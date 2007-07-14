@@ -1,6 +1,4 @@
-#define YASM_LIB_INTERNAL
 #include "util.h"
-RCSID("$Id: bitvect.c 1825 2007-04-22 03:32:46Z peter $");
 
 /*****************************************************************************/
 /*  MODULE NAME:  BitVector.c                           MODULE TYPE:  (adt)  */

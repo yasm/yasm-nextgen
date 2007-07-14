@@ -25,7 +25,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include "util.h"
-/*@unused@*/ RCSID("$Id: errwarn.c 1827 2007-04-22 05:09:49Z peter $");
 
 #include <cstdio>
 #include <cctype>

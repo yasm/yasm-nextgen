@@ -91,18 +91,6 @@
 # define toascii(c) ((c) & 0x7F)
 #endif
 
-#ifdef HAVE_SYS_CDEFS_H
-# include <sys/cdefs.h>
-#endif
-
-#ifdef __RCSID
-# define RCSID(s)       __RCSID(s)
-#elif defined(__GNUC__) && defined(__ELF__)
-# define RCSID(s)       __asm__(".ident\t\"" s "\"")
-#else
-# define RCSID(s)       static const char rcsid[] = s
-#endif
-
 /* Bit-counting: used primarily by HAMT but also in a few other places. */
 #define BC_TWO(c)       (0x1ul << (c))
 #define BC_MSK(c)       (((unsigned long)(-1)) / (BC_TWO(BC_TWO(c)) + 1ul))

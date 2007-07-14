@@ -2,10 +2,6 @@
  * \file libyasm/intnum.h
  * \brief YASM integer number interface.
  *
- * \rcs
- * $Id: intnum.h 1827 2007-04-22 05:09:49Z peter $
- * \endrcs
- *
  * \license
  *  Copyright (C) 2001-2007  Peter Johnson
  *

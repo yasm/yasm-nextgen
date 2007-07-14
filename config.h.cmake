@@ -24,9 +24,6 @@
 /* Define to 1 if you have the <strings.h> header file. */
 #cmakedefine HAVE_STRINGS_H 1
 
-/* Define to 1 if you have the <sys/cdefs.h> header file. */
-#cmakedefine HAVE_SYS_CDEFS_H 1
-
 /* Define to 1 if you have the `abort' function. */
 #cmakedefine HAVE_ABORT 1
 
