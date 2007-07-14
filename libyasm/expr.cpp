@@ -100,14 +100,10 @@ Expr::Term
 Expr::Term::clone() const
 {
     switch (m_type) {
-        case EXPR_INT:
-            return m_data.intn->clone();
-        case EXPR_FLOAT:
-            return m_data.flt/*->clone()*/;
-        case EXPR_EXPR:
-            return m_data.expr->clone();
-        default:
-            return *this;
+        case EXPR_INT:      return m_data.intn->clone();
+        case EXPR_FLOAT:    return m_data.flt/*->clone()*/;
+        case EXPR_EXPR:     return m_data.expr->clone();
+        default:            return *this;
     }
 }
 
@@ -972,30 +968,14 @@ std::ostream&
 operator<< (std::ostream& os, const Expr::Term& term)
 {
     switch (term.m_type) {
-        case Expr::EXPR_NONE:
-            os << "NONE";
-            break;
-        case Expr::EXPR_REG:
-            os << "REG";
-            break;
-        case Expr::EXPR_INT:
-            os << *term.m_data.intn;
-            break;
-        case Expr::EXPR_SUBST:
-            os << "[" << term.m_data.subst << "]";
-            break;
-        case Expr::EXPR_FLOAT:
-            os << "FLTN";
-            break;
-        case Expr::EXPR_SYM:
-            os << "SYM";
-            break;
-        case Expr::EXPR_PRECBC:
-            os << "{PRECBC}";
-            break;
-        case Expr::EXPR_EXPR:
-            os << "(" << *term.m_data.expr << ")";
-            break;
+        case Expr::EXPR_NONE:   os << "NONE"; break;
+        case Expr::EXPR_REG:    os << "REG"; break;
+        case Expr::EXPR_INT:    os << *term.m_data.intn; break;
+        case Expr::EXPR_SUBST:  os << "[" << term.m_data.subst << "]"; break;
+        case Expr::EXPR_FLOAT:  os << "FLTN"; break;
+        case Expr::EXPR_SYM:    os << "SYM"; break;
+        case Expr::EXPR_PRECBC: os << "{PRECBC}"; break;
+        case Expr::EXPR_EXPR:   os << "(" << *term.m_data.expr << ")"; break;
     }
     return os;
 }
@@ -1003,111 +983,42 @@ operator<< (std::ostream& os, const Expr::Term& term)
 std::ostream&
 operator<< (std::ostream& os, const Expr& e)
 {
-    char opstr[8];
+    const char* opstr = "";
 
     switch (e.m_op) {
-        case EXPR_ADD:
-            strcpy(opstr, "+");
-            break;
-        case EXPR_SUB:
-            strcpy(opstr, "-");
-            break;
-        case EXPR_MUL:
-            strcpy(opstr, "*");
-            break;
-        case EXPR_DIV:
-            strcpy(opstr, "/");
-            break;
-        case EXPR_SIGNDIV:
-            strcpy(opstr, "//");
-            break;
-        case EXPR_MOD:
-            strcpy(opstr, "%");
-            break;
-        case EXPR_SIGNMOD:
-            strcpy(opstr, "%%");
-            break;
-        case EXPR_NEG:
-            os << "-";
-            opstr[0] = 0;
-            break;
-        case EXPR_NOT:
-            os << "~";
-            opstr[0] = 0;
-            break;
-        case EXPR_OR:
-            strcpy(opstr, "|");
-            break;
-        case EXPR_AND:
-            strcpy(opstr, "&");
-            break;
-        case EXPR_XOR:
-            strcpy(opstr, "^");
-            break;
-        case EXPR_XNOR:
-            strcpy(opstr, "XNOR");
-            break;
-        case EXPR_NOR:
-            strcpy(opstr, "NOR");
-            break;
-        case EXPR_SHL:
-            strcpy(opstr, "<<");
-            break;
-        case EXPR_SHR:
-            strcpy(opstr, ">>");
-            break;
-        case EXPR_LOR:
-            strcpy(opstr, "||");
-            break;
-        case EXPR_LAND:
-            strcpy(opstr, "&&");
-            break;
-        case EXPR_LNOT:
-            strcpy(opstr, "!");
-            break;
-        case EXPR_LXOR:
-            strcpy(opstr, "^^");
-            break;
-        case EXPR_LXNOR:
-            strcpy(opstr, "LXNOR");
-            break;
-        case EXPR_LNOR:
-            strcpy(opstr, "LNOR");
-            break;
-        case EXPR_LT:
-            strcpy(opstr, "<");
-            break;
-        case EXPR_GT:
-            strcpy(opstr, ">");
-            break;
-        case EXPR_LE:
-            strcpy(opstr, "<=");
-            break;
-        case EXPR_GE:
-            strcpy(opstr, ">=");
-            break;
-        case EXPR_NE:
-            strcpy(opstr, "!=");
-            break;
-        case EXPR_EQ:
-            strcpy(opstr, "==");
-            break;
-        case EXPR_SEG:
-            os << "SEG ";
-            opstr[0] = 0;
-            break;
-        case EXPR_WRT:
-            strcpy(opstr, " WRT ");
-            break;
-        case EXPR_SEGOFF:
-            strcpy(opstr, ":");
-            break;
-        case EXPR_IDENT:
-            opstr[0] = 0;
-            break;
-        default:
-            strcpy(opstr, " !UNK! ");
-            break;
+        case EXPR_ADD:      opstr = "+"; break;
+        case EXPR_SUB:      opstr = "-"; break;
+        case EXPR_MUL:      opstr = "*"; break;
+        case EXPR_DIV:      opstr = "/"; break;
+        case EXPR_SIGNDIV:  opstr = "//"; break;
+        case EXPR_MOD:      opstr = "%"; break;
+        case EXPR_SIGNMOD:  opstr = "%%"; break;
+        case EXPR_NEG:      os << "-"; break;
+        case EXPR_NOT:      os << "~"; break;
+        case EXPR_OR:       opstr = "|"; break;
+        case EXPR_AND:      opstr = "&"; break;
+        case EXPR_XOR:      opstr = "^"; break;
+        case EXPR_XNOR:     opstr = "XNOR"; break;
+        case EXPR_NOR:      opstr = "NOR"; break;
+        case EXPR_SHL:      opstr = "<<"; break;
+        case EXPR_SHR:      opstr = ">>"; break;
+        case EXPR_LOR:      opstr = "||"; break;
+        case EXPR_LAND:     opstr = "&&"; break;
+        case EXPR_LNOT:     opstr = "!"; break;
+        case EXPR_LXOR:     opstr = "^^"; break;
+        case EXPR_LXNOR:    opstr = "LXNOR"; break;
+        case EXPR_LNOR:     opstr = "LNOR"; break;
+        case EXPR_LT:       opstr = "<"; break;
+        case EXPR_GT:       opstr = ">"; break;
+        case EXPR_LE:       opstr = "<="; break;
+        case EXPR_GE:       opstr = ">="; break;
+        case EXPR_NE:       opstr = "!="; break;
+        case EXPR_EQ:       opstr = "=="; break;
+        case EXPR_SEG:      os << "SEG "; break;
+        case EXPR_WRT:      opstr = " WRT "; break;
+        case EXPR_SEGOFF:   opstr = ":"; break;
+        case EXPR_IDENT:    break;
+        default:            opstr = " !UNK! "; break;
     }
     for (Expr::Terms::const_iterator i=e.m_terms.begin(), end=e.m_terms.end();
          i != end; ++i) {
