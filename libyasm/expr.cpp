@@ -50,24 +50,6 @@ namespace {
 
 using namespace yasm;
 
-inline void
-clone_terms(Expr::Terms& dest,
-            Expr::Terms::const_iterator first,
-            Expr::Terms::const_iterator last)
-{
-    dest.clear();
-    while (first != last) {
-        dest.push_back(first->clone());
-        ++first;
-    }
-}
-
-inline void
-clone_terms(Expr::Terms& dest, const Expr::Terms& src)
-{
-    clone_terms(dest, src.begin(), src.end());
-}
-
 /* Look for simple identities that make the entire result constant:
  * 0*&x, -1|x, etc.
  */
@@ -218,14 +200,16 @@ Expr::operator= (const Expr& rhs)
 {
     m_op = rhs.m_op;
     m_line = rhs.m_line;
-    clone_terms(m_terms, rhs.m_terms);
+    std::transform(rhs.m_terms.begin(), rhs.m_terms.end(), m_terms.begin(),
+                   boost::mem_fn(&Term::clone));
     return *this;
 }
 
 Expr::Expr(const Expr& e)
     : m_op(e.m_op), m_line(e.m_line)
 {
-    clone_terms(m_terms, e.m_terms);
+    std::transform(e.m_terms.begin(), e.m_terms.end(), m_terms.begin(),
+                   boost::mem_fn(&Term::clone));
 }
 
 Expr::Expr(ExprOp op, unsigned long line)
