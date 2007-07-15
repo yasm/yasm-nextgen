@@ -40,6 +40,8 @@ class Bytecode;
 
 class Linemap {
 public:
+    typedef std::set<std::string> Filenames;
+
     /** Create a new line mapping repository. */
     Linemap() : m_current(1) {}
 
@@ -108,8 +110,7 @@ public:
                 /*@out@*/ unsigned long& file_line) const;
 
     /** Get all filenames used in a linemap. */
-    const std::set<std::string> get_filenames() const
-    { return m_filenames; }
+    const Filenames get_filenames() const { return m_filenames; }
 
 private:
     /** Current virtual line number. */
@@ -159,7 +160,7 @@ private:
     std::vector<Source> m_source;
 
     // All used filenames
-    std::set<std::string> m_filenames;
+    Filenames m_filenames;
 };
 
 } // namespace yasm
