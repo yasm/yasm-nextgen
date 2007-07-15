@@ -248,7 +248,7 @@ expr_xform_bc_dist_base(/*@returned@*/ /*@only@*/ yasm_expr *e,
         /*@dependent@*/ yasm_section *sect2;
         /*@dependent@*/ /*@null@*/ yasm_bytecode *precbc2;
 
-        /* First look for an (-1*symrec) term */
+        // First look for an (-1*symrec) term
         if (e->terms[i].type != EXPR_EXPR)
             continue;
         sube = e->terms[i].data.expn;
@@ -281,7 +281,7 @@ expr_xform_bc_dist_base(/*@returned@*/ /*@only@*/ yasm_expr *e,
             continue;
         sect2 = yasm_bc_get_section(precbc);
 
-        /* Now look for a symrec term in the same segment */
+        // Now look for a symrec term in the same segment
         for (j=0; j<e->numterms; j++) {
             if (((e->terms[j].type == EXPR_SYM &&
                   yasm_symrec_get_label(e->terms[j].data.sym, &precbc2)) ||
@@ -290,19 +290,19 @@ expr_xform_bc_dist_base(/*@returned@*/ /*@only@*/ yasm_expr *e,
                 (sect = yasm_bc_get_section(precbc2)) &&
                 sect == sect2 &&
                 callback(&e->terms[j], precbc, precbc2, cbd)) {
-                /* Delete the matching (-1*symrec) term */
+                // Delete the matching (-1*symrec) term
                 yasm_expr_destroy(sube);
                 e->terms[i].type = EXPR_NONE;
-                break;  /* stop looking for matching symrec term */
+                break;  // stop looking for matching symrec term
             }
         }
     }
 
-    /* Clean up any deleted (EXPR_NONE) terms */
+    // Clean up any deleted (EXPR_NONE) terms
     numterms = 0;
     for (i=0; i<e->numterms; i++) {
         if (e->terms[i].type != EXPR_NONE)
-            e->terms[numterms++] = e->terms[i]; /* structure copy */
+            e->terms[numterms++] = e->terms[i]; // structure copy
     }
     if (e->numterms != numterms) {
         e->numterms = numterms;
@@ -322,7 +322,7 @@ expr_xform_bc_dist_cb(yasm_expr__term *ei, yasm_bytecode *precbc,
     yasm_intnum *dist = yasm_calc_bc_dist(precbc, precbc2);
     if (!dist)
         return 0;
-    /* Change the term to an integer */
+    // Change the term to an integer
     ei->type = EXPR_INT;
     ei->data.intn = dist;
     return 1;
@@ -352,9 +352,9 @@ expr_bc_dist_subst_cb(yasm_expr__term *ei, yasm_bytecode *precbc,
 {
     bc_dist_subst_cbd *my_cbd = d;
     assert(my_cbd != NULL);
-    /* Call higher-level callback */
+    // Call higher-level callback
     my_cbd->callback(my_cbd->subst, precbc, precbc2, my_cbd->cbd);
-    /* Change the term to an subst */
+    // Change the term to an subst
     ei->type = EXPR_SUBST;
     ei->data.subst = my_cbd->subst;
     my_cbd->subst++;
@@ -374,7 +374,7 @@ yasm_expr__bc_dist_subst(yasm_expr **ep, void *cbd,
                                            yasm_bytecode *precbc2,
                                            void *cbd))
 {
-    bc_dist_subst_cbd my_cbd;   /* callback info for low-level callback */
+    bc_dist_subst_cbd my_cbd;   // callback info for low-level callback
     my_cbd.callback = callback;
     my_cbd.cbd = cbd;
     my_cbd.subst = 0;
@@ -404,7 +404,7 @@ Expr::xform_neg_helper()
 {
     switch (m_op) {
         case EXPR_ADD:
-            /* distribute (recursively if expr) over terms */
+            // distribute (recursively if expr) over terms
             for (Terms::iterator i=m_terms.begin(), end=m_terms.end();
                  i != end; ++i) {
                 if (Expr* sube = i->get_expr())
@@ -414,7 +414,7 @@ Expr::xform_neg_helper()
             }
             break;
         case EXPR_SUB:
-            /* change op to ADD, and recursively negate left side (if expr) */
+            // change op to ADD, and recursively negate left side (if expr)
             m_op = EXPR_ADD;
             if (Expr* sube = m_terms.front().get_expr())
                 sube->xform_neg_helper();
@@ -422,7 +422,7 @@ Expr::xform_neg_helper()
                 xform_neg_term(m_terms.begin());
             break;
         case EXPR_NEG:
-            /* Negating a negated value?  Make it an IDENT. */
+            // Negating a negated value?  Make it an IDENT.
             m_op = EXPR_IDENT;
             break;
         case EXPR_IDENT:
@@ -470,15 +470,14 @@ Expr::xform_neg()
 {
     switch (m_op) {
         case EXPR_NEG:
-            /* Turn -x into -1*x */
+            // Turn -x into -1*x
             m_op = EXPR_IDENT;
             xform_neg_helper();
             break;
         case EXPR_SUB:
         {
-            /* Turn a-b into a+(-1*b) */
-
-            /* change op to ADD, and recursively negate right side (if expr) */
+            // Turn a-b into a+(-1*b)
+            // change op to ADD, and recursively negate right side (if expr)
             m_op = EXPR_ADD;
             Terms::iterator rhs = m_terms.begin()+1;
             if (Expr* sube = rhs->get_expr())
@@ -513,15 +512,16 @@ Expr::simplify_identity(IntNum* &intn, bool simplify_reg_mul)
              !contains(EXPR_REG)) &&
             ((is_first && can_destroy_int_left(m_op, intn)) ||
              (!is_first && can_destroy_int_right(m_op, intn)))) {
-            /* delete int term */
+            // delete int term
             m_terms.erase(std::find_if(m_terms.begin(), m_terms.end(),
-                                       boost::bind(&Term::is_type, _1, EXPR_INT)));
+                                       boost::bind(&Term::is_type, _1,
+                                                   EXPR_INT)));
             delete intn;
             intn = 0;
         }
-        /* Check for simple identites that delete everything BUT the intnum. */
+        // Check for simple identites that delete everything BUT the intnum.
         else if (is_constant(m_op, intn)) {
-            /* Delete everything but the integer term */
+            // Delete everything but the integer term
             Terms terms;
             Terms::iterator i;
             i = std::find_if(m_terms.begin(), m_terms.end(),
@@ -531,16 +531,17 @@ Expr::simplify_identity(IntNum* &intn, bool simplify_reg_mul)
             m_terms.swap(terms);
             intn = m_terms.front().get_int();
             // delete old terms
-            std::for_each(terms.begin(), terms.end(), boost::mem_fn(&Term::destroy));
+            std::for_each(terms.begin(), terms.end(),
+                          boost::mem_fn(&Term::destroy));
         }
     }
 
-    /* Compute NOT, NEG, and LNOT on single intnum. */
+    // Compute NOT, NEG, and LNOT on single intnum.
     if (m_terms.size() == 1 && is_first &&
         (m_op == EXPR_NOT || m_op == EXPR_NEG || m_op == EXPR_LNOT))
         intn->calc(m_op);
 
-    /* Change expression to IDENT if possible. */
+    // Change expression to IDENT if possible.
     if (m_terms.size() == 1)
         m_op = EXPR_IDENT;
 }
@@ -561,7 +562,7 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
     IntNum* intn = 0;
     bool do_level = false;
 
-    /* First, bring up any IDENT'ed values. */
+    // First, bring up any IDENT'ed values.
     Expr* e = this;
     Expr* sube;
     while (e->m_op == EXPR_IDENT && (sube = e->m_terms.front().get_expr()))
@@ -572,7 +573,7 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
         delete e;
     }
 
-    /* If non-numeric expression, don't fold constants. */
+    // If non-numeric expression, don't fold constants.
     if (m_op > EXPR_NONNUM)
         fold_const = false;
 
@@ -580,7 +581,6 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
         /* Search downward until we find something *other* than an
          * IDENT, then bring it up to the current level.
          */
-
         if ((e = i->get_expr())) {
             while (e && e->m_op == EXPR_IDENT) {
                 *i = e->m_terms.back();
@@ -589,7 +589,7 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
                 e = i->get_expr();
             }
 
-            /* Shortcut check for possible leveling later */
+            // Shortcut check for possible leveling later
             if (e && e->m_op == m_op)
                 do_level = true;
         }
@@ -610,13 +610,13 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
     }
 
     if (intn) {
-        /* Erase folded integer terms; we already deleted their contents above */
+        // Erase folded integer terms; we already deleted their contents above
         Terms::iterator erasefrom =
             std::remove_if(first_int_term+1, m_terms.end(),
                            boost::bind(&Term::is_type, _1, EXPR_INT));
         m_terms.erase(erasefrom, m_terms.end());
 
-        /* Simplify identities and make IDENT if possible. */
+        // Simplify identities and make IDENT if possible.
         if (simplify_ident)
             simplify_identity(intn, simplify_reg_mul);
         else if (m_terms.size() == 1)
@@ -643,7 +643,7 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
     for (Terms::reverse_iterator i=m_terms.rbegin(), end=m_terms.rend();
          i != end; ++i) {
         if ((e = i->get_expr()) && e->m_op == m_op) {
-            /* move up terms, folding constants as we go */
+            // move up terms, folding constants as we go
             while (!e->m_terms.empty()) {
                 Term& last = e->m_terms.back();
                 IntNum* intn_temp;
@@ -669,7 +669,7 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
     std::reverse(terms.begin(), terms.end());
     m_terms.swap(terms);
 
-    /* Simplify identities, make IDENT if possible. */
+    // Simplify identities, make IDENT if possible.
     if (simplify_ident && intn)
         simplify_identity(intn, simplify_reg_mul);
     else if (m_terms.size() == 1)
@@ -682,11 +682,11 @@ Expr::expand_equ(std::vector<const Expr*>& seen)
 #if 0
     for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i) {
         int type = i->type();
-        /* Expand equ's. */
+        // Expand equ's.
         const Expr *equ;
         if (type == EXPR_SYM &&
             (equ = ((TermSymbol&) *i).m_data->get_equ())) {
-            /* Check for circular reference */
+            // Check for circular reference
             if (std::find(seen.begin(), seen.end(), equ) != seen.end()) {
                 error_set(ERROR_TOO_COMPLEX,
                           N_("circular reference detected"));
@@ -696,12 +696,12 @@ Expr::expand_equ(std::vector<const Expr*>& seen)
             Expr *newe = equ->clone();
             m_terms.replace(i, new TermExpr(newe));
 
-            /* Remember we saw this equ and recurse */
+            // Remember we saw this equ and recurse
             seen.push_back(equ);
             newe->expand_equ(seen);
             seen.pop_back();
         } else if (type == EXPR_EXPR) {
-            /* Recurse */
+            // Recurse
             ((TermExpr&) *i).m_data->expand_equ(seen);
         }
     }
@@ -717,28 +717,28 @@ Expr::level(bool fold_const,
 {
     xform_neg();
 
-    /* Recurse into all expr terms first */
+    // Recurse into all expr terms first
     for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i) {
         if (Expr* e = i->get_expr())
             e->level(fold_const, simplify_ident, simplify_reg_mul,
                      calc_bc_dist, xform_extra);
     }
 
-    /* Check for SEG of SEG:OFF, if we match, simplify to just the segment */
+    // Check for SEG of SEG:OFF, if we match, simplify to just the segment
     Expr* e;
     if (m_op == EXPR_SEG && (e = m_terms.front().get_expr()) &&
         e->m_op == EXPR_SEGOFF) {
         m_op = EXPR_IDENT;
         e->m_op = EXPR_IDENT;
-        /* Destroy the second (offset) term */
+        // Destroy the second (offset) term
         e->m_terms.back().destroy();
         e->m_terms.pop_back();
     }
 
-    /* Do this level */
+    // Do this level
     level_op(fold_const, simplify_ident, simplify_reg_mul);
 
-    /* Do callback */
+    // Do callback
     if (calc_bc_dist || xform_extra) {
         if (calc_bc_dist)
             xform_bc_dist();
@@ -767,11 +767,11 @@ Expr::level_tree(bool fold_const,
 void
 Expr::order_terms()
 {
-    /* don't bother reordering if only one element */
+    // don't bother reordering if only one element
     if (m_terms.size() == 1)
         return;
 
-    /* only reorder some types of operations */
+    // only reorder some types of operations
     switch (m_op) {
         case EXPR_ADD:
         case EXPR_MUL:
@@ -822,7 +822,7 @@ Expr::substitute_cb(const Terms& subst_terms)
         if (!substp)
             continue;
         if (*substp >= subst_terms.size())
-            return true;   /* error */
+            return true;   // error
         *i = subst_terms[*substp].clone();
     }
     return false;
@@ -867,12 +867,12 @@ Expr::extract_deep_segoff()
 {
     Expr* retval;
 
-    /* Try to extract at this level */
+    // Try to extract at this level
     retval = extract_segoff();
     if (retval)
         return retval;
 
-    /* Not at this level?  Search any expr children. */
+    // Not at this level?  Search any expr children.
     for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i) {
         if (Expr* e = i->get_expr()) {
             retval = e->extract_deep_segoff();
@@ -881,30 +881,30 @@ Expr::extract_deep_segoff()
         }
     }
 
-    /* Didn't find one */
+    // Didn't find one
     return 0;
 }
 
 Expr*
 Expr::extract_segoff()
 {
-    /* If not SEG:OFF, we can't do this transformation */
+    // If not SEG:OFF, we can't do this transformation
     if (m_op != EXPR_SEGOFF || m_terms.size() != 2)
         return 0;
 
     Expr* retval;
     Term& left = m_terms.front();
 
-    /* Extract the SEG portion out to its own expression */
+    // Extract the SEG portion out to its own expression
     if (Expr* e = left.get_expr())
         retval = e;
     else {
-        /* Need to build IDENT expression to hold non-expression contents */
+        // Need to build IDENT expression to hold non-expression contents
         retval = new Expr(EXPR_IDENT, m_line);
         retval->m_terms.push_back(left);
     }
 
-    /* Change the expression into an IDENT */
+    // Change the expression into an IDENT
     m_terms.erase(m_terms.begin());
     m_op = EXPR_IDENT;
     return retval;
@@ -913,23 +913,23 @@ Expr::extract_segoff()
 Expr*
 Expr::extract_wrt()
 {
-    /* If not WRT, we can't do this transformation */
+    // If not WRT, we can't do this transformation
     if (m_op != EXPR_WRT || m_terms.size() != 2)
         return 0;
 
     Expr* retval;
     Term& right = m_terms.back();
 
-    /* Extract the right side portion out to its own expression */
+    // Extract the right side portion out to its own expression
     if (Expr* e = right.get_expr())
         retval = e;
     else {
-        /* Need to build IDENT expression to hold non-expression contents */
+        // Need to build IDENT expression to hold non-expression contents
         retval = new Expr(EXPR_IDENT, m_line);
         retval->m_terms.push_back(right);
     }
 
-    /* Change the expr into an IDENT */
+    // Change the expr into an IDENT
     m_terms.pop_back();
     m_op = EXPR_IDENT;
     return retval;
