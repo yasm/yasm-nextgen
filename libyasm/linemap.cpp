@@ -80,14 +80,14 @@ Linemap::add_source(Bytecode* bc, const std::string& source)
     m_source[m_current-1] = Source(bc, source);
 }
 
-void
+bool
 Linemap::lookup(unsigned long line,
                 std::string& filename, unsigned long& file_line) const
 {
     if (m_map.empty()) {
         filename = "unknown";
         file_line = 0;
-        return;
+        return false;
     }
 
     Mapping searchfor(line, "", 0, 0);
@@ -98,6 +98,7 @@ Linemap::lookup(unsigned long line,
 
     filename = m->m_filename;
     file_line = m->m_file_line + m->m_line_inc * (line - m->m_line);
+    return true;
 }
 
 bool

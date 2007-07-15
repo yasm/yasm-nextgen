@@ -104,8 +104,9 @@ public:
      * \param line          virtual line
      * \param filename      physical file name (output)
      * \param file_line     physical line number (output)
+     * \return True if information available for line, false if not.
      */
-    void lookup(unsigned long line,
+    bool lookup(unsigned long line,
                 /*@out@*/ std::string& filename,
                 /*@out@*/ unsigned long& file_line) const;
 
