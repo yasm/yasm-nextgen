@@ -220,7 +220,7 @@ abspath_unix(const char* path)
 
 /* FIXME: dumb way for now */
 char *
-yasm__abspath_win(const char *path)
+abspath_win(const char *path)
 {
     char *curdir, *abspath, *ch;
     static const char pathsep[2] = "\\";
