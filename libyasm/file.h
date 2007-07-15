@@ -93,13 +93,22 @@ size_t splitpath_win(const char* path, /*@out@*/ const char* &tail);
  * \param tail  (returned) base filename
  * \return Length of head (directory).
  */
-#ifndef splitpath
+#ifndef HAVE_SPLITPATH
+#define HAVE_SPLITPATH 1
 # if defined (_WIN32) || defined (WIN32) || defined (__MSDOS__) || \
  defined (__DJGPP__) || defined (__OS2__) || defined (__CYGWIN__) || \
  defined (__CYGWIN32__)
-#  define splitpath(path, tail)     splitpath_win(path, tail)
+inline size_t
+splitpath(const char* path, /*@out@*/ const char* &tail)
+{
+    return splitpath_win(path, tail);
+}
 # else
-#  define splitpath(path, tail)     splitpath_unix(path, tail)
+inline size_t
+splitpath(const char* path, /*@out@*/ const char* &tail)
+{
+    return splitpath_unix(path, tail);
+}
 # endif
 #endif
 
