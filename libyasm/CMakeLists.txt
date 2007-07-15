@@ -29,3 +29,5 @@ ADD_LIBRARY(libyasm
     #xstrdup.c
     #module.c
     )
+
+ADD_SUBDIRECTORY(tests)

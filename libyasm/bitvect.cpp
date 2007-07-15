@@ -35,9 +35,9 @@ namespace BitVector {
 /*  MODULE RESOURCES:                                                        */
 /*****************************************************************************/
 
-static inline N_int& bits_(const wordptr addr) { return *(addr-3); }
-static inline N_int& size_(const wordptr addr) { return *(addr-2); }
-static inline N_int& mask_(const wordptr addr) { return *(addr-1); }
+static inline N_int& bits_(const wordptr addr) { return addr[-3]; }
+static inline N_int& size_(const wordptr addr) { return addr[-2]; }
+static inline N_int& mask_(const wordptr addr) { return addr[-1]; }
 
 #define  ERRCODE_TYPE  "sizeof(word) > sizeof(size_t)"
 #define  ERRCODE_BITS  "bits(word) != sizeof(word)*8"

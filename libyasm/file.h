@@ -121,13 +121,22 @@ size_t splitpath_win(const char* path, /*@out@*/ const char* &tail);
  * \param path  pathname
  * \return Absolute version of path (newly allocated).
  */
-#ifndef abspath
+#ifndef HAVE_ABSPATH
+#define HAVE_ABSPATH 1
 # if defined (_WIN32) || defined (WIN32) || defined (__MSDOS__) || \
  defined (__DJGPP__) || defined (__OS2__) || defined (__CYGWIN__) || \
  defined (__CYGWIN32__)
-#  define abspath(path)     abspath_win(path)
+inline char*
+abspath(const char* path)
+{
+    return abspath_win(path);
+}
 # else
-#  define abspath(path)     abspath_unix(path)
+inline char*
+abspath(const char* path)
+{
+    return abspath_unix(path);
+}
 # endif
 #endif
 
@@ -157,13 +166,22 @@ char* combpath_win(const char* from, const char* to);
  * \param to    to pathname
  * \return Combined path (newly allocated).
  */
-#ifndef combpath
+#ifndef HAVE_COMBPATH
+#define HAVE_COMBPATH 1
 # if defined (_WIN32) || defined (WIN32) || defined (__MSDOS__) || \
  defined (__DJGPP__) || defined (__OS2__) || defined (__CYGWIN__) || \
  defined (__CYGWIN32__)
-#  define combpath(from, to)    combpath_win(from, to)
+inline char*
+combpath(const char* from, const char* to)
+{
+    return combpath_win(from, to);
+}
 # else
-#  define combpath(from, to)    combpath_unix(from, to)
+inline char*
+combpath(const char* from, const char* to)
+{
+    return combpath_unix(from, to);
+}
 # endif
 #endif
 

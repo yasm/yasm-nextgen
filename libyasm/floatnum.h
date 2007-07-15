@@ -34,13 +34,18 @@
 
 #include <iostream>
 
+#include "coretype.h"
+#include "bitvect.h"
+
 namespace yasm {
 
 class FloatNumManager;
+class FloatNumTest;
 
 class FloatNum {
     friend std::ostream& operator<< (std::ostream& os, const FloatNum& flt);
     friend class FloatNumManager;
+    friend class FloatNumTest;
 
 public:
     /** Create a new floatnum from a decimal string.  The input string

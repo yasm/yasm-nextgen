@@ -1,9 +1,18 @@
 PROJECT(yasm)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.4)
 
+# Where to look first for cmake modules
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
+
+INCLUDE(YasmMacros)
+
 OPTION(ENABLE_NLS "Enable message translations" ON)
 
-ENABLE_TESTING()
+OPTION(YASM_BUILD_TESTS "Enable building of tests" ON)
+
+IF(YASM_BUILD_TESTS)
+    ENABLE_TESTING()
+ENDIF(YASM_BUILD_TESTS)
 
 # Default build type to debug if not set
 IF(NOT CMAKE_BUILD_TYPE)
