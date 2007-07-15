@@ -30,6 +30,10 @@
 #ifndef YASM_LINEMAP_H
 #define YASM_LINEMAP_H
 
+#include <vector>
+#include <set>
+#include <string>
+
 namespace yasm {
 
 class Bytecode;
@@ -37,10 +41,7 @@ class Bytecode;
 class Linemap {
 public:
     /** Create a new line mapping repository. */
-    Linemap();
-
-    /** Destructor. */
-    ~Linemap();
+    Linemap() : m_current(1) {}
 
     /** Get the current line position in a repository.
      * \return Current virtual line.
@@ -53,12 +54,12 @@ public:
      * \param source        source code line pointer (output)
      * \return False if source line information available for line, true if
      *         not.
-     * \note If source line information is not available, bc and source targets
-     * are set to NULL.
+     * \note If source line information is not available, bc is set to 0 and
+     * source is set to "".
      */
     bool get_source(unsigned long line,
                     /*@out@*/ /*@null@*/ Bytecode * &bc,
-                    /*@out@*/ /*@null@*/ const char * &source) const;
+                    /*@out@*/ /*@null@*/ std::string& source) const;
 
     /** Add bytecode and source line information to the current virtual line.
      * \attention Deletes any existing bytecode and source line information for
@@ -67,7 +68,7 @@ public:
      * \param source        source code line
      * \note The source code line pointer is NOT kept, it is strdup'ed.
      */
-    void add_source(/*@null@*/ Bytecode *bc, const char *source);
+    void add_source(/*@null@*/ Bytecode* bc, const std::string& source);
 
     /** Go to the next line (increments the current virtual line).
      * \return The current (new) virtual line.
@@ -77,23 +78,25 @@ public:
     /** Set a new file/line physical association starting point at the current
      * virtual line.  line_inc indicates how much the "real" line is
      * incremented by for each virtual line increment (0 is perfectly legal).
-     * \param filename      physical file name (if NULL, not changed)
+     * \param filename      physical file name (optional)
      * \param file_line     physical line number
      * \param line_inc      line increment
      */
-    void set(/*@null@*/ const char *filename,
+    void set(unsigned long file_line, unsigned long line_inc);
+    void set(const std::string& filename,
              unsigned long file_line,
              unsigned long line_inc);
 
     /** Poke a single file/line association, restoring the original physical
      * association starting point.  Caution: increments the current virtual
      * line twice.
-     * \param filename      physical file name (if NULL, not changed)
+     * \param filename      physical file name (optional)
      * \param file_line     physical line number
      * \return The virtual line number of the poked association.
      */
-    unsigned long poke(/*@null@*/ const char *filename,
+    unsigned long poke(const std::string& filename,
                        unsigned long file_line);
+    unsigned long poke(unsigned long file_line);
 
     /** Look up the associated physical file and line for a virtual line.
      * \param line          virtual line
@@ -101,22 +104,62 @@ public:
      * \param file_line     physical line number (output)
      */
     void lookup(unsigned long line,
-                /*@out@*/ const char * &filename,
-                /*@out@*/ unsigned long &file_line) const;
+                /*@out@*/ std::string& filename,
+                /*@out@*/ unsigned long& file_line) const;
 
-    /** Traverses all filenames used in a linemap, calling a function on each
-     * filename.
-     * \param d             data pointer passed to func on each call
-     * \param func          function
-     * \return Stops early (and returns func's return value) if func returns a
-     *         nonzero value; otherwise 0.
-     */
-    int traverse_filenames(/*@null@*/ void *d,
-                           int (*func) (const char *filename, void *d)) const;
+    /** Get all filenames used in a linemap. */
+    const std::set<std::string> get_filenames() const
+    { return m_filenames; }
 
 private:
     /** Current virtual line number. */
     unsigned long m_current;
+
+    class Mapping {
+    public:
+        Mapping(unsigned long line, const std::string& filename,
+                unsigned long file_line, unsigned long line_inc)
+            : m_line(line), m_filename(filename), m_file_line(file_line),
+              m_line_inc(line_inc)
+        {}
+
+        bool operator< (const Mapping& other) const
+        { return (m_line < other.m_line); }
+
+        // monotonically increasing virtual line
+        unsigned long m_line;
+
+        // "original" source filename
+        std::string m_filename;
+        // "original" source base line number
+        unsigned long m_file_line;
+        // "original" source line number increment (for following lines)
+        unsigned long m_line_inc;
+    };
+
+    // Mappings from virtual to physical line numbers
+    typedef std::vector<Mapping> Mappings;
+    Mappings m_map;
+
+    class Source {
+    public:
+        Source() {}
+        Source(Bytecode* bc, const std::string& source)
+            : m_bc(bc), m_source(source)
+        {}
+
+        // first bytecode on line; 0 if no bytecodes on line
+        /*@null@*/ /*@dependent@*/ Bytecode* m_bc;
+
+        // source code line
+        std::string m_source;
+    };
+
+    // Bytecode and source line information
+    std::vector<Source> m_source;
+
+    // All used filenames
+    std::set<std::string> m_filenames;
 };
 
 } // namespace yasm
