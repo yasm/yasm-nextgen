@@ -53,12 +53,14 @@ Linemap::poke(const std::string& filename, unsigned long file_line)
     m_current++;
     set(filename, file_line, 0);
 
-    const Mapping& mapping = *(m_map.rbegin()+2);
+    const Mapping& mapping = *(m_map.rbegin()+1);
 
     unsigned long line = m_current;
 
     m_current++;
-    set(mapping.m_filename, mapping.m_file_line, mapping.m_line_inc);
+    set(mapping.m_filename,
+        mapping.m_file_line + mapping.m_line_inc*(m_current-2-mapping.m_line),
+        mapping.m_line_inc);
 
     return line;
 }

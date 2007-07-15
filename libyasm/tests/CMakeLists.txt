@@ -8,7 +8,8 @@ MACRO(LIBYASM_UNIT_TESTS)
 ENDMACRO(LIBYASM_UNIT_TESTS)
 
 LIBYASM_UNIT_TESTS(
+    linemap_test
+    file_combpath_test
     floatnum_new_test
     floatnum_get_test
-    file_combpath_test
     )
