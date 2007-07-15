@@ -54,7 +54,7 @@ public:
      * \param line          virtual line
      * \param bc            bytecode (output)
      * \param source        source code line pointer (output)
-     * \return False if source line information available for line, true if
+     * \return True if source line information available for line, false if
      *         not.
      * \note If source line information is not available, bc is set to 0 and
      * source is set to "".

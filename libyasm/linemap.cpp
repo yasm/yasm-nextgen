@@ -100,13 +100,13 @@ Linemap::get_source(unsigned long line, Bytecode* &bc, std::string& source) cons
     if (m_source.size() < line) {
         bc = 0;
         source = "";
-        return true;
+        return false;
     }
 
     bc = m_source[line-1].m_bc;
     source = m_source[line-1].m_source;
 
-    return false;
+    return true;
 }
 
 } // namespace yasm
