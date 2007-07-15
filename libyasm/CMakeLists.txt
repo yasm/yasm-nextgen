@@ -9,8 +9,8 @@ ADD_LIBRARY(libyasm
     #bytecode.c
     errwarn.cpp
     expr.cpp
-    #file.c
-    #floatnum.c
+    file.cpp
+    floatnum.cpp
     #hamt.c
     #insn.c
     intnum.cpp

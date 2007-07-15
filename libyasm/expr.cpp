@@ -30,7 +30,7 @@
 
 #include "errwarn.h"
 #include "intnum.h"
-//#include "floatnum.h"
+#include "floatnum.h"
 #include "expr.h"
 //#include "symrec.h"
 
@@ -101,7 +101,7 @@ Expr::Term::clone() const
 {
     switch (m_type) {
         case EXPR_INT:      return m_data.intn->clone();
-        case EXPR_FLOAT:    return m_data.flt/*->clone()*/;
+        case EXPR_FLOAT:    return m_data.flt->clone();
         case EXPR_EXPR:     return m_data.expr->clone();
         default:            return *this;
     }
@@ -116,7 +116,7 @@ Expr::Term::destroy()
             m_data.intn = 0;
             break;
         case EXPR_FLOAT:
-            /*delete m_data.flt;*/
+            delete m_data.flt;
             m_data.flt = 0;
             break;
         case EXPR_EXPR:
@@ -432,9 +432,9 @@ Expr::xform_neg_helper()
              */
             Term& first = m_terms.front();
             Expr* e;
-            /*if (FloatNum* flt = first.get_float())
+            if (FloatNum* flt = first.get_float())
                 flt->calc(EXPR_NEG);
-            else */if (IntNum* intn = first.get_int())
+            else if (IntNum* intn = first.get_int())
                 intn->calc(EXPR_NEG);
             else if ((e = first.get_expr()) && e->contains(EXPR_FLOAT))
                     e->xform_neg_helper();

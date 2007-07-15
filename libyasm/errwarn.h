@@ -35,6 +35,8 @@
 
 namespace yasm {
 
+class LineMap;
+
 /** Warning classes (that may be enabled/disabled). */
 enum WarnClass {
     WARN_NONE = 0,          /**< No warning */
