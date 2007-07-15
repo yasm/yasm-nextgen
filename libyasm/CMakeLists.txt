@@ -16,7 +16,7 @@ ADD_LIBRARY(libyasm
     intnum.cpp
     #inttree.c
     linemap.cpp
-    #md5.c
+    md5.cpp
     #mergesort.c
     #phash.c
     #section.c
