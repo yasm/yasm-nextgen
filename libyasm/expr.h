@@ -266,6 +266,9 @@ public:
 
     Expr* clone(int except = -1) const;
 
+    unsigned long get_line() const { return m_line; }
+    Terms& get_terms() { return m_terms; }
+
 private:
     ExprOp m_op;
     unsigned long m_line;
