@@ -14,7 +14,6 @@ ADD_LIBRARY(libyasm
     #hamt.c
     #insn.c
     intnum.cpp
-    #inttree.c
     linemap.cpp
     md5.cpp
     #mergesort.c
