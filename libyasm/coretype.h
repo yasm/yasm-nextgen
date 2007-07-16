@@ -30,6 +30,8 @@
 #ifndef YASM_CORETYPE_H
 #define YASM_CORETYPE_H
 
+#include <boost/function.hpp>
+
 namespace yasm {
 
 /** Architecture.  \see arch.h for details. */
@@ -161,7 +163,7 @@ enum ExprOp {
                      *   some other segment). */
     EXPR_SEGOFF     /**< The ':' in segment:offset. */
 };
-#if 0
+
 /** Convert yasm_value to its byte representation.  Usually implemented by
  * object formats to keep track of relocations and verify legal expressions.
  * Must put the value into the least significant bits of the destination,
@@ -178,13 +180,13 @@ enum ExprOp {
  *                      nonzero for overflow/underflow floating point warnings;
  *                      negative for signed integer warnings,
  *                      positive for unsigned integer warnings
- * \param d             objfmt-specific data (passed into higher-level calling
- *                      function)
- * \return Nonzero if an error occurred, 0 otherwise.
+ * \return True if an error occurred, false otherwise.
  */
-typedef int (*yasm_output_value_func)
-    (yasm_value *value, /*@out@*/ unsigned char *buf, unsigned int destsize,
-     unsigned long offset, yasm_bytecode *bc, int warn, /*@null@*/ void *d);
+typedef
+    boost::function<bool (Value* value, /*@out@*/ unsigned char* buf,
+                          unsigned int destsize, unsigned long offset,
+                          Bytecode *bc, int warn)>
+    OutputValueFunc;
 
 /** Convert a symbol reference to its byte representation.  Usually implemented
  * by object formats and debug formats to keep track of relocations generated
@@ -199,29 +201,21 @@ typedef int (*yasm_output_value_func)
  *                      nonzero for overflow/underflow floating point warnings;
  *                      negative for signed integer warnings,
  *                      positive for unsigned integer warnings
- * \param d             objfmt-specific data (passed into higher-level calling
- *                      function)
- * \return Nonzero if an error occurred, 0 otherwise.
+ * \return True if an error occurred, false otherwise.
  */
-typedef int (*yasm_output_reloc_func)
-    (yasm_symrec *sym, yasm_bytecode *bc, unsigned char *buf,
-     unsigned int destsize, unsigned int valsize, int warn, void *d);
-
-/** Separate string by delimiters.
- * \internal
- * \param stringp   string
- * \param delim     set of 1 or more delimiters
- * \return First/next substring.
- */
-/*@null@*/ char *yasm__strsep(char **stringp, const char *delim);
-
+typedef
+    boost::function<bool (Symbol* sym, Bytecode* bc, unsigned char* buf,
+                          unsigned int destsize, unsigned int valsize,
+                          int warn)>
+    OutputRelocFunc;
+#if 0
 /** Compare two strings, ignoring case differences.
  * \internal
  * \param s1    string 1
  * \param s2    string 2
  * \return 0 if strings are equal, -1 if s1<s2, 1 if s1>s2.
  */
-int yasm__strcasecmp(const char *s1, const char *s2);
+int strcasecmp(const char *s1, const char *s2);
 
 /** Compare portion of two strings, ignoring case differences.
  * \internal
@@ -230,57 +224,7 @@ int yasm__strcasecmp(const char *s1, const char *s2);
  * \param n     maximum number of characters to compare
  * \return 0 if strings are equal, -1 if s1<s2, 1 if s1>s2.
  */
-int yasm__strncasecmp(const char *s1, const char *s2, size_t n);
-
-/** strdup() implementation using yasm_xmalloc().
- * \internal
- * \param str   string
- * \return Newly allocated duplicate string.
- */
-/*@only@*/ char *yasm__xstrdup(const char *str);
-
-/** strndup() implementation using yasm_xmalloc().
- * \internal
- * \param str   string
- * \param max   maximum number of characters to copy
- * \return Newly allocated duplicate string.
- */
-/*@only@*/ char *yasm__xstrndup(const char *str, size_t max);
-
-/** Error-checking memory allocation.  A default implementation is provided
- * that calls yasm_fatal() on allocation errors.
- * A replacement should \em never return NULL.
- * \param size      number of bytes to allocate
- * \return Allocated memory block.
- */
-extern /*@only@*/ /*@out@*/ void * (*yasm_xmalloc) (size_t size);
-
-/** Error-checking memory allocation (with clear-to-0).  A default
- * implementation is provided that calls yasm_fatal() on allocation errors.
- * A replacement should \em never return NULL.
- * \param size      number of elements to allocate
- * \param elsize    size (in bytes) of each element
- * \return Allocated and cleared memory block.
- */
-extern /*@only@*/ void * (*yasm_xcalloc) (size_t nelem, size_t elsize);
-
-/** Error-checking memory reallocation.  A default implementation is provided
- * that calls yasm_fatal() on allocation errors.  A replacement should
- * \em never return NULL.
- * \param oldmem    memory block to resize
- * \param elsize    new size, in bytes
- * \return Re-allocated memory block.
- */
-extern /*@only@*/ void * (*yasm_xrealloc)
-    (/*@only@*/ /*@out@*/ /*@returned@*/ /*@null@*/ void *oldmem, size_t size)
-    /*@modifies oldmem@*/;
-
-/** Error-checking memory deallocation.  A default implementation is provided
- * that calls yasm_fatal() on allocation errors.
- * \param p     memory block to free
- */
-extern void (*yasm_xfree) (/*@only@*/ /*@out@*/ /*@null@*/ void *p)
-    /*@modifies p@*/;
+int strncasecmp(const char *s1, const char *s2, size_t n);
 #endif
 
 } // namespace yasm
