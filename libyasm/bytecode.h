@@ -40,7 +40,6 @@ namespace yasm {
 class Linemap;
 class Value;
 class Bytecode;
-class Section;
 class Arch;
 class Insn;
 class Expr;
@@ -114,6 +113,8 @@ public:
 
 /** A bytecode. */
 class Bytecode {
+    friend class Section;
+
 public:
     /** Add a dependent span for a bytecode.
      * \param bc            bytecode containing span
@@ -253,41 +254,6 @@ public:
         // Unimplemented assignment operator
         Contents& operator= (const Contents& oth);
     };
-
-    /** Implementation-specific data. */
-    Contents::Ptr m_contents;
-
-    /** Pointer to section containing bytecode; NULL if not part of a
-     * section.
-     */
-    /*@dependent@*/ /*@null@*/ Section* m_section;
-
-    /** Number of times bytecode is repeated.
-     * NULL=1 (to save space in the common case).
-     */
-    std::auto_ptr<Expr> m_multiple;
-
-    /** Total length of entire bytecode (not including multiple copies). */
-    unsigned long m_len;
-
-    /** Number of copies, integer version. */
-    long m_mult_int;
-
-    /** Line number where bytecode was defined. */
-    unsigned long m_line;
-
-    /** Offset of bytecode from beginning of its section.
-     * 0-based, ~0UL (e.g. all 1 bits) if unknown.
-     */
-    unsigned long m_offset;
-
-    /** Unique integer index of bytecode.  Used during optimization. */
-    unsigned long m_bc_index;
-
-    /** Labels that point to this bytecode (as the
-     * bytecode previous to the label).
-     */
-    std::vector<Symbol*> m_symbols;
 
     /** Create a bytecode of any specified type.
      * \param contents      type-specific data
@@ -531,6 +497,42 @@ public:
      *         otherwise NULL.
      */
     /*@dependent@*/ /*@null@*/ Insn* get_insn();
+
+private:
+    /** Implementation-specific data. */
+    Contents::Ptr m_contents;
+
+    /** Pointer to section containing bytecode; NULL if not part of a
+     * section.
+     */
+    /*@dependent@*/ /*@null@*/ Section* m_section;
+
+    /** Number of times bytecode is repeated.
+     * NULL=1 (to save space in the common case).
+     */
+    std::auto_ptr<Expr> m_multiple;
+
+    /** Total length of entire bytecode (not including multiple copies). */
+    unsigned long m_len;
+
+    /** Number of copies, integer version. */
+    long m_mult_int;
+
+    /** Line number where bytecode was defined. */
+    unsigned long m_line;
+
+    /** Offset of bytecode from beginning of its section.
+     * 0-based, ~0UL (e.g. all 1 bits) if unknown.
+     */
+    unsigned long m_offset;
+
+    /** Unique integer index of bytecode.  Used during optimization. */
+    unsigned long m_bc_index;
+
+    /** Labels that point to this bytecode (as the
+     * bytecode previous to the label).
+     */
+    std::vector<Symbol*> m_symbols;
 };
 
 } // namespace yasm
