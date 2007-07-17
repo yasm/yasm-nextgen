@@ -789,13 +789,13 @@ Expr::order_terms()
     std::stable_sort(m_terms.begin(), m_terms.end());
 }
 
-Expr*
+std::auto_ptr<Expr>
 Expr::clone(int except) const
 {
     if (except == -1 || m_terms.size() == 1)
-        return new Expr(*this);
+        return std::auto_ptr<Expr>(new Expr(*this));
 
-    Expr* e = new Expr(m_op, m_line);
+    std::auto_ptr<Expr> e(new Expr(m_op, m_line));
     int j = 0;
     for (Terms::const_iterator i=m_terms.begin(), end=m_terms.end();
          i != end; ++i, ++j) {

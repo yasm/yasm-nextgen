@@ -32,6 +32,7 @@
 
 #include <iostream>
 #include <vector>
+#include <memory>
 
 #include <boost/function.hpp>
 
@@ -109,11 +110,19 @@ public:
     public:
         Term(Register* reg) : m_type(REG) { m_data.reg = reg; }
         Term(IntNum* intn) : m_type(INT) { m_data.intn = intn; }
-        Term(unsigned int subst) : m_type(SUBST) { m_data.subst = subst; }
         Term(FloatNum* flt) : m_type(FLOAT) { m_data.flt = flt; }
+        Term(unsigned int subst) : m_type(SUBST) { m_data.subst = subst; }
         Term(Symbol* sym) : m_type(SYM) { m_data.sym = sym; }
         Term(Bytecode* bc) : m_type(PRECBC) { m_data.precbc = bc; }
         Term(Expr* expr) : m_type(EXPR) { m_data.expr = expr; }
+
+        /* auto_ptr constructors */
+        Term(std::auto_ptr<IntNum> intn) : m_type(INT)
+        { m_data.intn = intn.release(); }
+        Term(std::auto_ptr<FloatNum> flt) : m_type(FLOAT)
+        { m_data.flt = flt.release(); }
+        Term(std::auto_ptr<Expr> expr) : m_type(EXPR)
+        { m_data.expr = expr.release(); }
 
         Term clone() const;
         void release() { m_type = NONE; m_data.reg = 0; }
@@ -307,7 +316,7 @@ public:
      */
     bool substitute(const Terms& terms);
 
-    Expr* clone(int except = -1) const;
+    std::auto_ptr<Expr> clone(int except = -1) const;
 
     unsigned long get_line() const { return m_line; }
     Terms& get_terms() { return m_terms; }

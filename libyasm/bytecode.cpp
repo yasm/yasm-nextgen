@@ -43,8 +43,7 @@ void
 Bytecode::set_multiple(std::auto_ptr<Expr> e)
 {
     if (m_multiple.get() != 0)
-        m_multiple.reset(new Expr(m_multiple.release(), Expr::MUL,
-                                  e.release(), e->get_line()));
+        m_multiple.reset(new Expr(m_multiple, Expr::MUL, e, e->get_line()));
     else
         m_multiple = e;
 }
