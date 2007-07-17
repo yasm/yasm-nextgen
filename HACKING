@@ -1,0 +1,46 @@
+Welcome to Yasm-C++!
+
+This project is a translation of the Yasm C code into ANSI/ISO C++.
+It's very much an experimental project at the time of this writing,
+so don't expect anything to really work, and expect that the code may
+change drastically with little notice.
+
+Prerequisites (what you need):
+
+  * A standards-conforming C++ compiler (e.g. GCC 3.4+)
+  * Boost 1.33.1+ (http://www.boost.org/)
+  * CMake 2.4+ (http://www.cmake.org/)
+
+Also recommended (for development):
+
+  * STLFilt (http://www.bdsoft.com/tools/stlfilt.html)
+
+STLFilt makes C++ compiler error messages relatively readable.
+
+
+Building Yasm-C++ On UNIX
+=========================
+
+The standard build setup places the object directory separately from the
+source.  This makes it easier to clean up any temporary build files as well
+as keeps the source directory clean, making revision control systems less
+noisy.  The standard place to put this for Yasm is "objdir".
+
+To prepare your working copy for building, run:
+  % mkdir objdir
+  % cd objdir
+  % cmake ..
+
+Alternatively, you can run "ccmake .." which will display a text-mode GUI
+that shows some of the configurable options.  Options may also be specified
+on the cmake command line; e.g.:
+  % cmake -DCMAKE_CXX_COMPILER=`which gfilt` ..
+(this sets the C++ compiler to gfilt, the stlfilt frontend)
+
+Then to build:
+  % make
+
+Test:
+  % make test
+
+etc.
