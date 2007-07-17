@@ -207,6 +207,31 @@ Insn::finalize()
     // Simplify the operands' expressions.
     std::for_each(m_operands.begin(), m_operands.end(),
                   boost::mem_fn(&Operand::finalize));
+    do_finalize();
+}
+
+bool
+Insn::calc_len(Bytecode* bc, Bytecode::AddSpanFunc add_span)
+{
+    // simply pass down to the base class
+    return Bytecode::Contents::calc_len(bc, add_span);
+}
+
+int
+Insn::expand(Bytecode* bc, int span, long old_val, long new_val,
+             /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres)
+{
+    // simply pass down to the base class
+    return Bytecode::Contents::expand(bc, span, old_val, new_val, neg_thres,
+                                      pos_thres);
+}
+
+bool
+Insn::to_bytes(Bytecode* bc, unsigned char* &buf, OutputValueFunc output_value,
+               OutputRelocFunc output_reloc)
+{
+    // simply pass down to the base class
+    return Bytecode::Contents::to_bytes(bc, buf, output_value, output_reloc);
 }
 
 } // namespace yasm

@@ -246,6 +246,10 @@ public:
         virtual SpecialType get_special() const;
 
         virtual Ptr clone() const = 0;
+
+    private:
+        Contents(const Contents& oth);
+        Contents& operator= (const Contents& oth);
     };
 
     /** Implementation-specific data. */

@@ -126,6 +126,7 @@ public:
 
         void put(std::ostream& os, int indent_level) const;
         void finalize();
+
     private:
         /** Operand type. */
         enum yasm_insn_operand_type {
@@ -143,29 +144,33 @@ public:
             Expr* val;      /**< Value of immediate or jump target. */
         } m_data;
 
-        const TargetModifier* m_targetmod;  /**< Arch target modifier, 0 if none. */
+        /** Arch target modifier, 0 if none. */
+        const TargetModifier* m_targetmod;
 
-        /** Specified size of the operand, in bits.  0 if not user-specified. */
+        /** Specified size of the operand, in bits.
+         * 0 if not user-specified.
+         */
         unsigned int m_size:16;
 
         /** Nonzero if dereference.  Used for "*foo" in GAS.
          * The reason for this is that by default in GAS, an unprefixed value
-         * is a memory address, except for jumps/calls, in which case it needs a
-         * "*" prefix to become a memory address (otherwise it's an immediate).
-         * This isn't knowable in the parser stage, so the parser sets this flag
-         * to indicate the "*" prefix has been used, and the arch needs to adjust
-         * the operand type appropriately depending on the instruction type.
+         * is a memory address, except for jumps/calls, in which case it
+         * needs a "*" prefix to become a memory address (otherwise it's an
+         * immediate).  This isn't knowable in the parser stage, so the
+         * parser sets this flag to indicate the "*" prefix has been used,
+         * and the arch needs to adjust the operand type appropriately
+         * depending on the instruction type.
          */
         unsigned int m_deref:1;
 
         /** Nonzero if strict.  Used for "strict foo" in NASM.
          * This is used to inhibit optimization on otherwise "sized" values.
-         * For example, the user may just want to be explicit with the size on
-         * "push dword 4", but not actually want to force the immediate size to
-         * 4 bytes (rather wanting the optimizer to optimize it down to 1 byte as
-         * though "dword" was not specified).  To indicate the immediate should
-         * actually be forced to 4 bytes, the user needs to write
-         * "push strict dword 4", which sets this flag.
+         * For example, the user may just want to be explicit with the size
+         * on "push dword 4", but not actually want to force the immediate
+         * size to 4 bytes (rather wanting the optimizer to optimize it down
+         * to 1 byte as though "dword" was not specified).  To indicate the
+         * immediate should actually be forced to 4 bytes, the user needs to
+         * write "push strict dword 4", which sets this flag.
          */
         unsigned int m_strict:1;
     };
@@ -198,15 +203,33 @@ public:
     { m_segregs.push_back(segreg); }
 
     /** Print a list of instruction operands.  For debugging purposes.
+     * \note A base version of this function is provided.
      * \param os            output stream
      * \param indent_level  indentation level
      */
     virtual void put(std::ostream& os, int indent_level) const = 0;
 
-    /** Finalize the common parts of an instruction. */
-    virtual void finalize() = 0;
+    /** Finalize the common parts of an instruction.
+     * Calls do_finalize().
+     */
+    void finalize();
+
+    /** Calculates minimum size.  Internal errors when called. */
+    bool calc_len(Bytecode* bc, Bytecode::AddSpanFunc add_span);
+
+    /** Recalculates bytecode length.  Internal errors when called. */
+    int expand(Bytecode* bc, int span, long old_val, long new_val,
+               /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres);
+
+    /** Converts to bytes.  Internal errors when called. */
+    bool to_bytes(Bytecode* bc, unsigned char* &buf,
+                  OutputValueFunc output_value,
+                  OutputRelocFunc output_reloc = 0);
 
 protected:
+    /** Finalize the custom parts of an instruction. */
+    virtual void do_finalize() = 0;
+
     /** Operands. */
     std::vector<Operand> m_operands;
 
@@ -215,6 +238,12 @@ protected:
 
     /** Array of segment prefixes. */
     std::vector<const SegmentRegister*> m_segregs;
+
+private:
+    // Unimplemented copy constructor
+    Insn(const Insn& oth);
+    // Unimplemented assignment operator
+    Insn& operator= (const Insn& oth);
 };
 
 } // namespace yasm
