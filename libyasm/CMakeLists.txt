@@ -6,13 +6,13 @@ ADD_LIBRARY(libyasm
     #bc-incbin.c
     #bc-org.c
     #bc-reserve.c
-    #bytecode.c
+    bytecode.cpp
     errwarn.cpp
     expr.cpp
     file.cpp
     floatnum.cpp
     #hamt.c
-    #insn.c
+    insn.cpp
     intnum.cpp
     linemap.cpp
     md5.cpp
