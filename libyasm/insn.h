@@ -201,10 +201,10 @@ public:
      * \param os            output stream
      * \param indent_level  indentation level
      */
-    void put(std::ostream& os, int indent_level) const;
+    virtual void put(std::ostream& os, int indent_level) const = 0;
 
     /** Finalize the common parts of an instruction. */
-    void finalize();
+    virtual void finalize() = 0;
 
 protected:
     /** Operands. */
