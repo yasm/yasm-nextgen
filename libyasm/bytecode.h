@@ -248,7 +248,9 @@ public:
         virtual Ptr clone() const = 0;
 
     private:
+        // Unimplemented copy constructor
         Contents(const Contents& oth);
+        // Unimplemented assignment operator
         Contents& operator= (const Contents& oth);
     };
 
