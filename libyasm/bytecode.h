@@ -244,6 +244,8 @@ public:
         };
 
         virtual SpecialType get_special() const;
+
+        virtual Ptr clone() const = 0;
     };
 
     /** Implementation-specific data. */
@@ -286,6 +288,9 @@ public:
      * \param line          virtual line (from yasm_linemap)
      */
     Bytecode(Contents::Ptr contents, unsigned long line);
+
+    Bytecode(const Bytecode& oth);
+    Bytecode& operator= (const Bytecode& oth);
 
     /** Transform a bytecode of any type into a different type.
      * \param contents      new type-specific data

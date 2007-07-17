@@ -94,6 +94,26 @@ Bytecode::Bytecode(std::auto_ptr<Contents> contents, unsigned long line)
 {
 }
 
+Bytecode::Bytecode(const Bytecode& oth)
+    : m_contents(oth.m_contents->clone()),
+      m_multiple(oth.m_multiple->clone())
+{}
+
+Bytecode&
+Bytecode::operator= (const Bytecode& oth)
+{
+    *m_contents = *oth.m_contents;
+    m_section = oth.m_section;
+    *m_multiple = *oth.m_multiple;
+    m_len = oth.m_len;
+    m_mult_int = oth.m_mult_int;
+    m_line = oth.m_line;
+    m_offset = oth.m_offset;
+    m_bc_index = oth.m_bc_index;
+    m_symbols = oth.m_symbols;
+    return *this;
+}
+
 void
 Bytecode::put(std::ostream& os, int indent_level) const
 {
