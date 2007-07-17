@@ -35,11 +35,59 @@
 #include <memory>
 #include <boost/function.hpp>
 
-#include "coretype.h"
-
 namespace yasm {
 
 class Linemap;
+class Value;
+class Bytecode;
+class Section;
+class Arch;
+class Insn;
+
+/** Convert yasm_value to its byte representation.  Usually implemented by
+ * object formats to keep track of relocations and verify legal expressions.
+ * Must put the value into the least significant bits of the destination,
+ * unless shifted into more significant bits by the shift parameter.  The
+ * destination bits must be cleared before being set.
+ * \param value         value
+ * \param buf           buffer for byte representation
+ * \param destsize      destination size (in bytes)
+ * \param offset        offset (in bytes) of the expr contents from the start
+ *                      of the bytecode (needed for relative)
+ * \param bc            current bytecode (usually passed into higher-level
+ *                      calling function)
+ * \param warn          enables standard warnings: zero for none;
+ *                      nonzero for overflow/underflow floating point warnings;
+ *                      negative for signed integer warnings,
+ *                      positive for unsigned integer warnings
+ * \return True if an error occurred, false otherwise.
+ */
+typedef
+    boost::function<bool (Value* value, /*@out@*/ unsigned char* buf,
+                          unsigned int destsize, unsigned long offset,
+                          Bytecode *bc, int warn)>
+    OutputValueFunc;
+
+/** Convert a symbol reference to its byte representation.  Usually implemented
+ * by object formats and debug formats to keep track of relocations generated
+ * by themselves.
+ * \param sym           symbol
+ * \param bc            current bytecode (usually passed into higher-level
+ *                      calling function)
+ * \param buf           buffer for byte representation
+ * \param destsize      destination size (in bytes)
+ * \param valsize       size (in bits)
+ * \param warn          enables standard warnings: zero for none;
+ *                      nonzero for overflow/underflow floating point warnings;
+ *                      negative for signed integer warnings,
+ *                      positive for unsigned integer warnings
+ * \return True if an error occurred, false otherwise.
+ */
+typedef
+    boost::function<bool (Symbol* sym, Bytecode* bc, unsigned char* buf,
+                          unsigned int destsize, unsigned int valsize,
+                          int warn)>
+    OutputRelocFunc;
 
 /** A data value. */
 class Dataval {

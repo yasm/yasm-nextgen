@@ -33,8 +33,8 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "coretype.h"
 #include "bitvect.h"
+#include "expr.h"
 
 namespace yasm {
 
@@ -112,8 +112,8 @@ public:
      * \param operand   intnum operand
      * \return True if error occurred.
      */
-    bool calc(ExprOp op, const IntNum &operand) { return calc(op, &operand); }
-    bool calc(ExprOp op, /*@null@*/ const IntNum *operand = 0);
+    bool calc(Expr::Op op, const IntNum &operand) { return calc(op, &operand); }
+    bool calc(Expr::Op op, /*@null@*/ const IntNum *operand = 0);
 
     /** Zero an intnum. */
     void zero() { set(0); }

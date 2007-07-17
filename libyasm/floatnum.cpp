@@ -30,7 +30,6 @@
 
 #include <iomanip>
 
-#include "coretype.h"
 #include "bitvect.h"
 #include "file.h"
 
@@ -492,9 +491,9 @@ FloatNum::FloatNum(const FloatNum& flt)
 }
 
 bool
-FloatNum::calc(ExprOp op, /*@unused@*/ const FloatNum* operand)
+FloatNum::calc(Expr::Op op, /*@unused@*/ const FloatNum* operand)
 {
-    if (op != EXPR_NEG) {
+    if (op != Expr::NEG) {
         error_set(ERROR_FLOATING_POINT,
                   N_("Unsupported floating-point arithmetic operation"));
         return true;

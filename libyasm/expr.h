@@ -35,28 +35,71 @@
 
 #include <boost/function.hpp>
 
-#include "coretype.h"
-
 namespace yasm {
 
+class Register;
+class IntNum;
+class FloatNum;
+class Symbol;
+class Bytecode;
+
+/** An expression. */
 class Expr {
     friend std::ostream& operator<< (std::ostream&, const Expr&);
 
 public:
+    /** Operators usable in expressions. */
+    enum Op {
+        IDENT,      /**< No operation, just a value. */
+        ADD,        /**< Arithmetic addition (+). */
+        SUB,        /**< Arithmetic subtraction (-). */
+        MUL,        /**< Arithmetic multiplication (*). */
+        DIV,        /**< Arithmetic unsigned division. */
+        SIGNDIV,    /**< Arithmetic signed division. */
+        MOD,        /**< Arithmetic unsigned modulus. */
+        SIGNMOD,    /**< Arithmetic signed modulus. */
+        NEG,        /**< Arithmetic negation (-). */
+        NOT,        /**< Bitwise negation. */
+        OR,         /**< Bitwise OR. */
+        AND,        /**< Bitwise AND. */
+        XOR,        /**< Bitwise XOR. */
+        XNOR,       /**< Bitwise XNOR. */
+        NOR,        /**< Bitwise NOR. */
+        SHL,        /**< Shift left (logical). */
+        SHR,        /**< Shift right (logical). */
+        LOR,        /**< Logical OR. */
+        LAND,       /**< Logical AND. */
+        LNOT,       /**< Logical negation. */
+        LXOR,       /**< Logical XOR. */
+        LXNOR,      /**< Logical XNOR. */
+        LNOR,       /**< Logical NOR. */
+        LT,         /**< Less than comparison. */
+        GT,         /**< Greater than comparison. */
+        EQ,         /**< Equality comparison. */
+        LE,         /**< Less than or equal to comparison. */
+        GE,         /**< Greater than or equal to comparison. */
+        NE,         /**< Not equal comparison. */
+        NONNUM,     /**< Start of non-numeric operations (not an op). */
+        SEG,        /**< SEG operator (gets segment portion of address). */
+        WRT,        /**< WRT operator (gets offset of address relative to
+                     *   some other segment). */
+        SEGOFF      /**< The ':' in segment:offset. */
+    };
+
     /* Types listed in canonical sorting order.  See expr_order_terms().
      * Note precbc must be used carefully (in a-b pairs), as only symrecs can
      * become the relative term in a #yasm_value.
      * Testing uses bit comparison (&) so these have to be in bitmask form.
      */
     enum TermType {
-        EXPR_NONE = 0,
-        EXPR_REG = 1<<0,
-        EXPR_INT = 1<<1,
-        EXPR_SUBST = 1<<2,
-        EXPR_FLOAT = 1<<3,
-        EXPR_SYM = 1<<4,
-        EXPR_PRECBC = 1<<5, /* direct bytecode ref (rather than via symrec) */
-        EXPR_EXPR = 1<<6
+        NONE = 0,
+        REG = 1<<0,
+        INT = 1<<1,
+        SUBST = 1<<2,
+        FLOAT = 1<<3,
+        SYM = 1<<4,
+        PRECBC = 1<<5, /* direct bytecode ref (rather than via symrec) */
+        EXPR = 1<<6
     };
 
     /** An term inside the expression. */
@@ -64,16 +107,16 @@ public:
         friend std::ostream& operator<< (std::ostream&, const Term&);
 
     public:
-        Term(Register* reg) : m_type(EXPR_REG) { m_data.reg = reg; }
-        Term(IntNum* intn) : m_type(EXPR_INT) { m_data.intn = intn; }
-        Term(unsigned int subst) : m_type(EXPR_SUBST) { m_data.subst = subst; }
-        Term(FloatNum* flt) : m_type(EXPR_FLOAT) { m_data.flt = flt; }
-        Term(Symbol* sym) : m_type(EXPR_SYM) { m_data.sym = sym; }
-        Term(Bytecode* bc) : m_type(EXPR_PRECBC) { m_data.precbc = bc; }
-        Term(Expr* expr) : m_type(EXPR_EXPR) { m_data.expr = expr; }
+        Term(Register* reg) : m_type(REG) { m_data.reg = reg; }
+        Term(IntNum* intn) : m_type(INT) { m_data.intn = intn; }
+        Term(unsigned int subst) : m_type(SUBST) { m_data.subst = subst; }
+        Term(FloatNum* flt) : m_type(FLOAT) { m_data.flt = flt; }
+        Term(Symbol* sym) : m_type(SYM) { m_data.sym = sym; }
+        Term(Bytecode* bc) : m_type(PRECBC) { m_data.precbc = bc; }
+        Term(Expr* expr) : m_type(EXPR) { m_data.expr = expr; }
 
         Term clone() const;
-        void release() { m_type = EXPR_NONE; m_data.reg = 0; }
+        void release() { m_type = NONE; m_data.reg = 0; }
         void destroy();
 
         /* Comparison used for sorting; assumes TermTypes are in sort order. */
@@ -84,7 +127,7 @@ public:
         bool is_type(int type) const { return m_type & type; }
 
         /* Match operator */
-        bool is_op(ExprOp op) const
+        bool is_op(Expr::Op op) const
         {
             Expr* e = get_expr();
             return (e && e->is_op(op));
@@ -92,31 +135,31 @@ public:
 
         /* Helper functions to make it easier to get specific types. */
         Register* get_reg() const
-        { return (m_type == EXPR_REG ? m_data.reg : 0); }
+        { return (m_type == REG ? m_data.reg : 0); }
         IntNum* get_int() const
-        { return (m_type == EXPR_INT ? m_data.intn : 0); }
+        { return (m_type == INT ? m_data.intn : 0); }
         const unsigned int* get_subst() const
-        { return (m_type == EXPR_SUBST ? &m_data.subst : 0); }
+        { return (m_type == SUBST ? &m_data.subst : 0); }
         FloatNum* get_float() const
-        { return (m_type == EXPR_FLOAT ? m_data.flt : 0); }
+        { return (m_type == FLOAT ? m_data.flt : 0); }
         Symbol* get_sym() const
-        { return (m_type == EXPR_SYM ? m_data.sym : 0); }
+        { return (m_type == SYM ? m_data.sym : 0); }
         Bytecode* get_precbc() const
-        { return (m_type == EXPR_PRECBC ? m_data.precbc : 0); }
+        { return (m_type == PRECBC ? m_data.precbc : 0); }
         Expr* get_expr() const
-        { return (m_type == EXPR_EXPR ? m_data.expr : 0); }
+        { return (m_type == EXPR ? m_data.expr : 0); }
 
     private:
         TermType m_type;  /**< Type */
         /** Expression item data.  Correct value depends on type. */
         union {
-            Register *reg;      /**< Register (#EXPR_REG) */
-            IntNum *intn;       /**< Integer value (#EXPR_INT) */
-            unsigned int subst; /**< Subst placeholder (#EXPR_SUBST) */
-            FloatNum *flt;      /**< Floating point value (#EXPR_FLOAT) */
-            Symbol *sym;        /**< Symbol (#EXPR_SYM) */
-            Bytecode *precbc;   /**< Direct bytecode ref (#EXPR_PRECBC) */
-            Expr *expr;         /**< Subexpression (#EXPR_EXPR) */
+            Register *reg;      /**< Register (#REG) */
+            IntNum *intn;       /**< Integer value (#INT) */
+            unsigned int subst; /**< Subst placeholder (#SUBST) */
+            FloatNum *flt;      /**< Floating point value (#FLOAT) */
+            Symbol *sym;        /**< Symbol (#SYM) */
+            Bytecode *precbc;   /**< Direct bytecode ref (#PRECBC) */
+            Expr *expr;         /**< Subexpression (#EXPR) */
         } m_data;
     };
 
@@ -132,14 +175,14 @@ public:
      * \param b         expression b
      * \param line      virtual line (where expression defined)
      */
-    Expr(const Term& a, ExprOp op, const Term& b, unsigned long line=0);
+    Expr(const Term& a, Op op, const Term& b, unsigned long line=0);
 
     /** Create a new expression e=op a.
      * \param o         operation
      * \param a         expression a
      * \param l         virtual line (where expression defined)
      */
-    Expr(ExprOp op, const Term& a, unsigned long line=0);
+    Expr(Op op, const Term& a, unsigned long line=0);
 
     /** Create a new expression identity e=a.
      * \param a     identity within new expression
@@ -152,7 +195,7 @@ public:
      * \return True if the expression was the specified operation at the top
      *         level.
      */
-    bool is_op(ExprOp op) const { return op == m_op; }
+    bool is_op(Op op) const { return op == m_op; }
 
     /** Level an entire expression tree.  Also expands EQUs.
      * \param fold_const        enable constant folding if nonzero
@@ -179,7 +222,7 @@ public:
     /** Extract the segment portion of an expression containing SEG:OFF,
      * leaving the offset.
      * \return 0 if unable to extract a segment (expr does not contain a
-     *         EXPR_SEGOFF operator), otherwise the segment expression.
+     *         OP_SEGOFF operator), otherwise the segment expression.
      *         The input expression is modified such that on return, it's the
      *         offset expression.
      */
@@ -187,7 +230,7 @@ public:
 
     /** Extract the segment portion of a SEG:OFF expression, leaving the
      * offset.
-     * \return 0 if unable to extract a segment (EXPR_SEGOFF not the
+     * \return 0 if unable to extract a segment (OP_SEGOFF not the
      *         top-level operator), otherwise the segment expression.  The
      *         input expression is modified such that on return, it's the
      *         offset expression.
@@ -196,7 +239,7 @@ public:
 
     /** Extract the right portion (y) of a x WRT y expression, leaving the
      * left portion (x).
-     * \return 0 if unable to extract (EXPR_WRT not the top-level
+     * \return 0 if unable to extract (OP_WRT not the top-level
      *         operator), otherwise the right side of the WRT expression.  The
      *         input expression is modified such that on return, it's the left
      *         side of the WRT expression.
@@ -247,7 +290,7 @@ public:
 
     bool contains(int type) const;
 #if 0
-    /** Transform symrec-symrec terms in expression into EXPR_SUBST terms.
+    /** Transform symrec-symrec terms in expression into SUBST terms.
      * Calls the callback function for each symrec-symrec term.
      * \param callback      callback function: given subst index for bytecode
      *                      pair, bytecode pair (bc2-bc1)
@@ -257,7 +300,7 @@ public:
                                             Bytecode &precbc,
                                             Bytecode &precbc2)> func);
 #endif
-    /** Substitute terms into expr EXPR_SUBST terms (by index).  Terms
+    /** Substitute terms into expr SUBST terms (by index).  Terms
      * are cloned.
      * \param terms         terms
      * \return True on error (index out of range).
@@ -270,7 +313,7 @@ public:
     Terms& get_terms() { return m_terms; }
 
 private:
-    ExprOp m_op;
+    Op m_op;
     unsigned long m_line;
     /* Some operations may allow more than two operand terms:
      * ADD, MUL, OR, AND, XOR
@@ -278,7 +321,7 @@ private:
     Terms m_terms;
 
     void add_term(const Term& term);
-    Expr(ExprOp op, unsigned long line);
+    Expr(Op op, unsigned long line);
 
     /* internal callbacks */
     bool bc_dist_subst_cb(boost::function<void (unsigned int subst,

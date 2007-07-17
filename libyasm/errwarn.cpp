@@ -33,8 +33,6 @@
 
 #include <list>
 
-#include "coretype.h"
-
 #include "linemap.h"
 #include "errwarn.h"
 

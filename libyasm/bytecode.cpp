@@ -28,8 +28,6 @@
 
 #include <iomanip>
 
-#include "coretype.h"
-
 #include "errwarn.h"
 #include "intnum.h"
 #include "expr.h"
@@ -45,8 +43,8 @@ void
 Bytecode::set_multiple(std::auto_ptr<Expr> e)
 {
     if (m_multiple.get() != 0)
-        m_multiple.reset(new Expr(m_multiple.release(), EXPR_MUL, e.release(),
-                                  e->get_line()));
+        m_multiple.reset(new Expr(m_multiple.release(), Expr::MUL,
+                                  e.release(), e->get_line()));
     else
         m_multiple = e;
 }
@@ -153,7 +151,7 @@ Bytecode::calc_dist(const Bytecode* precbc1, const Bytecode* precbc2)
     dist2 = precbc2->next_offset();
     if (dist2 < dist1) {
         intn = new IntNum(dist1 - dist2);
-        intn->calc(EXPR_NEG);
+        intn->calc(Expr::NEG);
         return intn;
     }
     dist2 -= dist1;
@@ -185,7 +183,7 @@ Bytecode::calc_len(AddSpanFunc add_span)
             } else
                 m_mult_int = num->get_int();
         } else {
-            if (m_multiple->contains(Expr::EXPR_FLOAT)) {
+            if (m_multiple->contains(Expr::FLOAT)) {
                 error_set(ERROR_VALUE,
                     N_("expression must not contain floating point value"));
                 retval = true;
