@@ -49,6 +49,8 @@ class Expr {
     friend std::ostream& operator<< (std::ostream&, const Expr&);
 
 public:
+    typedef std::auto_ptr<Expr> Ptr;
+
     /** Operators usable in expressions. */
     enum Op {
         IDENT,      /**< No operation, just a value. */
@@ -316,7 +318,7 @@ public:
      */
     bool substitute(const Terms& terms);
 
-    std::auto_ptr<Expr> clone(int except = -1) const;
+    Ptr clone(int except = -1) const;
 
     unsigned long get_line() const { return m_line; }
     Terms& get_terms() { return m_terms; }

@@ -43,6 +43,7 @@ class Bytecode;
 class Section;
 class Arch;
 class Insn;
+class Expr;
 
 /** Convert yasm_value to its byte representation.  Usually implemented by
  * object formats to keep track of relocations and verify legal expressions.
@@ -136,6 +137,8 @@ public:
      */
     class Contents {
     public:
+        typedef std::auto_ptr<Contents> Ptr;
+
         Contents() {}
         virtual ~Contents() {}
 
@@ -244,7 +247,7 @@ public:
     };
 
     /** Implementation-specific data. */
-    std::auto_ptr<Contents> m_contents;
+    Contents::Ptr m_contents;
 
     /** Pointer to section containing bytecode; NULL if not part of a
      * section.
@@ -282,12 +285,12 @@ public:
      * \param contents      type-specific data
      * \param line          virtual line (from yasm_linemap)
      */
-    Bytecode(std::auto_ptr<Contents> contents, unsigned long line);
+    Bytecode(Contents::Ptr contents, unsigned long line);
 
     /** Transform a bytecode of any type into a different type.
      * \param contents      new type-specific data
      */
-    void transform(std::auto_ptr<Contents> contents);
+    void transform(Contents::Ptr contents);
 
     /** Set multiple field of a bytecode.
      * A bytecode can be repeated a number of times when output.  This

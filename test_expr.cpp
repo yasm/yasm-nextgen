@@ -8,15 +8,15 @@ using namespace yasm;
 int
 main()
 {
-    std::auto_ptr<Expr> e(new Expr(new IntNum(5)));
+    Expr::Ptr e(new Expr(new IntNum(5)));
 #if 0
     Expr *e2 = new Expr(Expr::NEG, new IntNum(5));
     Expr *e3 = new Expr(e2, Expr::MUL, new IntNum(6));
     Expr *e4 = new Expr(e, Expr::ADD, e3);
 #else
-    std::auto_ptr<Expr> e2(new Expr(Expr::NEG, new IntNum(5)));
-    std::auto_ptr<Expr> e3(new Expr(e2, Expr::MUL, new IntNum(6)));
-    std::auto_ptr<Expr> e4(new Expr(e, Expr::ADD, e3));
+    Expr::Ptr e2(new Expr(Expr::NEG, new IntNum(5)));
+    Expr::Ptr e3(new Expr(e2, Expr::MUL, new IntNum(6)));
+    Expr::Ptr e4(new Expr(e, Expr::ADD, e3));
 #endif
 
     std::cout << *e4 << std::endl;
