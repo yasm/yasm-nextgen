@@ -275,8 +275,6 @@ public:
      * \param e     multiple (kept, do not free)
      */
     void set_multiple(std::auto_ptr<Expr> e);
-    void set_multiple(/*@keep@*/ Expr* e)
-    { set_multiple(std::auto_ptr<Expr>(e)); }
 
     /*
      *
