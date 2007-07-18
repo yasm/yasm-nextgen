@@ -859,35 +859,33 @@ Expr::traverse_leaves_in(boost::function<bool (const Term&)> func) const
     return false;
 }
 
-Expr*
+std::auto_ptr<Expr>
 Expr::extract_deep_segoff()
 {
-    Expr* retval;
-
     // Try to extract at this level
-    retval = extract_segoff();
-    if (retval)
+    std::auto_ptr<Expr> retval = extract_segoff();
+    if (retval.get() != 0)
         return retval;
 
     // Not at this level?  Search any expr children.
     for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i) {
         if (Expr* e = i->get_expr()) {
             retval = e->extract_deep_segoff();
-            if (retval)
+            if (retval.get() != 0)
                 return retval;
         }
     }
 
     // Didn't find one
-    return 0;
+    return retval;
 }
 
-Expr*
+std::auto_ptr<Expr>
 Expr::extract_segoff()
 {
     // If not SEG:OFF, we can't do this transformation
     if (m_op != SEGOFF || m_terms.size() != 2)
-        return 0;
+        return std::auto_ptr<Expr>(0);
 
     Expr* retval;
     Term& left = m_terms.front();
@@ -904,15 +902,15 @@ Expr::extract_segoff()
     // Change the expression into an IDENT
     m_terms.erase(m_terms.begin());
     m_op = IDENT;
-    return retval;
+    return std::auto_ptr<Expr>(retval);
 }
 
-Expr*
+std::auto_ptr<Expr>
 Expr::extract_wrt()
 {
     // If not WRT, we can't do this transformation
     if (m_op != WRT || m_terms.size() != 2)
-        return 0;
+        return std::auto_ptr<Expr>(0);
 
     Expr* retval;
     Term& right = m_terms.back();
@@ -929,7 +927,7 @@ Expr::extract_wrt()
     // Change the expr into an IDENT
     m_terms.pop_back();
     m_op = IDENT;
-    return retval;
+    return std::auto_ptr<Expr>(retval);
 }
 
 IntNum*

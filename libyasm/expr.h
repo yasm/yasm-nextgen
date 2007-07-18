@@ -237,7 +237,7 @@ public:
      *         The input expression is modified such that on return, it's the
      *         offset expression.
      */
-    /*@only@*/ /*@null@*/ Expr* extract_deep_segoff();
+    /*@null@*/ std::auto_ptr<Expr> extract_deep_segoff();
 
     /** Extract the segment portion of a SEG:OFF expression, leaving the
      * offset.
@@ -246,7 +246,7 @@ public:
      *         input expression is modified such that on return, it's the
      *         offset expression.
      */
-    /*@only@*/ /*@null@*/ Expr* extract_segoff();
+    /*@null@*/ std::auto_ptr<Expr> extract_segoff();
 
     /** Extract the right portion (y) of a x WRT y expression, leaving the
      * left portion (x).
@@ -255,7 +255,7 @@ public:
      *         input expression is modified such that on return, it's the left
      *         side of the WRT expression.
      */
-    /*@only@*/ /*@null@*/ Expr* extract_wrt();
+    /*@null@*/ std::auto_ptr<Expr> extract_wrt();
 
     /** Get the integer value of an expression if it's just an integer.
      * \param calc_bc_dist  True if distances between bytecodes should be
@@ -318,7 +318,7 @@ public:
      */
     bool substitute(const Terms& terms);
 
-    Ptr clone(int except = -1) const;
+    std::auto_ptr<Expr> clone(int except = -1) const;
 
     unsigned long get_line() const { return m_line; }
     Terms& get_terms() { return m_terms; }
