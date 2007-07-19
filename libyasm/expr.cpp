@@ -389,6 +389,7 @@ Expr::xform_neg_term(Terms::iterator term)
 /// Negates e by multiplying by -1, with distribution over lower-precedence
 /// operators (eg ADD) and special handling to simplify result w/ADD, NEG,
 /// and others.
+void
 Expr::xform_neg_helper()
 {
     switch (m_op) {
