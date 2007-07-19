@@ -1,31 +1,31 @@
-/*
- * Floating point number functions.
- *
- *  Copyright (C) 2001-2007  Peter Johnson
- *
- *  Based on public-domain x86 assembly code by Randall Hyde (8/28/91).
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND OTHER CONTRIBUTORS ``AS IS''
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR OTHER CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+//
+// Floating point number functions.
+//
+//  Copyright (C) 2001-2007  Peter Johnson
+//
+//  Based on public-domain x86 assembly code by Randall Hyde (8/28/91).
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND OTHER CONTRIBUTORS ``AS IS''
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR OTHER CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+//
 #include "util.h"
 
 #include <iomanip>
@@ -44,7 +44,7 @@ using BitVector::N_long;
 
 namespace yasm {
 
-/* constants describing parameters of internal floating point format */
+// constants describing parameters of internal floating point format
 static const unsigned int MANT_BITS = 80;
 static const unsigned int MANT_BYTES = 10;
 static const unsigned int MANT_SIGDIGITS = 24;
@@ -54,15 +54,15 @@ static const unsigned short EXP_MAX = 0xFFFE;
 static const unsigned short EXP_MIN = 1;
 static const unsigned short EXP_ZERO = 0;
 
-/* Flag settings for flags field */
+// Flag settings for flags field
 static const unsigned int FLAG_ISZERO = 1<<0;
 
 class FloatNumManager {
 private:
-    /* "Source" for POT_Entry. */
+    /// "Source" for POT_Entry.
     struct POT_Entry_Source {
-        unsigned char mantissa[MANT_BYTES];     /* little endian mantissa */
-        unsigned short exponent;                /* Bias 32767 exponent */
+        unsigned char mantissa[MANT_BYTES]; ///< Little endian mantissa
+        unsigned short exponent;            ///< Bias 32767 exponent
     };
 
 public:
@@ -80,28 +80,25 @@ public:
         int dec_exponent;
     };
 
-    /* Power of ten tables used by the floating point I/O routines.
-     * The POT_Table? arrays are built from the POT_Table?_Source arrays at
-     * runtime by POT_Table_Init().
-     */
+    // Power of ten tables used by the floating point I/O routines.
+    // The POT_Table? arrays are built from the POT_Table?_Source arrays at
+    // runtime by POT_Table_Init().
 
-    /* This table contains the powers of ten raised to negative powers of two:
-     *
-     * entry[12-n] = 10 ** (-2 ** n) for 0 <= n <= 12.
-     * entry[13] = 1.0
-     */
+    /// This table contains the powers of ten raised to negative powers of two:
+    ///
+    /// entry[12-n] = 10 ** (-2 ** n) for 0 <= n <= 12.
+    /// entry[13] = 1.0
     POT_Entry* POT_TableN;
 
-    /* This table contains the powers of ten raised to positive powers of two:
-     *
-     * entry[12-n] = 10 ** (2 ** n) for 0 <= n <= 12.
-     * entry[13] = 1.0
-     * entry[-1] = entry[0];
-     *
-     * There is a -1 entry since it is possible for the algorithm to back up
-     * before the table.  This -1 entry is created at runtime by duplicating
-     * the 0 entry.
-     */
+    /// This table contains the powers of ten raised to positive powers of two:
+    ///
+    /// entry[12-n] = 10 ** (2 ** n) for 0 <= n <= 12.
+    /// entry[13] = 1.0
+    /// entry[-1] = entry[0];
+    ///
+    /// There is a -1 entry since it is possible for the algorithm to back up
+    /// before the table.  This -1 entry is created at runtime by duplicating
+    /// the 0 entry.
     POT_Entry* POT_TableP;
 private:
     FloatNumManager();
@@ -115,50 +112,49 @@ private:
 
 const FloatNumManager::POT_Entry_Source
 FloatNumManager::POT_TableN_Source[] = {
-    {{0xe3,0x2d,0xde,0x9f,0xce,0xd2,0xc8,0x04,0xdd,0xa6},0x4ad8}, /* 1e-4096 */
-    {{0x25,0x49,0xe4,0x2d,0x36,0x34,0x4f,0x53,0xae,0xce},0x656b}, /* 1e-2048 */
-    {{0xa6,0x87,0xbd,0xc0,0x57,0xda,0xa5,0x82,0xa6,0xa2},0x72b5}, /* 1e-1024 */
-    {{0x33,0x71,0x1c,0xd2,0x23,0xdb,0x32,0xee,0x49,0x90},0x795a}, /* 1e-512 */
-    {{0x91,0xfa,0x39,0x19,0x7a,0x63,0x25,0x43,0x31,0xc0},0x7cac}, /* 1e-256 */
-    {{0x7d,0xac,0xa0,0xe4,0xbc,0x64,0x7c,0x46,0xd0,0xdd},0x7e55}, /* 1e-128 */
-    {{0x24,0x3f,0xa5,0xe9,0x39,0xa5,0x27,0xea,0x7f,0xa8},0x7f2a}, /* 1e-64 */
-    {{0xde,0x67,0xba,0x94,0x39,0x45,0xad,0x1e,0xb1,0xcf},0x7f94}, /* 1e-32 */
-    {{0x2f,0x4c,0x5b,0xe1,0x4d,0xc4,0xbe,0x94,0x95,0xe6},0x7fc9}, /* 1e-16 */
-    {{0xc2,0xfd,0xfc,0xce,0x61,0x84,0x11,0x77,0xcc,0xab},0x7fe4}, /* 1e-8 */
-    {{0xc3,0xd3,0x2b,0x65,0x19,0xe2,0x58,0x17,0xb7,0xd1},0x7ff1}, /* 1e-4 */
-    {{0x71,0x3d,0x0a,0xd7,0xa3,0x70,0x3d,0x0a,0xd7,0xa3},0x7ff8}, /* 1e-2 */
-    {{0xcd,0xcc,0xcc,0xcc,0xcc,0xcc,0xcc,0xcc,0xcc,0xcc},0x7ffb}, /* 1e-1 */
-    {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x80},0x7fff}, /* 1e-0 */
+    {{0xe3,0x2d,0xde,0x9f,0xce,0xd2,0xc8,0x04,0xdd,0xa6},0x4ad8}, // 1e-4096
+    {{0x25,0x49,0xe4,0x2d,0x36,0x34,0x4f,0x53,0xae,0xce},0x656b}, // 1e-2048
+    {{0xa6,0x87,0xbd,0xc0,0x57,0xda,0xa5,0x82,0xa6,0xa2},0x72b5}, // 1e-1024
+    {{0x33,0x71,0x1c,0xd2,0x23,0xdb,0x32,0xee,0x49,0x90},0x795a}, // 1e-512
+    {{0x91,0xfa,0x39,0x19,0x7a,0x63,0x25,0x43,0x31,0xc0},0x7cac}, // 1e-256
+    {{0x7d,0xac,0xa0,0xe4,0xbc,0x64,0x7c,0x46,0xd0,0xdd},0x7e55}, // 1e-128
+    {{0x24,0x3f,0xa5,0xe9,0x39,0xa5,0x27,0xea,0x7f,0xa8},0x7f2a}, // 1e-64
+    {{0xde,0x67,0xba,0x94,0x39,0x45,0xad,0x1e,0xb1,0xcf},0x7f94}, // 1e-32
+    {{0x2f,0x4c,0x5b,0xe1,0x4d,0xc4,0xbe,0x94,0x95,0xe6},0x7fc9}, // 1e-16
+    {{0xc2,0xfd,0xfc,0xce,0x61,0x84,0x11,0x77,0xcc,0xab},0x7fe4}, // 1e-8
+    {{0xc3,0xd3,0x2b,0x65,0x19,0xe2,0x58,0x17,0xb7,0xd1},0x7ff1}, // 1e-4
+    {{0x71,0x3d,0x0a,0xd7,0xa3,0x70,0x3d,0x0a,0xd7,0xa3},0x7ff8}, // 1e-2
+    {{0xcd,0xcc,0xcc,0xcc,0xcc,0xcc,0xcc,0xcc,0xcc,0xcc},0x7ffb}, // 1e-1
+    {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x80},0x7fff}, // 1e-0
 };
 
 const FloatNumManager::POT_Entry_Source
 FloatNumManager::POT_TableP_Source[] = {
-    {{0x4c,0xc9,0x9a,0x97,0x20,0x8a,0x02,0x52,0x60,0xc4},0xb525}, /* 1e+4096 */
-    {{0x4d,0xa7,0xe4,0x5d,0x3d,0xc5,0x5d,0x3b,0x8b,0x9e},0x9a92}, /* 1e+2048 */
-    {{0x0d,0x65,0x17,0x0c,0x75,0x81,0x86,0x75,0x76,0xc9},0x8d48}, /* 1e+1024 */
-    {{0x65,0xcc,0xc6,0x91,0x0e,0xa6,0xae,0xa0,0x19,0xe3},0x86a3}, /* 1e+512 */
-    {{0xbc,0xdd,0x8d,0xde,0xf9,0x9d,0xfb,0xeb,0x7e,0xaa},0x8351}, /* 1e+256 */
-    {{0x6f,0xc6,0xdf,0x8c,0xe9,0x80,0xc9,0x47,0xba,0x93},0x81a8}, /* 1e+128 */
-    {{0xbf,0x3c,0xd5,0xa6,0xcf,0xff,0x49,0x1f,0x78,0xc2},0x80d3}, /* 1e+64 */
-    {{0x20,0xf0,0x9d,0xb5,0x70,0x2b,0xa8,0xad,0xc5,0x9d},0x8069}, /* 1e+32 */
-    {{0x00,0x00,0x00,0x00,0x00,0x04,0xbf,0xc9,0x1b,0x8e},0x8034}, /* 1e+16 */
-    {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x20,0xbc,0xbe},0x8019}, /* 1e+8 */
-    {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x40,0x9c},0x800c}, /* 1e+4 */
-    {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xc8},0x8005}, /* 1e+2 */
-    {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xa0},0x8002}, /* 1e+1 */
-    {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x80},0x7fff}, /* 1e+0 */
+    {{0x4c,0xc9,0x9a,0x97,0x20,0x8a,0x02,0x52,0x60,0xc4},0xb525}, // 1e+4096
+    {{0x4d,0xa7,0xe4,0x5d,0x3d,0xc5,0x5d,0x3b,0x8b,0x9e},0x9a92}, // 1e+2048
+    {{0x0d,0x65,0x17,0x0c,0x75,0x81,0x86,0x75,0x76,0xc9},0x8d48}, // 1e+1024
+    {{0x65,0xcc,0xc6,0x91,0x0e,0xa6,0xae,0xa0,0x19,0xe3},0x86a3}, // 1e+512
+    {{0xbc,0xdd,0x8d,0xde,0xf9,0x9d,0xfb,0xeb,0x7e,0xaa},0x8351}, // 1e+256
+    {{0x6f,0xc6,0xdf,0x8c,0xe9,0x80,0xc9,0x47,0xba,0x93},0x81a8}, // 1e+128
+    {{0xbf,0x3c,0xd5,0xa6,0xcf,0xff,0x49,0x1f,0x78,0xc2},0x80d3}, // 1e+64
+    {{0x20,0xf0,0x9d,0xb5,0x70,0x2b,0xa8,0xad,0xc5,0x9d},0x8069}, // 1e+32
+    {{0x00,0x00,0x00,0x00,0x00,0x04,0xbf,0xc9,0x1b,0x8e},0x8034}, // 1e+16
+    {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x20,0xbc,0xbe},0x8019}, // 1e+8
+    {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x40,0x9c},0x800c}, // 1e+4
+    {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xc8},0x8005}, // 1e+2
+    {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xa0},0x8002}, // 1e+1
+    {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x80},0x7fff}, // 1e+0
 };
 
 
 FloatNum::FloatNum(const unsigned char* mantissa, unsigned short exponent)
     : m_exponent(exponent), m_sign(0), m_flags(0)
 {
-    /* This is a bit dangerous, as we allow a FloatNum to be created without
-     * first calling BitVector::Boot(), but this is a private constructor only
-     * called from the FloatNumManager constructor, and due to that fact we
-     * *can't* get an instance of FloatNumManager as otherwise we'd cause an
-     * infinite loop.
-     */
+    // This is a bit dangerous, as we allow a FloatNum to be created without
+    // first calling BitVector::Boot(), but this is a private constructor only
+    // called from the FloatNumManager constructor, and due to that fact we
+    // *can't* get an instance of FloatNumManager as otherwise we'd cause an
+    // infinite loop.
     m_mantissa = BitVector::Create(MANT_BITS, false);
     BitVector::Block_Store(m_mantissa, (N_char*)mantissa, MANT_BYTES);
 }
@@ -221,9 +217,8 @@ FloatNum::normalize()
         return;
     }
 
-    /* Look for the highest set bit, shift to make it the MSB, and adjust
-     * exponent.  Don't let exponent go negative.
-     */
+    // Look for the highest set bit, shift to make it the MSB, and adjust
+    // exponent.  Don't let exponent go negative.
     long norm_amt = (MANT_BITS-1)-BitVector::Set_Max(m_mantissa);
     if (norm_amt > (long)m_exponent)
         norm_amt = (long)m_exponent;
@@ -250,12 +245,12 @@ FloatNum::mul(const FloatNum* op)
     expon = (((int)m_exponent)-EXP_BIAS) + (((int)op->m_exponent)-EXP_BIAS);
     expon += EXP_BIAS;
     if (expon > EXP_MAX) {
-        /* Overflow; return infinity. */
+        // Overflow; return infinity.
         BitVector::Empty(m_mantissa);
         m_exponent = EXP_INF;
         return;
     } else if (expon < EXP_MIN) {
-        /* Underflow; return zero. */
+        // Underflow; return zero.
         BitVector::Empty(m_mantissa);
         m_exponent = EXP_ZERO;
         return;
@@ -280,12 +275,11 @@ FloatNum::mul(const FloatNum* op)
     // Compute the product of the mantissas
     BitVector::Multiply(product, op1, op2);
 
-    /* Normalize the product.  Note: we know the product is non-zero because
-     * both of the original operands were non-zero.
-     *
-     * Look for the highest set bit, shift to make it the MSB, and adjust
-     * exponent.  Don't let exponent go negative.
-     */
+    // Normalize the product.  Note: we know the product is non-zero because
+    // both of the original operands were non-zero.
+    //
+    // Look for the highest set bit, shift to make it the MSB, and adjust
+    // exponent.  Don't let exponent go negative.
     long norm_amt = (MANT_BITS*2-1)-BitVector::Set_Max(product);
     if (norm_amt > (long)m_exponent)
         norm_amt = (long)m_exponent;
@@ -333,11 +327,10 @@ FloatNum::FloatNum(const char *str)
     while (*str == '0')
         str++;
 
-    /* When we reach the end of the leading zeros, first check for a decimal
-     * point.  If the number is of the form "0---0.0000" we need to get rid
-     * of the zeros after the decimal point and not count them as significant
-     * digits.
-     */
+    // When we reach the end of the leading zeros, first check for a decimal
+    // point.  If the number is of the form "0---0.0000" we need to get rid
+    // of the zeros after the decimal point and not count them as significant
+    // digits.
     if (*str == '.') {
         str++;
         while (*str == '0') {
@@ -362,9 +355,8 @@ FloatNum::FloatNum(const char *str)
                 carry = false;
                 BitVector::add(m_mantissa, operand[1], operand[0], &carry);
             } else {
-                /* Can't integrate more digits with mantissa, so instead just
-                 * raise by a power of ten.
-                 */
+                // Can't integrate more digits with mantissa, so instead just
+                // raise by a power of ten.
                 dec_exponent++;
             }
             sig_digits++;
@@ -405,9 +397,8 @@ FloatNum::FloatNum(const char *str)
 
     if (*str == 'e' || *str == 'E') {
         str++;
-        /* We just saw the "E" character, now read in the exponent value and
-         * add it into dec_exponent.
-         */
+        // We just saw the "E" character, now read in the exponent value and
+        // add it into dec_exponent.
         int dec_exp_add = 0;
         sscanf(str, "%d", &dec_exp_add);
         dec_exponent += dec_exp_add;
@@ -430,26 +421,24 @@ FloatNum::FloatNum(const char *str)
     m_exponent = (unsigned short)(0x7FFF+(MANT_BITS-1));
     normalize();
 
-    /* The number is normalized.  Now multiply by 10 the number of times
-     * specified in DecExponent.  This uses the power of ten tables to speed
-     * up this operation (and make it more accurate).
-     */
+    // The number is normalized.  Now multiply by 10 the number of times
+    // specified in DecExponent.  This uses the power of ten tables to speed
+    // up this operation (and make it more accurate).
     if (dec_exponent > 0) {
         int POT_index = 0;
-        /* Until we hit 1.0 or finish exponent or overflow */
+        // Until we hit 1.0 or finish exponent or overflow
         while ((POT_index < 14) && (dec_exponent != 0) &&
                (m_exponent != EXP_INF)) {
-            /* Find the first power of ten in the table which is just less than
-             * the exponent.
-             */
+            // Find the first power of ten in the table which is just less
+            // than the exponent.
             while (dec_exponent < manager.POT_TableP[POT_index].dec_exponent)
                 POT_index++;
 
             if (POT_index < 14) {
-                /* Subtract out what we're multiplying in from exponent */
+                // Subtract out what we're multiplying in from exponent
                 dec_exponent -= manager.POT_TableP[POT_index].dec_exponent;
 
-                /* Multiply by current power of 10 */
+                // Multiply by current power of 10
                 mul(manager.POT_TableP[POT_index].flt);
             }
         }
@@ -458,9 +447,8 @@ FloatNum::FloatNum(const char *str)
         // Until we hit 1.0 or finish exponent or underflow
         while ((POT_index < 14) && (dec_exponent != 0) &&
                (m_exponent != EXP_ZERO)) {
-            /* Find the first power of ten in the table which is just less than
-             * the exponent.
-             */
+            // Find the first power of ten in the table which is just less
+            // than the exponent.
             while (dec_exponent > manager.POT_TableN[POT_index].dec_exponent)
                 POT_index++;
 
@@ -474,9 +462,8 @@ FloatNum::FloatNum(const char *str)
         }
     }
 
-    /* Round the result. (Don't round underflow or overflow).  Also don't
-     * increment if this would cause the mantissa to wrap.
-     */
+    // Round the result. (Don't round underflow or overflow).  Also don't
+    // increment if this would cause the mantissa to wrap.
     if ((m_exponent != EXP_INF) && (m_exponent != EXP_ZERO) &&
         !BitVector::is_full(m_mantissa))
         BitVector::increment(m_mantissa);
@@ -598,43 +585,43 @@ FloatNum::get_common(/*@out@*/ unsigned char* ptr,
     return retval;
 }
 
-/* IEEE-754 (Intel) "single precision" format:
- * 32 bits:
- * Bit 31    Bit 22              Bit 0
- * |         |                       |
- * seeeeeee emmmmmmm mmmmmmmm mmmmmmmm
- *
- * e = bias 127 exponent
- * s = sign bit
- * m = mantissa bits, bit 23 is an implied one bit.
- *
- * IEEE-754 (Intel) "double precision" format:
- * 64 bits:
- * bit 63       bit 51                                               bit 0
- * |            |                                                        |
- * seeeeeee eeeemmmm mmmmmmmm mmmmmmmm mmmmmmmm mmmmmmmm mmmmmmmm mmmmmmmm
- *
- * e = bias 1023 exponent.
- * s = sign bit.
- * m = mantissa bits.  Bit 52 is an implied one bit.
- *
- * IEEE-754 (Intel) "extended precision" format:
- * 80 bits:
- * bit 79            bit 63                           bit 0
- * |                 |                                    |
- * seeeeeee eeeeeeee mmmmmmmm m...m m...m m...m m...m m...m
- *
- * e = bias 16383 exponent
- * m = 64 bit mantissa with NO implied bit!
- * s = sign (for mantissa)
- */
+// IEEE-754 (Intel) "single precision" format:
+// 32 bits:
+// Bit 31    Bit 22              Bit 0
+// |         |                       |
+// seeeeeee emmmmmmm mmmmmmmm mmmmmmmm
+//
+// e = bias 127 exponent
+// s = sign bit
+// m = mantissa bits, bit 23 is an implied one bit.
+//
+// IEEE-754 (Intel) "double precision" format:
+// 64 bits:
+// bit 63       bit 51                                               bit 0
+// |            |                                                        |
+// seeeeeee eeeemmmm mmmmmmmm mmmmmmmm mmmmmmmm mmmmmmmm mmmmmmmm mmmmmmmm
+//
+// e = bias 1023 exponent.
+// s = sign bit.
+// m = mantissa bits.  Bit 52 is an implied one bit.
+//
+// IEEE-754 (Intel) "extended precision" format:
+// 80 bits:
+// bit 79            bit 63                           bit 0
+// |                 |                                    |
+// seeeeeee eeeeeeee mmmmmmmm m...m m...m m...m m...m m...m
+//
+// e = bias 16383 exponent
+// m = 64 bit mantissa with NO implied bit!
+// s = sign (for mantissa)
+
 int
 FloatNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize,
                     size_t shift, int bigendian, int warn) const
 {
     int retval;
     if (destsize*8 != valsize || shift>0 || bigendian) {
-        /* TODO */
+        // TODO
         internal_error(N_("unsupported floatnum functionality"));
     }
     switch (destsize) {
