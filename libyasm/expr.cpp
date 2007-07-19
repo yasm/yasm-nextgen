@@ -1,29 +1,29 @@
-/*
- * Expression handling
- *
- *  Copyright (C) 2001-2007  Michael Urman, Peter Johnson
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND OTHER CONTRIBUTORS ``AS IS''
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR OTHER CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+//
+// Expression handling
+//
+//  Copyright (C) 2001-2007  Michael Urman, Peter Johnson
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND OTHER CONTRIBUTORS ``AS IS''
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR OTHER CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+//
 #include "util.h"
 
 #include "errwarn.h"
@@ -46,9 +46,8 @@ namespace {
 
 using namespace yasm;
 
-/* Look for simple identities that make the entire result constant:
- * 0*&x, -1|x, etc.
- */
+/// Look for simple identities that make the entire result constant:
+/// 0*&x, -1|x, etc.
 bool
 is_constant(Expr::Op op, const IntNum* intn)
 {
@@ -59,7 +58,7 @@ is_constant(Expr::Op op, const IntNum* intn)
             (intn->is_neg1() && op == Expr::OR));
 }
 
-/* Look for simple "left" identities like 0+x, 1*x, etc. */
+/// Look for simple "left" identities like 0+x, 1*x, etc.
 bool
 can_destroy_int_left(Expr::Op op, const IntNum* intn)
 {
@@ -72,7 +71,7 @@ can_destroy_int_left(Expr::Op op, const IntNum* intn)
             (iszero && op == Expr::LOR));
 }
 
-/* Look for simple "right" identities like x+|-0, x*&/1 */
+/// Look for simple "right" identities like x+|-0, x*&/1
 bool
 can_destroy_int_right(Expr::Op op, const IntNum* intn)
 {
@@ -138,9 +137,8 @@ Expr::add_term(const Term& term)
     Expr* e = base_e;
     Expr* copyfrom = 0;
 
-    /* Search downward until we find something *other* than an
-     * IDENT, then bring it up to the current level.
-     */
+    // Search downward until we find something *other* than an
+    // IDENT, then bring it up to the current level.
     for (;;) {
         if (e->m_op != IDENT)
             break;
@@ -214,11 +212,10 @@ Expr::~Expr()
     std::for_each(m_terms.begin(), m_terms.end(), boost::mem_fn(&Term::destroy));
 }
 #if 0
-/* Transforms instances of symrec-symrec [symrec+(-1*symrec)] into single
- * exprterms if possible.  Uses a simple n^2 algorithm because n is usually
- * quite small.  Also works for precbc-precbc (or symrec-precbc,
- * precbc-symrec).
- */
+// Transforms instances of symrec-symrec [symrec+(-1*symrec)] into single
+// exprterms if possible.  Uses a simple n^2 algorithm because n is usually
+// quite small.  Also works for precbc-precbc (or symrec-precbc,
+// precbc-symrec).
 static /*@only@*/ yasm_expr *
 expr_xform_bc_dist_base(/*@returned@*/ /*@only@*/ yasm_expr *e,
                         /*@null@*/ void *cbd,
@@ -232,9 +229,8 @@ expr_xform_bc_dist_base(/*@returned@*/ /*@only@*/ yasm_expr *e,
     /*@dependent@*/ /*@null@*/ yasm_bytecode *precbc;
     int numterms;
 
-    /* Handle symrec-symrec in ADD exprs by looking for (-1*symrec) and
-     * symrec term pairs (where both symrecs are in the same segment).
-     */
+    // Handle symrec-symrec in ADD exprs by looking for (-1*symrec) and
+    // symrec term pairs (where both symrecs are in the same segment).
     if (e->op != ADD)
         return e;
 
@@ -326,9 +322,8 @@ expr_xform_bc_dist_cb(yasm_expr__term *ei, yasm_bytecode *precbc,
     return 1;
 }
 #endif
-/* Transforms instances of symrec-symrec [symrec+(-1*symrec)] into integers if
- * possible.
- */
+/// Transforms instances of symrec-symrec [symrec+(-1*symrec)] into integers
+/// if possible.
 inline void
 Expr::xform_bc_dist()
 {
@@ -381,7 +376,7 @@ yasm_expr__bc_dist_subst(yasm_expr **ep, void *cbd,
     return my_cbd.subst;
 }
 #endif
-/* Negate just a single ExprTerm by building a -1*ei subexpression */
+/// Negate just a single ExprTerm by building a -1*ei subexpression.
 void
 Expr::xform_neg_term(Terms::iterator term)
 {
@@ -391,13 +386,9 @@ Expr::xform_neg_term(Terms::iterator term)
     *term = sube;
 }
 
-/* Negates e by multiplying by -1, with distribution over lower-precedence
- * operators (eg ADD) and special handling to simplify result w/ADD, NEG, and
- * others.
- *
- * Returns a possibly reallocated e.
- */
-void
+/// Negates e by multiplying by -1, with distribution over lower-precedence
+/// operators (eg ADD) and special handling to simplify result w/ADD, NEG,
+/// and others.
 Expr::xform_neg_helper()
 {
     switch (m_op) {
@@ -425,9 +416,8 @@ Expr::xform_neg_helper()
             break;
         case IDENT:
         {
-            /* Negating an ident?  Change it into a MUL w/ -1 if there's no
-             * floatnums present below; if there ARE floatnums, recurse.
-             */
+            // Negating an ident?  Change it into a MUL w/ -1 if there's no
+            // floatnums present below; if there ARE floatnums, recurse.
             Term& first = m_terms.front();
             Expr* e;
             if (FloatNum* flt = first.get_float())
@@ -443,9 +433,8 @@ Expr::xform_neg_helper()
             break;
         }
         default:
-            /* Everything else.  MUL will be combined when it's leveled.
-             * Replace ourselves with -1*e.
-             */
+            // Everything else.  MUL will be combined when it's leveled.
+            // Replace ourselves with -1*e.
             Expr *ne = new Expr(m_op, m_line);
             m_op = MUL;
             m_terms.swap(ne->m_terms);
@@ -455,14 +444,11 @@ Expr::xform_neg_helper()
     }
 }
 
-/* Transforms negatives into expressions that are easier to combine:
- * -x -> -1*x
- * a-b -> a+(-1*b)
- *
- * Call post-order on an expression tree to transform the entire tree.
- *
- * Returns a possibly reallocated e.
- */
+/// Transforms negatives into expressions that are easier to combine:
+/// -x -> -1*x
+/// a-b -> a+(-1*b)
+///
+/// Call post-order on an expression tree to transform the entire tree.
 void
 Expr::xform_neg()
 {
@@ -489,13 +475,12 @@ Expr::xform_neg()
     }
 }
 
-/* Check for and simplify identities.  Returns new number of expr terms.
- * Sets e->op = IDENT if numterms ends up being 1.
- * Uses numterms parameter instead of e->numterms for basis of "new" number
- * of terms.
- * Assumes int_term is *only* integer term in e.
- * NOTE: Really designed to only be used by expr_level_op().
- */
+/// Check for and simplify identities.  Returns new number of expr terms.
+/// Sets e->op = IDENT if numterms ends up being 1.
+/// Uses numterms parameter instead of e->numterms for basis of "new" number
+/// of terms.
+/// Assumes int_term is *only* integer term in e.
+/// @note Really designed to only be used by level_op().
 void
 Expr::simplify_identity(IntNum* &intn, bool simplify_reg_mul)
 {
@@ -503,9 +488,8 @@ Expr::simplify_identity(IntNum* &intn, bool simplify_reg_mul)
     bool is_first = (first && intn == first);
 
     if (m_terms.size() > 1) {
-        /* Check for simple identities that delete the intnum.
-         * Don't do this step if it's 1*REG.
-         */
+        // Check for simple identities that delete the intnum.
+        // Don't do this step if it's 1*REG.
         if ((simplify_reg_mul || m_op != MUL || !intn->is_pos1() ||
              !contains(REG)) &&
             ((is_first && can_destroy_int_left(m_op, intn)) ||
@@ -543,15 +527,14 @@ Expr::simplify_identity(IntNum* &intn, bool simplify_reg_mul)
         m_op = IDENT;
 }
 
-/* Levels the expression tree starting at e.  Eg:
- * a+(b+c) -> a+b+c
- * (a+b)+(c+d) -> a+b+c+d
- * Naturally, only levels operators that allow more than two operand terms.
- * NOTE: only does *one* level of leveling (no recursion).  Should be called
- *  post-order on a tree to combine deeper levels.
- * Also brings up any IDENT values into the current level (for ALL operators).
- * Folds (combines by evaluation) *integer* constant values if fold_const != 0.
- */
+/// Levels the expression tree.  Eg:
+/// a+(b+c) -> a+b+c
+/// (a+b)+(c+d) -> a+b+c+d
+/// Naturally, only levels operators that allow more than two operand terms.
+/// @note Only does *one* level of leveling (no recursion).  Should be called
+///       post-order on a tree to combine deeper levels.
+/// Also brings up any IDENT values into the current level (for ALL operators).
+/// Folds (combines by evaluation) *integer* constant values if fold_const.
 void
 Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
 {
@@ -575,9 +558,8 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
         fold_const = false;
 
     for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i) {
-        /* Search downward until we find something *other* than an
-         * IDENT, then bring it up to the current level.
-         */
+        // Search downward until we find something *other* than an
+        // IDENT, then bring it up to the current level.
         if ((e = i->get_expr())) {
             while (e && e->m_op == IDENT) {
                 *i = e->m_terms.back();
@@ -591,9 +573,8 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
                 do_level = true;
         }
 
-        /* Find the first integer term (if one is present) if we're folding
-         * constants and combine other integers with it.
-         */
+        // Find the first integer term (if one is present) if we're folding
+        // constants and combine other integers with it.
         IntNum* intn_temp;
         if (fold_const && (intn_temp = i->get_int())) {
             if (!intn) {
@@ -620,9 +601,8 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
             m_op = IDENT;
     }
 
-    /* Only level operators that allow more than two operand terms.
-     * Also don't bother leveling if it's not necessary to bring up any terms.
-     */
+    // Only level operators that allow more than two operand terms.
+    // Also don't bother leveling if it's not necessary to bring up any terms.
     if (!do_level || (m_op != ADD && m_op != MUL &&
                       m_op != OR && m_op != AND &&
                       m_op != LOR && m_op != LAND &&
@@ -632,10 +612,9 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
         return;
     }
 
-    /* Copy up ExprTerms.  Combine integer terms as necessary.
-     * This is a two-step process; we do this part in reverse order (to
-     * use constant time operations), and then reverse the vector at the end.
-     */
+    // Copy up ExprTerms.  Combine integer terms as necessary.
+    // This is a two-step process; we do this part in reverse order (to
+    // use constant time operations), and then reverse the vector at the end.
     Terms terms;
     for (Terms::reverse_iterator i=m_terms.rbegin(), end=m_terms.rend();
          i != end; ++i) {
@@ -645,9 +624,8 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
                 Term& last = e->m_terms.back();
                 IntNum* intn_temp;
                 if (fold_const && (intn_temp = last.get_int())) {
-                    /* Need to fold it in.. but if there's no int term
-                     * already, just move this one up to become it.
-                     */
+                    // Need to fold it in.. but if there's no int term
+                    // already, just move this one up to become it.
                     if (intn) {
                         intn->calc(m_op, intn_temp);
                         last.destroy();
@@ -741,9 +719,8 @@ Expr::level(bool fold_const,
             xform_bc_dist();
         if (xform_extra)
             xform_extra(this);
-        /* Cleanup recursion pass; zero out callback so we don't
-         * infinite loop (come back here again).
-         */
+        // Cleanup recursion pass; zero out callback so we don't
+        // infinite loop (come back here again).
         level(fold_const, simplify_ident, simplify_reg_mul, false, 0);
     }
 }
@@ -783,9 +760,8 @@ Expr::order_terms()
             return;
     }
 
-    /* Use a stable sort (multiple terms of same type are kept in the same
-     * order).
-     */
+    // Use a stable sort (multiple terms of same type are kept in the same
+    // order).
     std::stable_sort(m_terms.begin(), m_terms.end());
 }
 
