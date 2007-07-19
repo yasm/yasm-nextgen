@@ -31,7 +31,7 @@
 #include "errwarn.h"
 #include "intnum.h"
 #include "expr.h"
-//#include "value.h"
+#include "value.h"
 //#include "symrec.h"
 
 #include "bytecode.h"
@@ -215,11 +215,8 @@ Bytecode::calc_len(AddSpanFunc add_span)
                     N_("expression must not contain floating point value"));
                 retval = true;
             } else {
-#if 0
-                Value value;
-                yasm_value_initialize(&value, bc->multiple, 0);
-                add_span(add_span_data, bc, 0, &value, 0, 0);
-#endif
+                Value value(0, m_multiple->clone());
+                add_span(this, 0, value, 0, 0);
                 m_mult_int = 0;     // assume 0 to start
             }
         }

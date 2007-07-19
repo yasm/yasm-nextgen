@@ -253,6 +253,11 @@ public:
     ///         the left side of the WRT expression.
     /*@null@*/ std::auto_ptr<Expr> extract_wrt();
 
+    /// Get the float value of an expression if it's just a float.
+    /// @return 0 if the expression is too complex; otherwise the float
+    ///         value of the expression.
+    /*@dependent@*/ /*@null@*/ FloatNum* get_float() const;
+
     /// Get the integer value of an expression if it's just an integer.
     /// @param calc_bc_dist  True if distances between bytecodes should be
     ///                      calculated, false if 0 should be returned in

@@ -23,7 +23,7 @@ ADD_LIBRARY(libyasm
     #strsep.c
     #symrec.c
     #valparam.c
-    #value.c
+    value.cpp
     #xmalloc.c
     #xstrdup.c
     #module.c

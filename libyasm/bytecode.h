@@ -122,7 +122,7 @@ public:
     /// @param neg_thres    negative threshold for long/short decision
     /// @param pos_thres    positive threshold for long/short decision
     typedef
-        boost::function<void (Bytecode* bc, int id, const Value* value,
+        boost::function<void (Bytecode* bc, int id, const Value& value,
                               long neg_thres, long pos_thres)>
         AddSpanFunc;
 
@@ -380,6 +380,11 @@ public:
     /// @warning Only valid /after/ optimization.
     static /*@null@*/ /*@only@*/ IntNum* calc_dist
         (const Bytecode* precbc1, const Bytecode* precbc2);
+
+    /// Get the offset of the bytecode.
+    /// @return Offset of the bytecode in bytes.
+    /// @warning Only valid /after/ optimization.
+    unsigned long get_offset() const { return m_offset; }
 
     /// Get the offset of the next bytecode (the next bytecode doesn't have to
     /// actually exist).

@@ -907,6 +907,15 @@ Expr::extract_wrt()
     return std::auto_ptr<Expr>(retval);
 }
 
+FloatNum*
+Expr::get_float() const
+{
+    if (m_op == IDENT)
+        return m_terms.front().get_float();
+    else
+        return 0;
+}
+
 IntNum*
 Expr::get_intnum(bool calc_bc_dist)
 {
