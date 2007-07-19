@@ -1,29 +1,29 @@
-/*
- * Error and warning reporting and related functions.
- *
- *  Copyright (C) 2001-2007  Peter Johnson
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND OTHER CONTRIBUTORS ``AS IS''
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR OTHER CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+//
+// Error and warning reporting and related functions.
+//
+//  Copyright (C) 2001-2007  Peter Johnson
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND OTHER CONTRIBUTORS ``AS IS''
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR OTHER CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+//
 #include "util.h"
 
 #include <cstdio>
@@ -40,13 +40,13 @@ namespace yasm {
 
 static const int MSG_MAXSIZE = 1024;
 
-/* Default handlers for replacable functions */
+// Default handlers for replacable functions
 static /*@exits@*/ void def_internal_error_
     (const char *file, unsigned int line, const char *message);
 static /*@exits@*/ void def_fatal(const char *message, va_list va);
 static const char *def_gettext_hook(const char *msgid);
 
-/* Storage for errwarn's "extern" functions */
+// Storage for errwarn's "extern" functions
 /*@exits@*/ void (*internal_error_)
     (const char *file, unsigned int line, const char *message)
     = def_internal_error_;
@@ -61,13 +61,13 @@ public:
         return inst;
     }
 
-    /* Error indicator */
+    /// Error indicator.
     ErrorClass m_eclass;
     /*@only@*/ /*@null@*/ char *m_estr;
     unsigned long m_exrefline;
     /*@only@*/ /*@null@*/ char *m_exrefstr;
 
-    /* Warning indicator */
+    /// Warning indicator.
     class Warning {
     public:
         Warning(WarnClass wclass, const char *format, va_list va);
@@ -80,7 +80,7 @@ public:
 
     std::list<Warning> m_warns;
 
-    /* Enabled warnings.  See errwarn.h for a list. */
+    /// Enabled warnings.  See errwarn.h for a list.
     unsigned long m_wclass_enabled;
 
 private:
@@ -111,7 +111,7 @@ def_gettext_hook(const char *msgid)
 ErrwarnManager::ErrwarnManager()
     : m_eclass(ERROR_NONE), m_estr(0), m_exrefline(0), m_exrefstr(0)
 {
-    /* Default enabled warnings.  See errwarn.h for a list. */
+    // Default enabled warnings.  See errwarn.h for a list.
     m_wclass_enabled = 
         (1UL<<WARN_GENERAL) | (1UL<<WARN_UNREC_CHAR) |
         (1UL<<WARN_PREPROC) | (0UL<<WARN_ORPHAN_LABEL) |
@@ -124,9 +124,6 @@ ErrwarnManager::~ErrwarnManager()
     delete[] m_exrefstr;
 }
 
-/* Convert a possibly unprintable character into a printable string, using
- * standard cat(1) convention for unprintable characters.
- */
 char *
 conv_unprint(int ch)
 {
@@ -148,9 +145,8 @@ conv_unprint(int ch)
     return unprint;
 }
 
-/* Report an internal error.  Essentially a fatal error with trace info.
- * Exit immediately because it's essentially an assert() trap.
- */
+/// Report an internal error.  Essentially a fatal error with trace info.
+/// Exit immediately because it's essentially an assert() trap.
 static void
 def_internal_error_(const char *file, unsigned int line, const char *message)
 {
@@ -163,9 +159,8 @@ def_internal_error_(const char *file, unsigned int line, const char *message)
 #endif
 }
 
-/* Report a fatal error.  These are unrecoverable (such as running out of
- * memory), so just exit immediately.
- */
+/// Report a fatal error.  These are unrecoverable (such as running out of
+/// memory), so just exit immediately.
 static void
 def_fatal(const char *fmt, va_list va)
 {
@@ -175,10 +170,9 @@ def_fatal(const char *fmt, va_list va)
     exit(EXIT_FAILURE);
 }
 #if 0
-/* Create an errwarn structure in the correct linked list location.
- * If replace_parser_error is nonzero, overwrites the last error if its
- * type is WE_PARSERERROR.
- */
+/// Create an errwarn structure in the correct linked list location.
+/// If replace_parser_error is nonzero, overwrites the last error if its
+/// type is WE_PARSERERROR.
 static errwarn_data *
 errwarn_data_new(yasm_errwarns *errwarns, unsigned long line,
                  int replace_parser_error)
@@ -186,9 +180,8 @@ errwarn_data_new(yasm_errwarns *errwarns, unsigned long line,
     errwarn_data *first, *next, *ins_we, *we;
     enum { INS_NONE, INS_HEAD, INS_AFTER } action = INS_NONE;
 
-    /* Find the entry with either line=line or the last one with line<line.
-     * Start with the last entry added to speed the search.
-     */
+    // Find the entry with either line=line or the last one with line<line.
+    // Start with the last entry added to speed the search.
     ins_we = errwarns->previous_we;
     first = SLIST_FIRST(&errwarns->errwarns);
     if (!ins_we || !first)
@@ -209,10 +202,10 @@ errwarn_data_new(yasm_errwarns *errwarns, unsigned long line,
     }
 
     if (replace_parser_error && ins_we && ins_we->type == WE_PARSERERROR) {
-        /* overwrite last error */      
+        // overwrite last error
         we = ins_we;
     } else {
-        /* add a new error */
+        // add a new error
         we = yasm_xmalloc(sizeof(errwarn_data));
 
         we->type = WE_UNKNOWN;
@@ -230,7 +223,7 @@ errwarn_data_new(yasm_errwarns *errwarns, unsigned long line,
             yasm_internal_error(N_("Unexpected errwarn insert action"));
     }
 
-    /* Remember previous err/warn */
+    // Remember previous err/warn
     errwarns->previous_we = we;
 
     return we;
@@ -369,7 +362,7 @@ warn_set_va(WarnClass wclass, const char *format, va_list va)
     ErrwarnManager &manager = ErrwarnManager::instance();
 
     if (!(manager.m_wclass_enabled & (1UL<<wclass)))
-        return;     /* warning is part of disabled class */
+        return;     // warning is part of disabled class
 
     manager.m_warns.push_back(ErrwarnManager::Warning(wclass, format, va));
 }
@@ -473,7 +466,7 @@ yasm_errwarns_output_all(yasm_errwarns *errwarns, yasm_linemap *lm,
     const char *filename, *xref_filename;
     unsigned long line, xref_line;
 
-    /* If we're treating warnings as errors, tell the user about it. */
+    // If we're treating warnings as errors, tell the user about it.
     if (warning_as_error && warning_as_error != 2) {
         print_error("", 0,
                     yasm_gettext_hook(N_("warnings being treated as errors")),
@@ -481,9 +474,9 @@ yasm_errwarns_output_all(yasm_errwarns *errwarns, yasm_linemap *lm,
         warning_as_error = 2;
     }
 
-    /* Output error/warnings. */
+    // Output error/warnings.
     SLIST_FOREACH(we, &errwarns->errwarns, link) {
-        /* Output error/warning */
+        // Output error/warning
         yasm_linemap_lookup(lm, we->line, &filename, &line);
         if (we->xrefline)
             yasm_linemap_lookup(lm, we->xrefline, &xref_filename, &xref_line);
