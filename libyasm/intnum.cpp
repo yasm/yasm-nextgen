@@ -1,29 +1,29 @@
-/*
- * Integer number functions.
- *
- *  Copyright (C) 2001-2007  Peter Johnson
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND OTHER CONTRIBUTORS ``AS IS''
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR OTHER CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+//
+// Integer number functions.
+//
+//  Copyright (C) 2001-2007  Peter Johnson
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND OTHER CONTRIBUTORS ``AS IS''
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR OTHER CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+//
 #include "util.h"
 
 #include <cctype>
@@ -39,7 +39,7 @@ using BitVector::N_int;
 
 namespace yasm {
 
-/* "Native" "word" size for intnum calculations. */
+/// "Native" "word" size for intnum calculations.
 static const unsigned int BITVECT_NATIVE_SIZE = 128;
 
 class IntNumManager {
@@ -50,10 +50,10 @@ public:
         return inst;
     }
 
-    /* static bitvect used for conversions */
+    /// Static bitvect used for conversions.
     /*@only@*/ wordptr conv_bv;
 
-    /* static bitvects used for computation */
+    /// Static bitvects used for computation.
     /*@only@*/ wordptr result, spare, op1static, op2static;
 
     /*@only@*/ BitVector::from_Dec_static_data *from_dec_data;
@@ -176,7 +176,7 @@ yasm_intnum_create_charconst_nasm(const char *str)
         case 0:
             break;
         default:
-            /* >32 bit conversion */
+            // >32 bit conversion
             while (len) {
                 BitVector::Move_Left(conv_bv, 8);
                 BitVector::Chunk_Store(conv_bv, 8, 0,
@@ -192,7 +192,7 @@ yasm_intnum_create_charconst_nasm(const char *str)
 
 IntNum::IntNum(long i)
 {
-    /* positive numbers can go in as uint */
+    // positive numbers can go in as uint
     if (i >= 0) {
         m_type = INTNUM_UL;
         m_val.ul = (unsigned long)i;
@@ -212,7 +212,7 @@ IntNum::IntNum(long i)
 
 IntNum::IntNum(int i)
 {
-    /* positive numbers can go in as uint */
+    // positive numbers can go in as uint
     if (i >= 0) {
         m_type = INTNUM_UL;
         m_val.ul = (unsigned long)i;
@@ -273,17 +273,17 @@ IntNum::IntNum(const unsigned char *ptr, bool sign, size_t srcsize, bool bigendi
         error_set(ERROR_OVERFLOW,
                   N_("Numeric constant too large for internal format"));
 
-    /* Read the buffer into a bitvect */
+    // Read the buffer into a bitvect
     BitVector::Empty(conv_bv);
     if (bigendian) {
-        /* TODO */
+        // TODO
         internal_error(N_("big endian not implemented"));
     } else {
         for (i = 0; i < srcsize; i++)
             BitVector::Chunk_Store(conv_bv, 8, i*8, ptr[i]);
     }
 
-    /* Sign extend if needed */
+    // Sign extend if needed
     if (srcsize*8 < BITVECT_NATIVE_SIZE && sign && (ptr[i] & 0x80) == 0x80)
         BitVector::Interval_Fill(conv_bv, i*8, BITVECT_NATIVE_SIZE-1);
 
@@ -320,9 +320,8 @@ IntNum::calc(Expr::Op op, const IntNum *operand)
     wordptr op1, op2 = NULL;
     N_int count;
 
-    /* Always do computations with in full bit vector.
-     * Bit vector results must be calculated through intermediate storage.
-     */
+    // Always do computations with in full bit vector.
+    // Bit vector results must be calculated through intermediate storage.
     if (m_type == INTNUM_BV)
         op1 = m_val.bv;
     else {
@@ -347,7 +346,7 @@ IntNum::calc(Expr::Op op, const IntNum *operand)
         return true;
     }
 
-    /* A operation does a bitvector computation if result is allocated. */
+    // A operation does a bitvector computation if result is allocated.
     switch (op) {
         case Expr::ADD:
             BitVector::add(result, op1, op2, &carry);
@@ -359,7 +358,7 @@ IntNum::calc(Expr::Op op, const IntNum *operand)
             BitVector::Multiply(result, op1, op2);
             break;
         case Expr::DIV:
-            /* TODO: make sure op1 and op2 are unsigned */
+            // TODO: make sure op1 and op2 are unsigned
             if (BitVector::is_empty(op2)) {
                 error_set(ERROR_ZERO_DIVISION, N_("divide by zero"));
                 BitVector::Empty(result);
@@ -376,7 +375,7 @@ IntNum::calc(Expr::Op op, const IntNum *operand)
                 BitVector::Divide(result, op1, op2, spare);
             break;
         case Expr::MOD:
-            /* TODO: make sure op1 and op2 are unsigned */
+            // TODO: make sure op1 and op2 are unsigned
             if (BitVector::is_empty(op2)) {
                 error_set(ERROR_ZERO_DIVISION, N_("divide by zero"));
                 BitVector::Empty(result);
@@ -419,7 +418,7 @@ IntNum::calc(Expr::Op op, const IntNum *operand)
             if (operand->m_type == INTNUM_UL) {
                 BitVector::Copy(result, op1);
                 BitVector::Move_Left(result, (N_int)operand->m_val.ul);
-            } else      /* don't even bother, just zero result */
+            } else      // don't even bother, just zero result
                 BitVector::Empty(result);
             break;
         case Expr::SHR:
@@ -429,7 +428,7 @@ IntNum::calc(Expr::Op op, const IntNum *operand)
                 count = (N_int)operand->m_val.ul;
                 while (count-- > 0)
                     BitVector::shift_right(result, carry);
-            } else      /* don't even bother, just zero result */
+            } else      // don't even bother, just zero result
                 BitVector::Empty(result);
             break;
         case Expr::LOR:
@@ -504,7 +503,7 @@ IntNum::calc(Expr::Op op, const IntNum *operand)
             return true;
     }
 
-    /* Try to fit the result into 32 bits if possible */
+    // Try to fit the result into 32 bits if possible
     if (BitVector::Set_Max(result) < 32) {
         if (m_type == INTNUM_BV) {
             BitVector::Destroy(m_val.bv);
@@ -526,7 +525,7 @@ IntNum::calc(Expr::Op op, const IntNum *operand)
 void
 IntNum::set(long val)
 {
-    /* positive numbers can go through the uint() function */
+    // positive numbers can go through the uint() function
     if (val >= 0) {
         set((unsigned long)val);
         return;
@@ -552,28 +551,27 @@ IntNum::get_int() const
 {
     switch (m_type) {
         case INTNUM_UL:
-            /* unsigned long values are always positive; max out if needed */
+            // unsigned long values are always positive; max out if needed
             return (m_val.ul & 0x80000000) ? LONG_MAX : (long)m_val.ul;
         case INTNUM_BV:
             if (BitVector::msb_(m_val.bv)) {
-                /* it's negative: negate the bitvector to get a positive
-                 * number, then negate the positive number.
-                 */
+                // it's negative: negate the bitvector to get a positive
+                // number, then negate the positive number.
                 IntNumManager &manager = IntNumManager::instance();
                 wordptr conv_bv = manager.conv_bv;
                 unsigned long ul;
 
                 BitVector::Negate(conv_bv, m_val.bv);
                 if (BitVector::Set_Max(conv_bv) >= 32) {
-                    /* too negative */
+                    // too negative
                     return LONG_MIN;
                 }
                 ul = BitVector::Chunk_Read(conv_bv, 32, 0);
-                /* check for too negative */
+                // check for too negative
                 return (ul & 0x80000000) ? LONG_MIN : -((long)ul);
             }
 
-            /* it's positive, and since it's a BV, it must be >0x7FFFFFFF */
+            // it's positive, and since it's a BV, it must be >0x7FFFFFFF
             return LONG_MAX;
         default:
             internal_error(N_("unknown intnum type"));
@@ -594,25 +592,25 @@ IntNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize, int shift
     size_t rshift = shift < 0 ? (size_t)(-shift) : 0;
     int carry_in;
 
-    /* Currently don't support destinations larger than our native size */
+    // Currently don't support destinations larger than our native size
     if (destsize*8 > BITVECT_NATIVE_SIZE)
         internal_error(N_("destination too large"));
 
-    /* General size warnings */
+    // General size warnings
     if (warn<0 && !ok_size(valsize, rshift, 1))
         warn_set(WARN_GENERAL, N_("value does not fit in signed %d bit field"),
                  valsize);
     if (warn>0 && !ok_size(valsize, rshift, 2))
         warn_set(WARN_GENERAL, N_("value does not fit in %d bit field"), valsize);
 
-    /* Read the original data into a bitvect */
+    // Read the original data into a bitvect
     if (bigendian) {
-        /* TODO */
+        // TODO
         internal_error(N_("big endian not implemented"));
     } else
         BitVector::Block_Store(op1, ptr, (N_int)destsize);
 
-    /* If not already a bitvect, convert value to be written to a bitvect */
+    // If not already a bitvect, convert value to be written to a bitvect
     if (m_type == INTNUM_BV)
         op2 = m_val.bv;
     else {
@@ -621,7 +619,7 @@ IntNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize, int shift
         BitVector::Chunk_Store(op2, 32, 0, m_val.ul);
     }
 
-    /* Check low bits if right shifting and warnings enabled */
+    // Check low bits if right shifting and warnings enabled
     if (warn && rshift > 0) {
         BitVector::Copy(conv_bv, op2);
         BitVector::Move_Left(conv_bv, (N_int)(BITVECT_NATIVE_SIZE-rshift));
@@ -629,7 +627,7 @@ IntNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize, int shift
             warn_set(WARN_GENERAL, N_("misaligned value, truncating to boundary"));
     }
 
-    /* Shift right if needed */
+    // Shift right if needed
     if (rshift > 0) {
         carry_in = BitVector::msb_(op2);
         while (rshift-- > 0)
@@ -637,13 +635,13 @@ IntNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize, int shift
         shift = 0;
     }
 
-    /* Write the new value into the destination bitvect */
+    // Write the new value into the destination bitvect
     BitVector::Interval_Copy(op1, op2, (unsigned int)shift, 0, (N_int)valsize);
 
-    /* Write out the new data */
+    // Write out the new data
     buf = BitVector::Block_Read(op1, &len);
     if (bigendian) {
-        /* TODO */
+        // TODO
         internal_error(N_("big endian not implemented"));
     } else
         memcpy(ptr, buf, destsize);
@@ -657,7 +655,7 @@ IntNum::ok_size(size_t size, size_t rshift, int rangetype) const
     wordptr conv_bv = manager.conv_bv;
     wordptr val;
 
-    /* If not already a bitvect, convert value to a bitvect */
+    // If not already a bitvect, convert value to a bitvect
     if (m_type == INTNUM_BV) {
         if (rshift > 0) {
             val = conv_bv;
@@ -681,7 +679,7 @@ IntNum::ok_size(size_t size, size_t rshift, int rangetype) const
 
     if (rangetype > 0) {
         if (BitVector::msb_(val)) {
-            /* it's negative */
+            // it's negative
             int retval;
 
             BitVector::Negate(conv_bv, val);
@@ -705,7 +703,7 @@ IntNum::in_range(long low, long high) const
     wordptr lval = manager.op1static;
     wordptr hval = manager.op2static;
 
-    /* If not already a bitvect, convert value to be written to a bitvect */
+    // If not already a bitvect, convert value to be written to a bitvect
     if (m_type == INTNUM_BV)
         val = m_val.bv;
     else {
@@ -713,7 +711,7 @@ IntNum::in_range(long low, long high) const
         BitVector::Chunk_Store(val, 32, 0, m_val.ul);
     }
 
-    /* Convert high and low to bitvects */
+    // Convert high and low to bitvects
     BitVector::Empty(lval);
     if (low >= 0)
         BitVector::Chunk_Store(lval, 32, 0, (unsigned long)low);
@@ -730,7 +728,7 @@ IntNum::in_range(long low, long high) const
         BitVector::Negate(hval, hval);
     }
 
-    /* Compare! */
+    // Compare!
     return (BitVector::Compare(val, lval) >= 0
             && BitVector::Compare(val, hval) <= 0);
 }
@@ -742,29 +740,29 @@ get_leb128(wordptr val, unsigned char *ptr, bool sign)
     unsigned char *ptr_orig = ptr;
 
     if (sign) {
-        /* Signed mode */
+        // Signed mode
         if (BitVector::msb_(val)) {
-            /* Negative */
+            // Negative
             IntNumManager &manager = IntNumManager::instance();
             wordptr conv_bv = manager.conv_bv;
             BitVector::Negate(conv_bv, val);
             size = BitVector::Set_Max(conv_bv)+2;
         } else {
-            /* Positive */
+            // Positive
             size = BitVector::Set_Max(val)+2;
         }
     } else {
-        /* Unsigned mode */
+        // Unsigned mode
         size = BitVector::Set_Max(val)+1;
     }
 
-    /* Positive/Unsigned write */
+    // Positive/Unsigned write
     for (i=0; i<size; i += 7) {
         *ptr = (unsigned char)BitVector::Chunk_Read(val, 7, i);
         *ptr |= 0x80;
         ptr++;
     }
-    *(ptr-1) &= 0x7F;   /* Clear MSB of last byte */
+    *(ptr-1) &= 0x7F;   // Clear MSB of last byte
     return (unsigned long)(ptr-ptr_orig);
 }
 
@@ -772,19 +770,19 @@ static unsigned long
 size_leb128(wordptr val, bool sign)
 {
     if (sign) {
-        /* Signed mode */
+        // Signed mode
         if (BitVector::msb_(val)) {
-            /* Negative */
+            // Negative
             IntNumManager &manager = IntNumManager::instance();
             wordptr conv_bv = manager.conv_bv;
             BitVector::Negate(conv_bv, val);
             return (BitVector::Set_Max(conv_bv)+8)/7;
         } else {
-            /* Positive */
+            // Positive
             return (BitVector::Set_Max(val)+8)/7;
         }
     } else {
-        /* Unsigned mode */
+        // Unsigned mode
         return (BitVector::Set_Max(val)+7)/7;
     }
 }
@@ -795,13 +793,13 @@ IntNum::get_leb128(unsigned char *ptr, bool sign) const
     IntNumManager &manager = IntNumManager::instance();
     wordptr val = manager.op1static;
 
-    /* Shortcut 0 */
+    // Shortcut 0
     if (m_type == INTNUM_UL && m_val.ul == 0) {
         *ptr = 0;
         return 1;
     }
 
-    /* If not already a bitvect, convert value to be written to a bitvect */
+    // If not already a bitvect, convert value to be written to a bitvect
     if (m_type == INTNUM_BV)
         val = m_val.bv;
     else {
@@ -818,12 +816,12 @@ IntNum::size_leb128(bool sign) const
     IntNumManager &manager = IntNumManager::instance();
     wordptr val = manager.op1static;
 
-    /* Shortcut 0 */
+    // Shortcut 0
     if (m_type == INTNUM_UL && m_val.ul == 0) {
         return 1;
     }
 
-    /* If not already a bitvect, convert value to a bitvect */
+    // If not already a bitvect, convert value to a bitvect
     if (m_type == INTNUM_BV)
         val = m_val.bv;
     else {
@@ -840,7 +838,7 @@ get_sleb128(long v, unsigned char *ptr)
     IntNumManager &manager = IntNumManager::instance();
     wordptr val = manager.op1static;
 
-    /* Shortcut 0 */
+    // Shortcut 0
     if (v == 0) {
         *ptr = 0;
         return 1;
@@ -881,7 +879,7 @@ get_uleb128(unsigned long v, unsigned char *ptr)
     IntNumManager &manager = IntNumManager::instance();
     wordptr val = manager.op1static;
 
-    /* Shortcut 0 */
+    // Shortcut 0
     if (v == 0) {
         *ptr = 0;
         return 1;
