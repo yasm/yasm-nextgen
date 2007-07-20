@@ -32,6 +32,7 @@
 
 #include <iostream>
 #include <memory>
+#include <boost/scoped_ptr.hpp>
 
 namespace yasm {
 
@@ -149,7 +150,7 @@ private:
     /// The absolute portion of the value.  May contain *differences* between
     /// symrecs but not standalone symrecs.  May be NULL if there is no
     /// absolute portion (e.g. the absolute portion is 0).
-    std::auto_ptr<Expr> m_abs;
+    boost::scoped_ptr<Expr> m_abs;
 
     /// The relative portion of the value.  This is the portion that may
     /// need to generate a relocation.  May be NULL if no relative portion.

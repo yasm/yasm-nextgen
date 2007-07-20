@@ -210,6 +210,10 @@ public:
                   OutputValueFunc output_value,
                   OutputRelocFunc output_reloc = 0);
 
+    Contents::SpecialType get_special() const;
+
+    virtual Contents* clone() const = 0;
+
 protected:
     /// Finalize the custom parts of an instruction.
     virtual void do_finalize() = 0;

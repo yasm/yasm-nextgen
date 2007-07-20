@@ -312,7 +312,7 @@ public:
     /// @return True on error (index out of range).
     bool substitute(const Terms& terms);
 
-    std::auto_ptr<Expr> clone(int except = -1) const;
+    Expr* clone(int except = -1) const;
 
     unsigned long get_line() const { return m_line; }
     Terms& get_terms() { return m_terms; }

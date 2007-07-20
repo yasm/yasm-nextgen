@@ -233,4 +233,10 @@ Insn::to_bytes(Bytecode* bc, unsigned char* &buf, OutputValueFunc output_value,
     return Bytecode::Contents::to_bytes(bc, buf, output_value, output_reloc);
 }
 
+Insn::Contents::SpecialType
+Insn::get_special() const
+{
+    return Contents::SPECIAL_INSN;
+}
+
 } // namespace yasm

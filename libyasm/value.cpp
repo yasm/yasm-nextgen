@@ -104,7 +104,7 @@ Value::Value(const Value& oth)
       m_size(oth.m_size)
 {
     if (oth.m_abs.get())
-        m_abs = oth.m_abs->clone();
+        m_abs.reset(oth.m_abs->clone());
 }
 
 Value&
@@ -113,7 +113,7 @@ Value::operator= (const Value& rhs)
     if (this != &rhs) {
         m_abs.reset(0);
         if (rhs.m_abs.get())
-            m_abs = rhs.m_abs->clone();
+            m_abs.reset(rhs.m_abs->clone());
         m_rel = rhs.m_rel;
         m_wrt = rhs.m_wrt;
         m_seg_of = rhs.m_seg_of;

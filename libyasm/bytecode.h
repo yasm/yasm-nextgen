@@ -34,6 +34,7 @@
 #include <iostream>
 #include <memory>
 #include <boost/function.hpp>
+#include <boost/scoped_ptr.hpp>
 
 namespace yasm {
 
@@ -233,7 +234,7 @@ public:
 
         virtual SpecialType get_special() const;
 
-        virtual Ptr clone() const = 0;
+        virtual Contents* clone() const = 0;
 
     private:
         /// Unimplemented copy constructor.
@@ -467,7 +468,7 @@ public:
 
 private:
     /// Implementation-specific data.
-    Contents::Ptr m_contents;
+    boost::scoped_ptr<Contents> m_contents;
 
     /// Pointer to section containing bytecode; NULL if not part of a
     /// section.
@@ -475,7 +476,7 @@ private:
 
     /// Number of times bytecode is repeated.
     /// NULL=1 (to save space in the common case).
-    std::auto_ptr<Expr> m_multiple;
+    boost::scoped_ptr<Expr> m_multiple;
 
     /// Total length of entire bytecode (not including multiple copies).
     unsigned long m_len;

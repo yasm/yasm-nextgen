@@ -766,11 +766,11 @@ Expr::order_terms()
     std::stable_sort(m_terms.begin(), m_terms.end());
 }
 
-std::auto_ptr<Expr>
+Expr*
 Expr::clone(int except) const
 {
     if (except == -1 || m_terms.size() == 1)
-        return std::auto_ptr<Expr>(new Expr(*this));
+        return new Expr(*this);
 
     std::auto_ptr<Expr> e(new Expr(m_op, m_line));
     int j = 0;
@@ -779,7 +779,7 @@ Expr::clone(int except) const
         if (j != except)
             e->m_terms.push_back(i->clone());
     }
-    return e;
+    return e.release();
 }
 
 bool

@@ -43,9 +43,10 @@ void
 Bytecode::set_multiple(std::auto_ptr<Expr> e)
 {
     if (m_multiple.get() != 0)
-        m_multiple.reset(new Expr(m_multiple, Expr::MUL, e, e->get_line()));
+        m_multiple.reset(new Expr(m_multiple.get(), Expr::MUL, e,
+                                  e->get_line()));
     else
-        m_multiple = e;
+        m_multiple.reset(e.release());
 }
 
 bool
@@ -110,9 +111,9 @@ Bytecode&
 Bytecode::operator= (const Bytecode& oth)
 {
     if (this != &oth) {
-        m_contents = oth.m_contents->clone();
+        m_contents.reset(oth.m_contents->clone());
         m_section = oth.m_section;
-        m_multiple = oth.m_multiple->clone();
+        m_multiple.reset(oth.m_multiple->clone());
         m_len = oth.m_len;
         m_mult_int = oth.m_mult_int;
         m_line = oth.m_line;
@@ -215,7 +216,7 @@ Bytecode::calc_len(AddSpanFunc add_span)
                     N_("expression must not contain floating point value"));
                 retval = true;
             } else {
-                Value value(0, m_multiple->clone());
+                Value value(0, Expr::Ptr(m_multiple->clone()));
                 add_span(this, 0, value, 0, 0);
                 m_mult_int = 0;     // assume 0 to start
             }
