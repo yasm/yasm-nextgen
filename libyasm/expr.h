@@ -296,16 +296,16 @@ public:
     void order_terms();
 
     bool contains(int type) const;
-#if 0
+
     /// Transform symrec-symrec terms in expression into SUBST terms.
     /// Calls the callback function for each symrec-symrec term.
     /// @param callback     callback function: given subst index for bytecode
     ///                     pair, bytecode pair (bc2-bc1)
     /// @return Number of transformations made.
     int bc_dist_subst(boost::function<void (unsigned int subst,
-                                            Bytecode &precbc,
-                                            Bytecode &precbc2)> func);
-#endif
+                                            Bytecode* precbc,
+                                            Bytecode* precbc2)> func);
+
     /// Substitute terms into expr SUBST terms (by index).  Terms
     /// are cloned.
     /// @param terms        terms
@@ -332,12 +332,22 @@ private:
     Expr(Op op, unsigned long line);
 
     // Internal callbacks
-    bool bc_dist_subst_cb(boost::function<void (unsigned int subst,
-                                                Bytecode& precbc,
-                                                Bytecode& precbc2)> func);
+    bool bc_dist_cb(Term& term, Bytecode* precbc, Bytecode* precbc2);
+    bool bc_dist_subst_cb(Term& term, Bytecode* precbc, Bytecode* precbc2,
+                          boost::function<void (unsigned int subst,
+                                                Bytecode* precbc,
+                                                Bytecode* precbc2)> func,
+                          unsigned int& subst);
+    void xform_bc_dist_subst(boost::function<void (unsigned int subst,
+                                                   Bytecode* precbc,
+                                                   Bytecode* precbc2)> func,
+                             unsigned int& subst);
     bool substitute_cb(const Terms& subst_terms);
 
     // Levelling functions
+    void xform_bc_dist_base(boost::function<bool (Term& term,
+                                                  Bytecode* precbc,
+                                                  Bytecode* precbc2)> func);
     void xform_bc_dist();
     void xform_neg_term(Terms::iterator term);
     void xform_neg_helper();

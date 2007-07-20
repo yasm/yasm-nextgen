@@ -32,7 +32,7 @@
 #include "expr.h"
 //#include "symrec.h"
 
-//#include "bytecode.h"
+#include "bytecode.h"
 //#include "section.h"
 
 //#include "arch.h"
@@ -211,173 +211,141 @@ Expr::~Expr()
 {
     std::for_each(m_terms.begin(), m_terms.end(), boost::mem_fn(&Term::destroy));
 }
-#if 0
+
 // Transforms instances of symrec-symrec [symrec+(-1*symrec)] into single
 // exprterms if possible.  Uses a simple n^2 algorithm because n is usually
 // quite small.  Also works for precbc-precbc (or symrec-precbc,
 // precbc-symrec).
-static /*@only@*/ yasm_expr *
-expr_xform_bc_dist_base(/*@returned@*/ /*@only@*/ yasm_expr *e,
-                        /*@null@*/ void *cbd,
-                        int (*callback) (yasm_expr__term *ei,
-                                         yasm_bytecode *precbc,
-                                         yasm_bytecode *precbc2,
-                                         void *cbd))
+void
+Expr::xform_bc_dist_base(boost::function<bool (Term& term,
+                                               Bytecode* precbc,
+                                               Bytecode* precbc2)> func)
 {
-    int i;
-    /*@dependent@*/ yasm_section *sect;
-    /*@dependent@*/ /*@null@*/ yasm_bytecode *precbc;
-    int numterms;
-
     // Handle symrec-symrec in ADD exprs by looking for (-1*symrec) and
     // symrec term pairs (where both symrecs are in the same segment).
-    if (e->op != ADD)
-        return e;
+    if (m_op != ADD)
+        return;
 
-    for (i=0; i<e->numterms; i++) {
-        int j;
-        yasm_expr *sube;
-        yasm_intnum *intn;
-        yasm_symrec *sym = NULL;
-        /*@dependent@*/ yasm_section *sect2;
-        /*@dependent@*/ /*@null@*/ yasm_bytecode *precbc2;
-
+    for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i) {
         // First look for an (-1*symrec) term
-        if (e->terms[i].type != EXPR)
+        Expr* sube = i->get_expr();
+        if (!sube)
             continue;
-        sube = e->terms[i].data.expn;
-        if (sube->op != MUL || sube->numterms != 2)
+        if (sube->m_op != MUL || sube->m_terms.size() != 2)
             continue;
 
-        if (sube->terms[0].type == INT &&
-            (sube->terms[1].type == SYM ||
-             sube->terms[1].type == PRECBC)) {
-            intn = sube->terms[0].data.intn;
-            if (sube->terms[1].type == PRECBC)
-                precbc = sube->terms[1].data.precbc;
+        IntNum* intn;
+        Symbol* sym = 0;
+        /*@dependent@*/ /*@null@*/ Bytecode* precbc;
+
+        if ((intn = sube->m_terms[0].get_int())) {
+            if ((sym = sube->m_terms[1].get_sym()))
+                ;
+            else if ((precbc = sube->m_terms[1].get_precbc()))
+                ;
             else
-                sym = sube->terms[1].data.sym;
-        } else if ((sube->terms[0].type == SYM ||
-                    sube->terms[0].type == PRECBC) &&
-                   sube->terms[1].type == INT) {
-            if (sube->terms[0].type == PRECBC)
-                precbc = sube->terms[0].data.precbc;
+                continue;
+        } else if ((intn = sube->m_terms[1].get_int())) {
+            if ((sym = sube->m_terms[0].get_sym()))
+                ;
+            else if ((precbc = sube->m_terms[0].get_precbc()))
+                ;
             else
-                sym = sube->terms[0].data.sym;
-            intn = sube->terms[1].data.intn;
+                continue;
         } else
             continue;
 
-        if (!yasm_intnum_is_neg1(intn))
+        if (!intn->is_neg1())
             continue;
-
-        if (sym && !yasm_symrec_get_label(sym, &precbc))
+#if 0
+        if (sym && !sym->get_label(precbc))
             continue;
-        sect2 = yasm_bc_get_section(precbc);
+        Section* sect = precbc->get_section();
 
         // Now look for a symrec term in the same segment
-        for (j=0; j<e->numterms; j++) {
-            if (((e->terms[j].type == SYM &&
-                  yasm_symrec_get_label(e->terms[j].data.sym, &precbc2)) ||
-                 (e->terms[j].type == PRECBC &&
-                  (precbc2 = e->terms[j].data.precbc))) &&
-                (sect = yasm_bc_get_section(precbc2)) &&
-                sect == sect2 &&
-                callback(&e->terms[j], precbc, precbc2, cbd)) {
+        for (Terms::iterator j=m_terms.begin(), end=m_terms.end();
+             j != end; ++j) {
+            Symbol* sym2;
+            /*@dependent@*/ /*@null@*/ Bytecode* precbc2;
+
+            if ((((sym2 = j->get_sym()) && sym2->get_label(&precbc2)) ||
+                 (precbc2 = j->get_precbc())) &&
+                (sect == precbc2->get_section()) &&
+                func(*j, precbc, precbc2)) {
                 // Delete the matching (-1*symrec) term
-                yasm_expr_destroy(sube);
-                e->terms[i].type = NONE;
+                i->release();
                 break;  // stop looking for matching symrec term
             }
         }
+#endif
     }
 
     // Clean up any deleted (NONE) terms
-    numterms = 0;
-    for (i=0; i<e->numterms; i++) {
-        if (e->terms[i].type != NONE)
-            e->terms[numterms++] = e->terms[i]; // structure copy
-    }
-    if (e->numterms != numterms) {
-        e->numterms = numterms;
-        e = yasm_xrealloc(e, sizeof(yasm_expr)+((numterms<2) ? 0 :
-                          sizeof(yasm_expr__term)*(numterms-2)));
-        if (numterms == 1)
-            e->op = IDENT;
-    }
-
-    return e;
+    Terms::iterator erasefrom =
+        std::remove_if(m_terms.begin(), m_terms.end(),
+                       boost::bind(&Term::is_type, _1, NONE));
+    m_terms.erase(erasefrom, m_terms.end());
+    Terms(m_terms).swap(m_terms);   // trim capacity
 }
 
-static int
-expr_xform_bc_dist_cb(yasm_expr__term *ei, yasm_bytecode *precbc,
-                      yasm_bytecode *precbc2, /*@null@*/ void *d)
+inline bool
+Expr::bc_dist_cb(Term& term, Bytecode* precbc, Bytecode* precbc2)
 {
-    yasm_intnum *dist = yasm_calc_bc_dist(precbc, precbc2);
+    IntNum *dist = Bytecode::calc_dist(precbc, precbc2);
     if (!dist)
-        return 0;
+        return false;
     // Change the term to an integer
-    ei->type = INT;
-    ei->data.intn = dist;
-    return 1;
+    term = dist;
+    return true;
 }
-#endif
+
 /// Transforms instances of symrec-symrec [symrec+(-1*symrec)] into integers
 /// if possible.
 inline void
 Expr::xform_bc_dist()
 {
-#if 0
-    xform_bc_dist_base(expr_xform_bc_dist_cb);
-#endif
+    xform_bc_dist_base(boost::bind(&Expr::bc_dist_cb, this, _1, _2, _3));
 }
-#if 0
-typedef struct bc_dist_subst_cbd {
-    void (*callback) (unsigned int subst, yasm_bytecode *precbc,
-                      yasm_bytecode *precbc2, void *cbd);
-    void *cbd;
-    unsigned int subst;
-} bc_dist_subst_cbd;
 
-static int
-expr_bc_dist_subst_cb(yasm_expr__term *ei, yasm_bytecode *precbc,
-                      yasm_bytecode *precbc2, /*@null@*/ void *d)
+inline bool
+Expr::bc_dist_subst_cb(Term& term, Bytecode* precbc, Bytecode* precbc2,
+                       boost::function<void (unsigned int subst,
+                                             Bytecode* precbc,
+                                             Bytecode* precbc2)> func,
+                       unsigned int& subst)
 {
-    bc_dist_subst_cbd *my_cbd = d;
-    assert(my_cbd != NULL);
     // Call higher-level callback
-    my_cbd->callback(my_cbd->subst, precbc, precbc2, my_cbd->cbd);
+    func(subst, precbc, precbc2);
     // Change the term to an subst
-    ei->type = SUBST;
-    ei->data.subst = my_cbd->subst;
-    my_cbd->subst++;
-    return 1;
+    term = subst;
+    subst++;
+    return true;
 }
 
-static yasm_expr *
-expr_xform_bc_dist_subst(yasm_expr *e, void *d)
+inline void
+Expr::xform_bc_dist_subst(boost::function<void (unsigned int subst,
+                                                Bytecode* precbc,
+                                                Bytecode* precbc2)> func,
+                          unsigned int& subst)
 {
-    return expr_xform_bc_dist_base(e, d, expr_bc_dist_subst_cb);
+    xform_bc_dist_base(boost::bind(&Expr::bc_dist_subst_cb, this, _1, _2, _3,
+                                   func, boost::ref(subst)));
 }
 
-int
-yasm_expr__bc_dist_subst(yasm_expr **ep, void *cbd,
-                         void (*callback) (unsigned int subst,
-                                           yasm_bytecode *precbc,
-                                           yasm_bytecode *precbc2,
-                                           void *cbd))
+inline int
+Expr::bc_dist_subst(boost::function<void (unsigned int subst,
+                                          Bytecode* precbc,
+                                          Bytecode* precbc2)> func)
 {
-    bc_dist_subst_cbd my_cbd;   // callback info for low-level callback
-    my_cbd.callback = callback;
-    my_cbd.cbd = cbd;
-    my_cbd.subst = 0;
-    *ep = yasm_expr__level_tree(*ep, 1, 1, 1, 0, &expr_xform_bc_dist_subst,
-                                &my_cbd);
-    return my_cbd.subst;
+    unsigned int subst;
+    level_tree(true, true, true, false,
+               boost::bind(&Expr::xform_bc_dist_subst, _1, func,
+                           boost::ref(subst)));
+    return subst;
 }
-#endif
+
 /// Negate just a single ExprTerm by building a -1*ei subexpression.
-void
+inline void
 Expr::xform_neg_term(Terms::iterator term)
 {
     Expr *sube = new Expr(MUL, m_line);

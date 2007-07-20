@@ -143,10 +143,12 @@ Value::set_curpos_rel(Bytecode* bc, bool ip_rel)
     }
 #endif
 }
-#if 0
+
 bool
-Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc, bool ssym_not_ok)
+Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
+                     bool ssym_not_ok)
 {
+#if 0
     int i;
     /*@dependent@*/ Section* sect;
     /*@dependent@*/ /*@null@*/ Bytecode* precbc;
@@ -457,10 +459,11 @@ Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc, bool ssym_not_ok
             }
             break;
     }
+#endif
 
     return false;
 }
-#endif
+
 bool
 Value::finalize(Bytecode* precbc)
 {
