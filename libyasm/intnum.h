@@ -105,9 +105,8 @@ public:
     ///       operations will result in an error.
     /// @param op       operation
     /// @param operand  intnum operand
-    /// @return True if error occurred.
-    bool calc(Expr::Op op, const IntNum &operand) { return calc(op, &operand); }
-    bool calc(Expr::Op op, /*@null@*/ const IntNum *operand = 0);
+    void calc(Expr::Op op, const IntNum &operand) { calc(op, &operand); }
+    void calc(Expr::Op op, /*@null@*/ const IntNum *operand = 0);
 
     /// Zero an intnum.
     void zero() { set(0); }

@@ -67,10 +67,8 @@ public:
     ///       operations will result in an error.
     /// @param op       operation
     /// @param operand  floatnum operand
-    /// @return True if error occurred.
-    bool calc(Expr::Op op, const FloatNum& operand)
-    { return calc(op, &operand); }
-    bool calc(Expr::Op op, /*@null@*/ const FloatNum* operand = 0);
+    void calc(Expr::Op op, const FloatNum& operand) { calc(op, &operand); }
+    void calc(Expr::Op op, /*@null@*/ const FloatNum* operand = 0);
 
     /// Convert a floatnum to single-precision and return as 32-bit value.
     /// The 32-bit value is a "standard" C value (eg, of unknown endian).

@@ -469,10 +469,6 @@ Value::finalize(Bytecode* precbc)
 {
     m_abs->level_tree(true, true, false, false);
 
-    // quit early if there was an issue in simplify()
-    if (error_occurred())
-        return true;
-
     // Handle trivial (IDENT) cases immediately
     if (m_abs->is_op(Expr::IDENT)) {
         if (IntNum* intn = m_abs->get_intnum(false)) {

@@ -477,16 +477,13 @@ FloatNum::FloatNum(const FloatNum& flt)
     m_mantissa = BitVector::Clone(flt.m_mantissa);
 }
 
-bool
+void
 FloatNum::calc(Expr::Op op, /*@unused@*/ const FloatNum* operand)
 {
-    if (op != Expr::NEG) {
-        error_set(ERROR_FLOATING_POINT,
-                  N_("Unsupported floating-point arithmetic operation"));
-        return true;
-    }
+    if (op != Expr::NEG)
+        throw FloatingPointError(
+            N_("Unsupported floating-point arithmetic operation"));
     m_sign ^= 1;
-    return false;
 }
 
 int
@@ -547,7 +544,7 @@ FloatNum::get_common(/*@out@*/ unsigned char* ptr,
 
     // underflow and overflow both set!?
     if (underflow && overflow)
-        internal_error(N_("Both underflow and overflow set"));
+        throw InternalError(N_("Both underflow and overflow set"));
 
     // check for underflow or overflow and set up appropriate output
     if (underflow) {
@@ -571,7 +568,7 @@ FloatNum::get_common(/*@out@*/ unsigned char* ptr,
     unsigned int len;
     charptr buf = BitVector::Block_Read(output, &len);
     if (len < byte_size)
-        internal_error(
+        throw InternalError(
             N_("Byte length of BitVector does not match bit length"));
 
     // copy to output
@@ -622,7 +619,7 @@ FloatNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize,
     int retval;
     if (destsize*8 != valsize || shift>0 || bigendian) {
         // TODO
-        internal_error(N_("unsupported floatnum functionality"));
+        throw InternalError(N_("unsupported floatnum functionality"));
     }
     switch (destsize) {
         case 4:
@@ -635,7 +632,7 @@ FloatNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize,
             retval = get_common(ptr, 10, 64, false, 15);
             break;
         default:
-            internal_error(N_("Invalid float conversion size"));
+            throw InternalError(N_("Invalid float conversion size"));
             /*@notreached@*/
             return 1;
     }

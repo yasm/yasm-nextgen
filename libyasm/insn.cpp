@@ -209,14 +209,14 @@ Insn::finalize()
     do_finalize();
 }
 
-bool
+void
 Insn::calc_len(Bytecode* bc, Bytecode::AddSpanFunc add_span)
 {
     // simply pass down to the base class
-    return Bytecode::Contents::calc_len(bc, add_span);
+    Bytecode::Contents::calc_len(bc, add_span);
 }
 
-int
+bool
 Insn::expand(Bytecode* bc, int span, long old_val, long new_val,
              /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres)
 {
@@ -225,12 +225,12 @@ Insn::expand(Bytecode* bc, int span, long old_val, long new_val,
                                       pos_thres);
 }
 
-bool
+void
 Insn::to_bytes(Bytecode* bc, unsigned char* &buf, OutputValueFunc output_value,
                OutputRelocFunc output_reloc)
 {
     // simply pass down to the base class
-    return Bytecode::Contents::to_bytes(bc, buf, output_value, output_reloc);
+    Bytecode::Contents::to_bytes(bc, buf, output_value, output_reloc);
 }
 
 Insn::Contents::SpecialType

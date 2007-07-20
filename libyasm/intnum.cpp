@@ -113,20 +113,15 @@ IntNum::IntNum(char *str, int base)
             errstr = N_("invalid hex literal");
             break;
         default:
-            error_set(ERROR_VALUE, N_("invalid base"));
-            m_type = INTNUM_UL;
-            m_val.ul = 0;
-            return;
+            throw ValueError(N_("invalid base"));
     }
     
     switch (err) {
         case BitVector::ErrCode_Pars:
-            error_set(ERROR_VALUE, errstr);
-            break;
+            throw ValueError(errstr);
         case BitVector::ErrCode_Ovfl:
-            error_set(ERROR_OVERFLOW,
-                      N_("Numeric constant too large for internal format"));
-            break;
+            throw OverflowError(
+                N_("Numeric constant too large for internal format"));
         default:
             break;
     }
@@ -147,8 +142,8 @@ yasm_intnum_create_charconst_nasm(const char *str)
     size_t len = strlen(str);
 
     if(len*8 > BITVECT_NATIVE_SIZE)
-        yasm_error_set(YASM_ERROR_OVERFLOW,
-                       N_("Character constant too large for internal format"));
+        throw OverflowError(
+            N_("Character constant too large for internal format"));
 
     if (len > 4) {
         BitVector::Empty(conv_bv);
@@ -249,8 +244,8 @@ IntNum::IntNum(const unsigned char *ptr, bool sign, unsigned long &size)
     size = (unsigned long)(ptr-ptr_orig)+1;
 
     if (i > BITVECT_NATIVE_SIZE)
-        error_set(ERROR_OVERFLOW,
-                  N_("Numeric constant too large for internal format"));
+        throw OverflowError(
+            N_("Numeric constant too large for internal format"));
     else if (sign && (*ptr & 0x40) == 0x40)
         BitVector::Interval_Fill(conv_bv, i, BITVECT_NATIVE_SIZE-1);
 
@@ -270,14 +265,14 @@ IntNum::IntNum(const unsigned char *ptr, bool sign, size_t srcsize, bool bigendi
     unsigned long i = 0;
 
     if (srcsize*8 > BITVECT_NATIVE_SIZE)
-        error_set(ERROR_OVERFLOW,
-                  N_("Numeric constant too large for internal format"));
+        throw OverflowError(
+            N_("Numeric constant too large for internal format"));
 
     // Read the buffer into a bitvect
     BitVector::Empty(conv_bv);
     if (bigendian) {
         // TODO
-        internal_error(N_("big endian not implemented"));
+        throw InternalError(N_("big endian not implemented"));
     } else {
         for (i = 0; i < srcsize; i++)
             BitVector::Chunk_Store(conv_bv, 8, i*8, ptr[i]);
@@ -310,7 +305,7 @@ IntNum::IntNum(const IntNum &rhs)
 }
 
 /*@-nullderef -nullpass -branchstate@*/
-bool
+void
 IntNum::calc(Expr::Op op, const IntNum *operand)
 {
     IntNumManager &manager = IntNumManager::instance();
@@ -340,11 +335,8 @@ IntNum::calc(Expr::Op op, const IntNum *operand)
         }
     }
 
-    if (!operand && op != Expr::NEG && op != Expr::NOT && op != Expr::LNOT) {
-        error_set(ERROR_ARITHMETIC, N_("operation needs an operand"));
-        BitVector::Empty(result);
-        return true;
-    }
+    if (!operand && op != Expr::NEG && op != Expr::NOT && op != Expr::LNOT)
+        throw ArithmeticError(N_("operation needs an operand"));
 
     // A operation does a bitvector computation if result is allocated.
     switch (op) {
@@ -359,36 +351,28 @@ IntNum::calc(Expr::Op op, const IntNum *operand)
             break;
         case Expr::DIV:
             // TODO: make sure op1 and op2 are unsigned
-            if (BitVector::is_empty(op2)) {
-                error_set(ERROR_ZERO_DIVISION, N_("divide by zero"));
-                BitVector::Empty(result);
-                return true;
-            } else
+            if (BitVector::is_empty(op2))
+                throw ZeroDivisionError(N_("divide by zero"));
+            else
                 BitVector::Divide(result, op1, op2, spare);
             break;
         case Expr::SIGNDIV:
-            if (BitVector::is_empty(op2)) {
-                error_set(ERROR_ZERO_DIVISION, N_("divide by zero"));
-                BitVector::Empty(result);
-                return true;
-            } else
+            if (BitVector::is_empty(op2))
+                throw ZeroDivisionError(N_("divide by zero"));
+            else
                 BitVector::Divide(result, op1, op2, spare);
             break;
         case Expr::MOD:
             // TODO: make sure op1 and op2 are unsigned
-            if (BitVector::is_empty(op2)) {
-                error_set(ERROR_ZERO_DIVISION, N_("divide by zero"));
-                BitVector::Empty(result);
-                return true;
-            } else
+            if (BitVector::is_empty(op2))
+                throw ZeroDivisionError(N_("divide by zero"));
+            else
                 BitVector::Divide(spare, op1, op2, result);
             break;
         case Expr::SIGNMOD:
-            if (BitVector::is_empty(op2)) {
-                error_set(ERROR_ZERO_DIVISION, N_("divide by zero"));
-                BitVector::Empty(result);
-                return true;
-            } else
+            if (BitVector::is_empty(op2))
+                throw ZeroDivisionError(N_("divide by zero"));
+            else
                 BitVector::Divide(spare, op1, op2, result);
             break;
         case Expr::NEG:
@@ -485,22 +469,21 @@ IntNum::calc(Expr::Op op, const IntNum *operand)
             BitVector::LSB(result, !BitVector::equal(op1, op2));
             break;
         case Expr::SEG:
-            error_set(ERROR_ARITHMETIC, N_("invalid use of '%s'"), "SEG");
+            throw ArithmeticError(N_("invalid use of 'SEG'"));
             break;
         case Expr::WRT:
-            error_set(ERROR_ARITHMETIC, N_("invalid use of '%s'"), "WRT");
+            throw ArithmeticError(N_("invalid use of 'WRT'"));
             break;
         case Expr::SEGOFF:
-            error_set(ERROR_ARITHMETIC, N_("invalid use of '%s'"), ":");
+            throw ArithmeticError(N_("invalid use of ':'"));
             break;
         case Expr::IDENT:
             if (result)
                 BitVector::Copy(result, op1);
             break;
         default:
-            error_set(ERROR_ARITHMETIC, N_("invalid operation in intnum calculation"));
-            BitVector::Empty(result);
-            return true;
+            throw ArithmeticError(
+                N_("invalid operation in intnum calculation"));
     }
 
     // Try to fit the result into 32 bits if possible
@@ -518,7 +501,6 @@ IntNum::calc(Expr::Op op, const IntNum *operand)
             m_val.bv = BitVector::Clone(result);
         }
     }
-    return false;
 }
 /*@=nullderef =nullpass =branchstate@*/
 
@@ -574,7 +556,7 @@ IntNum::get_int() const
             // it's positive, and since it's a BV, it must be >0x7FFFFFFF
             return LONG_MAX;
         default:
-            internal_error(N_("unknown intnum type"));
+            throw InternalError(N_("unknown intnum type"));
             /*@notreached@*/
             return 0;
     }
@@ -594,7 +576,7 @@ IntNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize, int shift
 
     // Currently don't support destinations larger than our native size
     if (destsize*8 > BITVECT_NATIVE_SIZE)
-        internal_error(N_("destination too large"));
+        throw InternalError(N_("destination too large"));
 
     // General size warnings
     if (warn<0 && !ok_size(valsize, rshift, 1))
@@ -606,7 +588,7 @@ IntNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize, int shift
     // Read the original data into a bitvect
     if (bigendian) {
         // TODO
-        internal_error(N_("big endian not implemented"));
+        throw InternalError(N_("big endian not implemented"));
     } else
         BitVector::Block_Store(op1, ptr, (N_int)destsize);
 
@@ -642,7 +624,7 @@ IntNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize, int shift
     buf = BitVector::Block_Read(op1, &len);
     if (bigendian) {
         // TODO
-        internal_error(N_("big endian not implemented"));
+        throw InternalError(N_("big endian not implemented"));
     } else
         memcpy(ptr, buf, destsize);
     free(buf);

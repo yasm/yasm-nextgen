@@ -49,33 +49,29 @@ Bytecode::set_multiple(std::auto_ptr<Expr> e)
         m_multiple.reset(e.release());
 }
 
-bool
+void
 Bytecode::Contents::calc_len(Bytecode* bc, Bytecode::AddSpanFunc add_span)
 {
-    internal_error(N_("bytecode length cannot be calculated"));
-    /*@unreached@*/
-    return false;
+    throw InternalError(N_("bytecode length cannot be calculated"));
 }
 
-int
+bool
 Bytecode::Contents::expand(Bytecode *bc, int span,
                            long old_val, long new_val,
                            /*@out@*/ long& neg_thres,
                            /*@out@*/ long& pos_thres)
 {
-    internal_error(N_("bytecode does not have any dependent spans"));
+    throw InternalError(N_("bytecode does not have any dependent spans"));
     /*@unreached@*/
-    return 0;
+    return false;
 }
 
-bool
+void
 Bytecode::Contents::to_bytes(Bytecode* bc, unsigned char* &buf,
                              OutputValueFunc output_value,
                              OutputRelocFunc output_reloc)
 {
-    internal_error(N_("bytecode cannot be converted to bytes"));
-    /*@unreached@*/
-    return false;
+    throw InternalError(N_("bytecode cannot be converted to bytes"));
 }
 
 void
@@ -192,11 +188,11 @@ Bytecode::next_offset() const
     return m_offset + m_len * m_mult_int;
 }
 
-bool
+void
 Bytecode::calc_len(AddSpanFunc add_span)
 {
     m_len = 0;
-    bool retval = m_contents->calc_len(this, add_span);
+    m_contents->calc_len(this, add_span);
 
     // Check for multiples
     m_mult_int = 1;
@@ -206,15 +202,15 @@ Bytecode::calc_len(AddSpanFunc add_span)
         num = m_multiple->get_intnum(false);
         if (num) {
             if (num->sign() < 0) {
-                error_set(ERROR_VALUE, N_("multiple is negative"));
-                retval = true;
+                m_len = 0;
+                throw ValueError(N_("multiple is negative"));
             } else
                 m_mult_int = num->get_int();
         } else {
             if (m_multiple->contains(Expr::FLOAT)) {
-                error_set(ERROR_VALUE,
+                m_len = 0;
+                throw ValueError(
                     N_("expression must not contain floating point value"));
-                retval = true;
             } else {
                 Value value(0, Expr::Ptr(m_multiple->clone()));
                 add_span(this, 0, value, 0, 0);
@@ -222,21 +218,15 @@ Bytecode::calc_len(AddSpanFunc add_span)
             }
         }
     }
-
-    // If we got an error somewhere along the line, clear out any calc len
-    if (retval)
-        m_len = 0;
-
-    return retval;
 }
 
-int
+bool
 Bytecode::expand(int span, long old_val, long new_val,
                  /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres)
 {
     if (span == 0) {
         m_mult_int = new_val;
-        return 1;
+        return true;
     }
     return m_contents->expand(this, span, old_val, new_val, neg_thres,
                               pos_thres);
@@ -253,7 +243,8 @@ Bytecode::to_bytes(unsigned char* buf, unsigned long& bufsize,
     unsigned char *origbuf, *destbuf;
     long i;
 
-    if (get_multiple(m_mult_int, true) || m_mult_int == 0) {
+    m_mult_int = get_multiple(true);
+    if (m_mult_int == 0) {
         bufsize = 0;
         return 0;
     }
@@ -276,34 +267,28 @@ Bytecode::to_bytes(unsigned char* buf, unsigned long& bufsize,
 
     for (i=0; i<m_mult_int; i++) {
         origbuf = destbuf;
-        bool error = m_contents->to_bytes(this, destbuf, output_value,
-                                          output_reloc);
+        m_contents->to_bytes(this, destbuf, output_value, output_reloc);
 
-        if (!error && ((unsigned long)(destbuf - origbuf) != m_len))
-            internal_error(
+        if ((unsigned long)(destbuf - origbuf) != m_len)
+            throw InternalError(
                 N_("written length does not match optimized length"));
     }
 
     return mybuf;
 }
 
-bool
-Bytecode::get_multiple(long& multiple, bool calc_bc_dist)
+long
+Bytecode::get_multiple(bool calc_bc_dist)
 {
-    multiple = 1;
     if (m_multiple.get() != 0) {
         const IntNum* num = m_multiple->get_intnum(calc_bc_dist);
-        if (!num) {
-            error_set(ERROR_VALUE, N_("could not determine multiple"));
-            return true;
-        }
-        if (num->sign() < 0) {
-            error_set(ERROR_VALUE, N_("multiple is negative"));
-            return true;
-        }
-        multiple = num->get_int();
+        if (!num)
+            throw ValueError(N_("could not determine multiple"));
+        if (num->sign() < 0)
+            throw ValueError(N_("multiple is negative"));
+        return num->get_int();
     }
-    return false;
+    return 1;
 }
 
 Insn*

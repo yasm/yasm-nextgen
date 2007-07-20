@@ -159,10 +159,8 @@ public:
         ///
         /// @param bc           bytecode
         /// @param add_span     function to call to add a span
-        /// @return False if no error occurred, true if there was an
-        ///         error recognized (and output) during execution.
         /// @note May store to bytecode updated expressions.
-        virtual bool calc_len(Bytecode* bc,
+        virtual void calc_len(Bytecode* bc,
                               Bytecode::AddSpanFunc add_span) = 0;
 
         /// Recalculates the bytecode's length based on an expanded span
@@ -180,16 +178,15 @@ public:
         ///                     (returned)
         /// @param pos_thres    positive threshold for long/short decision
         ///                     (returned)
-        /// @return 0 if bc no longer dependent on this span's length,
-        ///         negative if there was an error recognized (and output)
-        ///         during execution, and positive if bc size may increase
-        ///         for this span further based on the new negative and
-        ///         positive thresholds returned.
+        /// @return False if bc no longer dependent on this span's length,
+        ///         or true if bc size may increase for this span further
+        ///         based on the new negative and positive thresholds
+        ///         returned.
         /// @note May store to bytecode updated expressions.
-        virtual int expand(Bytecode* bc, int span,
-                           long old_val, long new_val,
-                           /*@out@*/ long& neg_thres,
-                           /*@out@*/ long& pos_thres) = 0;
+        virtual bool expand(Bytecode* bc, int span,
+                            long old_val, long new_val,
+                            /*@out@*/ long& neg_thres,
+                            /*@out@*/ long& pos_thres) = 0;
 
         /// Convert a bytecode into its byte representation.
         /// Called from Bytecode::to_bytes().
@@ -206,11 +203,10 @@ public:
         ///                     their byte representation
         /// @param output_reloc function to call to output relocation entries
         ///                     for a single sym
-        /// @return True on error, false on success.
         /// @note May result in non-reversible changes to the bytecode, but
         ///       it's preferable if calling this function twice would result
         ///       in the same output.
-        virtual bool to_bytes(Bytecode* bc, unsigned char* &buf,
+        virtual void to_bytes(Bytecode* bc, unsigned char* &buf,
                               OutputValueFunc output_value,
                               OutputRelocFunc output_reloc = 0) = 0;
 
@@ -399,10 +395,8 @@ public:
     /// Any bytecode multiple is NOT included in the length or spans
     /// generation; this must be handled at a higher level.
     /// @param add_span     function to call to add a span
-    /// @return False if no error occurred, True if there was an error
-    ///         recognized (and output) during execution.
     /// @note May store to bytecode updated expressions and the short length.
-    bool calc_len(AddSpanFunc add_span);
+    void calc_len(AddSpanFunc add_span);
 
     /// Recalculate a bytecode's length based on an expanded span length.
     /// @param span         span ID (as given to yasm_bc_add_span_func in
@@ -413,14 +407,13 @@ public:
     ///                     (returned)
     /// @param pos_thres    positive threshold for long/short decision
     ///                     (returned)
-    /// @return 0 if bc no longer dependent on this span's length, negative if
-    ///         there was an error recognized (and output) during execution,
-    ///         and positive if bc size may increase for this span further
+    /// @return False if bc no longer dependent on this span's length,
+    ///         or true if bc size may increase for this span further
     ///         based on the new negative and positive thresholds returned.
     /// @note May store to bytecode updated expressions and the updated
     ///       length.
-    int expand(int span, long old_val, long new_val,
-               /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres);
+    bool expand(int span, long old_val, long new_val,
+                /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres);
 
     /// Convert a bytecode into its byte representation.
     /// @param bc           bytecode
@@ -448,12 +441,11 @@ public:
         /*@sets *buf@*/;
 
     /// Get the bytecode multiple value as an integer.
-    /// @param multiple     multiple value (output)
     /// @param calc_bc_dist True if distances between bytecodes should be
     ///                     calculated, false if error should be returned
     ///                     in this case
-    /// @return True on error (set with error_set()), false on success.
-    bool get_multiple(/*@out@*/ long& multiple, bool calc_bc_dist);
+    /// @return Multiple value.
+    long get_multiple(bool calc_bc_dist);
 
     /// Get the bytecode multiple value as an expression.
     /// @return Bytecode multiple, NULL if =1.

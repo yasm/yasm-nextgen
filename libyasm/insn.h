@@ -199,14 +199,14 @@ public:
     void finalize();
 
     /// Calculates minimum size.  Internal errors when called.
-    bool calc_len(Bytecode* bc, Bytecode::AddSpanFunc add_span);
+    void calc_len(Bytecode* bc, Bytecode::AddSpanFunc add_span);
 
     /// Recalculates bytecode length.  Internal errors when called.
-    int expand(Bytecode* bc, int span, long old_val, long new_val,
-               /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres);
+    bool expand(Bytecode* bc, int span, long old_val, long new_val,
+                /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres);
 
     /// Converts to bytes.  Internal errors when called.
-    bool to_bytes(Bytecode* bc, unsigned char* &buf,
+    void to_bytes(Bytecode* bc, unsigned char* &buf,
                   OutputValueFunc output_value,
                   OutputRelocFunc output_reloc = 0);
 

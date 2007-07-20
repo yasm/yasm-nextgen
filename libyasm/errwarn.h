@@ -32,6 +32,8 @@
 
 #include <vector>
 #include <cstdarg>
+#include <string>
+#include <stdexcept>
 
 namespace yasm {
 
@@ -48,122 +50,147 @@ enum WarnClass {
     WARN_SIZE_OVERRIDE      ///< Double size override
 };
 
-/// Error classes.  Bitmask-based to support limited subclassing.
-enum ErrorClass {
-    ERROR_NONE              = 0x0000, ///< No error
-    ERROR_GENERAL           = 0xFFFF, ///< Non-specific
-    ERROR_ARITHMETIC        = 0x0001, ///< Arithmetic error (general)
-    ERROR_OVERFLOW          = 0x8001, ///< Arithmetic overflow
-    ERROR_FLOATING_POINT    = 0x4001, ///< Floating point error
-    ERROR_ZERO_DIVISION     = 0x2001, ///< Divide-by-zero
-    ERROR_ASSERTION         = 0x0002, ///< Assertion error
-    ERROR_VALUE             = 0x0004, ///< Value inappropriate
-                                      ///< (e.g. not in range)
-    ERROR_NOT_ABSOLUTE      = 0x8004, ///< Absolute expression required
-    ERROR_TOO_COMPLEX       = 0x4004, ///< Expression too complex
-    ERROR_NOT_CONSTANT      = 0x2004, ///< Constant expression required
-    ERROR_IO                = 0x0008, ///< I/O error
-    ERROR_NOT_IMPLEMENTED   = 0x0010, ///< Not implemented error
-    ERROR_TYPE              = 0x0020, ///< Type error
-    ERROR_SYNTAX            = 0x0040, ///< Syntax error
-    ERROR_PARSE             = 0x8040  ///< Parser error
+/// Exception for internal errors.  These are usually due to sanity
+/// check failures in the code.
+class InternalError : public std::runtime_error
+{
+public:
+    /// Constructor.
+    /// @param message  internal error message
+    InternalError(const std::string& message);
+    virtual ~InternalError() throw() {}
+
+    virtual const char* what() const throw()
+    { return m_message.c_str(); }
+
+private:
+    std::string m_message;
 };
 
-/// Reporting point of internal errors.  These are usually due to sanity
-/// check failures in the code.
-/// @warning This function must NOT return to calling code; exit or longjmp
-///          instead.
-/// @param file     source file (ala __FILE__)
-/// @param line     source line (ala __LINE__)
-/// @param message  internal error message
-extern /*@exits@*/ void (*internal_error_)
-    (const char *file, unsigned int line, const char *message);
+/// Not implemented error.
+class NotImplementedError : public InternalError {
+public:
+    NotImplementedError(const std::string& message) : InternalError(message) {}
+};
 
-/// Easily-callable version of yasm_internal_error_().  Automatically uses
-/// __FILE__ and __LINE__ as the file and line.
-/// @param message   internal error message
-#define internal_error(message) \
-    internal_error_(__FILE__, __LINE__, message)
+/// Exception for fatal errors.
+class Fatal : public std::exception {
+public:
+    /// Constructor.
+    /// @param message  fatal error message
+    Fatal(const std::string& message);
+    virtual ~Fatal() throw() {}
 
-/// Reporting point of fatal errors.
-/// @warning This function must NOT return to calling code; exit or longjmp
-///          instead.
-/// @param message  fatal error message
-/// @param va       va_list argument list for message
-extern /*@exits@*/ void (*fatal_) (const char *message, va_list va);
+    virtual const char* what() const throw()
+    { return m_message.c_str(); }
 
-/// Reporting point of fatal errors, with variable arguments (internal only).
-/// @warning This function calls #yasm_fatal, and thus does not return to the
-///          calling code.
-/// @param message  fatal error message
-/// @param ...      argument list for message
-/*@exits@*/ void fatal(const char *message, ...);
+private:
+    std::string m_message;
+};
 
-/// Unconditionally clear the error indicator, freeing any associated data.
-/// Has no effect if the error indicator is not set.
-void error_clear();
+/// Error exception base class / non-specific error.
+class Error : public std::exception {
+public:
+    Error(const std::string& message);
+    virtual ~Error() throw() {}
 
-/// Get the error indicator.  YASM_ERROR_NONE is returned if no error has
-/// been set.  Note that as YASM_ERROR_NONE is 0, the return value can also
-/// be treated as a boolean value.
-/// @return Current error indicator.
-ErrorClass error_occurred();
+    /// Set a cross-reference for the error
+    /// @param xrefline virtual line to cross-reference to (should not be 0)
+    /// @param message  cross-reference message
+    void set_xref(unsigned long xrefline, const std::string& message);
 
-/// Check the error indicator against an error class.  To check if any error
-/// has been set, check against the YASM_ERROR_GENERAL class.  This function
-/// properly checks error subclasses.
-/// @param eclass   base error class to check against
-/// @return True if error indicator is set and a subclass of eclass.
-bool error_matches(ErrorClass eclass);
+    virtual const char* what() const throw()
+    { return m_message.c_str(); }
 
-/// Set the error indicator (va_list version).  Has no effect if the error
-/// indicator is already set.
-/// @param eclass   error class
-/// @param format   printf format string
-/// @param va       argument list for format
-void error_set_va(ErrorClass eclass, const char *format, va_list va);
+    /// Get the cross-reference for the error.
+    /// @param xrefstr  cross-reference message (output)
+    /// @return Cross-reference line number, or 0 if no cross reference.
+    virtual unsigned long what_xref(std::string& xrefstr) const
+    {
+        xrefstr = m_xrefstr;
+        return m_xrefline;
+    }
+private:
+    std::string m_message;
+    std::string m_xrefstr;
+    unsigned long m_xrefline;
+};
 
-/// Set the error indicator.  Has no effect if the error indicator is already
-/// set.
-/// @param eclass   error class
-/// @param format   printf format string
-/// @param ...      argument list for format
-void error_set(ErrorClass eclass, const char *format, ...)
-    /*@printflike@*/;
+// Error classes.
 
-/// Set a cross-reference for a new error (va_list version).  Has no effect
-/// if the error indicator is already set (e.g. with yasm_error_set()).  This
-/// function must be called prior to its corresponding yasm_error_set() call.
-/// @param xrefline virtual line to cross-reference to (should not be 0)
-/// @param format   printf format string
-/// @param va       argument list for format
-void error_set_xref_va(unsigned long xrefline, const char *format, va_list va);
+/// Arithmetic error (general).
+class ArithmeticError : public Error {
+public:
+    ArithmeticError(const std::string& message)
+        : Error(message) {}
+};
+/// Arithmetic overflow.
+class OverflowError : public ArithmeticError {
+public:
+    OverflowError(const std::string& message)
+        : ArithmeticError(message) {}
+};
+/// Floating point error.
+class FloatingPointError : public ArithmeticError {
+public:
+    FloatingPointError(const std::string& message)
+        : ArithmeticError(message) {}
+};
+/// Divide-by-zero.
+class ZeroDivisionError : public ArithmeticError {
+public:
+    ZeroDivisionError(const std::string& message) : ArithmeticError(message) {}
+};
 
-/// Set a cross-reference for a new error.  Has no effect if the error
-/// indicator is already set (e.g. with yasm_error_set()).  This function
-/// must be called prior to its corresponding yasm_error_set() call.
-/// @param xrefline virtual line to cross-reference to (should not be 0)
-/// @param format   printf format string
-/// @param ...      argument list for format
-void error_set_xref(unsigned long xrefline, const char *format, ...)
-    /*@printflike@*/;
+/// Assertion error.
+class AssertionError : public Error {
+public:
+    AssertionError(const std::string& message) : Error(message) {}
+};
 
-/// Fetch the error indicator and all associated data.  If the error
-/// indicator is set, the output pointers are set to the current error
-/// indicator values, and the error indicator is cleared.
-/// The code using this function is then responsible for deleting
-/// str and xrefstr (if non-NULL).  If the error indicator is not set,
-/// all output values are set to 0 (including eclass, which is set to
-/// #ERROR_NONE).
-/// @param eclass   error class (output)
-/// @param str      error message
-/// @param xrefline virtual line used for cross-referencing (0 if no xref)
-/// @param xrefstr  cross-reference error message (NULL if no xref)
-///
-void error_fetch(/*@out@*/ ErrorClass &eclass,
-                 /*@out@*/ /*@only@*/ /*@null@*/ char * &str,
-                 /*@out@*/ unsigned long &xrefline,
-                 /*@out@*/ /*@only@*/ /*@null@*/ char * &xrefstr);
+/// Value inappropriate (e.g. not in range).
+class ValueError : public Error {
+public:
+    ValueError(const std::string& message) : Error(message) {}
+};
+/// Absolute expression required.
+class NotAbsoluteError : public ValueError {
+public:
+    NotAbsoluteError(const std::string& message) : ValueError(message) {}
+};
+/// Expression too complex.
+class TooComplexError : public ValueError {
+public:
+    TooComplexError(const std::string& message) : ValueError(message) {}
+};
+/// Constant expression required.
+class NotConstantError : public ValueError {
+public:
+    NotConstantError(const std::string& message) : ValueError(message) {}
+};
+
+/// I/O error.
+class IOError : public Error {
+public:
+    IOError(const std::string& message) : Error(message) {}
+};
+
+/// Type error.
+class TypeError : public Error {
+public:
+    TypeError(const std::string& message) : Error(message) {}
+};
+
+/// Syntax error.
+class SyntaxError : public Error {
+public:
+    SyntaxError(const std::string& message) : Error(message) {}
+};
+/// Parser error.
+class ParseError : public Error {
+public:
+    ParseError(const std::string& message) : Error(message) {}
+};
 
 /// Unconditionally clear all warning indicators, freeing any associated data.
 /// Has no effect if no warning indicators have been set.
@@ -274,8 +301,8 @@ private:
 /// Convert a possibly unprintable character into a printable string.
 /// Uses standard cat(1) convention for unprintable characters.
 /// @param ch   possibly unprintable character
-/// @return Printable string representation (static buffer).
-char *conv_unprint(int ch);
+/// @return Printable string representation.
+std::string conv_unprint(int ch);
 
 /// Hook for library users to map to gettext() if GNU gettext is being used.
 /// @param msgid    message catalog identifier

@@ -41,16 +41,9 @@ namespace yasm {
 static const int MSG_MAXSIZE = 1024;
 
 // Default handlers for replacable functions
-static /*@exits@*/ void def_internal_error_
-    (const char *file, unsigned int line, const char *message);
-static /*@exits@*/ void def_fatal(const char *message, va_list va);
 static const char *def_gettext_hook(const char *msgid);
 
 // Storage for errwarn's "extern" functions
-/*@exits@*/ void (*internal_error_)
-    (const char *file, unsigned int line, const char *message)
-    = def_internal_error_;
-/*@exits@*/ void (*fatal_) (const char *message, va_list va) = def_fatal;
 const char * (*gettext_hook) (const char *msgid) = def_gettext_hook;
 
 class ErrwarnManager {
@@ -60,12 +53,6 @@ public:
         static ErrwarnManager inst;
         return inst;
     }
-
-    /// Error indicator.
-    ErrorClass m_eclass;
-    /*@only@*/ /*@null@*/ char *m_estr;
-    unsigned long m_exrefline;
-    /*@only@*/ /*@null@*/ char *m_exrefstr;
 
     /// Warning indicator.
     class Warning {
@@ -109,7 +96,6 @@ def_gettext_hook(const char *msgid)
 }
 
 ErrwarnManager::ErrwarnManager()
-    : m_eclass(ERROR_NONE), m_estr(0), m_exrefline(0), m_exrefstr(0)
 {
     // Default enabled warnings.  See errwarn.h for a list.
     m_wclass_enabled = 
@@ -120,54 +106,35 @@ ErrwarnManager::ErrwarnManager()
 
 ErrwarnManager::~ErrwarnManager()
 {
-    delete[] m_estr;
-    delete[] m_exrefstr;
 }
 
-char *
+std::string
 conv_unprint(int ch)
 {
-    static char unprint[5];
-    int pos = 0;
+    std::string unprint;
 
     if (((ch & ~0x7F) != 0) /*!isascii(ch)*/ && !isprint(ch)) {
-        unprint[pos++] = 'M';
-        unprint[pos++] = '-';
+        unprint += 'M';
+        unprint += '-';
         ch &= toascii(ch);
     }
     if (iscntrl(ch)) {
-        unprint[pos++] = '^';
-        unprint[pos++] = (ch == '\177') ? '?' : ch | 0100;
+        unprint += '^';
+        unprint += (ch == '\177') ? '?' : ch | 0100;
     } else
-        unprint[pos++] = ch;
-    unprint[pos] = '\0';
+        unprint += ch;
 
     return unprint;
 }
 
-/// Report an internal error.  Essentially a fatal error with trace info.
-/// Exit immediately because it's essentially an assert() trap.
-static void
-def_internal_error_(const char *file, unsigned int line, const char *message)
+InternalError::InternalError(const std::string& message)
+    : std::runtime_error(gettext_hook(N_("INTERNAL ERROR: ")) + message)
 {
-    fprintf(stderr, gettext_hook(N_("INTERNAL ERROR at %s, line %u: %s\n")),
-            file, line, gettext_hook(message));
-#ifdef HAVE_ABORT
-    abort();
-#else
-    exit(EXIT_FAILURE);
-#endif
 }
 
-/// Report a fatal error.  These are unrecoverable (such as running out of
-/// memory), so just exit immediately.
-static void
-def_fatal(const char *fmt, va_list va)
+Fatal::Fatal(const std::string& message)
+    : m_message(gettext_hook(N_("FATAL: ")) + message)
 {
-    fprintf(stderr, "%s: ", gettext_hook(N_("FATAL")));
-    vfprintf(stderr, gettext_hook(fmt), va);
-    fputc('\n', stderr);
-    exit(EXIT_FAILURE);
 }
 #if 0
 /// Create an errwarn structure in the correct linked list location.
@@ -229,103 +196,11 @@ errwarn_data_new(yasm_errwarns *errwarns, unsigned long line,
     return we;
 }
 #endif
-void
-error_clear()
+
+Error::Error(const std::string& message)
+    : m_message(message),
+      m_xrefline(0)
 {
-    ErrwarnManager &manager = ErrwarnManager::instance();
-
-    manager.m_eclass = ERROR_NONE;
-    delete[] manager.m_estr;
-    manager.m_estr = 0;
-    delete[] manager.m_exrefstr;
-    manager.m_exrefstr = 0;
-    manager.m_exrefline = 0;
-}
-
-ErrorClass
-error_occurred()
-{
-    ErrwarnManager &manager = ErrwarnManager::instance();
-    return manager.m_eclass;
-}
-
-bool
-error_matches(ErrorClass eclass)
-{
-    ErrwarnManager &manager = ErrwarnManager::instance();
-    if (manager.m_eclass == ERROR_NONE)
-        return eclass == ERROR_NONE;
-    if (manager.m_eclass == ERROR_GENERAL)
-        return eclass == ERROR_GENERAL;
-    return (manager.m_eclass & eclass) == eclass;
-}
-
-void
-error_set_va(ErrorClass eclass, const char *format, va_list va)
-{
-    ErrwarnManager &manager = ErrwarnManager::instance();
-    if (manager.m_eclass != ERROR_NONE)
-        return;
-
-    manager.m_eclass = eclass;
-    manager.m_estr = new char[MSG_MAXSIZE+1];
-#ifdef HAVE_VSNPRINTF
-    vsnprintf(manager.m_estr, MSG_MAXSIZE, gettext_hook(format), va);
-#else
-    vsprintf(manager.m_estr, gettext_hook(format), va);
-#endif
-}
-
-void
-error_set(ErrorClass eclass, const char *format, ...)
-{
-    va_list va;
-    va_start(va, format);
-    error_set_va(eclass, format, va);
-    va_end(va);
-}
-
-void
-error_set_xref_va(unsigned long xrefline, const char *format, va_list va)
-{
-    ErrwarnManager &manager = ErrwarnManager::instance();
-    if (manager.m_eclass != ERROR_NONE)
-        return;
-
-    manager.m_exrefline = xrefline;
-
-    manager.m_exrefstr = new char[MSG_MAXSIZE+1];
-#ifdef HAVE_VSNPRINTF
-    vsnprintf(manager.m_exrefstr, MSG_MAXSIZE, gettext_hook(format), va);
-#else
-    vsprintf(manager.m_exrefstr, gettext_hook(format), va);
-#endif
-}
-
-void
-error_set_xref(unsigned long xrefline, const char *format, ...)
-{
-    va_list va;
-    va_start(va, format);
-    error_set_xref_va(xrefline, format, va);
-    va_end(va);
-}
-
-void
-error_fetch(ErrorClass &eclass, char * &str, unsigned long &xrefline,
-            char * &xrefstr)
-{
-    ErrwarnManager &manager = ErrwarnManager::instance();
-
-    eclass = manager.m_eclass;
-    str = manager.m_estr;
-    xrefline = manager.m_exrefline;
-    xrefstr = manager.m_exrefstr;
-
-    manager.m_eclass = ERROR_NONE;
-    manager.m_estr = 0;
-    manager.m_exrefline = 0;
-    manager.m_exrefstr = 0;
 }
 
 void
@@ -492,14 +367,4 @@ yasm_errwarns_output_all(yasm_errwarns *errwarns, yasm_linemap *lm,
     }
 }
 #endif
-void
-fatal(const char *message, ...)
-{
-    va_list va;
-    va_start(va, message);
-    fatal_(message, va);
-    /*@notreached@*/
-    va_end(va);
-}
-
 } // namespace yasm
