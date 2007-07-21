@@ -57,7 +57,7 @@ class InternalError : public std::runtime_error
 public:
     /// Constructor.
     /// @param message  internal error message
-    InternalError(const std::string& message);
+    explicit InternalError(const std::string& message);
     virtual ~InternalError() throw() {}
 
     virtual const char* what() const throw()
@@ -70,7 +70,8 @@ private:
 /// Not implemented error.
 class NotImplementedError : public InternalError {
 public:
-    NotImplementedError(const std::string& message) : InternalError(message) {}
+    explicit NotImplementedError(const std::string& message)
+        : InternalError(message) {}
 };
 
 /// Exception for fatal errors.
@@ -78,7 +79,7 @@ class Fatal : public std::exception {
 public:
     /// Constructor.
     /// @param message  fatal error message
-    Fatal(const std::string& message);
+    explicit Fatal(const std::string& message);
     virtual ~Fatal() throw() {}
 
     virtual const char* what() const throw()
@@ -89,9 +90,9 @@ private:
 };
 
 /// Error exception base class / non-specific error.
-class Error : public std::exception {
+class Error : public virtual std::exception {
 public:
-    Error(const std::string& message);
+    explicit Error(const std::string& message);
     virtual ~Error() throw() {}
 
     /// Set a cross-reference for the error
@@ -121,75 +122,79 @@ private:
 /// Arithmetic error (general).
 class ArithmeticError : public Error {
 public:
-    ArithmeticError(const std::string& message)
+    explicit ArithmeticError(const std::string& message)
         : Error(message) {}
 };
 /// Arithmetic overflow.
 class OverflowError : public ArithmeticError {
 public:
-    OverflowError(const std::string& message)
+    explicit OverflowError(const std::string& message)
         : ArithmeticError(message) {}
 };
 /// Floating point error.
 class FloatingPointError : public ArithmeticError {
 public:
-    FloatingPointError(const std::string& message)
+    explicit FloatingPointError(const std::string& message)
         : ArithmeticError(message) {}
 };
 /// Divide-by-zero.
 class ZeroDivisionError : public ArithmeticError {
 public:
-    ZeroDivisionError(const std::string& message) : ArithmeticError(message) {}
+    explicit ZeroDivisionError(const std::string& message)
+        : ArithmeticError(message) {}
 };
 
 /// Assertion error.
 class AssertionError : public Error {
 public:
-    AssertionError(const std::string& message) : Error(message) {}
+    explicit AssertionError(const std::string& message) : Error(message) {}
 };
 
 /// Value inappropriate (e.g. not in range).
 class ValueError : public Error {
 public:
-    ValueError(const std::string& message) : Error(message) {}
+    explicit ValueError(const std::string& message) : Error(message) {}
 };
 /// Absolute expression required.
 class NotAbsoluteError : public ValueError {
 public:
-    NotAbsoluteError(const std::string& message) : ValueError(message) {}
+    explicit NotAbsoluteError(const std::string& message)
+        : ValueError(message) {}
 };
 /// Expression too complex.
 class TooComplexError : public ValueError {
 public:
-    TooComplexError(const std::string& message) : ValueError(message) {}
+    explicit TooComplexError(const std::string& message)
+        : ValueError(message) {}
 };
 /// Constant expression required.
 class NotConstantError : public ValueError {
 public:
-    NotConstantError(const std::string& message) : ValueError(message) {}
+    explicit NotConstantError(const std::string& message)
+        : ValueError(message) {}
 };
 
 /// I/O error.
 class IOError : public Error {
 public:
-    IOError(const std::string& message) : Error(message) {}
+    explicit IOError(const std::string& message) : Error(message) {}
 };
 
 /// Type error.
 class TypeError : public Error {
 public:
-    TypeError(const std::string& message) : Error(message) {}
+    explicit TypeError(const std::string& message) : Error(message) {}
 };
 
 /// Syntax error.
 class SyntaxError : public Error {
 public:
-    SyntaxError(const std::string& message) : Error(message) {}
+    explicit SyntaxError(const std::string& message) : Error(message) {}
 };
 /// Parser error.
 class ParseError : public Error {
 public:
-    ParseError(const std::string& message) : Error(message) {}
+    explicit ParseError(const std::string& message) : Error(message) {}
 };
 
 /// Unconditionally clear all warning indicators, freeing any associated data.

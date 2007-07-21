@@ -317,7 +317,7 @@ Expr::bc_dist_subst_cb(Term& term, Bytecode* precbc, Bytecode* precbc2,
     // Call higher-level callback
     func(subst, precbc, precbc2);
     // Change the term to an subst
-    term = subst;
+    term = Term(subst);
     subst++;
     return true;
 }

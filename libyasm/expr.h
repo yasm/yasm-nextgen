@@ -113,7 +113,8 @@ public:
         Term(Register* reg) : m_type(REG) { m_data.reg = reg; }
         Term(IntNum* intn) : m_type(INT) { m_data.intn = intn; }
         Term(FloatNum* flt) : m_type(FLOAT) { m_data.flt = flt; }
-        Term(unsigned int subst) : m_type(SUBST) { m_data.subst = subst; }
+        explicit Term(unsigned int subst) : m_type(SUBST)
+        { m_data.subst = subst; }
         Term(Symbol* sym) : m_type(SYM) { m_data.sym = sym; }
         Term(Bytecode* bc) : m_type(PRECBC) { m_data.precbc = bc; }
         Term(Expr* expr) : m_type(EXPR) { m_data.expr = expr; }
@@ -198,7 +199,7 @@ public:
     /// Create a new expression identity e=a.
     /// @param a        identity within new expression
     /// @param line     line
-    Expr(const Term& a, unsigned long line=0);
+    explicit Expr(const Term& a, unsigned long line=0);
 
     /// Determine if an expression is a specified operation (at the top
     /// level).

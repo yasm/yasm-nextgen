@@ -47,7 +47,7 @@ class IntNum;
 /// a relocatable value should use this structure instead.
 class Value {
 public:
-    Value(unsigned int size);
+    explicit Value(unsigned int size);
 
     /// Initialize a value with just an expression.  No processing is
     /// performed, the expression is simply stuck into #abs and the other
