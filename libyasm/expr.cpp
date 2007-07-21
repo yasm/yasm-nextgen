@@ -202,7 +202,7 @@ Expr::Expr(const Expr& e)
                    boost::mem_fn(&Term::clone));
 }
 
-Expr::Expr(Op op, unsigned long line)
+Expr::Expr(unsigned long line, Op op)
     : m_op(op), m_line(line)
 {
 }
@@ -317,7 +317,7 @@ Expr::bc_dist_subst_cb(Term& term, Bytecode* precbc, Bytecode* precbc2,
     // Call higher-level callback
     func(subst, precbc, precbc2);
     // Change the term to an subst
-    term = Term(subst);
+    term = Term(Term::Subst(subst));
     subst++;
     return true;
 }
@@ -348,7 +348,7 @@ Expr::bc_dist_subst(boost::function<void (unsigned int subst,
 inline void
 Expr::xform_neg_term(Terms::iterator term)
 {
-    Expr *sube = new Expr(MUL, m_line);
+    Expr *sube = new Expr(m_line, MUL);
     sube->m_terms.push_back(new IntNum(-1));
     sube->m_terms.push_back(*term);
     *term = sube;
@@ -404,7 +404,7 @@ Expr::xform_neg_helper()
         default:
             // Everything else.  MUL will be combined when it's leveled.
             // Replace ourselves with -1*e.
-            Expr *ne = new Expr(m_op, m_line);
+            Expr *ne = new Expr(m_line, m_op);
             m_op = MUL;
             m_terms.swap(ne->m_terms);
             m_terms.push_back(new IntNum(-1));
@@ -740,7 +740,7 @@ Expr::clone(int except) const
     if (except == -1 || m_terms.size() == 1)
         return new Expr(*this);
 
-    std::auto_ptr<Expr> e(new Expr(m_op, m_line));
+    std::auto_ptr<Expr> e(new Expr(m_line, m_op));
     int j = 0;
     for (Terms::const_iterator i=m_terms.begin(), end=m_terms.end();
          i != end; ++i, ++j) {
@@ -840,7 +840,7 @@ Expr::extract_segoff()
         retval = e;
     else {
         // Need to build IDENT expression to hold non-expression contents
-        retval = new Expr(IDENT, m_line);
+        retval = new Expr(m_line, IDENT);
         retval->m_terms.push_back(left);
     }
 
@@ -865,7 +865,7 @@ Expr::extract_wrt()
         retval = e;
     else {
         // Need to build IDENT expression to hold non-expression contents
-        retval = new Expr(IDENT, m_line);
+        retval = new Expr(m_line, IDENT);
         retval->m_terms.push_back(right);
     }
 

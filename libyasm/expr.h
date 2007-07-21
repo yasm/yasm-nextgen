@@ -110,11 +110,17 @@ public:
         friend std::ostream& operator<< (std::ostream&, const Term&);
 
     public:
+        /// Substitution value.
+        struct Subst {
+            explicit Subst(unsigned int v) : subst(v) {}
+            unsigned int subst;
+        };
+
         Term(Register* reg) : m_type(REG) { m_data.reg = reg; }
         Term(IntNum* intn) : m_type(INT) { m_data.intn = intn; }
         Term(FloatNum* flt) : m_type(FLOAT) { m_data.flt = flt; }
-        explicit Term(unsigned int subst) : m_type(SUBST)
-        { m_data.subst = subst; }
+        explicit Term(Subst subst) : m_type(SUBST)
+        { m_data.subst = subst.subst; }
         Term(Symbol* sym) : m_type(SYM) { m_data.sym = sym; }
         Term(Bytecode* bc) : m_type(PRECBC) { m_data.precbc = bc; }
         Term(Expr* expr) : m_type(EXPR) { m_data.expr = expr; }
@@ -330,7 +336,7 @@ private:
     Terms m_terms;
 
     void add_term(const Term& term);
-    Expr(Op op, unsigned long line);
+    Expr(unsigned long line, Op op);
 
     // Internal callbacks
     bool bc_dist_cb(Term& term, Bytecode* precbc, Bytecode* precbc2);
