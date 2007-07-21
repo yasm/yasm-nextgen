@@ -55,6 +55,8 @@ public:
 
     /// Copy constructor.
     FloatNum(const FloatNum& rhs);
+    /// Assignment operator.
+    FloatNum& operator= (const FloatNum& rhs);
 
     /// Create an explicit allocated copy.
     FloatNum* clone() const { return new FloatNum(*this); }

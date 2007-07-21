@@ -79,6 +79,8 @@ public:
 
     /// Copy constructor.
     IntNum(const IntNum &rhs);
+    /// Assignment operator.
+    IntNum& operator= (const IntNum& rhs);
 
     /// Get an allocated copy.
     IntNum *clone() const { return new IntNum(*this); }

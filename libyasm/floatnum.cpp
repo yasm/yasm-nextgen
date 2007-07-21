@@ -477,6 +477,16 @@ FloatNum::FloatNum(const FloatNum& flt)
     m_mantissa = BitVector::Clone(flt.m_mantissa);
 }
 
+FloatNum&
+FloatNum::operator= (const FloatNum& rhs)
+{
+    m_exponent = rhs.m_exponent;
+    m_sign = rhs.m_sign;
+    m_flags = rhs.m_flags;
+    m_mantissa = BitVector::Clone(rhs.m_mantissa);
+    return *this;
+}
+
 void
 FloatNum::calc(Expr::Op op, /*@unused@*/ const FloatNum* operand)
 {

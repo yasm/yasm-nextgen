@@ -304,6 +304,21 @@ IntNum::IntNum(const IntNum &rhs)
     }
 }
 
+IntNum&
+IntNum::operator= (const IntNum& rhs)
+{
+    m_type = rhs.m_type;
+    switch (rhs.m_type) {
+        case INTNUM_UL:
+            m_val.ul = rhs.m_val.ul;
+            break;
+        case INTNUM_BV:
+            m_val.bv = BitVector::Clone(rhs.m_val.bv);
+            break;
+    }
+    return *this;
+}
+
 /*@-nullderef -nullpass -branchstate@*/
 void
 IntNum::calc(Expr::Op op, const IntNum *operand)
