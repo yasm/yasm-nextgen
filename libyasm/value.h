@@ -56,7 +56,6 @@ public:
     /// parsing simply to ensure all fields of the value are initialized;
     /// after the parse is complete, yasm_value_extract() should be called
     /// to finalize the value.  The value defaults to unsigned.
-    /// @param value    value to be initialized
     /// @param e        expression (kept)
     /// @param size     value size (in bits)
     Value(unsigned int size, std::auto_ptr<Expr> e);
@@ -64,7 +63,6 @@ public:
     /// Initialize with just a symrec.  No processing is performed,
     /// the symrec is simply stuck into value.rel and the other fields are
     /// initialized.
-    /// @param value    value to be initialized
     /// @param sym      symrec
     /// @param size     value size (in bits)
     Value(unsigned int size, /*@null@*/ Symbol* sym);
@@ -79,7 +77,6 @@ public:
 
     /// Set a value to be relative to the current assembly position rather
     /// than relative to the section start.
-    /// @param value    value
     /// @param bc       bytecode containing value
     /// @param ip_rel   if nonzero, indicates IP-relative data relocation,
     ///                 sometimes used to generate special relocations
@@ -100,11 +97,10 @@ public:
     /// @note This should only be called after the parse is complete.
     ///       Calling before the parse is complete will usually result in
     ///       an error return.
-    bool finalize(/*@null@*/ Bytecode* precbc);
+    bool finalize(Bytecode* precbc);
 
     /// Get value if absolute or PC-relative section-local relative.
     /// Returns NULL otherwise.
-    /// @param value        value
     /// @param bc           current bytecode (for PC-relative calculation);
     ///                     if 0, 0 is returned for PC-relative values.
     /// @param calc_bc_dist if nonzero, calculates bytecode distances in
@@ -117,7 +113,6 @@ public:
 
     /// Output value if constant or PC-relative section-local.  This should
     /// be used from objfmt output_value_func() functions.
-    /// @param value        value
     /// @param buf          buffer for byte representation
     /// @param destsize     destination size (in bytes)
     /// @param bc           current bytecode (usually passed into
