@@ -141,7 +141,7 @@ public:
     void put(std::ostream& os, int indent_level) const;
 
     /// Maximum value of #m_rshift.
-    static const unsigned int RSHIFT_MAX;
+    static const unsigned int RSHIFT_MAX = 127;
 
 private:
     bool finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,

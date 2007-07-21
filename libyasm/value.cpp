@@ -43,8 +43,6 @@
 
 namespace yasm {
 
-const unsigned int Value::RSHIFT_MAX = 127;
-
 Value::Value(unsigned int size)
     : m_abs(0),
       m_rel(0),
