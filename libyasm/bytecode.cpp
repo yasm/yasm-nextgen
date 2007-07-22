@@ -411,25 +411,24 @@ subst_bc_dist_cb(Expr::Term& term, Bytecode* precbc, Bytecode* precbc2,
     return true;
 }
 
-inline void
-xform_subst_bc_dist_cb(Expr* e,
-                       unsigned int& subst,
-                       boost::function<void (unsigned int subst,
-                                             Bytecode* precbc,
-                                             Bytecode* precbc2)> func)
+static inline void
+xform_subst_bc_dist(Expr* e, unsigned int& subst,
+                    boost::function<void (unsigned int subst,
+                                          Bytecode* precbc,
+                                          Bytecode* precbc2)> func)
 {
     xform_bc_dist_base(e, boost::bind(&subst_bc_dist_cb, _1, _2, _3,
                                       boost::ref(subst), func));
 }
 
 int
-xform_subst_bc_dist(Expr* e, boost::function<void (unsigned int subst,
-                                                   Bytecode* precbc,
-                                                   Bytecode* precbc2)> func)
+subst_bc_dist(Expr* e, boost::function<void (unsigned int subst,
+                                             Bytecode* precbc,
+                                             Bytecode* precbc2)> func)
 {
     unsigned int subst = 0;
     e->level_tree(true, true, true,
-                  boost::bind(&xform_subst_bc_dist_cb, _1, boost::ref(subst),
+                  boost::bind(&xform_subst_bc_dist, _1, boost::ref(subst),
                               func));
     return subst;
 }

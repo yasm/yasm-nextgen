@@ -491,25 +491,23 @@ private:
 /*@null@*/ /*@only@*/ IntNum* calc_bc_dist(const Bytecode* precbc1,
                                            const Bytecode* precbc2);
 
-/// Transforms instances of symrec-symrec [symrec+(-1*symrec)] into integers
-/// if possible by calling calc_bc_dist().
+/// Expr::level_tree() transformation helper function to transform instances
+/// of symrec-symrec [symrec+(-1*symrec)] into integers if possible by
+/// calling calc_bc_dist().
 /// @param e            expression
 /// @warning Only valid /after/ optimization.
 void xform_calc_bc_dist(Expr* e);
 
-/// Expr::level_tree() transformation helper function to transform
-/// symrec-symrec terms in expression into SUBST terms.
+/// Transform symrec-symrec terms in expression into SUBST terms.
 /// Calls the callback function for each symrec-symrec term.
-/// @note Use boost::bind() to bind this into a form acceptable to
-///       Expr::level_tree().
-/// @param
+/// @note Also simplifies the expression.
+/// @param e            expression
 /// @param callback     callback function: given subst index for bytecode
 ///                     pair, bytecode pair (bc2-bc1)
 /// @return Number of transformations made.
-int xform_subst_bc_dist(Expr* e,
-                        boost::function<void (unsigned int subst,
-                                              Bytecode* precbc,
-                                              Bytecode* precbc2)> func);
+int subst_bc_dist(Expr* e, boost::function<void (unsigned int subst,
+                                                 Bytecode* precbc,
+                                                 Bytecode* precbc2)> func);
 
 } // namespace yasm
 
