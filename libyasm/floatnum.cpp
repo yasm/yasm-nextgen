@@ -480,10 +480,12 @@ FloatNum::FloatNum(const FloatNum& flt)
 FloatNum&
 FloatNum::operator= (const FloatNum& rhs)
 {
-    m_exponent = rhs.m_exponent;
-    m_sign = rhs.m_sign;
-    m_flags = rhs.m_flags;
-    m_mantissa = BitVector::Clone(rhs.m_mantissa);
+    if (this != &rhs) {
+        m_exponent = rhs.m_exponent;
+        m_sign = rhs.m_sign;
+        m_flags = rhs.m_flags;
+        m_mantissa = BitVector::Clone(rhs.m_mantissa);
+    }
     return *this;
 }
 
