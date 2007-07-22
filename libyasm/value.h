@@ -1,3 +1,5 @@
+#ifndef YASM_VALUE_H
+#define YASM_VALUE_H
 ///
 /// @file libyasm/value.h
 /// @brief YASM value interface.
@@ -27,9 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#ifndef YASM_VALUE_H
-#define YASM_VALUE_H
-
 #include <iostream>
 #include <memory>
 #include <boost/scoped_ptr.hpp>

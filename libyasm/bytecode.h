@@ -1,3 +1,5 @@
+#ifndef YASM_BYTECODE_H
+#define YASM_BYTECODE_H
 ///
 /// @file libyasm/bytecode.h
 /// @brief YASM bytecode interface.
@@ -27,9 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#ifndef YASM_BYTECODE_H
-#define YASM_BYTECODE_H
-
 #include <vector>
 #include <iostream>
 #include <memory>

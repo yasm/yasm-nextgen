@@ -1,3 +1,5 @@
+#ifndef YASM_FLOATNUM_H
+#define YASM_FLOATNUM_H
 ///
 /// @file libyasm/floatnum.h
 /// @brief YASM floating point (IEEE) interface.
@@ -29,9 +31,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#ifndef YASM_FLOATNUM_H
-#define YASM_FLOATNUM_H
-
 #include <iostream>
 
 #include "bitvect.h"

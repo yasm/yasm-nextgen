@@ -1,10 +1,10 @@
+#ifndef YASM_INTERVAL_TREE_H
+#define YASM_INTERVAL_TREE_H
+
 //  The interval_tree.h and interval_tree.cc files contain code for 
 //  interval trees implemented using red-black-trees as described in 
 //  the book _Introduction_To_Algorithms_ by Cormen, Leisserson, 
 //  and Rivest.  
-
-#ifndef YASM_INTERVAL_TREE_H
-#define YASM_INTERVAL_TREE_H
 
 /* If the symbol YASM_INTERVAL_TREE_CHECK_ASSUMPTIONS is defined then the
  * code does a lot of extra checking to make sure certain assumptions

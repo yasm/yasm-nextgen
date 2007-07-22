@@ -1,3 +1,5 @@
+#ifndef YASM_EXPR_H
+#define YASM_EXPR_H
 ///
 /// @file libyasm/expr.h
 /// @brief YASM expression interface.
@@ -27,9 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#ifndef YASM_EXPR_H
-#define YASM_EXPR_H
-
 #include <iostream>
 #include <vector>
 #include <memory>

@@ -1,3 +1,5 @@
+#ifndef YASM_INSN_H
+#define YASM_INSN_H
 ///
 /// @file libyasm/insn.h
 /// @brief YASM mnenomic instruction.
@@ -27,9 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#ifndef YASM_INSN_H
-#define YASM_INSN_H
-
 #include <vector>
 #include <iostream>
 #include <memory>

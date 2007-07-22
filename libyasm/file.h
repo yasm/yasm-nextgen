@@ -1,3 +1,5 @@
+#ifndef YASM_FILE_H
+#define YASM_FILE_H
 ///
 /// @file libyasm/file.h
 /// @brief YASM file helpers.
@@ -27,9 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#ifndef YASM_FILE_H
-#define YASM_FILE_H
-
 #include <boost/function.hpp>
 
 namespace yasm {

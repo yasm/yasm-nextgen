@@ -1,11 +1,11 @@
+#ifndef YASM_MD5_H
+#define YASM_MD5_H
+
 /* See md5.c for explanation and copyright information.  */
 
 /*
  * $Id: md5.h 1825 2007-04-22 03:32:46Z peter $
  */
-
-#ifndef YASM_MD5_H
-#define YASM_MD5_H
 
 namespace yasm {
 
@@ -33,4 +33,4 @@ private:
 
 } // namespace yasm
 
-#endif /* !YASM_MD5_H */
+#endif

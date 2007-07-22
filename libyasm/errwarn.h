@@ -1,3 +1,5 @@
+#ifndef YASM_ERRWARN_H
+#define YASM_ERRWARN_H
 ///
 /// @file libyasm/errwarn.h
 /// @brief YASM error and warning reporting interface.
@@ -27,9 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#ifndef YASM_ERRWARN_H
-#define YASM_ERRWARN_H
-
 #include <vector>
 #include <string>
 #include <stdexcept>

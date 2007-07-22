@@ -1,3 +1,5 @@
+#ifndef YASM_LINEMAP_H
+#define YASM_LINEMAP_H
 ///
 /// @file libyasm/linemap.h
 /// @brief YASM virtual line mapping interface.
@@ -27,9 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#ifndef YASM_LINEMAP_H
-#define YASM_LINEMAP_H
-
 #include <vector>
 #include <set>
 #include <string>

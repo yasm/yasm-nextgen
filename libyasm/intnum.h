@@ -1,3 +1,5 @@
+#ifndef YASM_INTNUM_H
+#define YASM_INTNUM_H
 ///
 /// @file libyasm/intnum.h
 /// @brief YASM integer number interface.
@@ -27,9 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#ifndef YASM_INTNUM_H
-#define YASM_INTNUM_H
-
 #include <iostream>
 #include <cstdlib>
 
