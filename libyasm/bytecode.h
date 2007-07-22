@@ -35,6 +35,7 @@
 #include <memory>
 #include <boost/function.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/noncopyable.hpp>
 
 namespace yasm {
 
@@ -130,7 +131,7 @@ public:
     /// Bytecode contents (abstract base class).  Any implementation of a
     /// specific bytecode must implement a class derived from this one.
     /// The bytecode implementation-specific data is stored in #contents.
-    class Contents {
+    class Contents : private boost::noncopyable {
     public:
         typedef std::auto_ptr<Contents> Ptr;
 
@@ -231,12 +232,6 @@ public:
         virtual SpecialType get_special() const;
 
         virtual Contents* clone() const = 0;
-
-    private:
-        /// Unimplemented copy constructor.
-        Contents(const Contents& oth);
-        /// Unimplemented assignment operator.
-        Contents& operator= (const Contents& oth);
     };
 
     /// Create a bytecode of any specified type.

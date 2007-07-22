@@ -33,6 +33,7 @@
 #include <vector>
 #include <iostream>
 #include <memory>
+#include <boost/noncopyable.hpp>
 
 #include "bytecode.h"
 
@@ -90,9 +91,11 @@ public:
     class Operand {
     public:
         /// Base class for target modifiers.
-        class TargetModifier {
+        class TargetModifier : private boost::noncopyable {
             TargetModifier() {}
             virtual ~TargetModifier() {}
+
+            virtual void put(std::ostream& os) = 0;
         };
 
         /// Create an instruction operand from a register.
@@ -116,6 +119,11 @@ public:
 
         /// Destructor.
         ~Operand();
+
+        // No copy constructor or assignment operator as we want to use
+        // the default bit-copy ones.  Even though this class contains
+        // more complex structures, we don't want to be copying the
+        // contents all the time.
 
         void put(std::ostream& os, int indent_level) const;
         void finalize();
@@ -227,12 +235,6 @@ protected:
 
     /// Array of segment prefixes.
     std::vector<const SegmentRegister*> m_segregs;
-
-private:
-    /// Unimplemented copy constructor.
-    Insn(const Insn& oth);
-    /// Unimplemented assignment operator.
-    Insn& operator= (const Insn& oth);
 };
 
 } // namespace yasm
