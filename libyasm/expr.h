@@ -134,8 +134,23 @@ public:
         Term(std::auto_ptr<Expr> expr) : m_type(EXPR)
         { m_data.expr = expr.release(); }
 
+        /// Explicit copy creator.
+        /// There's no copy constructor or assignment operator as we want
+        /// to use the default bit-copy ones.  Even though this class
+        /// contains more complex structures, we don't want to be copying
+        /// the contents all the time.
         Term clone() const;
+
+        /// Explicit release.
+        /// Doesn't destroy contents, just ensures what contents are there
+        /// won't be destroyed via destroy().  Also marks the type as
+        /// Expr::NONE for easy filtering (e.g. with std::remove_if()).
         void release() { m_type = NONE; m_data.reg = 0; }
+
+        /// Explicit destructor.
+        /// Similar to clone(), we do smart copying and destruction in
+        /// #Expr implementation to prevent over-copying of possibly deep
+        /// expression trees.
         void destroy();
 
         /// Comparison used for sorting; assumes TermTypes are in sort order.
