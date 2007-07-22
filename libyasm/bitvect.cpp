@@ -198,7 +198,7 @@ static void ins_words(wordptr addr, N_word total, N_word count,
 {
     N_word length;
 
-    if ((total > 0) && (count > 0))
+    if ((total > 0) and (count > 0))
     {
         if (count > total) count = total;
         length = total - count;
@@ -212,7 +212,7 @@ static void del_words(wordptr addr, N_word total, N_word count,
 {
     N_word length;
 
-    if ((total > 0) && (count > 0))
+    if ((total > 0) and (count > 0))
     {
         if (count > total) count = total;
         length = total - count;
@@ -350,7 +350,7 @@ ErrCode Boot(void)
     LOGBITS = 0;
     sample = BITS;
     lsb = (sample AND LSBMASK);
-    while ((sample >>= 1) && (!lsb))
+    while ((sample >>= 1) and (not lsb))
     {
         LOGBITS++;
         lsb = (sample AND LSBMASK);
@@ -571,7 +571,7 @@ wordptr Clone(wordptr addr)               /* makes exact duplicate */
 
     bits = bits_(addr);
     twin = Create(bits,false);
-    if ((twin != NULL) && (bits > 0))
+    if ((twin != NULL) and (bits > 0))
         cpy_words(twin,addr,size_(addr));
     return(twin);
 }
@@ -589,7 +589,7 @@ wordptr Concat(wordptr X, wordptr Y)      /* returns concatenation */
     bitsY = bits_(Y);
     bitsZ = bitsX + bitsY;
     Z = Create(bitsZ,false);
-    if ((Z != NULL) && (bitsZ > 0))
+    if ((Z != NULL) and (bitsZ > 0))
     {
         cpy_words(Z,Y,size_(Y));
         Interval_Copy(Z,X,bitsY,0,bitsX);
@@ -608,7 +608,7 @@ void Copy(wordptr X, wordptr Y)                           /* X = Y */
     wordptr lastX;
     wordptr lastY;
 
-    if ((X != Y) && (sizeX > 0))
+    if ((X != Y) and (sizeX > 0))
     {
         lastX = X + sizeX - 1;
         if (sizeY > 0)
@@ -620,7 +620,7 @@ void Copy(wordptr X, wordptr Y)                           /* X = Y */
                 fill = (N_word) ~0L;
                 *lastY |= NOT maskY;
             }
-            while ((sizeX > 0) && (sizeY > 0))
+            while ((sizeX > 0) and (sizeY > 0))
             {
                 *X++ = *Y++;
                 sizeX--;
@@ -719,12 +719,12 @@ void Reverse(wordptr X, wordptr Y)
                 {
                     value |= bit;
                 }
-                if (!(mask >>= 1))
+                if (not (mask >>= 1))
                 {
                     Y--;
                     mask = MSBMASK;
                 }
-                if (!(bit <<= 1))
+                if (not (bit <<= 1))
                 {
                     *X++ = value;
                     value = 0;
@@ -748,7 +748,7 @@ void Interval_Empty(wordptr addr, N_int lower, N_int upper)
     N_word  himask;
     N_word  diff;
 
-    if ((size > 0) && (lower < bits) && (upper < bits) && (lower <= upper))
+    if ((size > 0) and (lower < bits) and (upper < bits) and (lower <= upper))
     {
         lobase = lower >> LOGBITS;
         hibase = upper >> LOGBITS;
@@ -788,7 +788,7 @@ void Interval_Fill(wordptr addr, N_int lower, N_int upper)
     N_word  himask;
     N_word  diff;
 
-    if ((size > 0) && (lower < bits) && (upper < bits) && (lower <= upper))
+    if ((size > 0) and (lower < bits) and (upper < bits) and (lower <= upper))
     {
         lobase = lower >> LOGBITS;
         hibase = upper >> LOGBITS;
@@ -829,7 +829,7 @@ void Interval_Flip(wordptr addr, N_int lower, N_int upper)
     N_word  himask;
     N_word  diff;
 
-    if ((size > 0) && (lower < bits) && (upper < bits) && (lower <= upper))
+    if ((size > 0) and (lower < bits) and (upper < bits) and (lower <= upper))
     {
         lobase = lower >> LOGBITS;
         hibase = upper >> LOGBITS;
@@ -865,7 +865,7 @@ void Interval_Reverse(wordptr addr, N_int lower, N_int upper)
     N_word  lomask;
     N_word  himask;
 
-    if ((bits > 0) && (lower < bits) && (upper < bits) && (lower < upper))
+    if ((bits > 0) and (lower < bits) and (upper < bits) and (lower < upper))
     {
         loaddr = addr + (lower >> LOGBITS);
         hiaddr = addr + (upper >> LOGBITS);
@@ -878,12 +878,12 @@ void Interval_Reverse(wordptr addr, N_int lower, N_int upper)
                 *loaddr ^= lomask;  /* swap bits only if they differ! */
                 *hiaddr ^= himask;
             }
-            if (!(lomask <<= 1))
+            if (not (lomask <<= 1))
             {
                 lomask = LSBMASK;
                 loaddr++;
             }
-            if (!(himask >>= 1))
+            if (not (himask >>= 1))
             {
                 himask = MSBMASK;
                 hiaddr--;
@@ -902,7 +902,7 @@ bool interval_scan_inc(wordptr addr, N_int start,
     N_word  value;
     bool empty;
 
-    if ((size == 0) || (start >= bits_(addr))) return(false);
+    if ((size == 0) or (start >= bits_(addr))) return(false);
 
     *min = start;
     *max = start;
@@ -925,7 +925,7 @@ bool interval_scan_inc(wordptr addr, N_int start,
         {
             offset++;
             empty = true;
-            while (empty && (--size > 0))
+            while (empty and (--size > 0))
             {
                 if ((value = *addr++)) empty = false; else offset++;
             }
@@ -934,7 +934,7 @@ bool interval_scan_inc(wordptr addr, N_int start,
         start = offset << LOGBITS;
         bitmask = LSBMASK;
         mask = value;
-        while (!(mask AND LSBMASK))
+        while (not (mask AND LSBMASK))
         {
             bitmask <<= 1;
             mask >>= 1;
@@ -950,7 +950,7 @@ bool interval_scan_inc(wordptr addr, N_int start,
     {
         offset++;
         empty = true;
-        while (empty && (--size > 0))
+        while (empty and (--size > 0))
         {
             if ((value = NOT *addr++)) empty = false; else offset++;
         }
@@ -976,7 +976,7 @@ bool interval_scan_dec(wordptr addr, N_int start,
     N_word value;
     bool empty;
 
-    if ((size == 0) || (start >= bits_(addr))) return(false);
+    if ((size == 0) or (start >= bits_(addr))) return(false);
 
     *min = start;
     *max = start;
@@ -1001,7 +1001,7 @@ bool interval_scan_dec(wordptr addr, N_int start,
         {
             offset--;
             empty = true;
-            while (empty && (--size > 0))
+            while (empty and (--size > 0))
             {
                 if ((value = *addr--)) empty = false; else offset--;
             }
@@ -1010,7 +1010,7 @@ bool interval_scan_dec(wordptr addr, N_int start,
         start = offset << LOGBITS;
         bitmask = MSBMASK;
         mask = value;
-        while (!(mask AND MSBMASK))
+        while (not (mask AND MSBMASK))
         {
             bitmask >>= 1;
             mask <<= 1;
@@ -1026,14 +1026,14 @@ bool interval_scan_dec(wordptr addr, N_int start,
     {
         offset--;
         empty = true;
-        while (empty && (--size > 0))
+        while (empty and (--size > 0))
         {
             if ((value = NOT *addr--)) empty = false; else offset--;
         }
         if (empty) value = MSBMASK;
     }
     start = offset << LOGBITS;
-    while (!(value AND MSBMASK))
+    while (not (value AND MSBMASK))
     {
         value <<= 1;
         start--;
@@ -1075,7 +1075,7 @@ void Interval_Copy(wordptr X, wordptr Y, N_int Xoffset,
     bool notfirst;
     wordptr Z = X;
 
-    if ((length > 0) && (Xoffset < bitsX) && (Yoffset < bitsY))
+    if ((length > 0) and (Xoffset < bitsX) and (Yoffset < bitsY))
     {
         if ((Xoffset + length) > bitsX) length = bitsX - Xoffset;
         if ((Yoffset + length) > bitsY) length = bitsY - Yoffset;
@@ -1265,7 +1265,7 @@ wordptr Interval_Substitute(wordptr X, wordptr Y,
     N_word limit;
     N_word diff;
 
-    if ((Xoffset <= Xbits) && (Yoffset <= Ybits))
+    if ((Xoffset <= Xbits) and (Yoffset <= Ybits))
     {
         limit = Xoffset + Xlength;
         if (limit > Xbits)
@@ -1279,7 +1279,7 @@ wordptr Interval_Substitute(wordptr X, wordptr Y,
         }
         if (Xlength == Ylength)
         {
-            if ((Ylength > 0) && ((X != Y) || (Xoffset != Yoffset)))
+            if ((Ylength > 0) and ((X != Y) or (Xoffset != Yoffset)))
             {
                 Interval_Copy(X,Y,Xoffset,Yoffset,Ylength);
             }
@@ -1349,7 +1349,7 @@ bool is_empty(wordptr addr)                    /* X == {} ?     */
     if (size > 0)
     {
         *(addr+size-1) &= mask_(addr);
-        while (r && (size-- > 0)) r = ( *addr++ == 0 );
+        while (r and (size-- > 0)) r = ( *addr++ == 0 );
     }
     return(r);
 }
@@ -1366,7 +1366,7 @@ bool is_full(wordptr addr)                     /* X == ~{} ?    */
         r = true;
         last = addr + size - 1;
         *last |= NOT mask;
-        while (r && (size-- > 0)) r = ( NOT *addr++ == 0 );
+        while (r and (size-- > 0)) r = ( NOT *addr++ == 0 );
         *last &= mask;
     }
     return(r);
@@ -1385,7 +1385,7 @@ bool equal(wordptr X, wordptr Y)               /* X == Y ?      */
         {
             *(X+size-1) &= mask;
             *(Y+size-1) &= mask;
-            while (r && (size-- > 0)) r = (*X++ == *Y++);
+            while (r and (size-- > 0)) r = (*X++ == *Y++);
         }
     }
     return(r);
@@ -1404,7 +1404,7 @@ Z_int Lexicompare(wordptr X, wordptr Y)           /* X <,=,> Y ?   */
         {
             X += size;
             Y += size;
-            while (r && (size-- > 0)) r = (*(--X) == *(--Y));
+            while (r and (size-- > 0)) r = (*(--X) == *(--Y));
         }
         if (r) return((Z_int) 0);
         else
@@ -1438,7 +1438,7 @@ Z_int Compare(wordptr X, wordptr Y)               /* X <,=,> Y ?   */
             {
                 if (sign) return((Z_int) -1); else return((Z_int) 1);
             }
-            while (r && (size-- > 0)) r = (*(--X) == *(--Y));
+            while (r and (size-- > 0)) r = (*(--X) == *(--Y));
         }
         if (r) return((Z_int) 0);
         else
@@ -1471,17 +1471,17 @@ charptr to_Hex(wordptr addr)
     if (size > 0)
     {
         *(addr+size-1) &= mask_(addr);
-        while ((size-- > 0) && (length > 0))
+        while ((size-- > 0) and (length > 0))
         {
             value = *addr++;
             count = BITS >> 2;
-            while ((count-- > 0) && (length > 0))
+            while ((count-- > 0) and (length > 0))
             {
                 digit = value AND 0x000F;
                 if (digit > 9) digit += (N_word) 'A' - 10;
                 else           digit += (N_word) '0';
                 *(--string) = (N_char) digit; length--;
-                if ((count > 0) && (length > 0)) value >>= 4;
+                if ((count > 0) and (length > 0)) value >>= 4;
             }
         }
     }
@@ -1505,7 +1505,7 @@ ErrCode from_Hex(wordptr addr, charptr string)
         while (size-- > 0)
         {
             value = 0;
-            for ( count = 0; (ok && (length > 0) && (count < BITS)); count += 4 )
+            for ( count = 0; (ok and (length > 0) and (count < BITS)); count += 4 )
             {
                 digit = (int) *(--string); length--;
                 /* separate because toupper() is likely a macro! */
@@ -1544,7 +1544,7 @@ ErrCode from_Oct(wordptr addr, charptr string)
         while (size-- > 0)
         {
             value = value_fill;
-            for ( count = count_fill; (ok && (length > 0) && (count < BITS)); count += 3 )
+            for ( count = count_fill; (ok and (length > 0) and (count < BITS)); count += 3 )
             {
                 digit = (int) *(--string); length--;
                 if ((ok = (isdigit(digit) && digit != '8' && digit != '9')) != 0)
@@ -1617,7 +1617,7 @@ ErrCode from_Bin(wordptr addr, charptr string)
         while (size-- > 0)
         {
             value = 0;
-            for ( count = 0; (ok && (length > 0) && (count < BITS)); count++ )
+            for ( count = 0; (ok and (length > 0) and (count < BITS)); count++ )
             {
                 digit = (int) *(--string); length--;
                 switch (digit)
@@ -1663,7 +1663,7 @@ charptr to_Dec(wordptr addr)
     if (result == NULL) return(NULL);
     string = result;
     sign = Sign(addr);
-    if ((bits < 4) || (sign == 0))
+    if ((bits < 4) or (sign == 0))
     {
         if (bits > 0) digits = *addr; else digits = (N_word) 0;
         if (sign < 0) digits = ((N_word)(-((Z_word)digits))) AND mask_(addr);
@@ -1721,12 +1721,12 @@ charptr to_Dec(wordptr addr)
                     Destroy(base);
                     return(NULL);
                 }
-                loop = !is_empty(quot);
+                loop = not is_empty(quot);
                 q = *rest;
             }
             else q = *quot;
             count = LOG10;
-            while (((loop && (count-- > 0)) || ((!loop) && (q != 0))) &&
+            while (((loop and (count-- > 0)) or ((not loop) and (q != 0))) and
                 (digits < length))
             {
                 if (q != 0)
@@ -1738,13 +1738,13 @@ charptr to_Dec(wordptr addr)
                 digits++;
             }
         }
-        while (loop && (digits < length));
+        while (loop and (digits < length));
         Destroy(quot);
         Destroy(rest);
         Destroy(temp);
         Destroy(base);
     }
-    if ((sign < 0) && (digits < length))
+    if ((sign < 0) and (digits < length))
     {
         *string++ = (N_char) '-';
         digits++;
@@ -1829,7 +1829,7 @@ ErrCode from_Dec_static(from_Dec_static_data *data,
         length = strlen((char *) string);
         if (length == 0) return(ErrCode_Pars);
         digit = (int) *string;
-        if ((minus = (digit == (int) '-')) ||
+        if ((minus = (digit == (int) '-')) or
                      (digit == (int) '+'))
         {
             string++;
@@ -1844,12 +1844,12 @@ ErrCode from_Dec_static(from_Dec_static_data *data,
         Empty(addr);
         *base = EXP10;
         shift = false;
-        while ((!error) && (length > 0))
+        while ((not error) and (length > 0))
         {
             accu = 0;
             powr = 1;
             count = LOG10;
-            while ((!error) && (length > 0) && (count-- > 0))
+            while ((not error) and (length > 0) and (count-- > 0))
             {
                 digit = (int) *(--string); length--;
                 /* separate because isdigit() is likely a macro! */
@@ -1860,7 +1860,7 @@ ErrCode from_Dec_static(from_Dec_static_data *data,
                 }
                 else error = ErrCode_Pars;
             }
-            if (!error)
+            if (not error)
             {
                 if (shift)
                 {
@@ -1871,9 +1871,9 @@ ErrCode from_Dec_static(from_Dec_static_data *data,
                 else
                 {
                     *prod = accu;
-                    if ((!init) && ((accu AND NOT mask) != 0)) error = ErrCode_Ovfl;
+                    if ((not init) and ((accu AND NOT mask) != 0)) error = ErrCode_Ovfl;
                 }
-                if (!error)
+                if (not error)
                 {
                     carry = false;
                     compute(addr,addr,prod,false,&carry);
@@ -1899,7 +1899,7 @@ ErrCode from_Dec_static(from_Dec_static_data *data,
                 }
             }
         }
-        if (!error && minus)
+        if (not error and minus)
         {
             Negate(addr,addr);
             if ((*(addr + size_(addr) - 1) AND mask AND NOT (mask >> 1)) == 0)
@@ -1934,7 +1934,7 @@ ErrCode from_Dec(wordptr addr, charptr string)
         length = strlen((char *) string);
         if (length == 0) return(ErrCode_Pars);
         digit = (int) *string;
-        if ((minus = (digit == (int) '-')) ||
+        if ((minus = (digit == (int) '-')) or
                      (digit == (int) '+'))
         {
             string++;
@@ -1979,12 +1979,12 @@ ErrCode from_Dec(wordptr addr, charptr string)
         Empty(addr);
         *base = EXP10;
         shift = false;
-        while ((!error) && (length > 0))
+        while ((not error) and (length > 0))
         {
             accu = 0;
             powr = 1;
             count = LOG10;
-            while ((!error) && (length > 0) && (count-- > 0))
+            while ((not error) and (length > 0) and (count-- > 0))
             {
                 digit = (int) *(--string); length--;
                 /* separate because isdigit() is likely a macro! */
@@ -1995,7 +1995,7 @@ ErrCode from_Dec(wordptr addr, charptr string)
                 }
                 else error = ErrCode_Pars;
             }
-            if (!error)
+            if (not error)
             {
                 if (shift)
                 {
@@ -2006,9 +2006,9 @@ ErrCode from_Dec(wordptr addr, charptr string)
                 else
                 {
                     *prod = accu;
-                    if ((!init) && ((accu AND NOT mask) != 0)) error = ErrCode_Ovfl;
+                    if ((not init) and ((accu AND NOT mask) != 0)) error = ErrCode_Ovfl;
                 }
-                if (!error)
+                if (not error)
                 {
                     carry = false;
                     compute(addr,addr,prod,false,&carry);
@@ -2039,7 +2039,7 @@ ErrCode from_Dec(wordptr addr, charptr string)
         Destroy(prod);
         Destroy(rank);
         Destroy(temp);
-        if (!error && minus)
+        if (not error and minus)
         {
             Negate(addr,addr);
             if ((*(addr + size_(addr) - 1) AND mask AND NOT (mask >> 1)) == 0)
@@ -2091,7 +2091,7 @@ charptr to_Enum(wordptr addr)
     start = 0;
     comma = false;
     target = string;
-    while ((start < bits) && interval_scan_inc(addr,start,&min,&max))
+    while ((start < bits) and interval_scan_inc(addr,start,&min,&max))
     {
         start = max + 2;
         if (comma) *target++ = (N_char) ',';
@@ -2132,7 +2132,7 @@ ErrCode from_Enum(wordptr addr, charptr string)
     if (bits > 0)
     {
         Empty(addr);
-        while ((!error) && (state != 0))
+        while ((not error) and (state != 0))
         {
             token = (N_word) *string;
             /* separate because isdigit() is likely a macro! */
@@ -2143,7 +2143,7 @@ ErrCode from_Enum(wordptr addr, charptr string)
                 else error = ErrCode_Indx;
             }
             else string++;
-            if (!error)
+            if (not error)
             switch (state)
             {
                 case 1:
@@ -2455,7 +2455,7 @@ void Insert(wordptr addr, N_int offset, N_int count, bool clear)
     N_word bits = bits_(addr);
     N_word last;
 
-    if ((count > 0) && (offset < bits))
+    if ((count > 0) and (offset < bits))
     {
         last = offset + count;
         if (last < bits)
@@ -2472,7 +2472,7 @@ void Delete(wordptr addr, N_int offset, N_int count, bool clear)
     N_word bits = bits_(addr);
     N_word last;
 
-    if ((count > 0) && (offset < bits))
+    if ((count > 0) and (offset < bits))
     {
         last = offset + count;
         if (last < bits)
@@ -2494,7 +2494,7 @@ bool increment(wordptr addr)                   /* X++           */
     if (size > 0)
     {
         *last |= NOT mask;
-        while (carry && (size-- > 0))
+        while (carry and (size-- > 0))
         {
             carry = (++(*addr++) == 0);
         }
@@ -2513,7 +2513,7 @@ bool decrement(wordptr addr)                   /* X--           */
     if (size > 0)
     {
         *last &= mask;
-        while (carry && (size-- > 0))
+        while (carry and (size-- > 0))
         {
             carry = (*addr == 0);
             --(*addr++);
@@ -2661,7 +2661,7 @@ Z_int Sign(wordptr addr)
     if (size > 0)
     {
         *last &= mask;
-        while (r && (size-- > 0)) r = ( *addr++ == 0 );
+        while (r and (size-- > 0)) r = ( *addr++ == 0 );
     }
     if (r) return((Z_int) 0);
     else
@@ -2692,7 +2692,7 @@ ErrCode Mul_Pos(wordptr X, wordptr Y, wordptr Z, bool strict)
             (only Z is preserved!)
     */
 
-    if ((X == Y) || (X == Z) || (Y == Z)) return(ErrCode_Same);
+    if ((X == Y) or (X == Z) or (Y == Z)) return(ErrCode_Same);
     if (bits_(X) != bits_(Y)) return(ErrCode_Size);
     Empty(X);
     if (is_empty(Y)) return(ErrCode_Ok); /* exit also taken if bits_(Y)==0 */
@@ -2702,24 +2702,24 @@ ErrCode Mul_Pos(wordptr X, wordptr Y, wordptr Z, bool strict)
     mask = mask_(Y);
     *sign &= mask;
     mask &= NOT (mask >> 1);
-    for ( count = 0; (ok && (count <= limit)); count++ )
+    for ( count = 0; (ok and (count <= limit)); count++ )
     {
         if ( TST_BIT(Z,count) )
         {
             carry = false;
             overflow = compute(X,X,Y,false,&carry);
-            if (strict) ok = !(carry || overflow);
-            else        ok = ! carry;
+            if (strict) ok = not (carry or overflow);
+            else        ok = not carry;
         }
-        if (ok && (count < limit))
+        if (ok and (count < limit))
         {
             carry = shift_left(Y,0);
             if (strict)
             {
                 overflow = ((*sign AND mask) != 0);
-                ok = !(carry || overflow);
+                ok = not (carry or overflow);
             }
-            else ok = !carry;
+            else ok = not carry;
         }
     }
     if (ok) return(ErrCode_Ok); else return(ErrCode_Ovfl);
@@ -2753,8 +2753,8 @@ ErrCode Multiply(wordptr X, wordptr Y, wordptr Z)
             (in-place multiplication is possible!)
     */
 
-    if ((bit_y != bit_z) || (bit_x < bit_y)) return(ErrCode_Size);
-    if (is_empty(Y) || is_empty(Z))
+    if ((bit_y != bit_z) or (bit_x < bit_y)) return(ErrCode_Size);
+    if (is_empty(Y) or is_empty(Z))
     {
         Empty(X);
     }
@@ -2775,7 +2775,7 @@ ErrCode Multiply(wordptr X, wordptr Y, wordptr Z)
         ptr_y = A + size;
         ptr_z = B + size;
         zero = true;
-        while (zero && (size-- > 0))
+        while (zero and (size-- > 0))
         {
             zero &= (*(--ptr_y) == 0);
             zero &= (*(--ptr_z) == 0);
@@ -2798,7 +2798,7 @@ ErrCode Multiply(wordptr X, wordptr Y, wordptr Z)
             }
             error = Mul_Pos(X,B,A,true);
         }
-        if ((!error) && sgn_x) Negate(X,X);
+        if ((not error) and sgn_x) Negate(X,X);
         Destroy(A);
         Destroy(B);
     }
@@ -2824,9 +2824,9 @@ ErrCode Div_Pos(wordptr Q, wordptr X, wordptr Y, wordptr R)
             (only Y is preserved!)
     */
 
-    if ((bits != bits_(X)) || (bits != bits_(Y)) || (bits != bits_(R)))
+    if ((bits != bits_(X)) or (bits != bits_(Y)) or (bits != bits_(R)))
         return(ErrCode_Size);
-    if ((Q == X) || (Q == Y) || (Q == R) || (X == Y) || (X == R) || (Y == R))
+    if ((Q == X) or (Q == Y) or (Q == R) or (X == Y) or (X == R) or (Y == R))
         return(ErrCode_Same);
     if (is_empty(Y))
         return(ErrCode_Zero);
@@ -2856,7 +2856,7 @@ ErrCode Div_Pos(wordptr Q, wordptr X, wordptr Y, wordptr R)
         else
         {
             *addr |= mask;
-            copy = !copy;
+            copy = not copy;
         }
     }
     if (copy) Copy(R,X);
@@ -2889,7 +2889,7 @@ ErrCode Divide(wordptr Q, wordptr X, wordptr Y, wordptr R)
             (but not identical with Q!)
     */
 
-    if ((bits != bits_(X)) || (bits != bits_(Y)) || (bits != bits_(R)))
+    if ((bits != bits_(X)) or (bits != bits_(Y)) or (bits != bits_(R)))
         return(ErrCode_Size);
     if (Q == R)
         return(ErrCode_Same);
@@ -2951,7 +2951,7 @@ ErrCode GCD(wordptr X, wordptr Y, wordptr Z)
          -  negative values are handled correctly
     */
 
-    if ((bits != bits_(Y)) || (bits != bits_(Z))) return(ErrCode_Size);
+    if ((bits != bits_(Y)) or (bits != bits_(Z))) return(ErrCode_Size);
     if (is_empty(Y))
     {
         if (X != Z) Copy(X,Z);
@@ -2993,9 +2993,9 @@ ErrCode GCD(wordptr X, wordptr Y, wordptr Z)
     sgn_b = (((*(Z+size) &= mask) AND msb) != 0);
     if (sgn_a) Negate(A,Y); else Copy(A,Y);
     if (sgn_b) Negate(B,Z); else Copy(B,Z);
-    while (!error)
+    while (not error)
     {
-        if (!(error = Div_Pos(Q,A,B,R)))
+        if (not (error = Div_Pos(Q,A,B,R)))
         {
             if (is_empty(R)) break;
             T = A; sgn_r = sgn_a;
@@ -3057,14 +3057,14 @@ ErrCode GCD2(wordptr U, wordptr V, wordptr W, wordptr X, wordptr Y)
          -  negative values are handled correctly
     */
 
-    if ((bits != bits_(V)) ||
-        (bits != bits_(W)) ||
-        (bits != bits_(X)) ||
+    if ((bits != bits_(V)) or
+        (bits != bits_(W)) or
+        (bits != bits_(X)) or
         (bits != bits_(Y)))
     {
         return(ErrCode_Size);
     }
-    if ((U == V) || (U == W) || (V == W))
+    if ((U == V) or (U == W) or (V == W))
     {
         return(ErrCode_Same);
     }
@@ -3112,7 +3112,7 @@ ErrCode GCD2(wordptr U, wordptr V, wordptr W, wordptr X, wordptr Y)
     *Y2 = 1;
     sgn_x = false;
     sgn_y = false;
-    while (!error)
+    while (not error)
     {
         if ((error = Div_Pos(Q,A,B,R)))
         {
@@ -3129,7 +3129,7 @@ ErrCode GCD2(wordptr U, wordptr V, wordptr W, wordptr X, wordptr Y)
         {
             break;
         }
-        minus = !(sgn_x XOR sgn_q);
+        minus = not (sgn_x XOR sgn_q);
         carry = 0;
         if (compute(X3,X1,X3,minus,&carry))
         {
@@ -3143,7 +3143,7 @@ ErrCode GCD2(wordptr U, wordptr V, wordptr W, wordptr X, wordptr Y)
         {
             break;
         }
-        minus = !(sgn_y XOR sgn_q);
+        minus = not (sgn_y XOR sgn_q);
         carry = 0;
         if (compute(Y3,Y1,Y3,minus,&carry))
         {
@@ -3167,7 +3167,7 @@ ErrCode GCD2(wordptr U, wordptr V, wordptr W, wordptr X, wordptr Y)
         Y2 = Y3;
         Y3 = T;
     }
-    if (!error)
+    if (not error)
     {
         if (sgn_b) Negate(U,B); else Copy(U,B);
         Copy(V,X2);
@@ -3214,7 +3214,7 @@ ErrCode Power(wordptr X, wordptr Y, wordptr Z)
     T = Create(bits,false);
     if (T == NULL) return(ErrCode_Null);
     limit = (N_word) last;
-    for ( count = 0; ((!error) && (count <= limit)); count++ )
+    for ( count = 0; ((!error) and (count <= limit)); count++ )
     {
         if ( TST_BIT(Z,count) )
         {
@@ -3226,7 +3226,7 @@ ErrCode Power(wordptr X, wordptr Y, wordptr Z)
             }
             else error = Multiply(X,T,X); /* order important because T > X */
         }
-        if ((!error) && (count < limit))
+        if ((!error) and (count < limit))
         {
             if (count) error = Multiply(T,T,T);
             else       error = Multiply(T,Y,Y);
@@ -3249,7 +3249,7 @@ void Block_Store(wordptr addr, charptr buffer, N_int length)
         while (size-- > 0)
         {
             value = 0;
-            for ( count = 0; (length > 0) && (count < BITS); count += 8 )
+            for ( count = 0; (length > 0) and (count < BITS); count += 8 )
             {
                 value |= (((N_word) *buffer++) << count); length--;
             }
@@ -3352,7 +3352,7 @@ void Chunk_Store(wordptr addr, N_int chunksize, N_int offset,
     N_word mask;
     N_word temp;
 
-    if ((chunksize > 0) && (offset < bits))
+    if ((chunksize > 0) and (offset < bits))
     {
         if (chunksize > LONGBITS) chunksize = LONGBITS;
         if ((offset + chunksize) > bits) chunksize = bits - offset;
@@ -3387,7 +3387,7 @@ N_long Chunk_Read(wordptr addr, N_int chunksize, N_int offset)
     N_long temp;
     N_word mask;
 
-    if ((chunksize > 0) && (offset < bits))
+    if ((chunksize > 0) and (offset < bits))
     {
         if (chunksize > LONGBITS) chunksize = LONGBITS;
         if ((offset + chunksize) > bits) chunksize = bits - offset;
@@ -3426,7 +3426,7 @@ void Set_Union(wordptr X, wordptr Y, wordptr Z)             /* X = Y + Z     */
     N_word size = size_(X);
     N_word mask = mask_(X);
 
-    if ((size > 0) && (bits == bits_(Y)) && (bits == bits_(Z)))
+    if ((size > 0) and (bits == bits_(Y)) and (bits == bits_(Z)))
     {
         while (size-- > 0) *X++ = *Y++ OR *Z++;
         *(--X) &= mask;
@@ -3439,7 +3439,7 @@ void Set_Intersection(wordptr X, wordptr Y, wordptr Z)      /* X = Y * Z     */
     N_word size = size_(X);
     N_word mask = mask_(X);
 
-    if ((size > 0) && (bits == bits_(Y)) && (bits == bits_(Z)))
+    if ((size > 0) and (bits == bits_(Y)) and (bits == bits_(Z)))
     {
         while (size-- > 0) *X++ = *Y++ AND *Z++;
         *(--X) &= mask;
@@ -3452,7 +3452,7 @@ void Set_Difference(wordptr X, wordptr Y, wordptr Z)        /* X = Y \ Z     */
     N_word size = size_(X);
     N_word mask = mask_(X);
 
-    if ((size > 0) && (bits == bits_(Y)) && (bits == bits_(Z)))
+    if ((size > 0) and (bits == bits_(Y)) and (bits == bits_(Z)))
     {
         while (size-- > 0) *X++ = *Y++ AND NOT *Z++;
         *(--X) &= mask;
@@ -3465,7 +3465,7 @@ void Set_ExclusiveOr(wordptr X, wordptr Y, wordptr Z)       /* X=(Y+Z)\(Y*Z) */
     N_word size = size_(X);
     N_word mask = mask_(X);
 
-    if ((size > 0) && (bits == bits_(Y)) && (bits == bits_(Z)))
+    if ((size > 0) and (bits == bits_(Y)) and (bits == bits_(Z)))
     {
         while (size-- > 0) *X++ = *Y++ XOR *Z++;
         *(--X) &= mask;
@@ -3477,7 +3477,7 @@ void Set_Complement(wordptr X, wordptr Y)                   /* X = ~Y        */
     N_word size = size_(X);
     N_word mask = mask_(X);
 
-    if ((size > 0) && (bits_(X) == bits_(Y)))
+    if ((size > 0) and (bits_(X) == bits_(Y)))
     {
         while (size-- > 0) *X++ = NOT *Y++;
         *(--X) &= mask;
@@ -3493,10 +3493,10 @@ bool Set_subset(wordptr X, wordptr Y)                    /* X subset Y ?  */
     N_word size = size_(X);
     bool r = false;
 
-    if ((size > 0) && (bits_(X) == bits_(Y)))
+    if ((size > 0) and (bits_(X) == bits_(Y)))
     {
         r = true;
-        while (r && (size-- > 0)) r = ((*X++ AND NOT *Y++) == 0);
+        while (r and (size-- > 0)) r = ((*X++ AND NOT *Y++) == 0);
     }
     return(r);
 }
@@ -3528,7 +3528,7 @@ N_int Set_Norm2(wordptr addr)                               /* = | X |       */
     {
         k = 0;
         w1 = NOT (w0 = *addr++);
-        while (w0 && w1)
+        while (w0 and w1)
         {
             w0 &= w0 - 1;
             w1 &= w1 - 1;
@@ -3565,13 +3565,13 @@ Z_long Set_Min(wordptr addr)                                /* = min(X)      */
     N_word  i     = 0;
     N_word  c     = 0;         /* silence compiler warning */
 
-    while (empty && (size-- > 0))
+    while (empty and (size-- > 0))
     {
         if ((c = *addr++)) empty = false; else i++;
     }
     if (empty) return((Z_long) LONG_MAX);                  /* plus infinity  */
     i <<= LOGBITS;
-    while (!(c AND LSBMASK))
+    while (not (c AND LSBMASK))
     {
         c >>= 1;
         i++;
@@ -3587,13 +3587,13 @@ Z_long Set_Max(wordptr addr)                                /* = max(X)      */
     N_word  c     = 0;         /* silence compiler warning */
 
     addr += size-1;
-    while (empty && (size-- > 0))
+    while (empty and (size-- > 0))
     {
         if ((c = *addr--)) empty = false; else i--;
     }
     if (empty) return((Z_long) LONG_MIN);                  /* minus infinity */
     i <<= LOGBITS;
-    while (!(c AND MSBMASK))
+    while (not (c AND MSBMASK))
     {
         c <<= 1;
         i--;
@@ -3619,9 +3619,9 @@ void Matrix_Multiplication(wordptr X, N_int rowsX, N_int colsX,
     N_word termY;
     N_word sum;
 
-  if ((colsY == rowsZ) && (rowsX == rowsY) && (colsX == colsZ) &&
-      (bits_(X) == rowsX*colsX) &&
-      (bits_(Y) == rowsY*colsY) &&
+  if ((colsY == rowsZ) and (rowsX == rowsY) and (colsX == colsZ) and
+      (bits_(X) == rowsX*colsX) and
+      (bits_(Y) == rowsY*colsY) and
       (bits_(Z) == rowsZ*colsZ))
   {
     for ( i = 0; i < rowsY; i++ )
@@ -3660,9 +3660,9 @@ void Matrix_Product(wordptr X, N_int rowsX, N_int colsX,
     N_word termY;
     N_word sum;
 
-  if ((colsY == rowsZ) && (rowsX == rowsY) && (colsX == colsZ) &&
-      (bits_(X) == rowsX*colsX) &&
-      (bits_(Y) == rowsY*colsY) &&
+  if ((colsY == rowsZ) and (rowsX == rowsY) and (colsX == colsZ) and
+      (bits_(X) == rowsX*colsX) and
+      (bits_(Y) == rowsY*colsY) and
       (bits_(Z) == rowsZ*colsZ))
   {
     for ( i = 0; i < rowsY; i++ )
@@ -3699,7 +3699,7 @@ void Matrix_Closure(wordptr addr, N_int rows, N_int cols)
     N_word termi;
     N_word termk;
 
-  if ((rows == cols) && (bits_(addr) == rows*cols))
+  if ((rows == cols) and (bits_(addr) == rows*cols))
   {
     for ( i = 0; i < rows; i++ )
     {
@@ -3746,8 +3746,8 @@ void Matrix_Transpose(wordptr X, N_int rowsX, N_int colsX,
 
   /* BEWARE that "in-place" is ONLY possible if the matrix is quadratic!! */
 
-  if ((rowsX == colsY) && (colsX == rowsY) &&
-      (bits_(X) == rowsX*colsX) &&
+  if ((rowsX == colsY) and (colsX == rowsY) and
+      (bits_(X) == rowsX*colsX) and
       (bits_(Y) == rowsY*colsY))
   {
     if (rowsY == colsY) /* in-place is possible! */
