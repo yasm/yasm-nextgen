@@ -31,6 +31,7 @@
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
 
+#include "errwarn.h"
 #include "expr.h"
 #include "insn.h"
 
@@ -148,52 +149,30 @@ Insn::put(std::ostream& os, int indent_level) const
 void
 Insn::Operand::finalize()
 {
-#if 0
-    yasm_error_class eclass;
-    char *str, *xrefstr;
-    unsigned long xrefline;
-#endif
-
     switch (m_type) {
-#if 0
         case MEMORY:
             // Don't get over-ambitious here; some archs' memory expr
             // parser are sensitive to the presence of *1, etc, so don't
             // simplify reg*1 identities.
-            if (m_data.ea)
-                m_data.ea->disp.abs->level_tree(true, true, false);
-            if (error_occurred()) {
-                // Add a pointer to where it was used to the error
-                error_fetch(eclass, str, xrefline, xrefstr);
-                if (xrefstr) {
-                    error_set_xref(xrefline, "%s", xrefstr);
-                    yasm_xfree(xrefstr);
-                }
-                if (str) {
-                    error_set(eclass, "%s in memory expression", str);
-                    yasm_xfree(str);
-                }
-                return;
-            }
-            break;
-#endif
-        case IMM:
-            m_data.val->level_tree(true, true, true);
 #if 0
-            if (error_occurred()) {
-                // Add a pointer to where it was used to the error
-                error_fetch(eclass, str, xrefline, xrefstr);
-                if (xrefstr) {
-                    error_set_xref(xrefline, "%s", xrefstr);
-                    yasm_xfree(xrefstr);
-                }
-                if (str) {
-                    error_set(eclass, "%s in immediate expression", str);
-                    yasm_xfree(str);
-                }
-                return;
+            try {
+                if (m_data.ea && m_data.ea->disp.get_abs())
+                    m_data.ea->disp.get_abs()->level_tree(true, true, false);
+            } catch (Error& err) {
+                // Add a pointer to where it was used
+                err.get_msg() += " in memory expression";
+                throw;
             }
 #endif
+            break;
+        case IMM:
+            try {
+                m_data.val->level_tree(true, true, true);
+            } catch (Error& err) {
+                // Add a pointer to where it was used
+                err.get_msg() += " in immediate expression";
+                throw;
+            }
             break;
         default:
             break;

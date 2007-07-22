@@ -111,6 +111,10 @@ public:
         xrefstr = m_xrefstr;
         return m_xrefline;
     }
+
+    /// Accessor function to allow modification of the error message.
+    /// @return Error message reference.
+    std::string& get_msg() { return m_message; }
 private:
     std::string m_message;
     std::string m_xrefstr;
