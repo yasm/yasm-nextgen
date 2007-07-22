@@ -93,17 +93,17 @@ class Dataval {
 public:
     /// Create a new data value from an expression.
     /// @param expn  expression
-    Dataval(/*@keep@*/ Expr* expn);
+    Dataval(std::auto_ptr<Expr> expn);
 
     /// Create a new data value from a string.
     /// @param contents     string (may contain NULs)
     /// @param len          length of string
-    Dataval(/*@keep@*/ char* contents, size_t len);
+    Dataval(const std::string& str, size_t len);
 
     /// Create a new data value from raw bytes data.
     /// @param contents     raw data (may contain NULs)
     /// @param len          length
-    Dataval(/*@keep@*/ unsigned char *contents, unsigned long len);
+    Dataval(std::auto_ptr<unsigned char> contents, unsigned long len);
 };
 
 
@@ -488,8 +488,8 @@ private:
 /// @return Distance in bytes between the two bytecodes (bc2-bc1), or
 ///         NULL if the distance was indeterminate.
 /// @warning Only valid /after/ optimization.
-/*@null@*/ /*@only@*/ IntNum* calc_bc_dist(const Bytecode* precbc1,
-                                           const Bytecode* precbc2);
+/*@null@*/ std::auto_ptr<IntNum> calc_bc_dist(const Bytecode* precbc1,
+                                              const Bytecode* precbc2);
 
 /// Expr::level_tree() transformation helper function to transform instances
 /// of symrec-symrec [symrec+(-1*symrec)] into integers if possible by

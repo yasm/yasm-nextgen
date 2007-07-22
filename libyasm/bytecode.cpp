@@ -275,24 +275,21 @@ Bytecode::get_insn()
     return static_cast<Insn*>(m_contents.get());
 }
 
-/*@null@*/ IntNum*
+/*@null@*/ std::auto_ptr<IntNum>
 calc_bc_dist(const Bytecode* precbc1, const Bytecode* precbc2)
 {
-    unsigned long dist2, dist1;
-    IntNum* intn;
-
     if (precbc1->get_section() != precbc2->get_section())
-        return 0;
+        return std::auto_ptr<IntNum>(0);
 
-    dist1 = precbc1->next_offset();
-    dist2 = precbc2->next_offset();
+    unsigned long dist1 = precbc1->next_offset();
+    unsigned long dist2 = precbc2->next_offset();
     if (dist2 < dist1) {
-        intn = new IntNum(dist1 - dist2);
+        std::auto_ptr<IntNum> intn(new IntNum(dist1 - dist2));
         intn->calc(Expr::NEG);
         return intn;
     }
     dist2 -= dist1;
-    return new IntNum(dist2);
+    return std::auto_ptr<IntNum>(new IntNum(dist2));
 }
 
 // Transforms instances of symrec-symrec [symrec+(-1*symrec)] into single
@@ -377,8 +374,8 @@ xform_bc_dist_base(Expr* e, boost::function<bool (Expr::Term& term,
 static inline bool
 calc_bc_dist_cb(Expr::Term& term, Bytecode* precbc, Bytecode* precbc2)
 {
-    IntNum* dist = calc_bc_dist(precbc, precbc2);
-    if (!dist)
+    std::auto_ptr<IntNum> dist = calc_bc_dist(precbc, precbc2);
+    if (dist.get() == 0)
         return false;
     // Change the term to an integer
     term = dist;
