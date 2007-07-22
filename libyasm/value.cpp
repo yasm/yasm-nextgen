@@ -465,7 +465,7 @@ Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
 bool
 Value::finalize(Bytecode* precbc)
 {
-    m_abs->level_tree(true, true, false, false);
+    m_abs->level_tree(true, true, false);
 
     // Handle trivial (IDENT) cases immediately
     if (m_abs->is_op(Expr::IDENT)) {
@@ -482,7 +482,7 @@ Value::finalize(Bytecode* precbc)
     if (finalize_scan(m_abs.get(), precbc, false))
         return true;
 
-    m_abs->level_tree(true, true, false, false);
+    m_abs->level_tree(true, true, false);
 
     // Simplify 0 in abs to NULL
     IntNum* intn;

@@ -161,7 +161,7 @@ Insn::Operand::finalize()
             // parser are sensitive to the presence of *1, etc, so don't
             // simplify reg*1 identities.
             if (m_data.ea)
-                m_data.ea->disp.abs->level_tree(true, true, false, false);
+                m_data.ea->disp.abs->level_tree(true, true, false);
             if (error_occurred()) {
                 // Add a pointer to where it was used to the error
                 error_fetch(eclass, str, xrefline, xrefstr);
@@ -178,7 +178,7 @@ Insn::Operand::finalize()
             break;
 #endif
         case IMM:
-            m_data.val->level_tree(true, true, true, false);
+            m_data.val->level_tree(true, true, true);
 #if 0
             if (error_occurred()) {
                 // Add a pointer to where it was used to the error
