@@ -28,6 +28,7 @@
 
 #include <cctype>
 #include <limits.h>
+#include <boost/format.hpp>
 
 #include "bitvect.h"
 
@@ -597,10 +598,11 @@ IntNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize, int shift
 
     // General size warnings
     if (warn<0 && !ok_size(valsize, rshift, 1))
-        warn_set(WARN_GENERAL, N_("value does not fit in signed %d bit field"),
-                 valsize);
+        warn_set(WARN_GENERAL, str(boost::format(
+            N_("value does not fit in signed %d bit field")) % valsize));
     if (warn>0 && !ok_size(valsize, rshift, 2))
-        warn_set(WARN_GENERAL, N_("value does not fit in %d bit field"), valsize);
+        warn_set(WARN_GENERAL, str(boost::format(
+            N_("value does not fit in %d bit field")) % valsize));
 
     // Read the original data into a bitvect
     if (bigendian) {

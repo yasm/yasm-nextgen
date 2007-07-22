@@ -26,11 +26,6 @@
 //
 #include "util.h"
 
-#include <cstdio>
-#include <cctype>
-#include <cstdarg>
-#include <cstdlib>
-
 #include <list>
 
 #include "linemap.h"
@@ -57,12 +52,10 @@ public:
     /// Warning indicator.
     class Warning {
     public:
-        Warning(WarnClass wclass, const char *format, va_list va);
-
-        ~Warning() { delete[] m_wstr; }
+        Warning(WarnClass wclass, const std::string& wstr);
 
         WarnClass m_wclass;
-        /*@owned@*/ /*@null@*/ char *m_wstr;
+        std::string m_wstr;
     };
 
     std::list<Warning> m_warns;
@@ -85,8 +78,8 @@ public:
 
     unsigned long m_line;
     unsigned long m_xrefline;
-    /*@owned@*/ char *m_msg;
-    /*@owned@*/ char *m_xrefmsg;
+    std::string m_msg;
+    std::string m_xrefmsg;
 };
 
 static const char *
@@ -219,56 +212,37 @@ warn_occurred()
 }
 
 ErrwarnManager::Warning::Warning(WarnClass wclass,
-                                 const char *format,
-                                 va_list va)
-    : m_wclass(wclass)
+                                 const std::string& str)
+    : m_wclass(wclass), m_wstr(str)
 {
-    m_wstr = new char[MSG_MAXSIZE+1];
-#ifdef HAVE_VSNPRINTF
-    vsnprintf(m_wstr, MSG_MAXSIZE, gettext_hook(format), va);
-#else
-    vsprintf(m_wstr, gettext_hook(format), va);
-#endif
 }
 
 void
-warn_set_va(WarnClass wclass, const char *format, va_list va)
+warn_set(WarnClass wclass, const std::string& str)
 {
     ErrwarnManager &manager = ErrwarnManager::instance();
 
     if (!(manager.m_wclass_enabled & (1UL<<wclass)))
         return;     // warning is part of disabled class
 
-    manager.m_warns.push_back(ErrwarnManager::Warning(wclass, format, va));
+    manager.m_warns.push_back(ErrwarnManager::Warning(wclass, str));
 }
 
-void
-warn_set(WarnClass wclass, const char *format, ...)
+WarnClass
+warn_fetch(std::string& str)
 {
-    va_list va;
-    va_start(va, format);
-    warn_set_va(wclass, format, va);
-    va_end(va);
-}
+    ErrwarnManager& manager = ErrwarnManager::instance();
 
-void
-warn_fetch(WarnClass &wclass, char * &str)
-{
-    ErrwarnManager &manager = ErrwarnManager::instance();
+    if (manager.m_warns.empty())
+        return WARN_NONE;
 
-    if (manager.m_warns.empty()) {
-        wclass = WARN_NONE;
-        str = 0;
-        return;
-    }
+    ErrwarnManager::Warning& w = manager.m_warns.front();
 
-    ErrwarnManager::Warning &w = manager.m_warns.front();
-
-    wclass = w.m_wclass;
+    WarnClass wclass = w.m_wclass;
     str = w.m_wstr;
-    w.m_wstr = 0;   // don't free it
 
     manager.m_warns.pop_front();
+    return wclass;
 }
 
 void

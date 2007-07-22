@@ -31,7 +31,6 @@
 #define YASM_ERRWARN_H
 
 #include <vector>
-#include <cstdarg>
 #include <string>
 #include <stdexcept>
 
@@ -211,30 +210,20 @@ void warn_clear();
 /// @return First warning indicator.
 WarnClass warn_occurred();
 
-/// Add a warning indicator (va_list version).
-/// @param wclass   warning class
-/// @param format   printf format string
-/// @param va       argument list for format
-void warn_set_va(WarnClass wclass, const char *format, va_list va);
-
 /// Add a warning indicator.
 /// @param wclass   warning class
-/// @param format   printf format string
-/// @param ...      argument list for format
-void warn_set(WarnClass wclass, const char *format, ...)
-    /*@printflike@*/;
+/// @param wstr     warning message
+void warn_set(WarnClass wclass, const std::string& wstr);
 
-/// Fetch the first warning indicator and all associated data.  If there
-/// is at least one warning indicator, the output pointers are set to the
-/// first warning indicator values, and first warning indicator is removed.
-/// The code using this function is then responsible for yasm_xfree()'ing
-/// str and xrefstr (if non-NULL).  If there is no warning indicator set,
-/// all output values are set to 0 (including wclass, which is set to
-/// #WARN_NONE).
-/// @param wclass   warning class (output)
-/// @param str      warning message (output)
-void warn_fetch(/*@out@*/ WarnClass &wclass,
-                /*@out@*/ /*@only@*/ char * &str);
+/// Fetch the first warning indicator.  If there is at least one warning
+/// indicator, the output string is set to the first warning indicator
+/// value, the first warning indicator is removed, and the warning
+/// indicator is returned.
+/// @param wstr     warning message (output)
+/// @return If there is no warning indicator set, wstr is unchanged, and
+///         #WARN_NONE is returned; otherwise, the first warning indicator
+///         is returned.
+WarnClass warn_fetch(/*@out@*/ std::string& wstr);
 
 /// Enable a class of warnings.
 /// @param wclass   warning class
