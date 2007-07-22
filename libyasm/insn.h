@@ -32,6 +32,7 @@
 
 #include <vector>
 #include <iostream>
+#include <memory>
 
 #include "bytecode.h"
 
@@ -104,14 +105,14 @@ public:
 
         /// Create an instruction operand from an effective address.
         /// @param ea   effective address
-        Operand(/*@only@*/ EffAddr* ea);
+        Operand(std::auto_ptr<EffAddr> ea);
 
         /// Create an instruction operand from an immediate expression.
         /// Looks for cases of a single register and creates a register
         /// variant.
         /// @param val  immediate expression
         /// @return Newly allocated operand.
-        Operand(/*@only@*/ Expr* val);
+        Operand(std::auto_ptr<Expr> val);
 
         /// Destructor.
         ~Operand();

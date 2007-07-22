@@ -72,17 +72,17 @@ Insn::Operand::Operand(const SegmentRegister* segreg)
     m_data.segreg = segreg;
 }
 
-Insn::Operand::Operand(/*@only@*/ EffAddr* ea)
+Insn::Operand::Operand(std::auto_ptr<EffAddr> ea)
     : m_type(MEMORY),
       m_targetmod(0),
       m_size(0),
       m_deref(0),
       m_strict(0)
 {
-    m_data.ea = ea;
+    m_data.ea = ea.release();
 }
 
-Insn::Operand::Operand(/*@only@*/ Expr* val)
+Insn::Operand::Operand(std::auto_ptr<Expr> val)
     : m_type(IMM),
       m_targetmod(0),
       m_size(0),
@@ -95,9 +95,8 @@ Insn::Operand::Operand(/*@only@*/ Expr* val)
     if (reg) {
         m_type = REG;
         m_data.reg = reg;
-        delete val;
     } else
-        m_data.val = val;
+        m_data.val = val.release();
 }
 
 Insn::Operand::~Operand()
