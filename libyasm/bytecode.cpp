@@ -142,25 +142,20 @@ Bytecode::finalize(Bytecode* prev_bc)
 {
     m_contents->finalize(this, prev_bc);
     if (m_multiple.get() != 0) {
-#if 0
-        Value val;
+        Value val(0, std::auto_ptr<Expr>(m_multiple->clone()));
 
-        if (yasm_value_finalize_expr(&val, bc->multiple, prev_bc, 0))
-            yasm_error_set(YASM_ERROR_TOO_COMPLEX,
-                           N_("multiple expression too complex"));
-        else if (val.rel)
-            yasm_error_set(YASM_ERROR_NOT_ABSOLUTE,
-                           N_("multiple expression not absolute"));
+        if (val.finalize(prev_bc))
+            throw TooComplexError(N_("multiple expression too complex"));
+        else if (val.is_relative())
+            throw NotAbsoluteError(N_("multiple expression not absolute"));
         // Finalize creates NULL output if value=0, but bc->multiple is NULL
         // if value=1 (this difference is to make the common case small).
         // However, this means we need to set bc->multiple explicitly to 0
         // here if val.abs is NULL.
-        if (val.abs)
-            bc->multiple = val.abs;
+        if (const Expr* e = val.get_abs())
+            m_multiple.reset(e->clone());
         else
-            bc->multiple = yasm_expr_create_ident(
-                yasm_expr_int(yasm_intnum_create_uint(0)), bc->line);
-#endif
+            m_multiple.reset(new Expr(new IntNum(0), m_line));
     }
 }
 

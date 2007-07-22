@@ -135,6 +135,18 @@ public:
     /// @param indent_level indentation level
     void put(std::ostream& os, int indent_level) const;
 
+    /// Get the absolute portion of the value.
+    /// @return Absolute expression.
+    Expr* get_abs() const { return m_abs.get(); }
+
+    /// Get the relative portion of the value.
+    /// @return Symbol for the relative portion.
+    Symbol* get_rel() const { return m_rel; }
+
+    /// Determine if the value is relative.
+    /// @return True if value has relative portions, false if not.
+    bool is_relative() const { return m_rel != 0; }
+
     /// Maximum value of #m_rshift.
     static const unsigned int RSHIFT_MAX = 127;
 
