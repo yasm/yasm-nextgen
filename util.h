@@ -74,13 +74,13 @@
 #ifdef HAVE_STRCASECMP
 # define yasm__strcasecmp(x, y)         strcasecmp(x, y)
 # define yasm__strncasecmp(x, y, n)     strncasecmp(x, y, n)
-#elif HAVE_STRICMP
+#elif defined(HAVE_STRICMP)
 # define yasm__strcasecmp(x, y)         stricmp(x, y)
 # define yasm__strncasecmp(x, y, n)     strnicmp(x, y, n)
-#elif HAVE__STRICMP
+#elif defined(HAVE__STRICMP)
 # define yasm__strcasecmp(x, y)         _stricmp(x, y)
 # define yasm__strncasecmp(x, y, n)     _strnicmp(x, y, n)
-#elif HAVE_STRCMPI
+#elif defined(HAVE_STRCMPI)
 # define yasm__strcasecmp(x, y)         strcmpi(x, y)
 # define yasm__strncasecmp(x, y, n)     strncmpi(x, y, n)
 #else
