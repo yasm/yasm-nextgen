@@ -85,16 +85,16 @@ public:
 /// Base class for "instruction" bytecodes.  These are the mnenomic
 /// (rather than raw) representation of instructions.  Architectures should
 /// derive their own implementation from this.
-struct Insn : public Bytecode::Contents {
+class Insn : public Bytecode::Contents {
 public:
     /// An instruction operand.
     class Operand {
     public:
         /// Base class for target modifiers.
         class TargetModifier : private boost::noncopyable {
+        public:
             TargetModifier() {}
             virtual ~TargetModifier() {}
-
             virtual void put(std::ostream& os) = 0;
         };
 
@@ -175,8 +175,10 @@ public:
 
     /// Base class for instruction prefixes.
     class Prefix {
+    public:
         Prefix() {}
         virtual ~Prefix() {}
+        virtual void put(std::ostream& os) = 0;
     };
 
     Insn() {}
@@ -205,7 +207,7 @@ public:
 
     /// Finalize the common parts of an instruction.
     /// Calls do_finalize().
-    void finalize();
+    void finalize(Bytecode* bc, Bytecode* prev_bc);
 
     /// Calculates minimum size.  Internal errors when called.
     void calc_len(Bytecode* bc, Bytecode::AddSpanFunc add_span);
@@ -225,7 +227,7 @@ public:
 
 protected:
     /// Finalize the custom parts of an instruction.
-    virtual void do_finalize() = 0;
+    virtual void do_finalize(Bytecode* bc, Bytecode* prev_bc) = 0;
 
     /// Operands.
     std::vector<Operand> m_operands;

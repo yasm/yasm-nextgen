@@ -442,7 +442,7 @@ public:
     /// @param bc           bytecode
     /// @return Instruction details if bytecode is an instruction bytecode,
     ///         otherwise NULL.
-    /*@dependent@*/ /*@null@*/ Insn* get_insn();
+    /*@dependent@*/ /*@null@*/ Insn* get_insn() const;
 
 private:
     /// Implementation-specific data.

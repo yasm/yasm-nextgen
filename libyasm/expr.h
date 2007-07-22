@@ -119,7 +119,7 @@ public:
         Term(Register* reg) : m_type(REG) { m_data.reg = reg; }
         Term(IntNum* intn) : m_type(INT) { m_data.intn = intn; }
         Term(FloatNum* flt) : m_type(FLOAT) { m_data.flt = flt; }
-        explicit Term(Subst subst) : m_type(SUBST)
+        explicit Term(const Subst& subst) : m_type(SUBST)
         { m_data.subst = subst.subst; }
         Term(Symbol* sym) : m_type(SYM) { m_data.sym = sym; }
         Term(Bytecode* bc) : m_type(PRECBC) { m_data.precbc = bc; }

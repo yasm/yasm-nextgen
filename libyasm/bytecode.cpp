@@ -64,8 +64,6 @@ Bytecode::Contents::expand(Bytecode *bc, int span,
                            /*@out@*/ long& pos_thres)
 {
     throw InternalError(N_("bytecode does not have any dependent spans"));
-    /*@unreached@*/
-    return false;
 }
 
 void
@@ -89,7 +87,8 @@ Bytecode::Bytecode(std::auto_ptr<Contents> contents, unsigned long line)
       m_len(0),
       m_mult_int(1),
       m_line(line),
-      m_offset(~0UL)    // obviously incorrect / uninitialized value
+      m_offset(~0UL),   // obviously incorrect / uninitialized value
+      m_bc_index(~0UL)
 {
 }
 
@@ -132,9 +131,10 @@ Bytecode::put(std::ostream& os, int indent_level) const
     else
         os << *m_multiple;
     os << std::endl;
-    os << std::setw(indent_level) << "" << "Length=" << m_len;
-    os << std::setw(indent_level) << "" << "Line Index=" << m_line;
-    os << std::setw(indent_level) << "" << "Offset=" << m_offset;
+    os << std::setw(indent_level) << "" << "Length=" << m_len << std::endl;
+    os << std::setw(indent_level) << "" << "Line Index=" << m_line
+       << std::endl;
+    os << std::setw(indent_level) << "" << "Offset=" << m_offset << std::endl;
 }
 
 void
@@ -268,7 +268,7 @@ Bytecode::get_multiple(bool calc_bc_dist)
 }
 
 Insn*
-Bytecode::get_insn()
+Bytecode::get_insn() const
 {
     if (m_contents->get_special() != Contents::SPECIAL_INSN)
         return 0;

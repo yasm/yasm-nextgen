@@ -159,7 +159,7 @@ Insn::Operand::finalize()
                     m_data.ea->disp.get_abs()->level_tree(true, true, false);
             } catch (Error& err) {
                 // Add a pointer to where it was used
-                err.get_msg() += " in memory expression";
+                err.m_message += " in memory expression";
                 throw;
             }
 #endif
@@ -169,7 +169,7 @@ Insn::Operand::finalize()
                 m_data.val->level_tree(true, true, true);
             } catch (Error& err) {
                 // Add a pointer to where it was used
-                err.get_msg() += " in immediate expression";
+                err.m_message += " in immediate expression";
                 throw;
             }
             break;
@@ -179,12 +179,12 @@ Insn::Operand::finalize()
 }
 
 void
-Insn::finalize()
+Insn::finalize(Bytecode* bc, Bytecode* prev_bc)
 {
     // Simplify the operands' expressions.
     std::for_each(m_operands.begin(), m_operands.end(),
                   boost::mem_fn(&Operand::finalize));
-    do_finalize();
+    do_finalize(bc, prev_bc);
 }
 
 void

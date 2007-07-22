@@ -26,7 +26,6 @@
 //
 #include "util.h"
 
-#include <cstring>
 #include <algorithm>
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
@@ -185,10 +184,12 @@ Expr::Expr(const Term& a, unsigned long line)
 Expr&
 Expr::operator= (const Expr& rhs)
 {
-    m_op = rhs.m_op;
-    m_line = rhs.m_line;
-    std::transform(rhs.m_terms.begin(), rhs.m_terms.end(), m_terms.begin(),
-                   boost::mem_fn(&Term::clone));
+    if (this != &rhs) {
+        m_op = rhs.m_op;
+        m_line = rhs.m_line;
+        std::transform(rhs.m_terms.begin(), rhs.m_terms.end(), m_terms.begin(),
+                       boost::mem_fn(&Term::clone));
+    }
     return *this;
 }
 
@@ -206,7 +207,8 @@ Expr::Expr(unsigned long line, Op op)
 
 Expr::~Expr()
 {
-    std::for_each(m_terms.begin(), m_terms.end(), boost::mem_fn(&Term::destroy));
+    std::for_each(m_terms.begin(), m_terms.end(),
+                  boost::mem_fn(&Term::destroy));
 }
 
 /// Negate just a single ExprTerm by building a -1*ei subexpression.
@@ -352,7 +354,7 @@ Expr::simplify_identity(IntNum* &intn, bool simplify_reg_mul)
     }
 
     // Compute NOT, NEG, and LNOT on single intnum.
-    if (m_terms.size() == 1 && is_first &&
+    if (intn && m_terms.size() == 1 && is_first &&
         (m_op == NOT || m_op == NEG || m_op == LNOT))
         intn->calc(m_op);
 
@@ -675,7 +677,7 @@ Expr::extract_deep_segoff()
     // Not at this level?  Search any expr children.
     for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i) {
         if (Expr* e = i->get_expr()) {
-            retval = e->extract_deep_segoff();
+            retval.reset(e->extract_deep_segoff());
             if (retval.get() != 0)
                 return retval;
         }
@@ -688,51 +690,53 @@ Expr::extract_deep_segoff()
 std::auto_ptr<Expr>
 Expr::extract_segoff()
 {
+    std::auto_ptr<Expr> retval(0);
+
     // If not SEG:OFF, we can't do this transformation
     if (m_op != SEGOFF || m_terms.size() != 2)
-        return std::auto_ptr<Expr>(0);
+        return retval;
 
-    Expr* retval;
     Term& left = m_terms.front();
 
     // Extract the SEG portion out to its own expression
     if (Expr* e = left.get_expr())
-        retval = e;
+        retval.reset(e);
     else {
         // Need to build IDENT expression to hold non-expression contents
-        retval = new Expr(m_line, IDENT);
+        retval.reset(new Expr(m_line, IDENT));
         retval->m_terms.push_back(left);
     }
 
     // Change the expression into an IDENT
     m_terms.erase(m_terms.begin());
     m_op = IDENT;
-    return std::auto_ptr<Expr>(retval);
+    return retval;
 }
 
 std::auto_ptr<Expr>
 Expr::extract_wrt()
 {
+    std::auto_ptr<Expr> retval(0);
+
     // If not WRT, we can't do this transformation
     if (m_op != WRT || m_terms.size() != 2)
-        return std::auto_ptr<Expr>(0);
+        return retval;
 
-    Expr* retval;
     Term& right = m_terms.back();
 
     // Extract the right side portion out to its own expression
     if (Expr* e = right.get_expr())
-        retval = e;
+        retval.reset(e);
     else {
         // Need to build IDENT expression to hold non-expression contents
-        retval = new Expr(m_line, IDENT);
+        retval.reset(new Expr(m_line, IDENT));
         retval->m_terms.push_back(right);
     }
 
     // Change the expr into an IDENT
     m_terms.pop_back();
     m_op = IDENT;
-    return std::auto_ptr<Expr>(retval);
+    return retval;
 }
 
 FloatNum*

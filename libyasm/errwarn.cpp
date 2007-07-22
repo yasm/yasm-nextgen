@@ -33,8 +33,6 @@
 
 namespace yasm {
 
-static const int MSG_MAXSIZE = 1024;
-
 // Default handlers for replacable functions
 static const char *def_gettext_hook(const char *msgid);
 

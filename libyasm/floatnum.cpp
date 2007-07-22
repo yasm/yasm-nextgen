@@ -268,9 +268,9 @@ FloatNum::mul(const FloatNum* op)
 
     // Make the operands unsigned after copying from original operands
     BitVector::Copy(op1, m_mantissa);
-    BitVector::MSB(op1, 0);
+    BitVector::MSB(op1, false);
     BitVector::Copy(op2, op->m_mantissa);
-    BitVector::MSB(op2, 0);
+    BitVector::MSB(op2, false);
 
     // Compute the product of the mantissas
     BitVector::Multiply(product, op1, op2);
@@ -343,7 +343,7 @@ FloatNum::FloatNum(const char *str)
             // See if we've processed more than the max significant digits:
             if (sig_digits < MANT_SIGDIGITS) {
                 // Multiply mantissa by 10 [x = (x<<1)+(x<<3)]
-                BitVector::shift_left(m_mantissa, 0);
+                BitVector::shift_left(m_mantissa, false);
                 BitVector::Copy(operand[0], m_mantissa);
                 BitVector::Move_Left(m_mantissa, 2);
                 carry = false;

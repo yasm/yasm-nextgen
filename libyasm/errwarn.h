@@ -102,19 +102,6 @@ public:
     virtual const char* what() const throw()
     { return m_message.c_str(); }
 
-    /// Get the cross-reference for the error.
-    /// @param xrefstr  cross-reference message (output)
-    /// @return Cross-reference line number, or 0 if no cross reference.
-    virtual unsigned long what_xref(std::string& xrefstr) const
-    {
-        xrefstr = m_xrefstr;
-        return m_xrefline;
-    }
-
-    /// Accessor function to allow modification of the error message.
-    /// @return Error message reference.
-    std::string& get_msg() { return m_message; }
-private:
     std::string m_message;
     std::string m_xrefstr;
     unsigned long m_xrefline;

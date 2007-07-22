@@ -47,7 +47,7 @@ public:
 
     /// Get the current line position in a repository.
     /// @return Current virtual line.
-    unsigned long get_current() { return m_current; }
+    unsigned long get_current() const { return m_current; }
 
     /// Get bytecode and source line information, if any, for a virtual line.
     /// @param line         virtual line
@@ -143,7 +143,7 @@ private:
     /// Source code line info.
     class Source {
     public:
-        Source() {}
+        Source() : m_bc(0) {}
         Source(Bytecode* bc, const std::string& source)
             : m_bc(bc), m_source(source)
         {}
