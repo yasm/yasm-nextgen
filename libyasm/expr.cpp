@@ -677,7 +677,7 @@ Expr::extract_deep_segoff()
     // Not at this level?  Search any expr children.
     for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i) {
         if (Expr* e = i->get_expr()) {
-            retval.reset(e->extract_deep_segoff());
+            retval = e->extract_deep_segoff();
             if (retval.get() != 0)
                 return retval;
         }
