@@ -218,23 +218,17 @@ public:
     /// @param fold_const       enable constant folding if nonzero
     /// @param simplify_ident   simplify identities
     /// @param simplify_reg_mul simplify REG*1 identities
-    /// @param calc_bc_dist     true if distances between bytecodes should be
-    ///                         calculated, false if they should be left
-    ///                         intact
     /// @param xform_extra      extra transformation function
     void level_tree(bool fold_const,
                     bool simplify_ident,
                     bool simplify_reg_mul,
-                    bool calc_bc_dist,
                     boost::function<void (Expr*)> xform_extra = 0);
 
     /// Simplify an expression as much as possible.  Eliminates extraneous
     /// branches and simplifies integer-only subexpressions.  Simplified
     /// version of level_tree().
-    /// @param calc_bc_dist if distance between bytecodes should be
-    ///                     calculated
-    void simplify(bool calc_bc_dist)
-    { level_tree(true, true, true, calc_bc_dist, 0); }
+    void simplify()
+    { level_tree(true, true, true, 0); }
 
     /// Extract the segment portion of an expression containing SEG:OFF,
     /// leaving the offset.
@@ -266,13 +260,10 @@ public:
     /*@dependent@*/ /*@null@*/ FloatNum* get_float() const;
 
     /// Get the integer value of an expression if it's just an integer.
-    /// @param calc_bc_dist  True if distances between bytecodes should be
-    ///                      calculated, false if 0 should be returned in
-    ///                      this case
     /// @return 0 if the expression is too complex (contains anything other
     ///         than integers, ie floats, non-valued labels, registers);
     ///         otherwise the intnum value of the expression.
-    /*@dependent@*/ /*@null@*/ IntNum* get_intnum(bool calc_bc_dist);
+    /*@dependent@*/ /*@null@*/ IntNum* get_intnum() const;
 
     /// Get the symbol value of an expression if it's just a symbol.
     /// @return 0 if the expression is too complex; otherwise the symbol
@@ -309,10 +300,13 @@ public:
     /// @param callback     callback function: given subst index for bytecode
     ///                     pair, bytecode pair (bc2-bc1)
     /// @return Number of transformations made.
-    int bc_dist_subst(boost::function<void (unsigned int subst,
+    void xform_bc_dist_subst(boost::function<void (unsigned int subst,
                                             Bytecode* precbc,
                                             Bytecode* precbc2)> func);
 
+    void xform_bc_dist_base(boost::function<bool (Term& term,
+                                                  Bytecode* precbc,
+                                                  Bytecode* precbc2)> func);
     /// Substitute terms into expr SUBST terms (by index).  Terms
     /// are cloned.
     /// @param terms        terms
@@ -339,23 +333,9 @@ private:
     Expr(unsigned long line, Op op);
 
     // Internal callbacks
-    bool bc_dist_cb(Term& term, Bytecode* precbc, Bytecode* precbc2);
-    bool bc_dist_subst_cb(Term& term, Bytecode* precbc, Bytecode* precbc2,
-                          boost::function<void (unsigned int subst,
-                                                Bytecode* precbc,
-                                                Bytecode* precbc2)> func,
-                          unsigned int& subst);
-    void xform_bc_dist_subst(boost::function<void (unsigned int subst,
-                                                   Bytecode* precbc,
-                                                   Bytecode* precbc2)> func,
-                             unsigned int& subst);
     bool substitute_cb(const Terms& subst_terms);
 
     // Levelling functions
-    void xform_bc_dist_base(boost::function<bool (Term& term,
-                                                  Bytecode* precbc,
-                                                  Bytecode* precbc2)> func);
-    void xform_bc_dist();
     void xform_neg_term(Terms::iterator term);
     void xform_neg_helper();
     void xform_neg();
@@ -365,7 +345,6 @@ private:
     void level(bool fold_const,
                bool simplify_ident,
                bool simplify_reg_mul,
-               bool calc_bc_dist,
                boost::function<void (Expr*)> xform_extra);
 };
 

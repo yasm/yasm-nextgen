@@ -369,15 +369,6 @@ public:
     ///                     bytecodes
     void finalize(Bytecode* prev_bc);
 
-    /// Determine the distance between the starting offsets of two bytecodes.
-    /// @param precbc1      preceding bytecode to the first bytecode
-    /// @param precbc2      preceding bytecode to the second bytecode
-    /// @return Distance in bytes between the two bytecodes (bc2-bc1), or
-    ///         NULL if the distance was indeterminate.
-    /// @warning Only valid /after/ optimization.
-    static /*@null@*/ /*@only@*/ IntNum* calc_dist
-        (const Bytecode* precbc1, const Bytecode* precbc2);
-
     /// Get the offset of the bytecode.
     /// @return Offset of the bytecode in bytes.
     /// @warning Only valid /after/ optimization.
@@ -490,6 +481,35 @@ private:
     /// bytecode previous to the label).
     std::vector<Symbol*> m_symbols;
 };
+
+/// Determine the distance between the starting offsets of two bytecodes.
+/// @param precbc1      preceding bytecode to the first bytecode
+/// @param precbc2      preceding bytecode to the second bytecode
+/// @return Distance in bytes between the two bytecodes (bc2-bc1), or
+///         NULL if the distance was indeterminate.
+/// @warning Only valid /after/ optimization.
+/*@null@*/ /*@only@*/ IntNum* calc_bc_dist(const Bytecode* precbc1,
+                                           const Bytecode* precbc2);
+
+/// Transforms instances of symrec-symrec [symrec+(-1*symrec)] into integers
+/// if possible by calling calc_bc_dist().
+/// @param e            expression
+/// @warning Only valid /after/ optimization.
+void xform_calc_bc_dist(Expr* e);
+
+/// Expr::level_tree() transformation helper function to transform
+/// symrec-symrec terms in expression into SUBST terms.
+/// Calls the callback function for each symrec-symrec term.
+/// @note Use boost::bind() to bind this into a form acceptable to
+///       Expr::level_tree().
+/// @param
+/// @param callback     callback function: given subst index for bytecode
+///                     pair, bytecode pair (bc2-bc1)
+/// @return Number of transformations made.
+int xform_subst_bc_dist(Expr* e,
+                        boost::function<void (unsigned int subst,
+                                              Bytecode* precbc,
+                                              Bytecode* precbc2)> func);
 
 } // namespace yasm
 

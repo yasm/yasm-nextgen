@@ -21,7 +21,7 @@ main()
 
     std::cout << *e4 << std::endl;
 
-    e4->simplify(false);
+    e4->simplify();
 
     std::cout << *e4 << std::endl;
 

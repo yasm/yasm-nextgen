@@ -469,7 +469,7 @@ Value::finalize(Bytecode* precbc)
 
     // Handle trivial (IDENT) cases immediately
     if (m_abs->is_op(Expr::IDENT)) {
-        if (IntNum* intn = m_abs->get_intnum(false)) {
+        if (IntNum* intn = m_abs->get_intnum()) {
             if (intn->is_zero())
                 m_abs.reset(0);
         } else if (Symbol* sym = m_abs->get_symbol()) {

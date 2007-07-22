@@ -26,21 +26,18 @@
 //
 #include "util.h"
 
+#include <cstring>
+#include <algorithm>
+#include <boost/bind.hpp>
+#include <boost/ref.hpp>
+
 #include "errwarn.h"
 #include "intnum.h"
 #include "floatnum.h"
 #include "expr.h"
 //#include "symrec.h"
 
-#include "bytecode.h"
-//#include "section.h"
-
 //#include "arch.h"
-
-#include <cstring>
-#include <algorithm>
-#include <boost/bind.hpp>
-#include <boost/ref.hpp>
 
 namespace {
 
@@ -210,138 +207,6 @@ Expr::Expr(unsigned long line, Op op)
 Expr::~Expr()
 {
     std::for_each(m_terms.begin(), m_terms.end(), boost::mem_fn(&Term::destroy));
-}
-
-// Transforms instances of symrec-symrec [symrec+(-1*symrec)] into single
-// exprterms if possible.  Uses a simple n^2 algorithm because n is usually
-// quite small.  Also works for precbc-precbc (or symrec-precbc,
-// precbc-symrec).
-void
-Expr::xform_bc_dist_base(boost::function<bool (Term& term,
-                                               Bytecode* precbc,
-                                               Bytecode* precbc2)> func)
-{
-    // Handle symrec-symrec in ADD exprs by looking for (-1*symrec) and
-    // symrec term pairs (where both symrecs are in the same segment).
-    if (m_op != ADD)
-        return;
-
-    for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i) {
-        // First look for an (-1*symrec) term
-        Expr* sube = i->get_expr();
-        if (!sube)
-            continue;
-        if (sube->m_op != MUL || sube->m_terms.size() != 2)
-            continue;
-
-        IntNum* intn;
-        Symbol* sym = 0;
-        /*@dependent@*/ /*@null@*/ Bytecode* precbc;
-
-        if ((intn = sube->m_terms[0].get_int())) {
-            if ((sym = sube->m_terms[1].get_sym()))
-                ;
-            else if ((precbc = sube->m_terms[1].get_precbc()))
-                ;
-            else
-                continue;
-        } else if ((intn = sube->m_terms[1].get_int())) {
-            if ((sym = sube->m_terms[0].get_sym()))
-                ;
-            else if ((precbc = sube->m_terms[0].get_precbc()))
-                ;
-            else
-                continue;
-        } else
-            continue;
-
-        if (!intn->is_neg1())
-            continue;
-#if 0
-        if (sym && !sym->get_label(precbc))
-            continue;
-        Section* sect = precbc->get_section();
-
-        // Now look for a symrec term in the same segment
-        for (Terms::iterator j=m_terms.begin(), end=m_terms.end();
-             j != end; ++j) {
-            Symbol* sym2;
-            /*@dependent@*/ /*@null@*/ Bytecode* precbc2;
-
-            if ((((sym2 = j->get_sym()) && sym2->get_label(&precbc2)) ||
-                 (precbc2 = j->get_precbc())) &&
-                (sect == precbc2->get_section()) &&
-                func(*j, precbc, precbc2)) {
-                // Delete the matching (-1*symrec) term
-                i->release();
-                break;  // stop looking for matching symrec term
-            }
-        }
-#endif
-    }
-
-    // Clean up any deleted (NONE) terms
-    Terms::iterator erasefrom =
-        std::remove_if(m_terms.begin(), m_terms.end(),
-                       boost::bind(&Term::is_type, _1, NONE));
-    m_terms.erase(erasefrom, m_terms.end());
-    Terms(m_terms).swap(m_terms);   // trim capacity
-}
-
-inline bool
-Expr::bc_dist_cb(Term& term, Bytecode* precbc, Bytecode* precbc2)
-{
-    IntNum *dist = Bytecode::calc_dist(precbc, precbc2);
-    if (!dist)
-        return false;
-    // Change the term to an integer
-    term = dist;
-    return true;
-}
-
-/// Transforms instances of symrec-symrec [symrec+(-1*symrec)] into integers
-/// if possible.
-inline void
-Expr::xform_bc_dist()
-{
-    xform_bc_dist_base(boost::bind(&Expr::bc_dist_cb, this, _1, _2, _3));
-}
-
-inline bool
-Expr::bc_dist_subst_cb(Term& term, Bytecode* precbc, Bytecode* precbc2,
-                       boost::function<void (unsigned int subst,
-                                             Bytecode* precbc,
-                                             Bytecode* precbc2)> func,
-                       unsigned int& subst)
-{
-    // Call higher-level callback
-    func(subst, precbc, precbc2);
-    // Change the term to an subst
-    term = Term(Term::Subst(subst));
-    subst++;
-    return true;
-}
-
-inline void
-Expr::xform_bc_dist_subst(boost::function<void (unsigned int subst,
-                                                Bytecode* precbc,
-                                                Bytecode* precbc2)> func,
-                          unsigned int& subst)
-{
-    xform_bc_dist_base(boost::bind(&Expr::bc_dist_subst_cb, this, _1, _2, _3,
-                                   func, boost::ref(subst)));
-}
-
-inline int
-Expr::bc_dist_subst(boost::function<void (unsigned int subst,
-                                          Bytecode* precbc,
-                                          Bytecode* precbc2)> func)
-{
-    unsigned int subst;
-    level_tree(true, true, true, false,
-               boost::bind(&Expr::xform_bc_dist_subst, _1, func,
-                           boost::ref(subst)));
-    return subst;
 }
 
 /// Negate just a single ExprTerm by building a -1*ei subexpression.
@@ -656,7 +521,6 @@ void
 Expr::level(bool fold_const,
             bool simplify_ident,
             bool simplify_reg_mul,
-            bool calc_bc_dist,
             boost::function<void (Expr*)> xform_extra)
 {
     xform_neg();
@@ -665,7 +529,7 @@ Expr::level(bool fold_const,
     for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i) {
         if (Expr* e = i->get_expr())
             e->level(fold_const, simplify_ident, simplify_reg_mul,
-                     calc_bc_dist, xform_extra);
+                     xform_extra);
     }
 
     // Check for SEG of SEG:OFF, if we match, simplify to just the segment
@@ -683,14 +547,12 @@ Expr::level(bool fold_const,
     level_op(fold_const, simplify_ident, simplify_reg_mul);
 
     // Do callback
-    if (calc_bc_dist || xform_extra) {
-        if (calc_bc_dist)
-            xform_bc_dist();
+    if (xform_extra) {
         if (xform_extra)
             xform_extra(this);
         // Cleanup recursion pass; zero out callback so we don't
         // infinite loop (come back here again).
-        level(fold_const, simplify_ident, simplify_reg_mul, false, 0);
+        level(fold_const, simplify_ident, simplify_reg_mul, 0);
     }
 }
 
@@ -698,13 +560,11 @@ void
 Expr::level_tree(bool fold_const,
                  bool simplify_ident,
                  bool simplify_reg_mul,
-                 bool calc_bc_dist,
                  boost::function<void (Expr*)> xform_extra)
 {
     std::vector<const Expr*> seen;
     expand_equ(seen);
-    level(fold_const, simplify_ident, simplify_reg_mul, calc_bc_dist,
-          xform_extra);
+    level(fold_const, simplify_ident, simplify_reg_mul, xform_extra);
 }
 
 void
@@ -885,10 +745,8 @@ Expr::get_float() const
 }
 
 IntNum*
-Expr::get_intnum(bool calc_bc_dist)
+Expr::get_intnum() const
 {
-    simplify(calc_bc_dist);
-
     if (m_op == IDENT)
         return m_terms.front().get_int();
     else
