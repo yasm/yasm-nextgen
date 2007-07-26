@@ -16,16 +16,13 @@ ADD_LIBRARY(libyasm
     intnum.cpp
     linemap.cpp
     md5.cpp
-    #mergesort.c
+    object.cpp
     #phash.c
-    #section.c
+    section.cpp
     #strcasecmp.c
-    #strsep.c
     #symrec.c
     #valparam.c
     value.cpp
-    #xmalloc.c
-    #xstrdup.c
     #module.c
     )
 

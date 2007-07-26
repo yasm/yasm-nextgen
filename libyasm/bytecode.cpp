@@ -52,13 +52,13 @@ Bytecode::set_multiple(std::auto_ptr<Expr> e)
 }
 
 void
-Bytecode::Contents::calc_len(Bytecode* bc, Bytecode::AddSpanFunc add_span)
+Bytecode::Contents::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 {
     throw InternalError(N_("bytecode length cannot be calculated"));
 }
 
 bool
-Bytecode::Contents::expand(Bytecode *bc, int span,
+Bytecode::Contents::expand(Bytecode& bc, int span,
                            long old_val, long new_val,
                            /*@out@*/ long& neg_thres,
                            /*@out@*/ long& pos_thres)
@@ -67,7 +67,7 @@ Bytecode::Contents::expand(Bytecode *bc, int span,
 }
 
 void
-Bytecode::Contents::to_bytes(Bytecode* bc, unsigned char* &buf,
+Bytecode::Contents::to_bytes(Bytecode& bc, unsigned char* &buf,
                              OutputValueFunc output_value,
                              OutputRelocFunc output_reloc)
 {
@@ -138,13 +138,13 @@ Bytecode::put(std::ostream& os, int indent_level) const
 }
 
 void
-Bytecode::finalize(Bytecode* prev_bc)
+Bytecode::finalize(Bytecode& prev_bc)
 {
-    m_contents->finalize(this, prev_bc);
+    m_contents->finalize(*this, prev_bc);
     if (m_multiple.get() != 0) {
         Value val(0, std::auto_ptr<Expr>(m_multiple->clone()));
 
-        if (val.finalize(prev_bc))
+        if (val.finalize(&prev_bc))
             throw TooComplexError(N_("multiple expression too complex"));
         else if (val.is_relative())
             throw NotAbsoluteError(N_("multiple expression not absolute"));
@@ -159,6 +159,17 @@ Bytecode::finalize(Bytecode* prev_bc)
     }
 }
 
+void
+Bytecode::finalize(Bytecode& prev_bc, Errwarns& errwarns)
+{
+    try {
+        finalize(prev_bc);
+    } catch (Error& err) {
+        errwarns.propagate(m_line, err);
+    }
+    errwarns.propagate(m_line);     // propagate warnings
+}
+
 unsigned long
 Bytecode::next_offset() const
 {
@@ -169,7 +180,7 @@ void
 Bytecode::calc_len(AddSpanFunc add_span)
 {
     m_len = 0;
-    m_contents->calc_len(this, add_span);
+    m_contents->calc_len(*this, add_span);
 
     // Check for multiples
     m_mult_int = 1;
@@ -202,7 +213,7 @@ Bytecode::expand(int span, long old_val, long new_val,
         m_mult_int = new_val;
         return true;
     }
-    return m_contents->expand(this, span, old_val, new_val, neg_thres,
+    return m_contents->expand(*this, span, old_val, new_val, neg_thres,
                               pos_thres);
 }
 
@@ -241,7 +252,7 @@ Bytecode::to_bytes(unsigned char* buf, unsigned long& bufsize,
 
     for (i=0; i<m_mult_int; i++) {
         origbuf = destbuf;
-        m_contents->to_bytes(this, destbuf, output_value, output_reloc);
+        m_contents->to_bytes(*this, destbuf, output_value, output_reloc);
 
         if ((unsigned long)(destbuf - origbuf) != m_len)
             throw InternalError(
@@ -273,6 +284,33 @@ Bytecode::get_insn() const
     if (m_contents->get_special() != Contents::SPECIAL_INSN)
         return 0;
     return static_cast<Insn*>(m_contents.get());
+}
+
+unsigned long
+Bytecode::update_offset(unsigned long offset, Bytecode& prev_bc)
+{
+    if (m_contents->get_special() == Contents::SPECIAL_OFFSET) {
+        // Recalculate/adjust len of offset-based bytecodes here
+        long neg_thres = 0;
+        long pos_thres = (long)next_offset();
+        expand(1, 0, (long)prev_bc.next_offset(), neg_thres, pos_thres);
+    }
+    m_offset = offset;
+    return offset + m_len*m_mult_int;
+}
+
+unsigned long
+Bytecode::update_offset(unsigned long offset, Bytecode& prev_bc,
+                        Errwarns& errwarns)
+{
+    unsigned long retval;
+    try {
+        retval = update_offset(offset, prev_bc);
+    } catch (Error& err) {
+        errwarns.propagate(m_line, err);
+    }
+    errwarns.propagate(m_line);     // propagate warnings
+    return retval;
 }
 
 /*@null@*/ std::auto_ptr<IntNum>

@@ -179,7 +179,7 @@ Insn::Operand::finalize()
 }
 
 void
-Insn::finalize(Bytecode* bc, Bytecode* prev_bc)
+Insn::finalize(Bytecode& bc, Bytecode& prev_bc)
 {
     // Simplify the operands' expressions.
     std::for_each(m_operands.begin(), m_operands.end(),
@@ -188,14 +188,14 @@ Insn::finalize(Bytecode* bc, Bytecode* prev_bc)
 }
 
 void
-Insn::calc_len(Bytecode* bc, Bytecode::AddSpanFunc add_span)
+Insn::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 {
     // simply pass down to the base class
     Bytecode::Contents::calc_len(bc, add_span);
 }
 
 bool
-Insn::expand(Bytecode* bc, int span, long old_val, long new_val,
+Insn::expand(Bytecode& bc, int span, long old_val, long new_val,
              /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres)
 {
     // simply pass down to the base class
@@ -204,7 +204,7 @@ Insn::expand(Bytecode* bc, int span, long old_val, long new_val,
 }
 
 void
-Insn::to_bytes(Bytecode* bc, unsigned char* &buf, OutputValueFunc output_value,
+Insn::to_bytes(Bytecode& bc, unsigned char* &buf, OutputValueFunc output_value,
                OutputRelocFunc output_reloc)
 {
     // simply pass down to the base class

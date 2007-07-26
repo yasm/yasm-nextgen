@@ -38,12 +38,15 @@
 
 namespace yasm {
 
-class Linemap;
-class Value;
-class Bytecode;
 class Arch;
-class Insn;
+class Bytecode;
+class Errwarns;
 class Expr;
+class Insn;
+class IntNum;
+class Linemap;
+class Symbol;
+class Value;
 
 /// Convert yasm_value to its byte representation.  Usually implemented by
 /// object formats to keep track of relocations and verify legal expressions.
@@ -147,7 +150,7 @@ public:
         /// Called from Bytecode::finalize().
         /// @param bc           bytecode
         /// @param prev_bc      bytecode directly preceding bc
-        virtual void finalize(Bytecode* bc, Bytecode* prev_bc) = 0;
+        virtual void finalize(Bytecode& bc, Bytecode& prev_bc) = 0;
 
         /// Calculates the minimum size of a bytecode.
         /// Called from Bytecode::calc_len().
@@ -160,7 +163,7 @@ public:
         /// @param bc           bytecode
         /// @param add_span     function to call to add a span
         /// @note May store to bytecode updated expressions.
-        virtual void calc_len(Bytecode* bc,
+        virtual void calc_len(Bytecode& bc,
                               Bytecode::AddSpanFunc add_span) = 0;
 
         /// Recalculates the bytecode's length based on an expanded span
@@ -183,7 +186,7 @@ public:
         ///         based on the new negative and positive thresholds
         ///         returned.
         /// @note May store to bytecode updated expressions.
-        virtual bool expand(Bytecode* bc, int span,
+        virtual bool expand(Bytecode& bc, int span,
                             long old_val, long new_val,
                             /*@out@*/ long& neg_thres,
                             /*@out@*/ long& pos_thres) = 0;
@@ -206,7 +209,7 @@ public:
         /// @note May result in non-reversible changes to the bytecode, but
         ///       it's preferable if calling this function twice would result
         ///       in the same output.
-        virtual void to_bytes(Bytecode* bc, unsigned char* &buf,
+        virtual void to_bytes(Bytecode& bc, unsigned char* &buf,
                               OutputValueFunc output_value,
                               OutputRelocFunc output_reloc = 0) = 0;
 
@@ -361,7 +364,8 @@ public:
     /// Finalize a bytecode after parsing.
     /// @param prev_bc      bytecode directly preceding bc in a sequence of
     ///                     bytecodes
-    void finalize(Bytecode* prev_bc);
+    void finalize(Bytecode& prev_bc);
+    void finalize(Bytecode& prev_bc, Errwarns& errwarns);
 
     /// Get the offset of the bytecode.
     /// @return Offset of the bytecode in bytes.
@@ -442,6 +446,17 @@ public:
     /// @return Instruction details if bytecode is an instruction bytecode,
     ///         otherwise NULL.
     /*@dependent@*/ /*@null@*/ Insn* get_insn() const;
+
+    /// Updates bytecode offset.
+    /// @note For offset-based bytecodes, calls expand() to determine new
+    ///       length.
+    /// @param offset       offset to set this bytecode to
+    /// @param prev_bc      previous bytecode (in section)
+    /// @param errwarns     error/warning set
+    /// @return Offset of next bytecode.
+    unsigned long update_offset(unsigned long offset, Bytecode& prev_bc);
+    unsigned long update_offset(unsigned long offset, Bytecode& prev_bc,
+                                Errwarns& errwarns);
 
 private:
     /// Implementation-specific data.

@@ -206,17 +206,17 @@ public:
 
     /// Finalize the common parts of an instruction.
     /// Calls do_finalize().
-    void finalize(Bytecode* bc, Bytecode* prev_bc);
+    void finalize(Bytecode& bc, Bytecode& prev_bc);
 
     /// Calculates minimum size.  Internal errors when called.
-    void calc_len(Bytecode* bc, Bytecode::AddSpanFunc add_span);
+    void calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
 
     /// Recalculates bytecode length.  Internal errors when called.
-    bool expand(Bytecode* bc, int span, long old_val, long new_val,
+    bool expand(Bytecode& bc, int span, long old_val, long new_val,
                 /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres);
 
     /// Converts to bytes.  Internal errors when called.
-    void to_bytes(Bytecode* bc, unsigned char* &buf,
+    void to_bytes(Bytecode& bc, unsigned char* &buf,
                   OutputValueFunc output_value,
                   OutputRelocFunc output_reloc = 0);
 
@@ -226,7 +226,7 @@ public:
 
 protected:
     /// Finalize the custom parts of an instruction.
-    virtual void do_finalize(Bytecode* bc, Bytecode* prev_bc) = 0;
+    virtual void do_finalize(Bytecode& bc, Bytecode& prev_bc) = 0;
 
     /// Operands.
     std::vector<Operand> m_operands;
