@@ -34,9 +34,9 @@
 #include <config.h>
 #endif
 
-#if !defined(lint) && !defined(NDEBUG)
-# define NDEBUG
-#endif
+//#if !defined(lint) && !defined(NDEBUG)
+//# define NDEBUG
+//#endif
 
 #include <cstddef>
 #include <cassert>
