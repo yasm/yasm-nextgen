@@ -130,6 +130,8 @@ public:
                               long neg_thres, long pos_thres)>
         AddSpanFunc;
 
+    typedef std::auto_ptr<Bytecode> Ptr;
+
     /// Bytecode contents (abstract base class).  Any implementation of a
     /// specific bytecode must implement a class derived from this one.
     /// The bytecode implementation-specific data is stored in #contents.
@@ -254,92 +256,6 @@ public:
     /// @param e    multiple (kept, do not free)
     void set_multiple(std::auto_ptr<Expr> e);
 
-    //
-    // General bytecode factory functions
-    //
-
-    /// Create a bytecode containing data value(s).
-    /// @param data         vector of data values
-    /// @param size         storage size (in bytes) for each data value
-    /// @param append_zero  append a single zero byte after each data value
-    ///                     (if non-zero)
-    /// @param arch         architecture (optional); if provided, data items
-    ///                     are directly simplified to bytes if possible
-    /// @param line         virtual line (from yasm_linemap)
-    /// @return Newly allocated bytecode.
-    static /*@only@*/ Bytecode* create_data
-        (const std::vector<Dataval>& data, unsigned int size, int append_zero,
-         /*@null@*/ Arch* arch, unsigned long line);
-
-    /// Create a bytecode containing LEB128-encoded data value(s).
-    /// @param datahead     list of data values (kept, do not free)
-    /// @param sign         signedness (True=signed, False=unsigned) of each
-    ///                     data value
-    /// @param line         virtual line (from yasm_linemap)
-    /// @return Newly allocated bytecode.
-    static /*@only@*/ Bytecode* create_leb128
-        (const std::vector<Dataval>& datahead, bool sign, unsigned long line);
-
-    /// Create a bytecode reserving space.
-    /// @param numitems     number of reserve "items" (kept, do not free)
-    /// @param itemsize     reserved size (in bytes) for each item
-    /// @param line         virtual line (from yasm_linemap)
-    /// @return Newly allocated bytecode.
-    static /*@only@*/ Bytecode* create_reserve
-        (/*@only@*/ Expr* numitems, unsigned int itemsize,
-         unsigned long line);
-
-    /// Get the number of items and itemsize for a reserve bytecode.  If bc
-    /// is not a reserve bytecode, returns NULL.
-    /// @param bc           bytecode
-    /// @param itemsize     reserved size (in bytes) for each item (returned)
-    /// @return NULL if bc is not a reserve bytecode, otherwise an expression
-    ///         for the number of items to reserve.
-    /*@null@*/ const Expr* reserve_numitems
-        (/*@out@*/ unsigned int& itemsize) const;
-
-    /// Create a bytecode that includes a binary file verbatim.
-    /// @param filename     path to binary file
-    /// @param start        starting location in file (in bytes) to read data
-    ///                     from (kept, do not free); may be NULL to indicate
-    ///                     0
-    /// @param maxlen       maximum number of bytes to read from the file
-    ///                     (kept, do not free); may be NULL to indicate no
-    ///                     maximum
-    /// @param linemap      line mapping repository
-    /// @param line         virtual line (from linemap) for the bytecode
-    /// @return Newly allocated bytecode.
-    static /*@only@*/ Bytecode* create_incbin
-        (const std::string& filename, /*@only@*/ /*@null@*/ Expr* start,
-         /*@only@*/ /*@null@*/ Expr* maxlen, Linemap* linemap,
-         unsigned long line);
-
-    /// Create a bytecode that aligns the following bytecode to a boundary.
-    /// @param boundary     byte alignment (must be a power of two)
-    /// @param fill         fill data (if NULL, code_fill or 0 is used)
-    /// @param maxskip      maximum number of bytes to skip
-    /// @param code_fill    code fill data (if NULL, 0 is used)
-    /// @param line         virtual line (from yasm_linemap)
-    /// @return Newly allocated bytecode.
-    /// @note The precedence on generated fill is as follows:
-    ///       - from fill parameter (if not NULL)
-    ///       - from code_fill parameter (if not NULL)
-    ///       - 0
-    static /*@only@*/ Bytecode* create_align
-        (/*@keep@*/ Expr* boundary,
-         /*@keep@*/ /*@null@*/ Expr* fill,
-         /*@keep@*/ /*@null@*/ Expr* maxskip,
-         /*@null@*/ const unsigned char** code_fill,
-         unsigned long line);
-
-    /// Create a bytecode that puts the following bytecode at a fixed section
-    /// offset.
-    /// @param start        section offset of following bytecode
-    /// @param line         virtual line (from yasm_linemap)
-    /// @return Newly allocated bytecode.
-    static /*@only@*/ Bytecode *create_org
-        (unsigned long start, unsigned long line);
-
     /// Get the section that contains a particular bytecode.
     /// @param bc   bytecode
     /// @return Section containing bc (can be NULL if bytecode is not part of
@@ -441,6 +357,15 @@ public:
     const Expr* get_multiple_expr() const
     { return m_multiple.get(); };
 
+    /// Get the number of items and itemsize for a reserve bytecode.  If bc
+    /// is not a reserve bytecode, returns NULL.
+    /// @param bc           bytecode
+    /// @param itemsize     reserved size (in bytes) for each item (returned)
+    /// @return NULL if bc is not a reserve bytecode, otherwise an expression
+    ///         for the number of items to reserve.
+    /*@null@*/ const Expr* reserve_numitems
+        (/*@out@*/ unsigned int& itemsize) const;
+
     /// Get a #Insn structure from an instruction bytecode (if possible).
     /// @param bc           bytecode
     /// @return Instruction details if bytecode is an instruction bytecode,
@@ -490,6 +415,86 @@ private:
     /// bytecode previous to the label).
     std::vector<Symbol*> m_symbols;
 };
+
+//
+// General bytecode factory functions
+//
+
+/// Create a bytecode containing data value(s).
+/// @param data         vector of data values
+/// @param size         storage size (in bytes) for each data value
+/// @param append_zero  append a single zero byte after each data value
+///                     (if non-zero)
+/// @param arch         architecture (optional); if provided, data items
+///                     are directly simplified to bytes if possible
+/// @param line         virtual line (from yasm_linemap)
+/// @return Newly allocated bytecode.
+std::auto_ptr<Bytecode> create_data
+    (const std::vector<Dataval>& data, unsigned int size, int append_zero,
+     /*@null@*/ Arch* arch, unsigned long line);
+
+/// Create a bytecode containing LEB128-encoded data value(s).
+/// @param datahead     list of data values (kept, do not free)
+/// @param sign         signedness (True=signed, False=unsigned) of each
+///                     data value
+/// @param line         virtual line (from yasm_linemap)
+/// @return Newly allocated bytecode.
+std::auto_ptr<Bytecode> create_leb128
+    (const std::vector<Dataval>& datahead, bool sign, unsigned long line);
+
+/// Create a bytecode reserving space.
+/// @param numitems     number of reserve "items" (kept, do not free)
+/// @param itemsize     reserved size (in bytes) for each item
+/// @param line         virtual line (from yasm_linemap)
+/// @return Newly allocated bytecode.
+std::auto_ptr<Bytecode> create_reserve
+    (std::auto_ptr<Expr> numitems, unsigned int itemsize,
+     unsigned long line);
+
+/// Create a bytecode that includes a binary file verbatim.
+/// @param filename     path to binary file
+/// @param start        starting location in file (in bytes) to read data
+///                     from (kept, do not free); may be NULL to indicate
+///                     0
+/// @param maxlen       maximum number of bytes to read from the file
+///                     (kept, do not free); may be NULL to indicate no
+///                     maximum
+/// @param linemap      line mapping repository
+/// @param line         virtual line (from linemap) for the bytecode
+/// @return Newly allocated bytecode.
+std::auto_ptr<Bytecode> create_incbin
+    (const std::string& filename, /*@null@*/ std::auto_ptr<Expr> start,
+     /*@null@*/ std::auto_ptr<Expr> maxlen, Linemap* linemap,
+     unsigned long line);
+
+/// Create a bytecode that aligns the following bytecode to a boundary.
+/// @param boundary     byte alignment (must be a power of two)
+/// @param fill         fill data (if NULL, code_fill or 0 is used)
+/// @param maxskip      maximum number of bytes to skip
+/// @param code_fill    code fill data (if NULL, 0 is used)
+/// @param line         virtual line (from yasm_linemap)
+/// @return Newly allocated bytecode.
+/// @note The precedence on generated fill is as follows:
+///       - from fill parameter (if not NULL)
+///       - from code_fill parameter (if not NULL)
+///       - 0
+std::auto_ptr<Bytecode> create_align
+    (std::auto_ptr<Expr> boundary,
+     /*@null@*/ std::auto_ptr<Expr> fill,
+     /*@null@*/ std::auto_ptr<Expr> maxskip,
+     /*@null@*/ const unsigned char** code_fill,
+     unsigned long line);
+
+/// Create a bytecode that puts the following bytecode at a fixed section
+/// offset.
+/// @param start        section offset of following bytecode
+/// @param line         virtual line (from yasm_linemap)
+/// @return Newly allocated bytecode.
+std::auto_ptr<Bytecode> create_org(unsigned long start, unsigned long line);
+
+//
+// General bytecode helper functions.
+//
 
 /// Determine the distance between the starting offsets of two bytecodes.
 /// @param precbc1      preceding bytecode to the first bytecode
