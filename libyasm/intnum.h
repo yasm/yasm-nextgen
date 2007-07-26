@@ -42,26 +42,26 @@ class IntNum {
 
 public:
     /// Default constructor.  Initializes value to 0.
-    IntNum() : m_type(INTNUM_UL) { m_val.ul = 0; }
+    IntNum() : m_type(INTNUM_L) { m_val.l = 0; }
 
     /// Create a new intnum from a decimal/binary/octal/hexidecimal string.
     IntNum(char *str, int base=10);
 
     /// Create a new intnum from an unsigned integer value.
     /// @param i        unsigned integer value
-    IntNum(unsigned long i) : m_type(INTNUM_UL) { m_val.ul = i; }
+    IntNum(unsigned long i) : m_type(INTNUM_L) { set(i); }
 
     /// Create a new intnum from an signed integer value.
     /// @param i        signed integer value
-    IntNum(long i);
+    IntNum(long i) : m_type(INTNUM_L) { m_val.l = i; }
 
     /// Create a new intnum from an unsigned integer value.
     /// @param i        unsigned integer value
-    IntNum(unsigned int i) : m_type(INTNUM_UL) { m_val.ul = i; }
+    IntNum(unsigned int i) : m_type(INTNUM_L) { set(i); }
 
     /// Create a new intnum from an signed integer value.
     /// @param i        signed integer value
-    IntNum(int i);
+    IntNum(int i) : m_type(INTNUM_L) { m_val.l = (long)i; }
 
     /// Create a new intnum from LEB128-encoded form.
     /// @param ptr      pointer to start of LEB128 encoded form
@@ -117,18 +117,17 @@ public:
 
     /// Set an intnum to an unsigned integer.
     /// @param val      integer value
-    void set(unsigned long val)
-    {
-        if (m_type == INTNUM_BV) {
-            BitVector::Destroy(m_val.bv);
-            m_type = INTNUM_UL;
-        }
-        m_val.ul = val;
-    }
+    void set(unsigned long val);
 
     /// Set an intnum to an signed integer.
     /// @param val      integer value
-    void set(long val);
+    void set(long val)
+    {
+        if (m_type == INTNUM_BV)
+            BitVector::Destroy(m_val.bv);
+        m_type = INTNUM_L;
+        m_val.l = val;
+    }
 
     /// Set an intnum to an unsigned integer.
     /// @param val      integer value
@@ -141,44 +140,29 @@ public:
     /// Simple value check for 0.
     /// @return True if acc==0.
     bool is_zero() const
-    { return (m_type == INTNUM_UL && m_val.ul == 0); }
+    { return (m_type == INTNUM_L && m_val.l == 0); }
 
     /// Simple value check for 1.
     /// @param acc      intnum
     /// @return True if acc==1.
     bool is_pos1() const
-    { return (m_type == INTNUM_UL && m_val.ul == 1); }
+    { return (m_type == INTNUM_L && m_val.l == 1); }
 
     /// Simple value check for -1.
     /// @return True if acc==-1.
     bool is_neg1() const
-    { return (m_type == INTNUM_BV && BitVector::is_full(m_val.bv)); }
+    { return (m_type == INTNUM_L && m_val.l == -1); }
 
     /// Simple sign check.
     /// @return -1 if negative, 0 if zero, +1 if positive
-    int sign() const
-    {
-        if (m_type == INTNUM_UL) {
-            if (m_val.ul == 0)
-                return 0;
-            else
-                return 1;
-        } else
-            return BitVector::Sign(m_val.bv);
-    }
+    int sign() const;
 
     /// Convert an intnum to an unsigned 32-bit value.
     /// The value is in "standard" C format (eg, of unknown endian).
     /// @note Parameter intnum is truncated to fit into 32 bits.  Use
     ///       intnum_check_size() to check for overflow.
     /// @return Unsigned 32-bit value of intn.
-    unsigned long get_uint() const
-    {
-        if (m_type == INTNUM_BV)
-            return BitVector::Chunk_Read(m_val.bv, 32, 0);
-        else
-            return m_val.ul;
-    }
+    unsigned long get_uint() const;
 
     /// Convert an intnum to a signed 32-bit value.
     /// The value is in "standard" C format (eg, of unknown endian).
@@ -245,11 +229,23 @@ public:
     /*@only@*/ char *get_str() const;
 
 private:
+    // Compress a bitvector into intnum storage.
+    // If saved as a bitvector, clones the passed bitvector.
+    // Can modify the passed bitvector.
+    // @param bv        bitvector
+    void from_bv(BitVector::wordptr bv);
+
+    // If intnum is a BV, returns its bitvector directly.
+    // If not, converts into passed bv and returns that instead.
+    // @param bv        bitvector to use if intnum is not bitvector.
+    // @return Passed bv or intnum internal bitvector.
+    BitVector::wordptr to_bv(/*@returned@*/ BitVector::wordptr bv) const;
+
     union {
-        unsigned long ul;       ///< integer value (for integers <=32 bits)
+        long l;                 ///< integer value (for integers <=32 bits)
         BitVector::wordptr bv;  ///< bit vector (for integers >32 bits)
     } m_val;
-    enum { INTNUM_UL, INTNUM_BV } m_type;
+    enum { INTNUM_L, INTNUM_BV } m_type;
 };
 
 /// Output integer to buffer in signed LEB128-encoded form.
