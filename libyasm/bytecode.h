@@ -499,11 +499,13 @@ std::auto_ptr<Bytecode> create_org(unsigned long start, unsigned long line);
 /// Determine the distance between the starting offsets of two bytecodes.
 /// @param precbc1      preceding bytecode to the first bytecode
 /// @param precbc2      preceding bytecode to the second bytecode
-/// @return Distance in bytes between the two bytecodes (bc2-bc1), or
-///         NULL if the distance was indeterminate.
+/// @param dist         distance in bytes between the two bytecodes
+///                     (bc2-bc1); output.
+/// @return True if distance calculated; false if the distance was
+///         indeterminate.
 /// @warning Only valid /after/ optimization.
-/*@null@*/ std::auto_ptr<IntNum> calc_bc_dist(const Bytecode* precbc1,
-                                              const Bytecode* precbc2);
+bool calc_bc_dist(const Bytecode& precbc1, const Bytecode& precbc2,
+                  /*@out@*/ IntNum& dist);
 
 /// Expr::level_tree() transformation helper function to transform instances
 /// of symrec-symrec [symrec+(-1*symrec)] into integers if possible by

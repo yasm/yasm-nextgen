@@ -41,6 +41,9 @@ class IntNum {
     friend std::ostream& operator<< (std::ostream &os, const IntNum &intn);
 
 public:
+    /// Default constructor.  Initializes value to 0.
+    IntNum() : m_type(INTNUM_UL) { m_val.ul = 0; }
+
     /// Create a new intnum from a decimal/binary/octal/hexidecimal string.
     IntNum(char *str, int base=10);
 
