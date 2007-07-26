@@ -313,104 +313,104 @@ Object::get_section_by_name(const std::string& name)
     return &(*i);
 }
 
-/*
- * Robertson (1977) optimizer
- * Based (somewhat loosely) on the algorithm given in:
- *   MRC Technical Summary Report # 1779
- *   CODE GENERATION FOR SHORT/LONG ADDRESS MACHINES
- *   Edward L. Robertson
- *   Mathematics Research Center
- *   University of Wisconsin-Madison
- *   610 Walnut Street
- *   Madison, Wisconsin 53706
- *   August 1977
- *
- * Key components of algorithm:
- *  - start assuming all short forms
- *  - build spans for short->long transition dependencies
- *  - if a long form is needed, walk the dependencies and update
- * Major differences from Robertson's algorithm:
- *  - detection of cycles
- *  - any difference of two locations is allowed
- *  - handling of alignment/org gaps (offset setting)
- *  - handling of multiples
- *
- * Data structures:
- *  - Interval tree to store spans and associated data
- *  - Queues QA and QB
- *
- * Each span keeps track of:
- *  - Associated bytecode (bytecode that depends on the span length)
- *  - Active/inactive state (starts out active)
- *  - Sign (negative/positive; negative being "backwards" in address)
- *  - Current length in bytes
- *  - New length in bytes
- *  - Negative/Positive thresholds
- *  - Span ID (unique within each bytecode)
- *
- * How org and align and any other offset-based bytecodes are handled:
- *
- * Some portions are critical values that must not depend on any bytecode
- * offset (either relative or absolute).
- *
- * All offset-setters (ORG and ALIGN) are put into a linked list in section
- * order (e.g. increasing offset order).  Each span keeps track of the next
- * offset-setter following the span's associated bytecode.
- *
- * When a bytecode is expanded, the next offset-setter is examined.  The
- * offset-setter may be able to absorb the expansion (e.g. any offset
- * following it would not change), or it may have to move forward (in the
- * case of align) or error (in the case of org).  If it has to move forward,
- * following offset-setters must also be examined for absorption or moving
- * forward.  In either case, the ongoing offset is updated as well as the
- * lengths of any spans dependent on the offset-setter.
- *
- * Alignment/ORG value is critical value.
- * Cannot be combined with TIMES.
- *
- * How times is handled:
- *
- * TIMES: Handled separately from bytecode "raw" size.  If not span-dependent,
- *      trivial (just multiplied in at any bytecode size increase).  Span
- *      dependent times update on any change (span ID 0).  If the resultant
- *      next bytecode offset would be less than the old next bytecode offset,
- *      error.  Otherwise increase offset and update dependent spans.
- *
- * To reduce interval tree size, a first expansion pass is performed
- * before the spans are added to the tree.
- *
- * Basic algorithm outline:
- *
- * 1. Initialization:
- *  a. Number bytecodes sequentially (via bc_index) and calculate offsets
- *     of all bytecodes assuming minimum length, building a list of all
- *     dependent spans as we go.
- *     "minimum" here means absolute minimum:
- *      - align/org (offset-based) bumps offset as normal
- *      - times values (with span-dependent values) assumed to be 0
- *  b. Iterate over spans.  Set span length based on bytecode offsets
- *     determined in 1a.  If span is "certainly" long because the span
- *     is an absolute reference to another section (or external) or the
- *     distance calculated based on the minimum length is greater than the
- *     span's threshold, expand the span's bytecode, and if no further
- *     expansion can result, mark span as inactive.
- *  c. Iterate over bytecodes to update all bytecode offsets based on new
- *     (expanded) lengths calculated in 1b.
- *  d. Iterate over active spans.  Add span to interval tree.  Update span's
- *     length based on new bytecode offsets determined in 1c.  If span's
- *     length exceeds long threshold, add that span to Q.
- * 2. Main loop:
- *   While Q not empty:
- *     Expand BC dependent on span at head of Q (and remove span from Q).
- *     Update span:
- *       If BC no longer dependent on span, mark span as inactive.
- *       If BC has new thresholds for span, update span.
- *     If BC increased in size, for each active span that contains BC:
- *       Increase span length by difference between short and long BC length.
- *       If span exceeds long threshold (or is flagged to recalculate on any
- *       change), add it to tail of Q.
- * 3. Final pass over bytecodes to generate final offsets.
- */
+//
+// Robertson (1977) optimizer
+// Based (somewhat loosely) on the algorithm given in:
+//   MRC Technical Summary Report # 1779
+//   CODE GENERATION FOR SHORT/LONG ADDRESS MACHINES
+//   Edward L. Robertson
+//   Mathematics Research Center
+//   University of Wisconsin-Madison
+//   610 Walnut Street
+//   Madison, Wisconsin 53706
+//   August 1977
+//
+// Key components of algorithm:
+//  - start assuming all short forms
+//  - build spans for short->long transition dependencies
+//  - if a long form is needed, walk the dependencies and update
+// Major differences from Robertson's algorithm:
+//  - detection of cycles
+//  - any difference of two locations is allowed
+//  - handling of alignment/org gaps (offset setting)
+//  - handling of multiples
+//
+// Data structures:
+//  - Interval tree to store spans and associated data
+//  - Queues QA and QB
+//
+// Each span keeps track of:
+//  - Associated bytecode (bytecode that depends on the span length)
+//  - Active/inactive state (starts out active)
+//  - Sign (negative/positive; negative being "backwards" in address)
+//  - Current length in bytes
+//  - New length in bytes
+//  - Negative/Positive thresholds
+//  - Span ID (unique within each bytecode)
+//
+// How org and align and any other offset-based bytecodes are handled:
+//
+// Some portions are critical values that must not depend on any bytecode
+// offset (either relative or absolute).
+//
+// All offset-setters (ORG and ALIGN) are put into a linked list in section
+// order (e.g. increasing offset order).  Each span keeps track of the next
+// offset-setter following the span's associated bytecode.
+//
+// When a bytecode is expanded, the next offset-setter is examined.  The
+// offset-setter may be able to absorb the expansion (e.g. any offset
+// following it would not change), or it may have to move forward (in the
+// case of align) or error (in the case of org).  If it has to move forward,
+// following offset-setters must also be examined for absorption or moving
+// forward.  In either case, the ongoing offset is updated as well as the
+// lengths of any spans dependent on the offset-setter.
+//
+// Alignment/ORG value is critical value.
+// Cannot be combined with TIMES.
+//
+// How times is handled:
+//
+// TIMES: Handled separately from bytecode "raw" size.  If not span-dependent,
+//      trivial (just multiplied in at any bytecode size increase).  Span
+//      dependent times update on any change (span ID 0).  If the resultant
+//      next bytecode offset would be less than the old next bytecode offset,
+//      error.  Otherwise increase offset and update dependent spans.
+//
+// To reduce interval tree size, a first expansion pass is performed
+// before the spans are added to the tree.
+//
+// Basic algorithm outline:
+//
+// 1. Initialization:
+//  a. Number bytecodes sequentially (via bc_index) and calculate offsets
+//     of all bytecodes assuming minimum length, building a list of all
+//     dependent spans as we go.
+//     "minimum" here means absolute minimum:
+//      - align/org (offset-based) bumps offset as normal
+//      - times values (with span-dependent values) assumed to be 0
+//  b. Iterate over spans.  Set span length based on bytecode offsets
+//     determined in 1a.  If span is "certainly" long because the span
+//     is an absolute reference to another section (or external) or the
+//     distance calculated based on the minimum length is greater than the
+//     span's threshold, expand the span's bytecode, and if no further
+//     expansion can result, mark span as inactive.
+//  c. Iterate over bytecodes to update all bytecode offsets based on new
+//     (expanded) lengths calculated in 1b.
+//  d. Iterate over active spans.  Add span to interval tree.  Update span's
+//     length based on new bytecode offsets determined in 1c.  If span's
+//     length exceeds long threshold, add that span to Q.
+// 2. Main loop:
+//   While Q not empty:
+//     Expand BC dependent on span at head of Q (and remove span from Q).
+//     Update span:
+//       If BC no longer dependent on span, mark span as inactive.
+//       If BC has new thresholds for span, update span.
+//     If BC increased in size, for each active span that contains BC:
+//       Increase span length by difference between short and long BC length.
+//       If span exceeds long threshold (or is flagged to recalculate on any
+//       change), add it to tail of Q.
+// 3. Final pass over bytecodes to generate final offsets.
+//
 #if 0
 typedef struct yasm_span yasm_span;
 
