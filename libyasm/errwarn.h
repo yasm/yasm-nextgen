@@ -251,7 +251,7 @@ public:
     /// @param errwarns         error/warning set
     /// @param warning_as_error if true, warnings are treated as errors.
     /// @return Number of errors.
-    unsigned int num_errors(bool warning_as_error) const;
+    unsigned int num_errors(bool warning_as_error = false) const;
 
     /// Print out an error.
     /// @param fn           filename of source file
