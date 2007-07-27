@@ -309,18 +309,6 @@ public:
 
     bool contains(int type) const;
 
-    /// Transform symrec-symrec terms in expression into SUBST terms.
-    /// Calls the callback function for each symrec-symrec term.
-    /// @param callback     callback function: given subst index for bytecode
-    ///                     pair, bytecode pair (bc2-bc1)
-    /// @return Number of transformations made.
-    void xform_bc_dist_subst(boost::function<void (unsigned int subst,
-                                            Bytecode* precbc,
-                                            Bytecode* precbc2)> func);
-
-    void xform_bc_dist_base(boost::function<bool (Term& term,
-                                                  Bytecode* precbc,
-                                                  Bytecode* precbc2)> func);
     /// Substitute terms into expr SUBST terms (by index).  Terms
     /// are cloned.
     /// @param terms        terms
