@@ -522,8 +522,8 @@ void xform_calc_bc_dist(Expr* e);
 ///                     pair, bytecode pair (bc2-bc1)
 /// @return Number of transformations made.
 int subst_bc_dist(Expr* e, boost::function<void (unsigned int subst,
-                                                 Bytecode* precbc,
-                                                 Bytecode* precbc2)> func);
+                                                 Bytecode& precbc,
+                                                 Bytecode& precbc2)> func);
 
 } // namespace yasm
 
