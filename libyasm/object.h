@@ -108,6 +108,11 @@ public:
     section_iterator sections_end() { return m_sections.end(); }
     const_section_iterator sections_end() const { return m_sections.end(); }
 
+    /// Updates all bytecode offsets in object.
+    /// @param errwarns     error/warning set
+    /// @note Errors/warnings are stored into errwarns.
+    void update_bc_offsets(Errwarns& errwarns);
+
 private:
     std::string m_src_filename;         ///< Source filename
     std::string m_obj_filename;         ///< Object filename

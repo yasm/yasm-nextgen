@@ -26,12 +26,22 @@
 //
 #include "util.h"
 
+#include <vector>
+#include <list>
 #include <iomanip>
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/ptr_container/ptr_list.hpp>
 
+#include "bytecode.h"
+#include "errwarn.h"
+#include "expr.h"
+#include "intnum.h"
 #include "section.h"
 #include "object.h"
+#include "value.h"
 
 #include "interval_tree.h"
 
@@ -313,6 +323,8 @@ Object::get_section_by_name(const std::string& name)
     return &(*i);
 }
 
+} // namespace yasm
+
 //
 // Robertson (1977) optimizer
 // Based (somewhat loosely) on the algorithm given in:
@@ -411,332 +423,295 @@ Object::get_section_by_name(const std::string& name)
 //       change), add it to tail of Q.
 // 3. Final pass over bytecodes to generate final offsets.
 //
-#if 0
-typedef struct yasm_span yasm_span;
+namespace {
 
-typedef struct yasm_offset_setter {
-    /* Linked list in section order (e.g. offset order) */
-    /*@reldef@*/ STAILQ_ENTRY(yasm_offset_setter) link;
+using namespace yasm;
 
-    /*@dependent@*/ yasm_bytecode *bc;
+class OffsetSetter {
+public:
+    OffsetSetter();
+    ~OffsetSetter() {}
 
-    unsigned long cur_val, new_val;
-    unsigned long thres;
-} yasm_offset_setter;
-
-typedef struct yasm_span_term {
-    yasm_bytecode *precbc, *precbc2;
-    yasm_span *span;        /* span this term is a member of */
-    long cur_val, new_val;
-    unsigned int subst;
-} yasm_span_term;
-
-struct yasm_span {
-    /*@reldef@*/ TAILQ_ENTRY(yasm_span) link;   /* for allocation tracking */
-    /*@reldef@*/ STAILQ_ENTRY(yasm_span) linkq; /* for Q */
-
-    /*@dependent@*/ yasm_bytecode *bc;
-
-    yasm_value depval;
-
-    /* span term for relative portion of value */
-    yasm_span_term *rel_term;
-    /* span terms in absolute portion of value */
-    yasm_span_term *terms;
-    yasm_expr__item *items;
-    unsigned int num_terms;
-
-    long cur_val;
-    long new_val;
-
-    long neg_thres;
-    long pos_thres;
-
-    int id;
-
-    int active;
-
-    /* NULL-terminated array of spans that led to this span.  Used only for
-     * checking for circular references (cycles) with id=0 spans.
-     */
-    yasm_span **backtrace;
-
-    /* First offset setter following this span's bytecode */
-    yasm_offset_setter *os;
+    Bytecode* m_bc;
+    unsigned long m_cur_val;
+    unsigned long m_new_val;
+    unsigned long m_thres;
 };
 
-typedef struct optimize_data {
-    /*@reldef@*/ TAILQ_HEAD(, yasm_span) spans;
-    /*@reldef@*/ STAILQ_HEAD(, yasm_span) QA, QB;
-    /*@only@*/ IntervalTree *itree;
-    /*@reldef@*/ STAILQ_HEAD(, yasm_offset_setter) offset_setters;
-    long len_diff;      /* used only for optimize_term_expand */
-    yasm_span *span;    /* used only for check_cycle */
-    yasm_offset_setter *os;
-} optimize_data;
-
-static yasm_span *
-create_span(yasm_bytecode *bc, int id, /*@null@*/ const yasm_value *value, 
-            long neg_thres, long pos_thres, yasm_offset_setter *os)
+OffsetSetter::OffsetSetter()
+    : m_bc(0),
+      m_cur_val(0),
+      m_new_val(0),
+      m_thres(0)
 {
-    yasm_span *span = yasm_xmalloc(sizeof(yasm_span));
-
-    span->bc = bc;
-    if (value)
-        yasm_value_init_copy(&span->depval, value);
-    else
-        yasm_value_initialize(&span->depval, NULL, 0);
-    span->rel_term = NULL;
-    span->terms = NULL;
-    span->items = NULL;
-    span->num_terms = 0;
-    span->cur_val = 0;
-    span->new_val = 0;
-    span->neg_thres = neg_thres;
-    span->pos_thres = pos_thres;
-    span->id = id;
-    span->active = 1;
-    span->backtrace = NULL;
-    span->os = os;
-
-    return span;
 }
 
-static void
-optimize_add_span(void *add_span_data, yasm_bytecode *bc, int id,
-                  const yasm_value *value, long neg_thres, long pos_thres)
+class Span : boost::noncopyable {
+    friend class Optimize;
+public:
+    class Term : boost::noncopyable {
+    public:
+        Term();
+        Term(unsigned int subst, Bytecode* precbc, Bytecode* precbc2,
+             Span* span, long new_val);
+        ~Term() {}
+
+        Bytecode* m_precbc;
+        Bytecode* m_precbc2;
+        Span* m_span;       // span this term is a member of
+        long m_cur_val;
+        long m_new_val;
+        unsigned int m_subst;
+    };
+
+    Span(Bytecode& bc, int id, const Value& value, 
+         long neg_thres, long pos_thres, size_t os_index);
+    ~Span();
+
+    void create_terms();
+    bool recalc_normal();
+
+private:
+    void add_term(unsigned int subst, Bytecode& precbc, Bytecode& precbc2);
+
+    Bytecode& m_bc;
+
+    Value m_depval;
+
+    // span term for relative portion of value
+    boost::scoped_ptr<Term> m_rel_term;
+    // span terms in absolute portion of value
+    typedef boost::ptr_vector<Term> Terms;
+    Terms m_span_terms;
+    Expr::Terms m_expr_terms;
+
+    long m_cur_val;
+    long m_new_val;
+
+    long m_neg_thres;
+    long m_pos_thres;
+
+    int m_id;
+
+    enum { INACTIVE = 0, ACTIVE, ON_Q } m_active;
+
+    // Spans that led to this span.  Used only for
+    // checking for circular references (cycles) with id=0 spans.
+    std::vector<Span*> m_backtrace;
+
+    // Index of first offset setter following this span's bytecode
+    size_t m_os_index;
+};
+
+class Optimize {
+public:
+    Optimize();
+    ~Optimize();
+    void add_span(Bytecode& bc, int id, const Value& value,
+                  long neg_thres, long pos_thres);
+    void add_offset_setter(Bytecode& bc);
+
+    bool step_1b(Errwarns& errwarns);
+    bool step_1d();
+    bool step_1e(Errwarns& errwarns);
+    bool step_2(Errwarns& errwarns);
+
+private:
+    void itree_add(Span* span, Span::Term* term);
+    void check_cycle(IntervalTreeNode<Span::Term*> * node, Span& span);
+    void term_expand(IntervalTreeNode<Span::Term*> * node, long len_diff);
+
+    boost::ptr_list<Span> m_spans;
+    std::list<Span*> m_QA, m_QB;
+    IntervalTree<Span::Term*> m_itree;
+    boost::ptr_vector<OffsetSetter> m_offset_setters;
+};
+
+Span::Term::Term()
+    : m_precbc(0),
+      m_precbc2(0),
+      m_span(0),
+      m_cur_val(0),
+      m_new_val(0),
+      m_subst(0)
 {
-    optimize_data *optd = (optimize_data *)add_span_data;
-    yasm_span *span;
-    span = create_span(bc, id, value, neg_thres, pos_thres, optd->os);
-    TAILQ_INSERT_TAIL(&optd->spans, span, link);
 }
 
-static void
-add_span_term(unsigned int subst, yasm_bytecode *precbc,
-              yasm_bytecode *precbc2, void *d)
+Span::Term::Term(unsigned int subst, Bytecode* precbc, Bytecode* precbc2,
+                 Span* span, long new_val)
+    : m_precbc(precbc),
+      m_precbc2(precbc2),
+      m_span(span),
+      m_cur_val(0),
+      m_new_val(new_val),
+      m_subst(subst)
 {
-    yasm_span *span = d;
-    yasm_intnum *intn;
-
-    if (subst >= span->num_terms) {
-        /* Linear expansion since total number is essentially always small */
-        span->num_terms = subst+1;
-        span->terms = yasm_xrealloc(span->terms,
-                                    span->num_terms*sizeof(yasm_span_term));
-    }
-    span->terms[subst].precbc = precbc;
-    span->terms[subst].precbc2 = precbc2;
-    span->terms[subst].span = span;
-    span->terms[subst].subst = subst;
-
-    intn = yasm_calc_bc_dist(precbc, precbc2);
-    if (!intn)
-        yasm_internal_error(N_("could not calculate bc distance"));
-    span->terms[subst].cur_val = 0;
-    span->terms[subst].new_val = yasm_intnum_get_int(intn);
-    yasm_intnum_destroy(intn);
 }
 
-static void
-span_create_terms(yasm_span *span)
+Span::Span(Bytecode& bc, int id, /*@null@*/ const Value& value, 
+           long neg_thres, long pos_thres, size_t os_index)
+    : m_bc(bc),
+      m_depval(value),
+      m_rel_term(0),
+      m_cur_val(0),
+      m_new_val(0),
+      m_neg_thres(neg_thres),
+      m_pos_thres(pos_thres),
+      m_id(id),
+      m_active(ACTIVE),
+      m_os_index(os_index)
 {
-    unsigned int i;
+}
 
-    /* Split out sym-sym terms in absolute portion of dependent value */
-    if (span->depval.abs) {
-        span->num_terms = yasm_expr__bc_dist_subst(&span->depval.abs, span,
-                                                   add_span_term);
-        if (span->num_terms > 0) {
-            span->items = yasm_xmalloc(span->num_terms*sizeof(yasm_expr__item));
-            for (i=0; i<span->num_terms; i++) {
-                /* Create items with dummy value */
-                span->items[i].type = YASM_EXPR_INT;
-                span->items[i].data.intn = yasm_intnum_create_int(0);
+void
+Optimize::add_span(Bytecode& bc, int id, const Value& value,
+                   long neg_thres, long pos_thres)
+{
+    m_spans.push_back(new Span(bc, id, value, neg_thres, pos_thres,
+                               m_offset_setters.size()-1));
+}
 
-                /* Check for circular references */
-                if (span->id <= 0 &&
-                    ((span->bc->bc_index > span->terms[i].precbc->bc_index &&
-                      span->bc->bc_index <= span->terms[i].precbc2->bc_index) ||
-                     (span->bc->bc_index > span->terms[i].precbc2->bc_index &&
-                      span->bc->bc_index <= span->terms[i].precbc->bc_index)))
-                    yasm_error_set(YASM_ERROR_VALUE,
-                                   N_("circular reference detected"));
+void
+Span::add_term(unsigned int subst, Bytecode& precbc, Bytecode& precbc2)
+{
+    IntNum intn;
+    if (!calc_bc_dist(precbc, precbc2, intn))
+        throw InternalError(N_("could not calculate bc distance"));
+
+    while (subst >= m_span_terms.size())
+        m_span_terms.push_back(new Term());
+    m_span_terms.replace(subst, new Term(subst, &precbc, &precbc2, this,
+                                         intn.get_int()));
+}
+
+void
+Span::create_terms()
+{
+    // Split out sym-sym terms in absolute portion of dependent value
+    if (m_depval.has_abs()) {
+        subst_bc_dist(m_depval.get_abs(),
+                      boost::bind(&Span::add_term, this, _1, _2, _3));
+        if (m_span_terms.size() > 0) {
+            for (Terms::iterator i=m_span_terms.begin(),
+                 end=m_span_terms.end(); i != end; ++i) {
+                // Create expression terms with dummy value
+                m_expr_terms.push_back(new IntNum(0));
+
+                // Check for circular references
+                if (m_id <= 0 &&
+                    ((m_bc.get_index() > i->m_precbc->get_index() &&
+                      m_bc.get_index() <= i->m_precbc2->get_index()) ||
+                     (m_bc.get_index() > i->m_precbc2->get_index() &&
+                      m_bc.get_index() <= i->m_precbc->get_index())))
+                    throw ValueError(N_("circular reference detected"));
             }
         }
     }
 
-    /* Create term for relative portion of dependent value */
-    if (span->depval.rel) {
-        yasm_bytecode *rel_precbc;
-        int sym_local;
-
-        sym_local = yasm_symrec_get_label(span->depval.rel, &rel_precbc);
-        if (span->depval.wrt || span->depval.seg_of || span->depval.section_rel
+    // Create term for relative portion of dependent value
+    if (m_depval.m_rel) {
+        Bytecode* rel_precbc;
+#if 0
+        bool sym_local = m_depval.m_rel->get_label(rel_precbc);
+#else
+        bool sym_local = true;
+#endif
+        if (m_depval.is_wrt() || m_depval.m_seg_of || m_depval.m_section_rel
             || !sym_local)
-            return;     /* we can't handle SEG, WRT, or external symbols */
-        if (rel_precbc->section != span->bc->section)
-            return;     /* not in this section */
-        if (!span->depval.curpos_rel)
-            return;     /* not PC-relative */
+            return;     // we can't handle SEG, WRT, or external symbols
+        if (rel_precbc->get_section() != m_bc.get_section())
+            return;     // not in this section
+        if (!m_depval.m_curpos_rel)
+            return;     // not PC-relative
 
-        span->rel_term = yasm_xmalloc(sizeof(yasm_span_term));
-        span->rel_term->precbc = NULL;
-        span->rel_term->precbc2 = rel_precbc;
-        span->rel_term->span = span;
-        span->rel_term->subst = ~0U;
-
-        span->rel_term->cur_val = 0;
-        span->rel_term->new_val = yasm_bc_next_offset(rel_precbc) -
-            span->bc->offset;
+        m_rel_term.reset(new Term(~0U, 0, rel_precbc, this,
+                                  rel_precbc->next_offset() -
+                                  m_bc.get_offset()));
     }
 }
 
-/* Recalculate span value based on current span replacement values.
- * Returns 1 if span needs expansion (e.g. exceeded thresholds).
- */
-static int
-recalc_normal_span(yasm_span *span)
+// Recalculate span value based on current span replacement values.
+// Returns True if span needs expansion (e.g. exceeded thresholds).
+bool
+Span::recalc_normal()
 {
-    span->new_val = 0;
+    m_new_val = 0;
 
-    if (span->depval.abs) {
-        yasm_expr *abs_copy = yasm_expr_copy(span->depval.abs);
-        /*@null@*/ /*@dependent@*/ yasm_intnum *num;
+    if (m_depval.has_abs()) {
+        boost::scoped_ptr<Expr> abs_copy(m_depval.get_abs()->clone());
 
-        /* Update sym-sym terms and substitute back into expr */
-        unsigned int i;
-        for (i=0; i<span->num_terms; i++)
-            yasm_intnum_set_int(span->items[i].data.intn,
-                                span->terms[i].new_val);
-        yasm_expr__subst(abs_copy, span->num_terms, span->items);
-        num = yasm_expr_get_intnum(&abs_copy, 0);
-        if (num)
-            span->new_val = yasm_intnum_get_int(num);
+        // Update sym-sym terms and substitute back into expr
+        for (Terms::iterator i=m_span_terms.begin(), end=m_span_terms.end();
+             i != end; ++i)
+            m_expr_terms[i->m_subst].get_int()->set(i->m_new_val);
+        abs_copy->substitute(m_expr_terms);
+        if (const IntNum* num = abs_copy->get_intnum())
+            m_new_val = num->get_int();
         else
-            span->new_val = LONG_MAX; /* too complex; force to longest form */
-        yasm_expr_destroy(abs_copy);
+            m_new_val = LONG_MAX;   // too complex; force to longest form
     }
 
-    if (span->rel_term) {
-        if (span->new_val != LONG_MAX && span->rel_term->new_val != LONG_MAX)
-            span->new_val += span->rel_term->new_val >> span->depval.rshift;
+    if (m_rel_term) {
+        if (m_new_val != LONG_MAX && m_rel_term->m_new_val != LONG_MAX)
+            m_new_val += m_rel_term->m_new_val >> m_depval.m_rshift;
         else
-            span->new_val = LONG_MAX;   /* too complex; force to longest form */
-    } else if (span->depval.rel)
-        span->new_val = LONG_MAX;   /* too complex; force to longest form */
+            m_new_val = LONG_MAX;   // too complex; force to longest form
+    } else if (m_depval.is_relative())
+        m_new_val = LONG_MAX;       // too complex; force to longest form
 
-    if (span->new_val == LONG_MAX)
-        span->active = 0;
+    if (m_new_val == LONG_MAX)
+        m_active = INACTIVE;
 
-    /* If id<=0, flag update on any change */
-    if (span->id <= 0)
-        return (span->new_val != span->cur_val);
+    // If id<=0, flag update on any change
+    if (m_id <= 0)
+        return (m_new_val != m_cur_val);
 
-    return (span->new_val < span->neg_thres
-            || span->new_val > span->pos_thres);
+    return (m_new_val < m_neg_thres || m_new_val > m_pos_thres);
 }
 
-/* Updates all bytecode offsets.  For offset-based bytecodes, calls expand
- * to determine new length.
- */
-static int
-update_all_bc_offsets(yasm_object *object, yasm_errwarns *errwarns)
+Span::~Span()
 {
-    yasm_section *sect;
-    int saw_error = 0;
-
-    STAILQ_FOREACH(sect, &object->sections, link) {
-        unsigned long offset = 0;
-
-        yasm_bytecode *bc = STAILQ_FIRST(&sect->bcs);
-        yasm_bytecode *prevbc;
-
-        /* Skip our locally created empty bytecode first. */
-        prevbc = bc;
-        bc = STAILQ_NEXT(bc, link);
-
-        /* Iterate through the remainder, if any. */
-        while (bc) {
-            if (bc->callback->special == YASM_BC_SPECIAL_OFFSET) {
-                /* Recalculate/adjust len of offset-based bytecodes here */
-                long neg_thres = 0;
-                long pos_thres = (long)yasm_bc_next_offset(bc);
-                int retval = yasm_bc_expand(bc, 1, 0,
-                                            (long)yasm_bc_next_offset(prevbc),
-                                            &neg_thres, &pos_thres);
-                yasm_errwarn_propagate(errwarns, bc->line);
-                if (retval < 0)
-                    saw_error = 1;
-            }
-            bc->offset = offset;
-            offset += bc->len*bc->mult_int;
-            prevbc = bc;
-            bc = STAILQ_NEXT(bc, link);
-        }
-    }
-    return saw_error;
 }
 
-static void
-span_destroy(/*@only@*/ yasm_span *span)
+Optimize::Optimize()
 {
-    unsigned int i;
-
-    yasm_value_delete(&span->depval);
-    if (span->rel_term)
-        yasm_xfree(span->rel_term);
-    if (span->terms)
-        yasm_xfree(span->terms);
-    if (span->items) {
-        for (i=0; i<span->num_terms; i++)
-            yasm_intnum_destroy(span->items[i].data.intn);
-        yasm_xfree(span->items);
-    }
-    if (span->backtrace)
-        yasm_xfree(span->backtrace);
-    yasm_xfree(span);
+    // Create an placeholder offset setter for spans to point to; this will
+    // get updated if/when we actually run into one.
+    m_offset_setters.push_back(new OffsetSetter());
 }
 
-static void
-optimize_cleanup(optimize_data *optd)
+Optimize::~Optimize()
 {
-    yasm_span *s1, *s2;
-    yasm_offset_setter *os1, *os2;
-
-    IT_destroy(optd->itree);
-
-    s1 = TAILQ_FIRST(&optd->spans);
-    while (s1) {
-        s2 = TAILQ_NEXT(s1, link);
-        span_destroy(s1);
-        s1 = s2;
-    }
-
-    os1 = STAILQ_FIRST(&optd->offset_setters);
-    while (os1) {
-        os2 = STAILQ_NEXT(os1, link);
-        yasm_xfree(os1);
-        os1 = os2;
-    }
 }
 
-static void
-optimize_itree_add(IntervalTree *itree, yasm_span *span, yasm_span_term *term)
+void
+Optimize::add_offset_setter(Bytecode& bc)
+{
+    // Remember it
+    OffsetSetter& os = m_offset_setters.back();
+    os.m_bc = &bc;
+    os.m_thres = bc.next_offset();
+
+    // Create new placeholder
+    m_offset_setters.push_back(new OffsetSetter());
+}
+
+void
+Optimize::itree_add(Span* span, Span::Term* term)
 {
     long precbc_index, precbc2_index;
     unsigned long low, high;
 
     /* Update term length */
-    if (term->precbc)
-        precbc_index = term->precbc->bc_index;
+    if (term->m_precbc)
+        precbc_index = term->m_precbc->get_index();
     else
-        precbc_index = span->bc->bc_index-1;
+        precbc_index = span->m_bc.get_index()-1;
 
-    if (term->precbc2)
-        precbc2_index = term->precbc2->bc_index;
+    if (term->m_precbc2)
+        precbc2_index = term->m_precbc2->get_index();
     else
-        precbc2_index = span->bc->bc_index-1;
+        precbc2_index = span->m_bc.get_index()-1;
 
     if (precbc_index < precbc2_index) {
         low = precbc_index+1;
@@ -747,269 +722,159 @@ optimize_itree_add(IntervalTree *itree, yasm_span *span, yasm_span_term *term)
     } else
         return;     /* difference is same bc - always 0! */
 
-    IT_insert(itree, (long)low, (long)high, term);
-}
-
-static void
-check_cycle(IntervalTreeNode *node, void *d)
-{
-    optimize_data *optd = d;
-    yasm_span_term *term = node->data;
-    yasm_span *depspan = term->span;
-    int bt_size = 0, dep_bt_size = 0;
-
-    /* Only check for cycles in id=0 spans */
-    if (depspan->id > 0)
-        return;
-
-    /* Check for a circular reference by looking to see if this dependent
-     * span is in our backtrace.
-     */
-    if (optd->span->backtrace) {
-        yasm_span *s;
-        while ((s = optd->span->backtrace[bt_size])) {
-            bt_size++;
-            if (s == depspan)
-                yasm_error_set(YASM_ERROR_VALUE,
-                               N_("circular reference detected"));
-        }
-    }
-
-    /* Add our complete backtrace and ourselves to backtrace of dependent
-     * span.
-     */
-    if (!depspan->backtrace) {
-        depspan->backtrace = yasm_xmalloc((bt_size+2)*sizeof(yasm_span *));
-        if (bt_size > 0)
-            memcpy(depspan->backtrace, optd->span->backtrace,
-                   bt_size*sizeof(yasm_span *));
-        depspan->backtrace[bt_size] = optd->span;
-        depspan->backtrace[bt_size+1] = NULL;
-        return;
-    }
-
-    while (depspan->backtrace[dep_bt_size])
-        dep_bt_size++;
-    depspan->backtrace =
-        yasm_xrealloc(depspan->backtrace,
-                      (dep_bt_size+bt_size+2)*sizeof(yasm_span *));
-    if (bt_size > 0)
-        memcpy(&depspan->backtrace[dep_bt_size], optd->span->backtrace,
-               (bt_size-1)*sizeof(yasm_span *));
-    depspan->backtrace[dep_bt_size+bt_size] = optd->span;
-    depspan->backtrace[dep_bt_size+bt_size+1] = NULL;
-}
-
-static void
-optimize_term_expand(IntervalTreeNode *node, void *d)
-{
-    optimize_data *optd = d;
-    yasm_span_term *term = node->data;
-    yasm_span *span = term->span;
-    long len_diff = optd->len_diff;
-    long precbc_index, precbc2_index;
-
-    /* Don't expand inactive spans */
-    if (!span->active)
-        return;
-
-    /* Update term length */
-    if (term->precbc)
-        precbc_index = term->precbc->bc_index;
-    else
-        precbc_index = span->bc->bc_index-1;
-
-    if (term->precbc2)
-        precbc2_index = term->precbc2->bc_index;
-    else
-        precbc2_index = span->bc->bc_index-1;
-
-    if (precbc_index < precbc2_index)
-        term->new_val += len_diff;
-    else
-        term->new_val -= len_diff;
-
-    /* If already on Q, don't re-add */
-    if (span->active == 2)
-        return;
-
-    /* Update term and check against thresholds */
-    if (!recalc_normal_span(span))
-        return; /* didn't exceed thresholds, we're done */
-
-    /* Exceeded thresholds, need to add to Q for expansion */
-    if (span->id <= 0)
-        STAILQ_INSERT_TAIL(&optd->QA, span, linkq);
-    else
-        STAILQ_INSERT_TAIL(&optd->QB, span, linkq);
-    span->active = 2;       /* Mark as being in Q */
+    m_itree.insert((long)low, (long)high, term);
 }
 
 void
-yasm_object_optimize(yasm_object *object, yasm_errwarns *errwarns)
+Optimize::check_cycle(IntervalTreeNode<Span::Term*> * node, Span& span)
 {
-    yasm_section *sect;
-    unsigned long bc_index = 0;
-    int saw_error = 0;
-    optimize_data optd;
-    yasm_span *span, *span_temp;
-    yasm_offset_setter *os;
-    int retval;
-    unsigned int i;
+    Span::Term* term = node->get_data();
+    Span* depspan = term->m_span;
 
-    TAILQ_INIT(&optd.spans);
-    STAILQ_INIT(&optd.offset_setters);
-    optd.itree = IT_create();
-
-    /* Create an placeholder offset setter for spans to point to; this will
-     * get updated if/when we actually run into one.
-     */
-    os = yasm_xmalloc(sizeof(yasm_offset_setter));
-    os->bc = NULL;
-    os->cur_val = 0;
-    os->new_val = 0;
-    os->thres = 0;
-    STAILQ_INSERT_TAIL(&optd.offset_setters, os, link);
-    optd.os = os;
-
-    /* Step 1a */
-    STAILQ_FOREACH(sect, &object->sections, link) {
-        unsigned long offset = 0;
-
-        yasm_bytecode *bc = STAILQ_FIRST(&sect->bcs);
-        yasm_bytecode *prevbc;
-
-        bc->bc_index = bc_index++;
-
-        /* Skip our locally created empty bytecode first. */
-        prevbc = bc;
-        bc = STAILQ_NEXT(bc, link);
-
-        /* Iterate through the remainder, if any. */
-        while (bc) {
-            bc->bc_index = bc_index++;
-            bc->offset = offset;
-
-            retval = yasm_bc_calc_len(bc, optimize_add_span, &optd);
-            yasm_errwarn_propagate(errwarns, bc->line);
-            if (retval)
-                saw_error = 1;
-            else {
-                if (bc->callback->special == YASM_BC_SPECIAL_OFFSET) {
-                    /* Remember it as offset setter */
-                    os->bc = bc;
-                    os->thres = yasm_bc_next_offset(bc);
-
-                    /* Create new placeholder */
-                    os = yasm_xmalloc(sizeof(yasm_offset_setter));
-                    os->bc = NULL;
-                    os->cur_val = 0;
-                    os->new_val = 0;
-                    os->thres = 0;
-                    STAILQ_INSERT_TAIL(&optd.offset_setters, os, link);
-                    optd.os = os;
-
-                    if (bc->multiple) {
-                        yasm_error_set(YASM_ERROR_VALUE,
-                            N_("cannot combine multiples and setting assembly position"));
-                        yasm_errwarn_propagate(errwarns, bc->line);
-                        saw_error = 1;
-                    }
-                }
-
-                offset += bc->len*bc->mult_int;
-            }
-
-            prevbc = bc;
-            bc = STAILQ_NEXT(bc, link);
-        }
-    }
-
-    if (saw_error) {
-        optimize_cleanup(&optd);
+    // Only check for cycles in id=0 spans
+    if (depspan->m_id > 0)
         return;
-    }
 
-    /* Step 1b */
-    TAILQ_FOREACH_SAFE(span, &optd.spans, link, span_temp) {
-        span_create_terms(span);
-        if (yasm_error_occurred()) {
-            yasm_errwarn_propagate(errwarns, span->bc->line);
-            saw_error = 1;
-        } else if (recalc_normal_span(span)) {
-            retval = yasm_bc_expand(span->bc, span->id, span->cur_val,
-                                    span->new_val, &span->neg_thres,
-                                    &span->pos_thres);
-            yasm_errwarn_propagate(errwarns, span->bc->line);
-            if (retval < 0)
-                saw_error = 1;
-            else if (retval > 0) {
-                if (!span->active) {
-                    yasm_error_set(YASM_ERROR_VALUE,
-                        N_("secondary expansion of an external/complex value"));
-                    yasm_errwarn_propagate(errwarns, span->bc->line);
-                    saw_error = 1;
+    // Check for a circular reference by looking to see if this dependent
+    // span is in our backtrace.
+    std::vector<Span*>::iterator iter;
+    iter = std::find(span.m_backtrace.begin(), span.m_backtrace.end(),
+                     depspan);
+    if (iter != span.m_backtrace.end())
+        throw ValueError(N_("circular reference detected"));
+
+    // Add our complete backtrace and ourselves to backtrace of dependent
+    // span.
+    std::copy(span.m_backtrace.begin(), span.m_backtrace.end(),
+              depspan->m_backtrace.end());
+    depspan->m_backtrace.push_back(&span);
+}
+
+void
+Optimize::term_expand(IntervalTreeNode<Span::Term*> * node, long len_diff)
+{
+    Span::Term* term = node->get_data();
+    Span* span = term->m_span;
+    long precbc_index, precbc2_index;
+
+    // Don't expand inactive spans
+    if (span->m_active == Span::INACTIVE)
+        return;
+
+    // Update term length
+    if (term->m_precbc)
+        precbc_index = term->m_precbc->get_index();
+    else
+        precbc_index = span->m_bc.get_index()-1;
+
+    if (term->m_precbc2)
+        precbc2_index = term->m_precbc2->get_index();
+    else
+        precbc2_index = span->m_bc.get_index()-1;
+
+    if (precbc_index < precbc2_index)
+        term->m_new_val += len_diff;
+    else
+        term->m_new_val -= len_diff;
+
+    // If already on Q, don't re-add
+    if (span->m_active == Span::ON_Q)
+        return;
+
+    // Update term and check against thresholds
+    if (!span->recalc_normal())
+        return; // didn't exceed thresholds, we're done
+
+    // Exceeded thresholds, need to add to Q for expansion
+    if (span->m_id <= 0)
+        m_QA.push_back(span);
+    else
+        m_QB.push_back(span);
+    span->m_active = Span::ON_Q;    // Mark as being in Q
+}
+
+bool
+Optimize::step_1b(Errwarns& errwarns)
+{
+    bool saw_error = false;
+
+    boost::ptr_list<Span>::iterator span = m_spans.begin();
+    while (span != m_spans.end()) {
+        bool terms_okay = true;
+        try {
+            span->create_terms();
+        } catch (Error& err) {
+            errwarns.propagate(span->m_bc.get_line());
+            saw_error = true;
+            terms_okay = false;
+        }
+        if (terms_okay && span->recalc_normal()) {
+            bool still_depend =
+                span->m_bc.expand(span->m_id, span->m_cur_val, span->m_new_val,
+                                  span->m_neg_thres, span->m_pos_thres,
+                                  errwarns);
+            if (errwarns.num_errors() > 0)
+                saw_error = true;
+            else if (still_depend) {
+                if (span->m_active == Span::INACTIVE) {
+                    errwarns.propagate(span->m_bc.get_line(),
+                        ValueError(N_("secondary expansion of an external/complex value")));
+                    saw_error = true;
                 }
             } else {
-                TAILQ_REMOVE(&optd.spans, span, link);
-                span_destroy(span);
+                span = m_spans.erase(span);
                 continue;
             }
         }
-        span->cur_val = span->new_val;
+        span->m_cur_val = span->m_new_val;
+        ++span;
     }
 
-    if (saw_error) {
-        optimize_cleanup(&optd);
-        return;
-    }
+    return saw_error;
+}
 
-    /* Step 1c */
-    if (update_all_bc_offsets(object, errwarns)) {
-        optimize_cleanup(&optd);
-        return;
-    }
-
-    /* Step 1d */
-    STAILQ_INIT(&optd.QB);
-    TAILQ_FOREACH(span, &optd.spans, link) {
-        yasm_intnum *intn;
-
-        /* Update span terms based on new bc offsets */
-        for (i=0; i<span->num_terms; i++) {
-            intn = yasm_calc_bc_dist(span->terms[i].precbc,
-                                     span->terms[i].precbc2);
-            if (!intn)
-                yasm_internal_error(N_("could not calculate bc distance"));
-            span->terms[i].cur_val = span->terms[i].new_val;
-            span->terms[i].new_val = yasm_intnum_get_int(intn);
-            yasm_intnum_destroy(intn);
+bool
+Optimize::step_1d()
+{
+    for (boost::ptr_list<Span>::iterator span=m_spans.begin(),
+         endspan=m_spans.end(); span != endspan; ++span) {
+        // Update span terms based on new bc offsets
+        for (Span::Terms::iterator term=span->m_span_terms.begin(),
+             endterm=span->m_span_terms.end(); term != endterm; ++term) {
+            IntNum intn;
+            if (!calc_bc_dist(*(term->m_precbc), *(term->m_precbc2), intn))
+                throw InternalError(N_("could not calculate bc distance"));
+            term->m_cur_val = term->m_new_val;
+            term->m_new_val = intn.get_int();
         }
-        if (span->rel_term) {
-            span->rel_term->cur_val = span->rel_term->new_val;
-            if (span->rel_term->precbc2)
-                span->rel_term->new_val =
-                    yasm_bc_next_offset(span->rel_term->precbc2) -
-                    span->bc->offset;
+        if (span->m_rel_term) {
+            span->m_rel_term->m_cur_val = span->m_rel_term->m_new_val;
+            if (span->m_rel_term->m_precbc2)
+                span->m_rel_term->m_new_val =
+                    span->m_rel_term->m_precbc2->next_offset() -
+                    span->m_bc.get_offset();
             else
-                span->rel_term->new_val = span->bc->offset -
-                    yasm_bc_next_offset(span->rel_term->precbc);
+                span->m_rel_term->m_new_val = span->m_bc.get_offset() -
+                    span->m_rel_term->m_precbc->next_offset();
         }
 
-        if (recalc_normal_span(span)) {
-            /* Exceeded threshold, add span to QB */
-            STAILQ_INSERT_TAIL(&optd.QB, span, linkq);
-            span->active = 2;
+        if (span->recalc_normal()) {
+            // Exceeded threshold, add span to QB
+            m_QB.push_back(&(*span));
+            span->m_active = Span::ON_Q;
         }
     }
 
-    /* Do we need step 2?  If not, go ahead and exit. */
-    if (STAILQ_EMPTY(&optd.QB)) {
-        optimize_cleanup(&optd);
-        return;
-    }
+    // Do we need step 2?  If not, go ahead and exit.
+    return m_QB.empty();
+}
 
-    /* Update offset-setters values */
+bool
+Optimize::step_1e(Errwarns& errwarns)
+{
+    bool saw_error = false;
+#if 0
+    // Update offset-setters values
     STAILQ_FOREACH(os, &optd.offset_setters, link) {
         if (!os->bc)
             continue;
@@ -1018,7 +883,7 @@ yasm_object_optimize(yasm_object *object, yasm_errwarns *errwarns)
         os->cur_val = os->new_val;
     }
 
-    /* Build up interval tree */
+    // Build up interval tree
     TAILQ_FOREACH(span, &optd.spans, link) {
         for (i=0; i<span->num_terms; i++)
             optimize_itree_add(optd.itree, span, &span->terms[i]);
@@ -1026,7 +891,7 @@ yasm_object_optimize(yasm_object *object, yasm_errwarns *errwarns)
             optimize_itree_add(optd.itree, span, span->rel_term);
     }
 
-    /* Look for cycles in times expansion (span.id==0) */
+    // Look for cycles in times expansion (span.id==0)
     TAILQ_FOREACH(span, &optd.spans, link) {
         if (span->id > 0)
             continue;
@@ -1035,114 +900,194 @@ yasm_object_optimize(yasm_object *object, yasm_errwarns *errwarns)
                      (long)span->bc->bc_index, &optd, check_cycle);
         if (yasm_error_occurred()) {
             yasm_errwarn_propagate(errwarns, span->bc->line);
-            saw_error = 1;
+            saw_error = true;
         }
     }
-
-    if (saw_error) {
-        optimize_cleanup(&optd);
-        return;
-    }
-
-    /* Step 2 */
-    STAILQ_INIT(&optd.QA);
-    while (!STAILQ_EMPTY(&optd.QA) || !(STAILQ_EMPTY(&optd.QB))) {
-        unsigned long orig_len;
-        long offset_diff;
-
-        /* QA is for TIMES, update those first, then update non-TIMES.
-         * This is so that TIMES can absorb increases before we look at
-         * expanding non-TIMES BCs.
-         */
-        if (!STAILQ_EMPTY(&optd.QA)) {
-            span = STAILQ_FIRST(&optd.QA);
-            STAILQ_REMOVE_HEAD(&optd.QA, linkq);
-        } else {
-            span = STAILQ_FIRST(&optd.QB);
-            STAILQ_REMOVE_HEAD(&optd.QB, linkq);
-        }
-
-        if (!span->active)
-            continue;
-        span->active = 1;   /* no longer in Q */
-
-        /* Make sure we ended up ultimately exceeding thresholds; due to
-         * offset BCs we may have been placed on Q and then reduced in size
-         * again.
-         */
-        if (!recalc_normal_span(span))
-            continue;
-
-        orig_len = span->bc->len * span->bc->mult_int;
-
-        retval = yasm_bc_expand(span->bc, span->id, span->cur_val,
-                                span->new_val, &span->neg_thres,
-                                &span->pos_thres);
-        yasm_errwarn_propagate(errwarns, span->bc->line);
-
-        if (retval < 0) {
-            /* error */
-            saw_error = 1;
-            continue;
-        } else if (retval > 0) {
-            /* another threshold, keep active */
-            for (i=0; i<span->num_terms; i++)
-                span->terms[i].cur_val = span->terms[i].new_val;
-            if (span->rel_term)
-                span->rel_term->cur_val = span->rel_term->new_val;
-            span->cur_val = span->new_val;
-        } else
-            span->active = 0;       /* we're done with this span */
-
-        optd.len_diff = span->bc->len * span->bc->mult_int - orig_len;
-        if (optd.len_diff == 0)
-            continue;   /* didn't increase in size */
-
-        /* Iterate over all spans dependent across the bc just expanded */
-        IT_enumerate(optd.itree, (long)span->bc->bc_index,
-                     (long)span->bc->bc_index, &optd, optimize_term_expand);
-
-        /* Iterate over offset-setters that follow the bc just expanded.
-         * Stop iteration if:
-         *  - no more offset-setters in this section
-         *  - offset-setter didn't move its following offset
-         */
-        os = span->os;
-        offset_diff = optd.len_diff;
-        while (os->bc && os->bc->section == span->bc->section
-               && offset_diff != 0) {
-            unsigned long old_next_offset = os->cur_val + os->bc->len;
-            long neg_thres_temp;
-
-            if (offset_diff < 0 && (unsigned long)(-offset_diff) > os->new_val)
-                yasm_internal_error(N_("org/align went to negative offset"));
-            os->new_val += offset_diff;
-
-            orig_len = os->bc->len;
-            retval = yasm_bc_expand(os->bc, 1, (long)os->cur_val,
-                                    (long)os->new_val, &neg_thres_temp,
-                                    (long *)&os->thres);
-            yasm_errwarn_propagate(errwarns, os->bc->line);
-
-            offset_diff = os->new_val + os->bc->len - old_next_offset;
-            optd.len_diff = os->bc->len - orig_len;
-            if (optd.len_diff != 0)
-                IT_enumerate(optd.itree, (long)os->bc->bc_index,
-                     (long)os->bc->bc_index, &optd, optimize_term_expand);
-
-            os->cur_val = os->new_val;
-            os = STAILQ_NEXT(os, link);
-        }
-    }
-
-    if (saw_error) {
-        optimize_cleanup(&optd);
-        return;
-    }
-
-    /* Step 3 */
-    update_all_bc_offsets(object, errwarns);
-    optimize_cleanup(&optd);
-}
 #endif
+    return saw_error;
+}
+
+bool
+Optimize::step_2(Errwarns& errwarns)
+{
+    bool saw_error = false;
+
+    while (!m_QA.empty() || !m_QB.empty()) {
+        Span* span;
+
+        // QA is for TIMES, update those first, then update non-TIMES.
+        // This is so that TIMES can absorb increases before we look at
+        // expanding non-TIMES BCs.
+        if (!m_QA.empty()) {
+            span = m_QA.front();
+            m_QA.pop_front();
+        } else {
+            span = m_QB.front();
+            m_QB.pop_front();
+        }
+
+        if (span->m_active == Span::INACTIVE)
+            continue;
+        span->m_active = Span::ACTIVE;  // no longer in Q
+
+        // Make sure we ended up ultimately exceeding thresholds; due to
+        // offset BCs we may have been placed on Q and then reduced in size
+        // again.
+        if (!span->recalc_normal())
+            continue;
+
+        unsigned long orig_len = span->m_bc.get_total_len();
+
+        bool still_depend =
+            span->m_bc.expand(span->m_id, span->m_cur_val, span->m_new_val,
+                              span->m_neg_thres, span->m_pos_thres, errwarns);
+
+        if (errwarns.num_errors() > 0) {
+            // error
+            saw_error = true;
+            continue;
+        } else if (still_depend) {
+            // another threshold, keep active
+            for (Span::Terms::iterator term=span->m_span_terms.begin(),
+                 endterm=span->m_span_terms.end(); term != endterm; ++term)
+                term->m_cur_val = term->m_new_val;
+            if (span->m_rel_term)
+                span->m_rel_term->m_cur_val = span->m_rel_term->m_new_val;
+            span->m_cur_val = span->m_new_val;
+        } else
+            span->m_active = Span::INACTIVE;    // we're done with this span
+
+        long len_diff = span->m_bc.get_total_len() - orig_len;
+        if (len_diff == 0)
+            continue;   // didn't increase in size
+
+        // Iterate over all spans dependent across the bc just expanded
+        m_itree.enumerate((long)span->m_bc.get_index(),
+                          (long)span->m_bc.get_index(),
+                          boost::bind(&Optimize::term_expand, this, _1,
+                                      len_diff));
+
+        // Iterate over offset-setters that follow the bc just expanded.
+        // Stop iteration if:
+        //  - no more offset-setters in this section
+        //  - offset-setter didn't move its following offset
+        boost::ptr_vector<OffsetSetter>::iterator os =
+            m_offset_setters.begin() + span->m_os_index;
+        long offset_diff = len_diff;
+        while (os != m_offset_setters.end()
+               && os->m_bc
+               && os->m_bc->get_section() == span->m_bc.get_section()
+               && offset_diff != 0) {
+            unsigned long old_next_offset =
+                os->m_cur_val + os->m_bc->get_len();
+
+            if (offset_diff < 0
+                && (unsigned long)(-offset_diff) > os->m_new_val)
+                throw InternalError(N_("org/align went to negative offset"));
+            os->m_new_val += offset_diff;
+
+            orig_len = os->m_bc->get_len();
+            long neg_thres_temp, pos_thres_temp;
+            os->m_bc->expand(1, (long)os->m_cur_val, (long)os->m_new_val,
+                             neg_thres_temp, pos_thres_temp, errwarns);
+            os->m_thres = (long)pos_thres_temp;
+
+            offset_diff = os->m_new_val + os->m_bc->get_len() - old_next_offset;
+            len_diff = os->m_bc->get_len() - orig_len;
+            if (len_diff != 0)
+                m_itree.enumerate((long)os->m_bc->get_index(),
+                                  (long)os->m_bc->get_index(),
+                                  boost::bind(&Optimize::term_expand, this, _1,
+                                              len_diff));
+
+            os->m_cur_val = os->m_new_val;
+            ++os;
+        }
+    }
+
+    return saw_error;
+}
+
+} // anonymous namespace
+
+namespace yasm {
+
+void
+Object::update_bc_offsets(Errwarns& errwarns)
+{
+    for (section_iterator sect=m_sections.begin(), end=m_sections.end();
+         sect != end; ++sect)
+        sect->update_bc_offsets(errwarns);
+}
+
+void
+Object::optimize(Errwarns& errwarns)
+{
+    Optimize opt;
+    unsigned long bc_index = 0;
+    bool saw_error = false;
+
+    // Step 1a
+    for (section_iterator sect=m_sections.begin(), sectend=m_sections.end();
+         sect != sectend; ++sect) {
+        unsigned long offset = 0;
+
+        // Set the offset of the first (empty) bytecode.
+        sect->bcs_first().set_index(bc_index++);
+
+        // Iterate through the remainder, if any.
+        for (Section::bc_iterator bc=sect->bcs_begin(), bcend=sect->bcs_end();
+             bc != bcend; ++bc) {
+            bc->set_index(bc_index++);
+            bc->set_offset(offset);
+
+            bc->calc_len(boost::bind(&Optimize::add_span, &opt,
+                                     _1, _2, _3, _4, _5),
+                         errwarns);
+            if (errwarns.num_errors() > 0)
+                saw_error = true;
+            else {
+                if (bc->get_special() == Bytecode::Contents::SPECIAL_OFFSET) {
+                    opt.add_offset_setter(*bc);
+
+                    if (bc->get_multiple_expr()) {
+                        errwarns.propagate(bc->get_line(),
+                            ValueError(N_("cannot combine multiples and setting assembly position")));
+                        saw_error = true;
+                    }
+                }
+
+                offset = bc->next_offset();
+            }
+        }
+    }
+
+    if (saw_error)
+        return;
+
+    // Step 1b
+    if (opt.step_1b(errwarns))
+        return;
+
+    // Step 1c
+    update_bc_offsets(errwarns);
+    if (errwarns.num_errors() > 0)
+        return;
+
+    // Step 1d
+    if (opt.step_1d())
+        return;
+
+    // Step 1e
+    if (opt.step_1e(errwarns))
+        return;
+
+    // Step 2
+    if (opt.step_2(errwarns))
+        return;
+
+    // Step 3
+    update_bc_offsets(errwarns);
+}
+
 } // namespace yasm

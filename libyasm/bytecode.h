@@ -126,7 +126,7 @@ public:
     /// @param neg_thres    negative threshold for long/short decision
     /// @param pos_thres    positive threshold for long/short decision
     typedef
-        boost::function<void (Bytecode* bc, int id, const Value& value,
+        boost::function<void (Bytecode& bc, int id, const Value& value,
                               long neg_thres, long pos_thres)>
         AddSpanFunc;
 
@@ -288,11 +288,27 @@ public:
     /// @warning Only valid /after/ optimization.
     unsigned long get_offset() const { return m_offset; }
 
+    /// Set the offset of the bytecode.
+    /// @internal Should be used by Object::optimize() only.
+    /// @param offset       new offset of the bytecode
+    void set_offset(unsigned long offset) { m_offset = offset; }
+
     /// Get the offset of the next bytecode (the next bytecode doesn't have to
     /// actually exist).
     /// @return Offset of the next bytecode in bytes.
     /// @warning Only valid /after/ optimization.
-    unsigned long next_offset() const;
+    unsigned long next_offset() const
+    { return m_offset + m_len * m_mult_int; }
+
+    /// Get the total length of the bytecode, including any multiples.
+    /// @return Total length of the bytecode in bytes.
+    /// @warning Only valid /after/ optimization.
+    unsigned long get_total_len() const { return m_len * m_mult_int; }
+
+    /// Get the basic length of the bytecode, excluding multiples.
+    /// @return Length of the bytecode in bytes.
+    /// @warning Only valid /after/ optimization.
+    unsigned long get_len() const { return m_len; }
 
     /// Resolve EQUs in a bytecode and calculate its minimum size.
     /// Generates dependent bytecode spans for cases where, if the length
@@ -302,6 +318,7 @@ public:
     /// @param add_span     function to call to add a span
     /// @note May store to bytecode updated expressions and the short length.
     void calc_len(AddSpanFunc add_span);
+    void calc_len(AddSpanFunc add_span, Errwarns& errwarns);
 
     /// Recalculate a bytecode's length based on an expanded span length.
     /// @param span         span ID (as given to yasm_bc_add_span_func in
@@ -319,6 +336,9 @@ public:
     ///       length.
     bool expand(int span, long old_val, long new_val,
                 /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres);
+    bool expand(int span, long old_val, long new_val,
+                /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres,
+                Errwarns& errwarns);
 
     /// Convert a bytecode into its byte representation.
     /// @param bc           bytecode
@@ -383,6 +403,14 @@ public:
     unsigned long update_offset(unsigned long offset, Bytecode& prev_bc,
                                 Errwarns& errwarns);
 
+    unsigned long get_line() const { return m_line; }
+
+    unsigned long get_index() const { return m_index; }
+    void set_index(unsigned long idx) { m_index = idx; }
+
+    Contents::SpecialType get_special() const
+    { return m_contents->get_special(); }
+
 private:
     /// Implementation-specific data.
     boost::scoped_ptr<Contents> m_contents;
@@ -409,7 +437,7 @@ private:
     unsigned long m_offset;
 
     /// Unique integer index of bytecode.  Used during optimization.
-    unsigned long m_bc_index;
+    unsigned long m_index;
 
     /// Labels that point to this bytecode (as the
     /// bytecode previous to the label).

@@ -88,7 +88,7 @@ Bytecode::Bytecode(std::auto_ptr<Contents> contents, unsigned long line)
       m_mult_int(1),
       m_line(line),
       m_offset(~0UL),   // obviously incorrect / uninitialized value
-      m_bc_index(~0UL)
+      m_index(~0UL)
 {
 }
 
@@ -100,7 +100,7 @@ Bytecode::Bytecode(const Bytecode& oth)
       m_mult_int(oth.m_mult_int),
       m_line(oth.m_line),
       m_offset(oth.m_offset),
-      m_bc_index(oth.m_bc_index),
+      m_index(oth.m_index),
       m_symbols(oth.m_symbols)
 {}
 
@@ -115,7 +115,7 @@ Bytecode::operator= (const Bytecode& oth)
         m_mult_int = oth.m_mult_int;
         m_line = oth.m_line;
         m_offset = oth.m_offset;
-        m_bc_index = oth.m_bc_index;
+        m_index = oth.m_index;
         m_symbols = oth.m_symbols;
     }
     return *this;
@@ -170,12 +170,6 @@ Bytecode::finalize(Bytecode& prev_bc, Errwarns& errwarns)
     errwarns.propagate(m_line);     // propagate warnings
 }
 
-unsigned long
-Bytecode::next_offset() const
-{
-    return m_offset + m_len * m_mult_int;
-}
-
 void
 Bytecode::calc_len(AddSpanFunc add_span)
 {
@@ -198,11 +192,22 @@ Bytecode::calc_len(AddSpanFunc add_span)
                     N_("expression must not contain floating point value"));
             } else {
                 Value value(0, Expr::Ptr(m_multiple->clone()));
-                add_span(this, 0, value, 0, 0);
+                add_span(*this, 0, value, 0, 0);
                 m_mult_int = 0;     // assume 0 to start
             }
         }
     }
+}
+
+void
+Bytecode::calc_len(AddSpanFunc add_span, Errwarns& errwarns)
+{
+    try {
+        calc_len(add_span);
+    } catch (Error& err) {
+        errwarns.propagate(m_line, err);
+    }
+    errwarns.propagate(m_line);     // propagate warnings
 }
 
 bool
@@ -215,6 +220,21 @@ Bytecode::expand(int span, long old_val, long new_val,
     }
     return m_contents->expand(*this, span, old_val, new_val, neg_thres,
                               pos_thres);
+}
+
+bool
+Bytecode::expand(int span, long old_val, long new_val,
+                 /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres,
+                 Errwarns& errwarns)
+{
+    bool retval = false;
+    try {
+        retval = expand(span, old_val, new_val, neg_thres, pos_thres);
+    } catch (Error& err) {
+        errwarns.propagate(m_line, err);
+    }
+    errwarns.propagate(m_line);     // propagate warnings
+    return retval;
 }
 
 /*@null@*/ /*@only@*/ unsigned char *
