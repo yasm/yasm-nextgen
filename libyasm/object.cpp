@@ -517,7 +517,7 @@ public:
     bool step_2(Errwarns& errwarns);
 
 private:
-    void itree_add(Span* span, Span::Term* term);
+    void itree_add(Span& span, Span::Term& term);
     void check_cycle(IntervalTreeNode<Span::Term*> * node, Span& span);
     void term_expand(IntervalTreeNode<Span::Term*> * node, long len_diff);
 
@@ -697,21 +697,21 @@ Optimize::add_offset_setter(Bytecode& bc)
 }
 
 void
-Optimize::itree_add(Span* span, Span::Term* term)
+Optimize::itree_add(Span& span, Span::Term& term)
 {
     long precbc_index, precbc2_index;
     unsigned long low, high;
 
     /* Update term length */
-    if (term->m_precbc)
-        precbc_index = term->m_precbc->get_index();
+    if (term.m_precbc)
+        precbc_index = term.m_precbc->get_index();
     else
-        precbc_index = span->m_bc.get_index()-1;
+        precbc_index = span.m_bc.get_index()-1;
 
-    if (term->m_precbc2)
-        precbc2_index = term->m_precbc2->get_index();
+    if (term.m_precbc2)
+        precbc2_index = term.m_precbc2->get_index();
     else
-        precbc2_index = span->m_bc.get_index()-1;
+        precbc2_index = span.m_bc.get_index()-1;
 
     if (precbc_index < precbc2_index) {
         low = precbc_index+1;
@@ -722,7 +722,7 @@ Optimize::itree_add(Span* span, Span::Term* term)
     } else
         return;     /* difference is same bc - always 0! */
 
-    m_itree.insert((long)low, (long)high, term);
+    m_itree.insert((long)low, (long)high, &term);
 }
 
 void
@@ -873,37 +873,43 @@ bool
 Optimize::step_1e(Errwarns& errwarns)
 {
     bool saw_error = false;
-#if 0
+
     // Update offset-setters values
-    STAILQ_FOREACH(os, &optd.offset_setters, link) {
-        if (!os->bc)
+    for (boost::ptr_vector<OffsetSetter>::iterator os=m_offset_setters.begin(),
+         osend=m_offset_setters.end(); os != osend; ++os) {
+        if (!os->m_bc)
             continue;
-        os->thres = yasm_bc_next_offset(os->bc);
-        os->new_val = os->bc->offset;
-        os->cur_val = os->new_val;
+        os->m_thres = os->m_bc->next_offset();
+        os->m_new_val = os->m_bc->get_offset();
+        os->m_cur_val = os->m_new_val;
     }
 
     // Build up interval tree
-    TAILQ_FOREACH(span, &optd.spans, link) {
-        for (i=0; i<span->num_terms; i++)
-            optimize_itree_add(optd.itree, span, &span->terms[i]);
-        if (span->rel_term)
-            optimize_itree_add(optd.itree, span, span->rel_term);
+    for (boost::ptr_list<Span>::iterator span=m_spans.begin(),
+         endspan=m_spans.end(); span != endspan; ++span) {
+        for (Span::Terms::iterator term=span->m_span_terms.begin(),
+             endterm=span->m_span_terms.end(); term != endterm; ++term)
+            itree_add(*span, *term);
+        if (span->m_rel_term)
+            itree_add(*span, *(span->m_rel_term));
     }
 
     // Look for cycles in times expansion (span.id==0)
-    TAILQ_FOREACH(span, &optd.spans, link) {
-        if (span->id > 0)
+    for (boost::ptr_list<Span>::iterator span=m_spans.begin(),
+         endspan=m_spans.end(); span != endspan; ++span) {
+        if (span->m_id > 0)
             continue;
-        optd.span = span;
-        IT_enumerate(optd.itree, (long)span->bc->bc_index,
-                     (long)span->bc->bc_index, &optd, check_cycle);
-        if (yasm_error_occurred()) {
-            yasm_errwarn_propagate(errwarns, span->bc->line);
+        try {
+            m_itree.enumerate((long)span->m_bc.get_index(),
+                              (long)span->m_bc.get_index(),
+                              boost::bind(&Optimize::check_cycle, this, _1,
+                                          boost::ref(*span)));
+        } catch (Error& err) {
+            errwarns.propagate(span->m_bc.get_line(), err);
             saw_error = true;
         }
     }
-#endif
+
     return saw_error;
 }
 
