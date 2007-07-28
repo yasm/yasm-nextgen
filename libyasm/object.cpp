@@ -32,7 +32,6 @@
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/ptr_container/ptr_list.hpp>
 
 #include "bytecode.h"
