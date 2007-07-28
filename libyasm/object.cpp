@@ -524,7 +524,7 @@ private:
     boost::ptr_list<Span> m_spans;
     std::list<Span*> m_QA, m_QB;
     IntervalTree<Span::Term*> m_itree;
-    boost::ptr_vector<OffsetSetter> m_offset_setters;
+    std::vector<OffsetSetter> m_offset_setters;
 };
 
 Span::Term::Term()
@@ -677,7 +677,7 @@ Optimize::Optimize()
 {
     // Create an placeholder offset setter for spans to point to; this will
     // get updated if/when we actually run into one.
-    m_offset_setters.push_back(new OffsetSetter());
+    m_offset_setters.push_back(OffsetSetter());
 }
 
 Optimize::~Optimize()
@@ -693,7 +693,7 @@ Optimize::add_offset_setter(Bytecode& bc)
     os.m_thres = bc.next_offset();
 
     // Create new placeholder
-    m_offset_setters.push_back(new OffsetSetter());
+    m_offset_setters.push_back(OffsetSetter());
 }
 
 void
@@ -875,7 +875,7 @@ Optimize::step_1e(Errwarns& errwarns)
     bool saw_error = false;
 
     // Update offset-setters values
-    for (boost::ptr_vector<OffsetSetter>::iterator os=m_offset_setters.begin(),
+    for (std::vector<OffsetSetter>::iterator os=m_offset_setters.begin(),
          osend=m_offset_setters.end(); os != osend; ++os) {
         if (!os->m_bc)
             continue;
@@ -977,7 +977,7 @@ Optimize::step_2(Errwarns& errwarns)
         // Stop iteration if:
         //  - no more offset-setters in this section
         //  - offset-setter didn't move its following offset
-        boost::ptr_vector<OffsetSetter>::iterator os =
+        std::vector<OffsetSetter>::iterator os =
             m_offset_setters.begin() + span->m_os_index;
         long offset_diff = len_diff;
         while (os != m_offset_setters.end()
