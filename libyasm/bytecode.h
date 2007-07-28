@@ -45,6 +45,7 @@ class Expr;
 class Insn;
 class IntNum;
 class Linemap;
+class Section;
 class Symbol;
 class Value;
 
