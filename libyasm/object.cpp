@@ -449,7 +449,7 @@ OffsetSetter::OffsetSetter()
 class Span : boost::noncopyable {
     friend class Optimize;
 public:
-    class Term : boost::noncopyable {
+    class Term {
     public:
         Term();
         Term(unsigned int subst, Bytecode* precbc, Bytecode* precbc2,
@@ -481,7 +481,7 @@ private:
     // span term for relative portion of value
     boost::scoped_ptr<Term> m_rel_term;
     // span terms in absolute portion of value
-    typedef boost::ptr_vector<Term> Terms;
+    typedef std::vector<Term> Terms;
     Terms m_span_terms;
     Expr::Terms m_expr_terms;
 
@@ -578,10 +578,9 @@ Span::add_term(unsigned int subst, Bytecode& precbc, Bytecode& precbc2)
     if (!calc_bc_dist(precbc, precbc2, intn))
         throw InternalError(N_("could not calculate bc distance"));
 
-    while (subst >= m_span_terms.size())
-        m_span_terms.push_back(new Term());
-    m_span_terms.replace(subst, new Term(subst, &precbc, &precbc2, this,
-                                         intn.get_int()));
+    if (subst >= m_span_terms.size())
+        m_span_terms.resize(subst+1);
+    m_span_terms[subst] = Term(subst, &precbc, &precbc2, this, intn.get_int());
 }
 
 void
@@ -891,7 +890,7 @@ Optimize::step_1e(Errwarns& errwarns)
              endterm=span->m_span_terms.end(); term != endterm; ++term)
             itree_add(*span, *term);
         if (span->m_rel_term)
-            itree_add(*span, *(span->m_rel_term));
+            itree_add(*span, *(span->m_rel_term.get()));
     }
 
     // Look for cycles in times expansion (span.id==0)
