@@ -135,16 +135,21 @@ public:
     void put(std::ostream& os, int indent_level) const;
 
     /// Get the absolute portion of the value.
-    /// @return Absolute expression.
-    Expr* get_abs() const { return m_abs.get(); }
+    /// @return Absolute expression, or NULL if there is no absolute portion.
+    Expr* get_abs() { return m_abs.get(); }
+    const Expr* get_abs() const { return m_abs.get(); }
 
-    /// Get the relative portion of the value.
-    /// @return Symbol for the relative portion.
-    Symbol* get_rel() const { return m_rel; }
+    /// Determine if the value has an absolute portion.
+    /// @return True if value has absolute portion, false if not.
+    bool has_abs() const { return m_abs.get() != 0; }
 
     /// Determine if the value is relative.
     /// @return True if value has relative portions, false if not.
     bool is_relative() const { return m_rel != 0; }
+
+    /// Determine if the value is WRT anything.
+    /// @return True if value has WRT portion, false if not.
+    bool is_wrt() const { return m_wrt != 0; }
 
     /// Maximum value of #m_rshift.
     static const unsigned int RSHIFT_MAX = 127;
@@ -158,6 +163,7 @@ private:
     /// absolute portion (e.g. the absolute portion is 0).
     boost::scoped_ptr<Expr> m_abs;
 
+public:
     /// The relative portion of the value.  This is the portion that may
     /// need to generate a relocation.  May be NULL if no relative portion.
     /*@null@*/ /*@dependent@*/ Symbol* m_rel;
