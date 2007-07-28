@@ -445,7 +445,7 @@ OffsetSetter::OffsetSetter()
 {
 }
 
-class Span : boost::noncopyable {
+class Span : private boost::noncopyable {
     friend class Optimize;
 public:
     class Term {
