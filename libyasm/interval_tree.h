@@ -24,15 +24,19 @@
 
 namespace yasm {
 
+template <typename T> class IntervalTree;
+
 template <typename T>
 class IntervalTreeNode {
-    friend class IntervalTree;
+    friend class IntervalTree<T>;
 
 public:
     IntervalTreeNode() {}
     IntervalTreeNode(long l, long h);
     IntervalTreeNode(long l, long h, T d);
     ~IntervalTreeNode() {}
+
+    const T& get_data() const { return data; }
 
 protected:
     void put(std::ostream& os, IntervalTreeNode<T>* nil,
@@ -67,6 +71,21 @@ public:
 #endif
 
 protected:
+    class RecursionNode {
+    public:
+        RecursionNode() : start_node(0), parentIndex(0), tryRightBranch(false)
+        {}
+        RecursionNode(IntervalTreeNode<T>* sn, unsigned int pi, bool tr)
+            : start_node(sn), parentIndex(pi), tryRightBranch(tr)
+        {}
+        // this structure stores the information needed when we take the
+        // right branch in searching for intervals but possibly come back
+        // and check the left branch as well.
+        IntervalTreeNode<T>* start_node;
+        unsigned int parentIndex;
+        bool tryRightBranch;
+    };
+
     // A sentinel is used for root and for nil.  These sentinels are
     // created when ITTreeCreate is caled.  root->left should always
     // point to the node which is the root of the tree.  nil points to a
@@ -835,20 +854,6 @@ void
 IntervalTree<T>::enumerate(long low, long high,
     boost::function<void (IntervalTreeNode<T>*)> callback)
 {
-    class RecursionNode {
-    public:
-        RecursionNode() : start_node(0), parentIndex(0), tryRightBranch(false)
-        {}
-        RecursionNode(IntervalTreeNode<T>* sn, unsigned int pi, bool tr)
-            : start_node(sn), parentIndex(pi), tryRightBranch(tr)
-        {}
-        // this structure stores the information needed when we take the
-        // right branch in searching for intervals but possibly come back
-        // and check the left branch as well.
-        IntervalTreeNode<T>* start_node;
-        unsigned int parentIndex;
-        bool tryRightBranch;
-    };
     std::vector<RecursionNode> recursionNodeStack(1);
 
     IntervalTreeNode<T>* x=m_root->left;
