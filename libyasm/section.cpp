@@ -202,6 +202,7 @@ void
 Section::update_bc_offsets(Errwarns& errwarns)
 {
     unsigned long offset = 0;
+    m_bcs.front().set_offset(0);
     for (bc_iterator bc=m_bcs.begin()+1, end=m_bcs.end(), prevbc=m_bcs.begin();
          bc != end; ++bc, ++prevbc)
         offset = bc->update_offset(offset, *prevbc, errwarns);
