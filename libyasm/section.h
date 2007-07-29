@@ -122,7 +122,8 @@ public:
 #endif
     /// Add a relocation to a section.
     /// @param reloc        relocation
-    void add_reloc(std::auto_ptr<Reloc> reloc) { m_relocs.push_back(reloc); }
+    void add_reloc(std::auto_ptr<Reloc> reloc)
+    { m_relocs.push_back(reloc.release()); }
 
     typedef boost::ptr_vector<Reloc>::iterator reloc_iterator;
     typedef boost::ptr_vector<Reloc>::const_iterator const_reloc_iterator;

@@ -254,7 +254,7 @@ void
 Object::append_section(std::auto_ptr<Section> sect)
 {
     sect->m_object = this;
-    m_sections.push_back(sect);
+    m_sections.push_back(sect.release());
 }
 #if 0
 int
