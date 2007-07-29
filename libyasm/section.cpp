@@ -149,7 +149,7 @@ Section::append_bytecode(std::auto_ptr<Bytecode> bc)
 {
     if (bc.get() != 0) {
         bc->m_section = this;   // record parent section
-        m_bcs.push_back(bc);
+        m_bcs.push_back(bc.release());
     }
 }
 
