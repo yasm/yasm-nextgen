@@ -124,10 +124,10 @@ public:
     ///      section as bc (and there is no WRT or SEG); if this is not the
     ///      desired behavior, e.g. a reloc is needed in this case, don't
     ///      use this function!
-    /// @return 0 if no value output due to value needing relocation;
-    ///         1 if value output; -1 if error.
-    int output_basic(/*@out@*/ unsigned char* buf, size_t destsize,
-                     Bytecode *bc, int warn, Arch* arch);
+    /// @return False if no value output due to value needing relocation;
+    ///         true if value output.
+    bool output_basic(/*@out@*/ unsigned char* buf, size_t destsize,
+                      Bytecode *bc, int warn, Arch* arch);
 
     /// Print a value.  For debugging purposes.
     /// @param os           output stream

@@ -33,7 +33,7 @@
 //#include "floatnum.h"
 //#include "expr.h"
 #include "value.h"
-//#include "symrec.h"
+#include "symbol.h"
 
 #include "bytecode.h"
 //#include "section.h"
@@ -493,7 +493,7 @@ Value::finalize(Bytecode* precbc)
     }
     return false;
 }
-#if 0
+
 std::auto_ptr<IntNum>
 Value::get_intnum(Bytecode* bc, bool calc_bc_dist)
 {
@@ -503,7 +503,9 @@ Value::get_intnum(Bytecode* bc, bool calc_bc_dist)
     if (m_abs.get() != 0) {
         // Handle integer expressions, if non-integer or too complex, return
         // NULL.
-        intn = m_abs->get_intnum(calc_bc_dist);
+        if (calc_bc_dist)
+            m_abs->level_tree(true, true, true, xform_calc_bc_dist);
+        intn = m_abs->get_intnum();
         if (!intn)
             return outval;
     }
@@ -548,14 +550,14 @@ Value::get_intnum(Bytecode* bc, bool calc_bc_dist)
     return std::auto_ptr<IntNum>(new IntNum(0));
 }
 
-int
-Value::output_basic(/*@out@*/ unsigned char* buf, size_t destsize, Bytecode *bc,
-                    int warn, Arch* arch)
+bool
+Value::output_basic(/*@out@*/ unsigned char* buf, size_t destsize,
+                    Bytecode* bc, int warn, Arch* arch)
 {
     /*@dependent@*/ /*@null@*/ IntNum* intn = 0;
-    int retval = 1;
 
     if (m_abs.get() != 0) {
+#if 0
         // Handle floating point expressions
         FloatNum* flt;
         if (!m_rel && (flt = m_abs->get_float())) {
@@ -564,29 +566,28 @@ Value::output_basic(/*@out@*/ unsigned char* buf, size_t destsize, Bytecode *bc,
             else
                 return 1;
         }
-
+#endif
         // Check for complex float expressions
-        if (m_abs->contains(Expr::FLOAT)) {
-            error_set(ERROR_FLOATING_POINT,
-                      N_("floating point expression too complex"));
-            return -1;
-        }
+        if (m_abs->contains(Expr::FLOAT))
+            throw FloatingPointError(
+                N_("floating point expression too complex"));
 
         // Handle normal integer expressions
-        intn = m_abs->get_intnum(true);
+        m_abs->level_tree(true, true, true, xform_calc_bc_dist);
+        intn = m_abs->get_intnum();
 
         if (!intn) {
             // Second try before erroring: Expr::get_intnum() doesn't handle
             // SEG:OFF, so try simplifying out any to just the OFF portion,
             // then getting the intnum again.
-            m_abs->extract_deep_segoff(); // returns auto_ptr, so just throw away
-            intn = m_abs->get_intnum(true);
+            m_abs->extract_deep_segoff(); // returns auto_ptr, so ok to drop
+            m_abs->level_tree(true, true, true, xform_calc_bc_dist);
+            intn = m_abs->get_intnum();
         }
 
         if (!intn) {
             // Still don't have an integer!
-            error_set(ERROR_TOO_COMPLEX, N_("expression too complex"));
-            return -1;
+            throw TooComplexError(N_("expression too complex"));
         }
     }
 
@@ -601,11 +602,11 @@ Value::output_basic(/*@out@*/ unsigned char* buf, size_t destsize, Bytecode *bc,
 
         bool sym_local = m_rel->get_label(rel_prevbc);
         if (m_wrt || m_seg_of || m_section_rel || !sym_local)
-            return 0;       // we can't handle SEG, WRT, or external symbols
+            return false;   // we can't handle SEG, WRT, or external symbols
         if (rel_prevbc->get_section() != bc->get_section())
-            return 0;       // not in this section
+            return false;   // not in this section
         if (!m_curpos_rel)
-            return 0;       // not PC-relative
+            return false;   // not PC-relative
 
         // Calculate value relative to current assembly position
         IntNum outval(0);
@@ -623,15 +624,17 @@ Value::output_basic(/*@out@*/ unsigned char* buf, size_t destsize, Bytecode *bc,
         // Add in absolute portion
         if (intn)
             outval.calc(Expr::ADD, intn);
+#if 0
         // Output!
         if (arch->intnum_tobytes(outval, buf, destsize, m_size, 0, bc, warn))
             retval = -1;
-        return retval;
+#endif
+        return true;
     }
 
     if (m_seg_of || m_rshift || m_curpos_rel || m_ip_rel || m_section_rel)
-        return 0;   // We can't handle this with just an absolute
-
+        return false;   // We can't handle this with just an absolute
+#if 0
     if (intn) {
         // Output just absolute portion
         if (arch->intnum_tobytes(intn, buf, destsize, m_size, 0, bc, warn))
@@ -641,7 +644,8 @@ Value::output_basic(/*@out@*/ unsigned char* buf, size_t destsize, Bytecode *bc,
         if (arch->intnum_tobytes(0, buf, destsize, m_size, 0, bc, warn))
             retval = -1;
     }
-    return retval;
+#endif
+    return true;
 }
 
 void
@@ -673,5 +677,5 @@ Value::put(std::ostream& os, int indent_level) const
             os << std::setw(indent_level) << "" << "(Section-relative)" << std::endl;
     }
 }
-#endif
+
 } // namespace yasm

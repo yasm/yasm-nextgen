@@ -34,7 +34,7 @@
 #include "intnum.h"
 #include "floatnum.h"
 #include "expr.h"
-//#include "symrec.h"
+#include "symbol.h"
 
 //#include "arch.h"
 
@@ -490,33 +490,25 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
 void
 Expr::expand_equ(std::vector<const Expr*>& seen)
 {
-#if 0
     for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i) {
-        int type = i->type();
         // Expand equ's.
-        const Expr *equ;
-        if (type == SYM &&
-            (equ = ((TermSymbol&) *i).m_data->get_equ())) {
+        Symbol* sym;
+        const Expr* equ;
+        if ((sym = i->get_sym()) && (equ = sym->get_equ())) {
             // Check for circular reference
-            if (std::find(seen.begin(), seen.end(), equ) != seen.end()) {
-                error_set(ERROR_TOO_COMPLEX,
-                          N_("circular reference detected"));
-                return;
-            }
+            if (std::find(seen.begin(), seen.end(), equ) != seen.end())
+                throw TooComplexError(N_("circular reference detected"));
 
-            Expr *newe = equ->clone();
-            m_terms.replace(i, new TermExpr(newe));
+            Expr* newe = equ->clone();
+            *i = newe;
 
             // Remember we saw this equ and recurse
             seen.push_back(equ);
             newe->expand_equ(seen);
             seen.pop_back();
-        } else if (type == EXPR) {
-            // Recurse
-            ((TermExpr&) *i).m_data->expand_equ(seen);
-        }
+        } else if (Expr* e = i->get_expr())
+            e->expand_equ(seen);    // Recurse
     }
-#endif
 }
 
 void

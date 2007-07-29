@@ -40,6 +40,7 @@
 #include "intnum.h"
 #include "section.h"
 #include "object.h"
+#include "symbol.h"
 #include "value.h"
 
 #include "interval_tree.h"
@@ -609,11 +610,8 @@ Span::create_terms()
     // Create term for relative portion of dependent value
     if (m_depval.m_rel) {
         Bytecode* rel_precbc;
-#if 0
         bool sym_local = m_depval.m_rel->get_label(rel_precbc);
-#else
-        bool sym_local = true;
-#endif
+
         if (m_depval.is_wrt() || m_depval.m_seg_of || m_depval.m_section_rel
             || !sym_local)
             return;     // we can't handle SEG, WRT, or external symbols
