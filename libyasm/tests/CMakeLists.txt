@@ -3,7 +3,7 @@ INCLUDE_DIRECTORIES(${yasm_SOURCE_DIR}/libyasm)
 MACRO(LIBYASM_UNIT_TESTS)
    FOREACH(_testname ${ARGN})
        yasm_add_unit_test(${_testname} ${_testname}.cpp)
-       target_link_libraries(${_testname} libyasm)
+       target_link_libraries(${_testname} libyasm boost_unit_test_framework)
    ENDFOREACH(_testname)
 ENDMACRO(LIBYASM_UNIT_TESTS)
 
