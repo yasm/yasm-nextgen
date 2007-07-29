@@ -1,47 +1,46 @@
-/*
- *  Copyright (C) 2001-2007  Peter Johnson
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND OTHER CONTRIBUTORS ``AS IS''
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR OTHER CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+//
+//  Copyright (C) 2001-2007  Peter Johnson
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND OTHER CONTRIBUTORS ``AS IS''
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR OTHER CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+//
 
-/* constants describing parameters of internal floating point format.
- *  (these should match those in src/floatnum.c !)
- */
+// constants describing parameters of internal floating point format.
+//  (these should match those in src/floatnum.c !)
 static const unsigned int MANT_BITS = 80;
 static const unsigned int MANT_BYTES = 10;
 
 struct Init_Entry {
-    /* input ASCII value */
+    // input ASCII value
     const char *ascii;
 
-    /* correct output from ASCII conversion */
-    unsigned char mantissa[MANT_BYTES];     /* little endian mantissa - first
-                                               byte is not checked for
-                                               correctness. */
-    unsigned short exponent;        /* bias 32767 exponent */
+    // correct output from ASCII conversion
+
+    // little endian mantissa - first byte is not checked for correctness.
+    unsigned char mantissa[MANT_BYTES];
+    unsigned short exponent;        // bias 32767 exponent
     unsigned char sign;
     unsigned char flags;
 
-    /* correct output conversions - these should be *exact* matches */
+    // correct output conversions - these should be *exact* matches
     int ret32;
     unsigned char result32[4];
     int ret64;
@@ -82,7 +81,7 @@ static const Init_Entry normalized_vals[] = {
          0, {0x00,0x00,0x00,0x00,0x00,0xf4,0xb6,0xc0},
          0, {0x00,0x00,0x00,0x00,0x00,0x00,0xa0,0xb7,0x0b,0xc0}
     },
-    /* Edge cases for rounding wrap. */
+    // Edge cases for rounding wrap.
     {   "1.00000",
         {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff},0x7ffe,0,0,
          0, {0x00,0x00,0x80,0x3f},
@@ -97,11 +96,10 @@ static const Init_Entry normalized_vals[] = {
     },
 };
 
-/* Still normalized values, but edge cases of various sizes, testing underflow/
- * overflow checks as well.
- */
+// Still normalized values, but edge cases of various sizes, testing
+// underflow/overflow checks as well.
 static const Init_Entry normalized_edgecase_vals[] = {
-    /* 32-bit edges */
+    // 32-bit edges
     {   "1.1754943508222875e-38",
         {0xd5,0xf2,0x82,0xff,0xff,0xff,0xff,0xff,0xff,0xff},0x7f80,0,0,
          0, {0x00,0x00,0x80,0x00},
@@ -114,7 +112,7 @@ static const Init_Entry normalized_edgecase_vals[] = {
          0, {0x00,0x00,0x00,0xe0,0xff,0xff,0xef,0x47},
          0, {0x0a,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0x7e,0x40}
     },
-    /* 64-bit edges */
+    // 64-bit edges
     {   "2.2250738585072014E-308",
         {0x26,0x18,0x46,0x00,0x00,0x00,0x00,0x00,0x00,0x80},0x7c01,0,0,
         -1, {0x00,0x00,0x00,0x00},
@@ -127,7 +125,7 @@ static const Init_Entry normalized_edgecase_vals[] = {
          0, {0xff,0xff,0xff,0xff,0xff,0xff,0xef,0x7f},
          0, {0xac,0xf7,0xff,0xff,0xff,0xff,0xff,0xff,0xfe,0x43}
     },
-    /* 80-bit edges */
+    // 80-bit edges
 /*    { "3.3621E-4932",
         {},,0,0,
         -1, {0x00,0x00,0x00,0x00},
@@ -140,7 +138,7 @@ static const Init_Entry normalized_edgecase_vals[] = {
          1, {},
          0, {}
     },*/
-    /* internal format edges */
+    // internal format edges
 /*    {
     },
     {
