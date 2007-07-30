@@ -189,7 +189,7 @@ Symbol::declare(Visibility vis, unsigned long line)
 }
 
 void
-Symbol::parser_finalize(bool undef_extern)
+Symbol::finalize(bool undef_extern)
 {
     // error if a symbol is used but never defined or extern/common declared
     if ((m_status & USED) && !(m_status & DEFINED) &&

@@ -250,12 +250,6 @@ Object::Object(const std::string& src_filename,
 #endif
 }
 #endif
-void
-Object::append_section(std::auto_ptr<Section> sect)
-{
-    sect->m_object = this;
-    m_sections.push_back(sect.release());
-}
 #if 0
 int
 yasm_object_directive(yasm_object *object, const char *name,
@@ -292,11 +286,15 @@ Object::~Object()
 void
 Object::put(std::ostream& os, int indent_level) const
 {
-#if 0
-    /* Print symbol table */
-    fprintf(f, "%*sSymbol Table:\n", indent_level, "");
-    yasm_symtab_print(object->symtab, f, indent_level+1);
-#endif
+    // Print symbol table
+    os << std::setw(indent_level) << "" << "Symbol Table:" << std::endl;
+    for (const_symbol_iterator i=m_symbols.begin(), end=m_symbols.end();
+         i != end; ++i) {
+        os << std::setw(indent_level) << ""
+           << "Symbol `" << i->get_name() << "'" << std::endl;
+        i->put(os, indent_level+1);
+    }
+
     // Print sections and bytecodes
     for (const_section_iterator i=m_sections.begin(), end=m_sections.end();
          i != end; ++i) {
@@ -312,8 +310,15 @@ Object::finalize(Errwarns& errwarns)
                   boost::bind(&Section::finalize, _1, boost::ref(errwarns)));
 }
 
+void
+Object::append_section(std::auto_ptr<Section> sect)
+{
+    sect->m_object = this;
+    m_sections.push_back(sect.release());
+}
+
 Section*
-Object::get_section_by_name(const std::string& name)
+Object::find_section(const std::string& name)
 {
     section_iterator i =
         std::find_if(m_sections.begin(), m_sections.end(),
@@ -321,6 +326,53 @@ Object::get_section_by_name(const std::string& name)
     if (i == m_sections.end())
         return 0;
     return &(*i);
+}
+
+#if 0
+Symbol*
+Object::find_sym(const std::string& name)
+{
+    // TODO
+}
+
+Symbol*
+Object::get_sym(const std::string& name)
+{
+    // TODO
+}
+#endif
+
+void
+Object::append_symbol(std::auto_ptr<Symbol> sym)
+{
+    m_symbols.push_back(sym.release());
+}
+
+void
+Object::add_non_table_symbol(std::auto_ptr<Symbol> sym)
+{
+    m_non_table_syms.push_back(sym.release());
+}
+
+void
+Object::symbols_finalize(Errwarns& errwarns, bool undef_extern)
+{
+    unsigned long firstundef_line = ULONG_MAX;
+
+    for (symbol_iterator i=m_symbols.begin(), end=m_symbols.end();
+         i != end; ++i) {
+        try {
+            i->finalize(undef_extern);
+        } catch (Error& err) {
+            unsigned long use_line = i->get_use_line();
+            errwarns.propagate(use_line, err);
+            if (use_line < firstundef_line)
+                firstundef_line = use_line;
+        }
+    }
+    if (firstundef_line < ULONG_MAX)
+        errwarns.propagate(firstundef_line,
+            Error(N_(" (Each undefined symbol is reported only once.)")));
 }
 
 } // namespace yasm

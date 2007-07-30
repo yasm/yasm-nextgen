@@ -203,7 +203,7 @@ public:
     /// Finalize symbol after parsing stage.  Errors on symbols that
     /// are used but never defined or declared #EXTERN or #COMMON.
     /// @param undef_extern if true, all undef syms should be declared extern
-    void parser_finalize(bool undef_extern);
+    void finalize(bool undef_extern);
 
     /// Print a symbol.  For debugging purposes.
     /// @param os           output stream

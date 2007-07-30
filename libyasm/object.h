@@ -40,6 +40,7 @@ namespace yasm {
 
 class Arch;
 class Section;
+class Symbol;
 class Errwarns;
 class ObjectFormat;
 class DebugFormat;
@@ -71,18 +72,6 @@ public:
     /// @param indent_level indentation level
     void put(std::ostream& os, int indent_level) const;
 
-    /// Add a new section.  Does /not/ check to see if there's already
-    /// an existing section in the object with that name.  The caller
-    /// should first call get_section_by_name() if only unique names
-    /// are desired.
-    /// @param sect         section
-    void append_section(std::auto_ptr<Section> sect);
-
-    /// Find a general section in an object, based on its name.
-    /// @param name         section name
-    /// @return Section matching name, or NULL if no match found.
-    /*@null@*/ Section* get_section_by_name(const std::string& name);
-
     /// Finalize an object after parsing.
     /// @param errwarns     error/warning set
     /// @note Errors/warnings are stored into errwarns.
@@ -98,6 +87,25 @@ public:
     /// @note Optimization failures are stored into errwarns.
     void optimize(Errwarns& errwarns);
 
+    /// Updates all bytecode offsets in object.
+    /// @param errwarns     error/warning set
+    /// @note Errors/warnings are stored into errwarns.
+    void update_bc_offsets(Errwarns& errwarns);
+
+    // Section functions
+
+    /// Add a new section.  Does /not/ check to see if there's already
+    /// an existing section in the object with that name.  The caller
+    /// should first call find_section() if only unique names
+    /// are desired.
+    /// @param sect         section
+    void append_section(std::auto_ptr<Section> sect);
+
+    /// Find a general section in an object, based on its name.
+    /// @param name         section name
+    /// @return Section matching name, or NULL if no match found.
+    /*@null@*/ Section* find_section(const std::string& name);
+
     typedef boost::ptr_vector<Section>::iterator section_iterator;
     typedef boost::ptr_vector<Section>::const_iterator const_section_iterator;
 
@@ -108,10 +116,51 @@ public:
     section_iterator sections_end() { return m_sections.end(); }
     const_section_iterator sections_end() const { return m_sections.end(); }
 
-    /// Updates all bytecode offsets in object.
+    // Symbol functions
+
+    /// Get the object's "absolute" symbol.  This is
+    /// essentially an EQU with no name and value 0, and is used for
+    /// relocating absolute current-position-relative values.
+    /// @see Value::set_curpos_rel().
+    /// @return Absolute symbol.
+    Symbol* get_abs_sym();
+
+    /// Find a symbol by name.
+    /// @param name         symbol name
+    /// @return Symbol matching name, or NULL if no match found.
+    /*@null@*/ Symbol* find_sym(const std::string& name);
+
+    /// Get (creating if necessary) a symbol by name.
+    /// @param name         symbol name
+    /// @return Symbol matching name.
+    Symbol* get_sym(const std::string& name);
+
+    typedef boost::ptr_vector<Symbol>::iterator symbol_iterator;
+    typedef boost::ptr_vector<Symbol>::const_iterator const_symbol_iterator;
+
+    symbol_iterator begin() { return m_symbols.begin(); }
+    const_symbol_iterator begin() const { return m_symbols.begin(); }
+
+    symbol_iterator end() { return m_symbols.end(); }
+    const_symbol_iterator end() const { return m_symbols.end(); }
+
+    /// Add an arbitrary symbol to the end of the symbol table.
+    /// @note Does /not/ index the symbol by name.
+    /// @param sym      symbol
+    void append_symbol(std::auto_ptr<Symbol> sym);
+
+    /// Have the object manage an arbitrary symbol.  Useful for symbols
+    /// that shouldn't be in the table, but need to have memory management
+    /// tied up with the object (such as curpos symbols).
+    /// @param sym      symbol
+    void add_non_table_symbol(std::auto_ptr<Symbol> sym);
+
+    /// Finalize symbol table after parsing stage.  Checks for symbols that
+    /// are used but never defined or declared #EXTERN or #COMMON.
     /// @param errwarns     error/warning set
+    /// @param undef_extern if true, all undef syms should be declared extern
     /// @note Errors/warnings are stored into errwarns.
-    void update_bc_offsets(Errwarns& errwarns);
+    void symbols_finalize(Errwarns& errwarns, bool undef_extern);
 
 private:
     std::string m_src_filename;         ///< Source filename
@@ -128,6 +177,16 @@ private:
 
     /// Sections
     boost::ptr_vector<Section> m_sections;
+
+    /// Symbols in the symbol table
+    boost::ptr_vector<Symbol> m_symbols;
+
+    /// Non-table symbols
+    boost::ptr_vector<Symbol> m_non_table_syms;
+#if 0
+    /// Symbol table symbols, indexed by name.
+    hamt<Symbol> m_sym_map;
+#endif
 
     /// Directives, organized as two level HAMT; first level is parser,
     /// second level is directive name.
