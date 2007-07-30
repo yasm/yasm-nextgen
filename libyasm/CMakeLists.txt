@@ -20,7 +20,7 @@ ADD_LIBRARY(libyasm
     #phash.c
     section.cpp
     #strcasecmp.c
-    #symrec.c
+    symbol.cpp
     #valparam.c
     value.cpp
     #module.c

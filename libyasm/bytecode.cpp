@@ -74,6 +74,12 @@ Bytecode::Contents::to_bytes(Bytecode& bc, unsigned char* &buf,
     throw InternalError(N_("bytecode cannot be converted to bytes"));
 }
 
+Bytecode::Contents::SpecialType
+Bytecode::Contents::get_special() const
+{
+    return SPECIAL_NONE;
+}
+
 void
 Bytecode::transform(std::auto_ptr<Contents> contents)
 {

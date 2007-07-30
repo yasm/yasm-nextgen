@@ -35,7 +35,7 @@
 
 namespace yasm {
 
-class LineMap;
+class Linemap;
 
 /// Warning classes (that may be enabled/disabled).
 enum WarnClass {
@@ -102,8 +102,9 @@ public:
     { return m_message.c_str(); }
 
     std::string m_message;
-    std::string m_xrefstr;
+    std::string m_xrefmsg;
     unsigned long m_xrefline;
+    bool m_parse_error;
 };
 
 // Error classes.
@@ -183,7 +184,9 @@ public:
 /// Parser error.
 class ParseError : public Error {
 public:
-    explicit ParseError(const std::string& message) : Error(message) {}
+    explicit ParseError(const std::string& message)
+        : Error(message)
+    { m_parse_error = true; }
 };
 
 /// Unconditionally clear all warning indicators, freeing any associated data.
@@ -209,7 +212,7 @@ void warn_set(WarnClass wclass, const std::string& wstr);
 /// @return If there is no warning indicator set, wstr is unchanged, and
 ///         #WARN_NONE is returned; otherwise, the first warning indicator
 ///         is returned.
-WarnClass warn_fetch(/*@out@*/ std::string& wstr);
+WarnClass warn_fetch(/*@out@*/ std::string& wmsg);
 
 /// Enable a class of warnings.
 /// @param wclass   warning class
@@ -225,7 +228,7 @@ void warn_disable_all();
 class Errwarns {
 public:
     /// Create an error/warning set for collection of multiple error/warnings.
-    Errwarns() : m_ecount(0), m_wcount(0), previous_ew(0) {}
+    Errwarns();
 
     /// Destructor.
     ~Errwarns();
@@ -278,18 +281,35 @@ public:
     /// Outputs error/warning set in sorted order (sorted by line number).
     /// @param lm               line map (to convert virtual lines into
     ///                         filename/line pairs)
-    /// @param warning_as_error if true, treat warnings as errors.
+    /// @param warning_as_error if non-zero, treat warnings as errors.
+    ///                         if 1, prints a "warnings being treated as errors"
+    ///                         error first.
     /// @param print_error      function called to print out errors
     /// @param print_warning    function called to print out warnings
-    void output_all(LineMap* lm, bool warning_as_error,
+    void output_all(Linemap* lm, int warning_as_error,
                     yasm_print_error_func print_error,
                     yasm_print_warning_func print_warning);
 
 private:
-    class ErrwarnData;
-    std::vector<ErrwarnData*> m_errwarns;
+    class Data {
+    public:
+        Data(unsigned long line, const Error& err);
+        Data(unsigned long line, const std::string& wmsg);
+        ~Data();
+
+        bool operator< (const Data& other) const
+        { return m_line < other.m_line; }
+
+        enum { ERROR, WARNING, PARSERERROR } m_type;
+
+        unsigned long m_line;
+        unsigned long m_xrefline;
+        std::string m_message;
+        std::string m_xrefmsg;
+    };
+
+    std::vector<Data> m_errwarns;
     int m_ecount, m_wcount;
-    ErrwarnData *previous_ew;
 };
 
 /// Convert a possibly unprintable character into a printable string.

@@ -264,11 +264,10 @@ public:
     /*@dependent@*/ /*@null@*/ Section* get_section() const
     { return m_section; }
 
-    /// Add to the list of symrecs that reference a bytecode.  For symrec use
-    /// only.
-    /// @param bc   bytecode
+    /// Add to the list of symbols that reference a bytecode.
+    /// @note Intended for #Symbol use only.
     /// @param sym  symbol
-    void add_symrec(/*@dependent@*/ Symbol* sym);
+    void add_symbol(/*@dependent@*/ Symbol* sym) { m_symbols.push_back(sym); }
 
     /// Destructor.
     ~Bytecode() {};

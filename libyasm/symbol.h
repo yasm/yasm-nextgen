@@ -41,8 +41,6 @@ class Expr;
 class Bytecode;
 
 class Symbol : private boost::noncopyable {
-    friend class SymbolTable;
-
 public:
     /// Constructor.
     Symbol(const std::string& name);
@@ -56,8 +54,7 @@ public:
         NOSTATUS = 0,           ///< no status
         USED = 1 << 0,          ///< for use before definition
         DEFINED = 1 << 1,       ///< once it's been defined in the file
-        VALUED = 1 << 2,        ///< once its value has been determined
-        NOTINTABLE = 1 << 3     ///< if it's not in sym_table (ex. '$')
+        VALUED = 1 << 2         ///< once its value has been determined
     };
 
     /// Symbol record visibility.
@@ -76,11 +73,11 @@ public:
 
     /// Get the visibility of a symbol.
     /// @return Symbol visibility.
-    Visibility get_visibility() const { return m_visibility; }
+    int get_visibility() const { return m_visibility; }
 
     /// Get the status of a symbol.
     /// @return Symbol status.
-    Status get_status() const { return m_status; }
+    int get_status() const { return m_status; }
 
     /// Get the virtual line of where a symbol was first defined.
     /// @return Virtual line.
@@ -96,7 +93,7 @@ public:
 
     /// Get EQU value of a symbol.
     /// @return EQU value, or NULL if symbol is not an EQU or is not defined.
-    /*@null@*/ const Expr* get_equ() const { return m_equ.get(); }
+    /*@null@*/ const Expr* get_equ() const;
 
     /// Get the label location of a symbol.
     /// @param sym       symbol
@@ -121,11 +118,45 @@ public:
     ///         otherwise.
     bool is_curpos() const;
 
-    /// Declare external visibility of a symbol.
+    /// Mark the symbol as used.  The symbol does not necessarily need to
+    /// be defined before it is used.
+    /// @param line     virtual line where referenced
+    /// @return Symbol (this).
+    Symbol* use(unsigned long line);
+
+    /// Define as an EQU value.
+    /// @param e        EQU value (expression)
+    /// @param line     virtual line of EQU
+    /// @return Symbol (this).
+    Symbol* define_equ(std::auto_ptr<Expr> e, unsigned long line);
+
+    /// Define as a label.
+    /// @param precbc   bytecode preceding label
+    /// @param line     virtual line of label
+    /// @return Symbol (this).
+    Symbol* define_label(Bytecode& precbc, unsigned long line);
+
+    /// Define as a label representing the current assembly position.
+    /// This should be used for this purpose instead of define_label()
+    /// as Value::finalize_scan() looks for usage of this symbol type for
+    /// special handling.
+    /// @param precbc   bytecode preceding label
+    /// @param line     virtual line of label
+    /// @return Symbol (this).
+    Symbol* define_curpos(Bytecode& precbc, unsigned long line);
+
+    /// Define a special symbol.  Special symbols have no generic associated
+    /// data (such as an expression or precbc).
+    /// @param vis      symbol visibility
+    /// @return Symbol (this).
+    Symbol* define_special(Symbol::Visibility vis, unsigned long line=0);
+
+    /// Declare external visibility.
     /// @note Not all visibility combinations are allowed.
     /// @param vis      visibility
     /// @param line     virtual line of visibility-setting
-    void declare(Visibility vis, unsigned long line);
+    /// @return Symbol (this).
+    Symbol* declare(Visibility vis, unsigned long line);
 
 #if 0
     /** Set object-extended valparams.
@@ -168,14 +199,18 @@ public:
                               const yasm_assoc_data_callback *callback,
                               /*@only@*/ /*@null@*/ void *data);
 #endif
+
+    /// Finalize symbol after parsing stage.  Errors on symbols that
+    /// are used but never defined or declared #EXTERN or #COMMON.
+    /// @param undef_extern if true, all undef syms should be declared extern
+    void parser_finalize(bool undef_extern);
+
     /// Print a symbol.  For debugging purposes.
     /// @param os           output stream
     /// @param indent_level indentation level
     void put(std::ostream& os, int indent_level) const;
 
 private:
-    std::string m_name;
-
     enum Type {
         UNKNOWN,    ///< for unknown type (COMMON/EXTERN)
         EQU,        ///< for EQU defined symbols (expressions)
@@ -189,9 +224,12 @@ private:
         SPECIAL
     };
 
+    void define(Type type, unsigned long line);
+
+    std::string m_name;
     Type m_type;
-    Status m_status;
-    Visibility m_visibility;
+    int m_status;
+    int m_visibility;
     unsigned long m_def_line;   ///< line where symbol was first defined
     unsigned long m_decl_line;  ///< line where symbol was first declared
     unsigned long m_use_line;   ///< line where symbol was first used
