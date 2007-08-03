@@ -187,41 +187,7 @@ private:
     /// Pimpl for symbol table hash trie.
     class Impl;
     boost::scoped_ptr<Impl> m_impl;
-
-    /// Directives, organized as two level HAMT; first level is parser,
-    /// second level is directive name.
-    // /*@owned@*/ struct HAMT *directives;
 };
-
-#if 0
-/** Handle a directive.  Passed down to object format, debug format, or
- * architecture as appropriate.
- * \param object                object
- * \param name                  directive name
- * \param parser                parser keyword
- * \param valparams             value/parameters
- * \param objext_valparams      "object format-specific" value/parameters
- * \param line                  virtual line (from yasm_linemap)
- * \return 0 if directive recognized, nonzero if unrecognized.
- */
-int yasm_object_directive(Object* object,
-                          const std::string& name,
-                          const std::string& parser,
-                          yasm_valparamhead *valparams,
-                          yasm_valparamhead *objext_valparams,
-                          unsigned long line);
-
-/** Traverses all sections in an object, calling a function on each section.
- * \param object        object
- * \param d             data pointer passed to func on each call
- * \param func          function
- * \return Stops early (and returns func's return value) if func returns a
- *         nonzero value; otherwise 0.
- */
-int yasm_object_sections_traverse
-    (yasm_object *object, /*@null@*/ void *d,
-     int (*func) (yasm_section *sect, /*@null@*/ void *d));
-#endif
 
 } // namespace yasm
 
