@@ -36,7 +36,8 @@
 #include "symbol.h"
 
 #include "bytecode.h"
-//#include "section.h"
+#include "section.h"
+#include "object.h"
 
 //#include "arch.h"
 
@@ -134,12 +135,8 @@ Value::set_curpos_rel(Bytecode* bc, bool ip_rel)
     // In order for us to correctly output curpos-relative values, we must
     // have a relative portion of the value.  If one doesn't exist, point
     // to a custom absolute symbol.
-#if 0
-    if (!m_rel) {
-        yasm_object *object = yasm_section_get_object(yasm_bc_get_section(bc));
-        m_rel = yasm_symtab_abs_sym(object->symtab);
-    }
-#endif
+    if (!m_rel)
+        m_rel = bc->get_section()->get_object()->get_abs_sym();
 }
 
 bool
