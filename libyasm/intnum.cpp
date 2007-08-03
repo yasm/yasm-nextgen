@@ -28,12 +28,13 @@
 
 #include <cctype>
 #include <limits.h>
+
 #include <boost/format.hpp>
 
 #include "bitvect.h"
-
 #include "errwarn.h"
 #include "intnum.h"
+
 
 using BitVector::wordptr;
 using BitVector::N_int;

@@ -27,16 +27,17 @@
 #include "util.h"
 
 #include <algorithm>
+
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
 
+//#include "arch.h"
 #include "errwarn.h"
-#include "intnum.h"
-#include "floatnum.h"
 #include "expr.h"
+#include "floatnum.h"
+#include "intnum.h"
 #include "symbol.h"
 
-//#include "arch.h"
 
 namespace {
 

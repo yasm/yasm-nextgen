@@ -38,6 +38,7 @@
 #include "errwarn.h"
 #include "file.h"
 
+
 namespace yasm {
 
 bool

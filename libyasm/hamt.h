@@ -34,15 +34,16 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-
-#include <cstdlib>
 #include <cctype>
+#include <cstdlib>
+
 #include <boost/noncopyable.hpp>
-#include <boost/scoped_array.hpp>
-#include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/pool/pool.hpp>
+#include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/scoped_array.hpp>
 
 #include "bitcount.h"
+
 
 namespace yasm {
 

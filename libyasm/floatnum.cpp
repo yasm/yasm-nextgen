@@ -31,10 +31,10 @@
 #include <iomanip>
 
 #include "bitvect.h"
-#include "file.h"
-
 #include "errwarn.h"
+#include "file.h"
 #include "floatnum.h"
+
 
 using BitVector::charptr;
 using BitVector::wordptr;

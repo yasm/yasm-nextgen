@@ -28,6 +28,7 @@
 
 #include "linemap.h"
 
+
 namespace yasm {
 
 void

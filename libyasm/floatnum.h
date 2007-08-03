@@ -36,6 +36,7 @@
 #include "bitvect.h"
 #include "expr.h"
 
+
 namespace yasm {
 
 class FloatNumManager;

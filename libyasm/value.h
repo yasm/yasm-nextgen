@@ -31,15 +31,17 @@
 ///
 #include <iostream>
 #include <memory>
+
 #include <boost/scoped_ptr.hpp>
+
 
 namespace yasm {
 
+class Arch;
 class Bytecode;
 class Expr;
-class Symbol;
-class Arch;
 class IntNum;
+class Symbol;
 
 /// A value.  May be absolute or relative.  Outside the parser, #Expr
 /// should only be used for absolute exprs.  Anything that could contain

@@ -30,18 +30,19 @@
 /// @endlicense
 ///
 #include <iostream>
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include <boost/function.hpp>
 
+
 namespace yasm {
 
-class Register;
-class IntNum;
-class FloatNum;
-class Symbol;
 class Bytecode;
+class FloatNum;
+class IntNum;
+class Register;
+class Symbol;
 
 /// An expression.
 class Expr {

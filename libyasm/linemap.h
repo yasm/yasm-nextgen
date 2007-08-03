@@ -29,9 +29,10 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <vector>
 #include <set>
 #include <string>
+#include <vector>
+
 
 namespace yasm {
 

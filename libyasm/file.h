@@ -31,6 +31,7 @@
 ///
 #include <boost/function.hpp>
 
+
 namespace yasm {
 
 /// Re2c scanner state.

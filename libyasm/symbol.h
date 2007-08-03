@@ -29,16 +29,17 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-
 #include <iostream>
 #include <string>
+
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
+
 namespace yasm {
 
-class Expr;
 class Bytecode;
+class Expr;
 
 class Symbol : private boost::noncopyable {
 public:

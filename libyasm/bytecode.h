@@ -29,12 +29,14 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <vector>
 #include <iostream>
 #include <memory>
+#include <vector>
+
 #include <boost/function.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/scoped_ptr.hpp>
+
 
 namespace yasm {
 

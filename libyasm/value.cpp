@@ -28,18 +28,16 @@
 
 #include <iomanip>
 
-#include "errwarn.h"
-#include "intnum.h"
-//#include "floatnum.h"
-//#include "expr.h"
-#include "value.h"
-#include "symbol.h"
-
-#include "bytecode.h"
-#include "section.h"
-#include "object.h"
-
 //#include "arch.h"
+#include "bytecode.h"
+#include "errwarn.h"
+//#include "expr.h"
+//#include "floatnum.h"
+#include "intnum.h"
+#include "object.h"
+#include "section.h"
+#include "symbol.h"
+#include "value.h"
 
 
 namespace yasm {

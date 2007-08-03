@@ -29,11 +29,12 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iostream>
 #include <cstdlib>
+#include <iostream>
 
 #include "bitvect.h"
 #include "expr.h"
+
 
 namespace yasm {
 

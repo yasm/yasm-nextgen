@@ -26,11 +26,12 @@
 //
 #include "util.h"
 
-#include <list>
 #include <algorithm>
+#include <list>
 
-#include "linemap.h"
 #include "errwarn.h"
+#include "linemap.h"
+
 
 namespace yasm {
 

@@ -27,17 +27,18 @@
 #include "util.h"
 
 #include <iomanip>
+
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
 
-#include "errwarn.h"
-#include "intnum.h"
-#include "expr.h"
-#include "value.h"
-//#include "symrec.h"
-
 #include "bytecode.h"
+#include "errwarn.h"
+#include "expr.h"
 #include "insn.h"
+#include "intnum.h"
+//#include "symrec.h"
+#include "value.h"
+
 
 namespace yasm {
 

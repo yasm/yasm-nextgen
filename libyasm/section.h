@@ -29,21 +29,23 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <string>
 #include <iostream>
 #include <memory>
+#include <string>
+
 #include <boost/noncopyable.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/scoped_ptr.hpp>
+
 
 namespace yasm {
 
 class Bytecode;
-class Expr;
-class Symbol;
-class Object;
-class IntNum;
 class Errwarns;
+class Expr;
+class IntNum;
+class Object;
+class Symbol;
 
 /// Basic YASM relocation.  Object formats will need to extend this
 /// structure with additional fields for relocation type, etc.

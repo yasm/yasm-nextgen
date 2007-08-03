@@ -26,25 +26,25 @@
 //
 #include "util.h"
 
-#include <vector>
-#include <list>
 #include <iomanip>
+#include <list>
+#include <vector>
+
 #include <boost/bind.hpp>
+#include <boost/ptr_container/ptr_list.hpp>
 #include <boost/ref.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <boost/ptr_container/ptr_list.hpp>
 
 #include "bytecode.h"
 #include "errwarn.h"
 #include "expr.h"
 #include "hamt.h"
+#include "interval_tree.h"
 #include "intnum.h"
-#include "section.h"
 #include "object.h"
+#include "section.h"
 #include "symbol.h"
 #include "value.h"
-
-#include "interval_tree.h"
 
 
 namespace {

@@ -29,23 +29,25 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <string>
 #include <iostream>
 #include <memory>
+#include <string>
+
 #include <boost/noncopyable.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/scoped_ptr.hpp>
+
 
 namespace yasm {
 
 class Arch;
-class Section;
-class Symbol;
+class DebugFormat;
+class DebugFormatModule;
 class Errwarns;
 class ObjectFormat;
-class DebugFormat;
 class ObjectFormatModule;
-class DebugFormatModule;
+class Section;
+class Symbol;
 
 /// An object.  This is the internal representation of an object file.
 class Object : private boost::noncopyable {
