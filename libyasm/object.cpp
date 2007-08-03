@@ -37,6 +37,7 @@
 #include "bytecode.h"
 #include "errwarn.h"
 #include "expr.h"
+#include "hamt.h"
 #include "intnum.h"
 #include "section.h"
 #include "object.h"
@@ -46,7 +47,24 @@
 #include "interval_tree.h"
 
 
+namespace {
+
+/// Get name helper for symbol table HAMT.
+class SymGetName {
+public:
+    std::string operator() (const yasm::Symbol* sym) const
+    { return sym->get_name(); }
+};
+
+} // anonymous namespace
+
 namespace yasm {
+
+struct Object::Impl {
+    /// Symbol table symbols, indexed by name.
+    hamt<std::string, Symbol, SymGetName> sym_map;
+};
+
 #if 0
 /* Wrapper around directive for HAMT insertion */
 typedef struct yasm_directive_wrap {
@@ -189,7 +207,8 @@ Object::Object(const std::string& src_filename,
       m_objfmt(0),
       m_dbgfmt(0),
       m_cur_section(0),
-      m_sections(1)         // reserve space for first section
+      m_sections(1),        // reserve space for first section
+      m_impl(new Impl())
 {
 #if 0
     // Create empty symbol table
@@ -328,19 +347,40 @@ Object::find_section(const std::string& name)
     return &(*i);
 }
 
-#if 0
+Symbol*
+Object::get_abs_sym()
+{
+    Symbol* sym = get_sym("");
+
+    // If we already defined it, we're done.
+    if (sym->get_status() & Symbol::DEFINED)
+        return sym;
+
+    // Define it
+    std::auto_ptr<Expr> v(new Expr(new IntNum(0)));
+    sym->define_equ(v, 0);
+    sym->use(0);
+    return sym;
+}
+
 Symbol*
 Object::find_sym(const std::string& name)
 {
-    // TODO
+    return m_impl->sym_map.find(name);
 }
 
 Symbol*
 Object::get_sym(const std::string& name)
 {
-    // TODO
+    std::auto_ptr<Symbol> sym(new Symbol(name));
+    Symbol* sym2 = m_impl->sym_map.insert(sym.get());
+    if (sym2)
+        return sym2;
+
+    sym2 = sym.get();
+    m_symbols.push_back(sym.release());
+    return sym2;
 }
-#endif
 
 void
 Object::append_symbol(std::auto_ptr<Symbol> sym)

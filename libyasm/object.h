@@ -183,10 +183,10 @@ private:
 
     /// Non-table symbols
     boost::ptr_vector<Symbol> m_non_table_syms;
-#if 0
-    /// Symbol table symbols, indexed by name.
-    hamt<Symbol> m_sym_map;
-#endif
+
+    /// Pimpl for symbol table hash trie.
+    class Impl;
+    boost::scoped_ptr<Impl> m_impl;
 
     /// Directives, organized as two level HAMT; first level is parser,
     /// second level is directive name.
