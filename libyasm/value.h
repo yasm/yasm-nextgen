@@ -129,7 +129,7 @@ public:
     /// @return False if no value output due to value needing relocation;
     ///         true if value output.
     bool output_basic(/*@out@*/ unsigned char* buf, size_t destsize,
-                      Bytecode *bc, int warn, Arch* arch);
+                      Bytecode* bc, int warn, Arch* arch);
 
     /// Print a value.  For debugging purposes.
     /// @param os           output stream

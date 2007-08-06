@@ -556,10 +556,8 @@ Value::output_basic(/*@out@*/ unsigned char* buf, size_t destsize,
         // Handle floating point expressions
         FloatNum* flt;
         if (!m_rel && (flt = m_abs->get_float())) {
-            if (arch->floatnum_tobytes(*flt, buf, destsize, m_size, 0, warn))
-                return -1;
-            else
-                return 1;
+            arch->floatnum_tobytes(*flt, buf, destsize, m_size, 0, warn);
+            return true;
         }
 #endif
         // Check for complex float expressions
@@ -621,8 +619,7 @@ Value::output_basic(/*@out@*/ unsigned char* buf, size_t destsize,
             outval.calc(Expr::ADD, intn);
 #if 0
         // Output!
-        if (arch->intnum_tobytes(outval, buf, destsize, m_size, 0, bc, warn))
-            retval = -1;
+        arch->intnum_tobytes(outval, buf, destsize, m_size, 0, bc, warn);
 #endif
         return true;
     }
@@ -632,12 +629,10 @@ Value::output_basic(/*@out@*/ unsigned char* buf, size_t destsize,
 #if 0
     if (intn) {
         // Output just absolute portion
-        if (arch->intnum_tobytes(intn, buf, destsize, m_size, 0, bc, warn))
-            retval = -1;
+        arch->intnum_tobytes(intn, buf, destsize, m_size, 0, bc, warn);
     } else {
         // No absolute or relative portions: output 0
-        if (arch->intnum_tobytes(0, buf, destsize, m_size, 0, bc, warn))
-            retval = -1;
+        arch->intnum_tobytes(0, buf, destsize, m_size, 0, bc, warn);
     }
 #endif
     return true;

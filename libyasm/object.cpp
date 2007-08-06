@@ -26,22 +26,28 @@
 //
 #include "util.h"
 
+#include <algorithm>
 #include <iomanip>
 #include <list>
 #include <vector>
 
 #include <boost/bind.hpp>
+#include <boost/format.hpp>
 #include <boost/ptr_container/ptr_list.hpp>
 #include <boost/ref.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "arch.h"
 #include "bytecode.h"
+#include "debug_format.h"
 #include "errwarn.h"
 #include "expr.h"
+#include "factory.h"
 #include "hamt.h"
 #include "interval_tree.h"
 #include "intnum.h"
 #include "object.h"
+#include "object_format.h"
 #include "section.h"
 #include "symbol.h"
 #include "value.h"
@@ -61,46 +67,40 @@ public:
 namespace yasm {
 
 struct Object::Impl {
+    Impl(bool nocase) : sym_map(nocase) {}
+    ~Impl() {}
+
     /// Symbol table symbols, indexed by name.
     hamt<std::string, Symbol, SymGetName> sym_map;
 };
 
-#if 0
 Object::Object(const std::string& src_filename,
                const std::string& obj_filename,
                std::auto_ptr<Arch> arch,
-               const ObjectFormatModule* objfmt_module,
-               const DebugFormatModule* dbgfmt_module)
+               const std::string& objfmt_keyword,
+               const std::string& dbgfmt_keyword)
     : m_src_filename(src_filename),
       m_obj_filename(obj_filename),
       m_arch(arch.release()),
-      m_objfmt(0),
-      m_dbgfmt(0),
+      m_objfmt(ddj::genericFactory<ObjectFormat>::instance().create(objfmt_keyword).release()),
+      m_dbgfmt(ddj::genericFactory<DebugFormat>::instance().create(objfmt_keyword).release()),
       m_cur_section(0),
       m_sections(1),        // reserve space for first section
-      m_impl(new Impl())
+      m_impl(new Impl(false))
 {
-#if 0
     // Initialize the object format
-    m_objfmt.reset(yasm_objfmt_create(objfmt_module, object));
-    if (!object->objfmt) {
-        yasm_error_set(YASM_ERROR_GENERAL,
-            N_("object format `%s' does not support architecture `%s' machine `%s'"),
-            objfmt_module->keyword, ((yasm_arch_base *)arch)->module->keyword,
-            yasm_arch_get_machine(arch));
-        goto error;
+    if (!m_objfmt->set_object(this)) {
+        throw Error(str(boost::format(
+            N_("object format `%s' does not support architecture `%s' machine `%s'")) %
+            m_objfmt->get_keyword() % m_arch->get_keyword() %
+            m_arch->get_machine()));
     }
 
-    /* Get a fresh copy of objfmt_module as it may have changed. */
-    objfmt_module = ((yasm_objfmt_base *)object->objfmt)->module;
-
     // Add an initial "default" section to object
-    m_cur_section = m_objfmt->add_default_section(this);
-#endif
+    m_cur_section = m_objfmt->add_default_section();
 #if 0
-    /* Check to see if the requested debug format is in the allowed list
-     * for the active object format.
-     */
+    // Check to see if the requested debug format is in the allowed list
+    // for the active object format.
     bool matched = false;
     for (int i=0; !matched && objfmt_module->dbgfmt_keywords[i]; i++)
         if (yasm__strcasecmp(objfmt_module->dbgfmt_keywords[i],
@@ -121,18 +121,17 @@ Object::Object(const std::string& src_filename,
     }
 #endif
 }
-#endif
 
 void
 Object::set_source_fn(const std::string& src_filename)
 {
     m_src_filename = src_filename;
 }
-#if 0
+
 Object::~Object()
 {
 }
-#endif
+
 void
 Object::put(std::ostream& os, int indent_level) const
 {

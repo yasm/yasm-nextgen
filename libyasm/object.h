@@ -42,10 +42,8 @@ namespace yasm {
 
 class Arch;
 class DebugFormat;
-class DebugFormatModule;
 class Errwarns;
 class ObjectFormat;
-class ObjectFormatModule;
 class Section;
 class Symbol;
 
@@ -63,8 +61,8 @@ public:
     Object(const std::string& src_filename,
            const std::string& obj_filename,
            std::auto_ptr<Arch> arch,
-           const ObjectFormatModule* objfmt_module,
-           const DebugFormatModule* dbgfmt_module);
+           const std::string& objfmt_keyword,
+           const std::string& dbgfmt_keyword);
 
     /// Destructor.
     ~Object();

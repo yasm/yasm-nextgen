@@ -80,6 +80,11 @@ public:
     /// between "expr" (which might or might not be an effective address) and
     /// "expr(,1)" (which is definitely an effective address).
     unsigned int strong:1;
+
+    /// Print an effective address.  For debugging purposes.
+    /// @param os           output stream
+    /// @param indent_level indentation level
+    virtual void put(std::ostream& os, int indent_level) const = 0;
 };
 #endif
 
