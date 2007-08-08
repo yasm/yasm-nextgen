@@ -34,7 +34,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
