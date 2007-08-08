@@ -1,8 +1,8 @@
-#ifndef YASM_VALPARAM_H
-#define YASM_VALPARAM_H
+#ifndef YASM_DIRECTIVE_H
+#define YASM_DIRECTIVE_H
 ///
-/// @file libyasm/valparam.h
-/// @brief YASM value/parameter interface.
+/// @file libyasm/directive.h
+/// @brief YASM directive interface.
 ///
 /// @license
 ///  Copyright (C) 2001-2007  Peter Johnson
@@ -34,6 +34,7 @@
 #include <string>
 #include <vector>
 
+#include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
@@ -222,147 +223,7 @@ private:
     class Impl;
     boost::scoped_ptr<Impl> m_impl;
 };
-#if 0
-/// Directive valparam parse helper structure.
-struct DirHelp {
-    /// Name portion of name=value (if needsparam=true), or standalone
-    /// identifier (if needsparam=false).
-    const char *name;
 
-    /// True if value requires parameter, false if it must not have a
-    /// parameter.
-    bool needsparam;
-
-    /// Helper callback function if name and parameter existence match.
-    /// @param obj      obj passed into yasm_dir_helper()
-    /// @param nv       name/value
-    /// @param line     line passed into yasm_dir_helper()
-    /// @param data     data passed into yasm_dir_helper() plus
-    ///                 #yasm_dir_help.off offset
-    /// @param arg      #yasm_dir_help.arg argument
-    /// @return -1 on error, 0 otherwise.
-    int (*helper) (void *obj, yasm_valparam *vp, unsigned long line,
-                   void *data, uintptr_t arg);
-
-    /// Offset added to data pointer passed into yasm_dir_helper() before
-    /// data pointer is given to #yasm_dir_help.helper().  This is so that
-    /// a structure can be passed into yasm_dir_helper() and this can be an
-    /// offsetof() to point the helper function to a specific structure
-    /// member.
-    size_t off;
-
-    /// Argument to pass in as the arg parameter to #yasm_dir_help.helper().
-    uintptr_t arg;
-};
-
-/** Help parse a list of directive value/parameters.  Takes an array of
- * #yasm_dir_help structures and tries to match val=param (or just val)
- * against the passed value/parameters.  When no match is found in the
- * array of help structures, calls helper_valparam.
- * \param obj       object to be passed to yasm_dir_help.helper() or
- *                  helper_valparam() callback
- * \param vp_first  first value/parameter to examine
- * \param line      virtual line number; passed down to helper callback
- * \param help      array of #yasm_dir_help structures
- * \param nhelp     number of array elements
- * \param data      base data pointer; if a match is found,
- *                  the respective #yasm_dir_help.off is added to this
- *                  prior to it being passed to the helper callback
- * \param helper_valparam   catch-all callback; should return -1 on error,
- *                          0 if not matched, 1 if matched.
- * \return -1 on error, 1 if any arguments matched (including via
- *         catch-all callback), 0 if no match.
- */
-int yasm_dir_helper(void *obj, yasm_valparam *vp_first, unsigned long line,
-                    const yasm_dir_help *help, size_t nhelp, void *data,
-                    int (*helper_valparam) (void *object,
-                                            yasm_valparam *vp,
-                                            unsigned long line,
-                                            void *data));
-
-/** Standard helper for yasm_dir_helper() that simply sets a flag when called.
- * It does not look at the vp; rather, it uses the value of the arg parameter,
- * and stores an unsigned long value to data.
- * \param obj   unused
- * \param vp    unused
- * \param line  unused
- * \param data  pointer to an unsigned long
- * \param arg   flag to set
- * \return 0
- */
-int yasm_dir_helper_flag_set(void *obj, yasm_valparam *vp, unsigned long line,
-                             void *data, uintptr_t arg);
-
-/** Standard helper for yasm_dir_helper() that simply ORs a flag when called.
- * It does not look at the vp; rather, it uses the value of the arg parameter,
- * and ORs it with the unsigned long value in data.
- * \param obj   unused
- * \param vp    unused
- * \param line  unused
- * \param data  pointer to an unsigned long
- * \param arg   flag to OR
- * \return 0
- */
-int yasm_dir_helper_flag_or(void *obj, yasm_valparam *vp, unsigned long line,
-                            void *data, uintptr_t arg);
-
-/** Standard helper for yasm_dir_helper() that simply ANDs a flag when called.
- * It does not look at the vp; rather, it uses the value of the arg parameter,
- * and ANDs its inverse (~) with the unsigned long value in data.
- * \param obj   unused
- * \param vp    unused
- * \param line  unused
- * \param data  pointer to an unsigned long
- * \param arg   flag to AND
- * \return 0
- */
-int yasm_dir_helper_flag_and(void *obj, yasm_valparam *vp, unsigned long line,
-                             void *data, uintptr_t arg);
-
-/** Standard helper for yasm_dir_helper() that parses an intnum parameter.
- * The #yasm_dir_help structure that uses this function should have
- * needsparam=1.  The obj parameter to yasm_dir_helper() when this helper
- * is used MUST point to a #yasm_object.  In addition, the data parameter
- * that is ultimately passed to this function (e.g. yasm_dir_helper() data
- * parameter plus #yasm_dir_help.off) must point to a #yasm_intnum *
- * initialized to NULL.
- * \param obj   object; must be #yasm_object
- * \param vp    valparam
- * \param line  virtual line number
- * \param data  pointer to #yasm_intnum *
- * \param arg   unused argument
- * \return -1 on error, 0 otherwise.
- */
-int yasm_dir_helper_intn(void *obj, yasm_valparam *vp, unsigned long line,
-                         void *data, uintptr_t arg);
-
-/** Standard helper for yasm_dir_helper() that parses an string (or
- * standalone identifier) parameter.
- * The #yasm_dir_help structure that uses this function should have
- * needsparam=1.  The data parameter that is ultimately passed to this
- * function (e.g. yasm_dir_helper() data parameter plus #yasm_dir_help.off)
- * must point to a char * initialized to NULL.
- * \param obj   unused
- * \param vp    valparam
- * \param line  unused
- * \param data  pointer to char *
- * \param arg   unused
- * \return -1 on error, 0 otherwise.
- */
-int yasm_dir_helper_string(void *obj, yasm_valparam *vp, unsigned long line,
-                           void *data, uintptr_t arg);
-
-/** Standard catch-all callback fro yasm_dir_helper().  Generates standard
- * warning for all valparams.
- * \param obj   unused
- * \param vp    valparam
- * \param line  unused
- * \param data  unused
- * \return 0
- */
-int yasm_dir_helper_valparam_warn(void *obj, yasm_valparam *vp,
-                                  unsigned long line, void *data);
-#endif
 } // namespace yasm
 
 #endif
