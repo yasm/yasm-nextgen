@@ -40,8 +40,8 @@ namespace yasm {
 
 class DirectiveManager::Impl {
 public:
-    Impl() {};
-    ~Impl() {};
+    Impl() {}
+    ~Impl() {}
 
     boost::ptr_map<std::string, boost::ptr_map<std::string, Directive> > m_dirs;
 };
