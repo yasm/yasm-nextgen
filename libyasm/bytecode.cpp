@@ -52,14 +52,15 @@ Bytecode::set_multiple(std::auto_ptr<Expr> e)
         m_multiple.reset(e.release());
 }
 
-void
+unsigned long
 Bytecode::Contents::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 {
     throw InternalError(N_("bytecode length cannot be calculated"));
+    return 0;
 }
 
 bool
-Bytecode::Contents::expand(Bytecode& bc, int span,
+Bytecode::Contents::expand(Bytecode& bc, unsigned long& len, int span,
                            long old_val, long new_val,
                            /*@out@*/ long& neg_thres,
                            /*@out@*/ long& pos_thres)
@@ -180,8 +181,8 @@ Bytecode::finalize(Bytecode& prev_bc, Errwarns& errwarns)
 void
 Bytecode::calc_len(AddSpanFunc add_span)
 {
-    m_len = 0;
-    m_contents->calc_len(*this, add_span);
+    m_len = 0;  // just in case
+    m_len = m_contents->calc_len(*this, add_span);
 
     // Check for multiples
     m_mult_int = 1;
@@ -225,7 +226,7 @@ Bytecode::expand(int span, long old_val, long new_val,
         m_mult_int = new_val;
         return true;
     }
-    return m_contents->expand(*this, span, old_val, new_val, neg_thres,
+    return m_contents->expand(*this, m_len, span, old_val, new_val, neg_thres,
                               pos_thres);
 }
 

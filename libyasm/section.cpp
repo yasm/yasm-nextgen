@@ -46,9 +46,10 @@ public:
 
     void finalize(Bytecode& bc, Bytecode& prev_bc);
 
-    void calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
+    unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
 
-    bool expand(Bytecode& bc, int span, long old_val, long new_val,
+    bool expand(Bytecode& bc, unsigned long& len, int span,
+                long old_val, long new_val,
                 /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres);
 
     void to_bytes(Bytecode& bc, unsigned char* &buf,
@@ -73,18 +74,20 @@ EmptyBytecode::finalize(Bytecode& bc, Bytecode& prev_bc)
     // do nothing
 }
 
-void
+unsigned long
 EmptyBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 {
-    // zero length
+    return 0;
 }
 
 bool
-EmptyBytecode::expand(Bytecode& bc, int span, long old_val, long new_val,
+EmptyBytecode::expand(Bytecode& bc, unsigned long& len, int span,
+                      long old_val, long new_val,
                       /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres)
 {
     // should never expand
-    return Contents::expand(bc, span, old_val, new_val, neg_thres, pos_thres);
+    return Contents::expand(bc, len, span, old_val, new_val, neg_thres,
+                            pos_thres);
 }
 
 void

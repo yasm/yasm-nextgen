@@ -216,10 +216,11 @@ public:
     void finalize(Bytecode& bc, Bytecode& prev_bc);
 
     /// Calculates minimum size.  Internal errors when called.
-    void calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
+    unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
 
     /// Recalculates bytecode length.  Internal errors when called.
-    bool expand(Bytecode& bc, int span, long old_val, long new_val,
+    bool expand(Bytecode& bc, unsigned long& len, int span,
+                long old_val, long new_val,
                 /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres);
 
     /// Converts to bytes.  Internal errors when called.

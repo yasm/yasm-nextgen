@@ -161,24 +161,23 @@ public:
         /// Called from Bytecode::calc_len().
         /// The base version of this function internal errors when called,
         /// so be very careful using the base function in a derived class!
-        /// This function should simply add to bc->len and not set it
-        /// directly (it's initialized by Bytecode::calc_len() prior to
-        /// passing control to this function).
         ///
         /// @param bc           bytecode
         /// @param add_span     function to call to add a span
+        /// @return Length in bytes.
         /// @note May store to bytecode updated expressions.
-        virtual void calc_len(Bytecode& bc,
-                              Bytecode::AddSpanFunc add_span) = 0;
+        virtual unsigned long calc_len(Bytecode& bc,
+                                       Bytecode::AddSpanFunc add_span) = 0;
 
         /// Recalculates the bytecode's length based on an expanded span
         /// length.  Called from Bytecode::expand().
         /// The base version of this function internal errors when called,
         /// so if used from a derived class, make sure that calc_len() never
         /// adds a span.
-        /// This function should simply add to bc->len to increase the length
-        /// by a delta amount.
+        /// This function should simply add to the len parameter to increase the
+        /// length by a delta amount.
         /// @param bc           bytecode
+        /// @param len          length (update this)
         /// @param span         span ID (as given to add_span in calc_len)
         /// @param old_val      previous span value
         /// @param new_val      new span value
@@ -191,7 +190,7 @@ public:
         ///         based on the new negative and positive thresholds
         ///         returned.
         /// @note May store to bytecode updated expressions.
-        virtual bool expand(Bytecode& bc, int span,
+        virtual bool expand(Bytecode& bc, unsigned long& len, int span,
                             long old_val, long new_val,
                             /*@out@*/ long& neg_thres,
                             /*@out@*/ long& pos_thres) = 0;

@@ -188,20 +188,21 @@ Insn::finalize(Bytecode& bc, Bytecode& prev_bc)
     do_finalize(bc, prev_bc);
 }
 
-void
+unsigned long
 Insn::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 {
     // simply pass down to the base class
-    Bytecode::Contents::calc_len(bc, add_span);
+    return Bytecode::Contents::calc_len(bc, add_span);
 }
 
 bool
-Insn::expand(Bytecode& bc, int span, long old_val, long new_val,
+Insn::expand(Bytecode& bc, unsigned long& len, int span,
+             long old_val, long new_val,
              /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres)
 {
     // simply pass down to the base class
-    return Bytecode::Contents::expand(bc, span, old_val, new_val, neg_thres,
-                                      pos_thres);
+    return Bytecode::Contents::expand(bc, len, span, old_val, new_val,
+                                      neg_thres, pos_thres);
 }
 
 void
