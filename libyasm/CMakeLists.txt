@@ -1,7 +1,7 @@
 ADD_LIBRARY(libyasm
     #assocdat.c
     bitvect.cpp
-    #bc-align.c
+    bc-align.cpp
     #bc-data.c
     #bc-incbin.c
     #bc-org.c
