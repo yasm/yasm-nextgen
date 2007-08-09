@@ -4,7 +4,7 @@ ADD_LIBRARY(libyasm
     bc-align.cpp
     #bc-data.c
     #bc-incbin.c
-    #bc-org.c
+    bc-org.cpp
     #bc-reserve.c
     bytecode.cpp
     directive.cpp
