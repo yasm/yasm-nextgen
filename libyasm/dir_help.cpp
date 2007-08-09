@@ -113,7 +113,7 @@ dir_intn(const NameValue& nv, Object& obj, unsigned long line, IntNum& out,
     std::auto_ptr<Expr> e(nv.get_expr(obj, line));
     /*@null@*/ IntNum* local;
 
-    if (!e.get() || !(local = e->get_intnum())) {
+    if ((e.get() == 0) || ((local = e->get_intnum()) == 0)) {
         throw NotConstantError(str(boost::format(
             N_("argument to `%s' is not an integer")) % nv.get_name()));
     }
