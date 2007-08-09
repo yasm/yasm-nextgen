@@ -336,6 +336,7 @@ Bytecode::update_offset(unsigned long offset, Bytecode& prev_bc,
         retval = update_offset(offset, prev_bc);
     } catch (Error& err) {
         errwarns.propagate(m_line, err);
+        retval = offset + m_len*m_mult_int;
     }
     errwarns.propagate(m_line);     // propagate warnings
     return retval;
