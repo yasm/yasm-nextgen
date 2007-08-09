@@ -271,7 +271,7 @@ public:
     void add_symbol(/*@dependent@*/ Symbol* sym) { m_symbols.push_back(sym); }
 
     /// Destructor.
-    ~Bytecode() {};
+    ~Bytecode();
 
     /// Print a bytecode.  For debugging purposes.
     /// @param os           output stream
@@ -517,9 +517,11 @@ std::auto_ptr<Bytecode> create_align
 /// Create a bytecode that puts the following bytecode at a fixed section
 /// offset.
 /// @param start        section offset of following bytecode
+/// @param fill         fill value
 /// @param line         virtual line (from yasm_linemap)
 /// @return Newly allocated bytecode.
-std::auto_ptr<Bytecode> create_org(unsigned long start, unsigned long line);
+std::auto_ptr<Bytecode> create_org(unsigned long start, unsigned long fill,
+                                   unsigned long line);
 
 //
 // General bytecode helper functions.

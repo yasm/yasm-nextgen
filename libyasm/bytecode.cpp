@@ -112,6 +112,10 @@ Bytecode::Bytecode(const Bytecode& oth)
       m_symbols(oth.m_symbols)
 {}
 
+Bytecode::~Bytecode()
+{
+}
+
 Bytecode&
 Bytecode::operator= (const Bytecode& oth)
 {
