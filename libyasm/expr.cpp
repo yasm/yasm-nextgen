@@ -543,8 +543,7 @@ Expr::level(bool fold_const,
 
     // Do callback
     if (xform_extra) {
-        if (xform_extra)
-            xform_extra(this);
+        xform_extra(this);
         // Cleanup recursion pass; zero out callback so we don't
         // infinite loop (come back here again).
         level(fold_const, simplify_ident, simplify_reg_mul, 0);
