@@ -684,7 +684,7 @@ operator<< (std::ostream& os, const FloatNum& flt)
     // Internal format
     unsigned char* str = BitVector::to_Hex(flt.m_mantissa);
     os << (flt.m_sign?"-":"+") << " " << (char *)str;
-    os << " *2^" << std::hex << flt.m_exponent << std::dec << std::endl;
+    os << " *2^" << std::hex << flt.m_exponent << std::dec << '\n';
     BitVector::Dispose(str);
 
     // 32-bit (single precision) format
@@ -692,7 +692,7 @@ operator<< (std::ostream& os, const FloatNum& flt)
     os << std::hex << std::setfill('0') << std::setw(2);
     for (int i=0; i<4; i++)
         os << out[i] << " ";
-    os << std::endl;
+    os << '\n';
     os.flags(origff);
 
     // 64-bit (double precision) format
@@ -700,7 +700,7 @@ operator<< (std::ostream& os, const FloatNum& flt)
     os << std::hex << std::setfill('0') << std::setw(2);
     for (int i=0; i<8; i++)
         os << out[i] << " ";
-    os << std::endl;
+    os << '\n';
     os.flags(origff);
 
     // 80-bit (extended precision) format
@@ -708,7 +708,7 @@ operator<< (std::ostream& os, const FloatNum& flt)
     os << std::hex << std::setfill('0') << std::setw(2);
     for (int i=0; i<10; i++)
         os << out[i] << " ";
-    os << std::endl;
+    os << '\n';
     os.flags(origff);
 
     return os;

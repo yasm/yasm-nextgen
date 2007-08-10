@@ -107,15 +107,13 @@ AlignBytecode::~AlignBytecode()
 void
 AlignBytecode::put(std::ostream& os, int indent_level) const
 {
-    os << std::setw(indent_level) << "" << "_Align_" << std::endl;
-    os << std::setw(indent_level) << "" << "Boundary=" << *m_boundary
-       << std::endl;
+    os << std::setw(indent_level) << "" << "_Align_\n";
+    os << std::setw(indent_level) << "" << "Boundary=" << *m_boundary << '\n';
     if (m_fill.get() != 0)
-        os << std::setw(indent_level) << "" << "Fill=" << *m_fill
-           << std::endl;
+        os << std::setw(indent_level) << "" << "Fill=" << *m_fill << '\n';
     if (m_maxskip.get() != 0)
         os << std::setw(indent_level) << "" << "Max Skip=" << *m_maxskip
-           << std::endl;
+           << '\n';
 }
 
 void

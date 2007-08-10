@@ -141,18 +141,18 @@ void
 Object::put(std::ostream& os, int indent_level) const
 {
     // Print symbol table
-    os << std::setw(indent_level) << "" << "Symbol Table:" << std::endl;
+    os << std::setw(indent_level) << "" << "Symbol Table:\n";
     for (const_symbol_iterator i=m_symbols.begin(), end=m_symbols.end();
          i != end; ++i) {
         os << std::setw(indent_level) << ""
-           << "Symbol `" << i->get_name() << "'" << std::endl;
+           << "Symbol `" << i->get_name() << "'\n";
         i->put(os, indent_level+1);
     }
 
     // Print sections and bytecodes
     for (const_section_iterator i=m_sections.begin(), end=m_sections.end();
          i != end; ++i) {
-        os << std::setw(indent_level) << "" << "Section:" << std::endl;
+        os << std::setw(indent_level) << "" << "Section:\n";
         i->put(os, indent_level+1, true);
     }
 }

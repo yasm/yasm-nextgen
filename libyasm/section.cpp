@@ -65,7 +65,7 @@ public:
 void
 EmptyBytecode::put(std::ostream& os, int indent_level) const
 {
-    os << std::setw(indent_level) << "" << "(Empty)" << std::endl;
+    os << std::setw(indent_level) << "" << "(Empty)\n";
 }
 
 void
@@ -167,14 +167,13 @@ Section::set_start(std::auto_ptr<Expr> start)
 void
 Section::put(std::ostream& os, int indent_level, bool with_bcs) const
 {
-    os << std::setw(indent_level) << "" << "name=" << m_name << std::endl;
+    os << std::setw(indent_level) << "" << "name=" << m_name << '\n';
     os << std::setw(indent_level) << ""
-       << "start=" << *(m_start.get()) << std::endl;
-    os << std::setw(indent_level) << "" << "align=" << m_align << std::endl;
-    os << std::setw(indent_level) << "" << "code=" << m_code << std::endl;
-    os << std::setw(indent_level) << ""
-       << "res_only=" << m_res_only << std::endl;
-    os << std::setw(indent_level) << "" << "default=" << m_def << std::endl;
+       << "start=" << *(m_start.get()) << '\n';
+    os << std::setw(indent_level) << "" << "align=" << m_align << '\n';
+    os << std::setw(indent_level) << "" << "code=" << m_code << '\n';
+    os << std::setw(indent_level) << "" << "res_only=" << m_res_only << '\n';
+    os << std::setw(indent_level) << "" << "default=" << m_def << '\n';
 #if 0
     if (sect->assoc_data) {
         fprintf(f, "%*sAssociated data:\n", indent_level, "");
@@ -184,11 +183,11 @@ Section::put(std::ostream& os, int indent_level, bool with_bcs) const
     if (!with_bcs)
         return;
 
-    os << std::setw(indent_level) << "" << "Bytecodes:" << std::endl;
+    os << std::setw(indent_level) << "" << "Bytecodes:\n";
 
     for (const_bc_iterator bc=m_bcs.begin(), end=m_bcs.end();
          bc != end; ++bc) {
-        os << std::setw(indent_level+1) << "" << "Next Bytecode:" << std::endl;
+        os << std::setw(indent_level+1) << "" << "Next Bytecode:\n";
         bc->put(os, indent_level+2);
     }
 

@@ -85,9 +85,9 @@ OrgBytecode::~OrgBytecode()
 void
 OrgBytecode::put(std::ostream& os, int indent_level) const
 {
-    os << std::setw(indent_level) << "" << "_Org_" << std::endl;
-    os << std::setw(indent_level) << "" << "Start=" << m_start << std::endl;
-    os << std::setw(indent_level) << "" << "Fill=" << m_fill << std::endl;
+    os << std::setw(indent_level) << "" << "_Org_\n";
+    os << std::setw(indent_level) << "" << "Start=" << m_start << '\n';
+    os << std::setw(indent_level) << "" << "Fill=" << m_fill << '\n';
 }
 
 void

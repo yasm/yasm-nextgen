@@ -295,36 +295,36 @@ Symbol::put(std::ostream& os, int indent_level) const
     os << std::setw(indent_level) << "";
     switch (m_type) {
         case UNKNOWN:
-            os << "-Unknown (Common/Extern)-" << std::endl;
+            os << "-Unknown (Common/Extern)-\n";
             break;
         case EQU:
-            os << "_EQU_" << std::endl;
+            os << "_EQU_\n";
             os << std::setw(indent_level) << "" << "Expn=";
             if (m_status & VALUED)
                 os << *m_equ;
             else
                 os << "***UNVALUED***";
-            os << std::endl;
+            os << '\n';
             break;
         case LABEL:
         case CURPOS:
             if (m_type == LABEL)
-                os << "_Label_" << std::endl;
+                os << "_Label_\n";
             else
-                os << "_CurPos_" << std::endl;
-            os << std::setw(indent_level) << "" << "Section:" << std::endl;
+                os << "_CurPos_\n";
+            os << std::setw(indent_level) << "" << "Section:\n";
             m_precbc->get_section()->put(os, indent_level+1, false);
             os << std::setw(indent_level) << "" << "Preceding bytecode:\n";
             m_precbc->put(os, indent_level+1);
             break;
         case SPECIAL:
-            os << "-Special-" << std::endl;
+            os << "-Special-\n";
             break;
     }
 
     os << std::setw(indent_level) << "" << "Status=";
     if (m_status == NOSTATUS)
-        os << "None" << std::endl;
+        os << "None\n";
     else {
         if (m_status & USED)
             os << "Used,";
@@ -332,12 +332,12 @@ Symbol::put(std::ostream& os, int indent_level) const
             os << "Defined,";
         if (m_status & VALUED)
             os << "Valued,";
-        os << std::endl;
+        os << '\n';
     }
 
     os << std::setw(indent_level) << "" << "Visibility=";
     if (m_visibility == LOCAL)
-        os << "Local" << std::endl;
+        os << "Local\n";
     else {
         if (m_visibility & GLOBAL)
             os << "Global,";
@@ -345,7 +345,7 @@ Symbol::put(std::ostream& os, int indent_level) const
             os << "Common,";
         if (m_visibility & EXTERN)
             os << "Extern,";
-        os << std::endl;
+        os << '\n';
     }
 #if 0
     if (sym->assoc_data) {
@@ -354,11 +354,11 @@ Symbol::put(std::ostream& os, int indent_level) const
     }
 #endif
     os << std::setw(indent_level) << "" << "Line Index (Defined)="
-       << m_def_line << std::endl;
+       << m_def_line << '\n';
     os << std::setw(indent_level) << "" << "Line Index (Declared)="
-       << m_decl_line << std::endl;
+       << m_decl_line << '\n';
     os << std::setw(indent_level) << "" << "Line Index (Used)="
-       << m_use_line << std::endl;
+       << m_use_line << '\n';
 }
 
 } // namespace yasm

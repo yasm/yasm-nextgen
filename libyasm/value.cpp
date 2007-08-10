@@ -641,29 +641,30 @@ void
 Value::put(std::ostream& os, int indent_level) const
 {
     os << std::setw(indent_level) << "" << m_size << "-bit, ";
-    os << (m_sign ? "" : "un") << "signed" << std::endl;
-    os << std::setw(indent_level) << "" << "Absolute portion=" << *m_abs << std::endl;
+    os << (m_sign ? "" : "un") << "signed\n";
+    os << std::setw(indent_level) << ""
+       << "Absolute portion=" << *m_abs << '\n';
     if (m_rel) {
         os << std::setw(indent_level) << "" << "Relative to=";
-        os << (m_seg_of ? "SEG " : "") << m_rel->get_name() << std::endl;
+        os << (m_seg_of ? "SEG " : "") << m_rel->get_name() << '\n';
         if (m_wrt) {
-            os << std::setw(indent_level) << "";
-            os << "(With respect to=" << m_wrt->get_name() << ")" << std::endl;
+            os << std::setw(indent_level) << ""
+               << "(With respect to=" << m_wrt->get_name() << ")\n";
         }
         if (m_rshift > 0) {
-            os << std::setw(indent_level) << "";
-            os << "(Right shifted by=" << m_rshift << ")" << std::endl;
+            os << std::setw(indent_level) << ""
+               << "(Right shifted by=" << m_rshift << ")\n";
         }
         if (m_curpos_rel) {
-            os << std::setw(indent_level) << "";
-            os << "(Relative to current position)" << std::endl;
+            os << std::setw(indent_level) << ""
+               << "(Relative to current position)\n";
         }
         if (m_ip_rel)
-            os << std::setw(indent_level) << "" << "(IP-relative)" << std::endl;
+            os << std::setw(indent_level) << "" << "(IP-relative)\n";
         if (m_jump_target)
-            os << std::setw(indent_level) << "" << "(Jump target)" << std::endl;
+            os << std::setw(indent_level) << "" << "(Jump target)\n";
         if (m_section_rel)
-            os << std::setw(indent_level) << "" << "(Section-relative)" << std::endl;
+            os << std::setw(indent_level) << "" << "(Section-relative)\n";
     }
 }
 

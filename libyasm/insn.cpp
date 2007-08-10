@@ -115,26 +115,26 @@ Insn::Operand::put(std::ostream& os, int indent_level) const
     switch (m_type) {
         case REG:
             //os << std::setw(indent_level) << "";
-            //os << "Reg=" << *m_data.reg << std::endl;
+            //os << "Reg=" << *m_data.reg << '\n';
             break;
         case SEGREG:
             //os << std::setw(indent_level) << "";
-            //os << "SegReg=" << *m_data.segreg << std::endl;
+            //os << "SegReg=" << *m_data.segreg << '\n';
             break;
         case MEMORY:
             //os << std::setw(indent_level) << "";
-            //os << "Memory=" << *m_data.ea << std::endl;
+            //os << "Memory=" << *m_data.ea << '\n';
             break;
         case IMM:
             os << std::setw(indent_level) << "";
-            os << "Imm=" << *m_data.val << std::endl;
+            os << "Imm=" << *m_data.val << '\n';
             break;
     }
     //os << std::setw(indent_level+1) << "";
-    //os << "TargetMod=" << *m_targetmod << std::endl;
-    os << std::setw(indent_level+1) << "" << "Size=" << m_size << std::endl;
+    //os << "TargetMod=" << *m_targetmod << '\n';
+    os << std::setw(indent_level+1) << "" << "Size=" << m_size << '\n';
     os << std::setw(indent_level+1) << "";
-    os << "Deref=" << m_deref << ", Strict=" << m_strict << std::endl;
+    os << "Deref=" << m_deref << ", Strict=" << m_strict << '\n';
 }
 
 void

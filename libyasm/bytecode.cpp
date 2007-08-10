@@ -144,11 +144,10 @@ Bytecode::put(std::ostream& os, int indent_level) const
         os << "nil (1)";
     else
         os << *m_multiple;
-    os << std::endl;
-    os << std::setw(indent_level) << "" << "Length=" << m_len << std::endl;
-    os << std::setw(indent_level) << "" << "Line Index=" << m_line
-       << std::endl;
-    os << std::setw(indent_level) << "" << "Offset=" << m_offset << std::endl;
+    os << '\n';
+    os << std::setw(indent_level) << "" << "Length=" << m_len << '\n';
+    os << std::setw(indent_level) << "" << "Line Index=" << m_line << '\n';
+    os << std::setw(indent_level) << "" << "Offset=" << m_offset << '\n';
 }
 
 void
