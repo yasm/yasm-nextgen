@@ -55,7 +55,7 @@ typedef boost::function<void (Object& object,
                               unsigned long line)>
     Directive;
 
-class DirectiveManager {
+class Directives {
 public:
     /// Tests to perform prior to directive handler being called.
     /// These can be used to simplify a directive function implementation.
@@ -65,8 +65,8 @@ public:
         ID_REQUIRED = 2     ///< First valparam must be ID
     };
 
-    DirectiveManager();
-    ~DirectiveManager();
+    Directives();
+    ~Directives();
 
     /// Add a directive.
     /// @param name         Directive name.  GAS directives should include
@@ -74,9 +74,7 @@ public:
     ///                     name (not including the []).
     /// @param handler      Directive function
     /// @param flags        Flags for pre-handler parameter checking.
-    void add(const std::string& name,
-             Directive handler,
-             Flags flags = ANY);
+    void add(const std::string& name, Directive handler, Flags flags = ANY);
 
     /// Get a directive functor.  Throws an exception if no match.
     /// @param name         directive name
@@ -88,10 +86,10 @@ private:
     boost::scoped_ptr<Impl> m_impl;
 };
 
-class DirHelperManager {
+class DirHelpers {
 public:
-    DirHelperManager();
-    ~DirHelperManager();
+    DirHelpers();
+    ~DirHelpers();
 
     /// Add a directive helper.
     /// @param name         Name portion of name=value (if needsvalue=true),

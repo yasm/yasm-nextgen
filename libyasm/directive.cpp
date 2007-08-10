@@ -39,14 +39,14 @@
 
 namespace yasm {
 
-class DirectiveManager::Impl {
+class Directives::Impl {
 public:
     Impl() {}
     ~Impl() {}
 
     class Dir {
     public:
-        Dir(Directive handler, DirectiveManager::Flags flags)
+        Dir(Directive handler, Directives::Flags flags)
             : m_handler(handler), m_flags(flags)
         {}
         ~Dir() {}
@@ -58,32 +58,32 @@ public:
 
     private:
         Directive m_handler;
-        DirectiveManager::Flags m_flags;
+        Directives::Flags m_flags;
     };
 
-    typedef std::map<std::string, Dir> Dirs;
-    Dirs m_dirs;
+    typedef std::map<std::string, Dir> DirMap;
+    DirMap m_dirs;
 };
 
-DirectiveManager::DirectiveManager()
+Directives::Directives()
     : m_impl(new Impl)
 {
 }
 
-DirectiveManager::~DirectiveManager()
+Directives::~Directives()
 {
 }
 
 void
-DirectiveManager::add(const std::string& name, Directive handler, Flags flags)
+Directives::add(const std::string& name, Directive handler, Flags flags)
 {
     m_impl->m_dirs.insert(std::make_pair(name, Impl::Dir(handler, flags)));
 }
 
 Directive
-DirectiveManager::operator[] (const std::string& name) const
+Directives::operator[] (const std::string& name) const
 {
-    Impl::Dirs::iterator p = m_impl->m_dirs.find(name);
+    Impl::DirMap::iterator p = m_impl->m_dirs.find(name);
     if (p == m_impl->m_dirs.end()) {
         std::ostringstream emsg;
         emsg << N_("unrecognized directive") << " `" << name << "'";
@@ -94,7 +94,7 @@ DirectiveManager::operator[] (const std::string& name) const
 }
 
 void
-DirectiveManager::Impl::Dir::operator() (Object& object,
+Directives::Impl::Dir::operator() (Object& object,
                                          const std::string& name,
                                          const NameValues& namevals,
                                          const NameValues& objext_namevals,
@@ -120,7 +120,7 @@ DirectiveManager::Impl::Dir::operator() (Object& object,
 }
 
 
-class DirHelperManager::Impl {
+class DirHelpers::Impl {
 public:
     Impl() {}
     ~Impl() {}
@@ -130,18 +130,18 @@ public:
     HelperMap m_value_helpers, m_novalue_helpers;
 };
 
-DirHelperManager::DirHelperManager()
+DirHelpers::DirHelpers()
     : m_impl(new Impl)
 {
 }
 
-DirHelperManager::~DirHelperManager()
+DirHelpers::~DirHelpers()
 {
 }
 
 void
-DirHelperManager::add(const std::string& name, bool needsvalue,
-                      boost::function<void (const NameValue&)> helper)
+DirHelpers::add(const std::string& name, bool needsvalue,
+                boost::function<void (const NameValue&)> helper)
 {
     if (needsvalue)
         m_impl->m_value_helpers.insert(std::make_pair(name, helper));
@@ -150,7 +150,7 @@ DirHelperManager::add(const std::string& name, bool needsvalue,
 }
 
 bool
-DirHelperManager::operator()
+DirHelpers::operator()
     (NameValues::const_iterator nv_first,
      NameValues::const_iterator nv_last,
      boost::function<bool (const NameValue&)> helper_nameval)
