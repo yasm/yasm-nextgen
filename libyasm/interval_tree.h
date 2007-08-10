@@ -18,7 +18,7 @@
 
 #include <climits>
 #include <cstdlib>
-#include <iostream>
+#include <ostream>
 #include <vector>
 
 #include <boost/function.hpp>

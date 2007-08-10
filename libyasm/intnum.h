@@ -30,7 +30,7 @@
 /// @endlicense
 ///
 #include <cstdlib>
-#include <iostream>
+#include <ostream>
 
 #include "bitvect.h"
 #include "operator.h"

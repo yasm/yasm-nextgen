@@ -29,7 +29,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iostream>
+#include <ostream>
 #include <memory>
 #include <vector>
 
