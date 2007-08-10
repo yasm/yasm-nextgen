@@ -131,7 +131,9 @@ Section::Section(const std::string& name,
       m_align(align),
       m_code(code),
       m_res_only(res_only),
-      m_def(false)
+      m_def(false),
+      m_bcs_owner(m_bcs),
+      m_relocs_owner(m_relocs)
 {
     if (start.get() != 0)
         m_start.reset(start.release());

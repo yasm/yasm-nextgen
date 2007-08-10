@@ -34,8 +34,9 @@
 #include <string>
 
 #include <boost/noncopyable.hpp>
-#include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/scoped_ptr.hpp>
+
+#include "ptr_vector.h"
 
 
 namespace yasm {
@@ -127,8 +128,8 @@ public:
     void add_reloc(std::auto_ptr<Reloc> reloc)
     { m_relocs.push_back(reloc.release()); }
 
-    typedef boost::ptr_vector<Reloc>::iterator reloc_iterator;
-    typedef boost::ptr_vector<Reloc>::const_iterator const_reloc_iterator;
+    typedef stdx::ptr_vector<Reloc>::iterator reloc_iterator;
+    typedef stdx::ptr_vector<Reloc>::const_iterator const_reloc_iterator;
 
     reloc_iterator relocs_begin() { return m_relocs.begin(); }
     const_reloc_iterator relocs_begin() const { return m_relocs.begin(); }
@@ -139,8 +140,8 @@ public:
     /// @param bc       bytecode (may be NULL)
     void append_bytecode(/*@null@*/ std::auto_ptr<Bytecode> bc);
 
-    typedef boost::ptr_vector<Bytecode>::iterator bc_iterator;
-    typedef boost::ptr_vector<Bytecode>::const_iterator const_bc_iterator;
+    typedef stdx::ptr_vector<Bytecode>::iterator bc_iterator;
+    typedef stdx::ptr_vector<Bytecode>::const_iterator const_bc_iterator;
 
     bc_iterator bcs_begin() { return ++m_bcs.begin(); }
     const_bc_iterator bcs_begin() const { return ++m_bcs.begin(); }
@@ -212,10 +213,12 @@ private:
     bool m_def;
 
     /// The bytecodes for the section's contents.
-    boost::ptr_vector<Bytecode> m_bcs;
+    stdx::ptr_vector<Bytecode> m_bcs;
+    stdx::ptr_vector_owner<Bytecode> m_bcs_owner;
 
     /// The relocations for the section.
-    boost::ptr_vector<Reloc> m_relocs;
+    stdx::ptr_vector<Reloc> m_relocs;
+    stdx::ptr_vector_owner<Reloc> m_relocs_owner;
 };
 
 } // namespace yasm

@@ -34,8 +34,9 @@
 #include <string>
 
 #include <boost/noncopyable.hpp>
-#include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/scoped_ptr.hpp>
+
+#include "ptr_vector.h"
 
 
 namespace yasm {
@@ -106,8 +107,8 @@ public:
     /// @return Section matching name, or NULL if no match found.
     /*@null@*/ Section* find_section(const std::string& name);
 
-    typedef boost::ptr_vector<Section>::iterator section_iterator;
-    typedef boost::ptr_vector<Section>::const_iterator const_section_iterator;
+    typedef stdx::ptr_vector<Section>::iterator section_iterator;
+    typedef stdx::ptr_vector<Section>::const_iterator const_section_iterator;
 
     section_iterator sections_begin() { return m_sections.begin(); }
     const_section_iterator sections_begin() const
@@ -135,8 +136,8 @@ public:
     /// @return Symbol matching name.
     Symbol* get_sym(const std::string& name);
 
-    typedef boost::ptr_vector<Symbol>::iterator symbol_iterator;
-    typedef boost::ptr_vector<Symbol>::const_iterator const_symbol_iterator;
+    typedef stdx::ptr_vector<Symbol>::iterator symbol_iterator;
+    typedef stdx::ptr_vector<Symbol>::const_iterator const_symbol_iterator;
 
     symbol_iterator begin() { return m_symbols.begin(); }
     const_symbol_iterator begin() const { return m_symbols.begin(); }
@@ -176,13 +177,16 @@ private:
     /*@null@*/ Section* m_cur_section;
 
     /// Sections
-    boost::ptr_vector<Section> m_sections;
+    stdx::ptr_vector<Section> m_sections;
+    stdx::ptr_vector_owner<Section> m_sections_owner;
 
     /// Symbols in the symbol table
-    boost::ptr_vector<Symbol> m_symbols;
+    stdx::ptr_vector<Symbol> m_symbols;
+    stdx::ptr_vector_owner<Symbol> m_symbols_owner;
 
     /// Non-table symbols
-    boost::ptr_vector<Symbol> m_non_table_syms;
+    stdx::ptr_vector<Symbol> m_non_table_syms;
+    stdx::ptr_vector_owner<Symbol> m_non_table_syms_owner;
 
     /// Pimpl for symbol table hash trie.
     class Impl;

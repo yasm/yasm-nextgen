@@ -85,7 +85,9 @@ Object::Object(const std::string& src_filename,
       m_objfmt(ddj::genericFactory<ObjectFormat>::instance().create(objfmt_keyword).release()),
       m_dbgfmt(ddj::genericFactory<DebugFormat>::instance().create(objfmt_keyword).release()),
       m_cur_section(0),
-      m_sections(1),        // reserve space for first section
+      m_sections_owner(m_sections),
+      m_symbols_owner(m_symbols),
+      m_non_table_syms_owner(m_non_table_syms),
       m_impl(new Impl(false))
 {
     // Initialize the object format
