@@ -29,124 +29,19 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iostream>
-#include <memory>
 #include <string>
-#include <vector>
 
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "name_value.h"
+
 
 namespace yasm {
 
-class Expr;
+class IntNum;
 class Object;
-
-/// Name/value pair.
-class NameValue : private boost::noncopyable {
-public:
-    /// Identifier value constructor.
-    /// @param name         name; may be empty string if no name
-    /// @param id           identifier value
-    /// @param id_prefix    identifier prefix for raw identifiers
-    NameValue(const std::string& name, const std::string& id, char id_prefix);
-
-    /// String value constructor.
-    /// @param name         name; may be empty string if no name
-    /// @param str          string value
-    NameValue(const std::string& name, const std::string& str);
-
-    /// Expression value constructor.
-    /// @param name         name; may be empty string if no name
-    /// @param e            expression
-    NameValue(const std::string& name, std::auto_ptr<Expr> e);
-
-    /// Identifier value constructor with no name.
-    /// @param id           identifier value
-    /// @param id_prefix    identifier prefix for raw identifiers
-    NameValue(const std::string& id, char id_prefix);
-
-    /// String value constructor with no name.
-    /// @param name         name; may be empty string if no name
-    /// @param str          string value
-    NameValue(const std::string& str);
-
-    /// Expression value constructor with no name.
-    /// @param e            expression
-    NameValue(std::auto_ptr<Expr> e);
-
-    /// Destructor.
-    ~NameValue();
-
-    /// Get name.
-    /// @return Name; empty string if no name.
-    std::string get_name() const { return m_name; }
-
-    /// Determine if value is convertible to an expression using get_expr().
-    /// @return True if convertible.
-    bool is_expr() const { return (m_type == ID) || (m_type == EXPR); }
-
-    /// Determine if value is convertible to a string using get_string().
-    /// @return True if convertible.
-    bool is_string() const { return (m_type == ID) || (m_type == STRING); }
-
-    /// Determine if value is convertible to an identifier using get_id().
-    /// @return True if convertible.
-    bool is_id() const { return m_type == ID; }
-
-    /// Get value as an expr.  If the parameter is an identifier,
-    /// it's treated as a symbol (Symbol::use() is called to convert it).
-    /// @param object       object
-    /// @param line         virtual line
-    /// @return Expression, or NULL if the parameter cannot be
-    ///         converted to an expression.
-    /*@null@*/ std::auto_ptr<Expr> get_expr
-        (Object& object, unsigned long line) const;
-
-    /// Get value as a string.  If the parameter is an identifier,
-    /// it's treated as a string.
-    /// @return String; raises an exception if the parameter cannot be
-    ///         realized as a string.
-    std::string get_string() const;
-
-    /// Get value as an identifier.
-    /// @return Identifier (string); raises an exception if the parameter
-    ///         is not an identifier.
-    std::string get_id() const;
-
-private:
-    std::string m_name; ///< Name (empty string if no name)
-
-    /// Value type.
-    enum Type {
-        ID,             ///< Identifier
-        STRING,         ///< String
-        EXPR            ///< Expression
-    };
-
-    Type m_type;
-
-    /// Possible values
-    std::string m_idstr;            ///< Identifier or string
-    boost::scoped_ptr<Expr> m_expr; ///< Expression
-
-    /// Prefix character that indicates a raw identifier.  When
-    /// get_string() is called on a #ID, all characters are
-    /// returned.  When get_id() is called on a #ID, if the
-    /// identifier begins with this character, this character is stripped
-    /// from the returned value.
-    char m_id_prefix;
-};
-
-/// Vector of name/values.
-typedef std::vector<NameValue> NameValues;
-
-/// Print vector of name/values.  For debugging purposes.
-/// @param os       output stream
-/// @param namevals name/values
-std::ostream& operator<< (std::ostream& os, const NameValues& namevals);
 
 /// Directive handler function.
 /// @param object           object
@@ -196,6 +91,101 @@ private:
     class Impl;
     boost::scoped_ptr<Impl> m_impl;
 };
+
+class DirHelperManager {
+public:
+    DirHelperManager();
+    ~DirHelperManager();
+
+    /// Add a directive helper.
+    /// @param name         Name portion of name=value (if needsvalue=true),
+    ///                     or standalone identifier (if needsvalue=false)
+    /// @param needsvalue   True if name requires value, false if it must not
+    ///                     have a value.
+    /// @param helper       Helper function
+    void add(const std::string& name,
+             bool needsvalue,
+             boost::function<void (const NameValue&)> helper);
+
+    /// Help parse a list of directive name/values.  Matches name=value
+    /// (or just value) against each of the added helper functions.
+    /// When no match is found, calls helper_nameval.
+    /// @param nv_begin iterator to first value/parameter to examine
+    /// @param nv_end   iterator to last value/parameter to examine
+    /// @param helper_nameval   catch-all callback; should return
+    ///                         false if not matched, true if matched.
+    /// @return True if any arguments matched (including via
+    ///         catch-all callback), false if no match.
+    bool operator() (NameValues::const_iterator nv_first,
+                     NameValues::const_iterator nv_last,
+                     boost::function<bool (const NameValue&)> helper_nameval);
+
+private:
+    /// Pimpl for class internals.
+    class Impl;
+    boost::scoped_ptr<Impl> m_impl;
+};
+
+/// Standard helper for DirHelperManager() that simply resets a flag when
+/// called.  It does not look at the nv; rather, it uses the value of the
+/// val parameter, and stores it to out.
+/// @param nv       unused
+/// @param out      reference to unsigned long
+/// @param val      value to set
+inline void dir_flag_reset(const NameValue& nv, unsigned long& out,
+                           unsigned long val)
+{
+    out = val;
+}
+
+/// Standard helper for DirHelperManager() that simply sets a flag when
+/// called.  It does not look at the nv; rather, it uses the value of the
+/// flag parameter, and ORs it with the unsigned long value in out.
+/// @param nv       unused
+/// @param out      reference to unsigned long
+/// @param flag     flag bit(s) to set
+inline void dir_flag_set(const NameValue& nv, unsigned long& out,
+                         unsigned long flag)
+{
+    out |= flag;
+}
+
+/// Standard helper for DirHelperManager() that simply ANDs a flag when
+/// called.  It does not look at the nv; rather, it uses the value of the
+/// flag parameter, and ANDs its bitwise inverse with the unsigned long
+/// value in out.
+/// @param nv       unused
+/// @param out      reference to unsigned long
+/// @param flag     flag bit(s) to clear
+inline void dir_flag_clear(const NameValue& nv, unsigned long& out,
+                           unsigned long flag)
+{
+    out &= ~flag;
+}
+
+/// Standard helper for DirHelperManager() that parses an IntNum value.
+/// When calling DirHelperManager::add(), needsparam should be set to true.
+/// @param nv       name/value
+/// @param obj      object
+/// @param line     virtual line number
+/// @param out      reference to IntNum
+/// @param out_set  reference that is set to 1 when called
+void dir_intn(const NameValue& nv, Object& obj, unsigned long line,
+              IntNum& out, bool& out_set);
+
+/// Standard helper for DirHelperManager() that parses an string (or
+/// standalone identifier) value.
+/// When calling DirHelperManager::add(), needsparam should be set to true.
+/// @param nv       name/value
+/// @param out      reference to string
+/// @param out_set  reference that is set to 1 when called
+void dir_string(const NameValue& nv, std::string& out, bool& out_set);
+
+/// Standard catch-all callback for DirHelperManager().  Generates standard
+/// warning for all valparams.
+/// @param nv       name/value
+/// @return False
+bool dir_nameval_warn(const NameValue& nv);
 
 } // namespace yasm
 

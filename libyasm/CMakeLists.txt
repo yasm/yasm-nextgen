@@ -8,7 +8,6 @@ ADD_LIBRARY(libyasm
     #bc-reserve.c
     bytecode.cpp
     directive.cpp
-    dir_help.cpp
     errwarn.cpp
     expr.cpp
     file.cpp
@@ -18,6 +17,7 @@ ADD_LIBRARY(libyasm
     intnum.cpp
     linemap.cpp
     md5.cpp
+    name_value.cpp
     object.cpp
     #phash.c
     section.cpp

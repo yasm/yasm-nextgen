@@ -34,8 +34,7 @@
 #include "directive.h"
 #include "errwarn.h"
 #include "expr.h"
-#include "object.h"
-#include "symbol.h"
+#include "intnum.h"
 
 
 namespace yasm {
@@ -130,102 +129,126 @@ DirectiveManager::Impl::Dir::operator() (Object& object,
     m_handler(object, namevals, objext_namevals, line);
 }
 
-NameValue::NameValue(const std::string& name, const std::string& id,
-                     char id_prefix)
-    : m_name(name),
-      m_type(ID),
-      m_idstr(id),
-      m_expr(0),
-      m_id_prefix(id_prefix)
+
+class DirHelperManager::Impl {
+public:
+    Impl() {}
+    ~Impl() {}
+
+    typedef std::map<std::string, boost::function<void (const NameValue&)> >
+        HelperMap;
+    HelperMap m_value_helpers, m_novalue_helpers;
+};
+
+DirHelperManager::DirHelperManager()
+    : m_impl(new Impl)
 {
 }
 
-NameValue::NameValue(const std::string& name, const std::string& str)
-    : m_name(name),
-      m_type(STRING),
-      m_idstr(str),
-      m_expr(0),
-      m_id_prefix('\0')
+DirHelperManager::~DirHelperManager()
 {
 }
 
-NameValue::NameValue(const std::string& name, std::auto_ptr<Expr> e)
-    : m_name(name),
-      m_type(EXPR),
-      m_expr(e.release()),
-      m_id_prefix('\0')
+void
+DirHelperManager::add(const std::string& name, bool needsvalue,
+                      boost::function<void (const NameValue&)> helper)
 {
-}
-
-NameValue::NameValue(const std::string& id, char id_prefix)
-    : m_name(""),
-      m_type(ID),
-      m_idstr(id),
-      m_expr(0),
-      m_id_prefix(id_prefix)
-{
-}
-
-NameValue::NameValue(const std::string& str)
-    : m_name(""),
-      m_type(STRING),
-      m_idstr(str),
-      m_expr(0),
-      m_id_prefix('\0')
-{
-}
-
-NameValue::NameValue(std::auto_ptr<Expr> e)
-    : m_name(""),
-      m_type(EXPR),
-      m_expr(e.release()),
-      m_id_prefix('\0')
-{
-}
-
-NameValue::~NameValue()
-{
-}
-
-/*@null@*/ std::auto_ptr<Expr>
-NameValue::get_expr(Object& object, unsigned long line) const
-{
-    switch (m_type) {
-        case ID:
-        {
-            Symbol* sym = object.get_sym(get_id());
-            sym->use(line);
-            return std::auto_ptr<Expr>(new Expr(sym, line));
-        }
-        case EXPR:
-            return std::auto_ptr<Expr>(m_expr->clone());
-        default:
-            return std::auto_ptr<Expr>(0);
-    }
-}
-
-std::string
-NameValue::get_string() const
-{
-    switch (m_type) {
-        case ID:
-        case STRING:
-            return m_idstr;
-        default:
-            throw Error(N_("name/value not convertible to string"));
-    }
-}
-
-std::string
-NameValue::get_id() const
-{
-    if (m_type != ID)
-        throw Error(N_("name/value not convertible to identifier"));
-
-    if (m_idstr[0] == m_id_prefix)
-        return m_idstr.substr(1);
+    if (needsvalue)
+        m_impl->m_value_helpers.insert(std::make_pair(name, helper));
     else
-        return m_idstr;
+        m_impl->m_novalue_helpers.insert(std::make_pair(name, helper));
+}
+
+bool
+DirHelperManager::operator()
+    (NameValues::const_iterator nv_first,
+     NameValues::const_iterator nv_last,
+     boost::function<bool (const NameValue&)> helper_nameval)
+{
+    bool anymatched = false;
+
+    for (NameValues::const_iterator nv=nv_first; nv != nv_last; ++nv) {
+        bool matched = false;
+
+        if (nv->get_name().empty() && nv->is_id()) {
+            Impl::HelperMap::iterator helper =
+                m_impl->m_novalue_helpers.find(nv->get_id());
+            if (helper != m_impl->m_novalue_helpers.end()) {
+                helper->second(*nv);
+                matched = true;
+                anymatched = true;
+            }
+        } else if (!nv->get_name().empty()) {
+            Impl::HelperMap::iterator helper =
+                m_impl->m_value_helpers.find(nv->get_id());
+            if (helper != m_impl->m_novalue_helpers.end()) {
+                helper->second(*nv);
+                matched = true;
+                anymatched = true;
+            }
+        }
+
+        if (!matched) {
+            if (helper_nameval(*nv))
+                anymatched = true;
+        }
+    }
+
+    return anymatched;
+}
+
+void
+dir_intn(const NameValue& nv, Object& obj, unsigned long line, IntNum& out,
+         bool& out_set)
+{
+    std::auto_ptr<Expr> e(nv.get_expr(obj, line));
+    /*@null@*/ IntNum* local;
+
+    if ((e.get() == 0) || ((local = e->get_intnum()) == 0)) {
+        std::ostringstream emsg;
+        emsg << "`" << nv.get_name() << "': "
+             << N_("argument must be an integer");
+        throw NotConstantError(emsg.str());
+    }
+
+    out = *local;
+    out_set = true;
+}
+
+void
+dir_string(const NameValue& nv, std::string& out, bool& out_set)
+{
+    if (!nv.is_string()) {
+        std::ostringstream emsg;
+        emsg << "`" << nv.get_name() << "': "
+             << N_("argument must be a string or identifier");
+        throw ValueError(emsg.str());
+    }
+    out = nv.get_string();
+    out_set = true;
+}
+
+bool
+dir_nameval_warn(const NameValue& nv)
+{
+    if (!nv.get_name().empty()) {
+        std::ostringstream wmsg;
+        wmsg << N_("Unrecognized qualifier") << " `" << nv.get_name() << "'";
+        warn_set(WARN_GENERAL, wmsg.str());
+        return false;
+    }
+
+    if (nv.is_id()) {
+        std::ostringstream wmsg;
+        wmsg << N_("Unrecognized qualifier") << " `" << nv.get_id() << "'";
+        warn_set(WARN_GENERAL, wmsg.str());
+    } else if (nv.is_string()) {
+        warn_set(WARN_GENERAL, N_("Unrecognized string qualifier"));
+    } else {
+        warn_set(WARN_GENERAL, N_("Unrecognized numeric qualifier"));
+    }
+
+    return false;
 }
 
 } // namespace yasm
