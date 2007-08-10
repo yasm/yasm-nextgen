@@ -36,10 +36,10 @@
 ///
 #include <cctype>
 #include <cstdlib>
+#include <vector>
 
 #include <boost/noncopyable.hpp>
 #include <boost/pool/pool.hpp>
-#include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/scoped_array.hpp>
 
 #include "bitcount.h"
@@ -107,7 +107,7 @@ private:
     // Pools are used to manage all node memory except for the root (above).
     // There are individual pools for each size, from 0-32 Node* members.
     // (0=value node, 32=completely full bitmapped array of nodes).
-    boost::ptr_vector<boost::pool<> > m_pools;
+    std::vector<boost::pool<>*> m_pools;
 
     GetKey get_key; // functor instance
 
@@ -182,6 +182,10 @@ hamt<Key,T,GetKey>::hamt(bool nocase)
 template <typename Key, typename T, typename GetKey>
 hamt<Key,T,GetKey>::~hamt()
 {
+    while (!m_pools.empty()) {
+        delete m_pools.back();
+        m_pools.pop_back();
+    }
 }
 
 template <typename Key, typename T, typename GetKey>
@@ -194,7 +198,7 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
     Node* node = *pnode;
 
     if (node == 0) {
-        Node* node = static_cast<Node*>(m_pools[0].malloc());
+        Node* node = static_cast<Node*>(m_pools[0]->malloc());
         *pnode = node;
         node->bitmap_key = key;
         node->value = data;
@@ -229,7 +233,7 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
                         // Still equal, build one-node subtrie and continue
                         // downward.
                         Node* newnode =
-                            static_cast<Node*>(m_pools[1].malloc());
+                            static_cast<Node*>(m_pools[1]->malloc());
                         newnode->bitmap_key = 1<<keypart;
                         newnode->value = 0;  // subtrie indication
                         newnode->sub_trie(0) = node;
@@ -242,7 +246,7 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
                         // partitioned
 
                         // create value node
-                        Node* entry = static_cast<Node*>(m_pools[0].malloc());
+                        Node* entry = static_cast<Node*>(m_pools[0]->malloc());
                         entry->bitmap_key = key;
                         entry->value = data;
 
@@ -251,7 +255,7 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
 
                         // allocate two-node subtrie
                         Node* newnode =
-                            static_cast<Node*>(m_pools[2].malloc());
+                            static_cast<Node*>(m_pools[2]->malloc());
 
                         // Set bits in bitmap corresponding to keys
                         newnode->bitmap_key =
@@ -286,7 +290,7 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
             // bit is 0 in bitmap -> add node to table
 
             // create value node
-            Node* entry = static_cast<Node*>(m_pools[0].malloc());
+            Node* entry = static_cast<Node*>(m_pools[0]->malloc());
             entry->bitmap_key = key;
             entry->value = data;
 
@@ -300,7 +304,7 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
                 size = 32;
 
             // Allocate new subtrie
-            Node* newnode = static_cast<Node*>(m_pools[size].malloc());
+            Node* newnode = static_cast<Node*>(m_pools[size]->malloc());
 
             newnode->bitmap_key = node->bitmap_key;
             newnode->value = 0;     // subtrie indication
@@ -320,7 +324,7 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
             newnode->sub_trie(map) = entry;
 
             // Delete old subtrie
-            m_pools[size-1].free(node);
+            m_pools[size-1]->free(node);
 
             *pnode = newnode;
             return 0;
