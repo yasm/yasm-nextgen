@@ -38,7 +38,7 @@
 #include "insn.h"
 #include "intnum.h"
 #include "operator.h"
-//#include "symrec.h"
+#include "symbol.h"
 #include "value.h"
 
 
@@ -399,7 +399,7 @@ xform_bc_dist_base(Expr* e, boost::function<bool (Expr::Term& term,
 
         if (!intn->is_neg1())
             continue;
-#if 0
+
         if (sym && !sym->get_label(precbc))
             continue;
         Section* sect = precbc->get_section();
@@ -410,7 +410,7 @@ xform_bc_dist_base(Expr* e, boost::function<bool (Expr::Term& term,
             Symbol* sym2;
             /*@dependent@*/ /*@null@*/ Bytecode* precbc2;
 
-            if ((((sym2 = j->get_sym()) && sym2->get_label(&precbc2)) ||
+            if ((((sym2 = j->get_sym()) && sym2->get_label(precbc2)) ||
                  (precbc2 = j->get_precbc())) &&
                 (sect == precbc2->get_section()) &&
                 func(*j, *precbc, *precbc2)) {
@@ -419,7 +419,6 @@ xform_bc_dist_base(Expr* e, boost::function<bool (Expr::Term& term,
                 break;  // stop looking for matching symrec term
             }
         }
-#endif
     }
 
     // Clean up any deleted (NONE) terms
