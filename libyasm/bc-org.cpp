@@ -31,7 +31,6 @@
 #include "bytecode.h"
 #include "bytes.h"
 #include "errwarn.h"
-#include "file.h"
 
 
 namespace {
