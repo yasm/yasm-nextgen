@@ -1,7 +1,7 @@
-#ifndef YASM_OBJFMT_H
-#define YASM_OBJFMT_H
+#ifndef YASM_OBJECT_FORMAT_H
+#define YASM_OBJECT_FORMAT_H
 ///
-/// @file libyasm/objfmt.h
+/// @file libyasm/object_format.h
 /// @brief YASM object format module interface.
 ///
 /// @license

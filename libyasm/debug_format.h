@@ -1,7 +1,7 @@
-#ifndef YASM_DBGFMT_H
-#define YASM_DBGFMT_H
+#ifndef YASM_DEBUG_FORMAT_H
+#define YASM_DEBUG_FORMAT_H
 ///
-/// @file libyasm/dbgfmt.h
+/// @file libyasm/debug_format.h
 /// @brief YASM debug format interface.
 ///
 /// @license
