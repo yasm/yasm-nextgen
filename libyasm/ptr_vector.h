@@ -1402,11 +1402,7 @@ public:
       tmpVec.swap (ptrVec);
 
       while (! tmpVec.empty()) {
-         try {
-            delete tmpVec.pop_back();
-         } catch (...) {
-            assert (false);
-         }
+         delete tmpVec.pop_back();
       }
    }
 
