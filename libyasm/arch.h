@@ -189,22 +189,21 @@ public:
     /// cleared before being set.
     /// Architecture-specific because of endianness.
     /// @param flt           floating point value
-    /// @param buf           buffer to write into
+    /// @param bytes         storage for bytes representation
     /// @param destsize      destination size (in bytes)
     /// @param valsize       size (in bits)
     /// @param shift         left shift (in bits)
     /// @param warn          enables standard overflow/underflow warnings
-    virtual void floatnum_tobytes(const FloatNum& flt,
-                                  unsigned char* buf, size_t destsize,
-                                  size_t valsize, size_t shift,
-                                  int warn) const = 0;
+    virtual void floatnum_tobytes(const FloatNum& flt, Bytes& bytes,
+                                  size_t destsize, size_t valsize,
+                                  size_t shift, int warn) const = 0;
 
     /// Output #IntNum to buffer.  Puts the value into the least
     /// significant bits of the destination, or may be shifted into more
     /// significant bits by the shift parameter.  The destination bits are
     /// cleared before being set.
     /// @param intn         integer value
-    /// @param buf          buffer to write into
+    /// @param bytes        storage for bytes representation
     /// @param destsize     destination size (in bytes)
     /// @param valsize      size (in bits)
     /// @param shift        left shift (in bits); may be negative to specify
@@ -213,9 +212,8 @@ public:
     /// @param bc           bytecode being output ("parent" of value)
     /// @param warn         enables standard warnings (value doesn't fit into
     ///                     valsize bits)
-    virtual void intnum_tobytes(const IntNum& intn,
-                                unsigned char* buf, size_t destsize,
-                                size_t valsize, int shift,
+    virtual void intnum_tobytes(const IntNum& intn, Bytes& bytes,
+                                size_t destsize, size_t valsize, int shift,
                                 const Bytecode& bc, int warn) const = 0;
 
     /// Create an effective address from an expression.

@@ -29,10 +29,11 @@
 #include <iomanip>
 
 #include "arch.h"
+#include "bytes.h"
 #include "bytecode.h"
 #include "errwarn.h"
 #include "expr.h"
-//#include "floatnum.h"
+#include "floatnum.h"
 #include "intnum.h"
 #include "object.h"
 #include "section.h"
@@ -546,8 +547,8 @@ Value::get_intnum(Bytecode* bc, bool calc_bc_dist)
 }
 
 bool
-Value::output_basic(/*@out@*/ unsigned char* buf, size_t destsize,
-                    Bytecode& bc, int warn, const Arch& arch)
+Value::output_basic(Bytes& bytes, size_t destsize, const Bytecode& bc,
+                    int warn, const Arch& arch)
 {
     /*@dependent@*/ /*@null@*/ IntNum* intn = 0;
 
@@ -555,7 +556,7 @@ Value::output_basic(/*@out@*/ unsigned char* buf, size_t destsize,
         // Handle floating point expressions
         FloatNum* flt;
         if (!m_rel && (flt = m_abs->get_float())) {
-            arch.floatnum_tobytes(*flt, buf, destsize, m_size, 0, warn);
+            arch.floatnum_tobytes(*flt, bytes, destsize, m_size, 0, warn);
             return true;
         }
 
@@ -618,7 +619,7 @@ Value::output_basic(/*@out@*/ unsigned char* buf, size_t destsize,
             outval.calc(Op::ADD, intn);
 
         // Output!
-        arch.intnum_tobytes(outval, buf, destsize, m_size, 0, bc, warn);
+        arch.intnum_tobytes(outval, bytes, destsize, m_size, 0, bc, warn);
         return true;
     }
 
@@ -627,10 +628,10 @@ Value::output_basic(/*@out@*/ unsigned char* buf, size_t destsize,
 
     if (intn) {
         // Output just absolute portion
-        arch.intnum_tobytes(*intn, buf, destsize, m_size, 0, bc, warn);
+        arch.intnum_tobytes(*intn, bytes, destsize, m_size, 0, bc, warn);
     } else {
         // No absolute or relative portions: output 0
-        arch.intnum_tobytes(0, buf, destsize, m_size, 0, bc, warn);
+        arch.intnum_tobytes(0, bytes, destsize, m_size, 0, bc, warn);
     }
 
     return true;

@@ -114,7 +114,7 @@ public:
 
     /// Output value if constant or PC-relative section-local.  This should
     /// be used from objfmt output_value_func() functions.
-    /// @param buf          buffer for byte representation
+    /// @param bytes        storage for byte representation
     /// @param destsize     destination size (in bytes)
     /// @param bc           current bytecode (usually passed into
     ///                     higher-level calling function)
@@ -128,8 +128,8 @@ public:
     ///      use this function!
     /// @return False if no value output due to value needing relocation;
     ///         true if value output.
-    bool output_basic(/*@out@*/ unsigned char* buf, size_t destsize,
-                      Bytecode& bc, int warn, const Arch& arch);
+    bool output_basic(Bytes& bytes, size_t destsize, const Bytecode& bc,
+                      int warn, const Arch& arch);
 
     /// Print a value.  For debugging purposes.
     /// @param os           output stream

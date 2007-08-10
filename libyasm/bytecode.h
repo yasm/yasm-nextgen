@@ -70,8 +70,8 @@ class Value;
 ///                     positive for unsigned integer warnings
 /// @return True if an error occurred, false otherwise.
 typedef
-    boost::function<bool (Value* value, Bytes& bytes, unsigned int destsize,
-                          unsigned long offset, Bytecode* bc, int warn)>
+    boost::function<bool (Value& value, Bytes& bytes, unsigned int destsize,
+                          unsigned long offset, Bytecode& bc, int warn)>
     OutputValueFunc;
 
 /// Convert a symbol reference to its byte representation.  Usually
@@ -89,7 +89,7 @@ typedef
 ///                     positive for unsigned integer warnings
 /// @return True if an error occurred, false otherwise.
 typedef
-    boost::function<bool (Symbol* sym, Bytecode* bc, Bytes& bytes,
+    boost::function<bool (Symbol* sym, Bytecode& bc, Bytes& bytes,
                           unsigned int destsize, unsigned int valsize,
                           int warn)>
     OutputRelocFunc;
