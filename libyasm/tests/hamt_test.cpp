@@ -40,7 +40,7 @@ public:
     Symbol(const std::string& name);
     ~Symbol();
 
-    std::string get_name() const { return m_name; }
+    const std::string& get_name() const { return m_name; }
 
 private:
     std::string m_name;
@@ -57,7 +57,7 @@ Symbol::~Symbol()
 
 class SymGetName {
 public:
-    std::string operator() (const Symbol* sym) const
+    const std::string& operator() (const Symbol* sym) const
     { return sym->get_name(); }
 };
 

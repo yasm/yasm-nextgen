@@ -58,7 +58,7 @@ namespace {
 /// Get name helper for symbol table HAMT.
 class SymGetName {
 public:
-    std::string operator() (const yasm::Symbol* sym) const
+    const std::string& operator() (const yasm::Symbol* sym) const
     { return sym->get_name(); }
 };
 

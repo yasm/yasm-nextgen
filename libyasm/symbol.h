@@ -70,7 +70,7 @@ public:
 
     /// Get the name of a symbol.
     /// @return Symbol name.
-    std::string get_name() const { return m_name; }
+    const std::string& get_name() const { return m_name; }
 
     /// Get the visibility of a symbol.
     /// @return Symbol visibility.
