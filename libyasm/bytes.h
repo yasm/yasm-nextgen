@@ -91,7 +91,7 @@ set_endian(bool bigendian)
 }
 
 inline Bytes&
-operator<< (Bytes& bytes, SetEndian sete)
+operator<< (Bytes& bytes, const SetEndian& sete)
 {
     bytes.set_bigendian(sete.m_bigendian);
     return bytes;
