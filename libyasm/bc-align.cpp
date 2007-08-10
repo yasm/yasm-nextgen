@@ -28,6 +28,7 @@
 
 #include <cstdlib>
 #include <iomanip>
+#include <ostream>
 #include <sstream>
 
 #include <boost/scoped_ptr.hpp>

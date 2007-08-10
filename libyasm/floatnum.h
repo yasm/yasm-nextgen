@@ -31,7 +31,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <ostream>
+#include <iosfwd>
 
 #include "bitvect.h"
 #include "operator.h"

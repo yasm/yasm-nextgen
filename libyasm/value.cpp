@@ -27,6 +27,7 @@
 #include "util.h"
 
 #include <iomanip>
+#include <ostream>
 
 #include "arch.h"
 #include "bytes.h"

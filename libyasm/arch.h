@@ -29,7 +29,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <ostream>
+#include <iosfwd>
 #include <map>
 #include <memory>
 #include <string>

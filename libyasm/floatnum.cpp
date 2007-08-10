@@ -29,6 +29,7 @@
 #include "util.h"
 
 #include <iomanip>
+#include <ostream>
 
 #include "bitvect.h"
 #include "errwarn.h"

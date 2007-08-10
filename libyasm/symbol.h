@@ -29,7 +29,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <ostream>
+#include <iosfwd>
 #include <string>
 
 #include <boost/noncopyable.hpp>

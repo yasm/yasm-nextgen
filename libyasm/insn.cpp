@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <iomanip>
+#include <ostream>
 
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>

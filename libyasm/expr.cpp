@@ -27,6 +27,7 @@
 #include "util.h"
 
 #include <algorithm>
+#include <ostream>
 
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>

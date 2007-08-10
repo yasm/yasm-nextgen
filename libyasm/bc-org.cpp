@@ -27,6 +27,7 @@
 #include "util.h"
 
 #include <iomanip>
+#include <ostream>
 
 #include "bytecode.h"
 #include "bytes.h"
