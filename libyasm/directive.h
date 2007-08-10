@@ -34,6 +34,7 @@
 #include <string>
 #include <vector>
 
+#include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
@@ -147,55 +148,28 @@ typedef std::vector<NameValue> NameValues;
 /// @param namevals name/values
 std::ostream& operator<< (std::ostream& os, const NameValues& namevals);
 
-/// Directive functor.
-class Directive {
+/// Directive handler function.
+/// @param object           object
+/// @param name             directive name
+/// @param namevals         name/values
+/// @param objext_namevals  object format-specific name/values
+/// @param line             virtual line (from Linemap)
+typedef boost::function<void (Object& object,
+                              const NameValues& namevals,
+                              const NameValues& objext_namevals,
+                              unsigned long line)>
+    Directive;
+
+class DirectiveManager {
 public:
+    /// Tests to perform prior to directive handler being called.
+    /// These can be used to simplify a directive function implementation.
     enum Flags {
         ANY = 0,            ///< Any valparams accepted
         ARG_REQUIRED = 1,   ///< Require at least 1 valparam
         ID_REQUIRED = 2     ///< First valparam must be ID
     };
 
-    /// Constructor.
-    /// @param flags        Flags for pre-handler parameter checking.
-    Directive(std::string name, Flags flags)
-        : m_name(name), m_flags(flags)
-    {}
-    virtual ~Directive() {}
-
-    /// Call a directive.  Performs any valparam checks asked for by the
-    /// directive prior to call.  Note that for a variety of reasons, a
-    /// directive can raise an exception.
-    /// @param object           object 
-    /// @param namevals         name/values
-    /// @param objext_namevals  object format-specific name/values
-    /// @param line             virtual line (from Linemap)
-    void operator() (Object& object,
-                     const NameValues& namevals,
-                     const NameValues& objext_namevals,
-                     unsigned long line);
-
-protected:
-    /// Handler function for the directive.
-    /// @param object           object 
-    /// @param namevals         name/values
-    /// @param objext_namevals  object format-specific name/values
-    /// @param line             virtual line (from Linemap)
-    virtual void handler(Object& object,
-                         const NameValues& namevals,
-                         const NameValues& objext_namevals,
-                         unsigned long line) = 0;
-
-private:
-    /// Directive name.
-    std::string m_name;
-
-    /// Flags for pre-handler parameter checking.
-    Flags m_flags;
-};
-
-class DirectiveManager {
-public:
     DirectiveManager();
     ~DirectiveManager();
 
@@ -204,18 +178,18 @@ public:
     ///                     the ".", NASM directives should just be the raw
     ///                     name (not including the []).
     /// @param parser       Parser keyword
-    /// @param directive    New'ed instance of Directive functor.
+    /// @param handler      Directive function
     /// @param flags        Flags for pre-handler parameter checking.
     void add(const std::string& name,
              const std::string& parser,
-             Directive* directive,
-             Directive::Flags flags = Directive::ANY);
+             Directive handler,
+             Flags flags = ANY);
 
     /// Get a directive functor.  Throws an exception if no match.
     /// @param name         directive name
     /// @param parser       parser keyword
-    Directive& get(const std::string& name,
-                   const std::string& parser) const;
+    Directive get(const std::string& name,
+                  const std::string& parser) const;
 
 private:
     /// Pimpl for class internals.

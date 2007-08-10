@@ -26,9 +26,10 @@
 ///
 #include "util.h"
 
+#include <map>
 #include <sstream>
 
-#include <boost/ptr_container/ptr_map.hpp>
+#include <boost/bind.hpp>
 
 #include "directive.h"
 #include "errwarn.h"
@@ -44,7 +45,25 @@ public:
     Impl() {}
     ~Impl() {}
 
-    boost::ptr_map<std::string, boost::ptr_map<std::string, Directive> > m_dirs;
+    class Dir {
+    public:
+        Dir(Directive handler, DirectiveManager::Flags flags)
+            : m_handler(handler), m_flags(flags)
+        {}
+        ~Dir() {}
+        void operator() (Object& object,
+                         const std::string& name,
+                         const NameValues& namevals,
+                         const NameValues& objext_namevals,
+                         unsigned long line);
+
+    private:
+        Directive m_handler;
+        DirectiveManager::Flags m_flags;
+    };
+
+    typedef std::map<std::string, std::map<std::string, Dir> > Dirs;
+    Dirs m_dirs;
 };
 
 DirectiveManager::DirectiveManager()
@@ -58,27 +77,43 @@ DirectiveManager::~DirectiveManager()
 
 void
 DirectiveManager::add(const std::string& name, const std::string& parser,
-                      Directive* directive, Directive::Flags flags)
+                      Directive handler, Flags flags)
 {
-    m_impl->m_dirs[parser].insert(name, std::auto_ptr<Directive>(directive));
+    m_impl->m_dirs[parser].insert(std::make_pair(name,
+                                                 Impl::Dir(handler, flags)));
 }
 
-Directive&
+Directive
 DirectiveManager::get(const std::string& name,
                       const std::string& parser) const
 {
-    return m_impl->m_dirs.at(parser).at(name);
+    Impl::Dirs::iterator p = m_impl->m_dirs.find(parser);
+    if (p == m_impl->m_dirs.end()) {
+        std::ostringstream emsg;
+        emsg << N_("unrecognized parser") << " `" << parser << "'";
+        throw Error(emsg.str());
+    }
+
+    std::map<std::string, Impl::Dir>::iterator q = p->second.find(parser);
+    if (q == p->second.end()) {
+        std::ostringstream emsg;
+        emsg << N_("unrecognized directive") << " `" << name << "'";
+        throw Error(emsg.str());
+    }
+
+    return boost::bind<void>(q->second, _1, name, _2, _3, _4);
 }
 
 void
-Directive::operator() (Object& object,
-                       const NameValues& namevals,
-                       const NameValues& objext_namevals,
-                       unsigned long line)
+DirectiveManager::Impl::Dir::operator() (Object& object,
+                                         const std::string& name,
+                                         const NameValues& namevals,
+                                         const NameValues& objext_namevals,
+                                         unsigned long line)
 {
     if ((m_flags & (ARG_REQUIRED|ID_REQUIRED)) && namevals.empty()) {
         std::ostringstream emsg;
-        emsg << N_("directive") << " `" << m_name << "' "
+        emsg << N_("directive") << " `" << name << "' "
              << N_("requires an argument");
         throw SyntaxError(emsg.str());
     }
@@ -86,13 +121,13 @@ Directive::operator() (Object& object,
     if (!namevals.empty()) {
         if ((m_flags & ID_REQUIRED) && !namevals.front().is_id()) {
             std::ostringstream emsg;
-            emsg << N_("directive") << " `" << m_name << "' "
+            emsg << N_("directive") << " `" << name << "' "
                  << N_("requires an identifier parameter");
             throw SyntaxError(emsg.str());
         }
     }
 
-    handler(object, namevals, objext_namevals, line);
+    m_handler(object, namevals, objext_namevals, line);
 }
 
 NameValue::NameValue(const std::string& name, const std::string& id,
