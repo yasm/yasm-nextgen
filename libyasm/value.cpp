@@ -28,7 +28,7 @@
 
 #include <iomanip>
 
-//#include "arch.h"
+#include "arch.h"
 #include "bytecode.h"
 #include "errwarn.h"
 #include "expr.h"
@@ -547,19 +547,18 @@ Value::get_intnum(Bytecode* bc, bool calc_bc_dist)
 
 bool
 Value::output_basic(/*@out@*/ unsigned char* buf, size_t destsize,
-                    Bytecode* bc, int warn, Arch* arch)
+                    Bytecode& bc, int warn, const Arch& arch)
 {
     /*@dependent@*/ /*@null@*/ IntNum* intn = 0;
 
     if (m_abs.get() != 0) {
-#if 0
         // Handle floating point expressions
         FloatNum* flt;
         if (!m_rel && (flt = m_abs->get_float())) {
-            arch->floatnum_tobytes(*flt, buf, destsize, m_size, 0, warn);
+            arch.floatnum_tobytes(*flt, buf, destsize, m_size, 0, warn);
             return true;
         }
-#endif
+
         // Check for complex float expressions
         if (m_abs->contains(Expr::FLOAT))
             throw FloatingPointError(
@@ -596,7 +595,7 @@ Value::output_basic(/*@out@*/ unsigned char* buf, size_t destsize,
         bool sym_local = m_rel->get_label(rel_prevbc);
         if (m_wrt || m_seg_of || m_section_rel || !sym_local)
             return false;   // we can't handle SEG, WRT, or external symbols
-        if (rel_prevbc->get_section() != bc->get_section())
+        if (rel_prevbc->get_section() != bc.get_section())
             return false;   // not in this section
         if (!m_curpos_rel)
             return false;   // not PC-relative
@@ -604,11 +603,11 @@ Value::output_basic(/*@out@*/ unsigned char* buf, size_t destsize,
         // Calculate value relative to current assembly position
         IntNum outval(0);
         unsigned long dist = rel_prevbc->next_offset();
-        if (dist < bc->get_offset()) {
-            outval = bc->get_offset() - dist;
+        if (dist < bc.get_offset()) {
+            outval = bc.get_offset() - dist;
             outval.calc(Op::NEG);
         } else {
-            dist -= bc->get_offset();
+            dist -= bc.get_offset();
             outval = dist;
         }
 
@@ -617,24 +616,23 @@ Value::output_basic(/*@out@*/ unsigned char* buf, size_t destsize,
         // Add in absolute portion
         if (intn)
             outval.calc(Op::ADD, intn);
-#if 0
+
         // Output!
-        arch->intnum_tobytes(outval, buf, destsize, m_size, 0, bc, warn);
-#endif
+        arch.intnum_tobytes(outval, buf, destsize, m_size, 0, bc, warn);
         return true;
     }
 
     if (m_seg_of || m_rshift || m_curpos_rel || m_ip_rel || m_section_rel)
         return false;   // We can't handle this with just an absolute
-#if 0
+
     if (intn) {
         // Output just absolute portion
-        arch->intnum_tobytes(intn, buf, destsize, m_size, 0, bc, warn);
+        arch.intnum_tobytes(*intn, buf, destsize, m_size, 0, bc, warn);
     } else {
         // No absolute or relative portions: output 0
-        arch->intnum_tobytes(0, buf, destsize, m_size, 0, bc, warn);
+        arch.intnum_tobytes(0, buf, destsize, m_size, 0, bc, warn);
     }
-#endif
+
     return true;
 }
 
