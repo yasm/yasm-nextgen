@@ -26,7 +26,8 @@
 ///
 #include "util.h"
 
-#include <boost/format.hpp>
+#include <sstream>
+
 #include <boost/ptr_container/ptr_map.hpp>
 
 #include "directive.h"
@@ -75,15 +76,20 @@ Directive::operator() (Object& object,
                        const NameValues& objext_namevals,
                        unsigned long line)
 {
-    if ((m_flags & (ARG_REQUIRED|ID_REQUIRED)) && namevals.empty())
-        throw SyntaxError(str(boost::format(
-            N_("directive `%s' requires an argument")) % m_name));
+    if ((m_flags & (ARG_REQUIRED|ID_REQUIRED)) && namevals.empty()) {
+        std::ostringstream emsg;
+        emsg << N_("directive") << " `" << m_name << "' "
+             << N_("requires an argument");
+        throw SyntaxError(emsg.str());
+    }
 
     if (!namevals.empty()) {
-        if ((m_flags & ID_REQUIRED) && !namevals.front().is_id())
-            throw SyntaxError(str(boost::format(
-                N_("directive `%s' requires an identifier parameter")) %
-                m_name));
+        if ((m_flags & ID_REQUIRED) && !namevals.front().is_id()) {
+            std::ostringstream emsg;
+            emsg << N_("directive") << " `" << m_name << "' "
+                 << N_("requires an identifier parameter");
+            throw SyntaxError(emsg.str());
+        }
     }
 
     handler(object, namevals, objext_namevals, line);

@@ -29,10 +29,10 @@
 #include <algorithm>
 #include <iomanip>
 #include <list>
+#include <sstream>
 #include <vector>
 
 #include <boost/bind.hpp>
-#include <boost/format.hpp>
 #include <boost/ptr_container/ptr_list.hpp>
 #include <boost/ref.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -90,10 +90,14 @@ Object::Object(const std::string& src_filename,
 {
     // Initialize the object format
     if (!m_objfmt->set_object(this)) {
-        throw Error(str(boost::format(
-            N_("object format `%s' does not support architecture `%s' machine `%s'")) %
-            m_objfmt->get_keyword() % m_arch->get_keyword() %
-            m_arch->get_machine()));
+        std::ostringstream emsg;
+        emsg << N_("object format")
+             << " `" << m_objfmt->get_keyword() << "' ";
+        emsg << N_("does not support architecture")
+             << " `" << m_arch->get_keyword() << "' ";
+        emsg << N_("machine")
+             << " `" << m_arch->get_machine() << "'";
+        throw Error(emsg.str());
     }
 
     // Add an initial "default" section to object

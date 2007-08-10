@@ -27,8 +27,7 @@
 #include "util.h"
 
 #include <map>
-
-#include <boost/format.hpp>
+#include <sstream>
 
 #include "dir_help.h"
 #include "errwarn.h"
@@ -114,8 +113,10 @@ dir_intn(const NameValue& nv, Object& obj, unsigned long line, IntNum& out,
     /*@null@*/ IntNum* local;
 
     if ((e.get() == 0) || ((local = e->get_intnum()) == 0)) {
-        throw NotConstantError(str(boost::format(
-            N_("argument to `%s' is not an integer")) % nv.get_name()));
+        std::ostringstream emsg;
+        emsg << "`" << nv.get_name() << "': "
+             << N_("argument must be an integer");
+        throw NotConstantError(emsg.str());
     }
 
     out = *local;
@@ -126,9 +127,10 @@ void
 dir_string(const NameValue& nv, std::string& out, bool& out_set)
 {
     if (!nv.is_string()) {
-        throw ValueError(str(boost::format(
-            N_("argument to `%s' is not a string or identifier")) %
-                             nv.get_name()));
+        std::ostringstream emsg;
+        emsg << "`" << nv.get_name() << "': "
+             << N_("argument must be a string or identifier");
+        throw ValueError(emsg.str());
     }
     out = nv.get_string();
     out_set = true;
@@ -138,16 +140,16 @@ bool
 dir_nameval_warn(const NameValue& nv)
 {
     if (!nv.get_name().empty()) {
-        warn_set(WARN_GENERAL,
-                 str(boost::format(N_("Unrecognized qualifier `%s'")) %
-                     nv.get_name()));
+        std::ostringstream wmsg;
+        wmsg << N_("Unrecognized qualifier") << " `" << nv.get_name() << "'";
+        warn_set(WARN_GENERAL, wmsg.str());
         return false;
     }
 
     if (nv.is_id()) {
-        warn_set(WARN_GENERAL,
-                 str(boost::format(N_("Unrecognized qualifier `%s'")) %
-                     nv.get_id()));
+        std::ostringstream wmsg;
+        wmsg << N_("Unrecognized qualifier") << " `" << nv.get_id() << "'";
+        warn_set(WARN_GENERAL, wmsg.str());
     } else if (nv.is_string()) {
         warn_set(WARN_GENERAL, N_("Unrecognized string qualifier"));
     } else {

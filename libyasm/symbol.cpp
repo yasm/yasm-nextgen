@@ -27,8 +27,7 @@
 #include "util.h"
 
 #include <iomanip>
-
-#include <boost/format.hpp>
+#include <sstream>
 
 #include "bytecode.h"
 #include "errwarn.h"
@@ -107,16 +106,19 @@ Symbol::define(Type type, unsigned long line)
 {
     // Has it been defined before (either by DEFINED or COMMON/EXTERN)?
     if (m_status & DEFINED) {
-        Error err(str(boost::format(N_("redefinition of `%s'"))
-                                           % m_name));
-        err.set_xref(m_def_line != 0 ? m_def_line : m_decl_line,
-                     str(boost::format(N_("`%s' previously defined here"))
-                                       % m_name));
+        std::ostringstream emsg, xref;
+        emsg << N_("redefinition of") << " `" << m_name << "'";
+        Error err(emsg.str());
+        xref << "`" << m_name << "' " << N_("previously defined here");
+        err.set_xref(m_def_line != 0 ? m_def_line : m_decl_line, xref.str());
         throw err;
     } else {
-        if (m_visibility & EXTERN)
-            warn_set(WARN_GENERAL, str(boost::format(
-                N_("`%s' both defined and declared extern")) % m_name));
+        if (m_visibility & EXTERN) {
+            std::ostringstream wmsg;
+            wmsg << "`" << m_name << "' "
+                 << N_("both defined and declared extern");
+            warn_set(WARN_GENERAL, wmsg.str());
+        }
         m_def_line = line;      // set line number of definition
         m_type = type;
         m_status |= DEFINED;
@@ -181,10 +183,11 @@ Symbol::declare(Visibility vis, unsigned long line)
         m_decl_line = line;
         m_visibility |= vis;
     } else {
-        Error err(str(boost::format(N_("redefinition of `%s'")) % m_name));
-        err.set_xref(m_def_line!=0 ? m_def_line : m_decl_line,
-                     str(boost::format(N_("`%s' previously defined here"))
-                                       % m_name));
+        std::ostringstream emsg, xref;
+        emsg << N_("redefinition of") << " `" << m_name << "'";
+        Error err(emsg.str());
+        xref << "`" << m_name << "' " << N_("previously defined here");
+        err.set_xref(m_def_line != 0 ? m_def_line : m_decl_line, xref.str());
         throw err;
     }
     return this;
@@ -196,11 +199,14 @@ Symbol::finalize(bool undef_extern)
     // error if a symbol is used but never defined or extern/common declared
     if ((m_status & USED) && !(m_status & DEFINED) &&
         !(m_visibility & (EXTERN | COMMON))) {
-        if (undef_extern)
+        if (undef_extern) {
             m_visibility |= EXTERN;
-        else
-            throw Error(str(boost::format(
-                N_("undefined symbol `%s' (first use)")) % m_name));
+        } else {
+            std::ostringstream emsg;
+            emsg << N_("undefined symbol") << " `" << m_name << "' "
+                 << N_("(first use)");
+            throw Error(emsg.str());
+        }
     }
 }
 

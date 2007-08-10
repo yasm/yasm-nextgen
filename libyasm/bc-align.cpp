@@ -28,8 +28,8 @@
 
 #include <cstdlib>
 #include <iomanip>
+#include <sstream>
 
-#include <boost/format.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include "bytecode.h"
@@ -213,8 +213,9 @@ AlignBytecode::to_bytes(Bytecode& bc, Bytes& bytes,
         }
 
         if (!m_code_fill[len]) {
-            throw ValueError(str(boost::format(
-                N_("invalid alignment size %d")) % len));
+            std::ostringstream emsg;
+            emsg << N_("invalid alignment size") << " " << len;
+            throw ValueError(emsg.str());
         }
         // Handle rest of code fill
         bytes.insert(bytes.end(),
