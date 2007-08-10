@@ -33,7 +33,6 @@
 #include <vector>
 
 #include <boost/bind.hpp>
-#include <boost/ptr_container/ptr_list.hpp>
 #include <boost/ref.hpp>
 #include <boost/scoped_ptr.hpp>
 
@@ -449,7 +448,7 @@ private:
     void check_cycle(IntervalTreeNode<Span::Term*> * node, Span& span);
     void term_expand(IntervalTreeNode<Span::Term*> * node, long len_diff);
 
-    boost::ptr_list<Span> m_spans;
+    std::list<Span*> m_spans;   // ownership list
     std::list<Span*> m_QA, m_QB;
     IntervalTree<Span::Term*> m_itree;
     std::vector<OffsetSetter> m_offset_setters;
@@ -606,6 +605,10 @@ Optimize::Optimize()
 
 Optimize::~Optimize()
 {
+    while (!m_spans.empty()) {
+        delete m_spans.back();
+        m_spans.pop_back();
+    }
 }
 
 void
@@ -722,8 +725,9 @@ Optimize::step_1b(Errwarns& errwarns)
 {
     bool saw_error = false;
 
-    boost::ptr_list<Span>::iterator span = m_spans.begin();
-    while (span != m_spans.end()) {
+    std::list<Span*>::iterator spani = m_spans.begin();
+    while (spani != m_spans.end()) {
+        Span* span = *spani;
         bool terms_okay = true;
         try {
             span->create_terms();
@@ -734,9 +738,9 @@ Optimize::step_1b(Errwarns& errwarns)
         }
         if (terms_okay && span->recalc_normal()) {
             bool still_depend =
-                span->m_bc.expand(span->m_id, span->m_cur_val, span->m_new_val,
-                                  span->m_neg_thres, span->m_pos_thres,
-                                  errwarns);
+                span->m_bc.expand(span->m_id, span->m_cur_val,
+                                  span->m_new_val, span->m_neg_thres,
+                                  span->m_pos_thres, errwarns);
             if (errwarns.num_errors() > 0)
                 saw_error = true;
             else if (still_depend) {
@@ -746,12 +750,12 @@ Optimize::step_1b(Errwarns& errwarns)
                     saw_error = true;
                 }
             } else {
-                span = m_spans.erase(span);
+                spani = m_spans.erase(spani);
                 continue;
             }
         }
         span->m_cur_val = span->m_new_val;
-        ++span;
+        ++spani;
     }
 
     return saw_error;
@@ -760,8 +764,9 @@ Optimize::step_1b(Errwarns& errwarns)
 bool
 Optimize::step_1d()
 {
-    for (boost::ptr_list<Span>::iterator span=m_spans.begin(),
-         endspan=m_spans.end(); span != endspan; ++span) {
+    for (std::list<Span*>::iterator spani=m_spans.begin(),
+         endspan=m_spans.end(); spani != endspan; ++spani) {
+        Span* span = *spani;
         // Update span terms based on new bc offsets
         for (Span::Terms::iterator term=span->m_span_terms.begin(),
              endterm=span->m_span_terms.end(); term != endterm; ++term) {
@@ -809,8 +814,9 @@ Optimize::step_1e(Errwarns& errwarns)
     }
 
     // Build up interval tree
-    for (boost::ptr_list<Span>::iterator span=m_spans.begin(),
-         endspan=m_spans.end(); span != endspan; ++span) {
+    for (std::list<Span*>::iterator spani=m_spans.begin(),
+         endspan=m_spans.end(); spani != endspan; ++spani) {
+        Span* span = *spani;
         for (Span::Terms::iterator term=span->m_span_terms.begin(),
              endterm=span->m_span_terms.end(); term != endterm; ++term)
             itree_add(*span, *term);
@@ -819,8 +825,9 @@ Optimize::step_1e(Errwarns& errwarns)
     }
 
     // Look for cycles in times expansion (span.id==0)
-    for (boost::ptr_list<Span>::iterator span=m_spans.begin(),
-         endspan=m_spans.end(); span != endspan; ++span) {
+    for (std::list<Span*>::iterator spani=m_spans.begin(),
+         endspan=m_spans.end(); spani != endspan; ++spani) {
+        Span* span = *spani;
         if (span->m_id > 0)
             continue;
         try {
