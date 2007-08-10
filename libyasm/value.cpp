@@ -31,7 +31,7 @@
 //#include "arch.h"
 #include "bytecode.h"
 #include "errwarn.h"
-//#include "expr.h"
+#include "expr.h"
 //#include "floatnum.h"
 #include "intnum.h"
 #include "object.h"
@@ -463,7 +463,7 @@ Value::finalize(Bytecode* precbc)
     m_abs->level_tree(true, true, false);
 
     // Handle trivial (IDENT) cases immediately
-    if (m_abs->is_op(Expr::IDENT)) {
+    if (m_abs->is_op(Op::IDENT)) {
         if (IntNum* intn = m_abs->get_intnum()) {
             if (intn->is_zero())
                 m_abs.reset(0);
@@ -481,7 +481,7 @@ Value::finalize(Bytecode* precbc)
 
     // Simplify 0 in abs to NULL
     IntNum* intn;
-    if (m_abs->is_op(Expr::IDENT)
+    if (m_abs->is_op(Op::IDENT)
         && (intn = m_abs->get_terms()[0].get_int())
         && intn->is_zero()) {
         m_abs.reset(0);
@@ -524,17 +524,17 @@ Value::get_intnum(Bytecode* bc, bool calc_bc_dist)
         unsigned long dist = rel_prevbc->next_offset();
         if (dist < bc->get_offset()) {
             outval.reset(new IntNum(bc->get_offset() - dist));
-            outval->calc(Expr::NEG);
+            outval->calc(Op::NEG);
         } else {
             dist -= bc->get_offset();
             outval.reset(new IntNum(dist));
         }
 
         if (m_rshift > 0)
-            outval->calc(Expr::SHR, m_rshift);
+            outval->calc(Op::SHR, m_rshift);
         // Add in absolute portion
         if (intn)
-            outval->calc(Expr::ADD, intn);
+            outval->calc(Op::ADD, intn);
         return outval;
     }
 
@@ -606,17 +606,17 @@ Value::output_basic(/*@out@*/ unsigned char* buf, size_t destsize,
         unsigned long dist = rel_prevbc->next_offset();
         if (dist < bc->get_offset()) {
             outval = bc->get_offset() - dist;
-            outval.calc(Expr::NEG);
+            outval.calc(Op::NEG);
         } else {
             dist -= bc->get_offset();
             outval = dist;
         }
 
         if (m_rshift > 0)
-            outval.calc(Expr::SHR, m_rshift);
+            outval.calc(Op::SHR, m_rshift);
         // Add in absolute portion
         if (intn)
-            outval.calc(Expr::ADD, intn);
+            outval.calc(Op::ADD, intn);
 #if 0
         // Output!
         arch->intnum_tobytes(outval, buf, destsize, m_size, 0, bc, warn);

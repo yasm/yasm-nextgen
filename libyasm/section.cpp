@@ -29,6 +29,7 @@
 #include <iomanip>
 
 #include "bytecode.h"
+#include "expr.h"
 #include "intnum.h"
 #include "section.h"
 

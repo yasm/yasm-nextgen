@@ -37,6 +37,7 @@
 #include "expr.h"
 #include "insn.h"
 #include "intnum.h"
+#include "operator.h"
 //#include "symrec.h"
 #include "value.h"
 
@@ -47,7 +48,7 @@ void
 Bytecode::set_multiple(std::auto_ptr<Expr> e)
 {
     if (m_multiple.get() != 0)
-        m_multiple.reset(new Expr(m_multiple.get(), Expr::MUL, e,
+        m_multiple.reset(new Expr(m_multiple.get(), Op::MUL, e,
                                   e->get_line()));
     else
         m_multiple.reset(e.release());
@@ -343,7 +344,7 @@ calc_bc_dist(const Bytecode& precbc1, const Bytecode& precbc2, IntNum& dist)
     unsigned long dist2 = precbc2.next_offset();
     if (dist2 < dist1) {
         dist = dist1 - dist2;
-        dist.calc(Expr::NEG);
+        dist.calc(Op::NEG);
         return true;
     }
     dist = dist2 - dist1;
@@ -361,7 +362,7 @@ xform_bc_dist_base(Expr* e, boost::function<bool (Expr::Term& term,
 {
     // Handle symrec-symrec in ADD exprs by looking for (-1*symrec) and
     // symrec term pairs (where both symrecs are in the same segment).
-    if (!e->is_op(Expr::ADD))
+    if (!e->is_op(Op::ADD))
         return;
 
     Expr::Terms& terms = e->get_terms();
@@ -372,7 +373,7 @@ xform_bc_dist_base(Expr* e, boost::function<bool (Expr::Term& term,
         if (!sube)
             continue;
         Expr::Terms& subterms = sube->get_terms();
-        if (!sube->is_op(Expr::MUL) || subterms.size() != 2)
+        if (!sube->is_op(Op::MUL) || subterms.size() != 2)
             continue;
 
         IntNum* intn;

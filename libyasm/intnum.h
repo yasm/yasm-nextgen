@@ -33,7 +33,7 @@
 #include <iostream>
 
 #include "bitvect.h"
-#include "expr.h"
+#include "operator.h"
 
 
 namespace yasm {
@@ -106,12 +106,12 @@ public:
 #endif
 
     /// Floating point calculation function: acc = acc op operand.
-    /// @note Not all operations in yasm_expr_op may be supported; unsupported
+    /// @note Not all operations in Op::Op may be supported; unsupported
     ///       operations will result in an error.
     /// @param op       operation
     /// @param operand  intnum operand
-    void calc(Expr::Op op, const IntNum &operand) { calc(op, &operand); }
-    void calc(Expr::Op op, /*@null@*/ const IntNum *operand = 0);
+    void calc(Op::Op op, const IntNum &operand) { calc(op, &operand); }
+    void calc(Op::Op op, /*@null@*/ const IntNum *operand = 0);
 
     /// Zero an intnum.
     void zero() { set(0); }

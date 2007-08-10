@@ -35,6 +35,8 @@
 
 #include <boost/function.hpp>
 
+#include "operator.h"
+
 
 namespace yasm {
 
@@ -50,45 +52,6 @@ class Expr {
 
 public:
     typedef std::auto_ptr<Expr> Ptr;
-
-    /// Operators usable in expressions.
-    enum Op {
-        IDENT,      ///< No operation, just a value.
-        ADD,        ///< Arithmetic addition (+).
-        SUB,        ///< Arithmetic subtraction (-).
-        MUL,        ///< Arithmetic multiplication (*).
-        DIV,        ///< Arithmetic unsigned division.
-        SIGNDIV,    ///< Arithmetic signed division.
-        MOD,        ///< Arithmetic unsigned modulus.
-        SIGNMOD,    ///< Arithmetic signed modulus.
-        NEG,        ///< Arithmetic negation (-).
-        NOT,        ///< Bitwise negation.
-        OR,         ///< Bitwise OR.
-        AND,        ///< Bitwise AND.
-        XOR,        ///< Bitwise XOR.
-        XNOR,       ///< Bitwise XNOR.
-        NOR,        ///< Bitwise NOR.
-        SHL,        ///< Shift left (logical).
-        SHR,        ///< Shift right (logical).
-        LOR,        ///< Logical OR.
-        LAND,       ///< Logical AND.
-        LNOT,       ///< Logical negation.
-        LXOR,       ///< Logical XOR.
-        LXNOR,      ///< Logical XNOR.
-        LNOR,       ///< Logical NOR.
-        LT,         ///< Less than comparison.
-        GT,         ///< Greater than comparison.
-        EQ,         ///< Equality comparison.
-        LE,         ///< Less than or equal to comparison.
-        GE,         ///< Greater than or equal to comparison.
-        NE,         ///< Not equal comparison.
-        NONNUM,     ///< Start of non-numeric operations (not an op).
-        SEG,        ///< SEG operator (gets segment portion of address).
-        /// WRT operator (gets offset of address relative to some other
-        /// segment).
-        WRT,
-        SEGOFF      ///< The ':' in segment:offset.
-    };
 
     /// Types listed in canonical sorting order.  See expr_order_terms().
     /// Note precbc must be used carefully (in a-b pairs), as only symrecs
@@ -161,7 +124,7 @@ public:
         bool is_type(int type) const { return m_type & type; }
 
         /// Match operator.  Does not match non-expressions.
-        bool is_op(Expr::Op op) const
+        bool is_op(Op::Op op) const
         {
             Expr* e = get_expr();
             return (e && e->is_op(op));
@@ -209,13 +172,13 @@ public:
     /// @param op       operation
     /// @param b        expression b
     /// @param line     virtual line (where expression defined)
-    Expr(const Term& a, Op op, const Term& b, unsigned long line=0);
+    Expr(const Term& a, Op::Op op, const Term& b, unsigned long line=0);
 
     /// Create a new expression e=op a.
     /// @param o        operation
     /// @param a        expression a
     /// @param l        virtual line (where expression defined)
-    Expr(Op op, const Term& a, unsigned long line=0);
+    Expr(Op::Op op, const Term& a, unsigned long line=0);
 
     /// Create a new expression identity e=a.
     /// @param a        identity within new expression
@@ -227,7 +190,7 @@ public:
     /// @param op   operator
     /// @return True if the expression was the specified operation at the top
     ///         level.
-    bool is_op(Op op) const { return op == m_op; }
+    bool is_op(Op::Op op) const { return op == m_op; }
 
     /// Level an entire expression tree.  Also expands EQUs.
     /// @param fold_const       enable constant folding if nonzero
@@ -323,7 +286,7 @@ public:
 
 private:
     /// Operation.
-    Op m_op;
+    Op::Op m_op;
 
     /// Line number.
     unsigned long m_line;
@@ -333,7 +296,7 @@ private:
     Terms m_terms;
 
     void add_term(const Term& term);
-    Expr(unsigned long line, Op op);
+    Expr(unsigned long line, Op::Op op);
 
     // Internal callbacks
     bool substitute_cb(const Terms& subst_terms);

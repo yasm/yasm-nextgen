@@ -489,9 +489,9 @@ FloatNum::operator= (const FloatNum& rhs)
 }
 
 void
-FloatNum::calc(Expr::Op op, /*@unused@*/ const FloatNum* operand)
+FloatNum::calc(Op::Op op, /*@unused@*/ const FloatNum* operand)
 {
-    if (op != Expr::NEG)
+    if (op != Op::NEG)
         throw FloatingPointError(
             N_("Unsupported floating-point arithmetic operation"));
     m_sign ^= 1;

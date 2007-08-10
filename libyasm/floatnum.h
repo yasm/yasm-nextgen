@@ -34,7 +34,7 @@
 #include <iostream>
 
 #include "bitvect.h"
-#include "expr.h"
+#include "operator.h"
 
 
 namespace yasm {
@@ -65,12 +65,12 @@ public:
     ~FloatNum() { BitVector::Destroy(m_mantissa); }
 
     /// Floating point calculation function: acc = acc op operand.
-    /// @note Not all operations in Expr::Op may be supported; unsupported
+    /// @note Not all operations in Op::Op may be supported; unsupported
     ///       operations will result in an error.
     /// @param op       operation
     /// @param operand  floatnum operand
-    void calc(Expr::Op op, const FloatNum& operand) { calc(op, &operand); }
-    void calc(Expr::Op op, /*@null@*/ const FloatNum* operand = 0);
+    void calc(Op::Op op, const FloatNum& operand) { calc(op, &operand); }
+    void calc(Op::Op op, /*@null@*/ const FloatNum* operand = 0);
 
     /// Convert a floatnum to single-precision and return as 32-bit value.
     /// The 32-bit value is a "standard" C value (eg, of unknown endian).

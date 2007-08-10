@@ -14,9 +14,9 @@ main()
     Expr *e3 = new Expr(e2, Expr::MUL, new IntNum(6));
     Expr *e4 = new Expr(e, Expr::ADD, e3);
 #else
-    Expr::Ptr e2(new Expr(Expr::NEG, new IntNum(5)));
-    Expr::Ptr e3(new Expr(e2, Expr::MUL, new IntNum(6)));
-    Expr::Ptr e4(new Expr(e, Expr::ADD, e3));
+    Expr::Ptr e2(new Expr(Op::NEG, new IntNum(5)));
+    Expr::Ptr e3(new Expr(e2, Op::MUL, new IntNum(6)));
+    Expr::Ptr e4(new Expr(e, Op::ADD, e3));
 #endif
 
     std::cout << *e4 << std::endl;

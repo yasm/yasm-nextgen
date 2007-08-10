@@ -309,7 +309,7 @@ IntNum::operator= (const IntNum& rhs)
 
 /*@-nullderef -nullpass -branchstate@*/
 void
-IntNum::calc(Expr::Op op, const IntNum *operand)
+IntNum::calc(Op::Op op, const IntNum *operand)
 {
     IntNumManager &manager = IntNumManager::instance();
     wordptr result = manager.result;
@@ -324,77 +324,77 @@ IntNum::calc(Expr::Op op, const IntNum *operand)
     if (operand)
         op2 = operand->to_bv(manager.op2static);
 
-    if (!operand && op != Expr::NEG && op != Expr::NOT && op != Expr::LNOT)
+    if (!operand && op != Op::NEG && op != Op::NOT && op != Op::LNOT)
         throw ArithmeticError(N_("operation needs an operand"));
 
     // A operation does a bitvector computation if result is allocated.
     switch (op) {
-        case Expr::ADD:
+        case Op::ADD:
             BitVector::add(result, op1, op2, &carry);
             break;
-        case Expr::SUB:
+        case Op::SUB:
             BitVector::sub(result, op1, op2, &carry);
             break;
-        case Expr::MUL:
+        case Op::MUL:
             BitVector::Multiply(result, op1, op2);
             break;
-        case Expr::DIV:
+        case Op::DIV:
             // TODO: make sure op1 and op2 are unsigned
             if (BitVector::is_empty(op2))
                 throw ZeroDivisionError(N_("divide by zero"));
             else
                 BitVector::Divide(result, op1, op2, spare);
             break;
-        case Expr::SIGNDIV:
+        case Op::SIGNDIV:
             if (BitVector::is_empty(op2))
                 throw ZeroDivisionError(N_("divide by zero"));
             else
                 BitVector::Divide(result, op1, op2, spare);
             break;
-        case Expr::MOD:
+        case Op::MOD:
             // TODO: make sure op1 and op2 are unsigned
             if (BitVector::is_empty(op2))
                 throw ZeroDivisionError(N_("divide by zero"));
             else
                 BitVector::Divide(spare, op1, op2, result);
             break;
-        case Expr::SIGNMOD:
+        case Op::SIGNMOD:
             if (BitVector::is_empty(op2))
                 throw ZeroDivisionError(N_("divide by zero"));
             else
                 BitVector::Divide(spare, op1, op2, result);
             break;
-        case Expr::NEG:
+        case Op::NEG:
             BitVector::Negate(result, op1);
             break;
-        case Expr::NOT:
+        case Op::NOT:
             BitVector::Set_Complement(result, op1);
             break;
-        case Expr::OR:
+        case Op::OR:
             BitVector::Set_Union(result, op1, op2);
             break;
-        case Expr::AND:
+        case Op::AND:
             BitVector::Set_Intersection(result, op1, op2);
             break;
-        case Expr::XOR:
+        case Op::XOR:
             BitVector::Set_ExclusiveOr(result, op1, op2);
             break;
-        case Expr::XNOR:
+        case Op::XNOR:
             BitVector::Set_ExclusiveOr(result, op1, op2);
             BitVector::Set_Complement(result, result);
             break;
-        case Expr::NOR:
+        case Op::NOR:
             BitVector::Set_Union(result, op1, op2);
             BitVector::Set_Complement(result, result);
             break;
-        case Expr::SHL:
+        case Op::SHL:
             if (operand->m_type == INTNUM_L && operand->m_val.l > 0) {
                 BitVector::Copy(result, op1);
                 BitVector::Move_Left(result, (N_int)operand->m_val.l);
             } else      // don't even bother, just zero result
                 BitVector::Empty(result);
             break;
-        case Expr::SHR:
+        case Op::SHR:
             if (operand->m_type == INTNUM_L && operand->m_val.l > 0) {
                 BitVector::Copy(result, op1);
                 carry = BitVector::msb_(op1);
@@ -404,69 +404,69 @@ IntNum::calc(Expr::Op op, const IntNum *operand)
             } else      // don't even bother, just zero result
                 BitVector::Empty(result);
             break;
-        case Expr::LOR:
+        case Op::LOR:
             BitVector::Empty(result);
             BitVector::LSB(result, !BitVector::is_empty(op1) ||
                            !BitVector::is_empty(op2));
             break;
-        case Expr::LAND:
+        case Op::LAND:
             BitVector::Empty(result);
             BitVector::LSB(result, !BitVector::is_empty(op1) &&
                            !BitVector::is_empty(op2));
             break;
-        case Expr::LNOT:
+        case Op::LNOT:
             BitVector::Empty(result);
             BitVector::LSB(result, BitVector::is_empty(op1));
             break;
-        case Expr::LXOR:
+        case Op::LXOR:
             BitVector::Empty(result);
             BitVector::LSB(result, !BitVector::is_empty(op1) ^
                            !BitVector::is_empty(op2));
             break;
-        case Expr::LXNOR:
+        case Op::LXNOR:
             BitVector::Empty(result);
             BitVector::LSB(result, !(!BitVector::is_empty(op1) ^
                            !BitVector::is_empty(op2)));
             break;
-        case Expr::LNOR:
+        case Op::LNOR:
             BitVector::Empty(result);
             BitVector::LSB(result, !(!BitVector::is_empty(op1) ||
                            !BitVector::is_empty(op2)));
             break;
-        case Expr::EQ:
+        case Op::EQ:
             BitVector::Empty(result);
             BitVector::LSB(result, BitVector::equal(op1, op2));
             break;
-        case Expr::LT:
+        case Op::LT:
             BitVector::Empty(result);
             BitVector::LSB(result, BitVector::Compare(op1, op2) < 0);
             break;
-        case Expr::GT:
+        case Op::GT:
             BitVector::Empty(result);
             BitVector::LSB(result, BitVector::Compare(op1, op2) > 0);
             break;
-        case Expr::LE:
+        case Op::LE:
             BitVector::Empty(result);
             BitVector::LSB(result, BitVector::Compare(op1, op2) <= 0);
             break;
-        case Expr::GE:
+        case Op::GE:
             BitVector::Empty(result);
             BitVector::LSB(result, BitVector::Compare(op1, op2) >= 0);
             break;
-        case Expr::NE:
+        case Op::NE:
             BitVector::Empty(result);
             BitVector::LSB(result, !BitVector::equal(op1, op2));
             break;
-        case Expr::SEG:
+        case Op::SEG:
             throw ArithmeticError(N_("invalid use of 'SEG'"));
             break;
-        case Expr::WRT:
+        case Op::WRT:
             throw ArithmeticError(N_("invalid use of 'WRT'"));
             break;
-        case Expr::SEGOFF:
+        case Op::SEGOFF:
             throw ArithmeticError(N_("invalid use of ':'"));
             break;
-        case Expr::IDENT:
+        case Op::IDENT:
             if (result)
                 BitVector::Copy(result, op1);
             break;

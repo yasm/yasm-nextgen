@@ -46,44 +46,44 @@ using namespace yasm;
 /// Look for simple identities that make the entire result constant:
 /// 0*&x, -1|x, etc.
 bool
-is_constant(Expr::Op op, const IntNum* intn)
+is_constant(Op::Op op, const IntNum* intn)
 {
     bool iszero = intn->is_zero();
-    return ((iszero && op == Expr::MUL) ||
-            (iszero && op == Expr::AND) ||
-            (iszero && op == Expr::LAND) ||
-            (intn->is_neg1() && op == Expr::OR));
+    return ((iszero && op == Op::MUL) ||
+            (iszero && op == Op::AND) ||
+            (iszero && op == Op::LAND) ||
+            (intn->is_neg1() && op == Op::OR));
 }
 
 /// Look for simple "left" identities like 0+x, 1*x, etc.
 bool
-can_destroy_int_left(Expr::Op op, const IntNum* intn)
+can_destroy_int_left(Op::Op op, const IntNum* intn)
 {
     bool iszero = intn->is_zero();
-    return ((intn->is_pos1() && op == Expr::MUL) ||
-            (iszero && op == Expr::ADD) ||
-            (intn->is_neg1() && op == Expr::AND) ||
-            (!iszero && op == Expr::LAND) ||
-            (iszero && op == Expr::OR) ||
-            (iszero && op == Expr::LOR));
+    return ((intn->is_pos1() && op == Op::MUL) ||
+            (iszero && op == Op::ADD) ||
+            (intn->is_neg1() && op == Op::AND) ||
+            (!iszero && op == Op::LAND) ||
+            (iszero && op == Op::OR) ||
+            (iszero && op == Op::LOR));
 }
 
 /// Look for simple "right" identities like x+|-0, x*&/1
 bool
-can_destroy_int_right(Expr::Op op, const IntNum* intn)
+can_destroy_int_right(Op::Op op, const IntNum* intn)
 {
     int iszero = intn->is_zero();
     int ispos1 = intn->is_pos1();
-    return ((ispos1 && op == Expr::MUL) ||
-            (ispos1 && op == Expr::DIV) ||
-            (iszero && op == Expr::ADD) ||
-            (iszero && op == Expr::SUB) ||
-            (intn->is_neg1() && op == Expr::AND) ||
-            (!iszero && op == Expr::LAND) ||
-            (iszero && op == Expr::OR) ||
-            (iszero && op == Expr::LOR) ||
-            (iszero && op == Expr::SHL) ||
-            (iszero && op == Expr::SHR));
+    return ((ispos1 && op == Op::MUL) ||
+            (ispos1 && op == Op::DIV) ||
+            (iszero && op == Op::ADD) ||
+            (iszero && op == Op::SUB) ||
+            (intn->is_neg1() && op == Op::AND) ||
+            (!iszero && op == Op::LAND) ||
+            (iszero && op == Op::OR) ||
+            (iszero && op == Op::LOR) ||
+            (iszero && op == Op::SHL) ||
+            (iszero && op == Op::SHR));
 }
 
 } // anonymous namespace
@@ -137,7 +137,7 @@ Expr::add_term(const Term& term)
     // Search downward until we find something *other* than an
     // IDENT, then bring it up to the current level.
     for (;;) {
-        if (e->m_op != IDENT)
+        if (e->m_op != Op::IDENT)
             break;
         copyfrom = e;
 
@@ -163,21 +163,21 @@ Expr::add_term(const Term& term)
     }
 }
 
-Expr::Expr(const Term& a, Op op, const Term& b, unsigned long line)
+Expr::Expr(const Term& a, Op::Op op, const Term& b, unsigned long line)
     : m_op(op), m_line(line)
 {
     add_term(a);
     add_term(b);
 }
 
-Expr::Expr(Op op, const Term& a, unsigned long line)
+Expr::Expr(Op::Op op, const Term& a, unsigned long line)
     : m_op(op), m_line(line)
 {
     add_term(a);
 }
 
 Expr::Expr(const Term& a, unsigned long line)
-    : m_op(IDENT), m_line(line)
+    : m_op(Op::IDENT), m_line(line)
 {
     add_term(a);
 }
@@ -201,7 +201,7 @@ Expr::Expr(const Expr& e)
                    boost::mem_fn(&Term::clone));
 }
 
-Expr::Expr(unsigned long line, Op op)
+Expr::Expr(unsigned long line, Op::Op op)
     : m_op(op), m_line(line)
 {
 }
@@ -216,7 +216,7 @@ Expr::~Expr()
 inline void
 Expr::xform_neg_term(Terms::iterator term)
 {
-    Expr *sube = new Expr(m_line, MUL);
+    Expr *sube = new Expr(m_line, Op::MUL);
     sube->m_terms.push_back(new IntNum(-1));
     sube->m_terms.push_back(*term);
     *term = sube;
@@ -229,7 +229,7 @@ void
 Expr::xform_neg_helper()
 {
     switch (m_op) {
-        case ADD:
+        case Op::ADD:
             // distribute (recursively if expr) over terms
             for (Terms::iterator i=m_terms.begin(), end=m_terms.end();
                  i != end; ++i) {
@@ -239,32 +239,32 @@ Expr::xform_neg_helper()
                     xform_neg_term(i);
             }
             break;
-        case SUB:
+        case Op::SUB:
             // change op to ADD, and recursively negate left side (if expr)
-            m_op = ADD;
+            m_op = Op::ADD;
             if (Expr* sube = m_terms.front().get_expr())
                 sube->xform_neg_helper();
             else
                 xform_neg_term(m_terms.begin());
             break;
-        case NEG:
+        case Op::NEG:
             // Negating a negated value?  Make it an IDENT.
-            m_op = IDENT;
+            m_op = Op::IDENT;
             break;
-        case IDENT:
+        case Op::IDENT:
         {
             // Negating an ident?  Change it into a MUL w/ -1 if there's no
             // floatnums present below; if there ARE floatnums, recurse.
             Term& first = m_terms.front();
             Expr* e;
             if (FloatNum* flt = first.get_float())
-                flt->calc(NEG);
+                flt->calc(Op::NEG);
             else if (IntNum* intn = first.get_int())
-                intn->calc(NEG);
+                intn->calc(Op::NEG);
             else if ((e = first.get_expr()) && e->contains(FLOAT))
                     e->xform_neg_helper();
             else {
-                m_op = MUL;
+                m_op = Op::MUL;
                 m_terms.push_back(new IntNum(-1));
             }
             break;
@@ -273,7 +273,7 @@ Expr::xform_neg_helper()
             // Everything else.  MUL will be combined when it's leveled.
             // Replace ourselves with -1*e.
             Expr *ne = new Expr(m_line, m_op);
-            m_op = MUL;
+            m_op = Op::MUL;
             m_terms.swap(ne->m_terms);
             m_terms.push_back(new IntNum(-1));
             m_terms.push_back(ne);
@@ -290,16 +290,16 @@ void
 Expr::xform_neg()
 {
     switch (m_op) {
-        case NEG:
+        case Op::NEG:
             // Turn -x into -1*x
-            m_op = IDENT;
+            m_op = Op::IDENT;
             xform_neg_helper();
             break;
-        case SUB:
+        case Op::SUB:
         {
             // Turn a-b into a+(-1*b)
             // change op to ADD, and recursively negate right side (if expr)
-            m_op = ADD;
+            m_op = Op::ADD;
             Terms::iterator rhs = m_terms.begin()+1;
             if (Expr* sube = rhs->get_expr())
                 sube->xform_neg_helper();
@@ -327,7 +327,7 @@ Expr::simplify_identity(IntNum* &intn, bool simplify_reg_mul)
     if (m_terms.size() > 1) {
         // Check for simple identities that delete the intnum.
         // Don't do this step if it's 1*REG.
-        if ((simplify_reg_mul || m_op != MUL || !intn->is_pos1() ||
+        if ((simplify_reg_mul || m_op != Op::MUL || !intn->is_pos1() ||
              !contains(REG)) &&
             ((is_first && can_destroy_int_left(m_op, intn)) ||
              (!is_first && can_destroy_int_right(m_op, intn)))) {
@@ -356,12 +356,12 @@ Expr::simplify_identity(IntNum* &intn, bool simplify_reg_mul)
 
     // Compute NOT, NEG, and LNOT on single intnum.
     if (intn && m_terms.size() == 1 && is_first &&
-        (m_op == NOT || m_op == NEG || m_op == LNOT))
+        (m_op == Op::NOT || m_op == Op::NEG || m_op == Op::LNOT))
         intn->calc(m_op);
 
     // Change expression to IDENT if possible.
     if (m_terms.size() == 1)
-        m_op = IDENT;
+        m_op = Op::IDENT;
 }
 
 /// Levels the expression tree.  Eg:
@@ -382,7 +382,7 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
     // First, bring up any IDENT'ed values.
     Expr* e = this;
     Expr* sube;
-    while (e->m_op == IDENT && (sube = e->m_terms.front().get_expr()))
+    while (e->m_op == Op::IDENT && (sube = e->m_terms.front().get_expr()))
         e = sube;
     if (e != this) {
         m_op = e->m_op;
@@ -391,14 +391,14 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
     }
 
     // If non-numeric expression, don't fold constants.
-    if (m_op > NONNUM)
+    if (m_op > Op::NONNUM)
         fold_const = false;
 
     for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i) {
         // Search downward until we find something *other* than an
         // IDENT, then bring it up to the current level.
         if ((e = i->get_expr())) {
-            while (e && e->m_op == IDENT) {
+            while (e && e->m_op == Op::IDENT) {
                 *i = e->m_terms.back();
                 e->m_terms.pop_back();
                 delete e;
@@ -435,15 +435,15 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
         if (simplify_ident)
             simplify_identity(intn, simplify_reg_mul);
         else if (m_terms.size() == 1)
-            m_op = IDENT;
+            m_op = Op::IDENT;
     }
 
     // Only level operators that allow more than two operand terms.
     // Also don't bother leveling if it's not necessary to bring up any terms.
-    if (!do_level || (m_op != ADD && m_op != MUL &&
-                      m_op != OR && m_op != AND &&
-                      m_op != LOR && m_op != LAND &&
-                      m_op != LXOR && m_op != XOR)) {
+    if (!do_level || (m_op != Op::ADD && m_op != Op::MUL &&
+                      m_op != Op::OR && m_op != Op::AND &&
+                      m_op != Op::LOR && m_op != Op::LAND &&
+                      m_op != Op::LXOR && m_op != Op::XOR)) {
         // trim capacity before returning
         Terms(m_terms).swap(m_terms);
         return;
@@ -485,7 +485,7 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
     if (simplify_ident && intn)
         simplify_identity(intn, simplify_reg_mul);
     else if (m_terms.size() == 1)
-        m_op = IDENT;
+        m_op = Op::IDENT;
 }
 
 void
@@ -529,10 +529,10 @@ Expr::level(bool fold_const,
 
     // Check for SEG of SEG:OFF, if we match, simplify to just the segment
     Expr* e;
-    if (m_op == SEG && (e = m_terms.front().get_expr()) &&
-        e->m_op == SEGOFF) {
-        m_op = IDENT;
-        e->m_op = IDENT;
+    if (m_op == Op::SEG && (e = m_terms.front().get_expr()) &&
+        e->m_op == Op::SEGOFF) {
+        m_op = Op::IDENT;
+        e->m_op = Op::IDENT;
         // Destroy the second (offset) term
         e->m_terms.back().destroy();
         e->m_terms.pop_back();
@@ -571,14 +571,14 @@ Expr::order_terms()
 
     // only reorder some types of operations
     switch (m_op) {
-        case ADD:
-        case MUL:
-        case OR:
-        case AND:
-        case XOR:
-        case LOR:
-        case LAND:
-        case LXOR:
+        case Op::ADD:
+        case Op::MUL:
+        case Op::OR:
+        case Op::AND:
+        case Op::XOR:
+        case Op::LOR:
+        case Op::LAND:
+        case Op::LXOR:
             break;
         default:
             return;
@@ -686,7 +686,7 @@ Expr::extract_segoff()
     std::auto_ptr<Expr> retval(0);
 
     // If not SEG:OFF, we can't do this transformation
-    if (m_op != SEGOFF || m_terms.size() != 2)
+    if (m_op != Op::SEGOFF || m_terms.size() != 2)
         return retval;
 
     Term& left = m_terms.front();
@@ -696,13 +696,13 @@ Expr::extract_segoff()
         retval.reset(e);
     else {
         // Need to build IDENT expression to hold non-expression contents
-        retval.reset(new Expr(m_line, IDENT));
+        retval.reset(new Expr(m_line, Op::IDENT));
         retval->m_terms.push_back(left);
     }
 
     // Change the expression into an IDENT
     m_terms.erase(m_terms.begin());
-    m_op = IDENT;
+    m_op = Op::IDENT;
     return retval;
 }
 
@@ -712,7 +712,7 @@ Expr::extract_wrt()
     std::auto_ptr<Expr> retval(0);
 
     // If not WRT, we can't do this transformation
-    if (m_op != WRT || m_terms.size() != 2)
+    if (m_op != Op::WRT || m_terms.size() != 2)
         return retval;
 
     Term& right = m_terms.back();
@@ -722,20 +722,20 @@ Expr::extract_wrt()
         retval.reset(e);
     else {
         // Need to build IDENT expression to hold non-expression contents
-        retval.reset(new Expr(m_line, IDENT));
+        retval.reset(new Expr(m_line, Op::IDENT));
         retval->m_terms.push_back(right);
     }
 
     // Change the expr into an IDENT
     m_terms.pop_back();
-    m_op = IDENT;
+    m_op = Op::IDENT;
     return retval;
 }
 
 FloatNum*
 Expr::get_float() const
 {
-    if (m_op == IDENT)
+    if (m_op == Op::IDENT)
         return m_terms.front().get_float();
     else
         return 0;
@@ -744,7 +744,7 @@ Expr::get_float() const
 IntNum*
 Expr::get_intnum() const
 {
-    if (m_op == IDENT)
+    if (m_op == Op::IDENT)
         return m_terms.front().get_int();
     else
         return 0;
@@ -753,7 +753,7 @@ Expr::get_intnum() const
 Symbol*
 Expr::get_symbol() const
 {
-    if (m_op == IDENT)
+    if (m_op == Op::IDENT)
         return m_terms.front().get_sym();
     else
         return 0;
@@ -762,7 +762,7 @@ Expr::get_symbol() const
 const Register*
 Expr::get_reg() const
 {
-    if (m_op == IDENT)
+    if (m_op == Op::IDENT)
         return m_terms.front().get_reg();
     else
         return 0;
@@ -790,38 +790,38 @@ operator<< (std::ostream& os, const Expr& e)
     const char* opstr = "";
 
     switch (e.m_op) {
-        case Expr::ADD:     opstr = "+"; break;
-        case Expr::SUB:     opstr = "-"; break;
-        case Expr::MUL:     opstr = "*"; break;
-        case Expr::DIV:     opstr = "/"; break;
-        case Expr::SIGNDIV: opstr = "//"; break;
-        case Expr::MOD:     opstr = "%"; break;
-        case Expr::SIGNMOD: opstr = "%%"; break;
-        case Expr::NEG:     os << "-"; break;
-        case Expr::NOT:     os << "~"; break;
-        case Expr::OR:      opstr = "|"; break;
-        case Expr::AND:     opstr = "&"; break;
-        case Expr::XOR:     opstr = "^"; break;
-        case Expr::XNOR:    opstr = "XNOR"; break;
-        case Expr::NOR:     opstr = "NOR"; break;
-        case Expr::SHL:     opstr = "<<"; break;
-        case Expr::SHR:     opstr = ">>"; break;
-        case Expr::LOR:     opstr = "||"; break;
-        case Expr::LAND:    opstr = "&&"; break;
-        case Expr::LNOT:    opstr = "!"; break;
-        case Expr::LXOR:    opstr = "^^"; break;
-        case Expr::LXNOR:   opstr = "LXNOR"; break;
-        case Expr::LNOR:    opstr = "LNOR"; break;
-        case Expr::LT:      opstr = "<"; break;
-        case Expr::GT:      opstr = ">"; break;
-        case Expr::LE:      opstr = "<="; break;
-        case Expr::GE:      opstr = ">="; break;
-        case Expr::NE:      opstr = "!="; break;
-        case Expr::EQ:      opstr = "=="; break;
-        case Expr::SEG:     os << "SEG "; break;
-        case Expr::WRT:     opstr = " WRT "; break;
-        case Expr::SEGOFF:  opstr = ":"; break;
-        case Expr::IDENT:   break;
+        case Op::ADD:       opstr = "+"; break;
+        case Op::SUB:       opstr = "-"; break;
+        case Op::MUL:       opstr = "*"; break;
+        case Op::DIV:       opstr = "/"; break;
+        case Op::SIGNDIV:   opstr = "//"; break;
+        case Op::MOD:       opstr = "%"; break;
+        case Op::SIGNMOD:   opstr = "%%"; break;
+        case Op::NEG:       os << "-"; break;
+        case Op::NOT:       os << "~"; break;
+        case Op::OR:        opstr = "|"; break;
+        case Op::AND:       opstr = "&"; break;
+        case Op::XOR:       opstr = "^"; break;
+        case Op::XNOR:      opstr = "XNOR"; break;
+        case Op::NOR:       opstr = "NOR"; break;
+        case Op::SHL:       opstr = "<<"; break;
+        case Op::SHR:       opstr = ">>"; break;
+        case Op::LOR:       opstr = "||"; break;
+        case Op::LAND:      opstr = "&&"; break;
+        case Op::LNOT:      opstr = "!"; break;
+        case Op::LXOR:      opstr = "^^"; break;
+        case Op::LXNOR:     opstr = "LXNOR"; break;
+        case Op::LNOR:      opstr = "LNOR"; break;
+        case Op::LT:        opstr = "<"; break;
+        case Op::GT:        opstr = ">"; break;
+        case Op::LE:        opstr = "<="; break;
+        case Op::GE:        opstr = ">="; break;
+        case Op::NE:        opstr = "!="; break;
+        case Op::EQ:        opstr = "=="; break;
+        case Op::SEG:       os << "SEG "; break;
+        case Op::WRT:       opstr = " WRT "; break;
+        case Op::SEGOFF:    opstr = ":"; break;
+        case Op::IDENT:     break;
         default:            opstr = " !UNK! "; break;
     }
     for (Expr::Terms::const_iterator i=e.m_terms.begin(), end=e.m_terms.end();
