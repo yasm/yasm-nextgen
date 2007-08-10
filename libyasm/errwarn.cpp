@@ -118,66 +118,6 @@ Fatal::Fatal(const std::string& message)
     : m_message(gettext_hook(N_("FATAL: ")) + message)
 {
 }
-#if 0
-/// Create an errwarn structure in the correct linked list location.
-/// If replace_parser_error is nonzero, overwrites the last error if its
-/// type is WE_PARSERERROR.
-static errwarn_data *
-errwarn_data_new(yasm_errwarns *errwarns, unsigned long line,
-                 int replace_parser_error)
-{
-    errwarn_data *first, *next, *ins_we, *we;
-    enum { INS_NONE, INS_HEAD, INS_AFTER } action = INS_NONE;
-
-    // Find the entry with either line=line or the last one with line<line.
-    // Start with the last entry added to speed the search.
-    ins_we = errwarns->previous_we;
-    first = SLIST_FIRST(&errwarns->errwarns);
-    if (!ins_we || !first)
-        action = INS_HEAD;
-    while (action == INS_NONE) {
-        next = SLIST_NEXT(ins_we, link);
-        if (line < ins_we->line) {
-            if (ins_we == first)
-                action = INS_HEAD;
-            else
-                ins_we = first;
-        } else if (!next)
-            action = INS_AFTER;
-        else if (line >= ins_we->line && line < next->line)
-            action = INS_AFTER;
-        else
-            ins_we = next;
-    }
-
-    if (replace_parser_error && ins_we && ins_we->type == WE_PARSERERROR) {
-        // overwrite last error
-        we = ins_we;
-    } else {
-        // add a new error
-        we = yasm_xmalloc(sizeof(errwarn_data));
-
-        we->type = WE_UNKNOWN;
-        we->line = line;
-        we->xrefline = 0;
-        we->msg = NULL;
-        we->xrefmsg = NULL;
-
-        if (action == INS_HEAD)
-            SLIST_INSERT_HEAD(&errwarns->errwarns, we, link);
-        else if (action == INS_AFTER) {
-            assert(ins_we != NULL);
-            SLIST_INSERT_AFTER(ins_we, we, link);
-        } else
-            yasm_internal_error(N_("Unexpected errwarn insert action"));
-    }
-
-    // Remember previous err/warn
-    errwarns->previous_we = we;
-
-    return we;
-}
-#endif
 
 Error::Error(const std::string& message)
     : m_message(message),
