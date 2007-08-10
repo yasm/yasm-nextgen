@@ -82,7 +82,7 @@ Object::Object(const std::string& src_filename,
       m_obj_filename(obj_filename),
       m_arch(arch.release()),
       m_objfmt(ddj::genericFactory<ObjectFormat>::instance().create(objfmt_keyword).release()),
-      m_dbgfmt(ddj::genericFactory<DebugFormat>::instance().create(objfmt_keyword).release()),
+      m_dbgfmt(ddj::genericFactory<DebugFormat>::instance().create(dbgfmt_keyword).release()),
       m_cur_section(0),
       m_sections_owner(m_sections),
       m_symbols_owner(m_symbols),
@@ -103,28 +103,30 @@ Object::Object(const std::string& src_filename,
 
     // Add an initial "default" section to object
     m_cur_section = m_objfmt->add_default_section();
-#if 0
+
     // Check to see if the requested debug format is in the allowed list
     // for the active object format.
-    bool matched = false;
-    for (int i=0; !matched && objfmt_module->dbgfmt_keywords[i]; i++)
-        if (yasm__strcasecmp(objfmt_module->dbgfmt_keywords[i],
-                             dbgfmt_module->keyword) == 0)
-            matched = true;
-    if (!matched) {
-        yasm_error_set(YASM_ERROR_GENERAL,
-            N_("`%s' is not a valid debug format for object format `%s'"),
-            dbgfmt_module->keyword, objfmt_module->keyword);
+    std::vector<std::string> dbgfmt_keywords = m_objfmt->get_dbgfmt_keywords();
+    std::vector<std::string>::iterator f =
+        std::find(dbgfmt_keywords.begin(), dbgfmt_keywords.end(),
+                  dbgfmt_keyword);
+    if (f == dbgfmt_keywords.end()) {
+        std::ostringstream emsg;
+        emsg << "`" << m_dbgfmt->get_keyword() << "' ";
+        emsg << N_("is not a valid debug format for object format");
+        emsg << " `" << m_objfmt->get_keyword() << "'";
+        throw Error(emsg.str());
     }
 
-    /* Initialize the debug format */
-    object->dbgfmt = yasm_dbgfmt_create(dbgfmt_module, object);
-    if (!object->dbgfmt) {
-        yasm_error_set(YASM_ERROR_GENERAL,
-            N_("debug format `%s' does not work with object format `%s'"),
-            dbgfmt_module->keyword, objfmt_module->keyword);
+    // Initialize the debug format
+    if (!m_dbgfmt->set_object(this)) {
+        std::ostringstream emsg;
+        emsg << N_("debug format")
+             << " `" << m_dbgfmt->get_keyword() << "' ";
+        emsg << N_("does not work with object format")
+             << " `" << m_objfmt->get_keyword() << "' ";
+        throw Error(emsg.str());
     }
-#endif
 }
 
 void

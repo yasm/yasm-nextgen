@@ -57,7 +57,8 @@ public:
 
     /// Set associated object.
     /// @param object       object
-    virtual void set_object(Object* object) = 0;
+    /// @return False on error (object format cannot handle that object).
+    virtual bool set_object(Object* object) = 0;
 
     /// Get the one-line description of the debug format.
     /// @return One-line description of the debug format.
