@@ -61,7 +61,7 @@ public:
         DirectiveManager::Flags m_flags;
     };
 
-    typedef std::map<std::string, std::map<std::string, Dir> > Dirs;
+    typedef std::map<std::string, Dir> Dirs;
     Dirs m_dirs;
 };
 
@@ -75,32 +75,22 @@ DirectiveManager::~DirectiveManager()
 }
 
 void
-DirectiveManager::add(const std::string& name, const std::string& parser,
-                      Directive handler, Flags flags)
+DirectiveManager::add(const std::string& name, Directive handler, Flags flags)
 {
-    m_impl->m_dirs[parser].insert(std::make_pair(name,
-                                                 Impl::Dir(handler, flags)));
+    m_impl->m_dirs.insert(std::make_pair(name, Impl::Dir(handler, flags)));
 }
 
 Directive
-DirectiveManager::get(const std::string& name,
-                      const std::string& parser) const
+DirectiveManager::operator[] (const std::string& name) const
 {
-    Impl::Dirs::iterator p = m_impl->m_dirs.find(parser);
+    Impl::Dirs::iterator p = m_impl->m_dirs.find(name);
     if (p == m_impl->m_dirs.end()) {
-        std::ostringstream emsg;
-        emsg << N_("unrecognized parser") << " `" << parser << "'";
-        throw Error(emsg.str());
-    }
-
-    std::map<std::string, Impl::Dir>::iterator q = p->second.find(parser);
-    if (q == p->second.end()) {
         std::ostringstream emsg;
         emsg << N_("unrecognized directive") << " `" << name << "'";
         throw Error(emsg.str());
     }
 
-    return boost::bind<void>(q->second, _1, name, _2, _3, _4);
+    return boost::bind<void>(p->second, _1, name, _2, _3, _4);
 }
 
 void

@@ -72,19 +72,15 @@ public:
     /// @param name         Directive name.  GAS directives should include
     ///                     the ".", NASM directives should just be the raw
     ///                     name (not including the []).
-    /// @param parser       Parser keyword
     /// @param handler      Directive function
     /// @param flags        Flags for pre-handler parameter checking.
     void add(const std::string& name,
-             const std::string& parser,
              Directive handler,
              Flags flags = ANY);
 
     /// Get a directive functor.  Throws an exception if no match.
     /// @param name         directive name
-    /// @param parser       parser keyword
-    Directive get(const std::string& name,
-                  const std::string& parser) const;
+    Directive operator[] (const std::string& name) const;
 
 private:
     /// Pimpl for class internals.
