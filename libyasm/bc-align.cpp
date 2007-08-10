@@ -33,6 +33,7 @@
 #include <boost/scoped_ptr.hpp>
 
 #include "bytecode.h"
+#include "bytes.h"
 #include "errwarn.h"
 #include "expr.h"
 #include "intnum.h"
@@ -67,8 +68,7 @@ public:
                 /*@out@*/ long& pos_thres);
 
     /// Convert a bytecode into its byte representation.
-    void to_bytes(Bytecode& bc, unsigned char* &buf,
-                  OutputValueFunc output_value,
+    void to_bytes(Bytecode& bc, Bytes& bytes, OutputValueFunc output_value,
                   OutputRelocFunc output_reloc = 0);
 
     SpecialType get_special() const;
@@ -171,7 +171,7 @@ AlignBytecode::expand(Bytecode& bc, unsigned long& len, int span,
 }
 
 void
-AlignBytecode::to_bytes(Bytecode& bc, unsigned char* &buf,
+AlignBytecode::to_bytes(Bytecode& bc, Bytes& bytes,
                         OutputValueFunc output_value,
                         OutputRelocFunc output_reloc)
 {
@@ -196,8 +196,7 @@ AlignBytecode::to_bytes(Bytecode& bc, unsigned char* &buf,
 
     if (m_fill.get() != 0) {
         unsigned long v = m_fill->get_intnum()->get_uint();
-        std::memset(buf, (int)v, len);
-        buf += len;
+        bytes.insert(bytes.end(), len, static_cast<unsigned char>(v));
     } else if (m_code_fill) {
         unsigned long maxlen = 15;
         while (!m_code_fill[maxlen] && maxlen>0)
@@ -207,8 +206,9 @@ AlignBytecode::to_bytes(Bytecode& bc, unsigned char* &buf,
 
         // Fill with maximum code fill as much as possible
         while (len > maxlen) {
-            std::memcpy(buf, m_code_fill[maxlen], maxlen);
-            buf += maxlen;
+            bytes.insert(bytes.end(),
+                         &m_code_fill[maxlen][0],
+                         &m_code_fill[maxlen][len]);
             len -= maxlen;
         }
 
@@ -217,12 +217,12 @@ AlignBytecode::to_bytes(Bytecode& bc, unsigned char* &buf,
                 N_("invalid alignment size %d")) % len));
         }
         // Handle rest of code fill
-        std::memcpy(buf, m_code_fill[len], len);
-        buf += len;
+        bytes.insert(bytes.end(),
+                     &m_code_fill[len][0],
+                     &m_code_fill[len][len]);
     } else {
         // Just fill with 0
-        std::memset(buf, 0, len);
-        buf += len;
+        bytes.insert(bytes.end(), len, 0);
     }
 }
 

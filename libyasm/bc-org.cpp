@@ -29,6 +29,7 @@
 #include <iomanip>
 
 #include "bytecode.h"
+#include "bytes.h"
 #include "errwarn.h"
 #include "file.h"
 
@@ -59,8 +60,7 @@ public:
                 /*@out@*/ long& pos_thres);
 
     /// Convert a bytecode into its byte representation.
-    void to_bytes(Bytecode& bc, unsigned char* &buf,
-                  OutputValueFunc output_value,
+    void to_bytes(Bytecode& bc, Bytes& bytes, OutputValueFunc output_value,
                   OutputRelocFunc output_reloc = 0);
 
     SpecialType get_special() const;
@@ -124,7 +124,7 @@ OrgBytecode::expand(Bytecode& bc, unsigned long& len, int span,
 }
 
 void
-OrgBytecode::to_bytes(Bytecode& bc, unsigned char* &buf,
+OrgBytecode::to_bytes(Bytecode& bc, Bytes& bytes,
                       OutputValueFunc output_value,
                       OutputRelocFunc output_reloc)
 {
@@ -132,8 +132,8 @@ OrgBytecode::to_bytes(Bytecode& bc, unsigned char* &buf,
     if (bc.get_offset() > m_start)
         throw Error(N_("ORG overlap with already existing data"));
     unsigned long len = m_start - bc.get_offset();
-    for (unsigned long i=0; i<len; i++)
-        WRITE_8(buf, m_fill);       // XXX: handle more than 8 bit?
+    // XXX: handle more than 8 bit?
+    bytes.insert(bytes.end(), len, static_cast<unsigned char>(m_fill));
 }
 
 OrgBytecode::SpecialType

@@ -40,6 +40,7 @@
 
 namespace yasm {
 
+class Bytes;
 class Expr;
 class Register;
 class SegmentRegister;
@@ -224,8 +225,7 @@ public:
                 /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres);
 
     /// Converts to bytes.  Internal errors when called.
-    void to_bytes(Bytecode& bc, unsigned char* &buf,
-                  OutputValueFunc output_value,
+    void to_bytes(Bytecode& bc, Bytes& bytes, OutputValueFunc output_value,
                   OutputRelocFunc output_reloc = 0);
 
     Contents::SpecialType get_special() const;

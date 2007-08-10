@@ -206,11 +206,11 @@ Insn::expand(Bytecode& bc, unsigned long& len, int span,
 }
 
 void
-Insn::to_bytes(Bytecode& bc, unsigned char* &buf, OutputValueFunc output_value,
+Insn::to_bytes(Bytecode& bc, Bytes& bytes, OutputValueFunc output_value,
                OutputRelocFunc output_reloc)
 {
     // simply pass down to the base class
-    Bytecode::Contents::to_bytes(bc, buf, output_value, output_reloc);
+    Bytecode::Contents::to_bytes(bc, bytes, output_value, output_reloc);
 }
 
 Insn::Contents::SpecialType

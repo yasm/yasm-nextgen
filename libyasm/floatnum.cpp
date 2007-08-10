@@ -508,7 +508,10 @@ FloatNum::get_int(unsigned long& ret_val) const
         return 1;
     }
 
-    ret_val = LOAD_32_L(t);
+    ret_val = (unsigned long)(t[0] & 0xFF);
+    ret_val |= (unsigned long)((t[1] & 0xFF) << 8);
+    ret_val |= (unsigned long)((t[2] & 0xFF) << 16);
+    ret_val |= (unsigned long)((t[3] & 0xFF) << 24);
     return 0;
 }
 

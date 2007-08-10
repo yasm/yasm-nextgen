@@ -52,8 +52,7 @@ public:
                 long old_val, long new_val,
                 /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres);
 
-    void to_bytes(Bytecode& bc, unsigned char* &buf,
-                  OutputValueFunc output_value,
+    void to_bytes(Bytecode& bc, Bytes& bytes, OutputValueFunc output_value,
                   OutputRelocFunc output_reloc = 0);
 
     EmptyBytecode* clone() const;
@@ -91,12 +90,12 @@ EmptyBytecode::expand(Bytecode& bc, unsigned long& len, int span,
 }
 
 void
-EmptyBytecode::to_bytes(Bytecode& bc, unsigned char* &buf,
+EmptyBytecode::to_bytes(Bytecode& bc, Bytes& bytes,
                         OutputValueFunc output_value,
                         OutputRelocFunc output_reloc)
 {
     // should never get converted to bytes
-    Contents::to_bytes(bc, buf, output_value, output_reloc);
+    Contents::to_bytes(bc, bytes, output_value, output_reloc);
 }
 
 EmptyBytecode*

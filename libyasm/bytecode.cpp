@@ -32,6 +32,7 @@
 #include <boost/ref.hpp>
 
 #include "bytecode.h"
+#include "bytes.h"
 #include "errwarn.h"
 #include "expr.h"
 #include "insn.h"
@@ -69,7 +70,7 @@ Bytecode::Contents::expand(Bytecode& bc, unsigned long& len, int span,
 }
 
 void
-Bytecode::Contents::to_bytes(Bytecode& bc, unsigned char* &buf,
+Bytecode::Contents::to_bytes(Bytecode& bc, Bytes& bytes,
                              OutputValueFunc output_value,
                              OutputRelocFunc output_reloc)
 {
@@ -249,49 +250,35 @@ Bytecode::expand(int span, long old_val, long new_val,
     return retval;
 }
 
-/*@null@*/ /*@only@*/ unsigned char *
-Bytecode::to_bytes(unsigned char* buf, unsigned long& bufsize,
-                   /*@out@*/ bool& gap,
+void
+Bytecode::to_bytes(Bytes& bytes, /*@out@*/ unsigned long& gap,
                    OutputValueFunc output_value,
                    /*@null@*/ OutputRelocFunc output_reloc)
-    /*@sets *buf@*/
 {
-    /*@only@*/ /*@null@*/ unsigned char* mybuf = 0;
-    unsigned char *origbuf, *destbuf;
-    long i;
+    gap = 0;
 
     m_mult_int = get_multiple(true);
-    if (m_mult_int == 0) {
-        bufsize = 0;
-        return 0;
-    }
+    if (m_mult_int == 0)
+        return; // nothing to output
 
     // special case for reserve bytecodes
     if (m_contents->get_special() == Contents::SPECIAL_RESERVE) {
-        bufsize = m_len * m_mult_int;
-        gap = true;
-        return 0;   // we didn't allocate a buffer
+        gap = m_len * m_mult_int;
+        return;
     }
-    gap = false;
 
-    if (bufsize < m_len * m_mult_int) {
-        mybuf = new unsigned char[m_len * m_mult_int];
-        destbuf = mybuf;
-    } else
-        destbuf = buf;
+    Bytes lb;
+    lb.reserve(m_len);
+    for (long i=0; i<m_mult_int; i++) {
+        m_contents->to_bytes(*this, lb, output_value, output_reloc);
 
-    bufsize = m_len * m_mult_int;
-
-    for (i=0; i<m_mult_int; i++) {
-        origbuf = destbuf;
-        m_contents->to_bytes(*this, destbuf, output_value, output_reloc);
-
-        if ((unsigned long)(destbuf - origbuf) != m_len)
+        if (lb.size() != m_len)
             throw InternalError(
                 N_("written length does not match optimized length"));
-    }
 
-    return mybuf;
+        bytes.insert(bytes.end(), lb.begin(), lb.end());
+        lb.empty();
+    }
 }
 
 long

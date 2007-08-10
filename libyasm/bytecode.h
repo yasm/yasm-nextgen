@@ -42,6 +42,7 @@ namespace yasm {
 
 class Arch;
 class Bytecode;
+class Bytes;
 class Errwarns;
 class Expr;
 class Insn;
@@ -57,7 +58,7 @@ class Value;
 /// unless shifted into more significant bits by the shift parameter.  The
 /// destination bits must be cleared before being set.
 /// @param value        value
-/// @param buf          buffer for byte representation
+/// @param bytes        storage for byte representation
 /// @param destsize     destination size (in bytes)
 /// @param offset       offset (in bytes) of the expr contents from the start
 ///                     of the bytecode (needed for relative)
@@ -69,9 +70,8 @@ class Value;
 ///                     positive for unsigned integer warnings
 /// @return True if an error occurred, false otherwise.
 typedef
-    boost::function<bool (Value* value, /*@out@*/ unsigned char* buf,
-                          unsigned int destsize, unsigned long offset,
-                          Bytecode* bc, int warn)>
+    boost::function<bool (Value* value, Bytes& bytes, unsigned int destsize,
+                          unsigned long offset, Bytecode* bc, int warn)>
     OutputValueFunc;
 
 /// Convert a symbol reference to its byte representation.  Usually
@@ -80,7 +80,7 @@ typedef
 /// @param sym          symbol
 /// @param bc           current bytecode (usually passed into higher-level
 ///                     calling function)
-/// @param buf          buffer for byte representation
+/// @param bytes        storage for byte representation
 /// @param destsize     destination size (in bytes)
 /// @param valsize      size (in bits)
 /// @param warn         enables standard warnings.  Zero for none; nonzero
@@ -89,7 +89,7 @@ typedef
 ///                     positive for unsigned integer warnings
 /// @return True if an error occurred, false otherwise.
 typedef
-    boost::function<bool (Symbol* sym, Bytecode* bc, unsigned char* buf,
+    boost::function<bool (Symbol* sym, Bytecode* bc, Bytes& bytes,
                           unsigned int destsize, unsigned int valsize,
                           int warn)>
     OutputRelocFunc;
@@ -200,12 +200,10 @@ public:
         /// The base version of this function internal errors when called,
         /// so be very careful using the base function in a derived class!
         /// @param bc           bytecode
-        /// @param buf          byte representation destination buffer;
-        ///                     should be incremented as it's written to,
-        ///                     so that on return its delta from the
-        ///                     passed-in buf matches the bytecode length
-        ///                     (it's okay not to do this if an error
-        ///                     indication is returned)
+        /// @param bytes        byte representation destination buffer;
+        ///                     on return, its size should match the bytecode
+        ///                     length (it's okay not to do this if an error
+        ///                     is thrown)
         /// @param output_value function to call to convert values into
         ///                     their byte representation
         /// @param output_reloc function to call to output relocation entries
@@ -213,7 +211,7 @@ public:
         /// @note May result in non-reversible changes to the bytecode, but
         ///       it's preferable if calling this function twice would result
         ///       in the same output.
-        virtual void to_bytes(Bytecode& bc, unsigned char* &buf,
+        virtual void to_bytes(Bytecode& bc, Bytes& bytes,
                               OutputValueFunc output_value,
                               OutputRelocFunc output_reloc = 0) = 0;
 
@@ -343,28 +341,21 @@ public:
 
     /// Convert a bytecode into its byte representation.
     /// @param bc           bytecode
-    /// @param buf          byte representation destination buffer
-    /// @param bufsize      size of buf (in bytes) prior to call; size of
-    ///                     the generated data after call
-    /// @param gap          if nonzero, indicates the data does not really
-    ///                     need to exist in the object file; if nonzero,
-    ///                     contents of buf are undefined [output]
+    /// @param bytes        byte representation destination
+    /// @param gap          if nonzero: the data does not really need to
+    ///                     exist in the object file, the value indicates
+    ///                     the size to be reserved, and contents of bytes
+    ///                     is undefined [output]
     /// @param output_value function to call to convert values into their
     ///                     byte representation
     /// @param output_reloc function to call to output relocation entries
     ///                     for a single sym
-    /// @return Newly allocated buffer that should be used instead of buf for
-    ///         reading the byte representation, or NULL if buf was big enough
-    ///         to hold the entire byte representation.
     /// @note Calling twice on the same bytecode may \em not produce the same
     ///       results on the second call, as calling this function may result
     ///       in non-reversible changes to the bytecode.
-    /*@null@*/ /*@only@*/ unsigned char* to_bytes
-        (unsigned char* buf, unsigned long& bufsize,
-         /*@out@*/ bool& gap,
-         OutputValueFunc output_value,
-         /*@null@*/ OutputRelocFunc output_reloc = 0)
-        /*@sets *buf@*/;
+    void to_bytes(Bytes& bytes, /*@out@*/ unsigned long& gap,
+                  OutputValueFunc output_value,
+                  /*@null@*/ OutputRelocFunc output_reloc = 0);
 
     /// Get the bytecode multiple value as an integer.
     /// @param calc_bc_dist True if distances between bytecodes should be
