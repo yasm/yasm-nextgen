@@ -27,5 +27,6 @@ ADD_LIBRARY(libyasm
     value.cpp
     #module.c
     )
+SET_TARGET_PROPERTIES(libyasm PROPERTIES OUTPUT_NAME "yasm")
 
 ADD_SUBDIRECTORY(tests)
