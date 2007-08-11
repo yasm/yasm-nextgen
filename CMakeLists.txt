@@ -48,12 +48,41 @@ INCLUDE(CTest)
 INCLUDE(ConfigureChecks.cmake)
 
 ADD_SUBDIRECTORY(libyasm)
-#ADD_SUBDIRECTORY(modules)
+
+YASM_ADD_MODULE_SUBDIRECTORY(modules)
+MESSAGE(STATUS "Building modules: ${YASM_MODULES}")
+
+# Generate static_modules.cpp
+# This file ensures all modules are brought in by the linker.
+SET(STATIC_MODULES_SRC ${CMAKE_BINARY_DIR}/static_modules.cpp)
+FILE(WRITE ${STATIC_MODULES_SRC} "// Static module references\n")
+FILE(APPEND ${STATIC_MODULES_SRC} "namespace yasm {\n") 
+FOREACH(module ${YASM_MODULES})
+    FILE(APPEND ${STATIC_MODULES_SRC} "// ${module}\n")
+    STRING(REGEX MATCHALL "[a-zA-Z][a-zA-Z0-9]+" _modulepath ${module})
+    FOREACH(_pathpart ${_modulepath})
+	FILE(APPEND ${STATIC_MODULES_SRC} "namespace ${_pathpart} { ")
+    ENDFOREACH(_pathpart)
+    FILE(APPEND ${STATIC_MODULES_SRC} "\nextern bool static_ref;\n")
+    FILE(APPEND ${STATIC_MODULES_SRC} "static bool do_static_ref = static_ref;\n")
+    FOREACH(_pathpart ${_modulepath})
+	FILE(APPEND ${STATIC_MODULES_SRC} "}")
+    ENDFOREACH(_pathpart)
+ENDFOREACH(module)
+FILE(APPEND ${STATIC_MODULES_SRC} "\n}\n") 
+
 #ADD_SUBDIRECTORY(frontends)
 
 ADD_EXECUTABLE(test_expr
     test_expr.cpp
     )
 TARGET_LINK_LIBRARIES(test_expr libyasm)
-
 ADD_TEST(expr_basic test_expr)
+
+ADD_EXECUTABLE(test_preproc
+    test_preproc.cpp
+    ${STATIC_MODULES_SRC}
+    )
+TARGET_LINK_LIBRARIES(test_preproc ${YASM_MODULES} libyasm)
+ADD_TEST(preproc_basic test_preproc)
+

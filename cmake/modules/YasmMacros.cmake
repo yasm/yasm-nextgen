@@ -51,3 +51,18 @@ macro (YASM_ADD_TEST_EXECUTABLE _target_NAME)
                          BUILD_WITH_INSTALL_RPATH FALSE)
 
 endmacro (YASM_ADD_TEST_EXECUTABLE)
+
+macro (YASM_ADD_MODULE _module_NAME)
+    list(APPEND YASM_MODULES ${_module_NAME})
+    add_library(${_module_NAME} ${ARGN})
+endmacro (YASM_ADD_MODULE)
+
+macro (YASM_ADD_MODULE_SUBDIRECTORY _subdir_NAME)
+    add_subdirectory(${_subdir_NAME})
+    get_directory_property(_tmp_MODULES DIRECTORY ${_subdir_NAME} DEFINITION YASM_MODULES)
+    if (DEFINED _tmp_MODULES)
+        list(APPEND YASM_MODULES "${_tmp_MODULES}")
+    else (DEFINED _tmp_MODULES)
+        message(STATUS "Warning: found no modules in ${CMAKE_CURRENT_SOURCE_DIR}/${_subdir_NAME}")
+    endif (DEFINED _tmp_MODULES)
+endmacro (YASM_ADD_MODULE_SUBDIRECTORY)
