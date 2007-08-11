@@ -114,10 +114,14 @@ public:
     virtual void define_builtin(const std::string& macronameval) = 0;
 
 protected:
+    /// Create a streambuf for preprocessed source.
+    /// @return New streambuf.
     virtual std::auto_ptr<std::streambuf> create_streambuf();
 
 private:
+    /// streambuf for prepreprocessed source
     boost::scoped_ptr<std::streambuf> m_downstreambuf;
+    /// istream for preprocessed source
     boost::scoped_ptr<std::istream> m_downstream;
 };
 
