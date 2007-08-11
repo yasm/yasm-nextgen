@@ -1,11 +1,11 @@
-#ifndef YASM_DEBUG_FORMAT_H
-#define YASM_DEBUG_FORMAT_H
+#ifndef YASM_MODULE_H
+#define YASM_MODULE_H
 ///
-/// @file libyasm/debug_format.h
-/// @brief YASM debug format interface.
+/// @file libyasm/module.h
+/// @brief YASM base module interface.
 ///
 /// @license
-///  Copyright (C) 2002-2007  Peter Johnson
+///  Copyright (C) 2007  Peter Johnson
 ///
 /// Redistribution and use in source and binary forms, with or without
 /// modification, are permitted provided that the following conditions
@@ -31,40 +31,37 @@
 ///
 #include <string>
 
-#include "module.h"
+#include <boost/noncopyable.hpp>
 
 
 namespace yasm {
 
-class Errwarns;
-class Linemap;
-class Object;
+class Directives;
 
-/// Debug format interface.
-class DebugFormat : public Module {
+/// Module interface (abstract base).
+class Module : private boost::noncopyable {
 public:
     /// Constructor.
-    /// To make debug format truly usable, set_object()
-    /// needs to be called.
-    DebugFormat() {}
+    Module() {}
 
     /// Destructor.
-    virtual ~DebugFormat() {}
+    virtual ~Module() {}
 
-    /// Get the module type.
-    /// @return "DebugFormat".
-    std::string get_type() const { return "DebugFormat"; }
+    /// Get the one-line description of the module.
+    /// @return One-line description of module.
+    virtual std::string get_name() const = 0;
 
-    /// Set associated object.
-    /// @param object       object
-    /// @return False on error (object format cannot handle that object).
-    virtual bool set_object(Object* object) = 0;
+    /// Get the keyword used to select the module.
+    /// @return Module keyword.
+    virtual std::string get_keyword() const = 0;
 
-    /// Generate debugging information bytecodes.
-    /// @param linemap      virtual/physical line mapping
-    /// @param errwarns     error/warning set
-    /// @note Errors and warnings are stored into errwarns.
-    virtual void generate(Linemap& linemap, Errwarns& errwarns) = 0;
+    /// Get the module type name (e.g. "ObjectFormat", "DebugFormat", ...).
+    /// @return Module typename.
+    virtual std::string get_type() const = 0;
+
+    /// Add directive handlers.
+    virtual void add_directives(Directives& dirs, const std::string& parser)
+    {}
 };
 
 } // namespace yasm

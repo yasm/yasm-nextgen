@@ -34,9 +34,8 @@
 #include <memory>
 #include <string>
 
-#include <boost/noncopyable.hpp>
-
 #include "insn.h"
+#include "module.h"
 
 
 namespace yasm {
@@ -75,7 +74,7 @@ class SegmentRegister {
 };
 
 /// Architecture interface.
-class Arch : private boost::noncopyable {
+class Arch : public Module {
 public:
     /// Return value for parse_check_insnprefix().
     struct InsnPrefix {
@@ -90,30 +89,23 @@ public:
         const SegmentRegister* segreg;
         const Insn::Operand::TargetModifier* tmod;
     };
-#if 0
-    /** NULL-terminated list of directives.  NULL if none. */
-    /*@null@*/ const yasm_directive *directives;
-#endif
+
     /// Constructor.
     /// To make architecture truly usable, set_machine() and set_parser()
     /// need to be called.
-    Arch();
+    Arch() {}
 
     /// Destructor.
     virtual ~Arch() {}
+
+    /// Get the module type.
+    /// @return "Arch".
+    std::string get_type() const { return "Arch"; }
 
     /// Set parser to use.
     /// @param parser       keyword of parser to use
     /// @return False if unrecognized parser.
     virtual bool set_parser(const std::string& parser) = 0;
-
-    /// Get the one-line description of an architecture.
-    /// @return One-line description of architecture.
-    virtual std::string get_name() const = 0;
-
-    /// Get the keyword used to select an architecture.
-    /// @return Architecture keyword.
-    virtual std::string get_keyword() const = 0;
 
     /// Get the word size of an architecture.
     /// @return Word size (in bits).

@@ -33,7 +33,7 @@
 #include <string>
 #include <vector>
 
-#include <boost/noncopyable.hpp>
+#include "module.h"
 
 
 namespace yasm {
@@ -43,32 +43,24 @@ class Object;
 class Section;
 
 /// Object format interface.
-class ObjectFormat : private boost::noncopyable {
+class ObjectFormat : public Module {
 public:
-#if 0
-    /** NULL-terminated list of directives.  NULL if none. */
-    /*@null@*/ const yasm_directive *directives;
-#endif
     /// Constructor.
     /// To make object format truly usable, set_object()
     /// needs to be called.
-    ObjectFormat();
+    ObjectFormat() {}
 
     /// Destructor.
     virtual ~ObjectFormat() {}
+
+    /// Get the module type.
+    /// @return "ObjectFormat".
+    std::string get_type() const { return "ObjectFormat"; }
 
     /// Set associated object.
     /// @param object       object
     /// @return False on error (object format cannot handle that object).
     virtual bool set_object(Object* object) = 0;
-
-    /// Get the one-line description of the object format.
-    /// @return One-line description of the object format.
-    virtual std::string get_name() const = 0;
-
-    /// Get the keyword used to select the object format.
-    /// @return Object format keyword.
-    virtual std::string get_keyword() const = 0;
 
     /// Get the default file extension (including the '.').
     /// @return File extension.
