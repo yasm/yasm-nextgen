@@ -11,6 +11,8 @@ using namespace yasm;
 int
 main()
 {
+    use_static_modules();
+
     std::auto_ptr<Preprocessor> preproc =
         ddj::genericFactory<Preprocessor>::instance().create("raw");
 

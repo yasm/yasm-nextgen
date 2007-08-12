@@ -181,4 +181,11 @@ genericFactory<manufacturedObj, classIDKey>::getRegisteredClasses() const
 
 } // namespace ddj
 
+namespace yasm {
+/// Hook to bring in static modules.  Does nothing by itself, just serves
+/// as a link aid.  Call this function either from main() or from a
+/// static constructor to ensure the static modules are loadable.
+void use_static_modules();
+} // namespace yasm
+
 #endif

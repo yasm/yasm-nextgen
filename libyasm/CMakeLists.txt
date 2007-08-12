@@ -25,7 +25,7 @@ ADD_LIBRARY(libyasm
     symbol.cpp
     #valparam.c
     value.cpp
-    #module.c
+    ${YASM_MODULES_SRC}
     )
 SET_TARGET_PROPERTIES(libyasm PROPERTIES OUTPUT_NAME "yasm")
 
