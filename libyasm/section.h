@@ -36,6 +36,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "assoc_data.h"
 #include "ptr_vector.h"
 
 
@@ -61,7 +62,7 @@ protected:
 };
 
 /// A section.
-class Section : private boost::noncopyable {
+class Section : private boost::noncopyable, public AssocDataContainer {
     friend class Object;
 
 public:
@@ -104,25 +105,7 @@ public:
     /// Get object owner of a section.
     /// @return Object this section is a part of.
     Object* get_object() const { return m_object; }
-#if 0
-    /** Get assocated data for a section and data callback.
-     * \param sect      section
-     * \param callback  callback used when adding data
-     * \return Associated data (NULL if none).
-     */
-    /*@dependent@*/ /*@null@*/ void *yasm_section_get_data
-        (yasm_section *sect, const yasm_assoc_data_callback *callback);
 
-    /** Add associated data to a section.
-     * \attention Deletes any existing associated data for that data callback.
-     * \param sect      section
-     * \param callback  callback
-     * \param data      data to associate
-     */
-    void yasm_section_add_data(yasm_section *sect,
-                               const yasm_assoc_data_callback *callback,
-                               /*@null@*/ /*@only@*/ void *data);
-#endif
     /// Add a relocation to a section.
     /// @param reloc        relocation
     void add_reloc(std::auto_ptr<Reloc> reloc)
@@ -197,10 +180,7 @@ private:
     /*@dependent@*/ Object* m_object;   ///< Pointer to parent object
 
     std::string m_name;                 ///< name (given by user)
-#if 0
-    /* associated data; NULL if none */
-    /*@null@*/ /*@only@*/ yasm__assoc_data *assoc_data;
-#endif
+
     /// Starting address of section contents.
     boost::scoped_ptr<Expr> m_start;
 

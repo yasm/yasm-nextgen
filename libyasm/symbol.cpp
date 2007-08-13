@@ -275,20 +275,6 @@ yasm_symrec_get_common_size(yasm_symrec *sym)
 {
     return (yasm_expr **)yasm_symrec_get_data(sym, &common_size_cb);
 }
-
-void *
-yasm_symrec_get_data(yasm_symrec *sym,
-                     const yasm_assoc_data_callback *callback)
-{
-    return yasm__assoc_data_get(sym->assoc_data, callback);
-}
-
-void
-yasm_symrec_add_data(yasm_symrec *sym,
-                     const yasm_assoc_data_callback *callback, void *data)
-{
-    sym->assoc_data = yasm__assoc_data_add(sym->assoc_data, callback, data);
-}
 #endif
 void
 Symbol::put(std::ostream& os, int indent_level) const
@@ -348,12 +334,8 @@ Symbol::put(std::ostream& os, int indent_level) const
             os << "Extern,";
         os << '\n';
     }
-#if 0
-    if (sym->assoc_data) {
-        fprintf(f, "%*sAssociated data:\n", indent_level, "");
-        yasm__assoc_data_print(sym->assoc_data, f, indent_level+1);
-    }
-#endif
+    os << std::setw(indent_level) << "" << "Associated data:\n";
+    put_assoc_data(os, indent_level+1);
     os << std::setw(indent_level) << "" << "Line Index (Defined)="
        << m_def_line << '\n';
     os << std::setw(indent_level) << "" << "Line Index (Declared)="

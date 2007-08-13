@@ -175,12 +175,9 @@ Section::put(std::ostream& os, int indent_level, bool with_bcs) const
     os << std::setw(indent_level) << "" << "code=" << m_code << '\n';
     os << std::setw(indent_level) << "" << "res_only=" << m_res_only << '\n';
     os << std::setw(indent_level) << "" << "default=" << m_def << '\n';
-#if 0
-    if (sect->assoc_data) {
-        fprintf(f, "%*sAssociated data:\n", indent_level, "");
-        yasm__assoc_data_print(sect->assoc_data, f, indent_level+1);
-    }
-#endif
+    os << std::setw(indent_level) << "" << "Associated data:\n";
+    put_assoc_data(os, indent_level+1);
+
     if (!with_bcs)
         return;
 

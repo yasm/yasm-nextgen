@@ -35,13 +35,15 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "assoc_data.h"
+
 
 namespace yasm {
 
 class Bytecode;
 class Expr;
 
-class Symbol : private boost::noncopyable {
+class Symbol : private boost::noncopyable, public AssocDataContainer {
 public:
     /// Constructor.
     Symbol(const std::string& name);
@@ -182,24 +184,6 @@ public:
     /// size was set for it.
     /// @return Common size (NULL if none).
     /*@null@*/ Expr* get_common_size();
-#if 0
-    /** Get associated data for a symbol and data callback.
-     * @param callback  callback used when adding data
-     * @return Associated data (NULL if none).
-     */
-    /*@dependent@*/ /*@null@*/ void *yasm_symrec_get_data
-        (yasm_symrec *sym, const yasm_assoc_data_callback *callback);
-
-    /** Add associated data to a symbol.
-     * @attention Deletes any existing associated data for that data callback.
-     * @param sym       symbol
-     * @param callback  callback
-     * @param data      data to associate
-     */
-    void yasm_symrec_add_data(yasm_symrec *sym,
-                              const yasm_assoc_data_callback *callback,
-                              /*@only@*/ /*@null@*/ void *data);
-#endif
 
     /// Finalize symbol after parsing stage.  Errors on symbols that
     /// are used but never defined or declared #EXTERN or #COMMON.
@@ -241,10 +225,6 @@ private:
 
     /// Bytecode immediately preceding a label
     Bytecode* m_precbc;
-#if 0
-    /* associated data; NULL if none */
-    /*@null@*/ /*@only@*/ yasm__assoc_data *assoc_data;
-#endif
 };
 
 } // namespace yasm
