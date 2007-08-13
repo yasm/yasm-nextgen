@@ -36,6 +36,7 @@
 #include <boost/scoped_ptr.hpp>
 
 #include "assoc_data.h"
+#include "name_value.h"
 
 
 namespace yasm {
@@ -161,21 +162,16 @@ public:
     /// @return Symbol (this).
     Symbol* declare(Visibility vis, unsigned long line);
 
-#if 0
-    /** Set object-extended valparams.
-     *  @param objext_valparams     object-extended valparams
-     */
-    void yasm_symrec_set_objext_valparams
-        (yasm_symrec *sym, /*@only@*/ yasm_valparamhead *objext_valparams);
+    /// Set object-extended name/values.
+    /// @param objext_namevals  object-extended name/values
+    void set_objext_namevals(std::auto_ptr<NameValues> objext_namevals);
 
-    /** Get object-extended valparams, if any, associated with symbol's
-     * declaration.
-     * @param sym       symbol
-     * @return Object-extended valparams (NULL if none).
-     */
-    /*@null@*/ /*@dependent@*/ yasm_valparamhead *yasm_symrec_get_objext_valparams
-        (yasm_symrec *sym);
-#endif
+    /// Get object-extended name/values, if any, associated with symbol's
+    /// declaration.
+    /// @param sym      symbol
+    /// @return Object-extended name/values (NULL if none).
+    /*@null@*/ const NameValues* get_objext_namevals() const;
+
     /// Set common size of symbol.
     /// @param common_size  common size expression
     void set_common_size(std::auto_ptr<Expr> common_size);

@@ -76,6 +76,14 @@ public:
         return i->second;
     }
 
+    const AssocData* get_assoc_data(const void* key) const
+    {
+        AssocMap::const_iterator i = m_assoc_map.find(key);
+        if (i == m_assoc_map.end())
+            return 0;
+        return i->second;
+    }
+
 protected:
     void put_assoc_data(std::ostream& os, int indent_level) const;
 };

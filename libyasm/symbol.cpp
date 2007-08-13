@@ -37,45 +37,71 @@
 #include "symbol.h"
 
 
+namespace {
+
+using namespace yasm;
+
+class ObjextNamevals : public AssocData {
+public:
+    static const char* key;
+
+    ObjextNamevals(std::auto_ptr<NameValues> nvs) : m_nvs(nvs.release()) {}
+    ~ObjextNamevals();
+
+    void put(std::ostream& os, int indent_level) const;
+
+    const NameValues* get() const { return m_nvs.get(); }
+
+private:
+    boost::scoped_ptr<NameValues> m_nvs;
+};
+
+const char* ObjextNamevals::key = "ObjextNamevals";
+
+ObjextNamevals::~ObjextNamevals()
+{
+}
+
+void
+ObjextNamevals::put(std::ostream& os, int indent_level) const
+{
+    os << std::setw(indent_level) << "" << "Objext Namevals:\n";
+    //FIXME: m_nvs->put(os, indent_level+1);
+}
+
+
+class CommonSize : public AssocData {
+public:
+    static const char* key;
+
+    CommonSize(std::auto_ptr<Expr> e) : m_expr(e.release()) {}
+    ~CommonSize();
+
+    void put(std::ostream& os, int indent_level) const;
+
+    Expr* get() { return m_expr.get(); }
+
+private:
+    boost::scoped_ptr<Expr> m_expr;
+};
+
+const char* CommonSize::key = "CommonSize";
+
+CommonSize::~CommonSize()
+{
+}
+
+void
+CommonSize::put(std::ostream& os, int indent_level) const
+{
+    os << std::setw(indent_level) << "" << "Common Size="
+       << *m_expr << '\n';
+}
+
+} // anonymous namespace
+
 namespace yasm {
-#if 0
-static void
-objext_valparams_destroy(void *data)
-{
-    yasm_vps_destroy((yasm_valparamhead *)data);
-}
 
-static void
-objext_valparams_print(void *data, FILE *f, int indent_level)
-{
-    yasm_vps_print((yasm_valparamhead *)data, f);
-}
-
-static yasm_assoc_data_callback objext_valparams_cb = {
-    objext_valparams_destroy,
-    objext_valparams_print
-};
-
-static void
-common_size_destroy(void *data)
-{
-    yasm_expr **e = (yasm_expr **)data;
-    yasm_expr_destroy(*e);
-    yasm_xfree(data);
-}
-
-static void
-common_size_print(void *data, FILE *f, int indent_level)
-{
-    yasm_expr **e = (yasm_expr **)data;
-    yasm_expr_print(*e, f);
-}
-
-static yasm_assoc_data_callback common_size_cb = {
-    common_size_destroy,
-    common_size_print
-};
-#endif
 Symbol::Symbol(const std::string& name)
     : m_name(name),
       m_type(UNKNOWN),
@@ -247,35 +273,41 @@ Symbol::is_curpos() const
 {
     return (m_type == CURPOS);
 }
-#if 0
-void
-yasm_symrec_set_objext_valparams(yasm_symrec *sym,
-                                 /*@only@*/ yasm_valparamhead *objext_valparams)
-{
-    yasm_symrec_add_data(sym, &objext_valparams_cb, objext_valparams);
-}
-
-yasm_valparamhead *
-yasm_symrec_get_objext_valparams(yasm_symrec *sym)
-{
-    return yasm_symrec_get_data(sym, &objext_valparams_cb);
-}
 
 void
-yasm_symrec_set_common_size(yasm_symrec *sym,
-                            /*@only@*/ yasm_expr *common_size)
+Symbol::set_objext_namevals(std::auto_ptr<NameValues> objext_namevals)
 {
-    yasm_expr **ep = yasm_xmalloc(sizeof(yasm_expr *));
-    *ep = common_size;
-    yasm_symrec_add_data(sym, &common_size_cb, ep);
+    std::auto_ptr<AssocData> ad(new ObjextNamevals(objext_namevals));
+    add_assoc_data(ObjextNamevals::key, ad);
 }
 
-yasm_expr **
-yasm_symrec_get_common_size(yasm_symrec *sym)
+const NameValues*
+Symbol::get_objext_namevals() const
 {
-    return (yasm_expr **)yasm_symrec_get_data(sym, &common_size_cb);
+    const AssocData* ad = get_assoc_data(ObjextNamevals::key);
+    if (!ad)
+        return 0;
+    const ObjextNamevals* x = static_cast<const ObjextNamevals*>(ad);
+    return x->get();
 }
-#endif
+
+void
+Symbol::set_common_size(std::auto_ptr<Expr> common_size)
+{
+    std::auto_ptr<AssocData> ad(new CommonSize(common_size));
+    add_assoc_data(CommonSize::key, ad);
+}
+
+Expr*
+Symbol::get_common_size()
+{
+    AssocData* ad = get_assoc_data(CommonSize::key);
+    if (!ad)
+        return 0;
+    CommonSize* x = static_cast<CommonSize*>(ad);
+    return x->get();
+}
+
 void
 Symbol::put(std::ostream& os, int indent_level) const
 {
