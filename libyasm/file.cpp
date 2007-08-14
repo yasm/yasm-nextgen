@@ -506,53 +506,5 @@ yasm_add_include_path(const char *path)
 
     STAILQ_INSERT_TAIL(&incpaths, np, link);
 }
-
-size_t
-yasm_fwrite_16_l(unsigned short val, FILE *f)
-{
-    if (fputc(val & 0xFF, f) == EOF)
-        return 0;
-    if (fputc((val >> 8) & 0xFF, f) == EOF)
-        return 0;
-    return 1;
-}
-
-size_t
-yasm_fwrite_32_l(unsigned long val, FILE *f)
-{
-    if (fputc((int)(val & 0xFF), f) == EOF)
-        return 0;
-    if (fputc((int)((val >> 8) & 0xFF), f) == EOF)
-        return 0;
-    if (fputc((int)((val >> 16) & 0xFF), f) == EOF)
-        return 0;
-    if (fputc((int)((val >> 24) & 0xFF), f) == EOF)
-        return 0;
-    return 1;
-}
-
-size_t
-yasm_fwrite_16_b(unsigned short val, FILE *f)
-{
-    if (fputc((val >> 8) & 0xFF, f) == EOF)
-        return 0;
-    if (fputc(val & 0xFF, f) == EOF)
-        return 0;
-    return 1;
-}
-
-size_t
-yasm_fwrite_32_b(unsigned long val, FILE *f)
-{
-    if (fputc((int)((val >> 24) & 0xFF), f) == EOF)
-        return 0;
-    if (fputc((int)((val >> 16) & 0xFF), f) == EOF)
-        return 0;
-    if (fputc((int)((val >> 8) & 0xFF), f) == EOF)
-        return 0;
-    if (fputc((int)(val & 0xFF), f) == EOF)
-        return 0;
-    return 1;
-}
 #endif
 } // namespace yasm
