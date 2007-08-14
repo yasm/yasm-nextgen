@@ -26,6 +26,8 @@
 ///
 #include "util.h"
 
+#include <ostream>
+
 #include "errwarn.h"
 #include "expr.h"
 #include "name_value.h"
@@ -131,6 +133,42 @@ NameValue::get_id() const
         return m_idstr.substr(1);
     else
         return m_idstr;
+}
+
+std::ostream&
+operator<< (std::ostream& os, const NameValue& nv)
+{
+    os << "(\"" << nv.get_name() << "\",";
+    switch (nv.m_type) {
+        case NameValue::ID:
+            os << nv.m_idstr;
+            break;
+        case NameValue::STRING:
+            os << '"' << nv.m_idstr << '"';
+            break;
+        case NameValue::EXPR:
+            os << *(nv.m_expr);
+            break;
+    }
+    os << ')';
+    return os;
+}
+
+std::ostream&
+operator<< (std::ostream& os, const NameValues& namevals)
+{
+    if (namevals.empty()) {
+        os << "(none)";
+        return os;
+    }
+
+    for (NameValues::const_iterator i=namevals.begin(), end=namevals.end();
+         i != end; ++i) {
+        if (i != namevals.begin())
+            os << ',';
+        os << *i;
+    }
+    return os;
 }
 
 } // namespace yasm

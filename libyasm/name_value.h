@@ -45,6 +45,8 @@ class Object;
 
 /// Name/value pair.
 class NameValue : private boost::noncopyable {
+    friend std::ostream& operator<< (std::ostream& os, const NameValue& nv);
+
 public:
     /// Identifier value constructor.
     /// @param name         name; may be empty string if no name
@@ -139,8 +141,13 @@ private:
     char m_id_prefix;
 };
 
+/// Print name/value.  For debugging purposes.
+/// @param os   output stream
+/// @param nv   name/value
+std::ostream& operator<< (std::ostream& os, const NameValue& nv);
+
 /// Vector of name/values.
-typedef std::vector<NameValue> NameValues;
+class NameValues : public std::vector<NameValue> {};
 
 /// Print vector of name/values.  For debugging purposes.
 /// @param os       output stream

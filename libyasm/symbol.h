@@ -36,13 +36,13 @@
 #include <boost/scoped_ptr.hpp>
 
 #include "assoc_data.h"
-#include "name_value.h"
 
 
 namespace yasm {
 
 class Bytecode;
 class Expr;
+class NameValues;
 
 class Symbol : private boost::noncopyable, public AssocDataContainer {
 public:

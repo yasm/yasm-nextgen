@@ -33,6 +33,7 @@
 #include "bytecode.h"
 #include "errwarn.h"
 #include "expr.h"
+#include "name_value.h"
 #include "section.h"
 #include "symbol.h"
 
@@ -65,8 +66,8 @@ ObjextNamevals::~ObjextNamevals()
 void
 ObjextNamevals::put(std::ostream& os, int indent_level) const
 {
-    os << std::setw(indent_level) << "" << "Objext Namevals:\n";
-    //FIXME: m_nvs->put(os, indent_level+1);
+    os << std::setw(indent_level) << "" << "Objext Namevals: "
+       << *m_nvs << '\n';
 }
 
 
