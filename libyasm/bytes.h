@@ -34,47 +34,15 @@
 
 namespace yasm {
 
-class Bytes {
-    typedef std::vector<unsigned char> Contents;
+class Bytes : public std::vector<unsigned char> {
 public:
-    typedef Contents::size_type size_type;
-    typedef Contents::iterator iterator;
-    typedef Contents::const_iterator const_iterator;
-
     Bytes(bool bigendian=false) : m_bigendian(bigendian) {}
     ~Bytes() {}
-
-    iterator begin() { return m_storage.begin(); }
-    const_iterator begin() const { return m_storage.begin(); }
-    iterator end() { return m_storage.end(); }
-    const_iterator end() const { return m_storage.end(); }
-
-    void push_back(unsigned char b) { m_storage.push_back(b); }
-
-    iterator insert(iterator pos, unsigned char b)
-    { return m_storage.insert(pos, b); }
-    void insert(iterator pos, size_type n, unsigned char b)
-    { m_storage.insert(pos, n, b); }
-    template <class In> void insert(iterator pos, In first, In last)
-    { m_storage.insert(pos, first, last); }
-
-    void clear() { m_storage.clear(); }
-
-    unsigned char& operator[] (size_type i) { return m_storage[i]; }
-    unsigned char operator[] (size_type i) const { return m_storage[i]; }
-    unsigned char& at(size_type i) { return m_storage.at(i); }
-    unsigned char at(size_type i) const { return m_storage.at(i); }
-
-    size_type size() const { return m_storage.size(); }
-    bool empty() const { return m_storage.empty(); }
-
-    void reserve(size_type size) { m_storage.reserve(size); }
 
     void set_bigendian(bool bigendian) { m_bigendian = bigendian; }
     bool is_bigendian() const { return m_bigendian; }
 
 private:
-    Contents m_storage;
     bool m_bigendian;
 };
 
