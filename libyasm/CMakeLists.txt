@@ -5,7 +5,7 @@ ADD_LIBRARY(libyasm
     #bc-data.c
     #bc-incbin.c
     bc-org.cpp
-    #bc-reserve.c
+    bc-reserve.cpp
     bytecode.cpp
     directive.cpp
     errwarn.cpp

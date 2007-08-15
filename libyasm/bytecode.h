@@ -215,6 +215,17 @@ public:
                               OutputValueFunc output_value,
                               OutputRelocFunc output_reloc = 0) = 0;
 
+        /// Get the number of items and itemsize for a reserve bytecode.
+        /// Default implementation returns NULL; reserve bytecodes should
+        /// implement this function.
+        /// @param itemsize     reserved size (in bytes) for each item
+        ///                     (returned)
+        /// @return NULL if bc is not a reserve bytecode, otherwise an
+        ///         expression for the number of items to reserve.
+        virtual /*@null@*/ const Expr* reserve_numitems
+            (/*@out@*/ unsigned int& itemsize) const
+        { itemsize=0; return 0; }
+
         /// Special bytecode classifications.  Most bytecode types should
         /// simply not override the get_special() function (which returns
         /// #SPECIAL_NONE).  Other return values cause special handling to
