@@ -12,7 +12,6 @@ ADD_LIBRARY(libyasm
     expr.cpp
     file.cpp
     floatnum.cpp
-    #hamt.c
     insn.cpp
     intnum.cpp
     linemap.cpp
@@ -21,9 +20,7 @@ ADD_LIBRARY(libyasm
     object.cpp
     #phash.c
     section.cpp
-    #strcasecmp.c
     symbol.cpp
-    #valparam.c
     value.cpp
     ${YASM_MODULES_SRC}
     )
