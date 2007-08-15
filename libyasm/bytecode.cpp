@@ -48,11 +48,16 @@ namespace yasm {
 void
 Bytecode::set_multiple(std::auto_ptr<Expr> e)
 {
+    m_multiple = e;
+}
+
+void
+Bytecode::multiply_multiple(std::auto_ptr<Expr> e)
+{
     if (m_multiple.get() != 0)
-        m_multiple.reset(new Expr(m_multiple.get(), Op::MUL, e,
-                                  e->get_line()));
+        m_multiple.reset(new Expr(m_multiple, Op::MUL, e, e->get_line()));
     else
-        m_multiple.reset(e.release());
+        m_multiple = e;
 }
 
 unsigned long

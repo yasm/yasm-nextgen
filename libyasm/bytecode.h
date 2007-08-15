@@ -256,6 +256,10 @@ public:
     /// @param e    multiple (kept, do not free)
     void set_multiple(std::auto_ptr<Expr> e);
 
+    /// Multiply into the current multiple field.
+    /// @param e    multiple (kept, do not free)
+    void multiply_multiple(std::auto_ptr<Expr> e);
+
     /// Get the section that contains a particular bytecode.
     /// @param bc   bytecode
     /// @return Section containing bc (can be NULL if bytecode is not part of
@@ -413,7 +417,7 @@ private:
 
     /// Number of times bytecode is repeated.
     /// NULL=1 (to save space in the common case).
-    boost::scoped_ptr<Expr> m_multiple;
+    std::auto_ptr<Expr> m_multiple;
 
     /// Total length of entire bytecode (not including multiple copies).
     unsigned long m_len;
