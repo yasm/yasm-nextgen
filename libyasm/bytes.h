@@ -29,6 +29,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include <iosfwd>
 #include <vector>
 
 
@@ -123,6 +124,17 @@ operator<< (Bytes& bytes, unsigned long val)
         bytes.push_back((unsigned char)((val >> 24) & 0xFF));
     }
     return bytes;
+}
+
+// Output the entire contents of a bytes container to an output stream.
+// @param os    output stream
+// @param bytes bytes
+// @return Output stream
+inline std::ostream&
+operator<< (std::ostream& os, const Bytes& bytes)
+{
+    os.write(reinterpret_cast<const char*>(&bytes[0]), bytes.size());
+    return os;
 }
 
 } // namespace yasm
