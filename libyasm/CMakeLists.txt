@@ -3,7 +3,7 @@ ADD_LIBRARY(libyasm
     bitvect.cpp
     bc-align.cpp
     #bc-data.c
-    #bc-incbin.c
+    bc-incbin.cpp
     bc-org.cpp
     bc-reserve.cpp
     bytecode.cpp
