@@ -7,6 +7,7 @@ ADD_LIBRARY(libyasm
     bc-org.cpp
     bc-reserve.cpp
     bytecode.cpp
+    bytes.cpp
     directive.cpp
     errwarn.cpp
     expr.cpp

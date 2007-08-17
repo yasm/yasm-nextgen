@@ -43,6 +43,12 @@ public:
     void set_bigendian(bool bigendian) { m_bigendian = bigendian; }
     bool is_bigendian() const { return m_bigendian; }
 
+    /// Read from an input stream, appending the read values to the end
+    /// of the object.
+    /// @param  is  input stream
+    /// @param  n   number of bytes to read
+    void read(std::istream& is, size_type n);
+
 private:
     bool m_bigendian;
 };
@@ -126,16 +132,11 @@ operator<< (Bytes& bytes, unsigned long val)
     return bytes;
 }
 
-// Output the entire contents of a bytes container to an output stream.
-// @param os    output stream
-// @param bytes bytes
-// @return Output stream
-inline std::ostream&
-operator<< (std::ostream& os, const Bytes& bytes)
-{
-    os.write(reinterpret_cast<const char*>(&bytes[0]), bytes.size());
-    return os;
-}
+/// Output the entire contents of a bytes container to an output stream.
+/// @param os    output stream
+/// @param bytes bytes
+/// @return Output stream
+std::ostream& operator<< (std::ostream& os, const Bytes& bytes);
 
 } // namespace yasm
 
