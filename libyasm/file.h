@@ -29,6 +29,9 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include <fstream>
+#include <string>
+
 #include <boost/function.hpp>
 
 
@@ -183,7 +186,6 @@ combpath(const char* from, const char* to)
 # endif
 #endif
 
-#if 0
 /// Try to find and open an include file, searching through include paths.
 /// First iname is looked for relative to the directory containing "from",
 /// then it's looked for relative to each of the include paths.
@@ -193,19 +195,20 @@ combpath(const char* from, const char* to)
 /// directory.
 ///
 /// First match wins; the full pathname (newly allocated) to the opened file
-/// is saved into oname, and the fopen'ed FILE * is returned.  If not found,
-/// NULL is returned.
+/// is returned, and the ifstream is opened.  If not found, the ifstream
+/// after the call is not an open ifstream.
 ///
-/// @param iname    file to include
-/// @param from     file doing the including
-/// @param mode     fopen mode string
-/// @param oname    full pathname of included file (may be relative). NULL
-///                 may be passed if this is unwanted.
-/// @return fopen'ed include file, or NULL if not found.
-/*@null@*/ FILE *yasm_fopen_include
-    (const char *iname, const char *from, const char *mode,
-     /*@null@*/ /*@out@*/ /*@only@*/ char **oname);
+/// @param ifs      input file stream [modified]
+/// @param iname    filename to include
+/// @param from     filename doing the including
+/// @param mode     file open mode
+/// @return full pathname of included file (may be relative) [output]
+std::string open_include(std::ifstream& ifs,
+                         const std::string& iname,
+                         const std::string& from,
+                         std::ios_base::openmode mode = std::ios_base::in);
 
+#if 0
 /// Delete any stored include paths added by yasm_add_include_path().
 void yasm_delete_include_paths();
 
