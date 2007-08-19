@@ -31,6 +31,7 @@
 ///
 #include <fstream>
 #include <string>
+#include <vector>
 
 #include <boost/function.hpp>
 
@@ -77,34 +78,36 @@ void unescape_cstring(unsigned char* str, size_t& len);
 /// portions.
 /// @param path     pathname
 /// @param tail     (returned) base filename
-/// @return Length of head (directory).
-size_t splitpath_unix(const char* path, /*@out@*/ const char* &tail);
+/// @return Head (directory).
+std::string splitpath_unix(const std::string& path,
+                           /*@out@*/ std::string& tail);
 
 /// Split a Windows pathname into head (directory) and tail (base filename)
 /// portions.
 /// @param path     pathname
 /// @param tail     (returned) base filename
-/// @return Length of head (directory).
-size_t splitpath_win(const char* path, /*@out@*/ const char* &tail);
+/// @return Head (directory).
+std::string splitpath_win(const std::string& path,
+                          /*@out@*/ std::string& tail);
 
 /// Split a pathname into head (directory) and tail (base filename) portions.
 /// Unless otherwise defined, defaults to splitpath_unix().
 /// @param path     pathname
 /// @param tail     (returned) base filename
-/// @return Length of head (directory).
+/// @return Head (directory).
 #ifndef HAVE_SPLITPATH
 #define HAVE_SPLITPATH 1
 # if defined (_WIN32) || defined (WIN32) || defined (__MSDOS__) || \
  defined (__DJGPP__) || defined (__OS2__) || defined (__CYGWIN__) || \
  defined (__CYGWIN32__)
-inline size_t
-splitpath(const char* path, /*@out@*/ const char* &tail)
+inline std::string
+splitpath(const std::string& path, /*@out@*/ std::string& tail)
 {
     return splitpath_win(path, tail);
 }
 # else
-inline size_t
-splitpath(const char* path, /*@out@*/ const char* &tail)
+inline std::string
+splitpath(const std::string& path, /*@out@*/ std::string& tail)
 {
     return splitpath_unix(path, tail);
 }
@@ -113,13 +116,13 @@ splitpath(const char* path, /*@out@*/ const char* &tail)
 
 /// Convert a UNIX relative or absolute pathname into an absolute pathname.
 /// @param path     pathname
-/// @return Absolute version of path (newly allocated).
-/*@only@*/ char* abspath_unix(const char* path);
+/// @return Absolute version of path.
+std::string abspath_unix(const std::string& path);
 
 /// Convert a Windows relative or absolute pathname into an absolute pathname.
 /// @param path     pathname
-/// @return Absolute version of path (newly allocated).
-/*@only@*/ char* abspath_win(const char* path);
+/// @return Absolute version of path.
+std::string abspath_win(const std::string& path);
 
 /// Convert a relative or absolute pathname into an absolute pathname.
 /// Unless otherwise defined, defaults to abspath_unix().
@@ -130,14 +133,14 @@ splitpath(const char* path, /*@out@*/ const char* &tail)
 # if defined (_WIN32) || defined (WIN32) || defined (__MSDOS__) || \
  defined (__DJGPP__) || defined (__OS2__) || defined (__CYGWIN__) || \
  defined (__CYGWIN32__)
-inline char*
-abspath(const char* path)
+inline std::string
+abspath(const std::string& path)
 {
     return abspath_win(path);
 }
 # else
-inline char*
-abspath(const char* path)
+inline std::string
+abspath(const std::string& path)
 {
     return abspath_unix(path);
 }
@@ -150,7 +153,7 @@ abspath(const char* path)
 /// @param from     from pathname
 /// @param to       to pathname
 /// @return Combined path (newly allocated).
-char* combpath_unix(const char* from, const char* to);
+std::string combpath_unix(const std::string& from, const std::string& to);
 
 /// Build a Windows pathname that is equivalent to accessing the "to" pathname
 /// when you're in the directory containing "from".  Result is relative if
@@ -158,7 +161,7 @@ char* combpath_unix(const char* from, const char* to);
 /// @param from     from pathname
 /// @param to       to pathname
 /// @return Combined path (newly allocated).
-char* combpath_win(const char* from, const char* to);
+std::string combpath_win(const std::string& from, const std::string& to);
 
 /// Build a pathname that is equivalent to accessing the "to" pathname
 /// when you're in the directory containing "from".  Result is relative if
@@ -172,53 +175,54 @@ char* combpath_win(const char* from, const char* to);
 # if defined (_WIN32) || defined (WIN32) || defined (__MSDOS__) || \
  defined (__DJGPP__) || defined (__OS2__) || defined (__CYGWIN__) || \
  defined (__CYGWIN32__)
-inline char*
-combpath(const char* from, const char* to)
+inline std::string
+combpath(const std::string& from, const std::string& to)
 {
     return combpath_win(from, to);
 }
 # else
-inline char*
-combpath(const char* from, const char* to)
+inline std::string
+combpath(const std::string& from, const std::string& to)
 {
     return combpath_unix(from, to);
 }
 # endif
 #endif
 
-/// Try to find and open an include file, searching through include paths.
-/// First iname is looked for relative to the directory containing "from",
-/// then it's looked for relative to each of the include paths.
-///
-/// All pathnames may be either absolute or relative; from, oname, and
-/// include paths, if relative, are relative from the current working
-/// directory.
-///
-/// First match wins; the full pathname (newly allocated) to the opened file
-/// is returned, and the ifstream is opened.  If not found, the ifstream
-/// after the call is not an open ifstream.
-///
-/// @param ifs      input file stream [modified]
-/// @param iname    filename to include
-/// @param from     filename doing the including
-/// @param mode     file open mode
-/// @return full pathname of included file (may be relative) [output]
-std::string open_include(std::ifstream& ifs,
-                         const std::string& iname,
-                         const std::string& from,
-                         std::ios_base::openmode mode = std::ios_base::in);
-
-#if 0
-/// Delete any stored include paths added by yasm_add_include_path().
-void yasm_delete_include_paths();
-
-/// Add an include path for use by yasm_fopen_include().
-/// If path is relative, it is treated by yasm_fopen_include() as relative to
+/// Include path storage and search.  Paths are stored as std::strings.
+/// If a path is relative, it is treated by Includes::open() as relative to
 /// the current working directory.
-///
-/// @param path     path to add
-void yasm_add_include_path(const char *path);
-#endif
+class Includes : public std::vector<std::string> {
+public:
+    /// Try to find and open an include file, searching through include paths.
+    /// First iname is looked for relative to the directory containing "from",
+    /// then it's looked for relative to each of the include paths.
+    ///
+    /// All pathnames may be either absolute or relative; from, oname, and
+    /// include paths, if relative, are relative from the current working
+    /// directory.
+    ///
+    /// First match wins; the full pathname (newly allocated) to the opened file
+    /// is returned, and the ifstream is opened.  If not found, the ifstream
+    /// after the call is not an open ifstream.
+    ///
+    /// If ifs is currently open, it is closed first.
+    ///
+    /// @param ifs      input file stream [modified]
+    /// @param iname    filename to include
+    /// @param from     filename doing the including
+    /// @param mode     file open mode
+    /// @return full pathname of included file (may be relative) [output]
+    std::string open(std::ifstream& ifs,
+                     const std::string& iname,
+                     const std::string& from,
+                     std::ios_base::openmode mode = std::ios_base::in) const;
+
+    /// Add an include path.
+    /// @param path     pathname
+    void push_back(const std::string& path);
+};
+
 } // namespace yasm
 
 #endif

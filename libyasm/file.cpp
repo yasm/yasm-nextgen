@@ -33,7 +33,12 @@
 #include <direct.h>
 #endif
 
+#include <algorithm>
 #include <cctype>
+#include <string>
+#include <vector>
+
+#include <boost/lambda/lambda.hpp>
 
 #include "errwarn.h"
 #include "file.h"
@@ -144,75 +149,98 @@ unescape_cstring(unsigned char* str, size_t &len)
     len = o-str;
 }
 
-size_t
-splitpath_unix(const char* path, /*@out@*/ const char* &tail)
+std::string
+splitpath_unix(const std::string& path, /*@out@*/ std::string& tail)
 {
-    const char* s;
-    s = strrchr(path, '/');
-    if (!s) {
+    using boost::lambda::_1;
+    using boost::lambda::_2;
+
+    std::string::size_type found = path.rfind('/');
+    if (found == std::string::npos) {
         // No head
         tail = path;
-        return 0;
+        return "";
     }
-    tail = s+1;
+    std::string head = path.substr(0, found+1);
+    tail = path.substr(found+1);
+
     // Strip trailing ./ on path
-    while ((s-1)>=path && *(s-1) == '.' && *s == '/'
-           && !((s-2)>=path && *(s-2) == '.'))
-        s -= 2;
+    std::string::size_type len = head.length();
+    while (len >= 2 && head[len-2] == '.' && head[len-1] == '/'
+           && !(len >= 3 && head[len-3] == '.'))
+        len -= 2;
+    head.resize(len);
+
     // Strip trailing slashes on path (except leading)
-    while (s>path && *s == '/')
-        s--;
-    // Return length of head
-    return s-path+1;
+    found = head.find_last_not_of('/');
+    if (found != std::string::npos)
+        head.erase(found+1);
+
+    // Combine any double slashes
+    std::string::iterator end =
+        std::unique(head.begin(), head.end(), _1 == '/' && _2 == '/');
+    head.erase(end, head.end());
+
+    return head;
 }
 
-size_t
-splitpath_win(const char* path, /*@out@*/ const char* &tail)
+std::string
+splitpath_win(const std::string& path, /*@out@*/ std::string& tail)
 {
-    const char* basepath = path;
-    const char* s;
+    using boost::lambda::_1;
+    using boost::lambda::_2;
 
-    // split off drive letter first, if any
-    if (isalpha(path[0]) && path[1] == ':')
-        basepath += 2;
-
-    s = basepath;
-    while (*s != '\0')
-        s++;
-    while (s >= basepath && *s != '\\' && *s != '/')
-        s--;
-    if (s < basepath) {
-        tail = basepath;
-        if (path == basepath)
-            return 0;   // No head
-        else
-            return 2;   // Drive letter is head
+    std::string::size_type found = path.find_last_of("/\\");
+    if (found == std::string::npos) {
+        // look for drive letter
+        if (path.length() >= 2 && std::isalpha(path[0]) && path[1] == ':') {
+            tail = path.substr(2);
+            return path.substr(0, 2);
+        } else {
+            tail = path;
+            return "";
+        }
     }
-    tail = s+1;
-    // Strip trailing .\ or ./ on path
-    while ((s-1)>=basepath && *(s-1) == '.' && (*s == '/' || *s == '\\')
-           && !((s-2)>=basepath && *(s-2) == '.'))
-        s -= 2;
+    std::string head = path.substr(0, found+1);
+    tail = path.substr(found+1);
+
+    // Replace all "/" with "\".
+    std::replace(head.begin(), head.end(), '/', '\\');
+
+    // Strip trailing .\ on path
+    std::string::size_type len = head.length();
+    while (len >= 2 && head[len-2] == '.' && head[len-1] == '\\'
+           && !(len >= 3 && head[len-3] == '.'))
+        len -= 2;
+    head.resize(len);
+
     // Strip trailing slashes on path (except leading)
-    while (s>basepath && (*s == '/' || *s == '\\'))
-        s--;
-    // Return length of head
-    return s-path+1;
+    found = head.find_last_not_of('\\');
+    if (found != std::string::npos) {
+        // don't strip slash immediately following drive letter
+        if (found == 1 && std::isalpha(head[0]) && head[1] == ':')
+            head.erase(found+2);
+        else
+            head.erase(found+1);
+    }
+
+    // Combine any double slashes
+    std::string::iterator end =
+        std::unique(head.begin(), head.end(), _1 == '\\' && _2 == '\\');
+    head.erase(end, head.end());
+
+    return head;
 }
 
 // FIXME: dumb way for now
-char *
-abspath_unix(const char* path)
+std::string
+abspath_unix(const std::string& path)
 {
-    char *curdir, *abspath;
-    static const char pathsep[2] = "/";
+    char* curdir = getcwd(NULL, 0);
 
-    curdir = getcwd(NULL, 0);
-
-    abspath = new char[strlen(curdir) + strlen(path) + 2];
-    strcpy(abspath, curdir);
-    strcat(abspath, pathsep);
-    strcat(abspath, path);
+    std::string abspath = curdir;
+    abspath += '/';
+    abspath += path;
 
     free(curdir);
 
@@ -220,68 +248,45 @@ abspath_unix(const char* path)
 }
 
 // FIXME: dumb way for now
-char *
-abspath_win(const char *path)
+std::string
+abspath_win(const std::string& path)
 {
-    char *curdir, *abspath, *ch;
-    static const char pathsep[2] = "\\";
+    char* curdir = getcwd(NULL, 0);
 
-    curdir = getcwd(NULL, 0);
-
-    abspath = new char[strlen(curdir) + strlen(path) + 2];
-    strcpy(abspath, curdir);
-    strcat(abspath, pathsep);
-    strcat(abspath, path);
+    std::string abspath = curdir;
+    abspath += '\\';
+    abspath += path;
 
     free(curdir);
 
     // Replace all "/" with "\".
-    ch = abspath;
-    while (*ch) {
-        if (*ch == '/')
-            *ch = '\\';
-        ch++;
-    }
+    std::replace(abspath.begin(), abspath.end(), '/', '\\');
 
     return abspath;
 }
 
-char *
-combpath_unix(const char* from, const char* to)
+std::string
+combpath_unix(const std::string& from, const std::string& to)
 {
-    const char* tail;
-    size_t pathlen, i, j;
-    char* out;
+    using boost::lambda::_1;
+    using boost::lambda::_2;
 
     if (to[0] == '/') {
-        // absolute "to"
-        out = new char[strlen(to)+1];
-        // Combine any double slashes when copying
-        for (j=0; *to; to++) {
-            if (*to == '/' && *(to+1) == '/')
-                continue;
-            out[j++] = *to;
-        }
-        out[j++] = '\0';
+        // absolute "to"; combine any double slashes
+        std::string out = to;
+        std::string::iterator end =
+            std::unique(out.begin(), out.end(), _1 == '/' && _2 == '/');
+        out.erase(end, out.end());
         return out;
     }
 
     // Get path component; note this strips trailing slash
-    pathlen = splitpath_unix(from, tail);
-
-    out = new char [pathlen+strlen(to)+2];  // worst case maximum len
-
-    // Combine any double slashes when copying
-    for (i=0, j=0; i<pathlen; i++) {
-        if (i<pathlen-1 && from[i] == '/' && from[i+1] == '/')
-            continue;
-        out[j++] = from[i];
-    }
-    pathlen = j;
+    std::string tail;
+    std::string out = splitpath_unix(from, tail);
 
     // Add trailing slash back in
-    if (pathlen > 0 && out[pathlen-1] != '/')
-        out[pathlen++] = '/';
+    if (!out.empty() && out[out.length()-1] != '/')
+        out += '/';
 
     // Now scan from left to right through "to", stripping off "." and "..";
     // if we see "..", back up one directory in out unless last directory in
@@ -290,91 +295,82 @@ combpath_unix(const char* from, const char* to)
     // Note this does NOT back through ..'s in the "from" path; this is just
     // as well as that could skip symlinks (e.g. "foo/bar/.." might not be
     // the same as "foo").
+    std::string::size_type i = 0, tolen = to.length();
     for (;;) {
-        if (to[0] == '.' && to[1] == '/') {
-            to += 2;        // current directory
-            while (*to == '/')
-                to++;           // strip off any additional slashes
-        } else if (pathlen == 0)
+        if ((tolen-i) >= 2 && to[i] == '.' && to[i+1] == '/') {
+            i += 2;         // current directory
+            while (to[i] == '/')
+                i++;        // strip off any additional slashes
+        } else if (out.empty())
             break;          // no more "from" path left, we're done
-        else if (to[0] == '.' && to[1] == '.' && to[2] == '/') {
-            if (pathlen >= 3 && out[pathlen-1] == '/' && out[pathlen-2] == '.'
-                && out[pathlen-3] == '.') {
+        else if ((tolen-i) >= 3 && to[i] == '.' && to[i+1] == '.' &&
+                 to[i+2] == '/') {
+            std::string::size_type outlen = out.length();
+
+            if (outlen >= 3 && out[outlen-1] == '/' && out[outlen-2] == '.'
+                && out[outlen-3] == '.') {
                 // can't ".." against a "..", so we're done.
                 break;
             }
 
-            to += 3;    // throw away "../"
-            while (*to == '/')
-                to++;           // strip off any additional slashes
+            i += 3;     // throw away "../"
+            while (to[i] == '/')
+                i++;    // strip off any additional slashes
 
             // and back out last directory in "out" if not already at root
-            if (pathlen > 1) {
-                pathlen--;      // strip off trailing '/'
-                while (pathlen > 0 && out[pathlen-1] != '/')
-                    pathlen--;
+            if (outlen > 1) {
+                std::string::size_type found = out.rfind('/', outlen-2);
+                if (found != std::string::npos)
+                    out.erase(found+1);
+                else
+                    out.clear();
             }
         } else
             break;
     }
 
     // Copy "to" to tail of output, and we're done
-    // Combine any double slashes when copying
-    for (j=pathlen; *to; to++) {
-        if (*to == '/' && *(to+1) == '/')
-            continue;
-        out[j++] = *to;
-    }
-    out[j++] = '\0';
+    out += to.substr(i);
+
+    // Combine any double slashes before returning
+    std::string::iterator end =
+        std::unique(out.begin(), out.end(), _1 == '/' && _2 == '/');
+    out.erase(end, out.end());
 
     return out;
 }
 
-char *
-combpath_win(const char* from, const char* to)
+std::string
+combpath_win(const std::string& from, const std::string& to)
 {
-    const char *tail;
-    size_t pathlen, i, j;
-    char *out;
+    using boost::lambda::_1;
+    using boost::lambda::_2;
 
-    if ((isalpha(to[0]) && to[1] == ':') || (to[0] == '/' || to[0] == '\\')) {
+    if ((to.length() >= 2 && std::isalpha(to[0]) && to[1] == ':') ||
+        to[0] == '/' || to[0] == '\\') {
         // absolute or drive letter "to"
-        out = new char[strlen(to)+1];
-        // Combine any double slashes when copying
-        for (j=0; *to; to++) {
-            if ((*to == '/' || *to == '\\')
-                && (*(to+1) == '/' || *(to+1) == '\\'))
-                continue;
-            if (*to == '/')
-                out[j++] = '\\';
-            else
-                out[j++] = *to;
-        }
-        out[j++] = '\0';
+        std::string out = to;
+
+        // Replace all "/" with "\".
+        std::replace(out.begin(), out.end(), '/', '\\');
+
+        // combine any double slashes
+        std::string::iterator end =
+            std::unique(out.begin(), out.end(), _1 == '\\' && _2 == '\\');
+        out.erase(end, out.end());
+
         return out;
     }
 
     // Get path component; note this strips trailing slash
-    pathlen = splitpath_win(from, tail);
-
-    out = new char[pathlen+strlen(to)+2];   // worst case maximum len
-
-    // Combine any double slashes when copying
-    for (i=0, j=0; i<pathlen; i++) {
-        if (i<pathlen-1 && (from[i] == '/' || from[i] == '\\')
-            && (from[i+1] == '/' || from[i+1] == '\\'))
-            continue;
-        if (from[i] == '/')
-            out[j++] = '\\';
-        else
-            out[j++] = from[i];
-    }
-    pathlen = j;
+    std::string tail;
+    std::string out = splitpath_win(from, tail);
 
     // Add trailing slash back in, unless it's only a raw drive letter
-    if (pathlen > 0 && out[pathlen-1] != '\\'
-        && !(pathlen == 2 && isalpha(out[0]) && out[1] == ':'))
-        out[pathlen++] = '\\';
+    if (!out.empty()
+        && out[out.length()-1] != '/' && out[out.length()-1] != '\\'
+        && !(out.length() == 2 && std::isalpha(out[0]) && out[1] == ':'))
+        out += '\\';
 
     // Now scan from left to right through "to", stripping off "." and "..";
     // if we see "..", back up one directory in out unless last directory in
@@ -383,128 +379,92 @@ combpath_win(const char* from, const char* to)
     // Note this does NOT back through ..'s in the "from" path; this is just
     // as well as that could skip symlinks (e.g. "foo/bar/.." might not be
     // the same as "foo").
+    std::string::size_type i = 0, tolen = to.length();
     for (;;) {
-        if (to[0] == '.' && (to[1] == '/' || to[1] == '\\')) {
-            to += 2;        // current directory
-            while (*to == '/' || *to == '\\')
-                to++;           // strip off any additional slashes
-        } else if (pathlen == 0
-                 || (pathlen == 2 && isalpha(out[0]) && out[1] == ':'))
+        if ((tolen-i) >= 2 && to[i] == '.'
+            && (to[i+1] == '/' || to[i+1] == '\\')) {
+            i += 2;         // current directory
+            while (to[i] == '/' || to[i] == '\\')
+                i++;        // strip off any additional slashes
+        } else if (out.empty() ||
+                   (out.length() == 2 && std::isalpha(out[0]) && out[1] == ':'))
             break;          // no more "from" path left, we're done
-        else if (to[0] == '.' && to[1] == '.'
-                 && (to[2] == '/' || to[2] == '\\')) {
-            if (pathlen >= 3 && out[pathlen-1] == '\\'
-                && out[pathlen-2] == '.' && out[pathlen-3] == '.') {
+        else if ((tolen-i) >= 3 && to[i] == '.' && to[i+1] == '.'
+                 && (to[i+2] == '/' || to[i+2] == '\\')) {
+            std::string::size_type outlen = out.length();
+
+            if (outlen >= 3 && (out[outlen-1] == '/' || out[outlen-1] == '\\')
+                && out[outlen-2] == '.' && out[outlen-3] == '.') {
                 // can't ".." against a "..", so we're done.
                 break;
             }
 
-            to += 3;    // throw away "../" (or "..\")
-            while (*to == '/' || *to == '\\')
-                to++;           // strip off any additional slashes
+            i += 3;     // throw away "../" (or "..\")
+            while (to[i] == '/' || to[i] == '\\')
+                i++;    // strip off any additional slashes
 
             // and back out last directory in "out" if not already at root
-            if (pathlen > 1) {
-                pathlen--;      // strip off trailing '/'
-                while (pathlen > 0 && out[pathlen-1] != '\\')
-                    pathlen--;
+            if (outlen > 1 &&
+                !(outlen == 3 && std::isalpha(out[0]) && out[1] == ':')) {
+                std::string::size_type found =
+                    out.find_last_of("/\\:", outlen-2);
+                if (found != std::string::npos)
+                    out.erase(found+1);
+                else
+                    out.clear();
             }
         } else
             break;
     }
 
     // Copy "to" to tail of output, and we're done
-    // Combine any double slashes when copying
-    for (j=pathlen; *to; to++) {
-        if ((*to == '/' || *to == '\\') && (*(to+1) == '/' || *(to+1) == '\\'))
-            continue;
-        if (*to == '/')
-            out[j++] = '\\';
-        else
-            out[j++] = *to;
-    }
-    out[j++] = '\0';
+    out += to.substr(i);
+
+    // Replace all "/" with "\".
+    std::replace(out.begin(), out.end(), '/', '\\');
+
+    // Combine any double slashes
+    std::string::iterator end =
+        std::unique(out.begin(), out.end(), _1 == '\\' && _2 == '\\');
+    out.erase(end, out.end());
 
     return out;
 }
-#if 0
-typedef struct incpath {
-    STAILQ_ENTRY(incpath) link;
-    /*@owned@*/ char *path;
-} incpath;
 
-STAILQ_HEAD(, incpath) incpaths = STAILQ_HEAD_INITIALIZER(incpaths);
-
-FILE *
-yasm_fopen_include(const char *iname, const char *from, const char *mode,
-                   char **oname)
+std::string
+Includes::open(std::ifstream& ifs, const std::string& iname,
+               const std::string& from, std::ios_base::openmode mode) const
 {
-    FILE *f;
-    char *combine;
-    incpath *np;
+    // Close the stream if already open
+    if (ifs.is_open())
+        ifs.close();
+    ifs.clear();
 
     // Try directly relative to from first, then each of the include paths.
-    if (from) {
-        combine = yasm__combpath(from, iname);
-        f = fopen(combine, mode);
-        if (f) {
-            if (oname)
-                *oname = combine;
-            else
-                yasm_xfree(combine);
-            return f;
-        }
-        yasm_xfree(combine);
+    std::string combine = combpath(from, iname);
+    ifs.open(combine.c_str(), mode);
+    if (ifs)
+        return combine;
+
+    for (const_iterator i = begin(), e = end(); i != e; ++i) {
+        combine = combpath(*i, iname);
+        ifs.open(combine.c_str(), mode);
+        if (ifs)
+            return combine;
     }
 
-    STAILQ_FOREACH(np, &incpaths, link) {
-        combine = yasm__combpath(np->path, iname);
-        f = fopen(combine, mode);
-        if (f) {
-            if (oname)
-                *oname = combine;
-            else
-                yasm_xfree(combine);
-            return f;
-        }
-        yasm_xfree(combine);
-    }
-
-    if (oname)
-        *oname = NULL;
-    return NULL;
+    return "";
 }
 
 void
-yasm_delete_include_paths(void)
+Includes::push_back(const std::string& path)
 {
-    incpath *n1, *n2;
-
-    n1 = STAILQ_FIRST(&incpaths);
-    while (n1) {
-        n2 = STAILQ_NEXT(n1, link);
-        yasm_xfree(n1->path);
-        yasm_xfree(n1);
-        n1 = n2;
-    }
-    STAILQ_INIT(&incpaths);
-}
-
-void
-yasm_add_include_path(const char *path)
-{
-    incpath *np = yasm_xmalloc(sizeof(incpath));
-    size_t len = strlen(path);
-
-    np->path = yasm_xmalloc(len+2);
-    memcpy(np->path, path, len+1);
     // Add trailing slash if it is missing.
-    if (path[len-1] != '\\' && path[len-1] != '/') {
-        np->path[len] = '/';
-        np->path[len+1] = '\0';
-    }
-
-    STAILQ_INSERT_TAIL(&incpaths, np, link);
+    std::string::size_type len = path.length();
+    if (len > 0 && path[len-1] != '\\' && path[len-1] != '/')
+        std::vector<std::string>::push_back(path+'/');
+    else
+        std::vector<std::string>::push_back(path);
 }
-#endif
+
 } // namespace yasm

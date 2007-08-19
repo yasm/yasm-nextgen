@@ -33,141 +33,168 @@ using namespace yasm;
 
 BOOST_AUTO_TEST_CASE(UnixTestCaseCurDir)
 {
-    char* out;
+    std::string out;
 
     out = combpath_unix("file1", "file2");
-    BOOST_CHECK(strcmp(out, "file2") == 0);
+    BOOST_CHECK_EQUAL(out, "file2");
 
     out = combpath_unix("./file1.ext", "./file2.ext");
-    BOOST_CHECK(strcmp(out, "file2.ext") == 0);
+    BOOST_CHECK_EQUAL(out, "file2.ext");
 
     out = combpath_unix("foo/bar/", "file2");
-    BOOST_CHECK(strcmp(out, "foo/bar/file2") == 0);
+    BOOST_CHECK_EQUAL(out, "foo/bar/file2");
 }
 
 BOOST_AUTO_TEST_CASE(UnixTestCaseParentDir)
 {
-    char* out;
+    std::string out;
 
     out = combpath_unix("foo/bar/file1", "../file2");
-    BOOST_CHECK(strcmp(out, "foo/file2") == 0);
+    BOOST_CHECK_EQUAL(out, "foo/file2");
 
     out = combpath_unix("foo/bar/file1", "../../../file2");
-    BOOST_CHECK(strcmp(out, "../file2") == 0);
+    BOOST_CHECK_EQUAL(out, "../file2");
 
     out = combpath_unix("foo/bar//file1", "../..//..//file2");
-    BOOST_CHECK(strcmp(out, "../file2") == 0);
+    BOOST_CHECK_EQUAL(out, "../file2");
 
     out = combpath_unix("../../file1", "../../file2");
-    BOOST_CHECK(strcmp(out, "../../../../file2") == 0);
+    BOOST_CHECK_EQUAL(out, "../../../../file2");
 
     out = combpath_unix("../foo/bar/../file1", "../../file2");
-    BOOST_CHECK(strcmp(out, "../foo/bar/../../../file2") == 0);
+    BOOST_CHECK_EQUAL(out, "../foo/bar/../../../file2");
 
     out = combpath_unix("../foo/", "../file2");
-    BOOST_CHECK(strcmp(out, "../file2") == 0);
+    BOOST_CHECK_EQUAL(out, "../file2");
 
     out = combpath_unix("../foo/file1", "../../bar/file2");
-    BOOST_CHECK(strcmp(out, "../../bar/file2") == 0);
+    BOOST_CHECK_EQUAL(out, "../../bar/file2");
 }
 
 BOOST_AUTO_TEST_CASE(UnixTestCaseRootDir)
 {
-    char* out;
+    std::string out;
 
     out = combpath_unix("/file1", "file2");
-    BOOST_CHECK(strcmp(out, "/file2") == 0);
+    BOOST_CHECK_EQUAL(out, "/file2");
 
     out = combpath_unix("file1", "/file2");
-    BOOST_CHECK(strcmp(out, "/file2") == 0);
+    BOOST_CHECK_EQUAL(out, "/file2");
 
     out = combpath_unix("/foo/file1", "../../file2");
-    BOOST_CHECK(strcmp(out, "/file2") == 0);
+    BOOST_CHECK_EQUAL(out, "/file2");
 
     out = combpath_unix("/foo//file1", "../../file2");
-    BOOST_CHECK(strcmp(out, "/file2") == 0);
+    BOOST_CHECK_EQUAL(out, "/file2");
 
     out = combpath_unix("/", "../file2");
-    BOOST_CHECK(strcmp(out, "/file2") == 0);
+    BOOST_CHECK_EQUAL(out, "/file2");
 }
 
 BOOST_AUTO_TEST_CASE(WindowsTestCaseCurDir)
 {
-    char* out;
+    std::string out;
 
     out = combpath_win("file1", "file2");
-    BOOST_CHECK(strcmp(out, "file2") == 0);
+    BOOST_CHECK_EQUAL(out, "file2");
 
     out = combpath_win("./file1.ext", "./file2.ext");
-    BOOST_CHECK(strcmp(out, "file2.ext") == 0);
+    BOOST_CHECK_EQUAL(out, "file2.ext");
 
     out = combpath_win("./file1.ext", ".\\file2.ext");
-    BOOST_CHECK(strcmp(out, "file2.ext") == 0);
+    BOOST_CHECK_EQUAL(out, "file2.ext");
 
     out = combpath_win(".\\file1.ext", "./file2.ext");
-    BOOST_CHECK(strcmp(out, "file2.ext") == 0);
+    BOOST_CHECK_EQUAL(out, "file2.ext");
 
     out = combpath_win("/file1", "file2");
-    BOOST_CHECK(strcmp(out, "\\file2") == 0);
+    BOOST_CHECK_EQUAL(out, "\\file2");
 
     out = combpath_win("\\file1", "file2");
-    BOOST_CHECK(strcmp(out, "\\file2") == 0);
+    BOOST_CHECK_EQUAL(out, "\\file2");
 
     out = combpath_win("file1", "/file2");
-    BOOST_CHECK(strcmp(out, "\\file2") == 0);
+    BOOST_CHECK_EQUAL(out, "\\file2");
 
     out = combpath_win("file1", "\\file2");
-    BOOST_CHECK(strcmp(out, "\\file2") == 0);
+    BOOST_CHECK_EQUAL(out, "\\file2");
 }
 
 BOOST_AUTO_TEST_CASE(WindowsTestCaseParentDir)
 {
-    char* out;
+    std::string out;
 
     out = combpath_win("/foo\\file1", "../../file2");
-    BOOST_CHECK(strcmp(out, "\\file2") == 0);
+    BOOST_CHECK_EQUAL(out, "\\file2");
 
     out = combpath_win("\\foo\\\\file1", "..\\../file2");
-    BOOST_CHECK(strcmp(out, "\\file2") == 0);
+    BOOST_CHECK_EQUAL(out, "\\file2");
 
     out = combpath_win("foo/bar/file1", "../file2");
-    BOOST_CHECK(strcmp(out, "foo\\file2") == 0);
+    BOOST_CHECK_EQUAL(out, "foo\\file2");
 
     out = combpath_win("foo/bar/file1", "../..\\../file2");
-    BOOST_CHECK(strcmp(out, "..\\file2") == 0);
+    BOOST_CHECK_EQUAL(out, "..\\file2");
 
     out = combpath_win("foo/bar//file1", "../..\\\\..//file2");
-    BOOST_CHECK(strcmp(out, "..\\file2") == 0);
+    BOOST_CHECK_EQUAL(out, "..\\file2");
 
     out = combpath_win("foo/bar/", "file2");
-    BOOST_CHECK(strcmp(out, "foo\\bar\\file2") == 0);
+    BOOST_CHECK_EQUAL(out, "foo\\bar\\file2");
 
     out = combpath_win("..\\../file1", "../..\\file2");
-    BOOST_CHECK(strcmp(out, "..\\..\\..\\..\\file2") == 0);
+    BOOST_CHECK_EQUAL(out, "..\\..\\..\\..\\file2");
 
     out = combpath_win("../foo/bar\\\\../file1", "../..\\file2");
-    BOOST_CHECK(strcmp(out, "..\\foo\\bar\\..\\..\\..\\file2") == 0);
+    BOOST_CHECK_EQUAL(out, "..\\foo\\bar\\..\\..\\..\\file2");
 
     out = combpath_win("../foo/", "../file2");
-    BOOST_CHECK(strcmp(out, "..\\file2") == 0);
+    BOOST_CHECK_EQUAL(out, "..\\file2");
 
     out = combpath_win("../foo/file1", "../..\\bar\\file2");
-    BOOST_CHECK(strcmp(out, "..\\..\\bar\\file2") == 0);
+    BOOST_CHECK_EQUAL(out, "..\\..\\bar\\file2");
 }
 
 BOOST_AUTO_TEST_CASE(WindowsTestCaseRootDir)
 {
-    char* out;
+    std::string out;
 
     out = combpath_win("/", "../file2");
-    BOOST_CHECK(strcmp(out, "\\file2") == 0);
+    BOOST_CHECK_EQUAL(out, "\\file2");
 
     out = combpath_win("c:/file1.ext", "./file2.ext");
-    BOOST_CHECK(strcmp(out, "c:\\file2.ext") == 0);
+    BOOST_CHECK_EQUAL(out, "c:\\file2.ext");
+
+    out = combpath_win("c:/file1.ext", "../file2.ext");
+    BOOST_CHECK_EQUAL(out, "c:\\file2.ext");
+
+    out = combpath_win("g:/path/file1.ext", "../file2.ext");
+    BOOST_CHECK_EQUAL(out, "g:\\file2.ext");
+
+    out = combpath_win("g:path/file1.ext", "../file2.ext");
+    BOOST_CHECK_EQUAL(out, "g:file2.ext");
+
+    out = combpath_win("g:path/file1.ext", "../../file2.ext");
+    BOOST_CHECK_EQUAL(out, "g:..\\file2.ext");
+
+    out = combpath_win("g:file1.ext", "file2.ext");
+    BOOST_CHECK_EQUAL(out, "g:file2.ext");
+
+    out = combpath_win("g:file1.ext", "../file2.ext");
+    BOOST_CHECK_EQUAL(out, "g:..\\file2.ext");
 
     out = combpath_win("e:\\path\\to/file1.ext", ".\\file2.ext");
-    BOOST_CHECK(strcmp(out, "e:\\path\\to\\file2.ext") == 0);
+    BOOST_CHECK_EQUAL(out, "e:\\path\\to\\file2.ext");
 
     out = combpath_win(".\\file1.ext", "g:file2.ext");
-    BOOST_CHECK(strcmp(out, "g:file2.ext") == 0);
+    BOOST_CHECK_EQUAL(out, "g:file2.ext");
+
+    out = combpath_win(".\\file1.ext", "g:../file2.ext");
+    BOOST_CHECK_EQUAL(out, "g:..\\file2.ext");
+
+    out = combpath_win(".\\file1.ext", "g:\\file2.ext");
+    BOOST_CHECK_EQUAL(out, "g:\\file2.ext");
+
+    out = combpath_win("g:", "\\file2.ext");
+    BOOST_CHECK_EQUAL(out, "\\file2.ext");
 }

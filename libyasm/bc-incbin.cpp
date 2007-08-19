@@ -50,7 +50,8 @@ using namespace yasm;
 class IncbinBytecode : public Bytecode::Contents {
 public:
     IncbinBytecode(const std::string& filename, const std::string& from,
-                   std::auto_ptr<Expr> start, std::auto_ptr<Expr> maxlen);
+                   const Includes& includes, std::auto_ptr<Expr> start,
+                   std::auto_ptr<Expr> maxlen);
     ~IncbinBytecode();
 
     /// Prints the implementation-specific data (for debugging purposes).
@@ -79,6 +80,8 @@ private:
     std::string m_filename;     ///< file to include data from
     std::string m_from;         ///< filename of what contained incbin
 
+    const Includes& m_includes; ///< include search path
+
     /// starting offset to read from (NULL=0)
     /*@null@*/ boost::scoped_ptr<Expr> m_start;
 
@@ -88,10 +91,12 @@ private:
 
 IncbinBytecode::IncbinBytecode(const std::string& filename,
                                const std::string& from,
+                               const Includes& includes,
                                std::auto_ptr<Expr> start,
                                std::auto_ptr<Expr> maxlen)
     : m_filename(filename),
       m_from(from),
+      m_includes(includes),
       m_start(start.release()),
       m_maxlen(maxlen.release())
 {
@@ -173,8 +178,8 @@ IncbinBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 
     // Open file and determine its length
     std::ifstream ifs;
-    open_include(ifs, m_filename, m_from,
-                 std::ifstream::in | std::ifstream::binary);
+    m_includes.open(ifs, m_filename, m_from,
+                    std::ifstream::in | std::ifstream::binary);
     if (!ifs) {
         std::ostringstream emsg;
         emsg << N_("`incbin': unable to open file");
@@ -223,8 +228,8 @@ IncbinBytecode::to_bytes(Bytecode& bc, Bytes& bytes,
 
     // Open file
     std::ifstream ifs;
-    open_include(ifs, m_filename, m_from,
-                 std::ifstream::in | std::ifstream::binary);
+    m_includes.open(ifs, m_filename, m_from,
+                    std::ifstream::in | std::ifstream::binary);
     if (!ifs) {
         std::ostringstream emsg;
         emsg << N_("`incbin': unable to open file");
@@ -262,6 +267,7 @@ create_incbin(const std::string& filename,
               /*@null@*/ std::auto_ptr<Expr> start,
               /*@null@*/ std::auto_ptr<Expr> maxlen,
               const Linemap& linemap,
+              const Includes& includes,
               unsigned long line)
 {
     std::string from;
@@ -271,7 +277,7 @@ create_incbin(const std::string& filename,
     linemap.lookup(line, from, xline);
 
     Bytecode::Contents::Ptr
-        contents(new IncbinBytecode(filename, from, start, maxlen));
+        contents(new IncbinBytecode(filename, from, includes, start, maxlen));
     return std::auto_ptr<Bytecode>(new Bytecode(contents, line));
 }
 

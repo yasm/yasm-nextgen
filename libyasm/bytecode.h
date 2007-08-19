@@ -45,6 +45,7 @@ class Bytecode;
 class Bytes;
 class Errwarns;
 class Expr;
+class Includes;
 class Insn;
 class IntNum;
 class Linemap;
@@ -500,7 +501,7 @@ std::auto_ptr<Bytecode> create_reserve
 std::auto_ptr<Bytecode> create_incbin
     (const std::string& filename, /*@null@*/ std::auto_ptr<Expr> start,
      /*@null@*/ std::auto_ptr<Expr> maxlen, const Linemap& linemap,
-     unsigned long line);
+     const Includes& includes, unsigned long line);
 
 /// Create a bytecode that aligns the following bytecode to a boundary.
 /// @param boundary     byte alignment (must be a power of two)
