@@ -85,68 +85,73 @@ Scanner::fill_helper(unsigned char* &cursor,
     return first;
 }
 
-void
-unescape_cstring(unsigned char* str, size_t &len)
+std::string
+unescape(const std::string& str)
 {
-    unsigned char* s = str;
-    unsigned char* o = str;
-    unsigned char t[4];
-
-    while ((size_t)(s-str)<len) {
-        if (*s == '\\' && (size_t)(&s[1]-str)<len) {
-            s++;
-            switch (*s) {
-                case 'b': *o = '\b'; s++; break;
-                case 'f': *o = '\f'; s++; break;
-                case 'n': *o = '\n'; s++; break;
-                case 'r': *o = '\r'; s++; break;
-                case 't': *o = '\t'; s++; break;
+    std::string out;
+    std::string::const_iterator i=str.begin(), end=str.end();
+    while (i != end) {
+        if (*i == '\\') {
+            ++i;
+            if (i == end) {
+                out.push_back('\\');
+                return out;
+            }
+            switch (*i) {
+                case 'b': out.push_back('\b'); ++i; break;
+                case 'f': out.push_back('\f'); ++i; break;
+                case 'n': out.push_back('\n'); ++i; break;
+                case 'r': out.push_back('\r'); ++i; break;
+                case 't': out.push_back('\t'); ++i; break;
                 case 'x':
                     // hex escape; grab last two digits
-                    s++;
-                    while ((size_t)(&s[2]-str)<len && isxdigit(s[0])
-                           && isxdigit(s[1]) && isxdigit(s[2]))
-                        s++;
-                    if ((size_t)(s-str)<len && isxdigit(*s)) {
-                        t[0] = *s++;
+                    ++i;
+                    while (i != end && (i+1) != end && (i+2) != end
+                           && std::isxdigit(*i) && std::isxdigit(*(i+1))
+                           && std::isxdigit(*(i+2)))
+                        ++i;
+                    if (i != end && std::isxdigit(*i)) {
+                        char t[3];
+                        t[0] = *i++;
                         t[1] = '\0';
                         t[2] = '\0';
-                        if ((size_t)(s-str)<len && isxdigit(*s))
-                            t[1] = *s++;
-                        *o = (unsigned char)strtoul((char *)t, NULL, 16);
+                        if (i != end && std::isxdigit(*i))
+                            t[1] = *i++;
+                        out.push_back((char)strtoul((char *)t, NULL, 16));
                     } else
-                        *o = '\0';
+                        out.push_back(0);
                     break;
                 default:
-                    if (isdigit(*s)) {
-                        int warn = 0;
+                    if (isdigit(*i)) {
+                        bool warn = false;
                         // octal escape
-                        if (*s > '7')
-                            warn = 1;
-                        *o = *s++ - '0';
-                        if ((size_t)(s-str)<len && isdigit(*s)) {
-                            if (*s > '7')
-                                warn = 1;
-                            *o <<= 3;
-                            *o += *s++ - '0';
-                            if ((size_t)(s-str)<len && isdigit(*s)) {
-                                if (*s > '7')
-                                    warn = 1;
-                                *o <<= 3;
-                                *o += *s++ - '0';
+                        if (*i > '7')
+                            warn = true;
+                        unsigned char v = *i++ - '0';
+                        if (i != end && std::isdigit(*i)) {
+                            if (*i > '7')
+                                warn = true;
+                            v <<= 3;
+                            v += *i++ - '0';
+                            if (i != end && std::isdigit(*i)) {
+                                if (*i > '7')
+                                    warn = true;
+                                v <<= 3;
+                                v += *i++ - '0';
                             }
                         }
+                        out.push_back((char)v);
                         if (warn)
-                            warn_set(WARN_GENERAL, N_("octal value out of range"));
+                            warn_set(WARN_GENERAL,
+                                     N_("octal value out of range"));
                     } else
-                        *o = *s++;
+                        out.push_back(*i++);
                     break;
             }
-            o++;
         } else
-            *o++ = *s++;
+            out.push_back(*i++);
     }
-    len = o-str;
+    return out;
 }
 
 std::string

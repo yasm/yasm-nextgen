@@ -13,4 +13,5 @@ LIBYASM_UNIT_TESTS(
     file_combpath_test
     floatnum_new_test
     floatnum_get_test
+    unescape_test
     )
