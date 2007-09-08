@@ -26,6 +26,8 @@
 //
 #include "util.h"
 
+#include <algorithm>
+
 #include "linemap.h"
 
 
