@@ -66,7 +66,8 @@ public:
 
 namespace yasm {
 
-struct Object::Impl {
+class Object::Impl {
+public:
     Impl(bool nocase) : sym_map(nocase) {}
     ~Impl() {}
 
