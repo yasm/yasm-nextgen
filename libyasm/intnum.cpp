@@ -577,7 +577,7 @@ IntNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize,
     unsigned char *buf;
     unsigned int len;
     size_t rshift = shift < 0 ? (size_t)(-shift) : 0;
-    int carry_in;
+    bool carry_in;
 
     // Currently don't support destinations larger than our native size
     if (destsize*8 > BITVECT_NATIVE_SIZE)
@@ -657,7 +657,7 @@ IntNum::ok_size(size_t size, size_t rshift, int rangetype) const
         return 1;
 
     if (rshift > 0) {
-        int carry_in = BitVector::msb_(val);
+        bool carry_in = BitVector::msb_(val);
         while (rshift-- > 0)
             BitVector::shift_right(val, carry_in);
     }
@@ -665,7 +665,7 @@ IntNum::ok_size(size_t size, size_t rshift, int rangetype) const
     if (rangetype > 0) {
         if (BitVector::msb_(val)) {
             // it's negative
-            int retval;
+            bool retval;
 
             BitVector::Negate(conv_bv, val);
             BitVector::dec(conv_bv, conv_bv);

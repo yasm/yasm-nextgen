@@ -104,7 +104,7 @@ protected:
     void fix_up_max_high(IntervalTreeNode<T>*);
     void delete_fix_up(IntervalTreeNode<T>*);
 
-    static bool Max(long a, long b);
+    static long Max(long a, long b);
 
 #ifdef YASM_INTERVAL_TREE_CHECK_ASSUMPTIONS
     void check_max_high_fields(IntervalTreeNode<T>*) const;
@@ -140,7 +140,7 @@ IntervalTree<T>::Assert(bool assertion, const char* error)
 
 // a function to find the maximum of two objects.
 template <typename T>
-inline bool
+inline long
 IntervalTree<T>::Max(long a, long b)
 {
     return ((a>b) ? a : b);
