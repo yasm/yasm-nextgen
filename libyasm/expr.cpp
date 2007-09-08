@@ -91,6 +91,21 @@ can_destroy_int_right(Op::Op op, const IntNum* intn)
 
 namespace yasm {
 
+Expr::Term::Term(std::auto_ptr<IntNum> intn) : m_type(INT)
+{
+    m_data.intn = intn.release();
+}
+
+Expr::Term::Term(std::auto_ptr<FloatNum> flt) : m_type(FLOAT)
+{
+    m_data.flt = flt.release();
+}
+
+Expr::Term::Term(std::auto_ptr<Expr> expr) : m_type(EXPR)
+{
+    m_data.expr = expr.release();
+}
+
 Expr::Term
 Expr::Term::clone() const
 {

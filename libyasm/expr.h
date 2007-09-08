@@ -90,12 +90,9 @@ public:
 
         // auto_ptr constructors
 
-        Term(std::auto_ptr<IntNum> intn) : m_type(INT)
-        { m_data.intn = intn.release(); }
-        Term(std::auto_ptr<FloatNum> flt) : m_type(FLOAT)
-        { m_data.flt = flt.release(); }
-        Term(std::auto_ptr<Expr> expr) : m_type(EXPR)
-        { m_data.expr = expr.release(); }
+        Term(std::auto_ptr<IntNum> intn);
+        Term(std::auto_ptr<FloatNum> flt);
+        Term(std::auto_ptr<Expr> expr);
 
         /// Explicit copy creator.
         /// There's no copy constructor or assignment operator as we want
@@ -121,7 +118,7 @@ public:
         { return (m_type < other.m_type); }
 
         /// Match type.  Can take an OR'ed combination of TermTypes.
-        bool is_type(int type) const { return m_type & type; }
+        bool is_type(int type) const { return (m_type & type) != 0; }
 
         /// Match operator.  Does not match non-expressions.
         bool is_op(Op::Op op) const
