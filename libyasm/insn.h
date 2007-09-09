@@ -230,7 +230,7 @@ public:
 
     Contents::SpecialType get_special() const;
 
-    virtual Contents* clone() const = 0;
+    virtual Insn* clone() const = 0;
 
 protected:
     /// Finalize the custom parts of an instruction.
