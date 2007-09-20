@@ -47,6 +47,8 @@ INCLUDE(CTest)
 
 INCLUDE(ConfigureChecks.cmake)
 
+add_subdirectory(tools)
+
 YASM_ADD_MODULE_SUBDIRECTORY(modules)
 MESSAGE(STATUS "Building modules: ${YASM_MODULES}")
 #MESSAGE(STATUS "Module source files: ${YASM_MODULES_SRC}")

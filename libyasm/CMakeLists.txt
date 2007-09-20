@@ -19,7 +19,7 @@ ADD_LIBRARY(libyasm
     md5.cpp
     name_value.cpp
     object.cpp
-    #phash.c
+    phash.cpp
     section.cpp
     symbol.cpp
     value.cpp
