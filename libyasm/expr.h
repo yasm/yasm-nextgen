@@ -253,7 +253,7 @@ public:
     bool traverse_post(boost::function<bool (Expr*)> func);
 
     /// Traverse over expression tree in order, calling func for each leaf
-    /// (non-operation).  The data pointer d is passed to each func call.
+    /// (non-operation).
     ///
     /// Stops early (and returns true) if func returns true.
     /// Otherwise returns false.
