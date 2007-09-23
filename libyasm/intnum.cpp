@@ -387,14 +387,14 @@ IntNum::calc(Op::Op op, const IntNum *operand)
             BitVector::Set_Complement(result, result);
             break;
         case Op::SHL:
-            if (operand->m_type == INTNUM_L && operand->m_val.l > 0) {
+            if (operand->m_type == INTNUM_L && operand->m_val.l >= 0) {
                 BitVector::Copy(result, op1);
                 BitVector::Move_Left(result, (N_int)operand->m_val.l);
             } else      // don't even bother, just zero result
                 BitVector::Empty(result);
             break;
         case Op::SHR:
-            if (operand->m_type == INTNUM_L && operand->m_val.l > 0) {
+            if (operand->m_type == INTNUM_L && operand->m_val.l >= 0) {
                 BitVector::Copy(result, op1);
                 carry = BitVector::msb_(op1);
                 count = (N_int)operand->m_val.l;
