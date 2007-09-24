@@ -41,53 +41,10 @@
 namespace yasm {
 
 class Bytes;
+class EffAddr;
 class Expr;
 class Register;
 class SegmentRegister;
-
-class EffAddr;
-#if 0
-/// Base class for an effective address.
-/// Architectures should derive their own implementation from this.
-class EffAddr {
-public:
-    /// Set segment override for an effective address.
-    /// Some architectures (such as x86) support segment overrides on
-    /// effective addresses.  A override of an override will result in a
-    /// warning.
-    /// @param segreg       segment register (0 if none)
-    void set_segreg(const SegmentRegister* segreg);
-
-    Value disp;         ///< address displacement
-
-    /// Segment register override (0 if none).
-    const SegmentRegister* segreg;
-
-    /// 1 if length of disp must be >0.
-    unsigned int need_nonzero_len:1;
-
-    /// 1 if a displacement should be present in the output.
-    unsigned int need_disp:1;
-
-    /// 1 if reg*2 should not be split into reg+reg. (0 if not).
-    /// This flag indicates (for architectures that support complex effective
-    /// addresses such as x86) if various types of complex effective addresses
-    /// can be split into different forms in order to minimize instruction
-    /// length.
-    unsigned int nosplit:1;
-
-    /// 1 if effective address is /definitely/ an effective address.
-    /// This is used in e.g. the GAS parser to differentiate
-    /// between "expr" (which might or might not be an effective address) and
-    /// "expr(,1)" (which is definitely an effective address).
-    unsigned int strong:1;
-
-    /// Print an effective address.  For debugging purposes.
-    /// @param os           output stream
-    /// @param indent_level indentation level
-    virtual void put(std::ostream& os, int indent_level) const = 0;
-};
-#endif
 
 /// Base class for "instruction" bytecodes.  These are the mnenomic
 /// (rather than raw) representation of instructions.  Architectures should

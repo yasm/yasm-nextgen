@@ -9,6 +9,7 @@ ADD_LIBRARY(libyasm
     bytecode.cpp
     bytes.cpp
     directive.cpp
+    effaddr.cpp
     errwarn.cpp
     expr.cpp
     file.cpp

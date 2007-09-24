@@ -40,20 +40,6 @@
 
 namespace yasm {
 
-#if 0
-void
-yasm_ea_set_segreg(yasm_effaddr *ea, uintptr_t segreg)
-{
-    if (!ea)
-        return;
-
-    if (segreg != 0 && ea->segreg != 0)
-        yasm_warn_set(YASM_WARN_GENERAL,
-                      N_("multiple segment overrides, using leftmost"));
-
-    ea->segreg = segreg;
-}
-#endif
 Insn::Operand::Operand(const Register* reg)
     : m_type(REG),
       m_targetmod(0),
