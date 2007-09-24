@@ -81,6 +81,12 @@ public:
     /// "expr(,1)" (which is definitely an effective address).
     bool m_strong:1;
 
+    /// 1 if effective address is forced PC-relative.
+    bool m_pc_rel:1;
+
+    /// 1 if effective address is forced non-PC-relative.
+    bool m_not_pc_rel:1;
+
     /// Print an effective address.  For debugging purposes.
     /// @param os           output stream
     /// @param indent_level indentation level

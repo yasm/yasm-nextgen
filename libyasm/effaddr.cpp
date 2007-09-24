@@ -39,7 +39,9 @@ EffAddr::EffAddr(std::auto_ptr<Expr> e)
       m_need_nonzero_len(false),
       m_need_disp(false),
       m_nosplit(false),
-      m_strong(false)
+      m_strong(false),
+      m_pc_rel(false),
+      m_not_pc_rel(false)
 {
 }
 
