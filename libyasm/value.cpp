@@ -106,6 +106,10 @@ Value::Value(const Value& oth)
         m_abs.reset(oth.m_abs->clone());
 }
 
+Value::~Value()
+{
+}
+
 Value&
 Value::operator= (const Value& rhs)
 {

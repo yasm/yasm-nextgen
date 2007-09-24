@@ -39,6 +39,7 @@ namespace yasm {
 
 class Arch;
 class Bytecode;
+class Bytes;
 class Expr;
 class IntNum;
 class Symbol;
@@ -74,7 +75,7 @@ public:
     Value& operator= (const Value& rhs);
 
     /// Destructor.
-    ~Value() {}
+    ~Value();
 
     /// Set a value to be relative to the current assembly position rather
     /// than relative to the section start.
