@@ -152,8 +152,12 @@ make_c_tab(
 }
 
 static void
-perfect_gen(std::ostream& out, const std::string& lookup_function_name,
-            const std::string& struct_name, std::vector<Keyword>& kws,
+perfect_gen(std::ostream& out,
+            const std::string& language,
+            const std::string& class_name,
+            const std::string& lookup_function_name,
+            const std::string& struct_name,
+            std::vector<Keyword>& kws,
             const std::string& filename)
 {
     ub4 nkeys;
@@ -204,9 +208,21 @@ perfect_gen(std::ostream& out, const std::string& lookup_function_name,
              scramble, &smax, keys, nkeys, &form);
 
     /* The hash function beginning */
-    out << "static const struct " << struct_name << " *\n";
-    out << lookup_function_name << "(const char *key, size_t len)\n";
-    out << "{\n";
+    if (language == "C++") {
+        out << "class " << class_name << " {\n";
+        out << "public:\n";
+        out << "  static const struct " << struct_name << "* ";
+        out << lookup_function_name << "(const char* key, size_t len);\n";
+        out << "};\n\n";
+        out << "const struct " << struct_name << "*\n";
+        out << class_name << "::" << lookup_function_name
+            << "(const char* key, size_t len)\n";
+        out << "{\n";
+    } else {
+        out << "static const struct " << struct_name << " *\n";
+        out << lookup_function_name << "(const char *key, size_t len)\n";
+        out << "{\n";
+    }
 
     /* output the dir table: this should loop up to smax for NORMAL_HP,
      * or up to pakd.nkeys for MINIMAL_HP.
@@ -265,6 +281,7 @@ main(int argc, char *argv[])
     char *ch;
     static char line[1024];
     std::string struct_name;
+    std::string class_name = "Perfect_Hash";
     std::string lookup_function_name = "in_word_set";
     std::string language;
     std::string delimiters = ",\r\n";
@@ -395,7 +412,7 @@ main(int argc, char *argv[])
         } else if (strncmp(&line[1], "language=", 9) == 0) {
             ch = &line[10];
             language.clear();
-            while (*ch != '\n')
+            while (*ch != '\0')
                 language.push_back(*ch++);
         } else if (strncmp(&line[1], "delimiters=", 11) == 0) {
             ch = &line[12];
@@ -421,6 +438,13 @@ main(int argc, char *argv[])
                 lookup_function_name.clear();
                 while (isalnum(*ch) || *ch == '_')
                     lookup_function_name.push_back(*ch++);
+            } else if (strncmp(ch, "class-name", 10) == 0) {
+                ch = &line[7+10+1];
+                while (isspace(*ch))
+                    ch++;
+                class_name.clear();
+                while (isalnum(*ch) || *ch == '_')
+                    class_name.push_back(*ch++);
             } else {
                 std::cerr << cur_line << ": unrecognized define `"
                           << line << "'" << std::endl;
@@ -495,14 +519,15 @@ main(int argc, char *argv[])
 
     for (std::vector<std::string>::iterator i = usercode.begin(),
          end = usercode.end(); i != end; ++i)
-        out << *i;
+        out << *i << '\n';
 
     /* Get perfect hash */
-    perfect_gen(out, lookup_function_name, struct_name, keywords, filename);
+    perfect_gen(out, language, class_name, lookup_function_name, struct_name,
+                keywords, filename);
 
     for (std::vector<std::string>::iterator i = usercode2.begin(),
          end = usercode2.end(); i != end; ++i)
-        out << *i;
+        out << *i << '\n';
 
     out.close();
 
