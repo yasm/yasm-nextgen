@@ -68,6 +68,7 @@ public:
 };
 
 class SegmentRegister {
+public:
     /// Print a segment register.  For debugging purposes.
     /// @param os   output stream
     virtual void put(std::ostream& os) const = 0;
