@@ -1,11 +1,11 @@
-#ifndef YASM_INSN_H
-#define YASM_INSN_H
+#ifndef YASM_EFFADDR_H
+#define YASM_EFFADDR_H
 ///
-/// @file libyasm/insn.h
-/// @brief YASM mnenomic instruction.
+/// @file libyasm/effaddr.h
+/// @brief YASM effective address.
 ///
 /// @license
-///  Copyright (C) 2002-2007  Peter Johnson
+///  Copyright (C) 2007  Peter Johnson
 ///
 /// Redistribution and use in source and binary forms, with or without
 /// modification, are permitted provided that the following conditions
