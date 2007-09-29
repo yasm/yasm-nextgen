@@ -12,6 +12,7 @@ MACRO(LIBYASM_UNIT_TESTS)
 ENDMACRO(LIBYASM_UNIT_TESTS)
 
 LIBYASM_UNIT_TESTS(
+    compose_test
     hamt_test
     linemap_test
     file_combpath_test
