@@ -50,10 +50,10 @@ public:
 
     // supply an replacement argument starting from %1
     template <typename T>
-    Compose& auto_arg(const T &obj);
+    Compose& auto_arg(const T& obj);
 
     template <typename T>
-    Compose& operator%(const T &obj) { return auto_arg(obj); }
+    Compose& operator%(const T& obj) { return auto_arg(obj); }
 
     // compose and return string
     std::string str() const;
