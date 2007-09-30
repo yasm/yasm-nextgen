@@ -53,15 +53,8 @@ macro (YASM_ADD_TEST_EXECUTABLE _target_NAME)
 endmacro (YASM_ADD_TEST_EXECUTABLE)
 
 macro (YASM_ADD_MODULE _module_NAME)
-    # Don't build library for now; with all static modules, they're all
-    # pulled into libyasm.
-    #add_library(${_module_NAME} ${ARGN})
-
+    add_library(${_module_NAME} ${ARGN})
     list(APPEND YASM_MODULES ${_module_NAME})
-
-    foreach (_srcfile ${ARGN})
-        list(APPEND YASM_MODULES_SRC "${CMAKE_CURRENT_SOURCE_DIR}/${_srcfile}")
-    endforeach (_srcfile)
 endmacro (YASM_ADD_MODULE)
 
 macro (YASM_ADD_MODULE_SUBDIRECTORY _subdir_NAME)
@@ -69,7 +62,7 @@ macro (YASM_ADD_MODULE_SUBDIRECTORY _subdir_NAME)
 
     get_directory_property(_tmp_MODULES DIRECTORY ${_subdir_NAME} DEFINITION YASM_MODULES)
     if (DEFINED _tmp_MODULES)
-        list(APPEND YASM_MODULES "${_tmp_MODULES}")
+        set(YASM_MODULES "${_tmp_MODULES}")
     else (DEFINED _tmp_MODULES)
         message(STATUS "Warning: found no modules in ${CMAKE_CURRENT_SOURCE_DIR}/${_subdir_NAME}")
     endif (DEFINED _tmp_MODULES)
@@ -81,3 +74,13 @@ macro (YASM_ADD_MODULE_SUBDIRECTORY _subdir_NAME)
         message(STATUS "Warning: found no module source in ${CMAKE_CURRENT_SOURCE_DIR}/${_subdir_NAME}")
     endif (DEFINED _tmp_MODULES_SRC)
 endmacro (YASM_ADD_MODULE_SUBDIRECTORY)
+
+macro (YASM_GENPERF _in_NAME _out_NAME)
+    get_target_property(_tmp_GENPERF_EXE genperf LOCATION)
+    add_custom_command(
+        OUTPUT ${_out_NAME}
+        COMMAND ${_tmp_GENPERF_EXE} ${_in_NAME} ${_out_NAME}
+        DEPENDS ${_tmp_GENPERF_EXE}
+        MAIN_DEPENDENCY ${_in_NAME}
+        )
+endmacro (YASM_GENPERF)

@@ -118,12 +118,12 @@ ADD_SUBDIRECTORY(libyasm)
 ADD_EXECUTABLE(test_expr
     test_expr.cpp
     )
-TARGET_LINK_LIBRARIES(test_expr libyasm)
+TARGET_LINK_LIBRARIES(test_expr libyasm ${YASM_MODULES})
 ADD_TEST(expr_basic test_expr)
 
 ADD_EXECUTABLE(test_preproc
     test_preproc.cpp
     )
-TARGET_LINK_LIBRARIES(test_preproc libyasm)
+TARGET_LINK_LIBRARIES(test_preproc libyasm ${YASM_MODULES})
 ADD_TEST(preproc_basic test_preproc)
 
