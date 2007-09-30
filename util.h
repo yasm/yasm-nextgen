@@ -71,26 +71,6 @@
 # define N_(String)     (String)
 #endif
 
-#ifdef HAVE_STRCASECMP
-# define yasm__strcasecmp(x, y)         strcasecmp(x, y)
-# define yasm__strncasecmp(x, y, n)     strncasecmp(x, y, n)
-#elif defined(HAVE_STRICMP)
-# define yasm__strcasecmp(x, y)         stricmp(x, y)
-# define yasm__strncasecmp(x, y, n)     strnicmp(x, y, n)
-#elif defined(HAVE__STRICMP)
-# define yasm__strcasecmp(x, y)         _stricmp(x, y)
-# define yasm__strncasecmp(x, y, n)     _strnicmp(x, y, n)
-#elif defined(HAVE_STRCMPI)
-# define yasm__strcasecmp(x, y)         strcmpi(x, y)
-# define yasm__strncasecmp(x, y, n)     strncmpi(x, y, n)
-#else
-# define USE_OUR_OWN_STRCASECMP
-#endif
-
-#if !defined(HAVE_TOASCII) || defined(lint)
-# define toascii(c) ((c) & 0x7F)
-#endif
-
 #ifndef NELEMS
 /** Get the number of elements in an array.
  * \internal

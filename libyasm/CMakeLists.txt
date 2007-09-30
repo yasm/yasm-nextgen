@@ -20,6 +20,7 @@ ADD_LIBRARY(libyasm
     linemap.cpp
     md5.cpp
     name_value.cpp
+    nocase.cpp
     object.cpp
     phash.cpp
     section.cpp
