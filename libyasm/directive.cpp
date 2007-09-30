@@ -27,10 +27,10 @@
 #include "util.h"
 
 #include <map>
-#include <sstream>
 
 #include <boost/bind.hpp>
 
+#include "compose.h"
 #include "directive.h"
 #include "errwarn.h"
 #include "expr.h"
@@ -84,11 +84,8 @@ Directive
 Directives::operator[] (const std::string& name) const
 {
     Impl::DirMap::iterator p = m_impl->m_dirs.find(name);
-    if (p == m_impl->m_dirs.end()) {
-        std::ostringstream emsg;
-        emsg << N_("unrecognized directive") << " `" << name << "'";
-        throw Error(emsg.str());
-    }
+    if (p == m_impl->m_dirs.end())
+        throw Error(String::compose(N_("unrecognized directive `%1'"), name));
 
     return boost::bind<void>(p->second, _1, name, _2, _3, _4);
 }
@@ -100,20 +97,14 @@ Directives::Impl::Dir::operator() (Object& object,
                                          const NameValues& objext_namevals,
                                          unsigned long line)
 {
-    if ((m_flags & (ARG_REQUIRED|ID_REQUIRED)) && namevals.empty()) {
-        std::ostringstream emsg;
-        emsg << N_("directive") << " `" << name << "' "
-             << N_("requires an argument");
-        throw SyntaxError(emsg.str());
-    }
+    if ((m_flags & (ARG_REQUIRED|ID_REQUIRED)) && namevals.empty())
+        throw SyntaxError(String::compose(
+            N_("directive `%1' requires an argument"), name));
 
     if (!namevals.empty()) {
-        if ((m_flags & ID_REQUIRED) && !namevals.front().is_id()) {
-            std::ostringstream emsg;
-            emsg << N_("directive") << " `" << name << "' "
-                 << N_("requires an identifier parameter");
-            throw SyntaxError(emsg.str());
-        }
+        if ((m_flags & ID_REQUIRED) && !namevals.front().is_id())
+            throw SyntaxError(String::compose(
+                N_("directive `%1' requires an identifier parameter"), name));
     }
 
     m_handler(object, namevals, objext_namevals, line);
@@ -194,12 +185,9 @@ dir_intn(const NameValue& nv, Object& obj, unsigned long line, IntNum& out,
     std::auto_ptr<Expr> e(nv.get_expr(obj, line));
     /*@null@*/ IntNum* local;
 
-    if ((e.get() == 0) || ((local = e->get_intnum()) == 0)) {
-        std::ostringstream emsg;
-        emsg << "`" << nv.get_name() << "': "
-             << N_("argument must be an integer");
-        throw NotConstantError(emsg.str());
-    }
+    if ((e.get() == 0) || ((local = e->get_intnum()) == 0))
+        throw NotConstantError(String::compose(
+            N_("argument to `%1' is not an integer"), nv.get_name()));
 
     out = *local;
     out_set = true;
@@ -208,12 +196,10 @@ dir_intn(const NameValue& nv, Object& obj, unsigned long line, IntNum& out,
 void
 dir_string(const NameValue& nv, std::string& out, bool& out_set)
 {
-    if (!nv.is_string()) {
-        std::ostringstream emsg;
-        emsg << "`" << nv.get_name() << "': "
-             << N_("argument must be a string or identifier");
-        throw ValueError(emsg.str());
-    }
+    if (!nv.is_string())
+        throw ValueError(String::compose(
+            N_("argument to `%1' is not a string or identifier"),
+            nv.get_name()));
     out = nv.get_string();
     out_set = true;
 }
@@ -222,21 +208,20 @@ bool
 dir_nameval_warn(const NameValue& nv)
 {
     if (!nv.get_name().empty()) {
-        std::ostringstream wmsg;
-        wmsg << N_("Unrecognized qualifier") << " `" << nv.get_name() << "'";
-        warn_set(WARN_GENERAL, wmsg.str());
+        warn_set(WARN_GENERAL,
+                 String::compose(N_("Unrecognized qualifier `%1'"),
+                                 nv.get_name()));
         return false;
     }
 
-    if (nv.is_id()) {
-        std::ostringstream wmsg;
-        wmsg << N_("Unrecognized qualifier") << " `" << nv.get_id() << "'";
-        warn_set(WARN_GENERAL, wmsg.str());
-    } else if (nv.is_string()) {
+    if (nv.is_id())
+        warn_set(WARN_GENERAL,
+                 String::compose(N_("Unrecognized qualifier `%1'"),
+                                 nv.get_id()));
+    else if (nv.is_string())
         warn_set(WARN_GENERAL, N_("Unrecognized string qualifier"));
-    } else {
+    else
         warn_set(WARN_GENERAL, N_("Unrecognized numeric qualifier"));
-    }
 
     return false;
 }

@@ -29,12 +29,12 @@
 #include <cstdlib>
 #include <iomanip>
 #include <ostream>
-#include <sstream>
 
 #include <boost/scoped_ptr.hpp>
 
 #include "bytecode.h"
 #include "bytes.h"
+#include "compose.h"
 #include "errwarn.h"
 #include "expr.h"
 #include "intnum.h"
@@ -212,9 +212,8 @@ AlignBytecode::to_bytes(Bytecode& bc, Bytes& bytes,
         }
 
         if (!m_code_fill[len]) {
-            std::ostringstream emsg;
-            emsg << N_("invalid alignment size") << " " << len;
-            throw ValueError(emsg.str());
+            throw ValueError(String::compose(N_("invalid alignment size %1"),
+                                             len));
         }
         // Handle rest of code fill
         bytes.insert(bytes.end(),

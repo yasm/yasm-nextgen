@@ -29,12 +29,12 @@
 #include <iomanip>
 #include <fstream>
 #include <ostream>
-#include <sstream>
 
 #include <boost/scoped_ptr.hpp>
 
 #include "bytecode.h"
 #include "bytes.h"
+#include "compose.h"
 #include "errwarn.h"
 #include "expr.h"
 #include "file.h"
@@ -180,27 +180,20 @@ IncbinBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
     std::ifstream ifs;
     m_includes.open(ifs, m_filename, m_from,
                     std::ifstream::in | std::ifstream::binary);
-    if (!ifs) {
-        std::ostringstream emsg;
-        emsg << N_("`incbin': unable to open file");
-        emsg << " `" << m_filename << "'";
-        throw IOError(emsg.str());
-    }
+    if (!ifs)
+        throw IOError(String::compose(N_("`%1': unable to open file `%2'"),
+                                      "incbin", m_filename));
     ifs.seekg(0, std::ios_base::end);
-    if (!ifs) {
-        std::ostringstream emsg;
-        emsg << N_("`incbin': unable to seek on file");
-        emsg << " `" << m_filename << "'";
-        throw IOError(emsg.str());
-    }
+    if (!ifs)
+        throw IOError(String::compose(N_("`%1': unable to seek on file `%2'"),
+                                      "incbin", m_filename));
     flen = (unsigned long)ifs.tellg();
 
     // Compute length of incbin from start, maxlen, and len
     if (start > flen) {
-        std::ostringstream wmsg;
-        wmsg << N_("`incbin': start past end of file");
-        wmsg << " `" << m_filename << "'";
-        warn_set(WARN_GENERAL, wmsg.str());
+        warn_set(WARN_GENERAL,
+                 String::compose(N_("`%1': start past end of file `%2'"),
+                                 "incbin", m_filename));
         start = flen;
     }
     flen -= start;
@@ -230,32 +223,22 @@ IncbinBytecode::to_bytes(Bytecode& bc, Bytes& bytes,
     std::ifstream ifs;
     m_includes.open(ifs, m_filename, m_from,
                     std::ifstream::in | std::ifstream::binary);
-    if (!ifs) {
-        std::ostringstream emsg;
-        emsg << N_("`incbin': unable to open file");
-        emsg << " `" << m_filename << "'";
-        throw IOError(emsg.str());
-    }
+    if (!ifs)
+        throw IOError(String::compose(N_("`%1': unable to open file `%2'"),
+                                      "incbin", m_filename));
 
     // Seek to start of data
     ifs.seekg(start, std::ios_base::beg);
-    if (!ifs) {
-        std::ostringstream emsg;
-        emsg << N_("`incbin': unable to seek on file");
-        emsg << " `" << m_filename << "'";
-        throw IOError(emsg.str());
-    }
+    if (!ifs)
+        throw IOError(String::compose(N_("`%1': unable to seek on file `%2'"),
+                                      "incbin", m_filename));
 
     // Read len bytes
     bytes.read(ifs, bc.get_len());
-    if (!ifs) {
-        std::ostringstream emsg;
-        emsg << N_("`incbin': unable to read");
-        emsg << ' ' << bc.get_len() << ' ';
-        emsg << N_("bytes from file");
-        emsg << " `" << m_filename << "'";
-        throw IOError(emsg.str());
-    }
+    if (!ifs)
+        throw IOError(String::compose(
+            N_("`%1': unable to read %2 bytes from file `%3'"),
+            "incbin", bc.get_len(), m_filename));
 }
 
 } // anonymous namespace

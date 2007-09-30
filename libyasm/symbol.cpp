@@ -28,9 +28,9 @@
 
 #include <iomanip>
 #include <ostream>
-#include <sstream>
 
 #include "bytecode.h"
+#include "compose.h"
 #include "errwarn.h"
 #include "expr.h"
 #include "name_value.h"
@@ -134,19 +134,15 @@ Symbol::define(Type type, unsigned long line)
 {
     // Has it been defined before (either by DEFINED or COMMON/EXTERN)?
     if (m_status & DEFINED) {
-        std::ostringstream emsg, xref;
-        emsg << N_("redefinition of") << " `" << m_name << "'";
-        Error err(emsg.str());
-        xref << "`" << m_name << "' " << N_("previously defined here");
-        err.set_xref(m_def_line != 0 ? m_def_line : m_decl_line, xref.str());
+        Error err(String::compose(N_("redefinition of `%1'"), m_name));
+        err.set_xref(m_def_line != 0 ? m_def_line : m_decl_line,
+                     String::compose(N_("`%1' previously defined here"),
+                                     m_name));
         throw err;
     } else {
-        if (m_visibility & EXTERN) {
-            std::ostringstream wmsg;
-            wmsg << "`" << m_name << "' "
-                 << N_("both defined and declared extern");
-            warn_set(WARN_GENERAL, wmsg.str());
-        }
+        if (m_visibility & EXTERN)
+            warn_set(WARN_GENERAL, String::compose(
+                N_("`%1' both defined and declared extern"), m_name));
         m_def_line = line;      // set line number of definition
         m_type = type;
         m_status |= DEFINED;
@@ -211,11 +207,10 @@ Symbol::declare(Visibility vis, unsigned long line)
         m_decl_line = line;
         m_visibility |= vis;
     } else {
-        std::ostringstream emsg, xref;
-        emsg << N_("redefinition of") << " `" << m_name << "'";
-        Error err(emsg.str());
-        xref << "`" << m_name << "' " << N_("previously defined here");
-        err.set_xref(m_def_line != 0 ? m_def_line : m_decl_line, xref.str());
+        Error err(String::compose(N_("redefinition of `%1'"), m_name));
+        err.set_xref(m_def_line != 0 ? m_def_line : m_decl_line,
+                     String::compose(N_("`%1' previously defined here"),
+                                     m_name));
         throw err;
     }
     return this;
@@ -227,14 +222,11 @@ Symbol::finalize(bool undef_extern)
     // error if a symbol is used but never defined or extern/common declared
     if ((m_status & USED) && !(m_status & DEFINED) &&
         !(m_visibility & (EXTERN | COMMON))) {
-        if (undef_extern) {
+        if (undef_extern)
             m_visibility |= EXTERN;
-        } else {
-            std::ostringstream emsg;
-            emsg << N_("undefined symbol") << " `" << m_name << "' "
-                 << N_("(first use)");
-            throw Error(emsg.str());
-        }
+        else
+            throw Error(String::compose(N_("undefined symbol `%1' (first use)"),
+                                        m_name));
     }
 }
 

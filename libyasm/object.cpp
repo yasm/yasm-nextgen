@@ -30,7 +30,6 @@
 #include <iomanip>
 #include <list>
 #include <ostream>
-#include <sstream>
 #include <vector>
 
 #include <boost/bind.hpp>
@@ -39,6 +38,7 @@
 
 #include "arch.h"
 #include "bytecode.h"
+#include "compose.h"
 #include "debug_format.h"
 #include "errwarn.h"
 #include "expr.h"
@@ -93,14 +93,11 @@ Object::Object(const std::string& src_filename,
 {
     // Initialize the object format
     if (!m_objfmt->set_object(this)) {
-        std::ostringstream emsg;
-        emsg << N_("object format")
-             << " `" << m_objfmt->get_keyword() << "' ";
-        emsg << N_("does not support architecture")
-             << " `" << m_arch->get_keyword() << "' ";
-        emsg << N_("machine")
-             << " `" << m_arch->get_machine() << "'";
-        throw Error(emsg.str());
+        throw Error(String::compose(
+            N_("object format `%1' does not support architecture `%2' machine `%3'"),
+            m_objfmt->get_keyword(),
+            m_arch->get_keyword(),
+            m_arch->get_machine()));
     }
 
     // Add an initial "default" section to object
@@ -113,21 +110,18 @@ Object::Object(const std::string& src_filename,
         std::find(dbgfmt_keywords.begin(), dbgfmt_keywords.end(),
                   dbgfmt_keyword);
     if (f == dbgfmt_keywords.end()) {
-        std::ostringstream emsg;
-        emsg << "`" << m_dbgfmt->get_keyword() << "' ";
-        emsg << N_("is not a valid debug format for object format");
-        emsg << " `" << m_objfmt->get_keyword() << "'";
-        throw Error(emsg.str());
+        throw Error(String::compose(
+            N_("`%1' is not a valid debug format for object format `%2'"),
+            m_dbgfmt->get_keyword(),
+            m_objfmt->get_keyword()));
     }
 
     // Initialize the debug format
     if (!m_dbgfmt->set_object(this)) {
-        std::ostringstream emsg;
-        emsg << N_("debug format")
-             << " `" << m_dbgfmt->get_keyword() << "' ";
-        emsg << N_("does not work with object format")
-             << " `" << m_objfmt->get_keyword() << "' ";
-        throw Error(emsg.str());
+        throw Error(String::compose(
+            N_("debug format `%1' does not work with object format `%2'"),
+            m_dbgfmt->get_keyword(),
+            m_objfmt->get_keyword()));
     }
 }
 

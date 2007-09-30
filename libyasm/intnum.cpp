@@ -28,9 +28,9 @@
 
 #include <cctype>
 #include <limits.h>
-#include <sstream>
 
 #include "bitvect.h"
+#include "compose.h"
 #include "errwarn.h"
 #include "intnum.h"
 
@@ -457,13 +457,16 @@ IntNum::calc(Op::Op op, const IntNum *operand)
             BitVector::LSB(result, !BitVector::equal(op1, op2));
             break;
         case Op::SEG:
-            throw ArithmeticError(N_("invalid use of 'SEG'"));
+            throw ArithmeticError(String::compose(N_("invalid use of '%1'"),
+                                                  "SEG"));
             break;
         case Op::WRT:
-            throw ArithmeticError(N_("invalid use of 'WRT'"));
+            throw ArithmeticError(String::compose(N_("invalid use of '%1'"),
+                                                  "WRT"));
             break;
         case Op::SEGOFF:
-            throw ArithmeticError(N_("invalid use of ':'"));
+            throw ArithmeticError(String::compose(N_("invalid use of '%1'"),
+                                                  ":"));
             break;
         case Op::IDENT:
             if (result)
@@ -584,18 +587,14 @@ IntNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize,
         throw InternalError(N_("destination too large"));
 
     // General size warnings
-    if (warn<0 && !ok_size(valsize, rshift, 1)) {
-        std::ostringstream wmsg;
-        wmsg << N_("value does not fit in signed") << " " << valsize << " "
-             << N_("bit field");
-        warn_set(WARN_GENERAL, wmsg.str());
-    }
-    if (warn>0 && !ok_size(valsize, rshift, 2)) {
-        std::ostringstream wmsg;
-        wmsg << N_("value does not fit in") << " " << valsize << " "
-             << N_("bit field");
-        warn_set(WARN_GENERAL, wmsg.str());
-    }
+    if (warn<0 && !ok_size(valsize, rshift, 1))
+        warn_set(WARN_GENERAL,
+                 String::compose(N_("value does not fit in signed %1 bit field"),
+                                valsize));
+    if (warn>0 && !ok_size(valsize, rshift, 2))
+        warn_set(WARN_GENERAL,
+                 String::compose(N_("value does not fit in %1 bit field"),
+                                 valsize));
 
     // Read the original data into a bitvect
     if (bigendian) {
@@ -612,7 +611,8 @@ IntNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize,
         BitVector::Copy(conv_bv, op2);
         BitVector::Move_Left(conv_bv, (N_int)(BITVECT_NATIVE_SIZE-rshift));
         if (!BitVector::is_empty(conv_bv))
-            warn_set(WARN_GENERAL, N_("misaligned value, truncating to boundary"));
+            warn_set(WARN_GENERAL,
+                     N_("misaligned value, truncating to boundary"));
     }
 
     // Shift right if needed
