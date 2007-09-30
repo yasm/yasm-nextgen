@@ -29,7 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <cctype>
 #include <sstream>
 #include <string>
 

@@ -26,6 +26,8 @@
 //
 #include "compose.h"
 
+#include <cctype>
+
 namespace String {
 
 Compose::Compose(const Compose& rhs)
