@@ -77,8 +77,10 @@ Compose::str() const
             } else if (spec_no == m_arg) {
                 str.append(args, m_arg_pos[spec_no-1],
                            args.size() - m_arg_pos[spec_no-1] + 1);
-            } else
+            } else {
+                str += m_fmt[stop];
                 str += m_fmt[stop+1];
+            }
             start = stop + 2;
         } else {
             str += m_fmt[stop];

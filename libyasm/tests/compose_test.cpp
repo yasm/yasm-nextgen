@@ -172,3 +172,8 @@ BOOST_AUTO_TEST_CASE(Copy)
     BOOST_CHECK_EQUAL(a.str(), "foo bar");
     BOOST_CHECK_EQUAL(b.str(), "foo baz");
 }
+
+BOOST_AUTO_TEST_CASE(Partial)
+{
+    BOOST_CHECK_EQUAL(String::compose("%1 %2 %3", "foo", "bar"), "foo bar %3");
+}
