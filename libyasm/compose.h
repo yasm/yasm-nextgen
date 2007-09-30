@@ -37,7 +37,7 @@ namespace String {
 class Compose {
 public:
     // initialize and prepare format string on the form "text %1 text %2 etc."
-    Compose(const std::string& fmt)
+    explicit Compose(const std::string& fmt)
         : m_fmt(fmt), m_arg(0)
     {
         m_arg_pos[0] = 0;
