@@ -28,8 +28,30 @@
 
 namespace String {
 
+Compose::Compose(const Compose& rhs)
+    : m_fmt(rhs.m_fmt),
+      m_os(rhs.m_os.str()),
+      m_arg(rhs.m_arg)
+{
+    m_os.seekp(0, std::ios_base::end);
+    for (int i=0; i<10; i++)
+        m_arg_pos[i] = rhs.m_arg_pos[i];
+}
+
+Compose&
+Compose::operator=(const Compose& rhs)
+{
+    m_fmt = rhs.m_fmt;
+    m_os.str(rhs.m_os.str());
+    m_os.seekp(0, std::ios_base::end);
+    m_arg = rhs.m_arg;
+    for (int i=0; i<10; i++)
+        m_arg_pos[i] = rhs.m_arg_pos[i];
+    return *this;
+}
+
 std::string
-compose::str() const
+Compose::str() const
 {
     std::string args = m_os.str();
 
