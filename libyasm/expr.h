@@ -79,7 +79,7 @@ public:
             unsigned int subst;
         };
 
-        Term(Register* reg) : m_type(REG) { m_data.reg = reg; }
+        Term(const Register* reg) : m_type(REG) { m_data.reg = reg; }
         Term(IntNum* intn) : m_type(INT) { m_data.intn = intn; }
         Term(FloatNum* flt) : m_type(FLOAT) { m_data.flt = flt; }
         explicit Term(const Subst& subst) : m_type(SUBST)
@@ -129,7 +129,7 @@ public:
 
         // Helper functions to make it easier to get specific types.
 
-        Register* get_reg() const
+        const Register* get_reg() const
         { return (m_type == REG ? m_data.reg : 0); }
         IntNum* get_int() const
         { return (m_type == INT ? m_data.intn : 0); }
@@ -148,7 +148,7 @@ public:
         TermType m_type;  ///< Type.
         /// Expression item data.  Correct value depends on type.
         union {
-            Register *reg;      ///< Register (#REG)
+            const Register *reg;///< Register (#REG)
             IntNum *intn;       ///< Integer value (#INT)
             unsigned int subst; ///< Subst placeholder (#SUBST)
             FloatNum *flt;      ///< Floating point value (#FLOAT)
