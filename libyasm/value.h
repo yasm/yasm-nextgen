@@ -32,8 +32,6 @@
 #include <iosfwd>
 #include <memory>
 
-#include <boost/scoped_ptr.hpp>
-
 
 namespace yasm {
 
@@ -77,6 +75,10 @@ public:
     /// Destructor.
     ~Value();
 
+    /// Clear the value.  This is needed as values are commonly stored by
+    /// value in other objects.
+    void clear();
+
     /// Set a value to be relative to the current assembly position rather
     /// than relative to the section start.
     /// @param bc       bytecode containing value
@@ -84,7 +86,7 @@ public:
     ///                 sometimes used to generate special relocations
     /// @note If value is just an absolute value, will get an absolute symrec
     ///       to reference to (via bc's symbol table).
-    void set_curpos_rel(Bytecode* bc, bool ip_rel);
+    void set_curpos_rel(const Bytecode& bc, bool ip_rel);
 
     /// Break an #Expr into a #Value constituent parts.  Extracts the
     /// relative portion of the value, SEG and WRT portions, and top-level
@@ -139,12 +141,15 @@ public:
 
     /// Get the absolute portion of the value.
     /// @return Absolute expression, or NULL if there is no absolute portion.
-    Expr* get_abs() { return m_abs.get(); }
-    const Expr* get_abs() const { return m_abs.get(); }
+    Expr* get_abs() { return m_abs; }
+    const Expr* get_abs() const { return m_abs; }
 
     /// Determine if the value has an absolute portion.
     /// @return True if value has absolute portion, false if not.
-    bool has_abs() const { return m_abs.get() != 0; }
+    bool has_abs() const { return m_abs != 0; }
+
+    /// Add integer to the absolute portion of the value.
+    void add_abs(std::auto_ptr<IntNum> delta);
 
     /// Determine if the value is relative.
     /// @return True if value has relative portions, false if not.
@@ -164,7 +169,7 @@ private:
     /// The absolute portion of the value.  May contain *differences* between
     /// symrecs but not standalone symrecs.  May be NULL if there is no
     /// absolute portion (e.g. the absolute portion is 0).
-    boost::scoped_ptr<Expr> m_abs;
+    Expr* m_abs;    // can't use scoped_ptr as we want to internally modify
 
 public:
     /// The relative portion of the value.  This is the portion that may

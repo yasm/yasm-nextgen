@@ -60,7 +60,7 @@ Value::Value(unsigned int size)
 }
 
 Value::Value(unsigned int size, std::auto_ptr<Expr> e)
-    : m_abs(e),
+    : m_abs(e.release()),
       m_rel(0),
       m_wrt(0),
       m_seg_of(false),
@@ -102,21 +102,39 @@ Value::Value(const Value& oth)
       m_sign(oth.m_sign),
       m_size(oth.m_size)
 {
-    if (oth.m_abs.get())
-        m_abs.reset(oth.m_abs->clone());
+    if (oth.m_abs)
+        m_abs = oth.m_abs->clone();
 }
 
 Value::~Value()
 {
+    delete m_abs;
+}
+
+void
+Value::clear()
+{
+    delete m_abs;
+    m_abs = 0;
+    m_rel = 0;
+    m_wrt = 0;
+    m_seg_of = false;
+    m_rshift = 0;
+    m_curpos_rel = false;
+    m_ip_rel = false;
+    m_jump_target = false;
+    m_section_rel = false;
+    m_sign = false;
+    m_size = 0;
 }
 
 Value&
 Value::operator= (const Value& rhs)
 {
     if (this != &rhs) {
-        m_abs.reset(0);
-        if (rhs.m_abs.get())
-            m_abs.reset(rhs.m_abs->clone());
+        m_abs = 0;
+        if (rhs.m_abs)
+            m_abs = rhs.m_abs->clone();
         m_rel = rhs.m_rel;
         m_wrt = rhs.m_wrt;
         m_seg_of = rhs.m_seg_of;
@@ -132,7 +150,7 @@ Value::operator= (const Value& rhs)
 }
 
 void
-Value::set_curpos_rel(Bytecode* bc, bool ip_rel)
+Value::set_curpos_rel(const Bytecode& bc, bool ip_rel)
 {
     m_curpos_rel = true;
     m_ip_rel = ip_rel;
@@ -140,7 +158,7 @@ Value::set_curpos_rel(Bytecode* bc, bool ip_rel)
     // have a relative portion of the value.  If one doesn't exist, point
     // to a custom absolute symbol.
     if (!m_rel)
-        m_rel = bc->get_section()->get_object()->get_abs_sym();
+        m_rel = bc.get_section()->get_object()->get_abs_sym();
 }
 
 bool
@@ -471,16 +489,19 @@ Value::finalize(Bytecode* precbc)
     // Handle trivial (IDENT) cases immediately
     if (m_abs->is_op(Op::IDENT)) {
         if (IntNum* intn = m_abs->get_intnum()) {
-            if (intn->is_zero())
-                m_abs.reset(0);
+            if (intn->is_zero()) {
+                delete m_abs;
+                m_abs = 0;
+            }
         } else if (Symbol* sym = m_abs->get_symbol()) {
             m_rel = sym;
-            m_abs.reset(0);
+            delete m_abs;
+            m_abs = 0;
         }
         return false;
     }
 
-    if (finalize_scan(m_abs.get(), precbc, false))
+    if (finalize_scan(m_abs, precbc, false))
         return true;
 
     m_abs->level_tree(true, true, false);
@@ -490,7 +511,8 @@ Value::finalize(Bytecode* precbc)
     if (m_abs->is_op(Op::IDENT)
         && (intn = m_abs->get_terms()[0].get_int())
         && intn->is_zero()) {
-        m_abs.reset(0);
+        delete m_abs;
+        m_abs = 0;
     }
     return false;
 }
@@ -501,7 +523,7 @@ Value::get_intnum(Bytecode* bc, bool calc_bc_dist)
     /*@dependent@*/ /*@null@*/ IntNum* intn = 0;
     std::auto_ptr<IntNum> outval(0);
 
-    if (m_abs.get() != 0) {
+    if (m_abs != 0) {
         // Handle integer expressions, if non-integer or too complex, return
         // NULL.
         if (calc_bc_dist)
@@ -551,13 +573,22 @@ Value::get_intnum(Bytecode* bc, bool calc_bc_dist)
     return std::auto_ptr<IntNum>(new IntNum(0));
 }
 
+void
+Value::add_abs(std::auto_ptr<IntNum> delta)
+{
+    if (!m_abs)
+        m_abs = new Expr(delta);
+    else
+        m_abs = new Expr(m_abs, Op::ADD, delta, m_abs->get_line());
+}
+
 bool
 Value::output_basic(Bytes& bytes, size_t destsize, const Bytecode& bc,
                     int warn, const Arch& arch)
 {
     /*@dependent@*/ /*@null@*/ IntNum* intn = 0;
 
-    if (m_abs.get() != 0) {
+    if (m_abs != 0) {
         // Handle floating point expressions
         FloatNum* flt;
         if (!m_rel && (flt = m_abs->get_float())) {
