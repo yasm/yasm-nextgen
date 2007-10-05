@@ -24,7 +24,9 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include <algorithm>
 #include <istream>
+#include <iterator>
 #include <ostream>
 
 #include "bytes.h"
@@ -40,12 +42,20 @@ operator<< (std::ostream& os, const Bytes& bytes)
 }
 
 void
-Bytes::read(std::istream& is, size_type n)
+Bytes::write(std::istream& is, size_type n)
 {
     size_type sz = size();
     resize(sz+n);
     is.read(reinterpret_cast<char*>(&(at(sz))), n);
     resize(sz+is.gcount());
+}
+
+void
+Bytes::write(const unsigned char* buf, size_type n)
+{
+    size_type sz = size();
+    reserve(sz+n);
+    std::copy(buf, buf+n, std::back_inserter(*this));
 }
 
 } // namespace yasm

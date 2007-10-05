@@ -234,7 +234,7 @@ IncbinBytecode::to_bytes(Bytecode& bc, Bytes& bytes,
                                       "incbin", m_filename));
 
     // Read len bytes
-    bytes.read(ifs, bc.get_len());
+    bytes.write(ifs, bc.get_len());
     if (!ifs)
         throw IOError(String::compose(
             N_("`%1': unable to read %2 bytes from file `%3'"),

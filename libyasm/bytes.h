@@ -43,11 +43,19 @@ public:
     void set_bigendian(bool bigendian) { m_bigendian = bigendian; }
     bool is_bigendian() const { return m_bigendian; }
 
-    /// Read from an input stream, appending the read values to the end
-    /// of the object.
+    /// Copy from an input stream, appending the values to the end.
     /// @param  is  input stream
-    /// @param  n   number of bytes to read
-    void read(std::istream& is, size_type n);
+    /// @param  n   number of bytes
+    void write(std::istream& is, size_type n);
+
+    /// Copy from a byte array, appending the values to the end.
+    /// @param  buf input buffer
+    /// @param  n   number of bytes
+    void write(const unsigned char* buf, size_type n);
+
+    void write_8(unsigned char val);
+    void write_16(unsigned short val);
+    void write_32(unsigned long val);
 
 private:
     bool m_bigendian;
@@ -87,49 +95,43 @@ little_endian(Bytes& bytes)
 }
 
 /// Write an 8-bit value, incrementing buffer pointer.
-/// @param bytes    bytes
 /// @param val      8-bit value
-inline Bytes&
-operator<< (Bytes& bytes, unsigned char val)
+inline void
+Bytes::write_8(unsigned char val)
 {
-    bytes.push_back(val & 0xFF);
-    return bytes;
+    push_back(val & 0xFF);
 }
 
 /// Write a 16-bit value, incrementing buffer pointer.
-/// @param ptr  buffer
 /// @param val  16-bit value
-inline Bytes&
-operator<< (Bytes& bytes, unsigned short val)
+inline void
+Bytes::write_16(unsigned short val)
 {
-    if (bytes.is_bigendian()) {
-        bytes.push_back((unsigned char)((val >> 8) & 0xFF));
-        bytes.push_back((unsigned char)(val & 0xFF));
+    if (m_bigendian) {
+        push_back((unsigned char)((val >> 8) & 0xFF));
+        push_back((unsigned char)(val & 0xFF));
     } else {
-        bytes.push_back((unsigned char)(val & 0xFF));
-        bytes.push_back((unsigned char)((val >> 8) & 0xFF));
+        push_back((unsigned char)(val & 0xFF));
+        push_back((unsigned char)((val >> 8) & 0xFF));
     }
-    return bytes;
 }
 
 /// Write a 32-bit value to a buffer, incrementing buffer pointer.
-/// @param ptr  buffer
 /// @param val  32-bit value
-inline Bytes&
-operator<< (Bytes& bytes, unsigned long val)
+inline void
+Bytes::write_32(unsigned long val)
 {
-    if (bytes.is_bigendian()) {
-        bytes.push_back((unsigned char)((val >> 24) & 0xFF));
-        bytes.push_back((unsigned char)((val >> 16) & 0xFF));
-        bytes.push_back((unsigned char)((val >> 8) & 0xFF));
-        bytes.push_back((unsigned char)(val & 0xFF));
+    if (m_bigendian) {
+        push_back((unsigned char)((val >> 24) & 0xFF));
+        push_back((unsigned char)((val >> 16) & 0xFF));
+        push_back((unsigned char)((val >> 8) & 0xFF));
+        push_back((unsigned char)(val & 0xFF));
     } else {
-        bytes.push_back((unsigned char)(val & 0xFF));
-        bytes.push_back((unsigned char)((val >> 8) & 0xFF));
-        bytes.push_back((unsigned char)((val >> 16) & 0xFF));
-        bytes.push_back((unsigned char)((val >> 24) & 0xFF));
+        push_back((unsigned char)(val & 0xFF));
+        push_back((unsigned char)((val >> 8) & 0xFF));
+        push_back((unsigned char)((val >> 16) & 0xFF));
+        push_back((unsigned char)((val >> 24) & 0xFF));
     }
-    return bytes;
 }
 
 /// Output the entire contents of a bytes container to an output stream.
