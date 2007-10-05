@@ -30,6 +30,16 @@
 
 namespace String {
 
+Compose::Compose(const std::string& fmt)
+    : m_fmt(fmt), m_arg(0)
+{
+    m_arg_pos[0] = 0;
+}
+
+Compose::~Compose()
+{
+}
+
 Compose::Compose(const Compose& rhs)
     : m_fmt(rhs.m_fmt),
       m_os(rhs.m_os.str()),
