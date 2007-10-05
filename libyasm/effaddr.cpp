@@ -26,6 +26,9 @@
 //
 #include "util.h"
 
+#include <iomanip>
+
+#include "arch.h"
 #include "effaddr.h"
 #include "errwarn.h"
 #include "expr.h"
@@ -57,6 +60,22 @@ EffAddr::set_segreg(const SegmentRegister* segreg)
                  N_("multiple segment overrides, using leftmost"));
 
     m_segreg = segreg;
+}
+
+void
+EffAddr::put(std::ostream& os, int indent_level) const
+{
+    os << std::setw(indent_level) << "" << "Disp:\n";
+    m_disp.put(os, indent_level+1);
+    if (m_segreg != 0)
+        os << std::setw(indent_level) << "" << "SegReg=" << *m_segreg << '\n';
+    os << std::setw(indent_level) << ""
+       << "NeedNonzeroLen=" << m_need_nonzero_len << '\n';
+    os << std::setw(indent_level) << "" << "NeedDisp=" << m_need_disp << '\n';
+    os << std::setw(indent_level) << "" << "NoSplit=" << m_nosplit << '\n';
+    os << std::setw(indent_level) << "" << "Strong=" << m_strong << '\n';
+    os << std::setw(indent_level) << "" << "PCRel=" << m_pc_rel << '\n';
+    os << std::setw(indent_level) << "" << "NotPCRel=" << m_not_pc_rel << '\n';
 }
 
 } // namespace yasm
