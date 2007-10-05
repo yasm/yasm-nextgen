@@ -34,7 +34,7 @@
 
 namespace yasm {
 
-Bytes::Bytes(bool bigendian=false)
+Bytes::Bytes(bool bigendian)
     : m_bigendian(bigendian)
 {
 }
