@@ -34,6 +34,15 @@
 
 namespace yasm {
 
+Bytes::Bytes(bool bigendian=false)
+    : m_bigendian(bigendian)
+{
+}
+
+Bytes::~Bytes()
+{
+}
+
 std::ostream&
 operator<< (std::ostream& os, const Bytes& bytes)
 {

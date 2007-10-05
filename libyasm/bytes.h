@@ -37,8 +37,8 @@ namespace yasm {
 
 class Bytes : public std::vector<unsigned char> {
 public:
-    Bytes(bool bigendian=false) : m_bigendian(bigendian) {}
-    ~Bytes() {}
+    Bytes(bool bigendian=false);
+    ~Bytes();
 
     void set_bigendian(bool bigendian) { m_bigendian = bigendian; }
     bool is_bigendian() const { return m_bigendian; }
