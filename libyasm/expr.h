@@ -120,6 +120,9 @@ public:
         /// Match type.  Can take an OR'ed combination of TermTypes.
         bool is_type(int type) const { return (m_type & type) != 0; }
 
+        /// Get the type.
+        TermType get_type() const { return m_type; }
+
         /// Match operator.  Does not match non-expressions.
         bool is_op(Op::Op op) const
         {
@@ -188,6 +191,10 @@ public:
     /// @return True if the expression was the specified operation at the top
     ///         level.
     bool is_op(Op::Op op) const { return op == m_op; }
+
+    /// Get operation of expression.
+    /// @return Operator.
+    Op::Op get_op() const { return m_op; }
 
     /// Level an entire expression tree.  Also expands EQUs.
     /// @param fold_const       enable constant folding if nonzero
