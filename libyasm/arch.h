@@ -34,6 +34,8 @@
 #include <memory>
 #include <string>
 
+#include <boost/noncopyable.hpp>
+
 #include "insn.h"
 #include "module.h"
 
@@ -44,8 +46,10 @@ class Expr;
 class FloatNum;
 class IntNum;
 
-class Register {
+class Register : private boost::noncopyable {
 public:
+    virtual ~Register() {}
+
     /// Get the equivalent size of a register in bits.
     /// @param reg  register
     /// @return 0 if there is no suitable equivalent size, otherwise the
@@ -57,8 +61,17 @@ public:
     virtual void put(std::ostream& os) const = 0;
 };
 
-class RegisterGroup {
+inline std::ostream& operator<<
+(std::ostream &os, const Register &reg)
+{
+    reg.put(os);
+    return os;
+}
+
+class RegisterGroup : private boost::noncopyable {
 public:
+    virtual ~RegisterGroup() {}
+
     /// Get a specific register of a register group, based on the register
     /// group and the index within the group.
     /// @param regindex     register index
@@ -67,24 +80,47 @@ public:
     virtual const Register* get_reg(unsigned long regindex) const = 0;
 };
 
-class SegmentRegister {
+class SegmentRegister : private boost::noncopyable {
 public:
+    virtual ~SegmentRegister() {}
+
     /// Print a segment register.  For debugging purposes.
     /// @param os   output stream
     virtual void put(std::ostream& os) const = 0;
 };
+
+inline std::ostream& operator<<
+(std::ostream &os, const SegmentRegister &segreg)
+{
+    segreg.put(os);
+    return os;
+}
 
 /// Architecture interface.
 class Arch : public Module {
 public:
     /// Return value for parse_check_insnprefix().
     struct InsnPrefix {
+        InsnPrefix() : bc(0), prefix(0) {}
+        InsnPrefix(Bytecode* b) : bc(b), prefix(0) {}
+        InsnPrefix(const Insn::Prefix* p) : bc(0), prefix(p) {}
+
         Bytecode* bc;
         const Insn::Prefix* prefix;
     };
 
     /// Return value for parse_check_regtmod().
     struct RegTmod {
+        RegTmod() : reg(0), reggroup(0), segreg(0), tmod(0) {}
+        RegTmod(const Register* r)
+            : reg(r), reggroup(0), segreg(0), tmod(0) {}
+        RegTmod(const RegisterGroup* rg)
+            : reg(0), reggroup(rg), segreg(0), tmod(0) {}
+        RegTmod(const SegmentRegister* sr)
+            : reg(0), reggroup(0), segreg(sr), tmod(0) {}
+        RegTmod(const Insn::Operand::TargetModifier* tm)
+            : reg(0), reggroup(0), segreg(0), tmod(tm) {}
+
         const Register* reg;
         const RegisterGroup* reggroup;
         const SegmentRegister* segreg;
