@@ -92,12 +92,12 @@ public:
     /// @param destsize     destination size (in bytes)
     /// @param valsize      size (in bits)
     /// @param shift        left shift (in bits)
-    /// @param bigendian    endianness (nonzero=big, zero=little)
+    /// @param bigendian    endianness (true=big, false=little)
     /// @param warn         enables standard overflow/underflow warnings
     /// @return Nonzero if flt can't fit into the specified precision: -1 if
     ///         underflow occurred, 1 if overflow occurred.
     int get_sized(unsigned char *ptr, size_t destsize, size_t valsize,
-                  size_t shift, int bigendian, int warn) const;
+                  size_t shift, bool bigendian, int warn) const;
 
     /// Basic check to see if size is valid for flt conversion (using
     /// get_sized()).  Doesn't actually check for underflow/overflow

@@ -503,7 +503,7 @@ FloatNum::get_int(unsigned long& ret_val) const
 {
     unsigned char t[4];
 
-    if (get_sized(t, 4, 32, 0, 0, 0)) {
+    if (get_sized(t, 4, 32, 0, false, 0)) {
         ret_val = 0xDEADBEEFUL;     // Obviously incorrect return value
         return 1;
     }
@@ -629,7 +629,7 @@ FloatNum::get_common(/*@out@*/ unsigned char* ptr,
 
 int
 FloatNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize,
-                    size_t shift, int bigendian, int warn) const
+                    size_t shift, bool bigendian, int warn) const
 {
     int retval;
     if (destsize*8 != valsize || shift>0 || bigendian) {
@@ -689,7 +689,7 @@ operator<< (std::ostream& os, const FloatNum& flt)
     BitVector::Dispose(str);
 
     // 32-bit (single precision) format
-    os << "32-bit: " << flt.get_sized(out, 4, 32, 0, 0, 0) << ": ";
+    os << "32-bit: " << flt.get_sized(out, 4, 32, 0, false, 0) << ": ";
     os << std::hex << std::setfill('0') << std::setw(2);
     for (int i=0; i<4; i++)
         os << out[i] << " ";
@@ -697,7 +697,7 @@ operator<< (std::ostream& os, const FloatNum& flt)
     os.flags(origff);
 
     // 64-bit (double precision) format
-    os << "64-bit: " << flt.get_sized(out, 8, 64, 0, 0, 0) << ": ";
+    os << "64-bit: " << flt.get_sized(out, 8, 64, 0, false, 0) << ": ";
     os << std::hex << std::setfill('0') << std::setw(2);
     for (int i=0; i<8; i++)
         os << out[i] << " ";
@@ -705,7 +705,7 @@ operator<< (std::ostream& os, const FloatNum& flt)
     os.flags(origff);
 
     // 80-bit (extended precision) format
-    os << "80-bit: " << flt.get_sized(out, 10, 80, 0, 0, 0) << ": ";
+    os << "80-bit: " << flt.get_sized(out, 10, 80, 0, false, 0) << ": ";
     os << std::hex << std::setfill('0') << std::setw(2);
     for (int i=0; i<10; i++)
         os << out[i] << " ";
