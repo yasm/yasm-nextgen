@@ -26,7 +26,6 @@ ADD_LIBRARY(libyasm
     section.cpp
     symbol.cpp
     value.cpp
-    ${YASM_MODULES_SRC}
     )
 SET_TARGET_PROPERTIES(libyasm PROPERTIES OUTPUT_NAME "yasm")
 
