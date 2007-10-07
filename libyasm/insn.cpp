@@ -33,6 +33,7 @@
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
 
+#include "effaddr.h"
 #include "errwarn.h"
 #include "expr.h"
 #include "insn.h"
