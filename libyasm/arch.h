@@ -100,31 +100,77 @@ inline std::ostream& operator<<
 class Arch : public Module {
 public:
     /// Return value for parse_check_insnprefix().
-    struct InsnPrefix {
-        InsnPrefix() : bc(0), prefix(0) {}
-        InsnPrefix(Bytecode* b) : bc(b), prefix(0) {}
-        InsnPrefix(const Insn::Prefix* p) : bc(0), prefix(p) {}
+    class InsnPrefix {
+    public:
+        enum Type {
+            NONE,
+            INSN,
+            PREFIX
+        };
 
-        Bytecode* bc;
-        const Insn::Prefix* prefix;
+        InsnPrefix() : m_type(NONE) {}
+        InsnPrefix(std::auto_ptr<Bytecode> bc);
+        InsnPrefix(const Insn::Prefix* prefix)
+            : m_type(PREFIX), m_prefix(prefix) {}
+
+        ~InsnPrefix();
+
+        Type get_type() const { return m_type; }
+        bool is_type(Type type) const { return m_type == type; }
+
+        std::auto_ptr<Bytecode> release_insn();
+
+        const Insn::Prefix* get_prefix() const
+        { return (m_type == PREFIX ? m_prefix : 0); }
+    private:
+        Type m_type;
+        union {
+            Bytecode* m_bc;
+            const Insn::Prefix* m_prefix;
+        };
     };
 
     /// Return value for parse_check_regtmod().
-    struct RegTmod {
-        RegTmod() : reg(0), reggroup(0), segreg(0), tmod(0) {}
-        RegTmod(const Register* r)
-            : reg(r), reggroup(0), segreg(0), tmod(0) {}
-        RegTmod(const RegisterGroup* rg)
-            : reg(0), reggroup(rg), segreg(0), tmod(0) {}
-        RegTmod(const SegmentRegister* sr)
-            : reg(0), reggroup(0), segreg(sr), tmod(0) {}
-        RegTmod(const Insn::Operand::TargetModifier* tm)
-            : reg(0), reggroup(0), segreg(0), tmod(tm) {}
+    class RegTmod {
+    public:
+        enum Type {
+            NONE,
+            REG,
+            REGGROUP,
+            SEGREG,
+            TARGETMOD
+        };
 
-        const Register* reg;
-        const RegisterGroup* reggroup;
-        const SegmentRegister* segreg;
-        const Insn::Operand::TargetModifier* tmod;
+        RegTmod() : m_type(NONE) {}
+        RegTmod(const Register* reg)
+            : m_type(REG), m_reg(reg) {}
+        RegTmod(const RegisterGroup* reggroup)
+            : m_type(REGGROUP), m_reggroup(reggroup) {}
+        RegTmod(const SegmentRegister* segreg)
+            : m_type(SEGREG), m_segreg(segreg) {}
+        RegTmod(const Insn::Operand::TargetModifier* tmod)
+            : m_type(TARGETMOD), m_tmod(tmod) {}
+
+        Type get_type() const { return m_type; }
+        bool is_type(Type type) const { return m_type == type; }
+
+        const Register* get_reg() const
+        { return (m_type == REG ? m_reg : 0); }
+        const RegisterGroup* get_reggroup() const
+        { return (m_type == REGGROUP ? m_reggroup : 0); }
+        const SegmentRegister* get_segreg() const
+        { return (m_type == SEGREG ? m_segreg : 0); }
+        const Insn::Operand::TargetModifier* get_tmod() const
+        { return (m_type == TARGETMOD ? m_tmod : 0); }
+
+    private:
+        Type m_type;
+        union {
+            const Register* m_reg;
+            const RegisterGroup* m_reggroup;
+            const SegmentRegister* m_segreg;
+            const Insn::Operand::TargetModifier* m_tmod;
+        };
     };
 
     /// Constructor.
