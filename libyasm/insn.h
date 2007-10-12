@@ -54,12 +54,20 @@ public:
     /// An instruction operand.
     class Operand {
     public:
+        /// Operand type.
+        enum Type {
+            REG = 1,    ///< A register.
+            SEGREG,     ///< A segment register.
+            MEMORY,     ///< An effective address (memory reference).
+            IMM         ///< An immediate or jump target.
+        };
+
         /// Base class for target modifiers.
         class TargetModifier : private boost::noncopyable {
         public:
             TargetModifier() {}
             virtual ~TargetModifier() {}
-            virtual void put(std::ostream& os) = 0;
+            virtual void put(std::ostream& os) const = 0;
         };
 
         /// Create an instruction operand from a register.
@@ -89,25 +97,58 @@ public:
         // more complex structures, we don't want to be copying the
         // contents all the time.
 
+        /// Explicit release.
+        /// Doesn't destroy contents, just ensures what contents are there
+        /// won't be destroyed via the destructor.
+        void release() { m_type = REG; m_reg = 0; }
+
         void put(std::ostream& os, int indent_level) const;
         void finalize();
 
+        /// Match type.
+        bool is_type(Type type) const { return m_type == type; }
+
+        /// Get the type.
+        Type get_type() const { return m_type; }
+
+        /// Helper functions to get specific types.
+
+        const Register* get_reg() const
+        { return (m_type == REG ? m_reg : 0); }
+        const SegmentRegister* get_segreg() const
+        { return (m_type == SEGREG ? m_segreg : 0); }
+        EffAddr* get_memory() const
+        { return (m_type == MEMORY ? m_ea : 0); }
+        Expr* get_imm() const
+        { return (m_type == IMM ? m_val : 0); }
+
+        /// Helper functions to release specific types
+        std::auto_ptr<EffAddr> release_memory();
+        std::auto_ptr<Expr> release_imm();
+
+        /// Get arch target modifier, 0 if none.
+        const TargetModifier* get_targetmod() const { return m_targetmod; }
+
+        /// Get operand size, in bits.  0 if not user specified.
+        unsigned int get_size() const { return m_size; }
+
+        /// Is the operand dereferenced, as in "*foo" in GAS?
+        bool is_deref() const { return m_deref; }
+
+        /// Is the operand strict, as in "strict foo" in NASM?
+        bool is_strict() const { return m_strict; }
+
     private:
         /// Operand type.
-        enum yasm_insn_operand_type {
-            REG = 1,    ///< A register.
-            SEGREG,     ///< A segment register.
-            MEMORY,     ///< An effective address (memory reference).
-            IMM         ///< An immediate or jump target.
-        } m_type;
+        Type m_type;
 
         /// Operand data.
         union {
-            const SegmentRegister* segreg;  ///< Segment register.
-            const Register* reg;            ///< Register.
-            EffAddr* ea;    ///< Effective address for memory references.
-            Expr* val;      ///< Value of immediate or jump target.
-        } m_data;
+            const SegmentRegister* m_segreg;    ///< Segment register.
+            const Register* m_reg;              ///< Register.
+            EffAddr* m_ea;      ///< Effective address for memory references.
+            Expr* m_val;        ///< Value of immediate or jump target.
+        };
 
         /// Arch target modifier, 0 if none.
         const TargetModifier* m_targetmod;

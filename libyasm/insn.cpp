@@ -43,32 +43,32 @@ namespace yasm {
 
 Insn::Operand::Operand(const Register* reg)
     : m_type(REG),
+      m_reg(reg),
       m_targetmod(0),
       m_size(0),
       m_deref(0),
       m_strict(0)
 {
-    m_data.reg = reg;
 }
 
 Insn::Operand::Operand(const SegmentRegister* segreg)
     : m_type(SEGREG),
+      m_segreg(segreg),
       m_targetmod(0),
       m_size(0),
       m_deref(0),
       m_strict(0)
 {
-    m_data.segreg = segreg;
 }
 
 Insn::Operand::Operand(std::auto_ptr<EffAddr> ea)
     : m_type(MEMORY),
+      m_ea(ea.release()),
       m_targetmod(0),
       m_size(0),
       m_deref(0),
       m_strict(0)
 {
-    m_data.ea = ea.release();
 }
 
 Insn::Operand::Operand(std::auto_ptr<Expr> val)
@@ -83,16 +83,16 @@ Insn::Operand::Operand(std::auto_ptr<Expr> val)
     reg = val->get_reg();
     if (reg) {
         m_type = REG;
-        m_data.reg = reg;
+        m_reg = reg;
     } else
-        m_data.val = val.release();
+        m_val = val.release();
 }
 
 Insn::Operand::~Operand()
 {
     switch (m_type) {
-        //case MEMORY:    delete m_data.ea; break;
-        case IMM:       delete m_data.val; break;
+        case MEMORY:    delete m_ea; break;
+        case IMM:       delete m_val; break;
         default:        break;
     }
 }
@@ -103,19 +103,19 @@ Insn::Operand::put(std::ostream& os, int indent_level) const
     switch (m_type) {
         case REG:
             //os << std::setw(indent_level) << "";
-            //os << "Reg=" << *m_data.reg << '\n';
+            //os << "Reg=" << *m_reg << '\n';
             break;
         case SEGREG:
             //os << std::setw(indent_level) << "";
-            //os << "SegReg=" << *m_data.segreg << '\n';
+            //os << "SegReg=" << *m_segreg << '\n';
             break;
         case MEMORY:
             //os << std::setw(indent_level) << "";
-            //os << "Memory=" << *m_data.ea << '\n';
+            //os << "Memory=" << *m_ea << '\n';
             break;
         case IMM:
             os << std::setw(indent_level) << "";
-            os << "Imm=" << *m_data.val << '\n';
+            os << "Imm=" << *m_val << '\n';
             break;
     }
     //os << std::setw(indent_level+1) << "";
@@ -144,8 +144,8 @@ Insn::Operand::finalize()
             // simplify reg*1 identities.
 #if 0
             try {
-                if (m_data.ea && m_data.ea->disp.get_abs())
-                    m_data.ea->disp.get_abs()->level_tree(true, true, false);
+                if (m_ea && m_ea->disp.get_abs())
+                    m_ea->disp.get_abs()->level_tree(true, true, false);
             } catch (Error& err) {
                 // Add a pointer to where it was used
                 err.m_message += " in memory expression";
@@ -155,7 +155,7 @@ Insn::Operand::finalize()
             break;
         case IMM:
             try {
-                m_data.val->level_tree(true, true, true);
+                m_val->level_tree(true, true, true);
             } catch (Error& err) {
                 // Add a pointer to where it was used
                 err.m_message += " in immediate expression";
@@ -165,6 +165,26 @@ Insn::Operand::finalize()
         default:
             break;
     }
+}
+
+std::auto_ptr<EffAddr>
+Insn::Operand::release_memory()
+{
+    if (m_type != MEMORY)
+        return std::auto_ptr<EffAddr>(0);
+    std::auto_ptr<EffAddr> ea(m_ea);
+    release();
+    return ea;
+}
+
+std::auto_ptr<Expr>
+Insn::Operand::release_imm()
+{
+    if (m_type != IMM)
+        return std::auto_ptr<Expr>(0);
+    std::auto_ptr<Expr> imm(m_val);
+    release();
+    return imm;
 }
 
 void
