@@ -183,7 +183,7 @@ public:
     public:
         Prefix() {}
         virtual ~Prefix() {}
-        virtual void put(std::ostream& os) = 0;
+        virtual void put(std::ostream& os) const = 0;
     };
 
     Insn() {}
