@@ -79,14 +79,14 @@ public:
             unsigned int subst;
         };
 
-        Term(const Register* reg) : m_type(REG) { m_data.reg = reg; }
-        Term(IntNum* intn) : m_type(INT) { m_data.intn = intn; }
-        Term(FloatNum* flt) : m_type(FLOAT) { m_data.flt = flt; }
-        explicit Term(const Subst& subst) : m_type(SUBST)
-        { m_data.subst = subst.subst; }
-        Term(Symbol* sym) : m_type(SYM) { m_data.sym = sym; }
-        Term(Bytecode* bc) : m_type(PRECBC) { m_data.precbc = bc; }
-        Term(Expr* expr) : m_type(EXPR) { m_data.expr = expr; }
+        Term(const Register* reg) : m_type(REG), m_reg(reg) {}
+        Term(IntNum* intn) : m_type(INT), m_intn(intn) {}
+        Term(FloatNum* flt) : m_type(FLOAT), m_flt(flt) {}
+        explicit Term(const Subst& subst)
+            : m_type(SUBST), m_subst(subst.subst) {}
+        Term(Symbol* sym) : m_type(SYM), m_sym(sym) {}
+        Term(Bytecode* bc) : m_type(PRECBC), m_precbc(bc) {}
+        Term(Expr* expr) : m_type(EXPR), m_expr(expr) {}
 
         // auto_ptr constructors
 
@@ -105,7 +105,7 @@ public:
         /// Doesn't destroy contents, just ensures what contents are there
         /// won't be destroyed via destroy().  Also marks the type as
         /// Expr::NONE for easy filtering (e.g. with std::remove_if()).
-        void release() { m_type = NONE; m_data.reg = 0; }
+        void release() { m_type = NONE; m_reg = 0; }
 
         /// Explicit destructor.
         /// Similar to clone(), we do smart copying and destruction in
@@ -133,32 +133,32 @@ public:
         // Helper functions to make it easier to get specific types.
 
         const Register* get_reg() const
-        { return (m_type == REG ? m_data.reg : 0); }
+        { return (m_type == REG ? m_reg : 0); }
         IntNum* get_int() const
-        { return (m_type == INT ? m_data.intn : 0); }
+        { return (m_type == INT ? m_intn : 0); }
         const unsigned int* get_subst() const
-        { return (m_type == SUBST ? &m_data.subst : 0); }
+        { return (m_type == SUBST ? &m_subst : 0); }
         FloatNum* get_float() const
-        { return (m_type == FLOAT ? m_data.flt : 0); }
+        { return (m_type == FLOAT ? m_flt : 0); }
         Symbol* get_sym() const
-        { return (m_type == SYM ? m_data.sym : 0); }
+        { return (m_type == SYM ? m_sym : 0); }
         Bytecode* get_precbc() const
-        { return (m_type == PRECBC ? m_data.precbc : 0); }
+        { return (m_type == PRECBC ? m_precbc : 0); }
         Expr* get_expr() const
-        { return (m_type == EXPR ? m_data.expr : 0); }
+        { return (m_type == EXPR ? m_expr : 0); }
 
     private:
         TermType m_type;  ///< Type.
         /// Expression item data.  Correct value depends on type.
         union {
-            const Register *reg;///< Register (#REG)
-            IntNum *intn;       ///< Integer value (#INT)
-            unsigned int subst; ///< Subst placeholder (#SUBST)
-            FloatNum *flt;      ///< Floating point value (#FLOAT)
-            Symbol *sym;        ///< Symbol (#SYM)
-            Bytecode *precbc;   ///< Direct bytecode ref (#PRECBC)
-            Expr *expr;         ///< Subexpression (#EXPR)
-        } m_data;
+            const Register *m_reg;  ///< Register (#REG)
+            IntNum *m_intn;         ///< Integer value (#INT)
+            unsigned int m_subst;   ///< Subst placeholder (#SUBST)
+            FloatNum *m_flt;        ///< Floating point value (#FLOAT)
+            Symbol *m_sym;          ///< Symbol (#SYM)
+            Bytecode *m_precbc;     ///< Direct bytecode ref (#PRECBC)
+            Expr *m_expr;           ///< Subexpression (#EXPR)
+        };
     };
 
     typedef std::vector<Term> Terms;

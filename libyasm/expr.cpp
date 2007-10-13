@@ -91,28 +91,28 @@ can_destroy_int_right(Op::Op op, const IntNum* intn)
 
 namespace yasm {
 
-Expr::Term::Term(std::auto_ptr<IntNum> intn) : m_type(INT)
+Expr::Term::Term(std::auto_ptr<IntNum> intn)
+    : m_type(INT), m_intn(intn.release())
 {
-    m_data.intn = intn.release();
 }
 
-Expr::Term::Term(std::auto_ptr<FloatNum> flt) : m_type(FLOAT)
+Expr::Term::Term(std::auto_ptr<FloatNum> flt)
+    : m_type(FLOAT), m_flt(flt.release())
 {
-    m_data.flt = flt.release();
 }
 
-Expr::Term::Term(std::auto_ptr<Expr> expr) : m_type(EXPR)
+Expr::Term::Term(std::auto_ptr<Expr> expr)
+    : m_type(EXPR), m_expr(expr.release())
 {
-    m_data.expr = expr.release();
 }
 
 Expr::Term
 Expr::Term::clone() const
 {
     switch (m_type) {
-        case INT:   return m_data.intn->clone();
-        case FLOAT: return m_data.flt->clone();
-        case EXPR:  return m_data.expr->clone();
+        case INT:   return m_intn->clone();
+        case FLOAT: return m_flt->clone();
+        case EXPR:  return m_expr->clone();
         default:    return *this;
     }
 }
@@ -122,20 +122,21 @@ Expr::Term::destroy()
 {
     switch (m_type) {
         case INT:
-            delete m_data.intn;
-            m_data.intn = 0;
+            delete m_intn;
+            m_intn = 0;
             break;
         case FLOAT:
-            delete m_data.flt;
-            m_data.flt = 0;
+            delete m_flt;
+            m_flt = 0;
             break;
         case EXPR:
-            delete m_data.expr;
-            m_data.expr = 0;
+            delete m_expr;
+            m_expr = 0;
             break;
         default:
             break;
     }
+    //m_type = NONE;
 }
 
 void
@@ -789,12 +790,12 @@ operator<< (std::ostream& os, const Expr::Term& term)
     switch (term.m_type) {
         case Expr::NONE:    os << "NONE"; break;
         case Expr::REG:     os << "REG"; break;
-        case Expr::INT:     os << *term.m_data.intn; break;
-        case Expr::SUBST:   os << "[" << term.m_data.subst << "]"; break;
+        case Expr::INT:     os << *term.m_intn; break;
+        case Expr::SUBST:   os << "[" << term.m_subst << "]"; break;
         case Expr::FLOAT:   os << "FLTN"; break;
         case Expr::SYM:     os << "SYM"; break;
         case Expr::PRECBC:  os << "{PRECBC}"; break;
-        case Expr::EXPR:    os << "(" << *term.m_data.expr << ")"; break;
+        case Expr::EXPR:    os << "(" << *term.m_expr << ")"; break;
     }
     return os;
 }
