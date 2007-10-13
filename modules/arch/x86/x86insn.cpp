@@ -1418,7 +1418,7 @@ cpu_find_reverse(unsigned int cpu0, unsigned int cpu1, unsigned int cpu2)
 
 Arch::InsnPrefix
 X86Arch::parse_check_insnprefix(const char* id, size_t id_len,
-                                unsigned long line)
+                                unsigned long line) const
 {
     if (id_len > 15)
         return InsnPrefix();

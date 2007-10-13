@@ -113,8 +113,8 @@ public:
     bool set_var(const std::string& var, unsigned long val);
 
     InsnPrefix parse_check_insnprefix
-        (const char *id, size_t id_len, unsigned long line);
-    RegTmod parse_check_regtmod(const char *id, size_t id_len);
+        (const char *id, size_t id_len, unsigned long line) const;
+    RegTmod parse_check_regtmod(const char *id, size_t id_len) const;
 
     const unsigned char** get_fill() const;
 
@@ -125,7 +125,7 @@ public:
                         size_t destsize, size_t valsize, int shift,
                         const Bytecode& bc, int warn) const;
 
-    std::auto_ptr<EffAddr> ea_create(std::auto_ptr<Expr> e);
+    std::auto_ptr<EffAddr> ea_create(std::auto_ptr<Expr> e) const;
 
     std::auto_ptr<Bytecode> create_empty_insn(unsigned long line) const;
 

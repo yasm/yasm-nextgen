@@ -231,7 +231,7 @@ public:
 
     /// Check an generic identifier to see if it matches architecture
     /// specific names for instructions or instruction prefixes.
-    /// Unrecognized identifiers should return #NOTINSNPREFIX so they can be
+    /// Unrecognized identifiers should return empty so they can be
     /// treated as normal symbols.
     /// @param id           identifier as in the input file
     /// @param id_len       length of id string
@@ -240,17 +240,18 @@ public:
     ///                     returned (and NULL otherwise)
     /// @param prefix       for prefixes, yasm_arch-specific value is
     ///                     returned (and 0 otherwise)
-    /// @return Identifier type (#NOTINSNPREFIX if unrecognized)
+    /// @return Identifier type (empty if unrecognized)
     virtual InsnPrefix parse_check_insnprefix
-        (const char *id, size_t id_len, unsigned long line) = 0;
+        (const char *id, size_t id_len, unsigned long line) const = 0;
 
     /// Check an generic identifier to see if it matches architecture
     /// specific names for registers or target modifiers.  Unrecognized
-    /// identifiers should return #NOTREGTMOD.
+    /// identifiers should return empty.
     /// @param id           identifier as in the input file
     /// @param id_len       length of id string
-    /// @return Identifier type (#NOTREGTMOD if unrecognized)
-    virtual RegTmod parse_check_regtmod(const char *id, size_t id_len) = 0;
+    /// @return Identifier type (empty if unrecognized)
+    virtual RegTmod parse_check_regtmod(const char *id, size_t id_len)
+        const = 0;
 
     /// Get NOP fill patterns for 1-15 bytes of fill.
     /// @return 16-entry array of arrays; [0] is unused,
@@ -294,7 +295,7 @@ public:
     /// Create an effective address from an expression.
     /// @param e    expression
     /// @return Newly allocated effective address.
-    virtual std::auto_ptr<EffAddr> ea_create(std::auto_ptr<Expr> e) = 0;
+    virtual std::auto_ptr<EffAddr> ea_create(std::auto_ptr<Expr> e) const = 0;
 
     /// Create a bytecode that represents a single empty (0 length)
     /// instruction.  This is used for handling solitary prefixes.

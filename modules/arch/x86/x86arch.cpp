@@ -442,7 +442,7 @@ X86Arch::intnum_tobytes(const IntNum& intn, Bytes& bytes, size_t destsize,
 }
 
 std::auto_ptr<EffAddr>
-X86Arch::ea_create(std::auto_ptr<Expr> e)
+X86Arch::ea_create(std::auto_ptr<Expr> e) const
 {
     return std::auto_ptr<EffAddr>(new X86EffAddr(*this, e));
 }

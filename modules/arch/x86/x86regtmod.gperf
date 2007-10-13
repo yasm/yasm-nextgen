@@ -471,7 +471,7 @@ to,	&i_TO,		TARGETMOD,	0
 %%
 
 Arch::RegTmod
-X86Arch::parse_check_regtmod(const char* id, size_t id_len)
+X86Arch::parse_check_regtmod(const char* id, size_t id_len) const
 {
     if (id_len > 7)
         return RegTmod();
