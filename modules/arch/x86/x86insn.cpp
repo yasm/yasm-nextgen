@@ -779,12 +779,14 @@ X86Insn::match_info(const X86InsnInfo& info, const unsigned int* size_lookup,
         return std::equal(m_operands.rbegin(), m_operands.rend(),
                           &insn_operands[info.operands_index],
                           boost::bind(&X86Insn::match_operand, this, _1, _2,
-                                      m_operands.back(), size_lookup, bypass));
+                                      boost::ref(m_operands.back()),
+                                      size_lookup, bypass));
     else
         return std::equal(m_operands.begin(), m_operands.end(),
                           &insn_operands[info.operands_index],
                           boost::bind(&X86Insn::match_operand, this, _1, _2,
-                                      m_operands.front(), size_lookup, bypass));
+                                      boost::ref(m_operands.front()),
+                                      size_lookup, bypass));
 #else
     const Operand& last = m_operands.back();
     const X86InfoOperand* first2 = &insn_operands[info.operands_index];
@@ -1246,12 +1248,12 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
 void
 BuildGeneral::apply_segregs(const Insn::SegRegs& segregs, Bytecode& prev_bc)
 {
-    if (m_x86_ea.get() != 0) {
-        m_x86_ea->init(m_spare, m_drex,
-                       (m_info.drex_oc0 & NEED_DREX_MASK) != 0, &prev_bc);
+    X86EffAddr* x86_ea = m_x86_ea.get();
+    if (x86_ea) {
+        x86_ea->init(m_spare, m_drex,
+                     (m_info.drex_oc0 & NEED_DREX_MASK) != 0, &prev_bc);
         std::for_each(segregs.begin(), segregs.end(),
-                      boost::bind(&X86EffAddr::set_segreg, m_x86_ea.get(),
-                                  _1));
+                      boost::bind(&X86EffAddr::set_segreg, x86_ea, _1));
     } else if (segregs.size() > 0 && m_special_prefix == 0) {
         if (segregs.size() > 1)
             warn_set(WARN_GENERAL,
