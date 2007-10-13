@@ -56,7 +56,8 @@ public:
     public:
         /// Operand type.
         enum Type {
-            REG = 1,    ///< A register.
+            NONE = 0,   ///< Nothing.
+            REG,        ///< A register.
             SEGREG,     ///< A segment register.
             MEMORY,     ///< An effective address (memory reference).
             IMM         ///< An immediate or jump target.
@@ -89,18 +90,23 @@ public:
         /// @return Newly allocated operand.
         Operand(std::auto_ptr<Expr> val);
 
-        /// Destructor.
-        ~Operand();
-
-        // No copy constructor or assignment operator as we want to use
-        // the default bit-copy ones.  Even though this class contains
-        // more complex structures, we don't want to be copying the
-        // contents all the time.
+        /// Explicit copy creator.
+        /// There's no copy constructor or assignment operator as we want
+        /// to use the default bit-copy ones.  Even though this class
+        /// contains more complex structures, we don't want to be copying
+        /// the contents all the time.
+        Operand clone() const;
 
         /// Explicit release.
         /// Doesn't destroy contents, just ensures what contents are there
         /// won't be destroyed via the destructor.
-        void release() { m_type = REG; m_reg = 0; }
+        void release() { m_type = NONE; m_reg = 0; }
+
+        /// Explicit destructor.
+        /// Similar to clone(), we do smart copying and destruction in
+        /// #Expr implementation to prevent over-copying of possibly deep
+        /// expression trees.
+        void destroy();
 
         void put(std::ostream& os, int indent_level) const;
         void finalize();
@@ -179,15 +185,19 @@ public:
     };
 
     /// Base class for instruction prefixes.
-    class Prefix {
+    class Prefix : private boost::noncopyable {
     public:
         Prefix() {}
         virtual ~Prefix() {}
         virtual void put(std::ostream& os) const = 0;
     };
 
-    Insn() {}
-    virtual ~Insn() {}
+    typedef std::vector<Operand> Operands;
+    typedef std::vector<const Prefix*> Prefixes;
+    typedef std::vector<const SegmentRegister*> SegRegs;
+
+    Insn();
+    virtual ~Insn();
 
     /// Add operand to the end of an instruction.
     /// @param op           operand
@@ -231,17 +241,20 @@ public:
     virtual Insn* clone() const = 0;
 
 protected:
+    /// Copy constructor.
+    Insn(const Insn& rhs);
+
     /// Finalize the custom parts of an instruction.
     virtual void do_finalize(Bytecode& bc, Bytecode& prev_bc) = 0;
 
     /// Operands.
-    std::vector<Operand> m_operands;
+    Operands m_operands;
 
     /// Prefixes.
-    std::vector<const Prefix*> m_prefixes;
+    Prefixes m_prefixes;
 
     /// Array of segment prefixes.
-    std::vector<const SegmentRegister*> m_segregs;
+    SegRegs m_segregs;
 };
 
 } // namespace yasm

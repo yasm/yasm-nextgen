@@ -88,19 +88,50 @@ Insn::Operand::Operand(std::auto_ptr<Expr> val)
         m_val = val.release();
 }
 
-Insn::Operand::~Operand()
+void
+Insn::Operand::destroy()
 {
     switch (m_type) {
-        case MEMORY:    delete m_ea; break;
-        case IMM:       delete m_val; break;
-        default:        break;
+        case MEMORY:
+            delete m_ea;
+            m_ea = 0;
+            break;
+        case IMM:
+            delete m_val;
+            m_val = 0;
+            break;
+        default:
+            break;
     }
+}
+
+Insn::Operand
+Insn::Operand::clone() const
+{
+    Operand op(*this);
+
+    // Deep copy things that need to be deep copied.
+    switch (m_type) {
+        case MEMORY:
+            op.m_ea = op.m_ea->clone();
+            break;
+        case IMM:
+            op.m_val = op.m_val->clone();
+            break;
+        default:
+            break;
+    }
+
+    return op;
 }
 
 void
 Insn::Operand::put(std::ostream& os, int indent_level) const
 {
     switch (m_type) {
+        case NONE:
+            os << "None\n";
+            break;
         case REG:
             //os << std::setw(indent_level) << "";
             //os << "Reg=" << *m_reg << '\n';
@@ -185,6 +216,27 @@ Insn::Operand::release_imm()
     std::auto_ptr<Expr> imm(m_val);
     release();
     return imm;
+}
+
+Insn::Insn()
+{
+}
+
+Insn::Insn(const Insn& rhs)
+    : Bytecode::Contents(rhs),
+      m_operands(),
+      m_prefixes(rhs.m_prefixes),
+      m_segregs(rhs.m_segregs)
+{
+    m_operands.reserve(rhs.m_operands.size());
+    std::transform(rhs.m_operands.begin(), rhs.m_operands.end(),
+                   m_operands.begin(), boost::mem_fn(&Operand::clone));
+}
+
+Insn::~Insn()
+{
+    std::for_each(m_operands.begin(), m_operands.end(),
+                  boost::mem_fn(&Operand::destroy));
 }
 
 void
