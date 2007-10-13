@@ -257,6 +257,13 @@ protected:
     SegRegs m_segregs;
 };
 
+inline std::ostream& operator<<
+(std::ostream &os, const Insn::Operand::TargetModifier &tmod)
+{
+    tmod.put(os);
+    return os;
+}
+
 } // namespace yasm
 
 #endif

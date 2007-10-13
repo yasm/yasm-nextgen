@@ -33,6 +33,7 @@
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
 
+#include "arch.h"
 #include "effaddr.h"
 #include "errwarn.h"
 #include "expr.h"
@@ -133,24 +134,24 @@ Insn::Operand::put(std::ostream& os, int indent_level) const
             os << "None\n";
             break;
         case REG:
-            //os << std::setw(indent_level) << "";
-            //os << "Reg=" << *m_reg << '\n';
+            os << std::setw(indent_level) << "";
+            os << "Reg=" << *m_reg << '\n';
             break;
         case SEGREG:
-            //os << std::setw(indent_level) << "";
-            //os << "SegReg=" << *m_segreg << '\n';
+            os << std::setw(indent_level) << "";
+            os << "SegReg=" << *m_segreg << '\n';
             break;
         case MEMORY:
-            //os << std::setw(indent_level) << "";
-            //os << "Memory=" << *m_ea << '\n';
+            os << std::setw(indent_level) << "" << "Memory=\n";
+            m_ea->put(os, indent_level+1);
             break;
         case IMM:
             os << std::setw(indent_level) << "";
             os << "Imm=" << *m_val << '\n';
             break;
     }
-    //os << std::setw(indent_level+1) << "";
-    //os << "TargetMod=" << *m_targetmod << '\n';
+    os << std::setw(indent_level+1) << "";
+    os << "TargetMod=" << *m_targetmod << '\n';
     os << std::setw(indent_level+1) << "" << "Size=" << m_size << '\n';
     os << std::setw(indent_level+1) << "";
     os << "Deref=" << m_deref << ", Strict=" << m_strict << '\n';
