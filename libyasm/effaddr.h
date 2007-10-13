@@ -32,8 +32,6 @@
 #include <iosfwd>
 #include <memory>
 
-#include <boost/noncopyable.hpp>
-
 #include "value.h"
 
 namespace yasm {
@@ -42,7 +40,7 @@ class SegmentRegister;
 
 /// Base class for an effective address.
 /// Architectures should derive their own implementation from this.
-class EffAddr : private boost::noncopyable {
+class EffAddr {
 public:
     /// Constructor.
     EffAddr(std::auto_ptr<Expr> e);
@@ -91,6 +89,16 @@ public:
     /// @param os           output stream
     /// @param indent_level indentation level
     virtual void put(std::ostream& os, int indent_level) const = 0;
+
+    /// Clone an effective address.
+    virtual EffAddr* clone() const = 0;
+
+protected:
+    /// Copy constructor so that derived classes can sanely have one.
+    EffAddr(const EffAddr& rhs);
+
+private:
+    const EffAddr& operator=(const EffAddr&);
 };
 
 } // namespace yasm

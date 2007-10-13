@@ -48,6 +48,18 @@ EffAddr::EffAddr(std::auto_ptr<Expr> e)
 {
 }
 
+EffAddr::EffAddr(const EffAddr& rhs)
+    : m_disp(rhs.m_disp),
+      m_segreg(rhs.m_segreg),
+      m_need_nonzero_len(rhs.m_need_nonzero_len),
+      m_need_disp(rhs.m_need_disp),
+      m_nosplit(rhs.m_nosplit),
+      m_strong(rhs.m_strong),
+      m_pc_rel(rhs.m_pc_rel),
+      m_not_pc_rel(rhs.m_not_pc_rel)
+{
+}
+
 EffAddr::~EffAddr()
 {
 }
