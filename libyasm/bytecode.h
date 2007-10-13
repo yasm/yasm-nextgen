@@ -139,7 +139,7 @@ public:
     /// Bytecode contents (abstract base class).  Any implementation of a
     /// specific bytecode must implement a class derived from this one.
     /// The bytecode implementation-specific data is stored in #contents.
-    class Contents : private boost::noncopyable {
+    class Contents {
     public:
         typedef std::auto_ptr<Contents> Ptr;
 
@@ -232,22 +232,29 @@ public:
         /// #SPECIAL_NONE).  Other return values cause special handling to
         /// kick in in various parts of yasm.
         enum SpecialType {
-            /** No special handling. */
+            /// No special handling.
             SPECIAL_NONE = 0,
 
-            /** Bytecode reserves space instead of outputting data. */
+            /// Bytecode reserves space instead of outputting data.
             SPECIAL_RESERVE,
 
-            /** Adjusts offset instead of calculating len. */
+            /// Adjusts offset instead of calculating len.
             SPECIAL_OFFSET,
 
-            /** Instruction bytecode. */
+            /// Instruction bytecode.
             SPECIAL_INSN
         };
 
         virtual SpecialType get_special() const;
 
         virtual Contents* clone() const = 0;
+
+    protected:
+        /// Copy constructor so that derived classes can sanely have one.
+        Contents(const Contents&) {}
+
+    private:
+        const Contents& operator=(const Contents&);
     };
 
     /// Create a bytecode of any specified type.
