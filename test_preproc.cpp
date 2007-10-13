@@ -8,11 +8,11 @@
 
 using namespace yasm;
 
+YASM_STATIC_MODULE_REF(preproc, raw)
+
 int
 main()
 {
-    use_static_modules();
-
     std::auto_ptr<Preprocessor> preproc =
         ddj::genericFactory<Preprocessor>::instance().create("raw");
 

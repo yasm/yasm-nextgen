@@ -54,18 +54,18 @@ MESSAGE(STATUS "Building modules: ${YASM_MODULES}")
 #MESSAGE(STATUS "Module source files: ${YASM_MODULES_SRC}")
 
 #
-# Generate static_modules.cpp
+# Generate static_modules.h
 # This file ensures all modules are brought in by the linker.
 #
 
-SET(STATIC_MODULES_CPP ${CMAKE_BINARY_DIR}/static_modules.cpp)
-SET(STATIC_MODULES_CPP_REV 1)
+SET(STATIC_MODULES_H ${CMAKE_BINARY_DIR}/static_modules.h)
+SET(STATIC_MODULES_H_REV 1)
 
 # Don't regen if no changes; default to regen
-SET(regen_static_modules_cpp TRUE)
-IF(EXISTS ${STATIC_MODULES_CPP})
-    FILE(READ ${STATIC_MODULES_CPP} _old_static_modules_cpp)
-    STRING(REGEX MATCHALL "[^\n]*\n" _lines "${_old_static_modules_cpp}")
+SET(regen_static_modules_h TRUE)
+IF(EXISTS ${STATIC_MODULES_H})
+    FILE(READ ${STATIC_MODULES_H} _old_static_modules_h)
+    STRING(REGEX MATCHALL "[^\n]*\n" _lines "${_old_static_modules_h}")
     #MESSAGE(STATUS "Lines: ${_lines}")
 
     LIST(GET _lines 0 _line0)
@@ -77,41 +77,38 @@ IF(EXISTS ${STATIC_MODULES_CPP})
     LIST(GET _lines 1 _line1)
     STRING(REGEX MATCH "rev [0-9]+" _old_modules_rev "${_line1}")
     #MESSAGE(STATUS "Old modules rev: ${_old_modules_rev}")
-    STRING(COMPARE EQUAL "${_old_modules_rev}" "rev ${STATIC_MODULES_CPP_REV}"
+    STRING(COMPARE EQUAL "${_old_modules_rev}" "rev ${STATIC_MODULES_H_REV}"
            _modules_rev_match)
 
     IF(_modules_match AND _modules_rev_match)
-        SET(regen_static_modules_cpp FALSE)
+        SET(regen_static_modules_h FALSE)
     ENDIF(_modules_match AND _modules_rev_match)
-ENDIF(EXISTS ${STATIC_MODULES_CPP})
+ENDIF(EXISTS ${STATIC_MODULES_H})
 
-IF(regen_static_modules_cpp)
+IF(regen_static_modules_h)
     MESSAGE(STATUS "Generating static modules file")
     STRING(REPLACE ";" " " _modules_str "${YASM_MODULES}")
-    FILE(WRITE ${STATIC_MODULES_CPP} "// ${_modules_str} \n")
-    FILE(APPEND ${STATIC_MODULES_CPP} "// rev ${STATIC_MODULES_CPP_REV}\n")
-    FILE(APPEND ${STATIC_MODULES_CPP} "// static module references\n")
-    FILE(APPEND ${STATIC_MODULES_CPP} "namespace yasm {\n")
-    FILE(APPEND ${STATIC_MODULES_CPP} "void\nuse_static_modules()\n{\n}\n")
+    FILE(WRITE ${STATIC_MODULES_H} "// ${_modules_str} \n")
+    FILE(APPEND ${STATIC_MODULES_H} "// rev ${STATIC_MODULES_H_REV}\n")
+    FILE(APPEND ${STATIC_MODULES_H} "// static module references\n")
+    FILE(APPEND ${STATIC_MODULES_H} "namespace yasm {\n")
     FOREACH(module ${YASM_MODULES})
-        FILE(APPEND ${STATIC_MODULES_CPP} "// ${module}\n")
+        FILE(APPEND ${STATIC_MODULES_H} "// ${module}\n")
         STRING(REGEX MATCHALL "[a-zA-Z][a-zA-Z0-9]+" _modulepath ${module})
         FOREACH(_pathpart ${_modulepath})
-            FILE(APPEND ${STATIC_MODULES_CPP} "namespace ${_pathpart} { ")
+            FILE(APPEND ${STATIC_MODULES_H} "namespace ${_pathpart} { ")
         ENDFOREACH(_pathpart)
-        FILE(APPEND ${STATIC_MODULES_CPP} "\nextern bool static_ref;\n")
-        FILE(APPEND ${STATIC_MODULES_CPP}
+        FILE(APPEND ${STATIC_MODULES_H} "\nextern bool static_ref;\n")
+        FILE(APPEND ${STATIC_MODULES_H}
              "static bool do_static_ref = static_ref;\n")
         FOREACH(_pathpart ${_modulepath})
-            FILE(APPEND ${STATIC_MODULES_CPP} "}")
+            FILE(APPEND ${STATIC_MODULES_H} "}")
         ENDFOREACH(_pathpart)
     ENDFOREACH(module)
-    FILE(APPEND ${STATIC_MODULES_CPP} "\n}\n") 
-ELSE(regen_static_modules_cpp)
+    FILE(APPEND ${STATIC_MODULES_H} "\n}\n") 
+ELSE(regen_static_modules_h)
     MESSAGE(STATUS "Not regenerating static modules file (unchanged)")
-ENDIF(regen_static_modules_cpp)
-
-LIST(APPEND YASM_MODULES_SRC ${STATIC_MODULES_CPP})
+ENDIF(regen_static_modules_h)
 
 ADD_SUBDIRECTORY(libyasm)
 
