@@ -46,6 +46,16 @@
 
 namespace yasm {
 
+Scanner::Scanner()
+    : bot(0), tok(0), ptr(0), cur(0), lim(0), top(0), eof(0)
+{
+}
+
+Scanner::~Scanner()
+{
+    delete bot;
+}
+
 bool
 Scanner::fill_helper(unsigned char* &cursor,
                      boost::function<size_t (unsigned char*, size_t)> input_func)

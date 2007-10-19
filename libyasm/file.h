@@ -41,8 +41,11 @@ namespace yasm {
 /// Re2c scanner state.
 class Scanner {
 public:
+    /// Constructor.
+    Scanner();
+
     /// Destructor.
-    ~Scanner() { delete bot; }
+    ~Scanner();
 
     /// Fill a scanner state structure with data coming from an input
     /// function.
