@@ -84,6 +84,13 @@ Bytecode::Contents::to_bytes(Bytecode& bc, Bytes& bytes,
     throw InternalError(N_("bytecode cannot be converted to bytes"));
 }
 
+/*@null@*/ const Expr*
+Bytecode::Contents::reserve_numitems(/*@out@*/ unsigned int& itemsize) const
+{
+    itemsize = 0;
+    return 0;
+}
+
 Bytecode::Contents::SpecialType
 Bytecode::Contents::get_special() const
 {

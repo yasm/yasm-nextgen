@@ -224,8 +224,7 @@ public:
         /// @return NULL if bc is not a reserve bytecode, otherwise an
         ///         expression for the number of items to reserve.
         virtual /*@null@*/ const Expr* reserve_numitems
-            (/*@out@*/ unsigned int& itemsize) const
-        { itemsize=0; return 0; }
+            (/*@out@*/ unsigned int& itemsize) const;
 
         /// Special bytecode classifications.  Most bytecode types should
         /// simply not override the get_special() function (which returns
