@@ -163,6 +163,8 @@ public:
     /// @note Errors/warnings are stored into errwarns.
     void symbols_finalize(Errwarns& errwarns, bool undef_extern);
 
+    /*@null@*/ Section* get_cur_section() { return m_cur_section; }
+
 private:
     std::string m_src_filename;         ///< Source filename
     std::string m_obj_filename;         ///< Object filename
