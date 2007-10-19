@@ -34,6 +34,8 @@ Compose::Compose(const std::string& fmt)
     : m_fmt(fmt), m_arg(0)
 {
     m_arg_pos[0] = 0;
+    m_os << ' ';
+    m_os.seekp(0);
 }
 
 Compose::~Compose()
