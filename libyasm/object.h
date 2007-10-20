@@ -164,6 +164,12 @@ public:
     void symbols_finalize(Errwarns& errwarns, bool undef_extern);
 
     /*@null@*/ Section* get_cur_section() { return m_cur_section; }
+    const /*@null@*/ Section* get_cur_section() const { return m_cur_section; }
+    void set_cur_section(/*@null@*/ Section* section)
+    { m_cur_section = section; }
+
+    Arch* get_arch() { return m_arch.get(); }
+    const Arch* get_arch() const { return m_arch.get(); }
 
 private:
     std::string m_src_filename;         ///< Source filename
