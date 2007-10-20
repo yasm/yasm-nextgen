@@ -42,8 +42,11 @@ class Linemap {
 public:
     typedef std::set<std::string> Filenames;
 
-    /// Create a new line mapping repository.
-    Linemap() : m_current(1) {}
+    /// Constructor.  Virtual line number is initialized to 1.
+    Linemap();
+
+    /// Destructor.
+    ~Linemap();
 
     /// Get the current line position in a repository.
     /// @return Current virtual line.

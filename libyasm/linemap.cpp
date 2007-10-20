@@ -33,6 +33,15 @@
 
 namespace yasm {
 
+Linemap::Linemap()
+    : m_current(1)
+{
+}
+
+Linemap::~Linemap()
+{
+}
+
 void
 Linemap::set(unsigned long file_line, unsigned long line_inc)
 {
