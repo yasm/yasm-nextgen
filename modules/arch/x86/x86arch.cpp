@@ -397,24 +397,24 @@ X86Arch::get_type() const
 }
 
 void
-X86Arch::add_directives(Directives& dir, const std::string& parser)
+X86Arch::add_directives(Directives& dirs, const std::string& parser)
 {
     if (String::nocase_equal(parser, "nasm")) {
-        dir.add("cpu", boost::bind(&X86Arch::dir_cpu, this, _1, _2, _3, _4),
-                Directives::ARG_REQUIRED);
-        dir.add("bits", boost::bind(&X86Arch::dir_bits, this, _1, _2, _3, _4),
-                Directives::ARG_REQUIRED);
+        dirs.add("cpu", boost::bind(&X86Arch::dir_cpu, this, _1, _2, _3, _4),
+                 Directives::ARG_REQUIRED);
+        dirs.add("bits", boost::bind(&X86Arch::dir_bits, this, _1, _2, _3, _4),
+                 Directives::ARG_REQUIRED);
     } else if (String::nocase_equal(parser, "gas") ||
                String::nocase_equal(parser, "gnu")) {
-        dir.add(".code16",
-                boost::bind(&X86Arch::dir_code16, this, _1, _2, _3, _4),
-                Directives::ANY);
-        dir.add(".code32",
-                boost::bind(&X86Arch::dir_code32, this, _1, _2, _3, _4),
-                Directives::ANY);
-        dir.add(".code64",
-                boost::bind(&X86Arch::dir_code64, this, _1, _2, _3, _4),
-                Directives::ANY);
+        dirs.add(".code16",
+                 boost::bind(&X86Arch::dir_code16, this, _1, _2, _3, _4),
+                 Directives::ANY);
+        dirs.add(".code32",
+                 boost::bind(&X86Arch::dir_code32, this, _1, _2, _3, _4),
+                 Directives::ANY);
+        dirs.add(".code64",
+                 boost::bind(&X86Arch::dir_code64, this, _1, _2, _3, _4),
+                 Directives::ANY);
     }
 }
 
