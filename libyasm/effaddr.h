@@ -42,6 +42,8 @@ class SegmentRegister;
 /// Architectures should derive their own implementation from this.
 class EffAddr {
 public:
+    typedef std::auto_ptr<EffAddr> Ptr;
+
     /// Constructor.
     EffAddr(std::auto_ptr<Expr> e);
 
