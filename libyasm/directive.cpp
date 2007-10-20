@@ -92,10 +92,10 @@ Directives::operator[] (const std::string& name) const
 
 void
 Directives::Impl::Dir::operator() (Object& object,
-                                         const std::string& name,
-                                         const NameValues& namevals,
-                                         const NameValues& objext_namevals,
-                                         unsigned long line)
+                                   const std::string& name,
+                                   const NameValues& namevals,
+                                   const NameValues& objext_namevals,
+                                   unsigned long line)
 {
     if ((m_flags & (ARG_REQUIRED|ID_REQUIRED)) && namevals.empty())
         throw SyntaxError(String::compose(
