@@ -135,14 +135,23 @@ public:
         /// Get arch target modifier, 0 if none.
         const TargetModifier* get_targetmod() const { return m_targetmod; }
 
+        /// Set target modifier.
+        void set_targetmod(const TargetModifier* tmod) { m_targetmod = tmod; }
+
         /// Get operand size, in bits.  0 if not user specified.
         unsigned int get_size() const { return m_size; }
+
+        /// Set operand size, in bits.
+        void set_size(unsigned int size) { m_size = size; }
 
         /// Is the operand dereferenced, as in "*foo" in GAS?
         bool is_deref() const { return m_deref; }
 
         /// Is the operand strict, as in "strict foo" in NASM?
         bool is_strict() const { return m_strict; }
+
+        /// Set the strictness of the operand.
+        void make_strict(bool strict=true) { m_strict = strict; }
 
     private:
         /// Operand type.
