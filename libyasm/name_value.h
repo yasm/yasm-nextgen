@@ -37,6 +37,8 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "ptr_vector.h"
+
 
 namespace yasm {
 
@@ -147,7 +149,16 @@ private:
 std::ostream& operator<< (std::ostream& os, const NameValue& nv);
 
 /// Vector of name/values.
-class NameValues : public std::vector<NameValue> {};
+class NameValues : public stdx::ptr_vector<NameValue>
+{
+public:
+    NameValues();
+    NameValues(iterator first, iterator last);
+    ~NameValues();
+
+private:
+    stdx::ptr_vector_owner<NameValue> m_owner;
+};
 
 /// Print vector of name/values.  For debugging purposes.
 /// @param os       output stream

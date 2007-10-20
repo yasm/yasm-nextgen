@@ -154,6 +154,21 @@ operator<< (std::ostream& os, const NameValue& nv)
     return os;
 }
 
+NameValues::NameValues()
+    : m_owner(*this)
+{
+}
+
+NameValues::NameValues(iterator first, iterator last)
+    : stdx::ptr_vector<NameValue>(first, last),
+      m_owner(*this)
+{
+}
+
+NameValues::~NameValues()
+{
+}
+
 std::ostream&
 operator<< (std::ostream& os, const NameValues& namevals)
 {
