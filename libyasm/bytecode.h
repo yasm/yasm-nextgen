@@ -398,7 +398,8 @@ public:
     /// @return NULL if bc is not a reserve bytecode, otherwise an expression
     ///         for the number of items to reserve.
     /*@null@*/ const Expr* reserve_numitems
-        (/*@out@*/ unsigned int& itemsize) const;
+        (/*@out@*/ unsigned int& itemsize) const
+    { return m_contents->reserve_numitems(itemsize); }
 
     /// Get a #Insn structure from an instruction bytecode (if possible).
     /// @param bc           bytecode
