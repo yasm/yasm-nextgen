@@ -6,7 +6,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 
 INCLUDE(YasmMacros)
 
-OPTION(ENABLE_NLS "Enable message translations" ON)
+OPTION(ENABLE_NLS "Enable message translations" OFF)
 
 OPTION(YASM_BUILD_TESTS "Enable building of tests" ON)
 
@@ -112,7 +112,7 @@ ENDIF(regen_static_modules_h)
 
 ADD_SUBDIRECTORY(libyasm)
 
-#ADD_SUBDIRECTORY(frontends)
+ADD_SUBDIRECTORY(frontends)
 
 ADD_EXECUTABLE(test_expr
     test_expr.cpp
