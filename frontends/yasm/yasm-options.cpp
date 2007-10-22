@@ -198,12 +198,12 @@ help_msg(const char* msg, const char* tail, OptOption* options, size_t nopts)
         // split [-s <desc>], [--long <desc>] if it destroys columns
         if (shortopt_len && longopt_len && longopt_len > 22) {
             optbuf.resize(shortopt_len);
-            std::cout << "    " << std::setw(22) << optopt << "  "
+            std::cout << "    " << std::left << std::setw(22) << optopt << "  "
                       << gettext(options[i].description) << std::endl;
             std::cout << "     " << optbuf << std::endl;
         }
         else
-            std::cout << "    " << std::setw(22) << optbuf << "  "
+            std::cout << "    " << std::left << std::setw(22) << optbuf << "  "
                       << gettext(options[i].description) << std::endl;
     }
 
