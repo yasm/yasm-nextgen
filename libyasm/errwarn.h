@@ -287,7 +287,7 @@ public:
     ///                         error first.
     /// @param print_error      function called to print out errors
     /// @param print_warning    function called to print out warnings
-    void output_all(Linemap* lm, int warning_as_error,
+    void output_all(const Linemap& lm, int warning_as_error,
                     yasm_print_error_func print_error,
                     yasm_print_warning_func print_warning);
 
