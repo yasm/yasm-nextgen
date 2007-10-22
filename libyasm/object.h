@@ -52,15 +52,13 @@ class Symbol;
 class Object : private boost::noncopyable {
 public:
     /// Constructor.  A default section is created as the first
-    /// section.  An empty symbol table and line mapping are also
-    /// automatically created.
+    /// section, and an empty symbol table is created.
+    /// The object filename is initially unset (empty string).
     /// @param src_filename     source filename (e.g. "file.asm")
-    /// @param obj_filename     object filename (e.g. "file.o")
     /// @param arch             architecture
     /// @param objfmt_module    object format module
     /// @param dbgfmt_module    debug format module
     Object(const std::string& src_filename,
-           const std::string& obj_filename,
            std::auto_ptr<Arch> arch,
            const std::string& objfmt_keyword,
            const std::string& dbgfmt_keyword);
@@ -81,6 +79,14 @@ public:
     /// Change the source filename for an object.
     /// @param src_filename new source filename (e.g. "file.asm")
     void set_source_fn(const std::string& src_filename);
+
+    /// Change the object filename for an object.
+    /// @param obj_filename new object filename (e.g. "file.o")
+    void set_object_fn(const std::string& obj_filename);
+
+    /// Get the object filename for an object.
+    /// @return Object filename.
+    std::string get_object_fn() const { return m_obj_filename; }
 
     /// Optimize an object.  Takes the unoptimized object and optimizes it.
     /// If successful, the object is ready for output to an object file.
@@ -170,6 +176,11 @@ public:
 
     Arch* get_arch() { return m_arch.get(); }
     const Arch* get_arch() const { return m_arch.get(); }
+
+    /// Get the object format used for the object.
+    /// @return Object format.
+    ObjectFormat* get_objfmt() { return m_objfmt.get(); }
+    const ObjectFormat* get_objfmt() const { return m_objfmt.get(); }
 
 private:
     std::string m_src_filename;         ///< Source filename

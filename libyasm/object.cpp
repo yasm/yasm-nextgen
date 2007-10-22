@@ -76,15 +76,13 @@ public:
 };
 
 Object::Object(const std::string& src_filename,
-               const std::string& obj_filename,
                std::auto_ptr<Arch> arch,
                const std::string& objfmt_keyword,
                const std::string& dbgfmt_keyword)
     : m_src_filename(src_filename),
-      m_obj_filename(obj_filename),
       m_arch(arch.release()),
-      m_objfmt(ddj::genericFactory<ObjectFormat>::instance().create(objfmt_keyword).release()),
-      m_dbgfmt(ddj::genericFactory<DebugFormat>::instance().create(dbgfmt_keyword).release()),
+      m_objfmt(load_module<ObjectFormat>(objfmt_keyword).release()),
+      m_dbgfmt(load_module<DebugFormat>(dbgfmt_keyword).release()),
       m_cur_section(0),
       m_sections_owner(m_sections),
       m_symbols_owner(m_symbols),
@@ -129,6 +127,12 @@ void
 Object::set_source_fn(const std::string& src_filename)
 {
     m_src_filename = src_filename;
+}
+
+void
+Object::set_object_fn(const std::string& obj_filename)
+{
+    m_obj_filename = obj_filename;
 }
 
 Object::~Object()
