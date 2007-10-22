@@ -95,14 +95,16 @@ public:
     /// Classes derived from manufacturedObj call this function once
     /// per program to register the class ID key, and a pointer to
     /// the function that creates the class.
-    void regCreateFn(const classIDKey &, BASE_CREATE_FN);
+    void regCreateFn(const classIDKey&, BASE_CREATE_FN);
 
     /// Create a new class of the type specified by className.
-    std::auto_ptr<manufacturedObj> create(const classIDKey &className) const;
+    std::auto_ptr<manufacturedObj> create(const classIDKey& className) const;
 
-    /// This function is used by the driver program to get a list of
-    /// classes that are registered.
+    /// Return a list of classes that are registered.
     std::vector<classIDKey> getRegisteredClasses() const;
+
+    /// Return true if the specific class is registered.
+    bool isRegisteredClass(const classIDKey& className) const;
 };
 
 template <class ancestorType, class manufacturedObj, typename classIDKey=defaultIDKeyType>
@@ -179,6 +181,31 @@ genericFactory<manufacturedObj, classIDKey>::getRegisteredClasses() const
     return ret;
 }
 
+template <class manufacturedObj, typename classIDKey>
+bool
+genericFactory<manufacturedObj, classIDKey>::isRegisteredClass(const classIDKey& className) const
+{
+    return registry.find(className) != registry.end();
+}
+
 } // namespace ddj
+
+namespace yasm {
+
+template <typename T>
+inline std::auto_ptr<T>
+load_module(const std::string& keyword)
+{
+    return ddj::genericFactory<T>::instance().create(keyword);
+}
+
+template <typename T>
+inline bool
+is_module(const std::string& keyword)
+{
+    return ddj::genericFactory<T>::instance().isRegisteredClass(keyword);
+}
+
+} // namespace yasm
 
 #endif
