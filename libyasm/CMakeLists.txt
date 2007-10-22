@@ -20,6 +20,7 @@ ADD_LIBRARY(libyasm
     intnum.cpp
     linemap.cpp
     md5.cpp
+    module.cpp
     name_value.cpp
     nocase.cpp
     object.cpp

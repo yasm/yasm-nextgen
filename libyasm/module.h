@@ -69,8 +69,7 @@ public:
     virtual std::string get_type() const = 0;
 
     /// Add directive handlers.
-    virtual void add_directives(Directives& dirs, const std::string& parser)
-    {}
+    virtual void add_directives(Directives& dirs, const std::string& parser);
 };
 
 } // namespace yasm
