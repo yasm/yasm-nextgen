@@ -61,4 +61,15 @@ nocase_equal(const char* s2, const std::string& s1)
             std::equal(s1.begin(), s1.end(), s2, nocase_equal_char));
 }
 
+std::string
+lowercase(const std::string& in)
+{
+    std::string ret;
+    ret.reserve(in.length());
+    for (std::string::const_iterator i = in.begin(), end = in.end();
+         i != end; ++i)
+        ret += tolower(*i);
+    return ret;
+}
+
 } // namespace String

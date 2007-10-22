@@ -37,6 +37,8 @@ bool nocase_equal(const std::string& s1, const std::string& s2);
 bool nocase_equal(const std::string& s1, const char* s2);
 bool nocase_equal(const char* s1, const std::string& s2);
 
+std::string lowercase(const std::string& in);
+
 } // namespace String
 
 #endif
