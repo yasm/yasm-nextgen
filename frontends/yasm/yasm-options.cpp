@@ -71,7 +71,7 @@ parse_cmdline(int argc, const char** argv, OptOption* options, size_t nopts,
                         std::string cmd, param;
 
                         if (options[i].takes_param) {
-                            char* contents = std::strchr(&argv[0][2], '=');
+                            const char* contents = std::strchr(&argv[0][2], '=');
                             if (!contents) {
                                 print_error(String::compose(
                                     _("option `--%1' needs an argument!"),
