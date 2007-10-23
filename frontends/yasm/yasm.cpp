@@ -344,27 +344,22 @@ do_assemble(void)
 
     std::auto_ptr<yasm::Arch> arch_auto =
         yasm::load_module<yasm::Arch>(arch_keyword);
-
-    // Set up architecture using machine and parser.
-    if (machine_name.empty()) {
-#if 0
-        // If we're using x86 and the default objfmt bits is 64, default the
-        // machine to amd64.  When we get more arches with multiple machines,
-        // we should do this in a more modular fashion.
-        if (strcmp(cur_arch_module->keyword, "x86") == 0 &&
-            cur_objfmt_module->default_x86_mode_bits == 64)
-            machine_name = yasm__xstrdup("amd64");
-        else
-#endif
-            machine_name = arch_auto->get_machine();
+    if (arch_auto.get() == 0) {
+        print_error(String::compose(_("%1: could not load %2 `%3'"),
+                                    _("FATAL"), _("architecture"),
+                                    arch_keyword));
+        return EXIT_FAILURE;
     }
 
-    if (!arch_auto->set_machine(machine_name)) {
-        print_error(String::compose(
-            _("%1: `%2' is not a valid %3 for %4 `%5'"),
-            _("FATAL"), machine_name, _("machine"), _("architecture"),
-            arch_keyword));
-        return EXIT_FAILURE;
+    // Set up architecture using machine and parser.
+    if (!machine_name.empty()) {
+        if (!arch_auto->set_machine(machine_name)) {
+            print_error(String::compose(
+                _("%1: `%2' is not a valid %3 for %4 `%5'"),
+                _("FATAL"), machine_name, _("machine"), _("architecture"),
+                arch_keyword));
+            return EXIT_FAILURE;
+        }
     }
 
     if (!arch_auto->set_parser(parser_keyword)) {
@@ -377,6 +372,11 @@ do_assemble(void)
 
     std::auto_ptr<yasm::Parser> parser =
         yasm::load_module<yasm::Parser>(parser_keyword);
+    if (parser.get() == 0) {
+        print_error(String::compose(_("%1: could not load %2 `%3'"),
+                                    _("FATAL"), _("parser"), parser_keyword));
+        return EXIT_FAILURE;
+    }
 
     // If not already specified, default to the parser's default preproc.
     if (preproc_keyword.empty())
@@ -399,14 +399,21 @@ do_assemble(void)
 
     std::auto_ptr<yasm::Preprocessor> preproc =
         yasm::load_module<yasm::Preprocessor>(preproc_keyword);
+    if (preproc.get() == 0) {
+        print_error(String::compose(_("%1: could not load %2 `%3'"),
+                                    _("FATAL"), _("preprocessor"),
+                                    preproc_keyword));
+        return EXIT_FAILURE;
+    }
+
     preproc->init(in_file, in_filename, linemap, errwarns);
 
     apply_preproc_builtins(*preproc);
     apply_preproc_saved_options(*preproc);
 
     // Create object
-    yasm::Object object(in_filename, arch_auto, objfmt_keyword,
-                        dbgfmt_keyword);
+    yasm::Object object(in_filename, arch_auto, machine_name.empty(),
+                        objfmt_keyword, dbgfmt_keyword);
 
     // determine the object filename if not specified
     if (obj_filename.empty()) {
@@ -605,7 +612,14 @@ main(int argc, const char* argv[])
     if (dbgfmt_keyword.empty())
         dbgfmt_keyword = "null";
 
-    return do_assemble();
+    try {
+        return do_assemble();
+    } catch (yasm::InternalError& err) {
+        print_error(String::compose(_("INTERNAL ERROR: %1"), err.what()));
+    } catch (yasm::Error& err) {
+        print_error(String::compose(_("FATAL: %1"), err.what()));
+    }
+    return EXIT_FAILURE;
 }
 
 static bool

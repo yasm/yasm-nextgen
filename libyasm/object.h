@@ -56,10 +56,13 @@ public:
     /// The object filename is initially unset (empty string).
     /// @param src_filename     source filename (e.g. "file.asm")
     /// @param arch             architecture
+    /// @param machine_from_objfmt  have object format determine machine arch,
+    ///                             (normally the reverse applies)
     /// @param objfmt_module    object format module
     /// @param dbgfmt_module    debug format module
     Object(const std::string& src_filename,
            std::auto_ptr<Arch> arch,
+           bool machine_from_objfmt,
            const std::string& objfmt_keyword,
            const std::string& dbgfmt_keyword);
 
