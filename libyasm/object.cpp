@@ -752,7 +752,7 @@ Optimize::step_1b(Errwarns& errwarns)
         try {
             span->create_terms();
         } catch (Error& err) {
-            errwarns.propagate(span->m_bc.get_line());
+            errwarns.propagate(span->m_bc.get_line(), err);
             saw_error = true;
             terms_okay = false;
         }
