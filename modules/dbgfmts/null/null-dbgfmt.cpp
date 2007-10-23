@@ -1,12 +1,7 @@
-#ifndef YASM_UTIL_H
-#define YASM_UTIL_H
 //
-// YASM utility functions.
+// Null debugging format (creates NO debugging information)
 //
-// Includes standard headers and defines prototypes for replacement functions
-// if needed.
-//
-//  Copyright (C) 2001-2007  Peter Johnson
+//  Copyright (C) 2002-2007  Peter Johnson
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -29,45 +24,27 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include <util.h>
 
-#include <cassert>
+#include <libyasm/debug_format.h>
+#include <libyasm/factory.h>
 
-#ifdef lint
-# define _(String)      String
-#else
-# ifdef HAVE_LOCALE_H
-#  include <locale.h>
-# endif
 
-# ifdef ENABLE_NLS
-#  include <libintl.h>
-#  define _(String)     gettext(String)
-# else
-#  define gettext(Msgid)                            (Msgid)
-#  define dgettext(Domainname, Msgid)               (Msgid)
-#  define dcgettext(Domainname, Msgid, Category)    (Msgid)
-#  define textdomain(Domainname)                    while (0) /* nothing */
-#  define bindtextdomain(Domainname, Dirname)       while (0) /* nothing */
-#  define _(String)     (String)
-# endif
-#endif
+namespace yasm { namespace dbgfmt { namespace null {
 
-#ifdef gettext_noop
-# define N_(String)     gettext_noop(String)
-#else
-# define N_(String)     (String)
-#endif
+class NullDebug : public DebugFormat {
+public:
+    NullDebug() {}
+    ~NullDebug() {}
 
-#ifndef NELEMS
-/** Get the number of elements in an array.
- * \internal
- * \param array     array
- * \return Number of elements.
- */
-#define NELEMS(array)   (sizeof(array) / sizeof(array[0]))
-#endif
+    std::string get_name() const { return "No debugging info"; }
+    std::string get_keyword() const { return "null"; }
 
-#endif
+    bool set_object(Object* object) { return true; }
+    void generate(Linemap& linemap, Errwarns& errwarns) {}
+};
+
+ddj::registerInFactory<DebugFormat, NullDebug> registerNullDebug("null");
+bool static_ref = true;
+
+}}} // namespace yasm::dbgfmt::null

@@ -9,6 +9,8 @@
 // Source is http://burtleburtle.net/bob/c/lookupa.h
 // ---------------------------------------------------------------------------
 
+#include <cstddef>
+
 namespace phash {
 
 unsigned long lookup(const char* k, size_t length, unsigned long level);

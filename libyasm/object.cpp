@@ -77,6 +77,7 @@ public:
 
 Object::Object(const std::string& src_filename,
                std::auto_ptr<Arch> arch,
+               bool machine_from_objfmt,
                const std::string& objfmt_keyword,
                const std::string& dbgfmt_keyword)
     : m_src_filename(src_filename),
@@ -89,6 +90,25 @@ Object::Object(const std::string& src_filename,
       m_non_table_syms_owner(m_non_table_syms),
       m_impl(new Impl(false))
 {
+    if (m_objfmt.get() == 0)
+        throw Error(String::compose(N_("could not load object format `%1'"),
+                                       objfmt_keyword));
+
+    if (m_dbgfmt.get() == 0)
+        throw Error(String::compose(N_("could not load debug format `%1'"),
+                                       dbgfmt_keyword));
+
+    if (machine_from_objfmt) {
+        // If we're using x86 and the default objfmt bits is 64, default the
+        // machine to amd64.  When we get more arches with multiple machines,
+        // we should do this in a more modular fashion.
+        if (m_arch->get_keyword() == "x86" &&
+            m_objfmt->get_default_x86_mode_bits() == 64) {
+            if (!m_arch->set_machine("amd64"))
+                throw InternalError(N_("x86 architecture does not support amd64 machine"));
+        }
+    }
+
     // Initialize the object format
     if (!m_objfmt->set_object(this)) {
         throw Error(String::compose(
@@ -110,16 +130,14 @@ Object::Object(const std::string& src_filename,
     if (f == dbgfmt_keywords.end()) {
         throw Error(String::compose(
             N_("`%1' is not a valid debug format for object format `%2'"),
-            m_dbgfmt->get_keyword(),
-            m_objfmt->get_keyword()));
+            dbgfmt_keyword, objfmt_keyword));
     }
 
     // Initialize the debug format
     if (!m_dbgfmt->set_object(this)) {
         throw Error(String::compose(
             N_("debug format `%1' does not work with object format `%2'"),
-            m_dbgfmt->get_keyword(),
-            m_objfmt->get_keyword()));
+            dbgfmt_keyword, objfmt_keyword));
     }
 }
 

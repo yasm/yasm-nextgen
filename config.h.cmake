@@ -21,9 +21,6 @@
 /* Define to 1 if you have the <direct.h> header file. */
 #cmakedefine HAVE_DIRECT_H 1
 
-/* Define to 1 if you have the <strings.h> header file. */
-#cmakedefine HAVE_STRINGS_H 1
-
 /* Define to 1 if you have the `abort' function. */
 #cmakedefine HAVE_ABORT 1
 
