@@ -151,6 +151,9 @@ public:
     /// Add integer to the absolute portion of the value.
     void add_abs(std::auto_ptr<IntNum> delta);
 
+    /// Add expression to the absolute portion of the value.
+    void add_abs(std::auto_ptr<Expr> delta);
+
     /// Determine if the value is relative.
     /// @return True if value has relative portions, false if not.
     bool is_relative() const { return m_rel != 0; }

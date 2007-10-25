@@ -582,6 +582,15 @@ Value::add_abs(std::auto_ptr<IntNum> delta)
         m_abs = new Expr(m_abs, Op::ADD, delta, m_abs->get_line());
 }
 
+void
+Value::add_abs(std::auto_ptr<Expr> delta)
+{
+    if (!m_abs)
+        m_abs = delta.release();
+    else
+        m_abs = new Expr(m_abs, Op::ADD, delta, m_abs->get_line());
+}
+
 bool
 Value::output_basic(Bytes& bytes, size_t destsize, const Bytecode& bc,
                     int warn, const Arch& arch)
