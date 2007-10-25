@@ -132,7 +132,9 @@ public:
     const_bc_iterator bcs_end() const { return m_bcs.end(); }
 
     Bytecode& bcs_first() { return m_bcs.front(); }
+    const Bytecode& bcs_first() const { return m_bcs.front(); }
     Bytecode& bcs_last() { return m_bcs.back(); }
+    const Bytecode& bcs_last() const { return m_bcs.back(); }
 
     /// Get name of a section.
     /// @return Section name.
