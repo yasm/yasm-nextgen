@@ -148,11 +148,11 @@ public:
     typedef stdx::ptr_vector<Symbol>::iterator symbol_iterator;
     typedef stdx::ptr_vector<Symbol>::const_iterator const_symbol_iterator;
 
-    symbol_iterator begin() { return m_symbols.begin(); }
-    const_symbol_iterator begin() const { return m_symbols.begin(); }
+    symbol_iterator symbols_begin() { return m_symbols.begin(); }
+    const_symbol_iterator symbols_begin() const { return m_symbols.begin(); }
 
-    symbol_iterator end() { return m_symbols.end(); }
-    const_symbol_iterator end() const { return m_symbols.end(); }
+    symbol_iterator symbols_end() { return m_symbols.end(); }
+    const_symbol_iterator symbols_end() const { return m_symbols.end(); }
 
     /// Add an arbitrary symbol to the end of the symbol table.
     /// @note Does /not/ index the symbol by name.
