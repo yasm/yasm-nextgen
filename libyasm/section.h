@@ -147,7 +147,6 @@ public:
 
     /// Change starting address of a section.
     /// @param start    starting address
-    /// @param line     virtual line
     void set_start(std::auto_ptr<Expr> start);
 
     /// Get starting address of a section.
