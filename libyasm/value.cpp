@@ -24,6 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "value.h"
+
 #include "util.h"
 
 #include <iomanip>
@@ -39,7 +41,6 @@
 #include "object.h"
 #include "section.h"
 #include "symbol.h"
-#include "value.h"
 
 
 namespace yasm {

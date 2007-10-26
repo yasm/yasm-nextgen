@@ -24,6 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "file.h"
+
 #include <util.h>
 
 // Need either unistd.h or direct.h (on Windows) to prototype getcwd().
@@ -41,7 +43,6 @@
 #include <boost/lambda/lambda.hpp>
 
 #include "errwarn.h"
-#include "file.h"
 
 
 namespace yasm {

@@ -24,6 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "symbol.h"
+
 #include "util.h"
 
 #include <iomanip>
@@ -35,7 +37,6 @@
 #include "expr.h"
 #include "name_value.h"
 #include "section.h"
-#include "symbol.h"
 
 
 namespace {

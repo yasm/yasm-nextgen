@@ -24,6 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "bytecode.h"
+
 #include "util.h"
 
 #include <iomanip>
@@ -32,7 +34,6 @@
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
 
-#include "bytecode.h"
 #include "bytes.h"
 #include "errwarn.h"
 #include "expr.h"

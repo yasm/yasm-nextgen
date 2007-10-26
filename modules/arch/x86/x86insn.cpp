@@ -24,6 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "x86insn.h"
+
 #include <util.h>
 
 #include <algorithm>
@@ -43,7 +45,6 @@
 #include "x86common.h"
 #include "x86effaddr.h"
 #include "x86general.h"
-#include "x86insn.h"
 #include "x86jmp.h"
 #include "x86jmpfar.h"
 #include "x86opcode.h"

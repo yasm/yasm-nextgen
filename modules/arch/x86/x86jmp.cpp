@@ -24,6 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "x86jmp.h"
+
 #include "util.h"
 
 #include <iomanip>
@@ -33,8 +35,6 @@
 #include <libyasm/expr.h>
 #include <libyasm/intnum.h>
 #include <libyasm/symbol.h>
-
-#include "x86jmp.h"
 
 
 namespace yasm { namespace arch { namespace x86 {

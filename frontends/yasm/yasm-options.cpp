@@ -27,6 +27,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "yasm-options.h"
+
 #include <util.h>
 
 #include <cstring>
@@ -34,8 +36,6 @@
 #include <iostream>
 
 #include <libyasm/compose.h>
-
-#include "yasm-options.h"
 
 
 // Options Parser

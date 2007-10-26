@@ -26,6 +26,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "floatnum.h"
+
 #include "util.h"
 
 #include <iomanip>
@@ -33,7 +35,6 @@
 
 #include "bitvect.h"
 #include "errwarn.h"
-#include "floatnum.h"
 
 
 using BitVector::charptr;

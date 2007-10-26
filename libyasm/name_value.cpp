@@ -24,13 +24,14 @@
 /// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 /// POSSIBILITY OF SUCH DAMAGE.
 ///
+#include "name_value.h"
+
 #include "util.h"
 
 #include <ostream>
 
 #include "errwarn.h"
 #include "expr.h"
-#include "name_value.h"
 #include "object.h"
 #include "symbol.h"
 

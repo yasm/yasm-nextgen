@@ -24,6 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "expr.h"
+
 #include "util.h"
 
 #include <algorithm>
@@ -34,7 +36,6 @@
 
 //#include "arch.h"
 #include "errwarn.h"
-#include "expr.h"
 #include "floatnum.h"
 #include "intnum.h"
 #include "symbol.h"

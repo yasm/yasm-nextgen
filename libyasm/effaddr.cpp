@@ -24,12 +24,13 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "effaddr.h"
+
 #include "util.h"
 
 #include <iomanip>
 
 #include "arch.h"
-#include "effaddr.h"
 #include "errwarn.h"
 #include "expr.h"
 

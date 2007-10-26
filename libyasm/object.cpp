@@ -24,6 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "object.h"
+
 #include "util.h"
 
 #include <algorithm>
@@ -46,7 +48,6 @@
 #include "hamt.h"
 #include "interval_tree.h"
 #include "intnum.h"
-#include "object.h"
 #include "object_format.h"
 #include "section.h"
 #include "symbol.h"

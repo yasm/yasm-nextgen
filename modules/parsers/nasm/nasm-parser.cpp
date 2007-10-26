@@ -24,6 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "nasm-parser.h"
+
 #include <util.h>
 
 #include <boost/bind.hpp>
@@ -35,8 +37,6 @@
 #include <libyasm/object.h>
 #include <libyasm/section.h>
 #include <libyasm/nocase.h>
-
-#include "nasm-parser.h"
 
 
 namespace yasm { namespace parser { namespace nasm {

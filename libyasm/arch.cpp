@@ -24,9 +24,10 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "arch.h"
+
 #include "util.h"
 
-#include "arch.h"
 #include "bytecode.h"
 
 

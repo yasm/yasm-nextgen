@@ -24,6 +24,8 @@
 /// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 /// POSSIBILITY OF SUCH DAMAGE.
 ///
+#include "directive.h"
+
 #include "util.h"
 
 #include <map>
@@ -31,7 +33,6 @@
 #include <boost/bind.hpp>
 
 #include "compose.h"
-#include "directive.h"
 #include "errwarn.h"
 #include "expr.h"
 #include "intnum.h"

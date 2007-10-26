@@ -24,6 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "x86jmpfar.h"
+
 #include "util.h"
 
 #include <iomanip>
@@ -31,8 +33,6 @@
 #include <libyasm/bytes.h>
 #include <libyasm/errwarn.h>
 #include <libyasm/expr.h>
-
-#include "x86jmpfar.h"
 
 
 namespace yasm { namespace arch { namespace x86 {

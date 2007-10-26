@@ -1,4 +1,6 @@
 // Modified for use with yasm by Peter Johnson.
+#include "phash.h"
+
 #include "util.h"
 
 /*
@@ -8,7 +10,6 @@ Use this code however you wish.  Public Domain.  No warranty.
 Source is http://burtleburtle.net/bob/c/lookupa.c
 --------------------------------------------------------------------
 */
-#include "phash.h"
 
 
 namespace phash {

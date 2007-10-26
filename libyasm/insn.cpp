@@ -24,6 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "insn.h"
+
 #include "util.h"
 
 #include <algorithm>
@@ -37,7 +39,6 @@
 #include "effaddr.h"
 #include "errwarn.h"
 #include "expr.h"
-#include "insn.h"
 
 
 namespace yasm {

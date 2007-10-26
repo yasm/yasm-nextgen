@@ -24,6 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "section.h"
+
 #include "util.h"
 
 #include <iomanip>
@@ -32,7 +34,6 @@
 #include "bytecode.h"
 #include "expr.h"
 #include "intnum.h"
-#include "section.h"
 
 
 namespace {
