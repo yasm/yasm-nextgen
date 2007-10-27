@@ -29,6 +29,7 @@
 #include "util.h"
 
 #include <algorithm>
+#include <iterator>
 #include <ostream>
 
 #include <boost/bind.hpp>
@@ -206,7 +207,9 @@ Expr::operator= (const Expr& rhs)
     if (this != &rhs) {
         m_op = rhs.m_op;
         m_line = rhs.m_line;
-        std::transform(rhs.m_terms.begin(), rhs.m_terms.end(), m_terms.begin(),
+        m_terms.clear();
+        std::transform(rhs.m_terms.begin(), rhs.m_terms.end(),
+                       std::back_inserter(m_terms),
                        boost::mem_fn(&Term::clone));
     }
     return *this;
@@ -215,8 +218,8 @@ Expr::operator= (const Expr& rhs)
 Expr::Expr(const Expr& e)
     : m_op(e.m_op), m_line(e.m_line)
 {
-    std::transform(e.m_terms.begin(), e.m_terms.end(), m_terms.begin(),
-                   boost::mem_fn(&Term::clone));
+    std::transform(e.m_terms.begin(), e.m_terms.end(),
+                   std::back_inserter(m_terms), boost::mem_fn(&Term::clone));
 }
 
 Expr::Expr(unsigned long line, Op::Op op)
