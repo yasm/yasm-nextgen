@@ -144,7 +144,9 @@ Section::Section(const std::string& name,
 
     // Initialize bytecodes with one empty bytecode (acts as "prior" for
     // first real bytecode in section to avoid NULL checks.
-    m_bcs.push_back(EmptyBytecode::create(line));
+    Bytecode* empty = EmptyBytecode::create(line);
+    empty->m_section = this;
+    m_bcs.push_back(empty);
 }
 
 Section::~Section()
