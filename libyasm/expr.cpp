@@ -207,6 +207,8 @@ Expr::operator= (const Expr& rhs)
     if (this != &rhs) {
         m_op = rhs.m_op;
         m_line = rhs.m_line;
+        std::for_each(m_terms.begin(), m_terms.end(),
+                      boost::mem_fn(&Term::destroy));
         m_terms.clear();
         std::transform(rhs.m_terms.begin(), rhs.m_terms.end(),
                        std::back_inserter(m_terms),
