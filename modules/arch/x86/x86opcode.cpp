@@ -41,10 +41,11 @@ X86Opcode::put(std::ostream& os, int indent_level) const
     os << std::setw(indent_level) << "" << "Opcode: ";
 
     std::ios_base::fmtflags origff = os.flags();
-    os << std::hex << std::setfill('0') << std::setw(2)
-       << ((unsigned int)m_opcode[0]) << ' '
-       << ((unsigned int)m_opcode[1]) << ' '
-       << ((unsigned int)m_opcode[2]);
+    os << std::hex << std::setfill('0')
+       << std::setw(2) << ((unsigned int)m_opcode[0]) << ' '
+       << std::setw(2) << ((unsigned int)m_opcode[1]) << ' '
+       << std::setw(2) << ((unsigned int)m_opcode[2])
+       << std::setfill(' ');
     os.flags(origff);
 
     os << " OpLen=" << ((unsigned int)m_len);

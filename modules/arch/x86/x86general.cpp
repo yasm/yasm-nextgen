@@ -160,10 +160,11 @@ X86General::put(std::ostream& os, int indent_level) const
     os << std::setw(indent_level) << "";
     os << "SpPre=" << std::hex << std::setfill('0') << std::setw(2)
        << (unsigned int)m_special_prefix;
-    os << "REX=" << std::oct << std::setfill('0') << std::setw(3)
+    os << " REX=" << std::oct << std::setfill('0') << std::setw(3)
        << (unsigned int)m_rex;
+    os << std::setfill(' ');
     os.flags(origff);
-    os << "PostOp=" << (unsigned int)m_postop << '\n';
+    os << " PostOp=" << (unsigned int)m_postop << '\n';
 }
 
 void

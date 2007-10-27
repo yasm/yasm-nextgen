@@ -120,7 +120,7 @@ X86Common::put(std::ostream& os, int indent_level) const
 
     std::ios_base::fmtflags origff = os.flags();
     os << " LockRepPre=" << std::hex << std::setfill('0') << std::setw(2)
-       << ((unsigned int)m_lockrep_pre);
+       << ((unsigned int)m_lockrep_pre) << std::setfill(' ');
     os.flags(origff);
 
     os << " BITS=" << ((unsigned int)m_mode_bits);
