@@ -288,6 +288,10 @@ public:
     unsigned long get_line() const { return m_line; }
     Terms& get_terms() { return m_terms; }
 
+    /// Make expression an ident if it only has one term.
+    /// This should be used if deep magic has been performed via get_terms().
+    void make_ident() { if (m_terms.size() == 1) m_op = Op::IDENT; }
+
 private:
     /// Operation.
     Op::Op m_op;

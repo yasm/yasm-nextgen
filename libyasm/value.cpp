@@ -28,12 +28,14 @@
 
 #include "util.h"
 
+#include <bitset>
 #include <iomanip>
 #include <ostream>
 
 #include "arch.h"
 #include "bytes.h"
 #include "bytecode.h"
+#include "compose.h"
 #include "errwarn.h"
 #include "expr.h"
 #include "floatnum.h"
@@ -166,22 +168,7 @@ bool
 Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
                      bool ssym_not_ok)
 {
-#if 0
-    int i;
-    /*@dependent@*/ Section* sect;
-    /*@dependent@*/ /*@null@*/ Bytecode* precbc;
-
-    unsigned long shamt;    /* for SHR */
-
-    // Yes, this has a maximum upper bound on 32 terms, based on an
-    // "insane number of terms" (and ease of implementation) WAG.
-    // The right way to do this would be a stack-based alloca, but that's
-    // not ISO C.  We really don't want to malloc here as this function is
-    // hit a lot!
-    //
-    // This is a bitmask to keep things small, as this is a recursive
-    // routine and we don't want to eat up stack space.
-    unsigned long used;     /* for ADD */
+    Expr::Terms& terms = e->get_terms();
 
     // Thanks to this running after a simplify, we don't need to iterate
     // down through IDENTs or handle SUB.
@@ -193,80 +180,86 @@ Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
     //
     // Also, if we find a float anywhere, we don't allow mixing of a single
     // symrec with it.
-    switch (e->op) {
-        case YASM_EXPR_ADD:
+    switch (e->get_op()) {
+        case Op::ADD:
+        {
             // Okay for single symrec anywhere in expr.
             // Check for single symrec anywhere.
             // Handle symrec-symrec by checking for (-1*symrec)
             // and symrec term pairs (where both symrecs are in the same
             // segment).
-            if (e->numterms > 32)
-                yasm__fatal(N_("expression on line %d has too many add terms;"
-                               " internal limit of 32"), e->line);
+            if (terms.size() > 32)
+                throw Fatal(String::compose(
+                    N_("expression on line %1 has too many add terms; internal limit of 32"),
+                    e->get_line()));
 
-            used = 0;
+            // Yes, this has a maximum upper bound on 32 terms, based on an
+            // "insane number of terms" (and ease of implementation) WAG.
+            // The right way to do this would be a stack-based alloca, but
+            // that's not possible with bitset.  We really don't want to alloc
+            // here as this function is hit a lot!
+            //
+            // This is a bitmask to keep things small, as this is a recursive
+            // routine and we don't want to eat up stack space.
+            std::bitset<32> used;
 
-            for (i=0; i<e->numterms; i++) {
-                int j;
-                yasm_expr *sube;
-                yasm_intnum *intn;
-                yasm_symrec *sym;
-                /*@dependent@*/ yasm_section *sect2;
-                /*@dependent@*/ /*@null@*/ yasm_bytecode *precbc2;
+            for (Expr::Terms::iterator i=terms.begin(), end=terms.end();
+                 i != end; ++i) {
 
                 // First look for an (-1*symrec) term
-                if (e->terms[i].type != YASM_EXPR_EXPR)
+                Expr* sube = i->get_expr();
+                if (!sube)
                     continue;
-                sube = e->terms[i].data.expn;
 
-                if (sube->op != YASM_EXPR_MUL || sube->numterms != 2) {
+                Expr::Terms& sube_terms = sube->get_terms();
+                if (!sube->is_op(Op::MUL) || sube_terms.size() != 2) {
                     // recurse instead
-                    if (value_finalize_scan(value, sube, expr_precbc,
-                                            ssym_not_ok))
+                    if (finalize_scan(sube, expr_precbc, ssym_not_ok))
                         return true;
                     continue;
                 }
 
-                if (sube->terms[0].type == YASM_EXPR_INT &&
-                    sube->terms[1].type == YASM_EXPR_SYM) {
-                    intn = sube->terms[0].data.intn;
-                    sym = sube->terms[1].data.sym;
-                } else if (sube->terms[0].type == YASM_EXPR_SYM &&
-                           sube->terms[1].type == YASM_EXPR_INT) {
-                    sym = sube->terms[0].data.sym;
-                    intn = sube->terms[1].data.intn;
+                IntNum* intn;
+                Symbol* sym;
+                if ((intn = sube_terms[0].get_int()) &&
+                    (sym = sube_terms[1].get_sym())) {
+                    ;
+                } else if ((sym = sube_terms[0].get_sym()) &&
+                           (intn = sube_terms[1].get_int())) {
+                    ;
                 } else {
-                    if (value_finalize_scan(value, sube, expr_precbc,
-                                            ssym_not_ok))
+                    if (finalize_scan(sube, expr_precbc, ssym_not_ok))
                         return true;
                     continue;
                 }
 
-                if (!yasm_intnum_is_neg1(intn)) {
-                    if (value_finalize_scan(value, sube, expr_precbc,
-                                            ssym_not_ok))
+                if (!intn->is_neg1()) {
+                    if (finalize_scan(sube, expr_precbc, ssym_not_ok))
                         return true;
                     continue;
                 }
 
-                if (!yasm_symrec_get_label(sym, &precbc)) {
-                    if (value_finalize_scan(value, sube, expr_precbc,
-                                            ssym_not_ok))
+                Bytecode* precbc;
+                if (!sym->get_label(precbc)) {
+                    if (finalize_scan(sube, expr_precbc, ssym_not_ok))
                         return true;
                     continue;
                 }
-                sect2 = yasm_bc_get_section(precbc);
+                Section* sect = precbc->get_section();
 
                 // Now look for a unused symrec term in the same segment
-                for (j=0; j<e->numterms; j++) {
-                    if (e->terms[j].type == YASM_EXPR_SYM
-                        && yasm_symrec_get_label(e->terms[j].data.sym,
-                                                 &precbc2)
-                        && (sect = yasm_bc_get_section(precbc2))
+                Expr::Terms::iterator j=terms.begin();
+                for (; j != end; ++j) {
+                    Symbol* sym2;
+                    Bytecode* precbc2;
+                    Section* sect2;
+                    if ((sym2 = j->get_sym())
+                        && sym2->get_label(precbc2)
+                        && (sect2 = precbc2->get_section())
                         && sect == sect2
-                        && (used & (1<<j)) == 0) {
+                        && !used[j-terms.begin()]) {
                         // Mark as used
-                        used |= 1<<j;
+                        used[j-terms.begin()] = 1;
                         break;  // stop looking
                     }
                 }
@@ -284,39 +277,38 @@ Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
                 //
                 // Don't do this if we've already become curpos-relative.
                 // The unmatched symrec will be caught below.
-                if (j == e->numterms && !value->curpos_rel
-                    && (yasm_symrec_is_curpos(sym)
+                if (j == end && !m_curpos_rel
+                    && (sym->is_curpos()
                         || (expr_precbc
-                            && sect2 == yasm_bc_get_section(expr_precbc)))) {
-                    for (j=0; j<e->numterms; j++) {
-                        if (e->terms[j].type == YASM_EXPR_SYM
-                            && yasm_symrec_get_label(e->terms[j].data.sym,
-                                                     &precbc2)
-                            && (used & (1<<j)) == 0) {
+                            && sect == expr_precbc->get_section()))) {
+                    for (j=terms.begin(); j != end; ++j) {
+                        Symbol* sym2;
+                        Bytecode* precbc2;
+                        if ((sym2 = j->get_sym())
+                            && sym2->get_label(precbc2)
+                            && !used[j-terms.begin()]) {
                             // Mark as used
-                            used |= 1<<j;
+                            used[j-terms.begin()] = 1;
                             // Mark value as curpos-relative
-                            if (value->rel || ssym_not_ok)
+                            if (m_rel || ssym_not_ok)
                                 return true;
-                            value->rel = e->terms[j].data.sym;
-                            value->curpos_rel = 1;
-                            if (yasm_symrec_is_curpos(sym)) {
+                            m_rel = sym2;
+                            m_curpos_rel = true;
+                            if (sym->is_curpos()) {
                                 // Replace both symrec portions with 0
-                                yasm_expr_destroy(sube);
-                                e->terms[i].type = YASM_EXPR_INT;
-                                e->terms[i].data.intn =
-                                    yasm_intnum_create_uint(0);
-                                e->terms[j].type = YASM_EXPR_INT;
-                                e->terms[j].data.intn =
-                                    yasm_intnum_create_uint(0);
+                                i->destroy();
+                                *i = new IntNum(0);
+                                //j->destroy(); // unneeded as it's a symbol
+                                *j = new IntNum(0);
                             } else {
                                 // Replace positive portion with curpos
-                                yasm_object *object =
-                                    yasm_section_get_object(sect2);
-                                yasm_symtab *symtab = object->symtab;
-                                e->terms[j].data.sym =
-                                    yasm_symtab_define_curpos
-                                    (symtab, ".", expr_precbc, e->line);
+                                //j->destroy(); // unneeded as it's a symbol
+                                std::auto_ptr<Symbol> curpos(new Symbol("."));
+                                curpos->define_curpos(*expr_precbc,
+                                                      e->get_line());
+                                *j = curpos.get();
+                                Object* object = sect->get_object();
+                                object->add_non_table_symbol(curpos);
                             }
                             break;      // stop looking
                         }
@@ -324,40 +316,42 @@ Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
                 }
 
 
-                if (j == e->numterms)
+                if (j == end)
                     return true;    // We didn't find a match!
             }
 
             // Look for unmatched symrecs.  If we've already found one or
             // we don't WANT to find one, error out.
-            for (i=0; i<e->numterms; i++) {
-                if (e->terms[i].type == YASM_EXPR_SYM
-                    && (used & (1<<i)) == 0) {
-                    if (value->rel || ssym_not_ok)
+            for (Expr::Terms::iterator i=terms.begin(), end=terms.end();
+                 i != end; ++i) {
+                Symbol* sym;
+                if ((sym = i->get_sym()) && !used[i-terms.begin()]) {
+                    if (m_rel || ssym_not_ok)
                         return true;
-                    value->rel = e->terms[i].data.sym;
+                    m_rel = sym;
                     // and replace with 0
-                    e->terms[i].type = YASM_EXPR_INT;
-                    e->terms[i].data.intn = yasm_intnum_create_uint(0);
+                    //i->destroy(); // unneeded as it's a symbol
+                    *i = new IntNum(0);
                 }
             }
             break;
-        case YASM_EXPR_SHR:
+        }
+        case Op::SHR:
+        {
             // Okay for single symrec in LHS and constant on RHS.
             // Single symrecs are not okay on RHS.
             // If RHS is non-constant, don't allow single symrec on LHS.
             // XXX: should rshift be an expr instead??
 
             // Check for not allowed cases on RHS
-            switch (e->terms[1].type) {
-                case YASM_EXPR_REG:
-                case YASM_EXPR_FLOAT:
+            switch (terms[1].get_type()) {
+                case Expr::REG:
+                case Expr::FLOAT:
                     return true;        // not legal
-                case YASM_EXPR_SYM:
+                case Expr::SYM:
                     return true;
-                case YASM_EXPR_EXPR:
-                    if (value_finalize_scan(value, e->terms[1].data.expn,
-                                            expr_precbc, 1))
+                case Expr::EXPR:
+                    if (finalize_scan(terms[1].get_expr(), expr_precbc, true))
                         return true;
                     break;
                 default:
@@ -365,22 +359,22 @@ Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
             }
 
             // Check for single sym and allowed cases on LHS
-            switch (e->terms[0].type) {
-                //case YASM_EXPR_REG:   ????? should this be illegal ?????
-                case YASM_EXPR_FLOAT:
+            switch (terms[0].get_type()) {
+                //case Expr::REG:   ????? should this be illegal ?????
+                case Expr::FLOAT:
                     return true;        // not legal
-                case YASM_EXPR_SYM:
-                    if (value->rel || ssym_not_ok)
+                case Expr::SYM:
+                    if (m_rel || ssym_not_ok)
                         return true;
-                    value->rel = e->terms[0].data.sym;
+                    m_rel = terms[0].get_sym();
                     // and replace with 0
-                    e->terms[0].type = YASM_EXPR_INT;
-                    e->terms[0].data.intn = yasm_intnum_create_uint(0);
+                    //terms[0].destroy(); // unneeded as it's a symbol
+                    terms[0] = new IntNum(0);
                     break;
-                case YASM_EXPR_EXPR:
+                case Expr::EXPR:
                     // recurse
-                    if (value_finalize_scan(value, e->terms[0].data.expn,
-                                            expr_precbc, ssym_not_ok))
+                    if (finalize_scan(terms[0].get_expr(), expr_precbc,
+                                      ssym_not_ok))
                         return true;
                     break;
                 default:
@@ -388,96 +382,91 @@ Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
             }
 
             // Handle RHS
-            if (!value->rel)
+            if (!m_rel)
                 break;          // no handling needed
-            if (e->terms[1].type != YASM_EXPR_INT)
+            IntNum* intn = terms[1].get_int();
+            if (!intn)
                 return true;    // can't shift sym by non-constant integer
-            shamt = yasm_intnum_get_uint(e->terms[1].data.intn);
-            if ((shamt + value->rshift) > YASM_VALUE_RSHIFT_MAX)
+            unsigned long shamt = intn->get_uint();
+            if ((shamt + m_rshift) > RSHIFT_MAX)
                 return true;    // total shift would be too large
-            value->rshift += shamt;
+            m_rshift += shamt;
 
             // Just leave SHR in place
             break;
-        case YASM_EXPR_SEG:
+        }
+        case Op::SEG:
+        {
             // Okay for single symrec (can only be done once).
             // Not okay for anything BUT a single symrec as an immediate
             // child.
-            if (e->terms[0].type != YASM_EXPR_SYM)
+            Symbol* sym = terms[0].get_sym();
+            if (!sym)
                 return true;
 
-            if (value->seg_of)
+            if (m_seg_of)
                 return true;    // multiple SEG not legal
-            value->seg_of = 1;
+            m_seg_of = true;
 
-            if (value->rel || ssym_not_ok)
+            if (m_rel || ssym_not_ok)
                 return true;    // got a relative portion somewhere else?
-            value->rel = e->terms[0].data.sym;
+            m_rel = sym;
 
             // replace with ident'ed 0
-            e->op = YASM_EXPR_IDENT;
-            e->terms[0].type = YASM_EXPR_INT;
-            e->terms[0].data.intn = yasm_intnum_create_uint(0);
+            *e = Expr(new IntNum(0));
             break;
-        case YASM_EXPR_WRT:
+        }
+        case Op::WRT:
+        {
             // Okay for single symrec in LHS and either a register or single
             // symrec (as an immediate child) on RHS.
             // If a single symrec on RHS, can only be done once.
             // WRT reg is left in expr for arch to look at.
 
             // Handle RHS
-            switch (e->terms[1].type) {
-                case YASM_EXPR_SYM:
-                    if (value->wrt)
-                        return true;
-                    value->wrt = e->terms[1].data.sym;
-                    // and drop the WRT portion
-                    e->op = YASM_EXPR_IDENT;
-                    e->numterms = 1;
-                    break;
-                case YASM_EXPR_REG:
-                    break;  // ignore
-                default:
+            if (Symbol* sym = terms[1].get_sym()) {
+                if (m_wrt)
                     return true;
-            }
+                m_wrt = sym;
+                // and drop the WRT portion
+                //terms[1].destroy(); // unneeded as it's a symbol
+                terms.pop_back();
+                e->make_ident();
+            } else if (terms[1].is_type(Expr::REG))
+                ;  // ignore
+            else
+                return true;
 
             // Handle LHS
-            switch (e->terms[0].type) {
-                case YASM_EXPR_SYM:
-                    if (value->rel || ssym_not_ok)
-                        return true;
-                    value->rel = e->terms[0].data.sym;
-                    // and replace with 0
-                    e->terms[0].type = YASM_EXPR_INT;
-                    e->terms[0].data.intn = yasm_intnum_create_uint(0);
-                    break;
-                case YASM_EXPR_EXPR:
-                    // recurse
-                    return value_finalize_scan(value, e->terms[0].data.expn,
-                                               expr_precbc, ssym_not_ok);
-                default:
-                    break;  // ignore
+            if (Symbol* sym = terms[0].get_sym()) {
+                if (m_rel || ssym_not_ok)
+                    return true;
+                m_rel = sym;
+                // and replace with 0
+                //terms[0].destroy(); // unneeded as it's a symbol
+                terms[0] = new IntNum(0);
+            } else if (Expr* sube = terms[0].get_expr()) {
+                // recurse
+                return finalize_scan(sube, expr_precbc, ssym_not_ok);
             }
 
             break;
+        }
         default:
+        {
             // Single symrec not allowed anywhere
-            for (i=0; i<e->numterms; i++) {
-                switch (e->terms[i].type) {
-                    case YASM_EXPR_SYM:
-                        return true;
-                    case YASM_EXPR_EXPR:
-                        // recurse
-                        return value_finalize_scan(value,
-                                                   e->terms[i].data.expn,
-                                                   expr_precbc, 1);
-                    default:
-                        break;
+            for (Expr::Terms::iterator i=terms.begin(), end=terms.end();
+                 i != end; ++i) {
+                if (i->is_type(Expr::SYM))
+                    return true;
+                else if (Expr* sube = i->get_expr()) {
+                    // recurse
+                    return finalize_scan(sube, expr_precbc, true);
                 }
             }
             break;
+        }
     }
-#endif
 
     return false;
 }
