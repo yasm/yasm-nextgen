@@ -175,16 +175,14 @@ Insn::Operand::finalize()
             // Don't get over-ambitious here; some archs' memory expr
             // parser are sensitive to the presence of *1, etc, so don't
             // simplify reg*1 identities.
-#if 0
             try {
-                if (m_ea && m_ea->disp.get_abs())
-                    m_ea->disp.get_abs()->level_tree(true, true, false);
+                if (m_ea && m_ea->m_disp.get_abs())
+                    m_ea->m_disp.get_abs()->level_tree(true, true, false);
             } catch (Error& err) {
                 // Add a pointer to where it was used
                 err.m_message += " in memory expression";
                 throw;
             }
-#endif
             break;
         case IMM:
             try {
