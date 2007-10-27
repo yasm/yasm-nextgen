@@ -60,8 +60,6 @@ public:
     std::string get_keyword() const { return "bin"; }
     void add_directives(Directives& dirs, const std::string& parser);
 
-    bool set_object(Object* object);
-
     std::string get_extension() const { return ""; }
     unsigned int get_default_x86_mode_bits() const { return 16; }
 
@@ -80,8 +78,6 @@ private:
     void init_new_section(Section* sect, unsigned long line);
     void dir_org(Object& object, const NameValues& namevals,
                  const NameValues& objext_namevals, unsigned long line);
-
-    Object* m_object;
 };
 
 BinObject::BinObject()
@@ -90,13 +86,6 @@ BinObject::BinObject()
 
 BinObject::~BinObject()
 {
-}
-
-bool
-BinObject::set_object(Object* object)
-{
-    m_object = object;
-    return true;
 }
 
 // Aligns sect to either its specified alignment.  Uses prevsect and base to

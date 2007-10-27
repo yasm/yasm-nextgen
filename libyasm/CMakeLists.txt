@@ -24,6 +24,7 @@ ADD_LIBRARY(libyasm
     name_value.cpp
     nocase.cpp
     object.cpp
+    object_format.cpp
     phash.cpp
     section.cpp
     symbol.cpp

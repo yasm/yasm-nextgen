@@ -60,7 +60,8 @@ public:
     /// Set associated object.
     /// @param object       object
     /// @return False on error (object format cannot handle that object).
-    virtual bool set_object(Object* object) = 0;
+    /// @note The default implementation accepts all objects.
+    virtual bool set_object(Object* object);
 
     /// Get the default file extension (including the '.').
     /// @return File extension.
@@ -108,6 +109,8 @@ public:
          /*@null@*/ yasm_valparamhead *objext_valparams,
          unsigned long line) = 0;
 #endif
+protected:
+    Object* m_object;
 };
 
 } // namespace yasm
