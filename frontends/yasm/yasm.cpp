@@ -457,36 +457,43 @@ do_assemble(void)
 
     // Optimize
     object.optimize(errwarns);
-#if 0
-    check_errors(errwarns, linemap);
+
+    //object.put(std::cout, 0);
+
+    if (check_errors(errwarns, linemap))
+        return EXIT_FAILURE;
 
     // generate any debugging information
-    yasm_dbgfmt_generate(object, linemap, errwarns);
-    check_errors(errwarns, object, linemap);
+    //object.get_dbgfmt()->generate(linemap, errwarns);
+    if (check_errors(errwarns, linemap))
+        return EXIT_FAILURE;
 
     // open the object file for output (if not already opened by dbg objfmt)
-    if (!obj && strcmp(cur_objfmt_module->keyword, "dbg") != 0) {
-        obj = open_file(obj_filename, "wb");
-        if (!obj) {
-            print_error(String::compose(_("could not open file `%1'"), filename));
+    std::ofstream of;
+    if (objfmt_keyword != "dbg") {
+        of.open(obj_filename.c_str(), std::ios::binary);
+        if (!of) {
+            print_error(String::compose(_("could not open file `%1'"),
+                                        obj_filename));
             return EXIT_FAILURE;
         }
     }
 
     // Write the object file
-    yasm_objfmt_output(object, obj?obj:stderr,
-                       strcmp(cur_dbgfmt_module->keyword, "null"), errwarns);
+    object.get_objfmt()->output(of ? of : std::cerr,
+                                dbgfmt_keyword != "null", errwarns);
 
     // Close object file
-    if (obj)
-        fclose(obj);
+    if (of)
+        of.close();
 
     // If we had an error at this point, we also need to delete the output
     // object file (to make sure it's not left newer than the source).
-    if (yasm_errwarns_num_errors(errwarns, warning_error) > 0)
-        remove(obj_filename);
-    check_errors(errwarns, object, linemap);
-
+    if (errwarns.num_errors(warning_error) > 0)
+        remove(obj_filename.c_str());
+    if (check_errors(errwarns, linemap))
+        return EXIT_FAILURE;
+#if 0
     // Open and write the list file
     if (list_filename) {
         FILE *list = open_file(list_filename, "wt");
@@ -956,7 +963,6 @@ replace_extension(const std::string& orig, const std::string& ext,
                 ext, def));
             return def;
         }
-        --origext;  // back up to before '.'
     } else {
         // No extension: make sure the output extension is not empty
         // (again, we don't want to overwrite the source file).
