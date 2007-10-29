@@ -6,12 +6,6 @@
 /* */
 #undef HAVE_GETTEXT
 
-/* Define to 1 if you have the <inttypes.h> header file. */
-#cmakedefine HAVE_INTTYPES_H 1
-
-/* Define to 1 if you have the <stdint.h> header file. */
-#cmakedefine HAVE_STDINT_H 1
-
 /* Define to 1 if you have the <libgen.h> header file. */
 #cmakedefine HAVE_LIBGEN_H 1
 
@@ -21,35 +15,8 @@
 /* Define to 1 if you have the <direct.h> header file. */
 #cmakedefine HAVE_DIRECT_H 1
 
-/* Define to 1 if you have the `abort' function. */
-#cmakedefine HAVE_ABORT 1
-
-/* Define to 1 if you have the `toascii' function. */
-#cmakedefine HAVE_TOASCII 1
-
-/* Define to 1 if you have the `vsnprintf' function. */
-#cmakedefine HAVE_VSNPRINTF 1
-
 /* Define to 1 if you have the `getcwd' function. */
 #cmakedefine HAVE_GETCWD 1
-
-/* Define to 1 if you have the `strcasecmp' function. */
-#cmakedefine HAVE_STRCASECMP 1
-
-/* Define to 1 if you have the `strncasecmp' function. */
-#cmakedefine HAVE_STRNCASECMP 1
-
-/* Define to 1 if you have the `stricmp' function. */
-#cmakedefine HAVE_STRICMP 1
-
-/* Define to 1 if you have the `strcmpi' function. */
-#cmakedefine HAVE_STRCMPI 1
-
-/* Define to 1 if you have the `_stricmp' function. */
-#cmakedefine HAVE__STRICMP 1
-
-/* Define to 1 if you have the `_strcmpi' function. */
-#cmakedefine HAVE__STRCMPI 1
 
 /* Name of package */
 #define PACKAGE "yasm"
