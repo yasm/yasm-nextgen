@@ -14,8 +14,7 @@
  */
 //#define YASM_INTERVAL_TREE_CHECK_ASSUMPTIONS 1
 
-//#define YASM_INTERVAL_TREE_DEBUG_ASSERT 1
-
+#include <cassert>
 #include <climits>
 #include <cstdlib>
 #include <ostream>
@@ -114,7 +113,6 @@ protected:
 
     static void Verify(bool condition, const char* condstr, const char* file,
                        unsigned long line);
-    static void Assert(bool assertion, const char* error);
 #endif
 };
 
@@ -125,18 +123,6 @@ operator<< (std::ostream& os, const IntervalTree<U>& it)
     it.put(os, it.m_root->left);
     return os;
 }
-
-#ifdef DEBUG_ASSERT
-template <typename T>
-void
-IntervalTree<T>::Assert(bool assertion, const char* error)
-{
-    if (!assertion) {
-        std::cerr << "Assertion Failed: " << error << std::endl;
-        abort();
-    }
-}
-#endif
 
 // a function to find the maximum of two objects.
 template <typename T>
@@ -272,10 +258,9 @@ IntervalTree<T>::left_rotate(IntervalTreeNode<T>* x)
     y->maxHigh=Max(x->maxHigh, Max(y->right->maxHigh, y->high));
 #ifdef CHECK_INTERVAL_TREE_ASSUMPTIONS
     check_assumptions();
-#elif defined(DEBUG_ASSERT)
-    Assert(!m_nil->red,"nil not red in ITLeftRotate");
-    Assert((m_nil->maxHigh=LONG_MIN),
-           "nil->maxHigh != LONG_MIN in ITLeftRotate");
+#else
+    assert(!m_nil->red);
+    assert(m_nil->maxHigh==LONG_MIN);
 #endif
 }
 
@@ -337,10 +322,9 @@ IntervalTree<T>::right_rotate(IntervalTreeNode<T>* y)
     x->maxHigh=Max(x->left->maxHigh, Max(y->maxHigh, x->high));
 #ifdef CHECK_INTERVAL_TREE_ASSUMPTIONS
     check_assumptions();
-#elif defined(DEBUG_ASSERT)
-    Assert(!m_nil->red,"nil not red in ITRightRotate");
-    Assert((m_nil->maxHigh=LONG_MIN),
-           "nil->maxHigh != LONG_MIN in ITRightRotate");
+#else
+    assert(!m_nil->red);
+    assert(m_nil->maxHigh==LONG_MIN);
 #endif
 }
 
@@ -383,11 +367,8 @@ IntervalTree<T>::tree_insert_help(IntervalTreeNode<T>* z)
     else
         y->right=z;
 
-#if defined(DEBUG_ASSERT)
-    Assert(!m_nil->red,"nil not red in ITTreeInsertHelp");
-    Assert((m_nil->maxHigh=INT_MIN),
-           "nil->maxHigh != INT_MIN in ITTreeInsertHelp");
-#endif
+    assert(!m_nil->red);
+    assert(m_nil->maxHigh==INT_MIN);
 }
 
 
@@ -488,11 +469,10 @@ IntervalTree<T>::insert(long low, long high, T data)
 
 #ifdef CHECK_INTERVAL_TREE_ASSUMPTIONS
     check_assumptions();
-#elif defined(DEBUG_ASSERT)
-    Assert(!m_nil->red,"nil not red in ITTreeInsert");
-    Assert(!m_root->red,"root not red in ITTreeInsert");
-    Assert((m_nil->maxHigh=LONG_MIN),
-           "nil->maxHigh != LONG_MIN in ITTreeInsert");
+#else
+    assert(!m_nil->red);
+    assert(!m_root->red);
+    assert(m_nil->maxHigh==LONG_MIN);
 #endif
     return newNode;
 }
@@ -723,10 +703,9 @@ IntervalTree<T>::delete_fix_up(IntervalTreeNode<T>* x)
 
 #ifdef CHECK_INTERVAL_TREE_ASSUMPTIONS
     check_assumptions();
-#elif defined(DEBUG_ASSERT)
-    Assert(!m_nil->red,"nil not black in ITDeleteFixUp");
-    Assert((m_nil->maxHigh=LONG_MIN),
-           "nil->maxHigh != LONG_MIN in ITDeleteFixUp");
+#else
+    assert(!m_nil->red);
+    assert(m_nil->maxHigh==LONG_MIN);
 #endif
 }
 
@@ -769,10 +748,7 @@ IntervalTree<T>::delete_node(IntervalTreeNode<T>* z, long& low, long& high)
             y->parent->right=x;
     }
     if (y != z) { /* y should not be nil in this case */
-
-#ifdef DEBUG_ASSERT
-        Assert( (y!=m_nil),"y is nil in DeleteNode \n");
-#endif
+        assert(y!=m_nil);
         /* y is the node to splice out and x is its child */
   
         y->maxHigh = INT_MIN;
@@ -793,9 +769,9 @@ IntervalTree<T>::delete_node(IntervalTreeNode<T>* z, long& low, long& high)
         delete z;
 #ifdef CHECK_INTERVAL_TREE_ASSUMPTIONS
         check_assumptions();
-#elif defined(DEBUG_ASSERT)
-        Assert(!m_nil->red,"nil not black in ITDelete");
-        Assert((m_nil->maxHigh=LONG_MIN),"nil->maxHigh != LONG_MIN in ITDelete");
+#else
+        assert(!m_nil->red);
+        assert(m_nil->maxHigh==LONG_MIN);
 #endif
     } else {
         fix_up_max_high(x->parent);
@@ -804,9 +780,9 @@ IntervalTree<T>::delete_node(IntervalTreeNode<T>* z, long& low, long& high)
         delete y;
 #ifdef CHECK_INTERVAL_TREE_ASSUMPTIONS
         check_assumptions();
-#elif defined(DEBUG_ASSERT)
-        Assert(!m_nil->red,"nil not black in ITDelete");
-        Assert((m_nil->maxHigh=LONG_MIN),"nil->maxHigh != LONG_MIN in ITDelete");
+#else
+        assert(!m_nil->red);
+        assert(m_nil->maxHigh==LONG_MIN);
 #endif
     }
     return returnValue;
