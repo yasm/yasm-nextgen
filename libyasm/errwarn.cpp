@@ -99,7 +99,7 @@ conv_unprint(int ch)
     if (((ch & ~0x7F) != 0) /*!isascii(ch)*/ && !isprint(ch)) {
         unprint += 'M';
         unprint += '-';
-        ch &= toascii(ch);
+        ch &= 0x7F; /*toascii(ch)*/
     }
     if (iscntrl(ch)) {
         unprint += '^';
