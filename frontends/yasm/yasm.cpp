@@ -50,7 +50,7 @@
 
 #include "yasm-options.h"
 
-//#include "license.c"
+#include "frontends/yasm/license.cpp"
 
 #include "static_modules.h"
 
@@ -544,10 +544,8 @@ main(int argc, const char* argv[])
                 std::cout << version_msg[i] << '\n';
             return EXIT_SUCCESS;
         case SPECIAL_SHOW_LICENSE:
-#if 0
             for (std::size_t i=0; i<NELEMS(license_msg); i++)
                 std::cout << license_msg[i] << '\n';
-#endif
             return EXIT_SUCCESS;
         case SPECIAL_LISTED:
             // Printed out earlier
