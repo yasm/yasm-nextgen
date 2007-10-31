@@ -213,9 +213,7 @@ static OptOption options[] =
 
 // version message
 /*@observer@*/ static const char* version_msg[] = {
-#if 0
     PACKAGE_NAME " " PACKAGE_INTVER "." PACKAGE_BUILD,
-#endif
     "Compiled on " __DATE__ ".",
     "Copyright (c) 2001-2007 Peter Johnson and other Yasm developers.",
     "Run yasm --license for licensing overview and summary."

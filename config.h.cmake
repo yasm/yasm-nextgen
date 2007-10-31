@@ -25,13 +25,16 @@
 #define PACKAGE_BUGREPORT "bug-yasm@tortall.net"
 
 /* Define to internal version of this package. */
-#cmakedefine PACKAGE_INTVER
+#define PACKAGE_INTVER "@PACKAGE_INTVER@"
+
+/* Define to build version of this package. */
+#define PACKAGE_BUILD "@PACKAGE_BUILD@"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "yasm"
 
 /* Define to the full name and version of this package. */
-#cmakedefine PACKAGE_STRING
+#define PACKAGE_STRING "@PACKAGE_STRING@"
 
 /* Define to the version of this package. */
-#cmakedefine PACKAGE_VERSION
+#define PACKAGE_VERSION "@PACKAGE_VERSION@"
