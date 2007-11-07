@@ -44,13 +44,15 @@
 
 # ifdef ENABLE_NLS
 #  include <libintl.h>
+#  define yasm_gettext(Msgid)                       gettext(Msgid)
+#  define yasm_textdomain(Domainname)               textdomain(Domainname)
+#  define yasm_bindtextdomain(Domainname, Dirname)  \
+    bindtextdomain(Domainname, Dirname)
 #  define _(String)     gettext(String)
 # else
-#  define gettext(Msgid)                            (Msgid)
-#  define dgettext(Domainname, Msgid)               (Msgid)
-#  define dcgettext(Domainname, Msgid, Category)    (Msgid)
-#  define textdomain(Domainname)                    while (0) /* nothing */
-#  define bindtextdomain(Domainname, Dirname)       while (0) /* nothing */
+#  define yasm_gettext(Msgid)                       (Msgid)
+#  define yasm_textdomain(Domainname)               while (0) /* nothing */
+#  define yasm_bindtextdomain(Domainname, Dirname)  while (0) /* nothing */
 #  define _(String)     (String)
 # endif
 #endif

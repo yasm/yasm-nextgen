@@ -523,9 +523,9 @@ main(int argc, const char* argv[])
     setlocale(LC_MESSAGES, "");
 #endif
 #if defined(LOCALEDIR)
-    bindtextdomain(PACKAGE, LOCALEDIR);
+    yasm_bindtextdomain(PACKAGE, LOCALEDIR);
 #endif
-    textdomain(PACKAGE);
+    yasm_textdomain(PACKAGE);
 #endif
 
     // Initialize errwarn handling
@@ -1006,7 +1006,7 @@ print_error(const std::string& msg)
 static const char *
 handle_yasm_gettext(const char *msgid)
 {
-    return gettext(msgid);
+    return yasm_gettext(msgid);
 }
 
 static const char *fmt[2] = {
