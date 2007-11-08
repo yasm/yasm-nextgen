@@ -150,7 +150,7 @@ parse_cmdline(int argc, const char** argv, OptOption* options, size_t nopts,
 void
 help_msg(const char* msg, const char* tail, OptOption* options, size_t nopts)
 {
-    std::cout << gettext(msg);
+    std::cout << yasm_gettext(msg);
 
     for (size_t i = 0; i < nopts; i++) {
         std::string::size_type shortopt_len = 0;
@@ -199,13 +199,13 @@ help_msg(const char* msg, const char* tail, OptOption* options, size_t nopts)
         if (shortopt_len && longopt_len && longopt_len > 22) {
             optbuf.resize(shortopt_len);
             std::cout << "    " << std::left << std::setw(22) << optopt << "  "
-                      << gettext(options[i].description) << std::endl;
+                      << yasm_gettext(options[i].description) << std::endl;
             std::cout << "     " << optbuf << std::endl;
         }
         else
             std::cout << "    " << std::left << std::setw(22) << optbuf << "  "
-                      << gettext(options[i].description) << std::endl;
+                      << yasm_gettext(options[i].description) << std::endl;
     }
 
-    std::cout << gettext(tail);
+    std::cout << yasm_gettext(tail);
 }
