@@ -29,8 +29,8 @@
 
 #include <string>
 #include <iostream>
-#include <boost/ptr_container/ptr_vector.hpp>
 
+#include "ptr_vector.h"
 #include "hamt.h"
 
 static const int NUM_SYMS = 1000;
@@ -66,19 +66,28 @@ typedef yasm::hamt<std::string, Symbol, SymGetName> myhamt;
 class GenSym {
 public:
     GenSym(int nsym);
+    ~GenSym();
     void insert_check_new(myhamt& h);
 
-    typedef boost::ptr_vector<Symbol> Symbols;
+    typedef stdx::ptr_vector<Symbol> Symbols;
     Symbols syms;
+
+private:
+    stdx::ptr_vector_owner<Symbol> m_syms_owner;
 };
 
 GenSym::GenSym(int nsym)
+    : m_syms_owner(syms)
 {
     for (int i=0; i<nsym; i++) {
         std::ostringstream os;
         os << "sym" << i;
         syms.push_back(new Symbol(os.str()));
     }
+}
+
+GenSym::~GenSym()
+{
 }
 
 void
