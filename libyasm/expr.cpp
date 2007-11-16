@@ -399,17 +399,7 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
     Terms::iterator first_int_term;
     IntNum* intn = 0;
     bool do_level = false;
-
-    // First, bring up any IDENT'ed values.
-    Expr* e = this;
-    Expr* sube;
-    while (e->m_op == Op::IDENT && (sube = e->m_terms.front().get_expr()))
-        e = sube;
-    if (e != this) {
-        m_op = e->m_op;
-        m_terms.swap(e->m_terms);
-        delete e;
-    }
+    Expr* e;
 
     // If non-numeric expression, don't fold constants.
     if (m_op > Op::NONNUM)
