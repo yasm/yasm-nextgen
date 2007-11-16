@@ -32,9 +32,6 @@
 #include <iterator>
 #include <ostream>
 
-#include <boost/bind.hpp>
-#include <boost/ref.hpp>
-
 //#include "arch.h"
 #include "errwarn.h"
 #include "floatnum.h"
@@ -208,11 +205,11 @@ Expr::operator= (const Expr& rhs)
         m_op = rhs.m_op;
         m_line = rhs.m_line;
         std::for_each(m_terms.begin(), m_terms.end(),
-                      boost::mem_fn(&Term::destroy));
+                      MEMFN::mem_fn(&Term::destroy));
         m_terms.clear();
         std::transform(rhs.m_terms.begin(), rhs.m_terms.end(),
                        std::back_inserter(m_terms),
-                       boost::mem_fn(&Term::clone));
+                       MEMFN::mem_fn(&Term::clone));
     }
     return *this;
 }
@@ -221,7 +218,8 @@ Expr::Expr(const Expr& e)
     : m_op(e.m_op), m_line(e.m_line)
 {
     std::transform(e.m_terms.begin(), e.m_terms.end(),
-                   std::back_inserter(m_terms), boost::mem_fn(&Term::clone));
+                   std::back_inserter(m_terms),
+                   MEMFN::mem_fn(&Term::clone));
 }
 
 Expr::Expr(unsigned long line, Op::Op op)
@@ -232,7 +230,7 @@ Expr::Expr(unsigned long line, Op::Op op)
 Expr::~Expr()
 {
     std::for_each(m_terms.begin(), m_terms.end(),
-                  boost::mem_fn(&Term::destroy));
+                  MEMFN::mem_fn(&Term::destroy));
 }
 
 /// Negate just a single ExprTerm by building a -1*ei subexpression.
@@ -356,7 +354,7 @@ Expr::simplify_identity(IntNum* &intn, bool simplify_reg_mul)
              (!is_first && can_destroy_int_right(m_op, intn)))) {
             // delete int term
             m_terms.erase(std::find_if(m_terms.begin(), m_terms.end(),
-                                       boost::bind(&Term::is_type, _1, INT)));
+                                       BIND::bind(&Term::is_type, _1, INT)));
             delete intn;
             intn = 0;
         }
@@ -366,14 +364,14 @@ Expr::simplify_identity(IntNum* &intn, bool simplify_reg_mul)
             Terms terms;
             Terms::iterator i;
             i = std::find_if(m_terms.begin(), m_terms.end(),
-                             boost::bind(&Term::is_type, _1, INT));
+                             BIND::bind(&Term::is_type, _1, INT));
             terms.push_back(*i);
             i->release(); // don't delete it now we've moved it
             m_terms.swap(terms);
             intn = m_terms.front().get_int();
             // delete old terms
             std::for_each(terms.begin(), terms.end(),
-                          boost::mem_fn(&Term::destroy));
+                          MEMFN::mem_fn(&Term::destroy));
         }
     }
 
@@ -451,7 +449,7 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
         // Erase folded integer terms; we already deleted their contents above
         Terms::iterator erasefrom =
             std::remove_if(first_int_term+1, m_terms.end(),
-                           boost::bind(&Term::is_type, _1, INT));
+                           BIND::bind(&Term::is_type, _1, INT));
         m_terms.erase(erasefrom, m_terms.end());
 
         // Simplify identities and make IDENT if possible.
@@ -539,7 +537,7 @@ void
 Expr::level(bool fold_const,
             bool simplify_ident,
             bool simplify_reg_mul,
-            boost::function<void (Expr*)> xform_extra)
+            FUNCTION::function<void (Expr*)> xform_extra)
 {
     xform_neg();
 
@@ -577,7 +575,7 @@ void
 Expr::level_tree(bool fold_const,
                  bool simplify_ident,
                  bool simplify_reg_mul,
-                 boost::function<void (Expr*)> xform_extra)
+                 FUNCTION::function<void (Expr*)> xform_extra)
 {
     std::vector<const Expr*> seen;
     expand_equ(seen);
@@ -630,7 +628,7 @@ Expr::clone(int except) const
 bool
 Expr::contains(int type) const
 {
-    return traverse_leaves_in(boost::bind(&Term::is_type, _1, type));
+    return traverse_leaves_in(BIND::bind(&Term::is_type, _1, type));
 }
 
 bool
@@ -650,12 +648,12 @@ Expr::substitute_cb(const Terms& subst_terms)
 bool
 Expr::substitute(const Terms& subst_terms)
 {
-    return traverse_post(boost::bind(&Expr::substitute_cb, _1,
-                                     boost::ref(subst_terms)));
+    return traverse_post(BIND::bind(&Expr::substitute_cb, _1,
+                                    REF::ref(subst_terms)));
 }
 
 bool
-Expr::traverse_post(boost::function<bool (Expr*)> func)
+Expr::traverse_post(FUNCTION::function<bool (Expr*)> func)
 {
     for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i) {
         Expr* e = i->get_expr();
@@ -666,7 +664,7 @@ Expr::traverse_post(boost::function<bool (Expr*)> func)
 }
 
 bool
-Expr::traverse_leaves_in(boost::function<bool (const Term&)> func) const
+Expr::traverse_leaves_in(FUNCTION::function<bool (const Term&)> func) const
 {
     for (Terms::const_iterator i=m_terms.begin(), end=m_terms.end();
          i != end; ++i) {

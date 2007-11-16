@@ -30,9 +30,8 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 #include <string>
-
-#include <boost/bind.hpp>
 
 #include <libyasm/compose.h>
 #include <libyasm/effaddr.h>
@@ -779,15 +778,15 @@ X86Insn::match_info(const X86InsnInfo& info, const unsigned int* size_lookup,
     if (m_parser == X86Arch::PARSER_GAS && !(gas_flags & GAS_NO_REV))
         return std::equal(m_operands.rbegin(), m_operands.rend(),
                           &insn_operands[info.operands_index],
-                          boost::bind(&X86Insn::match_operand, this, _1, _2,
-                                      boost::ref(m_operands.back()),
-                                      size_lookup, bypass));
+                          BIND::bind(&X86Insn::match_operand, this, _1, _2,
+                                     REF::ref(m_operands.back()),
+                                     size_lookup, bypass));
     else
         return std::equal(m_operands.begin(), m_operands.end(),
                           &insn_operands[info.operands_index],
-                          boost::bind(&X86Insn::match_operand, this, _1, _2,
-                                      boost::ref(m_operands.front()),
-                                      size_lookup, bypass));
+                          BIND::bind(&X86Insn::match_operand, this, _1, _2,
+                                     REF::ref(m_operands.front()),
+                                     size_lookup, bypass));
 #else
     const Operand& last = m_operands.back();
     const X86InfoOperand* first2 = &insn_operands[info.operands_index];
@@ -824,8 +823,8 @@ X86Insn::find_match(const unsigned int* size_lookup, int bypass) const
     // First match wins.
     const X86InsnInfo* info = 
         std::find_if(&m_group[0], &m_group[m_num_info],
-                     boost::bind(&X86Insn::match_info, this, _1,
-                                 size_lookup, bypass));
+                     BIND::bind(&X86Insn::match_info, this, _1, size_lookup,
+                                bypass));
     if (info == &m_group[m_num_info])
         return 0;
     return info;
@@ -1254,7 +1253,7 @@ BuildGeneral::apply_segregs(const Insn::SegRegs& segregs, Bytecode& prev_bc)
         x86_ea->init(m_spare, m_drex,
                      (m_info.drex_oc0 & NEED_DREX_MASK) != 0, &prev_bc);
         std::for_each(segregs.begin(), segregs.end(),
-                      boost::bind(&X86EffAddr::set_segreg, x86_ea, _1));
+                      BIND::bind(&X86EffAddr::set_segreg, x86_ea, _1));
     } else if (segregs.size() > 0 && m_special_prefix == 0) {
         if (segregs.size() > 1)
             warn_set(WARN_GENERAL,

@@ -30,8 +30,6 @@
 
 #include <map>
 
-#include <boost/bind.hpp>
-
 #include "compose.h"
 #include "errwarn.h"
 #include "expr.h"
@@ -88,7 +86,8 @@ Directives::operator[] (const std::string& name) const
     if (p == m_impl->m_dirs.end())
         throw Error(String::compose(N_("unrecognized directive `%1'"), name));
 
-    return boost::bind<void>(p->second, _1, name, _2, _3, _4);
+    return BIND::bind(&Impl::Dir::operator(), REF::ref(p->second),
+                      _1, name, _2, _3, _4);
 }
 
 void
@@ -117,7 +116,7 @@ public:
     Impl() {}
     ~Impl() {}
 
-    typedef std::map<std::string, boost::function<void (const NameValue&)> >
+    typedef std::map<std::string, FUNCTION::function<void (const NameValue&)> >
         HelperMap;
     HelperMap m_value_helpers, m_novalue_helpers;
 };
@@ -133,7 +132,7 @@ DirHelpers::~DirHelpers()
 
 void
 DirHelpers::add(const std::string& name, bool needsvalue,
-                boost::function<void (const NameValue&)> helper)
+                FUNCTION::function<void (const NameValue&)> helper)
 {
     if (needsvalue)
         m_impl->m_value_helpers.insert(std::make_pair(name, helper));
@@ -145,7 +144,7 @@ bool
 DirHelpers::operator()
     (NameValues::const_iterator nv_first,
      NameValues::const_iterator nv_last,
-     boost::function<bool (const NameValue&)> helper_nameval)
+     FUNCTION::function<bool (const NameValue&)> helper_nameval)
 {
     bool anymatched = false;
 

@@ -35,7 +35,7 @@
 /// @endlicense
 ///
 #include <cctype>
-#include <cstdlib>
+#include <cstring>
 #include <vector>
 
 #include <boost/noncopyable.hpp>

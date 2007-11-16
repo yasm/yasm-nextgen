@@ -29,6 +29,7 @@
 #include "util.h"
 
 #include <cctype>
+#include <cstring>
 #include <limits.h>
 
 #include "bitvect.h"
@@ -633,7 +634,7 @@ IntNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize,
         // TODO
         throw InternalError(N_("big endian not implemented"));
     } else
-        memcpy(ptr, buf, destsize);
+        std::memcpy(ptr, buf, destsize);
     free(buf);
 }
 

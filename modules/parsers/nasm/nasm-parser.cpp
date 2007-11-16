@@ -28,8 +28,6 @@
 
 #include <util.h>
 
-#include <boost/bind.hpp>
-
 #include <libyasm/arch.h>
 #include <libyasm/directive.h>
 #include <libyasm/expr.h>
@@ -112,13 +110,13 @@ NasmParser::add_directives(Directives& dirs, const std::string& parser)
     if (!String::nocase_equal(parser, "nasm"))
         return;
     dirs.add("absolute",
-             boost::bind(&NasmParser::dir_absolute, this, _1, _2, _3, _4),
+             BIND::bind(&NasmParser::dir_absolute, this, _1, _2, _3, _4),
              Directives::ARG_REQUIRED);
     dirs.add("align",
-             boost::bind(&NasmParser::dir_align, this, _1, _2, _3, _4),
+             BIND::bind(&NasmParser::dir_align, this, _1, _2, _3, _4),
              Directives::ARG_REQUIRED);
     dirs.add("default",
-             boost::bind(&NasmParser::dir_default, this, _1, _2, _3, _4));
+             BIND::bind(&NasmParser::dir_default, this, _1, _2, _3, _4));
 }
 
 ddj::registerInFactory<Parser, NasmParser> registerRawPreproc("nasm");

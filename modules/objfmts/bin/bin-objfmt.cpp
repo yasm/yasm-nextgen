@@ -26,8 +26,6 @@
 //
 #include <util.h>
 
-#include <boost/bind.hpp>
-
 #include <libyasm/bytecode.h>
 #include <libyasm/bytes.h>
 #include <libyasm/directive.h>
@@ -245,8 +243,8 @@ Output::output_bytecode(Bytecode& bc)
 {
     unsigned long gap = 0;
     m_bytes.clear();
-    bc.to_bytes(m_bytes, gap, boost::bind(&Output::output_value, this, _1, _2,
-                                          _3, _4, _5, _6));
+    bc.to_bytes(m_bytes, gap, BIND::bind(&Output::output_value, this,
+                                         _1, _2, _3, _4, _5, _6));
 
     // Don't bother doing anything else if size ended up being 0.
     if (m_bytes.empty() && gap == 0)
@@ -488,7 +486,7 @@ BinObject::add_directives(Directives& dirs, const std::string& parser)
     if (!String::nocase_equal(parser, "nasm"))
         return;
     dirs.add("org",
-             boost::bind(&BinObject::dir_org, this, _1, _2, _3, _4),
+             BIND::bind(&BinObject::dir_org, this, _1, _2, _3, _4),
              Directives::ARG_REQUIRED);
 }
 

@@ -27,6 +27,7 @@
 #include <util.h>
 
 #include <cctype>
+#include <cstring>
 
 #include <libyasm/compose.h>
 #include <libyasm/errwarn.h>

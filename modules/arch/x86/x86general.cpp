@@ -29,6 +29,7 @@
 #include "util.h"
 
 #include <iomanip>
+#include <ostream>
 
 #include <libyasm/bytes.h>
 #include <libyasm/errwarn.h>

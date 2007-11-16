@@ -29,8 +29,7 @@
 #include <util.h>
 
 #include <iomanip>
-
-#include <boost/bind.hpp>
+#include <ostream>
 
 #include <libyasm/errwarn.h>
 #include <libyasm/expr.h>
@@ -439,7 +438,7 @@ x86_expr_checkea_distcheck_reg(Expr* e, unsigned int bits)
 static int
 x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
     bool* pcrel, unsigned int bits,
-    boost::function <int* (Expr::Term& term, int& regnum)> get_reg)
+    FUNCTION::function <int* (Expr::Term& term, int& regnum)> get_reg)
 {
     int* reg;
     int regnum;
@@ -729,7 +728,7 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
                 // default to bits setting.
                 if (!m_disp.has_abs() ||
                     !m_disp.get_abs()->traverse_leaves_in(
-                        boost::bind(&getregsize, _1, addrsize)))
+                        BIND::bind(&getregsize, _1, addrsize)))
                     *addrsize = bits;
                 // TODO: Add optional warning here if switched address size
                 // from bits setting just by register use.. eg [ax] in
@@ -783,8 +782,8 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
             bool pcrel = false;
             switch (x86_expr_checkea_getregusage
                     (m_disp.get_abs(), &indexreg, &pcrel, bits,
-                     boost::bind(&get_reg3264, _1, _2, reg3264mult, bits,
-                                 *addrsize))) {
+                     BIND::bind(&get_reg3264, _1, _2, reg3264mult, bits,
+                                *addrsize))) {
                 case 1:
                     throw ValueError(N_("invalid effective address"));
                 case 2:
@@ -1004,8 +1003,8 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
             bool pcrel = false;
             switch (x86_expr_checkea_getregusage
                     (m_disp.get_abs(), (int *)NULL, &pcrel, bits,
-                     boost::bind(&x86_expr_checkea_get_reg16, _1, _2, bx, si,
-                                 di, bp))) {
+                     BIND::bind(&x86_expr_checkea_get_reg16, _1, _2, bx, si,
+                                di, bp))) {
                 case 1:
                     throw ValueError(N_("invalid effective address"));
                 case 2:

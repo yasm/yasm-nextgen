@@ -33,7 +33,7 @@
 #include <string>
 #include <vector>
 
-#include <boost/function.hpp>
+#include "functional.h"
 
 
 namespace yasm {
@@ -56,7 +56,7 @@ public:
     /// @return True if this was the first time this function was called on
     ///         this scanner state, false otherwise.
     bool fill_helper(unsigned char* &cursor,
-        boost::function<size_t (unsigned char* buf, size_t max)> input_func);
+        FUNCTION::function<size_t (unsigned char* buf, size_t max)> input_func);
 
     unsigned char* bot;     ///< Bottom of scan buffer
     unsigned char* tok;     ///< Start of token

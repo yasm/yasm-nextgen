@@ -20,7 +20,7 @@
 #include <ostream>
 #include <vector>
 
-#include <boost/function.hpp>
+#include "functional.h"
 
 
 namespace yasm {
@@ -66,7 +66,7 @@ public:
     IntervalTreeNode<T>* get_predecessor(IntervalTreeNode<T>*) const;
     IntervalTreeNode<T>* get_successor(IntervalTreeNode<T>*) const;
     void enumerate(long low, long high,
-                   boost::function<void (IntervalTreeNode<T>*)> callback);
+                   FUNCTION::function<void (IntervalTreeNode<T>*)> callback);
 #ifdef YASM_INTERVAL_TREE_CHECK_ASSUMPTIONS
     void check_assumptions() const;
 #endif
@@ -830,7 +830,7 @@ IntervalTree<T>::delete_node(IntervalTreeNode<T>* z, long& low, long& high)
 template <typename T>
 void
 IntervalTree<T>::enumerate(long low, long high,
-    boost::function<void (IntervalTreeNode<T>*)> callback)
+    FUNCTION::function<void (IntervalTreeNode<T>*)> callback)
 {
     std::vector<RecursionNode> recursionNodeStack(1);
 

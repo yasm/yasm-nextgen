@@ -31,9 +31,6 @@
 #include <iomanip>
 #include <ostream>
 
-#include <boost/bind.hpp>
-#include <boost/ref.hpp>
-
 #include "bytes.h"
 #include "errwarn.h"
 #include "expr.h"
@@ -369,9 +366,9 @@ calc_bc_dist(const Bytecode& precbc1, const Bytecode& precbc2, IntNum& dist)
 // quite small.  Also works for precbc-precbc (or symrec-precbc,
 // precbc-symrec).
 static void
-xform_bc_dist_base(Expr* e, boost::function<bool (Expr::Term& term,
-                                                  Bytecode& precbc,
-                                                  Bytecode& precbc2)> func)
+xform_bc_dist_base(Expr* e, FUNCTION::function<bool (Expr::Term& term,
+                                                     Bytecode& precbc,
+                                                     Bytecode& precbc2)> func)
 {
     // Handle symrec-symrec in ADD exprs by looking for (-1*symrec) and
     // symrec term pairs (where both symrecs are in the same segment).
@@ -437,7 +434,7 @@ xform_bc_dist_base(Expr* e, boost::function<bool (Expr::Term& term,
     // Clean up any deleted (NONE) terms
     Expr::Terms::iterator erasefrom =
         std::remove_if(terms.begin(), terms.end(),
-                       boost::bind(&Expr::Term::is_type, _1, Expr::NONE));
+                       BIND::bind(&Expr::Term::is_type, _1, Expr::NONE));
     terms.erase(erasefrom, terms.end());
     Expr::Terms(terms).swap(terms);   // trim capacity
 }
@@ -462,9 +459,9 @@ xform_calc_bc_dist(Expr* e)
 static inline bool
 subst_bc_dist_cb(Expr::Term& term, Bytecode& precbc, Bytecode& precbc2,
                  unsigned int& subst,
-                 boost::function<void (unsigned int subst,
-                                       Bytecode& precbc,
-                                       Bytecode& precbc2)> func)
+                 FUNCTION::function<void (unsigned int subst,
+                                          Bytecode& precbc,
+                                          Bytecode& precbc2)> func)
 {
     // Call higher-level callback
     func(subst, precbc, precbc2);
@@ -476,23 +473,22 @@ subst_bc_dist_cb(Expr::Term& term, Bytecode& precbc, Bytecode& precbc2,
 
 static inline void
 xform_subst_bc_dist(Expr* e, unsigned int& subst,
-                    boost::function<void (unsigned int subst,
-                                          Bytecode& precbc,
-                                          Bytecode& precbc2)> func)
-{
-    xform_bc_dist_base(e, boost::bind(&subst_bc_dist_cb, _1, _2, _3,
-                                      boost::ref(subst), func));
-}
-
-int
-subst_bc_dist(Expr* e, boost::function<void (unsigned int subst,
+                    FUNCTION::function<void (unsigned int subst,
                                              Bytecode& precbc,
                                              Bytecode& precbc2)> func)
 {
+    xform_bc_dist_base(e, BIND::bind(&subst_bc_dist_cb, _1, _2, _3,
+                                     REF::ref(subst), func));
+}
+
+int
+subst_bc_dist(Expr* e, FUNCTION::function<void (unsigned int subst,
+                                                Bytecode& precbc,
+                                                Bytecode& precbc2)> func)
+{
     unsigned int subst = 0;
     e->level_tree(true, true, true,
-                  boost::bind(&xform_subst_bc_dist, _1, boost::ref(subst),
-                              func));
+                  BIND::bind(&xform_subst_bc_dist, _1, REF::ref(subst), func));
     return subst;
 }
 

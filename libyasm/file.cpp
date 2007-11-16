@@ -37,6 +37,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -59,7 +60,8 @@ Scanner::~Scanner()
 
 bool
 Scanner::fill_helper(unsigned char* &cursor,
-                     boost::function<size_t (unsigned char*, size_t)> input_func)
+                     FUNCTION::function<size_t (unsigned char*, size_t)>
+                        input_func)
 {
     static const size_t BSIZE = 8192;       // Fill block size
     bool first = false;
@@ -69,7 +71,7 @@ Scanner::fill_helper(unsigned char* &cursor,
 
     size_t cnt = tok - bot;
     if (cnt > 0) {
-        memmove(bot, tok, (size_t)(lim - tok));
+        std::memmove(bot, tok, (size_t)(lim - tok));
         tok = bot;
         ptr -= cnt;
         cursor -= cnt;
@@ -79,7 +81,7 @@ Scanner::fill_helper(unsigned char* &cursor,
         first = true;
     if ((size_t)(top - lim) < BSIZE) {
         unsigned char *buf = new unsigned char[(size_t)(lim - bot) + BSIZE];
-        memcpy(buf, tok, (size_t)(lim - tok));
+        std::memcpy(buf, tok, (size_t)(lim - tok));
         tok = buf;
         ptr = &buf[ptr - bot];
         cursor = &buf[cursor - bot];

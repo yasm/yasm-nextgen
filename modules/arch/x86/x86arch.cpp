@@ -27,8 +27,6 @@
 
 #include "util.h"
 
-#include <boost/bind.hpp>
-
 #include <libyasm/bytes.h>
 #include <libyasm/compose.h>
 #include <libyasm/directive.h>
@@ -400,20 +398,22 @@ void
 X86Arch::add_directives(Directives& dirs, const std::string& parser)
 {
     if (String::nocase_equal(parser, "nasm")) {
-        dirs.add("cpu", boost::bind(&X86Arch::dir_cpu, this, _1, _2, _3, _4),
+        dirs.add("cpu",
+                 BIND::bind(&X86Arch::dir_cpu, this, _1, _2, _3, _4),
                  Directives::ARG_REQUIRED);
-        dirs.add("bits", boost::bind(&X86Arch::dir_bits, this, _1, _2, _3, _4),
+        dirs.add("bits",
+                 BIND::bind(&X86Arch::dir_bits, this, _1, _2, _3, _4),
                  Directives::ARG_REQUIRED);
     } else if (String::nocase_equal(parser, "gas") ||
                String::nocase_equal(parser, "gnu")) {
         dirs.add(".code16",
-                 boost::bind(&X86Arch::dir_code16, this, _1, _2, _3, _4),
+                 BIND::bind(&X86Arch::dir_code16, this, _1, _2, _3, _4),
                  Directives::ANY);
         dirs.add(".code32",
-                 boost::bind(&X86Arch::dir_code32, this, _1, _2, _3, _4),
+                 BIND::bind(&X86Arch::dir_code32, this, _1, _2, _3, _4),
                  Directives::ANY);
         dirs.add(".code64",
-                 boost::bind(&X86Arch::dir_code64, this, _1, _2, _3, _4),
+                 BIND::bind(&X86Arch::dir_code64, this, _1, _2, _3, _4),
                  Directives::ANY);
     }
 }

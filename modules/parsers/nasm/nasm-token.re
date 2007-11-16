@@ -28,8 +28,6 @@
 //
 #include <util.h>
 
-#include <boost/bind.hpp>
-
 #include <libyasm/arch.h>
 #include <libyasm/compose.h>
 #include <libyasm/errwarn.h>
@@ -66,7 +64,7 @@ NasmParser::fill_input(unsigned char* buf, size_t max)
 void
 NasmParser::fill(YYCTYPE* &cursor)
 {
-    if (m_s.fill_helper(cursor, boost::bind(&NasmParser::fill_input, this, _1, _2))
+    if (m_s.fill_helper(cursor, BIND::bind(&NasmParser::fill_input, this, _1, _2))
         && m_save_input) {
         m_save_last ^= 1;
         YYCTYPE* saveline = m_save_line[m_save_last];

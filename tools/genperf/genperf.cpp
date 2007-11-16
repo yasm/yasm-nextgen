@@ -264,7 +264,7 @@ perfect_gen(std::ostream& out,
         out << final.line[i];
     out << "  if (rsl >= " << nkeys << ") return NULL;\n";
     out << "  ret = &pd[rsl];\n";
-    out << "  if (strcmp(key, ret->name) != 0) return NULL;\n";
+    out << "  if (std::strcmp(key, ret->name) != 0) return NULL;\n";
     out << "  return ret;\n";
     out << "}\n";
     out << "\n";

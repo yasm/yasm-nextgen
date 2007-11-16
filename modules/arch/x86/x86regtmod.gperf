@@ -29,6 +29,7 @@
 #include <util.h>
 
 #include <cctype>
+#include <cstring>
 
 #include <boost/preprocessor/repetition/enum.hpp>
 #include <boost/preprocessor/repetition/repeat.hpp>

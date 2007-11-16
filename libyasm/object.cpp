@@ -34,8 +34,6 @@
 #include <ostream>
 #include <vector>
 
-#include <boost/bind.hpp>
-#include <boost/ref.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include "arch.h"
@@ -182,7 +180,7 @@ void
 Object::finalize(Errwarns& errwarns)
 {
     std::for_each(m_sections.begin(), m_sections.end(),
-                  boost::bind(&Section::finalize, _1, boost::ref(errwarns)));
+                  BIND::bind(&Section::finalize, _1, REF::ref(errwarns)));
 }
 
 void
@@ -197,7 +195,7 @@ Object::find_section(const std::string& name)
 {
     section_iterator i =
         std::find_if(m_sections.begin(), m_sections.end(),
-                     boost::bind(&Section::is_name, _1, boost::ref(name)));
+                     BIND::bind(&Section::is_name, _1, REF::ref(name)));
     if (i == m_sections.end())
         return 0;
     return &(*i);
@@ -537,7 +535,7 @@ Span::create_terms()
     // Split out sym-sym terms in absolute portion of dependent value
     if (m_depval.has_abs()) {
         subst_bc_dist(m_depval.get_abs(),
-                      boost::bind(&Span::add_term, this, _1, _2, _3));
+                      BIND::bind(&Span::add_term, this, _1, _2, _3));
         if (m_span_terms.size() > 0) {
             for (Terms::iterator i=m_span_terms.begin(),
                  end=m_span_terms.end(); i != end; ++i) {
@@ -854,8 +852,8 @@ Optimize::step_1e(Errwarns& errwarns)
         try {
             m_itree.enumerate((long)span->m_bc.get_index(),
                               (long)span->m_bc.get_index(),
-                              boost::bind(&Optimize::check_cycle, this, _1,
-                                          boost::ref(*span)));
+                              BIND::bind(&Optimize::check_cycle, this, _1,
+                                         REF::ref(*span)));
         } catch (Error& err) {
             errwarns.propagate(span->m_bc.get_line(), err);
             saw_error = true;
@@ -922,8 +920,8 @@ Optimize::step_2(Errwarns& errwarns)
         // Iterate over all spans dependent across the bc just expanded
         m_itree.enumerate((long)span->m_bc.get_index(),
                           (long)span->m_bc.get_index(),
-                          boost::bind(&Optimize::term_expand, this, _1,
-                                      len_diff));
+                          BIND::bind(&Optimize::term_expand, this, _1,
+                                     len_diff));
 
         // Iterate over offset-setters that follow the bc just expanded.
         // Stop iteration if:
@@ -950,13 +948,14 @@ Optimize::step_2(Errwarns& errwarns)
                              neg_thres_temp, pos_thres_temp, errwarns);
             os->m_thres = (long)pos_thres_temp;
 
-            offset_diff = os->m_new_val + os->m_bc->get_len() - old_next_offset;
+            offset_diff =
+                os->m_new_val + os->m_bc->get_len() - old_next_offset;
             len_diff = os->m_bc->get_len() - orig_len;
             if (len_diff != 0)
                 m_itree.enumerate((long)os->m_bc->get_index(),
                                   (long)os->m_bc->get_index(),
-                                  boost::bind(&Optimize::term_expand, this, _1,
-                                              len_diff));
+                                  BIND::bind(&Optimize::term_expand, this, _1,
+                                             len_diff));
 
             os->m_cur_val = os->m_new_val;
             ++os;
@@ -999,8 +998,8 @@ Object::optimize(Errwarns& errwarns)
             bc->set_index(bc_index++);
             bc->set_offset(offset);
 
-            bc->calc_len(boost::bind(&Optimize::add_span, &opt,
-                                     _1, _2, _3, _4, _5),
+            bc->calc_len(BIND::bind(&Optimize::add_span, &opt,
+                                    _1, _2, _3, _4, _5),
                          errwarns);
             if (errwarns.num_errors() > 0)
                 saw_error = true;

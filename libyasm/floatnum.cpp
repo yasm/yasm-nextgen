@@ -30,6 +30,7 @@
 
 #include "util.h"
 
+#include <cstring>
 #include <iomanip>
 #include <ostream>
 
@@ -588,7 +589,7 @@ FloatNum::get_common(/*@out@*/ unsigned char* ptr,
             N_("Byte length of BitVector does not match bit length"));
 
     // copy to output
-    memcpy(ptr, buf, byte_size*sizeof(unsigned char));
+    std::memcpy(ptr, buf, byte_size*sizeof(unsigned char));
 
     // free allocated resources
     BitVector::Dispose(buf);

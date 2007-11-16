@@ -32,9 +32,6 @@
 #include <iomanip>
 #include <ostream>
 
-#include <boost/bind.hpp>
-#include <boost/ref.hpp>
-
 #include "arch.h"
 #include "effaddr.h"
 #include "errwarn.h"
@@ -162,9 +159,8 @@ void
 Insn::put(std::ostream& os, int indent_level) const
 {
     std::for_each(m_operands.begin(), m_operands.end(),
-                  boost::bind(&Insn::Operand::put, _1,
-                              boost::ref(os),
-                              indent_level));
+                  BIND::bind(&Insn::Operand::put, _1, REF::ref(os),
+                             indent_level));
 }
 
 void
@@ -230,13 +226,13 @@ Insn::Insn(const Insn& rhs)
 {
     m_operands.reserve(rhs.m_operands.size());
     std::transform(rhs.m_operands.begin(), rhs.m_operands.end(),
-                   m_operands.begin(), boost::mem_fn(&Operand::clone));
+                   m_operands.begin(), MEMFN::mem_fn(&Operand::clone));
 }
 
 Insn::~Insn()
 {
     std::for_each(m_operands.begin(), m_operands.end(),
-                  boost::mem_fn(&Operand::destroy));
+                  MEMFN::mem_fn(&Operand::destroy));
 }
 
 void
@@ -244,7 +240,7 @@ Insn::finalize(Bytecode& bc, Bytecode& prev_bc)
 {
     // Simplify the operands' expressions.
     std::for_each(m_operands.begin(), m_operands.end(),
-                  boost::mem_fn(&Operand::finalize));
+                  MEMFN::mem_fn(&Operand::finalize));
     do_finalize(bc, prev_bc);
 }
 

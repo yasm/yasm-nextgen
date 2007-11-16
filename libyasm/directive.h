@@ -31,7 +31,7 @@
 ///
 #include <string>
 
-#include <boost/function.hpp>
+#include "functional.h"
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
@@ -49,10 +49,10 @@ class Object;
 /// @param namevals         name/values
 /// @param objext_namevals  object format-specific name/values
 /// @param line             virtual line (from Linemap)
-typedef boost::function<void (Object& object,
-                              const NameValues& namevals,
-                              const NameValues& objext_namevals,
-                              unsigned long line)>
+typedef FUNCTION::function<void (Object& object,
+                                 const NameValues& namevals,
+                                 const NameValues& objext_namevals,
+                                 unsigned long line)>
     Directive;
 
 class Directives {
@@ -99,7 +99,7 @@ public:
     /// @param helper       Helper function
     void add(const std::string& name,
              bool needsvalue,
-             boost::function<void (const NameValue&)> helper);
+             FUNCTION::function<void (const NameValue&)> helper);
 
     /// Help parse a list of directive name/values.  Matches name=value
     /// (or just value) against each of the added helper functions.
@@ -112,7 +112,7 @@ public:
     ///         catch-all callback), false if no match.
     bool operator() (NameValues::const_iterator nv_first,
                      NameValues::const_iterator nv_last,
-                     boost::function<bool (const NameValue&)> helper_nameval);
+                     FUNCTION::function<bool (const NameValue&)> helper_nameval);
 
 private:
     /// Pimpl for class internals.

@@ -33,7 +33,7 @@
 #include <memory>
 #include <vector>
 
-#include <boost/function.hpp>
+#include "functional.h"
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
@@ -71,8 +71,8 @@ class Value;
 ///                     negative for signed integer warnings,
 ///                     positive for unsigned integer warnings
 typedef
-    boost::function<void (Value& value, Bytes& bytes, unsigned int destsize,
-                          unsigned long offset, Bytecode& bc, int warn)>
+    FUNCTION::function<void (Value& value, Bytes& bytes, unsigned int destsize,
+                             unsigned long offset, Bytecode& bc, int warn)>
     OutputValueFunc;
 
 /// Convert a symbol reference to its byte representation.  Usually
@@ -90,9 +90,9 @@ typedef
 ///                     negative for signed integer warnings,
 ///                     positive for unsigned integer warnings
 typedef
-    boost::function<void (Symbol* sym, Bytecode& bc, Bytes& bytes,
-                          unsigned int destsize, unsigned int valsize,
-                          int warn)>
+    FUNCTION::function<void (Symbol* sym, Bytecode& bc, Bytes& bytes,
+                             unsigned int destsize, unsigned int valsize,
+                             int warn)>
     OutputRelocFunc;
 
 /// A data value.
@@ -130,8 +130,8 @@ public:
     /// @param neg_thres    negative threshold for long/short decision
     /// @param pos_thres    positive threshold for long/short decision
     typedef
-        boost::function<void (Bytecode& bc, int id, const Value& value,
-                              long neg_thres, long pos_thres)>
+        FUNCTION::function<void (Bytecode& bc, int id, const Value& value,
+                                 long neg_thres, long pos_thres)>
         AddSpanFunc;
 
     typedef std::auto_ptr<Bytecode> Ptr;
@@ -566,9 +566,9 @@ void xform_calc_bc_dist(Expr* e);
 /// @param callback     callback function: given subst index for bytecode
 ///                     pair, bytecode pair (bc2-bc1)
 /// @return Number of transformations made.
-int subst_bc_dist(Expr* e, boost::function<void (unsigned int subst,
-                                                 Bytecode& precbc,
-                                                 Bytecode& precbc2)> func);
+int subst_bc_dist(Expr* e, FUNCTION::function<void (unsigned int subst,
+                                                    Bytecode& precbc,
+                                                    Bytecode& precbc2)> func);
 
 } // namespace yasm
 

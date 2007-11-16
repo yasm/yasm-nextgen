@@ -30,7 +30,7 @@
 /// @endlicense
 ///
 #include <cstddef>
-#include <cstdlib>
+#include <cstring>
 #include <istream>
 #include <memory>
 #include <streambuf>
