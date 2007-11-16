@@ -234,6 +234,7 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
                         // downward.
                         Node* newnode =
                             static_cast<Node*>(m_pools[1]->malloc());
+                        node->bitmap_key = key2;    // update in case we rehashed
                         newnode->bitmap_key = 1<<keypart;
                         newnode->value = 0;  // subtrie indication
                         newnode->sub_trie(0) = node;
