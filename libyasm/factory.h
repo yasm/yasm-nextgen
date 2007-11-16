@@ -65,21 +65,19 @@ namespace ddj {
 
 // Implemented using the Singleton pattern
 
-typedef std::string defaultIDKeyType;
-
-template <class manufacturedObj, typename classIDKey=defaultIDKeyType>
+template <class manufacturedObj>
 class genericFactory
 {
     /// A BASE_CREATE_FN is a function that takes no parameters
     /// and returns an auto_ptr to a manufactuedObj.  Note that
     /// we use no parameters, but you could add them
     /// easily enough to allow overloaded ctors.
-    typedef std::auto_ptr<manufacturedObj> (*BASE_CREATE_FN)();
+    typedef void* (*BASE_CREATE_FN)();
 
     /// FN_REGISTRY is the registry of all the BASE_CREATE_FN
     /// pointers registered.  Functions are registered using the
     /// regCreateFn member function (see below).
-    typedef std::map<classIDKey, BASE_CREATE_FN> FN_REGISTRY;
+    typedef std::map<std::string, BASE_CREATE_FN> FN_REGISTRY;
     FN_REGISTRY registry;
 
     // Singleton implementation - private ctor & copying, with
@@ -95,27 +93,29 @@ public:
     /// Classes derived from manufacturedObj call this function once
     /// per program to register the class ID key, and a pointer to
     /// the function that creates the class.
-    void regCreateFn(const classIDKey&, BASE_CREATE_FN);
+    void regCreateFn(const std::string&, BASE_CREATE_FN);
 
     /// Create a new class of the type specified by className.
-    std::auto_ptr<manufacturedObj> create(const classIDKey& className) const;
+    std::auto_ptr<manufacturedObj> create(const std::string& className) const;
 
     /// Return a list of classes that are registered.
-    std::vector<classIDKey> getRegisteredClasses() const;
+    std::vector<std::string> getRegisteredClasses() const;
 
     /// Return true if the specific class is registered.
-    bool isRegisteredClass(const classIDKey& className) const;
+    bool isRegisteredClass(const std::string& className) const;
 };
 
-template <class ancestorType, class manufacturedObj, typename classIDKey=defaultIDKeyType>
+template <class ancestorType, class manufacturedObj>
 class registerInFactory
 {
-public:
-    static std::auto_ptr<ancestorType> createInstance()
+private:
+    static void* createInstance()
     {
-        return std::auto_ptr<ancestorType>(new manufacturedObj);
+        return new manufacturedObj;
     }
-    registerInFactory(const classIDKey &id)
+
+public:
+    registerInFactory(const std::string& id)
     {
         genericFactory<ancestorType>::instance().regCreateFn(id, createInstance);
     }
@@ -125,14 +125,14 @@ public:
 // Implementation details.  If no comments appear, then I presume
 // the implementation is self-explanatory.
 
-template <class manufacturedObj, typename classIDKey>
-genericFactory<manufacturedObj, classIDKey>::genericFactory()
+template <class manufacturedObj>
+genericFactory<manufacturedObj>::genericFactory()
 {
 }
 
-template <class manufacturedObj, typename classIDKey>
-genericFactory<manufacturedObj, classIDKey> &
-genericFactory<manufacturedObj, classIDKey>::instance()
+template <class manufacturedObj>
+genericFactory<manufacturedObj> &
+genericFactory<manufacturedObj>::instance()
 {
     static genericFactory theInstance;
     return theInstance;
@@ -142,33 +142,34 @@ genericFactory<manufacturedObj, classIDKey>::instance()
 // with the function used to create the class.  The return value is a dummy
 // value, which is used to allow static initialization of the registry.
 // See example implementations in base.cc and derived.cc
-template <class manufacturedObj, typename classIDKey>
+template <class manufacturedObj>
 void
-genericFactory<manufacturedObj, classIDKey>::regCreateFn(const classIDKey &clName, BASE_CREATE_FN func)
+genericFactory<manufacturedObj>::regCreateFn(const std::string& clName,
+                                             BASE_CREATE_FN func)
 {
     registry[clName]=func;
 }
 
 // The create function simple looks up the class ID, and if it's in the list,
 // the statement "(*i).second();" calls the function.
-template <class manufacturedObj, typename classIDKey>
+template <class manufacturedObj>
 std::auto_ptr<manufacturedObj>
-genericFactory<manufacturedObj, classIDKey>::create(const classIDKey &className) const
+genericFactory<manufacturedObj>::create(const std::string& className) const
 {
     std::auto_ptr<manufacturedObj> ret(0);
     typename FN_REGISTRY::const_iterator regEntry=registry.find(className);
     if (regEntry != registry.end()) {
-        ret = (*regEntry).second();
+        ret.reset(static_cast<manufacturedObj*>((*regEntry).second()));
     }
     return ret;
 }
 
 // Just return a list of the classIDKeys used.
-template <class manufacturedObj, typename classIDKey>
-std::vector<classIDKey>
-genericFactory<manufacturedObj, classIDKey>::getRegisteredClasses() const
+template <class manufacturedObj>
+std::vector<std::string>
+genericFactory<manufacturedObj>::getRegisteredClasses() const
 {
-    std::vector<classIDKey> ret(registry.size());
+    std::vector<std::string> ret(registry.size());
     int count;
     typename FN_REGISTRY::const_iterator regEntry;
     for (count=0,
@@ -181,9 +182,9 @@ genericFactory<manufacturedObj, classIDKey>::getRegisteredClasses() const
     return ret;
 }
 
-template <class manufacturedObj, typename classIDKey>
+template <class manufacturedObj>
 bool
-genericFactory<manufacturedObj, classIDKey>::isRegisteredClass(const classIDKey& className) const
+genericFactory<manufacturedObj>::isRegisteredClass(const std::string& className) const
 {
     return registry.find(className) != registry.end();
 }
