@@ -799,6 +799,89 @@ IntNum::size_leb128(bool sign) const
     return ::yasm::size_leb128(val, sign);
 }
 
+IntNum&
+IntNum::operator++()
+{
+    if (m_type == INTNUM_L && m_val.l < LONG_MAX)
+        ++m_val.l;
+    else {
+        if (m_type == INTNUM_L) {
+            m_val.bv = to_bv(BitVector::Create(BITVECT_NATIVE_SIZE, false));
+            m_type = INTNUM_BV;
+        }
+        BitVector::increment(m_val.bv);
+    }
+    return *this;
+}
+
+IntNum&
+IntNum::operator--()
+{
+    if (m_type == INTNUM_L && m_val.l > LONG_MIN)
+        --m_val.l;
+    else {
+        if (m_type == INTNUM_L) {
+            m_val.bv = to_bv(BitVector::Create(BITVECT_NATIVE_SIZE, false));
+            m_type = INTNUM_BV;
+        }
+        BitVector::decrement(m_val.bv);
+    }
+    return *this;
+}
+
+int
+compare(const IntNum& lhs, const IntNum& rhs)
+{
+    if (lhs.m_type == IntNum::INTNUM_L && rhs.m_type == IntNum::INTNUM_L) {
+        if (lhs.m_val.l < rhs.m_val.l)
+            return -1;
+        if (lhs.m_val.l > rhs.m_val.l)
+            return 1;
+        return 0;
+    }
+
+    IntNumManager &manager = IntNumManager::instance();
+    wordptr op1 = lhs.to_bv(manager.op1static);
+    wordptr op2 = rhs.to_bv(manager.op2static);
+    return BitVector::Compare(op1, op2);
+}
+
+bool
+operator==(const IntNum& lhs, const IntNum& rhs)
+{
+    if (lhs.m_type == IntNum::INTNUM_L && rhs.m_type == IntNum::INTNUM_L)
+        return lhs.m_val.l == rhs.m_val.l;
+
+    IntNumManager &manager = IntNumManager::instance();
+    wordptr op1 = lhs.to_bv(manager.op1static);
+    wordptr op2 = rhs.to_bv(manager.op2static);
+    return BitVector::equal(op1, op2);
+}
+
+bool
+operator<(const IntNum& lhs, const IntNum& rhs)
+{
+    if (lhs.m_type == IntNum::INTNUM_L && rhs.m_type == IntNum::INTNUM_L)
+        return lhs.m_val.l < rhs.m_val.l;
+
+    IntNumManager &manager = IntNumManager::instance();
+    wordptr op1 = lhs.to_bv(manager.op1static);
+    wordptr op2 = rhs.to_bv(manager.op2static);
+    return BitVector::Compare(op1, op2) < 0;
+}
+
+bool
+operator>(const IntNum& lhs, const IntNum& rhs)
+{
+    if (lhs.m_type == IntNum::INTNUM_L && rhs.m_type == IntNum::INTNUM_L)
+        return lhs.m_val.l > rhs.m_val.l;
+
+    IntNumManager &manager = IntNumManager::instance();
+    wordptr op1 = lhs.to_bv(manager.op1static);
+    wordptr op2 = rhs.to_bv(manager.op2static);
+    return BitVector::Compare(op1, op2) > 0;
+}
+
 unsigned long
 get_sleb128(long v, unsigned char *ptr)
 {

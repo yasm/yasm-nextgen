@@ -40,6 +40,10 @@ namespace yasm {
 
 class IntNum {
     friend std::ostream& operator<< (std::ostream &os, const IntNum &intn);
+    friend int compare(const IntNum& intn1, const IntNum& intn2);
+    friend bool operator==(const IntNum& lhs, const IntNum& rhs);
+    friend bool operator<(const IntNum& lhs, const IntNum& rhs);
+    friend bool operator>(const IntNum& lhs, const IntNum& rhs);
 
 public:
     /// Default constructor.  Initializes value to 0.
@@ -82,7 +86,7 @@ public:
 
     /// Copy constructor.
     IntNum(const IntNum &rhs);
-    /// Assignment operator.
+    /// Assignment operators.
     IntNum& operator= (const IntNum& rhs);
 
     /// Get an allocated copy.
@@ -229,6 +233,17 @@ public:
     /// @return String containing the decimal representation of the intnum.
     /*@only@*/ char *get_str() const;
 
+    /// Overloaded unary operators:
+
+    /// Prefix increment.
+    IntNum& operator++();
+    /// Postfix increment.
+    IntNum operator++(int) { IntNum old(*this); ++*this; return old; }
+    /// Prefix decrement.
+    IntNum& operator--();
+    /// Postfix decrement.
+    IntNum operator--(int) { IntNum old(*this); --*this; return old; }
+
 private:
     // Compress a bitvector into intnum storage.
     // If saved as a bitvector, clones the passed bitvector.
@@ -248,6 +263,78 @@ private:
     } m_val;
     enum { INTNUM_L, INTNUM_BV } m_type;
 };
+
+/// Overloaded assignment binary operators.
+inline IntNum& operator+=(IntNum& lhs, const IntNum& rhs)
+{ lhs.calc(Op::ADD, &rhs); return lhs; }
+inline IntNum& operator-=(IntNum& lhs, const IntNum& rhs)
+{ lhs.calc(Op::SUB, &rhs); return lhs; }
+inline IntNum& operator*=(IntNum& lhs, const IntNum& rhs)
+{ lhs.calc(Op::MUL, &rhs); return lhs; }
+inline IntNum& operator/=(IntNum& lhs, const IntNum& rhs)
+{ lhs.calc(Op::DIV, &rhs); return lhs; }
+inline IntNum& operator%=(IntNum& lhs, const IntNum& rhs)
+{ lhs.calc(Op::MOD, &rhs); return lhs; }
+inline IntNum& operator^=(IntNum& lhs, const IntNum& rhs)
+{ lhs.calc(Op::XOR, &rhs); return lhs; }
+inline IntNum& operator&=(IntNum& lhs, const IntNum& rhs)
+{ lhs.calc(Op::AND, &rhs); return lhs; }
+inline IntNum& operator|=(IntNum& lhs, const IntNum& rhs)
+{ lhs.calc(Op::OR, &rhs); return lhs; }
+inline IntNum& operator>>=(IntNum& lhs, const IntNum& rhs)
+{ lhs.calc(Op::SHR, &rhs); return lhs; }
+inline IntNum& operator<<=(IntNum& lhs, const IntNum& rhs)
+{ lhs.calc(Op::SHL, &rhs); return lhs; }
+
+/// Overloaded unary operators.
+inline IntNum operator-(IntNum rhs)
+{ rhs.calc(Op::NEG, 0); return rhs; }
+inline IntNum operator+(const IntNum& rhs)
+{ return IntNum(rhs); }
+inline IntNum operator~(IntNum rhs)
+{ rhs.calc(Op::NOT, 0); return rhs; }
+inline bool operator!(const IntNum& rhs)
+{ return rhs.is_zero(); }
+
+/// Overloaded binary operators.
+inline const IntNum operator+(IntNum lhs, const IntNum& rhs)
+{ return lhs += rhs; }
+inline const IntNum operator-(IntNum lhs, const IntNum& rhs)
+{ return lhs -= rhs; }
+inline const IntNum operator*(IntNum lhs, const IntNum& rhs)
+{ return lhs *= rhs; }
+inline const IntNum operator/(IntNum lhs, const IntNum& rhs)
+{ return lhs /= rhs; }
+inline const IntNum operator%(IntNum lhs, const IntNum& rhs)
+{ return lhs %= rhs; }
+inline const IntNum operator^(IntNum lhs, const IntNum& rhs)
+{ return lhs ^= rhs; }
+inline const IntNum operator&(IntNum lhs, const IntNum& rhs)
+{ return lhs &= rhs; }
+inline const IntNum operator|(IntNum lhs, const IntNum& rhs)
+{ return lhs |= rhs; }
+inline const IntNum operator>>(IntNum lhs, const IntNum& rhs)
+{ return lhs >>= rhs; }
+inline const IntNum operator<<(IntNum lhs, const IntNum& rhs)
+{ return lhs <<= rhs; }
+
+/// Compare two intnums.
+/// @param lhs      first intnum
+/// @param rhs      second intnum
+/// @return -1 if lhs < rhs, 0 if lhs == rhs, 1 if lhs > rhs.
+int compare(const IntNum& lhs, const IntNum& rhs);
+
+/// Overloaded comparison operators.
+bool operator==(const IntNum& lhs, const IntNum& rhs);
+bool operator<(const IntNum& lhs, const IntNum& rhs);
+bool operator>(const IntNum& lhs, const IntNum& rhs);
+
+inline bool operator!=(const IntNum& lhs, const IntNum& rhs)
+{ return !(lhs == rhs); }
+inline bool operator<=(const IntNum& lhs, const IntNum& rhs)
+{ return !(lhs > rhs); }
+inline bool operator>=(const IntNum& lhs, const IntNum& rhs)
+{ return !(lhs < rhs); }
 
 /// Output integer to buffer in signed LEB128-encoded form.
 /// @param v        integer
