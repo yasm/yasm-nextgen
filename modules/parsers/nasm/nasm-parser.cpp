@@ -101,7 +101,8 @@ NasmParser::get_preproc_keywords() const
 std::string
 NasmParser::get_default_preproc_keyword() const
 {
-    return "nasm";
+    //return "nasm";
+    return "raw";
 }
 
 void
@@ -119,7 +120,7 @@ NasmParser::add_directives(Directives& dirs, const std::string& parser)
              BIND::bind(&NasmParser::dir_default, this, _1, _2, _3, _4));
 }
 
-ddj::registerInFactory<Parser, NasmParser> registerRawPreproc("nasm");
+registerModule<Parser, NasmParser> registerRawPreproc("nasm");
 bool static_ref = true;
 
 }}} // namespace yasm::parser::nasm

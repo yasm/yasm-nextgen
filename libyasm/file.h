@@ -192,6 +192,14 @@ combpath(const std::string& from, const std::string& to)
 # endif
 #endif
 
+/// Replace extension on a filename (or append one if none is present).
+/// @param orig     original filename
+/// @param ext      extension, should include '.'
+/// @param def      default output filename if orig == new.
+/// @return Filename with new extension, or default filename.
+std::string replace_extension(const std::string& orig, const std::string& ext,
+                              const std::string& def);
+
 /// Include path storage and search.  Paths are stored as std::strings.
 /// If a path is relative, it is treated by Includes::open() as relative to
 /// the current working directory.

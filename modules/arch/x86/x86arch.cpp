@@ -447,7 +447,7 @@ X86Arch::ea_create(std::auto_ptr<Expr> e) const
     return std::auto_ptr<EffAddr>(new X86EffAddr(*this, e));
 }
 
-ddj::registerInFactory<Arch, X86Arch> registerX86Arch("x86");
+registerModule<Arch, X86Arch> registerX86Arch("x86");
 bool static_ref = true;
 
 }}} // namespace yasm::arch::x86

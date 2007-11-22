@@ -1,5 +1,6 @@
 ADD_LIBRARY(libyasm
     arch.cpp
+    assembler.cpp
     assoc_data.cpp
     bitvect.cpp
     bc-align.cpp

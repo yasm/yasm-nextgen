@@ -15,7 +15,7 @@ int
 main()
 {
     std::auto_ptr<Preprocessor> preproc =
-        ddj::genericFactory<Preprocessor>::instance().create("raw");
+        moduleFactory<Preprocessor>::instance().create("raw");
 
     std::string instr("test text");
     std::istringstream iss(instr);

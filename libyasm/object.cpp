@@ -42,7 +42,6 @@
 #include "debug_format.h"
 #include "errwarn.h"
 #include "expr.h"
-#include "factory.h"
 #include "hamt.h"
 #include "interval_tree.h"
 #include "intnum.h"
@@ -75,69 +74,16 @@ public:
 };
 
 Object::Object(const std::string& src_filename,
-               std::auto_ptr<Arch> arch,
-               bool machine_from_objfmt,
-               const std::string& objfmt_keyword,
-               const std::string& dbgfmt_keyword)
+               const std::string& obj_filename,
+               Arch* arch)
     : m_src_filename(src_filename),
-      m_arch(arch.release()),
-      m_objfmt(load_module<ObjectFormat>(objfmt_keyword).release()),
-      m_dbgfmt(load_module<DebugFormat>(dbgfmt_keyword).release()),
+      m_arch(arch),
       m_cur_section(0),
       m_sections_owner(m_sections),
       m_symbols_owner(m_symbols),
       m_non_table_syms_owner(m_non_table_syms),
       m_impl(new Impl(false))
 {
-    if (m_objfmt.get() == 0)
-        throw Error(String::compose(N_("could not load object format `%1'"),
-                                       objfmt_keyword));
-
-    if (m_dbgfmt.get() == 0)
-        throw Error(String::compose(N_("could not load debug format `%1'"),
-                                       dbgfmt_keyword));
-
-    if (machine_from_objfmt) {
-        // If we're using x86 and the default objfmt bits is 64, default the
-        // machine to amd64.  When we get more arches with multiple machines,
-        // we should do this in a more modular fashion.
-        if (m_arch->get_keyword() == "x86" &&
-            m_objfmt->get_default_x86_mode_bits() == 64) {
-            if (!m_arch->set_machine("amd64"))
-                throw InternalError(N_("x86 architecture does not support amd64 machine"));
-        }
-    }
-
-    // Initialize the object format
-    if (!m_objfmt->set_object(this)) {
-        throw Error(String::compose(
-            N_("object format `%1' does not support architecture `%2' machine `%3'"),
-            m_objfmt->get_keyword(),
-            m_arch->get_keyword(),
-            m_arch->get_machine()));
-    }
-
-    // Add an initial "default" section to object
-    m_cur_section = m_objfmt->add_default_section();
-
-    // Check to see if the requested debug format is in the allowed list
-    // for the active object format.
-    std::vector<std::string> dbgfmt_keywords = m_objfmt->get_dbgfmt_keywords();
-    std::vector<std::string>::iterator f =
-        std::find(dbgfmt_keywords.begin(), dbgfmt_keywords.end(),
-                  dbgfmt_keyword);
-    if (f == dbgfmt_keywords.end()) {
-        throw Error(String::compose(
-            N_("`%1' is not a valid debug format for object format `%2'"),
-            dbgfmt_keyword, objfmt_keyword));
-    }
-
-    // Initialize the debug format
-    if (!m_dbgfmt->set_object(this)) {
-        throw Error(String::compose(
-            N_("debug format `%1' does not work with object format `%2'"),
-            dbgfmt_keyword, objfmt_keyword));
-    }
 }
 
 void

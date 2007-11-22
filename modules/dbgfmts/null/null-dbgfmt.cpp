@@ -44,7 +44,7 @@ public:
     void generate(Linemap& linemap, Errwarns& errwarns) {}
 };
 
-ddj::registerInFactory<DebugFormat, NullDebug> registerNullDebug("null");
+registerModule<DebugFormat, NullDebug> registerNullDebug("null");
 bool static_ref = true;
 
 }}} // namespace yasm::dbgfmt::null

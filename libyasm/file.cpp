@@ -450,6 +450,39 @@ combpath_win(const std::string& from, const std::string& to)
 }
 
 std::string
+replace_extension(const std::string& orig, const std::string& ext,
+                  const std::string& def)
+{
+    std::string::size_type origext = orig.find_last_of('.');
+    if (origext != std::string::npos) {
+        // Existing extension: make sure it's not the same as the replacement
+        // (as we don't want to overwrite the source file).
+        if (orig.compare(origext, std::string::npos, ext) == 0) {
+            /* FIXME
+            print_error(String::compose(
+                _("file name already ends in `%1': output will be in `%2'"),
+                ext, def));*/
+            return def;
+        }
+    } else {
+        // No extension: make sure the output extension is not empty
+        // (again, we don't want to overwrite the source file).
+        if (ext.empty()) {
+            /* FIXME
+            print_error(String::compose(
+                _("file name already has no extension: output will be in `%1'"),
+                def));*/
+            return def;
+        }
+    }
+
+    // replace extension
+    std::string out(orig, 0, origext);
+    out += ext;
+    return out;
+}
+
+std::string
 Includes::open(std::ifstream& ifs, const std::string& iname,
                const std::string& from, std::ios_base::openmode mode) const
 {

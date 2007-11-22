@@ -87,7 +87,7 @@ RawPreproc::input(/*@out@*/ char* buf, std::size_t max_size)
     return n;
 }
 
-ddj::registerInFactory<Preprocessor, RawPreproc> registerRawPreproc("raw");
+registerModule<Preprocessor, RawPreproc> registerRawPreproc("raw");
 bool static_ref = true;
 
 }}} // namespace yasm::preproc::raw

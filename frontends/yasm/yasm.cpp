@@ -31,18 +31,15 @@
 #include <fstream>
 
 #include <libyasm/arch.h>
-#include <libyasm/debug_format.h>
+#include <libyasm/assembler.h>
 #include <libyasm/compose.h>
 #include <libyasm/errwarn.h>
 #include <libyasm/factory.h>
 #include <libyasm/file.h>
 #include <libyasm/linemap.h>
-#include <libyasm/list_format.h>
-#include <libyasm/object.h>
-#include <libyasm/object_format.h>
-#include <libyasm/parser.h>
-#include <libyasm/preproc.h>
+#include <libyasm/module.h>
 #include <libyasm/nocase.h>
+#include <libyasm/preproc.h>
 
 #ifdef HAVE_LIBGEN_H
 #include <libgen.h>
@@ -85,9 +82,6 @@ static enum {
     EWSTYLE_VC
 } ewmsg_style = EWSTYLE_GNU;
 
-static bool check_errors(yasm::Errwarns& errwarns,
-                         const yasm::Linemap& linemap);
-
 // Forward declarations: cmd line parser handlers
 static int opt_special_handler(const std::string& cmd,
                                const std::string& param, int extra);
@@ -128,10 +122,6 @@ static int opt_ewmsg_handler(const std::string& cmd,
 static int opt_makedep_handler(const std::string& cmd,
                                const std::string& param, int extra);
 
-static std::string replace_extension(const std::string& orig,
-                                     const std::string& ext,
-                                     const std::string& def);
-
 static void print_error(const std::string& msg);
 
 static const char *handle_yasm_gettext(const char *msgid);
@@ -145,8 +135,8 @@ static void print_yasm_warning(const std::string& filename,
                                unsigned long line,
                                const std::string& msg);
 
-static void apply_preproc_builtins(yasm::Preprocessor& preproc);
-static void apply_preproc_saved_options(yasm::Preprocessor& preproc);
+static void apply_preproc_builtins(yasm::Preprocessor* preproc);
+static void apply_preproc_saved_options(yasm::Preprocessor* preproc);
 
 static void print_list_keyword_desc(const std::string& name,
                                     const std::string& keyword);
@@ -336,161 +326,68 @@ do_preproc_only(void)
 static int
 do_assemble(void)
 {
-    // Initialize line map
-    yasm::Linemap linemap;
-    linemap.set(in_filename, 1, 1);
+    yasm::Assembler assembler(arch_keyword, parser_keyword, objfmt_keyword);
 
-    std::auto_ptr<yasm::Arch> arch_auto =
-        yasm::load_module<yasm::Arch>(arch_keyword);
-    if (arch_auto.get() == 0) {
-        print_error(String::compose(_("%1: could not load %2 `%3'"),
-                                    _("FATAL"), _("architecture"),
-                                    arch_keyword));
-        return EXIT_FAILURE;
-    }
+    // Set object filename if specified.
+    if (!obj_filename.empty())
+        assembler.set_obj_filename(obj_filename);
 
-    // Set up architecture using machine and parser.
-    if (!machine_name.empty()) {
-        if (!arch_auto->set_machine(machine_name)) {
-            print_error(String::compose(
-                _("%1: `%2' is not a valid %3 for %4 `%5'"),
-                _("FATAL"), machine_name, _("machine"), _("architecture"),
-                arch_keyword));
-            return EXIT_FAILURE;
-        }
-    }
+    // Set machine if specified.
+    if (!machine_name.empty())
+        assembler.set_machine(machine_name);
 
-    if (!arch_auto->set_parser(parser_keyword)) {
-        print_error(String::compose(
-            _("%1: `%2' is not a valid %3 for %4 `%5'"),
-            _("FATAL"), parser_keyword, _("parser"),
-            _("architecture"), arch_keyword));
-        return EXIT_FAILURE;
-    }
+    // Set preprocessor if specified.
+    if (!preproc_keyword.empty())
+        assembler.set_preproc(preproc_keyword);
 
-    std::auto_ptr<yasm::Parser> parser =
-        yasm::load_module<yasm::Parser>(parser_keyword);
-    if (parser.get() == 0) {
-        print_error(String::compose(_("%1: could not load %2 `%3'"),
-                                    _("FATAL"), _("parser"), parser_keyword));
-        return EXIT_FAILURE;
-    }
+    apply_preproc_builtins(assembler.get_preproc());
+    apply_preproc_saved_options(assembler.get_preproc());
 
-    // If not already specified, default to the parser's default preproc.
-    if (preproc_keyword.empty())
-        preproc_keyword = parser->get_default_preproc_keyword();
+    assembler.get_arch()->set_var("force_strict", force_strict);
 
-    // Check to see if the requested preprocessor is in the allowed list
-    // for the active parser.
-    std::vector<std::string> preproc_keywords = parser->get_preproc_keywords();
-    if (std::find(preproc_keywords.begin(), preproc_keywords.end(),
-                  preproc_keyword) == preproc_keywords.end()) {
-        print_error(String::compose(
-            _("%1: `%2' is not a valid %3 for %4 `%5'"), _("FATAL"),
-            preproc_keyword, _("preprocessor"), _("parser"), parser_keyword));
-        return EXIT_FAILURE;
-    }
-
-    yasm::Errwarns errwarns;
-
+    // open the input file
     std::ifstream in_file(in_filename.c_str());
+    if (!in_file)
+        throw yasm::Error(String::compose(_("could not open file `%1'"),
+                          in_filename));
 
-    std::auto_ptr<yasm::Preprocessor> preproc =
-        yasm::load_module<yasm::Preprocessor>(preproc_keyword);
-    if (preproc.get() == 0) {
-        print_error(String::compose(_("%1: could not load %2 `%3'"),
-                                    _("FATAL"), _("preprocessor"),
-                                    preproc_keyword));
+    // assemble the input.
+    if (!assembler.assemble(in_file, in_filename, warning_error)) {
+        // An error occurred during assembly; output all errors and warnings
+        // and then exit.
+        assembler.get_errwarns()->output_all(*assembler.get_linemap(),
+                                             warning_error,
+                                             print_yasm_error,
+                                             print_yasm_warning);
         return EXIT_FAILURE;
     }
-
-    preproc->init(in_file, in_filename, linemap, errwarns);
-
-    apply_preproc_builtins(*preproc);
-    apply_preproc_saved_options(*preproc);
-
-    // Create object
-    yasm::Object object(in_filename, arch_auto, machine_name.empty(),
-                        objfmt_keyword, dbgfmt_keyword);
-
-    // determine the object filename if not specified
-    if (obj_filename.empty()) {
-        if (in_filename.empty())
-            // Default to yasm.out if no obj filename specified
-            obj_filename = "yasm.out";
-        else {
-            // replace (or add) extension to base filename
-            std::string base_filename;
-            yasm::splitpath(in_filename, base_filename);
-            if (base_filename.empty())
-                obj_filename = "yasm.out";
-            else
-                obj_filename =
-                    replace_extension(base_filename,
-                                      object.get_objfmt()->get_extension(),
-                                      "yasm.out");
-        }
-    }
-    object.set_object_fn(obj_filename);
-
-    /* Get initial x86 BITS setting from object format */
-    yasm::Arch* arch = object.get_arch();
-    if (arch->get_keyword() == "x86")
-        arch->set_var("mode_bits",
-                      object.get_objfmt()->get_default_x86_mode_bits());
-
-    arch->set_var("force_strict", force_strict);
-
-    // Parse!
-    parser->parse(object, preproc->get_stream(), !list_filename.empty(),
-                  linemap, errwarns);
-
-    if (check_errors(errwarns, linemap))
-        return EXIT_FAILURE;
-
-    // Finalize parse
-    object.finalize(errwarns);
-    if (check_errors(errwarns, linemap))
-        return EXIT_FAILURE;
-
-    // Optimize
-    object.optimize(errwarns);
-
-    //object.put(std::cout, 0);
-
-    if (check_errors(errwarns, linemap))
-        return EXIT_FAILURE;
-
-    // generate any debugging information
-    //object.get_dbgfmt()->generate(linemap, errwarns);
-    if (check_errors(errwarns, linemap))
-        return EXIT_FAILURE;
 
     // open the object file for output (if not already opened by dbg objfmt)
     std::ofstream of;
     if (objfmt_keyword != "dbg") {
-        of.open(obj_filename.c_str(), std::ios::binary);
-        if (!of) {
-            print_error(String::compose(_("could not open file `%1'"),
-                                        obj_filename));
-            return EXIT_FAILURE;
-        }
+        of.open(assembler.get_obj_filename().c_str(), std::ios::binary);
+        if (!of)
+            throw yasm::Error(String::compose(_("could not open file `%1'"),
+                              obj_filename));
     }
 
-    // Write the object file
-    object.get_objfmt()->output(of ? of : std::cerr,
-                                dbgfmt_keyword != "null", errwarns);
+    if (!assembler.output(of ? of : std::cerr, warning_error)) {
+        // An error occurred during output; output all errors and warnings.
+        // If we had an error at this point, we also need to delete the output
+        // object file (to make sure it's not left newer than the source).
+        assembler.get_errwarns()->output_all(*assembler.get_linemap(),
+                                             warning_error,
+                                             print_yasm_error,
+                                             print_yasm_warning);
+        if (of)
+            of.close();
+        remove(assembler.get_obj_filename().c_str());
+        return EXIT_FAILURE;
+    }
 
-    // Close object file
+    // close object file
     if (of)
         of.close();
-
-    // If we had an error at this point, we also need to delete the output
-    // object file (to make sure it's not left newer than the source).
-    if (errwarns.num_errors(warning_error) > 0)
-        remove(obj_filename.c_str());
-    if (check_errors(errwarns, linemap))
-        return EXIT_FAILURE;
 #if 0
     // Open and write the list file
     if (list_filename) {
@@ -506,8 +403,10 @@ do_assemble(void)
         fclose(list);
     }
 #endif
-    errwarns.output_all(linemap, warning_error, print_yasm_error,
-                        print_yasm_warning);
+    assembler.get_errwarns()->output_all(*assembler.get_linemap(),
+                                         warning_error,
+                                         print_yasm_error,
+                                         print_yasm_warning);
 
     return EXIT_SUCCESS;
 }
@@ -611,10 +510,6 @@ main(int argc, const char* argv[])
             listfmt_keyword = "nasm";
     }
 
-    // If not already specified, default to null as the debug format.
-    if (dbgfmt_keyword.empty())
-        dbgfmt_keyword = "null";
-
     try {
         return do_assemble();
     } catch (yasm::InternalError& err) {
@@ -623,17 +518,6 @@ main(int argc, const char* argv[])
         print_error(String::compose(_("FATAL: %1"), err.what()));
     }
     return EXIT_FAILURE;
-}
-
-static bool
-check_errors(yasm::Errwarns& errwarns, const yasm::Linemap& linemap)
-{
-    if (errwarns.num_errors(warning_error) > 0) {
-        errwarns.output_all(linemap, warning_error, print_yasm_error,
-                            print_yasm_warning);
-        return true;
-    }
-    return false;
 }
 
 //
@@ -917,63 +801,28 @@ opt_makedep_handler(/*@unused@*/ const std::string& cmd,
 }
 
 static void
-apply_preproc_builtins(yasm::Preprocessor& preproc)
+apply_preproc_builtins(yasm::Preprocessor* preproc)
 {
     // Define standard YASM assembly-time macro constants
     std::string predef("__YASM_OBJFMT__=");
     predef += objfmt_keyword;
-    preproc.define_builtin(predef);
+    preproc->define_builtin(predef);
 }
 
 static void
-apply_preproc_saved_options(yasm::Preprocessor& preproc)
+apply_preproc_saved_options(yasm::Preprocessor* preproc)
 {
     for (CommandOptions::const_iterator i = preproc_options.begin(),
          end = preproc_options.end(); i != end; ++i) {
         switch (i->second) {
             case 0:
-                preproc.add_include_file(i->first);
+                preproc->add_include_file(i->first);
             case 1:
-                preproc.predefine_macro(i->first);
+                preproc->predefine_macro(i->first);
             case 2:
-                preproc.undefine_macro(i->first);
+                preproc->undefine_macro(i->first);
         }
     }
-}
-
-/// Replace extension on a filename (or append one if none is present).
-/// @param orig     original filename
-/// @param ext      extension, should include '.'
-/// @return Filename with new extension.
-static std::string
-replace_extension(const std::string& orig, const std::string& ext,
-                  const std::string& def)
-{
-    std::string::size_type origext = orig.find_last_of('.');
-    if (origext != std::string::npos) {
-        // Existing extension: make sure it's not the same as the replacement
-        // (as we don't want to overwrite the source file).
-        if (orig.compare(origext, std::string::npos, ext) == 0) {
-            print_error(String::compose(
-                _("file name already ends in `%1': output will be in `%2'"),
-                ext, def));
-            return def;
-        }
-    } else {
-        // No extension: make sure the output extension is not empty
-        // (again, we don't want to overwrite the source file).
-        if (ext.empty()) {
-            print_error(String::compose(
-                _("file name already has no extension: output will be in `%1'"),
-                def));
-            return def;
-        }
-    }
-
-    // replace extension
-    std::string out(orig, 0, origext);
-    out += ext;
-    return out;
 }
 
 static void
@@ -988,11 +837,11 @@ template <typename T>
 static void
 list_module()
 {
-    ddj::genericFactory<T>& factory = ddj::genericFactory<T>::instance();
+    yasm::moduleFactory<T>& factory = yasm::moduleFactory<T>::instance();
     std::vector<std::string> list = factory.getRegisteredClasses();
     for (std::vector<std::string>::iterator i=list.begin(), end=list.end();
          i != end; ++i) {
-        std::auto_ptr<T> obj = factory.create(*i);
+        std::auto_ptr<yasm::Module> obj = factory.createBase(*i);
         print_list_keyword_desc(obj->get_name(), *i);
     }
 }

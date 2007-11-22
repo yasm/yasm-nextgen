@@ -42,9 +42,7 @@
 namespace yasm {
 
 class Arch;
-class DebugFormat;
 class Errwarns;
-class ObjectFormat;
 class Section;
 class Symbol;
 
@@ -55,16 +53,11 @@ public:
     /// section, and an empty symbol table is created.
     /// The object filename is initially unset (empty string).
     /// @param src_filename     source filename (e.g. "file.asm")
+    /// @param obj_filename     object filename (e.g. "file.o")
     /// @param arch             architecture
-    /// @param machine_from_objfmt  have object format determine machine arch,
-    ///                             (normally the reverse applies)
-    /// @param objfmt_module    object format module
-    /// @param dbgfmt_module    debug format module
     Object(const std::string& src_filename,
-           std::auto_ptr<Arch> arch,
-           bool machine_from_objfmt,
-           const std::string& objfmt_keyword,
-           const std::string& dbgfmt_keyword);
+           const std::string& obj_filename,
+           Arch* arch);
 
     /// Destructor.
     ~Object();
@@ -177,22 +170,14 @@ public:
     void set_cur_section(/*@null@*/ Section* section)
     { m_cur_section = section; }
 
-    Arch* get_arch() { return m_arch.get(); }
-    const Arch* get_arch() const { return m_arch.get(); }
-
-    /// Get the object format used for the object.
-    /// @return Object format.
-    ObjectFormat* get_objfmt() { return m_objfmt.get(); }
-    const ObjectFormat* get_objfmt() const { return m_objfmt.get(); }
+    Arch* get_arch() { return m_arch; }
+    const Arch* get_arch() const { return m_arch; }
 
 private:
     std::string m_src_filename;         ///< Source filename
     std::string m_obj_filename;         ///< Object filename
 
-    // /*@owned@*/ yasm_symtab *symtab;         ///< Symbol table
-    boost::scoped_ptr<Arch> m_arch;             ///< Target architecture
-    boost::scoped_ptr<ObjectFormat> m_objfmt;   ///< Object format
-    boost::scoped_ptr<DebugFormat> m_dbgfmt;    ///< Debug format
+    Arch* m_arch;                       ///< Target architecture
 
     /// Currently active section.  Used by some directives.  NULL if no
     /// section active.

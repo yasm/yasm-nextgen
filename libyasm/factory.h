@@ -47,7 +47,7 @@
 ///   class Derived : public Base { /* whatever */ };
 ///
 ///   derived implementation:
-///   registerInFactory<Base, Derived, std::string> registerDer("Derived");
+///   registerModule<Base, Derived> registerDer("Derived");
 ///
 ///   code that instantiates the classes:
 ///   std::auto_ptr<Base> newBase = genericFactory<Base>::instance().create("Base");
@@ -60,13 +60,23 @@
 #include <string>
 #include <vector>
 
+#include "module.h"
 
-namespace ddj {
+
+namespace yasm {
+
+// standard yasm module types
+class Arch;
+class DebugFormat;
+class ListFormat;
+class ObjectFormat;
+class Parser;
+class Preprocessor;
 
 // Implemented using the Singleton pattern
 
-template <class manufacturedObj>
-class genericFactory
+template <typename manufacturedObj>
+class moduleFactory
 {
     /// A BASE_CREATE_FN is a function that takes no parameters
     /// and returns an auto_ptr to a manufactuedObj.  Note that
@@ -82,13 +92,13 @@ class genericFactory
 
     // Singleton implementation - private ctor & copying, with
     // no implementation on the copying.
-    genericFactory();
-    genericFactory(const genericFactory&); // Not implemented
-    genericFactory &operator=(const genericFactory&); // Not implemented
+    moduleFactory();
+    moduleFactory(const moduleFactory&); // Not implemented
+    moduleFactory &operator=(const moduleFactory&); // Not implemented
 public:
 
     /// Singleton access.
-    static genericFactory &instance();
+    static moduleFactory &instance();
 
     /// Classes derived from manufacturedObj call this function once
     /// per program to register the class ID key, and a pointer to
@@ -98,6 +108,8 @@ public:
     /// Create a new class of the type specified by className.
     std::auto_ptr<manufacturedObj> create(const std::string& className) const;
 
+    std::auto_ptr<Module> createBase(const std::string& className) const;
+
     /// Return a list of classes that are registered.
     std::vector<std::string> getRegisteredClasses() const;
 
@@ -105,8 +117,8 @@ public:
     bool isRegisteredClass(const std::string& className) const;
 };
 
-template <class ancestorType, class manufacturedObj>
-class registerInFactory
+template <typename ancestorType, typename manufacturedObj>
+class registerModule
 {
 private:
     static void* createInstance()
@@ -115,9 +127,9 @@ private:
     }
 
 public:
-    registerInFactory(const std::string& id)
+    registerModule(const std::string& id)
     {
-        genericFactory<ancestorType>::instance().regCreateFn(id, createInstance);
+        moduleFactory<ancestorType>::instance().regCreateFn(id, createInstance);
     }
 };
 
@@ -125,16 +137,16 @@ public:
 // Implementation details.  If no comments appear, then I presume
 // the implementation is self-explanatory.
 
-template <class manufacturedObj>
-genericFactory<manufacturedObj>::genericFactory()
+template <typename manufacturedObj>
+moduleFactory<manufacturedObj>::moduleFactory()
 {
 }
 
-template <class manufacturedObj>
-genericFactory<manufacturedObj> &
-genericFactory<manufacturedObj>::instance()
+template <typename manufacturedObj>
+moduleFactory<manufacturedObj> &
+moduleFactory<manufacturedObj>::instance()
 {
-    static genericFactory theInstance;
+    static moduleFactory theInstance;
     return theInstance;
 }
 
@@ -142,19 +154,19 @@ genericFactory<manufacturedObj>::instance()
 // with the function used to create the class.  The return value is a dummy
 // value, which is used to allow static initialization of the registry.
 // See example implementations in base.cc and derived.cc
-template <class manufacturedObj>
+template <typename manufacturedObj>
 void
-genericFactory<manufacturedObj>::regCreateFn(const std::string& clName,
-                                             BASE_CREATE_FN func)
+moduleFactory<manufacturedObj>::regCreateFn(const std::string& clName,
+                                            BASE_CREATE_FN func)
 {
     registry[clName]=func;
 }
 
 // The create function simple looks up the class ID, and if it's in the list,
 // the statement "(*i).second();" calls the function.
-template <class manufacturedObj>
+template <typename manufacturedObj>
 std::auto_ptr<manufacturedObj>
-genericFactory<manufacturedObj>::create(const std::string& className) const
+moduleFactory<manufacturedObj>::create(const std::string& className) const
 {
     std::auto_ptr<manufacturedObj> ret(0);
     typename FN_REGISTRY::const_iterator regEntry=registry.find(className);
@@ -164,10 +176,24 @@ genericFactory<manufacturedObj>::create(const std::string& className) const
     return ret;
 }
 
+// createBase is similar to create, except it returns a base class instead
+// of manufacturedObj.
+template <typename manufacturedObj>
+std::auto_ptr<Module>
+moduleFactory<manufacturedObj>::createBase(const std::string& className) const
+{
+    std::auto_ptr<Module> ret(0);
+    typename FN_REGISTRY::const_iterator regEntry=registry.find(className);
+    if (regEntry != registry.end()) {
+        ret.reset(static_cast<Module*>((*regEntry).second()));
+    }
+    return ret;
+}
+
 // Just return a list of the classIDKeys used.
-template <class manufacturedObj>
+template <typename manufacturedObj>
 std::vector<std::string>
-genericFactory<manufacturedObj>::getRegisteredClasses() const
+moduleFactory<manufacturedObj>::getRegisteredClasses() const
 {
     std::vector<std::string> ret(registry.size());
     int count;
@@ -182,29 +208,25 @@ genericFactory<manufacturedObj>::getRegisteredClasses() const
     return ret;
 }
 
-template <class manufacturedObj>
+template <typename manufacturedObj>
 bool
-genericFactory<manufacturedObj>::isRegisteredClass(const std::string& className) const
+moduleFactory<manufacturedObj>::isRegisteredClass(const std::string& className) const
 {
     return registry.find(className) != registry.end();
 }
-
-} // namespace ddj
-
-namespace yasm {
 
 template <typename T>
 inline std::auto_ptr<T>
 load_module(const std::string& keyword)
 {
-    return ddj::genericFactory<T>::instance().create(keyword);
+    return moduleFactory<T>::instance().create(keyword);
 }
 
 template <typename T>
 inline bool
 is_module(const std::string& keyword)
 {
-    return ddj::genericFactory<T>::instance().isRegisteredClass(keyword);
+    return moduleFactory<T>::instance().isRegisteredClass(keyword);
 }
 
 } // namespace yasm

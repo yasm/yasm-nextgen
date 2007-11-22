@@ -490,7 +490,7 @@ BinObject::add_directives(Directives& dirs, const std::string& parser)
              Directives::ARG_REQUIRED);
 }
 
-ddj::registerInFactory<ObjectFormat, BinObject> registerBinObject("bin");
+registerModule<ObjectFormat, BinObject> registerBinObject("bin");
 bool static_ref = true;
 
 }}} // namespace yasm::objfmt::bin
