@@ -112,8 +112,7 @@ Symbol::Symbol(const std::string& name)
       m_def_line(0),
       m_decl_line(0),
       m_use_line(0),
-      m_equ(0),
-      m_precbc(0)
+      m_equ(0)
 {
 }
 
@@ -160,19 +159,19 @@ Symbol::define_equ(std::auto_ptr<Expr> e, unsigned long line)
 }
 
 Symbol&
-Symbol::define_label(Bytecode& precbc, unsigned long line)
+Symbol::define_label(Location loc, unsigned long line)
 {
     define(LABEL, line);
-    m_precbc = &precbc;
-    precbc.add_symbol(this);   /// XXX: should we add if not in table?
+    m_loc = loc;
+    loc.bc->add_symbol(this);   /// XXX: should we add if not in table?
     return *this;
 }
 
 Symbol&
-Symbol::define_curpos(Bytecode& precbc, unsigned long line)
+Symbol::define_curpos(Location loc, unsigned long line)
 {
     define(CURPOS, line);
-    m_precbc = &precbc;
+    m_loc = loc;
     // NOT added to bytecode cross-reference table
     return *this;
 }
@@ -231,22 +230,12 @@ Symbol::finalize(bool undef_extern)
     }
 }
 
-const Expr*
-Symbol::get_equ() const
-{
-    if (m_type == EQU && (m_status & VALUED))
-        return m_equ.get();
-    return 0;
-}
-
 bool
-Symbol::get_label(Bytecode* & precbc) const
+Symbol::get_label(Location* loc) const
 {
-    if (!(m_type == LABEL || m_type == CURPOS) || !m_precbc) {
-        precbc = 0;
+    if (!(m_type == LABEL || m_type == CURPOS))
         return false;
-    }
-    precbc = m_precbc;
+    *loc = m_loc;
     return true;
 }
 
@@ -327,10 +316,10 @@ Symbol::put(std::ostream& os, int indent_level) const
                 os << "_Label_\n";
             else
                 os << "_CurPos_\n";
-            os << std::setw(indent_level) << "" << "Section:\n";
-            m_precbc->get_section()->put(os, indent_level+1, false);
-            os << std::setw(indent_level) << "" << "Preceding bytecode:\n";
-            m_precbc->put(os, indent_level+1);
+            //os << std::setw(indent_level) << "" << "Section:\n";
+            //m_precbc->get_section()->put(os, indent_level+1, false);
+            //os << std::setw(indent_level) << "" << "Preceding bytecode:\n";
+            //m_precbc->put(os, indent_level+1);
             break;
         case SPECIAL:
             os << "-Special-\n";

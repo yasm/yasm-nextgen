@@ -752,7 +752,7 @@ operator<< (std::ostream& os, const Expr::Term& term)
         case Expr::SUBST:   os << "[" << term.m_subst << "]"; break;
         case Expr::FLOAT:   os << "FLTN"; break;
         case Expr::SYM:     os << "SYM"; break;
-        case Expr::PRECBC:  os << "{PRECBC}"; break;
+        case Expr::LOC:     os << "{LOC}"; break;
         case Expr::EXPR:    os << "(" << *term.m_expr << ")"; break;
     }
     return os;

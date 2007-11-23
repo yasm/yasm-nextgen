@@ -34,7 +34,7 @@
 #include <vector>
 
 #include "functional.h"
-
+#include "location.h"
 #include "operator.h"
 
 
@@ -54,7 +54,7 @@ public:
     typedef std::auto_ptr<Expr> Ptr;
 
     /// Types listed in canonical sorting order.  See expr_order_terms().
-    /// Note precbc must be used carefully (in a-b pairs), as only symrecs
+    /// Note loc must be used carefully (in a-b pairs), as only symrecs
     /// can become the relative term in a #yasm_value.
     /// Testing uses bit comparison (&) so these have to be in bitmask form.
     enum TermType {
@@ -64,7 +64,7 @@ public:
         SUBST = 1<<2,   ///< Substitution value.
         FLOAT = 1<<3,   ///< Float.
         SYM = 1<<4,     ///< Symbol.
-        PRECBC = 1<<5,  ///< Direct bytecode ref (rather than via symrec).
+        LOC = 1<<5,     ///< Direct location ref (rather than via symrec).
         EXPR = 1<<6     ///< Subexpression.
     };
 
@@ -86,7 +86,7 @@ public:
             : m_type(SUBST), m_subst(subst.subst) {}
         Term(Symbol* sym) : m_type(SYM), m_sym(sym) {}
         Term(Symbol& sym) : m_type(SYM), m_sym(&sym) {}
-        Term(Bytecode* bc) : m_type(PRECBC), m_precbc(bc) {}
+        Term(Location loc) : m_type(LOC), m_loc(loc) {}
         Term(Expr* expr) : m_type(EXPR), m_expr(expr) {}
 
         // auto_ptr constructors
@@ -143,8 +143,10 @@ public:
         { return (m_type == FLOAT ? m_flt : 0); }
         Symbol* get_sym() const
         { return (m_type == SYM ? m_sym : 0); }
-        Bytecode* get_precbc() const
-        { return (m_type == PRECBC ? m_precbc : 0); }
+        const Location* get_loc() const
+        { return (m_type == LOC ? &m_loc : 0); }
+        Location* get_loc()
+        { return (m_type == LOC ? &m_loc : 0); }
         Expr* get_expr() const
         { return (m_type == EXPR ? m_expr : 0); }
 
@@ -157,7 +159,7 @@ public:
             unsigned int m_subst;   ///< Subst placeholder (#SUBST)
             FloatNum *m_flt;        ///< Floating point value (#FLOAT)
             Symbol *m_sym;          ///< Symbol (#SYM)
-            Bytecode *m_precbc;     ///< Direct bytecode ref (#PRECBC)
+            Location m_loc;         ///< Direct bytecode ref (#LOC)
             Expr *m_expr;           ///< Subexpression (#EXPR)
         };
     };

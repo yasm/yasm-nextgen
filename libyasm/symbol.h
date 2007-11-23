@@ -36,6 +36,7 @@
 #include <boost/scoped_ptr.hpp>
 
 #include "assoc_data.h"
+#include "location.h"
 
 
 namespace yasm {
@@ -101,26 +102,27 @@ public:
 
     /// Get the label location of a symbol.
     /// @param sym       symbol
-    /// @param precbc    bytecode preceding label (output)
+    /// @param loc       label location (output)
     /// @return False if not symbol is not a label or if the symbol's
     ///         visibility is #EXTERN or #COMMON (not defined in the file).
-    bool get_label(/*@out@*/ Bytecode* & precbc) const;
+    bool get_label(/*@out@*/ Location* loc) const;
 
     /// Determine if symbol is the "absolute" symbol created by
     /// yasm_symtab_abs_sym().
     /// @return False if symbol is not the "absolute" symbol, true otherwise.
-    bool is_abs() const;
+    bool is_abs() const
+    { return m_def_line == 0 && m_type == EQU && m_name.length() == 0; }
 
     /// Determine if symbol is a special symbol.
     /// @return False if symbol is not a special symbol, true otherwise.
-    bool is_special() const;
+    bool is_special() const { return m_type == SPECIAL; }
 
     /// Determine if symbol is a label representing the current assembly
     /// position.
     /// @param sym       symbol
     /// @return False if symbol is not a current position label, true
     ///         otherwise.
-    bool is_curpos() const;
+    bool is_curpos() const { return m_type == CURPOS; }
 
     /// Mark the symbol as used.  The symbol does not necessarily need to
     /// be defined before it is used.
@@ -135,19 +137,19 @@ public:
     Symbol& define_equ(std::auto_ptr<Expr> e, unsigned long line);
 
     /// Define as a label.
-    /// @param precbc   bytecode preceding label
+    /// @param loc      location of label
     /// @param line     virtual line of label
     /// @return Symbol (this).
-    Symbol& define_label(Bytecode& precbc, unsigned long line);
+    Symbol& define_label(Location loc, unsigned long line);
 
     /// Define as a label representing the current assembly position.
     /// This should be used for this purpose instead of define_label()
     /// as Value::finalize_scan() looks for usage of this symbol type for
     /// special handling.
-    /// @param precbc   bytecode preceding label
+    /// @param loc      location of label
     /// @param line     virtual line of label
     /// @return Symbol (this).
-    Symbol& define_curpos(Bytecode& precbc, unsigned long line);
+    Symbol& define_curpos(Location loc, unsigned long line);
 
     /// Define a special symbol.  Special symbols have no generic associated
     /// data (such as an expression or precbc).
@@ -221,9 +223,26 @@ private:
 
     boost::scoped_ptr<Expr> m_equ;  ///< EQU value
 
-    /// Bytecode immediately preceding a label
-    Bytecode* m_precbc;
+    /// Label location
+    Location m_loc;
 };
+
+inline Symbol*
+Symbol::use(unsigned long line)
+{
+    if (m_use_line == 0)
+        m_use_line = line;      // set line number of first use
+    m_status |= USED;
+    return this;
+}
+
+inline const Expr*
+Symbol::get_equ() const
+{
+    if (m_type == EQU && (m_status & VALUED))
+        return m_equ.get();
+    return 0;
+}
 
 } // namespace yasm
 
