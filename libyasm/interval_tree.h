@@ -368,7 +368,7 @@ IntervalTree<T>::tree_insert_help(IntervalTreeNode<T>* z)
         y->right=z;
 
     assert(!m_nil->red);
-    assert(m_nil->maxHigh==INT_MIN);
+    assert(m_nil->maxHigh==LONG_MIN);
 }
 
 
@@ -751,7 +751,7 @@ IntervalTree<T>::delete_node(IntervalTreeNode<T>* z, long& low, long& high)
         assert(y!=m_nil);
         /* y is the node to splice out and x is its child */
   
-        y->maxHigh = INT_MIN;
+        y->maxHigh = LONG_MIN;
         y->left=z->left;
         y->right=z->right;
         y->parent=z->parent;
@@ -921,12 +921,12 @@ template <typename T>
 void
 IntervalTree<T>::check_assumptions() const
 {
-    YASM_INTERVAL_TREE_VERIFY(m_nil->low == INT_MIN);
-    YASM_INTERVAL_TREE_VERIFY(m_nil->high == INT_MIN);
-    YASM_INTERVAL_TREE_VERIFY(m_nil->maxHigh == INT_MIN);
-    YASM_INTERVAL_TREE_VERIFY(m_root->low == INT_MAX);
-    YASM_INTERVAL_TREE_VERIFY(m_root->high == INT_MAX);
-    YASM_INTERVAL_TREE_VERIFY(m_root->maxHigh == INT_MAX);
+    YASM_INTERVAL_TREE_VERIFY(m_nil->low == LONG_MIN);
+    YASM_INTERVAL_TREE_VERIFY(m_nil->high == LONG_MIN);
+    YASM_INTERVAL_TREE_VERIFY(m_nil->maxHigh == LONG_MIN);
+    YASM_INTERVAL_TREE_VERIFY(m_root->low == LONG_MAX);
+    YASM_INTERVAL_TREE_VERIFY(m_root->high == LONG_MAX);
+    YASM_INTERVAL_TREE_VERIFY(m_root->maxHigh == LONG_MAX);
     YASM_INTERVAL_TREE_VERIFY(m_nil->data == NULL);
     YASM_INTERVAL_TREE_VERIFY(m_root->data == NULL);
     YASM_INTERVAL_TREE_VERIFY(m_nil->red == 0);
