@@ -34,6 +34,7 @@
 #include <ostream>
 #include <vector>
 
+#include <boost/pool/pool.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include "arch.h"
@@ -338,6 +339,8 @@ OffsetSetter::OffsetSetter()
 {
 }
 
+class Optimize;
+
 class Span : private boost::noncopyable {
     friend class Optimize;
 public:
@@ -360,7 +363,7 @@ public:
          long neg_thres, long pos_thres, size_t os_index);
     ~Span();
 
-    void create_terms();
+    void create_terms(Optimize* optimize);
     bool recalc_normal();
 
 private:
@@ -371,7 +374,7 @@ private:
     Value m_depval;
 
     // span term for relative portion of value
-    boost::scoped_ptr<Term> m_rel_term;
+    Term* m_rel_term;
     // span terms in absolute portion of value
     typedef std::vector<Term> Terms;
     Terms m_span_terms;
@@ -408,10 +411,15 @@ public:
     bool step_1e(Errwarns& errwarns);
     bool step_2(Errwarns& errwarns);
 
+    Span::Term* alloc_term()
+    { return static_cast<Span::Term*>(m_term_pool.malloc()); }
+
 private:
     void itree_add(Span& span, Span::Term& term);
     void check_cycle(IntervalTreeNode<Span::Term*> * node, Span& span);
     void term_expand(IntervalTreeNode<Span::Term*> * node, long len_diff);
+
+    boost::pool<> m_term_pool;
 
     std::list<Span*> m_spans;   // ownership list
     std::list<Span*> m_QA, m_QB;
@@ -476,7 +484,7 @@ Span::add_term(unsigned int subst, Bytecode& precbc, Bytecode& precbc2)
 }
 
 void
-Span::create_terms()
+Span::create_terms(Optimize* optimize)
 {
     // Split out sym-sym terms in absolute portion of dependent value
     if (m_depval.has_abs()) {
@@ -512,9 +520,9 @@ Span::create_terms()
         if (!m_depval.m_curpos_rel)
             return;     // not PC-relative
 
-        m_rel_term.reset(new Term(~0U, 0, rel_precbc, this,
-                                  rel_precbc->next_offset() -
-                                  m_bc.get_offset()));
+        m_rel_term = optimize->alloc_term();
+        new (m_rel_term) Term(~0U, 0, rel_precbc, this,
+                              rel_precbc->next_offset() - m_bc.get_offset());
     }
 }
 
@@ -562,6 +570,7 @@ Span::~Span()
 }
 
 Optimize::Optimize()
+    : m_term_pool(sizeof(Span::Term))
 {
     // Create an placeholder offset setter for spans to point to; this will
     // get updated if/when we actually run into one.
@@ -695,7 +704,7 @@ Optimize::step_1b(Errwarns& errwarns)
         Span* span = *spani;
         bool terms_okay = true;
         try {
-            span->create_terms();
+            span->create_terms(this);
         } catch (Error& err) {
             errwarns.propagate(span->m_bc.get_line(), err);
             saw_error = true;
@@ -786,7 +795,7 @@ Optimize::step_1e(Errwarns& errwarns)
              endterm=span->m_span_terms.end(); term != endterm; ++term)
             itree_add(*span, *term);
         if (span->m_rel_term)
-            itree_add(*span, *(span->m_rel_term.get()));
+            itree_add(*span, *span->m_rel_term);
     }
 
     // Look for cycles in times expansion (span.id==0)
