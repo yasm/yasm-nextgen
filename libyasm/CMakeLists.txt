@@ -23,6 +23,7 @@ ADD_LIBRARY(libyasm
     insn.cpp
     intnum.cpp
     linemap.cpp
+    location.cpp
     md5.cpp
     module.cpp
     name_value.cpp

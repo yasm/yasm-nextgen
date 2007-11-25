@@ -34,11 +34,15 @@ namespace yasm {
 class Bytecode;
 
 /// An assembly location.  The finest granularity a label can directly access,
-/// and used throughout yasm to address a specific byte location.
+/// and used throughout yasm to address a specific assembly location.
 /// This structure is passed around by value, etc, so it must remain small!
 struct Location {
     Bytecode* bc;
     unsigned long off;
+
+    /// Get real offset (bc offset + off)
+    /// @return Offset.
+    unsigned long get_offset() const;
 };
 
 } // namespace yasm

@@ -32,6 +32,8 @@
 #include <iosfwd>
 #include <memory>
 
+#include "location.h"
+
 
 namespace yasm {
 
@@ -94,33 +96,38 @@ public:
     /// portion of the value.  First expands references to symrecs in
     /// absolute sections by expanding with the absolute section start plus
     /// the symrec offset within the absolute section.
-    /// @param precbc        previous bytecode to bytecode containing value
+    /// @param loc      location of value
     /// @return True if the expr could not be split into a value for some
     ///         reason (e.g. the relative portion was not added, but
     ///         multiplied etc).
     /// @note This should only be called after the parse is complete.
     ///       Calling before the parse is complete will usually result in
     ///       an error return.
-    bool finalize(Bytecode* precbc);
+    bool finalize(Location loc);
 
     /// Get value if absolute or PC-relative section-local relative.
     /// Returns NULL otherwise.
     /// @param bc           current bytecode (for PC-relative calculation);
-    ///                     if 0, 0 is returned for PC-relative values.
     /// @param calc_bc_dist if nonzero, calculates bytecode distances in
     ///                     absolute portion of value
     /// @note Adds in value.rel (correctly) if PC-relative and in the same
     ///       section as bc (and there is no WRT or SEG).
     /// @return Intnum if can be resolved to integer value, otherwise NULL.
-    /*@null@*/ std::auto_ptr<IntNum> get_intnum(/*@null@*/ Bytecode* bc,
+    /*@null@*/ std::auto_ptr<IntNum> get_intnum(Location loc,
                                                 bool calc_bc_dist);
+
+    /// Get value if absolute section-local relative.
+    /// Returns NULL otherwise.
+    /// @param calc_bc_dist if nonzero, calculates bytecode distances in
+    ///                     absolute portion of value
+    /// @return Intnum if can be resolved to integer value, otherwise NULL.
+    /*@null@*/ std::auto_ptr<IntNum> get_intnum(bool calc_bc_dist);
 
     /// Output value if constant or PC-relative section-local.  This should
     /// be used from objfmt output_value_func() functions.
     /// @param bytes        storage for byte representation
     /// @param destsize     destination size (in bytes)
-    /// @param bc           current bytecode (usually passed into
-    ///                     higher-level calling function)
+    /// @param loc          location of value
     /// @param warn         enables standard warnings: zero for none;
     ///                     nonzero for overflow/underflow floating point and
     ///                     integer warnings
@@ -131,8 +138,8 @@ public:
     ///      use this function!
     /// @return False if no value output due to value needing relocation;
     ///         true if value output.
-    bool output_basic(Bytes& bytes, size_t destsize, const Bytecode& bc,
-                      int warn, const Arch& arch);
+    bool output_basic(Bytes& bytes, size_t destsize, Location loc, int warn,
+                      const Arch& arch);
 
     /// Print a value.  For debugging purposes.
     /// @param os           output stream
@@ -166,8 +173,7 @@ public:
     static const unsigned int RSHIFT_MAX = 127;
 
 private:
-    bool finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
-                       bool ssym_not_ok);
+    bool finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok);
 
     /// The absolute portion of the value.  May contain *differences* between
     /// symrecs but not standalone symrecs.  May be NULL if there is no

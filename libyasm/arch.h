@@ -289,12 +289,12 @@ public:
     /// @param shift        left shift (in bits); may be negative to specify
     ///                     right shift (standard warnings include
     ///                     truncation to boundary)
-    /// @param bc           bytecode being output ("parent" of value)
+    /// @param loc          location of value
     /// @param warn         enables standard warnings (value doesn't fit into
     ///                     valsize bits)
     virtual void intnum_tobytes(const IntNum& intn, Bytes& bytes,
                                 size_t destsize, size_t valsize, int shift,
-                                const Bytecode& bc, int warn) const = 0;
+                                Location loc, int warn) const = 0;
 
     /// Create an effective address from an expression.
     /// @param e    expression

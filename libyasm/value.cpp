@@ -166,8 +166,7 @@ Value::set_curpos_rel(const Bytecode& bc, bool ip_rel)
 }
 
 bool
-Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
-                     bool ssym_not_ok)
+Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
 {
     Expr::Terms& terms = e->get_terms();
 
@@ -215,7 +214,7 @@ Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
                 Expr::Terms& sube_terms = sube->get_terms();
                 if (!sube->is_op(Op::MUL) || sube_terms.size() != 2) {
                     // recurse instead
-                    if (finalize_scan(sube, expr_precbc, ssym_not_ok))
+                    if (finalize_scan(sube, expr_loc, ssym_not_ok))
                         return true;
                     continue;
                 }
@@ -229,34 +228,34 @@ Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
                            (intn = sube_terms[1].get_int())) {
                     ;
                 } else {
-                    if (finalize_scan(sube, expr_precbc, ssym_not_ok))
+                    if (finalize_scan(sube, expr_loc, ssym_not_ok))
                         return true;
                     continue;
                 }
 
                 if (!intn->is_neg1()) {
-                    if (finalize_scan(sube, expr_precbc, ssym_not_ok))
+                    if (finalize_scan(sube, expr_loc, ssym_not_ok))
                         return true;
                     continue;
                 }
 
-                Bytecode* precbc;
-                if (!sym->get_label(precbc)) {
-                    if (finalize_scan(sube, expr_precbc, ssym_not_ok))
+                Location loc;
+                if (!sym->get_label(&loc)) {
+                    if (finalize_scan(sube, expr_loc, ssym_not_ok))
                         return true;
                     continue;
                 }
-                Section* sect = precbc->get_section();
+                Section* sect = loc.bc->get_section();
 
                 // Now look for a unused symrec term in the same segment
                 Expr::Terms::iterator j=terms.begin();
                 for (; j != end; ++j) {
                     Symbol* sym2;
-                    Bytecode* precbc2;
+                    Location loc2;
                     Section* sect2;
                     if ((sym2 = j->get_sym())
-                        && sym2->get_label(precbc2)
-                        && (sect2 = precbc2->get_section())
+                        && sym2->get_label(&loc2)
+                        && (sect2 = loc2.bc->get_section())
                         && sect == sect2
                         && !used[j-terms.begin()]) {
                         // Mark as used
@@ -280,13 +279,12 @@ Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
                 // The unmatched symrec will be caught below.
                 if (j == end && !m_curpos_rel
                     && (sym->is_curpos()
-                        || (expr_precbc
-                            && sect == expr_precbc->get_section()))) {
+                        || (sect == expr_loc.bc->get_section()))) {
                     for (j=terms.begin(); j != end; ++j) {
                         Symbol* sym2;
-                        Bytecode* precbc2;
+                        Location loc2;
                         if ((sym2 = j->get_sym())
-                            && sym2->get_label(precbc2)
+                            && sym2->get_label(&loc2)
                             && !used[j-terms.begin()]) {
                             // Mark as used
                             used[j-terms.begin()] = 1;
@@ -305,8 +303,7 @@ Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
                                 // Replace positive portion with curpos
                                 //j->destroy(); // unneeded as it's a symbol
                                 std::auto_ptr<Symbol> curpos(new Symbol("."));
-                                curpos->define_curpos(*expr_precbc,
-                                                      e->get_line());
+                                curpos->define_curpos(expr_loc, e->get_line());
                                 *j = curpos.get();
                                 Object* object = sect->get_object();
                                 object->add_non_table_symbol(curpos);
@@ -352,7 +349,7 @@ Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
                 case Expr::SYM:
                     return true;
                 case Expr::EXPR:
-                    if (finalize_scan(terms[1].get_expr(), expr_precbc, true))
+                    if (finalize_scan(terms[1].get_expr(), expr_loc, true))
                         return true;
                     break;
                 default:
@@ -374,7 +371,7 @@ Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
                     break;
                 case Expr::EXPR:
                     // recurse
-                    if (finalize_scan(terms[0].get_expr(), expr_precbc,
+                    if (finalize_scan(terms[0].get_expr(), expr_loc,
                                       ssym_not_ok))
                         return true;
                     break;
@@ -448,7 +445,7 @@ Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
                 terms[0] = new IntNum(0);
             } else if (Expr* sube = terms[0].get_expr()) {
                 // recurse
-                return finalize_scan(sube, expr_precbc, ssym_not_ok);
+                return finalize_scan(sube, expr_loc, ssym_not_ok);
             }
 
             break;
@@ -462,7 +459,7 @@ Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
                     return true;
                 else if (Expr* sube = i->get_expr()) {
                     // recurse
-                    return finalize_scan(sube, expr_precbc, true);
+                    return finalize_scan(sube, expr_loc, true);
                 }
             }
             break;
@@ -473,7 +470,7 @@ Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
 }
 
 bool
-Value::finalize(Bytecode* precbc)
+Value::finalize(Location loc)
 {
     if (!m_abs)
         return false;
@@ -496,7 +493,7 @@ Value::finalize(Bytecode* precbc)
         return false;
     }
 
-    if (finalize_scan(m_abs, precbc, false))
+    if (finalize_scan(m_abs, loc, false))
         return true;
 
     m_abs->level_tree(true, true, false);
@@ -513,7 +510,7 @@ Value::finalize(Bytecode* precbc)
 }
 
 std::auto_ptr<IntNum>
-Value::get_intnum(Bytecode* bc, bool calc_bc_dist)
+Value::get_intnum(Location loc, bool calc_bc_dist)
 {
     /*@dependent@*/ /*@null@*/ IntNum* intn = 0;
     std::auto_ptr<IntNum> outval(0);
@@ -531,35 +528,51 @@ Value::get_intnum(Bytecode* bc, bool calc_bc_dist)
     if (m_rel) {
         // If relative portion is not in bc section, return NULL.
         // Otherwise get the relative portion's offset.
-        if (!bc)
-            return outval;  // Can't calculate relative value
-
-        /*@dependent@*/ Bytecode* rel_prevbc;
-        bool sym_local = m_rel->get_label(rel_prevbc);
+        Location rel_loc;
+        bool sym_local = m_rel->get_label(&rel_loc);
         if (m_wrt || m_seg_of || m_section_rel || !sym_local)
             return outval;  // we can't handle SEG, WRT, or external symbols
-        if (rel_prevbc->get_section() != bc->get_section())
+        if (rel_loc.bc->get_section() != loc.bc->get_section())
             return outval;  // not in this section
         if (!m_curpos_rel)
             return outval;  // not PC-relative
 
         // Calculate value relative to current assembly position
-        unsigned long dist = rel_prevbc->next_offset();
-        if (dist < bc->get_offset()) {
-            outval.reset(new IntNum(bc->get_offset() - dist));
-            outval->calc(Op::NEG);
-        } else {
-            dist -= bc->get_offset();
-            outval.reset(new IntNum(dist));
-        }
-
+        outval.reset(new IntNum(rel_loc.get_offset()));
+        *outval -= loc.get_offset();
         if (m_rshift > 0)
-            outval->calc(Op::SHR, m_rshift);
+            *outval >>= m_rshift;
         // Add in absolute portion
         if (intn)
-            outval->calc(Op::ADD, intn);
+            *outval += *intn;
         return outval;
     }
+
+    if (intn)
+        return std::auto_ptr<IntNum>(intn->clone());
+
+    // No absolute or relative portions: output 0
+    return std::auto_ptr<IntNum>(new IntNum(0));
+}
+
+std::auto_ptr<IntNum>
+Value::get_intnum(bool calc_bc_dist)
+{
+    /*@dependent@*/ /*@null@*/ IntNum* intn = 0;
+    std::auto_ptr<IntNum> outval(0);
+
+    if (m_abs != 0) {
+        // Handle integer expressions, if non-integer or too complex, return
+        // NULL.
+        if (calc_bc_dist)
+            m_abs->level_tree(true, true, true, xform_calc_bc_dist);
+        intn = m_abs->get_intnum();
+        if (!intn)
+            return outval;
+    }
+
+    if (m_rel)
+        return outval;  // Can't calculate relative value
 
     if (intn)
         return std::auto_ptr<IntNum>(intn->clone());
@@ -587,8 +600,8 @@ Value::add_abs(std::auto_ptr<Expr> delta)
 }
 
 bool
-Value::output_basic(Bytes& bytes, size_t destsize, const Bytecode& bc,
-                    int warn, const Arch& arch)
+Value::output_basic(Bytes& bytes, size_t destsize, Location loc, int warn,
+                    const Arch& arch)
 {
     /*@dependent@*/ /*@null@*/ IntNum* intn = 0;
 
@@ -631,35 +644,27 @@ Value::output_basic(Bytes& bytes, size_t destsize, const Bytecode& bc,
     if (m_rel) {
         // If relative portion is not in bc section, don't try to handle it
         // here.  Otherwise get the relative portion's offset.
-        /*@dependent@*/ Bytecode* rel_prevbc;
+        Location rel_loc;
 
-        bool sym_local = m_rel->get_label(rel_prevbc);
+        bool sym_local = m_rel->get_label(&rel_loc);
         if (m_wrt || m_seg_of || m_section_rel || !sym_local)
             return false;   // we can't handle SEG, WRT, or external symbols
-        if (rel_prevbc->get_section() != bc.get_section())
+        if (rel_loc.bc->get_section() != loc.bc->get_section())
             return false;   // not in this section
         if (!m_curpos_rel)
             return false;   // not PC-relative
 
         // Calculate value relative to current assembly position
-        IntNum outval(0);
-        unsigned long dist = rel_prevbc->next_offset();
-        if (dist < bc.get_offset()) {
-            outval = bc.get_offset() - dist;
-            outval.calc(Op::NEG);
-        } else {
-            dist -= bc.get_offset();
-            outval = dist;
-        }
-
+        IntNum outval(rel_loc.get_offset());
+        outval -= loc.get_offset();
         if (m_rshift > 0)
-            outval.calc(Op::SHR, m_rshift);
+            outval >>= m_rshift;
         // Add in absolute portion
         if (intn)
-            outval.calc(Op::ADD, intn);
+            outval += *intn;
 
         // Output!
-        arch.intnum_tobytes(outval, bytes, destsize, m_size, 0, bc, warn);
+        arch.intnum_tobytes(outval, bytes, destsize, m_size, 0, loc, warn);
         return true;
     }
 
@@ -668,10 +673,10 @@ Value::output_basic(Bytes& bytes, size_t destsize, const Bytecode& bc,
 
     if (intn) {
         // Output just absolute portion
-        arch.intnum_tobytes(*intn, bytes, destsize, m_size, 0, bc, warn);
+        arch.intnum_tobytes(*intn, bytes, destsize, m_size, 0, loc, warn);
     } else {
         // No absolute or relative portions: output 0
-        arch.intnum_tobytes(0, bytes, destsize, m_size, 0, bc, warn);
+        arch.intnum_tobytes(0, bytes, destsize, m_size, 0, loc, warn);
     }
 
     return true;
