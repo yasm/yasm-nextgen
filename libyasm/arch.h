@@ -37,6 +37,7 @@
 #include <boost/noncopyable.hpp>
 
 #include "insn.h"
+#include "location.h"
 #include "module.h"
 
 
