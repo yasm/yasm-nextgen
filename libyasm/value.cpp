@@ -41,6 +41,7 @@
 #include "expr_util.h"
 #include "floatnum.h"
 #include "intnum.h"
+#include "location_util.h"
 #include "object.h"
 #include "section.h"
 #include "symbol.h"
@@ -519,7 +520,7 @@ Value::get_intnum(Location loc, bool calc_bc_dist)
         // Handle integer expressions, if non-integer or too complex, return
         // NULL.
         if (calc_bc_dist)
-            m_abs->level_tree(true, true, true, xform_calc_bc_dist);
+            m_abs->level_tree(true, true, true, xform_calc_dist);
         intn = m_abs->get_intnum();
         if (!intn)
             return outval;
@@ -565,7 +566,7 @@ Value::get_intnum(bool calc_bc_dist)
         // Handle integer expressions, if non-integer or too complex, return
         // NULL.
         if (calc_bc_dist)
-            m_abs->level_tree(true, true, true, xform_calc_bc_dist);
+            m_abs->level_tree(true, true, true, xform_calc_dist);
         intn = m_abs->get_intnum();
         if (!intn)
             return outval;
@@ -619,7 +620,7 @@ Value::output_basic(Bytes& bytes, size_t destsize, Location loc, int warn,
                 N_("floating point expression too complex"));
 
         // Handle normal integer expressions
-        m_abs->level_tree(true, true, true, xform_calc_bc_dist);
+        m_abs->level_tree(true, true, true, xform_calc_dist);
         intn = m_abs->get_intnum();
 
         if (!intn) {
@@ -627,7 +628,7 @@ Value::output_basic(Bytes& bytes, size_t destsize, Location loc, int warn,
             // SEG:OFF, so try simplifying out any to just the OFF portion,
             // then getting the intnum again.
             m_abs->extract_deep_segoff(); // returns auto_ptr, so ok to drop
-            m_abs->level_tree(true, true, true, xform_calc_bc_dist);
+            m_abs->level_tree(true, true, true, xform_calc_dist);
             intn = m_abs->get_intnum();
         }
 
