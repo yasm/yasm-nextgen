@@ -472,10 +472,10 @@ Optimize::add_span(Bytecode& bc, int id, const Value& value,
 }
 
 void
-Span::add_term(unsigned int subst, Bytecode& precbc, Bytecode& precbc2)
+Span::add_term(unsigned int subst, Location loc, Location loc2)
 {
     IntNum intn;
-    if (!calc_bc_dist(precbc, precbc2, intn))
+    if (!calc_dist(loc, loc2, intn))
         throw InternalError(N_("could not calculate bc distance"));
 
     if (subst >= m_span_terms.size())
@@ -488,8 +488,8 @@ Span::create_terms(Optimize* optimize)
 {
     // Split out sym-sym terms in absolute portion of dependent value
     if (m_depval.has_abs()) {
-        subst_bc_dist(m_depval.get_abs(),
-                      BIND::bind(&Span::add_term, this, _1, _2, _3));
+        subst_dist(m_depval.get_abs(),
+                   BIND::bind(&Span::add_term, this, _1, _2, _3));
         if (m_span_terms.size() > 0) {
             for (Terms::iterator i=m_span_terms.begin(),
                  end=m_span_terms.end(); i != end; ++i) {

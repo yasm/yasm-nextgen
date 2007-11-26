@@ -27,6 +27,7 @@
 #include "location.h"
 
 #include "bytecode.h"
+#include "intnum.h"
 
 
 namespace yasm {
@@ -35,6 +36,17 @@ unsigned long
 Location::get_offset() const
 {
     return bc->get_offset() + off;
+}
+
+bool
+calc_dist(Location loc1, Location loc2, IntNum* dist)
+{
+    if (loc1.bc->get_section() != loc2.bc->get_section())
+        return false;
+
+    *dist = loc2.get_offset();
+    *dist -= loc1.get_offset();
+    return true;
 }
 
 } // namespace yasm

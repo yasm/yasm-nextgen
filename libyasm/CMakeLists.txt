@@ -24,6 +24,7 @@ ADD_LIBRARY(libyasm
     intnum.cpp
     linemap.cpp
     location.cpp
+    location_util.cpp
     md5.cpp
     module.cpp
     name_value.cpp

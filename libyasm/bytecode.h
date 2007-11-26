@@ -389,11 +389,11 @@ public:
                   /*@null@*/ OutputRelocFunc output_reloc = 0);
 
     /// Get the bytecode multiple value as an integer.
-    /// @param calc_bc_dist True if distances between bytecodes should be
-    ///                     calculated, false if error should be returned
-    ///                     in this case
+    /// @param calc_dist True if distances between bytecodes should be
+    ///                  calculated, false if error should be returned
+    ///                  in this case
     /// @return Multiple value.
-    long get_multiple(bool calc_bc_dist);
+    long get_multiple(bool calc_dist);
 
     /// Get the bytecode multiple value as an expression.
     /// @return Bytecode multiple, NULL if =1.
@@ -544,39 +544,6 @@ std::auto_ptr<Bytecode> create_align
 /// @return Newly allocated bytecode.
 std::auto_ptr<Bytecode> create_org(unsigned long start, unsigned long fill,
                                    unsigned long line);
-
-//
-// General bytecode helper functions.
-//
-
-/// Determine the distance between the starting offsets of two bytecodes.
-/// @param precbc1      preceding bytecode to the first bytecode
-/// @param precbc2      preceding bytecode to the second bytecode
-/// @param dist         distance in bytes between the two bytecodes
-///                     (bc2-bc1); output.
-/// @return True if distance calculated; false if the distance was
-///         indeterminate.
-/// @warning Only valid /after/ optimization.
-bool calc_bc_dist(const Bytecode& precbc1, const Bytecode& precbc2,
-                  /*@out@*/ IntNum& dist);
-
-/// Expr::level_tree() transformation helper function to transform instances
-/// of symrec-symrec [symrec+(-1*symrec)] into integers if possible by
-/// calling calc_bc_dist().
-/// @param e            expression
-/// @warning Only valid /after/ optimization.
-void xform_calc_bc_dist(Expr* e);
-
-/// Transform symrec-symrec terms in expression into SUBST terms.
-/// Calls the callback function for each symrec-symrec term.
-/// @note Also simplifies the expression.
-/// @param e            expression
-/// @param callback     callback function: given subst index for bytecode
-///                     pair, bytecode pair (bc2-bc1)
-/// @return Number of transformations made.
-int subst_bc_dist(Expr* e, FUNCTION::function<void (unsigned int subst,
-                                                    Bytecode& precbc,
-                                                    Bytecode& precbc2)> func);
 
 } // namespace yasm
 

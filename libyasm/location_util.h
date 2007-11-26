@@ -1,8 +1,8 @@
-#ifndef YASM_LOCATION_H
-#define YASM_LOCATION_H
+#ifndef YASM_LOCATION_UTIL_H
+#define YASM_LOCATION_UTIL_H
 ///
 /// @file libyasm/location.h
-/// @brief YASM location interface.
+/// @brief YASM location utility functions.
 ///
 /// @license
 ///  Copyright (C) 2007  Peter Johnson
@@ -29,32 +29,24 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include "functional.h"
+
+#include "location.h"
+
 namespace yasm {
 
-class Bytecode;
-class IntNum;
+class Expr;
 
-/// An assembly location.  The finest granularity a label can directly access,
-/// and used throughout yasm to address a specific assembly location.
-/// This structure is passed around by value, etc, so it must remain small!
-struct Location {
-    Bytecode* bc;
-    unsigned long off;
-
-    /// Get real offset (bc offset + off)
-    /// @return Offset.
-    unsigned long get_offset() const;
-};
-
-/// Determine the distance between the starting offsets of two locations.
-/// @param loc1         location 1
-/// @param loc2         location 2
-/// @param dist         distance in bytes between the two locations
-///                     (loc2-loc1); output.
-/// @return True if distance calculated; false if the distance was
-///         indeterminate.
+/// Expr::level_tree() transformation helper function to transform instances
+/// of Symbol-Symbol [Symbol+(-1*Symbol)] into integers if possible by
+/// calling calc_dist().
+/// @param e            expression
 /// @warning Only valid /after/ optimization.
-bool calc_dist(Location loc1, Location loc2, /*@out@*/ IntNum* dist);
+void xform_calc_dist(Expr* e);
+
+int subst_dist(Expr* e,
+               FUNCTION::function<void (unsigned int subst, Location loc,
+                                        Location loc2)> func);
 
 } // namespace yasm
 

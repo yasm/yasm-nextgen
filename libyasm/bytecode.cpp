@@ -37,6 +37,7 @@
 #include "expr.h"
 #include "insn.h"
 #include "intnum.h"
+#include "location_util.h"
 #include "operator.h"
 #include "symbol.h"
 #include "value.h"
@@ -306,11 +307,11 @@ Bytecode::to_bytes(Bytes& bytes, /*@out@*/ unsigned long& gap,
 }
 
 long
-Bytecode::get_multiple(bool calc_bc_dist)
+Bytecode::get_multiple(bool calc_dist)
 {
     if (m_multiple.get() != 0) {
-        if (calc_bc_dist)
-            m_multiple->level_tree(true, true, true, xform_calc_bc_dist);
+        if (calc_dist)
+            m_multiple->level_tree(true, true, true, xform_calc_dist);
         const IntNum* num = m_multiple->get_intnum();
         if (!num)
             throw ValueError(N_("could not determine multiple"));
@@ -356,154 +357,5 @@ Bytecode::update_offset(unsigned long offset, Bytecode& prev_bc,
     errwarns.propagate(m_line);     // propagate warnings
     return retval;
 }
-
-bool
-calc_bc_dist(const Bytecode& precbc1, const Bytecode& precbc2, IntNum& dist)
-{
-    if (precbc1.get_section() != precbc2.get_section())
-        return false;
-
-    unsigned long dist1 = precbc1.next_offset();
-    unsigned long dist2 = precbc2.next_offset();
-    if (dist2 < dist1) {
-        dist = dist1 - dist2;
-        dist.calc(Op::NEG);
-        return true;
-    }
-    dist = dist2 - dist1;
-    return true;
-}
-
-// Transforms instances of symrec-symrec [symrec+(-1*symrec)] into single
-// exprterms if possible.  Uses a simple n^2 algorithm because n is usually
-// quite small.  Also works for precbc-precbc (or symrec-precbc,
-// precbc-symrec).
-static void
-xform_bc_dist_base(Expr* e, FUNCTION::function<bool (Expr::Term& term,
-                                                     Bytecode& precbc,
-                                                     Bytecode& precbc2)> func)
-{
-    // Handle symrec-symrec in ADD exprs by looking for (-1*symrec) and
-    // symrec term pairs (where both symrecs are in the same segment).
-    if (!e->is_op(Op::ADD))
-        return;
-
-    Expr::Terms& terms = e->get_terms();
-    for (Expr::Terms::iterator i=terms.begin(), end=terms.end();
-         i != end; ++i) {
-        // First look for an (-1*symrec) term
-        Expr* sube = i->get_expr();
-        if (!sube)
-            continue;
-        Expr::Terms& subterms = sube->get_terms();
-        if (!sube->is_op(Op::MUL) || subterms.size() != 2)
-            continue;
-
-        IntNum* intn;
-        Symbol* sym = 0;
-        /*@dependent@*/ /*@null@*/ Bytecode* precbc;
-
-        if ((intn = subterms[0].get_int())) {
-            if ((sym = subterms[1].get_sym()))
-                ;
-            else if ((precbc = subterms[1].get_precbc()))
-                ;
-            else
-                continue;
-        } else if ((intn = subterms[1].get_int())) {
-            if ((sym = subterms[0].get_sym()))
-                ;
-            else if ((precbc = subterms[0].get_precbc()))
-                ;
-            else
-                continue;
-        } else
-            continue;
-
-        if (!intn->is_neg1())
-            continue;
-
-        if (sym && !sym->get_label(precbc))
-            continue;
-        Section* sect = precbc->get_section();
-
-        // Now look for a symrec term in the same segment
-        for (Expr::Terms::iterator j=terms.begin(), end=terms.end();
-             j != end; ++j) {
-            Symbol* sym2;
-            /*@dependent@*/ /*@null@*/ Bytecode* precbc2;
-
-            if ((((sym2 = j->get_sym()) && sym2->get_label(precbc2)) ||
-                 (precbc2 = j->get_precbc())) &&
-                (sect == precbc2->get_section()) &&
-                func(*j, *precbc, *precbc2)) {
-                // Delete the matching (-1*symrec) term
-                i->release();
-                break;  // stop looking for matching symrec term
-            }
-        }
-    }
-
-    // Clean up any deleted (NONE) terms
-    Expr::Terms::iterator erasefrom =
-        std::remove_if(terms.begin(), terms.end(),
-                       BIND::bind(&Expr::Term::is_type, _1, Expr::NONE));
-    terms.erase(erasefrom, terms.end());
-    Expr::Terms(terms).swap(terms);   // trim capacity
-}
-
-static inline bool
-calc_bc_dist_cb(Expr::Term& term, Bytecode& precbc, Bytecode& precbc2)
-{
-    std::auto_ptr<IntNum> dist(new IntNum());
-    if (!calc_bc_dist(precbc, precbc2, *(dist.get())))
-        return false;
-    // Change the term to an integer
-    term = dist;
-    return true;
-}
-
-void
-xform_calc_bc_dist(Expr* e)
-{
-    xform_bc_dist_base(e, &calc_bc_dist_cb);
-}
-
-static inline bool
-subst_bc_dist_cb(Expr::Term& term, Bytecode& precbc, Bytecode& precbc2,
-                 unsigned int& subst,
-                 FUNCTION::function<void (unsigned int subst,
-                                          Bytecode& precbc,
-                                          Bytecode& precbc2)> func)
-{
-    // Call higher-level callback
-    func(subst, precbc, precbc2);
-    // Change the term to an subst
-    term = Expr::Term(Expr::Term::Subst(subst));
-    subst++;
-    return true;
-}
-
-static inline void
-xform_subst_bc_dist(Expr* e, unsigned int& subst,
-                    FUNCTION::function<void (unsigned int subst,
-                                             Bytecode& precbc,
-                                             Bytecode& precbc2)> func)
-{
-    xform_bc_dist_base(e, BIND::bind(&subst_bc_dist_cb, _1, _2, _3,
-                                     REF::ref(subst), func));
-}
-
-int
-subst_bc_dist(Expr* e, FUNCTION::function<void (unsigned int subst,
-                                                Bytecode& precbc,
-                                                Bytecode& precbc2)> func)
-{
-    unsigned int subst = 0;
-    e->level_tree(true, true, true,
-                  BIND::bind(&xform_subst_bc_dist, _1, REF::ref(subst), func));
-    return subst;
-}
-
 
 } // namespace yasm
