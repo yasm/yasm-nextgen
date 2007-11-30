@@ -169,7 +169,7 @@ X86General::put(std::ostream& os, int indent_level) const
 }
 
 void
-X86General::finalize(Bytecode& bc, Bytecode& prev_bc)
+X86General::finalize(Bytecode& bc)
 {
 }
 
@@ -215,7 +215,7 @@ X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 
         // Handle signext_imm8 postop special-casing
         if (m_postop == POSTOP_SIGNEXT_IMM8) {
-            /*@null@*/ std::auto_ptr<IntNum> num = m_imm->get_intnum(NULL, 0);
+            /*@null@*/ std::auto_ptr<IntNum> num = m_imm->get_intnum(false);
 
             if (!num.get()) {
                 // Unknown; default to byte form and set as critical

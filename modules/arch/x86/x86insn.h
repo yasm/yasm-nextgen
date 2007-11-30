@@ -55,19 +55,16 @@ public:
     X86Insn* clone() const;
 
 protected:
-    void do_finalize(Bytecode& bc, Bytecode& prev_bc);
+    void do_finalize(Bytecode& bc);
 
 private:
-    void finalize_jmpfar(Bytecode& bc, Bytecode& prev_bc,
-                         const X86InsnInfo& info);
+    void finalize_jmpfar(Bytecode& bc, const X86InsnInfo& info);
 
     bool match_jmp_info(const X86InsnInfo& info, unsigned int opersize,
                         X86Opcode& shortop, X86Opcode& nearop) const;
-    void finalize_jmp(Bytecode& bc, Bytecode& prev_bc,
-                      const X86InsnInfo& jinfo);
+    void finalize_jmp(Bytecode& bc, const X86InsnInfo& jinfo);
 
-    void finalize_general(Bytecode& bc, Bytecode& prev_bc,
-                          const X86InsnInfo& info,
+    void finalize_general(Bytecode& bc, const X86InsnInfo& info,
                           const unsigned int* size_lookup);
 
     const X86InsnInfo* find_match(const unsigned int* size_lookup, int bypass)

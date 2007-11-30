@@ -242,12 +242,12 @@ Insn::~Insn()
 }
 
 void
-Insn::finalize(Bytecode& bc, Bytecode& prev_bc)
+Insn::finalize(Bytecode& bc)
 {
     // Simplify the operands' expressions.
     std::for_each(m_operands.begin(), m_operands.end(),
                   MEMFN::mem_fn(&Operand::finalize));
-    do_finalize(bc, prev_bc);
+    do_finalize(bc);
 }
 
 unsigned long

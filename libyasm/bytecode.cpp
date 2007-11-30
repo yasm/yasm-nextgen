@@ -176,13 +176,14 @@ Bytecode::put(std::ostream& os, int indent_level) const
 }
 
 void
-Bytecode::finalize(Bytecode& prev_bc)
+Bytecode::finalize()
 {
-    m_contents->finalize(*this, prev_bc);
+    m_contents->finalize(*this);
     if (m_multiple.get() != 0) {
+        Location loc = {this, 0};
         Value val(0, std::auto_ptr<Expr>(m_multiple->clone()));
 
-        if (val.finalize(&prev_bc))
+        if (val.finalize(loc))
             throw TooComplexError(N_("multiple expression too complex"));
         else if (val.is_relative())
             throw NotAbsoluteError(N_("multiple expression not absolute"));
@@ -198,10 +199,10 @@ Bytecode::finalize(Bytecode& prev_bc)
 }
 
 void
-Bytecode::finalize(Bytecode& prev_bc, Errwarns& errwarns)
+Bytecode::finalize(Errwarns& errwarns)
 {
     try {
-        finalize(prev_bc);
+        finalize();
     } catch (Error& err) {
         errwarns.propagate(m_line, err);
     }
@@ -331,25 +332,24 @@ Bytecode::get_insn() const
 }
 
 unsigned long
-Bytecode::update_offset(unsigned long offset, Bytecode& prev_bc)
+Bytecode::update_offset(unsigned long offset)
 {
     if (m_contents->get_special() == Contents::SPECIAL_OFFSET) {
         // Recalculate/adjust len of offset-based bytecodes here
         long neg_thres = 0;
         long pos_thres = (long)next_offset();
-        expand(1, 0, (long)prev_bc.next_offset(), neg_thres, pos_thres);
+        expand(1, 0, (long)offset, neg_thres, pos_thres);
     }
     m_offset = offset;
     return offset + m_len*m_mult_int;
 }
 
 unsigned long
-Bytecode::update_offset(unsigned long offset, Bytecode& prev_bc,
-                        Errwarns& errwarns)
+Bytecode::update_offset(unsigned long offset, Errwarns& errwarns)
 {
     unsigned long retval;
     try {
-        retval = update_offset(offset, prev_bc);
+        retval = update_offset(offset);
     } catch (Error& err) {
         errwarns.propagate(m_line, err);
         retval = offset + m_len*m_mult_int;

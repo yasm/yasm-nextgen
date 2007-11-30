@@ -47,7 +47,7 @@ public:
     void put(std::ostream& os, int indent_level) const;
 
     /// Finalizes the bytecode after parsing.
-    void finalize(Bytecode& bc, Bytecode& prev_bc);
+    void finalize(Bytecode& bc);
 
     /// Calculates the minimum size of a bytecode.
     unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
@@ -92,7 +92,7 @@ OrgBytecode::put(std::ostream& os, int indent_level) const
 }
 
 void
-OrgBytecode::finalize(Bytecode& bc, Bytecode& prev_bc)
+OrgBytecode::finalize(Bytecode& bc)
 {
 }
 

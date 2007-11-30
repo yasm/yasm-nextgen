@@ -46,7 +46,7 @@ public:
     void put(std::ostream& os, int indent_level) const;
 
     /// Finalizes the bytecode after parsing.
-    void finalize(Bytecode& bc, Bytecode& prev_bc);
+    void finalize(Bytecode& bc);
 
     /// Calculates the minimum size of a bytecode.
     unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
@@ -100,7 +100,7 @@ ReserveBytecode::put(std::ostream& os, int indent_level) const
 }
 
 void
-ReserveBytecode::finalize(Bytecode& bc, Bytecode& prev_bc)
+ReserveBytecode::finalize(Bytecode& bc)
 {
     // multiply reserve expression into multiple
     bc.multiply_multiple(m_numitems);

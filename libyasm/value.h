@@ -107,7 +107,7 @@ public:
 
     /// Get value if absolute or PC-relative section-local relative.
     /// Returns NULL otherwise.
-    /// @param bc           current bytecode (for PC-relative calculation);
+    /// @param loc          current location (for PC-relative calculation);
     /// @param calc_bc_dist if nonzero, calculates bytecode distances in
     ///                     absolute portion of value
     /// @note Adds in value.rel (correctly) if PC-relative and in the same

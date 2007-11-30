@@ -72,9 +72,9 @@ set_rex_from_reg(unsigned char *rex, unsigned char *drex,
 
 void
 X86EffAddr::init(unsigned int spare, unsigned char drex,
-                 bool need_drex, Bytecode* precbc)
+                 bool need_drex, Location loc)
 {
-    if (m_disp.finalize(precbc))
+    if (m_disp.finalize(loc))
         throw TooComplexError(N_("effective address too complex"));
     m_modrm &= 0xC7;                  /* zero spare/reg bits */
     m_modrm |= (spare << 3) & 0x38;   /* plug in provided bits */
@@ -638,7 +638,7 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
     // assume 8 bit and set up for allowing 16 bit later.
     // FIXME: The complex expression equaling zero is probably a rare case,
     // so we ignore it for now.
-    /*@null@*/ std::auto_ptr<IntNum> num = m_disp.get_intnum(0, false);
+    /*@null@*/ std::auto_ptr<IntNum> num = m_disp.get_intnum(false);
     if (num.get() == 0) {
         /* Still has unknown values. */
         m_need_nonzero_len = true;

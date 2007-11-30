@@ -168,19 +168,24 @@ Output::expr_xform(Expr* e)
     for (Expr::Terms::iterator i=e->get_terms().begin(),
          end=e->get_terms().end(); i != end; ++i) {
         Symbol* sym;
-        Bytecode* precbc;
-        Section* sect;
-        std::auto_ptr<IntNum> dist(new IntNum(0));
+        Location loc;
 
         // Transform symrecs or precbcs that reference sections into
         // start expr + intnum(dist).
-        if ((((sym = i->get_sym()) && sym->get_label(precbc)) ||
-             (precbc = i->get_precbc())) &&
-            (sect = precbc->get_section()) &&
-            (calc_bc_dist(sect->bcs_first(), *precbc, *dist))) {
+        if ((sym = i->get_sym()) && sym->get_label(&loc))
+            ;
+        else if (Location* locp = i->get_loc())
+            loc = *locp;
+        else
+            continue;
+
+        Section* sect;
+        IntNum dist;
+        Location first = {&sect->bcs_first(), 0};
+        if ((sect = loc.bc->get_section()) && calc_dist(first, loc, &dist)) {
             const Expr* start = sect->get_start();
             //i->destroy(); // don't need to, as it's a sym or precbc
-            *i = new Expr(start->clone(), Op::ADD, dist, e->get_line());
+            *i = new Expr(start->clone(), Op::ADD, dist.clone(), e->get_line());
         }
     }
 }
@@ -189,24 +194,26 @@ void
 Output::output_value(Value& value, Bytes& bytes, unsigned int destsize,
                      /*@unused@*/ unsigned long offset, Bytecode& bc, int warn)
 {
+    Location curloc = {&bc, 0};
+
     // Binary objects we need to resolve against object, not against section.
     if (value.is_relative()) {
-        Bytecode* precbc;
+        Location loc;
         Section* sect;
         unsigned int rshift = (unsigned int)value.m_rshift;
         Expr::Ptr syme(0);
 
         if (value.m_rel->is_abs()) {
             syme.reset(new Expr(new IntNum(0), bc.get_line()));
-        } else if (value.m_rel->get_label(precbc)
-                   && (sect = precbc->get_section())) {
+        } else if (value.m_rel->get_label(&loc)
+                   && (sect = loc.bc->get_section())) {
             syme.reset(new Expr(value.m_rel, bc.get_line()));
         } else
             goto done;
 
         // Handle PC-relative
         if (value.m_curpos_rel) {
-            Expr::Ptr sube(new Expr(&bc, Op::SUB,
+            Expr::Ptr sube(new Expr(curloc, Op::SUB,
                                     new IntNum(bc.get_len() *
                                                bc.get_multiple(true)),
                                     bc.get_line()));
@@ -231,7 +238,7 @@ done:
 
     // Output
     Arch* arch = m_object.get_arch();
-    if (value.output_basic(bytes, destsize, bc, warn, *arch))
+    if (value.output_basic(bytes, destsize, curloc, warn, *arch))
         return;
 
     // Couldn't output, assume it contains an external reference.
@@ -365,7 +372,8 @@ BinObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
 void
 BinObject::init_new_section(Section* sect, unsigned long line)
 {
-    m_object->get_sym(sect->get_name()).define_label(sect->bcs_first(), line);
+    Location first = {&sect->bcs_first(), 0};
+    m_object->get_sym(sect->get_name()).define_label(first, line);
 }
 
 Section*

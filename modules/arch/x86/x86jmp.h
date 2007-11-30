@@ -46,11 +46,11 @@ public:
     };
 
     X86Jmp(OpcodeSel op_sel, const X86Opcode& shortop, const X86Opcode& nearop,
-           std::auto_ptr<Expr> target, const Bytecode& bc, Bytecode& precbc);
+           std::auto_ptr<Expr> target, Bytecode* bc);
     ~X86Jmp();
 
     void put(std::ostream& os, int indent_level) const;
-    void finalize(Bytecode& bc, Bytecode& prev_bc);
+    void finalize(Bytecode& bc);
     unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
     bool expand(Bytecode& bc, unsigned long& len, int span,
                 long old_val, long new_val,

@@ -88,7 +88,7 @@ public:
 
     /// Finalize the EA displacement and init the spare and drex fields.
     void init(unsigned int spare, unsigned char drex, bool need_drex,
-              Bytecode* precbc);
+              Location loc);
 
     /// Make the EA only a displacement.
     void set_disponly();

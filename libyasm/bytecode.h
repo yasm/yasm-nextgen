@@ -155,8 +155,7 @@ public:
         /// Finalizes the bytecode after parsing.
         /// Called from Bytecode::finalize().
         /// @param bc           bytecode
-        /// @param prev_bc      bytecode directly preceding bc
-        virtual void finalize(Bytecode& bc, Bytecode& prev_bc) = 0;
+        virtual void finalize(Bytecode& bc) = 0;
 
         /// Calculates the minimum size of a bytecode.
         /// Called from Bytecode::calc_len().
@@ -308,10 +307,8 @@ public:
     void put(std::ostream& os, int indent_level) const;
 
     /// Finalize a bytecode after parsing.
-    /// @param prev_bc      bytecode directly preceding bc in a sequence of
-    ///                     bytecodes
-    void finalize(Bytecode& prev_bc);
-    void finalize(Bytecode& prev_bc, Errwarns& errwarns);
+    void finalize();
+    void finalize(Errwarns& errwarns);
 
     /// Get the offset of the bytecode.
     /// @return Offset of the bytecode in bytes.
@@ -420,12 +417,10 @@ public:
     /// @note For offset-based bytecodes, calls expand() to determine new
     ///       length.
     /// @param offset       offset to set this bytecode to
-    /// @param prev_bc      previous bytecode (in section)
     /// @param errwarns     error/warning set
     /// @return Offset of next bytecode.
-    unsigned long update_offset(unsigned long offset, Bytecode& prev_bc);
-    unsigned long update_offset(unsigned long offset, Bytecode& prev_bc,
-                                Errwarns& errwarns);
+    unsigned long update_offset(unsigned long offset);
+    unsigned long update_offset(unsigned long offset, Errwarns& errwarns);
 
     unsigned long get_line() const { return m_line; }
 

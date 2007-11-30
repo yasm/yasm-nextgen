@@ -58,7 +58,7 @@ public:
     void put(std::ostream& os, int indent_level) const;
 
     /// Finalizes the bytecode after parsing.
-    void finalize(Bytecode& bc, Bytecode& prev_bc);
+    void finalize(Bytecode& bc);
 
     /// Calculates the minimum size of a bytecode.
     unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
@@ -125,11 +125,13 @@ IncbinBytecode::put(std::ostream& os, int indent_level) const
 }
 
 void
-IncbinBytecode::finalize(Bytecode& bc, Bytecode& prev_bc)
+IncbinBytecode::finalize(Bytecode& bc)
 {
+    Location loc = {&bc, 0};
+
     if (m_start) {
         Value val(0, Expr::Ptr(m_start->clone()));
-        if (val.finalize(&prev_bc))
+        if (val.finalize(loc))
             throw TooComplexError(N_("start expression too complex"));
         else if (val.is_relative())
             throw NotAbsoluteError(N_("start expression not absolute"));
@@ -138,7 +140,7 @@ IncbinBytecode::finalize(Bytecode& bc, Bytecode& prev_bc)
 
     if (m_maxlen) {
         Value val(0, Expr::Ptr(m_maxlen->clone()));
-        if (val.finalize(&prev_bc))
+        if (val.finalize(loc))
             throw TooComplexError(N_("maximum length expression too complex"));
         else if (val.is_relative())
             throw NotAbsoluteError(

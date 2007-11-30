@@ -42,17 +42,18 @@ namespace yasm { namespace arch { namespace x86 {
 
 X86Jmp::X86Jmp(OpcodeSel op_sel, const X86Opcode& shortop,
                const X86Opcode& nearop, std::auto_ptr<Expr> target,
-               const Bytecode& bc, Bytecode& precbc)
+               Bytecode* bc)
     : m_shortop(shortop),
       m_nearop(nearop),
       m_target(0, target),
       m_op_sel(op_sel)
 {
-    if (m_target.finalize(&precbc))
+    Location loc = {bc, 0};
+    if (m_target.finalize(loc))
         throw TooComplexError(N_("jump target expression too complex"));
     if (m_target.m_seg_of || m_target.m_rshift || m_target.m_curpos_rel)
         throw ValueError(N_("invalid jump target"));
-    m_target.set_curpos_rel(bc, false);
+    m_target.set_curpos_rel(*bc, false);
     m_target.m_jump_target = true;
 }
 
@@ -110,7 +111,7 @@ X86Jmp::put(std::ostream& os, int indent_level) const
 }
 
 void
-X86Jmp::finalize(Bytecode& bc, Bytecode& prev_bc)
+X86Jmp::finalize(Bytecode& bc)
 {
 }
 
@@ -144,10 +145,10 @@ X86Jmp::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
         // put it in as a dependent expression (falling through).
     }
 
-    Bytecode* target_prevbc;
+    Location target_loc;
     if (m_target.m_rel
-        && (!m_target.m_rel->get_label(target_prevbc)
-            || target_prevbc->get_section() != bc.get_section())) {
+        && (!m_target.m_rel->get_label(&target_loc)
+            || target_loc.bc->get_section() != bc.get_section())) {
         // External or out of segment, so we can't check distance.
         // Allowing short jumps depends on the objfmt supporting
         // 8-bit relocs.  While most don't, some might, so allow it here.

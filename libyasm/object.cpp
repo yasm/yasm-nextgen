@@ -46,6 +46,7 @@
 #include "hamt.h"
 #include "interval_tree.h"
 #include "intnum.h"
+#include "location_util.h"
 #include "object_format.h"
 #include "section.h"
 #include "symbol.h"
@@ -347,12 +348,12 @@ public:
     class Term {
     public:
         Term();
-        Term(unsigned int subst, Bytecode* precbc, Bytecode* precbc2,
-             Span* span, long new_val);
+        Term(unsigned int subst, Location loc, Location loc2, Span* span,
+             long new_val);
         ~Term() {}
 
-        Bytecode* m_precbc;
-        Bytecode* m_precbc2;
+        Location m_loc;
+        Location m_loc2;
         Span* m_span;       // span this term is a member of
         long m_cur_val;
         long m_new_val;
@@ -367,7 +368,7 @@ public:
     bool recalc_normal();
 
 private:
-    void add_term(unsigned int subst, Bytecode& precbc, Bytecode& precbc2);
+    void add_term(unsigned int subst, Location loc, Location loc2);
 
     Bytecode& m_bc;
 
@@ -428,19 +429,17 @@ private:
 };
 
 Span::Term::Term()
-    : m_precbc(0),
-      m_precbc2(0),
-      m_span(0),
+    : m_span(0),
       m_cur_val(0),
       m_new_val(0),
       m_subst(0)
 {
 }
 
-Span::Term::Term(unsigned int subst, Bytecode* precbc, Bytecode* precbc2,
-                 Span* span, long new_val)
-    : m_precbc(precbc),
-      m_precbc2(precbc2),
+Span::Term::Term(unsigned int subst, Location loc, Location loc2, Span* span,
+                 long new_val)
+    : m_loc(loc),
+      m_loc2(loc2),
       m_span(span),
       m_cur_val(0),
       m_new_val(new_val),
@@ -475,12 +474,12 @@ void
 Span::add_term(unsigned int subst, Location loc, Location loc2)
 {
     IntNum intn;
-    if (!calc_dist(loc, loc2, intn))
+    if (!calc_dist(loc, loc2, &intn))
         throw InternalError(N_("could not calculate bc distance"));
 
     if (subst >= m_span_terms.size())
         m_span_terms.resize(subst+1);
-    m_span_terms[subst] = Term(subst, &precbc, &precbc2, this, intn.get_int());
+    m_span_terms[subst] = Term(subst, loc, loc2, this, intn.get_int());
 }
 
 void
@@ -498,10 +497,10 @@ Span::create_terms(Optimize* optimize)
 
                 // Check for circular references
                 if (m_id <= 0 &&
-                    ((m_bc.get_index() > i->m_precbc->get_index() &&
-                      m_bc.get_index() <= i->m_precbc2->get_index()) ||
-                     (m_bc.get_index() > i->m_precbc2->get_index() &&
-                      m_bc.get_index() <= i->m_precbc->get_index())))
+                    ((m_bc.get_index() > i->m_loc.bc->get_index()-1 &&
+                      m_bc.get_index() <= i->m_loc2.bc->get_index()-1) ||
+                     (m_bc.get_index() > i->m_loc2.bc->get_index()-1 &&
+                      m_bc.get_index() <= i->m_loc.bc->get_index()-1)))
                     throw ValueError(N_("circular reference detected"));
             }
         }
@@ -509,20 +508,21 @@ Span::create_terms(Optimize* optimize)
 
     // Create term for relative portion of dependent value
     if (m_depval.m_rel) {
-        Bytecode* rel_precbc;
-        bool sym_local = m_depval.m_rel->get_label(rel_precbc);
+        Location zero_loc = {0, 0};
+        Location rel_loc;
+        bool sym_local = m_depval.m_rel->get_label(&rel_loc);
 
         if (m_depval.is_wrt() || m_depval.m_seg_of || m_depval.m_section_rel
             || !sym_local)
             return;     // we can't handle SEG, WRT, or external symbols
-        if (rel_precbc->get_section() != m_bc.get_section())
+        if (rel_loc.bc->get_section() != m_bc.get_section())
             return;     // not in this section
         if (!m_depval.m_curpos_rel)
             return;     // not PC-relative
 
         m_rel_term = optimize->alloc_term();
-        new (m_rel_term) Term(~0U, 0, rel_precbc, this,
-                              rel_precbc->next_offset() - m_bc.get_offset());
+        new (m_rel_term) Term(~0U, zero_loc, rel_loc, this,
+                              rel_loc.get_offset() - m_bc.get_offset());
     }
 }
 
@@ -604,13 +604,13 @@ Optimize::itree_add(Span& span, Span::Term& term)
     unsigned long low, high;
 
     /* Update term length */
-    if (term.m_precbc)
-        precbc_index = term.m_precbc->get_index();
+    if (term.m_loc.bc)
+        precbc_index = term.m_loc.bc->get_index();
     else
         precbc_index = span.m_bc.get_index()-1;
 
-    if (term.m_precbc2)
-        precbc2_index = term.m_precbc2->get_index();
+    if (term.m_loc2.bc)
+        precbc2_index = term.m_loc2.bc->get_index();
     else
         precbc2_index = span.m_bc.get_index()-1;
 
@@ -663,13 +663,13 @@ Optimize::term_expand(IntervalTreeNode<Span::Term*> * node, long len_diff)
         return;
 
     // Update term length
-    if (term->m_precbc)
-        precbc_index = term->m_precbc->get_index();
+    if (term->m_loc.bc)
+        precbc_index = term->m_loc.bc->get_index();
     else
         precbc_index = span->m_bc.get_index()-1;
 
-    if (term->m_precbc2)
-        precbc2_index = term->m_precbc2->get_index();
+    if (term->m_loc2.bc)
+        precbc2_index = term->m_loc2.bc->get_index();
     else
         precbc2_index = span->m_bc.get_index()-1;
 
@@ -745,20 +745,20 @@ Optimize::step_1d()
         for (Span::Terms::iterator term=span->m_span_terms.begin(),
              endterm=span->m_span_terms.end(); term != endterm; ++term) {
             IntNum intn;
-            if (!calc_bc_dist(*(term->m_precbc), *(term->m_precbc2), intn))
+            if (!calc_dist(term->m_loc, term->m_loc2, &intn))
                 throw InternalError(N_("could not calculate bc distance"));
             term->m_cur_val = term->m_new_val;
             term->m_new_val = intn.get_int();
         }
         if (span->m_rel_term) {
             span->m_rel_term->m_cur_val = span->m_rel_term->m_new_val;
-            if (span->m_rel_term->m_precbc2)
+            if (span->m_rel_term->m_loc2.bc)
                 span->m_rel_term->m_new_val =
-                    span->m_rel_term->m_precbc2->next_offset() -
+                    span->m_rel_term->m_loc2.get_offset() -
                     span->m_bc.get_offset();
             else
                 span->m_rel_term->m_new_val = span->m_bc.get_offset() -
-                    span->m_rel_term->m_precbc->next_offset();
+                    span->m_rel_term->m_loc.get_offset();
         }
 
         if (span->recalc_normal()) {

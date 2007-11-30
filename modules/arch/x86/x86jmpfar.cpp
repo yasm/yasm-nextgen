@@ -39,14 +39,15 @@
 namespace yasm { namespace arch { namespace x86 {
 
 X86JmpFar::X86JmpFar(const X86Opcode& opcode, std::auto_ptr<Expr> segment,
-                     std::auto_ptr<Expr> offset, Bytecode& precbc)
+                     std::auto_ptr<Expr> offset, Bytecode* bc)
     : m_opcode(opcode),
       m_segment(16, segment),
       m_offset(0, offset)
 {
-    if (m_segment.finalize(&precbc))
+    Location loc = {bc, 0};
+    if (m_segment.finalize(loc))
         throw TooComplexError(N_("jump target segment too complex"));
-    if (m_offset.finalize(&precbc))
+    if (m_offset.finalize(loc))
         throw TooComplexError(N_("jump target offset too complex"));
 }
 
@@ -67,7 +68,7 @@ X86JmpFar::put(std::ostream& os, int indent_level) const
 }
 
 void
-X86JmpFar::finalize(Bytecode& bc, Bytecode& prev_bc)
+X86JmpFar::finalize(Bytecode& bc)
 {
 }
 

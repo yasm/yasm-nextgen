@@ -56,7 +56,7 @@ public:
     void put(std::ostream& os, int indent_level) const;
 
     /// Finalizes the bytecode after parsing.
-    void finalize(Bytecode& bc, Bytecode& prev_bc);
+    void finalize(Bytecode& bc);
 
     /// Calculates the minimum size of a bytecode.
     unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
@@ -118,7 +118,7 @@ AlignBytecode::put(std::ostream& os, int indent_level) const
 }
 
 void
-AlignBytecode::finalize(Bytecode& bc, Bytecode& prev_bc)
+AlignBytecode::finalize(Bytecode& bc)
 {
     if (!m_boundary->get_intnum())
         throw NotConstantError(N_("align boundary must be a constant"));

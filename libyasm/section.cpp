@@ -36,79 +36,6 @@
 #include "intnum.h"
 
 
-namespace {
-
-using namespace yasm;
-
-class EmptyBytecode : public Bytecode::Contents {
-public:
-    EmptyBytecode() {}
-    ~EmptyBytecode() {}
-
-    void put(std::ostream& os, int indent_level) const;
-
-    void finalize(Bytecode& bc, Bytecode& prev_bc);
-
-    unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
-
-    bool expand(Bytecode& bc, unsigned long& len, int span,
-                long old_val, long new_val,
-                /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres);
-
-    void to_bytes(Bytecode& bc, Bytes& bytes, OutputValueFunc output_value,
-                  OutputRelocFunc output_reloc = 0);
-
-    EmptyBytecode* clone() const;
-
-    static Bytecode* create(unsigned long line)
-    { return new Bytecode(Ptr(new EmptyBytecode()), line); }
-};
-
-void
-EmptyBytecode::put(std::ostream& os, int indent_level) const
-{
-    os << std::setw(indent_level) << "" << "(Empty)\n";
-}
-
-void
-EmptyBytecode::finalize(Bytecode& bc, Bytecode& prev_bc)
-{
-    // do nothing
-}
-
-unsigned long
-EmptyBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
-{
-    return 0;
-}
-
-bool
-EmptyBytecode::expand(Bytecode& bc, unsigned long& len, int span,
-                      long old_val, long new_val,
-                      /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres)
-{
-    // should never expand
-    return Contents::expand(bc, len, span, old_val, new_val, neg_thres,
-                            pos_thres);
-}
-
-void
-EmptyBytecode::to_bytes(Bytecode& bc, Bytes& bytes,
-                        OutputValueFunc output_value,
-                        OutputRelocFunc output_reloc)
-{
-    // should never get converted to bytes
-    Contents::to_bytes(bc, bytes, output_value, output_reloc);
-}
-
-EmptyBytecode*
-EmptyBytecode::clone() const
-{
-    return new EmptyBytecode();
-}
-
-} // anonymous namespace
-
 namespace yasm {
 
 Reloc::Reloc(std::auto_ptr<IntNum> addr, Symbol* sym)
@@ -141,12 +68,6 @@ Section::Section(const std::string& name,
         m_start.reset(start.release());
     else
         m_start.reset(new Expr(new IntNum(0), line));
-
-    // Initialize bytecodes with one empty bytecode (acts as "prior" for
-    // first real bytecode in section to avoid NULL checks.
-    Bytecode* empty = EmptyBytecode::create(line);
-    empty->m_section = this;
-    m_bcs.push_back(empty);
 }
 
 Section::~Section()
@@ -198,9 +119,8 @@ Section::put(std::ostream& os, int indent_level, bool with_bcs) const
 void
 Section::finalize(Errwarns& errwarns)
 {
-    for (bc_iterator bc=m_bcs.begin()+1, end=m_bcs.end(), prevbc=m_bcs.begin();
-         bc != end; ++bc, ++prevbc)
-        bc->finalize(*prevbc, errwarns);
+    for (bc_iterator bc=m_bcs.begin(), end=m_bcs.end(); bc != end; ++bc)
+        bc->finalize(errwarns);
 }
 
 void
@@ -208,9 +128,8 @@ Section::update_bc_offsets(Errwarns& errwarns)
 {
     unsigned long offset = 0;
     m_bcs.front().set_offset(0);
-    for (bc_iterator bc=m_bcs.begin()+1, end=m_bcs.end(), prevbc=m_bcs.begin();
-         bc != end; ++bc, ++prevbc)
-        offset = bc->update_offset(offset, *prevbc, errwarns);
+    for (bc_iterator bc=m_bcs.begin(), end=m_bcs.end(); bc != end; ++bc)
+        offset = bc->update_offset(offset, errwarns);
 }
 
 } // namespace yasm

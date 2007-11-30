@@ -123,7 +123,7 @@ public:
                           size_t shift, int warn) const;
     void intnum_tobytes(const IntNum& intn, Bytes& bytes,
                         size_t destsize, size_t valsize, int shift,
-                        const Bytecode& bc, int warn) const;
+                        Location loc, int warn) const;
 
     std::auto_ptr<EffAddr> ea_create(std::auto_ptr<Expr> e) const;
 

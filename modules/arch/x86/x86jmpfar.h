@@ -41,11 +41,11 @@ namespace yasm { namespace arch { namespace x86 {
 class X86JmpFar : public X86Common {
 public:
     X86JmpFar(const X86Opcode& opcode, std::auto_ptr<Expr> segment,
-              std::auto_ptr<Expr> offset, Bytecode& precbc);
+              std::auto_ptr<Expr> offset, Bytecode* bc);
     ~X86JmpFar();
 
     void put(std::ostream& os, int indent_level) const;
-    void finalize(Bytecode& bc, Bytecode& prev_bc);
+    void finalize(Bytecode& bc);
     unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
     bool expand(Bytecode& bc, unsigned long& len, int span,
                 long old_val, long new_val,

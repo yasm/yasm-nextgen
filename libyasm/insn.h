@@ -233,7 +233,7 @@ public:
 
     /// Finalize the common parts of an instruction.
     /// Calls do_finalize().
-    void finalize(Bytecode& bc, Bytecode& prev_bc);
+    void finalize(Bytecode& bc);
 
     /// Calculates minimum size.  Internal errors when called.
     unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
@@ -256,7 +256,7 @@ protected:
     Insn(const Insn& rhs);
 
     /// Finalize the custom parts of an instruction.
-    virtual void do_finalize(Bytecode& bc, Bytecode& prev_bc) = 0;
+    virtual void do_finalize(Bytecode& bc) = 0;
 
     /// Operands.
     Operands m_operands;

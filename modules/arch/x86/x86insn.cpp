@@ -302,8 +302,7 @@ X86Prefix::put(std::ostream& os) const
 #include "modules/arch/x86/x86insns.cpp"
 
 void
-X86Insn::finalize_jmpfar(Bytecode& bc, Bytecode& prev_bc,
-                         const X86InsnInfo& info)
+X86Insn::finalize_jmpfar(Bytecode& bc, const X86InsnInfo& info)
 {
     Operand& op = m_operands.front();
     std::auto_ptr<Expr> imm = op.release_imm();
@@ -324,7 +323,7 @@ X86Insn::finalize_jmpfar(Bytecode& bc, Bytecode& prev_bc,
 
     std::auto_ptr<X86JmpFar>
         jmpfar(new X86JmpFar(X86Opcode(info.opcode_len, info.opcode),
-                             segment, imm, prev_bc));
+                             segment, imm, &bc));
     jmpfar->m_opersize = info.opersize;
     jmpfar->m_mode_bits = m_mode_bits;
 
@@ -392,8 +391,7 @@ X86Insn::match_jmp_info(const X86InsnInfo& info, unsigned int opersize,
 }
 
 void
-X86Insn::finalize_jmp(Bytecode& bc, Bytecode& prev_bc,
-                      const X86InsnInfo& jinfo)
+X86Insn::finalize_jmp(Bytecode& bc, const X86InsnInfo& jinfo)
 {
     static const unsigned char size_lookup[] = {0, 8, 16, 32, 64, 80, 128, 0};
 
@@ -438,7 +436,7 @@ X86Insn::finalize_jmp(Bytecode& bc, Bytecode& prev_bc,
     }
 
     std::auto_ptr<X86Jmp>
-        jmp(new X86Jmp(op_sel, shortop, nearop, imm, bc, prev_bc));
+        jmp(new X86Jmp(op_sel, shortop, nearop, imm, &bc));
     jmp->m_opersize = jinfo.opersize;
     jmp->m_mode_bits = m_mode_bits;
 
@@ -880,7 +878,7 @@ X86Insn::match_error(const unsigned int* size_lookup) const
 }
 
 void
-X86Insn::do_finalize(Bytecode& bc, Bytecode& prev_bc)
+X86Insn::do_finalize(Bytecode& bc)
 {
     unsigned int size_lookup[] = {0, 8, 16, 32, 64, 80, 128, 0};
     size_lookup[7] = m_mode_bits;
@@ -925,16 +923,16 @@ X86Insn::do_finalize(Bytecode& bc, Bytecode& prev_bc)
         switch (insn_operands[info->operands_index+0].action) {
             case OPA_JmpRel:
                 // Shortcut to JmpRel
-                finalize_jmp(bc, prev_bc, *info);
+                finalize_jmp(bc, *info);
                 return;
             case OPA_JmpFar:
                 // Shortcut to JmpFar
-                finalize_jmpfar(bc, prev_bc, *info);
+                finalize_jmpfar(bc, *info);
                 return;
         }
     }
 
-    finalize_general(bc, prev_bc, *info, size_lookup);
+    finalize_general(bc, *info, size_lookup);
 }
 
 class BuildGeneral {
@@ -948,8 +946,8 @@ public:
     void update_rex();
     void apply_operands(X86Arch::ParserSelect parser,
                         Insn::Operands& operands);
-    void apply_segregs(const Insn::SegRegs& segregs, Bytecode& prev_bc);
-    std::auto_ptr<X86General> finish(Bytecode& prev_bc,
+    void apply_segregs(const Insn::SegRegs& segregs, Bytecode* bc);
+    std::auto_ptr<X86General> finish(Bytecode* bc,
                                      const Insn::Prefixes& prefixes);
 
 private:
@@ -1246,12 +1244,13 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
 }
 
 void
-BuildGeneral::apply_segregs(const Insn::SegRegs& segregs, Bytecode& prev_bc)
+BuildGeneral::apply_segregs(const Insn::SegRegs& segregs, Bytecode* bc)
 {
     X86EffAddr* x86_ea = m_x86_ea.get();
     if (x86_ea) {
+        Location loc = {bc, 0};
         x86_ea->init(m_spare, m_drex,
-                     (m_info.drex_oc0 & NEED_DREX_MASK) != 0, &prev_bc);
+                     (m_info.drex_oc0 & NEED_DREX_MASK) != 0, loc);
         std::for_each(segregs.begin(), segregs.end(),
                       BIND::bind(&X86EffAddr::set_segreg, x86_ea, _1));
     } else if (segregs.size() > 0 && m_special_prefix == 0) {
@@ -1265,13 +1264,14 @@ BuildGeneral::apply_segregs(const Insn::SegRegs& segregs, Bytecode& prev_bc)
 }
 
 std::auto_ptr<X86General>
-BuildGeneral::finish(Bytecode& prev_bc, const Insn::Prefixes& prefixes)
+BuildGeneral::finish(Bytecode* bc, const Insn::Prefixes& prefixes)
 {
     std::auto_ptr<Value> imm_val(0);
 
     if (m_imm.get() != 0) {
         imm_val.reset(new Value(m_im_len, m_imm));
-        if (imm_val->finalize(&prev_bc))
+        Location loc = {bc, 0};
+        if (imm_val->finalize(loc))
             throw TooComplexError(N_("immediate expression too complex"));
         imm_val->m_sign = m_im_sign;
     }
@@ -1291,8 +1291,7 @@ BuildGeneral::finish(Bytecode& prev_bc, const Insn::Prefixes& prefixes)
 }
 
 void
-X86Insn::finalize_general(Bytecode& bc, Bytecode& prev_bc,
-                          const X86InsnInfo& info,
+X86Insn::finalize_general(Bytecode& bc, const X86InsnInfo& info,
                           const unsigned int* size_lookup)
 {
     BuildGeneral buildgen(info, m_mode_bits, size_lookup, m_force_strict,
@@ -1301,11 +1300,11 @@ X86Insn::finalize_general(Bytecode& bc, Bytecode& prev_bc,
     buildgen.apply_modifiers(m_mod_data, bc.get_line());
     buildgen.update_rex();
     buildgen.apply_operands((X86Arch::ParserSelect)m_parser, m_operands);
-    buildgen.apply_segregs(m_segregs, prev_bc);
+    buildgen.apply_segregs(m_segregs, &bc);
 
     // Transform the bytecode
     bc.transform(Bytecode::Contents::Ptr(
-        buildgen.finish(prev_bc, m_prefixes).release()));
+        buildgen.finish(&bc, m_prefixes).release()));
 }
 
 // Static parse data structure for instructions
