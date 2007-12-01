@@ -201,7 +201,7 @@ NasmParser::parse_line()
         return bc;
 
     switch (m_token) {
-        case LINE: /* LINE INTNUM '+' INTNUM FILENAME */
+        case LINE: // LINE INTNUM '+' INTNUM FILENAME
         {
             get_next_token();
 

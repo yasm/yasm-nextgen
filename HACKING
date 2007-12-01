@@ -10,6 +10,7 @@ Prerequisites (what you need):
   * A standards-conforming C++ compiler (e.g. GCC 3.4+)
   * Boost 1.33.1+ (http://www.boost.org/)
   * CMake 2.4+ (http://www.cmake.org/)
+  * re2c (http://re2c.sourceforge.net/)
 
 Also recommended (for development):
 
