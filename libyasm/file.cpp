@@ -41,10 +41,20 @@
 #include <string>
 #include <vector>
 
-#include <boost/lambda/lambda.hpp>
-
 #include "errwarn.h"
 
+
+namespace {
+
+class AdjacantChar {
+public:
+    AdjacantChar(char c) : m_c(c) {}
+    bool operator() (char l, char r) { return l == m_c && r == m_c; }
+private:
+    char m_c;
+};
+
+} // anonymous namespace
 
 namespace yasm {
 
@@ -170,9 +180,6 @@ unescape(const std::string& str)
 std::string
 splitpath_unix(const std::string& path, /*@out@*/ std::string& tail)
 {
-    using boost::lambda::_1;
-    using boost::lambda::_2;
-
     std::string::size_type found = path.rfind('/');
     if (found == std::string::npos) {
         // No head
@@ -196,7 +203,7 @@ splitpath_unix(const std::string& path, /*@out@*/ std::string& tail)
 
     // Combine any double slashes
     std::string::iterator end =
-        std::unique(head.begin(), head.end(), _1 == '/' && _2 == '/');
+        std::unique(head.begin(), head.end(), AdjacantChar('/'));
     head.erase(end, head.end());
 
     return head;
@@ -205,9 +212,6 @@ splitpath_unix(const std::string& path, /*@out@*/ std::string& tail)
 std::string
 splitpath_win(const std::string& path, /*@out@*/ std::string& tail)
 {
-    using boost::lambda::_1;
-    using boost::lambda::_2;
-
     std::string::size_type found = path.find_last_of("/\\");
     if (found == std::string::npos) {
         // look for drive letter
@@ -244,7 +248,7 @@ splitpath_win(const std::string& path, /*@out@*/ std::string& tail)
 
     // Combine any double slashes
     std::string::iterator end =
-        std::unique(head.begin(), head.end(), _1 == '\\' && _2 == '\\');
+        std::unique(head.begin(), head.end(), AdjacantChar('\\'));
     head.erase(end, head.end());
 
     return head;
@@ -286,14 +290,11 @@ abspath_win(const std::string& path)
 std::string
 combpath_unix(const std::string& from, const std::string& to)
 {
-    using boost::lambda::_1;
-    using boost::lambda::_2;
-
     if (to[0] == '/') {
         // absolute "to"; combine any double slashes
         std::string out = to;
         std::string::iterator end =
-            std::unique(out.begin(), out.end(), _1 == '/' && _2 == '/');
+            std::unique(out.begin(), out.end(), AdjacantChar('/'));
         out.erase(end, out.end());
         return out;
     }
@@ -352,7 +353,7 @@ combpath_unix(const std::string& from, const std::string& to)
 
     // Combine any double slashes before returning
     std::string::iterator end =
-        std::unique(out.begin(), out.end(), _1 == '/' && _2 == '/');
+        std::unique(out.begin(), out.end(), AdjacantChar('/'));
     out.erase(end, out.end());
 
     return out;
@@ -361,9 +362,6 @@ combpath_unix(const std::string& from, const std::string& to)
 std::string
 combpath_win(const std::string& from, const std::string& to)
 {
-    using boost::lambda::_1;
-    using boost::lambda::_2;
-
     if ((to.length() >= 2 && std::isalpha(to[0]) && to[1] == ':') ||
         to[0] == '/' || to[0] == '\\') {
         // absolute or drive letter "to"
@@ -374,7 +372,7 @@ combpath_win(const std::string& from, const std::string& to)
 
         // combine any double slashes
         std::string::iterator end =
-            std::unique(out.begin(), out.end(), _1 == '\\' && _2 == '\\');
+            std::unique(out.begin(), out.end(), AdjacantChar('\\'));
         out.erase(end, out.end());
 
         return out;
@@ -443,7 +441,7 @@ combpath_win(const std::string& from, const std::string& to)
 
     // Combine any double slashes
     std::string::iterator end =
-        std::unique(out.begin(), out.end(), _1 == '\\' && _2 == '\\');
+        std::unique(out.begin(), out.end(), AdjacantChar('\\'));
     out.erase(end, out.end());
 
     return out;
