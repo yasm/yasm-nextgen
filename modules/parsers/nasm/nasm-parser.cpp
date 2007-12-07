@@ -60,11 +60,11 @@ NasmParser::get_keyword() const
 }
 
 void
-NasmParser::parse(Object& object, std::istream& is, bool save_input,
+NasmParser::parse(Object& object, Preprocessor& preproc, bool save_input,
                   Linemap& linemap, Errwarns& errwarns)
 {
     m_object = &object;
-    m_is = &is;
+    m_preproc = &preproc;
     m_linemap = &linemap;
     m_errwarns = &errwarns;
     m_arch = object.get_arch();
@@ -75,7 +75,6 @@ NasmParser::parse(Object& object, std::istream& is, bool save_input,
     m_prev_bc = &(m_object->get_cur_section()->bcs_first());
 
     m_save_input = save_input;
-    m_save_last = false;
 
     m_peek_token = NONE;
 

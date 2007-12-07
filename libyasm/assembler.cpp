@@ -292,8 +292,7 @@ Assembler::Impl::assemble(std::istream& is, const std::string& src_filename,
     m_preproc->init(is, src_filename, m_linemap, m_errwarns);
 
     // Parse!
-    m_parser->parse(*m_object, m_preproc->get_stream(),
-                    m_listfmt.get() != 0, m_linemap,
+    m_parser->parse(*m_object, *m_preproc, m_listfmt.get() != 0, m_linemap,
                     m_errwarns);
 
     if (m_errwarns.num_errors(warning_error) > 0)

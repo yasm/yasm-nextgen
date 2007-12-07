@@ -23,20 +23,16 @@ main()
     Errwarns errwarns;
     preproc->init(iss, "<string>", linemap, errwarns);
 
-    std::istream& ppstream = preproc->get_stream();
-
-    if (ppstream.eof())
-        return EXIT_FAILURE;
-
     std::string outstr;
-    getline(ppstream, outstr);
+    if (!preproc->get_line(outstr))
+        return EXIT_FAILURE;
 
     std::cout << outstr << std::endl;
 
     if (outstr != instr)
         return EXIT_FAILURE;
 
-    if (!ppstream.eof())
+    if (preproc->get_line(outstr))
         return EXIT_FAILURE;
 
     return EXIT_SUCCESS;

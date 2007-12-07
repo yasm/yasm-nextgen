@@ -26,6 +26,8 @@
 //
 #include "util.h"
 
+#include <istream>
+
 #include <libyasm/errwarn.h>
 #include <libyasm/factory.h>
 #include <libyasm/linemap.h>
@@ -43,15 +45,10 @@ public:
     std::string get_name() const { return "Disable preprocessing"; }
     std::string get_keyword() const { return "raw"; }
 
-    std::istream& get_stream()
-    {
-        return *m_is;
-    }
-
     void init(std::istream& is, const std::string& in_filename,
               Linemap& linemap, Errwarns& errwarns);
 
-    std::size_t input(/*@out@*/ char* buf, std::size_t max_size);
+    bool get_line(/*@out@*/ std::string& line);
 
     std::string get_included_file() { return ""; }
     void add_include_file(const std::string& filename) {}
@@ -74,17 +71,20 @@ RawPreproc::init(std::istream& is, const std::string& in_filename,
     m_errwarns = &errwarns;
 }
 
-std::size_t
-RawPreproc::input(/*@out@*/ char* buf, std::size_t max_size)
+bool
+RawPreproc::get_line(/*@out@*/ std::string& line)
 {
-    std::size_t n = m_is->readsome(buf, max_size);
+    if (m_is->eof())
+        return false;
+
+    std::getline(*m_is, line);
 
     if (m_is->bad()) {
         m_errwarns->propagate(m_linemap->get_current(),
                               IOError(N_("error when reading from file")));
     }
 
-    return n;
+    return true;
 }
 
 registerModule<Preprocessor, RawPreproc> registerRawPreproc("raw");

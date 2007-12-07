@@ -38,6 +38,7 @@
 #include <libyasm/name_value.h>
 #include <libyasm/nocase.h>
 #include <libyasm/object.h>
+#include <libyasm/preproc.h>
 #include <libyasm/section.h>
 #include <libyasm/symbol.h>
 
@@ -49,7 +50,7 @@ namespace yasm { namespace parser { namespace nasm {
 inline bool
 is_eol_tok(int tok)
 {
-    return (tok == '\n') || (tok == 0);
+    return (tok == 0);
 }
 
 void
@@ -132,12 +133,17 @@ void
 NasmParser::do_parse()
 {
     unsigned long cur_line = get_cur_line();
+    std::string line;
 
-    while (get_next_token() != 0) {
+    while (m_preproc->get_line(line)) {
         std::auto_ptr<Bytecode> bc(0);
         Bytecode* temp_bc = 0;
 
         try {
+            m_bot = m_tok = m_ptr = m_cur = &line[0];
+            m_lim = &line[line.length()+1];
+
+            get_next_token();
             if (!is_eol()) {
                 bc = parse_line();
                 demand_eol();
@@ -183,8 +189,7 @@ NasmParser::do_parse()
         }
 
         if (m_save_input && temp_bc)
-            m_linemap->add_source(temp_bc,
-                                  (char *)m_save_line[(int)(!m_save_last)]);
+            m_linemap->add_source(temp_bc, line);
         cur_line = m_linemap->goto_next();
     }
 }

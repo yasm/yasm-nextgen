@@ -50,7 +50,7 @@ class NameValues;
 
 namespace parser { namespace nasm {
 
-#define YYCTYPE unsigned char
+#define YYCTYPE char
 
 #define MAX_SAVED_LINE_LEN  80
 
@@ -118,7 +118,7 @@ public:
     std::vector<std::string> get_preproc_keywords() const;
     std::string get_default_preproc_keyword() const;
 
-    void parse(Object& object, std::istream& is, bool save_input,
+    void parse(Object& object, Preprocessor& preproc, bool save_input,
                Linemap& linemap, Errwarns& errwarns);
 
 private:
@@ -179,7 +179,7 @@ private:
                    const NameValues& objext_namevals);
 
     Object* m_object;
-    std::istream* m_is;
+    Preprocessor* m_preproc;
     Linemap* m_linemap;
     Errwarns* m_errwarns;
 
@@ -192,10 +192,9 @@ private:
     /*@null@*/ Bytecode* m_prev_bc;
 
     bool m_save_input;
-    YYCTYPE m_save_line[2][MAX_SAVED_LINE_LEN];
-    bool m_save_last;
 
-    Scanner m_s;
+    YYCTYPE *m_bot, *m_tok, *m_ptr, *m_cur, *m_lim;
+
     enum State {
         INITIAL,
         DIRECTIVE,

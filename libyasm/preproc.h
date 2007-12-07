@@ -29,14 +29,8 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <cstddef>
-#include <cstring>
-#include <istream>
-#include <memory>
-#include <streambuf>
+#include <iosfwd>
 #include <string>
-
-#include <boost/scoped_ptr.hpp>
 
 #include "module.h"
 
@@ -46,14 +40,12 @@ namespace yasm {
 class Errwarns;
 class Linemap;
 
-class PreprocStreamBuf;
-
 /// Preprocesor interface.
 class Preprocessor : public Module {
 public:
     /// Constructor.
     /// To make preprocessor usable, init() needs to be called.
-    Preprocessor() : m_downstreambuf(0), m_downstream(0) {}
+    Preprocessor() {}
 
     /// Destructor.
     virtual ~Preprocessor() {}
@@ -61,18 +53,6 @@ public:
     /// Get the module type.
     /// @return "Preprocessor".
     std::string get_type() const { return "Preprocessor"; }
-
-    /// Get an input stream for the preprocessed source code.
-    /// @return Input stream.
-    virtual std::istream& get_stream()
-    {
-        if (m_downstream.get() != 0)
-            return *m_downstream;
-
-        m_downstreambuf.reset(create_streambuf().release());
-        m_downstream.reset(new std::istream(m_downstreambuf.get()));
-        return *m_downstream;
-    }
 
     /// Initialize preprocessor.
     /// The preprocessor needs access to the object format to find out
@@ -86,12 +66,10 @@ public:
     virtual void init(std::istream& is, const std::string& in_filename,
                       Linemap& linemap, Errwarns& errwarns) = 0;
 
-    /// Gets more preprocessed source code (up to max_size bytes) into buf.
-    /// More than a single line may be returned in buf.
-    /// @param buf      destination buffer for preprocessed source
-    /// @param max_size maximum number of bytes that can be returned in buf
-    /// @return Actual number of bytes returned in buf.
-    virtual std::size_t input(/*@out@*/ char* buf, std::size_t max_size) = 0;
+    /// Gets a line of preprocessed source code.
+    /// @param line     destination string for line of preprocessed source
+    /// @return True if line read; false if no more lines.
+    virtual bool get_line(/*@out@*/ std::string& line) = 0;
 
     /// Get the next filename included by the source code.
     /// @return Filename.
@@ -112,85 +90,7 @@ public:
     /// Define a builtin macro, preprocessed before the "standard" macros.
     /// @param macronameval "name=value" string
     virtual void define_builtin(const std::string& macronameval) = 0;
-
-protected:
-    /// Create a streambuf for preprocessed source.
-    /// @return New streambuf.
-    virtual std::auto_ptr<std::streambuf> create_streambuf();
-
-private:
-    /// streambuf for prepreprocessed source
-    boost::scoped_ptr<std::streambuf> m_downstreambuf;
-    /// istream for preprocessed source
-    boost::scoped_ptr<std::istream> m_downstream;
 };
-
-
-/// Preprocessor streambuf adapter
-class PreprocStreamBuf : public std::streambuf {
-public:
-    /// Constructor.
-    PreprocStreamBuf(Preprocessor& preproc)
-        : m_preproc(preproc)
-    {
-        // force underflow()
-        setg(m_buffer+4,    // beginning of putback area
-             m_buffer+4,    // read position
-             m_buffer+4);   // end position
-    }
-
-    /// Destructor.
-    ~PreprocStreamBuf() {}
-
-protected:
-    /// Underflow handler.  Inserts new characters into the buffer.
-    virtual int_type underflow()
-    {
-        // is read position before end of buffer?
-        if (gptr() < egptr())
-            return *gptr();
-
-        // process size of putback area
-        // - use number of characters read
-        // - but at most four
-        std::size_t numPutback = gptr() - eback();
-        if (numPutback > 4)
-            numPutback = 4;
-
-        // copy up to four characters previously read into
-        // the putback buffer (area of first four characters)
-        std::memcpy(m_buffer+(4-numPutback), gptr()-numPutback, numPutback);
-
-        // read new characters
-        std::size_t num = m_preproc.input(m_buffer+4, bufferSize-4);
-        if (num <= 0)
-            return EOF;     // ERROR or EOF
-
-        // reset buffer pointers
-        setg (m_buffer+(4-numPutback),  // beginning of putback area
-              m_buffer+4,               // read position
-              m_buffer+4+num);          // end of buffer
-
-        // return next character
-        return *gptr();
-    }
-
-private:
-    Preprocessor& m_preproc;
-
-    /* data buffer:
-     * - at most, four characters in putback area plus
-     * - at most, six characters in ordinary read buffer
-     */
-    static const size_t bufferSize = 8192+4;    // size of the data buffer
-    char m_buffer[bufferSize];                  // data buffer
-};
-
-inline std::auto_ptr<std::streambuf>
-Preprocessor::create_streambuf()
-{
-    return std::auto_ptr<std::streambuf>(new PreprocStreamBuf(*this));
-}
 
 } // namespace yasm
 
