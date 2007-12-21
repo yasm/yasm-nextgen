@@ -946,6 +946,7 @@ Object::optimize(Errwarns& errwarns)
 
         // Set the offset of the first (empty) bytecode.
         sect->bcs_first().set_index(bc_index++);
+        sect->bcs_first().set_offset(0);
 
         // Iterate through the remainder, if any.
         for (Section::bc_iterator bc=sect->bcs_begin(), bcend=sect->bcs_end();
