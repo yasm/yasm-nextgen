@@ -126,19 +126,19 @@ public:
     /// be defined before it is used.
     /// @param line     virtual line where referenced
     /// @return Symbol (this).
-    Symbol* use(unsigned long line);
+    Symbol& use(unsigned long line);
 
     /// Define as an EQU value.
     /// @param e        EQU value (expression)
     /// @param line     virtual line of EQU
     /// @return Symbol (this).
-    Symbol* define_equ(std::auto_ptr<Expr> e, unsigned long line);
+    Symbol& define_equ(std::auto_ptr<Expr> e, unsigned long line);
 
     /// Define as a label.
     /// @param precbc   bytecode preceding label
     /// @param line     virtual line of label
     /// @return Symbol (this).
-    Symbol* define_label(Bytecode& precbc, unsigned long line);
+    Symbol& define_label(Bytecode& precbc, unsigned long line);
 
     /// Define as a label representing the current assembly position.
     /// This should be used for this purpose instead of define_label()
@@ -147,24 +147,25 @@ public:
     /// @param precbc   bytecode preceding label
     /// @param line     virtual line of label
     /// @return Symbol (this).
-    Symbol* define_curpos(Bytecode& precbc, unsigned long line);
+    Symbol& define_curpos(Bytecode& precbc, unsigned long line);
 
     /// Define a special symbol.  Special symbols have no generic associated
     /// data (such as an expression or precbc).
     /// @param vis      symbol visibility
     /// @return Symbol (this).
-    Symbol* define_special(Symbol::Visibility vis, unsigned long line=0);
+    Symbol& define_special(Symbol::Visibility vis, unsigned long line=0);
 
     /// Declare external visibility.
     /// @note Not all visibility combinations are allowed.
     /// @param vis      visibility
     /// @param line     virtual line of visibility-setting
     /// @return Symbol (this).
-    Symbol* declare(Visibility vis, unsigned long line);
+    Symbol& declare(Visibility vis, unsigned long line);
 
     /// Set object-extended name/values.
     /// @param objext_namevals  object-extended name/values
-    void set_objext_namevals(std::auto_ptr<NameValues> objext_namevals);
+    /// @return Symbol (this).
+    Symbol& set_objext_namevals(std::auto_ptr<NameValues> objext_namevals);
 
     /// Get object-extended name/values, if any, associated with symbol's
     /// declaration.
@@ -174,7 +175,8 @@ public:
 
     /// Set common size of symbol.
     /// @param common_size  common size expression
-    void set_common_size(std::auto_ptr<Expr> common_size);
+    /// @return Symbol (this).
+    Symbol& set_common_size(std::auto_ptr<Expr> common_size);
 
     /// Get common size of symbol, if symbol is declared #COMMON and a
     /// size was set for it.

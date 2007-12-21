@@ -101,9 +101,8 @@ NameValue::get_expr(Object& object, unsigned long line) const
     switch (m_type) {
         case ID:
         {
-            Symbol* sym = object.get_sym(get_id());
-            sym->use(line);
-            return std::auto_ptr<Expr>(new Expr(sym, line));
+            return std::auto_ptr<Expr>(
+                new Expr(object.get_sym(get_id()).use(line), line));
         }
         case EXPR:
             return std::auto_ptr<Expr>(m_expr->clone());

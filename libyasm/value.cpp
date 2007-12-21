@@ -161,7 +161,7 @@ Value::set_curpos_rel(const Bytecode& bc, bool ip_rel)
     // have a relative portion of the value.  If one doesn't exist, point
     // to a custom absolute symbol.
     if (!m_rel)
-        m_rel = bc.get_section()->get_object()->get_abs_sym();
+        m_rel = &bc.get_section()->get_object()->get_abs_sym();
 }
 
 bool

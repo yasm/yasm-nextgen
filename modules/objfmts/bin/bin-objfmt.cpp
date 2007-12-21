@@ -364,7 +364,7 @@ BinObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
 void
 BinObject::init_new_section(Section* sect, unsigned long line)
 {
-    m_object->get_sym(sect->get_name())->define_label(sect->bcs_first(), line);
+    m_object->get_sym(sect->get_name()).define_label(sect->bcs_first(), line);
 }
 
 Section*

@@ -121,13 +121,13 @@ Symbol::~Symbol()
 {
 }
 
-Symbol*
+Symbol&
 Symbol::use(unsigned long line)
 {
     if (m_use_line == 0)
         m_use_line = line;      // set line number of first use
     m_status |= USED;
-    return this;
+    return *this;
 }
 
 void
@@ -150,43 +150,43 @@ Symbol::define(Type type, unsigned long line)
     }
 }
 
-Symbol*
+Symbol&
 Symbol::define_equ(std::auto_ptr<Expr> e, unsigned long line)
 {
     define(EQU, line);
     m_equ.reset(e.release());
     m_status |= VALUED;
-    return this;
+    return *this;
 }
 
-Symbol*
+Symbol&
 Symbol::define_label(Bytecode& precbc, unsigned long line)
 {
     define(LABEL, line);
     m_precbc = &precbc;
     precbc.add_symbol(this);   /// XXX: should we add if not in table?
-    return this;
+    return *this;
 }
 
-Symbol*
+Symbol&
 Symbol::define_curpos(Bytecode& precbc, unsigned long line)
 {
     define(CURPOS, line);
     m_precbc = &precbc;
     // NOT added to bytecode cross-reference table
-    return this;
+    return *this;
 }
 
-Symbol*
+Symbol&
 Symbol::define_special(Visibility vis, unsigned long line)
 {
     define(SPECIAL, line);
     m_status |= VALUED;
     m_visibility = vis;
-    return this;
+    return *this;
 }
 
-Symbol*
+Symbol&
 Symbol::declare(Visibility vis, unsigned long line)
 {
     // Allowable combinations:
@@ -214,7 +214,7 @@ Symbol::declare(Visibility vis, unsigned long line)
                                      m_name));
         throw err;
     }
-    return this;
+    return *this;
 }
 
 void
@@ -268,11 +268,12 @@ Symbol::is_curpos() const
     return (m_type == CURPOS);
 }
 
-void
+Symbol&
 Symbol::set_objext_namevals(std::auto_ptr<NameValues> objext_namevals)
 {
     std::auto_ptr<AssocData> ad(new ObjextNamevals(objext_namevals));
     add_assoc_data(ObjextNamevals::key, ad);
+    return *this;
 }
 
 const NameValues*
@@ -285,11 +286,12 @@ Symbol::get_objext_namevals() const
     return x->get();
 }
 
-void
+Symbol&
 Symbol::set_common_size(std::auto_ptr<Expr> common_size)
 {
     std::auto_ptr<AssocData> ad(new CommonSize(common_size));
     add_assoc_data(CommonSize::key, ad);
+    return *this;
 }
 
 Expr*

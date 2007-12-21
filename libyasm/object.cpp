@@ -148,19 +148,19 @@ Object::find_section(const std::string& name)
     return &(*i);
 }
 
-Symbol*
+Symbol&
 Object::get_abs_sym()
 {
-    Symbol* sym = get_sym("");
+    Symbol& sym = get_sym("");
 
     // If we already defined it, we're done.
-    if (sym->get_status() & Symbol::DEFINED)
+    if (sym.get_status() & Symbol::DEFINED)
         return sym;
 
     // Define it
     std::auto_ptr<Expr> v(new Expr(new IntNum(0)));
-    sym->define_equ(v, 0);
-    sym->use(0);
+    sym.define_equ(v, 0);
+    sym.use(0);
     return sym;
 }
 
@@ -170,17 +170,17 @@ Object::find_sym(const std::string& name)
     return m_impl->sym_map.find(name);
 }
 
-Symbol*
+Symbol&
 Object::get_sym(const std::string& name)
 {
     std::auto_ptr<Symbol> sym(new Symbol(name));
     Symbol* sym2 = m_impl->sym_map.insert(sym.get());
     if (sym2)
-        return sym2;
+        return *sym2;
 
     sym2 = sym.get();
     m_symbols.push_back(sym.release());
-    return sym2;
+    return *sym2;
 }
 
 void

@@ -126,7 +126,7 @@ public:
     /// relocating absolute current-position-relative values.
     /// @see Value::set_curpos_rel().
     /// @return Absolute symbol.
-    Symbol* get_abs_sym();
+    Symbol& get_abs_sym();
 
     /// Find a symbol by name.
     /// @param name         symbol name
@@ -136,7 +136,7 @@ public:
     /// Get (creating if necessary) a symbol by name.
     /// @param name         symbol name
     /// @return Symbol matching name.
-    Symbol* get_sym(const std::string& name);
+    Symbol& get_sym(const std::string& name);
 
     typedef stdx::ptr_vector<Symbol>::iterator symbol_iterator;
     typedef stdx::ptr_vector<Symbol>::const_iterator const_symbol_iterator;

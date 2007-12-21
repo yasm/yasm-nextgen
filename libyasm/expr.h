@@ -85,6 +85,7 @@ public:
         explicit Term(const Subst& subst)
             : m_type(SUBST), m_subst(subst.subst) {}
         Term(Symbol* sym) : m_type(SYM), m_sym(sym) {}
+        Term(Symbol& sym) : m_type(SYM), m_sym(&sym) {}
         Term(Bytecode* bc) : m_type(PRECBC), m_precbc(bc) {}
         Term(Expr* expr) : m_type(EXPR), m_expr(expr) {}
 

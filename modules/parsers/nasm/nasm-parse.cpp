@@ -290,7 +290,7 @@ NasmParser::parse_line()
                     throw SyntaxError(String::compose(
                         N_("expression expected after %1"), "EQU"));
                 }
-                m_object->get_sym(name)->define_equ(e, get_cur_line());
+                m_object->get_sym(name).define_equ(e, get_cur_line());
                 break;
             }
 
@@ -859,7 +859,7 @@ NasmParser::parse_expr6(ExprType type)
             e.reset(new Expr(REG_val));
             break;
         case ID:
-            e.reset(new Expr(m_object->get_sym(ID_val)->use(get_cur_line())));
+            e.reset(new Expr(m_object->get_sym(ID_val).use(get_cur_line())));
             break;
         default:
             return e;
@@ -915,7 +915,7 @@ NasmParser::parse_expr6(ExprType type)
         case ID:
         case SPECIAL_ID:
         case LOCAL_ID:
-            e.reset(new Expr(m_object->get_sym(ID_val)->use(get_cur_line())));
+            e.reset(new Expr(m_object->get_sym(ID_val).use(get_cur_line())));
             break;
         case '$':
             // "$" references the current assembly position
@@ -953,11 +953,11 @@ NasmParser::define_label(const std::string& name, bool local)
     if (!local)
         m_locallabel_base = name;
 
-    Symbol* sym = m_object->get_sym(name);
+    Symbol& sym = m_object->get_sym(name);
     if (m_abspos.get() != 0)
-        sym->define_equ(Expr::Ptr(m_abspos->clone()), get_cur_line());
+        sym.define_equ(Expr::Ptr(m_abspos->clone()), get_cur_line());
     else
-        sym->define_label(*m_prev_bc, get_cur_line());
+        sym.define_label(*m_prev_bc, get_cur_line());
 }
 
 void
