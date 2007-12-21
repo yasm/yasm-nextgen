@@ -677,8 +677,12 @@ Value::put(std::ostream& os, int indent_level) const
 {
     os << std::setw(indent_level) << "" << m_size << "-bit, ";
     os << (m_sign ? "" : "un") << "signed\n";
-    os << std::setw(indent_level) << ""
-       << "Absolute portion=" << *m_abs << '\n';
+    os << std::setw(indent_level) << "" << "Absolute portion=";
+    if (!m_abs)
+        os << "0";
+    else
+        os << *m_abs;
+    os << '\n';
     if (m_rel) {
         os << std::setw(indent_level) << "" << "Relative to=";
         os << (m_seg_of ? "SEG " : "") << m_rel->get_name() << '\n';
