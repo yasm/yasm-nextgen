@@ -67,6 +67,7 @@ public:
     IntervalTreeNode<T>* get_successor(IntervalTreeNode<T>*) const;
     void enumerate(long low, long high,
                    FUNCTION::function<void (IntervalTreeNode<T>*)> callback);
+    void put(std::ostream& os) const;
 #ifdef YASM_INTERVAL_TREE_CHECK_ASSUMPTIONS
     void check_assumptions() const;
 #endif
@@ -595,6 +596,13 @@ IntervalTree<T>::put(std::ostream& os, IntervalTreeNode<T>* x) const
         x->put(os, m_nil, m_root);
         put(os, x->right);
     }
+}
+
+template <typename T>
+void
+IntervalTree<T>::put(std::ostream& os) const
+{
+    put(os, m_root->left);
 }
 
 template <typename T>
