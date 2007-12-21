@@ -46,7 +46,14 @@ public:
     }
 
     void put(std::ostream& os, int indent_level) const;
+
+    virtual unsigned long calc_len(Bytecode& bc,
+                                   Bytecode::AddSpanFunc add_span) = 0;
     unsigned long calc_len() const;
+
+    virtual void to_bytes(Bytecode& bc, Bytes& bytes,
+                          OutputValueFunc output_value,
+                          OutputRelocFunc output_reloc = 0) = 0;
     void to_bytes(Bytes& bytes, const X86SegmentRegister* segreg) const;
 
     unsigned char m_addrsize;       // 0 or =mode_bits => no override
