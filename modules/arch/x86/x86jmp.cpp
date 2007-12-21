@@ -169,7 +169,7 @@ X86Jmp::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
     if (m_op_sel == NONE)
         m_op_sel = SHORT;
     len += m_shortop.get_len() + 1;
-    add_span(bc, 1, m_target, -128+(long)bc.get_len(), 127+(long)bc.get_len());
+    add_span(bc, 1, m_target, -128+len, 127+len);
     return len;
 }
 
