@@ -11,6 +11,7 @@ ADD_LIBRARY(libyasm
     bytecode.cpp
     bytes.cpp
     compose.cpp
+    debug_format.cpp
     directive.cpp
     effaddr.cpp
     errwarn.cpp

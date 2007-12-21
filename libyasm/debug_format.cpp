@@ -1,8 +1,6 @@
-#ifndef YASM_DEBUG_FORMAT_H
-#define YASM_DEBUG_FORMAT_H
 ///
-/// @file libyasm/debug_format.h
-/// @brief YASM debug format interface.
+/// @file libyasm/debug_format.cpp
+/// @brief YASM debug format base implementation.
 ///
 /// @license
 ///  Copyright (C) 2002-2007  Peter Johnson
@@ -29,44 +27,23 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <string>
-
-#include "module.h"
+#include "debug_format.h"
 
 
 namespace yasm {
 
-class Errwarns;
-class Linemap;
-class Object;
+DebugFormat::DebugFormat()
+{
+}
 
-/// Debug format interface.
-class DebugFormat : public Module {
-public:
-    /// Constructor.
-    /// To make debug format truly usable, set_object()
-    /// needs to be called.
-    DebugFormat();
+DebugFormat::~DebugFormat()
+{
+}
 
-    /// Destructor.
-    virtual ~DebugFormat();
-
-    /// Get the module type.
-    /// @return "DebugFormat".
-    std::string get_type() const;
-
-    /// Set associated object.
-    /// @param object       object
-    /// @return False on error (object format cannot handle that object).
-    virtual bool set_object(Object* object) = 0;
-
-    /// Generate debugging information bytecodes.
-    /// @param linemap      virtual/physical line mapping
-    /// @param errwarns     error/warning set
-    /// @note Errors and warnings are stored into errwarns.
-    virtual void generate(Linemap& linemap, Errwarns& errwarns) = 0;
-};
+std::string
+DebugFormat::get_type() const
+{
+    return "DebugFormat";
+}
 
 } // namespace yasm
-
-#endif
