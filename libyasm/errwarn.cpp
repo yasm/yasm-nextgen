@@ -115,9 +115,29 @@ InternalError::InternalError(const std::string& message)
 {
 }
 
+InternalError::~InternalError() throw()
+{
+}
+
+const char*
+InternalError::what() const throw()
+{
+    return m_message.c_str();
+}
+
 Fatal::Fatal(const std::string& message)
     : m_message(gettext_hook(N_("FATAL: ")) + message)
 {
+}
+
+Fatal::~Fatal() throw()
+{
+}
+
+const char*
+Fatal::what() const throw()
+{
+    return m_message.c_str();
 }
 
 Error::Error(const std::string& message)
@@ -127,11 +147,73 @@ Error::Error(const std::string& message)
 {
 }
 
+Error::~Error() throw()
+{
+}
+
 void
 Error::set_xref(unsigned long xrefline, const std::string& message)
 {
     m_xrefline = xrefline;
     m_xrefmsg = message;
+}
+
+const char*
+Error::what() const throw()
+{
+    return m_message.c_str();
+}
+
+ArithmeticError::~ArithmeticError() throw()
+{
+}
+
+OverflowError::~OverflowError() throw()
+{
+}
+
+FloatingPointError::~FloatingPointError() throw()
+{
+}
+
+ZeroDivisionError::~ZeroDivisionError() throw()
+{
+}
+
+AssertionError::~AssertionError() throw()
+{
+}
+
+ValueError::~ValueError() throw()
+{
+}
+
+NotAbsoluteError::~NotAbsoluteError() throw()
+{
+}
+
+TooComplexError::~TooComplexError() throw()
+{
+}
+
+NotConstantError::~NotConstantError() throw()
+{
+}
+
+IOError::~IOError() throw()
+{
+}
+
+TypeError::~TypeError() throw()
+{
+}
+
+SyntaxError::~SyntaxError() throw()
+{
+}
+
+ParseError::~ParseError() throw()
+{
 }
 
 void

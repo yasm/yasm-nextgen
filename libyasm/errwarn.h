@@ -57,10 +57,9 @@ public:
     /// Constructor.
     /// @param message  internal error message
     explicit InternalError(const std::string& message);
-    virtual ~InternalError() throw() {}
+    virtual ~InternalError() throw();
 
-    virtual const char* what() const throw()
-    { return m_message.c_str(); }
+    virtual const char* what() const throw();
 
 private:
     std::string m_message;
@@ -79,10 +78,9 @@ public:
     /// Constructor.
     /// @param message  fatal error message
     explicit Fatal(const std::string& message);
-    virtual ~Fatal() throw() {}
+    virtual ~Fatal() throw();
 
-    virtual const char* what() const throw()
-    { return m_message.c_str(); }
+    virtual const char* what() const throw();
 
 private:
     std::string m_message;
@@ -92,15 +90,14 @@ private:
 class Error : public virtual std::exception {
 public:
     explicit Error(const std::string& message);
-    virtual ~Error() throw() {}
+    virtual ~Error() throw();
 
     /// Set a cross-reference for the error
     /// @param xrefline virtual line to cross-reference to (should not be 0)
     /// @param message  cross-reference message
     void set_xref(unsigned long xrefline, const std::string& message);
 
-    virtual const char* what() const throw()
-    { return m_message.c_str(); }
+    virtual const char* what() const throw();
 
     std::string m_message;
     std::string m_xrefmsg;
@@ -115,72 +112,84 @@ class ArithmeticError : public Error {
 public:
     explicit ArithmeticError(const std::string& message)
         : Error(message) {}
+    ~ArithmeticError() throw();
 };
 /// Arithmetic overflow.
 class OverflowError : public ArithmeticError {
 public:
     explicit OverflowError(const std::string& message)
         : ArithmeticError(message) {}
+    ~OverflowError() throw();
 };
 /// Floating point error.
 class FloatingPointError : public ArithmeticError {
 public:
     explicit FloatingPointError(const std::string& message)
         : ArithmeticError(message) {}
+    ~FloatingPointError() throw();
 };
 /// Divide-by-zero.
 class ZeroDivisionError : public ArithmeticError {
 public:
     explicit ZeroDivisionError(const std::string& message)
         : ArithmeticError(message) {}
+    ~ZeroDivisionError() throw();
 };
 
 /// Assertion error.
 class AssertionError : public Error {
 public:
     explicit AssertionError(const std::string& message) : Error(message) {}
+    ~AssertionError() throw();
 };
 
 /// Value inappropriate (e.g. not in range).
 class ValueError : public Error {
 public:
     explicit ValueError(const std::string& message) : Error(message) {}
+    ~ValueError() throw();
 };
 /// Absolute expression required.
 class NotAbsoluteError : public ValueError {
 public:
     explicit NotAbsoluteError(const std::string& message)
         : ValueError(message) {}
+    ~NotAbsoluteError() throw();
 };
 /// Expression too complex.
 class TooComplexError : public ValueError {
 public:
     explicit TooComplexError(const std::string& message)
         : ValueError(message) {}
+    ~TooComplexError() throw();
 };
 /// Constant expression required.
 class NotConstantError : public ValueError {
 public:
     explicit NotConstantError(const std::string& message)
         : ValueError(message) {}
+    ~NotConstantError() throw();
 };
 
 /// I/O error.
 class IOError : public Error {
 public:
     explicit IOError(const std::string& message) : Error(message) {}
+    ~IOError() throw();
 };
 
 /// Type error.
 class TypeError : public Error {
 public:
     explicit TypeError(const std::string& message) : Error(message) {}
+    ~TypeError() throw();
 };
 
 /// Syntax error.
 class SyntaxError : public Error {
 public:
     explicit SyntaxError(const std::string& message) : Error(message) {}
+    ~SyntaxError() throw();
 };
 /// Parser error.
 class ParseError : public Error {
@@ -188,6 +197,7 @@ public:
     explicit ParseError(const std::string& message)
         : Error(message)
     { m_parse_error = true; }
+    ~ParseError() throw();
 };
 
 /// Unconditionally clear all warning indicators, freeing any associated data.
