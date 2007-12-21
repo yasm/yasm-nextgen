@@ -46,6 +46,8 @@ class Preprocessor;
 /// Parser interface.  The "front end" of the assembler.
 class Parser : public Module {
 public:
+    enum { module_type = 5 };
+
     /// Constructor.
     Parser() {}
 

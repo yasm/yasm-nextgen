@@ -27,7 +27,7 @@
 #include <util.h>
 
 #include <libyasm/debug_format.h>
-#include <libyasm/factory.h>
+#include <libyasm/registry.h>
 
 
 namespace yasm { namespace dbgfmt { namespace null {
@@ -44,7 +44,7 @@ public:
     void generate(Linemap& linemap, Errwarns& errwarns) {}
 };
 
-registerModule<DebugFormat, NullDebug> registerNullDebug("null");
+RegisterModule<DebugFormat, NullDebug> registerNullDebug("null");
 bool static_ref = true;
 
 }}} // namespace yasm::dbgfmt::null

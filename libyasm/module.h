@@ -34,15 +34,6 @@
 #include <boost/noncopyable.hpp>
 
 
-/// Force inclusion of a module statically.
-/// Must be called outside of a namespace or in an anonymous namespace.
-/// To include all modules, #include static_modules.h.
-#define YASM_STATIC_MODULE_REF(type, keyword) \
-    namespace yasm { namespace type { namespace keyword { \
-        extern bool static_ref; \
-        static bool do_static_ref = static_ref; \
-    }}}
-
 namespace yasm {
 
 class Directives;

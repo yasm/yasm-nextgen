@@ -29,9 +29,9 @@
 #include <istream>
 
 #include <libyasm/errwarn.h>
-#include <libyasm/factory.h>
 #include <libyasm/linemap.h>
 #include <libyasm/preproc.h>
+#include <libyasm/registry.h>
 
 namespace yasm {
 namespace preproc {
@@ -87,7 +87,7 @@ RawPreproc::get_line(/*@out@*/ std::string& line)
     return true;
 }
 
-registerModule<Preprocessor, RawPreproc> registerRawPreproc("raw");
+RegisterModule<Preprocessor, RawPreproc> registerRawPreproc("raw");
 bool static_ref = true;
 
 }}} // namespace yasm::preproc::raw

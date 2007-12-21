@@ -43,6 +43,8 @@ class Linemap;
 /// Preprocesor interface.
 class Preprocessor : public Module {
 public:
+    enum { module_type = 6 };
+
     /// Constructor.
     /// To make preprocessor usable, init() needs to be called.
     Preprocessor() {}

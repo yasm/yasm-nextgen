@@ -99,6 +99,8 @@ inline std::ostream& operator<<
 /// Architecture interface.
 class Arch : public Module {
 public:
+    enum { module_type = 1 };
+
     /// Return value for parse_check_insnprefix().
     class InsnPrefix {
     public:

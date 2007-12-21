@@ -45,6 +45,8 @@ class Section;
 /// Object format interface.
 class ObjectFormat : public Module {
 public:
+    enum { module_type = 4 };
+
     /// Constructor.
     /// To make object format truly usable, set_object()
     /// needs to be called.

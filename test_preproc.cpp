@@ -3,7 +3,7 @@
 #include <sstream>
 
 #include <libyasm/errwarn.h>
-#include <libyasm/factory.h>
+#include <libyasm/registry.h>
 #include <libyasm/linemap.h>
 #include <libyasm/preproc.h>
 
@@ -14,9 +14,7 @@ YASM_STATIC_MODULE_REF(preproc, raw)
 int
 main()
 {
-    std::auto_ptr<Preprocessor> preproc =
-        moduleFactory<Preprocessor>::instance().create("raw");
-
+    std::auto_ptr<Preprocessor> preproc = load_module<Preprocessor>("raw");
     std::string instr("test text");
     std::istringstream iss(instr);
     Linemap linemap;

@@ -43,6 +43,8 @@ class Object;
 /// Debug format interface.
 class DebugFormat : public Module {
 public:
+    enum { module_type = 2 };
+
     /// Constructor.
     /// To make debug format truly usable, set_object()
     /// needs to be called.

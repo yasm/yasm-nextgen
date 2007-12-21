@@ -32,12 +32,12 @@
 #include <libyasm/directive.h>
 #include <libyasm/errwarn.h>
 #include <libyasm/expr.h>
-#include <libyasm/factory.h>
 #include <libyasm/floatnum.h>
 #include <libyasm/intnum.h>
 #include <libyasm/object.h>
 #include <libyasm/name_value.h>
 #include <libyasm/nocase.h>
+#include <libyasm/registry.h>
 
 #include "x86effaddr.h"
 #include "x86regtmod.h"
@@ -447,7 +447,7 @@ X86Arch::ea_create(std::auto_ptr<Expr> e) const
     return std::auto_ptr<EffAddr>(new X86EffAddr(*this, e));
 }
 
-registerModule<Arch, X86Arch> registerX86Arch("x86");
+RegisterModule<Arch, X86Arch> registerX86Arch("x86");
 bool static_ref = true;
 
 }}} // namespace yasm::arch::x86

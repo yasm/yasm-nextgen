@@ -27,8 +27,11 @@
 #include "module.h"
 
 
+namespace yasm {
+
 void
-yasm::Module::add_directives(Directives& dirs, const std::string& parser)
+Module::add_directives(Directives& dirs, const std::string& parser)
 {
 }
 
+} // namespace yasm

@@ -34,7 +34,6 @@
 #include "compose.h"
 #include "debug_format.h"
 #include "errwarn.h"
-#include "factory.h"
 #include "file.h"
 #include "linemap.h"
 #include "list_format.h"
@@ -42,6 +41,7 @@
 #include "object_format.h"
 #include "parser.h"
 #include "preproc.h"
+#include "registry.h"
 
 
 namespace yasm {

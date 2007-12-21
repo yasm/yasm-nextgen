@@ -31,12 +31,12 @@
 #include <libyasm/directive.h>
 #include <libyasm/errwarn.h>
 #include <libyasm/expr.h>
-#include <libyasm/factory.h>
 #include <libyasm/intnum.h>
 #include <libyasm/nocase.h>
 #include <libyasm/object.h>
 #include <libyasm/object_format.h>
 #include <libyasm/name_value.h>
+#include <libyasm/registry.h>
 #include <libyasm/section.h>
 #include <libyasm/symbol.h>
 #include <libyasm/value.h>
@@ -490,7 +490,7 @@ BinObject::add_directives(Directives& dirs, const std::string& parser)
              Directives::ARG_REQUIRED);
 }
 
-registerModule<ObjectFormat, BinObject> registerBinObject("bin");
+RegisterModule<ObjectFormat, BinObject> registerBinObject("bin");
 bool static_ref = true;
 
 }}} // namespace yasm::objfmt::bin

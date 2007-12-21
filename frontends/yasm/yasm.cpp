@@ -33,13 +33,17 @@
 #include <libyasm/arch.h>
 #include <libyasm/assembler.h>
 #include <libyasm/compose.h>
+#include <libyasm/debug_format.h>
 #include <libyasm/errwarn.h>
-#include <libyasm/factory.h>
 #include <libyasm/file.h>
 #include <libyasm/linemap.h>
+#include <libyasm/list_format.h>
 #include <libyasm/module.h>
 #include <libyasm/nocase.h>
+#include <libyasm/object_format.h>
+#include <libyasm/parser.h>
 #include <libyasm/preproc.h>
+#include <libyasm/registry.h>
 
 #ifdef HAVE_LIBGEN_H
 #include <libgen.h>
@@ -837,11 +841,10 @@ template <typename T>
 static void
 list_module()
 {
-    yasm::moduleFactory<T>& factory = yasm::moduleFactory<T>::instance();
-    std::vector<std::string> list = factory.getRegisteredClasses();
+    std::vector<std::string> list = yasm::get_modules<T>();
     for (std::vector<std::string>::iterator i=list.begin(), end=list.end();
          i != end; ++i) {
-        std::auto_ptr<yasm::Module> obj = factory.createBase(*i);
+        std::auto_ptr<T> obj = yasm::load_module<T>(*i);
         print_list_keyword_desc(obj->get_name(), *i);
     }
 }

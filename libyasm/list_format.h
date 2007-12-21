@@ -43,6 +43,8 @@ class Linemap;
 /// List format interface.
 class ListFormat : public Module {
 public:
+    enum { module_type = 3 };
+
     /// Constructor.
     ListFormat() {}
 

@@ -31,10 +31,10 @@
 #include <libyasm/arch.h>
 #include <libyasm/directive.h>
 #include <libyasm/expr.h>
-#include <libyasm/factory.h>
+#include <libyasm/nocase.h>
 #include <libyasm/object.h>
 #include <libyasm/section.h>
-#include <libyasm/nocase.h>
+#include <libyasm/registry.h>
 
 
 namespace yasm { namespace parser { namespace nasm {
@@ -119,7 +119,7 @@ NasmParser::add_directives(Directives& dirs, const std::string& parser)
              BIND::bind(&NasmParser::dir_default, this, _1, _2, _3, _4));
 }
 
-registerModule<Parser, NasmParser> registerRawPreproc("nasm");
+RegisterModule<Parser, NasmParser> registerRawPreproc("nasm");
 bool static_ref = true;
 
 }}} // namespace yasm::parser::nasm
