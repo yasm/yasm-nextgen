@@ -32,14 +32,6 @@
 
 namespace yasm {
 
-DebugFormat::DebugFormat()
-{
-}
-
-DebugFormat::~DebugFormat()
-{
-}
-
 std::string
 DebugFormat::get_type() const
 {

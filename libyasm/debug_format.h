@@ -46,10 +46,10 @@ public:
     /// Constructor.
     /// To make debug format truly usable, set_object()
     /// needs to be called.
-    DebugFormat();
+    DebugFormat() {}
 
     /// Destructor.
-    virtual ~DebugFormat();
+    virtual ~DebugFormat() {}
 
     /// Get the module type.
     /// @return "DebugFormat".
