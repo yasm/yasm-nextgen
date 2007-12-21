@@ -227,13 +227,13 @@ private:
     Location m_loc;
 };
 
-inline Symbol*
+inline Symbol&
 Symbol::use(unsigned long line)
 {
     if (m_use_line == 0)
         m_use_line = line;      // set line number of first use
     m_status |= USED;
-    return this;
+    return *this;
 }
 
 inline const Expr*

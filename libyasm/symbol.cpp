@@ -120,15 +120,6 @@ Symbol::~Symbol()
 {
 }
 
-Symbol&
-Symbol::use(unsigned long line)
-{
-    if (m_use_line == 0)
-        m_use_line = line;      // set line number of first use
-    m_status |= USED;
-    return *this;
-}
-
 void
 Symbol::define(Type type, unsigned long line)
 {
@@ -237,24 +228,6 @@ Symbol::get_label(Location* loc) const
         return false;
     *loc = m_loc;
     return true;
-}
-
-bool
-Symbol::is_abs() const
-{
-    return (m_def_line == 0 && m_type == EQU && m_name.length() == 0);
-}
-
-bool
-Symbol::is_special() const
-{
-    return (m_type == SPECIAL);
-}
-
-bool
-Symbol::is_curpos() const
-{
-    return (m_type == CURPOS);
 }
 
 Symbol&
