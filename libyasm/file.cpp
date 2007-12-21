@@ -58,56 +58,6 @@ private:
 
 namespace yasm {
 
-Scanner::Scanner()
-    : bot(0), tok(0), ptr(0), cur(0), lim(0), top(0), eof(0)
-{
-}
-
-Scanner::~Scanner()
-{
-    delete bot;
-}
-
-bool
-Scanner::fill_helper(unsigned char* &cursor,
-                     FUNCTION::function<size_t (unsigned char*, size_t)>
-                        input_func)
-{
-    static const size_t BSIZE = 8192;       // Fill block size
-    bool first = false;
-
-    if (eof)
-        return 0;
-
-    size_t cnt = tok - bot;
-    if (cnt > 0) {
-        std::memmove(bot, tok, (size_t)(lim - tok));
-        tok = bot;
-        ptr -= cnt;
-        cursor -= cnt;
-        lim -= cnt;
-    }
-    if (!bot)
-        first = true;
-    if ((size_t)(top - lim) < BSIZE) {
-        unsigned char *buf = new unsigned char[(size_t)(lim - bot) + BSIZE];
-        std::memcpy(buf, tok, (size_t)(lim - tok));
-        tok = buf;
-        ptr = &buf[ptr - bot];
-        cursor = &buf[cursor - bot];
-        lim = &buf[lim - bot];
-        top = &lim[BSIZE];
-        delete bot;
-        bot = buf;
-    }
-    if ((cnt = input_func(lim, BSIZE)) == 0) {
-        eof = &lim[cnt];
-        *eof++ = '\n';
-    }
-    lim += cnt;
-    return first;
-}
-
 std::string
 unescape(const std::string& str)
 {

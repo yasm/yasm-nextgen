@@ -33,39 +33,8 @@
 #include <string>
 #include <vector>
 
-#include "functional.h"
-
 
 namespace yasm {
-
-/// Re2c scanner state.
-class Scanner {
-public:
-    /// Constructor.
-    Scanner();
-
-    /// Destructor.
-    ~Scanner();
-
-    /// Fill a scanner state structure with data coming from an input
-    /// function.
-    /// @param cursor       Re2c scan cursor
-    /// @param input_func   Input function to read data; takes buffer and
-    ///                     maximum number of bytes, returns number of bytes
-    ///                     read.
-    /// @return True if this was the first time this function was called on
-    ///         this scanner state, false otherwise.
-    bool fill_helper(unsigned char* &cursor,
-        FUNCTION::function<size_t (unsigned char* buf, size_t max)> input_func);
-
-    unsigned char* bot;     ///< Bottom of scan buffer
-    unsigned char* tok;     ///< Start of token
-    unsigned char* ptr;     ///< Scan marker
-    unsigned char* cur;     ///< Cursor (1 past end of token)
-    unsigned char* lim;     ///< Limit of good data
-    unsigned char* top;     ///< Top of scan buffer
-    unsigned char* eof;     ///< End of file
-};
 
 /// Unescape a string with C-style escapes.  Handles b, f, n, r, t, and hex
 /// and octal escapes.

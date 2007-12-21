@@ -31,7 +31,6 @@
 #include <boost/scoped_ptr.hpp>
 
 #include <libyasm/bytecode.h>
-#include <libyasm/file.h>
 #include <libyasm/floatnum.h>
 #include <libyasm/insn.h>
 #include <libyasm/intnum.h>
