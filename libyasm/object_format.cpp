@@ -27,9 +27,19 @@
 #include "object_format.h"
 
 
+namespace yasm {
+
+std::string
+ObjectFormat::get_type() const
+{
+    return "ObjectFormat";
+}
+
 bool
-yasm::ObjectFormat::set_object(Object* object)
+ObjectFormat::set_object(Object* object)
 {
     m_object = object;
     return true;
 }
+
+} // namespace yasm

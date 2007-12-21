@@ -55,7 +55,7 @@ public:
 
     /// Get the module type.
     /// @return "ObjectFormat".
-    std::string get_type() const { return "ObjectFormat"; }
+    std::string get_type() const;
 
     /// Set associated object.
     /// @param object       object
