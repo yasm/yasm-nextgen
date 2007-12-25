@@ -84,7 +84,8 @@ Directives::operator[] (const std::string& name) const
 {
     Impl::DirMap::iterator p = m_impl->m_dirs.find(name);
     if (p == m_impl->m_dirs.end())
-        throw Error(String::compose(N_("unrecognized directive `%1'"), name));
+        throw ValueError(String::compose(N_("unrecognized directive `%1'"),
+                                         name));
 
     return BIND::bind(&Impl::Dir::operator(), REF::ref(p->second),
                       _1, name, _2, _3, _4);
