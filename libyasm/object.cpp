@@ -39,7 +39,6 @@
 
 #include "arch.h"
 #include "bytecode.h"
-#include "compose.h"
 #include "debug_format.h"
 #include "errwarn.h"
 #include "expr.h"
