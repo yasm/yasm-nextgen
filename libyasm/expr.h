@@ -197,7 +197,8 @@ public:
     /// @return Operator.
     Op::Op get_op() const { return m_op; }
 
-    /// Level an entire expression tree.  Also expands EQUs.
+    /// Level an entire expression tree.  Does *not* expand EQUs; use
+    /// expand_equ() in expr_util.h to first expand EQUs.
     /// @param fold_const       enable constant folding if nonzero
     /// @param simplify_ident   simplify identities
     /// @param simplify_reg_mul simplify REG*1 identities
@@ -316,11 +317,6 @@ private:
     void xform_neg();
     void simplify_identity(IntNum* &intn, bool simplify_reg_mul);
     void level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul);
-    void expand_equ(std::vector<const Expr*> &seen);
-    void level(bool fold_const,
-               bool simplify_ident,
-               bool simplify_reg_mul,
-               FUNCTION::function<void (Expr*)> xform_extra);
 };
 
 std::ostream& operator<< (std::ostream& os, const Expr::Term& term);

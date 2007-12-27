@@ -36,6 +36,7 @@
 #include "effaddr.h"
 #include "errwarn.h"
 #include "expr.h"
+#include "expr_util.h"
 
 
 namespace yasm {
@@ -172,8 +173,12 @@ Insn::Operand::finalize()
             // parser are sensitive to the presence of *1, etc, so don't
             // simplify reg*1 identities.
             try {
-                if (m_ea && m_ea->m_disp.get_abs())
-                    m_ea->m_disp.get_abs()->level_tree(true, true, false);
+                if (m_ea) {
+                    if (Expr* abs = m_ea->m_disp.get_abs()) {
+                        expand_equ(abs);
+                        abs->level_tree(true, true, false);
+                    }
+                }
             } catch (Error& err) {
                 // Add a pointer to where it was used
                 err.m_message += " in memory expression";
@@ -182,6 +187,7 @@ Insn::Operand::finalize()
             break;
         case IMM:
             try {
+                expand_equ(m_val);
                 m_val->level_tree(true, true, true);
             } catch (Error& err) {
                 // Add a pointer to where it was used

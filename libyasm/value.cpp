@@ -38,6 +38,7 @@
 #include "compose.h"
 #include "errwarn.h"
 #include "expr.h"
+#include "expr_util.h"
 #include "floatnum.h"
 #include "intnum.h"
 #include "object.h"
@@ -474,6 +475,10 @@ Value::finalize_scan(Expr* e, /*@null@*/ Bytecode* expr_precbc,
 bool
 Value::finalize(Bytecode* precbc)
 {
+    if (!m_abs)
+        return false;
+
+    expand_equ(m_abs);
     m_abs->level_tree(true, true, false);
 
     // Handle trivial (IDENT) cases immediately

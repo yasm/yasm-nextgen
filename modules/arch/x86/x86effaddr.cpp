@@ -33,6 +33,7 @@
 
 #include <libyasm/errwarn.h>
 #include <libyasm/expr.h>
+#include <libyasm/expr_util.h>
 #include <libyasm/intnum.h>
 
 #include "x86arch.h"
@@ -445,6 +446,7 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
     int indexval = 0;
     int indexmult = 0;
 
+    expand_equ(e);
     e->level_tree(true, true, indexreg == 0);
 
     // Check for WRT rip first

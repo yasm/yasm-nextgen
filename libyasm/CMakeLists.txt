@@ -16,6 +16,7 @@ ADD_LIBRARY(libyasm
     effaddr.cpp
     errwarn.cpp
     expr.cpp
+    expr_util.cpp
     file.cpp
     floatnum.cpp
     insn.cpp

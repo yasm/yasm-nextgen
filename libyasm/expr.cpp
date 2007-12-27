@@ -36,7 +36,6 @@
 #include "errwarn.h"
 #include "floatnum.h"
 #include "intnum.h"
-#include "symbol.h"
 
 
 namespace {
@@ -500,42 +499,18 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
 }
 
 void
-Expr::expand_equ(std::vector<const Expr*>& seen)
-{
-    for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i) {
-        // Expand equ's.
-        Symbol* sym;
-        const Expr* equ;
-        if ((sym = i->get_sym()) && (equ = sym->get_equ())) {
-            // Check for circular reference
-            if (std::find(seen.begin(), seen.end(), equ) != seen.end())
-                throw TooComplexError(N_("circular reference detected"));
-
-            Expr* newe = equ->clone();
-            *i = newe;
-
-            // Remember we saw this equ and recurse
-            seen.push_back(equ);
-            newe->expand_equ(seen);
-            seen.pop_back();
-        } else if (Expr* e = i->get_expr())
-            e->expand_equ(seen);    // Recurse
-    }
-}
-
-void
-Expr::level(bool fold_const,
-            bool simplify_ident,
-            bool simplify_reg_mul,
-            FUNCTION::function<void (Expr*)> xform_extra)
+Expr::level_tree(bool fold_const,
+                 bool simplify_ident,
+                 bool simplify_reg_mul,
+                 FUNCTION::function<void (Expr*)> xform_extra)
 {
     xform_neg();
 
     // Recurse into all expr terms first
     for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i) {
         if (Expr* e = i->get_expr())
-            e->level(fold_const, simplify_ident, simplify_reg_mul,
-                     xform_extra);
+            e->level_tree(fold_const, simplify_ident, simplify_reg_mul,
+                          xform_extra);
     }
 
     // Check for SEG of SEG:OFF, if we match, simplify to just the segment
@@ -557,19 +532,8 @@ Expr::level(bool fold_const,
         xform_extra(this);
         // Cleanup recursion pass; zero out callback so we don't
         // infinite loop (come back here again).
-        level(fold_const, simplify_ident, simplify_reg_mul, 0);
+        level_tree(fold_const, simplify_ident, simplify_reg_mul, 0);
     }
-}
-
-void
-Expr::level_tree(bool fold_const,
-                 bool simplify_ident,
-                 bool simplify_reg_mul,
-                 FUNCTION::function<void (Expr*)> xform_extra)
-{
-    std::vector<const Expr*> seen;
-    expand_equ(seen);
-    level(fold_const, simplify_ident, simplify_reg_mul, xform_extra);
 }
 
 void
