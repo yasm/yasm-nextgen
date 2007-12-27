@@ -288,7 +288,7 @@ Bytecode::to_bytes(Bytes& bytes, /*@out@*/ unsigned long& gap,
                 N_("written length does not match optimized length"));
 
         bytes.insert(bytes.end(), lb.begin(), lb.end());
-        lb.empty();
+        lb.clear();
     }
 }
 
