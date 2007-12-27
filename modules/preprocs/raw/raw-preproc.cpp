@@ -29,6 +29,7 @@
 #include <istream>
 
 #include <libyasm/errwarn.h>
+#include <libyasm/errwarns.h>
 #include <libyasm/linemap.h>
 #include <libyasm/preproc.h>
 #include <libyasm/registry.h>

@@ -41,6 +41,7 @@
 #include "bytecode.h"
 #include "debug_format.h"
 #include "errwarn.h"
+#include "errwarns.h"
 #include "expr.h"
 #include "hamt.h"
 #include "interval_tree.h"

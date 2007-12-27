@@ -30,6 +30,7 @@
 #include <libyasm/bytes.h>
 #include <libyasm/directive.h>
 #include <libyasm/errwarn.h>
+#include <libyasm/errwarns.h>
 #include <libyasm/expr.h>
 #include <libyasm/intnum.h>
 #include <libyasm/nocase.h>

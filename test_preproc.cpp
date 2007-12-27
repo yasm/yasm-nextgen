@@ -3,6 +3,7 @@
 #include <sstream>
 
 #include <libyasm/errwarn.h>
+#include <libyasm/errwarns.h>
 #include <libyasm/registry.h>
 #include <libyasm/linemap.h>
 #include <libyasm/preproc.h>

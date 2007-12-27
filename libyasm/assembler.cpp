@@ -34,6 +34,7 @@
 #include "compose.h"
 #include "debug_format.h"
 #include "errwarn.h"
+#include "errwarns.h"
 #include "file.h"
 #include "linemap.h"
 #include "list_format.h"

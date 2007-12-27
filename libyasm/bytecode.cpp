@@ -33,6 +33,7 @@
 
 #include "bytes.h"
 #include "errwarn.h"
+#include "errwarns.h"
 #include "expr.h"
 #include "insn.h"
 #include "intnum.h"

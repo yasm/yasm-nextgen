@@ -35,6 +35,7 @@
 #include <libyasm/compose.h>
 #include <libyasm/debug_format.h>
 #include <libyasm/errwarn.h>
+#include <libyasm/errwarns.h>
 #include <libyasm/file.h>
 #include <libyasm/linemap.h>
 #include <libyasm/list_format.h>

@@ -34,6 +34,7 @@
 #include <libyasm/directive.h>
 #include <libyasm/effaddr.h>
 #include <libyasm/errwarn.h>
+#include <libyasm/errwarns.h>
 #include <libyasm/expr.h>
 #include <libyasm/name_value.h>
 #include <libyasm/nocase.h>

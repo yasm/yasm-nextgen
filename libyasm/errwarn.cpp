@@ -28,10 +28,7 @@
 
 #include "util.h"
 
-#include <algorithm>
 #include <list>
-
-#include "linemap.h"
 
 
 namespace yasm {
@@ -275,114 +272,6 @@ void
 warn_disable_all()
 {
     ErrwarnManager::instance().m_wclass_enabled = 0;
-}
-
-Errwarns::Errwarns()
-    : m_ecount(0),
-      m_wcount(0)
-{
-}
-
-Errwarns::~Errwarns()
-{
-}
-
-Errwarns::Data::Data(unsigned long line, const Error& err)
-    : m_type(ERROR),
-      m_line(line),
-      m_xrefline(err.m_xrefline),
-      m_message(err.m_message),
-      m_xrefmsg(err.m_xrefmsg)
-{
-    if (err.m_parse_error)
-        m_type = PARSERERROR;
-}
-
-Errwarns::Data::Data(unsigned long line, const std::string& wmsg)
-    : m_type(WARNING),
-      m_line(line),
-      m_xrefline(0),
-      m_message(wmsg)
-{
-}
-
-Errwarns::Data::~Data()
-{
-}
-
-void
-Errwarns::propagate(unsigned long line, const Error& err)
-{
-    m_errwarns.push_back(Data(line, err));
-    m_ecount++;
-    propagate(line);    // propagate warnings
-}
-
-void
-Errwarns::propagate(unsigned long line)
-{
-    ErrwarnManager& manager = ErrwarnManager::instance();
-
-    for (ErrwarnManager::Warnings::iterator i=manager.m_warns.begin(),
-         end=manager.m_warns.end(); i != end; ++i) {
-        m_errwarns.push_back(Data(line, i->m_wmsg));
-        m_wcount++;
-    }
-    manager.m_warns.clear();
-}
-
-unsigned int
-Errwarns::num_errors(bool warning_as_error) const
-{
-    if (warning_as_error)
-        return m_ecount+m_wcount;
-    else
-        return m_ecount;
-}
-
-void
-Errwarns::output_all(const Linemap& lm, int warning_as_error,
-                     yasm_print_error_func print_error,
-                     yasm_print_warning_func print_warning)
-{
-    // If we're treating warnings as errors, tell the user about it.
-    if (warning_as_error == 1)
-        print_error("", 0,
-                    gettext_hook(N_("warnings being treated as errors")),
-                    NULL, 0, NULL);
-
-    // Sort the error/warnings in virtual line order before output.
-    std::stable_sort(m_errwarns.begin(), m_errwarns.end());
-
-    // Output error/warnings.
-    for (std::vector<Data>::iterator i=m_errwarns.begin(),
-         end=m_errwarns.end(); i != end; ++i) {
-        // Get the physical location
-        std::string filename, xref_filename;
-        unsigned long line, xref_line;
-        lm.lookup(i->m_line, filename, line);
-
-        // Get the cross-reference physical location
-        if (i->m_xrefline != 0)
-            lm.lookup(i->m_xrefline, xref_filename, xref_line);
-        else {
-            xref_filename = "";
-            xref_line = 0;
-        }
-
-        // Don't output a PARSERERROR if there's another error on the same
-        // line.
-        if (i->m_type == Data::PARSERERROR && i->m_line == (i+1)->m_line
-            && (i+1)->m_type == Data::ERROR)
-            continue;
-
-        // Output error/warning
-        if (i->m_type == Data::ERROR || i->m_type == Data::PARSERERROR)
-            print_error(filename, line, i->m_message, xref_filename,
-                        xref_line, i->m_xrefmsg);
-        else
-            print_warning(filename, line, i->m_message);
-    }
 }
 
 } // namespace yasm

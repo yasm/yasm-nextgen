@@ -31,12 +31,9 @@
 ///
 #include <stdexcept>
 #include <string>
-#include <vector>
 
 
 namespace yasm {
-
-class Linemap;
 
 /// Warning classes (that may be enabled/disabled).
 enum WarnClass {
@@ -230,93 +227,6 @@ void warn_disable(WarnClass wclass);
 
 /// Disable all classes of warnings.
 void warn_disable_all();
-
-class Errwarns {
-public:
-    /// Create an error/warning set for collection of multiple error/warnings.
-    Errwarns();
-
-    /// Destructor.
-    ~Errwarns();
-
-    /// Propagate error exception to an error/warning set.
-    /// Does not print immediately; output_all() outputs
-    /// accumulated errors and warnings.
-    /// Generally multiple errors on the same line will be reported, but
-    /// errors of class #ERROR_PARSE will get overwritten by any other class
-    /// on the same line.
-    /// @param line     virtual line
-    /// @param err      error exception
-    void propagate(unsigned long line, const Error& err);
-
-    /// Propagate warning indicator(s) to an error/warning set.
-    /// Has no effect if no warnings have occurred.
-    /// Does not print immediately; output_all() outputs
-    /// accumulated errors and warnings.
-    /// @param line     virtual line
-    void propagate(unsigned long line);
-
-    /// Get total number of errors logged.
-    /// @param errwarns         error/warning set
-    /// @param warning_as_error if true, warnings are treated as errors.
-    /// @return Number of errors.
-    unsigned int num_errors(bool warning_as_error = false) const;
-
-    /// Print out an error.
-    /// @param fn           filename of source file
-    /// @param line         line number
-    /// @param msg          error message
-    /// @param xref_fn      cross-referenced source filename
-    /// @param xref_line    cross-referenced line number
-    /// @param xref_msg     cross-referenced error message
-    typedef void (*yasm_print_error_func)
-        (const std::string& fn,
-         unsigned long line,
-         const std::string& msg,
-         const std::string& xref_fn,
-         unsigned long xref_line,
-         const std::string& xref_msg);
-
-    /// Print out a warning.
-    /// @param fn   filename of source file
-    /// @param line line number
-    /// @param msg  warning message
-    typedef void (*yasm_print_warning_func)
-        (const std::string& fn, unsigned long line, const std::string& msg);
-
-    /// Outputs error/warning set in sorted order (sorted by line number).
-    /// @param lm               line map (to convert virtual lines into
-    ///                         filename/line pairs)
-    /// @param warning_as_error if non-zero, treat warnings as errors.
-    ///                         if 1, prints a "warnings being treated as errors"
-    ///                         error first.
-    /// @param print_error      function called to print out errors
-    /// @param print_warning    function called to print out warnings
-    void output_all(const Linemap& lm, int warning_as_error,
-                    yasm_print_error_func print_error,
-                    yasm_print_warning_func print_warning);
-
-private:
-    class Data {
-    public:
-        Data(unsigned long line, const Error& err);
-        Data(unsigned long line, const std::string& wmsg);
-        ~Data();
-
-        bool operator< (const Data& other) const
-        { return m_line < other.m_line; }
-
-        enum { ERROR, WARNING, PARSERERROR } m_type;
-
-        unsigned long m_line;
-        unsigned long m_xrefline;
-        std::string m_message;
-        std::string m_xrefmsg;
-    };
-
-    std::vector<Data> m_errwarns;
-    int m_ecount, m_wcount;
-};
 
 /// Convert a possibly unprintable character into a printable string.
 /// Uses standard cat(1) convention for unprintable characters.

@@ -31,6 +31,7 @@
 #include <libyasm/arch.h>
 #include <libyasm/compose.h>
 #include <libyasm/errwarn.h>
+#include <libyasm/errwarns.h>
 #include <libyasm/nocase.h>
 #include <libyasm/object.h>
 

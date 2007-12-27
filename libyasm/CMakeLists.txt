@@ -15,6 +15,7 @@ ADD_LIBRARY(libyasm
     directive.cpp
     effaddr.cpp
     errwarn.cpp
+    errwarns.cpp
     expr.cpp
     expr_util.cpp
     file.cpp
