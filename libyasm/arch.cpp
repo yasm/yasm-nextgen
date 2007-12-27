@@ -33,24 +33,24 @@
 
 namespace yasm {
 
-Arch::InsnPrefix::InsnPrefix(std::auto_ptr<Bytecode> bc)
+Arch::InsnPrefix::InsnPrefix(std::auto_ptr<Insn> insn)
     : m_type(INSN),
-      m_bc(bc.release())
+      m_insn(insn.release())
 {}
 
 Arch::InsnPrefix::~InsnPrefix()
 {
     if (m_type == INSN)
-        delete m_bc;
+        delete m_insn;
 }
 
-std::auto_ptr<Bytecode>
+std::auto_ptr<Insn>
 Arch::InsnPrefix::release_insn()
 {
     if (m_type != INSN)
-        return std::auto_ptr<Bytecode>(0);
+        return std::auto_ptr<Insn>(0);
     m_type = NONE;
-    return std::auto_ptr<Bytecode>(m_bc);
+    return std::auto_ptr<Insn>(m_insn);
 }
 
 } // namespace yasm

@@ -93,6 +93,7 @@ struct yystype {
     std::auto_ptr<IntNum> intn;
     std::auto_ptr<FloatNum> flt;
     std::auto_ptr<Bytecode> bc;
+    std::auto_ptr<Insn> insn;
     union {
         unsigned int int_info;
         const Insn::Prefix* prefix;
@@ -230,7 +231,7 @@ private:
 #define SIZE_OVERRIDE_val       (m_tokval.int_info)
 #define DECLARE_DATA_val        (m_tokval.int_info)
 #define RESERVE_SPACE_val       (m_tokval.int_info)
-#define INSN_val                (m_tokval.bc)
+#define INSN_val                (m_tokval.insn)
 #define PREFIX_val              (m_tokval.prefix)
 #define REG_val                 (m_tokval.reg)
 #define SEGREG_val              (m_tokval.segreg)

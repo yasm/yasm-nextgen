@@ -320,7 +320,7 @@ scan:
                 TOK[TOKLEN] = savech;
                 switch (ip.get_type()) {
                     case Arch::InsnPrefix::INSN:
-                        lvalp->bc = ip.release_insn();
+                        lvalp->insn = ip.release_insn();
                         m_state = INSTRUCTION;
                         RETURN(INSN);
                     case Arch::InsnPrefix::PREFIX:

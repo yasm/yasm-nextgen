@@ -508,9 +508,9 @@ NasmParser::parse_instr()
     switch (m_token) {
         case INSN:
         {
-            Bytecode::Ptr bc(INSN_val);
-            Insn* insn = bc->get_insn();
-            assert(insn != 0);
+            Insn* insn = INSN_val.get();
+            Bytecode::Contents::Ptr contents(INSN_val);
+            Bytecode::Ptr bc(new Bytecode(contents, get_cur_line()));
 
             get_next_token();
             if (is_eol())

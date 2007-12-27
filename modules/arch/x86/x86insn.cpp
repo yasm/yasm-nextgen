@@ -1474,19 +1474,18 @@ X86Arch::parse_check_insnprefix(const char* id, size_t id_len,
             return InsnPrefix();
         }
 
-        std::auto_ptr<Bytecode::Contents>
-            insn(new X86Insn(static_cast<const X86InsnInfo*>(pdata->struc),
-                             m_active_cpu,
-                             pdata->mod_data0,
-                             pdata->mod_data1,
-                             pdata->mod_data2,
-                             pdata->num_info,
-                             m_mode_bits,
-                             pdata->flags,
-                             m_parser,
-                             m_force_strict,
-                             m_default_rel));
-        return std::auto_ptr<Bytecode>(new Bytecode(insn, line));
+        return std::auto_ptr<Insn>(new X86Insn(
+            static_cast<const X86InsnInfo*>(pdata->struc),
+            m_active_cpu,
+            pdata->mod_data0,
+            pdata->mod_data1,
+            pdata->mod_data2,
+            pdata->num_info,
+            m_mode_bits,
+            pdata->flags,
+            m_parser,
+            m_force_strict,
+            m_default_rel));
     } else {
         const X86Prefix* prefix = static_cast<const X86Prefix*>(pdata->struc);
 

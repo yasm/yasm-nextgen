@@ -111,7 +111,7 @@ public:
         };
 
         InsnPrefix() : m_type(NONE) {}
-        InsnPrefix(std::auto_ptr<Bytecode> bc);
+        InsnPrefix(std::auto_ptr<Insn> insn);
         InsnPrefix(const Insn::Prefix* prefix)
             : m_type(PREFIX), m_prefix(prefix) {}
 
@@ -120,14 +120,16 @@ public:
         Type get_type() const { return m_type; }
         bool is_type(Type type) const { return m_type == type; }
 
-        std::auto_ptr<Bytecode> release_insn();
+        std::auto_ptr<Insn> release_insn();
 
+        const Insn* get_insn() const
+        { return (m_type == INSN ? m_insn : 0); }
         const Insn::Prefix* get_prefix() const
         { return (m_type == PREFIX ? m_prefix : 0); }
     private:
         Type m_type;
         union {
-            Bytecode* m_bc;
+            Insn* m_insn;
             const Insn::Prefix* m_prefix;
         };
     };
