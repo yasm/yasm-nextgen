@@ -203,6 +203,16 @@ IncbinBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
     return flen;
 }
 
+bool
+IncbinBytecode::expand(Bytecode& bc, unsigned long& len, int span,
+                       long old_val, long new_val,
+                       /*@out@*/ long& neg_thres,
+                       /*@out@*/ long& pos_thres)
+{
+    return Bytecode::Contents::expand(bc, len, span, old_val, new_val,
+                                      neg_thres, pos_thres);
+}
+
 void
 IncbinBytecode::to_bytes(Bytecode& bc, Bytes& bytes,
                          OutputValueFunc output_value,
@@ -239,6 +249,14 @@ IncbinBytecode::to_bytes(Bytecode& bc, Bytes& bytes,
         throw IOError(String::compose(
             N_("`%1': unable to read %2 bytes from file `%3'"),
             "incbin", bc.get_len(), m_filename));
+}
+
+IncbinBytecode*
+IncbinBytecode::clone() const
+{
+    return new IncbinBytecode(m_filename, m_from, m_includes,
+                              std::auto_ptr<Expr>(m_start->clone()),
+                              std::auto_ptr<Expr>(m_maxlen->clone()));
 }
 
 } // anonymous namespace
