@@ -111,7 +111,7 @@ conv_unprint(int ch)
 }
 
 InternalError::InternalError(const std::string& message)
-    : std::runtime_error(gettext_hook(N_("INTERNAL ERROR: ")) + message)
+    : std::runtime_error(message.c_str())
 {
 }
 
@@ -119,14 +119,8 @@ InternalError::~InternalError() throw()
 {
 }
 
-const char*
-InternalError::what() const throw()
-{
-    return m_message.c_str();
-}
-
 Fatal::Fatal(const std::string& message)
-    : m_message(gettext_hook(N_("FATAL: ")) + message)
+    : m_message(message)
 {
 }
 

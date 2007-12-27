@@ -58,11 +58,6 @@ public:
     /// @param message  internal error message
     explicit InternalError(const std::string& message);
     virtual ~InternalError() throw();
-
-    virtual const char* what() const throw();
-
-private:
-    std::string m_message;
 };
 
 /// Not implemented error.
