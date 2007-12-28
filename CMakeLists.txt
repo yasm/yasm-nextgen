@@ -51,6 +51,7 @@ set (CPACK_SOURCE_IGNORE_FILES
      "\\\\.o$"
      "\\\\.swp$"
      "/objdir.*"
+     "/doc.*"
      )
 #message ("CPACK_SOURCE_IGNORE_FILES = ${CPACK_SOURCE_IGNORE_FILES}")
 INCLUDE(CPack)
