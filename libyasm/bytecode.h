@@ -273,6 +273,10 @@ public:
     /// @param contents     new type-specific data
     void transform(Contents::Ptr contents);
 
+    /// Return if bytecode has contents.
+    /// @return True if bytecode has contents.
+    bool has_contents() const { return m_contents.get() != 0; }
+
     /// Set multiple field of a bytecode.
     /// A bytecode can be repeated a number of times when output.  This
     /// function sets that multiple.
