@@ -114,6 +114,18 @@ Bytecode::Bytecode(std::auto_ptr<Contents> contents, unsigned long line)
 {
 }
 
+Bytecode::Bytecode(unsigned long line)
+    : m_contents(0),
+      m_section(0),
+      m_multiple(0),
+      m_len(0),
+      m_mult_int(1),
+      m_line(line),
+      m_offset(~0UL),   // obviously incorrect / uninitialized value
+      m_index(~0UL)
+{
+}
+
 Bytecode::Bytecode(const Bytecode& oth)
     : m_contents(oth.m_contents->clone()),
       m_section(oth.m_section),

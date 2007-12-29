@@ -92,8 +92,8 @@ struct yystype {
     std::string str;
     std::auto_ptr<IntNum> intn;
     std::auto_ptr<FloatNum> flt;
-    std::auto_ptr<Bytecode> bc;
-    std::auto_ptr<Insn> insn;
+    Bytecode::Ptr bc;
+    Insn::Ptr insn;
     union {
         unsigned int int_info;
         const Insn::Prefix* prefix;
@@ -148,11 +148,11 @@ private:
     void define_label(const std::string& name, bool local);
 
     void do_parse();
-    std::auto_ptr<Bytecode> parse_line();
+    Bytecode::Ptr parse_line();
     bool parse_directive_namevals(/*@out@*/ NameValues& nvs);
-    std::auto_ptr<Bytecode> parse_times();
-    std::auto_ptr<Bytecode> parse_exp();
-    std::auto_ptr<Bytecode> parse_instr();
+    Bytecode::Ptr parse_times();
+    bool parse_exp(Bytecode* bc);
+    Insn* parse_instr(Bytecode* bc);
 
     Insn::Operand parse_operand();
 

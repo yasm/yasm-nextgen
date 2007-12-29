@@ -202,8 +202,8 @@ NasmParser::do_parse()
 Bytecode::Ptr
 NasmParser::parse_line()
 {
-    Bytecode::Ptr bc = parse_exp();
-    if (bc.get() != 0)
+    Bytecode::Ptr bc(new Bytecode(get_cur_line()));
+    if (parse_exp(bc.get()))
         return bc;
 
     switch (m_token) {
@@ -302,8 +302,7 @@ NasmParser::parse_line()
                 get_next_token();
                 return parse_times();
             }
-            bc = parse_exp();
-            if (bc.get() == 0)
+            if (!parse_exp(bc.get()))
                 throw SyntaxError(N_("instruction expected after label"));
             return bc;
         }
@@ -387,19 +386,18 @@ NasmParser::parse_times()
         throw SyntaxError(String::compose(N_("expression expected after %1"),
                                           "TIMES"));
     }
-    Bytecode::Ptr bc = parse_exp();
-    if (bc.get() == 0)
+    Bytecode::Ptr bc(new Bytecode(get_cur_line()));
+    if (!parse_exp(bc.get()))
         throw SyntaxError(N_("instruction expected after TIMES expression"));
     bc->set_multiple(multiple);
     return bc;
 }
 
-Bytecode::Ptr
-NasmParser::parse_exp()
+bool
+NasmParser::parse_exp(Bytecode* bc)
 {
-    Bytecode::Ptr bc = parse_instr();
-    if (bc.get() != 0)
-        return bc;
+    if (parse_instr(bc))
+        return true;
 
     switch (m_token) {
 #if 0
@@ -457,7 +455,8 @@ dv_done:
                 throw SyntaxError(String::compose(
                     N_("expression expected after %1"), "RESx"));
             }
-            return create_reserve(e, size, get_cur_line());
+            bc->transform(create_reserve(e, size));
+            return true;
         }
 #if 0
         case INCBIN:
@@ -500,22 +499,21 @@ incbin_done:
         default:
             break;
     }
-    return Bytecode::Ptr(0);
+    return false;
 }
 
-Bytecode::Ptr
-NasmParser::parse_instr()
+Insn*
+NasmParser::parse_instr(Bytecode* bc)
 {
     switch (m_token) {
         case INSN:
         {
             Insn* insn = INSN_val.get();
-            Bytecode::Contents::Ptr contents(INSN_val);
-            Bytecode::Ptr bc(new Bytecode(contents, get_cur_line()));
-
+            Bytecode::Contents::Ptr insn_ptr(INSN_val);
+            bc->transform(insn_ptr);
             get_next_token();
             if (is_eol())
-                return bc;      // no operands
+                return insn;    // no operands
 
             // parse operands
             for (;;) {
@@ -526,28 +524,28 @@ NasmParser::parse_instr()
                 expect(',');
                 get_next_token();
             }
-            return bc;
+            return insn;
         }
         case PREFIX:
         {
             const Insn::Prefix* prefix = PREFIX_val;
             get_next_token();
-            Bytecode::Ptr bc = parse_instr();
-            if (bc.get() != 0)
-                bc->get_insn()->add_prefix(prefix);
-            return bc;
+            Insn* insn = parse_instr(bc);
+            if (insn)
+                insn->add_prefix(prefix);
+            return insn;
         }
         case SEGREG:
         {
             const SegmentRegister* segreg = SEGREG_val;
             get_next_token();
-            Bytecode::Ptr bc = parse_instr();
-            if (bc.get() != 0)
-                bc->get_insn()->add_seg_prefix(segreg);
-            return bc;
+            Insn* insn = parse_instr(bc);
+            if (insn)
+                insn->add_seg_prefix(segreg);
+            return insn;
         }
         default:
-            return Bytecode::Ptr(0);
+            return 0;
     }
 }
 

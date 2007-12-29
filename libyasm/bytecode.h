@@ -258,8 +258,13 @@ public:
 
     /// Create a bytecode of any specified type.
     /// @param contents     type-specific data
-    /// @param line         virtual line (from yasm_linemap)
+    /// @param line         virtual line (from Linemap)
     Bytecode(Contents::Ptr contents, unsigned long line);
+
+    /// Create a bytecode of no type.
+    /// Caution: the bytecode will be unusable until it is transformed.
+    /// @param line         virtual line (from Linemap)
+    Bytecode(unsigned long line);
 
     Bytecode(const Bytecode& oth);
     Bytecode& operator= (const Bytecode& oth);
@@ -489,10 +494,9 @@ std::auto_ptr<Bytecode> create_leb128
 /// @param numitems     number of reserve "items" (kept, do not free)
 /// @param itemsize     reserved size (in bytes) for each item
 /// @param line         virtual line (from yasm_linemap)
-/// @return Newly allocated bytecode.
-std::auto_ptr<Bytecode> create_reserve
-    (std::auto_ptr<Expr> numitems, unsigned int itemsize,
-     unsigned long line);
+/// @return Newly allocated bytecode contents.
+Bytecode::Contents::Ptr create_reserve
+    (std::auto_ptr<Expr> numitems, unsigned int itemsize);
 
 /// Create a bytecode that includes a binary file verbatim.
 /// @param filename     path to binary file

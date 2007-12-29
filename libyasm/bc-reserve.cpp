@@ -159,12 +159,10 @@ ReserveBytecode::reserve_numitems(unsigned int& itemsize) const
 
 namespace yasm {
 
-std::auto_ptr<Bytecode>
-create_reserve(std::auto_ptr<Expr> numitems, unsigned int itemsize,
-               unsigned long line)
+Bytecode::Contents::Ptr
+create_reserve(std::auto_ptr<Expr> numitems, unsigned int itemsize)
 {
-    Bytecode::Contents::Ptr contents(new ReserveBytecode(numitems, itemsize));
-    return std::auto_ptr<Bytecode>(new Bytecode(contents, line));
+    return Bytecode::Contents::Ptr(new ReserveBytecode(numitems, itemsize));
 }
 
 } // namespace yasm

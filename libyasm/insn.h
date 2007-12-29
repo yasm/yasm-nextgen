@@ -51,6 +51,8 @@ class SegmentRegister;
 /// derive their own implementation from this.
 class Insn : public Bytecode::Contents {
 public:
+    typedef std::auto_ptr<Insn> Ptr;
+
     /// An instruction operand.
     class Operand {
     public:
