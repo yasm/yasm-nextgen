@@ -33,6 +33,8 @@
 #include <string>
 #include <vector>
 
+#include "location.h"
+
 
 namespace yasm {
 
@@ -54,23 +56,22 @@ public:
 
     /// Get bytecode and source line information, if any, for a virtual line.
     /// @param line         virtual line
-    /// @param bc           bytecode (output)
+    /// @param loc          location (output)
     /// @param source       source code line pointer (output)
     /// @return True if source line information available for line, false if
     ///         not.
-    /// @note If source line information is not available, bc is set to 0 and
+    /// @note If source line information is not available, loc is set to 0 and
     ///       source is set to "".
     bool get_source(unsigned long line,
-                    /*@out@*/ /*@null@*/ Bytecode * &bc,
-                    /*@out@*/ /*@null@*/ std::string& source) const;
+                    /*@out@*/ Location& loc,
+                    /*@out@*/ std::string& source) const;
 
-    /// Add bytecode and source line information to the current virtual line.
-    /// @attention Deletes any existing bytecode and source line information for
+    /// Add location and source line information to the current virtual line.
+    /// @attention Deletes any existing location and source line information for
     ///            the current virtual line.
-    /// @param bc           bytecode (if any)
+    /// @param loc          location
     /// @param source       source code line
-    /// @note The source code line pointer is NOT kept, it is strdup'ed.
-    void add_source(/*@null@*/ Bytecode* bc, const std::string& source);
+    void add_source(Location loc, const std::string& source);
 
     /// Go to the next line (increments the current virtual line).
     /// @return The current (new) virtual line.
@@ -146,13 +147,13 @@ private:
     /// Source code line info.
     class Source {
     public:
-        Source() : m_bc(0) {}
-        Source(Bytecode* bc, const std::string& source)
-            : m_bc(bc), m_source(source)
+        Source() {}
+        Source(Location loc, const std::string& source)
+            : m_loc(loc), m_source(source)
         {}
 
-        /// First bytecode on line.  0 if no bytecodes on line.
-        /*@null@*/ /*@dependent@*/ Bytecode* m_bc;
+        /// First location on line.  Loc.bc=0 if no locations on line.
+        Location m_loc;
 
         /// Source code line.
         std::string m_source;

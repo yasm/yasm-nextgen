@@ -255,15 +255,14 @@ public:
         const Contents& operator=(const Contents&);
     };
 
-    /// Create a bytecode of any specified type.
+    /// Create a bytecode of given contents.
     /// @param contents     type-specific data
     /// @param line         virtual line (from Linemap)
     Bytecode(Contents::Ptr contents, unsigned long line);
 
     /// Create a bytecode of no type.
     /// Caution: the bytecode will be unusable until it is transformed.
-    /// @param line         virtual line (from Linemap)
-    Bytecode(unsigned long line);
+    Bytecode();
 
     Bytecode(const Bytecode& oth);
     Bytecode& operator= (const Bytecode& oth);
@@ -275,6 +274,10 @@ public:
     /// Return if bytecode has contents.
     /// @return True if bytecode has contents.
     bool has_contents() const { return m_contents.get() != 0; }
+
+    /// Set line number of bytecode.
+    /// @param line     virtual line (from Linemap)
+    void set_line(unsigned long line) { m_line = line; }
 
     /// Set multiple field of a bytecode.
     /// A bytecode can be repeated a number of times when output.  This
@@ -405,7 +408,11 @@ public:
     ///         for the number of items to reserve.
     /*@null@*/ const Expr* reserve_numitems
         (/*@out@*/ unsigned int& itemsize) const
-    { return m_contents->reserve_numitems(itemsize); }
+    {
+        if (m_contents.get() == 0)
+            return 0;
+        return m_contents->reserve_numitems(itemsize);
+    }
 
     /// Get a #Insn structure from an instruction bytecode (if possible).
     /// @param bc           bytecode
@@ -428,7 +435,11 @@ public:
     void set_index(unsigned long idx) { m_index = idx; }
 
     Contents::SpecialType get_special() const
-    { return m_contents->get_special(); }
+    {
+        if (m_contents.get() == 0)
+            return Contents::SPECIAL_NONE;
+        return m_contents->get_special();
+    }
 
 private:
     /// Implementation-specific data.

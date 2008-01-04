@@ -88,11 +88,11 @@ Linemap::poke(unsigned long file_line)
 }
 
 void
-Linemap::add_source(Bytecode* bc, const std::string& source)
+Linemap::add_source(Location loc, const std::string& source)
 {
     if (m_source.size() < m_current)
         m_source.resize(m_current);
-    m_source[m_current-1] = Source(bc, source);
+    m_source[m_current-1] = Source(loc, source);
 }
 
 bool
@@ -119,16 +119,17 @@ Linemap::lookup(unsigned long line,
 
 bool
 Linemap::get_source(unsigned long line,
-                    Bytecode* &bc,
+                    Location& loc,
                     std::string& source) const
 {
     if (m_source.size() < line) {
-        bc = 0;
+        loc.bc = 0;
+        loc.off = 0;
         source = "";
         return false;
     }
 
-    bc = m_source[line-1].m_bc;
+    loc = m_source[line-1].m_loc;
     source = m_source[line-1].m_source;
 
     return true;

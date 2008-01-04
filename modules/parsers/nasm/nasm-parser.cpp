@@ -72,7 +72,7 @@ NasmParser::parse(Object& object, Preprocessor& preproc, bool save_input,
 
     m_locallabel_base = "";
 
-    m_prev_bc = &(m_object->get_cur_section()->bcs_first());
+    m_bc = 0;
 
     m_save_input = save_input;
 

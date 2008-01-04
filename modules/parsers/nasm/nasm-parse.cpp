@@ -135,10 +135,13 @@ NasmParser::do_parse()
 {
     unsigned long cur_line = get_cur_line();
     std::string line;
+    Bytecode::Ptr bc(new Bytecode());
 
     while (m_preproc->get_line(line)) {
-        std::auto_ptr<Bytecode> bc(0);
-        Bytecode* temp_bc = 0;
+        if (m_abspos.get() != 0)
+            m_bc = bc.get();
+        else
+            m_bc = &m_object->get_cur_section()->bcs_last();
 
         try {
             m_bot = m_tok = m_ptr = m_cur = &line[0];
@@ -146,7 +149,7 @@ NasmParser::do_parse()
 
             get_next_token();
             if (!is_eol()) {
-                bc = parse_line();
+                parse_line();
                 demand_eol();
             }
 
@@ -155,15 +158,15 @@ NasmParser::do_parse()
                 // absolute position rather than appending bytecodes to a
                 // section.  Only RES* are allowed in an absolute section,
                 // so this is easy.
-                if (bc.get() != 0) {
+                if (m_bc->has_contents()) {
                     unsigned int itemsize;
-                    const Expr* numitems = bc->reserve_numitems(itemsize);
+                    const Expr* numitems = m_bc->reserve_numitems(itemsize);
                     if (numitems) {
                         Expr::Ptr e(new Expr(numitems->clone(),
                                              Op::MUL,
                                              new IntNum(itemsize),
                                              cur_line));
-                        const Expr* multiple = bc->get_multiple_expr();
+                        const Expr* multiple = m_bc->get_multiple_expr();
                         if (multiple)
                             e.reset(new Expr(e.release(),
                                              Op::MUL,
@@ -176,21 +179,21 @@ NasmParser::do_parse()
                     } else
                         throw SyntaxError(
                             N_("only RES* allowed within absolute section"));
+                    bc.reset(new Bytecode());
                 }
-            } else {
-                temp_bc = bc.get();
-                m_object->get_cur_section()->append_bytecode(bc);
-                if (temp_bc)
-                    m_prev_bc = temp_bc;
+            } else if (m_bc->has_contents()) {
+                m_bc->set_line(cur_line);
+                m_object->get_cur_section()->start_bytecode();
+            }
+
+            if (m_save_input) {
+                Location loc = {m_bc, 0};
+                m_linemap->add_source(loc, line);
             }
         } catch (Error& err) {
             m_errwarns->propagate(cur_line, err);
-            bc.reset(0);
-            temp_bc = 0;
         }
 
-        if (m_save_input && temp_bc)
-            m_linemap->add_source(temp_bc, line);
         cur_line = m_linemap->goto_next();
     }
 }
@@ -199,12 +202,11 @@ NasmParser::do_parse()
 // token.  They should return with m_token being the token *after* their
 // information.
 
-Bytecode::Ptr
+void
 NasmParser::parse_line()
 {
-    Bytecode::Ptr bc(new Bytecode(get_cur_line()));
-    if (parse_exp(bc.get()))
-        return bc;
+    if (parse_exp())
+        return;
 
     switch (m_token) {
         case LINE: // LINE INTNUM '+' INTNUM FILENAME
@@ -263,7 +265,8 @@ NasmParser::parse_line()
         }
         case TIMES: // TIMES expr exp
             get_next_token();
-            return parse_times();
+            parse_times();
+            return;
         case ID:
         case SPECIAL_ID:
         case LOCAL_ID:
@@ -302,16 +305,14 @@ NasmParser::parse_line()
                 get_next_token();
                 return parse_times();
             }
-            if (!parse_exp(bc.get()))
+            if (!parse_exp())
                 throw SyntaxError(N_("instruction expected after label"));
-            return bc;
+            return;
         }
         default:
             throw SyntaxError(
                 N_("label or instruction expected at start of line"));
     }
-
-    return Bytecode::Ptr(0);
 }
 
 bool
@@ -378,7 +379,7 @@ next:
     }
 }
 
-Bytecode::Ptr
+void
 NasmParser::parse_times()
 {
     Expr::Ptr multiple = parse_expr(DV_EXPR);
@@ -386,17 +387,15 @@ NasmParser::parse_times()
         throw SyntaxError(String::compose(N_("expression expected after %1"),
                                           "TIMES"));
     }
-    Bytecode::Ptr bc(new Bytecode(get_cur_line()));
-    if (!parse_exp(bc.get()))
+    if (!parse_exp())
         throw SyntaxError(N_("instruction expected after TIMES expression"));
-    bc->set_multiple(multiple);
-    return bc;
+    m_bc->set_multiple(multiple);
 }
 
 bool
-NasmParser::parse_exp(Bytecode* bc)
+NasmParser::parse_exp()
 {
-    if (parse_instr(bc))
+    if (parse_instr())
         return true;
 
     switch (m_token) {
@@ -455,7 +454,7 @@ dv_done:
                 throw SyntaxError(String::compose(
                     N_("expression expected after %1"), "RESx"));
             }
-            bc->transform(create_reserve(e, size));
+            m_bc->transform(create_reserve(e, size));
             return true;
         }
 #if 0
@@ -503,14 +502,14 @@ incbin_done:
 }
 
 Insn*
-NasmParser::parse_instr(Bytecode* bc)
+NasmParser::parse_instr()
 {
     switch (m_token) {
         case INSN:
         {
             Insn* insn = INSN_val.get();
             Bytecode::Contents::Ptr insn_ptr(INSN_val);
-            bc->transform(insn_ptr);
+            m_bc->transform(insn_ptr);
             get_next_token();
             if (is_eol())
                 return insn;    // no operands
@@ -530,7 +529,7 @@ NasmParser::parse_instr(Bytecode* bc)
         {
             const Insn::Prefix* prefix = PREFIX_val;
             get_next_token();
-            Insn* insn = parse_instr(bc);
+            Insn* insn = parse_instr();
             if (insn)
                 insn->add_prefix(prefix);
             return insn;
@@ -539,7 +538,7 @@ NasmParser::parse_instr(Bytecode* bc)
         {
             const SegmentRegister* segreg = SEGREG_val;
             get_next_token();
-            Insn* insn = parse_instr(bc);
+            Insn* insn = parse_instr();
             if (insn)
                 insn->add_seg_prefix(segreg);
             return insn;
@@ -922,7 +921,8 @@ NasmParser::parse_expr6(ExprType type)
                 e.reset(m_abspos->clone());
             else {
                 std::auto_ptr<Symbol> sym(new Symbol("$"));
-                sym->define_curpos(*m_prev_bc, get_cur_line());
+                Location loc = {m_bc, 0};
+                sym->define_curpos(loc, get_cur_line());
                 e.reset(new Expr(sym.get()));
                 m_object->add_non_table_symbol(sym);
             }
@@ -933,8 +933,8 @@ NasmParser::parse_expr6(ExprType type)
                 e.reset(m_absstart->clone());
             else {
                 std::auto_ptr<Symbol> sym(new Symbol("$$"));
-                sym->define_label(m_object->get_cur_section()->bcs_first(),
-                                  get_cur_line());
+                Location loc = {&m_object->get_cur_section()->bcs_first(), 0};
+                sym->define_label(loc, get_cur_line());
                 e.reset(new Expr(sym.get()));
                 m_object->add_non_table_symbol(sym);
             }
@@ -955,8 +955,10 @@ NasmParser::define_label(const std::string& name, bool local)
     Symbol& sym = m_object->get_sym(name);
     if (m_abspos.get() != 0)
         sym.define_equ(Expr::Ptr(m_abspos->clone()), get_cur_line());
-    else
-        sym.define_label(*m_prev_bc, get_cur_line());
+    else {
+        Location loc = {m_bc, 0};
+        sym.define_label(loc, get_cur_line());
+    }
 }
 
 void
@@ -966,7 +968,6 @@ NasmParser::dir_absolute(Object& object, const NameValues& namevals,
     m_absstart.reset(namevals.front().get_expr(object, line).release());
     m_abspos.reset(m_absstart->clone());
     object.set_cur_section(0);
-    m_prev_bc = 0;
 }
 
 void
@@ -1046,12 +1047,6 @@ NasmParser::directive(const std::string& name,
         // We switched to a new section.  Get out of absolute section mode.
         m_absstart.reset(0);
         m_abspos.reset(0);
-    }
-
-    if (cursect) {
-        // In case cursect changed or a bytecode was added, update prev_bc.
-        Bytecode& prev_bc = cursect->bcs_last();
-        m_prev_bc = &prev_bc;
     }
 }
 

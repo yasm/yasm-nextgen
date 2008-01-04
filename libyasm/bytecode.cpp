@@ -115,13 +115,13 @@ Bytecode::Bytecode(std::auto_ptr<Contents> contents, unsigned long line)
 {
 }
 
-Bytecode::Bytecode(unsigned long line)
+Bytecode::Bytecode()
     : m_contents(0),
       m_section(0),
       m_multiple(0),
       m_len(0),
       m_mult_int(1),
-      m_line(line),
+      m_line(0),
       m_offset(~0UL),   // obviously incorrect / uninitialized value
       m_index(~0UL)
 {
@@ -147,7 +147,10 @@ Bytecode&
 Bytecode::operator= (const Bytecode& oth)
 {
     if (this != &oth) {
-        m_contents.reset(oth.m_contents->clone());
+        if (oth.m_contents.get() != 0)
+            m_contents.reset(oth.m_contents->clone());
+        else
+            m_contents.reset(0);
         m_section = oth.m_section;
         m_multiple.reset(oth.m_multiple->clone());
         m_len = oth.m_len;
@@ -163,7 +166,10 @@ Bytecode::operator= (const Bytecode& oth)
 void
 Bytecode::put(std::ostream& os, int indent_level) const
 {
-    m_contents->put(os, indent_level);
+    if (m_contents.get() != 0)
+        m_contents->put(os, indent_level);
+    else
+        os << std::setw(indent_level) << "" << "EMPTY\n";
     os << std::setw(indent_level) << "" << "Multiple=";
     if (m_multiple.get() == 0)
         os << "nil (1)";
@@ -178,6 +184,8 @@ Bytecode::put(std::ostream& os, int indent_level) const
 void
 Bytecode::finalize()
 {
+    if (m_contents.get() == 0)
+        return;
     m_contents->finalize(*this);
     if (m_multiple.get() != 0) {
         Location loc = {this, 0};
@@ -212,7 +220,10 @@ Bytecode::finalize(Errwarns& errwarns)
 void
 Bytecode::calc_len(AddSpanFunc add_span)
 {
-    m_len = 0;  // just in case
+    if (m_contents.get() == 0) {
+        m_len = 0;
+        return;
+    }
     m_len = m_contents->calc_len(*this, add_span);
 
     // Check for multiples
@@ -257,6 +268,8 @@ Bytecode::expand(int span, long old_val, long new_val,
         m_mult_int = new_val;
         return true;
     }
+    if (m_contents.get() == 0)
+        return false;
     return m_contents->expand(*this, m_len, span, old_val, new_val, neg_thres,
                               pos_thres);
 }
@@ -285,6 +298,9 @@ Bytecode::to_bytes(Bytes& bytes, /*@out@*/ unsigned long& gap,
 
     m_mult_int = get_multiple(true);
     if (m_mult_int == 0)
+        return; // nothing to output
+
+    if (m_contents.get() == 0)
         return; // nothing to output
 
     // special case for reserve bytecodes
@@ -326,7 +342,8 @@ Bytecode::get_multiple(bool calc_dist)
 Insn*
 Bytecode::get_insn() const
 {
-    if (m_contents->get_special() != Contents::SPECIAL_INSN)
+    if (m_contents.get() == 0 ||
+        m_contents->get_special() != Contents::SPECIAL_INSN)
         return 0;
     return static_cast<Insn*>(m_contents.get());
 }
@@ -334,7 +351,8 @@ Bytecode::get_insn() const
 unsigned long
 Bytecode::update_offset(unsigned long offset)
 {
-    if (m_contents->get_special() == Contents::SPECIAL_OFFSET) {
+    if (m_contents.get() != 0 &&
+        m_contents->get_special() == Contents::SPECIAL_OFFSET) {
         // Recalculate/adjust len of offset-based bytecodes here
         long neg_thres = 0;
         long pos_thres = (long)next_offset();

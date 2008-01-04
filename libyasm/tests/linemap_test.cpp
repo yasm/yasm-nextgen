@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(TestCase1)
 {
     Linemap lm;
     bool ok;
-    Bytecode* bc;
+    Location loc = {0, 0};
     std::string source;
     unsigned long line;
 
@@ -43,13 +43,14 @@ BOOST_AUTO_TEST_CASE(TestCase1)
     BOOST_CHECK_EQUAL(lm.get_current(), 1UL);
 
     // get source with no source available
-    ok = lm.get_source(1, bc, source);
+    ok = lm.get_source(1, loc, source);
     BOOST_CHECK_EQUAL(ok, false);
-    BOOST_CHECK(bc == 0);
+    BOOST_CHECK(loc.bc == 0);
     BOOST_CHECK_EQUAL(source, "");
 
     // add source for line 1, no bytecode
-    lm.add_source(0, "line 1 source");
+    loc.bc = 0;
+    lm.add_source(loc, "line 1 source");
 
     // line number increment
     line = lm.goto_next();
@@ -57,18 +58,19 @@ BOOST_AUTO_TEST_CASE(TestCase1)
     BOOST_CHECK_EQUAL(lm.get_current(), 2UL);
 
     // add source for line 2, no bytecode
-    lm.add_source(0, "line 2 source");
+    loc.bc = 0;
+    lm.add_source(loc, "line 2 source");
 
     // get source for line 1
-    ok = lm.get_source(1, bc, source);
+    ok = lm.get_source(1, loc, source);
     BOOST_CHECK_EQUAL(ok, true);
-    BOOST_CHECK(bc == 0);
+    BOOST_CHECK(loc.bc == 0);
     BOOST_CHECK_EQUAL(source, "line 1 source");
 
     // get source for line 2
-    ok = lm.get_source(2, bc, source);
+    ok = lm.get_source(2, loc, source);
     BOOST_CHECK_EQUAL(ok, true);
-    BOOST_CHECK(bc == 0);
+    BOOST_CHECK(loc.bc == 0);
     BOOST_CHECK_EQUAL(source, "line 2 source");
 }
 

@@ -179,10 +179,10 @@ Output::expr_xform(Expr* e)
         else
             continue;
 
-        Section* sect;
-        IntNum dist;
+        Section* sect = loc.bc->get_section();
         Location first = {&sect->bcs_first(), 0};
-        if ((sect = loc.bc->get_section()) && calc_dist(first, loc, &dist)) {
+        IntNum dist;
+        if (calc_dist(first, loc, &dist)) {
             const Expr* start = sect->get_start();
             //i->destroy(); // don't need to, as it's a sym or precbc
             *i = new Expr(start->clone(), Op::ADD, dist.clone(), e->get_line());

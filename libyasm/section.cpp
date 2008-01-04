@@ -68,6 +68,8 @@ Section::Section(const std::string& name,
         m_start.reset(start.release());
     else
         m_start.reset(new Expr(new IntNum(0), line));
+    // A section always has at least one bytecode.
+    start_bytecode();
 }
 
 Section::~Section()
@@ -81,6 +83,15 @@ Section::append_bytecode(std::auto_ptr<Bytecode> bc)
         bc->m_section = this;   // record parent section
         m_bcs.push_back(bc.release());
     }
+}
+
+Bytecode&
+Section::start_bytecode()
+{
+    Bytecode* bc = new Bytecode;
+    bc->m_section = this;   // record parent section
+    m_bcs.push_back(bc);
+    return *bc;
 }
 
 void

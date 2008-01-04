@@ -123,11 +123,15 @@ public:
     /// @param bc       bytecode (may be NULL)
     void append_bytecode(/*@null@*/ std::auto_ptr<Bytecode> bc);
 
+    /// Start a new bytecode at the end of a section.  Factory function.
+    /// @return Reference to new bytecode.
+    Bytecode& start_bytecode();
+
     typedef stdx::ptr_vector<Bytecode>::iterator bc_iterator;
     typedef stdx::ptr_vector<Bytecode>::const_iterator const_bc_iterator;
 
-    bc_iterator bcs_begin() { return ++m_bcs.begin(); }
-    const_bc_iterator bcs_begin() const { return ++m_bcs.begin(); }
+    bc_iterator bcs_begin() { return m_bcs.begin(); }
+    const_bc_iterator bcs_begin() const { return m_bcs.begin(); }
     bc_iterator bcs_end() { return m_bcs.end(); }
     const_bc_iterator bcs_end() const { return m_bcs.end(); }
 

@@ -148,11 +148,11 @@ private:
     void define_label(const std::string& name, bool local);
 
     void do_parse();
-    Bytecode::Ptr parse_line();
+    void parse_line();
     bool parse_directive_namevals(/*@out@*/ NameValues& nvs);
-    Bytecode::Ptr parse_times();
-    bool parse_exp(Bytecode* bc);
-    Insn* parse_instr(Bytecode* bc);
+    void parse_times();
+    bool parse_exp();
+    Insn* parse_instr();
 
     Insn::Operand parse_operand();
 
@@ -189,7 +189,7 @@ private:
     // last "base" label for local (.) labels
     std::string m_locallabel_base;
 
-    /*@null@*/ Bytecode* m_prev_bc;
+    /*@null@*/ Bytecode* m_bc;
 
     bool m_save_input;
 
