@@ -30,7 +30,9 @@
 /// @endlicense
 ///
 #include <string>
-#include <vector>
+
+#include <boost/noncopyable.hpp>
+#include <boost/scoped_ptr.hpp>
 
 
 namespace yasm {
@@ -38,7 +40,7 @@ namespace yasm {
 class Error;
 class Linemap;
 
-class Errwarns {
+class Errwarns : private boost::noncopyable {
 public:
     /// Create an error/warning set for collection of multiple error/warnings.
     Errwarns();
@@ -104,25 +106,9 @@ public:
                     yasm_print_warning_func print_warning);
 
 private:
-    class Data {
-    public:
-        Data(unsigned long line, const Error& err);
-        Data(unsigned long line, const std::string& wmsg);
-        ~Data();
-
-        bool operator< (const Data& other) const
-        { return m_line < other.m_line; }
-
-        enum { ERROR, WARNING, PARSERERROR } m_type;
-
-        unsigned long m_line;
-        unsigned long m_xrefline;
-        std::string m_message;
-        std::string m_xrefmsg;
-    };
-
-    std::vector<Data> m_errwarns;
-    int m_ecount, m_wcount;
+    /// Pimpl
+    class Impl;
+    boost::scoped_ptr<Impl> m_impl;
 };
 
 } // namespace yasm

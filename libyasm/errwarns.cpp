@@ -37,17 +37,43 @@
 
 namespace yasm {
 
-Errwarns::Errwarns()
+class Errwarns::Impl {
+public:
+    Impl();
+    ~Impl();
+
+    class Data {
+    public:
+        Data(unsigned long line, const Error& err);
+        Data(unsigned long line, const std::string& wmsg);
+        ~Data();
+
+        bool operator< (const Data& other) const
+        { return m_line < other.m_line; }
+
+        enum { ERROR, WARNING, PARSERERROR } m_type;
+
+        unsigned long m_line;
+        unsigned long m_xrefline;
+        std::string m_message;
+        std::string m_xrefmsg;
+    };
+
+    std::vector<Data> m_errwarns;
+    int m_ecount, m_wcount;
+};
+
+Errwarns::Impl::Impl()
     : m_ecount(0),
       m_wcount(0)
 {
 }
 
-Errwarns::~Errwarns()
+Errwarns::Impl::~Impl()
 {
 }
 
-Errwarns::Data::Data(unsigned long line, const Error& err)
+Errwarns::Impl::Data::Data(unsigned long line, const Error& err)
     : m_type(ERROR),
       m_line(line),
       m_xrefline(err.m_xrefline),
@@ -58,7 +84,7 @@ Errwarns::Data::Data(unsigned long line, const Error& err)
         m_type = PARSERERROR;
 }
 
-Errwarns::Data::Data(unsigned long line, const std::string& wmsg)
+Errwarns::Impl::Data::Data(unsigned long line, const std::string& wmsg)
     : m_type(WARNING),
       m_line(line),
       m_xrefline(0),
@@ -66,15 +92,24 @@ Errwarns::Data::Data(unsigned long line, const std::string& wmsg)
 {
 }
 
-Errwarns::Data::~Data()
+Errwarns::Impl::Data::~Data()
+{
+}
+
+Errwarns::Errwarns()
+    : m_impl(new Impl)
+{
+}
+
+Errwarns::~Errwarns()
 {
 }
 
 void
 Errwarns::propagate(unsigned long line, const Error& err)
 {
-    m_errwarns.push_back(Data(line, err));
-    m_ecount++;
+    m_impl->m_errwarns.push_back(Impl::Data(line, err));
+    m_impl->m_ecount++;
     propagate(line);    // propagate warnings
 }
 
@@ -85,8 +120,8 @@ Errwarns::propagate(unsigned long line)
     std::string wmsg;
 
     while ((wclass = warn_fetch(wmsg)) != WARN_NONE) {
-        m_errwarns.push_back(Data(line, wmsg));
-        m_wcount++;
+        m_impl->m_errwarns.push_back(Impl::Data(line, wmsg));
+        m_impl->m_wcount++;
     }
 }
 
@@ -94,9 +129,9 @@ unsigned int
 Errwarns::num_errors(bool warning_as_error) const
 {
     if (warning_as_error)
-        return m_ecount+m_wcount;
+        return m_impl->m_ecount + m_impl->m_wcount;
     else
-        return m_ecount;
+        return m_impl->m_ecount;
 }
 
 void
@@ -111,11 +146,11 @@ Errwarns::output_all(const Linemap& lm, int warning_as_error,
                     NULL, 0, NULL);
 
     // Sort the error/warnings in virtual line order before output.
-    std::stable_sort(m_errwarns.begin(), m_errwarns.end());
+    std::stable_sort(m_impl->m_errwarns.begin(), m_impl->m_errwarns.end());
 
     // Output error/warnings.
-    for (std::vector<Data>::iterator i=m_errwarns.begin(),
-         end=m_errwarns.end(); i != end; ++i) {
+    for (std::vector<Impl::Data>::iterator i=m_impl->m_errwarns.begin(),
+         end=m_impl->m_errwarns.end(); i != end; ++i) {
         // Get the physical location
         std::string filename, xref_filename;
         unsigned long line, xref_line;
@@ -131,12 +166,13 @@ Errwarns::output_all(const Linemap& lm, int warning_as_error,
 
         // Don't output a PARSERERROR if there's another error on the same
         // line.
-        if (i->m_type == Data::PARSERERROR && i->m_line == (i+1)->m_line
-            && (i+1)->m_type == Data::ERROR)
+        if (i->m_type == Impl::Data::PARSERERROR && i->m_line == (i+1)->m_line
+            && (i+1)->m_type == Impl::Data::ERROR)
             continue;
 
         // Output error/warning
-        if (i->m_type == Data::ERROR || i->m_type == Data::PARSERERROR)
+        if (i->m_type == Impl::Data::ERROR
+            || i->m_type == Impl::Data::PARSERERROR)
             print_error(filename, line, i->m_message, xref_filename,
                         xref_line, i->m_xrefmsg);
         else
