@@ -37,6 +37,8 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "location.h"
+
 
 namespace yasm {
 
@@ -62,17 +64,14 @@ class Value;
 /// @param value        value
 /// @param bytes        storage for byte representation
 /// @param destsize     destination size (in bytes)
-/// @param offset       offset (in bytes) of the expr contents from the start
-///                     of the bytecode (needed for relative)
-/// @param bc           current bytecode (usually passed into higher-level
-///                     calling function)
+/// @param loc          location of the expr contents (needed for relative)
 /// @param warn         enables standard warnings.  Zero for none; nonzero
 ///                     for overflow/underflow floating point warnings;
 ///                     negative for signed integer warnings,
 ///                     positive for unsigned integer warnings
 typedef
     FUNCTION::function<void (Value& value, Bytes& bytes, unsigned int destsize,
-                             unsigned long offset, Bytecode& bc, int warn)>
+                             Location loc, int warn)>
     OutputValueFunc;
 
 /// Convert a symbol reference to its byte representation.  Usually

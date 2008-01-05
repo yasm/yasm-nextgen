@@ -123,8 +123,7 @@ public:
 private:
     static void expr_xform(Expr* e);
     void output_value(Value& value, Bytes& bytes, unsigned int destsize,
-                      /*@unused@*/ unsigned long offset, Bytecode& bc,
-                      int warn);
+                      Location loc, int warn);
     void output_bytecode(Bytecode& bc);
 
     Object& m_object;
@@ -192,39 +191,33 @@ Output::expr_xform(Expr* e)
 
 void
 Output::output_value(Value& value, Bytes& bytes, unsigned int destsize,
-                     /*@unused@*/ unsigned long offset, Bytecode& bc, int warn)
+                     Location loc, int warn)
 {
-    Location curloc = {&bc, 0};
-
     // Binary objects we need to resolve against object, not against section.
     if (value.is_relative()) {
-        Location loc;
+        Location label_loc;
         Section* sect;
         unsigned int rshift = (unsigned int)value.m_rshift;
         Expr::Ptr syme(0);
+        unsigned long line = loc.bc->get_line();
 
         if (value.m_rel->is_abs()) {
-            syme.reset(new Expr(new IntNum(0), bc.get_line()));
-        } else if (value.m_rel->get_label(&loc)
-                   && (sect = loc.bc->get_section())) {
-            syme.reset(new Expr(value.m_rel, bc.get_line()));
+            syme.reset(new Expr(new IntNum(0), line));
+        } else if (value.m_rel->get_label(&label_loc)
+                   && (sect = label_loc.bc->get_section())) {
+            syme.reset(new Expr(value.m_rel, line));
         } else
             goto done;
 
         // Handle PC-relative
         if (value.m_curpos_rel) {
-            Expr::Ptr sube(new Expr(curloc, Op::SUB,
-                                    new IntNum(bc.get_len() *
-                                               bc.get_multiple(true)),
-                                    bc.get_line()));
-            syme.reset(new Expr(syme, Op::SUB, sube, bc.get_line()));
+            syme.reset(new Expr(syme, Op::SUB, loc, line));
             value.m_curpos_rel = 0;
             value.m_ip_rel = 0;
         }
 
         if (value.m_rshift > 0)
-            syme.reset(new Expr(syme, Op::SHR, new IntNum(rshift),
-                                bc.get_line()));
+            syme.reset(new Expr(syme, Op::SHR, new IntNum(rshift), line));
 
         // Add into absolute portion
         value.add_abs(syme);
@@ -238,7 +231,7 @@ done:
 
     // Output
     Arch* arch = m_object.get_arch();
-    if (value.output_basic(bytes, destsize, curloc, warn, *arch))
+    if (value.output_basic(bytes, destsize, loc, warn, *arch))
         return;
 
     // Couldn't output, assume it contains an external reference.
@@ -252,7 +245,7 @@ Output::output_bytecode(Bytecode& bc)
     unsigned long gap = 0;
     m_bytes.clear();
     bc.to_bytes(m_bytes, gap, BIND::bind(&Output::output_value, this,
-                                         _1, _2, _3, _4, _5, _6));
+                                         _1, _2, _3, _4, _5));
 
     // Don't bother doing anything else if size ended up being 0.
     if (m_bytes.empty() && gap == 0)

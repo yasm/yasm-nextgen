@@ -112,9 +112,11 @@ X86JmpFar::to_bytes(Bytecode& bc, Bytes& bytes,
     // Absolute displacement: segment and offset
     unsigned int i = (opersize == 16) ? 2 : 4;
     m_offset.m_size = i*8;
-    output_value(m_offset, bytes, i, bytes.size()-orig, bc, 1);
+    Location loc = {&bc, bytes.size()-orig};
+    output_value(m_offset, bytes, i, loc, 1);
     m_segment.m_size = 16;
-    output_value(m_segment, bytes, 2, bytes.size()-orig, bc, 1);
+    loc.off = bytes.size()-orig;
+    output_value(m_segment, bytes, 2, loc, 1);
 }
 
 X86JmpFar*

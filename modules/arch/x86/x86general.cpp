@@ -327,8 +327,8 @@ X86General::to_bytes(Bytecode& bc, Bytes& bytes,
                 std::auto_ptr<IntNum> delta(new IntNum(-(long)bc.get_len()));
                 m_ea->m_disp.add_abs(delta);
             }
-            output_value(m_ea->m_disp, bytes, disp_len, bytes.size()-orig, bc,
-                         1);
+            Location loc = {&bc, bytes.size()-orig};
+            output_value(m_ea->m_disp, bytes, disp_len, loc, 1);
         }
     }
 
@@ -343,7 +343,8 @@ X86General::to_bytes(Bytecode& bc, Bytes& bytes,
             imm_len = 1;
         } else
             imm_len = m_imm->m_size/8;
-        output_value(*m_imm, bytes, imm_len, bytes.size()-orig, bc, 1);
+        Location loc = {&bc, bytes.size()-orig};
+        output_value(*m_imm, bytes, imm_len, loc, 1);
     }
 }
 

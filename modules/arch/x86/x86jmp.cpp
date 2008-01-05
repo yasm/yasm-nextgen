@@ -226,11 +226,12 @@ X86Jmp::to_bytes(Bytecode& bc, Bytes& bytes,
             m_shortop.to_bytes(bytes);
 
             // Adjust relative displacement to end of bytecode
-            std::auto_ptr<IntNum> delta(new IntNum(-(long)bc.get_len()));
+            std::auto_ptr<IntNum> delta(new IntNum((long)-1));
             m_target.add_abs(delta);
             m_target.m_size = 8;
             m_target.m_sign = 1;
-            output_value(m_target, bytes, 1, bytes.size()-orig, bc, 1);
+            Location loc = {&bc, bytes.size()-orig};
+            output_value(m_target, bytes, 1, loc, 1);
             break;
         }
         case NEAR_FORCED:
@@ -246,11 +247,12 @@ X86Jmp::to_bytes(Bytecode& bc, Bytes& bytes,
             unsigned int i = (opersize == 16) ? 2 : 4;
 
             // Adjust relative displacement to end of bytecode
-            std::auto_ptr<IntNum> delta(new IntNum(-(long)bc.get_len()));
+            std::auto_ptr<IntNum> delta(new IntNum(-(long)i));
             m_target.add_abs(delta);
             m_target.m_size = i*8;
             m_target.m_sign = 1;
-            output_value(m_target, bytes, i, bytes.size()-orig, bc, 1);
+            Location loc = {&bc, bytes.size()-orig};
+            output_value(m_target, bytes, i, loc, 1);
             break;
         }
         case NONE:
