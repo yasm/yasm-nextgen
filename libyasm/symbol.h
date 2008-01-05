@@ -48,7 +48,7 @@ class NameValues;
 class Symbol : private boost::noncopyable, public AssocDataContainer {
 public:
     /// Constructor.
-    Symbol(const std::string& name);
+    explicit Symbol(const std::string& name);
 
     /// Destructor.
     ~Symbol();

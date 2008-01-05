@@ -58,7 +58,7 @@ class hamt : private boost::noncopyable {
 public:
     /// Constructor.
     /// @param  nocase      True if HAMT should be case-insensitive
-    hamt(bool nocase);
+    explicit hamt(bool nocase);
 
     /// Destructor.
     ~hamt();

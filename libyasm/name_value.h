@@ -74,11 +74,11 @@ public:
     /// String value constructor with no name.
     /// @param name         name; may be empty string if no name
     /// @param str          string value
-    NameValue(const std::string& str);
+    explicit NameValue(const std::string& str);
 
     /// Expression value constructor with no name.
     /// @param e            expression
-    NameValue(std::auto_ptr<Expr> e);
+    explicit NameValue(std::auto_ptr<Expr> e);
 
     /// Destructor.
     ~NameValue();

@@ -45,7 +45,7 @@ public:
     typedef std::auto_ptr<EffAddr> Ptr;
 
     /// Constructor.
-    EffAddr(std::auto_ptr<Expr> e);
+    explicit EffAddr(std::auto_ptr<Expr> e);
 
     /// Destructor.
     virtual ~EffAddr();

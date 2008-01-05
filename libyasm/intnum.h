@@ -50,7 +50,7 @@ public:
     IntNum() : m_type(INTNUM_L) { m_val.l = 0; }
 
     /// Create a new intnum from a decimal/binary/octal/hexidecimal string.
-    IntNum(char *str, int base=10);
+    explicit IntNum(char *str, int base=10);
 
     /// Create a new intnum from an unsigned integer value.
     /// @param i        unsigned integer value

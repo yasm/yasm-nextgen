@@ -51,7 +51,7 @@ public:
     /// Create a new floatnum from a decimal string.  The input string
     /// must be in standard C representation ([+-]123.456e[-+]789).
     /// @param str  floating point decimal string
-    FloatNum(const char* str);
+    explicit FloatNum(const char* str);
 
     /// Copy constructor.
     FloatNum(const FloatNum& rhs);
