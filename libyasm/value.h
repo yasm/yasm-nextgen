@@ -156,7 +156,7 @@ public:
     bool has_abs() const { return m_abs != 0; }
 
     /// Add integer to the absolute portion of the value.
-    void add_abs(std::auto_ptr<IntNum> delta);
+    void add_abs(const IntNum& delta);
 
     /// Add expression to the absolute portion of the value.
     void add_abs(std::auto_ptr<Expr> delta);

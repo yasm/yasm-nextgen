@@ -583,7 +583,7 @@ Value::get_intnum(bool calc_bc_dist)
 }
 
 void
-Value::add_abs(std::auto_ptr<IntNum> delta)
+Value::add_abs(const IntNum& delta)
 {
     if (!m_abs)
         m_abs = new Expr(delta);
