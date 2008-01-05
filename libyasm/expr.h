@@ -81,6 +81,7 @@ public:
 
         Term(const Register* reg) : m_type(REG), m_reg(reg) {}
         Term(IntNum* intn) : m_type(INT), m_intn(intn) {}
+        Term(const IntNum& intn);
         Term(FloatNum* flt) : m_type(FLOAT), m_flt(flt) {}
         explicit Term(const Subst& subst)
             : m_type(SUBST), m_subst(subst.subst) {}
