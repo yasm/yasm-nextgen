@@ -24,6 +24,8 @@
 /// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 /// POSSIBILITY OF SUCH DAMAGE.
 ///
+#include "section_util.h"
+
 #include "util.h"
 
 #include <iomanip>
@@ -31,6 +33,7 @@
 
 #include "bytecode.h"
 #include "expr.h"
+#include "section.h"
 
 
 namespace {
@@ -159,10 +162,14 @@ ReserveBytecode::reserve_numitems(unsigned int& itemsize) const
 
 namespace yasm {
 
-Bytecode::Contents::Ptr
-create_reserve(std::auto_ptr<Expr> numitems, unsigned int itemsize)
+void
+append_reserve(Section& sect, std::auto_ptr<Expr> numitems,
+               unsigned int itemsize, unsigned long line)
 {
-    return Bytecode::Contents::Ptr(new ReserveBytecode(numitems, itemsize));
+    Bytecode& bc = sect.fresh_bytecode();
+    bc.transform(Bytecode::Contents::Ptr(
+        new ReserveBytecode(numitems, itemsize)));
+    bc.set_line(line);
 }
 
 } // namespace yasm

@@ -24,6 +24,8 @@
 /// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 /// POSSIBILITY OF SUCH DAMAGE.
 ///
+#include "section_util.h"
+
 #include "util.h"
 
 #include <cstdlib>
@@ -38,6 +40,7 @@
 #include "errwarn.h"
 #include "expr.h"
 #include "intnum.h"
+#include "section.h"
 
 
 namespace {
@@ -249,16 +252,18 @@ AlignBytecode::clone() const
 
 namespace yasm {
 
-std::auto_ptr<Bytecode>
-create_align(std::auto_ptr<Expr> boundary,
+void
+append_align(Section& sect,
+             std::auto_ptr<Expr> boundary,
              /*@null@*/ std::auto_ptr<Expr> fill,
              /*@null@*/ std::auto_ptr<Expr> maxskip,
              /*@null@*/ const unsigned char** code_fill,
              unsigned long line)
 {
-    Bytecode::Contents::Ptr contents(new AlignBytecode(boundary, fill,
-                                                       maxskip, code_fill));
-    return std::auto_ptr<Bytecode>(new Bytecode(contents, line));
+    Bytecode& bc = sect.fresh_bytecode();
+    bc.transform(Bytecode::Contents::Ptr(
+        new AlignBytecode(boundary, fill, maxskip, code_fill)));
+    bc.set_line(line);
 }
 
 } // namespace yasm

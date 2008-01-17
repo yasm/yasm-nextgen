@@ -41,6 +41,7 @@
 #include <libyasm/object.h>
 #include <libyasm/preproc.h>
 #include <libyasm/section.h>
+#include <libyasm/section_util.h>
 #include <libyasm/symbol.h>
 
 #include "modules/parsers/nasm/nasm-parser.h"
@@ -142,6 +143,7 @@ NasmParser::do_parse()
             m_bc = bc.get();
         else
             m_bc = &m_object->get_cur_section()->bcs_last();
+        Location loc = {m_bc, m_bc->get_fixed_len()};
 
         try {
             m_bot = m_tok = m_ptr = m_cur = &line[0];
@@ -181,13 +183,9 @@ NasmParser::do_parse()
                             N_("only RES* allowed within absolute section"));
                     bc.reset(new Bytecode());
                 }
-            } else if (m_bc->has_contents()) {
-                m_bc->set_line(cur_line);
-                m_object->get_cur_section()->start_bytecode();
             }
 
             if (m_save_input) {
-                Location loc = {m_bc, 0};
                 m_linemap->add_source(loc, line);
             }
         } catch (Error& err) {
@@ -263,10 +261,12 @@ NasmParser::parse_line()
             get_next_token();
             break;
         }
+#if 0
         case TIMES: // TIMES expr exp
             get_next_token();
             parse_times();
             return;
+#endif
         case ID:
         case SPECIAL_ID:
         case LOCAL_ID:
@@ -399,52 +399,40 @@ NasmParser::parse_exp()
         return true;
 
     switch (m_token) {
-#if 0
         case DECLARE_DATA:
         {
             unsigned int size = DECLARE_DATA_val/8;
-            yasm_datavalhead dvs;
-            yasm_dataval *dv;
-            yasm_expr *e;
-
             get_next_token();
 
-            yasm_dvs_initialize(&dvs);
+            Section& sect = *m_object->get_cur_section();
             for (;;) {
                 if (m_token == STRING) {
                     // Peek ahead to see if we're in an expr.  If we're not,
                     // then generate a real string dataval.
                     get_peek_token();
                     if (m_peek_token == ',' || is_eol_tok(m_peek_token)) {
-                        dv = yasm_dv_create_string(STRING_val.contents,
-                                                   STRING_val.len);
+                        append_data(sect, STRING_val, size, false);
                         get_next_token();
                         goto dv_done;
                     }
                 }
-                if ((e = parse_expr(parser_nasm, DV_EXPR)))
-                    dv = yasm_dv_create_expr(e);
-                else {
-                    yasm_error_set(YASM_ERROR_SYNTAX,
-                                   N_("expression or string expected"));
-                    yasm_dvs_delete(&dvs);
-                    return NULL;
+                {
+                    Expr::Ptr e = parse_expr(DV_EXPR);
+                    if (e.get() != 0)
+                        append_data(sect, e, size, *m_object->get_arch());
+                    else
+                        throw SyntaxError(N_("expression or string expected"));
                 }
 dv_done:
-                yasm_dvs_append(&dvs, dv);
                 if (is_eol())
                     break;
-                if (!expect(',')) {
-                    yasm_dvs_delete(&dvs);
-                    return NULL;
-                }
+                expect(',');
                 get_next_token();
-                if (is_eol())   /* allow trailing , on list */
+                if (is_eol())   // allow trailing , on list
                     break;
             }
-            return create_data(dvs, size, 0, p_object->arch, get_cur_line());
+            return true;
         }
-#endif
         case RESERVE_SPACE:
         {
             unsigned int size = RESERVE_SPACE_val/8;
@@ -454,7 +442,8 @@ dv_done:
                 throw SyntaxError(String::compose(
                     N_("expression expected after %1"), "RESx"));
             }
-            m_bc->transform(create_reserve(e, size));
+            append_reserve(*m_object->get_cur_section(), e, size,
+                           get_cur_line());
             return true;
         }
 #if 0
@@ -509,6 +498,7 @@ NasmParser::parse_instr()
         {
             Insn* insn = INSN_val.get();
             Bytecode::Contents::Ptr insn_ptr(INSN_val);
+            m_bc = &m_object->get_cur_section()->fresh_bytecode();
             m_bc->transform(insn_ptr);
             get_next_token();
             if (is_eol())
@@ -921,7 +911,7 @@ NasmParser::parse_expr6(ExprType type)
                 e.reset(m_abspos->clone());
             else {
                 std::auto_ptr<Symbol> sym(new Symbol("$"));
-                Location loc = {m_bc, 0};
+                Location loc = {m_bc, m_bc->get_fixed_len()};
                 sym->define_curpos(loc, get_cur_line());
                 e.reset(new Expr(sym.get()));
                 m_object->add_non_table_symbol(sym);
@@ -956,7 +946,8 @@ NasmParser::define_label(const std::string& name, bool local)
     if (m_abspos.get() != 0)
         sym.define_equ(Expr::Ptr(m_abspos->clone()), get_cur_line());
     else {
-        Location loc = {m_bc, 0};
+        m_bc = &m_object->get_cur_section()->fresh_bytecode();
+        Location loc = {m_bc, m_bc->get_fixed_len()};
         sym.define_label(loc, get_cur_line());
     }
 }
@@ -1005,11 +996,10 @@ NasmParser::dir_align(Object& object, const NameValues& namevals,
 
         // As this directive is called only when nop is used as fill, always
         // use arch (nop) fill.
-        cur_section->append_bytecode(
-            create_align(boundval, Expr::Ptr(0), Expr::Ptr(0),
-                         /*cur_section->is_code() ?*/
-                         object.get_arch()->get_fill()/* : 0*/,
-                         line));
+        append_align(*cur_section, boundval, Expr::Ptr(0), Expr::Ptr(0),
+                     /*cur_section->is_code() ?*/
+                     object.get_arch()->get_fill()/* : 0*/,
+                     line);
     }
 }
 

@@ -37,23 +37,19 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "bytes.h"
 #include "location.h"
+#include "value.h"
 
 
 namespace yasm {
 
-class Arch;
 class Bytecode;
-class Bytes;
 class Errwarns;
 class Expr;
-class Includes;
 class Insn;
-class IntNum;
-class Linemap;
 class Section;
 class Symbol;
-class Value;
 
 /// Convert yasm_value to its byte representation.  Usually implemented by
 /// object formats to keep track of relocations and verify legal expressions.
@@ -93,25 +89,6 @@ typedef
                              unsigned int destsize, unsigned int valsize,
                              int warn)>
     OutputRelocFunc;
-
-/// A data value.
-class Dataval {
-public:
-    /// Create a new data value from an expression.
-    /// @param expn  expression
-    Dataval(std::auto_ptr<Expr> expn);
-
-    /// Create a new data value from a string.
-    /// @param contents     string (may contain NULs)
-    /// @param len          length of string
-    Dataval(const std::string& str, size_t len);
-
-    /// Create a new data value from raw bytes data.
-    /// @param contents     raw data (may contain NULs)
-    /// @param len          length
-    Dataval(std::auto_ptr<unsigned char> contents, unsigned long len);
-};
-
 
 /// A bytecode.
 class Bytecode {
@@ -260,7 +237,6 @@ public:
     Bytecode(Contents::Ptr contents, unsigned long line);
 
     /// Create a bytecode of no type.
-    /// Caution: the bytecode will be unusable until it is transformed.
     Bytecode();
 
     Bytecode(const Bytecode& oth);
@@ -327,17 +303,22 @@ public:
     /// @return Offset of the next bytecode in bytes.
     /// @warning Only valid /after/ optimization.
     unsigned long next_offset() const
-    { return m_offset + m_len * m_mult_int; }
+    { return m_offset + get_total_len(); }
 
     /// Get the total length of the bytecode, including any multiples.
     /// @return Total length of the bytecode in bytes.
     /// @warning Only valid /after/ optimization.
-    unsigned long get_total_len() const { return m_len * m_mult_int; }
+    unsigned long get_total_len() const
+    { return m_fixed.size() + m_len * m_mult_int; }
 
-    /// Get the basic length of the bytecode, excluding multiples.
+    /// Get the fixed length of the bytecode.
+    /// @return Length in bytes.
+    unsigned long get_fixed_len() const { return m_fixed.size(); }
+
+    /// Get the tail (dynamic) length of the bytecode, excluding multiples.
     /// @return Length of the bytecode in bytes.
     /// @warning Only valid /after/ optimization.
-    unsigned long get_len() const { return m_len; }
+    unsigned long get_tail_len() const { return m_len; }
 
     /// Resolve EQUs in a bytecode and calculate its minimum size.
     /// Generates dependent bytecode spans for cases where, if the length
@@ -440,25 +421,47 @@ public:
         return m_contents->get_special();
     }
 
+    Bytes& get_fixed() { return m_fixed; }
+    const Bytes& get_fixed() const { return m_fixed; }
+
+    void append_fixed(const Value& val);
+    void append_fixed(unsigned int size, std::auto_ptr<Expr> e);
 private:
-    /// Implementation-specific data.
+    /// Fixed data that comes before the possibly dynamic length data generated
+    /// by the implementation-specific tail in m_contents.
+    Bytes m_fixed;
+
+    /// To allow combination of more complex values, fixups can be specified.
+    /// A fixup consists of a value+offset combination.  0's need to be stored
+    /// in m_fixed as placeholders.
+    class Fixup : public Value {
+    public:
+        Fixup(unsigned int off, const Value& val) : Value(val), m_off(off) {}
+        unsigned int get_off() const { return m_off; }
+    private:
+        unsigned int m_off;
+    };
+
+    std::vector<Fixup> m_fixed_fixups;
+
+    /// Implementation-specific tail.
     boost::scoped_ptr<Contents> m_contents;
 
     /// Pointer to section containing bytecode; NULL if not part of a
     /// section.
     /*@dependent@*/ /*@null@*/ Section* m_section;
 
-    /// Number of times bytecode is repeated.
+    /// Number of times bytecode tail is repeated.
     /// NULL=1 (to save space in the common case).
     std::auto_ptr<Expr> m_multiple;
 
-    /// Total length of entire bytecode (not including multiple copies).
+    /// Total length of tail contents (not including multiple copies).
     unsigned long m_len;
 
-    /// Number of copies, integer version.
+    /// Number of copies of tail, integer version.
     long m_mult_int;
 
-    /// Line number where bytecode was defined.
+    /// Line number where bytecode tail was defined.
     unsigned long m_line;
 
     /// Offset of bytecode from beginning of its section.
@@ -468,87 +471,9 @@ private:
     /// Unique integer index of bytecode.  Used during optimization.
     unsigned long m_index;
 
-    /// Labels that point to this bytecode (as the
-    /// bytecode previous to the label).
+    /// Labels that point to this bytecode.
     std::vector<Symbol*> m_symbols;
 };
-
-//
-// General bytecode factory functions
-//
-
-/// Create a bytecode containing data value(s).
-/// @param data         vector of data values
-/// @param size         storage size (in bytes) for each data value
-/// @param append_zero  append a single zero byte after each data value
-///                     (if non-zero)
-/// @param arch         architecture (optional); if provided, data items
-///                     are directly simplified to bytes if possible
-/// @param line         virtual line (from yasm_linemap)
-/// @return Newly allocated bytecode.
-std::auto_ptr<Bytecode> create_data
-    (const std::vector<Dataval>& data, unsigned int size, int append_zero,
-     /*@null@*/ Arch* arch, unsigned long line);
-
-/// Create a bytecode containing LEB128-encoded data value(s).
-/// @param datahead     list of data values (kept, do not free)
-/// @param sign         signedness (True=signed, False=unsigned) of each
-///                     data value
-/// @param line         virtual line (from yasm_linemap)
-/// @return Newly allocated bytecode.
-std::auto_ptr<Bytecode> create_leb128
-    (const std::vector<Dataval>& datahead, bool sign, unsigned long line);
-
-/// Create a bytecode reserving space.
-/// @param numitems     number of reserve "items" (kept, do not free)
-/// @param itemsize     reserved size (in bytes) for each item
-/// @param line         virtual line (from yasm_linemap)
-/// @return Newly allocated bytecode contents.
-Bytecode::Contents::Ptr create_reserve
-    (std::auto_ptr<Expr> numitems, unsigned int itemsize);
-
-/// Create a bytecode that includes a binary file verbatim.
-/// @param filename     path to binary file
-/// @param start        starting location in file (in bytes) to read data
-///                     from (kept, do not free); may be NULL to indicate
-///                     0
-/// @param maxlen       maximum number of bytes to read from the file
-///                     (kept, do not free); may be NULL to indicate no
-///                     maximum
-/// @param linemap      line mapping repository
-/// @param line         virtual line (from linemap) for the bytecode
-/// @return Newly allocated bytecode.
-std::auto_ptr<Bytecode> create_incbin
-    (const std::string& filename, /*@null@*/ std::auto_ptr<Expr> start,
-     /*@null@*/ std::auto_ptr<Expr> maxlen, const Linemap& linemap,
-     const Includes& includes, unsigned long line);
-
-/// Create a bytecode that aligns the following bytecode to a boundary.
-/// @param boundary     byte alignment (must be a power of two)
-/// @param fill         fill data (if NULL, code_fill or 0 is used)
-/// @param maxskip      maximum number of bytes to skip
-/// @param code_fill    code fill data (if NULL, 0 is used)
-/// @param line         virtual line (from yasm_linemap)
-/// @return Newly allocated bytecode.
-/// @note The precedence on generated fill is as follows:
-///       - from fill parameter (if not NULL)
-///       - from code_fill parameter (if not NULL)
-///       - 0
-std::auto_ptr<Bytecode> create_align
-    (std::auto_ptr<Expr> boundary,
-     /*@null@*/ std::auto_ptr<Expr> fill,
-     /*@null@*/ std::auto_ptr<Expr> maxskip,
-     /*@null@*/ const unsigned char** code_fill,
-     unsigned long line);
-
-/// Create a bytecode that puts the following bytecode at a fixed section
-/// offset.
-/// @param start        section offset of following bytecode
-/// @param fill         fill value
-/// @param line         virtual line (from yasm_linemap)
-/// @return Newly allocated bytecode.
-std::auto_ptr<Bytecode> create_org(unsigned long start, unsigned long fill,
-                                   unsigned long line);
 
 } // namespace yasm
 

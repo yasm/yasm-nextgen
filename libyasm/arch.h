@@ -295,7 +295,7 @@ public:
     ///                     valsize bits)
     virtual void intnum_tobytes(const IntNum& intn, Bytes& bytes,
                                 size_t destsize, size_t valsize, int shift,
-                                Location loc, int warn) const = 0;
+                                int warn) const = 0;
 
     /// Create an effective address from an expression.
     /// @param e    expression

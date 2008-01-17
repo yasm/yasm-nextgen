@@ -67,4 +67,15 @@ Bytes::write(const unsigned char* buf, size_type n)
     std::copy(buf, buf+n, std::back_inserter(*this));
 }
 
+void
+Bytes::write(size_type n, unsigned char v)
+{
+    if (n == 0)
+        return;
+    do {
+        push_back(v);
+        n--;
+    } while (n != 0);
+}
+
 } // namespace yasm

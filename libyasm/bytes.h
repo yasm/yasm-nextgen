@@ -53,6 +53,11 @@ public:
     /// @param  n   number of bytes
     void write(const unsigned char* buf, size_type n);
 
+    /// Append n bytes of value v.
+    /// @param  n   number of bytes
+    /// @param  v   byte value
+    void write(size_type n, unsigned char v);
+
     void write_8(unsigned char val);
     void write_16(unsigned short val);
     void write_32(unsigned long val);

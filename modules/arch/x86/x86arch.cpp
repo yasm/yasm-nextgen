@@ -433,8 +433,7 @@ X86Arch::floatnum_tobytes(const FloatNum& flt, Bytes& bytes, size_t destsize,
 
 void
 X86Arch::intnum_tobytes(const IntNum& intn, Bytes& bytes, size_t destsize,
-                        size_t valsize, int shift, Location loc,
-                        int warn) const
+                        size_t valsize, int shift, int warn) const
 {
     Bytes::size_type sz = bytes.size();
     bytes.resize(sz+destsize);

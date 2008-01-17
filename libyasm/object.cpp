@@ -890,22 +890,22 @@ Optimize::step_2(Errwarns& errwarns)
                && os->m_bc->get_section() == span->m_bc.get_section()
                && offset_diff != 0) {
             unsigned long old_next_offset =
-                os->m_cur_val + os->m_bc->get_len();
+                os->m_cur_val + os->m_bc->get_total_len();
 
             if (offset_diff < 0
                 && (unsigned long)(-offset_diff) > os->m_new_val)
                 throw InternalError(N_("org/align went to negative offset"));
             os->m_new_val += offset_diff;
 
-            orig_len = os->m_bc->get_len();
+            orig_len = os->m_bc->get_tail_len();
             long neg_thres_temp, pos_thres_temp;
             os->m_bc->expand(1, (long)os->m_cur_val, (long)os->m_new_val,
                              neg_thres_temp, pos_thres_temp, errwarns);
             os->m_thres = (long)pos_thres_temp;
 
             offset_diff =
-                os->m_new_val + os->m_bc->get_len() - old_next_offset;
-            len_diff = os->m_bc->get_len() - orig_len;
+                os->m_new_val + os->m_bc->get_total_len() - old_next_offset;
+            len_diff = os->m_bc->get_tail_len() - orig_len;
             if (len_diff != 0)
                 m_itree.enumerate((long)os->m_bc->get_index(),
                                   (long)os->m_bc->get_index(),

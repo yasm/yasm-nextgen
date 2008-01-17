@@ -665,7 +665,7 @@ Value::output_basic(Bytes& bytes, size_t destsize, Location loc, int warn,
             outval += *intn;
 
         // Output!
-        arch.intnum_tobytes(outval, bytes, destsize, m_size, 0, loc, warn);
+        arch.intnum_tobytes(outval, bytes, destsize, m_size, 0, warn);
         return true;
     }
 
@@ -674,10 +674,10 @@ Value::output_basic(Bytes& bytes, size_t destsize, Location loc, int warn,
 
     if (intn) {
         // Output just absolute portion
-        arch.intnum_tobytes(*intn, bytes, destsize, m_size, 0, loc, warn);
+        arch.intnum_tobytes(*intn, bytes, destsize, m_size, 0, warn);
     } else {
         // No absolute or relative portions: output 0
-        arch.intnum_tobytes(0, bytes, destsize, m_size, 0, loc, warn);
+        arch.intnum_tobytes(0, bytes, destsize, m_size, 0, warn);
     }
 
     return true;

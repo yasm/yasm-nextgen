@@ -152,7 +152,10 @@ Bytecode::operator= (const Bytecode& oth)
         else
             m_contents.reset(0);
         m_section = oth.m_section;
-        m_multiple.reset(oth.m_multiple->clone());
+        if (oth.m_multiple.get() != 0)
+            m_multiple.reset(oth.m_multiple->clone());
+        else
+            m_multiple.reset(0);
         m_len = oth.m_len;
         m_mult_int = oth.m_mult_int;
         m_line = oth.m_line;
@@ -184,6 +187,12 @@ Bytecode::put(std::ostream& os, int indent_level) const
 void
 Bytecode::finalize()
 {
+    for (std::vector<Fixup>::iterator i=m_fixed_fixups.begin(),
+         end=m_fixed_fixups.end(); i != end; ++i) {
+        Location loc = {this, i->get_off()};
+        i->finalize(loc);
+    }
+
     if (m_contents.get() == 0)
         return;
     m_contents->finalize(*this);
@@ -294,6 +303,19 @@ Bytecode::to_bytes(Bytes& bytes, /*@out@*/ unsigned long& gap,
                    OutputValueFunc output_value,
                    /*@null@*/ OutputRelocFunc output_reloc)
 {
+    unsigned int last = 0;
+    for (std::vector<Fixup>::iterator i=m_fixed_fixups.begin(),
+         end=m_fixed_fixups.end(); i != end; ++i) {
+        unsigned int off = i->get_off();
+        Location loc = {this, off};
+        bytes.insert(bytes.end(), m_fixed.begin() + last,
+                     m_fixed.begin() + off);
+        output_value(*i, bytes, i->m_size/8, loc, i->m_sign ? -1 : 1);
+        last = off + i->m_size/8;
+    }
+    bytes.insert(bytes.end(), m_fixed.begin() + last, m_fixed.end());
+
+    // handle tail contents
     gap = 0;
 
     m_mult_int = get_multiple(true);
@@ -359,7 +381,7 @@ Bytecode::update_offset(unsigned long offset)
         expand(1, 0, (long)offset, neg_thres, pos_thres);
     }
     m_offset = offset;
-    return offset + m_len*m_mult_int;
+    return next_offset();
 }
 
 unsigned long
@@ -374,6 +396,20 @@ Bytecode::update_offset(unsigned long offset, Errwarns& errwarns)
     }
     errwarns.propagate(m_line);     // propagate warnings
     return retval;
+}
+
+void
+Bytecode::append_fixed(const Value& val)
+{
+    m_fixed_fixups.push_back(Fixup(m_fixed.size(), val));
+    m_fixed.write(val.m_size/8, 0);
+}
+
+void
+Bytecode::append_fixed(unsigned int size, std::auto_ptr<Expr> e)
+{
+    m_fixed_fixups.push_back(Fixup(m_fixed.size(), Value(size*8, e)));
+    m_fixed.write(size, 0);
 }
 
 } // namespace yasm

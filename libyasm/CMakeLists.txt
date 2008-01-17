@@ -4,7 +4,7 @@ ADD_LIBRARY(libyasm
     assoc_data.cpp
     bitvect.cpp
     bc-align.cpp
-    #bc-data.c
+    bc-data.cpp
     bc-incbin.cpp
     bc-org.cpp
     bc-reserve.cpp

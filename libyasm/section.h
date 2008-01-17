@@ -127,6 +127,12 @@ public:
     /// @return Reference to new bytecode.
     Bytecode& start_bytecode();
 
+    /// Ensure the last bytecode in the section has no tail.  If the last
+    /// bytecode has no tail, simply returns it; otherwise creates and returns
+    /// a fresh bytecode.
+    /// @return Reference to last bytecode.
+    Bytecode& fresh_bytecode();
+
     typedef stdx::ptr_vector<Bytecode>::iterator bc_iterator;
     typedef stdx::ptr_vector<Bytecode>::const_iterator const_bc_iterator;
 

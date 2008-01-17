@@ -94,6 +94,15 @@ Section::start_bytecode()
     return *bc;
 }
 
+Bytecode&
+Section::fresh_bytecode()
+{
+    Bytecode& bc = bcs_last();
+    if (bc.has_contents())
+        return start_bytecode();
+    return bc;
+}
+
 void
 Section::set_start(std::auto_ptr<Expr> start)
 {
