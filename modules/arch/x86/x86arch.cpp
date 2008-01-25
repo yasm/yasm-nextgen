@@ -379,13 +379,13 @@ X86Arch::get_fill() const
 std::string
 X86Arch::get_name() const
 {
-    return "x86";
+    return "x86 (IA-32 and derivatives), AMD64";
 }
 
 std::string
 X86Arch::get_keyword() const
 {
-    return "x86 (IA-32 and derivatives), AMD64";
+    return "x86";
 }
 
 std::string
