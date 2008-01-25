@@ -1,5 +1,5 @@
 //
-// Mnemonic instruction bytecode
+// Mnemonic instruction
 //
 //  Copyright (C) 2005-2007  Peter Johnson
 //
@@ -225,8 +225,7 @@ Insn::Insn()
 }
 
 Insn::Insn(const Insn& rhs)
-    : Bytecode::Contents(rhs),
-      m_operands(),
+    : m_operands(),
       m_prefixes(rhs.m_prefixes),
       m_segregs(rhs.m_segregs)
 {
@@ -242,43 +241,12 @@ Insn::~Insn()
 }
 
 void
-Insn::finalize(Bytecode& bc)
+Insn::append(Section& sect)
 {
     // Simplify the operands' expressions.
     std::for_each(m_operands.begin(), m_operands.end(),
                   MEMFN::mem_fn(&Operand::finalize));
-    do_finalize(bc);
-}
-
-unsigned long
-Insn::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
-{
-    // simply pass down to the base class
-    return Bytecode::Contents::calc_len(bc, add_span);
-}
-
-bool
-Insn::expand(Bytecode& bc, unsigned long& len, int span,
-             long old_val, long new_val,
-             /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres)
-{
-    // simply pass down to the base class
-    return Bytecode::Contents::expand(bc, len, span, old_val, new_val,
-                                      neg_thres, pos_thres);
-}
-
-void
-Insn::to_bytes(Bytecode& bc, Bytes& bytes, OutputValueFunc output_value,
-               OutputRelocFunc output_reloc)
-{
-    // simply pass down to the base class
-    Bytecode::Contents::to_bytes(bc, bytes, output_value, output_reloc);
-}
-
-Insn::Contents::SpecialType
-Insn::get_special() const
-{
-    return Contents::SPECIAL_INSN;
+    do_append(sect);
 }
 
 } // namespace yasm

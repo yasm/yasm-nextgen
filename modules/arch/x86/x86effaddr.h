@@ -87,8 +87,7 @@ public:
     void set_imm(std::auto_ptr<Expr> imm, unsigned int im_len);
 
     /// Finalize the EA displacement and init the spare and drex fields.
-    void init(unsigned int spare, unsigned char drex, bool need_drex,
-              Location loc);
+    void init(unsigned int spare, unsigned char drex, bool need_drex);
 
     /// Make the EA only a displacement.
     void set_disponly();
@@ -100,6 +99,9 @@ public:
     // determined, false if indeterminate EA.
     bool check(unsigned char* addrsize, unsigned int bits,
                bool address16_op, unsigned char* rex, Bytecode& bc);
+
+    /// Finalize the effective address.
+    void finalize(Location loc);
 
 private:
     /// Copy constructor.

@@ -26,43 +26,27 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <libyasm/bytecode.h>
-#include <libyasm/value.h>
-
-#include "x86common.h"
-#include "x86opcode.h"
+#include <memory>
 
 
-namespace yasm { namespace arch { namespace x86 {
+namespace yasm {
 
-// Direct (immediate) FAR jumps ONLY; indirect FAR jumps get turned into
-// x86_insn bytecodes; relative jumps turn into x86_jmp bytecodes.
-// This bytecode is not legal in 64-bit mode.
-class X86JmpFar : public X86Common {
-public:
-    X86JmpFar(const X86Opcode& opcode, std::auto_ptr<Expr> segment,
-              std::auto_ptr<Expr> offset, Bytecode* bc);
-    ~X86JmpFar();
+class Expr;
+class Section; 
+   
+namespace arch { namespace x86 {
 
-    void put(std::ostream& os, int indent_level) const;
-    void finalize(Bytecode& bc);
-    unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
-    bool expand(Bytecode& bc, unsigned long& len, int span,
-                long old_val, long new_val,
-                /*@out@*/ long& neg_thres,
-                /*@out@*/ long& pos_thres);
-    void to_bytes(Bytecode& bc, Bytes& bytes,
-                  OutputValueFunc output_value,
-                  OutputRelocFunc output_reloc = 0);
+class X86Common;
+class X86Opcode;
 
-    X86JmpFar* clone() const;
-
-private:
-    X86Opcode m_opcode;
-
-    Value m_segment;            // target segment
-    Value m_offset;             // target offset
-};
+/// Direct (immediate) FAR jumps ONLY; indirect FAR jumps get turned into
+/// x86_insn bytecodes; relative jumps turn into x86_jmp bytecodes.
+/// This bytecode is not legal in 64-bit mode.
+void append_jmpfar(Section& sect,
+                   const X86Common& common,
+                   const X86Opcode& opcode,
+                   std::auto_ptr<Expr> segment,
+                   std::auto_ptr<Expr> offset);
 
 }}} // namespace yasm::arch::x86
 

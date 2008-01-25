@@ -127,7 +127,7 @@ public:
 
     std::auto_ptr<EffAddr> ea_create(std::auto_ptr<Expr> e) const;
 
-    std::auto_ptr<Bytecode> create_empty_insn(unsigned long line) const;
+    std::auto_ptr<Insn> create_empty_insn() const;
 
     ParserSelect parser() const { return m_parser; }
 

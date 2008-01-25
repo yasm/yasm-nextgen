@@ -35,8 +35,6 @@
 
 #include <boost/noncopyable.hpp>
 
-#include "bytecode.h"
-
 
 namespace yasm {
 
@@ -44,12 +42,12 @@ class Bytes;
 class EffAddr;
 class Expr;
 class Register;
+class Section;
 class SegmentRegister;
 
-/// Base class for "instruction" bytecodes.  These are the mnenomic
-/// (rather than raw) representation of instructions.  Architectures should
+/// Base class for instructions.  Architectures should
 /// derive their own implementation from this.
-class Insn : public Bytecode::Contents {
+class Insn {
 public:
     typedef std::auto_ptr<Insn> Ptr;
 
@@ -231,23 +229,8 @@ public:
     /// @param indent_level indentation level
     virtual void put(std::ostream& os, int indent_level) const = 0;
 
-    /// Finalize the common parts of an instruction.
-    /// Calls do_finalize().
-    void finalize(Bytecode& bc);
-
-    /// Calculates minimum size.  Internal errors when called.
-    unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
-
-    /// Recalculates bytecode length.  Internal errors when called.
-    bool expand(Bytecode& bc, unsigned long& len, int span,
-                long old_val, long new_val,
-                /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres);
-
-    /// Converts to bytes.  Internal errors when called.
-    void to_bytes(Bytecode& bc, Bytes& bytes, OutputValueFunc output_value,
-                  OutputRelocFunc output_reloc = 0);
-
-    Contents::SpecialType get_special() const;
+    /// Append instruction to a section.
+    void append(Section& sect);
 
     virtual Insn* clone() const = 0;
 
@@ -255,8 +238,8 @@ protected:
     /// Copy constructor.
     Insn(const Insn& rhs);
 
-    /// Finalize the custom parts of an instruction.
-    virtual void do_finalize(Bytecode& bc) = 0;
+    /// Append instruction to a section.
+    virtual void do_append(Section& sect) = 0;
 
     /// Operands.
     Operands m_operands;
@@ -266,6 +249,9 @@ protected:
 
     /// Array of segment prefixes.
     SegRegs m_segregs;
+
+private:
+    const Insn& operator=(const Insn&);
 };
 
 inline std::ostream& operator<<

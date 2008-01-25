@@ -395,8 +395,11 @@ NasmParser::parse_times()
 bool
 NasmParser::parse_exp()
 {
-    if (parse_instr())
+    Insn::Ptr insn = parse_instr();
+    if (insn.get() != 0) {
+        insn->append(*m_object->get_cur_section());
         return true;
+    }
 
     switch (m_token) {
         case DECLARE_DATA:
@@ -490,16 +493,13 @@ incbin_done:
     return false;
 }
 
-Insn*
+Insn::Ptr
 NasmParser::parse_instr()
 {
     switch (m_token) {
         case INSN:
         {
-            Insn* insn = INSN_val.get();
-            Bytecode::Contents::Ptr insn_ptr(INSN_val);
-            m_bc = &m_object->get_cur_section()->fresh_bytecode();
-            m_bc->transform(insn_ptr);
+            Insn::Ptr insn(INSN_val);
             get_next_token();
             if (is_eol())
                 return insn;    // no operands
@@ -519,8 +519,8 @@ NasmParser::parse_instr()
         {
             const Insn::Prefix* prefix = PREFIX_val;
             get_next_token();
-            Insn* insn = parse_instr();
-            if (insn)
+            Insn::Ptr insn = parse_instr();
+            if (insn.get() != 0)
                 insn->add_prefix(prefix);
             return insn;
         }
@@ -528,13 +528,13 @@ NasmParser::parse_instr()
         {
             const SegmentRegister* segreg = SEGREG_val;
             get_next_token();
-            Insn* insn = parse_instr();
-            if (insn)
+            Insn::Ptr insn = parse_instr();
+            if (insn.get() != 0)
                 insn->add_seg_prefix(segreg);
             return insn;
         }
         default:
-            return 0;
+            return Insn::Ptr(0);
     }
 }
 
@@ -911,6 +911,7 @@ NasmParser::parse_expr6(ExprType type)
                 e.reset(m_abspos->clone());
             else {
                 std::auto_ptr<Symbol> sym(new Symbol("$"));
+                m_bc = &m_object->get_cur_section()->fresh_bytecode();
                 Location loc = {m_bc, m_bc->get_fixed_len()};
                 sym->define_curpos(loc, get_cur_line());
                 e.reset(new Expr(sym.get()));

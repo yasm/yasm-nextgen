@@ -1,5 +1,5 @@
 //
-// x86 general bytecode
+// x86 general instruction
 //
 //  Copyright (C) 2001-2007  Peter Johnson
 //
@@ -31,37 +31,154 @@
 #include <iomanip>
 #include <ostream>
 
+#include <libyasm/bytecode.h>
 #include <libyasm/bytes.h>
 #include <libyasm/errwarn.h>
 #include <libyasm/expr.h>
 #include <libyasm/intnum.h>
+#include <libyasm/section.h>
 #include <libyasm/symbol.h>
 
 #include "x86arch.h"
+#include "x86common.h"
 #include "x86effaddr.h"
+#include "x86opcode.h"
 #include "x86regtmod.h"
 
 
 namespace yasm { namespace arch { namespace x86 {
 
-X86General::X86General(const X86Opcode& opcode, std::auto_ptr<X86EffAddr> ea,
-                       std::auto_ptr<Value> imm, unsigned char special_prefix,
-                       unsigned char rex, PostOp postop)
-    : m_opcode(opcode),
+class X86General : public Bytecode::Contents {
+public:
+
+    X86General(const X86Common& common,
+               const X86Opcode& opcode,
+               std::auto_ptr<X86EffAddr> ea,
+               std::auto_ptr<Value> imm,
+               unsigned char special_prefix,
+               unsigned char rex,
+               GeneralPostOp postop,
+               bool default_rel);
+    ~X86General();
+
+    void put(std::ostream& os, int indent_level) const;
+    void finalize(Bytecode& bc);
+    unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
+    bool expand(Bytecode& bc, unsigned long& len, int span,
+                long old_val, long new_val,
+                /*@out@*/ long& neg_thres,
+                /*@out@*/ long& pos_thres);
+    void to_bytes(Bytecode& bc, Bytes& bytes,
+                  OutputValueFunc output_value,
+                  OutputRelocFunc output_reloc = 0);
+
+    X86General* clone() const;
+
+private:
+    X86General(const X86General& rhs);
+
+    X86Common m_common;
+    X86Opcode m_opcode;
+
+    /*@null@*/ boost::scoped_ptr<X86EffAddr> m_ea;  // effective address
+
+    /*@null@*/ boost::scoped_ptr<Value> m_imm;  // immediate or relative value
+
+    unsigned char m_special_prefix;     // "special" prefix (0=none)
+
+    // REX AMD64 extension, 0 if none,
+    // 0xff if not allowed (high 8 bit reg used)
+    unsigned char m_rex;
+
+    unsigned char m_default_rel;
+
+    GeneralPostOp m_postop;
+};
+
+X86General::X86General(const X86Common& common,
+                       const X86Opcode& opcode,
+                       std::auto_ptr<X86EffAddr> ea,
+                       std::auto_ptr<Value> imm,
+                       unsigned char special_prefix,
+                       unsigned char rex,
+                       GeneralPostOp postop,
+                       bool default_rel)
+    : m_common(common),
+      m_opcode(opcode),
       m_ea(ea.release()),
       m_imm(imm.release()),
       m_special_prefix(special_prefix),
       m_rex(rex),
+      m_default_rel(default_rel),
       m_postop(postop)
 {
 }
 
-void
-X86General::finish_postop(bool default_rel)
+X86General::X86General(const X86General& rhs)
+    : Bytecode::Contents(),
+      m_common(rhs.m_common),
+      m_opcode(rhs.m_opcode),
+      m_ea(0),
+      m_imm(0),
+      m_special_prefix(rhs.m_special_prefix),
+      m_rex(rhs.m_rex),
+      m_postop(rhs.m_postop)
 {
-    if (m_postop == X86General::POSTOP_ADDRESS16 && m_addrsize != 0) {
+    if (rhs.m_ea != 0)
+        m_ea.reset(rhs.m_ea->clone());
+    if (rhs.m_imm != 0)
+        m_imm.reset(new Value(*rhs.m_imm));
+}
+
+X86General::~X86General()
+{
+}
+
+void
+X86General::put(std::ostream& os, int indent_level) const
+{
+    os << std::setw(indent_level) << "" << "_Instruction_\n";
+
+    os << std::setw(indent_level) << "" << "Effective Address:";
+    if (m_ea) {
+        os << '\n';
+        m_ea->put(os, indent_level+1);
+    } else
+        os << " (nil)\n";
+
+    os << std::setw(indent_level) << "" << "Immediate Value:";
+    if (m_imm) {
+        os << '\n';
+        m_imm->put(os, indent_level+1);
+    } else
+        os << " (nil)\n";
+
+    m_opcode.put(os, indent_level);
+    m_common.put(os, indent_level);
+
+    std::ios_base::fmtflags origff = os.flags();
+    os << std::setw(indent_level) << "";
+    os << "SpPre=" << std::hex << std::setfill('0') << std::setw(2)
+       << (unsigned int)m_special_prefix;
+    os << " REX=" << std::oct << std::setfill('0') << std::setw(3)
+       << (unsigned int)m_rex;
+    os << std::setfill(' ');
+    os.flags(origff);
+    os << " PostOp=" << (unsigned int)m_postop << '\n';
+}
+
+void
+X86General::finalize(Bytecode& bc)
+{
+    Location loc = {&bc, bc.get_fixed_len()};
+    if (m_ea)
+        m_ea->finalize(loc);
+    if (m_imm.get() != 0 && m_imm->finalize(loc))
+        throw TooComplexError(N_("immediate expression too complex"));
+
+    if (m_postop == POSTOP_ADDRESS16 && m_common.m_addrsize != 0) {
         warn_set(WARN_GENERAL, N_("address size override ignored"));
-        m_addrsize = 0;
+        m_common.m_addrsize = 0;
     }
 
     // Handle non-span-dependent post-ops here
@@ -75,7 +192,8 @@ X86General::finish_postop(bool default_rel)
             //
             // We don't want to do this if we're in default rel mode.
             Expr* abs;
-            if (!default_rel && m_mode_bits == 64 && m_addrsize == 32 &&
+            if (!m_default_rel && m_common.m_mode_bits == 64 &&
+                m_common.m_addrsize == 32 &&
                 (!(abs = m_ea->m_disp.get_abs()) ||
                  !abs->contains(Expr::REG))) {
                 m_ea->set_disponly();
@@ -116,68 +234,9 @@ X86General::finish_postop(bool default_rel)
     }
 }
 
-X86General::X86General(const X86General& rhs)
-    : X86Common(rhs),
-      m_opcode(rhs.m_opcode),
-      m_ea(0),
-      m_imm(0),
-      m_special_prefix(rhs.m_special_prefix),
-      m_rex(rhs.m_rex),
-      m_postop(rhs.m_postop)
-{
-    if (rhs.m_ea != 0)
-        m_ea.reset(rhs.m_ea->clone());
-    if (rhs.m_imm != 0)
-        m_imm.reset(new Value(*rhs.m_imm));
-}
-
-X86General::~X86General()
-{
-}
-
-void
-X86General::put(std::ostream& os, int indent_level) const
-{
-    os << std::setw(indent_level) << "" << "_Instruction_\n";
-
-    os << std::setw(indent_level) << "" << "Effective Address:";
-    if (m_ea) {
-        os << '\n';
-        m_ea->put(os, indent_level+1);
-    } else
-        os << " (nil)\n";
-
-    os << std::setw(indent_level) << "" << "Immediate Value:";
-    if (m_imm) {
-        os << '\n';
-        m_imm->put(os, indent_level+1);
-    } else
-        os << " (nil)\n";
-
-    m_opcode.put(os, indent_level);
-    X86Common::put(os, indent_level);
-
-    std::ios_base::fmtflags origff = os.flags();
-    os << std::setw(indent_level) << "";
-    os << "SpPre=" << std::hex << std::setfill('0') << std::setw(2)
-       << (unsigned int)m_special_prefix;
-    os << " REX=" << std::oct << std::setfill('0') << std::setw(3)
-       << (unsigned int)m_rex;
-    os << std::setfill(' ');
-    os.flags(origff);
-    os << " PostOp=" << (unsigned int)m_postop << '\n';
-}
-
-void
-X86General::finalize(Bytecode& bc)
-{
-}
-
 unsigned long
 X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 {
-    //x86_effaddr *x86_ea = insn->x86_ea;
-    //yasm_value *imm = insn->imm;
     unsigned long len = 0;
 
     if (m_ea != 0) {
@@ -185,7 +244,7 @@ X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
         // Mod/RM byte and SIB byte.  We won't know the Mod field
         // of the Mod/RM byte until we know more about the
         // displacement.
-        if (!m_ea->check(&m_addrsize, m_mode_bits,
+        if (!m_ea->check(&m_common.m_addrsize, m_common.m_mode_bits,
                          m_postop == POSTOP_ADDRESS16, &m_rex, bc))
             // failed, don't bother checking rest of insn
             throw ValueError(N_("indeterminate effective address during length calculation"));
@@ -200,7 +259,7 @@ X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 
         // Handle address16 postop case
         if (m_postop == POSTOP_ADDRESS16)
-            m_addrsize = 0;
+            m_common.m_addrsize = 0;
 
         // Compute length of ea and add to total
         len += m_ea->m_need_modrm + (m_ea->m_need_sib ? 1:0);
@@ -242,7 +301,7 @@ X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
     }
 
     len += m_opcode.get_len();
-    len += X86Common::calc_len();
+    len += m_common.get_len();
     len += (m_special_prefix != 0) ? 1:0;
     if (m_rex != 0xff && m_rex != 0)
         len++;
@@ -257,7 +316,7 @@ X86General::expand(Bytecode& bc, unsigned long& len, int span,
     if (m_ea != 0 && span == 1) {
         // Change displacement length into word-sized
         if (m_ea->m_disp.m_size == 8) {
-            m_ea->m_disp.m_size = (m_addrsize == 16) ? 16 : 32;
+            m_ea->m_disp.m_size = (m_common.m_addrsize == 16) ? 16 : 32;
             m_ea->m_modrm &= ~0300;
             m_ea->m_modrm |= 0200;
             len--;
@@ -288,12 +347,12 @@ X86General::to_bytes(Bytecode& bc, Bytes& bytes,
     unsigned long orig = bytes.size();
 
     // Prefixes
-    X86Common::to_bytes(bytes,
+    m_common.to_bytes(bytes,
         m_ea != 0 ? static_cast<const X86SegmentRegister*>(m_ea->m_segreg) : 0);
     if (m_special_prefix != 0)
         bytes.write_8(m_special_prefix);
     if (m_rex != 0xff && m_rex != 0) {
-        if (m_mode_bits != 64)
+        if (m_common.m_mode_bits != 64)
             throw InternalError(N_("x86: got a REX prefix in non-64-bit mode"));
         bytes.write_8(m_rex);
     }
@@ -351,6 +410,28 @@ X86General*
 X86General::clone() const
 {
     return new X86General(*this);
+}
+
+void
+append_general(Section& sect,
+               const X86Common& common,
+               const X86Opcode& opcode,
+               std::auto_ptr<X86EffAddr> ea,
+               std::auto_ptr<Value> imm,
+               unsigned char special_prefix,
+               unsigned char rex,
+               GeneralPostOp postop,
+               bool default_rel)
+{
+    Bytecode& bc = sect.fresh_bytecode();
+
+    /// TODO: optimize other cases when the value is just an integer
+    //if (postop != POSTOP_NONE) {
+        bc.transform(Bytecode::Contents::Ptr(new X86General(
+            common, opcode, ea, imm, special_prefix, rex, postop,
+            default_rel)));
+    //    return;
+    //}
 }
 
 }}} // namespace yasm::arch::x86

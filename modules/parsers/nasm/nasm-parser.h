@@ -92,7 +92,6 @@ struct yystype {
     std::string str;
     std::auto_ptr<IntNum> intn;
     std::auto_ptr<FloatNum> flt;
-    Bytecode::Ptr bc;
     Insn::Ptr insn;
     union {
         unsigned int int_info;
@@ -152,7 +151,7 @@ private:
     bool parse_directive_namevals(/*@out@*/ NameValues& nvs);
     void parse_times();
     bool parse_exp();
-    Insn* parse_instr();
+    Insn::Ptr parse_instr();
 
     Insn::Operand parse_operand();
 

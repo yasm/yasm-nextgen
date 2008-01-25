@@ -47,7 +47,6 @@ namespace yasm {
 class Bytecode;
 class Errwarns;
 class Expr;
-class Insn;
 class Section;
 class Symbol;
 
@@ -213,10 +212,7 @@ public:
             SPECIAL_RESERVE,
 
             /// Adjusts offset instead of calculating len.
-            SPECIAL_OFFSET,
-
-            /// Instruction bytecode.
-            SPECIAL_INSN
+            SPECIAL_OFFSET
         };
 
         virtual SpecialType get_special() const;
@@ -394,12 +390,6 @@ public:
         return m_contents->reserve_numitems(itemsize);
     }
 
-    /// Get a #Insn structure from an instruction bytecode (if possible).
-    /// @param bc           bytecode
-    /// @return Instruction details if bytecode is an instruction bytecode,
-    ///         otherwise NULL.
-    /*@dependent@*/ /*@null@*/ Insn* get_insn() const;
-
     /// Updates bytecode offset.
     /// @note For offset-based bytecodes, calls expand() to determine new
     ///       length.
@@ -436,7 +426,7 @@ private:
     /// in m_fixed as placeholders.
     class Fixup : public Value {
     public:
-        Fixup(unsigned int off, const Value& val) : Value(val), m_off(off) {}
+        Fixup(unsigned int off, const Value& val);
         unsigned int get_off() const { return m_off; }
     private:
         unsigned int m_off;

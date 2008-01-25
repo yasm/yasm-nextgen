@@ -26,51 +26,31 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <libyasm/bytecode.h>
-#include <libyasm/value.h>
-
-#include "x86common.h"
-#include "x86opcode.h"
+#include <memory>
 
 
-namespace yasm { namespace arch { namespace x86 {
+namespace yasm {
 
-class X86Jmp : public X86Common {
-public:
-    enum OpcodeSel {
-        NONE,
-        SHORT,
-        NEAR,
-        SHORT_FORCED,
-        NEAR_FORCED
-    };
+class Expr;
+class Section;
 
-    X86Jmp(OpcodeSel op_sel, const X86Opcode& shortop, const X86Opcode& nearop,
-           std::auto_ptr<Expr> target, Bytecode* bc);
-    ~X86Jmp();
+namespace arch { namespace x86 {
 
-    void put(std::ostream& os, int indent_level) const;
-    void finalize(Bytecode& bc);
-    unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
-    bool expand(Bytecode& bc, unsigned long& len, int span,
-                long old_val, long new_val,
-                /*@out@*/ long& neg_thres,
-                /*@out@*/ long& pos_thres);
-    void to_bytes(Bytecode& bc, Bytes& bytes,
-                  OutputValueFunc output_value,
-                  OutputRelocFunc output_reloc = 0);
+class X86Common;
+class X86Opcode;
 
-    X86Jmp* clone() const;
-
-private:
-    X86Opcode m_shortop, m_nearop;
-
-    Value m_target;             // jump target
-
-    // which opcode are we using?
-    // The *FORCED forms are specified in the source as such
-    OpcodeSel m_op_sel;
+enum JmpOpcodeSel {
+    JMP_NONE,
+    JMP_SHORT,
+    JMP_NEAR
 };
+
+void append_jmp(Section& sect,
+                const X86Common& common,
+                const X86Opcode& shortop,
+                const X86Opcode& nearop,
+                std::auto_ptr<Expr> target,
+                JmpOpcodeSel op_sel = JMP_NONE);
 
 }}} // namespace yasm::arch::x86
 

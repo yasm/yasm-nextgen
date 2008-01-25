@@ -302,12 +302,10 @@ public:
     /// @return Newly allocated effective address.
     virtual std::auto_ptr<EffAddr> ea_create(std::auto_ptr<Expr> e) const = 0;
 
-    /// Create a bytecode that represents a single empty (0 length)
+    /// Create an instruction that represents a single empty (0 length)
     /// instruction.  This is used for handling solitary prefixes.
-    /// @param line         virtual line (from yasm_linemap)
-    /// @return Newly allocated bytecode.
-    virtual std::auto_ptr<Bytecode>
-        create_empty_insn(unsigned long line) const = 0;
+    /// @return Newly allocated instruction.
+    virtual std::auto_ptr<Insn> create_empty_insn() const = 0;
 };
 
 } // namespace yasm

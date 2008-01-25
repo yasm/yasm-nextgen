@@ -72,10 +72,8 @@ set_rex_from_reg(unsigned char *rex, unsigned char *drex,
 
 void
 X86EffAddr::init(unsigned int spare, unsigned char drex,
-                 bool need_drex, Location loc)
+                 bool need_drex)
 {
-    if (m_disp.finalize(loc))
-        throw TooComplexError(N_("effective address too complex"));
     m_modrm &= 0xC7;                  /* zero spare/reg bits */
     m_modrm |= (spare << 3) & 0x38;   /* plug in provided bits */
     m_drex = (unsigned char)drex;
@@ -1068,6 +1066,13 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
         }
     }
     return true;
+}
+
+void
+X86EffAddr::finalize(Location loc)
+{
+    if (m_disp.finalize(loc))
+        throw TooComplexError(N_("effective address too complex"));
 }
 
 }}} // namespace yasm::arch::x86

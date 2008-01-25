@@ -1,5 +1,5 @@
 //
-// x86 common bytecode
+// x86 common instruction information interface
 //
 //  Copyright (C) 2001-2007  Peter Johnson
 //
@@ -49,9 +49,9 @@ X86Common::X86Common()
 }
 
 void
-X86Common::apply_prefixes_common
-    (unsigned char* rex, unsigned int def_opersize_64,
-     const std::vector<const Insn::Prefix*>& prefixes)
+X86Common::apply_prefixes(unsigned int def_opersize_64,
+                          const std::vector<const Insn::Prefix*>& prefixes,
+                          unsigned char* rex)
 {
     bool first = true;
 
@@ -113,6 +113,17 @@ X86Common::apply_prefixes_common
 }
 
 void
+X86Common::finish()
+{
+    // Change 0 addrsize or opersize to mode_bits.
+    // 64-bit mode opersize defaults to 32-bit.
+    if (m_addrsize == 0)
+        m_addrsize = m_mode_bits;
+    if (m_opersize == 0)
+        m_opersize = (m_mode_bits == 64 ? 32 : m_mode_bits);
+}
+
+void
 X86Common::put(std::ostream& os, int indent_level) const
 {
     os << std::setw(indent_level) << "";
@@ -129,15 +140,14 @@ X86Common::put(std::ostream& os, int indent_level) const
 }
 
 unsigned long
-X86Common::calc_len() const
+X86Common::get_len() const
 {
     unsigned long len = 0;
 
-    if (m_addrsize != 0 && m_addrsize != m_mode_bits)
+    if (m_addrsize != m_mode_bits)
         len++;
-    if (m_opersize != 0 &&
-        ((m_mode_bits != 64 && m_opersize != m_mode_bits) ||
-         (m_mode_bits == 64 && m_opersize == 16)))
+    if ((m_mode_bits != 64 && m_opersize != m_mode_bits) ||
+        (m_mode_bits == 64 && m_opersize == 16))
         len++;
     if (m_lockrep_pre != 0)
         len++;
@@ -150,11 +160,10 @@ X86Common::to_bytes(Bytes& bytes, const X86SegmentRegister* segreg) const
 {
     if (segreg != 0)
         bytes.write_8(segreg->prefix());
-    if (m_addrsize != 0 && m_addrsize != m_mode_bits)
+    if (m_addrsize != m_mode_bits)
         bytes.write_8(0x67);
-    if (m_opersize != 0 &&
-        ((m_mode_bits != 64 && m_opersize != m_mode_bits) ||
-         (m_mode_bits == 64 && m_opersize == 16)))
+    if ((m_mode_bits != 64 && m_opersize != m_mode_bits) ||
+        (m_mode_bits == 64 && m_opersize == 16))
         bytes.write_8(0x66);
     if (m_lockrep_pre != 0)
         bytes.write_8(m_lockrep_pre);

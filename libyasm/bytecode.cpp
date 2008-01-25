@@ -35,7 +35,6 @@
 #include "errwarn.h"
 #include "errwarns.h"
 #include "expr.h"
-#include "insn.h"
 #include "intnum.h"
 #include "location_util.h"
 #include "operator.h"
@@ -190,7 +189,17 @@ Bytecode::finalize()
     for (std::vector<Fixup>::iterator i=m_fixed_fixups.begin(),
          end=m_fixed_fixups.end(); i != end; ++i) {
         Location loc = {this, i->get_off()};
-        i->finalize(loc);
+        if (i->finalize(loc)) {
+            if (i->m_jump_target)
+                throw TooComplexError(N_("jump target expression too complex"));
+            else
+                throw TooComplexError(N_("expression too complex"));
+        }
+        if (i->m_jump_target) {
+            if (i->m_seg_of || i->m_rshift || i->m_curpos_rel)
+                throw ValueError(N_("invalid jump target"));
+            i->set_curpos_rel(*this, false);
+        }
     }
 
     if (m_contents.get() == 0)
@@ -361,15 +370,6 @@ Bytecode::get_multiple(bool calc_dist)
     return 1;
 }
 
-Insn*
-Bytecode::get_insn() const
-{
-    if (m_contents.get() == 0 ||
-        m_contents->get_special() != Contents::SPECIAL_INSN)
-        return 0;
-    return static_cast<Insn*>(m_contents.get());
-}
-
 unsigned long
 Bytecode::update_offset(unsigned long offset)
 {
@@ -410,6 +410,11 @@ Bytecode::append_fixed(unsigned int size, std::auto_ptr<Expr> e)
 {
     m_fixed_fixups.push_back(Fixup(m_fixed.size(), Value(size*8, e)));
     m_fixed.write(size, 0);
+}
+
+Bytecode::Fixup::Fixup(unsigned int off, const Value& val)
+    : Value(val), m_off(off)
+{
 }
 
 } // namespace yasm
