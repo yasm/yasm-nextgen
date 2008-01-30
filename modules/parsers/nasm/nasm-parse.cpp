@@ -142,7 +142,8 @@ NasmParser::do_parse()
         if (m_abspos.get() != 0)
             m_bc = bc.get();
         else
-            m_bc = &m_object->get_cur_section()->bcs_last();
+            m_bc = &m_object->get_cur_section()->fresh_bytecode();
+        m_bc->set_line(cur_line);
         Location loc = {m_bc, m_bc->get_fixed_len()};
 
         try {
@@ -188,6 +189,7 @@ NasmParser::do_parse()
             if (m_save_input) {
                 m_linemap->add_source(loc, line);
             }
+            m_errwarns->propagate(cur_line);
         } catch (Error& err) {
             m_errwarns->propagate(cur_line, err);
         }
