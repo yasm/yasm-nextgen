@@ -50,8 +50,9 @@ public:
     /// Warning indicator.
     class Warning {
     public:
-        Warning(WarnClass wclass, const std::string& wmsg);
+        Warning(unsigned long line, WarnClass wclass, const std::string& wmsg);
 
+        unsigned long m_line;
         WarnClass m_wclass;
         std::string m_wmsg;
     };
@@ -132,7 +133,16 @@ Fatal::what() const throw()
 }
 
 Error::Error(const std::string& message)
-    : m_message(message),
+    : m_line(0),
+      m_message(message),
+      m_xrefline(0),
+      m_parse_error(false)
+{
+}
+
+Error::Error(unsigned long line, const std::string& message)
+    : m_line(line),
+      m_message(message),
       m_xrefline(0),
       m_parse_error(false)
 {
@@ -222,25 +232,38 @@ warn_occurred()
     return manager.m_warns.front().m_wclass;
 }
 
-ErrwarnManager::Warning::Warning(WarnClass wclass,
+ErrwarnManager::Warning::Warning(unsigned long line,
+                                 WarnClass wclass,
                                  const std::string& msg)
-    : m_wclass(wclass), m_wmsg(msg)
+    : m_line(line), m_wclass(wclass), m_wmsg(msg)
 {
 }
 
 void
-warn_set(WarnClass wclass, const std::string& str)
+warn_set(unsigned long line, WarnClass wclass, const std::string& str)
 {
     ErrwarnManager &manager = ErrwarnManager::instance();
 
     if (!(manager.m_wclass_enabled & (1UL<<wclass)))
         return;     // warning is part of disabled class
 
-    manager.m_warns.push_back(ErrwarnManager::Warning(wclass, str));
+    manager.m_warns.push_back(ErrwarnManager::Warning(line, wclass, str));
+}
+
+void
+warn_update_line(unsigned long line)
+{
+    ErrwarnManager &manager = ErrwarnManager::instance();
+
+    for (ErrwarnManager::Warnings::iterator i = manager.m_warns.begin(),
+         end = manager.m_warns.end(); i != end; ++i) {
+        if (i->m_line == 0)
+            i->m_line = line;
+    }
 }
 
 WarnClass
-warn_fetch(std::string& wmsg)
+warn_fetch(std::string* wmsg, unsigned long* wline)
 {
     ErrwarnManager& manager = ErrwarnManager::instance();
 
@@ -250,7 +273,10 @@ warn_fetch(std::string& wmsg)
     ErrwarnManager::Warning& w = manager.m_warns.front();
 
     WarnClass wclass = w.m_wclass;
-    wmsg = w.m_wmsg;
+    if (wmsg)
+        *wmsg = w.m_wmsg;
+    if (wline)
+        *wline = w.m_line;
 
     manager.m_warns.pop_front();
     return wclass;

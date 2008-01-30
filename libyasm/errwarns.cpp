@@ -108,7 +108,8 @@ Errwarns::~Errwarns()
 void
 Errwarns::propagate(unsigned long line, const Error& err)
 {
-    m_impl->m_errwarns.push_back(Impl::Data(line, err));
+    unsigned long real_line = err.m_line == 0 ? line : err.m_line;
+    m_impl->m_errwarns.push_back(Impl::Data(real_line, err));
     m_impl->m_ecount++;
     propagate(line);    // propagate warnings
 }
@@ -118,9 +119,11 @@ Errwarns::propagate(unsigned long line)
 {
     WarnClass wclass;
     std::string wmsg;
+    unsigned long wline;
 
-    while ((wclass = warn_fetch(wmsg)) != WARN_NONE) {
-        m_impl->m_errwarns.push_back(Impl::Data(line, wmsg));
+    while ((wclass = warn_fetch(&wmsg, &wline)) != WARN_NONE) {
+        unsigned long real_line = wline == 0 ? line : wline;
+        m_impl->m_errwarns.push_back(Impl::Data(real_line, wmsg));
         m_impl->m_wcount++;
     }
 }

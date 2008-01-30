@@ -82,6 +82,7 @@ private:
 class Error : public virtual std::exception {
 public:
     explicit Error(const std::string& message);
+    Error(unsigned long line, const std::string& message);
     virtual ~Error() throw();
 
     /// Set a cross-reference for the error
@@ -91,6 +92,7 @@ public:
 
     virtual const char* what() const throw();
 
+    unsigned long m_line;
     std::string m_message;
     std::string m_xrefmsg;
     unsigned long m_xrefline;
@@ -104,6 +106,8 @@ class ArithmeticError : public Error {
 public:
     explicit ArithmeticError(const std::string& message)
         : Error(message) {}
+    ArithmeticError(unsigned long line, const std::string& message)
+        : Error(line, message) {}
     ~ArithmeticError() throw();
 };
 /// Arithmetic overflow.
@@ -111,6 +115,8 @@ class OverflowError : public ArithmeticError {
 public:
     explicit OverflowError(const std::string& message)
         : ArithmeticError(message) {}
+    OverflowError(unsigned long line, const std::string& message)
+        : ArithmeticError(line, message) {}
     ~OverflowError() throw();
 };
 /// Floating point error.
@@ -118,6 +124,8 @@ class FloatingPointError : public ArithmeticError {
 public:
     explicit FloatingPointError(const std::string& message)
         : ArithmeticError(message) {}
+    FloatingPointError(unsigned long line, const std::string& message)
+        : ArithmeticError(line, message) {}
     ~FloatingPointError() throw();
 };
 /// Divide-by-zero.
@@ -125,6 +133,8 @@ class ZeroDivisionError : public ArithmeticError {
 public:
     explicit ZeroDivisionError(const std::string& message)
         : ArithmeticError(message) {}
+    ZeroDivisionError(unsigned long line, const std::string& message)
+        : ArithmeticError(line, message) {}
     ~ZeroDivisionError() throw();
 };
 
@@ -132,6 +142,8 @@ public:
 class AssertionError : public Error {
 public:
     explicit AssertionError(const std::string& message) : Error(message) {}
+    AssertionError(unsigned long line, const std::string& message)
+        : Error(line, message) {}
     ~AssertionError() throw();
 };
 
@@ -139,6 +151,8 @@ public:
 class ValueError : public Error {
 public:
     explicit ValueError(const std::string& message) : Error(message) {}
+    ValueError(unsigned long line, const std::string& message)
+        : Error(line, message) {}
     ~ValueError() throw();
 };
 /// Absolute expression required.
@@ -146,6 +160,8 @@ class NotAbsoluteError : public ValueError {
 public:
     explicit NotAbsoluteError(const std::string& message)
         : ValueError(message) {}
+    NotAbsoluteError(unsigned long line, const std::string& message)
+        : ValueError(line, message) {}
     ~NotAbsoluteError() throw();
 };
 /// Expression too complex.
@@ -153,6 +169,8 @@ class TooComplexError : public ValueError {
 public:
     explicit TooComplexError(const std::string& message)
         : ValueError(message) {}
+    TooComplexError(unsigned long line, const std::string& message)
+        : ValueError(line, message) {}
     ~TooComplexError() throw();
 };
 /// Constant expression required.
@@ -160,6 +178,8 @@ class NotConstantError : public ValueError {
 public:
     explicit NotConstantError(const std::string& message)
         : ValueError(message) {}
+    NotConstantError(unsigned long line, const std::string& message)
+        : ValueError(line, message) {}
     ~NotConstantError() throw();
 };
 
@@ -167,6 +187,8 @@ public:
 class IOError : public Error {
 public:
     explicit IOError(const std::string& message) : Error(message) {}
+    IOError(unsigned long line, const std::string& message)
+        : Error(line, message) {}
     ~IOError() throw();
 };
 
@@ -174,6 +196,8 @@ public:
 class TypeError : public Error {
 public:
     explicit TypeError(const std::string& message) : Error(message) {}
+    TypeError(unsigned long line, const std::string& message)
+        : Error(line, message) {}
     ~TypeError() throw();
 };
 
@@ -181,6 +205,8 @@ public:
 class SyntaxError : public Error {
 public:
     explicit SyntaxError(const std::string& message) : Error(message) {}
+    SyntaxError(unsigned long line, const std::string& message)
+        : Error(line, message) {}
     ~SyntaxError() throw();
 };
 /// Parser error.
@@ -188,6 +214,9 @@ class ParseError : public Error {
 public:
     explicit ParseError(const std::string& message)
         : Error(message)
+    { m_parse_error = true; }
+    ParseError(unsigned long line, const std::string& message)
+        : Error(line, message)
     { m_parse_error = true; }
     ~ParseError() throw();
 };
@@ -203,19 +232,36 @@ void warn_clear();
 WarnClass warn_occurred();
 
 /// Add a warning indicator.
+/// @param line     line
 /// @param wclass   warning class
 /// @param wstr     warning message
-void warn_set(WarnClass wclass, const std::string& wstr);
+void warn_set(unsigned long line, WarnClass wclass, const std::string& wstr);
+
+/// Add a warning indicator.
+/// @param wclass   warning class
+/// @param wstr     warning message
+inline void
+warn_set(WarnClass wclass, const std::string& wstr)
+{
+    warn_set(0, wclass, wstr);
+}
+
+/// Update all warning indicators that do not have a line number set with
+/// a line number.
+/// @param line     line number
+void warn_update_line(unsigned long line);
 
 /// Fetch the first warning indicator.  If there is at least one warning
 /// indicator, the output string is set to the first warning indicator
 /// value, the first warning indicator is removed, and the warning
 /// indicator is returned.
 /// @param wstr     warning message (output)
+/// @param wline    warning line (output)
 /// @return If there is no warning indicator set, wstr is unchanged, and
 ///         #WARN_NONE is returned; otherwise, the first warning indicator
 ///         is returned.
-WarnClass warn_fetch(/*@out@*/ std::string& wmsg);
+WarnClass warn_fetch(/*@out@*/ std::string* wmsg,
+                     /*@out@*/ unsigned long *wline = 0);
 
 /// Enable a class of warnings.
 /// @param wclass   warning class

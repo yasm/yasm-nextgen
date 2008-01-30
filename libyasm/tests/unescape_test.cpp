@@ -72,11 +72,11 @@ BOOST_AUTO_TEST_CASE(Oct)
 
     cmp.push_back(0);
     BOOST_CHECK_EQUAL(unescape("\\778"), cmp);
-    BOOST_CHECK_EQUAL(warn_fetch(wmsg), WARN_GENERAL);
+    BOOST_CHECK_EQUAL(warn_fetch(&wmsg), WARN_GENERAL);
     BOOST_CHECK_EQUAL(wmsg, "octal value out of range");
 
     BOOST_CHECK_EQUAL(unescape("\\779"), "\001");
-    BOOST_CHECK_EQUAL(warn_fetch(wmsg), WARN_GENERAL);
+    BOOST_CHECK_EQUAL(warn_fetch(&wmsg), WARN_GENERAL);
     BOOST_CHECK_EQUAL(wmsg, "octal value out of range");
 
     BOOST_CHECK_EQUAL(unescape("\\1x"), "\001x");
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(Oct)
     BOOST_CHECK_EQUAL(warn_occurred(), WARN_NONE);
 
     BOOST_CHECK_EQUAL(unescape("\\7999"), "\x11" "9");
-    BOOST_CHECK_EQUAL(warn_fetch(wmsg), WARN_GENERAL);
+    BOOST_CHECK_EQUAL(warn_fetch(&wmsg), WARN_GENERAL);
     BOOST_CHECK_EQUAL(wmsg, "octal value out of range");
 
     BOOST_CHECK_EQUAL(unescape("\\77a"), "\077a");
@@ -94,6 +94,6 @@ BOOST_AUTO_TEST_CASE(Oct)
     BOOST_CHECK_EQUAL(warn_occurred(), WARN_NONE);
 
     BOOST_CHECK_EQUAL(unescape("\\9999"), "\x91" "9");
-    BOOST_CHECK_EQUAL(warn_fetch(wmsg), WARN_GENERAL);
+    BOOST_CHECK_EQUAL(warn_fetch(&wmsg), WARN_GENERAL);
     BOOST_CHECK_EQUAL(wmsg, "octal value out of range");
 }
