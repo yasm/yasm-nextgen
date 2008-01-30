@@ -191,15 +191,18 @@ Bytecode::finalize()
         Location loc = {this, i->get_off()};
         if (i->finalize(loc)) {
             if (i->m_jump_target)
-                throw TooComplexError(N_("jump target expression too complex"));
+                throw TooComplexError(i->get_line(),
+                                      N_("jump target expression too complex"));
             else
-                throw TooComplexError(N_("expression too complex"));
+                throw TooComplexError(i->get_line(),
+                                      N_("expression too complex"));
         }
         if (i->m_jump_target) {
             if (i->m_seg_of || i->m_rshift || i->m_curpos_rel)
-                throw ValueError(N_("invalid jump target"));
+                throw ValueError(i->get_line(), N_("invalid jump target"));
             i->set_curpos_rel(*this, false);
         }
+        warn_update_line(i->get_line());
     }
 
     if (m_contents.get() == 0)
@@ -321,6 +324,7 @@ Bytecode::to_bytes(Bytes& bytes, /*@out@*/ unsigned long& gap,
                      m_fixed.begin() + off);
         output_value(*i, bytes, i->m_size/8, loc, i->m_sign ? -1 : 1);
         last = off + i->m_size/8;
+        warn_update_line(i->get_line());
     }
     bytes.insert(bytes.end(), m_fixed.begin() + last, m_fixed.end());
 
@@ -401,19 +405,19 @@ Bytecode::update_offset(unsigned long offset, Errwarns& errwarns)
 void
 Bytecode::append_fixed(const Value& val)
 {
-    m_fixed_fixups.push_back(Fixup(m_fixed.size(), val));
+    m_fixed_fixups.push_back(Fixup(m_fixed.size(), val, m_line));
     m_fixed.write(val.m_size/8, 0);
 }
 
 void
 Bytecode::append_fixed(unsigned int size, std::auto_ptr<Expr> e)
 {
-    m_fixed_fixups.push_back(Fixup(m_fixed.size(), Value(size*8, e)));
+    m_fixed_fixups.push_back(Fixup(m_fixed.size(), Value(size*8, e), m_line));
     m_fixed.write(size, 0);
 }
 
-Bytecode::Fixup::Fixup(unsigned int off, const Value& val)
-    : Value(val), m_off(off)
+Bytecode::Fixup::Fixup(unsigned int off, const Value& val, unsigned long line)
+    : Value(val), m_line(line), m_off(off)
 {
 }
 

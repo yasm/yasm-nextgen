@@ -426,9 +426,11 @@ private:
     /// in m_fixed as placeholders.
     class Fixup : public Value {
     public:
-        Fixup(unsigned int off, const Value& val);
+        Fixup(unsigned int off, const Value& val, unsigned long line);
+        unsigned long get_line() const { return m_line; }
         unsigned int get_off() const { return m_off; }
     private:
+        unsigned long m_line;
         unsigned int m_off;
     };
 
