@@ -134,8 +134,6 @@ public:
 
         /// Calculates the minimum size of a bytecode.
         /// Called from Bytecode::calc_len().
-        /// The base version of this function internal errors when called,
-        /// so be very careful using the base function in a derived class!
         ///
         /// @param bc           bytecode
         /// @param add_span     function to call to add a span
@@ -147,8 +145,8 @@ public:
         /// Recalculates the bytecode's length based on an expanded span
         /// length.  Called from Bytecode::expand().
         /// The base version of this function internal errors when called,
-        /// so if used from a derived class, make sure that calc_len() never
-        /// adds a span.
+        /// so if calc_len() ever adds a span, this function should be
+        /// overridden!
         /// This function should simply add to the len parameter to increase the
         /// length by a delta amount.
         /// @param bc           bytecode
@@ -168,12 +166,10 @@ public:
         virtual bool expand(Bytecode& bc, unsigned long& len, int span,
                             long old_val, long new_val,
                             /*@out@*/ long& neg_thres,
-                            /*@out@*/ long& pos_thres) = 0;
+                            /*@out@*/ long& pos_thres);
 
         /// Convert a bytecode into its byte representation.
         /// Called from Bytecode::to_bytes().
-        /// The base version of this function internal errors when called,
-        /// so be very careful using the base function in a derived class!
         /// @param bc           bytecode
         /// @param bytes        byte representation destination buffer;
         ///                     on return, its size should match the bytecode

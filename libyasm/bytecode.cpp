@@ -59,13 +59,6 @@ Bytecode::multiply_multiple(std::auto_ptr<Expr> e)
         m_multiple = e;
 }
 
-unsigned long
-Bytecode::Contents::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
-{
-    throw InternalError(N_("bytecode length cannot be calculated"));
-    return 0;
-}
-
 bool
 Bytecode::Contents::expand(Bytecode& bc, unsigned long& len, int span,
                            long old_val, long new_val,
@@ -73,14 +66,6 @@ Bytecode::Contents::expand(Bytecode& bc, unsigned long& len, int span,
                            /*@out@*/ long& pos_thres)
 {
     throw InternalError(N_("bytecode does not have any dependent spans"));
-}
-
-void
-Bytecode::Contents::to_bytes(Bytecode& bc, Bytes& bytes,
-                             OutputValueFunc output_value,
-                             OutputRelocFunc output_reloc)
-{
-    throw InternalError(N_("bytecode cannot be converted to bytes"));
 }
 
 /*@null@*/ const Expr*

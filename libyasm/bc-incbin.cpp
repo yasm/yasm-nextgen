@@ -63,13 +63,6 @@ public:
     /// Calculates the minimum size of a bytecode.
     unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
 
-    /// Recalculates the bytecode's length based on an expanded span
-    /// length.
-    bool expand(Bytecode& bc, unsigned long& len, int span,
-                long old_val, long new_val,
-                /*@out@*/ long& neg_thres,
-                /*@out@*/ long& pos_thres);
-
     /// Convert a bytecode into its byte representation.
     void to_bytes(Bytecode& bc, Bytes& bytes, OutputValueFunc output_value,
                   OutputRelocFunc output_reloc = 0);
@@ -203,16 +196,6 @@ IncbinBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
         if (maxlen < flen)
             flen = maxlen;
     return flen;
-}
-
-bool
-IncbinBytecode::expand(Bytecode& bc, unsigned long& len, int span,
-                       long old_val, long new_val,
-                       /*@out@*/ long& neg_thres,
-                       /*@out@*/ long& pos_thres)
-{
-    return Bytecode::Contents::expand(bc, len, span, old_val, new_val,
-                                      neg_thres, pos_thres);
 }
 
 void

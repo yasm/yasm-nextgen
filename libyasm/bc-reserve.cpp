@@ -32,6 +32,7 @@
 #include <ostream>
 
 #include "bytecode.h"
+#include "errwarn.h"
 #include "expr.h"
 #include "section.h"
 
@@ -53,13 +54,6 @@ public:
 
     /// Calculates the minimum size of a bytecode.
     unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
-
-    /// Recalculates the bytecode's length based on an expanded span
-    /// length.
-    bool expand(Bytecode& bc, unsigned long& len, int span,
-                long old_val, long new_val,
-                /*@out@*/ long& neg_thres,
-                /*@out@*/ long& pos_thres);
 
     /// Convert a bytecode into its byte representation.
     void to_bytes(Bytecode& bc, Bytes& bytes, OutputValueFunc output_value,
@@ -117,22 +111,12 @@ ReserveBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
     return m_itemsize;
 }
 
-bool
-ReserveBytecode::expand(Bytecode& bc, unsigned long& len, int span,
-                        long old_val, long new_val,
-                        /*@out@*/ long& neg_thres,
-                        /*@out@*/ long& pos_thres)
-{
-    return Bytecode::Contents::expand(bc, len, span, old_val, new_val,
-                                      neg_thres, pos_thres);
-}
-
 void
 ReserveBytecode::to_bytes(Bytecode& bc, Bytes& bytes,
                           OutputValueFunc output_value,
                           OutputRelocFunc output_reloc)
 {
-    Bytecode::Contents::to_bytes(bc, bytes, output_value, output_reloc);
+    throw InternalError(N_("bytecode cannot be converted to bytes"));
 }
 
 ReserveBytecode::SpecialType
