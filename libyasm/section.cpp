@@ -31,7 +31,6 @@
 #include <iomanip>
 #include <ostream>
 
-#include "bytecode.h"
 #include "expr.h"
 #include "intnum.h"
 
@@ -54,53 +53,22 @@ Section::Section(const std::string& name,
                  bool code,
                  bool res_only,
                  unsigned long line)
-    : m_object(0),
-      m_name(name),
+    : m_name(name),
       m_start(0),
       m_align(align),
       m_code(code),
       m_res_only(res_only),
       m_def(false),
-      m_bcs_owner(m_bcs),
       m_relocs_owner(m_relocs)
 {
     if (start.get() != 0)
         m_start.reset(start.release());
     else
         m_start.reset(new Expr(new IntNum(0), line));
-    // A section always has at least one bytecode.
-    start_bytecode();
 }
 
 Section::~Section()
 {
-}
-
-void
-Section::append_bytecode(std::auto_ptr<Bytecode> bc)
-{
-    if (bc.get() != 0) {
-        bc->m_section = this;   // record parent section
-        m_bcs.push_back(bc.release());
-    }
-}
-
-Bytecode&
-Section::start_bytecode()
-{
-    Bytecode* bc = new Bytecode;
-    bc->m_section = this;   // record parent section
-    m_bcs.push_back(bc);
-    return *bc;
-}
-
-Bytecode&
-Section::fresh_bytecode()
-{
-    Bytecode& bc = bcs_last();
-    if (bc.has_contents())
-        return start_bytecode();
-    return bc;
 }
 
 void
@@ -122,34 +90,12 @@ Section::put(std::ostream& os, int indent_level, bool with_bcs) const
     os << std::setw(indent_level) << "" << "Associated data:\n";
     put_assoc_data(os, indent_level+1);
 
-    if (!with_bcs)
-        return;
-
-    os << std::setw(indent_level) << "" << "Bytecodes:\n";
-
-    for (const_bc_iterator bc=m_bcs.begin(), end=m_bcs.end();
-         bc != end; ++bc) {
-        os << std::setw(indent_level+1) << "" << "Next Bytecode:\n";
-        bc->put(os, indent_level+2);
+    if (with_bcs) {
+        os << std::setw(indent_level) << "" << "Bytecodes:\n";
+        BytecodeContainer::put(os, indent_level+1);
     }
 
     // TODO: relocs
-}
-
-void
-Section::finalize(Errwarns& errwarns)
-{
-    for (bc_iterator bc=m_bcs.begin(), end=m_bcs.end(); bc != end; ++bc)
-        bc->finalize(errwarns);
-}
-
-void
-Section::update_bc_offsets(Errwarns& errwarns)
-{
-    unsigned long offset = 0;
-    m_bcs.front().set_offset(0);
-    for (bc_iterator bc=m_bcs.begin(), end=m_bcs.end(); bc != end; ++bc)
-        offset = bc->update_offset(offset, errwarns);
 }
 
 } // namespace yasm

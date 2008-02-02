@@ -2,12 +2,13 @@ ADD_LIBRARY(libyasm
     arch.cpp
     assembler.cpp
     assoc_data.cpp
-    bitvect.cpp
+    bc_container.cpp
     bc-align.cpp
     bc-data.cpp
     bc-incbin.cpp
     bc-org.cpp
     bc-reserve.cpp
+    bitvect.cpp
     bytecode.cpp
     bytes.cpp
     compose.cpp

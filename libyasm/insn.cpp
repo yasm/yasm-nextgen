@@ -241,12 +241,12 @@ Insn::~Insn()
 }
 
 void
-Insn::append(Section& sect)
+Insn::append(BytecodeContainer& container)
 {
     // Simplify the operands' expressions.
     std::for_each(m_operands.begin(), m_operands.end(),
                   MEMFN::mem_fn(&Operand::finalize));
-    do_append(sect);
+    do_append(container);
 }
 
 } // namespace yasm

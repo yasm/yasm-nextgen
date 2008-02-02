@@ -89,7 +89,7 @@ Bytecode::transform(std::auto_ptr<Contents> contents)
 
 Bytecode::Bytecode(std::auto_ptr<Contents> contents, unsigned long line)
     : m_contents(contents),
-      m_section(0),
+      m_container(0),
       m_multiple(0),
       m_len(0),
       m_mult_int(1),
@@ -101,7 +101,7 @@ Bytecode::Bytecode(std::auto_ptr<Contents> contents, unsigned long line)
 
 Bytecode::Bytecode()
     : m_contents(0),
-      m_section(0),
+      m_container(0),
       m_multiple(0),
       m_len(0),
       m_mult_int(1),
@@ -113,7 +113,7 @@ Bytecode::Bytecode()
 
 Bytecode::Bytecode(const Bytecode& oth)
     : m_contents(oth.m_contents->clone()),
-      m_section(oth.m_section),
+      m_container(oth.m_container),
       m_multiple(oth.m_multiple->clone()),
       m_len(oth.m_len),
       m_mult_int(oth.m_mult_int),
@@ -135,7 +135,7 @@ Bytecode::operator= (const Bytecode& oth)
             m_contents.reset(oth.m_contents->clone());
         else
             m_contents.reset(0);
-        m_section = oth.m_section;
+        m_container = oth.m_container;
         if (oth.m_multiple.get() != 0)
             m_multiple.reset(oth.m_multiple->clone());
         else
@@ -190,9 +190,9 @@ Bytecode::finalize()
         warn_update_line(i->get_line());
     }
 
-    if (m_contents.get() == 0)
-        return;
-    m_contents->finalize(*this);
+    if (m_contents.get() != 0)
+        m_contents->finalize(*this);
+
     if (m_multiple.get() != 0) {
         Location loc = {this, 0};
         Value val(0, std::auto_ptr<Expr>(m_multiple->clone()));
@@ -226,12 +226,6 @@ Bytecode::finalize(Errwarns& errwarns)
 void
 Bytecode::calc_len(AddSpanFunc add_span)
 {
-    if (m_contents.get() == 0) {
-        m_len = 0;
-        return;
-    }
-    m_len = m_contents->calc_len(*this, add_span);
-
     // Check for multiples
     m_mult_int = 1;
     if (m_multiple.get() != 0) {
@@ -253,6 +247,12 @@ Bytecode::calc_len(AddSpanFunc add_span)
             }
         }
     }
+
+    if (m_contents.get() == 0) {
+        m_len = 0;
+        return;
+    }
+    m_len = m_contents->calc_len(*this, add_span);
 }
 
 void
@@ -300,38 +300,50 @@ Bytecode::to_bytes(Bytes& bytes, /*@out@*/ unsigned long& gap,
                    OutputValueFunc output_value,
                    /*@null@*/ OutputRelocFunc output_reloc)
 {
-    unsigned int last = 0;
-    for (std::vector<Fixup>::iterator i=m_fixed_fixups.begin(),
-         end=m_fixed_fixups.end(); i != end; ++i) {
-        unsigned int off = i->get_off();
-        Location loc = {this, off};
-        bytes.insert(bytes.end(), m_fixed.begin() + last,
-                     m_fixed.begin() + off);
-        output_value(*i, bytes, i->m_size/8, loc, i->m_sign ? -1 : 1);
-        last = off + i->m_size/8;
-        warn_update_line(i->get_line());
-    }
-    bytes.insert(bytes.end(), m_fixed.begin() + last, m_fixed.end());
-
-    // handle tail contents
-    gap = 0;
-
     m_mult_int = get_multiple(true);
     if (m_mult_int == 0)
         return; // nothing to output
 
-    if (m_contents.get() == 0)
-        return; // nothing to output
-
     // special case for reserve bytecodes
-    if (m_contents->get_special() == Contents::SPECIAL_RESERVE) {
+    if (m_contents.get() != 0 &&
+        m_contents->get_special() == Contents::SPECIAL_RESERVE) {
         gap = m_len * m_mult_int;
         return;
     }
 
+    gap = 0;
+
     Bytes lb;
     lb.reserve(m_len);
-    for (long i=0; i<m_mult_int; i++) {
+
+    unsigned long total_len = get_total_len();
+    unsigned long pos = 0;
+    for (long mult=0; mult<m_mult_int; mult++, pos += total_len) {
+        unsigned int last = 0;
+        for (std::vector<Fixup>::iterator i=m_fixed_fixups.begin(),
+             end=m_fixed_fixups.end(); i != end; ++i) {
+            unsigned int off = i->get_off();
+            Location loc = {this, pos+off};
+            bytes.insert(bytes.end(), m_fixed.begin() + last,
+                         m_fixed.begin() + off);
+            if (m_mult_int > 1) {
+                // Make a copy of the value to ensure things like
+                // "TIMES x JMP label" work.
+                Value vcopy = *i;
+                output_value(vcopy, bytes, i->m_size/8, loc,
+                             i->m_sign ? -1 : 1);
+            } else {
+                output_value(*i, bytes, i->m_size/8, loc, i->m_sign ? -1 : 1);
+            }
+            last = off + i->m_size/8;
+            warn_update_line(i->get_line());
+        }
+        bytes.insert(bytes.end(), m_fixed.begin() + last, m_fixed.end());
+
+        // handle tail contents
+        if (m_contents.get() == 0)
+            continue; // no tail contents to output
+
         m_contents->to_bytes(*this, lb, output_value, output_reloc);
 
         if (lb.size() != m_len)

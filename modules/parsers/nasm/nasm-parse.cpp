@@ -29,6 +29,7 @@
 #include <math.h>
 
 #include <libyasm/arch.h>
+#include <libyasm/bc_container_util.h>
 #include <libyasm/bitcount.h>
 #include <libyasm/compose.h>
 #include <libyasm/directive.h>
@@ -41,7 +42,6 @@
 #include <libyasm/object.h>
 #include <libyasm/preproc.h>
 #include <libyasm/section.h>
-#include <libyasm/section_util.h>
 #include <libyasm/symbol.h>
 
 #include "modules/parsers/nasm/nasm-parser.h"
@@ -263,12 +263,10 @@ NasmParser::parse_line()
             get_next_token();
             break;
         }
-#if 0
         case TIMES: // TIMES expr exp
             get_next_token();
             parse_times();
             return;
-#endif
         case ID:
         case SPECIAL_ID:
         case LOCAL_ID:
@@ -384,6 +382,10 @@ next:
 void
 NasmParser::parse_times()
 {
+    // multiple applies to the entire bytecode (both fixed and tail portions),
+    // so force a completely new bytecode.
+    Bytecode& bc = m_object->get_cur_section()->start_bytecode();
+    m_bc = &bc;
     Expr::Ptr multiple = parse_expr(DV_EXPR);
     if (multiple.get() == 0) {
         throw SyntaxError(String::compose(N_("expression expected after %1"),
@@ -391,7 +393,12 @@ NasmParser::parse_times()
     }
     if (!parse_exp())
         throw SyntaxError(N_("instruction expected after TIMES expression"));
+    m_bc = &m_object->get_cur_section()->bcs_last();
+    if (m_bc != &bc)
+        throw InternalError(N_("trying to TIMES more than one bytecode"));
     m_bc->set_multiple(multiple);
+    // force a completely new bytecode now that we're done with this one.
+    m_bc = &m_object->get_cur_section()->start_bytecode();
 }
 
 bool

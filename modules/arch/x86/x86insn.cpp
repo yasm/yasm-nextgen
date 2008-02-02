@@ -302,7 +302,7 @@ X86Prefix::put(std::ostream& os) const
 #include "modules/arch/x86/x86insns.cpp"
 
 void
-X86Insn::do_append_jmpfar(Section& sect, const X86InsnInfo& info)
+X86Insn::do_append_jmpfar(BytecodeContainer& container, const X86InsnInfo& info)
 {
     Operand& op = m_operands.front();
     std::auto_ptr<Expr> imm = op.release_imm();
@@ -326,7 +326,7 @@ X86Insn::do_append_jmpfar(Section& sect, const X86InsnInfo& info)
     common.m_mode_bits = m_mode_bits;
     common.apply_prefixes(info.def_opersize_64, m_prefixes);
     common.finish();
-    append_jmpfar(sect, common, X86Opcode(info.opcode_len, info.opcode),
+    append_jmpfar(container, common, X86Opcode(info.opcode_len, info.opcode),
                   segment, imm);
 }
 
@@ -388,7 +388,7 @@ X86Insn::match_jmp_info(const X86InsnInfo& info, unsigned int opersize,
 }
 
 void
-X86Insn::do_append_jmp(Section& sect, const X86InsnInfo& jinfo)
+X86Insn::do_append_jmp(BytecodeContainer& container, const X86InsnInfo& jinfo)
 {
     static const unsigned char size_lookup[] = {0, 8, 16, 32, 64, 80, 128, 0};
 
@@ -451,7 +451,7 @@ X86Insn::do_append_jmp(Section& sect, const X86InsnInfo& jinfo)
     common.apply_prefixes(jinfo.def_opersize_64, m_prefixes);
     common.finish();
 
-    append_jmp(sect, common, shortop, nearop, imm, op_sel);
+    append_jmp(container, common, shortop, nearop, imm, op_sel);
 }
 
 bool
@@ -874,7 +874,7 @@ X86Insn::match_error(const unsigned int* size_lookup) const
 }
 
 void
-X86Insn::do_append(Section& sect)
+X86Insn::do_append(BytecodeContainer& container)
 {
     unsigned int size_lookup[] = {0, 8, 16, 32, 64, 80, 128, 0};
     size_lookup[7] = m_mode_bits;
@@ -919,16 +919,16 @@ X86Insn::do_append(Section& sect)
         switch (insn_operands[info->operands_index+0].action) {
             case OPA_JmpRel:
                 // Shortcut to JmpRel
-                do_append_jmp(sect, *info);
+                do_append_jmp(container, *info);
                 return;
             case OPA_JmpFar:
                 // Shortcut to JmpFar
-                do_append_jmpfar(sect, *info);
+                do_append_jmpfar(container, *info);
                 return;
         }
     }
 
-    do_append_general(sect, *info, size_lookup);
+    do_append_general(container, *info, size_lookup);
 }
 
 class BuildGeneral {
@@ -943,7 +943,7 @@ public:
     void apply_operands(X86Arch::ParserSelect parser,
                         Insn::Operands& operands);
     void apply_segregs(const Insn::SegRegs& segregs);
-    void finish(Section& sect, const Insn::Prefixes& prefixes);
+    void finish(BytecodeContainer& container, const Insn::Prefixes& prefixes);
 
 private:
     void apply_operand(const X86InfoOperand& info_op, Insn::Operand& op);
@@ -1258,7 +1258,8 @@ BuildGeneral::apply_segregs(const Insn::SegRegs& segregs)
 }
 
 void
-BuildGeneral::finish(Section& sect, const Insn::Prefixes& prefixes)
+BuildGeneral::finish(BytecodeContainer& container,
+                     const Insn::Prefixes& prefixes)
 {
     std::auto_ptr<Value> imm_val(0);
 
@@ -1274,12 +1275,13 @@ BuildGeneral::finish(Section& sect, const Insn::Prefixes& prefixes)
     common.apply_prefixes(m_def_opersize_64, prefixes, &m_rex);
     common.finish();
 
-    append_general(sect, common, m_opcode, m_x86_ea, imm_val,
+    append_general(container, common, m_opcode, m_x86_ea, imm_val,
                    m_special_prefix, m_rex, m_postop, m_default_rel);
 }
 
 void
-X86Insn::do_append_general(Section& sect, const X86InsnInfo& info,
+X86Insn::do_append_general(BytecodeContainer& container,
+                           const X86InsnInfo& info,
                            const unsigned int* size_lookup)
 {
     BuildGeneral buildgen(info, m_mode_bits, size_lookup, m_force_strict,
@@ -1289,7 +1291,7 @@ X86Insn::do_append_general(Section& sect, const X86InsnInfo& info,
     buildgen.update_rex();
     buildgen.apply_operands((X86Arch::ParserSelect)m_parser, m_operands);
     buildgen.apply_segregs(m_segregs);
-    buildgen.finish(sect, m_prefixes);
+    buildgen.finish(container, m_prefixes);
 }
 
 // Static parse data structure for instructions

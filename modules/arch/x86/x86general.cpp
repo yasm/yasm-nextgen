@@ -31,12 +31,12 @@
 #include <iomanip>
 #include <ostream>
 
+#include <libyasm/bc_container.h>
 #include <libyasm/bytecode.h>
 #include <libyasm/bytes.h>
 #include <libyasm/errwarn.h>
 #include <libyasm/expr.h>
 #include <libyasm/intnum.h>
-#include <libyasm/section.h>
 #include <libyasm/symbol.h>
 
 #include "x86arch.h"
@@ -413,7 +413,7 @@ X86General::clone() const
 }
 
 void
-append_general(Section& sect,
+append_general(BytecodeContainer& container,
                const X86Common& common,
                const X86Opcode& opcode,
                std::auto_ptr<X86EffAddr> ea,
@@ -423,7 +423,7 @@ append_general(Section& sect,
                GeneralPostOp postop,
                bool default_rel)
 {
-    Bytecode& bc = sect.fresh_bytecode();
+    Bytecode& bc = container.fresh_bytecode();
 
     /// TODO: optimize other cases when the value is just an integer
     //if (postop != POSTOP_NONE) {

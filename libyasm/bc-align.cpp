@@ -24,7 +24,7 @@
 /// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 /// POSSIBILITY OF SUCH DAMAGE.
 ///
-#include "section_util.h"
+#include "bc_container_util.h"
 
 #include "util.h"
 
@@ -34,13 +34,13 @@
 
 #include <boost/scoped_ptr.hpp>
 
+#include "bc_container.h"
 #include "bytecode.h"
 #include "bytes.h"
 #include "compose.h"
 #include "errwarn.h"
 #include "expr.h"
 #include "intnum.h"
-#include "section.h"
 
 
 namespace {
@@ -253,14 +253,14 @@ AlignBytecode::clone() const
 namespace yasm {
 
 void
-append_align(Section& sect,
+append_align(BytecodeContainer& container,
              std::auto_ptr<Expr> boundary,
              /*@null@*/ std::auto_ptr<Expr> fill,
              /*@null@*/ std::auto_ptr<Expr> maxskip,
              /*@null@*/ const unsigned char** code_fill,
              unsigned long line)
 {
-    Bytecode& bc = sect.fresh_bytecode();
+    Bytecode& bc = container.fresh_bytecode();
     bc.transform(Bytecode::Contents::Ptr(
         new AlignBytecode(boundary, fill, maxskip, code_fill)));
     bc.set_line(line);

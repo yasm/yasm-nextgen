@@ -26,9 +26,9 @@
 //
 #include "x86jmpfar.h"
 
+#include <libyasm/bc_container.h>
 #include <libyasm/bytecode.h>
 #include <libyasm/expr.h>
-#include <libyasm/section.h>
 
 #include "x86common.h"
 #include "x86opcode.h"
@@ -36,13 +36,13 @@
 
 namespace yasm { namespace arch { namespace x86 {
 
-void append_jmpfar(Section& sect,
+void append_jmpfar(BytecodeContainer& container,
                    const X86Common& common,
                    const X86Opcode& opcode,
                    std::auto_ptr<Expr> segment,
                    std::auto_ptr<Expr> offset)
 {
-    Bytecode& bc = sect.fresh_bytecode();
+    Bytecode& bc = container.fresh_bytecode();
     Bytes& bytes = bc.get_fixed();
 
     common.to_bytes(bytes, 0);

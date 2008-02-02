@@ -515,7 +515,7 @@ Span::create_terms(Optimize* optimize)
         if (m_depval.is_wrt() || m_depval.m_seg_of || m_depval.m_section_rel
             || !sym_local)
             return;     // we can't handle SEG, WRT, or external symbols
-        if (rel_loc.bc->get_section() != m_bc.get_section())
+        if (rel_loc.bc->get_container() != m_bc.get_container())
             return;     // not in this section
         if (!m_depval.m_curpos_rel)
             return;     // not PC-relative
@@ -887,7 +887,7 @@ Optimize::step_2(Errwarns& errwarns)
         long offset_diff = len_diff;
         while (os != m_offset_setters.end()
                && os->m_bc
-               && os->m_bc->get_section() == span->m_bc.get_section()
+               && os->m_bc->get_container() == span->m_bc.get_container()
                && offset_diff != 0) {
             unsigned long old_next_offset =
                 os->m_cur_val + os->m_bc->get_total_len();
@@ -929,7 +929,7 @@ Object::update_bc_offsets(Errwarns& errwarns)
 {
     for (section_iterator sect=m_sections.begin(), end=m_sections.end();
          sect != end; ++sect)
-        sect->update_bc_offsets(errwarns);
+        sect->update_offsets(errwarns);
 }
 
 void

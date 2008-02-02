@@ -178,11 +178,11 @@ Output::expr_xform(Expr* e)
         else
             continue;
 
-        Section* sect = loc.bc->get_section();
-        Location first = {&sect->bcs_first(), 0};
+        BytecodeContainer* container = loc.bc->get_container();
+        Location first = {&container->bcs_first(), 0};
         IntNum dist;
         if (calc_dist(first, loc, &dist)) {
-            const Expr* start = sect->get_start();
+            const Expr* start = (dynamic_cast<Section&>(*container)).get_start();
             //i->destroy(); // don't need to, as it's a sym or precbc
             *i = new Expr(start->clone(), Op::ADD, dist.clone(), e->get_line());
         }
@@ -196,7 +196,6 @@ Output::output_value(Value& value, Bytes& bytes, unsigned int destsize,
     // Binary objects we need to resolve against object, not against section.
     if (value.is_relative()) {
         Location label_loc;
-        Section* sect;
         unsigned int rshift = (unsigned int)value.m_rshift;
         Expr::Ptr syme(0);
         unsigned long line = loc.bc->get_line();
@@ -204,7 +203,7 @@ Output::output_value(Value& value, Bytes& bytes, unsigned int destsize,
         if (value.m_rel->is_abs()) {
             syme.reset(new Expr(new IntNum(0), line));
         } else if (value.m_rel->get_label(&label_loc)
-                   && (sect = label_loc.bc->get_section())) {
+                   && label_loc.bc->get_container()) {
             syme.reset(new Expr(value.m_rel, line));
         } else
             goto done;

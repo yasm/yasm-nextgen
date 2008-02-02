@@ -84,7 +84,7 @@ xform_dist_base(Expr* e, FUNCTION::function<bool (Expr::Term& term,
 
         if (sym && !sym->get_label(&loc))
             continue;
-        Section* sect = loc.bc->get_section();
+        BytecodeContainer* container = loc.bc->get_container();
 
         // Now look for a Symbol term in the same segment
         for (Expr::Terms::iterator j=terms.begin(), end=terms.end();
@@ -99,7 +99,7 @@ xform_dist_base(Expr* e, FUNCTION::function<bool (Expr::Term& term,
             else
                 continue;
 
-            if (sect != loc2.bc->get_section())
+            if (container != loc2.bc->get_container())
                 continue;
 
             if (func(*j, loc, loc2)) {

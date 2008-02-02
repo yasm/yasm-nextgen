@@ -45,9 +45,9 @@
 namespace yasm {
 
 class Bytecode;
+class BytecodeContainer;
 class Errwarns;
 class Expr;
-class Section;
 class Symbol;
 
 /// Convert yasm_value to its byte representation.  Usually implemented by
@@ -91,7 +91,7 @@ typedef
 
 /// A bytecode.
 class Bytecode {
-    friend class Section;
+    friend class BytecodeContainer;
 
 public:
     /// Add a dependent span for a bytecode.
@@ -258,10 +258,9 @@ public:
 
     /// Get the section that contains a particular bytecode.
     /// @param bc   bytecode
-    /// @return Section containing bc (can be NULL if bytecode is not part of
-    ///         a section).
-    /*@dependent@*/ /*@null@*/ Section* get_section() const
-    { return m_section; }
+    /// @return Bytecode container containing bc.
+    const BytecodeContainer* get_container() const { return m_container; }
+    BytecodeContainer* get_container() { return m_container; }
 
     /// Add to the list of symbols that reference a bytecode.
     /// @note Intended for #Symbol use only.
@@ -301,9 +300,9 @@ public:
     /// @return Total length of the bytecode in bytes.
     /// @warning Only valid /after/ optimization.
     unsigned long get_total_len() const
-    { return m_fixed.size() + m_len * m_mult_int; }
+    { return (m_fixed.size() + m_len) * m_mult_int; }
 
-    /// Get the fixed length of the bytecode.
+    /// Get the fixed length of the bytecode, excluding multiples.
     /// @return Length in bytes.
     unsigned long get_fixed_len() const { return m_fixed.size(); }
 
@@ -435,9 +434,8 @@ private:
     /// Implementation-specific tail.
     boost::scoped_ptr<Contents> m_contents;
 
-    /// Pointer to section containing bytecode; NULL if not part of a
-    /// section.
-    /*@dependent@*/ /*@null@*/ Section* m_section;
+    /// Pointer to container containing bytecode.
+    /*@dependent@*/ BytecodeContainer* m_container;
 
     /// Number of times bytecode tail is repeated.
     /// NULL=1 (to save space in the common case).

@@ -31,12 +31,12 @@
 #include <iomanip>
 #include <ostream>
 
+#include <libyasm/bc_container.h>
 #include <libyasm/bytecode.h>
 #include <libyasm/bytes.h>
 #include <libyasm/errwarn.h>
 #include <libyasm/expr.h>
 #include <libyasm/intnum.h>
-#include <libyasm/section.h>
 #include <libyasm/symbol.h>
 
 #include "x86common.h"
@@ -150,7 +150,7 @@ X86Jmp::finalize(Bytecode& bc)
     Location target_loc;
     if (m_target.m_rel
         && (!m_target.m_rel->get_label(&target_loc)
-            || target_loc.bc->get_section() != bc.get_section())) {
+            || target_loc.bc->get_container() != bc.get_container())) {
         // External or out of segment, so we can't check distance.
         // Default to near (if explicitly overridden, we never get to
         // this function anyway).
@@ -243,14 +243,14 @@ X86Jmp::clone() const
 }
 
 void
-append_jmp(Section& sect,
+append_jmp(BytecodeContainer& container,
            const X86Common& common,
            const X86Opcode& shortop,
            const X86Opcode& nearop,
            std::auto_ptr<Expr> target,
            JmpOpcodeSel op_sel)
 {
-    Bytecode& bc = sect.fresh_bytecode();
+    Bytecode& bc = container.fresh_bytecode();
 
     if (shortop.get_len() == 0)
         op_sel = JMP_NEAR;

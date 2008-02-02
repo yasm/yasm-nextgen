@@ -37,6 +37,7 @@
 #include <boost/scoped_ptr.hpp>
 
 #include "assoc_data.h"
+#include "bc_container.h"
 #include "ptr_vector.h"
 
 
@@ -62,9 +63,8 @@ protected:
 };
 
 /// A section.
-class Section : private boost::noncopyable, public AssocDataContainer {
-    friend class Object;
-
+class Section : public AssocDataContainer,
+                public BytecodeContainer {
 public:
     /// Create a new section.  The section
     /// is added to the object if there's not already a section by that name.
@@ -102,10 +102,6 @@ public:
     /// @param def      new value of default flag
     void set_default(bool def = true) { m_def = def; }
 
-    /// Get object owner of a section.
-    /// @return Object this section is a part of.
-    Object* get_object() const { return m_object; }
-
     /// Add a relocation to a section.
     /// @param reloc        relocation
     void add_reloc(std::auto_ptr<Reloc> reloc)
@@ -118,33 +114,6 @@ public:
     const_reloc_iterator relocs_begin() const { return m_relocs.begin(); }
     reloc_iterator relocs_end() { return m_relocs.end(); }
     const_reloc_iterator relocs_end() const { return m_relocs.end(); }
-
-    /// Add bytecode to the end of a section.
-    /// @param bc       bytecode (may be NULL)
-    void append_bytecode(/*@null@*/ std::auto_ptr<Bytecode> bc);
-
-    /// Start a new bytecode at the end of a section.  Factory function.
-    /// @return Reference to new bytecode.
-    Bytecode& start_bytecode();
-
-    /// Ensure the last bytecode in the section has no tail.  If the last
-    /// bytecode has no tail, simply returns it; otherwise creates and returns
-    /// a fresh bytecode.
-    /// @return Reference to last bytecode.
-    Bytecode& fresh_bytecode();
-
-    typedef stdx::ptr_vector<Bytecode>::iterator bc_iterator;
-    typedef stdx::ptr_vector<Bytecode>::const_iterator const_bc_iterator;
-
-    bc_iterator bcs_begin() { return m_bcs.begin(); }
-    const_bc_iterator bcs_begin() const { return m_bcs.begin(); }
-    bc_iterator bcs_end() { return m_bcs.end(); }
-    const_bc_iterator bcs_end() const { return m_bcs.end(); }
-
-    Bytecode& bcs_first() { return m_bcs.front(); }
-    const Bytecode& bcs_first() const { return m_bcs.front(); }
-    Bytecode& bcs_last() { return m_bcs.back(); }
-    const Bytecode& bcs_last() const { return m_bcs.back(); }
 
     /// Get name of a section.
     /// @return Section name.
@@ -178,19 +147,7 @@ public:
     /// @param with_bcs     if true, print bytecodes within section
     void put(std::ostream& os, int indent_level, bool with_bcs) const;
 
-    /// Finalize a section after parsing.
-    /// @param errwarns     error/warning set
-    /// @note Errors/warnings are stored into errwarns.
-    void finalize(Errwarns& errwarns);
-
-    /// Updates all bytecode offsets in section.
-    /// @param errwarns     error/warning set
-    /// @note Errors/warnings are stored into errwarns.
-    void update_bc_offsets(Errwarns& errwarns);
-
 private:
-    /*@dependent@*/ Object* m_object;   ///< Pointer to parent object
-
     std::string m_name;                 ///< name (given by user)
 
     /// Starting address of section contents.
@@ -203,10 +160,6 @@ private:
 
     /// "Default" section, e.g. not specified by using section directive.
     bool m_def;
-
-    /// The bytecodes for the section's contents.
-    stdx::ptr_vector<Bytecode> m_bcs;
-    stdx::ptr_vector_owner<Bytecode> m_bcs_owner;
 
     /// The relocations for the section.
     stdx::ptr_vector<Reloc> m_relocs;

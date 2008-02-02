@@ -31,8 +31,8 @@
 
 namespace yasm {
 
+class BytecodeContainer;
 class Expr;
-class Section;
 
 namespace arch { namespace x86 {
 
@@ -45,7 +45,7 @@ enum JmpOpcodeSel {
     JMP_NEAR
 };
 
-void append_jmp(Section& sect,
+void append_jmp(BytecodeContainer& container,
                 const X86Common& common,
                 const X86Opcode& shortop,
                 const X86Opcode& nearop,

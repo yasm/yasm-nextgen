@@ -31,7 +31,7 @@
 
 namespace yasm {
  
-class Section;
+class BytecodeContainer;
 class Value;
 
 namespace arch { namespace x86 {
@@ -63,7 +63,7 @@ enum GeneralPostOp {
     POSTOP_SIMM32_AVAIL
 };
 
-void append_general(Section& sect,
+void append_general(BytecodeContainer& container,
                     const X86Common& common,
                     const X86Opcode& opcode,
                     std::auto_ptr<X86EffAddr> ea,

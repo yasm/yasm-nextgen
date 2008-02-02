@@ -31,8 +31,8 @@
 
 namespace yasm {
 
+class BytecodeContainer;
 class Expr;
-class Section; 
    
 namespace arch { namespace x86 {
 
@@ -42,7 +42,7 @@ class X86Opcode;
 /// Direct (immediate) FAR jumps ONLY; indirect FAR jumps get turned into
 /// x86_insn bytecodes; relative jumps turn into x86_jmp bytecodes.
 /// This bytecode is not legal in 64-bit mode.
-void append_jmpfar(Section& sect,
+void append_jmpfar(BytecodeContainer& container,
                    const X86Common& common,
                    const X86Opcode& opcode,
                    std::auto_ptr<Expr> segment,

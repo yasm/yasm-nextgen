@@ -38,11 +38,11 @@
 
 namespace yasm {
 
+class BytecodeContainer;
 class Bytes;
 class EffAddr;
 class Expr;
 class Register;
-class Section;
 class SegmentRegister;
 
 /// Base class for instructions.  Architectures should
@@ -229,8 +229,8 @@ public:
     /// @param indent_level indentation level
     virtual void put(std::ostream& os, int indent_level) const = 0;
 
-    /// Append instruction to a section.
-    void append(Section& sect);
+    /// Append instruction to a bytecode container.
+    void append(BytecodeContainer& container);
 
     virtual Insn* clone() const = 0;
 
@@ -239,7 +239,7 @@ protected:
     Insn(const Insn& rhs);
 
     /// Append instruction to a section.
-    virtual void do_append(Section& sect) = 0;
+    virtual void do_append(BytecodeContainer& container) = 0;
 
     /// Operands.
     Operands m_operands;

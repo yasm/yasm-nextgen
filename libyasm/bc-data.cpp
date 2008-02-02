@@ -24,14 +24,14 @@
 /// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 /// POSSIBILITY OF SUCH DAMAGE.
 ///
-#include "section_util.h"
+#include "bc_container_util.h"
 
 #include "util.h"
 
 #include "arch.h"
+#include "bc_container.h"
 #include "bytecode.h"
 #include "expr.h"
-#include "section.h"
 
 
 namespace yasm {
@@ -289,47 +289,55 @@ yasm_dv_create_raw(unsigned char *contents, unsigned long len)
 }
 #endif
 void
-append_byte(Section& sect, unsigned char val)
+append_byte(BytecodeContainer& container, unsigned char val)
 {
-    Bytecode& bc = sect.fresh_bytecode();
+    Bytecode& bc = container.fresh_bytecode();
     bc.get_fixed().write_8(val);
 }
 
 void
-append_data(Section& sect, const IntNum& val, unsigned int size,
+append_data(BytecodeContainer& container,
+            const IntNum& val,
+            unsigned int size,
             const Arch& arch)
 {
-    Bytecode& bc = sect.fresh_bytecode();
+    Bytecode& bc = container.fresh_bytecode();
     arch.intnum_tobytes(val, bc.get_fixed(), size, size*8, 0, 1);
 }
 
 void
-append_data(Section& sect, std::auto_ptr<Expr> expr, unsigned int size,
+append_data(BytecodeContainer& container,
+            std::auto_ptr<Expr> expr,
+            unsigned int size,
             const Arch& arch)
 {
     expr->simplify();
     if (IntNum* intn = expr->get_intnum()) {
-        append_data(sect, *intn, size, arch);
+        append_data(container, *intn, size, arch);
         return;
     }
-    Bytecode& bc = sect.fresh_bytecode();
+    Bytecode& bc = container.fresh_bytecode();
     bc.append_fixed(size, expr);
 }
 
 void
-append_data(Section& sect, const std::string& str, bool append_zero)
+append_data(BytecodeContainer& container,
+            const std::string& str,
+            bool append_zero)
 {
-    Bytes& fixed = sect.fresh_bytecode().get_fixed();
+    Bytes& fixed = container.fresh_bytecode().get_fixed();
     fixed.write((const unsigned char *)str.data(), str.length());
     if (append_zero)
         fixed.write_8(0);
 }
 
 void
-append_data(Section& sect, const std::string& str, unsigned int size,
+append_data(BytecodeContainer& container,
+            const std::string& str,
+            unsigned int size,
             bool append_zero)
 {
-    Bytes& fixed = sect.fresh_bytecode().get_fixed();
+    Bytes& fixed = container.fresh_bytecode().get_fixed();
     std::string::size_type len = str.length();
     fixed.write((const unsigned char *)str.data(), len);
     fixed.write(len % size, 0);

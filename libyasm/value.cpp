@@ -163,7 +163,7 @@ Value::set_curpos_rel(const Bytecode& bc, bool ip_rel)
     // have a relative portion of the value.  If one doesn't exist, point
     // to a custom absolute symbol.
     if (!m_rel)
-        m_rel = &bc.get_section()->get_object()->get_abs_sym();
+        m_rel = &bc.get_container()->get_object()->get_abs_sym();
 }
 
 bool
@@ -246,18 +246,18 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                         return true;
                     continue;
                 }
-                Section* sect = loc.bc->get_section();
+                BytecodeContainer* container = loc.bc->get_container();
 
                 // Now look for a unused symrec term in the same segment
                 Expr::Terms::iterator j=terms.begin();
                 for (; j != end; ++j) {
                     Symbol* sym2;
                     Location loc2;
-                    Section* sect2;
+                    BytecodeContainer* container2;
                     if ((sym2 = j->get_sym())
                         && sym2->get_label(&loc2)
-                        && (sect2 = loc2.bc->get_section())
-                        && sect == sect2
+                        && (container2 = loc2.bc->get_container())
+                        && container == container2
                         && !used[j-terms.begin()]) {
                         // Mark as used
                         used[j-terms.begin()] = 1;
@@ -280,7 +280,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                 // The unmatched symrec will be caught below.
                 if (j == end && !m_curpos_rel
                     && (sym->is_curpos()
-                        || (sect == expr_loc.bc->get_section()))) {
+                        || (container == expr_loc.bc->get_container()))) {
                     for (j=terms.begin(); j != end; ++j) {
                         Symbol* sym2;
                         Location loc2;
@@ -306,7 +306,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                                 std::auto_ptr<Symbol> curpos(new Symbol("."));
                                 curpos->define_curpos(expr_loc, e->get_line());
                                 *j = curpos.get();
-                                Object* object = sect->get_object();
+                                Object* object = container->get_object();
                                 object->add_non_table_symbol(curpos);
                             }
                             break;      // stop looking
@@ -533,7 +533,7 @@ Value::get_intnum(Location loc, bool calc_bc_dist)
         bool sym_local = m_rel->get_label(&rel_loc);
         if (m_wrt || m_seg_of || m_section_rel || !sym_local)
             return outval;  // we can't handle SEG, WRT, or external symbols
-        if (rel_loc.bc->get_section() != loc.bc->get_section())
+        if (rel_loc.bc->get_container() != loc.bc->get_container())
             return outval;  // not in this section
         if (!m_curpos_rel)
             return outval;  // not PC-relative
@@ -650,7 +650,7 @@ Value::output_basic(Bytes& bytes, size_t destsize, Location loc, int warn,
         bool sym_local = m_rel->get_label(&rel_loc);
         if (m_wrt || m_seg_of || m_section_rel || !sym_local)
             return false;   // we can't handle SEG, WRT, or external symbols
-        if (rel_loc.bc->get_section() != loc.bc->get_section())
+        if (rel_loc.bc->get_container() != loc.bc->get_container())
             return false;   // not in this section
         if (!m_curpos_rel)
             return false;   // not PC-relative

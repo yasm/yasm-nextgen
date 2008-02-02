@@ -1,8 +1,8 @@
 #ifndef YASM_SECTION_UTIL_H
 #define YASM_SECTION_UTIL_H
 ///
-/// @file libyasm/section_util.h
-/// @brief YASM section utility functions.
+/// @file libyasm/bc_container_util.h
+/// @brief YASM bytecode container utility functions.
 ///
 /// @license
 ///  Copyright (C) 2001-2007  Peter Johnson
@@ -36,9 +36,9 @@
 namespace yasm {
 
 class Arch;
+class BytecodeContainer;
 class Expr;
 class IntNum;
-class Section;
 
 /// The factory functions append to the end of a section.
 /// The functions will throw an error if unable to append.
@@ -46,14 +46,14 @@ class Section;
 /// Append a single byte value to the end of a section.
 /// @param sect         section
 /// @param val          byte value
-void append_byte(Section& sect, unsigned char val);
+void append_byte(BytecodeContainer& container, unsigned char val);
 
 /// Append a raw data value to the end of a section.
 /// @param sect         section
 /// @param val          data value
 /// @param size         storage size (in bytes) for the data value
 /// @param arch         architecture
-void append_data(Section& sect,
+void append_data(BytecodeContainer& container,
                  const IntNum& val,
                  unsigned int size,
                  const Arch& arch);
@@ -63,7 +63,7 @@ void append_data(Section& sect,
 /// @param expr         data value
 /// @param size         storage size (in bytes) for the data value
 /// @param arch         architecture
-void append_data(Section& sect,
+void append_data(BytecodeContainer& container,
                  std::auto_ptr<Expr> expr,
                  unsigned int size,
                  const Arch& arch);
@@ -72,7 +72,7 @@ void append_data(Section& sect,
 /// @param sect         section
 /// @param str          string/data (may contain 0 values)
 /// @param append_zero  append a single zero byte after the string (if true)
-void append_data(Section& sect,
+void append_data(BytecodeContainer& container,
                  const std::string& str,
                  bool append_zero);
 
@@ -81,7 +81,7 @@ void append_data(Section& sect,
 /// @param str          string/data (may contain 0 values)
 /// @param size         storage size (in bytes) to round up to
 /// @param append_zero  append a single zero byte after the string (if true)
-void append_data(Section& sect,
+void append_data(BytecodeContainer& container,
                  const std::string& str,
                  unsigned int size,
                  bool append_zero);
@@ -92,7 +92,7 @@ void append_data(Section& sect,
 /// @param sign         signedness (True=signed, False=unsigned) of the
 ///                     data value
 /// @param line         virtual line number
-void append_leb128(Section& sect,
+void append_leb128(BytecodeContainer& container,
                    std::auto_ptr<Expr> expr,
                    bool sign,
                    unsigned long line);
@@ -103,7 +103,7 @@ void append_leb128(Section& sect,
 /// @param numitems     number of reserve "items"
 /// @param itemsize     reserved size (in bytes) for each item
 /// @param line         virtual line number
-void append_reserve(Section& sect,
+void append_reserve(BytecodeContainer& container,
                     std::auto_ptr<Expr> numitems,
                     unsigned int itemsize,
                     unsigned long line);
@@ -116,7 +116,7 @@ void append_reserve(Section& sect,
 /// @param maxlen           maximum number of bytes to read from the file;
 ///                         may be NULL to indicate no maximum
 /// @param line             virtual line number
-void append_incbin(Section& sect,
+void append_incbin(BytecodeContainer& container,
                    const std::string& filename,
                    /*@null@*/ std::auto_ptr<Expr> start,
                    /*@null@*/ std::auto_ptr<Expr> maxlen,
@@ -133,7 +133,7 @@ void append_incbin(Section& sect,
 ///       - from fill parameter (if not NULL)
 ///       - from code_fill parameter (if not NULL)
 ///       - 0
-void append_align(Section& sect,
+void append_align(BytecodeContainer& container,
                   std::auto_ptr<Expr> boundary,
                   /*@null@*/ std::auto_ptr<Expr> fill,
                   /*@null@*/ std::auto_ptr<Expr> maxskip,
@@ -146,7 +146,7 @@ void append_align(Section& sect,
 /// @param start        section offset of following bytecode
 /// @param fill         fill value
 /// @param line         virtual line number
-void append_org(Section& sect,
+void append_org(BytecodeContainer& container,
                 unsigned long start,
                 unsigned long fill,
                 unsigned long line);
