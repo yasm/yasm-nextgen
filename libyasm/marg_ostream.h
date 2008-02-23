@@ -212,7 +212,7 @@ public:
     }
         
     //  Provide my_type::operator<<(T) for each
-    //  std::ostraem::operator<<(T) or
+    //  ostream_type::operator<<(T) or
     //  operator<<(ostream_type&, T):
       
     typedef ostream_type& (*super_io_manip_type)(ostream_type&);
