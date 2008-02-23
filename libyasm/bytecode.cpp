@@ -44,19 +44,19 @@
 
 namespace yasm {
 
-void
-Bytecode::set_multiple(std::auto_ptr<Expr> e)
+BytecodeOutput::BytecodeOutput()
 {
-    m_multiple = e;
+}
+
+BytecodeOutput::~BytecodeOutput()
+{
 }
 
 void
-Bytecode::multiply_multiple(std::auto_ptr<Expr> e)
+BytecodeOutput::output_reloc(Symbol* sym, Bytes& bytes, Bytecode& bc,
+                             unsigned int valsize, int warn)
 {
-    if (m_multiple.get() != 0)
-        m_multiple.reset(new Expr(m_multiple, Op::MUL, e, e->get_line()));
-    else
-        m_multiple = e;
+    output_bytes(bytes);
 }
 
 bool
@@ -66,13 +66,6 @@ Bytecode::Contents::expand(Bytecode& bc, unsigned long& len, int span,
                            /*@out@*/ long& pos_thres)
 {
     throw InternalError(N_("bytecode does not have any dependent spans"));
-}
-
-/*@null@*/ const Expr*
-Bytecode::Contents::reserve_numitems(/*@out@*/ unsigned int& itemsize) const
-{
-    itemsize = 0;
-    return 0;
 }
 
 Bytecode::Contents::SpecialType
@@ -90,9 +83,7 @@ Bytecode::transform(std::auto_ptr<Contents> contents)
 Bytecode::Bytecode(std::auto_ptr<Contents> contents, unsigned long line)
     : m_contents(contents),
       m_container(0),
-      m_multiple(0),
       m_len(0),
-      m_mult_int(1),
       m_line(line),
       m_offset(~0UL),   // obviously incorrect / uninitialized value
       m_index(~0UL)
@@ -102,9 +93,7 @@ Bytecode::Bytecode(std::auto_ptr<Contents> contents, unsigned long line)
 Bytecode::Bytecode()
     : m_contents(0),
       m_container(0),
-      m_multiple(0),
       m_len(0),
-      m_mult_int(1),
       m_line(0),
       m_offset(~0UL),   // obviously incorrect / uninitialized value
       m_index(~0UL)
@@ -114,9 +103,7 @@ Bytecode::Bytecode()
 Bytecode::Bytecode(const Bytecode& oth)
     : m_contents(oth.m_contents->clone()),
       m_container(oth.m_container),
-      m_multiple(oth.m_multiple->clone()),
       m_len(oth.m_len),
-      m_mult_int(oth.m_mult_int),
       m_line(oth.m_line),
       m_offset(oth.m_offset),
       m_index(oth.m_index),
@@ -136,12 +123,7 @@ Bytecode::operator= (const Bytecode& oth)
         else
             m_contents.reset(0);
         m_container = oth.m_container;
-        if (oth.m_multiple.get() != 0)
-            m_multiple.reset(oth.m_multiple->clone());
-        else
-            m_multiple.reset(0);
         m_len = oth.m_len;
-        m_mult_int = oth.m_mult_int;
         m_line = oth.m_line;
         m_offset = oth.m_offset;
         m_index = oth.m_index;
@@ -153,16 +135,14 @@ Bytecode::operator= (const Bytecode& oth)
 void
 Bytecode::put(std::ostream& os, int indent_level) const
 {
+    if (m_fixed.size() > 0) {
+        os << std::setw(indent_level) << "" << "Fixed: ";
+        debug_put(os, m_fixed);
+    }
     if (m_contents.get() != 0)
         m_contents->put(os, indent_level);
     else
         os << std::setw(indent_level) << "" << "EMPTY\n";
-    os << std::setw(indent_level) << "" << "Multiple=";
-    if (m_multiple.get() == 0)
-        os << "nil (1)";
-    else
-        os << *m_multiple;
-    os << '\n';
     os << std::setw(indent_level) << "" << "Length=" << m_len << '\n';
     os << std::setw(indent_level) << "" << "Line Index=" << m_line << '\n';
     os << std::setw(indent_level) << "" << "Offset=" << m_offset << '\n';
@@ -192,24 +172,6 @@ Bytecode::finalize()
 
     if (m_contents.get() != 0)
         m_contents->finalize(*this);
-
-    if (m_multiple.get() != 0) {
-        Location loc = {this, 0};
-        Value val(0, std::auto_ptr<Expr>(m_multiple->clone()));
-
-        if (val.finalize(loc))
-            throw TooComplexError(N_("multiple expression too complex"));
-        else if (val.is_relative())
-            throw NotAbsoluteError(N_("multiple expression not absolute"));
-        // Finalize creates NULL output if value=0, but bc->multiple is NULL
-        // if value=1 (this difference is to make the common case small).
-        // However, this means we need to set bc->multiple explicitly to 0
-        // here if val.abs is NULL.
-        if (const Expr* e = val.get_abs())
-            m_multiple.reset(e->clone());
-        else
-            m_multiple.reset(new Expr(new IntNum(0), m_line));
-    }
 }
 
 void
@@ -226,28 +188,6 @@ Bytecode::finalize(Errwarns& errwarns)
 void
 Bytecode::calc_len(AddSpanFunc add_span)
 {
-    // Check for multiples
-    m_mult_int = 1;
-    if (m_multiple.get() != 0) {
-        if (const IntNum* num = m_multiple->get_intnum()) {
-            if (num->sign() < 0) {
-                m_len = 0;
-                throw ValueError(N_("multiple is negative"));
-            } else
-                m_mult_int = num->get_int();
-        } else {
-            if (m_multiple->contains(Expr::FLOAT)) {
-                m_len = 0;
-                throw ValueError(
-                    N_("expression must not contain floating point value"));
-            } else {
-                Value value(0, Expr::Ptr(m_multiple->clone()));
-                add_span(*this, 0, value, 0, 0);
-                m_mult_int = 0;     // assume 0 to start
-            }
-        }
-    }
-
     if (m_contents.get() == 0) {
         m_len = 0;
         return;
@@ -270,10 +210,6 @@ bool
 Bytecode::expand(int span, long old_val, long new_val,
                  /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres)
 {
-    if (span == 0) {
-        m_mult_int = new_val;
-        return true;
-    }
     if (m_contents.get() == 0)
         return false;
     return m_contents->expand(*this, m_len, span, old_val, new_val, neg_thres,
@@ -296,79 +232,43 @@ Bytecode::expand(int span, long old_val, long new_val,
 }
 
 void
-Bytecode::to_bytes(Bytes& bytes, /*@out@*/ unsigned long& gap,
-                   OutputValueFunc output_value,
-                   /*@null@*/ OutputRelocFunc output_reloc)
+Bytecode::output(BytecodeOutput& bc_out)
 {
-    m_mult_int = get_multiple(true);
-    if (m_mult_int == 0)
-        return; // nothing to output
+    // output fixups, outputting the fixed portions in between each one
+    unsigned int last = 0;
+    for (std::vector<Fixup>::iterator i=m_fixed_fixups.begin(),
+         end=m_fixed_fixups.end(); i != end; ++i) {
+        unsigned int off = i->get_off();
+        Location loc = {this, off};
 
-    // special case for reserve bytecodes
-    if (m_contents.get() != 0 &&
-        m_contents->get_special() == Contents::SPECIAL_RESERVE) {
-        gap = m_len * m_mult_int;
-        return;
+        // Output fixed portion.
+        Bytes& fixed = bc_out.get_scratch();
+        fixed.insert(fixed.end(), m_fixed.begin() + last,
+                     m_fixed.begin() + off);
+        bc_out.output_bytes(fixed);
+
+        // Output value.
+        Bytes& vbytes = bc_out.get_scratch();
+        vbytes.insert(vbytes.end(), m_fixed.begin() + off,
+                      m_fixed.begin() + off + i->m_size/8);
+        // Make a copy of the value to ensure things like
+        // "TIMES x JMP label" work.
+        Value vcopy = *i;
+        bc_out.output_value(vcopy, vbytes, loc, i->m_sign ? -1 : 1);
+        warn_update_line(i->get_line());
+
+        last = off + i->m_size/8;
+    }
+    // handle last part of fixed
+    if (last < m_fixed.size()) {
+        Bytes& fixed = bc_out.get_scratch();
+        fixed.insert(fixed.end(), m_fixed.begin() + last, m_fixed.end());
+        bc_out.output_bytes(fixed);
     }
 
-    gap = 0;
-
-    Bytes lb;
-    lb.reserve(m_len);
-
-    unsigned long total_len = get_total_len();
-    unsigned long pos = 0;
-    for (long mult=0; mult<m_mult_int; mult++, pos += total_len) {
-        unsigned int last = 0;
-        for (std::vector<Fixup>::iterator i=m_fixed_fixups.begin(),
-             end=m_fixed_fixups.end(); i != end; ++i) {
-            unsigned int off = i->get_off();
-            Location loc = {this, pos+off};
-            bytes.insert(bytes.end(), m_fixed.begin() + last,
-                         m_fixed.begin() + off);
-            if (m_mult_int > 1) {
-                // Make a copy of the value to ensure things like
-                // "TIMES x JMP label" work.
-                Value vcopy = *i;
-                output_value(vcopy, bytes, i->m_size/8, loc,
-                             i->m_sign ? -1 : 1);
-            } else {
-                output_value(*i, bytes, i->m_size/8, loc, i->m_sign ? -1 : 1);
-            }
-            last = off + i->m_size/8;
-            warn_update_line(i->get_line());
-        }
-        bytes.insert(bytes.end(), m_fixed.begin() + last, m_fixed.end());
-
-        // handle tail contents
-        if (m_contents.get() == 0)
-            continue; // no tail contents to output
-
-        m_contents->to_bytes(*this, lb, output_value, output_reloc);
-
-        if (lb.size() != m_len)
-            throw InternalError(
-                N_("written length does not match optimized length"));
-
-        bytes.insert(bytes.end(), lb.begin(), lb.end());
-        lb.clear();
-    }
-}
-
-long
-Bytecode::get_multiple(bool calc_dist)
-{
-    if (m_multiple.get() != 0) {
-        if (calc_dist)
-            m_multiple->level_tree(true, true, true, xform_calc_dist);
-        const IntNum* num = m_multiple->get_intnum();
-        if (!num)
-            throw ValueError(N_("could not determine multiple"));
-        if (num->sign() < 0)
-            throw ValueError(N_("multiple is negative"));
-        return num->get_int();
-    }
-    return 1;
+    // handle tail contents
+    if (m_contents.get() != 0)
+        m_contents->output(*this, bc_out);
 }
 
 unsigned long
@@ -393,7 +293,7 @@ Bytecode::update_offset(unsigned long offset, Errwarns& errwarns)
         retval = update_offset(offset);
     } catch (Error& err) {
         errwarns.propagate(m_line, err);
-        retval = offset + m_len*m_mult_int;
+        retval = next_offset();
     }
     errwarns.propagate(m_line);     // propagate warnings
     return retval;

@@ -1,5 +1,5 @@
-#ifndef YASM_BYTECODE_CONTAINER_H
-#define YASM_BYTECODE_CONTAINER_H
+#ifndef YASM_BC_CONTAINER_H
+#define YASM_BC_CONTAINER_H
 ///
 /// @file libyasm/bc_container.h
 /// @brief YASM bytecode container interface.
@@ -40,6 +40,7 @@ namespace yasm {
 
 class Bytecode;
 class Errwarns;
+class Expr;
 class Section;
 class Object;
 
@@ -67,15 +68,19 @@ public:
     /// @param indent_level indentation level
     void put(std::ostream& os, int indent_level) const;
 
-    /// Add bytecode to the end of a section.
+    /// Add bytecode to the end of the container.
     /// @param bc       bytecode (may be NULL)
     void append_bytecode(/*@null@*/ std::auto_ptr<Bytecode> bc);
 
-    /// Start a new bytecode at the end of a section.  Factory function.
+    /// Add gap space to the end of the container.
+    /// @param size     number of bytes of gap
+    void append_gap(unsigned int size, unsigned long line);
+
+    /// Start a new bytecode at the end of the container.  Factory function.
     /// @return Reference to new bytecode.
     Bytecode& start_bytecode();
 
-    /// Ensure the last bytecode in the section has no tail.  If the last
+    /// Ensure the last bytecode in the container has no tail.  If the last
     /// bytecode has no tail, simply returns it; otherwise creates and returns
     /// a fresh bytecode.
     /// @return Reference to last bytecode.
@@ -110,6 +115,8 @@ private:
     /// The bytecodes for the section's contents.
     stdx::ptr_vector<Bytecode> m_bcs;
     stdx::ptr_vector_owner<Bytecode> m_bcs_owner;
+
+    bool m_last_gap;        ///< Last bytecode is a gap bytecode
 };
 
 } // namespace yasm

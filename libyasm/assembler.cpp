@@ -166,7 +166,7 @@ Assembler::Impl::set_preproc(const std::string& preproc_keyword)
             preproc_keyword, m_parser->get_keyword()));
     }
 
-    std::auto_ptr<Preprocessor> preproc = 
+    std::auto_ptr<Preprocessor> preproc =
         load_module<Preprocessor>(preproc_keyword);
     if (preproc.get() == 0) {
         throw Error(String::compose(N_("could not load preprocessor `%1'"),
@@ -197,7 +197,7 @@ Assembler::Impl::set_dbgfmt(const std::string& dbgfmt_keyword)
             dbgfmt_keyword, m_objfmt->get_keyword()));
     }
 
-    std::auto_ptr<DebugFormat> dbgfmt = 
+    std::auto_ptr<DebugFormat> dbgfmt =
         load_module<DebugFormat>(dbgfmt_keyword);
     if (dbgfmt.get() == 0)
         throw Error(String::compose(N_("could not load debug format `%1'"),
@@ -214,7 +214,7 @@ Assembler::set_dbgfmt(const std::string& dbgfmt_keyword)
 void
 Assembler::Impl::set_listfmt(const std::string& listfmt_keyword)
 {
-    std::auto_ptr<ListFormat> listfmt = 
+    std::auto_ptr<ListFormat> listfmt =
         load_module<ListFormat>(listfmt_keyword);
     if (listfmt.get() == 0)
         throw Error(String::compose(N_("could not load list format `%1'"),

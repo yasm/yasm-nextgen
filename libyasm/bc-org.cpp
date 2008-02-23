@@ -60,8 +60,7 @@ public:
                 /*@out@*/ long& pos_thres);
 
     /// Convert a bytecode into its byte representation.
-    void to_bytes(Bytecode& bc, Bytes& bytes, OutputValueFunc output_value,
-                  OutputRelocFunc output_reloc = 0);
+    void output(Bytecode& bc, BytecodeOutput& bc_out);
 
     SpecialType get_special() const;
 
@@ -124,16 +123,16 @@ OrgBytecode::expand(Bytecode& bc, unsigned long& len, int span,
 }
 
 void
-OrgBytecode::to_bytes(Bytecode& bc, Bytes& bytes,
-                      OutputValueFunc output_value,
-                      OutputRelocFunc output_reloc)
+OrgBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     // Sanity check for overrun
     if (bc.get_offset() > m_start)
         throw Error(N_("ORG overlap with already existing data"));
     unsigned long len = m_start - bc.get_offset();
+    Bytes& bytes = bc_out.get_scratch();
     // XXX: handle more than 8 bit?
     bytes.insert(bytes.end(), len, static_cast<unsigned char>(m_fill));
+    bc_out.output_bytes(bytes);
 }
 
 OrgBytecode::SpecialType

@@ -71,6 +71,18 @@ Section::~Section()
 {
 }
 
+Section*
+Section::as_section()
+{
+    return this;
+}
+
+const Section*
+Section::as_section() const
+{
+    return this;
+}
+
 void
 Section::set_start(std::auto_ptr<Expr> start)
 {

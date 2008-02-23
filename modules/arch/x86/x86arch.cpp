@@ -420,24 +420,20 @@ X86Arch::add_directives(Directives& dirs, const std::string& parser)
 
 
 void
-X86Arch::floatnum_tobytes(const FloatNum& flt, Bytes& bytes, size_t destsize,
-                          size_t valsize, size_t shift, int warn) const
+X86Arch::floatnum_tobytes(const FloatNum& flt, Bytes& bytes, size_t valsize,
+                          size_t shift, int warn) const
 {
     if (!flt.is_valid_size(valsize))
         throw FloatingPointError(N_("invalid floating point constant size"));
 
-    Bytes::size_type sz = bytes.size();
-    bytes.resize(sz+destsize);
-    flt.get_sized(&bytes[sz], destsize, valsize, shift, false, warn);
+    flt.get_sized(&bytes[0], bytes.size(), valsize, shift, false, warn);
 }
 
 void
-X86Arch::intnum_tobytes(const IntNum& intn, Bytes& bytes, size_t destsize,
-                        size_t valsize, int shift, int warn) const
+X86Arch::intnum_tobytes(const IntNum& intn, Bytes& bytes, size_t valsize,
+                        int shift, int warn) const
 {
-    Bytes::size_type sz = bytes.size();
-    bytes.resize(sz+destsize);
-    intn.get_sized(&bytes[sz], destsize, valsize, shift, false, warn);
+    intn.get_sized(&bytes[0], bytes.size(), valsize, shift, false, warn);
 }
 
 std::auto_ptr<EffAddr>

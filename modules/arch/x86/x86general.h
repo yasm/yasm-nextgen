@@ -30,7 +30,7 @@
 
 
 namespace yasm {
- 
+
 class BytecodeContainer;
 class Value;
 

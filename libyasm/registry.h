@@ -116,7 +116,7 @@ template <typename T>
 inline std::auto_ptr<T>
 load_module(const std::string& keyword)
 {
-    impl::ModuleFactory::BASE_CREATE_FN create = 
+    impl::ModuleFactory::BASE_CREATE_FN create =
         impl::ModuleFactory::instance().get_create_fn(T::module_type, keyword);
     return std::auto_ptr<T>(static_cast<T*>(create()));
 }

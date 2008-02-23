@@ -97,17 +97,6 @@ void append_leb128(BytecodeContainer& container,
                    bool sign,
                    unsigned long line);
 
-/// Reserves space at the end of a section.
-/// Note: a bytecode will always have tail contents after this is called.
-/// @param sect         section
-/// @param numitems     number of reserve "items"
-/// @param itemsize     reserved size (in bytes) for each item
-/// @param line         virtual line number
-void append_reserve(BytecodeContainer& container,
-                    std::auto_ptr<Expr> numitems,
-                    unsigned int itemsize,
-                    unsigned long line);
-
 /// Append a binary file verbatim to the end of a section.
 /// @param sect             section
 /// @param filename         path to binary file
@@ -150,6 +139,15 @@ void append_org(BytecodeContainer& container,
                 unsigned long start,
                 unsigned long fill,
                 unsigned long line);
+
+/// Append a multiple container.
+/// @param container    bytecode container
+/// @param multiple     multiple expression
+/// @param line         virtual line number
+/// @return Multiple inner container.
+BytecodeContainer& append_multiple(BytecodeContainer& container,
+                                   std::auto_ptr<Expr> multiple,
+                                   unsigned long line);
 
 } // namespace yasm
 

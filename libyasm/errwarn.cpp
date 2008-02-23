@@ -79,7 +79,7 @@ def_gettext_hook(const char *msgid)
 ErrwarnManager::ErrwarnManager()
 {
     // Default enabled warnings.  See errwarn.h for a list.
-    m_wclass_enabled = 
+    m_wclass_enabled =
         (1UL<<WARN_GENERAL) | (1UL<<WARN_UNREC_CHAR) |
         (1UL<<WARN_PREPROC) | (0UL<<WARN_ORPHAN_LABEL) |
         (1UL<<WARN_UNINIT_CONTENTS);

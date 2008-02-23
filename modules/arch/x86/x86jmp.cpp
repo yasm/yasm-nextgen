@@ -59,9 +59,7 @@ public:
                 long old_val, long new_val,
                 /*@out@*/ long& neg_thres,
                 /*@out@*/ long& pos_thres);
-    void to_bytes(Bytecode& bc, Bytes& bytes,
-                  OutputValueFunc output_value,
-                  OutputRelocFunc output_reloc = 0);
+    void output(Bytecode& bc, BytecodeOutput& bc_out);
 
     X86Jmp* clone() const;
 
@@ -200,40 +198,37 @@ X86Jmp::expand(Bytecode& bc, unsigned long& len, int span,
 }
 
 void
-X86Jmp::to_bytes(Bytecode& bc, Bytes& bytes,
-                 OutputValueFunc output_value,
-                 OutputRelocFunc output_reloc)
+X86Jmp::output(Bytecode& bc, BytecodeOutput& bc_out)
 {
-    unsigned long orig = bytes.size();
+    Bytes& bytes = bc_out.get_scratch();
 
     // Prefixes
     m_common.to_bytes(bytes, 0);
 
+    unsigned int size;
     if (m_op_sel == JMP_SHORT) {
         // 1 byte relative displacement
+        size = 1;
 
         // Opcode
         m_shortop.to_bytes(bytes);
-
-        // Adjust relative displacement to end of bytecode
-        m_target.add_abs(-1);
-        m_target.m_size = 8;
-        Location loc = {&bc, bc.get_fixed_len()+bytes.size()-orig};
-        output_value(m_target, bytes, 1, loc, 1);
     } else {
         // 2/4 byte relative displacement (depending on operand size)
+        size = (m_common.m_opersize == 16) ? 2 : 4;
 
         // Opcode
         m_nearop.to_bytes(bytes);
-
-        unsigned int i = (m_common.m_opersize == 16) ? 2 : 4;
-
-        // Adjust relative displacement to end of bytecode
-        m_target.add_abs(-(long)i);
-        m_target.m_size = i*8;
-        Location loc = {&bc, bc.get_fixed_len()+bytes.size()-orig};
-        output_value(m_target, bytes, i, loc, 1);
     }
+
+    bc_out.output_bytes(bytes);
+
+    // Adjust relative displacement to end of bytecode
+    m_target.add_abs(-(long)size);
+    m_target.m_size = size*8;
+    Location loc = {&bc, bc.get_fixed_len()+bytes.size()};
+    Bytes& tbytes = bc_out.get_scratch();
+    tbytes.resize(size);
+    bc_out.output_value(m_target, tbytes, loc, 1);
 }
 
 X86Jmp*

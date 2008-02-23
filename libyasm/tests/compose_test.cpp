@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(ByClass)
     BOOST_CHECK_EQUAL(out, "There are 15 cows in them fields.");
 
     using String::Compose;
-  
+
     // demonstrate argument repetition
     out = Compose("To %1, or not to %1... is actually not a question.") % "be";
     BOOST_CHECK_EQUAL(out, "To be, or not to be... is actually not a question.");
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(ByClass)
     // demonstrate % escaping
     out = Compose("Using % before a %%1 causes the %1 to be escaped") % "%1";
     BOOST_CHECK_EQUAL(out, "Using % before a %1 causes the %1 to be escaped");
-  
+
     out = Compose("Four percent in a row: %%%%%%%%");
     BOOST_CHECK_EQUAL(out, "Four percent in a row: %%%%");
 
@@ -65,11 +65,11 @@ BOOST_AUTO_TEST_CASE(ByClass)
     // test % escaping at the string ends
     out = Compose("%% This is like a LaTeX comment %%");
     BOOST_CHECK_EQUAL(out, "% This is like a LaTeX comment %");
-  
+
     // test % specs at the string ends
     out = Compose("%1 %2") % "Hello" % "World!";
     BOOST_CHECK_EQUAL(out, "Hello World!");
-  
+
     // test a bunch of arguments
     out = Compose("%1 %2 %3 %4 %5 %6, %7 %8!") % "May" % "the" % "Force" %
 	"be" % "with" % "you" % "Woung" % "Skytalker";
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(ByFunction)
     BOOST_CHECK_EQUAL(out, "There are 15 cows in them fields.");
 
     using String::compose;
-  
+
     // demonstrate argument repetition
     out = compose("To %1, or not to %1... is actually not a question.", "be");
     BOOST_CHECK_EQUAL(out, "To be, or not to be... is actually not a question.");
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(ByFunction)
     // demonstrate % escaping
     out = compose("Using % before a %%1 causes the %1 to be escaped", "%1");
     BOOST_CHECK_EQUAL(out, "Using % before a %1 causes the %1 to be escaped");
-  
+
     out = compose("Four percent in a row: %%%%%%%%");
     BOOST_CHECK_EQUAL(out, "Four percent in a row: %%%%");
 
@@ -109,11 +109,11 @@ BOOST_AUTO_TEST_CASE(ByFunction)
     // test % escaping at the string ends
     out = compose("%% This is like a LaTeX comment %%");
     BOOST_CHECK_EQUAL(out, "% This is like a LaTeX comment %");
-  
+
     // test % specs at the string ends
     out = compose("%1 %2", "Hello", "World!");
     BOOST_CHECK_EQUAL(out, "Hello World!");
-  
+
     // test a bunch of arguments
     out = compose("%1 %2 %3 %4 %5 %6, %7 %8!", "May", "the", "Force",
 	          "be", "with", "you", "Woung", "Skytalker");

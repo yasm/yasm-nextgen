@@ -145,6 +145,8 @@ Bytes::write_32(unsigned long val)
 /// @return Output stream
 std::ostream& operator<< (std::ostream& os, const Bytes& bytes);
 
+void debug_put(std::ostream& os, const Bytes& bytes);
+
 } // namespace yasm
 
 #endif

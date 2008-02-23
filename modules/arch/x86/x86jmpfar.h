@@ -33,7 +33,7 @@ namespace yasm {
 
 class BytecodeContainer;
 class Expr;
-   
+
 namespace arch { namespace x86 {
 
 class X86Common;

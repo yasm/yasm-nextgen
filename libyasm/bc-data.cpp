@@ -302,7 +302,10 @@ append_data(BytecodeContainer& container,
             const Arch& arch)
 {
     Bytecode& bc = container.fresh_bytecode();
-    arch.intnum_tobytes(val, bc.get_fixed(), size, size*8, 0, 1);
+    Bytes zero;
+    zero.resize(size);
+    arch.intnum_tobytes(val, zero, size*8, 0, 1);
+    bc.get_fixed().insert(bc.get_fixed().end(), zero.begin(), zero.end());
 }
 
 void

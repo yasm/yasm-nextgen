@@ -88,6 +88,11 @@ public:
 
     ~Section();
 
+    /// BytecodeContainer override that returns this.
+    /// @return This section.
+    Section* as_section();
+    const Section* as_section() const;
+
     /// Determine if a section is flagged to contain code.
     /// @return True if section is flagged to contain code.
     bool is_code() const { return m_code; }

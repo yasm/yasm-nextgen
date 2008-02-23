@@ -360,7 +360,7 @@ public:
         unsigned int m_subst;
     };
 
-    Span(Bytecode& bc, int id, const Value& value, 
+    Span(Bytecode& bc, int id, const Value& value,
          long neg_thres, long pos_thres, size_t os_index);
     ~Span();
 
@@ -447,7 +447,7 @@ Span::Term::Term(unsigned int subst, Location loc, Location loc2, Span* span,
 {
 }
 
-Span::Span(Bytecode& bc, int id, /*@null@*/ const Value& value, 
+Span::Span(Bytecode& bc, int id, /*@null@*/ const Value& value,
            long neg_thres, long pos_thres, size_t os_index)
     : m_bc(bc),
       m_depval(value),
@@ -960,15 +960,8 @@ Object::optimize(Errwarns& errwarns)
             if (errwarns.num_errors() > 0)
                 saw_error = true;
             else {
-                if (bc->get_special() == Bytecode::Contents::SPECIAL_OFFSET) {
+                if (bc->get_special() == Bytecode::Contents::SPECIAL_OFFSET)
                     opt.add_offset_setter(*bc);
-
-                    if (bc->get_multiple_expr()) {
-                        errwarns.propagate(bc->get_line(),
-                            ValueError(N_("cannot combine multiples and setting assembly position")));
-                        saw_error = true;
-                    }
-                }
 
                 offset = bc->next_offset();
             }

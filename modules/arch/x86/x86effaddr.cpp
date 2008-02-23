@@ -939,7 +939,7 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
                                  X86_REX_B);
                 m_sib |= low3;
             }
-            
+
             // Put in indexreg, checking for none case
             if (indexreg == REG3264_NONE)
                 m_sib |= 040;

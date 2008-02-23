@@ -35,7 +35,7 @@ namespace yasm {
 
 class Object;
 class NameValues;
-   
+
 namespace arch { namespace x86 {
 
 // Available CPU feature flags
@@ -119,11 +119,9 @@ public:
     const unsigned char** get_fill() const;
 
     void floatnum_tobytes(const FloatNum& flt, Bytes& bytes,
-                          size_t destsize, size_t valsize,
-                          size_t shift, int warn) const;
+                          size_t valsize, size_t shift, int warn) const;
     void intnum_tobytes(const IntNum& intn, Bytes& bytes,
-                        size_t destsize, size_t valsize, int shift,
-                        int warn) const;
+                        size_t valsize, int shift, int warn) const;
 
     std::auto_ptr<EffAddr> ea_create(std::auto_ptr<Expr> e) const;
 

@@ -124,9 +124,8 @@ public:
     /*@null@*/ std::auto_ptr<IntNum> get_intnum(bool calc_bc_dist);
 
     /// Output value if constant or PC-relative section-local.  This should
-    /// be used from objfmt output_value_func() functions.
+    /// be used from BytecodeOutput::output_value() implementations.
     /// @param bytes        storage for byte representation
-    /// @param destsize     destination size (in bytes)
     /// @param loc          location of value
     /// @param warn         enables standard warnings: zero for none;
     ///                     nonzero for overflow/underflow floating point and
@@ -138,8 +137,7 @@ public:
     ///      use this function!
     /// @return False if no value output due to value needing relocation;
     ///         true if value output.
-    bool output_basic(Bytes& bytes, size_t destsize, Location loc, int warn,
-                      const Arch& arch);
+    bool output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch);
 
     /// Print a value.  For debugging purposes.
     /// @param os           output stream

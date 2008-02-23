@@ -160,7 +160,7 @@ IntNum::IntNum(char *str, int base)
         default:
             throw ValueError(N_("invalid base"));
     }
-    
+
     switch (err) {
         case BitVector::ErrCode_Pars:
             throw ValueError(errstr);
@@ -675,7 +675,7 @@ IntNum::ok_size(size_t size, size_t rshift, int rangetype) const
 
             return retval;
         }
-        
+
         if (rangetype == 1)
             size--;
     }

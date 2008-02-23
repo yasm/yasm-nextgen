@@ -155,7 +155,7 @@ NasmParser::do_parse()
                 parse_line();
                 demand_eol();
             }
-
+#if 0
             if (m_abspos.get() != 0) {
                 // If we're inside an absolute section, just add to the
                 // absolute position rather than appending bytecodes to a
@@ -185,7 +185,7 @@ NasmParser::do_parse()
                     bc.reset(new Bytecode());
                 }
             }
-
+#endif
             if (m_save_input) {
                 m_linemap->add_source(loc, line);
             }
@@ -264,6 +264,8 @@ NasmParser::parse_line()
             break;
         }
         case TIMES: // TIMES expr exp
+            m_container = m_object->get_cur_section();
+
             get_next_token();
             parse_times();
             return;
@@ -274,6 +276,8 @@ NasmParser::parse_line()
             bool local = (m_token != ID);
             std::string name;
             std::swap(name, ID_val);
+
+            m_container = m_object->get_cur_section();
 
             get_next_token();
             if (is_eol()) {
@@ -382,23 +386,20 @@ next:
 void
 NasmParser::parse_times()
 {
-    // multiple applies to the entire bytecode (both fixed and tail portions),
-    // so force a completely new bytecode.
-    Bytecode& bc = m_object->get_cur_section()->start_bytecode();
-    m_bc = &bc;
     Expr::Ptr multiple = parse_expr(DV_EXPR);
     if (multiple.get() == 0) {
         throw SyntaxError(String::compose(N_("expression expected after %1"),
                                           "TIMES"));
     }
-    if (!parse_exp())
-        throw SyntaxError(N_("instruction expected after TIMES expression"));
-    m_bc = &m_object->get_cur_section()->bcs_last();
-    if (m_bc != &bc)
-        throw InternalError(N_("trying to TIMES more than one bytecode"));
-    m_bc->set_multiple(multiple);
-    // force a completely new bytecode now that we're done with this one.
-    m_bc = &m_object->get_cur_section()->start_bytecode();
+    BytecodeContainer* orig_container = m_container;
+    m_container = &append_multiple(*m_container, multiple, get_cur_line());
+    try {
+        if (!parse_exp())
+            throw SyntaxError(N_("instruction expected after TIMES expression"));
+    } catch (...) {
+        m_container = orig_container;
+        throw;
+    }
 }
 
 bool
@@ -406,7 +407,7 @@ NasmParser::parse_exp()
 {
     Insn::Ptr insn = parse_instr();
     if (insn.get() != 0) {
-        insn->append(*m_object->get_cur_section());
+        insn->append(*m_container);
         return true;
     }
 
@@ -416,14 +417,13 @@ NasmParser::parse_exp()
             unsigned int size = DECLARE_DATA_val/8;
             get_next_token();
 
-            Section& sect = *m_object->get_cur_section();
             for (;;) {
                 if (m_token == STRING) {
                     // Peek ahead to see if we're in an expr.  If we're not,
                     // then generate a real string dataval.
                     get_peek_token();
                     if (m_peek_token == ',' || is_eol_tok(m_peek_token)) {
-                        append_data(sect, STRING_val, size, false);
+                        append_data(*m_container, STRING_val, size, false);
                         get_next_token();
                         goto dv_done;
                     }
@@ -431,7 +431,8 @@ NasmParser::parse_exp()
                 {
                     Expr::Ptr e = parse_expr(DV_EXPR);
                     if (e.get() != 0)
-                        append_data(sect, e, size, *m_object->get_arch());
+                        append_data(*m_container, e, size,
+                                    *m_object->get_arch());
                     else
                         throw SyntaxError(N_("expression or string expected"));
                 }
@@ -454,8 +455,9 @@ dv_done:
                 throw SyntaxError(String::compose(
                     N_("expression expected after %1"), "RESx"));
             }
-            append_reserve(*m_object->get_cur_section(), e, size,
-                           get_cur_line());
+            BytecodeContainer& multc =
+                append_multiple(*m_container, e, get_cur_line());
+            multc.append_gap(size, get_cur_line());
             return true;
         }
 #if 0
@@ -920,7 +922,7 @@ NasmParser::parse_expr6(ExprType type)
                 e.reset(m_abspos->clone());
             else {
                 std::auto_ptr<Symbol> sym(new Symbol("$"));
-                m_bc = &m_object->get_cur_section()->fresh_bytecode();
+                m_bc = &m_container->fresh_bytecode();
                 Location loc = {m_bc, m_bc->get_fixed_len()};
                 sym->define_curpos(loc, get_cur_line());
                 e.reset(new Expr(sym.get()));
@@ -933,7 +935,7 @@ NasmParser::parse_expr6(ExprType type)
                 e.reset(m_absstart->clone());
             else {
                 std::auto_ptr<Symbol> sym(new Symbol("$$"));
-                Location loc = {&m_object->get_cur_section()->bcs_first(), 0};
+                Location loc = {&m_container->bcs_first(), 0};
                 sym->define_label(loc, get_cur_line());
                 e.reset(new Expr(sym.get()));
                 m_object->add_non_table_symbol(sym);
@@ -956,7 +958,7 @@ NasmParser::define_label(const std::string& name, bool local)
     if (m_abspos.get() != 0)
         sym.define_equ(Expr::Ptr(m_abspos->clone()), get_cur_line());
     else {
-        m_bc = &m_object->get_cur_section()->fresh_bytecode();
+        m_bc = &m_container->fresh_bytecode();
         Location loc = {m_bc, m_bc->get_fixed_len()};
         sym.define_label(loc, get_cur_line());
     }

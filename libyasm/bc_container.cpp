@@ -32,13 +32,95 @@
 #include <ostream>
 
 #include "bytecode.h"
+#include "errwarn.h"
+#include "expr.h"
 
+
+namespace {
+
+using namespace yasm;
+
+class GapBytecode : public Bytecode::Contents {
+public:
+    GapBytecode(unsigned int size);
+    ~GapBytecode();
+
+    /// Prints the implementation-specific data (for debugging purposes).
+    void put(std::ostream& os, int indent_level) const;
+
+    /// Finalizes the bytecode after parsing.
+    void finalize(Bytecode& bc);
+
+    /// Calculates the minimum size of a bytecode.
+    unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
+
+    /// Output a bytecode.
+    void output(Bytecode& bc, BytecodeOutput& bc_out);
+
+    /// Increase the gap size.
+    /// @param size     size in bytes
+    void extend(unsigned int size);
+
+    GapBytecode* clone() const;
+
+private:
+    unsigned int m_size;        ///< size of gap (in bytes)
+};
+
+
+GapBytecode::GapBytecode(unsigned int size)
+    : m_size(size)
+{
+}
+
+GapBytecode::~GapBytecode()
+{
+}
+
+void
+GapBytecode::put(std::ostream& os, int indent_level) const
+{
+    os << std::setw(indent_level) << "" << "_Gap_\n";
+    os << std::setw(indent_level) << "" << "Size=" << m_size << '\n';
+}
+
+void
+GapBytecode::finalize(Bytecode& bc)
+{
+}
+
+unsigned long
+GapBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
+{
+    return m_size;
+}
+
+void
+GapBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
+{
+    bc_out.output_gap(m_size);
+}
+
+GapBytecode*
+GapBytecode::clone() const
+{
+    return new GapBytecode(m_size);
+}
+
+void
+GapBytecode::extend(unsigned int size)
+{
+    m_size += size;
+}
+
+} // anonymous namespace
 
 namespace yasm {
 
 BytecodeContainer::BytecodeContainer()
     : m_object(0),
-      m_bcs_owner(m_bcs)
+      m_bcs_owner(m_bcs),
+      m_last_gap(false)
 {
     // A container always has at least one bytecode.
     start_bytecode();
@@ -77,6 +159,20 @@ BytecodeContainer::append_bytecode(std::auto_ptr<Bytecode> bc)
         bc->m_container = this; // record parent
         m_bcs.push_back(bc.release());
     }
+    m_last_gap = false;
+}
+
+void
+BytecodeContainer::append_gap(unsigned int size, unsigned long line)
+{
+    if (m_last_gap) {
+        static_cast<GapBytecode&>(*m_bcs.back().m_contents).extend(size);
+        return;
+    }
+    Bytecode& bc = fresh_bytecode();
+    bc.transform(Bytecode::Contents::Ptr(new GapBytecode(size)));
+    bc.set_line(line);
+    m_last_gap = true;
 }
 
 Bytecode&
@@ -85,6 +181,7 @@ BytecodeContainer::start_bytecode()
     Bytecode* bc = new Bytecode;
     bc->m_container = this; // record parent
     m_bcs.push_back(bc);
+    m_last_gap = false;
     return *bc;
 }
 

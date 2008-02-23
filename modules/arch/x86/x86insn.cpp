@@ -815,7 +815,7 @@ X86Insn::find_match(const unsigned int* size_lookup, int bypass) const
 {
     // Just do a simple linear search through the info array for a match.
     // First match wins.
-    const X86InsnInfo* info = 
+    const X86InsnInfo* info =
         std::find_if(&m_group[0], &m_group[m_num_info],
                      BIND::bind(&X86Insn::match_info, this, _1, size_lookup,
                                 bypass));

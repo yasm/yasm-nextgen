@@ -601,8 +601,7 @@ Value::add_abs(std::auto_ptr<Expr> delta)
 }
 
 bool
-Value::output_basic(Bytes& bytes, size_t destsize, Location loc, int warn,
-                    const Arch& arch)
+Value::output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch)
 {
     /*@dependent@*/ /*@null@*/ IntNum* intn = 0;
 
@@ -610,7 +609,7 @@ Value::output_basic(Bytes& bytes, size_t destsize, Location loc, int warn,
         // Handle floating point expressions
         FloatNum* flt;
         if (!m_rel && (flt = m_abs->get_float())) {
-            arch.floatnum_tobytes(*flt, bytes, destsize, m_size, 0, warn);
+            arch.floatnum_tobytes(*flt, bytes, m_size, 0, warn);
             return true;
         }
 
@@ -665,7 +664,7 @@ Value::output_basic(Bytes& bytes, size_t destsize, Location loc, int warn,
             outval += *intn;
 
         // Output!
-        arch.intnum_tobytes(outval, bytes, destsize, m_size, 0, warn);
+        arch.intnum_tobytes(outval, bytes, m_size, 0, warn);
         return true;
     }
 
@@ -674,10 +673,10 @@ Value::output_basic(Bytes& bytes, size_t destsize, Location loc, int warn,
 
     if (intn) {
         // Output just absolute portion
-        arch.intnum_tobytes(*intn, bytes, destsize, m_size, 0, warn);
+        arch.intnum_tobytes(*intn, bytes, m_size, 0, warn);
     } else {
         // No absolute or relative portions: output 0
-        arch.intnum_tobytes(0, bytes, destsize, m_size, 0, warn);
+        arch.intnum_tobytes(0, bytes, m_size, 0, warn);
     }
 
     return true;

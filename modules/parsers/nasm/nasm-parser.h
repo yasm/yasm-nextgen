@@ -178,6 +178,7 @@ private:
                    const NameValues& objext_namevals);
 
     Object* m_object;
+    BytecodeContainer* m_container;
     Preprocessor* m_preproc;
     Linemap* m_linemap;
     Errwarns* m_errwarns;

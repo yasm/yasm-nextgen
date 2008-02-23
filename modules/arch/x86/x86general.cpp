@@ -68,9 +68,7 @@ public:
                 long old_val, long new_val,
                 /*@out@*/ long& neg_thres,
                 /*@out@*/ long& pos_thres);
-    void to_bytes(Bytecode& bc, Bytes& bytes,
-                  OutputValueFunc output_value,
-                  OutputRelocFunc output_reloc = 0);
+    void output(Bytecode& bc, BytecodeOutput& bc_out);
 
     X86General* clone() const;
 
@@ -340,11 +338,9 @@ X86General::expand(Bytecode& bc, unsigned long& len, int span,
 }
 
 void
-X86General::to_bytes(Bytecode& bc, Bytes& bytes,
-                     OutputValueFunc output_value,
-                     OutputRelocFunc output_reloc)
+X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
 {
-    unsigned long orig = bytes.size();
+    Bytes& bytes = bc_out.get_scratch();
 
     // Prefixes
     m_common.to_bytes(bytes,
@@ -360,8 +356,7 @@ X86General::to_bytes(Bytecode& bc, Bytes& bytes,
     // Opcode
     m_opcode.to_bytes(bytes);
 
-    // Effective address: ModR/M (if required), SIB (if required), and
-    // displacement (if required).
+    // Effective address: ModR/M (if required), SIB (if required)
     if (m_ea != 0) {
         if (m_ea->m_need_modrm) {
             if (!m_ea->m_valid_modrm)
@@ -377,17 +372,24 @@ X86General::to_bytes(Bytecode& bc, Bytes& bytes,
 
         if (m_ea->m_need_drex)
             bytes.write_8(m_ea->m_drex);
+    }
 
-        if (m_ea->m_need_disp) {
-            unsigned int disp_len = m_ea->m_disp.m_size/8;
+    bc_out.output_bytes(bytes);
+    unsigned long pos = bc.get_fixed_len()+bytes.size();
 
-            if (m_ea->m_disp.m_ip_rel) {
-                // Adjust relative displacement to end of bytecode
-                m_ea->m_disp.add_abs(-(long)disp_len);
-            }
-            Location loc = {&bc, bytes.size()-orig};
-            output_value(m_ea->m_disp, bytes, disp_len, loc, 1);
+    // Displacement (if required)
+    if (m_ea != 0 && m_ea->m_need_disp) {
+        unsigned int disp_len = m_ea->m_disp.m_size/8;
+
+        if (m_ea->m_disp.m_ip_rel) {
+            // Adjust relative displacement to end of bytecode
+            m_ea->m_disp.add_abs(-(long)disp_len);
         }
+        Location loc = {&bc, pos};
+        pos += disp_len;
+        Bytes& dbytes = bc_out.get_scratch();
+        dbytes.resize(disp_len);
+        bc_out.output_value(m_ea->m_disp, bytes, loc, 1);
     }
 
     // Immediate (if required)
@@ -401,8 +403,10 @@ X86General::to_bytes(Bytecode& bc, Bytes& bytes,
             imm_len = 1;
         } else
             imm_len = m_imm->m_size/8;
-        Location loc = {&bc, bytes.size()-orig};
-        output_value(*m_imm, bytes, imm_len, loc, 1);
+        Location loc = {&bc, pos};
+        Bytes& ibytes = bc_out.get_scratch();
+        ibytes.resize(imm_len);
+        bc_out.output_value(*m_imm, bytes, loc, 1);
     }
 }
 

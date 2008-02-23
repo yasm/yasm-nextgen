@@ -113,22 +113,23 @@ align_section(const Section& sect, const Section& prevsect, unsigned long base,
     return start;
 }
 
-class Output {
+class Output : public BytecodeOutput {
 public:
     Output(std::ostream& os, Object& object, unsigned long abs_start);
     ~Output();
 
     void output_section(Section* sect, unsigned long start, Errwarns& errwarns);
 
+    // OutputBytecode overrides
+    void output_value(Value& value, Bytes& bytes, Location loc, int warn);
+    void output_gap(unsigned int size);
+    void output_bytes(const Bytes& bytes);
+
 private:
     static void expr_xform(Expr* e);
-    void output_value(Value& value, Bytes& bytes, unsigned int destsize,
-                      Location loc, int warn);
-    void output_bytecode(Bytecode& bc);
 
     Object& m_object;
     std::ostream& m_os;
-    Bytes m_bytes;
     /*@observer@*/ const Section* m_sect;
     unsigned long m_start;          // what normal variables go against
     unsigned long m_abs_start;      // what absolutes go against
@@ -153,7 +154,7 @@ Output::output_section(Section* sect, unsigned long start, Errwarns& errwarns)
     for (Section::bc_iterator i=sect->bcs_begin(), end=sect->bcs_end();
          i != end; ++i) {
         try {
-            output_bytecode(*i);
+            i->output(*this);
         } catch (Error& err) {
             errwarns.propagate(i->get_line(), err);
         }
@@ -182,7 +183,7 @@ Output::expr_xform(Expr* e)
         Location first = {&container->bcs_first(), 0};
         IntNum dist;
         if (calc_dist(first, loc, &dist)) {
-            const Expr* start = (dynamic_cast<Section&>(*container)).get_start();
+            const Expr* start = container->as_section()->get_start();
             //i->destroy(); // don't need to, as it's a sym or precbc
             *i = new Expr(start->clone(), Op::ADD, dist.clone(), e->get_line());
         }
@@ -190,8 +191,7 @@ Output::expr_xform(Expr* e)
 }
 
 void
-Output::output_value(Value& value, Bytes& bytes, unsigned int destsize,
-                     Location loc, int warn)
+Output::output_value(Value& value, Bytes& bytes, Location loc, int warn)
 {
     // Binary objects we need to resolve against object, not against section.
     if (value.is_relative()) {
@@ -230,8 +230,10 @@ done:
 
     // Output
     Arch* arch = m_object.get_arch();
-    if (value.output_basic(bytes, destsize, loc, warn, *arch))
+    if (value.output_basic(bytes, loc, warn, *arch)) {
+        m_os << bytes;
         return;
+    }
 
     // Couldn't output, assume it contains an external reference.
     throw Error(
@@ -239,36 +241,29 @@ done:
 }
 
 void
-Output::output_bytecode(Bytecode& bc)
+Output::output_gap(unsigned int size)
 {
-    unsigned long gap = 0;
-    m_bytes.clear();
-    bc.to_bytes(m_bytes, gap, BIND::bind(&Output::output_value, this,
-                                         _1, _2, _3, _4, _5));
-
-    // Don't bother doing anything else if size ended up being 0.
-    if (m_bytes.empty() && gap == 0)
-        return;
-
     // Warn that gaps are converted to 0 and write out the 0's.
-    if (gap) {
-        static const unsigned long BLOCK_SIZE = 4096;
+    static const unsigned long BLOCK_SIZE = 4096;
 
-        warn_set(WARN_UNINIT_CONTENTS,
-            N_("uninitialized space declared in code/data section: zeroing"));
-        // Write out in chunks
-        m_bytes.clear();
-        m_bytes.resize(BLOCK_SIZE);
-        while (gap > BLOCK_SIZE) {
-            m_os << m_bytes;
-            gap -= BLOCK_SIZE;
-        }
-        m_bytes.resize(gap);
-        m_os << m_bytes;
-    } else {
-        // Output bytes to file
-        m_os << m_bytes;
+    warn_set(WARN_UNINIT_CONTENTS,
+        N_("uninitialized space declared in code/data section: zeroing"));
+    // Write out in chunks
+    Bytes& bytes = get_scratch();
+    bytes.resize(BLOCK_SIZE);
+    while (size > BLOCK_SIZE) {
+        m_os << bytes;
+        size -= BLOCK_SIZE;
     }
+    bytes.resize(size);
+    m_os << bytes;
+}
+
+void
+Output::output_bytes(const Bytes& bytes)
+{
+    // Output bytes to file
+    m_os << bytes;
 }
 
 static void

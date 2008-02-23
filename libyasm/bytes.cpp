@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <istream>
 #include <iterator>
+#include <iomanip>
 #include <ostream>
 
 
@@ -48,6 +49,15 @@ operator<< (std::ostream& os, const Bytes& bytes)
 {
     os.write(reinterpret_cast<const char*>(&bytes[0]), bytes.size());
     return os;
+}
+
+void
+debug_put(std::ostream& os, const Bytes& bytes)
+{
+    os << std::hex << std::setfill('0');
+    for (Bytes::size_type i=0; i<bytes.size(); ++i)
+        os << std::setw(2) << (unsigned int)bytes[i] << ' ';
+    os << std::setfill(' ') << '\n';
 }
 
 void

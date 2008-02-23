@@ -72,8 +72,7 @@ public:
                 /*@out@*/ long& pos_thres);
 
     /// Convert a bytecode into its byte representation.
-    void to_bytes(Bytecode& bc, Bytes& bytes, OutputValueFunc output_value,
-                  OutputRelocFunc output_reloc = 0);
+    void output(Bytecode& bc, BytecodeOutput& bc_out);
 
     SpecialType get_special() const;
 
@@ -173,12 +172,11 @@ AlignBytecode::expand(Bytecode& bc, unsigned long& len, int span,
 }
 
 void
-AlignBytecode::to_bytes(Bytecode& bc, Bytes& bytes,
-                        OutputValueFunc output_value,
-                        OutputRelocFunc output_reloc)
+AlignBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     unsigned long len;
     unsigned long boundary = m_boundary->get_intnum()->get_uint();
+    Bytes& bytes = bc_out.get_scratch();
 
     if (boundary == 0)
         return;
@@ -226,6 +224,7 @@ AlignBytecode::to_bytes(Bytecode& bc, Bytes& bytes,
         // Just fill with 0
         bytes.insert(bytes.end(), len, 0);
     }
+    bc_out.output_bytes(bytes);
 }
 
 AlignBytecode::SpecialType

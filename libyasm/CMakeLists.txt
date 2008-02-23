@@ -6,8 +6,8 @@ ADD_LIBRARY(libyasm
     bc-align.cpp
     bc-data.cpp
     bc-incbin.cpp
+    bc-multiple.cpp
     bc-org.cpp
-    bc-reserve.cpp
     bitvect.cpp
     bytecode.cpp
     bytes.cpp

@@ -64,8 +64,7 @@ public:
     unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
 
     /// Convert a bytecode into its byte representation.
-    void to_bytes(Bytecode& bc, Bytes& bytes, OutputValueFunc output_value,
-                  OutputRelocFunc output_reloc = 0);
+    void output(Bytecode& bc, BytecodeOutput& bc_out);
 
     IncbinBytecode* clone() const;
 
@@ -199,9 +198,7 @@ IncbinBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 }
 
 void
-IncbinBytecode::to_bytes(Bytecode& bc, Bytes& bytes,
-                         OutputValueFunc output_value,
-                         OutputRelocFunc output_reloc)
+IncbinBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     unsigned long start = 0;
 
@@ -229,11 +226,13 @@ IncbinBytecode::to_bytes(Bytecode& bc, Bytes& bytes,
                                       "incbin", m_filename));
 
     // Read len bytes
+    Bytes& bytes = bc_out.get_scratch();
     bytes.write(ifs, bc.get_tail_len());
     if (!ifs)
         throw IOError(String::compose(
             N_("`%1': unable to read %2 bytes from file `%3'"),
             "incbin", bc.get_tail_len(), m_filename));
+    bc_out.output_bytes(bytes);
 }
 
 IncbinBytecode*
