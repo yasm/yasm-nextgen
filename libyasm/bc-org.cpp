@@ -29,6 +29,8 @@
 #include <iomanip>
 #include <ostream>
 
+#include "bc_container.h"
+#include "bc_container_util.h"
 #include "bytecode.h"
 #include "bytes.h"
 #include "errwarn.h"
@@ -151,11 +153,15 @@ OrgBytecode::clone() const
 
 namespace yasm {
 
-std::auto_ptr<Bytecode>
-create_org(unsigned long start, unsigned long fill, unsigned long line)
+void
+append_org(BytecodeContainer& container,
+           unsigned long start,
+           unsigned long fill,
+           unsigned long line)
 {
-    Bytecode::Contents::Ptr contents(new OrgBytecode(start, fill));
-    return std::auto_ptr<Bytecode>(new Bytecode(contents, line));
+    Bytecode& bc = container.fresh_bytecode();
+    bc.transform(Bytecode::Contents::Ptr(new OrgBytecode(start, fill)));
+    bc.set_line(line);
 }
 
 } // namespace yasm
