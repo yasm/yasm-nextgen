@@ -29,7 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
 #include <string>
 
 #include <boost/noncopyable.hpp>
@@ -37,6 +36,7 @@
 
 #include "assoc_data.h"
 #include "location.h"
+#include "marg_ostream_fwd.h"
 
 
 namespace yasm {
@@ -46,6 +46,8 @@ class Expr;
 class NameValues;
 
 class Symbol : private boost::noncopyable, public AssocDataContainer {
+    friend marg_ostream& operator<< (marg_ostream& os, const Symbol& sym);
+
 public:
     /// Constructor.
     explicit Symbol(const std::string& name);
@@ -190,11 +192,6 @@ public:
     /// @param undef_extern if true, all undef syms should be declared extern
     void finalize(bool undef_extern);
 
-    /// Print a symbol.  For debugging purposes.
-    /// @param os           output stream
-    /// @param indent_level indentation level
-    void put(std::ostream& os, int indent_level) const;
-
 private:
     enum Type {
         UNKNOWN,    ///< for unknown type (COMMON/EXTERN)
@@ -243,6 +240,11 @@ Symbol::get_equ() const
         return m_equ.get();
     return 0;
 }
+
+/// Print a symbol.  For debugging purposes.
+/// @param os           output stream
+/// @param sym          symbol
+marg_ostream& operator<< (marg_ostream& os, const Symbol& sym);
 
 } // namespace yasm
 

@@ -972,7 +972,8 @@ IntNum::get_str() const
     return NULL;
 }
 
-std::ostream& operator<< (std::ostream &os, const IntNum &intn)
+std::ostream&
+operator<< (std::ostream &os, const IntNum &intn)
 {
     switch (intn.m_type) {
         case IntNum::INTNUM_L:

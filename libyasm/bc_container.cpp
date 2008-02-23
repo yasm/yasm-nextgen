@@ -28,12 +28,10 @@
 
 #include "util.h"
 
-#include <iomanip>
-#include <ostream>
-
 #include "bytecode.h"
 #include "errwarn.h"
 #include "expr.h"
+#include "marg_ostream.h"
 
 
 namespace {
@@ -46,7 +44,7 @@ public:
     ~GapBytecode();
 
     /// Prints the implementation-specific data (for debugging purposes).
-    void put(std::ostream& os, int indent_level) const;
+    void put(marg_ostream& os) const;
 
     /// Finalizes the bytecode after parsing.
     void finalize(Bytecode& bc);
@@ -78,10 +76,10 @@ GapBytecode::~GapBytecode()
 }
 
 void
-GapBytecode::put(std::ostream& os, int indent_level) const
+GapBytecode::put(marg_ostream& os) const
 {
-    os << std::setw(indent_level) << "" << "_Gap_\n";
-    os << std::setw(indent_level) << "" << "Size=" << m_size << '\n';
+    os << "_Gap_\n";
+    os << "Size=" << m_size << '\n';
 }
 
 void
@@ -143,12 +141,14 @@ BytecodeContainer::as_section() const
 }
 
 void
-BytecodeContainer::put(std::ostream& os, int indent_level) const
+BytecodeContainer::put(marg_ostream& os) const
 {
     for (const_bc_iterator bc=m_bcs.begin(), end=m_bcs.end();
          bc != end; ++bc) {
-        os << std::setw(indent_level) << "" << "Next Bytecode:\n";
-        bc->put(os, indent_level+1);
+        os << "Next Bytecode:\n";
+        ++os;
+        os << *bc;
+        --os;
     }
 }
 

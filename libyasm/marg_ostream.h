@@ -76,7 +76,7 @@ private:
 template <typename CharType, typename TraitsType>
 class basic_marg_ostream
   : private detail::marg_ostreambuf<CharType, TraitsType>,  // adapt ostreambuf
-    private std::basic_ostream<CharType, TraitsType>        // and ostream
+    public std::basic_ostream<CharType, TraitsType>         // and ostream
 {
 public:
     typedef typename TraitsType::int_type int_type;

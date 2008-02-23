@@ -32,6 +32,8 @@
 #include <iosfwd>
 #include <vector>
 
+#include "marg_ostream_fwd.h"
+
 
 namespace yasm {
 
@@ -145,7 +147,11 @@ Bytes::write_32(unsigned long val)
 /// @return Output stream
 std::ostream& operator<< (std::ostream& os, const Bytes& bytes);
 
-void debug_put(std::ostream& os, const Bytes& bytes);
+/// Output a bytes container in user-readable format to an debug output stream.
+/// @param os    debug stream
+/// @param bytes bytes
+/// @return Debug stream
+marg_ostream& operator<< (marg_ostream& os, const Bytes& bytes);
 
 } // namespace yasm
 

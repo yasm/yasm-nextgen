@@ -29,7 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
 #include <memory>
 #include <string>
 
@@ -38,6 +37,7 @@
 
 #include "assoc_data.h"
 #include "bc_container.h"
+#include "marg_ostream_fwd.h"
 #include "ptr_vector.h"
 
 
@@ -148,9 +148,8 @@ public:
 
     /// Print a section.  For debugging purposes.
     /// @param os           output stream
-    /// @param indent_level indentation level
     /// @param with_bcs     if true, print bytecodes within section
-    void put(std::ostream& os, int indent_level, bool with_bcs) const;
+    void put(marg_ostream& os, bool with_bcs=false) const;
 
 private:
     std::string m_name;                 ///< name (given by user)
@@ -170,6 +169,13 @@ private:
     stdx::ptr_vector<Reloc> m_relocs;
     stdx::ptr_vector_owner<Reloc> m_relocs_owner;
 };
+
+inline marg_ostream&
+operator<< (marg_ostream& os, const Section& section)
+{
+    section.put(os);
+    return os;
+}
 
 } // namespace yasm
 

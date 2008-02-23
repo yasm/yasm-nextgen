@@ -32,6 +32,8 @@
 #include <iomanip>
 #include <ostream>
 
+#include "marg_ostream.h"
+
 
 namespace yasm {
 
@@ -51,13 +53,14 @@ operator<< (std::ostream& os, const Bytes& bytes)
     return os;
 }
 
-void
-debug_put(std::ostream& os, const Bytes& bytes)
+marg_ostream&
+operator<< (marg_ostream& os, const Bytes& bytes)
 {
     os << std::hex << std::setfill('0');
     for (Bytes::size_type i=0; i<bytes.size(); ++i)
         os << std::setw(2) << (unsigned int)bytes[i] << ' ';
     os << std::setfill(' ') << '\n';
+    return os;
 }
 
 void

@@ -28,12 +28,10 @@
 
 #include "util.h"
 
-#include <iomanip>
-#include <ostream>
-
 #include "arch.h"
 #include "errwarn.h"
 #include "expr.h"
+#include "marg_ostream.h"
 
 
 namespace yasm {
@@ -77,19 +75,20 @@ EffAddr::set_segreg(const SegmentRegister* segreg)
 }
 
 void
-EffAddr::put(std::ostream& os, int indent_level) const
+EffAddr::put(marg_ostream& os) const
 {
-    os << std::setw(indent_level) << "" << "Disp:\n";
-    m_disp.put(os, indent_level+1);
+    os << "Disp:\n";
+    ++os;
+    os << m_disp;
+    --os;
     if (m_segreg != 0)
-        os << std::setw(indent_level) << "" << "SegReg=" << *m_segreg << '\n';
-    os << std::setw(indent_level) << ""
-       << "NeedNonzeroLen=" << m_need_nonzero_len << '\n';
-    os << std::setw(indent_level) << "" << "NeedDisp=" << m_need_disp << '\n';
-    os << std::setw(indent_level) << "" << "NoSplit=" << m_nosplit << '\n';
-    os << std::setw(indent_level) << "" << "Strong=" << m_strong << '\n';
-    os << std::setw(indent_level) << "" << "PCRel=" << m_pc_rel << '\n';
-    os << std::setw(indent_level) << "" << "NotPCRel=" << m_not_pc_rel << '\n';
+        os << "SegReg=" << *m_segreg << '\n';
+    os << "NeedNonzeroLen=" << m_need_nonzero_len << '\n';
+    os << "NeedDisp=" << m_need_disp << '\n';
+    os << "NoSplit=" << m_nosplit << '\n';
+    os << "Strong=" << m_strong << '\n';
+    os << "PCRel=" << m_pc_rel << '\n';
+    os << "NotPCRel=" << m_not_pc_rel << '\n';
 }
 
 } // namespace yasm

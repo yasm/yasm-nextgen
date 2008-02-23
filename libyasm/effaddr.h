@@ -29,9 +29,9 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
 #include <memory>
 
+#include "marg_ostream_fwd.h"
 #include "value.h"
 
 namespace yasm {
@@ -90,7 +90,7 @@ public:
     /// Print an effective address.  For debugging purposes.
     /// @param os           output stream
     /// @param indent_level indentation level
-    virtual void put(std::ostream& os, int indent_level) const = 0;
+    virtual void put(marg_ostream& os) const = 0;
 
     /// Clone an effective address.
     virtual EffAddr* clone() const = 0;
@@ -102,6 +102,13 @@ protected:
 private:
     const EffAddr& operator=(const EffAddr&);
 };
+
+inline marg_ostream&
+operator<< (marg_ostream& os, const EffAddr& ea)
+{
+    ea.put(os);
+    return os;
+}
 
 } // namespace yasm
 

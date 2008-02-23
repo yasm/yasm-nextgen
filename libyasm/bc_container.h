@@ -33,6 +33,7 @@
 
 #include <boost/noncopyable.hpp>
 
+#include "marg_ostream_fwd.h"
 #include "ptr_vector.h"
 
 
@@ -65,8 +66,7 @@ public:
 
     /// Print a bytecode container.  For debugging purposes.
     /// @param os           output stream
-    /// @param indent_level indentation level
-    void put(std::ostream& os, int indent_level) const;
+    void put(marg_ostream& os) const;
 
     /// Add bytecode to the end of the container.
     /// @param bc       bytecode (may be NULL)
@@ -118,6 +118,15 @@ private:
 
     bool m_last_gap;        ///< Last bytecode is a gap bytecode
 };
+
+/// Print a bytecode container.  For debugging purposes.
+/// @param os           output stream
+inline marg_ostream&
+operator<< (marg_ostream& os, const BytecodeContainer& container)
+{
+    container.put(os);
+    return os;
+}
 
 } // namespace yasm
 

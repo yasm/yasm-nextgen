@@ -28,15 +28,13 @@
 
 #include "util.h"
 
-#include <iomanip>
-#include <ostream>
-
 #include "bytes.h"
 #include "errwarn.h"
 #include "errwarns.h"
 #include "expr.h"
 #include "intnum.h"
 #include "location_util.h"
+#include "marg_ostream.h"
 #include "operator.h"
 #include "symbol.h"
 #include "value.h"
@@ -132,20 +130,21 @@ Bytecode::operator= (const Bytecode& oth)
     return *this;
 }
 
-void
-Bytecode::put(std::ostream& os, int indent_level) const
+marg_ostream&
+operator<< (marg_ostream &os, const Bytecode& bc)
 {
-    if (m_fixed.size() > 0) {
-        os << std::setw(indent_level) << "" << "Fixed: ";
-        debug_put(os, m_fixed);
+    if (bc.m_fixed.size() > 0) {
+        os << "Fixed: ";
+        os << bc.m_fixed;
     }
-    if (m_contents.get() != 0)
-        m_contents->put(os, indent_level);
+    if (bc.m_contents.get() != 0)
+        os << *bc.m_contents;
     else
-        os << std::setw(indent_level) << "" << "EMPTY\n";
-    os << std::setw(indent_level) << "" << "Length=" << m_len << '\n';
-    os << std::setw(indent_level) << "" << "Line Index=" << m_line << '\n';
-    os << std::setw(indent_level) << "" << "Offset=" << m_offset << '\n';
+        os << "EMPTY\n";
+    os << "Length=" << bc.m_len << '\n';
+    os << "Line Index=" << bc.m_line << '\n';
+    os << "Offset=" << bc.m_offset << '\n';
+    return os;
 }
 
 void

@@ -29,28 +29,29 @@
 #include "util.h"
 
 #include <iomanip>
-#include <ostream>
 
 #include <libyasm/bytes.h>
+#include <libyasm/marg_ostream.h>
 
 
 namespace yasm { namespace arch { namespace x86 {
 
-void
-X86Opcode::put(std::ostream& os, int indent_level) const
+marg_ostream&
+operator<< (marg_ostream& os, const X86Opcode& opcode)
 {
-    os << std::setw(indent_level) << "" << "Opcode: ";
+    os << "Opcode: ";
 
     std::ios_base::fmtflags origff = os.flags();
     os << std::hex << std::setfill('0')
-       << std::setw(2) << ((unsigned int)m_opcode[0]) << ' '
-       << std::setw(2) << ((unsigned int)m_opcode[1]) << ' '
-       << std::setw(2) << ((unsigned int)m_opcode[2])
+       << std::setw(2) << ((unsigned int)opcode.m_opcode[0]) << ' '
+       << std::setw(2) << ((unsigned int)opcode.m_opcode[1]) << ' '
+       << std::setw(2) << ((unsigned int)opcode.m_opcode[2])
        << std::setfill(' ');
     os.flags(origff);
 
-    os << " OpLen=" << ((unsigned int)m_len);
+    os << " OpLen=" << ((unsigned int)opcode.m_len);
     os << '\n';
+    return os;
 }
 
 void

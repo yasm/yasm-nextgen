@@ -29,6 +29,7 @@
 #include <vector>
 
 #include <libyasm/insn.h>
+#include <libyasm/marg_ostream_fwd.h>
 
 
 namespace yasm { namespace arch { namespace x86 {
@@ -44,7 +45,6 @@ public:
                         unsigned char* rex = 0);
     void finish();
 
-    void put(std::ostream& os, int indent_level) const;
     unsigned long get_len() const;
     void to_bytes(Bytes& bytes, const X86SegmentRegister* segreg) const;
 
@@ -54,6 +54,8 @@ public:
 
     unsigned char m_mode_bits;
 };
+
+marg_ostream& operator<< (marg_ostream& os, const X86Common& common);
 
 }}} // namespace yasm::arch::x86
 

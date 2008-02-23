@@ -28,13 +28,11 @@
 
 #include "util.h"
 
-#include <iomanip>
-#include <ostream>
-
 #include "bytecode.h"
 #include "compose.h"
 #include "errwarn.h"
 #include "expr.h"
+#include "marg_ostream.h"
 #include "name_value.h"
 #include "section.h"
 
@@ -50,7 +48,7 @@ public:
     ObjextNamevals(std::auto_ptr<NameValues> nvs) : m_nvs(nvs.release()) {}
     ~ObjextNamevals();
 
-    void put(std::ostream& os, int indent_level) const;
+    void put(marg_ostream& os) const;
 
     const NameValues* get() const { return m_nvs.get(); }
 
@@ -65,10 +63,9 @@ ObjextNamevals::~ObjextNamevals()
 }
 
 void
-ObjextNamevals::put(std::ostream& os, int indent_level) const
+ObjextNamevals::put(marg_ostream& os) const
 {
-    os << std::setw(indent_level) << "" << "Objext Namevals: "
-       << *m_nvs << '\n';
+    os << "Objext Namevals: " << *m_nvs << '\n';
 }
 
 
@@ -79,7 +76,7 @@ public:
     CommonSize(std::auto_ptr<Expr> e) : m_expr(e.release()) {}
     ~CommonSize();
 
-    void put(std::ostream& os, int indent_level) const;
+    void put(marg_ostream& os) const;
 
     Expr* get() { return m_expr.get(); }
 
@@ -94,10 +91,9 @@ CommonSize::~CommonSize()
 }
 
 void
-CommonSize::put(std::ostream& os, int indent_level) const
+CommonSize::put(marg_ostream& os) const
 {
-    os << std::setw(indent_level) << "" << "Common Size="
-       << *m_expr << '\n';
+    os << "Common Size=" << *m_expr << '\n';
 }
 
 } // anonymous namespace
@@ -266,26 +262,25 @@ Symbol::get_common_size()
     return x->get();
 }
 
-void
-Symbol::put(std::ostream& os, int indent_level) const
+marg_ostream&
+operator<< (marg_ostream& os, const Symbol& sym)
 {
-    os << std::setw(indent_level) << "";
-    switch (m_type) {
-        case UNKNOWN:
+    switch (sym.m_type) {
+        case Symbol::UNKNOWN:
             os << "-Unknown (Common/Extern)-\n";
             break;
-        case EQU:
+        case Symbol::EQU:
             os << "_EQU_\n";
-            os << std::setw(indent_level) << "" << "Expn=";
-            if (m_status & VALUED)
-                os << *m_equ;
+            os << "Expn=";
+            if (sym.m_status & Symbol::VALUED)
+                os << *sym.m_equ;
             else
                 os << "***UNVALUED***";
             os << '\n';
             break;
-        case LABEL:
-        case CURPOS:
-            if (m_type == LABEL)
+        case Symbol::LABEL:
+        case Symbol::CURPOS:
+            if (sym.m_type == Symbol::LABEL)
                 os << "_Label_\n";
             else
                 os << "_CurPos_\n";
@@ -294,44 +289,44 @@ Symbol::put(std::ostream& os, int indent_level) const
             //os << std::setw(indent_level) << "" << "Preceding bytecode:\n";
             //m_precbc->put(os, indent_level+1);
             break;
-        case SPECIAL:
+        case Symbol::SPECIAL:
             os << "-Special-\n";
             break;
     }
 
-    os << std::setw(indent_level) << "" << "Status=";
-    if (m_status == NOSTATUS)
+    os << "Status=";
+    if (sym.m_status == Symbol::NOSTATUS)
         os << "None\n";
     else {
-        if (m_status & USED)
+        if (sym.m_status & Symbol::USED)
             os << "Used,";
-        if (m_status & DEFINED)
+        if (sym.m_status & Symbol::DEFINED)
             os << "Defined,";
-        if (m_status & VALUED)
+        if (sym.m_status & Symbol::VALUED)
             os << "Valued,";
         os << '\n';
     }
 
-    os << std::setw(indent_level) << "" << "Visibility=";
-    if (m_visibility == LOCAL)
+    os << "Visibility=";
+    if (sym.m_visibility == Symbol::LOCAL)
         os << "Local\n";
     else {
-        if (m_visibility & GLOBAL)
+        if (sym.m_visibility & Symbol::GLOBAL)
             os << "Global,";
-        if (m_visibility & COMMON)
+        if (sym.m_visibility & Symbol::COMMON)
             os << "Common,";
-        if (m_visibility & EXTERN)
+        if (sym.m_visibility & Symbol::EXTERN)
             os << "Extern,";
         os << '\n';
     }
-    os << std::setw(indent_level) << "" << "Associated data:\n";
-    put_assoc_data(os, indent_level+1);
-    os << std::setw(indent_level) << "" << "Line Index (Defined)="
-       << m_def_line << '\n';
-    os << std::setw(indent_level) << "" << "Line Index (Declared)="
-       << m_decl_line << '\n';
-    os << std::setw(indent_level) << "" << "Line Index (Used)="
-       << m_use_line << '\n';
+    os << "Associated data:\n";
+    ++os;
+    os << static_cast<const AssocDataContainer&>(sym);
+    --os;
+    os << "Line Index (Defined)=" << sym.m_def_line << '\n';
+    os << "Line Index (Declared)=" << sym.m_decl_line << '\n';
+    os << "Line Index (Used)=" << sym.m_use_line << '\n';
+    return os;
 }
 
 } // namespace yasm

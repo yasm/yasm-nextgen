@@ -92,7 +92,7 @@ public:
     /// Make the EA only a displacement.
     void set_disponly();
 
-    void put(std::ostream& os, int indent_level) const;
+    void put(marg_ostream& os) const;
     X86EffAddr* clone() const;
 
     // Check an effective address.  Returns true if EA was successfully

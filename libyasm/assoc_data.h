@@ -29,12 +29,13 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
 #include <map>
 #include <memory>
 #include <string>
 
 #include <boost/noncopyable.hpp>
+
+#include "marg_ostream_fwd.h"
 
 
 namespace yasm {
@@ -48,10 +49,20 @@ public:
     /// Destructor.
     virtual ~AssocData() {}
 
-    virtual void put(std::ostream& os, int indent_level) const = 0;
+    virtual void put(marg_ostream& os) const = 0;
 };
 
+inline marg_ostream&
+operator<< (marg_ostream& os, const AssocData& data)
+{
+    data.put(os);
+    return os;
+}
+
 class AssocDataContainer {
+    friend marg_ostream& operator<< (marg_ostream& os,
+                                     const AssocDataContainer& container);
+
     typedef std::map<const void*, AssocData*> AssocMap;
     AssocMap m_assoc_map;
 
@@ -83,10 +94,10 @@ public:
             return 0;
         return i->second;
     }
-
-protected:
-    void put_assoc_data(std::ostream& os, int indent_level) const;
 };
+
+marg_ostream& operator<< (marg_ostream& os,
+                          const AssocDataContainer& container);
 
 } // namespace yasm
 

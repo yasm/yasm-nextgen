@@ -29,12 +29,12 @@
 #include <util.h>
 
 #include <iomanip>
-#include <ostream>
 
 #include <libyasm/errwarn.h>
 #include <libyasm/expr.h>
 #include <libyasm/expr_util.h>
 #include <libyasm/intnum.h>
+#include <libyasm/marg_ostream.h>
 
 #include "x86arch.h"
 #include "x86regtmod.h"
@@ -201,10 +201,9 @@ X86EffAddr::set_imm(std::auto_ptr<Expr> imm, unsigned int im_len)
 }
 
 void
-X86EffAddr::put(std::ostream& os, int indent_level) const
+X86EffAddr::put(marg_ostream& os) const
 {
-    EffAddr::put(os, indent_level);
-    os << std::setw(indent_level) << "";
+    EffAddr::put(os);
 
     os << "ModRM=";
     std::ios_base::fmtflags origff = os.flags();
@@ -215,7 +214,7 @@ X86EffAddr::put(std::ostream& os, int indent_level) const
     os << " ValidRM=" << m_valid_modrm;
     os << " NeedRM=" << m_need_modrm;
 
-    os << '\n' << std::setw(indent_level) << "" << "SIB=";
+    os << "\nSIB=";
     origff = os.flags();
     os << std::oct << std::setfill('0') << std::setw(3)
        << ((unsigned int)m_sib);
@@ -224,7 +223,7 @@ X86EffAddr::put(std::ostream& os, int indent_level) const
     os << " ValidSIB=" << m_valid_sib;
     os << " NeedSIB=" << ((unsigned int)m_need_sib);
 
-    os << '\n' << std::setw(indent_level) << "" << "DREX=";
+    os << "DREX=";
     origff = os.flags();
     os << std::hex << std::setfill('0') << std::setw(2)
        << ((unsigned int)m_drex);

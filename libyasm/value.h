@@ -29,10 +29,10 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
 #include <memory>
 
 #include "location.h"
+#include "marg_ostream_fwd.h"
 
 
 namespace yasm {
@@ -139,11 +139,6 @@ public:
     ///         true if value output.
     bool output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch);
 
-    /// Print a value.  For debugging purposes.
-    /// @param os           output stream
-    /// @param indent_level indentation level
-    void put(std::ostream& os, int indent_level) const;
-
     /// Get the absolute portion of the value.
     /// @return Absolute expression, or NULL if there is no absolute portion.
     Expr* get_abs() { return m_abs; }
@@ -225,6 +220,11 @@ public:
     /// Size of the value, in bits.
     unsigned int m_size : 8;
 };
+
+/// Print a value.  For debugging purposes.
+/// @param os           output stream
+/// @param value        value
+marg_ostream& operator<< (marg_ostream& os, const Value& value);
 
 } // namespace yasm
 

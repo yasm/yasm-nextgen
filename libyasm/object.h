@@ -29,13 +29,13 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
 #include <memory>
 #include <string>
 
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "marg_ostream_fwd.h"
 #include "ptr_vector.h"
 
 
@@ -48,6 +48,8 @@ class Symbol;
 
 /// An object.  This is the internal representation of an object file.
 class Object : private boost::noncopyable {
+    friend marg_ostream& operator<< (marg_ostream& os, const Object& object);
+
 public:
     /// Constructor.  A default section is created as the first
     /// section, and an empty symbol table is created.
@@ -61,11 +63,6 @@ public:
 
     /// Destructor.
     ~Object();
-
-    /// Print an object.  For debugging purposes.
-    /// @param os           output stream
-    /// @param indent_level indentation level
-    void put(std::ostream& os, int indent_level) const;
 
     /// Finalize an object after parsing.
     /// @param errwarns     error/warning set
@@ -199,6 +196,11 @@ private:
     class Impl;
     boost::scoped_ptr<Impl> m_impl;
 };
+
+/// Print an object.  For debugging purposes.
+/// @param os           output stream
+/// @param object       object
+marg_ostream& operator<< (marg_ostream& os, const Object& object);
 
 } // namespace yasm
 

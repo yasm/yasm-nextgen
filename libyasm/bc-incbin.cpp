@@ -26,9 +26,7 @@
 ///
 #include "util.h"
 
-#include <iomanip>
 #include <fstream>
-#include <ostream>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -42,6 +40,7 @@
 #include "file.h"
 #include "intnum.h"
 #include "linemap.h"
+#include "marg_ostream.h"
 #include "value.h"
 
 
@@ -57,7 +56,7 @@ public:
     ~IncbinBytecode();
 
     /// Prints the implementation-specific data (for debugging purposes).
-    void put(std::ostream& os, int indent_level) const;
+    void put(marg_ostream& os) const;
 
     /// Finalizes the bytecode after parsing.
     void finalize(Bytecode& bc);
@@ -94,16 +93,16 @@ IncbinBytecode::~IncbinBytecode()
 }
 
 void
-IncbinBytecode::put(std::ostream& os, int indent_level) const
+IncbinBytecode::put(marg_ostream& os) const
 {
-    os << std::setw(indent_level) << "" << "_IncBin_\n";
-    os << std::setw(indent_level) << "" << "Filename=`" << m_filename << "'\n";
-    os << std::setw(indent_level) << "" << "Start=";
+    os << "_IncBin_\n";
+    os << "Filename=`" << m_filename << "'\n";
+    os << "Start=";
     if (!m_start)
         os << "nil (0)";
     else
         os << *m_start;
-    os << '\n' << std::setw(indent_level) << "" << "Max Len=";
+    os << "\nMax Len=";
     if (!m_maxlen)
         os << "nil (unlimited)";
     else

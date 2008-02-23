@@ -28,11 +28,9 @@
 
 #include "util.h"
 
-#include <iomanip>
-#include <ostream>
-
 #include "expr.h"
 #include "intnum.h"
+#include "marg_ostream.h"
 
 
 namespace yasm {
@@ -90,21 +88,24 @@ Section::set_start(std::auto_ptr<Expr> start)
 }
 
 void
-Section::put(std::ostream& os, int indent_level, bool with_bcs) const
+Section::put(marg_ostream& os, bool with_bcs) const
 {
-    os << std::setw(indent_level) << "" << "name=" << m_name << '\n';
-    os << std::setw(indent_level) << ""
-       << "start=" << *(m_start.get()) << '\n';
-    os << std::setw(indent_level) << "" << "align=" << m_align << '\n';
-    os << std::setw(indent_level) << "" << "code=" << m_code << '\n';
-    os << std::setw(indent_level) << "" << "res_only=" << m_res_only << '\n';
-    os << std::setw(indent_level) << "" << "default=" << m_def << '\n';
-    os << std::setw(indent_level) << "" << "Associated data:\n";
-    put_assoc_data(os, indent_level+1);
+    os << "name=" << m_name << '\n';
+    os << "start=" << *(m_start.get()) << '\n';
+    os << "align=" << m_align << '\n';
+    os << "code=" << m_code << '\n';
+    os << "res_only=" << m_res_only << '\n';
+    os << "default=" << m_def << '\n';
+    os << "Associated data:\n";
+    ++os;
+    os << static_cast<const AssocDataContainer&>(*this);
+    --os;
 
     if (with_bcs) {
-        os << std::setw(indent_level) << "" << "Bytecodes:\n";
-        BytecodeContainer::put(os, indent_level+1);
+        os << "Bytecodes:\n";
+        ++os;
+        BytecodeContainer::put(os);
+        --os;
     }
 
     // TODO: relocs

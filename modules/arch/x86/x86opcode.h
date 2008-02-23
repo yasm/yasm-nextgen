@@ -26,7 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <iosfwd>
+#include <libyasm/marg_ostream_fwd.h>
 
 namespace yasm {
 
@@ -35,6 +35,9 @@ class Bytes;
 namespace arch { namespace x86 {
 
 struct X86Opcode {
+    friend marg_ostream& operator<< (marg_ostream& os,
+                                     const X86Opcode& opcode);
+
     X86Opcode() : m_len(0) {}
 
     X86Opcode(unsigned int len, const unsigned char* opcode)
@@ -47,7 +50,6 @@ struct X86Opcode {
         }
     }
 
-    void put(std::ostream& os, int indent_level) const;
     void to_bytes(Bytes& bytes) const;
 
     /// Switch to the "alternate" one-byte opcode.  Some optimizations
@@ -69,6 +71,8 @@ private:
     unsigned char m_opcode[3];      // opcode
     unsigned char m_len;
 };
+
+marg_ostream& operator<< (marg_ostream& os, const X86Opcode& opcode);
 
 }}} // namespace yasm::arch::x86
 

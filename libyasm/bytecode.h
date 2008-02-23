@@ -29,7 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
 #include <memory>
 #include <vector>
 
@@ -39,6 +38,7 @@
 
 #include "bytes.h"
 #include "location.h"
+#include "marg_ostream_fwd.h"
 #include "value.h"
 
 
@@ -138,6 +138,7 @@ private:
 
 /// A bytecode.
 class Bytecode {
+    friend marg_ostream& operator<< (marg_ostream &os, const Bytecode &bc);
     friend class BytecodeContainer;
 
 public:
@@ -171,8 +172,7 @@ public:
         /// Prints the implementation-specific data (for debugging purposes).
         /// Called from Bytecode::put().
         /// @param os           output stream
-        /// @param indent_level indentation level
-        virtual void put(std::ostream& os, int indent_level) const = 0;
+        virtual void put(marg_ostream& os) const = 0;
 
         /// Finalizes the bytecode after parsing.
         /// Called from Bytecode::finalize().
@@ -284,11 +284,6 @@ public:
 
     /// Destructor.
     ~Bytecode();
-
-    /// Print a bytecode.  For debugging purposes.
-    /// @param os           output stream
-    /// @param indent_level indentation level
-    void put(std::ostream& os, int indent_level) const;
 
     /// Finalize a bytecode after parsing.
     void finalize();
@@ -429,6 +424,15 @@ private:
     /// Labels that point to this bytecode.
     std::vector<Symbol*> m_symbols;
 };
+
+inline marg_ostream&
+operator<< (marg_ostream& os, const Bytecode::Contents& contents)
+{
+    contents.put(os);
+    return os;
+}
+
+marg_ostream& operator<< (marg_ostream &os, const Bytecode& bc);
 
 } // namespace yasm
 

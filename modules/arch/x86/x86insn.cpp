@@ -38,6 +38,7 @@
 #include <libyasm/errwarn.h>
 #include <libyasm/expr.h>
 #include <libyasm/intnum.h>
+#include <libyasm/marg_ostream.h>
 #include <libyasm/phash.h>
 
 #include "x86arch.h"
@@ -1532,9 +1533,9 @@ X86Insn::~X86Insn()
 }
 
 void
-X86Insn::put(std::ostream& os, int indent_level) const
+X86Insn::put(marg_ostream& os) const
 {
-    Insn::put(os, indent_level);
+    Insn::put(os);
     // TODO
 }
 

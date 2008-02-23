@@ -29,7 +29,6 @@
 #include "util.h"
 
 #include <algorithm>
-#include <iomanip>
 #include <ostream>
 
 #include "arch.h"
@@ -37,6 +36,7 @@
 #include "errwarn.h"
 #include "expr.h"
 #include "expr_util.h"
+#include "marg_ostream.h"
 
 
 namespace yasm {
@@ -126,42 +126,40 @@ Insn::Operand::clone() const
 }
 
 void
-Insn::Operand::put(std::ostream& os, int indent_level) const
+Insn::Operand::put(marg_ostream& os) const
 {
     switch (m_type) {
         case NONE:
             os << "None\n";
             break;
         case REG:
-            os << std::setw(indent_level) << "";
             os << "Reg=" << *m_reg << '\n';
             break;
         case SEGREG:
-            os << std::setw(indent_level) << "";
             os << "SegReg=" << *m_segreg << '\n';
             break;
         case MEMORY:
-            os << std::setw(indent_level) << "" << "Memory=\n";
-            m_ea->put(os, indent_level+1);
+            os << "Memory=\n";
+            ++os;
+            os << *m_ea;
+            --os;
             break;
         case IMM:
-            os << std::setw(indent_level) << "";
             os << "Imm=" << *m_val << '\n';
             break;
     }
-    os << std::setw(indent_level+1) << "";
+    ++os;
     os << "TargetMod=" << *m_targetmod << '\n';
-    os << std::setw(indent_level+1) << "" << "Size=" << m_size << '\n';
-    os << std::setw(indent_level+1) << "";
+    os << "Size=" << m_size << '\n';
     os << "Deref=" << m_deref << ", Strict=" << m_strict << '\n';
+    --os;
 }
 
 void
-Insn::put(std::ostream& os, int indent_level) const
+Insn::put(marg_ostream& os) const
 {
     std::for_each(m_operands.begin(), m_operands.end(),
-                  BIND::bind(&Insn::Operand::put, _1, REF::ref(os),
-                             indent_level));
+                  BIND::bind(&Insn::Operand::put, _1, REF::ref(os)));
 }
 
 void

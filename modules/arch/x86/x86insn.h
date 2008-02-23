@@ -51,7 +51,7 @@ public:
             bool default_rel);
     ~X86Insn();
 
-    void put(std::ostream& os, int indent_level) const;
+    void put(marg_ostream& os) const;
     X86Insn* clone() const;
 
 protected:

@@ -29,7 +29,6 @@
 #include "util.h"
 
 #include <iomanip>
-#include <ostream>
 
 #include <libyasm/bc_container.h>
 #include <libyasm/bytecode.h>
@@ -37,6 +36,7 @@
 #include <libyasm/errwarn.h>
 #include <libyasm/expr.h>
 #include <libyasm/intnum.h>
+#include <libyasm/marg_ostream.h>
 #include <libyasm/symbol.h>
 
 #include "x86arch.h"
@@ -61,7 +61,7 @@ public:
                bool default_rel);
     ~X86General();
 
-    void put(std::ostream& os, int indent_level) const;
+    void put(marg_ostream& os) const;
     void finalize(Bytecode& bc);
     unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
     bool expand(Bytecode& bc, unsigned long& len, int span,
@@ -133,29 +133,32 @@ X86General::~X86General()
 }
 
 void
-X86General::put(std::ostream& os, int indent_level) const
+X86General::put(marg_ostream& os) const
 {
-    os << std::setw(indent_level) << "" << "_Instruction_\n";
+    os << "_Instruction_\n";
 
-    os << std::setw(indent_level) << "" << "Effective Address:";
+    os << "Effective Address:";
     if (m_ea) {
         os << '\n';
-        m_ea->put(os, indent_level+1);
+        ++os;
+        os << *m_ea;
+        --os;
     } else
         os << " (nil)\n";
 
-    os << std::setw(indent_level) << "" << "Immediate Value:";
+    os << "Immediate Value:";
     if (m_imm) {
         os << '\n';
-        m_imm->put(os, indent_level+1);
+        ++os;
+        os << *m_imm;
+        --os;
     } else
         os << " (nil)\n";
 
-    m_opcode.put(os, indent_level);
-    m_common.put(os, indent_level);
+    os << m_opcode;
+    os << m_common;
 
     std::ios_base::fmtflags origff = os.flags();
-    os << std::setw(indent_level) << "";
     os << "SpPre=" << std::hex << std::setfill('0') << std::setw(2)
        << (unsigned int)m_special_prefix;
     os << " REX=" << std::oct << std::setfill('0') << std::setw(3)

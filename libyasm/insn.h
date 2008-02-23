@@ -35,6 +35,8 @@
 
 #include <boost/noncopyable.hpp>
 
+#include "marg_ostream_fwd.h"
+
 
 namespace yasm {
 
@@ -108,7 +110,7 @@ public:
         /// expression trees.
         void destroy();
 
-        void put(std::ostream& os, int indent_level) const;
+        void put(marg_ostream& os) const;
         void finalize();
 
         /// Match type.
@@ -227,7 +229,7 @@ public:
     /// @note A base version of this function is provided.
     /// @param os           output stream
     /// @param indent_level indentation level
-    virtual void put(std::ostream& os, int indent_level) const = 0;
+    virtual void put(marg_ostream& os) const = 0;
 
     /// Append instruction to a bytecode container.
     void append(BytecodeContainer& container);
@@ -254,10 +256,31 @@ private:
     const Insn& operator=(const Insn&);
 };
 
-inline std::ostream& operator<<
-(std::ostream &os, const Insn::Operand::TargetModifier &tmod)
+inline std::ostream&
+operator<< (std::ostream& os, const Insn::Operand::TargetModifier& tmod)
 {
     tmod.put(os);
+    return os;
+}
+
+inline std::ostream&
+operator<< (std::ostream& os, const Insn::Prefix& prefix)
+{
+    prefix.put(os);
+    return os;
+}
+
+inline marg_ostream&
+operator<< (marg_ostream& os, const Insn::Operand& operand)
+{
+    operand.put(os);
+    return os;
+}
+
+inline marg_ostream&
+operator<< (marg_ostream& os, const Insn& insn)
+{
+    insn.put(os);
     return os;
 }
 

@@ -28,15 +28,13 @@
 
 #include "util.h"
 
-#include <iomanip>
-#include <ostream>
-
 #include "bc_container.h"
 #include "bytecode.h"
 #include "errwarn.h"
 #include "expr.h"
 #include "intnum.h"
 #include "location_util.h"
+#include "marg_ostream.h"
 
 
 namespace {
@@ -49,7 +47,7 @@ public:
     ~MultipleBytecode();
 
     /// Prints the implementation-specific data (for debugging purposes).
-    void put(std::ostream& os, int indent_level) const;
+    void put(marg_ostream& os) const;
 
     /// Finalizes the bytecode after parsing.
     void finalize(Bytecode& bc);
@@ -94,14 +92,15 @@ MultipleBytecode::~MultipleBytecode()
 }
 
 void
-MultipleBytecode::put(std::ostream& os, int indent_level) const
+MultipleBytecode::put(marg_ostream& os) const
 {
-    os << std::setw(indent_level) << "" << "_Multiple_\n";
-    os << std::setw(indent_level) << "" << "Multiple=" << *m_multiple << '\n';
-    os << std::setw(indent_level) << "" << "Multiple (int)=";
-    os << m_mult_int << '\n';
-    os << std::setw(indent_level) << "" << "Contents:\n";
-    m_contents.put(os, indent_level+1);
+    os << "_Multiple_\n";
+    os << "Multiple=" << *m_multiple << '\n';
+    os << "Multiple (int)=" << m_mult_int << '\n';
+    os << "Contents:\n";
+    ++os;
+    os << m_contents;
+    --os;
 }
 
 void

@@ -28,6 +28,8 @@
 
 #include "util.h"
 
+#include "marg_ostream.h"
+
 
 namespace yasm {
 
@@ -42,12 +44,14 @@ AssocDataContainer::~AssocDataContainer()
         delete i->second;
 }
 
-void
-AssocDataContainer::put_assoc_data(std::ostream& os, int indent_level) const
+marg_ostream&
+operator<< (marg_ostream& os, const AssocDataContainer& container)
 {
-    for (AssocMap::const_iterator i=m_assoc_map.begin(), end=m_assoc_map.end();
+    for (AssocDataContainer::AssocMap::const_iterator
+         i=container.m_assoc_map.begin(), end=container.m_assoc_map.end();
          i != end; ++i)
-        i->second->put(os, indent_level);
+        os << *i->second;
+    return os;
 }
 
 } // namespace yasm

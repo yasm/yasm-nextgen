@@ -29,10 +29,10 @@
 #include "util.h"
 
 #include <iomanip>
-#include <ostream>
 
 #include <libyasm/bytes.h>
 #include <libyasm/errwarn.h>
+#include <libyasm/marg_ostream.h>
 
 #include "x86prefix.h"
 #include "x86regtmod.h"
@@ -123,20 +123,20 @@ X86Common::finish()
         m_opersize = (m_mode_bits == 64 ? 32 : m_mode_bits);
 }
 
-void
-X86Common::put(std::ostream& os, int indent_level) const
+marg_ostream&
+operator<< (marg_ostream& os, const X86Common& common)
 {
-    os << std::setw(indent_level) << "";
-    os << "AddrSize=" << ((unsigned int)m_addrsize);
-    os << " OperSize=" << ((unsigned int)m_opersize);
+    os << "AddrSize=" << ((unsigned int)common.m_addrsize);
+    os << " OperSize=" << ((unsigned int)common.m_opersize);
 
     std::ios_base::fmtflags origff = os.flags();
     os << " LockRepPre=" << std::hex << std::setfill('0') << std::setw(2)
-       << ((unsigned int)m_lockrep_pre) << std::setfill(' ');
+       << ((unsigned int)common.m_lockrep_pre) << std::setfill(' ');
     os.flags(origff);
 
-    os << " BITS=" << ((unsigned int)m_mode_bits);
+    os << " BITS=" << ((unsigned int)common.m_mode_bits);
     os << '\n';
+    return os;
 }
 
 unsigned long

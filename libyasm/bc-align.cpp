@@ -28,10 +28,6 @@
 
 #include "util.h"
 
-#include <cstdlib>
-#include <iomanip>
-#include <ostream>
-
 #include <boost/scoped_ptr.hpp>
 
 #include "bc_container.h"
@@ -41,6 +37,7 @@
 #include "errwarn.h"
 #include "expr.h"
 #include "intnum.h"
+#include "marg_ostream.h"
 
 
 namespace {
@@ -56,7 +53,7 @@ public:
     ~AlignBytecode();
 
     /// Prints the implementation-specific data (for debugging purposes).
-    void put(std::ostream& os, int indent_level) const;
+    void put(marg_ostream& os) const;
 
     /// Finalizes the bytecode after parsing.
     void finalize(Bytecode& bc);
@@ -108,15 +105,14 @@ AlignBytecode::~AlignBytecode()
 }
 
 void
-AlignBytecode::put(std::ostream& os, int indent_level) const
+AlignBytecode::put(marg_ostream& os) const
 {
-    os << std::setw(indent_level) << "" << "_Align_\n";
-    os << std::setw(indent_level) << "" << "Boundary=" << *m_boundary << '\n';
+    os << "_Align_\n";
+    os << "Boundary=" << *m_boundary << '\n';
     if (m_fill.get() != 0)
-        os << std::setw(indent_level) << "" << "Fill=" << *m_fill << '\n';
+        os << "Fill=" << *m_fill << '\n';
     if (m_maxskip.get() != 0)
-        os << std::setw(indent_level) << "" << "Max Skip=" << *m_maxskip
-           << '\n';
+        os << "Max Skip=" << *m_maxskip << '\n';
 }
 
 void

@@ -28,15 +28,13 @@
 
 #include "util.h"
 
-#include <iomanip>
-#include <ostream>
-
 #include <libyasm/bc_container.h>
 #include <libyasm/bytecode.h>
 #include <libyasm/bytes.h>
 #include <libyasm/errwarn.h>
 #include <libyasm/expr.h>
 #include <libyasm/intnum.h>
+#include <libyasm/marg_ostream.h>
 #include <libyasm/symbol.h>
 
 #include "x86common.h"
@@ -52,7 +50,7 @@ public:
            std::auto_ptr<Expr> target);
     ~X86Jmp();
 
-    void put(std::ostream& os, int indent_level) const;
+    void put(marg_ostream& os) const;
     void finalize(Bytecode& bc);
     unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
     bool expand(Bytecode& bc, unsigned long& len, int span,
@@ -93,30 +91,36 @@ X86Jmp::~X86Jmp()
 }
 
 void
-X86Jmp::put(std::ostream& os, int indent_level) const
+X86Jmp::put(marg_ostream& os) const
 {
-    os << std::setw(indent_level) << "" << "_Jump_\n";
+    os << "_Jump_\n";
 
-    os << std::setw(indent_level) << "" << "Target:\n";
-    m_target.put(os, indent_level+1);
+    os << "Target:\n";
+    ++os;
+    os << m_target;
+    --os;
     /* FIXME
     fprintf(f, "%*sOrigin=\n", indent_level, "");
     yasm_symrec_print(jmp->origin, f, indent_level+1);
     */
 
-    os << '\n' << std::setw(indent_level) << "" << "Short Form:\n";
+    os << "\nShort Form:\n";
+    ++os;
     if (m_shortop.get_len() == 0)
-        os << std::setw(indent_level+1) << "" << "None\n";
+        os << "None\n";
     else
-        m_shortop.put(os, indent_level+1);
+        os << m_shortop;
+    --os;
 
-    os << std::setw(indent_level) << "" << "Near Form:\n";
+    os << "Near Form:\n";
+    ++os;
     if (m_nearop.get_len() == 0)
-        os << std::setw(indent_level+1) << "" << "None\n";
+        os << "None\n";
     else
-        m_nearop.put(os, indent_level+1);
+        os << m_nearop;
+    --os;
 
-    os << std::setw(indent_level) << "" << "OpSel=";
+    os << "OpSel=";
     switch (m_op_sel) {
         case JMP_NONE:
             os << "None";
@@ -132,7 +136,7 @@ X86Jmp::put(std::ostream& os, int indent_level) const
             break;
     }
 
-    m_common.put(os, indent_level);
+    os << m_common;
 }
 
 void

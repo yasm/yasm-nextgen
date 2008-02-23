@@ -29,8 +29,6 @@
 #include "util.h"
 
 #include <bitset>
-#include <iomanip>
-#include <ostream>
 
 #include "arch.h"
 #include "bytes.h"
@@ -42,6 +40,7 @@
 #include "floatnum.h"
 #include "intnum.h"
 #include "location_util.h"
+#include "marg_ostream.h"
 #include "object.h"
 #include "section.h"
 #include "symbol.h"
@@ -682,39 +681,38 @@ Value::output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch)
     return true;
 }
 
-void
-Value::put(std::ostream& os, int indent_level) const
+marg_ostream&
+operator<< (marg_ostream& os, const Value& value)
 {
-    os << std::setw(indent_level) << "" << m_size << "-bit, ";
-    os << (m_sign ? "" : "un") << "signed\n";
-    os << std::setw(indent_level) << "" << "Absolute portion=";
-    if (!m_abs)
+    os << value.m_size << "-bit, ";
+    os << (value.m_sign ? "" : "un") << "signed\n";
+    os << "Absolute portion=";
+    if (!value.has_abs())
         os << "0";
     else
-        os << *m_abs;
+        os << *value.get_abs();
     os << '\n';
-    if (m_rel) {
-        os << std::setw(indent_level) << "" << "Relative to=";
-        os << (m_seg_of ? "SEG " : "") << m_rel->get_name() << '\n';
-        if (m_wrt) {
-            os << std::setw(indent_level) << ""
-               << "(With respect to=" << m_wrt->get_name() << ")\n";
+    if (value.m_rel) {
+        os << "Relative to=";
+        os << (value.m_seg_of ? "SEG " : "");
+        os << value.m_rel->get_name() << '\n';
+        if (value.m_wrt) {
+            os << "(With respect to=" << value.m_wrt->get_name() << ")\n";
         }
-        if (m_rshift > 0) {
-            os << std::setw(indent_level) << ""
-               << "(Right shifted by=" << m_rshift << ")\n";
+        if (value.m_rshift > 0) {
+            os << "(Right shifted by=" << value.m_rshift << ")\n";
         }
-        if (m_curpos_rel) {
-            os << std::setw(indent_level) << ""
-               << "(Relative to current position)\n";
+        if (value.m_curpos_rel) {
+            os << "(Relative to current position)\n";
         }
-        if (m_ip_rel)
-            os << std::setw(indent_level) << "" << "(IP-relative)\n";
-        if (m_jump_target)
-            os << std::setw(indent_level) << "" << "(Jump target)\n";
-        if (m_section_rel)
-            os << std::setw(indent_level) << "" << "(Section-relative)\n";
+        if (value.m_ip_rel)
+            os << "(IP-relative)\n";
+        if (value.m_jump_target)
+            os << "(Jump target)\n";
+        if (value.m_section_rel)
+            os << "(Section-relative)\n";
     }
+    return os;
 }
 
 } // namespace yasm

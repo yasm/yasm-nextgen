@@ -29,9 +29,7 @@
 #include "util.h"
 
 #include <algorithm>
-#include <iomanip>
 #include <list>
-#include <ostream>
 #include <vector>
 
 #include <boost/pool/pool.hpp>
@@ -47,6 +45,7 @@
 #include "interval_tree.h"
 #include "intnum.h"
 #include "location_util.h"
+#include "marg_ostream.h"
 #include "object_format.h"
 #include "section.h"
 #include "symbol.h"
@@ -104,24 +103,26 @@ Object::~Object()
 {
 }
 
-void
-Object::put(std::ostream& os, int indent_level) const
+marg_ostream&
+operator<< (marg_ostream& os, const Object& object)
 {
     // Print symbol table
-    os << std::setw(indent_level) << "" << "Symbol Table:\n";
-    for (const_symbol_iterator i=m_symbols.begin(), end=m_symbols.end();
-         i != end; ++i) {
-        os << std::setw(indent_level) << ""
-           << "Symbol `" << i->get_name() << "'\n";
-        i->put(os, indent_level+1);
+    os << "Symbol Table:\n";
+    for (Object::const_symbol_iterator i=object.m_symbols.begin(),
+         end=object.m_symbols.end(); i != end; ++i) {
+        os << "Symbol `" << i->get_name() << "'\n";
+        ++os;
+        os << *i;
+        --os;
     }
 
     // Print sections and bytecodes
-    for (const_section_iterator i=m_sections.begin(), end=m_sections.end();
-         i != end; ++i) {
-        os << std::setw(indent_level) << "" << "Section:\n";
-        i->put(os, indent_level+1, true);
+    for (Object::const_section_iterator i=object.m_sections.begin(),
+         end=object.m_sections.end(); i != end; ++i) {
+        os << "Section:\n";
+        i->put(os, true);
     }
+    return os;
 }
 
 void
