@@ -460,7 +460,6 @@ dv_done:
             multc.append_gap(size, get_cur_line());
             return true;
         }
-#if 0
         case INCBIN:
         {
             Expr::Ptr start(0), maxlen(0);
@@ -494,10 +493,10 @@ dv_done:
             }
 
 incbin_done:
-            return create_incbin(filename, start, maxlen, *m_linemap,
-                                 get_cur_line());
+            append_incbin(*m_container, filename, start, maxlen,
+                          get_cur_line());
+            return true;
         }
-#endif
         default:
             break;
     }

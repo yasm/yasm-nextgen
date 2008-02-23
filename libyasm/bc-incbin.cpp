@@ -32,6 +32,8 @@
 
 #include <boost/scoped_ptr.hpp>
 
+#include "bc_container.h"
+#include "bc_container_util.h"
 #include "bytecode.h"
 #include "bytes.h"
 #include "compose.h"
@@ -49,8 +51,8 @@ using namespace yasm;
 
 class IncbinBytecode : public Bytecode::Contents {
 public:
-    IncbinBytecode(const std::string& filename, const std::string& from,
-                   const Includes& includes, std::auto_ptr<Expr> start,
+    IncbinBytecode(const std::string& filename,
+                   std::auto_ptr<Expr> start,
                    std::auto_ptr<Expr> maxlen);
     ~IncbinBytecode();
 
@@ -70,9 +72,6 @@ public:
 
 private:
     std::string m_filename;     ///< file to include data from
-    std::string m_from;         ///< filename of what contained incbin
-
-    const Includes& m_includes; ///< include search path
 
     /// starting offset to read from (NULL=0)
     /*@null@*/ boost::scoped_ptr<Expr> m_start;
@@ -82,13 +81,9 @@ private:
 };
 
 IncbinBytecode::IncbinBytecode(const std::string& filename,
-                               const std::string& from,
-                               const Includes& includes,
                                std::auto_ptr<Expr> start,
                                std::auto_ptr<Expr> maxlen)
     : m_filename(filename),
-      m_from(from),
-      m_includes(includes),
       m_start(start.release()),
       m_maxlen(maxlen.release())
 {
@@ -171,9 +166,8 @@ IncbinBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
     }
 
     // Open file and determine its length
-    std::ifstream ifs;
-    m_includes.open(ifs, m_filename, m_from,
-                    std::ifstream::in | std::ifstream::binary);
+    std::ifstream ifs(m_filename.c_str(),
+                      std::ifstream::in | std::ifstream::binary);
     if (!ifs)
         throw IOError(String::compose(N_("`%1': unable to open file `%2'"),
                                       "incbin", m_filename));
@@ -212,9 +206,8 @@ IncbinBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
     }
 
     // Open file
-    std::ifstream ifs;
-    m_includes.open(ifs, m_filename, m_from,
-                    std::ifstream::in | std::ifstream::binary);
+    std::ifstream ifs(m_filename.c_str(),
+                      std::ifstream::in | std::ifstream::binary);
     if (!ifs)
         throw IOError(String::compose(N_("`%1': unable to open file `%2'"),
                                       "incbin", m_filename));
@@ -238,7 +231,7 @@ IncbinBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
 IncbinBytecode*
 IncbinBytecode::clone() const
 {
-    return new IncbinBytecode(m_filename, m_from, m_includes,
+    return new IncbinBytecode(m_filename,
                               std::auto_ptr<Expr>(m_start->clone()),
                               std::auto_ptr<Expr>(m_maxlen->clone()));
 }
@@ -247,23 +240,17 @@ IncbinBytecode::clone() const
 
 namespace yasm {
 
-std::auto_ptr<Bytecode>
-create_incbin(const std::string& filename,
+void
+append_incbin(BytecodeContainer& container,
+              const std::string& filename,
               /*@null@*/ std::auto_ptr<Expr> start,
               /*@null@*/ std::auto_ptr<Expr> maxlen,
-              const Linemap& linemap,
-              const Includes& includes,
               unsigned long line)
 {
-    std::string from;
-    unsigned long xline;
-
-    // Find from filename based on line number
-    linemap.lookup(line, from, xline);
-
-    Bytecode::Contents::Ptr
-        contents(new IncbinBytecode(filename, from, includes, start, maxlen));
-    return std::auto_ptr<Bytecode>(new Bytecode(contents, line));
+    Bytecode& bc = container.fresh_bytecode();
+    bc.transform(Bytecode::Contents::Ptr(
+        new IncbinBytecode(filename, start, maxlen)));
+    bc.set_line(line);
 }
 
 } // namespace yasm
