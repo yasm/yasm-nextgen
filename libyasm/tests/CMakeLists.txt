@@ -20,5 +20,6 @@ LIBYASM_UNIT_TESTS(
     floatnum_new_test
     floatnum_get_test
     intnum_test
+    marg_ostream_test
     unescape_test
     )
