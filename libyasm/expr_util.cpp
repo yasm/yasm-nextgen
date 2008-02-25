@@ -35,7 +35,8 @@
 #include "symbol.h"
 
 
-namespace {
+namespace
+{
 
 using yasm::Expr;
 
@@ -43,11 +44,13 @@ void
 do_expand_equ(Expr* expr, std::vector<const Expr*>& seen)
 {
     for (Expr::Terms::iterator i=expr->get_terms().begin(),
-         end=expr->get_terms().end(); i != end; ++i) {
+         end=expr->get_terms().end(); i != end; ++i)
+    {
         // Expand equ's.
         yasm::Symbol* sym;
         const Expr* equ;
-        if ((sym = i->get_sym()) && (equ = sym->get_equ())) {
+        if ((sym = i->get_sym()) && (equ = sym->get_equ()))
+        {
             // Check for circular reference
             if (std::find(seen.begin(), seen.end(), equ) != seen.end())
                 throw yasm::TooComplexError(N_("circular reference detected"));
@@ -59,14 +62,16 @@ do_expand_equ(Expr* expr, std::vector<const Expr*>& seen)
             seen.push_back(equ);
             do_expand_equ(newe, seen);
             seen.pop_back();
-        } else if (Expr* e = i->get_expr())
+        }
+        else if (Expr* e = i->get_expr())
             do_expand_equ(e, seen);     // Recurse
     }
 }
 
 } // anonymous namespace
 
-namespace yasm {
+namespace yasm
+{
 
 void
 expand_equ(Expr* expr)

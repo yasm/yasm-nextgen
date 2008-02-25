@@ -44,9 +44,11 @@
 #include "errwarn.h"
 
 
-namespace {
+namespace
+{
 
-class AdjacantChar {
+class AdjacantChar
+{
 public:
     AdjacantChar(char c) : m_c(c) {}
     bool operator() (char l, char r) { return l == m_c && r == m_c; }
@@ -56,21 +58,26 @@ private:
 
 } // anonymous namespace
 
-namespace yasm {
+namespace yasm
+{
 
 std::string
 unescape(const std::string& str)
 {
     std::string out;
     std::string::const_iterator i=str.begin(), end=str.end();
-    while (i != end) {
-        if (*i == '\\') {
+    while (i != end)
+    {
+        if (*i == '\\')
+        {
             ++i;
-            if (i == end) {
+            if (i == end)
+            {
                 out.push_back('\\');
                 return out;
             }
-            switch (*i) {
+            switch (*i)
+            {
                 case 'b': out.push_back('\b'); ++i; break;
                 case 'f': out.push_back('\f'); ++i; break;
                 case 'n': out.push_back('\n'); ++i; break;
@@ -83,7 +90,8 @@ unescape(const std::string& str)
                            && std::isxdigit(*i) && std::isxdigit(*(i+1))
                            && std::isxdigit(*(i+2)))
                         ++i;
-                    if (i != end && std::isxdigit(*i)) {
+                    if (i != end && std::isxdigit(*i))
+                    {
                         char t[3];
                         t[0] = *i++;
                         t[1] = '\0';
@@ -91,22 +99,26 @@ unescape(const std::string& str)
                         if (i != end && std::isxdigit(*i))
                             t[1] = *i++;
                         out.push_back((char)strtoul((char *)t, NULL, 16));
-                    } else
+                    }
+                    else
                         out.push_back(0);
                     break;
                 default:
-                    if (isdigit(*i)) {
+                    if (isdigit(*i))
+                    {
                         bool warn = false;
                         // octal escape
                         if (*i > '7')
                             warn = true;
                         unsigned char v = *i++ - '0';
-                        if (i != end && std::isdigit(*i)) {
+                        if (i != end && std::isdigit(*i))
+                        {
                             if (*i > '7')
                                 warn = true;
                             v <<= 3;
                             v += *i++ - '0';
-                            if (i != end && std::isdigit(*i)) {
+                            if (i != end && std::isdigit(*i))
+                            {
                                 if (*i > '7')
                                     warn = true;
                                 v <<= 3;
@@ -117,11 +129,13 @@ unescape(const std::string& str)
                         if (warn)
                             warn_set(WARN_GENERAL,
                                      N_("octal value out of range"));
-                    } else
+                    }
+                    else
                         out.push_back(*i++);
                     break;
             }
-        } else
+        }
+        else
             out.push_back(*i++);
     }
     return out;
@@ -131,7 +145,8 @@ std::string
 splitpath_unix(const std::string& path, /*@out@*/ std::string& tail)
 {
     std::string::size_type found = path.rfind('/');
-    if (found == std::string::npos) {
+    if (found == std::string::npos)
+    {
         // No head
         tail = path;
         return "";
@@ -163,12 +178,16 @@ std::string
 splitpath_win(const std::string& path, /*@out@*/ std::string& tail)
 {
     std::string::size_type found = path.find_last_of("/\\");
-    if (found == std::string::npos) {
+    if (found == std::string::npos)
+    {
         // look for drive letter
-        if (path.length() >= 2 && std::isalpha(path[0]) && path[1] == ':') {
+        if (path.length() >= 2 && std::isalpha(path[0]) && path[1] == ':')
+        {
             tail = path.substr(2);
             return path.substr(0, 2);
-        } else {
+        }
+        else
+        {
             tail = path;
             return "";
         }
@@ -188,7 +207,8 @@ splitpath_win(const std::string& path, /*@out@*/ std::string& tail)
 
     // Strip trailing slashes on path (except leading)
     found = head.find_last_not_of('\\');
-    if (found != std::string::npos) {
+    if (found != std::string::npos)
+    {
         // don't strip slash immediately following drive letter
         if (found == 1 && std::isalpha(head[0]) && head[1] == ':')
             head.erase(found+2);
@@ -240,7 +260,8 @@ abspath_win(const std::string& path)
 std::string
 combpath_unix(const std::string& from, const std::string& to)
 {
-    if (to[0] == '/') {
+    if (to[0] == '/')
+    {
         // absolute "to"; combine any double slashes
         std::string out = to;
         std::string::iterator end =
@@ -265,19 +286,24 @@ combpath_unix(const std::string& from, const std::string& to)
     // as well as that could skip symlinks (e.g. "foo/bar/.." might not be
     // the same as "foo").
     std::string::size_type i = 0, tolen = to.length();
-    for (;;) {
-        if ((tolen-i) >= 2 && to[i] == '.' && to[i+1] == '/') {
+    for (;;)
+    {
+        if ((tolen-i) >= 2 && to[i] == '.' && to[i+1] == '/')
+        {
             i += 2;         // current directory
             while (to[i] == '/')
                 i++;        // strip off any additional slashes
-        } else if (out.empty())
+        }
+        else if (out.empty())
             break;          // no more "from" path left, we're done
         else if ((tolen-i) >= 3 && to[i] == '.' && to[i+1] == '.' &&
-                 to[i+2] == '/') {
+                 to[i+2] == '/')
+        {
             std::string::size_type outlen = out.length();
 
             if (outlen >= 3 && out[outlen-1] == '/' && out[outlen-2] == '.'
-                && out[outlen-3] == '.') {
+                && out[outlen-3] == '.')
+            {
                 // can't ".." against a "..", so we're done.
                 break;
             }
@@ -287,14 +313,16 @@ combpath_unix(const std::string& from, const std::string& to)
                 i++;    // strip off any additional slashes
 
             // and back out last directory in "out" if not already at root
-            if (outlen > 1) {
+            if (outlen > 1)
+            {
                 std::string::size_type found = out.rfind('/', outlen-2);
                 if (found != std::string::npos)
                     out.erase(found+1);
                 else
                     out.clear();
             }
-        } else
+        }
+        else
             break;
     }
 
@@ -313,7 +341,8 @@ std::string
 combpath_win(const std::string& from, const std::string& to)
 {
     if ((to.length() >= 2 && std::isalpha(to[0]) && to[1] == ':') ||
-        to[0] == '/' || to[0] == '\\') {
+        to[0] == '/' || to[0] == '\\')
+    {
         // absolute or drive letter "to"
         std::string out = to;
 
@@ -346,21 +375,26 @@ combpath_win(const std::string& from, const std::string& to)
     // as well as that could skip symlinks (e.g. "foo/bar/.." might not be
     // the same as "foo").
     std::string::size_type i = 0, tolen = to.length();
-    for (;;) {
+    for (;;)
+    {
         if ((tolen-i) >= 2 && to[i] == '.'
-            && (to[i+1] == '/' || to[i+1] == '\\')) {
+            && (to[i+1] == '/' || to[i+1] == '\\'))
+        {
             i += 2;         // current directory
             while (to[i] == '/' || to[i] == '\\')
                 i++;        // strip off any additional slashes
-        } else if (out.empty() ||
-                   (out.length() == 2 && std::isalpha(out[0]) && out[1] == ':'))
+        }
+        else if (out.empty() ||
+                 (out.length() == 2 && std::isalpha(out[0]) && out[1] == ':'))
             break;          // no more "from" path left, we're done
         else if ((tolen-i) >= 3 && to[i] == '.' && to[i+1] == '.'
-                 && (to[i+2] == '/' || to[i+2] == '\\')) {
+                 && (to[i+2] == '/' || to[i+2] == '\\'))
+        {
             std::string::size_type outlen = out.length();
 
             if (outlen >= 3 && (out[outlen-1] == '/' || out[outlen-1] == '\\')
-                && out[outlen-2] == '.' && out[outlen-3] == '.') {
+                && out[outlen-2] == '.' && out[outlen-3] == '.')
+            {
                 // can't ".." against a "..", so we're done.
                 break;
             }
@@ -371,7 +405,8 @@ combpath_win(const std::string& from, const std::string& to)
 
             // and back out last directory in "out" if not already at root
             if (outlen > 1 &&
-                !(outlen == 3 && std::isalpha(out[0]) && out[1] == ':')) {
+                !(outlen == 3 && std::isalpha(out[0]) && out[1] == ':'))
+            {
                 std::string::size_type found =
                     out.find_last_of("/\\:", outlen-2);
                 if (found != std::string::npos)
@@ -379,7 +414,8 @@ combpath_win(const std::string& from, const std::string& to)
                 else
                     out.clear();
             }
-        } else
+        }
+        else
             break;
     }
 
@@ -402,20 +438,25 @@ replace_extension(const std::string& orig, const std::string& ext,
                   const std::string& def)
 {
     std::string::size_type origext = orig.find_last_of('.');
-    if (origext != std::string::npos) {
+    if (origext != std::string::npos)
+    {
         // Existing extension: make sure it's not the same as the replacement
         // (as we don't want to overwrite the source file).
-        if (orig.compare(origext, std::string::npos, ext) == 0) {
+        if (orig.compare(origext, std::string::npos, ext) == 0)
+        {
             /* FIXME
             print_error(String::compose(
                 _("file name already ends in `%1': output will be in `%2'"),
                 ext, def));*/
             return def;
         }
-    } else {
+    }
+    else
+    {
         // No extension: make sure the output extension is not empty
         // (again, we don't want to overwrite the source file).
-        if (ext.empty()) {
+        if (ext.empty())
+        {
             /* FIXME
             print_error(String::compose(
                 _("file name already has no extension: output will be in `%1'"),
@@ -431,8 +472,10 @@ replace_extension(const std::string& orig, const std::string& ext,
 }
 
 std::string
-Includes::open(std::ifstream& ifs, const std::string& iname,
-               const std::string& from, std::ios_base::openmode mode) const
+Includes::open(std::ifstream& ifs,
+               const std::string& iname,
+               const std::string& from,
+               std::ios_base::openmode mode) const
 {
     // Close the stream if already open
     if (ifs.is_open())
@@ -445,7 +488,8 @@ Includes::open(std::ifstream& ifs, const std::string& iname,
     if (ifs)
         return combine;
 
-    for (const_iterator i = begin(), e = end(); i != e; ++i) {
+    for (const_iterator i = begin(), e = end(); i != e; ++i)
+    {
         combine = combpath(*i, iname);
         ifs.open(combine.c_str(), mode);
         if (ifs)

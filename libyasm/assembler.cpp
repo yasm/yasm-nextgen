@@ -45,9 +45,11 @@
 #include "registry.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
-class Assembler::Impl {
+class Assembler::Impl
+{
 public:
     Impl(const std::string& arch_keyword,
          const std::string& parser_keyword,
@@ -160,7 +162,8 @@ Assembler::Impl::set_preproc(const std::string& preproc_keyword)
     std::vector<std::string> preproc_keywords =
         m_parser->get_preproc_keywords();
     if (std::find(preproc_keywords.begin(), preproc_keywords.end(),
-                  preproc_keyword) == preproc_keywords.end()) {
+                  preproc_keyword) == preproc_keywords.end())
+    {
         throw Error(String::compose(
             N_("`%1' is not a valid preprocessor for parser `%2'"),
             preproc_keyword, m_parser->get_keyword()));
@@ -168,7 +171,8 @@ Assembler::Impl::set_preproc(const std::string& preproc_keyword)
 
     std::auto_ptr<Preprocessor> preproc =
         load_module<Preprocessor>(preproc_keyword);
-    if (preproc.get() == 0) {
+    if (preproc.get() == 0)
+    {
         throw Error(String::compose(N_("could not load preprocessor `%1'"),
                                     preproc_keyword));
     }
@@ -191,7 +195,8 @@ Assembler::Impl::set_dbgfmt(const std::string& dbgfmt_keyword)
     std::vector<std::string>::iterator f =
         std::find(dbgfmt_keywords.begin(), dbgfmt_keywords.end(),
                   dbgfmt_keyword);
-    if (f == dbgfmt_keywords.end()) {
+    if (f == dbgfmt_keywords.end())
+    {
         throw Error(String::compose(
             N_("`%1' is not a valid debug format for object format `%2'"),
             dbgfmt_keyword, m_objfmt->get_keyword()));
@@ -233,11 +238,13 @@ Assembler::Impl::assemble(std::istream& is, const std::string& src_filename,
                           bool warning_error)
 {
     // determine the object filename if not specified
-    if (m_obj_filename.empty()) {
+    if (m_obj_filename.empty())
+    {
         if (src_filename.empty())
             // Default to yasm.out if no obj filename specified
             m_obj_filename = "yasm.out";
-        else {
+        else
+        {
             // replace (or add) extension to base filename
             std::string base_filename;
             splitpath(src_filename, base_filename);
@@ -251,7 +258,8 @@ Assembler::Impl::assemble(std::istream& is, const std::string& src_filename,
         }
     }
 
-    if (m_machine.empty()) {
+    if (m_machine.empty())
+    {
         // If we're using x86 and the default objfmt bits is 64, default the
         // machine to amd64.  When we get more arches with multiple machines,
         // we should do this in a more modular fashion.
@@ -264,7 +272,8 @@ Assembler::Impl::assemble(std::istream& is, const std::string& src_filename,
     m_object.reset(new Object(src_filename, m_obj_filename, m_arch.get()));
 
     // Initialize the object format
-    if (!m_objfmt->set_object(m_object.get())) {
+    if (!m_objfmt->set_object(m_object.get()))
+    {
         throw Error(String::compose(
             N_("object format `%1' does not support architecture `%2' machine `%3'"),
             m_objfmt->get_keyword(),
@@ -280,7 +289,8 @@ Assembler::Impl::assemble(std::istream& is, const std::string& src_filename,
         set_dbgfmt("null");
 
     // Initialize the debug format
-    if (!m_dbgfmt->set_object(m_object.get())) {
+    if (!m_dbgfmt->set_object(m_object.get()))
+    {
         throw Error(String::compose(
             N_("debug format `%1' does not work with object format `%2'"),
             m_dbgfmt->get_keyword(), m_objfmt->get_keyword()));

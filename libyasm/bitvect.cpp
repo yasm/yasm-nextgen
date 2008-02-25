@@ -15,7 +15,8 @@
 /*  MODULE INTERFACE:                                                        */
 /*****************************************************************************/
 
-namespace BitVector {
+namespace BitVector
+{
 
 /* ToolBox.h */
 #define AND         &       /* binary (bitwise) operators: UPPER CASE */

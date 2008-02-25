@@ -31,7 +31,8 @@
 #include <algorithm>
 
 
-namespace yasm {
+namespace yasm
+{
 
 Linemap::Linemap()
     : m_current(1)
@@ -100,7 +101,8 @@ Linemap::lookup(unsigned long line,
                 std::string& filename,
                 unsigned long& file_line) const
 {
-    if (m_map.empty()) {
+    if (m_map.empty())
+    {
         filename = "unknown";
         file_line = 0;
         return false;
@@ -122,7 +124,8 @@ Linemap::get_source(unsigned long line,
                     Location& loc,
                     std::string& source) const
 {
-    if (m_source.size() < line) {
+    if (m_source.size() < line)
+    {
         loc.bc = 0;
         loc.off = 0;
         source = "";

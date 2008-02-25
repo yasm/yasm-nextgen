@@ -31,7 +31,8 @@
 #include "marg_ostream.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 AssocDataContainer::AssocDataContainer()
 {

@@ -46,7 +46,8 @@
 #include "symbol.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 Value::Value(unsigned int size)
     : m_abs(0),
@@ -135,7 +136,8 @@ Value::clear()
 Value&
 Value::operator= (const Value& rhs)
 {
-    if (this != &rhs) {
+    if (this != &rhs)
+    {
         m_abs = 0;
         if (rhs.m_abs)
             m_abs = rhs.m_abs->clone();
@@ -180,7 +182,8 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
     //
     // Also, if we find a float anywhere, we don't allow mixing of a single
     // symrec with it.
-    switch (e->get_op()) {
+    switch (e->get_op())
+    {
         case Op::ADD:
         {
             // Okay for single symrec anywhere in expr.
@@ -204,7 +207,8 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
             std::bitset<32> used;
 
             for (Expr::Terms::iterator i=terms.begin(), end=terms.end();
-                 i != end; ++i) {
+                 i != end; ++i)
+            {
 
                 // First look for an (-1*symrec) term
                 Expr* sube = i->get_expr();
@@ -212,7 +216,8 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                     continue;
 
                 Expr::Terms& sube_terms = sube->get_terms();
-                if (!sube->is_op(Op::MUL) || sube_terms.size() != 2) {
+                if (!sube->is_op(Op::MUL) || sube_terms.size() != 2)
+                {
                     // recurse instead
                     if (finalize_scan(sube, expr_loc, ssym_not_ok))
                         return true;
@@ -222,25 +227,32 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                 IntNum* intn;
                 Symbol* sym;
                 if ((intn = sube_terms[0].get_int()) &&
-                    (sym = sube_terms[1].get_sym())) {
+                    (sym = sube_terms[1].get_sym()))
+                {
                     ;
-                } else if ((sym = sube_terms[0].get_sym()) &&
-                           (intn = sube_terms[1].get_int())) {
+                }
+                else if ((sym = sube_terms[0].get_sym()) &&
+                         (intn = sube_terms[1].get_int()))
+                {
                     ;
-                } else {
+                }
+                else
+                {
                     if (finalize_scan(sube, expr_loc, ssym_not_ok))
                         return true;
                     continue;
                 }
 
-                if (!intn->is_neg1()) {
+                if (!intn->is_neg1())
+                {
                     if (finalize_scan(sube, expr_loc, ssym_not_ok))
                         return true;
                     continue;
                 }
 
                 Location loc;
-                if (!sym->get_label(&loc)) {
+                if (!sym->get_label(&loc))
+                {
                     if (finalize_scan(sube, expr_loc, ssym_not_ok))
                         return true;
                     continue;
@@ -249,7 +261,8 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
 
                 // Now look for a unused symrec term in the same segment
                 Expr::Terms::iterator j=terms.begin();
-                for (; j != end; ++j) {
+                for (; j != end; ++j)
+                {
                     Symbol* sym2;
                     Location loc2;
                     BytecodeContainer* container2;
@@ -257,7 +270,8 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                         && sym2->get_label(&loc2)
                         && (container2 = loc2.bc->get_container())
                         && container == container2
-                        && !used[j-terms.begin()]) {
+                        && !used[j-terms.begin()])
+                    {
                         // Mark as used
                         used[j-terms.begin()] = 1;
                         break;  // stop looking
@@ -279,13 +293,16 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                 // The unmatched symrec will be caught below.
                 if (j == end && !m_curpos_rel
                     && (sym->is_curpos()
-                        || (container == expr_loc.bc->get_container()))) {
-                    for (j=terms.begin(); j != end; ++j) {
+                        || (container == expr_loc.bc->get_container())))
+                {
+                    for (j=terms.begin(); j != end; ++j)
+                    {
                         Symbol* sym2;
                         Location loc2;
                         if ((sym2 = j->get_sym())
                             && sym2->get_label(&loc2)
-                            && !used[j-terms.begin()]) {
+                            && !used[j-terms.begin()])
+                        {
                             // Mark as used
                             used[j-terms.begin()] = 1;
                             // Mark value as curpos-relative
@@ -293,13 +310,16 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                                 return true;
                             m_rel = sym2;
                             m_curpos_rel = true;
-                            if (sym->is_curpos()) {
+                            if (sym->is_curpos())
+                            {
                                 // Replace both symrec portions with 0
                                 i->destroy();
                                 *i = new IntNum(0);
                                 //j->destroy(); // unneeded as it's a symbol
                                 *j = new IntNum(0);
-                            } else {
+                            }
+                            else
+                            {
                                 // Replace positive portion with curpos
                                 //j->destroy(); // unneeded as it's a symbol
                                 std::auto_ptr<Symbol> curpos(new Symbol("."));
@@ -321,9 +341,11 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
             // Look for unmatched symrecs.  If we've already found one or
             // we don't WANT to find one, error out.
             for (Expr::Terms::iterator i=terms.begin(), end=terms.end();
-                 i != end; ++i) {
+                 i != end; ++i)
+            {
                 Symbol* sym;
-                if ((sym = i->get_sym()) && !used[i-terms.begin()]) {
+                if ((sym = i->get_sym()) && !used[i-terms.begin()])
+                {
                     if (m_rel || ssym_not_ok)
                         return true;
                     m_rel = sym;
@@ -342,7 +364,8 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
             // XXX: should rshift be an expr instead??
 
             // Check for not allowed cases on RHS
-            switch (terms[1].get_type()) {
+            switch (terms[1].get_type())
+            {
                 case Expr::REG:
                 case Expr::FLOAT:
                     return true;        // not legal
@@ -357,7 +380,8 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
             }
 
             // Check for single sym and allowed cases on LHS
-            switch (terms[0].get_type()) {
+            switch (terms[0].get_type())
+            {
                 //case Expr::REG:   ????? should this be illegal ?????
                 case Expr::FLOAT:
                     return true;        // not legal
@@ -422,7 +446,8 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
             // WRT reg is left in expr for arch to look at.
 
             // Handle RHS
-            if (Symbol* sym = terms[1].get_sym()) {
+            if (Symbol* sym = terms[1].get_sym())
+            {
                 if (m_wrt)
                     return true;
                 m_wrt = sym;
@@ -430,20 +455,24 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                 //terms[1].destroy(); // unneeded as it's a symbol
                 terms.pop_back();
                 e->make_ident();
-            } else if (terms[1].is_type(Expr::REG))
+            }
+            else if (terms[1].is_type(Expr::REG))
                 ;  // ignore
             else
                 return true;
 
             // Handle LHS
-            if (Symbol* sym = terms[0].get_sym()) {
+            if (Symbol* sym = terms[0].get_sym())
+            {
                 if (m_rel || ssym_not_ok)
                     return true;
                 m_rel = sym;
                 // and replace with 0
                 //terms[0].destroy(); // unneeded as it's a symbol
                 terms[0] = new IntNum(0);
-            } else if (Expr* sube = terms[0].get_expr()) {
+            }
+            else if (Expr* sube = terms[0].get_expr())
+            {
                 // recurse
                 return finalize_scan(sube, expr_loc, ssym_not_ok);
             }
@@ -454,10 +483,12 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
         {
             // Single symrec not allowed anywhere
             for (Expr::Terms::iterator i=terms.begin(), end=terms.end();
-                 i != end; ++i) {
+                 i != end; ++i)
+            {
                 if (i->is_type(Expr::SYM))
                     return true;
-                else if (Expr* sube = i->get_expr()) {
+                else if (Expr* sube = i->get_expr())
+                {
                     // recurse
                     return finalize_scan(sube, expr_loc, true);
                 }
@@ -479,13 +510,18 @@ Value::finalize(Location loc)
     m_abs->level_tree(true, true, false);
 
     // Handle trivial (IDENT) cases immediately
-    if (m_abs->is_op(Op::IDENT)) {
-        if (IntNum* intn = m_abs->get_intnum()) {
-            if (intn->is_zero()) {
+    if (m_abs->is_op(Op::IDENT))
+    {
+        if (IntNum* intn = m_abs->get_intnum())
+        {
+            if (intn->is_zero())
+            {
                 delete m_abs;
                 m_abs = 0;
             }
-        } else if (Symbol* sym = m_abs->get_symbol()) {
+        }
+        else if (Symbol* sym = m_abs->get_symbol())
+        {
             m_rel = sym;
             delete m_abs;
             m_abs = 0;
@@ -502,7 +538,8 @@ Value::finalize(Location loc)
     IntNum* intn;
     if (m_abs->is_op(Op::IDENT)
         && (intn = m_abs->get_terms()[0].get_int())
-        && intn->is_zero()) {
+        && intn->is_zero())
+    {
         delete m_abs;
         m_abs = 0;
     }
@@ -515,7 +552,8 @@ Value::get_intnum(Location loc, bool calc_bc_dist)
     /*@dependent@*/ /*@null@*/ IntNum* intn = 0;
     std::auto_ptr<IntNum> outval(0);
 
-    if (m_abs != 0) {
+    if (m_abs != 0)
+    {
         // Handle integer expressions, if non-integer or too complex, return
         // NULL.
         if (calc_bc_dist)
@@ -525,7 +563,8 @@ Value::get_intnum(Location loc, bool calc_bc_dist)
             return outval;
     }
 
-    if (m_rel) {
+    if (m_rel)
+    {
         // If relative portion is not in bc section, return NULL.
         // Otherwise get the relative portion's offset.
         Location rel_loc;
@@ -561,7 +600,8 @@ Value::get_intnum(bool calc_bc_dist)
     /*@dependent@*/ /*@null@*/ IntNum* intn = 0;
     std::auto_ptr<IntNum> outval(0);
 
-    if (m_abs != 0) {
+    if (m_abs != 0)
+    {
         // Handle integer expressions, if non-integer or too complex, return
         // NULL.
         if (calc_bc_dist)
@@ -604,10 +644,12 @@ Value::output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch)
 {
     /*@dependent@*/ /*@null@*/ IntNum* intn = 0;
 
-    if (m_abs != 0) {
+    if (m_abs != 0)
+    {
         // Handle floating point expressions
         FloatNum* flt;
-        if (!m_rel && (flt = m_abs->get_float())) {
+        if (!m_rel && (flt = m_abs->get_float()))
+        {
             arch.floatnum_tobytes(*flt, bytes, m_size, 0, warn);
             return true;
         }
@@ -621,7 +663,8 @@ Value::output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch)
         m_abs->level_tree(true, true, true, xform_calc_dist);
         intn = m_abs->get_intnum();
 
-        if (!intn) {
+        if (!intn)
+        {
             // Second try before erroring: Expr::get_intnum() doesn't handle
             // SEG:OFF, so try simplifying out any to just the OFF portion,
             // then getting the intnum again.
@@ -630,7 +673,8 @@ Value::output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch)
             intn = m_abs->get_intnum();
         }
 
-        if (!intn) {
+        if (!intn)
+        {
             // Still don't have an integer!
             throw TooComplexError(N_("expression too complex"));
         }
@@ -640,7 +684,8 @@ Value::output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch)
     if (warn != 0)
         warn = m_sign ? -1 : 1;
 
-    if (m_rel) {
+    if (m_rel)
+    {
         // If relative portion is not in bc section, don't try to handle it
         // here.  Otherwise get the relative portion's offset.
         Location rel_loc;
@@ -670,10 +715,13 @@ Value::output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch)
     if (m_seg_of || m_rshift || m_curpos_rel || m_ip_rel || m_section_rel)
         return false;   // We can't handle this with just an absolute
 
-    if (intn) {
+    if (intn)
+    {
         // Output just absolute portion
         arch.intnum_tobytes(*intn, bytes, m_size, 0, warn);
-    } else {
+    }
+    else
+    {
         // No absolute or relative portions: output 0
         arch.intnum_tobytes(0, bytes, m_size, 0, warn);
     }
@@ -692,17 +740,21 @@ operator<< (marg_ostream& os, const Value& value)
     else
         os << *value.get_abs();
     os << '\n';
-    if (value.m_rel) {
+    if (value.m_rel)
+    {
         os << "Relative to=";
         os << (value.m_seg_of ? "SEG " : "");
         os << value.m_rel->get_name() << '\n';
-        if (value.m_wrt) {
+        if (value.m_wrt)
+        {
             os << "(With respect to=" << value.m_wrt->get_name() << ")\n";
         }
-        if (value.m_rshift > 0) {
+        if (value.m_rshift > 0)
+        {
             os << "(Right shifted by=" << value.m_rshift << ")\n";
         }
-        if (value.m_curpos_rel) {
+        if (value.m_curpos_rel)
+        {
             os << "(Relative to current position)\n";
         }
         if (value.m_ip_rel)

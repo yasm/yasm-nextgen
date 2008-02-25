@@ -63,7 +63,8 @@
 static std::string obj_filename, in_filename;
 static std::string list_filename;
 static std::string machine_name;
-static enum SpecialOption {
+static enum SpecialOption
+{
     SPECIAL_NONE = 0,
     SPECIAL_SHOW_HELP,
     SPECIAL_SHOW_VERSION,
@@ -82,50 +83,70 @@ static bool generate_make_dependencies = false;
 static bool warning_error = false;  // warnings being treated as errors
 static std::ofstream errfile;
 static std::string error_filename;
-static enum {
+static enum
+{
     EWSTYLE_GNU = 0,
     EWSTYLE_VC
 } ewmsg_style = EWSTYLE_GNU;
 
 // Forward declarations: cmd line parser handlers
 static int opt_special_handler(const std::string& cmd,
-                               const std::string& param, int extra);
+                               const std::string& param,
+                               int extra);
 static int opt_arch_handler(const std::string& cmd,
-                            const std::string& param, int extra);
+                            const std::string& param,
+                            int extra);
 static int opt_parser_handler(const std::string& cmd,
-                              const std::string& param, int extra);
+                              const std::string& param,
+                              int extra);
 static int opt_preproc_handler(const std::string& cmd,
-                               const std::string& param, int extra);
+                               const std::string& param,
+                               int extra);
 static int opt_objfmt_handler(const std::string& cmd,
-                              const std::string& param, int extra);
+                              const std::string& param,
+                              int extra);
 static int opt_dbgfmt_handler(const std::string& cmd,
-                              const std::string& param, int extra);
+                              const std::string& param,
+                              int extra);
 static int opt_listfmt_handler(const std::string& cmd,
-                               const std::string& param, int extra);
+                               const std::string& param,
+                               int extra);
 static int opt_listfile_handler(const std::string& cmd,
-                                const std::string& param, int extra);
+                                const std::string& param,
+                                int extra);
 static int opt_objfile_handler(const std::string& cmd,
-                               const std::string& param, int extra);
+                               const std::string& param,
+                               int extra);
 static int opt_machine_handler(const std::string& cmd,
-                               const std::string& param, int extra);
+                               const std::string& param,
+                               int extra);
 static int opt_strict_handler(const std::string& cmd,
-                              const std::string& param, int extra);
+                              const std::string& param,
+                              int extra);
 static int opt_warning_handler(const std::string& cmd,
-                               const std::string& param, int extra);
+                               const std::string& param,
+                               int extra);
 static int opt_error_file(const std::string& cmd,
-                          const std::string& param, int extra);
+                          const std::string& param,
+                          int extra);
 static int opt_error_stdout(const std::string& cmd,
-                            const std::string& param, int extra);
+                            const std::string& param,
+                            int extra);
 static int preproc_only_handler(const std::string& cmd,
-                                const std::string& param, int extra);
+                                const std::string& param,
+                                int extra);
 static int opt_include_option(const std::string& cmd,
-                              const std::string& param, int extra);
+                              const std::string& param,
+                              int extra);
 static int opt_preproc_option(const std::string& cmd,
-                              const std::string& param, int extra);
+                              const std::string& param,
+                              int extra);
 static int opt_ewmsg_handler(const std::string& cmd,
-                             const std::string& param, int extra);
+                             const std::string& param,
+                             int extra);
 static int opt_makedep_handler(const std::string& cmd,
-                               const std::string& param, int extra);
+                               const std::string& param,
+                               int extra);
 
 static void print_error(const std::string& msg);
 
@@ -207,7 +228,8 @@ static OptOption options[] =
 };
 
 // version message
-/*@observer@*/ static const char* version_msg[] = {
+/*@observer@*/ static const char* version_msg[] =
+{
     PACKAGE_NAME " " PACKAGE_INTVER "." PACKAGE_BUILD,
     "Compiled on " __DATE__ ".",
     "Copyright (c) 2001-2007 Peter Johnson and other Yasm developers.",
@@ -247,16 +269,19 @@ do_preproc_only(void)
 
     /* Default output to stdout if not specified or generating dependency
        makefiles */
-    if (!obj_filename || generate_make_dependencies) {
+    if (!obj_filename || generate_make_dependencies)
+    {
         out = stdout;
 
         /* determine the object filename if not specified, but we need a
             file name for the makefile rule */
-        if (generate_make_dependencies && !obj_filename) {
+        if (generate_make_dependencies && !obj_filename)
+        {
             if (in_filename == NULL)
                 /* Default to yasm.out if no obj filename specified */
                 obj_filename = yasm__xstrdup("yasm.out");
-            else {
+            else
+            {
                 /* replace (or add) extension to base filename */
                 yasm__splitpath(in_filename, &base_filename);
                 if (base_filename[0] == '\0')
@@ -266,10 +291,13 @@ do_preproc_only(void)
                         cur_objfmt_module->extension, "yasm.out");
             }
         }
-    } else {
+    }
+    else
+    {
         /* Open output (object) file */
         out = open_file(obj_filename, "wt");
-        if (!out) {
+        if (!out)
+        {
             print_error(String::compose(_("could not open file `%1'"), filename));
             yasm_xfree(preproc_buf);
             return EXIT_FAILURE;
@@ -283,16 +311,19 @@ do_preproc_only(void)
     apply_preproc_builtins();
     apply_preproc_saved_options();
 
-    if (generate_make_dependencies) {
+    if (generate_make_dependencies)
+    {
         size_t totlen;
 
         fprintf(stdout, "%s: %s", obj_filename, in_filename);
         totlen = strlen(obj_filename)+2+strlen(in_filename);
 
         while ((got = yasm_preproc_get_included_file(cur_preproc, preproc_buf,
-                                                     PREPROC_BUF_SIZE)) != 0) {
+                                                     PREPROC_BUF_SIZE)) != 0)
+        {
             totlen += got;
-            if (totlen > 72) {
+            if (totlen > 72)
+            {
                 fputs(" \\\n  ", stdout);
                 totlen = 2;
             }
@@ -300,7 +331,9 @@ do_preproc_only(void)
             fwrite(preproc_buf, got, 1, stdout);
         }
         fputc('\n', stdout);
-    } else {
+    }
+    else
+    {
         while ((got = yasm_preproc_input(cur_preproc, preproc_buf,
                                          PREPROC_BUF_SIZE)) != 0)
             fwrite(preproc_buf, got, 1, out);
@@ -309,7 +342,8 @@ do_preproc_only(void)
     if (out != stdout)
         fclose(out);
 
-    if (yasm_errwarns_num_errors(errwarns, warning_error) > 0) {
+    if (yasm_errwarns_num_errors(errwarns, warning_error) > 0)
+    {
         yasm_errwarns_output_all(errwarns, linemap, warning_error,
                                  print_yasm_error, print_yasm_warning);
         if (out != stdout)
@@ -357,7 +391,8 @@ do_assemble(void)
                           in_filename));
 
     // assemble the input.
-    if (!assembler.assemble(in_file, in_filename, warning_error)) {
+    if (!assembler.assemble(in_file, in_filename, warning_error))
+    {
         // An error occurred during assembly; output all errors and warnings
         // and then exit.
         assembler.get_errwarns()->output_all(*assembler.get_linemap(),
@@ -369,14 +404,16 @@ do_assemble(void)
 
     // open the object file for output (if not already opened by dbg objfmt)
     std::ofstream of;
-    if (objfmt_keyword != "dbg") {
+    if (objfmt_keyword != "dbg")
+    {
         of.open(assembler.get_obj_filename().c_str(), std::ios::binary);
         if (!of)
             throw yasm::Error(String::compose(_("could not open file `%1'"),
                               obj_filename));
     }
 
-    if (!assembler.output(of ? of : std::cerr, warning_error)) {
+    if (!assembler.output(of ? of : std::cerr, warning_error))
+    {
         // An error occurred during output; output all errors and warnings.
         // If we had an error at this point, we also need to delete the output
         // object file (to make sure it's not left newer than the source).
@@ -395,9 +432,11 @@ do_assemble(void)
         of.close();
 #if 0
     // Open and write the list file
-    if (list_filename) {
+    if (list_filename)
+    {
         FILE *list = open_file(list_filename, "wt");
-        if (!list) {
+        if (!list)
+        {
             print_error(String::compose(_("could not open file `%1'"), filename));
             return EXIT_FAILURE;
         }
@@ -438,7 +477,8 @@ main(int argc, const char* argv[])
     if (parse_cmdline(argc, argv, options, NELEMS(options), print_error))
         return EXIT_FAILURE;
 
-    switch (special_option) {
+    switch (special_option)
+    {
         case SPECIAL_SHOW_HELP:
             // Does gettext calls internally
             help_msg(help_head, help_tail, options, NELEMS(options));
@@ -459,10 +499,12 @@ main(int argc, const char* argv[])
     }
 
     // Open error file if specified.
-    if (!error_filename.empty()) {
+    if (!error_filename.empty())
+    {
         errfile.close();
         errfile.open(error_filename.c_str());
-        if (errfile.fail()) {
+        if (errfile.fail())
+        {
             print_error(String::compose(_("could not open file `%1'"),
                                         error_filename));
             return EXIT_FAILURE;
@@ -474,7 +516,8 @@ main(int argc, const char* argv[])
         arch_keyword = "x86";
 
     // Check for arch help
-    if (machine_name == "help") {
+    if (machine_name == "help")
+    {
         std::auto_ptr<yasm::Arch> arch_auto =
             yasm::load_module<yasm::Arch>(arch_keyword);
         std::cout << String::compose(_("Available %1 for %2 `%3':"),
@@ -490,7 +533,8 @@ main(int argc, const char* argv[])
     }
 
     // Determine input filename and open input file.
-    if (in_filename.empty()) {
+    if (in_filename.empty())
+    {
         print_error(_("No input files specified"));
         return EXIT_FAILURE;
     }
@@ -509,17 +553,23 @@ main(int argc, const char* argv[])
         return do_preproc_only();
 #endif
     // If list file enabled, make sure we have a list format loaded.
-    if (!list_filename.empty()) {
+    if (!list_filename.empty())
+    {
         // If not already specified, default to nasm as the list format.
         if (listfmt_keyword.empty())
             listfmt_keyword = "nasm";
     }
 
-    try {
+    try
+    {
         return do_assemble();
-    } catch (yasm::InternalError& err) {
+    }
+    catch (yasm::InternalError& err)
+    {
         print_error(String::compose(_("INTERNAL ERROR: %1"), err.what()));
-    } catch (yasm::Error& err) {
+    }
+    catch (yasm::Error& err)
+    {
         print_error(String::compose(_("FATAL: %1"), err.what()));
     }
     return EXIT_FAILURE;
@@ -532,7 +582,8 @@ main(int argc, const char* argv[])
 int
 not_an_option_handler(const std::string& param)
 {
-    if (!in_filename.empty()) {
+    if (!in_filename.empty())
+    {
         print_error(
             _("warning: can open only one input file, only the last file will be processed"));
     }
@@ -545,7 +596,8 @@ int
 other_option_handler(const std::string& option)
 {
     // Accept, but ignore, -O and -Onnn, for compatibility with NASM.
-    if (option[0] == '-' && option[1] == 'O') {
+    if (option[0] == '-' && option[1] == 'O')
+    {
         if (option.find_first_not_of("0123456789", 2) != std::string::npos)
             return 1;
         return 0;
@@ -568,8 +620,10 @@ module_common_handler(const std::string& param, const char* name,
                       const char* name_plural)
 {
     std::string keyword = String::lowercase(param);
-    if (!yasm::is_module<T>(keyword)) {
-        if (param == "help") {
+    if (!yasm::is_module<T>(keyword))
+    {
+        if (param == "help")
+        {
             std::cout << String::compose(_("Available yasm %1:"), name_plural)
                       << '\n';
             list_module<T>();
@@ -646,7 +700,8 @@ static int
 opt_listfile_handler(/*@unused@*/ const std::string& cmd,
                      const std::string& param, /*@unused@*/ int extra)
 {
-    if (!list_filename.empty()) {
+    if (!list_filename.empty())
+    {
         print_error(
             _("warning: can output to only one list file, last specified used"));
     }
@@ -659,7 +714,8 @@ static int
 opt_objfile_handler(/*@unused@*/ const std::string& cmd,
                     const std::string& param, /*@unused@*/ int extra)
 {
-    if (!obj_filename.empty()) {
+    if (!obj_filename.empty())
+    {
         print_error(
             _("warning: can output to only one object file, last specified used"));
     }
@@ -692,7 +748,8 @@ opt_warning_handler(const std::string& cmd,
     // is it disabling the warning instead of enabling?
     void (*action)(yasm::WarnClass wclass) = yasm::warn_enable;
 
-    if (extra == 1) {
+    if (extra == 1)
+    {
         // -w, disable warnings
         yasm::warn_disable_all();
         return 0;
@@ -702,7 +759,8 @@ opt_warning_handler(const std::string& cmd,
     std::string::size_type pos = 1;
 
     // detect no- prefix to disable the warning
-    if (cmd.compare(pos, 3, "no-") == 0) {
+    if (cmd.compare(pos, 3, "no-") == 0)
+    {
         action = yasm::warn_disable;
         pos += 3;   // skip past it to get to the warning name
     }
@@ -730,7 +788,8 @@ static int
 opt_error_file(/*@unused@*/ const std::string& cmd,
                const std::string& param, /*@unused@*/ int extra)
 {
-    if (!error_filename.empty()) {
+    if (!error_filename.empty())
+    {
         print_error(
             _("warning: can output to only one error file, last specified used"));
     }
@@ -782,11 +841,15 @@ opt_ewmsg_handler(/*@unused@*/ const std::string& cmd,
                   const std::string& param, /*@unused@*/ int extra)
 {
     if (String::nocase_equal(param, "gnu") ||
-        String::nocase_equal(param, "gcc")) {
+        String::nocase_equal(param, "gcc"))
+    {
         ewmsg_style = EWSTYLE_GNU;
-    } else if (String::nocase_equal(param, "vc")) {
+    }
+    else if (String::nocase_equal(param, "vc"))
+    {
         ewmsg_style = EWSTYLE_VC;
-    } else
+    }
+    else
         print_error(String::compose(
             _("warning: unrecognized message style `%1'"), param));
 
@@ -818,8 +881,10 @@ static void
 apply_preproc_saved_options(yasm::Preprocessor* preproc)
 {
     for (CommandOptions::const_iterator i = preproc_options.begin(),
-         end = preproc_options.end(); i != end; ++i) {
-        switch (i->second) {
+         end = preproc_options.end(); i != end; ++i)
+    {
+        switch (i->second)
+        {
             case 0:
                 preproc->add_include_file(i->first);
             case 1:
@@ -844,7 +909,8 @@ list_module()
 {
     std::vector<std::string> list = yasm::get_modules<T>();
     for (std::vector<std::string>::iterator i=list.begin(), end=list.end();
-         i != end; ++i) {
+         i != end; ++i)
+    {
         std::auto_ptr<T> obj = yasm::load_module<T>(*i);
         print_list_keyword_desc(obj->get_name(), *i);
     }
@@ -862,27 +928,32 @@ handle_yasm_gettext(const char *msgid)
     return yasm_gettext(msgid);
 }
 
-static const char *fmt[2] = {
-        "%1:%2: %3%4",      // GNU
-        "%1(%2) : %3%4"     // VC
+static const char *fmt[2] =
+{
+    "%1:%2: %3%4",      // GNU
+    "%1(%2) : %3%4"     // VC
 };
 
-static const char *fmt_noline[2] = {
-        "%1: %3%4",         // GNU
-        "%1 : %3%4"         // VC
+static const char *fmt_noline[2] =
+{
+    "%1: %3%4",         // GNU
+    "%1 : %3%4"         // VC
 };
 
 static void
-print_yasm_error(const std::string& filename, unsigned long line,
+print_yasm_error(const std::string& filename,
+                 unsigned long line,
                  const std::string& msg,
-                 const std::string& xref_fn, unsigned long xref_line,
+                 const std::string& xref_fn,
+                 unsigned long xref_line,
                  const std::string& xref_msg)
 {
     errfile <<
         String::compose(line ? fmt[ewmsg_style] : fmt_noline[ewmsg_style],
                         filename, line, "", msg) << std::endl;
 
-    if (!xref_fn.empty() && !xref_msg.empty()) {
+    if (!xref_fn.empty() && !xref_msg.empty())
+    {
         errfile <<
             String::compose(xref_line ?
                             fmt[ewmsg_style] : fmt_noline[ewmsg_style],
@@ -891,7 +962,8 @@ print_yasm_error(const std::string& filename, unsigned long line,
 }
 
 static void
-print_yasm_warning(const std::string& filename, unsigned long line,
+print_yasm_warning(const std::string& filename,
+                   unsigned long line,
                    const std::string& msg)
 {
     errfile <<

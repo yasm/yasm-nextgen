@@ -37,11 +37,13 @@
 #include "marg_ostream.h"
 
 
-namespace {
+namespace
+{
 
 using namespace yasm;
 
-class MultipleBytecode : public Bytecode::Contents {
+class MultipleBytecode : public Bytecode::Contents
+{
 public:
     MultipleBytecode(std::auto_ptr<Expr> e);
     ~MultipleBytecode();
@@ -57,8 +59,11 @@ public:
 
     /// Recalculates the bytecode's length based on an expanded span
     /// length.
-    bool expand(Bytecode& bc, unsigned long& len, int span,
-                long old_val, long new_val,
+    bool expand(Bytecode& bc,
+                unsigned long& len,
+                int span,
+                long old_val,
+                long new_val,
                 /*@out@*/ long& neg_thres,
                 /*@out@*/ long& pos_thres);
 
@@ -123,7 +128,8 @@ MultipleBytecode::finalize(Bytecode& bc)
         m_multiple.reset(new Expr(new IntNum(0), bc.get_line()));
 
     for (BytecodeContainer::bc_iterator i = m_contents.bcs_begin(),
-         end = m_contents.bcs_end(); i != end; ++i) {
+         end = m_contents.bcs_end(); i != end; ++i)
+    {
         if (i->get_special() == Bytecode::Contents::SPECIAL_OFFSET)
             throw ValueError(N_("cannot combine multiples and setting assembly position"));
         i->finalize();
@@ -135,18 +141,26 @@ MultipleBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 {
     // Calculate multiple value as an integer
     m_mult_int = 1;
-    if (const IntNum* num = m_multiple->get_intnum()) {
-        if (num->sign() < 0) {
+    if (const IntNum* num = m_multiple->get_intnum())
+    {
+        if (num->sign() < 0)
+        {
             m_mult_int = 0;
             throw ValueError(N_("multiple is negative"));
-        } else
+        }
+        else
             m_mult_int = num->get_int();
-    } else {
-        if (m_multiple->contains(Expr::FLOAT)) {
+    }
+    else
+    {
+        if (m_multiple->contains(Expr::FLOAT))
+        {
             m_mult_int = 0;
             throw ValueError(
                 N_("expression must not contain floating point value"));
-        } else {
+        }
+        else
+        {
             Value value(0, Expr::Ptr(m_multiple->clone()));
             add_span(bc, 0, value, 0, 0);
             m_mult_int = 0;     // assume 0 to start
@@ -155,7 +169,8 @@ MultipleBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 
     unsigned long len = 0;
     for (BytecodeContainer::bc_iterator i = m_contents.bcs_begin(),
-         end = m_contents.bcs_end(); i != end; ++i) {
+         end = m_contents.bcs_end(); i != end; ++i)
+    {
         i->calc_len(add_span);
         len += i->get_total_len();
     }
@@ -164,11 +179,16 @@ MultipleBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 }
 
 bool
-MultipleBytecode::expand(Bytecode& bc, unsigned long& len, int span,
-                         long old_val, long new_val,
-                         /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres)
+MultipleBytecode::expand(Bytecode& bc,
+                         unsigned long& len,
+                         int span,
+                         long old_val,
+                         long new_val,
+                         /*@out@*/ long& neg_thres,
+                         /*@out@*/ long& pos_thres)
 {
-    if (span == 0) {
+    if (span == 0)
+    {
         m_mult_int = new_val;
         return true;
     }
@@ -192,9 +212,11 @@ MultipleBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
 
     unsigned long total_len = 0;
     unsigned long pos = 0;
-    for (long mult=0; mult<m_mult_int; mult++, pos += total_len) {
+    for (long mult=0; mult<m_mult_int; mult++, pos += total_len)
+    {
         for (BytecodeContainer::bc_iterator i = m_contents.bcs_begin(),
-             end = m_contents.bcs_end(); i != end; ++i) {
+             end = m_contents.bcs_end(); i != end; ++i)
+        {
             i->output(bc_out);
         }
     }
@@ -210,7 +232,8 @@ MultipleBytecode::clone() const
 
 } // anonymous namespace
 
-namespace yasm {
+namespace yasm
+{
 
 BytecodeContainer&
 append_multiple(BytecodeContainer& container,

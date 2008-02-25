@@ -36,7 +36,8 @@
 #include "symbol.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 NameValue::NameValue(const std::string& name, const std::string& id,
                      char id_prefix)
@@ -98,12 +99,11 @@ NameValue::~NameValue()
 /*@null@*/ std::auto_ptr<Expr>
 NameValue::get_expr(Object& object, unsigned long line) const
 {
-    switch (m_type) {
+    switch (m_type)
+    {
         case ID:
-        {
             return std::auto_ptr<Expr>(
                 new Expr(object.get_sym(get_id()).use(line), line));
-        }
         case EXPR:
             return std::auto_ptr<Expr>(m_expr->clone());
         default:
@@ -114,7 +114,8 @@ NameValue::get_expr(Object& object, unsigned long line) const
 std::string
 NameValue::get_string() const
 {
-    switch (m_type) {
+    switch (m_type)
+    {
         case ID:
         case STRING:
             return m_idstr;
@@ -139,7 +140,8 @@ std::ostream&
 operator<< (std::ostream& os, const NameValue& nv)
 {
     os << "(\"" << nv.get_name() << "\",";
-    switch (nv.m_type) {
+    switch (nv.m_type)
+    {
         case NameValue::ID:
             os << nv.m_idstr;
             break;
@@ -177,13 +179,15 @@ NameValues::~NameValues()
 std::ostream&
 operator<< (std::ostream& os, const NameValues& namevals)
 {
-    if (namevals.empty()) {
+    if (namevals.empty())
+    {
         os << "(none)";
         return os;
     }
 
     for (NameValues::const_iterator i=namevals.begin(), end=namevals.end();
-         i != end; ++i) {
+         i != end; ++i)
+    {
         if (i != namevals.begin())
             os << ',';
         os << *i;

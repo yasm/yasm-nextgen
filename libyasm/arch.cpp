@@ -31,7 +31,8 @@
 #include "bytecode.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 Arch::InsnPrefix::InsnPrefix(std::auto_ptr<Insn> insn)
     : m_type(INSN),

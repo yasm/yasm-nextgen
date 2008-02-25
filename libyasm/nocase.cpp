@@ -32,7 +32,8 @@
 #include <string>
 
 
-namespace String {
+namespace String
+{
 
 static inline bool
 nocase_equal_char(char a, char b)

@@ -31,7 +31,8 @@
 #include <list>
 
 
-namespace yasm {
+namespace yasm
+{
 
 // Default handlers for replacable functions
 static const char *def_gettext_hook(const char *msgid);
@@ -39,7 +40,8 @@ static const char *def_gettext_hook(const char *msgid);
 // Storage for errwarn's "extern" functions
 const char * (*gettext_hook) (const char *msgid) = def_gettext_hook;
 
-class ErrwarnManager {
+class ErrwarnManager
+{
 public:
     static ErrwarnManager & instance()
     {
@@ -48,7 +50,8 @@ public:
     }
 
     /// Warning indicator.
-    class Warning {
+    class Warning
+    {
     public:
         Warning(unsigned long line, WarnClass wclass, const std::string& wmsg);
 
@@ -94,15 +97,19 @@ conv_unprint(int ch)
 {
     std::string unprint;
 
-    if (((ch & ~0x7F) != 0) /*!isascii(ch)*/ && !isprint(ch)) {
+    if (((ch & ~0x7F) != 0) /*!isascii(ch)*/ && !isprint(ch))
+    {
         unprint += 'M';
         unprint += '-';
         ch &= 0x7F; /*toascii(ch)*/
     }
-    if (iscntrl(ch)) {
+
+    if (iscntrl(ch))
+    {
         unprint += '^';
         unprint += (ch == '\177') ? '?' : ch | 0100;
-    } else
+    }
+    else
         unprint += ch;
 
     return unprint;
@@ -235,7 +242,9 @@ warn_occurred()
 ErrwarnManager::Warning::Warning(unsigned long line,
                                  WarnClass wclass,
                                  const std::string& msg)
-    : m_line(line), m_wclass(wclass), m_wmsg(msg)
+    : m_line(line),
+      m_wclass(wclass),
+      m_wmsg(msg)
 {
 }
 
@@ -256,7 +265,8 @@ warn_update_line(unsigned long line)
     ErrwarnManager &manager = ErrwarnManager::instance();
 
     for (ErrwarnManager::Warnings::iterator i = manager.m_warns.begin(),
-         end = manager.m_warns.end(); i != end; ++i) {
+         end = manager.m_warns.end(); i != end; ++i)
+    {
         if (i->m_line == 0)
             i->m_line = line;
     }

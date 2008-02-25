@@ -27,7 +27,8 @@
 #include "object_format.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 std::string
 ObjectFormat::get_type() const

@@ -32,7 +32,8 @@
 
 #include <cstring>
 
-namespace {
+namespace
+{
 
 /* Little-endian byte-swapping routines.  Note that these do not
    depend on the size of datatypes such as cvs_uint32, nor do they require
@@ -58,7 +59,8 @@ putu32(unsigned long data, unsigned char *addr)
 
 } // anonymous namespace
 
-namespace yasm {
+namespace yasm
+{
 
 /*
  * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious

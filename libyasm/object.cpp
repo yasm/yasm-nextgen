@@ -52,10 +52,12 @@
 #include "value.h"
 
 
-namespace {
+namespace
+{
 
 /// Get name helper for symbol table HAMT.
-class SymGetName {
+class SymGetName
+{
 public:
     const std::string& operator() (const yasm::Symbol* sym) const
     { return sym->get_name(); }
@@ -63,9 +65,11 @@ public:
 
 } // anonymous namespace
 
-namespace yasm {
+namespace yasm
+{
 
-class Object::Impl {
+class Object::Impl
+{
 public:
     Impl(bool nocase) : sym_map(nocase) {}
     ~Impl() {}
@@ -109,7 +113,8 @@ operator<< (marg_ostream& os, const Object& object)
     // Print symbol table
     os << "Symbol Table:\n";
     for (Object::const_symbol_iterator i=object.m_symbols.begin(),
-         end=object.m_symbols.end(); i != end; ++i) {
+         end=object.m_symbols.end(); i != end; ++i)
+    {
         os << "Symbol `" << i->get_name() << "'\n";
         ++os;
         os << *i;
@@ -118,7 +123,8 @@ operator<< (marg_ostream& os, const Object& object)
 
     // Print sections and bytecodes
     for (Object::const_section_iterator i=object.m_sections.begin(),
-         end=object.m_sections.end(); i != end; ++i) {
+         end=object.m_sections.end(); i != end; ++i)
+    {
         os << "Section:\n";
         i->put(os, true);
     }
@@ -203,10 +209,14 @@ Object::symbols_finalize(Errwarns& errwarns, bool undef_extern)
     unsigned long firstundef_line = ULONG_MAX;
 
     for (symbol_iterator i=m_symbols.begin(), end=m_symbols.end();
-         i != end; ++i) {
-        try {
+         i != end; ++i)
+    {
+        try
+        {
             i->finalize(undef_extern);
-        } catch (Error& err) {
+        }
+        catch (Error& err)
+        {
             unsigned long use_line = i->get_use_line();
             errwarns.propagate(use_line, err);
             if (use_line < firstundef_line)
@@ -318,11 +328,13 @@ Object::symbols_finalize(Errwarns& errwarns, bool undef_extern)
 //       change), add it to tail of Q.
 // 3. Final pass over bytecodes to generate final offsets.
 //
-namespace {
+namespace
+{
 
 using namespace yasm;
 
-class OffsetSetter {
+class OffsetSetter
+{
 public:
     OffsetSetter();
     ~OffsetSetter() {}
@@ -343,13 +355,18 @@ OffsetSetter::OffsetSetter()
 
 class Optimize;
 
-class Span : private boost::noncopyable {
+class Span : private boost::noncopyable
+{
     friend class Optimize;
 public:
-    class Term {
+    class Term
+    {
     public:
         Term();
-        Term(unsigned int subst, Location loc, Location loc2, Span* span,
+        Term(unsigned int subst,
+             Location loc,
+             Location loc2,
+             Span* span,
              long new_val);
         ~Term() {}
 
@@ -361,8 +378,12 @@ public:
         unsigned int m_subst;
     };
 
-    Span(Bytecode& bc, int id, const Value& value,
-         long neg_thres, long pos_thres, size_t os_index);
+    Span(Bytecode& bc,
+         int id,
+         const Value& value,
+         long neg_thres,
+         long pos_thres,
+         size_t os_index);
     ~Span();
 
     void create_terms(Optimize* optimize);
@@ -400,12 +421,16 @@ private:
     size_t m_os_index;
 };
 
-class Optimize {
+class Optimize
+{
 public:
     Optimize();
     ~Optimize();
-    void add_span(Bytecode& bc, int id, const Value& value,
-                  long neg_thres, long pos_thres);
+    void add_span(Bytecode& bc,
+                  int id,
+                  const Value& value,
+                  long neg_thres,
+                  long pos_thres);
     void add_offset_setter(Bytecode& bc);
 
     bool step_1b(Errwarns& errwarns);
@@ -437,7 +462,10 @@ Span::Term::Term()
 {
 }
 
-Span::Term::Term(unsigned int subst, Location loc, Location loc2, Span* span,
+Span::Term::Term(unsigned int subst,
+                 Location loc,
+                 Location loc2,
+                 Span* span,
                  long new_val)
     : m_loc(loc),
       m_loc2(loc2),
@@ -448,8 +476,12 @@ Span::Term::Term(unsigned int subst, Location loc, Location loc2, Span* span,
 {
 }
 
-Span::Span(Bytecode& bc, int id, /*@null@*/ const Value& value,
-           long neg_thres, long pos_thres, size_t os_index)
+Span::Span(Bytecode& bc,
+           int id,
+           /*@null@*/ const Value& value,
+           long neg_thres,
+           long pos_thres,
+           size_t os_index)
     : m_bc(bc),
       m_depval(value),
       m_rel_term(0),
@@ -464,8 +496,11 @@ Span::Span(Bytecode& bc, int id, /*@null@*/ const Value& value,
 }
 
 void
-Optimize::add_span(Bytecode& bc, int id, const Value& value,
-                   long neg_thres, long pos_thres)
+Optimize::add_span(Bytecode& bc,
+                   int id,
+                   const Value& value,
+                   long neg_thres,
+                   long pos_thres)
 {
     m_spans.push_back(new Span(bc, id, value, neg_thres, pos_thres,
                                m_offset_setters.size()-1));
@@ -487,12 +522,15 @@ void
 Span::create_terms(Optimize* optimize)
 {
     // Split out sym-sym terms in absolute portion of dependent value
-    if (m_depval.has_abs()) {
+    if (m_depval.has_abs())
+    {
         subst_dist(m_depval.get_abs(),
                    BIND::bind(&Span::add_term, this, _1, _2, _3));
-        if (m_span_terms.size() > 0) {
+        if (m_span_terms.size() > 0)
+        {
             for (Terms::iterator i=m_span_terms.begin(),
-                 end=m_span_terms.end(); i != end; ++i) {
+                 end=m_span_terms.end(); i != end; ++i)
+            {
                 // Create expression terms with dummy value
                 m_expr_terms.push_back(new IntNum(0));
 
@@ -508,7 +546,8 @@ Span::create_terms(Optimize* optimize)
     }
 
     // Create term for relative portion of dependent value
-    if (m_depval.m_rel) {
+    if (m_depval.m_rel)
+    {
         Location zero_loc = {0, 0};
         Location rel_loc;
         bool sym_local = m_depval.m_rel->get_label(&rel_loc);
@@ -534,7 +573,8 @@ Span::recalc_normal()
 {
     m_new_val = 0;
 
-    if (m_depval.has_abs()) {
+    if (m_depval.has_abs())
+    {
         boost::scoped_ptr<Expr> abs_copy(m_depval.get_abs()->clone());
 
         // Update sym-sym terms and substitute back into expr
@@ -548,12 +588,14 @@ Span::recalc_normal()
             m_new_val = LONG_MAX;   // too complex; force to longest form
     }
 
-    if (m_rel_term) {
+    if (m_rel_term)
+    {
         if (m_new_val != LONG_MAX && m_rel_term->m_new_val != LONG_MAX)
             m_new_val += m_rel_term->m_new_val >> m_depval.m_rshift;
         else
             m_new_val = LONG_MAX;   // too complex; force to longest form
-    } else if (m_depval.is_relative())
+    }
+    else if (m_depval.is_relative())
         m_new_val = LONG_MAX;       // too complex; force to longest form
 
     if (m_new_val == LONG_MAX)
@@ -580,7 +622,8 @@ Optimize::Optimize()
 
 Optimize::~Optimize()
 {
-    while (!m_spans.empty()) {
+    while (!m_spans.empty())
+    {
         delete m_spans.back();
         m_spans.pop_back();
     }
@@ -615,13 +658,17 @@ Optimize::itree_add(Span& span, Span::Term& term)
     else
         precbc2_index = span.m_bc.get_index()-1;
 
-    if (precbc_index < precbc2_index) {
+    if (precbc_index < precbc2_index)
+    {
         low = precbc_index+1;
         high = precbc2_index;
-    } else if (precbc_index > precbc2_index) {
+    }
+    else if (precbc_index > precbc2_index)
+    {
         low = precbc2_index+1;
         high = precbc_index;
-    } else
+    }
+    else
         return;     /* difference is same bc - always 0! */
 
     m_itree.insert((long)low, (long)high, &term);
@@ -701,30 +748,41 @@ Optimize::step_1b(Errwarns& errwarns)
     bool saw_error = false;
 
     std::list<Span*>::iterator spani = m_spans.begin();
-    while (spani != m_spans.end()) {
+    while (spani != m_spans.end())
+    {
         Span* span = *spani;
         bool terms_okay = true;
-        try {
+
+        try
+        {
             span->create_terms(this);
-        } catch (Error& err) {
+        }
+        catch (Error& err)
+        {
             errwarns.propagate(span->m_bc.get_line(), err);
             saw_error = true;
             terms_okay = false;
         }
-        if (terms_okay && span->recalc_normal()) {
+
+        if (terms_okay && span->recalc_normal())
+        {
             bool still_depend =
                 span->m_bc.expand(span->m_id, span->m_cur_val,
                                   span->m_new_val, span->m_neg_thres,
                                   span->m_pos_thres, errwarns);
             if (errwarns.num_errors() > 0)
                 saw_error = true;
-            else if (still_depend) {
-                if (span->m_active == Span::INACTIVE) {
+            else if (still_depend)
+            {
+                if (span->m_active == Span::INACTIVE)
+                {
                     errwarns.propagate(span->m_bc.get_line(),
                         ValueError(N_("secondary expansion of an external/complex value")));
                     saw_error = true;
                 }
-            } else {
+            }
+            else
+            {
                 spani = m_spans.erase(spani);
                 continue;
             }
@@ -740,18 +798,23 @@ bool
 Optimize::step_1d()
 {
     for (std::list<Span*>::iterator spani=m_spans.begin(),
-         endspan=m_spans.end(); spani != endspan; ++spani) {
+         endspan=m_spans.end(); spani != endspan; ++spani)
+    {
         Span* span = *spani;
+
         // Update span terms based on new bc offsets
         for (Span::Terms::iterator term=span->m_span_terms.begin(),
-             endterm=span->m_span_terms.end(); term != endterm; ++term) {
+             endterm=span->m_span_terms.end(); term != endterm; ++term)
+        {
             IntNum intn;
             if (!calc_dist(term->m_loc, term->m_loc2, &intn))
                 throw InternalError(N_("could not calculate bc distance"));
             term->m_cur_val = term->m_new_val;
             term->m_new_val = intn.get_int();
         }
-        if (span->m_rel_term) {
+
+        if (span->m_rel_term)
+        {
             span->m_rel_term->m_cur_val = span->m_rel_term->m_new_val;
             if (span->m_rel_term->m_loc2.bc)
                 span->m_rel_term->m_new_val =
@@ -762,7 +825,8 @@ Optimize::step_1d()
                     span->m_rel_term->m_loc.get_offset();
         }
 
-        if (span->recalc_normal()) {
+        if (span->recalc_normal())
+        {
             // Exceeded threshold, add span to QB
             m_QB.push_back(&(*span));
             span->m_active = Span::ON_Q;
@@ -780,7 +844,8 @@ Optimize::step_1e(Errwarns& errwarns)
 
     // Update offset-setters values
     for (std::vector<OffsetSetter>::iterator os=m_offset_setters.begin(),
-         osend=m_offset_setters.end(); os != osend; ++os) {
+         osend=m_offset_setters.end(); os != osend; ++os)
+    {
         if (!os->m_bc)
             continue;
         os->m_thres = os->m_bc->next_offset();
@@ -790,7 +855,8 @@ Optimize::step_1e(Errwarns& errwarns)
 
     // Build up interval tree
     for (std::list<Span*>::iterator spani=m_spans.begin(),
-         endspan=m_spans.end(); spani != endspan; ++spani) {
+         endspan=m_spans.end(); spani != endspan; ++spani)
+    {
         Span* span = *spani;
         for (Span::Terms::iterator term=span->m_span_terms.begin(),
              endterm=span->m_span_terms.end(); term != endterm; ++term)
@@ -801,16 +867,20 @@ Optimize::step_1e(Errwarns& errwarns)
 
     // Look for cycles in times expansion (span.id==0)
     for (std::list<Span*>::iterator spani=m_spans.begin(),
-         endspan=m_spans.end(); spani != endspan; ++spani) {
+         endspan=m_spans.end(); spani != endspan; ++spani)
+    {
         Span* span = *spani;
         if (span->m_id > 0)
             continue;
-        try {
+        try
+        {
             m_itree.enumerate((long)span->m_bc.get_index(),
                               (long)span->m_bc.get_index(),
                               BIND::bind(&Optimize::check_cycle, this, _1,
                                          REF::ref(*span)));
-        } catch (Error& err) {
+        }
+        catch (Error& err)
+        {
             errwarns.propagate(span->m_bc.get_line(), err);
             saw_error = true;
         }
@@ -824,16 +894,20 @@ Optimize::step_2(Errwarns& errwarns)
 {
     bool saw_error = false;
 
-    while (!m_QA.empty() || !m_QB.empty()) {
+    while (!m_QA.empty() || !m_QB.empty())
+    {
         Span* span;
 
         // QA is for TIMES, update those first, then update non-TIMES.
         // This is so that TIMES can absorb increases before we look at
         // expanding non-TIMES BCs.
-        if (!m_QA.empty()) {
+        if (!m_QA.empty())
+        {
             span = m_QA.front();
             m_QA.pop_front();
-        } else {
+        }
+        else
+        {
             span = m_QB.front();
             m_QB.pop_front();
         }
@@ -854,11 +928,14 @@ Optimize::step_2(Errwarns& errwarns)
             span->m_bc.expand(span->m_id, span->m_cur_val, span->m_new_val,
                               span->m_neg_thres, span->m_pos_thres, errwarns);
 
-        if (errwarns.num_errors() > 0) {
+        if (errwarns.num_errors() > 0)
+        {
             // error
             saw_error = true;
             continue;
-        } else if (still_depend) {
+        }
+        else if (still_depend)
+        {
             // another threshold, keep active
             for (Span::Terms::iterator term=span->m_span_terms.begin(),
                  endterm=span->m_span_terms.end(); term != endterm; ++term)
@@ -866,7 +943,8 @@ Optimize::step_2(Errwarns& errwarns)
             if (span->m_rel_term)
                 span->m_rel_term->m_cur_val = span->m_rel_term->m_new_val;
             span->m_cur_val = span->m_new_val;
-        } else
+        }
+        else
             span->m_active = Span::INACTIVE;    // we're done with this span
 
         long len_diff = span->m_bc.get_total_len() - orig_len;
@@ -889,7 +967,8 @@ Optimize::step_2(Errwarns& errwarns)
         while (os != m_offset_setters.end()
                && os->m_bc
                && os->m_bc->get_container() == span->m_bc.get_container()
-               && offset_diff != 0) {
+               && offset_diff != 0)
+        {
             unsigned long old_next_offset =
                 os->m_cur_val + os->m_bc->get_total_len();
 
@@ -942,7 +1021,8 @@ Object::optimize(Errwarns& errwarns)
 
     // Step 1a
     for (section_iterator sect=m_sections.begin(), sectend=m_sections.end();
-         sect != sectend; ++sect) {
+         sect != sectend; ++sect)
+    {
         unsigned long offset = 0;
 
         // Set the offset of the first (empty) bytecode.
@@ -951,7 +1031,8 @@ Object::optimize(Errwarns& errwarns)
 
         // Iterate through the remainder, if any.
         for (Section::bc_iterator bc=sect->bcs_begin(), bcend=sect->bcs_end();
-             bc != bcend; ++bc) {
+             bc != bcend; ++bc)
+        {
             bc->set_index(bc_index++);
             bc->set_offset(offset);
 
@@ -960,7 +1041,8 @@ Object::optimize(Errwarns& errwarns)
                          errwarns);
             if (errwarns.num_errors() > 0)
                 saw_error = true;
-            else {
+            else
+            {
                 if (bc->get_special() == Bytecode::Contents::SPECIAL_OFFSET)
                     opt.add_offset_setter(*bc);
 

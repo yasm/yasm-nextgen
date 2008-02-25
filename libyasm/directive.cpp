@@ -36,14 +36,17 @@
 #include "intnum.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
-class Directives::Impl {
+class Directives::Impl
+{
 public:
     Impl() {}
     ~Impl() {}
 
-    class Dir {
+    class Dir
+    {
     public:
         Dir(Directive handler, Directives::Flags flags)
             : m_handler(handler), m_flags(flags)
@@ -102,7 +105,8 @@ Directives::Impl::Dir::operator() (Object& object,
         throw SyntaxError(String::compose(
             N_("directive `%1' requires an argument"), name));
 
-    if (!namevals.empty()) {
+    if (!namevals.empty())
+    {
         if ((m_flags & ID_REQUIRED) && !namevals.front().is_id())
             throw SyntaxError(String::compose(
                 N_("directive `%1' requires an identifier parameter"), name));
@@ -112,7 +116,8 @@ Directives::Impl::Dir::operator() (Object& object,
 }
 
 
-class DirHelpers::Impl {
+class DirHelpers::Impl
+{
 public:
     Impl() {}
     ~Impl() {}
@@ -149,28 +154,35 @@ DirHelpers::operator()
 {
     bool anymatched = false;
 
-    for (NameValues::const_iterator nv=nv_first; nv != nv_last; ++nv) {
+    for (NameValues::const_iterator nv=nv_first; nv != nv_last; ++nv)
+    {
         bool matched = false;
 
-        if (nv->get_name().empty() && nv->is_id()) {
+        if (nv->get_name().empty() && nv->is_id())
+        {
             Impl::HelperMap::iterator helper =
                 m_impl->m_novalue_helpers.find(nv->get_id());
-            if (helper != m_impl->m_novalue_helpers.end()) {
+            if (helper != m_impl->m_novalue_helpers.end())
+            {
                 helper->second(*nv);
                 matched = true;
                 anymatched = true;
             }
-        } else if (!nv->get_name().empty()) {
+        }
+        else if (!nv->get_name().empty())
+        {
             Impl::HelperMap::iterator helper =
                 m_impl->m_value_helpers.find(nv->get_id());
-            if (helper != m_impl->m_novalue_helpers.end()) {
+            if (helper != m_impl->m_novalue_helpers.end())
+            {
                 helper->second(*nv);
                 matched = true;
                 anymatched = true;
             }
         }
 
-        if (!matched) {
+        if (!matched)
+        {
             if (helper_nameval(*nv))
                 anymatched = true;
         }
@@ -180,7 +192,10 @@ DirHelpers::operator()
 }
 
 void
-dir_intn(const NameValue& nv, Object& obj, unsigned long line, IntNum& out,
+dir_intn(const NameValue& nv,
+         Object& obj,
+         unsigned long line,
+         IntNum& out,
          bool& out_set)
 {
     std::auto_ptr<Expr> e(nv.get_expr(obj, line));
@@ -208,7 +223,8 @@ dir_string(const NameValue& nv, std::string& out, bool& out_set)
 bool
 dir_nameval_warn(const NameValue& nv)
 {
-    if (!nv.get_name().empty()) {
+    if (!nv.get_name().empty())
+    {
         warn_set(WARN_GENERAL,
                  String::compose(N_("Unrecognized qualifier `%1'"),
                                  nv.get_name()));

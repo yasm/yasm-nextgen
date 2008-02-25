@@ -37,11 +37,13 @@
 #include "section.h"
 
 
-namespace {
+namespace
+{
 
 using namespace yasm;
 
-class ObjextNamevals : public AssocData {
+class ObjextNamevals : public AssocData
+{
 public:
     static const char* key;
 
@@ -69,7 +71,8 @@ ObjextNamevals::put(marg_ostream& os) const
 }
 
 
-class CommonSize : public AssocData {
+class CommonSize : public AssocData
+{
 public:
     static const char* key;
 
@@ -98,7 +101,8 @@ CommonSize::put(marg_ostream& os) const
 
 } // anonymous namespace
 
-namespace yasm {
+namespace yasm
+{
 
 Symbol::Symbol(const std::string& name)
     : m_name(name),
@@ -120,13 +124,16 @@ void
 Symbol::define(Type type, unsigned long line)
 {
     // Has it been defined before (either by DEFINED or COMMON/EXTERN)?
-    if (m_status & DEFINED) {
+    if (m_status & DEFINED)
+    {
         Error err(String::compose(N_("redefinition of `%1'"), m_name));
         err.set_xref(m_def_line != 0 ? m_def_line : m_decl_line,
                      String::compose(N_("`%1' previously defined here"),
                                      m_name));
         throw err;
-    } else {
+    }
+    else
+    {
         if (m_visibility & EXTERN)
             warn_set(WARN_GENERAL, String::compose(
                 N_("`%1' both defined and declared extern"), m_name));
@@ -190,10 +197,13 @@ Symbol::declare(Visibility vis, unsigned long line)
         (!(m_status & DEFINED) &&
          (!(m_visibility & (COMMON | EXTERN)) ||
           ((m_visibility & COMMON) && (vis == COMMON)) ||
-          ((m_visibility & EXTERN) && (vis == EXTERN))))) {
+          ((m_visibility & EXTERN) && (vis == EXTERN)))))
+    {
         m_decl_line = line;
         m_visibility |= vis;
-    } else {
+    }
+    else
+    {
         Error err(String::compose(N_("redefinition of `%1'"), m_name));
         err.set_xref(m_def_line != 0 ? m_def_line : m_decl_line,
                      String::compose(N_("`%1' previously defined here"),
@@ -208,7 +218,8 @@ Symbol::finalize(bool undef_extern)
 {
     // error if a symbol is used but never defined or extern/common declared
     if ((m_status & USED) && !(m_status & DEFINED) &&
-        !(m_visibility & (EXTERN | COMMON))) {
+        !(m_visibility & (EXTERN | COMMON)))
+    {
         if (undef_extern)
             m_visibility |= EXTERN;
         else
@@ -265,7 +276,8 @@ Symbol::get_common_size()
 marg_ostream&
 operator<< (marg_ostream& os, const Symbol& sym)
 {
-    switch (sym.m_type) {
+    switch (sym.m_type)
+    {
         case Symbol::UNKNOWN:
             os << "-Unknown (Common/Extern)-\n";
             break;
@@ -297,7 +309,8 @@ operator<< (marg_ostream& os, const Symbol& sym)
     os << "Status=";
     if (sym.m_status == Symbol::NOSTATUS)
         os << "None\n";
-    else {
+    else
+    {
         if (sym.m_status & Symbol::USED)
             os << "Used,";
         if (sym.m_status & Symbol::DEFINED)
@@ -310,7 +323,8 @@ operator<< (marg_ostream& os, const Symbol& sym)
     os << "Visibility=";
     if (sym.m_visibility == Symbol::LOCAL)
         os << "Local\n";
-    else {
+    else
+    {
         if (sym.m_visibility & Symbol::GLOBAL)
             os << "Global,";
         if (sym.m_visibility & Symbol::COMMON)

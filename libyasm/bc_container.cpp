@@ -34,11 +34,13 @@
 #include "marg_ostream.h"
 
 
-namespace {
+namespace
+{
 
 using namespace yasm;
 
-class GapBytecode : public Bytecode::Contents {
+class GapBytecode : public Bytecode::Contents
+{
 public:
     GapBytecode(unsigned int size);
     ~GapBytecode();
@@ -113,7 +115,8 @@ GapBytecode::extend(unsigned int size)
 
 } // anonymous namespace
 
-namespace yasm {
+namespace yasm
+{
 
 BytecodeContainer::BytecodeContainer()
     : m_object(0),
@@ -144,7 +147,8 @@ void
 BytecodeContainer::put(marg_ostream& os) const
 {
     for (const_bc_iterator bc=m_bcs.begin(), end=m_bcs.end();
-         bc != end; ++bc) {
+         bc != end; ++bc)
+    {
         os << "Next Bytecode:\n";
         ++os;
         os << *bc;
@@ -155,7 +159,8 @@ BytecodeContainer::put(marg_ostream& os) const
 void
 BytecodeContainer::append_bytecode(std::auto_ptr<Bytecode> bc)
 {
-    if (bc.get() != 0) {
+    if (bc.get() != 0)
+    {
         bc->m_container = this; // record parent
         m_bcs.push_back(bc.release());
     }
@@ -165,7 +170,8 @@ BytecodeContainer::append_bytecode(std::auto_ptr<Bytecode> bc)
 void
 BytecodeContainer::append_gap(unsigned int size, unsigned long line)
 {
-    if (m_last_gap) {
+    if (m_last_gap)
+    {
         static_cast<GapBytecode&>(*m_bcs.back().m_contents).extend(size);
         return;
     }

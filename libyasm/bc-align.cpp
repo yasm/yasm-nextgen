@@ -40,11 +40,13 @@
 #include "marg_ostream.h"
 
 
-namespace {
+namespace
+{
 
 using namespace yasm;
 
-class AlignBytecode : public Bytecode::Contents {
+class AlignBytecode : public Bytecode::Contents
+{
 public:
     AlignBytecode(std::auto_ptr<Expr> boundary,
                   /*@null@*/ std::auto_ptr<Expr> fill,
@@ -144,7 +146,8 @@ AlignBytecode::expand(Bytecode& bc, unsigned long& len, int span,
 {
     unsigned long boundary = m_boundary->get_intnum()->get_uint();
 
-    if (boundary == 0) {
+    if (boundary == 0)
+    {
         len = 0;
         pos_thres = new_val;
         return false;
@@ -157,9 +160,11 @@ AlignBytecode::expand(Bytecode& bc, unsigned long& len, int span,
     pos_thres = (long)end;
     len = end - (unsigned long)new_val;
 
-    if (m_maxskip.get() != 0) {
+    if (m_maxskip.get() != 0)
+    {
         unsigned long maxskip = m_maxskip->get_intnum()->get_uint();
-        if (len > maxskip) {
+        if (len > maxskip)
+        {
             pos_thres = (long)end-maxskip-1;
             len = 0;
         }
@@ -176,24 +181,29 @@ AlignBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
 
     if (boundary == 0)
         return;
-    else {
+    else
+    {
         unsigned long end = bc.get_offset();
         if (bc.get_offset() & (boundary-1))
             end = (bc.get_offset() & ~(boundary-1)) + boundary;
         len = end - bc.get_offset();
         if (len == 0)
             return;
-        if (m_maxskip.get() != 0) {
+        if (m_maxskip.get() != 0)
+        {
             unsigned long maxskip = m_maxskip->get_intnum()->get_uint();
             if (len > maxskip)
                 return;
         }
     }
 
-    if (m_fill.get() != 0) {
+    if (m_fill.get() != 0)
+    {
         unsigned long v = m_fill->get_intnum()->get_uint();
         bytes.insert(bytes.end(), len, static_cast<unsigned char>(v));
-    } else if (m_code_fill) {
+    }
+    else if (m_code_fill)
+    {
         unsigned long maxlen = 15;
         while (!m_code_fill[maxlen] && maxlen>0)
             maxlen--;
@@ -201,14 +211,16 @@ AlignBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
             throw Error(N_("could not find any code alignment size"));
 
         // Fill with maximum code fill as much as possible
-        while (len > maxlen) {
+        while (len > maxlen)
+        {
             bytes.insert(bytes.end(),
                          &m_code_fill[maxlen][0],
                          &m_code_fill[maxlen][len]);
             len -= maxlen;
         }
 
-        if (!m_code_fill[len]) {
+        if (!m_code_fill[len])
+        {
             throw ValueError(String::compose(N_("invalid alignment size %1"),
                                              len));
         }
@@ -216,7 +228,9 @@ AlignBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
         bytes.insert(bytes.end(),
                      &m_code_fill[len][0],
                      &m_code_fill[len][len]);
-    } else {
+    }
+    else
+    {
         // Just fill with 0
         bytes.insert(bytes.end(), len, 0);
     }

@@ -30,7 +30,8 @@
 #include "debug_format.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 std::string
 DebugFormat::get_type() const

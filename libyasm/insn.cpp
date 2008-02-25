@@ -39,7 +39,8 @@
 #include "marg_ostream.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 Insn::Operand::Operand(const Register* reg)
     : m_type(REG),
@@ -81,17 +82,20 @@ Insn::Operand::Operand(std::auto_ptr<Expr> val)
     const Register* reg;
 
     reg = val->get_reg();
-    if (reg) {
+    if (reg)
+    {
         m_type = REG;
         m_reg = reg;
-    } else
+    }
+    else
         m_val = val.release();
 }
 
 void
 Insn::Operand::destroy()
 {
-    switch (m_type) {
+    switch (m_type)
+    {
         case MEMORY:
             delete m_ea;
             m_ea = 0;
@@ -111,7 +115,8 @@ Insn::Operand::clone() const
     Operand op(*this);
 
     // Deep copy things that need to be deep copied.
-    switch (m_type) {
+    switch (m_type)
+    {
         case MEMORY:
             op.m_ea = op.m_ea->clone();
             break;
@@ -128,7 +133,8 @@ Insn::Operand::clone() const
 void
 Insn::Operand::put(marg_ostream& os) const
 {
-    switch (m_type) {
+    switch (m_type)
+    {
         case NONE:
             os << "None\n";
             break;
@@ -165,29 +171,38 @@ Insn::put(marg_ostream& os) const
 void
 Insn::Operand::finalize()
 {
-    switch (m_type) {
+    switch (m_type)
+    {
         case MEMORY:
             // Don't get over-ambitious here; some archs' memory expr
             // parser are sensitive to the presence of *1, etc, so don't
             // simplify reg*1 identities.
-            try {
-                if (m_ea) {
-                    if (Expr* abs = m_ea->m_disp.get_abs()) {
+            try
+            {
+                if (m_ea)
+                {
+                    if (Expr* abs = m_ea->m_disp.get_abs())
+                    {
                         expand_equ(abs);
                         abs->level_tree(true, true, false);
                     }
                 }
-            } catch (Error& err) {
+            }
+            catch (Error& err)
+            {
                 // Add a pointer to where it was used
                 err.m_message += " in memory expression";
                 throw;
             }
             break;
         case IMM:
-            try {
+            try
+            {
                 expand_equ(m_val);
                 m_val->level_tree(true, true, true);
-            } catch (Error& err) {
+            }
+            catch (Error& err)
+            {
                 // Add a pointer to where it was used
                 err.m_message += " in immediate expression";
                 throw;

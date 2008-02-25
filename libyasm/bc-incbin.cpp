@@ -44,11 +44,13 @@
 #include "value.h"
 
 
-namespace {
+namespace
+{
 
 using namespace yasm;
 
-class IncbinBytecode : public Bytecode::Contents {
+class IncbinBytecode : public Bytecode::Contents
+{
 public:
     IncbinBytecode(const std::string& filename,
                    std::auto_ptr<Expr> start,
@@ -115,7 +117,8 @@ IncbinBytecode::finalize(Bytecode& bc)
 {
     Location loc = {&bc, 0};
 
-    if (m_start) {
+    if (m_start)
+    {
         Value val(0, Expr::Ptr(m_start->clone()));
         if (val.finalize(loc))
             throw TooComplexError(N_("start expression too complex"));
@@ -124,7 +127,8 @@ IncbinBytecode::finalize(Bytecode& bc)
         m_start.reset(val.get_abs()->clone());
     }
 
-    if (m_maxlen) {
+    if (m_maxlen)
+    {
         Value val(0, Expr::Ptr(m_maxlen->clone()));
         if (val.finalize(loc))
             throw TooComplexError(N_("maximum length expression too complex"));
@@ -141,11 +145,13 @@ IncbinBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
     unsigned long start = 0, maxlen = 0xFFFFFFFFUL, flen;
 
     // Try to convert start to integer value
-    if (m_start) {
+    if (m_start)
+    {
         const IntNum* num = m_start->get_intnum();
         if (num)
             start = num->get_uint();
-        else {
+        else
+        {
             // FIXME
             throw NotImplementedError(
                 N_("incbin does not yet understand non-constant"));
@@ -153,11 +159,13 @@ IncbinBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
     }
 
     // Try to convert maxlen to integer value
-    if (m_maxlen) {
+    if (m_maxlen)
+    {
         const IntNum* num = m_maxlen->get_intnum();
         if (num)
             maxlen = num->get_uint();
-        else {
+        else
+        {
             // FIXME
             throw NotImplementedError(
                 N_("incbin does not yet understand non-constant"));
@@ -177,7 +185,8 @@ IncbinBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
     flen = (unsigned long)ifs.tellg();
 
     // Compute length of incbin from start, maxlen, and len
-    if (start > flen) {
+    if (start > flen)
+    {
         warn_set(WARN_GENERAL,
                  String::compose(N_("`%1': start past end of file `%2'"),
                                  "incbin", m_filename));
@@ -185,8 +194,10 @@ IncbinBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
     }
     flen -= start;
     if (m_maxlen)
+    {
         if (maxlen < flen)
             flen = maxlen;
+    }
     return flen;
 }
 
@@ -196,7 +207,8 @@ IncbinBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
     unsigned long start = 0;
 
     // Convert start to integer value
-    if (m_start) {
+    if (m_start)
+    {
         const IntNum* num = m_start->get_intnum();
         if (!num)
             throw InternalError(
@@ -237,7 +249,8 @@ IncbinBytecode::clone() const
 
 } // anonymous namespace
 
-namespace yasm {
+namespace yasm
+{
 
 void
 append_incbin(BytecodeContainer& container,

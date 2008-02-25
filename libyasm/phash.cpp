@@ -12,7 +12,8 @@ Source is http://burtleburtle.net/bob/c/lookupa.c
 */
 
 
-namespace phash {
+namespace phash
+{
 
 #define ub4 unsigned long
 

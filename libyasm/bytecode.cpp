@@ -40,7 +40,8 @@
 #include "value.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 BytecodeOutput::BytecodeOutput()
 {
@@ -51,15 +52,21 @@ BytecodeOutput::~BytecodeOutput()
 }
 
 void
-BytecodeOutput::output_reloc(Symbol* sym, Bytes& bytes, Bytecode& bc,
-                             unsigned int valsize, int warn)
+BytecodeOutput::output_reloc(Symbol* sym,
+                             Bytes& bytes,
+                             Bytecode& bc,
+                             unsigned int valsize,
+                             int warn)
 {
     output_bytes(bytes);
 }
 
 bool
-Bytecode::Contents::expand(Bytecode& bc, unsigned long& len, int span,
-                           long old_val, long new_val,
+Bytecode::Contents::expand(Bytecode& bc,
+                           unsigned long& len,
+                           int span,
+                           long old_val,
+                           long new_val,
                            /*@out@*/ long& neg_thres,
                            /*@out@*/ long& pos_thres)
 {
@@ -115,7 +122,8 @@ Bytecode::~Bytecode()
 Bytecode&
 Bytecode::operator= (const Bytecode& oth)
 {
-    if (this != &oth) {
+    if (this != &oth)
+    {
         if (oth.m_contents.get() != 0)
             m_contents.reset(oth.m_contents->clone());
         else
@@ -133,7 +141,8 @@ Bytecode::operator= (const Bytecode& oth)
 marg_ostream&
 operator<< (marg_ostream &os, const Bytecode& bc)
 {
-    if (bc.m_fixed.size() > 0) {
+    if (bc.m_fixed.size() > 0)
+    {
         os << "Fixed: ";
         os << bc.m_fixed;
     }
@@ -151,9 +160,11 @@ void
 Bytecode::finalize()
 {
     for (std::vector<Fixup>::iterator i=m_fixed_fixups.begin(),
-         end=m_fixed_fixups.end(); i != end; ++i) {
+         end=m_fixed_fixups.end(); i != end; ++i)
+    {
         Location loc = {this, i->get_off()};
-        if (i->finalize(loc)) {
+        if (i->finalize(loc))
+        {
             if (i->m_jump_target)
                 throw TooComplexError(i->get_line(),
                                       N_("jump target expression too complex"));
@@ -161,7 +172,8 @@ Bytecode::finalize()
                 throw TooComplexError(i->get_line(),
                                       N_("expression too complex"));
         }
-        if (i->m_jump_target) {
+        if (i->m_jump_target)
+        {
             if (i->m_seg_of || i->m_rshift || i->m_curpos_rel)
                 throw ValueError(i->get_line(), N_("invalid jump target"));
             i->set_curpos_rel(*this, false);
@@ -176,9 +188,12 @@ Bytecode::finalize()
 void
 Bytecode::finalize(Errwarns& errwarns)
 {
-    try {
+    try
+    {
         finalize();
-    } catch (Error& err) {
+    }
+    catch (Error& err)
+    {
         errwarns.propagate(m_line, err);
     }
     errwarns.propagate(m_line);     // propagate warnings
@@ -187,7 +202,8 @@ Bytecode::finalize(Errwarns& errwarns)
 void
 Bytecode::calc_len(AddSpanFunc add_span)
 {
-    if (m_contents.get() == 0) {
+    if (m_contents.get() == 0)
+    {
         m_len = 0;
         return;
     }
@@ -197,17 +213,23 @@ Bytecode::calc_len(AddSpanFunc add_span)
 void
 Bytecode::calc_len(AddSpanFunc add_span, Errwarns& errwarns)
 {
-    try {
+    try
+    {
         calc_len(add_span);
-    } catch (Error& err) {
+    }
+    catch (Error& err)
+    {
         errwarns.propagate(m_line, err);
     }
     errwarns.propagate(m_line);     // propagate warnings
 }
 
 bool
-Bytecode::expand(int span, long old_val, long new_val,
-                 /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres)
+Bytecode::expand(int span,
+                 long old_val,
+                 long new_val,
+                 /*@out@*/ long& neg_thres,
+                 /*@out@*/ long& pos_thres)
 {
     if (m_contents.get() == 0)
         return false;
@@ -216,14 +238,20 @@ Bytecode::expand(int span, long old_val, long new_val,
 }
 
 bool
-Bytecode::expand(int span, long old_val, long new_val,
-                 /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres,
+Bytecode::expand(int span,
+                 long old_val,
+                 long new_val,
+                 /*@out@*/ long& neg_thres,
+                 /*@out@*/ long& pos_thres,
                  Errwarns& errwarns)
 {
     bool retval = false;
-    try {
+    try
+    {
         retval = expand(span, old_val, new_val, neg_thres, pos_thres);
-    } catch (Error& err) {
+    }
+    catch (Error& err)
+    {
         errwarns.propagate(m_line, err);
     }
     errwarns.propagate(m_line);     // propagate warnings
@@ -236,7 +264,8 @@ Bytecode::output(BytecodeOutput& bc_out)
     // output fixups, outputting the fixed portions in between each one
     unsigned int last = 0;
     for (std::vector<Fixup>::iterator i=m_fixed_fixups.begin(),
-         end=m_fixed_fixups.end(); i != end; ++i) {
+         end=m_fixed_fixups.end(); i != end; ++i)
+    {
         unsigned int off = i->get_off();
         Location loc = {this, off};
 
@@ -259,7 +288,8 @@ Bytecode::output(BytecodeOutput& bc_out)
         last = off + i->m_size/8;
     }
     // handle last part of fixed
-    if (last < m_fixed.size()) {
+    if (last < m_fixed.size())
+    {
         Bytes& fixed = bc_out.get_scratch();
         fixed.insert(fixed.end(), m_fixed.begin() + last, m_fixed.end());
         bc_out.output_bytes(fixed);
@@ -274,7 +304,8 @@ unsigned long
 Bytecode::update_offset(unsigned long offset)
 {
     if (m_contents.get() != 0 &&
-        m_contents->get_special() == Contents::SPECIAL_OFFSET) {
+        m_contents->get_special() == Contents::SPECIAL_OFFSET)
+    {
         // Recalculate/adjust len of offset-based bytecodes here
         long neg_thres = 0;
         long pos_thres = (long)next_offset();
@@ -288,9 +319,12 @@ unsigned long
 Bytecode::update_offset(unsigned long offset, Errwarns& errwarns)
 {
     unsigned long retval;
-    try {
+    try
+    {
         retval = update_offset(offset);
-    } catch (Error& err) {
+    }
+    catch (Error& err)
+    {
         errwarns.propagate(m_line, err);
         retval = next_offset();
     }

@@ -28,7 +28,8 @@
 
 #include <cctype>
 
-namespace String {
+namespace String
+{
 
 Compose::Compose(const std::string& fmt)
     : m_fmt(fmt), m_arg(0)
@@ -76,25 +77,36 @@ Compose::str() const
     // fill in output with the strings between the %1 %2 %3 etc. and
     // fill in specs with the arg data
     std::string::size_type start = 0, stop;
-    while ((stop = m_fmt.find_first_of('%', start)) != std::string::npos) {
+    while ((stop = m_fmt.find_first_of('%', start)) != std::string::npos)
+    {
         str.append(m_fmt, start, stop - start);
-        if (m_fmt[stop + 1] == '%') {   // catch %%
+        if (m_fmt[stop + 1] == '%')     // catch %%
+        {
             str += '%';
             start = stop + 2;
-        } else if (std::isdigit(m_fmt[stop + 1])) {
+        }
+        else if (std::isdigit(m_fmt[stop + 1]))
+        {
             int spec_no = m_fmt[stop + 1] - '0';
-            if (spec_no > 0 && spec_no < m_arg) {
+            if (spec_no > 0 && spec_no < m_arg)
+            {
                 str.append(args, m_arg_pos[spec_no-1],
                            m_arg_pos[spec_no] - m_arg_pos[spec_no-1]);
-            } else if (spec_no == m_arg) {
+            }
+            else if (spec_no == m_arg)
+            {
                 str.append(args, m_arg_pos[spec_no-1],
                            args.size() - m_arg_pos[spec_no-1] + 1);
-            } else {
+            }
+            else
+            {
                 str += m_fmt[stop];
                 str += m_fmt[stop+1];
             }
             start = stop + 2;
-        } else {
+        }
+        else
+        {
             str += m_fmt[stop];
             start = stop + 1;
         }

@@ -34,7 +34,8 @@
 #include "marg_ostream.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 EffAddr::EffAddr(std::auto_ptr<Expr> e)
     : m_disp(0, e),

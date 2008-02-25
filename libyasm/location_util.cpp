@@ -32,7 +32,8 @@
 #include "symbol.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 // Transforms instances of Symbol-Symbol [Symbol+(-1*Symbol)] into single
 // Expr::Terms if possible.  Uses a simple n^2 algorithm because n is usually
@@ -49,7 +50,8 @@ xform_dist_base(Expr* e, FUNCTION::function<bool (Expr::Term& term,
 
     Expr::Terms& terms = e->get_terms();
     for (Expr::Terms::iterator i=terms.begin(), end=terms.end();
-         i != end; ++i) {
+         i != end; ++i)
+    {
         // First look for an (-1*Symbol) term
         Expr* sube = i->get_expr();
         if (!sube)
@@ -62,21 +64,25 @@ xform_dist_base(Expr* e, FUNCTION::function<bool (Expr::Term& term,
         Symbol* sym = 0;
         Location loc;
 
-        if ((intn = subterms[0].get_int())) {
+        if ((intn = subterms[0].get_int()))
+        {
             if ((sym = subterms[1].get_sym()))
                 ;
             else if (Location* locp = subterms[1].get_loc())
                 loc = *locp;
             else
                 continue;
-        } else if ((intn = subterms[1].get_int())) {
+        }
+        else if ((intn = subterms[1].get_int()))
+        {
             if ((sym = subterms[0].get_sym()))
                 ;
             else if (Location* locp = subterms[0].get_loc())
                 loc = *locp;
             else
                 continue;
-        } else
+        }
+        else
             continue;
 
         if (!intn->is_neg1())
@@ -88,7 +94,8 @@ xform_dist_base(Expr* e, FUNCTION::function<bool (Expr::Term& term,
 
         // Now look for a Symbol term in the same segment
         for (Expr::Terms::iterator j=terms.begin(), end=terms.end();
-             j != end; ++j) {
+             j != end; ++j)
+        {
             Symbol* sym2;
             Location loc2;
 
@@ -102,7 +109,8 @@ xform_dist_base(Expr* e, FUNCTION::function<bool (Expr::Term& term,
             if (container != loc2.bc->get_container())
                 continue;
 
-            if (func(*j, loc, loc2)) {
+            if (func(*j, loc, loc2))
+            {
                 // Delete the matching (-1*Symbol) term
                 i->release();
                 break;  // stop looking for matching Symbol term

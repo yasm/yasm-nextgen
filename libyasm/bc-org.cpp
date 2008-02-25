@@ -34,11 +34,13 @@
 #include "marg_ostream.h"
 
 
-namespace {
+namespace
+{
 
 using namespace yasm;
 
-class OrgBytecode : public Bytecode::Contents {
+class OrgBytecode : public Bytecode::Contents
+{
 public:
     OrgBytecode(unsigned long start, unsigned long fill);
     ~OrgBytecode();
@@ -54,8 +56,11 @@ public:
 
     /// Recalculates the bytecode's length based on an expanded span
     /// length.
-    bool expand(Bytecode& bc, unsigned long& len, int span,
-                long old_val, long new_val,
+    bool expand(Bytecode& bc,
+                unsigned long& len,
+                int span,
+                long old_val,
+                long new_val,
                 /*@out@*/ long& neg_thres,
                 /*@out@*/ long& pos_thres);
 
@@ -108,8 +113,11 @@ OrgBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 }
 
 bool
-OrgBytecode::expand(Bytecode& bc, unsigned long& len, int span,
-                    long old_val, long new_val,
+OrgBytecode::expand(Bytecode& bc,
+                    unsigned long& len,
+                    int span,
+                    long old_val,
+                    long new_val,
                     /*@out@*/ long& neg_thres,
                     /*@out@*/ long& pos_thres)
 {
@@ -149,7 +157,8 @@ OrgBytecode::clone() const
 
 } // anonymous namespace
 
-namespace yasm {
+namespace yasm
+{
 
 void
 append_org(BytecodeContainer& container,

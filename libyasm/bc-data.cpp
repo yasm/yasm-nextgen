@@ -34,7 +34,8 @@
 #include "expr.h"
 
 
-namespace yasm {
+namespace yasm
+{
 #if 0
 static void
 bc_data_finalize(yasm_bytecode *bc, yasm_bytecode *prev_bc)
@@ -315,7 +316,8 @@ append_data(BytecodeContainer& container,
             const Arch& arch)
 {
     expr->simplify();
-    if (IntNum* intn = expr->get_intnum()) {
+    if (IntNum* intn = expr->get_intnum())
+    {
         append_data(container, *intn, size, arch);
         return;
     }

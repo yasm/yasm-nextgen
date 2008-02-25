@@ -44,7 +44,8 @@ using BitVector::N_char;
 using BitVector::N_int;
 using BitVector::N_long;
 
-namespace yasm {
+namespace yasm
+{
 
 // constants describing parameters of internal floating point format
 static const unsigned int MANT_BITS = 80;
@@ -59,10 +60,12 @@ static const unsigned short EXP_ZERO = 0;
 // Flag settings for flags field
 static const unsigned int FLAG_ISZERO = 1<<0;
 
-class FloatNumManager {
+class FloatNumManager
+{
 private:
     /// "Source" for POT_Entry.
-    struct POT_Entry_Source {
+    struct POT_Entry_Source
+    {
         unsigned char mantissa[MANT_BYTES]; ///< Little endian mantissa
         unsigned short exponent;            ///< Bias 32767 exponent
     };
@@ -74,7 +77,8 @@ public:
         return inst;
     }
 
-    class POT_Entry {
+    class POT_Entry
+    {
     public:
         ~POT_Entry() { delete flt; }
 
@@ -113,7 +117,8 @@ private:
 };
 
 const FloatNumManager::POT_Entry_Source
-FloatNumManager::POT_TableN_Source[] = {
+FloatNumManager::POT_TableN_Source[] =
+{
     {{0xe3,0x2d,0xde,0x9f,0xce,0xd2,0xc8,0x04,0xdd,0xa6},0x4ad8}, // 1e-4096
     {{0x25,0x49,0xe4,0x2d,0x36,0x34,0x4f,0x53,0xae,0xce},0x656b}, // 1e-2048
     {{0xa6,0x87,0xbd,0xc0,0x57,0xda,0xa5,0x82,0xa6,0xa2},0x72b5}, // 1e-1024
@@ -131,7 +136,8 @@ FloatNumManager::POT_TableN_Source[] = {
 };
 
 const FloatNumManager::POT_Entry_Source
-FloatNumManager::POT_TableP_Source[] = {
+FloatNumManager::POT_TableP_Source[] =
+{
     {{0x4c,0xc9,0x9a,0x97,0x20,0x8a,0x02,0x52,0x60,0xc4},0xb525}, // 1e+4096
     {{0x4d,0xa7,0xe4,0x5d,0x3d,0xc5,0x5d,0x3b,0x8b,0x9e},0x9a92}, // 1e+2048
     {{0x0d,0x65,0x17,0x0c,0x75,0x81,0x86,0x75,0x76,0xc9},0x8d48}, // 1e+1024
@@ -173,7 +179,8 @@ FloatNumManager::FloatNumManager()
     POT_TableP = new POT_Entry[15]; // note 1 extra for -1
 
     // Initialize entry[0..12]
-    for (i=12; i>=0; i--) {
+    for (i=12; i>=0; i--)
+    {
         POT_TableN[i].flt = new FloatNum(POT_TableN_Source[i].mantissa,
                                          POT_TableN_Source[i].exponent);
         POT_TableN[i].dec_exponent = 0-dec_exp;
@@ -214,7 +221,8 @@ FloatNumManager::~FloatNumManager()
 void
 FloatNum::normalize()
 {
-    if (BitVector::is_empty(m_mantissa)) {
+    if (BitVector::is_empty(m_mantissa))
+    {
         m_exponent = 0;
         return;
     }
@@ -236,7 +244,8 @@ FloatNum::mul(const FloatNum* op)
 
     // Check for multiply by 0
     if (BitVector::is_empty(m_mantissa) ||
-        BitVector::is_empty(op->m_mantissa)) {
+        BitVector::is_empty(op->m_mantissa))
+    {
         BitVector::Empty(m_mantissa);
         m_exponent = EXP_ZERO;
         return;
@@ -246,12 +255,15 @@ FloatNum::mul(const FloatNum* op)
     long expon;
     expon = (((int)m_exponent)-EXP_BIAS) + (((int)op->m_exponent)-EXP_BIAS);
     expon += EXP_BIAS;
-    if (expon > EXP_MAX) {
+    if (expon > EXP_MAX)
+    {
         // Overflow; return infinity.
         BitVector::Empty(m_mantissa);
         m_exponent = EXP_INF;
         return;
-    } else if (expon < EXP_MIN) {
+    }
+    else if (expon < EXP_MIN)
+    {
         // Underflow; return zero.
         BitVector::Empty(m_mantissa);
         m_exponent = EXP_ZERO;
@@ -316,13 +328,17 @@ FloatNum::FloatNum(const char *str)
     m_flags = 0;
 
     // check for + or - character and skip
-    if (*str == '-') {
+    if (*str == '-')
+    {
         m_sign = 1;
         str++;
-    } else if (*str == '+') {
+    }
+    else if (*str == '+')
+    {
         m_sign = 0;
         str++;
-    } else
+    }
+    else
         m_sign = 0;
 
     // eliminate any leading zeros (which do not count as significant digits)
@@ -333,17 +349,23 @@ FloatNum::FloatNum(const char *str)
     // point.  If the number is of the form "0---0.0000" we need to get rid
     // of the zeros after the decimal point and not count them as significant
     // digits.
-    if (*str == '.') {
+    if (*str == '.')
+    {
         str++;
-        while (*str == '0') {
+        while (*str == '0')
+        {
             str++;
             dec_exponent--;
         }
-    } else {
+    }
+    else
+    {
         // The number is of the form "yyy.xxxx" (where y <> 0).
-        while (isdigit(*str)) {
+        while (isdigit(*str))
+        {
             // See if we've processed more than the max significant digits:
-            if (sig_digits < MANT_SIGDIGITS) {
+            if (sig_digits < MANT_SIGDIGITS)
+            {
                 // Multiply mantissa by 10 [x = (x<<1)+(x<<3)]
                 BitVector::shift_left(m_mantissa, false);
                 BitVector::Copy(operand[0], m_mantissa);
@@ -356,7 +378,9 @@ FloatNum::FloatNum(const char *str)
                 BitVector::Chunk_Store(operand[0], 4, 0, (N_long)(*str-'0'));
                 carry = false;
                 BitVector::add(m_mantissa, operand[1], operand[0], &carry);
-            } else {
+            }
+            else
+            {
                 // Can't integrate more digits with mantissa, so instead just
                 // raise by a power of ten.
                 dec_exponent++;
@@ -371,11 +395,14 @@ FloatNum::FloatNum(const char *str)
             decimal_pt = 0;
     }
 
-    if (decimal_pt) {
+    if (decimal_pt)
+    {
         // Process the digits to the right of the decimal point.
-        while (isdigit(*str)) {
+        while (isdigit(*str))
+        {
             // See if we've processed more than 19 significant digits:
-            if (sig_digits < 19) {
+            if (sig_digits < 19)
+            {
                 // Raise by a power of ten
                 dec_exponent--;
 
@@ -397,7 +424,8 @@ FloatNum::FloatNum(const char *str)
         }
     }
 
-    if (*str == 'e' || *str == 'E') {
+    if (*str == 'e' || *str == 'E')
+    {
         str++;
         // We just saw the "E" character, now read in the exponent value and
         // add it into dec_exponent.
@@ -411,7 +439,8 @@ FloatNum::FloatNum(const char *str)
     BitVector::Destroy(operand[0]);
 
     // Normalize the number, checking for 0 first.
-    if (BitVector::is_empty(m_mantissa)) {
+    if (BitVector::is_empty(m_mantissa))
+    {
         // Mantissa is 0, zero exponent too.
         m_exponent = 0;
         // Set zero flag so output functions don't see 0 value as underflow.
@@ -426,17 +455,20 @@ FloatNum::FloatNum(const char *str)
     // The number is normalized.  Now multiply by 10 the number of times
     // specified in DecExponent.  This uses the power of ten tables to speed
     // up this operation (and make it more accurate).
-    if (dec_exponent > 0) {
+    if (dec_exponent > 0)
+    {
         int POT_index = 0;
         // Until we hit 1.0 or finish exponent or overflow
         while ((POT_index < 14) && (dec_exponent != 0) &&
-               (m_exponent != EXP_INF)) {
+               (m_exponent != EXP_INF))
+        {
             // Find the first power of ten in the table which is just less
             // than the exponent.
             while (dec_exponent < manager.POT_TableP[POT_index].dec_exponent)
                 POT_index++;
 
-            if (POT_index < 14) {
+            if (POT_index < 14)
+            {
                 // Subtract out what we're multiplying in from exponent
                 dec_exponent -= manager.POT_TableP[POT_index].dec_exponent;
 
@@ -444,17 +476,21 @@ FloatNum::FloatNum(const char *str)
                 mul(manager.POT_TableP[POT_index].flt);
             }
         }
-    } else if (dec_exponent < 0) {
+    }
+    else if (dec_exponent < 0)
+    {
         int POT_index = 0;
         // Until we hit 1.0 or finish exponent or underflow
         while ((POT_index < 14) && (dec_exponent != 0) &&
-               (m_exponent != EXP_ZERO)) {
+               (m_exponent != EXP_ZERO))
+        {
             // Find the first power of ten in the table which is just less
             // than the exponent.
             while (dec_exponent > manager.POT_TableN[POT_index].dec_exponent)
                 POT_index++;
 
-            if (POT_index < 14) {
+            if (POT_index < 14)
+            {
                 // Subtract out what we're multiplying in from exponent
                 dec_exponent -= manager.POT_TableN[POT_index].dec_exponent;
 
@@ -482,7 +518,8 @@ FloatNum::FloatNum(const FloatNum& flt)
 FloatNum&
 FloatNum::operator= (const FloatNum& rhs)
 {
-    if (this != &rhs) {
+    if (this != &rhs)
+    {
         m_exponent = rhs.m_exponent;
         m_sign = rhs.m_sign;
         m_flags = rhs.m_flags;
@@ -505,7 +542,8 @@ FloatNum::get_int(unsigned long& ret_val) const
 {
     unsigned char t[4];
 
-    if (get_sized(t, 4, 32, 0, false, 0)) {
+    if (get_sized(t, 4, 32, 0, false, 0))
+    {
         ret_val = 0xDEADBEEFUL;     // Obviously incorrect return value
         return 1;
     }
@@ -541,7 +579,8 @@ FloatNum::get_common(/*@out@*/ unsigned char* ptr,
     if (BitVector::bit_test(m_mantissa, (MANT_BITS-implicit1)-(mant_bits+1)))
         BitVector::increment(output);
 
-    if (BitVector::bit_test(output, mant_bits)) {
+    if (BitVector::bit_test(output, mant_bits))
+    {
         // overflowed, so zero mantissa (and set explicit bit if necessary)
         BitVector::Empty(output);
         BitVector::Bit_Copy(output, mant_bits-1, !implicit1);
@@ -564,12 +603,15 @@ FloatNum::get_common(/*@out@*/ unsigned char* ptr,
         throw InternalError(N_("Both underflow and overflow set"));
 
     // check for underflow or overflow and set up appropriate output
-    if (underflow) {
+    if (underflow)
+    {
         BitVector::Empty(output);
         exponent = 0;
         if (!(m_flags & FLAG_ISZERO))
             retval = -1;
-    } else if (overflow) {
+    }
+    else if (overflow)
+    {
         BitVector::Empty(output);
         exponent = exp_inf;
         retval = 1;
@@ -634,11 +676,15 @@ FloatNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize,
                     size_t shift, bool bigendian, int warn) const
 {
     int retval;
-    if (destsize*8 != valsize || shift>0 || bigendian) {
+
+    if (destsize*8 != valsize || shift>0 || bigendian)
+    {
         // TODO
         throw InternalError(N_("unsupported floatnum functionality"));
     }
-    switch (destsize) {
+
+    switch (destsize)
+    {
         case 4:
             retval = get_common(ptr, 4, 23, true, 8);
             break;
@@ -653,7 +699,9 @@ FloatNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize,
             /*@notreached@*/
             return 1;
     }
-    if (warn) {
+
+    if (warn)
+    {
         if (retval < 0)
             warn_set(WARN_GENERAL,
                      N_("underflow in floating point expression"));
@@ -667,7 +715,8 @@ FloatNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize,
 bool
 FloatNum::is_valid_size(size_t size) const
 {
-    switch (size) {
+    switch (size)
+    {
         case 32:
         case 64:
         case 80:

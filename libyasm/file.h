@@ -167,7 +167,8 @@ combpath(const std::string& from, const std::string& to)
 /// @param ext      extension, should include '.'
 /// @param def      default output filename if orig == new.
 /// @return Filename with new extension, or default filename.
-std::string replace_extension(const std::string& orig, const std::string& ext,
+std::string replace_extension(const std::string& orig,
+                              const std::string& ext,
                               const std::string& def);
 
 /// Include path storage and search.  Paths are stored as std::strings.

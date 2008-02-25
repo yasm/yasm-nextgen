@@ -101,7 +101,8 @@ Section::put(marg_ostream& os, bool with_bcs) const
     os << static_cast<const AssocDataContainer&>(*this);
     --os;
 
-    if (with_bcs) {
+    if (with_bcs)
+    {
         os << "Bytecodes:\n";
         ++os;
         BytecodeContainer::put(os);

@@ -32,9 +32,13 @@
 #include <map>
 
 
-namespace yasm { namespace impl {
+namespace yasm
+{
+namespace impl
+{
 
-class ModuleFactory::Impl {
+class ModuleFactory::Impl
+{
 public:
     /// FN_REGISTRY is the registry of all the BASE_CREATE_FN
     /// pointers registered.  Functions are registered using the

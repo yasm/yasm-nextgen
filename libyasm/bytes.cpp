@@ -35,7 +35,8 @@
 #include "marg_ostream.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 Bytes::Bytes(bool bigendian)
     : m_bigendian(bigendian)

@@ -40,23 +40,31 @@
 
 // Options Parser
 int
-parse_cmdline(int argc, const char** argv, OptOption* options, size_t nopts,
+parse_cmdline(int argc,
+              const char** argv,
+              OptOption* options,
+              size_t nopts,
               void (*print_error) (const std::string& msg))
 {
     int errors = 0, warnings = 0;
     size_t i;
     int got_it;
 
-  fail:
-    while (--argc) {
+fail:
+    while (--argc)
+    {
         argv++;
 
-        if (argv[0][0] == '-') {        // opt
+        if (argv[0][0] == '-')          // opt
+        {
             got_it = 0;
-            if (argv[0][1] == '-') {    // lopt
-                if (argv[0][2] == '\0') {   // --, end of options
+            if (argv[0][1] == '-')      // lopt
+            {
+                if (argv[0][2] == '\0')     // --, end of options
+                {
                     // Handle rest of args as non-options
-                    while (--argc) {
+                    while (--argc)
+                    {
                         argv++;
                         if (not_an_option_handler(argv[0]))
                             errors++;
@@ -64,25 +72,32 @@ parse_cmdline(int argc, const char** argv, OptOption* options, size_t nopts,
                     return errors;
                 }
 
-                for (i = 0; i < nopts; i++) {
+                for (i = 0; i < nopts; i++)
+                {
                     if (options[i].lopt &&
                         std::strncmp(&argv[0][2], options[i].lopt,
-                                     std::strlen(options[i].lopt)) == 0) {
+                                     std::strlen(options[i].lopt)) == 0)
+                    {
                         std::string cmd, param;
 
-                        if (options[i].takes_param) {
+                        if (options[i].takes_param)
+                        {
                             const char* contents = std::strchr(&argv[0][2], '=');
-                            if (!contents) {
+                            if (!contents)
+                            {
                                 print_error(String::compose(
                                     _("option `--%1' needs an argument!"),
                                     options[i].lopt));
                                 errors++;
                                 goto fail;
-                            } else {
+                            }
+                            else
+                            {
                                 cmd.assign(&argv[0][2], contents-&argv[0][2]);
                                 param.assign(contents+1);
                             }
-                        } else
+                        }
+                        else
                             cmd.assign(&argv[0][2]);
 
                         if (!options[i].
@@ -93,35 +108,47 @@ parse_cmdline(int argc, const char** argv, OptOption* options, size_t nopts,
                 }
                 if (!got_it && !other_option_handler(argv[0]))
                     got_it = 1;
-                if (!got_it) {
+                if (!got_it)
+                {
                     print_error(String::compose(
                         _("warning: unrecognized option `%1'"), argv[0]));
                     warnings++;
                 }
-            } else if (argv[0][1] == '\0') {   // just -, is non-option
+            }
+            else if (argv[0][1] == '\0')     // just -, is non-option
+            {
                 if (not_an_option_handler(argv[0]))
                     errors++;
-            } else {            // sopt
-                for (i = 0; i < nopts; i++) {
-                    if (argv[0][1] == options[i].sopt) {
+            }
+            else              // sopt
+            {
+                for (i = 0; i < nopts; i++)
+                {
+                    if (argv[0][1] == options[i].sopt)
+                    {
                         const char* cmd = &argv[0][1];
                         const char* param;
 
-                        if (options[i].takes_param) {
+                        if (options[i].takes_param)
+                        {
                             param = argv[1];
                             if (argv[0][2] != '\0')
                                 param = &argv[0][2];
-                            else if (param == NULL || *param == '-') {
+                            else if (param == NULL || *param == '-')
+                            {
                                 print_error(String::compose(
                                     _("option `-%1' needs an argument!"),
                                     options[i].sopt));
                                 errors++;
                                 goto fail;
-                            } else {
+                            }
+                            else
+                            {
                                 argc--;
                                 argv++;
                             }
-                        } else
+                        }
+                        else
                             param = NULL;
 
                         if (!options[i].handler(cmd, param, options[i].extra))
@@ -131,14 +158,16 @@ parse_cmdline(int argc, const char** argv, OptOption* options, size_t nopts,
                 }
                 if (!got_it && !other_option_handler(argv[0]))
                     got_it = 1;
-                if (!got_it) {
+                if (!got_it)
+                {
                     print_error(String::compose(
                         _("warning: unrecognized option `%1'"), argv[0]));
                     warnings++;
                 }
             }
-        } else {    /* not an option, then it should be a file or something */
-
+        }
+        else      // not an option, then it should be a file or something
+        {
             if (not_an_option_handler(argv[0]))
                 errors++;
         }
@@ -152,13 +181,16 @@ help_msg(const char* msg, const char* tail, OptOption* options, size_t nopts)
 {
     std::cout << yasm_gettext(msg);
 
-    for (size_t i = 0; i < nopts; i++) {
+    for (size_t i = 0; i < nopts; i++)
+    {
         std::string::size_type shortopt_len = 0;
         std::string::size_type longopt_len = 0;
         std::string optbuf, optopt;
 
-        if (options[i].takes_param) {
-            if (options[i].sopt) {
+        if (options[i].takes_param)
+        {
+            if (options[i].sopt)
+            {
                 optbuf += '-';
                 optbuf += options[i].sopt;
                 optbuf += " <";
@@ -169,7 +201,8 @@ help_msg(const char* msg, const char* tail, OptOption* options, size_t nopts)
             }
             if (options[i].sopt && options[i].lopt)
                 optbuf += ", ";
-            if (options[i].lopt) {
+            if (options[i].lopt)
+            {
                 optopt = "--";
                 optopt += options[i].lopt;
                 optopt += "=<";
@@ -179,15 +212,19 @@ help_msg(const char* msg, const char* tail, OptOption* options, size_t nopts)
                 optbuf += optopt;
                 longopt_len = optbuf.length();
             }
-        } else {
-            if (options[i].sopt) {
+        }
+        else
+        {
+            if (options[i].sopt)
+            {
                 optbuf += '-';
                 optbuf += options[i].sopt;
                 shortopt_len = optbuf.length();
             }
             if (options[i].sopt && options[i].lopt)
                 optbuf += ", ";
-            if (options[i].lopt) {
+            if (options[i].lopt)
+            {
                 optopt = "--";
                 optopt += options[i].lopt;
                 optbuf += optopt;
@@ -196,7 +233,8 @@ help_msg(const char* msg, const char* tail, OptOption* options, size_t nopts)
         }
 
         // split [-s <desc>], [--long <desc>] if it destroys columns
-        if (shortopt_len && longopt_len && longopt_len > 22) {
+        if (shortopt_len && longopt_len && longopt_len > 22)
+        {
             optbuf.resize(shortopt_len);
             std::cout << "    " << std::left << std::setw(22) << optopt << "  "
                       << yasm_gettext(options[i].description) << std::endl;

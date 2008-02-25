@@ -30,7 +30,8 @@
 #include "intnum.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 unsigned long
 Location::get_offset() const

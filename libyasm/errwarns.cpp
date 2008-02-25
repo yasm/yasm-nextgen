@@ -35,14 +35,17 @@
 #include "linemap.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
-class Errwarns::Impl {
+class Errwarns::Impl
+{
 public:
     Impl();
     ~Impl();
 
-    class Data {
+    class Data
+    {
     public:
         Data(unsigned long line, const Error& err);
         Data(unsigned long line, const std::string& wmsg);
@@ -64,8 +67,7 @@ public:
 };
 
 Errwarns::Impl::Impl()
-    : m_ecount(0),
-      m_wcount(0)
+    : m_ecount(0), m_wcount(0)
 {
 }
 
@@ -121,7 +123,8 @@ Errwarns::propagate(unsigned long line)
     std::string wmsg;
     unsigned long wline;
 
-    while ((wclass = warn_fetch(&wmsg, &wline)) != WARN_NONE) {
+    while ((wclass = warn_fetch(&wmsg, &wline)) != WARN_NONE)
+    {
         unsigned long real_line = wline == 0 ? line : wline;
         m_impl->m_errwarns.push_back(Impl::Data(real_line, wmsg));
         m_impl->m_wcount++;
@@ -153,7 +156,8 @@ Errwarns::output_all(const Linemap& lm, int warning_as_error,
 
     // Output error/warnings.
     for (std::vector<Impl::Data>::iterator i=m_impl->m_errwarns.begin(),
-         end=m_impl->m_errwarns.end(); i != end; ++i) {
+         end=m_impl->m_errwarns.end(); i != end; ++i)
+    {
         // Get the physical location
         std::string filename, xref_filename;
         unsigned long line, xref_line;
@@ -162,7 +166,8 @@ Errwarns::output_all(const Linemap& lm, int warning_as_error,
         // Get the cross-reference physical location
         if (i->m_xrefline != 0)
             lm.lookup(i->m_xrefline, xref_filename, xref_line);
-        else {
+        else
+        {
             xref_filename = "";
             xref_line = 0;
         }
