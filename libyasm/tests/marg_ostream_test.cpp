@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(TestCase1)
     --os;
     os << "end\n";
 
-    golden = 
+    golden =
         "begin\n"
         "  not indented\n"
         "    indented\n"

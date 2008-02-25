@@ -95,7 +95,7 @@ public:
         m_delta(2)
     {
     }
-        
+
     ostream_type&
     as_super_ostream()
     {
@@ -143,7 +143,7 @@ public:
     }
 
     // increment width
-    const my_type& 
+    const my_type&
     operator+=(int w)
     {
         if (w > 0)
@@ -185,7 +185,7 @@ public:
     pumpout_fluid(CharType c)
     {
         if(m_bol)
-        { 
+        {
             for (unsigned int i=0; i<m_width; ++i)
                 m_sink->sputc(' ');
         }
@@ -195,9 +195,9 @@ public:
     }
 
     //  Make super_insert available to allow user coding of any
-    //  operator<<(my_type&, T) for which there's a corresponding 
+    //  operator<<(my_type&, T) for which there's a corresponding
     //  operator<<(ostream_type&, T) or
-    //  ostream_type::operator<<(T): 
+    //  ostream_type::operator<<(T):
     template<typename T>
     my_type&
     super_insert(T n)
@@ -205,18 +205,18 @@ public:
         as_super_ostream()<<n;
         return *this;
     }
-        
+
     my_type& operator<<(my_type& (*n)(my_type&))
     {
         return n(*this);
     }
-        
+
     //  Provide my_type::operator<<(T) for each
     //  ostream_type::operator<<(T) or
     //  operator<<(ostream_type&, T):
-      
+
     typedef ostream_type& (*super_io_manip_type)(ostream_type&);
-      
+
     my_type& operator<<(super_io_manip_type n){return super_insert(n);}
     my_type& operator<<(bool n){return super_insert(n);}
     my_type& operator<<(short n){return super_insert(n);}
@@ -233,7 +233,7 @@ public:
     my_type& operator<<(const unsigned char* n){return super_insert(n);}
     my_type& operator<<(char n){return super_insert(n);}
     my_type& operator<<(const string_type& n){return super_insert(n);}
-      
+
 private:
     sink_type* m_sink;
     // records whether last character forwarded was an end-of-line.
