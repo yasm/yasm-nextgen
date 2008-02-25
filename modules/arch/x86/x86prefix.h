@@ -28,12 +28,19 @@
 //
 #include <libyasm/insn.h>
 
-namespace yasm { namespace arch { namespace x86 {
+namespace yasm
+{
+namespace arch
+{
+namespace x86
+{
 
-class X86Prefix : public Insn::Prefix {
+class X86Prefix : public Insn::Prefix
+{
 public:
     // Low 8 bits are used for the prefix value, stored in same data area.
-    enum Type {
+    enum Type
+    {
         LOCKREP = 1<<8,
         ADDRSIZE = 2<<8,
         OPERSIZE = 3<<8,

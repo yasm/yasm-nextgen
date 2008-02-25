@@ -42,7 +42,8 @@
 #include "value.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 class BytecodeContainer;
 class Errwarns;
@@ -55,7 +56,8 @@ class Symbol;
 /// relocations into byte format first, then output_bytes() is called to
 /// actually output the bytes to the object file.  The function output_gap()
 /// will be called for gaps in the output.
-class BytecodeOutput : private boost::noncopyable {
+class BytecodeOutput : private boost::noncopyable
+{
 public:
     /// Constructor.
     BytecodeOutput();
@@ -95,7 +97,9 @@ public:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    virtual void output_value(Value& value, Bytes& bytes, Location loc,
+    virtual void output_value(Value& value,
+                              Bytes& bytes,
+                              Location loc,
                               int warn) = 0;
 
     /// Convert a symbol reference to its byte representation.  Usual
@@ -119,8 +123,11 @@ public:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    virtual void output_reloc(Symbol* sym, Bytes& bytes, Bytecode& bc,
-                              unsigned int valsize, int warn);
+    virtual void output_reloc(Symbol* sym,
+                              Bytes& bytes,
+                              Bytecode& bc,
+                              unsigned int valsize,
+                              int warn);
 
     /// Output a "gap" in the object file: the data does not really need to
     /// exist in the object file, but should be initialized to 0 when the
@@ -137,7 +144,8 @@ private:
 };
 
 /// A bytecode.
-class Bytecode {
+class Bytecode
+{
     friend marg_ostream& operator<< (marg_ostream &os, const Bytecode &bc);
     friend class BytecodeContainer;
 
@@ -153,8 +161,11 @@ public:
     /// @param neg_thres    negative threshold for long/short decision
     /// @param pos_thres    positive threshold for long/short decision
     typedef
-        FUNCTION::function<void (Bytecode& bc, int id, const Value& value,
-                                 long neg_thres, long pos_thres)>
+        FUNCTION::function<void (Bytecode& bc,
+                                 int id,
+                                 const Value& value,
+                                 long neg_thres,
+                                 long pos_thres)>
         AddSpanFunc;
 
     typedef std::auto_ptr<Bytecode> Ptr;
@@ -162,7 +173,8 @@ public:
     /// Bytecode contents (abstract base class).  Any implementation of a
     /// specific bytecode must implement a class derived from this one.
     /// The bytecode implementation-specific data is stored in #contents.
-    class Contents {
+    class Contents
+    {
     public:
         typedef std::auto_ptr<Contents> Ptr;
 
@@ -210,8 +222,11 @@ public:
         ///         based on the new negative and positive thresholds
         ///         returned.
         /// @note May store to bytecode updated expressions.
-        virtual bool expand(Bytecode& bc, unsigned long& len, int span,
-                            long old_val, long new_val,
+        virtual bool expand(Bytecode& bc,
+                            unsigned long& len,
+                            int span,
+                            long old_val,
+                            long new_val,
                             /*@out@*/ long& neg_thres,
                             /*@out@*/ long& pos_thres);
 
@@ -228,7 +243,8 @@ public:
         /// simply not override the get_special() function (which returns
         /// #SPECIAL_NONE).  Other return values cause special handling to
         /// kick in in various parts of yasm.
-        enum SpecialType {
+        enum SpecialType
+        {
             /// No special handling.
             SPECIAL_NONE = 0,
 
@@ -343,10 +359,16 @@ public:
     ///         based on the new negative and positive thresholds returned.
     /// @note May store to bytecode updated expressions and the updated
     ///       length.
-    bool expand(int span, long old_val, long new_val,
-                /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres);
-    bool expand(int span, long old_val, long new_val,
-                /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres,
+    bool expand(int span,
+                long old_val,
+                long new_val,
+                /*@out@*/ long& neg_thres,
+                /*@out@*/ long& pos_thres);
+    bool expand(int span,
+                long old_val,
+                long new_val,
+                /*@out@*/ long& neg_thres,
+                /*@out@*/ long& pos_thres,
                 Errwarns& errwarns);
 
     /// Output a bytecode.
@@ -390,7 +412,8 @@ private:
     /// To allow combination of more complex values, fixups can be specified.
     /// A fixup consists of a value+offset combination.  0's need to be stored
     /// in m_fixed as placeholders.
-    class Fixup : public Value {
+    class Fixup : public Value
+    {
     public:
         Fixup(unsigned int off, const Value& val, unsigned long line);
         unsigned long get_line() const { return m_line; }

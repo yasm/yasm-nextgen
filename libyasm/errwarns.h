@@ -35,12 +35,14 @@
 #include <boost/scoped_ptr.hpp>
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Error;
 class Linemap;
 
-class Errwarns : private boost::noncopyable {
+class Errwarns : private boost::noncopyable
+{
 public:
     /// Create an error/warning set for collection of multiple error/warnings.
     Errwarns();
@@ -101,7 +103,8 @@ public:
     ///                         error first.
     /// @param print_error      function called to print out errors
     /// @param print_warning    function called to print out warnings
-    void output_all(const Linemap& lm, int warning_as_error,
+    void output_all(const Linemap& lm,
+                    int warning_as_error,
                     yasm_print_error_func print_error,
                     yasm_print_warning_func print_warning);
 

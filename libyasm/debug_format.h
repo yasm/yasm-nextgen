@@ -34,14 +34,16 @@
 #include "module.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Errwarns;
 class Linemap;
 class Object;
 
 /// Debug format interface.
-class DebugFormat : public Module {
+class DebugFormat : public Module
+{
 public:
     enum { module_type = 2 };
 

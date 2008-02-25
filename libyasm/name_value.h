@@ -40,13 +40,15 @@
 #include "ptr_vector.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Expr;
 class Object;
 
 /// Name/value pair.
-class NameValue : private boost::noncopyable {
+class NameValue : private boost::noncopyable
+{
     friend std::ostream& operator<< (std::ostream& os, const NameValue& nv);
 
 public:
@@ -123,7 +125,8 @@ private:
     std::string m_name; ///< Name (empty string if no name)
 
     /// Value type.
-    enum Type {
+    enum Type
+    {
         ID,             ///< Identifier
         STRING,         ///< String
         EXPR            ///< Expression

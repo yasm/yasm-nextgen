@@ -28,13 +28,18 @@
 //
 #include <libyasm/marg_ostream_fwd.h>
 
-namespace yasm {
+namespace yasm
+{
 
 class Bytes;
 
-namespace arch { namespace x86 {
+namespace arch
+{
+namespace x86
+{
 
-struct X86Opcode {
+struct X86Opcode
+{
     friend marg_ostream& operator<< (marg_ostream& os,
                                      const X86Opcode& opcode);
 
@@ -43,7 +48,8 @@ struct X86Opcode {
     X86Opcode(unsigned int len, const unsigned char* opcode)
         : m_len(len)
     {
-        if (opcode) {
+        if (opcode)
+        {
             m_opcode[0] = opcode[0];
             m_opcode[1] = opcode[1];
             m_opcode[2] = opcode[2];

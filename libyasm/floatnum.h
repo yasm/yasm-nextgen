@@ -37,12 +37,14 @@
 #include "operator.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 class FloatNumManager;
 class FloatNumTest;
 
-class FloatNum {
+class FloatNum
+{
     friend std::ostream& operator<< (std::ostream& os, const FloatNum& flt);
     friend class FloatNumManager;
     friend class FloatNumTest;

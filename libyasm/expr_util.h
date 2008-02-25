@@ -29,7 +29,8 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-namespace yasm {
+namespace yasm
+{
 
 class Expr;
 

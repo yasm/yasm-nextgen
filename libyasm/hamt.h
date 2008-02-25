@@ -45,7 +45,8 @@
 #include "bitcount.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 /// Hash array mapped trie data structure.
 /// Template parameters:
@@ -54,7 +55,8 @@ namespace yasm {
 /// - GetKey: functor that gets a key from the data;
 ///   definition should be: "Key GetKey(const T*)" or similar.
 template <typename Key, typename T, typename GetKey>
-class hamt : private boost::noncopyable {
+class hamt : private boost::noncopyable
+{
 public:
     /// Constructor.
     /// @param  nocase      True if HAMT should be case-insensitive
@@ -90,7 +92,8 @@ private:
     ///     - bitmap_key = bitmap (1=present), indexed by 5 bits of hash
     ///     - value = 0
     ///     - followed in memory by between 1 and 32 Node*'s
-    struct Node {
+    struct Node
+    {
         unsigned long bitmap_key;   ///< 32 bits, bitmap or hash key
 
         /// Value pointer; if NULL an array of nodes immediately follow this
@@ -98,7 +101,9 @@ private:
         T* value;
 
         Node* & sub_trie(unsigned long i)
-        { return (reinterpret_cast<Node**>(this+1))[i]; }
+        {
+            return (reinterpret_cast<Node**>(this+1))[i];
+        }
     };
 
     boost::scoped_array<Node*> m_root;
@@ -182,7 +187,8 @@ hamt<Key,T,GetKey>::hamt(bool nocase)
 template <typename Key, typename T, typename GetKey>
 hamt<Key,T,GetKey>::~hamt()
 {
-    while (!m_pools.empty()) {
+    while (!m_pools.empty())
+    {
         delete m_pools.back();
         m_pools.pop_back();
     }
@@ -197,7 +203,8 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
     Node** pnode = &m_root[keypart];
     Node* node = *pnode;
 
-    if (node == 0) {
+    if (node == 0)
+    {
         Node* node = static_cast<Node*>(m_pools[0]->malloc());
         *pnode = node;
         node->bitmap_key = key;
@@ -205,22 +212,29 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
         return 0;
     }
 
-    for (int keypartbits=0, level=0;;) {
-        if (node->value != 0) {
+    for (int keypartbits=0, level=0;;)
+    {
+        if (node->value != 0)
+        {
             if (node->bitmap_key == key &&
                 ((!m_nocase && get_key(data) == get_key(node->value)) ||
-                 (m_nocase && false/* TODO */))) {
+                 (m_nocase && false/* TODO */)))
+            {
                 T* oldvalue = node->value;
                 if (replace)
                     node->value = data;
                 return oldvalue;
-            } else {
+            }
+            else
+            {
                 unsigned long key2 = node->bitmap_key;
                 // build tree downward until keys differ
-                for (;;) {
+                for (;;)
+                {
                     // replace node with subtrie
                     keypartbits += 5;
-                    if (keypartbits > 30) {
+                    if (keypartbits > 30)
+                    {
                         // Exceeded 32 bits: rehash
                         key = rehash_key(get_key(data), level);
                         key2 = rehash_key(get_key(node->value), level);
@@ -229,7 +243,8 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
                     keypart = (key >> keypartbits) & 0x1F;
                     unsigned long keypart2 = (key2 >> keypartbits) & 0x1F;
 
-                    if (keypart == keypart2) {
+                    if (keypart == keypart2)
+                    {
                         // Still equal, build one-node subtrie and continue
                         // downward.
                         Node* newnode =
@@ -243,7 +258,9 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
                         pnode = &newnode->sub_trie(0);
                         node = *pnode;
                         level++;
-                    } else {
+                    }
+                    else
+                    {
                         // partitioned
 
                         // create value node
@@ -264,10 +281,13 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
                         newnode->value = 0;  // subtrie indication
 
                         // Copy nodes into subtrie based on order
-                        if (keypart2 < keypart) {
+                        if (keypart2 < keypart)
+                        {
                             newnode->sub_trie(0) = node;
                             newnode->sub_trie(1) = entry;
-                        } else {
+                        }
+                        else
+                        {
                             newnode->sub_trie(0) = entry;
                             newnode->sub_trie(1) = node;
                         }
@@ -281,13 +301,15 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
 
         // Subtrie: look up in bitmap
         keypartbits += 5;
-        if (keypartbits > 30) {
+        if (keypartbits > 30)
+        {
             // Exceeded 32 bits of current key: rehash
             key = rehash_key(get_key(data), level);
             keypartbits = 0;
         }
         keypart = (key >> keypartbits) & 0x1F;
-        if (!(node->bitmap_key & (1<<keypart))) {
+        if (!(node->bitmap_key & (1<<keypart)))
+        {
             // bit is 0 in bitmap -> add node to table
 
             // create value node
@@ -353,8 +375,10 @@ hamt<Key,T,GetKey>::find(const Key& str)
     if (node == 0)
         return 0;
 
-    for (int keypartbits=0, level=0;;) {
-        if (node->value != 0) {
+    for (int keypartbits=0, level=0;;)
+    {
+        if (node->value != 0)
+        {
             if (node->bitmap_key == key &&
                 ((!m_nocase && str == get_key(node->value)) ||
                  (m_nocase && false/* TODO */)))
@@ -365,7 +389,8 @@ hamt<Key,T,GetKey>::find(const Key& str)
 
         // Subtree: look up in bitmap
         keypartbits += 5;
-        if (keypartbits > 30) {
+        if (keypartbits > 30)
+        {
             // Exceeded 32 bits of current key: rehash
             key = rehash_key(str, level);
             keypartbits = 0;

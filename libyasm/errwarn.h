@@ -33,10 +33,12 @@
 #include <string>
 
 
-namespace yasm {
+namespace yasm
+{
 
 /// Warning classes (that may be enabled/disabled).
-enum WarnClass {
+enum WarnClass
+{
     WARN_NONE = 0,          ///< No warning
     WARN_GENERAL,           ///< Non-specific warnings
     WARN_UNREC_CHAR,        ///< Unrecognized characters (while tokenizing)
@@ -58,14 +60,17 @@ public:
 };
 
 /// Not implemented error.
-class NotImplementedError : public InternalError {
+class NotImplementedError : public InternalError
+{
 public:
     explicit NotImplementedError(const std::string& message)
-        : InternalError(message) {}
+        : InternalError(message)
+    {}
 };
 
 /// Exception for fatal errors.
-class Fatal : public std::exception {
+class Fatal : public std::exception
+{
 public:
     /// Constructor.
     /// @param message  fatal error message
@@ -79,7 +84,8 @@ private:
 };
 
 /// Error exception base class / non-specific error.
-class Error : public virtual std::exception {
+class Error : public virtual std::exception
+{
 public:
     explicit Error(const std::string& message);
     Error(unsigned long line, const std::string& message);
@@ -102,122 +108,163 @@ public:
 // Error classes.
 
 /// Arithmetic error (general).
-class ArithmeticError : public Error {
+class ArithmeticError : public Error
+{
 public:
     explicit ArithmeticError(const std::string& message)
-        : Error(message) {}
+        : Error(message)
+    {}
     ArithmeticError(unsigned long line, const std::string& message)
-        : Error(line, message) {}
+        : Error(line, message)
+    {}
     ~ArithmeticError() throw();
 };
 /// Arithmetic overflow.
-class OverflowError : public ArithmeticError {
+class OverflowError : public ArithmeticError
+{
 public:
     explicit OverflowError(const std::string& message)
-        : ArithmeticError(message) {}
+        : ArithmeticError(message)
+    {}
     OverflowError(unsigned long line, const std::string& message)
-        : ArithmeticError(line, message) {}
+        : ArithmeticError(line, message)
+    {}
     ~OverflowError() throw();
 };
 /// Floating point error.
-class FloatingPointError : public ArithmeticError {
+class FloatingPointError : public ArithmeticError
+{
 public:
     explicit FloatingPointError(const std::string& message)
-        : ArithmeticError(message) {}
+        : ArithmeticError(message)
+    {}
     FloatingPointError(unsigned long line, const std::string& message)
-        : ArithmeticError(line, message) {}
+        : ArithmeticError(line, message)
+    {}
     ~FloatingPointError() throw();
 };
 /// Divide-by-zero.
-class ZeroDivisionError : public ArithmeticError {
+class ZeroDivisionError : public ArithmeticError
+{
 public:
     explicit ZeroDivisionError(const std::string& message)
-        : ArithmeticError(message) {}
+        : ArithmeticError(message)
+    {}
     ZeroDivisionError(unsigned long line, const std::string& message)
-        : ArithmeticError(line, message) {}
+        : ArithmeticError(line, message)
+    {}
     ~ZeroDivisionError() throw();
 };
 
 /// Assertion error.
-class AssertionError : public Error {
+class AssertionError : public Error
+{
 public:
-    explicit AssertionError(const std::string& message) : Error(message) {}
+    explicit AssertionError(const std::string& message) : Error(message)
+    {}
     AssertionError(unsigned long line, const std::string& message)
-        : Error(line, message) {}
+        : Error(line, message)
+    {}
     ~AssertionError() throw();
 };
 
 /// Value inappropriate (e.g. not in range).
-class ValueError : public Error {
+class ValueError : public Error
+{
 public:
-    explicit ValueError(const std::string& message) : Error(message) {}
+    explicit ValueError(const std::string& message) : Error(message)
+    {}
     ValueError(unsigned long line, const std::string& message)
-        : Error(line, message) {}
+        : Error(line, message)
+    {}
     ~ValueError() throw();
 };
 /// Absolute expression required.
-class NotAbsoluteError : public ValueError {
+class NotAbsoluteError : public ValueError
+{
 public:
     explicit NotAbsoluteError(const std::string& message)
-        : ValueError(message) {}
+        : ValueError(message)
+    {}
     NotAbsoluteError(unsigned long line, const std::string& message)
-        : ValueError(line, message) {}
+        : ValueError(line, message)
+    {}
     ~NotAbsoluteError() throw();
 };
 /// Expression too complex.
-class TooComplexError : public ValueError {
+class TooComplexError : public ValueError
+{
 public:
     explicit TooComplexError(const std::string& message)
-        : ValueError(message) {}
+        : ValueError(message)
+    {}
     TooComplexError(unsigned long line, const std::string& message)
-        : ValueError(line, message) {}
+        : ValueError(line, message)
+    {}
     ~TooComplexError() throw();
 };
 /// Constant expression required.
-class NotConstantError : public ValueError {
+class NotConstantError : public ValueError
+{
 public:
     explicit NotConstantError(const std::string& message)
-        : ValueError(message) {}
+        : ValueError(message)
+    {}
     NotConstantError(unsigned long line, const std::string& message)
-        : ValueError(line, message) {}
+        : ValueError(line, message)
+    {}
     ~NotConstantError() throw();
 };
 
 /// I/O error.
-class IOError : public Error {
+class IOError : public Error
+{
 public:
-    explicit IOError(const std::string& message) : Error(message) {}
+    explicit IOError(const std::string& message) : Error(message)
+    {}
     IOError(unsigned long line, const std::string& message)
-        : Error(line, message) {}
+        : Error(line, message)
+    {}
     ~IOError() throw();
 };
 
 /// Type error.
-class TypeError : public Error {
+class TypeError : public Error
+{
 public:
-    explicit TypeError(const std::string& message) : Error(message) {}
+    explicit TypeError(const std::string& message) : Error(message)
+    {}
     TypeError(unsigned long line, const std::string& message)
-        : Error(line, message) {}
+        : Error(line, message)
+    {}
     ~TypeError() throw();
 };
 
 /// Syntax error.
-class SyntaxError : public Error {
+class SyntaxError : public Error
+{
 public:
-    explicit SyntaxError(const std::string& message) : Error(message) {}
+    explicit SyntaxError(const std::string& message) : Error(message)
+    {}
     SyntaxError(unsigned long line, const std::string& message)
-        : Error(line, message) {}
+        : Error(line, message)
+    {}
     ~SyntaxError() throw();
 };
 /// Parser error.
-class ParseError : public Error {
+class ParseError : public Error
+{
 public:
     explicit ParseError(const std::string& message)
         : Error(message)
-    { m_parse_error = true; }
+    {
+        m_parse_error = true;
+    }
     ParseError(unsigned long line, const std::string& message)
         : Error(line, message)
-    { m_parse_error = true; }
+    {
+        m_parse_error = true;
+    }
     ~ParseError() throw();
 };
 

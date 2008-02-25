@@ -35,7 +35,8 @@
 #include "marg_ostream_fwd.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Arch;
 class Bytecode;
@@ -47,7 +48,8 @@ class Symbol;
 /// A value.  May be absolute or relative.  Outside the parser, #Expr
 /// should only be used for absolute exprs.  Anything that could contain
 /// a relocatable value should use this structure instead.
-class Value {
+class Value
+{
 public:
     explicit Value(unsigned int size);
 

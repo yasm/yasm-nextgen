@@ -38,7 +38,8 @@
 #include <libyasm/parser.h>
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Arch;
 class Bytecode;
@@ -47,13 +48,17 @@ class FloatNum;
 class IntNum;
 class NameValues;
 
-namespace parser { namespace nasm {
+namespace parser
+{
+namespace nasm
+{
 
 #define YYCTYPE char
 
 #define MAX_SAVED_LINE_LEN  80
 
-enum TokenType {
+enum TokenType
+{
     INTNUM = 258,
     FLTNUM,
     DIRECTIVE_NAME,
@@ -88,12 +93,14 @@ enum TokenType {
     NONE                // special token for lookahead
 };
 
-struct yystype {
+struct yystype
+{
     std::string str;
     std::auto_ptr<IntNum> intn;
     std::auto_ptr<FloatNum> flt;
     Insn::Ptr insn;
-    union {
+    union
+    {
         unsigned int int_info;
         const Insn::Prefix* prefix;
         const SegmentRegister* segreg;
@@ -105,7 +112,8 @@ struct yystype {
 
 bool is_eol_tok(int tok);
 
-class NasmParser : public Parser {
+class NasmParser : public Parser
+{
 public:
     NasmParser();
     ~NasmParser();
@@ -117,11 +125,15 @@ public:
     std::vector<std::string> get_preproc_keywords() const;
     std::string get_default_preproc_keyword() const;
 
-    void parse(Object& object, Preprocessor& preproc, bool save_input,
-               Linemap& linemap, Errwarns& errwarns);
+    void parse(Object& object,
+               Preprocessor& preproc,
+               bool save_input,
+               Linemap& linemap,
+               Errwarns& errwarns);
 
 private:
-    enum ExprType {
+    enum ExprType
+    {
         NORM_EXPR,
         DIR_EXPR,
         DV_EXPR
@@ -134,7 +146,11 @@ private:
     size_t fill_input(unsigned char* buf, size_t max);
     YYCTYPE* save_line(YYCTYPE* cursor);
 
-    int get_next_token() { m_token = lex(&m_tokval); return m_token; }
+    int get_next_token()
+    {
+        m_token = lex(&m_tokval);
+        return m_token;
+    }
     void get_peek_token();
     bool is_eol() { return is_eol_tok(m_token); }
 
@@ -167,14 +183,21 @@ private:
     std::auto_ptr<Expr> parse_expr5(ExprType type);
     std::auto_ptr<Expr> parse_expr6(ExprType type);
 
-    void dir_absolute(Object& object, const NameValues& namevals,
-                      const NameValues& objext_namevals, unsigned long line);
-    void dir_align(Object& object, const NameValues& namevals,
-                   const NameValues& objext_namevals, unsigned long line);
-    void dir_default(Object& object, const NameValues& namevals,
-                     const NameValues& objext_namevals, unsigned long line);
+    void dir_absolute(Object& object,
+                      const NameValues& namevals,
+                      const NameValues& objext_namevals,
+                      unsigned long line);
+    void dir_align(Object& object,
+                   const NameValues& namevals,
+                   const NameValues& objext_namevals,
+                   unsigned long line);
+    void dir_default(Object& object,
+                     const NameValues& namevals,
+                     const NameValues& objext_namevals,
+                     unsigned long line);
 
-    void directive(const std::string& name, const NameValues& namevals,
+    void directive(const std::string& name,
+                   const NameValues& namevals,
                    const NameValues& objext_namevals);
 
     Object* m_object;
@@ -195,7 +218,8 @@ private:
 
     YYCTYPE *m_bot, *m_tok, *m_ptr, *m_cur, *m_lim;
 
-    enum State {
+    enum State
+    {
         INITIAL,
         DIRECTIVE,
         SECTION_DIRECTIVE,

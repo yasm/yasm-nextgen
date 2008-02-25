@@ -39,7 +39,8 @@
 #include "ptr_vector.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Arch;
 class Errwarns;
@@ -47,7 +48,8 @@ class Section;
 class Symbol;
 
 /// An object.  This is the internal representation of an object file.
-class Object : private boost::noncopyable {
+class Object : private boost::noncopyable
+{
     friend marg_ostream& operator<< (marg_ostream& os, const Object& object);
 
 public:

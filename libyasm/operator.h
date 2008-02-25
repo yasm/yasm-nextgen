@@ -29,11 +29,14 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-namespace yasm {
+namespace yasm
+{
 
-namespace Op {
+namespace Op
+{
     /// Operators usable in expressions.
-    enum Op {
+    enum Op
+    {
         IDENT,      ///< No operation, just a value.
         ADD,        ///< Arithmetic addition (+).
         SUB,        ///< Arithmetic subtraction (-).

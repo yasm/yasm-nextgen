@@ -31,7 +31,8 @@
 ///
 #include <iosfwd>
 
-namespace yasm {
+namespace yasm
+{
 
 template <typename CharType, typename TraitsType=std::char_traits<CharType> >
     class basic_marg_ostream;

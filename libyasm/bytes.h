@@ -35,9 +35,11 @@
 #include "marg_ostream_fwd.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
-class Bytes : public std::vector<unsigned char> {
+class Bytes : public std::vector<unsigned char>
+{
 public:
     Bytes(bool bigendian=false);
     ~Bytes();
@@ -68,7 +70,8 @@ private:
     bool m_bigendian;
 };
 
-struct SetEndian {
+struct SetEndian
+{
     bool m_bigendian;
 };
 

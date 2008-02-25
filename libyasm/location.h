@@ -29,7 +29,8 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-namespace yasm {
+namespace yasm
+{
 
 class Bytecode;
 class IntNum;
@@ -37,7 +38,8 @@ class IntNum;
 /// An assembly location.  The finest granularity a label can directly access,
 /// and used throughout yasm to address a specific assembly location.
 /// This structure is passed around by value, etc, so it must remain small!
-struct Location {
+struct Location
+{
     Bytecode* bc;
     unsigned long off;
 

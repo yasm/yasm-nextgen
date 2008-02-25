@@ -34,7 +34,8 @@
 #include <vector>
 
 
-namespace yasm {
+namespace yasm
+{
 
 /// Unescape a string with C-style escapes.  Handles b, f, n, r, t, and hex
 /// and octal escapes.
@@ -172,7 +173,8 @@ std::string replace_extension(const std::string& orig, const std::string& ext,
 /// Include path storage and search.  Paths are stored as std::strings.
 /// If a path is relative, it is treated by Includes::open() as relative to
 /// the current working directory.
-class Includes : public std::vector<std::string> {
+class Includes : public std::vector<std::string>
+{
 public:
     /// Try to find and open an include file, searching through include paths.
     /// First iname is looked for relative to the directory containing "from",

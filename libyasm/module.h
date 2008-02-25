@@ -34,12 +34,14 @@
 #include <boost/noncopyable.hpp>
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Directives;
 
 /// Module interface (abstract base).
-class Module : private boost::noncopyable {
+class Module : private boost::noncopyable
+{
 public:
     /// Constructor.
     Module() {}

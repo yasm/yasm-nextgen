@@ -39,13 +39,15 @@
 #include "marg_ostream_fwd.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Bytecode;
 class Expr;
 class NameValues;
 
-class Symbol : private boost::noncopyable, public AssocDataContainer {
+class Symbol : private boost::noncopyable, public AssocDataContainer
+{
     friend marg_ostream& operator<< (marg_ostream& os, const Symbol& sym);
 
 public:
@@ -57,7 +59,8 @@ public:
 
     /// Symbol status.  #DEFINED is set by define_label(), define_equ(), or
     /// declare(), with a visibility of #EXTERN or #COMMON.
-    enum Status {
+    enum Status
+    {
         NOSTATUS = 0,           ///< no status
         USED = 1 << 0,          ///< for use before definition
         DEFINED = 1 << 1,       ///< once it's been defined in the file
@@ -66,7 +69,8 @@ public:
 
     /// Symbol record visibility.
     /// @note #EXTERN and #COMMON are mutually exclusive.
-    enum Visibility {
+    enum Visibility
+    {
         LOCAL = 0,              ///< Default, local only
         GLOBAL = 1 << 0,        ///< If symbol is declared GLOBAL
         COMMON = 1 << 1,        ///< If symbol is declared COMMON
@@ -113,7 +117,9 @@ public:
     /// yasm_symtab_abs_sym().
     /// @return False if symbol is not the "absolute" symbol, true otherwise.
     bool is_abs() const
-    { return m_def_line == 0 && m_type == EQU && m_name.length() == 0; }
+    {
+        return m_def_line == 0 && m_type == EQU && m_name.length() == 0;
+    }
 
     /// Determine if symbol is a special symbol.
     /// @return False if symbol is not a special symbol, true otherwise.
@@ -193,7 +199,8 @@ public:
     void finalize(bool undef_extern);
 
 private:
-    enum Type {
+    enum Type
+    {
         UNKNOWN,    ///< for unknown type (COMMON/EXTERN)
         EQU,        ///< for EQU defined symbols (expressions)
         LABEL,      ///< for labels

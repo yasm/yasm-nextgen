@@ -35,13 +35,15 @@
 #include "module.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Errwarns;
 class Linemap;
 
 /// Preprocesor interface.
-class Preprocessor : public Module {
+class Preprocessor : public Module
+{
 public:
     enum { module_type = 6 };
 

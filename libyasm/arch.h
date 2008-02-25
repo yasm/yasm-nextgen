@@ -41,13 +41,15 @@
 #include "module.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Expr;
 class FloatNum;
 class IntNum;
 
-class Register : private boost::noncopyable {
+class Register : private boost::noncopyable
+{
 public:
     virtual ~Register() {}
 
@@ -69,7 +71,8 @@ inline std::ostream& operator<<
     return os;
 }
 
-class RegisterGroup : private boost::noncopyable {
+class RegisterGroup : private boost::noncopyable
+{
 public:
     virtual ~RegisterGroup() {}
 
@@ -81,7 +84,8 @@ public:
     virtual const Register* get_reg(unsigned long regindex) const = 0;
 };
 
-class SegmentRegister : private boost::noncopyable {
+class SegmentRegister : private boost::noncopyable
+{
 public:
     virtual ~SegmentRegister() {}
 
@@ -98,14 +102,17 @@ inline std::ostream& operator<<
 }
 
 /// Architecture interface.
-class Arch : public Module {
+class Arch : public Module
+{
 public:
     enum { module_type = 1 };
 
     /// Return value for parse_check_insnprefix().
-    class InsnPrefix {
+    class InsnPrefix
+    {
     public:
-        enum Type {
+        enum Type
+        {
             NONE,
             INSN,
             PREFIX
@@ -114,7 +121,8 @@ public:
         InsnPrefix() : m_type(NONE) {}
         InsnPrefix(std::auto_ptr<Insn> insn);
         InsnPrefix(const Insn::Prefix* prefix)
-            : m_type(PREFIX), m_prefix(prefix) {}
+            : m_type(PREFIX), m_prefix(prefix)
+        {}
 
         ~InsnPrefix();
 
@@ -124,21 +132,28 @@ public:
         std::auto_ptr<Insn> release_insn();
 
         const Insn* get_insn() const
-        { return (m_type == INSN ? m_insn : 0); }
+        {
+            return (m_type == INSN ? m_insn : 0);
+        }
         const Insn::Prefix* get_prefix() const
-        { return (m_type == PREFIX ? m_prefix : 0); }
+        {
+            return (m_type == PREFIX ? m_prefix : 0);
+        }
     private:
         Type m_type;
-        union {
+        union
+        {
             Insn* m_insn;
             const Insn::Prefix* m_prefix;
         };
     };
 
     /// Return value for parse_check_regtmod().
-    class RegTmod {
+    class RegTmod
+    {
     public:
-        enum Type {
+        enum Type
+        {
             NONE,
             REG,
             REGGROUP,
@@ -148,29 +163,45 @@ public:
 
         RegTmod() : m_type(NONE) {}
         RegTmod(const Register* reg)
-            : m_type(REG), m_reg(reg) {}
+            : m_type(REG), m_reg(reg)
+        {}
         RegTmod(const RegisterGroup* reggroup)
-            : m_type(REGGROUP), m_reggroup(reggroup) {}
+            : m_type(REGGROUP), m_reggroup(reggroup)
+        {}
         RegTmod(const SegmentRegister* segreg)
-            : m_type(SEGREG), m_segreg(segreg) {}
+            : m_type(SEGREG), m_segreg(segreg)
+        {}
         RegTmod(const Insn::Operand::TargetModifier* tmod)
-            : m_type(TARGETMOD), m_tmod(tmod) {}
+            : m_type(TARGETMOD), m_tmod(tmod)
+        {}
 
         Type get_type() const { return m_type; }
         bool is_type(Type type) const { return m_type == type; }
 
         const Register* get_reg() const
-        { return (m_type == REG ? m_reg : 0); }
+        {
+            return (m_type == REG ? m_reg : 0);
+        }
+
         const RegisterGroup* get_reggroup() const
-        { return (m_type == REGGROUP ? m_reggroup : 0); }
+        {
+            return (m_type == REGGROUP ? m_reggroup : 0);
+        }
+
         const SegmentRegister* get_segreg() const
-        { return (m_type == SEGREG ? m_segreg : 0); }
+        {
+            return (m_type == SEGREG ? m_segreg : 0);
+        }
+
         const Insn::Operand::TargetModifier* get_tmod() const
-        { return (m_type == TARGETMOD ? m_tmod : 0); }
+        {
+            return (m_type == TARGETMOD ? m_tmod : 0);
+        }
 
     private:
         Type m_type;
-        union {
+        union
+        {
             const Register* m_reg;
             const RegisterGroup* m_reggroup;
             const SegmentRegister* m_segreg;
@@ -181,10 +212,12 @@ public:
     /// Constructor.
     /// To make architecture truly usable, set_machine() and set_parser()
     /// need to be called.
-    Arch() {}
+    Arch()
+    {}
 
     /// Destructor.
-    virtual ~Arch() {}
+    virtual ~Arch()
+    {}
 
     /// Get the module type.
     /// @return "Arch".
@@ -274,8 +307,10 @@ public:
     /// @param valsize       size (in bits)
     /// @param shift         left shift (in bits)
     /// @param warn          enables standard overflow/underflow warnings
-    virtual void floatnum_tobytes(const FloatNum& flt, Bytes& bytes,
-                                  size_t valsize, size_t shift,
+    virtual void floatnum_tobytes(const FloatNum& flt,
+                                  Bytes& bytes,
+                                  size_t valsize,
+                                  size_t shift,
                                   int warn) const = 0;
 
     /// Output #IntNum to buffer.  Puts the value into the least
@@ -291,8 +326,11 @@ public:
     /// @param loc          location of value
     /// @param warn         enables standard warnings (value doesn't fit into
     ///                     valsize bits)
-    virtual void intnum_tobytes(const IntNum& intn, Bytes& bytes,
-                                size_t valsize, int shift, int warn) const = 0;
+    virtual void intnum_tobytes(const IntNum& intn,
+                                Bytes& bytes,
+                                size_t valsize,
+                                int shift,
+                                int warn) const = 0;
 
     /// Create an effective address from an expression.
     /// @param e    expression

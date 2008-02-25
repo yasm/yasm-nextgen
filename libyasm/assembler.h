@@ -36,7 +36,8 @@
 #include <boost/scoped_ptr.hpp>
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Arch;
 class Errwarns;
@@ -45,7 +46,8 @@ class Object;
 class Preprocessor;
 
 /// An assembler.
-class Assembler : private boost::noncopyable {
+class Assembler : private boost::noncopyable
+{
 public:
     /// Constructor.  A default section is created as the first
     /// section, and an empty symbol table is created.

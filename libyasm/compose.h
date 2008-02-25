@@ -32,9 +32,11 @@
 #include <sstream>
 #include <string>
 
-namespace String {
+namespace String
+{
 
-class Compose {
+class Compose
+{
 public:
     // initialize and prepare format string on the form "text %1 text %2 etc."
     explicit Compose(const std::string& fmt);

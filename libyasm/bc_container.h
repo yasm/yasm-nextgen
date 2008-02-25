@@ -37,7 +37,8 @@
 #include "ptr_vector.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Bytecode;
 class Errwarns;
@@ -45,7 +46,8 @@ class Expr;
 class Section;
 class Object;
 
-class BytecodeContainer : private boost::noncopyable {
+class BytecodeContainer : private boost::noncopyable
+{
     friend class Object;
 
 public:

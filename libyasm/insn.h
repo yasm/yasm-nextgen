@@ -38,7 +38,8 @@
 #include "marg_ostream_fwd.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 class BytecodeContainer;
 class Bytes;
@@ -49,15 +50,18 @@ class SegmentRegister;
 
 /// Base class for instructions.  Architectures should
 /// derive their own implementation from this.
-class Insn {
+class Insn
+{
 public:
     typedef std::auto_ptr<Insn> Ptr;
 
     /// An instruction operand.
-    class Operand {
+    class Operand
+    {
     public:
         /// Operand type.
-        enum Type {
+        enum Type
+        {
             NONE = 0,   ///< Nothing.
             REG,        ///< A register.
             SEGREG,     ///< A segment register.
@@ -66,7 +70,8 @@ public:
         };
 
         /// Base class for target modifiers.
-        class TargetModifier : private boost::noncopyable {
+        class TargetModifier : private boost::noncopyable
+        {
         public:
             TargetModifier() {}
             virtual ~TargetModifier() {}
@@ -102,7 +107,11 @@ public:
         /// Explicit release.
         /// Doesn't destroy contents, just ensures what contents are there
         /// won't be destroyed via the destructor.
-        void release() { m_type = NONE; m_reg = 0; }
+        void release()
+        {
+            m_type = NONE;
+            m_reg = 0;
+        }
 
         /// Explicit destructor.
         /// Similar to clone(), we do smart copying and destruction in
@@ -122,13 +131,24 @@ public:
         /// Helper functions to get specific types.
 
         const Register* get_reg() const
-        { return (m_type == REG ? m_reg : 0); }
+        {
+            return (m_type == REG ? m_reg : 0);
+        }
+
         const SegmentRegister* get_segreg() const
-        { return (m_type == SEGREG ? m_segreg : 0); }
+        {
+            return (m_type == SEGREG ? m_segreg : 0);
+        }
+
         EffAddr* get_memory() const
-        { return (m_type == MEMORY ? m_ea : 0); }
+        {
+            return (m_type == MEMORY ? m_ea : 0);
+        }
+
         Expr* get_imm() const
-        { return (m_type == IMM ? m_val : 0); }
+        {
+            return (m_type == IMM ? m_val : 0);
+        }
 
         /// Helper functions to release specific types
         std::auto_ptr<EffAddr> release_memory();
@@ -160,7 +180,8 @@ public:
         Type m_type;
 
         /// Operand data.
-        union {
+        union
+        {
             const SegmentRegister* m_segreg;    ///< Segment register.
             const Register* m_reg;              ///< Register.
             EffAddr* m_ea;      ///< Effective address for memory references.
@@ -196,7 +217,8 @@ public:
     };
 
     /// Base class for instruction prefixes.
-    class Prefix : private boost::noncopyable {
+    class Prefix : private boost::noncopyable
+    {
     public:
         Prefix() {}
         virtual ~Prefix() {}
@@ -213,17 +235,23 @@ public:
     /// Add operand to the end of an instruction.
     /// @param op           operand
     void add_operand(const Operand& op)
-    { m_operands.push_back(op); }
+    {
+        m_operands.push_back(op);
+    }
 
     /// Associate a prefix with an instruction.
     /// @param prefix       data that identifies the prefix
     void add_prefix(const Prefix* prefix)
-    { m_prefixes.push_back(prefix); }
+    {
+        m_prefixes.push_back(prefix);
+    }
 
     /// Associate a segment prefix with an instruction.
     /// @param segreg       data that identifies the segment register
     void add_seg_prefix(const SegmentRegister* segreg)
-    { m_segregs.push_back(segreg); }
+    {
+        m_segregs.push_back(segreg);
+    }
 
     /// Print a list of instruction operands.  For debugging purposes.
     /// @note A base version of this function is provided.

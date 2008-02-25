@@ -33,7 +33,8 @@
 
 #include "location.h"
 
-namespace yasm {
+namespace yasm
+{
 
 class Expr;
 
@@ -45,7 +46,8 @@ class Expr;
 void xform_calc_dist(Expr* e);
 
 int subst_dist(Expr* e,
-               FUNCTION::function<void (unsigned int subst, Location loc,
+               FUNCTION::function<void (unsigned int subst,
+                                        Location loc,
                                         Location loc2)> func);
 
 } // namespace yasm

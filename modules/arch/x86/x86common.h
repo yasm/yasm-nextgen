@@ -32,11 +32,17 @@
 #include <libyasm/marg_ostream_fwd.h>
 
 
-namespace yasm { namespace arch { namespace x86 {
+namespace yasm
+{
+namespace arch
+{
+namespace x86
+{
 
 class X86SegmentRegister;
 
-class X86Common {
+class X86Common
+{
 public:
     X86Common();
 

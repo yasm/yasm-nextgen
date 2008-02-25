@@ -33,7 +33,8 @@
 #include <string>
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Arch;
 class BytecodeContainer;

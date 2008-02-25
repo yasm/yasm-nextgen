@@ -38,7 +38,8 @@
 #include "operator.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Bytecode;
 class FloatNum;
@@ -47,7 +48,8 @@ class Register;
 class Symbol;
 
 /// An expression.
-class Expr {
+class Expr
+{
     friend std::ostream& operator<< (std::ostream&, const Expr&);
 
 public:
@@ -57,7 +59,8 @@ public:
     /// Note loc must be used carefully (in a-b pairs), as only symrecs
     /// can become the relative term in a #yasm_value.
     /// Testing uses bit comparison (&) so these have to be in bitmask form.
-    enum TermType {
+    enum TermType
+    {
         NONE = 0,       ///< Nothing (temporary placeholder only).
         REG = 1<<0,     ///< Register.
         INT = 1<<1,     ///< Integer.
@@ -69,12 +72,14 @@ public:
     };
 
     /// An term inside the expression.
-    class Term {
+    class Term
+    {
         friend std::ostream& operator<< (std::ostream&, const Term&);
 
     public:
         /// Substitution value.
-        struct Subst {
+        struct Subst
+        {
             explicit Subst(unsigned int v) : subst(v) {}
             unsigned int subst;
         };
@@ -84,7 +89,8 @@ public:
         Term(const IntNum& intn);
         Term(FloatNum* flt) : m_type(FLOAT), m_flt(flt) {}
         explicit Term(const Subst& subst)
-            : m_type(SUBST), m_subst(subst.subst) {}
+            : m_type(SUBST), m_subst(subst.subst)
+        {}
         Term(Symbol* sym) : m_type(SYM), m_sym(sym) {}
         Term(Symbol& sym) : m_type(SYM), m_sym(&sym) {}
         Term(Location loc) : m_type(LOC), m_loc(loc) {}
@@ -117,7 +123,9 @@ public:
 
         /// Comparison used for sorting; assumes TermTypes are in sort order.
         bool operator< (const Term& other) const
-        { return (m_type < other.m_type); }
+        {
+            return (m_type < other.m_type);
+        }
 
         /// Match type.  Can take an OR'ed combination of TermTypes.
         bool is_type(int type) const { return (m_type & type) != 0; }
@@ -135,26 +143,50 @@ public:
         // Helper functions to make it easier to get specific types.
 
         const Register* get_reg() const
-        { return (m_type == REG ? m_reg : 0); }
+        {
+            return (m_type == REG ? m_reg : 0);
+        }
+
         IntNum* get_int() const
-        { return (m_type == INT ? m_intn : 0); }
+        {
+            return (m_type == INT ? m_intn : 0);
+        }
+
         const unsigned int* get_subst() const
-        { return (m_type == SUBST ? &m_subst : 0); }
+        {
+            return (m_type == SUBST ? &m_subst : 0);
+        }
+
         FloatNum* get_float() const
-        { return (m_type == FLOAT ? m_flt : 0); }
+        {
+            return (m_type == FLOAT ? m_flt : 0);
+        }
+
         Symbol* get_sym() const
-        { return (m_type == SYM ? m_sym : 0); }
+        {
+            return (m_type == SYM ? m_sym : 0);
+        }
+
         const Location* get_loc() const
-        { return (m_type == LOC ? &m_loc : 0); }
+        {
+            return (m_type == LOC ? &m_loc : 0);
+        }
+
         Location* get_loc()
-        { return (m_type == LOC ? &m_loc : 0); }
+        {
+            return (m_type == LOC ? &m_loc : 0);
+        }
+
         Expr* get_expr() const
-        { return (m_type == EXPR ? m_expr : 0); }
+        {
+            return (m_type == EXPR ? m_expr : 0);
+        }
 
     private:
         TermType m_type;  ///< Type.
         /// Expression item data.  Correct value depends on type.
-        union {
+        union
+        {
             const Register *m_reg;  ///< Register (#REG)
             IntNum *m_intn;         ///< Integer value (#INT)
             unsigned int m_subst;   ///< Subst placeholder (#SUBST)
@@ -215,7 +247,9 @@ public:
     /// branches and simplifies integer-only subexpressions.  Simplified
     /// version of level_tree().
     void simplify()
-    { level_tree(true, true, true, 0); }
+    {
+        level_tree(true, true, true, 0);
+    }
 
     /// Extract the segment portion of an expression containing SEG:OFF,
     /// leaving the offset.
@@ -295,7 +329,11 @@ public:
 
     /// Make expression an ident if it only has one term.
     /// This should be used if deep magic has been performed via get_terms().
-    void make_ident() { if (m_terms.size() == 1) m_op = Op::IDENT; }
+    void make_ident()
+    {
+        if (m_terms.size() == 1)
+            m_op = Op::IDENT;
+    }
 
 private:
     /// Operation.

@@ -36,14 +36,16 @@
 #include "module.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Errwarns;
 class Object;
 class Section;
 
 /// Object format interface.
-class ObjectFormat : public Module {
+class ObjectFormat : public Module
+{
 public:
     enum { module_type = 4 };
 

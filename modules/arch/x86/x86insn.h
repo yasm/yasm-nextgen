@@ -30,13 +30,19 @@
 
 #include "x86arch.h"
 
-namespace yasm { namespace arch { namespace x86 {
+namespace yasm
+{
+namespace arch
+{
+namespace x86
+{
 
 struct X86InfoOperand;
 struct X86InsnInfo;
 struct X86Opcode;
 
-class X86Insn : public Insn {
+class X86Insn : public Insn
+{
 public:
     X86Insn(const X86InsnInfo* group,
             const X86Arch::CpuMask& active_cpu,
@@ -61,8 +67,10 @@ private:
     void do_append_jmpfar(BytecodeContainer& container,
                           const X86InsnInfo& info);
 
-    bool match_jmp_info(const X86InsnInfo& info, unsigned int opersize,
-                        X86Opcode& shortop, X86Opcode& nearop) const;
+    bool match_jmp_info(const X86InsnInfo& info,
+                        unsigned int opersize,
+                        X86Opcode& shortop,
+                        X86Opcode& nearop) const;
     void do_append_jmp(BytecodeContainer& container, const X86InsnInfo& jinfo);
 
     void do_append_general(BytecodeContainer& container,
@@ -71,10 +79,13 @@ private:
 
     const X86InsnInfo* find_match(const unsigned int* size_lookup, int bypass)
         const;
-    bool match_info(const X86InsnInfo& info, const unsigned int* size_lookup,
+    bool match_info(const X86InsnInfo& info,
+                    const unsigned int* size_lookup,
                     int bypass) const;
-    bool match_operand(const Operand& op, const X86InfoOperand& info_op,
-                       const Operand& op0, const unsigned int* size_lookup,
+    bool match_operand(const Operand& op,
+                       const X86InfoOperand& info_op,
+                       const Operand& op0,
+                       const unsigned int* size_lookup,
                        int bypass) const;
     void match_error(const unsigned int* size_lookup) const;
 

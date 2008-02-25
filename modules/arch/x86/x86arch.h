@@ -31,15 +31,20 @@
 #include <libyasm/arch.h>
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Object;
 class NameValues;
 
-namespace arch { namespace x86 {
+namespace arch
+{
+namespace x86
+{
 
 // Available CPU feature flags
-enum CPUFeature {
+enum CPUFeature
+{
     CPU_Any = 0,        // Any old cpu will do
     CPU_086 = CPU_Any,
     CPU_186,            // i186 or better required
@@ -82,10 +87,12 @@ enum CPUFeature {
     CPU_Not64 = 121     // Not available (invalid) in 64-bit mode
 };
 
-class X86Arch : public Arch {
+class X86Arch : public Arch
+{
 public:
     typedef std::bitset<64> CpuMask;
-    enum ParserSelect {
+    enum ParserSelect
+    {
         PARSER_NASM = 0,
         PARSER_GAS = 1,
         PARSER_UNKNOWN
@@ -118,10 +125,16 @@ public:
 
     const unsigned char** get_fill() const;
 
-    void floatnum_tobytes(const FloatNum& flt, Bytes& bytes,
-                          size_t valsize, size_t shift, int warn) const;
-    void intnum_tobytes(const IntNum& intn, Bytes& bytes,
-                        size_t valsize, int shift, int warn) const;
+    void floatnum_tobytes(const FloatNum& flt,
+                          Bytes& bytes,
+                          size_t valsize,
+                          size_t shift,
+                          int warn) const;
+    void intnum_tobytes(const IntNum& intn,
+                        Bytes& bytes,
+                        size_t valsize,
+                        int shift,
+                        int warn) const;
 
     std::auto_ptr<EffAddr> ea_create(std::auto_ptr<Expr> e) const;
 

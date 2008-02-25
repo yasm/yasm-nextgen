@@ -29,17 +29,22 @@
 #include <memory>
 
 
-namespace yasm {
+namespace yasm
+{
 
 class BytecodeContainer;
 class Expr;
 
-namespace arch { namespace x86 {
+namespace arch
+{
+namespace x86
+{
 
 class X86Common;
 class X86Opcode;
 
-enum JmpOpcodeSel {
+enum JmpOpcodeSel
+{
     JMP_NONE,
     JMP_SHORT,
     JMP_NEAR

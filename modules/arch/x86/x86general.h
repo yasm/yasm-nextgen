@@ -29,19 +29,24 @@
 #include <memory>
 
 
-namespace yasm {
+namespace yasm
+{
 
 class BytecodeContainer;
 class Value;
 
-namespace arch { namespace x86 {
+namespace arch
+{
+namespace x86
+{
 
 class X86Common;
 class X86EffAddr;
 class X86Opcode;
 
 // Postponed (from parsing to later binding) action options.
-enum GeneralPostOp {
+enum GeneralPostOp
+{
     // None
     POSTOP_NONE = 0,
 

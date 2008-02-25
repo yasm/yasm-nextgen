@@ -40,9 +40,11 @@
 
 #include <ostream>
 
-namespace yasm {
+namespace yasm
+{
 
-namespace detail {
+namespace detail
+{
 
 // Adapt a basic_marg_ostream to ostreambuf interface.
 template <typename CharType, typename TraitsType=std::char_traits<CharType> >

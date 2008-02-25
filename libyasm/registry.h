@@ -45,7 +45,8 @@
         static bool do_static_ref = static_ref; \
     }}}
 
-namespace yasm {
+namespace yasm
+{
 
 // standard yasm module types
 class Arch;
@@ -55,10 +56,12 @@ class ObjectFormat;
 class Parser;
 class Preprocessor;
 
-namespace impl {
+namespace impl
+{
 
 // Implemented using the Singleton pattern
-class ModuleFactory : private boost::noncopyable {
+class ModuleFactory : private boost::noncopyable
+{
 public:
     /// A BASE_CREATE_FN is a function that takes no parameters
     /// and returns an auto_ptr to a manufactuedObj.  Note that

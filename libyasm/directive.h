@@ -38,7 +38,8 @@
 #include "name_value.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 class IntNum;
 class Object;
@@ -55,11 +56,13 @@ typedef FUNCTION::function<void (Object& object,
                                  unsigned long line)>
     Directive;
 
-class Directives {
+class Directives
+{
 public:
     /// Tests to perform prior to directive handler being called.
     /// These can be used to simplify a directive function implementation.
-    enum Flags {
+    enum Flags
+    {
         ANY = 0,            ///< Any valparams accepted
         ARG_REQUIRED = 1,   ///< Require at least 1 valparam
         ID_REQUIRED = 2     ///< First valparam must be ID
@@ -86,7 +89,8 @@ private:
     boost::scoped_ptr<Impl> m_impl;
 };
 
-class DirHelpers {
+class DirHelpers
+{
 public:
     DirHelpers();
     ~DirHelpers();
@@ -126,8 +130,8 @@ private:
 /// @param nv       unused
 /// @param out      reference to unsigned long
 /// @param val      value to set
-inline void dir_flag_reset(const NameValue& nv, unsigned long& out,
-                           unsigned long val)
+inline void
+dir_flag_reset(const NameValue& nv, unsigned long& out, unsigned long val)
 {
     out = val;
 }
@@ -138,8 +142,8 @@ inline void dir_flag_reset(const NameValue& nv, unsigned long& out,
 /// @param nv       unused
 /// @param out      reference to unsigned long
 /// @param flag     flag bit(s) to set
-inline void dir_flag_set(const NameValue& nv, unsigned long& out,
-                         unsigned long flag)
+inline void
+dir_flag_set(const NameValue& nv, unsigned long& out, unsigned long flag)
 {
     out |= flag;
 }
@@ -151,8 +155,8 @@ inline void dir_flag_set(const NameValue& nv, unsigned long& out,
 /// @param nv       unused
 /// @param out      reference to unsigned long
 /// @param flag     flag bit(s) to clear
-inline void dir_flag_clear(const NameValue& nv, unsigned long& out,
-                           unsigned long flag)
+inline void
+dir_flag_clear(const NameValue& nv, unsigned long& out, unsigned long flag)
 {
     out &= ~flag;
 }
@@ -164,8 +168,11 @@ inline void dir_flag_clear(const NameValue& nv, unsigned long& out,
 /// @param line     virtual line number
 /// @param out      reference to IntNum
 /// @param out_set  reference that is set to 1 when called
-void dir_intn(const NameValue& nv, Object& obj, unsigned long line,
-              IntNum& out, bool& out_set);
+void dir_intn(const NameValue& nv,
+              Object& obj,
+              unsigned long line,
+              IntNum& out,
+              bool& out_set);
 
 /// Standard helper for DirHelperManager() that parses an string (or
 /// standalone identifier) value.

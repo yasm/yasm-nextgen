@@ -23,12 +23,14 @@
 #include "functional.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 template <typename T> class IntervalTree;
 
 template <typename T>
-class IntervalTreeNode {
+class IntervalTreeNode
+{
     friend class IntervalTree<T>;
 
 public:
@@ -54,7 +56,8 @@ protected:
 };
 
 template <typename T>
-class IntervalTree {
+class IntervalTree
+{
     template <typename U> friend
     std::ostream& operator<< (std::ostream& os, const IntervalTree<U>& it);
 
@@ -73,7 +76,8 @@ public:
 #endif
 
 protected:
-    class RecursionNode {
+    class RecursionNode
+    {
     public:
         RecursionNode() : start_node(0), parentIndex(0), tryRightBranch(false)
         {}
@@ -157,15 +161,19 @@ Overlap(int a1, int a2, int b1, int b2)
 
 } // anonymous namespace
 
-namespace yasm {
+namespace yasm
+{
 
 template <typename T>
 IntervalTreeNode<T>::IntervalTreeNode(long l, long h)
 {
-    if (l < h) {
+    if (l < h)
+    {
         low = l;
         high = h;
-    } else {
+    }
+    else
+    {
         low = h;
         high = l;
     }
@@ -176,10 +184,13 @@ template <typename T>
 IntervalTreeNode<T>::IntervalTreeNode(long l, long h, T d)
     : data(d)
 {
-    if (l < h) {
+    if (l < h)
+    {
         low = l;
         high = h;
-    } else {
+    }
+    else
+    {
         low = h;
         high = l;
     }
@@ -355,7 +366,8 @@ IntervalTree<T>::tree_insert_help(IntervalTreeNode<T>* z)
     z->left=z->right=m_nil;
     y=m_root;
     x=m_root->left;
-    while( x != m_nil) {
+    while( x != m_nil)
+    {
         y=x;
         if (x->low > z->low)
             x=x->left;
@@ -390,7 +402,8 @@ template <typename T>
 void
 IntervalTree<T>::fix_up_max_high(IntervalTreeNode<T>* x)
 {
-    while(x != m_root) {
+    while(x != m_root)
+    {
         x->maxHigh=Max(x->high, Max(x->left->maxHigh, x->right->maxHigh));
         x=x->parent;
     }
@@ -429,16 +442,22 @@ IntervalTree<T>::insert(long low, long high, T data)
     fix_up_max_high(x->parent);
     newNode = x;
     x->red=true;
-    while(x->parent->red) { // use sentinel instead of checking for root
-        if (x->parent == x->parent->parent->left) {
+    while(x->parent->red) // use sentinel instead of checking for root
+    {
+        if (x->parent == x->parent->parent->left)
+        {
             y=x->parent->parent->right;
-            if (y->red) {
+            if (y->red)
+            {
                 x->parent->red=false;
                 y->red=false;
                 x->parent->parent->red=true;
                 x=x->parent->parent;
-            } else {
-                if (x == x->parent->right) {
+            }
+            else
+            {
+                if (x == x->parent->right)
+                {
                     x=x->parent;
                     left_rotate(x);
                 }
@@ -446,17 +465,23 @@ IntervalTree<T>::insert(long low, long high, T data)
                 x->parent->parent->red=true;
                 right_rotate(x->parent->parent);
             } 
-        } else { // case for x->parent == x->parent->parent->right
+        }
+        else // case for x->parent == x->parent->parent->right 
+        {
             // this part is just like the section above with
             // left and right interchanged
             y=x->parent->parent->left;
-            if (y->red) {
+            if (y->red)
+            {
                 x->parent->red=false;
                 y->red=false;
                 x->parent->parent->red=true;
                 x=x->parent->parent;
-            } else {
-                if (x == x->parent->left) {
+            }
+            else
+            {
+                if (x == x->parent->left)
+                {
                     x=x->parent;
                     right_rotate(x);
                 }
@@ -497,13 +522,17 @@ IntervalTree<T>::get_successor(IntervalTreeNode<T>* x) const
 { 
     IntervalTreeNode<T>* y;
 
-    if (m_nil != (y = x->right)) { // assignment to y is intentional
+    if (m_nil != (y = x->right)) // assignment to y is intentional
+    {
         while(y->left != m_nil) // returns the minium of the right subtree of x
             y=y->left;
         return y;
-    } else {
+    }
+    else
+    {
         y=x->parent;
-        while(x == y->right) { // sentinel used instead of checking for nil
+        while(x == y->right) // sentinel used instead of checking for nil
+        {
             x=y;
             y=y->parent;
         }
@@ -532,13 +561,17 @@ IntervalTree<T>::get_predecessor(IntervalTreeNode<T>* x) const
 {
     IntervalTreeNode<T>* y;
 
-    if (m_nil != (y = x->left)) { /* assignment to y is intentional */
+    if (m_nil != (y = x->left)) /* assignment to y is intentional */
+    {
         while(y->right != m_nil) /* returns the maximum of the left subtree of x */
             y=y->right;
         return y;
-    } else {
+    }
+    else
+    {
         y=x->parent;
-        while(x == y->left) { 
+        while(x == y->left)
+        {
             if (y == m_root)
                 return(m_nil); 
             x=y;
@@ -565,7 +598,8 @@ IntervalTree<T>::get_predecessor(IntervalTreeNode<T>* x) const
 
 template <typename T>
 void
-IntervalTreeNode<T>::put(std::ostream& os, IntervalTreeNode<T>* nil,
+IntervalTreeNode<T>::put(std::ostream& os,
+                         IntervalTreeNode<T>* nil,
                          IntervalTreeNode<T>* root) const
 {
     os << ", l=" << low << ", h=" << high << ", mH=" << maxHigh;
@@ -591,7 +625,8 @@ template <typename T>
 void
 IntervalTree<T>::put(std::ostream& os, IntervalTreeNode<T>* x) const
 {
-    if (x != m_nil) {
+    if (x != m_nil)
+    {
         put(os, x->left);
         x->put(os, m_nil, m_root);
         put(os, x->right);
@@ -611,13 +646,15 @@ IntervalTree<T>::~IntervalTree()
     IntervalTreeNode<T>* x = m_root->left;
     std::vector<IntervalTreeNode<T>*> stuffToFree;
 
-    if (x != m_nil) {
+    if (x != m_nil)
+    {
         if (x->left != m_nil)
             stuffToFree.push_back(x->left);
         if (x->right != m_nil)
             stuffToFree.push_back(x->right);
         delete x;
-        while (!stuffToFree.empty()) {
+        while (!stuffToFree.empty())
+        {
             x = stuffToFree.back();
             stuffToFree.pop_back();
 
@@ -656,20 +693,27 @@ IntervalTree<T>::delete_fix_up(IntervalTreeNode<T>* x)
     IntervalTreeNode<T>* w;
     IntervalTreeNode<T>* rootLeft = m_root->left;
 
-    while ((!x->red) && (rootLeft != x)) {
-        if (x == x->parent->left) {
+    while ((!x->red) && (rootLeft != x))
+    {
+        if (x == x->parent->left)
+        {
             w=x->parent->right;
-            if (w->red) {
+            if (w->red)
+            {
                 w->red=false;
                 x->parent->red=true;
                 left_rotate(x->parent);
                 w=x->parent->right;
             }
-            if ( (!w->right->red) && (!w->left->red) ) { 
+            if ( (!w->right->red) && (!w->left->red) )
+            { 
                 w->red=true;
                 x=x->parent;
-            } else {
-                if (!w->right->red) {
+            }
+            else
+            {
+                if (!w->right->red)
+                {
                     w->left->red=false;
                     w->red=true;
                     right_rotate(w);
@@ -679,21 +723,28 @@ IntervalTree<T>::delete_fix_up(IntervalTreeNode<T>* x)
                 x->parent->red=false;
                 w->right->red=false;
                 left_rotate(x->parent);
-                x=rootLeft; /* this is to exit while loop */
+                x=rootLeft; // this is to exit while loop
             }
-        } else { /* the code below is has left and right switched from above */
+        }
+        else // the code below is has left and right switched from above
+        {
             w=x->parent->left;
-            if (w->red) {
+            if (w->red)
+            {
                 w->red=false;
                 x->parent->red=true;
                 right_rotate(x->parent);
                 w=x->parent->left;
             }
-            if ((!w->right->red) && (!w->left->red)) { 
+            if ((!w->right->red) && (!w->left->red))
+            { 
                 w->red=true;
                 x=x->parent;
-            } else {
-                if (!w->left->red) {
+            }
+            else
+            {
+                if (!w->left->red)
+                {
                     w->right->red=false;
                     w->red=true;
                     left_rotate(w);
@@ -703,7 +754,7 @@ IntervalTree<T>::delete_fix_up(IntervalTreeNode<T>* x)
                 x->parent->red=false;
                 w->left->red=false;
                 right_rotate(x->parent);
-                x=rootLeft; /* this is to exit while loop */
+                x=rootLeft; // this is to exit while loop
             }
         }
     }
@@ -747,17 +798,19 @@ IntervalTree<T>::delete_node(IntervalTreeNode<T>* z, long& low, long& high)
     y= ((z->left == m_nil) || (z->right == m_nil)) ? z : get_successor(z);
     x= (y->left == m_nil) ? y->right : y->left;
     if (m_root == (x->parent = y->parent))
-        /* assignment of y->p to x->p is intentional */
+        // assignment of y->p to x->p is intentional
         m_root->left=x;
-    else {
+    else
+    {
         if (y == y->parent->left)
             y->parent->left=x;
         else
             y->parent->right=x;
     }
-    if (y != z) { /* y should not be nil in this case */
+    if (y != z) // y should not be nil in this case
+    {
         assert(y!=m_nil);
-        /* y is the node to splice out and x is its child */
+        // y is the node to splice out and x is its child
   
         y->maxHigh = LONG_MIN;
         y->left=z->left;
@@ -769,10 +822,12 @@ IntervalTree<T>::delete_node(IntervalTreeNode<T>* z, long& low, long& high)
         else
             z->parent->right=y;
         fix_up_max_high(x->parent); 
-        if (!(y->red)) {
+        if (!(y->red))
+        {
             y->red = z->red;
             delete_fix_up(x);
-        } else
+        }
+        else
             y->red = z->red; 
         delete z;
 #ifdef CHECK_INTERVAL_TREE_ASSUMPTIONS
@@ -781,7 +836,9 @@ IntervalTree<T>::delete_node(IntervalTreeNode<T>* z, long& low, long& high)
         assert(!m_nil->red);
         assert(m_nil->maxHigh==LONG_MIN);
 #endif
-    } else {
+    }
+    else
+    {
         fix_up_max_high(x->parent);
         if (!(y->red))
             delete_fix_up(x);
@@ -848,24 +905,31 @@ IntervalTree<T>::enumerate(long low, long high,
   
     // Possible speed up: add min field to prune right searches
 
-    while (stuffToDo) {
-        if (Overlap(low,high,x->low,x->high)) {
+    while (stuffToDo)
+    {
+        if (Overlap(low,high,x->low,x->high))
+        {
             callback(x);
             recursionNodeStack[currentParent].tryRightBranch=true;
         }
-        if(x->left->maxHigh >= low) { // implies x != nil
+        if(x->left->maxHigh >= low) // implies x != nil
+        {
             recursionNodeStack.push_back(RecursionNode(x, currentParent,
                                                        false));
             currentParent = recursionNodeStack.size()-1;
             x = x->left;
-        } else {
+        }
+        else
+        {
             x = x->right;
         }
         stuffToDo = (x != m_nil);
-        while (!stuffToDo && recursionNodeStack.size() > 1) {
+        while (!stuffToDo && recursionNodeStack.size() > 1)
+        {
             RecursionNode top = recursionNodeStack.back();
             recursionNodeStack.pop_back();
-            if (top.tryRightBranch) {
+            if (top.tryRightBranch)
+            {
                 x=top.start_node->right;
                 currentParent=top.parentIndex;
                 recursionNodeStack[currentParent].tryRightBranch=true;
@@ -881,7 +945,8 @@ void
 IntervalTree<T>::Verify(bool condition, const char* condstr, const char* file,
                         unsigned long line)
 {
-    if (!condition) {
+    if (!condition)
+    {
         std::cerr << "Assumption \"" << condstr << "\"" << std::endl;
         std::cerr << "Failed in file " << file << ": at line:" << line;
         std::cerr << std::endl;
@@ -897,7 +962,8 @@ IntervalTree<T>::check_max_high_fields_helper(IntervalTreeNode<T>* y,
                                               long currentHigh,
                                               bool match) const
 {
-    if (y != m_nil) {
+    if (y != m_nil)
+    {
         match = check_max_high_fields_helper(y->left, currentHigh, match) ?
             true : match;
         YASM_INTERVAL_TREE_VERIFY(y->high <= currentHigh);
@@ -915,9 +981,11 @@ template <typename T>
 void
 IntervalTree<T>::check_max_high_fields(IntervalTreeNode<T>* x) const
 {
-    if (x != m_nil) {
+    if (x != m_nil)
+    {
         check_max_high_fields(x->left);
-        if(check_max_high_fields_helper(x, x->maxHigh, false)) {
+        if(check_max_high_fields_helper(x, x->maxHigh, false))
+        {
             std::cerr << "error found in CheckMaxHighFields." << std::endl;
             abort();
         }

@@ -36,11 +36,13 @@
 #include "location.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Bytecode;
 
-class Linemap {
+class Linemap
+{
 public:
     typedef std::set<std::string> Filenames;
 
@@ -115,7 +117,8 @@ private:
     unsigned long m_current;
 
     /// Physical mapping info.
-    class Mapping {
+    class Mapping
+    {
     public:
         Mapping(unsigned long line, const std::string& filename,
                 unsigned long file_line, unsigned long line_inc)
@@ -125,7 +128,9 @@ private:
 
         /// Comparison operator to sort on virtual line number.
         bool operator< (const Mapping& other) const
-        { return (m_line < other.m_line); }
+        {
+            return (m_line < other.m_line);
+        }
 
         /// Monotonically increasing virtual line number.
         unsigned long m_line;
@@ -145,7 +150,8 @@ private:
     Mappings m_map;
 
     /// Source code line info.
-    class Source {
+    class Source
+    {
     public:
         Source() {}
         Source(Location loc, const std::string& source)

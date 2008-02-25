@@ -29,12 +29,19 @@
 #include <libyasm/arch.h>
 #include <libyasm/insn.h>
 
-namespace yasm { namespace arch { namespace x86 {
+namespace yasm
+{
+namespace arch
+{
+namespace x86
+{
 
-class X86Register : public Register {
+class X86Register : public Register
+{
 public:
     // 0-15 (low 4 bits) used for register number, stored in same data area.
-    enum Type {
+    enum Type
+    {
         REG8 = 0x1,
         REG8X = 0x2,    // 64-bit mode only, REX prefix version of REG8
         REG16 = 0x3,
@@ -87,7 +94,8 @@ extern const X86Register* X86_REG8[16];
 extern const X86Register* X86_REG8X[8];
 extern const X86Register* X86_RIP;
 
-class X86RegisterGroup : public RegisterGroup {
+class X86RegisterGroup : public RegisterGroup
+{
 public:
     X86RegisterGroup(const X86Register** regs, unsigned long size);
     ~X86RegisterGroup();
@@ -108,7 +116,8 @@ extern const X86RegisterGroup* X86_FPUGroup;
 extern const X86RegisterGroup* X86_MMXGroup;
 extern const X86RegisterGroup* X86_XMMGroup;
 
-class X86SegmentRegister : public SegmentRegister {
+class X86SegmentRegister : public SegmentRegister
+{
 public:
     X86SegmentRegister(unsigned int num, unsigned char prefix);
     ~X86SegmentRegister();
@@ -132,7 +141,8 @@ extern const X86SegmentRegister* X86_DS;
 extern const X86SegmentRegister* X86_FS;
 extern const X86SegmentRegister* X86_GS;
 
-class X86TargetModifier : public Insn::Operand::TargetModifier {
+class X86TargetModifier : public Insn::Operand::TargetModifier
+{
 public:
     enum Type {
         NEAR = 1,

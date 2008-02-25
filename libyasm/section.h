@@ -41,7 +41,8 @@
 #include "ptr_vector.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Bytecode;
 class Errwarns;
@@ -52,7 +53,8 @@ class Symbol;
 
 /// Basic YASM relocation.  Object formats will need to extend this
 /// structure with additional fields for relocation type, etc.
-class Reloc {
+class Reloc
+{
 public:
     Reloc(std::auto_ptr<IntNum> addr, Symbol* sym);
     virtual ~Reloc();
@@ -64,7 +66,8 @@ protected:
 
 /// A section.
 class Section : public AssocDataContainer,
-                public BytecodeContainer {
+                public BytecodeContainer
+{
 public:
     /// Create a new section.  The section
     /// is added to the object if there's not already a section by that name.

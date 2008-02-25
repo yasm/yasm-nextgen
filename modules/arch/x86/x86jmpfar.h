@@ -29,12 +29,16 @@
 #include <memory>
 
 
-namespace yasm {
+namespace yasm
+{
 
 class BytecodeContainer;
 class Expr;
 
-namespace arch { namespace x86 {
+namespace arch
+{
+namespace x86
+{
 
 class X86Common;
 class X86Opcode;

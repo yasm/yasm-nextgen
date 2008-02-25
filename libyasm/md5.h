@@ -7,7 +7,8 @@
  * $Id: md5.h 1825 2007-04-22 03:32:46Z peter $
  */
 
-namespace yasm {
+namespace yasm
+{
 
 /* Unlike previous versions of this code, uint32 need not be exactly
    32 bits, merely 32 bits or more.  Choosing a data type which is 32
@@ -15,7 +16,8 @@ namespace yasm {
    important.  ANSI guarantees that "unsigned long" will be big enough,
    and always using it seems to have few disadvantages.  */
 
-class MD5 {
+class MD5
+{
     MD5() { init(); }
 
     void init();

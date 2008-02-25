@@ -11,7 +11,8 @@
 
 #include <cstddef>
 
-namespace phash {
+namespace phash
+{
 
 unsigned long lookup(const char* k, size_t length, unsigned long level);
 void checksum(const char* k, size_t length, unsigned long* state);

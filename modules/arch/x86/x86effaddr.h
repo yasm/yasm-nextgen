@@ -28,12 +28,18 @@
 //
 #include <libyasm/effaddr.h>
 
-namespace yasm { namespace arch { namespace x86 {
+namespace yasm
+{
+namespace arch
+{
+namespace x86
+{
 
 class X86Arch;
 class X86Register;
 
-enum X86RexBitPos {
+enum X86RexBitPos
+{
     X86_REX_W = 3,
     X86_REX_R = 2,
     X86_REX_X = 1,
@@ -44,12 +50,16 @@ enum X86RexBitPos {
 // TypeError if impossible to fit reg into REX.  Input parameter rexbit
 // indicates bit of REX to use if REX is needed.  Will not modify REX if not
 // in 64-bit mode or if it wasn't needed to express reg.
-void set_rex_from_reg(unsigned char *rex, unsigned char *drex,
-                      unsigned char *low3, const X86Register* reg,
-                      unsigned int bits, X86RexBitPos rexbit);
+void set_rex_from_reg(unsigned char *rex,
+                      unsigned char *drex,
+                      unsigned char *low3,
+                      const X86Register* reg,
+                      unsigned int bits,
+                      X86RexBitPos rexbit);
 
 // Effective address type
-class X86EffAddr : public EffAddr {
+class X86EffAddr : public EffAddr
+{
 public:
     // How the spare (register) bits in Mod/RM are handled:
     // Even if valid_modrm=0, the spare bits are still valid (don't overwrite!)
@@ -70,7 +80,9 @@ public:
     X86EffAddr();
 
     /// Register constructor.
-    X86EffAddr(const X86Register* reg, unsigned char* rex, unsigned char* drex,
+    X86EffAddr(const X86Register* reg,
+               unsigned char* rex,
+               unsigned char* drex,
                unsigned int bits);
 
     /// Immediate constructor.

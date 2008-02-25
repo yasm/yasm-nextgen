@@ -34,13 +34,15 @@
 #include "marg_ostream_fwd.h"
 #include "value.h"
 
-namespace yasm {
+namespace yasm
+{
 
 class SegmentRegister;
 
 /// Base class for an effective address.
 /// Architectures should derive their own implementation from this.
-class EffAddr {
+class EffAddr
+{
 public:
     typedef std::auto_ptr<EffAddr> Ptr;
 

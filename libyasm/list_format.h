@@ -35,13 +35,15 @@
 #include "module.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Arch;
 class Linemap;
 
 /// List format interface.
-class ListFormat : public Module {
+class ListFormat : public Module
+{
 public:
     enum { module_type = 3 };
 

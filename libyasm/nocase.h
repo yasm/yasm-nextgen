@@ -31,7 +31,8 @@
 ///
 #include <string>
 
-namespace String {
+namespace String
+{
 
 bool nocase_equal(const std::string& s1, const std::string& s2);
 bool nocase_equal(const std::string& s1, const char* s2);

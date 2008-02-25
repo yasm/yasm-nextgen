@@ -36,7 +36,8 @@
 #include "module.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
 class Errwarns;
 class Linemap;
@@ -44,7 +45,8 @@ class Object;
 class Preprocessor;
 
 /// Parser interface.  The "front end" of the assembler.
-class Parser : public Module {
+class Parser : public Module
+{
 public:
     enum { module_type = 5 };
 
@@ -77,8 +79,11 @@ public:
     /// @param linemap      line mapping repository
     /// @param errwarns     error/warning set
     /// @note Parse errors and warnings are stored into errwarns.
-    virtual void parse(Object& object, Preprocessor& preproc, bool save_input,
-                       Linemap& linemap, Errwarns& errwarns) = 0;
+    virtual void parse(Object& object,
+                       Preprocessor& preproc,
+                       bool save_input,
+                       Linemap& linemap,
+                       Errwarns& errwarns) = 0;
 };
 
 } // namespace yasm

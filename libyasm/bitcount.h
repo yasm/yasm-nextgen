@@ -35,15 +35,30 @@
 /// @endlicense
 ///
 
-namespace yasm {
+namespace yasm
+{
 
 // Bit-counting: used primarily by HAMT but also in a few other places.
-inline unsigned long BC_TWO(int c) { return (0x1ul << c); }
-inline unsigned long BC_MSK(int c)
-{ return (((unsigned long)(-1)) / (BC_TWO(BC_TWO(c)) + 1ul)); }
-inline void BC_COUNT(unsigned long& x, int c)
-{ x = (x & BC_MSK(c)) + ((x >> BC_TWO(c)) & BC_MSK(c)); }
-inline unsigned long bit_count(unsigned long s)
+inline unsigned long
+BC_TWO(int c)
+{
+    return (0x1ul << c);
+}
+
+inline unsigned long
+BC_MSK(int c)
+{
+    return (((unsigned long)(-1)) / (BC_TWO(BC_TWO(c)) + 1ul));
+}
+
+inline void
+BC_COUNT(unsigned long& x, int c)
+{
+    x = (x & BC_MSK(c)) + ((x >> BC_TWO(c)) & BC_MSK(c));
+}
+
+inline unsigned long
+bit_count(unsigned long s)
 {
     unsigned long d=s;
     BC_COUNT(d, 0);
@@ -58,7 +73,11 @@ inline unsigned long bit_count(unsigned long s)
 /// of two.
 /// @param x    value
 /// @return Nonzero if x is a power of 2.
-inline bool is_exp2(unsigned long x) { return ((x & (x - 1)) == 0); }
+inline bool
+is_exp2(unsigned long x)
+{
+    return ((x & (x - 1)) == 0);
+}
 
 } // namespace yasm
 

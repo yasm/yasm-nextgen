@@ -36,9 +36,11 @@
 #include "operator.h"
 
 
-namespace yasm {
+namespace yasm
+{
 
-class IntNum {
+class IntNum
+{
     friend std::ostream& operator<< (std::ostream &os, const IntNum &intn);
     friend int compare(const IntNum& intn1, const IntNum& intn2);
     friend bool operator==(const IntNum& lhs, const IntNum& rhs);
@@ -81,7 +83,9 @@ public:
     /// @param sign         signed (true) or unsigned (false) source
     /// @param srcsize      source buffer size (in bytes)
     /// @param bigendian    endianness (true=big, false=little)
-    IntNum(const unsigned char *ptr, bool sign, size_t srcsize,
+    IntNum(const unsigned char *ptr,
+           bool sign,
+           size_t srcsize,
            bool bigendian);
 
     /// Copy constructor.
@@ -145,18 +149,24 @@ public:
     /// Simple value check for 0.
     /// @return True if acc==0.
     bool is_zero() const
-    { return (m_type == INTNUM_L && m_val.l == 0); }
+    {
+        return (m_type == INTNUM_L && m_val.l == 0);
+    }
 
     /// Simple value check for 1.
     /// @param acc      intnum
     /// @return True if acc==1.
     bool is_pos1() const
-    { return (m_type == INTNUM_L && m_val.l == 1); }
+    {
+        return (m_type == INTNUM_L && m_val.l == 1);
+    }
 
     /// Simple value check for -1.
     /// @return True if acc==-1.
     bool is_neg1() const
-    { return (m_type == INTNUM_L && m_val.l == -1); }
+    {
+        return (m_type == INTNUM_L && m_val.l == -1);
+    }
 
     /// Simple sign check.
     /// @return -1 if negative, 0 if zero, +1 if positive
@@ -237,12 +247,25 @@ public:
 
     /// Prefix increment.
     IntNum& operator++();
+
     /// Postfix increment.
-    IntNum operator++(int) { IntNum old(*this); ++*this; return old; }
+    IntNum operator++(int)
+    {
+        IntNum old(*this);
+        ++*this;
+        return old;
+    }
+
     /// Prefix decrement.
     IntNum& operator--();
+
     /// Postfix decrement.
-    IntNum operator--(int) { IntNum old(*this); --*this; return old; }
+    IntNum operator--(int)
+    {
+        IntNum old(*this);
+        --*this;
+        return old;
+    }
 
 private:
     // Compress a bitvector into intnum storage.
@@ -257,7 +280,8 @@ private:
     // @return Passed bv or intnum internal bitvector.
     BitVector::wordptr to_bv(/*@returned@*/ BitVector::wordptr bv) const;
 
-    union {
+    union
+    {
         long l;                 ///< integer value (for integers <=32 bits)
         BitVector::wordptr bv;  ///< bit vector (for integers >32 bits)
     } m_val;
