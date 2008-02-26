@@ -40,27 +40,42 @@
 #include "x86regtmod.h"
 
 
-namespace yasm { namespace arch { namespace x86 {
+namespace yasm
+{
+namespace arch
+{
+namespace x86
+{
 
 void
-set_rex_from_reg(unsigned char *rex, unsigned char *drex,
-                 unsigned char *low3, const X86Register* reg,
-                 unsigned int bits, X86RexBitPos rexbit)
+set_rex_from_reg(unsigned char *rex,
+                 unsigned char *drex,
+                 unsigned char *low3,
+                 const X86Register* reg,
+                 unsigned int bits,
+                 X86RexBitPos rexbit)
 {
     *low3 = (unsigned char)(reg->num()&7);
 
-    if (bits == 64) {
-        if (reg->type() == X86Register::REG8X || reg->num() >= 8) {
-            if (drex) {
+    if (bits == 64)
+    {
+        if (reg->type() == X86Register::REG8X || reg->num() >= 8)
+        {
+            if (drex)
+            {
                 *drex |= ((reg->num() & 8) >> 3) << rexbit;
-            } else {
+            }
+            else
+            {
                 // Check to make sure we can set it
                 if (*rex == 0xff)
                     throw TypeError(
                         N_("cannot use A/B/C/DH with instruction needing REX"));
                 *rex |= 0x40 | (((reg->num() & 8) >> 3) << rexbit);
             }
-        } else if (reg->type() == X86Register::REG8 && (reg->num() & 7) >= 4) {
+        }
+        else if (reg->type() == X86Register::REG8 && (reg->num() & 7) >= 4)
+        {
             // AH/BH/CH/DH, so no REX allowed
             if (*rex != 0 && *rex != 0xff)
                 throw TypeError(
@@ -148,11 +163,13 @@ X86EffAddr::set_reg(const X86Register* reg, unsigned char* rex,
 std::auto_ptr<Expr>
 X86EffAddr::fixup(const X86Arch& arch, std::auto_ptr<Expr> e)
 {
-    if (arch.parser() == X86Arch::PARSER_GAS) {
+    if (arch.parser() == X86Arch::PARSER_GAS)
+    {
         // Need to change foo+rip into foo wrt rip.
         // Note this assumes a particular ordering coming from the parser
         // to work (it's not very smart)!
-        if (e->is_op(Op::ADD) && e->get_terms()[0].get_reg() == X86_RIP) {
+        if (e->is_op(Op::ADD) && e->get_terms()[0].get_reg() == X86_RIP)
+        {
             // replace register with 0
             e->get_terms()[0] = new IntNum(0);
             // build new wrt expression
@@ -247,7 +264,8 @@ get_reg3264(Expr::Term& term, int& regnum, int* regs, unsigned char bits,
 {
     const X86Register* reg = static_cast<const X86Register*>(term.get_reg());
     assert(reg != 0);
-    switch (reg->type()) {
+    switch (reg->type())
+    {
         case X86Register::REG32:
             if (addrsize != 32)
                 return 0;
@@ -337,11 +355,14 @@ x86_expr_checkea_distcheck_reg(Expr* e, unsigned int bits)
     Expr::Terms::iterator havereg_expr = end;
     int retval = 1;     /* default to legal, no changes */
 
-    for (Expr::Terms::iterator i=e->get_terms().begin(); i != end; ++i) {
-        switch (i->get_type()) {
+    for (Expr::Terms::iterator i=e->get_terms().begin(); i != end; ++i)
+    {
+        switch (i->get_type())
+        {
             case Expr::REG:
                 /* Check op to make sure it's valid to use w/register. */
-                switch (e->get_op()) {
+                switch (e->get_op())
+                {
                     case Op::MUL:
                         // Check for reg*reg
                         if (havereg != end)
@@ -362,7 +383,8 @@ x86_expr_checkea_distcheck_reg(Expr* e, unsigned int bits)
             {
                 Expr* sube = i->get_expr();
                 assert(sube != 0);
-                if (sube->contains(Expr::REG)) {
+                if (sube->contains(Expr::REG))
+                {
                     int ret2;
 
                     // Check op to make sure it's valid to use w/register.
@@ -379,7 +401,8 @@ x86_expr_checkea_distcheck_reg(Expr* e, unsigned int bits)
                         return 0;
                     if (ret2 == 2)
                         retval = 2;
-                } else if (sube->contains(Expr::FLOAT))
+                }
+                else if (sube->contains(Expr::FLOAT))
                     return 0;   // Disallow floats
                 break;
             }
@@ -393,7 +416,8 @@ x86_expr_checkea_distcheck_reg(Expr* e, unsigned int bits)
         return retval;
 
     // Distribute
-    if (e->is_op(Op::MUL) && havereg_expr != end) {
+    if (e->is_op(Op::MUL) && havereg_expr != end)
+    {
         Expr* sube = havereg_expr->get_expr();
         assert(sube != 0);
 
@@ -404,7 +428,8 @@ x86_expr_checkea_distcheck_reg(Expr* e, unsigned int bits)
 
         // Iterate over each term in reg expn
         for (Expr::Terms::iterator i=sube->get_terms().begin(),
-             end2=sube->get_terms().end(); i != end2; ++i) {
+             end2=sube->get_terms().end(); i != end2; ++i)
+        {
             // Copy everything EXCEPT havereg_expr term into new expression
             std::auto_ptr<Expr>
                 ne(e->clone(havereg_expr - e->get_terms().begin()));
@@ -449,7 +474,8 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
     // Check for WRT rip first
     std::auto_ptr<Expr> wrt = e->extract_wrt();
     if (wrt.get() != 0 && wrt->is_op(Op::IDENT) &&
-        wrt->get_terms()[0].is_type(Expr::REG)) {
+        wrt->get_terms()[0].is_type(Expr::REG))
+    {
         if (bits != 64)     // only valid in 64-bit mode
             return 1;
         reg = get_reg(wrt->get_terms()[0], regnum);
@@ -460,11 +486,14 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
         // Delete WRT.  Set pcrel to 1 to indicate to x86
         // bytecode code to do PC-relative displacement transform.
         *pcrel = true;
-    } else if (wrt.get() != 0) {
+    }
+    else if (wrt.get() != 0)
+    {
         return 1;
     }
 
-    switch (x86_expr_checkea_distcheck_reg(e, bits)) {
+    switch (x86_expr_checkea_distcheck_reg(e, bits))
+    {
         case 0:
             return 1;
         case 2:
@@ -475,16 +504,20 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
             break;
     }
 
-    switch (e->get_op()) {
+    switch (e->get_op())
+    {
         case Op::ADD:
             // Prescan for non-int multipliers against a reg.
             // This is invalid due to the optimizer structure.
             for (Expr::Terms::iterator i=e->get_terms().begin(),
-                 end=e->get_terms().end(); i != end; ++i) {
-                if (Expr* sube = i->get_expr()) {
+                 end=e->get_terms().end(); i != end; ++i)
+            {
+                if (Expr* sube = i->get_expr())
+                {
                     sube->order_terms();
                     Expr::Terms& terms = sube->get_terms();
-                    if (terms[0].is_type(Expr::REG)) {
+                    if (terms[0].is_type(Expr::REG))
+                    {
                         if (terms.size() > 2)
                             return 1;
                         if (!terms[1].is_type(Expr::INT))
@@ -496,23 +529,29 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
         case Op::IDENT:
             // Check each term for register (and possible multiplier).
             for (Expr::Terms::iterator i=e->get_terms().begin(),
-                 end=e->get_terms().end(); i != end; ++i) {
-                if (i->is_type(Expr::REG)) {
+                 end=e->get_terms().end(); i != end; ++i)
+            {
+                if (i->is_type(Expr::REG))
+                {
                     reg = get_reg(*i, regnum);
                     if (!reg)
                         return 1;
                     (*reg)++;
                     // Let last, largest multipler win indexreg
                     if (indexreg && *reg > 0 && indexval <= *reg &&
-                        !indexmult) {
+                        !indexmult)
+                    {
                         *indexreg = regnum;
                         indexval = *reg;
                     }
-                } else if (Expr* sube = i->get_expr()) {
+                }
+                else if (Expr* sube = i->get_expr())
+                {
                     // Already ordered from ADD above, just grab the value.
                     // Sanity check for EXPR_INT.
                     Expr::Terms& terms = sube->get_terms();
-                    if (terms[0].is_type(Expr::REG)) {
+                    if (terms[0].is_type(Expr::REG))
+                    {
                         IntNum* intn = terms[1].get_int();
                         if (!intn)
                             throw InternalError(
@@ -522,7 +561,8 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
                             return 1;
                         (*reg) += intn->get_int();
                         // Let last, largest multipler win indexreg
-                        if (indexreg && *reg > 0 && indexval <= *reg) {
+                        if (indexreg && *reg > 0 && indexval <= *reg)
+                        {
                             *indexreg = regnum;
                             indexval = *reg;
                             indexmult = 1;
@@ -536,7 +576,8 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
             // Here, too, check for non-int multipliers against a reg.
             e->order_terms();
             Expr::Terms& terms = e->get_terms();
-            if (terms[0].is_type(Expr::REG)) {
+            if (terms[0].is_type(Expr::REG))
+            {
                 if (terms.size() > 2)
                     return 1;
                 IntNum* intn = terms[1].get_int();
@@ -568,7 +609,8 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
 {
     m_valid_modrm = false;      // default to not yet valid
 
-    switch (m_disp.m_size) {
+    switch (m_disp.m_size)
+    {
         case 0:
             break;
         // If not 0, the displacement length was forced; set the Mod bits
@@ -576,10 +618,12 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
         case 8:
             // Byte is only a valid override if there are registers in the
             // EA.  With no registers, we must have a 16/32 value.
-            if (noreg) {
+            if (noreg)
+            {
                 warn_set(WARN_GENERAL, N_("invalid displacement size; fixed"));
                 m_disp.m_size = wordsize;
-            } else
+            }
+            else
                 m_modrm |= 0100;
             m_valid_modrm = true;
             return;
@@ -587,7 +631,8 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
         case 32:
             // Don't allow changing displacement different from BITS setting
             // directly; require an address-size override to change it.
-            if (wordsize != m_disp.m_size) {
+            if (wordsize != m_disp.m_size)
+            {
                 throw ValueError(
                     N_("invalid effective address (displacement size)"));
             }
@@ -602,7 +647,8 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
 
     // The displacement length hasn't been forced (or the forcing wasn't
     // valid), try to determine what it is.
-    if (noreg) {
+    if (noreg)
+    {
         // No register in ModRM expression, so it must be disp16/32,
         // and as the Mod bits are set to 0 by the caller, we're done
         // with the ModRM byte.
@@ -611,13 +657,15 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
         return;
     }
 
-    if (dispreq) {
+    if (dispreq)
+    {
         // for BP/EBP, there *must* be a displacement value, but we
         // may not know the size (8 or 16/32) for sure right now.
         m_need_nonzero_len = true;
     }
 
-    if (m_disp.m_rel) {
+    if (m_disp.m_rel)
+    {
         // Relative displacement; basically all object formats need non-byte
         // for relocation here, so just do that. (TODO: handle this
         // differently?)
@@ -636,7 +684,8 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
     // FIXME: The complex expression equaling zero is probably a rare case,
     // so we ignore it for now.
     /*@null@*/ std::auto_ptr<IntNum> num = m_disp.get_intnum(false);
-    if (num.get() == 0) {
+    if (num.get() == 0)
+    {
         /* Still has unknown values. */
         m_need_nonzero_len = true;
         m_modrm |= 0100;
@@ -645,7 +694,8 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
     }
 
     // Figure out what size displacement we will have.
-    if (num->is_zero() && !m_need_nonzero_len) {
+    if (num->is_zero() && !m_need_nonzero_len)
+    {
         // If we know that the displacement is 0 right now,
         // go ahead and delete the expr and make it so no
         // displacement value is included in the output.
@@ -653,11 +703,15 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
         // we're done with the ModRM byte!
         m_disp.clear();
         m_need_disp = false;
-    } else if (num->in_range(-128, 127)) {
+    }
+    else if (num->in_range(-128, 127))
+    {
         // It fits into a signed byte
         m_disp.m_size = 8;
         m_modrm |= 0100;
-    } else {
+    }
+    else
+    {
         // It's a 16/32-bit displacement
         m_disp.m_size = wordsize;
         m_modrm |= 0200;
@@ -670,8 +724,10 @@ static bool
 getregsize(const Expr::Term& term, unsigned char* addrsize)
 {
     if (const X86Register* reg =
-        static_cast<const X86Register*>(term.get_reg())) {
-        switch (reg->type()) {
+        static_cast<const X86Register*>(term.get_reg()))
+    {
+        switch (reg->type())
+        {
             case X86Register::REG16:
                 *addrsize = 16;
                 break;
@@ -694,12 +750,14 @@ bool
 X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
                   bool address16_op, unsigned char* rex, Bytecode& bc)
 {
-    if (*addrsize == 0) {
+    if (*addrsize == 0)
+    {
         // we need to figure out the address size from what we know about:
         // - the displacement length
         // - what registers are used in the expression
         // - the bits setting
-        switch (m_disp.m_size) {
+        switch (m_disp.m_size)
+        {
             case 16:
                 // must be 16-bit
                 *addrsize = 16;
@@ -707,7 +765,8 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
             case 64:
                 // We have to support this for the MemOffs case, but it's
                 // otherwise illegal.  It's also illegal in non-64-bit mode.
-                if (m_need_modrm || m_need_sib) {
+                if (m_need_modrm || m_need_sib)
+                {
                     throw ValueError(
                         N_("invalid effective address (displacement size)"));
                 }
@@ -717,7 +776,8 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
                 // Must be 32-bit in 16-bit or 32-bit modes.  In 64-bit mode,
                 // we don't know unless we look at the registers, except in the
                 // MemOffs case (see the end of this function).
-                if (bits != 64 || (!m_need_modrm && !m_need_sib)) {
+                if (bits != 64 || (!m_need_modrm && !m_need_sib))
+                {
                     *addrsize = 32;
                     break;
                 }
@@ -736,11 +796,13 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
     }
 
     if ((*addrsize == 32 || *addrsize == 64) &&
-        ((m_need_modrm && !m_valid_modrm) || (m_need_sib && !m_valid_sib))) {
+        ((m_need_modrm && !m_valid_modrm) || (m_need_sib && !m_valid_sib)))
+    {
         int i;
         unsigned char* drex = m_need_drex ? &m_drex : 0;
         unsigned char low3;
-        enum Reg3264Type {
+        enum Reg3264Type
+        {
             REG3264_NONE = -1,
             REG3264_EAX = 0,
             REG3264_ECX,
@@ -766,23 +828,27 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
         int indexreg = REG3264_NONE;    // "index" register (for SIB)
 
         // We can only do 64-bit addresses in 64-bit mode.
-        if (*addrsize == 64 && bits != 64) {
+        if (*addrsize == 64 && bits != 64)
+        {
             throw TypeError(
                 N_("invalid effective address (64-bit in non-64-bit mode)"));
         }
 
-        if (m_pc_rel && bits != 64) {
+        if (m_pc_rel && bits != 64)
+        {
             warn_set(WARN_GENERAL,
                 N_("RIP-relative directive ignored in non-64-bit mode"));
             m_pc_rel = false;
         }
 
-        if (m_disp.has_abs()) {
+        if (m_disp.has_abs())
+        {
             bool pcrel = false;
             switch (x86_expr_checkea_getregusage
                     (m_disp.get_abs(), &indexreg, &pcrel, bits,
                      BIND::bind(&get_reg3264, _1, _2, reg3264mult, bits,
-                                *addrsize))) {
+                                *addrsize)))
+            {
                 case 1:
                     throw ValueError(N_("invalid effective address"));
                 case 2:
@@ -805,7 +871,8 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
         // Find a basereg (*1, but not indexreg), if there is one.
         // Also, if an indexreg hasn't been assigned, try to find one.
         // Meanwhile, check to make sure there's no negative register mults.
-        for (i=0; i<17; i++) {
+        for (i=0; i<17; i++)
+        {
             if (reg3264mult[i] < 0)
                 throw ValueError(N_("invalid effective address"));
             if (i != indexreg && reg3264mult[i] == 1 &&
@@ -818,17 +885,20 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
         // Handle certain special cases of indexreg mults when basereg is
         // empty.
         if (indexreg != REG3264_NONE && basereg == REG3264_NONE)
-            switch (reg3264mult[indexreg]) {
+            switch (reg3264mult[indexreg])
+            {
                 case 1:
                     // Only optimize this way if nosplit wasn't specified
-                    if (!m_nosplit) {
+                    if (!m_nosplit)
+                    {
                         basereg = indexreg;
                         indexreg = -1;
                     }
                     break;
                 case 2:
                     // Only split if nosplit wasn't specified
-                    if (!m_nosplit) {
+                    if (!m_nosplit)
+                    {
                         basereg = indexreg;
                         reg3264mult[indexreg] = 1;
                     }
@@ -854,7 +924,8 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
             throw ValueError(N_("invalid effective address"));
 
         // ESP is not a legal indexreg.
-        if (indexreg == REG3264_ESP) {
+        if (indexreg == REG3264_ESP)
+        {
             // If mult>1 or basereg is ESP also, there's no way to make it
             // legal.
             if (reg3264mult[REG3264_ESP] > 1 || basereg == REG3264_ESP)
@@ -876,14 +947,16 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
 
         // If we're supposed to be RIP-relative and there's no register
         // usage, change to RIP-relative.
-        if (basereg == REG3264_NONE && indexreg == REG3264_NONE && m_pc_rel) {
+        if (basereg == REG3264_NONE && indexreg == REG3264_NONE && m_pc_rel)
+        {
             basereg = REG64_RIP;
             m_disp.set_curpos_rel(bc, true);
         }
 
         // First determine R/M (Mod is later determined from disp size)
         m_need_modrm = true;    // we always need ModRM
-        if (basereg == REG3264_NONE && indexreg == REG3264_NONE) {
+        if (basereg == REG3264_NONE && indexreg == REG3264_NONE)
+        {
             // Just a disp32: in 64-bit mode the RM encoding is used for RIP
             // offset addressing, so we need to use the SIB form instead.
             if (bits == 64) {
@@ -895,7 +968,9 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
                 m_valid_sib = false;
                 m_need_sib = 0;
             }
-        } else if (basereg == REG64_RIP) {
+        }
+        else if (basereg == REG64_RIP)
+        {
             m_modrm |= 5;
             m_sib = 0;
             m_valid_sib = false;
@@ -904,7 +979,9 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
             m_valid_modrm = true;
             m_disp.m_size = 32;
             return true;
-        } else if (indexreg == REG3264_NONE) {
+        }
+        else if (indexreg == REG3264_NONE)
+        {
             // basereg only
             // Don't need to go to the full effort of determining what type
             // of register basereg is, as set_rex_from_reg doesn't pay
@@ -920,20 +997,24 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
                 m_valid_sib = false;
                 m_need_sib = 0;
             }
-        } else {
+        }
+        else
+        {
             // index or both base and index
             m_modrm |= 4;
             m_need_sib = 1;
         }
 
         // Determine SIB if needed
-        if (m_need_sib == 1) {
+        if (m_need_sib == 1)
+        {
             m_sib = 0;      // start with 0
 
             // Special case: no basereg
             if (basereg == REG3264_NONE)
                 m_sib |= 5;
-            else {
+            else
+            {
                 set_rex_from_reg(rex, drex, &low3, X86_REG64[basereg], bits,
                                  X86_REX_B);
                 m_sib |= low3;
@@ -943,12 +1024,14 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
             if (indexreg == REG3264_NONE)
                 m_sib |= 040;
                 // Any scale field is valid, just leave at 0.
-            else {
+            else
+            {
                 set_rex_from_reg(rex, drex, &low3, X86_REG64[indexreg], bits,
                                  X86_REX_X);
                 m_sib |= low3 << 3;
                 // Set scale field, 1 case -> 0, so don't bother.
-                switch (reg3264mult[indexreg]) {
+                switch (reg3264mult[indexreg])
+                {
                     case 2:
                         m_sib |= 0100;
                         break;
@@ -968,8 +1051,10 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
         calc_displen(32, basereg == REG3264_NONE,
                      basereg == REG3264_EBP || basereg == REG64_R13);
         return true;
-    } else if (*addrsize == 16 && m_need_modrm && !m_valid_modrm) {
-        static const unsigned char modrm16[16] = {
+    } else if (*addrsize == 16 && m_need_modrm && !m_valid_modrm)
+    {
+        static const unsigned char modrm16[16] =
+        {
             0006 /* disp16  */, 0007 /* [BX]    */, 0004 /* [SI]    */,
             0000 /* [BX+SI] */, 0005 /* [DI]    */, 0001 /* [BX+DI] */,
             0377 /* invalid */, 0377 /* invalid */, 0006 /* [BP]+d  */,
@@ -978,7 +1063,8 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
             0377 /* invalid */
         };
         int bx=0, si=0, di=0, bp=0; // total multiplier for each reg
-        enum HaveReg {
+        enum HaveReg
+        {
             HAVE_NONE = 0,
             HAVE_BX = 1<<0,
             HAVE_SI = 1<<1,
@@ -988,7 +1074,8 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
         int havereg = HAVE_NONE;
 
         // 64-bit mode does not allow 16-bit addresses
-        if (bits == 64 && !address16_op) {
+        if (bits == 64 && !address16_op)
+        {
             throw TypeError(
                 N_("16-bit addresses not supported in 64-bit mode"));
         }
@@ -998,12 +1085,14 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
         m_valid_sib = false;
         m_need_sib = 0;
 
-        if (m_disp.has_abs()) {
+        if (m_disp.has_abs())
+        {
             bool pcrel = false;
             switch (x86_expr_checkea_getregusage
                     (m_disp.get_abs(), (int *)NULL, &pcrel, bits,
                      BIND::bind(&x86_expr_checkea_get_reg16, _1, _2, bx, si,
-                                di, bp))) {
+                                di, bp)))
+            {
                 case 1:
                     throw ValueError(N_("invalid effective address"));
                 case 2:
@@ -1041,11 +1130,15 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
         // Calculate displacement length (if possible)
         calc_displen(16, havereg == HAVE_NONE, havereg == HAVE_BP);
         return true;
-    } else if (!m_need_modrm && !m_need_sib) {
+    }
+    else if (!m_need_modrm && !m_need_sib)
+    {
         // Special case for MOV MemOffs opcode: displacement but no modrm.
-        switch (*addrsize) {
+        switch (*addrsize)
+        {
             case 64:
-                if (bits != 64) {
+                if (bits != 64)
+                {
                     throw TypeError(
                         N_("invalid effective address (64-bit in non-64-bit mode)"));
                 }
@@ -1056,7 +1149,8 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
                 break;
             case 16:
                 // 64-bit mode does not allow 16-bit addresses
-                if (bits == 64 && !address16_op) {
+                if (bits == 64 && !address16_op)
+                {
                     throw TypeError(
                         N_("16-bit addresses not supported in 64-bit mode"));
                 }

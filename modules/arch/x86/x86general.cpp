@@ -46,9 +46,15 @@
 #include "x86regtmod.h"
 
 
-namespace yasm { namespace arch { namespace x86 {
+namespace yasm
+{
+namespace arch
+{
+namespace x86
+{
 
-class X86General : public Bytecode::Contents {
+class X86General : public Bytecode::Contents
+{
 public:
 
     X86General(const X86Common& common,
@@ -138,21 +144,25 @@ X86General::put(marg_ostream& os) const
     os << "_Instruction_\n";
 
     os << "Effective Address:";
-    if (m_ea) {
+    if (m_ea)
+    {
         os << '\n';
         ++os;
         os << *m_ea;
         --os;
-    } else
+    }
+    else
         os << " (nil)\n";
 
     os << "Immediate Value:";
-    if (m_imm) {
+    if (m_imm)
+    {
         os << '\n';
         ++os;
         os << *m_imm;
         --os;
-    } else
+    }
+    else
         os << " (nil)\n";
 
     os << m_opcode;
@@ -177,13 +187,15 @@ X86General::finalize(Bytecode& bc)
     if (m_imm.get() != 0 && m_imm->finalize(loc))
         throw TooComplexError(N_("immediate expression too complex"));
 
-    if (m_postop == POSTOP_ADDRESS16 && m_common.m_addrsize != 0) {
+    if (m_postop == POSTOP_ADDRESS16 && m_common.m_addrsize != 0)
+    {
         warn_set(WARN_GENERAL, N_("address size override ignored"));
         m_common.m_addrsize = 0;
     }
 
     // Handle non-span-dependent post-ops here
-    switch (m_postop) {
+    switch (m_postop)
+    {
         case POSTOP_SHORT_MOV:
         {
             // Long (modrm+sib) mov instructions in amd64 can be optimized into
@@ -196,7 +208,8 @@ X86General::finalize(Bytecode& bc)
             if (!m_default_rel && m_common.m_mode_bits == 64 &&
                 m_common.m_addrsize == 32 &&
                 (!(abs = m_ea->m_disp.get_abs()) ||
-                 !abs->contains(Expr::REG))) {
+                 !abs->contains(Expr::REG)))
+            {
                 m_ea->set_disponly();
                 // Make the short form permanent.
                 m_opcode.make_alt_1();
@@ -214,7 +227,8 @@ X86General::finalize(Bytecode& bc)
             IntNum* intn;
             if (!(abs = m_imm->get_abs()) ||
                 ((intn = m_imm->get_abs()->get_intnum()) &&
-                 intn->ok_size(32, 0, 1))) {
+                 intn->ok_size(32, 0, 1)))
+            {
                 // Throwaway REX byte
                 unsigned char rex_temp = 0;
 
@@ -240,7 +254,8 @@ X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 {
     unsigned long len = 0;
 
-    if (m_ea != 0) {
+    if (m_ea != 0)
+    {
         // Check validity of effective address and calc R/M bits of
         // Mod/RM byte and SIB byte.  We won't know the Mod field
         // of the Mod/RM byte until we know more about the
@@ -250,7 +265,8 @@ X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
             // failed, don't bother checking rest of insn
             throw ValueError(N_("indeterminate effective address during length calculation"));
 
-        if (m_ea->m_disp.m_size == 0 && m_ea->m_need_nonzero_len) {
+        if (m_ea->m_disp.m_size == 0 && m_ea->m_need_nonzero_len)
+        {
             // Handle unknown case, default to byte-sized and set as
             // critical expression.
             m_ea->m_disp.m_size = 8;
@@ -268,29 +284,37 @@ X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
         len += (m_ea->m_segreg != 0) ? 1 : 0;
     }
 
-    if (m_imm != 0) {
+    if (m_imm != 0)
+    {
         unsigned int immlen = m_imm->m_size;
 
         // TODO: check imm->len vs. sized len from expr?
 
         // Handle signext_imm8 postop special-casing
-        if (m_postop == POSTOP_SIGNEXT_IMM8) {
+        if (m_postop == POSTOP_SIGNEXT_IMM8)
+        {
             /*@null@*/ std::auto_ptr<IntNum> num = m_imm->get_intnum(false);
 
-            if (!num.get()) {
+            if (!num.get())
+            {
                 // Unknown; default to byte form and set as critical
                 // expression.
                 immlen = 8;
                 add_span(bc, 2, *m_imm, -128, 127);
-            } else {
-                if (num->in_range(-128, 127)) {
+            }
+            else
+            {
+                if (num->in_range(-128, 127))
+                {
                     // We can use the sign-extended byte form: shorten
                     // the immediate length to 1 and make the byte form
                     // permanent.
                     m_imm->m_size = 8;
                     m_imm->m_sign = 1;
                     immlen = 8;
-                } else {
+                }
+                else
+                {
                     // We can't.  Copy over the word-sized opcode.
                     m_opcode.make_alt_1();
                 }
@@ -314,9 +338,11 @@ X86General::expand(Bytecode& bc, unsigned long& len, int span,
                    long old_val, long new_val,
                    /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres)
 {
-    if (m_ea != 0 && span == 1) {
+    if (m_ea != 0 && span == 1)
+    {
         // Change displacement length into word-sized
-        if (m_ea->m_disp.m_size == 8) {
+        if (m_ea->m_disp.m_size == 8)
+        {
             m_ea->m_disp.m_size = (m_common.m_addrsize == 16) ? 16 : 32;
             m_ea->m_modrm &= ~0300;
             m_ea->m_modrm |= 0200;
@@ -325,8 +351,10 @@ X86General::expand(Bytecode& bc, unsigned long& len, int span,
         }
     }
 
-    if (m_imm != 0 && span == 2) {
-        if (m_postop == POSTOP_SIGNEXT_IMM8) {
+    if (m_imm != 0 && span == 2)
+    {
+        if (m_postop == POSTOP_SIGNEXT_IMM8)
+        {
             // Update len for new opcode and immediate size
             len -= m_opcode.get_len();
             len += m_imm->m_size/8;
@@ -350,7 +378,8 @@ X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
         m_ea != 0 ? static_cast<const X86SegmentRegister*>(m_ea->m_segreg) : 0);
     if (m_special_prefix != 0)
         bytes.write_8(m_special_prefix);
-    if (m_rex != 0xff && m_rex != 0) {
+    if (m_rex != 0xff && m_rex != 0)
+    {
         if (m_common.m_mode_bits != 64)
             throw InternalError(N_("x86: got a REX prefix in non-64-bit mode"));
         bytes.write_8(m_rex);
@@ -360,14 +389,17 @@ X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
     m_opcode.to_bytes(bytes);
 
     // Effective address: ModR/M (if required), SIB (if required)
-    if (m_ea != 0) {
-        if (m_ea->m_need_modrm) {
+    if (m_ea != 0)
+    {
+        if (m_ea->m_need_modrm)
+        {
             if (!m_ea->m_valid_modrm)
                 throw InternalError(N_("invalid Mod/RM in x86 tobytes_insn"));
             bytes.write_8(m_ea->m_modrm);
         }
 
-        if (m_ea->m_need_sib) {
+        if (m_ea->m_need_sib)
+        {
             if (!m_ea->m_valid_sib)
                 throw InternalError(N_("invalid SIB in x86 tobytes_insn"));
             bytes.write_8(m_ea->m_sib);
@@ -381,10 +413,12 @@ X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
     unsigned long pos = bc.get_fixed_len()+bytes.size();
 
     // Displacement (if required)
-    if (m_ea != 0 && m_ea->m_need_disp) {
+    if (m_ea != 0 && m_ea->m_need_disp)
+    {
         unsigned int disp_len = m_ea->m_disp.m_size/8;
 
-        if (m_ea->m_disp.m_ip_rel) {
+        if (m_ea->m_disp.m_ip_rel)
+        {
             // Adjust relative displacement to end of bytecode
             m_ea->m_disp.add_abs(-(long)disp_len);
         }
@@ -396,15 +430,18 @@ X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
     }
 
     // Immediate (if required)
-    if (m_imm != 0) {
+    if (m_imm != 0)
+    {
         unsigned int imm_len;
-        if (m_postop == POSTOP_SIGNEXT_IMM8) {
+        if (m_postop == POSTOP_SIGNEXT_IMM8)
+        {
             // If we got here with this postop still set, we need to force
             // imm size to 8 here.
             m_imm->m_size = 8;
             m_imm->m_sign = 1;
             imm_len = 1;
-        } else
+        }
+        else
             imm_len = m_imm->m_size/8;
         Location loc = {&bc, pos};
         Bytes& ibytes = bc_out.get_scratch();
@@ -433,7 +470,8 @@ append_general(BytecodeContainer& container,
     Bytecode& bc = container.fresh_bytecode();
 
     /// TODO: optimize other cases when the value is just an integer
-    //if (postop != POSTOP_NONE) {
+    //if (postop != POSTOP_NONE)
+    //{
         bc.transform(Bytecode::Contents::Ptr(new X86General(
             common, opcode, ea, imm, special_prefix, rex, postop,
             default_rel)));

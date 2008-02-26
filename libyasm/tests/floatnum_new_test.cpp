@@ -34,9 +34,11 @@
 #define NELEMS(array)   (sizeof(array) / sizeof(array[0]))
 #endif
 
-namespace yasm {
+namespace yasm
+{
 
-class FloatNumTest {
+class FloatNumTest
+{
 public:
     FloatNumTest(const Init_Entry& val);
     void check();
@@ -75,7 +77,8 @@ FloatNumTest::check()
 static void
 test_new_common(const Init_Entry* vals, int num)
 {
-    for (int i=0; i<num; i++) {
+    for (int i=0; i<num; i++)
+    {
         yasm::FloatNumTest test(vals[i]);
         test.check();
     }

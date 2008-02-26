@@ -30,9 +30,15 @@
 #include <libyasm/registry.h>
 
 
-namespace yasm { namespace dbgfmt { namespace null {
+namespace yasm
+{
+namespace dbgfmt
+{
+namespace null
+{
 
-class NullDebug : public DebugFormat {
+class NullDebug : public DebugFormat
+{
 public:
     NullDebug() {}
     ~NullDebug() {}

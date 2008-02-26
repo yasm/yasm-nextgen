@@ -41,20 +41,31 @@
 #include "x86opcode.h"
 
 
-namespace yasm { namespace arch { namespace x86 {
+namespace yasm
+{
+namespace arch
+{
+namespace x86
+{
 
-class X86Jmp : public Bytecode::Contents {
+class X86Jmp : public Bytecode::Contents
+{
 public:
-    X86Jmp(const X86Common& common, JmpOpcodeSel op_sel,
-           const X86Opcode& shortop, const X86Opcode& nearop,
+    X86Jmp(const X86Common& common,
+           JmpOpcodeSel op_sel,
+           const X86Opcode& shortop,
+           const X86Opcode& nearop,
            std::auto_ptr<Expr> target);
     ~X86Jmp();
 
     void put(marg_ostream& os) const;
     void finalize(Bytecode& bc);
     unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
-    bool expand(Bytecode& bc, unsigned long& len, int span,
-                long old_val, long new_val,
+    bool expand(Bytecode& bc,
+                unsigned long& len,
+                int span,
+                long old_val,
+                long new_val,
                 /*@out@*/ long& neg_thres,
                 /*@out@*/ long& pos_thres);
     void output(Bytecode& bc, BytecodeOutput& bc_out);
@@ -72,8 +83,10 @@ private:
     JmpOpcodeSel m_op_sel;
 };
 
-X86Jmp::X86Jmp(const X86Common& common, JmpOpcodeSel op_sel,
-               const X86Opcode& shortop, const X86Opcode& nearop,
+X86Jmp::X86Jmp(const X86Common& common,
+               JmpOpcodeSel op_sel,
+               const X86Opcode& shortop,
+               const X86Opcode& nearop,
                std::auto_ptr<Expr> target)
     : Bytecode::Contents(),
       m_common(common),
@@ -121,7 +134,8 @@ X86Jmp::put(marg_ostream& os) const
     --os;
 
     os << "OpSel=";
-    switch (m_op_sel) {
+    switch (m_op_sel)
+    {
         case JMP_NONE:
             os << "None";
             break;
@@ -152,12 +166,15 @@ X86Jmp::finalize(Bytecode& bc)
     Location target_loc;
     if (m_target.m_rel
         && (!m_target.m_rel->get_label(&target_loc)
-            || target_loc.bc->get_container() != bc.get_container())) {
+            || target_loc.bc->get_container() != bc.get_container()))
+    {
         // External or out of segment, so we can't check distance.
         // Default to near (if explicitly overridden, we never get to
         // this function anyway).
         m_op_sel = JMP_NEAR;
-    } else {
+    }
+    else
+    {
         // Default to short jump
         m_op_sel = JMP_SHORT;
     }
@@ -170,10 +187,13 @@ X86Jmp::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 
     len += m_common.get_len();
 
-    if (m_op_sel == JMP_NEAR) {
+    if (m_op_sel == JMP_NEAR)
+    {
         len += m_nearop.get_len();
         len += (m_common.m_opersize == 16) ? 2 : 4;
-    } else {
+    }
+    else
+    {
         // Short or maybe long; generate span
         len += m_shortop.get_len() + 1;
         add_span(bc, 1, m_target, -128+len, 127+len);
@@ -182,9 +202,13 @@ X86Jmp::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 }
 
 bool
-X86Jmp::expand(Bytecode& bc, unsigned long& len, int span,
-               long old_val, long new_val,
-               /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres)
+X86Jmp::expand(Bytecode& bc,
+               unsigned long& len,
+               int span,
+               long old_val,
+               long new_val,
+               /*@out@*/ long& neg_thres,
+               /*@out@*/ long& pos_thres)
 {
     if (span != 1)
         throw InternalError(N_("unrecognized span id"));
@@ -210,13 +234,16 @@ X86Jmp::output(Bytecode& bc, BytecodeOutput& bc_out)
     m_common.to_bytes(bytes, 0);
 
     unsigned int size;
-    if (m_op_sel == JMP_SHORT) {
+    if (m_op_sel == JMP_SHORT)
+    {
         // 1 byte relative displacement
         size = 1;
 
         // Opcode
         m_shortop.to_bytes(bytes);
-    } else {
+    }
+    else
+    {
         // 2/4 byte relative displacement (depending on operand size)
         size = (m_common.m_opersize == 16) ? 2 : 4;
 
@@ -259,7 +286,8 @@ append_jmp(BytecodeContainer& container,
     // jump size not forced near or far, so variable size (need contents)
     // TODO: we can be a bit more optimal for backward jumps within the
     // same bytecode (as the distance is known)
-    if (op_sel == JMP_NONE) {
+    if (op_sel == JMP_NONE)
+    {
         bc.transform(Bytecode::Contents::Ptr(new X86Jmp(
             common, op_sel, shortop, nearop, target)));
         return;
@@ -274,14 +302,17 @@ append_jmp(BytecodeContainer& container,
     Value targetv(0, target);
     targetv.m_jump_target = true;
     targetv.m_sign = 1;
-    if (op_sel == JMP_SHORT) {
+    if (op_sel == JMP_SHORT)
+    {
         // Opcode
         shortop.to_bytes(bytes);
 
         // Adjust relative displacement to end of bytecode
         targetv.add_abs(-1);
         targetv.m_size = 8;
-    } else {
+    }
+    else
+    {
         // Opcode
         nearop.to_bytes(bytes);
 

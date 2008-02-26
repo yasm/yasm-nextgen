@@ -43,7 +43,12 @@
 #include "x86regtmod.h"
 
 
-namespace yasm { namespace arch { namespace x86 {
+namespace yasm
+{
+namespace arch
+{
+namespace x86
+{
 
 X86Arch::X86Arch()
     : m_amd64_machine(false),
@@ -133,13 +138,15 @@ X86Arch::set_var(const std::string& var, unsigned long val)
         m_mode_bits = (unsigned int)val;
     else if (String::nocase_equal(var, "force_strict"))
         m_force_strict = (val != 0);
-    else if (String::nocase_equal(var, "default_rel")) {
+    else if (String::nocase_equal(var, "default_rel"))
+    {
         if (m_mode_bits != 64)
             warn_set(WARN_GENERAL,
                      N_("ignoring default rel in non-64-bit mode"));
         else
             m_default_rel = (val != 0);
-    } else
+    }
+    else
         return true;
     return false;
 }
@@ -149,21 +156,25 @@ X86Arch::dir_cpu(Object& object, const NameValues& namevals,
                  const NameValues& objext_namevals, unsigned long line)
 {
     for (NameValues::const_iterator nv=namevals.begin(), end=namevals.end();
-         nv != end; ++nv) {
+         nv != end; ++nv)
+    {
         if (nv->is_string())
             parse_cpu(nv->get_string());
-        else if (nv->is_expr()) {
+        else if (nv->is_expr())
+        {
             std::auto_ptr<Expr> e = nv->get_expr(object, line);
             IntNum* intcpu = e->get_intnum();
             if (!intcpu)
                 throw SyntaxError(String::compose(
                     N_("invalid argument to [%1]"), "CPU"));
-            else {
+            else
+            {
                 std::ostringstream strcpu;
                 strcpu << intcpu->get_uint();
                 parse_cpu(strcpu.str());
             }
-        } else
+        }
+        else
             throw SyntaxError(String::compose(N_("invalid argument to [%1]"),
                                               "CPU"));
     }
@@ -174,12 +185,15 @@ X86Arch::dir_bits(Object& object, const NameValues& namevals,
                   const NameValues& objext_namevals, unsigned long line)
 {
     NameValues::const_iterator nv = namevals.begin();
-    if (nv != namevals.end() && nv->is_expr()) {
+    if (nv != namevals.end() && nv->is_expr())
+    {
         std::auto_ptr<Expr> e = nv->get_expr(object, line);
         IntNum* intcpu = e->get_intnum();
-        if (intcpu) {
+        if (intcpu)
+        {
             unsigned long v = intcpu->get_uint();
-            if (v == 16 || v == 32 || v == 64) {
+            if (v == 16 || v == 32 || v == 64)
+            {
                 m_mode_bits = v;
                 return;
             }
@@ -214,7 +228,8 @@ const unsigned char **
 X86Arch::get_fill() const
 {
     // Fill patterns that GAS uses.
-    static const unsigned char *fill16[16] = {
+    static const unsigned char *fill16[16] =
+    {
         NULL,                           // unused
         (const unsigned char *)
         "\x90",                         // 1 - nop
@@ -258,7 +273,8 @@ X86Arch::get_fill() const
         "\xeb\x0d\x90\x90\x90\x90\x90"  // 15 - jmp $+15; nop fill
         "\x90\x90\x90\x90\x90\x90\x90\x90"
     };
-    static const unsigned char *fill32[16] = {
+    static const unsigned char *fill32[16] =
+    {
         NULL,                           // unused
         (const unsigned char *)
         "\x90",                         // 1 - nop
@@ -323,7 +339,8 @@ X86Arch::get_fill() const
         "\xeb\x0d\x90\x90\x90\x90\x90"  // 15 - jmp $+15; nop fill
         "\x90\x90\x90\x90\x90\x90\x90\x90"
     };
-    static const unsigned char *fill64[16] = {
+    static const unsigned char *fill64[16] =
+    {
         NULL,                           // unused
         (const unsigned char *)
         "\x90",                         // 1 - nop
@@ -364,7 +381,8 @@ X86Arch::get_fill() const
         "\x66\x66\x66\x90\x66\x66\x66"  // 15
         "\x90\x66\x66\x66\x90\x66\x66\x90"
     };
-    switch (m_mode_bits) {
+    switch (m_mode_bits)
+    {
         case 16:
             return fill16;
         case 32:
@@ -397,15 +415,18 @@ X86Arch::get_type() const
 void
 X86Arch::add_directives(Directives& dirs, const std::string& parser)
 {
-    if (String::nocase_equal(parser, "nasm")) {
+    if (String::nocase_equal(parser, "nasm"))
+    {
         dirs.add("cpu",
                  BIND::bind(&X86Arch::dir_cpu, this, _1, _2, _3, _4),
                  Directives::ARG_REQUIRED);
         dirs.add("bits",
                  BIND::bind(&X86Arch::dir_bits, this, _1, _2, _3, _4),
                  Directives::ARG_REQUIRED);
-    } else if (String::nocase_equal(parser, "gas") ||
-               String::nocase_equal(parser, "gnu")) {
+    }
+    else if (String::nocase_equal(parser, "gas") ||
+             String::nocase_equal(parser, "gnu"))
+    {
         dirs.add(".code16",
                  BIND::bind(&X86Arch::dir_code16, this, _1, _2, _3, _4),
                  Directives::ANY);

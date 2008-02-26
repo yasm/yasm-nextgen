@@ -34,9 +34,11 @@
 #define NELEMS(array)   (sizeof(array) / sizeof(array[0]))
 #endif
 
-namespace yasm {
+namespace yasm
+{
 
-class FloatNumTest {
+class FloatNumTest
+{
 public:
     FloatNumTest(const Init_Entry& val);
     void check(int destsize, int valsize);
@@ -60,7 +62,8 @@ FloatNumTest::check(int destsize, int valsize)
 {
     int correct_retval;
     const unsigned char* correct_result;
-    switch (valsize) {
+    switch (valsize)
+    {
         case 32:
             correct_retval = m_val.ret32;
             correct_result = m_val.result32;
@@ -93,7 +96,8 @@ static void
 test_get_common(const Init_Entry* vals, int num, int destsize, int valsize)
 {
     BitVector::Boot();
-    for (int i=0; i<num; i++) {
+    for (int i=0; i<num; i++)
+    {
         yasm::FloatNumTest test(vals[i]);
         test.check(destsize, valsize);
     }

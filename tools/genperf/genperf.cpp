@@ -34,7 +34,8 @@
 
 #include "perfect.h"
 
-class Keyword {
+class Keyword
+{
 public:
     Keyword(const std::string& n, const std::string& a, unsigned int l)
         : name(n), args(a), line(l)
@@ -66,9 +67,11 @@ make_c_tab(
 {
     ub4   i;
     /* table for the mapping for the perfect hash */
-    if (blen >= USE_SCRAMBLE) {
+    if (blen >= USE_SCRAMBLE)
+    {
         /* A way to make the 1-byte values in tab bigger */
-        if (smax > UB2MAXVAL+1) {
+        if (smax > UB2MAXVAL+1)
+        {
             f << "  static const unsigned long scramble[] = {\n";
             for (i=0; i<=UB1MAXVAL; i+=4)
                 f << "    " << std::hex
@@ -76,7 +79,9 @@ make_c_tab(
                   << "0x" << scramble[i+1] << ','
                   << "0x" << scramble[i+2] << ','
                   << "0x" << scramble[i+3] << ",\n" << std::dec;
-        } else {
+        }
+        else
+        {
             f << "  static const unsigned short scramble[] = {\n";
             for (i=0; i<=UB1MAXVAL; i+=8)
                 f << "    " << std::hex
@@ -93,7 +98,8 @@ make_c_tab(
         f << '\n';
     }
 
-    if (blen > 0) {
+    if (blen > 0)
+    {
         /* small adjustments to _a_ to make values distinct */
         if (smax <= UB1MAXVAL+1 || blen >= USE_SCRAMBLE)
             f << "  static const unsigned char ";
@@ -101,10 +107,13 @@ make_c_tab(
             f << "  static const unsigned short ";
         f << "tab[] = {\n";
 
-        if (blen < 16) {
+        if (blen < 16)
+        {
             for (i=0; i<blen; ++i)
                 f << std::setw(3) << scramble[tab[i].val_b] << ',';
-        } else if (blen <= 1024) {
+        }
+        else if (blen <= 1024)
+        {
             for (i=0; i<blen; i+=16)
                 f << "    "
                   << scramble[tab[i+0].val_b] << ','
@@ -123,7 +132,9 @@ make_c_tab(
                   << scramble[tab[i+13].val_b] << ','
                   << scramble[tab[i+14].val_b] << ','
                   << scramble[tab[i+15].val_b] << ",\n";
-        } else if (blen < USE_SCRAMBLE) {
+        }
+        else if (blen < USE_SCRAMBLE)
+        {
             for (i=0; i<blen; i+=8)
                 f << "    "
                   << scramble[tab[i+0].val_b] << ','
@@ -134,7 +145,9 @@ make_c_tab(
                   << scramble[tab[i+5].val_b] << ','
                   << scramble[tab[i+6].val_b] << ','
                   << scramble[tab[i+7].val_b] << ",\n";
-        } else {
+        }
+        else
+        {
             for (i=0; i<blen; i+=16)
                 f << "    "
                   << tab[i+0].val_b << ',' << tab[i+1].val_b << ','
@@ -192,7 +205,8 @@ perfect_gen(std::ostream& out,
     nkeys = 0;
     keys = NULL;
     for (std::vector<Keyword>::iterator kw = kws.begin(), end = kws.end();
-         kw != end; ++kw) {
+         kw != end; ++kw)
+    {
         key *k = (key*)malloc(sizeof(key));
 
         k->name_k = (char*)malloc(kw->name.length()+1);
@@ -208,7 +222,8 @@ perfect_gen(std::ostream& out,
              scramble, &smax, keys, nkeys, &form);
 
     /* The hash function beginning */
-    if (language == "C++") {
+    if (language == "C++")
+    {
         out << "class " << class_name << " {\n";
         out << "public:\n";
         out << "  static const struct " << struct_name << "* ";
@@ -218,7 +233,9 @@ perfect_gen(std::ostream& out,
         out << class_name << "::" << lookup_function_name
             << "(const char* key, size_t len)\n";
         out << "{\n";
-    } else {
+    }
+    else
+    {
         out << "static const struct " << struct_name << " *\n";
         out << lookup_function_name << "(const char *key, size_t len)\n";
         out << "{\n";
@@ -229,15 +246,19 @@ perfect_gen(std::ostream& out,
      */
     out << "  static const struct " << struct_name
         << " pd[" << nkeys << "] = {\n";
-    for (i=0; i<nkeys; i++) {
-        if (tabh[i].key_h) {
+    for (i=0; i<nkeys; i++)
+    {
+        if (tabh[i].key_h)
+        {
             std::vector<Keyword>::iterator kw = kws.begin();
             for (std::vector<Keyword>::iterator end = kws.end();
-                 kw != end; ++kw) {
+                 kw != end; ++kw)
+            {
                 if (kw->name == tabh[i].key_h->name_k)
                     break;
             }
-            if (kw == kws.end()) {
+            if (kw == kws.end())
+            {
                 std::ostringstream err;
                 err << "internal error: could not find `"
                     << tabh[i].key_h->name_k << "'";
@@ -246,7 +267,8 @@ perfect_gen(std::ostream& out,
             }
             out << "#line " << kw->line << " \"" << filename << "\"\n";
             out << "    {\"" << kw->name << '"' << kw->args << '}';
-        } else
+        }
+        else
             out << "    { NULL }";
 
         if (i < nkeys-1)
@@ -296,44 +318,54 @@ main(int argc, char *argv[])
     std::vector<std::string> usercode, usercode2;
     std::vector<Keyword> keywords;
 
-    if (argc != 3) {
+    if (argc != 3)
+    {
         std::cerr << "Usage: genperf <in> <out>" << std::endl;
         return EXIT_FAILURE;
     }
 
     in.open(argv[1], std::ifstream::in);
-    if (in.fail()) {
+    if (in.fail())
+    {
         std::cerr << "Could not open `" << argv[1] << "' for reading"
                   << std::endl;
         return EXIT_FAILURE;
     }
 
     ch = argv[1];
-    while (*ch) {
-        if (*ch == '\\') {
+    while (*ch)
+    {
+        if (*ch == '\\')
+        {
             filename.push_back('/');
             ch++;
-        } else
+        }
+        else
             filename.push_back(*ch++);
     }
 
     /* Parse declarations section */
-    while (in.getline(line, 1024)) {
+    while (in.getline(line, 1024))
+    {
         /* Comments start with # as the first thing on a line */
-        if (line[0] == '#') {
+        if (line[0] == '#')
+        {
             cur_line++;
             continue;
         }
 
         /* Handle structure declaration */
-        if (strncmp(line, "struct", 6) == 0) {
+        if (strncmp(line, "struct", 6) == 0)
+        {
             int braces;
 
-            if (!need_struct) {
+            if (!need_struct)
+            {
                 report_error("struct without %struct-type declaration");
                 return EXIT_FAILURE;
             }
-            if (have_struct) {
+            if (have_struct)
+            {
                 report_error("more than one struct declaration");
                 return EXIT_FAILURE;
             }
@@ -355,7 +387,8 @@ main(int argc, char *argv[])
             do {
                 /* count braces to determine when we're done */
                 ch = line;
-                while (*ch != '\0') {
+                while (*ch != '\0')
+                {
                     if (*ch == '{')
                         braces++;
                     if (*ch == '}')
@@ -372,14 +405,17 @@ main(int argc, char *argv[])
         }
 
         /* Ignore non-declaration lines */
-        if (line[0] != '%') {
+        if (line[0] != '%')
+        {
             cur_line++;
             continue;
         }
 
         /* %% terminates declarations section */
-        if (line[1] == '%') {
-            if (need_struct && !have_struct) {
+        if (line[1] == '%')
+        {
+            if (need_struct && !have_struct)
+            {
                 report_error("%struct-type declaration, but no struct found");
                 return EXIT_FAILURE;
             }
@@ -388,12 +424,14 @@ main(int argc, char *argv[])
         }
 
         /* %{ begins a verbatim code section that ends with %} */
-        if (line[1] == '{') {
+        if (line[1] == '{')
+        {
             std::ostringstream ostrline;
             ostrline << "#line " << cur_line << " \"" << filename << "\"\n";
             usercode.push_back(ostrline.str());
 
-            while (in.getline(line, 1024)) {
+            while (in.getline(line, 1024))
+            {
                 cur_line++;
                 if (line[0] == '%' && line[1] == '}')
                     break;
@@ -403,53 +441,77 @@ main(int argc, char *argv[])
             continue;
         }
 
-        if (strncmp(&line[1], "ignore-case", 11) == 0) {
+        if (strncmp(&line[1], "ignore-case", 11) == 0)
+        {
             ignore_case = true;
-        } else if (strncmp(&line[1], "compare-strncmp", 15) == 0) {
+        }
+        else if (strncmp(&line[1], "compare-strncmp", 15) == 0)
+        {
             compare_strncmp = true;
-        } else if (strncmp(&line[1], "readonly-tables", 15) == 0) {
+        }
+        else if (strncmp(&line[1], "readonly-tables", 15) == 0)
+        {
             readonly_tables = true;
-        } else if (strncmp(&line[1], "language=", 9) == 0) {
+        }
+        else if (strncmp(&line[1], "language=", 9) == 0)
+        {
             ch = &line[10];
             language.clear();
             while (*ch != '\0')
                 language.push_back(*ch++);
-        } else if (strncmp(&line[1], "delimiters=", 11) == 0) {
+        }
+        else if (strncmp(&line[1], "delimiters=", 11) == 0)
+        {
             ch = &line[12];
             delimiters.clear();
             while (*ch != '\0')
                 delimiters.push_back(*ch++);
-        } else if (strncmp(&line[1], "enum", 4) == 0) {
+        }
+        else if (strncmp(&line[1], "enum", 4) == 0)
+        {
             /* unused */
-        } else if (strncmp(&line[1], "struct-type", 11) == 0) {
+        }
+        else if (strncmp(&line[1], "struct-type", 11) == 0)
+        {
             need_struct = true;
-        } else if (strncmp(&line[1], "define", 6) == 0) {
+        }
+        else if (strncmp(&line[1], "define", 6) == 0)
+        {
             /* Several different defines we need to handle */
             ch = &line[7];
             while (isspace(*ch))
                 ch++;
 
-            if (strncmp(ch, "hash-function-name", 18) == 0) {
+            if (strncmp(ch, "hash-function-name", 18) == 0)
+            {
                 /* unused */
-            } else if (strncmp(ch, "lookup-function-name", 20) == 0) {
+            }
+            else if (strncmp(ch, "lookup-function-name", 20) == 0)
+            {
                 ch = &line[7+20+1];
                 while (isspace(*ch))
                     ch++;
                 lookup_function_name.clear();
                 while (isalnum(*ch) || *ch == '_')
                     lookup_function_name.push_back(*ch++);
-            } else if (strncmp(ch, "class-name", 10) == 0) {
+            }
+            else if (strncmp(ch, "class-name", 10) == 0)
+            {
                 ch = &line[7+10+1];
                 while (isspace(*ch))
                     ch++;
                 class_name.clear();
                 while (isalnum(*ch) || *ch == '_')
                     class_name.push_back(*ch++);
-            } else {
+            }
+            else
+            {
                 std::cerr << cur_line << ": unrecognized define `"
                           << line << "'" << std::endl;
             }
-        } else {
+        }
+        else
+        {
             std::cerr << cur_line << ": unrecognized declaration `"
                       << line << "'" << std::endl;
         }
@@ -457,17 +519,20 @@ main(int argc, char *argv[])
         cur_line++;
     }
 
-    if (!go_keywords) {
+    if (!go_keywords)
+    {
         report_error("no keywords section found");
         return EXIT_FAILURE;
     }
 
     /* Parse keywords section */
-    while (in.getline(line, 1024)) {
+    while (in.getline(line, 1024))
+    {
         char *d;
 
         /* Comments start with # as the first thing on a line */
-        if (line[0] == '#') {
+        if (line[0] == '#')
+        {
             cur_line++;
             continue;
         }
@@ -497,7 +562,8 @@ main(int argc, char *argv[])
         return EXIT_FAILURE;
 
     /* Pull in any end code */
-    if (!in.eof()) {
+    if (!in.eof())
+    {
         std::ostringstream ostrline;
         ostrline << "#line " << cur_line << " \"" << filename << "\"\n";
         usercode2.push_back(ostrline.str());
@@ -508,7 +574,8 @@ main(int argc, char *argv[])
 
     /* output code */
     out.open(argv[2], std::ofstream::trunc);
-    if (out.fail()) {
+    if (out.fail())
+    {
         std::cerr << "Could not open `" << argv[2] << "' for writing"
                   << std::endl;
         return EXIT_FAILURE;
@@ -531,7 +598,8 @@ main(int argc, char *argv[])
 
     out.close();
 
-    if (errors > 0) {
+    if (errors > 0)
+    {
         remove(argv[2]);
         return EXIT_FAILURE;
     }

@@ -35,7 +35,8 @@
 
 static const int NUM_SYMS = 1000;
 
-class Symbol {
+class Symbol
+{
 public:
     Symbol(const std::string& name);
     ~Symbol();
@@ -55,7 +56,8 @@ Symbol::~Symbol()
 {
 }
 
-class SymGetName {
+class SymGetName
+{
 public:
     const std::string& operator() (const Symbol* sym) const
     { return sym->get_name(); }
@@ -63,7 +65,8 @@ public:
 
 typedef yasm::hamt<std::string, Symbol, SymGetName> myhamt;
 
-class GenSym {
+class GenSym
+{
 public:
     GenSym(int nsym);
     ~GenSym();
@@ -79,7 +82,8 @@ private:
 GenSym::GenSym(int nsym)
     : m_syms_owner(syms)
 {
-    for (int i=0; i<nsym; i++) {
+    for (int i=0; i<nsym; i++)
+    {
         std::ostringstream os;
         os << "sym" << i;
         syms.push_back(new Symbol(os.str()));
@@ -94,7 +98,8 @@ void
 GenSym::insert_check_new(myhamt& h)
 {
     for (GenSym::Symbols::iterator i=syms.begin(), end=syms.end();
-         i != end; ++i) {
+         i != end; ++i)
+    {
         Symbol* old = h.insert(&(*i));
         BOOST_CHECK(old == 0);
     }
@@ -117,7 +122,8 @@ BOOST_AUTO_TEST_CASE(TestCaseFind)
 
     // find
     for (GenSym::Symbols::iterator i=g.syms.begin(), end=g.syms.end();
-         i != end; ++i) {
+         i != end; ++i)
+    {
         Symbol* sym = h.find(i->get_name());
         BOOST_CHECK(sym == &(*i));
     }
@@ -134,14 +140,16 @@ BOOST_AUTO_TEST_CASE(TestCaseDupInsert)
     // duplicate insertion (without replacement)
     for (GenSym::Symbols::iterator i=g1.syms.begin(), end=g1.syms.end(),
          i2=g2.syms.begin(), i2end=g2.syms.end();
-         i != end && i2 != i2end; ++i, ++i2) {
+         i != end && i2 != i2end; ++i, ++i2)
+    {
         Symbol* old = h.insert(&(*i2));
         BOOST_CHECK(old == &(*i));
     }
 
     // check to make sure the hamt values didn't change
     for (GenSym::Symbols::iterator i=g1.syms.begin(), end=g1.syms.end();
-         i != end; ++i) {
+         i != end; ++i)
+    {
         Symbol* sym = h.find(i->get_name());
         BOOST_CHECK(sym == &(*i));
     }
@@ -158,14 +166,16 @@ BOOST_AUTO_TEST_CASE(TestCaseDupReplace)
     // duplicate insertion (with replacement)
     for (GenSym::Symbols::iterator i=g1.syms.begin(), end=g1.syms.end(),
          i2=g2.syms.begin(), i2end=g2.syms.end();
-         i != end && i2 != i2end; ++i, ++i2) {
+         i != end && i2 != i2end; ++i, ++i2)
+    {
         Symbol* old = h.replace(&(*i2));
         BOOST_CHECK(old == &(*i));
     }
 
     // check to make sure the hamt values changed
     for (GenSym::Symbols::iterator i=g2.syms.begin(), end=g2.syms.end();
-         i != end; ++i) {
+         i != end; ++i)
+    {
         Symbol* sym = h.find(i->get_name());
         BOOST_CHECK(sym == &(*i));
     }

@@ -34,7 +34,12 @@
 #include <libyasm/marg_ostream.h>
 
 
-namespace yasm { namespace arch { namespace x86 {
+namespace yasm
+{
+namespace arch
+{
+namespace x86
+{
 
 marg_ostream&
 operator<< (marg_ostream& os, const X86Opcode& opcode)

@@ -34,7 +34,12 @@
 #include "x86opcode.h"
 
 
-namespace yasm { namespace arch { namespace x86 {
+namespace yasm
+{
+namespace arch
+{
+namespace x86
+{
 
 void append_jmpfar(BytecodeContainer& container,
                    const X86Common& common,

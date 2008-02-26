@@ -38,7 +38,12 @@
 #include "x86regtmod.h"
 
 
-namespace yasm { namespace arch { namespace x86 {
+namespace yasm
+{
+namespace arch
+{
+namespace x86
+{
 
 X86Common::X86Common()
     : m_addrsize(0),
@@ -56,9 +61,11 @@ X86Common::apply_prefixes(unsigned int def_opersize_64,
     bool first = true;
 
     for (std::vector<const Insn::Prefix*>::const_iterator i=prefixes.begin(),
-         end=prefixes.end(); i != end; ++i) {
+         end=prefixes.end(); i != end; ++i)
+    {
         const X86Prefix* prefix = static_cast<const X86Prefix*>(*i);
-        switch (prefix->get_type()) {
+        switch (prefix->get_type())
+        {
             case X86Prefix::LOCKREP:
                 if (m_lockrep_pre != 0)
                     warn_set(WARN_GENERAL,
@@ -71,7 +78,8 @@ X86Common::apply_prefixes(unsigned int def_opersize_64,
             case X86Prefix::OPERSIZE:
                 m_opersize = prefix->get_value();
                 if (m_mode_bits == 64 && m_opersize == 64 &&
-                    def_opersize_64 != 64) {
+                    def_opersize_64 != 64)
+                {
                     if (*rex == 0xff)
                         warn_set(WARN_GENERAL,
                             N_("REX prefix not allowed on this instruction, ignoring"));
@@ -91,8 +99,10 @@ X86Common::apply_prefixes(unsigned int def_opersize_64,
                 else if (*rex == 0xff)
                     warn_set(WARN_GENERAL,
                         N_("REX prefix not allowed on this instruction, ignoring"));
-                else {
-                    if (*rex != 0) {
+                else
+                {
+                    if (*rex != 0)
+                    {
                         if (first)
                             warn_set(WARN_GENERAL,
                                 N_("overriding generated REX prefix"));

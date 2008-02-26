@@ -34,11 +34,15 @@
 #include <libyasm/preproc.h>
 #include <libyasm/registry.h>
 
-namespace yasm {
-namespace preproc {
-namespace raw {
+namespace yasm
+{
+namespace preproc
+{
+namespace raw
+{
 
-class RawPreproc : public Preprocessor {
+class RawPreproc : public Preprocessor
+{
 public:
     RawPreproc() {}
     ~RawPreproc() {}
@@ -80,7 +84,8 @@ RawPreproc::get_line(/*@out@*/ std::string& line)
 
     std::getline(*m_is, line);
 
-    if (m_is->bad()) {
+    if (m_is->bad())
+    {
         m_errwarns->propagate(m_linemap->get_current(),
                               IOError(N_("error when reading from file")));
     }

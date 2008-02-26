@@ -37,7 +37,12 @@
 #include <libyasm/registry.h>
 
 
-namespace yasm { namespace parser { namespace nasm {
+namespace yasm
+{
+namespace parser
+{
+namespace nasm
+{
 
 NasmParser::NasmParser()
 {

@@ -47,7 +47,12 @@
 #include "modules/parsers/nasm/nasm-parser.h"
 
 
-namespace yasm { namespace parser { namespace nasm {
+namespace yasm
+{
+namespace parser
+{
+namespace nasm
+{
 
 inline bool
 is_eol_tok(int tok)
@@ -93,7 +98,8 @@ NasmParser::expect(int token)
     static char strch[] = "` '";
     const char *str;
 
-    switch (token) {
+    switch (token)
+    {
         case INTNUM:            str = "integer"; break;
         case FLTNUM:            str = "floating point value"; break;
         case DIRECTIVE_NAME:    str = "directive name"; break;
@@ -138,7 +144,8 @@ NasmParser::do_parse()
     std::string line;
     Bytecode::Ptr bc(new Bytecode());
 
-    while (m_preproc->get_line(line)) {
+    while (m_preproc->get_line(line))
+    {
         if (m_abspos.get() != 0)
             m_bc = bc.get();
         else
@@ -146,25 +153,30 @@ NasmParser::do_parse()
         m_bc->set_line(cur_line);
         Location loc = {m_bc, m_bc->get_fixed_len()};
 
-        try {
+        try
+        {
             m_bot = m_tok = m_ptr = m_cur = &line[0];
             m_lim = &line[line.length()+1];
 
             get_next_token();
-            if (!is_eol()) {
+            if (!is_eol())
+            {
                 parse_line();
                 demand_eol();
             }
 #if 0
-            if (m_abspos.get() != 0) {
+            if (m_abspos.get() != 0)
+            {
                 // If we're inside an absolute section, just add to the
                 // absolute position rather than appending bytecodes to a
                 // section.  Only RES* are allowed in an absolute section,
                 // so this is easy.
-                if (m_bc->has_contents()) {
+                if (m_bc->has_contents())
+                {
                     unsigned int itemsize;
                     const Expr* numitems = m_bc->reserve_numitems(itemsize);
-                    if (numitems) {
+                    if (numitems)
+                    {
                         Expr::Ptr e(new Expr(numitems->clone(),
                                              Op::MUL,
                                              new IntNum(itemsize),
@@ -179,18 +191,22 @@ NasmParser::do_parse()
                                                 Op::ADD,
                                                 e,
                                                 cur_line));
-                    } else
+                    }
+                    else
                         throw SyntaxError(
                             N_("only RES* allowed within absolute section"));
                     bc.reset(new Bytecode());
                 }
             }
 #endif
-            if (m_save_input) {
+            if (m_save_input)
+            {
                 m_linemap->add_source(loc, line);
             }
             m_errwarns->propagate(cur_line);
-        } catch (Error& err) {
+        }
+        catch (Error& err)
+        {
             m_errwarns->propagate(cur_line, err);
         }
 
@@ -208,7 +224,8 @@ NasmParser::parse_line()
     if (parse_exp())
         return;
 
-    switch (m_token) {
+    switch (m_token)
+    {
         case LINE: // LINE INTNUM '+' INTNUM FILENAME
         {
             get_next_token();
@@ -247,13 +264,16 @@ NasmParser::parse_line()
 
             NameValues dir_nvs, ext_nvs;
             if (m_token != ']' && m_token != ':' &&
-                !parse_directive_namevals(dir_nvs)) {
+                !parse_directive_namevals(dir_nvs))
+            {
                 throw SyntaxError(String::compose(
                     N_("invalid arguments to [%s]"), dirname));
             }
-            if (m_token == ':') {
+            if (m_token == ':')
+            {
                 get_next_token();
-                if (!parse_directive_namevals(ext_nvs)) {
+                if (!parse_directive_namevals(ext_nvs))
+                {
                     throw SyntaxError(String::compose(
                         N_("invalid arguments to [%1]"), dirname));
                 }
@@ -280,7 +300,8 @@ NasmParser::parse_line()
             m_container = m_object->get_cur_section();
 
             get_next_token();
-            if (is_eol()) {
+            if (is_eol())
+            {
                 // label alone on the line
                 warn_set(WARN_ORPHAN_LABEL,
                     N_("label alone on a line without a colon might be in error"));
@@ -290,11 +311,13 @@ NasmParser::parse_line()
             if (m_token == ':')
                 get_next_token();
 
-            if (m_token == EQU) {
+            if (m_token == EQU)
+            {
                 // label EQU expr
                 get_next_token();
                 Expr::Ptr e = parse_expr(NORM_EXPR);
-                if (e.get() == 0) {
+                if (e.get() == 0)
+                {
                     throw SyntaxError(String::compose(
                         N_("expression expected after %1"), "EQU"));
                 }
@@ -305,7 +328,8 @@ NasmParser::parse_line()
             define_label(name, local);
             if (is_eol())
                 break;
-            if (m_token == TIMES) {
+            if (m_token == TIMES)
+            {
                 get_next_token();
                 return parse_times();
             }
@@ -322,14 +346,17 @@ NasmParser::parse_line()
 bool
 NasmParser::parse_directive_namevals(/*@out@*/ NameValues& nvs)
 {
-    for (;;) {
+    for (;;)
+    {
         std::string id;
         std::auto_ptr<NameValue> nv(0);
 
         // Look for value first
-        if (m_token == ID) {
+        if (m_token == ID)
+        {
             get_peek_token();
-            if (m_peek_token == '=') {
+            if (m_peek_token == '=')
+            {
                 std::swap(id, ID_val);
                 get_next_token(); // id
                 get_next_token(); // '='
@@ -337,7 +364,8 @@ NasmParser::parse_directive_namevals(/*@out@*/ NameValues& nvs)
         }
 
         // Look for parameter
-        switch (m_token) {
+        switch (m_token)
+        {
             case STRING:
                 nv.reset(new NameValue(id, STRING_val));
                 get_next_token();
@@ -353,7 +381,8 @@ NasmParser::parse_directive_namevals(/*@out@*/ NameValues& nvs)
                 // the expression "x+y" and not as "x", "+y").
                 if (m_peek_token == NONE)
                     get_peek_token();
-                switch (m_peek_token) {
+                switch (m_peek_token)
+                {
                     case '|': case '^': case '&': case LEFT_OP: case RIGHT_OP:
                     case '+': case '-':
                     case '*': case '/': case '%': case SIGNDIV: case SIGNMOD:
@@ -387,16 +416,20 @@ void
 NasmParser::parse_times()
 {
     Expr::Ptr multiple = parse_expr(DV_EXPR);
-    if (multiple.get() == 0) {
+    if (multiple.get() == 0)
+    {
         throw SyntaxError(String::compose(N_("expression expected after %1"),
                                           "TIMES"));
     }
     BytecodeContainer* orig_container = m_container;
     m_container = &append_multiple(*m_container, multiple, get_cur_line());
-    try {
+    try
+    {
         if (!parse_exp())
             throw SyntaxError(N_("instruction expected after TIMES expression"));
-    } catch (...) {
+    }
+    catch (...)
+    {
         m_container = orig_container;
         throw;
     }
@@ -406,23 +439,28 @@ bool
 NasmParser::parse_exp()
 {
     Insn::Ptr insn = parse_instr();
-    if (insn.get() != 0) {
+    if (insn.get() != 0)
+    {
         insn->append(*m_container);
         return true;
     }
 
-    switch (m_token) {
+    switch (m_token)
+    {
         case DECLARE_DATA:
         {
             unsigned int size = DECLARE_DATA_val/8;
             get_next_token();
 
-            for (;;) {
-                if (m_token == STRING) {
+            for (;;)
+            {
+                if (m_token == STRING)
+                {
                     // Peek ahead to see if we're in an expr.  If we're not,
                     // then generate a real string dataval.
                     get_peek_token();
-                    if (m_peek_token == ',' || is_eol_tok(m_peek_token)) {
+                    if (m_peek_token == ',' || is_eol_tok(m_peek_token))
+                    {
                         append_data(*m_container, STRING_val, size, false);
                         get_next_token();
                         goto dv_done;
@@ -451,7 +489,8 @@ dv_done:
             unsigned int size = RESERVE_SPACE_val/8;
             get_next_token();
             Expr::Ptr e = parse_expr(DV_EXPR);
-            if (e.get() == 0) {
+            if (e.get() == 0)
+            {
                 throw SyntaxError(String::compose(
                     N_("expression expected after %1"), "RESx"));
             }
@@ -487,7 +526,8 @@ dv_done:
             if (is_eol())
                 goto incbin_done;
             maxlen = parse_expr(DV_EXPR);
-            if (maxlen.get() == 0) {
+            if (maxlen.get() == 0)
+            {
                 throw SyntaxError(
                     N_("expression expected for INCBIN maximum length"));
             }
@@ -506,7 +546,8 @@ incbin_done:
 Insn::Ptr
 NasmParser::parse_instr()
 {
-    switch (m_token) {
+    switch (m_token)
+    {
         case INSN:
         {
             Insn::Ptr insn(INSN_val);
@@ -515,7 +556,8 @@ NasmParser::parse_instr()
                 return insn;    // no operands
 
             // parse operands
-            for (;;) {
+            for (;;)
+            {
                 insn->add_operand(parse_operand());
 
                 if (is_eol())
@@ -551,7 +593,8 @@ NasmParser::parse_instr()
 Insn::Operand
 NasmParser::parse_operand()
 {
-    switch (m_token) {
+    switch (m_token)
+    {
         case '[':
         {
             get_next_token();
@@ -589,7 +632,8 @@ NasmParser::parse_operand()
             const Register* reg = op.get_reg();
             if (reg && reg->get_size() != size)
                 throw TypeError(N_("cannot override register size"));
-            else {
+            else
+            {
                 // Silently override others unless a warning is turned on.
                 // This is to allow overrides such as:
                 //   %define arg1 dword [bp+4]
@@ -597,7 +641,8 @@ NasmParser::parse_operand()
                 // Which expands to:
                 //   cmp word dword [bp+4], 2
                 unsigned int opsize = op.get_size();
-                if (opsize != 0) {
+                if (opsize != 0)
+                {
                     if (opsize != size)
                         warn_set(WARN_SIZE_OVERRIDE, String::compose(
                             N_("overriding operand size from %1-bit to %2-bit"),
@@ -632,7 +677,8 @@ NasmParser::parse_operand()
 EffAddr::Ptr
 NasmParser::parse_memaddr()
 {
-    switch (m_token) {
+    switch (m_token)
+    {
         case SEGREG:
         {
             const SegmentRegister* segreg = SEGREG_val;
@@ -707,7 +753,8 @@ NasmParser::parse_memaddr()
         if (e.get() == 0)                               \
             return e;                                   \
                                                         \
-        while (m_token == tok) {                        \
+        while (m_token == tok)                          \
+        {                                               \
             get_next_token();                           \
             Expr::Ptr f = rightfunc(type);              \
             if (f.get() == 0)                           \
@@ -720,7 +767,8 @@ NasmParser::parse_memaddr()
 Expr::Ptr
 NasmParser::parse_expr(ExprType type)
 {
-    switch (type) {
+    switch (type)
+    {
         case NORM_EXPR:
             parse_expr_common(parse_bexpr, ':', parse_bexpr, Op::SEGOFF);
         case DV_EXPR:
@@ -765,14 +813,16 @@ NasmParser::parse_expr3(ExprType type)
     if (e.get() == 0)
         return e;
 
-    while (m_token == LEFT_OP || m_token == RIGHT_OP) {
+    while (m_token == LEFT_OP || m_token == RIGHT_OP)
+    {
         int op = m_token;
         get_next_token();
         Expr::Ptr f = parse_expr4(type);
         if (f.get() == 0)
             return f;
 
-        switch (op) {
+        switch (op)
+        {
             case LEFT_OP: e.reset(new Expr(e, Op::SHL, f)); break;
             case RIGHT_OP: e.reset(new Expr(e, Op::SHR, f)); break;
         }
@@ -787,14 +837,16 @@ NasmParser::parse_expr4(ExprType type)
     if (e.get() == 0)
         return e;
 
-    while (m_token == '+' || m_token == '-') {
+    while (m_token == '+' || m_token == '-')
+    {
         int op = m_token;
         get_next_token();
         Expr::Ptr f = parse_expr5(type);
         if (f.get() == 0)
             return f;
 
-        switch (op) {
+        switch (op)
+        {
             case '+': e.reset(new Expr(e, Op::ADD, f)); break;
             case '-': e.reset(new Expr(e, Op::SUB, f)); break;
         }
@@ -810,14 +862,16 @@ NasmParser::parse_expr5(ExprType type)
         return e;
 
     while (m_token == '*' || m_token == '/' || m_token == '%'
-           || m_token == SIGNDIV || m_token == SIGNMOD) {
+           || m_token == SIGNDIV || m_token == SIGNMOD)
+    {
         int op = m_token;
         get_next_token();
         Expr::Ptr f = parse_expr6(type);
         if (f.get() == 0)
             return f;
 
-        switch (op) {
+        switch (op)
+        {
             case '*': e.reset(new Expr(e, Op::MUL, f)); break;
             case '/': e.reset(new Expr(e, Op::DIV, f)); break;
             case '%': e.reset(new Expr(e, Op::MOD, f)); break;
@@ -834,8 +888,10 @@ NasmParser::parse_expr6(ExprType type)
     Expr::Ptr e(0);
 
     /* directives allow very little and handle IDs specially */
-    if (type == DIR_EXPR) {
-        switch (m_token) {
+    if (type == DIR_EXPR)
+    {
+        switch (m_token)
+        {
         case '~':
             get_next_token();
             e = parse_expr6(type);
@@ -862,7 +918,9 @@ NasmParser::parse_expr6(ExprType type)
         default:
             return e;
         }
-    } else switch (m_token) {
+    }
+    else switch (m_token)
+    {
         case '+':
             get_next_token();
             return parse_expr6(type);
@@ -919,7 +977,8 @@ NasmParser::parse_expr6(ExprType type)
             // "$" references the current assembly position
             if (m_abspos.get() != 0)
                 e.reset(m_abspos->clone());
-            else {
+            else
+            {
                 std::auto_ptr<Symbol> sym(new Symbol("$"));
                 m_bc = &m_container->fresh_bytecode();
                 Location loc = {m_bc, m_bc->get_fixed_len()};
@@ -932,7 +991,8 @@ NasmParser::parse_expr6(ExprType type)
             // "$$" references the start of the current section
             if (m_absstart.get() != 0)
                 e.reset(m_absstart->clone());
-            else {
+            else
+            {
                 std::auto_ptr<Symbol> sym(new Symbol("$$"));
                 Location loc = {&m_container->bcs_first(), 0};
                 sym->define_label(loc, get_cur_line());
@@ -956,7 +1016,8 @@ NasmParser::define_label(const std::string& name, bool local)
     Symbol& sym = m_object->get_sym(name);
     if (m_abspos.get() != 0)
         sym.define_equ(Expr::Ptr(m_abspos->clone()), get_cur_line());
-    else {
+    else
+    {
         m_bc = &m_container->fresh_bytecode();
         Location loc = {m_bc, m_bc->get_fixed_len()};
         sym.define_label(loc, get_cur_line());
@@ -979,7 +1040,8 @@ NasmParser::dir_align(Object& object, const NameValues& namevals,
     // Really, we shouldn't end up with an align directive in an absolute
     // section (as it's supposed to be only used for nop fill), but handle
     // it gracefully anyway.
-    if (m_abspos.get() != 0) {
+    if (m_abspos.get() != 0)
+    {
         Expr::Ptr boundval = namevals.front().get_expr(object, line);
         Expr::Ptr e(new Expr(
             new Expr(m_absstart->clone(), Op::SUB, m_abspos->clone(), line),
@@ -987,7 +1049,9 @@ NasmParser::dir_align(Object& object, const NameValues& namevals,
             new Expr(boundval, Op::SUB, new IntNum(1), line),
             line));
         m_abspos.reset(new Expr(m_abspos, Op::ADD, e, line));
-    } else {
+    }
+    else
+    {
         Section* cur_section = object.get_cur_section();
         Expr::Ptr boundval = namevals.front().get_expr(object, line);
         IntNum* boundintn;
@@ -995,11 +1059,13 @@ NasmParser::dir_align(Object& object, const NameValues& namevals,
         // Largest .align in the section specifies section alignment.
         // Note: this doesn't match NASM behavior, but is a lot more
         // intelligent!
-        if (boundval.get() != 0 && (boundintn = boundval->get_intnum())) {
+        if (boundval.get() != 0 && (boundintn = boundval->get_intnum()))
+        {
             unsigned long boundint = boundintn->get_uint();
 
             // Alignments must be a power of two.
-            if (is_exp2(boundint)) {
+            if (is_exp2(boundint))
+            {
                 if (boundint > cur_section->get_align())
                     cur_section->set_align(boundint);
             }
@@ -1019,8 +1085,10 @@ NasmParser::dir_default(Object& object, const NameValues& namevals,
                         const NameValues& objext_namevals, unsigned long line)
 {
     for (NameValues::const_iterator nv=namevals.begin(), end=namevals.end();
-         nv != end; ++nv) {
-        if (nv->is_id()) {
+         nv != end; ++nv)
+    {
+        if (nv->is_id())
+        {
             std::string id = nv->get_id();
             if (String::nocase_equal(id, "rel") == 0)
                 object.get_arch()->set_var("default_rel", 1);
@@ -1029,7 +1097,8 @@ NasmParser::dir_default(Object& object, const NameValues& namevals,
             else
                 throw SyntaxError(String::compose(
                     N_("unrecognized default `%1'"), id));
-        } else
+        }
+        else
             throw SyntaxError(N_("unrecognized default value"));
     }
 }
@@ -1044,7 +1113,8 @@ NasmParser::directive(const std::string& name,
                              get_cur_line());
 #endif
     Section* cursect = m_object->get_cur_section();
-    if (m_absstart.get() != 0 && cursect) {
+    if (m_absstart.get() != 0 && cursect)
+    {
         // We switched to a new section.  Get out of absolute section mode.
         m_absstart.reset(0);
         m_abspos.reset(0);

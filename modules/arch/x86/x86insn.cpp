@@ -52,13 +52,19 @@
 #include "x86regtmod.h"
 
 
-namespace yasm { namespace arch { namespace x86 {
+namespace yasm
+{
+namespace arch
+{
+namespace x86
+{
 
 static std::string cpu_find_reverse(unsigned int cpu0, unsigned int cpu1,
                                     unsigned int cpu2);
 
 // Opcode modifiers.
-enum X86OpcodeModifier {
+enum X86OpcodeModifier
+{
     MOD_Gap = 0,        // Eats a parameter / does nothing
     MOD_PreAdd = 1,     // Parameter adds to "special" prefix
     MOD_Op0Add = 2,     // Parameter adds to opcode byte 0
@@ -73,7 +79,8 @@ enum X86OpcodeModifier {
 };
 
 // GAS suffix flags for instructions
-enum X86GasSuffixFlags {
+enum X86GasSuffixFlags
+{
     NONE = 0,
     SUF_B = 1<<0,
     SUF_W = 1<<1,
@@ -91,7 +98,8 @@ enum X86GasSuffixFlags {
     WEAK = 1<<5             // Relaxed operand mode for GAS
 };
 
-enum X86OperandType {
+enum X86OperandType
+{
     OPT_Imm = 0,        // immediate
     OPT_Reg = 1,        // any general purpose or FPU register
     OPT_Mem = 2,        // memory
@@ -128,7 +136,8 @@ enum X86OperandType {
     OPT_SIMDRegMatch0 = 27
 };
 
-enum X86OperandSize {
+enum X86OperandSize
+{
     // any size acceptable/no size spec acceptable (dep. on strict)
     OPS_Any = 0,
     // 8/16/32/64 bits (from user or reg size)
@@ -144,7 +153,8 @@ enum X86OperandSize {
     OPS_BITS = 7
 };
 
-enum X86OperandTargetmod {
+enum X86OperandTargetmod
+{
     OPTM_None = 0,  // no target mod acceptable
     OPTM_Near = 1,  // NEAR
     OPTM_Short = 2, // SHORT
@@ -152,7 +162,8 @@ enum X86OperandTargetmod {
     OPTM_To = 4     // TO
 };
 
-enum X86OperandAction {
+enum X86OperandAction
+{
     OPA_None = 0,   // does nothing (operand data is discarded)
     OPA_EA = 1,     // operand data goes into ea field
     OPA_Imm = 2,    // operand data goes into imm field
@@ -174,7 +185,8 @@ enum X86OperandAction {
     OPA_DREX = 12   // operand data goes into DREX "dest" field
 };
 
-enum X86OperandPostAction {
+enum X86OperandPostAction
+{
     OPAP_None = 0,
     // sign-extended imm8 that could expand to a large imm16/32
     OPAP_SImm8 = 1,
@@ -186,7 +198,8 @@ enum X86OperandPostAction {
     OPAP_SImm32Avail = 4
 };
 
-struct X86InfoOperand {
+struct X86InfoOperand
+{
     // Operand types.  These are more detailed than the "general" types for all
     // architectures, as they include the size, for instance.
 
@@ -225,7 +238,8 @@ struct X86InfoOperand {
     unsigned int post_action:3;
 };
 
-struct X86InsnInfo {
+struct X86InsnInfo
+{
     // GAS suffix flags
     unsigned int gas_flags:8;      // Enabled for these GAS suffixes
 
@@ -311,15 +325,19 @@ X86Insn::do_append_jmpfar(BytecodeContainer& container, const X86InsnInfo& info)
 
     std::auto_ptr<Expr> segment(0);
 
-    if (imm->is_op(Op::SEGOFF)) {
+    if (imm->is_op(Op::SEGOFF))
+    {
         // SEG:OFF expression; split it.
         segment = imm->extract_segoff();
         if (segment.get() == 0)
             throw InternalError(N_("didn't get SEG:OFF expression in jmpfar"));
-    } else if (op.get_targetmod() == X86_FAR) {
+    }
+    else if (op.get_targetmod() == X86_FAR)
+    {
         // "FAR imm" target needs to become "seg imm:imm".
         segment.reset(new Expr(Op::SEG, imm->clone(), imm->get_line()));
-    } else
+    }
+    else
         throw InternalError(N_("didn't get FAR expression in jmpfar"));
 
     X86Common common;
@@ -365,10 +383,12 @@ X86Insn::match_jmp_info(const X86InsnInfo& info, unsigned int opersize,
     if (info.opersize != opersize)
         return false;
 
-    switch (insn_operands[info.operands_index+0].targetmod) {
+    switch (insn_operands[info.operands_index+0].targetmod)
+    {
         case OPTM_Short:
             shortop = X86Opcode(info.opcode_len, info.opcode);
-            for (unsigned int i=0; i<NELEMS(info.modifiers); i++) {
+            for (unsigned int i=0; i<NELEMS(info.modifiers); i++)
+            {
                 if (info.modifiers[i] == MOD_Op0Add)
                     shortop.add(0, m_mod_data[i]);
             }
@@ -377,7 +397,8 @@ X86Insn::match_jmp_info(const X86InsnInfo& info, unsigned int opersize,
             break;
         case OPTM_Near:
             nearop = X86Opcode(info.opcode_len, info.opcode);
-            for (unsigned int i=0; i<NELEMS(info.modifiers); i++) {
+            for (unsigned int i=0; i<NELEMS(info.modifiers); i++)
+            {
                 if (info.modifiers[i] == MOD_Op1Add)
                     nearop.add(1, m_mod_data[i]);
             }
@@ -401,7 +422,8 @@ X86Insn::do_append_jmp(BytecodeContainer& container, const X86InsnInfo& jinfo)
     JmpOpcodeSel op_sel;
 
     // See if the user explicitly specified short/near/far.
-    switch (insn_operands[jinfo.operands_index+0].targetmod) {
+    switch (insn_operands[jinfo.operands_index+0].targetmod)
+    {
         case OPTM_Short:
             op_sel = JMP_SHORT;
             break;
@@ -416,7 +438,8 @@ X86Insn::do_append_jmp(BytecodeContainer& container, const X86InsnInfo& jinfo)
     // Needs to match opersize and number of operands, also be within CPU.
     X86Opcode shortop, nearop;
     for (const X86InsnInfo* info = &m_group[0]; info != &m_group[m_num_info];
-         ++info) {
+         ++info)
+    {
         if (match_jmp_info(*info, jinfo.opersize, shortop, nearop))
             break;
     }
@@ -426,7 +449,8 @@ X86Insn::do_append_jmp(BytecodeContainer& container, const X86InsnInfo& jinfo)
     if ((op_sel == JMP_NEAR) && nearop.is_empty())
         throw TypeError(N_("no NEAR form of that jump instruction exists"));
 
-    if (op_sel == JMP_NONE) {
+    if (op_sel == JMP_NONE)
+    {
         if (nearop.is_empty())
             op_sel = JMP_SHORT;
         if (shortop.is_empty())
@@ -444,7 +468,8 @@ X86Insn::do_append_jmp(BytecodeContainer& container, const X86InsnInfo& jinfo)
             size_lookup[insn_operands[jinfo.operands_index+1].size];
 
     // Check for address size override
-    for (unsigned int i=0; i<NELEMS(jinfo.modifiers); i++) {
+    for (unsigned int i=0; i<NELEMS(jinfo.modifiers); i++)
+    {
         if (jinfo.modifiers[i] == MOD_AdSizeR)
             common.m_addrsize = m_mod_data[i];
     }
@@ -466,7 +491,8 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
     EffAddr* ea = op.get_memory();
 
     // Check operand type
-    switch (info_op.type) {
+    switch (info_op.type)
+    {
         case OPT_Imm:
             if (!op.is_type(Insn::Operand::IMM))
                 return false;
@@ -478,7 +504,8 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
         case OPT_Reg:
             if (!reg)
                 return false;
-            switch (reg->type()) {
+            switch (reg->type())
+            {
                 case X86Register::REG8:
                 case X86Register::REG8X:
                 case X86Register::REG16:
@@ -502,7 +529,8 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
         case OPT_SIMDReg:
             if (!reg)
                 return false;
-            switch (reg->type()) {
+            switch (reg->type())
+            {
                 case X86Register::MMXREG:
                 case X86Register::XMMREG:
                     break;
@@ -597,11 +625,13 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
             break;
         case OPT_Imm1:
         {
-            if (Expr* imm = op.get_imm()) {
+            if (Expr* imm = op.get_imm())
+            {
                 const IntNum* num = imm->get_intnum();
                 if (!num || !num->is_pos1())
                     return false;
-            } else
+            }
+            else
                 return false;
             break;
         }
@@ -642,21 +672,27 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
 
     // Check operand size
     unsigned int size = size_lookup[info_op.size];
-    if (m_suffix != 0) {
+    if (m_suffix != 0)
+    {
         // Require relaxed operands for GAS mode (don't allow
         // per-operand sizing).
-        if (reg && op.get_size() == 0) {
+        if (reg && op.get_size() == 0)
+        {
             // Register size must exactly match
             if (reg->get_size() != size)
                 return false;
-        } else if ((info_op.type == OPT_Imm
-                    || info_op.type == OPT_ImmNotSegOff
-                    || info_op.type == OPT_Imm1)
-                   && !info_op.relaxed
-                   && info_op.action != OPA_JmpRel)
+        }
+        else if ((info_op.type == OPT_Imm
+                  || info_op.type == OPT_ImmNotSegOff
+                  || info_op.type == OPT_Imm1)
+                 && !info_op.relaxed
+                 && info_op.action != OPA_JmpRel)
             return false;
-    } else {
-        if (reg && op.get_size() == 0) {
+    }
+    else
+    {
+        if (reg && op.get_size() == 0)
+        {
             // Register size must exactly match
             if ((bypass == 4 && (&op-&op0) == 0)
                 || (bypass == 5 && (&op-&op0) == 1)
@@ -664,16 +700,21 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
                 ;
             else if (reg->get_size() != size)
                 return false;
-        } else {
+        }
+        else
+        {
             if ((bypass == 1 && (&op-&op0) == 0)
                 || (bypass == 2 && (&op-&op0) == 1)
                 || (bypass == 3 && (&op-&op0) == 2))
                 ;
-            else if (info_op.relaxed) {
+            else if (info_op.relaxed)
+            {
                 // Relaxed checking
                 if (size != 0 && op.get_size() != size && op.get_size() != 0)
                     return false;
-            } else {
+            }
+            else
+            {
                 // Strict checking
                 if (op.get_size() != size)
                     return false;
@@ -682,18 +723,22 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
     }
 
     // Check for 64-bit effective address size in NASM mode
-    if (m_suffix == 0 && ea) {
-        if (info_op.eas64) {
+    if (m_suffix == 0 && ea)
+    {
+        if (info_op.eas64)
+        {
             if (ea->m_disp.m_size != 64)
                 return false;
-        } else if (ea->m_disp.m_size == 64)
+        }
+        else if (ea->m_disp.m_size == 64)
             return false;
     }
 
     // Check target modifier
     const X86TargetModifier* targetmod =
         static_cast<const X86TargetModifier*>(op.get_targetmod());
-    switch (info_op.targetmod) {
+    switch (info_op.targetmod)
+    {
         case OPTM_None:
             if (targetmod != 0)
                 return false;
@@ -785,7 +830,8 @@ X86Insn::match_info(const X86InsnInfo& info, const unsigned int* size_lookup,
 #else
     const Operand& last = m_operands.back();
     const X86InfoOperand* first2 = &insn_operands[info.operands_index];
-    if (m_parser == X86Arch::PARSER_GAS && !(gas_flags & GAS_NO_REV)) {
+    if (m_parser == X86Arch::PARSER_GAS && !(gas_flags & GAS_NO_REV))
+    {
         Operands::const_reverse_iterator
             first1 = m_operands.rbegin(), last1 = m_operands.rend();
         while (first1 != last1)
@@ -796,7 +842,9 @@ X86Insn::match_info(const X86InsnInfo& info, const unsigned int* size_lookup,
             ++first2;
         }
         return true;
-    } else {
+    }
+    else
+    {
         Operands::const_iterator
             first1 = m_operands.begin(), last1 = m_operands.end();
         while (first1 != last1)
@@ -832,8 +880,10 @@ X86Insn::match_error(const unsigned int* size_lookup) const
 
     // Check for matching # of operands
     bool found = false;
-    for (int ni=m_num_info; ni>0; ni--, ++i) {
-        if (m_operands.size() == i->num_operands) {
+    for (int ni=m_num_info; ni>0; ni--, ++i)
+    {
+        if (m_operands.size() == i->num_operands)
+        {
             found = true;
             break;
         }
@@ -842,13 +892,15 @@ X86Insn::match_error(const unsigned int* size_lookup) const
         throw TypeError(N_("invalid number of operands"));
 
     int bypass;
-    for (bypass=1; bypass<9; bypass++) {
+    for (bypass=1; bypass<9; bypass++)
+    {
         i = find_match(size_lookup, bypass);
         if (i)
             break;
     }
 
-    switch (bypass) {
+    switch (bypass)
+    {
         case 1:
         case 4:
             throw TypeError(
@@ -887,16 +939,19 @@ X86Insn::do_append(BytecodeContainer& container)
     // if this is a relative jump (OPA_JmpRel).  If so, run through the
     // operands and adjust for dereferences / lack thereof.
     if (m_parser == X86Arch::PARSER_GAS
-        && insn_operands[m_group->operands_index+0].action == OPA_JmpRel) {
+        && insn_operands[m_group->operands_index+0].action == OPA_JmpRel)
+    {
         for (Insn::Operands::iterator op = m_operands.begin(),
-             end = m_operands.end(); op != end; ++op) {
+             end = m_operands.end(); op != end; ++op)
+        {
             const X86Register* reg =
                 static_cast<const X86Register*>(op->get_reg());
             EffAddr* ea = op->get_memory();
 
             if (!op->is_deref() && (reg || (ea && ea->m_strong)))
                 warn_set(WARN_GENERAL, N_("indirect call without `*'"));
-            if (!op->is_deref() && ea && !ea->m_strong) {
+            if (!op->is_deref() && ea && !ea->m_strong)
+            {
                 // Memory that is not dereferenced, and not strong, is
                 // actually an immediate for the purposes of relative jumps.
                 if (ea->m_segreg != 0)
@@ -910,14 +965,17 @@ X86Insn::do_append(BytecodeContainer& container)
 
     const X86InsnInfo* info = find_match(size_lookup, 0);
 
-    if (!info) {
+    if (!info)
+    {
         // Didn't find a match
         match_error(size_lookup);
         throw TypeError(N_("invalid combination of opcode and operands"));
     }
 
-    if (m_operands.size() > 0) {
-        switch (insn_operands[info->operands_index+0].action) {
+    if (m_operands.size() > 0)
+    {
+        switch (insn_operands[info->operands_index+0].action)
+        {
             case OPA_JmpRel:
                 // Shortcut to JmpRel
                 do_append_jmp(container, *info);
@@ -932,7 +990,8 @@ X86Insn::do_append(BytecodeContainer& container)
     do_append_general(container, *info, size_lookup);
 }
 
-class BuildGeneral {
+class BuildGeneral
+{
 public:
     BuildGeneral(const X86InsnInfo& info, unsigned int mode_bits,
                  const unsigned int* size_lookup, bool force_strict,
@@ -972,8 +1031,10 @@ private:
 };
 
 inline
-BuildGeneral::BuildGeneral(const X86InsnInfo& info, unsigned int mode_bits,
-                           const unsigned int* size_lookup, bool force_strict,
+BuildGeneral::BuildGeneral(const X86InsnInfo& info,
+                           unsigned int mode_bits,
+                           const unsigned int* size_lookup,
+                           bool force_strict,
                            bool default_rel)
     : m_info(info),
       m_mode_bits(mode_bits),
@@ -1006,8 +1067,10 @@ void
 BuildGeneral::apply_modifiers(unsigned char* mod_data)
 {
     // Apply modifiers
-    for (unsigned int i=0; i<NELEMS(m_info.modifiers); i++) {
-        switch (m_info.modifiers[i]) {
+    for (unsigned int i=0; i<NELEMS(m_info.modifiers); i++)
+    {
+        switch (m_info.modifiers[i])
+        {
             case MOD_Gap:
                 break;
             case MOD_PreAdd:
@@ -1058,17 +1121,21 @@ BuildGeneral::apply_operands(X86Arch::ParserSelect parser,
                              Insn::Operands& operands)
 {
     // Go through operands and assign
-    if (operands.size() > 0) {
+    if (operands.size() > 0)
+    {
         const X86InfoOperand* info_ops = &insn_operands[m_info.operands_index];
 
         // Use reversed operands in GAS mode if not otherwise specified
         if (parser == X86Arch::PARSER_GAS &&
-            !(m_info.gas_flags & GAS_NO_REV)) {
+            !(m_info.gas_flags & GAS_NO_REV))
+        {
             Insn::Operands::reverse_iterator
                 first = operands.rbegin(), last = operands.rend();
             while (first != last)
                 apply_operand(*info_ops++, *first++);
-        } else {
+        }
+        else
+        {
             Insn::Operands::iterator
                 first = operands.begin(), last = operands.end();
             while (first != last)
@@ -1080,12 +1147,14 @@ BuildGeneral::apply_operands(X86Arch::ParserSelect parser,
 void
 BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
 {
-    switch (info_op.action) {
+    switch (info_op.action)
+    {
         case OPA_None:
             // Throw away the operand contents
             break;
         case OPA_EA:
-            switch (op.get_type()) {
+            switch (op.get_type())
+            {
                 case Insn::Operand::NONE:
                     throw InternalError(
                         N_("invalid operand conversion"));
@@ -1134,45 +1203,55 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             m_im_sign = 1;
             break;
         case OPA_Spare:
-            if (const SegmentRegister* segreg = op.get_segreg()) {
+            if (const SegmentRegister* segreg = op.get_segreg())
+            {
                 m_spare =
                     (static_cast<const X86SegmentRegister*>(segreg))->num();
-            } else if (const Register* reg = op.get_reg()) {
+            }
+            else if (const Register* reg = op.get_reg())
+            {
                 set_rex_from_reg(&m_rex, m_pdrex, &m_spare,
                                  static_cast<const X86Register*>(reg),
                                  m_mode_bits, X86_REX_R);
-            } else
+            }
+            else
                 throw InternalError(N_("invalid operand conversion"));
             break;
         case OPA_Op0Add:
-            if (const Register* reg = op.get_reg()) {
+            if (const Register* reg = op.get_reg())
+            {
                 unsigned char opadd;
                 set_rex_from_reg(&m_rex, m_pdrex, &opadd,
                                  static_cast<const X86Register*>(reg),
                                  m_mode_bits, X86_REX_B);
                 m_opcode.add(0, opadd);
-            } else
+            }
+            else
                 throw InternalError(N_("invalid operand conversion"));
             break;
         case OPA_Op1Add:
-            if (const Register* reg = op.get_reg()) {
+            if (const Register* reg = op.get_reg())
+            {
                 unsigned char opadd;
                 set_rex_from_reg(&m_rex, m_pdrex, &opadd,
                                  static_cast<const X86Register*>(reg),
                                  m_mode_bits, X86_REX_B);
                 m_opcode.add(1, opadd);
-            } else
+            }
+            else
                 throw InternalError(N_("invalid operand conversion"));
             break;
         case OPA_SpareEA:
-            if (const Register* reg = op.get_reg()) {
+            if (const Register* reg = op.get_reg())
+            {
                 const X86Register* x86_reg =
                     static_cast<const X86Register*>(reg);
                 m_x86_ea.reset(new X86EffAddr(x86_reg, &m_rex, m_pdrex,
                                               m_mode_bits));
                 set_rex_from_reg(&m_rex, m_pdrex, &m_spare, x86_reg,
                                  m_mode_bits, X86_REX_R);
-            } else
+            }
+            else
                 throw InternalError(N_("invalid operand conversion"));
             break;
         case OPA_AdSizeEA:
@@ -1198,11 +1277,13 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             break;
         }
         case OPA_DREX:
-            if (const Register* reg = op.get_reg()) {
+            if (const Register* reg = op.get_reg())
+            {
                 m_drex &= 0x0F;
                 m_drex |= (static_cast<const X86Register*>(reg)->num() << 4)
                     & 0xF0;
-            } else
+            }
+            else
                 throw InternalError(N_("invalid operand conversion"));
             break;
         default:
@@ -1212,7 +1293,8 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
     if (info_op.size == OPS_BITS)
         m_opersize = (unsigned char)m_mode_bits;
 
-    switch (info_op.post_action) {
+    switch (info_op.post_action)
+    {
         case OPAP_None:
             break;
         case OPAP_SImm8:
@@ -1243,18 +1325,22 @@ void
 BuildGeneral::apply_segregs(const Insn::SegRegs& segregs)
 {
     X86EffAddr* x86_ea = m_x86_ea.get();
-    if (x86_ea) {
+    if (x86_ea)
+    {
         x86_ea->init(m_spare, m_drex,
                      (m_info.drex_oc0 & NEED_DREX_MASK) != 0);
         std::for_each(segregs.begin(), segregs.end(),
                       BIND::bind(&X86EffAddr::set_segreg, x86_ea, _1));
-    } else if (segregs.size() > 0 && m_special_prefix == 0) {
+    }
+    else if (segregs.size() > 0 && m_special_prefix == 0)
+    {
         if (segregs.size() > 1)
             warn_set(WARN_GENERAL,
                      N_("multiple segment overrides, using leftmost"));
         m_special_prefix =
             static_cast<const X86SegmentRegister*>(segregs.back())->prefix();
-    } else if (segregs.size() > 0)
+    }
+    else if (segregs.size() > 0)
         throw InternalError(N_("unhandled segment prefix"));
 }
 
@@ -1264,7 +1350,8 @@ BuildGeneral::finish(BytecodeContainer& container,
 {
     std::auto_ptr<Value> imm_val(0);
 
-    if (m_imm.get() != 0) {
+    if (m_imm.get() != 0)
+    {
         imm_val.reset(new Value(m_im_len, m_imm));
         imm_val->m_sign = m_im_sign;
     }
@@ -1296,7 +1383,8 @@ X86Insn::do_append_general(BytecodeContainer& container,
 }
 
 // Static parse data structure for instructions
-struct InsnPrefixParseData {
+struct InsnPrefixParseData
+{
     const char* name;
 
     // If num_info > 0, instruction parse group
@@ -1416,7 +1504,8 @@ X86Arch::parse_check_insnprefix(const char* id, size_t id_len,
     lcaseid[id_len] = '\0';
 
     /*@null@*/ const InsnPrefixParseData* pdata;
-    switch (m_parser) {
+    switch (m_parser)
+    {
         case PARSER_NASM:
             pdata = InsnPrefixNasmHash::in_word_set(lcaseid, id_len);
             break;
@@ -1433,15 +1522,18 @@ X86Arch::parse_check_insnprefix(const char* id, size_t id_len,
     unsigned int cpu1 = pdata->cpu1;
     unsigned int cpu2 = pdata->cpu2;
 
-    if (pdata->num_info > 0) {
+    if (pdata->num_info > 0)
+    {
         if (m_mode_bits != 64 &&
-            (cpu0 == CPU_64 || cpu1 == CPU_64 || cpu2 == CPU_64)) {
+            (cpu0 == CPU_64 || cpu1 == CPU_64 || cpu2 == CPU_64))
+        {
             warn_set(WARN_GENERAL, String::compose(
                 N_("`%s' is an instruction in 64-bit mode"), id));
             return InsnPrefix();
         }
         if (m_mode_bits == 64 &&
-            (cpu0 == CPU_Not64 || cpu1 == CPU_Not64 || cpu2 == CPU_Not64)) {
+            (cpu0 == CPU_Not64 || cpu1 == CPU_Not64 || cpu2 == CPU_Not64))
+        {
             throw Error(String::compose(N_("`%s' invalid in 64-bit mode"),
                                         id));
         }
@@ -1454,7 +1546,8 @@ X86Arch::parse_check_insnprefix(const char* id, size_t id_len,
             cpu2 = CPU_Any;
         if (!m_active_cpu[cpu0] ||
             !m_active_cpu[cpu1] ||
-            !m_active_cpu[cpu2]) {
+            !m_active_cpu[cpu2])
+        {
             warn_set(WARN_GENERAL, String::compose(
                 N_("`%s' is an instruction in CPU%s"), id,
                 cpu_find_reverse(cpu0, cpu1, cpu2)));
@@ -1473,26 +1566,32 @@ X86Arch::parse_check_insnprefix(const char* id, size_t id_len,
             m_parser,
             m_force_strict,
             m_default_rel));
-    } else {
+    }
+    else
+    {
         const X86Prefix* prefix = static_cast<const X86Prefix*>(pdata->struc);
 
-        if (m_mode_bits == 64) {
+        if (m_mode_bits == 64)
+        {
             X86Prefix::Type type = prefix->get_type();
             unsigned char value = prefix->get_value();
 
-            if (type == X86Prefix::OPERSIZE && value == 32) {
+            if (type == X86Prefix::OPERSIZE && value == 32)
+            {
                 throw Error(
                     N_("Cannot override data size to 32 bits in 64-bit mode"));
             }
 
-            if (type == X86Prefix::ADDRSIZE && value == 16) {
+            if (type == X86Prefix::ADDRSIZE && value == 16)
+            {
                 throw Error(
                     N_("Cannot override address size to 16 bits in 64-bit mode"));
             }
         }
 
         if (m_mode_bits != 64 &&
-            (cpu0 == CPU_64 || cpu1 == CPU_64 || cpu2 == CPU_64)) {
+            (cpu0 == CPU_64 || cpu1 == CPU_64 || cpu2 == CPU_64))
+        {
             warn_set(WARN_GENERAL, String::compose(
                 N_("`%s' is a prefix in 64-bit mode"), id));
             return InsnPrefix();

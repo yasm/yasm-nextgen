@@ -43,9 +43,15 @@
 #include <libyasm/value.h>
 
 
-namespace yasm { namespace objfmt { namespace bin {
+namespace yasm
+{
+namespace objfmt
+{
+namespace bin
+{
 
-class BinObject : public ObjectFormat {
+class BinObject : public ObjectFormat
+{
 public:
     /// Constructor.
     /// To make object format truly usable, set_object()
@@ -113,7 +119,8 @@ align_section(const Section& sect, const Section& prevsect, unsigned long base,
     return start;
 }
 
-class Output : public BytecodeOutput {
+class Output : public BytecodeOutput
+{
 public:
     Output(std::ostream& os, Object& object, unsigned long abs_start);
     ~Output();
@@ -152,10 +159,14 @@ Output::output_section(Section* sect, unsigned long start, Errwarns& errwarns)
     m_sect = sect;
     m_start = start;
     for (Section::bc_iterator i=sect->bcs_begin(), end=sect->bcs_end();
-         i != end; ++i) {
-        try {
+         i != end; ++i)
+    {
+        try
+        {
             i->output(*this);
-        } catch (Error& err) {
+        }
+        catch (Error& err)
+        {
             errwarns.propagate(i->get_line(), err);
         }
         errwarns.propagate(i->get_line());  // propagate warnings
@@ -166,7 +177,8 @@ void
 Output::expr_xform(Expr* e)
 {
     for (Expr::Terms::iterator i=e->get_terms().begin(),
-         end=e->get_terms().end(); i != end; ++i) {
+         end=e->get_terms().end(); i != end; ++i)
+    {
         Symbol* sym;
         Location loc;
 
@@ -182,7 +194,8 @@ Output::expr_xform(Expr* e)
         BytecodeContainer* container = loc.bc->get_container();
         Location first = {&container->bcs_first(), 0};
         IntNum dist;
-        if (calc_dist(first, loc, &dist)) {
+        if (calc_dist(first, loc, &dist))
+        {
             const Expr* start = container->as_section()->get_start();
             //i->destroy(); // don't need to, as it's a sym or precbc
             *i = new Expr(start->clone(), Op::ADD, dist.clone(), e->get_line());
@@ -194,22 +207,28 @@ void
 Output::output_value(Value& value, Bytes& bytes, Location loc, int warn)
 {
     // Binary objects we need to resolve against object, not against section.
-    if (value.is_relative()) {
+    if (value.is_relative())
+    {
         Location label_loc;
         unsigned int rshift = (unsigned int)value.m_rshift;
         Expr::Ptr syme(0);
         unsigned long line = loc.bc->get_line();
 
-        if (value.m_rel->is_abs()) {
+        if (value.m_rel->is_abs())
+        {
             syme.reset(new Expr(new IntNum(0), line));
-        } else if (value.m_rel->get_label(&label_loc)
-                   && label_loc.bc->get_container()) {
+        }
+        else if (value.m_rel->get_label(&label_loc)
+                 && label_loc.bc->get_container())
+        {
             syme.reset(new Expr(value.m_rel, line));
-        } else
+        }
+        else
             goto done;
 
         // Handle PC-relative
-        if (value.m_curpos_rel) {
+        if (value.m_curpos_rel)
+        {
             syme.reset(new Expr(syme, Op::SUB, loc, line));
             value.m_curpos_rel = 0;
             value.m_ip_rel = 0;
@@ -230,7 +249,8 @@ done:
 
     // Output
     Arch* arch = m_object.get_arch();
-    if (value.output_basic(bytes, loc, warn, *arch)) {
+    if (value.output_basic(bytes, loc, warn, *arch))
+    {
         m_os << bytes;
         return;
     }
@@ -251,7 +271,8 @@ Output::output_gap(unsigned int size)
     // Write out in chunks
     Bytes& bytes = get_scratch();
     bytes.resize(BLOCK_SIZE);
-    while (size > BLOCK_SIZE) {
+    while (size > BLOCK_SIZE)
+    {
         m_os << bytes;
         size -= BLOCK_SIZE;
     }
@@ -271,15 +292,20 @@ check_sym(const Symbol& sym, Errwarns& errwarns)
 {
     int vis = sym.get_visibility();
 
-    if (vis & Symbol::EXTERN) {
+    if (vis & Symbol::EXTERN)
+    {
         warn_set(WARN_GENERAL,
             N_("binary object format does not support extern variables"));
         errwarns.propagate(sym.get_decl_line());
-    } else if (vis & Symbol::GLOBAL) {
+    }
+    else if (vis & Symbol::GLOBAL)
+    {
         warn_set(WARN_GENERAL,
             N_("binary object format does not support global variables"));
         errwarns.propagate(sym.get_decl_line());
-    } else if (vis & Symbol::COMMON) {
+    }
+    else if (vis & Symbol::COMMON)
+    {
         errwarns.propagate(sym.get_decl_line(), TypeError(
             N_("binary object format does not support common variables")));
     }
@@ -309,7 +335,8 @@ BinObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     // Find out the start of .text
     Expr::Ptr startexpr(text->get_start()->clone());
     IntNum* startnum = startexpr->get_intnum();
-    if (!startnum) {
+    if (!startnum)
+    {
         errwarns.propagate(startexpr->get_line(),
             TooComplexError(N_("ORG expression too complex")));
         return;
@@ -323,7 +350,8 @@ BinObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     unsigned long textlen = 0, textpad = 0, datalen = 0, datapad = 0;
     unsigned long* prevsectlenptr = &textlen;
     unsigned long* prevsectpadptr = &textpad;
-    if (data) {
+    if (data)
+    {
         start = align_section(*data, *prevsect, start, prevsectlenptr,
                               prevsectpadptr);
         data->set_start(Expr::Ptr(new Expr(new IntNum(start), 0)));
@@ -332,7 +360,8 @@ BinObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
         prevsectlenptr = &datalen;
         prevsectpadptr = &datapad;
     }
-    if (bss) {
+    if (bss)
+    {
         start = align_section(*bss, *prevsect, start, prevsectlenptr,
                               prevsectpadptr);
         bss->set_start(Expr::Ptr(new Expr(new IntNum(start), 0)));
@@ -343,7 +372,8 @@ BinObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     output.output_section(text, textstart, errwarns);
 
     // If .data is present, output it
-    if (data) {
+    if (data)
+    {
         // Add padding to align .data.  Just use a for loop, as this will
         // seldom be very many bytes.
         for (unsigned long i=0; i<textpad; i++)
@@ -388,7 +418,8 @@ bin_objfmt_section_switch(yasm_object *object, yasm_valparamhead *valparams,
     unsigned long align = 4;
     int have_align = 0;
 
-    static const yasm_dir_help help[] = {
+    static const yasm_dir_help help[] =
+    {
         { "align", 1, yasm_dir_helper_intn, 0, 0 }
     };
 
@@ -405,10 +436,13 @@ bin_objfmt_section_switch(yasm_object *object, yasm_valparamhead *valparams,
         start = 0;
     else if (strcmp(sectname, ".data") == 0)
         start = 200;
-    else if (strcmp(sectname, ".bss") == 0) {
+    else if (strcmp(sectname, ".bss") == 0)
+    {
         start = 200;
         resonly = 1;
-    } else {
+    }
+    else
+    {
         /* other section names not recognized. */
         yasm_error_set(YASM_ERROR_GENERAL,
                        N_("segment name `%s' not recognized"), sectname);
@@ -420,12 +454,14 @@ bin_objfmt_section_switch(yasm_object *object, yasm_valparamhead *valparams,
     if (have_align < 0)
         return NULL;    /* error occurred */
 
-    if (align_intn) {
+    if (align_intn)
+    {
         align = yasm_intnum_get_uint(align_intn);
         yasm_intnum_destroy(align_intn);
 
         /* Alignments must be a power of two. */
-        if (!is_exp2(align)) {
+        if (!is_exp2(align))
+        {
             yasm_error_set(YASM_ERROR_VALUE,
                            N_("argument to `%s' is not a power of two"),
                            "align");
@@ -441,10 +477,12 @@ bin_objfmt_section_switch(yasm_object *object, yasm_valparamhead *valparams,
     if (isnew)
         bin_objfmt_init_new_section(object, retval, sectname, line);
 
-    if (isnew || yasm_section_is_default(retval)) {
+    if (isnew || yasm_section_is_default(retval))
+    {
         yasm_section_set_default(retval, 0);
         yasm_section_set_align(retval, align, line);
-    } else if (have_align)
+    }
+    else if (have_align)
         yasm_warn_set(YASM_WARN_GENERAL,
             N_("alignment value ignored on section redeclaration"));
 
