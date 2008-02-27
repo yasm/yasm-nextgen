@@ -38,7 +38,12 @@
 #include "modules/parsers/nasm/nasm-parser.h"
 
 
-namespace yasm { namespace parser { namespace nasm {
+namespace yasm
+{
+namespace parser
+{
+namespace nasm
+{
 
 #define BSIZE   8192
 
@@ -80,7 +85,8 @@ NasmParser::lex(YYSTYPE* lvalp)
     YYCTYPE savech;
 
     // Handle one token of lookahead
-    if (m_peek_token != NONE) {
+    if (m_peek_token != NONE)
+    {
         int tok = m_peek_token;
         *lvalp = m_peek_tokval;     // structure copy
         m_tokch = m_peek_tokch;
@@ -93,7 +99,8 @@ NasmParser::lex(YYSTYPE* lvalp)
         return 0;
 
     // Jump to proper "exclusive" states
-    switch (m_state) {
+    switch (m_state)
+    {
         case DIRECTIVE:
             goto directive;
         case SECTION_DIRECTIVE:
@@ -113,7 +120,8 @@ scan:
 
     /*!re2c
         /* standard decimal integer */
-        digit+ {
+        digit+
+        {
             savech = TOK[TOKLEN];
             TOK[TOKLEN] = '\0';
             lvalp->intn.reset(new IntNum(TOK, 10));
@@ -122,28 +130,32 @@ scan:
         }
         /* 10010011b - binary number */
 
-        bindigit+ 'b' {
+        bindigit+ 'b'
+        {
             TOK[TOKLEN-1] = '\0'; /* strip off 'b' */
             lvalp->intn.reset(new IntNum(TOK, 2));
             RETURN(INTNUM);
         }
 
         /* 777q or 777o - octal number */
-        octdigit+ [qQoO] {
+        octdigit+ [qQoO]
+        {
             TOK[TOKLEN-1] = '\0'; /* strip off 'q' or 'o' */
             lvalp->intn.reset(new IntNum(TOK, 8));
             RETURN(INTNUM);
         }
 
         /* 0AAh form of hexidecimal number */
-        digit hexdigit* 'h' {
+        digit hexdigit* 'h'
+        {
             TOK[TOKLEN-1] = '\0'; /* strip off 'h' */
             lvalp->intn.reset(new IntNum(TOK, 16));
             RETURN(INTNUM);
         }
 
         /* $0AA and 0xAA forms of hexidecimal number */
-        (("$" digit) | "0x") hexdigit+ {
+        (("$" digit) | "0x") hexdigit+
+        {
             savech = TOK[TOKLEN];
             TOK[TOKLEN] = '\0';
             if (TOK[1] == 'x')
@@ -157,7 +169,8 @@ scan:
         }
 
         /* floating point value */
-        digit+ "." digit* ('e' [-+]? digit+)? {
+        digit+ "." digit* ('e' [-+]? digit+)?
+        {
             savech = TOK[TOKLEN];
             TOK[TOKLEN] = '\0';
             lvalp->flt.reset(new FloatNum(TOK));
@@ -166,97 +179,141 @@ scan:
         }
 
         /* string/character constant values */
-        quot {
+        quot
+        {
             endch = TOK[0];
             goto stringconst;
         }
 
         /* %line linenum+lineinc filename */
-        "%line" {
+        "%line"
+        {
             m_state = LINECHG;
             linechg_numcount = 0;
             RETURN(LINE);
         }
 
         /* size specifiers */
-        'byte'          { lvalp->int_info = 8; RETURN(SIZE_OVERRIDE); }
-        'hword'         {
+        'byte'
+        {
+            lvalp->int_info = 8;
+            RETURN(SIZE_OVERRIDE);
+        }
+        'hword'
+        {
             lvalp->int_info = m_wordsize/2;
             RETURN(SIZE_OVERRIDE);
         }
-        'word'          {
+        'word'
+        {
             lvalp->int_info = m_wordsize;
             RETURN(SIZE_OVERRIDE);
         }
-        'dword' | 'long'        {
+        'dword' | 'long'
+        {
             lvalp->int_info = m_wordsize*2;
             RETURN(SIZE_OVERRIDE);
         }
-        'qword'         {
+        'qword'
+        {
             lvalp->int_info = m_wordsize*4;
             RETURN(SIZE_OVERRIDE);
         }
-        'tword'         { lvalp->int_info = 80; RETURN(SIZE_OVERRIDE); }
-        'dqword'        {
+        'tword'
+        {
+            lvalp->int_info = 80;
+            RETURN(SIZE_OVERRIDE);
+        }
+        'dqword'
+        {
             lvalp->int_info = m_wordsize*8;
             RETURN(SIZE_OVERRIDE);
         }
-        'oword'        {
+        'oword'
+        {
             lvalp->int_info = m_wordsize*8;
             RETURN(SIZE_OVERRIDE);
         }
 
         /* pseudo-instructions */
-        'db'            { lvalp->int_info = 8; RETURN(DECLARE_DATA); }
-        'dhw'           {
+        'db'
+        {
+            lvalp->int_info = 8;
+            RETURN(DECLARE_DATA);
+        }
+        'dhw'
+        {
             lvalp->int_info = m_wordsize/2;
             RETURN(DECLARE_DATA);
         }
-        'dw'            {
+        'dw'
+        {
             lvalp->int_info = m_wordsize;
             RETURN(DECLARE_DATA);
         }
-        'dd'            {
+        'dd'
+        {
             lvalp->int_info = m_wordsize*2;
             RETURN(DECLARE_DATA);
         }
-        'dq'            {
+        'dq'
+        {
             lvalp->int_info = m_wordsize*4;
             RETURN(DECLARE_DATA);
         }
-        'dt'            { lvalp->int_info = 80; RETURN(DECLARE_DATA); }
-        'ddq'           {
+        'dt'
+        {
+            lvalp->int_info = 80;
+            RETURN(DECLARE_DATA);
+        }
+        'ddq'
+        {
             lvalp->int_info = m_wordsize*8;
             RETURN(DECLARE_DATA);
         }
-        'do'           {
+        'do'
+        {
             lvalp->int_info = m_wordsize*8;
             RETURN(DECLARE_DATA);
         }
 
-        'resb'          { lvalp->int_info = 8; RETURN(RESERVE_SPACE); }
-        'reshw'         {
+        'resb'
+        {
+            lvalp->int_info = 8;
+            RETURN(RESERVE_SPACE);
+        }
+        'reshw'
+        {
             lvalp->int_info = m_wordsize/2;
             RETURN(RESERVE_SPACE);
         }
-        'resw'          {
+        'resw'
+        {
             lvalp->int_info = m_wordsize;
             RETURN(RESERVE_SPACE);
         }
-        'resd'          {
+        'resd'
+        {
             lvalp->int_info = m_wordsize*2;
             RETURN(RESERVE_SPACE);
         }
-        'resq'          {
+        'resq'
+        {
             lvalp->int_info = m_wordsize*4;
             RETURN(RESERVE_SPACE);
         }
-        'rest'          { lvalp->int_info = 80; RETURN(RESERVE_SPACE); }
-        'resdq'         {
+        'rest'
+        {
+            lvalp->int_info = 80;
+            RETURN(RESERVE_SPACE);
+        }
+        'resdq'
+        {
             lvalp->int_info = m_wordsize*8;
             RETURN(RESERVE_SPACE);
         }
-        'reso'         {
+        'reso'
+        {
             lvalp->int_info = m_wordsize*8;
             RETURN(RESERVE_SPACE);
         }
@@ -286,18 +343,23 @@ scan:
         "]"                     { RETURN(TOK[0]); }
 
         /* special non-local ..@label and labels like ..start */
-        ".." [a-zA-Z0-9_$#@~.?]+ {
+        ".." [a-zA-Z0-9_$#@~.?]+
+        {
             lvalp->str.assign(TOK, TOKLEN);
             RETURN(SPECIAL_ID);
         }
 
         /* local label (.label) */
-        "." [a-zA-Z0-9_$#@~?][a-zA-Z0-9_$#@~.?]* {
-            if (m_locallabel_base.empty()) {
+        "." [a-zA-Z0-9_$#@~?][a-zA-Z0-9_$#@~.?]*
+        {
+            if (m_locallabel_base.empty())
+            {
                 lvalp->str.assign(TOK, TOKLEN);
                 warn_set(WARN_GENERAL, String::compose(
                     N_("no non-local label before `%1'"), lvalp->str));
-            } else {
+            }
+            else
+            {
                 lvalp->str = m_locallabel_base;
                 lvalp->str.append(TOK, TOKLEN);
             }
@@ -306,20 +368,24 @@ scan:
         }
 
         /* forced identifier */
-        "$" [a-zA-Z0-9_$#@~.?]+ {
+        "$" [a-zA-Z0-9_$#@~.?]+
+        {
             lvalp->str.assign(TOK+1, TOKLEN-1);
             RETURN(ID);
         }
 
         /* identifier that may be a register, instruction, etc. */
-        [a-zA-Z_?][a-zA-Z0-9_$#@~.?]* {
+        [a-zA-Z_?][a-zA-Z0-9_$#@~.?]*
+        {
             savech = TOK[TOKLEN];
             TOK[TOKLEN] = '\0';
-            if (m_state != INSTRUCTION) {
+            if (m_state != INSTRUCTION)
+            {
                 Arch::InsnPrefix ip =
                     m_arch->parse_check_insnprefix(TOK, TOKLEN, get_cur_line());
                 TOK[TOKLEN] = savech;
-                switch (ip.get_type()) {
+                switch (ip.get_type())
+                {
                     case Arch::InsnPrefix::INSN:
                         lvalp->insn = ip.release_insn();
                         m_state = INSTRUCTION;
@@ -333,7 +399,8 @@ scan:
             }
             Arch::RegTmod regtmod = m_arch->parse_check_regtmod(TOK, TOKLEN);
             TOK[TOKLEN] = savech;
-            switch (regtmod.get_type()) {
+            switch (regtmod.get_type())
+            {
                 case Arch::RegTmod::REG:
                     lvalp->reg = regtmod.get_reg();
                     RETURN(REG);
@@ -357,12 +424,14 @@ scan:
 
         ws+                     { goto scan; }
 
-        [\000]                  {
+        [\000]
+        {
             m_state = INITIAL;
             RETURN(TOK[0]);
         }
 
-        any {
+        any
+        {
             warn_set(WARN_UNREC_CHAR, String::compose(
                 N_("ignoring unrecognized character `%1'"),
                 conv_unprint(TOK[0])));
@@ -375,7 +444,8 @@ linechg:
     SCANINIT();
 
     /*!re2c
-        digit+ {
+        digit+
+        {
             linechg_numcount++;
             savech = TOK[TOKLEN];
             TOK[TOKLEN] = '\0';
@@ -384,24 +454,29 @@ linechg:
             RETURN(INTNUM);
         }
 
-        [\000] {
+        [\000]
+        {
             m_state = INITIAL;
             RETURN(TOK[0]);
         }
 
-        "+" {
+        "+"
+        {
             RETURN(TOK[0]);
         }
 
-        ws+ {
-            if (linechg_numcount == 2) {
+        ws+
+        {
+            if (linechg_numcount == 2)
+            {
                 m_state = LINECHG2;
                 goto linechg2;
             }
             goto linechg;
         }
 
-        any {
+        any
+        {
             warn_set(WARN_UNREC_CHAR, String::compose(
                 N_("ignoring unrecognized character `%1'"),
                 conv_unprint(TOK[0])));
@@ -413,14 +488,16 @@ linechg2:
     SCANINIT();
 
     /*!re2c
-        [\000] {
+        [\000]
+        {
             m_state = INITIAL;
             RETURN(TOK[0]);
         }
 
         "\r" { }
 
-        (any \ [\000])+ {
+        (any \ [\000])+
+        {
             m_state = LINECHG;
             lvalp->str.assign(TOK, TOKLEN);
             RETURN(FILENAME);
@@ -432,12 +509,14 @@ directive:
     SCANINIT();
 
     /*!re2c
-        [\]\000] {
+        [\]\000]
+        {
             m_state = INITIAL;
             RETURN(TOK[0]);
         }
 
-        [a-zA-Z_][a-zA-Z_0-9]* {
+        [a-zA-Z_][a-zA-Z_0-9]*
+        {
             lvalp->str.assign(TOK, TOKLEN);
             if (String::nocase_equal(lvalp->str, "section") ||
                 String::nocase_equal(lvalp->str, "segment"))
@@ -447,7 +526,8 @@ directive:
             RETURN(DIRECTIVE_NAME);
         }
 
-        any {
+        any
+        {
             warn_set(WARN_UNREC_CHAR, String::compose(
                 N_("ignoring unrecognized character `%1'"),
                 conv_unprint(TOK[0])));
@@ -460,34 +540,40 @@ section_directive:
     SCANINIT();
 
     /*!re2c
-        [a-zA-Z0-9_$#@~.?-]+ {
+        [a-zA-Z0-9_$#@~.?-]+
+        {
             lvalp->str.assign(TOK, TOKLEN);
             m_state = DIRECTIVE2;
             RETURN(STRING);
         }
 
-        quot            {
+        quot
+        {
             m_state = DIRECTIVE2;
             endch = TOK[0];
             goto stringconst;
         }
 
-        ws+             {
+        ws+
+        {
             m_state = DIRECTIVE2;
             goto section_directive;
         }
 
-        "]" {
+        "]"
+        {
             m_state = INITIAL;
             RETURN(TOK[0]);
         }
 
-        [\000]                  {
+        [\000]
+        {
             m_state = INITIAL;
             RETURN(TOK[0]);
         }
 
-        any {
+        any
+        {
             warn_set(WARN_UNREC_CHAR, String::compose(
                 N_("ignoring unrecognized character `%1'"),
                 conv_unprint(TOK[0])));
@@ -501,7 +587,8 @@ directive2:
 
     /*!re2c
         /* standard decimal integer */
-        digit+ {
+        digit+
+        {
             savech = TOK[TOKLEN];
             TOK[TOKLEN] = '\0';
             lvalp->intn.reset(new IntNum(TOK, 10));
@@ -510,28 +597,32 @@ directive2:
         }
         /* 10010011b - binary number */
 
-        bindigit+ 'b' {
+        bindigit+ 'b'
+        {
             TOK[TOKLEN-1] = '\0'; /* strip off 'b' */
             lvalp->intn.reset(new IntNum(TOK, 2));
             RETURN(INTNUM);
         }
 
         /* 777q or 777o - octal number */
-        octdigit+ [qQoO] {
+        octdigit+ [qQoO]
+        {
             TOK[TOKLEN-1] = '\0'; /* strip off 'q' or 'o' */
             lvalp->intn.reset(new IntNum(TOK, 8));
             RETURN(INTNUM);
         }
 
         /* 0AAh form of hexidecimal number */
-        digit hexdigit* 'h' {
+        digit hexdigit* 'h'
+        {
             TOK[TOKLEN-1] = '\0'; /* strip off 'h' */
             lvalp->intn.reset(new IntNum(TOK, 16));
             RETURN(INTNUM);
         }
 
         /* $0AA and 0xAA forms of hexidecimal number */
-        (("$" digit) | "0x") hexdigit+ {
+        (("$" digit) | "0x") hexdigit+
+        {
             savech = TOK[TOKLEN];
             TOK[TOKLEN] = '\0';
             if (TOK[1] == 'x')
@@ -545,7 +636,8 @@ directive2:
         }
 
         /* string/character constant values */
-        quot {
+        quot
+        {
             endch = TOK[0];
             goto stringconst;
         }
@@ -558,7 +650,8 @@ directive2:
         [-+|^*&/%~$():=,\[]     { RETURN(TOK[0]); }
 
         /* handle ] for directives */
-        "]" {
+        "]"
+        {
             m_state = INITIAL;
             RETURN(TOK[0]);
         }
@@ -566,13 +659,15 @@ directive2:
         /* forced identifier; within directive, don't strip '$', this is
          * handled later.
          */
-        "$" [a-zA-Z0-9_$#@~.?]+ {
+        "$" [a-zA-Z0-9_$#@~.?]+
+        {
             lvalp->str.assign(TOK, TOKLEN);
             RETURN(ID);
         }
 
         /* identifier; within directive, no local label mechanism */
-        [a-zA-Z_.?][a-zA-Z0-9_$#@~.?]* {
+        [a-zA-Z_.?][a-zA-Z0-9_$#@~.?]*
+        {
             savech = TOK[TOKLEN];
             TOK[TOKLEN] = '\0';
             Arch::RegTmod regtmod = m_arch->parse_check_regtmod(TOK, TOKLEN);
@@ -591,12 +686,14 @@ directive2:
 
         ws+                     { goto directive2; }
 
-        [\000]                  {
+        [\000]
+        {
             m_state = INITIAL;
             RETURN(TOK[0]);
         }
 
-        any {
+        any
+        {
             warn_set(WARN_UNREC_CHAR, String::compose(
                 N_("ignoring unrecognized character `%1'"),
                 conv_unprint(TOK[0])));
@@ -612,11 +709,13 @@ stringconst_scan:
     SCANINIT();
 
     /*!re2c
-        [\000]  {
+        [\000]
+        {
             throw SyntaxError(N_("unterminated string"));
         }
 
-        any     {
+        any
+        {
             if (TOK[0] == endch)
                 RETURN(STRING);
             lvalp->str += TOK[0];

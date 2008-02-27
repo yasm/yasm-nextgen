@@ -40,7 +40,12 @@
 
 #include "modules/arch/x86/x86arch.h"
 
-namespace yasm { namespace arch { namespace x86 {
+namespace yasm
+{
+namespace arch
+{
+namespace x86
+{
 
 inline
 X86Register::X86Register(Type type, unsigned int num)
@@ -56,7 +61,8 @@ X86Register::~X86Register()
 unsigned int
 X86Register::get_size() const
 {
-    switch (m_type) {
+    switch (m_type)
+    {
         case REG8:
         case REG8X:
             return 8;
@@ -84,24 +90,29 @@ void
 X86Register::put(std::ostream& os) const
 {
     static const char *name8[] = {"al","cl","dl","bl","ah","ch","dh","bh"};
-    static const char *name8x[] = {
+    static const char *name8x[] =
+    {
         "al", "cl", "dl", "bl", "spl", "bpl", "sil", "dil",
         "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"
     };
-    static const char *name16[] = {
+    static const char *name16[] =
+    {
         "ax", "cx", "dx", "bx", "sp", "bp", "si", "di"
         "r8w", "r9w", "r10w", "r11w", "r12w", "r13w", "r14w", "r15w"
     };
-    static const char *name32[] = {
+    static const char *name32[] =
+    {
         "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"
         "r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d"
     };
-    static const char *name64[] = {
+    static const char *name64[] =
+    {
         "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"
         "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
     };
 
-    switch (m_type) {
+    switch (m_type)
+    {
         case REG8:
             os << name8[m_num&7];
             break;
@@ -146,7 +157,8 @@ X86Register::put(std::ostream& os) const
 
 #define REG_DECL(n, regname) \
     BOOST_PP_REPEAT(n, STATIC_REG_DECL, regname) \
-    const X86Register* X86_##regname[n] = { \
+    const X86Register* X86_##regname[n] = \
+    { \
         BOOST_PP_ENUM(n, STATIC_REG_USE, regname) \
     };
 
@@ -180,9 +192,11 @@ X86RegisterGroup::~X86RegisterGroup()
 const Register*
 X86RegisterGroup::get_reg(unsigned long regindex) const
 {
-    switch ((x86_expritem_reg_size)(reggroup & ~0xFUL)) {
+    switch ((x86_expritem_reg_size)(reggroup & ~0xFUL))
+    {
         case XMMREG:
-            if (arch_x86->mode_bits == 64) {
+            if (arch_x86->mode_bits == 64)
+            {
                 if (regindex > 15)
                     return 0;
                 return reggroup | (regindex & 15);
@@ -280,7 +294,8 @@ TARGETMOD_DECL(SHORT)
 TARGETMOD_DECL(FAR)
 TARGETMOD_DECL(TO)
 
-enum RegTmodType {
+enum RegTmodType
+{
     REG = 1,
     REGGROUP,
     SEGREG,
@@ -489,9 +504,11 @@ X86Arch::parse_check_regtmod(const char* id, size_t id_len) const
 
     unsigned int bits = pdata->bits;
 
-    switch ((RegTmodType)pdata->type) {
+    switch ((RegTmodType)pdata->type)
+    {
         case REG:
-            if (bits != 0 && m_mode_bits != bits) {
+            if (bits != 0 && m_mode_bits != bits)
+            {
                 warn_set(WARN_GENERAL,
                     String::compose(N_("`%1' is a register in %2-bit mode"),
                                     id, bits));
@@ -501,7 +518,8 @@ X86Arch::parse_check_regtmod(const char* id, size_t id_len) const
         case REGGROUP:
             return static_cast<const RegisterGroup*>(pdata->struc);
         case SEGREG:
-            if (bits != 0 && m_mode_bits == bits) {
+            if (bits != 0 && m_mode_bits == bits)
+            {
                 warn_set(WARN_GENERAL, String::compose(
                     N_("`%1' segment register ignored in %2-bit mode"),
                     id, bits));

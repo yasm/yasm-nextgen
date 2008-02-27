@@ -35,7 +35,12 @@
 
 #include "modules/arch/x86/x86arch.h"
 
-namespace yasm { namespace arch { namespace x86 {
+namespace yasm
+{
+namespace arch
+{
+namespace x86
+{
 
 #define PROC_8086	0
 #define PROC_186	1
@@ -344,7 +349,8 @@ X86Arch::parse_cpu(const std::string& cpuid)
     lcaseid[cpuid_len] = '\0';
 
     const CpuParseData* pdata = CpuHash::in_word_set(lcaseid, cpuid_len);
-    if (!pdata) {
+    if (!pdata)
+    {
         warn_set(WARN_GENERAL,
                  String::compose(N_("unrecognized CPU identifier `%1'"),
                                  cpuid));
