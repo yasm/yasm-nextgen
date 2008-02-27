@@ -221,6 +221,8 @@ NasmParser::do_parse()
 void
 NasmParser::parse_line()
 {
+    m_container = m_object->get_cur_section();
+
     if (parse_exp())
         return;
 
@@ -284,8 +286,6 @@ NasmParser::parse_line()
             break;
         }
         case TIMES: // TIMES expr exp
-            m_container = m_object->get_cur_section();
-
             get_next_token();
             parse_times();
             return;
@@ -296,8 +296,6 @@ NasmParser::parse_line()
             bool local = (m_token != ID);
             std::string name;
             std::swap(name, ID_val);
-
-            m_container = m_object->get_cur_section();
 
             get_next_token();
             if (is_eol())
