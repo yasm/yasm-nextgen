@@ -18,7 +18,7 @@ namespace yasm
 
 class MD5
 {
-    MD5() { init(); }
+    MD5();
 
     void init();
     void update(const unsigned char* buf, unsigned long len);
@@ -32,6 +32,11 @@ private:
     unsigned char m_in[64];
 };
 
+inline
+MD5::MD5()
+{
+    init();
+}
 
 } // namespace yasm
 
