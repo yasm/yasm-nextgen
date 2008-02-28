@@ -43,11 +43,8 @@ class Directives;
 class Module : private boost::noncopyable
 {
 public:
-    /// Constructor.
-    Module() {}
-
     /// Destructor.
-    virtual ~Module() {}
+    virtual ~Module();
 
     /// Get the one-line description of the module.
     /// @return One-line description of module.

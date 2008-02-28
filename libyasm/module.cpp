@@ -30,6 +30,10 @@
 namespace yasm
 {
 
+Module::~Module()
+{
+}
+
 void
 Module::add_directives(Directives& dirs, const std::string& parser)
 {
