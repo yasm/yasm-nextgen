@@ -42,6 +42,14 @@
 namespace yasm
 {
 
+Insn::Operand::TargetModifier::TargetModifier()
+{
+}
+
+Insn::Operand::TargetModifier::~TargetModifier()
+{
+}
+
 Insn::Operand::Operand(const Register* reg)
     : m_type(REG),
       m_reg(reg),

@@ -73,8 +73,8 @@ public:
         class TargetModifier : private boost::noncopyable
         {
         public:
-            TargetModifier() {}
-            virtual ~TargetModifier() {}
+            TargetModifier();
+            virtual ~TargetModifier();
             virtual void put(std::ostream& os) const = 0;
         };
 
