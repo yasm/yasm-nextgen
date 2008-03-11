@@ -49,14 +49,14 @@ public:
 
     /// Constructor.
     /// To make preprocessor usable, init() needs to be called.
-    Preprocessor() {}
+    Preprocessor();
 
     /// Destructor.
-    virtual ~Preprocessor() {}
+    virtual ~Preprocessor();
 
     /// Get the module type.
     /// @return "Preprocessor".
-    std::string get_type() const { return "Preprocessor"; }
+    std::string get_type() const;
 
     /// Initialize preprocessor.
     /// The preprocessor needs access to the object format to find out
