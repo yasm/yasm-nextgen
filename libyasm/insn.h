@@ -220,8 +220,8 @@ public:
     class Prefix : private boost::noncopyable
     {
     public:
-        Prefix() {}
-        virtual ~Prefix() {}
+        Prefix();
+        virtual ~Prefix();
         virtual void put(std::ostream& os) const = 0;
     };
 

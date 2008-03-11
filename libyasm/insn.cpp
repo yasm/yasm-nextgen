@@ -241,6 +241,14 @@ Insn::Operand::release_imm()
     return imm;
 }
 
+Insn::Prefix::Prefix()
+{
+}
+
+Insn::Prefix::~Prefix()
+{
+}
+
 Insn::Insn()
 {
 }
