@@ -33,6 +33,7 @@ ADD_LIBRARY(libyasm
     object.cpp
     object_format.cpp
     phash.cpp
+    preproc.cpp
     registry.cpp
     section.cpp
     symbol.cpp
