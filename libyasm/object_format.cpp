@@ -30,6 +30,14 @@
 namespace yasm
 {
 
+ObjectFormat::ObjectFormat()
+{
+}
+
+ObjectFormat::~ObjectFormat()
+{
+}
+
 std::string
 ObjectFormat::get_type() const
 {

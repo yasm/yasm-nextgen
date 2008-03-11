@@ -52,10 +52,10 @@ public:
     /// Constructor.
     /// To make object format truly usable, set_object()
     /// needs to be called.
-    ObjectFormat() {}
+    ObjectFormat();
 
     /// Destructor.
-    virtual ~ObjectFormat() {}
+    virtual ~ObjectFormat();
 
     /// Get the module type.
     /// @return "ObjectFormat".
