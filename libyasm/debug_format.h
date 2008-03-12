@@ -42,18 +42,14 @@ class Linemap;
 class Object;
 
 /// Debug format interface.
+/// To make debug format truly usable, set_object() needs to be called.
 class DebugFormat : public Module
 {
 public:
     enum { module_type = 2 };
 
-    /// Constructor.
-    /// To make debug format truly usable, set_object()
-    /// needs to be called.
-    DebugFormat() {}
-
     /// Destructor.
-    virtual ~DebugFormat() {}
+    virtual ~DebugFormat();
 
     /// Get the module type.
     /// @return "DebugFormat".
