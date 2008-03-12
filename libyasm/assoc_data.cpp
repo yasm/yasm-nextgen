@@ -34,6 +34,10 @@
 namespace yasm
 {
 
+AssocData::~AssocData()
+{
+}
+
 AssocDataContainer::AssocDataContainer()
 {
 }
@@ -43,6 +47,34 @@ AssocDataContainer::~AssocDataContainer()
     for (AssocMap::iterator i=m_assoc_map.begin(), end=m_assoc_map.end();
          i != end; ++i)
         delete i->second;
+}
+
+std::auto_ptr<AssocData>
+AssocDataContainer::add_assoc_data(const void* key,
+                                   std::auto_ptr<AssocData> data)
+{
+    AssocData*& x = m_assoc_map[key];
+    std::auto_ptr<AssocData> rv(x);
+    x = data.release();
+    return rv;
+}
+
+AssocData*
+AssocDataContainer::get_assoc_data(const void* key)
+{
+    AssocMap::iterator i = m_assoc_map.find(key);
+    if (i == m_assoc_map.end())
+        return 0;
+    return i->second;
+}
+
+const AssocData*
+AssocDataContainer::get_assoc_data(const void* key) const
+{
+    AssocMap::const_iterator i = m_assoc_map.find(key);
+    if (i == m_assoc_map.end())
+        return 0;
+    return i->second;
 }
 
 marg_ostream&

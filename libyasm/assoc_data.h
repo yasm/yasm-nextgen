@@ -45,11 +45,8 @@ namespace yasm
 class AssocData : private boost::noncopyable
 {
 public:
-    /// Constructor.
-    AssocData() {}
-
     /// Destructor.
-    virtual ~AssocData() {}
+    virtual ~AssocData();
 
     virtual void put(marg_ostream& os) const = 0;
 };
@@ -71,32 +68,13 @@ class AssocDataContainer
 
 public:
     AssocDataContainer();
-    ~AssocDataContainer();
+    virtual ~AssocDataContainer();
 
     std::auto_ptr<AssocData> add_assoc_data(const void* key,
-                                            std::auto_ptr<AssocData> data)
-    {
-        AssocData*& x = m_assoc_map[key];
-        std::auto_ptr<AssocData> rv(x);
-        x = data.release();
-        return rv;
-    }
+                                            std::auto_ptr<AssocData> data);
 
-    AssocData* get_assoc_data(const void* key)
-    {
-        AssocMap::iterator i = m_assoc_map.find(key);
-        if (i == m_assoc_map.end())
-            return 0;
-        return i->second;
-    }
-
-    const AssocData* get_assoc_data(const void* key) const
-    {
-        AssocMap::const_iterator i = m_assoc_map.find(key);
-        if (i == m_assoc_map.end())
-            return 0;
-        return i->second;
-    }
+    AssocData* get_assoc_data(const void* key);
+    const AssocData* get_assoc_data(const void* key) const;
 };
 
 marg_ostream& operator<< (marg_ostream& os,
