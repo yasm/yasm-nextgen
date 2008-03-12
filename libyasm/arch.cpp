@@ -34,6 +34,18 @@
 namespace yasm
 {
 
+Register::~Register()
+{
+}
+
+RegisterGroup::~RegisterGroup()
+{
+}
+
+SegmentRegister::~SegmentRegister()
+{
+}
+
 Arch::InsnPrefix::InsnPrefix(std::auto_ptr<Insn> insn)
     : m_type(INSN),
       m_insn(insn.release())
@@ -52,6 +64,20 @@ Arch::InsnPrefix::release_insn()
         return std::auto_ptr<Insn>(0);
     m_type = NONE;
     return std::auto_ptr<Insn>(m_insn);
+}
+
+Arch::Arch()
+{
+}
+
+Arch::~Arch()
+{
+}
+
+std::string
+Arch::get_type() const
+{
+    return "Arch";
 }
 
 } // namespace yasm

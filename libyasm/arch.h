@@ -51,7 +51,7 @@ class IntNum;
 class Register : private boost::noncopyable
 {
 public:
-    virtual ~Register() {}
+    virtual ~Register();
 
     /// Get the equivalent size of a register in bits.
     /// @param reg  register
@@ -74,7 +74,7 @@ inline std::ostream& operator<<
 class RegisterGroup : private boost::noncopyable
 {
 public:
-    virtual ~RegisterGroup() {}
+    virtual ~RegisterGroup();
 
     /// Get a specific register of a register group, based on the register
     /// group and the index within the group.
@@ -87,7 +87,7 @@ public:
 class SegmentRegister : private boost::noncopyable
 {
 public:
-    virtual ~SegmentRegister() {}
+    virtual ~SegmentRegister();
 
     /// Print a segment register.  For debugging purposes.
     /// @param os   output stream
@@ -212,16 +212,14 @@ public:
     /// Constructor.
     /// To make architecture truly usable, set_machine() and set_parser()
     /// need to be called.
-    Arch()
-    {}
+    Arch();
 
     /// Destructor.
-    virtual ~Arch()
-    {}
+    virtual ~Arch();
 
     /// Get the module type.
     /// @return "Arch".
-    std::string get_type() const { return "Arch"; }
+    std::string get_type() const;
 
     /// Set parser to use.
     /// @param parser       keyword of parser to use
