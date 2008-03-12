@@ -102,6 +102,8 @@ inline std::ostream& operator<<
 }
 
 /// Architecture interface.
+/// To make architecture truly usable, set_machine() and set_parser()
+/// need to be called.
 class Arch : public Module
 {
 public:
@@ -208,11 +210,6 @@ public:
             const Insn::Operand::TargetModifier* m_tmod;
         };
     };
-
-    /// Constructor.
-    /// To make architecture truly usable, set_machine() and set_parser()
-    /// need to be called.
-    Arch();
 
     /// Destructor.
     virtual ~Arch();

@@ -66,10 +66,6 @@ Arch::InsnPrefix::release_insn()
     return std::auto_ptr<Insn>(m_insn);
 }
 
-Arch::Arch()
-{
-}
-
 Arch::~Arch()
 {
 }
