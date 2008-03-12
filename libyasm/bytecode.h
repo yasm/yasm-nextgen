@@ -178,8 +178,8 @@ public:
     public:
         typedef std::auto_ptr<Contents> Ptr;
 
-        Contents() {}
-        virtual ~Contents() {}
+        Contents();
+        virtual ~Contents();
 
         /// Prints the implementation-specific data (for debugging purposes).
         /// Called from Bytecode::put().
@@ -258,7 +258,7 @@ public:
 
     protected:
         /// Copy constructor so that derived classes can sanely have one.
-        Contents(const Contents&) {}
+        Contents(const Contents&);
 
     private:
         const Contents& operator=(const Contents&);

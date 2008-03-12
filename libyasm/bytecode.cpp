@@ -61,6 +61,14 @@ BytecodeOutput::output_reloc(Symbol* sym,
     output_bytes(bytes);
 }
 
+Bytecode::Contents::Contents()
+{
+}
+
+Bytecode::Contents::~Contents()
+{
+}
+
 bool
 Bytecode::Contents::expand(Bytecode& bc,
                            unsigned long& len,
@@ -77,6 +85,10 @@ Bytecode::Contents::SpecialType
 Bytecode::Contents::get_special() const
 {
     return SPECIAL_NONE;
+}
+
+Bytecode::Contents::Contents(const Contents& rhs)
+{
 }
 
 void
