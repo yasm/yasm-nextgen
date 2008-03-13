@@ -110,7 +110,7 @@ public:
                 /*@out@*/ unsigned long& file_line) const;
 
     /// Get all filenames used in a linemap.
-    const Filenames get_filenames() const { return m_filenames; }
+    const Filenames& get_filenames() const { return m_filenames; }
 
 private:
     /// Current virtual line number.
