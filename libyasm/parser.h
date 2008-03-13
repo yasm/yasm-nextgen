@@ -50,15 +50,12 @@ class Parser : public Module
 public:
     enum { module_type = 5 };
 
-    /// Constructor.
-    Parser() {}
-
     /// Destructor.
-    virtual ~Parser() {}
+    virtual ~Parser();
 
     /// Get the module type.
     /// @return "Parser".
-    std::string get_type() const { return "Parser"; }
+    std::string get_type() const;
 
     /// Get list of preprocessor (Preprocessor) keywords that are
     /// recommended to use with this parser.  The raw preprocessor

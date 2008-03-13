@@ -33,6 +33,7 @@ ADD_LIBRARY(libyasm
     nocase.cpp
     object.cpp
     object_format.cpp
+    parser.cpp
     phash.cpp
     preproc.cpp
     registry.cpp
