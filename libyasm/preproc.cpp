@@ -30,10 +30,6 @@
 namespace yasm
 {
 
-Preprocessor::Preprocessor()
-{
-}
-
 Preprocessor::~Preprocessor()
 {
 }
