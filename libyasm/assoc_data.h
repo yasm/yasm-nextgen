@@ -68,7 +68,7 @@ class AssocDataContainer
 
 public:
     AssocDataContainer();
-    ~AssocDataContainer();
+    virtual ~AssocDataContainer();
 
     std::auto_ptr<AssocData> add_assoc_data(const void* key,
                                             std::auto_ptr<AssocData> data);
