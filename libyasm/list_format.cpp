@@ -1,11 +1,9 @@
-#ifndef YASM_LIST_FORMAT_H
-#define YASM_LIST_FORMAT_H
 ///
-/// @file libyasm/listfmt.h
-/// @brief YASM list format interface.
+/// @file libyasm/list_format.cpp
+/// @brief YASM list format base implementation.
 ///
 /// @license
-///  Copyright (C) 2004-2007  Peter Johnson
+///  Copyright (C) 2002-2007  Peter Johnson
 ///
 /// Redistribution and use in source and binary forms, with or without
 /// modification, are permitted provided that the following conditions
@@ -29,39 +27,20 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
-#include <string>
-
-#include "module.h"
+#include "list_format.h"
 
 
 namespace yasm
 {
 
-class Arch;
-class Linemap;
-
-/// List format interface.
-class ListFormat : public Module
+ListFormat::~ListFormat()
 {
-public:
-    enum { module_type = 3 };
+}
 
-    /// Destructor.
-    virtual ~ListFormat();
-
-    /// Get the module type.
-    /// @return "ListFormat".
-    std::string get_type() const;
-
-    /// Write out list to the list file.
-    /// This function may call all read-only yasm:: functions as necessary.
-    /// @param os           output stream
-    /// @param linemap      line mapping repository
-    /// @param arch         architecture
-    virtual void output(std::ostream& os, Linemap& linemap, Arch& arch) = 0;
-};
+std::string
+ListFormat::get_type() const
+{
+    return "ListFormat";
+}
 
 } // namespace yasm
-
-#endif
