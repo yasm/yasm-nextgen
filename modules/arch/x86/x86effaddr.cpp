@@ -747,6 +747,349 @@ getregsize(const Expr::Term& term, unsigned char* addrsize)
 }
 
 bool
+X86EffAddr::check_3264(unsigned int addrsize,
+                       unsigned int bits,
+                       unsigned char* rex,
+                       Bytecode& bc)
+{
+    int i;
+    unsigned char* drex = m_need_drex ? &m_drex : 0;
+    unsigned char low3;
+    enum Reg3264Type
+    {
+        REG3264_NONE = -1,
+        REG3264_EAX = 0,
+        REG3264_ECX,
+        REG3264_EDX,
+        REG3264_EBX,
+        REG3264_ESP,
+        REG3264_EBP,
+        REG3264_ESI,
+        REG3264_EDI,
+        REG64_R8,
+        REG64_R9,
+        REG64_R10,
+        REG64_R11,
+        REG64_R12,
+        REG64_R13,
+        REG64_R14,
+        REG64_R15,
+        REG64_RIP
+    };
+    int reg3264mult[17] = {0, 0, 0, 0, 0, 0, 0, 0,
+                           0, 0, 0, 0, 0, 0, 0, 0, 0};
+    int basereg = REG3264_NONE;     // "base" register (for SIB)
+    int indexreg = REG3264_NONE;    // "index" register (for SIB)
+
+    // We can only do 64-bit addresses in 64-bit mode.
+    if (addrsize == 64 && bits != 64)
+    {
+        throw TypeError(
+            N_("invalid effective address (64-bit in non-64-bit mode)"));
+    }
+
+    if (m_pc_rel && bits != 64)
+    {
+        warn_set(WARN_GENERAL,
+            N_("RIP-relative directive ignored in non-64-bit mode"));
+        m_pc_rel = false;
+    }
+
+    if (m_disp.has_abs())
+    {
+        bool pcrel = false;
+        switch (x86_expr_checkea_getregusage
+                (m_disp.get_abs(), &indexreg, &pcrel, bits,
+                 BIND::bind(&get_reg3264, _1, _2, reg3264mult, bits,
+                            addrsize)))
+        {
+            case 1:
+                throw ValueError(N_("invalid effective address"));
+            case 2:
+                if (pcrel)
+                    m_disp.set_curpos_rel(bc, true);
+                return false;
+            default:
+                if (pcrel)
+                    m_disp.set_curpos_rel(bc, true);
+                break;
+        }
+    }
+
+    // If indexreg mult is 0, discard it.
+    // This is possible because of the way indexreg is found in
+    // expr_checkea_getregusage().
+    if (indexreg != REG3264_NONE && reg3264mult[indexreg] == 0)
+        indexreg = REG3264_NONE;
+
+    // Find a basereg (*1, but not indexreg), if there is one.
+    // Also, if an indexreg hasn't been assigned, try to find one.
+    // Meanwhile, check to make sure there's no negative register mults.
+    for (i=0; i<17; i++)
+    {
+        if (reg3264mult[i] < 0)
+            throw ValueError(N_("invalid effective address"));
+        if (i != indexreg && reg3264mult[i] == 1 &&
+            basereg == REG3264_NONE)
+            basereg = i;
+        else if (indexreg == REG3264_NONE && reg3264mult[i] > 0)
+            indexreg = i;
+    }
+
+    // Handle certain special cases of indexreg mults when basereg is
+    // empty.
+    if (indexreg != REG3264_NONE && basereg == REG3264_NONE)
+        switch (reg3264mult[indexreg])
+        {
+            case 1:
+                // Only optimize this way if nosplit wasn't specified
+                if (!m_nosplit)
+                {
+                    basereg = indexreg;
+                    indexreg = -1;
+                }
+                break;
+            case 2:
+                // Only split if nosplit wasn't specified
+                if (!m_nosplit)
+                {
+                    basereg = indexreg;
+                    reg3264mult[indexreg] = 1;
+                }
+                break;
+            case 3:
+            case 5:
+            case 9:
+                basereg = indexreg;
+                reg3264mult[indexreg]--;
+                break;
+        }
+
+    // Make sure there's no other registers than the basereg and indexreg
+    // we just found.
+    for (i=0; i<17; i++)
+        if (i != basereg && i != indexreg && reg3264mult[i] != 0)
+            throw ValueError(N_("invalid effective address"));
+
+    // Check the index multiplier value for validity if present.
+    if (indexreg != REG3264_NONE && reg3264mult[indexreg] != 1 &&
+        reg3264mult[indexreg] != 2 && reg3264mult[indexreg] != 4 &&
+        reg3264mult[indexreg] != 8)
+        throw ValueError(N_("invalid effective address"));
+
+    // ESP is not a legal indexreg.
+    if (indexreg == REG3264_ESP)
+    {
+        // If mult>1 or basereg is ESP also, there's no way to make it
+        // legal.
+        if (reg3264mult[REG3264_ESP] > 1 || basereg == REG3264_ESP)
+            throw ValueError(N_("invalid effective address"));
+
+        // If mult==1 and basereg is not ESP, swap indexreg w/basereg.
+        indexreg = basereg;
+        basereg = REG3264_ESP;
+    }
+
+    // RIP is only legal if it's the ONLY register used.
+    if (indexreg == REG64_RIP ||
+        (basereg == REG64_RIP && indexreg != REG3264_NONE))
+        throw ValueError(N_("invalid effective address"));
+
+    // At this point, we know the base and index registers and that the
+    // memory expression is (essentially) valid.  Now build the ModRM and
+    // (optional) SIB bytes.
+
+    // If we're supposed to be RIP-relative and there's no register
+    // usage, change to RIP-relative.
+    if (basereg == REG3264_NONE && indexreg == REG3264_NONE && m_pc_rel)
+    {
+        basereg = REG64_RIP;
+        m_disp.set_curpos_rel(bc, true);
+    }
+
+    // First determine R/M (Mod is later determined from disp size)
+    m_need_modrm = true;    // we always need ModRM
+    if (basereg == REG3264_NONE && indexreg == REG3264_NONE)
+    {
+        // Just a disp32: in 64-bit mode the RM encoding is used for RIP
+        // offset addressing, so we need to use the SIB form instead.
+        if (bits == 64) {
+            m_modrm |= 4;
+            m_need_sib = 1;
+        } else {
+            m_modrm |= 5;
+            m_sib = 0;
+            m_valid_sib = false;
+            m_need_sib = 0;
+        }
+    }
+    else if (basereg == REG64_RIP)
+    {
+        m_modrm |= 5;
+        m_sib = 0;
+        m_valid_sib = false;
+        m_need_sib = 0;
+        // RIP always requires a 32-bit displacement
+        m_valid_modrm = true;
+        m_disp.m_size = 32;
+        return true;
+    }
+    else if (indexreg == REG3264_NONE)
+    {
+        // basereg only
+        // Don't need to go to the full effort of determining what type
+        // of register basereg is, as set_rex_from_reg doesn't pay
+        // much attention.
+        set_rex_from_reg(rex, drex, &low3, X86_REG64[basereg], bits,
+                         X86_REX_B);
+        m_modrm |= low3;
+        // we don't need an SIB *unless* basereg is ESP or R12
+        if (basereg == REG3264_ESP || basereg == REG64_R12)
+            m_need_sib = 1;
+        else {
+            m_sib = 0;
+            m_valid_sib = false;
+            m_need_sib = 0;
+        }
+    }
+    else
+    {
+        // index or both base and index
+        m_modrm |= 4;
+        m_need_sib = 1;
+    }
+
+    // Determine SIB if needed
+    if (m_need_sib == 1)
+    {
+        m_sib = 0;      // start with 0
+
+        // Special case: no basereg
+        if (basereg == REG3264_NONE)
+            m_sib |= 5;
+        else
+        {
+            set_rex_from_reg(rex, drex, &low3, X86_REG64[basereg], bits,
+                             X86_REX_B);
+            m_sib |= low3;
+        }
+
+        // Put in indexreg, checking for none case
+        if (indexreg == REG3264_NONE)
+            m_sib |= 040;
+            // Any scale field is valid, just leave at 0.
+        else
+        {
+            set_rex_from_reg(rex, drex, &low3, X86_REG64[indexreg], bits,
+                             X86_REX_X);
+            m_sib |= low3 << 3;
+            // Set scale field, 1 case -> 0, so don't bother.
+            switch (reg3264mult[indexreg])
+            {
+                case 2:
+                    m_sib |= 0100;
+                    break;
+                case 4:
+                    m_sib |= 0200;
+                    break;
+                case 8:
+                    m_sib |= 0300;
+                    break;
+            }
+        }
+
+        m_valid_sib = true;     // Done with SIB
+    }
+
+    // Calculate displacement length (if possible)
+    calc_displen(32, basereg == REG3264_NONE,
+                 basereg == REG3264_EBP || basereg == REG64_R13);
+    return true;
+}
+
+bool
+X86EffAddr::check_16(unsigned int bits, bool address16_op, Bytecode& bc)
+{
+    static const unsigned char modrm16[16] =
+    {
+        0006 /* disp16  */, 0007 /* [BX]    */, 0004 /* [SI]    */,
+        0000 /* [BX+SI] */, 0005 /* [DI]    */, 0001 /* [BX+DI] */,
+        0377 /* invalid */, 0377 /* invalid */, 0006 /* [BP]+d  */,
+        0377 /* invalid */, 0002 /* [BP+SI] */, 0377 /* invalid */,
+        0003 /* [BP+DI] */, 0377 /* invalid */, 0377 /* invalid */,
+        0377 /* invalid */
+    };
+    int bx=0, si=0, di=0, bp=0; // total multiplier for each reg
+    enum HaveReg
+    {
+        HAVE_NONE = 0,
+        HAVE_BX = 1<<0,
+        HAVE_SI = 1<<1,
+        HAVE_DI = 1<<2,
+        HAVE_BP = 1<<3
+    };
+    int havereg = HAVE_NONE;
+
+    // 64-bit mode does not allow 16-bit addresses
+    if (bits == 64 && !address16_op)
+    {
+        throw TypeError(
+            N_("16-bit addresses not supported in 64-bit mode"));
+    }
+
+    // 16-bit cannot have SIB
+    m_sib = 0;
+    m_valid_sib = false;
+    m_need_sib = 0;
+
+    if (m_disp.has_abs())
+    {
+        bool pcrel = false;
+        switch (x86_expr_checkea_getregusage
+                (m_disp.get_abs(), (int *)NULL, &pcrel, bits,
+                 BIND::bind(&x86_expr_checkea_get_reg16, _1, _2, bx, si,
+                            di, bp)))
+        {
+            case 1:
+                throw ValueError(N_("invalid effective address"));
+            case 2:
+                if (pcrel)
+                    m_disp.set_curpos_rel(bc, true);
+                return false;
+            default:
+                if (pcrel)
+                    m_disp.set_curpos_rel(bc, true);
+                break;
+        }
+    }
+
+    // reg multipliers not 0 or 1 are illegal.
+    if (bx & ~1 || si & ~1 || di & ~1 || bp & ~1)
+        throw ValueError(N_("invalid effective address"));
+
+    // Set havereg appropriately
+    if (bx > 0)
+        havereg |= HAVE_BX;
+    if (si > 0)
+        havereg |= HAVE_SI;
+    if (di > 0)
+        havereg |= HAVE_DI;
+    if (bp > 0)
+        havereg |= HAVE_BP;
+
+    // Check the modrm value for invalid combinations.
+    if (modrm16[havereg] & 0070)
+        throw ValueError(N_("invalid effective address"));
+
+    // Set ModRM byte for registers
+    m_modrm |= modrm16[havereg];
+
+    // Calculate displacement length (if possible)
+    calc_displen(16, havereg == HAVE_NONE, havereg == HAVE_BP);
+    return true;
+}
+
+bool
 X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
                   bool address16_op, unsigned char* rex, Bytecode& bc)
 {
@@ -798,338 +1141,11 @@ X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
     if ((*addrsize == 32 || *addrsize == 64) &&
         ((m_need_modrm && !m_valid_modrm) || (m_need_sib && !m_valid_sib)))
     {
-        int i;
-        unsigned char* drex = m_need_drex ? &m_drex : 0;
-        unsigned char low3;
-        enum Reg3264Type
-        {
-            REG3264_NONE = -1,
-            REG3264_EAX = 0,
-            REG3264_ECX,
-            REG3264_EDX,
-            REG3264_EBX,
-            REG3264_ESP,
-            REG3264_EBP,
-            REG3264_ESI,
-            REG3264_EDI,
-            REG64_R8,
-            REG64_R9,
-            REG64_R10,
-            REG64_R11,
-            REG64_R12,
-            REG64_R13,
-            REG64_R14,
-            REG64_R15,
-            REG64_RIP
-        };
-        int reg3264mult[17] = {0, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0, 0, 0, 0, 0, 0};
-        int basereg = REG3264_NONE;     // "base" register (for SIB)
-        int indexreg = REG3264_NONE;    // "index" register (for SIB)
-
-        // We can only do 64-bit addresses in 64-bit mode.
-        if (*addrsize == 64 && bits != 64)
-        {
-            throw TypeError(
-                N_("invalid effective address (64-bit in non-64-bit mode)"));
-        }
-
-        if (m_pc_rel && bits != 64)
-        {
-            warn_set(WARN_GENERAL,
-                N_("RIP-relative directive ignored in non-64-bit mode"));
-            m_pc_rel = false;
-        }
-
-        if (m_disp.has_abs())
-        {
-            bool pcrel = false;
-            switch (x86_expr_checkea_getregusage
-                    (m_disp.get_abs(), &indexreg, &pcrel, bits,
-                     BIND::bind(&get_reg3264, _1, _2, reg3264mult, bits,
-                                *addrsize)))
-            {
-                case 1:
-                    throw ValueError(N_("invalid effective address"));
-                case 2:
-                    if (pcrel)
-                        m_disp.set_curpos_rel(bc, true);
-                    return false;
-                default:
-                    if (pcrel)
-                        m_disp.set_curpos_rel(bc, true);
-                    break;
-            }
-        }
-
-        // If indexreg mult is 0, discard it.
-        // This is possible because of the way indexreg is found in
-        // expr_checkea_getregusage().
-        if (indexreg != REG3264_NONE && reg3264mult[indexreg] == 0)
-            indexreg = REG3264_NONE;
-
-        // Find a basereg (*1, but not indexreg), if there is one.
-        // Also, if an indexreg hasn't been assigned, try to find one.
-        // Meanwhile, check to make sure there's no negative register mults.
-        for (i=0; i<17; i++)
-        {
-            if (reg3264mult[i] < 0)
-                throw ValueError(N_("invalid effective address"));
-            if (i != indexreg && reg3264mult[i] == 1 &&
-                basereg == REG3264_NONE)
-                basereg = i;
-            else if (indexreg == REG3264_NONE && reg3264mult[i] > 0)
-                indexreg = i;
-        }
-
-        // Handle certain special cases of indexreg mults when basereg is
-        // empty.
-        if (indexreg != REG3264_NONE && basereg == REG3264_NONE)
-            switch (reg3264mult[indexreg])
-            {
-                case 1:
-                    // Only optimize this way if nosplit wasn't specified
-                    if (!m_nosplit)
-                    {
-                        basereg = indexreg;
-                        indexreg = -1;
-                    }
-                    break;
-                case 2:
-                    // Only split if nosplit wasn't specified
-                    if (!m_nosplit)
-                    {
-                        basereg = indexreg;
-                        reg3264mult[indexreg] = 1;
-                    }
-                    break;
-                case 3:
-                case 5:
-                case 9:
-                    basereg = indexreg;
-                    reg3264mult[indexreg]--;
-                    break;
-            }
-
-        // Make sure there's no other registers than the basereg and indexreg
-        // we just found.
-        for (i=0; i<17; i++)
-            if (i != basereg && i != indexreg && reg3264mult[i] != 0)
-                throw ValueError(N_("invalid effective address"));
-
-        // Check the index multiplier value for validity if present.
-        if (indexreg != REG3264_NONE && reg3264mult[indexreg] != 1 &&
-            reg3264mult[indexreg] != 2 && reg3264mult[indexreg] != 4 &&
-            reg3264mult[indexreg] != 8)
-            throw ValueError(N_("invalid effective address"));
-
-        // ESP is not a legal indexreg.
-        if (indexreg == REG3264_ESP)
-        {
-            // If mult>1 or basereg is ESP also, there's no way to make it
-            // legal.
-            if (reg3264mult[REG3264_ESP] > 1 || basereg == REG3264_ESP)
-                throw ValueError(N_("invalid effective address"));
-
-            // If mult==1 and basereg is not ESP, swap indexreg w/basereg.
-            indexreg = basereg;
-            basereg = REG3264_ESP;
-        }
-
-        // RIP is only legal if it's the ONLY register used.
-        if (indexreg == REG64_RIP ||
-            (basereg == REG64_RIP && indexreg != REG3264_NONE))
-            throw ValueError(N_("invalid effective address"));
-
-        // At this point, we know the base and index registers and that the
-        // memory expression is (essentially) valid.  Now build the ModRM and
-        // (optional) SIB bytes.
-
-        // If we're supposed to be RIP-relative and there's no register
-        // usage, change to RIP-relative.
-        if (basereg == REG3264_NONE && indexreg == REG3264_NONE && m_pc_rel)
-        {
-            basereg = REG64_RIP;
-            m_disp.set_curpos_rel(bc, true);
-        }
-
-        // First determine R/M (Mod is later determined from disp size)
-        m_need_modrm = true;    // we always need ModRM
-        if (basereg == REG3264_NONE && indexreg == REG3264_NONE)
-        {
-            // Just a disp32: in 64-bit mode the RM encoding is used for RIP
-            // offset addressing, so we need to use the SIB form instead.
-            if (bits == 64) {
-                m_modrm |= 4;
-                m_need_sib = 1;
-            } else {
-                m_modrm |= 5;
-                m_sib = 0;
-                m_valid_sib = false;
-                m_need_sib = 0;
-            }
-        }
-        else if (basereg == REG64_RIP)
-        {
-            m_modrm |= 5;
-            m_sib = 0;
-            m_valid_sib = false;
-            m_need_sib = 0;
-            // RIP always requires a 32-bit displacement
-            m_valid_modrm = true;
-            m_disp.m_size = 32;
-            return true;
-        }
-        else if (indexreg == REG3264_NONE)
-        {
-            // basereg only
-            // Don't need to go to the full effort of determining what type
-            // of register basereg is, as set_rex_from_reg doesn't pay
-            // much attention.
-            set_rex_from_reg(rex, drex, &low3, X86_REG64[basereg], bits,
-                             X86_REX_B);
-            m_modrm |= low3;
-            // we don't need an SIB *unless* basereg is ESP or R12
-            if (basereg == REG3264_ESP || basereg == REG64_R12)
-                m_need_sib = 1;
-            else {
-                m_sib = 0;
-                m_valid_sib = false;
-                m_need_sib = 0;
-            }
-        }
-        else
-        {
-            // index or both base and index
-            m_modrm |= 4;
-            m_need_sib = 1;
-        }
-
-        // Determine SIB if needed
-        if (m_need_sib == 1)
-        {
-            m_sib = 0;      // start with 0
-
-            // Special case: no basereg
-            if (basereg == REG3264_NONE)
-                m_sib |= 5;
-            else
-            {
-                set_rex_from_reg(rex, drex, &low3, X86_REG64[basereg], bits,
-                                 X86_REX_B);
-                m_sib |= low3;
-            }
-
-            // Put in indexreg, checking for none case
-            if (indexreg == REG3264_NONE)
-                m_sib |= 040;
-                // Any scale field is valid, just leave at 0.
-            else
-            {
-                set_rex_from_reg(rex, drex, &low3, X86_REG64[indexreg], bits,
-                                 X86_REX_X);
-                m_sib |= low3 << 3;
-                // Set scale field, 1 case -> 0, so don't bother.
-                switch (reg3264mult[indexreg])
-                {
-                    case 2:
-                        m_sib |= 0100;
-                        break;
-                    case 4:
-                        m_sib |= 0200;
-                        break;
-                    case 8:
-                        m_sib |= 0300;
-                        break;
-                }
-            }
-
-            m_valid_sib = true;     // Done with SIB
-        }
-
-        // Calculate displacement length (if possible)
-        calc_displen(32, basereg == REG3264_NONE,
-                     basereg == REG3264_EBP || basereg == REG64_R13);
-        return true;
-    } else if (*addrsize == 16 && m_need_modrm && !m_valid_modrm)
+        return check_3264(*addrsize, bits, rex, bc);
+    }
+    else if (*addrsize == 16 && m_need_modrm && !m_valid_modrm)
     {
-        static const unsigned char modrm16[16] =
-        {
-            0006 /* disp16  */, 0007 /* [BX]    */, 0004 /* [SI]    */,
-            0000 /* [BX+SI] */, 0005 /* [DI]    */, 0001 /* [BX+DI] */,
-            0377 /* invalid */, 0377 /* invalid */, 0006 /* [BP]+d  */,
-            0377 /* invalid */, 0002 /* [BP+SI] */, 0377 /* invalid */,
-            0003 /* [BP+DI] */, 0377 /* invalid */, 0377 /* invalid */,
-            0377 /* invalid */
-        };
-        int bx=0, si=0, di=0, bp=0; // total multiplier for each reg
-        enum HaveReg
-        {
-            HAVE_NONE = 0,
-            HAVE_BX = 1<<0,
-            HAVE_SI = 1<<1,
-            HAVE_DI = 1<<2,
-            HAVE_BP = 1<<3
-        };
-        int havereg = HAVE_NONE;
-
-        // 64-bit mode does not allow 16-bit addresses
-        if (bits == 64 && !address16_op)
-        {
-            throw TypeError(
-                N_("16-bit addresses not supported in 64-bit mode"));
-        }
-
-        // 16-bit cannot have SIB
-        m_sib = 0;
-        m_valid_sib = false;
-        m_need_sib = 0;
-
-        if (m_disp.has_abs())
-        {
-            bool pcrel = false;
-            switch (x86_expr_checkea_getregusage
-                    (m_disp.get_abs(), (int *)NULL, &pcrel, bits,
-                     BIND::bind(&x86_expr_checkea_get_reg16, _1, _2, bx, si,
-                                di, bp)))
-            {
-                case 1:
-                    throw ValueError(N_("invalid effective address"));
-                case 2:
-                    if (pcrel)
-                        m_disp.set_curpos_rel(bc, true);
-                    return false;
-                default:
-                    if (pcrel)
-                        m_disp.set_curpos_rel(bc, true);
-                    break;
-            }
-        }
-
-        // reg multipliers not 0 or 1 are illegal.
-        if (bx & ~1 || si & ~1 || di & ~1 || bp & ~1)
-            throw ValueError(N_("invalid effective address"));
-
-        // Set havereg appropriately
-        if (bx > 0)
-            havereg |= HAVE_BX;
-        if (si > 0)
-            havereg |= HAVE_SI;
-        if (di > 0)
-            havereg |= HAVE_DI;
-        if (bp > 0)
-            havereg |= HAVE_BP;
-
-        // Check the modrm value for invalid combinations.
-        if (modrm16[havereg] & 0070)
-            throw ValueError(N_("invalid effective address"));
-
-        // Set ModRM byte for registers
-        m_modrm |= modrm16[havereg];
-
-        // Calculate displacement length (if possible)
-        calc_displen(16, havereg == HAVE_NONE, havereg == HAVE_BP);
-        return true;
+        return check_16(bits, address16_op, bc);
     }
     else if (!m_need_modrm && !m_need_sib)
     {

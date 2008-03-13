@@ -132,6 +132,12 @@ private:
     //  dispreq=true if a displacement value is *required* (even if =0).
     // Throws error if not successfully calculated.
     void calc_displen(unsigned int wordsize, bool noreg, bool dispreq);
+
+    bool check_3264(unsigned int addrsize,
+                    unsigned int bits,
+                    unsigned char* rex,
+                    Bytecode& bc);
+    bool check_16(unsigned int bits, bool address16_op, Bytecode& bc);
 };
 
 }}} // namespace yasm::arch::x86
