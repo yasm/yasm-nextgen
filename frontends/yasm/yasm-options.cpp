@@ -47,8 +47,6 @@ parse_cmdline(int argc,
               void (*print_error) (const std::string& msg))
 {
     int errors = 0, warnings = 0;
-    size_t i;
-    int got_it;
 
 fail:
     while (--argc)
@@ -57,7 +55,7 @@ fail:
 
         if (argv[0][0] == '-')          // opt
         {
-            got_it = 0;
+            bool got_it = false;
             if (argv[0][1] == '-')      // lopt
             {
                 if (argv[0][2] == '\0')     // --, end of options
@@ -72,7 +70,7 @@ fail:
                     return errors;
                 }
 
-                for (i = 0; i < nopts; i++)
+                for (size_t i = 0; i < nopts; i++)
                 {
                     if (options[i].lopt &&
                         std::strncmp(&argv[0][2], options[i].lopt,
@@ -102,12 +100,12 @@ fail:
 
                         if (!options[i].
                             handler(&argv[0][2], param, options[i].extra))
-                            got_it = 1;
+                            got_it = true;
                         break;
                     }
                 }
                 if (!got_it && !other_option_handler(argv[0]))
-                    got_it = 1;
+                    got_it = true;
                 if (!got_it)
                 {
                     print_error(String::compose(
@@ -122,7 +120,7 @@ fail:
             }
             else              // sopt
             {
-                for (i = 0; i < nopts; i++)
+                for (size_t i = 0; i < nopts; i++)
                 {
                     if (argv[0][1] == options[i].sopt)
                     {
@@ -150,12 +148,12 @@ fail:
                         }
 
                         if (!options[i].handler(cmd, param, options[i].extra))
-                            got_it = 1;
+                            got_it = true;
                         break;
                     }
                 }
                 if (!got_it && !other_option_handler(argv[0]))
-                    got_it = 1;
+                    got_it = true;
                 if (!got_it)
                 {
                     print_error(String::compose(
