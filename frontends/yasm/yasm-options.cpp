@@ -126,15 +126,15 @@ fail:
                 {
                     if (argv[0][1] == options[i].sopt)
                     {
-                        const char* cmd = &argv[0][1];
-                        const char* param;
+                        std::string cmd = &argv[0][1];
+                        std::string param;
 
                         if (options[i].takes_param)
                         {
                             param = argv[1];
                             if (argv[0][2] != '\0')
                                 param = &argv[0][2];
-                            else if (param == NULL || *param == '-')
+                            else if (param.empty() || param[0] == '-')
                             {
                                 print_error(String::compose(
                                     _("option `-%1' needs an argument!"),
@@ -148,8 +148,6 @@ fail:
                                 argv++;
                             }
                         }
-                        else
-                            param = NULL;
 
                         if (!options[i].handler(cmd, param, options[i].extra))
                             got_it = 1;
