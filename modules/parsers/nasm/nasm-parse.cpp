@@ -1106,10 +1106,7 @@ NasmParser::directive(const std::string& name,
                       const NameValues& namevals,
                       const NameValues& objext_namevals)
 {
-#if 0
-    m_object->directive(name, "nasm", namevals, objext_namevals,
-                             get_cur_line());
-#endif
+    (*m_dirs)[name](*m_object, namevals, objext_namevals, get_cur_line());
     Section* cursect = m_object->get_cur_section();
     if (m_absstart.get() != 0 && cursect)
     {

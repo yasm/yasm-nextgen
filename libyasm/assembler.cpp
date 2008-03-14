@@ -33,6 +33,7 @@
 #include "arch.h"
 #include "compose.h"
 #include "debug_format.h"
+#include "directive.h"
 #include "errwarn.h"
 #include "errwarns.h"
 #include "file.h"
@@ -302,9 +303,20 @@ Assembler::Impl::assemble(std::istream& is, const std::string& src_filename,
     // Initialize preprocessor
     m_preproc->init(is, src_filename, m_linemap, m_errwarns);
 
+    // Set up directive handlers
+    Directives dirs;
+    std::string parser_keyword = m_parser->get_keyword();
+    m_arch->add_directives(dirs, parser_keyword);
+    m_parser->add_directives(dirs, parser_keyword);
+    m_preproc->add_directives(dirs, parser_keyword);
+    m_objfmt->add_directives(dirs, parser_keyword);
+    m_dbgfmt->add_directives(dirs, parser_keyword);
+    if (m_listfmt.get() != 0)
+        m_listfmt->add_directives(dirs, parser_keyword);
+
     // Parse!
-    m_parser->parse(*m_object, *m_preproc, m_listfmt.get() != 0, m_linemap,
-                    m_errwarns);
+    m_parser->parse(*m_object, *m_preproc, m_listfmt.get() != 0, dirs,
+                    m_linemap, m_errwarns);
 
     if (m_errwarns.num_errors(warning_error) > 0)
         return false;

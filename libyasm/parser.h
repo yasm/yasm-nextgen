@@ -39,6 +39,7 @@
 namespace yasm
 {
 
+class Directives;
 class Errwarns;
 class Linemap;
 class Object;
@@ -69,16 +70,18 @@ public:
 
     /// Parse an input stream into an object.
     /// @param object       object to parse into
-    /// @param is           input stream
+    /// @param preproc      preprocessor
     /// @param save_input   true if the parser should save the original
     ///                     lines of source into the linemap (via
     ///                     Linemap::add_source()).
+    /// @param dirs         available directives
     /// @param linemap      line mapping repository
     /// @param errwarns     error/warning set
     /// @note Parse errors and warnings are stored into errwarns.
     virtual void parse(Object& object,
                        Preprocessor& preproc,
                        bool save_input,
+                       Directives& dirs,
                        Linemap& linemap,
                        Errwarns& errwarns) = 0;
 };

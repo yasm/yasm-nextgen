@@ -43,6 +43,7 @@ namespace yasm
 
 class Arch;
 class Bytecode;
+class Directives;
 class Expr;
 class FloatNum;
 class IntNum;
@@ -128,6 +129,7 @@ public:
     void parse(Object& object,
                Preprocessor& preproc,
                bool save_input,
+               Directives& dirs,
                Linemap& linemap,
                Errwarns& errwarns);
 
@@ -203,6 +205,7 @@ private:
     Object* m_object;
     BytecodeContainer* m_container;
     Preprocessor* m_preproc;
+    Directives* m_dirs;
     Linemap* m_linemap;
     Errwarns* m_errwarns;
 

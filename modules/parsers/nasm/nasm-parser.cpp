@@ -65,11 +65,16 @@ NasmParser::get_keyword() const
 }
 
 void
-NasmParser::parse(Object& object, Preprocessor& preproc, bool save_input,
-                  Linemap& linemap, Errwarns& errwarns)
+NasmParser::parse(Object& object,
+                  Preprocessor& preproc,
+                  bool save_input,
+                  Directives& dirs,
+                  Linemap& linemap,
+                  Errwarns& errwarns)
 {
     m_object = &object;
     m_preproc = &preproc;
+    m_dirs = &dirs;
     m_linemap = &linemap;
     m_errwarns = &errwarns;
     m_arch = object.get_arch();
