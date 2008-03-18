@@ -315,6 +315,10 @@ public:
     /// @param offset       new offset of the bytecode
     void set_offset(unsigned long offset) { m_offset = offset; }
 
+    /// Get the offset of the start of the tail of the bytecode.
+    /// @return Offset of the tail in bytes.
+    unsigned long tail_offset() const { return m_offset + get_fixed_len(); }
+
     /// Get the offset of the next bytecode (the next bytecode doesn't have to
     /// actually exist).
     /// @return Offset of the next bytecode in bytes.
