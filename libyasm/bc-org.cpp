@@ -107,7 +107,7 @@ OrgBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
     long neg_thres = 0;
     long pos_thres = m_start;
 
-    expand(bc, len, 0, 0, (long)bc.get_offset(), neg_thres, pos_thres);
+    expand(bc, len, 0, 0, (long)bc.tail_offset(), neg_thres, pos_thres);
 
     return len;
 }
@@ -134,9 +134,9 @@ void
 OrgBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     // Sanity check for overrun
-    if (bc.get_offset() > m_start)
+    if (bc.tail_offset() > m_start)
         throw Error(N_("ORG overlap with already existing data"));
-    unsigned long len = m_start - bc.get_offset();
+    unsigned long len = m_start - bc.tail_offset();
     Bytes& bytes = bc_out.get_scratch();
     // XXX: handle more than 8 bit?
     bytes.insert(bytes.end(), len, static_cast<unsigned char>(m_fill));

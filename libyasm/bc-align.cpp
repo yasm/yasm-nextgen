@@ -135,7 +135,7 @@ AlignBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
     long neg_thres = 0;
     long pos_thres = 0;
 
-    expand(bc, len, 0, 0, (long)bc.get_offset(), neg_thres, pos_thres);
+    expand(bc, len, 0, 0, (long)bc.tail_offset(), neg_thres, pos_thres);
     return len;
 }
 
@@ -183,10 +183,11 @@ AlignBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
         return;
     else
     {
-        unsigned long end = bc.get_offset();
-        if (bc.get_offset() & (boundary-1))
-            end = (bc.get_offset() & ~(boundary-1)) + boundary;
-        len = end - bc.get_offset();
+        unsigned long tail = bc.tail_offset();
+        unsigned long end = tail;
+        if (tail & (boundary-1))
+            end = (tail & ~(boundary-1)) + boundary;
+        len = end - tail;
         if (len == 0)
             return;
         if (m_maxskip.get() != 0)
