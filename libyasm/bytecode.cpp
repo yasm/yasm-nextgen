@@ -30,7 +30,6 @@
 
 #include "bytes.h"
 #include "errwarn.h"
-#include "errwarns.h"
 #include "expr.h"
 #include "intnum.h"
 #include "location_util.h"
@@ -198,20 +197,6 @@ Bytecode::finalize()
 }
 
 void
-Bytecode::finalize(Errwarns& errwarns)
-{
-    try
-    {
-        finalize();
-    }
-    catch (Error& err)
-    {
-        errwarns.propagate(m_line, err);
-    }
-    errwarns.propagate(m_line);     // propagate warnings
-}
-
-void
 Bytecode::calc_len(AddSpanFunc add_span)
 {
     if (m_contents.get() == 0)
@@ -220,20 +205,6 @@ Bytecode::calc_len(AddSpanFunc add_span)
         return;
     }
     m_len = m_contents->calc_len(*this, add_span);
-}
-
-void
-Bytecode::calc_len(AddSpanFunc add_span, Errwarns& errwarns)
-{
-    try
-    {
-        calc_len(add_span);
-    }
-    catch (Error& err)
-    {
-        errwarns.propagate(m_line, err);
-    }
-    errwarns.propagate(m_line);     // propagate warnings
 }
 
 bool
@@ -247,27 +218,6 @@ Bytecode::expand(int span,
         return false;
     return m_contents->expand(*this, m_len, span, old_val, new_val, neg_thres,
                               pos_thres);
-}
-
-bool
-Bytecode::expand(int span,
-                 long old_val,
-                 long new_val,
-                 /*@out@*/ long& neg_thres,
-                 /*@out@*/ long& pos_thres,
-                 Errwarns& errwarns)
-{
-    bool retval = false;
-    try
-    {
-        retval = expand(span, old_val, new_val, neg_thres, pos_thres);
-    }
-    catch (Error& err)
-    {
-        errwarns.propagate(m_line, err);
-    }
-    errwarns.propagate(m_line);     // propagate warnings
-    return retval;
 }
 
 void
@@ -325,23 +275,6 @@ Bytecode::update_offset(unsigned long offset)
     }
     m_offset = offset;
     return next_offset();
-}
-
-unsigned long
-Bytecode::update_offset(unsigned long offset, Errwarns& errwarns)
-{
-    unsigned long retval;
-    try
-    {
-        retval = update_offset(offset);
-    }
-    catch (Error& err)
-    {
-        errwarns.propagate(m_line, err);
-        retval = next_offset();
-    }
-    errwarns.propagate(m_line);     // propagate warnings
-    return retval;
 }
 
 void

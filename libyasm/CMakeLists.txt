@@ -10,6 +10,7 @@ ADD_LIBRARY(libyasm
     bc-org.cpp
     bitvect.cpp
     bytecode.cpp
+    bytecode_util.cpp
     bytes.cpp
     compose.cpp
     debug_format.cpp

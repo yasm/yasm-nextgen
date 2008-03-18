@@ -46,7 +46,6 @@ namespace yasm
 {
 
 class BytecodeContainer;
-class Errwarns;
 class Expr;
 class Symbol;
 
@@ -303,7 +302,6 @@ public:
 
     /// Finalize a bytecode after parsing.
     void finalize();
-    void finalize(Errwarns& errwarns);
 
     /// Get the offset of the bytecode.
     /// @return Offset of the bytecode in bytes.
@@ -347,7 +345,6 @@ public:
     /// @param add_span     function to call to add a span
     /// @note May store to bytecode updated expressions and the short length.
     void calc_len(AddSpanFunc add_span);
-    void calc_len(AddSpanFunc add_span, Errwarns& errwarns);
 
     /// Recalculate a bytecode's length based on an expanded span length.
     /// @param span         span ID (as given to yasm_bc_add_span_func in
@@ -368,12 +365,6 @@ public:
                 long new_val,
                 /*@out@*/ long& neg_thres,
                 /*@out@*/ long& pos_thres);
-    bool expand(int span,
-                long old_val,
-                long new_val,
-                /*@out@*/ long& neg_thres,
-                /*@out@*/ long& pos_thres,
-                Errwarns& errwarns);
 
     /// Output a bytecode.
     /// @param bc_out       bytecode output interface
@@ -389,7 +380,6 @@ public:
     /// @param errwarns     error/warning set
     /// @return Offset of next bytecode.
     unsigned long update_offset(unsigned long offset);
-    unsigned long update_offset(unsigned long offset, Errwarns& errwarns);
 
     unsigned long get_line() const { return m_line; }
 

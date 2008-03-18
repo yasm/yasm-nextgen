@@ -29,6 +29,7 @@
 #include "util.h"
 
 #include "bytecode.h"
+#include "bytecode_util.h"
 #include "errwarn.h"
 #include "expr.h"
 #include "marg_ostream.h"
@@ -204,7 +205,7 @@ void
 BytecodeContainer::finalize(Errwarns& errwarns)
 {
     for (bc_iterator bc=m_bcs.begin(), end=m_bcs.end(); bc != end; ++bc)
-        bc->finalize(errwarns);
+        ::finalize(*bc, errwarns);
 }
 
 void
@@ -213,7 +214,7 @@ BytecodeContainer::update_offsets(Errwarns& errwarns)
     unsigned long offset = 0;
     m_bcs.front().set_offset(0);
     for (bc_iterator bc=m_bcs.begin(), end=m_bcs.end(); bc != end; ++bc)
-        offset = bc->update_offset(offset, errwarns);
+        offset = update_offset(*bc, offset, errwarns);
 }
 
 } // namespace yasm

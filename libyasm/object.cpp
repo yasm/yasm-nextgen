@@ -37,6 +37,7 @@
 
 #include "arch.h"
 #include "bytecode.h"
+#include "bytecode_util.h"
 #include "debug_format.h"
 #include "errwarn.h"
 #include "errwarns.h"
@@ -767,9 +768,9 @@ Optimize::step_1b(Errwarns& errwarns)
         if (terms_okay && span->recalc_normal())
         {
             bool still_depend =
-                span->m_bc.expand(span->m_id, span->m_cur_val,
-                                  span->m_new_val, span->m_neg_thres,
-                                  span->m_pos_thres, errwarns);
+                expand(span->m_bc, span->m_id, span->m_cur_val,
+                       span->m_new_val, span->m_neg_thres,
+                       span->m_pos_thres, errwarns);
             if (errwarns.num_errors() > 0)
                 saw_error = true;
             else if (still_depend)
@@ -925,8 +926,8 @@ Optimize::step_2(Errwarns& errwarns)
         unsigned long orig_len = span->m_bc.get_total_len();
 
         bool still_depend =
-            span->m_bc.expand(span->m_id, span->m_cur_val, span->m_new_val,
-                              span->m_neg_thres, span->m_pos_thres, errwarns);
+            expand(span->m_bc, span->m_id, span->m_cur_val, span->m_new_val,
+                   span->m_neg_thres, span->m_pos_thres, errwarns);
 
         if (errwarns.num_errors() > 0)
         {
@@ -979,8 +980,8 @@ Optimize::step_2(Errwarns& errwarns)
 
             orig_len = os->m_bc->get_tail_len();
             long neg_thres_temp, pos_thres_temp;
-            os->m_bc->expand(1, (long)os->m_cur_val, (long)os->m_new_val,
-                             neg_thres_temp, pos_thres_temp, errwarns);
+            expand(*os->m_bc, 1, (long)os->m_cur_val, (long)os->m_new_val,
+                   neg_thres_temp, pos_thres_temp, errwarns);
             os->m_thres = (long)pos_thres_temp;
 
             offset_diff =
@@ -1036,9 +1037,9 @@ Object::optimize(Errwarns& errwarns)
             bc->set_index(bc_index++);
             bc->set_offset(offset);
 
-            bc->calc_len(BIND::bind(&Optimize::add_span, &opt,
-                                    _1, _2, _3, _4, _5),
-                         errwarns);
+            calc_len(*bc, BIND::bind(&Optimize::add_span, &opt,
+                                     _1, _2, _3, _4, _5),
+                     errwarns);
             if (errwarns.num_errors() > 0)
                 saw_error = true;
             else
