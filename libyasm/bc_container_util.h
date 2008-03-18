@@ -1,5 +1,5 @@
-#ifndef YASM_SECTION_UTIL_H
-#define YASM_SECTION_UTIL_H
+#ifndef YASM_BC_CONTAINER_UTIL_H
+#define YASM_BC_CONTAINER_UTIL_H
 ///
 /// @file libyasm/bc_container_util.h
 /// @brief YASM bytecode container utility functions.
