@@ -7,6 +7,7 @@
 /*****************************************************************************/
 /*  MODULE IMPORTS:                                                          */
 /*****************************************************************************/
+#include <limits>
 #include <ctype.h>                                  /*  MODULE TYPE:  (sys)  */
 #include <limits.h>                                 /*  MODULE TYPE:  (sys)  */
 #include <string.h>                                 /*  MODULE TYPE:  (sys)  */
@@ -108,17 +109,23 @@ static const int HIDDEN_WORDS = 3;
     /* global machine-dependent constants (set by "Boot"): */
     /*****************************************************************/
 
-static N_word BITS;     /* = # of bits in machine word (must be power of 2)  */
-static N_word MODMASK;  /* = BITS - 1 (mask for calculating modulo BITS)     */
+// # of bits in machine word (must be power of 2)
+#define BITS ((N_word)(std::numeric_limits<N_word>::digits))
+// BITS - 1 (mask for calculating modulo BITS)
+#define MODMASK ((N_word)(BITS-1))
 static N_word LOGBITS;  /* = ld(BITS) (logarithmus dualis)                   */
 static N_word FACTOR;   /* = ld(BITS / 8) (ld of # of bytes)                 */
 
-static N_word LSBMASK = 1;/* = mask for least significant bit                */
-static N_word MSBMASK;  /* = mask for most significant bit                   */
+// mask for least significant bit
+#define LSBMASK 1U
+// mask for most significant bit
+#define MSBMASK (LSBMASK << MODMASK)
 
-static N_word LONGBITS; /* = # of bits in unsigned long                      */
+// # of bits in unsigned long
+#define LONGBITS ((N_word)(std::numeric_limits<N_long>::digits))
 
-static N_word LOG10;    /* = logarithm to base 10 of BITS - 1                */
+// logarithm to base 10 of BITS - 1
+#define LOG10 ((N_word)(MODMASK * 0.30103))     // (BITS - 1) * ( ln 2 / ln 10 )
 static N_word EXP10;    /* = largest possible power of 10 in signed int      */
 
     /********************************************************************/
@@ -331,21 +338,14 @@ const char * Error(ErrCode error)
 
 ErrCode Boot(void)
 {
-    N_long longsample = 1L;
     N_word sample = LSBMASK;
     N_word lsb;
 
     if (sizeof(N_word) > sizeof(size_t)) return(ErrCode_Type);
 
-    BITS = 1;
-    while (sample <<= 1) BITS++;    /* determine # of bits in a machine word */
-
     if (BITS != (sizeof(N_word) << 3)) return(ErrCode_Bits);
 
     if (BITS < 16) return(ErrCode_Word);
-
-    LONGBITS = 1;
-    while (longsample <<= 1) LONGBITS++;  /* = # of bits in an unsigned long */
 
     if (BITS > LONGBITS) return(ErrCode_Long);
 
@@ -362,9 +362,7 @@ ErrCode Boot(void)
 
     if (BITS != (LSBMASK << LOGBITS)) return(ErrCode_Loga);
 
-    MODMASK = BITS - 1;
     FACTOR = LOGBITS - 3;  /* ld(BITS / 8) = ld(BITS) - ld(8) = ld(BITS) - 3 */
-    MSBMASK = (LSBMASK << MODMASK);
 
     if (BITMASKTAB) free(BITMASKTAB);
 
@@ -377,7 +375,6 @@ ErrCode Boot(void)
         BITMASKTAB[sample] = (LSBMASK << sample);
     }
 
-    LOG10 = (N_word) (MODMASK * 0.30103); /* = (BITS - 1) * ( ln 2 / ln 10 ) */
     EXP10 = power10(LOG10);
 
     return(ErrCode_Ok);
