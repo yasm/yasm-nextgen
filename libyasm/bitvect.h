@@ -292,21 +292,6 @@ bool Set_subset           (wordptr X, wordptr Y);            /* X in Y ?  */
 Z_long  Set_Min              (wordptr addr);                    /* = min(X)  */
 Z_long  Set_Max              (wordptr addr);                    /* = max(X)  */
 
-/* ===> matrix-of-booleans operations: */
-
-void    Matrix_Multiplication(wordptr X, N_int rowsX, N_int colsX,
-                              wordptr Y, N_int rowsY, N_int colsY,
-                              wordptr Z, N_int rowsZ, N_int colsZ);
-
-void    Matrix_Product       (wordptr X, N_int rowsX, N_int colsX,
-                              wordptr Y, N_int rowsY, N_int colsY,
-                              wordptr Z, N_int rowsZ, N_int colsZ);
-
-void    Matrix_Closure       (wordptr addr, N_int rows, N_int cols);
-
-void    Matrix_Transpose     (wordptr X, N_int rowsX, N_int colsX,
-                              wordptr Y, N_int rowsY, N_int colsY);
-
 } // namespace BitVector
 
 /*****************************************************************************/
