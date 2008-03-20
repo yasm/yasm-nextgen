@@ -27,13 +27,6 @@ namespace BitVector
 #define SHL         <<
 #define SHR         >>
 
-#ifdef ENABLE_MODULO
-#define mod         %       /* arithmetic operators */
-#endif
-
-#define blockdef(name,size)         unsigned char name[size]
-#define blocktypedef(name,size)     typedef unsigned char name[size]
-
 /*****************************************************************************/
 /*  MODULE RESOURCES:                                                        */
 /*****************************************************************************/
