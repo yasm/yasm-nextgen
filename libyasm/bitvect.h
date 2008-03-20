@@ -289,9 +289,6 @@ void    Set_Complement       (wordptr X, wordptr Y);            /* X = ~Y    */
 
 bool Set_subset           (wordptr X, wordptr Y);            /* X in Y ?  */
 
-N_int   Set_Norm             (wordptr addr);                    /* = | X |   */
-N_int   Set_Norm2            (wordptr addr);                    /* = | X |   */
-N_int   Set_Norm3            (wordptr addr);                    /* = | X |   */
 Z_long  Set_Min              (wordptr addr);                    /* = min(X)  */
 Z_long  Set_Max              (wordptr addr);                    /* = max(X)  */
 
