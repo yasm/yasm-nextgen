@@ -81,8 +81,6 @@ enum ErrCode
         ErrCode_Bits,      /* bits of word and sizeof(word) are inconsistent */
         ErrCode_Word,      /* size of word is less than 16 bits              */
         ErrCode_Long,      /* size of word is greater than size of long      */
-        ErrCode_Powr,      /* number of bits of word is not a power of two   */
-        ErrCode_Loga,      /* error in calculation of logarithm              */
 
         ErrCode_Null,      /* unable to allocate memory                      */
 

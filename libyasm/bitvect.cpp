@@ -39,8 +39,6 @@ static inline N_int& mask_(const wordptr addr) { return addr[-1]; }
 #define  ERRCODE_BITS  "bits(word) != sizeof(word)*8"
 #define  ERRCODE_WORD  "bits(word) < 16"
 #define  ERRCODE_LONG  "bits(word) > bits(long)"
-#define  ERRCODE_POWR  "bits(word) != 2^x"
-#define  ERRCODE_LOGA  "bits(word) != 2^ld(bits(word))"
 #define  ERRCODE_NULL  "unable to allocate memory"
 #define  ERRCODE_INDX  "index out of range"
 #define  ERRCODE_ORDR  "minimum > maximum index"
@@ -265,8 +263,6 @@ const char * Error(ErrCode error)
         case ErrCode_Bits: return( ERRCODE_BITS ); break;
         case ErrCode_Word: return( ERRCODE_WORD ); break;
         case ErrCode_Long: return( ERRCODE_LONG ); break;
-        case ErrCode_Powr: return( ERRCODE_POWR ); break;
-        case ErrCode_Loga: return( ERRCODE_LOGA ); break;
         case ErrCode_Null: return( ERRCODE_NULL ); break;
         case ErrCode_Indx: return( ERRCODE_INDX ); break;
         case ErrCode_Ordr: return( ERRCODE_ORDR ); break;
