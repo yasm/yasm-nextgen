@@ -70,8 +70,8 @@ static const int HIDDEN_WORDS = 3;
 #define BITS ((N_word)(std::numeric_limits<N_word>::digits))
 // BITS - 1 (mask for calculating modulo BITS)
 #define MODMASK ((N_word)(BITS-1))
-static N_word LOGBITS;  /* = ld(BITS) (logarithmus dualis)                   */
-static N_word FACTOR;   /* = ld(BITS / 8) (ld of # of bytes)                 */
+// # of bytes in machine word
+#define BYTES ((N_word)(BITS>>3))
 
 // mask for least significant bit
 #define LSBMASK 1U
@@ -111,17 +111,17 @@ static wordptr BITMASKTAB = 0;
     { target += count; source += count; while (count-- > 0) *--target = *--source; }
 
 #define CLR_BIT(address,index) \
-    *(address+(index>>LOGBITS)) &= NOT BITMASKTAB[index AND MODMASK];
+    *(address+(index/BITS)) &= NOT BITMASKTAB[index AND MODMASK];
 
 #define SET_BIT(address,index) \
-    *(address+(index>>LOGBITS)) |= BITMASKTAB[index AND MODMASK];
+    *(address+(index/BITS)) |= BITMASKTAB[index AND MODMASK];
 
 #define TST_BIT(address,index) \
-    ((*(address+(index>>LOGBITS)) AND BITMASKTAB[index AND MODMASK]) != 0)
+    ((*(address+(index/BITS)) AND BITMASKTAB[index AND MODMASK]) != 0)
 
 #define FLP_BIT(address,index,mask) \
     (mask = BITMASKTAB[index AND MODMASK]), \
-    (((*(addr+(index>>LOGBITS)) ^= mask) AND mask) != 0)
+    (((*(addr+(index/BITS)) ^= mask) AND mask) != 0)
 
 #define DIGITIZE(type,value,digit) \
     value = (type) ((digit = value) / 10); \
@@ -296,7 +296,6 @@ const char * Error(ErrCode error)
 ErrCode Boot(void)
 {
     N_word sample = LSBMASK;
-    N_word lsb;
 
     if (sizeof(N_word) > sizeof(size_t)) return(ErrCode_Type);
 
@@ -306,24 +305,9 @@ ErrCode Boot(void)
 
     if (BITS > LONGBITS) return(ErrCode_Long);
 
-    LOGBITS = 0;
-    sample = BITS;
-    lsb = (sample AND LSBMASK);
-    while ((sample >>= 1) && (!lsb))
-    {
-        LOGBITS++;
-        lsb = (sample AND LSBMASK);
-    }
-
-    if (sample) return(ErrCode_Powr);      /* # of bits is not a power of 2! */
-
-    if (BITS != (LSBMASK << LOGBITS)) return(ErrCode_Loga);
-
-    FACTOR = LOGBITS - 3;  /* ld(BITS / 8) = ld(BITS) - ld(8) = ld(BITS) - 3 */
-
     if (BITMASKTAB) free(BITMASKTAB);
 
-    BITMASKTAB = (wordptr) malloc((size_t) (BITS << FACTOR));
+    BITMASKTAB = (wordptr) malloc((size_t) (BITS * BYTES));
 
     if (BITMASKTAB == NULL) return(ErrCode_Null);
 
@@ -347,7 +331,7 @@ N_word Size(N_int bits)           /* bit vector size (# of words)  */
 {
     N_word size;
 
-    size = bits >> LOGBITS;
+    size = bits / BITS;
     if (bits AND MODMASK) size++;
     return(size);
 }
@@ -427,7 +411,7 @@ wordptr Create(N_int bits, bool clear)         /* malloc        */
 
     size = Size(bits);
     mask = Mask(bits);
-    bytes = (size + HIDDEN_WORDS) << FACTOR;
+    bytes = (size + HIDDEN_WORDS) * BYTES;
     addr = (wordptr) malloc((size_t) bytes);
     if (addr != NULL)
     {
@@ -497,7 +481,7 @@ wordptr Resize(wordptr oldaddr, N_int bits)       /* realloc       */
     }
     else
     {
-        bytes = (newsize + HIDDEN_WORDS) << FACTOR;
+        bytes = (newsize + HIDDEN_WORDS) * BYTES;
         newaddr = (wordptr) malloc((size_t) bytes);
         if (newaddr != NULL)
         {
@@ -706,8 +690,8 @@ void Interval_Empty(wordptr addr, N_int lower, N_int upper)
 
     if ((size > 0) && (lower < bits) && (upper < bits) && (lower <= upper))
     {
-        lobase = lower >> LOGBITS;
-        hibase = upper >> LOGBITS;
+        lobase = lower / BITS;
+        hibase = upper / BITS;
         diff = hibase - lobase;
         loaddr = addr + lobase;
         hiaddr = addr + hibase;
@@ -746,8 +730,8 @@ void Interval_Fill(wordptr addr, N_int lower, N_int upper)
 
     if ((size > 0) && (lower < bits) && (upper < bits) && (lower <= upper))
     {
-        lobase = lower >> LOGBITS;
-        hibase = upper >> LOGBITS;
+        lobase = lower / BITS;
+        hibase = upper / BITS;
         diff = hibase - lobase;
         loaddr = addr + lobase;
         hiaddr = addr + hibase;
@@ -787,8 +771,8 @@ void Interval_Flip(wordptr addr, N_int lower, N_int upper)
 
     if ((size > 0) && (lower < bits) && (upper < bits) && (lower <= upper))
     {
-        lobase = lower >> LOGBITS;
-        hibase = upper >> LOGBITS;
+        lobase = lower / BITS;
+        hibase = upper / BITS;
         diff = hibase - lobase;
         loaddr = addr + lobase;
         hiaddr = addr + hibase;
@@ -823,8 +807,8 @@ void Interval_Reverse(wordptr addr, N_int lower, N_int upper)
 
     if ((bits > 0) && (lower < bits) && (upper < bits) && (lower < upper))
     {
-        loaddr = addr + (lower >> LOGBITS);
-        hiaddr = addr + (upper >> LOGBITS);
+        loaddr = addr + (lower / BITS);
+        hiaddr = addr + (upper / BITS);
         lomask = BITMASKTAB[lower AND MODMASK];
         himask = BITMASKTAB[upper AND MODMASK];
         for ( bits = upper - lower + 1; bits > 1; bits -= 2 )
@@ -863,7 +847,7 @@ bool interval_scan_inc(wordptr addr, N_int start,
     *min = start;
     *max = start;
 
-    offset = start >> LOGBITS;
+    offset = start / BITS;
 
     *(addr+size-1) &= mask;
 
@@ -887,7 +871,7 @@ bool interval_scan_inc(wordptr addr, N_int start,
             }
             if (empty) return(false);
         }
-        start = offset << LOGBITS;
+        start = offset * BITS;
         bitmask = LSBMASK;
         mask = value;
         while (!(mask AND LSBMASK))
@@ -912,7 +896,7 @@ bool interval_scan_inc(wordptr addr, N_int start,
         }
         if (empty) value = LSBMASK;
     }
-    start = offset << LOGBITS;
+    start = offset * BITS;
     while (!(value AND LSBMASK))
     {
         value >>= 1;
@@ -937,7 +921,7 @@ bool interval_scan_dec(wordptr addr, N_int start,
     *min = start;
     *max = start;
 
-    offset = start >> LOGBITS;
+    offset = start / BITS;
 
     if (offset >= size) return(false);
 
@@ -963,7 +947,7 @@ bool interval_scan_dec(wordptr addr, N_int start,
             }
             if (empty) return(false);
         }
-        start = offset << LOGBITS;
+        start = offset * BITS;
         bitmask = MSBMASK;
         mask = value;
         while (!(mask AND MSBMASK))
@@ -988,7 +972,7 @@ bool interval_scan_dec(wordptr addr, N_int start,
         }
         if (empty) value = MSBMASK;
     }
-    start = offset << LOGBITS;
+    start = offset * BITS;
     while (!(value AND MSBMASK))
     {
         value <<= 1;
@@ -1038,16 +1022,16 @@ void Interval_Copy(wordptr X, wordptr Y, N_int Xoffset,
 
         ascending = (Xoffset <= Yoffset);
 
-        s_lo_base = Yoffset >> LOGBITS;
+        s_lo_base = Yoffset / BITS;
         s_lo_bit = Yoffset AND MODMASK;
         Yoffset += --length;
-        s_hi_base = Yoffset >> LOGBITS;
+        s_hi_base = Yoffset / BITS;
         s_hi_bit = Yoffset AND MODMASK;
 
-        t_lo_base = Xoffset >> LOGBITS;
+        t_lo_base = Xoffset / BITS;
         t_lo_bit = Xoffset AND MODMASK;
         Xoffset += length;
-        t_hi_base = Xoffset >> LOGBITS;
+        t_hi_base = Xoffset / BITS;
         t_hi_bit = Xoffset AND MODMASK;
 
         if (ascending)
@@ -2378,7 +2362,7 @@ void Move_Left(wordptr addr, N_int bits)
     if (bits > 0)
     {
         count = bits AND MODMASK;
-        words = bits >> LOGBITS;
+        words = bits / BITS;
         if (bits >= bits_(addr)) Empty(addr);
         else
         {
@@ -2396,7 +2380,7 @@ void Move_Right(wordptr addr, N_int bits)
     if (bits > 0)
     {
         count = bits AND MODMASK;
-        words = bits >> LOGBITS;
+        words = bits / BITS;
         if (bits >= bits_(addr)) Empty(addr);
         else
         {
@@ -2793,7 +2777,7 @@ ErrCode Div_Pos(wordptr Q, wordptr X, wordptr Y, wordptr R)
     bits = (N_word) ++last;
     while (bits-- > 0)
     {
-        addr = Q + (bits >> LOGBITS);
+        addr = Q + (bits / BITS);
         mask = BITMASKTAB[bits AND MODMASK];
         flag = ((*addr AND mask) != 0);
         if (copy)
@@ -3224,7 +3208,7 @@ charptr Block_Read(wordptr addr, N_intptr length)
     charptr target;
 
     /* provide translation for independence of endian-ness: */
-    *length = size << FACTOR;
+    *length = size * BYTES;
     buffer = (charptr) malloc((size_t) ((*length)+1));
     if (buffer == NULL) return(NULL);
     target = buffer;
@@ -3312,7 +3296,7 @@ void Chunk_Store(wordptr addr, N_int chunksize, N_int offset,
     {
         if (chunksize > LONGBITS) chunksize = LONGBITS;
         if ((offset + chunksize) > bits) chunksize = bits - offset;
-        addr += offset >> LOGBITS;
+        addr += offset / BITS;
         offset &= MODMASK;
         while (chunksize > 0)
         {
@@ -3347,7 +3331,7 @@ N_long Chunk_Read(wordptr addr, N_int chunksize, N_int offset)
     {
         if (chunksize > LONGBITS) chunksize = LONGBITS;
         if ((offset + chunksize) > bits) chunksize = bits - offset;
-        addr += offset >> LOGBITS;
+        addr += offset / BITS;
         offset &= MODMASK;
         while (chunksize > 0)
         {
@@ -3469,7 +3453,7 @@ Z_long Set_Min(wordptr addr)                                /* = min(X)      */
         if ((c = *addr++)) empty = false; else i++;
     }
     if (empty) return((Z_long) LONG_MAX);                  /* plus infinity  */
-    i <<= LOGBITS;
+    i *= BITS;
     while (!(c AND LSBMASK))
     {
         c >>= 1;
@@ -3491,7 +3475,7 @@ Z_long Set_Max(wordptr addr)                                /* = max(X)      */
         if ((c = *addr--)) empty = false; else i--;
     }
     if (empty) return((Z_long) LONG_MIN);                  /* minus infinity */
-    i <<= LOGBITS;
+    i *= BITS;
     while (!(c AND MSBMASK))
     {
         c <<= 1;
