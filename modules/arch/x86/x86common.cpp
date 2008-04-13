@@ -80,7 +80,10 @@ X86Common::apply_prefixes(unsigned int def_opersize_64,
                 if (m_mode_bits == 64 && m_opersize == 64 &&
                     def_opersize_64 != 64)
                 {
-                    if (*rex == 0xff)
+                    if (!rex)
+                        warn_set(WARN_GENERAL,
+                                 N_("ignoring REX prefix on jump"));
+                    else if (*rex == 0xff)
                         warn_set(WARN_GENERAL,
                             N_("REX prefix not allowed on this instruction, ignoring"));
                     else
