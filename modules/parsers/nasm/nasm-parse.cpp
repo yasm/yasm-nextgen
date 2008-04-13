@@ -579,7 +579,8 @@ NasmParser::parse_instr()
             get_next_token();
             Insn::Ptr insn = parse_instr();
             if (insn.get() != 0)
-                insn->add_prefix(prefix);
+                insn = m_arch->create_empty_insn();
+            insn->add_prefix(prefix);
             return insn;
         }
         case SEGREG:
@@ -588,7 +589,8 @@ NasmParser::parse_instr()
             get_next_token();
             Insn::Ptr insn = parse_instr();
             if (insn.get() != 0)
-                insn->add_seg_prefix(segreg);
+                insn = m_arch->create_empty_insn();
+            insn->add_seg_prefix(segreg);
             return insn;
         }
         default:
