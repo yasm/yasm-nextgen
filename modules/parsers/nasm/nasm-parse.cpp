@@ -421,7 +421,7 @@ next:
 void
 NasmParser::parse_times()
 {
-    Expr::Ptr multiple = parse_expr(DV_EXPR);
+    Expr::Ptr multiple = parse_bexpr(DV_EXPR);
     if (multiple.get() == 0)
     {
         throw SyntaxError(String::compose(N_("expression expected after %1"),
@@ -473,7 +473,7 @@ NasmParser::parse_exp()
                     }
                 }
                 {
-                    Expr::Ptr e = parse_expr(DV_EXPR);
+                    Expr::Ptr e = parse_bexpr(DV_EXPR);
                     if (e.get() != 0)
                         append_data(*m_container, e, size,
                                     *m_object->get_arch());
@@ -494,7 +494,7 @@ dv_done:
         {
             unsigned int size = RESERVE_SPACE_val/8;
             get_next_token();
-            Expr::Ptr e = parse_expr(DV_EXPR);
+            Expr::Ptr e = parse_bexpr(DV_EXPR);
             if (e.get() == 0)
             {
                 throw SyntaxError(String::compose(
@@ -522,7 +522,7 @@ dv_done:
                 get_next_token();
             if (is_eol())
                 goto incbin_done;
-            start = parse_expr(DV_EXPR);
+            start = parse_bexpr(DV_EXPR);
             if (start.get() == 0)
                 throw SyntaxError(N_("expression expected for INCBIN start"));
 
@@ -531,7 +531,7 @@ dv_done:
                 get_next_token();
             if (is_eol())
                 goto incbin_done;
-            maxlen = parse_expr(DV_EXPR);
+            maxlen = parse_bexpr(DV_EXPR);
             if (maxlen.get() == 0)
             {
                 throw SyntaxError(
@@ -606,12 +606,12 @@ NasmParser::parse_operand()
         case '[':
         {
             get_next_token();
-            EffAddr::Ptr ea = parse_memaddr();
+            Insn::Operand op = parse_memaddr();
 
             expect(']');
             get_next_token();
 
-            return Insn::Operand(ea);
+            return op;
         }
         case SEGREG:
         {
@@ -673,18 +673,26 @@ NasmParser::parse_operand()
         }
         default:
         {
-            Expr::Ptr e = parse_expr(NORM_EXPR);
+            Expr::Ptr e = parse_bexpr(NORM_EXPR);
             if (e.get() == 0)
                 throw SyntaxError(
                     String::compose(N_("expected operand, got %1"),
                                     describe_token(m_token)));
-            return Insn::Operand(e);
+            if (m_token != ':')
+                return Insn::Operand(e);
+            get_next_token();
+            Expr::Ptr off = parse_bexpr(NORM_EXPR);
+            if (off.get() == 0)
+                throw SyntaxError(N_("offset expected after ':'"));
+            Insn::Operand op(off);
+            op.set_seg(e);
+            return op;
         }
     }
 }
 
 // memory addresses
-EffAddr::Ptr
+Insn::Operand
 NasmParser::parse_memaddr()
 {
     switch (m_token)
@@ -696,47 +704,57 @@ NasmParser::parse_memaddr()
             if (m_token != ':')
                 throw SyntaxError(N_("`:' required after segment register"));
             get_next_token();
-            EffAddr::Ptr ea = parse_memaddr();
-            ea->set_segreg(segreg);
-            return ea;
+            Insn::Operand op = parse_memaddr();
+            op.get_memory()->set_segreg(segreg);
+            return op;
         }
         case SIZE_OVERRIDE:
         {
             unsigned int size = SIZE_OVERRIDE_val;
             get_next_token();
-            EffAddr::Ptr ea = parse_memaddr();
-            ea->m_disp.m_size = size;
-            return ea;
+            Insn::Operand op = parse_memaddr();
+            op.get_memory()->m_disp.m_size = size;
+            return op;
         }
         case NOSPLIT:
         {
             get_next_token();
-            EffAddr::Ptr ea = parse_memaddr();
-            ea->m_nosplit = true;
-            return ea;
+            Insn::Operand op = parse_memaddr();
+            op.get_memory()->m_nosplit = true;
+            return op;
         }
         case REL:
         {
             get_next_token();
-            EffAddr::Ptr ea = parse_memaddr();
+            Insn::Operand op = parse_memaddr();
+            EffAddr* ea = op.get_memory();
             ea->m_pc_rel = true;
             ea->m_not_pc_rel = false;
-            return ea;
+            return op;
         }
         case ABS:
         {
             get_next_token();
-            EffAddr::Ptr ea = parse_memaddr();
+            Insn::Operand op = parse_memaddr();
+            EffAddr* ea = op.get_memory();
             ea->m_pc_rel = false;
             ea->m_not_pc_rel = true;
-            return ea;
+            return op;
         }
         default:
         {
-            Expr::Ptr e = parse_expr(NORM_EXPR);
+            Expr::Ptr e = parse_bexpr(NORM_EXPR);
             if (e.get() == 0)
                 throw SyntaxError(N_("memory address expected"));
-            return m_object->get_arch()->ea_create(e);
+            if (m_token != ':')
+                return m_object->get_arch()->ea_create(e);
+            get_next_token();
+            Expr::Ptr off = parse_bexpr(NORM_EXPR);
+            if (e.get() == 0)
+                throw SyntaxError(N_("offset expected after ':'"));
+            Insn::Operand op(m_object->get_arch()->ea_create(off));
+            op.set_seg(e);
+            return op;
         }
     }
 }
@@ -779,14 +797,11 @@ NasmParser::parse_expr(ExprType type)
 {
     switch (type)
     {
-        case NORM_EXPR:
-            parse_expr_common(parse_bexpr, ':', parse_bexpr, Op::SEGOFF);
-        case DV_EXPR:
-            // dataval expressions can't handle seg:off
-            return parse_bexpr(type);
         case DIR_EXPR:
             // directive expressions can't handle seg:off or WRT
             return parse_expr0(type);
+        default:
+            parse_expr_common(parse_bexpr, ':', parse_bexpr, Op::SEGOFF);
     }
     /*@notreached@*/
     return Expr::Ptr(0);

@@ -123,10 +123,11 @@ public:
         void finalize();
 
         /// Match type.
-        bool is_type(Type type) const { return m_type == type; }
+        bool is_type(Type type) const
+        { return m_type == static_cast<unsigned int>(type); }
 
         /// Get the type.
-        Type get_type() const { return m_type; }
+        Type get_type() const { return static_cast<Type>(m_type); }
 
         /// Helper functions to get specific types.
 
@@ -154,6 +155,16 @@ public:
         std::auto_ptr<EffAddr> release_memory();
         std::auto_ptr<Expr> release_imm();
 
+        /// Release segment expression, 0 if none.
+        std::auto_ptr<Expr> release_seg();
+
+        /// Get segment expression, 0 if none.
+        Expr* get_seg() { return m_seg; }
+        const Expr* get_seg() const { return m_seg; }
+
+        /// Set segment expression.
+        void set_seg(std::auto_ptr<Expr> seg);
+
         /// Get arch target modifier, 0 if none.
         const TargetModifier* get_targetmod() const { return m_targetmod; }
 
@@ -176,9 +187,6 @@ public:
         void make_strict(bool strict=true) { m_strict = strict; }
 
     private:
-        /// Operand type.
-        Type m_type;
-
         /// Operand data.
         union
         {
@@ -187,6 +195,9 @@ public:
             EffAddr* m_ea;      ///< Effective address for memory references.
             Expr* m_val;        ///< Value of immediate or jump target.
         };
+
+        /// Segment expression.
+        Expr* m_seg;
 
         /// Arch target modifier, 0 if none.
         const TargetModifier* m_targetmod;
@@ -214,6 +225,9 @@ public:
         /// immediate should actually be forced to 4 bytes, the user needs to
         /// write "push strict dword 4", which sets this flag.
         unsigned int m_strict:1;
+
+        /// Operand type.
+        unsigned int m_type:4;
     };
 
     /// Base class for instruction prefixes.

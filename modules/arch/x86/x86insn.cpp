@@ -323,21 +323,14 @@ X86Insn::do_append_jmpfar(BytecodeContainer& container, const X86InsnInfo& info)
     std::auto_ptr<Expr> imm = op.release_imm();
     assert(imm.get() != 0);
 
-    std::auto_ptr<Expr> segment(0);
+    std::auto_ptr<Expr> segment(op.release_seg());
 
-    if (imm->is_op(Op::SEGOFF))
-    {
-        // SEG:OFF expression; split it.
-        segment = imm->extract_segoff();
-        if (segment.get() == 0)
-            throw InternalError(N_("didn't get SEG:OFF expression in jmpfar"));
-    }
-    else if (op.get_targetmod() == X86_FAR)
+    if (segment.get() == 0 && op.get_targetmod() == X86_FAR)
     {
         // "FAR imm" target needs to become "seg imm:imm".
         segment.reset(new Expr(Op::SEG, imm->clone(), imm->get_line()));
     }
-    else
+    else if (segment.get() == 0)
         throw InternalError(N_("didn't get FAR expression in jmpfar"));
 
     X86Common common;
@@ -638,7 +631,7 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
         case OPT_ImmNotSegOff:
         {
             Expr* imm = op.get_imm();
-            if (!imm || op.get_targetmod() != 0 || imm->is_op(Op::SEGOFF))
+            if (!imm || op.get_targetmod() != 0 || op.get_seg() != 0)
                 return false;
             break;
         }
@@ -1167,6 +1160,11 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
                     throw InternalError(
                         N_("invalid operand conversion"));
                 case Insn::Operand::MEMORY:
+                    if (op.get_seg() != 0)
+                    {
+                        throw ValueError(
+                            N_("invalid segment in effective address"));
+                    }
                     m_x86_ea.reset(static_cast<X86EffAddr*>
                                    (op.release_memory().release()));
                     if (info_op.type == OPT_MemOffs)
@@ -1188,6 +1186,8 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             }
             break;
         case OPA_Imm:
+            if (op.get_seg() != 0)
+                throw ValueError(N_("immediate does not support segment"));
             m_imm = op.release_imm();
             if (m_imm.get() == 0)
                 throw InternalError(N_("invalid operand conversion"));
@@ -1195,6 +1195,8 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             m_im_len = m_size_lookup[info_op.size];
             break;
         case OPA_SImm:
+            if (op.get_seg() != 0)
+                throw ValueError(N_("immediate does not support segment"));
             m_imm = op.release_imm();
             if (m_imm.get() == 0)
                 throw InternalError(N_("invalid operand conversion"));

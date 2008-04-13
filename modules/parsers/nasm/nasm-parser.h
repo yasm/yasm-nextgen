@@ -137,8 +137,8 @@ private:
     enum ExprType
     {
         NORM_EXPR,
-        DIR_EXPR,
-        DV_EXPR
+        DIR_EXPR,       // Can't have seg:off or WRT anywhere
+        DV_EXPR         // Can't have registers anywhere
     };
 
     unsigned long get_cur_line() const { return m_linemap->get_current(); }
@@ -173,7 +173,7 @@ private:
 
     Insn::Operand parse_operand();
 
-    std::auto_ptr<EffAddr> parse_memaddr();
+    Insn::Operand parse_memaddr();
 
     std::auto_ptr<Expr> parse_expr(ExprType type);
     std::auto_ptr<Expr> parse_bexpr(ExprType type);

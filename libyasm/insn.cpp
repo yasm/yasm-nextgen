@@ -51,41 +51,45 @@ Insn::Operand::TargetModifier::~TargetModifier()
 }
 
 Insn::Operand::Operand(const Register* reg)
-    : m_type(REG),
-      m_reg(reg),
+    : m_reg(reg),
+      m_seg(0),
       m_targetmod(0),
       m_size(0),
       m_deref(0),
-      m_strict(0)
+      m_strict(0),
+      m_type(REG)
 {
 }
 
 Insn::Operand::Operand(const SegmentRegister* segreg)
-    : m_type(SEGREG),
-      m_segreg(segreg),
+    : m_segreg(segreg),
+      m_seg(0),
       m_targetmod(0),
       m_size(0),
       m_deref(0),
-      m_strict(0)
+      m_strict(0),
+      m_type(SEGREG)
 {
 }
 
 Insn::Operand::Operand(std::auto_ptr<EffAddr> ea)
-    : m_type(MEMORY),
-      m_ea(ea.release()),
+    : m_ea(ea.release()),
+      m_seg(0),
       m_targetmod(0),
       m_size(0),
       m_deref(0),
-      m_strict(0)
+      m_strict(0),
+      m_type(MEMORY)
 {
 }
 
 Insn::Operand::Operand(std::auto_ptr<Expr> val)
-    : m_type(IMM),
+    : m_seg(0),
       m_targetmod(0),
       m_size(0),
       m_deref(0),
-      m_strict(0)
+      m_strict(0),
+      m_type(IMM)
 {
     const Register* reg;
 
@@ -115,6 +119,8 @@ Insn::Operand::destroy()
         default:
             break;
     }
+    delete m_seg;
+    m_seg = 0;
 }
 
 Insn::Operand
@@ -134,6 +140,9 @@ Insn::Operand::clone() const
         default:
             break;
     }
+
+    if (op.m_seg)
+        op.m_seg = op.m_seg->clone();
 
     return op;
 }
@@ -163,7 +172,12 @@ Insn::Operand::put(marg_ostream& os) const
             break;
     }
     ++os;
-    os << "TargetMod=" << *m_targetmod << '\n';
+    os << "Seg=";
+    if (m_seg)
+        os << *m_seg;
+    else
+        os << "None";
+    os << "\nTargetMod=" << *m_targetmod << '\n';
     os << "Size=" << m_size << '\n';
     os << "Deref=" << m_deref << ", Strict=" << m_strict << '\n';
     --os;
@@ -239,6 +253,22 @@ Insn::Operand::release_imm()
     std::auto_ptr<Expr> imm(m_val);
     release();
     return imm;
+}
+
+std::auto_ptr<Expr>
+Insn::Operand::release_seg()
+{
+    std::auto_ptr<Expr> seg(m_seg);
+    m_seg = 0;
+    return seg;
+}
+
+void
+Insn::Operand::set_seg(std::auto_ptr<Expr> seg)
+{
+    if (m_seg)
+        delete m_seg;
+    m_seg = seg.release();
 }
 
 Insn::Prefix::Prefix()
