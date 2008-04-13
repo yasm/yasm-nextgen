@@ -950,14 +950,15 @@ print_yasm_error(const std::string& filename,
 {
     errfile <<
         String::compose(line ? fmt[ewmsg_style] : fmt_noline[ewmsg_style],
-                        filename, line, "", msg) << std::endl;
+                        filename, line, _("error: "), msg) << std::endl;
 
     if (!xref_fn.empty() && !xref_msg.empty())
     {
         errfile <<
             String::compose(xref_line ?
                             fmt[ewmsg_style] : fmt_noline[ewmsg_style],
-                            xref_fn, xref_line, "", xref_msg) << std::endl;
+                            xref_fn, xref_line, _("error: "), xref_msg)
+            << std::endl;
     }
 }
 
