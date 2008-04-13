@@ -154,11 +154,11 @@ scan:
         }
 
         /* $0AA and 0xAA forms of hexidecimal number */
-        (("$" digit) | "0x") hexdigit+
+        (("$" digit) | '0x') hexdigit+
         {
             savech = TOK[TOKLEN];
             TOK[TOKLEN] = '\0';
-            if (TOK[1] == 'x')
+            if (TOK[1] == 'x' || TOK[1] == 'X')
                 /* skip 0 and x */
                 lvalp->intn.reset(new IntNum(TOK+2, 16));
             else
