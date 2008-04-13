@@ -250,6 +250,28 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                     continue;
                 }
 
+                // Look for the same symrec term; even if both are external,
+                // they should cancel out.
+                Expr::Terms::iterator j = terms.begin();
+                for (; j != end; ++j)
+                {
+                    if (j->get_sym() == sym && !used[j-terms.begin()])
+                    {
+                        // Mark as used
+                        used[j-terms.begin()] = 1;
+
+                        // Replace both symrec portions with 0
+                        i->destroy();
+                        *i = new IntNum(0);
+                        //j->destroy(); // unneeded as it's a symbol
+                        *j = new IntNum(0);
+
+                        break;  // stop looking
+                    }
+                }
+                if (j != end)
+                    continue;
+
                 Location loc;
                 if (!sym->get_label(&loc))
                 {
@@ -260,7 +282,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                 BytecodeContainer* container = loc.bc->get_container();
 
                 // Now look for a unused symrec term in the same segment
-                Expr::Terms::iterator j=terms.begin();
+                j = terms.begin();
                 for (; j != end; ++j)
                 {
                     Symbol* sym2;
