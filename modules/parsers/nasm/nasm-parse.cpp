@@ -89,17 +89,15 @@ NasmParser::demand_eol()
 
 }
 
-void
-NasmParser::expect(int token)
+static const char*
+describe_token(int token)
 {
-    if (m_token == token)
-        return;
-
     static char strch[] = "` '";
     const char *str;
 
     switch (token)
     {
+        case 0:                 str = "end of line"; break;
         case INTNUM:            str = "integer"; break;
         case FLTNUM:            str = "floating point value"; break;
         case DIRECTIVE_NAME:    str = "directive name"; break;
@@ -134,7 +132,17 @@ NasmParser::expect(int token)
             str = strch;
             break;
     }
-    throw ParseError(String::compose("expected %1", str));
+
+    return str;
+}
+
+void
+NasmParser::expect(int token)
+{
+    if (m_token == token)
+        return;
+
+    throw ParseError(String::compose("expected %1", describe_token(token)));
 }
 
 void
@@ -665,7 +673,9 @@ NasmParser::parse_operand()
         {
             Expr::Ptr e = parse_expr(NORM_EXPR);
             if (e.get() == 0)
-                throw SyntaxError(N_("expression syntax error"));
+                throw SyntaxError(
+                    String::compose(N_("expected operand, got %1"),
+                                    describe_token(m_token)));
             return Insn::Operand(e);
         }
     }
