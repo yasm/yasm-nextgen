@@ -592,6 +592,11 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
             }
             break;
         }
+        case Op::SEGOFF:
+            // No registers are allowed on either side.
+            if (e->contains(Expr::REG))
+                return 1;
+            break;
         default:
             // Should never get here!
             assert(false); // unexpected expr op
