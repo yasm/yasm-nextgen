@@ -28,6 +28,7 @@
 
 #include "util.h"
 
+#include <algorithm>
 #include <bitset>
 
 #include "arch.h"
@@ -45,6 +46,25 @@
 #include "section.h"
 #include "symbol.h"
 
+namespace {
+
+// Predicate used in Value::finalize() to remove matching integers.
+class TermIsInt
+{
+public:
+    TermIsInt(const yasm::IntNum& intn) : m_intn(intn) {}
+
+    bool operator() (const yasm::Expr::Term& term) const
+    {
+        const yasm::IntNum* intn = term.get_int();
+        return intn && m_intn == *intn;
+    }
+
+private:
+    yasm::IntNum m_intn;
+};
+
+} // anonymous namespace
 
 namespace yasm
 {
@@ -59,6 +79,7 @@ Value::Value(unsigned int size)
       m_ip_rel(false),
       m_jump_target(false),
       m_section_rel(false),
+      m_no_warn(false),
       m_sign(false),
       m_size(size)
 {
@@ -74,6 +95,7 @@ Value::Value(unsigned int size, std::auto_ptr<Expr> e)
       m_ip_rel(false),
       m_jump_target(false),
       m_section_rel(false),
+      m_no_warn(false),
       m_sign(false),
       m_size(size)
 {
@@ -89,6 +111,7 @@ Value::Value(unsigned int size, /*@null@*/ Symbol* sym)
       m_ip_rel(false),
       m_jump_target(false),
       m_section_rel(false),
+      m_no_warn(false),
       m_sign(false),
       m_size(size)
 {
@@ -104,6 +127,7 @@ Value::Value(const Value& oth)
       m_ip_rel(oth.m_ip_rel),
       m_jump_target(oth.m_jump_target),
       m_section_rel(oth.m_section_rel),
+      m_no_warn(oth.m_no_warn),
       m_sign(oth.m_sign),
       m_size(oth.m_size)
 {
@@ -129,6 +153,7 @@ Value::clear()
     m_ip_rel = false;
     m_jump_target = false;
     m_section_rel = false;
+    m_no_warn = false;
     m_sign = false;
     m_size = 0;
 }
@@ -149,6 +174,7 @@ Value::operator= (const Value& rhs)
         m_ip_rel = rhs.m_ip_rel;
         m_jump_target = rhs.m_jump_target;
         m_section_rel = rhs.m_section_rel;
+        m_no_warn = rhs.m_no_warn;
         m_sign = rhs.m_sign;
         m_size = rhs.m_size;
     }
@@ -531,6 +557,31 @@ Value::finalize(Location loc)
     expand_equ(m_abs);
     m_abs->level_tree(true, true, false);
 
+    // Strip top-level AND masking to an all-1s mask the same size
+    // of the value size.  This allows forced avoidance of overflow warnings.
+    if (m_abs->is_op(Op::AND))
+    {
+        // Calculate 1<<size - 1 value
+        IntNum m_mask = 1;
+        m_mask <<= m_size;
+        m_mask -= 1;
+
+        Expr::Terms& terms = m_abs->get_terms();
+
+        // See if any terms match mask
+        if (std::count_if(terms.begin(), terms.end(), TermIsInt(m_mask)) > 0)
+        {
+            // Walk terms and delete all matching masks
+            Expr::Terms::iterator erasefrom =
+                std::remove_if(terms.begin(), terms.end(), TermIsInt(m_mask));
+            std::for_each(erasefrom, terms.end(),
+                          MEMFN::mem_fn(&Expr::Term::destroy));
+            terms.erase(erasefrom, terms.end());
+            m_abs->make_ident();
+            m_no_warn = true;
+        }
+    }
+
     // Handle trivial (IDENT) cases immediately
     if (m_abs->is_op(Op::IDENT))
     {
@@ -666,6 +717,9 @@ Value::output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch)
 {
     /*@dependent@*/ /*@null@*/ IntNum* intn = 0;
 
+    if (m_no_warn)
+        warn = 0;
+
     if (m_abs != 0)
     {
         // Handle floating point expressions
@@ -785,6 +839,8 @@ operator<< (marg_ostream& os, const Value& value)
             os << "(Jump target)\n";
         if (value.m_section_rel)
             os << "(Section-relative)\n";
+        if (value.m_no_warn)
+            os << "(Overflow warnings disabled)\n";
     }
     return os;
 }

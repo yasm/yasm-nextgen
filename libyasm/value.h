@@ -215,6 +215,9 @@ public:
     /// section start.  Boolean.
     unsigned int m_section_rel : 1;
 
+    /// Indicates overflow warnings have been disabled for this value.
+    unsigned int m_no_warn : 1;
+
     /// Sign of the value.  Nonzero if the final value should be treated as
     /// signed, 0 if it should be treated as signed.
     unsigned int m_sign : 1;
