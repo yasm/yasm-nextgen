@@ -8,6 +8,8 @@ ADD_CUSTOM_COMMAND(
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/genstring.py
     )
 
+SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
+
 ADD_EXECUTABLE(yasm
     yasm.cpp
     yasm-options.cpp
