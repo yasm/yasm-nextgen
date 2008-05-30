@@ -164,6 +164,19 @@ public:
     /// @note Errors/warnings are stored into errwarns.
     void symbols_finalize(Errwarns& errwarns, bool undef_extern);
 
+    /// Add a special symbol.
+    void add_special_sym(const std::string& parser, std::auto_ptr<Symbol> sym);
+
+    /// Find a special symbol.  Special symbols are generally used to generate
+    /// special relocation types via the WRT mechanism.
+    /// @note Default implementation always returns NULL.
+    /// @param name         symbol name (not including any parser-specific
+    ///                     prefix)
+    /// @param parser       parser keyword
+    /// @return NULL if unrecognized, otherwise special symbol.
+    /*@null@*/ Symbol* find_special_sym(const std::string& name,
+                                        const std::string& parser);
+
     /*@null@*/ Section* get_cur_section() { return m_cur_section; }
     const /*@null@*/ Section* get_cur_section() const { return m_cur_section; }
     void set_cur_section(/*@null@*/ Section* section)
