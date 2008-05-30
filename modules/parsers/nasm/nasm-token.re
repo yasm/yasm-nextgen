@@ -389,7 +389,7 @@ scan:
         }
 
         /* identifier that may be a register, instruction, etc. */
-        [a-zA-Z_?][a-zA-Z0-9_$#@~.?]*
+        [a-zA-Z_?@][a-zA-Z0-9_$#@~.?]*
         {
             savech = TOK[TOKLEN];
             TOK[TOKLEN] = '\0';
