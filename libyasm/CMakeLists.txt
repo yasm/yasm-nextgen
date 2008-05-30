@@ -43,6 +43,65 @@ ADD_LIBRARY(libyasm
     symbol.cpp
     value.cpp
     )
-SET_TARGET_PROPERTIES(libyasm PROPERTIES OUTPUT_NAME "yasm")
+SET_TARGET_PROPERTIES(libyasm PROPERTIES
+    OUTPUT_NAME "yasm"
+    COMPILE_FLAGS -DYASM_LIB_SOURCE
+    )
+
+INSTALL(TARGETS libyasm
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    )
+
+INSTALL(FILES
+    arch.h
+    assembler.h
+    assoc_data.h
+    bc_container.h
+    bc_container_util.h
+    bitcount.h
+    bitvect.h
+    bytecode.h
+    bytecode_util.h
+    bytes.h
+    compose.h
+    debug_format.h
+    directive.h
+    effaddr.h
+    errwarn.h
+    errwarns.h
+    expr.h
+    expr_util.h
+    file.h
+    floatnum.h
+    hamt.h
+    insn.h
+    interval_tree.h
+    intnum.h
+    linemap.h
+    list_format.h
+    location.h
+    location_util.h
+    marg_ostream_fwd.h
+    marg_ostream.h
+    md5.h
+    module.h
+    name_value.h
+    nocase.h
+    object_format.h
+    object.h
+    obstack.h
+    operator.h
+    parser.h
+    phash.h
+    preproc.h
+    ptr_vector.h
+    registry.h
+    section.h
+    symbol.h
+    value.h
+    DESTINATION include/libyasm
+    )
 
 ADD_SUBDIRECTORY(tests)
