@@ -90,6 +90,7 @@ enum TokenType
     ID,
     LOCAL_ID,
     SPECIAL_ID,
+    NONLOCAL_ID,
     LINE,
     NONE                // special token for lookahead
 };
@@ -143,6 +144,8 @@ private:
 
     unsigned long get_cur_line() const { return m_linemap->get_current(); }
 
+    int handle_dot_label(YYSTYPE* lvalp, YYCTYPE* tok, size_t toklen,
+                         size_t zeropos);
     int lex(YYSTYPE* lvalp);
     void fill(YYCTYPE* &cursor);
     size_t fill_input(unsigned char* buf, size_t max);

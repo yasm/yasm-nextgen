@@ -76,6 +76,34 @@ static int linechg_numcount;
   quot = ["'];
 */
 
+int
+NasmParser::handle_dot_label(YYSTYPE* lvalp, YYCTYPE* tok, size_t toklen,
+                             size_t zeropos)
+{
+    /* check for special non-local labels like ..start */
+    if (tok[zeropos+1] == '.')
+    {
+        lvalp->str.assign(tok+zeropos, toklen-zeropos);
+        /* check for special non-local ..@label */
+        if (lvalp->str[zeropos+2] == '@')
+            return NONLOCAL_ID;
+        return SPECIAL_ID;
+    }
+
+    if (m_locallabel_base.empty())
+    {
+        lvalp->str.assign(tok+zeropos, toklen-zeropos);
+        warn_set(WARN_GENERAL, String::compose(
+            N_("no non-local label before `%1'"), lvalp->str));
+    }
+    else
+    {
+        lvalp->str = m_locallabel_base;
+        lvalp->str.append(tok+zeropos, toklen-zeropos);
+    }
+
+    return LOCAL_ID;
+}
 
 int
 NasmParser::lex(YYSTYPE* lvalp)
@@ -342,34 +370,20 @@ scan:
         [-+|^*&/%~$():=,\[]     { RETURN(TOK[0]); }
         "]"                     { RETURN(TOK[0]); }
 
-        /* special non-local ..@label and labels like ..start */
-        ".." [a-zA-Z0-9_$#@~.?]+
-        {
-            lvalp->str.assign(TOK, TOKLEN);
-            RETURN(SPECIAL_ID);
-        }
-
         /* local label (.label) */
-        "." [a-zA-Z0-9_$#@~?][a-zA-Z0-9_$#@~.?]*
+        "." [a-zA-Z0-9_$#@~.?]+
         {
-            if (m_locallabel_base.empty())
-            {
-                lvalp->str.assign(TOK, TOKLEN);
-                warn_set(WARN_GENERAL, String::compose(
-                    N_("no non-local label before `%1'"), lvalp->str));
-            }
-            else
-            {
-                lvalp->str = m_locallabel_base;
-                lvalp->str.append(TOK, TOKLEN);
-            }
-
-            RETURN(LOCAL_ID);
+            RETURN(handle_dot_label(lvalp, TOK, TOKLEN, 0));
         }
 
         /* forced identifier */
         "$" [a-zA-Z0-9_$#@~.?]+
         {
+            if (TOK[1] == '.')
+            {
+                /* handle like .label */
+                RETURN(handle_dot_label(lvalp, TOK, TOKLEN, 1));
+            }
             lvalp->str.assign(TOK+1, TOKLEN-1);
             RETURN(ID);
         }

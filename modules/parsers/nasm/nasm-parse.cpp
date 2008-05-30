@@ -126,6 +126,7 @@ describe_token(int token)
         case ID:                str = "identifier"; break;
         case LOCAL_ID:          str = ".identifier"; break;
         case SPECIAL_ID:        str = "..identifier"; break;
+        case NONLOCAL_ID:       str = "..@identifier"; break;
         case LINE:              str = "%line"; break;
         default:
             strch[1] = token;
@@ -299,6 +300,7 @@ NasmParser::parse_line()
             return;
         case ID:
         case SPECIAL_ID:
+        case NONLOCAL_ID:
         case LOCAL_ID:
         {
             bool local = (m_token != ID);
@@ -993,9 +995,19 @@ NasmParser::parse_expr6(ExprType type)
             yasm_xfree(STRING_val.contents);
             break;
 #endif
-        case ID:
         case SPECIAL_ID:
+        {
+            Symbol* sym = m_object->find_special_sym(ID_val.c_str()+2, "nasm");
+            if (sym)
+            {
+                e.reset(new Expr(sym));
+                break;
+            }
+            /*@fallthrough@*/
+        }
+        case ID:
         case LOCAL_ID:
+        case NONLOCAL_ID:
             e.reset(new Expr(m_object->get_sym(ID_val).use(get_cur_line())));
             break;
         case '$':
