@@ -128,10 +128,10 @@ X86Common::apply_prefixes(unsigned int def_opersize_64,
 void
 X86Common::finish()
 {
-    // Change 0 addrsize or opersize to mode_bits.
+    // Change 0 opersize to mode_bits.
     // 64-bit mode opersize defaults to 32-bit.
-    if (m_addrsize == 0)
-        m_addrsize = m_mode_bits;
+    // Don't change addrsize here as it needs to be auto-detected by
+    // X86EffAddr::checkea().
     if (m_opersize == 0)
         m_opersize = (m_mode_bits == 64 ? 32 : m_mode_bits);
 }
@@ -157,7 +157,7 @@ X86Common::get_len() const
 {
     unsigned long len = 0;
 
-    if (m_addrsize != m_mode_bits)
+    if (m_addrsize != 0 && m_addrsize != m_mode_bits)
         len++;
     if ((m_mode_bits != 64 && m_opersize != m_mode_bits) ||
         (m_mode_bits == 64 && m_opersize == 16))
@@ -173,7 +173,7 @@ X86Common::to_bytes(Bytes& bytes, const SegmentRegister* segreg) const
 {
     if (segreg != 0)
         bytes.write_8(get_prefix(*segreg));
-    if (m_addrsize != m_mode_bits)
+    if (m_addrsize != 0 && m_addrsize != m_mode_bits)
         bytes.write_8(0x67);
     if ((m_mode_bits != 64 && m_opersize != m_mode_bits) ||
         (m_mode_bits == 64 && m_opersize == 16))
