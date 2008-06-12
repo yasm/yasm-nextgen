@@ -171,7 +171,7 @@ X86Common::get_len() const
 void
 X86Common::to_bytes(Bytes& bytes, const SegmentRegister* segreg) const
 {
-    if (segreg != 0)
+    if (segreg != 0 && !segreg->empty())
         bytes.write_8(get_prefix(*segreg));
     if (m_addrsize != 0 && m_addrsize != m_mode_bits)
         bytes.write_8(0x67);

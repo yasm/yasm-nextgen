@@ -202,6 +202,7 @@ X86Arch::put(std::ostream& os, const SegmentRegister& segreg) const
 unsigned char
 get_prefix(const SegmentRegister& segreg)
 {
+    assert(!segreg.empty());
     static const unsigned char prefix[] = {0x26, 0x2e, 0x36, 0x3e, 0x64, 0x65};
     assert(segreg.m_num < sizeof(prefix)/sizeof(prefix[0]));
     return prefix[segreg.m_num&7];
