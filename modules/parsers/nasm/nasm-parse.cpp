@@ -585,7 +585,7 @@ NasmParser::parse_instr()
         }
         case SEGREG:
         {
-            const SegmentRegister* segreg = SEGREG_val;
+            SegmentRegister segreg = SEGREG_val;
             get_next_token();
             Insn::Ptr insn = parse_instr();
             if (insn.get() != 0)
@@ -665,7 +665,7 @@ NasmParser::parse_operand()
         }
         case TARGETMOD:
         {
-            const Insn::Operand::TargetModifier* tmod = TARGETMOD_val;
+            Insn::Operand::TargetModifier tmod = TARGETMOD_val;
             get_next_token();
             Insn::Operand op = parse_operand();
             op.set_targetmod(tmod);
@@ -699,7 +699,7 @@ NasmParser::parse_memaddr()
     {
         case SEGREG:
         {
-            const SegmentRegister* segreg = SEGREG_val;
+            SegmentRegister segreg = SEGREG_val;
             get_next_token();
             if (m_token != ':')
                 throw SyntaxError(N_("`:' required after segment register"));
@@ -747,7 +747,7 @@ NasmParser::parse_memaddr()
             if (e.get() == 0)
                 throw SyntaxError(N_("memory address expected"));
             if (m_token != ':')
-                return m_object->get_arch()->ea_create(e);
+                return Insn::Operand(m_object->get_arch()->ea_create(e));
             get_next_token();
             Expr::Ptr off = parse_bexpr(NORM_EXPR);
             if (e.get() == 0)

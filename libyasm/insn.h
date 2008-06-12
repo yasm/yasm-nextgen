@@ -36,17 +36,17 @@
 #include <boost/noncopyable.hpp>
 
 #include "marg_ostream_fwd.h"
+#include "register.h"
 
 
 namespace yasm
 {
 
+class Arch;
 class BytecodeContainer;
 class Bytes;
 class EffAddr;
 class Expr;
-class Register;
-class SegmentRegister;
 
 /// Base class for instructions.  Architectures should
 /// derive their own implementation from this.
@@ -69,33 +69,36 @@ public:
             IMM         ///< An immediate or jump target.
         };
 
-        /// Base class for target modifiers.
-        class TargetModifier : private boost::noncopyable
+        /// Target modifier.  Examples: "near", "short", "far".
+        class TargetModifier
         {
         public:
-            TargetModifier();
-            virtual ~TargetModifier();
-            virtual void put(std::ostream& os) const = 0;
+            //@{
+            /// Data must be public so this is a POD type (required for unions).
+            /// But it should not be accessed outside of Arch, so m_ prefix it.
+            const Arch* m_arch;
+            unsigned int m_type;
+            //@}
         };
 
         /// Create an instruction operand from a register.
         /// @param reg  register
-        Operand(const Register* reg);
+        explicit Operand(const Register& reg);
 
         /// Create an instruction operand from a segment register.
         /// @param segreg       segment register
-        Operand(const SegmentRegister* segreg);
+        explicit Operand(const SegmentRegister& segreg);
 
         /// Create an instruction operand from an effective address.
         /// @param ea   effective address
-        Operand(std::auto_ptr<EffAddr> ea);
+        explicit Operand(std::auto_ptr<EffAddr> ea);
 
         /// Create an instruction operand from an immediate expression.
         /// Looks for cases of a single register and creates a register
         /// variant.
         /// @param val  immediate expression
         /// @return Newly allocated operand.
-        Operand(std::auto_ptr<Expr> val);
+        explicit Operand(std::auto_ptr<Expr> val);
 
         /// Explicit copy creator.
         /// There's no copy constructor or assignment operator as we want
@@ -110,7 +113,7 @@ public:
         void release()
         {
             m_type = NONE;
-            m_reg = 0;
+            m_ea = 0;
         }
 
         /// Explicit destructor.
@@ -133,12 +136,12 @@ public:
 
         const Register* get_reg() const
         {
-            return (m_type == REG ? m_reg : 0);
+            return (m_type == REG ? &m_reg : 0);
         }
 
         const SegmentRegister* get_segreg() const
         {
-            return (m_type == SEGREG ? m_segreg : 0);
+            return (m_type == SEGREG ? &m_segreg : 0);
         }
 
         EffAddr* get_memory() const
@@ -166,10 +169,15 @@ public:
         void set_seg(std::auto_ptr<Expr> seg);
 
         /// Get arch target modifier, 0 if none.
-        const TargetModifier* get_targetmod() const { return m_targetmod; }
+        const TargetModifier* get_targetmod() const
+        {
+            if (!m_targetmod.m_arch)
+                return 0;
+            return &m_targetmod;
+        }
 
         /// Set target modifier.
-        void set_targetmod(const TargetModifier* tmod) { m_targetmod = tmod; }
+        void set_targetmod(const TargetModifier& tmod) { m_targetmod = tmod; }
 
         /// Get operand size, in bits.  0 if not user specified.
         unsigned int get_size() const { return m_size; }
@@ -190,8 +198,8 @@ public:
         /// Operand data.
         union
         {
-            const SegmentRegister* m_segreg;    ///< Segment register.
-            const Register* m_reg;              ///< Register.
+            SegmentRegister m_segreg;    ///< Segment register.
+            Register m_reg;              ///< Register.
             EffAddr* m_ea;      ///< Effective address for memory references.
             Expr* m_val;        ///< Value of immediate or jump target.
         };
@@ -200,7 +208,7 @@ public:
         Expr* m_seg;
 
         /// Arch target modifier, 0 if none.
-        const TargetModifier* m_targetmod;
+        TargetModifier m_targetmod;
 
         /// Specified size of the operand, in bits.
         /// 0 if not user-specified.
@@ -241,7 +249,7 @@ public:
 
     typedef std::vector<Operand> Operands;
     typedef std::vector<const Prefix*> Prefixes;
-    typedef std::vector<const SegmentRegister*> SegRegs;
+    typedef std::vector<SegmentRegister> SegRegs;
 
     Insn();
     virtual ~Insn();
@@ -262,7 +270,7 @@ public:
 
     /// Associate a segment prefix with an instruction.
     /// @param segreg       data that identifies the segment register
-    void add_seg_prefix(const SegmentRegister* segreg)
+    void add_seg_prefix(const SegmentRegister& segreg)
     {
         m_segregs.push_back(segreg);
     }
@@ -298,12 +306,8 @@ private:
     const Insn& operator=(const Insn&);
 };
 
-inline std::ostream&
-operator<< (std::ostream& os, const Insn::Operand::TargetModifier& tmod)
-{
-    tmod.put(os);
-    return os;
-}
+std::ostream& operator<< (std::ostream& os,
+                          const Insn::Operand::TargetModifier& tmod);
 
 inline std::ostream&
 operator<< (std::ostream& os, const Insn::Prefix& prefix)

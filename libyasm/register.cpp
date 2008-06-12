@@ -1,7 +1,7 @@
 //
-// Effective address container
+// Registers
 //
-//  Copyright (C) 2005-2007  Peter Johnson
+//  Copyright (C) 2005-2008  Peter Johnson
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -24,71 +24,60 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "effaddr.h"
+#include "register.h"
 
-#include "util.h"
+#include <ostream>
 
 #include "arch.h"
-#include "errwarn.h"
-#include "expr.h"
-#include "marg_ostream.h"
 
 
 namespace yasm
 {
 
-EffAddr::EffAddr(std::auto_ptr<Expr> e)
-    : m_disp(0, e),
-      m_segreg(no_segreg()),
-      m_need_nonzero_len(false),
-      m_need_disp(false),
-      m_nosplit(false),
-      m_strong(false),
-      m_pc_rel(false),
-      m_not_pc_rel(false)
+unsigned int
+Register::get_size() const
 {
+    if (!m_arch)
+        return 0;
+    return m_arch->get_size(*this);
 }
 
-EffAddr::EffAddr(const EffAddr& rhs)
-    : m_disp(rhs.m_disp),
-      m_segreg(rhs.m_segreg),
-      m_need_nonzero_len(rhs.m_need_nonzero_len),
-      m_need_disp(rhs.m_need_disp),
-      m_nosplit(rhs.m_nosplit),
-      m_strong(rhs.m_strong),
-      m_pc_rel(rhs.m_pc_rel),
-      m_not_pc_rel(rhs.m_not_pc_rel)
+std::ostream&
+operator<< (std::ostream& os, const Register& reg)
 {
+    if (reg.m_arch)
+        reg.m_arch->put(os, reg);
+    else
+        os << "NONE";
+    return os;
 }
 
-EffAddr::~EffAddr()
+Register
+RegisterGroup::get_reg(unsigned int regindex) const
 {
+    if (!m_arch)
+        return no_reg();
+    return m_arch->get_reg(*this, regindex);
 }
 
-void
-EffAddr::set_segreg(const SegmentRegister& segreg)
+std::ostream&
+operator<< (std::ostream &os, const RegisterGroup &reggroup)
 {
-    if (!m_segreg.empty())
-        warn_set(WARN_GENERAL,
-                 N_("multiple segment overrides, using leftmost"));
-
-    m_segreg = segreg;
+    if (reggroup.m_arch)
+        reggroup.m_arch->put(os, reggroup);
+    else
+        os << "NONE";
+    return os;
 }
 
-void
-EffAddr::put(marg_ostream& os) const
+std::ostream&
+operator<< (std::ostream &os, const SegmentRegister &segreg)
 {
-    os << "Disp:\n";
-    ++os;
-    os << m_disp;
-    --os;
-    os << "SegReg=" << m_segreg << '\n';
-    os << "NeedNonzeroLen=" << m_need_nonzero_len << '\n';
-    os << "NeedDisp=" << m_need_disp << '\n';
-    os << "NoSplit=" << m_nosplit << '\n';
-    os << "Strong=" << m_strong << '\n';
-    os << "PCRel=" << m_pc_rel << '\n';
-    os << "NotPCRel=" << m_not_pc_rel << '\n';
+    if (segreg.m_arch)
+        segreg.m_arch->put(os, segreg);
+    else
+        os << "NONE";
+    return os;
 }
 
 } // namespace yasm

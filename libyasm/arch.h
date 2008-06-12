@@ -39,6 +39,7 @@
 #include "insn.h"
 #include "location.h"
 #include "module.h"
+#include "register.h"
 
 
 namespace yasm
@@ -47,59 +48,6 @@ namespace yasm
 class Expr;
 class FloatNum;
 class IntNum;
-
-class Register : private boost::noncopyable
-{
-public:
-    virtual ~Register();
-
-    /// Get the equivalent size of a register in bits.
-    /// @param reg  register
-    /// @return 0 if there is no suitable equivalent size, otherwise the
-    ///         size.
-    virtual unsigned int get_size() const = 0;
-
-    /// Print a register.  For debugging purposes.
-    /// @param os   output stream
-    virtual void put(std::ostream& os) const = 0;
-};
-
-inline std::ostream& operator<<
-(std::ostream &os, const Register &reg)
-{
-    reg.put(os);
-    return os;
-}
-
-class RegisterGroup : private boost::noncopyable
-{
-public:
-    virtual ~RegisterGroup();
-
-    /// Get a specific register of a register group, based on the register
-    /// group and the index within the group.
-    /// @param regindex     register index
-    /// @return 0 if regindex is not valid for that register group,
-    ///         otherwise the specific register.
-    virtual const Register* get_reg(unsigned long regindex) const = 0;
-};
-
-class SegmentRegister : private boost::noncopyable
-{
-public:
-    virtual ~SegmentRegister();
-
-    /// Print a segment register.  For debugging purposes.
-    /// @param os   output stream
-    virtual void put(std::ostream& os) const = 0;
-};
-
-inline std::ostream& operator<<
-(std::ostream &os, const SegmentRegister &segreg)
-{
-    segreg.put(os);
-    return os;
-}
 
 /// Architecture interface.
 /// To make architecture truly usable, set_machine() and set_parser()
@@ -164,16 +112,16 @@ public:
         };
 
         RegTmod() : m_type(NONE) {}
-        RegTmod(const Register* reg)
+        RegTmod(const Register& reg)
             : m_type(REG), m_reg(reg)
         {}
-        RegTmod(const RegisterGroup* reggroup)
+        RegTmod(const RegisterGroup& reggroup)
             : m_type(REGGROUP), m_reggroup(reggroup)
         {}
-        RegTmod(const SegmentRegister* segreg)
+        RegTmod(const SegmentRegister& segreg)
             : m_type(SEGREG), m_segreg(segreg)
         {}
-        RegTmod(const Insn::Operand::TargetModifier* tmod)
+        RegTmod(const Insn::Operand::TargetModifier& tmod)
             : m_type(TARGETMOD), m_tmod(tmod)
         {}
 
@@ -182,32 +130,32 @@ public:
 
         const Register* get_reg() const
         {
-            return (m_type == REG ? m_reg : 0);
+            return (m_type == REG ? &m_reg : 0);
         }
 
         const RegisterGroup* get_reggroup() const
         {
-            return (m_type == REGGROUP ? m_reggroup : 0);
+            return (m_type == REGGROUP ? &m_reggroup : 0);
         }
 
         const SegmentRegister* get_segreg() const
         {
-            return (m_type == SEGREG ? m_segreg : 0);
+            return (m_type == SEGREG ? &m_segreg : 0);
         }
 
         const Insn::Operand::TargetModifier* get_tmod() const
         {
-            return (m_type == TARGETMOD ? m_tmod : 0);
+            return (m_type == TARGETMOD ? &m_tmod : 0);
         }
 
     private:
         Type m_type;
         union
         {
-            const Register* m_reg;
-            const RegisterGroup* m_reggroup;
-            const SegmentRegister* m_segreg;
-            const Insn::Operand::TargetModifier* m_tmod;
+            Register m_reg;
+            RegisterGroup m_reggroup;
+            SegmentRegister m_segreg;
+            Insn::Operand::TargetModifier m_tmod;
         };
     };
 
@@ -336,6 +284,38 @@ public:
     /// instruction.  This is used for handling solitary prefixes.
     /// @return Newly allocated instruction.
     virtual std::auto_ptr<Insn> create_empty_insn() const = 0;
+
+    /// Get the equivalent size of a register in bits.
+    /// @param reg  register
+    /// @return 0 if there is no suitable equivalent size, otherwise the
+    ///         size.
+    virtual unsigned int get_size(const Register& reg) const = 0;
+
+    /// Get a specific register of a register group, based on the register
+    /// group and the index within the group.
+    /// @param reggroup     register group
+    /// @param regindex     register index
+    /// @return Specific register
+    /// @exception ValueError invalid index for group
+    virtual Register get_reg(const RegisterGroup& reggroup,
+                             unsigned int regindex) const = 0;
+
+    /// Print a register.  For debugging purposes.
+    /// @param os   output stream
+    virtual void put(std::ostream& os, const Register& reg) const = 0;
+
+    /// Print a register group.  For debugging purposes.
+    /// @param os   output stream
+    virtual void put(std::ostream& os, const RegisterGroup& reggroup) const = 0;
+
+    /// Print a segment register.  For debugging purposes.
+    /// @param os   output stream
+    virtual void put(std::ostream& os, const SegmentRegister& segreg) const = 0;
+
+    /// Print a target modifier.  For debugging purposes.
+    /// @param os   output stream
+    virtual void put(std::ostream& os,
+                     const Insn::Operand::TargetModifier& tmod) const = 0;
 };
 
 } // namespace yasm

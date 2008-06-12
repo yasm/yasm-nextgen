@@ -31,9 +31,6 @@
 #include <cctype>
 #include <cstring>
 
-#include <boost/preprocessor/repetition/enum.hpp>
-#include <boost/preprocessor/repetition/repeat.hpp>
-
 #include <libyasm/compose.h>
 #include <libyasm/errwarn.h>
 #include <libyasm/phash.h>
@@ -47,38 +44,30 @@ namespace arch
 namespace x86
 {
 
-inline
-X86Register::X86Register(Type type, unsigned int num)
-    : m_type(type), m_num(num)
-{
-}
-
-inline
-X86Register::~X86Register()
-{
-}
-
 unsigned int
-X86Register::get_size() const
+X86Arch::get_size(const Register& reg) const
 {
-    switch (m_type)
+    assert(reg.m_arch == this);
+    switch (yasm::arch::x86::get_type(reg))
     {
-        case REG8:
-        case REG8X:
+        case X86Register::NONE:
+            return 0;
+        case X86Register::REG8:
+        case X86Register::REG8X:
             return 8;
-        case REG16:
+        case X86Register::REG16:
             return 16;
-        case REG32:
-        case CRREG:
-        case DRREG:
-        case TRREG:
+        case X86Register::REG32:
+        case X86Register::CRREG:
+        case X86Register::DRREG:
+        case X86Register::TRREG:
             return 32;
-        case REG64:
-        case MMXREG:
+        case X86Register::REG64:
+        case X86Register::MMXREG:
             return 64;
-        case XMMREG:
+        case X86Register::XMMREG:
             return 128;
-        case FPUREG:
+        case X86Register::FPUREG:
             return 80;
         default:
             assert(false);  // unknown register size
@@ -87,7 +76,7 @@ X86Register::get_size() const
 }
 
 void
-X86Register::put(std::ostream& os) const
+X86Arch::put(std::ostream& os, const Register& reg) const
 {
     static const char *name8[] = {"al","cl","dl","bl","ah","ch","dh","bh"};
     static const char *name8x[] =
@@ -111,188 +100,131 @@ X86Register::put(std::ostream& os) const
         "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
     };
 
-    switch (m_type)
+    assert(reg.m_arch == this);
+    unsigned int num = get_num(reg);
+    switch (yasm::arch::x86::get_type(reg))
     {
-        case REG8:
-            os << name8[m_num&7];
+        case X86Register::REG8:
+            os << name8[num&7];
             break;
-        case REG8X:
-            os << name8x[m_num&0xF];
+        case X86Register::REG8X:
+            os << name8x[num&0xF];
             break;
-        case REG16:
-            os << name16[m_num&0xF];
+        case X86Register::REG16:
+            os << name16[num&0xF];
             break;
-        case REG32:
-            os << name32[m_num&0xF];
+        case X86Register::REG32:
+            os << name32[num&0xF];
             break;
-        case REG64:
-            os << name64[m_num&0xF];
+        case X86Register::REG64:
+            os << name64[num&0xF];
             break;
-        case MMXREG:
-            os << "mm" << m_num;
+        case X86Register::MMXREG:
+            os << "mm" << num;
             break;
-        case XMMREG:
-            os << "xmm" << m_num;
+        case X86Register::XMMREG:
+            os << "xmm" << num;
             break;
-        case CRREG:
-            os << "cr" << m_num;
+        case X86Register::CRREG:
+            os << "cr" << num;
             break;
-        case DRREG:
-            os << "dr" << m_num;
+        case X86Register::DRREG:
+            os << "dr" << num;
             break;
-        case TRREG:
-            os << "tr" << m_num;
+        case X86Register::TRREG:
+            os << "tr" << num;
             break;
-        case FPUREG:
-            os << "st" << m_num;
+        case X86Register::FPUREG:
+            os << "st" << num;
             break;
         default:
             assert(false);  // unknown register size
     }
 }
 
-#define STATIC_REG_DECL(z, n, regname) \
-    static const X86Register i_##regname##_##n(X86Register::regname, n);
-#define STATIC_REG_USE(z, n, regname) &i_##regname##_##n
-
-#define REG_DECL(n, regname) \
-    BOOST_PP_REPEAT(n, STATIC_REG_DECL, regname) \
-    const X86Register* X86_##regname[n] = \
-    { \
-        BOOST_PP_ENUM(n, STATIC_REG_USE, regname) \
-    };
-
-REG_DECL(16, CRREG)
-REG_DECL(8, DRREG)
-REG_DECL(8, TRREG)
-REG_DECL(8, FPUREG)
-REG_DECL(8, MMXREG)
-REG_DECL(16, XMMREG)
-REG_DECL(16, REG64)
-REG_DECL(16, REG32)
-REG_DECL(16, REG16)
-REG_DECL(16, REG8)
-REG_DECL(8, REG8X)
-
-static const X86Register i_RIP(X86Register::RIP, 0);
-const X86Register* X86_RIP = &i_RIP;
-
-inline
-X86RegisterGroup::X86RegisterGroup(const X86Register** regs, unsigned long size)
-    : m_regs(regs), m_size(size)
+Register
+X86Arch::get_reg(const RegisterGroup& reggroup, unsigned int regindex) const
 {
-}
+    assert(reggroup.m_arch == this);
 
-inline
-X86RegisterGroup::~X86RegisterGroup()
-{
-}
+    Register reg;
+    reg.m_arch = this;
+    reg.m_type = reggroup.m_type;
+    reg.m_num = regindex;
 
-#if 0
-const Register*
-X86RegisterGroup::get_reg(unsigned long regindex) const
-{
-    switch ((x86_expritem_reg_size)(reggroup & ~0xFUL))
+    switch (yasm::arch::x86::get_type(reggroup))
     {
-        case XMMREG:
-            if (arch_x86->mode_bits == 64)
-            {
-                if (regindex > 15)
-                    return 0;
-                return reggroup | (regindex & 15);
-            }
+        case X86Register::XMMREG:
+            if (m_mode_bits == 64 && regindex > 15)
+                throw ValueError(N_("invalid register index"));
             /*@fallthrough@*/
-        case MMXREG:
-        case FPUREG:
+        case X86Register::MMXREG:
+        case X86Register::FPUREG:
             if (regindex > 7)
-                return 0;
-            return reggroup | (regindex & 7);
+                throw ValueError(N_("invalid register index"));
+            break;
         default:
             assert(false);  // bad register group
+            throw ValueError(N_("bad register group"));
     }
-    return 0;
-}
-#endif
-const X86Register*
-X86RegisterGroup::get_reg(unsigned long regindex) const
-{
-    if (regindex >= m_size)
-        throw ValueError(N_("invalid register index"));
-    return m_regs[regindex];
-}
-
-#define REGGROUP_DECL(type) \
-    static const X86RegisterGroup \
-        i_##type##Group(X86_##type##REG, NELEMS(X86_##type##REG)); \
-    const X86RegisterGroup* X86_##type##Group = &i_##type##Group;
-
-REGGROUP_DECL(FPU)
-REGGROUP_DECL(MMX)
-REGGROUP_DECL(XMM)
-
-inline
-X86SegmentRegister::X86SegmentRegister(unsigned int num, unsigned char prefix)
-    : m_num(num), m_prefix(prefix)
-{
-}
-
-inline
-X86SegmentRegister::~X86SegmentRegister()
-{
+    return reg;
 }
 
 void
-X86SegmentRegister::put(std::ostream& os) const
+X86Arch::put(std::ostream& os, const RegisterGroup& reggroup) const
 {
+    assert(reggroup.m_arch == this);
+    switch (yasm::arch::x86::get_type(reggroup))
+    {
+        case X86Register::XMMREG:
+            os << "xmm";
+            break;
+        case X86Register::MMXREG:
+            os << "mm";
+            break;
+        case X86Register::FPUREG:
+            os << "st";
+            break;
+        default:
+            assert(false);
+    }
+}
+
+void
+X86Arch::put(std::ostream& os, const SegmentRegister& segreg) const
+{
+    assert(segreg.m_arch == this);
     static const char *name[] = {"es","cs","ss","ds","fs","gs"};
-    os << name[m_num&7];
+    assert(segreg.m_num < sizeof(name)/sizeof(name[0]));
+    os << name[segreg.m_num&7];
 }
 
-#define SEGREG_DECL(reg, num, prefix) \
-    static const X86SegmentRegister i_##reg(num, prefix); \
-    const X86SegmentRegister* X86_##reg = &i_##reg;
-
-SEGREG_DECL(ES,	0, 0x26)
-SEGREG_DECL(CS,	1, 0x2e)
-SEGREG_DECL(SS,	2, 0x36)
-SEGREG_DECL(DS,	3, 0x3e)
-SEGREG_DECL(FS,	4, 0x64)
-SEGREG_DECL(GS,	5, 0x65)
-
-inline
-X86TargetModifier::X86TargetModifier(Type type)
-    : m_type(type)
+unsigned char
+get_prefix(const SegmentRegister& segreg)
 {
-}
-
-inline
-X86TargetModifier::~X86TargetModifier()
-{
+    static const unsigned char prefix[] = {0x26, 0x2e, 0x36, 0x3e, 0x64, 0x65};
+    assert(segreg.m_num < sizeof(prefix)/sizeof(prefix[0]));
+    return prefix[segreg.m_num&7];
 }
 
 void
-X86TargetModifier::put(std::ostream& os) const
+X86Arch::put(std::ostream& os, const Insn::Operand::TargetModifier& tmod) const
 {
-    switch (m_type) {
-        case NEAR:
+    switch (yasm::arch::x86::get_type(tmod)) {
+        case X86TargetModifier::NEAR:
             os << "near";
-        case SHORT:
+            break;
+        case X86TargetModifier::SHORT:
             os << "short";
-        case FAR:
+            break;
+        case X86TargetModifier::FAR:
             os << "far";
-        case TO:
+            break;
+        case X86TargetModifier::TO:
             os << "to";
+            break;
     }
 }
-
-#define TARGETMOD_DECL(type) \
-    static const X86TargetModifier i_##type(X86TargetModifier::type); \
-    const X86TargetModifier* X86_##type = &i_##type;
-
-TARGETMOD_DECL(NEAR)
-TARGETMOD_DECL(SHORT)
-TARGETMOD_DECL(FAR)
-TARGETMOD_DECL(TO)
 
 enum RegTmodType
 {
@@ -312,10 +244,19 @@ enum RegTmodType
 struct RegTmodParseData {
     const char* name;
 
-    // structure pointer
-    const void* struc;
-
     unsigned int type:8;                // RegTmodType
+
+    /* REG: register size
+     * Others: 0
+     */
+    unsigned int size:8;
+
+    /* REG: register index
+     * REGGROUP: register group type
+     * SEGREG: register encoding
+     * TARGETMOD: target modifier
+     */
+    unsigned int data:8;
 
     // REG: required bits setting
     // SEGREG: BITS in which the segment is ignored
@@ -326,165 +267,165 @@ struct RegTmodParseData {
 #
 # control, debug, and test registers
 #
-cr0,	&i_CRREG_0,	REG,	0
-cr2,	&i_CRREG_2,	REG,	0
-cr3,	&i_CRREG_3,	REG,	0
-cr4,	&i_CRREG_4,	REG,	0
-cr8,	&i_CRREG_8,	REG,	64
+cr0,	REG,	X86Register::CRREG,	0,	0
+cr2,	REG,	X86Register::CRREG,	2,	0
+cr3,	REG,	X86Register::CRREG,	3,	0
+cr4,	REG,	X86Register::CRREG,	4,	0
+cr8,	REG,	X86Register::CRREG,	8,	64
 #
-dr0,	&i_DRREG_0,	REG,	0
-dr1,	&i_DRREG_1,	REG,	0
-dr2,	&i_DRREG_2,	REG,	0
-dr3,	&i_DRREG_3,	REG,	0
-dr4,	&i_DRREG_4,	REG,	0
-dr5,	&i_DRREG_5,	REG,	0
-dr6,	&i_DRREG_6,	REG,	0
-dr7,	&i_DRREG_7,	REG,	0
+dr0,	REG,	X86Register::DRREG,	0,	0
+dr1,	REG,	X86Register::DRREG,	1,	0
+dr2,	REG,	X86Register::DRREG,	2,	0
+dr3,	REG,	X86Register::DRREG,	3,	0
+dr4,	REG,	X86Register::DRREG,	4,	0
+dr5,	REG,	X86Register::DRREG,	5,	0
+dr6,	REG,	X86Register::DRREG,	6,	0
+dr7,	REG,	X86Register::DRREG,	7,	0
 #
-tr0,	&i_TRREG_0,	REG,	0
-tr1,	&i_TRREG_1,	REG,	0
-tr2,	&i_TRREG_2,	REG,	0
-tr3,	&i_TRREG_3,	REG,	0
-tr4,	&i_TRREG_4,	REG,	0
-tr5,	&i_TRREG_5,	REG,	0
-tr6,	&i_TRREG_6,	REG,	0
-tr7,	&i_TRREG_7,	REG,	0
+tr0,	REG,	X86Register::TRREG,	0,	0
+tr1,	REG,	X86Register::TRREG,	1,	0
+tr2,	REG,	X86Register::TRREG,	2,	0
+tr3,	REG,	X86Register::TRREG,	3,	0
+tr4,	REG,	X86Register::TRREG,	4,	0
+tr5,	REG,	X86Register::TRREG,	5,	0
+tr6,	REG,	X86Register::TRREG,	6,	0
+tr7,	REG,	X86Register::TRREG,	7,	0
 #
 # floating point, MMX, and SSE/SSE2 registers
 #
-st0,	&i_FPUREG_0,	REG,	0
-st1,	&i_FPUREG_1,	REG,	0
-st2,	&i_FPUREG_2,	REG,	0
-st3,	&i_FPUREG_3,	REG,	0
-st4,	&i_FPUREG_4,	REG,	0
-st5,	&i_FPUREG_5,	REG,	0
-st6,	&i_FPUREG_6,	REG,	0
-st7,	&i_FPUREG_7,	REG,	0
+st0,	REG,	X86Register::FPUREG,	0,	0
+st1,	REG,	X86Register::FPUREG,	1,	0
+st2,	REG,	X86Register::FPUREG,	2,	0
+st3,	REG,	X86Register::FPUREG,	3,	0
+st4,	REG,	X86Register::FPUREG,	4,	0
+st5,	REG,	X86Register::FPUREG,	5,	0
+st6,	REG,	X86Register::FPUREG,	6,	0
+st7,	REG,	X86Register::FPUREG,	7,	0
 #
-mm0,	&i_MMXREG_0,	REG,	0
-mm1,	&i_MMXREG_1,	REG,	0
-mm2,	&i_MMXREG_2,	REG,	0
-mm3,	&i_MMXREG_3,	REG,	0
-mm4,	&i_MMXREG_4,	REG,	0
-mm5,	&i_MMXREG_5,	REG,	0
-mm6,	&i_MMXREG_6,	REG,	0
-mm7,	&i_MMXREG_7,	REG,	0
+mm0,	REG,	X86Register::MMXREG,	0,	0
+mm1,	REG,	X86Register::MMXREG,	1,	0
+mm2,	REG,	X86Register::MMXREG,	2,	0
+mm3,	REG,	X86Register::MMXREG,	3,	0
+mm4,	REG,	X86Register::MMXREG,	4,	0
+mm5,	REG,	X86Register::MMXREG,	5,	0
+mm6,	REG,	X86Register::MMXREG,	6,	0
+mm7,	REG,	X86Register::MMXREG,	7,	0
 #
-xmm0,	&i_XMMREG_0,	REG,	0
-xmm1,	&i_XMMREG_1,	REG,	0
-xmm2,	&i_XMMREG_2,	REG,	0
-xmm3,	&i_XMMREG_3,	REG,	0
-xmm4,	&i_XMMREG_4,	REG,	0
-xmm5,	&i_XMMREG_5,	REG,	0
-xmm6,	&i_XMMREG_6,	REG,	0
-xmm7,	&i_XMMREG_7,	REG,	0
-xmm8,	&i_XMMREG_8,	REG,	64
-xmm9,	&i_XMMREG_9,	REG,	64
-xmm10,	&i_XMMREG_10,	REG,	64
-xmm11,	&i_XMMREG_11,	REG,	64
-xmm12,	&i_XMMREG_12,	REG,	64
-xmm13,	&i_XMMREG_13,	REG,	64
-xmm14,	&i_XMMREG_14,	REG,	64
-xmm15,	&i_XMMREG_15,	REG,	64
+xmm0,	REG,	X86Register::XMMREG,	0,	0
+xmm1,	REG,	X86Register::XMMREG,	1,	0
+xmm2,	REG,	X86Register::XMMREG,	2,	0
+xmm3,	REG,	X86Register::XMMREG,	3,	0
+xmm4,	REG,	X86Register::XMMREG,	4,	0
+xmm5,	REG,	X86Register::XMMREG,	5,	0
+xmm6,	REG,	X86Register::XMMREG,	6,	0
+xmm7,	REG,	X86Register::XMMREG,	7,	0
+xmm8,	REG,	X86Register::XMMREG,	8,	64
+xmm9,	REG,	X86Register::XMMREG,	9,	64
+xmm10,	REG,	X86Register::XMMREG,	10,	64
+xmm11,	REG,	X86Register::XMMREG,	11,	64
+xmm12,	REG,	X86Register::XMMREG,	12,	64
+xmm13,	REG,	X86Register::XMMREG,	13,	64
+xmm14,	REG,	X86Register::XMMREG,	14,	64
+xmm15,	REG,	X86Register::XMMREG,	15,	64
 #
 # integer registers
 #
-rax,	&i_REG64_0,	REG,	64
-rcx,	&i_REG64_1,	REG,	64
-rdx,	&i_REG64_2,	REG,	64
-rbx,	&i_REG64_3,	REG,	64
-rsp,	&i_REG64_4,	REG,	64
-rbp,	&i_REG64_5,	REG,	64
-rsi,	&i_REG64_6,	REG,	64
-rdi,	&i_REG64_7,	REG,	64
-r8,	&i_REG64_8,	REG,	64
-r9,	&i_REG64_9,	REG,	64
-r10,	&i_REG64_10,	REG,	64
-r11,	&i_REG64_11,	REG,	64
-r12,	&i_REG64_12,	REG,	64
-r13,	&i_REG64_13,	REG,	64
-r14,	&i_REG64_14,	REG,	64
-r15,	&i_REG64_15,	REG,	64
+rax,	REG,	X86Register::REG64,	0,	64
+rcx,	REG,	X86Register::REG64,	1,	64
+rdx,	REG,	X86Register::REG64,	2,	64
+rbx,	REG,	X86Register::REG64,	3,	64
+rsp,	REG,	X86Register::REG64,	4,	64
+rbp,	REG,	X86Register::REG64,	5,	64
+rsi,	REG,	X86Register::REG64,	6,	64
+rdi,	REG,	X86Register::REG64,	7,	64
+r8,	REG,	X86Register::REG64,	8,	64
+r9,	REG,	X86Register::REG64,	9,	64
+r10,	REG,	X86Register::REG64,	10,	64
+r11,	REG,	X86Register::REG64,	11,	64
+r12,	REG,	X86Register::REG64,	12,	64
+r13,	REG,	X86Register::REG64,	13,	64
+r14,	REG,	X86Register::REG64,	14,	64
+r15,	REG,	X86Register::REG64,	15,	64
 #
-eax,	&i_REG32_0,	REG,	0
-ecx,	&i_REG32_1,	REG,	0
-edx,	&i_REG32_2,	REG,	0
-ebx,	&i_REG32_3,	REG,	0
-esp,	&i_REG32_4,	REG,	0
-ebp,	&i_REG32_5,	REG,	0
-esi,	&i_REG32_6,	REG,	0
-edi,	&i_REG32_7,	REG,	0
-r8d,	&i_REG32_8,	REG,	64
-r9d,	&i_REG32_9,	REG,	64
-r10d,	&i_REG32_10,	REG,	64
-r11d,	&i_REG32_11,	REG,	64
-r12d,	&i_REG32_12,	REG,	64
-r13d,	&i_REG32_13,	REG,	64
-r14d,	&i_REG32_14,	REG,	64
-r15d,	&i_REG32_15,	REG,	64
+eax,	REG,	X86Register::REG32,	0,	0
+ecx,	REG,	X86Register::REG32,	1,	0
+edx,	REG,	X86Register::REG32,	2,	0
+ebx,	REG,	X86Register::REG32,	3,	0
+esp,	REG,	X86Register::REG32,	4,	0
+ebp,	REG,	X86Register::REG32,	5,	0
+esi,	REG,	X86Register::REG32,	6,	0
+edi,	REG,	X86Register::REG32,	7,	0
+r8d,	REG,	X86Register::REG32,	8,	64
+r9d,	REG,	X86Register::REG32,	9,	64
+r10d,	REG,	X86Register::REG32,	10,	64
+r11d,	REG,	X86Register::REG32,	11,	64
+r12d,	REG,	X86Register::REG32,	12,	64
+r13d,	REG,	X86Register::REG32,	13,	64
+r14d,	REG,	X86Register::REG32,	14,	64
+r15d,	REG,	X86Register::REG32,	15,	64
 #
-ax,	&i_REG16_0,	REG,	0
-cx,	&i_REG16_1,	REG,	0
-dx,	&i_REG16_2,	REG,	0
-bx,	&i_REG16_3,	REG,	0
-sp,	&i_REG16_4,	REG,	0
-bp,	&i_REG16_5,	REG,	0
-si,	&i_REG16_6,	REG,	0
-di,	&i_REG16_7,	REG,	0
-r8w,	&i_REG16_8,	REG,	64
-r9w,	&i_REG16_9,	REG,	64
-r10w,	&i_REG16_10,	REG,	64
-r11w,	&i_REG16_11,	REG,	64
-r12w,	&i_REG16_12,	REG,	64
-r13w,	&i_REG16_13,	REG,	64
-r14w,	&i_REG16_14,	REG,	64
-r15w,	&i_REG16_15,	REG,	64
+ax,	REG,	X86Register::REG16,	0,	0
+cx,	REG,	X86Register::REG16,	1,	0
+dx,	REG,	X86Register::REG16,	2,	0
+bx,	REG,	X86Register::REG16,	3,	0
+sp,	REG,	X86Register::REG16,	4,	0
+bp,	REG,	X86Register::REG16,	5,	0
+si,	REG,	X86Register::REG16,	6,	0
+di,	REG,	X86Register::REG16,	7,	0
+r8w,	REG,	X86Register::REG16,	8,	64
+r9w,	REG,	X86Register::REG16,	9,	64
+r10w,	REG,	X86Register::REG16,	10,	64
+r11w,	REG,	X86Register::REG16,	11,	64
+r12w,	REG,	X86Register::REG16,	12,	64
+r13w,	REG,	X86Register::REG16,	13,	64
+r14w,	REG,	X86Register::REG16,	14,	64
+r15w,	REG,	X86Register::REG16,	15,	64
 #
-al,	&i_REG8_0,	REG,	0
-cl,	&i_REG8_1,	REG,	0
-dl,	&i_REG8_2,	REG,	0
-bl,	&i_REG8_3,	REG,	0
-ah,	&i_REG8_4,	REG,	0
-ch,	&i_REG8_5,	REG,	0
-dh,	&i_REG8_6,	REG,	0
-bh,	&i_REG8_7,	REG,	0
-r8b,	&i_REG8_8,	REG,	64
-r9b,	&i_REG8_9,	REG,	64
-r10b,	&i_REG8_10,	REG,	64
-r11b,	&i_REG8_11,	REG,	64
-r12b,	&i_REG8_12,	REG,	64
-r13b,	&i_REG8_13,	REG,	64
-r14b,	&i_REG8_14,	REG,	64
-r15b,	&i_REG8_15,	REG,	64
+al,	REG,	X86Register::REG8,	0,	0
+cl,	REG,	X86Register::REG8,	1,	0
+dl,	REG,	X86Register::REG8,	2,	0
+bl,	REG,	X86Register::REG8,	3,	0
+ah,	REG,	X86Register::REG8,	4,	0
+ch,	REG,	X86Register::REG8,	5,	0
+dh,	REG,	X86Register::REG8,	6,	0
+bh,	REG,	X86Register::REG8,	7,	0
+r8b,	REG,	X86Register::REG8,	8,	64
+r9b,	REG,	X86Register::REG8,	9,	64
+r10b,	REG,	X86Register::REG8,	10,	64
+r11b,	REG,	X86Register::REG8,	11,	64
+r12b,	REG,	X86Register::REG8,	12,	64
+r13b,	REG,	X86Register::REG8,	13,	64
+r14b,	REG,	X86Register::REG8,	14,	64
+r15b,	REG,	X86Register::REG8,	15,	64
 #
-spl,	&i_REG8X_4,	REG,	64
-bpl,	&i_REG8X_5,	REG,	64
-sil,	&i_REG8X_6,	REG,	64
-dil,	&i_REG8X_7,	REG,	64
+spl,	REG,	X86Register::REG8X,	4,	64
+bpl,	REG,	X86Register::REG8X,	5,	64
+sil,	REG,	X86Register::REG8X,	6,	64
+dil,	REG,	X86Register::REG8X,	7,	64
 #
-rip,	&i_RIP,		REG,	64
+rip,	REG,	X86Register::RIP,	0,	64
 #
 # floating point, MMX, and SSE/SSE2 registers
 #
-st,	&i_FPUGroup,	REGGROUP,	0
-mm,	&i_MMXGroup,	REGGROUP,	0
-xmm,	&i_XMMGroup,	REGGROUP,	0
+st,	REGGROUP,	0,	X86Register::FPUREG,	0
+mm,	REGGROUP,	0,	X86Register::MMXREG,	0
+xmm,	REGGROUP,	0,	X86Register::XMMREG,	0
 #
 # segment registers
 #
-es,	&i_ES,	SEGREG,	64
-cs,	&i_CS,	SEGREG,	0
-ss,	&i_SS,	SEGREG,	64
-ds,	&i_DS,	SEGREG,	64
-fs,	&i_FS,	SEGREG,	0
-gs,	&i_GS,	SEGREG,	0
+es,	SEGREG,	0,	X86SegReg::ES,	64
+cs,	SEGREG,	0,	X86SegReg::CS,	0
+ss,	SEGREG,	0,	X86SegReg::SS,	64
+ds,	SEGREG,	0,	X86SegReg::DS,	64
+fs,	SEGREG,	0,	X86SegReg::FS,	0
+gs,	SEGREG,	0,	X86SegReg::GS,	0
 #
 # target modifiers
 #
-near,	&i_NEAR,	TARGETMOD,	0
-short,	&i_SHORT,	TARGETMOD,	0
-far,	&i_FAR,		TARGETMOD,	0
-to,	&i_TO,		TARGETMOD,	0
+near,	TARGETMOD,	0,	X86TargetModifier::NEAR,	0
+short,	TARGETMOD,	0,	X86TargetModifier::SHORT,	0
+far,	TARGETMOD,	0,	X86TargetModifier::FAR,		0
+to,	TARGETMOD,	0,	X86TargetModifier::TO,		0
 %%
 
 Arch::RegTmod
@@ -507,6 +448,7 @@ X86Arch::parse_check_regtmod(const char* id, size_t id_len) const
     switch ((RegTmodType)pdata->type)
     {
         case REG:
+        {
             if (bits != 0 && m_mode_bits != bits)
             {
                 warn_set(WARN_GENERAL,
@@ -514,19 +456,39 @@ X86Arch::parse_check_regtmod(const char* id, size_t id_len) const
                                     id, bits));
                 return RegTmod();
             }
-            return static_cast<const Register*>(pdata->struc);
+            Register reg;
+            reg.m_arch = this;
+            reg.m_type = pdata->size;
+            reg.m_num = pdata->data;
+            return reg;
+        }
         case REGGROUP:
-            return static_cast<const RegisterGroup*>(pdata->struc);
+        {
+            RegisterGroup reggroup;
+            reggroup.m_arch = this;
+            reggroup.m_type = pdata->data;
+            return reggroup;
+        }
         case SEGREG:
+        {
             if (bits != 0 && m_mode_bits == bits)
             {
                 warn_set(WARN_GENERAL, String::compose(
                     N_("`%1' segment register ignored in %2-bit mode"),
                     id, bits));
             }
-            return static_cast<const SegmentRegister*>(pdata->struc);
+            SegmentRegister segreg;
+            segreg.m_arch = this;
+            segreg.m_num = pdata->data;
+            return segreg;
+        }
         case TARGETMOD:
-            return static_cast<const Insn::Operand::TargetModifier*>(pdata->struc);
+        {
+            Insn::Operand::TargetModifier tmod;
+            tmod.m_arch = this;
+            tmod.m_type = pdata->data;
+            return tmod;
+        }
     }
 
     return RegTmod();

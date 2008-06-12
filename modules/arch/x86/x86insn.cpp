@@ -325,7 +325,8 @@ X86Insn::do_append_jmpfar(BytecodeContainer& container, const X86InsnInfo& info)
 
     std::auto_ptr<Expr> segment(op.release_seg());
 
-    if (segment.get() == 0 && op.get_targetmod() == X86_FAR)
+    if (segment.get() == 0 && op.get_targetmod() &&
+        get_type(*op.get_targetmod()) == X86TargetModifier::FAR)
     {
         // "FAR imm" target needs to become "seg imm:imm".
         segment.reset(new Expr(Op::SEG, imm->clone(), imm->get_line()));
@@ -478,10 +479,10 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
                        const Operand& op0, const unsigned int* size_lookup,
                        int bypass) const
 {
-    const X86Register* reg = static_cast<const X86Register*>(op.get_reg());
-    const X86SegmentRegister* segreg =
-        static_cast<const X86SegmentRegister*>(op.get_segreg());
+    const Register* reg = op.get_reg();
+    const SegmentRegister* segreg = op.get_segreg();
     EffAddr* ea = op.get_memory();
+    X86Register::Type regtype = reg ? get_type(*reg) : X86Register::NONE;
 
     // Check operand type
     switch (info_op.type)
@@ -497,7 +498,7 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
         case OPT_Reg:
             if (!reg)
                 return false;
-            switch (reg->type())
+            switch (regtype)
             {
                 case X86Register::REG8:
                 case X86Register::REG8X:
@@ -522,7 +523,7 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
         case OPT_SIMDReg:
             if (!reg)
                 return false;
-            switch (reg->type())
+            switch (regtype)
             {
                 case X86Register::MMXREG:
                 case X86Register::XMMREG:
@@ -539,74 +540,77 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
                 return false;
             break;
         case OPT_CRReg:
-            if (!reg || reg->type() != X86Register::CRREG)
+            if (!reg || regtype != X86Register::CRREG)
                 return false;
             break;
         case OPT_DRReg:
-            if (!reg || reg->type() != X86Register::DRREG)
+            if (!reg || regtype != X86Register::DRREG)
                 return false;
             break;
         case OPT_TRReg:
-            if (!reg || reg->type() != X86Register::TRREG)
+            if (!reg || regtype != X86Register::TRREG)
                 return false;
             break;
         case OPT_ST0:
-            if (!reg || reg->type() != X86Register::FPUREG)
+            if (!reg || regtype != X86Register::FPUREG)
                 return false;
             break;
         case OPT_Areg:
-            if (!reg ||
+            if (!reg || get_num(*reg) != 0 ||
                 (info_op.size == OPS_8 &&
-                 reg != X86_REG8[0] && reg != X86_REG8X[0]) ||
-                (info_op.size == OPS_16 && reg != X86_REG16[0]) ||
-                (info_op.size == OPS_32 && reg != X86_REG32[0]) ||
-                (info_op.size == OPS_64 && reg != X86_REG64[0]))
+                 regtype != X86Register::REG8 &&
+                 regtype != X86Register::REG8X) ||
+                (info_op.size == OPS_16 && regtype != X86Register::REG16) ||
+                (info_op.size == OPS_32 && regtype != X86Register::REG32) ||
+                (info_op.size == OPS_64 && regtype != X86Register::REG64))
                 return false;
             break;
         case OPT_Creg:
-            if (!reg ||
+            if (!reg || get_num(*reg) != 1 ||
                 (info_op.size == OPS_8 &&
-                 reg != X86_REG8[1] && reg != X86_REG8X[1]) ||
-                (info_op.size == OPS_16 && reg != X86_REG16[1]) ||
-                (info_op.size == OPS_32 && reg != X86_REG32[1]) ||
-                (info_op.size == OPS_64 && reg != X86_REG64[1]))
+                 regtype != X86Register::REG8 &&
+                 regtype != X86Register::REG8X) ||
+                (info_op.size == OPS_16 && regtype != X86Register::REG16) ||
+                (info_op.size == OPS_32 && regtype != X86Register::REG32) ||
+                (info_op.size == OPS_64 && regtype != X86Register::REG64))
                 return false;
             break;
         case OPT_Dreg:
-            if (!reg ||
+            if (!reg || get_num(*reg) != 2 ||
                 (info_op.size == OPS_8 &&
-                 reg != X86_REG8[2] && reg != X86_REG8X[2]) ||
-                (info_op.size == OPS_16 && reg != X86_REG16[2]) ||
-                (info_op.size == OPS_32 && reg != X86_REG32[2]) ||
-                (info_op.size == OPS_64 && reg != X86_REG64[2]))
+                 regtype != X86Register::REG8 &&
+                 regtype != X86Register::REG8X) ||
+                (info_op.size == OPS_16 && regtype != X86Register::REG16) ||
+                (info_op.size == OPS_32 && regtype != X86Register::REG32) ||
+                (info_op.size == OPS_64 && regtype != X86Register::REG64))
                 return false;
             break;
         case OPT_CS:
-            if (!segreg || segreg != X86_CS)
+            if (!segreg || get_num(*segreg) != X86SegReg::CS)
                 return false;
             break;
         case OPT_DS:
-            if (!segreg || segreg != X86_DS)
+            if (!segreg || get_num(*segreg) != X86SegReg::DS)
                 return false;
             break;
         case OPT_ES:
-            if (!segreg || segreg != X86_ES)
+            if (!segreg || get_num(*segreg) != X86SegReg::ES)
                 return false;
             break;
         case OPT_FS:
-            if (!segreg || segreg != X86_FS)
+            if (!segreg || get_num(*segreg) != X86SegReg::FS)
                 return false;
             break;
         case OPT_GS:
-            if (!segreg || segreg != X86_GS)
+            if (!segreg || get_num(*segreg) != X86SegReg::GS)
                 return false;
             break;
         case OPT_SS:
-            if (!segreg || segreg != X86_SS)
+            if (!segreg || get_num(*segreg) != X86SegReg::SS)
                 return false;
             break;
         case OPT_CR4:
-            if (!reg || reg != X86_CRREG[4])
+            if (!reg || get_num(*reg) != 4 || regtype != X86Register::CRREG)
                 return false;
             break;
         case OPT_MemOffs:
@@ -636,7 +640,7 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
             break;
         }
         case OPT_XMM0:
-            if (!reg || reg != X86_XMMREG[0])
+            if (!reg || get_num(*reg) != 0 || regtype != X86Register::XMMREG)
                 return false;
             break;
         case OPT_MemrAX:
@@ -644,9 +648,10 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
             const Register* reg2;
             if (!ea ||
                 !(reg2 = ea->m_disp.get_abs()->get_reg()) ||
-                (reg != X86_REG16[0] &&
-                 reg != X86_REG32[0] &&
-                 reg != X86_REG64[0]))
+                get_num(*reg) != 0 ||
+                (regtype != X86Register::REG16 &&
+                 regtype != X86Register::REG32 &&
+                 regtype != X86Register::REG64))
                 return false;
             break;
         }
@@ -655,7 +660,8 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
             const Register* reg2;
             if (!ea ||
                 !(reg2 = ea->m_disp.get_abs()->get_reg()) ||
-                reg != X86_REG32[0])
+                get_num(*reg) != 0 ||
+                regtype != X86Register::REG32)
                 return false;
             break;
         }
@@ -728,8 +734,7 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
     }
 
     // Check target modifier
-    const X86TargetModifier* targetmod =
-        static_cast<const X86TargetModifier*>(op.get_targetmod());
+    const Insn::Operand::TargetModifier* targetmod = op.get_targetmod();
     switch (info_op.targetmod)
     {
         case OPTM_None:
@@ -737,19 +742,19 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
                 return false;
             break;
         case OPTM_Near:
-            if (targetmod != X86_NEAR)
+            if (get_type(*targetmod) != X86TargetModifier::NEAR)
                 return false;
             break;
         case OPTM_Short:
-            if (targetmod != X86_SHORT)
+            if (get_type(*targetmod) != X86TargetModifier::SHORT)
                 return false;
             break;
         case OPTM_Far:
-            if (targetmod != X86_FAR)
+            if (get_type(*targetmod) != X86TargetModifier::FAR)
                 return false;
             break;
         case OPTM_To:
-            if (targetmod != X86_TO)
+            if (get_type(*targetmod) != X86TargetModifier::TO)
                 return false;
             break;
         default:
@@ -937,8 +942,7 @@ X86Insn::do_append(BytecodeContainer& container)
         for (Insn::Operands::iterator op = m_operands.begin(),
              end = m_operands.end(); op != end; ++op)
         {
-            const X86Register* reg =
-                static_cast<const X86Register*>(op->get_reg());
+            const Register* reg = op->get_reg();
             EffAddr* ea = op->get_memory();
 
             if (!op->is_deref() && (reg || (ea && ea->m_strong)))
@@ -947,10 +951,10 @@ X86Insn::do_append(BytecodeContainer& container)
             {
                 // Memory that is not dereferenced, and not strong, is
                 // actually an immediate for the purposes of relative jumps.
-                if (ea->m_segreg != 0)
+                if (!ea->m_segreg.empty())
                     warn_set(WARN_GENERAL,
                              N_("skipping prefixes on this instruction"));
-                *op = std::auto_ptr<Expr>(ea->m_disp.get_abs()->clone());
+                *op = Insn::Operand(std::auto_ptr<Expr>(ea->m_disp.get_abs()->clone()));
                 delete ea;
             }
         }
@@ -1152,9 +1156,8 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
                     throw InternalError(
                         N_("invalid operand conversion"));
                 case Insn::Operand::REG:
-                    m_x86_ea.reset(new X86EffAddr(
-                        static_cast<const X86Register*>(op.get_reg()),
-                        &m_rex, m_pdrex, m_mode_bits));
+                    m_x86_ea.reset(new X86EffAddr(*op.get_reg(), &m_rex,
+                                                  m_pdrex, m_mode_bits));
                     break;
                 case Insn::Operand::SEGREG:
                     throw InternalError(
@@ -1172,8 +1175,8 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
                         m_x86_ea->set_disponly();
                     else if (m_default_rel &&
                              !m_x86_ea->m_not_pc_rel &&
-                             m_x86_ea->m_segreg != X86_FS &&
-                             m_x86_ea->m_segreg != X86_GS &&
+                             get_num(m_x86_ea->m_segreg) != X86SegReg::FS &&
+                             get_num(m_x86_ea->m_segreg) != X86SegReg::GS &&
                              !m_x86_ea->m_disp.get_abs()->contains(Expr::REG))
                         // Enable default PC-rel if no regs and segreg
                         // is not FS or GS.
@@ -1207,14 +1210,12 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
         case OPA_Spare:
             if (const SegmentRegister* segreg = op.get_segreg())
             {
-                m_spare =
-                    (static_cast<const X86SegmentRegister*>(segreg))->num();
+                m_spare = get_num(*segreg);
             }
             else if (const Register* reg = op.get_reg())
             {
-                set_rex_from_reg(&m_rex, m_pdrex, &m_spare,
-                                 static_cast<const X86Register*>(reg),
-                                 m_mode_bits, X86_REX_R);
+                set_rex_from_reg(&m_rex, m_pdrex, &m_spare, *reg, m_mode_bits,
+                                 X86_REX_R);
             }
             else
                 throw InternalError(N_("invalid operand conversion"));
@@ -1223,9 +1224,8 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             if (const Register* reg = op.get_reg())
             {
                 unsigned char opadd;
-                set_rex_from_reg(&m_rex, m_pdrex, &opadd,
-                                 static_cast<const X86Register*>(reg),
-                                 m_mode_bits, X86_REX_B);
+                set_rex_from_reg(&m_rex, m_pdrex, &opadd, *reg, m_mode_bits,
+                                 X86_REX_B);
                 m_opcode.add(0, opadd);
             }
             else
@@ -1235,9 +1235,8 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             if (const Register* reg = op.get_reg())
             {
                 unsigned char opadd;
-                set_rex_from_reg(&m_rex, m_pdrex, &opadd,
-                                 static_cast<const X86Register*>(reg),
-                                 m_mode_bits, X86_REX_B);
+                set_rex_from_reg(&m_rex, m_pdrex, &opadd, *reg, m_mode_bits,
+                                 X86_REX_B);
                 m_opcode.add(1, opadd);
             }
             else
@@ -1246,12 +1245,10 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
         case OPA_SpareEA:
             if (const Register* reg = op.get_reg())
             {
-                const X86Register* x86_reg =
-                    static_cast<const X86Register*>(reg);
-                m_x86_ea.reset(new X86EffAddr(x86_reg, &m_rex, m_pdrex,
+                m_x86_ea.reset(new X86EffAddr(*reg, &m_rex, m_pdrex,
                                               m_mode_bits));
-                set_rex_from_reg(&m_rex, m_pdrex, &m_spare, x86_reg,
-                                 m_mode_bits, X86_REX_R);
+                set_rex_from_reg(&m_rex, m_pdrex, &m_spare, *reg, m_mode_bits,
+                                 X86_REX_R);
             }
             else
                 throw InternalError(N_("invalid operand conversion"));
@@ -1264,15 +1261,19 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             const Register* reg;
             if (!ea || !(reg = ea->m_disp.get_abs()->get_reg()))
                 throw InternalError(N_("invalid operand conversion"));
+            X86Register::Type regtype = get_type(*reg);
+            unsigned int regnum = get_num(*reg);
             // 64-bit mode does not allow 16-bit addresses
-            if (m_mode_bits == 64 && reg == X86_REG16[0])
+            if (m_mode_bits == 64 && regtype == X86Register::REG16 &&
+                regnum == 0)
                 throw TypeError(
                     N_("16-bit addresses not supported in 64-bit mode"));
-            else if (reg == X86_REG16[0])
+            else if (regtype == X86Register::REG16 && regnum == 0)
                 m_addrsize = 16;
-            else if (reg == X86_REG32[0])
+            else if (regtype == X86Register::REG32 && regnum == 0)
                 m_addrsize = 32;
-            else if (m_mode_bits == 64 && reg == X86_REG64[0])
+            else if (m_mode_bits == 64 && regtype == X86Register::REG64 &&
+                     regnum == 0)
                 m_addrsize = 64;
             else
                 throw TypeError(N_("unsupported address size"));
@@ -1282,8 +1283,7 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             if (const Register* reg = op.get_reg())
             {
                 m_drex &= 0x0F;
-                m_drex |= (static_cast<const X86Register*>(reg)->num() << 4)
-                    & 0xF0;
+                m_drex |= (get_num(*reg) << 4) & 0xF0;
             }
             else
                 throw InternalError(N_("invalid operand conversion"));
@@ -1339,8 +1339,7 @@ BuildGeneral::apply_segregs(const Insn::SegRegs& segregs)
         if (segregs.size() > 1)
             warn_set(WARN_GENERAL,
                      N_("multiple segment overrides, using leftmost"));
-        m_special_prefix =
-            static_cast<const X86SegmentRegister*>(segregs.back())->prefix();
+        m_special_prefix = get_prefix(segregs.back());
     }
     else if (segregs.size() > 0)
         throw InternalError(N_("unhandled segment prefix"));
