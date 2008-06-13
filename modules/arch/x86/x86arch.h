@@ -140,15 +140,6 @@ public:
 
     std::auto_ptr<Insn> create_empty_insn() const;
 
-    unsigned int get_size(const Register& reg) const;
-    Register get_reg(const RegisterGroup& reggroup,
-                     unsigned int regindex) const;
-
-    void put(std::ostream& os, const Register& reg) const;
-    void put(std::ostream& os, const RegisterGroup& reggroup) const;
-    void put(std::ostream& os, const SegmentRegister& segreg) const;
-    void put(std::ostream& os, const Insn::Operand::TargetModifier& tmod) const;
-
     ParserSelect parser() const { return m_parser; }
 
 private:

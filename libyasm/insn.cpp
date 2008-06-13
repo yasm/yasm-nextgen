@@ -42,66 +42,62 @@
 namespace yasm
 {
 
-std::ostream&
-operator<< (std::ostream& os, const Insn::Operand::TargetModifier& tmod)
+Insn::Operand::TargetModifier::TargetModifier()
 {
-    tmod.m_arch->put(os, tmod);
-    return os;
 }
 
-Insn::Operand::Operand(const Register& reg)
+Insn::Operand::TargetModifier::~TargetModifier()
+{
+}
+
+Insn::Operand::Operand(const Register* reg)
     : m_reg(reg),
       m_seg(0),
+      m_targetmod(0),
       m_size(0),
       m_deref(0),
       m_strict(0),
       m_type(REG)
 {
-    m_targetmod.m_arch = 0;
-    m_targetmod.m_type = 0;
 }
 
-Insn::Operand::Operand(const SegmentRegister& segreg)
+Insn::Operand::Operand(const SegmentRegister* segreg)
     : m_segreg(segreg),
       m_seg(0),
+      m_targetmod(0),
       m_size(0),
       m_deref(0),
       m_strict(0),
       m_type(SEGREG)
 {
-    m_targetmod.m_arch = 0;
-    m_targetmod.m_type = 0;
 }
 
 Insn::Operand::Operand(std::auto_ptr<EffAddr> ea)
     : m_ea(ea.release()),
       m_seg(0),
+      m_targetmod(0),
       m_size(0),
       m_deref(0),
       m_strict(0),
       m_type(MEMORY)
 {
-    m_targetmod.m_arch = 0;
-    m_targetmod.m_type = 0;
 }
 
 Insn::Operand::Operand(std::auto_ptr<Expr> val)
     : m_seg(0),
+      m_targetmod(0),
       m_size(0),
       m_deref(0),
       m_strict(0),
       m_type(IMM)
 {
-    m_targetmod.m_arch = 0;
-    m_targetmod.m_type = 0;
-
     const Register* reg;
 
     reg = val->get_reg();
     if (reg)
     {
         m_type = REG;
-        m_reg = *reg;
+        m_reg = reg;
     }
     else
         m_val = val.release();
@@ -160,10 +156,10 @@ Insn::Operand::put(marg_ostream& os) const
             os << "None\n";
             break;
         case REG:
-            os << "Reg=" << m_reg << '\n';
+            os << "Reg=" << *m_reg << '\n';
             break;
         case SEGREG:
-            os << "SegReg=" << m_segreg << '\n';
+            os << "SegReg=" << *m_segreg << '\n';
             break;
         case MEMORY:
             os << "Memory=\n";
@@ -181,7 +177,7 @@ Insn::Operand::put(marg_ostream& os) const
         os << *m_seg;
     else
         os << "None";
-    os << "\nTargetMod=" << m_targetmod << '\n';
+    os << "\nTargetMod=" << *m_targetmod << '\n';
     os << "Size=" << m_size << '\n';
     os << "Deref=" << m_deref << ", Strict=" << m_strict << '\n';
     --os;

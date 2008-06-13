@@ -416,13 +416,13 @@ scan:
             switch (regtmod.get_type())
             {
                 case Arch::RegTmod::REG:
-                    lvalp->reg = *regtmod.get_reg();
+                    lvalp->reg = regtmod.get_reg();
                     RETURN(REG);
                 case Arch::RegTmod::SEGREG:
-                    lvalp->segreg = *regtmod.get_segreg();
+                    lvalp->segreg = regtmod.get_segreg();
                     RETURN(SEGREG);
                 case Arch::RegTmod::TARGETMOD:
-                    lvalp->targetmod = *regtmod.get_tmod();
+                    lvalp->targetmod = regtmod.get_tmod();
                     RETURN(TARGETMOD);
                 default:
                     break;
@@ -686,11 +686,9 @@ directive2:
             TOK[TOKLEN] = '\0';
             Arch::RegTmod regtmod = m_arch->parse_check_regtmod(TOK, TOKLEN);
             TOK[TOKLEN] = savech;
-            if (regtmod.get_reg())
-            {
-                lvalp->reg = *regtmod.get_reg();
+            lvalp->reg = regtmod.get_reg();
+            if (lvalp->reg)
                 RETURN(REG);
-            }
             // Propagate errors in case we got a warning from the arch
             m_errwarns->propagate(get_cur_line());
             /* Just an identifier, return as such. */

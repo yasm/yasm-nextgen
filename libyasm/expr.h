@@ -36,7 +36,6 @@
 #include "functional.h"
 #include "location.h"
 #include "operator.h"
-#include "register.h"
 
 
 namespace yasm
@@ -45,6 +44,7 @@ namespace yasm
 class Bytecode;
 class FloatNum;
 class IntNum;
+class Register;
 class Symbol;
 
 /// An expression.
@@ -84,7 +84,7 @@ public:
             unsigned int subst;
         };
 
-        Term(const Register& reg) : m_type(REG), m_reg(reg) {}
+        Term(const Register* reg) : m_type(REG), m_reg(reg) {}
         Term(IntNum* intn) : m_type(INT), m_intn(intn) {}
         Term(const IntNum& intn);
         Term(FloatNum* flt) : m_type(FLOAT), m_flt(flt) {}
@@ -113,7 +113,7 @@ public:
         /// Doesn't destroy contents, just ensures what contents are there
         /// won't be destroyed via destroy().  Also marks the type as
         /// Expr::NONE for easy filtering (e.g. with std::remove_if()).
-        void release() { m_type = NONE; m_subst = 0; }
+        void release() { m_type = NONE; m_reg = 0; }
 
         /// Explicit destructor.
         /// Similar to clone(), we do smart copying and destruction in
@@ -144,7 +144,7 @@ public:
 
         const Register* get_reg() const
         {
-            return (m_type == REG ? &m_reg : 0);
+            return (m_type == REG ? m_reg : 0);
         }
 
         IntNum* get_int() const
@@ -187,7 +187,7 @@ public:
         /// Expression item data.  Correct value depends on type.
         union
         {
-            Register m_reg;         ///< Register (#REG)
+            const Register *m_reg;  ///< Register (#REG)
             IntNum *m_intn;         ///< Integer value (#INT)
             unsigned int m_subst;   ///< Subst placeholder (#SUBST)
             FloatNum *m_flt;        ///< Floating point value (#FLOAT)

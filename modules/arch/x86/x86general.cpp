@@ -37,7 +37,6 @@
 #include <libyasm/expr.h>
 #include <libyasm/intnum.h>
 #include <libyasm/marg_ostream.h>
-#include <libyasm/object.h>
 #include <libyasm/symbol.h>
 
 #include "x86arch.h"
@@ -235,11 +234,8 @@ X86General::finalize(Bytecode& bc)
 
                 // Build ModRM EA - CAUTION: this depends on
                 // opcode 0 being a mov instruction!
-                Register reg;
-                reg.m_arch = bc.get_container()->get_object()->get_arch();
-                reg.m_type = X86Register::REG64;
-                reg.m_num = m_opcode.get(0)-0xB8;
-                m_ea.reset(new X86EffAddr(reg, &rex_temp, 0, 64));
+                m_ea.reset(new X86EffAddr(X86_REG64[m_opcode.get(0)-0xB8],
+                                          &rex_temp, 0, 64));
 
                 // Make the imm32s form permanent.
                 m_opcode.make_alt_1();
@@ -285,7 +281,7 @@ X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
         // Compute length of ea and add to total
         len += m_ea->m_need_modrm + (m_ea->m_need_sib ? 1:0);
         len += m_ea->m_need_drex ? 1:0;
-        len += (!m_ea->m_segreg.empty()) ? 1 : 0;
+        len += (m_ea->m_segreg != 0) ? 1 : 0;
     }
 
     if (m_imm != 0)
@@ -378,7 +374,8 @@ X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
     Bytes& bytes = bc_out.get_scratch();
 
     // Prefixes
-    m_common.to_bytes(bytes, m_ea != 0 ? &m_ea->m_segreg : 0);
+    m_common.to_bytes(bytes,
+        m_ea != 0 ? static_cast<const X86SegmentRegister*>(m_ea->m_segreg) : 0);
     if (m_special_prefix != 0)
         bytes.write_8(m_special_prefix);
     if (m_rex != 0xff && m_rex != 0)

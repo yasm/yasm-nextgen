@@ -28,9 +28,6 @@
 //
 #include <libyasm/effaddr.h>
 
-#include "x86regtmod.h"
-
-
 namespace yasm
 {
 namespace arch
@@ -39,6 +36,7 @@ namespace x86
 {
 
 class X86Arch;
+class X86Register;
 
 enum X86RexBitPos
 {
@@ -55,22 +53,9 @@ enum X86RexBitPos
 void set_rex_from_reg(unsigned char *rex,
                       unsigned char *drex,
                       unsigned char *low3,
-                      X86Register::Type reg_type,
-                      unsigned int reg_num,
+                      const X86Register* reg,
                       unsigned int bits,
                       X86RexBitPos rexbit);
-
-inline void
-set_rex_from_reg(unsigned char *rex,
-                 unsigned char *drex,
-                 unsigned char *low3,
-                 const Register& reg,
-                 unsigned int bits,
-                 X86RexBitPos rexbit)
-{
-    set_rex_from_reg(rex, drex, low3, get_type(reg), get_num(reg), bits,
-                     rexbit);
-}
 
 // Effective address type
 class X86EffAddr : public EffAddr
@@ -95,7 +80,7 @@ public:
     X86EffAddr();
 
     /// Register constructor.
-    X86EffAddr(const Register& reg,
+    X86EffAddr(const X86Register* reg,
                unsigned char* rex,
                unsigned char* drex,
                unsigned int bits);
@@ -107,7 +92,7 @@ public:
     X86EffAddr(const X86Arch& arch, std::auto_ptr<Expr> e);
 
     /// Register setter.
-    void set_reg(const Register& reg, unsigned char* rex,
+    void set_reg(const X86Register* reg, unsigned char* rex,
                  unsigned char* drex, unsigned int bits);
 
     /// Immediate setter.

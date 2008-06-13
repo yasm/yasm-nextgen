@@ -39,7 +39,7 @@ namespace yasm
 
 EffAddr::EffAddr(std::auto_ptr<Expr> e)
     : m_disp(0, e),
-      m_segreg(no_segreg()),
+      m_segreg(0),
       m_need_nonzero_len(false),
       m_need_disp(false),
       m_nosplit(false),
@@ -66,9 +66,9 @@ EffAddr::~EffAddr()
 }
 
 void
-EffAddr::set_segreg(const SegmentRegister& segreg)
+EffAddr::set_segreg(const SegmentRegister* segreg)
 {
-    if (!m_segreg.empty())
+    if (segreg != 0 && m_segreg != 0)
         warn_set(WARN_GENERAL,
                  N_("multiple segment overrides, using leftmost"));
 
@@ -82,7 +82,8 @@ EffAddr::put(marg_ostream& os) const
     ++os;
     os << m_disp;
     --os;
-    os << "SegReg=" << m_segreg << '\n';
+    if (m_segreg != 0)
+        os << "SegReg=" << *m_segreg << '\n';
     os << "NeedNonzeroLen=" << m_need_nonzero_len << '\n';
     os << "NeedDisp=" << m_need_disp << '\n';
     os << "NoSplit=" << m_nosplit << '\n';

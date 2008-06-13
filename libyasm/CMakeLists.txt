@@ -37,7 +37,6 @@ ADD_LIBRARY(libyasm
     parser.cpp
     phash.cpp
     preproc.cpp
-    register.cpp
     registry.cpp
     section.cpp
     symbol.cpp

@@ -39,6 +39,8 @@ namespace arch
 namespace x86
 {
 
+class X86SegmentRegister;
+
 class X86Common
 {
 public:
@@ -50,7 +52,7 @@ public:
     void finish();
 
     unsigned long get_len() const;
-    void to_bytes(Bytes& bytes, const SegmentRegister* segreg) const;
+    void to_bytes(Bytes& bytes, const X86SegmentRegister* segreg) const;
 
     unsigned char m_addrsize;       // 0 or =mode_bits => no override
     unsigned char m_opersize;       // 0 or =mode_bits => no override

@@ -32,7 +32,6 @@
 #include <memory>
 
 #include "marg_ostream_fwd.h"
-#include "register.h"
 #include "value.h"
 
 namespace yasm
@@ -58,12 +57,12 @@ public:
     /// effective addresses.  A override of an override will result in a
     /// warning.
     /// @param segreg       segment register (0 if none)
-    void set_segreg(const SegmentRegister& segreg);
+    void set_segreg(const SegmentRegister* segreg);
 
     Value m_disp;       ///< address displacement
 
-    /// Segment register override (empty if none).
-    SegmentRegister m_segreg;
+    /// Segment register override (0 if none).
+    const SegmentRegister* m_segreg;
 
     /// 1 if length of disp must be >0.
     bool m_need_nonzero_len:1;

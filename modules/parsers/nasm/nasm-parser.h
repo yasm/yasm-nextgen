@@ -105,9 +105,9 @@ struct yystype
     {
         unsigned int int_info;
         const Insn::Prefix* prefix;
-        SegmentRegister segreg;
-        Register reg;
-        Insn::Operand::TargetModifier targetmod;
+        const SegmentRegister* segreg;
+        const Register* reg;
+        const Insn::Operand::TargetModifier* targetmod;
     };
 };
 #define YYSTYPE yystype

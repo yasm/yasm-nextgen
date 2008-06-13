@@ -51,20 +51,19 @@ void
 set_rex_from_reg(unsigned char *rex,
                  unsigned char *drex,
                  unsigned char *low3,
-                 X86Register::Type reg_type,
-                 unsigned int reg_num,
+                 const X86Register* reg,
                  unsigned int bits,
                  X86RexBitPos rexbit)
 {
-    *low3 = (unsigned char)(reg_num&7);
+    *low3 = (unsigned char)(reg->num()&7);
 
     if (bits == 64)
     {
-        if (reg_type == X86Register::REG8X || reg_num >= 8)
+        if (reg->type() == X86Register::REG8X || reg->num() >= 8)
         {
             if (drex)
             {
-                *drex |= ((reg_num & 8) >> 3) << rexbit;
+                *drex |= ((reg->num() & 8) >> 3) << rexbit;
             }
             else
             {
@@ -72,10 +71,10 @@ set_rex_from_reg(unsigned char *rex,
                 if (*rex == 0xff)
                     throw TypeError(
                         N_("cannot use A/B/C/DH with instruction needing REX"));
-                *rex |= 0x40 | (((reg_num & 8) >> 3) << rexbit);
+                *rex |= 0x40 | (((reg->num() & 8) >> 3) << rexbit);
             }
         }
-        else if (reg_type == X86Register::REG8 && (reg_num & 7) >= 4)
+        else if (reg->type() == X86Register::REG8 && (reg->num() & 7) >= 4)
         {
             // AH/BH/CH/DH, so no REX allowed
             if (*rex != 0 && *rex != 0xff)
@@ -119,7 +118,7 @@ X86EffAddr::X86EffAddr()
 {
 }
 
-X86EffAddr::X86EffAddr(const Register& reg, unsigned char* rex,
+X86EffAddr::X86EffAddr(const X86Register* reg, unsigned char* rex,
                        unsigned char* drex, unsigned int bits)
     : EffAddr(std::auto_ptr<Expr>(0)),
       m_sib(0),
@@ -149,7 +148,7 @@ X86EffAddr::X86EffAddr(const X86EffAddr& rhs)
 }
 
 void
-X86EffAddr::set_reg(const Register& reg, unsigned char* rex,
+X86EffAddr::set_reg(const X86Register* reg, unsigned char* rex,
                     unsigned char* drex, unsigned int bits)
 {
     unsigned char rm;
@@ -169,14 +168,12 @@ X86EffAddr::fixup(const X86Arch& arch, std::auto_ptr<Expr> e)
         // Need to change foo+rip into foo wrt rip.
         // Note this assumes a particular ordering coming from the parser
         // to work (it's not very smart)!
-        const Register* reg = e->get_terms()[0].get_reg();
-        if (e->is_op(Op::ADD) && reg != 0 && get_type(*reg) == X86Register::RIP)
+        if (e->is_op(Op::ADD) && e->get_terms()[0].get_reg() == X86_RIP)
         {
-            Register rcopy = *reg;
             // replace register with 0
             e->get_terms()[0] = new IntNum(0);
             // build new wrt expression
-            e.reset(new Expr(e.release(), Op::WRT, rcopy, e->get_line()));
+            e.reset(new Expr(e.release(), Op::WRT, X86_RIP, e->get_line()));
         }
     }
     return e;
@@ -265,19 +262,19 @@ static /*@null@*/ /*@dependent@*/ int*
 get_reg3264(Expr::Term& term, int& regnum, int* regs, unsigned char bits,
             unsigned char addrsize)
 {
-    const Register* reg = term.get_reg();
+    const X86Register* reg = static_cast<const X86Register*>(term.get_reg());
     assert(reg != 0);
-    switch (get_type(*reg))
+    switch (reg->type())
     {
         case X86Register::REG32:
             if (addrsize != 32)
                 return 0;
-            regnum = get_num(*reg);
+            regnum = reg->num();
             break;
         case X86Register::REG64:
             if (addrsize != 64)
                 return 0;
-            regnum = get_num(*reg);
+            regnum = reg->num();
             break;
         case X86Register::RIP:
             if (bits != 64)
@@ -311,15 +308,15 @@ x86_expr_checkea_get_reg16(Expr::Term& term, int& regnum, int& bx, int& si,
     reg16[6] = &si;
     reg16[7] = &di;
 
-    const Register* reg = term.get_reg();
+    const X86Register* reg = static_cast<const X86Register*>(term.get_reg());
     assert(reg != 0);
 
     // don't allow 32-bit registers
-    if (get_type(*reg) != X86Register::REG16)
+    if (reg->type() != X86Register::REG16)
         return 0;
 
     // & 7 for sanity check
-    regnum = get_num(*reg) & 0x7;
+    regnum = reg->num() & 0x7;
 
     // only allow BX, SI, DI, BP
     if (!reg16[regnum])
@@ -731,9 +728,10 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
 static bool
 getregsize(const Expr::Term& term, unsigned char* addrsize)
 {
-    if (const Register* reg = term.get_reg())
+    if (const X86Register* reg =
+        static_cast<const X86Register*>(term.get_reg()))
     {
-        switch (get_type(*reg))
+        switch (reg->type())
         {
             case X86Register::REG16:
                 *addrsize = 16;
@@ -947,7 +945,7 @@ X86EffAddr::check_3264(unsigned int addrsize,
         // Don't need to go to the full effort of determining what type
         // of register basereg is, as set_rex_from_reg doesn't pay
         // much attention.
-        set_rex_from_reg(rex, drex, &low3, X86Register::REG64, basereg, bits,
+        set_rex_from_reg(rex, drex, &low3, X86_REG64[basereg], bits,
                          X86_REX_B);
         m_modrm |= low3;
         // we don't need an SIB *unless* basereg is ESP or R12
@@ -976,8 +974,8 @@ X86EffAddr::check_3264(unsigned int addrsize,
             m_sib |= 5;
         else
         {
-            set_rex_from_reg(rex, drex, &low3, X86Register::REG64, basereg,
-                             bits, X86_REX_B);
+            set_rex_from_reg(rex, drex, &low3, X86_REG64[basereg], bits,
+                             X86_REX_B);
             m_sib |= low3;
         }
 
@@ -987,8 +985,8 @@ X86EffAddr::check_3264(unsigned int addrsize,
             // Any scale field is valid, just leave at 0.
         else
         {
-            set_rex_from_reg(rex, drex, &low3, X86Register::REG64, indexreg,
-                             bits, X86_REX_X);
+            set_rex_from_reg(rex, drex, &low3, X86_REG64[indexreg], bits,
+                             X86_REX_X);
             m_sib |= low3 << 3;
             // Set scale field, 1 case -> 0, so don't bother.
             switch (reg3264mult[indexreg])
