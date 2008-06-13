@@ -826,15 +826,15 @@ X86Insn::match_info(const X86InsnInfo& info, const unsigned int* size_lookup,
                                      REF::ref(m_operands.front()),
                                      size_lookup, bypass));
 #else
-    const Operand& last = m_operands.back();
     const X86InfoOperand* first2 = &insn_operands[info.operands_index];
     if (m_parser == X86Arch::PARSER_GAS && !(gas_flags & GAS_NO_REV))
     {
+        const Operand& first = m_operands.back();
         Operands::const_reverse_iterator
             first1 = m_operands.rbegin(), last1 = m_operands.rend();
         while (first1 != last1)
         {
-            if (!match_operand(*first1, *first2, last, size_lookup, bypass))
+            if (!match_operand(*first1, *first2, first, size_lookup, bypass))
                 return false;
             ++first1;
             ++first2;
@@ -843,11 +843,12 @@ X86Insn::match_info(const X86InsnInfo& info, const unsigned int* size_lookup,
     }
     else
     {
+        const Operand& first = m_operands.front();
         Operands::const_iterator
             first1 = m_operands.begin(), last1 = m_operands.end();
         while (first1 != last1)
         {
-            if (!match_operand(*first1, *first2, last, size_lookup, bypass))
+            if (!match_operand(*first1, *first2, first, size_lookup, bypass))
                 return false;
             ++first1;
             ++first2;
