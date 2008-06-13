@@ -8,6 +8,7 @@
 /*  MODULE IMPORTS:                                                          */
 /*****************************************************************************/
 #include <limits>
+#include <boost/static_assert.hpp>
 #include <ctype.h>                                  /*  MODULE TYPE:  (sys)  */
 #include <limits.h>                                 /*  MODULE TYPE:  (sys)  */
 #include <string.h>                                 /*  MODULE TYPE:  (sys)  */
@@ -35,10 +36,6 @@ static inline N_int& bits_(const wordptr addr) { return addr[-3]; }
 static inline N_int& size_(const wordptr addr) { return addr[-2]; }
 static inline N_int& mask_(const wordptr addr) { return addr[-1]; }
 
-#define  ERRCODE_TYPE  "sizeof(word) > sizeof(size_t)"
-#define  ERRCODE_BITS  "bits(word) != sizeof(word)*8"
-#define  ERRCODE_WORD  "bits(word) < 16"
-#define  ERRCODE_LONG  "bits(word) > bits(long)"
 #define  ERRCODE_NULL  "unable to allocate memory"
 #define  ERRCODE_INDX  "index out of range"
 #define  ERRCODE_ORDR  "minimum > maximum index"
@@ -78,6 +75,11 @@ static const int HIDDEN_WORDS = 3;
 
 // # of bits in unsigned long
 #define LONGBITS ((N_word)(std::numeric_limits<N_long>::digits))
+
+BOOST_STATIC_ASSERT(sizeof(N_word) <= sizeof(size_t));
+BOOST_STATIC_ASSERT(BITS == (sizeof(N_word) << 3));
+BOOST_STATIC_ASSERT(BITS >= 16);
+BOOST_STATIC_ASSERT(BITS <= LONGBITS);
 
 // logarithm to base 10 of BITS - 1
 #define LOG10 ((N_word)(MODMASK * 0.30103))     // (BITS - 1) * ( ln 2 / ln 10 )
@@ -259,10 +261,6 @@ const char * Error(ErrCode error)
     switch (error)
     {
         case ErrCode_Ok:   return(     NULL     ); break;
-        case ErrCode_Type: return( ERRCODE_TYPE ); break;
-        case ErrCode_Bits: return( ERRCODE_BITS ); break;
-        case ErrCode_Word: return( ERRCODE_WORD ); break;
-        case ErrCode_Long: return( ERRCODE_LONG ); break;
         case ErrCode_Null: return( ERRCODE_NULL ); break;
         case ErrCode_Indx: return( ERRCODE_INDX ); break;
         case ErrCode_Ordr: return( ERRCODE_ORDR ); break;
@@ -292,14 +290,6 @@ const char * Error(ErrCode error)
 ErrCode Boot(void)
 {
     N_word sample = LSBMASK;
-
-    if (sizeof(N_word) > sizeof(size_t)) return(ErrCode_Type);
-
-    if (BITS != (sizeof(N_word) << 3)) return(ErrCode_Bits);
-
-    if (BITS < 16) return(ErrCode_Word);
-
-    if (BITS > LONGBITS) return(ErrCode_Long);
 
     if (BITMASKTAB) free(BITMASKTAB);
 

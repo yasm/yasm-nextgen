@@ -77,11 +77,6 @@ enum ErrCode
     {
         ErrCode_Ok = 0,    /* everything went allright                       */
 
-        ErrCode_Type,      /* types word and size_t have incompatible sizes  */
-        ErrCode_Bits,      /* bits of word and sizeof(word) are inconsistent */
-        ErrCode_Word,      /* size of word is less than 16 bits              */
-        ErrCode_Long,      /* size of word is greater than size of long      */
-
         ErrCode_Null,      /* unable to allocate memory                      */
 
         ErrCode_Indx,      /* index out of range                             */
