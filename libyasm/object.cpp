@@ -819,6 +819,7 @@ Optimize::step_1b(Errwarns& errwarns)
             }
             else
             {
+                delete *spani;
                 spani = m_spans.erase(spani);
                 continue;
             }
