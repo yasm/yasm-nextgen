@@ -140,7 +140,7 @@ OrgBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
     Bytes& bytes = bc_out.get_scratch();
     // XXX: handle more than 8 bit?
     bytes.insert(bytes.end(), len, static_cast<unsigned char>(m_fill));
-    bc_out.output_bytes(bytes);
+    bc_out.output(bytes);
 }
 
 OrgBytecode::SpecialType

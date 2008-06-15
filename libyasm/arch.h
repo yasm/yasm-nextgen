@@ -302,11 +302,11 @@ public:
     /// @param valsize       size (in bits)
     /// @param shift         left shift (in bits)
     /// @param warn          enables standard overflow/underflow warnings
-    virtual void floatnum_tobytes(const FloatNum& flt,
-                                  Bytes& bytes,
-                                  size_t valsize,
-                                  size_t shift,
-                                  int warn) const = 0;
+    virtual void tobytes(const FloatNum& flt,
+                         Bytes& bytes,
+                         size_t valsize,
+                         size_t shift,
+                         int warn) const = 0;
 
     /// Output #IntNum to buffer.  Puts the value into the least
     /// significant bits of the destination, or may be shifted into more
@@ -321,11 +321,11 @@ public:
     /// @param loc          location of value
     /// @param warn         enables standard warnings (value doesn't fit into
     ///                     valsize bits)
-    virtual void intnum_tobytes(const IntNum& intn,
-                                Bytes& bytes,
-                                size_t valsize,
-                                int shift,
-                                int warn) const = 0;
+    virtual void tobytes(const IntNum& intn,
+                         Bytes& bytes,
+                         size_t valsize,
+                         int shift,
+                         int warn) const = 0;
 
     /// Create an effective address from an expression.
     /// @param e    expression

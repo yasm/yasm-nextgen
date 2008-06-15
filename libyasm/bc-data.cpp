@@ -305,7 +305,7 @@ append_data(BytecodeContainer& container,
     Bytecode& bc = container.fresh_bytecode();
     Bytes zero;
     zero.resize(size);
-    arch.intnum_tobytes(val, zero, size*8, 0, 1);
+    arch.tobytes(val, zero, size*8, 0, 1);
     bc.get_fixed().insert(bc.get_fixed().end(), zero.begin(), zero.end());
 }
 

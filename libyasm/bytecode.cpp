@@ -51,13 +51,13 @@ BytecodeOutput::~BytecodeOutput()
 }
 
 void
-BytecodeOutput::output_reloc(Symbol* sym,
-                             Bytes& bytes,
-                             Bytecode& bc,
-                             unsigned int valsize,
-                             int warn)
+BytecodeOutput::output(Symbol* sym,
+                       Bytes& bytes,
+                       Bytecode& bc,
+                       unsigned int valsize,
+                       int warn)
 {
-    output_bytes(bytes);
+    output(bytes);
 }
 
 Bytecode::Contents::Contents()
@@ -235,7 +235,7 @@ Bytecode::output(BytecodeOutput& bc_out)
         Bytes& fixed = bc_out.get_scratch();
         fixed.insert(fixed.end(), m_fixed.begin() + last,
                      m_fixed.begin() + off);
-        bc_out.output_bytes(fixed);
+        bc_out.output(fixed);
 
         // Output value.
         Bytes& vbytes = bc_out.get_scratch();
@@ -244,7 +244,7 @@ Bytecode::output(BytecodeOutput& bc_out)
         // Make a copy of the value to ensure things like
         // "TIMES x JMP label" work.
         Value vcopy = *i;
-        bc_out.output_value(vcopy, vbytes, loc, i->m_sign ? -1 : 1);
+        bc_out.output(vcopy, vbytes, loc, i->m_sign ? -1 : 1);
         warn_update_line(i->get_line());
 
         last = off + i->m_size/8;
@@ -254,7 +254,7 @@ Bytecode::output(BytecodeOutput& bc_out)
     {
         Bytes& fixed = bc_out.get_scratch();
         fixed.insert(fixed.end(), m_fixed.begin() + last, m_fixed.end());
-        bc_out.output_bytes(fixed);
+        bc_out.output(fixed);
     }
 
     // handle tail contents

@@ -96,10 +96,10 @@ public:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    virtual void output_value(Value& value,
-                              Bytes& bytes,
-                              Location loc,
-                              int warn) = 0;
+    virtual void output(Value& value,
+                        Bytes& bytes,
+                        Location loc,
+                        int warn) = 0;
 
     /// Convert a symbol reference to its byte representation.  Usual
     /// implementations will keep track of relocations generated this way.
@@ -111,7 +111,7 @@ public:
     ///
     /// May raise an exception if an error occurs.
     ///
-    /// The default implementation just calls output_bytes.
+    /// The default implementation just calls output(Bytes).
     ///
     /// @param sym          symbol
     /// @param bytes        storage for byte representation
@@ -122,11 +122,11 @@ public:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    virtual void output_reloc(Symbol* sym,
-                              Bytes& bytes,
-                              Bytecode& bc,
-                              unsigned int valsize,
-                              int warn);
+    virtual void output(Symbol* sym,
+                        Bytes& bytes,
+                        Bytecode& bc,
+                        unsigned int valsize,
+                        int warn);
 
     /// Output a "gap" in the object file: the data does not really need to
     /// exist in the object file, but should be initialized to 0 when the
@@ -136,7 +136,7 @@ public:
 
     /// Output a sequence of bytes.
     /// @param bytes        bytes to output
-    virtual void output_bytes(const Bytes& bytes) = 0;
+    virtual void output(const Bytes& bytes) = 0;
 
 private:
     Bytes m_scratch;

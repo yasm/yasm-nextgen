@@ -508,8 +508,11 @@ X86Arch::add_directives(Directives& dirs, const std::string& parser)
 
 
 void
-X86Arch::floatnum_tobytes(const FloatNum& flt, Bytes& bytes, size_t valsize,
-                          size_t shift, int warn) const
+X86Arch::tobytes(const FloatNum& flt,
+                 Bytes& bytes,
+                 size_t valsize,
+                 size_t shift,
+                 int warn) const
 {
     if (!flt.is_valid_size(valsize))
         throw FloatingPointError(N_("invalid floating point constant size"));
@@ -518,8 +521,11 @@ X86Arch::floatnum_tobytes(const FloatNum& flt, Bytes& bytes, size_t valsize,
 }
 
 void
-X86Arch::intnum_tobytes(const IntNum& intn, Bytes& bytes, size_t valsize,
-                        int shift, int warn) const
+X86Arch::tobytes(const IntNum& intn,
+                 Bytes& bytes,
+                 size_t valsize,
+                 int shift,
+                 int warn) const
 {
     intn.get_sized(&bytes[0], bytes.size(), valsize, shift, false, warn);
 }

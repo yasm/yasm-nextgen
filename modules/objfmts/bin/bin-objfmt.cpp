@@ -128,9 +128,10 @@ public:
     void output_section(Section* sect, unsigned long start, Errwarns& errwarns);
 
     // OutputBytecode overrides
-    void output_value(Value& value, Bytes& bytes, Location loc, int warn);
+    using BytecodeOutput::output;
+    void output(Value& value, Bytes& bytes, Location loc, int warn);
     void output_gap(unsigned int size);
-    void output_bytes(const Bytes& bytes);
+    void output(const Bytes& bytes);
 
 private:
     static void expr_xform(Expr* e);
@@ -204,7 +205,7 @@ Output::expr_xform(Expr* e)
 }
 
 void
-Output::output_value(Value& value, Bytes& bytes, Location loc, int warn)
+Output::output(Value& value, Bytes& bytes, Location loc, int warn)
 {
     // Binary objects we need to resolve against object, not against section.
     if (value.is_relative())
@@ -281,7 +282,7 @@ Output::output_gap(unsigned int size)
 }
 
 void
-Output::output_bytes(const Bytes& bytes)
+Output::output(const Bytes& bytes)
 {
     // Output bytes to file
     m_os << bytes;

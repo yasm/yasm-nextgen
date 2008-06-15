@@ -235,7 +235,7 @@ AlignBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
         // Just fill with 0
         bytes.insert(bytes.end(), len, 0);
     }
-    bc_out.output_bytes(bytes);
+    bc_out.output(bytes);
 }
 
 AlignBytecode::SpecialType

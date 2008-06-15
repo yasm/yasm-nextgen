@@ -726,7 +726,7 @@ Value::output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch)
         FloatNum* flt;
         if (!m_rel && (flt = m_abs->get_float()))
         {
-            arch.floatnum_tobytes(*flt, bytes, m_size, 0, warn);
+            arch.tobytes(*flt, bytes, m_size, 0, warn);
             return true;
         }
 
@@ -784,7 +784,7 @@ Value::output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch)
             outval += *intn;
 
         // Output!
-        arch.intnum_tobytes(outval, bytes, m_size, 0, warn);
+        arch.tobytes(outval, bytes, m_size, 0, warn);
         return true;
     }
 
@@ -794,12 +794,12 @@ Value::output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch)
     if (intn)
     {
         // Output just absolute portion
-        arch.intnum_tobytes(*intn, bytes, m_size, 0, warn);
+        arch.tobytes(*intn, bytes, m_size, 0, warn);
     }
     else
     {
         // No absolute or relative portions: output 0
-        arch.intnum_tobytes(0, bytes, m_size, 0, warn);
+        arch.tobytes(0, bytes, m_size, 0, warn);
     }
 
     return true;

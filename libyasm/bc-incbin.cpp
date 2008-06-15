@@ -212,7 +212,7 @@ IncbinBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
         const IntNum* num = m_start->get_intnum();
         if (!num)
             throw InternalError(
-                N_("could not determine start in incbin::to_bytes"));
+                N_("could not determine start in incbin::output"));
         start = num->get_uint();
     }
 
@@ -236,7 +236,7 @@ IncbinBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
         throw IOError(String::compose(
             N_("`%1': unable to read %2 bytes from file `%3'"),
             "incbin", bc.get_tail_len(), m_filename));
-    bc_out.output_bytes(bytes);
+    bc_out.output(bytes);
 }
 
 IncbinBytecode*

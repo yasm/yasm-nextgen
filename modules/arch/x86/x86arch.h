@@ -127,16 +127,16 @@ public:
 
     const unsigned char** get_fill() const;
 
-    void floatnum_tobytes(const FloatNum& flt,
-                          Bytes& bytes,
-                          size_t valsize,
-                          size_t shift,
-                          int warn) const;
-    void intnum_tobytes(const IntNum& intn,
-                        Bytes& bytes,
-                        size_t valsize,
-                        int shift,
-                        int warn) const;
+    void tobytes(const FloatNum& flt,
+                 Bytes& bytes,
+                 size_t valsize,
+                 size_t shift,
+                 int warn) const;
+    void tobytes(const IntNum& intn,
+                 Bytes& bytes,
+                 size_t valsize,
+                 int shift,
+                 int warn) const;
 
     std::auto_ptr<EffAddr> ea_create(std::auto_ptr<Expr> e) const;
 

@@ -251,7 +251,7 @@ X86Jmp::output(Bytecode& bc, BytecodeOutput& bc_out)
         m_nearop.to_bytes(bytes);
     }
 
-    bc_out.output_bytes(bytes);
+    bc_out.output(bytes);
 
     // Adjust relative displacement to end of bytecode
     m_target.add_abs(-(long)size);
@@ -259,7 +259,7 @@ X86Jmp::output(Bytecode& bc, BytecodeOutput& bc_out)
     Location loc = {&bc, bc.get_fixed_len()+bytes.size()};
     Bytes& tbytes = bc_out.get_scratch();
     tbytes.resize(size);
-    bc_out.output_value(m_target, tbytes, loc, 1);
+    bc_out.output(m_target, tbytes, loc, 1);
 }
 
 X86Jmp*

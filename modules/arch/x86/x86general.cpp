@@ -412,7 +412,7 @@ X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
             bytes.write_8(m_ea->m_drex);
     }
 
-    bc_out.output_bytes(bytes);
+    bc_out.output(bytes);
     unsigned long pos = bc.get_fixed_len()+bytes.size();
 
     // Displacement (if required)
@@ -429,7 +429,7 @@ X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
         pos += disp_len;
         Bytes& dbytes = bc_out.get_scratch();
         dbytes.resize(disp_len);
-        bc_out.output_value(m_ea->m_disp, bytes, loc, 1);
+        bc_out.output(m_ea->m_disp, bytes, loc, 1);
     }
 
     // Immediate (if required)
@@ -449,7 +449,7 @@ X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
         Location loc = {&bc, pos};
         Bytes& ibytes = bc_out.get_scratch();
         ibytes.resize(imm_len);
-        bc_out.output_value(*m_imm, bytes, loc, 1);
+        bc_out.output(*m_imm, bytes, loc, 1);
     }
 }
 
