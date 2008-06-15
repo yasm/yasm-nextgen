@@ -50,6 +50,23 @@ namespace arch
 namespace x86
 {
 
+#ifndef NELEMS
+#define NELEMS(x) (sizeof(x)/sizeof(x[0]))
+#endif
+static const unsigned int reg_count[X86Register::TYPE_COUNT] =
+    {16,    // REG8
+     8,     // REG8X
+     16,    // REG16
+     16,    // REG32
+     16,    // REG64
+     8,     // FPUREG
+     8,     // MMXREG
+     16,    // XMMREG
+     16,    // CRREG
+     8,     // DRREG
+     8,     // TRREG
+     1};    // RIP
+
 X86Arch::X86Arch()
     : m_amd64_machine(false),
       m_parser(PARSER_UNKNOWN),
@@ -59,6 +76,44 @@ X86Arch::X86Arch()
 {
     // default to all instructions/features enabled
     m_active_cpu.set();
+
+    // create registers
+    for (unsigned int i=0; i<NELEMS(m_reg); i++)
+    {
+        m_reg[i] = new X86Register*[reg_count[i]];
+        for (unsigned int j=0; j<reg_count[i]; j++)
+            m_reg[i][j] = new X86Register(static_cast<X86Register::Type>(i), j);
+    }
+
+    // create register groups
+    for (unsigned int i=0; i<NELEMS(m_reg_group); i++)
+        m_reg_group[i] = 0;
+    m_reg_group[X86Register::FPUREG] =
+        new X86RegisterGroup(*this, m_reg[X86Register::FPUREG],
+                             reg_count[X86Register::FPUREG]);
+    m_reg_group[X86Register::MMXREG] =
+        new X86RegisterGroup(*this, m_reg[X86Register::MMXREG],
+                             reg_count[X86Register::MMXREG]);
+    m_reg_group[X86Register::XMMREG] =
+        new X86RegisterGroup(*this, m_reg[X86Register::XMMREG],
+                             reg_count[X86Register::XMMREG]);
+
+    // create segment registers
+    static const unsigned char segreg_prefix[NELEMS(m_segreg)] =
+        {0x26, 0x2e, 0x36, 0x3e, 0x64, 0x65};
+    for (unsigned int i=0; i<NELEMS(m_segreg); i++)
+    {
+        m_segreg[i] =
+            new X86SegmentRegister(static_cast<X86SegmentRegister::Type>(i),
+                                   segreg_prefix[i]);
+    }
+
+    // create target modifiers
+    for (unsigned int i=0; i<NELEMS(m_targetmod); i++)
+    {
+        m_targetmod[i] =
+            new X86TargetModifier(static_cast<X86TargetModifier::Type>(i));
+    }
 }
 
 bool
@@ -88,6 +143,18 @@ X86Arch::set_machine(const std::string& machine)
 
 X86Arch::~X86Arch()
 {
+    for (unsigned int i=0; i<NELEMS(m_targetmod); i++)
+        delete m_targetmod[i];
+    for (unsigned int i=0; i<NELEMS(m_segreg); i++)
+        delete m_segreg[i];
+    for (unsigned int i=0; i<NELEMS(m_reg_group); i++)
+        delete m_reg_group[i];
+    for (unsigned int i=0; i<NELEMS(m_reg); i++)
+    {
+        for (unsigned int j=0; j<reg_count[i]; j++)
+            delete m_reg[i][j];
+        delete [] m_reg[i];
+    }
 }
 
 unsigned int

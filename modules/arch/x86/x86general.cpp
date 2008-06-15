@@ -37,6 +37,7 @@
 #include <libyasm/expr.h>
 #include <libyasm/intnum.h>
 #include <libyasm/marg_ostream.h>
+#include <libyasm/object.h>
 #include <libyasm/symbol.h>
 
 #include "x86arch.h"
@@ -234,7 +235,9 @@ X86General::finalize(Bytecode& bc)
 
                 // Build ModRM EA - CAUTION: this depends on
                 // opcode 0 being a mov instruction!
-                m_ea.reset(new X86EffAddr(X86_REG64[m_opcode.get(0)-0xB8],
+                X86Arch* arch = static_cast<X86Arch*>(
+                    bc.get_container()->get_object()->get_arch());
+                m_ea.reset(new X86EffAddr(arch->get_reg64(m_opcode.get(0)-0xB8),
                                           &rex_temp, 0, 64));
 
                 // Make the imm32s form permanent.

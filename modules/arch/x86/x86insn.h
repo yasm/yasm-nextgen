@@ -44,7 +44,8 @@ struct X86Opcode;
 class X86Insn : public Insn
 {
 public:
-    X86Insn(const X86InsnInfo* group,
+    X86Insn(const X86Arch& arch,
+            const X86InsnInfo* group,
             const X86Arch::CpuMask& active_cpu,
             unsigned char mod_data0,
             unsigned char mod_data1,
@@ -88,6 +89,9 @@ private:
                        const unsigned int* size_lookup,
                        int bypass) const;
     void match_error(const unsigned int* size_lookup) const;
+
+    // architecture
+    const X86Arch& m_arch;
 
     // instruction parse group - NULL if empty instruction (just prefixes)
     /*@null@*/ const X86InsnInfo* m_group;

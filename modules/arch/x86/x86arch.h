@@ -30,6 +30,8 @@
 
 #include <libyasm/arch.h>
 
+#include "x86regtmod.h"
+
 
 namespace yasm
 {
@@ -142,6 +144,10 @@ public:
 
     ParserSelect parser() const { return m_parser; }
 
+    unsigned int get_mode_bits() const { return m_mode_bits; }
+    const X86Register* get_reg64(unsigned int num) const
+    { return m_reg[X86Register::REG64][num]; }
+
 private:
     void parse_cpu(const std::string& cpuid);
 
@@ -165,6 +171,18 @@ private:
     unsigned int m_mode_bits;
     bool m_force_strict;
     bool m_default_rel;
+
+    // Registers
+    X86Register** m_reg[X86Register::TYPE_COUNT];
+
+    // Register groups
+    X86RegisterGroup* m_reg_group[X86Register::TYPE_COUNT];
+
+    // Segment registers
+    X86SegmentRegister* m_segreg[X86SegmentRegister::TYPE_COUNT];
+
+    // Target modifiers
+    X86TargetModifier* m_targetmod[X86TargetModifier::TYPE_COUNT];
 };
 
 }}} // namespace yasm::arch::x86

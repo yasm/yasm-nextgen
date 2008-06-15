@@ -28,6 +28,8 @@
 //
 #include <libyasm/effaddr.h>
 
+#include "x86regtmod.h"
+
 namespace yasm
 {
 namespace arch
@@ -36,7 +38,6 @@ namespace x86
 {
 
 class X86Arch;
-class X86Register;
 
 enum X86RexBitPos
 {
@@ -53,9 +54,21 @@ enum X86RexBitPos
 void set_rex_from_reg(unsigned char *rex,
                       unsigned char *drex,
                       unsigned char *low3,
-                      const X86Register* reg,
+                      X86Register::Type reg_type,
+                      unsigned int reg_num,
                       unsigned int bits,
                       X86RexBitPos rexbit);
+
+inline void
+set_rex_from_reg(unsigned char *rex,
+                 unsigned char *drex,
+                 unsigned char *low3,
+                 const X86Register* reg,
+                 unsigned int bits,
+                 X86RexBitPos rexbit)
+{
+    set_rex_from_reg(rex, drex, low3, reg->type(), reg->num(), bits, rexbit);
+}
 
 // Effective address type
 class X86EffAddr : public EffAddr

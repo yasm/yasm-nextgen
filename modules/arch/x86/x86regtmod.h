@@ -36,28 +36,31 @@ namespace arch
 namespace x86
 {
 
+class X86Arch;
+
 class X86Register : public Register
 {
 public:
-    // 0-15 (low 4 bits) used for register number, stored in same data area.
+    // Register type.
     enum Type
     {
-        REG8 = 0x1,
-        REG8X = 0x2,    // 64-bit mode only, REX prefix version of REG8
-        REG16 = 0x3,
-        REG32 = 0x4,
-        REG64 = 0x5,    // 64-bit mode only
-        FPUREG = 0x6,
-        MMXREG = 0x7,
-        XMMREG = 0x8,
-        CRREG = 0x9,
-        DRREG = 0xA,
-        TRREG = 0xB,
-        RIP = 0xC       // 64-bit mode only, always RIP (reg num ignored)
+        REG8 = 0,
+        REG8X,      // 64-bit mode only, REX prefix version of REG8
+        REG16,
+        REG32,
+        REG64,      // 64-bit mode only
+        FPUREG,
+        MMXREG,
+        XMMREG,
+        CRREG,
+        DRREG,
+        TRREG,
+        RIP,        // 64-bit mode only, always RIP (reg num ignored)
+        TYPE_COUNT  // Number of types, must always be last in enum
     };
 
-    X86Register(Type type, unsigned int num);
-    ~X86Register();
+    X86Register(Type type, unsigned int num) : m_type(type), m_num(num) {}
+    ~X86Register() {}
 
     /// Get the equivalent size of a register in bits.
     /// @param reg  register
@@ -81,24 +84,12 @@ private:
     unsigned int m_num;
 };
 
-extern const X86Register* X86_CRREG[16];
-extern const X86Register* X86_DRREG[8];
-extern const X86Register* X86_TRREG[8];
-extern const X86Register* X86_FPUREG[8];
-extern const X86Register* X86_MMXREG[8];
-extern const X86Register* X86_XMMREG[16];
-extern const X86Register* X86_REG64[16];
-extern const X86Register* X86_REG32[16];
-extern const X86Register* X86_REG16[16];
-extern const X86Register* X86_REG8[16];
-extern const X86Register* X86_REG8X[8];
-extern const X86Register* X86_RIP;
-
 class X86RegisterGroup : public RegisterGroup
 {
 public:
-    X86RegisterGroup(const X86Register** regs, unsigned long size);
-    ~X86RegisterGroup();
+    X86RegisterGroup(X86Arch& arch, X86Register** regs, unsigned long size)
+        : m_arch(arch), m_regs(regs), m_size(size) {}
+    ~X86RegisterGroup() {}
 
     /// Get a specific register of a register group, based on the register
     /// group and the index within the group.
@@ -108,51 +99,56 @@ public:
     const X86Register* get_reg(unsigned long regindex) const;
 
 private:
-    const X86Register** m_regs;
+    X86Arch& m_arch;
+    X86Register** m_regs;
     unsigned long m_size;
 };
-
-extern const X86RegisterGroup* X86_FPUGroup;
-extern const X86RegisterGroup* X86_MMXGroup;
-extern const X86RegisterGroup* X86_XMMGroup;
 
 class X86SegmentRegister : public SegmentRegister
 {
 public:
-    X86SegmentRegister(unsigned int num, unsigned char prefix);
-    ~X86SegmentRegister();
+    enum Type
+    {
+        ES = 0,
+        CS,
+        SS,
+        DS,
+        FS,
+        GS,
+        TYPE_COUNT
+    };
+
+    X86SegmentRegister(Type type, unsigned char prefix)
+        : m_type(type), m_prefix(prefix) {}
+    ~X86SegmentRegister() {}
 
     /// Print a segment register.  For debugging purposes.
     /// @param os   output stream
     void put(std::ostream& os) const;
 
-    unsigned int num() const { return m_num; }
+    Type type() const { return m_type; }
+    unsigned int num() const { return static_cast<unsigned int>(m_type); }
     unsigned char prefix() const { return m_prefix; }
 
 private:
-    unsigned int m_num;
+    Type m_type;
     unsigned char m_prefix;
 };
-
-extern const X86SegmentRegister* X86_ES;
-extern const X86SegmentRegister* X86_CS;
-extern const X86SegmentRegister* X86_SS;
-extern const X86SegmentRegister* X86_DS;
-extern const X86SegmentRegister* X86_FS;
-extern const X86SegmentRegister* X86_GS;
 
 class X86TargetModifier : public Insn::Operand::TargetModifier
 {
 public:
-    enum Type {
-        NEAR = 1,
+    enum Type
+    {
+        NEAR = 0,
         SHORT,
         FAR,
-        TO
+        TO,
+        TYPE_COUNT
     };
 
-    explicit X86TargetModifier(Type type);
-    ~X86TargetModifier();
+    explicit X86TargetModifier(Type type) : m_type(type) {}
+    ~X86TargetModifier() {}
 
     Type type() const { return m_type; }
 
@@ -161,11 +157,6 @@ public:
 private:
     Type m_type;
 };
-
-extern const X86TargetModifier* X86_NEAR;
-extern const X86TargetModifier* X86_SHORT;
-extern const X86TargetModifier* X86_FAR;
-extern const X86TargetModifier* X86_TO;
 
 }}} // namespace yasm::arch::x86
 

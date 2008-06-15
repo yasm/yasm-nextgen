@@ -51,19 +51,20 @@ void
 set_rex_from_reg(unsigned char *rex,
                  unsigned char *drex,
                  unsigned char *low3,
-                 const X86Register* reg,
+                 X86Register::Type reg_type,
+                 unsigned int reg_num,
                  unsigned int bits,
                  X86RexBitPos rexbit)
 {
-    *low3 = (unsigned char)(reg->num()&7);
+    *low3 = (unsigned char)(reg_num&7);
 
     if (bits == 64)
     {
-        if (reg->type() == X86Register::REG8X || reg->num() >= 8)
+        if (reg_type == X86Register::REG8X || reg_num >= 8)
         {
             if (drex)
             {
-                *drex |= ((reg->num() & 8) >> 3) << rexbit;
+                *drex |= ((reg_num & 8) >> 3) << rexbit;
             }
             else
             {
@@ -71,10 +72,10 @@ set_rex_from_reg(unsigned char *rex,
                 if (*rex == 0xff)
                     throw TypeError(
                         N_("cannot use A/B/C/DH with instruction needing REX"));
-                *rex |= 0x40 | (((reg->num() & 8) >> 3) << rexbit);
+                *rex |= 0x40 | (((reg_num & 8) >> 3) << rexbit);
             }
         }
-        else if (reg->type() == X86Register::REG8 && (reg->num() & 7) >= 4)
+        else if (reg_type == X86Register::REG8 && (reg_num & 7) >= 4)
         {
             // AH/BH/CH/DH, so no REX allowed
             if (*rex != 0 && *rex != 0xff)
@@ -168,12 +169,14 @@ X86EffAddr::fixup(const X86Arch& arch, std::auto_ptr<Expr> e)
         // Need to change foo+rip into foo wrt rip.
         // Note this assumes a particular ordering coming from the parser
         // to work (it's not very smart)!
-        if (e->is_op(Op::ADD) && e->get_terms()[0].get_reg() == X86_RIP)
+        const X86Register* reg =
+            static_cast<const X86Register*>(e->get_terms()[0].get_reg());
+        if (e->is_op(Op::ADD) && reg && reg->type() == X86Register::RIP)
         {
             // replace register with 0
             e->get_terms()[0] = new IntNum(0);
             // build new wrt expression
-            e.reset(new Expr(e.release(), Op::WRT, X86_RIP, e->get_line()));
+            e.reset(new Expr(e.release(), Op::WRT, reg, e->get_line()));
         }
     }
     return e;
@@ -945,7 +948,7 @@ X86EffAddr::check_3264(unsigned int addrsize,
         // Don't need to go to the full effort of determining what type
         // of register basereg is, as set_rex_from_reg doesn't pay
         // much attention.
-        set_rex_from_reg(rex, drex, &low3, X86_REG64[basereg], bits,
+        set_rex_from_reg(rex, drex, &low3, X86Register::REG64, basereg, bits,
                          X86_REX_B);
         m_modrm |= low3;
         // we don't need an SIB *unless* basereg is ESP or R12
@@ -974,8 +977,8 @@ X86EffAddr::check_3264(unsigned int addrsize,
             m_sib |= 5;
         else
         {
-            set_rex_from_reg(rex, drex, &low3, X86_REG64[basereg], bits,
-                             X86_REX_B);
+            set_rex_from_reg(rex, drex, &low3, X86Register::REG64, basereg,
+                             bits, X86_REX_B);
             m_sib |= low3;
         }
 
@@ -985,8 +988,8 @@ X86EffAddr::check_3264(unsigned int addrsize,
             // Any scale field is valid, just leave at 0.
         else
         {
-            set_rex_from_reg(rex, drex, &low3, X86_REG64[indexreg], bits,
-                             X86_REX_X);
+            set_rex_from_reg(rex, drex, &low3, X86Register::REG64, indexreg,
+                             bits, X86_REX_X);
             m_sib |= low3 << 3;
             // Set scale field, 1 case -> 0, so don't bother.
             switch (reg3264mult[indexreg])
