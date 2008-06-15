@@ -8,6 +8,8 @@ INCLUDE(YasmMacros)
 
 OPTION(ENABLE_NLS "Enable message translations" OFF)
 
+OPTION(BUILD_TEST_COVERAGE "Enable test coverage if possible" ON)
+
 # Default build type to debug if not set
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Debug CACHE STRING
@@ -57,6 +59,14 @@ add_subdirectory(tools)
 YASM_ADD_MODULE_SUBDIRECTORY(modules)
 MESSAGE(STATUS "Building modules: ${YASM_MODULES}")
 #MESSAGE(STATUS "Module source files: ${YASM_MODULES_SRC}")
+
+IF(BUILD_TEST_COVERAGE AND CMAKE_BUILD_TYPE STREQUAL "Debug" AND CMAKE_COMPILER_IS_GNUCXX)
+    # Add build options for test coverage. Currently coverage is only supported
+    # on gcc compiler
+    ADD_DEFINITIONS(-ftest-coverage)
+    ADD_DEFINITIONS(-fprofile-arcs)
+    SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
+ENDIF(BUILD_TEST_COVERAGE AND CMAKE_BUILD_TYPE STREQUAL "Debug" AND CMAKE_COMPILER_IS_GNUCXX)
 
 #
 # Generate static_modules.h
