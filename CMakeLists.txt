@@ -8,12 +8,6 @@ INCLUDE(YasmMacros)
 
 OPTION(ENABLE_NLS "Enable message translations" OFF)
 
-OPTION(YASM_BUILD_TESTS "Enable building of tests" ON)
-
-IF(YASM_BUILD_TESTS)
-    ENABLE_TESTING()
-ENDIF(YASM_BUILD_TESTS)
-
 # Default build type to debug if not set
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Debug CACHE STRING

@@ -11,7 +11,7 @@
 # add a unit test, which is executed when running make test
 # it will be built with RPATH pointing to the build dir
 # The targets are always created, but only built for the "all"
-# target if the option YASM_BUILD_TESTS is enabled. Otherwise the rules for
+# target if the option BUILD_TESTING is enabled. Otherwise the rules for
 # the target are created but not built by default. You can build them by
 # manually building the target.
 # The name of the target can be specified using TESTNAME <testname>, if it is
@@ -30,16 +30,16 @@ endmacro (YASM_ADD_UNIT_TEST)
 # add an test executable
 # it will be built with RPATH pointing to the build dir
 # The targets are always created, but only built for the "all"
-# target if the option YASM_BUILD_TESTS is enabled. Otherwise the rules for
+# target if the option BUILD_TESTING is enabled. Otherwise the rules for
 # the target are created but not built by default. You can build them by
 # manually building the target.
 macro (YASM_ADD_TEST_EXECUTABLE _target_NAME)
 
    set(_add_executable_param)
 
-   if (NOT YASM_BUILD_TESTS)
+   if (NOT BUILD_TESTING)
       set(_add_executable_param EXCLUDE_FROM_ALL)
-   endif (NOT YASM_BUILD_TESTS)
+   endif (NOT BUILD_TESTING)
 
    set( EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR} )
 
