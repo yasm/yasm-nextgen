@@ -53,6 +53,7 @@ public:
             unsigned int num_info,
             unsigned int mode_bits,
             unsigned int suffix,
+            unsigned int misc_flags,
             X86Arch::ParserSelect parser,
             bool force_strict,
             bool default_rel);
@@ -110,6 +111,9 @@ private:
 
     // Suffix flags
     unsigned int m_suffix:8;
+
+    // Tests against BITS==64 and AVX
+    unsigned int m_misc_flags:6;
 
     // Parser enabled at the time of parsing the instruction
     unsigned int m_parser:2;

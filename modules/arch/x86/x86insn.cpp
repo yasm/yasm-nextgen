@@ -98,6 +98,13 @@ enum X86GasSuffixFlags
     WEAK = 1<<5             // Relaxed operand mode for GAS
 };
 
+// Miscellaneous flag tests for instructions
+enum X86MiscFlags {
+    // These are tested against BITS==64.
+    ONLY_64 = 1<<0,         // Only available in 64-bit mode
+    NOT_64 = 1<<1           // Not available (invalid) in 64-bit mode
+};
+
 enum X86OperandType
 {
     OPT_Imm = 0,        // immediate
@@ -243,13 +250,16 @@ struct X86InsnInfo
     // GAS suffix flags
     unsigned int gas_flags:8;      // Enabled for these GAS suffixes
 
+    // Tests against BITS==64 and AVX
+    unsigned int misc_flags:6;
+
     // The CPU feature flags needed to execute this instruction.  This is OR'ed
     // with arch-specific data[2].  This combined value is compared with
     // cpu_enabled to see if all bits set here are set in cpu_enabled--if so,
     // the instruction is available on this CPU.
-    unsigned int cpu0:8;
-    unsigned int cpu1:8;
-    unsigned int cpu2:8;
+    unsigned int cpu0:6;
+    unsigned int cpu1:6;
+    unsigned int cpu2:6;
 
     // Opcode modifiers for variations of instruction.  As each modifier reads
     // its parameter in LSB->MSB order from the arch-specific data[1] from the
@@ -348,25 +358,15 @@ bool
 X86Insn::match_jmp_info(const X86InsnInfo& info, unsigned int opersize,
                         X86Opcode& shortop, X86Opcode& nearop) const
 {
-    unsigned int cpu0 = info.cpu0;
-    unsigned int cpu1 = info.cpu1;
-    unsigned int cpu2 = info.cpu2;
-
     // Match CPU
-    if (m_mode_bits != 64 &&
-        (cpu0 == CPU_64 || cpu1 == CPU_64 || cpu2 == CPU_64))
+    if (m_mode_bits != 64 && (info.misc_flags & ONLY_64))
         return false;
-    if (m_mode_bits == 64 &&
-        (cpu0 == CPU_Not64 || cpu1 == CPU_Not64 || cpu2 == CPU_Not64))
+    if (m_mode_bits == 64 && (info.misc_flags & NOT_64))
         return false;
 
-    if (cpu0 == CPU_64 || cpu0 == CPU_Not64)
-        cpu0 = CPU_Any;
-    if (cpu1 == CPU_64 || cpu1 == CPU_Not64)
-        cpu1 = CPU_Any;
-    if (cpu2 == CPU_64 || cpu2 == CPU_Not64)
-        cpu2 = CPU_Any;
-    if (!m_active_cpu[cpu0] || !m_active_cpu[cpu1] || !m_active_cpu[cpu2])
+    if (!m_active_cpu[info.cpu0] ||
+        !m_active_cpu[info.cpu1] ||
+        !m_active_cpu[info.cpu2])
         return false;
 
     if (info.num_operands == 0)
@@ -771,26 +771,14 @@ X86Insn::match_info(const X86InsnInfo& info, const unsigned int* size_lookup,
                     int bypass) const
 {
     // Match CPU
-    unsigned int cpu0 = info.cpu0;
-    unsigned int cpu1 = info.cpu1;
-    unsigned int cpu2 = info.cpu2;
-
-    if (m_mode_bits != 64 &&
-        (cpu0 == CPU_64 || cpu1 == CPU_64 || cpu2 == CPU_64))
+    if (m_mode_bits != 64 && (info.misc_flags & ONLY_64))
         return false;
-    if (m_mode_bits == 64 &&
-        (cpu0 == CPU_Not64 || cpu1 == CPU_Not64 || cpu2 == CPU_Not64))
+    if (m_mode_bits == 64 && (info.misc_flags & NOT_64))
         return false;
 
-    if (cpu0 == CPU_64 || cpu0 == CPU_Not64)
-        cpu0 = CPU_Any;
-    if (cpu1 == CPU_64 || cpu1 == CPU_Not64)
-        cpu1 = CPU_Any;
-    if (cpu2 == CPU_64 || cpu2 == CPU_Not64)
-        cpu2 = CPU_Any;
-    if (bypass != 8 && (!m_active_cpu[cpu0] ||
-                        !m_active_cpu[cpu1] ||
-                        !m_active_cpu[cpu2]))
+    if (bypass != 8 && (!m_active_cpu[info.cpu0] ||
+                        !m_active_cpu[info.cpu1] ||
+                        !m_active_cpu[info.cpu2]))
         return false;
 
     // Match # of operands
@@ -1424,10 +1412,13 @@ struct InsnPrefixParseData
     unsigned int mod_data1:8;
     unsigned int mod_data2:8;
 
+    // Tests against BITS==64 and AVX
+    unsigned int misc_flags:6;
+
     // CPU flags
-    unsigned int cpu0:8;
-    unsigned int cpu1:8;
-    unsigned int cpu2:8;
+    unsigned int cpu0:6;
+    unsigned int cpu1:6;
+    unsigned int cpu2:6;
 };
 
 // Pull in all parse data
@@ -1539,39 +1530,27 @@ X86Arch::parse_check_insnprefix(const char* id, size_t id_len,
     if (!pdata)
         return InsnPrefix();
 
-    unsigned int cpu0 = pdata->cpu0;
-    unsigned int cpu1 = pdata->cpu1;
-    unsigned int cpu2 = pdata->cpu2;
-
     if (pdata->num_info > 0)
     {
-        if (m_mode_bits != 64 &&
-            (cpu0 == CPU_64 || cpu1 == CPU_64 || cpu2 == CPU_64))
+        if (m_mode_bits != 64 && (pdata->misc_flags & ONLY_64))
         {
             warn_set(WARN_GENERAL, String::compose(
                 N_("`%s' is an instruction in 64-bit mode"), id));
             return InsnPrefix();
         }
-        if (m_mode_bits == 64 &&
-            (cpu0 == CPU_Not64 || cpu1 == CPU_Not64 || cpu2 == CPU_Not64))
+        if (m_mode_bits == 64 && (pdata->misc_flags & NOT_64))
         {
             throw Error(String::compose(N_("`%s' invalid in 64-bit mode"),
                                         id));
         }
 
-        if (cpu0 == CPU_64 || cpu0 == CPU_Not64)
-            cpu0 = CPU_Any;
-        if (cpu1 == CPU_64 || cpu1 == CPU_Not64)
-            cpu1 = CPU_Any;
-        if (cpu2 == CPU_64 || cpu2 == CPU_Not64)
-            cpu2 = CPU_Any;
-        if (!m_active_cpu[cpu0] ||
-            !m_active_cpu[cpu1] ||
-            !m_active_cpu[cpu2])
+        if (!m_active_cpu[pdata->cpu0] ||
+            !m_active_cpu[pdata->cpu1] ||
+            !m_active_cpu[pdata->cpu2])
         {
             warn_set(WARN_GENERAL, String::compose(
                 N_("`%s' is an instruction in CPU%s"), id,
-                cpu_find_reverse(cpu0, cpu1, cpu2)));
+                cpu_find_reverse(pdata->cpu0, pdata->cpu1, pdata->cpu2)));
             return InsnPrefix();
         }
 
@@ -1585,6 +1564,7 @@ X86Arch::parse_check_insnprefix(const char* id, size_t id_len,
             pdata->num_info,
             m_mode_bits,
             pdata->flags,
+            pdata->misc_flags,
             m_parser,
             m_force_strict,
             m_default_rel));
@@ -1611,8 +1591,7 @@ X86Arch::parse_check_insnprefix(const char* id, size_t id_len,
             }
         }
 
-        if (m_mode_bits != 64 &&
-            (cpu0 == CPU_64 || cpu1 == CPU_64 || cpu2 == CPU_64))
+        if (m_mode_bits != 64 && (pdata->misc_flags & ONLY_64))
         {
             warn_set(WARN_GENERAL, String::compose(
                 N_("`%s' is a prefix in 64-bit mode"), id));
@@ -1633,6 +1612,7 @@ X86Insn::X86Insn(const X86Arch& arch,
                  unsigned int num_info,
                  unsigned int mode_bits,
                  unsigned int suffix,
+                 unsigned int misc_flags,
                  X86Arch::ParserSelect parser,
                  bool force_strict,
                  bool default_rel)
@@ -1642,6 +1622,7 @@ X86Insn::X86Insn(const X86Arch& arch,
       m_num_info(num_info),
       m_mode_bits(mode_bits),
       m_suffix(suffix),
+      m_misc_flags(misc_flags),
       m_parser(parser),
       m_force_strict(force_strict),
       m_default_rel(default_rel)
@@ -1680,6 +1661,7 @@ X86Arch::create_empty_insn() const
         0,
         NELEMS(empty_insn),
         m_mode_bits,
+        0,
         0,
         m_parser,
         m_force_strict,
