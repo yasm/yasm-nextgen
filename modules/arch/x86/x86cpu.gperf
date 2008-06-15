@@ -68,7 +68,10 @@ x86_cpu_intel(X86Arch::CpuMask& cpu, unsigned int data)
     if (data >= PROC_386)
         cpu.set(CPU_SMM);
     if (data >= PROC_nehalem)
+    {
         cpu.set(CPU_SSE42);
+        cpu.set(CPU_XSAVE);
+    }
     if (data >= PROC_penryn)
         cpu.set(CPU_SSE41);
     if (data >= PROC_conroe)
@@ -333,6 +336,8 @@ sse4,		x86_cpu_set_sse4,	0
 nosse4,		x86_cpu_clear_sse4,	0
 sse5,		x86_cpu_set,	CPU_SSE5
 nosse5,		x86_cpu_clear,	CPU_SSE5
+xsave,		x86_cpu_set,	CPU_XSAVE
+noxsave,	x86_cpu_clear,	CPU_XSAVE
 %%
 
 void

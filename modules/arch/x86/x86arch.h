@@ -82,6 +82,7 @@ enum CPUFeature
     CPU_SSE42,          // Streaming SIMD extensions 4.2 required
     CPU_SSE4a,          // AMD Streaming SIMD extensions 4a required
     CPU_SSE5,           // AMD Streaming SIMD extensions 5 required
+    CPU_XSAVE,          // Intel XSAVE instruction
 
     // Technically not CPU capabilities, they do affect what instructions are
     // available.  These are tested against BITS==64.
