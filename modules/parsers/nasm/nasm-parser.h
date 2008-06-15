@@ -30,12 +30,12 @@
 
 #include <boost/scoped_ptr.hpp>
 
-#include <libyasm/bytecode.h>
-#include <libyasm/floatnum.h>
-#include <libyasm/insn.h>
-#include <libyasm/intnum.h>
-#include <libyasm/linemap.h>
-#include <libyasm/parser.h>
+#include <libyasmx/bytecode.h>
+#include <libyasmx/floatnum.h>
+#include <libyasmx/insn.h>
+#include <libyasmx/intnum.h>
+#include <libyasmx/linemap.h>
+#include <libyasmx/parser.h>
 
 
 namespace yasm

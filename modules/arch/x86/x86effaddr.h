@@ -26,7 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <libyasm/effaddr.h>
+#include <libyasmx/effaddr.h>
 
 #include "x86regtmod.h"
 

@@ -1,12 +1,12 @@
-INCLUDE_DIRECTORIES(${yasm_SOURCE_DIR}/libyasm)
+INCLUDE_DIRECTORIES(${yasm_SOURCE_DIR}/libyasmx)
 
 MACRO(LIBYASM_UNIT_TESTS)
    FOREACH(_testname ${ARGN})
        yasm_add_unit_test(${_testname} ${_testname}.cpp ${YASM_MODULES_SRC})
        IF(MSVC)
-           target_link_libraries(${_testname} ${YASM_MODULES} libyasm)
+           target_link_libraries(${_testname} ${YASM_MODULES} libyasmx)
        ELSE(MSVC)
-           target_link_libraries(${_testname} ${YASM_MODULES} libyasm
+           target_link_libraries(${_testname} ${YASM_MODULES} libyasmx
                                  boost_unit_test_framework)
        ENDIF(MSVC)
    ENDFOREACH(_testname)

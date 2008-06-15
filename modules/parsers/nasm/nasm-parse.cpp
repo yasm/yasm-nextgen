@@ -28,21 +28,21 @@
 
 #include <math.h>
 
-#include <libyasm/arch.h>
-#include <libyasm/bc_container_util.h>
-#include <libyasm/bitcount.h>
-#include <libyasm/compose.h>
-#include <libyasm/directive.h>
-#include <libyasm/effaddr.h>
-#include <libyasm/errwarn.h>
-#include <libyasm/errwarns.h>
-#include <libyasm/expr.h>
-#include <libyasm/name_value.h>
-#include <libyasm/nocase.h>
-#include <libyasm/object.h>
-#include <libyasm/preproc.h>
-#include <libyasm/section.h>
-#include <libyasm/symbol.h>
+#include <libyasmx/arch.h>
+#include <libyasmx/bc_container_util.h>
+#include <libyasmx/bitcount.h>
+#include <libyasmx/compose.h>
+#include <libyasmx/directive.h>
+#include <libyasmx/effaddr.h>
+#include <libyasmx/errwarn.h>
+#include <libyasmx/errwarns.h>
+#include <libyasmx/expr.h>
+#include <libyasmx/name_value.h>
+#include <libyasmx/nocase.h>
+#include <libyasmx/object.h>
+#include <libyasmx/preproc.h>
+#include <libyasmx/section.h>
+#include <libyasmx/symbol.h>
 
 #include "modules/parsers/nasm/nasm-parser.h"
 

@@ -28,14 +28,14 @@
 
 #include "util.h"
 
-#include <libyasm/bc_container.h>
-#include <libyasm/bytecode.h>
-#include <libyasm/bytes.h>
-#include <libyasm/errwarn.h>
-#include <libyasm/expr.h>
-#include <libyasm/intnum.h>
-#include <libyasm/marg_ostream.h>
-#include <libyasm/symbol.h>
+#include <libyasmx/bc_container.h>
+#include <libyasmx/bytecode.h>
+#include <libyasmx/bytes.h>
+#include <libyasmx/errwarn.h>
+#include <libyasmx/expr.h>
+#include <libyasmx/intnum.h>
+#include <libyasmx/marg_ostream.h>
+#include <libyasmx/symbol.h>
 
 #include "x86common.h"
 #include "x86opcode.h"

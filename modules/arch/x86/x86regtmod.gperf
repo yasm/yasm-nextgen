@@ -31,9 +31,9 @@
 #include <cctype>
 #include <cstring>
 
-#include <libyasm/compose.h>
-#include <libyasm/errwarn.h>
-#include <libyasm/phash.h>
+#include <libyasmx/compose.h>
+#include <libyasmx/errwarn.h>
+#include <libyasmx/phash.h>
 
 #include "modules/arch/x86/x86arch.h"
 

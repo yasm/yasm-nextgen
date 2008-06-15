@@ -26,21 +26,21 @@
 //
 #include <util.h>
 
-#include <libyasm/bytecode.h>
-#include <libyasm/bytes.h>
-#include <libyasm/directive.h>
-#include <libyasm/errwarn.h>
-#include <libyasm/errwarns.h>
-#include <libyasm/expr.h>
-#include <libyasm/intnum.h>
-#include <libyasm/nocase.h>
-#include <libyasm/object.h>
-#include <libyasm/object_format.h>
-#include <libyasm/name_value.h>
-#include <libyasm/registry.h>
-#include <libyasm/section.h>
-#include <libyasm/symbol.h>
-#include <libyasm/value.h>
+#include <libyasmx/bytecode.h>
+#include <libyasmx/bytes.h>
+#include <libyasmx/directive.h>
+#include <libyasmx/errwarn.h>
+#include <libyasmx/errwarns.h>
+#include <libyasmx/expr.h>
+#include <libyasmx/intnum.h>
+#include <libyasmx/nocase.h>
+#include <libyasmx/object.h>
+#include <libyasmx/object_format.h>
+#include <libyasmx/name_value.h>
+#include <libyasmx/registry.h>
+#include <libyasmx/section.h>
+#include <libyasmx/symbol.h>
+#include <libyasmx/value.h>
 
 
 namespace yasm

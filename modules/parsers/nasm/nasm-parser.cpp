@@ -28,13 +28,13 @@
 
 #include <util.h>
 
-#include <libyasm/arch.h>
-#include <libyasm/directive.h>
-#include <libyasm/expr.h>
-#include <libyasm/nocase.h>
-#include <libyasm/object.h>
-#include <libyasm/section.h>
-#include <libyasm/registry.h>
+#include <libyasmx/arch.h>
+#include <libyasmx/directive.h>
+#include <libyasmx/expr.h>
+#include <libyasmx/nocase.h>
+#include <libyasmx/object.h>
+#include <libyasmx/section.h>
+#include <libyasmx/registry.h>
 
 
 namespace yasm

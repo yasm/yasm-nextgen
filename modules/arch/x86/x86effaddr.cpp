@@ -30,11 +30,11 @@
 
 #include <iomanip>
 
-#include <libyasm/errwarn.h>
-#include <libyasm/expr.h>
-#include <libyasm/expr_util.h>
-#include <libyasm/intnum.h>
-#include <libyasm/marg_ostream.h>
+#include <libyasmx/errwarn.h>
+#include <libyasmx/expr.h>
+#include <libyasmx/expr_util.h>
+#include <libyasmx/intnum.h>
+#include <libyasmx/marg_ostream.h>
 
 #include "x86arch.h"
 #include "x86regtmod.h"

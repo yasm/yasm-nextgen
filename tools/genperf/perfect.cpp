@@ -49,7 +49,7 @@ determined a perfect hash for the whole set of keys.
 
 #include <cstring>
 #include "standard.h"
-#include "libyasm/phash.h"
+#include "libyasmx/phash.h"
 #include "perfect.h"
 
 #define CHECKSTATE 8

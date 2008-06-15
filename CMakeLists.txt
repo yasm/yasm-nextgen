@@ -125,7 +125,7 @@ ELSE(regen_static_modules_h)
     MESSAGE(STATUS "Not regenerating static modules file (unchanged)")
 ENDIF(regen_static_modules_h)
 
-ADD_SUBDIRECTORY(libyasm)
+ADD_SUBDIRECTORY(libyasmx)
 
 ADD_SUBDIRECTORY(frontends)
 
@@ -133,13 +133,13 @@ ADD_EXECUTABLE(test_expr
     test_expr.cpp
     ${YASM_MODULES_SRC}
     )
-TARGET_LINK_LIBRARIES(test_expr ${YASM_MODULES} libyasm)
+TARGET_LINK_LIBRARIES(test_expr ${YASM_MODULES} libyasmx)
 ADD_TEST(expr_basic test_expr)
 
 ADD_EXECUTABLE(test_preproc
     test_preproc.cpp
     ${YASM_MODULES_SRC}
     )
-TARGET_LINK_LIBRARIES(test_preproc ${YASM_MODULES} libyasm)
+TARGET_LINK_LIBRARIES(test_preproc ${YASM_MODULES} libyasmx)
 ADD_TEST(preproc_basic test_preproc)
 

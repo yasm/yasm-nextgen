@@ -30,8 +30,8 @@
 
 #include <iomanip>
 
-#include <libyasm/bytes.h>
-#include <libyasm/marg_ostream.h>
+#include <libyasmx/bytes.h>
+#include <libyasmx/marg_ostream.h>
 
 
 namespace yasm

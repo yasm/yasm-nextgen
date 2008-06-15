@@ -2,11 +2,11 @@
 #include <iostream>
 #include <sstream>
 
-#include <libyasm/errwarn.h>
-#include <libyasm/errwarns.h>
-#include <libyasm/registry.h>
-#include <libyasm/linemap.h>
-#include <libyasm/preproc.h>
+#include <libyasmx/errwarn.h>
+#include <libyasmx/errwarns.h>
+#include <libyasmx/registry.h>
+#include <libyasmx/linemap.h>
+#include <libyasmx/preproc.h>
 
 using namespace yasm;
 

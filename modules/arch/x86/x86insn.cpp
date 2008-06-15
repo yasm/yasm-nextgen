@@ -33,13 +33,13 @@
 #include <cstring>
 #include <string>
 
-#include <libyasm/compose.h>
-#include <libyasm/effaddr.h>
-#include <libyasm/errwarn.h>
-#include <libyasm/expr.h>
-#include <libyasm/intnum.h>
-#include <libyasm/marg_ostream.h>
-#include <libyasm/phash.h>
+#include <libyasmx/compose.h>
+#include <libyasmx/effaddr.h>
+#include <libyasmx/errwarn.h>
+#include <libyasmx/expr.h>
+#include <libyasmx/intnum.h>
+#include <libyasmx/marg_ostream.h>
+#include <libyasmx/phash.h>
 
 #include "x86arch.h"
 #include "x86common.h"

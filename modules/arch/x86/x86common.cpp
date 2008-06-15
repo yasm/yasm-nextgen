@@ -30,9 +30,9 @@
 
 #include <iomanip>
 
-#include <libyasm/bytes.h>
-#include <libyasm/errwarn.h>
-#include <libyasm/marg_ostream.h>
+#include <libyasmx/bytes.h>
+#include <libyasmx/errwarn.h>
+#include <libyasmx/marg_ostream.h>
 
 #include "x86prefix.h"
 #include "x86regtmod.h"

@@ -28,11 +28,11 @@
 
 #include <istream>
 
-#include <libyasm/errwarn.h>
-#include <libyasm/errwarns.h>
-#include <libyasm/linemap.h>
-#include <libyasm/preproc.h>
-#include <libyasm/registry.h>
+#include <libyasmx/errwarn.h>
+#include <libyasmx/errwarns.h>
+#include <libyasmx/linemap.h>
+#include <libyasmx/preproc.h>
+#include <libyasmx/registry.h>
 
 namespace yasm
 {

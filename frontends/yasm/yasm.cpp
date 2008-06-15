@@ -30,21 +30,21 @@
 #include <iostream>
 #include <fstream>
 
-#include <libyasm/arch.h>
-#include <libyasm/assembler.h>
-#include <libyasm/compose.h>
-#include <libyasm/debug_format.h>
-#include <libyasm/errwarn.h>
-#include <libyasm/errwarns.h>
-#include <libyasm/file.h>
-#include <libyasm/linemap.h>
-#include <libyasm/list_format.h>
-#include <libyasm/module.h>
-#include <libyasm/nocase.h>
-#include <libyasm/object_format.h>
-#include <libyasm/parser.h>
-#include <libyasm/preproc.h>
-#include <libyasm/registry.h>
+#include <libyasmx/arch.h>
+#include <libyasmx/assembler.h>
+#include <libyasmx/compose.h>
+#include <libyasmx/debug_format.h>
+#include <libyasmx/errwarn.h>
+#include <libyasmx/errwarns.h>
+#include <libyasmx/file.h>
+#include <libyasmx/linemap.h>
+#include <libyasmx/list_format.h>
+#include <libyasmx/module.h>
+#include <libyasmx/nocase.h>
+#include <libyasmx/object_format.h>
+#include <libyasmx/parser.h>
+#include <libyasmx/preproc.h>
+#include <libyasmx/registry.h>
 
 #ifdef HAVE_LIBGEN_H
 #include <libgen.h>

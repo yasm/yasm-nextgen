@@ -1,4 +1,4 @@
-ADD_LIBRARY(libyasm
+ADD_LIBRARY(libyasmx
     arch.cpp
     assembler.cpp
     assoc_data.cpp
@@ -42,12 +42,12 @@ ADD_LIBRARY(libyasm
     symbol.cpp
     value.cpp
     )
-SET_TARGET_PROPERTIES(libyasm PROPERTIES
-    OUTPUT_NAME "yasm"
+SET_TARGET_PROPERTIES(libyasmx PROPERTIES
+    OUTPUT_NAME "yasmx"
     COMPILE_FLAGS -DYASM_LIB_SOURCE
     )
 
-INSTALL(TARGETS libyasm
+INSTALL(TARGETS libyasmx
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
@@ -100,7 +100,7 @@ INSTALL(FILES
     section.h
     symbol.h
     value.h
-    DESTINATION include/libyasm
+    DESTINATION include/libyasmx
     )
 
 ADD_SUBDIRECTORY(tests)

@@ -26,8 +26,8 @@
 //
 #include <util.h>
 
-#include <libyasm/debug_format.h>
-#include <libyasm/registry.h>
+#include <libyasmx/debug_format.h>
+#include <libyasmx/registry.h>
 
 
 namespace yasm

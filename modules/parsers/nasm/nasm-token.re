@@ -28,12 +28,12 @@
 //
 #include <util.h>
 
-#include <libyasm/arch.h>
-#include <libyasm/compose.h>
-#include <libyasm/errwarn.h>
-#include <libyasm/errwarns.h>
-#include <libyasm/nocase.h>
-#include <libyasm/object.h>
+#include <libyasmx/arch.h>
+#include <libyasmx/compose.h>
+#include <libyasmx/errwarn.h>
+#include <libyasmx/errwarns.h>
+#include <libyasmx/nocase.h>
+#include <libyasmx/object.h>
 
 #include "modules/parsers/nasm/nasm-parser.h"
 

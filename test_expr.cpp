@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include <libyasm/intnum.h>
-#include <libyasm/expr.h>
+#include <libyasmx/intnum.h>
+#include <libyasmx/expr.h>
 
 using namespace yasm;
 
