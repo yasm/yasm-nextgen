@@ -5031,20 +5031,79 @@ for sz in [32, 64]:
                   Operand(type="Mem", size=sz, relaxed=True, dest="EA"),
                   Operand(type="Imm", size=8, relaxed=True, dest="Imm")])
 
-add_insn("comps", "sse5com", modifiers=[0x2C])
-add_insn("compd", "sse5com", modifiers=[0x2D])
-add_insn("comss", "sse5com32", modifiers=[0x2E])
-add_insn("comsd", "sse5com64", modifiers=[0x2F])
+# Condition code versions
+add_group("sse5comcc",
+    cpu=["SSE5"],
+    modifiers=["Op2Add", "Imm8"],
+    opcode=[0x0F, 0x25, 0x00],
+    drex_oc0=0,
+    operands=[Operand(type="SIMDReg", size=128, dest="DREX"),
+              Operand(type="SIMDReg", size=128, dest="Spare"),
+              Operand(type="SIMDRM", size=128, relaxed=True, dest="EA")])
 
-add_insn("pcomb", "sse5com", modifiers=[0x4C])
-add_insn("pcomw", "sse5com", modifiers=[0x4D])
-add_insn("pcomd", "sse5com", modifiers=[0x4E])
-add_insn("pcomq", "sse5com", modifiers=[0x4F])
+for sz in [32, 64]:
+    add_group("sse5comcc%d" % sz,
+        cpu=["SSE5"],
+        modifiers=["Op2Add", "Imm8"],
+        opcode=[0x0F, 0x25, 0x00],
+        drex_oc0=0,
+        operands=[Operand(type="SIMDReg", size=128, dest="DREX"),
+                  Operand(type="SIMDReg", size=128, dest="Spare"),
+                  Operand(type="SIMDReg", size=128, dest="EA")])
+    add_group("sse5comcc%d" % sz,
+        cpu=["SSE5"],
+        modifiers=["Op2Add", "Imm8"],
+        opcode=[0x0F, 0x25, 0x00],
+        drex_oc0=0,
+        operands=[Operand(type="SIMDReg", size=128, dest="DREX"),
+                  Operand(type="SIMDReg", size=128, dest="Spare"),
+                  Operand(type="Mem", size=sz, relaxed=True, dest="EA")])
 
-add_insn("pcomub", "sse5com", modifiers=[0x6C])
-add_insn("pcomuw", "sse5com", modifiers=[0x6D])
-add_insn("pcomud", "sse5com", modifiers=[0x6E])
-add_insn("pcomuq", "sse5com", modifiers=[0x6F])
+sse5coms = [(0, ""),
+            (0x0, "eq"),
+            (0x1, "lt"), (0x1, "unge"),
+            (0x2, "le"), (0x2, "ungt"),
+            (0x3, "unord"),
+            (0x4, "ne"), (0x4, "neq"),
+            (0x5, "nlt"), (0x5, "uge"),
+            (0x6, "nle"), (0x6, "ugt"),
+            (0x7, "ord"),
+            (0x8, "ueq"),
+            (0x9, "ult"), (0x9, "nge"),
+            (0xa, "ule"), (0xa, "ngt"),
+            (0xb, "false"),
+            (0xc, "une"), (0xc, "uneq"),
+            (0xd, "unlt"), (0xd, "ge"),
+            (0xe, "unle"), (0xe, "gt"),
+            (0xf, "true")]
+for ib, cc in sse5coms:
+    if cc:
+        iname = "sse5comcc"
+    else:
+        iname = "sse5com"
+    add_insn("com"+cc+"ps", iname, modifiers=[0x2C, ib])
+    add_insn("com"+cc+"pd", iname, modifiers=[0x2D, ib])
+    add_insn("com"+cc+"ss", iname+"32", modifiers=[0x2E, ib])
+    add_insn("com"+cc+"sd", iname+"64", modifiers=[0x2F, ib])
+
+sse5coms = list(enumerate(["lt", "le", "gt", "ge",
+                           "eq", "neq", "false", "true"]))
+sse5coms.append((5, "ne"))
+sse5coms.append((0, ""))
+for ib, cc in sse5coms:
+    if cc:
+        iname = "sse5comcc"
+    else:
+        iname = "sse5com"
+    add_insn("pcom"+cc+"b", iname, modifiers=[0x4C, ib])
+    add_insn("pcom"+cc+"w", iname, modifiers=[0x4D, ib])
+    add_insn("pcom"+cc+"d", iname, modifiers=[0x4E, ib])
+    add_insn("pcom"+cc+"q", iname, modifiers=[0x4F, ib])
+
+    add_insn("pcom"+cc+"ub", iname, modifiers=[0x6C, ib])
+    add_insn("pcom"+cc+"uw", iname, modifiers=[0x6D, ib])
+    add_insn("pcom"+cc+"ud", iname, modifiers=[0x6E, ib])
+    add_insn("pcom"+cc+"uq", iname, modifiers=[0x6F, ib])
 
 add_group("cvtph2ps",
     cpu=["SSE5"],
