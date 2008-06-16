@@ -69,9 +69,9 @@ static int linechg_numcount;
   any = [\001-\377];
   digit = [0-9];
   iletter = [a-zA-Z];
-  bindigit = [01];
-  octdigit = [0-7];
-  hexdigit = [0-9a-fA-F];
+  bindigit = [01_];
+  octdigit = [0-7_];
+  hexdigit = [0-9a-fA-F_];
   ws = [ \t\r];
   quot = ["'];
 */
@@ -158,7 +158,7 @@ scan:
         }
         /* 10010011b - binary number */
 
-        bindigit+ 'b'
+        [01] bindigit* 'b'
         {
             TOK[TOKLEN-1] = '\0'; /* strip off 'b' */
             lvalp->intn.reset(new IntNum(TOK, 2));
@@ -166,7 +166,7 @@ scan:
         }
 
         /* 777q or 777o - octal number */
-        octdigit+ [qQoO]
+        [0-7] octdigit* [qQoO]
         {
             TOK[TOKLEN-1] = '\0'; /* strip off 'q' or 'o' */
             lvalp->intn.reset(new IntNum(TOK, 8));
@@ -626,7 +626,7 @@ directive2:
         }
         /* 10010011b - binary number */
 
-        bindigit+ 'b'
+        [01] bindigit* 'b'
         {
             TOK[TOKLEN-1] = '\0'; /* strip off 'b' */
             lvalp->intn.reset(new IntNum(TOK, 2));
@@ -634,7 +634,7 @@ directive2:
         }
 
         /* 777q or 777o - octal number */
-        octdigit+ [qQoO]
+        [0-7] octdigit* [qQoO]
         {
             TOK[TOKLEN-1] = '\0'; /* strip off 'q' or 'o' */
             lvalp->intn.reset(new IntNum(TOK, 8));
@@ -650,11 +650,11 @@ directive2:
         }
 
         /* $0AA and 0xAA forms of hexidecimal number */
-        (("$" digit) | "0x") hexdigit+
+        (("$" digit) | '0x') hexdigit+
         {
             savech = TOK[TOKLEN];
             TOK[TOKLEN] = '\0';
-            if (TOK[1] == 'x')
+            if (TOK[1] == 'x' || TOK[1] == 'X')
                 /* skip 0 and x */
                 lvalp->intn.reset(new IntNum(TOK+2, 16));
             else

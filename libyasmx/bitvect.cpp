@@ -1436,7 +1436,9 @@ ErrCode from_Hex(wordptr addr, charptr string)
                 digit = (int) *(--string); length--;
                 /* separate because toupper() is likely a macro! */
                 digit = toupper(digit);
-                if ((ok = (isxdigit(digit) != 0)))
+                if (digit == '_')
+                    count -= 4;
+                else if ((ok = (isxdigit(digit) != 0)))
                 {
                     if (digit >= (int) 'A') digit -= (int) 'A' - 10;
                     else                    digit -= (int) '0';
@@ -1473,7 +1475,9 @@ ErrCode from_Oct(wordptr addr, charptr string)
             for ( count = count_fill; (ok && (length > 0) && (count < BITS)); count += 3 )
             {
                 digit = (int) *(--string); length--;
-                if ((ok = (isdigit(digit) && digit != '8' && digit != '9')) != 0)
+                if (digit == '_')
+                    count -= 3;
+                else if ((ok = (isdigit(digit) && digit != '8' && digit != '9')) != 0)
                 {
                     digit -= (int) '0';
                     value |= (((N_word) digit) << count);
@@ -1552,6 +1556,9 @@ ErrCode from_Bin(wordptr addr, charptr string)
                         break;
                     case (int) '1':
                         value |= BITMASKTAB[count];
+                        break;
+                    case (int) '_':
+                        count--;
                         break;
                     default:
                         ok = false;
