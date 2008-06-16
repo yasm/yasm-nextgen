@@ -346,9 +346,9 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                     for (j=terms.begin(); j != end; ++j)
                     {
                         Symbol* sym2;
-                        Location loc2;
                         if ((sym2 = j->get_sym())
-                            && sym2->get_label(&loc2)
+                            && !sym2->get_equ()
+                            && !sym2->is_special()
                             && !used[j-terms.begin()])
                         {
                             // Mark as used
