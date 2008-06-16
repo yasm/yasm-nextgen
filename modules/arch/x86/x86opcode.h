@@ -66,10 +66,17 @@ struct X86Opcode
     /// over the first opcode and setting the opcode length to 1.
     void make_alt_1();
 
+    /// Switch to the "alternate" two-byte opcode.  Copies the last two
+    /// opcode bytes to the first two, and sets the length to 2.
+    /// This is primarily used for VEX opcodes.
+    void make_alt_2();
+
     bool is_empty() const { return m_len == 0; }
     unsigned int get_len() const { return m_len; }
 
     void add(int byte, unsigned char val) { m_opcode[byte] += val; }
+    void mask(int byte, unsigned char mask) { m_opcode[byte] &= mask; }
+    void merge(int byte, unsigned char val) { m_opcode[byte] |= val; }
 
     unsigned char get(int byte) { return m_opcode[byte]; }
 

@@ -62,6 +62,7 @@ static const unsigned int reg_count[X86Register::TYPE_COUNT] =
      8,     // FPUREG
      8,     // MMXREG
      16,    // XMMREG
+     16,    // YMMREG
      16,    // CRREG
      8,     // DRREG
      8,     // TRREG
@@ -97,6 +98,9 @@ X86Arch::X86Arch()
     m_reg_group[X86Register::XMMREG] =
         new X86RegisterGroup(*this, m_reg[X86Register::XMMREG],
                              reg_count[X86Register::XMMREG]);
+    m_reg_group[X86Register::YMMREG] =
+        new X86RegisterGroup(*this, m_reg[X86Register::YMMREG],
+                             reg_count[X86Register::YMMREG]);
 
     // create segment registers
     static const unsigned char segreg_prefix[NELEMS(m_segreg)] =

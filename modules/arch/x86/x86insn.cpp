@@ -75,7 +75,8 @@ enum X86OpcodeModifier
     MOD_Imm8 = 7,       // Parameter is included as immediate byte
     MOD_AdSizeR = 8,    // Parameter replaces addrsize (jmp only)
     MOD_DOpS64R = 9,    // Parameter replaces default 64-bit opersize
-    MOD_Op1AddSp = 10   // Parameter is added as "spare" to opcode byte 2
+    MOD_Op1AddSp = 10,  // Parameter is added as "spare" to opcode byte 2
+    MOD_SetVEX = 11     // Parameter replaces internal VEX prefix value
 };
 
 // GAS suffix flags for instructions
@@ -102,7 +103,10 @@ enum X86GasSuffixFlags
 enum X86MiscFlags {
     // These are tested against BITS==64.
     ONLY_64 = 1<<0,         // Only available in 64-bit mode
-    NOT_64 = 1<<1           // Not available (invalid) in 64-bit mode
+    NOT_64 = 1<<1,          // Not available (invalid) in 64-bit mode
+    // These are tested against whether the base instruction is an AVX one.
+    ONLY_AVX = 1<<2,        // Only available in AVX instruction
+    NOT_AVX = 1<<3          // Not available (invalid) in AVX instruction
 };
 
 enum X86OperandType
@@ -147,17 +151,17 @@ enum X86OperandSize
 {
     // any size acceptable/no size spec acceptable (dep. on strict)
     OPS_Any = 0,
-    // 8/16/32/64 bits (from user or reg size)
+    // 8/16/32/64/80/128/256 bits (from user or reg size)
     OPS_8 = 1,
     OPS_16 = 2,
     OPS_32 = 3,
     OPS_64 = 4,
-    // 80/128 bits (from user)
     OPS_80 = 5,
     OPS_128 = 6,
+    OPS_256 = 7,
     // current BITS setting; when this is used the size matched
     // gets stored into the opersize as well.
-    OPS_BITS = 7
+    OPS_BITS = 8
 };
 
 enum X86OperandTargetmod
@@ -189,7 +193,17 @@ enum X86OperandAction
     OPA_JmpFar = 10,
     // ea operand only sets address size (no actual ea field)
     OPA_AdSizeEA = 11,
-    OPA_DREX = 12   // operand data goes into DREX "dest" field
+    OPA_DREX = 12,  // operand data goes into DREX "dest" field
+    OPA_VEX = 13,   // operand data goes into VEX "vvvv" field
+    // operand data goes into BOTH VEX "vvvv" field and ea field
+    OPA_EAVEX = 14,
+    // operand data goes into BOTH VEX "vvvv" field and spare field
+    OPA_SpareVEX = 15,
+    // operand data goes into upper 4 bits of immediate byte (VEX is4 field)
+    OPA_VEXImmSrc = 16,
+    // operand data goes into bottom 4 bits of immediate byte
+    // (currently only VEX imz2 field)
+    OPA_VEXImm = 17
 };
 
 enum X86OperandPostAction
@@ -214,7 +228,7 @@ struct X86InfoOperand
     unsigned int type:5;
 
     // size (user-specified, or from register size)
-    unsigned int size:3;
+    unsigned int size:4;
 
     // size implicit or explicit ("strictness" of size matching on
     // non-registers -- registers are always strictly matched):
@@ -235,7 +249,7 @@ struct X86InfoOperand
     // operand.  This may require conversion (e.g. a register going into
     // an ea field).  Naturally, only one of each of these may be contained
     // in the operands of a single insn_info structure.
-    unsigned int action:4;
+    unsigned int action:5;
 
     // Postponed actions: actions which can't be completed at
     // parse-time due to possibly dependent expressions.  For these, some
@@ -279,6 +293,14 @@ struct X86InsnInfo
     // mode, they're treated like normal prefixes (e.g. the REX prefix needs
     // to be *after* the F2/F3/66 "prefix").
     // (0=no special prefix)
+    // 0xC0 - 0xCF indicate a VEX prefix, with the four LSBs holding "WLpp":
+    //  W: VEX.W field (meaning depends on opcode)
+    //  L: 0=128-bit, 1=256-bit
+    //  pp: SIMD prefix designation:
+    //      00: None
+    //      01: 66
+    //      10: F3
+    //      11: F2
     unsigned char special_prefix;
 
     // The DREX base byte value (almost).  The only bit kept from this
@@ -407,7 +429,8 @@ X86Insn::match_jmp_info(const X86InsnInfo& info, unsigned int opersize,
 void
 X86Insn::do_append_jmp(BytecodeContainer& container, const X86InsnInfo& jinfo)
 {
-    static const unsigned char size_lookup[] = {0, 8, 16, 32, 64, 80, 128, 0};
+    static const unsigned char size_lookup[] =
+        {0, 8, 16, 32, 64, 80, 128, 0, 0};  // 256 not needed
 
     // We know the target is in operand 0, but sanity check for Imm.
     Operand& op = m_operands.front();
@@ -528,6 +551,7 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
             {
                 case X86Register::MMXREG:
                 case X86Register::XMMREG:
+                case X86Register::YMMREG:
                     break;
                 default:
                     return false;
@@ -785,6 +809,12 @@ X86Insn::match_info(const X86InsnInfo& info, const unsigned int* size_lookup,
     if (m_operands.size() != info.num_operands)
         return false;
 
+    // Match AVX
+    if (!(m_misc_flags & ONLY_AVX) && (info.misc_flags & ONLY_AVX))
+        return false;
+    if ((m_misc_flags & ONLY_AVX) && (info.misc_flags & NOT_AVX))
+        return false;
+
     // Match parser mode
     unsigned int gas_flags = info.gas_flags;
     if ((gas_flags & GAS_ONLY) && m_parser != X86Arch::PARSER_GAS)
@@ -918,8 +948,8 @@ X86Insn::match_error(const unsigned int* size_lookup) const
 void
 X86Insn::do_append(BytecodeContainer& container)
 {
-    unsigned int size_lookup[] = {0, 8, 16, 32, 64, 80, 128, 0};
-    size_lookup[7] = m_mode_bits;
+    unsigned int size_lookup[] = {0, 8, 16, 32, 64, 80, 128, 256, 0};
+    size_lookup[OPS_BITS] = m_mode_bits;
 
     if (m_operands.size() > 4)
         throw TypeError(N_("too many operands"));
@@ -1015,6 +1045,8 @@ private:
     GeneralPostOp m_postop;
     unsigned char m_rex;
     unsigned char* m_pdrex;
+    unsigned char m_vexdata;
+    unsigned char m_vexreg;
     unsigned char m_opersize;
     unsigned char m_addrsize;
 };
@@ -1042,9 +1074,18 @@ BuildGeneral::BuildGeneral(const X86InsnInfo& info,
       m_postop(POSTOP_NONE),
       m_rex(0),
       m_pdrex((info.drex_oc0 & NEED_DREX_MASK) ? &m_drex : 0),
+      m_vexdata(0),
+      m_vexreg(0),
       m_opersize(0),
       m_addrsize(0)
 {
+    // Move VEX data (stored in special prefix) to separate location to
+    // allow overriding of special prefix by modifiers.
+    if ((m_special_prefix & 0xF0) == 0xC0)
+    {
+        m_vexdata = m_special_prefix;
+        m_special_prefix = 0;
+    }
 }
 
 inline
@@ -1089,6 +1130,9 @@ BuildGeneral::apply_modifiers(unsigned char* mod_data)
                 break;
             case MOD_Op1AddSp:
                 m_opcode.add(1, mod_data[i]<<3);
+                break;
+            case MOD_SetVEX:
+                m_vexdata = mod_data[i];
                 break;
             default:
                 break;
@@ -1187,6 +1231,17 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
                     break;
             }
             break;
+        case OPA_EAVEX:
+            if (const X86Register* reg =
+                static_cast<const X86Register*>(op.get_reg()))
+            {
+                m_x86_ea.reset(new X86EffAddr(reg, &m_rex, m_pdrex,
+                                              m_mode_bits));
+                m_vexreg = reg->num() & 0xF;
+            }
+            else
+                throw InternalError(N_("invalid operand conversion"));
+            break;
         case OPA_Imm:
             if (op.get_seg() != 0)
                 throw ValueError(N_("immediate does not support segment"));
@@ -1217,6 +1272,17 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
                 set_rex_from_reg(&m_rex, m_pdrex, &m_spare,
                                  static_cast<const X86Register*>(reg),
                                  m_mode_bits, X86_REX_R);
+            }
+            else
+                throw InternalError(N_("invalid operand conversion"));
+            break;
+        case OPA_SpareVEX:
+            if (const X86Register* reg =
+                static_cast<const X86Register*>(op.get_reg()))
+            {
+                set_rex_from_reg(&m_rex, m_pdrex, &m_spare, reg, m_mode_bits,
+                                 X86_REX_R);
+                m_vexreg = reg->num() & 0xF;
             }
             else
                 throw InternalError(N_("invalid operand conversion"));
@@ -1295,6 +1361,47 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             else
                 throw InternalError(N_("invalid operand conversion"));
             break;
+        case OPA_VEX:
+            if (const Register* reg = op.get_reg())
+                m_vexreg = static_cast<const X86Register*>(reg)->num() & 0xF;
+            else
+                throw InternalError(N_("invalid operand conversion"));
+            break;
+        case OPA_VEXImmSrc:
+            if (const X86Register* reg =
+                static_cast<const X86Register*>(op.get_reg()))
+            {
+                if (m_imm.get() == 0)
+                    m_imm.reset(new Expr(IntNum((reg->num() << 4) & 0xF0)));
+                else
+                {
+                    m_imm.reset(new Expr(
+                        new Expr(m_imm, Op::AND, IntNum(0x0F)),
+                        Op::OR,
+                        IntNum((reg->num() << 4) & 0xF0)));
+                }
+                m_im_len = 8;
+            }
+            else
+                throw InternalError(N_("invalid operand conversion"));
+            break;
+        case OPA_VEXImm:
+            if (op.get_type() == Insn::Operand::IMM)
+            {
+                if (m_imm.get() == 0)
+                    m_imm = op.release_imm();
+                else
+                {
+                    m_imm.reset(new Expr(
+                        new Expr(op.release_imm(), Op::AND, IntNum(0x0F)),
+                        Op::OR,
+                        new Expr(m_imm, Op::AND, IntNum(0xF0))));
+                }
+                m_im_len = 8;
+            }
+            else
+                throw InternalError(N_("invalid operand conversion"));
+            break;
         default:
             throw InternalError(N_("unknown operand action"));
     }
@@ -1327,6 +1434,69 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             break;
         default:
             throw InternalError(N_("unknown operand postponed action"));
+    }
+
+    // Convert to VEX prefixes if requested.
+    // To save space in the insn structure, the VEX prefix is written into
+    // special_prefix and the first 2 bytes of the instruction are set to
+    // the second two VEX bytes.  During calc_len() it may be shortened to
+    // one VEX byte (this can only be done after knowledge of REX value).
+    if (m_vexdata)
+    {
+        // Look at the first bytes of the opcode to see what leading bytes
+        // to encode in the VEX mmmmm field.  Leave R=X=B=1 for now.
+        if (m_opcode.get(0) != 0x0F)
+            throw InternalError(N_("first opcode byte of VEX must be 0x0F"));
+
+        unsigned char opcode[3];    // VEX opcode; 0=VEX1, 1=VEX2, 2=Opcode
+        opcode[0] = 0xE0;           // R=X=B=1, mmmmm=0
+        if (m_opcode.get(1) == 0x38)
+        {
+            opcode[2] = m_opcode.get(2);
+            opcode[0] |= 0x02;      // implied 0x0F 0x38
+        }
+        else if (m_opcode.get(1) == 0x3A)
+        {
+            opcode[2] = m_opcode.get(2);
+            opcode[0] |= 0x03;      // implied 0x0F 0x3A
+        }
+        else
+        {
+            // A 0F-only opcode; thus opcode is in byte 1.
+            opcode[2] = m_opcode.get(1);
+            opcode[0] |= 0x01;      // implied 0x0F
+        }
+
+        // Check for update of special prefix by modifiers
+        if (m_special_prefix != 0)
+        {
+            m_vexdata &= ~0x03;
+            switch (m_special_prefix)
+            {
+                case 0x66:
+                    m_vexdata |= 0x01;
+                    break;
+                case 0xF3:
+                    m_vexdata |= 0x02;
+                    break;
+                case 0xF2:
+                    m_vexdata |= 0x03;
+                    break;
+                default:
+                    throw InternalError(N_("unrecognized special prefix"));
+            }
+        }
+
+        // 2nd VEX byte is WvvvvLpp.
+        // W, L, pp come from vexdata
+        // vvvv comes from 1s complement of vexreg
+        opcode[1] = (((m_vexdata & 0x8) << 4) |          // W
+                     ((15 - (m_vexreg & 0xF)) << 3) |    // vvvv
+                     (m_vexdata & 0x7));                 // Lpp
+
+        // Save to special_prefix and opcode
+        m_special_prefix = 0xC4;    // VEX prefix
+        m_opcode = X86Opcode(3, opcode); // two prefix bytes and 1 opcode byte
     }
 }
 

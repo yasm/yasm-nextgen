@@ -56,6 +56,7 @@ namespace x86
 #define PROC_conroe	11
 #define PROC_penryn	12
 #define PROC_nehalem	13
+#define PROC_sandybridge 14
 
 static void
 x86_cpu_intel(X86Arch::CpuMask& cpu, unsigned int data)
@@ -67,6 +68,13 @@ x86_cpu_intel(X86Arch::CpuMask& cpu, unsigned int data)
         cpu.set(CPU_Prot);
     if (data >= PROC_386)
         cpu.set(CPU_SMM);
+    if (data >= PROC_sandybridge)
+    {
+        cpu.set(CPU_AVX);
+        cpu.set(CPU_FMA);
+        cpu.set(CPU_AES);
+        cpu.set(CPU_CLMUL);
+    }
     if (data >= PROC_nehalem)
     {
         cpu.set(CPU_SSE42);
@@ -274,6 +282,7 @@ prescott,	x86_cpu_intel,	PROC_prescott
 conroe,		x86_cpu_intel,	PROC_conroe
 penryn,		x86_cpu_intel,	PROC_penryn
 nehalem,	x86_cpu_intel,	PROC_nehalem
+sandybridge,	x86_cpu_intel,	PROC_sandybridge
 #
 # Features have "no" versions to disable them, and only set/reset the
 # specific feature being changed.  All other bits are left alone.
@@ -338,6 +347,16 @@ sse5,		x86_cpu_set,	CPU_SSE5
 nosse5,		x86_cpu_clear,	CPU_SSE5
 xsave,		x86_cpu_set,	CPU_XSAVE
 noxsave,	x86_cpu_clear,	CPU_XSAVE
+avx,		x86_cpu_set,	CPU_AVX
+noavx,		x86_cpu_clear,	CPU_AVX
+fma,		x86_cpu_set,	CPU_FMA
+nofma,		x86_cpu_clear,	CPU_FMA
+aes,		x86_cpu_set,	CPU_AES
+noaes,		x86_cpu_clear,	CPU_AES
+clmul,		x86_cpu_set,	CPU_CLMUL
+noclmul,	x86_cpu_clear,	CPU_CLMUL
+pclmulqdq,	x86_cpu_set,	CPU_CLMUL
+nopclmulqdq,	x86_cpu_clear,	CPU_CLMUL
 %%
 
 void

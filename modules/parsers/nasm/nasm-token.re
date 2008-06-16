@@ -262,6 +262,11 @@ scan:
             lvalp->int_info = m_wordsize*8;
             RETURN(SIZE_OVERRIDE);
         }
+        'yword'
+        {
+            lvalp->int_info = 256;
+            RETURN(SIZE_OVERRIDE);
+        }
 
         /* pseudo-instructions */
         'db'
@@ -304,6 +309,11 @@ scan:
             lvalp->int_info = m_wordsize*8;
             RETURN(DECLARE_DATA);
         }
+        'dy'
+        {
+            lvalp->int_info = 256;
+            RETURN(DECLARE_DATA);
+        }
 
         'resb'
         {
@@ -343,6 +353,11 @@ scan:
         'reso'
         {
             lvalp->int_info = m_wordsize*8;
+            RETURN(RESERVE_SPACE);
+        }
+        'resy'
+        {
+            lvalp->int_info = 256;
             RETURN(RESERVE_SPACE);
         }
 

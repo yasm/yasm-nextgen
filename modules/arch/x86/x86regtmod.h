@@ -52,6 +52,7 @@ public:
         FPUREG,
         MMXREG,
         XMMREG,
+        YMMREG,
         CRREG,
         DRREG,
         TRREG,

@@ -64,6 +64,8 @@ X86Register::get_size() const
             return 64;
         case XMMREG:
             return 128;
+        case YMMREG:
+            return 256;
         case FPUREG:
             return 80;
         default:
@@ -120,6 +122,9 @@ X86Register::put(std::ostream& os) const
         case XMMREG:
             os << "xmm" << m_num;
             break;
+        case YMMREG:
+            os << "ymm" << m_num;
+            break;
         case CRREG:
             os << "cr" << m_num;
             break;
@@ -166,7 +171,7 @@ X86TargetModifier::put(std::ostream& os) const
         case TO:
             os << "to";
         default:
-            break;
+            assert(false);   // unknown
     }
 }
 
@@ -268,6 +273,23 @@ xmm12,	REG,	X86Register::XMMREG,	12,	64
 xmm13,	REG,	X86Register::XMMREG,	13,	64
 xmm14,	REG,	X86Register::XMMREG,	14,	64
 xmm15,	REG,	X86Register::XMMREG,	15,	64
+# AVX registers
+ymm0,	REG,	X86Register::YMMREG,	0,	0
+ymm1,	REG,	X86Register::YMMREG,	1,	0
+ymm2,	REG,	X86Register::YMMREG,	2,	0
+ymm3,	REG,	X86Register::YMMREG,	3,	0
+ymm4,	REG,	X86Register::YMMREG,	4,	0
+ymm5,	REG,	X86Register::YMMREG,	5,	0
+ymm6,	REG,	X86Register::YMMREG,	6,	0
+ymm7,	REG,	X86Register::YMMREG,	7,	0
+ymm8,	REG,	X86Register::YMMREG,	8,	64
+ymm9,	REG,	X86Register::YMMREG,	9,	64
+ymm10,	REG,	X86Register::YMMREG,	10,	64
+ymm11,	REG,	X86Register::YMMREG,	11,	64
+ymm12,	REG,	X86Register::YMMREG,	12,	64
+ymm13,	REG,	X86Register::YMMREG,	13,	64
+ymm14,	REG,	X86Register::YMMREG,	14,	64
+ymm15,	REG,	X86Register::YMMREG,	15,	64
 #
 # integer registers
 #
@@ -351,6 +373,7 @@ rip,	REG,	X86Register::RIP,	0,	64
 st,	REGGROUP,	0,	X86Register::FPUREG,	0
 mm,	REGGROUP,	0,	X86Register::MMXREG,	0
 xmm,	REGGROUP,	0,	X86Register::XMMREG,	0
+ymm,	REGGROUP,	0,	X86Register::YMMREG,	0
 #
 # segment registers
 #

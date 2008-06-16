@@ -72,4 +72,12 @@ X86Opcode::make_alt_1()
     m_len = 1;
 }
 
+void
+X86Opcode::make_alt_2()
+{
+    m_opcode[0] = m_opcode[1];
+    m_opcode[1] = m_opcode[2];
+    m_len = 2;
+}
+
 }}} // namespace yasm::arch::x86

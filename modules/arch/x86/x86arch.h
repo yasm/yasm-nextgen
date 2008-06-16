@@ -82,7 +82,11 @@ enum CPUFeature
     CPU_SSE42,          // Streaming SIMD extensions 4.2 required
     CPU_SSE4a,          // AMD Streaming SIMD extensions 4a required
     CPU_SSE5,           // AMD Streaming SIMD extensions 5 required
-    CPU_XSAVE           // Intel XSAVE instruction
+    CPU_XSAVE,          // Intel XSAVE instruction
+    CPU_AVX,            // Intel Advanced Vector Extensions
+    CPU_FMA,            // Intel Fused-Multiply-Add Extensions
+    CPU_AES,            // AES instruction
+    CPU_CLMUL           // PCLMULQDQ instruction
 };
 
 class X86Arch : public Arch

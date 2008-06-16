@@ -44,7 +44,7 @@ namespace yasm
 {
 
 /// "Native" "word" size for intnum calculations.
-static const unsigned int BITVECT_NATIVE_SIZE = 128;
+static const unsigned int BITVECT_NATIVE_SIZE = 256;
 
 class IntNumManager
 {
