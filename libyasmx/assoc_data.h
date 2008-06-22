@@ -35,6 +35,7 @@
 
 #include <boost/noncopyable.hpp>
 
+#include "export.h"
 #include "marg_ostream_fwd.h"
 
 
@@ -42,7 +43,7 @@ namespace yasm
 {
 
 /// Associated data interface (abstract base).
-class AssocData : private boost::noncopyable
+class YASM_LIB_EXPORT AssocData : private boost::noncopyable
 {
 public:
     /// Destructor.
@@ -58,7 +59,7 @@ operator<< (marg_ostream& os, const AssocData& data)
     return os;
 }
 
-class AssocDataContainer
+class YASM_LIB_EXPORT AssocDataContainer
 {
     friend marg_ostream& operator<< (marg_ostream& os,
                                      const AssocDataContainer& container);

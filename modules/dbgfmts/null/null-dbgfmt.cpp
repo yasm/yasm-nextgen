@@ -50,7 +50,10 @@ public:
     void generate(Linemap& linemap, Errwarns& errwarns) {}
 };
 
-RegisterModule<DebugFormat, NullDebug> registerNullDebug("null");
-bool static_ref = true;
+void
+do_register()
+{
+    register_module<DebugFormat, NullDebug>("null");
+}
 
 }}} // namespace yasm::dbgfmt::null

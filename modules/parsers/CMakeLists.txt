@@ -1,1 +1,1 @@
-YASM_ADD_MODULE_SUBDIRECTORY(nasm)
+INCLUDE(parsers/nasm/CMakeLists.txt)

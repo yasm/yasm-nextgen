@@ -346,7 +346,7 @@ X86Prefix::put(std::ostream& os) const
     os << "PREFIX";
 }
 
-#include "modules/arch/x86/x86insns.cpp"
+#include "x86insns.cpp"
 
 void
 X86Insn::do_append_jmpfar(BytecodeContainer& container, const X86InsnInfo& info)
@@ -1592,8 +1592,8 @@ struct InsnPrefixParseData
 };
 
 // Pull in all parse data
-#include "modules/arch/x86/x86insn_nasm.cpp"
-#include "modules/arch/x86/x86insn_gas.cpp"
+#include "x86insn_nasm.cpp"
+#include "x86insn_gas.cpp"
 
 static std::string
 cpu_find_reverse(unsigned int cpu0, unsigned int cpu1, unsigned int cpu2)

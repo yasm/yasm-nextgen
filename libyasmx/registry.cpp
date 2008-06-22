@@ -53,6 +53,10 @@ ModuleFactory::ModuleFactory()
 {
 }
 
+ModuleFactory::~ModuleFactory()
+{
+}
+
 ModuleFactory&
 ModuleFactory::instance()
 {

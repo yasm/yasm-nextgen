@@ -29,6 +29,9 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include "export.h"
+
+
 namespace yasm
 {
 
@@ -37,6 +40,7 @@ class Expr;
 /// Expand any and all EQU values in an expression.
 /// Detects circular references, and will throw TooComplexError if one found.
 /// @param e        Expression
+YASM_LIB_EXPORT
 void expand_equ(Expr* e);
 
 } // namespace yasm

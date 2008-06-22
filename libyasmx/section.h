@@ -37,6 +37,7 @@
 
 #include "assoc_data.h"
 #include "bc_container.h"
+#include "export.h"
 #include "marg_ostream_fwd.h"
 #include "ptr_vector.h"
 
@@ -53,7 +54,7 @@ class Symbol;
 
 /// Basic YASM relocation.  Object formats will need to extend this
 /// structure with additional fields for relocation type, etc.
-class Reloc
+class YASM_LIB_EXPORT Reloc
 {
 public:
     Reloc(std::auto_ptr<IntNum> addr, Symbol* sym);
@@ -65,8 +66,9 @@ protected:
 };
 
 /// A section.
-class Section : public AssocDataContainer,
-                public BytecodeContainer
+class YASM_LIB_EXPORT Section
+    : public AssocDataContainer,
+      public BytecodeContainer
 {
 public:
     /// Create a new section.  The section

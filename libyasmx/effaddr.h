@@ -31,6 +31,7 @@
 ///
 #include <memory>
 
+#include "export.h"
 #include "marg_ostream_fwd.h"
 #include "value.h"
 
@@ -41,7 +42,7 @@ class SegmentRegister;
 
 /// Base class for an effective address.
 /// Architectures should derive their own implementation from this.
-class EffAddr
+class YASM_LIB_EXPORT EffAddr
 {
 public:
     typedef std::auto_ptr<EffAddr> Ptr;

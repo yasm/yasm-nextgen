@@ -35,6 +35,7 @@
 #include <boost/scoped_ptr.hpp>
 
 #include "assoc_data.h"
+#include "export.h"
 #include "location.h"
 #include "marg_ostream_fwd.h"
 
@@ -46,9 +47,12 @@ class Bytecode;
 class Expr;
 class NameValues;
 
-class Symbol : private boost::noncopyable, public AssocDataContainer
+class YASM_LIB_EXPORT Symbol
+    : private boost::noncopyable,
+      public AssocDataContainer
 {
-    friend marg_ostream& operator<< (marg_ostream& os, const Symbol& sym);
+    friend YASM_LIB_EXPORT
+    marg_ostream& operator<< (marg_ostream& os, const Symbol& sym);
 
 public:
     /// Constructor.
@@ -251,6 +255,7 @@ Symbol::get_equ() const
 /// Print a symbol.  For debugging purposes.
 /// @param os           output stream
 /// @param sym          symbol
+YASM_LIB_EXPORT
 marg_ostream& operator<< (marg_ostream& os, const Symbol& sym);
 
 } // namespace yasm

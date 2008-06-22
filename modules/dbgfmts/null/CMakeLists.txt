@@ -1,1 +1,3 @@
-YASM_ADD_MODULE(dbgfmt_null null-dbgfmt.cpp)
+YASM_ADD_MODULE(dbgfmt_null
+    dbgfmts/null/null-dbgfmt.cpp
+    )

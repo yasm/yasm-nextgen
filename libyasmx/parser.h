@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 
+#include "export.h"
 #include "module.h"
 
 
@@ -46,7 +47,7 @@ class Object;
 class Preprocessor;
 
 /// Parser interface.  The "front end" of the assembler.
-class Parser : public Module
+class YASM_LIB_EXPORT Parser : public Module
 {
 public:
     enum { module_type = 5 };

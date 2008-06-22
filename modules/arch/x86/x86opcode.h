@@ -38,11 +38,12 @@ namespace arch
 namespace x86
 {
 
-struct X86Opcode
+class X86Opcode
 {
     friend marg_ostream& operator<< (marg_ostream& os,
                                      const X86Opcode& opcode);
 
+public:
     X86Opcode() : m_len(0) {}
 
     X86Opcode(unsigned int len, const unsigned char* opcode)

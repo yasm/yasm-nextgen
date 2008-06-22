@@ -32,10 +32,13 @@
 #include <sstream>
 #include <string>
 
+#include "export.h"
+
+
 namespace String
 {
 
-class Compose
+class YASM_LIB_EXPORT Compose
 {
 public:
     // initialize and prepare format string on the form "text %1 text %2 etc."

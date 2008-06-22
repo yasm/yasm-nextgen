@@ -31,10 +31,11 @@
 ///
 #include <string>
 
-#include "functional.h"
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "export.h"
+#include "functional.h"
 #include "name_value.h"
 
 
@@ -56,7 +57,7 @@ typedef FUNCTION::function<void (Object& object,
                                  unsigned long line)>
     Directive;
 
-class Directives
+class YASM_LIB_EXPORT Directives
 {
 public:
     /// Tests to perform prior to directive handler being called.
@@ -89,7 +90,7 @@ private:
     boost::scoped_ptr<Impl> m_impl;
 };
 
-class DirHelpers
+class YASM_LIB_EXPORT DirHelpers
 {
 public:
     DirHelpers();
@@ -168,6 +169,7 @@ dir_flag_clear(const NameValue& nv, unsigned long& out, unsigned long flag)
 /// @param line     virtual line number
 /// @param out      reference to IntNum
 /// @param out_set  reference that is set to 1 when called
+YASM_LIB_EXPORT
 void dir_intn(const NameValue& nv,
               Object& obj,
               unsigned long line,
@@ -180,12 +182,14 @@ void dir_intn(const NameValue& nv,
 /// @param nv       name/value
 /// @param out      reference to string
 /// @param out_set  reference that is set to 1 when called
+YASM_LIB_EXPORT
 void dir_string(const NameValue& nv, std::string& out, bool& out_set);
 
 /// Standard catch-all callback for DirHelperManager().  Generates standard
 /// warning for all valparams.
 /// @param nv       name/value
 /// @return False
+YASM_LIB_EXPORT
 bool dir_nameval_warn(const NameValue& nv);
 
 } // namespace yasm

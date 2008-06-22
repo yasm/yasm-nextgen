@@ -3,6 +3,9 @@
 /* Define if messsage translations are enabled */
 #cmakedefine ENABLE_NLS 1
 
+/* Define if building monolithic executable */
+#cmakedefine BUILD_STATIC 1
+
 /* */
 #undef HAVE_GETTEXT
 
@@ -38,3 +41,6 @@
 
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "@PACKAGE_VERSION@"
+
+/* Define to the plugin installation directory. */
+#define PLUGIN_INSTALL_DIR "@PLUGIN_INSTALL_DIR@"

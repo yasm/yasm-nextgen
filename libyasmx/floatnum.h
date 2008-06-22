@@ -34,6 +34,7 @@
 #include <iosfwd>
 
 #include "bitvect.h"
+#include "export.h"
 #include "operator.h"
 
 
@@ -43,9 +44,10 @@ namespace yasm
 class FloatNumManager;
 class FloatNumTest;
 
-class FloatNum
+class YASM_LIB_EXPORT FloatNum
 {
-    friend std::ostream& operator<< (std::ostream& os, const FloatNum& flt);
+    friend YASM_LIB_EXPORT
+    std::ostream& operator<< (std::ostream& os, const FloatNum& flt);
     friend class FloatNumManager;
     friend class FloatNumTest;
 
@@ -148,6 +150,7 @@ private:
     unsigned char m_flags;
 };
 
+YASM_LIB_EXPORT
 std::ostream& operator<< (std::ostream& os, const FloatNum& flt);
 
 } // namespace yasm

@@ -31,6 +31,7 @@
 ///
 #include <string>
 
+#include "export.h"
 #include "module.h"
 
 
@@ -43,7 +44,7 @@ class Object;
 
 /// Debug format interface.
 /// To make debug format truly usable, set_object() needs to be called.
-class DebugFormat : public Module
+class YASM_LIB_EXPORT DebugFormat : public Module
 {
 public:
     enum { module_type = 2 };

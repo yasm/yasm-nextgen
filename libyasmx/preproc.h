@@ -32,6 +32,7 @@
 #include <iosfwd>
 #include <string>
 
+#include "export.h"
 #include "module.h"
 
 
@@ -43,7 +44,7 @@ class Linemap;
 
 /// Preprocesor interface.
 /// To make preprocessor usable, init() needs to be called.
-class Preprocessor : public Module
+class YASM_LIB_EXPORT Preprocessor : public Module
 {
 public:
     enum { module_type = 6 };

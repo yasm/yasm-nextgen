@@ -11,10 +11,14 @@
 
 #include <cstddef>
 
+#include "export.h"
+
 namespace phash
 {
 
+YASM_LIB_EXPORT
 unsigned long lookup(const char* k, size_t length, unsigned long level);
+YASM_LIB_EXPORT
 void checksum(const char* k, size_t length, unsigned long* state);
 
 } // namespace phash

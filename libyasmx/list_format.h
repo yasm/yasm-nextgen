@@ -32,6 +32,7 @@
 #include <iosfwd>
 #include <string>
 
+#include "export.h"
 #include "module.h"
 
 
@@ -42,7 +43,7 @@ class Arch;
 class Linemap;
 
 /// List format interface.
-class ListFormat : public Module
+class YASM_LIB_EXPORT ListFormat : public Module
 {
 public:
     enum { module_type = 3 };

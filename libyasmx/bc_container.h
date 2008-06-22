@@ -33,6 +33,7 @@
 
 #include <boost/noncopyable.hpp>
 
+#include "export.h"
 #include "marg_ostream_fwd.h"
 #include "ptr_vector.h"
 
@@ -46,7 +47,7 @@ class Expr;
 class Section;
 class Object;
 
-class BytecodeContainer : private boost::noncopyable
+class YASM_LIB_EXPORT BytecodeContainer : private boost::noncopyable
 {
     friend class Object;
 

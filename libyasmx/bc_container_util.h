@@ -32,6 +32,8 @@
 #include <memory>
 #include <string>
 
+#include "export.h"
+
 
 namespace yasm
 {
@@ -47,6 +49,7 @@ class IntNum;
 /// Append a single byte value to the end of a section.
 /// @param sect         section
 /// @param val          byte value
+YASM_LIB_EXPORT
 void append_byte(BytecodeContainer& container, unsigned char val);
 
 /// Append a raw data value to the end of a section.
@@ -54,6 +57,7 @@ void append_byte(BytecodeContainer& container, unsigned char val);
 /// @param val          data value
 /// @param size         storage size (in bytes) for the data value
 /// @param arch         architecture
+YASM_LIB_EXPORT
 void append_data(BytecodeContainer& container,
                  const IntNum& val,
                  unsigned int size,
@@ -64,6 +68,7 @@ void append_data(BytecodeContainer& container,
 /// @param expr         data value
 /// @param size         storage size (in bytes) for the data value
 /// @param arch         architecture
+YASM_LIB_EXPORT
 void append_data(BytecodeContainer& container,
                  std::auto_ptr<Expr> expr,
                  unsigned int size,
@@ -73,6 +78,7 @@ void append_data(BytecodeContainer& container,
 /// @param sect         section
 /// @param str          string/data (may contain 0 values)
 /// @param append_zero  append a single zero byte after the string (if true)
+YASM_LIB_EXPORT
 void append_data(BytecodeContainer& container,
                  const std::string& str,
                  bool append_zero);
@@ -82,6 +88,7 @@ void append_data(BytecodeContainer& container,
 /// @param str          string/data (may contain 0 values)
 /// @param size         storage size (in bytes) to round up to
 /// @param append_zero  append a single zero byte after the string (if true)
+YASM_LIB_EXPORT
 void append_data(BytecodeContainer& container,
                  const std::string& str,
                  unsigned int size,
@@ -93,6 +100,7 @@ void append_data(BytecodeContainer& container,
 /// @param sign         signedness (True=signed, False=unsigned) of the
 ///                     data value
 /// @param line         virtual line number
+YASM_LIB_EXPORT
 void append_leb128(BytecodeContainer& container,
                    std::auto_ptr<Expr> expr,
                    bool sign,
@@ -106,6 +114,7 @@ void append_leb128(BytecodeContainer& container,
 /// @param maxlen           maximum number of bytes to read from the file;
 ///                         may be NULL to indicate no maximum
 /// @param line             virtual line number
+YASM_LIB_EXPORT
 void append_incbin(BytecodeContainer& container,
                    const std::string& filename,
                    /*@null@*/ std::auto_ptr<Expr> start,
@@ -123,6 +132,7 @@ void append_incbin(BytecodeContainer& container,
 ///       - from fill parameter (if not NULL)
 ///       - from code_fill parameter (if not NULL)
 ///       - 0
+YASM_LIB_EXPORT
 void append_align(BytecodeContainer& container,
                   std::auto_ptr<Expr> boundary,
                   /*@null@*/ std::auto_ptr<Expr> fill,
@@ -136,6 +146,7 @@ void append_align(BytecodeContainer& container,
 /// @param start        section offset of following bytecode
 /// @param fill         fill value
 /// @param line         virtual line number
+YASM_LIB_EXPORT
 void append_org(BytecodeContainer& container,
                 unsigned long start,
                 unsigned long fill,
@@ -146,6 +157,7 @@ void append_org(BytecodeContainer& container,
 /// @param multiple     multiple expression
 /// @param line         virtual line number
 /// @return Multiple inner container.
+YASM_LIB_EXPORT
 BytecodeContainer& append_multiple(BytecodeContainer& container,
                                    std::auto_ptr<Expr> multiple,
                                    unsigned long line);

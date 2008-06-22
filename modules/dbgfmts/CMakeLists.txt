@@ -1,1 +1,1 @@
-YASM_ADD_MODULE_SUBDIRECTORY(null)
+INCLUDE(dbgfmts/null/CMakeLists.txt)

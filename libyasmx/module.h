@@ -33,6 +33,8 @@
 
 #include <boost/noncopyable.hpp>
 
+#include "export.h"
+
 
 namespace yasm
 {
@@ -40,7 +42,7 @@ namespace yasm
 class Directives;
 
 /// Module interface (abstract base).
-class Module : private boost::noncopyable
+class YASM_LIB_EXPORT Module : private boost::noncopyable
 {
 public:
     /// Destructor.

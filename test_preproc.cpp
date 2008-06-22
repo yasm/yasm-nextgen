@@ -2,19 +2,26 @@
 #include <iostream>
 #include <sstream>
 
+#include "config.h"
+
 #include <libyasmx/errwarn.h>
 #include <libyasmx/errwarns.h>
-#include <libyasmx/registry.h>
 #include <libyasmx/linemap.h>
+#include <libyasmx/plugin.h>
 #include <libyasmx/preproc.h>
+#include <libyasmx/registry.h>
 
 using namespace yasm;
-
-YASM_STATIC_MODULE_REF(preproc, raw)
 
 int
 main()
 {
+#ifdef BUILD_STATIC
+    yasm_init_plugin();
+#else
+    if (!load_plugin("standard"))
+        return EXIT_FAILURE;
+#endif
     std::auto_ptr<Preprocessor> preproc = load_module<Preprocessor>("raw");
     std::string instr("test text");
     std::istringstream iss(instr);

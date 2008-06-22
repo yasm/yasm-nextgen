@@ -35,6 +35,8 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "export.h"
+
 
 namespace yasm
 {
@@ -46,7 +48,7 @@ class Object;
 class Preprocessor;
 
 /// An assembler.
-class Assembler : private boost::noncopyable
+class YASM_LIB_EXPORT Assembler : private boost::noncopyable
 {
 public:
     /// Constructor.  A default section is created as the first

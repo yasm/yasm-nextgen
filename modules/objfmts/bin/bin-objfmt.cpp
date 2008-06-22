@@ -525,7 +525,10 @@ BinObject::add_directives(Directives& dirs, const std::string& parser)
              Directives::ARG_REQUIRED);
 }
 
-RegisterModule<ObjectFormat, BinObject> registerBinObject("bin");
-bool static_ref = true;
+void
+do_register()
+{
+    register_module<ObjectFormat, BinObject>("bin");
+}
 
 }}} // namespace yasm::objfmt::bin

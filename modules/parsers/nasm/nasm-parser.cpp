@@ -129,7 +129,10 @@ NasmParser::add_directives(Directives& dirs, const std::string& parser)
              BIND::bind(&NasmParser::dir_default, this, _1, _2, _3, _4));
 }
 
-RegisterModule<Parser, NasmParser> registerRawPreproc("nasm");
-bool static_ref = true;
+void
+do_register()
+{
+    register_module<Parser, NasmParser>("nasm");
+}
 
 }}} // namespace yasm::parser::nasm

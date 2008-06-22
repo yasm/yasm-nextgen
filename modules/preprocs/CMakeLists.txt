@@ -1,1 +1,1 @@
-YASM_ADD_MODULE_SUBDIRECTORY(raw)
+INCLUDE(preprocs/raw/CMakeLists.txt)

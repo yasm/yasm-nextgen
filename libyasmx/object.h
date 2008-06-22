@@ -35,6 +35,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "export.h"
 #include "marg_ostream_fwd.h"
 #include "ptr_vector.h"
 
@@ -48,9 +49,10 @@ class Section;
 class Symbol;
 
 /// An object.  This is the internal representation of an object file.
-class Object : private boost::noncopyable
+class YASM_LIB_EXPORT Object : private boost::noncopyable
 {
-    friend marg_ostream& operator<< (marg_ostream& os, const Object& object);
+    friend YASM_LIB_EXPORT
+    marg_ostream& operator<< (marg_ostream& os, const Object& object);
 
 public:
     /// Constructor.  A default section is created as the first
@@ -215,6 +217,7 @@ private:
 /// Print an object.  For debugging purposes.
 /// @param os           output stream
 /// @param object       object
+YASM_LIB_EXPORT
 marg_ostream& operator<< (marg_ostream& os, const Object& object);
 
 } // namespace yasm

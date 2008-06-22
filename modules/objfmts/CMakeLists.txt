@@ -1,1 +1,1 @@
-YASM_ADD_MODULE_SUBDIRECTORY(bin)
+INCLUDE(objfmts/bin/CMakeLists.txt)

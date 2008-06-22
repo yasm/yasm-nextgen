@@ -29,9 +29,10 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include "export.h"
 #include "functional.h"
-
 #include "location.h"
+
 
 namespace yasm
 {
@@ -43,8 +44,10 @@ class Expr;
 /// calling calc_dist().
 /// @param e            expression
 /// @warning Only valid /after/ optimization.
+YASM_LIB_EXPORT
 void xform_calc_dist(Expr* e);
 
+YASM_LIB_EXPORT
 int subst_dist(Expr* e,
                FUNCTION::function<void (unsigned int subst,
                                         Location loc,

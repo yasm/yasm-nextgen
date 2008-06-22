@@ -33,6 +33,8 @@
 #include <string>
 #include <vector>
 
+#include "export.h"
+
 
 namespace yasm
 {
@@ -45,6 +47,7 @@ namespace yasm
 ///                warning.
 /// @param str          C-style string
 /// @return Unescaped string
+YASM_LIB_EXPORT
 std::string unescape(const std::string& str);
 
 /// Split a UNIX pathname into head (directory) and tail (base filename)
@@ -52,6 +55,7 @@ std::string unescape(const std::string& str);
 /// @param path     pathname
 /// @param tail     (returned) base filename
 /// @return Head (directory).
+YASM_LIB_EXPORT
 std::string splitpath_unix(const std::string& path,
                            /*@out@*/ std::string& tail);
 
@@ -60,6 +64,7 @@ std::string splitpath_unix(const std::string& path,
 /// @param path     pathname
 /// @param tail     (returned) base filename
 /// @return Head (directory).
+YASM_LIB_EXPORT
 std::string splitpath_win(const std::string& path,
                           /*@out@*/ std::string& tail);
 
@@ -90,11 +95,13 @@ splitpath(const std::string& path, /*@out@*/ std::string& tail)
 /// Convert a UNIX relative or absolute pathname into an absolute pathname.
 /// @param path     pathname
 /// @return Absolute version of path.
+YASM_LIB_EXPORT
 std::string abspath_unix(const std::string& path);
 
 /// Convert a Windows relative or absolute pathname into an absolute pathname.
 /// @param path     pathname
 /// @return Absolute version of path.
+YASM_LIB_EXPORT
 std::string abspath_win(const std::string& path);
 
 /// Convert a relative or absolute pathname into an absolute pathname.
@@ -126,6 +133,7 @@ abspath(const std::string& path)
 /// @param from     from pathname
 /// @param to       to pathname
 /// @return Combined path (newly allocated).
+YASM_LIB_EXPORT
 std::string combpath_unix(const std::string& from, const std::string& to);
 
 /// Build a Windows pathname that is equivalent to accessing the "to" pathname
@@ -134,6 +142,7 @@ std::string combpath_unix(const std::string& from, const std::string& to);
 /// @param from     from pathname
 /// @param to       to pathname
 /// @return Combined path (newly allocated).
+YASM_LIB_EXPORT
 std::string combpath_win(const std::string& from, const std::string& to);
 
 /// Build a pathname that is equivalent to accessing the "to" pathname
@@ -167,6 +176,7 @@ combpath(const std::string& from, const std::string& to)
 /// @param ext      extension, should include '.'
 /// @param def      default output filename if orig == new.
 /// @return Filename with new extension, or default filename.
+YASM_LIB_EXPORT
 std::string replace_extension(const std::string& orig,
                               const std::string& ext,
                               const std::string& def);
@@ -174,7 +184,7 @@ std::string replace_extension(const std::string& orig,
 /// Include path storage and search.  Paths are stored as std::strings.
 /// If a path is relative, it is treated by Includes::open() as relative to
 /// the current working directory.
-class Includes : public std::vector<std::string>
+class YASM_LIB_EXPORT Includes : public std::vector<std::string>
 {
 public:
     /// Try to find and open an include file, searching through include paths.

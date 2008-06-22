@@ -36,6 +36,7 @@
 
 #include <boost/noncopyable.hpp>
 
+#include "export.h"
 #include "insn.h"
 #include "location.h"
 #include "module.h"
@@ -48,7 +49,7 @@ class Expr;
 class FloatNum;
 class IntNum;
 
-class Register : private boost::noncopyable
+class YASM_LIB_EXPORT Register : private boost::noncopyable
 {
 public:
     virtual ~Register();
@@ -71,7 +72,7 @@ inline std::ostream& operator<<
     return os;
 }
 
-class RegisterGroup : private boost::noncopyable
+class YASM_LIB_EXPORT RegisterGroup : private boost::noncopyable
 {
 public:
     virtual ~RegisterGroup();
@@ -84,7 +85,7 @@ public:
     virtual const Register* get_reg(unsigned long regindex) const = 0;
 };
 
-class SegmentRegister : private boost::noncopyable
+class YASM_LIB_EXPORT SegmentRegister : private boost::noncopyable
 {
 public:
     virtual ~SegmentRegister();
@@ -104,13 +105,13 @@ inline std::ostream& operator<<
 /// Architecture interface.
 /// To make architecture truly usable, set_machine() and set_parser()
 /// need to be called.
-class Arch : public Module
+class YASM_LIB_EXPORT Arch : public Module
 {
 public:
     enum { module_type = 1 };
 
     /// Return value for parse_check_insnprefix().
-    class InsnPrefix
+    class YASM_LIB_EXPORT InsnPrefix
     {
     public:
         enum Type
@@ -151,7 +152,7 @@ public:
     };
 
     /// Return value for parse_check_regtmod().
-    class RegTmod
+    class YASM_LIB_EXPORT RegTmod
     {
     public:
         enum Type

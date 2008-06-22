@@ -32,13 +32,14 @@
 #include <iosfwd>
 #include <vector>
 
+#include "export.h"
 #include "marg_ostream_fwd.h"
 
 
 namespace yasm
 {
 
-class Bytes : public std::vector<unsigned char>
+class YASM_LIB_EXPORT Bytes : public std::vector<unsigned char>
 {
 public:
     Bytes(bool bigendian=false);
@@ -148,12 +149,14 @@ Bytes::write_32(unsigned long val)
 /// @param os    output stream
 /// @param bytes bytes
 /// @return Output stream
+YASM_LIB_EXPORT
 std::ostream& operator<< (std::ostream& os, const Bytes& bytes);
 
 /// Output a bytes container in user-readable format to an debug output stream.
 /// @param os    debug stream
 /// @param bytes bytes
 /// @return Debug stream
+YASM_LIB_EXPORT
 marg_ostream& operator<< (marg_ostream& os, const Bytes& bytes);
 
 } // namespace yasm

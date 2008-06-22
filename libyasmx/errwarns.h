@@ -34,6 +34,8 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "export.h"
+
 
 namespace yasm
 {
@@ -41,7 +43,7 @@ namespace yasm
 class Error;
 class Linemap;
 
-class Errwarns : private boost::noncopyable
+class YASM_LIB_EXPORT Errwarns : private boost::noncopyable
 {
 public:
     /// Create an error/warning set for collection of multiple error/warnings.

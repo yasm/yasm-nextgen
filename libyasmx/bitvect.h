@@ -5,6 +5,8 @@
 /*****************************************************************************/
 /*  MODULE IMPORTS:                                                          */
 /*****************************************************************************/
+#include "export.h"
+
 
 namespace BitVector
 {
@@ -93,196 +95,294 @@ typedef wordptr *listptr;
 
 /* ===> MISCELLANEOUS BASIC FUNCTIONS: <=== */
 
+YASM_LIB_EXPORT
 const char * Error      (ErrCode error);  /* return string for err code */
 
+YASM_LIB_EXPORT
 ErrCode Boot       (void);                 /* 0 = ok, 1..7 = error */
+YASM_LIB_EXPORT
 void    Shutdown   (void);                            /* undo Boot */
 
+YASM_LIB_EXPORT
 N_word  Size       (N_int bits);  /* bit vector size (# of words)  */
+YASM_LIB_EXPORT
 N_word  Mask       (N_int bits);  /* bit vector mask (unused bits) */
 
 /* ===> CLASS METHODS: <=== */
 
+YASM_LIB_EXPORT
 const char * Version    (void);          /* returns version string */
 
+YASM_LIB_EXPORT
 N_int   Word_Bits  (void);     /* return # of bits in machine word */
+YASM_LIB_EXPORT
 N_int   Long_Bits  (void);    /* return # of bits in unsigned long */
 
 /* ===> CONSTRUCTOR METHODS: <=== */
 
+YASM_LIB_EXPORT
 /*@only@*/ wordptr Create     (N_int bits, bool clear);          /* malloc */
+YASM_LIB_EXPORT
 listptr Create_List(N_int bits, bool clear, N_int count);
 
+YASM_LIB_EXPORT
 wordptr Resize     (wordptr oldaddr, N_int bits);       /* realloc */
 
+YASM_LIB_EXPORT
 wordptr Shadow     (wordptr addr); /* make new same size but empty */
+YASM_LIB_EXPORT
 wordptr Clone      (wordptr addr);         /* make exact duplicate */
 
+YASM_LIB_EXPORT
 wordptr Concat     (wordptr X, wordptr Y); /* return concatenation */
 
 /* ===> DESTRUCTOR METHODS: <=== */
 
+YASM_LIB_EXPORT
 void    Dispose            (/*@only@*/ /*@out@*/ charptr string);             /* string */
+YASM_LIB_EXPORT
 void    Destroy            (/*@only@*/ wordptr addr);               /* bitvec */
+YASM_LIB_EXPORT
 void    Destroy_List       (listptr list, N_int count);  /* list   */
 
 /* ===> OBJECT METHODS: <=== */
 
 /* ===> bit vector copy function: */
 
+YASM_LIB_EXPORT
 void    Copy       (wordptr X, wordptr Y);              /* X = Y   */
 
 /* ===> bit vector initialization: */
 
+YASM_LIB_EXPORT
 void    Empty      (wordptr addr);                      /* X = {}  */
+YASM_LIB_EXPORT
 void    Fill       (wordptr addr);                      /* X = ~{} */
+YASM_LIB_EXPORT
 void    Flip       (wordptr addr);                      /* X = ~X  */
 
+YASM_LIB_EXPORT
 void    Primes     (wordptr addr);
 
 /* ===> miscellaneous functions: */
 
+YASM_LIB_EXPORT
 void    Reverse    (wordptr X, wordptr Y);
 
 /* ===> bit vector interval operations and functions: */
 
+YASM_LIB_EXPORT
 void    Interval_Empty     (/*@out@*/ wordptr addr, N_int lower, N_int upper);
+YASM_LIB_EXPORT
 void    Interval_Fill      (/*@out@*/ wordptr addr, N_int lower, N_int upper);
+YASM_LIB_EXPORT
 void    Interval_Flip      (/*@out@*/ wordptr addr, N_int lower, N_int upper);
+YASM_LIB_EXPORT
 void    Interval_Reverse   (/*@out@*/ wordptr addr, N_int lower, N_int upper);
 
+YASM_LIB_EXPORT
 bool interval_scan_inc  (wordptr addr, N_int start,
                                    N_intptr min, N_intptr max);
+YASM_LIB_EXPORT
 bool interval_scan_dec  (wordptr addr, N_int start,
                                    N_intptr min, N_intptr max);
 
+YASM_LIB_EXPORT
 void    Interval_Copy      (/*@out@*/ wordptr X, wordptr Y, N_int Xoffset,
                                       N_int Yoffset, N_int length);
 
+YASM_LIB_EXPORT
 wordptr Interval_Substitute(/*@out@*/ wordptr X, wordptr Y,
                                       N_int Xoffset, N_int Xlength,
                                       N_int Yoffset, N_int Ylength);
 
 /* ===> bit vector test functions: */
 
+YASM_LIB_EXPORT
 bool is_empty   (wordptr addr);                  /* X == {} ?   */
+YASM_LIB_EXPORT
 bool is_full    (wordptr addr);                  /* X == ~{} ?  */
 
+YASM_LIB_EXPORT
 bool equal      (wordptr X, wordptr Y);          /* X == Y ?    */
+YASM_LIB_EXPORT
 Z_int   Lexicompare(wordptr X, wordptr Y);          /* X <,=,> Y ? */
+YASM_LIB_EXPORT
 Z_int   Compare    (wordptr X, wordptr Y);          /* X <,=,> Y ? */
 
 /* ===> bit vector string conversion functions: */
 
+YASM_LIB_EXPORT
 /*@only@*/ charptr to_Hex     (wordptr addr);
+YASM_LIB_EXPORT
 ErrCode from_Hex   (/*@out@*/wordptr addr, charptr string);
 
+YASM_LIB_EXPORT
 ErrCode from_Oct(/*@out@*/ wordptr addr, charptr string);
 
+YASM_LIB_EXPORT
 /*@only@*/ charptr to_Bin     (wordptr addr);
+YASM_LIB_EXPORT
 ErrCode from_Bin   (/*@out@*/ wordptr addr, charptr string);
 
+YASM_LIB_EXPORT
 /*@only@*/ charptr to_Dec     (wordptr addr);
+YASM_LIB_EXPORT
 ErrCode from_Dec   (/*@out@*/ wordptr addr, charptr string);
 
 typedef struct from_Dec_static_data from_Dec_static_data;
+YASM_LIB_EXPORT
 from_Dec_static_data *from_Dec_static_Boot(N_word bits);
+YASM_LIB_EXPORT
 void from_Dec_static_Shutdown(/*@null@*/ from_Dec_static_data *data);
+YASM_LIB_EXPORT
 ErrCode from_Dec_static(from_Dec_static_data *data,
                                   /*@out@*/ wordptr addr, charptr string);
 
+YASM_LIB_EXPORT
 /*@only@*/ charptr to_Enum    (wordptr addr);
+YASM_LIB_EXPORT
 ErrCode from_Enum  (/*@out@*/ wordptr addr, charptr string);
 
 /* ===> bit vector bit operations, functions & tests: */
 
+YASM_LIB_EXPORT
 void    Bit_Off    (/*@out@*/ wordptr addr, N_int indx); /*  X = X \ {x}    */
+YASM_LIB_EXPORT
 void    Bit_On     (/*@out@*/ wordptr addr, N_int indx); /*  X = X + {x}    */
+YASM_LIB_EXPORT
 bool bit_flip   (/*@out@*/ wordptr addr, N_int indx); /* (X+{x})\(X*{x}) */
 
+YASM_LIB_EXPORT
 bool bit_test   (wordptr addr, N_int indx); /*  {x} in X ?     */
 
+YASM_LIB_EXPORT
 void    Bit_Copy   (/*@out@*/ wordptr addr, N_int indx, bool bit);
 
 /* ===> bit vector bit shift & rotate functions: */
 
+YASM_LIB_EXPORT
 void    LSB                (/*@out@*/ wordptr addr, bool bit);
+YASM_LIB_EXPORT
 void    MSB                (/*@out@*/ wordptr addr, bool bit);
+YASM_LIB_EXPORT
 bool lsb_               (wordptr addr);
+YASM_LIB_EXPORT
 bool msb_               (wordptr addr);
+YASM_LIB_EXPORT
 bool /*@alt void@*/ rotate_left        (wordptr addr);
+YASM_LIB_EXPORT
 bool /*@alt void@*/ rotate_right       (wordptr addr);
+YASM_LIB_EXPORT
 bool /*@alt void@*/ shift_left         (wordptr addr, bool carry_in);
+YASM_LIB_EXPORT
 bool /*@alt void@*/ shift_right        (wordptr addr, bool carry_in);
+YASM_LIB_EXPORT
 void    Move_Left          (wordptr addr, N_int bits);
+YASM_LIB_EXPORT
 void    Move_Right         (wordptr addr, N_int bits);
 
 /* ===> bit vector insert/delete bits: */
 
+YASM_LIB_EXPORT
 void    Insert     (wordptr addr, N_int offset, N_int count,
                               bool clear);
+YASM_LIB_EXPORT
 void    Delete     (wordptr addr, N_int offset, N_int count,
                               bool clear);
 
 /* ===> bit vector arithmetic: */
 
+YASM_LIB_EXPORT
 bool /*@alt void@*/ increment  (wordptr addr);                        /*  X++  */
+YASM_LIB_EXPORT
 bool /*@alt void@*/ decrement  (wordptr addr);                        /*  X--  */
 
+YASM_LIB_EXPORT
 bool /*@alt void@*/ compute    (wordptr X, wordptr Y, wordptr Z, bool minus,
                                                                bool *carry);
+YASM_LIB_EXPORT
 bool /*@alt void@*/ add        (wordptr X, wordptr Y, wordptr Z, bool *carry);
+YASM_LIB_EXPORT
 bool /*@alt void@*/ sub        (wordptr X, wordptr Y, wordptr Z, bool *carry);
+YASM_LIB_EXPORT
 bool /*@alt void@*/ inc        (wordptr X, wordptr Y);
+YASM_LIB_EXPORT
 bool /*@alt void@*/ dec        (wordptr X, wordptr Y);
 
+YASM_LIB_EXPORT
 void    Negate     (wordptr X, wordptr Y);
+YASM_LIB_EXPORT
 void    Absolute   (wordptr X, wordptr Y);
+YASM_LIB_EXPORT
 Z_int   Sign       (wordptr addr);
+YASM_LIB_EXPORT
 ErrCode Mul_Pos    (wordptr X, wordptr Y, wordptr Z, bool strict);
+YASM_LIB_EXPORT
 ErrCode Multiply   (wordptr X, wordptr Y, wordptr Z);
+YASM_LIB_EXPORT
 ErrCode Div_Pos    (wordptr Q, wordptr X, wordptr Y, wordptr R);
+YASM_LIB_EXPORT
 ErrCode Divide     (wordptr Q, wordptr X, wordptr Y, wordptr R);
+YASM_LIB_EXPORT
 ErrCode GCD        (wordptr X, wordptr Y, wordptr Z);
+YASM_LIB_EXPORT
 ErrCode GCD2       (wordptr U, wordptr V, wordptr W,      /*   O   */
                                          wordptr X, wordptr Y);     /*   I   */
+YASM_LIB_EXPORT
 ErrCode Power      (wordptr X, wordptr Y, wordptr Z);
 
 /* ===> direct memory access functions: */
 
+YASM_LIB_EXPORT
 void    Block_Store(wordptr addr, charptr buffer, N_int length);
+YASM_LIB_EXPORT
 charptr Block_Read (wordptr addr, /*@out@*/ N_intptr length);
 
 /* ===> word array functions: */
 
+YASM_LIB_EXPORT
 void    Word_Store (wordptr addr, N_int offset, N_int value);
+YASM_LIB_EXPORT
 N_int   Word_Read  (wordptr addr, N_int offset);
 
+YASM_LIB_EXPORT
 void    Word_Insert(wordptr addr, N_int offset, N_int count,
                               bool clear);
+YASM_LIB_EXPORT
 void    Word_Delete(wordptr addr, N_int offset, N_int count,
                               bool clear);
 
 /* ===> arbitrary size chunk functions: */
 
+YASM_LIB_EXPORT
 void    Chunk_Store(wordptr addr, N_int chunksize,
                               N_int offset, N_long value);
+YASM_LIB_EXPORT
 N_long  Chunk_Read (wordptr addr, N_int chunksize,
                               N_int offset);
 
 /* ===> set operations: */
 
+YASM_LIB_EXPORT
 void    Set_Union            (wordptr X, wordptr Y, wordptr Z); /* X = Y + Z */
+YASM_LIB_EXPORT
 void    Set_Intersection     (wordptr X, wordptr Y, wordptr Z); /* X = Y * Z */
+YASM_LIB_EXPORT
 void    Set_Difference       (wordptr X, wordptr Y, wordptr Z); /* X = Y \ Z */
+YASM_LIB_EXPORT
 void    Set_ExclusiveOr      (wordptr X, wordptr Y, wordptr Z); /*(Y+Z)\(Y*Z)*/
+YASM_LIB_EXPORT
 void    Set_Complement       (wordptr X, wordptr Y);            /* X = ~Y    */
 
 /* ===> set functions: */
 
+YASM_LIB_EXPORT
 bool Set_subset           (wordptr X, wordptr Y);            /* X in Y ?  */
 
+YASM_LIB_EXPORT
 Z_long  Set_Min              (wordptr addr);                    /* = min(X)  */
+YASM_LIB_EXPORT
 Z_long  Set_Max              (wordptr addr);                    /* = max(X)  */
 
 } // namespace BitVector

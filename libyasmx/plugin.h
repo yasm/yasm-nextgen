@@ -1,11 +1,11 @@
-#ifndef YASM_NOCASE_H
-#define YASM_NOCASE_H
+#ifndef YASM_PLUGIN_H
+#define YASM_PLUGIN_H
 ///
-/// @file libyasm/nocase.h
-/// @brief Case-insensitive string functions.
+/// @file libyasm/plugin.h
+/// @brief YASM plugin loader interface.
 ///
 /// @license
-///  Copyright (C) 2007  Peter Johnson
+///  Copyright (C) 2008  Peter Johnson
 ///
 /// Redistribution and use in source and binary forms, with or without
 /// modification, are permitted provided that the following conditions
@@ -34,19 +34,20 @@
 #include "export.h"
 
 
-namespace String
+#ifdef BUILD_STATIC
+extern "C" void yasm_init_plugin();
+#endif
+
+namespace yasm
 {
 
+/// Load a plugin.
+/// @return False on failure
 YASM_LIB_EXPORT
-bool nocase_equal(const std::string& s1, const std::string& s2);
+bool load_plugin(const std::string& name);
 YASM_LIB_EXPORT
-bool nocase_equal(const std::string& s1, const char* s2);
-YASM_LIB_EXPORT
-bool nocase_equal(const char* s1, const std::string& s2);
+void unload_plugins(void);
 
-YASM_LIB_EXPORT
-std::string lowercase(const std::string& in);
-
-} // namespace String
+} // namespace yasm
 
 #endif

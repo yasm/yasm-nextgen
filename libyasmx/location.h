@@ -29,6 +29,9 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include "export.h"
+
+
 namespace yasm
 {
 
@@ -38,7 +41,7 @@ class IntNum;
 /// An assembly location.  The finest granularity a label can directly access,
 /// and used throughout yasm to address a specific assembly location.
 /// This structure is passed around by value, etc, so it must remain small!
-struct Location
+struct YASM_LIB_EXPORT Location
 {
     Bytecode* bc;
     unsigned long off;
@@ -56,6 +59,7 @@ struct Location
 /// @return True if distance calculated; false if the distance was
 ///         indeterminate.
 /// @warning Only valid /after/ optimization.
+YASM_LIB_EXPORT
 bool calc_dist(Location loc1, Location loc2, /*@out@*/ IntNum* dist);
 
 } // namespace yasm

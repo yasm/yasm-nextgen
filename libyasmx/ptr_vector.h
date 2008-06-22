@@ -692,12 +692,14 @@ public:
       assert (check_not_null (baseVec.begin(), baseVec.end()));
    }
 
+#if 0
    /**
    * sorts ptr_vector according to operator<
    */
    void sort() {
       this->sort (std::less<T>());
    }
+#endif
 
 private:
    /**

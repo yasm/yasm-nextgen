@@ -30,6 +30,7 @@
 /// @endlicense
 ///
 #include "bytecode.h"
+#include "export.h"
 
 namespace yasm
 {
@@ -40,6 +41,7 @@ class Errwarns;
 /// Catches yasm errors and saves based on bytecode line number.
 /// @param bc           bytecode
 /// @param errwarns     error/warning set
+YASM_LIB_EXPORT
 void finalize(Bytecode& bc, Errwarns& errwarns);
 
 /// Resolve EQUs in a bytecode and calculate its minimum size
@@ -48,6 +50,7 @@ void finalize(Bytecode& bc, Errwarns& errwarns);
 /// @param bc           bytecode
 /// @param add_span     function to call to add a span
 /// @param errwarns     error/warning set
+YASM_LIB_EXPORT
 void calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span, Errwarns& errwarns);
 
 /// Recalculate a bytecode's length based on an expanded span length
@@ -66,6 +69,7 @@ void calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span, Errwarns& errwarns);
 /// @return False if bc no longer dependent on this span's length,
 ///         or true if bc size may increase for this span further
 ///         based on the new negative and positive thresholds returned.
+YASM_LIB_EXPORT
 bool expand(Bytecode& bc,
             int span,
             long old_val,
@@ -79,6 +83,7 @@ bool expand(Bytecode& bc,
 /// @param offset       offset to set this bytecode to
 /// @param errwarns     error/warning set
 /// @return Offset of next bytecode.
+YASM_LIB_EXPORT
 unsigned long update_offset(Bytecode& bc,
                             unsigned long offset,
                             Errwarns& errwarns);

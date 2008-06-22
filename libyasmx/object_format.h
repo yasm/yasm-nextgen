@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 
+#include "export.h"
 #include "module.h"
 
 
@@ -44,7 +45,7 @@ class Object;
 class Section;
 
 /// Object format interface.
-class ObjectFormat : public Module
+class YASM_LIB_EXPORT ObjectFormat : public Module
 {
 public:
     enum { module_type = 4 };

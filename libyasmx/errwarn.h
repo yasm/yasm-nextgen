@@ -32,6 +32,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "export.h"
+
 
 namespace yasm
 {
@@ -50,7 +52,7 @@ enum WarnClass
 
 /// Exception for internal errors.  These are usually due to sanity
 /// check failures in the code.
-class InternalError : public std::runtime_error
+class YASM_LIB_EXPORT InternalError : public std::runtime_error
 {
 public:
     /// Constructor.
@@ -60,7 +62,7 @@ public:
 };
 
 /// Not implemented error.
-class NotImplementedError : public InternalError
+class YASM_LIB_EXPORT NotImplementedError : public InternalError
 {
 public:
     explicit NotImplementedError(const std::string& message)
@@ -69,7 +71,7 @@ public:
 };
 
 /// Exception for fatal errors.
-class Fatal : public std::exception
+class YASM_LIB_EXPORT Fatal : public std::exception
 {
 public:
     /// Constructor.
@@ -84,7 +86,7 @@ private:
 };
 
 /// Error exception base class / non-specific error.
-class Error : public virtual std::exception
+class YASM_LIB_EXPORT Error : public virtual std::exception
 {
 public:
     explicit Error(const std::string& message);
@@ -108,7 +110,7 @@ public:
 // Error classes.
 
 /// Arithmetic error (general).
-class ArithmeticError : public Error
+class YASM_LIB_EXPORT ArithmeticError : public Error
 {
 public:
     explicit ArithmeticError(const std::string& message)
@@ -120,7 +122,7 @@ public:
     ~ArithmeticError() throw();
 };
 /// Arithmetic overflow.
-class OverflowError : public ArithmeticError
+class YASM_LIB_EXPORT OverflowError : public ArithmeticError
 {
 public:
     explicit OverflowError(const std::string& message)
@@ -132,7 +134,7 @@ public:
     ~OverflowError() throw();
 };
 /// Floating point error.
-class FloatingPointError : public ArithmeticError
+class YASM_LIB_EXPORT FloatingPointError : public ArithmeticError
 {
 public:
     explicit FloatingPointError(const std::string& message)
@@ -144,7 +146,7 @@ public:
     ~FloatingPointError() throw();
 };
 /// Divide-by-zero.
-class ZeroDivisionError : public ArithmeticError
+class YASM_LIB_EXPORT ZeroDivisionError : public ArithmeticError
 {
 public:
     explicit ZeroDivisionError(const std::string& message)
@@ -157,7 +159,7 @@ public:
 };
 
 /// Assertion error.
-class AssertionError : public Error
+class YASM_LIB_EXPORT AssertionError : public Error
 {
 public:
     explicit AssertionError(const std::string& message) : Error(message)
@@ -169,7 +171,7 @@ public:
 };
 
 /// Value inappropriate (e.g. not in range).
-class ValueError : public Error
+class YASM_LIB_EXPORT ValueError : public Error
 {
 public:
     explicit ValueError(const std::string& message) : Error(message)
@@ -180,7 +182,7 @@ public:
     ~ValueError() throw();
 };
 /// Absolute expression required.
-class NotAbsoluteError : public ValueError
+class YASM_LIB_EXPORT NotAbsoluteError : public ValueError
 {
 public:
     explicit NotAbsoluteError(const std::string& message)
@@ -192,7 +194,7 @@ public:
     ~NotAbsoluteError() throw();
 };
 /// Expression too complex.
-class TooComplexError : public ValueError
+class YASM_LIB_EXPORT TooComplexError : public ValueError
 {
 public:
     explicit TooComplexError(const std::string& message)
@@ -204,7 +206,7 @@ public:
     ~TooComplexError() throw();
 };
 /// Constant expression required.
-class NotConstantError : public ValueError
+class YASM_LIB_EXPORT NotConstantError : public ValueError
 {
 public:
     explicit NotConstantError(const std::string& message)
@@ -217,7 +219,7 @@ public:
 };
 
 /// I/O error.
-class IOError : public Error
+class YASM_LIB_EXPORT IOError : public Error
 {
 public:
     explicit IOError(const std::string& message) : Error(message)
@@ -229,7 +231,7 @@ public:
 };
 
 /// Type error.
-class TypeError : public Error
+class YASM_LIB_EXPORT TypeError : public Error
 {
 public:
     explicit TypeError(const std::string& message) : Error(message)
@@ -241,7 +243,7 @@ public:
 };
 
 /// Syntax error.
-class SyntaxError : public Error
+class YASM_LIB_EXPORT SyntaxError : public Error
 {
 public:
     explicit SyntaxError(const std::string& message) : Error(message)
@@ -252,7 +254,7 @@ public:
     ~SyntaxError() throw();
 };
 /// Parser error.
-class ParseError : public Error
+class YASM_LIB_EXPORT ParseError : public Error
 {
 public:
     explicit ParseError(const std::string& message)
@@ -270,18 +272,21 @@ public:
 
 /// Unconditionally clear all warning indicators, freeing any associated data.
 /// Has no effect if no warning indicators have been set.
+YASM_LIB_EXPORT
 void warn_clear();
 
 /// Get the first warning indicator.  YASM_WARN_NONE is returned if no warning
 /// has been set.  Note that as YASM_WARN_NONE is 0, the return value can also
 /// be treated as a boolean value.
 /// @return First warning indicator.
+YASM_LIB_EXPORT
 WarnClass warn_occurred();
 
 /// Add a warning indicator.
 /// @param line     line
 /// @param wclass   warning class
 /// @param wstr     warning message
+YASM_LIB_EXPORT
 void warn_set(unsigned long line, WarnClass wclass, const std::string& wstr);
 
 /// Add a warning indicator.
@@ -296,6 +301,7 @@ warn_set(WarnClass wclass, const std::string& wstr)
 /// Update all warning indicators that do not have a line number set with
 /// a line number.
 /// @param line     line number
+YASM_LIB_EXPORT
 void warn_update_line(unsigned long line);
 
 /// Fetch the first warning indicator.  If there is at least one warning
@@ -307,29 +313,35 @@ void warn_update_line(unsigned long line);
 /// @return If there is no warning indicator set, wstr is unchanged, and
 ///         #WARN_NONE is returned; otherwise, the first warning indicator
 ///         is returned.
+YASM_LIB_EXPORT
 WarnClass warn_fetch(/*@out@*/ std::string* wmsg,
                      /*@out@*/ unsigned long *wline = 0);
 
 /// Enable a class of warnings.
 /// @param wclass   warning class
+YASM_LIB_EXPORT
 void warn_enable(WarnClass wclass);
 
 /// Disable a class of warnings.
 /// @param wclass   warning class
+YASM_LIB_EXPORT
 void warn_disable(WarnClass wclass);
 
 /// Disable all classes of warnings.
+YASM_LIB_EXPORT
 void warn_disable_all();
 
 /// Convert a possibly unprintable character into a printable string.
 /// Uses standard cat(1) convention for unprintable characters.
 /// @param ch   possibly unprintable character
 /// @return Printable string representation.
+YASM_LIB_EXPORT
 std::string conv_unprint(int ch);
 
 /// Hook for library users to map to gettext() if GNU gettext is being used.
 /// @param msgid    message catalog identifier
 /// @return Translated message.
+YASM_LIB_EXPORT
 extern const char * (*gettext_hook) (const char *msgid);
 
 } // namespace yasm

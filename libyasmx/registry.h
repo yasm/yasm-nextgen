@@ -35,15 +35,8 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "export.h"
 
-/// Force inclusion of a module statically.
-/// Must be called outside of a namespace or in an anonymous namespace.
-/// To include all modules, #include static_modules.h.
-#define YASM_STATIC_MODULE_REF(type, keyword) \
-    namespace yasm { namespace type { namespace keyword { \
-        extern bool static_ref; \
-        static bool do_static_ref = static_ref; \
-    }}}
 
 namespace yasm
 {
@@ -60,9 +53,11 @@ namespace impl
 {
 
 // Implemented using the Singleton pattern
-class ModuleFactory : private boost::noncopyable
+class YASM_LIB_EXPORT ModuleFactory : private boost::noncopyable
 {
 public:
+    ~ModuleFactory();
+
     /// A BASE_CREATE_FN is a function that takes no parameters
     /// and returns an auto_ptr to a manufactuedObj.  Note that
     /// we use no parameters, but you could add them
@@ -96,24 +91,23 @@ private:
     boost::scoped_ptr<Impl> m_impl;
 };
 
+template <typename Manufactured>
+void* create_instance()
+{
+    return new Manufactured;
+}
+
 } // namespace impl
 
 template <typename Ancestor, typename Manufactured>
-class RegisterModule
+inline void
+register_module(const char* keyword)
 {
-private:
-    static void* create_instance()
-    {
-        return new Manufactured;
-    }
-
-public:
-    RegisterModule(const char* keyword)
-    {
-        impl::ModuleFactory::instance().add_create_fn(Ancestor::module_type,
-                                                      keyword, create_instance);
-    }
-};
+    impl::ModuleFactory::instance().add_create_fn(
+        Ancestor::module_type,
+        keyword,
+        impl::create_instance<Manufactured>);
+}
 
 template <typename T>
 inline std::auto_ptr<T>

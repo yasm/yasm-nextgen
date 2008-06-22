@@ -8,6 +8,209 @@
 #
 # Changes for Yasm Copyright (c) 2007 Peter Johnson
 
+INCLUDE(MacroAdditionalCleanFiles)
+
+# This macro sets the RPATH related options for libraries, plugins and
+# executables.
+# If RPATH is not explicitly disabled, libraries and plugins are built without
+# RPATH, in the hope that the RPATH which is compiled into the executable is
+# good enough.
+macro (YASM_HANDLE_RPATH_FOR_LIBRARY _target_NAME)
+   if (NOT CMAKE_SKIP_RPATH)
+      if(YASM_USE_ALWAYS_FULL_RPATH)
+         set_target_properties(${_target_NAME} PROPERTIES
+                               SKIP_BUILD_RPATH FALSE
+                               BUILD_WITH_INSTALL_RPATH FALSE)
+      else(YASM_USE_ALWAYS_FULL_RPATH)
+         set_target_properties(${_target_NAME} PROPERTIES
+                               INSTALL_RPATH_USE_LINK_PATH FALSE
+                               SKIP_BUILD_RPATH TRUE
+                               BUILD_WITH_INSTALL_RPATH TRUE
+                               INSTALL_RPATH "")
+      endif(YASM_USE_ALWAYS_FULL_RPATH)
+   endif (NOT CMAKE_SKIP_RPATH)
+endmacro (YASM_HANDLE_RPATH_FOR_LIBRARY)
+
+# This macro sets the RPATH related options for executables and creates wrapper
+# shell scripts for the executables.
+# For every executable a wrapper script is created, which sets the appropriate
+# environment variable for the platform (LD_LIBRARY_PATH on most UNIX systems,
+# DYLD_LIBRARY_PATH on OS X and PATH in Windows) so  that it points to the
+# built but not yet installed versions of the libraries. So if RPATH is
+# disabled, the executables can be run via these scripts from the build tree
+# and will find the correct libraries.
+# If RPATH is not disabled, these scripts are also used but only for
+# consistency, because they don't really influence anything then, because the
+# compiled-in RPATH overrides the LD_LIBRARY_PATH env. variable.
+# Executables with the RUN_UNINSTALLED option will be built with the RPATH
+# pointing to the build dir, so that they can be run safely without being
+# installed, e.g. as code generators for other stuff during the build. These
+# executables will be relinked during "make install".
+# All other executables are built with the RPATH with which they will be
+# installed.
+macro (YASM_HANDLE_RPATH_FOR_EXECUTABLE _target_NAME _type)
+   if (UNIX)
+
+      # set the RPATH related properties
+      if (NOT CMAKE_SKIP_RPATH)
+         if (${_type} STREQUAL "NORMAL")
+            set_target_properties(${_target_NAME} PROPERTIES
+                                  SKIP_BUILD_RPATH TRUE
+                                  BUILD_WITH_INSTALL_RPATH TRUE)
+         endif (${_type} STREQUAL "NORMAL")
+
+         if (${_type} STREQUAL "RUN_UNINSTALLED")
+            set_target_properties(${_target_NAME} PROPERTIES
+                                  SKIP_BUILD_RPATH FALSE
+                                  BUILD_WITH_INSTALL_RPATH FALSE)
+         endif (${_type} STREQUAL "RUN_UNINSTALLED")
+      endif (NOT CMAKE_SKIP_RPATH)
+
+      if (APPLE)
+         set(_library_path_variable "DYLD_LIBRARY_PATH")
+      else (APPLE)
+         set(_library_path_variable "LD_LIBRARY_PATH")
+      endif (APPLE)
+
+      if (APPLE)
+         # DYLD_LIBRARY_PATH does not work like LD_LIBRARY_PATH
+         # OSX already has the RPATH in libraries and executables, putting
+         # runtime directories in DYLD_LIBRARY_PATH actually breaks things
+         set(_ld_library_path "${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/")
+      else (APPLE)
+         set(_ld_library_path "${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/:${LIB_INSTALL_DIR}")
+      endif (APPLE)
+      get_target_property(_executable ${_target_NAME} LOCATION )
+
+      # use add_custom_target() to have the sh-wrapper generated during build
+      # time instead of cmake time
+      add_custom_command(TARGET ${_target_NAME} POST_BUILD
+         COMMAND ${CMAKE_COMMAND}
+         -D_filename=${_executable}.shell
+         -D_library_path_variable=${_library_path_variable}
+         -D_ld_library_path="${_ld_library_path}"
+         -D_executable=${_executable}
+         -P ${YASM_MODULE_DIR}/yasm_exec_via_sh.cmake
+         )
+
+      macro_additional_clean_files(${_executable}.shell)
+
+      # under UNIX, set the property WRAPPER_SCRIPT to the name of the
+      # generated shell script so it can be queried and used later on easily
+      set_target_properties(${_target_NAME} PROPERTIES
+                            WRAPPER_SCRIPT ${_executable}.shell)
+
+   else (UNIX)
+      # under windows, set the property WRAPPER_SCRIPT just to the name of the
+      # executable maybe later this will change to a generated batch file (for
+      # setting the PATH so that the libs are found)
+      get_target_property(_executable ${_target_NAME} LOCATION )
+      set_target_properties(${_target_NAME} PROPERTIES
+                            WRAPPER_SCRIPT ${_executable})
+
+      set(_ld_library_path "${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}\;${LIB_INSTALL_DIR}")
+      get_target_property(_executable ${_target_NAME} LOCATION )
+
+      # use add_custom_target() to have the batch-file-wrapper generated during
+      # build time instead of cmake time
+      add_custom_command(TARGET ${_target_NAME} POST_BUILD
+         COMMAND ${CMAKE_COMMAND}
+         -D_filename="${_executable}.bat"
+         -D_ld_library_path="${_ld_library_path}"
+         -D_executable="${_executable}"
+         -P ${YASM_MODULE_DIR}/yasm_exec_via_sh.cmake
+         )
+
+   endif (UNIX)
+endmacro (YASM_HANDLE_RPATH_FOR_EXECUTABLE)
+
+
+macro (YASM_ADD_PLUGIN _target_NAME _with_PREFIX)
+# is the first argument is "WITH_PREFIX" then keep the standard "lib" prefix,
+# otherwise set the prefix empty
+   if (${_with_PREFIX} STREQUAL "WITH_PREFIX")
+      set(_first_SRC)
+   else (${_with_PREFIX} STREQUAL "WITH_PREFIX")
+      set(_first_SRC ${_with_PREFIX})
+   endif (${_with_PREFIX} STREQUAL "WITH_PREFIX")
+
+   set(_SRCS ${_first_SRC} ${ARGN})
+   if (BUILD_STATIC)
+       add_library(${_target_NAME} STATIC ${_SRCS})
+   else (BUILD_STATIC)
+       add_library(${_target_NAME} MODULE ${_SRCS})
+       if (_first_SRC)
+           set_target_properties(${_target_NAME} PROPERTIES PREFIX "")
+       endif (_first_SRC)
+   endif (BUILD_STATIC)
+
+
+   if (NOT BUILD_STATIC)
+       yasm_handle_rpath_for_library(${_target_NAME})
+   endif (NOT BUILD_STATIC)
+
+   if (WIN32)
+      # for shared libraries/plugins a -DMAKE_target_LIB is required
+      string(TOUPPER ${_target_NAME} _symbol)
+      string(REGEX REPLACE "[^_A-Za-z0-9]" "_" _symbol ${_symbol})
+      set(_symbol "MAKE_${_symbol}_LIB")
+      set_target_properties(${_target_NAME} PROPERTIES DEFINE_SYMBOL ${_symbol})
+   endif (WIN32)
+
+endmacro (YASM_ADD_PLUGIN _target_NAME _with_PREFIX)
+
+
+# this macro is intended to check whether a list of source
+# files has the "RUN_UNINSTALLED" keyword at the beginning
+# in _output_LIST the list of source files is returned with the
+# "RUN_UNINSTALLED" keyword removed
+# if "RUN_UNINSTALLED" is in the list of files, the _uninst argument is set to
+# "RUN_UNINSTALLED" (which evaluates to TRUE in cmake), otherwise it is set
+# empty (which evaluates to FALSE in cmake)
+# if "TEST" is in the list of files, the _test argument is set to
+# "TEST" (which evaluates to TRUE in cmake), otherwise it is set empty
+# (which evaluates to FALSE in cmake)
+macro(YASM_CHECK_EXECUTABLE_PARAMS _output_LIST _uninst _test)
+   set(${_uninst})
+   set(${_test})
+   set(${_output_LIST} ${ARGN})
+   list(LENGTH ${_output_LIST} count)
+
+   list(GET ${_output_LIST} 0 first_PARAM)
+
+   set(second_PARAM "NOTFOUND")
+   if (${count} GREATER 1)
+      list(GET ${_output_LIST} 1 second_PARAM)
+   endif (${count} GREATER 1)
+
+   set(remove "NOTFOUND")
+
+   if (${first_PARAM} STREQUAL "RUN_UNINSTALLED")
+      set(${_uninst} "RUN_UNINSTALLED")
+      set(remove 0)
+   endif (${first_PARAM} STREQUAL "RUN_UNINSTALLED")
+
+   if (${first_PARAM} STREQUAL "TEST")
+      set(${_test} "TEST")
+      set(remove 0)
+   endif (${first_PARAM} STREQUAL "TEST")
+
+   if (${second_PARAM} STREQUAL "RUN_UNINSTALLED")
+      set(${_uninst} "RUN_UNINSTALLED")
+      set(remove 0;1)
+   endif (${second_PARAM} STREQUAL "RUN_UNINSTALLED")
+
+   if (${second_PARAM} STREQUAL "TEST")
+      set(${_test} "TEST")
+      set(remove 0;1)
+   endif (${second_PARAM} STREQUAL "TEST")
+
+   if (NOT "${remove}" STREQUAL "NOTFOUND")
+      list(REMOVE_AT ${_output_LIST} ${remove})
+   endif (NOT "${remove}" STREQUAL "NOTFOUND")
+
+endmacro(YASM_CHECK_EXECUTABLE_PARAMS)
+
 # add a unit test, which is executed when running make test
 # it will be built with RPATH pointing to the build dir
 # The targets are always created, but only built for the "all"
@@ -23,57 +226,86 @@ macro (YASM_ADD_UNIT_TEST _test_NAME)
         set(_targetName ${ARGV2})
         LIST(REMOVE_AT _srcList 0 1)
     endif( ${ARGV1} STREQUAL "TESTNAME" )
-    yasm_add_test_executable( ${_test_NAME} ${_srcList} )
-    add_test( ${_targetName} ${EXECUTABLE_OUTPUT_PATH}/${_test_NAME} )
+    yasm_add_executable( ${_test_NAME} TEST ${_srcList} )
+    set(_executable ${EXECUTABLE_OUTPUT_PATH}/${_test_NAME})
+    # Use .shell wrapper where available, to use uninstalled libs.
+    if (UNIX AND NOT BUILD_STATIC)
+        set(_executable ${_executable}.shell)
+    endif (UNIX AND NOT BUILD_STATIC)
+    add_test( ${_targetName} ${_executable} )
 endmacro (YASM_ADD_UNIT_TEST)
 
-# add an test executable
+# add an executable
 # it will be built with RPATH pointing to the build dir
 # The targets are always created, but only built for the "all"
 # target if the option BUILD_TESTING is enabled. Otherwise the rules for
 # the target are created but not built by default. You can build them by
 # manually building the target.
-macro (YASM_ADD_TEST_EXECUTABLE _target_NAME)
+macro (YASM_ADD_EXECUTABLE _target_NAME)
+
+   yasm_check_executable_params( _SRCS _uninst _test ${ARGN})
+
+   set(_type "NORMAL")
+   if (_uninst OR _test)
+      set(_type "RUN_UNINSTALLED")
+   endif (_uninst OR _test)
 
    set(_add_executable_param)
+   if (_test AND NOT BUILD_TESTING)
+      set(_add_executable_param ${_add_executable_param} EXCLUDE_FROM_ALL)
+   endif (_test AND NOT BUILD_TESTING)
 
-   if (NOT BUILD_TESTING)
-      set(_add_executable_param EXCLUDE_FROM_ALL)
-   endif (NOT BUILD_TESTING)
-
-   set( EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR} )
-
-   set(_SRCS ${ARGN})
    add_executable(${_target_NAME} ${_add_executable_param} ${_SRCS})
+   if (BUILD_STATIC)
+       TARGET_LINK_LIBRARIES(${_target_NAME} standard libyasmx)
+   else (BUILD_STATIC)
+       yasm_handle_rpath_for_executable(${_target_NAME} ${_type})
+       TARGET_LINK_LIBRARIES(${_target_NAME} libyasmx)
+       ADD_DEPENDENCIES(${_target_NAME} standard)
+   endif (BUILD_STATIC)
 
-   set_target_properties(${_target_NAME} PROPERTIES
-                         SKIP_BUILD_RPATH FALSE
-                         BUILD_WITH_INSTALL_RPATH FALSE)
+endmacro (YASM_ADD_EXECUTABLE)
 
-endmacro (YASM_ADD_TEST_EXECUTABLE)
+macro (YASM_ADD_LIBRARY _target_NAME _lib_TYPE)
+   set(_first_SRC ${_lib_TYPE})
+   set(_add_lib_param)
+
+   if (${_lib_TYPE} STREQUAL "STATIC")
+      set(_first_SRC)
+      set(_add_lib_param STATIC)
+   endif (${_lib_TYPE} STREQUAL "STATIC")
+   if (${_lib_TYPE} STREQUAL "SHARED")
+      set(_first_SRC)
+      set(_add_lib_param SHARED)
+   endif (${_lib_TYPE} STREQUAL "SHARED")
+   if (${_lib_TYPE} STREQUAL "MODULE")
+      set(_first_SRC)
+      set(_add_lib_param MODULE)
+   endif (${_lib_TYPE} STREQUAL "MODULE")
+
+   if (BUILD_STATIC)
+       set(_add_lib_param STATIC)
+   endif (BUILD_STATIC)
+
+   set(_SRCS ${_first_SRC} ${ARGN})
+   add_library(${_target_NAME} ${_add_lib_param} ${_SRCS})
+
+   if (NOT BUILD_STATIC)
+       yasm_handle_rpath_for_library(${_target_NAME})
+   endif (NOT BUILD_STATIC)
+
+   # for shared libraries a -DMAKE_target_LIB is required
+   string(TOUPPER ${_target_NAME} _symbol)
+   string(REGEX REPLACE "[^_A-Za-z0-9]" "_" _symbol ${_symbol})
+   set(_symbol "MAKE_${_symbol}_LIB")
+   set_target_properties(${_target_NAME} PROPERTIES DEFINE_SYMBOL ${_symbol})
+
+endmacro (YASM_ADD_LIBRARY _target_NAME _lib_TYPE)
 
 macro (YASM_ADD_MODULE _module_NAME)
-    add_library(${_module_NAME} ${ARGN})
+    list(APPEND YASM_MODULES_SRC ${ARGN})
     list(APPEND YASM_MODULES ${_module_NAME})
 endmacro (YASM_ADD_MODULE)
-
-macro (YASM_ADD_MODULE_SUBDIRECTORY _subdir_NAME)
-    add_subdirectory(${_subdir_NAME})
-
-    get_directory_property(_tmp_MODULES DIRECTORY ${_subdir_NAME} DEFINITION YASM_MODULES)
-    if (DEFINED _tmp_MODULES)
-        set(YASM_MODULES "${_tmp_MODULES}")
-    else (DEFINED _tmp_MODULES)
-        message(STATUS "Warning: found no modules in ${CMAKE_CURRENT_SOURCE_DIR}/${_subdir_NAME}")
-    endif (DEFINED _tmp_MODULES)
-
-    get_directory_property(_tmp_MODULES_SRC DIRECTORY ${_subdir_NAME} DEFINITION YASM_MODULES_SRC)
-    if (DEFINED _tmp_MODULES_SRC)
-        list(APPEND YASM_MODULES_SRC "${_tmp_MODULES_SRC}")
-    else (DEFINED _tmp_MODULES_SRC)
-        message(STATUS "Warning: found no module source in ${CMAKE_CURRENT_SOURCE_DIR}/${_subdir_NAME}")
-    endif (DEFINED _tmp_MODULES_SRC)
-endmacro (YASM_ADD_MODULE_SUBDIRECTORY)
 
 macro (YASM_GENPERF _in_NAME _out_NAME)
     get_target_property(_tmp_GENPERF_EXE genperf LOCATION)

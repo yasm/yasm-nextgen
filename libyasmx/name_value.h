@@ -37,6 +37,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "export.h"
 #include "ptr_vector.h"
 
 
@@ -47,9 +48,10 @@ class Expr;
 class Object;
 
 /// Name/value pair.
-class NameValue : private boost::noncopyable
+class YASM_LIB_EXPORT NameValue : private boost::noncopyable
 {
-    friend std::ostream& operator<< (std::ostream& os, const NameValue& nv);
+    friend YASM_LIB_EXPORT
+    std::ostream& operator<< (std::ostream& os, const NameValue& nv);
 
 public:
     /// Identifier value constructor.
@@ -149,10 +151,11 @@ private:
 /// Print name/value.  For debugging purposes.
 /// @param os   output stream
 /// @param nv   name/value
+YASM_LIB_EXPORT
 std::ostream& operator<< (std::ostream& os, const NameValue& nv);
 
 /// Vector of name/values.
-class NameValues : public stdx::ptr_vector<NameValue>
+class YASM_LIB_EXPORT NameValues : public stdx::ptr_vector<NameValue>
 {
 public:
     NameValues();
@@ -166,6 +169,7 @@ private:
 /// Print vector of name/values.  For debugging purposes.
 /// @param os       output stream
 /// @param namevals name/values
+YASM_LIB_EXPORT
 std::ostream& operator<< (std::ostream& os, const NameValues& namevals);
 
 } // namespace yasm

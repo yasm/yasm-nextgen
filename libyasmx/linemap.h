@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 
+#include "export.h"
 #include "location.h"
 
 
@@ -41,7 +42,7 @@ namespace yasm
 
 class Bytecode;
 
-class Linemap
+class YASM_LIB_EXPORT Linemap
 {
 public:
     typedef std::set<std::string> Filenames;

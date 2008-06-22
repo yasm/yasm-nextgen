@@ -7,6 +7,9 @@
  * $Id: md5.h 1825 2007-04-22 03:32:46Z peter $
  */
 
+#include "export.h"
+
+
 namespace yasm
 {
 
@@ -16,7 +19,7 @@ namespace yasm
    important.  ANSI guarantees that "unsigned long" will be big enough,
    and always using it seems to have few disadvantages.  */
 
-class MD5
+class YASM_LIB_EXPORT MD5
 {
     MD5();
 

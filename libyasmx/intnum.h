@@ -33,19 +33,25 @@
 #include <iosfwd>
 
 #include "bitvect.h"
+#include "export.h"
 #include "operator.h"
 
 
 namespace yasm
 {
 
-class IntNum
+class YASM_LIB_EXPORT IntNum
 {
-    friend std::ostream& operator<< (std::ostream &os, const IntNum &intn);
-    friend int compare(const IntNum& intn1, const IntNum& intn2);
-    friend bool operator==(const IntNum& lhs, const IntNum& rhs);
-    friend bool operator<(const IntNum& lhs, const IntNum& rhs);
-    friend bool operator>(const IntNum& lhs, const IntNum& rhs);
+    friend YASM_LIB_EXPORT
+    std::ostream& operator<< (std::ostream &os, const IntNum &intn);
+    friend YASM_LIB_EXPORT
+    int compare(const IntNum& intn1, const IntNum& intn2);
+    friend YASM_LIB_EXPORT
+    bool operator==(const IntNum& lhs, const IntNum& rhs);
+    friend YASM_LIB_EXPORT
+    bool operator<(const IntNum& lhs, const IntNum& rhs);
+    friend YASM_LIB_EXPORT
+    bool operator>(const IntNum& lhs, const IntNum& rhs);
 
 public:
     /// Default constructor.  Initializes value to 0.
@@ -346,11 +352,15 @@ inline const IntNum operator<<(IntNum lhs, const IntNum& rhs)
 /// @param lhs      first intnum
 /// @param rhs      second intnum
 /// @return -1 if lhs < rhs, 0 if lhs == rhs, 1 if lhs > rhs.
+YASM_LIB_EXPORT
 int compare(const IntNum& lhs, const IntNum& rhs);
 
 /// Overloaded comparison operators.
+YASM_LIB_EXPORT
 bool operator==(const IntNum& lhs, const IntNum& rhs);
+YASM_LIB_EXPORT
 bool operator<(const IntNum& lhs, const IntNum& rhs);
+YASM_LIB_EXPORT
 bool operator>(const IntNum& lhs, const IntNum& rhs);
 
 inline bool operator!=(const IntNum& lhs, const IntNum& rhs)
@@ -364,25 +374,30 @@ inline bool operator>=(const IntNum& lhs, const IntNum& rhs)
 /// @param v        integer
 /// @param ptr      pointer to storage for output bytes
 /// @return Number of bytes generated.
+YASM_LIB_EXPORT
 unsigned long get_sleb128(long v, unsigned char *ptr);
 
 /// Calculate number of bytes signed LEB128-encoded form of integer will take.
 /// @param v        integer
 /// @return Number of bytes.
+YASM_LIB_EXPORT
 unsigned long size_sleb128(long v);
 
 /// Output integer to buffer in unsigned LEB128-encoded form.
 /// @param v        integer
 /// @param ptr      pointer to storage for output bytes
 /// @return Number of bytes generated.
+YASM_LIB_EXPORT
 unsigned long get_uleb128(unsigned long v, unsigned char *ptr);
 
 /// Calculate number of bytes unsigned LEB128-encoded form of integer will
 /// take.
 /// @param v        integer
 /// @return Number of bytes.
+YASM_LIB_EXPORT
 unsigned long size_uleb128(unsigned long v);
 
+YASM_LIB_EXPORT
 std::ostream& operator<< (std::ostream &os, const IntNum &intn);
 
 } // namespace yasm

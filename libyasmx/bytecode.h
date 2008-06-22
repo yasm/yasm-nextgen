@@ -37,6 +37,7 @@
 #include <boost/scoped_ptr.hpp>
 
 #include "bytes.h"
+#include "export.h"
 #include "location.h"
 #include "marg_ostream_fwd.h"
 #include "value.h"
@@ -55,7 +56,7 @@ class Symbol;
 /// relocations into byte format first, then output_bytes() is called to
 /// actually output the bytes to the object file.  The function output_gap()
 /// will be called for gaps in the output.
-class BytecodeOutput : private boost::noncopyable
+class YASM_LIB_EXPORT BytecodeOutput : private boost::noncopyable
 {
 public:
     /// Constructor.
@@ -143,9 +144,10 @@ private:
 };
 
 /// A bytecode.
-class Bytecode
+class YASM_LIB_EXPORT Bytecode
 {
-    friend marg_ostream& operator<< (marg_ostream &os, const Bytecode &bc);
+    friend YASM_LIB_EXPORT
+    marg_ostream& operator<< (marg_ostream &os, const Bytecode &bc);
     friend class BytecodeContainer;
 
 public:
@@ -172,7 +174,7 @@ public:
     /// Bytecode contents (abstract base class).  Any implementation of a
     /// specific bytecode must implement a class derived from this one.
     /// The bytecode implementation-specific data is stored in #contents.
-    class Contents
+    class YASM_LIB_EXPORT Contents
     {
     public:
         typedef std::auto_ptr<Contents> Ptr;
@@ -406,7 +408,7 @@ private:
     /// To allow combination of more complex values, fixups can be specified.
     /// A fixup consists of a value+offset combination.  0's need to be stored
     /// in m_fixed as placeholders.
-    class Fixup : public Value
+    class YASM_LIB_EXPORT Fixup : public Value
     {
     public:
         Fixup(unsigned int off, const Value& val, unsigned long line);
@@ -449,6 +451,7 @@ operator<< (marg_ostream& os, const Bytecode::Contents& contents)
     return os;
 }
 
+YASM_LIB_EXPORT
 marg_ostream& operator<< (marg_ostream &os, const Bytecode& bc);
 
 } // namespace yasm

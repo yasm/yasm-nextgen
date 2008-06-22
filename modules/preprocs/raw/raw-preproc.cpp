@@ -93,7 +93,10 @@ RawPreproc::get_line(/*@out@*/ std::string& line)
     return true;
 }
 
-RegisterModule<Preprocessor, RawPreproc> registerRawPreproc("raw");
-bool static_ref = true;
+void
+do_register()
+{
+    register_module<Preprocessor, RawPreproc>("raw");
+}
 
 }}} // namespace yasm::preproc::raw

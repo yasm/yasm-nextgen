@@ -31,6 +31,7 @@
 ///
 #include <memory>
 
+#include "export.h"
 #include "location.h"
 #include "marg_ostream_fwd.h"
 
@@ -48,7 +49,7 @@ class Symbol;
 /// A value.  May be absolute or relative.  Outside the parser, #Expr
 /// should only be used for absolute exprs.  Anything that could contain
 /// a relocatable value should use this structure instead.
-class Value
+class YASM_LIB_EXPORT Value
 {
 public:
     explicit Value(unsigned int size);
@@ -229,6 +230,7 @@ public:
 /// Print a value.  For debugging purposes.
 /// @param os           output stream
 /// @param value        value
+YASM_LIB_EXPORT
 marg_ostream& operator<< (marg_ostream& os, const Value& value);
 
 } // namespace yasm

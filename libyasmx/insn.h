@@ -35,6 +35,7 @@
 
 #include <boost/noncopyable.hpp>
 
+#include "export.h"
 #include "marg_ostream_fwd.h"
 
 
@@ -50,13 +51,13 @@ class SegmentRegister;
 
 /// Base class for instructions.  Architectures should
 /// derive their own implementation from this.
-class Insn
+class YASM_LIB_EXPORT Insn
 {
 public:
     typedef std::auto_ptr<Insn> Ptr;
 
     /// An instruction operand.
-    class Operand
+    class YASM_LIB_EXPORT Operand
     {
     public:
         /// Operand type.
@@ -70,7 +71,7 @@ public:
         };
 
         /// Base class for target modifiers.
-        class TargetModifier : private boost::noncopyable
+        class YASM_LIB_EXPORT TargetModifier : private boost::noncopyable
         {
         public:
             TargetModifier();
@@ -231,7 +232,7 @@ public:
     };
 
     /// Base class for instruction prefixes.
-    class Prefix : private boost::noncopyable
+    class YASM_LIB_EXPORT Prefix : private boost::noncopyable
     {
     public:
         Prefix();

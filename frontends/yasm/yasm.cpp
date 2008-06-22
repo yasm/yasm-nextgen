@@ -43,6 +43,7 @@
 #include <libyasmx/nocase.h>
 #include <libyasmx/object_format.h>
 #include <libyasmx/parser.h>
+#include <libyasmx/plugin.h>
 #include <libyasmx/preproc.h>
 #include <libyasmx/registry.h>
 
@@ -53,8 +54,6 @@
 #include "yasm-options.h"
 
 #include "frontends/yasm/license.cpp"
-
-#include "static_modules.h"
 
 
 // Preprocess-only buffer size
@@ -147,6 +146,11 @@ static int opt_ewmsg_handler(const std::string& cmd,
 static int opt_makedep_handler(const std::string& cmd,
                                const std::string& param,
                                int extra);
+#ifndef BUILD_STATIC
+static int opt_plugin_handler(const std::string& cmd,
+                              const std::string& param,
+                              int extra);
+#endif
 
 static void print_error(const std::string& msg);
 
@@ -225,6 +229,10 @@ static OptOption options[] =
       N_("undefine a macro"), N_("macro") },
     { 'X', NULL, 1, opt_ewmsg_handler, 0,
       N_("select error/warning message style (`gnu' or `vc')"), N_("style") },
+#ifndef BUILD_STATIC
+    { 'N', "plugin", 1, opt_plugin_handler, 0,
+      N_("load plugin module"), N_("plugin") },
+#endif
 };
 
 // version message
@@ -473,6 +481,17 @@ main(int argc, const char* argv[])
 
     // Initialize errwarn handling
     yasm::gettext_hook = handle_yasm_gettext;
+
+    // Load standard modules
+#ifdef BUILD_STATIC
+    yasm_init_plugin();
+#else
+    if (!yasm::load_plugin("standard"))
+    {
+        print_error(_("FATAL: could not load standard modules"));
+        return EXIT_FAILURE;
+    }
+#endif
 
     if (parse_cmdline(argc, argv, options, NELEMS(options), print_error))
         return EXIT_FAILURE;
@@ -867,6 +886,19 @@ opt_makedep_handler(/*@unused@*/ const std::string& cmd,
 
     return 0;
 }
+
+#ifndef BUILD_STATIC
+static int
+opt_plugin_handler(/*@unused@*/ const std::string& cmd,
+                   const std::string& param,
+                   /*@unused@*/ int extra)
+{
+    if (!yasm::load_plugin(param))
+        print_error(String::compose(
+            _("warning: could not load plugin `%s'"), param));
+    return 0;
+}
+#endif
 
 static void
 apply_preproc_builtins(yasm::Preprocessor* preproc)

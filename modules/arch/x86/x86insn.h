@@ -39,7 +39,7 @@ namespace x86
 
 struct X86InfoOperand;
 struct X86InsnInfo;
-struct X86Opcode;
+class X86Opcode;
 
 class X86Insn : public Insn
 {

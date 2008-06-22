@@ -33,6 +33,7 @@
 #include <memory>
 #include <vector>
 
+#include "export.h"
 #include "functional.h"
 #include "location.h"
 #include "operator.h"
@@ -48,9 +49,10 @@ class Register;
 class Symbol;
 
 /// An expression.
-class Expr
+class YASM_LIB_EXPORT Expr
 {
-    friend std::ostream& operator<< (std::ostream&, const Expr&);
+    friend YASM_LIB_EXPORT
+    std::ostream& operator<< (std::ostream&, const Expr&);
 
 public:
     typedef std::auto_ptr<Expr> Ptr;
@@ -72,9 +74,10 @@ public:
     };
 
     /// An term inside the expression.
-    class Term
+    class YASM_LIB_EXPORT Term
     {
-        friend std::ostream& operator<< (std::ostream&, const Term&);
+        friend YASM_LIB_EXPORT
+        std::ostream& operator<< (std::ostream&, const Term&);
 
     public:
         /// Substitution value.
@@ -360,7 +363,9 @@ private:
     void level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul);
 };
 
+YASM_LIB_EXPORT
 std::ostream& operator<< (std::ostream& os, const Expr::Term& term);
+YASM_LIB_EXPORT
 std::ostream& operator<< (std::ostream& os, const Expr& e);
 
 }   // namespace yasm
