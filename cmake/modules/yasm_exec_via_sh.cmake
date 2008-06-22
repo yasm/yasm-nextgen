@@ -42,6 +42,7 @@ file(TO_NATIVE_PATH "${_ld_library_path}" win_path)
 
 file(WRITE "${_filename}" 
 "
+@echo off
 set PATH=${win_path};$ENV{PATH}
 \"${_executable}\" %*
 ")
