@@ -1,7 +1,9 @@
+#ifndef BIN_MAP_H
+#define BIN_MAP_H
 //
-// Section implementation.
+// Flat-format binary object format map file output
 //
-//  Copyright (C) 2001-2007  Peter Johnson
+//  Copyright (C) 2002-2008  Peter Johnson
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -24,79 +26,56 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "section.h"
+#include <iosfwd>
 
-#include "util.h"
-
-#include "intnum.h"
-#include "marg_ostream.h"
+#include "bin-link.h"
 
 
 namespace yasm
 {
 
-Reloc::Reloc(std::auto_ptr<IntNum> addr, Symbol* sym)
-    : m_addr(addr.release()),
-      m_sym(sym)
+class IntNum;
+class Object;
+
+namespace objfmt
 {
-}
-
-Reloc::~Reloc()
+namespace bin
 {
-}
 
-Section::Section(const std::string& name,
-                 unsigned long align,
-                 bool code,
-                 bool res_only,
-                 unsigned long line)
-    : m_name(name),
-      m_align(align),
-      m_code(code),
-      m_res_only(res_only),
-      m_def(false),
-      m_relocs_owner(m_relocs)
+class MapOutput
 {
-}
+public:
+    MapOutput(std::ostream& os,
+              const Object& object,
+              const IntNum& origin,
+              const BinGroups& groups,
+              const void* assoc_key);
+    ~MapOutput();
 
-Section::~Section()
-{
-}
+    void output_header();
+    void output_origin();
+    void output_sections_summary();
+    void output_sections_detail();
+    void output_sections_symbols();
 
-Section*
-Section::as_section()
-{
-    return this;
-}
+private:
+    void output_intnum(const IntNum& intn);
+    void inner_sections_summary(const BinGroups& groups);
+    void inner_sections_detail(const BinGroups& groups);
+    void output_symbols(const Section* sect);
+    void inner_sections_symbols(const BinGroups& groups);
 
-const Section*
-Section::as_section() const
-{
-    return this;
-}
+    // address width
+    int m_bytes;
+    unsigned char* m_buf;
 
-void
-Section::put(marg_ostream& os, bool with_bcs) const
-{
-    os << "name=" << m_name << '\n';
-    os << "align=" << m_align << '\n';
-    os << "code=" << m_code << '\n';
-    os << "res_only=" << m_res_only << '\n';
-    os << "default=" << m_def << '\n';
-    os << "Associated data:\n";
-    ++os;
-    os << static_cast<const AssocDataContainer&>(*this);
-    --os;
+    std::ostream& m_os;         // map output file
+    const Object& m_object;     // object
+    const IntNum& m_origin;     // origin
+    const BinGroups& m_groups;  // section groups
+    const void* m_assoc_key;    // key to get associated data
+};
 
-    if (with_bcs)
-    {
-        os << "Bytecodes:\n";
-        ++os;
-        BytecodeContainer::put(os);
-        --os;
-    }
+}}} // namespace yasm::objfmt::bin
 
-    // TODO: relocs
-}
-
-} // namespace yasm
+#endif

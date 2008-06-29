@@ -47,7 +47,6 @@ namespace yasm
 
 class Bytecode;
 class Errwarns;
-class Expr;
 class IntNum;
 class Object;
 class Symbol;
@@ -74,8 +73,6 @@ public:
     /// Create a new section.  The section
     /// is added to the object if there's not already a section by that name.
     /// @param name     section name
-    /// @param start    starting address (ignored if section already exists),
-    ///                 NULL if 0 or don't care.
     /// @param align    alignment in bytes (0 if none)
     /// @param code     if true, section is intended to contain code
     ///                 (e.g. alignment should be made with NOP instructions)
@@ -85,7 +82,6 @@ public:
     /// @param line     virtual line of section declaration (ignored if
     ///                 section already exists)
     Section(const std::string& name,
-            std::auto_ptr<Expr> start,
             unsigned long align,
             bool code,
             bool res_only,
@@ -134,14 +130,6 @@ public:
     /// @return True if section name matches, false if not.
     bool is_name(const std::string& name) const { return m_name == name; }
 
-    /// Change starting address of a section.
-    /// @param start    starting address
-    void set_start(std::auto_ptr<Expr> start);
-
-    /// Get starting address of a section.
-    /// @return Starting address.
-    const Expr* get_start() const { return m_start.get(); }
-
     /// Change alignment of a section.
     /// @param align    alignment in bytes
     /// @param line     virtual line
@@ -158,9 +146,6 @@ public:
 
 private:
     std::string m_name;                 ///< name (given by user)
-
-    /// Starting address of section contents.
-    boost::scoped_ptr<Expr> m_start;
 
     unsigned long m_align;      ///< Section alignment
 

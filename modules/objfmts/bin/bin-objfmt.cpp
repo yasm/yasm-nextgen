@@ -26,8 +26,12 @@
 //
 #include <util.h>
 
+#include <fstream>
+#include <iostream>
+
 #include <libyasmx/bytecode.h>
 #include <libyasmx/bytes.h>
+#include <libyasmx/compose.h>
 #include <libyasmx/directive.h>
 #include <libyasmx/errwarn.h>
 #include <libyasmx/errwarns.h>
@@ -41,6 +45,10 @@
 #include <libyasmx/section.h>
 #include <libyasmx/symbol.h>
 #include <libyasmx/value.h>
+
+#include "bin-data.h"
+#include "bin-link.h"
+#include "bin-map.h"
 
 
 namespace yasm
@@ -80,12 +88,43 @@ public:
          unsigned long line) = 0;
 #endif
 private:
+    void define_section_symbol(Object& object,
+                               const BinSectionData& bsd,
+                               const std::string& sectname,
+                               const char* suffix,
+                               BinSymbolData::SpecialSym which,
+                               unsigned long line);
     void init_new_section(Section* sect, unsigned long line);
-    void dir_org(Object& object, const NameValues& namevals,
-                 const NameValues& objext_namevals, unsigned long line);
+    void dir_org(Object& object,
+                 const NameValues& namevals,
+                 const NameValues& objext_namevals,
+                 unsigned long line);
+    void dir_map(Object& object,
+                 const NameValues& namevals,
+                 const NameValues& objext_namevals,
+                 unsigned long line);
+    bool map_filename(const NameValue& nv);
+
+    void output_map(const IntNum& origin,
+                    const BinGroups& groups,
+                    Errwarns& errwarns) const;
+
+    enum
+    {
+        NO_MAP = 0,
+        MAP_NONE = 0x01,
+        MAP_BRIEF = 0x02,
+        MAP_SECTIONS = 0x04,
+        MAP_SYMBOLS = 0x08
+    };
+    unsigned long m_map_flags;
+    std::string m_map_filename;
+
+    boost::scoped_ptr<Expr> m_org;
 };
 
 BinObject::BinObject()
+    : m_map_flags(NO_MAP), m_org(0)
 {
 }
 
@@ -93,39 +132,102 @@ BinObject::~BinObject()
 {
 }
 
-// Aligns sect to either its specified alignment.  Uses prevsect and base to
-// both determine the new starting address (returned) and the total length of
-// prevsect after sect has been aligned.
-static unsigned long
-align_section(const Section& sect, const Section& prevsect, unsigned long base,
-              /*@out@*/ unsigned long *prevsectlen,
-              /*@out@*/ unsigned long *padamt)
+void
+BinObject::define_section_symbol(Object& object, const BinSectionData& bsd,
+                                 const std::string& sectname,
+                                 const char* suffix,
+                                 BinSymbolData::SpecialSym which,
+                                 unsigned long line)
 {
-    // Figure out the size of .text by looking at the last bytecode's offset
-    // plus its length.  Add the start and size together to get the new start.
-    *prevsectlen = prevsect.bcs_last().next_offset();
-    unsigned long start = base + *prevsectlen;
+    Symbol& sym = object.get_sym("section."+sectname+suffix);
+    sym.declare(Symbol::EXTERN, line);
+    std::auto_ptr<AssocData> ad(new BinSymbolData(bsd, which));
+    sym.add_assoc_data(this, ad);
+}
 
-    // Round new start up to alignment of .data section, and adjust textlen to
-    // indicate padded size.  Because aignment is always a power of two, we
-    // can use some bit trickery to do this easily.
-    unsigned long align = sect.get_align();
 
-    if (start & (align-1))
-        start = (start & ~(align-1)) + align;
+void
+BinObject::output_map(const IntNum& origin,
+                      const BinGroups& groups,
+                      Errwarns& errwarns) const
+{
+    int map_flags = m_map_flags;
 
-    *padamt = start - (base + *prevsectlen);
+    if (map_flags == NO_MAP)
+        return;
 
-    return start;
+    if (map_flags == MAP_NONE)
+        map_flags = MAP_BRIEF;          // default to brief
+
+    std::ofstream os;
+    if (m_map_filename.empty())
+        os.std::basic_ios<char>::rdbuf(std::cout.rdbuf()); // stdout
+    else
+    {
+        os.open(m_map_filename.c_str());
+        if (os.fail())
+        {
+            warn_set(WARN_GENERAL, String::compose(
+                N_("unable to open map file `%1'"), m_map_filename));
+            errwarns.propagate(0);
+            return;
+        }
+    }
+
+    MapOutput out(os, *m_object, origin, groups, this);
+    out.output_header();
+    out.output_origin();
+
+    if (map_flags & MAP_BRIEF)
+        out.output_sections_summary();
+
+    if (map_flags & MAP_SECTIONS)
+        out.output_sections_detail();
+
+    if (map_flags & MAP_SYMBOLS)
+        out.output_sections_symbols();
+}
+
+class NoOutput : public BytecodeOutput
+{
+public:
+    NoOutput() {}
+    ~NoOutput() {}
+
+    using BytecodeOutput::output;
+    void output(Value& value, Bytes& bytes, Location loc, int warn);
+    void output_gap(unsigned int size);
+    void output(const Bytes& bytes);
+};
+
+void
+NoOutput::output(Value& value, Bytes& bytes, Location loc, int warn)
+{
+    // unnecessary; we don't actually output it anyway
+}
+
+void
+NoOutput::output_gap(unsigned int size)
+{
+    // expected
+}
+
+void
+NoOutput::output(const Bytes& bytes)
+{
+    warn_set(WARN_GENERAL,
+        N_("initialized space declared in nobits section: ignoring"));
 }
 
 class Output : public BytecodeOutput
 {
 public:
-    Output(std::ostream& os, Object& object, unsigned long abs_start);
+    Output(std::ostream& os, Object& object, const void* assoc_key);
     ~Output();
 
-    void output_section(Section* sect, unsigned long start, Errwarns& errwarns);
+    void output_section(Section& sect,
+                        const IntNum& origin,
+                        Errwarns& errwarns);
 
     // OutputBytecode overrides
     using BytecodeOutput::output;
@@ -134,19 +236,16 @@ public:
     void output(const Bytes& bytes);
 
 private:
-    static void expr_xform(Expr* e);
-
+    const void* m_assoc_key;
     Object& m_object;
     std::ostream& m_os;
-    /*@observer@*/ const Section* m_sect;
-    unsigned long m_start;          // what normal variables go against
-    unsigned long m_abs_start;      // what absolutes go against
+    NoOutput m_no_output;
 };
 
-Output::Output(std::ostream& os, Object& object, unsigned long abs_start)
-    : m_object(object),
-      m_os(os),
-      m_abs_start(abs_start)
+Output::Output(std::ostream& os, Object& object, const void* assoc_key)
+    : m_assoc_key(assoc_key),
+      m_object(object),
+      m_os(os)
 {
 }
 
@@ -155,52 +254,55 @@ Output::~Output()
 }
 
 void
-Output::output_section(Section* sect, unsigned long start, Errwarns& errwarns)
+Output::output_section(Section& sect, const IntNum& origin, Errwarns& errwarns)
 {
-    m_sect = sect;
-    m_start = start;
-    for (Section::bc_iterator i=sect->bcs_begin(), end=sect->bcs_end();
+    BytecodeOutput* outputter;
+
+    BinSectionData* bsd =
+        static_cast<BinSectionData*>(sect.get_assoc_data(m_assoc_key));
+    assert(bsd);
+
+    if (bsd->bss)
+    {
+        outputter = &m_no_output;
+    }
+    else
+    {
+        IntNum file_start = bsd->istart;
+        file_start -= origin;
+        if (file_start.sign() < 0)
+        {
+            errwarns.propagate(0, ValueError(String::compose(
+                N_("section `%1' starts before origin (ORG)"),
+                sect.get_name())));
+            return;
+        }
+        if (!file_start.ok_size(sizeof(unsigned long)*8, 0, 0))
+        {
+            errwarns.propagate(0, ValueError(String::compose(
+                N_("section `%1' start value too large"),
+                sect.get_name())));
+            return;
+        }
+        m_os.seekp(file_start.get_uint());
+        if (!m_os.good())
+            throw Fatal(N_("could not seek on output file"));
+
+        outputter = this;
+    }
+
+    for (Section::bc_iterator i=sect.bcs_begin(), end=sect.bcs_end();
          i != end; ++i)
     {
         try
         {
-            i->output(*this);
+            i->output(*outputter);
         }
         catch (Error& err)
         {
             errwarns.propagate(i->get_line(), err);
         }
         errwarns.propagate(i->get_line());  // propagate warnings
-    }
-}
-
-void
-Output::expr_xform(Expr* e)
-{
-    for (Expr::Terms::iterator i=e->get_terms().begin(),
-         end=e->get_terms().end(); i != end; ++i)
-    {
-        Symbol* sym;
-        Location loc;
-
-        // Transform symrecs or precbcs that reference sections into
-        // start expr + intnum(dist).
-        if ((sym = i->get_sym()) && sym->get_label(&loc))
-            ;
-        else if (Location* locp = i->get_loc())
-            loc = *locp;
-        else
-            continue;
-
-        BytecodeContainer* container = loc.bc->get_container();
-        Location first = {&container->bcs_first(), 0};
-        IntNum dist;
-        if (calc_dist(first, loc, &dist))
-        {
-            const Expr* start = container->as_section()->get_start();
-            //i->destroy(); // don't need to, as it's a sym or precbc
-            *i = new Expr(start->clone(), Op::ADD, dist.clone(), e->get_line());
-        }
     }
 }
 
@@ -224,6 +326,11 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
         {
             syme.reset(new Expr(value.m_rel, line));
         }
+        else if (const IntNum* ssymval =
+                 get_ssym_value(value.m_rel, m_assoc_key))
+        {
+            syme.reset(new Expr(*ssymval, line));
+        }
         else
             goto done;
 
@@ -246,7 +353,8 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
 done:
     // Simplify absolute portion of value, transforming symrecs
     if (Expr* abs = value.get_abs())
-        abs->level_tree(true, true, true, &Output::expr_xform);
+        abs->level_tree(true, true, true,
+                        BIND::bind(&expr_xform, _1, m_assoc_key));
 
     // Output
     Arch* arch = m_object.get_arch();
@@ -289,9 +397,14 @@ Output::output(const Bytes& bytes)
 }
 
 static void
-check_sym(const Symbol& sym, Errwarns& errwarns)
+check_sym(const Symbol& sym, const void* assoc_key, Errwarns& errwarns)
 {
     int vis = sym.get_visibility();
+
+    // Don't check internally-generated symbols.  Only internally generated
+    // symbols have symrec data, so simply check for its presence.
+    if (sym.get_assoc_data(assoc_key))
+        return;
 
     if (vis & Symbol::EXTERN)
     {
@@ -315,89 +428,78 @@ check_sym(const Symbol& sym, Errwarns& errwarns)
 void
 BinObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
 {
+    // Set ORG to 0 unless otherwise specified
+    IntNum origin(0);
+    if (m_org.get() != 0)
+    {
+        m_org->simplify();
+        const IntNum* orgi = m_org->get_intnum();
+        if (!orgi)
+        {
+            errwarns.propagate(m_org->get_line(),
+                TooComplexError(N_("ORG expression is too complex")));
+            return;
+        }
+        if (orgi->sign() < 0)
+        {
+            errwarns.propagate(m_org->get_line(),
+                ValueError(N_("ORG expression is negative")));
+            return;
+        }
+        origin = *orgi;
+    }
+
     // Check symbol table
     for (Object::const_symbol_iterator i=m_object->symbols_begin(),
          end=m_object->symbols_end(); i != end; ++i)
-        check_sym(*i, errwarns);
+        check_sym(*i, this, errwarns);
 
-    Section* text = m_object->find_section(".text");
-    Section* data = m_object->find_section(".data");
-    Section* bss = m_object->find_section(".bss");
+    Link link(*m_object, this, errwarns);
 
-    if (!text)
-        throw InternalError(N_("No `.text' section in bin objfmt output"));
-
-    // First determine the actual starting offsets for .data and .bss.
-    // As the order in the file is .text -> .data -> .bss (not present),
-    // use the last bytecode in .text (and the .text section start) to
-    // determine the starting offset in .data, and likewise for .bss.
-    // Also compensate properly for alignment.
-
-    // Find out the start of .text
-    Expr::Ptr startexpr(text->get_start()->clone());
-    IntNum* startnum = startexpr->get_intnum();
-    if (!startnum)
-    {
-        errwarns.propagate(startexpr->get_line(),
-            TooComplexError(N_("ORG expression too complex")));
+    if (!link.do_link(origin))
         return;
-    }
-    unsigned long start = startnum->get_uint();
-    unsigned long abs_start = start;
-    unsigned long textstart = start, datastart = 0;
 
-    // Align .data and .bss (if present) by adjusting their starts.
-    Section* prevsect = text;
-    unsigned long textlen = 0, textpad = 0, datalen = 0, datapad = 0;
-    unsigned long* prevsectlenptr = &textlen;
-    unsigned long* prevsectpadptr = &textpad;
-    if (data)
+    // Output map file
+    output_map(origin, link.get_lma_groups(), errwarns);
+
+    // Ensure we don't have overlapping progbits LMAs.
+    if (!link.check_lma_overlap())
+        return;
+
+    // Output sections
+    Output out(os, *m_object, this);
+    for (Object::section_iterator i=m_object->sections_begin(),
+         end=m_object->sections_end(); i != end; ++i)
     {
-        start = align_section(*data, *prevsect, start, prevsectlenptr,
-                              prevsectpadptr);
-        data->set_start(Expr::Ptr(new Expr(new IntNum(start), 0)));
-        datastart = start;
-        prevsect = data;
-        prevsectlenptr = &datalen;
-        prevsectpadptr = &datapad;
+        out.output_section(*i, origin, errwarns);
     }
-    if (bss)
-    {
-        start = align_section(*bss, *prevsect, start, prevsectlenptr,
-                              prevsectpadptr);
-        bss->set_start(Expr::Ptr(new Expr(new IntNum(start), 0)));
-    }
-
-    // Output .text first.
-    Output output(os, *m_object, abs_start);
-    output.output_section(text, textstart, errwarns);
-
-    // If .data is present, output it
-    if (data)
-    {
-        // Add padding to align .data.  Just use a for loop, as this will
-        // seldom be very many bytes.
-        for (unsigned long i=0; i<textpad; i++)
-            os << '\0';
-
-        // Output .data bytecodes
-        output.output_section(data, datastart, errwarns);
-    }
-
-    // If .bss is present, check it for non-reserve bytecodes
 }
 
 void
 BinObject::init_new_section(Section* sect, unsigned long line)
 {
-    Location first = {&sect->bcs_first(), 0};
-    m_object->get_sym(sect->get_name()).define_label(first, line);
+    std::auto_ptr<BinSectionData> bsd(new BinSectionData());
+
+    m_object->get_sym("section."+sect->get_name()+".start")
+        .declare(Symbol::EXTERN, line)
+        .add_assoc_data(this, std::auto_ptr<AssocData>
+                        (new BinSymbolData(*bsd, BinSymbolData::START)));
+    m_object->get_sym("section."+sect->get_name()+".vstart")
+        .declare(Symbol::EXTERN, line)
+        .add_assoc_data(this, std::auto_ptr<AssocData>
+                        (new BinSymbolData(*bsd, BinSymbolData::VSTART)));
+    m_object->get_sym("section."+sect->get_name()+".length")
+        .declare(Symbol::EXTERN, line)
+        .add_assoc_data(this, std::auto_ptr<AssocData>
+                        (new BinSymbolData(*bsd, BinSymbolData::LENGTH)));
+
+    sect->add_assoc_data(this, std::auto_ptr<AssocData>(bsd.release()));
 }
 
 Section*
 BinObject::add_default_section()
 {
-    Section* section = new Section(".text", Expr::Ptr(0), 16, true, false, 0);
+    Section* section = new Section(".text", 16, true, false, 0);
     m_object->append_section(std::auto_ptr<Section>(section));
     init_new_section(section, 0);
     return section;
@@ -412,16 +514,46 @@ bin_objfmt_section_switch(yasm_object *object, yasm_valparamhead *valparams,
     yasm_valparam *vp;
     yasm_section *retval;
     int isnew;
-    unsigned long start;
+    int flags_override = 0;
     const char *sectname;
-    int resonly = 0;
-    /*@only@*/ /*@null@*/ yasm_intnum *align_intn = NULL;
-    unsigned long align = 4;
-    int have_align = 0;
+    bin_section_data *bsd = NULL;
 
-    static const yasm_dir_help help[] =
-    {
-        { "align", 1, yasm_dir_helper_intn, 0, 0 }
+    struct bin_section_switch_data {
+        /*@only@*/ /*@null@*/ char *follows;
+        /*@only@*/ /*@null@*/ char *vfollows;
+        /*@only@*/ /*@null@*/ yasm_expr *start;
+        /*@only@*/ /*@null@*/ yasm_expr *vstart;
+        /*@only@*/ /*@null@*/ yasm_intnum *align;
+        /*@only@*/ /*@null@*/ yasm_intnum *valign;
+        unsigned long bss;
+        unsigned long code;
+    } data;
+
+    static const yasm_dir_help help[] = {
+        { "follows", 1, yasm_dir_helper_string,
+          offsetof(struct bin_section_switch_data, follows), 0 },
+        { "vfollows", 1, yasm_dir_helper_string,
+          offsetof(struct bin_section_switch_data, vfollows), 0 },
+        { "start", 1, yasm_dir_helper_expr,
+          offsetof(struct bin_section_switch_data, start), 0 },
+        { "vstart", 1, yasm_dir_helper_expr,
+          offsetof(struct bin_section_switch_data, vstart), 0 },
+        { "align", 1, yasm_dir_helper_intn,
+          offsetof(struct bin_section_switch_data, align), 0 },
+        { "valign", 1, yasm_dir_helper_intn,
+          offsetof(struct bin_section_switch_data, valign), 0 },
+        { "nobits", 0, yasm_dir_helper_flag_set,
+          offsetof(struct bin_section_switch_data, bss), 1 },
+        { "progbits", 0, yasm_dir_helper_flag_set,
+          offsetof(struct bin_section_switch_data, bss), 0 },
+        { "code", 0, yasm_dir_helper_flag_set,
+          offsetof(struct bin_section_switch_data, code), 1 },
+        { "data", 0, yasm_dir_helper_flag_set,
+          offsetof(struct bin_section_switch_data, code), 0 },
+        { "execute", 0, yasm_dir_helper_flag_set,
+          offsetof(struct bin_section_switch_data, code), 1 },
+        { "noexecute", 0, yasm_dir_helper_flag_set,
+          offsetof(struct bin_section_switch_data, code), 0 }
     };
 
     vp = yasm_vps_first(valparams);
@@ -430,62 +562,92 @@ bin_objfmt_section_switch(yasm_object *object, yasm_valparamhead *valparams,
         return NULL;
     vp = yasm_vps_next(vp);
 
-    /* If it's the first section output (.text) start at 0, otherwise
-     * make sure the start is > 128.
-     */
-    if (strcmp(sectname, ".text") == 0)
-        start = 0;
-    else if (strcmp(sectname, ".data") == 0)
-        start = 200;
-    else if (strcmp(sectname, ".bss") == 0)
-    {
-        start = 200;
-        resonly = 1;
+    retval = yasm_object_find_general(object, sectname);
+    if (retval) {
+        bsd = yasm_section_get_data(retval, &bin_section_data_cb);
+        assert(bsd != NULL);
+        data.follows = bsd->follows;
+        data.vfollows = bsd->vfollows;
+        data.start = bsd->start;
+        data.vstart = bsd->vstart;
+        data.align = NULL;
+        data.valign = NULL;
+        data.bss = bsd->bss;
+        data.code = yasm_section_is_code(retval);
+    } else {
+        data.follows = NULL;
+        data.vfollows = NULL;
+        data.start = NULL;
+        data.vstart = NULL;
+        data.align = NULL;
+        data.valign = NULL;
+        data.bss = strcmp(sectname, ".bss") == 0;
+        data.code = strcmp(sectname, ".text") == 0;
     }
-    else
-    {
-        /* other section names not recognized. */
+
+    flags_override = yasm_dir_helper(object, vp, line, help, NELEMS(help),
+                                     &data, yasm_dir_helper_valparam_warn);
+    if (flags_override < 0)
+        return NULL;    /* error occurred */
+
+    if (data.start && data.follows) {
         yasm_error_set(YASM_ERROR_GENERAL,
-                       N_("segment name `%s' not recognized"), sectname);
+            N_("cannot combine `start' and `follows' section attributes"));
         return NULL;
     }
 
-    have_align = yasm_dir_helper(object, vp, line, help, NELEMS(help),
-                                 &align_intn, yasm_dir_helper_valparam_warn);
-    if (have_align < 0)
-        return NULL;    /* error occurred */
+    if (data.vstart && data.vfollows) {
+        yasm_error_set(YASM_ERROR_GENERAL,
+            N_("cannot combine `vstart' and `vfollows' section attributes"));
+        return NULL;
+    }
 
-    if (align_intn)
-    {
-        align = yasm_intnum_get_uint(align_intn);
-        yasm_intnum_destroy(align_intn);
+    if (data.align) {
+        unsigned long align = yasm_intnum_get_uint(data.align);
 
         /* Alignments must be a power of two. */
-        if (!is_exp2(align))
-        {
+        if (!is_exp2(align)) {
             yasm_error_set(YASM_ERROR_VALUE,
                            N_("argument to `%s' is not a power of two"),
                            "align");
             return NULL;
         }
-    }
+    } else
+        data.align = bsd ? bsd->align : NULL;
 
-    retval = yasm_object_get_general(object, sectname,
-        yasm_expr_create_ident(
-            yasm_expr_int(yasm_intnum_create_uint(start)), line), align,
-        strcmp(sectname, ".text") == 0, resonly, &isnew, line);
+    if (data.valign) {
+        unsigned long valign = yasm_intnum_get_uint(data.valign);
+
+        /* Alignments must be a power of two. */
+        if (!is_exp2(valign)) {
+            yasm_error_set(YASM_ERROR_VALUE,
+                           N_("argument to `%s' is not a power of two"),
+                           "valign");
+            return NULL;
+        }
+    } else
+        data.valign = bsd ? bsd->valign : NULL;
+
+    retval = yasm_object_get_general(object, sectname, 0, (int)data.code,
+                                     (int)data.bss, &isnew, line);
 
     if (isnew)
-        bin_objfmt_init_new_section(object, retval, sectname, line);
+        bsd = bin_objfmt_init_new_section(object, retval, sectname, line);
+    else
+        bsd = yasm_section_get_data(retval, &bin_section_data_cb);
 
-    if (isnew || yasm_section_is_default(retval))
-    {
+    if (isnew || yasm_section_is_default(retval)) {
         yasm_section_set_default(retval, 0);
-        yasm_section_set_align(retval, align, line);
     }
-    else if (have_align)
-        yasm_warn_set(YASM_WARN_GENERAL,
-            N_("alignment value ignored on section redeclaration"));
+
+    /* Update section flags */
+    bsd->bss = data.bss;
+    bsd->align = data.align;
+    bsd->valign = data.valign;
+    bsd->start = data.start;
+    bsd->vstart = data.vstart;
+    bsd->follows = data.follows;
+    bsd->vfollows = data.vfollows;
 
     return retval;
 }
@@ -494,18 +656,54 @@ void
 BinObject::dir_org(Object& object, const NameValues& namevals,
                    const NameValues& objext_namevals, unsigned long line)
 {
-    // ORG takes just a simple integer as param
+    // We only allow a single ORG in a program.
+    if (m_org.get() != 0)
+        throw Error(N_("program origin redefined"));
+
+    // ORG takes just a simple expression as param
     const NameValue& nv = namevals.front();
     if (!nv.is_expr())
         throw SyntaxError(N_("argument to ORG must be expression"));
-    Expr::Ptr start = nv.get_expr(object, line);
+    m_org.reset(nv.get_expr(object, line).release());
+}
 
-    // ORG changes the start of the .text section
-    Section* sect = object.find_section(".text");
-    if (!sect)
-        throw InternalError(
-            N_("bin objfmt: .text section does not exist before ORG is called?"));
-    sect->set_start(start);
+bool
+BinObject::map_filename(const NameValue& nv)
+{
+    if (!m_map_filename.empty())
+        throw Error(N_("map file already specified"));
+
+    if (!nv.is_string())
+        throw SyntaxError(N_("unexpected expression in [map]"));
+    m_map_filename = nv.get_string();
+    return true;
+}
+
+void
+BinObject::dir_map(Object& object, const NameValues& namevals,
+                   const NameValues& objext_namevals, unsigned long line)
+{
+    DirHelpers helpers;
+    helpers.add("all", false,
+                BIND::bind(&dir_flag_set, _1, REF::ref(m_map_flags),
+                           MAP_BRIEF|MAP_SECTIONS|MAP_SYMBOLS));
+    helpers.add("brief", false,
+                BIND::bind(&dir_flag_set, _1, REF::ref(m_map_flags),
+                           static_cast<unsigned long>(MAP_BRIEF)));
+    helpers.add("sections", false,
+                BIND::bind(&dir_flag_set, _1, REF::ref(m_map_flags),
+                           static_cast<unsigned long>(MAP_SECTIONS)));
+    helpers.add("segments", false,
+                BIND::bind(&dir_flag_set, _1, REF::ref(m_map_flags),
+                           static_cast<unsigned long>(MAP_SECTIONS)));
+    helpers.add("symbols", false,
+                BIND::bind(&dir_flag_set, _1, REF::ref(m_map_flags),
+                           static_cast<unsigned long>(MAP_SYMBOLS)));
+
+    m_map_flags |= MAP_NONE;
+
+    helpers(namevals.begin(), namevals.end(), 
+            BIND::bind(&BinObject::map_filename, this, _1));
 }
 
 std::vector<std::string>
@@ -523,6 +721,9 @@ BinObject::add_directives(Directives& dirs, const std::string& parser)
     dirs.add("org",
              BIND::bind(&BinObject::dir_org, this, _1, _2, _3, _4),
              Directives::ARG_REQUIRED);
+    dirs.add("map",
+             BIND::bind(&BinObject::dir_map, this, _1, _2, _3, _4),
+             Directives::ANY);
 }
 
 void
