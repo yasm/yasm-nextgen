@@ -81,6 +81,10 @@ public:
     /// @param obj_filename new object filename (e.g. "file.o")
     void set_object_fn(const std::string& obj_filename);
 
+    /// Get the source filename for an object.
+    /// @return Source filename.
+    std::string get_source_fn() const { return m_src_filename; }
+
     /// Get the object filename for an object.
     /// @return Object filename.
     std::string get_object_fn() const { return m_obj_filename; }
