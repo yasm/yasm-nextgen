@@ -193,31 +193,45 @@ DirHelpers::operator()
 
 void
 dir_intn(const NameValue& nv,
-         Object& obj,
+         Object* obj,
          unsigned long line,
-         IntNum& out,
-         bool& out_set)
+         IntNum* out,
+         bool* out_set)
 {
-    std::auto_ptr<Expr> e(nv.get_expr(obj, line));
+    std::auto_ptr<Expr> e(nv.get_expr(*obj, line));
     /*@null@*/ IntNum* local;
 
     if ((e.get() == 0) || ((local = e->get_intnum()) == 0))
         throw NotConstantError(String::compose(
             N_("argument to `%1' is not an integer"), nv.get_name()));
 
-    out = *local;
-    out_set = true;
+    *out = *local;
+    *out_set = true;
 }
 
 void
-dir_string(const NameValue& nv, std::string& out, bool& out_set)
+dir_expr(const NameValue& nv,
+         Object* obj,
+         unsigned long line,
+         std::auto_ptr<Expr>* out,
+         bool* out_set)
+{
+    if (!nv.is_expr())
+        throw ValueError(String::compose(
+            N_("argument to `%1' is not an expression"), nv.get_name()));
+    *out = nv.get_expr(*obj, line);
+    *out_set = true;
+}
+
+void
+dir_string(const NameValue& nv, std::string* out, bool* out_set)
 {
     if (!nv.is_string())
         throw ValueError(String::compose(
             N_("argument to `%1' is not a string or identifier"),
             nv.get_name()));
-    out = nv.get_string();
-    out_set = true;
+    *out = nv.get_string();
+    *out_set = true;
 }
 
 bool

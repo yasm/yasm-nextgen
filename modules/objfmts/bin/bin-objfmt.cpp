@@ -29,6 +29,7 @@
 #include <fstream>
 #include <iostream>
 
+#include <libyasmx/bitcount.h>
 #include <libyasmx/bytecode.h>
 #include <libyasmx/bytes.h>
 #include <libyasmx/compose.h>
@@ -82,11 +83,11 @@ public:
     void output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* add_default_section();
-#if 0
-    Section* section_switch(yasm_valparamhead *valparams,
-         /*@null@*/ yasm_valparamhead *objext_valparams,
-         unsigned long line) = 0;
-#endif
+
+    Section* section_switch(const NameValues& namevals,
+                            const NameValues& objext_namevals,
+                            unsigned long line);
+
 private:
     void define_section_symbol(Object& object,
                                const BinSectionData& bsd,
@@ -504,154 +505,129 @@ BinObject::add_default_section()
     init_new_section(section, 0);
     return section;
 }
-#if 0
-static /*@observer@*/ /*@null@*/ yasm_section *
-bin_objfmt_section_switch(yasm_object *object, yasm_valparamhead *valparams,
-                          /*@unused@*/ /*@null@*/
-                          yasm_valparamhead *objext_valparams,
+
+Section*
+BinObject::section_switch(const NameValues& nvs,
+                          const NameValues& objext_nvs,
                           unsigned long line)
 {
-    yasm_valparam *vp;
-    yasm_section *retval;
-    int isnew;
-    int flags_override = 0;
-    const char *sectname;
-    bin_section_data *bsd = NULL;
+    if (!nvs.front().is_string())
+        return 0;
+    std::string sectname = nvs.front().get_string();
 
-    struct bin_section_switch_data {
-        /*@only@*/ /*@null@*/ char *follows;
-        /*@only@*/ /*@null@*/ char *vfollows;
-        /*@only@*/ /*@null@*/ yasm_expr *start;
-        /*@only@*/ /*@null@*/ yasm_expr *vstart;
-        /*@only@*/ /*@null@*/ yasm_intnum *align;
-        /*@only@*/ /*@null@*/ yasm_intnum *valign;
-        unsigned long bss;
-        unsigned long code;
-    } data;
+    Section* sect = m_object->find_section(sectname);
 
-    static const yasm_dir_help help[] = {
-        { "follows", 1, yasm_dir_helper_string,
-          offsetof(struct bin_section_switch_data, follows), 0 },
-        { "vfollows", 1, yasm_dir_helper_string,
-          offsetof(struct bin_section_switch_data, vfollows), 0 },
-        { "start", 1, yasm_dir_helper_expr,
-          offsetof(struct bin_section_switch_data, start), 0 },
-        { "vstart", 1, yasm_dir_helper_expr,
-          offsetof(struct bin_section_switch_data, vstart), 0 },
-        { "align", 1, yasm_dir_helper_intn,
-          offsetof(struct bin_section_switch_data, align), 0 },
-        { "valign", 1, yasm_dir_helper_intn,
-          offsetof(struct bin_section_switch_data, valign), 0 },
-        { "nobits", 0, yasm_dir_helper_flag_set,
-          offsetof(struct bin_section_switch_data, bss), 1 },
-        { "progbits", 0, yasm_dir_helper_flag_set,
-          offsetof(struct bin_section_switch_data, bss), 0 },
-        { "code", 0, yasm_dir_helper_flag_set,
-          offsetof(struct bin_section_switch_data, code), 1 },
-        { "data", 0, yasm_dir_helper_flag_set,
-          offsetof(struct bin_section_switch_data, code), 0 },
-        { "execute", 0, yasm_dir_helper_flag_set,
-          offsetof(struct bin_section_switch_data, code), 1 },
-        { "noexecute", 0, yasm_dir_helper_flag_set,
-          offsetof(struct bin_section_switch_data, code), 0 }
-    };
+    bool has_follows = false, has_vfollows = false;
+    bool has_start = false, has_vstart = false;
+    std::auto_ptr<Expr> start(0);
+    std::auto_ptr<Expr> vstart(0);
+    unsigned long bss = 0;
+    unsigned long code = 0;
 
-    vp = yasm_vps_first(valparams);
-    sectname = yasm_vp_string(vp);
-    if (!sectname)
-        return NULL;
-    vp = yasm_vps_next(vp);
-
-    retval = yasm_object_find_general(object, sectname);
-    if (retval) {
-        bsd = yasm_section_get_data(retval, &bin_section_data_cb);
-        assert(bsd != NULL);
-        data.follows = bsd->follows;
-        data.vfollows = bsd->vfollows;
-        data.start = bsd->start;
-        data.vstart = bsd->vstart;
-        data.align = NULL;
-        data.valign = NULL;
-        data.bss = bsd->bss;
-        data.code = yasm_section_is_code(retval);
-    } else {
-        data.follows = NULL;
-        data.vfollows = NULL;
-        data.start = NULL;
-        data.vstart = NULL;
-        data.align = NULL;
-        data.valign = NULL;
-        data.bss = strcmp(sectname, ".bss") == 0;
-        data.code = strcmp(sectname, ".text") == 0;
+    std::auto_ptr<AssocData> bsdauto(0);
+    BinSectionData* bsd;
+    if (sect)
+    {
+        bsd = static_cast<BinSectionData*>(sect->get_assoc_data(this));
+        assert(bsd);
+        bss = bsd->bss;
+        code = sect->is_code();
     }
-
-    flags_override = yasm_dir_helper(object, vp, line, help, NELEMS(help),
-                                     &data, yasm_dir_helper_valparam_warn);
-    if (flags_override < 0)
-        return NULL;    /* error occurred */
-
-    if (data.start && data.follows) {
-        yasm_error_set(YASM_ERROR_GENERAL,
-            N_("cannot combine `start' and `follows' section attributes"));
-        return NULL;
-    }
-
-    if (data.vstart && data.vfollows) {
-        yasm_error_set(YASM_ERROR_GENERAL,
-            N_("cannot combine `vstart' and `vfollows' section attributes"));
-        return NULL;
-    }
-
-    if (data.align) {
-        unsigned long align = yasm_intnum_get_uint(data.align);
-
-        /* Alignments must be a power of two. */
-        if (!is_exp2(align)) {
-            yasm_error_set(YASM_ERROR_VALUE,
-                           N_("argument to `%s' is not a power of two"),
-                           "align");
-            return NULL;
-        }
-    } else
-        data.align = bsd ? bsd->align : NULL;
-
-    if (data.valign) {
-        unsigned long valign = yasm_intnum_get_uint(data.valign);
-
-        /* Alignments must be a power of two. */
-        if (!is_exp2(valign)) {
-            yasm_error_set(YASM_ERROR_VALUE,
-                           N_("argument to `%s' is not a power of two"),
-                           "valign");
-            return NULL;
-        }
-    } else
-        data.valign = bsd ? bsd->valign : NULL;
-
-    retval = yasm_object_get_general(object, sectname, 0, (int)data.code,
-                                     (int)data.bss, &isnew, line);
-
-    if (isnew)
-        bsd = bin_objfmt_init_new_section(object, retval, sectname, line);
     else
-        bsd = yasm_section_get_data(retval, &bin_section_data_cb);
-
-    if (isnew || yasm_section_is_default(retval)) {
-        yasm_section_set_default(retval, 0);
+    {
+        bsdauto.reset(new BinSectionData());
+        bsd = static_cast<BinSectionData*>(bsdauto.get());
+        bss = (sectname == ".bss");
+        code = (sectname == ".text");
     }
 
-    /* Update section flags */
-    bsd->bss = data.bss;
-    bsd->align = data.align;
-    bsd->valign = data.valign;
-    bsd->start = data.start;
-    bsd->vstart = data.vstart;
-    bsd->follows = data.follows;
-    bsd->vfollows = data.vfollows;
+    DirHelpers helpers;
+    helpers.add("follows", true,
+                BIND::bind(&dir_string, _1, &bsd->follows, &has_follows));
+    helpers.add("vfollows", true,
+                BIND::bind(&dir_string, _1, &bsd->vfollows, &has_vfollows));
+    helpers.add("start", true,
+                BIND::bind(&dir_expr, _1, m_object, line, &start, &has_start));
+    helpers.add("vstart", true,
+                BIND::bind(&dir_expr, _1, m_object, line, &vstart,
+                           &has_vstart));
+    helpers.add("align", true,
+                BIND::bind(&dir_intn, _1, m_object, line, &bsd->align,
+                           &bsd->has_align));
+    helpers.add("valign", true,
+                BIND::bind(&dir_intn, _1, m_object, line, &bsd->valign,
+                           &bsd->has_valign));
+    helpers.add("nobits", false,
+                BIND::bind(&dir_flag_set, _1, &bss, 1));
+    helpers.add("progbits", false,
+                BIND::bind(&dir_flag_clear, _1, &bss, 1));
+    helpers.add("code", false,
+                BIND::bind(&dir_flag_set, _1, &code, 1));
+    helpers.add("data", false,
+                BIND::bind(&dir_flag_clear, _1, &code, 1));
+    helpers.add("execute", false,
+                BIND::bind(&dir_flag_set, _1, &code, 1));
+    helpers.add("noexecute", false,
+                BIND::bind(&dir_flag_clear, _1, &code, 1));
 
-    return retval;
+    helpers(nvs.begin()+1, nvs.end(), dir_nameval_warn);
+
+    if (start.get() != 0)
+        bsd->start.reset(start.release());
+    if (vstart.get() != 0)
+        bsd->start.reset(vstart.release());
+
+    if (bsd->start.get() != 0 && !bsd->follows.empty())
+    {
+        throw Error(
+            N_("cannot combine `start' and `follows' section attributes"));
+    }
+
+    if (bsd->vstart.get() != 0 && !bsd->vfollows.empty())
+    {
+        throw Error(
+            N_("cannot combine `vstart' and `vfollows' section attributes"));
+    }
+
+    if (bsd->has_align)
+    {
+        unsigned long align = bsd->align.get_uint();
+
+        // Alignments must be a power of two.
+        if (!is_exp2(align))
+        {
+            throw ValueError(String::compose(
+                N_("argument to `%1' is not a power of two"), "align"));
+        }
+    }
+
+    if (bsd->has_valign)
+    {
+        unsigned long valign = bsd->valign.get_uint();
+
+        // Alignments must be a power of two.
+        if (!is_exp2(valign))
+        {
+            throw ValueError(String::compose(
+                N_("argument to `%1' is not a power of two"), "valign"));
+        }
+    }
+
+    if (!sect)
+    {
+        std::auto_ptr<Section>
+            sectauto(new Section(sectname, bsd->valign.get_uint(), code, bss,
+                                 line));
+        sect = sectauto.get();
+        sect->add_assoc_data(this, bsdauto);
+        m_object->append_section(sectauto);
+    }
+    else if (sect->is_default())
+        sect->set_default(false);
+
+    return sect;
 }
-#endif
+
 void
 BinObject::dir_org(Object& object, const NameValues& namevals,
                    const NameValues& objext_namevals, unsigned long line)
@@ -685,19 +661,19 @@ BinObject::dir_map(Object& object, const NameValues& namevals,
 {
     DirHelpers helpers;
     helpers.add("all", false,
-                BIND::bind(&dir_flag_set, _1, REF::ref(m_map_flags),
+                BIND::bind(&dir_flag_set, _1, &m_map_flags,
                            MAP_BRIEF|MAP_SECTIONS|MAP_SYMBOLS));
     helpers.add("brief", false,
-                BIND::bind(&dir_flag_set, _1, REF::ref(m_map_flags),
+                BIND::bind(&dir_flag_set, _1, &m_map_flags,
                            static_cast<unsigned long>(MAP_BRIEF)));
     helpers.add("sections", false,
-                BIND::bind(&dir_flag_set, _1, REF::ref(m_map_flags),
+                BIND::bind(&dir_flag_set, _1, &m_map_flags,
                            static_cast<unsigned long>(MAP_SECTIONS)));
     helpers.add("segments", false,
-                BIND::bind(&dir_flag_set, _1, REF::ref(m_map_flags),
+                BIND::bind(&dir_flag_set, _1, &m_map_flags,
                            static_cast<unsigned long>(MAP_SECTIONS)));
     helpers.add("symbols", false,
-                BIND::bind(&dir_flag_set, _1, REF::ref(m_map_flags),
+                BIND::bind(&dir_flag_set, _1, &m_map_flags,
                            static_cast<unsigned long>(MAP_SYMBOLS)));
 
     m_map_flags |= MAP_NONE;

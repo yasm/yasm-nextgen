@@ -41,6 +41,7 @@ namespace yasm
 {
 
 class Errwarns;
+class NameValues;
 class Object;
 class Section;
 
@@ -102,18 +103,18 @@ public:
     /// Add a default section to an object.
     /// @return Default section.
     virtual Section* add_default_section() = 0;
-#if 0
-    /// Switch object file sections.  The first val of the valparams should
+
+    /// Switch object file sections.  The first val of the namevals should
     /// be the section name.
     /// @param object               object
-    /// @param valparams            value/parameters
-    /// @param objext_valparams     object format-specific value/parameters
-    /// @param line                 virtual line (from yasm_linemap)
+    /// @param namevals             name/values
+    /// @param objext_namevals      object format-specific name/values
+    /// @param line                 virtual line
     /// @return NULL on error, otherwise new section.
-    virtual Section* section_switch(yasm_valparamhead *valparams,
-         /*@null@*/ yasm_valparamhead *objext_valparams,
-         unsigned long line) = 0;
-#endif
+    virtual Section* section_switch(const NameValues& namevals,
+                                    const NameValues& objext_namevals,
+                                    unsigned long line) = 0;
+
 protected:
     Object* m_object;
 };

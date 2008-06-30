@@ -29,6 +29,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include <memory>
 #include <string>
 
 #include <boost/noncopyable.hpp>
@@ -42,6 +43,7 @@
 namespace yasm
 {
 
+class Expr;
 class IntNum;
 class Object;
 
@@ -125,31 +127,31 @@ private:
     boost::scoped_ptr<Impl> m_impl;
 };
 
-/// Standard helper for DirHelperManager() that simply resets a flag when
+/// Standard helper for DirHelpers() that simply resets a flag when
 /// called.  It does not look at the nv; rather, it uses the value of the
 /// val parameter, and stores it to out.
 /// @param nv       unused
 /// @param out      reference to unsigned long
 /// @param val      value to set
 inline void
-dir_flag_reset(const NameValue& nv, unsigned long& out, unsigned long val)
+dir_flag_reset(const NameValue& nv, unsigned long* out, unsigned long val)
 {
-    out = val;
+    *out = val;
 }
 
-/// Standard helper for DirHelperManager() that simply sets a flag when
+/// Standard helper for DirHelpers() that simply sets a flag when
 /// called.  It does not look at the nv; rather, it uses the value of the
 /// flag parameter, and ORs it with the unsigned long value in out.
 /// @param nv       unused
 /// @param out      reference to unsigned long
 /// @param flag     flag bit(s) to set
 inline void
-dir_flag_set(const NameValue& nv, unsigned long& out, unsigned long flag)
+dir_flag_set(const NameValue& nv, unsigned long* out, unsigned long flag)
 {
-    out |= flag;
+    *out |= flag;
 }
 
-/// Standard helper for DirHelperManager() that simply ANDs a flag when
+/// Standard helper for DirHelpers() that simply ANDs a flag when
 /// called.  It does not look at the nv; rather, it uses the value of the
 /// flag parameter, and ANDs its bitwise inverse with the unsigned long
 /// value in out.
@@ -157,13 +159,13 @@ dir_flag_set(const NameValue& nv, unsigned long& out, unsigned long flag)
 /// @param out      reference to unsigned long
 /// @param flag     flag bit(s) to clear
 inline void
-dir_flag_clear(const NameValue& nv, unsigned long& out, unsigned long flag)
+dir_flag_clear(const NameValue& nv, unsigned long* out, unsigned long flag)
 {
-    out &= ~flag;
+    *out &= ~flag;
 }
 
-/// Standard helper for DirHelperManager() that parses an IntNum value.
-/// When calling DirHelperManager::add(), needsparam should be set to true.
+/// Standard helper for DirHelpers() that parses an IntNum value.
+/// When calling DirHelpers::add(), needsparam should be set to true.
 /// @param nv       name/value
 /// @param obj      object
 /// @param line     virtual line number
@@ -171,21 +173,35 @@ dir_flag_clear(const NameValue& nv, unsigned long& out, unsigned long flag)
 /// @param out_set  reference that is set to 1 when called
 YASM_LIB_EXPORT
 void dir_intn(const NameValue& nv,
-              Object& obj,
+              Object* obj,
               unsigned long line,
-              IntNum& out,
-              bool& out_set);
+              IntNum* out,
+              bool* out_set);
 
-/// Standard helper for DirHelperManager() that parses an string (or
+/// Standard helper for DirHelpers() that parses an IntNum value.
+/// When calling DirHelpers::add(), needsparam should be set to true.
+/// @param nv       name/value
+/// @param obj      object
+/// @param line     virtual line number
+/// @param out      reference to Expr auto_ptr
+/// @param out_set  reference that is set to 1 when called
+YASM_LIB_EXPORT
+void dir_expr(const NameValue& nv,
+              Object* obj,
+              unsigned long line,
+              std::auto_ptr<Expr>* out,
+              bool* out_set);
+
+/// Standard helper for DirHelpers() that parses an string (or
 /// standalone identifier) value.
-/// When calling DirHelperManager::add(), needsparam should be set to true.
+/// When calling DirHelpers::add(), needsparam should be set to true.
 /// @param nv       name/value
 /// @param out      reference to string
 /// @param out_set  reference that is set to 1 when called
 YASM_LIB_EXPORT
-void dir_string(const NameValue& nv, std::string& out, bool& out_set);
+void dir_string(const NameValue& nv, std::string* out, bool* out_set);
 
-/// Standard catch-all callback for DirHelperManager().  Generates standard
+/// Standard catch-all callback for DirHelpers().  Generates standard
 /// warning for all valparams.
 /// @param nv       name/value
 /// @return False
