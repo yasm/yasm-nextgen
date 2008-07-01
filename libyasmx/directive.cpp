@@ -34,6 +34,7 @@
 #include "errwarn.h"
 #include "expr.h"
 #include "intnum.h"
+#include "nocase.h"
 
 
 namespace yasm
@@ -79,13 +80,14 @@ Directives::~Directives()
 void
 Directives::add(const std::string& name, Directive handler, Flags flags)
 {
-    m_impl->m_dirs.insert(std::make_pair(name, Impl::Dir(handler, flags)));
+    m_impl->m_dirs.insert(std::make_pair(String::lowercase(name),
+                                         Impl::Dir(handler, flags)));
 }
 
 Directive
 Directives::operator[] (const std::string& name) const
 {
-    Impl::DirMap::iterator p = m_impl->m_dirs.find(name);
+    Impl::DirMap::iterator p = m_impl->m_dirs.find(String::lowercase(name));
     if (p == m_impl->m_dirs.end())
         throw ValueError(String::compose(N_("unrecognized directive `%1'"),
                                          name));
