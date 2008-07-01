@@ -504,6 +504,7 @@ BinObject::add_default_section()
     Section* section = new Section(".text", 16, true, false, 0);
     m_object->append_section(std::auto_ptr<Section>(section));
     init_new_section(section, 0);
+    section->set_default(true);
     return section;
 }
 
