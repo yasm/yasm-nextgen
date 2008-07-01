@@ -97,9 +97,10 @@ MapOutput::output_intnum(const IntNum& intn)
 {
     intn.get_sized(m_buf, m_bytes, m_bytes*8, 0, false, 0);
     m_os.fill('0');
+    m_os.setf(std::ios::right, std::ios::adjustfield);
     m_os << std::hex;
     for (int i=m_bytes; i != 0; i--)
-        m_os << std::setw(2) << m_buf[i-1];
+        m_os << std::setw(2) << static_cast<unsigned int>(m_buf[i-1]);
     m_os.fill(' ');
     m_os << std::dec;
 }
@@ -123,7 +124,6 @@ MapOutput::output_origin()
     m_os << std::setw(61) << '-';
 
     m_os.fill(' ');
-    m_os.setf(std::ios::left, std::ios::adjustfield);
 
     m_os << "\n\n";
     output_intnum(m_origin);
@@ -153,6 +153,7 @@ MapOutput::inner_sections_summary(const BinGroups& groups)
         output_intnum(bsd.length);
         m_os << "  ";
 
+        m_os.setf(std::ios::left, std::ios::adjustfield);
         m_os << std::setw(10)
              << (group->m_section.is_bss() ? "nobits" : "progbits");
         m_os << group->m_section.get_name() << '\n';
@@ -229,7 +230,6 @@ MapOutput::output_sections_detail()
     m_os << std::setw(56) << '-';
 
     m_os.fill(' ');
-    m_os.setf(std::ios::left, std::ios::adjustfield);
 
     m_os << "\n\n";
     inner_sections_detail(m_groups);
@@ -328,7 +328,6 @@ MapOutput::output_sections_symbols()
     m_os << std::setw(68) << '-';
 
     m_os.fill(' ');
-    m_os.setf(std::ios::left, std::ios::adjustfield);
 
     m_os << "\n\n";
 
