@@ -83,10 +83,7 @@ public:
     void output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* add_default_section();
-
-    Section* section_switch(const NameValues& namevals,
-                            const NameValues& objext_namevals,
-                            unsigned long line);
+    Section* append_section(const std::string& name, unsigned long line);
 
 private:
     void define_section_symbol(Object& object,
@@ -96,6 +93,10 @@ private:
                                BinSymbolData::SpecialSym which,
                                unsigned long line);
     void init_new_section(Section* sect, unsigned long line);
+    void dir_section(Object& object,
+                     const NameValues& namevals,
+                     const NameValues& objext_namevals,
+                     unsigned long line);
     void dir_org(Object& object,
                  const NameValues& namevals,
                  const NameValues& objext_namevals,
@@ -507,39 +508,42 @@ BinObject::add_default_section()
 }
 
 Section*
-BinObject::section_switch(const NameValues& nvs,
-                          const NameValues& objext_nvs,
-                          unsigned long line)
+BinObject::append_section(const std::string& name, unsigned long line)
 {
+    bool bss = (name == ".bss");
+    bool code = (name == ".text");
+    Section* section = new Section(name, 0, code, bss, line);
+    m_object->append_section(std::auto_ptr<Section>(section));
+    init_new_section(section, 0);
+    return section;
+}
+
+void
+BinObject::dir_section(Object& object,
+                       const NameValues& nvs,
+                       const NameValues& objext_nvs,
+                       unsigned long line)
+{
+    assert(&object == m_object);
+
     if (!nvs.front().is_string())
-        return 0;
+        throw Error(N_("section name must be a string"));
     std::string sectname = nvs.front().get_string();
 
     Section* sect = m_object->find_section(sectname);
+    if (!sect)
+        sect = append_section(sectname, line);
 
     bool has_follows = false, has_vfollows = false;
     bool has_start = false, has_vstart = false;
     std::auto_ptr<Expr> start(0);
     std::auto_ptr<Expr> vstart(0);
-    unsigned long bss = 0;
-    unsigned long code = 0;
 
-    std::auto_ptr<AssocData> bsdauto(0);
-    BinSectionData* bsd;
-    if (sect)
-    {
-        bsd = static_cast<BinSectionData*>(sect->get_assoc_data(this));
-        assert(bsd);
-        bss = bsd->bss;
-        code = sect->is_code();
-    }
-    else
-    {
-        bsdauto.reset(new BinSectionData());
-        bsd = static_cast<BinSectionData*>(bsdauto.get());
-        bss = (sectname == ".bss");
-        code = (sectname == ".text");
-    }
+    BinSectionData* bsd =
+        static_cast<BinSectionData*>(sect->get_assoc_data(this));
+    assert(bsd);
+    unsigned long bss = bsd->bss;
+    unsigned long code = sect->is_code();
 
     DirHelpers helpers;
     helpers.add("follows", true,
@@ -613,19 +617,9 @@ BinObject::section_switch(const NameValues& nvs,
         }
     }
 
-    if (!sect)
-    {
-        std::auto_ptr<Section>
-            sectauto(new Section(sectname, bsd->valign.get_uint(), code, bss,
-                                 line));
-        sect = sectauto.get();
-        sect->add_assoc_data(this, bsdauto);
-        m_object->append_section(sectauto);
-    }
-    else if (sect->is_default())
-        sect->set_default(false);
-
-    return sect;
+    sect->set_code(code);
+    sect->set_default(false);
+    m_object->set_cur_section(sect);
 }
 
 void
@@ -694,6 +688,12 @@ BinObject::add_directives(Directives& dirs, const std::string& parser)
 {
     if (!String::nocase_equal(parser, "nasm"))
         return;
+    dirs.add("section",
+             BIND::bind(&BinObject::dir_section, this, _1, _2, _3, _4),
+             Directives::ARG_REQUIRED);
+    dirs.add("segment",
+             BIND::bind(&BinObject::dir_section, this, _1, _2, _3, _4),
+             Directives::ARG_REQUIRED);
     dirs.add("org",
              BIND::bind(&BinObject::dir_org, this, _1, _2, _3, _4),
              Directives::ARG_REQUIRED);

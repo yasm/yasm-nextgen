@@ -104,15 +104,12 @@ public:
     /// @return Default section.
     virtual Section* add_default_section() = 0;
 
-    /// Switch object file sections.  The first val of the namevals should
-    /// be the section name.
-    /// @param object               object
-    /// @param namevals             name/values
-    /// @param objext_namevals      object format-specific name/values
-    /// @param line                 virtual line
-    /// @return NULL on error, otherwise new section.
-    virtual Section* section_switch(const NameValues& namevals,
-                                    const NameValues& objext_namevals,
+    /// Add a section to an object.  Use this function instead of
+    /// Object::append_section() to ensure the object format is aware of the
+    /// section.  As with Object::append_section(), this does not check to see
+    /// if the section already exists; use Object::find_section() first.
+    /// @return New section.
+    virtual Section* append_section(const std::string& name,
                                     unsigned long line) = 0;
 
 protected:
