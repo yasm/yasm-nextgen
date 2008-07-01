@@ -98,6 +98,10 @@ public:
     /// @return True if section is flagged to contain code.
     bool is_code() const { return m_code; }
 
+    /// Set section code flag to a new value.
+    /// @param code     new value of code flag
+    void set_code(bool code = true) { m_code = code; }
+
     /// Determine if a section was declared as the "default" section (e.g.
     /// not created through a section directive).
     /// @param sect     section
