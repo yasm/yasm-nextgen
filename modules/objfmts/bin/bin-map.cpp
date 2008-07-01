@@ -153,7 +153,8 @@ MapOutput::inner_sections_summary(const BinGroups& groups)
         output_intnum(bsd.length);
         m_os << "  ";
 
-        m_os << std::setw(10) << (bsd.bss ? "nobits" : "progbits");
+        m_os << std::setw(10)
+             << (group->m_section.is_bss() ? "nobits" : "progbits");
         m_os << group->m_section.get_name() << '\n';
 
         // Recurse to loop through follow groups
@@ -197,7 +198,8 @@ MapOutput::inner_sections_detail(const BinGroups& groups)
 
         const BinSectionData& bsd = group->m_bsd;
 
-        m_os << "\n\nclass:     " << (bsd.bss ? "nobits" : "progbits");
+        m_os << "\n\nclass:     ";
+        m_os << (group->m_section.is_bss() ? "nobits" : "progbits");
         m_os << "\nlength:    ";
         output_intnum(bsd.length);
         m_os << "\nstart:     ";

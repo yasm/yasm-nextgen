@@ -42,8 +42,7 @@ namespace bin
 {
 
 BinSectionData::BinSectionData()
-    : bss(false),
-      has_align(false),
+    : has_align(false),
       has_valign(false),
       has_istart(false),
       has_ivstart(false),

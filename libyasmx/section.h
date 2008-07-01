@@ -76,15 +76,15 @@ public:
     /// @param align    alignment in bytes (0 if none)
     /// @param code     if true, section is intended to contain code
     ///                 (e.g. alignment should be made with NOP instructions)
-    /// @param res_only if true, only space-reserving bytecodes are allowed
-    ///                 in the section (ignored if section already exists)
+    /// @param bss      if true, section is intended to contain only
+    ///                 uninitialized space
     /// @param isnew    output; set to true if section did not already exist
     /// @param line     virtual line of section declaration (ignored if
     ///                 section already exists)
     Section(const std::string& name,
             unsigned long align,
             bool code,
-            bool res_only,
+            bool bss,
             unsigned long line);
 
     ~Section();
@@ -101,6 +101,14 @@ public:
     /// Set section code flag to a new value.
     /// @param code     new value of code flag
     void set_code(bool code = true) { m_code = code; }
+
+    /// Determine if a section is flagged to only contain uninitialized space.
+    /// @return True if section is flagged to only contain uninitialized space.
+    bool is_bss() const { return m_bss; }
+
+    /// Set uninitialized space flag to a new value.
+    /// @param code     new value of uninitialized space flag
+    void set_bss(bool bss = true) { m_bss = bss; }
 
     /// Determine if a section was declared as the "default" section (e.g.
     /// not created through a section directive).
@@ -154,7 +162,7 @@ private:
     unsigned long m_align;      ///< Section alignment
 
     bool m_code;                ///< section contains code (instructions)
-    bool m_res_only;            ///< allow only resb family of bytecodes?
+    bool m_bss;         ///< section should contain only uninitialized space
 
     /// "Default" section, e.g. not specified by using section directive.
     bool m_def;

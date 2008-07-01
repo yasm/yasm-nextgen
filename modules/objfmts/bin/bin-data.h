@@ -50,8 +50,6 @@ struct BinSectionData : public AssocData
     ~BinSectionData();
     void put(marg_ostream& os) const;
 
-    bool bss;               // aka nobits
-
     // User-provided alignment
     bool has_align, has_valign;
     IntNum align;

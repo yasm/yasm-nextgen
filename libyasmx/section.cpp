@@ -48,12 +48,12 @@ Reloc::~Reloc()
 Section::Section(const std::string& name,
                  unsigned long align,
                  bool code,
-                 bool res_only,
+                 bool bss,
                  unsigned long line)
     : m_name(name),
       m_align(align),
       m_code(code),
-      m_res_only(res_only),
+      m_bss(bss),
       m_def(false),
       m_relocs_owner(m_relocs)
 {
@@ -81,7 +81,7 @@ Section::put(marg_ostream& os, bool with_bcs) const
     os << "name=" << m_name << '\n';
     os << "align=" << m_align << '\n';
     os << "code=" << m_code << '\n';
-    os << "res_only=" << m_res_only << '\n';
+    os << "bss=" << m_bss << '\n';
     os << "default=" << m_def << '\n';
     os << "Associated data:\n";
     ++os;

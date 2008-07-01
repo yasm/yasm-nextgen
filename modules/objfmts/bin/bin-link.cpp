@@ -212,7 +212,7 @@ Link::lma_create_group(Section& section)
 static inline bool
 not_bss(const BinGroup& group)
 {
-    return (group.m_bsd.has_istart || !group.m_bsd.bss);
+    return (group.m_bsd.has_istart || !group.m_section.is_bss());
 }
 
 static inline bool

@@ -264,7 +264,7 @@ Output::output_section(Section& sect, const IntNum& origin, Errwarns& errwarns)
         static_cast<BinSectionData*>(sect.get_assoc_data(m_assoc_key));
     assert(bsd);
 
-    if (bsd->bss)
+    if (sect.is_bss())
     {
         outputter = &m_no_output;
     }
@@ -542,7 +542,7 @@ BinObject::dir_section(Object& object,
     BinSectionData* bsd =
         static_cast<BinSectionData*>(sect->get_assoc_data(this));
     assert(bsd);
-    unsigned long bss = bsd->bss;
+    unsigned long bss = sect->is_bss();
     unsigned long code = sect->is_code();
 
     DirHelpers helpers;
@@ -611,6 +611,7 @@ BinObject::dir_section(Object& object,
         }
     }
 
+    sect->set_bss(bss);
     sect->set_code(code);
     sect->set_default(false);
     m_object->set_cur_section(sect);
