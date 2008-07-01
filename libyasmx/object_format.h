@@ -97,7 +97,8 @@ public:
     ///                     the object file
     /// @param errwarns     error/warning set
     /// @note Errors and warnings are stored into errwarns.
-    virtual void output(std::ostream& os, bool all_syms,
+    virtual void output(std::ostream& os,
+                        bool all_syms,
                         Errwarns& errwarns) = 0;
 
     /// Add a default section to an object.

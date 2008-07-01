@@ -623,8 +623,10 @@ BinObject::dir_section(Object& object,
 }
 
 void
-BinObject::dir_org(Object& object, const NameValues& namevals,
-                   const NameValues& objext_namevals, unsigned long line)
+BinObject::dir_org(Object& object,
+                   const NameValues& namevals,
+                   const NameValues& objext_namevals,
+                   unsigned long line)
 {
     // We only allow a single ORG in a program.
     if (m_org.get() != 0)
@@ -650,8 +652,10 @@ BinObject::map_filename(const NameValue& nv)
 }
 
 void
-BinObject::dir_map(Object& object, const NameValues& namevals,
-                   const NameValues& objext_namevals, unsigned long line)
+BinObject::dir_map(Object& object,
+                   const NameValues& namevals,
+                   const NameValues& objext_namevals,
+                   unsigned long line)
 {
     DirHelpers helpers;
     helpers.add("all", false,
