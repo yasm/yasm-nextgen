@@ -561,18 +561,12 @@ BinObject::dir_section(Object& object,
     helpers.add("valign", true,
                 BIND::bind(&dir_intn, _1, m_object, line, &bsd->valign,
                            &bsd->has_valign));
-    helpers.add("nobits", false,
-                BIND::bind(&dir_flag_set, _1, &bss, 1));
-    helpers.add("progbits", false,
-                BIND::bind(&dir_flag_clear, _1, &bss, 1));
-    helpers.add("code", false,
-                BIND::bind(&dir_flag_set, _1, &code, 1));
-    helpers.add("data", false,
-                BIND::bind(&dir_flag_clear, _1, &code, 1));
-    helpers.add("execute", false,
-                BIND::bind(&dir_flag_set, _1, &code, 1));
-    helpers.add("noexecute", false,
-                BIND::bind(&dir_flag_clear, _1, &code, 1));
+    helpers.add("nobits", false, BIND::bind(&dir_flag_set, _1, &bss, 1));
+    helpers.add("progbits", false, BIND::bind(&dir_flag_clear, _1, &bss, 1));
+    helpers.add("code", false, BIND::bind(&dir_flag_set, _1, &code, 1));
+    helpers.add("data", false, BIND::bind(&dir_flag_clear, _1, &code, 1));
+    helpers.add("execute", false, BIND::bind(&dir_flag_set, _1, &code, 1));
+    helpers.add("noexecute", false, BIND::bind(&dir_flag_clear, _1, &code, 1));
 
     helpers(nvs.begin()+1, nvs.end(), dir_nameval_warn);
 
