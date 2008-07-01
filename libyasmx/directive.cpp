@@ -174,7 +174,7 @@ DirHelpers::operator()
         else if (!nv->get_name().empty())
         {
             Impl::HelperMap::iterator helper =
-                m_impl->m_value_helpers.find(nv->get_id());
+                m_impl->m_value_helpers.find(nv->get_name());
             if (helper != m_impl->m_value_helpers.end())
             {
                 helper->second(*nv);
