@@ -573,7 +573,7 @@ BinObject::dir_section(Object& object,
     if (start.get() != 0)
         bsd->start.reset(start.release());
     if (vstart.get() != 0)
-        bsd->start.reset(vstart.release());
+        bsd->vstart.reset(vstart.release());
 
     if (bsd->start.get() != 0 && !bsd->follows.empty())
     {
