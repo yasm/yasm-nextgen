@@ -175,7 +175,7 @@ DirHelpers::operator()
         {
             Impl::HelperMap::iterator helper =
                 m_impl->m_value_helpers.find(nv->get_id());
-            if (helper != m_impl->m_novalue_helpers.end())
+            if (helper != m_impl->m_value_helpers.end())
             {
                 helper->second(*nv);
                 matched = true;
