@@ -1542,8 +1542,15 @@ BuildGeneral::finish(BytecodeContainer& container,
         m_opcode = X86Opcode(3, opcode); // two prefix bytes and 1 opcode byte
     }
 
-    append_general(container, common, m_opcode, m_x86_ea, imm_val,
-                   m_special_prefix, m_rex, m_postop, m_default_rel);
+    append_general(container,
+                   common,
+                   m_opcode,
+                   m_x86_ea,
+                   imm_val,
+                   m_special_prefix,
+                   m_rex,
+                   m_postop,
+                   m_default_rel);
 }
 
 void
