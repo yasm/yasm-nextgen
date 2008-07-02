@@ -1076,7 +1076,7 @@ BuildGeneral::BuildGeneral(const X86InsnInfo& info,
       m_pdrex((info.drex_oc0 & NEED_DREX_MASK) ? &m_drex : 0),
       m_vexdata(0),
       m_vexreg(0),
-      m_opersize(0),
+      m_opersize(info.opersize),
       m_addrsize(0)
 {
     // Move VEX data (stored in special prefix) to separate location to
