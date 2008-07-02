@@ -951,7 +951,7 @@ X86Insn::do_append(BytecodeContainer& container)
     unsigned int size_lookup[] = {0, 8, 16, 32, 64, 80, 128, 256, 0};
     size_lookup[OPS_BITS] = m_mode_bits;
 
-    if (m_operands.size() > 4)
+    if (m_operands.size() > 5)
         throw TypeError(N_("too many operands"));
 
     // If we're running in GAS mode, look at the first insn_info to see
@@ -1435,6 +1435,49 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
         default:
             throw InternalError(N_("unknown operand postponed action"));
     }
+}
+
+void
+BuildGeneral::apply_segregs(const Insn::SegRegs& segregs)
+{
+    X86EffAddr* x86_ea = m_x86_ea.get();
+    if (x86_ea)
+    {
+        x86_ea->init(m_spare, m_drex,
+                     (m_info.drex_oc0 & NEED_DREX_MASK) != 0);
+        std::for_each(segregs.begin(), segregs.end(),
+                      BIND::bind(&X86EffAddr::set_segreg, x86_ea, _1));
+    }
+    else if (segregs.size() > 0 && m_special_prefix == 0)
+    {
+        if (segregs.size() > 1)
+            warn_set(WARN_GENERAL,
+                     N_("multiple segment overrides, using leftmost"));
+        m_special_prefix =
+            static_cast<const X86SegmentRegister*>(segregs.back())->prefix();
+    }
+    else if (segregs.size() > 0)
+        throw InternalError(N_("unhandled segment prefix"));
+}
+
+void
+BuildGeneral::finish(BytecodeContainer& container,
+                     const Insn::Prefixes& prefixes)
+{
+    std::auto_ptr<Value> imm_val(0);
+
+    if (m_imm.get() != 0)
+    {
+        imm_val.reset(new Value(m_im_len, m_imm));
+        imm_val->m_sign = m_im_sign;
+    }
+
+    X86Common common;
+    common.m_addrsize = m_addrsize;
+    common.m_opersize = m_opersize;
+    common.m_mode_bits = m_mode_bits;
+    common.apply_prefixes(m_def_opersize_64, prefixes, &m_rex);
+    common.finish();
 
     // Convert to VEX prefixes if requested.
     // To save space in the insn structure, the VEX prefix is written into
@@ -1498,49 +1541,6 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
         m_special_prefix = 0xC4;    // VEX prefix
         m_opcode = X86Opcode(3, opcode); // two prefix bytes and 1 opcode byte
     }
-}
-
-void
-BuildGeneral::apply_segregs(const Insn::SegRegs& segregs)
-{
-    X86EffAddr* x86_ea = m_x86_ea.get();
-    if (x86_ea)
-    {
-        x86_ea->init(m_spare, m_drex,
-                     (m_info.drex_oc0 & NEED_DREX_MASK) != 0);
-        std::for_each(segregs.begin(), segregs.end(),
-                      BIND::bind(&X86EffAddr::set_segreg, x86_ea, _1));
-    }
-    else if (segregs.size() > 0 && m_special_prefix == 0)
-    {
-        if (segregs.size() > 1)
-            warn_set(WARN_GENERAL,
-                     N_("multiple segment overrides, using leftmost"));
-        m_special_prefix =
-            static_cast<const X86SegmentRegister*>(segregs.back())->prefix();
-    }
-    else if (segregs.size() > 0)
-        throw InternalError(N_("unhandled segment prefix"));
-}
-
-void
-BuildGeneral::finish(BytecodeContainer& container,
-                     const Insn::Prefixes& prefixes)
-{
-    std::auto_ptr<Value> imm_val(0);
-
-    if (m_imm.get() != 0)
-    {
-        imm_val.reset(new Value(m_im_len, m_imm));
-        imm_val->m_sign = m_im_sign;
-    }
-
-    X86Common common;
-    common.m_addrsize = m_addrsize;
-    common.m_opersize = m_opersize;
-    common.m_mode_bits = m_mode_bits;
-    common.apply_prefixes(m_def_opersize_64, prefixes, &m_rex);
-    common.finish();
 
     append_general(container, common, m_opcode, m_x86_ea, imm_val,
                    m_special_prefix, m_rex, m_postop, m_default_rel);
