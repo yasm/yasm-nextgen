@@ -921,10 +921,13 @@ X86EffAddr::check_3264(unsigned int addrsize,
     {
         // Just a disp32: in 64-bit mode the RM encoding is used for RIP
         // offset addressing, so we need to use the SIB form instead.
-        if (bits == 64) {
+        if (bits == 64)
+        {
             m_modrm |= 4;
             m_need_sib = 1;
-        } else {
+        }
+        else
+        {
             m_modrm |= 5;
             m_sib = 0;
             m_valid_sib = false;
@@ -954,7 +957,8 @@ X86EffAddr::check_3264(unsigned int addrsize,
         // we don't need an SIB *unless* basereg is ESP or R12
         if (basereg == REG3264_ESP || basereg == REG64_R12)
             m_need_sib = 1;
-        else {
+        else
+        {
             m_sib = 0;
             m_valid_sib = false;
             m_need_sib = 0;
