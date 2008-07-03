@@ -515,7 +515,7 @@ BinObject::append_section(const std::string& name, unsigned long line)
     bool code = (name == ".text");
     Section* section = new Section(name, 0, code, bss, line);
     m_object->append_section(std::auto_ptr<Section>(section));
-    init_new_section(section, 0);
+    init_new_section(section, line);
     return section;
 }
 
