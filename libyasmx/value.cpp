@@ -141,6 +141,26 @@ Value::~Value()
 }
 
 void
+Value::swap(Value& oth)
+{
+    // Have to use hybrid approach of zeroing what would otherwise be cloned,
+    // and then doing copy-construct/assignment "swap", as we can't std::swap
+    // individual bitfield members.
+    Expr* othabs = oth.m_abs;
+    Expr* myabs = m_abs;
+    oth.m_abs = 0;
+    m_abs = 0;
+
+    // std::swap(*this, oth);
+    Value tmpv = oth;
+    oth = *this;
+    *this = tmpv;
+
+    oth.m_abs = myabs;
+    m_abs = othabs;
+}
+
+void
 Value::clear()
 {
     delete m_abs;

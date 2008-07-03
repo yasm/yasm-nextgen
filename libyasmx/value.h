@@ -80,6 +80,10 @@ public:
     /// Destructor.
     ~Value();
 
+    /// Exchanges this value with another value.
+    /// @param oth      other value
+    void swap(Value& oth);
+
     /// Clear the value.  This is needed as values are commonly stored by
     /// value in other objects.
     void clear();
@@ -232,6 +236,13 @@ public:
 /// @param value        value
 YASM_LIB_EXPORT
 marg_ostream& operator<< (marg_ostream& os, const Value& value);
+
+/// Specialized swap for algorithms.
+inline void
+swap(Value& left, Value& right)
+{
+    left.swap(right);
+}
 
 } // namespace yasm
 
