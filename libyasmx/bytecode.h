@@ -399,6 +399,7 @@ public:
     const Bytes& get_fixed() const { return m_fixed; }
 
     void append_fixed(const Value& val);
+    void append_fixed(std::auto_ptr<Value> val);
     void append_fixed(unsigned int size, std::auto_ptr<Expr> e);
 private:
     /// Fixed data that comes before the possibly dynamic length data generated
@@ -412,12 +413,19 @@ private:
     {
     public:
         Fixup(unsigned int off, const Value& val, unsigned long line);
+        Fixup(unsigned int off, std::auto_ptr<Value> val, unsigned long line);
+        Fixup(unsigned int off,
+              unsigned int size,
+              std::auto_ptr<Expr> e,
+              unsigned long line);
+        void swap(Fixup& oth);
         unsigned long get_line() const { return m_line; }
         unsigned int get_off() const { return m_off; }
     private:
         unsigned long m_line;
         unsigned int m_off;
     };
+    friend void swap(Fixup& left, Fixup& right);
 
     std::vector<Fixup> m_fixed_fixups;
 
@@ -453,6 +461,12 @@ operator<< (marg_ostream& os, const Bytecode::Contents& contents)
 
 YASM_LIB_EXPORT
 marg_ostream& operator<< (marg_ostream &os, const Bytecode& bc);
+
+inline void
+swap(Bytecode::Fixup& left, Bytecode::Fixup& right)
+{
+    left.swap(right);
+}
 
 } // namespace yasm
 
