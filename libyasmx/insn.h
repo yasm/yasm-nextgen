@@ -2,7 +2,7 @@
 #define YASM_INSN_H
 ///
 /// @file
-/// @brief YASM mnenomic instruction.
+/// @brief Mnenomic instructions interface.
 ///
 /// @license
 ///  Copyright (C) 2002-2007  Peter Johnson

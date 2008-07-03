@@ -2,7 +2,7 @@
 #define YASM_EXPR_UTIL_H
 ///
 /// @file
-/// @brief YASM expression utilities.
+/// @brief Expression utilities.
 ///
 /// @license
 ///  Copyright (C) 2001-2007  Michael Urman, Peter Johnson

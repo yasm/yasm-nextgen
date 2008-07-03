@@ -2,7 +2,7 @@
 #define YASM_REGISTRY_H
 ///
 /// @file
-/// @brief YASM module registry interface.
+/// @brief Module registry interface.
 ///
 /// @license
 ///  Copyright (C) 2007  Peter Johnson

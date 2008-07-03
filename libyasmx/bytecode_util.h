@@ -2,7 +2,7 @@
 #define YASM_BYTECODE_UTIL_H
 ///
 /// @file
-/// @brief YASM bytecode utility functions.
+/// @brief Bytecode utility functions.
 ///
 /// @license
 ///  Copyright (C) 2001-2008  Peter Johnson

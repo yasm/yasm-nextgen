@@ -2,7 +2,7 @@
 #define YASM_ASSOC_DATA_H
 ///
 /// @file
-/// @brief YASM associated data interface.
+/// @brief Associated data interface.
 ///
 /// @license
 ///  Copyright (C) 2007  Peter Johnson

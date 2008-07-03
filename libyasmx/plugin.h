@@ -2,7 +2,7 @@
 #define YASM_PLUGIN_H
 ///
 /// @file
-/// @brief YASM plugin loader interface.
+/// @brief Plugin loader interface.
 ///
 /// @license
 ///  Copyright (C) 2008  Peter Johnson

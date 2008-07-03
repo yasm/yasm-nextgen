@@ -2,7 +2,7 @@
 #define YASM_PARSER_H
 ///
 /// @file
-/// @brief YASM parser interface.
+/// @brief Parser interface.
 ///
 /// @license
 ///  Copyright (C) 2001-2007  Peter Johnson

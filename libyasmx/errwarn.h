@@ -2,7 +2,7 @@
 #define YASM_ERRWARN_H
 ///
 /// @file
-/// @brief YASM error and warning reporting interface.
+/// @brief Error and warning reporting interface.
 ///
 /// @license
 ///  Copyright (C) 2001-2007  Peter Johnson

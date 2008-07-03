@@ -2,7 +2,7 @@
 #define YASM_MODULE_H
 ///
 /// @file
-/// @brief YASM base module interface.
+/// @brief Base module interface.
 ///
 /// @license
 ///  Copyright (C) 2007  Peter Johnson

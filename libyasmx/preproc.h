@@ -2,7 +2,7 @@
 #define YASM_PREPROC_H
 ///
 /// @file
-/// @brief YASM preprocessor interface.
+/// @brief Preprocessor interface.
 ///
 /// @license
 ///  Copyright (C) 2001-2007  Peter Johnson

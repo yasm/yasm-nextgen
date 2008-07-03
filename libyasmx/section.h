@@ -2,7 +2,7 @@
 #define YASM_SECTION_H
 ///
 /// @file
-/// @brief YASM section interface.
+/// @brief Section interface.
 ///
 /// @license
 ///  Copyright (C) 2001-2007  Peter Johnson

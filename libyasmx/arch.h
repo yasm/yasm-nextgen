@@ -2,7 +2,7 @@
 #define YASM_ARCH_H
 ///
 /// @file
-/// @brief YASM architecture interface.
+/// @brief Architecture interface.
 ///
 /// @license
 ///  Copyright (C) 2002-2007  Peter Johnson

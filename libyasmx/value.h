@@ -2,7 +2,7 @@
 #define YASM_VALUE_H
 ///
 /// @file
-/// @brief YASM value interface.
+/// @brief Value interface.
 ///
 /// @license
 ///  Copyright (C) 2006-2007  Peter Johnson

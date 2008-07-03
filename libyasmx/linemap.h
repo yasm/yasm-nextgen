@@ -2,7 +2,7 @@
 #define YASM_LINEMAP_H
 ///
 /// @file
-/// @brief YASM virtual line mapping interface.
+/// @brief Virtual line mapping interface.
 ///
 /// @license
 ///  Copyright (C) 2002-2007  Peter Johnson

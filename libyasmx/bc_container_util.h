@@ -2,7 +2,7 @@
 #define YASM_BC_CONTAINER_UTIL_H
 ///
 /// @file
-/// @brief YASM bytecode container utility functions.
+/// @brief Bytecode container utility functions.
 ///
 /// @license
 ///  Copyright (C) 2001-2007  Peter Johnson

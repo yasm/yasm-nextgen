@@ -2,7 +2,7 @@
 #define YASM_BYTES_H
 ///
 /// @file
-/// @brief YASM bytes interface.
+/// @brief Bytes interface.
 ///
 /// @license
 ///  Copyright (C) 2007  Peter Johnson

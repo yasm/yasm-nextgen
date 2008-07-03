@@ -2,7 +2,7 @@
 #define YASM_DEBUG_FORMAT_H
 ///
 /// @file
-/// @brief YASM debug format interface.
+/// @brief Debug format interface.
 ///
 /// @license
 ///  Copyright (C) 2002-2007  Peter Johnson

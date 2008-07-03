@@ -2,7 +2,7 @@
 #define YASM_OBJECT_H
 ///
 /// @file
-/// @brief YASM object interface.
+/// @brief Object interface.
 ///
 /// @license
 ///  Copyright (C) 2001-2007  Peter Johnson

@@ -2,7 +2,7 @@
 #define YASM_FILE_H
 ///
 /// @file
-/// @brief YASM file helpers.
+/// @brief File helpers.
 ///
 /// @license
 ///  Copyright (C) 2001-2007  Peter Johnson

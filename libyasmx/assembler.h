@@ -2,7 +2,7 @@
 #define YASM_ASSEMBLER_H
 ///
 /// @file
-/// @brief YASM assembler interface.
+/// @brief Assembler interface.
 ///
 /// @license
 ///  Copyright (C) 2001-2007  Peter Johnson

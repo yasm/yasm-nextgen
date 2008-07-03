@@ -2,7 +2,7 @@
 #define YASM_FLOATNUM_H
 ///
 /// @file
-/// @brief YASM floating point (IEEE) interface.
+/// @brief Floating point (IEEE) interface.
 ///
 /// @license
 ///  Copyright (C) 2001-2007  Peter Johnson

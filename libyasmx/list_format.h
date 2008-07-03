@@ -2,7 +2,7 @@
 #define YASM_LIST_FORMAT_H
 ///
 /// @file
-/// @brief YASM list format interface.
+/// @brief List format interface.
 ///
 /// @license
 ///  Copyright (C) 2004-2007  Peter Johnson

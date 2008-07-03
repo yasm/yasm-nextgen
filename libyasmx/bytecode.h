@@ -2,7 +2,7 @@
 #define YASM_BYTECODE_H
 ///
 /// @file
-/// @brief YASM bytecode interface.
+/// @brief Bytecode interface.
 ///
 /// @license
 ///  Copyright (C) 2001-2007  Peter Johnson

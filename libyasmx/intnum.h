@@ -2,7 +2,7 @@
 #define YASM_INTNUM_H
 ///
 /// @file
-/// @brief YASM integer number interface.
+/// @brief Big integer number interface.
 ///
 /// @license
 ///  Copyright (C) 2001-2007  Peter Johnson

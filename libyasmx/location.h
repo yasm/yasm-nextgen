@@ -2,7 +2,7 @@
 #define YASM_LOCATION_H
 ///
 /// @file
-/// @brief YASM location interface.
+/// @brief Location interface.
 ///
 /// @license
 ///  Copyright (C) 2007  Peter Johnson

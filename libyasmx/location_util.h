@@ -2,7 +2,7 @@
 #define YASM_LOCATION_UTIL_H
 ///
 /// @file
-/// @brief YASM location utility functions.
+/// @brief Location utility functions.
 ///
 /// @license
 ///  Copyright (C) 2007  Peter Johnson

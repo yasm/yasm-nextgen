@@ -2,7 +2,7 @@
 #define YASM_BC_CONTAINER_H
 ///
 /// @file
-/// @brief YASM bytecode container interface.
+/// @brief Bytecode container interface.
 ///
 /// @license
 ///  Copyright (C) 2001-2007  Peter Johnson

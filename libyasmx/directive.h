@@ -2,7 +2,7 @@
 #define YASM_DIRECTIVE_H
 ///
 /// @file
-/// @brief YASM directive interface.
+/// @brief Directive interface.
 ///
 /// @license
 ///  Copyright (C) 2001-2007  Peter Johnson

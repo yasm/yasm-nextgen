@@ -2,7 +2,7 @@
 #define YASM_SYMBOL_H
 ///
 /// @file
-/// @brief YASM symbol interface.
+/// @brief Symbol interface.
 ///
 /// @license
 ///  Copyright (C) 2001-2007  Michael Urman, Peter Johnson

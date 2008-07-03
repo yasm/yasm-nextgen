@@ -2,7 +2,7 @@
 #define YASM_OPERATOR_H
 ///
 /// @file
-/// @brief YASM expression operators.
+/// @brief Expression operators.
 ///
 /// @license
 ///  Copyright (C) 2007  Peter Johnson

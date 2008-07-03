@@ -2,7 +2,7 @@
 #define YASM_EFFADDR_H
 ///
 /// @file
-/// @brief YASM effective address.
+/// @brief Effective address interface.
 ///
 /// @license
 ///  Copyright (C) 2007  Peter Johnson

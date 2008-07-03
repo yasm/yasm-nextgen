@@ -2,7 +2,7 @@
 #define YASM_OBJECT_FORMAT_H
 ///
 /// @file
-/// @brief YASM object format module interface.
+/// @brief Object format module interface.
 ///
 /// @license
 ///  Copyright (C) 2001-2007  Peter Johnson
