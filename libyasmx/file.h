@@ -1,7 +1,7 @@
 #ifndef YASM_FILE_H
 #define YASM_FILE_H
 ///
-/// @file libyasm/file.h
+/// @file
 /// @brief YASM file helpers.
 ///
 /// @license

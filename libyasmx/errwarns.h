@@ -1,7 +1,7 @@
 #ifndef YASM_ERRWARNS_H
 #define YASM_ERRWARNS_H
 ///
-/// @file libyasm/errwarns.h
+/// @file
 /// @brief YASM error and warning set interface.
 ///
 /// @license

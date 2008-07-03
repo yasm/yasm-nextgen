@@ -1,7 +1,7 @@
 #ifndef YASM_COMPOSE_H
 #define YASM_COMPOSE_H
 ///
-/// @file libyasm/compose.h
+/// @file
 /// @brief String composition.
 ///
 /// @license

@@ -1,7 +1,7 @@
 #ifndef YASM_INSN_H
 #define YASM_INSN_H
 ///
-/// @file libyasm/insn.h
+/// @file
 /// @brief YASM mnenomic instruction.
 ///
 /// @license

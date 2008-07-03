@@ -1,7 +1,7 @@
 #ifndef YASM_ARCH_H
 #define YASM_ARCH_H
 ///
-/// @file libyasm/arch.h
+/// @file
 /// @brief YASM architecture interface.
 ///
 /// @license

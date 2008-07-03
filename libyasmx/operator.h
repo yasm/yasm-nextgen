@@ -1,7 +1,7 @@
 #ifndef YASM_OPERATOR_H
 #define YASM_OPERATOR_H
 ///
-/// @file libyasm/operator.h
+/// @file
 /// @brief YASM expression operators.
 ///
 /// @license

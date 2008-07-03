@@ -1,7 +1,7 @@
 #ifndef YASM_NAME_VALUE_H
 #define YASM_NAME_VALUE_H
 ///
-/// @file libyasm/name_value.h
+/// @file
 /// @brief YASM name/value interface.
 ///
 /// @license

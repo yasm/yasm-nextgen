@@ -1,7 +1,7 @@
 #ifndef YASM_SYMBOL_H
 #define YASM_SYMBOL_H
 ///
-/// @file libyasm/symbol.h
+/// @file
 /// @brief YASM symbol interface.
 ///
 /// @license

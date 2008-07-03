@@ -1,7 +1,7 @@
 #ifndef YASM_PREPROC_H
 #define YASM_PREPROC_H
 ///
-/// @file libyasm/preproc.h
+/// @file
 /// @brief YASM preprocessor interface.
 ///
 /// @license

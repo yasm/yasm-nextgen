@@ -1,7 +1,7 @@
 #ifndef YASM_LIST_FORMAT_H
 #define YASM_LIST_FORMAT_H
 ///
-/// @file libyasm/listfmt.h
+/// @file
 /// @brief YASM list format interface.
 ///
 /// @license

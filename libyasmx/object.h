@@ -1,7 +1,7 @@
 #ifndef YASM_OBJECT_H
 #define YASM_OBJECT_H
 ///
-/// @file libyasm/object.h
+/// @file
 /// @brief YASM object interface.
 ///
 /// @license

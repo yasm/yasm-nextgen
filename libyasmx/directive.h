@@ -1,7 +1,7 @@
 #ifndef YASM_DIRECTIVE_H
 #define YASM_DIRECTIVE_H
 ///
-/// @file libyasm/directive.h
+/// @file
 /// @brief YASM directive interface.
 ///
 /// @license

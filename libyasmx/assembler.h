@@ -1,7 +1,7 @@
 #ifndef YASM_ASSEMBLER_H
 #define YASM_ASSEMBLER_H
 ///
-/// @file libyasm/assembler.h
+/// @file
 /// @brief YASM assembler interface.
 ///
 /// @license

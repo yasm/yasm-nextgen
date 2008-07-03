@@ -1,7 +1,7 @@
 #ifndef YASM_BYTES_H
 #define YASM_BYTES_H
 ///
-/// @file libyasm/bytes.h
+/// @file
 /// @brief YASM bytes interface.
 ///
 /// @license

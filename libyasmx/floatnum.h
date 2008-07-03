@@ -1,7 +1,7 @@
 #ifndef YASM_FLOATNUM_H
 #define YASM_FLOATNUM_H
 ///
-/// @file libyasm/floatnum.h
+/// @file
 /// @brief YASM floating point (IEEE) interface.
 ///
 /// @license

@@ -1,7 +1,7 @@
 #ifndef YASM_BYTECODE_UTIL_H
 #define YASM_BYTECODE_UTIL_H
 ///
-/// @file libyasm/bytecode_util.h
+/// @file
 /// @brief YASM bytecode utility functions.
 ///
 /// @license

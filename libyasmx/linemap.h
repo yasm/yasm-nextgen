@@ -1,7 +1,7 @@
 #ifndef YASM_LINEMAP_H
 #define YASM_LINEMAP_H
 ///
-/// @file libyasm/linemap.h
+/// @file
 /// @brief YASM virtual line mapping interface.
 ///
 /// @license

@@ -1,7 +1,7 @@
 #ifndef YASM_BITCOUNT_H
 #define YASM_BITCOUNT_H
 ///
-/// @file libyasm/bitcount.h
+/// @file
 /// @brief Bit-counting utility functions.
 ///
 /// @license

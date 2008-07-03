@@ -1,7 +1,7 @@
 #ifndef YASM_REGISTRY_H
 #define YASM_REGISTRY_H
 ///
-/// @file libyasm/registry.h
+/// @file
 /// @brief YASM module registry interface.
 ///
 /// @license

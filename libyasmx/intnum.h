@@ -1,7 +1,7 @@
 #ifndef YASM_INTNUM_H
 #define YASM_INTNUM_H
 ///
-/// @file libyasm/intnum.h
+/// @file
 /// @brief YASM integer number interface.
 ///
 /// @license

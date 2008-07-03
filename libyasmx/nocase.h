@@ -1,7 +1,7 @@
 #ifndef YASM_NOCASE_H
 #define YASM_NOCASE_H
 ///
-/// @file libyasm/nocase.h
+/// @file
 /// @brief Case-insensitive string functions.
 ///
 /// @license

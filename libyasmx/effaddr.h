@@ -1,7 +1,7 @@
 #ifndef YASM_EFFADDR_H
 #define YASM_EFFADDR_H
 ///
-/// @file libyasm/effaddr.h
+/// @file
 /// @brief YASM effective address.
 ///
 /// @license

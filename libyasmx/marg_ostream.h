@@ -1,7 +1,7 @@
 #ifndef YASM_MARG_OSTREAM_H
 #define YASM_MARG_OSTREAM_H
 ///
-/// @file libyasm/marg_ostream.h
+/// @file
 /// @brief Output stream with indentation support.
 ///
 /// @license

@@ -1,7 +1,7 @@
 #ifndef YASM_LOCATION_H
 #define YASM_LOCATION_H
 ///
-/// @file libyasm/location.h
+/// @file
 /// @brief YASM location interface.
 ///
 /// @license

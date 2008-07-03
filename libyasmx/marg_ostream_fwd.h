@@ -1,7 +1,7 @@
 #ifndef YASM_MARG_OSTREAM_FWD_H
 #define YASM_MARG_OSTREAM_FWD_H
 ///
-/// @file libyasm/marg_ostream_fwd.h
+/// @file
 /// @brief Forward definitions for marg_ostream.
 ///
 /// @license

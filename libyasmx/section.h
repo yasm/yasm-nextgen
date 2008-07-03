@@ -1,7 +1,7 @@
 #ifndef YASM_SECTION_H
 #define YASM_SECTION_H
 ///
-/// @file libyasm/section.h
+/// @file
 /// @brief YASM section interface.
 ///
 /// @license

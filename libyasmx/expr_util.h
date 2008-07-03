@@ -1,7 +1,7 @@
 #ifndef YASM_EXPR_UTIL_H
 #define YASM_EXPR_UTIL_H
 ///
-/// @file libyasm/expr.h
+/// @file
 /// @brief YASM expression utilities.
 ///
 /// @license

@@ -1,7 +1,7 @@
 #ifndef YASM_BC_CONTAINER_UTIL_H
 #define YASM_BC_CONTAINER_UTIL_H
 ///
-/// @file libyasm/bc_container_util.h
+/// @file
 /// @brief YASM bytecode container utility functions.
 ///
 /// @license

@@ -1,7 +1,7 @@
 #ifndef YASM_HAMT_H
 #define YASM_HAMT_H
 ///
-/// @file libyasm/hamt.h
+/// @file
 /// @brief Hash Array Mapped Trie (HAMT) implementation.
 ///
 /// @license

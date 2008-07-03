@@ -1,7 +1,7 @@
 #ifndef YASM_ASSOC_DATA_H
 #define YASM_ASSOC_DATA_H
 ///
-/// @file libyasm/assoc_data.h
+/// @file
 /// @brief YASM associated data interface.
 ///
 /// @license

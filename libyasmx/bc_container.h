@@ -1,7 +1,7 @@
 #ifndef YASM_BC_CONTAINER_H
 #define YASM_BC_CONTAINER_H
 ///
-/// @file libyasm/bc_container.h
+/// @file
 /// @brief YASM bytecode container interface.
 ///
 /// @license

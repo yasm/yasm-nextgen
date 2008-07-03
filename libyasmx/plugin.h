@@ -1,7 +1,7 @@
 #ifndef YASM_PLUGIN_H
 #define YASM_PLUGIN_H
 ///
-/// @file libyasm/plugin.h
+/// @file
 /// @brief YASM plugin loader interface.
 ///
 /// @license

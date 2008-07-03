@@ -1,7 +1,7 @@
 #ifndef YASM_DEBUG_FORMAT_H
 #define YASM_DEBUG_FORMAT_H
 ///
-/// @file libyasm/debug_format.h
+/// @file
 /// @brief YASM debug format interface.
 ///
 /// @license

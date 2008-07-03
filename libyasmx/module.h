@@ -1,7 +1,7 @@
 #ifndef YASM_MODULE_H
 #define YASM_MODULE_H
 ///
-/// @file libyasm/module.h
+/// @file
 /// @brief YASM base module interface.
 ///
 /// @license

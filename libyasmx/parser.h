@@ -1,7 +1,7 @@
 #ifndef YASM_PARSER_H
 #define YASM_PARSER_H
 ///
-/// @file libyasm/parser.h
+/// @file
 /// @brief YASM parser interface.
 ///
 /// @license
