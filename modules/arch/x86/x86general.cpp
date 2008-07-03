@@ -542,7 +542,7 @@ append_general(BytecodeContainer& container,
         Bytes& bytes = bc.get_fixed();
         general_tobytes(bytes, common, opcode, ea.get(), special_prefix, rex);
         if (imm.get() != 0)
-            bc.append_fixed(*imm);
+            bc.append_fixed(imm);
         return;
     }
 
