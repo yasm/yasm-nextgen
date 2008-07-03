@@ -252,6 +252,28 @@ X86General::finalize(Bytecode& bc)
     }
 }
 
+// See if we can optimize a VEX prefix of three byte form into two byte form.
+inline void
+vex_optimize(X86Opcode& opcode,
+             unsigned char& special_prefix,
+             unsigned char rex)
+{
+    // Don't do anything if we don't have a 3-byte VEX prefix
+    if (special_prefix != 0xC4)
+        return;
+
+    // See if we can shorten the VEX prefix to its two byte form.
+    // In order to do this, REX.X, REX.B, and REX.W/VEX.W must all be 0,
+    // and the VEX mmmmm field must be 1.
+    if ((opcode.get(0) & 0x1F) == 1 &&
+        (opcode.get(1) & 0x80) == 0 &&
+        (rex == 0xff || (rex & 0x0B) == 0))
+    {
+        opcode.make_alt_2();
+        special_prefix = 0xC5;      // mark as two-byte VEX
+    }
+}
+
 unsigned long
 X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 {
@@ -332,20 +354,9 @@ X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
     // three byte form, so we need to see if we can optimize to the two byte
     // form.  We can't do it earlier, as we don't know all of the REX byte
     // until now.
-    if (m_special_prefix == 0xC4)
-    {
-        // See if we can shorten the VEX prefix to its two byte form.
-        // In order to do this, REX.X, REX.B, and REX.W/VEX.W must all be 0,
-        // and the VEX mmmmm field must be 1.
-        if ((m_opcode.get(0) & 0x1F) == 1 &&
-            (m_opcode.get(1) & 0x80) == 0 &&
-            (m_rex == 0xff || (m_rex & 0x0B) == 0))
-        {
-            m_opcode.make_alt_2();
-            m_special_prefix = 0xC5;    // mark as two-byte VEX
-        }
-    }
-    else if (m_rex != 0xff && m_rex != 0 && m_special_prefix != 0xC5)
+    vex_optimize(m_opcode, m_special_prefix, m_rex);
+    if (m_rex != 0xff && m_rex != 0 &&
+        m_special_prefix != 0xC5 && m_special_prefix != 0xC4)
         len++;
 
     len += m_opcode.get_len();
@@ -390,45 +401,59 @@ X86General::expand(Bytecode& bc, unsigned long& len, int span,
 }
 
 void
+general_tobytes(Bytes& bytes,
+                const X86Common& common,
+                X86Opcode opcode,
+                const X86EffAddr* ea,
+                unsigned char special_prefix,
+                unsigned char rex)
+{
+    vex_optimize(opcode, special_prefix, rex);
+
+    // Prefixes
+    common.to_bytes(bytes,
+        ea != 0 ? static_cast<const X86SegmentRegister*>(ea->m_segreg) : 0);
+    if (special_prefix != 0)
+        bytes.write_8(special_prefix);
+    if (special_prefix == 0xC4)
+    {
+        // 3-byte VEX; merge in 1s complement of REX.R, REX.X, REX.B
+        opcode.mask(0, 0x1F);
+        if (rex != 0xff)
+            opcode.merge(0, ((~rex) & 0x07) << 5);
+        // merge REX.W via ORing; there should never be a case in which REX.W
+        // is important when VEX.W is already set by the instruction.
+        if (rex != 0xff && (rex & 0x8) != 0)
+            opcode.merge(1, 0x80);
+    }
+    else if (special_prefix == 0xC5)
+    {
+        // 2-byte VEX; merge in 1s complement of REX.R
+        opcode.mask(0, 0x7F);
+        if (rex != 0xff && (rex & 0x4) == 0)
+            opcode.merge(0, 0x80);
+        // No other REX bits should be set
+        if (rex != 0xff && (rex & 0xB) != 0)
+            throw InternalError(N_("x86: REX.WXB set, but 2-byte VEX"));
+    }
+    else if (rex != 0xff && rex != 0)
+    {
+        if (common.m_mode_bits != 64)
+            throw InternalError(N_("x86: got a REX prefix in non-64-bit mode"));
+        bytes.write_8(rex);
+    }
+
+    // Opcode
+    opcode.to_bytes(bytes);
+}
+
+void
 X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     Bytes& bytes = bc_out.get_scratch();
 
-    // Prefixes
-    m_common.to_bytes(bytes,
-        m_ea != 0 ? static_cast<const X86SegmentRegister*>(m_ea->m_segreg) : 0);
-    if (m_special_prefix != 0)
-        bytes.write_8(m_special_prefix);
-    if (m_special_prefix == 0xC4)
-    {
-        // 3-byte VEX; merge in 1s complement of REX.R, REX.X, REX.B
-        m_opcode.mask(0, 0x1F);
-        if (m_rex != 0xff)
-            m_opcode.merge(0, ((~m_rex) & 0x07) << 5);
-        // merge REX.W via ORing; there should never be a case in which REX.W
-        // is important when VEX.W is already set by the instruction.
-        if (m_rex != 0xff && (m_rex & 0x8) != 0)
-            m_opcode.merge(1, 0x80);
-    }
-    else if (m_special_prefix == 0xC5)
-    {
-        // 2-byte VEX; merge in 1s complement of REX.R
-        m_opcode.mask(0, 0x7F);
-        if (m_rex != 0xff && (m_rex & 0x4) == 0)
-            m_opcode.merge(0, 0x80);
-        // No other REX bits should be set
-        if (m_rex != 0xff && (m_rex & 0xB) != 0)
-            throw InternalError(N_("x86: REX.WXB set, but 2-byte VEX"));
-    }
-    else if (m_rex != 0xff && m_rex != 0)
-    {
-        if (m_common.m_mode_bits != 64)
-            throw InternalError(N_("x86: got a REX prefix in non-64-bit mode"));
-        bytes.write_8(m_rex);
-    }
-
-    // Opcode
-    m_opcode.to_bytes(bytes);
+    general_tobytes(bytes, m_common, m_opcode, m_ea.get(), m_special_prefix,
+                    m_rex);
 
     // Effective address: ModR/M (if required), SIB (if required)
     if (m_ea != 0)
@@ -511,14 +536,19 @@ append_general(BytecodeContainer& container,
 {
     Bytecode& bc = container.fresh_bytecode();
 
-    /// TODO: optimize other cases when the value is just an integer
-    //if (postop != POSTOP_NONE)
-    //{
-        bc.transform(Bytecode::Contents::Ptr(new X86General(
-            common, opcode, ea, imm, special_prefix, rex, postop,
-            default_rel)));
-    //    return;
-    //}
+    // if no postop and no effective address, output the fixed contents
+    if (postop == POSTOP_NONE && ea.get() == 0)
+    {
+        Bytes& bytes = bc.get_fixed();
+        general_tobytes(bytes, common, opcode, ea.get(), special_prefix, rex);
+        if (imm.get() != 0)
+            bc.append_fixed(*imm);
+        return;
+    }
+
+    // TODO: optimize EA case
+    bc.transform(Bytecode::Contents::Ptr(new X86General(
+        common, opcode, ea, imm, special_prefix, rex, postop, default_rel)));
 }
 
 }}} // namespace yasm::arch::x86
