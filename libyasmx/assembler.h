@@ -37,7 +37,8 @@
 
 #include "export.h"
 
-
+/// Namespace for classes, functions, and templates related to the Yasm
+/// assembler.
 namespace yasm
 {
 
