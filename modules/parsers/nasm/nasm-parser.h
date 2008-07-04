@@ -159,6 +159,9 @@ private:
     void get_peek_token();
     bool is_eol() { return is_eol_tok(m_token); }
 
+    // Eat all remaining tokens to EOL, discarding all of them.
+    void demand_eol_nothrow();
+
     // Eat all remaining tokens to EOL, discarding all of them.  If there's any
     // intervening tokens, generates an error (junk at end of line).
     void demand_eol();

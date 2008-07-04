@@ -72,16 +72,24 @@ NasmParser::get_peek_token()
 }
 
 void
+NasmParser::demand_eol_nothrow()
+{
+    if (is_eol())
+        return;
+
+    do {
+        get_next_token();
+    } while (!is_eol());
+}
+
+void
 NasmParser::demand_eol()
 {
     if (is_eol())
         return;
 
     char tokch = m_tokch;
-
-    do {
-        get_next_token();
-    } while (!is_eol());
+    demand_eol_nothrow();
 
     throw SyntaxError(String::compose(
         N_("junk at end of line, first unrecognized character is `%1'"),
@@ -217,6 +225,8 @@ NasmParser::do_parse()
         catch (Error& err)
         {
             m_errwarns->propagate(cur_line, err);
+            demand_eol_nothrow();
+            m_state = INITIAL;
         }
 
         cur_line = m_linemap->goto_next();
