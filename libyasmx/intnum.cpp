@@ -185,62 +185,6 @@ IntNum::IntNum(char *str, int base)
     }
     from_bv(conv_bv);
 }
-#if 0
-/*@-usedef -compdef -uniondef@*/
-yasm_intnum *
-yasm_intnum_create_charconst_nasm(const char *str)
-{
-    yasm_intnum *intn = yasm_xmalloc(sizeof(yasm_intnum));
-    size_t len = strlen(str);
-
-    if(len*8 > BITVECT_NATIVE_SIZE)
-        throw OverflowError(
-            N_("Character constant too large for internal format"));
-
-    if (len > 4)
-    {
-        BitVector::Empty(conv_bv);
-        m_type = INTNUM_BV;
-    }
-    else
-    {
-        m_val.ul = 0;
-        m_type = INTNUM_UL;
-    }
-
-    switch (len)
-    {
-        case 4:
-            m_val.ul |= ((unsigned long)str[3]) & 0xff;
-            m_val.ul <<= 8;
-            /*@fallthrough@*/
-        case 3:
-            m_val.ul |= ((unsigned long)str[2]) & 0xff;
-            m_val.ul <<= 8;
-            /*@fallthrough@*/
-        case 2:
-            m_val.ul |= ((unsigned long)str[1]) & 0xff;
-            m_val.ul <<= 8;
-            /*@fallthrough@*/
-        case 1:
-            m_val.ul |= ((unsigned long)str[0]) & 0xff;
-        case 0:
-            break;
-        default:
-            // >32 bit conversion
-            while (len)
-            {
-                BitVector::Move_Left(conv_bv, 8);
-                BitVector::Chunk_Store(conv_bv, 8, 0,
-                                      (unsigned long)str[--len]);
-            }
-            m_val.bv = BitVector::Clone(conv_bv);
-    }
-
-    return intn;
-}
-/*@=usedef =compdef =uniondef@*/
-#endif
 
 IntNum::IntNum(const unsigned char *ptr, bool sign, unsigned long &size)
 {

@@ -109,16 +109,6 @@ public:
             BitVector::Destroy(m_val.bv);
     }
 
-#if 0
-    /// Convert character constant to integer value, using NASM rules.
-    /// NASM syntax supports automatic conversion from strings such as
-    /// 'abcd' to a 32-bit integer value.  This function performs those
-    /// conversions.
-    /// @param str      character constant string
-    /// @return Newly allocated intnum.
-    /*@only@*/ yasm_intnum *yasm_intnum_create_charconst_nasm(const char *str);
-#endif
-
     /// Floating point calculation function: acc = acc op operand.
     /// @note Not all operations in Op::Op may be supported; unsupported
     ///       operations will result in an error.

@@ -998,13 +998,13 @@ NasmParser::parse_expr6(ExprType type)
                 throw SyntaxError(N_("data values can't have registers"));
             e.reset(new Expr(REG_val));
             break;
-#if 0
         case STRING:
-            e = p_expr_new_ident(yasm_expr_int(
-                yasm_intnum_create_charconst_nasm(STRING_val.contents)));
-            yasm_xfree(STRING_val.contents);
+            e.reset(new Expr(IntNum(
+                reinterpret_cast<const unsigned char*>(STRING_val.c_str()),
+                false,
+                STRING_val.length(),
+                false)));
             break;
-#endif
         case SPECIAL_ID:
         {
             Symbol* sym = m_object->find_special_sym(ID_val.c_str()+2, "nasm");
