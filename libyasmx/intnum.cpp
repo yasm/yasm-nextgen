@@ -219,15 +219,14 @@ IntNum::IntNum(const unsigned char* ptr,
                size_t srcsize,
                bool bigendian)
 {
-    IntNumManager& manager = IntNumManager::instance();
-    wordptr conv_bv = manager.conv_bv;
-    unsigned long i = 0;
-
     if (srcsize*8 > BITVECT_NATIVE_SIZE)
         throw OverflowError(
             N_("Numeric constant too large for internal format"));
 
     // Read the buffer into a bitvect
+    IntNumManager& manager = IntNumManager::instance();
+    wordptr conv_bv = manager.conv_bv;
+    unsigned long i = 0;
     BitVector::Empty(conv_bv);
     if (bigendian)
     {
@@ -289,31 +288,36 @@ IntNum::operator= (const IntNum& rhs)
 void
 IntNum::calc(Op::Op op, const IntNum* operand)
 {
+    if (!operand && op != Op::NEG && op != Op::NOT && op != Op::LNOT)
+        throw ArithmeticError(N_("operation needs an operand"));
+
     IntNumManager& manager = IntNumManager::instance();
-    wordptr result = manager.result;
-    wordptr spare = manager.spare;
-    bool carry = false;
-    wordptr op1, op2 = NULL;
-    N_int count;
 
     // Always do computations with in full bit vector.
     // Bit vector results must be calculated through intermediate storage.
-    op1 = to_bv(manager.op1static);
+    wordptr op1 = to_bv(manager.op1static);
+    wordptr op2 = 0;
     if (operand)
         op2 = operand->to_bv(manager.op2static);
 
-    if (!operand && op != Op::NEG && op != Op::NOT && op != Op::LNOT)
-        throw ArithmeticError(N_("operation needs an operand"));
+    wordptr result = manager.result;
+    wordptr spare = manager.spare;
 
     // A operation does a bitvector computation if result is allocated.
     switch (op)
     {
         case Op::ADD:
+        {
+            bool carry = false;
             BitVector::add(result, op1, op2, &carry);
             break;
+        }
         case Op::SUB:
+        {
+            bool carry = false;
             BitVector::sub(result, op1, op2, &carry);
             break;
+        }
         case Op::MUL:
             BitVector::Multiply(result, op1, op2);
             break;
@@ -379,8 +383,8 @@ IntNum::calc(Op::Op op, const IntNum* operand)
             if (operand->m_type == INTNUM_L && operand->m_val.l >= 0)
             {
                 BitVector::Copy(result, op1);
-                carry = BitVector::msb_(op1);
-                count = (N_int)operand->m_val.l;
+                bool carry = BitVector::msb_(op1);
+                N_int count = (N_int)operand->m_val.l;
                 while (count-- > 0)
                     BitVector::shift_right(result, carry);
             }
@@ -573,19 +577,12 @@ IntNum::get_sized(unsigned char* ptr,
                   bool bigendian,
                   int warn) const
 {
-    IntNumManager& manager = IntNumManager::instance();
-    wordptr conv_bv = manager.conv_bv;
-    wordptr op1 = manager.op1static;
-    unsigned char* buf;
-    unsigned int len;
-    size_t rshift = shift < 0 ? (size_t)(-shift) : 0;
-    bool carry_in;
-
     // Currently don't support destinations larger than our native size
     if (destsize*8 > BITVECT_NATIVE_SIZE)
         throw InternalError(N_("destination too large"));
 
     // General size warnings
+    size_t rshift = shift < 0 ? (size_t)(-shift) : 0;
     if (warn<0 && !ok_size(valsize, rshift, 1))
         warn_set(WARN_GENERAL,
                  String::compose(N_("value does not fit in signed %1 bit field"),
@@ -596,6 +593,9 @@ IntNum::get_sized(unsigned char* ptr,
                                  valsize));
 
     // Read the original data into a bitvect
+    IntNumManager& manager = IntNumManager::instance();
+    wordptr op1 = manager.op1static;
+
     if (bigendian)
     {
         // TODO
@@ -610,6 +610,7 @@ IntNum::get_sized(unsigned char* ptr,
     // Check low bits if right shifting and warnings enabled
     if (warn && rshift > 0)
     {
+        wordptr conv_bv = manager.conv_bv;
         BitVector::Copy(conv_bv, op2);
         BitVector::Move_Left(conv_bv, (N_int)(BITVECT_NATIVE_SIZE-rshift));
         if (!BitVector::is_empty(conv_bv))
@@ -620,7 +621,7 @@ IntNum::get_sized(unsigned char* ptr,
     // Shift right if needed
     if (rshift > 0)
     {
-        carry_in = BitVector::msb_(op2);
+        bool carry_in = BitVector::msb_(op2);
         while (rshift-- > 0)
             BitVector::shift_right(op2, carry_in);
         shift = 0;
@@ -630,7 +631,8 @@ IntNum::get_sized(unsigned char* ptr,
     BitVector::Interval_Copy(op1, op2, (unsigned int)shift, 0, (N_int)valsize);
 
     // Write out the new data
-    buf = BitVector::Block_Read(op1, &len);
+    unsigned int len;
+    unsigned char* buf = BitVector::Block_Read(op1, &len);
     if (bigendian)
     {
         // TODO
@@ -646,9 +648,9 @@ IntNum::ok_size(size_t size, size_t rshift, int rangetype) const
 {
     IntNumManager& manager = IntNumManager::instance();
     wordptr conv_bv = manager.conv_bv;
-    wordptr val;
 
     // If not already a bitvect, convert value to a bitvect
+    wordptr val;
     if (m_type == INTNUM_BV)
     {
         if (rshift > 0)
@@ -677,13 +679,9 @@ IntNum::ok_size(size_t size, size_t rshift, int rangetype) const
         if (BitVector::msb_(val))
         {
             // it's negative
-            bool retval;
-
             BitVector::Negate(conv_bv, val);
             BitVector::dec(conv_bv, conv_bv);
-            retval = BitVector::Set_Max(conv_bv) < (long)size-1;
-
-            return retval;
+            return (BitVector::Set_Max(conv_bv) < (long)size-1);
         }
 
         if (rangetype == 1)
@@ -695,7 +693,7 @@ IntNum::ok_size(size_t size, size_t rshift, int rangetype) const
 bool
 IntNum::in_range(long low, long high) const
 {
-    IntNumManager &manager = IntNumManager::instance();
+    IntNumManager& manager = IntNumManager::instance();
 
     // If not already a bitvect, convert value to be written to a bitvect
     wordptr val = to_bv(manager.result);
@@ -729,9 +727,7 @@ IntNum::in_range(long low, long high) const
 static unsigned long
 get_leb128(wordptr val, unsigned char* ptr, bool sign)
 {
-    unsigned long i, size;
-    unsigned char* ptr_orig = ptr;
-
+    unsigned long size;
     if (sign)
     {
         // Signed mode
@@ -756,7 +752,8 @@ get_leb128(wordptr val, unsigned char* ptr, bool sign)
     }
 
     // Positive/Unsigned write
-    for (i=0; i<size; i += 7)
+    unsigned char* ptr_orig = ptr;
+    for (unsigned long i=0; i<size; i += 7)
     {
         *ptr = (unsigned char)BitVector::Chunk_Read(val, 7, i);
         *ptr |= 0x80;
@@ -775,7 +772,7 @@ size_leb128(wordptr val, bool sign)
         if (BitVector::msb_(val))
         {
             // Negative
-            IntNumManager &manager = IntNumManager::instance();
+            IntNumManager& manager = IntNumManager::instance();
             wordptr conv_bv = manager.conv_bv;
             BitVector::Negate(conv_bv, val);
             return (BitVector::Set_Max(conv_bv)+8)/7;
