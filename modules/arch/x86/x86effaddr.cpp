@@ -298,18 +298,18 @@ get_reg3264(Expr::Term& term, int& regnum, int* regs, unsigned char bits,
 // Only works if term.type == Expr::REG (doesn't check).
 // Overwrites term with intnum of 0 (to eliminate regs from the final expr).
 static /*@null@*/ int*
-x86_expr_checkea_get_reg16(Expr::Term& term, int& regnum, int& bx, int& si,
-                           int& di, int& bp)
+x86_expr_checkea_get_reg16(Expr::Term& term, int& regnum, int* bx, int* si,
+                           int* di, int* bp)
 {
     // in order: ax,cx,dx,bx,sp,bp,si,di
     /*@-nullassign@*/
     static int* reg16[8] = {0,0,0,0,0,0,0,0};
     /*@=nullassign@*/
 
-    reg16[3] = &bx;
-    reg16[5] = &bp;
-    reg16[6] = &si;
-    reg16[7] = &di;
+    reg16[3] = bx;
+    reg16[5] = bp;
+    reg16[6] = si;
+    reg16[7] = di;
 
     const X86Register* reg = static_cast<const X86Register*>(term.get_reg());
     assert(reg != 0);
@@ -1059,8 +1059,8 @@ X86EffAddr::check_16(unsigned int bits, bool address16_op, Bytecode& bc)
         bool pcrel = false;
         switch (x86_expr_checkea_getregusage
                 (m_disp.get_abs(), (int *)NULL, &pcrel, bits,
-                 BIND::bind(&x86_expr_checkea_get_reg16, _1, _2, bx, si,
-                            di, bp)))
+                 BIND::bind(&x86_expr_checkea_get_reg16, _1, _2, &bx, &si,
+                            &di, &bp)))
         {
             case 1:
                 throw ValueError(N_("invalid effective address"));
