@@ -280,22 +280,24 @@ Bytecode::update_offset(unsigned long offset)
 void
 Bytecode::append_fixed(const Value& val)
 {
-    m_fixed.write(val.m_size/8, 0);
+    unsigned int valsize = val.m_size/8;
     m_fixed_fixups.push_back(Fixup(m_fixed.size(), val, m_line));
+    m_fixed.write(valsize, 0);
 }
 
 void
 Bytecode::append_fixed(std::auto_ptr<Value> val)
 {
-    m_fixed.write(val->m_size/8, 0);
+    unsigned int valsize = val->m_size/8;
     m_fixed_fixups.push_back(Fixup(m_fixed.size(), val, m_line));
+    m_fixed.write(valsize, 0);
 }
 
 void
 Bytecode::append_fixed(unsigned int size, std::auto_ptr<Expr> e)
 {
-    m_fixed.write(size, 0);
     m_fixed_fixups.push_back(Fixup(m_fixed.size(), size*8, e, m_line));
+    m_fixed.write(size, 0);
 }
 
 Bytecode::Fixup::Fixup(unsigned int off, const Value& val, unsigned long line)
