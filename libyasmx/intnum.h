@@ -43,7 +43,7 @@ namespace yasm
 class YASM_LIB_EXPORT IntNum
 {
     friend YASM_LIB_EXPORT
-    std::ostream& operator<< (std::ostream &os, const IntNum &intn);
+    std::ostream& operator<< (std::ostream& os, const IntNum& intn);
     friend YASM_LIB_EXPORT
     int compare(const IntNum& intn1, const IntNum& intn2);
     friend YASM_LIB_EXPORT
@@ -58,7 +58,7 @@ public:
     IntNum() : m_type(INTNUM_L) { m_val.l = 0; }
 
     /// Create a new intnum from a decimal/binary/octal/hexidecimal string.
-    explicit IntNum(char *str, int base=10);
+    explicit IntNum(char* str, int base=10);
 
     /// Create a new intnum from an unsigned integer value.
     /// @param i        unsigned integer value
@@ -81,7 +81,7 @@ public:
     /// @param sign     signed (true) or unsigned (false) LEB128 format
     /// @param size     number of bytes read from ptr (output)
     /// @return Number of bytes read returned into size parameter.
-    IntNum(const unsigned char *ptr, bool sign, /*@out@*/ unsigned long &size);
+    IntNum(const unsigned char* ptr, bool sign, /*@out@*/ unsigned long& size);
 
     /// Create a new intnum from a little-endian or big-endian buffer.
     /// In little endian, the LSB is in ptr[0].
@@ -89,18 +89,18 @@ public:
     /// @param sign         signed (true) or unsigned (false) source
     /// @param srcsize      source buffer size (in bytes)
     /// @param bigendian    endianness (true=big, false=little)
-    IntNum(const unsigned char *ptr,
+    IntNum(const unsigned char* ptr,
            bool sign,
            size_t srcsize,
            bool bigendian);
 
     /// Copy constructor.
-    IntNum(const IntNum &rhs);
+    IntNum(const IntNum& rhs);
     /// Assignment operators.
     IntNum& operator= (const IntNum& rhs);
 
     /// Get an allocated copy.
-    IntNum *clone() const { return new IntNum(*this); }
+    IntNum* clone() const { return new IntNum(*this); }
 
     /// Destructor.
     ~IntNum()
@@ -114,8 +114,8 @@ public:
     ///       operations will result in an error.
     /// @param op       operation
     /// @param operand  intnum operand
-    void calc(Op::Op op, const IntNum &operand) { calc(op, &operand); }
-    void calc(Op::Op op, /*@null@*/ const IntNum *operand = 0);
+    void calc(Op::Op op, const IntNum& operand) { calc(op, &operand); }
+    void calc(Op::Op op, /*@null@*/ const IntNum* operand = 0);
 
     /// Zero an intnum.
     void zero() { set(0); }
@@ -225,7 +225,7 @@ public:
     /// @param sign     signedness of LEB128 encoding (false=unsigned,
     ///                 true=signed)
     /// @return Number of bytes generated.
-    unsigned long get_leb128(unsigned char *ptr, bool sign) const;
+    unsigned long get_leb128(unsigned char* ptr, bool sign) const;
 
     /// Calculate number of bytes LEB128-encoded form of intnum will take.
     /// @param intn     intnum
@@ -237,7 +237,7 @@ public:
     /// Get an intnum as a signed decimal string.  The returned string will
     /// contain a leading '-' if the intnum is negative.
     /// @return String containing the decimal representation of the intnum.
-    /*@only@*/ char *get_str() const;
+    /*@only@*/ char* get_str() const;
 
     /// Overloaded unary operators:
 
@@ -365,7 +365,7 @@ inline bool operator>=(const IntNum& lhs, const IntNum& rhs)
 /// @param ptr      pointer to storage for output bytes
 /// @return Number of bytes generated.
 YASM_LIB_EXPORT
-unsigned long get_sleb128(long v, unsigned char *ptr);
+unsigned long get_sleb128(long v, unsigned char* ptr);
 
 /// Calculate number of bytes signed LEB128-encoded form of integer will take.
 /// @param v        integer
@@ -378,7 +378,7 @@ unsigned long size_sleb128(long v);
 /// @param ptr      pointer to storage for output bytes
 /// @return Number of bytes generated.
 YASM_LIB_EXPORT
-unsigned long get_uleb128(unsigned long v, unsigned char *ptr);
+unsigned long get_uleb128(unsigned long v, unsigned char* ptr);
 
 /// Calculate number of bytes unsigned LEB128-encoded form of integer will
 /// take.
@@ -388,7 +388,7 @@ YASM_LIB_EXPORT
 unsigned long size_uleb128(unsigned long v);
 
 YASM_LIB_EXPORT
-std::ostream& operator<< (std::ostream &os, const IntNum &intn);
+std::ostream& operator<< (std::ostream& os, const IntNum& intn);
 
 } // namespace yasm
 

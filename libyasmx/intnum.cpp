@@ -49,7 +49,7 @@ static const unsigned int BITVECT_NATIVE_SIZE = 256;
 class IntNumManager
 {
 public:
-    static IntNumManager & instance()
+    static IntNumManager& instance()
     {
         static IntNumManager inst;
         return inst;
@@ -65,8 +65,8 @@ public:
 
 private:
     IntNumManager();
-    IntNumManager(const IntNumManager &) {}
-    IntNumManager & operator= (const IntNumManager &) { return *this; }
+    IntNumManager(const IntNumManager&) {}
+    IntNumManager& operator= (const IntNumManager&) { return *this; }
     ~IntNumManager();
 };
 
@@ -143,12 +143,12 @@ IntNum::to_bv(/*@returned@*/ wordptr bv) const
     return bv;
 }
 
-IntNum::IntNum(char *str, int base)
+IntNum::IntNum(char* str, int base)
 {
-    IntNumManager &manager = IntNumManager::instance();
+    IntNumManager& manager = IntNumManager::instance();
     wordptr conv_bv = manager.conv_bv;
     BitVector::ErrCode err;
-    const char *errstr;
+    const char* errstr;
 
     switch (base)
     {
@@ -186,11 +186,11 @@ IntNum::IntNum(char *str, int base)
     from_bv(conv_bv);
 }
 
-IntNum::IntNum(const unsigned char *ptr, bool sign, unsigned long &size)
+IntNum::IntNum(const unsigned char* ptr, bool sign, unsigned long& size)
 {
-    IntNumManager &manager = IntNumManager::instance();
+    IntNumManager& manager = IntNumManager::instance();
     wordptr conv_bv = manager.conv_bv;
-    const unsigned char *ptr_orig = ptr;
+    const unsigned char* ptr_orig = ptr;
     unsigned long i = 0;
 
     BitVector::Empty(conv_bv);
@@ -214,12 +214,12 @@ IntNum::IntNum(const unsigned char *ptr, bool sign, unsigned long &size)
     from_bv(conv_bv);
 }
 
-IntNum::IntNum(const unsigned char *ptr,
+IntNum::IntNum(const unsigned char* ptr,
                bool sign,
                size_t srcsize,
                bool bigendian)
 {
-    IntNumManager &manager = IntNumManager::instance();
+    IntNumManager& manager = IntNumManager::instance();
     wordptr conv_bv = manager.conv_bv;
     unsigned long i = 0;
 
@@ -247,7 +247,7 @@ IntNum::IntNum(const unsigned char *ptr,
     from_bv(conv_bv);
 }
 
-IntNum::IntNum(const IntNum &rhs)
+IntNum::IntNum(const IntNum& rhs)
     : m_type (rhs.m_type)
 {
     switch (rhs.m_type)
@@ -287,9 +287,9 @@ IntNum::operator= (const IntNum& rhs)
 
 /*@-nullderef -nullpass -branchstate@*/
 void
-IntNum::calc(Op::Op op, const IntNum *operand)
+IntNum::calc(Op::Op op, const IntNum* operand)
 {
-    IntNumManager &manager = IntNumManager::instance();
+    IntNumManager& manager = IntNumManager::instance();
     wordptr result = manager.result;
     wordptr spare = manager.spare;
     bool carry = false;
@@ -566,17 +566,17 @@ IntNum::get_int() const
 }
 
 void
-IntNum::get_sized(unsigned char *ptr,
+IntNum::get_sized(unsigned char* ptr,
                   size_t destsize,
                   size_t valsize,
                   int shift,
                   bool bigendian,
                   int warn) const
 {
-    IntNumManager &manager = IntNumManager::instance();
+    IntNumManager& manager = IntNumManager::instance();
     wordptr conv_bv = manager.conv_bv;
     wordptr op1 = manager.op1static;
-    unsigned char *buf;
+    unsigned char* buf;
     unsigned int len;
     size_t rshift = shift < 0 ? (size_t)(-shift) : 0;
     bool carry_in;
@@ -644,7 +644,7 @@ IntNum::get_sized(unsigned char *ptr,
 bool
 IntNum::ok_size(size_t size, size_t rshift, int rangetype) const
 {
-    IntNumManager &manager = IntNumManager::instance();
+    IntNumManager& manager = IntNumManager::instance();
     wordptr conv_bv = manager.conv_bv;
     wordptr val;
 
@@ -727,10 +727,10 @@ IntNum::in_range(long low, long high) const
 }
 
 static unsigned long
-get_leb128(wordptr val, unsigned char *ptr, bool sign)
+get_leb128(wordptr val, unsigned char* ptr, bool sign)
 {
     unsigned long i, size;
-    unsigned char *ptr_orig = ptr;
+    unsigned char* ptr_orig = ptr;
 
     if (sign)
     {
@@ -794,7 +794,7 @@ size_leb128(wordptr val, bool sign)
 }
 
 unsigned long
-IntNum::get_leb128(unsigned char *ptr, bool sign) const
+IntNum::get_leb128(unsigned char* ptr, bool sign) const
 {
     // Shortcut 0
     if (m_type == INTNUM_L && m_val.l == 0)
@@ -915,7 +915,7 @@ operator>(const IntNum& lhs, const IntNum& rhs)
 }
 
 unsigned long
-get_sleb128(long v, unsigned char *ptr)
+get_sleb128(long v, unsigned char* ptr)
 {
     // Shortcut 0
     if (v == 0)
@@ -959,7 +959,7 @@ size_sleb128(long v)
 }
 
 unsigned long
-get_uleb128(unsigned long v, unsigned char *ptr)
+get_uleb128(unsigned long v, unsigned char* ptr)
 {
     // Shortcut 0
     if (v == 0)
@@ -968,7 +968,7 @@ get_uleb128(unsigned long v, unsigned char *ptr)
         return 1;
     }
 
-    IntNumManager &manager = IntNumManager::instance();
+    IntNumManager& manager = IntNumManager::instance();
     wordptr val = manager.op1static;
 
     BitVector::Empty(val);
@@ -990,7 +990,7 @@ size_uleb128(unsigned long v)
     return size_leb128(val, 0);
 }
 
-char *
+char*
 IntNum::get_str() const
 {
     char *s;
@@ -1010,7 +1010,7 @@ IntNum::get_str() const
 }
 
 std::ostream&
-operator<< (std::ostream &os, const IntNum &intn)
+operator<< (std::ostream& os, const IntNum& intn)
 {
     switch (intn.m_type)
     {
@@ -1019,7 +1019,7 @@ operator<< (std::ostream &os, const IntNum &intn)
             break;
         case IntNum::INTNUM_BV:
         {
-            unsigned char *s = BitVector::to_Dec(intn.m_val.bv);
+            unsigned char* s = BitVector::to_Dec(intn.m_val.bv);
             os << s;
             free(s);
             break;
