@@ -65,8 +65,8 @@ public:
 
 private:
     IntNumManager();
-    IntNumManager(const IntNumManager&) {}
-    IntNumManager& operator= (const IntNumManager&) { return *this; }
+    IntNumManager(const IntNumManager&);
+    IntNumManager& operator= (const IntNumManager&);
     ~IntNumManager();
 };
 
