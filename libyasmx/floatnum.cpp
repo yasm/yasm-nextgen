@@ -529,6 +529,15 @@ FloatNum::operator= (const FloatNum& rhs)
 }
 
 void
+FloatNum::swap(FloatNum& oth)
+{
+    std::swap(m_mantissa, oth.m_mantissa);
+    std::swap(m_exponent, oth.m_exponent);
+    std::swap(m_sign, oth.m_sign);
+    std::swap(m_flags, oth.m_flags);
+}
+
+void
 FloatNum::calc(Op::Op op, /*@unused@*/ const FloatNum* operand)
 {
     if (op != Op::NEG)

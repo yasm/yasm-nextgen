@@ -62,6 +62,10 @@ public:
     /// Assignment operator.
     FloatNum& operator= (const FloatNum& rhs);
 
+    /// Exchanges this floatnum with another one.
+    /// @param other    other floatnum
+    void swap(FloatNum& oth);
+
     /// Create an explicit allocated copy.
     FloatNum* clone() const { return new FloatNum(*this); }
 
@@ -152,6 +156,13 @@ private:
 
 YASM_LIB_EXPORT
 std::ostream& operator<< (std::ostream& os, const FloatNum& flt);
+
+/// Specialized swap for algorithms.
+inline void
+swap(FloatNum& left, FloatNum& right)
+{
+    left.swap(right);
+}
 
 } // namespace yasm
 
