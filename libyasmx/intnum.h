@@ -99,6 +99,10 @@ public:
     /// Assignment operators.
     IntNum& operator= (const IntNum& rhs);
 
+    /// Exchanges this integer with another one.
+    /// @param oth      other integer number
+    void swap(IntNum& oth);
+
     /// Get an allocated copy.
     IntNum* clone() const { return new IntNum(*this); }
 
@@ -359,6 +363,13 @@ inline bool operator<=(const IntNum& lhs, const IntNum& rhs)
 { return !(lhs > rhs); }
 inline bool operator>=(const IntNum& lhs, const IntNum& rhs)
 { return !(lhs < rhs); }
+
+/// Specialized swap for algorithms.
+inline void
+swap(IntNum& left, IntNum& right)
+{
+    left.swap(right);
+}
 
 /// Output integer to buffer in signed LEB128-encoded form.
 /// @param v        integer
