@@ -1,7 +1,7 @@
-#ifndef YASM_X86REGGROUP_H
-#define YASM_X86REGGROUP_H
+#ifndef YASM_X86TMOD_H
+#define YASM_X86TMOD_H
 //
-// x86 register group header file
+// x86 target modifier header file
 //
 //  Copyright (C) 2001-2008  Peter Johnson
 //
@@ -26,11 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <libyasmx/arch.h>
-#include <libyasmx/functional.h>
-
-#include "x86register.h"
-
+#include <libyasmx/insn.h>
 
 namespace yasm
 {
@@ -39,25 +35,27 @@ namespace arch
 namespace x86
 {
 
-class X86RegisterGroup : public RegisterGroup
+class X86TargetModifier : public Insn::Operand::TargetModifier
 {
 public:
-    X86RegisterGroup(FUNCTION::function<unsigned int ()> get_bits,
-                     X86Register** regs, unsigned long size)
-        : m_get_bits(get_bits), m_regs(regs), m_size(size) {}
-    ~X86RegisterGroup() {}
+    enum Type
+    {
+        NEAR = 0,
+        SHORT,
+        FAR,
+        TO,
+        TYPE_COUNT
+    };
 
-    /// Get a specific register of a register group, based on the register
-    /// group and the index within the group.
-    /// @param regindex     register index
-    /// @return 0 if regindex is not valid for that register group,
-    ///         otherwise the specific register.
-    const X86Register* get_reg(unsigned long regindex) const;
+    explicit X86TargetModifier(Type type) : m_type(type) {}
+    ~X86TargetModifier() {}
+
+    Type type() const { return m_type; }
+
+    void put(std::ostream& os) const;
 
 private:
-    FUNCTION::function<unsigned int ()> m_get_bits;
-    X86Register** m_regs;
-    unsigned long m_size;
+    Type m_type;
 };
 
 }}} // namespace yasm::arch::x86

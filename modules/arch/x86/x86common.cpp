@@ -35,7 +35,7 @@
 #include <libyasmx/marg_ostream.h>
 
 #include "x86prefix.h"
-#include "x86regtmod.h"
+#include "x86register.h"
 
 
 namespace yasm

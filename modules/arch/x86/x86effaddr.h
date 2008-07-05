@@ -28,7 +28,7 @@
 //
 #include <libyasmx/effaddr.h>
 
-#include "x86regtmod.h"
+#include "x86register.h"
 
 namespace yasm
 {

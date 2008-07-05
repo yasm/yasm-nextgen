@@ -1,5 +1,5 @@
-#ifndef YASM_X86REGTMOD_H
-#define YASM_X86REGTMOD_H
+#ifndef YASM_X86REGISTER_H
+#define YASM_X86REGISTER_H
 //
 // x86 register header file
 //
@@ -27,7 +27,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 #include <libyasmx/arch.h>
-#include <libyasmx/insn.h>
 
 namespace yasm
 {
@@ -112,29 +111,6 @@ public:
 private:
     Type m_type;
     unsigned char m_prefix;
-};
-
-class X86TargetModifier : public Insn::Operand::TargetModifier
-{
-public:
-    enum Type
-    {
-        NEAR = 0,
-        SHORT,
-        FAR,
-        TO,
-        TYPE_COUNT
-    };
-
-    explicit X86TargetModifier(Type type) : m_type(type) {}
-    ~X86TargetModifier() {}
-
-    Type type() const { return m_type; }
-
-    void put(std::ostream& os) const;
-
-private:
-    Type m_type;
 };
 
 }}} // namespace yasm::arch::x86

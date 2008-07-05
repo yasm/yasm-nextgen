@@ -30,7 +30,8 @@
 
 #include <libyasmx/arch.h>
 
-#include "x86regtmod.h"
+#include "x86register.h"
+#include "x86tmod.h"
 
 
 namespace yasm

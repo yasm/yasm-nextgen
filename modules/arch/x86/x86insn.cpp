@@ -49,7 +49,6 @@
 #include "x86jmpfar.h"
 #include "x86opcode.h"
 #include "x86prefix.h"
-#include "x86regtmod.h"
 
 
 namespace yasm

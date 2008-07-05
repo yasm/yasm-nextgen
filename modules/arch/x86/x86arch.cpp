@@ -41,7 +41,6 @@
 
 #include "x86effaddr.h"
 #include "x86reggroup.h"
-#include "x86regtmod.h"
 
 
 namespace yasm
