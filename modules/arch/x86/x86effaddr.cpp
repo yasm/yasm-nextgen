@@ -36,7 +36,6 @@
 #include <libyasmx/intnum.h>
 #include <libyasmx/marg_ostream.h>
 
-#include "x86arch.h"
 #include "x86regtmod.h"
 
 
@@ -161,10 +160,10 @@ X86EffAddr::set_reg(const X86Register* reg, unsigned char* rex,
     m_need_modrm = true;
 }
 
-std::auto_ptr<Expr>
-X86EffAddr::fixup(const X86Arch& arch, std::auto_ptr<Expr> e)
+static std::auto_ptr<Expr>
+fixup(bool xform_rip_plus, std::auto_ptr<Expr> e)
 {
-    if (arch.parser() == X86Arch::PARSER_GAS)
+    if (xform_rip_plus)
     {
         // Need to change foo+rip into foo wrt rip.
         // Note this assumes a particular ordering coming from the parser
@@ -182,8 +181,8 @@ X86EffAddr::fixup(const X86Arch& arch, std::auto_ptr<Expr> e)
     return e;
 }
 
-X86EffAddr::X86EffAddr(const X86Arch& arch, std::auto_ptr<Expr> e)
-    : EffAddr(fixup(arch, e)),
+X86EffAddr::X86EffAddr(bool xform_rip_plus, std::auto_ptr<Expr> e)
+    : EffAddr(fixup(xform_rip_plus, e)),
       m_modrm(0),
       m_sib(0),
       m_drex(0),

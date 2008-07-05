@@ -37,8 +37,6 @@ namespace arch
 namespace x86
 {
 
-class X86Arch;
-
 enum X86RexBitPos
 {
     X86_REX_W = 3,
@@ -102,7 +100,10 @@ public:
     X86EffAddr(std::auto_ptr<Expr> imm, unsigned int im_len);
 
     /// Expression constructor.
-    X86EffAddr(const X86Arch& arch, std::auto_ptr<Expr> e);
+    /// @param xform_rip_plus   Transform foo+rip into foo wrt rip; used
+    ///                         for GAS parser
+    /// @param e                Expression
+    X86EffAddr(bool xform_rip_plus, std::auto_ptr<Expr> e);
 
     /// Register setter.
     void set_reg(const X86Register* reg, unsigned char* rex,
@@ -131,11 +132,6 @@ public:
 private:
     /// Copy constructor.
     X86EffAddr(const X86EffAddr& rhs);
-
-    // Helper function to fix up expression in constructor before it's passed
-    // to lower-level EffAddr constructor.
-    static std::auto_ptr<Expr> fixup(const X86Arch& arch,
-                                     std::auto_ptr<Expr> e);
 
     // Calculate the displacement length, if possible.
     // Takes several extra inputs so it can be used by both 32-bit and 16-bit

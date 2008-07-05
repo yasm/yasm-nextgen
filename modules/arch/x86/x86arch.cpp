@@ -537,7 +537,7 @@ X86Arch::tobytes(const IntNum& intn,
 std::auto_ptr<EffAddr>
 X86Arch::ea_create(std::auto_ptr<Expr> e) const
 {
-    return std::auto_ptr<EffAddr>(new X86EffAddr(*this, e));
+    return std::auto_ptr<EffAddr>(new X86EffAddr(m_parser == PARSER_GAS, e));
 }
 
 void
