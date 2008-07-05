@@ -52,3 +52,5 @@ SET(insn_DEPS
 SET_SOURCE_FILES_PROPERTIES(arch/x86/x86insn.cpp PROPERTIES
     OBJECT_DEPENDS "${insn_DEPS}"
     )
+
+ADD_SUBDIRECTORY(arch/x86/tests)
