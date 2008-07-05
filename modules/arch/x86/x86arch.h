@@ -44,6 +44,8 @@ namespace arch
 namespace x86
 {
 
+class X86RegisterGroup;
+
 // Available CPU feature flags
 enum CPUFeature
 {

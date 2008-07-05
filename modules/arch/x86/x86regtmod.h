@@ -36,8 +36,6 @@ namespace arch
 namespace x86
 {
 
-class X86Arch;
-
 class X86Register : public Register
 {
 public:
@@ -83,26 +81,6 @@ private:
     // Register number.
     // Note 8-15 are only valid for some registers, and only in 64-bit mode.
     unsigned int m_num;
-};
-
-class X86RegisterGroup : public RegisterGroup
-{
-public:
-    X86RegisterGroup(X86Arch& arch, X86Register** regs, unsigned long size)
-        : m_arch(arch), m_regs(regs), m_size(size) {}
-    ~X86RegisterGroup() {}
-
-    /// Get a specific register of a register group, based on the register
-    /// group and the index within the group.
-    /// @param regindex     register index
-    /// @return 0 if regindex is not valid for that register group,
-    ///         otherwise the specific register.
-    const X86Register* get_reg(unsigned long regindex) const;
-
-private:
-    X86Arch& m_arch;
-    X86Register** m_regs;
-    unsigned long m_size;
 };
 
 class X86SegmentRegister : public SegmentRegister

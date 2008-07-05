@@ -40,6 +40,7 @@
 #include <libyasmx/registry.h>
 
 #include "x86effaddr.h"
+#include "x86reggroup.h"
 #include "x86regtmod.h"
 
 
@@ -90,16 +91,20 @@ X86Arch::X86Arch()
     for (unsigned int i=0; i<NELEMS(m_reg_group); i++)
         m_reg_group[i] = 0;
     m_reg_group[X86Register::FPUREG] =
-        new X86RegisterGroup(*this, m_reg[X86Register::FPUREG],
+        new X86RegisterGroup(BIND::bind(&X86Arch::get_mode_bits, this),
+                             m_reg[X86Register::FPUREG],
                              reg_count[X86Register::FPUREG]);
     m_reg_group[X86Register::MMXREG] =
-        new X86RegisterGroup(*this, m_reg[X86Register::MMXREG],
+        new X86RegisterGroup(BIND::bind(&X86Arch::get_mode_bits, this),
+                             m_reg[X86Register::MMXREG],
                              reg_count[X86Register::MMXREG]);
     m_reg_group[X86Register::XMMREG] =
-        new X86RegisterGroup(*this, m_reg[X86Register::XMMREG],
+        new X86RegisterGroup(BIND::bind(&X86Arch::get_mode_bits, this),
+                             m_reg[X86Register::XMMREG],
                              reg_count[X86Register::XMMREG]);
     m_reg_group[X86Register::YMMREG] =
-        new X86RegisterGroup(*this, m_reg[X86Register::YMMREG],
+        new X86RegisterGroup(BIND::bind(&X86Arch::get_mode_bits, this),
+                             m_reg[X86Register::YMMREG],
                              reg_count[X86Register::YMMREG]);
 
     // create segment registers

@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 %{
 #include "modules/arch/x86/x86regtmod.h"
+#include "modules/arch/x86/x86reggroup.h"
 
 #include <util.h>
 
@@ -145,8 +146,7 @@ X86Register::put(std::ostream& os) const
 const X86Register*
 X86RegisterGroup::get_reg(unsigned long regindex) const
 {
-    if ((m_arch.get_mode_bits() != 64 && regindex >= 8) ||
-        regindex >= m_size)
+    if ((m_get_bits() != 64 && regindex >= 8) || regindex >= m_size)
         throw ValueError(N_("invalid register index"));
     return m_regs[regindex];
 }
