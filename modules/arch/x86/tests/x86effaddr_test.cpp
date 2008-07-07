@@ -22,6 +22,9 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include <algorithm>
+#include <cstring>
+
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MAIN
 #define BOOST_TEST_MODULE x86effaddr_test
@@ -29,11 +32,15 @@
 
 #include "x86effaddr.h"
 #include <libyasmx/errwarn.h>
+#include <libyasmx/expr.h>
+#include <libyasmx/intnum.h>
+#include <libyasmx/symbol.h>
 
 
+using namespace yasm;
 using namespace yasm::arch::x86;
 
-BOOST_AUTO_TEST_SUITE(SetRexFromReg)
+BOOST_AUTO_TEST_SUITE(SetRexFromRegTests)
 
 BOOST_AUTO_TEST_CASE(SetRexFromRegDrex)
 {
@@ -137,7 +144,7 @@ BOOST_AUTO_TEST_CASE(SetRexFromRegNoRex)
     low3 = 0; rex = 0xff;
     BOOST_CHECK_THROW(set_rex_from_reg(&rex, 0, &low3, X86Register::REG32, 13,
                                        64, X86_REX_W),
-                      yasm::TypeError);
+                      TypeError);
 
     // If DREX available but REX isn't, reg_num >= 8 should not error
     drex = low3 = 0; rex = 0xff;
@@ -228,6 +235,146 @@ BOOST_AUTO_TEST_CASE(SetRexFromReg8High)
     set_rex_from_reg(&rex, 0, &low3, X86Register::REG8, 3, 64, X86_REX_W);
     BOOST_CHECK_EQUAL(low3, 3);
     BOOST_CHECK_EQUAL(rex, 0x40);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(X86EffAddrTests)
+
+BOOST_AUTO_TEST_CASE(X86EffAddrInitBasic)
+{
+    X86EffAddr ea;
+    BOOST_CHECK_EQUAL(ea.m_modrm, 0);
+    BOOST_CHECK_EQUAL(ea.m_sib, 0);
+    BOOST_CHECK_EQUAL(ea.m_drex, 0);
+    BOOST_CHECK_EQUAL(ea.m_need_sib, 0);
+    BOOST_CHECK_EQUAL(ea.m_valid_modrm, false);
+    BOOST_CHECK_EQUAL(ea.m_need_modrm, false);
+    BOOST_CHECK_EQUAL(ea.m_valid_sib, false);
+    BOOST_CHECK_EQUAL(ea.m_need_drex, false);
+    BOOST_CHECK_EQUAL(ea.m_disp.has_abs(), false);
+}
+
+BOOST_AUTO_TEST_CASE(X86EffAddrInitReg)
+{
+    unsigned char rex;
+    unsigned char drex;
+
+    {
+        X86Register reg32_5(X86Register::REG32, 5);
+        rex = drex = 0;
+        X86EffAddr ea(&reg32_5, &rex, &drex, 32);
+        BOOST_CHECK_EQUAL(ea.m_modrm, 0xC5);
+        BOOST_CHECK_EQUAL(ea.m_sib, 0);
+        BOOST_CHECK_EQUAL(ea.m_drex, 0);
+        BOOST_CHECK_EQUAL(ea.m_need_sib, 0);
+        BOOST_CHECK_EQUAL(ea.m_valid_modrm, true);
+        BOOST_CHECK_EQUAL(ea.m_need_modrm, true);
+        BOOST_CHECK_EQUAL(ea.m_valid_sib, false);
+        BOOST_CHECK_EQUAL(ea.m_need_drex, false);
+        BOOST_CHECK_EQUAL(ea.m_disp.has_abs(), false);
+        BOOST_CHECK_EQUAL(rex, 0);
+        BOOST_CHECK_EQUAL(drex, 0);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr16)
+{
+    X86Register BX(X86Register::REG16, 3);
+    X86Register BP(X86Register::REG16, 5);
+    X86Register SI(X86Register::REG16, 6);
+    X86Register DI(X86Register::REG16, 7);
+    Symbol abs_sym("");
+    unsigned char addrsize;
+    unsigned char rex;
+
+    struct eaform16
+    {
+        const char* reg[2];
+        unsigned char rm;
+    };
+    const eaform16 forms[] =
+    {
+        {{"bx", "si"}, 0},
+        {{"bx", "di"}, 1},
+        {{"bp", "si"}, 2},
+        {{"bp", "di"}, 3},
+        {{"si", 0},    4},
+        {{"di", 0},    5},
+        {{0,    0},    6},
+        {{"bx", 0},    7},
+    };
+    const long disps[] = {0, 16, 127, 128, -128, -129, 255, -256};
+
+    for (const eaform16* form=&forms[0];
+         form != &forms[sizeof(forms)/sizeof(forms[0])]; ++form)
+    {
+        X86Register* reg[2];
+
+        for (unsigned int i=0; i<2; ++i)
+        {
+            if (!form->reg[i])
+                reg[i] = 0;
+            else if (std::strcmp(form->reg[i], "bx") == 0)
+                reg[i] = &BX;
+            else if (std::strcmp(form->reg[i], "bp") == 0)
+                reg[i] = &BP;
+            else if (std::strcmp(form->reg[i], "si") == 0)
+                reg[i] = &SI;
+            else if (std::strcmp(form->reg[i], "di") == 0)
+                reg[i] = &DI;
+            else
+                BOOST_ASSERT(false);
+        }
+
+        for (const long* disp=&disps[0];
+             disp != &disps[sizeof(disps)/sizeof(disps[0])]; ++disp)
+        {
+            int permutes[3] = {1, 2, 3};
+            do
+            {
+                Expr::Terms terms;
+                for (unsigned int i=0; i<3; ++i)
+                {
+                    if (permutes[i] == 1 && reg[0] != 0)
+                        terms.push_back(reg[0]);
+                    if (permutes[i] == 2 && reg[1] != 0)
+                        terms.push_back(reg[1]);
+                    if (permutes[i] == 3)
+                        terms.push_back(IntNum(*disp));
+                }
+
+                unsigned int expect_modrm = 0;
+                if (*disp == 0 || (reg[0] == 0 && reg[1] == 0))
+                    ;                       // mod=00
+                else if (*disp >= -128 && *disp <= 127)
+                    expect_modrm |= 0100;   // mod=01
+                else
+                    expect_modrm |= 0200;   // mod=10
+
+                expect_modrm |= form->rm;
+
+                Expr::Ptr e(0);
+                if (terms.size() == 1)
+                    e.reset(new Expr(Op::IDENT, terms));
+                else
+                    e.reset(new Expr(Op::ADD, terms));
+                BOOST_MESSAGE("Input expression: " << *e);
+                X86EffAddr ea(false, e);
+                addrsize = 0; rex = 0;
+                BOOST_CHECK_EQUAL(ea.check(&addrsize, 16, false, &rex, abs_sym),
+                                  true);
+                BOOST_CHECK_EQUAL(ea.m_modrm, expect_modrm);
+                BOOST_CHECK_EQUAL(ea.m_need_sib, 0);
+                BOOST_CHECK_EQUAL(ea.m_need_modrm, true);
+                BOOST_CHECK_EQUAL(ea.m_valid_sib, false);
+                BOOST_CHECK_EQUAL(ea.m_need_drex, false);
+                BOOST_CHECK_EQUAL(addrsize, 16);
+                BOOST_CHECK_EQUAL(rex, 0);
+            }
+            while (std::next_permutation(&permutes[0], &permutes[3]));
+        }
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
