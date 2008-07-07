@@ -28,12 +28,14 @@
 
 #include "util.h"
 
+#include "bc_container.h"
 #include "bytes.h"
 #include "errwarn.h"
 #include "expr.h"
 #include "intnum.h"
 #include "location_util.h"
 #include "marg_ostream.h"
+#include "object.h"
 #include "operator.h"
 #include "symbol.h"
 #include "value.h"
@@ -187,7 +189,7 @@ Bytecode::finalize()
         {
             if (i->m_seg_of || i->m_rshift || i->m_curpos_rel)
                 throw ValueError(i->get_line(), N_("invalid jump target"));
-            i->set_curpos_rel(*this, false);
+            i->set_curpos_rel(m_container->get_object()->get_abs_sym(), false);
         }
         warn_update_line(i->get_line());
     }

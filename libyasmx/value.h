@@ -40,7 +40,6 @@ namespace yasm
 {
 
 class Arch;
-class Bytecode;
 class Bytes;
 class Expr;
 class IntNum;
@@ -90,12 +89,11 @@ public:
 
     /// Set a value to be relative to the current assembly position rather
     /// than relative to the section start.
-    /// @param bc       bytecode containing value
+    /// @param abs_sym  absolute symbol to refer to if no existing relative
+    ///                 portion
     /// @param ip_rel   if nonzero, indicates IP-relative data relocation,
     ///                 sometimes used to generate special relocations
-    /// @note If value is just an absolute value, will get an absolute symrec
-    ///       to reference to (via bc's symbol table).
-    void set_curpos_rel(const Bytecode& bc, bool ip_rel);
+    void set_curpos_rel(Symbol& abs_sym, bool ip_rel);
 
     /// Break an #Expr into a #Value constituent parts.  Extracts the
     /// relative portion of the value, SEG and WRT portions, and top-level

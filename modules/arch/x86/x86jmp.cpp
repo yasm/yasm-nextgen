@@ -35,6 +35,7 @@
 #include <libyasmx/expr.h>
 #include <libyasmx/intnum.h>
 #include <libyasmx/marg_ostream.h>
+#include <libyasmx/object.h>
 #include <libyasmx/symbol.h>
 
 #include "x86common.h"
@@ -161,7 +162,8 @@ X86Jmp::finalize(Bytecode& bc)
         throw TooComplexError(N_("jump target expression too complex"));
     if (m_target.m_seg_of || m_target.m_rshift || m_target.m_curpos_rel)
         throw ValueError(N_("invalid jump target"));
-    m_target.set_curpos_rel(bc, false);
+    m_target.set_curpos_rel(bc.get_container()->get_object()->get_abs_sym(),
+                            false);
 
     Location target_loc;
     if (m_target.m_rel

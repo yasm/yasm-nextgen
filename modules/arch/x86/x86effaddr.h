@@ -124,7 +124,7 @@ public:
     // Check an effective address.  Returns true if EA was successfully
     // determined, false if indeterminate EA.
     bool check(unsigned char* addrsize, unsigned int bits,
-               bool address16_op, unsigned char* rex, Bytecode& bc);
+               bool address16_op, unsigned char* rex, Symbol& abs_sym);
 
     /// Finalize the effective address.
     void finalize(Location loc);
@@ -145,8 +145,8 @@ private:
     bool check_3264(unsigned int addrsize,
                     unsigned int bits,
                     unsigned char* rex,
-                    Bytecode& bc);
-    bool check_16(unsigned int bits, bool address16_op, Bytecode& bc);
+                    Symbol& abs_sym);
+    bool check_16(unsigned int bits, bool address16_op, Symbol& abs_sym);
 };
 
 }}} // namespace yasm::arch::x86

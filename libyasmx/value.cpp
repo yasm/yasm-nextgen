@@ -202,7 +202,7 @@ Value::operator= (const Value& rhs)
 }
 
 void
-Value::set_curpos_rel(const Bytecode& bc, bool ip_rel)
+Value::set_curpos_rel(Symbol& abs_sym, bool ip_rel)
 {
     m_curpos_rel = true;
     m_ip_rel = ip_rel;
@@ -210,7 +210,7 @@ Value::set_curpos_rel(const Bytecode& bc, bool ip_rel)
     // have a relative portion of the value.  If one doesn't exist, point
     // to a custom absolute symbol.
     if (!m_rel)
-        m_rel = &bc.get_container()->get_object()->get_abs_sym();
+        m_rel = &abs_sym;
 }
 
 bool
