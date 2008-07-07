@@ -39,6 +39,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     nocase.cpp
     object.cpp
     object_format.cpp
+    operator.cpp
     parser.cpp
     phash.cpp
     ${PLUGIN_CPP}

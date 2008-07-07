@@ -219,6 +219,14 @@ public:
     /// @param l        virtual line (where expression defined)
     Expr(Op::Op op, const Term& a, unsigned long line=0);
 
+    /// Create a new expression e=a op b op c op ....
+    /// @param op       operation
+    /// @param terms    expression terms
+    /// @param line     virtual line (where expression defined)
+    /// @note Only ADD, MUL, OR, AND, XOR operations are valid for more than
+    ///       two terms.
+    Expr(Op::Op op, const Terms& terms, unsigned long line=0);
+
     /// Create a new expression identity e=a.
     /// @param a        identity within new expression
     /// @param line     line
@@ -345,6 +353,7 @@ private:
     /// Line number.
     unsigned long m_line;
 
+    /// Terms of the expression.
     /// Some operations may allow more than two operand terms:
     /// ADD, MUL, OR, AND, XOR.
     Terms m_terms;

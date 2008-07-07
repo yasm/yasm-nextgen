@@ -202,7 +202,28 @@ Expr::Expr(const Term& a, Op::Op op, const Term& b, unsigned long line)
 Expr::Expr(Op::Op op, const Term& a, unsigned long line)
     : m_op(op), m_line(line)
 {
+    if (!is_unary(op))
+        throw ValueError(N_("expression with one term must be unary"));
     add_term(a);
+}
+
+Expr::Expr(Op::Op op, const Terms& terms, unsigned long line)
+    : m_op(op), m_line(line), m_terms(terms)
+{
+    switch (terms.size())
+    {
+        case 0:
+            throw ValueError(N_("expression must have more than 0 terms"));
+        case 1:
+            if (!is_unary(op))
+                throw ValueError(N_("expression with one term must be unary"));
+            return;
+        case 2:
+            return;
+    }
+    // more than 2 terms
+    if (!is_associative(op))
+        throw ValueError(N_("expression with more than two terms must be associative"));
 }
 
 Expr::Expr(const Term& a, unsigned long line)
@@ -478,12 +499,9 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
             m_op = Op::IDENT;
     }
 
-    // Only level operators that allow more than two operand terms.
+    // Only level associative operators.
     // Also don't bother leveling if it's not necessary to bring up any terms.
-    if (!do_level || (m_op != Op::ADD && m_op != Op::MUL &&
-                      m_op != Op::OR && m_op != Op::AND &&
-                      m_op != Op::LOR && m_op != Op::LAND &&
-                      m_op != Op::LXOR && m_op != Op::XOR))
+    if (!do_level || !is_associative(m_op))
     {
         // trim capacity before returning
         Terms(m_terms).swap(m_terms);
@@ -586,21 +604,9 @@ Expr::order_terms()
     if (m_terms.size() == 1)
         return;
 
-    // only reorder some types of operations
-    switch (m_op)
-    {
-        case Op::ADD:
-        case Op::MUL:
-        case Op::OR:
-        case Op::AND:
-        case Op::XOR:
-        case Op::LOR:
-        case Op::LAND:
-        case Op::LXOR:
-            break;
-        default:
-            return;
-    }
+    // only reorder commutative operators
+    if (!is_commutative(m_op))
+        return;
 
     // Use a stable sort (multiple terms of same type are kept in the same
     // order).

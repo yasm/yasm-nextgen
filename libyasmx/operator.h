@@ -75,6 +75,22 @@ namespace Op
     };
 }
 
+/// Determine if operator is unary.
+/// @param op   Operator
+/// @return True if op is unary, false otherwise.
+bool is_unary(Op::Op op);
+
+/// Determine if operator is commutative.
+/// @param op   Operator
+/// @return True if op is commutative (A op B === B op A), false otherwise.
+bool is_commutative(Op::Op op);
+
+/// Determine if operator is associative.
+/// @param op   Operator
+/// @return True if op is associative (A op (B op C) === (A op B) op C),
+///         false otherwise.
+bool is_associative(Op::Op op);
+
 } // namespace yasm
 
 #endif
