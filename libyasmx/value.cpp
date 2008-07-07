@@ -32,8 +32,8 @@
 #include <bitset>
 
 #include "arch.h"
-#include "bytes.h"
 #include "bytecode.h"
+#include "bytes.h"
 #include "compose.h"
 #include "errwarn.h"
 #include "expr.h"
