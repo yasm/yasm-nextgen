@@ -32,7 +32,7 @@
 #include <iterator>
 #include <ostream>
 
-//#include "arch.h"
+#include "arch.h"
 #include "errwarn.h"
 #include "floatnum.h"
 #include "intnum.h"
@@ -809,7 +809,7 @@ operator<< (std::ostream& os, const Expr::Term& term)
     switch (term.m_type)
     {
         case Expr::NONE:    os << "NONE"; break;
-        case Expr::REG:     os << "REG"; break;
+        case Expr::REG:     os << *term.m_reg; break;
         case Expr::INT:     os << *term.m_intn; break;
         case Expr::SUBST:   os << "[" << term.m_subst << "]"; break;
         case Expr::FLOAT:   os << "FLTN"; break;
