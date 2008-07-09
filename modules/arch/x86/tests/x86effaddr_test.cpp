@@ -406,7 +406,7 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr32)
          basereg != baseregs+NELEMS(baseregs); ++basereg)
     {
         for (const X86Register** indexreg=indexregs;
-             indexreg != &indexregs[NELEMS(indexregs)]; ++indexreg)
+             indexreg != indexregs+NELEMS(indexregs); ++indexreg)
         {
             for (const unsigned long* index=indexes;
                  index != indexes+NELEMS(indexes); ++index)
@@ -568,7 +568,7 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr32Hints)
          basereg != baseregs+NELEMS(baseregs); ++basereg)
     {
         for (const X86Register** indexreg=indexregs;
-             indexreg != &indexregs[NELEMS(indexregs)]; ++indexreg)
+             indexreg != indexregs+NELEMS(indexregs); ++indexreg)
         {
             Expr::Ptr e(
                 new Expr(
@@ -601,7 +601,7 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr32HintESP)
     {&EAX, &ECX, &EDX, &EBX, &EBP, &ESI, &EDI};
 
     for (const X86Register** indexreg=indexregs;
-         indexreg != &indexregs[NELEMS(indexregs)]; ++indexreg)
+         indexreg != indexregs+NELEMS(indexregs); ++indexreg)
     {
         Expr::Ptr e(
             new Expr(
