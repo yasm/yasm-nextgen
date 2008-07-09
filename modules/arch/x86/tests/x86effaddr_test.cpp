@@ -285,8 +285,6 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr16)
     X86Register SI(X86Register::REG16, 6);
     X86Register DI(X86Register::REG16, 7);
     Symbol abs_sym("");
-    unsigned char addrsize;
-    unsigned char rex;
 
     struct eaform16
     {
@@ -330,20 +328,15 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr16)
         for (const long* disp=&disps[0];
              disp != &disps[sizeof(disps)/sizeof(disps[0])]; ++disp)
         {
-            int permutes[3] = {1, 2, 3};
+            Expr::Terms terms;
+            if (reg[0] != 0)
+                terms.push_back(reg[0]);
+            if (reg[1] != 0)
+                terms.push_back(reg[1]);
+            terms.push_back(IntNum(*disp));
+
             do
             {
-                Expr::Terms terms;
-                for (unsigned int i=0; i<3; ++i)
-                {
-                    if (permutes[i] == 1 && reg[0] != 0)
-                        terms.push_back(reg[0]);
-                    if (permutes[i] == 2 && reg[1] != 0)
-                        terms.push_back(reg[1]);
-                    if (permutes[i] == 3)
-                        terms.push_back(IntNum(*disp));
-                }
-
                 unsigned int expect_modrm = 0;
                 if (*disp == 0 || (reg[0] == 0 && reg[1] == 0))
                     ;                       // mod=00
@@ -361,18 +354,22 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr16)
                     e.reset(new Expr(Op::ADD, terms));
                 BOOST_MESSAGE("Input expression: " << *e);
                 X86EffAddr ea(false, e);
-                addrsize = 0; rex = 0;
+                unsigned char addrsize = 0;
+                unsigned char rex = 0;
                 BOOST_CHECK_EQUAL(ea.check(&addrsize, 16, false, &rex, abs_sym),
                                   true);
+                BOOST_CHECK_EQUAL(ea.m_need_modrm, true);
                 BOOST_CHECK_EQUAL(ea.m_modrm, expect_modrm);
                 BOOST_CHECK_EQUAL(ea.m_need_sib, 0);
-                BOOST_CHECK_EQUAL(ea.m_need_modrm, true);
                 BOOST_CHECK_EQUAL(ea.m_valid_sib, false);
                 BOOST_CHECK_EQUAL(ea.m_need_drex, false);
                 BOOST_CHECK_EQUAL(addrsize, 16);
                 BOOST_CHECK_EQUAL(rex, 0);
             }
-            while (std::next_permutation(&permutes[0], &permutes[3]));
+            while (std::next_permutation(terms.begin(), terms.end()));
+            // clean up after ourselves
+            std::for_each(terms.begin(), terms.end(),
+                          MEMFN::mem_fn(&Expr::Term::destroy));
         }
     }
 }

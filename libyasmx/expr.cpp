@@ -208,7 +208,7 @@ Expr::Expr(Op::Op op, const Term& a, unsigned long line)
 }
 
 Expr::Expr(Op::Op op, const Terms& terms, unsigned long line)
-    : m_op(op), m_line(line), m_terms(terms)
+    : m_op(op), m_line(line)
 {
     switch (terms.size())
     {
@@ -217,13 +217,16 @@ Expr::Expr(Op::Op op, const Terms& terms, unsigned long line)
         case 1:
             if (!is_unary(op))
                 throw ValueError(N_("expression with one term must be unary"));
-            return;
+            break;
         case 2:
-            return;
+            break;
+        default:
+            // more than 2 terms
+            if (!is_associative(op))
+                throw ValueError(N_("expression with more than two terms must be associative"));
     }
-    // more than 2 terms
-    if (!is_associative(op))
-        throw ValueError(N_("expression with more than two terms must be associative"));
+    std::transform(terms.begin(), terms.end(), std::back_inserter(m_terms),
+                   MEMFN::mem_fn(&Term::clone));
 }
 
 Expr::Expr(const Term& a, unsigned long line)
