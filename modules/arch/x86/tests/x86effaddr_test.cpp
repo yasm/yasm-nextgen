@@ -36,11 +36,12 @@
 #include <libyasmx/intnum.h>
 #include <libyasmx/symbol.h>
 
+#ifndef NELEMS
+#define NELEMS(array)   (sizeof(array) / sizeof(array[0]))
+#endif
 
 using namespace yasm;
 using namespace yasm::arch::x86;
-
-BOOST_AUTO_TEST_SUITE(SetRexFromRegTests)
 
 BOOST_AUTO_TEST_CASE(SetRexFromRegDrex)
 {
@@ -237,10 +238,6 @@ BOOST_AUTO_TEST_CASE(SetRexFromReg8High)
     BOOST_CHECK_EQUAL(rex, 0x40);
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE(X86EffAddrTests)
-
 BOOST_AUTO_TEST_CASE(X86EffAddrInitBasic)
 {
     X86EffAddr ea;
@@ -278,6 +275,7 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitReg)
     }
 }
 
+// General 16-bit exhaustive expression tests
 BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr16)
 {
     X86Register BX(X86Register::REG16, 3);
@@ -304,8 +302,7 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr16)
     };
     const long disps[] = {0, 16, 127, 128, -128, -129, 255, -256};
 
-    for (const eaform16* form=&forms[0];
-         form != &forms[sizeof(forms)/sizeof(forms[0])]; ++form)
+    for (const eaform16* form=forms; form != forms+NELEMS(forms); ++form)
     {
         X86Register* reg[2];
 
@@ -325,8 +322,7 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr16)
                 BOOST_ASSERT(false);
         }
 
-        for (const long* disp=&disps[0];
-             disp != &disps[sizeof(disps)/sizeof(disps[0])]; ++disp)
+        for (const long* disp=disps; disp != disps+NELEMS(disps); ++disp)
         {
             Expr::Terms terms;
             if (reg[0] != 0)
@@ -371,6 +367,262 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr16)
             std::for_each(terms.begin(), terms.end(),
                           MEMFN::mem_fn(&Expr::Term::destroy));
         }
+    }
+}
+
+struct X86EffAddr32Fixture
+{
+    X86EffAddr32Fixture();
+    X86Register EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI;
+    Symbol abs_sym;
+};
+
+X86EffAddr32Fixture::X86EffAddr32Fixture()
+    : EAX(X86Register::REG32, 0)
+    , ECX(X86Register::REG32, 1)
+    , EDX(X86Register::REG32, 2)
+    , EBX(X86Register::REG32, 3)
+    , ESP(X86Register::REG32, 4)
+    , EBP(X86Register::REG32, 5)
+    , ESI(X86Register::REG32, 6)
+    , EDI(X86Register::REG32, 7)
+    , abs_sym("")
+{
+}
+
+BOOST_FIXTURE_TEST_SUITE(X86EffAddr32Tests, X86EffAddr32Fixture)
+
+// General 32-bit exhaustive expression tests
+BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr32)
+{
+    const X86Register* baseregs[] =
+    {0, &EAX, &ECX, &EDX, &EBX, &ESP, &EBP, &ESI, &EDI};
+    const X86Register* indexregs[] =
+    {0, &EAX, &ECX, &EDX, &EBX, &EBP, &ESI, &EDI};
+    const unsigned long indexes[] = {0, 1, 2, 4, 8};
+    const long disps[] = {0, 16, 127, 128, -128, -129, 255, -256};
+
+    for (const X86Register** basereg=baseregs;
+         basereg != baseregs+NELEMS(baseregs); ++basereg)
+    {
+        for (const X86Register** indexreg=indexregs;
+             indexreg != &indexregs[NELEMS(indexregs)]; ++indexreg)
+        {
+            for (const unsigned long* index=indexes;
+                 index != indexes+NELEMS(indexes); ++index)
+            {
+                // don't test multiplying cases if no indexreg
+                if (!*indexreg && *index != 0)
+                    continue;
+                // don't test plain indexreg if no basereg (equiv expression)
+                if (!*basereg && *index == 0)
+                    continue;
+
+                for (const long* disp=disps; disp != disps+NELEMS(disps);
+                     ++disp)
+                {
+                    Expr::Terms terms;
+                    if (*basereg != 0)
+                        terms.push_back(*basereg);
+                    if (*indexreg != 0)
+                    {
+                        if (*index == 0)
+                            terms.push_back(*indexreg);
+                        else
+                            terms.push_back(Expr::Ptr(
+                                new Expr(*indexreg, Op::MUL, IntNum(*index))));
+                    }
+                    terms.push_back(IntNum(*disp));
+
+                    //do
+                    {
+
+            const X86Register* breg = *basereg;
+            const X86Register* ireg = *indexreg;
+            unsigned long times = *index;
+
+            // map indexreg*1 to basereg (optimization)
+            if (breg == 0 && (times == 0 || times == 1))
+            {
+                breg = ireg;
+                ireg = 0;
+            }
+
+            // map indexreg*2 to basereg+basereg
+            // (optimization if not nosplit)
+            if (breg == 0 && (times == 2))
+            {
+                breg = ireg;
+                times = 0;
+            }
+
+            bool expect_error = false;
+
+            // SIB is required if any indexreg or if ESP basereg
+            bool need_sib =
+                (ireg != 0) ||
+                (breg == &ESP);
+
+            // Can't use ESP as an index register
+            if (ireg == &ESP)
+            {
+                if (breg != &ESP && (times == 0 || times == 1))
+                {
+                    // swap with base register
+                    std::swap(breg, ireg);
+                }
+                else
+                    expect_error = true;
+            }
+
+            unsigned char expect_modrm = 0;
+            unsigned char expect_sib = 0;
+
+            if ((*disp == 0 && breg != &EBP) || breg == 0)
+                ;                       // mod=00
+            else if (*disp >= -128 && *disp <= 127)
+                expect_modrm |= 0100;   // mod=01
+            else
+                expect_modrm |= 0200;   // mod=10
+
+            if (need_sib)
+            {
+                expect_modrm |= 4;
+                if (times == 0 || times == 1)
+                    ;                   // ss=00
+                else if (times == 2)
+                    expect_sib |= 0100; // ss=01
+                else if (times == 4)
+                    expect_sib |= 0200; // ss=02
+                else if (times == 8)
+                    expect_sib |= 0300; // ss=03
+                else
+                    expect_error = true;
+
+                if (ireg)
+                    expect_sib |= (ireg->num()&7)<<3;
+                else
+                    expect_sib |= 4<<3;
+
+                if (breg)
+                    expect_sib |= breg->num()&7;
+                else
+                    expect_sib |= 5;
+            }
+            else if (breg)
+                expect_modrm |= breg->num();
+            else
+                expect_modrm |= 5;
+
+            Expr::Ptr e(0);
+            if (terms.size() == 1)
+                e.reset(new Expr(Op::IDENT, terms));
+            else
+                e.reset(new Expr(Op::ADD, terms));
+            BOOST_MESSAGE("Input expression: " << *e);
+            X86EffAddr ea(false, e);
+            unsigned char addrsize = 0;
+            unsigned char rex = 0;
+            if (expect_error)
+            {
+                BOOST_CHECK_THROW(ea.check(&addrsize, 32, false, &rex, abs_sym),
+                                  ValueError);
+            }
+            else
+            {
+                BOOST_CHECK_EQUAL(ea.check(&addrsize, 32, false, &rex, abs_sym),
+                                  true);
+                BOOST_CHECK_EQUAL(ea.m_need_modrm, true);
+                BOOST_CHECK_EQUAL(ea.m_modrm, expect_modrm);
+                BOOST_CHECK_EQUAL(ea.m_need_sib, need_sib);
+                BOOST_CHECK_EQUAL(ea.m_valid_sib, need_sib);
+                if (need_sib)
+                    BOOST_CHECK_EQUAL(ea.m_sib, expect_sib);
+                BOOST_CHECK_EQUAL(ea.m_need_drex, false);
+                BOOST_CHECK_EQUAL(addrsize, 32);
+                BOOST_CHECK_EQUAL(rex, 0);
+            }
+
+                    }
+                    //while (std::next_permutation(terms.begin(), terms.end()));
+                    // clean up after ourselves
+                    std::for_each(terms.begin(), terms.end(),
+                                  MEMFN::mem_fn(&Expr::Term::destroy));
+                }
+            }
+        }
+    }
+}
+
+// Test for the hinting mechanism
+// First reg is preferred base register, unless it has *1, in which case it's
+// the preferred index register.
+BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr32Hints)
+{
+    const X86Register* baseregs[] =
+    {&EAX, &ECX, &EDX, &EBX, &ESP, &EBP, &ESI, &EDI};
+    const X86Register* indexregs[] =
+    {&EAX, &ECX, &EDX, &EBX, &EBP, &ESI, &EDI};
+
+    for (const X86Register** basereg=baseregs;
+         basereg != baseregs+NELEMS(baseregs); ++basereg)
+    {
+        for (const X86Register** indexreg=indexregs;
+             indexreg != &indexregs[NELEMS(indexregs)]; ++indexreg)
+        {
+            Expr::Ptr e(
+                new Expr(
+                    new Expr(*indexreg, Op::MUL, IntNum(1)),
+                    Op::ADD,
+                    *basereg));
+
+            unsigned char expect_sib = 0;
+            expect_sib |= ((*indexreg)->num()&7)<<3;
+            expect_sib |= (*basereg)->num()&7;
+
+            BOOST_MESSAGE("Input expression: " << *e);
+            X86EffAddr ea(false, e);
+            unsigned char addrsize = 0;
+            unsigned char rex = 0;
+            BOOST_CHECK_EQUAL(ea.check(&addrsize, 32, false, &rex, abs_sym),
+                              true);
+            BOOST_CHECK_EQUAL(ea.m_need_modrm, true);
+            BOOST_CHECK_EQUAL(ea.m_need_sib, true);
+            BOOST_CHECK_EQUAL(ea.m_valid_sib, true);
+            BOOST_CHECK_EQUAL(ea.m_sib, expect_sib);
+        }
+    }
+}
+
+// ESP can't be used as an index register, make sure ESP*1+EAX works.
+BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr32HintESP)
+{
+    const X86Register* indexregs[] =
+    {&EAX, &ECX, &EDX, &EBX, &EBP, &ESI, &EDI};
+
+    for (const X86Register** indexreg=indexregs;
+         indexreg != &indexregs[NELEMS(indexregs)]; ++indexreg)
+    {
+        Expr::Ptr e(
+            new Expr(
+                new Expr(&ESP, Op::MUL, IntNum(1)),
+                Op::ADD,
+                *indexreg));
+
+        unsigned char expect_sib = 0;
+        expect_sib |= ((*indexreg)->num()&7)<<3;
+        expect_sib |= ESP.num()&7;
+
+        BOOST_MESSAGE("Input expression: " << *e);
+        X86EffAddr ea(false, e);
+        unsigned char addrsize = 0;
+        unsigned char rex = 0;
+        BOOST_CHECK_EQUAL(ea.check(&addrsize, 32, false, &rex, abs_sym),
+                          true);
+        BOOST_CHECK_EQUAL(ea.m_need_modrm, true);
+        BOOST_CHECK_EQUAL(ea.m_need_sib, true);
+        BOOST_CHECK_EQUAL(ea.m_valid_sib, true);
+        BOOST_CHECK_EQUAL(ea.m_sib, expect_sib);
     }
 }
 
