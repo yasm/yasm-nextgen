@@ -499,6 +499,16 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
             m_op = Op::IDENT;
     }
 
+    // If just an IDENT'ed expression, bring up expression to this level.
+    if (m_op == Op::IDENT && (e = m_terms.front().get_expr()))
+    {
+        m_op = e->m_op;
+        m_line = e->m_line;
+        m_terms.clear();
+        m_terms.swap(e->m_terms);
+        delete e;
+    }
+
     // Only level associative operators.
     // Also don't bother leveling if it's not necessary to bring up any terms.
     if (!do_level || !is_associative(m_op))
@@ -554,6 +564,16 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
         simplify_identity(intn, simplify_reg_mul);
     else if (m_terms.size() == 1)
         m_op = Op::IDENT;
+
+    // If just an IDENT'ed expression, bring up expression to this level.
+    if (m_op == Op::IDENT && (e = m_terms.front().get_expr()))
+    {
+        m_op = e->m_op;
+        m_line = e->m_line;
+        m_terms.clear();
+        m_terms.swap(e->m_terms);
+        delete e;
+    }
 }
 
 void
