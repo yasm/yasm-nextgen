@@ -162,27 +162,26 @@ xform_calc_dist_no_bc(Expr* e)
 
 static inline bool
 subst_dist_cb(Expr::Term& term, Location loc, Location loc2,
-              unsigned int& subst,
+              unsigned int* subst,
               FUNCTION::function<void (unsigned int subst,
                                        Location loc,
                                        Location loc2)> func)
 {
     // Call higher-level callback
-    func(subst, loc, loc2);
+    func(*subst, loc, loc2);
     // Change the term to an subst
-    term = Expr::Term(Expr::Term::Subst(subst));
-    subst++;
+    term = Expr::Term(Expr::Term::Subst(*subst));
+    *subst = *subst + 1;
     return true;
 }
 
 static inline void
-xform_subst_dist(Expr* e, unsigned int& subst,
+xform_subst_dist(Expr* e, unsigned int* subst,
                  FUNCTION::function<void (unsigned int subst,
                                           Location loc,
                                           Location loc2)> func)
 {
-    xform_dist_base(e, BIND::bind(&subst_dist_cb, _1, _2, _3,
-                                  REF::ref(subst), func));
+    xform_dist_base(e, BIND::bind(&subst_dist_cb, _1, _2, _3, subst, func));
 }
 
 int
@@ -192,7 +191,7 @@ subst_dist(Expr* e,
 {
     unsigned int subst = 0;
     e->level_tree(true, true, true,
-                  BIND::bind(&xform_subst_dist, _1, REF::ref(subst), func));
+                  BIND::bind(&xform_subst_dist, _1, &subst, func));
     return subst;
 }
 
