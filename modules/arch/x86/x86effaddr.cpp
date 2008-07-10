@@ -1113,8 +1113,11 @@ X86EffAddr::check_16(unsigned int bits, bool address16_op, Symbol& abs_sym)
 }
 
 bool
-X86EffAddr::check(unsigned char* addrsize, unsigned int bits,
-                  bool address16_op, unsigned char* rex, Symbol& abs_sym)
+X86EffAddr::check(unsigned char* addrsize,
+                  unsigned int bits,
+                  bool address16_op,
+                  unsigned char* rex,
+                  Symbol& abs_sym)
 {
     if (*addrsize == 0)
     {
