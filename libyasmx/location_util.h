@@ -47,6 +47,15 @@ class Expr;
 YASM_LIB_EXPORT
 void xform_calc_dist(Expr* e);
 
+/// Expr::level_tree() transformation helper function to transform instances
+/// of Symbol-Symbol [Symbol+(-1*Symbol)] into integers if possible by
+/// calling calc_dist_no_bc().
+/// Unlike xform_calc_dist(), this only calculates the distance if both
+/// locations/symbols are within the same bytecode, so it's safe to call
+/// prior to optimization being performed.
+/// @param e            expression
+void xform_calc_dist_no_bc(Expr* e);
+
 YASM_LIB_EXPORT
 int subst_dist(Expr* e,
                FUNCTION::function<void (unsigned int subst,

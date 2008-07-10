@@ -62,6 +62,19 @@ struct YASM_LIB_EXPORT Location
 YASM_LIB_EXPORT
 bool calc_dist(Location loc1, Location loc2, /*@out@*/ IntNum* dist);
 
+/// Determine the distance between the starting offsets of two locations.
+/// Unlike calc_dist(), this only calculates the distance if both locations
+/// are within the same bytecode, so it's safe to call prior to optimization
+/// being performed.
+/// @param loc1         location 1
+/// @param loc2         location 2
+/// @param dist         distance in bytes between the two locations
+///                     (loc2-loc1); output.
+/// @return True if distance calculated; false if the distance was
+///         indeterminate (e.g. the locations have different bytecodes).
+YASM_LIB_EXPORT
+bool calc_dist_no_bc(Location loc1, Location loc2, IntNum* dist);
+
 } // namespace yasm
 
 #endif

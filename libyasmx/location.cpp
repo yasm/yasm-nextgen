@@ -50,4 +50,15 @@ calc_dist(Location loc1, Location loc2, IntNum* dist)
     return true;
 }
 
+bool
+calc_dist_no_bc(Location loc1, Location loc2, IntNum* dist)
+{
+    if (loc1.bc != loc2.bc)
+        return false;
+
+    *dist = loc2.off;
+    *dist -= loc1.off;
+    return true;
+}
+
 } // namespace yasm

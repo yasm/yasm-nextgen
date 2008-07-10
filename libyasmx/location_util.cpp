@@ -129,8 +129,8 @@ xform_dist_base(Expr* e, FUNCTION::function<bool (Expr::Term& term,
 static inline bool
 calc_dist_cb(Expr::Term& term, Location loc, Location loc2)
 {
-    std::auto_ptr<IntNum> dist(new IntNum());
-    if (!calc_dist(loc, loc2, dist.get()))
+    IntNum dist;
+    if (!calc_dist(loc, loc2, &dist))
         return false;
     // Change the term to an integer
     term = dist;
@@ -141,6 +141,23 @@ void
 xform_calc_dist(Expr* e)
 {
     xform_dist_base(e, &calc_dist_cb);
+}
+
+static inline bool
+calc_dist_no_bc_cb(Expr::Term& term, Location loc, Location loc2)
+{
+    IntNum dist;
+    if (!calc_dist_no_bc(loc, loc2, &dist))
+        return false;
+    // Change the term to an integer
+    term = dist;
+    return true;
+}
+
+void
+xform_calc_dist_no_bc(Expr* e)
+{
+    xform_dist_base(e, &calc_dist_no_bc_cb);
 }
 
 static inline bool
