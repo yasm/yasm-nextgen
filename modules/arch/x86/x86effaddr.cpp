@@ -89,8 +89,8 @@ void
 X86EffAddr::init(unsigned int spare, unsigned char drex,
                  bool need_drex)
 {
-    m_modrm &= 0xC7;                  /* zero spare/reg bits */
-    m_modrm |= (spare << 3) & 0x38;   /* plug in provided bits */
+    m_modrm &= 0xC7;                  // zero spare/reg bits
+    m_modrm |= (spare << 3) & 0x38;   // plug in provided bits
     m_drex = (unsigned char)drex;
     m_need_drex = need_drex;
 }
@@ -355,14 +355,14 @@ x86_expr_checkea_distcheck_reg(Expr* e, unsigned int bits)
     Expr::Terms::iterator end = e->get_terms().end();
     Expr::Terms::iterator havereg = end;
     Expr::Terms::iterator havereg_expr = end;
-    int retval = 1;     /* default to legal, no changes */
+    int retval = 1;     // default to legal, no changes
 
     for (Expr::Terms::iterator i=e->get_terms().begin(); i != end; ++i)
     {
         switch (i->get_type())
         {
             case Expr::REG:
-                /* Check op to make sure it's valid to use w/register. */
+                // Check op to make sure it's valid to use w/register.
                 switch (e->get_op())
                 {
                     case Op::MUL:
@@ -693,7 +693,7 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
     /*@null@*/ std::auto_ptr<IntNum> num = m_disp.get_intnum(false);
     if (num.get() == 0)
     {
-        /* Still has unknown values. */
+        // Still has unknown values.
         m_need_nonzero_len = true;
         m_modrm |= 0100;
         m_valid_modrm = true;
@@ -1023,12 +1023,24 @@ X86EffAddr::check_16(unsigned int bits, bool address16_op, Symbol& abs_sym)
 {
     static const unsigned char modrm16[16] =
     {
-        0006 /* disp16  */, 0007 /* [BX]    */, 0004 /* [SI]    */,
-        0000 /* [BX+SI] */, 0005 /* [DI]    */, 0001 /* [BX+DI] */,
-        0377 /* invalid */, 0377 /* invalid */, 0006 /* [BP]+d  */,
-        0377 /* invalid */, 0002 /* [BP+SI] */, 0377 /* invalid */,
-        0003 /* [BP+DI] */, 0377 /* invalid */, 0377 /* invalid */,
-        0377 /* invalid */
+                // B D S B
+                // P I I X
+        0006,   // 0 0 0 0: disp16
+        0007,   // 0 0 0 1: [BX]
+        0004,   // 0 0 1 0: [SI]
+        0000,   // 0 0 1 1: [BX+SI]
+        0005,   // 0 1 0 0: [DI]
+        0001,   // 0 1 0 1: [BX+DI]
+        0377,   // 0 1 1 0: invalid
+        0377,   // 0 1 1 1: invalid
+        0006,   // 1 0 0 0: [BP]+d
+        0377,   // 1 0 0 1: invalid
+        0002,   // 1 0 1 0: [BP+SI]
+        0377,   // 1 0 1 1: invalid
+        0003,   // 1 1 0 0: [BP+DI]
+        0377,   // 1 1 0 1: invalid
+        0377,   // 1 1 1 0: invalid
+        0377    // 1 1 1 1: invalid
     };
     int bx=0, si=0, di=0, bp=0; // total multiplier for each reg
     enum HaveReg
