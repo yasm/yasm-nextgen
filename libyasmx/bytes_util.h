@@ -36,7 +36,8 @@
 namespace yasm
 {
 
-/// Write an 8-bit value, incrementing buffer pointer.
+/// Write an 8-bit value to a bytes buffer.
+/// @param bytes    output bytes buffer
 /// @param val      8-bit value
 inline void
 write_8(Bytes& bytes, unsigned char val)
@@ -44,8 +45,9 @@ write_8(Bytes& bytes, unsigned char val)
     bytes.push_back(val & 0xFF);
 }
 
-/// Write a 16-bit value, incrementing buffer pointer.
-/// @param val  16-bit value
+/// Write a 16-bit value to a bytes buffer.
+/// @param bytes    output bytes buffer
+/// @param val      16-bit value
 inline void
 write_16(Bytes& bytes, unsigned short val)
 {
@@ -61,8 +63,9 @@ write_16(Bytes& bytes, unsigned short val)
     }
 }
 
-/// Write a 32-bit value to a buffer, incrementing buffer pointer.
-/// @param val  32-bit value
+/// Write a 32-bit value to a bytes buffer.
+/// @param bytes    output bytes buffer
+/// @param val      32-bit value
 inline void
 write_32(Bytes& bytes, unsigned long val)
 {
