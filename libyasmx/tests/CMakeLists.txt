@@ -14,6 +14,7 @@ ENDMACRO(LIBYASM_UNIT_TESTS)
 
 LIBYASM_UNIT_TESTS(
     align_test
+    bytes_util_test
     compose_test
     hamt_test
     linemap_test
