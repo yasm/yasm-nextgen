@@ -43,7 +43,6 @@
 namespace yasm
 {
 
-class Bytecode;
 class Expr;
 
 class YASM_LIB_EXPORT Symbol
