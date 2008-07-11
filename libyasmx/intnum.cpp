@@ -55,33 +55,8 @@ static BitVector::scoped_wordptr spare(BITVECT_NATIVE_SIZE, false);
 static BitVector::scoped_wordptr op1static(BITVECT_NATIVE_SIZE, false);
 static BitVector::scoped_wordptr op2static(BITVECT_NATIVE_SIZE, false);
 
-class IntNumManager
-{
-public:
-    static IntNumManager& instance()
-    {
-        static IntNumManager inst;
-        return inst;
-    }
-
-    /*@only@*/ BitVector::from_Dec_static_data *from_dec_data;
-
-private:
-    IntNumManager();
-    IntNumManager(const IntNumManager&);
-    IntNumManager& operator= (const IntNumManager&);
-    ~IntNumManager();
-};
-
-IntNumManager::IntNumManager()
-{
-    from_dec_data = BitVector::from_Dec_static_Boot(BITVECT_NATIVE_SIZE);
-}
-
-IntNumManager::~IntNumManager()
-{
-    BitVector::from_Dec_static_Shutdown(from_dec_data);
-}
+/// Static bitvect decimal conversion.
+static BitVector::from_Dec_static my_from_Dec(BITVECT_NATIVE_SIZE);
 
 void
 IntNum::from_bv(wordptr bv)
@@ -150,13 +125,9 @@ IntNum::IntNum(char* str, int base)
             errstr = N_("invalid octal literal");
             break;
         case 10:
-        {
-            IntNumManager& manager = IntNumManager::instance();
-            err = BitVector::from_Dec_static(manager.from_dec_data, conv_bv,
-                                            (unsigned char *)str);
+            err = my_from_Dec(conv_bv, (unsigned char *)str);
             errstr = N_("invalid decimal literal");
             break;
-        }
         case 16:
             err = BitVector::from_Hex(conv_bv, (unsigned char *)str);
             errstr = N_("invalid hex literal");

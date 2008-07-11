@@ -1692,51 +1692,26 @@ charptr to_Dec(wordptr addr)
     return(result);
 }
 
-struct from_Dec_static_data {
-    wordptr term;
-    wordptr base;
-    wordptr prod;
-    wordptr rank;
-    wordptr temp;
-};
-
-from_Dec_static_data *from_Dec_static_Boot(N_word bits)
+from_Dec_static::from_Dec_static(N_word bits)
+    : term(Create(BITS,false))
+    , base(Create(BITS,false))
+    , prod(Create(bits,false))
+    , rank(Create(bits,false))
+    , temp(Create(bits,false))
 {
-    from_Dec_static_data *data;
-
-    data = (from_Dec_static_data *)malloc(sizeof(from_Dec_static_data));
-
-    if (bits > 0)
-    {
-        data->term = Create(BITS,false);
-        data->base = Create(BITS,false);
-        data->prod = Create(bits,false);
-        data->rank = Create(bits,false);
-        data->temp = Create(bits,false);
-    } else {
-        data->term = NULL;
-        data->base = NULL;
-        data->prod = NULL;
-        data->rank = NULL;
-        data->temp = NULL;
-    }
-    return data;
+    assert(bits > 0);
 }
 
-void from_Dec_static_Shutdown(from_Dec_static_data *data)
+from_Dec_static::~from_Dec_static()
 {
-    if (data) {
-        Destroy(data->term);
-        Destroy(data->base);
-        Destroy(data->prod);
-        Destroy(data->rank);
-        Destroy(data->temp);
-    }
-    free(data);
+    Destroy(term);
+    Destroy(base);
+    Destroy(prod);
+    Destroy(rank);
+    Destroy(temp);
 }
 
-ErrCode from_Dec_static(from_Dec_static_data *data,
-                                  wordptr addr, charptr string)
+ErrCode from_Dec_static::operator() (wordptr addr, charptr string)
 {
     ErrCode error = ErrCode_Ok;
     N_word  bits = bits_(addr);
@@ -1745,11 +1720,6 @@ ErrCode from_Dec_static(from_Dec_static_data *data,
     bool minus;
     bool shift;
     bool carry;
-    wordptr term;
-    wordptr base;
-    wordptr prod;
-    wordptr rank;
-    wordptr temp;
     N_word  accu;
     N_word  powr;
     N_word  count;
@@ -1761,12 +1731,6 @@ ErrCode from_Dec_static(from_Dec_static_data *data,
 
     if (bits > 0)
     {
-        term = data->term;
-        base = data->base;
-        prod = data->prod;
-        rank = data->rank;
-        temp = data->temp;
-
         length = strlen((char *) string);
         if (length == 0) return(ErrCode_Pars);
         digit = (int) *string;
@@ -1852,145 +1816,14 @@ ErrCode from_Dec_static(from_Dec_static_data *data,
 
 ErrCode from_Dec(wordptr addr, charptr string)
 {
-    ErrCode error = ErrCode_Ok;
     N_word  bits = bits_(addr);
-    N_word  mask = mask_(addr);
-    bool init = (bits > BITS);
-    bool minus;
-    bool shift;
-    bool carry;
-    wordptr term;
-    wordptr base;
-    wordptr prod;
-    wordptr rank;
-    wordptr temp;
-    N_word  accu;
-    N_word  powr;
-    N_word  count;
-    size_t  length;
-    int     digit;
-
-    if (EXP10 == 0)
-        EXP10 = power10(LOG10);
 
     if (bits > 0)
     {
-        length = strlen((char *) string);
-        if (length == 0) return(ErrCode_Pars);
-        digit = (int) *string;
-        if ((minus = (digit == (int) '-')) ||
-                     (digit == (int) '+'))
-        {
-            string++;
-            if (--length == 0) return(ErrCode_Pars);
-        }
-        string += length;
-        term = Create(BITS,false);
-        if (term == NULL)
-        {
-            return(ErrCode_Null);
-        }
-        base = Create(BITS,false);
-        if (base == NULL)
-        {
-            Destroy(term);
-            return(ErrCode_Null);
-        }
-        prod = Create(bits,init);
-        if (prod == NULL)
-        {
-            Destroy(term);
-            Destroy(base);
-            return(ErrCode_Null);
-        }
-        rank = Create(bits,init);
-        if (rank == NULL)
-        {
-            Destroy(term);
-            Destroy(base);
-            Destroy(prod);
-            return(ErrCode_Null);
-        }
-        temp = Create(bits,false);
-        if (temp == NULL)
-        {
-            Destroy(term);
-            Destroy(base);
-            Destroy(prod);
-            Destroy(rank);
-            return(ErrCode_Null);
-        }
-        Empty(addr);
-        *base = EXP10;
-        shift = false;
-        while ((!error) && (length > 0))
-        {
-            accu = 0;
-            powr = 1;
-            count = LOG10;
-            while ((!error) && (length > 0) && (count-- > 0))
-            {
-                digit = (int) *(--string); length--;
-                /* separate because isdigit() is likely a macro! */
-                if (isdigit(digit) != 0)
-                {
-                    accu += ((N_word) digit - (N_word) '0') * powr;
-                    powr *= 10;
-                }
-                else error = ErrCode_Pars;
-            }
-            if (!error)
-            {
-                if (shift)
-                {
-                    *term = accu;
-                    Copy(temp,rank);
-                    error = Mul_Pos(prod,temp,term,false);
-                }
-                else
-                {
-                    *prod = accu;
-                    if ((!init) && ((accu AND NOT mask) != 0)) error = ErrCode_Ovfl;
-                }
-                if (!error)
-                {
-                    carry = false;
-                    compute(addr,addr,prod,false,&carry);
-                    /* ignores sign change (= overflow) but not */
-                    /* numbers too large (= carry) for resulting bit vector */
-                    if (carry) error = ErrCode_Ovfl;
-                    else
-                    {
-                        if (length > 0)
-                        {
-                            if (shift)
-                            {
-                                Copy(temp,rank);
-                                error = Mul_Pos(rank,temp,base,false);
-                            }
-                            else
-                            {
-                                *rank = *base;
-                                shift = true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        Destroy(term);
-        Destroy(base);
-        Destroy(prod);
-        Destroy(rank);
-        Destroy(temp);
-        if (!error && minus)
-        {
-            Negate(addr,addr);
-            if ((*(addr + size_(addr) - 1) AND mask AND NOT (mask >> 1)) == 0)
-                error = ErrCode_Ovfl;
-        }
+        from_Dec_static do_from_Dec(bits);
+        return do_from_Dec(addr, string);
     }
-    return(error);
+    return(ErrCode_Ok);
 }
 
 charptr to_Enum(wordptr addr)

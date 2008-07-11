@@ -225,14 +225,19 @@ YASM_LIB_EXPORT
 YASM_LIB_EXPORT
 ErrCode from_Dec   (/*@out@*/ wordptr addr, charptr string);
 
-typedef struct from_Dec_static_data from_Dec_static_data;
-YASM_LIB_EXPORT
-from_Dec_static_data *from_Dec_static_Boot(N_word bits);
-YASM_LIB_EXPORT
-void from_Dec_static_Shutdown(/*@null@*/ from_Dec_static_data *data);
-YASM_LIB_EXPORT
-ErrCode from_Dec_static(from_Dec_static_data *data,
-                                  /*@out@*/ wordptr addr, charptr string);
+class YASM_LIB_EXPORT from_Dec_static
+{
+public:
+    explicit from_Dec_static(N_word bits);
+    ~from_Dec_static();
+    ErrCode operator() (/*@out@*/ wordptr addr, charptr string);
+private:
+    wordptr term;
+    wordptr base;
+    wordptr prod;
+    wordptr rank;
+    wordptr temp;
+};
 
 YASM_LIB_EXPORT
 /*@only@*/ charptr to_Enum    (wordptr addr);
