@@ -87,19 +87,10 @@ operator<< (Bytes& bytes, const SetEndian& sete)
     return bytes;
 }
 
-inline Bytes&
-big_endian(Bytes& bytes)
-{
-    bytes.set_bigendian(true);
-    return bytes;
-}
-
-inline Bytes&
-little_endian(Bytes& bytes)
-{
-    bytes.set_bigendian(false);
-    return bytes;
-}
+/// Generates multi-byte output in big endian format.
+static const SetEndian big_endian = { true };
+/// Generates multi-byte output in little endian format.
+static const SetEndian little_endian = { false };
 
 /// Output the entire contents of a bytes container to an output stream.
 /// @param os    output stream
