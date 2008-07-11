@@ -385,6 +385,26 @@ Z_long  Set_Min              (wordptr addr);                    /* = min(X)  */
 YASM_LIB_EXPORT
 Z_long  Set_Max              (wordptr addr);                    /* = max(X)  */
 
+class scoped_wordptr
+{
+    explicit scoped_wordptr(N_int bits, bool clear=false)
+        : ptr(Create(bits, clear))
+    {}
+
+    ~scoped_wordptr()
+    {
+        Destroy(ptr);
+    }
+
+    operator wordptr ()
+    {
+        return ptr;
+    }
+
+private:
+    wordptr ptr;
+};
+
 } // namespace BitVector
 
 /*****************************************************************************/
