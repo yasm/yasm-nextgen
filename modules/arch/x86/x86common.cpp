@@ -31,6 +31,7 @@
 #include <iomanip>
 
 #include <libyasmx/bytes.h>
+#include <libyasmx/bytes_util.h>
 #include <libyasmx/errwarn.h>
 #include <libyasmx/marg_ostream.h>
 
@@ -172,14 +173,14 @@ void
 X86Common::to_bytes(Bytes& bytes, const X86SegmentRegister* segreg) const
 {
     if (segreg != 0)
-        bytes.write_8(segreg->prefix());
+        write_8(bytes, segreg->prefix());
     if (m_addrsize != 0 && m_addrsize != m_mode_bits)
-        bytes.write_8(0x67);
+        write_8(bytes, 0x67);
     if ((m_mode_bits != 64 && m_opersize != m_mode_bits) ||
         (m_mode_bits == 64 && m_opersize == 16))
-        bytes.write_8(0x66);
+        write_8(bytes, 0x66);
     if (m_lockrep_pre != 0)
-        bytes.write_8(m_lockrep_pre);
+        write_8(bytes, m_lockrep_pre);
 }
 
 }}} // namespace yasm::arch::x86

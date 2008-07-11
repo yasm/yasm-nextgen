@@ -33,6 +33,7 @@
 #include <libyasmx/bc_container.h>
 #include <libyasmx/bytecode.h>
 #include <libyasmx/bytes.h>
+#include <libyasmx/bytes_util.h>
 #include <libyasmx/errwarn.h>
 #include <libyasmx/expr.h>
 #include <libyasmx/intnum.h>
@@ -415,7 +416,7 @@ general_tobytes(Bytes& bytes,
     common.to_bytes(bytes,
         ea != 0 ? static_cast<const X86SegmentRegister*>(ea->m_segreg) : 0);
     if (special_prefix != 0)
-        bytes.write_8(special_prefix);
+        write_8(bytes, special_prefix);
     if (special_prefix == 0xC4)
     {
         // 3-byte VEX; merge in 1s complement of REX.R, REX.X, REX.B
@@ -441,7 +442,7 @@ general_tobytes(Bytes& bytes,
     {
         if (common.m_mode_bits != 64)
             throw InternalError(N_("x86: got a REX prefix in non-64-bit mode"));
-        bytes.write_8(rex);
+        write_8(bytes, rex);
     }
 
     // Opcode
@@ -463,18 +464,18 @@ X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
         {
             if (!m_ea->m_valid_modrm)
                 throw InternalError(N_("invalid Mod/RM in x86 tobytes_insn"));
-            bytes.write_8(m_ea->m_modrm);
+            write_8(bytes, m_ea->m_modrm);
         }
 
         if (m_ea->m_need_sib)
         {
             if (!m_ea->m_valid_sib)
                 throw InternalError(N_("invalid SIB in x86 tobytes_insn"));
-            bytes.write_8(m_ea->m_sib);
+            write_8(bytes, m_ea->m_sib);
         }
 
         if (m_ea->m_need_drex)
-            bytes.write_8(m_ea->m_drex);
+            write_8(bytes, m_ea->m_drex);
     }
 
     bc_out.output(bytes);

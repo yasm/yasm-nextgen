@@ -31,6 +31,7 @@
 #include "arch.h"
 #include "bc_container.h"
 #include "bytecode.h"
+#include "bytes_util.h"
 #include "expr.h"
 
 
@@ -41,7 +42,7 @@ void
 append_byte(BytecodeContainer& container, unsigned char val)
 {
     Bytecode& bc = container.fresh_bytecode();
-    bc.get_fixed().write_8(val);
+    write_8(bc.get_fixed(), val);
 }
 
 void
@@ -81,7 +82,7 @@ append_data(BytecodeContainer& container,
     Bytes& fixed = container.fresh_bytecode().get_fixed();
     fixed.write((const unsigned char *)str.data(), str.length());
     if (append_zero)
-        fixed.write_8(0);
+        write_8(fixed, 0);
 }
 
 void
@@ -96,7 +97,7 @@ append_data(BytecodeContainer& container,
     if ((len % size) != 0)
         fixed.write(size-(len % size), 0);
     if (append_zero)
-        fixed.write_8(0);
+        write_8(fixed, 0);
 }
 
 } // namespace yasm

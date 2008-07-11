@@ -63,10 +63,6 @@ public:
     /// @param  v   byte value
     void write(size_type n, unsigned char v);
 
-    void write_8(unsigned char val);
-    void write_16(unsigned short val);
-    void write_32(unsigned long val);
-
 private:
     bool m_bigendian;
 };
@@ -103,46 +99,6 @@ little_endian(Bytes& bytes)
 {
     bytes.set_bigendian(false);
     return bytes;
-}
-
-/// Write an 8-bit value, incrementing buffer pointer.
-/// @param val      8-bit value
-inline void
-Bytes::write_8(unsigned char val)
-{
-    push_back(val & 0xFF);
-}
-
-/// Write a 16-bit value, incrementing buffer pointer.
-/// @param val  16-bit value
-inline void
-Bytes::write_16(unsigned short val)
-{
-    if (m_bigendian) {
-        push_back((unsigned char)((val >> 8) & 0xFF));
-        push_back((unsigned char)(val & 0xFF));
-    } else {
-        push_back((unsigned char)(val & 0xFF));
-        push_back((unsigned char)((val >> 8) & 0xFF));
-    }
-}
-
-/// Write a 32-bit value to a buffer, incrementing buffer pointer.
-/// @param val  32-bit value
-inline void
-Bytes::write_32(unsigned long val)
-{
-    if (m_bigendian) {
-        push_back((unsigned char)((val >> 24) & 0xFF));
-        push_back((unsigned char)((val >> 16) & 0xFF));
-        push_back((unsigned char)((val >> 8) & 0xFF));
-        push_back((unsigned char)(val & 0xFF));
-    } else {
-        push_back((unsigned char)(val & 0xFF));
-        push_back((unsigned char)((val >> 8) & 0xFF));
-        push_back((unsigned char)((val >> 16) & 0xFF));
-        push_back((unsigned char)((val >> 24) & 0xFF));
-    }
 }
 
 /// Output the entire contents of a bytes container to an output stream.

@@ -78,6 +78,7 @@ IF(NOT BUILD_STATIC)
         bytecode.h
         bytecode_util.h
         bytes.h
+        bytes_util.h
         compose.h
         debug_format.h
         directive.h
