@@ -54,6 +54,9 @@ class YASM_LIB_EXPORT IntNum
     bool operator>(const IntNum& lhs, const IntNum& rhs);
 
 public:
+    /// "Native" "word" size for intnum calculations.
+    enum { BITVECT_NATIVE_SIZE = 256 };
+
     /// Default constructor.  Initializes value to 0.
     IntNum() : m_type(INTNUM_L) { m_val.l = 0; }
 
@@ -224,20 +227,6 @@ public:
     /// @return True if intnum is within range.
     bool in_range(long low, long high) const;
 
-    /// Output intnum to buffer in LEB128-encoded form.
-    /// @param ptr      pointer to storage for output bytes
-    /// @param sign     signedness of LEB128 encoding (false=unsigned,
-    ///                 true=signed)
-    /// @return Number of bytes generated.
-    unsigned long get_leb128(unsigned char* ptr, bool sign) const;
-
-    /// Calculate number of bytes LEB128-encoded form of intnum will take.
-    /// @param intn     intnum
-    /// @param sign     signedness of LEB128 encoding (false=unsigned,
-    ///                 true=signed)
-    /// @return Number of bytes.
-    unsigned long size_leb128(bool sign) const;
-
     /// Get an intnum as a signed decimal string.  The returned string will
     /// contain a leading '-' if the intnum is negative.
     /// @return String containing the decimal representation of the intnum.
@@ -267,18 +256,18 @@ public:
         return old;
     }
 
+    // If intnum is a BV, returns its bitvector directly.
+    // If not, converts into passed bv and returns that instead.
+    // @param bv        bitvector to use if intnum is not bitvector.
+    // @return Passed bv or intnum internal bitvector.
+    BitVector::wordptr to_bv(/*@returned@*/ BitVector::wordptr bv) const;
+
 private:
     // Compress a bitvector into intnum storage.
     // If saved as a bitvector, clones the passed bitvector.
     // Can modify the passed bitvector.
     // @param bv        bitvector
     void from_bv(BitVector::wordptr bv);
-
-    // If intnum is a BV, returns its bitvector directly.
-    // If not, converts into passed bv and returns that instead.
-    // @param bv        bitvector to use if intnum is not bitvector.
-    // @return Passed bv or intnum internal bitvector.
-    BitVector::wordptr to_bv(/*@returned@*/ BitVector::wordptr bv) const;
 
     union
     {
@@ -370,33 +359,6 @@ swap(IntNum& left, IntNum& right)
 {
     left.swap(right);
 }
-
-/// Output integer to buffer in signed LEB128-encoded form.
-/// @param v        integer
-/// @param ptr      pointer to storage for output bytes
-/// @return Number of bytes generated.
-YASM_LIB_EXPORT
-unsigned long get_sleb128(long v, unsigned char* ptr);
-
-/// Calculate number of bytes signed LEB128-encoded form of integer will take.
-/// @param v        integer
-/// @return Number of bytes.
-YASM_LIB_EXPORT
-unsigned long size_sleb128(long v);
-
-/// Output integer to buffer in unsigned LEB128-encoded form.
-/// @param v        integer
-/// @param ptr      pointer to storage for output bytes
-/// @return Number of bytes generated.
-YASM_LIB_EXPORT
-unsigned long get_uleb128(unsigned long v, unsigned char* ptr);
-
-/// Calculate number of bytes unsigned LEB128-encoded form of integer will
-/// take.
-/// @param v        integer
-/// @return Number of bytes.
-YASM_LIB_EXPORT
-unsigned long size_uleb128(unsigned long v);
 
 YASM_LIB_EXPORT
 std::ostream& operator<< (std::ostream& os, const IntNum& intn);

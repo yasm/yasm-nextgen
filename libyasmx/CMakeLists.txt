@@ -29,6 +29,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     floatnum.cpp
     insn.cpp
     intnum.cpp
+    leb128.cpp
     linemap.cpp
     list_format.cpp
     location.cpp
@@ -95,6 +96,7 @@ IF(NOT BUILD_STATIC)
         insn.h
         interval_tree.h
         intnum.h
+	leb128.h
         linemap.h
         list_format.h
         location.h

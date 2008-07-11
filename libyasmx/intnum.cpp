@@ -43,20 +43,17 @@ using BitVector::N_int;
 namespace yasm
 {
 
-/// "Native" "word" size for intnum calculations.
-static const unsigned int BITVECT_NATIVE_SIZE = 256;
-
 /// Static bitvect used for conversions.
-static BitVector::scoped_wordptr conv_bv(BITVECT_NATIVE_SIZE, false);
+static BitVector::scoped_wordptr conv_bv(IntNum::BITVECT_NATIVE_SIZE);
 
 /// Static bitvects used for computation.
-static BitVector::scoped_wordptr result(BITVECT_NATIVE_SIZE, false);
-static BitVector::scoped_wordptr spare(BITVECT_NATIVE_SIZE, false);
-static BitVector::scoped_wordptr op1static(BITVECT_NATIVE_SIZE, false);
-static BitVector::scoped_wordptr op2static(BITVECT_NATIVE_SIZE, false);
+static BitVector::scoped_wordptr result(IntNum::BITVECT_NATIVE_SIZE);
+static BitVector::scoped_wordptr spare(IntNum::BITVECT_NATIVE_SIZE);
+static BitVector::scoped_wordptr op1static(IntNum::BITVECT_NATIVE_SIZE);
+static BitVector::scoped_wordptr op2static(IntNum::BITVECT_NATIVE_SIZE);
 
 /// Static bitvect decimal conversion.
-static BitVector::from_Dec_static my_from_Dec(BITVECT_NATIVE_SIZE);
+static BitVector::from_Dec_static my_from_Dec(IntNum::BITVECT_NATIVE_SIZE);
 
 void
 IntNum::from_bv(wordptr bv)
@@ -701,99 +698,6 @@ IntNum::in_range(long low, long high) const
             && BitVector::Compare(val, hval) <= 0);
 }
 
-static unsigned long
-get_leb128(wordptr val, unsigned char* ptr, bool sign)
-{
-    unsigned long size;
-    if (sign)
-    {
-        // Signed mode
-        if (BitVector::msb_(val))
-        {
-            // Negative
-            BitVector::Negate(conv_bv, val);
-            size = BitVector::Set_Max(conv_bv)+2;
-        }
-        else
-        {
-            // Positive
-            size = BitVector::Set_Max(val)+2;
-        }
-    }
-    else
-    {
-        // Unsigned mode
-        size = BitVector::Set_Max(val)+1;
-    }
-
-    // Positive/Unsigned write
-    unsigned char* ptr_orig = ptr;
-    for (unsigned long i=0; i<size; i += 7)
-    {
-        *ptr = (unsigned char)BitVector::Chunk_Read(val, 7, i);
-        *ptr |= 0x80;
-        ptr++;
-    }
-    *(ptr-1) &= 0x7F;   // Clear MSB of last byte
-    return (unsigned long)(ptr-ptr_orig);
-}
-
-static unsigned long
-size_leb128(wordptr val, bool sign)
-{
-    if (sign)
-    {
-        // Signed mode
-        if (BitVector::msb_(val))
-        {
-            // Negative
-            BitVector::Negate(conv_bv, val);
-            return (BitVector::Set_Max(conv_bv)+8)/7;
-        }
-        else
-        {
-            // Positive
-            return (BitVector::Set_Max(val)+8)/7;
-        }
-    }
-    else
-    {
-        // Unsigned mode
-        return (BitVector::Set_Max(val)+7)/7;
-    }
-}
-
-unsigned long
-IntNum::get_leb128(unsigned char* ptr, bool sign) const
-{
-    // Shortcut 0
-    if (m_type == INTNUM_L && m_val.l == 0)
-    {
-        *ptr = 0;
-        return 1;
-    }
-
-    // If not already a bitvect, convert value to be written to a bitvect
-    wordptr val = to_bv(op1static);
-
-    return ::yasm::get_leb128(val, ptr, sign);
-}
-
-unsigned long
-IntNum::size_leb128(bool sign) const
-{
-    // Shortcut 0
-    if (m_type == INTNUM_L && m_val.l == 0)
-    {
-        return 1;
-    }
-
-    // If not already a bitvect, convert value to a bitvect
-    wordptr val = to_bv(op1static);
-
-    return ::yasm::size_leb128(val, sign);
-}
-
 IntNum&
 IntNum::operator++()
 {
@@ -876,78 +780,6 @@ operator>(const IntNum& lhs, const IntNum& rhs)
     wordptr op1 = lhs.to_bv(op1static);
     wordptr op2 = rhs.to_bv(op2static);
     return BitVector::Compare(op1, op2) > 0;
-}
-
-unsigned long
-get_sleb128(long v, unsigned char* ptr)
-{
-    // Shortcut 0
-    if (v == 0)
-    {
-        *ptr = 0;
-        return 1;
-    }
-
-    wordptr val = op1static;
-
-    BitVector::Empty(val);
-    if (v >= 0)
-        BitVector::Chunk_Store(val, 32, 0, (unsigned long)v);
-    else
-    {
-        BitVector::Chunk_Store(val, 32, 0, (unsigned long)(-v));
-        BitVector::Negate(val, val);
-    }
-    return get_leb128(val, ptr, 1);
-}
-
-unsigned long
-size_sleb128(long v)
-{
-    if (v == 0)
-        return 1;
-
-    wordptr val = op1static;
-
-    BitVector::Empty(val);
-    if (v >= 0)
-        BitVector::Chunk_Store(val, 32, 0, (unsigned long)v);
-    else
-    {
-        BitVector::Chunk_Store(val, 32, 0, (unsigned long)(-v));
-        BitVector::Negate(val, val);
-    }
-    return size_leb128(val, 1);
-}
-
-unsigned long
-get_uleb128(unsigned long v, unsigned char* ptr)
-{
-    // Shortcut 0
-    if (v == 0)
-    {
-        *ptr = 0;
-        return 1;
-    }
-
-    wordptr val = op1static;
-
-    BitVector::Empty(val);
-    BitVector::Chunk_Store(val, 32, 0, v);
-    return get_leb128(val, ptr, 0);
-}
-
-unsigned long
-size_uleb128(unsigned long v)
-{
-    if (v == 0)
-        return 1;
-
-    wordptr val = op1static;
-
-    BitVector::Empty(val);
-    BitVector::Chunk_Store(val, 32, 0, v);
-    return size_leb128(val, 0);
 }
 
 char*
