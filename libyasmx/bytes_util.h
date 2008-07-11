@@ -49,10 +49,13 @@ write_8(Bytes& bytes, unsigned char val)
 inline void
 write_16(Bytes& bytes, unsigned short val)
 {
-    if (bytes.is_bigendian()) {
+    if (bytes.is_bigendian())
+    {
         bytes.push_back((unsigned char)((val >> 8) & 0xFF));
         bytes.push_back((unsigned char)(val & 0xFF));
-    } else {
+    }
+    else
+    {
         bytes.push_back((unsigned char)(val & 0xFF));
         bytes.push_back((unsigned char)((val >> 8) & 0xFF));
     }
@@ -63,12 +66,15 @@ write_16(Bytes& bytes, unsigned short val)
 inline void
 write_32(Bytes& bytes, unsigned long val)
 {
-    if (bytes.is_bigendian()) {
+    if (bytes.is_bigendian())
+    {
         bytes.push_back((unsigned char)((val >> 24) & 0xFF));
         bytes.push_back((unsigned char)((val >> 16) & 0xFF));
         bytes.push_back((unsigned char)((val >> 8) & 0xFF));
         bytes.push_back((unsigned char)(val & 0xFF));
-    } else {
+    }
+    else
+    {
         bytes.push_back((unsigned char)(val & 0xFF));
         bytes.push_back((unsigned char)((val >> 8) & 0xFF));
         bytes.push_back((unsigned char)((val >> 16) & 0xFF));
