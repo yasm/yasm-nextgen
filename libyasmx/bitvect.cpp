@@ -289,15 +289,14 @@ const char * Error(ErrCode error)
 
 ErrCode Boot(void)
 {
-    N_word sample = LSBMASK;
-
-    if (BITMASKTAB) free(BITMASKTAB);
+    if (BITMASKTAB)
+        return ErrCode_Ok;
 
     BITMASKTAB = (wordptr) malloc((size_t) (BITS * BYTES));
 
     if (BITMASKTAB == NULL) return(ErrCode_Null);
 
-    for ( sample = 0; sample < BITS; sample++ )
+    for (N_word sample = 0; sample < BITS; sample++ )
     {
         BITMASKTAB[sample] = (LSBMASK << sample);
     }
