@@ -177,14 +177,14 @@ public:
 
     /// Convert an intnum to an unsigned 32-bit value.
     /// The value is in "standard" C format (eg, of unknown endian).
-    /// @note Parameter intnum is truncated to fit into 32 bits.  Use
+    /// @note Parameter intnum is saturated to fit into 32 bits.  Use
     ///       intnum_check_size() to check for overflow.
     /// @return Unsigned 32-bit value of intn.
     unsigned long get_uint() const;
 
     /// Convert an intnum to a signed 32-bit value.
     /// The value is in "standard" C format (eg, of unknown endian).
-    /// @note Parameter intnum is truncated to fit into 32 bits.  Use
+    /// @note Parameter intnum is saturated to fit into 32 bits.  Use
     ///       intnum_check_size() to check for overflow.
     /// @return Signed 32-bit value of intn.
     long get_int() const;
