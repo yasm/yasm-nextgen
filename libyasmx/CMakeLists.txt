@@ -17,6 +17,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     bytecode.cpp
     bytecode_util.cpp
     bytes.cpp
+    bytes_util.cpp
     compose.cpp
     debug_format.cpp
     directive.cpp
