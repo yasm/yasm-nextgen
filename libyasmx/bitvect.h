@@ -387,6 +387,7 @@ Z_long  Set_Max              (wordptr addr);                    /* = max(X)  */
 
 class scoped_wordptr
 {
+public:
     explicit scoped_wordptr(N_int bits, bool clear=false)
         : ptr(Create(bits, clear))
     {}
