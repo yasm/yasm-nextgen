@@ -36,6 +36,32 @@
 namespace yasm
 {
 
+class IntNum;
+
+/// Write an intnum as an 8-bit value to a bytes buffer.
+/// @param bytes    output bytes buffer
+/// @param intn     intnum
+/// @warning Intnum is silently truncated to fit into 8 bits.
+void write_8(Bytes& bytes, const IntNum& intn);
+
+/// Write an intnum as a 16-bit value to a bytes buffer.
+/// @param bytes    output bytes buffer
+/// @param intn     intnum
+/// @warning Intnum is silently truncated to fit into 16 bits.
+void write_16(Bytes& bytes, const IntNum& intn);
+
+/// Write an intnum as a 32-bit value to a bytes buffer.
+/// @param bytes    output bytes buffer
+/// @param intn     intnum
+/// @warning Intnum is silently truncated to fit into 32 bits.
+void write_32(Bytes& bytes, const IntNum& intn);
+
+/// Write an intnum as a 64-bit value to a bytes buffer.
+/// @param bytes    output bytes buffer
+/// @param intn     intnum
+/// @warning Intnum is silently truncated to fit into 64 bits.
+void write_64(Bytes& bytes, const IntNum& intn);
+
 /// Write an 8-bit value to a bytes buffer.
 /// @param bytes    output bytes buffer
 /// @param val      8-bit value

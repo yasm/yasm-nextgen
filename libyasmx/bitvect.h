@@ -99,11 +99,6 @@ YASM_LIB_EXPORT
 const char * Error      (ErrCode error);  /* return string for err code */
 
 YASM_LIB_EXPORT
-ErrCode Boot       (void);                 /* 0 = ok, 1..7 = error */
-YASM_LIB_EXPORT
-void    Shutdown   (void);                            /* undo Boot */
-
-YASM_LIB_EXPORT
 N_word  Size       (N_int bits);  /* bit vector size (# of words)  */
 YASM_LIB_EXPORT
 N_word  Mask       (N_int bits);  /* bit vector mask (unused bits) */

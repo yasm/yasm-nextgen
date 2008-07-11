@@ -158,11 +158,6 @@ FloatNumManager::POT_TableP_Source[] =
 FloatNum::FloatNum(const unsigned char* mantissa, unsigned short exponent)
     : m_exponent(exponent), m_sign(0), m_flags(0)
 {
-    // This is a bit dangerous, as we allow a FloatNum to be created without
-    // first calling BitVector::Boot(), but this is a private constructor only
-    // called from the FloatNumManager constructor, and due to that fact we
-    // *can't* get an instance of FloatNumManager as otherwise we'd cause an
-    // infinite loop.
     m_mantissa = BitVector::Create(MANT_BITS, false);
     BitVector::Block_Store(m_mantissa, (N_char*)mantissa, MANT_BYTES);
 }
@@ -171,8 +166,6 @@ FloatNumManager::FloatNumManager()
 {
     int dec_exp = 1;
     int i;
-
-    BitVector::Boot();
 
     // Allocate space for two POT tables
     POT_TableN = new POT_Entry[14];
@@ -214,8 +207,6 @@ FloatNumManager::~FloatNumManager()
 
     delete[] POT_TableN;
     delete[] POT_TableP;
-
-    BitVector::Shutdown();
 }
 
 void

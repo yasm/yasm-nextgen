@@ -46,6 +46,15 @@ namespace yasm
 /// "Native" "word" size for intnum calculations.
 static const unsigned int BITVECT_NATIVE_SIZE = 256;
 
+/// Static bitvect used for conversions.
+static BitVector::scoped_wordptr conv_bv(BITVECT_NATIVE_SIZE, false);
+
+/// Static bitvects used for computation.
+static BitVector::scoped_wordptr result(BITVECT_NATIVE_SIZE, false);
+static BitVector::scoped_wordptr spare(BITVECT_NATIVE_SIZE, false);
+static BitVector::scoped_wordptr op1static(BITVECT_NATIVE_SIZE, false);
+static BitVector::scoped_wordptr op2static(BITVECT_NATIVE_SIZE, false);
+
 class IntNumManager
 {
 public:
@@ -54,12 +63,6 @@ public:
         static IntNumManager inst;
         return inst;
     }
-
-    /// Static bitvect used for conversions.
-    /*@only@*/ wordptr conv_bv;
-
-    /// Static bitvects used for computation.
-    /*@only@*/ wordptr result, spare, op1static, op2static;
 
     /*@only@*/ BitVector::from_Dec_static_data *from_dec_data;
 
@@ -72,24 +75,12 @@ private:
 
 IntNumManager::IntNumManager()
 {
-    BitVector::Boot();
-    conv_bv = BitVector::Create(BITVECT_NATIVE_SIZE, false);
-    result = BitVector::Create(BITVECT_NATIVE_SIZE, false);
-    spare = BitVector::Create(BITVECT_NATIVE_SIZE, false);
-    op1static = BitVector::Create(BITVECT_NATIVE_SIZE, false);
-    op2static = BitVector::Create(BITVECT_NATIVE_SIZE, false);
     from_dec_data = BitVector::from_Dec_static_Boot(BITVECT_NATIVE_SIZE);
 }
 
 IntNumManager::~IntNumManager()
 {
     BitVector::from_Dec_static_Shutdown(from_dec_data);
-    BitVector::Destroy(op2static);
-    BitVector::Destroy(op1static);
-    BitVector::Destroy(spare);
-    BitVector::Destroy(result);
-    BitVector::Destroy(conv_bv);
-    BitVector::Shutdown();
 }
 
 void
@@ -145,8 +136,6 @@ IntNum::to_bv(/*@returned@*/ wordptr bv) const
 
 IntNum::IntNum(char* str, int base)
 {
-    IntNumManager& manager = IntNumManager::instance();
-    wordptr conv_bv = manager.conv_bv;
     BitVector::ErrCode err;
     const char* errstr;
 
@@ -161,10 +150,13 @@ IntNum::IntNum(char* str, int base)
             errstr = N_("invalid octal literal");
             break;
         case 10:
+        {
+            IntNumManager& manager = IntNumManager::instance();
             err = BitVector::from_Dec_static(manager.from_dec_data, conv_bv,
                                             (unsigned char *)str);
             errstr = N_("invalid decimal literal");
             break;
+        }
         case 16:
             err = BitVector::from_Hex(conv_bv, (unsigned char *)str);
             errstr = N_("invalid hex literal");
@@ -188,8 +180,6 @@ IntNum::IntNum(char* str, int base)
 
 IntNum::IntNum(const unsigned char* ptr, bool sign, unsigned long& size)
 {
-    IntNumManager& manager = IntNumManager::instance();
-    wordptr conv_bv = manager.conv_bv;
     const unsigned char* ptr_orig = ptr;
     unsigned long i = 0;
 
@@ -224,8 +214,6 @@ IntNum::IntNum(const unsigned char* ptr,
             N_("Numeric constant too large for internal format"));
 
     // Read the buffer into a bitvect
-    IntNumManager& manager = IntNumManager::instance();
-    wordptr conv_bv = manager.conv_bv;
     unsigned long i = 0;
     BitVector::Empty(conv_bv);
     if (bigendian)
@@ -323,17 +311,12 @@ IntNum::calc(Op::Op op, const IntNum* operand)
     if (!operand && op != Op::NEG && op != Op::NOT && op != Op::LNOT)
         throw ArithmeticError(N_("operation needs an operand"));
 
-    IntNumManager& manager = IntNumManager::instance();
-
     // Always do computations with in full bit vector.
     // Bit vector results must be calculated through intermediate storage.
-    wordptr op1 = to_bv(manager.op1static);
+    wordptr op1 = to_bv(op1static);
     wordptr op2 = 0;
     if (operand)
-        op2 = operand->to_bv(manager.op2static);
-
-    wordptr result = manager.result;
-    wordptr spare = manager.spare;
+        op2 = operand->to_bv(op2static);
 
     // A operation does a bitvector computation if result is allocated.
     switch (op)
@@ -577,8 +560,6 @@ IntNum::get_int() const
             {
                 // it's negative: negate the bitvector to get a positive
                 // number, then negate the positive number.
-                IntNumManager &manager = IntNumManager::instance();
-                wordptr conv_bv = manager.conv_bv;
                 unsigned long ul;
 
                 BitVector::Negate(conv_bv, m_val.bv);
@@ -625,8 +606,7 @@ IntNum::get_sized(unsigned char* ptr,
                                  valsize));
 
     // Read the original data into a bitvect
-    IntNumManager& manager = IntNumManager::instance();
-    wordptr op1 = manager.op1static;
+    wordptr op1 = op1static;
 
     if (bigendian)
     {
@@ -637,12 +617,11 @@ IntNum::get_sized(unsigned char* ptr,
         BitVector::Block_Store(op1, ptr, (N_int)destsize);
 
     // If not already a bitvect, convert value to be written to a bitvect
-    wordptr op2 = to_bv(manager.op2static);
+    wordptr op2 = to_bv(op2static);
 
     // Check low bits if right shifting and warnings enabled
     if (warn && rshift > 0)
     {
-        wordptr conv_bv = manager.conv_bv;
         BitVector::Copy(conv_bv, op2);
         BitVector::Move_Left(conv_bv, (N_int)(BITVECT_NATIVE_SIZE-rshift));
         if (!BitVector::is_empty(conv_bv))
@@ -678,9 +657,6 @@ IntNum::get_sized(unsigned char* ptr,
 bool
 IntNum::ok_size(size_t size, size_t rshift, int rangetype) const
 {
-    IntNumManager& manager = IntNumManager::instance();
-    wordptr conv_bv = manager.conv_bv;
-
     // If not already a bitvect, convert value to a bitvect
     wordptr val;
     if (m_type == INTNUM_BV)
@@ -725,13 +701,11 @@ IntNum::ok_size(size_t size, size_t rshift, int rangetype) const
 bool
 IntNum::in_range(long low, long high) const
 {
-    IntNumManager& manager = IntNumManager::instance();
-
     // If not already a bitvect, convert value to be written to a bitvect
-    wordptr val = to_bv(manager.result);
+    wordptr val = to_bv(result);
 
     // Convert high and low to bitvects
-    wordptr lval = manager.op1static;
+    wordptr lval = op1static;
     BitVector::Empty(lval);
     if (low >= 0)
         BitVector::Chunk_Store(lval, 32, 0, (unsigned long)low);
@@ -741,7 +715,7 @@ IntNum::in_range(long low, long high) const
         BitVector::Negate(lval, lval);
     }
 
-    wordptr hval = manager.op2static;
+    wordptr hval = op2static;
     BitVector::Empty(hval);
     if (high >= 0)
         BitVector::Chunk_Store(hval, 32, 0, (unsigned long)high);
@@ -766,8 +740,6 @@ get_leb128(wordptr val, unsigned char* ptr, bool sign)
         if (BitVector::msb_(val))
         {
             // Negative
-            IntNumManager &manager = IntNumManager::instance();
-            wordptr conv_bv = manager.conv_bv;
             BitVector::Negate(conv_bv, val);
             size = BitVector::Set_Max(conv_bv)+2;
         }
@@ -804,8 +776,6 @@ size_leb128(wordptr val, bool sign)
         if (BitVector::msb_(val))
         {
             // Negative
-            IntNumManager& manager = IntNumManager::instance();
-            wordptr conv_bv = manager.conv_bv;
             BitVector::Negate(conv_bv, val);
             return (BitVector::Set_Max(conv_bv)+8)/7;
         }
@@ -833,8 +803,7 @@ IntNum::get_leb128(unsigned char* ptr, bool sign) const
     }
 
     // If not already a bitvect, convert value to be written to a bitvect
-    IntNumManager &manager = IntNumManager::instance();
-    wordptr val = to_bv(manager.op1static);
+    wordptr val = to_bv(op1static);
 
     return ::yasm::get_leb128(val, ptr, sign);
 }
@@ -849,8 +818,7 @@ IntNum::size_leb128(bool sign) const
     }
 
     // If not already a bitvect, convert value to a bitvect
-    IntNumManager &manager = IntNumManager::instance();
-    wordptr val = to_bv(manager.op1static);
+    wordptr val = to_bv(op1static);
 
     return ::yasm::size_leb128(val, sign);
 }
@@ -901,9 +869,8 @@ compare(const IntNum& lhs, const IntNum& rhs)
         return 0;
     }
 
-    IntNumManager &manager = IntNumManager::instance();
-    wordptr op1 = lhs.to_bv(manager.op1static);
-    wordptr op2 = rhs.to_bv(manager.op2static);
+    wordptr op1 = lhs.to_bv(op1static);
+    wordptr op2 = rhs.to_bv(op2static);
     return BitVector::Compare(op1, op2);
 }
 
@@ -913,9 +880,8 @@ operator==(const IntNum& lhs, const IntNum& rhs)
     if (lhs.m_type == IntNum::INTNUM_L && rhs.m_type == IntNum::INTNUM_L)
         return lhs.m_val.l == rhs.m_val.l;
 
-    IntNumManager &manager = IntNumManager::instance();
-    wordptr op1 = lhs.to_bv(manager.op1static);
-    wordptr op2 = rhs.to_bv(manager.op2static);
+    wordptr op1 = lhs.to_bv(op1static);
+    wordptr op2 = rhs.to_bv(op2static);
     return BitVector::equal(op1, op2);
 }
 
@@ -925,9 +891,8 @@ operator<(const IntNum& lhs, const IntNum& rhs)
     if (lhs.m_type == IntNum::INTNUM_L && rhs.m_type == IntNum::INTNUM_L)
         return lhs.m_val.l < rhs.m_val.l;
 
-    IntNumManager &manager = IntNumManager::instance();
-    wordptr op1 = lhs.to_bv(manager.op1static);
-    wordptr op2 = rhs.to_bv(manager.op2static);
+    wordptr op1 = lhs.to_bv(op1static);
+    wordptr op2 = rhs.to_bv(op2static);
     return BitVector::Compare(op1, op2) < 0;
 }
 
@@ -937,9 +902,8 @@ operator>(const IntNum& lhs, const IntNum& rhs)
     if (lhs.m_type == IntNum::INTNUM_L && rhs.m_type == IntNum::INTNUM_L)
         return lhs.m_val.l > rhs.m_val.l;
 
-    IntNumManager &manager = IntNumManager::instance();
-    wordptr op1 = lhs.to_bv(manager.op1static);
-    wordptr op2 = rhs.to_bv(manager.op2static);
+    wordptr op1 = lhs.to_bv(op1static);
+    wordptr op2 = rhs.to_bv(op2static);
     return BitVector::Compare(op1, op2) > 0;
 }
 
@@ -953,8 +917,7 @@ get_sleb128(long v, unsigned char* ptr)
         return 1;
     }
 
-    IntNumManager &manager = IntNumManager::instance();
-    wordptr val = manager.op1static;
+    wordptr val = op1static;
 
     BitVector::Empty(val);
     if (v >= 0)
@@ -973,8 +936,7 @@ size_sleb128(long v)
     if (v == 0)
         return 1;
 
-    IntNumManager &manager = IntNumManager::instance();
-    wordptr val = manager.op1static;
+    wordptr val = op1static;
 
     BitVector::Empty(val);
     if (v >= 0)
@@ -997,8 +959,7 @@ get_uleb128(unsigned long v, unsigned char* ptr)
         return 1;
     }
 
-    IntNumManager& manager = IntNumManager::instance();
-    wordptr val = manager.op1static;
+    wordptr val = op1static;
 
     BitVector::Empty(val);
     BitVector::Chunk_Store(val, 32, 0, v);
@@ -1011,8 +972,7 @@ size_uleb128(unsigned long v)
     if (v == 0)
         return 1;
 
-    IntNumManager &manager = IntNumManager::instance();
-    wordptr val = manager.op1static;
+    wordptr val = op1static;
 
     BitVector::Empty(val);
     BitVector::Chunk_Store(val, 32, 0, v);

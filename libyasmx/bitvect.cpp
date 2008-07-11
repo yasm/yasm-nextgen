@@ -8,6 +8,7 @@
 /*  MODULE IMPORTS:                                                          */
 /*****************************************************************************/
 #include <limits>
+#include <boost/scoped_array.hpp>
 #include <boost/static_assert.hpp>
 #include <ctype.h>                                  /*  MODULE TYPE:  (sys)  */
 #include <limits.h>                                 /*  MODULE TYPE:  (sys)  */
@@ -83,13 +84,14 @@ BOOST_STATIC_ASSERT(BITS <= LONGBITS);
 
 // logarithm to base 10 of BITS - 1
 #define LOG10 ((N_word)(MODMASK * 0.30103))     // (BITS - 1) * ( ln 2 / ln 10 )
-static N_word EXP10;    /* = largest possible power of 10 in signed int      */
+static N_word EXP10 = 0;  // = largest possible power of 10 in signed int
 
     /********************************************************************/
     /* global bit mask table for fast access (set by "Boot"): */
     /********************************************************************/
 
-static wordptr BITMASKTAB = 0;
+static boost::scoped_array<N_word> BITMASKTAB(new N_word[BITS]);
+static bool BITMASKTAB_valid = false;
 
     /*****************************/
     /* global macro definitions: */
@@ -287,29 +289,12 @@ const char * Error(ErrCode error)
     /*                                                     */
     /*******************************************************/
 
-ErrCode Boot(void)
+static void Init_BITMASKTAB(void)
 {
-    if (BITMASKTAB)
-        return ErrCode_Ok;
-
-    BITMASKTAB = (wordptr) malloc((size_t) (BITS * BYTES));
-
-    if (BITMASKTAB == NULL) return(ErrCode_Null);
-
     for (N_word sample = 0; sample < BITS; sample++ )
     {
         BITMASKTAB[sample] = (LSBMASK << sample);
     }
-
-    EXP10 = power10(LOG10);
-
-    return(ErrCode_Ok);
-}
-
-void Shutdown(void)
-{
-    if (BITMASKTAB) free(BITMASKTAB);
-    BITMASKTAB = 0;
 }
 
 N_word Size(N_int bits)           /* bit vector size (# of words)  */
@@ -599,6 +584,9 @@ void Primes(wordptr addr)
     N_word  temp;
     N_word  i,j;
 
+    if (!BITMASKTAB_valid)
+        Init_BITMASKTAB();
+
     if (size > 0)
     {
         temp = 0xAAAA;
@@ -626,6 +614,9 @@ void Reverse(wordptr X, wordptr Y)
     N_word mask;
     N_word bit;
     N_word value;
+
+    if (!BITMASKTAB_valid)
+        Init_BITMASKTAB();
 
     if (bits > 0)
     {
@@ -790,6 +781,9 @@ void Interval_Reverse(wordptr addr, N_int lower, N_int upper)
     N_word  lomask;
     N_word  himask;
 
+    if (!BITMASKTAB_valid)
+        Init_BITMASKTAB();
+
     if ((bits > 0) && (lower < bits) && (upper < bits) && (lower < upper))
     {
         loaddr = addr + (lower / BITS);
@@ -838,6 +832,9 @@ bool interval_scan_inc(wordptr addr, N_int start,
 
     addr += offset;
     size -= offset;
+
+    if (!BITMASKTAB_valid)
+        Init_BITMASKTAB();
 
     bitmask = BITMASKTAB[start AND MODMASK];
     mask = NOT (bitmask OR (bitmask - 1));
@@ -914,6 +911,9 @@ bool interval_scan_dec(wordptr addr, N_int start,
 
     addr += offset;
     size = ++offset;
+
+    if (!BITMASKTAB_valid)
+        Init_BITMASKTAB();
 
     bitmask = BITMASKTAB[start AND MODMASK];
     mask = (bitmask - 1);
@@ -1539,6 +1539,9 @@ ErrCode from_Bin(wordptr addr, charptr string)
     N_word  count;
     int     digit;
 
+    if (!BITMASKTAB_valid)
+        Init_BITMASKTAB();
+
     if (size > 0)
     {
         length = strlen((char *) string);
@@ -1588,6 +1591,9 @@ charptr to_Dec(wordptr addr)
     wordptr temp;
     wordptr base;
     Z_int   sign;
+
+    if (EXP10 == 0)
+        EXP10 = power10(LOG10);
 
     length = (N_word) (bits / 3.3);        /* digits = bits * ln(2) / ln(10) */
     length += 2; /* compensate for truncating & provide space for minus sign */
@@ -1750,6 +1756,9 @@ ErrCode from_Dec_static(from_Dec_static_data *data,
     size_t  length;
     int     digit;
 
+    if (EXP10 == 0)
+        EXP10 = power10(LOG10);
+
     if (bits > 0)
     {
         term = data->term;
@@ -1860,6 +1869,9 @@ ErrCode from_Dec(wordptr addr, charptr string)
     N_word  count;
     size_t  length;
     int     digit;
+
+    if (EXP10 == 0)
+        EXP10 = power10(LOG10);
 
     if (bits > 0)
     {
@@ -2061,6 +2073,9 @@ ErrCode from_Enum(wordptr addr, charptr string)
     N_word  indx = 0;          /* silence compiler warning */
     N_word  start = 0;         /* silence compiler warning */
 
+    if (!BITMASKTAB_valid)
+        Init_BITMASKTAB();
+
     if (bits > 0)
     {
         Empty(addr);
@@ -2161,11 +2176,17 @@ ErrCode from_Enum(wordptr addr, charptr string)
 
 void Bit_Off(wordptr addr, N_int indx)            /* X = X \ {x}   */
 {
+    if (!BITMASKTAB_valid)
+        Init_BITMASKTAB();
+
     if (indx < bits_(addr)) CLR_BIT(addr,indx)
 }
 
 void Bit_On(wordptr addr, N_int indx)             /* X = X + {x}   */
 {
+    if (!BITMASKTAB_valid)
+        Init_BITMASKTAB();
+
     if (indx < bits_(addr)) SET_BIT(addr,indx)
 }
 
@@ -2173,18 +2194,27 @@ bool bit_flip(wordptr addr, N_int indx)    /* X=(X+{x})\(X*{x}) */
 {
     N_word mask;
 
+    if (!BITMASKTAB_valid)
+        Init_BITMASKTAB();
+
     if (indx < bits_(addr)) return( FLP_BIT(addr,indx,mask) );
     else                    return( false );
 }
 
 bool bit_test(wordptr addr, N_int indx)        /* {x} in X ?    */
 {
+    if (!BITMASKTAB_valid)
+        Init_BITMASKTAB();
+
     if (indx < bits_(addr)) return( TST_BIT(addr,indx) );
     else                    return( false );
 }
 
 void Bit_Copy(wordptr addr, N_int indx, bool bit)
 {
+    if (!BITMASKTAB_valid)
+        Init_BITMASKTAB();
+
     if (indx < bits_(addr))
     {
         if (bit) SET_BIT(addr,indx)
@@ -2614,6 +2644,9 @@ ErrCode Mul_Pos(wordptr X, wordptr Y, wordptr Z, bool strict)
     bool overflow;
     bool ok = true;
 
+    if (!BITMASKTAB_valid)
+        Init_BITMASKTAB();
+
     /*
        Requirements:
          -  X, Y and Z must be distinct
@@ -2762,6 +2795,9 @@ ErrCode Div_Pos(wordptr Q, wordptr X, wordptr Y, wordptr R)
         return(ErrCode_Same);
     if (is_empty(Y))
         return(ErrCode_Zero);
+
+    if (!BITMASKTAB_valid)
+        Init_BITMASKTAB();
 
     Empty(R);
     Copy(Q,X);
@@ -3118,6 +3154,9 @@ ErrCode Power(wordptr X, wordptr Y, wordptr Z)
     N_word  limit;
     N_word  count;
     wordptr T;
+
+    if (!BITMASKTAB_valid)
+        Init_BITMASKTAB();
 
     /*
        Requirements:
