@@ -51,16 +51,16 @@ write_16(Bytes& bytes, const IntNum& intn)
     if (bytes.is_bigendian())
     {
         bytes.push_back(static_cast<unsigned char>(
-            BitVector::Chunk_Read(bv, 8, 0)));
-        bytes.push_back(static_cast<unsigned char>(
             BitVector::Chunk_Read(bv, 8, 8)));
+        bytes.push_back(static_cast<unsigned char>(
+            BitVector::Chunk_Read(bv, 8, 0)));
     }
     else
     {
         bytes.push_back(static_cast<unsigned char>(
-            BitVector::Chunk_Read(bv, 8, 8)));
-        bytes.push_back(static_cast<unsigned char>(
             BitVector::Chunk_Read(bv, 8, 0)));
+        bytes.push_back(static_cast<unsigned char>(
+            BitVector::Chunk_Read(bv, 8, 8)));
     }
 }
 
@@ -70,13 +70,13 @@ write_32(Bytes& bytes, const IntNum& intn)
     BitVector::wordptr bv = intn.to_bv(staticbv);
     if (bytes.is_bigendian())
     {
-        for (int i=0; i<32; i+=8)
+        for (int i=32-8; i>=0; i-=8)
             bytes.push_back(static_cast<unsigned char>(
                 BitVector::Chunk_Read(bv, 8, i)));
     }
     else
     {
-        for (int i=32-8; i>=0; i-=8)
+        for (int i=0; i<32; i+=8)
             bytes.push_back(static_cast<unsigned char>(
                 BitVector::Chunk_Read(bv, 8, i)));
     }
@@ -88,13 +88,13 @@ write_64(Bytes& bytes, const IntNum& intn)
     BitVector::wordptr bv = intn.to_bv(staticbv);
     if (bytes.is_bigendian())
     {
-        for (int i=0; i<64; i+=8)
+        for (int i=64-8; i>=0; i-=8)
             bytes.push_back(static_cast<unsigned char>(
                 BitVector::Chunk_Read(bv, 8, i)));
     }
     else
     {
-        for (int i=64-8; i>=0; i-=8)
+        for (int i=0; i<64; i+=8)
             bytes.push_back(static_cast<unsigned char>(
                 BitVector::Chunk_Read(bv, 8, i)));
     }
