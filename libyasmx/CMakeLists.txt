@@ -49,6 +49,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     registry.cpp
     section.cpp
     symbol.cpp
+    symbol_util.cpp
     value.cpp
     )
 SET_TARGET_PROPERTIES(libyasmx PROPERTIES
@@ -119,6 +120,7 @@ IF(NOT BUILD_STATIC)
         registry.h
         section.h
         symbol.h
+        symbol_util.h
         value.h
         DESTINATION ${INCLUDE_INSTALL_DIR}/libyasmx
         )

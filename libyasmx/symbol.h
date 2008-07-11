@@ -45,7 +45,6 @@ namespace yasm
 
 class Bytecode;
 class Expr;
-class NameValues;
 
 class YASM_LIB_EXPORT Symbol
     : private boost::noncopyable,
@@ -175,27 +174,6 @@ public:
     /// @param line     virtual line of visibility-setting
     /// @return Symbol (this).
     Symbol& declare(Visibility vis, unsigned long line);
-
-    /// Set object-extended name/values.
-    /// @param objext_namevals  object-extended name/values
-    /// @return Symbol (this).
-    Symbol& set_objext_namevals(std::auto_ptr<NameValues> objext_namevals);
-
-    /// Get object-extended name/values, if any, associated with symbol's
-    /// declaration.
-    /// @param sym      symbol
-    /// @return Object-extended name/values (NULL if none).
-    /*@null@*/ const NameValues* get_objext_namevals() const;
-
-    /// Set common size of symbol.
-    /// @param common_size  common size expression
-    /// @return Symbol (this).
-    Symbol& set_common_size(std::auto_ptr<Expr> common_size);
-
-    /// Get common size of symbol, if symbol is declared #COMMON and a
-    /// size was set for it.
-    /// @return Common size (NULL if none).
-    /*@null@*/ Expr* get_common_size();
 
     /// Finalize symbol after parsing stage.  Errors on symbols that
     /// are used but never defined or declared #EXTERN or #COMMON.
