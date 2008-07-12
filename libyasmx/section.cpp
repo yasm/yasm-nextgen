@@ -46,12 +46,11 @@ Reloc::~Reloc()
 }
 
 Section::Section(const std::string& name,
-                 unsigned long align,
                  bool code,
                  bool bss,
                  unsigned long line)
     : m_name(name),
-      m_align(align),
+      m_align(0),
       m_code(code),
       m_bss(bss),
       m_def(false),

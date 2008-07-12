@@ -501,7 +501,7 @@ BinObject::init_new_section(Section* sect, unsigned long line)
 Section*
 BinObject::add_default_section()
 {
-    Section* section = new Section(".text", 0, true, false, 0);
+    Section* section = new Section(".text", true, false, 0);
     m_object->append_section(std::auto_ptr<Section>(section));
     init_new_section(section, 0);
     section->set_default(true);
@@ -513,7 +513,7 @@ BinObject::append_section(const std::string& name, unsigned long line)
 {
     bool bss = (name == ".bss");
     bool code = (name == ".text");
-    Section* section = new Section(name, 0, code, bss, line);
+    Section* section = new Section(name, code, bss, line);
     m_object->append_section(std::auto_ptr<Section>(section));
     init_new_section(section, line);
     return section;

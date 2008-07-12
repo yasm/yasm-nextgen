@@ -73,7 +73,6 @@ public:
     /// Create a new section.  The section
     /// is added to the object if there's not already a section by that name.
     /// @param name     section name
-    /// @param align    alignment in bytes (0 if none)
     /// @param code     if true, section is intended to contain code
     ///                 (e.g. alignment should be made with NOP instructions)
     /// @param bss      if true, section is intended to contain only
@@ -81,11 +80,7 @@ public:
     /// @param isnew    output; set to true if section did not already exist
     /// @param line     virtual line of section declaration (ignored if
     ///                 section already exists)
-    Section(const std::string& name,
-            unsigned long align,
-            bool code,
-            bool bss,
-            unsigned long line);
+    Section(const std::string& name, bool code, bool bss, unsigned long line);
 
     ~Section();
 
