@@ -67,7 +67,7 @@ public:
     /// @param object       object
     /// @return False on error (object format cannot handle that object).
     /// @note The default implementation accepts all objects.
-    virtual bool set_object(Object* object);
+    bool set_object(Object* object);
 
     /// Get the default file extension (including the '.').
     /// @return File extension.
@@ -114,6 +114,12 @@ public:
                                     unsigned long line) = 0;
 
 protected:
+    /// Determine if object is acceptable to object format.
+    /// @param object       object
+    /// @return False on error (object format cannot handle the object).
+    /// @note The default implementation accepts all objects.
+    virtual bool ok_object(Object* object) const;
+
     Object* m_object;
 };
 

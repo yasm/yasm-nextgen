@@ -47,7 +47,15 @@ ObjectFormat::get_type() const
 bool
 ObjectFormat::set_object(Object* object)
 {
+    if (!ok_object(object))
+        return false;
     m_object = object;
+    return true;
+}
+
+bool
+ObjectFormat::ok_object(Object* object) const
+{
     return true;
 }
 
