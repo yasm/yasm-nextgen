@@ -135,7 +135,8 @@ BinObject::~BinObject()
 }
 
 void
-BinObject::define_section_symbol(Object& object, const BinSectionData& bsd,
+BinObject::define_section_symbol(Object& object,
+                                 const BinSectionData& bsd,
                                  const std::string& sectname,
                                  const char* suffix,
                                  BinSymbolData::SpecialSym which,
