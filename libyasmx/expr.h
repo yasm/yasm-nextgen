@@ -257,9 +257,9 @@ public:
     /// Simplify an expression as much as possible.  Eliminates extraneous
     /// branches and simplifies integer-only subexpressions.  Simplified
     /// version of level_tree().
-    void simplify()
+    void simplify(FUNCTION::function<void (Expr*)> xform_extra = 0)
     {
-        level_tree(true, true, true, 0);
+        level_tree(true, true, true, xform_extra);
     }
 
     /// Extract the segment portion of an expression containing SEG:OFF,
