@@ -132,23 +132,18 @@ Bytecode::~Bytecode()
 {
 }
 
-Bytecode&
-Bytecode::operator= (const Bytecode& oth)
+void
+Bytecode::swap(Bytecode& oth)
 {
-    if (this != &oth)
-    {
-        if (oth.m_contents.get() != 0)
-            m_contents.reset(oth.m_contents->clone());
-        else
-            m_contents.reset(0);
-        m_container = oth.m_container;
-        m_len = oth.m_len;
-        m_line = oth.m_line;
-        m_offset = oth.m_offset;
-        m_index = oth.m_index;
-        m_symbols = oth.m_symbols;
-    }
-    return *this;
+    m_fixed.swap(oth.m_fixed);
+    m_fixed_fixups.swap(oth.m_fixed_fixups);
+    m_contents.swap(oth.m_contents);
+    std::swap(m_container, oth.m_container);
+    std::swap(m_len, oth.m_len);
+    std::swap(m_line, oth.m_line);
+    std::swap(m_offset, oth.m_offset);
+    std::swap(m_index, oth.m_index);
+    m_symbols.swap(oth.m_symbols);
 }
 
 marg_ostream&

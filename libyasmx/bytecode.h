@@ -275,7 +275,16 @@ public:
     Bytecode();
 
     Bytecode(const Bytecode& oth);
-    Bytecode& operator= (const Bytecode& oth);
+    Bytecode& operator= (const Bytecode& rhs)
+    {
+        if (this != &rhs)
+            Bytecode(rhs).swap(*this);
+        return *this;
+    }
+
+    /// Exchanges this bytecode with another one.
+    /// @param oth      other bytecode
+    void swap(Bytecode& oth);
 
     /// Transform a bytecode of any type into a different type.
     /// @param contents     new type-specific data
@@ -465,6 +474,12 @@ marg_ostream& operator<< (marg_ostream &os, const Bytecode& bc);
 
 /// Specialized swap for algorithms.
 inline void
+swap(Bytecode& left, Bytecode& right)
+{
+    left.swap(right);
+}
+
+inline void
 swap(Bytecode::Fixup& left, Bytecode::Fixup& right)
 {
     left.swap(right);
@@ -476,6 +491,13 @@ namespace std
 {
 
 // Specialized std::swap.
+template <>
+inline void
+swap(yasm::Bytecode& left, yasm::Bytecode& right)
+{
+    left.swap(right);
+}
+
 template <>
 inline void
 swap(yasm::Bytecode::Fixup& left, yasm::Bytecode::Fixup& right)
