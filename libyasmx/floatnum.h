@@ -61,7 +61,12 @@ public:
     /// Copy constructor.
     FloatNum(const FloatNum& rhs);
     /// Assignment operator.
-    FloatNum& operator= (const FloatNum& rhs);
+    FloatNum& operator= (const FloatNum& rhs)
+    {
+        if (this != &rhs)
+            FloatNum(rhs).swap(*this);
+        return *this;
+    }
 
     /// Exchanges this floatnum with another one.
     /// @param other    other floatnum

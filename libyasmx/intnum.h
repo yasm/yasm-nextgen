@@ -101,7 +101,12 @@ public:
     /// Copy constructor.
     IntNum(const IntNum& rhs);
     /// Assignment operators.
-    IntNum& operator= (const IntNum& rhs);
+    IntNum& operator= (const IntNum& rhs)
+    {
+        if (this != &rhs)
+            IntNum(rhs).swap(*this);
+        return *this;
+    }
 
     /// Exchanges this integer with another one.
     /// @param oth      other integer number

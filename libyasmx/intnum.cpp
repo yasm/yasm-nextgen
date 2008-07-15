@@ -216,30 +216,6 @@ IntNum::IntNum(const IntNum& rhs)
     }
 }
 
-IntNum&
-IntNum::operator= (const IntNum& rhs)
-{
-    if (this != &rhs)
-    {
-        switch (rhs.m_type)
-        {
-            case INTNUM_L:
-                if (m_type == INTNUM_BV)
-                    BitVector::Destroy(m_val.bv);
-                m_val.l = rhs.m_val.l;
-                break;
-            case INTNUM_BV:
-                if (m_type == INTNUM_BV)
-                    BitVector::Copy(m_val.bv, rhs.m_val.bv);
-                else
-                    m_val.bv = BitVector::Clone(rhs.m_val.bv);
-                break;
-        }
-        m_type = rhs.m_type;
-    }
-    return *this;
-}
-
 void
 IntNum::swap(IntNum& oth)
 {
