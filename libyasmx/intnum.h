@@ -29,6 +29,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include <algorithm>
 #include <cstdlib>
 #include <iosfwd>
 
@@ -364,5 +365,18 @@ YASM_LIB_EXPORT
 std::ostream& operator<< (std::ostream& os, const IntNum& intn);
 
 } // namespace yasm
+
+namespace std
+{
+
+/// Specialized std::swap.
+template <>
+inline void
+swap(yasm::IntNum& left, yasm::IntNum& right)
+{
+    left.swap(right);
+}
+
+} // namespace std
 
 #endif

@@ -29,6 +29,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include <algorithm>
 #include <memory>
 #include <vector>
 
@@ -401,12 +402,7 @@ public:
     void append_fixed(const Value& val);
     void append_fixed(std::auto_ptr<Value> val);
     void append_fixed(unsigned int size, std::auto_ptr<Expr> e);
-private:
-    /// Fixed data that comes before the possibly dynamic length data generated
-    /// by the implementation-specific tail in m_contents.
-    Bytes m_fixed;
 
-    /// To allow combination of more complex values, fixups can be specified.
     /// A fixup consists of a value+offset combination.  0's need to be stored
     /// in m_fixed as placeholders.
     class YASM_LIB_EXPORT Fixup : public Value
@@ -425,8 +421,13 @@ private:
         unsigned long m_line;
         unsigned int m_off;
     };
-    friend void swap(Fixup& left, Fixup& right);
 
+private:
+    /// Fixed data that comes before the possibly dynamic length data generated
+    /// by the implementation-specific tail in m_contents.
+    Bytes m_fixed;
+
+    /// To allow combination of more complex values, fixups can be specified.
     std::vector<Fixup> m_fixed_fixups;
 
     /// Implementation-specific tail.
@@ -462,6 +463,7 @@ operator<< (marg_ostream& os, const Bytecode::Contents& contents)
 YASM_LIB_EXPORT
 marg_ostream& operator<< (marg_ostream &os, const Bytecode& bc);
 
+/// Specialized swap for algorithms.
 inline void
 swap(Bytecode::Fixup& left, Bytecode::Fixup& right)
 {
@@ -469,5 +471,18 @@ swap(Bytecode::Fixup& left, Bytecode::Fixup& right)
 }
 
 } // namespace yasm
+
+namespace std
+{
+
+// Specialized std::swap.
+template <>
+inline void
+swap(yasm::Bytecode::Fixup& left, yasm::Bytecode::Fixup& right)
+{
+    left.swap(right);
+}
+
+} // namespace std
 
 #endif

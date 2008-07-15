@@ -31,6 +31,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include <algorithm>
 #include <iosfwd>
 
 #include "bitvect.h"
@@ -165,5 +166,18 @@ swap(FloatNum& left, FloatNum& right)
 }
 
 } // namespace yasm
+
+namespace std
+{
+
+/// Specialized std::swap.
+template <>
+inline void
+swap(yasm::FloatNum& left, yasm::FloatNum& right)
+{
+    left.swap(right);
+}
+
+} // namespace std
 
 #endif

@@ -29,6 +29,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include <algorithm>
 #include <memory>
 
 #include "export.h"
@@ -243,5 +244,18 @@ swap(Value& left, Value& right)
 }
 
 } // namespace yasm
+
+namespace std
+{
+
+/// Specialized std::swap.
+template <>
+inline void
+swap(yasm::Value& left, yasm::Value& right)
+{
+    left.swap(right);
+}
+
+} // namespace std
 
 #endif
