@@ -120,9 +120,8 @@ find_group(BinGroups& groups, const Section& section)
     return 0;
 }
 
-Link::Link(Object& object, const void* assoc_key, Errwarns& errwarns)
+Link::Link(Object& object, Errwarns& errwarns)
     : m_object(object),
-      m_assoc_key(assoc_key),
       m_errwarns(errwarns),
       m_lma_groups_owner(m_lma_groups),
       m_vma_groups_owner(m_vma_groups)
@@ -136,8 +135,7 @@ Link::~Link()
 bool
 Link::lma_create_group(Section& section)
 {
-    BinSectionData* bsd =
-        static_cast<BinSectionData*>(section.get_assoc_data(m_assoc_key));
+    BinSectionData* bsd = get_bin_sect(section);
     assert(bsd);
 
     // Determine section alignment as necessary.
@@ -330,8 +328,7 @@ Link::do_link(const IntNum& origin)
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        BinSectionData* bsd =
-            static_cast<BinSectionData*>(i->get_assoc_data(m_assoc_key));
+        BinSectionData* bsd = get_bin_sect(*i);
         assert(bsd);
         m_vma_groups.push_back(new BinGroup(*i, *bsd));
     }
@@ -397,10 +394,8 @@ Link::check_lma_overlap(const Section& sect, const Section& other)
     if (&sect == &other)
         return true;
 
-    const BinSectionData* bsd =
-        static_cast<const BinSectionData*>(sect.get_assoc_data(m_assoc_key));
-    const BinSectionData* bsd2 =
-        static_cast<const BinSectionData*>(other.get_assoc_data(m_assoc_key));
+    const BinSectionData* bsd = get_bin_sect(sect);
+    const BinSectionData* bsd2 = get_bin_sect(other);
 
     assert(bsd);
     assert(bsd2);

@@ -41,6 +41,8 @@ namespace objfmt
 namespace bin
 {
 
+const char* BinSectionData::key = "objfmt::bin::BinSectionData";
+
 BinSectionData::BinSectionData()
     : has_align(false),
       has_valign(false),
@@ -58,6 +60,8 @@ void
 BinSectionData::put(marg_ostream& os) const
 {
 }
+
+const char* BinSymbolData::key = "objfmt::bin::BinSymbolData";
 
 BinSymbolData::BinSymbolData(const BinSectionData& bsd, SpecialSym which)
     : m_bsd(bsd), m_which(which)
@@ -105,7 +109,7 @@ BinSymbolData::get_value() const
 }
 
 void
-expr_xform(Expr* e, const void* assoc_key)
+expr_xform(Expr* e)
 {
     for (Expr::Terms::iterator i=e->get_terms().begin(),
          end=e->get_terms().end(); i != end; ++i)
@@ -114,7 +118,7 @@ expr_xform(Expr* e, const void* assoc_key)
 
         // Transform our special symrecs into the appropriate value
         const IntNum* ssymval;
-        if ((sym = i->get_sym()) && (ssymval = get_ssym_value(sym, assoc_key)))
+        if ((sym = i->get_sym()) && (ssymval = get_ssym_value(*sym)))
             *i = *ssymval;
 
         // Transform symrecs or precbcs that reference sections into
@@ -132,9 +136,7 @@ expr_xform(Expr* e, const void* assoc_key)
         IntNum dist;
         if (calc_dist(first, loc, &dist))
         {
-            const Section* sect = container->as_section();
-            const BinSectionData* bsd = static_cast<const BinSectionData*>
-                (sect->get_assoc_data(assoc_key));
+            const BinSectionData* bsd = get_bin_sect(*container->as_section());
             assert(bsd);
             assert(bsd->has_ivstart);
             dist += bsd->ivstart;

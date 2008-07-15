@@ -177,7 +177,7 @@ BinObject::output_map(const IntNum& origin,
         }
     }
 
-    MapOutput out(os, *m_object, origin, groups, this);
+    MapOutput out(os, *m_object, origin, groups);
     out.output_header();
     out.output_origin();
 
@@ -225,7 +225,7 @@ NoOutput::output(const Bytes& bytes)
 class Output : public BytecodeOutput
 {
 public:
-    Output(std::ostream& os, Object& object, const void* assoc_key);
+    Output(std::ostream& os, Object& object);
     ~Output();
 
     void output_section(Section& sect,
@@ -239,15 +239,13 @@ public:
     void output(const Bytes& bytes);
 
 private:
-    const void* m_assoc_key;
     Object& m_object;
     std::ostream& m_os;
     NoOutput m_no_output;
 };
 
-Output::Output(std::ostream& os, Object& object, const void* assoc_key)
-    : m_assoc_key(assoc_key),
-      m_object(object),
+Output::Output(std::ostream& os, Object& object)
+    : m_object(object),
       m_os(os)
 {
 }
@@ -261,8 +259,7 @@ Output::output_section(Section& sect, const IntNum& origin, Errwarns& errwarns)
 {
     BytecodeOutput* outputter;
 
-    BinSectionData* bsd =
-        static_cast<BinSectionData*>(sect.get_assoc_data(m_assoc_key));
+    BinSectionData* bsd = get_bin_sect(sect);
     assert(bsd);
 
     if (sect.is_bss())
@@ -329,8 +326,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
         {
             syme.reset(new Expr(value.m_rel, line));
         }
-        else if (const IntNum* ssymval =
-                 get_ssym_value(value.m_rel, m_assoc_key))
+        else if (const IntNum* ssymval = get_ssym_value(*value.m_rel))
         {
             syme.reset(new Expr(*ssymval, line));
         }
@@ -356,8 +352,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
 done:
     // Simplify absolute portion of value, transforming symrecs
     if (Expr* abs = value.get_abs())
-        abs->level_tree(true, true, true,
-                        BIND::bind(&expr_xform, _1, m_assoc_key));
+        abs->level_tree(true, true, true, expr_xform);
 
     // Output
     Arch* arch = m_object.get_arch();
@@ -400,13 +395,13 @@ Output::output(const Bytes& bytes)
 }
 
 static void
-check_sym(const Symbol& sym, const void* assoc_key, Errwarns& errwarns)
+check_sym(const Symbol& sym, Errwarns& errwarns)
 {
     int vis = sym.get_visibility();
 
     // Don't check internally-generated symbols.  Only internally generated
     // symbols have symrec data, so simply check for its presence.
-    if (sym.get_assoc_data(assoc_key))
+    if (get_bin_sym(sym))
         return;
 
     if (vis & Symbol::EXTERN)
@@ -455,9 +450,9 @@ BinObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     // Check symbol table
     for (Object::const_symbol_iterator i=m_object->symbols_begin(),
          end=m_object->symbols_end(); i != end; ++i)
-        check_sym(*i, this, errwarns);
+        check_sym(*i, errwarns);
 
-    Link link(*m_object, this, errwarns);
+    Link link(*m_object, errwarns);
 
     if (!link.do_link(origin))
         return;
@@ -470,7 +465,7 @@ BinObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
         return;
 
     // Output sections
-    Output out(os, *m_object, this);
+    Output out(os, *m_object);
     for (Object::section_iterator i=m_object->sections_begin(),
          end=m_object->sections_end(); i != end; ++i)
     {

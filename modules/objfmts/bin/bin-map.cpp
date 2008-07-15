@@ -62,13 +62,11 @@ map_prescan_bytes(const BinSectionData& bsd, int* bytes)
 MapOutput::MapOutput(std::ostream& os,
                      const Object& object,
                      const IntNum& origin,
-                     const BinGroups& groups,
-                     const void* assoc_key)
+                     const BinGroups& groups)
     : m_os(os),
       m_object(object),
       m_origin(origin),
-      m_groups(groups),
-      m_assoc_key(assoc_key)
+      m_groups(groups)
 {
     // Prescan all values to figure out what width we should make the output
     // fields.  Start with a minimum of 4.
@@ -78,8 +76,7 @@ MapOutput::MapOutput(std::ostream& os,
     for (Object::const_section_iterator sect = object.sections_begin(),
          end = object.sections_end(); sect != end; ++sect)
     {
-        const BinSectionData* bsd = static_cast<const BinSectionData*>
-            (sect->get_assoc_data(assoc_key));
+        const BinSectionData* bsd = get_bin_sect(*sect);
         assert(bsd != 0);
         map_prescan_bytes(*bsd, &m_bytes);
     }
@@ -266,8 +263,7 @@ MapOutput::output_symbols(const Section* sect)
         if (sect == 0 && (equ = sym->get_equ()))
         {
             std::auto_ptr<Expr> realequ(equ->clone());
-            realequ->level_tree(true, true, true,
-                                BIND::bind(&expr_xform, _1, m_assoc_key));
+            realequ->level_tree(true, true, true, expr_xform);
             IntNum* intn = realequ->get_intnum();
             assert(intn != 0);
             output_intnum(*intn);
@@ -275,8 +271,7 @@ MapOutput::output_symbols(const Section* sect)
         }
         else if (sym->get_label(&loc) && loc.bc->get_container() == sect)
         {
-            const BinSectionData* bsd = static_cast<const BinSectionData*>
-                (sect->get_assoc_data(m_assoc_key));
+            const BinSectionData* bsd = get_bin_sect(*sect);
 
             // Real address
             output_intnum(bsd->istart + loc.get_offset());

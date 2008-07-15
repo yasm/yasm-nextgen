@@ -48,8 +48,7 @@ public:
     MapOutput(std::ostream& os,
               const Object& object,
               const IntNum& origin,
-              const BinGroups& groups,
-              const void* assoc_key);
+              const BinGroups& groups);
     ~MapOutput();
 
     void output_header();
@@ -73,7 +72,6 @@ private:
     const Object& m_object;     // object
     const IntNum& m_origin;     // origin
     const BinGroups& m_groups;  // section groups
-    const void* m_assoc_key;    // key to get associated data
 };
 
 }}} // namespace yasm::objfmt::bin

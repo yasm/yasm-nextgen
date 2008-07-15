@@ -81,7 +81,7 @@ marg_ostream& operator<< (marg_ostream& os, const BinGroups& groups);
 class Link
 {
 public:
-    Link(Object& object, const void* assoc_key, Errwarns& errwarns);
+    Link(Object& object, Errwarns& errwarns);
     ~Link();
 
     bool do_link(const IntNum& origin);
@@ -99,7 +99,6 @@ private:
     void output_bytecode(Bytecode& bc);
 
     Object& m_object;
-    const void* m_assoc_key;
     Errwarns& m_errwarns;
 
     BinGroups m_lma_groups, m_vma_groups;

@@ -32,6 +32,7 @@
 
 #include <libyasmx/assoc_data.h>
 #include <libyasmx/intnum.h>
+#include <libyasmx/section.h>
 #include <libyasmx/symbol.h>
 
 namespace yasm
@@ -46,6 +47,8 @@ namespace bin
 
 struct BinSectionData : public AssocData
 {
+    static const char* key;
+
     BinSectionData();
     ~BinSectionData();
     void put(marg_ostream& os) const;
@@ -78,6 +81,8 @@ struct BinSectionData : public AssocData
 class BinSymbolData : public AssocData
 {
 public:
+    static const char* key;
+
     enum SpecialSym
     {
         START,
@@ -94,13 +99,40 @@ private:
     SpecialSym m_which;
 };
 
-void expr_xform(Expr* e, const void* assoc_key);
+void expr_xform(Expr* e);
 
-static inline const IntNum*
-get_ssym_value(const Symbol* sym, const void* assoc_key)
+inline const BinSectionData*
+get_bin_sect(const Section& sect)
 {
-    const BinSymbolData* bsymd =
-        static_cast<const BinSymbolData*>(sym->get_assoc_data(assoc_key));
+    return static_cast<const BinSectionData*>
+        (sect.get_assoc_data(BinSectionData::key));
+}
+
+inline BinSectionData*
+get_bin_sect(Section& sect)
+{
+    return static_cast<BinSectionData*>
+        (sect.get_assoc_data(BinSectionData::key));
+}
+
+inline const BinSymbolData*
+get_bin_sym(const Symbol& sym)
+{
+    return static_cast<const BinSymbolData*>
+        (sym.get_assoc_data(BinSymbolData::key));
+}
+
+inline BinSymbolData*
+get_bin_sym(Symbol& sym)
+{
+    return static_cast<BinSymbolData*>
+        (sym.get_assoc_data(BinSymbolData::key));
+}
+
+inline const IntNum*
+get_ssym_value(const Symbol& sym)
+{
+    const BinSymbolData* bsymd = get_bin_sym(sym);
     if (!bsymd)
         return 0;
     return bsymd->get_value();
