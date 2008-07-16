@@ -35,6 +35,8 @@
 
 #include <boost/noncopyable.hpp>
 
+#include "effaddr.h"
+#include "expr.h"
 #include "export.h"
 #include "marg_ostream_fwd.h"
 
@@ -44,8 +46,6 @@ namespace yasm
 
 class BytecodeContainer;
 class Bytes;
-class EffAddr;
-class Expr;
 class Register;
 class SegmentRegister;
 

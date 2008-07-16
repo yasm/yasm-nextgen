@@ -38,13 +38,13 @@
 #include <boost/scoped_ptr.hpp>
 
 #include "export.h"
+#include "expr.h"
 #include "ptr_vector.h"
 
 
 namespace yasm
 {
 
-class Expr;
 class Object;
 
 /// Name/value pair.

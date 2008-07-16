@@ -33,6 +33,7 @@
 #include <memory>
 
 #include "export.h"
+#include "intnum.h"
 #include "location.h"
 #include "marg_ostream_fwd.h"
 
@@ -43,7 +44,6 @@ namespace yasm
 class Arch;
 class Bytes;
 class Expr;
-class IntNum;
 class Symbol;
 
 /// A value.  May be absolute or relative.  Outside the parser, #Expr
