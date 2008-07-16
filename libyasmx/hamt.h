@@ -112,7 +112,7 @@ private:
     // Pools are used to manage all node memory except for the root (above).
     // There are individual pools for each size, from 0-32 Node* members.
     // (0=value node, 32=completely full bitmapped array of nodes).
-    std::vector<boost::pool<>*> m_pools;
+    boost::pool<>* m_pools[33];
 
     GetKey get_key; // functor instance
 
@@ -177,9 +177,8 @@ hamt<Key,T,GetKey>::hamt(bool nocase)
     : m_root(new Node* [32]),
       m_nocase(nocase)
 {
-    m_pools.reserve(33);
     for (int i=0; i<33; i++)
-        m_pools.push_back(new boost::pool<>(sizeof(Node) + i*sizeof(Node*)));
+        m_pools[i] = new boost::pool<>(sizeof(Node) + i*sizeof(Node*));
     for (int i=0; i<32; i++)
         m_root[i] = 0;
 }
@@ -187,11 +186,8 @@ hamt<Key,T,GetKey>::hamt(bool nocase)
 template <typename Key, typename T, typename GetKey>
 hamt<Key,T,GetKey>::~hamt()
 {
-    while (!m_pools.empty())
-    {
-        delete m_pools.back();
-        m_pools.pop_back();
-    }
+    for (int i=0; i<33; i++)
+        delete m_pools[i];
 }
 
 template <typename Key, typename T, typename GetKey>
