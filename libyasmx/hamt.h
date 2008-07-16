@@ -36,7 +36,6 @@
 ///
 #include <cctype>
 #include <cstring>
-#include <vector>
 
 #include <boost/noncopyable.hpp>
 #include <boost/pool/pool.hpp>
