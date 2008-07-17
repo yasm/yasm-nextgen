@@ -39,7 +39,6 @@
 
 #include <boost/noncopyable.hpp>
 #include <boost/pool/pool.hpp>
-#include <boost/scoped_array.hpp>
 
 #include "bitcount.h"
 
@@ -105,7 +104,7 @@ private:
         }
     };
 
-    boost::scoped_array<Node*> m_root;
+    Node* m_root[32];
     bool m_nocase;
 
     // Pools are used to manage all node memory except for the root (above).
@@ -173,8 +172,7 @@ hamt<Key,T,GetKey>::rehash_key_nocase(const Key& key, int Level)
 
 template <typename Key, typename T, typename GetKey>
 hamt<Key,T,GetKey>::hamt(bool nocase)
-    : m_root(new Node* [32]),
-      m_nocase(nocase)
+    : m_nocase(nocase)
 {
     for (int i=0; i<33; i++)
         m_pools[i] = new boost::pool<>(sizeof(Node) + i*sizeof(Node*));
