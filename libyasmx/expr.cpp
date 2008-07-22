@@ -72,8 +72,8 @@ can_destroy_int_left(Op::Op op, const IntNum* intn)
 bool
 can_destroy_int_right(Op::Op op, const IntNum* intn)
 {
-    int iszero = intn->is_zero();
-    int ispos1 = intn->is_pos1();
+    bool iszero = intn->is_zero();
+    bool ispos1 = intn->is_pos1();
     return ((ispos1 && op == Op::MUL) ||
             (ispos1 && op == Op::DIV) ||
             (iszero && op == Op::ADD) ||
