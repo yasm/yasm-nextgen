@@ -114,7 +114,7 @@ ExprTerm::clone() const
     switch (m_type)
     {
         case INT:   return static_cast<const IntNum&>(m_intn);
-        case FLOAT: return m_flt->clone();
+        case FLOAT: return std::auto_ptr<FloatNum>(m_flt->clone());
         case EXPR:  return m_expr->clone();
         default:    return *this;
     }

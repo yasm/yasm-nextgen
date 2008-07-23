@@ -268,7 +268,6 @@ public:
 
     ExprTerm(const Register* reg) : m_type(REG), m_reg(reg) {}
     ExprTerm(IntNum intn) : m_type(INT), m_intn(intn) {}
-    ExprTerm(FloatNum* flt) : m_type(FLOAT), m_flt(flt) {}
     explicit ExprTerm(const Subst& subst)
         : m_type(SUBST), m_subst(subst.subst)
     {}
