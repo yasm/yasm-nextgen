@@ -319,7 +319,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
 
         if (value.m_rel->is_abs())
         {
-            syme.reset(new Expr(new IntNum(0), line));
+            syme.reset(new Expr(IntNum(0), line));
         }
         else if (value.m_rel->get_label(&label_loc)
                  && label_loc.bc->get_container())
@@ -342,7 +342,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
         }
 
         if (value.m_rshift > 0)
-            syme.reset(new Expr(syme, Op::SHR, new IntNum(rshift), line));
+            syme.reset(new Expr(syme, Op::SHR, IntNum(rshift), line));
 
         // Add into absolute portion
         value.add_abs(syme);

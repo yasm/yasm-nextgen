@@ -173,7 +173,7 @@ fixup(bool xform_rip_plus, std::auto_ptr<Expr> e)
         if (e->is_op(Op::ADD) && reg && reg->type() == X86Register::RIP)
         {
             // replace register with 0
-            e->get_terms()[0] = new IntNum(0);
+            e->get_terms()[0] = IntNum(0);
             // build new wrt expression
             e.reset(new Expr(e.release(), Op::WRT, reg, e->get_line()));
         }
@@ -288,7 +288,7 @@ get_reg3264(ExprTerm& term, int& regnum, int* regs, unsigned char bits,
     }
 
     // overwrite with 0 to eliminate register from displacement expr
-    term = new IntNum(0);
+    term = IntNum(0);
 
     // we're okay
     return &regs[regnum];
@@ -325,7 +325,7 @@ x86_expr_checkea_get_reg16(ExprTerm& term, int& regnum, int* bx, int* si,
         return 0;
 
     // overwrite with 0 to eliminate register from displacement expr
-    term = new IntNum(0);
+    term = IntNum(0);
 
     // we're okay
     return reg16[regnum];

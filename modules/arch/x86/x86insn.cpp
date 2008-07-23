@@ -1121,7 +1121,7 @@ BuildGeneral::apply_modifiers(unsigned char* mod_data)
                 m_opersize = mod_data[i];
                 break;
             case MOD_Imm8:
-                m_imm.reset(new Expr(new IntNum(mod_data[i]), 0));
+                m_imm.reset(new Expr(IntNum(mod_data[i]), 0));
                 m_im_len = 8;
                 break;
             case MOD_DOpS64R:

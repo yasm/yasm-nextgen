@@ -125,7 +125,7 @@ MultipleBytecode::finalize(Bytecode& bc)
     if (const Expr* e = val.get_abs())
         m_multiple.reset(e->clone());
     else
-        m_multiple.reset(new Expr(new IntNum(0), bc.get_line()));
+        m_multiple.reset(new Expr(IntNum(0), bc.get_line()));
 
     for (BytecodeContainer::bc_iterator i = m_contents.bcs_begin(),
          end = m_contents.bcs_end(); i != end; ++i)

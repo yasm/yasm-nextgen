@@ -91,14 +91,11 @@ can_destroy_int_right(Op::Op op, const IntNum* intn)
 namespace yasm
 {
 
-ExprTerm::ExprTerm(const IntNum& intn)
-    : m_type(INT), m_intn(intn.clone())
-{
-}
-
 ExprTerm::ExprTerm(std::auto_ptr<IntNum> intn)
-    : m_type(INT), m_intn(intn.release())
+    : m_type(INT)
 {
+    m_intn.m_type = IntNumData::INTNUM_L;
+    std::swap(m_intn, static_cast<IntNumData&>(*intn));
 }
 
 ExprTerm::ExprTerm(std::auto_ptr<FloatNum> flt)
@@ -116,7 +113,7 @@ ExprTerm::clone() const
 {
     switch (m_type)
     {
-        case INT:   return m_intn->clone();
+        case INT:   return static_cast<const IntNum&>(m_intn);
         case FLOAT: return m_flt->clone();
         case EXPR:  return m_expr->clone();
         default:    return *this;
@@ -129,8 +126,7 @@ ExprTerm::destroy()
     switch (m_type)
     {
         case INT:
-            delete m_intn;
-            m_intn = 0;
+            static_cast<IntNum&>(m_intn).~IntNum();
             break;
         case FLOAT:
             delete m_flt;
@@ -276,7 +272,7 @@ inline void
 Expr::xform_neg_term(ExprTerms::iterator term)
 {
     Expr *sube = new Expr(m_line, Op::MUL);
-    sube->m_terms.push_back(new IntNum(-1));
+    sube->m_terms.push_back(IntNum(-1));
     sube->m_terms.push_back(*term);
     *term = sube;
 }
@@ -327,7 +323,7 @@ Expr::xform_neg_helper()
             else
             {
                 m_op = Op::MUL;
-                m_terms.push_back(new IntNum(-1));
+                m_terms.push_back(IntNum(-1));
             }
             break;
         }
@@ -337,7 +333,7 @@ Expr::xform_neg_helper()
             Expr *ne = new Expr(m_line, m_op);
             m_op = Op::MUL;
             m_terms.swap(ne->m_terms);
-            m_terms.push_back(new IntNum(-1));
+            m_terms.push_back(IntNum(-1));
             m_terms.push_back(ne);
             break;
     }
@@ -397,10 +393,10 @@ Expr::simplify_identity(IntNum* &intn, bool simplify_reg_mul)
              (!is_first && can_destroy_int_right(m_op, intn))))
         {
             // delete int term
+            intn->~IntNum();
+            intn = 0;
             m_terms.erase(std::find_if(m_terms.begin(), m_terms.end(),
                 BIND::bind(&ExprTerm::is_type, _1, ExprTerm::INT)));
-            delete intn;
-            intn = 0;
         }
         // Check for simple identites that delete everything BUT the intnum.
         else if (is_constant(m_op, intn))
@@ -804,8 +800,17 @@ Expr::get_float() const
         return 0;
 }
 
-IntNum*
+const IntNum*
 Expr::get_intnum() const
+{
+    if (m_op == Op::IDENT)
+        return m_terms.front().get_int();
+    else
+        return 0;
+}
+
+IntNum*
+Expr::get_intnum()
 {
     if (m_op == Op::IDENT)
         return m_terms.front().get_int();
@@ -838,7 +843,7 @@ operator<< (std::ostream& os, const ExprTerm& term)
     {
         case ExprTerm::NONE:    os << "NONE"; break;
         case ExprTerm::REG:     os << *term.m_reg; break;
-        case ExprTerm::INT:     os << *term.m_intn; break;
+        case ExprTerm::INT:     os << *term.get_int(); break;
         case ExprTerm::SUBST:   os << "[" << term.m_subst << "]"; break;
         case ExprTerm::FLOAT:   os << "FLTN"; break;
         case ExprTerm::SYM:     os << "SYM"; break;

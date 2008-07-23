@@ -35,6 +35,7 @@
 
 #include "export.h"
 #include "functional.h"
+#include "intnum.h"
 #include "location.h"
 #include "operator.h"
 
@@ -44,7 +45,6 @@ namespace yasm
 
 class Bytecode;
 class FloatNum;
-class IntNum;
 class Register;
 class Symbol;
 
@@ -153,7 +153,13 @@ public:
     /// @return 0 if the expression is too complex (contains anything other
     ///         than integers, ie floats, non-valued labels, registers);
     ///         otherwise the intnum value of the expression.
-    /*@dependent@*/ /*@null@*/ IntNum* get_intnum() const;
+    /*@dependent@*/ /*@null@*/ const IntNum* get_intnum() const;
+
+    /// Get the integer value of an expression if it's just an integer.
+    /// @return 0 if the expression is too complex (contains anything other
+    ///         than integers, ie floats, non-valued labels, registers);
+    ///         otherwise the intnum value of the expression.
+    /*@dependent@*/ /*@null@*/ IntNum* get_intnum();
 
     /// Get the symbol value of an expression if it's just a symbol.
     /// @return 0 if the expression is too complex; otherwise the symbol
@@ -261,8 +267,7 @@ public:
     };
 
     ExprTerm(const Register* reg) : m_type(REG), m_reg(reg) {}
-    ExprTerm(IntNum* intn) : m_type(INT), m_intn(intn) {}
-    ExprTerm(const IntNum& intn);
+    ExprTerm(IntNum intn) : m_type(INT), m_intn(intn) {}
     ExprTerm(FloatNum* flt) : m_type(FLOAT), m_flt(flt) {}
     explicit ExprTerm(const Subst& subst)
         : m_type(SUBST), m_subst(subst.subst)
@@ -323,9 +328,14 @@ public:
         return (m_type == REG ? m_reg : 0);
     }
 
-    IntNum* get_int() const
+    const IntNum* get_int() const
     {
-        return (m_type == INT ? m_intn : 0);
+        return (m_type == INT ? static_cast<const IntNum*>(&m_intn) : 0);
+    }
+
+    IntNum* get_int()
+    {
+        return (m_type == INT ? static_cast<IntNum*>(&m_intn) : 0);
     }
 
     const unsigned int* get_subst() const
@@ -364,7 +374,7 @@ private:
     union
     {
         const Register *m_reg;  ///< Register (#REG)
-        IntNum *m_intn;         ///< Integer value (#INT)
+        IntNumData m_intn;      ///< Integer value (#INT)
         unsigned int m_subst;   ///< Subst placeholder (#SUBST)
         FloatNum *m_flt;        ///< Floating point value (#FLOAT)
         Symbol *m_sym;          ///< Symbol (#SYM)

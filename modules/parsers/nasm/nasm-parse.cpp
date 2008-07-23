@@ -1093,7 +1093,7 @@ NasmParser::dir_align(Object& object, const NameValues& namevals,
         Expr::Ptr e(new Expr(
             new Expr(m_absstart->clone(), Op::SUB, m_abspos->clone(), line),
             Op::AND,
-            new Expr(boundval, Op::SUB, new IntNum(1), line),
+            new Expr(boundval, Op::SUB, IntNum(1), line),
             line));
         m_abspos.reset(new Expr(m_abspos, Op::ADD, e, line));
     }

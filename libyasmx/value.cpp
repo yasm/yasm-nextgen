@@ -308,9 +308,9 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
 
                         // Replace both symrec portions with 0
                         i->destroy();
-                        *i = new IntNum(0);
+                        *i = IntNum(0);
                         //j->destroy(); // unneeded as it's a symbol
-                        *j = new IntNum(0);
+                        *j = IntNum(0);
 
                         break;  // stop looking
                     }
@@ -382,9 +382,9 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                             {
                                 // Replace both symrec portions with 0
                                 i->destroy();
-                                *i = new IntNum(0);
+                                *i = IntNum(0);
                                 //j->destroy(); // unneeded as it's a symbol
-                                *j = new IntNum(0);
+                                *j = IntNum(0);
                             }
                             else
                             {
@@ -419,7 +419,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                     m_rel = sym;
                     // and replace with 0
                     //i->destroy(); // unneeded as it's a symbol
-                    *i = new IntNum(0);
+                    *i = IntNum(0);
                 }
             }
             break;
@@ -459,7 +459,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                     m_rel = terms[0].get_sym();
                     // and replace with 0
                     //terms[0].destroy(); // unneeded as it's a symbol
-                    terms[0] = new IntNum(0);
+                    terms[0] = IntNum(0);
                     break;
                 case ExprTerm::EXPR:
                     // recurse
@@ -503,7 +503,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
             m_rel = sym;
 
             // replace with ident'ed 0
-            *e = Expr(new IntNum(0));
+            *e = Expr(IntNum(0));
             break;
         }
         case Op::WRT:
@@ -537,7 +537,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                 m_rel = sym;
                 // and replace with 0
                 //terms[0].destroy(); // unneeded as it's a symbol
-                terms[0] = new IntNum(0);
+                terms[0] = IntNum(0);
             }
             else if (Expr* sube = terms[0].get_expr())
             {
