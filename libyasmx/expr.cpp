@@ -91,28 +91,28 @@ can_destroy_int_right(Op::Op op, const IntNum* intn)
 namespace yasm
 {
 
-Expr::Term::Term(const IntNum& intn)
+ExprTerm::ExprTerm(const IntNum& intn)
     : m_type(INT), m_intn(intn.clone())
 {
 }
 
-Expr::Term::Term(std::auto_ptr<IntNum> intn)
+ExprTerm::ExprTerm(std::auto_ptr<IntNum> intn)
     : m_type(INT), m_intn(intn.release())
 {
 }
 
-Expr::Term::Term(std::auto_ptr<FloatNum> flt)
+ExprTerm::ExprTerm(std::auto_ptr<FloatNum> flt)
     : m_type(FLOAT), m_flt(flt.release())
 {
 }
 
-Expr::Term::Term(std::auto_ptr<Expr> expr)
+ExprTerm::ExprTerm(std::auto_ptr<Expr> expr)
     : m_type(EXPR), m_expr(expr.release())
 {
 }
 
-Expr::Term
-Expr::Term::clone() const
+ExprTerm
+ExprTerm::clone() const
 {
     switch (m_type)
     {
@@ -124,7 +124,7 @@ Expr::Term::clone() const
 }
 
 void
-Expr::Term::destroy()
+ExprTerm::destroy()
 {
     switch (m_type)
     {
@@ -147,7 +147,7 @@ Expr::Term::destroy()
 }
 
 void
-Expr::add_term(const Term& term)
+Expr::add_term(const ExprTerm& term)
 {
     Expr* base_e = term.get_expr();
     if (!base_e)
@@ -192,14 +192,14 @@ Expr::add_term(const Term& term)
     }
 }
 
-Expr::Expr(const Term& a, Op::Op op, const Term& b, unsigned long line)
+Expr::Expr(const ExprTerm& a, Op::Op op, const ExprTerm& b, unsigned long line)
     : m_op(op), m_line(line)
 {
     add_term(a);
     add_term(b);
 }
 
-Expr::Expr(Op::Op op, const Term& a, unsigned long line)
+Expr::Expr(Op::Op op, const ExprTerm& a, unsigned long line)
     : m_op(op), m_line(line)
 {
     if (!is_unary(op))
@@ -207,7 +207,7 @@ Expr::Expr(Op::Op op, const Term& a, unsigned long line)
     add_term(a);
 }
 
-Expr::Expr(Op::Op op, const Terms& terms, unsigned long line)
+Expr::Expr(Op::Op op, const ExprTerms& terms, unsigned long line)
     : m_op(op), m_line(line)
 {
     switch (terms.size())
@@ -226,10 +226,10 @@ Expr::Expr(Op::Op op, const Terms& terms, unsigned long line)
                 throw ValueError(N_("expression with more than two terms must be associative"));
     }
     std::transform(terms.begin(), terms.end(), std::back_inserter(m_terms),
-                   MEMFN::mem_fn(&Term::clone));
+                   MEMFN::mem_fn(&ExprTerm::clone));
 }
 
-Expr::Expr(const Term& a, unsigned long line)
+Expr::Expr(const ExprTerm& a, unsigned long line)
     : m_op(Op::IDENT), m_line(line)
 {
     add_term(a);
@@ -243,11 +243,11 @@ Expr::operator= (const Expr& rhs)
         m_op = rhs.m_op;
         m_line = rhs.m_line;
         std::for_each(m_terms.begin(), m_terms.end(),
-                      MEMFN::mem_fn(&Term::destroy));
+                      MEMFN::mem_fn(&ExprTerm::destroy));
         m_terms.clear();
         std::transform(rhs.m_terms.begin(), rhs.m_terms.end(),
                        std::back_inserter(m_terms),
-                       MEMFN::mem_fn(&Term::clone));
+                       MEMFN::mem_fn(&ExprTerm::clone));
     }
     return *this;
 }
@@ -257,7 +257,7 @@ Expr::Expr(const Expr& e)
 {
     std::transform(e.m_terms.begin(), e.m_terms.end(),
                    std::back_inserter(m_terms),
-                   MEMFN::mem_fn(&Term::clone));
+                   MEMFN::mem_fn(&ExprTerm::clone));
 }
 
 Expr::Expr(unsigned long line, Op::Op op)
@@ -268,12 +268,12 @@ Expr::Expr(unsigned long line, Op::Op op)
 Expr::~Expr()
 {
     std::for_each(m_terms.begin(), m_terms.end(),
-                  MEMFN::mem_fn(&Term::destroy));
+                  MEMFN::mem_fn(&ExprTerm::destroy));
 }
 
 /// Negate just a single ExprTerm by building a -1*ei subexpression.
 inline void
-Expr::xform_neg_term(Terms::iterator term)
+Expr::xform_neg_term(ExprTerms::iterator term)
 {
     Expr *sube = new Expr(m_line, Op::MUL);
     sube->m_terms.push_back(new IntNum(-1));
@@ -291,7 +291,7 @@ Expr::xform_neg_helper()
     {
         case Op::ADD:
             // distribute (recursively if expr) over terms
-            for (Terms::iterator i=m_terms.begin(), end=m_terms.end();
+            for (ExprTerms::iterator i=m_terms.begin(), end=m_terms.end();
                  i != end; ++i)
             {
                 if (Expr* sube = i->get_expr())
@@ -316,13 +316,13 @@ Expr::xform_neg_helper()
         {
             // Negating an ident?  Change it into a MUL w/ -1 if there's no
             // floatnums present below; if there ARE floatnums, recurse.
-            Term& first = m_terms.front();
+            ExprTerm& first = m_terms.front();
             Expr* e;
             if (FloatNum* flt = first.get_float())
                 flt->calc(Op::NEG);
             else if (IntNum* intn = first.get_int())
                 intn->calc(Op::NEG);
-            else if ((e = first.get_expr()) && e->contains(FLOAT))
+            else if ((e = first.get_expr()) && e->contains(ExprTerm::FLOAT))
                 e->xform_neg_helper();
             else
             {
@@ -363,7 +363,7 @@ Expr::xform_neg()
             // Turn a-b into a+(-1*b)
             // change op to ADD, and recursively negate right side (if expr)
             m_op = Op::ADD;
-            Terms::iterator rhs = m_terms.begin()+1;
+            ExprTerms::iterator rhs = m_terms.begin()+1;
             if (Expr* sube = rhs->get_expr())
                 sube->xform_neg_helper();
             else
@@ -392,13 +392,13 @@ Expr::simplify_identity(IntNum* &intn, bool simplify_reg_mul)
         // Check for simple identities that delete the intnum.
         // Don't do this step if it's 1*REG.
         if ((simplify_reg_mul || m_op != Op::MUL || !intn->is_pos1() ||
-             !contains(REG)) &&
+             !contains(ExprTerm::REG)) &&
             ((is_first && can_destroy_int_left(m_op, intn)) ||
              (!is_first && can_destroy_int_right(m_op, intn))))
         {
             // delete int term
             m_terms.erase(std::find_if(m_terms.begin(), m_terms.end(),
-                                       BIND::bind(&Term::is_type, _1, INT)));
+                BIND::bind(&ExprTerm::is_type, _1, ExprTerm::INT)));
             delete intn;
             intn = 0;
         }
@@ -406,17 +406,17 @@ Expr::simplify_identity(IntNum* &intn, bool simplify_reg_mul)
         else if (is_constant(m_op, intn))
         {
             // Delete everything but the integer term
-            Terms terms;
-            Terms::iterator i;
+            ExprTerms terms;
+            ExprTerms::iterator i;
             i = std::find_if(m_terms.begin(), m_terms.end(),
-                             BIND::bind(&Term::is_type, _1, INT));
+                             BIND::bind(&ExprTerm::is_type, _1, ExprTerm::INT));
             terms.push_back(*i);
             i->release(); // don't delete it now we've moved it
             m_terms.swap(terms);
             intn = m_terms.front().get_int();
             // delete old terms
             std::for_each(terms.begin(), terms.end(),
-                          MEMFN::mem_fn(&Term::destroy));
+                          MEMFN::mem_fn(&ExprTerm::destroy));
         }
     }
 
@@ -441,7 +441,7 @@ Expr::simplify_identity(IntNum* &intn, bool simplify_reg_mul)
 void
 Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
 {
-    Terms::iterator first_int_term;
+    ExprTerms::iterator first_int_term;
     IntNum* intn = 0;
     bool do_level = false;
     Expr* e;
@@ -450,7 +450,8 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
     if (m_op > Op::NONNUM)
         fold_const = false;
 
-    for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i)
+    for (ExprTerms::iterator i=m_terms.begin(), end=m_terms.end(); i != end;
+         ++i)
     {
         // Search downward until we find something *other* than an
         // IDENT, then bring it up to the current level.
@@ -490,9 +491,9 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
     if (intn)
     {
         // Erase folded integer terms; we already deleted their contents above
-        Terms::iterator erasefrom =
+        ExprTerms::iterator erasefrom =
             std::remove_if(first_int_term+1, m_terms.end(),
-                           BIND::bind(&Term::is_type, _1, INT));
+                           BIND::bind(&ExprTerm::is_type, _1, ExprTerm::INT));
         m_terms.erase(erasefrom, m_terms.end());
 
         // Simplify identities and make IDENT if possible.
@@ -517,15 +518,15 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
     if (!do_level || !is_associative(m_op))
     {
         // trim capacity before returning
-        Terms(m_terms).swap(m_terms);
+        ExprTerms(m_terms).swap(m_terms);
         return;
     }
 
     // Copy up ExprTerms.  Combine integer terms as necessary.
     // This is a two-step process; we do this part in reverse order (to
     // use constant time operations), and then reverse the vector at the end.
-    Terms terms;
-    for (Terms::reverse_iterator i=m_terms.rbegin(), end=m_terms.rend();
+    ExprTerms terms;
+    for (ExprTerms::reverse_iterator i=m_terms.rbegin(), end=m_terms.rend();
          i != end; ++i)
     {
         if ((e = i->get_expr()) && e->m_op == m_op)
@@ -533,7 +534,7 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
             // move up terms, folding constants as we go
             while (!e->m_terms.empty())
             {
-                Term& last = e->m_terms.back();
+                ExprTerm& last = e->m_terms.back();
                 IntNum* intn_temp;
                 if (fold_const && (intn_temp = last.get_int()))
                 {
@@ -588,7 +589,8 @@ Expr::level_tree(bool fold_const,
     xform_neg();
 
     // Recurse into all expr terms first
-    for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i)
+    for (ExprTerms::iterator i=m_terms.begin(), end=m_terms.end(); i != end;
+         ++i)
     {
         if (Expr* e = i->get_expr())
             e->level_tree(fold_const, simplify_ident, simplify_reg_mul,
@@ -644,7 +646,7 @@ Expr::clone(int except) const
 
     std::auto_ptr<Expr> e(new Expr(m_line, m_op));
     int j = 0;
-    for (Terms::const_iterator i=m_terms.begin(), end=m_terms.end();
+    for (ExprTerms::const_iterator i=m_terms.begin(), end=m_terms.end();
          i != end; ++i, ++j)
     {
         if (j != except)
@@ -656,13 +658,14 @@ Expr::clone(int except) const
 bool
 Expr::contains(int type) const
 {
-    return traverse_leaves_in(BIND::bind(&Term::is_type, _1, type));
+    return traverse_leaves_in(BIND::bind(&ExprTerm::is_type, _1, type));
 }
 
 bool
-Expr::substitute_cb(const Terms& subst_terms)
+Expr::substitute_cb(const ExprTerms& subst_terms)
 {
-    for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i)
+    for (ExprTerms::iterator i=m_terms.begin(), end=m_terms.end(); i != end;
+         ++i)
     {
         const unsigned int* substp = i->get_subst();
         if (!substp)
@@ -675,7 +678,7 @@ Expr::substitute_cb(const Terms& subst_terms)
 }
 
 bool
-Expr::substitute(const Terms& subst_terms)
+Expr::substitute(const ExprTerms& subst_terms)
 {
     return traverse_post(BIND::bind(&Expr::substitute_cb, _1,
                                     REF::ref(subst_terms)));
@@ -684,7 +687,8 @@ Expr::substitute(const Terms& subst_terms)
 bool
 Expr::traverse_post(FUNCTION::function<bool (Expr*)> func)
 {
-    for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i)
+    for (ExprTerms::iterator i=m_terms.begin(), end=m_terms.end(); i != end;
+         ++i)
     {
         Expr* e = i->get_expr();
         if (e && e->traverse_post(func))
@@ -694,9 +698,9 @@ Expr::traverse_post(FUNCTION::function<bool (Expr*)> func)
 }
 
 bool
-Expr::traverse_leaves_in(FUNCTION::function<bool (const Term&)> func) const
+Expr::traverse_leaves_in(FUNCTION::function<bool (const ExprTerm&)> func) const
 {
-    for (Terms::const_iterator i=m_terms.begin(), end=m_terms.end();
+    for (ExprTerms::const_iterator i=m_terms.begin(), end=m_terms.end();
          i != end; ++i)
     {
         if (const Expr* e = i->get_expr())
@@ -722,7 +726,8 @@ Expr::extract_deep_segoff()
         return retval;
 
     // Not at this level?  Search any expr children.
-    for (Terms::iterator i=m_terms.begin(), end=m_terms.end(); i != end; ++i)
+    for (ExprTerms::iterator i=m_terms.begin(), end=m_terms.end(); i != end;
+         ++i)
     {
         if (Expr* e = i->get_expr())
         {
@@ -745,7 +750,7 @@ Expr::extract_segoff()
     if (m_op != Op::SEGOFF || m_terms.size() != 2)
         return retval;
 
-    Term& left = m_terms.front();
+    ExprTerm& left = m_terms.front();
 
     // Extract the SEG portion out to its own expression
     if (Expr* e = left.get_expr())
@@ -772,7 +777,7 @@ Expr::extract_wrt()
     if (m_op != Op::WRT || m_terms.size() != 2)
         return retval;
 
-    Term& right = m_terms.back();
+    ExprTerm& right = m_terms.back();
 
     // Extract the right side portion out to its own expression
     if (Expr* e = right.get_expr())
@@ -827,18 +832,18 @@ Expr::get_reg() const
 }
 
 std::ostream&
-operator<< (std::ostream& os, const Expr::Term& term)
+operator<< (std::ostream& os, const ExprTerm& term)
 {
     switch (term.m_type)
     {
-        case Expr::NONE:    os << "NONE"; break;
-        case Expr::REG:     os << *term.m_reg; break;
-        case Expr::INT:     os << *term.m_intn; break;
-        case Expr::SUBST:   os << "[" << term.m_subst << "]"; break;
-        case Expr::FLOAT:   os << "FLTN"; break;
-        case Expr::SYM:     os << "SYM"; break;
-        case Expr::LOC:     os << "{LOC}"; break;
-        case Expr::EXPR:    os << "(" << *term.m_expr << ")"; break;
+        case ExprTerm::NONE:    os << "NONE"; break;
+        case ExprTerm::REG:     os << *term.m_reg; break;
+        case ExprTerm::INT:     os << *term.m_intn; break;
+        case ExprTerm::SUBST:   os << "[" << term.m_subst << "]"; break;
+        case ExprTerm::FLOAT:   os << "FLTN"; break;
+        case ExprTerm::SYM:     os << "SYM"; break;
+        case ExprTerm::LOC:     os << "{LOC}"; break;
+        case ExprTerm::EXPR:    os << "(" << *term.m_expr << ")"; break;
     }
     return os;
 }
@@ -885,7 +890,7 @@ operator<< (std::ostream& os, const Expr& e)
         default:            opstr = " !UNK! "; break;
     }
 
-    for (Expr::Terms::const_iterator i=e.m_terms.begin(), end=e.m_terms.end();
+    for (ExprTerms::const_iterator i=e.m_terms.begin(), end=e.m_terms.end();
          i != end; ++i)
     {
         if (i != e.m_terms.begin())

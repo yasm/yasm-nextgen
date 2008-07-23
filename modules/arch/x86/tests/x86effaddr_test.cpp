@@ -324,7 +324,7 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr16)
 
         for (const long* disp=disps; disp != disps+NELEMS(disps); ++disp)
         {
-            Expr::Terms terms;
+            ExprTerms terms;
             if (reg[0] != 0)
                 terms.push_back(reg[0]);
             if (reg[1] != 0)
@@ -365,7 +365,7 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr16)
             while (std::next_permutation(terms.begin(), terms.end()));
             // clean up after ourselves
             std::for_each(terms.begin(), terms.end(),
-                          MEMFN::mem_fn(&Expr::Term::destroy));
+                          MEMFN::mem_fn(&ExprTerm::destroy));
         }
     }
 }
@@ -421,7 +421,7 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr32)
                 for (const long* disp=disps; disp != disps+NELEMS(disps);
                      ++disp)
                 {
-                    Expr::Terms terms;
+                    ExprTerms terms;
                     if (*basereg != 0)
                         terms.push_back(*basereg);
                     if (*indexreg != 0)
@@ -547,7 +547,7 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr32)
                     //while (std::next_permutation(terms.begin(), terms.end()));
                     // clean up after ourselves
                     std::for_each(terms.begin(), terms.end(),
-                                  MEMFN::mem_fn(&Expr::Term::destroy));
+                                  MEMFN::mem_fn(&ExprTerm::destroy));
                 }
             }
         }

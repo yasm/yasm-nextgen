@@ -437,7 +437,7 @@ private:
     // span terms in absolute portion of value
     typedef std::vector<Term> Terms;
     Terms m_span_terms;
-    Expr::Terms m_expr_terms;
+    ExprTerms m_expr_terms;
 
     long m_cur_val;
     long m_new_val;

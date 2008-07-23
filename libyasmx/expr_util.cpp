@@ -43,7 +43,7 @@ using yasm::Expr;
 void
 do_expand_equ(Expr* expr, std::vector<const Expr*>& seen)
 {
-    for (Expr::Terms::iterator i=expr->get_terms().begin(),
+    for (yasm::ExprTerms::iterator i=expr->get_terms().begin(),
          end=expr->get_terms().end(); i != end; ++i)
     {
         // Expand equ's.

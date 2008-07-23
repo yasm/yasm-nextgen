@@ -210,7 +210,7 @@ X86General::finalize(Bytecode& bc)
             if (!m_default_rel && m_common.m_mode_bits == 64 &&
                 m_common.m_addrsize == 32 &&
                 (!(abs = m_ea->m_disp.get_abs()) ||
-                 !abs->contains(Expr::REG)))
+                 !abs->contains(ExprTerm::REG)))
             {
                 m_ea->set_disponly();
                 // Make the short form permanent.

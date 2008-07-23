@@ -48,6 +48,9 @@ class IntNum;
 class Register;
 class Symbol;
 
+class ExprTerm;
+typedef std::vector<ExprTerm> ExprTerms;
+
 /// An expression.
 class YASM_LIB_EXPORT Expr
 {
@@ -56,151 +59,6 @@ class YASM_LIB_EXPORT Expr
 
 public:
     typedef std::auto_ptr<Expr> Ptr;
-
-    /// Types listed in canonical sorting order.  See expr_order_terms().
-    /// Note loc must be used carefully (in a-b pairs), as only symrecs
-    /// can become the relative term in a #yasm_value.
-    /// Testing uses bit comparison (&) so these have to be in bitmask form.
-    enum TermType
-    {
-        NONE = 0,       ///< Nothing (temporary placeholder only).
-        REG = 1<<0,     ///< Register.
-        INT = 1<<1,     ///< Integer.
-        SUBST = 1<<2,   ///< Substitution value.
-        FLOAT = 1<<3,   ///< Float.
-        SYM = 1<<4,     ///< Symbol.
-        LOC = 1<<5,     ///< Direct location ref (rather than via symrec).
-        EXPR = 1<<6     ///< Subexpression.
-    };
-
-    /// An term inside the expression.
-    class YASM_LIB_EXPORT Term
-    {
-        friend YASM_LIB_EXPORT
-        std::ostream& operator<< (std::ostream&, const Term&);
-
-    public:
-        /// Substitution value.
-        struct Subst
-        {
-            explicit Subst(unsigned int v) : subst(v) {}
-            unsigned int subst;
-        };
-
-        Term(const Register* reg) : m_type(REG), m_reg(reg) {}
-        Term(IntNum* intn) : m_type(INT), m_intn(intn) {}
-        Term(const IntNum& intn);
-        Term(FloatNum* flt) : m_type(FLOAT), m_flt(flt) {}
-        explicit Term(const Subst& subst)
-            : m_type(SUBST), m_subst(subst.subst)
-        {}
-        Term(Symbol* sym) : m_type(SYM), m_sym(sym) {}
-        Term(Symbol& sym) : m_type(SYM), m_sym(&sym) {}
-        Term(Location loc) : m_type(LOC), m_loc(loc) {}
-        Term(Expr* expr) : m_type(EXPR), m_expr(expr) {}
-
-        // auto_ptr constructors
-
-        Term(std::auto_ptr<IntNum> intn);
-        Term(std::auto_ptr<FloatNum> flt);
-        Term(std::auto_ptr<Expr> expr);
-
-        /// Explicit copy creator.
-        /// There's no copy constructor or assignment operator as we want
-        /// to use the default bit-copy ones.  Even though this class
-        /// contains more complex structures, we don't want to be copying
-        /// the contents all the time.
-        Term clone() const;
-
-        /// Explicit release.
-        /// Doesn't destroy contents, just ensures what contents are there
-        /// won't be destroyed via destroy().  Also marks the type as
-        /// Expr::NONE for easy filtering (e.g. with std::remove_if()).
-        void release() { m_type = NONE; m_reg = 0; }
-
-        /// Explicit destructor.
-        /// Similar to clone(), we do smart copying and destruction in
-        /// #Expr implementation to prevent over-copying of possibly deep
-        /// expression trees.
-        void destroy();
-
-        /// Comparison used for sorting; assumes TermTypes are in sort order.
-        bool operator< (const Term& other) const
-        {
-            return (m_type < other.m_type);
-        }
-
-        /// Match type.  Can take an OR'ed combination of TermTypes.
-        bool is_type(int type) const { return (m_type & type) != 0; }
-
-        /// Get the type.
-        TermType get_type() const { return m_type; }
-
-        /// Match operator.  Does not match non-expressions.
-        bool is_op(Op::Op op) const
-        {
-            Expr* e = get_expr();
-            return (e && e->is_op(op));
-        }
-
-        // Helper functions to make it easier to get specific types.
-
-        const Register* get_reg() const
-        {
-            return (m_type == REG ? m_reg : 0);
-        }
-
-        IntNum* get_int() const
-        {
-            return (m_type == INT ? m_intn : 0);
-        }
-
-        const unsigned int* get_subst() const
-        {
-            return (m_type == SUBST ? &m_subst : 0);
-        }
-
-        FloatNum* get_float() const
-        {
-            return (m_type == FLOAT ? m_flt : 0);
-        }
-
-        Symbol* get_sym() const
-        {
-            return (m_type == SYM ? m_sym : 0);
-        }
-
-        const Location* get_loc() const
-        {
-            return (m_type == LOC ? &m_loc : 0);
-        }
-
-        Location* get_loc()
-        {
-            return (m_type == LOC ? &m_loc : 0);
-        }
-
-        Expr* get_expr() const
-        {
-            return (m_type == EXPR ? m_expr : 0);
-        }
-
-    private:
-        TermType m_type;  ///< Type.
-        /// Expression item data.  Correct value depends on type.
-        union
-        {
-            const Register *m_reg;  ///< Register (#REG)
-            IntNum *m_intn;         ///< Integer value (#INT)
-            unsigned int m_subst;   ///< Subst placeholder (#SUBST)
-            FloatNum *m_flt;        ///< Floating point value (#FLOAT)
-            Symbol *m_sym;          ///< Symbol (#SYM)
-            Location m_loc;         ///< Direct bytecode ref (#LOC)
-            Expr *m_expr;           ///< Subexpression (#EXPR)
-        };
-    };
-
-    typedef std::vector<Term> Terms;
 
     Expr& operator= (const Expr& rhs);
     Expr(const Expr& e);
@@ -211,13 +69,13 @@ public:
     /// @param op       operation
     /// @param b        expression b
     /// @param line     virtual line (where expression defined)
-    Expr(const Term& a, Op::Op op, const Term& b, unsigned long line=0);
+    Expr(const ExprTerm& a, Op::Op op, const ExprTerm& b, unsigned long line=0);
 
     /// Create a new expression e=op a.
     /// @param o        operation
     /// @param a        expression a
     /// @param l        virtual line (where expression defined)
-    Expr(Op::Op op, const Term& a, unsigned long line=0);
+    Expr(Op::Op op, const ExprTerm& a, unsigned long line=0);
 
     /// Create a new expression e=a op b op c op ....
     /// @param op       operation
@@ -225,12 +83,12 @@ public:
     /// @param line     virtual line (where expression defined)
     /// @note Only ADD, MUL, OR, AND, XOR operations are valid for more than
     ///       two terms.
-    Expr(Op::Op op, const Terms& terms, unsigned long line=0);
+    Expr(Op::Op op, const ExprTerms& terms, unsigned long line=0);
 
     /// Create a new expression identity e=a.
     /// @param a        identity within new expression
     /// @param line     line
-    explicit Expr(const Term& a, unsigned long line=0);
+    explicit Expr(const ExprTerm& a, unsigned long line=0);
 
     /// Determine if an expression is a specified operation (at the top
     /// level).
@@ -314,7 +172,7 @@ public:
     ///
     /// Stops early (and returns true) if func returns true.
     /// Otherwise returns false.
-    bool traverse_leaves_in(FUNCTION::function<bool (const Term&)> func)
+    bool traverse_leaves_in(FUNCTION::function<bool (const ExprTerm&)> func)
         const;
 
     /// Reorder terms of e into canonical order.  Only reorders if reordering
@@ -331,12 +189,12 @@ public:
     /// are cloned.
     /// @param terms        terms
     /// @return True on error (index out of range).
-    bool substitute(const Terms& terms);
+    bool substitute(const ExprTerms& terms);
 
     Expr* clone(int except = -1) const;
 
     unsigned long get_line() const { return m_line; }
-    Terms& get_terms() { return m_terms; }
+    ExprTerms& get_terms() { return m_terms; }
 
     /// Make expression an ident if it only has one term.
     /// This should be used if deep magic has been performed via get_terms().
@@ -356,24 +214,167 @@ private:
     /// Terms of the expression.
     /// Some operations may allow more than two operand terms:
     /// ADD, MUL, OR, AND, XOR.
-    Terms m_terms;
+    ExprTerms m_terms;
 
-    void add_term(const Term& term);
+    void add_term(const ExprTerm& term);
     Expr(unsigned long line, Op::Op op);
 
     // Internal callbacks
-    bool substitute_cb(const Terms& subst_terms);
+    bool substitute_cb(const ExprTerms& subst_terms);
 
     // Levelling functions
-    void xform_neg_term(Terms::iterator term);
+    void xform_neg_term(ExprTerms::iterator term);
     void xform_neg_helper();
     void xform_neg();
     void simplify_identity(IntNum* &intn, bool simplify_reg_mul);
     void level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul);
 };
 
+/// An term inside an expression.
+class YASM_LIB_EXPORT ExprTerm
+{
+    friend YASM_LIB_EXPORT
+    std::ostream& operator<< (std::ostream&, const ExprTerm&);
+
+public:
+    /// Types listed in canonical sorting order.  See expr_order_terms().
+    /// Note loc must be used carefully (in a-b pairs), as only symrecs
+    /// can become the relative term in a #yasm_value.
+    /// Testing uses bit comparison (&) so these have to be in bitmask form.
+    enum Type
+    {
+        NONE = 0,       ///< Nothing (temporary placeholder only).
+        REG = 1<<0,     ///< Register.
+        INT = 1<<1,     ///< Integer.
+        SUBST = 1<<2,   ///< Substitution value.
+        FLOAT = 1<<3,   ///< Float.
+        SYM = 1<<4,     ///< Symbol.
+        LOC = 1<<5,     ///< Direct location ref (rather than via symrec).
+        EXPR = 1<<6     ///< Subexpression.
+    };
+
+    /// Substitution value.
+    struct Subst
+    {
+        explicit Subst(unsigned int v) : subst(v) {}
+        unsigned int subst;
+    };
+
+    ExprTerm(const Register* reg) : m_type(REG), m_reg(reg) {}
+    ExprTerm(IntNum* intn) : m_type(INT), m_intn(intn) {}
+    ExprTerm(const IntNum& intn);
+    ExprTerm(FloatNum* flt) : m_type(FLOAT), m_flt(flt) {}
+    explicit ExprTerm(const Subst& subst)
+        : m_type(SUBST), m_subst(subst.subst)
+    {}
+    ExprTerm(Symbol* sym) : m_type(SYM), m_sym(sym) {}
+    ExprTerm(Symbol& sym) : m_type(SYM), m_sym(&sym) {}
+    ExprTerm(Location loc) : m_type(LOC), m_loc(loc) {}
+    ExprTerm(Expr* expr) : m_type(EXPR), m_expr(expr) {}
+
+    // auto_ptr constructors
+
+    ExprTerm(std::auto_ptr<IntNum> intn);
+    ExprTerm(std::auto_ptr<FloatNum> flt);
+    ExprTerm(std::auto_ptr<Expr> expr);
+
+    /// Explicit copy creator.
+    /// There's no copy constructor or assignment operator as we want
+    /// to use the default bit-copy ones.  Even though this class
+    /// contains more complex structures, we don't want to be copying
+    /// the contents all the time.
+    ExprTerm clone() const;
+
+    /// Explicit release.
+    /// Doesn't destroy contents, just ensures what contents are there
+    /// won't be destroyed via destroy().  Also marks the type as
+    /// Expr::NONE for easy filtering (e.g. with std::remove_if()).
+    void release() { m_type = NONE; m_reg = 0; }
+
+    /// Explicit destructor.
+    /// Similar to clone(), we do smart copying and destruction in
+    /// #Expr implementation to prevent over-copying of possibly deep
+    /// expression trees.
+    void destroy();
+
+    /// Comparison used for sorting; assumes TermTypes are in sort order.
+    bool operator< (const ExprTerm& other) const
+    {
+        return (m_type < other.m_type);
+    }
+
+    /// Match type.  Can take an OR'ed combination of TermTypes.
+    bool is_type(int type) const { return (m_type & type) != 0; }
+
+    /// Get the type.
+    Type get_type() const { return m_type; }
+
+    /// Match operator.  Does not match non-expressions.
+    bool is_op(Op::Op op) const
+    {
+        Expr* e = get_expr();
+        return (e && e->is_op(op));
+    }
+
+    // Helper functions to make it easier to get specific types.
+
+    const Register* get_reg() const
+    {
+        return (m_type == REG ? m_reg : 0);
+    }
+
+    IntNum* get_int() const
+    {
+        return (m_type == INT ? m_intn : 0);
+    }
+
+    const unsigned int* get_subst() const
+    {
+        return (m_type == SUBST ? &m_subst : 0);
+    }
+
+    FloatNum* get_float() const
+    {
+        return (m_type == FLOAT ? m_flt : 0);
+    }
+
+    Symbol* get_sym() const
+    {
+        return (m_type == SYM ? m_sym : 0);
+    }
+
+    const Location* get_loc() const
+    {
+        return (m_type == LOC ? &m_loc : 0);
+    }
+
+    Location* get_loc()
+    {
+        return (m_type == LOC ? &m_loc : 0);
+    }
+
+    Expr* get_expr() const
+    {
+        return (m_type == EXPR ? m_expr : 0);
+    }
+
+private:
+    Type m_type;    ///< Type.
+    /// Expression item data.  Correct value depends on type.
+    union
+    {
+        const Register *m_reg;  ///< Register (#REG)
+        IntNum *m_intn;         ///< Integer value (#INT)
+        unsigned int m_subst;   ///< Subst placeholder (#SUBST)
+        FloatNum *m_flt;        ///< Floating point value (#FLOAT)
+        Symbol *m_sym;          ///< Symbol (#SYM)
+        Location m_loc;         ///< Direct bytecode ref (#LOC)
+        Expr *m_expr;           ///< Subexpression (#EXPR)
+    };
+};
+
 YASM_LIB_EXPORT
-std::ostream& operator<< (std::ostream& os, const Expr::Term& term);
+std::ostream& operator<< (std::ostream& os, const ExprTerm& term);
 YASM_LIB_EXPORT
 std::ostream& operator<< (std::ostream& os, const Expr& e);
 

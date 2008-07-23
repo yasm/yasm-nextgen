@@ -111,7 +111,7 @@ BinSymbolData::get_value() const
 void
 expr_xform(Expr* e)
 {
-    for (Expr::Terms::iterator i=e->get_terms().begin(),
+    for (ExprTerms::iterator i=e->get_terms().begin(),
          end=e->get_terms().end(); i != end; ++i)
     {
         Symbol* sym;

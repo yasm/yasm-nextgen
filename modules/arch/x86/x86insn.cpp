@@ -639,7 +639,7 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
             break;
         case OPT_MemOffs:
             if (!ea ||
-                ea->m_disp.get_abs()->contains(Expr::REG) ||
+                ea->m_disp.get_abs()->contains(ExprTerm::REG) ||
                 ea->m_pc_rel ||
                 (!ea->m_not_pc_rel && m_default_rel && ea->m_disp.m_size != 64))
                 return false;
@@ -1218,7 +1218,7 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
                              (!segreg ||
                               (segreg->type() != X86SegmentRegister::FS &&
                                segreg->type() != X86SegmentRegister::GS)) &&
-                             !m_x86_ea->m_disp.get_abs()->contains(Expr::REG))
+                             !m_x86_ea->m_disp.get_abs()->contains(ExprTerm::REG))
                         // Enable default PC-rel if no regs and segreg
                         // is not FS or GS.
                         m_x86_ea->m_pc_rel = true;

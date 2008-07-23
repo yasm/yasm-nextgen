@@ -153,7 +153,7 @@ MultipleBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
     }
     else
     {
-        if (m_multiple->contains(Expr::FLOAT))
+        if (m_multiple->contains(ExprTerm::FLOAT))
         {
             m_mult_int = 0;
             throw ValueError(

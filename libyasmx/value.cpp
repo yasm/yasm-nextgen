@@ -54,7 +54,7 @@ class TermIsInt
 public:
     TermIsInt(const yasm::IntNum& intn) : m_intn(intn) {}
 
-    bool operator() (const yasm::Expr::Term& term) const
+    bool operator() (const yasm::ExprTerm& term) const
     {
         const yasm::IntNum* intn = term.get_int();
         return intn && m_intn == *intn;
@@ -216,7 +216,7 @@ Value::set_curpos_rel(Symbol& abs_sym, bool ip_rel)
 bool
 Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
 {
-    Expr::Terms& terms = e->get_terms();
+    ExprTerms& terms = e->get_terms();
 
     // Thanks to this running after a simplify, we don't need to iterate
     // down through IDENTs or handle SUB.
@@ -252,7 +252,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
             // routine and we don't want to eat up stack space.
             std::bitset<32> used;
 
-            for (Expr::Terms::iterator i=terms.begin(), end=terms.end();
+            for (ExprTerms::iterator i=terms.begin(), end=terms.end();
                  i != end; ++i)
             {
 
@@ -261,7 +261,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                 if (!sube)
                     continue;
 
-                Expr::Terms& sube_terms = sube->get_terms();
+                ExprTerms& sube_terms = sube->get_terms();
                 if (!sube->is_op(Op::MUL) || sube_terms.size() != 2)
                 {
                     // recurse instead
@@ -298,7 +298,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
 
                 // Look for the same symrec term; even if both are external,
                 // they should cancel out.
-                Expr::Terms::iterator j = terms.begin();
+                ExprTerms::iterator j = terms.begin();
                 for (; j != end; ++j)
                 {
                     if (j->get_sym() == sym && !used[j-terms.begin()])
@@ -408,7 +408,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
 
             // Look for unmatched symrecs.  If we've already found one or
             // we don't WANT to find one, error out.
-            for (Expr::Terms::iterator i=terms.begin(), end=terms.end();
+            for (ExprTerms::iterator i=terms.begin(), end=terms.end();
                  i != end; ++i)
             {
                 Symbol* sym;
@@ -434,12 +434,12 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
             // Check for not allowed cases on RHS
             switch (terms[1].get_type())
             {
-                case Expr::REG:
-                case Expr::FLOAT:
+                case ExprTerm::REG:
+                case ExprTerm::FLOAT:
                     return true;        // not legal
-                case Expr::SYM:
+                case ExprTerm::SYM:
                     return true;
-                case Expr::EXPR:
+                case ExprTerm::EXPR:
                     if (finalize_scan(terms[1].get_expr(), expr_loc, true))
                         return true;
                     break;
@@ -450,10 +450,10 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
             // Check for single sym and allowed cases on LHS
             switch (terms[0].get_type())
             {
-                //case Expr::REG:   ????? should this be illegal ?????
-                case Expr::FLOAT:
+                //case ExprTerm::REG:   ????? should this be illegal ?????
+                case ExprTerm::FLOAT:
                     return true;        // not legal
-                case Expr::SYM:
+                case ExprTerm::SYM:
                     if (m_rel || ssym_not_ok)
                         return true;
                     m_rel = terms[0].get_sym();
@@ -461,7 +461,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                     //terms[0].destroy(); // unneeded as it's a symbol
                     terms[0] = new IntNum(0);
                     break;
-                case Expr::EXPR:
+                case ExprTerm::EXPR:
                     // recurse
                     if (finalize_scan(terms[0].get_expr(), expr_loc,
                                       ssym_not_ok))
@@ -524,7 +524,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                 terms.pop_back();
                 e->make_ident();
             }
-            else if (terms[1].is_type(Expr::REG))
+            else if (terms[1].is_type(ExprTerm::REG))
                 ;  // ignore
             else
                 return true;
@@ -550,10 +550,10 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
         default:
         {
             // Single symrec not allowed anywhere
-            for (Expr::Terms::iterator i=terms.begin(), end=terms.end();
+            for (ExprTerms::iterator i=terms.begin(), end=terms.end();
                  i != end; ++i)
             {
-                if (i->is_type(Expr::SYM))
+                if (i->is_type(ExprTerm::SYM))
                     return true;
                 else if (Expr* sube = i->get_expr())
                 {
@@ -586,16 +586,16 @@ Value::finalize(Location loc)
         m_mask <<= m_size;
         m_mask -= 1;
 
-        Expr::Terms& terms = m_abs->get_terms();
+        ExprTerms& terms = m_abs->get_terms();
 
         // See if any terms match mask
         if (std::count_if(terms.begin(), terms.end(), TermIsInt(m_mask)) > 0)
         {
             // Walk terms and delete all matching masks
-            Expr::Terms::iterator erasefrom =
+            ExprTerms::iterator erasefrom =
                 std::remove_if(terms.begin(), terms.end(), TermIsInt(m_mask));
             std::for_each(erasefrom, terms.end(),
-                          MEMFN::mem_fn(&Expr::Term::destroy));
+                          MEMFN::mem_fn(&ExprTerm::destroy));
             terms.erase(erasefrom, terms.end());
             m_abs->make_ident();
             m_no_warn = true;
@@ -751,7 +751,7 @@ Value::output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch)
         }
 
         // Check for complex float expressions
-        if (m_abs->contains(Expr::FLOAT))
+        if (m_abs->contains(ExprTerm::FLOAT))
             throw FloatingPointError(
                 N_("floating point expression too complex"));
 

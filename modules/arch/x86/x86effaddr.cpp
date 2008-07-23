@@ -261,7 +261,7 @@ X86EffAddr::clone() const
 // Only works if term.type == Expr::REG (doesn't check).
 // Overwrites term with intnum of 0 (to eliminate regs from the final expr).
 static /*@null@*/ /*@dependent@*/ int*
-get_reg3264(Expr::Term& term, int& regnum, int* regs, unsigned char bits,
+get_reg3264(ExprTerm& term, int& regnum, int* regs, unsigned char bits,
             unsigned char addrsize)
 {
     const X86Register* reg = static_cast<const X86Register*>(term.get_reg());
@@ -297,7 +297,7 @@ get_reg3264(Expr::Term& term, int& regnum, int* regs, unsigned char bits,
 // Only works if term.type == Expr::REG (doesn't check).
 // Overwrites term with intnum of 0 (to eliminate regs from the final expr).
 static /*@null@*/ int*
-x86_expr_checkea_get_reg16(Expr::Term& term, int& regnum, int* bx, int* si,
+x86_expr_checkea_get_reg16(ExprTerm& term, int& regnum, int* bx, int* si,
                            int* di, int* bp)
 {
     // in order: ax,cx,dx,bx,sp,bp,si,di
@@ -352,16 +352,16 @@ x86_expr_checkea_get_reg16(Expr::Term& term, int& regnum, int* bx, int* si,
 static int
 x86_expr_checkea_distcheck_reg(Expr* e, unsigned int bits)
 {
-    Expr::Terms::iterator end = e->get_terms().end();
-    Expr::Terms::iterator havereg = end;
-    Expr::Terms::iterator havereg_expr = end;
+    ExprTerms::iterator end = e->get_terms().end();
+    ExprTerms::iterator havereg = end;
+    ExprTerms::iterator havereg_expr = end;
     int retval = 1;     // default to legal, no changes
 
-    for (Expr::Terms::iterator i=e->get_terms().begin(); i != end; ++i)
+    for (ExprTerms::iterator i=e->get_terms().begin(); i != end; ++i)
     {
         switch (i->get_type())
         {
-            case Expr::REG:
+            case ExprTerm::REG:
                 // Check op to make sure it's valid to use w/register.
                 switch (e->get_op())
                 {
@@ -378,14 +378,14 @@ x86_expr_checkea_distcheck_reg(Expr* e, unsigned int bits)
                 }
                 havereg = i;
                 break;
-            case Expr::FLOAT:
+            case ExprTerm::FLOAT:
                 // Floats not allowed.
                 return 0;
-            case Expr::EXPR:
+            case ExprTerm::EXPR:
             {
                 Expr* sube = i->get_expr();
                 assert(sube != 0);
-                if (sube->contains(Expr::REG))
+                if (sube->contains(ExprTerm::REG))
                 {
                     int ret2;
 
@@ -404,7 +404,7 @@ x86_expr_checkea_distcheck_reg(Expr* e, unsigned int bits)
                     if (ret2 == 2)
                         retval = 2;
                 }
-                else if (sube->contains(Expr::FLOAT))
+                else if (sube->contains(ExprTerm::FLOAT))
                     return 0;   // Disallow floats
                 break;
             }
@@ -429,7 +429,7 @@ x86_expr_checkea_distcheck_reg(Expr* e, unsigned int bits)
         assert(sube->is_op(Op::ADD));
 
         // Iterate over each term in reg expn
-        for (Expr::Terms::iterator i=sube->get_terms().begin(),
+        for (ExprTerms::iterator i=sube->get_terms().begin(),
              end2=sube->get_terms().end(); i != end2; ++i)
         {
             // Copy everything EXCEPT havereg_expr term into new expression
@@ -463,7 +463,7 @@ x86_expr_checkea_distcheck_reg(Expr* e, unsigned int bits)
 static int
 x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
     bool* pcrel, unsigned int bits,
-    FUNCTION::function <int* (Expr::Term& term, int& regnum)> get_reg)
+    FUNCTION::function <int* (ExprTerm& term, int& regnum)> get_reg)
 {
     int* reg;
     int regnum;
@@ -476,7 +476,7 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
     // Check for WRT rip first
     std::auto_ptr<Expr> wrt = e->extract_wrt();
     if (wrt.get() != 0 && wrt->is_op(Op::IDENT) &&
-        wrt->get_terms()[0].is_type(Expr::REG))
+        wrt->get_terms()[0].is_type(ExprTerm::REG))
     {
         if (bits != 64)     // only valid in 64-bit mode
             return 1;
@@ -511,18 +511,18 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
         case Op::ADD:
             // Prescan for non-int multipliers against a reg.
             // This is invalid due to the optimizer structure.
-            for (Expr::Terms::iterator i=e->get_terms().begin(),
+            for (ExprTerms::iterator i=e->get_terms().begin(),
                  end=e->get_terms().end(); i != end; ++i)
             {
                 if (Expr* sube = i->get_expr())
                 {
                     sube->order_terms();
-                    Expr::Terms& terms = sube->get_terms();
-                    if (terms[0].is_type(Expr::REG))
+                    ExprTerms& terms = sube->get_terms();
+                    if (terms[0].is_type(ExprTerm::REG))
                     {
                         if (terms.size() > 2)
                             return 1;
-                        if (!terms[1].is_type(Expr::INT))
+                        if (!terms[1].is_type(ExprTerm::INT))
                             return 1;
                     }
                 }
@@ -530,10 +530,10 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
             /*@fallthrough@*/
         case Op::IDENT:
             // Check each term for register (and possible multiplier).
-            for (Expr::Terms::iterator i=e->get_terms().begin(),
+            for (ExprTerms::iterator i=e->get_terms().begin(),
                  end=e->get_terms().end(); i != end; ++i)
             {
-                if (i->is_type(Expr::REG))
+                if (i->is_type(ExprTerm::REG))
                 {
                     reg = get_reg(*i, regnum);
                     if (!reg)
@@ -551,8 +551,8 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
                 {
                     // Already ordered from ADD above, just grab the value.
                     // Sanity check for EXPR_INT.
-                    Expr::Terms& terms = sube->get_terms();
-                    if (terms[0].is_type(Expr::REG))
+                    ExprTerms& terms = sube->get_terms();
+                    if (terms[0].is_type(ExprTerm::REG))
                     {
                         IntNum* intn = terms[1].get_int();
                         if (!intn)
@@ -577,8 +577,8 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
         {
             // Here, too, check for non-int multipliers against a reg.
             e->order_terms();
-            Expr::Terms& terms = e->get_terms();
-            if (terms[0].is_type(Expr::REG))
+            ExprTerms& terms = e->get_terms();
+            if (terms[0].is_type(ExprTerm::REG))
             {
                 if (terms.size() > 2)
                     return 1;
@@ -596,7 +596,7 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
         }
         case Op::SEGOFF:
             // No registers are allowed on either side.
-            if (e->contains(Expr::REG))
+            if (e->contains(ExprTerm::REG))
                 return 1;
             break;
         default:
@@ -728,7 +728,7 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
 /*@=nullstate@*/
 
 static bool
-getregsize(const Expr::Term& term, unsigned char* addrsize)
+getregsize(const ExprTerm& term, unsigned char* addrsize)
 {
     if (const X86Register* reg =
         static_cast<const X86Register*>(term.get_reg()))

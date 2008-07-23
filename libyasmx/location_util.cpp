@@ -36,10 +36,10 @@ namespace yasm
 {
 
 // Transforms instances of Symbol-Symbol [Symbol+(-1*Symbol)] into single
-// Expr::Terms if possible.  Uses a simple n^2 algorithm because n is usually
+// ExprTerms if possible.  Uses a simple n^2 algorithm because n is usually
 // quite small.  Also works for loc-loc (or Symbol-loc, loc-Symbol).
 static void
-xform_dist_base(Expr* e, FUNCTION::function<bool (Expr::Term& term,
+xform_dist_base(Expr* e, FUNCTION::function<bool (ExprTerm& term,
                                                   Location loc1,
                                                   Location loc2)> func)
 {
@@ -48,15 +48,15 @@ xform_dist_base(Expr* e, FUNCTION::function<bool (Expr::Term& term,
     if (!e->is_op(Op::ADD))
         return;
 
-    Expr::Terms& terms = e->get_terms();
-    for (Expr::Terms::iterator i=terms.begin(), end=terms.end();
+    ExprTerms& terms = e->get_terms();
+    for (ExprTerms::iterator i=terms.begin(), end=terms.end();
          i != end; ++i)
     {
         // First look for an (-1*Symbol) term
         Expr* sube = i->get_expr();
         if (!sube)
             continue;
-        Expr::Terms& subterms = sube->get_terms();
+        ExprTerms& subterms = sube->get_terms();
         if (!sube->is_op(Op::MUL) || subterms.size() != 2)
             continue;
 
@@ -93,7 +93,7 @@ xform_dist_base(Expr* e, FUNCTION::function<bool (Expr::Term& term,
         BytecodeContainer* container = loc.bc->get_container();
 
         // Now look for a Symbol term in the same segment
-        for (Expr::Terms::iterator j=terms.begin(), end=terms.end();
+        for (ExprTerms::iterator j=terms.begin(), end=terms.end();
              j != end; ++j)
         {
             Symbol* sym2;
@@ -119,15 +119,15 @@ xform_dist_base(Expr* e, FUNCTION::function<bool (Expr::Term& term,
     }
 
     // Clean up any deleted (NONE) terms
-    Expr::Terms::iterator erasefrom =
+    ExprTerms::iterator erasefrom =
         std::remove_if(terms.begin(), terms.end(),
-                       BIND::bind(&Expr::Term::is_type, _1, Expr::NONE));
+                       BIND::bind(&ExprTerm::is_type, _1, ExprTerm::NONE));
     terms.erase(erasefrom, terms.end());
-    Expr::Terms(terms).swap(terms);   // trim capacity
+    ExprTerms(terms).swap(terms);   // trim capacity
 }
 
 static inline bool
-calc_dist_cb(Expr::Term& term, Location loc, Location loc2)
+calc_dist_cb(ExprTerm& term, Location loc, Location loc2)
 {
     IntNum dist;
     if (!calc_dist(loc, loc2, &dist))
@@ -144,7 +144,7 @@ xform_calc_dist(Expr* e)
 }
 
 static inline bool
-calc_dist_no_bc_cb(Expr::Term& term, Location loc, Location loc2)
+calc_dist_no_bc_cb(ExprTerm& term, Location loc, Location loc2)
 {
     IntNum dist;
     if (!calc_dist_no_bc(loc, loc2, &dist))
@@ -161,7 +161,7 @@ xform_calc_dist_no_bc(Expr* e)
 }
 
 static inline bool
-subst_dist_cb(Expr::Term& term, Location loc, Location loc2,
+subst_dist_cb(ExprTerm& term, Location loc, Location loc2,
               unsigned int* subst,
               FUNCTION::function<void (unsigned int subst,
                                        Location loc,
@@ -170,7 +170,7 @@ subst_dist_cb(Expr::Term& term, Location loc, Location loc2,
     // Call higher-level callback
     func(*subst, loc, loc2);
     // Change the term to an subst
-    term = Expr::Term(Expr::Term::Subst(*subst));
+    term = ExprTerm(ExprTerm::Subst(*subst));
     *subst = *subst + 1;
     return true;
 }
