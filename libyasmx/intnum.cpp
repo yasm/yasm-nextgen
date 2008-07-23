@@ -203,8 +203,8 @@ IntNum::IntNum(const unsigned char* ptr,
 }
 
 IntNum::IntNum(const IntNum& rhs)
-    : m_type (rhs.m_type)
 {
+    m_type = rhs.m_type;
     switch (rhs.m_type)
     {
         case INTNUM_L:
@@ -219,33 +219,7 @@ IntNum::IntNum(const IntNum& rhs)
 void
 IntNum::swap(IntNum& oth)
 {
-    switch ((m_type<<2) + oth.m_type)
-    {
-        case (INTNUM_L<<2)+INTNUM_L:
-            std::swap(m_val.l, oth.m_val.l);
-            break;
-        case (INTNUM_BV<<2)+INTNUM_BV:
-            std::swap(m_val.bv, oth.m_val.bv);
-            break;
-        case (INTNUM_L<<2)+INTNUM_BV:
-        {
-            long t = m_val.l;
-            m_val.bv = oth.m_val.bv;
-            m_type = INTNUM_BV;
-            oth.m_val.l = t;
-            oth.m_type = INTNUM_L;
-            break;
-        }
-        case (INTNUM_BV<<2)+INTNUM_L:
-        {
-            BitVector::wordptr t = m_val.bv;
-            m_val.l = oth.m_val.l;
-            m_type = INTNUM_L;
-            oth.m_val.bv = t;
-            oth.m_type = INTNUM_BV;
-            break;
-        }
-    }
+    std::swap(static_cast<IntNumData&>(*this), static_cast<IntNumData&>(oth));
 }
 
 /*@-nullderef -nullpass -branchstate@*/

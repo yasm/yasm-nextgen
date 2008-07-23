@@ -41,7 +41,19 @@
 namespace yasm
 {
 
-class YASM_LIB_EXPORT IntNum
+class ExprTerm;
+
+struct YASM_LIB_EXPORT IntNumData
+{
+    union
+    {
+        long l;                 ///< integer value (for integers <=32 bits)
+        BitVector::wordptr bv;  ///< bit vector (for integers >32 bits)
+    } m_val;
+    enum { INTNUM_L, INTNUM_BV } m_type;
+};
+
+class YASM_LIB_EXPORT IntNum : private IntNumData
 {
     friend YASM_LIB_EXPORT
     std::ostream& operator<< (std::ostream& os, const IntNum& intn);
@@ -53,32 +65,53 @@ class YASM_LIB_EXPORT IntNum
     bool operator<(const IntNum& lhs, const IntNum& rhs);
     friend YASM_LIB_EXPORT
     bool operator>(const IntNum& lhs, const IntNum& rhs);
+    friend class ExprTerm;
 
 public:
     /// "Native" "word" size for intnum calculations.
     enum { BITVECT_NATIVE_SIZE = 256 };
 
     /// Default constructor.  Initializes value to 0.
-    IntNum() : m_type(INTNUM_L) { m_val.l = 0; }
+    IntNum()
+    {
+        m_type = INTNUM_L;
+        m_val.l = 0;
+    }
 
     /// Create a new intnum from a decimal/binary/octal/hexidecimal string.
     explicit IntNum(char* str, int base=10);
 
     /// Create a new intnum from an unsigned integer value.
     /// @param i        unsigned integer value
-    IntNum(unsigned long i) : m_type(INTNUM_L) { set(i); }
+    IntNum(unsigned long i)
+    {
+        m_type = INTNUM_L;
+        set(i);
+    }
 
     /// Create a new intnum from an signed integer value.
     /// @param i        signed integer value
-    IntNum(long i) : m_type(INTNUM_L) { m_val.l = i; }
+    IntNum(long i)
+    {
+        m_type = INTNUM_L;
+        m_val.l = i;
+    }
 
     /// Create a new intnum from an unsigned integer value.
     /// @param i        unsigned integer value
-    IntNum(unsigned int i) : m_type(INTNUM_L) { set(i); }
+    IntNum(unsigned int i)
+    {
+        m_type = INTNUM_L;
+        set(i);
+    }
 
     /// Create a new intnum from an signed integer value.
     /// @param i        signed integer value
-    IntNum(int i) : m_type(INTNUM_L) { m_val.l = (long)i; }
+    IntNum(int i)
+    {
+        m_type = INTNUM_L;
+        m_val.l = (long)i;
+    }
 
     /// Create a new intnum from LEB128-encoded form.
     /// @param ptr      pointer to start of LEB128 encoded form
@@ -274,13 +307,6 @@ private:
     // Can modify the passed bitvector.
     // @param bv        bitvector
     void from_bv(BitVector::wordptr bv);
-
-    union
-    {
-        long l;                 ///< integer value (for integers <=32 bits)
-        BitVector::wordptr bv;  ///< bit vector (for integers >32 bits)
-    } m_val;
-    enum { INTNUM_L, INTNUM_BV } m_type;
 };
 
 /// Overloaded assignment binary operators.
