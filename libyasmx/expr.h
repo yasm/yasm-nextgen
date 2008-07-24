@@ -267,7 +267,12 @@ public:
     };
 
     ExprTerm(const Register* reg) : m_type(REG), m_reg(reg) {}
-    ExprTerm(IntNum intn) : m_type(INT), m_intn(intn) {}
+    ExprTerm(IntNum intn)
+        : m_type(INT)
+    {
+        m_intn.m_type = IntNumData::INTNUM_L;
+        intn.swap(static_cast<IntNum&>(m_intn));
+    }
     explicit ExprTerm(const Subst& subst)
         : m_type(SUBST), m_subst(subst.subst)
     {}

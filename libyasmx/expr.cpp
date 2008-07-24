@@ -95,7 +95,7 @@ ExprTerm::ExprTerm(std::auto_ptr<IntNum> intn)
     : m_type(INT)
 {
     m_intn.m_type = IntNumData::INTNUM_L;
-    std::swap(m_intn, static_cast<IntNumData&>(*intn));
+    intn->swap(static_cast<IntNum&>(m_intn));
 }
 
 ExprTerm::ExprTerm(std::auto_ptr<FloatNum> flt)
