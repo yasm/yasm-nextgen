@@ -54,6 +54,7 @@ void xform_calc_dist(Expr* e);
 /// locations/symbols are within the same bytecode, so it's safe to call
 /// prior to optimization being performed.
 /// @param e            expression
+YASM_LIB_EXPORT
 void xform_calc_dist_no_bc(Expr* e);
 
 YASM_LIB_EXPORT
