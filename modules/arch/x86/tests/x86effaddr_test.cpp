@@ -36,6 +36,8 @@
 #include <libyasmx/intnum.h>
 #include <libyasmx/symbol.h>
 
+#include "x86regtmod.cpp"
+
 #ifndef NELEMS
 #define NELEMS(array)   (sizeof(array) / sizeof(array[0]))
 #endif
