@@ -41,6 +41,7 @@
 #include "export.h"
 #include "location.h"
 #include "marg_ostream_fwd.h"
+#include "symbolref.h"
 #include "value.h"
 
 
@@ -49,7 +50,6 @@ namespace yasm
 
 class BytecodeContainer;
 class Expr;
-class Symbol;
 
 /// Bytecode output interface.
 /// Object formats should implement this interface for output of bytecodes.
@@ -124,7 +124,7 @@ public:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    virtual void output(Symbol* sym,
+    virtual void output(SymbolRef sym,
                         Bytes& bytes,
                         Bytecode& bc,
                         unsigned int valsize,
@@ -307,7 +307,7 @@ public:
     /// Add to the list of symbols that reference a bytecode.
     /// @note Intended for #Symbol use only.
     /// @param sym  symbol
-    void add_symbol(/*@dependent@*/ Symbol* sym) { m_symbols.push_back(sym); }
+    void add_symbol(SymbolRef sym) { m_symbols.push_back(sym); }
 
     /// Destructor.
     ~Bytecode();
@@ -459,7 +459,7 @@ private:
     unsigned long m_index;
 
     /// Labels that point to this bytecode.
-    std::vector<Symbol*> m_symbols;
+    std::vector<SymbolRef> m_symbols;
 };
 
 inline marg_ostream&

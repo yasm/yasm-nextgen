@@ -38,6 +38,7 @@
 #include "intnum.h"
 #include "location.h"
 #include "operator.h"
+#include "symbolref.h"
 
 
 namespace yasm
@@ -89,8 +90,7 @@ public:
     explicit ExprTerm(const Subst& subst)
         : m_type(SUBST), m_subst(subst.subst)
     {}
-    ExprTerm(Symbol* sym) : m_type(SYM), m_sym(sym) {}
-    ExprTerm(Symbol& sym) : m_type(SYM), m_sym(&sym) {}
+    ExprTerm(SymbolRef sym) : m_type(SYM), m_sym(sym) {}
     ExprTerm(Location loc) : m_type(LOC), m_loc(loc) {}
     ExprTerm(Expr* expr) : m_type(EXPR), m_expr(expr) {}
 
@@ -161,7 +161,7 @@ public:
         return (m_type == FLOAT ? m_flt : 0);
     }
 
-    Symbol* get_sym() const
+    SymbolRef get_sym() const
     {
         return (m_type == SYM ? m_sym : 0);
     }
@@ -311,7 +311,7 @@ public:
     /// Get the symbol value of an expression if it's just a symbol.
     /// @return 0 if the expression is too complex; otherwise the symbol
     ///         value of the expression.
-    /*@dependent@*/ /*@null@*/ Symbol* get_symbol() const;
+    SymbolRef get_symbol() const;
 
     /// Get the register value of an expression if it's just a register.
     /// @return 0 if the expression is too complex; otherwise the register

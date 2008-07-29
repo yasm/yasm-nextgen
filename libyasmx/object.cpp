@@ -173,51 +173,55 @@ Object::find_section(const std::string& name)
     return &(*i);
 }
 
-Symbol&
+SymbolRef
 Object::get_abs_sym()
 {
-    Symbol& sym = get_sym("");
+    SymbolRef sym = get_sym("");
 
     // If we already defined it, we're done.
-    if (sym.get_status() & Symbol::DEFINED)
+    if (sym->get_status() & Symbol::DEFINED)
         return sym;
 
     // Define it
     std::auto_ptr<Expr> v(new Expr(IntNum(0)));
-    sym.define_equ(v, 0);
-    sym.use(0);
+    sym->define_equ(v, 0);
+    sym->use(0);
     return sym;
 }
 
-Symbol*
+SymbolRef
 Object::find_sym(const std::string& name)
 {
     return m_impl->sym_map.find(name);
 }
 
-Symbol&
+SymbolRef
 Object::get_sym(const std::string& name)
 {
     std::auto_ptr<Symbol> sym(new Symbol(name));
     Symbol* sym2 = m_impl->sym_map.insert(sym.get());
     if (sym2)
-        return *sym2;
+        return sym2;
 
     sym2 = sym.get();
     m_symbols.push_back(sym.release());
-    return *sym2;
+    return sym2;
 }
 
-void
+SymbolRef
 Object::append_symbol(std::auto_ptr<Symbol> sym)
 {
+    Symbol* sptr = sym.get();
     m_symbols.push_back(sym.release());
+    return sptr;
 }
 
-void
+SymbolRef
 Object::add_non_table_symbol(std::auto_ptr<Symbol> sym)
 {
+    Symbol* sptr = sym.get();
     m_non_table_syms.push_back(sym.release());
+    return sptr;
 }
 
 void
@@ -245,17 +249,19 @@ Object::symbols_finalize(Errwarns& errwarns, bool undef_extern)
             Error(N_(" (Each undefined symbol is reported only once.)")));
 }
 
-void
+SymbolRef
 Object::add_special_sym(const std::string& parser, std::auto_ptr<Symbol> sym)
 {
     Impl::SymbolTable*& tab = m_impl->special_sym_map[parser];
     if (!tab)
        tab = new Impl::SymbolTable(false);
-    m_impl->special_sym_map[parser]->insert(sym.get());
+    Symbol* sptr = sym.get();
+    m_impl->special_sym_map[parser]->insert(sptr);
     m_non_table_syms.push_back(sym.release());
+    return sptr;
 }
 
-/*@null@*/ Symbol*
+SymbolRef
 Object::find_special_sym(const std::string& name, const std::string& parser)
 {
     Impl::SymbolTable* tab = m_impl->special_sym_map[parser];

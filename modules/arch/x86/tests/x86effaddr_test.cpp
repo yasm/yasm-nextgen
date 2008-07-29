@@ -354,7 +354,8 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr16)
                 X86EffAddr ea(false, e);
                 unsigned char addrsize = 0;
                 unsigned char rex = 0;
-                BOOST_CHECK_EQUAL(ea.check(&addrsize, 16, false, &rex, abs_sym),
+                BOOST_CHECK_EQUAL(ea.check(&addrsize, 16, false, &rex,
+                                           &abs_sym),
                                   true);
                 BOOST_CHECK_EQUAL(ea.m_need_modrm, true);
                 BOOST_CHECK_EQUAL(ea.m_modrm, expect_modrm);
@@ -527,12 +528,14 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr32)
             unsigned char rex = 0;
             if (expect_error)
             {
-                BOOST_CHECK_THROW(ea.check(&addrsize, 32, false, &rex, abs_sym),
+                BOOST_CHECK_THROW(ea.check(&addrsize, 32, false, &rex,
+                                           &abs_sym),
                                   ValueError);
             }
             else
             {
-                BOOST_CHECK_EQUAL(ea.check(&addrsize, 32, false, &rex, abs_sym),
+                BOOST_CHECK_EQUAL(ea.check(&addrsize, 32, false, &rex,
+                                           &abs_sym),
                                   true);
                 BOOST_CHECK_EQUAL(ea.m_need_modrm, true);
                 BOOST_CHECK_EQUAL(ea.m_modrm, expect_modrm);
@@ -586,7 +589,7 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr32Hints)
             X86EffAddr ea(false, e);
             unsigned char addrsize = 0;
             unsigned char rex = 0;
-            BOOST_CHECK_EQUAL(ea.check(&addrsize, 32, false, &rex, abs_sym),
+            BOOST_CHECK_EQUAL(ea.check(&addrsize, 32, false, &rex, &abs_sym),
                               true);
             BOOST_CHECK_EQUAL(ea.m_need_modrm, true);
             BOOST_CHECK_EQUAL(ea.m_need_sib, true);
@@ -619,7 +622,7 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr32HintESP)
         X86EffAddr ea(false, e);
         unsigned char addrsize = 0;
         unsigned char rex = 0;
-        BOOST_CHECK_EQUAL(ea.check(&addrsize, 32, false, &rex, abs_sym),
+        BOOST_CHECK_EQUAL(ea.check(&addrsize, 32, false, &rex, &abs_sym),
                           true);
         BOOST_CHECK_EQUAL(ea.m_need_modrm, true);
         BOOST_CHECK_EQUAL(ea.m_need_sib, true);

@@ -757,7 +757,7 @@ bool
 X86EffAddr::check_3264(unsigned int addrsize,
                        unsigned int bits,
                        unsigned char* rex,
-                       Symbol& abs_sym)
+                       SymbolRef abs_sym)
 {
     int i;
     unsigned char* drex = m_need_drex ? &m_drex : 0;
@@ -1019,7 +1019,7 @@ X86EffAddr::check_3264(unsigned int addrsize,
 }
 
 bool
-X86EffAddr::check_16(unsigned int bits, bool address16_op, Symbol& abs_sym)
+X86EffAddr::check_16(unsigned int bits, bool address16_op, SymbolRef abs_sym)
 {
     static const unsigned char modrm16[16] =
     {
@@ -1117,7 +1117,7 @@ X86EffAddr::check(unsigned char* addrsize,
                   unsigned int bits,
                   bool address16_op,
                   unsigned char* rex,
-                  Symbol& abs_sym)
+                  SymbolRef abs_sym)
 {
     if (*addrsize == 0)
     {

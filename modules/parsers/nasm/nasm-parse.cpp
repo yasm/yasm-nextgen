@@ -339,7 +339,7 @@ NasmParser::parse_line()
                     throw SyntaxError(String::compose(
                         N_("expression expected after %1"), "EQU"));
                 }
-                m_object->get_sym(name).define_equ(e, get_cur_line());
+                m_object->get_sym(name)->define_equ(e, get_cur_line());
                 break;
             }
 
@@ -950,8 +950,12 @@ NasmParser::parse_expr6(ExprType type)
             e.reset(new Expr(REG_val));
             break;
         case ID:
-            e.reset(new Expr(m_object->get_sym(ID_val).use(get_cur_line())));
+        {
+            SymbolRef sym = m_object->get_sym(ID_val);
+            sym->use(get_cur_line());
+            e.reset(new Expr(sym));
             break;
+        }
         default:
             return e;
         }
@@ -1007,7 +1011,8 @@ NasmParser::parse_expr6(ExprType type)
             break;
         case SPECIAL_ID:
         {
-            Symbol* sym = m_object->find_special_sym(ID_val.c_str()+2, "nasm");
+            SymbolRef sym =
+                m_object->find_special_sym(ID_val.c_str()+2, "nasm");
             if (sym)
             {
                 e.reset(new Expr(sym));
@@ -1018,20 +1023,24 @@ NasmParser::parse_expr6(ExprType type)
         case ID:
         case LOCAL_ID:
         case NONLOCAL_ID:
-            e.reset(new Expr(m_object->get_sym(ID_val).use(get_cur_line())));
+        {
+            SymbolRef sym = m_object->get_sym(ID_val);
+            sym->use(get_cur_line());
+            e.reset(new Expr(sym));
             break;
+        }
         case '$':
             // "$" references the current assembly position
             if (m_abspos.get() != 0)
                 e.reset(m_abspos->clone());
             else
             {
-                std::auto_ptr<Symbol> sym(new Symbol("$"));
+                SymbolRef sym = m_object->add_non_table_symbol(
+                    std::auto_ptr<Symbol>(new Symbol("$")));
                 m_bc = &m_container->fresh_bytecode();
                 Location loc = {m_bc, m_bc->get_fixed_len()};
                 sym->define_curpos(loc, get_cur_line());
-                e.reset(new Expr(sym.get()));
-                m_object->add_non_table_symbol(sym);
+                e.reset(new Expr(sym));
             }
             break;
         case START_SECTION_ID:
@@ -1040,11 +1049,11 @@ NasmParser::parse_expr6(ExprType type)
                 e.reset(m_absstart->clone());
             else
             {
-                std::auto_ptr<Symbol> sym(new Symbol("$$"));
+                SymbolRef sym = m_object->add_non_table_symbol(
+                    std::auto_ptr<Symbol>(new Symbol("$$")));
                 Location loc = {&m_container->bcs_first(), 0};
                 sym->define_label(loc, get_cur_line());
-                e.reset(new Expr(sym.get()));
-                m_object->add_non_table_symbol(sym);
+                e.reset(new Expr(sym));
             }
             break;
         default:
@@ -1060,14 +1069,14 @@ NasmParser::define_label(const std::string& name, bool local)
     if (!local)
         m_locallabel_base = name;
 
-    Symbol& sym = m_object->get_sym(name);
+    SymbolRef sym = m_object->get_sym(name);
     if (m_abspos.get() != 0)
-        sym.define_equ(Expr::Ptr(m_abspos->clone()), get_cur_line());
+        sym->define_equ(Expr::Ptr(m_abspos->clone()), get_cur_line());
     else
     {
         m_bc = &m_container->fresh_bytecode();
         Location loc = {m_bc, m_bc->get_fixed_len()};
-        sym.define_label(loc, get_cur_line());
+        sym->define_label(loc, get_cur_line());
     }
 }
 

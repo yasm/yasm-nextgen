@@ -142,10 +142,10 @@ BinObject::define_section_symbol(Object& object,
                                  BinSymbolData::SpecialSym which,
                                  unsigned long line)
 {
-    Symbol& sym = object.get_sym("section."+sectname+suffix);
-    sym.declare(Symbol::EXTERN, line);
+    SymbolRef sym = object.get_sym("section."+sectname+suffix);
+    sym->declare(Symbol::EXTERN, line);
     std::auto_ptr<AssocData> ad(new BinSymbolData(bsd, which));
-    sym.add_assoc_data(this, ad);
+    sym->add_assoc_data(this, ad);
 }
 
 
@@ -478,18 +478,20 @@ BinObject::init_new_section(Section* sect, unsigned long line)
 {
     std::auto_ptr<BinSectionData> bsd(new BinSectionData());
 
-    m_object->get_sym("section."+sect->get_name()+".start")
-        .declare(Symbol::EXTERN, line)
-        .add_assoc_data(this, std::auto_ptr<AssocData>
-                        (new BinSymbolData(*bsd, BinSymbolData::START)));
-    m_object->get_sym("section."+sect->get_name()+".vstart")
-        .declare(Symbol::EXTERN, line)
-        .add_assoc_data(this, std::auto_ptr<AssocData>
-                        (new BinSymbolData(*bsd, BinSymbolData::VSTART)));
-    m_object->get_sym("section."+sect->get_name()+".length")
-        .declare(Symbol::EXTERN, line)
-        .add_assoc_data(this, std::auto_ptr<AssocData>
-                        (new BinSymbolData(*bsd, BinSymbolData::LENGTH)));
+    SymbolRef start = m_object->get_sym("section."+sect->get_name()+".start");
+    start->declare(Symbol::EXTERN, line);
+    start->add_assoc_data(this, std::auto_ptr<AssocData>
+                          (new BinSymbolData(*bsd, BinSymbolData::START)));
+
+    SymbolRef vstart = m_object->get_sym("section."+sect->get_name()+".vstart");
+    vstart->declare(Symbol::EXTERN, line);
+    vstart->add_assoc_data(this, std::auto_ptr<AssocData>
+                           (new BinSymbolData(*bsd, BinSymbolData::VSTART)));
+
+    SymbolRef length = m_object->get_sym("section."+sect->get_name()+".length");
+    length->declare(Symbol::EXTERN, line);
+    length->add_assoc_data(this, std::auto_ptr<AssocData>
+                           (new BinSymbolData(*bsd, BinSymbolData::LENGTH)));
 
     sect->add_assoc_data(this, std::auto_ptr<AssocData>(bsd.release()));
 }

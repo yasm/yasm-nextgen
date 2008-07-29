@@ -53,7 +53,7 @@ BytecodeOutput::~BytecodeOutput()
 }
 
 void
-BytecodeOutput::output(Symbol* sym,
+BytecodeOutput::output(SymbolRef sym,
                        Bytes& bytes,
                        Bytecode& bc,
                        unsigned int valsize,
