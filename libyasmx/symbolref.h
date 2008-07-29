@@ -40,7 +40,7 @@ class Symbol;
 class SymbolRef
 {
 public:
-    SymbolRef(Symbol* sym) : m_sym(sym) {}
+    explicit SymbolRef(Symbol* sym) : m_sym(sym) {}
     operator Symbol* () const { return m_sym; }
     Symbol& operator*() const { return *m_sym; }
     Symbol* operator->() const { return m_sym; }

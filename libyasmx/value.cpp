@@ -165,8 +165,8 @@ Value::clear()
 {
     delete m_abs;
     m_abs = 0;
-    m_rel = 0;
-    m_wrt = 0;
+    m_rel = SymbolRef(0);
+    m_wrt = SymbolRef(0);
     m_seg_of = false;
     m_rshift = 0;
     m_curpos_rel = false;
@@ -614,7 +614,7 @@ Value::finalize(Location loc)
                 m_abs = 0;
             }
         }
-        else if (Symbol* sym = m_abs->get_symbol())
+        else if (SymbolRef sym = m_abs->get_symbol())
         {
             m_rel = sym;
             delete m_abs;

@@ -824,7 +824,7 @@ Expr::get_symbol() const
     if (m_op == Op::IDENT)
         return m_terms.front().get_sym();
     else
-        return 0;
+        return SymbolRef(0);
 }
 
 const Register*

@@ -346,7 +346,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
 
         // Add into absolute portion
         value.add_abs(syme);
-        value.m_rel = 0;
+        value.m_rel = SymbolRef(0);
         value.m_rshift = 0;
     }
 done:

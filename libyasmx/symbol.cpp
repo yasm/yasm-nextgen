@@ -91,7 +91,7 @@ Symbol::define_label(Location loc, unsigned long line)
 {
     define(LABEL, line);
     m_loc = loc;
-    loc.bc->add_symbol(this);   /// XXX: should we add if not in table?
+    loc.bc->add_symbol(SymbolRef(this)); /// XXX: should we add if not in table?
     return *this;
 }
 

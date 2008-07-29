@@ -163,7 +163,7 @@ public:
 
     SymbolRef get_sym() const
     {
-        return (m_type == SYM ? m_sym : 0);
+        return SymbolRef(m_type == SYM ? m_sym : 0);
     }
 
     const Location* get_loc() const
