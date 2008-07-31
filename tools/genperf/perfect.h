@@ -17,7 +17,7 @@ Source is http://burtleburtle.net/bob/c/perfect.h
 
 #define MAXKEYLEN 30                              /* maximum length of a key */
 #define USE_SCRAMBLE  4096           /* use scramble if blen >= USE_SCRAMBLE */
-#define SCRAMBLE_LEN ((ub4)1<<16)                    /* length of *scramble* */
+#define SCRAMBLE_LEN (static_cast<ub4>(1)<<16)       /* length of *scramble* */
 #define RETRY_INITKEY 2048  /* number of times to try to find distinct (a,b) */
 #define RETRY_PERFECT 1     /* number of times to try to make a perfect hash */
 #define RETRY_HEX     200               /* RETRY_PERFECT when hex keys given */

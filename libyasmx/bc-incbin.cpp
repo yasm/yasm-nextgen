@@ -182,7 +182,7 @@ IncbinBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
     if (!ifs)
         throw IOError(String::compose(N_("`%1': unable to seek on file `%2'"),
                                       "incbin", m_filename));
-    flen = (unsigned long)ifs.tellg();
+    flen = static_cast<unsigned long>(ifs.tellg());
 
     // Compute length of incbin from start, maxlen, and len
     if (start > flen)

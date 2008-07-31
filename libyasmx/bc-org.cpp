@@ -107,7 +107,8 @@ OrgBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
     long neg_thres = 0;
     long pos_thres = m_start;
 
-    expand(bc, len, 0, 0, (long)bc.tail_offset(), neg_thres, pos_thres);
+    expand(bc, len, 0, 0, static_cast<long>(bc.tail_offset()), neg_thres,
+           pos_thres);
 
     return len;
 }
@@ -122,7 +123,7 @@ OrgBytecode::expand(Bytecode& bc,
                     /*@out@*/ long& pos_thres)
 {
     // Check for overrun
-    if ((unsigned long)new_val > m_start)
+    if (static_cast<unsigned long>(new_val) > m_start)
         throw Error(N_("ORG overlap with already existing data"));
 
     // Generate space to start offset

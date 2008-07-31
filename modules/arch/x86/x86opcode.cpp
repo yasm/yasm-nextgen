@@ -48,13 +48,13 @@ operator<< (marg_ostream& os, const X86Opcode& opcode)
 
     std::ios_base::fmtflags origff = os.flags();
     os << std::hex << std::setfill('0')
-       << std::setw(2) << ((unsigned int)opcode.m_opcode[0]) << ' '
-       << std::setw(2) << ((unsigned int)opcode.m_opcode[1]) << ' '
-       << std::setw(2) << ((unsigned int)opcode.m_opcode[2])
+       << std::setw(2) << static_cast<unsigned int>(opcode.m_opcode[0]) << ' '
+       << std::setw(2) << static_cast<unsigned int>(opcode.m_opcode[1]) << ' '
+       << std::setw(2) << static_cast<unsigned int>(opcode.m_opcode[2])
        << std::setfill(' ');
     os.flags(origff);
 
-    os << " OpLen=" << ((unsigned int)opcode.m_len);
+    os << " OpLen=" << static_cast<unsigned int>(opcode.m_len);
     os << '\n';
     return os;
 }

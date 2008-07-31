@@ -159,7 +159,8 @@ FloatNum::FloatNum(const unsigned char* mantissa, unsigned short exponent)
     : m_exponent(exponent), m_sign(0), m_flags(0)
 {
     m_mantissa = BitVector::Create(MANT_BITS, false);
-    BitVector::Block_Store(m_mantissa, (N_char*)mantissa, MANT_BYTES);
+    BitVector::Block_Store(m_mantissa, const_cast<N_char*>(mantissa),
+                           MANT_BYTES);
 }
 
 FloatNumManager::FloatNumManager()
@@ -221,10 +222,10 @@ FloatNum::normalize()
     // Look for the highest set bit, shift to make it the MSB, and adjust
     // exponent.  Don't let exponent go negative.
     long norm_amt = (MANT_BITS-1)-BitVector::Set_Max(m_mantissa);
-    if (norm_amt > (long)m_exponent)
-        norm_amt = (long)m_exponent;
-    BitVector::Move_Left(m_mantissa, (N_int)norm_amt);
-    m_exponent -= (unsigned short)norm_amt;
+    if (norm_amt > static_cast<long>(m_exponent))
+        norm_amt = static_cast<long>(m_exponent);
+    BitVector::Move_Left(m_mantissa, static_cast<N_int>(norm_amt));
+    m_exponent -= static_cast<unsigned short>(norm_amt);
 }
 
 void
@@ -244,7 +245,8 @@ FloatNum::mul(const FloatNum* op)
 
     // Add exponents, checking for overflow/underflow.
     long expon;
-    expon = (((int)m_exponent)-EXP_BIAS) + (((int)op->m_exponent)-EXP_BIAS);
+    expon = (static_cast<int>(m_exponent)-EXP_BIAS) +
+        (static_cast<int>(op->m_exponent)-EXP_BIAS);
     expon += EXP_BIAS;
     if (expon > EXP_MAX)
     {
@@ -262,14 +264,15 @@ FloatNum::mul(const FloatNum* op)
     }
 
     // Add one to the final exponent, as the multiply shifts one extra time.
-    m_exponent = (unsigned short)(expon+1);
+    m_exponent = static_cast<unsigned short>(expon+1);
 
     // Allocate space for the multiply result
-    wordptr product = BitVector::Create((N_int)((MANT_BITS+1)*2), false);
+    wordptr product =
+        BitVector::Create(static_cast<N_int>((MANT_BITS+1)*2), false);
 
     // Allocate 1-bit-longer fields to force the operands to be unsigned
-    wordptr op1 = BitVector::Create((N_int)(MANT_BITS+1), false);
-    wordptr op2 = BitVector::Create((N_int)(MANT_BITS+1), false);
+    wordptr op1 = BitVector::Create(static_cast<N_int>(MANT_BITS+1), false);
+    wordptr op2 = BitVector::Create(static_cast<N_int>(MANT_BITS+1), false);
 
     // Make the operands unsigned after copying from original operands
     BitVector::Copy(op1, m_mantissa);
@@ -286,10 +289,10 @@ FloatNum::mul(const FloatNum* op)
     // Look for the highest set bit, shift to make it the MSB, and adjust
     // exponent.  Don't let exponent go negative.
     long norm_amt = (MANT_BITS*2-1)-BitVector::Set_Max(product);
-    if (norm_amt > (long)m_exponent)
-        norm_amt = (long)m_exponent;
-    BitVector::Move_Left(product, (N_int)norm_amt);
-    m_exponent -= (unsigned short)norm_amt;
+    if (norm_amt > static_cast<long>(m_exponent))
+        norm_amt = static_cast<long>(m_exponent);
+    BitVector::Move_Left(product, static_cast<N_int>(norm_amt));
+    m_exponent -= static_cast<unsigned short>(norm_amt);
 
     // Store the highest bits of the result
     BitVector::Interval_Copy(m_mantissa, product, 0, MANT_BITS, MANT_BITS);
@@ -366,7 +369,8 @@ FloatNum::FloatNum(const char *str)
 
                 // Add in current digit
                 BitVector::Empty(operand[0]);
-                BitVector::Chunk_Store(operand[0], 4, 0, (N_long)(*str-'0'));
+                BitVector::Chunk_Store(operand[0], 4, 0,
+                                       static_cast<N_long>(*str-'0'));
                 carry = false;
                 BitVector::add(m_mantissa, operand[1], operand[0], &carry);
             }
@@ -406,7 +410,8 @@ FloatNum::FloatNum(const char *str)
 
                 // Add in current digit
                 BitVector::Empty(operand[0]);
-                BitVector::Chunk_Store(operand[0], 4, 0, (N_long)(*str-'0'));
+                BitVector::Chunk_Store(operand[0], 4, 0,
+                                       static_cast<N_long>(*str-'0'));
                 carry = false;
                 BitVector::add(m_mantissa, operand[1], operand[0], &carry);
             }
@@ -440,7 +445,7 @@ FloatNum::FloatNum(const char *str)
         return;
     }
     // Exponent if already norm.
-    m_exponent = (unsigned short)(0x7FFF+(MANT_BITS-1));
+    m_exponent = static_cast<unsigned short>(0x7FFF+(MANT_BITS-1));
     normalize();
 
     // The number is normalized.  Now multiply by 10 the number of times
@@ -535,10 +540,10 @@ FloatNum::get_int(unsigned long& ret_val) const
         return 1;
     }
 
-    ret_val = (unsigned long)(t[0] & 0xFF);
-    ret_val |= (unsigned long)((t[1] & 0xFF) << 8);
-    ret_val |= (unsigned long)((t[2] & 0xFF) << 16);
-    ret_val |= (unsigned long)((t[3] & 0xFF) << 24);
+    ret_val = static_cast<unsigned long>(t[0] & 0xFF);
+    ret_val |= static_cast<unsigned long>((t[1] & 0xFF) << 8);
+    ret_val |= static_cast<unsigned long>((t[2] & 0xFF) << 16);
+    ret_val |= static_cast<unsigned long>((t[3] & 0xFF) << 24);
     return 0;
 }
 
@@ -549,7 +554,7 @@ FloatNum::get_common(/*@out@*/ unsigned char* ptr,
                      bool implicit1,
                      N_int exp_bits) const
 {
-    long exponent = (long)m_exponent;
+    long exponent = static_cast<long>(m_exponent);
     bool overflow = false, underflow = false;
     int retval = 0;
     const long exp_bias = (1<<(exp_bits-1))-1;
@@ -559,8 +564,7 @@ FloatNum::get_common(/*@out@*/ unsigned char* ptr,
 
     // copy mantissa
     BitVector::Interval_Copy(output, m_mantissa, 0,
-                             (N_int)((MANT_BITS-implicit1)-mant_bits),
-                             mant_bits);
+        static_cast<N_int>((MANT_BITS-implicit1)-mant_bits), mant_bits);
 
     // round mantissa
     if (BitVector::bit_test(m_mantissa, (MANT_BITS-implicit1)-(mant_bits+1)))
@@ -605,7 +609,8 @@ FloatNum::get_common(/*@out@*/ unsigned char* ptr,
     }
 
     // move exponent into place
-    BitVector::Chunk_Store(output, exp_bits, mant_bits, (N_long)exponent);
+    BitVector::Chunk_Store(output, exp_bits, mant_bits,
+                           static_cast<N_long>(exponent));
 
     // merge in sign bit
     BitVector::Bit_Copy(output, byte_size*8-1, m_sign);
@@ -722,7 +727,7 @@ operator<< (std::ostream& os, const FloatNum& flt)
 
     // Internal format
     unsigned char* str = BitVector::to_Hex(flt.m_mantissa);
-    os << (flt.m_sign?"-":"+") << " " << (char *)str;
+    os << (flt.m_sign?"-":"+") << " " << reinterpret_cast<char*>(str);
     os << " *2^" << std::hex << flt.m_exponent << std::dec << '\n';
     BitVector::Dispose(str);
 

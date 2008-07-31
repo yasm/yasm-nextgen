@@ -55,7 +55,7 @@ set_rex_from_reg(unsigned char *rex,
                  unsigned int bits,
                  X86RexBitPos rexbit)
 {
-    *low3 = (unsigned char)(reg_num&7);
+    *low3 = reg_num&7;
 
     if (bits == 64)
     {
@@ -91,7 +91,7 @@ X86EffAddr::init(unsigned int spare, unsigned char drex,
 {
     m_modrm &= 0xC7;                  // zero spare/reg bits
     m_modrm |= (spare << 3) & 0x38;   // plug in provided bits
-    m_drex = (unsigned char)drex;
+    m_drex = drex;
     m_need_drex = need_drex;
 }
 
@@ -227,7 +227,7 @@ X86EffAddr::put(marg_ostream& os) const
     os << "ModRM=";
     std::ios_base::fmtflags origff = os.flags();
     os << std::oct << std::setfill('0') << std::setw(3)
-       << ((unsigned int)m_modrm);
+       << static_cast<unsigned int>(m_modrm);
     os.flags(origff);
 
     os << " ValidRM=" << m_valid_modrm;
@@ -236,16 +236,16 @@ X86EffAddr::put(marg_ostream& os) const
     os << "\nSIB=";
     origff = os.flags();
     os << std::oct << std::setfill('0') << std::setw(3)
-       << ((unsigned int)m_sib);
+       << static_cast<unsigned int>(m_sib);
     os.flags(origff);
 
     os << " ValidSIB=" << m_valid_sib;
-    os << " NeedSIB=" << ((unsigned int)m_need_sib);
+    os << " NeedSIB=" << static_cast<unsigned int>(m_need_sib);
 
     os << "DREX=";
     origff = os.flags();
     os << std::hex << std::setfill('0') << std::setw(2)
-       << ((unsigned int)m_drex);
+       << static_cast<unsigned int>(m_drex);
     os.flags(origff);
 
     os << " NeedDREX=" << m_need_drex;
@@ -1069,7 +1069,7 @@ X86EffAddr::check_16(unsigned int bits, bool address16_op, Symbol& abs_sym)
     {
         bool pcrel = false;
         switch (x86_expr_checkea_getregusage
-                (m_disp.get_abs(), (int *)NULL, &pcrel, bits,
+                (m_disp.get_abs(), 0, &pcrel, bits,
                  BIND::bind(&x86_expr_checkea_get_reg16, _1, _2, &bx, &si,
                             &di, &bp)))
         {

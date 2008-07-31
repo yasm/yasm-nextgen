@@ -313,7 +313,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
     if (value.is_relative())
     {
         Location label_loc;
-        unsigned int rshift = (unsigned int)value.m_rshift;
+        unsigned int rshift = static_cast<unsigned int>(value.m_rshift);
         Expr::Ptr syme(0);
         unsigned long line = loc.bc->get_line();
 

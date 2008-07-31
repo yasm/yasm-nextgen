@@ -410,7 +410,7 @@ X86Arch::parse_check_regtmod(const char* id, size_t id_len) const
 
     unsigned int bits = pdata->bits;
 
-    switch ((RegTmodType)pdata->type)
+    switch (static_cast<RegTmodType>(pdata->type))
     {
         case REG:
             if (bits != 0 && m_mode_bits != bits)

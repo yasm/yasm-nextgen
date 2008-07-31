@@ -63,11 +63,11 @@ static const int HIDDEN_WORDS = 3;
     /*****************************************************************/
 
 // # of bits in machine word (must be power of 2)
-#define BITS ((N_word)(std::numeric_limits<N_word>::digits))
+#define BITS static_cast<N_word>(std::numeric_limits<N_word>::digits)
 // BITS - 1 (mask for calculating modulo BITS)
-#define MODMASK ((N_word)(BITS-1))
+#define MODMASK static_cast<N_word>(BITS-1)
 // # of bytes in machine word
-#define BYTES ((N_word)(BITS>>3))
+#define BYTES static_cast<N_word>(BITS>>3)
 
 // mask for least significant bit
 #define LSBMASK 1U
@@ -75,7 +75,7 @@ static const int HIDDEN_WORDS = 3;
 #define MSBMASK (LSBMASK << MODMASK)
 
 // # of bits in unsigned long
-#define LONGBITS ((N_word)(std::numeric_limits<N_long>::digits))
+#define LONGBITS static_cast<N_word>(std::numeric_limits<N_long>::digits)
 
 BOOST_STATIC_ASSERT(sizeof(N_word) <= sizeof(size_t));
 BOOST_STATIC_ASSERT(BITS == (sizeof(N_word) << 3));
@@ -83,7 +83,9 @@ BOOST_STATIC_ASSERT(BITS >= 16);
 BOOST_STATIC_ASSERT(BITS <= LONGBITS);
 
 // logarithm to base 10 of BITS - 1
-#define LOG10 ((N_word)(MODMASK * 0.30103))     // (BITS - 1) * ( ln 2 / ln 10 )
+// (BITS - 1) * ( ln 2 / ln 10 )
+#define LOG10 static_cast<N_word>(MODMASK * 0.30103)
+
 static N_word EXP10 = 0;  // = largest possible power of 10 in signed int
 
     /********************************************************************/
@@ -126,9 +128,9 @@ static bool BITMASKTAB_valid = false;
     (((*(addr+(index/BITS)) ^= mask) AND mask) != 0)
 
 #define DIGITIZE(type,value,digit) \
-    value = (type) ((digit = value) / 10); \
+    value = static_cast<type>((digit = value) / 10); \
     digit -= value * 10; \
-    digit += (type) '0';
+    digit += static_cast<type>('0');
 
     /*********************************************************/
     /* private low-level functions (potentially dangerous!): */
@@ -221,7 +223,7 @@ static N_word int2str(charptr string, N_word value)
         while (value > 0)
         {
             DIGITIZE(N_word,value,digit)
-            *work++ = (N_char) digit;
+            *work++ = static_cast<N_char>(digit);
             length++;
         }
         reverse(string,length);
@@ -229,7 +231,7 @@ static N_word int2str(charptr string, N_word value)
     else
     {
         length = 1;
-        *work++ = (N_char) '0';
+        *work++ = static_cast<N_char>('0');
     }
     return(length);
 }
@@ -241,15 +243,15 @@ static N_word str2int(charptr string, N_word *value)
 
     *value = 0;
     length = 0;
-    digit = (N_word) *string++;
+    digit = static_cast<N_word>(*string++);
     /* separate because isdigit() is likely a macro! */
-    while (isdigit((int)digit) != 0)
+    while (isdigit(static_cast<int>(digit)) != 0)
     {
         length++;
-        digit -= (N_word) '0';
+        digit -= static_cast<N_word>('0');
         if (*value) *value *= 10;
         *value += digit;
-        digit = (N_word) *string++;
+        digit = static_cast<N_word>(*string++);
     }
     return(length);
 }
@@ -311,7 +313,10 @@ N_word Mask(N_int bits)           /* bit vector mask (unused bits) */
     N_word mask;
 
     mask = bits AND MODMASK;
-    if (mask) mask = (N_word) ~(~0L << mask); else mask = (N_word) ~0L;
+    if (mask)
+        mask = static_cast<N_word>(~(~0L << mask));
+    else
+        mask = static_cast<N_word>(~0L);
     return(mask);
 }
 
@@ -344,7 +349,7 @@ N_int Long_Bits(void)
 
 void Dispose(charptr string)                      /* free string   */
 {
-    if (string != NULL) free((voidptr) string);
+    if (string != NULL) free(string);
 }
 
 void Destroy(wordptr addr)                        /* free bitvec   */
@@ -352,7 +357,7 @@ void Destroy(wordptr addr)                        /* free bitvec   */
     if (addr != NULL)
     {
         addr -= HIDDEN_WORDS;
-        free((voidptr) addr);
+        free(addr);
     }
 }
 
@@ -367,7 +372,7 @@ void Destroy_List(listptr list, N_int count)      /* free list     */
         {
             Destroy(*slot++);
         }
-        free((voidptr) list);
+        free(list);
     }
 }
 
@@ -382,7 +387,7 @@ wordptr Create(N_int bits, bool clear)         /* malloc        */
     size = Size(bits);
     mask = Mask(bits);
     bytes = (size + HIDDEN_WORDS) * BYTES;
-    addr = (wordptr) malloc((size_t) bytes);
+    addr = static_cast<wordptr>(malloc(bytes));
     if (addr != NULL)
     {
         *addr++ = bits;
@@ -406,7 +411,7 @@ listptr Create_List(N_int bits, bool clear, N_int count)
 
     if (count > 0)
     {
-        list = (listptr) malloc(sizeof(wordptr) * count);
+        list = static_cast<listptr>(malloc(sizeof(wordptr) * count));
         if (list != NULL)
         {
             slot = list;
@@ -452,7 +457,7 @@ wordptr Resize(wordptr oldaddr, N_int bits)       /* realloc       */
     else
     {
         bytes = (newsize + HIDDEN_WORDS) * BYTES;
-        newaddr = (wordptr) malloc((size_t) bytes);
+        newaddr = static_cast<wordptr>(malloc(bytes));
         if (newaddr != NULL)
         {
             *newaddr++ = bits;
@@ -527,7 +532,7 @@ void Copy(wordptr X, wordptr Y)                           /* X = Y */
             if ( (*lastY AND (maskY AND NOT (maskY >> 1))) == 0 ) *lastY &= maskY;
             else
             {
-                fill = (N_word) ~0L;
+                fill = static_cast<N_word>(~0L);
                 *lastY |= NOT maskY;
             }
             while ((sizeX > 0) && (sizeY > 0))
@@ -554,7 +559,7 @@ void Fill(wordptr addr)                         /* X = ~{} set all */
 {
     N_word size = size_(addr);
     N_word mask = mask_(addr);
-    N_word fill = (N_word) ~0L;
+    N_word fill = static_cast<N_word>(~0L);
 
     if (size > 0)
     {
@@ -567,7 +572,7 @@ void Flip(wordptr addr)                         /* X = ~X flip all */
 {
     N_word size = size_(addr);
     N_word mask = mask_(addr);
-    N_word flip = (N_word) ~0L;
+    N_word flip = static_cast<N_word>(~0L);
 
     if (size > 0)
     {
@@ -672,8 +677,8 @@ void Interval_Empty(wordptr addr, N_int lower, N_int upper)
         loaddr = addr + lobase;
         hiaddr = addr + hibase;
 
-        lomask = (N_word)   (~0L << (lower AND MODMASK));
-        himask = (N_word) ~((~0L << (upper AND MODMASK)) << 1);
+        lomask = static_cast<N_word>(~0L << (lower AND MODMASK));
+        himask = static_cast<N_word>(~((~0L << (upper AND MODMASK)) << 1));
 
         if (diff == 0)
         {
@@ -695,7 +700,7 @@ void Interval_Fill(wordptr addr, N_int lower, N_int upper)
 {                                                  /* X = X + [lower..upper] */
     N_word  bits = bits_(addr);
     N_word  size = size_(addr);
-    N_word  fill = (N_word) ~0L;
+    N_word  fill = static_cast<N_word>(~0L);
     wordptr loaddr;
     wordptr hiaddr;
     N_word  lobase;
@@ -712,8 +717,8 @@ void Interval_Fill(wordptr addr, N_int lower, N_int upper)
         loaddr = addr + lobase;
         hiaddr = addr + hibase;
 
-        lomask = (N_word)   (~0L << (lower AND MODMASK));
-        himask = (N_word) ~((~0L << (upper AND MODMASK)) << 1);
+        lomask = static_cast<N_word>(~0L << (lower AND MODMASK));
+        himask = static_cast<N_word>(~((~0L << (upper AND MODMASK)) << 1));
 
         if (diff == 0)
         {
@@ -736,7 +741,7 @@ void Interval_Flip(wordptr addr, N_int lower, N_int upper)
 {                                                  /* X = X ^ [lower..upper] */
     N_word  bits = bits_(addr);
     N_word  size = size_(addr);
-    N_word  flip = (N_word) ~0L;
+    N_word  flip = static_cast<N_word>(~0L);
     wordptr loaddr;
     wordptr hiaddr;
     N_word  lobase;
@@ -753,8 +758,8 @@ void Interval_Flip(wordptr addr, N_int lower, N_int upper)
         loaddr = addr + lobase;
         hiaddr = addr + hibase;
 
-        lomask = (N_word)   (~0L << (lower AND MODMASK));
-        himask = (N_word) ~((~0L << (upper AND MODMASK)) << 1);
+        lomask = static_cast<N_word>(~0L << (lower AND MODMASK));
+        himask = static_cast<N_word>(~((~0L << (upper AND MODMASK)) << 1));
 
         if (diff == 0)
         {
@@ -1067,22 +1072,22 @@ void Interval_Copy(wordptr X, wordptr Y, N_int Xoffset,
                         t_lower = t_lo_bit;
                         t_upper = BITS - 1;
                         t_bits = BITS - t_lo_bit;
-                        mask = (N_word) (~0L << t_lower);
+                        mask = static_cast<N_word>(~0L << t_lower);
                         target = *X AND NOT mask;
                         break;
                     case 2:
                         t_lower = 0;
                         t_upper = t_hi_bit;
                         t_bits = t_hi_bit + 1;
-                        mask = (N_word) ((~0L << t_upper) << 1);
+                        mask = static_cast<N_word>((~0L << t_upper) << 1);
                         target = *X AND mask;
                         break;
                     case 3:
                         t_lower = t_lo_bit;
                         t_upper = t_hi_bit;
                         t_bits = t_hi_bit - t_lo_bit + 1;
-                        mask = (N_word) (~0L << t_lower);
-                        mask &= (N_word) ~((~0L << t_upper) << 1);
+                        mask = static_cast<N_word>(~0L << t_lower);
+                        mask &= static_cast<N_word>(~((~0L << t_upper) << 1));
                         target = *X AND NOT mask;
                         break;
                 }
@@ -1155,8 +1160,8 @@ void Interval_Copy(wordptr X, wordptr Y, N_int Xoffset,
                 s_max = s_upper;
             }
             bits++;
-            mask = (N_word) (~0L << s_min);
-            mask &= (N_word) ~((~0L << s_max) << 1);
+            mask = static_cast<N_word>(~0L << s_min);
+            mask &= static_cast<N_word>(~((~0L << s_max) << 1));
             if (s_min == t_min) target |= (source AND mask);
             else
             {
@@ -1331,15 +1336,15 @@ Z_int Lexicompare(wordptr X, wordptr Y)           /* X <,=,> Y ?   */
             Y += size;
             while (r && (size-- > 0)) r = (*(--X) == *(--Y));
         }
-        if (r) return((Z_int) 0);
+        if (r) return(0);
         else
         {
-            if (*X < *Y) return((Z_int) -1); else return((Z_int) 1);
+            if (*X < *Y) return(-1); else return(1);
         }
     }
     else
     {
-        if (bitsX < bitsY) return((Z_int) -1); else return((Z_int) 1);
+        if (bitsX < bitsY) return(-1); else return(1);
     }
 }
 
@@ -1361,19 +1366,19 @@ Z_int Compare(wordptr X, wordptr Y)               /* X <,=,> Y ?   */
             mask &= NOT (mask >> 1);
             if ((sign = (*(X-1) AND mask)) != (*(Y-1) AND mask))
             {
-                if (sign) return((Z_int) -1); else return((Z_int) 1);
+                if (sign) return(-1); else return(1);
             }
             while (r && (size-- > 0)) r = (*(--X) == *(--Y));
         }
-        if (r) return((Z_int) 0);
+        if (r) return(0);
         else
         {
-            if (*X < *Y) return((Z_int) -1); else return((Z_int) 1);
+            if (*X < *Y) return(-1); else return(1);
         }
     }
     else
     {
-        if (bitsX < bitsY) return((Z_int) -1); else return((Z_int) 1);
+        if (bitsX < bitsY) return(-1); else return(1);
     }
 }
 
@@ -1389,10 +1394,10 @@ charptr to_Hex(wordptr addr)
 
     length = bits >> 2;
     if (bits AND 0x0003) length++;
-    string = (charptr) malloc((size_t) (length+1));
+    string = static_cast<charptr>(malloc(static_cast<size_t>(length+1)));
     if (string == NULL) return(NULL);
     string += length;
-    *string = (N_char) '\0';
+    *string = static_cast<N_char>('\0');
     if (size > 0)
     {
         *(addr+size-1) &= mask_(addr);
@@ -1403,9 +1408,9 @@ charptr to_Hex(wordptr addr)
             while ((count-- > 0) && (length > 0))
             {
                 digit = value AND 0x000F;
-                if (digit > 9) digit += (N_word) 'A' - 10;
-                else           digit += (N_word) '0';
-                *(--string) = (N_char) digit; length--;
+                if (digit > 9) digit += static_cast<N_word>('A') - 10;
+                else           digit += static_cast<N_word>('0');
+                *(--string) = static_cast<N_char>(digit); length--;
                 if ((count > 0) && (length > 0)) value >>= 4;
             }
         }
@@ -1425,23 +1430,25 @@ ErrCode from_Hex(wordptr addr, charptr string)
 
     if (size > 0)
     {
-        length = strlen((char *) string);
+        length = strlen(reinterpret_cast<char*>(string));
         string += length;
         while (size-- > 0)
         {
             value = 0;
             for ( count = 0; (ok && (length > 0) && (count < BITS)); count += 4 )
             {
-                digit = (int) *(--string); length--;
+                digit = static_cast<int>(*(--string)); length--;
                 /* separate because toupper() is likely a macro! */
                 digit = toupper(digit);
                 if (digit == '_')
                     count -= 4;
                 else if ((ok = (isxdigit(digit) != 0)))
                 {
-                    if (digit >= (int) 'A') digit -= (int) 'A' - 10;
-                    else                    digit -= (int) '0';
-                    value |= (((N_word) digit) << count);
+                    if (digit >= static_cast<int>('A'))
+                        digit -= static_cast<int>('A') - 10;
+                    else
+                        digit -= static_cast<int>('0');
+                    value |= (static_cast<N_word>(digit) << count);
                 }
             }
             *addr++ = value;
@@ -1466,25 +1473,25 @@ ErrCode from_Oct(wordptr addr, charptr string)
 
     if (size > 0)
     {
-        length = strlen((char *) string);
+        length = strlen(reinterpret_cast<char*>(string));
         string += length;
         while (size-- > 0)
         {
             value = value_fill;
             for ( count = count_fill; (ok && (length > 0) && (count < BITS)); count += 3 )
             {
-                digit = (int) *(--string); length--;
+                digit = static_cast<int>(*(--string)); length--;
                 if (digit == '_')
                     count -= 3;
                 else if ((ok = (isdigit(digit) && digit != '8' && digit != '9')) != 0)
                 {
-                    digit -= (int) '0';
-                    value |= (((N_word) digit) << count);
+                    digit -= static_cast<int>('0');
+                    value |= (static_cast<N_word>(digit) << count);
                 }
             }
-            count_fill = (Z_word)count-(Z_word)BITS;
+            count_fill = static_cast<Z_word>(count) - static_cast<Z_word>(BITS);
             if (count_fill > 0)
-                value_fill = (((N_word) digit) >> (3-count_fill));
+                value_fill = (static_cast<N_word>(digit) >> (3-count_fill));
             else
                 value_fill = 0;
             *addr++ = value;
@@ -1505,10 +1512,10 @@ charptr to_Bin(wordptr addr)
     charptr string;
 
     length = bits_(addr);
-    string = (charptr) malloc((size_t) (length+1));
+    string = static_cast<charptr>(malloc(static_cast<size_t>(length+1)));
     if (string == NULL) return(NULL);
     string += length;
-    *string = (N_char) '\0';
+    *string = static_cast<N_char>('\0');
     if (size > 0)
     {
         *(addr+size-1) &= mask_(addr);
@@ -1520,8 +1527,8 @@ charptr to_Bin(wordptr addr)
             while (count-- > 0)
             {
                 digit = value AND 0x0001;
-                digit += (N_word) '0';
-                *(--string) = (N_char) digit; length--;
+                digit += static_cast<N_word>('0');
+                *(--string) = static_cast<N_char>(digit); length--;
                 if (count > 0) value >>= 1;
             }
         }
@@ -1544,22 +1551,22 @@ ErrCode from_Bin(wordptr addr, charptr string)
 
     if (size > 0)
     {
-        length = strlen((char *) string);
+        length = strlen(reinterpret_cast<char*>(string));
         string += length;
         while (size-- > 0)
         {
             value = 0;
             for ( count = 0; (ok && (length > 0) && (count < BITS)); count++ )
             {
-                digit = (int) *(--string); length--;
+                digit = static_cast<int>(*(--string)); length--;
                 switch (digit)
                 {
-                    case (int) '0':
+                    case '0':
                         break;
-                    case (int) '1':
+                    case '1':
                         value |= BITMASKTAB[count];
                         break;
-                    case (int) '_':
+                    case '_':
                         count--;
                         break;
                     default:
@@ -1595,17 +1602,21 @@ charptr to_Dec(wordptr addr)
     if (EXP10 == 0)
         EXP10 = power10(LOG10);
 
-    length = (N_word) (bits / 3.3);        /* digits = bits * ln(2) / ln(10) */
+    /* digits = bits * ln(2) / ln(10) */
+    length = static_cast<N_word>(bits / 3.3);
     length += 2; /* compensate for truncating & provide space for minus sign */
-    result = (charptr) malloc((size_t) (length+1));   /* remember the '\0'! */
+    /* remember the '\0'! */
+    result = static_cast<charptr>(malloc(static_cast<size_t>(length+1)));
     if (result == NULL) return(NULL);
     string = result;
     sign = Sign(addr);
     if ((bits < 4) || (sign == 0))
     {
-        if (bits > 0) digits = *addr; else digits = (N_word) 0;
-        if (sign < 0) digits = ((N_word)(-((Z_word)digits))) AND mask_(addr);
-        *string++ = (N_char) digits + (N_char) '0';
+        if (bits > 0) digits = *addr; else digits = 0;
+        if (sign < 0)
+            digits = static_cast<N_word>(-static_cast<Z_word>(digits))
+                AND mask_(addr);
+        *string++ = static_cast<N_char>(digits) + static_cast<N_char>('0');
         digits = 1;
     }
     else
@@ -1671,8 +1682,8 @@ charptr to_Dec(wordptr addr)
                 {
                     DIGITIZE(N_word,q,r)
                 }
-                else r = (N_word) '0';
-                *string++ = (N_char) r;
+                else r = static_cast<N_word>('0');
+                *string++ = static_cast<N_char>(r);
                 digits++;
             }
         }
@@ -1684,10 +1695,10 @@ charptr to_Dec(wordptr addr)
     }
     if ((sign < 0) && (digits < length))
     {
-        *string++ = (N_char) '-';
+        *string++ = static_cast<N_char>('-');
         digits++;
     }
-    *string = (N_char) '\0';
+    *string = static_cast<N_char>('\0');
     reverse(result,digits);
     return(result);
 }
@@ -1731,11 +1742,11 @@ ErrCode from_Dec_static::operator() (wordptr addr, charptr string)
 
     if (bits > 0)
     {
-        length = strlen((char *) string);
+        length = strlen(reinterpret_cast<char*>(string));
         if (length == 0) return(ErrCode_Pars);
-        digit = (int) *string;
-        if ((minus = (digit == (int) '-')) ||
-                     (digit == (int) '+'))
+        digit = static_cast<int>(*string);
+        if ((minus = (digit == static_cast<int>('-'))) ||
+                     (digit == static_cast<int>('+')))
         {
             string++;
             if (--length == 0) return(ErrCode_Pars);
@@ -1756,11 +1767,12 @@ ErrCode from_Dec_static::operator() (wordptr addr, charptr string)
             count = LOG10;
             while ((!error) && (length > 0) && (count-- > 0))
             {
-                digit = (int) *(--string); length--;
+                digit = static_cast<int>(*(--string)); length--;
                 /* separate because isdigit() is likely a macro! */
                 if (isdigit(digit) != 0)
                 {
-                    accu += ((N_word) digit - (N_word) '0') * powr;
+                    accu += (static_cast<N_word>(digit) -
+                             static_cast<N_word>('0')) * powr;
                     powr *= 10;
                 }
                 else error = ErrCode_Pars;
@@ -1857,13 +1869,13 @@ charptr to_Enum(wordptr addr)
         if (sample > --factor)
         {
             sample -= factor;
-            factor = (N_word) ( sample / 3 );
+            factor = static_cast<N_word>( sample / 3 );
             factor = (factor << 1) + (sample - (factor * 3));
             length += ++digits * factor;
         }
     }
     else length = 1;
-    string = (charptr) malloc((size_t) length);
+    string = static_cast<charptr>(malloc(static_cast<size_t>(length)));
     if (string == NULL) return(NULL);
     start = 0;
     comma = false;
@@ -1871,7 +1883,7 @@ charptr to_Enum(wordptr addr)
     while ((start < bits) && interval_scan_inc(addr,start,&min,&max))
     {
         start = max + 2;
-        if (comma) *target++ = (N_char) ',';
+        if (comma) *target++ = static_cast<N_char>(',');
         if (min == max)
         {
             target += int2str(target,min);
@@ -1881,19 +1893,19 @@ charptr to_Enum(wordptr addr)
             if (min+1 == max)
             {
                 target += int2str(target,min);
-                *target++ = (N_char) ',';
+                *target++ = static_cast<N_char>(',');
                 target += int2str(target,max);
             }
             else
             {
                 target += int2str(target,min);
-                *target++ = (N_char) '-';
+                *target++ = static_cast<N_char>('-');
                 target += int2str(target,max);
             }
         }
         comma = true;
     }
-    *target = (N_char) '\0';
+    *target = static_cast<N_char>('\0');
     return(string);
 }
 
@@ -1914,12 +1926,12 @@ ErrCode from_Enum(wordptr addr, charptr string)
         Empty(addr);
         while ((!error) && (state != 0))
         {
-            token = (N_word) *string;
+            token = static_cast<N_word>(*string);
             /* separate because isdigit() is likely a macro! */
-            if (isdigit((int)token) != 0)
+            if (isdigit(static_cast<int>(token)) != 0)
             {
                 string += str2int(string,&indx);
-                if (indx < bits) token = (N_word) '0';
+                if (indx < bits) token = static_cast<N_word>('0');
                 else error = ErrCode_Indx;
             }
             else string++;
@@ -1929,10 +1941,10 @@ ErrCode from_Enum(wordptr addr, charptr string)
                 case 1:
                     switch (token)
                     {
-                        case (N_word) '0':
+                        case '0':
                             state = 2;
                             break;
-                        case (N_word) '\0':
+                        case '\0':
                             state = 0;
                             break;
                         default:
@@ -1943,15 +1955,15 @@ ErrCode from_Enum(wordptr addr, charptr string)
                 case 2:
                     switch (token)
                     {
-                        case (N_word) '-':
+                        case '-':
                             start = indx;
                             state = 3;
                             break;
-                        case (N_word) ',':
+                        case ',':
                             SET_BIT(addr,indx)
                             state = 5;
                             break;
-                        case (N_word) '\0':
+                        case '\0':
                             SET_BIT(addr,indx)
                             state = 0;
                             break;
@@ -1963,7 +1975,7 @@ ErrCode from_Enum(wordptr addr, charptr string)
                 case 3:
                     switch (token)
                     {
-                        case (N_word) '0':
+                        case '0':
                             if (start < indx)
                                 Interval_Fill(addr,start,indx);
                             else if (start == indx)
@@ -1979,10 +1991,10 @@ ErrCode from_Enum(wordptr addr, charptr string)
                 case 4:
                     switch (token)
                     {
-                        case (N_word) ',':
+                        case ',':
                             state = 5;
                             break;
-                        case (N_word) '\0':
+                        case '\0':
                             state = 0;
                             break;
                         default:
@@ -1993,7 +2005,7 @@ ErrCode from_Enum(wordptr addr, charptr string)
                 case 5:
                     switch (token)
                     {
-                        case (N_word) '0':
+                        case '0':
                             state = 2;
                             break;
                         default:
@@ -2338,8 +2350,8 @@ bool compute(wordptr X, wordptr Y, wordptr Z, bool minus, bool *carry)
         while (--size > 0)
         {
             yy = *Y++;
-            if (minus) zz = (N_word) NOT ( Z ? *Z++ : 0 );
-            else       zz = (N_word)     ( Z ? *Z++ : 0 );
+            if (minus) zz = static_cast<N_word>( NOT ( Z ? *Z++ : 0 ));
+            else       zz = static_cast<N_word>( Z ? *Z++ : 0 );
             lo = (yy AND LSBMASK) + (zz AND LSBMASK) + cc;
             hi = (yy >> 1) + (zz >> 1) + (lo >> 1);
             cc = ((hi AND MSBMASK) != 0);
@@ -2347,8 +2359,8 @@ bool compute(wordptr X, wordptr Y, wordptr Z, bool minus, bool *carry)
         }
         /* deal with most significant word (may be used only partially): */
         yy = *Y AND mask;
-        if (minus) zz = (N_word) NOT ( Z ? *Z : 0 );
-        else       zz = (N_word)     ( Z ? *Z : 0 );
+        if (minus) zz = static_cast<N_word>( NOT ( Z ? *Z : 0 ));
+        else       zz = static_cast<N_word>( Z ? *Z : 0 );
         zz &= mask;
         if (mask == LSBMASK) /* special case, only one bit used */
         {
@@ -2458,11 +2470,11 @@ Z_int Sign(wordptr addr)
         *last &= mask;
         while (r && (size-- > 0)) r = ( *addr++ == 0 );
     }
-    if (r) return((Z_int) 0);
+    if (r) return(0);
     else
     {
-        if (*last AND (mask AND NOT (mask >> 1))) return((Z_int) -1);
-        else                                      return((Z_int)  1);
+        if (*last AND (mask AND NOT (mask >> 1))) return(-1);
+        else                                      return(1);
     }
 }
 
@@ -2495,7 +2507,7 @@ ErrCode Mul_Pos(wordptr X, wordptr Y, wordptr Z, bool strict)
     Empty(X);
     if (is_empty(Y)) return(ErrCode_Ok); /* exit also taken if bits_(Y)==0 */
     if ((last = Set_Max(Z)) < 0L) return(ErrCode_Ok);
-    limit = (N_word) last;
+    limit = static_cast<N_word>(last);
     sign = Y + size_(Y) - 1;
     mask = mask_(Y);
     *sign &= mask;
@@ -2635,7 +2647,7 @@ ErrCode Div_Pos(wordptr Q, wordptr X, wordptr Y, wordptr R)
     Empty(R);
     Copy(Q,X);
     if ((last = Set_Max(Q)) < 0L) return(ErrCode_Ok);
-    bits = (N_word) ++last;
+    bits = static_cast<N_word>(++last);
     while (bits-- > 0)
     {
         addr = Q + (bits / BITS);
@@ -3017,7 +3029,7 @@ ErrCode Power(wordptr X, wordptr Y, wordptr Z)
     }
     T = Create(bits,false);
     if (T == NULL) return(ErrCode_Null);
-    limit = (N_word) last;
+    limit = static_cast<N_word>(last);
     for ( count = 0; ((!error) && (count <= limit)); count++ )
     {
         if ( TST_BIT(Z,count) )
@@ -3055,7 +3067,7 @@ void Block_Store(wordptr addr, charptr buffer, N_int length)
             value = 0;
             for ( count = 0; (length > 0) && (count < BITS); count += 8 )
             {
-                value |= (((N_word) *buffer++) << count); length--;
+                value |= (static_cast<N_word>(*buffer++) << count); length--;
             }
             *addr++ = value;
         }
@@ -3073,7 +3085,7 @@ charptr Block_Read(wordptr addr, N_intptr length)
 
     /* provide translation for independence of endian-ness: */
     *length = size * BYTES;
-    buffer = (charptr) malloc((size_t) ((*length)+1));
+    buffer = static_cast<charptr>(malloc(static_cast<size_t>((*length)+1)));
     if (buffer == NULL) return(NULL);
     target = buffer;
     if (size > 0)
@@ -3085,12 +3097,12 @@ charptr Block_Read(wordptr addr, N_intptr length)
             count = BITS >> 3;
             while (count-- > 0)
             {
-                *target++ = (N_char) (value AND 0x00FF);
+                *target++ = static_cast<N_char>(value AND 0x00FF);
                 if (count > 0) value >>= 8;
             }
         }
     }
-    *target = (N_char) '\0';
+    *target = static_cast<N_char>('\0');
     return(buffer);
 }
 
@@ -3114,7 +3126,7 @@ N_int Word_Read(wordptr addr, N_int offset)
         *(addr+size-1) &= mask_(addr);
         if (offset < size) return( *(addr+offset) );
     }
-    return( (N_int) 0 );
+    return( 0 );
 }
 
 void Word_Insert(wordptr addr, N_int offset, N_int count,
@@ -3164,15 +3176,15 @@ void Chunk_Store(wordptr addr, N_int chunksize, N_int offset,
         offset &= MODMASK;
         while (chunksize > 0)
         {
-            mask = (N_word) (~0L << offset);
+            mask = static_cast<N_word>(~0L << offset);
             bits = offset + chunksize;
             if (bits < BITS)
             {
-                mask &= (N_word) ~(~0L << bits);
+                mask &= static_cast<N_word>(~(~0L << bits));
                 bits = chunksize;
             }
             else bits = BITS - offset;
-            temp = (N_word) (value << offset);
+            temp = static_cast<N_word>(value << offset);
             temp &= mask;
             *addr &= NOT mask;
             *addr++ |= temp;
@@ -3202,15 +3214,15 @@ N_long Chunk_Read(wordptr addr, N_int chunksize, N_int offset)
             bits = offset + chunksize;
             if (bits < BITS)
             {
-                mask = (N_word) ~(~0L << bits);
+                mask = static_cast<N_word>(~(~0L << bits));
                 bits = chunksize;
             }
             else
             {
-                mask = (N_word) ~0L;
+                mask = static_cast<N_word>(~0L);
                 bits = BITS - offset;
             }
-            temp = (N_long) ((*addr++ AND mask) >> offset);
+            temp = static_cast<N_long>((*addr++ AND mask) >> offset);
             value |= temp << chunkbits;
             chunkbits += bits;
             chunksize -= bits;
@@ -3316,14 +3328,14 @@ Z_long Set_Min(wordptr addr)                                /* = min(X)      */
     {
         if ((c = *addr++)) empty = false; else i++;
     }
-    if (empty) return((Z_long) LONG_MAX);                  /* plus infinity  */
+    if (empty) return(static_cast<Z_long>(LONG_MAX));      /* plus infinity  */
     i *= BITS;
     while (!(c AND LSBMASK))
     {
         c >>= 1;
         i++;
     }
-    return((Z_long) i);
+    return(static_cast<Z_long>(i));
 }
 
 Z_long Set_Max(wordptr addr)                                /* = max(X)      */
@@ -3338,14 +3350,14 @@ Z_long Set_Max(wordptr addr)                                /* = max(X)      */
     {
         if ((c = *addr--)) empty = false; else i--;
     }
-    if (empty) return((Z_long) LONG_MIN);                  /* minus infinity */
+    if (empty) return(static_cast<Z_long>(LONG_MIN));      /* minus infinity */
     i *= BITS;
     while (!(c AND MSBMASK))
     {
         c <<= 1;
         i--;
     }
-    return((Z_long) --i);
+    return(static_cast<Z_long>(--i));
 }
 
 } // namespace BitVector

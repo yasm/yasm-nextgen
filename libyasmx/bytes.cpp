@@ -59,7 +59,7 @@ operator<< (marg_ostream& os, const Bytes& bytes)
 {
     os << std::hex << std::setfill('0');
     for (Bytes::size_type i=0; i<bytes.size(); ++i)
-        os << std::setw(2) << (unsigned int)bytes[i] << ' ';
+        os << std::setw(2) << static_cast<unsigned int>(bytes[i]) << ' ';
     os << std::setfill(' ') << '\n';
     return os;
 }

@@ -150,8 +150,8 @@ public:
     {
         if (w > 0)
             m_width += w;
-        else if ((unsigned int)(-w) < m_width)
-            m_width -= (unsigned int)(-w);
+        else if (static_cast<unsigned int>(-w) < m_width)
+            m_width -= static_cast<unsigned int>(-w);
         else
             m_width = 0;
         return *this;

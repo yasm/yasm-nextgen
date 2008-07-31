@@ -172,12 +172,12 @@ X86General::put(marg_ostream& os) const
 
     std::ios_base::fmtflags origff = os.flags();
     os << "SpPre=" << std::hex << std::setfill('0') << std::setw(2)
-       << (unsigned int)m_special_prefix;
+       << static_cast<unsigned int>(m_special_prefix);
     os << " REX=" << std::oct << std::setfill('0') << std::setw(3)
-       << (unsigned int)m_rex;
+       << static_cast<unsigned int>(m_rex);
     os << std::setfill(' ');
     os.flags(origff);
-    os << " PostOp=" << (unsigned int)m_postop << '\n';
+    os << " PostOp=" << static_cast<unsigned int>(m_postop) << '\n';
 }
 
 void
@@ -489,7 +489,7 @@ X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
         if (m_ea->m_disp.m_ip_rel)
         {
             // Adjust relative displacement to end of bytecode
-            m_ea->m_disp.add_abs(-(long)disp_len);
+            m_ea->m_disp.add_abs(-static_cast<long>(disp_len));
         }
         Location loc = {&bc, pos};
         pos += disp_len;

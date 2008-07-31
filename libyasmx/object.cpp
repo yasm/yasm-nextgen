@@ -707,7 +707,7 @@ Optimize::itree_add(Span& span, Span::Term& term)
     else
         return;     /* difference is same bc - always 0! */
 
-    m_itree.insert((long)low, (long)high, &term);
+    m_itree.insert(static_cast<long>(low), static_cast<long>(high), &term);
 }
 
 void
@@ -911,8 +911,8 @@ Optimize::step_1e(Errwarns& errwarns)
             continue;
         try
         {
-            m_itree.enumerate((long)span->m_bc.get_index(),
-                              (long)span->m_bc.get_index(),
+            m_itree.enumerate(static_cast<long>(span->m_bc.get_index()),
+                              static_cast<long>(span->m_bc.get_index()),
                               BIND::bind(&Optimize::check_cycle, this, _1,
                                          REF::ref(*span)));
         }
@@ -989,8 +989,8 @@ Optimize::step_2(Errwarns& errwarns)
             continue;   // didn't increase in size
 
         // Iterate over all spans dependent across the bc just expanded
-        m_itree.enumerate((long)span->m_bc.get_index(),
-                          (long)span->m_bc.get_index(),
+        m_itree.enumerate(static_cast<long>(span->m_bc.get_index()),
+                          static_cast<long>(span->m_bc.get_index()),
                           BIND::bind(&Optimize::term_expand, this, _1,
                                      len_diff));
 
@@ -1010,22 +1010,23 @@ Optimize::step_2(Errwarns& errwarns)
                 os->m_cur_val + os->m_bc->get_total_len();
 
             if (offset_diff < 0
-                && (unsigned long)(-offset_diff) > os->m_new_val)
+                && static_cast<unsigned long>(-offset_diff) > os->m_new_val)
                 throw InternalError(N_("org/align went to negative offset"));
             os->m_new_val += offset_diff;
 
             orig_len = os->m_bc->get_tail_len();
             long neg_thres_temp, pos_thres_temp;
-            expand(*os->m_bc, 1, (long)os->m_cur_val, (long)os->m_new_val,
-                   neg_thres_temp, pos_thres_temp, errwarns);
-            os->m_thres = (long)pos_thres_temp;
+            expand(*os->m_bc, 1, static_cast<long>(os->m_cur_val),
+                   static_cast<long>(os->m_new_val), neg_thres_temp,
+                   pos_thres_temp, errwarns);
+            os->m_thres = static_cast<long>(pos_thres_temp);
 
             offset_diff =
                 os->m_new_val + os->m_bc->get_total_len() - old_next_offset;
             len_diff = os->m_bc->get_tail_len() - orig_len;
             if (len_diff != 0)
-                m_itree.enumerate((long)os->m_bc->get_index(),
-                                  (long)os->m_bc->get_index(),
+                m_itree.enumerate(static_cast<long>(os->m_bc->get_index()),
+                                  static_cast<long>(os->m_bc->get_index()),
                                   BIND::bind(&Optimize::term_expand, this, _1,
                                              len_diff));
 

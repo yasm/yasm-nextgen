@@ -481,7 +481,7 @@ X86Insn::do_append_jmp(BytecodeContainer& container, const X86InsnInfo& jinfo)
     // Check for address size setting in second operand, if present
     if (jinfo.num_operands > 1 &&
         insn_operands[jinfo.operands_index+1].action == OPA_AdSizeR)
-        common.m_addrsize = (unsigned char)
+        common.m_addrsize =
             size_lookup[insn_operands[jinfo.operands_index+1].size];
 
     // Check for address size override
@@ -1406,7 +1406,7 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
     }
 
     if (info_op.size == OPS_BITS)
-        m_opersize = (unsigned char)m_mode_bits;
+        m_opersize = static_cast<unsigned char>(m_mode_bits);
 
     switch (info_op.post_action)
     {
@@ -1562,7 +1562,8 @@ X86Insn::do_append_general(BytecodeContainer& container,
 
     buildgen.apply_modifiers(m_mod_data);
     buildgen.update_rex();
-    buildgen.apply_operands((X86Arch::ParserSelect)m_parser, m_operands);
+    buildgen.apply_operands(static_cast<X86Arch::ParserSelect>(m_parser),
+                            m_operands);
     buildgen.apply_segregs(m_segregs);
     buildgen.finish(container, m_prefixes);
 }

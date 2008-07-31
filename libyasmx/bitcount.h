@@ -48,7 +48,7 @@ BC_TWO(int c)
 inline unsigned long
 BC_MSK(int c)
 {
-    return (((unsigned long)(-1)) / (BC_TWO(BC_TWO(c)) + 1ul));
+    return (static_cast<unsigned long>(-1) / (BC_TWO(BC_TWO(c)) + 1ul));
 }
 
 inline void

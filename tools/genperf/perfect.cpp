@@ -67,7 +67,7 @@ Find the mapping that will produce a perfect hash
 ub4  phash_log2(ub4  val)
 {
   ub4 i;
-  for (i=0; ((ub4)1<<i) < val; ++i)
+  for (i=0; (static_cast<ub4>(1)<<i) < val; ++i)
     ;
   return i;
 }
@@ -79,7 +79,7 @@ static ub4  permute(
     ub4 nbits)                             /* input, number of bits in range */
 {
   int i;
-  int mask   = ((ub4)1<<nbits)-1;                                /* all ones */
+  int mask   = (static_cast<ub4>(1)<<nbits)-1;                   /* all ones */
   int const2 = 1+nbits/2;
   int const3 = 1+nbits/3;
   int const4 = 1+nbits/4;
@@ -121,10 +121,10 @@ static void checkdup(
   {
   case hashform::STRING_HT:
     if ((key1->len_k == key2->len_k) &&
-        !memcmp(key1->name_k, key2->name_k, (size_t)key1->len_k))
+        !memcmp(key1->name_k, key2->name_k, static_cast<size_t>(key1->len_k)))
     {
       fprintf(stderr, "perfect.c: Duplicates keys!  %.*s\n",
-              (int)key1->len_k, key1->name_k);
+              static_cast<int>(key1->len_k), key1->name_k);
       exit(EXIT_FAILURE);
     }
     break;
@@ -141,7 +141,8 @@ static void checkdup(
     exit(EXIT_FAILURE);
     break;
   default:
-    fprintf(stderr, "perfect.c: Illegal hash type %ld\n", (ub4)form->hashtype);
+    fprintf(stderr, "perfect.c: Illegal hash type %ld\n",
+            static_cast<ub4>(form->hashtype));
     exit(EXIT_FAILURE);
     break;
   }
@@ -162,7 +163,7 @@ static int inittab(
   int  nocollision = TRUE;
   key *mykey;
 
-  memset((void *)tabb, 0, (size_t)(sizeof(bstuff)*blen));
+  memset(tabb, 0, sizeof(bstuff)*blen);
 
   /* Two keys with the same (a,b) guarantees a collision */
   for (mykey=keys; mykey; mykey=mykey->next_k)
@@ -272,13 +273,14 @@ static void initinl(
   ub4  initval = salt*0x9e3779b9;    /* the golden ratio; an arbitrary value */
 
   /* It's more important to have b uniform than a, so b is the low bits */
-  for (mykey = keys;  mykey != (key *)0;  mykey = mykey->next_k)
+  for (mykey = keys;  mykey != 0;  mykey = mykey->next_k)
   {
     ub4   hash = initval;
     ub4   i;
     for (i=0; i<mykey->len_k; ++i)
     {
-      hash = ((ub1)mykey->name_k[i] ^ hash) + ((hash<<(UB4BITS-6))+(hash>>6));
+      hash = (static_cast<ub1>(mykey->name_k[i]) ^ hash) +
+          ((hash<<(UB4BITS-6))+(hash>>6));
     }
     mykey->hash_k = hash;
     mykey->a_k = (alen > 1) ? (hash & amask) : 0;
@@ -402,7 +404,7 @@ static int apply(
       hash = mykey->a_k^stabb;
       if (mykey == tabh[hash].key_h)
       {                            /* erase hash for all of child's siblings */
-        tabh[hash].key_h = (key *)0;
+        tabh[hash].key_h = 0;
       }
     }
 
@@ -484,7 +486,7 @@ static int augment(
 
     for (i=0; i<limit; ++i)
     {
-      bstuff *childb = (bstuff *)0;             /* the b that this i maps to */
+      bstuff *childb = 0;                       /* the b that this i maps to */
       key    *mykey;                       /* for walking through myb's keys */
 
       for (mykey = myb->list_b; mykey; mykey=mykey->nextb_k)
@@ -515,7 +517,7 @@ static int augment(
       /* add childb to the queue of reachable things */
       if (childb) childb->water_b = highwater;
       tabq[tail].b_q      = childb;
-      tabq[tail].newval_q = (ub2)i; /* how to make parent (myb) use this hash */
+      tabq[tail].newval_q = static_cast<ub2>(i); /* how to make parent (myb) use this hash */
       tabq[tail].oldval_q = myb->val_b;            /* need this for rollback */
       tabq[tail].parent_q = q;
       ++tail;
@@ -549,10 +551,10 @@ static int perfect(
   ub4 i, j;
 
   /* clear any state from previous attempts */
-  memset((void *)tabh, 0, 
-         (size_t)(sizeof(hstuff)*
-                  ((form->perfect == hashform::MINIMAL_HP) ? nkeys : smax)));
-  memset((void *)tabq, 0, (size_t)(sizeof(qstuff)*(blen+1)));
+  memset(tabh, 0, 
+         sizeof(hstuff)*
+                  ((form->perfect == hashform::MINIMAL_HP) ? nkeys : smax));
+  memset(tabq, 0, sizeof(qstuff)*(blen+1));
 
   for (maxkeys=0,i=0; i<blen; ++i) 
     if (tabb[i].listlen_b > maxkeys) 
@@ -597,13 +599,13 @@ static void hash_ab(
   int     used_tab;
 
   /* initially make smax the first power of two bigger than nkeys */
-  *smax = ((ub4)1<<phash_log2(nkeys));
+  *smax = (static_cast<ub4>(1)<<phash_log2(nkeys));
   scrambleinit(scramble, *smax);
 
   /* set *alen and *blen based on max A and B from user */
   *alen = 1;
   *blen = 1;
-  for (mykey = keys;  mykey != (key *)0;  mykey = mykey->next_k)
+  for (mykey = keys;  mykey != 0;  mykey = mykey->next_k)
   {
     while (*alen <= mykey->a_k) *alen *= 2;
     while (*blen <= mykey->b_k) *blen *= 2;
@@ -636,7 +638,7 @@ static void hash_ab(
     else
     {
       /* try with 2*smax */
-      free((void *)tabh);
+      free(tabh);
       *smax = *smax * 2;
       scrambleinit(scramble, *smax);
       tabh = new hstuff[form->perfect == hashform::MINIMAL_HP ? nkeys : *smax];
@@ -673,8 +675,8 @@ static void hash_ab(
 
   printf("success, found a perfect hash\n");
 
-  free((void *)tabq);
-  free((void *)tabh);
+  free(tabq);
+  free(tabh);
 }
 
 
@@ -728,7 +730,7 @@ static void initalen(
     }
 
     *alen = ((form->hashtype==hashform::INT_HT) && *smax>131072) ? 
-      ((ub4)1<<(UB4BITS-phash_log2(*blen))) :   /* distinct keys => distinct (A,B) */
+      (static_cast<ub4>(1)<<(UB4BITS-phash_log2(*blen))) :   /* distinct keys => distinct (A,B) */
       *smax;                         /* no reason to restrict alen to smax/2 */
     if ((form->hashtype == hashform::INT_HT) && *smax < 32)
       *blen = *smax;                      /* go for function speed not space */
@@ -840,7 +842,7 @@ void findhash(
   }
 
   /* guess initial values for smax, alen and blen */
-  *smax = ((ub4)1<<phash_log2(nkeys));
+  *smax = (static_cast<ub4>(1)<<phash_log2(nkeys));
   initalen(alen, blen, smax, nkeys, form);
 
   scrambleinit(scramble, *smax);
@@ -934,7 +936,7 @@ void findhash(
   printf("built perfect hash table of size %ld\n", *blen);
 
   /* free working memory */
-  free((void *)tabq);
+  free(tabq);
 }
 
 #if 0

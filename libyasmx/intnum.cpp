@@ -61,7 +61,7 @@ IntNum::from_bv(wordptr bv)
     if (BitVector::Set_Max(bv) < 31)
     {
         m_type = INTNUM_L;
-        m_val.l = (long)BitVector::Chunk_Read(bv, 31, 0);
+        m_val.l = static_cast<long>(BitVector::Chunk_Read(bv, 31, 0));
     }
     else if (BitVector::msb_(bv))
     {
@@ -79,7 +79,7 @@ IntNum::from_bv(wordptr bv)
         else
         {
             m_type = INTNUM_L;
-            m_val.l = -((long)ul);
+            m_val.l = -static_cast<long>(ul);
         }
     }
     else
@@ -97,10 +97,10 @@ IntNum::to_bv(/*@returned@*/ wordptr bv) const
 
     BitVector::Empty(bv);
     if (m_val.l >= 0)
-        BitVector::Chunk_Store(bv, 32, 0, (unsigned long)m_val.l);
+        BitVector::Chunk_Store(bv, 32, 0, static_cast<unsigned long>(m_val.l));
     else
     {
-        BitVector::Chunk_Store(bv, 32, 0, (unsigned long)-m_val.l);
+        BitVector::Chunk_Store(bv, 32, 0, static_cast<unsigned long>(-m_val.l));
         BitVector::Negate(bv, bv);
     }
     return bv;
@@ -114,19 +114,22 @@ IntNum::IntNum(char* str, int base)
     switch (base)
     {
         case 2:
-            err = BitVector::from_Bin(conv_bv, (unsigned char *)str);
+            err = BitVector::from_Bin(conv_bv,
+                                      reinterpret_cast<unsigned char *>(str));
             errstr = N_("invalid binary literal");
             break;
         case 8:
-            err = BitVector::from_Oct(conv_bv, (unsigned char *)str);
+            err = BitVector::from_Oct(conv_bv,
+                                      reinterpret_cast<unsigned char *>(str));
             errstr = N_("invalid octal literal");
             break;
         case 10:
-            err = my_from_Dec(conv_bv, (unsigned char *)str);
+            err = my_from_Dec(conv_bv, reinterpret_cast<unsigned char *>(str));
             errstr = N_("invalid decimal literal");
             break;
         case 16:
-            err = BitVector::from_Hex(conv_bv, (unsigned char *)str);
+            err = BitVector::from_Hex(conv_bv,
+                                      reinterpret_cast<unsigned char *>(str));
             errstr = N_("invalid hex literal");
             break;
         default:
@@ -161,7 +164,7 @@ IntNum::IntNum(const unsigned char* ptr, bool sign, unsigned long& size)
         ptr++;
     }
 
-    size = (unsigned long)(ptr-ptr_orig)+1;
+    size = static_cast<unsigned long>(ptr-ptr_orig)+1;
 
     if (i > BITVECT_NATIVE_SIZE)
         throw OverflowError(
@@ -307,7 +310,8 @@ IntNum::calc(Op::Op op, const IntNum* operand)
             if (operand->m_type == INTNUM_L && operand->m_val.l >= 0)
             {
                 BitVector::Copy(result, op1);
-                BitVector::Move_Left(result, (N_int)operand->m_val.l);
+                BitVector::Move_Left(result,
+                                     static_cast<N_int>(operand->m_val.l));
             }
             else    // don't even bother, just zero result
                 BitVector::Empty(result);
@@ -317,7 +321,7 @@ IntNum::calc(Op::Op op, const IntNum* operand)
             {
                 BitVector::Copy(result, op1);
                 bool carry = BitVector::msb_(op1);
-                N_int count = (N_int)operand->m_val.l;
+                N_int count = static_cast<N_int>(operand->m_val.l);
                 while (count-- > 0)
                     BitVector::shift_right(result, carry);
             }
@@ -424,7 +428,7 @@ IntNum::set(unsigned long val)
             BitVector::Destroy(m_val.bv);
             m_type = INTNUM_L;
         }
-        m_val.l = (long)val;
+        m_val.l = static_cast<long>(val);
     }
 }
 
@@ -452,7 +456,7 @@ IntNum::get_uint() const
         case INTNUM_L:
             if (m_val.l < 0)
                 return 0;
-            return (unsigned long)m_val.l;
+            return static_cast<unsigned long>(m_val.l);
         case INTNUM_BV:
             if (BitVector::msb_(m_val.bv))
                 return 0;
@@ -488,7 +492,7 @@ IntNum::get_int() const
                 }
                 ul = BitVector::Chunk_Read(conv_bv, 32, 0);
                 // check for too negative
-                return (ul & 0x80000000) ? LONG_MIN : -((long)ul);
+                return (ul & 0x80000000) ? LONG_MIN : -static_cast<long>(ul);
             }
 
             // it's positive, and since it's a BV, it must be >0x7FFFFFFF
@@ -513,7 +517,7 @@ IntNum::get_sized(unsigned char* ptr,
         throw InternalError(N_("destination too large"));
 
     // General size warnings
-    size_t rshift = shift < 0 ? (size_t)(-shift) : 0;
+    size_t rshift = shift < 0 ? static_cast<size_t>(-shift) : 0;
     if (warn<0 && !ok_size(valsize, rshift, 1))
         warn_set(WARN_GENERAL,
                  String::compose(N_("value does not fit in signed %1 bit field"),
@@ -532,7 +536,7 @@ IntNum::get_sized(unsigned char* ptr,
         throw InternalError(N_("big endian not implemented"));
     }
     else
-        BitVector::Block_Store(op1, ptr, (N_int)destsize);
+        BitVector::Block_Store(op1, ptr, static_cast<N_int>(destsize));
 
     // If not already a bitvect, convert value to be written to a bitvect
     wordptr op2 = to_bv(op2static);
@@ -541,7 +545,8 @@ IntNum::get_sized(unsigned char* ptr,
     if (warn && rshift > 0)
     {
         BitVector::Copy(conv_bv, op2);
-        BitVector::Move_Left(conv_bv, (N_int)(BITVECT_NATIVE_SIZE-rshift));
+        BitVector::Move_Left(conv_bv,
+                             static_cast<N_int>(BITVECT_NATIVE_SIZE-rshift));
         if (!BitVector::is_empty(conv_bv))
             warn_set(WARN_GENERAL,
                      N_("misaligned value, truncating to boundary"));
@@ -557,7 +562,8 @@ IntNum::get_sized(unsigned char* ptr,
     }
 
     // Write the new value into the destination bitvect
-    BitVector::Interval_Copy(op1, op2, (unsigned int)shift, 0, (N_int)valsize);
+    BitVector::Interval_Copy(op1, op2, static_cast<unsigned int>(shift), 0,
+                             static_cast<N_int>(valsize));
 
     // Write out the new data
     unsigned int len;
@@ -607,13 +613,13 @@ IntNum::ok_size(size_t size, size_t rshift, int rangetype) const
             // it's negative
             BitVector::Negate(conv_bv, val);
             BitVector::dec(conv_bv, conv_bv);
-            return (BitVector::Set_Max(conv_bv) < (long)size-1);
+            return (BitVector::Set_Max(conv_bv) < static_cast<long>(size)-1);
         }
 
         if (rangetype == 1)
             size--;
     }
-    return (BitVector::Set_Max(val) < (long)size);
+    return (BitVector::Set_Max(val) < static_cast<long>(size));
 }
 
 bool
@@ -626,20 +632,20 @@ IntNum::in_range(long low, long high) const
     wordptr lval = op1static;
     BitVector::Empty(lval);
     if (low >= 0)
-        BitVector::Chunk_Store(lval, 32, 0, (unsigned long)low);
+        BitVector::Chunk_Store(lval, 32, 0, static_cast<unsigned long>(low));
     else
     {
-        BitVector::Chunk_Store(lval, 32, 0, (unsigned long)(-low));
+        BitVector::Chunk_Store(lval, 32, 0, static_cast<unsigned long>(-low));
         BitVector::Negate(lval, lval);
     }
 
     wordptr hval = op2static;
     BitVector::Empty(hval);
     if (high >= 0)
-        BitVector::Chunk_Store(hval, 32, 0, (unsigned long)high);
+        BitVector::Chunk_Store(hval, 32, 0, static_cast<unsigned long>(high));
     else
     {
-        BitVector::Chunk_Store(hval, 32, 0, (unsigned long)(-high));
+        BitVector::Chunk_Store(hval, 32, 0, static_cast<unsigned long>(-high));
         BitVector::Negate(hval, hval);
     }
 
@@ -739,12 +745,12 @@ IntNum::get_str() const
     switch (m_type)
     {
         case INTNUM_L:
-            s = (char *)malloc(16);
+            s = static_cast<char*>(malloc(16));
             sprintf(s, "%ld", m_val.l);
             return s;
             break;
         case INTNUM_BV:
-            return (char *)BitVector::to_Dec(m_val.bv);
+            return reinterpret_cast<char*>(BitVector::to_Dec(m_val.bv));
             break;
     }
     /*@notreached@*/

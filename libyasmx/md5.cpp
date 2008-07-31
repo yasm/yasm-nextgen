@@ -44,17 +44,17 @@ namespace
 inline unsigned long
 getu32(const unsigned char *addr)
 {
-        return (((((unsigned long)addr[3] << 8) | addr[2]) << 8)
+        return ((((static_cast<unsigned long>(addr[3]) << 8) | addr[2]) << 8)
                 | addr[1]) << 8 | addr[0];
 }
 
 void
 putu32(unsigned long data, unsigned char *addr)
 {
-        addr[0] = (unsigned char)data;
-        addr[1] = (unsigned char)(data >> 8);
-        addr[2] = (unsigned char)(data >> 16);
-        addr[3] = (unsigned char)(data >> 24);
+        addr[0] = static_cast<unsigned char>(data);
+        addr[1] = static_cast<unsigned char>(data >> 8);
+        addr[2] = static_cast<unsigned char>(data >> 16);
+        addr[3] = static_cast<unsigned char>(data >> 24);
 }
 
 } // anonymous namespace
@@ -90,7 +90,8 @@ MD5::update(const unsigned char* buf, unsigned long len)
         /* Update bitcount */
 
         t = m_bits[0];
-        if ((m_bits[0] = (t + ((unsigned long)len << 3)) & 0xffffffff) < t)
+        if ((m_bits[0] =
+             (t + (static_cast<unsigned long>(len) << 3)) & 0xffffffff) < t)
                 m_bits[1]++; /* Carry from low to high */
         m_bits[1] += len >> 29;
 

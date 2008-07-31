@@ -140,15 +140,15 @@ X86Common::finish()
 marg_ostream&
 operator<< (marg_ostream& os, const X86Common& common)
 {
-    os << "AddrSize=" << ((unsigned int)common.m_addrsize);
-    os << " OperSize=" << ((unsigned int)common.m_opersize);
+    os << "AddrSize=" << static_cast<unsigned int>(common.m_addrsize);
+    os << " OperSize=" << static_cast<unsigned int>(common.m_opersize);
 
     std::ios_base::fmtflags origff = os.flags();
     os << " LockRepPre=" << std::hex << std::setfill('0') << std::setw(2)
-       << ((unsigned int)common.m_lockrep_pre) << std::setfill(' ');
+       << static_cast<unsigned int>(common.m_lockrep_pre) << std::setfill(' ');
     os.flags(origff);
 
-    os << " BITS=" << ((unsigned int)common.m_mode_bits);
+    os << " BITS=" << static_cast<unsigned int>(common.m_mode_bits);
     os << '\n';
     return os;
 }

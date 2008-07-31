@@ -207,11 +207,11 @@ perfect_gen(std::ostream& out,
     for (std::vector<Keyword>::iterator kw = kws.begin(), end = kws.end();
          kw != end; ++kw)
     {
-        key *k = (key*)malloc(sizeof(key));
+        key *k = static_cast<key*>(malloc(sizeof(key)));
 
-        k->name_k = (char*)malloc(kw->name.length()+1);
+        k->name_k = static_cast<char*>(malloc(kw->name.length()+1));
         std::strcpy(k->name_k, kw->name.c_str());
-        k->len_k = (ub4)kw->name.length();
+        k->len_k = static_cast<ub4>(kw->name.length());
         k->next_k = keys;
         keys = k;
         nkeys++;

@@ -83,13 +83,13 @@ write_16(Bytes& bytes, unsigned short val)
 {
     if (bytes.is_bigendian())
     {
-        bytes.push_back((unsigned char)((val >> 8) & 0xFF));
-        bytes.push_back((unsigned char)(val & 0xFF));
+        bytes.push_back(static_cast<unsigned char>((val >> 8) & 0xFF));
+        bytes.push_back(static_cast<unsigned char>(val & 0xFF));
     }
     else
     {
-        bytes.push_back((unsigned char)(val & 0xFF));
-        bytes.push_back((unsigned char)((val >> 8) & 0xFF));
+        bytes.push_back(static_cast<unsigned char>(val & 0xFF));
+        bytes.push_back(static_cast<unsigned char>((val >> 8) & 0xFF));
     }
 }
 
@@ -101,17 +101,17 @@ write_32(Bytes& bytes, unsigned long val)
 {
     if (bytes.is_bigendian())
     {
-        bytes.push_back((unsigned char)((val >> 24) & 0xFF));
-        bytes.push_back((unsigned char)((val >> 16) & 0xFF));
-        bytes.push_back((unsigned char)((val >> 8) & 0xFF));
-        bytes.push_back((unsigned char)(val & 0xFF));
+        bytes.push_back(static_cast<unsigned char>((val >> 24) & 0xFF));
+        bytes.push_back(static_cast<unsigned char>((val >> 16) & 0xFF));
+        bytes.push_back(static_cast<unsigned char>((val >> 8) & 0xFF));
+        bytes.push_back(static_cast<unsigned char>(val & 0xFF));
     }
     else
     {
-        bytes.push_back((unsigned char)(val & 0xFF));
-        bytes.push_back((unsigned char)((val >> 8) & 0xFF));
-        bytes.push_back((unsigned char)((val >> 16) & 0xFF));
-        bytes.push_back((unsigned char)((val >> 24) & 0xFF));
+        bytes.push_back(static_cast<unsigned char>(val & 0xFF));
+        bytes.push_back(static_cast<unsigned char>((val >> 8) & 0xFF));
+        bytes.push_back(static_cast<unsigned char>((val >> 16) & 0xFF));
+        bytes.push_back(static_cast<unsigned char>((val >> 24) & 0xFF));
     }
 }
 

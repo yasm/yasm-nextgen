@@ -110,7 +110,7 @@ public:
     IntNum(int i)
     {
         m_type = INTNUM_L;
-        m_val.l = (long)i;
+        m_val.l = static_cast<long>(i);
     }
 
     /// Create a new intnum from LEB128-encoded form.
@@ -182,7 +182,7 @@ public:
 
     /// Set an intnum to an unsigned integer.
     /// @param val      integer value
-    void set(unsigned int val) { set((unsigned long)val); }
+    void set(unsigned int val) { set(static_cast<unsigned long>(val)); }
 
     /// Set an intnum to an signed integer.
     /// @param val      integer value

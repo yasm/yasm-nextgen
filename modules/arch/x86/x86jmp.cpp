@@ -256,7 +256,7 @@ X86Jmp::output(Bytecode& bc, BytecodeOutput& bc_out)
     bc_out.output(bytes);
 
     // Adjust relative displacement to end of bytecode
-    m_target.add_abs(-(long)size);
+    m_target.add_abs(-static_cast<long>(size));
     m_target.m_size = size*8;
     Location loc = {&bc, bc.get_fixed_len()+bytes.size()};
     Bytes& tbytes = bc_out.get_scratch();
@@ -321,7 +321,7 @@ append_jmp(BytecodeContainer& container,
         unsigned int i = (common.m_opersize == 16) ? 2 : 4;
 
         // Adjust relative displacement to end of bytecode
-        targetv.add_abs(-(long)i);
+        targetv.add_abs(-static_cast<long>(i));
         targetv.m_size = i*8;
     }
     bc.append_fixed(targetv);

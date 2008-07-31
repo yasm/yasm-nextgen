@@ -80,7 +80,8 @@ append_data(BytecodeContainer& container,
             bool append_zero)
 {
     Bytes& fixed = container.fresh_bytecode().get_fixed();
-    fixed.write((const unsigned char *)str.data(), str.length());
+    fixed.write(reinterpret_cast<const unsigned char *>(str.data()),
+                str.length());
     if (append_zero)
         write_8(fixed, 0);
 }
@@ -93,7 +94,7 @@ append_data(BytecodeContainer& container,
 {
     Bytes& fixed = container.fresh_bytecode().get_fixed();
     std::string::size_type len = str.length();
-    fixed.write((const unsigned char *)str.data(), len);
+    fixed.write(reinterpret_cast<const unsigned char *>(str.data()), len);
     if ((len % size) != 0)
         fixed.write(size-(len % size), 0);
     if (append_zero)

@@ -104,7 +104,8 @@ lookup(
 {
     register unsigned long a,b,c;
     register size_t len;
-    register const unsigned char *k = (const unsigned char *)sk;
+    register const unsigned char *k =
+        reinterpret_cast<const unsigned char*>(sk);
 
     // Set up the internal state
     len = length;
@@ -114,33 +115,39 @@ lookup(
     //---------------------------------------- handle most of the key
     while (len >= 12)
     {
-        a += (k[0] +((ub4)k[1]<<8) +((ub4)k[2]<<16) +((ub4)k[3]<<24));
+        a += (k[0] +(static_cast<ub4>(k[1])<<8)
+                   +(static_cast<ub4>(k[2])<<16)
+                   +(static_cast<ub4>(k[3])<<24));
         a &= 0xffffffff;
-        b += (k[4] +((ub4)k[5]<<8) +((ub4)k[6]<<16) +((ub4)k[7]<<24));
+        b += (k[4] +(static_cast<ub4>(k[5])<<8)
+                   +(static_cast<ub4>(k[6])<<16)
+                   +(static_cast<ub4>(k[7])<<24));
         b &= 0xffffffff;
-        c += (k[8] +((ub4)k[9]<<8) +((ub4)k[10]<<16)+((ub4)k[11]<<24));
+        c += (k[8] +(static_cast<ub4>(k[9])<<8)
+                   +(static_cast<ub4>(k[10])<<16)
+                   +(static_cast<ub4>(k[11])<<24));
         c &= 0xffffffff;
         mix(a,b,c);
         k += 12; len -= 12;
     }
 
     //------------------------------------- handle the last 11 bytes
-    c += (ub4)length;
+    c += static_cast<ub4>(length);
     switch(len)              // all the case statements fall through
     {
-        case 11: c+=((ub4)k[10]<<24);
-        case 10: c+=((ub4)k[9]<<16);
-        case 9 : c+=((ub4)k[8]<<8);
+        case 11: c+=(static_cast<ub4>(k[10])<<24);
+        case 10: c+=(static_cast<ub4>(k[9])<<16);
+        case 9 : c+=(static_cast<ub4>(k[8])<<8);
                  c &= 0xffffffff;
             // the first byte of c is reserved for the length
-        case 8 : b+=((ub4)k[7]<<24);
-        case 7 : b+=((ub4)k[6]<<16);
-        case 6 : b+=((ub4)k[5]<<8);
+        case 8 : b+=(static_cast<ub4>(k[7])<<24);
+        case 7 : b+=(static_cast<ub4>(k[6])<<16);
+        case 6 : b+=(static_cast<ub4>(k[5])<<8);
         case 5 : b+=k[4];
                  b &= 0xffffffff;
-        case 4 : a+=((ub4)k[3]<<24);
-        case 3 : a+=((ub4)k[2]<<16);
-        case 2 : a+=((ub4)k[1]<<8);
+        case 4 : a+=(static_cast<ub4>(k[3])<<24);
+        case 3 : a+=(static_cast<ub4>(k[2])<<16);
+        case 2 : a+=(static_cast<ub4>(k[1])<<8);
         case 1 : a+=k[0];
                  a &= 0xffffffff;
         // case 0: nothing left to add
@@ -201,7 +208,8 @@ checksum(
 {
     register unsigned long a,b,c,d,e,f,g,h;
     register size_t length;
-    register const unsigned char *k = (const unsigned char *)sk;
+    register const unsigned char *k =
+        reinterpret_cast<const unsigned char*>(sk);
 
     // Use the length and level; add in the golden ratio.
     length = len;
@@ -227,7 +235,7 @@ checksum(
     }
 
     //------------------------------------- handle the last 31 bytes
-    h += (ub4)length;
+    h += static_cast<ub4>(length);
     switch(len)
     {
         case 31: h+=(k[30]<<24);

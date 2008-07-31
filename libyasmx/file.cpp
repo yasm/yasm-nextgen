@@ -98,7 +98,8 @@ unescape(const std::string& str)
                         t[2] = '\0';
                         if (i != end && std::isxdigit(*i))
                             t[1] = *i++;
-                        out.push_back((char)strtoul((char *)t, NULL, 16));
+                        out.push_back(static_cast<char>(
+                            strtoul(static_cast<char*>(t), NULL, 16)));
                     }
                     else
                         out.push_back(0);
@@ -125,7 +126,7 @@ unescape(const std::string& str)
                                 v += *i++ - '0';
                             }
                         }
-                        out.push_back((char)v);
+                        out.push_back(static_cast<char>(v));
                         if (warn)
                             warn_set(WARN_GENERAL,
                                      N_("octal value out of range"));

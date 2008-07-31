@@ -64,10 +64,12 @@ write_leb128(Bytes& bytes, BitVector::wordptr val, bool sign)
     Bytes::size_type orig_size = bytes.size();
     unsigned long i = 0;
     for (; i<size-7; i += 7)
-        bytes.push_back((unsigned char)BitVector::Chunk_Read(val, 7, i) | 0x80);
+        bytes.push_back(static_cast<unsigned char>(
+            BitVector::Chunk_Read(val, 7, i) | 0x80));
     // last byte does not have MSB set
-    bytes.push_back((unsigned char)BitVector::Chunk_Read(val, 7, i));
-    return (unsigned long)(bytes.size()-orig_size);
+    bytes.push_back(static_cast<unsigned char>(
+        BitVector::Chunk_Read(val, 7, i)));
+    return static_cast<unsigned long>(bytes.size()-orig_size);
 }
 
 static unsigned long
@@ -132,10 +134,10 @@ write_sleb128(Bytes& bytes, long v)
 
     BitVector::Empty(val);
     if (v >= 0)
-        BitVector::Chunk_Store(val, 32, 0, (unsigned long)v);
+        BitVector::Chunk_Store(val, 32, 0, static_cast<unsigned long>(v));
     else
     {
-        BitVector::Chunk_Store(val, 32, 0, (unsigned long)(-v));
+        BitVector::Chunk_Store(val, 32, 0, static_cast<unsigned long>(-v));
         BitVector::Negate(val, val);
     }
     return write_leb128(bytes, val, true);
@@ -151,10 +153,10 @@ size_sleb128(long v)
 
     BitVector::Empty(val);
     if (v >= 0)
-        BitVector::Chunk_Store(val, 32, 0, (unsigned long)v);
+        BitVector::Chunk_Store(val, 32, 0, static_cast<unsigned long>(v));
     else
     {
-        BitVector::Chunk_Store(val, 32, 0, (unsigned long)(-v));
+        BitVector::Chunk_Store(val, 32, 0, static_cast<unsigned long>(-v));
         BitVector::Negate(val, val);
     }
     return size_leb128(val, true);

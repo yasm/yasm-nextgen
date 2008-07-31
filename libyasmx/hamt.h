@@ -144,7 +144,7 @@ hamt<Key,T,GetKey>::rehash_key(const Key& key, int Level)
     unsigned long a=31415, b=27183, vHash=0;
     for (typename Key::const_iterator i=key.begin(), end=key.end();
          i != end; ++i, a*=b)
-        vHash = a*vHash*(unsigned long)Level + *i;
+        vHash = a*vHash*static_cast<unsigned long>(Level) + *i;
     return vHash;
 }
 
@@ -166,7 +166,7 @@ hamt<Key,T,GetKey>::rehash_key_nocase(const Key& key, int Level)
     unsigned long a=31415, b=27183, vHash=0;
     for (typename Key::const_iterator i=key.begin(), end=key.end();
          i != end; ++i, a*=b)
-        vHash = a*vHash*(unsigned long)Level + std::tolower(*i);
+        vHash = a*vHash*static_cast<unsigned long>(Level) + std::tolower(*i);
     return vHash;
 }
 
