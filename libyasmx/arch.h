@@ -30,9 +30,10 @@
 /// @endlicense
 ///
 #include <iosfwd>
-#include <map>
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include <boost/noncopyable.hpp>
 
@@ -242,16 +243,19 @@ public:
     /// @return Active machine name.
     virtual std::string get_machine() const = 0;
 
+    /// Vector of machine keyword/name pairs.  The first element in the pair
+    /// is the keyword used to select the machine with set_machine(), and the
+    /// second element is a one-line description of the machine.
+    typedef std::vector<std::pair<std::string, std::string> > MachineNames;
+
     /// Get available machines.
     /// A number of different machine types may be associated with a single
     /// architecture.  These may be specific CPU's, but the ABI used to
     /// interface with the architecture should be the primary differentiator
     /// between machines.  Some object formats (ELF) use the machine to
     /// determine parameters within the generated output.
-    /// @return Map of all machines.  The key is the keyword used to select
-    ///         the machine with set_machine(), and the value is a one-line
-    ///         description of the machine.
-    virtual std::map<std::string, std::string> get_machines() const = 0;
+    /// @return Machine keyword/name pairs.
+    virtual MachineNames get_machines() const = 0;
 
     /// Get architecture's active address size, in bits.
     /// @return Active address size (in bits).

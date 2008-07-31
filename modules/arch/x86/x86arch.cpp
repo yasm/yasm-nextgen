@@ -186,12 +186,12 @@ X86Arch::get_machine() const
         return "x86";
 }
 
-std::map<std::string, std::string>
+Arch::MachineNames
 X86Arch::get_machines() const
 {
-    std::map<std::string, std::string> machines;
-    machines["x86"] = "IA-32 and derivatives";
-    machines["amd64"] = "AMD64";
+    MachineNames machines;
+    machines.push_back(std::make_pair("x86", "IA-32 and derivatives"));
+    machines.push_back(std::make_pair("amd64", "AMD64"));
     return machines;
 }
 

@@ -119,7 +119,7 @@ public:
     unsigned int get_min_insn_len() const;
     bool set_machine(const std::string& machine);
     std::string get_machine() const;
-    std::map<std::string, std::string> get_machines() const;
+    MachineNames get_machines() const;
     unsigned int get_address_size() const;
 
     bool set_var(const std::string& var, unsigned long val);

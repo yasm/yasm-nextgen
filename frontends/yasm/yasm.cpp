@@ -542,10 +542,9 @@ main(int argc, const char* argv[])
         std::cout << String::compose(_("Available %1 for %2 `%3':"),
                                      _("machines"), _("architecture"),
                                      arch_keyword) << '\n';
-        std::map<std::string, std::string> machines =
-            arch_auto->get_machines();
+        yasm::Arch::MachineNames machines = arch_auto->get_machines();
 
-        for (std::map<std::string, std::string>::const_iterator
+        for (yasm::Arch::MachineNames::const_iterator
              i=machines.begin(), end=machines.end(); i != end; ++i)
             print_list_keyword_desc(i->second, i->first);
         return EXIT_SUCCESS;
