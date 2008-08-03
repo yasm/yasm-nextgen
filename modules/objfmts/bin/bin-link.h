@@ -47,7 +47,7 @@ namespace bin
 {
 
 class BinObject;
-class BinSectionData;
+struct BinSectionData;
 
 class BinGroup;
 typedef stdx::ptr_vector<BinGroup> BinGroups;
@@ -91,7 +91,7 @@ public:
 
 private:
     bool lma_create_group(Section& sect);
-    bool check_lma_overlap(const Section& sect, const Section& sect);
+    bool check_lma_overlap(const Section& sect, const Section& other);
 
     void output_value(Value& value, Bytes& bytes, unsigned int destsize,
                       /*@unused@*/ unsigned long offset, Bytecode& bc,
