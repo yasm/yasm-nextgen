@@ -72,7 +72,7 @@ static const int HIDDEN_WORDS = 3;
 // mask for least significant bit
 #define LSBMASK 1U
 // mask for most significant bit
-#define MSBMASK (LSBMASK << MODMASK)
+#define MSBMASK ((LSBMASK) << (MODMASK))
 
 // # of bits in unsigned long
 #define LONGBITS static_cast<N_word>(std::numeric_limits<N_long>::digits)
