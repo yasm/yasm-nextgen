@@ -26,6 +26,9 @@
 //
 #include "object_format.h"
 
+#include "errwarn.h"
+#include "util.h"
+
 
 namespace yasm
 {
@@ -52,6 +55,12 @@ ObjectFormat::set_object(Object* object)
     m_object = object;
     initialize();
     return true;
+}
+
+void
+ObjectFormat::read(std::istream& is)
+{
+    throw NotImplementedError(N_("object format does not support reading"));
 }
 
 bool

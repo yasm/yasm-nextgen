@@ -95,6 +95,13 @@ public:
     /// @param parser       parser keyword
     virtual void init_symbols(const std::string& parser);
 
+    /// Read object file into associated object.
+    /// May create sections, relocations, and bytecodes, as well as modify
+    /// any other portion of associated object.
+    /// The default implementation always throws NotImplementedError.
+    /// @param is           input object file
+    virtual void read(std::istream& is);
+
     /// Write out (post-optimized) sections to the object file.
     /// This function may call #Symbol and #Object functions as necessary
     /// to retrieve symbolic information.
