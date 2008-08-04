@@ -1,0 +1,35 @@
+TODO list (no particular order):
+
+Key:
+- No work done
++ Work started
+* Significant work performed
+
+- Translate more object formats from C version:
+-   coff/win32/win64
+-   dbg
++   elf
+-   macho
+-   rdf
++   xdf
++ Object format reading core support
+- Object format reading for various formats
+- Disassembly core support
+- x86 disassembly
+* "Flattened" expression trees (Expr reimplementation) to reduce memory allocs
+- More unit tests
+- Optimize align to detect already aligned case and not create new bytecode
+  (will need adding align member to bytecode?)
+- Optimize org to detect same-offset case and not create new bytecode
+- Optimize x86 append_foo functions for less new bytecode creation
+- Make object format output const (no modification of Object)
+- Add NASM preprocessor
+- Add list format support
+- Don't install Boost-dependent headers;
+  note: will probably always depend on Boost for build (Boost.Pool, Boost.Test)
+- Provide separate "mini-Boost" package for easier builds (mainly on Windows)
+- Re-examine standard plugin handling: shared lib or like "external" plugin?
+- Scan plugin directory and load all plugins present?
+- Allow subsetting of standard plugins selection for static builds (yasm-lite)
+- Increase Doxygen code documentation coverage
+- Improve consistency of pointers vs. references
