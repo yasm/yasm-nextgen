@@ -94,7 +94,7 @@ IF(NOT BUILD_STATIC)
         file.h
         floatnum.h
         ${CMAKE_CURRENT_BINARY_DIR}/functional.h
-        hamt.h
+        #hamt.h         # Don't install; only included by object.cpp.
         insn.h
         interval_tree.h
         intnum.h
