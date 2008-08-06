@@ -101,7 +101,7 @@ Value::Value(unsigned int size, std::auto_ptr<Expr> e)
 {
 }
 
-Value::Value(unsigned int size, /*@null@*/ Symbol* sym)
+Value::Value(unsigned int size, SymbolRef sym)
     : m_abs(0),
       m_rel(sym),
       m_wrt(0),
@@ -202,7 +202,7 @@ Value::operator= (const Value& rhs)
 }
 
 void
-Value::set_curpos_rel(Symbol& abs_sym, bool ip_rel)
+Value::set_curpos_rel(SymbolRef abs_sym, bool ip_rel)
 {
     m_curpos_rel = true;
     m_ip_rel = ip_rel;
@@ -210,7 +210,7 @@ Value::set_curpos_rel(Symbol& abs_sym, bool ip_rel)
     // have a relative portion of the value.  If one doesn't exist, point
     // to a custom absolute symbol.
     if (!m_rel)
-        m_rel = &abs_sym;
+        m_rel = abs_sym;
 }
 
 bool
@@ -390,11 +390,12 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                             {
                                 // Replace positive portion with curpos
                                 //j->destroy(); // unneeded as it's a symbol
-                                std::auto_ptr<Symbol> curpos(new Symbol("."));
-                                curpos->define_curpos(expr_loc, e->get_line());
-                                *j = curpos.get();
                                 Object* object = container->get_object();
-                                object->add_non_table_symbol(curpos);
+                                SymbolRef curpos =
+                                    object->add_non_table_symbol(
+                                        std::auto_ptr<Symbol>(new Symbol(".")));
+                                curpos->define_curpos(expr_loc, e->get_line());
+                                *j = curpos;
                             }
                             break;      // stop looking
                         }

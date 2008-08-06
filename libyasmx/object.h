@@ -38,6 +38,7 @@
 #include "export.h"
 #include "marg_ostream_fwd.h"
 #include "ptr_vector.h"
+#include "symbolref.h"
 
 
 namespace yasm
@@ -131,17 +132,17 @@ public:
     /// relocating absolute current-position-relative values.
     /// @see Value::set_curpos_rel().
     /// @return Absolute symbol.
-    Symbol& get_abs_sym();
+    SymbolRef get_abs_sym();
 
     /// Find a symbol by name.
     /// @param name         symbol name
     /// @return Symbol matching name, or NULL if no match found.
-    /*@null@*/ Symbol* find_sym(const std::string& name);
+    SymbolRef find_sym(const std::string& name);
 
     /// Get (creating if necessary) a symbol by name.
     /// @param name         symbol name
     /// @return Symbol matching name.
-    Symbol& get_sym(const std::string& name);
+    SymbolRef get_sym(const std::string& name);
 
     typedef stdx::ptr_vector<Symbol>::iterator symbol_iterator;
     typedef stdx::ptr_vector<Symbol>::const_iterator const_symbol_iterator;
@@ -155,13 +156,15 @@ public:
     /// Add an arbitrary symbol to the end of the symbol table.
     /// @note Does /not/ index the symbol by name.
     /// @param sym      symbol
-    void append_symbol(std::auto_ptr<Symbol> sym);
+    /// @return Reference to symbol.
+    SymbolRef append_symbol(std::auto_ptr<Symbol> sym);
 
     /// Have the object manage an arbitrary symbol.  Useful for symbols
     /// that shouldn't be in the table, but need to have memory management
     /// tied up with the object (such as curpos symbols).
     /// @param sym      symbol
-    void add_non_table_symbol(std::auto_ptr<Symbol> sym);
+    /// @return Reference to symbol.
+    SymbolRef add_non_table_symbol(std::auto_ptr<Symbol> sym);
 
     /// Finalize symbol table after parsing stage.  Checks for symbols that
     /// are used but never defined or declared #EXTERN or #COMMON.
@@ -171,7 +174,11 @@ public:
     void symbols_finalize(Errwarns& errwarns, bool undef_extern);
 
     /// Add a special symbol.
-    void add_special_sym(const std::string& parser, std::auto_ptr<Symbol> sym);
+    /// @param parser   parser
+    /// @param sym      symbol
+    /// @return Reference to symbol.
+    SymbolRef add_special_sym(const std::string& parser,
+                              std::auto_ptr<Symbol> sym);
 
     /// Find a special symbol.  Special symbols are generally used to generate
     /// special relocation types via the WRT mechanism.
@@ -180,8 +187,8 @@ public:
     ///                     prefix)
     /// @param parser       parser keyword
     /// @return NULL if unrecognized, otherwise special symbol.
-    /*@null@*/ Symbol* find_special_sym(const std::string& name,
-                                        const std::string& parser);
+    SymbolRef find_special_sym(const std::string& name,
+                               const std::string& parser);
 
     /*@null@*/ Section* get_cur_section() { return m_cur_section; }
     const /*@null@*/ Section* get_cur_section() const { return m_cur_section; }

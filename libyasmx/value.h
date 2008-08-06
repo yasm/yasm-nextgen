@@ -36,6 +36,7 @@
 #include "intnum.h"
 #include "location.h"
 #include "marg_ostream_fwd.h"
+#include "symbolref.h"
 
 
 namespace yasm
@@ -44,7 +45,6 @@ namespace yasm
 class Arch;
 class Bytes;
 class Expr;
-class Symbol;
 
 /// A value.  May be absolute or relative.  Outside the parser, #Expr
 /// should only be used for absolute exprs.  Anything that could contain
@@ -70,7 +70,7 @@ public:
     /// initialized.
     /// @param sym      symrec
     /// @param size     value size (in bits)
-    Value(unsigned int size, /*@null@*/ Symbol* sym);
+    Value(unsigned int size, SymbolRef sym);
 
     /// Copy constructor.
     /// @param oth      original value
@@ -94,7 +94,7 @@ public:
     ///                 portion
     /// @param ip_rel   if nonzero, indicates IP-relative data relocation,
     ///                 sometimes used to generate special relocations
-    void set_curpos_rel(Symbol& abs_sym, bool ip_rel);
+    void set_curpos_rel(SymbolRef abs_sym, bool ip_rel);
 
     /// Break an #Expr into a #Value constituent parts.  Extracts the
     /// relative portion of the value, SEG and WRT portions, and top-level
@@ -182,10 +182,10 @@ private:
 public:
     /// The relative portion of the value.  This is the portion that may
     /// need to generate a relocation.  May be NULL if no relative portion.
-    /*@null@*/ /*@dependent@*/ Symbol* m_rel;
+    SymbolRef m_rel;
 
     /// What the relative portion is in reference to.  NULL if the default.
-    /*@null@*/ /*@dependent@*/ Symbol* m_wrt;
+    SymbolRef m_wrt;
 
     /// If the segment of the relative portion should be used, not the
     /// relative portion itself.  Boolean.

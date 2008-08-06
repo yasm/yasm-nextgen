@@ -127,7 +127,7 @@ public:
                unsigned int bits,
                bool address16_op,
                unsigned char* rex,
-               Symbol& abs_sym);
+               SymbolRef abs_sym);
 
     /// Finalize the effective address.
     void finalize(Location loc);
@@ -148,8 +148,8 @@ private:
     bool check_3264(unsigned int addrsize,
                     unsigned int bits,
                     unsigned char* rex,
-                    Symbol& abs_sym);
-    bool check_16(unsigned int bits, bool address16_op, Symbol& abs_sym);
+                    SymbolRef abs_sym);
+    bool check_16(unsigned int bits, bool address16_op, SymbolRef abs_sym);
 };
 
 }}} // namespace yasm::arch::x86

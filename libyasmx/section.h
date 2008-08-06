@@ -40,6 +40,7 @@
 #include "export.h"
 #include "marg_ostream_fwd.h"
 #include "ptr_vector.h"
+#include "symbolref.h"
 
 
 namespace yasm
@@ -49,19 +50,18 @@ class Bytecode;
 class Errwarns;
 class IntNum;
 class Object;
-class Symbol;
 
 /// Basic YASM relocation.  Object formats will need to extend this
 /// structure with additional fields for relocation type, etc.
 class YASM_LIB_EXPORT Reloc
 {
 public:
-    Reloc(std::auto_ptr<IntNum> addr, Symbol* sym);
+    Reloc(std::auto_ptr<IntNum> addr, SymbolRef sym);
     virtual ~Reloc();
 
 protected:
     boost::scoped_ptr<IntNum> m_addr;   ///< Offset (address) within section
-    Symbol* m_sym;                      ///< Relocated symbol
+    SymbolRef m_sym;                    ///< Relocated symbol
 };
 
 /// A section.

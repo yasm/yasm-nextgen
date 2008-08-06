@@ -120,6 +120,7 @@ IF(NOT BUILD_STATIC)
         registry.h
         section.h
         symbol.h
+        symbolref.h
         symbol_util.h
         value.h
         DESTINATION ${INCLUDE_INSTALL_DIR}/libyasmx

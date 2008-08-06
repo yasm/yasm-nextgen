@@ -818,7 +818,7 @@ Expr::get_intnum()
         return 0;
 }
 
-Symbol*
+SymbolRef
 Expr::get_symbol() const
 {
     if (m_op == Op::IDENT)
