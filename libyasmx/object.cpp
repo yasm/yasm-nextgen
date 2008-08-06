@@ -183,7 +183,7 @@ Object::get_abs_sym()
         return sym;
 
     // Define it
-    std::auto_ptr<Expr> v(new Expr(0));
+    std::auto_ptr<Expr> v(new Expr(IntNum(0)));
     sym->define_equ(v, 0);
     sym->use(0);
     return sym;

@@ -1371,7 +1371,7 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
                 static_cast<const X86Register*>(op.get_reg()))
             {
                 if (m_imm.get() == 0)
-                    m_imm.reset(new Expr((reg->num() << 4) & 0xF0));
+                    m_imm.reset(new Expr(IntNum((reg->num() << 4) & 0xF0)));
                 else
                 {
                     m_imm.reset(new Expr(
