@@ -192,7 +192,7 @@ Object::get_abs_sym()
 SymbolRef
 Object::find_sym(const std::string& name)
 {
-    return m_impl->sym_map.find(name);
+    return SymbolRef(m_impl->sym_map.find(name));
 }
 
 SymbolRef
@@ -201,11 +201,11 @@ Object::get_sym(const std::string& name)
     std::auto_ptr<Symbol> sym(new Symbol(name));
     Symbol* sym2 = m_impl->sym_map.insert(sym.get());
     if (sym2)
-        return sym2;
+        return SymbolRef(sym2);
 
     sym2 = sym.get();
     m_symbols.push_back(sym.release());
-    return sym2;
+    return SymbolRef(sym2);
 }
 
 SymbolRef
@@ -213,7 +213,7 @@ Object::append_symbol(std::auto_ptr<Symbol> sym)
 {
     Symbol* sptr = sym.get();
     m_symbols.push_back(sym.release());
-    return sptr;
+    return SymbolRef(sptr);
 }
 
 SymbolRef
@@ -221,7 +221,7 @@ Object::add_non_table_symbol(std::auto_ptr<Symbol> sym)
 {
     Symbol* sptr = sym.get();
     m_non_table_syms.push_back(sym.release());
-    return sptr;
+    return SymbolRef(sptr);
 }
 
 void
@@ -258,7 +258,7 @@ Object::add_special_sym(const std::string& parser, std::auto_ptr<Symbol> sym)
     Symbol* sptr = sym.get();
     m_impl->special_sym_map[parser]->insert(sptr);
     m_non_table_syms.push_back(sym.release());
-    return sptr;
+    return SymbolRef(sptr);
 }
 
 SymbolRef
@@ -266,8 +266,8 @@ Object::find_special_sym(const std::string& name, const std::string& parser)
 {
     Impl::SymbolTable* tab = m_impl->special_sym_map[parser];
     if (!tab)
-        return 0;
-    return tab->find(name);
+        return SymbolRef(0);
+    return SymbolRef(tab->find(name));
 }
 
 } // namespace yasm

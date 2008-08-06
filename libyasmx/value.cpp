@@ -165,8 +165,8 @@ Value::clear()
 {
     delete m_abs;
     m_abs = 0;
-    m_rel = 0;
-    m_wrt = 0;
+    m_rel = SymbolRef(0);
+    m_wrt = SymbolRef(0);
     m_seg_of = false;
     m_rshift = 0;
     m_curpos_rel = false;
@@ -365,8 +365,8 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                 {
                     for (j=terms.begin(); j != end; ++j)
                     {
-                        Symbol* sym2;
-                        if ((sym2 = j->get_sym())
+                        SymbolRef sym2 = j->get_sym();
+                        if (sym2
                             && !sym2->get_equ()
                             && !sym2->is_special()
                             && !used[j-terms.begin()])
@@ -412,8 +412,8 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
             for (ExprTerms::iterator i=terms.begin(), end=terms.end();
                  i != end; ++i)
             {
-                Symbol* sym;
-                if ((sym = i->get_sym()) && !used[i-terms.begin()])
+                SymbolRef sym = i->get_sym();
+                if (sym && !used[i-terms.begin()])
                 {
                     if (m_rel || ssym_not_ok)
                         return true;
@@ -491,7 +491,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
             // Okay for single symrec (can only be done once).
             // Not okay for anything BUT a single symrec as an immediate
             // child.
-            Symbol* sym = terms[0].get_sym();
+            SymbolRef sym = terms[0].get_sym();
             if (!sym)
                 return true;
 
@@ -515,7 +515,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
             // WRT reg is left in expr for arch to look at.
 
             // Handle RHS
-            if (Symbol* sym = terms[1].get_sym())
+            if (SymbolRef sym = terms[1].get_sym())
             {
                 if (m_wrt)
                     return true;
@@ -531,7 +531,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                 return true;
 
             // Handle LHS
-            if (Symbol* sym = terms[0].get_sym())
+            if (SymbolRef sym = terms[0].get_sym())
             {
                 if (m_rel || ssym_not_ok)
                     return true;
@@ -614,7 +614,7 @@ Value::finalize(Location loc)
                 m_abs = 0;
             }
         }
-        else if (Symbol* sym = m_abs->get_symbol())
+        else if (SymbolRef sym = m_abs->get_symbol())
         {
             m_rel = sym;
             delete m_abs;
