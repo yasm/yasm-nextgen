@@ -59,6 +59,11 @@ public:
     Reloc(std::auto_ptr<IntNum> addr, SymbolRef sym);
     virtual ~Reloc();
 
+    SymbolRef get_sym() { return m_sym; }
+    const SymbolRef get_sym() const { return m_sym; }
+
+    const IntNum& get_addr() const { return *m_addr; }
+
 protected:
     boost::scoped_ptr<IntNum> m_addr;   ///< Offset (address) within section
     SymbolRef m_sym;                    ///< Relocated symbol
