@@ -29,6 +29,8 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include <iosfwd>
+
 #include <boost/noncopyable.hpp>
 
 #include "bytes.h"
@@ -148,6 +150,24 @@ public:
     void output(Value& value, Bytes& bytes, Location loc, int warn);
     void output_gap(unsigned int size);
     void output(const Bytes& bytes);
+};
+
+/// Stream output specialization of BytecodeOutput.
+/// Handles gaps by converting to 0 and generating a warning.
+/// This does not implement Value output function, so it's still a virtual
+/// base class.
+class YASM_LIB_EXPORT BytecodeStreamOutput : public BytecodeOutput
+{
+public:
+    BytecodeStreamOutput(std::ostream& os) : m_os(os) {}
+    ~BytecodeStreamOutput();
+
+    using BytecodeOutput::output;
+    void output_gap(unsigned int size);
+    void output(const Bytes& bytes);
+
+protected:
+    std::ostream& m_os;
 };
 
 } // namespace yasm

@@ -26,6 +26,8 @@
 //
 #include "bc_output.h"
 
+#include <ostream>
+
 #include "errwarn.h"
 #include "util.h"
 
@@ -72,6 +74,37 @@ BytecodeNoOutput::output(const Bytes& bytes)
 {
     warn_set(WARN_GENERAL,
         N_("initialized space declared in nobits section: ignoring"));
+}
+
+BytecodeStreamOutput::~BytecodeStreamOutput()
+{
+}
+
+void
+BytecodeStreamOutput::output_gap(unsigned int size)
+{
+    // Warn that gaps are converted to 0 and write out the 0's.
+    static const unsigned long BLOCK_SIZE = 4096;
+
+    warn_set(WARN_UNINIT_CONTENTS,
+        N_("uninitialized space declared in code/data section: zeroing"));
+    // Write out in chunks
+    Bytes& bytes = get_scratch();
+    bytes.resize(BLOCK_SIZE);
+    while (size > BLOCK_SIZE)
+    {
+        m_os << bytes;
+        size -= BLOCK_SIZE;
+    }
+    bytes.resize(size);
+    m_os << bytes;
+}
+
+void
+BytecodeStreamOutput::output(const Bytes& bytes)
+{
+    // Output bytes to file
+    m_os << bytes;
 }
 
 } // namespace yasm

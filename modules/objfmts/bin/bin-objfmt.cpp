@@ -192,7 +192,7 @@ BinObject::output_map(const IntNum& origin,
         out.output_sections_symbols();
 }
 
-class Output : public BytecodeOutput
+class Output : public BytecodeStreamOutput
 {
 public:
     Output(std::ostream& os, Object& object);
@@ -203,20 +203,17 @@ public:
                         Errwarns& errwarns);
 
     // OutputBytecode overrides
-    using BytecodeOutput::output;
+    using BytecodeStreamOutput::output;
     void output(Value& value, Bytes& bytes, Location loc, int warn);
-    void output_gap(unsigned int size);
-    void output(const Bytes& bytes);
 
 private:
     Object& m_object;
-    std::ostream& m_os;
     BytecodeNoOutput m_no_output;
 };
 
 Output::Output(std::ostream& os, Object& object)
-    : m_object(object),
-      m_os(os)
+    : BytecodeStreamOutput(os),
+      m_object(object)
 {
 }
 
@@ -335,33 +332,6 @@ done:
     // Couldn't output, assume it contains an external reference.
     throw Error(
         N_("binary object format does not support external references"));
-}
-
-void
-Output::output_gap(unsigned int size)
-{
-    // Warn that gaps are converted to 0 and write out the 0's.
-    static const unsigned long BLOCK_SIZE = 4096;
-
-    warn_set(WARN_UNINIT_CONTENTS,
-        N_("uninitialized space declared in code/data section: zeroing"));
-    // Write out in chunks
-    Bytes& bytes = get_scratch();
-    bytes.resize(BLOCK_SIZE);
-    while (size > BLOCK_SIZE)
-    {
-        m_os << bytes;
-        size -= BLOCK_SIZE;
-    }
-    bytes.resize(size);
-    m_os << bytes;
-}
-
-void
-Output::output(const Bytes& bytes)
-{
-    // Output bytes to file
-    m_os << bytes;
 }
 
 static void
