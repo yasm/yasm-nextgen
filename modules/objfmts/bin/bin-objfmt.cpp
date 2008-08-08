@@ -192,37 +192,6 @@ BinObject::output_map(const IntNum& origin,
         out.output_sections_symbols();
 }
 
-class NoOutput : public BytecodeOutput
-{
-public:
-    NoOutput() {}
-    ~NoOutput() {}
-
-    using BytecodeOutput::output;
-    void output(Value& value, Bytes& bytes, Location loc, int warn);
-    void output_gap(unsigned int size);
-    void output(const Bytes& bytes);
-};
-
-void
-NoOutput::output(Value& value, Bytes& bytes, Location loc, int warn)
-{
-    // unnecessary; we don't actually output it anyway
-}
-
-void
-NoOutput::output_gap(unsigned int size)
-{
-    // expected
-}
-
-void
-NoOutput::output(const Bytes& bytes)
-{
-    warn_set(WARN_GENERAL,
-        N_("initialized space declared in nobits section: ignoring"));
-}
-
 class Output : public BytecodeOutput
 {
 public:
@@ -242,7 +211,7 @@ public:
 private:
     Object& m_object;
     std::ostream& m_os;
-    NoOutput m_no_output;
+    BytecodeNoOutput m_no_output;
 };
 
 Output::Output(std::ostream& os, Object& object)

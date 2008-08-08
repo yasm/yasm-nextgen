@@ -136,6 +136,20 @@ private:
     Bytes m_scratch;
 };
 
+/// No-output specialization of BytecodeOutput.
+/// Warns on all attempts to output non-gaps.
+class YASM_LIB_EXPORT BytecodeNoOutput : public BytecodeOutput
+{
+public:
+    BytecodeNoOutput() {}
+    ~BytecodeNoOutput();
+
+    using BytecodeOutput::output;
+    void output(Value& value, Bytes& bytes, Location loc, int warn);
+    void output_gap(unsigned int size);
+    void output(const Bytes& bytes);
+};
+
 } // namespace yasm
 
 #endif

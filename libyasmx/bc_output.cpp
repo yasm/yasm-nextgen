@@ -26,6 +26,9 @@
 //
 #include "bc_output.h"
 
+#include "errwarn.h"
+#include "util.h"
+
 
 namespace yasm
 {
@@ -46,6 +49,29 @@ BytecodeOutput::output(SymbolRef sym,
                        int warn)
 {
     output(bytes);
+}
+
+BytecodeNoOutput::~BytecodeNoOutput()
+{
+}
+
+void
+BytecodeNoOutput::output(Value& value, Bytes& bytes, Location loc, int warn)
+{
+    // unnecessary; we don't actually output it anyway
+}
+
+void
+BytecodeNoOutput::output_gap(unsigned int size)
+{
+    // expected
+}
+
+void
+BytecodeNoOutput::output(const Bytes& bytes)
+{
+    warn_set(WARN_GENERAL,
+        N_("initialized space declared in nobits section: ignoring"));
 }
 
 } // namespace yasm
