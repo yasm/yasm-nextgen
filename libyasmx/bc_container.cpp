@@ -28,6 +28,7 @@
 
 #include "util.h"
 
+#include "bc_output.h"
 #include "bytecode.h"
 #include "bytecode_util.h"
 #include "errwarn.h"

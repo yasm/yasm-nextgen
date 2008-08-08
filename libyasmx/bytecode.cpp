@@ -29,6 +29,7 @@
 #include "util.h"
 
 #include "bc_container.h"
+#include "bc_output.h"
 #include "bytes.h"
 #include "errwarn.h"
 #include "expr.h"
@@ -43,24 +44,6 @@
 
 namespace yasm
 {
-
-BytecodeOutput::BytecodeOutput()
-{
-}
-
-BytecodeOutput::~BytecodeOutput()
-{
-}
-
-void
-BytecodeOutput::output(SymbolRef sym,
-                       Bytes& bytes,
-                       Bytecode& bc,
-                       unsigned int valsize,
-                       int warn)
-{
-    output(bytes);
-}
 
 Bytecode::Contents::Contents()
 {

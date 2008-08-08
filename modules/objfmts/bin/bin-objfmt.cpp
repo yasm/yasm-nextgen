@@ -29,6 +29,7 @@
 #include <fstream>
 #include <iostream>
 
+#include <libyasmx/bc_output.h>
 #include <libyasmx/bitcount.h>
 #include <libyasmx/bytecode.h>
 #include <libyasmx/bytes.h>

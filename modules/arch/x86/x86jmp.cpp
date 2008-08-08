@@ -29,6 +29,7 @@
 #include "util.h"
 
 #include <libyasmx/bc_container.h>
+#include <libyasmx/bc_output.h>
 #include <libyasmx/bytecode.h>
 #include <libyasmx/bytes.h>
 #include <libyasmx/errwarn.h>

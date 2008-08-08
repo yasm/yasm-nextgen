@@ -31,6 +31,7 @@
 #include <boost/scoped_ptr.hpp>
 
 #include "bc_container.h"
+#include "bc_output.h"
 #include "bytecode.h"
 #include "bytes.h"
 #include "compose.h"

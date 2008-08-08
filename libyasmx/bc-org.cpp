@@ -28,6 +28,7 @@
 
 #include "bc_container.h"
 #include "bc_container_util.h"
+#include "bc_output.h"
 #include "bytecode.h"
 #include "bytes.h"
 #include "errwarn.h"

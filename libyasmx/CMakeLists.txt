@@ -8,6 +8,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     assembler.cpp
     assoc_data.cpp
     bc_container.cpp
+    bc_output.cpp
     bc-align.cpp
     bc-data.cpp
     bc-incbin.cpp
@@ -76,6 +77,7 @@ IF(NOT BUILD_STATIC)
         assoc_data.h
         bc_container.h
         bc_container_util.h
+        bc_output.h
         bitcount.h
         bitvect.h
         bytecode.h
