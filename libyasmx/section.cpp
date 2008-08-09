@@ -35,8 +35,8 @@
 namespace yasm
 {
 
-Reloc::Reloc(std::auto_ptr<IntNum> addr, SymbolRef sym)
-    : m_addr(addr.release()),
+Reloc::Reloc(const IntNum& addr, SymbolRef sym)
+    : m_addr(addr),
       m_sym(sym)
 {
 }

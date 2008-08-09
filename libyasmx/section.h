@@ -33,11 +33,11 @@
 #include <string>
 
 #include <boost/noncopyable.hpp>
-#include <boost/scoped_ptr.hpp>
 
 #include "assoc_data.h"
 #include "bc_container.h"
 #include "export.h"
+#include "intnum.h"
 #include "marg_ostream_fwd.h"
 #include "ptr_vector.h"
 #include "symbolref.h"
@@ -48,7 +48,6 @@ namespace yasm
 
 class Bytecode;
 class Errwarns;
-class IntNum;
 class Object;
 
 /// Basic YASM relocation.  Object formats will need to extend this
@@ -56,17 +55,17 @@ class Object;
 class YASM_LIB_EXPORT Reloc
 {
 public:
-    Reloc(std::auto_ptr<IntNum> addr, SymbolRef sym);
+    Reloc(const IntNum& addr, SymbolRef sym);
     virtual ~Reloc();
 
     SymbolRef get_sym() { return m_sym; }
     const SymbolRef get_sym() const { return m_sym; }
 
-    const IntNum& get_addr() const { return *m_addr; }
+    const IntNum& get_addr() const { return m_addr; }
 
 protected:
-    boost::scoped_ptr<IntNum> m_addr;   ///< Offset (address) within section
-    SymbolRef m_sym;                    ///< Relocated symbol
+    IntNum m_addr;      ///< Offset (address) within section
+    SymbolRef m_sym;    ///< Relocated symbol
 };
 
 /// A section.
