@@ -120,8 +120,12 @@ public:
     void add_reloc(std::auto_ptr<Reloc> reloc)
     { m_relocs.push_back(reloc.release()); }
 
-    typedef stdx::ptr_vector<Reloc>::iterator reloc_iterator;
-    typedef stdx::ptr_vector<Reloc>::const_iterator const_reloc_iterator;
+    typedef stdx::ptr_vector<Reloc> Relocs;
+    typedef Relocs::iterator reloc_iterator;
+    typedef Relocs::const_iterator const_reloc_iterator;
+
+    Relocs& get_relocs() { return m_relocs; }
+    const Relocs& get_relocs() const { return m_relocs; }
 
     reloc_iterator relocs_begin() { return m_relocs.begin(); }
     const_reloc_iterator relocs_begin() const { return m_relocs.begin(); }
@@ -163,7 +167,7 @@ private:
     bool m_def;
 
     /// The relocations for the section.
-    stdx::ptr_vector<Reloc> m_relocs;
+    Relocs m_relocs;
     stdx::ptr_vector_owner<Reloc> m_relocs_owner;
 };
 
