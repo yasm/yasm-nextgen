@@ -52,7 +52,7 @@ class Object;
 
 /// Basic YASM relocation.  Object formats will need to extend this
 /// structure with additional fields for relocation type, etc.
-class YASM_LIB_EXPORT Reloc
+class YASM_LIB_EXPORT Reloc : private boost::noncopyable
 {
 public:
     Reloc(const IntNum& addr, SymbolRef sym);
