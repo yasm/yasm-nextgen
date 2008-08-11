@@ -767,19 +767,19 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
                 return false;
             break;
         case OPTM_Near:
-            if (targetmod->type() != X86TargetModifier::NEAR)
+            if (targetmod == 0 || targetmod->type() != X86TargetModifier::NEAR)
                 return false;
             break;
         case OPTM_Short:
-            if (targetmod->type() != X86TargetModifier::SHORT)
+            if (targetmod == 0 || targetmod->type() != X86TargetModifier::SHORT)
                 return false;
             break;
         case OPTM_Far:
-            if (targetmod->type() != X86TargetModifier::FAR)
+            if (targetmod == 0 || targetmod->type() != X86TargetModifier::FAR)
                 return false;
             break;
         case OPTM_To:
-            if (targetmod->type() != X86TargetModifier::TO)
+            if (targetmod == 0 || targetmod->type() != X86TargetModifier::TO)
                 return false;
             break;
         default:
