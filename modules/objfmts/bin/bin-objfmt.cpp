@@ -470,9 +470,28 @@ BinObject::dir_section(Object& object,
     std::string sectname = nvs.front().get_string();
 
     Section* sect = m_object->find_section(sectname);
-    if (!sect)
+    bool first = true;
+    if (sect)
+        first = sect->is_default();
+    else
         sect = append_section(sectname, line);
 
+    m_object->set_cur_section(sect);
+    sect->set_default(false);
+
+    // No name/values, so nothing more to do
+    if (nvs.size() <= 1)
+        return;
+
+    // Ignore flags if we've seen this section before
+    if (!first)
+    {
+        warn_set(WARN_GENERAL,
+                 N_("section flags ignored on section redeclaration"));
+        return;
+    }
+
+    // Parse section flags
     bool has_follows = false, has_vfollows = false;
     bool has_start = false, has_vstart = false;
     std::auto_ptr<Expr> start(0);
@@ -507,7 +526,7 @@ BinObject::dir_section(Object& object,
     helpers.add("execute", false, BIND::bind(&dir_flag_set, _1, &code, 1));
     helpers.add("noexecute", false, BIND::bind(&dir_flag_clear, _1, &code, 1));
 
-    helpers(nvs.begin()+1, nvs.end(), dir_nameval_warn);
+    helpers(++nvs.begin(), nvs.end(), dir_nameval_warn);
 
     if (start.get() != 0)
         bsd->start.reset(start.release());
@@ -552,8 +571,6 @@ BinObject::dir_section(Object& object,
 
     sect->set_bss(bss);
     sect->set_code(code);
-    sect->set_default(false);
-    m_object->set_cur_section(sect);
 }
 
 void
