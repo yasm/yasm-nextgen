@@ -284,7 +284,6 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr16)
     X86Register BP(X86Register::REG16, 5);
     X86Register SI(X86Register::REG16, 6);
     X86Register DI(X86Register::REG16, 7);
-    Symbol abs_sym("");
 
     struct eaform16
     {
@@ -354,8 +353,7 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr16)
                 X86EffAddr ea(false, e);
                 unsigned char addrsize = 0;
                 unsigned char rex = 0;
-                BOOST_CHECK_EQUAL(ea.check(&addrsize, 16, false, &rex,
-                                           SymbolRef(&abs_sym)),
+                BOOST_CHECK_EQUAL(ea.check(&addrsize, 16, false, &rex, 0),
                                   true);
                 BOOST_CHECK_EQUAL(ea.m_need_modrm, true);
                 BOOST_CHECK_EQUAL(ea.m_modrm, expect_modrm);
@@ -377,7 +375,6 @@ struct X86EffAddr32Fixture
 {
     X86EffAddr32Fixture();
     X86Register EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI;
-    Symbol abs_sym;
 };
 
 X86EffAddr32Fixture::X86EffAddr32Fixture()
@@ -389,7 +386,6 @@ X86EffAddr32Fixture::X86EffAddr32Fixture()
     , EBP(X86Register::REG32, 5)
     , ESI(X86Register::REG32, 6)
     , EDI(X86Register::REG32, 7)
-    , abs_sym("")
 {
 }
 
@@ -528,14 +524,12 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr32)
             unsigned char rex = 0;
             if (expect_error)
             {
-                BOOST_CHECK_THROW(ea.check(&addrsize, 32, false, &rex,
-                                           SymbolRef(&abs_sym)),
+                BOOST_CHECK_THROW(ea.check(&addrsize, 32, false, &rex, 0),
                                   ValueError);
             }
             else
             {
-                BOOST_CHECK_EQUAL(ea.check(&addrsize, 32, false, &rex,
-                                           SymbolRef(&abs_sym)),
+                BOOST_CHECK_EQUAL(ea.check(&addrsize, 32, false, &rex, 0),
                                   true);
                 BOOST_CHECK_EQUAL(ea.m_need_modrm, true);
                 BOOST_CHECK_EQUAL(ea.m_modrm, expect_modrm);
@@ -589,8 +583,7 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr32Hints)
             X86EffAddr ea(false, e);
             unsigned char addrsize = 0;
             unsigned char rex = 0;
-            BOOST_CHECK_EQUAL(ea.check(&addrsize, 32, false, &rex,
-                                       SymbolRef(&abs_sym)),
+            BOOST_CHECK_EQUAL(ea.check(&addrsize, 32, false, &rex, 0),
                               true);
             BOOST_CHECK_EQUAL(ea.m_need_modrm, true);
             BOOST_CHECK_EQUAL(ea.m_need_sib, true);
@@ -623,8 +616,7 @@ BOOST_AUTO_TEST_CASE(X86EffAddrInitExpr32HintESP)
         X86EffAddr ea(false, e);
         unsigned char addrsize = 0;
         unsigned char rex = 0;
-        BOOST_CHECK_EQUAL(ea.check(&addrsize, 32, false, &rex,
-                                   SymbolRef(&abs_sym)),
+        BOOST_CHECK_EQUAL(ea.check(&addrsize, 32, false, &rex, 0),
                           true);
         BOOST_CHECK_EQUAL(ea.m_need_modrm, true);
         BOOST_CHECK_EQUAL(ea.m_need_sib, true);

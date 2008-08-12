@@ -289,7 +289,7 @@ X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
         // displacement.
         if (!m_ea->check(&m_common.m_addrsize, m_common.m_mode_bits,
                          m_postop == POSTOP_ADDRESS16, &m_rex,
-                         bc.get_container()->get_object()->get_abs_sym()))
+                         bc.get_container()->get_object()))
             // failed, don't bother checking rest of insn
             throw ValueError(N_("indeterminate effective address during length calculation"));
 

@@ -45,6 +45,7 @@ namespace yasm
 class Arch;
 class Bytes;
 class Expr;
+class Object;
 
 /// A value.  May be absolute or relative.  Outside the parser, #Expr
 /// should only be used for absolute exprs.  Anything that could contain
@@ -90,11 +91,11 @@ public:
 
     /// Set a value to be relative to the current assembly position rather
     /// than relative to the section start.
-    /// @param abs_sym  absolute symbol to refer to if no existing relative
-    ///                 portion
+    /// Creates absolute symbol to refer to if no existing relative portion.
+    /// @param object   object
     /// @param ip_rel   if nonzero, indicates IP-relative data relocation,
     ///                 sometimes used to generate special relocations
-    void set_curpos_rel(SymbolRef abs_sym, bool ip_rel);
+    void set_curpos_rel(Object* object, bool ip_rel);
 
     /// Break an #Expr into a #Value constituent parts.  Extracts the
     /// relative portion of the value, SEG and WRT portions, and top-level

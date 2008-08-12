@@ -757,7 +757,7 @@ bool
 X86EffAddr::check_3264(unsigned int addrsize,
                        unsigned int bits,
                        unsigned char* rex,
-                       SymbolRef abs_sym)
+                       Object* object)
 {
     int i;
     unsigned char* drex = m_need_drex ? &m_drex : 0;
@@ -814,11 +814,11 @@ X86EffAddr::check_3264(unsigned int addrsize,
                 throw ValueError(N_("invalid effective address"));
             case 2:
                 if (pcrel)
-                    m_disp.set_curpos_rel(abs_sym, true);
+                    m_disp.set_curpos_rel(object, true);
                 return false;
             default:
                 if (pcrel)
-                    m_disp.set_curpos_rel(abs_sym, true);
+                    m_disp.set_curpos_rel(object, true);
                 break;
         }
     }
@@ -911,7 +911,7 @@ X86EffAddr::check_3264(unsigned int addrsize,
     if (basereg == REG3264_NONE && indexreg == REG3264_NONE && m_pc_rel)
     {
         basereg = REG64_RIP;
-        m_disp.set_curpos_rel(abs_sym, true);
+        m_disp.set_curpos_rel(object, true);
     }
 
     // First determine R/M (Mod is later determined from disp size)
@@ -1019,7 +1019,7 @@ X86EffAddr::check_3264(unsigned int addrsize,
 }
 
 bool
-X86EffAddr::check_16(unsigned int bits, bool address16_op, SymbolRef abs_sym)
+X86EffAddr::check_16(unsigned int bits, bool address16_op, Object* object)
 {
     static const unsigned char modrm16[16] =
     {
@@ -1077,11 +1077,11 @@ X86EffAddr::check_16(unsigned int bits, bool address16_op, SymbolRef abs_sym)
                 throw ValueError(N_("invalid effective address"));
             case 2:
                 if (pcrel)
-                    m_disp.set_curpos_rel(abs_sym, true);
+                    m_disp.set_curpos_rel(object, true);
                 return false;
             default:
                 if (pcrel)
-                    m_disp.set_curpos_rel(abs_sym, true);
+                    m_disp.set_curpos_rel(object, true);
                 break;
         }
     }
@@ -1117,7 +1117,7 @@ X86EffAddr::check(unsigned char* addrsize,
                   unsigned int bits,
                   bool address16_op,
                   unsigned char* rex,
-                  SymbolRef abs_sym)
+                  Object* object)
 {
     if (*addrsize == 0)
     {
@@ -1167,11 +1167,11 @@ X86EffAddr::check(unsigned char* addrsize,
     if ((*addrsize == 32 || *addrsize == 64) &&
         ((m_need_modrm && !m_valid_modrm) || (m_need_sib && !m_valid_sib)))
     {
-        return check_3264(*addrsize, bits, rex, abs_sym);
+        return check_3264(*addrsize, bits, rex, object);
     }
     else if (*addrsize == 16 && m_need_modrm && !m_valid_modrm)
     {
-        return check_16(bits, address16_op, abs_sym);
+        return check_16(bits, address16_op, object);
     }
     else if (!m_need_modrm && !m_need_sib)
     {

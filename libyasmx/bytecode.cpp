@@ -167,7 +167,7 @@ Bytecode::finalize()
         {
             if (i->m_seg_of || i->m_rshift || i->m_curpos_rel)
                 throw ValueError(i->get_line(), N_("invalid jump target"));
-            i->set_curpos_rel(m_container->get_object()->get_abs_sym(), false);
+            i->set_curpos_rel(m_container->get_object(), false);
         }
         warn_update_line(i->get_line());
     }
