@@ -11,7 +11,6 @@ Key:
 +   elf
 -   macho
 -   rdf
-+   xdf
 - Translate debug formats from C version:
 -   stabs
 -   dwarf2
