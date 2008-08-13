@@ -41,9 +41,9 @@ struct OptOption
     // true if option requires parameter, false if not
     bool takes_param;
 
-    int (*handler) (const std::string& cmd,
-                    const std::string& param,
-                    int extra);
+    bool (*handler) (const std::string& cmd,
+                     const std::string& param,
+                     int extra);
     int extra;                  // extra value for handler
 
     // description to use in help_msg()
@@ -55,20 +55,20 @@ struct OptOption
 };
 
 // handle everything that is not an option
-int not_an_option_handler(const std::string& param);
+bool not_an_option_handler(const std::string& param);
 
 // handle possibly other special-case options; no parameters allowed
-int other_option_handler(const std::string& option);
+bool other_option_handler(const std::string& option);
 
 // parse command line calling handlers when appropriate
 // argc, argv - pass directly from main(argc,argv)
 // options - array of options
 // nopts - options count
-int parse_cmdline(int argc,
-                  const char** argv,
-                  OptOption* options,
-                  size_t nopts,
-                  void (*print_error) (const std::string& msg));
+bool parse_cmdline(int argc,
+                   const char** argv,
+                   OptOption* options,
+                   size_t nopts,
+                   void (*print_error) (const std::string& msg));
 
 // display help message msg followed by list of options in options and
 // followed by tail

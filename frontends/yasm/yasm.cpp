@@ -89,67 +89,67 @@ static enum
 } ewmsg_style = EWSTYLE_GNU;
 
 // Forward declarations: cmd line parser handlers
-static int opt_special_handler(const std::string& cmd,
-                               const std::string& param,
-                               int extra);
-static int opt_arch_handler(const std::string& cmd,
-                            const std::string& param,
-                            int extra);
-static int opt_parser_handler(const std::string& cmd,
-                              const std::string& param,
-                              int extra);
-static int opt_preproc_handler(const std::string& cmd,
-                               const std::string& param,
-                               int extra);
-static int opt_objfmt_handler(const std::string& cmd,
-                              const std::string& param,
-                              int extra);
-static int opt_dbgfmt_handler(const std::string& cmd,
-                              const std::string& param,
-                              int extra);
-static int opt_listfmt_handler(const std::string& cmd,
-                               const std::string& param,
-                               int extra);
-static int opt_listfile_handler(const std::string& cmd,
+static bool opt_special_handler(const std::string& cmd,
                                 const std::string& param,
                                 int extra);
-static int opt_objfile_handler(const std::string& cmd,
-                               const std::string& param,
-                               int extra);
-static int opt_machine_handler(const std::string& cmd,
-                               const std::string& param,
-                               int extra);
-static int opt_strict_handler(const std::string& cmd,
-                              const std::string& param,
-                              int extra);
-static int opt_warning_handler(const std::string& cmd,
-                               const std::string& param,
-                               int extra);
-static int opt_error_file(const std::string& cmd,
-                          const std::string& param,
-                          int extra);
-static int opt_error_stdout(const std::string& cmd,
-                            const std::string& param,
-                            int extra);
-static int preproc_only_handler(const std::string& cmd,
-                                const std::string& param,
-                                int extra);
-static int opt_include_option(const std::string& cmd,
-                              const std::string& param,
-                              int extra);
-static int opt_preproc_option(const std::string& cmd,
-                              const std::string& param,
-                              int extra);
-static int opt_ewmsg_handler(const std::string& cmd,
+static bool opt_arch_handler(const std::string& cmd,
                              const std::string& param,
                              int extra);
-static int opt_makedep_handler(const std::string& cmd,
+static bool opt_parser_handler(const std::string& cmd,
                                const std::string& param,
                                int extra);
-#ifndef BUILD_STATIC
-static int opt_plugin_handler(const std::string& cmd,
+static bool opt_preproc_handler(const std::string& cmd,
+                                const std::string& param,
+                                int extra);
+static bool opt_objfmt_handler(const std::string& cmd,
+                               const std::string& param,
+                               int extra);
+static bool opt_dbgfmt_handler(const std::string& cmd,
+                               const std::string& param,
+                               int extra);
+static bool opt_listfmt_handler(const std::string& cmd,
+                                const std::string& param,
+                                int extra);
+static bool opt_listfile_handler(const std::string& cmd,
+                                 const std::string& param,
+                                 int extra);
+static bool opt_objfile_handler(const std::string& cmd,
+                                const std::string& param,
+                                int extra);
+static bool opt_machine_handler(const std::string& cmd,
+                                const std::string& param,
+                                int extra);
+static bool opt_strict_handler(const std::string& cmd,
+                               const std::string& param,
+                               int extra);
+static bool opt_warning_handler(const std::string& cmd,
+                                const std::string& param,
+                                int extra);
+static bool opt_error_file(const std::string& cmd,
+                           const std::string& param,
+                           int extra);
+static bool opt_error_stdout(const std::string& cmd,
+                             const std::string& param,
+                             int extra);
+static bool preproc_only_handler(const std::string& cmd,
+                                 const std::string& param,
+                                 int extra);
+static bool opt_include_option(const std::string& cmd,
+                               const std::string& param,
+                               int extra);
+static bool opt_preproc_option(const std::string& cmd,
+                               const std::string& param,
+                               int extra);
+static bool opt_ewmsg_handler(const std::string& cmd,
                               const std::string& param,
                               int extra);
+static bool opt_makedep_handler(const std::string& cmd,
+                                const std::string& param,
+                                int extra);
+#ifndef BUILD_STATIC
+static bool opt_plugin_handler(const std::string& cmd,
+                               const std::string& param,
+                               int extra);
 #endif
 
 static void print_error(const std::string& msg);
@@ -493,7 +493,7 @@ main(int argc, const char* argv[])
     }
 #endif
 
-    if (parse_cmdline(argc, argv, options, NELEMS(options), print_error))
+    if (!parse_cmdline(argc, argv, options, NELEMS(options), print_error))
         return EXIT_FAILURE;
 
     switch (special_option)
@@ -597,7 +597,7 @@ main(int argc, const char* argv[])
 //  Command line options handlers
 //
 
-int
+bool
 not_an_option_handler(const std::string& param)
 {
     if (!in_filename.empty())
@@ -607,29 +607,29 @@ not_an_option_handler(const std::string& param)
     }
 
     in_filename = param;
-    return 0;
+    return true;
 }
 
-int
+bool
 other_option_handler(const std::string& option)
 {
     // Accept, but ignore, -O and -Onnn, for compatibility with NASM.
     if (option[0] == '-' && option[1] == 'O')
     {
         if (option.find_first_not_of("0123456789", 2) != std::string::npos)
-            return 1;
-        return 0;
+            return false;
+        return true;
     }
-    return 1;
+    return false;
 }
 
-static int
+static bool
 opt_special_handler(/*@unused@*/ const std::string& cmd,
                     /*@unused@*/ const std::string& param, int extra)
 {
     if (special_option == 0)
         special_option = static_cast<SpecialOption>(extra);
-    return 0;
+    return true;
 }
 
 template <typename T>
@@ -655,66 +655,66 @@ module_common_handler(const std::string& param, const char* name,
     return keyword;
 }
 
-static int
+static bool
 opt_arch_handler(/*@unused@*/ const std::string& cmd,
                  const std::string& param, /*@unused@*/ int extra)
 {
     arch_keyword =
         module_common_handler<yasm::Arch>(param, _("architecture"),
                                           _("architectures"));
-    return 0;
+    return true;
 }
 
-static int
+static bool
 opt_parser_handler(/*@unused@*/ const std::string& cmd,
                    const std::string& param, /*@unused@*/ int extra)
 {
     parser_keyword =
         module_common_handler<yasm::Parser>(param, _("parser"), _("parsers"));
-    return 0;
+    return true;
 }
 
-static int
+static bool
 opt_preproc_handler(/*@unused@*/ const std::string& cmd,
                     const std::string& param, /*@unused@*/ int extra)
 {
     preproc_keyword =
         module_common_handler<yasm::Preprocessor>(param, _("preprocessor"),
                                                   _("preprocessors"));
-    return 0;
+    return true;
 }
 
-static int
+static bool
 opt_objfmt_handler(/*@unused@*/ const std::string& cmd,
                    const std::string& param, /*@unused@*/ int extra)
 {
     objfmt_keyword =
         module_common_handler<yasm::ObjectFormat>(param, _("object format"),
                                                   _("object formats"));
-    return 0;
+    return true;
 }
 
-static int
+static bool
 opt_dbgfmt_handler(/*@unused@*/ const std::string& cmd,
                    const std::string& param, /*@unused@*/ int extra)
 {
     dbgfmt_keyword =
         module_common_handler<yasm::DebugFormat>(param, _("debug format"),
                                                  _("debug formats"));
-    return 0;
+    return true;
 }
 
-static int
+static bool
 opt_listfmt_handler(/*@unused@*/ const std::string& cmd,
                     const std::string& param, /*@unused@*/ int extra)
 {
     listfmt_keyword =
         module_common_handler<yasm::ListFormat>(param, _("list format"),
                                                 _("list formats"));
-    return 0;
+    return true;
 }
 
-static int
+static bool
 opt_listfile_handler(/*@unused@*/ const std::string& cmd,
                      const std::string& param, /*@unused@*/ int extra)
 {
@@ -725,10 +725,10 @@ opt_listfile_handler(/*@unused@*/ const std::string& cmd,
     }
 
     list_filename = param;
-    return 0;
+    return true;
 }
 
-static int
+static bool
 opt_objfile_handler(/*@unused@*/ const std::string& cmd,
                     const std::string& param, /*@unused@*/ int extra)
 {
@@ -739,27 +739,27 @@ opt_objfile_handler(/*@unused@*/ const std::string& cmd,
     }
 
     obj_filename = param;
-    return 0;
+    return true;
 }
 
-static int
+static bool
 opt_machine_handler(/*@unused@*/ const std::string& cmd,
                     const std::string& param, /*@unused@*/ int extra)
 {
     machine_name = param;
-    return 0;
+    return true;
 }
 
-static int
+static bool
 opt_strict_handler(/*@unused@*/ const std::string& cmd,
                    /*@unused@*/ const std::string& param,
                    /*@unused@*/ int extra)
 {
     force_strict = true;
-    return 0;
+    return true;
 }
 
-static int
+static bool
 opt_warning_handler(const std::string& cmd,
                     /*@unused@*/ const std::string& param, int extra)
 {
@@ -770,7 +770,7 @@ opt_warning_handler(const std::string& cmd,
     {
         // -w, disable warnings
         yasm::warn_disable_all();
-        return 0;
+        return true;
     }
 
     // skip past 'W'
@@ -797,12 +797,12 @@ opt_warning_handler(const std::string& cmd,
     else if (cmd.compare(pos, std::string::npos, "size-override") == 0)
         action(yasm::WARN_SIZE_OVERRIDE);
     else
-        return 1;
+        return false;
 
-    return 0;
+    return true;
 }
 
-static int
+static bool
 opt_error_file(/*@unused@*/ const std::string& cmd,
                const std::string& param, /*@unused@*/ int extra)
 {
@@ -813,10 +813,10 @@ opt_error_file(/*@unused@*/ const std::string& cmd,
     }
 
     error_filename = param;
-    return 0;
+    return true;
 }
 
-static int
+static bool
 opt_error_stdout(/*@unused@*/ const std::string& cmd,
                  /*@unused@*/ const std::string& param,
                  /*@unused@*/ int extra)
@@ -824,37 +824,37 @@ opt_error_stdout(/*@unused@*/ const std::string& cmd,
     // Clear any specified error filename
     error_filename.clear();
     errfile.std::basic_ios<char>::rdbuf(std::cout.rdbuf());
-    return 0;
+    return true;
 }
 
-static int
+static bool
 preproc_only_handler(/*@unused@*/ const std::string& cmd,
                      /*@unused@*/ const std::string& param,
                      /*@unused@*/ int extra)
 {
     preproc_only = 1;
-    return 0;
+    return true;
 }
 
-static int
+static bool
 opt_include_option(/*@unused@*/ const std::string& cmd,
                    const std::string& param, /*@unused@*/ int extra)
 {
 #if 0
     yasm_add_include_path(param);
 #endif
-    return 0;
+    return true;
 }
 
-static int
+static bool
 opt_preproc_option(/*@unused@*/ const std::string& cmd,
                    const std::string& param, int extra)
 {
     preproc_options.push_back(std::make_pair(param, extra));
-    return 0;
+    return true;
 }
 
-static int
+static bool
 opt_ewmsg_handler(/*@unused@*/ const std::string& cmd,
                   const std::string& param, /*@unused@*/ int extra)
 {
@@ -871,10 +871,10 @@ opt_ewmsg_handler(/*@unused@*/ const std::string& cmd,
         print_error(String::compose(
             _("warning: unrecognized message style `%1'"), param));
 
-    return 0;
+    return true;
 }
 
-static int
+static bool
 opt_makedep_handler(/*@unused@*/ const std::string& cmd,
                     /*@unused@*/ const std::string& param,
                     /*@unused@*/ int extra)
@@ -883,11 +883,11 @@ opt_makedep_handler(/*@unused@*/ const std::string& cmd,
     preproc_only = true;
     generate_make_dependencies = true;
 
-    return 0;
+    return true;
 }
 
 #ifndef BUILD_STATIC
-static int
+static bool
 opt_plugin_handler(/*@unused@*/ const std::string& cmd,
                    const std::string& param,
                    /*@unused@*/ int extra)
@@ -895,7 +895,7 @@ opt_plugin_handler(/*@unused@*/ const std::string& cmd,
     if (!yasm::load_plugin(param))
         print_error(String::compose(
             _("warning: could not load plugin `%s'"), param));
-    return 0;
+    return true;
 }
 #endif
 

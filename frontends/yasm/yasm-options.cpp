@@ -39,7 +39,7 @@
 
 
 // Options Parser
-int
+bool
 parse_cmdline(int argc,
               const char** argv,
               OptOption* options,
@@ -64,10 +64,10 @@ fail:
                     while (--argc)
                     {
                         argv++;
-                        if (not_an_option_handler(argv[0]))
+                        if (!not_an_option_handler(argv[0]))
                             errors++;
                     }
-                    return errors;
+                    return errors == 0;
                 }
 
                 for (size_t i = 0; i < nopts; i++)
@@ -98,13 +98,13 @@ fail:
                         else
                             cmd.assign(&argv[0][2]);
 
-                        if (!options[i].
+                        if (options[i].
                             handler(&argv[0][2], param, options[i].extra))
                             got_it = true;
                         break;
                     }
                 }
-                if (!got_it && !other_option_handler(argv[0]))
+                if (!got_it && other_option_handler(argv[0]))
                     got_it = true;
                 if (!got_it)
                 {
@@ -115,7 +115,7 @@ fail:
             }
             else if (argv[0][1] == '\0')     // just -, is non-option
             {
-                if (not_an_option_handler(argv[0]))
+                if (!not_an_option_handler(argv[0]))
                     errors++;
             }
             else              // sopt
@@ -147,12 +147,12 @@ fail:
                             }
                         }
 
-                        if (!options[i].handler(cmd, param, options[i].extra))
+                        if (options[i].handler(cmd, param, options[i].extra))
                             got_it = true;
                         break;
                     }
                 }
-                if (!got_it && !other_option_handler(argv[0]))
+                if (!got_it && other_option_handler(argv[0]))
                     got_it = true;
                 if (!got_it)
                 {
@@ -164,12 +164,12 @@ fail:
         }
         else      // not an option, then it should be a file or something
         {
-            if (not_an_option_handler(argv[0]))
+            if (!not_an_option_handler(argv[0]))
                 errors++;
         }
     }
 
-    return errors;
+    return errors == 0;
 }
 
 void
