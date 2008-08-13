@@ -62,8 +62,8 @@ public:
                 int span,
                 long old_val,
                 long new_val,
-                /*@out@*/ long& neg_thres,
-                /*@out@*/ long& pos_thres);
+                /*@out@*/ long* neg_thres,
+                /*@out@*/ long* pos_thres);
 
     /// Convert a bytecode into its byte representation.
     void output(Bytecode& bc, BytecodeOutput& bc_out);
@@ -108,8 +108,8 @@ OrgBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
     long neg_thres = 0;
     long pos_thres = m_start;
 
-    expand(bc, len, 0, 0, static_cast<long>(bc.tail_offset()), neg_thres,
-           pos_thres);
+    expand(bc, len, 0, 0, static_cast<long>(bc.tail_offset()), &neg_thres,
+           &pos_thres);
 
     return len;
 }
@@ -120,8 +120,8 @@ OrgBytecode::expand(Bytecode& bc,
                     int span,
                     long old_val,
                     long new_val,
-                    /*@out@*/ long& neg_thres,
-                    /*@out@*/ long& pos_thres)
+                    /*@out@*/ long* neg_thres,
+                    /*@out@*/ long* pos_thres)
 {
     // Check for overrun
     if (static_cast<unsigned long>(new_val) > m_start)

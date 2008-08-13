@@ -74,8 +74,8 @@ bool expand(Bytecode& bc,
             int span,
             long old_val,
             long new_val,
-            /*@out@*/ long& neg_thres,
-            /*@out@*/ long& pos_thres,
+            /*@out@*/ long* neg_thres,
+            /*@out@*/ long* pos_thres,
             Errwarns& errwarns);
 
 /// Updates bytecode offset (wrapping Bytecode::update_offset()).

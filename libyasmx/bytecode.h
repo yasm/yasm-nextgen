@@ -137,8 +137,8 @@ public:
                             int span,
                             long old_val,
                             long new_val,
-                            /*@out@*/ long& neg_thres,
-                            /*@out@*/ long& pos_thres);
+                            /*@out@*/ long* neg_thres,
+                            /*@out@*/ long* pos_thres);
 
         /// Output a bytecode.
         /// Called from Bytecode::output().
@@ -283,8 +283,8 @@ public:
     bool expand(int span,
                 long old_val,
                 long new_val,
-                /*@out@*/ long& neg_thres,
-                /*@out@*/ long& pos_thres);
+                /*@out@*/ long* neg_thres,
+                /*@out@*/ long* pos_thres);
 
     /// Output a bytecode.
     /// @param bc_out       bytecode output interface

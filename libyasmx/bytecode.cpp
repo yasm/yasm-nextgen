@@ -59,8 +59,8 @@ Bytecode::Contents::expand(Bytecode& bc,
                            int span,
                            long old_val,
                            long new_val,
-                           /*@out@*/ long& neg_thres,
-                           /*@out@*/ long& pos_thres)
+                           /*@out@*/ long* neg_thres,
+                           /*@out@*/ long* pos_thres)
 {
     throw InternalError(N_("bytecode does not have any dependent spans"));
 }
@@ -191,8 +191,8 @@ bool
 Bytecode::expand(int span,
                  long old_val,
                  long new_val,
-                 /*@out@*/ long& neg_thres,
-                 /*@out@*/ long& pos_thres)
+                 /*@out@*/ long* neg_thres,
+                 /*@out@*/ long* pos_thres)
 {
     if (m_contents.get() == 0)
         return false;
@@ -251,7 +251,7 @@ Bytecode::update_offset(unsigned long offset)
         // Recalculate/adjust len of offset-based bytecodes here
         long neg_thres = 0;
         long pos_thres = static_cast<long>(next_offset());
-        expand(1, 0, static_cast<long>(offset), neg_thres, pos_thres);
+        expand(1, 0, static_cast<long>(offset), &neg_thres, &pos_thres);
     }
     m_offset = offset;
     return next_offset();

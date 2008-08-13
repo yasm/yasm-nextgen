@@ -68,8 +68,8 @@ public:
                 int span,
                 long old_val,
                 long new_val,
-                /*@out@*/ long& neg_thres,
-                /*@out@*/ long& pos_thres);
+                /*@out@*/ long* neg_thres,
+                /*@out@*/ long* pos_thres);
     void output(Bytecode& bc, BytecodeOutput& bc_out);
 
     X86Jmp* clone() const;
@@ -209,8 +209,8 @@ X86Jmp::expand(Bytecode& bc,
                int span,
                long old_val,
                long new_val,
-               /*@out@*/ long& neg_thres,
-               /*@out@*/ long& pos_thres)
+               /*@out@*/ long* neg_thres,
+               /*@out@*/ long* pos_thres)
 {
     if (span != 1)
         throw InternalError(N_("unrecognized span id"));

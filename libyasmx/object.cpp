@@ -810,8 +810,8 @@ Optimize::step_1b(Errwarns& errwarns)
         {
             bool still_depend =
                 expand(span->m_bc, span->m_id, span->m_cur_val,
-                       span->m_new_val, span->m_neg_thres,
-                       span->m_pos_thres, errwarns);
+                       span->m_new_val, &span->m_neg_thres,
+                       &span->m_pos_thres, errwarns);
             if (errwarns.num_errors() > 0)
                 saw_error = true;
             else if (still_depend)
@@ -969,7 +969,7 @@ Optimize::step_2(Errwarns& errwarns)
 
         bool still_depend =
             expand(span->m_bc, span->m_id, span->m_cur_val, span->m_new_val,
-                   span->m_neg_thres, span->m_pos_thres, errwarns);
+                   &span->m_neg_thres, &span->m_pos_thres, errwarns);
 
         if (errwarns.num_errors() > 0)
         {
@@ -1023,8 +1023,8 @@ Optimize::step_2(Errwarns& errwarns)
             orig_len = os->m_bc->get_tail_len();
             long neg_thres_temp, pos_thres_temp;
             expand(*os->m_bc, 1, static_cast<long>(os->m_cur_val),
-                   static_cast<long>(os->m_new_val), neg_thres_temp,
-                   pos_thres_temp, errwarns);
+                   static_cast<long>(os->m_new_val), &neg_thres_temp,
+                   &pos_thres_temp, errwarns);
             os->m_thres = static_cast<long>(pos_thres_temp);
 
             offset_diff =

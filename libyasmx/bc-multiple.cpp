@@ -64,8 +64,8 @@ public:
                 int span,
                 long old_val,
                 long new_val,
-                /*@out@*/ long& neg_thres,
-                /*@out@*/ long& pos_thres);
+                /*@out@*/ long* neg_thres,
+                /*@out@*/ long* pos_thres);
 
     /// Convert a bytecode into its byte representation.
     void output(Bytecode& bc, BytecodeOutput& bc_out);
@@ -184,8 +184,8 @@ MultipleBytecode::expand(Bytecode& bc,
                          int span,
                          long old_val,
                          long new_val,
-                         /*@out@*/ long& neg_thres,
-                         /*@out@*/ long& pos_thres)
+                         /*@out@*/ long* neg_thres,
+                         /*@out@*/ long* pos_thres)
 {
     if (span == 0)
     {

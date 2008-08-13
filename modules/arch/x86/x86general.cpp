@@ -75,8 +75,8 @@ public:
     unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
     bool expand(Bytecode& bc, unsigned long& len, int span,
                 long old_val, long new_val,
-                /*@out@*/ long& neg_thres,
-                /*@out@*/ long& pos_thres);
+                /*@out@*/ long* neg_thres,
+                /*@out@*/ long* pos_thres);
     void output(Bytecode& bc, BytecodeOutput& bc_out);
 
     X86General* clone() const;
@@ -371,7 +371,7 @@ X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 bool
 X86General::expand(Bytecode& bc, unsigned long& len, int span,
                    long old_val, long new_val,
-                   /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres)
+                   /*@out@*/ long* neg_thres, /*@out@*/ long* pos_thres)
 {
     if (m_ea != 0 && span == 1)
     {

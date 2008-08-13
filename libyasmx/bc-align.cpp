@@ -68,8 +68,8 @@ public:
     /// length.
     bool expand(Bytecode& bc, unsigned long& len, int span,
                 long old_val, long new_val,
-                /*@out@*/ long& neg_thres,
-                /*@out@*/ long& pos_thres);
+                /*@out@*/ long* neg_thres,
+                /*@out@*/ long* pos_thres);
 
     /// Convert a bytecode into its byte representation.
     void output(Bytecode& bc, BytecodeOutput& bc_out);
@@ -136,22 +136,22 @@ AlignBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
     long neg_thres = 0;
     long pos_thres = 0;
 
-    expand(bc, len, 0, 0, static_cast<long>(bc.tail_offset()), neg_thres,
-           pos_thres);
+    expand(bc, len, 0, 0, static_cast<long>(bc.tail_offset()), &neg_thres,
+           &pos_thres);
     return len;
 }
 
 bool
 AlignBytecode::expand(Bytecode& bc, unsigned long& len, int span,
                       long old_val, long new_val,
-                      /*@out@*/ long& neg_thres, /*@out@*/ long& pos_thres)
+                      /*@out@*/ long* neg_thres, /*@out@*/ long* pos_thres)
 {
     unsigned long boundary = m_boundary->get_intnum()->get_uint();
 
     if (boundary == 0)
     {
         len = 0;
-        pos_thres = new_val;
+        *pos_thres = new_val;
         return false;
     }
 
@@ -159,7 +159,7 @@ AlignBytecode::expand(Bytecode& bc, unsigned long& len, int span,
     if (end & (boundary-1))
         end = (end & ~(boundary-1)) + boundary;
 
-    pos_thres = static_cast<long>(end);
+    *pos_thres = static_cast<long>(end);
     len = end - static_cast<unsigned long>(new_val);
 
     if (m_maxskip.get() != 0)
@@ -167,7 +167,7 @@ AlignBytecode::expand(Bytecode& bc, unsigned long& len, int span,
         unsigned long maxskip = m_maxskip->get_intnum()->get_uint();
         if (len > maxskip)
         {
-            pos_thres = static_cast<long>(end-maxskip)-1;
+            *pos_thres = static_cast<long>(end-maxskip)-1;
             len = 0;
         }
     }
