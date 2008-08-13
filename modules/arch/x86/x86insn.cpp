@@ -1684,10 +1684,10 @@ Arch::InsnPrefix
 X86Arch::parse_check_insnprefix(const char* id, size_t id_len,
                                 unsigned long line) const
 {
-    if (id_len > 15)
+    if (id_len > 16)
         return InsnPrefix();
 
-    static char lcaseid[16];
+    static char lcaseid[17];
     for (size_t i=0; i<id_len; i++)
         lcaseid[i] = tolower(id[i]);
     lcaseid[id_len] = '\0';
