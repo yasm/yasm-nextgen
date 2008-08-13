@@ -12,6 +12,10 @@ Key:
 -   macho
 -   rdf
 +   xdf
+- Translate debug formats from C version:
+-   stabs
+-   dwarf2
+-   cv8
 + Object format reading core support
 - Object format reading for various formats
 - Disassembly core support
@@ -23,8 +27,9 @@ Key:
 - Optimize org to detect same-offset case and not create new bytecode
 - Optimize x86 append_foo functions for less new bytecode creation
 - Make object format output const (no modification of Object)
-- Add NASM preprocessor
-- Add list format support
+- Translate NASM preprocessor from C version
+- Translate GAS parser from C version
+- Translate list format support from C version
 - Don't install Boost-dependent headers;
   note: will probably always depend on Boost for build (Boost.Pool, Boost.Test)
 - Provide separate "mini-Boost" package for easier builds (mainly on Windows)
