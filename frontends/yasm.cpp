@@ -120,6 +120,14 @@ print_error(const std::string& msg)
     errfile << "yasm: " << msg << std::endl;
 }
 
+static void
+print_list_keyword_desc(const std::string& name, const std::string& keyword)
+{
+    std::cout << "    "
+              << std::left << std::setfill(' ') << std::setw(12) << keyword
+              << name << std::endl;
+}
+
 template <typename T>
 static void
 list_module()
@@ -464,14 +472,6 @@ apply_preproc_saved_options(yasm::Preprocessor* preproc)
                 preproc->undefine_macro(i->first);
         }
     }
-}
-
-static void
-print_list_keyword_desc(const std::string& name, const std::string& keyword)
-{
-    std::cout << "    "
-              << std::left << std::setfill(' ') << std::setw(12) << keyword
-              << name << std::endl;
 }
 
 static const char *
