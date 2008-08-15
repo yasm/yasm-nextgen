@@ -13,7 +13,6 @@ SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 YASM_ADD_EXECUTABLE(yasm RUN_UNINSTALLED
     yasm.cpp
     options.cpp
-    #yasm-plugin.cpp
     )
 
 SET_SOURCE_FILES_PROPERTIES(yasm.cpp PROPERTIES
