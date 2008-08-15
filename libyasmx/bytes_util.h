@@ -115,6 +115,76 @@ write_32(Bytes& bytes, unsigned long val)
     }
 }
 
+/// Read an unsigned 8-bit value from a bytes buffer.
+/// @param bytes    input bytes buffer
+/// @return 8-bit value.
+inline unsigned char
+read_u8(Bytes& bytes)
+{
+    const unsigned char* ptr = bytes.read(1);
+    return ptr[0] & 0xFF;
+}
+
+/// Read an unsigned 16-bit value from a bytes buffer.
+/// @param bytes    input bytes buffer
+/// @return 16-bit value.
+inline unsigned short
+read_u16(Bytes& bytes)
+{
+    const unsigned char* ptr = bytes.read(2);
+    unsigned short val = 0;
+    if (bytes.is_bigendian())
+    {
+        val |= ptr[0] & 0xFF;
+        val <<= 8;
+        val |= ptr[1] & 0xFF;
+    }
+    else
+    {
+        val |= ptr[1] & 0xFF;
+        val <<= 8;
+        val |= ptr[0] & 0xFF;
+    }
+    return val;
+}
+
+/// Read an unsigned 32-bit value from a bytes buffer.
+/// @param bytes    output bytes buffer
+/// @return 32-bit value.
+inline unsigned long
+read_u32(Bytes& bytes)
+{
+    const unsigned char* ptr = bytes.read(4);
+    unsigned long val = 0;
+    if (bytes.is_bigendian())
+    {
+        val |= ptr[0] & 0xFF;
+        val <<= 8;
+        val |= ptr[1] & 0xFF;
+        val <<= 8;
+        val |= ptr[2] & 0xFF;
+        val <<= 8;
+        val |= ptr[3] & 0xFF;
+    }
+    else
+    {
+        val |= ptr[3] & 0xFF;
+        val <<= 8;
+        val |= ptr[2] & 0xFF;
+        val <<= 8;
+        val |= ptr[1] & 0xFF;
+        val <<= 8;
+        val |= ptr[0] & 0xFF;
+    }
+    return val;
+}
+
+/// Read an unsigned 64-bit value from a bytes buffer.
+/// @param bytes    input bytes buffer
+/// @return 64-bit value (as an IntNum).
+YASM_LIB_EXPORT
+IntNum read_u64(Bytes& bytes);
+
 } // namespace yasm
 
 #endif

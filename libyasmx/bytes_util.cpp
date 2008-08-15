@@ -100,4 +100,11 @@ write_64(Bytes& bytes, const IntNum& intn)
     }
 }
 
+IntNum
+read_u64(Bytes& bytes)
+{
+    const unsigned char* ptr = bytes.read(8);
+    return IntNum(ptr, false, 4, bytes.is_bigendian());
+}
+
 } // namespace yasm
