@@ -1,1 +1,23 @@
-add_subdirectory(yasm)
+ADD_CUSTOM_COMMAND(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/license.cpp
+    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/genstring.py
+        license_msg
+        ${CMAKE_CURRENT_BINARY_DIR}/license.cpp
+        ${CMAKE_SOURCE_DIR}/Copying/COPYING
+    MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/Copying/COPYING
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/genstring.py
+    )
+
+SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
+
+YASM_ADD_EXECUTABLE(yasm RUN_UNINSTALLED
+    yasm.cpp
+    yasm-options.cpp
+    #yasm-plugin.cpp
+    )
+
+SET_SOURCE_FILES_PROPERTIES(yasm.cpp PROPERTIES
+    OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/license.cpp"
+    )
+
+INSTALL(TARGETS yasm RUNTIME DESTINATION ${BIN_INSTALL_DIR})
