@@ -51,7 +51,7 @@
 #include <libgen.h>
 #endif
 
-#include "yasm-options.h"
+#include "options.h"
 
 #include "frontends/license.cpp"
 
