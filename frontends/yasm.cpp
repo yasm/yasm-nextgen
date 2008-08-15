@@ -53,7 +53,7 @@
 
 #include "yasm-options.h"
 
-#include "frontends/yasm/license.cpp"
+#include "frontends/license.cpp"
 
 
 // Preprocess-only buffer size
