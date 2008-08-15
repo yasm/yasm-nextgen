@@ -40,6 +40,7 @@ namespace yasm
 
 Bytes::Bytes(bool bigendian)
     : m_bigendian(bigendian)
+    , m_readpos(0)
 {
 }
 

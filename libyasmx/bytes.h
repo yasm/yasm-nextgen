@@ -30,6 +30,7 @@
 /// @endlicense
 ///
 #include <iosfwd>
+#include <stdexcept>
 #include <vector>
 
 #include "export.h"
@@ -63,8 +64,30 @@ public:
     /// @param  v   byte value
     void write(size_type n, unsigned char v);
 
+    /// Set read position.
+    /// @param pos  new read position
+    void set_readpos(size_type pos) { m_readpos = pos; }
+
+    /// Get read position.
+    /// @return Current read position.
+    size_type get_readpos() const { return m_readpos; }
+
+    /// Perform a "read" by returning a pointer to the current read position
+    /// and then advancing the read position.
+    /// @param n    number of bytes to advance read position by
+    /// @return Pointer to current read position.
+    /// Throws std::out_of_range if not enough bytes left to read n bytes.
+    const unsigned char* read(size_type n)
+    {
+        size_type oldpos = m_readpos;
+        m_readpos += n;
+        if (m_readpos > size())
+            throw std::out_of_range("read past end of Bytes buffer");
+        return &(at(oldpos));
+    }
 private:
     bool m_bigendian;
+    size_type m_readpos;
 };
 
 struct SetEndian
