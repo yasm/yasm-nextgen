@@ -57,6 +57,14 @@ ObjectFormat::set_object(Object* object)
     return true;
 }
 
+bool
+ObjectFormat::taste(std::istream& is,
+                    /*@out@*/ std::string* arch_keyword,
+                    /*@out@*/ std::string* machine)
+{
+    return false;
+}
+
 void
 ObjectFormat::read(std::istream& is)
 {

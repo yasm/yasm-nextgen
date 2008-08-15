@@ -95,6 +95,16 @@ public:
     /// @param parser       parser keyword
     virtual void init_symbols(const std::string& parser);
 
+    /// Taste object file to see if it is readable by this object format.
+    /// The default implementation always returns false.
+    /// @param is           input object file
+    /// @param arch_keyword architecture keyword (output)
+    /// @param machine      machine (output)
+    /// @return True if object file readable, false otherwise.
+    virtual bool taste(std::istream& is,
+                       /*@out@*/ std::string* arch_keyword,
+                       /*@out@*/ std::string* machine);
+
     /// Read object file into associated object.
     /// May create sections, relocations, and bytecodes, as well as modify
     /// any other portion of associated object.
