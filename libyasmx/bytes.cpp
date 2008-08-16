@@ -67,6 +67,8 @@ operator<< (marg_ostream& os, const Bytes& bytes)
 void
 Bytes::write(std::istream& is, size_type n)
 {
+    if (n == 0)
+        return;
     size_type sz = size();
     resize(sz+n);
     is.read(reinterpret_cast<char*>(&(at(sz))), n);
@@ -76,6 +78,8 @@ Bytes::write(std::istream& is, size_type n)
 void
 Bytes::write(const unsigned char* buf, size_type n)
 {
+    if (n == 0)
+        return;
     size_type sz = size();
     reserve(sz+n);
     std::copy(buf, buf+n, std::back_inserter(*this));
