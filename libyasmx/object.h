@@ -115,8 +115,15 @@ public:
     /// @return Section matching name, or NULL if no match found.
     /*@null@*/ Section* find_section(const std::string& name);
 
-    typedef stdx::ptr_vector<Section>::iterator section_iterator;
-    typedef stdx::ptr_vector<Section>::const_iterator const_section_iterator;
+    typedef stdx::ptr_vector<Section> Sections;
+    typedef Sections::iterator section_iterator;
+    typedef Sections::const_iterator const_section_iterator;
+
+    /// Get a section by index.
+    /// @param n            section index
+    /// @return Section at index.
+    /// Can raise std::out_of_range exception if index out of range.
+    Section& get_section(Sections::size_type n) { return m_sections.at(n); }
 
     section_iterator sections_begin() { return m_sections.begin(); }
     const_section_iterator sections_begin() const
@@ -144,8 +151,16 @@ public:
     /// @return Symbol matching name.
     SymbolRef get_sym(const std::string& name);
 
-    typedef stdx::ptr_vector<Symbol>::iterator symbol_iterator;
-    typedef stdx::ptr_vector<Symbol>::const_iterator const_symbol_iterator;
+    typedef stdx::ptr_vector<Symbol> Symbols;
+    typedef Symbols::iterator symbol_iterator;
+    typedef Symbols::const_iterator const_symbol_iterator;
+
+    /// Get a symbol by index.
+    /// @param n            symbol index
+    /// @return Symbol at index.
+    /// Can raise std::out_of_range exception if index out of range.
+    SymbolRef get_sym(Symbols::size_type n)
+    { return SymbolRef(&(m_symbols.at(n))); }
 
     symbol_iterator symbols_begin() { return m_symbols.begin(); }
     const_symbol_iterator symbols_begin() const { return m_symbols.begin(); }
@@ -209,15 +224,15 @@ private:
     /*@null@*/ Section* m_cur_section;
 
     /// Sections
-    stdx::ptr_vector<Section> m_sections;
+    Sections m_sections;
     stdx::ptr_vector_owner<Section> m_sections_owner;
 
     /// Symbols in the symbol table
-    stdx::ptr_vector<Symbol> m_symbols;
+    Symbols m_symbols;
     stdx::ptr_vector_owner<Symbol> m_symbols_owner;
 
     /// Non-table symbols
-    stdx::ptr_vector<Symbol> m_non_table_syms;
+    Symbols m_non_table_syms;
     stdx::ptr_vector_owner<Symbol> m_non_table_syms_owner;
 
     /// Pimpl for symbol table hash trie.
