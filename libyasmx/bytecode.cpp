@@ -86,7 +86,7 @@ Bytecode::Bytecode(std::auto_ptr<Contents> contents, unsigned long line)
       m_container(0),
       m_len(0),
       m_line(line),
-      m_offset(~0UL),   // obviously incorrect / uninitialized value
+      m_offset(0),
       m_index(~0UL)
 {
 }
@@ -96,7 +96,7 @@ Bytecode::Bytecode()
       m_container(0),
       m_len(0),
       m_line(0),
-      m_offset(~0UL),   // obviously incorrect / uninitialized value
+      m_offset(0),
       m_index(~0UL)
 {
 }
