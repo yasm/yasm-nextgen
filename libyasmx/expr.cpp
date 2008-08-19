@@ -36,6 +36,7 @@
 #include "errwarn.h"
 #include "floatnum.h"
 #include "intnum.h"
+#include "symbol.h"
 
 
 namespace
@@ -846,7 +847,7 @@ operator<< (std::ostream& os, const ExprTerm& term)
         case ExprTerm::INT:     os << *term.get_int(); break;
         case ExprTerm::SUBST:   os << "[" << term.m_subst << "]"; break;
         case ExprTerm::FLOAT:   os << "FLTN"; break;
-        case ExprTerm::SYM:     os << "SYM"; break;
+        case ExprTerm::SYM:     os << term.m_sym->get_name(); break;
         case ExprTerm::LOC:     os << "{LOC}"; break;
         case ExprTerm::EXPR:    os << "(" << *term.m_expr << ")"; break;
     }
