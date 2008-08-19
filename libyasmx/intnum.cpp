@@ -767,7 +767,26 @@ operator<< (std::ostream& os, const IntNum& intn)
             break;
         case IntNum::INTNUM_BV:
         {
-            unsigned char* s = BitVector::to_Dec(intn.m_val.bv);
+            std::ios_base::fmtflags ff = os.flags();
+            if ((ff & os.showpos) && (ff & os.dec) &&
+                BitVector::Sign(intn.m_val.bv) >= 0)
+                os << '+';
+
+            unsigned char* s;
+            /*if (ff & os.oct)
+            {
+                if (ff & os.showbase)
+                    os << '0';
+                s = BitVector::to_Oct(intn.m_val.bv);
+            }
+            else*/ if (ff & os.hex)
+            {
+                if (ff & os.showbase)
+                    os << "0x";
+                s = BitVector::to_Hex(intn.m_val.bv);
+            }
+            else
+                s = BitVector::to_Dec(intn.m_val.bv);
             os << s;
             free(s);
             break;
