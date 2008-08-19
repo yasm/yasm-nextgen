@@ -37,6 +37,7 @@
 #include "assoc_data.h"
 #include "bc_container.h"
 #include "export.h"
+#include "expr.h"
 #include "intnum.h"
 #include "marg_ostream_fwd.h"
 #include "ptr_vector.h"
@@ -62,6 +63,12 @@ public:
     const SymbolRef get_sym() const { return m_sym; }
 
     const IntNum& get_addr() const { return m_addr; }
+
+    /// Get the relocated value as an expression.
+    /// Should be overloaded by derived classes that have addends.
+    /// The default implementation simply returns the symbol as the value.
+    /// @return Relocated value.
+    virtual std::auto_ptr<Expr> get_value() const;
 
 protected:
     IntNum m_addr;      ///< Offset (address) within section

@@ -45,6 +45,12 @@ Reloc::~Reloc()
 {
 }
 
+std::auto_ptr<Expr>
+Reloc::get_value() const
+{
+    return std::auto_ptr<Expr>(new Expr(m_sym, 0));
+}
+
 Section::Section(const std::string& name,
                  bool code,
                  bool bss,
