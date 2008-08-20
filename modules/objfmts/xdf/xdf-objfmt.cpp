@@ -243,6 +243,9 @@ public:
     XdfReloc(Value& value, Location loc);
     ~XdfReloc() {}
 
+    std::auto_ptr<Expr> get_value() const;
+    std::string get_type_name() const;
+
     Type get_type() const { return m_type; }
 
     void write(Bytes& bytes) const;
@@ -279,6 +282,45 @@ XdfReloc::XdfReloc(Value& value, Location loc)
         m_type = XDF_RIP;
     else
         m_type = XDF_REL;
+}
+
+std::auto_ptr<Expr>
+XdfReloc::get_value() const
+{
+    std::auto_ptr<Expr> e;
+    if (m_type == XDF_WRT)
+        e.reset(new Expr(m_sym, Op::WRT, m_base, 0));
+    else
+        e.reset(new Expr(m_sym, 0));
+
+    if (m_shift > 0)
+        e.reset(new Expr(e, Op::SHR, IntNum(m_shift), 0));
+
+    return e;
+}
+
+std::string
+XdfReloc::get_type_name() const
+{
+    std::string s;
+
+    switch (m_type)
+    {
+        case XDF_REL: s += "REL_"; break;
+        case XDF_WRT: s += "WRT_"; break;
+        case XDF_RIP: s += "RIP_"; break;
+        case XDF_SEG: s += "SEG_"; break;
+    }
+
+    switch (m_size)
+    {
+        case XDF_8: s += "8"; break;
+        case XDF_16: s += "16"; break;
+        case XDF_32: s += "32"; break;
+        case XDF_64: s += "64"; break;
+    }
+
+    return s;
 }
 
 void

@@ -70,6 +70,10 @@ public:
     /// @return Relocated value.
     virtual std::auto_ptr<Expr> get_value() const;
 
+    /// Get the name of the relocation type (a string).
+    /// @return Type name.
+    virtual std::string get_type_name() const = 0;
+
 protected:
     IntNum m_addr;      ///< Offset (address) within section
     SymbolRef m_sym;    ///< Relocated symbol
