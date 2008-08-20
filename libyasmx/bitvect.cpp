@@ -1459,6 +1459,65 @@ ErrCode from_Hex(wordptr addr, charptr string)
     else    return(ErrCode_Pars);
 }
 
+charptr to_Oct(wordptr addr)
+{
+    N_word  bits = bits_(addr);
+    N_word  size = size_(addr);
+    N_word  value;
+    N_word  count;
+    N_word  digit;
+    N_word  length;
+    charptr string;
+
+    length = bits / 3;
+    if ((bits % 3) != 0) length++;
+    string = static_cast<charptr>(malloc(static_cast<size_t>(length+1)));
+    if (string == NULL) return(NULL);
+    string += length;
+    *string = static_cast<N_char>('\0');
+    if (size > 0)
+    {
+        *(addr+size-1) &= mask_(addr);
+        value = 0;
+        count = 0;
+        while ((size-- > 0) && (length > 0))
+        {
+            N_word prev_value = value;
+            N_word prev_count = count;
+            value = *addr++;
+            count = BITS;
+            switch (prev_count)
+            {
+                case 0:
+                    break;
+                case 1:
+                    if (value AND 0x0001)
+                        prev_value |= 0x0002;
+                    value >>= 1; count--;
+                    /*@fallthrough@*/
+                case 2:
+                    if (value AND 0x0001)
+                        prev_value |= 0x0004;
+                    value >>= 1; count--;
+
+                    digit = prev_value AND 0x0007;
+                    digit += static_cast<N_word>('0');
+                    *(--string) = static_cast<N_char>(digit); length--;
+                    break;
+            }
+            while ((count > 0) && (length > 0))
+            {
+                count -= 3;
+                digit = value AND 0x0007;
+                digit += static_cast<N_word>('0');
+                *(--string) = static_cast<N_char>(digit); length--;
+                if ((count > 2) && (length > 0)) value >>= 3;
+            }
+        }
+    }
+    return(string);
+}
+
 ErrCode from_Oct(wordptr addr, charptr string)
 {
     N_word  size = size_(addr);

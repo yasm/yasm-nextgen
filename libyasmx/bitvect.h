@@ -213,6 +213,8 @@ YASM_LIB_EXPORT
 ErrCode from_Hex   (/*@out@*/wordptr addr, charptr string);
 
 YASM_LIB_EXPORT
+/*@only@*/ charptr to_Oct     (wordptr addr);
+YASM_LIB_EXPORT
 ErrCode from_Oct(/*@out@*/ wordptr addr, charptr string);
 
 YASM_LIB_EXPORT

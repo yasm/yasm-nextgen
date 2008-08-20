@@ -773,13 +773,13 @@ operator<< (std::ostream& os, const IntNum& intn)
                 os << '+';
 
             unsigned char* s;
-            /*if (ff & os.oct)
+            if (ff & os.oct)
             {
                 if (ff & os.showbase)
                     os << '0';
                 s = BitVector::to_Oct(intn.m_val.bv);
             }
-            else*/ if (ff & os.hex)
+            else if (ff & os.hex)
             {
                 if (ff & os.showbase)
                     os << "0x";
