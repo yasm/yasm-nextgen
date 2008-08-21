@@ -27,7 +27,12 @@
 #define BOOST_TEST_MODULE intnum_test
 #include <boost/test/unit_test.hpp>
 
+#include <sstream>
+#include <iomanip>
+#include <cstdio>
+
 #include "intnum.h"
+#include "intnum_iomanip.h"
 
 using namespace yasm;
 
@@ -155,4 +160,85 @@ BOOST_AUTO_TEST_CASE(IncDecOperatorOverload)
     BOOST_CHECK_EQUAL(--x, 6);
     BOOST_CHECK_EQUAL(x--, 6);
     BOOST_CHECK_EQUAL(x, 5);
+}
+
+BOOST_AUTO_TEST_CASE(StreamOutput)
+{
+    for (long v=-1000; v<=1000; ++v)
+    {
+        std::ostringstream oss;
+        char golden[100];
+
+        oss << set_intnum_bits(64);
+
+        // Test small values
+        IntNum x(v);
+
+        oss << std::oct << x;
+        if (v < 0)
+            sprintf(golden, "777777777777%010lo", v&0x3fffffff);
+        else
+            sprintf(golden, "000000000000%010lo", v&0x3fffffff);
+        BOOST_CHECK_EQUAL(oss.str(), golden);
+
+        oss.str("");
+        oss << std::hex << std::uppercase << x;
+        if (v < 0)
+            sprintf(golden, "FFFFFFFF%08lX", v&0xffffffff);
+        else
+            sprintf(golden, "00000000%08lX", v);
+        BOOST_CHECK_EQUAL(oss.str(), golden);
+
+        oss.str("");
+        oss << std::hex << std::nouppercase << x;
+        if (v < 0)
+            sprintf(golden, "ffffffff%08lx", v&0xffffffff);
+        else
+            sprintf(golden, "00000000%08lx", v);
+        BOOST_CHECK_EQUAL(oss.str(), golden);
+
+        oss.str("");
+        oss << std::dec << x;
+        sprintf(golden, "%ld", v);
+        BOOST_CHECK_EQUAL(oss.str(), golden);
+
+        // Test big values
+        IntNum y;
+
+        y = (x<<33) + x;
+        oss.str("");
+        oss << std::oct << y;
+        if (v < 0)
+            sprintf(golden, "7%010lo7%010lo", (v-1)&0x3fffffff, v&0x3fffffff);
+        else
+            sprintf(golden, "0%010lo0%010lo", v, v);
+        BOOST_CHECK_EQUAL(oss.str(), golden);
+
+        y = (x<<32) + x;
+        oss.str("");
+        oss << std::hex << std::uppercase << y;
+        if (v < 0)
+            sprintf(golden, "%08lX%08lX", (v-1)&0xffffffff, v&0xffffffff);
+        else
+            sprintf(golden, "%08lX%08lX", v, v);
+        BOOST_CHECK_EQUAL(oss.str(), golden);
+
+        y = (x<<32) + x;
+        oss.str("");
+        oss << std::hex << std::nouppercase << y;
+        if (v < 0)
+            sprintf(golden, "%08lx%08lx", (v-1)&0xffffffff, v&0xffffffff);
+        else
+            sprintf(golden, "%08lx%08lx", v, v);
+        BOOST_CHECK_EQUAL(oss.str(), golden);
+
+        y = x * 1000 * 1000 * 1000;
+        oss.str("");
+        oss << std::dec << y;
+        if (v == 0)
+            sprintf(golden, "0");
+        else
+            sprintf(golden, "%ld000000000", v);
+        BOOST_CHECK_EQUAL(oss.str(), golden);
+    }
 }
