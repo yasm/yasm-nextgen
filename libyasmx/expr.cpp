@@ -900,7 +900,18 @@ operator<< (std::ostream& os, const Expr& e)
          i != end; ++i)
     {
         if (i != e.m_terms.begin())
+        {
             os << opstr;
+            // Force RHS of shift operations to decimal
+            if (e.m_op == Op::SHL || e.m_op == Op::SHR)
+            {
+                std::ios_base::fmtflags ff =
+                    os.setf(std::ios::dec, std::ios::basefield);
+                os << *i;
+                os.setf(ff);
+                continue;
+            }
+        }
         os << *i;
     }
 
