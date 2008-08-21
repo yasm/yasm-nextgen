@@ -1382,9 +1382,8 @@ Z_int Compare(wordptr X, wordptr Y)               /* X <,=,> Y ?   */
     }
 }
 
-charptr to_Hex(wordptr addr)
+charptr to_Hex(wordptr addr, bool uppercase, N_word bits)
 {
-    N_word  bits = bits_(addr);
     N_word  size = size_(addr);
     N_word  value;
     N_word  count;
@@ -1392,6 +1391,8 @@ charptr to_Hex(wordptr addr)
     N_word  length;
     charptr string;
 
+    if (bits == 0)
+        bits = bits_(addr);
     length = bits >> 2;
     if (bits AND 0x0003) length++;
     string = static_cast<charptr>(malloc(static_cast<size_t>(length+1)));
@@ -1408,8 +1409,15 @@ charptr to_Hex(wordptr addr)
             while ((count-- > 0) && (length > 0))
             {
                 digit = value AND 0x000F;
-                if (digit > 9) digit += static_cast<N_word>('A') - 10;
-                else           digit += static_cast<N_word>('0');
+                if (digit > 9)
+                {
+                    if (uppercase)
+                        digit += static_cast<N_word>('A') - 10;
+                    else
+                        digit += static_cast<N_word>('a') - 10;
+                }
+                else
+                    digit += static_cast<N_word>('0');
                 *(--string) = static_cast<N_char>(digit); length--;
                 if ((count > 0) && (length > 0)) value >>= 4;
             }
@@ -1459,9 +1467,8 @@ ErrCode from_Hex(wordptr addr, charptr string)
     else    return(ErrCode_Pars);
 }
 
-charptr to_Oct(wordptr addr)
+charptr to_Oct(wordptr addr, N_word bits)
 {
-    N_word  bits = bits_(addr);
     N_word  size = size_(addr);
     N_word  value;
     N_word  count;
@@ -1469,6 +1476,8 @@ charptr to_Oct(wordptr addr)
     N_word  length;
     charptr string;
 
+    if (bits == 0)
+        bits = bits_(addr);
     length = bits / 3;
     if ((bits % 3) != 0) length++;
     string = static_cast<charptr>(malloc(static_cast<size_t>(length+1)));
@@ -1561,7 +1570,7 @@ ErrCode from_Oct(wordptr addr, charptr string)
     else    return(ErrCode_Pars);
 }
 
-charptr to_Bin(wordptr addr)
+charptr to_Bin(wordptr addr, N_word bits)
 {
     N_word  size = size_(addr);
     N_word  value;
@@ -1570,7 +1579,7 @@ charptr to_Bin(wordptr addr)
     N_word  length;
     charptr string;
 
-    length = bits_(addr);
+    length = (bits == 0) ? bits_(addr) : bits;
     string = static_cast<charptr>(malloc(static_cast<size_t>(length+1)));
     if (string == NULL) return(NULL);
     string += length;

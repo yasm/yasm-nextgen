@@ -208,17 +208,17 @@ Z_int   Compare    (wordptr X, wordptr Y);          /* X <,=,> Y ? */
 /* ===> bit vector string conversion functions: */
 
 YASM_LIB_EXPORT
-/*@only@*/ charptr to_Hex     (wordptr addr);
+/*@only@*/ charptr to_Hex     (wordptr addr, bool uppercase, N_word bits=0);
 YASM_LIB_EXPORT
 ErrCode from_Hex   (/*@out@*/wordptr addr, charptr string);
 
 YASM_LIB_EXPORT
-/*@only@*/ charptr to_Oct     (wordptr addr);
+/*@only@*/ charptr to_Oct     (wordptr addr, N_word bits=0);
 YASM_LIB_EXPORT
 ErrCode from_Oct(/*@out@*/ wordptr addr, charptr string);
 
 YASM_LIB_EXPORT
-/*@only@*/ charptr to_Bin     (wordptr addr);
+/*@only@*/ charptr to_Bin     (wordptr addr, N_word bits=0);
 YASM_LIB_EXPORT
 ErrCode from_Bin   (/*@out@*/ wordptr addr, charptr string);
 

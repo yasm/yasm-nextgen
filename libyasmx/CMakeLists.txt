@@ -100,6 +100,7 @@ IF(NOT BUILD_STATIC)
         insn.h
         interval_tree.h
         intnum.h
+        intnum_iomanip.h
 	leb128.h
         linemap.h
         list_format.h

@@ -25,6 +25,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 #include "intnum.h"
+#include "intnum_iomanip.h"
 
 #include "util.h"
 
@@ -42,6 +43,8 @@ using BitVector::N_int;
 
 namespace yasm
 {
+
+YASM_LIB_EXPORT const int set_intnum_bits::m_idx = std::ios_base::xalloc();
 
 /// Static bitvect used for conversions.
 static BitVector::scoped_wordptr conv_bv(IntNum::BITVECT_NATIVE_SIZE);
@@ -760,38 +763,37 @@ IntNum::get_str() const
 std::ostream&
 operator<< (std::ostream& os, const IntNum& intn)
 {
-    switch (intn.m_type)
-    {
-        case IntNum::INTNUM_L:
-            os << intn.m_val.l;
-            break;
-        case IntNum::INTNUM_BV:
-        {
-            std::ios_base::fmtflags ff = os.flags();
-            if ((ff & os.showpos) && (ff & os.dec) &&
-                BitVector::Sign(intn.m_val.bv) >= 0)
-                os << '+';
+    wordptr bv = intn.to_bv(conv_bv);
 
-            unsigned char* s;
-            if (ff & os.oct)
-            {
-                if (ff & os.showbase)
-                    os << '0';
-                s = BitVector::to_Oct(intn.m_val.bv);
-            }
-            else if (ff & os.hex)
-            {
-                if (ff & os.showbase)
-                    os << "0x";
-                s = BitVector::to_Hex(intn.m_val.bv);
-            }
-            else
-                s = BitVector::to_Dec(intn.m_val.bv);
-            os << s;
-            free(s);
-            break;
-        }
+    BitVector::N_word bits =
+        static_cast<BitVector::N_word>(os.iword(set_intnum_bits::m_idx));
+
+    std::ios_base::fmtflags ff = os.flags();
+    if ((ff & os.showpos) && (ff & os.dec) && BitVector::Sign(bv) >= 0)
+        os << '+';
+
+    unsigned char* s;
+    if (ff & os.oct)
+    {
+        if (ff & os.showbase)
+            os << '0';
+        s = BitVector::to_Oct(bv, bits);
     }
+    else if (ff & os.hex)
+    {
+        if (ff & os.showbase)
+        {
+            if (ff & os.uppercase)
+                os << "0X";
+            else
+                os << "0x";
+        }
+        s = BitVector::to_Hex(bv, (ff & os.uppercase) != 0, bits);
+    }
+    else
+        s = BitVector::to_Dec(bv);
+    os << s;
+    free(s);
     return os;
 }
 

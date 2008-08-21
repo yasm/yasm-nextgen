@@ -726,7 +726,7 @@ operator<< (std::ostream& os, const FloatNum& flt)
     std::ios_base::fmtflags origff = os.flags();
 
     // Internal format
-    unsigned char* str = BitVector::to_Hex(flt.m_mantissa);
+    unsigned char* str = BitVector::to_Hex(flt.m_mantissa, false);
     os << (flt.m_sign?"-":"+") << " " << reinterpret_cast<char*>(str);
     os << " *2^" << std::hex << flt.m_exponent << std::dec << '\n';
     BitVector::Dispose(str);
