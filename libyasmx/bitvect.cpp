@@ -1505,7 +1505,7 @@ charptr to_Oct(wordptr addr)
                     *(--string) = static_cast<N_char>(digit); length--;
                     break;
             }
-            while ((count > 0) && (length > 0))
+            while ((count > 2) && (length > 0))
             {
                 count -= 3;
                 digit = value AND 0x0007;
