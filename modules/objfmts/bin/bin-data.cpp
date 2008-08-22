@@ -91,15 +91,15 @@ BinSymbolData::get_value() const
     switch (m_which)
     {
         case START:
-            if (m_bsd.has_istart)
+            if (!m_bsd.has_istart)
                 return 0;
             return &m_bsd.istart;
         case VSTART:
-            if (m_bsd.has_ivstart)
+            if (!m_bsd.has_ivstart)
                 return 0;
             return &m_bsd.ivstart;
         case LENGTH:
-            if (m_bsd.has_length)
+            if (!m_bsd.has_length)
                 return 0;
             return &m_bsd.length;
         default:
