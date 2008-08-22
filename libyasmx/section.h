@@ -137,6 +137,31 @@ public:
     /// @return Alignment in bytes (0 if none).
     unsigned long get_align() const { return m_align; }
 
+    /// Get virtual memory address (VMA).
+    /// @return VMA.
+    IntNum get_vma() const { return m_vma; }
+
+    /// Set virtual memory address (VMA).
+    /// @param vma      VMA
+    void set_vma(const IntNum& vma) { m_vma = vma; }
+
+    /// Get load memory address (LMA).
+    /// @return LMA.
+    IntNum get_lma() const { return m_lma; }
+
+    /// Set load memory address (LMA).
+    /// @param lma      LMA
+    void set_lma(const IntNum& lma) { m_lma = lma; }
+
+    /// Get file position of section data.
+    /// @return File position.
+    unsigned long get_filepos() const { return m_filepos; }
+
+    /// Set file position of section data.
+    /// Generally should only be used by ObjectFormat.
+    /// @param filepos  File position
+    void set_filepos(unsigned long filepos) { m_filepos = filepos; }
+
     /// Print a section.  For debugging purposes.
     /// @param os           output stream
     /// @param with_bcs     if true, print bytecodes within section
@@ -144,6 +169,11 @@ public:
 
 private:
     std::string m_name;                 ///< name (given by user)
+
+    IntNum m_vma;               ///< Virtual Memory Address (VMA)
+    IntNum m_lma;               ///< Load Memory Address (LMA)
+
+    unsigned long m_filepos;    ///< File position of section data
 
     unsigned long m_align;      ///< Section alignment
 
