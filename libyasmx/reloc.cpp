@@ -1,5 +1,5 @@
 //
-// Section implementation.
+// Relocation implementation.
 //
 //  Copyright (C) 2001-2007  Peter Johnson
 //
@@ -24,75 +24,26 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "section.h"
-
-#include "util.h"
-
-#include "intnum.h"
-#include "marg_ostream.h"
 #include "reloc.h"
 
 
 namespace yasm
 {
 
-Section::Section(const std::string& name,
-                 bool code,
-                 bool bss,
-                 unsigned long line)
-    : m_name(name),
-      m_align(0),
-      m_code(code),
-      m_bss(bss),
-      m_def(false),
-      m_relocs_owner(m_relocs)
+Reloc::Reloc(const IntNum& addr, SymbolRef sym)
+    : m_addr(addr),
+      m_sym(sym)
 {
 }
 
-Section::~Section()
+Reloc::~Reloc()
 {
 }
 
-Section*
-Section::as_section()
+std::auto_ptr<Expr>
+Reloc::get_value() const
 {
-    return this;
-}
-
-const Section*
-Section::as_section() const
-{
-    return this;
-}
-
-void
-Section::add_reloc(std::auto_ptr<Reloc> reloc)
-{
-    m_relocs.push_back(reloc.release());
-}
-
-void
-Section::put(marg_ostream& os, bool with_bcs) const
-{
-    os << "name=" << m_name << '\n';
-    os << "align=" << m_align << '\n';
-    os << "code=" << m_code << '\n';
-    os << "bss=" << m_bss << '\n';
-    os << "default=" << m_def << '\n';
-    os << "Associated data:\n";
-    ++os;
-    os << static_cast<const AssocDataContainer&>(*this);
-    --os;
-
-    if (with_bcs)
-    {
-        os << "Bytecodes:\n";
-        ++os;
-        BytecodeContainer::put(os);
-        --os;
-    }
-
-    // TODO: relocs
+    return std::auto_ptr<Expr>(new Expr(m_sym, 0));
 }
 
 } // namespace yasm

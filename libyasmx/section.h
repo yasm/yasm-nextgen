@@ -50,34 +50,7 @@ namespace yasm
 class Bytecode;
 class Errwarns;
 class Object;
-
-/// Basic YASM relocation.  Object formats will need to extend this
-/// structure with additional fields for relocation type, etc.
-class YASM_LIB_EXPORT Reloc : private boost::noncopyable
-{
-public:
-    Reloc(const IntNum& addr, SymbolRef sym);
-    virtual ~Reloc();
-
-    SymbolRef get_sym() { return m_sym; }
-    const SymbolRef get_sym() const { return m_sym; }
-
-    const IntNum& get_addr() const { return m_addr; }
-
-    /// Get the relocated value as an expression.
-    /// Should be overloaded by derived classes that have addends.
-    /// The default implementation simply returns the symbol as the value.
-    /// @return Relocated value.
-    virtual std::auto_ptr<Expr> get_value() const;
-
-    /// Get the name of the relocation type (a string).
-    /// @return Type name.
-    virtual std::string get_type_name() const = 0;
-
-protected:
-    IntNum m_addr;      ///< Offset (address) within section
-    SymbolRef m_sym;    ///< Relocated symbol
-};
+class Reloc;
 
 /// A section.
 class YASM_LIB_EXPORT Section
@@ -132,8 +105,7 @@ public:
 
     /// Add a relocation to a section.
     /// @param reloc        relocation
-    void add_reloc(std::auto_ptr<Reloc> reloc)
-    { m_relocs.push_back(reloc.release()); }
+    void add_reloc(std::auto_ptr<Reloc> reloc);
 
     typedef stdx::ptr_vector<Reloc> Relocs;
     typedef Relocs::iterator reloc_iterator;

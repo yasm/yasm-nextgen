@@ -48,6 +48,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     ${PLUGIN_CPP}
     preproc.cpp
     registry.cpp
+    reloc.cpp
     section.cpp
     symbol.cpp
     symbol_util.cpp
@@ -121,6 +122,7 @@ IF(NOT BUILD_STATIC)
         preproc.h
         ptr_vector.h
         registry.h
+        reloc.h
         section.h
         symbol.h
         symbolref.h

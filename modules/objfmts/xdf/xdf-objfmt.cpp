@@ -45,6 +45,7 @@
 #include <libyasmx/object.h>
 #include <libyasmx/object_format.h>
 #include <libyasmx/registry.h>
+#include <libyasmx/reloc.h>
 #include <libyasmx/section.h>
 #include <libyasmx/symbol.h>
 
