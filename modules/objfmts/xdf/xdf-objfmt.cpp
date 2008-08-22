@@ -126,17 +126,13 @@ struct XdfSectionData : public AssocData
     SymbolRef sym;          //< symbol created for this section
 
     bool has_addr;          //< absolute address set by user?
-    IntNum addr;            //< starting absolute address
-
     bool has_vaddr;         //< virtual address set by user?
-    IntNum vaddr;           //< starting virtual address
 
     long scnum;             //< section number (0=first section)
 
     bool flat;              //< specified by user as "flat" section
     unsigned long bits;     //< "bits" (aka use16/use32/use64) of section
 
-    unsigned long scnptr;   //< file ptr to raw data
     unsigned long size;     //< size of raw data (section data) in bytes
     unsigned long relptr;   //< file ptr to relocation
 };
@@ -150,7 +146,6 @@ XdfSectionData::XdfSectionData(SymbolRef sym_)
     , scnum(0)
     , flat(false)
     , bits(0)
-    , scnptr(0)
     , size(0)
     , relptr(0)
 {
@@ -163,14 +158,11 @@ XdfSectionData::put(marg_ostream& os) const
     ++os;
     os << *sym;
     --os;
-    if (has_addr)
-        os << "addr=" << addr << '\n';
-    if (has_vaddr)
-        os << "vaddr=" << vaddr << '\n';
+    os << "has_addr=" << has_addr << '\n';
+    os << "has_vaddr=" << has_vaddr << '\n';
     os << "scnum=" << scnum << '\n';
     os << "flat=" << flat << '\n';
     os << "bits=" << bits << '\n';
-    os << "scnptr=0x" << std::hex << scnptr << std::dec << '\n';
     os << "size=" << size << '\n';
     os << "relptr=0x" << std::hex << relptr << std::dec << '\n';
 }
@@ -184,12 +176,12 @@ XdfSectionData::write(Bytes& bytes, const Section& sect) const
     bytes << little_endian;
 
     write_32(bytes, xsymd->index);      // section name symbol
-    write_64(bytes, addr);              // physical address
+    write_64(bytes, sect.get_lma());    // physical address
 
     if (has_vaddr)
-        write_64(bytes, vaddr);         // virtual address
+        write_64(bytes, sect.get_vma());// virtual address
     else
-        write_64(bytes, addr);          // virt=phys if unspecified
+        write_64(bytes, sect.get_lma());// virt=phys if unspecified
 
     write_16(bytes, sect.get_align());  // alignment
 
@@ -209,7 +201,7 @@ XdfSectionData::write(Bytes& bytes, const Section& sect) const
     }
     write_16(bytes, flags);
 
-    write_32(bytes, scnptr);            // file ptr to data
+    write_32(bytes, sect.get_filepos());// file ptr to data
     write_32(bytes, size);              // section size
     write_32(bytes, relptr);            // file ptr to relocs
     write_32(bytes, sect.get_relocs().size());// num of relocation entries
@@ -532,7 +524,7 @@ Output::output_section(Section& sect, Errwarns& errwarns)
     if (xsd->size == 0)
         return;
 
-    xsd->scnptr = static_cast<unsigned long>(pos);
+    sect.set_filepos(static_cast<unsigned long>(pos));
 
     // No relocations to output?  Go on to next section
     if (sect.get_relocs().size() == 0)
@@ -806,7 +798,10 @@ XdfObject::dir_section(Object& object,
 
     unsigned long bss = sect->is_bss();
     unsigned long code = sect->is_code();
+    IntNum vma = sect->get_vma();
+    IntNum lma = sect->get_lma();
     unsigned long flat = xsd->flat;
+
 
     DirHelpers helpers;
     helpers.add("use16", false,
@@ -822,10 +817,10 @@ XdfObject::dir_section(Object& object,
     helpers.add("flat", false, BIND::bind(&dir_flag_set, _1, &flat, 1));
     helpers.add("noflat", false, BIND::bind(&dir_flag_clear, _1, &flat, 1));
     helpers.add("absolute", true,
-                BIND::bind(&dir_intn, _1, m_object, line, &xsd->addr,
+                BIND::bind(&dir_intn, _1, m_object, line, &lma,
                            &xsd->has_addr));
     helpers.add("virtual", true,
-                BIND::bind(&dir_intn, _1, m_object, line, &xsd->vaddr,
+                BIND::bind(&dir_intn, _1, m_object, line, &vma,
                            &xsd->has_vaddr));
     helpers.add("align", true,
                 BIND::bind(&dir_intn, _1, m_object, line, &align, &has_align));
@@ -852,6 +847,8 @@ XdfObject::dir_section(Object& object,
 
     sect->set_bss(bss);
     sect->set_code(code);
+    sect->set_vma(vma);
+    sect->set_lma(lma);
     xsd->flat = flat;
     m_object->get_arch()->set_var("mode_bits", xsd->bits);
 }
