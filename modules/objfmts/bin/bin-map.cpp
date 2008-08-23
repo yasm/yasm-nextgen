@@ -49,13 +49,13 @@ namespace bin
 {
 
 static void
-map_prescan_bytes(const BinSectionData& bsd, int* bytes)
+map_prescan_bytes(const Section& sect, const BinSectionData& bsd, int* bytes)
 {
     while (!bsd.length.ok_size(*bytes * 8, 0, 0))
         *bytes *= 2;
-    while (!bsd.istart.ok_size(*bytes * 8, 0, 0))
+    while (!sect.get_lma().ok_size(*bytes * 8, 0, 0))
         *bytes *= 2;
-    while (!bsd.ivstart.ok_size(*bytes * 8, 0, 0))
+    while (!sect.get_vma().ok_size(*bytes * 8, 0, 0))
         *bytes *= 2;
 }
 
@@ -78,7 +78,7 @@ MapOutput::MapOutput(std::ostream& os,
     {
         const BinSectionData* bsd = get_bin_sect(*sect);
         assert(bsd != 0);
-        map_prescan_bytes(*bsd, &m_bytes);
+        map_prescan_bytes(*sect, *bsd, &m_bytes);
     }
 
     m_buf = new unsigned char[m_bytes];
@@ -133,18 +133,19 @@ MapOutput::inner_sections_summary(const BinGroups& groups)
     for (BinGroups::const_iterator group = groups.begin(), end=groups.end();
          group != end; ++group)
     {
+        const Section& sect = group->m_section;
         const BinSectionData& bsd = group->m_bsd;
 
-        output_intnum(bsd.ivstart);
+        output_intnum(sect.get_vma());
         m_os << "  ";
 
-        output_intnum(bsd.ivstart + bsd.length);
+        output_intnum(sect.get_vma() + bsd.length);
         m_os << "  ";
 
-        output_intnum(bsd.istart);
+        output_intnum(sect.get_lma());
         m_os << "  ";
 
-        output_intnum(bsd.istart + bsd.length);
+        output_intnum(sect.get_lma() + bsd.length);
         m_os << "  ";
 
         output_intnum(bsd.length);
@@ -188,7 +189,8 @@ MapOutput::inner_sections_detail(const BinGroups& groups)
     for (BinGroups::const_iterator group = groups.begin(), end=groups.end();
          group != end; ++group)
     {
-        const std::string& name = group->m_section.get_name();
+        const Section& sect = group->m_section;
+        const std::string& name = sect.get_name();
         m_os << "---- Section " << name << " ";
         m_os.fill('-');
         m_os << std::setw(65-name.length()) << '-';
@@ -201,13 +203,13 @@ MapOutput::inner_sections_detail(const BinGroups& groups)
         m_os << "\nlength:    ";
         output_intnum(bsd.length);
         m_os << "\nstart:     ";
-        output_intnum(bsd.istart);
+        output_intnum(sect.get_lma());
         m_os << "\nalign:     ";
         output_intnum(bsd.align);
         m_os << "\nfollows:   ";
         m_os << (!bsd.follows.empty() ? bsd.follows : "not defined");
         m_os << "\nvstart:    ";
-        output_intnum(bsd.ivstart);
+        output_intnum(sect.get_vma());
         m_os << "\nvalign:    ";
         output_intnum(bsd.valign);
         m_os << "\nvfollows:  ";
@@ -271,14 +273,12 @@ MapOutput::output_symbols(const Section* sect)
         }
         else if (sym->get_label(&loc) && loc.bc->get_container() == sect)
         {
-            const BinSectionData* bsd = get_bin_sect(*sect);
-
             // Real address
-            output_intnum(bsd->istart + loc.get_offset());
+            output_intnum(sect->get_lma() + loc.get_offset());
             m_os << "  ";
 
             // Virtual address
-            output_intnum(bsd->ivstart + loc.get_offset());
+            output_intnum(sect->get_vma() + loc.get_offset());
 
             // Name
             m_os << "  " << name << '\n';

@@ -68,8 +68,6 @@ struct BinSectionData : public AssocData
 
     // Calculated (final) starts, used only during output()
     bool has_istart, has_ivstart;
-    IntNum istart;
-    IntNum ivstart;
 
     // Calculated (final) length, used only during output()
     bool has_length;
@@ -89,12 +87,15 @@ public:
         VSTART,
         LENGTH
     };
-    BinSymbolData(const BinSectionData& bsd, SpecialSym which);
+    BinSymbolData(const Section& sect,
+                  const BinSectionData& bsd,
+                  SpecialSym which);
     ~BinSymbolData();
     void put(marg_ostream& os) const;
-    const IntNum* get_value() const;
+    bool get_value(/*@out@*/ IntNum* val) const;
 
 private:
+    const Section& m_sect;          // referenced section
     const BinSectionData& m_bsd;    // data for referenced section
     SpecialSym m_which;
 };
@@ -129,13 +130,13 @@ get_bin_sym(Symbol& sym)
         (sym.get_assoc_data(BinSymbolData::key));
 }
 
-inline const IntNum*
-get_ssym_value(const Symbol& sym)
+inline bool
+get_ssym_value(const Symbol& sym, /*@out@*/ IntNum* val)
 {
     const BinSymbolData* bsymd = get_bin_sym(sym);
     if (!bsymd)
-        return 0;
-    return bsymd->get_value();
+        return false;
+    return bsymd->get_value(val);
 }
 
 }}} // namespace yasm::objfmt::bin

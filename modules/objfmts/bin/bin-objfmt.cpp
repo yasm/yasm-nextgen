@@ -87,12 +87,6 @@ public:
     Section* append_section(const std::string& name, unsigned long line);
 
 private:
-    void define_section_symbol(Object& object,
-                               const BinSectionData& bsd,
-                               const std::string& sectname,
-                               const char* suffix,
-                               BinSymbolData::SpecialSym which,
-                               unsigned long line);
     void init_new_section(Section* sect, unsigned long line);
     void dir_section(Object& object,
                      const NameValues& namevals,
@@ -134,21 +128,6 @@ BinObject::BinObject()
 BinObject::~BinObject()
 {
 }
-
-void
-BinObject::define_section_symbol(Object& object,
-                                 const BinSectionData& bsd,
-                                 const std::string& sectname,
-                                 const char* suffix,
-                                 BinSymbolData::SpecialSym which,
-                                 unsigned long line)
-{
-    SymbolRef sym = object.get_sym("section."+sectname+suffix);
-    sym->declare(Symbol::EXTERN, line);
-    std::auto_ptr<AssocData> ad(new BinSymbolData(bsd, which));
-    sym->add_assoc_data(this, ad);
-}
-
 
 void
 BinObject::output_map(const IntNum& origin,
@@ -235,7 +214,7 @@ Output::output_section(Section& sect, const IntNum& origin, Errwarns& errwarns)
     }
     else
     {
-        IntNum file_start = bsd->istart;
+        IntNum file_start = sect.get_lma();
         file_start -= origin;
         if (file_start.sign() < 0)
         {
@@ -280,6 +259,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
     if (value.is_relative())
     {
         Location label_loc;
+        IntNum ssymval;
         unsigned int rshift = static_cast<unsigned int>(value.m_rshift);
         Expr::Ptr syme(0);
         unsigned long line = loc.bc->get_line();
@@ -293,9 +273,9 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
         {
             syme.reset(new Expr(value.m_rel, line));
         }
-        else if (const IntNum* ssymval = get_ssym_value(*value.m_rel))
+        else if (get_ssym_value(*value.m_rel, &ssymval))
         {
-            syme.reset(new Expr(*ssymval, line));
+            syme.reset(new Expr(ssymval, line));
         }
         else
             goto done;
@@ -421,17 +401,17 @@ BinObject::init_new_section(Section* sect, unsigned long line)
     SymbolRef start = m_object->get_sym("section."+sect->get_name()+".start");
     start->declare(Symbol::EXTERN, line);
     start->add_assoc_data(this, std::auto_ptr<AssocData>
-                          (new BinSymbolData(*bsd, BinSymbolData::START)));
+        (new BinSymbolData(*sect, *bsd, BinSymbolData::START)));
 
     SymbolRef vstart = m_object->get_sym("section."+sect->get_name()+".vstart");
     vstart->declare(Symbol::EXTERN, line);
     vstart->add_assoc_data(this, std::auto_ptr<AssocData>
-                           (new BinSymbolData(*bsd, BinSymbolData::VSTART)));
+        (new BinSymbolData(*sect, *bsd, BinSymbolData::VSTART)));
 
     SymbolRef length = m_object->get_sym("section."+sect->get_name()+".length");
     length->declare(Symbol::EXTERN, line);
     length->add_assoc_data(this, std::auto_ptr<AssocData>
-                           (new BinSymbolData(*bsd, BinSymbolData::LENGTH)));
+        (new BinSymbolData(*sect, *bsd, BinSymbolData::LENGTH)));
 
     sect->add_assoc_data(this, std::auto_ptr<AssocData>(bsd.release()));
 }

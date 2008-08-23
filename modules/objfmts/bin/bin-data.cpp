@@ -63,8 +63,10 @@ BinSectionData::put(marg_ostream& os) const
 
 const char* BinSymbolData::key = "objfmt::bin::BinSymbolData";
 
-BinSymbolData::BinSymbolData(const BinSectionData& bsd, SpecialSym which)
-    : m_bsd(bsd), m_which(which)
+BinSymbolData::BinSymbolData(const Section& sect,
+                             const BinSectionData& bsd,
+                             SpecialSym which)
+    : m_sect(sect), m_bsd(bsd), m_which(which)
 {
 }
 
@@ -85,26 +87,29 @@ BinSymbolData::put(marg_ostream& os) const
     os << '\n';
 }
 
-const IntNum*
-BinSymbolData::get_value() const
+bool
+BinSymbolData::get_value(IntNum* val) const
 {
     switch (m_which)
     {
         case START:
             if (!m_bsd.has_istart)
-                return 0;
-            return &m_bsd.istart;
+                return false;
+            *val = m_sect.get_lma();
+            return true;
         case VSTART:
             if (!m_bsd.has_ivstart)
-                return 0;
-            return &m_bsd.ivstart;
+                return false;
+            *val = m_sect.get_vma();
+            return true;
         case LENGTH:
             if (!m_bsd.has_length)
-                return 0;
-            return &m_bsd.length;
+                return false;
+            *val = m_bsd.length;
+            return true;
         default:
             assert(false);
-            return 0;
+            return false;
     }
 }
 
@@ -117,9 +122,9 @@ expr_xform(Expr* e)
         Symbol* sym;
 
         // Transform our special symrecs into the appropriate value
-        const IntNum* ssymval;
-        if ((sym = i->get_sym()) && (ssymval = get_ssym_value(*sym)))
-            *i = *ssymval;
+        IntNum ssymval;
+        if ((sym = i->get_sym()) && get_ssym_value(*sym, &ssymval))
+            *i = ssymval;
 
         // Transform symrecs or precbcs that reference sections into
         // vstart + intnum(dist).
@@ -136,10 +141,11 @@ expr_xform(Expr* e)
         IntNum dist;
         if (calc_dist(first, loc, &dist))
         {
-            const BinSectionData* bsd = get_bin_sect(*container->as_section());
+            const Section* sect = container->as_section();
+            const BinSectionData* bsd = get_bin_sect(*sect);
             assert(bsd);
             assert(bsd->has_ivstart);
-            dist += bsd->ivstart;
+            dist += sect->get_vma();
             //i->destroy(); // don't need to, as it's a sym or loc
             *i = dist;
         }

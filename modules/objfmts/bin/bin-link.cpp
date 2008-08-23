@@ -173,7 +173,7 @@ Link::lma_create_group(Section& section)
         else
         {
             bsd->has_istart = true;
-            bsd->istart = *istart;
+            section.set_lma(*istart);
         }
     }
 
@@ -190,7 +190,7 @@ Link::lma_create_group(Section& section)
         else
         {
             bsd->has_ivstart = true;
-            bsd->ivstart = *ivstart;
+            section.set_vma(*ivstart);
         }
     }
 
@@ -218,7 +218,7 @@ compare_istart(const BinGroup& lhs, const BinGroup& rhs)
 {
     if (!lhs.m_bsd.has_istart || !rhs.m_bsd.has_istart)
         return false;
-    return (lhs.m_bsd.istart < rhs.m_bsd.istart);
+    return (lhs.m_section.get_lma() < rhs.m_section.get_lma());
 }
 
 bool
@@ -315,7 +315,7 @@ Link::do_link(const IntNum& origin)
          i != end; ++i)
     {
         if (i->m_bsd.has_istart)
-            start = i->m_bsd.istart;
+            start = i->m_section.get_lma();
         i->assign_start_recurse(start, last, vdelta, m_errwarns);
         start = last;
     }
@@ -381,7 +381,7 @@ Link::do_link(const IntNum& origin)
     for (BinGroups::iterator i=m_vma_groups.begin(), end=m_vma_groups.end();
          i != end; ++i)
     {
-        start = i->m_bsd.ivstart;
+        start = i->m_section.get_vma();
         i->assign_vstart_recurse(start, m_errwarns);
     }
     
@@ -404,17 +404,17 @@ Link::check_lma_overlap(const Section& sect, const Section& other)
         return true;
 
     IntNum overlap;
-    if (bsd->istart <= bsd2->istart)
+    if (sect.get_lma() <= other.get_lma())
     {
-        overlap = bsd->istart;
+        overlap = sect.get_lma();
         overlap += bsd->length;
-        overlap -= bsd2->istart;
+        overlap -= other.get_lma();
     }
     else
     {
-        overlap = bsd2->istart;
+        overlap = other.get_lma();
         overlap += bsd2->length;
-        overlap -= bsd->istart;
+        overlap -= sect.get_lma();
     }
 
     if (overlap.sign() > 0)
@@ -451,13 +451,15 @@ Link::check_lma_overlap()
 // Start is modified (rounded up) to the closest aligned value greater than
 // what was passed in.
 // Align must be a power of 2.
-static void
-align_start(IntNum& start, const IntNum& align)
+static IntNum
+align_start(const IntNum& start, const IntNum& align)
 {
     // Because alignment is always a power of two, we can use some bit
     // trickery to do this easily.
     if ((start & (align-1)) != 0)
-        start = (start & ~(align-1)) + align;
+        return (start & ~(align-1)) + align;
+    else
+        return start;
 }
 
 // Recursive function to assign start addresses.
@@ -473,24 +475,26 @@ BinGroup::assign_start_recurse(IntNum& start,
     // Determine LMA
     if (m_bsd.has_istart)
     {
-        m_bsd.istart = start;
         if (m_bsd.has_align)
         {
-            align_start(m_bsd.istart, m_bsd.align);
-            if (start != m_bsd.istart)
+            m_section.set_lma(align_start(start, m_bsd.align));
+            if (start != m_section.get_lma())
             {
                 warn_set(WARN_GENERAL,
                     N_("start inconsistent with align; using aligned value"));
                 errwarns.propagate(m_bsd.start->get_line());
             }
         }
+        else
+            m_section.set_lma(start);
     }
     else
     {
         m_bsd.has_istart = true;
-        m_bsd.istart = start;
         if (m_bsd.has_align)
-            align_start(m_bsd.istart, m_bsd.align);
+            m_section.set_lma(align_start(start, m_bsd.align));
+        else
+            m_section.set_lma(start);
     }
 
     // Determine VMA if either just valign specified or if no v* specified
@@ -500,25 +504,23 @@ BinGroup::assign_start_recurse(IntNum& start,
         {
             // No v* specified, set VMA=LMA+vdelta.
             m_bsd.has_ivstart = true;
-            m_bsd.ivstart = m_bsd.istart;
-            m_bsd.ivstart += vdelta;
+            m_section.set_vma(m_section.get_lma() + vdelta);
         }
         else if (m_bsd.vfollows.empty())
         {
             // Just valign specified: set VMA=LMA+vdelta, align VMA, then add
             // delta between unaligned and aligned to vdelta parameter.
             m_bsd.has_ivstart = true;
-            m_bsd.ivstart = m_bsd.istart;
-            m_bsd.ivstart += vdelta;
-            IntNum orig_start = m_bsd.ivstart;
-            align_start(m_bsd.ivstart, m_bsd.valign);
-            vdelta += m_bsd.ivstart;
+            IntNum orig_start = m_section.get_lma();
+            orig_start += vdelta;
+            m_section.set_vma(align_start(orig_start, m_bsd.valign));
+            vdelta += m_section.get_vma();
             vdelta -= orig_start;
         }
     }
 
     // Find the maximum end value
-    IntNum tmp = m_bsd.istart;
+    IntNum tmp = m_section.get_lma();
     tmp += m_bsd.length;
     if (tmp > last)
         last = tmp;
@@ -529,7 +531,7 @@ BinGroup::assign_start_recurse(IntNum& start,
     {
         // Following sections have to follow this one,
         // so add length to start.
-        start = m_bsd.istart;
+        start = m_section.get_lma();
         start += m_bsd.length;
 
         follow_group->assign_start_recurse(start, last, vdelta, errwarns);
@@ -568,23 +570,25 @@ BinGroup::assign_vstart_recurse(IntNum& start, Errwarns& errwarns)
     // Determine VMA
     if (m_bsd.has_ivstart)
     {
-        m_bsd.ivstart = start;
         if (m_bsd.has_valign)
         {
-            align_start(m_bsd.ivstart, m_bsd.valign);
-            if (start != m_bsd.ivstart)
+            m_section.set_vma(align_start(start, m_bsd.valign));
+            if (start != m_section.get_vma())
             {
                 errwarns.propagate(m_bsd.vstart->get_line(),
                     ValueError(N_("vstart inconsistent with valign")));
             }
         }
+        else
+            m_section.set_vma(start);
     }
     else
     {
         m_bsd.has_ivstart = true;
-        m_bsd.ivstart = start;
         if (m_bsd.has_valign)
-            align_start(m_bsd.ivstart, m_bsd.valign);
+            m_section.set_vma(align_start(start, m_bsd.valign));
+        else
+            m_section.set_vma(start);
     }
 
     // Recurse for each following group.
@@ -593,7 +597,7 @@ BinGroup::assign_vstart_recurse(IntNum& start, Errwarns& errwarns)
     {
         // Following sections have to follow this one,
         // so add length to start.
-        start = m_bsd.ivstart;
+        start = m_section.get_vma();
         start += m_bsd.length;
 
         follow_group->assign_vstart_recurse(start, errwarns);
