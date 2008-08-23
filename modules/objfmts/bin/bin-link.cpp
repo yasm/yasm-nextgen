@@ -473,29 +473,19 @@ BinGroup::assign_start_recurse(IntNum& start,
                                Errwarns& errwarns)
 {
     // Determine LMA
-    if (m_bsd.has_istart)
+    if (m_bsd.has_align)
     {
-        if (m_bsd.has_align)
+        m_section.set_lma(align_start(start, m_bsd.align));
+        if (m_bsd.has_istart && start != m_section.get_lma())
         {
-            m_section.set_lma(align_start(start, m_bsd.align));
-            if (start != m_section.get_lma())
-            {
-                warn_set(WARN_GENERAL,
-                    N_("start inconsistent with align; using aligned value"));
-                errwarns.propagate(m_bsd.start->get_line());
-            }
+            warn_set(WARN_GENERAL,
+                N_("start inconsistent with align; using aligned value"));
+            errwarns.propagate(m_bsd.start->get_line());
         }
-        else
-            m_section.set_lma(start);
     }
     else
-    {
-        m_bsd.has_istart = true;
-        if (m_bsd.has_align)
-            m_section.set_lma(align_start(start, m_bsd.align));
-        else
-            m_section.set_lma(start);
-    }
+        m_section.set_lma(start);
+    m_bsd.has_istart = true;
 
     // Determine VMA if either just valign specified or if no v* specified
     if (m_bsd.vstart.get() == 0)
@@ -568,28 +558,18 @@ BinGroup::assign_vstart_recurse(IntNum& start, Errwarns& errwarns)
     }
 
     // Determine VMA
-    if (m_bsd.has_ivstart)
+    if (m_bsd.has_valign)
     {
-        if (m_bsd.has_valign)
+        m_section.set_vma(align_start(start, m_bsd.valign));
+        if (m_bsd.has_ivstart && start != m_section.get_vma())
         {
-            m_section.set_vma(align_start(start, m_bsd.valign));
-            if (start != m_section.get_vma())
-            {
-                errwarns.propagate(m_bsd.vstart->get_line(),
-                    ValueError(N_("vstart inconsistent with valign")));
-            }
+            errwarns.propagate(m_bsd.vstart->get_line(),
+                ValueError(N_("vstart inconsistent with valign")));
         }
-        else
-            m_section.set_vma(start);
     }
     else
-    {
-        m_bsd.has_ivstart = true;
-        if (m_bsd.has_valign)
-            m_section.set_vma(align_start(start, m_bsd.valign));
-        else
-            m_section.set_vma(start);
-    }
+        m_section.set_vma(start);
+    m_bsd.has_ivstart = true;
 
     // Recurse for each following group.
     for (BinGroups::iterator follow_group = m_follow_groups.begin(),
