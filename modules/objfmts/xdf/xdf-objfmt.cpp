@@ -505,7 +505,7 @@ Output::output_section(Section& sect, Errwarns& errwarns)
     else
     {
         pos = m_os.tellp();
-        if (pos == -1)
+        if (pos < 0)
             throw Fatal(N_("could not get file position on output file"));
     }
 
@@ -539,7 +539,7 @@ Output::output_section(Section& sect, Errwarns& errwarns)
         return;
 
     pos = m_os.tellp();
-    if (pos == -1)
+    if (pos < 0)
         throw Fatal(N_("could not get file position on output file"));
     xsd->relptr = static_cast<unsigned long>(pos);
 
