@@ -117,16 +117,15 @@ NasmParser::get_default_preproc_keyword() const
 void
 NasmParser::add_directives(Directives& dirs, const std::string& parser)
 {
-    if (!String::nocase_equal(parser, "nasm"))
-        return;
-    dirs.add("absolute",
-             BIND::bind(&NasmParser::dir_absolute, this, _1, _2, _3, _4),
-             Directives::ARG_REQUIRED);
-    dirs.add("align",
-             BIND::bind(&NasmParser::dir_align, this, _1, _2, _3, _4),
-             Directives::ARG_REQUIRED);
-    dirs.add("default",
-             BIND::bind(&NasmParser::dir_default, this, _1, _2, _3, _4));
+    static const Directives::Init<NasmParser> nasm_dirs[] =
+    {
+        {"absolute", &NasmParser::dir_absolute, Directives::ARG_REQUIRED},
+        {"align", &NasmParser::dir_align, Directives::ARG_REQUIRED},
+        {"default", &NasmParser::dir_default, Directives::ANY},
+    };
+
+    if (String::nocase_equal(parser, "nasm"))
+        dirs.add_array(this, nasm_dirs, NELEMS(nasm_dirs));
 }
 
 void
