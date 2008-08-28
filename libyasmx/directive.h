@@ -71,6 +71,17 @@ public:
         ID_REQUIRED = 2     ///< First valparam must be ID
     };
 
+    template <typename T>
+    struct Init
+    {
+        const char* name;
+        void (T::*func) (Object& object,
+                         const NameValues& namevals,
+                         const NameValues& objext_namevals,
+                         unsigned long line);
+        Flags flags;
+    };
+
     Directives();
     ~Directives();
 
@@ -81,6 +92,19 @@ public:
     /// @param handler      Directive function
     /// @param flags        Flags for pre-handler parameter checking.
     void add(const char* name, Directive handler, Flags flags = ANY);
+
+    /// Add directives from an initializer array.
+    /// @param me           this pointer to associate
+    /// @param inits        initializer array
+    /// @param size         size of initializer array
+    template <typename T>
+    void add_array(T* me, const Init<T>* inits, unsigned int size)
+    {
+        for (unsigned int i=0; i<size; ++i)
+            add(inits[i].name,
+                BIND::bind(inits[i].func, me, _1, _2, _3, _4),
+                inits[i].flags);
+    }
 
     /// Get a directive functor.  Throws an exception if no match.
     /// @param name         directive name
