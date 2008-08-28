@@ -856,14 +856,14 @@ XdfObject::dir_section(Object& object,
 void
 XdfObject::add_directives(Directives& dirs, const std::string& parser)
 {
-    if (!String::nocase_equal(parser, "nasm"))
-        return;
-    dirs.add("section",
-             BIND::bind(&XdfObject::dir_section, this, _1, _2, _3, _4),
-             Directives::ARG_REQUIRED);
-    dirs.add("segment",
-             BIND::bind(&XdfObject::dir_section, this, _1, _2, _3, _4),
-             Directives::ARG_REQUIRED);
+    static const Directives::Init<XdfObject> nasm_dirs[] =
+    {
+        {"section", &XdfObject::dir_section, Directives::ARG_REQUIRED},
+        {"segment", &XdfObject::dir_section, Directives::ARG_REQUIRED},
+    };
+
+    if (String::nocase_equal(parser, "nasm"))
+        dirs.add_array(this, nasm_dirs, NELEMS(nasm_dirs));
 }
 
 void
