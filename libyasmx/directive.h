@@ -80,7 +80,7 @@ public:
     ///                     name (not including the []).
     /// @param handler      Directive function
     /// @param flags        Flags for pre-handler parameter checking.
-    void add(const std::string& name, Directive handler, Flags flags = ANY);
+    void add(const char* name, Directive handler, Flags flags = ANY);
 
     /// Get a directive functor.  Throws an exception if no match.
     /// @param name         directive name
@@ -104,7 +104,7 @@ public:
     /// @param needsvalue   True if name requires value, false if it must not
     ///                     have a value.
     /// @param helper       Helper function
-    void add(const std::string& name,
+    void add(const char* name,
              bool needsvalue,
              FUNCTION::function<void (const NameValue&)> helper);
 

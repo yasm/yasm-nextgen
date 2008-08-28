@@ -78,7 +78,7 @@ Directives::~Directives()
 }
 
 void
-Directives::add(const std::string& name, Directive handler, Flags flags)
+Directives::add(const char* name, Directive handler, Flags flags)
 {
     m_impl->m_dirs.insert(std::make_pair(String::lowercase(name),
                                          Impl::Dir(handler, flags)));
@@ -139,7 +139,7 @@ DirHelpers::~DirHelpers()
 }
 
 void
-DirHelpers::add(const std::string& name, bool needsvalue,
+DirHelpers::add(const char* name, bool needsvalue,
                 FUNCTION::function<void (const NameValue&)> helper)
 {
     if (needsvalue)
