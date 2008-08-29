@@ -375,7 +375,6 @@ public:
     Section* append_section(const std::string& name, unsigned long line);
 
 private:
-    void init_new_section(Section* sect, unsigned long line);
     void dir_section(Object& object,
                      const NameValues& namevals,
                      const NameValues& objext_namevals,
@@ -723,23 +722,10 @@ XdfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     }
 }
 
-void
-XdfObject::init_new_section(Section* sect, unsigned long line)
-{
-    Location start = {&sect->bcs_first(), 0};
-    SymbolRef sym = m_object->get_sym(sect->get_name());
-    sym->define_label(start, line);
-
-    sect->add_assoc_data(XdfSectionData::key,
-        std::auto_ptr<AssocData>(new XdfSectionData(sym)));
-}
-
 Section*
 XdfObject::add_default_section()
 {
-    Section* section = new Section(".text", true, false, 0);
-    m_object->append_section(std::auto_ptr<Section>(section));
-    init_new_section(section, 0);
+    Section* section = append_section(".text", 0);
     section->set_default(true);
     return section;
 }
@@ -750,7 +736,16 @@ XdfObject::append_section(const std::string& name, unsigned long line)
     bool code = (name == ".text");
     Section* section = new Section(name, code, false, line);
     m_object->append_section(std::auto_ptr<Section>(section));
-    init_new_section(section, line);
+
+    // Define a label for the start of the section
+    Location start = {&section->bcs_first(), 0};
+    SymbolRef sym = m_object->get_sym(name);
+    sym->define_label(start, line);
+
+    // Add XDF data to the section
+    section->add_assoc_data(XdfSectionData::key,
+                            std::auto_ptr<AssocData>(new XdfSectionData(sym)));
+
     return section;
 }
 
