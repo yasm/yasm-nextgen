@@ -50,6 +50,7 @@ ObjectFormat::set_object(Object* object)
     if (!ok_object(object))
         return false;
     m_object = object;
+    initialize();
     return true;
 }
 
@@ -57,6 +58,11 @@ bool
 ObjectFormat::ok_object(Object* object) const
 {
     return true;
+}
+
+void
+ObjectFormat::initialize()
+{
 }
 
 } // namespace yasm

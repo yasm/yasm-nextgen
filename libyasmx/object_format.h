@@ -120,6 +120,10 @@ protected:
     /// @note The default implementation accepts all objects.
     virtual bool ok_object(Object* object) const;
 
+    /// Initialize object format.  Called by set_object() after m_object
+    /// is initialized.  Default implementation does nothing.
+    virtual void initialize();
+
     Object* m_object;
 };
 
