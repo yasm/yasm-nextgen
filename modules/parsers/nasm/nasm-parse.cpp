@@ -1012,7 +1012,7 @@ NasmParser::parse_expr6(ExprType type)
         case SPECIAL_ID:
         {
             SymbolRef sym =
-                m_object->find_special_sym(ID_val.c_str()+2, "nasm");
+                m_object->find_special_sym(ID_val.c_str()+2);
             if (sym)
             {
                 e.reset(new Expr(sym));

@@ -73,27 +73,17 @@ namespace yasm
 class Object::Impl
 {
 public:
-    Impl(bool nocase) : sym_map(nocase) {}
-    ~Impl();
+    Impl(bool nocase) : sym_map(nocase), special_sym_map(false) {}
+    ~Impl() {}
 
     typedef hamt<std::string, Symbol, SymGetName> SymbolTable;
-    typedef std::map<std::string, SymbolTable*> SpecialSymbolTables;
 
     /// Symbol table symbols, indexed by name.
     SymbolTable sym_map;
 
-    /// Special symbol tables, indexed by parser.
-    SpecialSymbolTables special_sym_map;
+    /// Special symbols, indexed by name.
+    SymbolTable special_sym_map;
 };
-
-Object::Impl::~Impl()
-{
-    for (SpecialSymbolTables::iterator i = special_sym_map.begin(),
-         end = special_sym_map.end(); i != end; ++i)
-    {
-        delete i->second;
-    }
-}
 
 Object::Object(const std::string& src_filename,
                const std::string& obj_filename,
@@ -250,24 +240,18 @@ Object::symbols_finalize(Errwarns& errwarns, bool undef_extern)
 }
 
 SymbolRef
-Object::add_special_sym(const std::string& parser, std::auto_ptr<Symbol> sym)
+Object::add_special_sym(std::auto_ptr<Symbol> sym)
 {
-    Impl::SymbolTable*& tab = m_impl->special_sym_map[parser];
-    if (!tab)
-       tab = new Impl::SymbolTable(false);
     Symbol* sptr = sym.get();
-    m_impl->special_sym_map[parser]->insert(sptr);
+    m_impl->special_sym_map.insert(sptr);
     m_non_table_syms.push_back(sym.release());
     return SymbolRef(sptr);
 }
 
 SymbolRef
-Object::find_special_sym(const std::string& name, const std::string& parser)
+Object::find_special_sym(const std::string& name)
 {
-    Impl::SymbolTable* tab = m_impl->special_sym_map[parser];
-    if (!tab)
-        return SymbolRef(0);
-    return SymbolRef(tab->find(name));
+    return SymbolRef(m_impl->special_sym_map.find(name));
 }
 
 } // namespace yasm
