@@ -61,6 +61,11 @@ ObjectFormat::ok_object(Object* object) const
 }
 
 void
+ObjectFormat::init_symbols(const std::string& parser)
+{
+}
+
+void
 ObjectFormat::initialize()
 {
 }

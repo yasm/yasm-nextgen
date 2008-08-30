@@ -89,6 +89,12 @@ public:
     /// @return Default debug format keyword.
     virtual std::string get_default_dbgfmt_keyword() const = 0;
 
+    /// Initialize symbols (default and special symbols).
+    /// Called after set_object() but prior to assembly process.
+    /// Default implementation does nothing.
+    /// @param parser       parser keyword
+    virtual void init_symbols(const std::string& parser);
+
     /// Write out (post-optimized) sections to the object file.
     /// This function may call #Symbol and #Object functions as necessary
     /// to retrieve symbolic information.

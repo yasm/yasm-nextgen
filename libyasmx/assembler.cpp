@@ -238,6 +238,8 @@ bool
 Assembler::Impl::assemble(std::istream& is, const std::string& src_filename,
                           bool warning_error)
 {
+    std::string parser_keyword = m_parser->get_keyword();
+
     // determine the object filename if not specified
     if (m_obj_filename.empty())
     {
@@ -285,6 +287,9 @@ Assembler::Impl::assemble(std::istream& is, const std::string& src_filename,
     // Add an initial "default" section to object
     m_object->set_cur_section(m_objfmt->add_default_section());
 
+    // Add any object-format special symbols
+    m_objfmt->init_symbols(parser_keyword);
+
     // Default to null as the debug format if not specified
     if (m_dbgfmt.get() == 0)
         set_dbgfmt("null");
@@ -305,7 +310,6 @@ Assembler::Impl::assemble(std::istream& is, const std::string& src_filename,
 
     // Set up directive handlers
     Directives dirs;
-    std::string parser_keyword = m_parser->get_keyword();
     m_arch->add_directives(dirs, parser_keyword);
     m_parser->add_directives(dirs, parser_keyword);
     m_preproc->add_directives(dirs, parser_keyword);
