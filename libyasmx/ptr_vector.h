@@ -1396,20 +1396,21 @@ inline bool prev_permutation (PtrBidirectionalIterator first, PtrBidirectionalIt
 template <typename T>
 class ptr_vector_owner {
 public:
-   ptr_vector_owner (stdx::ptr_vector<T>& pv) : ptrVec (pv) {}
+   ptr_vector_owner (stdx::ptr_vector<T>& pv) : ptrVec (&pv) {}
 
    ~ptr_vector_owner() {
-      assert (check_no_duplicates (ptrVec));
+      assert (check_no_duplicates (*ptrVec));
       stdx::ptr_vector<T> tmpVec;
-      tmpVec.swap (ptrVec);
+      tmpVec.swap (*ptrVec);
 
       while (! tmpVec.empty()) {
          delete tmpVec.pop_back();
       }
    }
 
+   void swap (ptr_vector_owner& other)  { std::swap (ptrVec, other.ptrVec); }
 private:
-   stdx::ptr_vector<T>& ptrVec;
+   stdx::ptr_vector<T>* ptrVec;
 
    bool check_no_duplicates (stdx::ptr_vector<T>& ptrVector) {
       std::vector<T*> tmpVec, chkVec;
