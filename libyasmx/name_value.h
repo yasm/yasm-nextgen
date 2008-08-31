@@ -34,7 +34,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include "export.h"
@@ -48,7 +47,7 @@ namespace yasm
 class Object;
 
 /// Name/value pair.
-class YASM_LIB_EXPORT NameValue : private boost::noncopyable
+class YASM_LIB_EXPORT NameValue
 {
     friend YASM_LIB_EXPORT
     std::ostream& operator<< (std::ostream& os, const NameValue& nv);
@@ -84,8 +83,19 @@ public:
     /// @param e            expression
     explicit NameValue(std::auto_ptr<Expr> e);
 
+    NameValue(const NameValue& oth);
+    NameValue& operator= (const NameValue& rhs)
+    {
+        if (this != &rhs)
+            NameValue(rhs).swap(*this);
+        return *this;
+    }
+
     /// Destructor.
     ~NameValue();
+
+    // Exchanges this name/value with another one.
+    void swap(NameValue& oth);
 
     /// Get name.
     /// @return Name; empty string if no name.
@@ -155,12 +165,38 @@ YASM_LIB_EXPORT
 std::ostream& operator<< (std::ostream& os, const NameValue& nv);
 
 /// Vector of name/values.
-class YASM_LIB_EXPORT NameValues : public stdx::ptr_vector<NameValue>
+class YASM_LIB_EXPORT NameValues : private stdx::ptr_vector<NameValue>
 {
+    typedef stdx::ptr_vector<NameValue> base_vector;
+
 public:
     NameValues();
     NameValues(iterator first, iterator last);
     ~NameValues();
+
+    typedef base_vector::iterator iterator;
+    typedef base_vector::const_iterator const_iterator;
+    typedef base_vector::reverse_iterator reverse_iterator;
+    typedef base_vector::const_reverse_iterator const_reverse_iterator;
+
+    using base_vector::begin;
+    using base_vector::end;
+    using base_vector::rbegin;
+    using base_vector::rend;
+    using base_vector::size;
+    using base_vector::max_size;
+    using base_vector::empty;
+    using base_vector::capacity;
+    using base_vector::reserve;
+    using base_vector::operator[];
+    using base_vector::at;
+    using base_vector::front;
+    using base_vector::back;
+    using base_vector::push_back;
+    using base_vector::insert;
+
+    // Exchanges this vector with another one.
+    void swap(NameValues& oth);
 
 private:
     stdx::ptr_vector_owner<NameValue> m_owner;
@@ -172,6 +208,39 @@ private:
 YASM_LIB_EXPORT
 std::ostream& operator<< (std::ostream& os, const NameValues& namevals);
 
+/// Specialized swap for algorithms.
+inline void
+swap(NameValue& left, NameValue& right)
+{
+    left.swap(right);
+}
+
+inline void
+swap(NameValues& left, NameValues& right)
+{
+    left.swap(right);
+}
+
 } // namespace yasm
+
+namespace std
+{
+
+// Specialized std::swap.
+template <>
+inline void
+swap(yasm::NameValue& left, yasm::NameValue& right)
+{
+    left.swap(right);
+}
+
+template <>
+inline void
+swap(yasm::NameValues& left, yasm::NameValues& right)
+{
+    left.swap(right);
+}
+
+} // namespace std
 
 #endif

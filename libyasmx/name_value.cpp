@@ -92,8 +92,27 @@ NameValue::NameValue(std::auto_ptr<Expr> e)
 {
 }
 
+NameValue::NameValue(const NameValue& oth)
+    : m_name(oth.m_name),
+      m_type(oth.m_type),
+      m_idstr(oth.m_idstr),
+      m_expr(oth.m_expr->clone()),
+      m_id_prefix(oth.m_id_prefix)
+{
+}
+
 NameValue::~NameValue()
 {
+}
+
+void
+NameValue::swap(NameValue& oth)
+{
+    m_name.swap(oth.m_name);
+    std::swap(m_type, oth.m_type);
+    m_idstr.swap(oth.m_idstr);
+    m_expr.swap(oth.m_expr);
+    std::swap(m_id_prefix, oth.m_id_prefix);
 }
 
 /*@null@*/ std::auto_ptr<Expr>
@@ -170,13 +189,20 @@ NameValues::NameValues()
 }
 
 NameValues::NameValues(iterator first, iterator last)
-    : stdx::ptr_vector<NameValue>(first, last),
+    : base_vector(first, last),
       m_owner(*this)
 {
 }
 
 NameValues::~NameValues()
 {
+}
+
+void
+NameValues::swap(NameValues& oth)
+{
+    base_vector::swap(oth);
+    m_owner.swap(oth.m_owner);
 }
 
 std::ostream&
