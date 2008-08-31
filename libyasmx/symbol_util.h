@@ -39,14 +39,15 @@ namespace yasm
 
 class Expr;
 class NameValues;
+class Object;
 class Symbol;
 
 /// Set object-extended name/values.
 /// @param sym              symbol
 /// @param objext_namevals  object-extended name/values
+/// @note object_namevals are moved, not copied.
 YASM_LIB_EXPORT
-void set_objext_namevals(Symbol& sym,
-                         std::auto_ptr<NameValues> objext_namevals);
+void set_objext_namevals(Symbol& sym, NameValues& objext_namevals);
 
 /// Get object-extended name/values, if any, associated with symbol's
 /// declaration.
@@ -68,6 +69,45 @@ void set_common_size(Symbol& sym, std::auto_ptr<Expr> common_size);
 /// @return Common size (NULL if none).
 YASM_LIB_EXPORT
 /*@null@*/ Expr* get_common_size(Symbol& sym);
+
+/// Extern directive handler.  Sets symbol visibility to Symbol::EXTERN and
+/// saves objext_namevals as associated symbol data.
+/// @param object           object
+/// @param name             directive name
+/// @param namevals         name/values
+/// @param objext_namevals  object format-specific name/values
+/// @param line             virtual line (from Linemap)
+YASM_LIB_EXPORT
+void dir_extern(Object& object,
+                NameValues& namevals,
+                NameValues& objext_namevals,
+                unsigned long line);
+
+/// Global directive handler.  Sets symbol visibility to Symbol::GLOBAL and
+/// saves objext_namevals as associated symbol data.
+/// @param object           object
+/// @param name             directive name
+/// @param namevals         name/values
+/// @param objext_namevals  object format-specific name/values
+/// @param line             virtual line (from Linemap)
+YASM_LIB_EXPORT
+void dir_global(Object& object,
+                NameValues& namevals,
+                NameValues& objext_namevals,
+                unsigned long line);
+
+/// Common directive handler.  Sets symbol visibility to Symbol::COMMON and
+/// saves common size and objext_namevals as associated symbol data.
+/// @param object           object
+/// @param name             directive name
+/// @param namevals         name/values
+/// @param objext_namevals  object format-specific name/values
+/// @param line             virtual line (from Linemap)
+YASM_LIB_EXPORT
+void dir_common(Object& object,
+                NameValues& namevals,
+                NameValues& objext_namevals,
+                unsigned long line);
 
 } // namespace yasm
 

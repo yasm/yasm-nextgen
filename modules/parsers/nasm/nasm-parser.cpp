@@ -34,6 +34,7 @@
 #include <libyasmx/nocase.h>
 #include <libyasmx/object.h>
 #include <libyasmx/section.h>
+#include <libyasmx/symbol_util.h>
 #include <libyasmx/registry.h>
 
 
@@ -125,7 +126,12 @@ NasmParser::add_directives(Directives& dirs, const std::string& parser)
     };
 
     if (String::nocase_equal(parser, "nasm"))
+    {
         dirs.add_array(this, nasm_dirs, NELEMS(nasm_dirs));
+        dirs.add("extern", &dir_extern, Directives::ID_REQUIRED);
+        dirs.add("global", &dir_global, Directives::ID_REQUIRED);
+        dirs.add("common", &dir_common, Directives::ID_REQUIRED);
+    }
 }
 
 void
