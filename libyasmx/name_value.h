@@ -34,8 +34,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/scoped_ptr.hpp>
-
 #include "export.h"
 #include "expr.h"
 #include "ptr_vector.h"
@@ -122,6 +120,15 @@ public:
     /*@null@*/ std::auto_ptr<Expr> get_expr
         (Object& object, unsigned long line) const;
 
+    /// Release value's expression.  Operates just like get_expr() but moves
+    /// the expression instead of copying it.
+    /// @param object       object
+    /// @param line         virtual line
+    /// @return Expression, or NULL if the parameter cannot be
+    ///         converted to an expression.
+    /*@null@*/ std::auto_ptr<Expr> release_expr
+        (Object& object, unsigned long line);
+
     /// Get value as a string.  If the parameter is an identifier,
     /// it's treated as a string.
     /// @return String; raises an exception if the parameter cannot be
@@ -148,7 +155,7 @@ private:
 
     /// Possible values
     std::string m_idstr;            ///< Identifier or string
-    boost::scoped_ptr<Expr> m_expr; ///< Expression
+    std::auto_ptr<Expr> m_expr;     ///< Expression
 
     /// Prefix character that indicates a raw identifier.  When
     /// get_string() is called on a #ID, all characters are

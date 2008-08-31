@@ -111,7 +111,7 @@ NameValue::swap(NameValue& oth)
     m_name.swap(oth.m_name);
     std::swap(m_type, oth.m_type);
     m_idstr.swap(oth.m_idstr);
-    m_expr.swap(oth.m_expr);
+    std::swap(m_expr, oth.m_expr);
     std::swap(m_id_prefix, oth.m_id_prefix);
 }
 
@@ -128,6 +128,24 @@ NameValue::get_expr(Object& object, unsigned long line) const
         }
         case EXPR:
             return std::auto_ptr<Expr>(m_expr->clone());
+        default:
+            return std::auto_ptr<Expr>(0);
+    }
+}
+
+/*@null@*/ std::auto_ptr<Expr>
+NameValue::release_expr(Object& object, unsigned long line)
+{
+    switch (m_type)
+    {
+        case ID:
+        {
+            SymbolRef sym = object.get_sym(get_id());
+            sym->use(line);
+            return std::auto_ptr<Expr>(new Expr(sym, line));
+        }
+        case EXPR:
+            return m_expr;
         default:
             return std::auto_ptr<Expr>(0);
     }
