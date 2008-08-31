@@ -89,16 +89,16 @@ public:
 private:
     void init_new_section(Section* sect, unsigned long line);
     void dir_section(Object& object,
-                     const NameValues& namevals,
-                     const NameValues& objext_namevals,
+                     NameValues& namevals,
+                     NameValues& objext_namevals,
                      unsigned long line);
     void dir_org(Object& object,
-                 const NameValues& namevals,
-                 const NameValues& objext_namevals,
+                 NameValues& namevals,
+                 NameValues& objext_namevals,
                  unsigned long line);
     void dir_map(Object& object,
-                 const NameValues& namevals,
-                 const NameValues& objext_namevals,
+                 NameValues& namevals,
+                 NameValues& objext_namevals,
                  unsigned long line);
     bool map_filename(const NameValue& nv);
 
@@ -439,8 +439,8 @@ BinObject::append_section(const std::string& name, unsigned long line)
 
 void
 BinObject::dir_section(Object& object,
-                       const NameValues& nvs,
-                       const NameValues& objext_nvs,
+                       NameValues& nvs,
+                       NameValues& objext_nvs,
                        unsigned long line)
 {
     assert(&object == m_object);
@@ -555,8 +555,8 @@ BinObject::dir_section(Object& object,
 
 void
 BinObject::dir_org(Object& object,
-                   const NameValues& namevals,
-                   const NameValues& objext_namevals,
+                   NameValues& namevals,
+                   NameValues& objext_namevals,
                    unsigned long line)
 {
     // We only allow a single ORG in a program.
@@ -584,8 +584,8 @@ BinObject::map_filename(const NameValue& nv)
 
 void
 BinObject::dir_map(Object& object,
-                   const NameValues& namevals,
-                   const NameValues& objext_namevals,
+                   NameValues& namevals,
+                   NameValues& objext_namevals,
                    unsigned long line)
 {
     DirHelpers helpers;

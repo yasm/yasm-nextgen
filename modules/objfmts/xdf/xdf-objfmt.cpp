@@ -376,8 +376,8 @@ public:
 
 private:
     void dir_section(Object& object,
-                     const NameValues& namevals,
-                     const NameValues& objext_namevals,
+                     NameValues& namevals,
+                     NameValues& objext_namevals,
                      unsigned long line);
 };
 
@@ -751,8 +751,8 @@ XdfObject::append_section(const std::string& name, unsigned long line)
 
 void
 XdfObject::dir_section(Object& object,
-                       const NameValues& nvs,
-                       const NameValues& objext_nvs,
+                       NameValues& nvs,
+                       NameValues& objext_nvs,
                        unsigned long line)
 {
     assert(&object == m_object);

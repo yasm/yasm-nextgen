@@ -53,9 +53,13 @@ class Object;
 /// @param namevals         name/values
 /// @param objext_namevals  object format-specific name/values
 /// @param line             virtual line (from Linemap)
+/// @note The namevals and objext_namevals parameter are *not* constant;
+///       the callee (directive handler) is free to modify these.  The
+///       typical modification performed is to swap or otherwise remove
+///       values without copying.
 typedef FUNCTION::function<void (Object& object,
-                                 const NameValues& namevals,
-                                 const NameValues& objext_namevals,
+                                 NameValues& namevals,
+                                 NameValues& objext_namevals,
                                  unsigned long line)>
     Directive;
 
@@ -76,8 +80,8 @@ public:
     {
         const char* name;
         void (T::*func) (Object& object,
-                         const NameValues& namevals,
-                         const NameValues& objext_namevals,
+                         NameValues& namevals,
+                         NameValues& objext_namevals,
                          unsigned long line);
         Flags flags;
     };
@@ -130,7 +134,7 @@ public:
     /// @param helper       Helper function
     void add(const char* name,
              bool needsvalue,
-             FUNCTION::function<void (const NameValue&)> helper);
+             FUNCTION::function<void (NameValue&)> helper);
 
     /// Help parse a list of directive name/values.  Matches name=value
     /// (or just value) against each of the added helper functions.
@@ -141,9 +145,9 @@ public:
     ///                         false if not matched, true if matched.
     /// @return True if any arguments matched (including via
     ///         catch-all callback), false if no match.
-    bool operator() (NameValues::const_iterator nv_first,
-                     NameValues::const_iterator nv_last,
-                     FUNCTION::function<bool (const NameValue&)> helper_nameval);
+    bool operator() (NameValues::iterator nv_first,
+                     NameValues::iterator nv_last,
+                     FUNCTION::function<bool (NameValue&)> helper_nameval);
 
 private:
     /// Pimpl for class internals.
@@ -158,7 +162,7 @@ private:
 /// @param out      reference to unsigned long
 /// @param val      value to set
 inline void
-dir_flag_reset(const NameValue& nv, unsigned long* out, unsigned long val)
+dir_flag_reset(NameValue& nv, unsigned long* out, unsigned long val)
 {
     *out = val;
 }
@@ -170,7 +174,7 @@ dir_flag_reset(const NameValue& nv, unsigned long* out, unsigned long val)
 /// @param out      reference to unsigned long
 /// @param flag     flag bit(s) to set
 inline void
-dir_flag_set(const NameValue& nv, unsigned long* out, unsigned long flag)
+dir_flag_set(NameValue& nv, unsigned long* out, unsigned long flag)
 {
     *out |= flag;
 }
@@ -183,7 +187,7 @@ dir_flag_set(const NameValue& nv, unsigned long* out, unsigned long flag)
 /// @param out      reference to unsigned long
 /// @param flag     flag bit(s) to clear
 inline void
-dir_flag_clear(const NameValue& nv, unsigned long* out, unsigned long flag)
+dir_flag_clear(NameValue& nv, unsigned long* out, unsigned long flag)
 {
     *out &= ~flag;
 }
@@ -196,7 +200,7 @@ dir_flag_clear(const NameValue& nv, unsigned long* out, unsigned long flag)
 /// @param out      reference to IntNum
 /// @param out_set  reference that is set to 1 when called
 YASM_LIB_EXPORT
-void dir_intn(const NameValue& nv,
+void dir_intn(NameValue& nv,
               Object* obj,
               unsigned long line,
               IntNum* out,
@@ -210,7 +214,7 @@ void dir_intn(const NameValue& nv,
 /// @param out      reference to Expr auto_ptr
 /// @param out_set  reference that is set to 1 when called
 YASM_LIB_EXPORT
-void dir_expr(const NameValue& nv,
+void dir_expr(NameValue& nv,
               Object* obj,
               unsigned long line,
               std::auto_ptr<Expr>* out,
@@ -223,14 +227,14 @@ void dir_expr(const NameValue& nv,
 /// @param out      reference to string
 /// @param out_set  reference that is set to 1 when called
 YASM_LIB_EXPORT
-void dir_string(const NameValue& nv, std::string* out, bool* out_set);
+void dir_string(NameValue& nv, std::string* out, bool* out_set);
 
 /// Standard catch-all callback for DirHelpers().  Generates standard
 /// warning for all valparams.
 /// @param nv       name/value
 /// @return False
 YASM_LIB_EXPORT
-bool dir_nameval_warn(const NameValue& nv);
+bool dir_nameval_warn(NameValue& nv);
 
 } // namespace yasm
 

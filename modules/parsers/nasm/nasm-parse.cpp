@@ -1081,8 +1081,8 @@ NasmParser::define_label(const std::string& name, bool local)
 }
 
 void
-NasmParser::dir_absolute(Object& object, const NameValues& namevals,
-                         const NameValues& objext_namevals, unsigned long line)
+NasmParser::dir_absolute(Object& object, NameValues& namevals,
+                         NameValues& objext_namevals, unsigned long line)
 {
     m_absstart.reset(namevals.front().get_expr(object, line).release());
     m_abspos.reset(m_absstart->clone());
@@ -1090,8 +1090,8 @@ NasmParser::dir_absolute(Object& object, const NameValues& namevals,
 }
 
 void
-NasmParser::dir_align(Object& object, const NameValues& namevals,
-                      const NameValues& objext_namevals, unsigned long line)
+NasmParser::dir_align(Object& object, NameValues& namevals,
+                      NameValues& objext_namevals, unsigned long line)
 {
     // Really, we shouldn't end up with an align directive in an absolute
     // section (as it's supposed to be only used for nop fill), but handle
@@ -1137,8 +1137,8 @@ NasmParser::dir_align(Object& object, const NameValues& namevals,
 }
 
 void
-NasmParser::dir_default(Object& object, const NameValues& namevals,
-                        const NameValues& objext_namevals, unsigned long line)
+NasmParser::dir_default(Object& object, NameValues& namevals,
+                        NameValues& objext_namevals, unsigned long line)
 {
     for (NameValues::const_iterator nv=namevals.begin(), end=namevals.end();
          nv != end; ++nv)
@@ -1161,8 +1161,8 @@ NasmParser::dir_default(Object& object, const NameValues& namevals,
 
 void
 NasmParser::directive(const std::string& name,
-                      const NameValues& namevals,
-                      const NameValues& objext_namevals)
+                      NameValues& namevals,
+                      NameValues& objext_namevals)
 {
     (*m_dirs)[name](*m_object, namevals, objext_namevals, get_cur_line());
     Section* cursect = m_object->get_cur_section();

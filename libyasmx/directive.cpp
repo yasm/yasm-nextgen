@@ -55,8 +55,8 @@ public:
         ~Dir() {}
         void operator() (Object& object,
                          const std::string& name,
-                         const NameValues& namevals,
-                         const NameValues& objext_namevals,
+                         NameValues& namevals,
+                         NameValues& objext_namevals,
                          unsigned long line);
 
     private:
@@ -99,8 +99,8 @@ Directives::operator[] (const std::string& name) const
 void
 Directives::Impl::Dir::operator() (Object& object,
                                    const std::string& name,
-                                   const NameValues& namevals,
-                                   const NameValues& objext_namevals,
+                                   NameValues& namevals,
+                                   NameValues& objext_namevals,
                                    unsigned long line)
 {
     if ((m_flags & (ARG_REQUIRED|ID_REQUIRED)) && namevals.empty())
@@ -124,7 +124,7 @@ public:
     Impl() {}
     ~Impl() {}
 
-    typedef std::map<std::string, FUNCTION::function<void (const NameValue&)> >
+    typedef std::map<std::string, FUNCTION::function<void (NameValue&)> >
         HelperMap;
     HelperMap m_value_helpers, m_novalue_helpers;
 };
@@ -140,7 +140,7 @@ DirHelpers::~DirHelpers()
 
 void
 DirHelpers::add(const char* name, bool needsvalue,
-                FUNCTION::function<void (const NameValue&)> helper)
+                FUNCTION::function<void (NameValue&)> helper)
 {
     if (needsvalue)
         m_impl->m_value_helpers.insert(std::make_pair(name, helper));
@@ -150,13 +150,13 @@ DirHelpers::add(const char* name, bool needsvalue,
 
 bool
 DirHelpers::operator()
-    (NameValues::const_iterator nv_first,
-     NameValues::const_iterator nv_last,
-     FUNCTION::function<bool (const NameValue&)> helper_nameval)
+    (NameValues::iterator nv_first,
+     NameValues::iterator nv_last,
+     FUNCTION::function<bool (NameValue&)> helper_nameval)
 {
     bool anymatched = false;
 
-    for (NameValues::const_iterator nv=nv_first; nv != nv_last; ++nv)
+    for (NameValues::iterator nv=nv_first; nv != nv_last; ++nv)
     {
         bool matched = false;
 
@@ -194,13 +194,13 @@ DirHelpers::operator()
 }
 
 void
-dir_intn(const NameValue& nv,
+dir_intn(NameValue& nv,
          Object* obj,
          unsigned long line,
          IntNum* out,
          bool* out_set)
 {
-    std::auto_ptr<Expr> e(nv.get_expr(*obj, line));
+    std::auto_ptr<Expr> e(nv.release_expr(*obj, line));
     /*@null@*/ IntNum* local;
 
     if ((e.get() == 0) || ((local = e->get_intnum()) == 0))
@@ -212,7 +212,7 @@ dir_intn(const NameValue& nv,
 }
 
 void
-dir_expr(const NameValue& nv,
+dir_expr(NameValue& nv,
          Object* obj,
          unsigned long line,
          std::auto_ptr<Expr>* out,
@@ -221,12 +221,12 @@ dir_expr(const NameValue& nv,
     if (!nv.is_expr())
         throw ValueError(String::compose(
             N_("argument to `%1' is not an expression"), nv.get_name()));
-    *out = nv.get_expr(*obj, line);
+    *out = nv.release_expr(*obj, line);
     *out_set = true;
 }
 
 void
-dir_string(const NameValue& nv, std::string* out, bool* out_set)
+dir_string(NameValue& nv, std::string* out, bool* out_set)
 {
     if (!nv.is_string())
         throw ValueError(String::compose(
@@ -237,7 +237,7 @@ dir_string(const NameValue& nv, std::string* out, bool* out_set)
 }
 
 bool
-dir_nameval_warn(const NameValue& nv)
+dir_nameval_warn(NameValue& nv)
 {
     if (!nv.get_name().empty())
     {

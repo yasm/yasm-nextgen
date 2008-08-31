@@ -192,21 +192,21 @@ private:
     std::auto_ptr<Expr> parse_expr6(ExprType type);
 
     void dir_absolute(Object& object,
-                      const NameValues& namevals,
-                      const NameValues& objext_namevals,
+                      NameValues& namevals,
+                      NameValues& objext_namevals,
                       unsigned long line);
     void dir_align(Object& object,
-                   const NameValues& namevals,
-                   const NameValues& objext_namevals,
+                   NameValues& namevals,
+                   NameValues& objext_namevals,
                    unsigned long line);
     void dir_default(Object& object,
-                     const NameValues& namevals,
-                     const NameValues& objext_namevals,
+                     NameValues& namevals,
+                     NameValues& objext_namevals,
                      unsigned long line);
 
     void directive(const std::string& name,
-                   const NameValues& namevals,
-                   const NameValues& objext_namevals);
+                   NameValues& namevals,
+                   NameValues& objext_namevals);
 
     Object* m_object;
     BytecodeContainer* m_container;
