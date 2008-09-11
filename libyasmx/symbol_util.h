@@ -56,6 +56,13 @@ void set_objext_namevals(Symbol& sym, NameValues& objext_namevals);
 YASM_LIB_EXPORT
 /*@null@*/ const NameValues* get_objext_namevals(const Symbol& sym);
 
+/// Get object-extended name/values, if any, associated with symbol's
+/// declaration (non-const version).
+/// @param sym          symbol
+/// @return Object-extended name/values (NULL if none).
+YASM_LIB_EXPORT
+/*@null@*/ NameValues* get_objext_namevals(Symbol& sym);
+
 /// Set common size of symbol.
 /// @param sym          symbol
 /// @param common_size  common size expression

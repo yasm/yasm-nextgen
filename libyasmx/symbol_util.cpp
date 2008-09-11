@@ -53,6 +53,7 @@ public:
     void put(marg_ostream& os) const;
 
     const NameValues& get() const { return m_nvs; }
+    NameValues& get() { return m_nvs; }
 
 private:
     NameValues m_nvs;
@@ -118,6 +119,16 @@ get_objext_namevals(const Symbol& sym)
     if (!ad)
         return 0;
     const ObjextNamevals* x = static_cast<const ObjextNamevals*>(ad);
+    return &x->get();
+}
+
+NameValues*
+get_objext_namevals(Symbol& sym)
+{
+    AssocData* ad = sym.get_assoc_data(ObjextNamevals::key);
+    if (!ad)
+        return 0;
+    ObjextNamevals* x = static_cast<ObjextNamevals*>(ad);
     return &x->get();
 }
 
