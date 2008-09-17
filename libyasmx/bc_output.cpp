@@ -46,7 +46,7 @@ BytecodeOutput::~BytecodeOutput()
 void
 BytecodeOutput::output(SymbolRef sym,
                        Bytes& bytes,
-                       Bytecode& bc,
+                       Location loc,
                        unsigned int valsize,
                        int warn)
 {

@@ -111,8 +111,7 @@ public:
     ///
     /// @param sym          symbol
     /// @param bytes        storage for byte representation
-    /// @param bc           current bytecode (usually passed into higher-level
-    ///                     calling function)
+    /// @param loc          location of the symbol reference
     /// @param valsize      size (in bits)
     /// @param warn         enables standard warnings.  Zero for none; nonzero
     ///                     for overflow/underflow floating point warnings;
@@ -120,7 +119,7 @@ public:
     ///                     positive for unsigned integer warnings
     virtual void output(SymbolRef sym,
                         Bytes& bytes,
-                        Bytecode& bc,
+                        Location loc,
                         unsigned int valsize,
                         int warn);
 
