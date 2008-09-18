@@ -177,8 +177,8 @@ class YASM_LIB_EXPORT NameValues : private stdx::ptr_vector<NameValue>
     typedef stdx::ptr_vector<NameValue> base_vector;
 
 public:
-    NameValues();
-    NameValues(iterator first, iterator last);
+    NameValues() {}
+    NameValues(iterator first, iterator last) : base_vector(first, last) {}
     ~NameValues();
 
     typedef base_vector::iterator iterator;
@@ -203,10 +203,7 @@ public:
     using base_vector::insert;
 
     // Exchanges this vector with another one.
-    void swap(NameValues& oth);
-
-private:
-    stdx::ptr_vector_owner<NameValue> m_owner;
+    void swap(NameValues& oth) { base_vector::swap(oth); }
 };
 
 /// Print vector of name/values.  For debugging purposes.

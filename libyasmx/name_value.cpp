@@ -201,26 +201,9 @@ operator<< (std::ostream& os, const NameValue& nv)
 #   pragma warning(disable: 4355)
 #endif
 
-NameValues::NameValues()
-    : m_owner(*this)
-{
-}
-
-NameValues::NameValues(iterator first, iterator last)
-    : base_vector(first, last),
-      m_owner(*this)
-{
-}
-
 NameValues::~NameValues()
 {
-}
-
-void
-NameValues::swap(NameValues& oth)
-{
-    base_vector::swap(oth);
-    m_owner.swap(oth.m_owner);
+    stdx::ptr_vector_owner<NameValue> owner(*this);
 }
 
 std::ostream&
