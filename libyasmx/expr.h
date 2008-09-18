@@ -125,6 +125,9 @@ public:
         return (m_type < other.m_type);
     }
 
+    /// Match empty (NONE).
+    bool is_empty() const { return m_type == NONE; }
+
     /// Match type.  Can take an OR'ed combination of TermTypes.
     bool is_type(int type) const { return (m_type & type) != 0; }
 

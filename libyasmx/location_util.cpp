@@ -121,9 +121,10 @@ xform_dist_base(Expr* e, FUNCTION::function<bool (ExprTerm& term,
     // Clean up any deleted (NONE) terms
     ExprTerms::iterator erasefrom =
         std::remove_if(terms.begin(), terms.end(),
-                       BIND::bind(&ExprTerm::is_type, _1, ExprTerm::NONE));
+                       MEMFN::mem_fn(&ExprTerm::is_empty));
     terms.erase(erasefrom, terms.end());
     ExprTerms(terms).swap(terms);   // trim capacity
+    e->make_ident();
 }
 
 static inline bool
