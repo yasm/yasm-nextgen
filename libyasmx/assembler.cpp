@@ -284,11 +284,11 @@ Assembler::Impl::assemble(std::istream& is, const std::string& src_filename,
             m_arch->get_machine()));
     }
 
-    // Add an initial "default" section to object
-    m_object->set_cur_section(m_objfmt->add_default_section());
-
     // Add any object-format special symbols
     m_objfmt->init_symbols(parser_keyword);
+
+    // Add an initial "default" section to object
+    m_object->set_cur_section(m_objfmt->add_default_section());
 
     // Default to null as the debug format if not specified
     if (m_dbgfmt.get() == 0)
