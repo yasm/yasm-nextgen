@@ -196,11 +196,6 @@ operator<< (std::ostream& os, const NameValue& nv)
     return os;
 }
 
-#if defined (_MSC_VER)
-// disable warning C4355: 'this' : used in base member initializer list
-#   pragma warning(disable: 4355)
-#endif
-
 NameValues::~NameValues()
 {
     stdx::ptr_vector_owner<NameValue> owner(*this);
