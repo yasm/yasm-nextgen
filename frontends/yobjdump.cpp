@@ -89,6 +89,7 @@ static bool show_section_headers = false;
 static bool show_private_headers = false;
 static bool show_relocs = false;
 static bool show_symbols = false;
+static bool show_contents = false;
 
 static void
 print_error(const std::string& msg)
@@ -168,6 +169,7 @@ OPT_BOOL_HANDLER(section_headers, show_section_headers)
 OPT_BOOL_HANDLER(private_headers, show_private_headers)
 OPT_BOOL_HANDLER(relocs, show_relocs)
 OPT_BOOL_HANDLER(symbols, show_symbols)
+OPT_BOOL_HANDLER(contents, show_contents)
 
 static bool
 opt_all_headers_handler(/*@unused@*/ const std::string& cmd,
@@ -211,6 +213,8 @@ static OptOption options[] =
     { 'x', "all-headers", false, opt_all_headers_handler, 0,
       N_("display all available header information (-f -h -p -r -t)"),
       NULL },
+    { 's', "full-contents", false, opt_contents_handler, 0,
+      N_("display full contents of sections"), NULL },
 };
 
 static const char *
@@ -295,7 +299,6 @@ dump_relocs(const yasm::Object& object)
     for (yasm::Object::const_section_iterator sect=object.sections_begin(),
          end=object.sections_end(); sect != end; ++sect)
     {
-        std::cout << "\n\n";
         std::cout << "RELOCATION RECORDS FOR [" << sect->get_name() << "]\n";
         std::cout << std::left << std::setfill(' ');
         std::cout << std::setw(bits/4) << "OFFSET";
@@ -312,7 +315,102 @@ dump_relocs(const yasm::Object& object)
             std::cout << '\n';
         }
         std::cout << std::noshowbase;
+        std::cout << "\n\n";
     }
+}
+
+static void
+dump_contents_line(unsigned long addr,
+                   unsigned int addr_hexdigits,
+                   const unsigned char* data,
+                   int len)
+{
+    // address
+    std::cout << ' ' << std::setw(addr_hexdigits) << addr;
+
+    // hex dump
+    for (int i=0; i<16; ++i)
+    {
+        if ((i & 3) == 0)
+            std::cout << ' ';
+        if (i<len)
+            std::cout << std::setw(2) << static_cast<unsigned int>(data[i]);
+        else
+            std::cout << "  ";
+    }
+
+    // ascii dump
+    std::cout << "  ";
+    for (int i=0; i<16; ++i)
+    {
+        if (i>=len)
+            std::cout << ' ';
+        else if (!std::isprint(data[i]))
+            std::cout << '.';
+        else
+            std::cout << data[i];
+    }
+
+    std::cout << '\n';
+}
+
+static void
+dump_contents(const yasm::Object& object)
+{
+    std::cout << std::hex << std::setfill('0') << std::right;
+
+    for (yasm::Object::const_section_iterator sect=object.sections_begin(),
+         end=object.sections_end(); sect != end; ++sect)
+    {
+        if (sect->is_bss())
+            continue;
+
+        unsigned long size = sect->bcs_last().next_offset();
+        if (size == 0)
+            continue;   // empty
+
+        // figure out how many hex digits we should have for the address
+        unsigned int addr_hexdigits = String::format(std::hex, size).length();
+        if (addr_hexdigits < 4)
+            addr_hexdigits = 4;
+
+        std::cout << "Contents of section " << sect->get_name() << ":\n";
+
+        unsigned char line[16];
+        int line_pos = 0;
+        unsigned long addr = 0;
+
+        for (yasm::Section::const_bc_iterator bc=sect->bcs_begin(),
+             endbc=sect->bcs_end(); bc != endbc; ++bc)
+        {
+            const yasm::Bytes& fixed = bc->get_fixed();
+            long fixed_pos = 0;
+            long fixed_size = fixed.size();
+            while (fixed_pos < fixed_size)
+            {
+                long tocopy = 16-line_pos;
+                if (tocopy > (fixed_size-fixed_pos))
+                    tocopy = fixed_size-fixed_pos;
+                std::memcpy(&line[line_pos], &fixed[fixed_pos], tocopy);
+                line_pos += tocopy;
+                fixed_pos += tocopy;
+
+                // when we've filled up a line, output it.
+                if (line_pos == 16)
+                {
+                    dump_contents_line(addr, addr_hexdigits, line, 16);
+                    addr += 16;
+                    line_pos = 0;
+                }
+            }
+        }
+
+        // output any remaining
+        if (line_pos != 0)
+            dump_contents_line(addr, addr_hexdigits, line, line_pos);
+    }
+
+    std::cout << std::dec << std::setfill(' ');
 }
 
 static void
@@ -386,7 +484,7 @@ do_dump(const std::string& in_filename)
     objfmt->read(in_file);
 
     std::cout << in_filename << ":     file format " << objfmt->get_keyword()
-              << '\n';
+              << "\n\n";
 
     if (show_section_headers)
         dump_section_headers(object);
@@ -394,6 +492,8 @@ do_dump(const std::string& in_filename)
         dump_symbols(object);
     if (show_relocs)
         dump_relocs(object);
+    if (show_contents)
+        dump_contents(object);
 }
 
 int
