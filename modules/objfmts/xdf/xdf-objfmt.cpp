@@ -26,8 +26,6 @@
 //
 #include <util.h>
 
-#include <fstream>
-
 #include <libyasmx/arch.h>
 #include <libyasmx/bc_output.h>
 #include <libyasmx/bitcount.h>
@@ -58,6 +56,10 @@ namespace xdf
 {
 
 static const unsigned long XDF_MAGIC = 0x87654322;
+static const unsigned int FILEHEAD_SIZE = 16;
+static const unsigned int SECTHEAD_SIZE = 40;
+static const unsigned int SYMBOL_SIZE = 16;
+static const unsigned int RELOC_SIZE = 16;
 
 struct XdfSymbolData : public AssocData
 {
@@ -109,6 +111,14 @@ struct XdfSectionData : public AssocData
     void put(marg_ostream& os) const;
 
     void write(Bytes& bytes, const Section& sect) const;
+    void read(Bytes& bytes,
+              /*@out@*/ unsigned long* name_sym_index,
+              /*@out@*/ IntNum* lma,
+              /*@out@*/ IntNum* vma,
+              /*@out@*/ unsigned long* align,
+              /*@out@*/ bool* bss,
+              /*@out@*/ unsigned long* filepos,
+              /*@out@*/ unsigned long* nrelocs);
 
     // Section flags.
     // Not used directly in this class, but used in file representation.
@@ -186,7 +196,7 @@ XdfSectionData::write(Bytes& bytes, const Section& sect) const
     write_16(bytes, sect.get_align());  // alignment
 
     // flags
-    unsigned long flags = 0;
+    unsigned short flags = 0;
     if (has_addr)
         flags |= XDF_ABSOLUTE;
     if (flat)
@@ -205,6 +215,42 @@ XdfSectionData::write(Bytes& bytes, const Section& sect) const
     write_32(bytes, size);              // section size
     write_32(bytes, relptr);            // file ptr to relocs
     write_32(bytes, sect.get_relocs().size());// num of relocation entries
+}
+
+void
+XdfSectionData::read(Bytes& bytes,
+                     /*@out@*/ unsigned long* name_sym_index,
+                     /*@out@*/ IntNum* lma,
+                     /*@out@*/ IntNum* vma,
+                     /*@out@*/ unsigned long* align,
+                     /*@out@*/ bool* bss,
+                     /*@out@*/ unsigned long* filepos,
+                     /*@out@*/ unsigned long* nrelocs)
+{
+    bytes << little_endian;
+
+    *name_sym_index = read_u32(bytes);  // section name symbol index
+    *lma = read_u64(bytes);             // physical address
+    *vma = read_u64(bytes);             // virtual address
+    has_vaddr = true;                   // virtual specified by object file
+    *align = read_u16(bytes);           // alignment
+
+    // flags
+    unsigned short flags = read_u16(bytes);
+    has_addr = (flags & XDF_ABSOLUTE) != 0;
+    flat = (flags & XDF_FLAT) != 0;
+    *bss = (flags & XDF_BSS) != 0;
+    if ((flags & XDF_USE_16) != 0)
+        bits = 16;
+    else if ((flags & XDF_USE_32) != 0)
+        bits = 32;
+    else if ((flags & XDF_USE_64) != 0)
+        bits = 64;
+
+    *filepos = read_u32(bytes);         // file ptr to data
+    size = read_u32(bytes);             // section size
+    relptr = read_u32(bytes);           // file ptr to relocs
+    *nrelocs = read_u32(bytes);         // num of relocation entries
 }
 
 inline XdfSectionData*
@@ -232,7 +278,20 @@ public:
         XDF_RIP = 4,        //< RIP-relative
         XDF_SEG = 8         //< segment containing symbol
     };
+    enum Size
+    {
+        XDF_8  = 1,
+        XDF_16 = 2,
+        XDF_32 = 4,
+        XDF_64 = 8
+    };
 
+    XdfReloc(const IntNum& addr,
+             SymbolRef sym,
+             SymbolRef base,
+             Type type,
+             Size size,
+             unsigned int shift);
     XdfReloc(Value& value, Location loc);
     ~XdfReloc() {}
 
@@ -246,16 +305,24 @@ public:
 private:
     SymbolRef m_base;       //< base symbol (for WRT)
     Type m_type;            //< type of relocation
-    enum Size
-    {
-        XDF_8  = 1,
-        XDF_16 = 2,
-        XDF_32 = 4,
-        XDF_64 = 8
-    };
     Size m_size;            //< size of relocation
     unsigned int m_shift;   //< relocation shift (0,4,8,16,24,32)
 };
+
+inline
+XdfReloc::XdfReloc(const IntNum& addr,
+                   SymbolRef sym,
+                   SymbolRef base,
+                   Type type,
+                   Size size,
+                   unsigned int shift)
+    : Reloc(addr, sym)
+    , m_base(base)
+    , m_type(type)
+    , m_size(size)
+    , m_shift(shift)
+{
+}
 
 inline
 XdfReloc::XdfReloc(Value& value, Location loc)
@@ -369,6 +436,10 @@ public:
     std::vector<std::string> get_dbgfmt_keywords() const;
     std::string get_default_dbgfmt_keyword() const { return "null"; }
 
+    bool taste(std::istream& is,
+               /*@out@*/ std::string* arch_keyword,
+               /*@out@*/ std::string* machine);
+    void read(std::istream& is);
     void output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* add_default_section();
@@ -540,7 +611,7 @@ Output::output_section(Section& sect, Errwarns& errwarns)
         const XdfReloc& reloc = static_cast<const XdfReloc&>(*i);
         Bytes& scratch = get_scratch();
         reloc.write(scratch);
-        assert(scratch.size() == 16);
+        assert(scratch.size() == RELOC_SIZE);
         m_os << scratch;
     }
 }
@@ -614,7 +685,7 @@ Output::output_sym(const Symbol& sym,
     write_32(scratch, value);       // value
     write_32(scratch, *strtab_offset);
     write_32(scratch, flags);       // flags
-    assert(scratch.size() == 16);
+    assert(scratch.size() == SYMBOL_SIZE);
     m_os << scratch;
 
     *strtab_offset += static_cast<unsigned long>(sym.get_name().length()+1);
@@ -658,14 +729,15 @@ XdfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     }
 
     // Allocate space for headers by seeking forward
-    os.seekp(16+40*scnum);
+    os.seekp(FILEHEAD_SIZE+SECTHEAD_SIZE*scnum);
     if (!os)
         throw Fatal(N_("could not seek on output file"));
 
     Output out(os, *m_object);
 
     // Get file offset of start of string table
-    unsigned long strtab_offset = 16+40*scnum+16*symtab_count;
+    unsigned long strtab_offset =
+        FILEHEAD_SIZE + SECTHEAD_SIZE*scnum + SYMBOL_SIZE*symtab_count;
 
     // Output symbol table
     for (Object::const_symbol_iterator sym = m_object->symbols_begin(),
@@ -704,8 +776,8 @@ XdfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     write_32(scratch, scnum);           // number of sects
     write_32(scratch, symtab_count);    // number of symtabs
     // size of sect headers + symbol table + strings
-    write_32(scratch, strtab_offset-16);
-    assert(scratch.size() == 16);
+    write_32(scratch, strtab_offset-FILEHEAD_SIZE);
+    assert(scratch.size() == FILEHEAD_SIZE);
     os << scratch;
 
     // Output section headers
@@ -717,8 +789,198 @@ XdfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
 
         Bytes& scratch2 = out.get_scratch();
         xsd->write(scratch2, *i);
-        assert(scratch2.size() == 40);
+        assert(scratch2.size() == SECTHEAD_SIZE);
         os << scratch2;
+    }
+}
+
+bool
+XdfObject::taste(std::istream& is,
+                 /*@out@*/ std::string* arch_keyword,
+                 /*@out@*/ std::string* machine)
+{
+    Bytes bytes;
+
+    // Check for XDF magic number in header
+    is.seekg(0);
+    bytes.write(is, FILEHEAD_SIZE);
+    if (!is)
+        return false;
+    bytes << little_endian;
+    unsigned long magic = read_u32(bytes);
+    if (magic != XDF_MAGIC)
+        return false;
+
+    // all XDF files are x86/x86 or amd64 (can't tell which)
+    arch_keyword->assign("x86");
+    machine->assign("x86");
+    return true;
+}
+
+void
+XdfObject::read(std::istream& is)
+{
+    Bytes bytes;
+
+    // Read object header
+    is.seekg(0);
+    bytes.write(is, FILEHEAD_SIZE);
+    if (!is)
+        throw Error(N_("could not read object header"));
+    bytes << little_endian;
+    unsigned long magic = read_u32(bytes);
+    if (magic != XDF_MAGIC)
+        throw Error(N_("not an XDF file"));
+    unsigned long scnum = read_u32(bytes);
+    unsigned long symnum = read_u32(bytes);
+    unsigned long headers_len = read_u32(bytes);
+
+    // Read section headers, symbol table, and strings raw data
+    bytes.resize(0);
+    bytes.set_readpos(0);
+    bytes.write(is, scnum*SECTHEAD_SIZE);
+    if (!is)
+        throw Error(N_("could not read section table"));
+
+    Bytes symtab;
+    symtab.write(is, symnum*SYMBOL_SIZE);
+    if (!is)
+        throw Error(N_("could not read symbol table"));
+
+    unsigned strtab_offset =
+        FILEHEAD_SIZE + SECTHEAD_SIZE*scnum + SYMBOL_SIZE*symnum;
+    Bytes strtab;
+    strtab.write(is, FILEHEAD_SIZE+headers_len-strtab_offset);
+    strtab.push_back(0);        // add extra 0 in case of data corruption
+    if (!is)
+        throw Error(N_("could not read string table"));
+
+    // Storage for nrelocs, indexed by section number
+    std::vector<unsigned long> sects_nrelocs;
+    sects_nrelocs.reserve(scnum);
+
+    // Create sections
+    for (unsigned long i=0; i<scnum; ++i)
+    {
+        // Start with symbol=0 as it's not created yet; updated later.
+        std::auto_ptr<XdfSectionData> xsd(new XdfSectionData(SymbolRef(0)));
+        unsigned long name_sym_index;
+        IntNum lma, vma;
+        unsigned long align;
+        bool bss;
+        unsigned long filepos;
+        unsigned long nrelocs;
+        xsd->read(bytes, &name_sym_index, &lma, &vma, &align, &bss, &filepos,
+                  &nrelocs);
+        xsd->scnum = i;
+
+        symtab.set_readpos(name_sym_index*SYMBOL_SIZE+8);   // strtab offset
+        unsigned long name_strtab_off = read_u32(symtab) - strtab_offset;
+        std::string sectname =
+            reinterpret_cast<const char*>(&strtab.at(name_strtab_off));
+
+        std::auto_ptr<Section> section(
+            new Section(sectname, xsd->bits != 0, bss, 0));
+
+        section->set_filepos(filepos);
+        section->set_vma(vma);
+        section->set_lma(lma);
+
+        // Read section data
+        is.seekg(filepos);
+        if (!is)
+            throw Error(String::compose(
+                N_("could not read seek to section `%1'"), sectname));
+
+        section->bcs_first().get_fixed().write(is, xsd->size);
+        if (!is)
+            throw Error(String::compose(
+                N_("could not read section `%1' data"), sectname));
+
+        // Associate section data with section
+        section->add_assoc_data(XdfSectionData::key,
+                                std::auto_ptr<AssocData>(xsd.release()));
+
+        // Add section to object
+        m_object->append_section(section);
+
+        sects_nrelocs.push_back(nrelocs);
+    }
+
+    // Create symbols
+    symtab.set_readpos(0);
+    symtab << little_endian;
+    for (unsigned long i=0; i<symnum; ++i)
+    {
+        unsigned long sym_scnum = read_u32(symtab);     // section number
+        unsigned long value = read_u32(symtab);         // value
+        unsigned long name_strtab_off = read_u32(symtab) - strtab_offset;
+        unsigned long flags = read_u32(symtab);         // flags
+
+        std::string symname =
+            reinterpret_cast<const char*>(&strtab.at(name_strtab_off));
+
+        SymbolRef sym = m_object->get_sym(symname);
+        if ((flags & XdfSymbolData::XDF_GLOBAL) != 0)
+            sym->declare(Symbol::GLOBAL, 0);
+        else if ((flags & XdfSymbolData::XDF_EXTERN) != 0)
+            sym->declare(Symbol::EXTERN, 0);
+
+        if ((flags & XdfSymbolData::XDF_EQU) != 0)
+            sym->define_equ(std::auto_ptr<Expr>(new Expr(IntNum(value), 0)), 0);
+        else if (sym_scnum < scnum)
+        {
+            Section& sect = m_object->get_section(sym_scnum);
+            Location loc = {&sect.bcs_first(), value};
+            sym->define_label(loc, 0);
+        }
+
+        // Save index in symrec data
+        sym->add_assoc_data(XdfSymbolData::key,
+            std::auto_ptr<AssocData>(new XdfSymbolData(i)));
+    }
+
+    // Update section symbol info, and create section relocations
+    Bytes relocs;
+    std::vector<unsigned long>::iterator nrelocsi = sects_nrelocs.begin();
+    for (Object::section_iterator sect=m_object->sections_begin(),
+         end=m_object->sections_end(); sect != end; ++sect, ++nrelocsi)
+    {
+        XdfSectionData* xsd = get_xdf(*sect);
+        assert(xsd != 0);
+
+        // Read relocations
+        is.seekg(xsd->relptr);
+        if (!is)
+            throw Error(String::compose(
+                N_("could not read seek to section `%1' relocs"),
+                sect->get_name()));
+
+        relocs.resize(0);
+        relocs.set_readpos(0);
+        relocs.write(is, (*nrelocsi) * RELOC_SIZE);
+        if (!is)
+            throw Error(String::compose(
+                N_("could not read section `%1' relocs"),
+                sect->get_name()));
+
+        relocs << little_endian;
+        for (unsigned long i=0; i<(*nrelocsi); ++i)
+        {
+            unsigned long addr = read_u32(relocs);
+            unsigned long sym_index = read_u32(relocs);
+            unsigned long basesym_index = read_u32(relocs);
+            XdfReloc::Type type = static_cast<XdfReloc::Type>(read_u8(relocs));
+            XdfReloc::Size size = static_cast<XdfReloc::Size>(read_u8(relocs));
+            unsigned char shift = read_u8(relocs);
+            read_u8(relocs);    // flags; ignored
+            SymbolRef sym = m_object->get_sym(sym_index);
+            SymbolRef basesym(0);
+            if (type == XdfReloc::XDF_WRT)
+                basesym = m_object->get_sym(basesym_index);
+            sect->add_reloc(std::auto_ptr<Reloc>(
+                new XdfReloc(addr, sym, basesym, type, size, shift)));
+        }
     }
 }
 
