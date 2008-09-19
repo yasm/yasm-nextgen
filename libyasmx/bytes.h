@@ -40,11 +40,46 @@
 namespace yasm
 {
 
-class YASM_LIB_EXPORT Bytes : public std::vector<unsigned char>
+class YASM_LIB_EXPORT Bytes : private std::vector<unsigned char>
 {
+    typedef std::vector<unsigned char> base_vector;
+
 public:
     Bytes(bool bigendian=false);
     ~Bytes();
+
+    typedef base_vector::reference reference;
+    typedef base_vector::const_reference const_reference;
+    typedef base_vector::iterator iterator;
+    typedef base_vector::const_iterator const_iterator;
+    typedef base_vector::size_type size_type;
+    typedef base_vector::difference_type difference_type;
+    typedef base_vector::value_type value_type;
+    typedef base_vector::reverse_iterator reverse_iterator;
+    typedef base_vector::const_reverse_iterator const_reverse_iterator;
+
+    using base_vector::begin;
+    using base_vector::end;
+    using base_vector::rbegin;
+    using base_vector::rend;
+    using base_vector::size;
+    using base_vector::max_size;
+    using base_vector::resize;
+    using base_vector::capacity;
+    using base_vector::empty;
+    using base_vector::reserve;
+    using base_vector::operator[];
+    using base_vector::at;
+    using base_vector::front;
+    using base_vector::back;
+    using base_vector::assign;
+    using base_vector::push_back;
+    using base_vector::pop_back;
+    using base_vector::insert;
+    using base_vector::erase;
+    using base_vector::clear;
+
+    void swap(Bytes& oth);
 
     void set_bigendian(bool bigendian) { m_bigendian = bigendian; }
     bool is_bigendian() const { return m_bigendian; }
@@ -129,6 +164,26 @@ std::ostream& operator<< (std::ostream& os, const Bytes& bytes);
 YASM_LIB_EXPORT
 marg_ostream& operator<< (marg_ostream& os, const Bytes& bytes);
 
+/// Specialized swap for algorithms.
+inline void
+swap(Bytes& left, Bytes& right)
+{
+    left.swap(right);
+}
+
 } // namespace yasm
+
+namespace std
+{
+
+// Specialized std::swap.
+template <>
+inline void
+swap(yasm::Bytes& left, yasm::Bytes& right)
+{
+    left.swap(right);
+}
+
+}
 
 #endif

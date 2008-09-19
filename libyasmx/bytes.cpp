@@ -66,6 +66,14 @@ operator<< (marg_ostream& os, const Bytes& bytes)
 }
 
 void
+Bytes::swap(Bytes& oth)
+{
+    base_vector::swap(*this);
+    std::swap(m_bigendian, oth.m_bigendian);
+    std::swap(m_readpos, oth.m_readpos);
+}
+
+void
 Bytes::write(std::istream& is, size_type n)
 {
     if (n == 0)
