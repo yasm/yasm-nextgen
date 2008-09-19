@@ -26,6 +26,8 @@
 //
 #include <util.h>
 
+#include <cctype>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <fstream>
@@ -383,6 +385,7 @@ dump_contents(const yasm::Object& object)
         for (yasm::Section::const_bc_iterator bc=sect->bcs_begin(),
              endbc=sect->bcs_end(); bc != endbc; ++bc)
         {
+            // XXX: only outputs fixed portions
             const yasm::Bytes& fixed = bc->get_fixed();
             long fixed_pos = 0;
             long fixed_size = fixed.size();
