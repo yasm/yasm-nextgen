@@ -886,16 +886,24 @@ XdfObject::read(std::istream& is)
         section->set_vma(vma);
         section->set_lma(lma);
 
-        // Read section data
-        is.seekg(filepos);
-        if (!is)
-            throw Error(String::compose(
-                N_("could not read seek to section `%1'"), sectname));
+        if (bss)
+        {
+            Bytecode& gap = section->append_gap(xsd->size, 0);
+            gap.calc_len(0);    // force length calculation of gap
+        }
+        else
+        {
+            // Read section data
+            is.seekg(filepos);
+            if (!is)
+                throw Error(String::compose(
+                    N_("could not read seek to section `%1'"), sectname));
 
-        section->bcs_first().get_fixed().write(is, xsd->size);
-        if (!is)
-            throw Error(String::compose(
-                N_("could not read section `%1' data"), sectname));
+            section->bcs_first().get_fixed().write(is, xsd->size);
+            if (!is)
+                throw Error(String::compose(
+                    N_("could not read section `%1' data"), sectname));
+        }
 
         // Associate section data with section
         section->add_assoc_data(XdfSectionData::key,
