@@ -198,6 +198,9 @@ operator<< (std::ostream& os, const NameValue& nv)
 
 NameValues::~NameValues()
 {
+    // Destroy contained NameValues.  By doing this here, we can guarantee
+    // the ptr_vector_owner destructor will be called before the base class
+    // (ptr_vector) destructor.
     stdx::ptr_vector_owner<NameValue> owner(*this);
 }
 
