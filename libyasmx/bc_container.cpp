@@ -169,18 +169,19 @@ BytecodeContainer::append_bytecode(std::auto_ptr<Bytecode> bc)
     m_last_gap = false;
 }
 
-void
+Bytecode&
 BytecodeContainer::append_gap(unsigned int size, unsigned long line)
 {
     if (m_last_gap)
     {
         static_cast<GapBytecode&>(*m_bcs.back().m_contents).extend(size);
-        return;
+        return m_bcs.back();
     }
     Bytecode& bc = fresh_bytecode();
     bc.transform(Bytecode::Contents::Ptr(new GapBytecode(size)));
     bc.set_line(line);
     m_last_gap = true;
+    return bc;
 }
 
 Bytecode&
