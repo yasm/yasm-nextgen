@@ -34,12 +34,12 @@
 #include <vector>
 
 #include "functional.h"
-#include <boost/scoped_ptr.hpp>
 
 #include "bytes.h"
 #include "export.h"
 #include "location.h"
 #include "marg_ostream_fwd.h"
+#include "scoped_ptr.h"
 #include "symbolref.h"
 #include "value.h"
 
@@ -347,7 +347,7 @@ private:
     std::vector<Fixup> m_fixed_fixups;
 
     /// Implementation-specific tail.
-    boost::scoped_ptr<Contents> m_contents;
+    util::scoped_ptr<Contents> m_contents;
 
     /// Pointer to container containing bytecode.
     /*@dependent@*/ BytecodeContainer* m_container;

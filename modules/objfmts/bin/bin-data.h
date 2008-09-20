@@ -28,12 +28,12 @@
 //
 #include <string>
 
-#include <boost/scoped_ptr.hpp>
-
 #include <libyasmx/assoc_data.h>
 #include <libyasmx/intnum.h>
+#include <libyasmx/scoped_ptr.h>
 #include <libyasmx/section.h>
 #include <libyasmx/symbol.h>
+
 
 namespace yasm
 {
@@ -59,8 +59,8 @@ struct BinSectionData : public AssocData
     IntNum valign;
 
     // User-provided starts
-    boost::scoped_ptr<Expr> start;
-    boost::scoped_ptr<Expr> vstart;
+    util::scoped_ptr<Expr> start;
+    util::scoped_ptr<Expr> vstart;
 
     // User-provided follows
     std::string follows;

@@ -116,7 +116,7 @@ private:
     unsigned long m_map_flags;
     std::string m_map_filename;
 
-    boost::scoped_ptr<Expr> m_org;
+    util::scoped_ptr<Expr> m_org;
 };
 
 BinObject::BinObject()

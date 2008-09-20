@@ -87,9 +87,9 @@ private:
     X86Common m_common;
     X86Opcode m_opcode;
 
-    /*@null@*/ boost::scoped_ptr<X86EffAddr> m_ea;  // effective address
+    /*@null@*/ util::scoped_ptr<X86EffAddr> m_ea;   // effective address
 
-    /*@null@*/ boost::scoped_ptr<Value> m_imm;  // immediate or relative value
+    /*@null@*/ util::scoped_ptr<Value> m_imm;   // immediate or relative value
 
     unsigned char m_special_prefix;     // "special" prefix (0=none)
 

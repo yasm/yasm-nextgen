@@ -32,11 +32,10 @@
 #include <memory>
 #include <string>
 
-#include <boost/scoped_ptr.hpp>
-
 #include "export.h"
 #include "marg_ostream_fwd.h"
 #include "ptr_vector.h"
+#include "scoped_ptr.h"
 #include "symbolref.h"
 
 
@@ -235,7 +234,7 @@ private:
 
     /// Pimpl for symbol table hash trie.
     class Impl;
-    boost::scoped_ptr<Impl> m_impl;
+    util::scoped_ptr<Impl> m_impl;
 };
 
 /// Print an object.  For debugging purposes.

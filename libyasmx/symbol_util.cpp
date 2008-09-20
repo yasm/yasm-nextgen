@@ -34,6 +34,7 @@
 #include "marg_ostream.h"
 #include "name_value.h"
 #include "object.h"
+#include "scoped_ptr.h"
 #include "symbol.h"
 
 
@@ -85,7 +86,7 @@ public:
     Expr* get() { return m_expr.get(); }
 
 private:
-    boost::scoped_ptr<Expr> m_expr;
+    util::scoped_ptr<Expr> m_expr;
 };
 
 const char* CommonSize::key = "CommonSize";

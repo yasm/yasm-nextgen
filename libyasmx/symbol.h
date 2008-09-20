@@ -31,12 +31,11 @@
 ///
 #include <string>
 
-#include <boost/scoped_ptr.hpp>
-
 #include "assoc_data.h"
 #include "export.h"
 #include "location.h"
 #include "marg_ostream_fwd.h"
+#include "scoped_ptr.h"
 
 
 namespace yasm
@@ -206,7 +205,7 @@ private:
 
     // Possible data
 
-    boost::scoped_ptr<Expr> m_equ;  ///< EQU value
+    util::scoped_ptr<Expr> m_equ;   ///< EQU value
 
     /// Label location
     Location m_loc;

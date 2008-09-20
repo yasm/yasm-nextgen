@@ -28,14 +28,13 @@
 
 #include <iosfwd>
 
-#include <boost/scoped_ptr.hpp>
-
 #include <libyasmx/assoc_data.h>
 #include <libyasmx/bytes.h>
 #include <libyasmx/intnum.h>
 #include <libyasmx/marg_ostream_fwd.h>
 #include <libyasmx/ptr_vector.h>
 #include <libyasmx/reloc.h>
+#include <libyasmx/scoped_ptr.h>
 #include <libyasmx/section.h>
 #include <libyasmx/symbol.h>
 #include <libyasmx/symbolref.h>
@@ -492,7 +491,7 @@ private:
     Section*            m_sect;
     ElfStrtab::Entry*   m_name;
     IntNum              m_value;
-    boost::scoped_ptr<Expr> m_xsize;
+    util::scoped_ptr<Expr> m_xsize;
     IntNum              m_size;
     ElfSectionIndex     m_index;
     ElfSymbolBinding    m_bind;

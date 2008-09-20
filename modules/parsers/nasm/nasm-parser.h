@@ -28,14 +28,13 @@
 //
 #include <memory>
 
-#include <boost/scoped_ptr.hpp>
-
 #include <libyasmx/bytecode.h>
 #include <libyasmx/floatnum.h>
 #include <libyasmx/insn.h>
 #include <libyasmx/intnum.h>
 #include <libyasmx/linemap.h>
 #include <libyasmx/parser.h>
+#include <libyasmx/scoped_ptr.h>
 
 
 namespace yasm
@@ -249,7 +248,7 @@ private:
 
     // Starting point of the absolute section.  NULL if not in an absolute
     // section.
-    /*@null@*/ boost::scoped_ptr<Expr> m_absstart;
+    /*@null@*/ util::scoped_ptr<Expr> m_absstart;
 
     // Current location inside an absolute section (including the start).
     // NULL if not in an absolute section.

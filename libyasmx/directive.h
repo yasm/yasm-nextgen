@@ -32,11 +32,10 @@
 #include <memory>
 #include <string>
 
-#include <boost/scoped_ptr.hpp>
-
 #include "export.h"
 #include "functional.h"
 #include "name_value.h"
+#include "scoped_ptr.h"
 
 
 namespace yasm
@@ -116,7 +115,7 @@ public:
 private:
     /// Pimpl for class internals.
     class Impl;
-    boost::scoped_ptr<Impl> m_impl;
+    util::scoped_ptr<Impl> m_impl;
 };
 
 class YASM_LIB_EXPORT DirHelpers
@@ -151,7 +150,7 @@ public:
 private:
     /// Pimpl for class internals.
     class Impl;
-    boost::scoped_ptr<Impl> m_impl;
+    util::scoped_ptr<Impl> m_impl;
 };
 
 /// Standard helper for DirHelpers() that simply resets a flag when

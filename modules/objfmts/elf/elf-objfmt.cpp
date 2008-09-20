@@ -133,7 +133,7 @@ public:
                    unsigned long line);
 
     ElfConfig m_config;                     // ELF configuration
-    boost::scoped_ptr<ElfMachine> m_machine;// ELF machine interface
+    util::scoped_ptr<ElfMachine> m_machine; // ELF machine interface
 
     ElfStrtab m_shstrtab;                   // section name strtab
     ElfStrtab m_strtab;                     // strtab entries

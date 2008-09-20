@@ -32,9 +32,8 @@
 #include <string>
 #include <vector>
 
-#include <boost/scoped_ptr.hpp>
-
 #include "export.h"
+#include "scoped_ptr.h"
 
 
 namespace yasm
@@ -90,7 +89,7 @@ private:
 
     /// Pimpl for class internals.
     class Impl;
-    boost::scoped_ptr<Impl> m_impl;
+    util::scoped_ptr<Impl> m_impl;
 };
 
 template <typename Manufactured>
