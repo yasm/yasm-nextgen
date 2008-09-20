@@ -32,8 +32,6 @@
 #include <memory>
 #include <string>
 
-#include <boost/noncopyable.hpp>
-
 #include "assoc_data.h"
 #include "bc_container.h"
 #include "export.h"

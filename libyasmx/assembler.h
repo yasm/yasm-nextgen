@@ -32,7 +32,6 @@
 #include <iosfwd>
 #include <string>
 
-#include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include "export.h"
@@ -49,7 +48,7 @@ class Object;
 class Preprocessor;
 
 /// An assembler.
-class YASM_LIB_EXPORT Assembler : private boost::noncopyable
+class YASM_LIB_EXPORT Assembler
 {
 public:
     /// Constructor.  A default section is created as the first
@@ -130,6 +129,9 @@ public:
     std::string get_obj_filename() const;
 
 private:
+    Assembler(const Assembler&);                    // not implemented
+    const Assembler& operator=(const Assembler&);   // not implemented
+
     /// Pimpl
     class Impl;
     boost::scoped_ptr<Impl> m_impl;

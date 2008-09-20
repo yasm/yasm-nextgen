@@ -31,8 +31,6 @@
 ///
 #include <memory>
 
-#include <boost/noncopyable.hpp>
-
 #include "export.h"
 #include "marg_ostream_fwd.h"
 #include "ptr_vector.h"
@@ -47,7 +45,7 @@ class Expr;
 class Section;
 class Object;
 
-class YASM_LIB_EXPORT BytecodeContainer : private boost::noncopyable
+class YASM_LIB_EXPORT BytecodeContainer
 {
     friend class Object;
 
@@ -114,6 +112,10 @@ public:
     void update_offsets(Errwarns& errwarns);
 
 private:
+    // not implemented (noncopyable class)
+    BytecodeContainer(const BytecodeContainer&);
+    const BytecodeContainer& operator=(const BytecodeContainer&);
+
     /*@dependent@*/ Object* m_object;   ///< Pointer to parent object
 
     /// The bytecodes for the section's contents.

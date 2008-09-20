@@ -31,8 +31,6 @@
 ///
 #include <iosfwd>
 
-#include <boost/noncopyable.hpp>
-
 #include "bytes.h"
 #include "export.h"
 #include "location.h"
@@ -51,7 +49,7 @@ class Value;
 /// relocations into byte format first, then output_bytes() is called to
 /// actually output the bytes to the object file.  The function output_gap()
 /// will be called for gaps in the output.
-class YASM_LIB_EXPORT BytecodeOutput : private boost::noncopyable
+class YASM_LIB_EXPORT BytecodeOutput
 {
 public:
     /// Constructor.
@@ -134,6 +132,9 @@ public:
     virtual void output(const Bytes& bytes) = 0;
 
 private:
+    BytecodeOutput(const BytecodeOutput&);                  // not implemented
+    const BytecodeOutput& operator=(const BytecodeOutput&); // not implemented
+
     Bytes m_scratch;
 };
 

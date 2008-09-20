@@ -37,7 +37,6 @@
 #include <cctype>
 #include <cstring>
 
-#include <boost/noncopyable.hpp>
 #include <boost/pool/pool.hpp>
 
 #include "bitcount.h"
@@ -53,7 +52,7 @@ namespace yasm
 /// - GetKey: functor that gets a key from the data;
 ///   definition should be: "Key GetKey(const T*)" or similar.
 template <typename Key, typename T, typename GetKey>
-class hamt : private boost::noncopyable
+class hamt
 {
 public:
     /// Constructor.
@@ -81,6 +80,9 @@ public:
     T* replace(T* data) { return insrep(data, true); }
 
 private:
+    hamt(const hamt&);                  // not implemented
+    const hamt& operator=(const hamt&); // not implemented
+
     /// A node.
     /// Nodes come in two forms:
     /// (a) a value-containing node that contains:

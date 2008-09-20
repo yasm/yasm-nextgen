@@ -31,8 +31,6 @@
 ///
 #include <string>
 
-#include <boost/noncopyable.hpp>
-
 #include "export.h"
 
 
@@ -42,9 +40,12 @@ namespace yasm
 class Directives;
 
 /// Module interface (abstract base).
-class YASM_LIB_EXPORT Module : private boost::noncopyable
+class YASM_LIB_EXPORT Module
 {
 public:
+    /// Constructor.
+    Module() {}
+
     /// Destructor.
     virtual ~Module();
 
@@ -62,6 +63,10 @@ public:
 
     /// Add directive handlers.
     virtual void add_directives(Directives& dirs, const std::string& parser);
+
+private:
+    Module(const Module&);                  // not implemented
+    const Module& operator=(const Module&); // not implemented
 };
 
 } // namespace yasm

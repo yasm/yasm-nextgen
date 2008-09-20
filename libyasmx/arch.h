@@ -35,8 +35,6 @@
 #include <utility>
 #include <vector>
 
-#include <boost/noncopyable.hpp>
-
 #include "export.h"
 #include "insn.h"
 #include "location.h"
@@ -50,9 +48,10 @@ class Expr;
 class FloatNum;
 class IntNum;
 
-class YASM_LIB_EXPORT Register : private boost::noncopyable
+class YASM_LIB_EXPORT Register
 {
 public:
+    Register() {}
     virtual ~Register();
 
     /// Get the equivalent size of a register in bits.
@@ -64,6 +63,10 @@ public:
     /// Print a register.  For debugging purposes.
     /// @param os   output stream
     virtual void put(std::ostream& os) const = 0;
+
+private:
+    Register(const Register&);                  // not implemented
+    const Register& operator=(const Register&); // not implemented
 };
 
 inline std::ostream& operator<<
@@ -73,9 +76,10 @@ inline std::ostream& operator<<
     return os;
 }
 
-class YASM_LIB_EXPORT RegisterGroup : private boost::noncopyable
+class YASM_LIB_EXPORT RegisterGroup
 {
 public:
+    RegisterGroup() {}
     virtual ~RegisterGroup();
 
     /// Get a specific register of a register group, based on the register
@@ -84,16 +88,25 @@ public:
     /// @return 0 if regindex is not valid for that register group,
     ///         otherwise the specific register.
     virtual const Register* get_reg(unsigned long regindex) const = 0;
+
+private:
+    RegisterGroup(const RegisterGroup&);                  // not implemented
+    const RegisterGroup& operator=(const RegisterGroup&); // not implemented
 };
 
-class YASM_LIB_EXPORT SegmentRegister : private boost::noncopyable
+class YASM_LIB_EXPORT SegmentRegister
 {
 public:
+    SegmentRegister() {}
     virtual ~SegmentRegister();
 
     /// Print a segment register.  For debugging purposes.
     /// @param os   output stream
     virtual void put(std::ostream& os) const = 0;
+
+private:
+    SegmentRegister(const SegmentRegister&);                  // not implemented
+    const SegmentRegister& operator=(const SegmentRegister&); // not implemented
 };
 
 inline std::ostream& operator<<

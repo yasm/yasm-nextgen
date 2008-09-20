@@ -32,7 +32,6 @@
 #include <memory>
 #include <string>
 
-#include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include "export.h"
@@ -50,7 +49,7 @@ class Section;
 class Symbol;
 
 /// An object.  This is the internal representation of an object file.
-class YASM_LIB_EXPORT Object : private boost::noncopyable
+class YASM_LIB_EXPORT Object
 {
     friend YASM_LIB_EXPORT
     marg_ostream& operator<< (marg_ostream& os, const Object& object);
@@ -210,6 +209,9 @@ public:
     const Arch* get_arch() const { return m_arch; }
 
 private:
+    Object(const Object&);                  // not implemented
+    const Object& operator=(const Object&); // not implemented
+
     std::string m_src_filename;         ///< Source filename
     std::string m_obj_filename;         ///< Object filename
 

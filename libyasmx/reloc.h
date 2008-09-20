@@ -32,8 +32,6 @@
 #include <memory>
 #include <string>
 
-#include <boost/noncopyable.hpp>
-
 #include "export.h"
 #include "expr.h"
 #include "intnum.h"
@@ -45,7 +43,7 @@ namespace yasm
 
 /// Basic YASM relocation.  Object formats will need to extend this
 /// structure with additional fields for relocation type, etc.
-class YASM_LIB_EXPORT Reloc : private boost::noncopyable
+class YASM_LIB_EXPORT Reloc
 {
 public:
     Reloc(const IntNum& addr, SymbolRef sym);
@@ -69,6 +67,10 @@ public:
 protected:
     IntNum m_addr;      ///< Offset (address) within section
     SymbolRef m_sym;    ///< Relocated symbol
+
+private:
+    Reloc(const Reloc&);                    // not implemented
+    const Reloc& operator=(const Reloc&);   // not implemented
 };
 
 } // namespace yasm

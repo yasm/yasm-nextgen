@@ -33,8 +33,6 @@
 #include <memory>
 #include <string>
 
-#include <boost/noncopyable.hpp>
-
 #include "export.h"
 #include "marg_ostream_fwd.h"
 
@@ -43,13 +41,19 @@ namespace yasm
 {
 
 /// Associated data interface (abstract base).
-class YASM_LIB_EXPORT AssocData : private boost::noncopyable
+class YASM_LIB_EXPORT AssocData
 {
 public:
+    AssocData() {}
+
     /// Destructor.
     virtual ~AssocData();
 
     virtual void put(marg_ostream& os) const = 0;
+
+private:
+    AssocData(const AssocData&);                    // not implemented
+    const AssocData& operator=(const AssocData&);   // not implemented
 };
 
 inline marg_ostream&

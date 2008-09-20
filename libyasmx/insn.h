@@ -33,8 +33,6 @@
 #include <memory>
 #include <vector>
 
-#include <boost/noncopyable.hpp>
-
 #include "effaddr.h"
 #include "expr.h"
 #include "export.h"
@@ -71,12 +69,17 @@ public:
         };
 
         /// Base class for target modifiers.
-        class YASM_LIB_EXPORT TargetModifier : private boost::noncopyable
+        class YASM_LIB_EXPORT TargetModifier
         {
         public:
-            TargetModifier();
+            TargetModifier() {}
             virtual ~TargetModifier();
             virtual void put(std::ostream& os) const = 0;
+
+        private:
+            // not implemented (noncopyable class)
+            TargetModifier(const TargetModifier&);
+            const TargetModifier& operator=(const TargetModifier&);
         };
 
         /// Create an instruction operand from a register.
@@ -232,12 +235,16 @@ public:
     };
 
     /// Base class for instruction prefixes.
-    class YASM_LIB_EXPORT Prefix : private boost::noncopyable
+    class YASM_LIB_EXPORT Prefix
     {
     public:
-        Prefix();
+        Prefix() {}
         virtual ~Prefix();
         virtual void put(std::ostream& os) const = 0;
+
+    private:
+        Prefix(const Prefix&);                  // not implemented
+        const Prefix& operator=(const Prefix&); // not implemented
     };
 
     typedef std::vector<Operand> Operands;

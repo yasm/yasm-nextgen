@@ -42,10 +42,6 @@
 namespace yasm
 {
 
-Insn::Operand::TargetModifier::TargetModifier()
-{
-}
-
 Insn::Operand::TargetModifier::~TargetModifier()
 {
 }
@@ -269,10 +265,6 @@ Insn::Operand::set_seg(std::auto_ptr<Expr> seg)
     if (m_seg)
         delete m_seg;
     m_seg = seg.release();
-}
-
-Insn::Prefix::Prefix()
-{
 }
 
 Insn::Prefix::~Prefix()

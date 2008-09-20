@@ -32,7 +32,6 @@
 #include <memory>
 #include <string>
 
-#include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include "export.h"

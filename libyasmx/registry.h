@@ -32,7 +32,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include "export.h"
@@ -53,7 +52,7 @@ namespace impl
 {
 
 // Implemented using the Singleton pattern
-class YASM_LIB_EXPORT ModuleFactory : private boost::noncopyable
+class YASM_LIB_EXPORT ModuleFactory
 {
 public:
     ~ModuleFactory();
@@ -85,6 +84,9 @@ public:
 private:
     /// Singleton implementation - private ctor.
     ModuleFactory();
+
+    ModuleFactory(const ModuleFactory&);                  // not implemented
+    const ModuleFactory& operator=(const ModuleFactory&); // not implemented
 
     /// Pimpl for class internals.
     class Impl;

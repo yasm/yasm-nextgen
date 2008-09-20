@@ -34,7 +34,6 @@
 #include <vector>
 
 #include "functional.h"
-#include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include "bytes.h"

@@ -31,7 +31,6 @@
 ///
 #include <string>
 
-#include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include "export.h"
@@ -43,7 +42,7 @@ namespace yasm
 class Error;
 class Linemap;
 
-class YASM_LIB_EXPORT Errwarns : private boost::noncopyable
+class YASM_LIB_EXPORT Errwarns
 {
 public:
     /// Create an error/warning set for collection of multiple error/warnings.
@@ -111,6 +110,9 @@ public:
                     yasm_print_warning_func print_warning);
 
 private:
+    Errwarns(const Errwarns&);                  // not implemented
+    const Errwarns& operator=(const Errwarns&); // not implemented
+
     /// Pimpl
     class Impl;
     boost::scoped_ptr<Impl> m_impl;

@@ -381,7 +381,7 @@ OffsetSetter::OffsetSetter()
 
 class Optimize;
 
-class Span : private boost::noncopyable
+class Span
 {
     friend class Optimize;
 public:
@@ -416,6 +416,9 @@ public:
     bool recalc_normal();
 
 private:
+    Span(const Span&);                  // not implemented
+    const Span& operator=(const Span&); // not implemented
+
     void add_term(unsigned int subst, Location loc, Location loc2);
 
     Bytecode& m_bc;

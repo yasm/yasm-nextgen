@@ -31,7 +31,6 @@
 ///
 #include <string>
 
-#include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include "assoc_data.h"
@@ -45,9 +44,7 @@ namespace yasm
 
 class Expr;
 
-class YASM_LIB_EXPORT Symbol
-    : private boost::noncopyable,
-      public AssocDataContainer
+class YASM_LIB_EXPORT Symbol : public AssocDataContainer
 {
     friend YASM_LIB_EXPORT
     marg_ostream& operator<< (marg_ostream& os, const Symbol& sym);
@@ -180,6 +177,9 @@ public:
     void finalize(bool undef_extern);
 
 private:
+    Symbol(const Symbol&);                  // not implemented
+    const Symbol& operator=(const Symbol&); // not implemented
+
     enum Type
     {
         UNKNOWN,    ///< for unknown type (COMMON/EXTERN)
