@@ -45,6 +45,7 @@ class Expr;
 class Section;
 class Object;
 
+/// A bytecode container.
 class YASM_LIB_EXPORT BytecodeContainer
 {
     friend class Object;

@@ -45,6 +45,7 @@ namespace yasm
 class FloatNumManager;
 class FloatNumTest;
 
+/// IEEE floating point number.
 class YASM_LIB_EXPORT FloatNum
 {
     friend YASM_LIB_EXPORT

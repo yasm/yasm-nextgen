@@ -43,6 +43,7 @@ namespace yasm
 
 class Expr;
 
+/// A symbol.
 class YASM_LIB_EXPORT Symbol : public AssocDataContainer
 {
     friend YASM_LIB_EXPORT

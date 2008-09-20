@@ -61,6 +61,7 @@ typedef FUNCTION::function<void (Object& object,
                                  unsigned long line)>
     Directive;
 
+/// Container to manage and call directive handlers.
 class YASM_LIB_EXPORT Directives
 {
 public:
@@ -118,6 +119,7 @@ private:
     util::scoped_ptr<Impl> m_impl;
 };
 
+/// Helper class to make writing directive handlers easier.
 class YASM_LIB_EXPORT DirHelpers
 {
 public:

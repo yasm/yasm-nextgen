@@ -40,6 +40,7 @@
 namespace yasm
 {
 
+/// A vector of bytes.
 class YASM_LIB_EXPORT Bytes : private std::vector<unsigned char>
 {
     typedef std::vector<unsigned char> base_vector;

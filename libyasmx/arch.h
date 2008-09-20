@@ -48,6 +48,7 @@ class Expr;
 class FloatNum;
 class IntNum;
 
+/// A register.
 class YASM_LIB_EXPORT Register
 {
 public:
@@ -76,6 +77,7 @@ inline std::ostream& operator<<
     return os;
 }
 
+/// A group of registers.
 class YASM_LIB_EXPORT RegisterGroup
 {
 public:
@@ -94,6 +96,7 @@ private:
     const RegisterGroup& operator=(const RegisterGroup&); // not implemented
 };
 
+/// A segment register.
 class YASM_LIB_EXPORT SegmentRegister
 {
 public:

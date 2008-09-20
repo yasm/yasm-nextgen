@@ -42,6 +42,7 @@ namespace yasm
 
 class Bytecode;
 
+/// Mapping from virtual (1..N) to physical (file/line) line numbers.
 class YASM_LIB_EXPORT Linemap
 {
 public:

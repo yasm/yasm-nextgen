@@ -43,6 +43,7 @@ namespace yasm
 
 class ExprTerm;
 
+/// Raw storage for IntNum.
 struct YASM_LIB_EXPORT IntNumData
 {
     union
@@ -53,6 +54,7 @@ struct YASM_LIB_EXPORT IntNumData
     enum { INTNUM_L, INTNUM_BV } m_type;
 };
 
+/// Big integer number.
 class YASM_LIB_EXPORT IntNum : private IntNumData
 {
     friend YASM_LIB_EXPORT
