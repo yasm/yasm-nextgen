@@ -308,7 +308,7 @@ dump_relocs(const yasm::Object& object)
              endr=sect->relocs_end(); reloc != endr; ++reloc)
         {
             std::cout << std::noshowbase;
-            std::cout << std::hex << reloc->get_addr() << ' ';
+            std::cout << std::hex << (sect->get_vma()+reloc->get_addr()) << ' ';
             std::cout << std::setw(16) << reloc->get_type_name() << "  ";
             std::cout << std::showbase;
             std::cout << *reloc->get_value();
@@ -320,13 +320,12 @@ dump_relocs(const yasm::Object& object)
 }
 
 static void
-dump_contents_line(unsigned long addr,
-                   unsigned int addr_hexdigits,
+dump_contents_line(const yasm::IntNum& addr,
                    const unsigned char* data,
                    int len)
 {
     // address
-    std::cout << ' ' << std::setw(addr_hexdigits) << addr;
+    std::cout << ' ' << addr;
 
     // hex dump
     for (int i=0; i<16; ++i)
@@ -370,15 +369,22 @@ dump_contents(const yasm::Object& object)
             continue;   // empty
 
         // figure out how many hex digits we should have for the address
-        unsigned int addr_hexdigits = String::format(std::hex, size).length();
-        if (addr_hexdigits < 4)
-            addr_hexdigits = 4;
+        yasm::IntNum last_addr = sect->get_vma() + size;
+        unsigned int addr_bits = 0;
+        while (!last_addr.is_zero())
+        {
+            last_addr >>= 1;
+            ++addr_bits;
+        }
+        if (addr_bits < 16)
+            addr_bits = 16;
+        std::cout << yasm::set_intnum_bits(addr_bits);
 
         std::cout << "Contents of section " << sect->get_name() << ":\n";
 
         unsigned char line[16];
         int line_pos = 0;
-        unsigned long addr = 0;
+        yasm::IntNum addr = sect->get_vma();
 
         for (yasm::Section::const_bc_iterator bc=sect->bcs_begin(),
              endbc=sect->bcs_end(); bc != endbc; ++bc)
@@ -399,7 +405,7 @@ dump_contents(const yasm::Object& object)
                 // when we've filled up a line, output it.
                 if (line_pos == 16)
                 {
-                    dump_contents_line(addr, addr_hexdigits, line, 16);
+                    dump_contents_line(addr, line, 16);
                     addr += 16;
                     line_pos = 0;
                 }
@@ -408,7 +414,7 @@ dump_contents(const yasm::Object& object)
 
         // output any remaining
         if (line_pos != 0)
-            dump_contents_line(addr, addr_hexdigits, line, line_pos);
+            dump_contents_line(addr, line, line_pos);
     }
 
     std::cout << std::dec << std::setfill(' ');
