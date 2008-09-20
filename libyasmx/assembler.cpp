@@ -28,8 +28,6 @@
 
 #include "util.h"
 
-#include <boost/scoped_ptr.hpp>
-
 #include "arch.h"
 #include "compose.h"
 #include "debug_format.h"
@@ -44,6 +42,7 @@
 #include "parser.h"
 #include "preproc.h"
 #include "registry.h"
+#include "scoped_ptr.h"
 
 
 namespace yasm
@@ -65,14 +64,14 @@ public:
                   const std::string& src_filename,
                   bool warning_error);
 
-    boost::scoped_ptr<Arch> m_arch;
-    boost::scoped_ptr<Parser> m_parser;
-    boost::scoped_ptr<Preprocessor> m_preproc;
-    boost::scoped_ptr<ObjectFormat> m_objfmt;
-    boost::scoped_ptr<DebugFormat> m_dbgfmt;
-    boost::scoped_ptr<ListFormat> m_listfmt;
+    util::scoped_ptr<Arch> m_arch;
+    util::scoped_ptr<Parser> m_parser;
+    util::scoped_ptr<Preprocessor> m_preproc;
+    util::scoped_ptr<ObjectFormat> m_objfmt;
+    util::scoped_ptr<DebugFormat> m_dbgfmt;
+    util::scoped_ptr<ListFormat> m_listfmt;
 
-    boost::scoped_ptr<Object> m_object;
+    util::scoped_ptr<Object> m_object;
 
     Linemap m_linemap;
     Errwarns m_errwarns;

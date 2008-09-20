@@ -28,8 +28,6 @@
 
 #include "util.h"
 
-#include <boost/scoped_ptr.hpp>
-
 #include "bc_container.h"
 #include "bc_output.h"
 #include "bytecode.h"
@@ -39,6 +37,7 @@
 #include "expr.h"
 #include "intnum.h"
 #include "marg_ostream.h"
+#include "scoped_ptr.h"
 
 
 namespace
@@ -79,13 +78,13 @@ public:
     AlignBytecode* clone() const;
 
 private:
-    boost::scoped_ptr<Expr> m_boundary;     ///< alignment boundary
+    util::scoped_ptr<Expr> m_boundary;      ///< alignment boundary
 
     /// What to fill intervening locations with, NULL if using code_fill
-    boost::scoped_ptr<Expr> m_fill;
+    util::scoped_ptr<Expr> m_fill;
 
     /// Maximum number of bytes to skip, NULL if no maximum.
-    boost::scoped_ptr<Expr> m_maxskip;
+    util::scoped_ptr<Expr> m_maxskip;
 
     /// Code fill, NULL if using 0 fill
     /*@null@*/ const unsigned char** m_code_fill;

@@ -31,10 +31,10 @@
 #include <algorithm>
 #include <list>
 #include <map>
+#include <memory>
 #include <vector>
 
 #include <boost/pool/pool.hpp>
-#include <boost/scoped_ptr.hpp>
 
 #include "arch.h"
 #include "bytecode.h"
@@ -604,7 +604,7 @@ Span::recalc_normal()
 
     if (m_depval.has_abs())
     {
-        boost::scoped_ptr<Expr> abs_copy(m_depval.get_abs()->clone());
+        std::auto_ptr<Expr> abs_copy(m_depval.get_abs()->clone());
 
         // Update sym-sym terms and substitute back into expr
         for (Terms::iterator i=m_span_terms.begin(), end=m_span_terms.end();

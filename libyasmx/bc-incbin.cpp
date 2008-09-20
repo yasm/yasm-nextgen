@@ -28,8 +28,6 @@
 
 #include <fstream>
 
-#include <boost/scoped_ptr.hpp>
-
 #include "bc_container.h"
 #include "bc_container_util.h"
 #include "bc_output.h"
@@ -42,6 +40,7 @@
 #include "intnum.h"
 #include "linemap.h"
 #include "marg_ostream.h"
+#include "scoped_ptr.h"
 #include "value.h"
 
 
@@ -76,10 +75,10 @@ private:
     std::string m_filename;     ///< file to include data from
 
     /// starting offset to read from (NULL=0)
-    /*@null@*/ boost::scoped_ptr<Expr> m_start;
+    /*@null@*/ util::scoped_ptr<Expr> m_start;
 
     /// maximum number of bytes to read (NULL=no limit)
-    /*@null@*/ boost::scoped_ptr<Expr> m_maxlen;
+    /*@null@*/ util::scoped_ptr<Expr> m_maxlen;
 };
 
 IncbinBytecode::IncbinBytecode(const std::string& filename,
