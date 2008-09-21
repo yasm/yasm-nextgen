@@ -62,7 +62,7 @@ ElfConfig::ElfConfig()
     , version(EV_CURRENT)
     , osabi(ELFOSABI_SYSV)
     , abi_version(0)
-    , file_type(ET_NONE)
+    , file_type(ET_REL)
     , start(0)
     , rela(false)
 {
