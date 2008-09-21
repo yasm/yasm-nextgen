@@ -31,7 +31,7 @@
 
 #include <cctype>
 #include <cstring>
-#include <limits.h>
+#include <limits>
 
 #include "bitvect.h"
 #include "compose.h"
@@ -40,6 +40,11 @@
 
 using BitVector::wordptr;
 using BitVector::N_int;
+
+#define LONG_BITS \
+    static_cast<unsigned int>(std::numeric_limits<long>::digits)
+#define ULONG_BITS \
+    static_cast<unsigned int>(std::numeric_limits<unsigned long>::digits)
 
 namespace yasm
 {
@@ -61,26 +66,25 @@ static BitVector::from_Dec_static my_from_Dec(IntNum::BITVECT_NATIVE_SIZE);
 void
 IntNum::from_bv(wordptr bv)
 {
-    if (BitVector::Set_Max(bv) < 31)
+    if (BitVector::Set_Max(bv) < LONG_BITS)
     {
         m_type = INTNUM_L;
-        m_val.l = static_cast<long>(BitVector::Chunk_Read(bv, 31, 0));
+        m_val.l = static_cast<long>(BitVector::Chunk_Read(bv, LONG_BITS, 0));
     }
     else if (BitVector::msb_(bv))
     {
         // Negative, negate and see if we'll fit into a long.
-        unsigned long ul;
         BitVector::Negate(bv, bv);
-        if (BitVector::Set_Max(bv) >= 32 ||
-            ((ul = BitVector::Chunk_Read(bv, 32, 0)) & 0x80000000))
+        if (BitVector::Set_Max(bv) >= LONG_BITS)
         {
-            /* too negative */
+            // too negative
             BitVector::Negate(bv, bv);
             m_type = INTNUM_BV;
             m_val.bv = BitVector::Clone(bv);
         }
         else
         {
+            unsigned long ul = BitVector::Chunk_Read(bv, LONG_BITS, 0);
             m_type = INTNUM_L;
             m_val.l = -static_cast<long>(ul);
         }
@@ -100,10 +104,12 @@ IntNum::to_bv(/*@returned@*/ wordptr bv) const
 
     BitVector::Empty(bv);
     if (m_val.l >= 0)
-        BitVector::Chunk_Store(bv, 32, 0, static_cast<unsigned long>(m_val.l));
+        BitVector::Chunk_Store(bv, LONG_BITS, 0,
+                               static_cast<unsigned long>(m_val.l));
     else
     {
-        BitVector::Chunk_Store(bv, 32, 0, static_cast<unsigned long>(-m_val.l));
+        BitVector::Chunk_Store(bv, LONG_BITS, 0,
+                               static_cast<unsigned long>(-m_val.l));
         BitVector::Negate(bv, bv);
     }
     return bv;
@@ -405,7 +411,7 @@ IntNum::calc(Op::Op op, const IntNum* operand)
                 N_("invalid operation in intnum calculation"));
     }
 
-    // Try to fit the result into 32 bits if possible
+    // Try to fit the result into long if possible
     if (m_type == INTNUM_BV)
         BitVector::Destroy(m_val.bv);
     from_bv(result);
@@ -422,7 +428,7 @@ IntNum::set(unsigned long val)
             m_val.bv = BitVector::Create(BITVECT_NATIVE_SIZE, true);
             m_type = INTNUM_BV;
         }
-        BitVector::Chunk_Store(m_val.bv, 32, 0, val);
+        BitVector::Chunk_Store(m_val.bv, ULONG_BITS, 0, val);
     }
     else
     {
@@ -463,9 +469,9 @@ IntNum::get_uint() const
         case INTNUM_BV:
             if (BitVector::msb_(m_val.bv))
                 return 0;
-            if (BitVector::Set_Max(m_val.bv) > 32)
+            if (BitVector::Set_Max(m_val.bv) > ULONG_BITS)
                 return ULONG_MAX;
-            return BitVector::Chunk_Read(m_val.bv, 32, 0);
+            return BitVector::Chunk_Read(m_val.bv, ULONG_BITS, 0);
         default:
             throw InternalError(N_("unknown intnum type"));
             /*@notreached@*/
@@ -488,14 +494,14 @@ IntNum::get_int() const
                 unsigned long ul;
 
                 BitVector::Negate(conv_bv, m_val.bv);
-                if (BitVector::Set_Max(conv_bv) >= 32)
+                if (BitVector::Set_Max(conv_bv) >= LONG_BITS)
                 {
                     // too negative
                     return LONG_MIN;
                 }
-                ul = BitVector::Chunk_Read(conv_bv, 32, 0);
+                ul = BitVector::Chunk_Read(conv_bv, LONG_BITS, 0);
                 // check for too negative
-                return (ul & 0x80000000) ? LONG_MIN : -static_cast<long>(ul);
+                return -static_cast<long>(ul);
             }
 
             // it's positive, and since it's a BV, it must be >0x7FFFFFFF
@@ -635,20 +641,24 @@ IntNum::in_range(long low, long high) const
     wordptr lval = op1static;
     BitVector::Empty(lval);
     if (low >= 0)
-        BitVector::Chunk_Store(lval, 32, 0, static_cast<unsigned long>(low));
+        BitVector::Chunk_Store(lval, LONG_BITS, 0,
+                               static_cast<unsigned long>(low));
     else
     {
-        BitVector::Chunk_Store(lval, 32, 0, static_cast<unsigned long>(-low));
+        BitVector::Chunk_Store(lval, LONG_BITS, 0,
+                               static_cast<unsigned long>(-low));
         BitVector::Negate(lval, lval);
     }
 
     wordptr hval = op2static;
     BitVector::Empty(hval);
     if (high >= 0)
-        BitVector::Chunk_Store(hval, 32, 0, static_cast<unsigned long>(high));
+        BitVector::Chunk_Store(hval, LONG_BITS, 0,
+                               static_cast<unsigned long>(high));
     else
     {
-        BitVector::Chunk_Store(hval, 32, 0, static_cast<unsigned long>(-high));
+        BitVector::Chunk_Store(hval, LONG_BITS, 0,
+                               static_cast<unsigned long>(-high));
         BitVector::Negate(hval, hval);
     }
 
