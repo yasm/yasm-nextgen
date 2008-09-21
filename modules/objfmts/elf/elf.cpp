@@ -695,6 +695,71 @@ ElfConfig::proghead_get_size() const
         return 0;
 }
 
+bool
+ElfConfig::proghead_read(std::istream& is)
+{
+    Bytes bytes;
+
+    // read magic number and elf class
+    is.seekg(0);
+    bytes.write(is, 5);
+    if (!is)
+        return false;
+
+    if (read_u8(bytes) != ELFMAG0)
+        return false;
+    if (read_u8(bytes) != ELFMAG1)
+        return false;
+    if (read_u8(bytes) != ELFMAG2)
+        return false;
+    if (read_u8(bytes) != ELFMAG3)
+        return false;
+
+    cls = static_cast<ElfClass>(read_u8(bytes));
+
+    // determine header size
+    unsigned long hdrsize = proghead_get_size();
+    if (hdrsize == 0)
+        return false;
+
+    // read remainder of header
+    bytes.write(is, hdrsize-5);
+    if (!is)
+        return false;
+
+    encoding = static_cast<ElfDataEncoding>(read_u8(bytes));
+    if (!setup_endian(bytes))
+        return false;
+
+    version = static_cast<ElfVersion>(read_u8(bytes));
+    if (version != EV_CURRENT)
+        return false;
+
+    osabi = static_cast<ElfOsabiIndex>(read_u8(bytes));
+    abi_version = read_u8(bytes);
+    bytes.set_readpos(EI_NIDENT);
+    file_type = static_cast<ElfFileType>(read_u16(bytes));
+    machine_type = static_cast<ElfMachineType>(read_u16(bytes));
+    /*version =*/ static_cast<ElfVersion>(read_u32(bytes));
+
+    if (cls == ELFCLASS32)
+    {
+        start = read_u32(bytes);    // execution start address
+        read_u32(bytes);            // program header offset
+        read_u32(bytes);            // section header offset
+    }
+    else if (cls == ELFCLASS64)
+    {
+        start = read_u64(bytes);    // execution start address
+        read_u64(bytes);            // program header offset
+        read_u64(bytes);            // section header offset
+    }
+
+    // TODO: rest of header
+
+    return true;
+}
+
 void
 ElfConfig::proghead_write(std::ostream& os,
                           ElfOffset secthead_addr,
@@ -727,7 +792,7 @@ ElfConfig::proghead_write(std::ostream& os,
     unsigned int shdr_size = 0;
     if (cls == ELFCLASS32)
     {
-        write_32(scratch, 0);               // e_entry exection startaddr
+        write_32(scratch, start);           // e_entry execution startaddr
         write_32(scratch, 0);               // e_phoff program header off
         write_32(scratch, secthead_addr);   // e_shoff section header off
         ehdr_size = EHDR32_SIZE;
@@ -735,7 +800,7 @@ ElfConfig::proghead_write(std::ostream& os,
     }
     else if (cls == ELFCLASS64)
     {
-        write_64(scratch, start);           // e_entry exection startaddr
+        write_64(scratch, start);           // e_entry execution startaddr
         write_64(scratch, 0);               // e_phoff program header off
         write_64(scratch, secthead_addr);   // e_shoff section header off
         ehdr_size = EHDR64_SIZE;

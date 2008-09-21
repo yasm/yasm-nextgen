@@ -383,6 +383,7 @@ struct ElfConfig
     ~ElfConfig() {}
 
     unsigned long proghead_get_size() const;
+    bool proghead_read(std::istream& is);
     void proghead_write(std::ostream& os,
                         ElfOffset secthead_addr,
                         unsigned long secthead_count,
@@ -399,12 +400,15 @@ struct ElfConfig
 
     std::string name_reloc_section(const std::string& basesect) const;
 
-    void setup_endian(Bytes& bytes) const
+    bool setup_endian(Bytes& bytes) const
     {
         if (encoding == ELFDATA2LSB)
             bytes << little_endian;
         else if (encoding == ELFDATA2MSB)
             bytes << big_endian;
+        else
+            return false;
+        return true;
     }
 };
 

@@ -96,6 +96,10 @@ public:
 
     void init_symbols(const std::string& parser);
 
+    bool taste(std::istream& is,
+               /*@out@*/ std::string* arch_keyword,
+               /*@out@*/ std::string* machine);
+    void read(std::istream& is);
     void output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* add_default_section();
@@ -205,6 +209,40 @@ bool
 ElfObject::ok_object(Object* object) const
 {
     return ok_elf_machine(*object->get_arch(), m_config.cls);
+}
+
+bool
+ElfObject::taste(std::istream& is,
+                 /*@out@*/ std::string* arch_keyword,
+                 /*@out@*/ std::string* machine)
+{
+    // Read header
+    if (!m_config.proghead_read(is))
+        return false;
+
+    // for now, just handle this here
+    switch (m_config.machine_type)
+    {
+        case EM_386:
+            arch_keyword->assign("x86");
+            machine->assign("x86");
+            break;
+        case EM_X86_64:
+            arch_keyword->assign("x86");
+            machine->assign("amd64");
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+void
+ElfObject::read(std::istream& is)
+{
+    // Read header
+    if (!m_config.proghead_read(is))
+        throw Error(N_("not an ELF file"));
 }
 
 void
