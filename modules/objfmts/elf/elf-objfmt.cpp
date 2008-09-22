@@ -531,7 +531,7 @@ public:
     ~Output();
 
     void output_section(Section& sect,
-                        unsigned long* sindex,
+                        unsigned int* sindex,
                         Errwarns& errwarns);
 
     // OutputBytecode overrides
@@ -694,7 +694,7 @@ elf_objfmt_create_dbg_secthead(yasm_section *sect, /*@null@*/ void *d)
 #endif
 void
 Output::output_section(Section& sect,
-                       unsigned long* sindex,
+                       unsigned int* sindex,
                        Errwarns& errwarns)
 {
     BytecodeOutput* outputter = this;
@@ -820,11 +820,11 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
         errwarns.propagate(i->get_decl_line());
     }
 
-    unsigned long sindex = 0;
+    m_config.secthead_count = 0;
 
     // dummy section header
     ElfSection null_sect(m_config, 0, SHT_NULL, 0);
-    null_sect.set_index(sindex++);
+    null_sect.set_index(m_config.secthead_count++);
 
     Output out(os, *this, *m_object);
 
@@ -833,7 +833,7 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     for (Object::section_iterator i=m_object->sections_begin(),
          end=m_object->sections_end(); i != end; ++i)
     {
-        out.output_section(*i, &sindex, errwarns);
+        out.output_section(*i, &m_config.secthead_count, errwarns);
     }
 
     // If we're not forcing all symbols to be in the table, go through
@@ -872,7 +872,8 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     size = m_shstrtab.write(os);
 
     ElfSection shstrtab_sect(m_config, shstrtab_name, SHT_STRTAB, 0);
-    shstrtab_sect.set_index(sindex++);
+    m_config.shstrtab_index = m_config.secthead_count;
+    shstrtab_sect.set_index(m_config.secthead_count++);
     shstrtab_sect.set_file_offset(offset);
     shstrtab_sect.set_size(size);
 
@@ -881,7 +882,7 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     size = m_strtab.write(os);
 
     ElfSection strtab_sect(m_config, strtab_name, SHT_STRTAB, 0);
-    strtab_sect.set_index(sindex++);
+    strtab_sect.set_index(m_config.secthead_count++);
     strtab_sect.set_file_offset(offset);
     strtab_sect.set_size(size);
 
@@ -890,7 +891,7 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     size = m_config.symtab_write(os, *m_object, errwarns, out.get_scratch());
 
     ElfSection symtab_sect(m_config, symtab_name, SHT_SYMTAB, 0);
-    symtab_sect.set_index(sindex++);
+    symtab_sect.set_index(m_config.secthead_count++);
     symtab_sect.set_file_offset(offset);
     symtab_sect.set_size(size);
     symtab_sect.set_info(symtab_nlocal);
@@ -911,7 +912,7 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     }
 
     // output section header table
-    unsigned long shead_addr = output_align(os, 16);
+    m_config.secthead_pos = output_align(os, 16);
 
 #if 0
     // stabs debugging support
@@ -958,9 +959,7 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     if (!os)
         throw IOError(N_("could not seek on output file"));
 
-    m_config.proghead_write(os, shead_addr, sindex,
-                            shstrtab_sect.get_index(),
-                            out.get_scratch());
+    m_config.proghead_write(os, out.get_scratch());
 }
 
 Section*

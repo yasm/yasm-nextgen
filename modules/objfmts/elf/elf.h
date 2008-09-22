@@ -379,16 +379,24 @@ struct ElfConfig
     IntNum          start;          // execution start address
     bool            rela;           // relocations have explicit addends?
 
+    // other program header fields; may not always be valid
+    unsigned long   proghead_pos;   // file offset of program header (0=none)
+    unsigned int    proghead_count; // number of program header entries (0=none)
+    unsigned int    proghead_size;  // program header entry size (0=none)
+
+    unsigned long   secthead_pos;   // file offset of section header (0=none)
+    unsigned int    secthead_count; // number of section header entries (0=none)
+    unsigned int    secthead_size;  // section header entry size (0=none)
+
+    unsigned long   machine_flags;  // machine-specific flags
+    ElfSectionIndex shstrtab_index; // section index of section string table
+
     ElfConfig();
     ~ElfConfig() {}
 
     unsigned long proghead_get_size() const;
     bool proghead_read(std::istream& is);
-    void proghead_write(std::ostream& os,
-                        ElfOffset secthead_addr,
-                        unsigned long secthead_count,
-                        ElfSectionIndex shstrtab_index,
-                        Bytes& scratch);
+    void proghead_write(std::ostream& os, Bytes& scratch);
 
     ElfSymbolIndex symtab_setindexes(Object& object, ElfSymbolIndex* nlocal)
         const;

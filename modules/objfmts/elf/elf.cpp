@@ -65,6 +65,14 @@ ElfConfig::ElfConfig()
     , file_type(ET_REL)
     , start(0)
     , rela(false)
+    , proghead_pos(0)
+    , proghead_count(0)
+    , proghead_size(0)
+    , secthead_pos(0)
+    , secthead_count(0)
+    , secthead_size(0)
+    , machine_flags(0)
+    , shstrtab_index(0)
 {
 }
 
@@ -719,7 +727,7 @@ ElfConfig::proghead_read(std::istream& is)
 
     // determine header size
     unsigned long hdrsize = proghead_get_size();
-    if (hdrsize == 0)
+    if (hdrsize < 5)
         return false;
 
     // read remainder of header
@@ -740,32 +748,36 @@ ElfConfig::proghead_read(std::istream& is)
     bytes.set_readpos(EI_NIDENT);
     file_type = static_cast<ElfFileType>(read_u16(bytes));
     machine_type = static_cast<ElfMachineType>(read_u16(bytes));
-    /*version =*/ static_cast<ElfVersion>(read_u32(bytes));
+    version = static_cast<ElfVersion>(read_u32(bytes));
+    if (version != EV_CURRENT)
+        return false;
 
     if (cls == ELFCLASS32)
     {
-        start = read_u32(bytes);    // execution start address
-        read_u32(bytes);            // program header offset
-        read_u32(bytes);            // section header offset
+        start = read_u32(bytes);
+        proghead_pos = read_u32(bytes);
+        secthead_pos = read_u32(bytes);
     }
     else if (cls == ELFCLASS64)
     {
-        start = read_u64(bytes);    // execution start address
-        read_u64(bytes);            // program header offset
-        read_u64(bytes);            // section header offset
+        start = read_u64(bytes);
+        proghead_pos = read_u64(bytes).get_uint();
+        secthead_pos = read_u64(bytes).get_uint();
     }
 
-    // TODO: rest of header
+    machine_flags = read_u32(bytes);
+    read_u16(bytes);                // e_ehsize (don't care)
+    proghead_size = read_u16(bytes);
+    proghead_count = read_u16(bytes);
+    secthead_size = read_u16(bytes);
+    secthead_count = read_u16(bytes);
+    shstrtab_index = read_u16(bytes);
 
     return true;
 }
 
 void
-ElfConfig::proghead_write(std::ostream& os,
-                          ElfOffset secthead_addr,
-                          unsigned long secthead_count,
-                          ElfSectionIndex shstrtab_index,
-                          Bytes& scratch)
+ElfConfig::proghead_write(std::ostream& os, Bytes& scratch)
 {
     scratch.resize(0);
     setup_endian(scratch);
@@ -789,29 +801,28 @@ ElfConfig::proghead_write(std::ostream& os,
     write_32(scratch, version);         // elf version
 
     unsigned int ehdr_size = 0;
-    unsigned int shdr_size = 0;
     if (cls == ELFCLASS32)
     {
         write_32(scratch, start);           // e_entry execution startaddr
-        write_32(scratch, 0);               // e_phoff program header off
-        write_32(scratch, secthead_addr);   // e_shoff section header off
+        write_32(scratch, proghead_pos);    // e_phoff program header off
+        write_32(scratch, secthead_pos);    // e_shoff section header off
         ehdr_size = EHDR32_SIZE;
-        shdr_size = SHDR32_SIZE;
+        secthead_size = SHDR32_SIZE;
     }
     else if (cls == ELFCLASS64)
     {
         write_64(scratch, start);           // e_entry execution startaddr
-        write_64(scratch, 0);               // e_phoff program header off
-        write_64(scratch, secthead_addr);   // e_shoff section header off
+        write_64(scratch, proghead_pos);    // e_phoff program header off
+        write_64(scratch, secthead_pos);    // e_shoff section header off
         ehdr_size = EHDR64_SIZE;
-        shdr_size = SHDR64_SIZE;
+        secthead_size = SHDR64_SIZE;
     }
 
-    write_32(scratch, 0);               // e_flags
+    write_32(scratch, machine_flags);   // e_flags
     write_16(scratch, ehdr_size);       // e_ehsize
-    write_16(scratch, 0);               // e_phentsize
-    write_16(scratch, 0);               // e_phnum
-    write_16(scratch, shdr_size);       // e_shentsize
+    write_16(scratch, proghead_size);   // e_phentsize
+    write_16(scratch, proghead_count);  // e_phnum
+    write_16(scratch, secthead_size);   // e_shentsize
     write_16(scratch, secthead_count);  // e_shnum
     write_16(scratch, shstrtab_index);  // e_shstrndx
 
