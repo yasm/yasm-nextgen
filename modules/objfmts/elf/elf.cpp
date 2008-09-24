@@ -631,6 +631,50 @@ ElfSection::write(std::ostream& os, Bytes& scratch) const
     return scratch.size();
 }
 
+std::auto_ptr<Section>
+ElfSection::create_section() const
+{
+    bool bss = (m_type == SHT_NOBITS || m_offset == 0);
+
+    std::auto_ptr<Section> section(
+        new Section(get_name(), m_flags & SHF_EXECINSTR, bss, 0));
+
+    section->set_filepos(m_offset);
+    section->set_vma(m_addr);
+    section->set_lma(m_addr);
+    section->set_align(m_align);
+
+    if (bss)
+    {
+        Bytecode& gap = section->append_gap(m_size.get_uint(), 0);
+        gap.calc_len(0);    // force length calculation of gap
+    }
+
+    return section;
+}
+
+void
+ElfSection::load_section_data(Section& sect, std::istream& is) const
+{
+    if (sect.is_bss())
+        return;
+
+    std::streampos oldpos = is.tellg();
+
+    // Read section data
+    is.seekg(m_offset);
+    if (!is)
+        throw Error(String::compose(
+            N_("could not seek to section `%1'"), get_name()));
+
+    sect.bcs_first().get_fixed().write(is, m_size.get_uint());
+    if (!is)
+        throw Error(String::compose(
+            N_("could not read section `%1' data"), get_name()));
+
+    is.seekg(oldpos);
+}
+
 unsigned long
 ElfSection::write_rel(std::ostream& os,
                       ElfSectionIndex symtab_idx,

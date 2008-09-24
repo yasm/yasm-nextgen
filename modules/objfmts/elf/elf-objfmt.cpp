@@ -296,44 +296,8 @@ ElfObject::read(std::istream& is)
         }
         else
         {
-            bool bss = (secttype == SHT_NOBITS ||
-                        elfsect->get_file_offset() == 0);
-            std::string sectname = elfsect->get_name();
-            unsigned long sectsize = elfsect->get_size().get_uint();
-
-            std::auto_ptr<Section> section(
-                new Section(sectname,
-                            elfsect->get_flags() & SHF_EXECINSTR,
-                            bss,
-                            0));
-
-            section->set_filepos(elfsect->get_file_offset());
-            section->set_vma(elfsect->get_addr());
-            section->set_lma(elfsect->get_addr());
-            section->set_align(elfsect->get_align());
-
-            if (bss)
-            {
-                Bytecode& gap = section->append_gap(sectsize, 0);
-                gap.calc_len(0);    // force length calculation of gap
-            }
-            else
-            {
-                std::streampos oldpos = is.tellg();
-
-                // Read section data
-                is.seekg(elfsect->get_file_offset());
-                if (!is)
-                    throw Error(String::compose(
-                        N_("could not seek to section `%1'"), sectname));
-
-                section->bcs_first().get_fixed().write(is, sectsize);
-                if (!is)
-                    throw Error(String::compose(
-                        N_("could not read section `%1' data"), sectname));
-
-                is.seekg(oldpos);
-            }
+            std::auto_ptr<Section> section = elfsect->create_section();
+            elfsect->load_section_data(*section, is);
 
             // Associate section data with section
             section->add_assoc_data(ElfSection::key,

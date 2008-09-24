@@ -549,6 +549,9 @@ public:
 
     unsigned long write(std::ostream& os, Bytes& scratch) const;
 
+    std::auto_ptr<Section> create_section() const;
+    void load_section_data(Section& sect, std::istream& is) const;
+
     ElfSectionType get_type() const { return m_type; }
 
     void set_typeflags(ElfSectionType type, ElfSectionFlags flags)
@@ -595,8 +598,6 @@ public:
                                const ElfMachine& machine);
     unsigned long set_file_offset(unsigned long pos);
     unsigned long get_file_offset() const { return m_offset; }
-
-    IntNum get_addr() const { return m_addr; }
 
 private:
     const ElfConfig&    m_config;
