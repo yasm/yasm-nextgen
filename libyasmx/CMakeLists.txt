@@ -123,6 +123,8 @@ IF(NOT BUILD_STATIC)
         ptr_vector.h
         registry.h
         reloc.h
+        scoped_array.h
+        scoped_ptr.h
         section.h
         symbol.h
         symbolref.h
