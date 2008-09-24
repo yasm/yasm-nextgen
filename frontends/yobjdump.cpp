@@ -299,6 +299,9 @@ dump_relocs(const yasm::Object& object)
     for (yasm::Object::const_section_iterator sect=object.sections_begin(),
          end=object.sections_end(); sect != end; ++sect)
     {
+        if (sect->get_relocs().empty())
+            continue;
+
         std::cout << "RELOCATION RECORDS FOR [" << sect->get_name() << "]\n";
         std::cout << std::left << std::setfill(' ');
         std::cout << std::setw(bits/4) << "OFFSET";
