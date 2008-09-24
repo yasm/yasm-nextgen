@@ -57,6 +57,7 @@
 #include <libyasmx/name_value.h>
 #include <libyasmx/nocase.h>
 #include <libyasmx/registry.h>
+#include <libyasmx/scoped_array.h>
 #include <libyasmx/section.h>
 #include <libyasmx/symbol_util.h>
 
@@ -243,6 +244,105 @@ ElfObject::read(std::istream& is)
     // Read header
     if (!m_config.proghead_read(is))
         throw Error(N_("not an ELF file"));
+
+    // Can't handle files without section table yet
+    if (m_config.secthead_pos == 0)
+        throw Error(N_("no section table"));
+
+    // Read section string table (needed for section names)
+    is.seekg(m_config.secthead_pos +
+             m_config.shstrtab_index * m_config.secthead_size);
+    if (!is)
+        throw Error(N_("could not read .shstrtab section header"));
+
+    std::auto_ptr<ElfSection>
+        shstrtab_sect(new ElfSection(m_config, is, m_config.shstrtab_index,
+                                     m_shstrtab, 0));
+
+    unsigned long shstrtab_size = shstrtab_sect->get_size().get_uint();
+    util::scoped_array<char> shstrtab_str(new char[shstrtab_size]);
+    is.seekg(shstrtab_sect->get_file_offset());
+    is.read(&shstrtab_str[0], shstrtab_size);
+    if (!is)
+        throw Error(N_("could not read .shstrtab string data"));
+
+    // Read all section headers
+
+    // owned storage for "misc" sections (e.g. relocation sections)
+    stdx::ptr_vector<ElfSection> misc_sections;
+    stdx::ptr_vector_owner<ElfSection> misc_sections_owner(misc_sections);
+    misc_sections.reserve(m_config.secthead_count);
+
+    // indexed array of all sections by section index
+    util::scoped_array<ElfSection*>
+        file_sections(new ElfSection*[m_config.secthead_count]);
+
+    is.seekg(m_config.secthead_pos);
+    for (unsigned int i=0; i<m_config.secthead_count; ++i)
+    {
+        // read section header and save by index
+        std::auto_ptr<ElfSection> elfsect(
+            new ElfSection(m_config, is, i, m_shstrtab, &shstrtab_str[0]));
+        file_sections[i] = elfsect.get();
+
+        ElfSectionType secttype = elfsect->get_type();
+        if (secttype == SHT_NULL ||
+            secttype == SHT_SYMTAB ||
+            secttype == SHT_STRTAB ||
+            secttype == SHT_RELA ||
+            secttype == SHT_REL)
+        {
+            misc_sections.push_back(elfsect.release());
+        }
+        else
+        {
+            bool bss = (secttype == SHT_NOBITS ||
+                        elfsect->get_file_offset() == 0);
+            std::string sectname = elfsect->get_name();
+            unsigned long sectsize = elfsect->get_size().get_uint();
+
+            std::auto_ptr<Section> section(
+                new Section(sectname,
+                            elfsect->get_flags() & SHF_EXECINSTR,
+                            bss,
+                            0));
+
+            section->set_filepos(elfsect->get_file_offset());
+            section->set_vma(elfsect->get_addr());
+            section->set_lma(elfsect->get_addr());
+            section->set_align(elfsect->get_align());
+
+            if (bss)
+            {
+                Bytecode& gap = section->append_gap(sectsize, 0);
+                gap.calc_len(0);    // force length calculation of gap
+            }
+            else
+            {
+                std::streampos oldpos = is.tellg();
+
+                // Read section data
+                is.seekg(elfsect->get_file_offset());
+                if (!is)
+                    throw Error(String::compose(
+                        N_("could not read seek to section `%1'"), sectname));
+
+                section->bcs_first().get_fixed().write(is, sectsize);
+                if (!is)
+                    throw Error(String::compose(
+                        N_("could not read section `%1' data"), sectname));
+
+                is.seekg(oldpos);
+            }
+
+            // Associate section data with section
+            section->add_assoc_data(ElfSection::key,
+                std::auto_ptr<AssocData>(elfsect.release()));
+
+            // Add section to object
+            m_object->append_section(section);
+        }
+    }
 }
 
 void

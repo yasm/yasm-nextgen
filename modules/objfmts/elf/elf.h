@@ -253,6 +253,8 @@ enum ElfSymbolVis
     static_cast<ElfSymbolVis>((static_cast<unsigned int>(v) \
                                & ELF_VISIBILITY_MASK))
 
+#define ELF_ST_BIND(val)                (((unsigned char)(val)) >> 4)
+#define ELF_ST_TYPE(val)                ((val) & 0xf)
 #define ELF_ST_INFO(bind, type)         (((bind) << 4) + ((type) & 0xf))
 #define ELF_ST_OTHER(vis)               ELF_ST_VISIBILITY(vis)
 
@@ -528,10 +530,19 @@ class ElfSection : public AssocData
 public:
     static const char* key;
 
+    // Constructor that reads from file.  Assumes input stream is already
+    // positioned at the beginning of the section header.
+    ElfSection(const ElfConfig&     config,
+               std::istream&        is,
+               ElfSectionIndex      index,
+               ElfStrtab&           shstrtab,
+               const char*          shstrtab_str);
+
     ElfSection(const ElfConfig&     config,
                ElfStrtab::Entry*    name,
                ElfSectionType       type,
                ElfSectionFlags      flags);
+
     ~ElfSection();
 
     void put(marg_ostream& os) const;
@@ -571,6 +582,7 @@ public:
     void add_size(const IntNum& size) { m_size += size; }
     void set_size(const IntNum& size) { m_size = size; }
     IntNum get_size() const { return m_size; }
+    std::string get_name() const { return m_name ? m_name->get_str() : ""; }
 
     unsigned long write_rel(std::ostream& os,
                             ElfSectionIndex symtab,
@@ -581,13 +593,17 @@ public:
                                Errwarns& errwarns,
                                Bytes& scratch,
                                const ElfMachine& machine);
-    long set_file_offset(long pos);
+    unsigned long set_file_offset(unsigned long pos);
+    unsigned long get_file_offset() const { return m_offset; }
+
+    IntNum get_addr() const { return m_addr; }
 
 private:
     const ElfConfig&    m_config;
 
     ElfSectionType      m_type;
     ElfSectionFlags     m_flags;
+    IntNum              m_addr;
     ElfAddress          m_offset;
     IntNum              m_size;
     ElfSectionIndex     m_link;

@@ -454,12 +454,74 @@ ElfSymbol::set_size(std::auto_ptr<Expr> size)
 }                            
 
 ElfSection::ElfSection(const ElfConfig&     config,
+                       std::istream&        is,
+                       ElfSectionIndex      index,
+                       ElfStrtab&           shstrtab,
+                       const char*          shstrtab_str)
+    : m_config(config)
+    , m_sym(0)
+    , m_index(index)
+    , m_rel_name(0)
+    , m_rel_index(0)
+    , m_rel_offset(0)
+{
+    Bytes bytes;
+
+    bytes.write(is, m_config.secthead_size);
+    if (!is)
+        throw Error(N_("could not read section header"));
+
+    m_config.setup_endian(bytes);
+
+    unsigned long name_idx = read_u32(bytes);
+    if (shstrtab_str)
+        m_name = shstrtab.append_str(&shstrtab_str[name_idx]);
+    else
+        m_name = 0;
+    m_type = static_cast<ElfSectionType>(read_u32(bytes));
+
+    if (m_config.cls == ELFCLASS32)
+    {
+        if (bytes.size() < SHDR32_SIZE)
+            throw Error(N_("section header too small"));
+
+        m_flags = static_cast<ElfSectionFlags>(read_u32(bytes));
+        m_addr = read_u32(bytes);
+
+        m_offset = static_cast<ElfAddress>(read_u32(bytes));
+        m_size = read_u32(bytes);
+        m_link = static_cast<ElfSectionIndex>(read_u32(bytes));
+        m_info = static_cast<ElfSectionInfo>(read_u32(bytes));
+
+        m_align = read_u32(bytes);
+        m_entsize = static_cast<ElfSize>(read_u32(bytes));
+    }
+    else if (m_config.cls == ELFCLASS64)
+    {
+        if (bytes.size() < SHDR64_SIZE)
+            throw Error(N_("section header too small"));
+
+        m_flags = static_cast<ElfSectionFlags>(read_u64(bytes).get_uint());
+        m_addr = read_u64(bytes);
+
+        m_offset = static_cast<ElfAddress>(read_u64(bytes).get_uint());
+        m_size = read_u64(bytes);
+        m_link = static_cast<ElfSectionIndex>(read_u32(bytes));
+        m_info = static_cast<ElfSectionInfo>(read_u32(bytes));
+
+        m_align = read_u64(bytes).get_uint();
+        m_entsize = static_cast<ElfSize>(read_u64(bytes).get_uint());
+    }
+}
+
+ElfSection::ElfSection(const ElfConfig&     config,
                        ElfStrtab::Entry*    name,
                        ElfSectionType       type,
                        ElfSectionFlags      flags)
     : m_config(config)
     , m_type(type)
     , m_flags(flags)
+    , m_addr(0)
     , m_offset(0)
     , m_size(0)
     , m_link(0)
@@ -534,7 +596,7 @@ ElfSection::write(std::ostream& os, Bytes& scratch) const
     if (m_config.cls == ELFCLASS32)
     {
         write_32(scratch, m_flags);
-        write_32(scratch, 0); // vmem address
+        write_32(scratch, m_addr);
 
         write_32(scratch, m_offset);
         write_32(scratch, m_size);
@@ -549,7 +611,7 @@ ElfSection::write(std::ostream& os, Bytes& scratch) const
     else if (m_config.cls == ELFCLASS64)
     {
         write_64(scratch, m_flags);
-        write_64(scratch, 0); // vmem address
+        write_64(scratch, m_addr);
 
         write_64(scratch, m_offset);
         write_64(scratch, m_size);
@@ -673,14 +735,14 @@ ElfSection::write_relocs(std::ostream& os,
     return size;
 }
 
-long
-ElfSection::set_file_offset(long pos)
+unsigned long
+ElfSection::set_file_offset(unsigned long pos)
 {
     const unsigned long align = m_align;
 
     if (align == 0 || align == 1)
     {
-        m_offset = static_cast<unsigned long>(pos);
+        m_offset = pos;
         return pos;
     }
     else if (align & (align - 1))
@@ -688,8 +750,8 @@ ElfSection::set_file_offset(long pos)
             N_("alignment %1 for section `%2' is not a power of 2"),
             align, m_name->get_str()));
 
-    m_offset = (unsigned long)((pos + align - 1) & ~(align - 1));
-    return (long)m_offset;
+    m_offset = (pos + align - 1) & ~(align - 1);
+    return m_offset;
 }
 
 unsigned long
