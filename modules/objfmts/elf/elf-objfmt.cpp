@@ -325,7 +325,7 @@ ElfObject::read(std::istream& is)
                 is.seekg(elfsect->get_file_offset());
                 if (!is)
                     throw Error(String::compose(
-                        N_("could not read seek to section `%1'"), sectname));
+                        N_("could not seek to section `%1'"), sectname));
 
                 section->bcs_first().get_fixed().write(is, sectsize);
                 if (!is)
