@@ -44,7 +44,7 @@ using namespace yasm;
 class GapBytecode : public Bytecode::Contents
 {
 public:
-    GapBytecode(unsigned int size);
+    GapBytecode(unsigned long size);
     ~GapBytecode();
 
     /// Prints the implementation-specific data (for debugging purposes).
@@ -61,16 +61,16 @@ public:
 
     /// Increase the gap size.
     /// @param size     size in bytes
-    void extend(unsigned int size);
+    void extend(unsigned long size);
 
     GapBytecode* clone() const;
 
 private:
-    unsigned int m_size;        ///< size of gap (in bytes)
+    unsigned long m_size;       ///< size of gap (in bytes)
 };
 
 
-GapBytecode::GapBytecode(unsigned int size)
+GapBytecode::GapBytecode(unsigned long size)
     : m_size(size)
 {
 }
@@ -110,7 +110,7 @@ GapBytecode::clone() const
 }
 
 void
-GapBytecode::extend(unsigned int size)
+GapBytecode::extend(unsigned long size)
 {
     m_size += size;
 }
@@ -170,7 +170,7 @@ BytecodeContainer::append_bytecode(std::auto_ptr<Bytecode> bc)
 }
 
 Bytecode&
-BytecodeContainer::append_gap(unsigned int size, unsigned long line)
+BytecodeContainer::append_gap(unsigned long size, unsigned long line)
 {
     if (m_last_gap)
     {

@@ -77,7 +77,7 @@ public:
     /// Add gap space to the end of the container.
     /// @param size     number of bytes of gap
     /// @return Reference to gap bytecode.
-    Bytecode& append_gap(unsigned int size, unsigned long line);
+    Bytecode& append_gap(unsigned long size, unsigned long line);
 
     /// Start a new bytecode at the end of the container.  Factory function.
     /// @return Reference to new bytecode.
