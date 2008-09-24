@@ -1,6 +1,7 @@
 #include "bitvect.h"
 
 #include "util.h"
+#include "scoped_array.h"
 
 /*****************************************************************************/
 /*  MODULE NAME:  BitVector.c                           MODULE TYPE:  (adt)  */
@@ -8,7 +9,6 @@
 /*  MODULE IMPORTS:                                                          */
 /*****************************************************************************/
 #include <limits>
-#include <boost/scoped_array.hpp>
 #include <boost/static_assert.hpp>
 #include <ctype.h>                                  /*  MODULE TYPE:  (sys)  */
 #include <limits.h>                                 /*  MODULE TYPE:  (sys)  */
@@ -92,7 +92,7 @@ static N_word EXP10 = 0;  // = largest possible power of 10 in signed int
     /* global bit mask table for fast access (set by "Boot"): */
     /********************************************************************/
 
-static boost::scoped_array<N_word> BITMASKTAB(new N_word[BITS]);
+static yasm::util::scoped_array<N_word> BITMASKTAB(new N_word[BITS]);
 static bool BITMASKTAB_valid = false;
 
     /*****************************/
