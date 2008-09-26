@@ -222,6 +222,50 @@ ElfStrtab::write(std::ostream& os)
 
 
 
+ElfSymbol::ElfSymbol(const ElfConfig&   config,
+                     Bytes&             bytes,
+                     ElfSymbolIndex     index,
+                     ElfStrtab&         strtab,
+                     const char*        strtab_str,
+                     unsigned long      strtab_size,
+                     Section*           sections[])
+    : m_sect(0)
+    , m_value(0)
+    , m_xsize(0)
+    , m_size(0)
+    , m_symindex(index)
+{
+    bytes.set_readpos(0);
+    config.setup_endian(bytes);
+
+    unsigned long name_idx = read_u32(bytes);
+    if (name_idx < strtab_size)
+        m_name = strtab.append_str(&strtab_str[name_idx]);
+    else
+        m_name = 0;
+
+    if (config.cls == ELFCLASS32)
+    {
+        m_value = read_u32(bytes);
+        m_size = read_u32(bytes);
+    }
+
+    unsigned char info = read_u8(bytes);
+    m_bind = ELF_ST_BIND(info);
+    m_type = ELF_ST_TYPE(info);
+    m_vis = ELF_ST_VISIBILITY(read_u8(bytes));
+
+    m_index = static_cast<ElfSectionIndex>(read_u16(bytes));
+    if (m_index != SHN_UNDEF && m_index < config.secthead_count)
+        m_sect = sections[m_index];
+
+    if (config.cls == ELFCLASS64)
+    {
+        m_value = read_u64(bytes);
+        m_size = read_u64(bytes);
+    }
+}
+
 ElfSymbol::ElfSymbol(ElfStrtab::Entry* name)
     : m_sect(0)
     , m_name(name)
@@ -238,6 +282,43 @@ ElfSymbol::ElfSymbol(ElfStrtab::Entry* name)
 
 ElfSymbol::~ElfSymbol()
 {
+}
+
+SymbolRef
+ElfSymbol::create_symbol(Object& object) const
+{
+    SymbolRef sym(0);
+    std::string name = m_name ? m_name->get_str() : "";
+
+    if (m_bind == STB_GLOBAL || m_bind == STB_WEAK)
+    {
+        sym = object.get_sym(name);
+        if (m_index == SHN_UNDEF)
+            sym->declare(Symbol::EXTERN, 0);
+        else
+            sym->declare(Symbol::GLOBAL, 0);
+    }
+    else
+    {
+        // don't index by name, just append
+        sym = object.append_symbol(std::auto_ptr<Symbol>(new Symbol(name)));
+    }
+
+    if (m_index == SHN_ABS)
+    {
+        sym->define_equ(Expr::Ptr(new Expr(m_size, 0)), 0);
+    }
+    else if (m_index == SHN_COMMON)
+    {
+        sym->declare(Symbol::COMMON, 0);
+    }
+    else if (m_sect != 0)
+    {
+        Location loc = {&m_sect->bcs_first(), m_value.get_uint()};
+        sym->define_label(loc, 0);
+    }
+
+    return sym;
 }
 
 void
@@ -447,6 +528,44 @@ ElfConfig::symtab_write(std::ostream& os,
     return size;
 }
 
+bool
+ElfConfig::symtab_read(std::istream&    is,
+                       Object&          object,
+                       unsigned long    size,
+                       ElfSize          symsize,
+                       ElfStrtab&       strtab,
+                       const char*      strtab_str,
+                       unsigned long    strtab_size,
+                       Section*         sections[]) const
+{
+    is.seekg(symsize, std::ios_base::cur);  // skip first symbol (undef)
+
+    Bytes bytes;
+    ElfSymbolIndex index = 1;
+    for (unsigned long pos=symsize; pos<size; pos += symsize, ++index)
+    {
+        bytes.resize(0);
+        bytes.write(is, symsize);
+        if (!is)
+            throw Error(N_("could not read symbol entry"));
+
+        std::auto_ptr<ElfSymbol> elfsym(
+            new ElfSymbol(*this, bytes, index, strtab, strtab_str,
+                          strtab_size, sections));
+
+        SymbolRef sym = elfsym->create_symbol(object);
+
+        if (sym)
+        {
+            // Associate symbol data with symbol
+            sym->add_assoc_data(ElfSymbol::key,
+                std::auto_ptr<AssocData>(elfsym.release()));
+        }
+    }
+
+    return true;
+}
+
 void
 ElfSymbol::set_size(std::auto_ptr<Expr> size)
 {
@@ -457,7 +576,8 @@ ElfSection::ElfSection(const ElfConfig&     config,
                        std::istream&        is,
                        ElfSectionIndex      index,
                        ElfStrtab&           shstrtab,
-                       const char*          shstrtab_str)
+                       const char*          shstrtab_str,
+                       unsigned long        shstrtab_size)
     : m_config(config)
     , m_sym(0)
     , m_index(index)
@@ -474,7 +594,7 @@ ElfSection::ElfSection(const ElfConfig&     config,
     m_config.setup_endian(bytes);
 
     unsigned long name_idx = read_u32(bytes);
-    if (shstrtab_str)
+    if (shstrtab_str && name_idx < shstrtab_size)
         m_name = shstrtab.append_str(&shstrtab_str[name_idx]);
     else
         m_name = 0;

@@ -257,7 +257,7 @@ ElfObject::read(std::istream& is)
 
     std::auto_ptr<ElfSection>
         shstrtab_sect(new ElfSection(m_config, is, m_config.shstrtab_index,
-                                     m_shstrtab, 0));
+                                     m_shstrtab, 0, 0));
 
     unsigned long shstrtab_size = shstrtab_sect->get_size().get_uint();
     util::scoped_array<char> shstrtab_str(new char[shstrtab_size]);
@@ -273,17 +273,36 @@ ElfObject::read(std::istream& is)
     stdx::ptr_vector_owner<ElfSection> misc_sections_owner(misc_sections);
     misc_sections.reserve(m_config.secthead_count);
 
-    // indexed array of all sections by section index
+    // indexed array of all ElfSections by section index
     util::scoped_array<ElfSection*>
-        file_sections(new ElfSection*[m_config.secthead_count]);
+        elfsects(new ElfSection*[m_config.secthead_count]);
+    // indexed array of all Sections by section index
+    util::scoped_array<Section*>
+        sections(new Section*[m_config.secthead_count]);
 
+    // special sections
+    ElfSection* strtab_sect = 0;
+    ElfSection* symtab_sect = 0;
+
+    // read section headers
     is.seekg(m_config.secthead_pos);
     for (unsigned int i=0; i<m_config.secthead_count; ++i)
     {
         // read section header and save by index
         std::auto_ptr<ElfSection> elfsect(
-            new ElfSection(m_config, is, i, m_shstrtab, &shstrtab_str[0]));
-        file_sections[i] = elfsect.get();
+            new ElfSection(m_config, is, i, m_shstrtab, &shstrtab_str[0],
+                           shstrtab_size));
+        elfsects[i] = elfsect.get();
+
+        std::string sectname = elfsect->get_name();
+        if (sectname == ".strtab")
+        {
+            strtab_sect = elfsect.get();
+        }
+        else if (sectname == ".symtab")
+        {
+            symtab_sect = elfsect.get();
+        }
 
         ElfSectionType secttype = elfsect->get_type();
         if (secttype == SHT_NULL ||
@@ -293,11 +312,19 @@ ElfObject::read(std::istream& is)
             secttype == SHT_REL)
         {
             misc_sections.push_back(elfsect.release());
+            sections[i] = 0;
+
+            // try to pick these up by section type if not set
+            if (secttype == SHT_SYMTAB && symtab_sect == 0)
+                symtab_sect = elfsect.get();
+            else if (secttype == SHT_STRTAB && strtab_sect == 0)
+                strtab_sect = elfsect.get();
         }
         else
         {
             std::auto_ptr<Section> section = elfsect->create_section();
             elfsect->load_section_data(*section, is);
+            sections[i] = section.get();
 
             // Associate section data with section
             section->add_assoc_data(ElfSection::key,
@@ -306,6 +333,43 @@ ElfObject::read(std::istream& is)
             // Add section to object
             m_object->append_section(section);
         }
+    }
+
+    // read symtab string table and symbol table (if present)
+    if (symtab_sect != 0)
+    {
+        // get string table section index from symtab link field if reasonable
+        ElfSectionIndex link = symtab_sect->get_link();
+        if (link < m_config.secthead_count &&
+            elfsects[link]->get_type() == SHT_STRTAB)
+            strtab_sect = elfsects[link];
+
+        if (strtab_sect == 0)
+            throw Error(N_("could not find symbol string table"));
+
+        // load symbol string table
+        unsigned long strtab_size = strtab_sect->get_size().get_uint();
+        util::scoped_array<char> strtab_str(new char[strtab_size]);
+        is.seekg(strtab_sect->get_file_offset());
+        is.read(&strtab_str[0], strtab_size);
+        if (!is)
+            throw Error(N_("could not read symbol string data"));
+
+        // load symbol table
+        unsigned long symtab_size = symtab_sect->get_size().get_uint();
+        ElfSize symsize = symtab_sect->get_entsize();
+        if (symsize == 0)
+            throw Error(N_("symbol table entity size is zero"));
+        is.seekg(symtab_sect->get_file_offset());
+        if (!m_config.symtab_read(is, *m_object, symtab_size, symsize,
+                                  m_strtab, &strtab_str[0], strtab_size,
+                                  &sections[0]))
+            throw Error(N_("could not read symbol table"));
+    }
+
+    // go through misc sections to load relocations
+    for (unsigned int i=0; i<m_config.secthead_count; ++i)
+    {
     }
 }
 
