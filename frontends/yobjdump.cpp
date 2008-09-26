@@ -278,13 +278,18 @@ dump_symbols(const yasm::Object& object)
         std::cout << std::left;
         std::cout << "  ";
         // TODO: symbol flags
+        int vis = sym->get_visibility();
         if (is_label)
         {
             std::cout << loc.bc->get_container()->as_section()->get_name()
-                      << "  ";
+                      << '\t';
         }
-        else if ((sym->get_visibility() & yasm::Symbol::EXTERN) != 0)
-            std::cout << "*UND*  ";
+        else if (sym->get_equ())
+            std::cout << "*ABS*\t";
+        else if ((vis & yasm::Symbol::EXTERN) != 0)
+            std::cout << "*UND*\t";
+        else if ((vis & yasm::Symbol::COMMON) != 0)
+            std::cout << "*COM*\t";
         std::cout << sym->get_name();
         std::cout << '\n';
     }
