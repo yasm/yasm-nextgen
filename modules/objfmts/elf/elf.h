@@ -27,12 +27,12 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include <iosfwd>
+#include <vector>
 
 #include <libyasmx/assoc_data.h>
 #include <libyasmx/bytes.h>
 #include <libyasmx/intnum.h>
 #include <libyasmx/marg_ostream_fwd.h>
-#include <libyasmx/ptr_vector.h>
 #include <libyasmx/reloc.h>
 #include <libyasmx/scoped_ptr.h>
 #include <libyasmx/section.h>
@@ -59,6 +59,7 @@ typedef unsigned long ElfAddress;
 typedef unsigned long ElfOffset;
 typedef unsigned long ElfSize;
 typedef unsigned long ElfSectionInfo;
+typedef unsigned long ElfStringIndex;
 
 enum ElfFileType
 {
@@ -371,32 +372,17 @@ enum ElfRelocationType_x86_64
 class ElfStrtab
 {
 public:
-    class Entry
-    {
-        friend class ElfStrtab;
-
-    public:
-        unsigned long get_index() const { return m_index; }
-        std::string get_str() const { return m_str; }
-
-    private:
-        Entry(unsigned long index, const std::string& str)
-            : m_index(index), m_str(str) {}
-
-        unsigned long m_index;
-        std::string m_str;
-    };
-
     ElfStrtab();
-    ~ElfStrtab();
+    ~ElfStrtab() {}
 
-    Entry* append_str(const std::string& str);
-    void set_str(Entry* entry, const std::string& str);
-    unsigned long write(std::ostream& os);
+    ElfStringIndex get_index(const std::string& str);
+    std::string get_str(ElfStringIndex index) const;
+
+    unsigned long write(std::ostream& os) const;
+    void read(std::istream& is, unsigned long size);
 
 private:
-    stdx::ptr_vector<Entry> m_strs;
-    stdx::ptr_vector_owner<Entry> m_strs_owner;
+    std::vector<char> m_storage;
 };
 
 struct ElfConfig
@@ -439,14 +425,12 @@ struct ElfConfig
                                Object& object,
                                Errwarns& errwarns,
                                Bytes& scratch) const;
-    bool symtab_read(std::istream&  is,
-                     Object&        object,
-                     unsigned long  size,
-                     ElfSize        symsize,
-                     ElfStrtab&     strtab,
-                     const char*    strtab_str,
-                     unsigned long  strtab_size,
-                     Section*       sections[]) const;
+    bool symtab_read(std::istream&      is,
+                     Object&            object,
+                     unsigned long      size,
+                     ElfSize            symsize,
+                     const ElfStrtab&   strtab,
+                     Section*           sections[]) const;
 
     std::string name_reloc_section(const std::string& basesect) const;
 
@@ -494,15 +478,12 @@ public:
     ElfSymbol(const ElfConfig&  config,
               Bytes&            bytes,
               ElfSymbolIndex    index,
-              ElfStrtab&        strtab,
-              const char*       strtab_str,
-              unsigned long     strtab_size,
               Section*          sections[]);
 
-    ElfSymbol(ElfStrtab::Entry* name);
+    ElfSymbol();
     ~ElfSymbol();
 
-    SymbolRef create_symbol(Object& object) const;
+    SymbolRef create_symbol(Object& object, const ElfStrtab& strtab) const;
 
     void put(marg_ostream& os) const;
 
@@ -510,6 +491,7 @@ public:
     void write(Bytes& bytes, const ElfConfig& config);
 
     void set_section(Section* sect) { m_sect = sect; }
+    void set_name(ElfStringIndex index) { m_name_index = index; }
     void set_index(ElfSectionIndex index) { m_index = index; }
     void set_visibility(ElfSymbolVis vis) { m_vis = ELF_ST_VISIBILITY(vis); }
     void set_binding(ElfSymbolBinding bind) { m_bind = bind; }
@@ -523,7 +505,7 @@ public:
 
 private:
     Section*            m_sect;
-    ElfStrtab::Entry*   m_name;
+    ElfStringIndex      m_name_index;
     IntNum              m_value;
     util::scoped_ptr<Expr> m_xsize;
     IntNum              m_size;
@@ -554,15 +536,12 @@ public:
     // positioned at the beginning of the section header.
     ElfSection(const ElfConfig&     config,
                std::istream&        is,
-               ElfSectionIndex      index,
-               ElfStrtab&           shstrtab,
-               const char*          shstrtab_str,
-               unsigned long        shstrtab_size);
+               ElfSectionIndex      index);
 
     ElfSection(const ElfConfig&     config,
-               ElfStrtab::Entry*    name,
                ElfSectionType       type,
-               ElfSectionFlags      flags);
+               ElfSectionFlags      flags,
+               bool                 symtab = false);
 
     ~ElfSection();
 
@@ -570,10 +549,13 @@ public:
 
     unsigned long write(std::ostream& os, Bytes& scratch) const;
 
-    std::auto_ptr<Section> create_section() const;
+    std::auto_ptr<Section> create_section(const ElfStrtab& shstrtab) const;
     void load_section_data(Section& sect, std::istream& is) const;
 
     ElfSectionType get_type() const { return m_type; }
+
+    void set_name(ElfStringIndex index) { m_name_index = index; }
+    ElfStringIndex get_name() const { return m_name_index; }
 
     void set_typeflags(ElfSectionType type, ElfSectionFlags flags)
     {
@@ -600,7 +582,7 @@ public:
     ElfSectionIndex get_link() const { return m_link; }
 
     void set_rel_index(ElfSectionIndex sectidx) { m_rel_index = sectidx; }
-    void set_rel_name(ElfStrtab::Entry* entry) { m_rel_name = entry; }
+    void set_rel_name(ElfStringIndex nameidx) { m_rel_name_index = nameidx; }
 
     void set_entsize(ElfSize size) { m_entsize = size; }
     ElfSize get_entsize() const { return m_entsize; }
@@ -610,8 +592,6 @@ public:
     void add_size(const IntNum& size) { m_size += size; }
     void set_size(const IntNum& size) { m_size = size; }
     IntNum get_size() const { return m_size; }
-
-    std::string get_name() const { return m_name ? m_name->get_str() : ""; }
 
     unsigned long write_rel(std::ostream& os,
                             ElfSectionIndex symtab,
@@ -639,10 +619,10 @@ private:
     ElfSize             m_entsize;
 
     SymbolRef           m_sym;
-    ElfStrtab::Entry*   m_name;
+    ElfStringIndex      m_name_index;
     ElfSectionIndex     m_index;
 
-    ElfStrtab::Entry*   m_rel_name;
+    ElfStringIndex      m_rel_name_index;
     ElfSectionIndex     m_rel_index;
     ElfAddress          m_rel_offset;
 };

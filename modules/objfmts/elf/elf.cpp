@@ -162,72 +162,47 @@ ElfReloc::write(Bytes& bytes, const ElfConfig& config, unsigned int r_type)
     }
 }
 
-void
-ElfStrtab::set_str(Entry* entry, const std::string& str)
-{
-    stdx::ptr_vector<Entry>::iterator i=m_strs.begin(), end=m_strs.end();
-
-    // Find entry in question
-    for (; i != end; ++i)
-    {
-        if (&(*i) == entry)
-            break;
-    }
-
-    int lendiff = str.length() - entry->m_str.length();
-    entry->m_str = str;
-
-    if (lendiff == 0)
-        return;
-
-    // Update indexes on all following entries
-    for (; i != end; ++i)
-        i->m_index += lendiff;
-}
-
 ElfStrtab::ElfStrtab()
-    : m_strs_owner(m_strs)
 {
-    m_strs.push_back(new Entry(0, ""));
+    m_storage.push_back('\0');
 }
 
-ElfStrtab::Entry*
-ElfStrtab::append_str(const std::string& str)
+ElfStringIndex
+ElfStrtab::get_index(const std::string& str)
 {
-    Entry& back = m_strs.back();
-    unsigned long newindex = back.m_index + back.m_str.length() + 1;
-    m_strs.push_back(new Entry(newindex, str));
-    return &m_strs.back();
+    const char* cstr = str.c_str();
+    std::string::size_type len = str.length()+1;    // include trailing 0
+    std::string::size_type end = m_storage.size();
+    std::copy(cstr, cstr+len, std::back_inserter(m_storage));
+    return end;
 }
 
-ElfStrtab::~ElfStrtab()
+std::string
+ElfStrtab::get_str(ElfStringIndex index) const
 {
+    return &m_storage.at(index);
 }
 
 unsigned long
-ElfStrtab::write(std::ostream& os)
+ElfStrtab::write(std::ostream& os) const
 {
-    unsigned long size = 0;
-    // consider optimizing tables here
-    for (stdx::ptr_vector<Entry>::iterator i=m_strs.begin(), end=m_strs.end();
-         i != end; ++i)
-    {
-        os << i->m_str;
-        os << '\0';
-        size += i->m_str.length() + 1;
-    }
-    assert(size == (m_strs.back().m_index + m_strs.back().m_str.length() + 1));
+    unsigned long size = m_storage.size();
+    os.write(&m_storage[0], size);
     return size;
 }
 
+void
+ElfStrtab::read(std::istream& is, unsigned long size)
+{
+    m_storage.resize(size);
+    is.read(&m_storage[0], size);
+    m_storage.resize(is.gcount());
+}
 
 
 ElfSymbol::ElfSymbol(const ElfConfig&   config,
                      Bytes&             bytes,
                      ElfSymbolIndex     index,
-                     ElfStrtab&         strtab,
-                     const char*        strtab_str,
-                     unsigned long      strtab_size,
                      Section*           sections[])
     : m_sect(0)
     , m_value(0)
@@ -238,11 +213,7 @@ ElfSymbol::ElfSymbol(const ElfConfig&   config,
     bytes.set_readpos(0);
     config.setup_endian(bytes);
 
-    unsigned long name_idx = read_u32(bytes);
-    if (name_idx < strtab_size)
-        m_name = strtab.append_str(&strtab_str[name_idx]);
-    else
-        m_name = 0;
+    m_name_index = read_u32(bytes);
 
     if (config.cls == ELFCLASS32)
     {
@@ -266,9 +237,9 @@ ElfSymbol::ElfSymbol(const ElfConfig&   config,
     }
 }
 
-ElfSymbol::ElfSymbol(ElfStrtab::Entry* name)
+ElfSymbol::ElfSymbol()
     : m_sect(0)
-    , m_name(name)
+    , m_name_index(0)
     , m_value(0)
     , m_xsize(0)
     , m_size(0)
@@ -285,10 +256,10 @@ ElfSymbol::~ElfSymbol()
 }
 
 SymbolRef
-ElfSymbol::create_symbol(Object& object) const
+ElfSymbol::create_symbol(Object& object, const ElfStrtab& strtab) const
 {
     SymbolRef sym(0);
-    std::string name = m_name ? m_name->get_str() : "";
+    std::string name = strtab.get_str(m_name_index);
 
     if (m_bind == STB_GLOBAL || m_bind == STB_WEAK)
     {
@@ -438,7 +409,7 @@ ElfSymbol::write(Bytes& bytes, const ElfConfig& config)
     bytes.resize(0);
     config.setup_endian(bytes);
 
-    write_32(bytes, m_name ? m_name->get_index() : 0);
+    write_32(bytes, m_name_index);
 
     if (config.cls == ELFCLASS32)
     {
@@ -504,7 +475,7 @@ ElfConfig::symtab_write(std::ostream& os,
     unsigned long size = 0;
 
     // write undef symbol
-    ElfSymbol undef(0);
+    ElfSymbol undef;
     scratch.resize(0);
     undef.write(scratch, *this); 
     os << scratch;
@@ -533,9 +504,7 @@ ElfConfig::symtab_read(std::istream&    is,
                        Object&          object,
                        unsigned long    size,
                        ElfSize          symsize,
-                       ElfStrtab&       strtab,
-                       const char*      strtab_str,
-                       unsigned long    strtab_size,
+                       const ElfStrtab& strtab,
                        Section*         sections[]) const
 {
     is.seekg(symsize, std::ios_base::cur);  // skip first symbol (undef)
@@ -550,10 +519,9 @@ ElfConfig::symtab_read(std::istream&    is,
             throw Error(N_("could not read symbol entry"));
 
         std::auto_ptr<ElfSymbol> elfsym(
-            new ElfSymbol(*this, bytes, index, strtab, strtab_str,
-                          strtab_size, sections));
+            new ElfSymbol(*this, bytes, index, sections));
 
-        SymbolRef sym = elfsym->create_symbol(object);
+        SymbolRef sym = elfsym->create_symbol(object, strtab);
 
         if (sym)
         {
@@ -574,14 +542,11 @@ ElfSymbol::set_size(std::auto_ptr<Expr> size)
 
 ElfSection::ElfSection(const ElfConfig&     config,
                        std::istream&        is,
-                       ElfSectionIndex      index,
-                       ElfStrtab&           shstrtab,
-                       const char*          shstrtab_str,
-                       unsigned long        shstrtab_size)
+                       ElfSectionIndex      index)
     : m_config(config)
     , m_sym(0)
     , m_index(index)
-    , m_rel_name(0)
+    , m_rel_name_index(0)
     , m_rel_index(0)
     , m_rel_offset(0)
 {
@@ -593,11 +558,7 @@ ElfSection::ElfSection(const ElfConfig&     config,
 
     m_config.setup_endian(bytes);
 
-    unsigned long name_idx = read_u32(bytes);
-    if (shstrtab_str && name_idx < shstrtab_size)
-        m_name = shstrtab.append_str(&shstrtab_str[name_idx]);
-    else
-        m_name = 0;
+    m_name_index = read_u32(bytes);
     m_type = static_cast<ElfSectionType>(read_u32(bytes));
 
     if (m_config.cls == ELFCLASS32)
@@ -635,9 +596,9 @@ ElfSection::ElfSection(const ElfConfig&     config,
 }
 
 ElfSection::ElfSection(const ElfConfig&     config,
-                       ElfStrtab::Entry*    name,
                        ElfSectionType       type,
-                       ElfSectionFlags      flags)
+                       ElfSectionFlags      flags,
+                       bool                 symtab)
     : m_config(config)
     , m_type(type)
     , m_flags(flags)
@@ -649,13 +610,13 @@ ElfSection::ElfSection(const ElfConfig&     config,
     , m_align(0)
     , m_entsize(0)
     , m_sym(0)
-    , m_name(name)
+    , m_name_index(0)
     , m_index(0)
-    , m_rel_name(0)
+    , m_rel_name_index(0)
     , m_rel_index(0)
     , m_rel_offset(0)
 {
-    if (name && name->get_str() == ".symtab")
+    if (symtab)
     {
         if (m_config.cls == ELFCLASS32)
         {
@@ -677,11 +638,6 @@ ElfSection::~ElfSection()
 void
 ElfSection::put(marg_ostream& os) const
 {
-    os << "name=";
-    if (m_name)
-        os << m_name->get_str();
-    else
-        os << "<undef>";
     os << "\nsym=\n";
     ++os;
     os << *m_sym;
@@ -710,7 +666,7 @@ ElfSection::write(std::ostream& os, Bytes& scratch) const
     scratch.resize(0);
     m_config.setup_endian(scratch);
 
-    write_32(scratch, m_name ? m_name->get_index() : 0);
+    write_32(scratch, m_name_index);
     write_32(scratch, m_type);
 
     if (m_config.cls == ELFCLASS32)
@@ -752,12 +708,13 @@ ElfSection::write(std::ostream& os, Bytes& scratch) const
 }
 
 std::auto_ptr<Section>
-ElfSection::create_section() const
+ElfSection::create_section(const ElfStrtab& shstrtab) const
 {
     bool bss = (m_type == SHT_NOBITS || m_offset == 0);
 
     std::auto_ptr<Section> section(
-        new Section(get_name(), m_flags & SHF_EXECINSTR, bss, 0));
+        new Section(shstrtab.get_str(m_name_index), m_flags & SHF_EXECINSTR,
+                    bss, 0));
 
     section->set_filepos(m_offset);
     section->set_vma(m_addr);
@@ -807,7 +764,7 @@ ElfSection::write_rel(std::ostream& os,
     scratch.resize(0);
     m_config.setup_endian(scratch);
 
-    write_32(scratch, m_rel_name ? m_rel_name->get_index() : 0);
+    write_32(scratch, m_rel_name_index);
     write_32(scratch, m_config.rela ? SHT_RELA : SHT_REL);
 
     unsigned int size = 0;
@@ -911,8 +868,7 @@ ElfSection::set_file_offset(unsigned long pos)
     }
     else if (align & (align - 1))
         throw InternalError(String::compose(
-            N_("alignment %1 for section `%2' is not a power of 2"),
-            align, m_name->get_str()));
+            N_("alignment %1 is not a power of 2"), align));
 
     m_offset = (pos + align - 1) & ~(align - 1);
     return m_offset;

@@ -109,12 +109,12 @@ public:
     bool ok_object(Object* object) const;
     void initialize();
 
-    ElfSymbol& build_symbol(Symbol& sym, bool with_name = true);
+    ElfSymbol& build_symbol(Symbol& sym);
     void build_extern(Symbol& sym);
     void build_global(Symbol& sym);
     void build_common(Symbol& sym);
     void sym_set_sectval(Symbol& sym, ElfSymbol& elfsym);
-    void finalize_symbol(Symbol& sym, bool local_names);
+    void finalize_symbol(Symbol& sym, ElfStrtab& strtab, bool local_names);
 
     void dir_section(Object& object,
                      NameValues& namevals,
@@ -140,10 +140,7 @@ public:
     ElfConfig m_config;                     // ELF configuration
     util::scoped_ptr<ElfMachine> m_machine; // ELF machine interface
 
-    ElfStrtab m_shstrtab;                   // section name strtab
-    ElfStrtab m_strtab;                     // strtab entries
-
-    ElfStrtab::Entry* m_file_strtab_entry;  // .file symbol associated string
+    ElfSymbol* m_file_elfsym;               // .file symbol
     SymbolRef m_dotdotsym;                  // ..sym symbol
 };
 
@@ -161,7 +158,7 @@ public:
 
 ElfObject::ElfObject(unsigned int bits)
     : m_machine(0)
-    , m_file_strtab_entry(0)
+    , m_file_elfsym(0)
     , m_dotdotsym(0)
 {
     if (bits == 32)
@@ -256,13 +253,11 @@ ElfObject::read(std::istream& is)
         throw Error(N_("could not read .shstrtab section header"));
 
     std::auto_ptr<ElfSection>
-        shstrtab_sect(new ElfSection(m_config, is, m_config.shstrtab_index,
-                                     m_shstrtab, 0, 0));
+        shstrtab_sect(new ElfSection(m_config, is, m_config.shstrtab_index));
 
-    unsigned long shstrtab_size = shstrtab_sect->get_size().get_uint();
-    util::scoped_array<char> shstrtab_str(new char[shstrtab_size]);
+    ElfStrtab shstrtab;
     is.seekg(shstrtab_sect->get_file_offset());
-    is.read(&shstrtab_str[0], shstrtab_size);
+    shstrtab.read(is, shstrtab_sect->get_size().get_uint());
     if (!is)
         throw Error(N_("could not read .shstrtab string data"));
 
@@ -289,12 +284,10 @@ ElfObject::read(std::istream& is)
     for (unsigned int i=0; i<m_config.secthead_count; ++i)
     {
         // read section header and save by index
-        std::auto_ptr<ElfSection> elfsect(
-            new ElfSection(m_config, is, i, m_shstrtab, &shstrtab_str[0],
-                           shstrtab_size));
+        std::auto_ptr<ElfSection> elfsect(new ElfSection(m_config, is, i));
         elfsects[i] = elfsect.get();
 
-        std::string sectname = elfsect->get_name();
+        std::string sectname = shstrtab.get_str(elfsect->get_name());
         if (sectname == ".strtab")
         {
             strtab_sect = elfsect.get();
@@ -322,7 +315,7 @@ ElfObject::read(std::istream& is)
         }
         else
         {
-            std::auto_ptr<Section> section = elfsect->create_section();
+            std::auto_ptr<Section> section = elfsect->create_section(shstrtab);
             elfsect->load_section_data(*section, is);
             sections[i] = section.get();
 
@@ -348,10 +341,9 @@ ElfObject::read(std::istream& is)
             throw Error(N_("could not find symbol string table"));
 
         // load symbol string table
-        unsigned long strtab_size = strtab_sect->get_size().get_uint();
-        util::scoped_array<char> strtab_str(new char[strtab_size]);
+        ElfStrtab strtab;
         is.seekg(strtab_sect->get_file_offset());
-        is.read(&strtab_str[0], strtab_size);
+        strtab.read(is, strtab_sect->get_size().get_uint());
         if (!is)
             throw Error(N_("could not read symbol string data"));
 
@@ -362,8 +354,7 @@ ElfObject::read(std::istream& is)
             throw Error(N_("symbol table entity size is zero"));
         is.seekg(symtab_sect->get_file_offset());
         if (!m_config.symtab_read(is, *m_object, symtab_size, symsize,
-                                  m_strtab, &strtab_str[0], strtab_size,
-                                  &sections[0]))
+                                  strtab, &sections[0]))
             throw Error(N_("could not read symbol table"));
     }
 
@@ -389,12 +380,11 @@ ElfObject::init_symbols(const std::string& parser)
         new Symbol(".file")));
     filesym->define_special(Symbol::LOCAL);
 
-    // Put in current input filename; we'll replace it in output()
-    m_file_strtab_entry = m_strtab.append_str(m_object->get_source_fn());
-    std::auto_ptr<ElfSymbol> elfsym(new ElfSymbol(m_file_strtab_entry));
+    std::auto_ptr<ElfSymbol> elfsym(new ElfSymbol());
     elfsym->set_index(SHN_ABS);
     elfsym->set_binding(STB_LOCAL);
     elfsym->set_type(STT_FILE);
+    m_file_elfsym = elfsym.get();
 
     filesym->add_assoc_data(ElfSymbol::key,
                             std::auto_ptr<AssocData>(elfsym.release()));
@@ -412,17 +402,13 @@ ElfObject::init_symbols(const std::string& parser)
 }
 
 ElfSymbol&
-ElfObject::build_symbol(Symbol& sym, bool with_name)
+ElfObject::build_symbol(Symbol& sym)
 {
     ElfSymbol* elfsym = get_elf(sym);
 
     if (!elfsym)
     {
-        ElfStrtab::Entry* symname = 0;
-        if (with_name)
-            symname = m_strtab.append_str(sym.get_name());
-
-        elfsym = new ElfSymbol(symname);
+        elfsym = new ElfSymbol;
         sym.add_assoc_data(ElfSymbol::key, std::auto_ptr<AssocData>(elfsym));
     }
 
@@ -585,7 +571,7 @@ ElfObject::sym_set_sectval(Symbol& sym, ElfSymbol& elfsym)
 }
 
 void
-ElfObject::finalize_symbol(Symbol& sym, bool local_names)
+ElfObject::finalize_symbol(Symbol& sym, ElfStrtab& strtab, bool local_names)
 {
     int vis = sym.get_visibility();
     int status = sym.get_status();
@@ -594,6 +580,8 @@ ElfObject::finalize_symbol(Symbol& sym, bool local_names)
     if (vis & Symbol::EXTERN)
     {
         build_extern(sym);
+        elfsym = get_elf(sym);
+        elfsym->set_name(strtab.get_index(sym.get_name()));
         return;
     }
 
@@ -601,6 +589,7 @@ ElfObject::finalize_symbol(Symbol& sym, bool local_names)
     {
         build_common(sym);
         elfsym = get_elf(sym);
+        elfsym->set_name(strtab.get_index(sym.get_name()));
         // fall through (check below catches undefined case)
     }
 
@@ -614,6 +603,7 @@ ElfObject::finalize_symbol(Symbol& sym, bool local_names)
     {
         build_global(sym);
         elfsym = get_elf(sym);
+        elfsym->set_name(strtab.get_index(sym.get_name()));
     }
     else
     {
@@ -644,7 +634,9 @@ ElfObject::finalize_symbol(Symbol& sym, bool local_names)
         if (sym.get_equ() && !sym.is_abs())
             return;
 
-        elfsym = &build_symbol(sym, local_names || is_sect);
+        elfsym = &build_symbol(sym);
+        if (local_names || is_sect)
+            elfsym->set_name(strtab.get_index(sym.get_name()));
         if (is_sect)
             elfsym->set_type(STT_SECTION);
     }
@@ -660,6 +652,7 @@ public:
 
     void output_section(Section& sect,
                         unsigned int* sindex,
+                        ElfStrtab& shstrtab,
                         Errwarns& errwarns);
 
     // OutputBytecode overrides
@@ -823,6 +816,7 @@ elf_objfmt_create_dbg_secthead(yasm_section *sect, /*@null@*/ void *d)
 void
 Output::output_section(Section& sect,
                        unsigned int* sindex,
+                       ElfStrtab& shstrtab,
                        Errwarns& errwarns)
 {
     BytecodeOutput* outputter = this;
@@ -833,6 +827,7 @@ Output::output_section(Section& sect,
     if (elfsect->get_align() == 0)
         elfsect->set_align(sect.get_align());
 
+    elfsect->set_name(shstrtab.get_index(sect.get_name()));
     elfsect->set_index(*sindex);
     *sindex = *sindex + 1;
 
@@ -890,7 +885,7 @@ Output::output_section(Section& sect,
 
     // name the relocation section .rel[a].foo
     std::string relname = m_objfmt.m_config.name_reloc_section(sect.get_name());
-    elfsect->set_rel_name(m_objfmt.m_shstrtab.append_str(relname));
+    elfsect->set_rel_name(shstrtab.get_index(relname));
 }
 
 unsigned long
@@ -917,8 +912,13 @@ output_align(std::ostream& os, unsigned int align)
 void
 ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
 {
-    // Update filename strtab
-    m_strtab.set_str(m_file_strtab_entry, m_object->get_source_fn());
+    ElfStrtab shstrtab, strtab;
+
+    // Add filename to strtab and set as .file symbol name
+    if (m_file_elfsym)
+    {
+        m_file_elfsym->set_name(strtab.get_index(m_object->get_source_fn()));
+    }
 
     // Allocate space for Ehdr by seeking forward
     os.seekp(m_config.proghead_get_size());
@@ -939,7 +939,7 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     {
         try
         {
-            finalize_symbol(*i, all_syms);
+            finalize_symbol(*i, strtab, all_syms);
         }
         catch (Error& err)
         {
@@ -951,17 +951,17 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     m_config.secthead_count = 0;
 
     // dummy section header
-    ElfSection null_sect(m_config, 0, SHT_NULL, 0);
+    ElfSection null_sect(m_config, SHT_NULL, 0);
     null_sect.set_index(m_config.secthead_count++);
 
     Output out(os, *this, *m_object);
 
     // Output user sections.
-    // Assign indices as we go (including for relocation sections).
+    // Assign indices and names as we go (including for relocation sections).
     for (Object::section_iterator i=m_object->sections_begin(),
          end=m_object->sections_end(); i != end; ++i)
     {
-        out.output_section(*i, &m_config.secthead_count, errwarns);
+        out.output_section(*i, &m_config.secthead_count, shstrtab, errwarns);
     }
 
     // If we're not forcing all symbols to be in the table, go through
@@ -976,7 +976,8 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
                  endreloc=sect->relocs_end(); reloc != endreloc; ++reloc)
             {
                 SymbolRef sym = reloc->get_sym();
-                ElfSymbol& elfsym = build_symbol(*sym, true); // XXX
+                ElfSymbol& elfsym = build_symbol(*sym); // XXX
+                elfsym.set_name(strtab.get_index(sym->get_name()));
                 sym_set_sectval(*sym, elfsym);
             }
         }
@@ -991,25 +992,27 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     m_config.symtab_setindexes(*m_object, &symtab_nlocal);
 
     unsigned long offset, size;
-    ElfStrtab::Entry* shstrtab_name = m_shstrtab.append_str(".shstrtab");
-    ElfStrtab::Entry* strtab_name = m_shstrtab.append_str(".strtab");
-    ElfStrtab::Entry* symtab_name = m_shstrtab.append_str(".symtab");
+    ElfStringIndex shstrtab_name = shstrtab.get_index(".shstrtab");
+    ElfStringIndex strtab_name = shstrtab.get_index(".strtab");
+    ElfStringIndex symtab_name = shstrtab.get_index(".symtab");
 
     // section header string table (.shstrtab)
     offset = output_align(os, 4);
-    size = m_shstrtab.write(os);
+    size = shstrtab.write(os);
 
-    ElfSection shstrtab_sect(m_config, shstrtab_name, SHT_STRTAB, 0);
+    ElfSection shstrtab_sect(m_config, SHT_STRTAB, 0);
     m_config.shstrtab_index = m_config.secthead_count;
+    shstrtab_sect.set_name(shstrtab_name);
     shstrtab_sect.set_index(m_config.secthead_count++);
     shstrtab_sect.set_file_offset(offset);
     shstrtab_sect.set_size(size);
 
     // string table (.strtab)
     offset = output_align(os, 4);
-    size = m_strtab.write(os);
+    size = strtab.write(os);
 
-    ElfSection strtab_sect(m_config, strtab_name, SHT_STRTAB, 0);
+    ElfSection strtab_sect(m_config, SHT_STRTAB, 0);
+    strtab_sect.set_name(strtab_name);
     strtab_sect.set_index(m_config.secthead_count++);
     strtab_sect.set_file_offset(offset);
     strtab_sect.set_size(size);
@@ -1018,7 +1021,8 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     offset = output_align(os, 4);
     size = m_config.symtab_write(os, *m_object, errwarns, out.get_scratch());
 
-    ElfSection symtab_sect(m_config, symtab_name, SHT_SYMTAB, 0);
+    ElfSection symtab_sect(m_config, SHT_SYMTAB, 0, true);
+    symtab_sect.set_name(symtab_name);
     symtab_sect.set_index(m_config.secthead_count++);
     symtab_sect.set_file_offset(offset);
     symtab_sect.set_size(size);
@@ -1156,8 +1160,7 @@ ElfObject::append_section(const std::string& name, unsigned long line)
     sym->define_label(start, line);
 
     // Add ELF data to the section
-    ElfSection* elfsect = new ElfSection(m_config, m_shstrtab.append_str(name),
-                                         type, flags);
+    ElfSection* elfsect = new ElfSection(m_config, type, flags);
     section->add_assoc_data(ElfSection::key, std::auto_ptr<AssocData>(elfsect));
     elfsect->set_sym(sym);
 
