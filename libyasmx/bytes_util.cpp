@@ -104,7 +104,14 @@ IntNum
 read_u64(Bytes& bytes)
 {
     const unsigned char* ptr = bytes.read(8);
-    return IntNum(ptr, false, 4, bytes.is_bigendian());
+    return IntNum(ptr, false, 8, bytes.is_bigendian());
+}
+
+IntNum
+read_s64(Bytes& bytes)
+{
+    const unsigned char* ptr = bytes.read(8);
+    return IntNum(ptr, true, 8, bytes.is_bigendian());
 }
 
 } // namespace yasm

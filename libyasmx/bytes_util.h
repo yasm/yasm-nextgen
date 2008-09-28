@@ -179,11 +179,30 @@ read_u32(Bytes& bytes)
     return val;
 }
 
+/// Read an signed 32-bit value from a bytes buffer.
+/// @param bytes    output bytes buffer
+/// @return 32-bit value.
+inline long
+read_s32(Bytes& bytes)
+{
+    unsigned long val = read_u32(bytes);
+    if (val & 0x80000000UL)
+        return -static_cast<long>((~val)+1);
+    else
+        return static_cast<long>(val);
+}
+
 /// Read an unsigned 64-bit value from a bytes buffer.
 /// @param bytes    input bytes buffer
 /// @return 64-bit value (as an IntNum).
 YASM_LIB_EXPORT
 IntNum read_u64(Bytes& bytes);
+
+/// Read an signed 64-bit value from a bytes buffer.
+/// @param bytes    input bytes buffer
+/// @return 64-bit value (as an IntNum).
+YASM_LIB_EXPORT
+IntNum read_s64(Bytes& bytes);
 
 } // namespace yasm
 
