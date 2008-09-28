@@ -198,8 +198,8 @@ IntNum::IntNum(const unsigned char* ptr,
     BitVector::Empty(conv_bv);
     if (bigendian)
     {
-        // TODO
-        throw InternalError(N_("big endian not implemented"));
+        for (i = 0; i < srcsize; i++)
+            BitVector::Chunk_Store(conv_bv, 8, (srcsize-1-i)*8, ptr[i]);
     }
     else
     {
