@@ -346,23 +346,7 @@ ElfSymbol::put(marg_ostream& os) const
         os << m_size;
     os << '\n';
 }
-#if 0
-void
-insert_local_sym(Object& object,
-                 std::auto_ptr<Symbol> sym,
-                 std::auto_ptr<ElfSymbol> entry)
-{
-    elf_symtab_entry *after = STAILQ_FIRST(symtab);
-    elf_symtab_entry *before = NULL;
 
-    while (after && (after->bind == STB_LOCAL)) {
-        before = after;
-        if (before->type == STT_FILE) break;
-        after = STAILQ_NEXT(after, qlink);
-    }
-    STAILQ_INSERT_AFTER(symtab, before, entry, qlink);
-}
-#endif
 ElfSymbolIndex
 assign_sym_indices(Object& object)
 {
