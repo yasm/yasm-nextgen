@@ -113,10 +113,9 @@ public:
     virtual void add_special_syms(Object& object,
                                   const std::string& parser) const = 0;
 
-    virtual bool accepts_reloc(size_t val) const = 0;
-    virtual void handle_reloc_addend(IntNum* intn, ElfReloc* reloc) const = 0;
-    virtual unsigned int map_reloc_info_to_type(const ElfReloc& reloc) const
-        = 0;
+    virtual bool map_reloc_type(ElfRelocationType* type,
+                                bool rel,
+                                size_t valsize) const = 0;
 };
 
 bool ok_elf_machine(const Arch& arch, ElfClass cls);

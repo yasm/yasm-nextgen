@@ -312,6 +312,10 @@ ElfObject::read(std::istream& is)
                 symtab_sect = elfsect.get();
             else if (secttype == SHT_STRTAB && strtab_sect == 0)
                 strtab_sect = elfsect.get();
+
+            // if any section is RELA, set config to RELA
+            if (secttype == SHT_RELA)
+                m_config.rela = true;
         }
         else
         {

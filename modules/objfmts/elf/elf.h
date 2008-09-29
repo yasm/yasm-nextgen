@@ -60,6 +60,7 @@ typedef unsigned long ElfOffset;
 typedef unsigned long ElfSize;
 typedef unsigned long ElfSectionInfo;
 typedef unsigned long ElfStringIndex;
+typedef unsigned char ElfRelocationType;
 
 enum ElfFileType
 {
@@ -260,8 +261,14 @@ enum ElfSymbolVis
 #define ELF_ST_INFO(bind, type)         (((bind) << 4) + ((type) & 0xf))
 #define ELF_ST_OTHER(vis)               ELF_ST_VISIBILITY(vis)
 
-#define ELF32_R_INFO(s,t)               (((s)<<8)+(unsigned char)(t))
-#define ELF64_R_INFO(s,t)               (((s)<<32) + ((t) & 0xffffffffL))
+#define ELF32_R_SYM(i)              static_cast<ElfSymbolIndex>((i) >> 8)
+#define ELF32_R_TYPE(i)             static_cast<ElfRelocationType>((i) & 0xff)
+#define ELF32_R_INFO(s, t)          (((s)<<8)+(unsigned char)(t & 0xff))
+
+#define ELF64_R_SYM(i) \
+    static_cast<ElfSymbolIndex>(((i) >> 32).get_uint())
+#define ELF64_R_TYPE(i)             ((i.get_uint()) & 0xffffffff)
+#define ELF64_R_INFO(s, t)          ((IntNum(s)<<32) + ((t) & 0xffffffffUL))
 
 #define EHDR32_SIZE 52
 #define EHDR64_SIZE 64
@@ -449,6 +456,10 @@ struct ElfConfig
 class ElfReloc : public Reloc
 {
 public:
+    // Constructor that reads from file.  Assumes input stream is already
+    // positioned at the beginning of the relocation.
+    ElfReloc(const ElfConfig& config, std::istream& is, bool rela);
+
     ElfReloc(SymbolRef sym,
              SymbolRef wrt,
              const IntNum& addr,
@@ -461,12 +472,10 @@ public:
     std::string get_type_name() const;
 
     void handle_addend(IntNum* intn, const ElfConfig& config);
-    void write(Bytes& bytes, const ElfConfig& config, unsigned int r_type);
+    void write(Bytes& bytes, const ElfConfig& config);
 
-    bool        m_rtype_rel;
-    size_t      m_valsize;
-    IntNum      m_addend;
-    SymbolRef   m_wrt;
+    ElfRelocationType   m_type;
+    IntNum              m_addend;
 };
 
 class ElfSymbol : public AssocData

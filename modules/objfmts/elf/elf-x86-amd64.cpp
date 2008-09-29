@@ -48,9 +48,9 @@ public:
     void configure(ElfConfig* config) const;
     void add_special_syms(Object& object, const std::string& parser) const;
 
-    bool accepts_reloc(size_t val) const;
-    void handle_reloc_addend(IntNum* intn, ElfReloc* reloc) const;
-    unsigned int map_reloc_info_to_type(const ElfReloc& reloc) const;
+    bool map_reloc_type(ElfRelocationType* type,
+                        bool rel,
+                        size_t valsize) const;
 };
 
 bool
@@ -102,44 +102,32 @@ Elf_x86_amd64::add_special_syms(Object& object,
 }
 
 bool
-Elf_x86_amd64::accepts_reloc(size_t val) const
+Elf_x86_amd64::map_reloc_type(ElfRelocationType* type,
+                              bool rel,
+                              size_t valsize) const
 {
-    return (val&(val-1)) ? 0 : ((val & (8|16|32|64)) != 0);
-}
-
-void
-Elf_x86_amd64::handle_reloc_addend(IntNum* intn, ElfReloc* reloc) const
-{
-    // .rela: copy value out as addend, replace original with 0
-    reloc->m_addend = 0;
-    std::swap(*intn, reloc->m_addend);
-}
-
-unsigned int
-Elf_x86_amd64::map_reloc_info_to_type(const ElfReloc& reloc) const
-{
-    if (reloc.m_rtype_rel)
+    if (rel)
     {
-        switch (reloc.m_valsize)
+        switch (valsize)
         {
-            case 8: return R_X86_64_PC8;
-            case 16: return R_X86_64_PC16;
-            case 32: return R_X86_64_PC32;
-            default: throw InternalError(N_("Unsupported relocation size"));
+            case 8: *type = R_X86_64_PC8;
+            case 16: *type = R_X86_64_PC16;
+            case 32: *type = R_X86_64_PC32;
+            default: return false;
         }
     }
     else
     {
-        switch (reloc.m_valsize)
+        switch (valsize)
         {
-            case 8: return R_X86_64_8;
-            case 16: return R_X86_64_16;
-            case 32: return R_X86_64_32;
-            case 64: return R_X86_64_64;
-            default: throw InternalError(N_("Unsupported relocation size"));
+            case 8: *type = R_X86_64_8;
+            case 16: *type = R_X86_64_16;
+            case 32: *type = R_X86_64_32;
+            case 64: *type = R_X86_64_64;
+            default: return false;
         }
     }
-    return 0;
+    return true;
 }
 
 }}} // namespace yasm::objfmt::elf

@@ -86,22 +86,58 @@ ElfReloc::ElfReloc(SymbolRef sym,
                    size_t valsize,
                    const ElfMachine& machine)
     : Reloc(addr, sym)
-    , m_rtype_rel(rel)
-    , m_valsize(valsize)
+    , m_type(0)
     , m_addend(0)
-    , m_wrt(wrt)
 {
     if (wrt)
     {
         const ElfSpecialSymbol* ssym = get_elf_ssym(*wrt);
         if (!ssym || valsize != ssym->size)
             throw TypeError(N_("elf: invalid WRT"));
+
+        // Force TLS type; this is required by the linker.
+        if (ssym->thread_local)
+        {
+            if (ElfSymbol* esym = get_elf(*sym))
+                esym->set_type(STT_TLS);
+        }
+        m_type = ssym->reloc;
     }
-    else if (!machine.accepts_reloc(valsize))
+    else if (!machine.map_reloc_type(&m_type, rel, valsize))
         throw TypeError(N_("elf: invalid relocation size"));
 
     if (sym == 0)
         throw InternalError("sym is null");
+}
+
+ElfReloc::ElfReloc(const ElfConfig& config, std::istream& is, bool rela)
+    : Reloc(0, SymbolRef(0))
+{
+    Bytes bytes;
+    config.setup_endian(bytes);
+
+    if (config.cls == ELFCLASS32)
+    {
+        m_addr = read_u32(bytes);
+
+        unsigned long info = read_u32(bytes);
+        ElfSymbolIndex symindex = ELF32_R_SYM(info);
+        m_type = ELF32_R_TYPE(info);
+
+        if (rela)
+            m_addend = read_s32(bytes);
+    }
+    else if (config.cls == ELFCLASS64)
+    {
+        m_addr = read_u64(bytes);
+
+        IntNum info = read_u64(bytes);
+        ElfSymbolIndex symindex = ELF64_R_SYM(info);
+        m_type = ELF64_R_TYPE(info);
+
+        if (rela)
+            m_addend = read_s64(bytes);
+    }
 }
 
 ElfReloc::~ElfReloc()
@@ -133,7 +169,7 @@ ElfReloc::handle_addend(IntNum* intn, const ElfConfig& config)
 }
 
 void
-ElfReloc::write(Bytes& bytes, const ElfConfig& config, unsigned int r_type)
+ElfReloc::write(Bytes& bytes, const ElfConfig& config)
 {
     unsigned long r_sym = STN_UNDEF;
 
@@ -147,7 +183,7 @@ ElfReloc::write(Bytes& bytes, const ElfConfig& config, unsigned int r_type)
     {
         write_32(bytes, m_addr);
         write_32(bytes,
-                 ELF32_R_INFO(r_sym, static_cast<unsigned char>(r_type)));
+                 ELF32_R_INFO(r_sym, static_cast<unsigned char>(m_type)));
 
         if (config.rela)
             write_32(bytes, m_addend);
@@ -155,8 +191,8 @@ ElfReloc::write(Bytes& bytes, const ElfConfig& config, unsigned int r_type)
     else if (config.cls == ELFCLASS64)
     {
         write_64(bytes, m_addr);
-        write_64(bytes, ELF64_R_INFO(IntNum(r_sym),
-                                     static_cast<unsigned char>(r_type)));
+        write_64(bytes,
+                 ELF64_R_INFO(r_sym, static_cast<unsigned char>(m_type)));
         if (config.rela)
             write_64(bytes, m_addend);
     }
@@ -829,27 +865,8 @@ ElfSection::write_relocs(std::ostream& os,
          i != end; ++i)
     {
         ElfReloc& reloc = static_cast<ElfReloc&>(*i);
-
-        unsigned int r_type;
-        if (reloc.m_wrt)
-        {
-            ElfSpecialSymbol* ssym = get_elf_ssym(*reloc.m_wrt);
-            if (!ssym || reloc.m_valsize != ssym->size)
-                throw InternalError(N_("Unsupported WRT"));
-
-            // Force TLS type; this is required by the linker.
-            if (ssym->thread_local)
-            {
-                if (ElfSymbol* esym = get_elf(*reloc.get_sym()))
-                    esym->set_type(STT_TLS);
-            }
-            r_type = ssym->reloc;
-        }
-        else
-            r_type = machine.map_reloc_info_to_type(reloc);
-
         scratch.resize(0);
-        reloc.write(scratch, m_config, r_type);
+        reloc.write(scratch, m_config);
         os << scratch;
         size += scratch.size();
     }
