@@ -40,6 +40,22 @@ namespace objfmt
 namespace elf
 {
 
+class ElfReloc_x86_amd64 : public ElfReloc
+{
+public:
+    ElfReloc_x86_amd64(const ElfConfig& config, std::istream& is, bool rela)
+        : ElfReloc(config, is, rela)
+    {}
+    ElfReloc_x86_amd64(SymbolRef sym,
+                       SymbolRef wrt,
+                       const IntNum& addr,
+                       bool rel,
+                       size_t valsize);
+    ~ElfReloc_x86_amd64() {}
+
+    std::string get_type_name() const;
+};
+
 class Elf_x86_amd64 : public ElfMachine
 {
 public:
@@ -48,9 +64,23 @@ public:
     void configure(ElfConfig* config) const;
     void add_special_syms(Object& object, const std::string& parser) const;
 
-    bool map_reloc_type(ElfRelocationType* type,
-                        bool rel,
-                        size_t valsize) const;
+    std::auto_ptr<ElfReloc>
+    read_reloc(const ElfConfig& config, std::istream& is, bool rela) const
+    {
+        return std::auto_ptr<ElfReloc>
+            (new ElfReloc_x86_amd64(config, is, rela));
+    }
+
+    std::auto_ptr<ElfReloc>
+    make_reloc(SymbolRef sym,
+               SymbolRef wrt,
+               const IntNum& addr,
+               bool rel,
+               size_t valsize) const
+    {
+        return std::auto_ptr<ElfReloc>
+            (new ElfReloc_x86_amd64(sym, wrt, addr, rel, valsize));
+    }
 };
 
 bool
@@ -101,33 +131,71 @@ Elf_x86_amd64::add_special_syms(Object& object,
         add_ssym(object, ssyms[i]);
 }
 
-bool
-Elf_x86_amd64::map_reloc_type(ElfRelocationType* type,
-                              bool rel,
-                              size_t valsize) const
+ElfReloc_x86_amd64::ElfReloc_x86_amd64(SymbolRef sym,
+                                       SymbolRef wrt,
+                                       const IntNum& addr,
+                                       bool rel,
+                                       size_t valsize)
+    : ElfReloc(sym, wrt, addr, valsize)
 {
-    if (rel)
+    if (m_type != 0)
+        ;
+    else if (rel)
     {
         switch (valsize)
         {
-            case 8: *type = R_X86_64_PC8;
-            case 16: *type = R_X86_64_PC16;
-            case 32: *type = R_X86_64_PC32;
-            default: return false;
+            case 8: m_type = R_X86_64_PC8;
+            case 16: m_type = R_X86_64_PC16;
+            case 32: m_type = R_X86_64_PC32;
+            default: throw TypeError(N_("elf: invalid relocation size"));
         }
     }
     else
     {
         switch (valsize)
         {
-            case 8: *type = R_X86_64_8;
-            case 16: *type = R_X86_64_16;
-            case 32: *type = R_X86_64_32;
-            case 64: *type = R_X86_64_64;
-            default: return false;
+            case 8: m_type = R_X86_64_8;
+            case 16: m_type = R_X86_64_16;
+            case 32: m_type = R_X86_64_32;
+            case 64: m_type = R_X86_64_64;
+            default: throw TypeError(N_("elf: invalid relocation size"));
         }
     }
-    return true;
+}
+
+std::string
+ElfReloc_x86_amd64::get_type_name() const
+{
+    const char* name = "***UNKNOWN***";
+    switch (static_cast<ElfRelocationType_x86_64>(m_type))
+    {
+        case R_X86_64_NONE: name = "R_X86_64_NONE"; break;
+        case R_X86_64_64: name = "R_X86_64_64"; break;
+        case R_X86_64_PC32: name = "R_X86_64_PC32"; break;
+        case R_X86_64_GOT32: name = "R_X86_64_GOT32"; break;
+        case R_X86_64_PLT32: name = "R_X86_64_PLT32"; break;
+        case R_X86_64_COPY: name = "R_X86_64_COPY"; break;
+        case R_X86_64_GLOB_DAT: name = "R_X86_64_GLOB_DAT"; break;
+        case R_X86_64_JMP_SLOT: name = "R_X86_64_JMP_SLOT"; break;
+        case R_X86_64_RELATIVE: name = "R_X86_64_RELATIVE"; break;
+        case R_X86_64_GOTPCREL: name = "R_X86_64_GOTPCREL"; break;
+        case R_X86_64_32: name = "R_X86_64_32"; break;
+        case R_X86_64_32S: name = "R_X86_64_32S"; break;
+        case R_X86_64_16: name = "R_X86_64_16"; break;
+        case R_X86_64_PC16: name = "R_X86_64_PC16"; break;
+        case R_X86_64_8: name = "R_X86_64_8"; break;
+        case R_X86_64_PC8: name = "R_X86_64_PC8"; break;
+        case R_X86_64_DPTMOD64: name = "R_X86_64_DPTMOD64"; break;
+        case R_X86_64_DTPOFF64: name = "R_X86_64_DTPOFF64"; break;
+        case R_X86_64_TPOFF64: name = "R_X86_64_TPOFF64"; break;
+        case R_X86_64_TLSGD: name = "R_X86_64_TLSGD"; break;
+        case R_X86_64_TLSLD: name = "R_X86_64_TLSLD"; break;
+        case R_X86_64_DTPOFF32: name = "R_X86_64_DTPOFF32"; break;
+        case R_X86_64_GOTTPOFF: name = "R_X86_64_GOTTPOFF"; break;
+        case R_X86_64_TPOFF32: name = "R_X86_64_TPOFF32"; break;
+    }
+
+    return name;
 }
 
 }}} // namespace yasm::objfmt::elf

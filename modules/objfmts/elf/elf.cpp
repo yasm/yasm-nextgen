@@ -82,11 +82,9 @@ ElfConfig::ElfConfig()
 ElfReloc::ElfReloc(SymbolRef sym,
                    SymbolRef wrt,
                    const IntNum& addr,
-                   bool rel,
-                   size_t valsize,
-                   const ElfMachine& machine)
+                   size_t valsize)
     : Reloc(addr, sym)
-    , m_type(0)
+    , m_type(0)         // default to no type
     , m_addend(0)
 {
     if (wrt)
@@ -103,8 +101,6 @@ ElfReloc::ElfReloc(SymbolRef sym,
         }
         m_type = ssym->reloc;
     }
-    else if (!machine.map_reloc_type(&m_type, rel, valsize))
-        throw TypeError(N_("elf: invalid relocation size"));
 
     if (sym == 0)
         throw InternalError("sym is null");
@@ -148,12 +144,6 @@ std::auto_ptr<Expr>
 ElfReloc::get_value() const
 {
     return Expr::Ptr(new Expr(m_sym, Op::ADD, m_addend, 0));
-}
-
-std::string
-ElfReloc::get_type_name() const
-{
-    return "";  // TODO
 }
 
 void

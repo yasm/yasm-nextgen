@@ -40,6 +40,22 @@ namespace objfmt
 namespace elf
 {
 
+class ElfReloc_x86_x86 : public ElfReloc
+{
+public:
+    ElfReloc_x86_x86(const ElfConfig& config, std::istream& is, bool rela)
+        : ElfReloc(config, is, rela)
+    {}
+    ElfReloc_x86_x86(SymbolRef sym,
+                     SymbolRef wrt,
+                     const IntNum& addr,
+                     bool rel,
+                     size_t valsize);
+    ~ElfReloc_x86_x86() {}
+
+    std::string get_type_name() const;
+};
+
 class Elf_x86_x86 : public ElfMachine
 {
 public:
@@ -48,9 +64,22 @@ public:
     void configure(ElfConfig* config) const;
     void add_special_syms(Object& object, const std::string& parser) const;
 
-    bool map_reloc_type(ElfRelocationType* type,
-                        bool rel,
-                        size_t valsize) const;
+    std::auto_ptr<ElfReloc>
+    read_reloc(const ElfConfig& config, std::istream& is, bool rela) const
+    {
+        return std::auto_ptr<ElfReloc>(new ElfReloc_x86_x86(config, is, rela));
+    }
+
+    std::auto_ptr<ElfReloc>
+    make_reloc(SymbolRef sym,
+               SymbolRef wrt,
+               const IntNum& addr,
+               bool rel,
+               size_t valsize) const
+    {
+        return std::auto_ptr<ElfReloc>
+            (new ElfReloc_x86_x86(sym, wrt, addr, rel, valsize));
+    }
 };
 
 bool
@@ -105,32 +134,81 @@ Elf_x86_x86::add_special_syms(Object& object, const std::string& parser) const
         add_ssym(object, ssyms[i]);
 }
 
-bool
-Elf_x86_x86::map_reloc_type(ElfRelocationType* type,
-                            bool rel,
-                            size_t valsize) const
+ElfReloc_x86_x86::ElfReloc_x86_x86(SymbolRef sym,
+                                   SymbolRef wrt,
+                                   const IntNum& addr,
+                                   bool rel,
+                                   size_t valsize)
+    : ElfReloc(sym, wrt, addr, valsize)
 {
-    if (rel)
+    if (m_type != 0)
+        ;
+    else if (rel)
     {
         switch (valsize)
         {
-            case 8: *type = R_386_PC8;
-            case 16: *type = R_386_PC16;
-            case 32: *type = R_386_PC32;
-            default: return false;
+            case 8: m_type = R_386_PC8;
+            case 16: m_type = R_386_PC16;
+            case 32: m_type = R_386_PC32;
+            default: throw TypeError(N_("elf: invalid relocation size"));
         }
     }
     else
     {
         switch (valsize)
         {
-            case 8: *type = R_386_8;
-            case 16: *type = R_386_16;
-            case 32: *type = R_386_32;
-            default: return false;
+            case 8: m_type = R_386_8;
+            case 16: m_type = R_386_16;
+            case 32: m_type = R_386_32;
+            default: throw TypeError(N_("elf: invalid relocation size"));
         }
     }
-    return true;
+}
+
+std::string
+ElfReloc_x86_x86::get_type_name() const
+{
+    const char* name = "***UNKNOWN***";
+    switch (static_cast<ElfRelocationType_386>(m_type))
+    {
+        case R_386_NONE: name = "R_386_NONE"; break;
+        case R_386_32: name = "R_386_32"; break;
+        case R_386_PC32: name = "R_386_PC32"; break;
+        case R_386_GOT32: name = "R_386_GOT32"; break;
+        case R_386_PLT32: name = "R_386_PLT32"; break;
+        case R_386_COPY: name = "R_386_COPY"; break;
+        case R_386_GLOB_DAT: name = "R_386_GLOB_DAT"; break;
+        case R_386_JMP_SLOT: name = "R_386_JMP_SLOT"; break;
+        case R_386_RELATIVE: name = "R_386_RELATIVE"; break;
+        case R_386_GOTOFF: name = "R_386_GOTOFF"; break;
+        case R_386_GOTPC: name = "R_386_GOTPC"; break;
+        case R_386_TLS_TPOFF: name = "R_386_TLS_TPOFF"; break;
+        case R_386_TLS_IE: name = "R_386_TLS_IE"; break;
+        case R_386_TLS_GOTIE: name = "R_386_TLS_GOTIE"; break;
+        case R_386_TLS_LE: name = "R_386_TLS_LE"; break;
+        case R_386_TLS_GD: name = "R_386_TLS_GD"; break;
+        case R_386_TLS_LDM: name = "R_386_TLS_LDM"; break;
+        case R_386_16: name = "R_386_16"; break;
+        case R_386_PC16: name = "R_386_PC16"; break;
+        case R_386_8: name = "R_386_8"; break;
+        case R_386_PC8: name = "R_386_PC8"; break;
+        case R_386_TLS_GD_32: name = "R_386_TLS_GD_32"; break;
+        case R_386_TLS_GD_PUSH: name = "R_386_TLS_GD_PUSH"; break;
+        case R_386_TLS_GD_CALL: name = "R_386_TLS_GD_CALL"; break;
+        case R_386_TLS_GD_POP: name = "R_386_TLS_GD_POP"; break;
+        case R_386_TLS_LDM_32: name = "R_386_TLS_LDM_32"; break;
+        case R_386_TLS_LDM_PUSH: name = "R_386_TLS_LDM_PUSH"; break;
+        case R_386_TLS_LDM_CALL: name = "R_386_TLS_LDM_CALL"; break;
+        case R_386_TLS_LDM_POP: name = "R_386_TLS_LDM_POP"; break;
+        case R_386_TLS_LDO_32: name = "R_386_TLS_LDO_32"; break;
+        case R_386_TLS_IE_32: name = "R_386_TLS_IE_32"; break;
+        case R_386_TLS_LE_32: name = "R_386_TLS_LE_32"; break;
+        case R_386_TLS_DTPMOD32: name = "R_386_TLS_DTPMOD32"; break;
+        case R_386_TLS_DTPOFF32: name = "R_386_TLS_DTPOFF32"; break;
+        case R_386_TLS_TPOFF32: name = "R_386_TLS_TPOFF32"; break;
+    }
+
+    return name;
 }
 
 }}} // namespace yasm::objfmt::elf

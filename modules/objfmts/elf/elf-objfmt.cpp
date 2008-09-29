@@ -692,9 +692,9 @@ Output::output(SymbolRef sym,
                unsigned int valsize,
                int warn)
 {
-    std::auto_ptr<ElfReloc> reloc(new
-        ElfReloc(sym, SymbolRef(0), loc.get_offset(), false, valsize,
-                 *m_objfmt.m_machine));
+    std::auto_ptr<ElfReloc> reloc =
+        m_objfmt.m_machine->make_reloc(sym, SymbolRef(0), loc.get_offset(),
+                                       false, valsize);
 
     // allocate .rel[a] sections on a need-basis
     Section* sect = loc.bc->get_container()->as_section();
@@ -759,9 +759,11 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
 
         // allocate .rel[a] sections on a need-basis
         Section* sect = loc.bc->get_container()->as_section();
-        reloc = new ElfReloc(sym, wrt, loc.get_offset(), value.m_curpos_rel,
-                             value.m_size, *m_objfmt.m_machine);
-        sect->add_reloc(std::auto_ptr<Reloc>(reloc));
+        std::auto_ptr<ElfReloc> reloc_auto =
+            m_objfmt.m_machine->make_reloc(sym, wrt, loc.get_offset(),
+                                           value.m_curpos_rel, value.m_size);
+        reloc = reloc_auto.get();
+        sect->add_reloc(std::auto_ptr<Reloc>(reloc_auto.release()));
     }
 
     if (Expr* abs = value.get_abs())

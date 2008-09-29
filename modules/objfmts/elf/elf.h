@@ -459,21 +459,16 @@ public:
     // Constructor that reads from file.  Assumes input stream is already
     // positioned at the beginning of the relocation.
     ElfReloc(const ElfConfig& config, std::istream& is, bool rela);
-
-    ElfReloc(SymbolRef sym,
-             SymbolRef wrt,
-             const IntNum& addr,
-             bool rel,
-             size_t valsize,
-             const ElfMachine& machine);
-    ~ElfReloc();
+    ElfReloc(SymbolRef sym, SymbolRef wrt, const IntNum& addr, size_t valsize);
+    virtual ~ElfReloc();
 
     std::auto_ptr<Expr> get_value() const;
-    std::string get_type_name() const;
+    virtual std::string get_type_name() const = 0;
 
     void handle_addend(IntNum* intn, const ElfConfig& config);
     void write(Bytes& bytes, const ElfConfig& config);
 
+protected:
     ElfRelocationType   m_type;
     IntNum              m_addend;
 };

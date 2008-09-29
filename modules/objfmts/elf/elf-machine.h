@@ -113,9 +113,17 @@ public:
     virtual void add_special_syms(Object& object,
                                   const std::string& parser) const = 0;
 
-    virtual bool map_reloc_type(ElfRelocationType* type,
-                                bool rel,
-                                size_t valsize) const = 0;
+    virtual std::auto_ptr<ElfReloc>
+        read_reloc(const ElfConfig& config,
+                   std::istream& is,
+                   bool rela) const = 0;
+
+    virtual std::auto_ptr<ElfReloc>
+        make_reloc(SymbolRef sym,
+                   SymbolRef wrt,
+                   const IntNum& addr,
+                   bool rel,
+                   size_t valsize) const = 0;
 };
 
 bool ok_elf_machine(const Arch& arch, ElfClass cls);
