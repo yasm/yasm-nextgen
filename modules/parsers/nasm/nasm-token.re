@@ -145,6 +145,8 @@ NasmParser::lex(YYSTYPE* lvalp)
 
 scan:
     SCANINIT();
+    if (*cursor == '\0')
+        goto endofinput;
 
     /*!re2c
         /* standard decimal integer */
@@ -453,11 +455,7 @@ scan:
 
         ws+                     { goto scan; }
 
-        [\000]
-        {
-            m_state = INITIAL;
-            RETURN(TOK[0]);
-        }
+        [\000]                  { goto endofinput; }
 
         any
         {
@@ -471,6 +469,8 @@ scan:
     // %line linenum+lineinc filename
 linechg:
     SCANINIT();
+    if (*cursor == '\0')
+        goto endofinput;
 
     /*!re2c
         digit+
@@ -485,8 +485,7 @@ linechg:
 
         [\000]
         {
-            m_state = INITIAL;
-            RETURN(TOK[0]);
+            goto endofinput;
         }
 
         "+"
@@ -515,15 +514,13 @@ linechg:
 
 linechg2:
     SCANINIT();
+    if (*cursor == '\0')
+        goto endofinput;
 
     /*!re2c
-        [\000]
-        {
-            m_state = INITIAL;
-            RETURN(TOK[0]);
-        }
+        [\000]  { goto endofinput; }
 
-        "\r" { }
+        "\r"    { goto linechg2; }
 
         (any \ [\000])+
         {
@@ -536,13 +533,11 @@ linechg2:
     // directive: [name value]
 directive:
     SCANINIT();
+    if (*cursor == '\0')
+        goto endofinput;
 
     /*!re2c
-        [\]\000]
-        {
-            m_state = INITIAL;
-            RETURN(TOK[0]);
-        }
+        [\]\000]    { goto endofinput; }
 
         [a-zA-Z_][a-zA-Z_0-9]*
         {
@@ -567,6 +562,8 @@ directive:
     // section directive (the section name portion thereof)
 section_directive:
     SCANINIT();
+    if (*cursor == '\0')
+        goto endofinput;
 
     /*!re2c
         [a-zA-Z0-9_$#@~.?-]+
@@ -589,17 +586,7 @@ section_directive:
             goto section_directive;
         }
 
-        "]"
-        {
-            m_state = INITIAL;
-            RETURN(TOK[0]);
-        }
-
-        [\000]
-        {
-            m_state = INITIAL;
-            RETURN(TOK[0]);
-        }
+        [\]\000]    { goto endofinput; }
 
         any
         {
@@ -613,6 +600,8 @@ section_directive:
     // inner part of directive
 directive2:
     SCANINIT();
+    if (*cursor == '\0')
+        goto endofinput;
 
     /*!re2c
         /* standard decimal integer */
@@ -679,11 +668,7 @@ directive2:
         [-+|^*&/%~$():=,\[]     { RETURN(TOK[0]); }
 
         /* handle ] for directives */
-        "]"
-        {
-            m_state = INITIAL;
-            RETURN(TOK[0]);
-        }
+        "]"                     { goto endofinput; }
 
         /* forced identifier; within directive, don't strip '$', this is
          * handled later.
@@ -715,11 +700,7 @@ directive2:
 
         ws+                     { goto directive2; }
 
-        [\000]
-        {
-            m_state = INITIAL;
-            RETURN(TOK[0]);
-        }
+        [\000]                  { goto endofinput; }
 
         any
         {
@@ -736,6 +717,8 @@ stringconst:
 
 stringconst_scan:
     SCANINIT();
+    if (*cursor == '\0')
+        throw SyntaxError(N_("unterminated string"));
 
     /*!re2c
         [\000]
@@ -751,6 +734,10 @@ stringconst_scan:
             goto stringconst_scan;
         }
     */
+
+endofinput:
+    m_state = INITIAL;
+    RETURN(TOK[0]);
 }
 
 }}} // namespace yasm::parser::nasm
