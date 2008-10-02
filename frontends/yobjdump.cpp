@@ -307,7 +307,7 @@ dump_relocs(const yasm::Object& object)
         if (sect->get_relocs().empty())
             continue;
 
-        std::cout << "RELOCATION RECORDS FOR [" << sect->get_name() << "]\n";
+        std::cout << "RELOCATION RECORDS FOR [" << sect->get_name() << "]:\n";
         std::cout << std::left << std::setfill(' ');
         std::cout << std::setw(bits/4) << "OFFSET";
         std::cout << " TYPE              VALUE\n";
