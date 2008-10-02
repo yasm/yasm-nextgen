@@ -150,7 +150,10 @@ ElfReloc::~ElfReloc()
 std::auto_ptr<Expr>
 ElfReloc::get_value() const
 {
-    return Expr::Ptr(new Expr(m_sym, Op::ADD, m_addend, 0));
+    if (m_addend.is_zero())
+        return Expr::Ptr(new Expr(m_sym, 0));
+    else
+        return Expr::Ptr(new Expr(m_sym, Op::ADD, m_addend, 0));
 }
 
 void
