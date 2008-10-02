@@ -332,6 +332,9 @@ ElfObject::read(std::istream& is)
         }
     }
 
+    // Symbol table by index (needed for relocation lookups by index)
+    std::vector<SymbolRef> symtab;
+
     // read symtab string table and symbol table (if present)
     if (symtab_sect != 0)
     {
@@ -357,7 +360,7 @@ ElfObject::read(std::istream& is)
         if (symsize == 0)
             throw Error(N_("symbol table entity size is zero"));
         is.seekg(symtab_sect->get_file_offset());
-        if (!m_config.symtab_read(is, *m_object, symtab_size, symsize,
+        if (!m_config.symtab_read(is, symtab, *m_object, symtab_size, symsize,
                                   strtab, &sections[0]))
             throw Error(N_("could not read symbol table"));
     }
@@ -365,6 +368,37 @@ ElfObject::read(std::istream& is)
     // go through misc sections to load relocations
     for (unsigned int i=0; i<m_config.secthead_count; ++i)
     {
+        ElfSection* reloc_sect = elfsects[i];
+        ElfSectionType secttype = reloc_sect->get_type();
+        if (secttype != SHT_REL && secttype != SHT_RELA)
+            continue;
+
+        // get symbol table section index from link field (if valid)
+        ElfSection* rel_symtab_sect = symtab_sect;
+        ElfSectionIndex link = reloc_sect->get_link();
+        if (link < m_config.secthead_count &&
+            elfsects[link]->get_type() == SHT_SYMTAB)
+        {
+            if (rel_symtab_sect != elfsects[link])
+            {
+                throw Error(N_("only one symbol table supported"));
+            }
+        }
+
+        // section relocs apply to is indicated by info field
+        ElfSectionIndex info = reloc_sect->get_info();
+        if (link >= m_config.secthead_count || sections[info] == 0)
+            continue;
+
+        // load relocations
+        is.seekg(reloc_sect->get_file_offset());
+        unsigned long relocs_size = reloc_sect->get_size().get_uint();
+        if (!elfsects[info]->read_relocs(is, *sections[info], relocs_size,
+                                         *m_machine, symtab,
+                                         secttype == SHT_RELA))
+            throw Error(String::compose(
+                N_("could not read section `%1' relocations"),
+                sections[info]->get_name()));
     }
 }
 

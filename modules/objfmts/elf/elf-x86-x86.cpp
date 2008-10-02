@@ -43,8 +43,11 @@ namespace elf
 class ElfReloc_x86_x86 : public ElfReloc
 {
 public:
-    ElfReloc_x86_x86(const ElfConfig& config, std::istream& is, bool rela)
-        : ElfReloc(config, is, rela)
+    ElfReloc_x86_x86(const ElfConfig& config,
+                     const ElfSymtab& symtab,
+                     std::istream& is,
+                     bool rela)
+        : ElfReloc(config, symtab, is, rela)
     {}
     ElfReloc_x86_x86(SymbolRef sym,
                      SymbolRef wrt,
@@ -65,9 +68,13 @@ public:
     void add_special_syms(Object& object, const std::string& parser) const;
 
     std::auto_ptr<ElfReloc>
-    read_reloc(const ElfConfig& config, std::istream& is, bool rela) const
+    read_reloc(const ElfConfig& config,
+               const ElfSymtab& symtab,
+               std::istream& is,
+               bool rela) const
     {
-        return std::auto_ptr<ElfReloc>(new ElfReloc_x86_x86(config, is, rela));
+        return std::auto_ptr<ElfReloc>
+            (new ElfReloc_x86_x86(config, symtab, is, rela));
     }
 
     std::auto_ptr<ElfReloc>

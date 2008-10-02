@@ -376,6 +376,8 @@ enum ElfRelocationType_x86_64
     R_X86_64_TPOFF32 = 23       // word32, offset in initial TLS block
 };
 
+typedef std::vector<SymbolRef> ElfSymtab;
+
 class ElfStrtab
 {
 public:
@@ -433,6 +435,7 @@ struct ElfConfig
                                Errwarns& errwarns,
                                Bytes& scratch) const;
     bool symtab_read(std::istream&      is,
+                     ElfSymtab&         symtab,
                      Object&            object,
                      unsigned long      size,
                      ElfSize            symsize,
@@ -458,7 +461,10 @@ class ElfReloc : public Reloc
 public:
     // Constructor that reads from file.  Assumes input stream is already
     // positioned at the beginning of the relocation.
-    ElfReloc(const ElfConfig& config, std::istream& is, bool rela);
+    ElfReloc(const ElfConfig& config,
+             const ElfSymtab& symtab,
+             std::istream& is,
+             bool rela);
     ElfReloc(SymbolRef sym, SymbolRef wrt, const IntNum& addr, size_t valsize);
     virtual ~ElfReloc();
 
@@ -606,6 +612,13 @@ public:
                                Errwarns& errwarns,
                                Bytes& scratch,
                                const ElfMachine& machine);
+    bool read_relocs(std::istream& is,
+                     Section& sect,
+                     unsigned long size,
+                     const ElfMachine& machine,
+                     const ElfSymtab& symtab,
+                     bool rela) const;
+
     unsigned long set_file_offset(unsigned long pos);
     unsigned long get_file_offset() const { return m_offset; }
 

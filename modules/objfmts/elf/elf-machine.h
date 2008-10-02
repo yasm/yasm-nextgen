@@ -115,6 +115,7 @@ public:
 
     virtual std::auto_ptr<ElfReloc>
         read_reloc(const ElfConfig& config,
+                   const ElfSymtab& symtab,
                    std::istream& is,
                    bool rela) const = 0;
 

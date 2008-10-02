@@ -106,7 +106,10 @@ ElfReloc::ElfReloc(SymbolRef sym,
         throw InternalError("sym is null");
 }
 
-ElfReloc::ElfReloc(const ElfConfig& config, std::istream& is, bool rela)
+ElfReloc::ElfReloc(const ElfConfig& config,
+                   const ElfSymtab& symtab,
+                   std::istream& is,
+                   bool rela)
     : Reloc(0, SymbolRef(0))
 {
     Bytes bytes;
@@ -114,10 +117,12 @@ ElfReloc::ElfReloc(const ElfConfig& config, std::istream& is, bool rela)
 
     if (config.cls == ELFCLASS32)
     {
+        bytes.write(is, rela ? RELOC32A_SIZE : RELOC32_SIZE);
+
         m_addr = read_u32(bytes);
 
         unsigned long info = read_u32(bytes);
-        ElfSymbolIndex symindex = ELF32_R_SYM(info);
+        m_sym = symtab.at(ELF32_R_SYM(info));
         m_type = ELF32_R_TYPE(info);
 
         if (rela)
@@ -125,10 +130,12 @@ ElfReloc::ElfReloc(const ElfConfig& config, std::istream& is, bool rela)
     }
     else if (config.cls == ELFCLASS64)
     {
+        bytes.write(is, rela ? RELOC64A_SIZE : RELOC64_SIZE);
+
         m_addr = read_u64(bytes);
 
         IntNum info = read_u64(bytes);
-        ElfSymbolIndex symindex = ELF64_R_SYM(info);
+        m_sym = symtab.at(ELF64_R_SYM(info));
         m_type = ELF64_R_TYPE(info);
 
         if (rela)
@@ -511,6 +518,7 @@ ElfConfig::symtab_write(std::ostream& os,
 
 bool
 ElfConfig::symtab_read(std::istream&    is,
+                       ElfSymtab&       symtab,
                        Object&          object,
                        unsigned long    size,
                        ElfSize          symsize,
@@ -518,6 +526,7 @@ ElfConfig::symtab_read(std::istream&    is,
                        Section*         sections[]) const
 {
     is.seekg(symsize, std::ios_base::cur);  // skip first symbol (undef)
+    symtab.push_back(SymbolRef(0));
 
     Bytes bytes;
     ElfSymbolIndex index = 1;
@@ -532,6 +541,7 @@ ElfConfig::symtab_read(std::istream&    is,
             new ElfSymbol(*this, bytes, index, sections));
 
         SymbolRef sym = elfsym->create_symbol(object, strtab);
+        symtab.push_back(sym);
 
         if (sym)
         {
@@ -845,6 +855,26 @@ ElfSection::write_relocs(std::ostream& os,
         size += scratch.size();
     }
     return size;
+}
+
+bool
+ElfSection::read_relocs(std::istream&       is,
+                        Section&            sect,
+                        unsigned long       size,
+                        const ElfMachine&   machine,
+                        const ElfSymtab&    symtab,
+                        bool                rela) const
+{
+    for (unsigned long pos=is.tellg();
+         static_cast<unsigned long>(is.tellg()) < (pos+size);)
+    {
+        sect.add_reloc(std::auto_ptr<Reloc>(
+            machine.read_reloc(m_config, symtab, is, rela).release()));
+        if (!is)
+            throw Error(N_("could not read relocation entry"));
+    }
+
+    return true;
 }
 
 unsigned long
