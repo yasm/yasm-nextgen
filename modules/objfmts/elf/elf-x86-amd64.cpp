@@ -144,7 +144,10 @@ ElfReloc_x86_amd64::ElfReloc_x86_amd64(SymbolRef sym,
                                        size_t valsize)
     : ElfReloc(sym, wrt, addr, valsize)
 {
-    if (m_type != 0)
+    // Map PC-relative GOT to appropriate relocation
+    if (rel && m_type == R_X86_64_GOT32)
+        m_type = R_X86_64_GOTPCREL;
+    else if (m_type != 0)
         ;
     else if (rel)
     {
