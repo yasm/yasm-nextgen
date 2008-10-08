@@ -165,7 +165,12 @@ enum ElfSectionType
     SHT_REL = 9,                // relocations entries w/o explicit addends
     SHT_SHLIB = 10,             // reserved; unspecified semantics
     SHT_DYNSYM = 11,            // like symtab, but more for dynamic linking
-
+    SHT_INIT_ARRAY = 14,        // Array of constructors
+    SHT_FINI_ARRAY = 15,        // Array of destructors
+    SHT_PREINIT_ARRAY = 16,     // Array of pre-constructors
+    SHT_GROUP = 17,             // Section group
+    SHT_SYMTAB_SHNDX = 18,      // Extended section indices
+    SHT_NUM = 19,               // Number of defined types
     SHT_LOOS = 0x60000000,      // reserved for environment specific use
     SHT_HIOS = 0x6fffffff,
     SHT_LOPROC = 0x70000000,    // reserved for processor specific semantics
