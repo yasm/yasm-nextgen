@@ -16,12 +16,8 @@ using namespace yasm;
 int
 main()
 {
-#ifdef BUILD_STATIC
-    yasm_init_plugin();
-#else
-    if (!load_plugin("standard"))
+    if (!load_standard_plugins())
         return EXIT_FAILURE;
-#endif
     std::auto_ptr<Preprocessor> preproc = load_module<Preprocessor>("raw");
     std::string instr("test text");
     std::istringstream iss(instr);

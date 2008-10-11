@@ -31,17 +31,6 @@ macro (YASM_HANDLE_RPATH_FOR_LIBRARY _target_NAME)
    endif (NOT CMAKE_SKIP_RPATH)
 endmacro (YASM_HANDLE_RPATH_FOR_LIBRARY)
 
-# This macro sets the RPATH related options for executables and creates wrapper
-# shell scripts for the executables.
-# For every executable a wrapper script is created, which sets the appropriate
-# environment variable for the platform (LD_LIBRARY_PATH on most UNIX systems,
-# DYLD_LIBRARY_PATH on OS X and PATH in Windows) so  that it points to the
-# built but not yet installed versions of the libraries. So if RPATH is
-# disabled, the executables can be run via these scripts from the build tree
-# and will find the correct libraries.
-# If RPATH is not disabled, these scripts are also used but only for
-# consistency, because they don't really influence anything then, because the
-# compiled-in RPATH overrides the LD_LIBRARY_PATH env. variable.
 # Executables with the RUN_UNINSTALLED option will be built with the RPATH
 # pointing to the build dir, so that they can be run safely without being
 # installed, e.g. as code generators for other stuff during the build. These
@@ -50,7 +39,6 @@ endmacro (YASM_HANDLE_RPATH_FOR_LIBRARY)
 # installed.
 macro (YASM_HANDLE_RPATH_FOR_EXECUTABLE _target_NAME _type)
    if (UNIX)
-
       # set the RPATH related properties
       if (NOT CMAKE_SKIP_RPATH)
          if (${_type} STREQUAL "NORMAL")
@@ -65,62 +53,6 @@ macro (YASM_HANDLE_RPATH_FOR_EXECUTABLE _target_NAME _type)
                                   BUILD_WITH_INSTALL_RPATH FALSE)
          endif (${_type} STREQUAL "RUN_UNINSTALLED")
       endif (NOT CMAKE_SKIP_RPATH)
-
-      if (APPLE)
-         set(_library_path_variable "DYLD_LIBRARY_PATH")
-      else (APPLE)
-         set(_library_path_variable "LD_LIBRARY_PATH")
-      endif (APPLE)
-
-      if (APPLE)
-         # DYLD_LIBRARY_PATH does not work like LD_LIBRARY_PATH
-         # OSX already has the RPATH in libraries and executables, putting
-         # runtime directories in DYLD_LIBRARY_PATH actually breaks things
-         set(_ld_library_path "${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/")
-      else (APPLE)
-         set(_ld_library_path "${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/:${LIB_INSTALL_DIR}")
-      endif (APPLE)
-      get_target_property(_executable ${_target_NAME} LOCATION )
-
-      # use add_custom_target() to have the sh-wrapper generated during build
-      # time instead of cmake time
-      add_custom_command(TARGET ${_target_NAME} POST_BUILD
-         COMMAND ${CMAKE_COMMAND}
-         -D_filename=${_executable}.shell
-         -D_library_path_variable=${_library_path_variable}
-         -D_ld_library_path="${_ld_library_path}"
-         -D_executable=${_executable}
-         -P ${YASM_MODULE_DIR}/yasm_exec_via_sh.cmake
-         )
-
-      macro_additional_clean_files(${_executable}.shell)
-
-      # under UNIX, set the property WRAPPER_SCRIPT to the name of the
-      # generated shell script so it can be queried and used later on easily
-      set_target_properties(${_target_NAME} PROPERTIES
-                            WRAPPER_SCRIPT ${_executable}.shell)
-
-   else (UNIX)
-      # under windows, set the property WRAPPER_SCRIPT just to the name of the
-      # executable maybe later this will change to a generated batch file (for
-      # setting the PATH so that the libs are found)
-      get_target_property(_executable ${_target_NAME} LOCATION )
-      set_target_properties(${_target_NAME} PROPERTIES
-                            WRAPPER_SCRIPT ${_executable})
-
-      set(_ld_library_path "${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}\;${LIB_INSTALL_DIR}")
-      get_target_property(_executable ${_target_NAME} LOCATION )
-
-      # use add_custom_target() to have the batch-file-wrapper generated during
-      # build time instead of cmake time
-      add_custom_command(TARGET ${_target_NAME} POST_BUILD
-         COMMAND ${CMAKE_COMMAND}
-         -D_filename="${_executable}.bat"
-         -D_ld_library_path="${_ld_library_path}"
-         -D_executable="${_executable}"
-         -P ${YASM_MODULE_DIR}/yasm_exec_via_sh.cmake
-         )
-
    endif (UNIX)
 endmacro (YASM_HANDLE_RPATH_FOR_EXECUTABLE)
 
@@ -228,11 +160,6 @@ macro (YASM_ADD_UNIT_TEST _test_NAME)
     endif( ${ARGV1} STREQUAL "TESTNAME" )
     yasm_add_executable( ${_test_NAME} TEST ${_srcList} )
     set(_executable ${_test_NAME})
-    # Use .shell wrapper where available, to use uninstalled libs.
-    if (UNIX AND NOT BUILD_STATIC)
-        get_target_property(_executable ${_test_NAME} LOCATION )
-        set(_executable ${_executable}.shell)
-    endif (UNIX AND NOT BUILD_STATIC)
     add_test( ${_targetName} ${_executable} )
 endmacro (YASM_ADD_UNIT_TEST)
 
@@ -257,13 +184,10 @@ macro (YASM_ADD_EXECUTABLE _target_NAME)
    endif (_test AND NOT BUILD_TESTING)
 
    add_executable(${_target_NAME} ${_add_executable_param} ${_SRCS})
-   if (BUILD_STATIC)
-       TARGET_LINK_LIBRARIES(${_target_NAME} standard libyasmx)
-   else (BUILD_STATIC)
+   if (NOT BUILD_STATIC)
        yasm_handle_rpath_for_executable(${_target_NAME} ${_type})
-       TARGET_LINK_LIBRARIES(${_target_NAME} libyasmx)
-       ADD_DEPENDENCIES(${_target_NAME} standard)
-   endif (BUILD_STATIC)
+   endif (NOT BUILD_STATIC)
+   TARGET_LINK_LIBRARIES(${_target_NAME} yasmstdx libyasmx)
 
 endmacro (YASM_ADD_EXECUTABLE)
 

@@ -14,7 +14,7 @@ MESSAGE(STATUS "Standard modules: ${YASM_MODULES}")
 #
 
 SET(INIT_PLUGIN_CPP ${CMAKE_CURRENT_BINARY_DIR}/init_plugin.cpp)
-SET(INIT_PLUGIN_CPP_REV 1)
+SET(INIT_PLUGIN_CPP_REV 2)
 
 # Don't regen if no changes; default to regen
 SET(regen_init_plugin_cpp TRUE)
@@ -59,33 +59,38 @@ IF(regen_init_plugin_cpp)
             FILE(APPEND ${INIT_PLUGIN_CPP} "}")
         ENDFOREACH(_pathpart)
     ENDFOREACH(module)
-    FILE(APPEND ${INIT_PLUGIN_CPP} "\n}\n") 
-    FILE(APPEND ${INIT_PLUGIN_CPP} "\nextern \"C\" {\n")
-    FILE(APPEND ${INIT_PLUGIN_CPP} "YASM_EXPORT\n")
-    FILE(APPEND ${INIT_PLUGIN_CPP} "void\n")
-    FILE(APPEND ${INIT_PLUGIN_CPP} "yasm_init_plugin(void)\n")
+    FILE(APPEND ${INIT_PLUGIN_CPP} "\n\nYASM_EXPORT\n")
+    FILE(APPEND ${INIT_PLUGIN_CPP} "bool\n")
+    FILE(APPEND ${INIT_PLUGIN_CPP} "load_standard_plugins()\n")
     FILE(APPEND ${INIT_PLUGIN_CPP} "{\n")
     FOREACH(module ${YASM_MODULES})
-        FILE(APPEND ${INIT_PLUGIN_CPP} "    yasm::")
+        FILE(APPEND ${INIT_PLUGIN_CPP} "    ")
         STRING(REGEX MATCHALL "[a-zA-Z][a-zA-Z0-9]+" _modulepath ${module})
         FOREACH(_pathpart ${_modulepath})
             FILE(APPEND ${INIT_PLUGIN_CPP} "${_pathpart}::")
         ENDFOREACH(_pathpart)
         FILE(APPEND ${INIT_PLUGIN_CPP} "do_register();\n")
     ENDFOREACH(module)
-    FILE(APPEND ${INIT_PLUGIN_CPP} "}\n}\n") 
+    FILE(APPEND ${INIT_PLUGIN_CPP} "    return true;\n}\n}\n") 
 ELSE(regen_init_plugin_cpp)
     MESSAGE(STATUS "Not regenerating standard plugin init file (unchanged)")
 ENDIF(regen_init_plugin_cpp)
 
 SET_SOURCE_FILES_PROPERTIES(init_plugin.cpp GENERATED)
 
-YASM_ADD_PLUGIN(standard
+YASM_ADD_LIBRARY(yasmstdx SHARED
     init_plugin.cpp
     ${YASM_MODULES_SRC}
     )
-TARGET_LINK_LIBRARIES(standard libyasmx)
+TARGET_LINK_LIBRARIES(yasmstdx libyasmx)
+IF(NOT BUILD_STATIC)
+    TARGET_LINK_LIBRARIES(yasmstdx ${LIBDL})
+    SET_TARGET_PROPERTIES(yasmstdx PROPERTIES
+	VERSION "0.0.0"
+	SOVERSION 0
+	)
+ENDIF(NOT BUILD_STATIC)
 
 IF(NOT BUILD_STATIC)
-    INSTALL(TARGETS standard LIBRARY DESTINATION ${PLUGIN_INSTALL_DIR})
+    INSTALL(TARGETS yasmstdx ${INSTALL_TARGETS_DEFAULT_ARGS})
 ENDIF(NOT BUILD_STATIC)

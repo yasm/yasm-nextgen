@@ -810,15 +810,11 @@ main(int argc, const char* argv[])
     yasm::gettext_hook = handle_yasm_gettext;
 
     // Load standard modules
-#ifdef BUILD_STATIC
-    yasm_init_plugin();
-#else
-    if (!yasm::load_plugin("standard"))
+    if (!yasm::load_standard_plugins())
     {
         print_error(_("FATAL: could not load standard modules"));
         return EXIT_FAILURE;
     }
-#endif
 
     if (!parse_cmdline(argc, argv, options, NELEMS(options), print_error))
         return EXIT_FAILURE;

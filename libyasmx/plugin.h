@@ -34,10 +34,6 @@
 #include "export.h"
 
 
-#ifdef BUILD_STATIC
-extern "C" void yasm_init_plugin();
-#endif
-
 namespace yasm
 {
 
@@ -47,6 +43,11 @@ YASM_LIB_EXPORT
 bool load_plugin(const std::string& name);
 YASM_LIB_EXPORT
 void unload_plugins(void);
+
+/// Load standard plugins.
+/// @return False on failure
+YASM_LIB_EXPORT
+bool load_standard_plugins();
 
 } // namespace yasm
 
