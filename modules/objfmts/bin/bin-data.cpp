@@ -142,9 +142,6 @@ expr_xform(Expr* e)
         if (calc_dist(first, loc, &dist))
         {
             const Section* sect = container->as_section();
-            const BinSectionData* bsd = get_bin_sect(*sect);
-            assert(bsd);
-            assert(bsd->has_ivstart);
             dist += sect->get_vma();
             //i->destroy(); // don't need to, as it's a sym or loc
             *i = dist;

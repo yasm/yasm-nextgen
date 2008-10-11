@@ -204,9 +204,6 @@ Output::output_section(Section& sect, const IntNum& origin, Errwarns& errwarns)
 {
     BytecodeOutput* outputter;
 
-    BinSectionData* bsd = get_bin_sect(sect);
-    assert(bsd);
-
     if (sect.is_bss())
     {
         outputter = &m_no_output;
