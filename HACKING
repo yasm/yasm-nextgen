@@ -8,9 +8,13 @@ change drastically with little notice.
 Prerequisites (what you need):
 
   * A standards-conforming C++ compiler (e.g. GCC 3.4+)
-  * Boost 1.33.1+ (http://www.boost.org/)
   * CMake 2.4+ (http://www.cmake.org/)
   * re2c (http://re2c.sourceforge.net/)
+
+If your C++ installation does not have TR1 functional headers, you will also
+need Boost 1.33.1+ (http://www.boost.org/).  The configuration process will
+autodetect this and report an error if it requires Boost and you do not have
+it.
 
 Also recommended (for development):
 
