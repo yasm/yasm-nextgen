@@ -22,9 +22,16 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include <cxxtest/TestSuite.h>
+
+#include "floatnum.h"
+
+#ifndef NELEMS
+#define NELEMS(array)   (sizeof(array) / sizeof(array[0]))
+#endif
 
 // constants describing parameters of internal floating point format.
-//  (these should match those in src/floatnum.c !)
+//  (these should match those in libyasmx/floatnum.cpp !)
 static const unsigned int MANT_BITS = 80;
 static const unsigned int MANT_BYTES = 10;
 
@@ -49,7 +56,7 @@ struct Init_Entry {
     unsigned char result80[10];
 };
 
-/* Values used for normalized tests */
+// Values used for normalized tests
 static const Init_Entry normalized_vals[] = {
     {   "3.141592653589793",
         {0xc6,0x0d,0xe9,0xbd,0x68,0x21,0xa2,0xda,0x0f,0xc9},0x8000,0,0,
@@ -143,4 +150,131 @@ static const Init_Entry normalized_edgecase_vals[] = {
     },
     {
     },*/
+};
+
+namespace yasm
+{
+
+// Friend class of FloatNum to get access to private constructor/members
+class FloatNumTest
+{
+public:
+    static FloatNum make_floatnum(const Init_Entry& val)
+    {
+        FloatNum flt = FloatNum(val.mantissa, val.exponent);
+        flt.m_sign = val.sign;
+        flt.m_flags = val.flags;
+        return flt;
+    }
+
+    static void extract_floatnum_data(BitVector::wordptr* mantissa,
+                                      unsigned short* exponent,
+                                      unsigned char* sign,
+                                      unsigned char* flags,
+                                      const FloatNum& flt)
+    {
+        *mantissa = flt.m_mantissa;
+        *exponent = flt.m_exponent;
+        *sign = flt.m_sign;
+        *flags = flt.m_flags;
+    }
+};
+
+} // namespace yasm
+
+
+class FloatNumTestSuite : public CxxTest::TestSuite
+{
+public:
+
+    void check_get_sized(const yasm::FloatNum& flt,
+                         const Init_Entry& val,
+                         int destsize,
+                         int valsize)
+    {
+        int correct_retval;
+        const unsigned char* correct_result;
+        switch (valsize)
+        {
+            case 32:
+                correct_retval = val.ret32;
+                correct_result = val.result32;
+                break;
+            case 64:
+                correct_retval = val.ret64;
+                correct_result = val.result64;
+                break;
+            case 80:
+                correct_retval = val.ret80;
+                correct_result = val.result80;
+                break;
+            default:
+                return;
+        }
+        unsigned char result[10];
+        int retval = flt.get_sized(result, destsize, valsize, 0, 0, 0);
+        TS_ASSERT_EQUALS(retval, correct_retval);
+        TS_ASSERT_SAME_DATA(result, correct_result, destsize);
+    }
+
+    void check_internal(const yasm::FloatNum& flt, const Init_Entry& val)
+    {
+        BitVector::wordptr mantissa;
+        unsigned short exponent;
+        unsigned char sign, flags;
+
+        yasm::FloatNumTest::extract_floatnum_data(&mantissa, &exponent, &sign,
+                                                  &flags, flt);
+        unsigned int len;
+        unsigned char* bmantissa = BitVector::Block_Read(mantissa, &len);
+        // don't compare first byte
+        TS_ASSERT_SAME_DATA(bmantissa+1, val.mantissa+1, MANT_BYTES-1);
+        BitVector::Dispose(bmantissa);
+
+        TS_ASSERT_EQUALS(exponent, val.exponent);
+        TS_ASSERT_EQUALS(sign, val.sign);
+        TS_ASSERT_EQUALS(flags, val.flags);
+    }
+
+    void testNewNormalized()
+    {
+        for (size_t i=0; i<NELEMS(normalized_vals); i++)
+        {
+            check_internal(yasm::FloatNum(normalized_vals[i].ascii),
+                           normalized_vals[i]);
+        }
+    }
+
+    void testNewNormalizedEdgecase()
+    {
+        for (size_t i=0; i<NELEMS(normalized_edgecase_vals); i++)
+        {
+            check_internal(yasm::FloatNum(normalized_edgecase_vals[i].ascii),
+                           normalized_edgecase_vals[i]);
+        }
+    }
+
+    void testGetNormalized()
+    {
+        for (size_t i=0; i<NELEMS(normalized_vals); i++)
+        {
+            FloatNum flt =
+                yasm::FloatNumTest::make_floatnum(normalized_vals[i]);
+            check_get_sized(flt, normalized_vals[i], 4, 32);
+            check_get_sized(flt, normalized_vals[i], 8, 64);
+            check_get_sized(flt, normalized_vals[i], 10, 80);
+        }
+    }
+
+    void testGetNormalizedEdgecase()
+    {
+        for (size_t i=0; i<NELEMS(normalized_edgecase_vals); i++)
+        {
+            FloatNum flt =
+                yasm::FloatNumTest::make_floatnum(normalized_edgecase_vals[i]);
+            check_get_sized(flt, normalized_edgecase_vals[i], 4, 32);
+            check_get_sized(flt, normalized_edgecase_vals[i], 8, 64);
+            check_get_sized(flt, normalized_edgecase_vals[i], 10, 80);
+        }
+    }
 };

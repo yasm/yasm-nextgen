@@ -23,10 +23,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MAIN
-#define BOOST_TEST_MODULE align_test
-#include <boost/test/unit_test.hpp>
+#include <cxxtest/TestSuite.h>
 
 #include "bc_container.h"
 #include "bc_container_util.h"
@@ -34,21 +31,25 @@
 #include "expr.h"
 #include "intnum.h"
 
-BOOST_AUTO_TEST_CASE(AppendAlign)
+class AlignTestSuite : public CxxTest::TestSuite
 {
-    yasm::BytecodeContainer container;
-    yasm::append_align(container,
-                       yasm::Expr::Ptr(new yasm::Expr(yasm::IntNum(4))),
-                       yasm::Expr::Ptr(0),                  // fill
-                       yasm::Expr::Ptr(0),                  // maxskip
-                       0,                                   // code fill
-                       5);                                  // line
-    yasm::Bytecode& align = container.bcs_first();
+public:
+    void testAppendAlign()
+    {
+        yasm::BytecodeContainer container;
+        yasm::append_align(container,
+                           yasm::Expr::Ptr(new yasm::Expr(yasm::IntNum(4))),
+                           yasm::Expr::Ptr(0),                  // fill
+                           yasm::Expr::Ptr(0),                  // maxskip
+                           0,                                   // code fill
+                           5);                                  // line
+        yasm::Bytecode& align = container.bcs_first();
 
-    // align always results in contents
-    BOOST_REQUIRE(align.has_contents());
-    BOOST_CHECK_EQUAL(align.get_special(),
-                      yasm::Bytecode::Contents::SPECIAL_OFFSET);
-    BOOST_CHECK_EQUAL(align.get_line(), 5UL);
-    BOOST_REQUIRE(align.get_fixed().empty());
-}
+        // align always results in contents
+        TS_ASSERT(align.has_contents());
+        TS_ASSERT_EQUALS(align.get_special(),
+                         yasm::Bytecode::Contents::SPECIAL_OFFSET);
+        TS_ASSERT_EQUALS(align.get_line(), 5UL);
+        TS_ASSERT(align.get_fixed().empty());
+    }
+};

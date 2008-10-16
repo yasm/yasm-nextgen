@@ -1,27 +1,15 @@
 INCLUDE_DIRECTORIES(${yasm_SOURCE_DIR}/libyasmx)
 
-MACRO(LIBYASM_UNIT_TESTS)
-   FOREACH(_testname ${ARGN})
-       yasm_add_unit_test(${_testname} ${_testname}.cpp)
-       IF(MSVC)
-           target_link_libraries(${_testname} libyasmx)
-       ELSE(MSVC)
-           target_link_libraries(${_testname} libyasmx
-                                 boost_unit_test_framework)
-       ENDIF(MSVC)
-   ENDFOREACH(_testname)
-ENDMACRO(LIBYASM_UNIT_TESTS)
-
-LIBYASM_UNIT_TESTS(
-    align_test
-    bytes_util_test
-    compose_test
-    hamt_test
-    linemap_test
-    file_combpath_test
-    floatnum_new_test
-    floatnum_get_test
-    intnum_test
-    marg_ostream_test
-    unescape_test
+ADD_CXXTEST(libyasmx_tests
+    align_test.h
+    bytes_util_test.h
+    compose_test.h
+    hamt_test.h
+    linemap_test.h
+    file_combpath_test.h
+    floatnum_test.h
+    intnum_test.h
+    marg_ostream_test.h
+    unescape_test.h
     )
+target_link_libraries(libyasmx_tests libyasmx)

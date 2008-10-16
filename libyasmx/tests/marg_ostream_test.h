@@ -22,10 +22,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MAIN
-#define BOOST_TEST_MODULE marg_ostream_test
-#include <boost/test/unit_test.hpp>
+#include <cxxtest/TestSuite.h>
 
 #include "marg_ostream.h"
 
@@ -34,44 +31,47 @@
 
 using namespace yasm;
 
-
-static void
-t2(yasm::marg_ostream& os)
+class MargOStreamTestSuite : public CxxTest::TestSuite
 {
-    ++os;
-    os << "function indented\n";
-    --os;
-}
+public:
+    void
+    t2(yasm::marg_ostream& os)
+    {
+        ++os;
+        os << "function indented\n";
+        --os;
+    }
 
-static void
-t1(yasm::marg_ostream& os)
-{
-    os << "not indented\n";
-    ++os;
-    os << "indented\n";
-    --os;
-    os << "unindented\n";
-    t2(os);
-}
+    void
+    t1(yasm::marg_ostream& os)
+    {
+        os << "not indented\n";
+        ++os;
+        os << "indented\n";
+        --os;
+        os << "unindented\n";
+        t2(os);
+    }
 
-BOOST_AUTO_TEST_CASE(TestCase1)
-{
-    std::ostringstream oss;
-    std::string golden;
+    void testCase1()
+    {
+        std::ostringstream oss;
+        std::string golden;
 
-    yasm::marg_ostream os(oss.rdbuf());
-    os << "begin\n";
-    ++os;
-    t1(os);
-    --os;
-    os << "end\n";
+        yasm::marg_ostream os(oss.rdbuf());
+        os << "begin\n";
+        ++os;
+        t1(os);
+        --os;
+        os << "end\n";
 
-    golden =
-        "begin\n"
-        "  not indented\n"
-        "    indented\n"
-        "  unindented\n"
-        "    function indented\n"
-        "end\n";
-    BOOST_CHECK_EQUAL(oss.str(), golden);
-}
+        golden =
+            "begin\n"
+            "  not indented\n"
+            "    indented\n"
+            "  unindented\n"
+            "    function indented\n"
+            "end\n";
+        TS_ASSERT_EQUALS(oss.str(), golden);
+    }
+};
