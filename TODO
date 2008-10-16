@@ -27,8 +27,6 @@ Key:
 - Translate NASM preprocessor from C version
 - Translate GAS parser from C version
 - Translate list format support from C version
-- Provide separate "mini-Boost" package for easier builds (mainly on Windows)
-  note: build requires Boost.Pool
 - Re-examine standard plugin handling: shared lib or like "external" plugin?
 - Scan plugin directory and load all plugins present?
 - Allow subsetting of standard plugins selection for static builds (yasm-lite)
