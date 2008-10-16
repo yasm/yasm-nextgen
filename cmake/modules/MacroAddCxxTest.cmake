@@ -20,12 +20,19 @@ MACRO(ADD_CXXTEST NAME)
     ENDIF(_arg STREQUAL "EXTRA_SRCS")
   ENDFOREACH(_arg)
 
+  SET(_RUNNER ErrorPrinter)
+  IF(MSVC)
+    SET(_RUNNER ParenPrinter)
+  ENDIF(MSVC)
+
   IF(PYTHONINTERP_FOUND)
     ADD_CUSTOM_COMMAND(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.cpp
       COMMAND
         ${PYTHON_EXECUTABLE} ${CXXTESTGEN}
-        --runner=ErrorPrinter
+        --runner=${_RUNNER}
+        --have-eh
+        --have-std
         -o ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.cpp ${ARGN}
       DEPENDS ${_CXXTEST_ARGS}
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
