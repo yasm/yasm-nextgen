@@ -59,13 +59,21 @@ IF(HAVE_TR1_FUNCTIONAL)
 ENDIF(HAVE_TR1_FUNCTIONAL)
 
 IF(NOT HAVE_TR1_FUNCTION)
-YASM_CHECK_CXX("std::function<int ()> x = main;" "std::function" "functional" HAVE_STD_FUNCTION)
+    YASM_CHECK_CXX("std::tr1::function<int ()> x = main;" "std::tr1::function" "functional" HAVE_TR1_FUNCTION)
+ENDIF(NOT HAVE_TR1_FUNCTION)
+
+IF(NOT HAVE_TR1_FUNCTION)
+    YASM_CHECK_CXX("std::function<int ()> x = main;" "std::function" "functional" HAVE_STD_FUNCTION)
 ENDIF(NOT HAVE_TR1_FUNCTION)
 
 # ref
 IF(HAVE_TR1_FUNCTIONAL)
     YASM_CHECK_CXX("X x1;\n  X& x2 = std::tr1::ref(x1);" "std::tr1::ref" "tr1/functional" HAVE_TR1_REF)
 ENDIF(HAVE_TR1_FUNCTIONAL)
+
+IF(NOT HAVE_TR1_REF)
+    YASM_CHECK_CXX("X x1;\n  X& x2 = std::tr1::ref(x1);" "std::tr1::ref" "functional" HAVE_TR1_REF)
+ENDIF(NOT HAVE_TR1_REF)
 
 IF(NOT HAVE_TR1_REF)
     YASM_CHECK_CXX("X x1;\n  X& x2 = std::ref(x1);" "std::ref" "functional" HAVE_STD_REF)
@@ -77,6 +85,10 @@ IF(HAVE_TR1_FUNCTIONAL)
 ENDIF(HAVE_TR1_FUNCTIONAL)
 
 IF(NOT HAVE_TR1_BIND)
+    YASM_CHECK_CXX("std::tr1::bind(f2, 1)();" "std::tr1::bind" "functional" HAVE_TR1_BIND)
+ENDIF(NOT HAVE_TR1_BIND)
+
+IF(NOT HAVE_TR1_BIND)
     YASM_CHECK_CXX("std::bind(f2, 1)();" "std::bind" "functional" HAVE_STD_BIND)
 ENDIF(NOT HAVE_TR1_BIND)
 
@@ -86,23 +98,23 @@ IF(HAVE_TR1_FUNCTIONAL)
 ENDIF(HAVE_TR1_FUNCTIONAL)
 
 IF(NOT HAVE_TR1_MEMFN)
+    YASM_CHECK_CXX("std::vector<X> v;\n  std::for_each(v.begin(), v.end(), std::tr1::mem_fn(&X::f));" "std::tr1::mem_fn" "functional" HAVE_TR1_MEMFN)
+ENDIF(NOT HAVE_TR1_MEMFN)
+
+IF(NOT HAVE_TR1_MEMFN)
     YASM_CHECK_CXX("std::vector<X> v;\n  std::for_each(v.begin(), v.end(), std::mem_fn(&X::f));" "std::mem_fn" "functional" HAVE_STD_MEMFN)
 ENDIF(NOT HAVE_TR1_MEMFN)
 
 #
 # Generate functional.h code
 #
-SET(FUNCTIONAL_INCLUDES "")
+SET(FUNCTIONAL_INCLUDES "${FUNCTIONAL_INCLUDES}#include <functional>\n")
 SET(FUNCTIONAL_ALIASES "")
 
-# Bring in generic TR1 functional header if anything in it.
-IF(HAVE_STD_FUNCTION OR HAVE_STD_REF OR HAVE_STD_BIND OR HAVE_STD_MEMFN)
-    SET(FUNCTIONAL_INCLUDES "${FUNCTIONAL_INCLUDES}#include <functional>\n")
-ENDIF(HAVE_STD_FUNCTION OR HAVE_STD_REF OR HAVE_STD_BIND OR HAVE_STD_MEMFN)
-
-IF(HAVE_TR1_FUNCTION OR HAVE_TR1_REF OR HAVE_TR1_BIND OR HAVE_TR1_MEMFN)
+# Bring in generic TR1 functional header if we have it.
+IF(HAVE_TR1_FUNCTIONAL)
     SET(FUNCTIONAL_INCLUDES "${FUNCTIONAL_INCLUDES}#include <tr1/functional>\n")
-ENDIF(HAVE_TR1_FUNCTION OR HAVE_TR1_REF OR HAVE_TR1_BIND OR HAVE_TR1_MEMFN)
+ENDIF(HAVE_TR1_FUNCTIONAL)
 
 # Point to correct namespace, bringing in boost if necessary.
 
