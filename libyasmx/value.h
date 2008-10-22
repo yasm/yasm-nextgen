@@ -112,23 +112,22 @@ public:
     ///       an error return.
     bool finalize(Location loc);
 
-    /// Get value if absolute or PC-relative section-local relative.
-    /// Returns NULL otherwise.
+    /// Get integer value if absolute or PC-relative section-local relative.
+    /// @param out          (output) integer
     /// @param loc          current location (for PC-relative calculation);
     /// @param calc_bc_dist if nonzero, calculates bytecode distances in
     ///                     absolute portion of value
     /// @note Adds in value.rel (correctly) if PC-relative and in the same
     ///       section as bc (and there is no WRT or SEG).
-    /// @return Intnum if can be resolved to integer value, otherwise NULL.
-    /*@null@*/ std::auto_ptr<IntNum> get_intnum(Location loc,
-                                                bool calc_bc_dist);
+    /// @return True (and out set) if can be resolved to integer value.
+    bool get_intnum(/*@out@*/ IntNum* out, Location loc, bool calc_bc_dist);
 
-    /// Get value if absolute section-local relative.
-    /// Returns NULL otherwise.
+    /// Get integer value if absolute section-local relative.
+    /// @param out          (output) integer
     /// @param calc_bc_dist if nonzero, calculates bytecode distances in
     ///                     absolute portion of value
-    /// @return Intnum if can be resolved to integer value, otherwise NULL.
-    /*@null@*/ std::auto_ptr<IntNum> get_intnum(bool calc_bc_dist);
+    /// @return True (and out set) if can be resolved to integer value.
+    bool get_intnum(/*@out@*/ IntNum* out, bool calc_bc_dist);
 
     /// Output value if constant or PC-relative section-local.  This should
     /// be used from BytecodeOutput::output_value() implementations.

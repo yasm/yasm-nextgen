@@ -321,9 +321,8 @@ X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
         // Handle signext_imm8 postop special-casing
         if (m_postop == POSTOP_SIGNEXT_IMM8)
         {
-            /*@null@*/ std::auto_ptr<IntNum> num = m_imm->get_intnum(false);
-
-            if (!num.get())
+            IntNum num;
+            if (!m_imm->get_intnum(&num, false))
             {
                 // Unknown; default to byte form and set as critical
                 // expression.
@@ -332,7 +331,7 @@ X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
             }
             else
             {
-                if (num->in_range(-128, 127))
+                if (num.in_range(-128, 127))
                 {
                     // We can use the sign-extended byte form: shorten
                     // the immediate length to 1 and make the byte form

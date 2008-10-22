@@ -643,11 +643,10 @@ Value::finalize(Location loc)
     return false;
 }
 
-std::auto_ptr<IntNum>
-Value::get_intnum(Location loc, bool calc_bc_dist)
+bool
+Value::get_intnum(IntNum* out, Location loc, bool calc_bc_dist)
 {
     /*@dependent@*/ /*@null@*/ IntNum* intn = 0;
-    std::auto_ptr<IntNum> outval(0);
 
     if (m_abs != 0)
     {
@@ -657,7 +656,7 @@ Value::get_intnum(Location loc, bool calc_bc_dist)
             m_abs->level_tree(true, true, true, xform_calc_dist);
         intn = m_abs->get_intnum();
         if (!intn)
-            return outval;
+            return false;
     }
 
     if (m_rel)
@@ -667,35 +666,41 @@ Value::get_intnum(Location loc, bool calc_bc_dist)
         Location rel_loc;
         bool sym_local = m_rel->get_label(&rel_loc);
         if (m_wrt || m_seg_of || m_section_rel || !sym_local)
-            return outval;  // we can't handle SEG, WRT, or external symbols
+            return false;   // we can't handle SEG, WRT, or external symbols
         if (rel_loc.bc->get_container() != loc.bc->get_container())
-            return outval;  // not in this section
+            return false;   // not in this section
         if (!m_curpos_rel)
-            return outval;  // not PC-relative
+            return false;   // not PC-relative
 
         // Calculate value relative to current assembly position
-        outval.reset(new IntNum(rel_loc.get_offset()));
-        *outval -= loc.get_offset();
+        *out = rel_loc.get_offset();
+        *out -= loc.get_offset();
         if (m_rshift > 0)
-            *outval >>= m_rshift;
+            *out >>= m_rshift;
         // Add in absolute portion
         if (intn)
-            *outval += *intn;
-        return outval;
+            *out += *intn;
+        return true;
     }
 
     if (intn)
-        return std::auto_ptr<IntNum>(intn->clone());
+    {
+        *out = *intn;
+        return true;
+    }
 
     // No absolute or relative portions: output 0
-    return std::auto_ptr<IntNum>(new IntNum(0));
+    *out = 0;
+    return true;
 }
 
-std::auto_ptr<IntNum>
-Value::get_intnum(bool calc_bc_dist)
+bool
+Value::get_intnum(IntNum* out, bool calc_bc_dist)
 {
     /*@dependent@*/ /*@null@*/ IntNum* intn = 0;
-    std::auto_ptr<IntNum> outval(0);
+
+    if (m_rel)
+        return false;   // Can't calculate relative value
 
     if (m_abs != 0)
     {
@@ -705,17 +710,14 @@ Value::get_intnum(bool calc_bc_dist)
             m_abs->level_tree(true, true, true, xform_calc_dist);
         intn = m_abs->get_intnum();
         if (!intn)
-            return outval;
+            return false;
+        *out = *intn;
+        return true;
     }
 
-    if (m_rel)
-        return outval;  // Can't calculate relative value
-
-    if (intn)
-        return std::auto_ptr<IntNum>(intn->clone());
-
     // No absolute or relative portions: output 0
-    return std::auto_ptr<IntNum>(new IntNum(0));
+    *out = 0;
+    return true;
 }
 
 void

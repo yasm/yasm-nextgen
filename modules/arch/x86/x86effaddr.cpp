@@ -690,8 +690,8 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
     // assume 8 bit and set up for allowing 16 bit later.
     // FIXME: The complex expression equaling zero is probably a rare case,
     // so we ignore it for now.
-    /*@null@*/ std::auto_ptr<IntNum> num = m_disp.get_intnum(false);
-    if (num.get() == 0)
+    IntNum num;
+    if (!m_disp.get_intnum(&num, false))
     {
         // Still has unknown values.
         m_need_nonzero_len = true;
@@ -701,7 +701,7 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
     }
 
     // Figure out what size displacement we will have.
-    if (num->is_zero() && !m_need_nonzero_len)
+    if (num.is_zero() && !m_need_nonzero_len)
     {
         // If we know that the displacement is 0 right now,
         // go ahead and delete the expr and make it so no
@@ -711,7 +711,7 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
         m_disp.clear();
         m_need_disp = false;
     }
-    else if (num->in_range(-128, 127))
+    else if (num.in_range(-128, 127))
     {
         // It fits into a signed byte
         m_disp.m_size = 8;
