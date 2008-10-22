@@ -11,5 +11,6 @@ ADD_CXXTEST(libyasmx_tests
     intnum_test.h
     marg_ostream_test.h
     unescape_test.h
+    value_test.h
     )
 target_link_libraries(libyasmx_tests libyasmx)
