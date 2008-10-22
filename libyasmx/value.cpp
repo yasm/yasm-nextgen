@@ -657,13 +657,28 @@ Value::get_intnum(IntNum* out, Location loc, bool calc_bc_dist)
         intn = m_abs->get_intnum();
         if (!intn)
             return false;
+
+        if (!intn)
+        {
+            // Second try before erroring: Expr::get_intnum() doesn't handle
+            // SEG:OFF, so try simplifying out any to just the OFF portion,
+            // then getting the intnum again.
+            m_abs->extract_deep_segoff(); // returns auto_ptr, so ok to drop
+            m_abs->level_tree(true, true, true, xform_calc_dist);
+            intn = m_abs->get_intnum();
+        }
     }
 
     if (m_rel)
     {
-        // If relative portion is not in bc section, return NULL.
+        // If relative portion is not in bc section, return false.
         // Otherwise get the relative portion's offset.
+
+        if (!loc.bc)
+            return false;
+
         Location rel_loc;
+
         bool sym_local = m_rel->get_label(&rel_loc);
         if (m_wrt || m_seg_of || m_section_rel || !sym_local)
             return false;   // we can't handle SEG, WRT, or external symbols
@@ -694,32 +709,6 @@ Value::get_intnum(IntNum* out, Location loc, bool calc_bc_dist)
     return true;
 }
 
-bool
-Value::get_intnum(IntNum* out, bool calc_bc_dist)
-{
-    /*@dependent@*/ /*@null@*/ IntNum* intn = 0;
-
-    if (m_rel)
-        return false;   // Can't calculate relative value
-
-    if (m_abs != 0)
-    {
-        // Handle integer expressions, if non-integer or too complex, return
-        // NULL.
-        if (calc_bc_dist)
-            m_abs->level_tree(true, true, true, xform_calc_dist);
-        intn = m_abs->get_intnum();
-        if (!intn)
-            return false;
-        *out = *intn;
-        return true;
-    }
-
-    // No absolute or relative portions: output 0
-    *out = 0;
-    return true;
-}
-
 void
 Value::add_abs(const IntNum& delta)
 {
@@ -741,8 +730,6 @@ Value::add_abs(std::auto_ptr<Expr> delta)
 bool
 Value::output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch)
 {
-    /*@dependent@*/ /*@null@*/ IntNum* intn = 0;
-
     if (m_no_warn)
         warn = 0;
 
@@ -760,74 +747,22 @@ Value::output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch)
         if (m_abs->contains(ExprTerm::FLOAT))
             throw FloatingPointError(
                 N_("floating point expression too complex"));
-
-        // Handle normal integer expressions
-        m_abs->level_tree(true, true, true, xform_calc_dist);
-        intn = m_abs->get_intnum();
-
-        if (!intn)
-        {
-            // Second try before erroring: Expr::get_intnum() doesn't handle
-            // SEG:OFF, so try simplifying out any to just the OFF portion,
-            // then getting the intnum again.
-            m_abs->extract_deep_segoff(); // returns auto_ptr, so ok to drop
-            m_abs->level_tree(true, true, true, xform_calc_dist);
-            intn = m_abs->get_intnum();
-        }
-
-        if (!intn)
-        {
-            // Still don't have an integer!
-            throw TooComplexError(N_("expression too complex"));
-        }
     }
+
+    if (!m_rel &&
+        (m_seg_of || m_rshift || m_curpos_rel || m_ip_rel || m_section_rel))
+        return false;   // We can't handle this with just an absolute
+
+    IntNum outval;
+    if (!get_intnum(&outval, loc, true))
+        return false;
 
     // Adjust warn for signed/unsigned integer warnings
     if (warn != 0)
         warn = m_sign ? -1 : 1;
 
-    if (m_rel)
-    {
-        // If relative portion is not in bc section, don't try to handle it
-        // here.  Otherwise get the relative portion's offset.
-        Location rel_loc;
-
-        bool sym_local = m_rel->get_label(&rel_loc);
-        if (m_wrt || m_seg_of || m_section_rel || !sym_local)
-            return false;   // we can't handle SEG, WRT, or external symbols
-        if (rel_loc.bc->get_container() != loc.bc->get_container())
-            return false;   // not in this section
-        if (!m_curpos_rel)
-            return false;   // not PC-relative
-
-        // Calculate value relative to current assembly position
-        IntNum outval(rel_loc.get_offset());
-        outval -= loc.get_offset();
-        if (m_rshift > 0)
-            outval >>= m_rshift;
-        // Add in absolute portion
-        if (intn)
-            outval += *intn;
-
-        // Output!
-        arch.tobytes(outval, bytes, m_size, 0, warn);
-        return true;
-    }
-
-    if (m_seg_of || m_rshift || m_curpos_rel || m_ip_rel || m_section_rel)
-        return false;   // We can't handle this with just an absolute
-
-    if (intn)
-    {
-        // Output just absolute portion
-        arch.tobytes(*intn, bytes, m_size, 0, warn);
-    }
-    else
-    {
-        // No absolute or relative portions: output 0
-        arch.tobytes(0, bytes, m_size, 0, warn);
-    }
-
+    // Output!
+    arch.tobytes(outval, bytes, m_size, 0, warn);
     return true;
 }
 

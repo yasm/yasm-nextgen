@@ -127,7 +127,11 @@ public:
     /// @param calc_bc_dist if nonzero, calculates bytecode distances in
     ///                     absolute portion of value
     /// @return True (and out set) if can be resolved to integer value.
-    bool get_intnum(/*@out@*/ IntNum* out, bool calc_bc_dist);
+    bool get_intnum(/*@out@*/ IntNum* out, bool calc_bc_dist)
+    {
+        Location noloc = {0, 0};
+        return get_intnum(out, noloc, calc_bc_dist);
+    }
 
     /// Output value if constant or PC-relative section-local.  This should
     /// be used from BytecodeOutput::output_value() implementations.
