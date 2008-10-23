@@ -199,8 +199,12 @@ public:
         TS_ASSERT_EQUALS(v.m_curpos_rel, true);
         TS_ASSERT_EQUALS(v.m_ip_rel, true);
 
-        v = Value(4);
         Object object("x", "y", 0);
+        v.m_curpos_rel = false;
+        v.set_curpos_rel(&object, true);
+        TS_ASSERT_EQUALS(v.m_rel, sym1);    // shouldn't change m_rel
+
+        v = Value(4);
         v.set_curpos_rel(&object, false);
         TS_ASSERT_EQUALS(v.m_curpos_rel, true);
         TS_ASSERT_EQUALS(v.m_rel, object.get_abs_sym());
