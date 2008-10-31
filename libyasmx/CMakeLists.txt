@@ -42,6 +42,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     nocase.cpp
     object.cpp
     object_format.cpp
+    object_util.cpp
     operator.cpp
     parser.cpp
     phash.cpp
@@ -115,6 +116,7 @@ IF(NOT BUILD_STATIC)
         nocase.h
         object_format.h
         object.h
+        object_util.h
         operator.h
         parser.h
         phash.h

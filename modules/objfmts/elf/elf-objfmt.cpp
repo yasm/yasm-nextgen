@@ -54,6 +54,7 @@
 #include <libyasmx/location_util.h>
 #include <libyasmx/object.h>
 #include <libyasmx/object_format.h>
+#include <libyasmx/object_util.h>
 #include <libyasmx/name_value.h>
 #include <libyasmx/nocase.h>
 #include <libyasmx/registry.h>
@@ -1445,29 +1446,8 @@ ElfObject::dir_ident(Object& object,
                      unsigned long line)
 {
     assert(m_object == &object);
-
-    // Accept, but do nothing with empty ident
-    if (namevals.empty())
-        return;
-
-    // Put ident data into .comment section
-    Section* comment = object.find_section(".comment");
-    if (!comment)
-        comment = append_section(".comment", line);
-
-    // To match GAS output, if the comment section is empty, put an
-    // initial 0 byte in the section.
-    Bytecode& bc = comment->fresh_bytecode();
-    if (comment->bcs_begin() == comment->bcs_end() && bc.get_fixed_len() == 0)
-        append_byte(*comment, 0);
-
-    for (NameValues::const_iterator nv=namevals.begin(), end=namevals.end();
-         nv != end; ++nv)
-    {
-        if (!nv->is_string())
-            throw ValueError(N_(".comment requires string parameters"));
-        append_data(*comment, nv->get_string(), true);
-    }
+    dir_ident_common(*this, ".comment", object, namevals, objext_namevals,
+                     line);
 }
 
 std::vector<std::string>
