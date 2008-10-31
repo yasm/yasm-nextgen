@@ -37,6 +37,7 @@
 #include <libyasmx/errwarn.h>
 #include <libyasmx/errwarns.h>
 #include <libyasmx/intnum.h>
+#include <libyasmx/location_util.h>
 #include <libyasmx/marg_ostream.h>
 #include <libyasmx/name_value.h>
 #include <libyasmx/nocase.h>
@@ -512,7 +513,7 @@ void
 Output::output(Value& value, Bytes& bytes, Location loc, int warn)
 {
     if (Expr* abs = value.get_abs())
-        abs->simplify();
+        abs->simplify(&xform_calc_dist);
 
     // Try to output constant and PC-relative section-local first.
     // Note this does NOT output any value with a SEG, WRT, external,
