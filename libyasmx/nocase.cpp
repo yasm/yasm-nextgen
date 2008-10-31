@@ -62,6 +62,34 @@ nocase_equal(const char* s2, const std::string& s1)
             std::equal(s1.begin(), s1.end(), s2, nocase_equal_char));
 }
 
+bool
+nocase_equal(const std::string& s1, const std::string& s2,
+             std::string::size_type n)
+{
+    if (s1.length() > n || s2.length() > n)
+        return false;
+    return (std::equal(s1.begin(), s1.begin()+n, s2.begin(),
+                       nocase_equal_char));
+}
+
+bool
+nocase_equal(const std::string& s1, const char* s2,
+             std::string::size_type n)
+{
+    if (s1.length() > n || std::strlen(s2) > n)
+        return false;
+    return (std::equal(s1.begin(), s1.begin()+n, s2, nocase_equal_char));
+}
+
+bool
+nocase_equal(const char* s2, const std::string& s1,
+             std::string::size_type n)
+{
+    if (s1.length() > n || std::strlen(s2) > n)
+        return false;
+    return (std::equal(s1.begin(), s1.begin()+n, s2, nocase_equal_char));
+}
+
 std::string
 lowercase(const std::string& in)
 {
