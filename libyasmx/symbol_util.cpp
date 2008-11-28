@@ -83,6 +83,7 @@ public:
 
     void put(marg_ostream& os) const;
 
+    const Expr* get() const { return m_expr.get(); }
     Expr* get() { return m_expr.get(); }
 
 private:
@@ -138,6 +139,16 @@ set_common_size(Symbol& sym, std::auto_ptr<Expr> common_size)
 {
     std::auto_ptr<AssocData> ad(new CommonSize(common_size));
     sym.add_assoc_data(CommonSize::key, ad);
+}
+
+const Expr*
+get_common_size(const Symbol& sym)
+{
+    const AssocData* ad = sym.get_assoc_data(CommonSize::key);
+    if (!ad)
+        return 0;
+    const CommonSize* x = static_cast<const CommonSize*>(ad);
+    return x->get();
 }
 
 Expr*

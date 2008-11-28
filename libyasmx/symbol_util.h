@@ -75,6 +75,13 @@ void set_common_size(Symbol& sym, std::auto_ptr<Expr> common_size);
 /// @param sym          symbol
 /// @return Common size (NULL if none).
 YASM_LIB_EXPORT
+/*@null@*/ const Expr* get_common_size(const Symbol& sym);
+
+/// Get common size of symbol, if symbol is declared #COMMON and a
+/// size was set for it.
+/// @param sym          symbol
+/// @return Common size (NULL if none).
+YASM_LIB_EXPORT
 /*@null@*/ Expr* get_common_size(Symbol& sym);
 
 /// Extern directive handler.  Sets symbol visibility to Symbol::EXTERN and
