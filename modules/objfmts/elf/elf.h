@@ -47,6 +47,7 @@ class Errwarns;
 class Expr;
 class Object;
 class Section;
+class StringTable;
 
 namespace objfmt
 {
@@ -383,22 +384,6 @@ enum ElfRelocationType_x86_64
 
 typedef std::vector<SymbolRef> ElfSymtab;
 
-class ElfStrtab
-{
-public:
-    ElfStrtab();
-    ~ElfStrtab() {}
-
-    ElfStringIndex get_index(const std::string& str);
-    std::string get_str(ElfStringIndex index) const;
-
-    unsigned long write(std::ostream& os) const;
-    void read(std::istream& is, unsigned long size);
-
-private:
-    std::vector<char> m_storage;
-};
-
 struct ElfConfig
 {
     ElfClass        cls;            // ELF class (32/64)
@@ -444,7 +429,7 @@ struct ElfConfig
                      Object&            object,
                      unsigned long      size,
                      ElfSize            symsize,
-                     const ElfStrtab&   strtab,
+                     const StringTable& strtab,
                      Section*           sections[]) const;
 
     std::string name_reloc_section(const std::string& basesect) const;
@@ -498,7 +483,7 @@ public:
     ElfSymbol();
     ~ElfSymbol();
 
-    SymbolRef create_symbol(Object& object, const ElfStrtab& strtab) const;
+    SymbolRef create_symbol(Object& object, const StringTable& strtab) const;
 
     void put(marg_ostream& os) const;
 
@@ -564,7 +549,7 @@ public:
 
     unsigned long write(std::ostream& os, Bytes& scratch) const;
 
-    std::auto_ptr<Section> create_section(const ElfStrtab& shstrtab) const;
+    std::auto_ptr<Section> create_section(const StringTable& shstrtab) const;
     void load_section_data(Section& sect, std::istream& is) const;
 
     ElfSectionType get_type() const { return m_type; }

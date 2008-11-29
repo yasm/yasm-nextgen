@@ -41,6 +41,7 @@
 #include <libyasmx/location_util.h>
 #include <libyasmx/marg_ostream.h>
 #include <libyasmx/section.h>
+#include <libyasmx/string_table.h>
 #include <libyasmx/object.h>
 
 #include "elf-machine.h"
@@ -198,43 +199,6 @@ ElfReloc::write(Bytes& bytes, const ElfConfig& config)
     }
 }
 
-ElfStrtab::ElfStrtab()
-{
-    m_storage.push_back('\0');
-}
-
-ElfStringIndex
-ElfStrtab::get_index(const std::string& str)
-{
-    const char* cstr = str.c_str();
-    std::string::size_type len = str.length()+1;    // include trailing 0
-    std::string::size_type end = m_storage.size();
-    std::copy(cstr, cstr+len, std::back_inserter(m_storage));
-    return end;
-}
-
-std::string
-ElfStrtab::get_str(ElfStringIndex index) const
-{
-    return &m_storage.at(index);
-}
-
-unsigned long
-ElfStrtab::write(std::ostream& os) const
-{
-    unsigned long size = m_storage.size();
-    os.write(&m_storage[0], size);
-    return size;
-}
-
-void
-ElfStrtab::read(std::istream& is, unsigned long size)
-{
-    m_storage.resize(size);
-    is.read(&m_storage[0], size);
-    m_storage.resize(is.gcount());
-}
-
 
 ElfSymbol::ElfSymbol(const ElfConfig&   config,
                      Bytes&             bytes,
@@ -292,7 +256,7 @@ ElfSymbol::~ElfSymbol()
 }
 
 SymbolRef
-ElfSymbol::create_symbol(Object& object, const ElfStrtab& strtab) const
+ElfSymbol::create_symbol(Object& object, const StringTable& strtab) const
 {
     SymbolRef sym(0);
     std::string name = strtab.get_str(m_name_index);
@@ -520,13 +484,13 @@ ElfConfig::symtab_write(std::ostream& os,
 }
 
 bool
-ElfConfig::symtab_read(std::istream&    is,
-                       ElfSymtab&       symtab,
-                       Object&          object,
-                       unsigned long    size,
-                       ElfSize          symsize,
-                       const ElfStrtab& strtab,
-                       Section*         sections[]) const
+ElfConfig::symtab_read(std::istream&      is,
+                       ElfSymtab&         symtab,
+                       Object&            object,
+                       unsigned long      size,
+                       ElfSize            symsize,
+                       const StringTable& strtab,
+                       Section*           sections[]) const
 {
     is.seekg(symsize, std::ios_base::cur);  // skip first symbol (undef)
     symtab.push_back(SymbolRef(0));
@@ -731,7 +695,7 @@ ElfSection::write(std::ostream& os, Bytes& scratch) const
 }
 
 std::auto_ptr<Section>
-ElfSection::create_section(const ElfStrtab& shstrtab) const
+ElfSection::create_section(const StringTable& shstrtab) const
 {
     bool bss = (m_type == SHT_NOBITS || m_offset == 0);
 

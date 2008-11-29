@@ -51,6 +51,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     registry.cpp
     reloc.cpp
     section.cpp
+    string_table.cpp
     symbol.cpp
     symbol_util.cpp
     value.cpp
@@ -128,6 +129,7 @@ IF(NOT BUILD_STATIC)
         scoped_array.h
         scoped_ptr.h
         section.h
+        string_table.h
         symbol.h
         symbolref.h
         symbol_util.h

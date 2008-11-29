@@ -60,6 +60,7 @@
 #include <libyasmx/registry.h>
 #include <libyasmx/scoped_array.h>
 #include <libyasmx/section.h>
+#include <libyasmx/string_table.h>
 #include <libyasmx/symbol_util.h>
 
 #include "elf.h"
@@ -115,7 +116,7 @@ public:
     void build_global(Symbol& sym);
     void build_common(Symbol& sym);
     void sym_set_sectval(Symbol& sym, ElfSymbol& elfsym);
-    void finalize_symbol(Symbol& sym, ElfStrtab& strtab, bool local_names);
+    void finalize_symbol(Symbol& sym, StringTable& strtab, bool local_names);
 
     void dir_section(Object& object,
                      NameValues& namevals,
@@ -256,7 +257,7 @@ ElfObject::read(std::istream& is)
     std::auto_ptr<ElfSection>
         shstrtab_sect(new ElfSection(m_config, is, m_config.shstrtab_index));
 
-    ElfStrtab shstrtab;
+    StringTable shstrtab;
     is.seekg(shstrtab_sect->get_file_offset());
     shstrtab.read(is, shstrtab_sect->get_size().get_uint());
     if (!is)
@@ -349,7 +350,7 @@ ElfObject::read(std::istream& is)
             throw Error(N_("could not find symbol string table"));
 
         // load symbol string table
-        ElfStrtab strtab;
+        StringTable strtab;
         is.seekg(strtab_sect->get_file_offset());
         strtab.read(is, strtab_sect->get_size().get_uint());
         if (!is)
@@ -610,7 +611,7 @@ ElfObject::sym_set_sectval(Symbol& sym, ElfSymbol& elfsym)
 }
 
 void
-ElfObject::finalize_symbol(Symbol& sym, ElfStrtab& strtab, bool local_names)
+ElfObject::finalize_symbol(Symbol& sym, StringTable& strtab, bool local_names)
 {
     int vis = sym.get_visibility();
     int status = sym.get_status();
@@ -691,7 +692,7 @@ public:
 
     void output_section(Section& sect,
                         unsigned int* sindex,
-                        ElfStrtab& shstrtab,
+                        StringTable& shstrtab,
                         Errwarns& errwarns);
 
     // OutputBytecode overrides
@@ -857,7 +858,7 @@ elf_objfmt_create_dbg_secthead(yasm_section *sect, /*@null@*/ void *d)
 void
 Output::output_section(Section& sect,
                        unsigned int* sindex,
-                       ElfStrtab& shstrtab,
+                       StringTable& shstrtab,
                        Errwarns& errwarns)
 {
     BytecodeOutput* outputter = this;
@@ -953,7 +954,7 @@ output_align(std::ostream& os, unsigned int align)
 void
 ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
 {
-    ElfStrtab shstrtab, strtab;
+    StringTable shstrtab, strtab;
 
     // Add filename to strtab and set as .file symbol name
     if (m_file_elfsym)
@@ -1039,7 +1040,8 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
 
     // section header string table (.shstrtab)
     offset = output_align(os, 4);
-    size = shstrtab.write(os);
+    size = shstrtab.get_size();
+    shstrtab.write(os);
 
     ElfSection shstrtab_sect(m_config, SHT_STRTAB, 0);
     m_config.shstrtab_index = m_config.secthead_count;
@@ -1050,7 +1052,8 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
 
     // string table (.strtab)
     offset = output_align(os, 4);
-    size = strtab.write(os);
+    size = strtab.get_size();
+    strtab.write(os);
 
     ElfSection strtab_sect(m_config, SHT_STRTAB, 0);
     strtab_sect.set_name(strtab_name);
