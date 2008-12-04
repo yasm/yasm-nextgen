@@ -68,7 +68,13 @@ public:
     unsigned long get_size() const { return m_storage.size(); }
 
     /// Write the string table to an output stream.
+    /// @param os       output stream
     void write(std::ostream& os) const;
+
+    /// Read the string table from an input stream.
+    /// Deletes any pre-existing string table data.
+    /// @param is       input stream
+    /// @param size     string table size, in bytes
     void read(std::istream& is, unsigned long size);
 
 private:
