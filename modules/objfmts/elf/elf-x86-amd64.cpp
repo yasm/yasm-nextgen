@@ -153,9 +153,9 @@ ElfReloc_x86_amd64::ElfReloc_x86_amd64(SymbolRef sym,
     {
         switch (valsize)
         {
-            case 8: m_type = R_X86_64_PC8;
-            case 16: m_type = R_X86_64_PC16;
-            case 32: m_type = R_X86_64_PC32;
+            case 8: m_type = R_X86_64_PC8; break;
+            case 16: m_type = R_X86_64_PC16; break;
+            case 32: m_type = R_X86_64_PC32; break;
             default: throw TypeError(N_("elf: invalid relocation size"));
         }
     }
@@ -163,10 +163,10 @@ ElfReloc_x86_amd64::ElfReloc_x86_amd64(SymbolRef sym,
     {
         switch (valsize)
         {
-            case 8: m_type = R_X86_64_8;
-            case 16: m_type = R_X86_64_16;
-            case 32: m_type = R_X86_64_32;
-            case 64: m_type = R_X86_64_64;
+            case 8: m_type = R_X86_64_8; break;
+            case 16: m_type = R_X86_64_16; break;
+            case 32: m_type = R_X86_64_32; break;
+            case 64: m_type = R_X86_64_64; break;
             default: throw TypeError(N_("elf: invalid relocation size"));
         }
     }
