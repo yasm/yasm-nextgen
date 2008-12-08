@@ -184,10 +184,9 @@ X86General::put(marg_ostream& os) const
 void
 X86General::finalize(Bytecode& bc)
 {
-    Location loc = {&bc, bc.get_fixed_len()};
     if (m_ea)
-        m_ea->finalize(loc);
-    if (m_imm.get() != 0 && m_imm->finalize(loc))
+        m_ea->finalize();
+    if (m_imm.get() != 0 && m_imm->finalize())
         throw TooComplexError(N_("immediate expression too complex"));
 
     if (m_postop == POSTOP_ADDRESS16 && m_common.m_addrsize != 0)
@@ -287,11 +286,31 @@ X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
         // Mod/RM byte and SIB byte.  We won't know the Mod field
         // of the Mod/RM byte until we know more about the
         // displacement.
+        bool ip_rel = false;
         if (!m_ea->check(&m_common.m_addrsize, m_common.m_mode_bits,
                          m_postop == POSTOP_ADDRESS16, &m_rex,
-                         bc.get_container()->get_object()))
+                         &ip_rel))
             // failed, don't bother checking rest of insn
             throw ValueError(N_("indeterminate effective address during length calculation"));
+
+        // IP-relative needs to be adjusted to the end of the instruction.
+        // However, we may not know the instruction length yet (due to imm
+        // size optimization).
+        // Since RIP-relative effective addresses are always 32-bit in size,
+        // we can instead add in the instruction length in tobytes(), and
+        // simply adjust to the *start* of the instruction here.
+        // We couldn't do this if effective addresses were variable length.
+        if (ip_rel)
+        {
+            Object* object = bc.get_container()->get_object();
+
+            SymbolRef sub_sym = object->add_non_table_symbol(
+                std::auto_ptr<Symbol>(new Symbol("$")));
+            Location sub_loc = {&bc, bc.get_fixed_len()};
+            sub_sym->define_label(sub_loc, bc.get_line());
+            m_ea->m_disp.sub_rel(object, sub_sym);
+            m_ea->m_disp.m_ip_rel = true;
+        }
 
         if (m_ea->m_disp.m_size == 0 && m_ea->m_need_nonzero_len)
         {
@@ -481,6 +500,22 @@ X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
     bc_out.output(bytes);
     unsigned long pos = bc.get_fixed_len()+bytes.size();
 
+    // Calculate immediate length
+    unsigned int imm_len = 0;
+    if (m_imm != 0)
+    {
+        if (m_postop == POSTOP_SIGNEXT_IMM8)
+        {
+            // If we got here with this postop still set, we need to force
+            // imm size to 8 here.
+            m_imm->m_size = 8;
+            m_imm->m_sign = 1;
+            imm_len = 1;
+        }
+        else
+            imm_len = m_imm->m_size/8;
+    }
+
     // Displacement (if required)
     if (m_ea != 0 && m_ea->m_need_disp)
     {
@@ -489,7 +524,10 @@ X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
         if (m_ea->m_disp.m_ip_rel)
         {
             // Adjust relative displacement to end of bytecode
-            m_ea->m_disp.add_abs(-static_cast<long>(disp_len));
+            m_ea->m_disp.add_abs(
+                -static_cast<long>(pos-bc.get_fixed_len()+disp_len+imm_len));
+            // Distance to end of instruction is the immediate length
+            m_ea->m_disp.m_next_insn = imm_len;
         }
         Location loc = {&bc, pos};
         pos += disp_len;
@@ -501,17 +539,6 @@ X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
     // Immediate (if required)
     if (m_imm != 0)
     {
-        unsigned int imm_len;
-        if (m_postop == POSTOP_SIGNEXT_IMM8)
-        {
-            // If we got here with this postop still set, we need to force
-            // imm size to 8 here.
-            m_imm->m_size = 8;
-            m_imm->m_sign = 1;
-            imm_len = 1;
-        }
-        else
-            imm_len = m_imm->m_size/8;
         Location loc = {&bc, pos};
         Bytes& ibytes = bc_out.get_scratch();
         ibytes.resize(imm_len);

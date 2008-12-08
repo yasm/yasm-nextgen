@@ -1039,7 +1039,7 @@ NasmParser::parse_expr6(ExprType type)
                     std::auto_ptr<Symbol>(new Symbol("$")));
                 m_bc = &m_container->fresh_bytecode();
                 Location loc = {m_bc, m_bc->get_fixed_len()};
-                sym->define_curpos(loc, get_cur_line());
+                sym->define_label(loc, get_cur_line());
                 e.reset(new Expr(sym));
             }
             break;

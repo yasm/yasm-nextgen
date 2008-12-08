@@ -749,7 +749,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
     // Try to output constant and PC-relative section-local first.
     // Note this does NOT output any value with a SEG, WRT, external,
     // cross-section, or non-PC-relative reference (those are handled below).
-    if (value.output_basic(bytes, loc, warn, *m_object.get_arch()))
+    if (value.output_basic(bytes, warn, *m_object.get_arch()))
     {
         m_os << bytes;
         return;
@@ -793,11 +793,22 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
             }
         }
 
-        // allocate .rel[a] sections on a need-basis
+        bool pc_rel = false;
+        IntNum intn2;
+        if (value.calc_pcrel_sub(&intn2, loc))
+        {
+            // Create PC-relative relocation type and fix up absolute portion.
+            pc_rel = true;
+            intn += intn2;
+        }
+        else if (value.m_sub)
+            throw TooComplexError(N_("elf: relocation too complex"));
+
+        // Create relocation
         Section* sect = loc.bc->get_container()->as_section();
         std::auto_ptr<ElfReloc> reloc_auto =
-            m_objfmt.m_machine->make_reloc(sym, wrt, loc.get_offset(),
-                                           value.m_curpos_rel, value.m_size);
+            m_objfmt.m_machine->make_reloc(sym, wrt, loc.get_offset(), pc_rel,
+                                           value.m_size);
         reloc = reloc_auto.get();
         sect->add_reloc(std::auto_ptr<Reloc>(reloc_auto.release()));
     }
@@ -909,6 +920,9 @@ Output::output_section(Section& sect,
         }
         errwarns.propagate(i->get_line());  // propagate warnings
     }
+
+    if (errwarns.num_errors() > 0)
+        return;
 
     // Sanity check final section size
     assert(elfsect->get_size() == sect.bcs_last().next_offset());

@@ -462,7 +462,7 @@ x86_expr_checkea_distcheck_reg(Expr* e, unsigned int bits)
 // and 0 if all values successfully determined and saved in data.
 static int
 x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
-    bool* pcrel, unsigned int bits,
+    bool* ip_rel, unsigned int bits,
     FUNCTION::function <int* (ExprTerm& term, int& regnum)> get_reg)
 {
     int* reg;
@@ -485,9 +485,9 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
             return 1;
         (*reg)++;
 
-        // Delete WRT.  Set pcrel to 1 to indicate to x86
-        // bytecode code to do PC-relative displacement transform.
-        *pcrel = true;
+        // Delete WRT.  Set ip_rel to 1 to indicate to x86
+        // bytecode code to do IP-relative displacement transform.
+        *ip_rel = true;
     }
     else if (wrt.get() != 0)
     {
@@ -757,7 +757,7 @@ bool
 X86EffAddr::check_3264(unsigned int addrsize,
                        unsigned int bits,
                        unsigned char* rex,
-                       Object* object)
+                       bool* ip_rel)
 {
     int i;
     unsigned char* drex = m_need_drex ? &m_drex : 0;
@@ -804,21 +804,16 @@ X86EffAddr::check_3264(unsigned int addrsize,
 
     if (m_disp.has_abs())
     {
-        bool pcrel = false;
         switch (x86_expr_checkea_getregusage
-                (m_disp.get_abs(), &indexreg, &pcrel, bits,
+                (m_disp.get_abs(), &indexreg, ip_rel, bits,
                  BIND::bind(&get_reg3264, _1, _2, reg3264mult, bits,
                             addrsize)))
         {
             case 1:
                 throw ValueError(N_("invalid effective address"));
             case 2:
-                if (pcrel)
-                    m_disp.set_curpos_rel(object, true);
                 return false;
             default:
-                if (pcrel)
-                    m_disp.set_curpos_rel(object, true);
                 break;
         }
     }
@@ -911,7 +906,7 @@ X86EffAddr::check_3264(unsigned int addrsize,
     if (basereg == REG3264_NONE && indexreg == REG3264_NONE && m_pc_rel)
     {
         basereg = REG64_RIP;
-        m_disp.set_curpos_rel(object, true);
+        *ip_rel = true;
     }
 
     // First determine R/M (Mod is later determined from disp size)
@@ -1019,7 +1014,7 @@ X86EffAddr::check_3264(unsigned int addrsize,
 }
 
 bool
-X86EffAddr::check_16(unsigned int bits, bool address16_op, Object* object)
+X86EffAddr::check_16(unsigned int bits, bool address16_op, bool* ip_rel)
 {
     static const unsigned char modrm16[16] =
     {
@@ -1067,21 +1062,16 @@ X86EffAddr::check_16(unsigned int bits, bool address16_op, Object* object)
 
     if (m_disp.has_abs())
     {
-        bool pcrel = false;
         switch (x86_expr_checkea_getregusage
-                (m_disp.get_abs(), 0, &pcrel, bits,
+                (m_disp.get_abs(), 0, ip_rel, bits,
                  BIND::bind(&x86_expr_checkea_get_reg16, _1, _2, &bx, &si,
                             &di, &bp)))
         {
             case 1:
                 throw ValueError(N_("invalid effective address"));
             case 2:
-                if (pcrel)
-                    m_disp.set_curpos_rel(object, true);
                 return false;
             default:
-                if (pcrel)
-                    m_disp.set_curpos_rel(object, true);
                 break;
         }
     }
@@ -1117,7 +1107,7 @@ X86EffAddr::check(unsigned char* addrsize,
                   unsigned int bits,
                   bool address16_op,
                   unsigned char* rex,
-                  Object* object)
+                  bool* ip_rel)
 {
     if (*addrsize == 0)
     {
@@ -1167,11 +1157,11 @@ X86EffAddr::check(unsigned char* addrsize,
     if ((*addrsize == 32 || *addrsize == 64) &&
         ((m_need_modrm && !m_valid_modrm) || (m_need_sib && !m_valid_sib)))
     {
-        return check_3264(*addrsize, bits, rex, object);
+        return check_3264(*addrsize, bits, rex, ip_rel);
     }
     else if (*addrsize == 16 && m_need_modrm && !m_valid_modrm)
     {
-        return check_16(bits, address16_op, object);
+        return check_16(bits, address16_op, ip_rel);
     }
     else if (!m_need_modrm && !m_need_sib)
     {
@@ -1204,9 +1194,9 @@ X86EffAddr::check(unsigned char* addrsize,
 }
 
 void
-X86EffAddr::finalize(Location loc)
+X86EffAddr::finalize()
 {
-    if (m_disp.finalize(loc))
+    if (m_disp.finalize())
         throw TooComplexError(N_("effective address too complex"));
 }
 

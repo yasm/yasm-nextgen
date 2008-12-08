@@ -127,10 +127,10 @@ public:
                unsigned int bits,
                bool address16_op,
                unsigned char* rex,
-               Object* object);
+               bool* ip_rel);
 
     /// Finalize the effective address.
-    void finalize(Location loc);
+    void finalize();
 
 private:
     /// Copy constructor.
@@ -148,8 +148,8 @@ private:
     bool check_3264(unsigned int addrsize,
                     unsigned int bits,
                     unsigned char* rex,
-                    Object* object);
-    bool check_16(unsigned int bits, bool address16_op, Object* object);
+                    bool* ip_rel);
+    bool check_16(unsigned int bits, bool address16_op, bool* ip_rel);
 };
 
 }}} // namespace yasm::arch::x86

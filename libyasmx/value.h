@@ -89,13 +89,13 @@ public:
     /// value in other objects.
     void clear();
 
-    /// Set a value to be relative to the current assembly position rather
-    /// than relative to the section start.
-    /// Creates absolute symbol to refer to if no existing relative portion.
+    /// Add a subtractive relative to the value.  Commonly used to subtract
+    /// the current assembly position.
+    /// Creates absolute symbol to refer to if no existing additive relative
+    /// portion.
     /// @param object   object
-    /// @param ip_rel   if nonzero, indicates IP-relative data relocation,
-    ///                 sometimes used to generate special relocations
-    void set_curpos_rel(Object* object, bool ip_rel);
+    /// @param sub      symbol to subtract
+    void sub_rel(Object* object, SymbolRef sub);
 
     /// Break an #Expr into a #Value constituent parts.  Extracts the
     /// relative portion of the value, SEG and WRT portions, and top-level
@@ -103,51 +103,44 @@ public:
     /// portion of the value.  First expands references to symrecs in
     /// absolute sections by expanding with the absolute section start plus
     /// the symrec offset within the absolute section.
-    /// @param loc      location of value
     /// @return True if the expr could not be split into a value for some
     ///         reason (e.g. the relative portion was not added, but
     ///         multiplied etc).
     /// @note This should only be called after the parse is complete.
     ///       Calling before the parse is complete will usually result in
     ///       an error return.
-    bool finalize(Location loc);
+    bool finalize();
 
-    /// Get integer value if absolute or PC-relative section-local relative.
+    /// Determine if subtractive relative portion can be treated as
+    /// PC relative, and if so, calculate its needed integer fixup.
+    /// This can only be done if the subtractive portion is in the value's
+    /// segment.
+    /// @param out          (output) integer additive fixup
+    /// @param loc          location of value in output
+    /// @return True if can be treated as PC relative; out valid.
+    ///         False if not; out=0.
+    /// @note In cases when this function returns false, there still may
+    ///       be a subtractive relative portion, so users should handle
+    ///       or error as necessary.
+    bool calc_pcrel_sub(/*@out@*/ IntNum* out, Location loc) const;
+
+    /// Get integer value if absolute constant (no relative portion).
     /// @param out          (output) integer
-    /// @param loc          current location (for PC-relative calculation);
     /// @param calc_bc_dist if nonzero, calculates bytecode distances in
     ///                     absolute portion of value
-    /// @note Adds in value.rel (correctly) if PC-relative and in the same
-    ///       section as bc (and there is no WRT or SEG).
     /// @return True (and out set) if can be resolved to integer value.
-    bool get_intnum(/*@out@*/ IntNum* out, Location loc, bool calc_bc_dist);
+    bool get_intnum(/*@out@*/ IntNum* out, bool calc_bc_dist);
 
-    /// Get integer value if absolute section-local relative.
-    /// @param out          (output) integer
-    /// @param calc_bc_dist if nonzero, calculates bytecode distances in
-    ///                     absolute portion of value
-    /// @return True (and out set) if can be resolved to integer value.
-    bool get_intnum(/*@out@*/ IntNum* out, bool calc_bc_dist)
-    {
-        Location noloc = {0, 0};
-        return get_intnum(out, noloc, calc_bc_dist);
-    }
-
-    /// Output value if constant or PC-relative section-local.  This should
+    /// Output value if absolute constant (no relative portion).  This should
     /// be used from BytecodeOutput::output_value() implementations.
     /// @param bytes        storage for byte representation
-    /// @param loc          location of value
     /// @param warn         enables standard warnings: zero for none;
     ///                     nonzero for overflow/underflow floating point and
     ///                     integer warnings
     /// @param arch         architecture
-    /// @note Adds in value.rel (correctly) if PC-relative and in the same
-    ///      section as bc (and there is no WRT or SEG); if this is not the
-    ///      desired behavior, e.g. a reloc is needed in this case, don't
-    ///      use this function!
     /// @return False if no value output due to value needing relocation;
     ///         true if value output.
-    bool output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch);
+    bool output_basic(Bytes& bytes, int warn, const Arch& arch);
 
     /// Get the absolute portion of the value.
     /// @return Absolute expression, or NULL if there is no absolute portion.
@@ -165,7 +158,7 @@ public:
     void add_abs(std::auto_ptr<Expr> delta);
 
     /// Determine if the value is relative.
-    /// @return True if value has relative portions, false if not.
+    /// @return True if value has a relative portion, false if not.
     bool is_relative() const { return m_rel != 0; }
 
     /// Determine if the value is WRT anything.
@@ -176,7 +169,7 @@ public:
     static const unsigned int RSHIFT_MAX = 127;
 
 private:
-    bool finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok);
+    bool finalize_scan(Expr* e, bool ssym_not_ok);
 
     /// The absolute portion of the value.  May contain *differences* between
     /// symrecs but not standalone symrecs.  May be NULL if there is no
@@ -191,6 +184,17 @@ public:
     /// What the relative portion is in reference to.  NULL if the default.
     SymbolRef m_wrt;
 
+    /// Subtractive relative element.  NULL if none.
+    /// Usually in a different section than m_rel; unless there's a WRT portion
+    /// or other modification of m_rel, differences in the same section should
+    /// be in m_abs.
+    SymbolRef m_sub;
+
+    /// Distance from the end of the value to the next instruction, in bytes.
+    /// Used to generate special relocations in some object formats.
+    /// Only needs to be set for IP-relative values (m_ip_rel is true).
+    unsigned int m_next_insn : 4;
+
     /// If the segment of the relative portion should be used, not the
     /// relative portion itself.  Boolean.
     unsigned int m_seg_of : 1;
@@ -199,12 +203,6 @@ public:
     /// (supported only by a few object formats).  If just the absolute
     /// portion should be shifted, that must be in the abs expr, not here!
     unsigned int m_rshift : 7;
-
-    /// Indicates the relative portion of the value should be relocated
-    /// relative to the current assembly position rather than relative to the
-    /// section start.  "Current assembly position" here refers to the
-    /// starting address of the bytecode containing this value.  Boolean.
-    unsigned int m_curpos_rel : 1;
 
     /// Indicates that curpos_rel was set due to IP-relative relocation;
     /// in some objfmt/arch combinations (e.g. win64/x86-amd64) this info

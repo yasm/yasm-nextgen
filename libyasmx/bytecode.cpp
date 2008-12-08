@@ -153,8 +153,7 @@ Bytecode::finalize()
     for (std::vector<Fixup>::iterator i=m_fixed_fixups.begin(),
          end=m_fixed_fixups.end(); i != end; ++i)
     {
-        Location loc = {this, i->get_off()};
-        if (i->finalize(loc))
+        if (i->finalize())
         {
             if (i->m_jump_target)
                 throw TooComplexError(i->get_line(),
@@ -163,12 +162,9 @@ Bytecode::finalize()
                 throw TooComplexError(i->get_line(),
                                       N_("expression too complex"));
         }
-        if (i->m_jump_target)
-        {
-            if (i->m_seg_of || i->m_rshift || i->m_curpos_rel)
-                throw ValueError(i->get_line(), N_("invalid jump target"));
-            i->set_curpos_rel(m_container->get_object(), false);
-        }
+        if (i->m_jump_target &&
+            (i->m_seg_of || i->m_rshift || i->m_section_rel))
+            throw ValueError(i->get_line(), N_("invalid jump target"));
         warn_update_line(i->get_line());
     }
 

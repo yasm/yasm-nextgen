@@ -111,10 +111,9 @@ MultipleBytecode::put(marg_ostream& os) const
 void
 MultipleBytecode::finalize(Bytecode& bc)
 {
-    Location loc = {&bc, 0};
     Value val(0, std::auto_ptr<Expr>(m_multiple->clone()));
 
-    if (val.finalize(loc))
+    if (val.finalize())
         throw TooComplexError(N_("multiple expression too complex"));
     else if (val.is_relative())
         throw NotAbsoluteError(N_("multiple expression not absolute"));
@@ -200,7 +199,7 @@ MultipleBytecode::expand(Bytecode& bc,
 void
 MultipleBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
 {
-    m_multiple->level_tree(true, true, true, xform_calc_dist);
+    m_multiple->simplify(xform_calc_dist);
     const IntNum* num = m_multiple->get_intnum();
     if (!num)
         throw ValueError(N_("could not determine multiple"));

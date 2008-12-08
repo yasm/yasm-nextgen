@@ -51,9 +51,10 @@ public:
         TS_ASSERT_EQUALS(v.has_abs(), false);
         TS_ASSERT_EQUALS(v.m_rel, SymbolRef(0));
         TS_ASSERT_EQUALS(v.m_wrt, SymbolRef(0));
+        TS_ASSERT_EQUALS(v.m_sub, SymbolRef(0));
+        TS_ASSERT_EQUALS(v.m_next_insn, 0U);
         TS_ASSERT_EQUALS(v.m_seg_of, false);
         TS_ASSERT_EQUALS(v.m_rshift, 0U);
-        TS_ASSERT_EQUALS(v.m_curpos_rel, false);
         TS_ASSERT_EQUALS(v.m_ip_rel, false);
         TS_ASSERT_EQUALS(v.m_jump_target, false);
         TS_ASSERT_EQUALS(v.m_section_rel, false);
@@ -70,9 +71,10 @@ public:
         TS_ASSERT_EQUALS(v.get_abs(), e);
         TS_ASSERT_EQUALS(v.m_rel, SymbolRef(0));
         TS_ASSERT_EQUALS(v.m_wrt, SymbolRef(0));
+        TS_ASSERT_EQUALS(v.m_sub, SymbolRef(0));
+        TS_ASSERT_EQUALS(v.m_next_insn, 0U);
         TS_ASSERT_EQUALS(v.m_seg_of, false);
         TS_ASSERT_EQUALS(v.m_rshift, 0U);
-        TS_ASSERT_EQUALS(v.m_curpos_rel, false);
         TS_ASSERT_EQUALS(v.m_ip_rel, false);
         TS_ASSERT_EQUALS(v.m_jump_target, false);
         TS_ASSERT_EQUALS(v.m_section_rel, false);
@@ -87,9 +89,10 @@ public:
         TS_ASSERT_EQUALS(v.has_abs(), false);
         TS_ASSERT_EQUALS(v.m_rel, sym1);
         TS_ASSERT_EQUALS(v.m_wrt, SymbolRef(0));
+        TS_ASSERT_EQUALS(v.m_sub, SymbolRef(0));
+        TS_ASSERT_EQUALS(v.m_next_insn, 0U);
         TS_ASSERT_EQUALS(v.m_seg_of, false);
         TS_ASSERT_EQUALS(v.m_rshift, 0U);
-        TS_ASSERT_EQUALS(v.m_curpos_rel, false);
         TS_ASSERT_EQUALS(v.m_ip_rel, false);
         TS_ASSERT_EQUALS(v.m_jump_target, false);
         TS_ASSERT_EQUALS(v.m_section_rel, false);
@@ -103,9 +106,10 @@ public:
         Value v(6, Expr::Ptr(new Expr(sym1, 0)));
         v.m_rel = sym1;
         v.m_wrt = wrt;
+        v.m_sub = sym2;
+        v.m_next_insn = 3;
         v.m_seg_of = true;
         v.m_rshift = 5;
-        v.m_curpos_rel = true;
         v.m_ip_rel = true;
         v.m_jump_target = true;
         v.m_no_warn = true;
@@ -116,9 +120,10 @@ public:
         TS_ASSERT_EQUALS(v.has_abs(), false);
         TS_ASSERT_EQUALS(v.m_rel, SymbolRef(0));
         TS_ASSERT_EQUALS(v.m_wrt, SymbolRef(0));
+        TS_ASSERT_EQUALS(v.m_sub, SymbolRef(0));
+        TS_ASSERT_EQUALS(v.m_next_insn, 0U);
         TS_ASSERT_EQUALS(v.m_seg_of, false);
         TS_ASSERT_EQUALS(v.m_rshift, 0U);
-        TS_ASSERT_EQUALS(v.m_curpos_rel, false);
         TS_ASSERT_EQUALS(v.m_ip_rel, false);
         TS_ASSERT_EQUALS(v.m_jump_target, false);
         TS_ASSERT_EQUALS(v.m_section_rel, false);
@@ -187,30 +192,31 @@ public:
         TS_ASSERT_EQUALS(last_rshift, Value::RSHIFT_MAX);
     }
 
-    void test_set_curpos_rel()
+    void test_sub_rel()
     {
         Value v(4, sym1);
         TS_ASSERT_EQUALS(v.m_rel, sym1);
-        TS_ASSERT_EQUALS(v.m_curpos_rel, false);
-        v.set_curpos_rel(0, false); // object=0 okay if m_rel set
-        TS_ASSERT_EQUALS(v.m_curpos_rel, true);
-        TS_ASSERT_EQUALS(v.m_ip_rel, false);
-        v.set_curpos_rel(0, true);  // object=0 okay if m_rel set
-        TS_ASSERT_EQUALS(v.m_curpos_rel, true);
-        TS_ASSERT_EQUALS(v.m_ip_rel, true);
+        v.sub_rel(0, sym2); // object=0 okay if m_rel set
+        TS_ASSERT_EQUALS(v.m_rel, sym1);
+        TS_ASSERT_EQUALS(v.m_sub, sym2);
 
         Object object("x", "y", 0);
-        v.m_curpos_rel = false;
-        v.set_curpos_rel(&object, true);
+        v.sub_rel(&object, sym2);
         TS_ASSERT_EQUALS(v.m_rel, sym1);    // shouldn't change m_rel
+        TS_ASSERT_EQUALS(v.m_sub, sym2);
 
         v = Value(4);
-        v.set_curpos_rel(&object, false);
-        TS_ASSERT_EQUALS(v.m_curpos_rel, true);
+        v.sub_rel(&object, sym2);
         TS_ASSERT_EQUALS(v.m_rel, object.get_abs_sym());
+        TS_ASSERT_EQUALS(v.m_sub, sym2);
     }
 
-    void test_get_intnum_noloc()
+    void test_calc_pcrel_sub()
+    {
+        // TODO
+    }
+
+    void test_get_intnum()
     {
         IntNum intn;
         bool rv;
@@ -233,10 +239,5 @@ public:
         TS_ASSERT_EQUALS(rv, false);
 
         // TODO: calc_bc_dist-using tests
-    }
-
-    void test_get_intnum_loc()
-    {
-        // TODO
     }
 };

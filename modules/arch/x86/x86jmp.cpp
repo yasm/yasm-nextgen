@@ -158,12 +158,23 @@ X86Jmp::put(marg_ostream& os) const
 void
 X86Jmp::finalize(Bytecode& bc)
 {
-    Location loc = {&bc, bc.get_fixed_len()};
-    if (m_target.finalize(loc))
+    if (m_target.finalize())
         throw TooComplexError(N_("jump target expression too complex"));
-    if (m_target.m_seg_of || m_target.m_rshift || m_target.m_curpos_rel)
+    if (m_target.m_seg_of || m_target.m_rshift || m_target.m_section_rel)
         throw ValueError(N_("invalid jump target"));
-    m_target.set_curpos_rel(bc.get_container()->get_object(), false);
+
+    // Need to adjust target to the end of the instruction.
+    // However, we don't know the instruction length yet (short/near).
+    // So just adjust to the start of the instruction, and handle the
+    // difference in calc_len() and tobytes().
+    Object* object = bc.get_container()->get_object();
+
+    SymbolRef sub_sym = object->add_non_table_symbol(
+        std::auto_ptr<Symbol>(new Symbol("$")));
+    Location sub_loc = {&bc, bc.get_fixed_len()};
+    sub_sym->define_label(sub_loc, bc.get_line());
+    m_target.sub_rel(object, sub_sym);
+    m_target.m_ip_rel = true;
 
     Location target_loc;
     if (m_target.m_rel
@@ -255,9 +266,14 @@ X86Jmp::output(Bytecode& bc, BytecodeOutput& bc_out)
 
     bc_out.output(bytes);
 
-    // Adjust relative displacement to end of bytecode
-    m_target.add_abs(-static_cast<long>(size));
+    // Adjust relative displacement to end of instruction
+    m_target.add_abs(-static_cast<long>(bytes.size()+size));
     m_target.m_size = size*8;
+
+    // Distance from displacement to end of instruction is always 0.
+    m_target.m_next_insn = 0;
+
+    // Output displacement
     Location loc = {&bc, bc.get_fixed_len()+bytes.size()};
     Bytes& tbytes = bc_out.get_scratch();
     tbytes.resize(size);

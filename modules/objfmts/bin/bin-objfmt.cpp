@@ -277,11 +277,11 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
             goto done;
 
         // Handle PC-relative
-        if (value.m_curpos_rel)
+        if (value.m_sub && value.m_sub->get_label(&label_loc)
+            && label_loc.bc->get_container())
         {
-            syme.reset(new Expr(syme, Op::SUB, loc, line));
-            value.m_curpos_rel = 0;
-            value.m_ip_rel = 0;
+            syme.reset(new Expr(syme, Op::SUB, value.m_sub, line));
+            value.m_sub = SymbolRef(0);
         }
 
         if (value.m_rshift > 0)
@@ -295,11 +295,11 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
 done:
     // Simplify absolute portion of value, transforming symrecs
     if (Expr* abs = value.get_abs())
-        abs->level_tree(true, true, true, expr_xform);
+        abs->simplify(expr_xform);
 
     // Output
     Arch* arch = m_object.get_arch();
-    if (value.output_basic(bytes, loc, warn, *arch))
+    if (value.output_basic(bytes, warn, *arch))
     {
         m_os << bytes;
         return;

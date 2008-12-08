@@ -425,8 +425,6 @@ private:
 
     Value m_depval;
 
-    // span term for relative portion of value
-    Term* m_rel_term;
     // span terms in absolute portion of value
     typedef std::vector<Term> Terms;
     Terms m_span_terms;
@@ -513,7 +511,6 @@ Span::Span(Bytecode& bc,
            size_t os_index)
     : m_bc(bc),
       m_depval(value),
-      m_rel_term(0),
       m_cur_val(0),
       m_new_val(0),
       m_neg_thres(neg_thres),
@@ -573,26 +570,6 @@ Span::create_terms(Optimize* optimize)
             }
         }
     }
-
-    // Create term for relative portion of dependent value
-    if (m_depval.m_rel)
-    {
-        Location zero_loc = {0, 0};
-        Location rel_loc;
-        bool sym_local = m_depval.m_rel->get_label(&rel_loc);
-
-        if (m_depval.is_wrt() || m_depval.m_seg_of || m_depval.m_section_rel
-            || !sym_local)
-            return;     // we can't handle SEG, WRT, or external symbols
-        if (rel_loc.bc->get_container() != m_bc.get_container())
-            return;     // not in this section
-        if (!m_depval.m_curpos_rel)
-            return;     // not PC-relative
-
-        m_rel_term = optimize->alloc_term();
-        new (m_rel_term) Term(~0U, zero_loc, rel_loc, this,
-                              rel_loc.get_offset() - m_bc.get_offset());
-    }
 }
 
 // Recalculate span value based on current span replacement values.
@@ -617,14 +594,7 @@ Span::recalc_normal()
             m_new_val = LONG_MAX;   // too complex; force to longest form
     }
 
-    if (m_rel_term)
-    {
-        if (m_new_val != LONG_MAX && m_rel_term->m_new_val != LONG_MAX)
-            m_new_val += m_rel_term->m_new_val >> m_depval.m_rshift;
-        else
-            m_new_val = LONG_MAX;   // too complex; force to longest form
-    }
-    else if (m_depval.is_relative())
+    if (m_depval.is_relative())
         m_new_val = LONG_MAX;       // too complex; force to longest form
 
     if (m_new_val == LONG_MAX)
@@ -843,18 +813,6 @@ Optimize::step_1d()
             term->m_new_val = intn.get_int();
         }
 
-        if (span->m_rel_term)
-        {
-            span->m_rel_term->m_cur_val = span->m_rel_term->m_new_val;
-            if (span->m_rel_term->m_loc2.bc)
-                span->m_rel_term->m_new_val =
-                    span->m_rel_term->m_loc2.get_offset() -
-                    span->m_bc.get_offset();
-            else
-                span->m_rel_term->m_new_val = span->m_bc.get_offset() -
-                    span->m_rel_term->m_loc.get_offset();
-        }
-
         if (span->recalc_normal())
         {
             // Exceeded threshold, add span to QB
@@ -891,8 +849,6 @@ Optimize::step_1e(Errwarns& errwarns)
         for (Span::Terms::iterator term=span->m_span_terms.begin(),
              endterm=span->m_span_terms.end(); term != endterm; ++term)
             itree_add(*span, *term);
-        if (span->m_rel_term)
-            itree_add(*span, *span->m_rel_term);
     }
 
     // Look for cycles in times expansion (span.id==0)
@@ -970,8 +926,6 @@ Optimize::step_2(Errwarns& errwarns)
             for (Span::Terms::iterator term=span->m_span_terms.begin(),
                  endterm=span->m_span_terms.end(); term != endterm; ++term)
                 term->m_cur_val = term->m_new_val;
-            if (span->m_rel_term)
-                span->m_rel_term->m_cur_val = span->m_rel_term->m_new_val;
             span->m_cur_val = span->m_new_val;
         }
         else

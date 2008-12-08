@@ -73,9 +73,10 @@ Value::Value(unsigned int size)
     : m_abs(0),
       m_rel(0),
       m_wrt(0),
+      m_sub(0),
+      m_next_insn(0),
       m_seg_of(false),
       m_rshift(0),
-      m_curpos_rel(false),
       m_ip_rel(false),
       m_jump_target(false),
       m_section_rel(false),
@@ -89,9 +90,10 @@ Value::Value(unsigned int size, std::auto_ptr<Expr> e)
     : m_abs(e.release()),
       m_rel(0),
       m_wrt(0),
+      m_sub(0),
+      m_next_insn(0),
       m_seg_of(false),
       m_rshift(0),
-      m_curpos_rel(false),
       m_ip_rel(false),
       m_jump_target(false),
       m_section_rel(false),
@@ -105,9 +107,10 @@ Value::Value(unsigned int size, SymbolRef sym)
     : m_abs(0),
       m_rel(sym),
       m_wrt(0),
+      m_sub(0),
+      m_next_insn(0),
       m_seg_of(false),
       m_rshift(0),
-      m_curpos_rel(false),
       m_ip_rel(false),
       m_jump_target(false),
       m_section_rel(false),
@@ -121,9 +124,10 @@ Value::Value(const Value& oth)
     : m_abs(0),
       m_rel(oth.m_rel),
       m_wrt(oth.m_wrt),
+      m_sub(oth.m_sub),
+      m_next_insn(oth.m_next_insn),
       m_seg_of(oth.m_seg_of),
       m_rshift(oth.m_rshift),
-      m_curpos_rel(oth.m_curpos_rel),
       m_ip_rel(oth.m_ip_rel),
       m_jump_target(oth.m_jump_target),
       m_section_rel(oth.m_section_rel),
@@ -167,9 +171,10 @@ Value::clear()
     m_abs = 0;
     m_rel = SymbolRef(0);
     m_wrt = SymbolRef(0);
+    m_sub = SymbolRef(0);
+    m_next_insn = 0;
     m_seg_of = false;
     m_rshift = 0;
-    m_curpos_rel = false;
     m_ip_rel = false;
     m_jump_target = false;
     m_section_rel = false;
@@ -188,9 +193,10 @@ Value::operator= (const Value& rhs)
             m_abs = rhs.m_abs->clone();
         m_rel = rhs.m_rel;
         m_wrt = rhs.m_wrt;
+        m_sub = rhs.m_sub;
+        m_next_insn = rhs.m_next_insn;
         m_seg_of = rhs.m_seg_of;
         m_rshift = rhs.m_rshift;
-        m_curpos_rel = rhs.m_curpos_rel;
         m_ip_rel = rhs.m_ip_rel;
         m_jump_target = rhs.m_jump_target;
         m_section_rel = rhs.m_section_rel;
@@ -202,22 +208,39 @@ Value::operator= (const Value& rhs)
 }
 
 void
-Value::set_curpos_rel(Object* object, bool ip_rel)
+Value::sub_rel(Object* object, SymbolRef sub)
 {
-    m_curpos_rel = true;
-    m_ip_rel = ip_rel;
-    // In order for us to correctly output curpos-relative values, we must
-    // have a relative portion of the value.  If one doesn't exist, point
-    // to a custom absolute symbol.
+    // In order for us to correctly output subtractive relative values, we must
+    // have an additive relative portion of the value.  If one doesn't exist,
+    // point to a custom absolute symbol.
     if (!m_rel)
     {
         assert(object != 0);
         m_rel = object->get_abs_sym();
+        m_sub = sub;
+    }
+    else
+    {
+        Location loc, sub_loc;
+        // If same section as m_rel, move both into absolute portion.
+        // Can't do this if we're doing something fancier with the relative
+        // portion.
+        if (!m_wrt && !m_seg_of && !m_rshift && !m_section_rel
+            && m_rel->get_label(&loc)
+            && sub->get_label(&sub_loc)
+            && loc.bc->get_container() == sub_loc.bc->get_container())
+        {
+            add_abs(Expr::Ptr(new Expr(m_rel, Op::SUB, sub,
+                                       m_abs ? m_abs->get_line() : 0)));
+            m_rel = SymbolRef(0);
+        }
+        else
+            m_sub = sub;
     }
 }
 
 bool
-Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
+Value::finalize_scan(Expr* e, bool ssym_not_ok)
 {
     ExprTerms& terms = e->get_terms();
 
@@ -268,7 +291,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                 if (!sube->is_op(Op::MUL) || sube_terms.size() != 2)
                 {
                     // recurse instead
-                    if (finalize_scan(sube, expr_loc, ssym_not_ok))
+                    if (finalize_scan(sube, ssym_not_ok))
                         return true;
                     continue;
                 }
@@ -287,14 +310,14 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                 }
                 else
                 {
-                    if (finalize_scan(sube, expr_loc, ssym_not_ok))
+                    if (finalize_scan(sube, ssym_not_ok))
                         return true;
                     continue;
                 }
 
                 if (!intn->is_neg1())
                 {
-                    if (finalize_scan(sube, expr_loc, ssym_not_ok))
+                    if (finalize_scan(sube, ssym_not_ok))
                         return true;
                     continue;
                 }
@@ -324,7 +347,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                 Location loc;
                 if (!sym->get_label(&loc))
                 {
-                    if (finalize_scan(sube, expr_loc, ssym_not_ok))
+                    if (finalize_scan(sube, ssym_not_ok))
                         return true;
                     continue;
                 }
@@ -349,60 +372,14 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                     }
                 }
 
-                // We didn't match in the same segment.  If the
-                // -1*symrec is actually -1*curpos, we can match
-                // unused symrec terms in other segments and generate
-                // a curpos-relative reloc.
-                //
-                // Similarly, handle -1*symrec in other segment via the
-                // following transformation:
-                // other-this = (other-.)+(.-this)
-                // We can only do this transformation if "this" is in
-                // this expr's segment.
-                //
-                // Don't do this if we've already become curpos-relative.
-                // The unmatched symrec will be caught below.
-                if (j == end && !m_curpos_rel
-                    && (sym->is_curpos()
-                        || (container == expr_loc.bc->get_container())))
+                // We didn't match in the same segment.  Save as subtractive
+                // relative value.  If we already have one, don't bother;
+                // the unmatched symrec will be caught below.
+                if (j == end && !m_sub)
                 {
-                    for (j=terms.begin(); j != end; ++j)
-                    {
-                        SymbolRef sym2 = j->get_sym();
-                        if (sym2
-                            && !sym2->get_equ()
-                            && !sym2->is_special()
-                            && !used[j-terms.begin()])
-                        {
-                            // Mark as used
-                            used[j-terms.begin()] = 1;
-                            // Mark value as curpos-relative
-                            if (m_rel || ssym_not_ok)
-                                return true;
-                            m_rel = sym2;
-                            m_curpos_rel = true;
-                            if (sym->is_curpos())
-                            {
-                                // Replace both symrec portions with 0
-                                i->destroy();
-                                *i = IntNum(0);
-                                //j->destroy(); // unneeded as it's a symbol
-                                *j = IntNum(0);
-                            }
-                            else
-                            {
-                                // Replace positive portion with curpos
-                                //j->destroy(); // unneeded as it's a symbol
-                                Object* object = container->get_object();
-                                SymbolRef curpos =
-                                    object->add_non_table_symbol(
-                                        std::auto_ptr<Symbol>(new Symbol(".")));
-                                curpos->define_curpos(expr_loc, e->get_line());
-                                *j = curpos;
-                            }
-                            break;      // stop looking
-                        }
-                    }
+                    m_sub = SymbolRef(sym);
+                    i->destroy();
+                    *i = IntNum(0);
                 }
 
 
@@ -444,7 +421,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                 case ExprTerm::SYM:
                     return true;
                 case ExprTerm::EXPR:
-                    if (finalize_scan(terms[1].get_expr(), expr_loc, true))
+                    if (finalize_scan(terms[1].get_expr(), true))
                         return true;
                     break;
                 default:
@@ -467,8 +444,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                     break;
                 case ExprTerm::EXPR:
                     // recurse
-                    if (finalize_scan(terms[0].get_expr(), expr_loc,
-                                      ssym_not_ok))
+                    if (finalize_scan(terms[0].get_expr(), ssym_not_ok))
                         return true;
                     break;
                 default:
@@ -546,7 +522,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
             else if (Expr* sube = terms[0].get_expr())
             {
                 // recurse
-                return finalize_scan(sube, expr_loc, ssym_not_ok);
+                return finalize_scan(sube, ssym_not_ok);
             }
 
             break;
@@ -562,7 +538,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
                 else if (Expr* sube = i->get_expr())
                 {
                     // recurse
-                    return finalize_scan(sube, expr_loc, true);
+                    return finalize_scan(sube, true);
                 }
             }
             break;
@@ -573,7 +549,7 @@ Value::finalize_scan(Expr* e, Location expr_loc, bool ssym_not_ok)
 }
 
 bool
-Value::finalize(Location loc)
+Value::finalize()
 {
     if (!m_abs)
         return false;
@@ -626,7 +602,7 @@ Value::finalize(Location loc)
         return false;
     }
 
-    if (finalize_scan(m_abs, loc, false))
+    if (finalize_scan(m_abs, false))
         return true;
 
     m_abs->level_tree(true, true, false);
@@ -644,19 +620,45 @@ Value::finalize(Location loc)
 }
 
 bool
-Value::get_intnum(IntNum* out, Location loc, bool calc_bc_dist)
+Value::calc_pcrel_sub(/*@out@*/ IntNum* out, Location loc) const
 {
-    /*@dependent@*/ /*@null@*/ IntNum* intn = 0;
+    // Need subtractive portion to do this transformation.
+    if (!m_sub)
+        return false;
+
+    // We can handle this as a PC-relative relocation if the
+    // subtractive portion is in the current segment.
+    Location sub_loc;
+    if (!m_sub->get_label(&sub_loc)
+        || sub_loc.bc->get_container() != loc.bc->get_container())
+        return false;
+
+    // Need to fix up the value to make it PC-relative.
+    // This applies the transformation: rel-sub = (rel-.)+(.-sub)
+    // The (rel-.) portion is done by the PC-relative relocation,
+    // so we just need to add (.-sub) to the outputted value.
+    if (!calc_dist(sub_loc, loc, out))
+        assert(false);
+
+    return true;
+}
+
+bool
+Value::get_intnum(IntNum* out, bool calc_bc_dist)
+{
+    // Output 0 if no absolute or relative
+    *out = 0;
+
+    if (m_rel || m_sub || m_wrt)
+        return false;   // can't handle relative values
 
     if (m_abs != 0)
     {
         // Handle integer expressions, if non-integer or too complex, return
         // NULL.
         if (calc_bc_dist)
-            m_abs->level_tree(true, true, true, xform_calc_dist);
-        intn = m_abs->get_intnum();
-        if (!intn)
-            return false;
+            m_abs->simplify(xform_calc_dist);
+        IntNum* intn = m_abs->get_intnum();
 
         if (!intn)
         {
@@ -664,48 +666,19 @@ Value::get_intnum(IntNum* out, Location loc, bool calc_bc_dist)
             // SEG:OFF, so try simplifying out any to just the OFF portion,
             // then getting the intnum again.
             m_abs->extract_deep_segoff(); // returns auto_ptr, so ok to drop
-            m_abs->level_tree(true, true, true, xform_calc_dist);
+            m_abs->simplify(xform_calc_dist);
             intn = m_abs->get_intnum();
         }
-    }
 
-    if (m_rel)
-    {
-        // If relative portion is not in bc section, return false.
-        // Otherwise get the relative portion's offset.
-
-        if (!loc.bc)
+        if (!intn)
             return false;
 
-        Location rel_loc;
-
-        bool sym_local = m_rel->get_label(&rel_loc);
-        if (m_wrt || m_seg_of || m_section_rel || !sym_local)
-            return false;   // we can't handle SEG, WRT, or external symbols
-        if (rel_loc.bc->get_container() != loc.bc->get_container())
-            return false;   // not in this section
-        if (!m_curpos_rel)
-            return false;   // not PC-relative
-
-        // Calculate value relative to current assembly position
-        *out = rel_loc.get_offset();
-        *out -= loc.get_offset();
-        if (m_rshift > 0)
-            *out >>= m_rshift;
-        // Add in absolute portion
-        if (intn)
+        if (out->is_zero())
+            *out = *intn;   // micro-optimization because this is hit a lot
+        else
             *out += *intn;
-        return true;
     }
 
-    if (intn)
-    {
-        *out = *intn;
-        return true;
-    }
-
-    // No absolute or relative portions: output 0
-    *out = 0;
     return true;
 }
 
@@ -728,7 +701,7 @@ Value::add_abs(std::auto_ptr<Expr> delta)
 }
 
 bool
-Value::output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch)
+Value::output_basic(Bytes& bytes, int warn, const Arch& arch)
 {
     if (m_no_warn)
         warn = 0;
@@ -749,12 +722,8 @@ Value::output_basic(Bytes& bytes, Location loc, int warn, const Arch& arch)
                 N_("floating point expression too complex"));
     }
 
-    if (!m_rel &&
-        (m_seg_of || m_rshift || m_curpos_rel || m_ip_rel || m_section_rel))
-        return false;   // We can't handle this with just an absolute
-
     IntNum outval;
-    if (!get_intnum(&outval, loc, true))
+    if (!get_intnum(&outval, true))
         return false;
 
     // Adjust warn for signed/unsigned integer warnings
@@ -781,7 +750,10 @@ operator<< (marg_ostream& os, const Value& value)
     {
         os << "Relative to=";
         os << (value.m_seg_of ? "SEG " : "");
-        os << value.m_rel->get_name() << '\n';
+        os << value.m_rel->get_name();
+        if (value.m_sub)
+            os << " - " << value.m_sub->get_name();
+        os << '\n';
         if (value.m_wrt)
         {
             os << "(With respect to=" << value.m_wrt->get_name() << ")\n";
@@ -789,10 +761,6 @@ operator<< (marg_ostream& os, const Value& value)
         if (value.m_rshift > 0)
         {
             os << "(Right shifted by=" << value.m_rshift << ")\n";
-        }
-        if (value.m_curpos_rel)
-        {
-            os << "(Relative to current position)\n";
         }
         if (value.m_ip_rel)
             os << "(IP-relative)\n";

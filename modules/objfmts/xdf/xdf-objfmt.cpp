@@ -293,7 +293,7 @@ public:
              Type type,
              Size size,
              unsigned int shift);
-    XdfReloc(Value& value, Location loc);
+    XdfReloc(const IntNum& addr, const Value& value, bool ip_rel);
     ~XdfReloc() {}
 
     std::auto_ptr<Expr> get_value() const;
@@ -326,8 +326,8 @@ XdfReloc::XdfReloc(const IntNum& addr,
 }
 
 inline
-XdfReloc::XdfReloc(Value& value, Location loc)
-    : Reloc(loc.get_offset(), value.m_rel)
+XdfReloc::XdfReloc(const IntNum& addr, const Value& value, bool ip_rel)
+    : Reloc(addr, value.m_rel)
     , m_base(0)
     , m_size(static_cast<Size>(value.m_size/8))
     , m_shift(value.m_rshift)
@@ -339,7 +339,7 @@ XdfReloc::XdfReloc(Value& value, Location loc)
         m_base = value.m_wrt;
         m_type = XDF_WRT;
     }
-    else if (value.m_curpos_rel)
+    else if (ip_rel)
         m_type = XDF_RIP;
     else
         m_type = XDF_REL;
@@ -518,7 +518,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
     // Try to output constant and PC-relative section-local first.
     // Note this does NOT output any value with a SEG, WRT, external,
     // cross-section, or non-PC-relative reference (those are handled below).
-    if (value.output_basic(bytes, loc, warn, *m_object.get_arch()))
+    if (value.output_basic(bytes, warn, *m_object.get_arch()))
     {
         m_os << bytes;
         return;
@@ -530,8 +530,20 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
     IntNum intn(0);
     if (value.is_relative())
     {
-        std::auto_ptr<XdfReloc> reloc(new XdfReloc(value, loc));
-        if (reloc->get_type() == XdfReloc::XDF_RIP)
+        bool pc_rel = false;
+        IntNum intn2;
+        if (value.calc_pcrel_sub(&intn2, loc))
+        {
+            // Create PC-relative relocation type and fix up absolute portion.
+            pc_rel = true;
+            intn += intn2;
+        }
+        else if (value.m_sub)
+            throw TooComplexError(N_("xdf: relocation too complex"));
+
+        std::auto_ptr<XdfReloc>
+            reloc(new XdfReloc(loc.get_offset(), value, pc_rel));
+        if (pc_rel)
             intn -= loc.get_offset();   // Adjust to start of section
         Section* sect = loc.bc->get_container()->as_section();
         sect->add_reloc(std::auto_ptr<Reloc>(reloc.release()));

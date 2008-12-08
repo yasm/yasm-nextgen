@@ -96,15 +96,6 @@ Symbol::define_label(Location loc, unsigned long line)
 }
 
 Symbol&
-Symbol::define_curpos(Location loc, unsigned long line)
-{
-    define(CURPOS, line);
-    m_loc = loc;
-    // NOT added to bytecode cross-reference table
-    return *this;
-}
-
-Symbol&
 Symbol::define_special(Visibility vis, unsigned long line)
 {
     define(SPECIAL, line);
@@ -165,7 +156,7 @@ Symbol::finalize(bool undef_extern)
 bool
 Symbol::get_label(Location* loc) const
 {
-    if (!(m_type == LABEL || m_type == CURPOS))
+    if (m_type != LABEL)
         return false;
     *loc = m_loc;
     return true;
@@ -189,11 +180,7 @@ operator<< (marg_ostream& os, const Symbol& sym)
             os << '\n';
             break;
         case Symbol::LABEL:
-        case Symbol::CURPOS:
-            if (sym.m_type == Symbol::LABEL)
-                os << "_Label_\n";
-            else
-                os << "_CurPos_\n";
+            os << "_Label_\n";
             //os << std::setw(indent_level) << "" << "Section:\n";
             //m_precbc->get_section()->put(os, indent_level+1, false);
             //os << std::setw(indent_level) << "" << "Preceding bytecode:\n";

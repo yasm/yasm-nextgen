@@ -124,13 +124,6 @@ public:
     /// @return False if symbol is not a special symbol, true otherwise.
     bool is_special() const { return m_type == SPECIAL; }
 
-    /// Determine if symbol is a label representing the current assembly
-    /// position.
-    /// @param sym       symbol
-    /// @return False if symbol is not a current position label, true
-    ///         otherwise.
-    bool is_curpos() const { return m_type == CURPOS; }
-
     /// Mark the symbol as used.  The symbol does not necessarily need to
     /// be defined before it is used.
     /// @param line     virtual line where referenced
@@ -148,15 +141,6 @@ public:
     /// @param line     virtual line of label
     /// @return Symbol (this).
     Symbol& define_label(Location loc, unsigned long line);
-
-    /// Define as a label representing the current assembly position.
-    /// This should be used for this purpose instead of define_label()
-    /// as Value::finalize_scan() looks for usage of this symbol type for
-    /// special handling.
-    /// @param loc      location of label
-    /// @param line     virtual line of label
-    /// @return Symbol (this).
-    Symbol& define_curpos(Location loc, unsigned long line);
 
     /// Define a special symbol.  Special symbols have no generic associated
     /// data (such as an expression or precbc).
@@ -185,9 +169,6 @@ private:
         UNKNOWN,    ///< for unknown type (COMMON/EXTERN)
         EQU,        ///< for EQU defined symbols (expressions)
         LABEL,      ///< for labels
-
-        /// For labels representing the current assembly position.
-        CURPOS,
 
         /// For special symbols that need to be in the symbol table but
         /// otherwise have no purpose.
