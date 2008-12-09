@@ -140,7 +140,7 @@ ExprTerm::destroy()
         default:
             break;
     }
-    //m_type = NONE;
+    m_type = NONE;
 }
 
 void

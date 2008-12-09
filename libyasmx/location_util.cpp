@@ -112,7 +112,7 @@ xform_dist_base(Expr* e, FUNCTION::function<bool (ExprTerm& term,
             if (func(*j, loc, loc2))
             {
                 // Delete the matching (-1*Symbol) term
-                i->release();
+                i->destroy();
                 break;  // stop looking for matching Symbol term
             }
         }
@@ -191,8 +191,7 @@ subst_dist(Expr* e,
                                     Location loc2)> func)
 {
     unsigned int subst = 0;
-    e->level_tree(true, true, true,
-                  BIND::bind(&xform_subst_dist, _1, &subst, func));
+    e->simplify(BIND::bind(&xform_subst_dist, _1, &subst, func));
     return subst;
 }
 
