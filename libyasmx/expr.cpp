@@ -438,8 +438,7 @@ Expr::simplify_identity(IntNum* &intn, bool simplify_reg_mul)
 void
 Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
 {
-    ExprTerms::iterator first_int_term;
-    IntNum* intn = 0;
+    int int_term;
     bool do_level = false;
     Expr* e;
 
@@ -447,6 +446,7 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
     if (m_op > Op::NONNUM)
         fold_const = false;
 
+    int_term = -1;
     for (ExprTerms::iterator i=m_terms.begin(), end=m_terms.end(); i != end;
          ++i)
     {
@@ -472,30 +472,30 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
         IntNum* intn_temp;
         if (fold_const && (intn_temp = i->get_int()))
         {
-            if (!intn)
-            {
-                intn = intn_temp;
-                first_int_term = i;
-            }
+            if (int_term < 0)
+                int_term = i - m_terms.begin();
             else
             {
-                intn->calc(m_op, intn_temp);
+                m_terms[int_term].get_int()->calc(m_op, intn_temp);
                 i->destroy();
             }
         }
     }
 
-    if (intn)
+    if (int_term >= 0)
     {
         // Erase folded integer terms; we already deleted their contents above
         ExprTerms::iterator erasefrom =
-            std::remove_if(first_int_term+1, m_terms.end(),
+            std::remove_if(m_terms.begin()+int_term+1, m_terms.end(),
                            MEMFN::mem_fn(&ExprTerm::is_empty));
         m_terms.erase(erasefrom, m_terms.end());
 
         // Simplify identities and make IDENT if possible.
         if (simplify_ident)
+        {
+            IntNum* intn = m_terms[int_term].get_int();
             simplify_identity(intn, simplify_reg_mul);
+        }
         else if (m_terms.size() == 1)
             m_op = Op::IDENT;
     }
@@ -523,6 +523,7 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
     // This is a two-step process; we do this part in reverse order (to
     // use constant time operations), and then reverse the vector at the end.
     ExprTerms terms;
+    int_term = -1;
     for (ExprTerms::reverse_iterator i=m_terms.rbegin(), end=m_terms.rend();
          i != end; ++i)
     {
@@ -537,14 +538,14 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
                 {
                     // Need to fold it in.. but if there's no int term
                     // already, just move this one up to become it.
-                    if (intn)
+                    if (int_term >= 0)
                     {
-                        intn->calc(m_op, intn_temp);
+                        terms[int_term].get_int()->calc(m_op, intn_temp);
                         last.destroy();
                     }
                     else
                     {
-                        intn = intn_temp;
+                        int_term = terms.size();
                         terms.push_back(last);
                     }
                 }
@@ -555,14 +556,21 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
             i->destroy();
         }
         else
+        {
+            if (int_term < 0 && i->is_type(ExprTerm::INT))
+                int_term = terms.size();
             terms.push_back(*i);
+        }
     }
     std::reverse(terms.begin(), terms.end());
     m_terms.swap(terms);
 
     // Simplify identities, make IDENT if possible.
-    if (simplify_ident && intn)
+    if (simplify_ident && int_term >= 0)
+    {
+        IntNum* intn = m_terms[(m_terms.size()-1)-int_term].get_int();
         simplify_identity(intn, simplify_reg_mul);
+    }
     else if (m_terms.size() == 1)
         m_op = Op::IDENT;
 
