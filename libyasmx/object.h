@@ -227,10 +227,6 @@ private:
     Symbols m_symbols;
     stdx::ptr_vector_owner<Symbol> m_symbols_owner;
 
-    /// Non-table symbols
-    Symbols m_non_table_syms;
-    stdx::ptr_vector_owner<Symbol> m_non_table_syms_owner;
-
     /// Pimpl for symbol table hash trie.
     class Impl;
     util::scoped_ptr<Impl> m_impl;

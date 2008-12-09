@@ -73,8 +73,28 @@ namespace yasm
 class Object::Impl
 {
 public:
-    Impl(bool nocase) : sym_map(nocase), special_sym_map(false) {}
+    Impl(bool nocase)
+        : sym_map(nocase)
+        , special_sym_map(false)
+        , m_sym_pool(sizeof(Symbol))
+    {}
     ~Impl() {}
+
+    Symbol* new_symbol(const std::string& name)
+    {
+        Symbol* sym = static_cast<Symbol*>(m_sym_pool.malloc());
+        new (sym) Symbol(name);
+        return sym;
+    }
+
+    void delete_symbol(Symbol* sym)
+    {
+        if (sym)
+        {
+            sym->~Symbol();
+            m_sym_pool.free(sym);
+        }
+    }
 
     typedef hamt<std::string, Symbol, SymGetName> SymbolTable;
 
@@ -83,6 +103,10 @@ public:
 
     /// Special symbols, indexed by name.
     SymbolTable special_sym_map;
+
+private:
+    /// Pool for symbols not in the symbol table.
+    boost::pool<> m_sym_pool;
 };
 
 Object::Object(const std::string& src_filename,
@@ -93,7 +117,6 @@ Object::Object(const std::string& src_filename,
       m_cur_section(0),
       m_sections_owner(m_sections),
       m_symbols_owner(m_symbols),
-      m_non_table_syms_owner(m_non_table_syms),
       m_impl(new Impl(false))
 {
 }
@@ -188,6 +211,11 @@ Object::find_symbol(const std::string& name)
 SymbolRef
 Object::get_symbol(const std::string& name)
 {
+    // Don't use pool allocator for symbols in the symbol table.
+    // We have to maintain an ordered link list of all symbols in the symbol
+    // table, so it's easy enough to reuse that for deleting the symbols.
+    // The memory impact of keeping a second linked list (internal to the pool)
+    // seems to outweigh the moderate time savings of pool deletion.
     std::auto_ptr<Symbol> sym(new Symbol(name));
     Symbol* sym2 = m_impl->sym_map.insert(sym.get());
     if (sym2)
@@ -209,8 +237,7 @@ Object::append_symbol(const std::string& name)
 SymbolRef
 Object::add_non_table_symbol(const std::string& name)
 {
-    Symbol* sym = new Symbol(name);
-    m_non_table_syms.push_back(sym);
+    Symbol* sym = m_impl->new_symbol(name);
     return SymbolRef(sym);
 }
 
@@ -242,8 +269,7 @@ Object::symbols_finalize(Errwarns& errwarns, bool undef_extern)
 SymbolRef
 Object::add_special_symbol(const std::string& name)
 {
-    Symbol* sym = new Symbol(name);
-    m_non_table_syms.push_back(sym);
+    Symbol* sym = m_impl->new_symbol(name);
     m_impl->special_sym_map.insert(sym);
     return SymbolRef(sym);
 }
