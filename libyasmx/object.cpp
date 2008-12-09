@@ -491,15 +491,10 @@ public:
     bool step_1e(Errwarns& errwarns);
     bool step_2(Errwarns& errwarns);
 
-    Span::Term* alloc_term()
-    { return static_cast<Span::Term*>(m_term_pool.malloc()); }
-
 private:
     void itree_add(Span& span, Span::Term& term);
     void check_cycle(IntervalTreeNode<Span::Term*> * node, Span& span);
     void term_expand(IntervalTreeNode<Span::Term*> * node, long len_diff);
-
-    boost::pool<> m_term_pool;
 
     std::list<Span*> m_spans;   // ownership list
     std::list<Span*> m_QA, m_QB;
@@ -638,7 +633,6 @@ Span::~Span()
 }
 
 Optimize::Optimize()
-    : m_term_pool(sizeof(Span::Term))
 {
     // Create an placeholder offset setter for spans to point to; this will
     // get updated if/when we actually run into one.
