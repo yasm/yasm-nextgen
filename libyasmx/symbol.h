@@ -128,32 +128,32 @@ public:
     /// be defined before it is used.
     /// @param line     virtual line where referenced
     /// @return Symbol (this).
-    Symbol& use(unsigned long line);
+    void use(unsigned long line);
 
     /// Define as an EQU value.
     /// @param e        EQU value (expression)
     /// @param line     virtual line of EQU
     /// @return Symbol (this).
-    Symbol& define_equ(std::auto_ptr<Expr> e, unsigned long line);
+    void define_equ(std::auto_ptr<Expr> e, unsigned long line);
 
     /// Define as a label.
     /// @param loc      location of label
     /// @param line     virtual line of label
     /// @return Symbol (this).
-    Symbol& define_label(Location loc, unsigned long line);
+    void define_label(Location loc, unsigned long line);
 
     /// Define a special symbol.  Special symbols have no generic associated
     /// data (such as an expression or precbc).
     /// @param vis      symbol visibility
     /// @return Symbol (this).
-    Symbol& define_special(Symbol::Visibility vis, unsigned long line=0);
+    void define_special(Symbol::Visibility vis, unsigned long line=0);
 
     /// Declare external visibility.
     /// @note Not all visibility combinations are allowed.
     /// @param vis      visibility
     /// @param line     virtual line of visibility-setting
     /// @return Symbol (this).
-    Symbol& declare(Visibility vis, unsigned long line);
+    void declare(Visibility vis, unsigned long line);
 
     /// Finalize symbol after parsing stage.  Errors on symbols that
     /// are used but never defined or declared #EXTERN or #COMMON.
@@ -193,13 +193,12 @@ private:
     Location m_loc;
 };
 
-inline Symbol&
+inline void
 Symbol::use(unsigned long line)
 {
     if (m_use_line == 0)
         m_use_line = line;      // set line number of first use
     m_status |= USED;
-    return *this;
 }
 
 inline const Expr*

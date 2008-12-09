@@ -77,34 +77,31 @@ Symbol::define(Type type, unsigned long line)
     }
 }
 
-Symbol&
+void
 Symbol::define_equ(std::auto_ptr<Expr> e, unsigned long line)
 {
     define(EQU, line);
     m_equ.reset(e.release());
     m_status |= VALUED;
-    return *this;
 }
 
-Symbol&
+void
 Symbol::define_label(Location loc, unsigned long line)
 {
     define(LABEL, line);
     m_loc = loc;
     loc.bc->add_symbol(SymbolRef(this)); /// XXX: should we add if not in table?
-    return *this;
 }
 
-Symbol&
+void
 Symbol::define_special(Visibility vis, unsigned long line)
 {
     define(SPECIAL, line);
     m_status |= VALUED;
     m_visibility = vis;
-    return *this;
 }
 
-Symbol&
+void
 Symbol::declare(Visibility vis, unsigned long line)
 {
     // Allowable combinations:
@@ -135,7 +132,6 @@ Symbol::declare(Visibility vis, unsigned long line)
                                      m_name));
         throw err;
     }
-    return *this;
 }
 
 void
