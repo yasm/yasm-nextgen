@@ -490,7 +490,7 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
         // Erase folded integer terms; we already deleted their contents above
         ExprTerms::iterator erasefrom =
             std::remove_if(first_int_term+1, m_terms.end(),
-                           BIND::bind(&ExprTerm::is_type, _1, ExprTerm::INT));
+                           MEMFN::mem_fn(&ExprTerm::is_empty));
         m_terms.erase(erasefrom, m_terms.end());
 
         // Simplify identities and make IDENT if possible.
