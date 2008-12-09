@@ -134,20 +134,20 @@ public:
 
     /// Get the object's "absolute" symbol.  This is
     /// essentially an EQU with no name and value 0, and is used for
-    /// relocating absolute current-position-relative values.
-    /// @see Value::set_curpos_rel().
+    /// relocating subtractive relative values.
+    /// @see Value::sub_rel().
     /// @return Absolute symbol.
-    SymbolRef get_abs_sym();
+    SymbolRef get_absolute_symbol();
 
     /// Find a symbol by name.
     /// @param name         symbol name
     /// @return Symbol matching name, or NULL if no match found.
-    SymbolRef find_sym(const std::string& name);
+    SymbolRef find_symbol(const std::string& name);
 
     /// Get (creating if necessary) a symbol by name.
     /// @param name         symbol name
     /// @return Symbol matching name.
-    SymbolRef get_sym(const std::string& name);
+    SymbolRef get_symbol(const std::string& name);
 
     typedef stdx::ptr_vector<Symbol> Symbols;
     typedef Symbols::iterator symbol_iterator;
@@ -157,7 +157,7 @@ public:
     /// @param n            symbol index
     /// @return Symbol at index.
     /// Can raise std::out_of_range exception if index out of range.
-    SymbolRef get_sym(Symbols::size_type n)
+    SymbolRef get_symbol(Symbols::size_type n)
     { return SymbolRef(&(m_symbols.at(n))); }
 
     symbol_iterator symbols_begin() { return m_symbols.begin(); }
@@ -168,16 +168,15 @@ public:
 
     /// Add an arbitrary symbol to the end of the symbol table.
     /// @note Does /not/ index the symbol by name.
-    /// @param sym      symbol
+    /// @param name     symbol name
     /// @return Reference to symbol.
-    SymbolRef append_symbol(std::auto_ptr<Symbol> sym);
+    SymbolRef append_symbol(const std::string& name);
 
-    /// Have the object manage an arbitrary symbol.  Useful for symbols
-    /// that shouldn't be in the table, but need to have memory management
-    /// tied up with the object (such as curpos symbols).
-    /// @param sym      symbol
+    /// Have the object manage an arbitrary symbol.
+    /// @note Does /not/ index the symbol by name.
+    /// @param name     symbol name
     /// @return Reference to symbol.
-    SymbolRef add_non_table_symbol(std::auto_ptr<Symbol> sym);
+    SymbolRef add_non_table_symbol(const std::string& name);
 
     /// Finalize symbol table after parsing stage.  Checks for symbols that
     /// are used but never defined or declared #EXTERN or #COMMON.
@@ -187,9 +186,9 @@ public:
     void symbols_finalize(Errwarns& errwarns, bool undef_extern);
 
     /// Add a special symbol.
-    /// @param sym      symbol
+    /// @param sym      symbol name
     /// @return Reference to symbol.
-    SymbolRef add_special_sym(std::auto_ptr<Symbol> sym);
+    SymbolRef add_special_symbol(const std::string& name);
 
     /// Find a special symbol.  Special symbols are generally used to generate
     /// special relocation types via the WRT mechanism.
@@ -197,7 +196,7 @@ public:
     /// @param name         symbol name (not including any parser-specific
     ///                     prefix)
     /// @return NULL if unrecognized, otherwise special symbol.
-    SymbolRef find_special_sym(const std::string& name);
+    SymbolRef find_special_symbol(const std::string& name);
 
     /*@null@*/ Section* get_cur_section() { return m_cur_section; }
     const /*@null@*/ Section* get_cur_section() const { return m_cur_section; }

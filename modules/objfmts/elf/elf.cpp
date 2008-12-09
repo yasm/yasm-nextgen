@@ -263,7 +263,7 @@ ElfSymbol::create_symbol(Object& object, const StringTable& strtab) const
 
     if (m_bind == STB_GLOBAL || m_bind == STB_WEAK)
     {
-        sym = object.get_sym(name);
+        sym = object.get_symbol(name);
         if (m_index == SHN_UNDEF)
             sym->declare(Symbol::EXTERN, 0);
         else
@@ -272,7 +272,7 @@ ElfSymbol::create_symbol(Object& object, const StringTable& strtab) const
     else
     {
         // don't index by name, just append
-        sym = object.append_symbol(std::auto_ptr<Symbol>(new Symbol(name)));
+        sym = object.append_symbol(name);
     }
 
     if (m_index == SHN_ABS)

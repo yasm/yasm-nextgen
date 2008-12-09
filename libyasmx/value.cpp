@@ -216,7 +216,7 @@ Value::sub_rel(Object* object, SymbolRef sub)
     if (!m_rel)
     {
         assert(object != 0);
-        m_rel = object->get_abs_sym();
+        m_rel = object->get_absolute_symbol();
         m_sub = sub;
     }
     else

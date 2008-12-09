@@ -167,7 +167,7 @@ dir_extern(Object& object,
            NameValues& objext_namevals,
            unsigned long line)
 {
-    SymbolRef sym = object.get_sym(namevals.front().get_id());
+    SymbolRef sym = object.get_symbol(namevals.front().get_id());
     sym->declare(Symbol::EXTERN, line);
 
     if (!objext_namevals.empty())
@@ -180,7 +180,7 @@ dir_global(Object& object,
            NameValues& objext_namevals,
            unsigned long line)
 {
-    SymbolRef sym = object.get_sym(namevals.front().get_id());
+    SymbolRef sym = object.get_symbol(namevals.front().get_id());
     sym->declare(Symbol::GLOBAL, line);
 
     if (!objext_namevals.empty())
@@ -198,7 +198,7 @@ dir_common(Object& object,
     if (!namevals[1].is_expr())
         throw SyntaxError(N_("common size is not an expression"));
 
-    SymbolRef sym = object.get_sym(namevals.front().get_id());
+    SymbolRef sym = object.get_symbol(namevals.front().get_id());
     sym->declare(Symbol::COMMON, line);
 
     set_common_size(*sym, namevals[1].get_expr(object, line));

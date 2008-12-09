@@ -122,7 +122,7 @@ NameValue::get_expr(Object& object, unsigned long line) const
     {
         case ID:
         {
-            SymbolRef sym = object.get_sym(get_id());
+            SymbolRef sym = object.get_symbol(get_id());
             sym->use(line);
             return std::auto_ptr<Expr>(new Expr(sym, line));
         }
@@ -140,7 +140,7 @@ NameValue::release_expr(Object& object, unsigned long line)
     {
         case ID:
         {
-            SymbolRef sym = object.get_sym(get_id());
+            SymbolRef sym = object.get_symbol(get_id());
             sym->use(line);
             return std::auto_ptr<Expr>(new Expr(sym, line));
         }

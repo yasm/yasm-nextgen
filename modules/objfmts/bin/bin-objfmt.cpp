@@ -408,17 +408,17 @@ BinObject::append_section(const std::string& name, unsigned long line)
     // Initialize section data and symbols.
     std::auto_ptr<BinSectionData> bsd(new BinSectionData());
 
-    SymbolRef start = m_object->get_sym("section."+name+".start");
+    SymbolRef start = m_object->get_symbol("section."+name+".start");
     start->declare(Symbol::EXTERN, line);
     start->add_assoc_data(BinSymbolData::key, std::auto_ptr<AssocData>
         (new BinSymbolData(*section, *bsd, BinSymbolData::START)));
 
-    SymbolRef vstart = m_object->get_sym("section."+name+".vstart");
+    SymbolRef vstart = m_object->get_symbol("section."+name+".vstart");
     vstart->declare(Symbol::EXTERN, line);
     vstart->add_assoc_data(BinSymbolData::key, std::auto_ptr<AssocData>
         (new BinSymbolData(*section, *bsd, BinSymbolData::VSTART)));
 
-    SymbolRef length = m_object->get_sym("section."+name+".length");
+    SymbolRef length = m_object->get_symbol("section."+name+".length");
     length->declare(Symbol::EXTERN, line);
     length->add_assoc_data(BinSymbolData::key, std::auto_ptr<AssocData>
         (new BinSymbolData(*section, *bsd, BinSymbolData::LENGTH)));

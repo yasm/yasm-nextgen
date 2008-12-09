@@ -112,11 +112,10 @@ create_elf_machine(const Arch& arch, ElfClass cls)
 void
 add_ssym(Object& object, const SpecialSymbolData& ssym)
 {
-    std::auto_ptr<Symbol> sym(new Symbol(ssym.name));
+    SymbolRef sym = object.add_special_symbol(ssym.name);
     sym->define_special(Symbol::EXTERN);
     sym->add_assoc_data(ElfSpecialSymbol::key,
         std::auto_ptr<AssocData>(new ElfSpecialSymbol(ssym)));
-    object.add_special_sym(sym);
 }
 
 }}} // namespace yasm::objfmt::elf

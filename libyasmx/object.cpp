@@ -164,9 +164,9 @@ Object::find_section(const std::string& name)
 }
 
 SymbolRef
-Object::get_abs_sym()
+Object::get_absolute_symbol()
 {
-    SymbolRef sym = get_sym("");
+    SymbolRef sym = get_symbol("");
 
     // If we already defined it, we're done.
     if (sym->get_status() & Symbol::DEFINED)
@@ -180,13 +180,13 @@ Object::get_abs_sym()
 }
 
 SymbolRef
-Object::find_sym(const std::string& name)
+Object::find_symbol(const std::string& name)
 {
     return SymbolRef(m_impl->sym_map.find(name));
 }
 
 SymbolRef
-Object::get_sym(const std::string& name)
+Object::get_symbol(const std::string& name)
 {
     std::auto_ptr<Symbol> sym(new Symbol(name));
     Symbol* sym2 = m_impl->sym_map.insert(sym.get());
@@ -199,19 +199,19 @@ Object::get_sym(const std::string& name)
 }
 
 SymbolRef
-Object::append_symbol(std::auto_ptr<Symbol> sym)
+Object::append_symbol(const std::string& name)
 {
-    Symbol* sptr = sym.get();
-    m_symbols.push_back(sym.release());
-    return SymbolRef(sptr);
+    Symbol* sym = new Symbol(name);
+    m_symbols.push_back(sym);
+    return SymbolRef(sym);
 }
 
 SymbolRef
-Object::add_non_table_symbol(std::auto_ptr<Symbol> sym)
+Object::add_non_table_symbol(const std::string& name)
 {
-    Symbol* sptr = sym.get();
-    m_non_table_syms.push_back(sym.release());
-    return SymbolRef(sptr);
+    Symbol* sym = new Symbol(name);
+    m_non_table_syms.push_back(sym);
+    return SymbolRef(sym);
 }
 
 void
@@ -240,16 +240,16 @@ Object::symbols_finalize(Errwarns& errwarns, bool undef_extern)
 }
 
 SymbolRef
-Object::add_special_sym(std::auto_ptr<Symbol> sym)
+Object::add_special_symbol(const std::string& name)
 {
-    Symbol* sptr = sym.get();
-    m_impl->special_sym_map.insert(sptr);
-    m_non_table_syms.push_back(sym.release());
-    return SymbolRef(sptr);
+    Symbol* sym = new Symbol(name);
+    m_non_table_syms.push_back(sym);
+    m_impl->special_sym_map.insert(sym);
+    return SymbolRef(sym);
 }
 
 SymbolRef
-Object::find_special_sym(const std::string& name)
+Object::find_special_symbol(const std::string& name)
 {
     return SymbolRef(m_impl->special_sym_map.find(name));
 }

@@ -339,7 +339,7 @@ NasmParser::parse_line()
                     throw SyntaxError(String::compose(
                         N_("expression expected after %1"), "EQU"));
                 }
-                m_object->get_sym(name)->define_equ(e, get_cur_line());
+                m_object->get_symbol(name)->define_equ(e, get_cur_line());
                 break;
             }
 
@@ -951,7 +951,7 @@ NasmParser::parse_expr6(ExprType type)
             break;
         case ID:
         {
-            SymbolRef sym = m_object->get_sym(ID_val);
+            SymbolRef sym = m_object->get_symbol(ID_val);
             sym->use(get_cur_line());
             e.reset(new Expr(sym));
             break;
@@ -1012,7 +1012,7 @@ NasmParser::parse_expr6(ExprType type)
         case SPECIAL_ID:
         {
             SymbolRef sym =
-                m_object->find_special_sym(ID_val.c_str()+2);
+                m_object->find_special_symbol(ID_val.c_str()+2);
             if (sym)
             {
                 e.reset(new Expr(sym));
@@ -1024,7 +1024,7 @@ NasmParser::parse_expr6(ExprType type)
         case LOCAL_ID:
         case NONLOCAL_ID:
         {
-            SymbolRef sym = m_object->get_sym(ID_val);
+            SymbolRef sym = m_object->get_symbol(ID_val);
             sym->use(get_cur_line());
             e.reset(new Expr(sym));
             break;
@@ -1035,8 +1035,7 @@ NasmParser::parse_expr6(ExprType type)
                 e.reset(m_abspos->clone());
             else
             {
-                SymbolRef sym = m_object->add_non_table_symbol(
-                    std::auto_ptr<Symbol>(new Symbol("$")));
+                SymbolRef sym = m_object->add_non_table_symbol("$");
                 m_bc = &m_container->fresh_bytecode();
                 Location loc = {m_bc, m_bc->get_fixed_len()};
                 sym->define_label(loc, get_cur_line());
@@ -1049,8 +1048,7 @@ NasmParser::parse_expr6(ExprType type)
                 e.reset(m_absstart->clone());
             else
             {
-                SymbolRef sym = m_object->add_non_table_symbol(
-                    std::auto_ptr<Symbol>(new Symbol("$$")));
+                SymbolRef sym = m_object->add_non_table_symbol("$$");
                 Location loc = {&m_container->bcs_first(), 0};
                 sym->define_label(loc, get_cur_line());
                 e.reset(new Expr(sym));
@@ -1069,7 +1067,7 @@ NasmParser::define_label(const std::string& name, bool local)
     if (!local)
         m_locallabel_base = name;
 
-    SymbolRef sym = m_object->get_sym(name);
+    SymbolRef sym = m_object->get_symbol(name);
     if (m_abspos.get() != 0)
         sym->define_equ(Expr::Ptr(m_abspos->clone()), get_cur_line());
     else

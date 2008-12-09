@@ -416,8 +416,7 @@ void
 ElfObject::init_symbols(const std::string& parser)
 {
     // Add .file symbol
-    SymbolRef filesym = m_object->append_symbol(std::auto_ptr<Symbol>(
-        new Symbol(".file")));
+    SymbolRef filesym = m_object->append_symbol(".file");
     filesym->define_special(Symbol::LOCAL);
 
     std::auto_ptr<ElfSymbol> elfsym(new ElfSymbol());
@@ -432,9 +431,8 @@ ElfObject::init_symbols(const std::string& parser)
     // Create ..sym special symbol (NASM only)
     if (String::nocase_equal(parser, "nasm"))
     {
-        std::auto_ptr<Symbol> sym(new Symbol("sym"));
-        sym->define_special(Symbol::EXTERN);
-        m_dotdotsym = m_object->add_special_sym(sym);
+        m_dotdotsym = m_object->add_special_symbol("sym");
+        m_dotdotsym->define_special(Symbol::EXTERN);
     }
 
     // Create machine-specific special symbols
@@ -1214,7 +1212,7 @@ ElfObject::append_section(const std::string& name, unsigned long line)
 
     // Define a label for the start of the section
     Location start = {&section->bcs_first(), 0};
-    SymbolRef sym = m_object->get_sym(name);
+    SymbolRef sym = m_object->get_symbol(name);
     sym->define_label(start, line);
 
     // Add ELF data to the section
@@ -1394,7 +1392,7 @@ ElfObject::dir_type(Object& object,
 {
     assert(m_object == &object);
 
-    SymbolRef sym = object.get_sym(namevals.front().get_id());
+    SymbolRef sym = object.get_symbol(namevals.front().get_id());
     sym->use(line);
 
     ElfSymbol& elfsym = build_symbol(*sym);
@@ -1427,7 +1425,7 @@ ElfObject::dir_size(Object& object,
 {
     assert(m_object == &object);
 
-    SymbolRef sym = object.get_sym(namevals.front().get_id());
+    SymbolRef sym = object.get_symbol(namevals.front().get_id());
     sym->use(line);
 
     // Pull new size from param
@@ -1449,7 +1447,7 @@ ElfObject::dir_weak(Object& object,
 {
     assert(m_object == &object);
 
-    SymbolRef sym = object.get_sym(namevals.front().get_id());
+    SymbolRef sym = object.get_symbol(namevals.front().get_id());
     sym->declare(Symbol::GLOBAL, line);
 
     ElfSymbol& elfsym = build_symbol(*sym);

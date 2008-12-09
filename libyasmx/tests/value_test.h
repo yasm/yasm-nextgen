@@ -207,7 +207,7 @@ public:
 
         v = Value(4);
         v.sub_rel(&object, sym2);
-        TS_ASSERT_EQUALS(v.m_rel, object.get_abs_sym());
+        TS_ASSERT_EQUALS(v.m_rel, object.get_absolute_symbol());
         TS_ASSERT_EQUALS(v.m_sub, sym2);
     }
 

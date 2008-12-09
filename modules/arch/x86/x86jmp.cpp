@@ -169,8 +169,7 @@ X86Jmp::finalize(Bytecode& bc)
     // difference in calc_len() and tobytes().
     Object* object = bc.get_container()->get_object();
 
-    SymbolRef sub_sym = object->add_non_table_symbol(
-        std::auto_ptr<Symbol>(new Symbol("$")));
+    SymbolRef sub_sym = object->add_non_table_symbol("$");
     Location sub_loc = {&bc, bc.get_fixed_len()};
     sub_sym->define_label(sub_loc, bc.get_line());
     m_target.sub_rel(object, sub_sym);

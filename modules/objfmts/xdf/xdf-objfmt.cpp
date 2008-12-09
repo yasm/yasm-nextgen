@@ -941,7 +941,7 @@ XdfObject::read(std::istream& is)
         std::string symname =
             reinterpret_cast<const char*>(&strtab.at(name_strtab_off));
 
-        SymbolRef sym = m_object->get_sym(symname);
+        SymbolRef sym = m_object->get_symbol(symname);
         if ((flags & XdfSymbolData::XDF_GLOBAL) != 0)
             sym->declare(Symbol::GLOBAL, 0);
         else if ((flags & XdfSymbolData::XDF_EXTERN) != 0)
@@ -995,10 +995,10 @@ XdfObject::read(std::istream& is)
             XdfReloc::Size size = static_cast<XdfReloc::Size>(read_u8(relocs));
             unsigned char shift = read_u8(relocs);
             read_u8(relocs);    // flags; ignored
-            SymbolRef sym = m_object->get_sym(sym_index);
+            SymbolRef sym = m_object->get_symbol(sym_index);
             SymbolRef basesym(0);
             if (type == XdfReloc::XDF_WRT)
-                basesym = m_object->get_sym(basesym_index);
+                basesym = m_object->get_symbol(basesym_index);
             sect->add_reloc(std::auto_ptr<Reloc>(
                 new XdfReloc(addr, sym, basesym, type, size, shift)));
         }
@@ -1022,7 +1022,7 @@ XdfObject::append_section(const std::string& name, unsigned long line)
 
     // Define a label for the start of the section
     Location start = {&section->bcs_first(), 0};
-    SymbolRef sym = m_object->get_sym(name);
+    SymbolRef sym = m_object->get_symbol(name);
     sym->define_label(start, line);
 
     // Add XDF data to the section
