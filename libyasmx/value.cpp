@@ -183,6 +183,18 @@ Value::clear()
     m_size = 0;
 }
 
+void
+Value::clear_rel()
+{
+    m_rel = SymbolRef(0);
+    m_wrt = SymbolRef(0);
+    m_sub = SymbolRef(0);
+    m_seg_of = false;
+    m_rshift = 0;
+    m_ip_rel = false;
+    m_section_rel = false;
+}
+
 Value&
 Value::operator= (const Value& rhs)
 {
@@ -746,17 +758,17 @@ operator<< (marg_ostream& os, const Value& value)
     else
         os << *value.get_abs();
     os << '\n';
-    if (value.m_rel)
+    if (value.is_relative())
     {
         os << "Relative to=";
         os << (value.m_seg_of ? "SEG " : "");
-        os << value.m_rel->get_name();
-        if (value.m_sub)
-            os << " - " << value.m_sub->get_name();
+        os << value.get_rel()->get_name();
+        if (value.has_sub())
+            os << " - " << value.get_sub()->get_name();
         os << '\n';
-        if (value.m_wrt)
+        if (value.is_wrt())
         {
-            os << "(With respect to=" << value.m_wrt->get_name() << ")\n";
+            os << "(With respect to=" << value.get_wrt()->get_name() << ")\n";
         }
         if (value.m_rshift > 0)
         {

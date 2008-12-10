@@ -176,8 +176,8 @@ X86Jmp::finalize(Bytecode& bc)
     m_target.m_ip_rel = true;
 
     Location target_loc;
-    if (m_target.m_rel
-        && (!m_target.m_rel->get_label(&target_loc)
+    if (m_target.is_relative()
+        && (!m_target.get_rel()->get_label(&target_loc)
             || target_loc.bc->get_container() != bc.get_container()))
     {
         // External or out of segment, so we can't check distance.

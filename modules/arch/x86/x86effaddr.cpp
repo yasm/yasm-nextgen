@@ -671,7 +671,7 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
         m_need_nonzero_len = true;
     }
 
-    if (m_disp.m_rel)
+    if (m_disp.is_relative())
     {
         // Relative displacement; basically all object formats need non-byte
         // for relocation here, so just do that. (TODO: handle this

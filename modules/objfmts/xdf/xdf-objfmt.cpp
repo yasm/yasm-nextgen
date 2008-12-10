@@ -327,16 +327,16 @@ XdfReloc::XdfReloc(const IntNum& addr,
 
 inline
 XdfReloc::XdfReloc(const IntNum& addr, const Value& value, bool ip_rel)
-    : Reloc(addr, value.m_rel)
+    : Reloc(addr, value.get_rel())
     , m_base(0)
     , m_size(static_cast<Size>(value.m_size/8))
     , m_shift(value.m_rshift)
 {
     if (value.m_seg_of)
         m_type = XDF_SEG;
-    else if (value.m_wrt)
+    else if (value.is_wrt())
     {
-        m_base = value.m_wrt;
+        m_base = value.get_wrt();
         m_type = XDF_WRT;
     }
     else if (ip_rel)
@@ -538,7 +538,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
             pc_rel = true;
             intn += intn2;
         }
-        else if (value.m_sub)
+        else if (value.has_sub())
             throw TooComplexError(N_("xdf: relocation too complex"));
 
         std::auto_ptr<XdfReloc>

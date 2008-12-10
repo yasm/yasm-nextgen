@@ -89,6 +89,11 @@ public:
     /// value in other objects.
     void clear();
 
+    /// Clear just the relative portion of the value.  Clears additive and
+    /// subtractive relative portions, WRT symbol, m_seg_of, m_rshift,
+    /// m_ip_rel, and m_section_rel.
+    void clear_rel();
+
     /// Add a subtractive relative to the value.  Commonly used to subtract
     /// the current assembly position.
     /// Creates absolute symbol to refer to if no existing additive relative
@@ -157,6 +162,18 @@ public:
     /// Add expression to the absolute portion of the value.
     void add_abs(std::auto_ptr<Expr> delta);
 
+    /// Get the additive relative portion of the value.
+    /// @return Relative symbol, or NULL if there is no relative portion.
+    SymbolRef get_rel() const { return m_rel; }
+
+    /// Get the WRT portion of the value.
+    /// @return WRT symbol, or NULL if there isn't one.
+    SymbolRef get_wrt() const { return m_wrt; }
+
+    /// Get the subtractive relative portion of the value.
+    /// @return Subtractive symbol, or NULL if there isn't one.
+    SymbolRef get_sub() const { return m_sub; }
+
     /// Determine if the value is relative.
     /// @return True if value has a relative portion, false if not.
     bool is_relative() const { return m_rel != 0; }
@@ -164,6 +181,10 @@ public:
     /// Determine if the value is WRT anything.
     /// @return True if value has WRT portion, false if not.
     bool is_wrt() const { return m_wrt != 0; }
+
+    /// Determine if there is a subtractive relative portion of the value.
+    /// @return True if value has a subtractive relative portion, false if not.
+    bool has_sub() const { return m_sub != 0; }
 
     /// Maximum value of #m_rshift.
     static const unsigned int RSHIFT_MAX = 127;
@@ -176,7 +197,6 @@ private:
     /// absolute portion (e.g. the absolute portion is 0).
     Expr* m_abs;    // can't use scoped_ptr as we want to internally modify
 
-public:
     /// The relative portion of the value.  This is the portion that may
     /// need to generate a relocation.  May be NULL if no relative portion.
     SymbolRef m_rel;
@@ -190,6 +210,7 @@ public:
     /// be in m_abs.
     SymbolRef m_sub;
 
+public:
     /// Distance from the end of the value to the next instruction, in bytes.
     /// Used to generate special relocations in some object formats.
     /// Only needs to be set for IP-relative values (m_ip_rel is true).
@@ -204,7 +225,7 @@ public:
     /// portion should be shifted, that must be in the abs expr, not here!
     unsigned int m_rshift : 7;
 
-    /// Indicates that curpos_rel was set due to IP-relative relocation;
+    /// Indicates that the value should be treated as a IP-relative relocation;
     /// in some objfmt/arch combinations (e.g. win64/x86-amd64) this info
     /// is needed to generate special relocations.
     unsigned int m_ip_rel : 1;

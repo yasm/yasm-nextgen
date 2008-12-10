@@ -761,8 +761,8 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
     ElfReloc* reloc = 0;
     if (value.is_relative())
     {
-        SymbolRef sym = value.m_rel;
-        SymbolRef wrt = value.m_wrt;
+        SymbolRef sym = value.get_rel();
+        SymbolRef wrt = value.get_wrt();
 
         if (wrt == m_objfmt.m_dotdotsym)
             wrt = SymbolRef(0);
@@ -799,7 +799,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
             pc_rel = true;
             intn += intn2;
         }
-        else if (value.m_sub)
+        else if (value.has_sub())
             throw TooComplexError(N_("elf: relocation too complex"));
 
         // Create relocation

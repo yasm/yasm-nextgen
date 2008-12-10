@@ -259,17 +259,17 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
         unsigned int rshift = static_cast<unsigned int>(value.m_rshift);
         Expr::Ptr syme(0);
         unsigned long line = loc.bc->get_line();
+        SymbolRef rel = value.get_rel();
 
-        if (value.m_rel->is_abs())
+        if (rel->is_abs())
         {
             syme.reset(new Expr(IntNum(0), line));
         }
-        else if (value.m_rel->get_label(&label_loc)
-                 && label_loc.bc->get_container())
+        else if (rel->get_label(&label_loc) && label_loc.bc->get_container())
         {
-            syme.reset(new Expr(value.m_rel, line));
+            syme.reset(new Expr(rel, line));
         }
-        else if (get_ssym_value(*value.m_rel, &ssymval))
+        else if (get_ssym_value(*rel, &ssymval))
         {
             syme.reset(new Expr(ssymval, line));
         }
@@ -277,11 +277,10 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
             goto done;
 
         // Handle PC-relative
-        if (value.m_sub && value.m_sub->get_label(&label_loc)
+        if (value.has_sub() && value.get_sub()->get_label(&label_loc)
             && label_loc.bc->get_container())
         {
-            syme.reset(new Expr(syme, Op::SUB, value.m_sub, line));
-            value.m_sub = SymbolRef(0);
+            syme.reset(new Expr(syme, Op::SUB, value.get_sub(), line));
         }
 
         if (value.m_rshift > 0)
@@ -289,8 +288,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
 
         // Add into absolute portion
         value.add_abs(syme);
-        value.m_rel = SymbolRef(0);
-        value.m_rshift = 0;
+        value.clear_rel();
     }
 done:
     // Simplify absolute portion of value, transforming symrecs
