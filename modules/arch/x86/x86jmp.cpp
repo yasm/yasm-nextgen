@@ -291,6 +291,7 @@ append_jmp(BytecodeContainer& container,
            const X86Opcode& shortop,
            const X86Opcode& nearop,
            std::auto_ptr<Expr> target,
+           unsigned long line,
            JmpOpcodeSel op_sel)
 {
     Bytecode& bc = container.fresh_bytecode();
@@ -307,6 +308,7 @@ append_jmp(BytecodeContainer& container,
     {
         bc.transform(Bytecode::Contents::Ptr(new X86Jmp(
             common, op_sel, shortop, nearop, target)));
+        bc.set_line(line);
         return;
     }
 
@@ -317,6 +319,7 @@ append_jmp(BytecodeContainer& container,
     common.to_bytes(bytes, 0);
 
     Value targetv(0, target);
+    targetv.set_line(line);
     targetv.m_jump_target = true;
     targetv.m_sign = 1;
     if (op_sel == JMP_SHORT)

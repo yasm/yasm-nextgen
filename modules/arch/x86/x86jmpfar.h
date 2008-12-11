@@ -50,7 +50,8 @@ void append_jmpfar(BytecodeContainer& container,
                    const X86Common& common,
                    const X86Opcode& opcode,
                    std::auto_ptr<Expr> segment,
-                   std::auto_ptr<Expr> offset);
+                   std::auto_ptr<Expr> offset,
+                   unsigned long line);
 
 }}} // namespace yasm::arch::x86
 

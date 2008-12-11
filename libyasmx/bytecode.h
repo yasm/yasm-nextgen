@@ -317,24 +317,24 @@ public:
 
     void append_fixed(const Value& val);
     void append_fixed(std::auto_ptr<Value> val);
-    void append_fixed(unsigned int size, std::auto_ptr<Expr> e);
+    void append_fixed(unsigned int size,
+                      std::auto_ptr<Expr> e,
+                      unsigned long line);
 
     /// A fixup consists of a value+offset combination.  0's need to be stored
     /// in m_fixed as placeholders.
     class YASM_LIB_EXPORT Fixup : public Value
     {
     public:
-        Fixup(unsigned int off, const Value& val, unsigned long line);
-        Fixup(unsigned int off, std::auto_ptr<Value> val, unsigned long line);
+        Fixup(unsigned int off, const Value& val);
+        Fixup(unsigned int off, std::auto_ptr<Value> val);
         Fixup(unsigned int off,
               unsigned int size,
               std::auto_ptr<Expr> e,
               unsigned long line);
         void swap(Fixup& oth);
-        unsigned long get_line() const { return m_line; }
         unsigned int get_off() const { return m_off; }
     private:
-        unsigned long m_line;
         unsigned int m_off;
     };
 

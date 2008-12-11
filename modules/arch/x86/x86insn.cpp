@@ -348,7 +348,9 @@ X86Prefix::put(std::ostream& os) const
 #include "x86insns.cpp"
 
 void
-X86Insn::do_append_jmpfar(BytecodeContainer& container, const X86InsnInfo& info)
+X86Insn::do_append_jmpfar(BytecodeContainer& container,
+                          const X86InsnInfo& info,
+                          unsigned long line)
 {
     Operand& op = m_operands.front();
     std::auto_ptr<Expr> imm = op.release_imm();
@@ -372,7 +374,7 @@ X86Insn::do_append_jmpfar(BytecodeContainer& container, const X86InsnInfo& info)
     common.apply_prefixes(info.def_opersize_64, m_prefixes);
     common.finish();
     append_jmpfar(container, common, X86Opcode(info.opcode_len, info.opcode),
-                  segment, imm);
+                  segment, imm, line);
 }
 
 bool
@@ -426,7 +428,9 @@ X86Insn::match_jmp_info(const X86InsnInfo& info, unsigned int opersize,
 }
 
 void
-X86Insn::do_append_jmp(BytecodeContainer& container, const X86InsnInfo& jinfo)
+X86Insn::do_append_jmp(BytecodeContainer& container,
+                       const X86InsnInfo& jinfo,
+                       unsigned long line)
 {
     static const unsigned char size_lookup[] =
         {0, 8, 16, 32, 64, 80, 128, 0, 0};  // 256 not needed
@@ -494,7 +498,7 @@ X86Insn::do_append_jmp(BytecodeContainer& container, const X86InsnInfo& jinfo)
     common.apply_prefixes(jinfo.def_opersize_64, m_prefixes);
     common.finish();
 
-    append_jmp(container, common, shortop, nearop, imm, op_sel);
+    append_jmp(container, common, shortop, nearop, imm, line, op_sel);
 }
 
 bool
@@ -945,7 +949,7 @@ X86Insn::match_error(const unsigned int* size_lookup) const
 }
 
 void
-X86Insn::do_append(BytecodeContainer& container)
+X86Insn::do_append(BytecodeContainer& container, unsigned long line)
 {
     unsigned int size_lookup[] = {0, 8, 16, 32, 64, 80, 128, 256, 0};
     size_lookup[OPS_BITS] = m_mode_bits;
@@ -996,16 +1000,16 @@ X86Insn::do_append(BytecodeContainer& container)
         {
             case OPA_JmpRel:
                 // Shortcut to JmpRel
-                do_append_jmp(container, *info);
+                do_append_jmp(container, *info, line);
                 return;
             case OPA_JmpFar:
                 // Shortcut to JmpFar
-                do_append_jmpfar(container, *info);
+                do_append_jmpfar(container, *info, line);
                 return;
         }
     }
 
-    do_append_general(container, *info, size_lookup);
+    do_append_general(container, *info, size_lookup, line);
 }
 
 class BuildGeneral
@@ -1021,7 +1025,9 @@ public:
     void apply_operands(X86Arch::ParserSelect parser,
                         Insn::Operands& operands);
     void apply_segregs(const Insn::SegRegs& segregs);
-    void finish(BytecodeContainer& container, const Insn::Prefixes& prefixes);
+    void finish(BytecodeContainer& container,
+                const Insn::Prefixes& prefixes,
+                unsigned long line);
 
 private:
     void apply_operand(const X86InfoOperand& info_op, Insn::Operand& op);
@@ -1461,7 +1467,8 @@ BuildGeneral::apply_segregs(const Insn::SegRegs& segregs)
 
 void
 BuildGeneral::finish(BytecodeContainer& container,
-                     const Insn::Prefixes& prefixes)
+                     const Insn::Prefixes& prefixes,
+                     unsigned long line)
 {
     std::auto_ptr<Value> imm_val(0);
 
@@ -1549,13 +1556,15 @@ BuildGeneral::finish(BytecodeContainer& container,
                    m_special_prefix,
                    m_rex,
                    m_postop,
-                   m_default_rel);
+                   m_default_rel,
+                   line);
 }
 
 void
 X86Insn::do_append_general(BytecodeContainer& container,
                            const X86InsnInfo& info,
-                           const unsigned int* size_lookup)
+                           const unsigned int* size_lookup,
+                           unsigned long line)
 {
     BuildGeneral buildgen(info, m_mode_bits, size_lookup, m_force_strict,
                           m_default_rel);
@@ -1565,7 +1574,7 @@ X86Insn::do_append_general(BytecodeContainer& container,
     buildgen.apply_operands(static_cast<X86Arch::ParserSelect>(m_parser),
                             m_operands);
     buildgen.apply_segregs(m_segregs);
-    buildgen.finish(container, m_prefixes);
+    buildgen.finish(container, m_prefixes, line);
 }
 
 // Static parse data structure for instructions

@@ -76,7 +76,8 @@ void append_general(BytecodeContainer& container,
                     unsigned char special_prefix,
                     unsigned char rex,
                     GeneralPostOp postop,
-                    bool default_rel);
+                    bool default_rel,
+                    unsigned long line);
 
 }}} // namespace yasm::arch::x86
 

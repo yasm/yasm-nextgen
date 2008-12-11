@@ -257,7 +257,7 @@ void
 Bytecode::append_fixed(const Value& val)
 {
     unsigned int valsize = val.m_size/8;
-    m_fixed_fixups.push_back(Fixup(m_fixed.size(), val, m_line));
+    m_fixed_fixups.push_back(Fixup(m_fixed.size(), val));
     m_fixed.write(valsize, 0);
 }
 
@@ -265,26 +265,26 @@ void
 Bytecode::append_fixed(std::auto_ptr<Value> val)
 {
     unsigned int valsize = val->m_size/8;
-    m_fixed_fixups.push_back(Fixup(m_fixed.size(), val, m_line));
+    m_fixed_fixups.push_back(Fixup(m_fixed.size(), val));
     m_fixed.write(valsize, 0);
 }
 
 void
-Bytecode::append_fixed(unsigned int size, std::auto_ptr<Expr> e)
+Bytecode::append_fixed(unsigned int size,
+                       std::auto_ptr<Expr> e,
+                       unsigned long line)
 {
-    m_fixed_fixups.push_back(Fixup(m_fixed.size(), size*8, e, m_line));
+    m_fixed_fixups.push_back(Fixup(m_fixed.size(), size*8, e, line));
     m_fixed.write(size, 0);
 }
 
-Bytecode::Fixup::Fixup(unsigned int off, const Value& val, unsigned long line)
-    : Value(val), m_line(line), m_off(off)
+Bytecode::Fixup::Fixup(unsigned int off, const Value& val)
+    : Value(val), m_off(off)
 {
 }
 
-Bytecode::Fixup::Fixup(unsigned int off,
-                       std::auto_ptr<Value> val,
-                       unsigned long line)
-    : Value(0), m_line(line), m_off(off)
+Bytecode::Fixup::Fixup(unsigned int off, std::auto_ptr<Value> val)
+    : Value(0), m_off(off)
 {
     Value::swap(*val);
 }
@@ -293,15 +293,15 @@ Bytecode::Fixup::Fixup(unsigned int off,
                        unsigned int size,
                        std::auto_ptr<Expr> e,
                        unsigned long line)
-    : Value(size, e), m_line(line), m_off(off)
+    : Value(size, e), m_off(off)
 {
+    set_line(line);
 }
 
 void
 Bytecode::Fixup::swap(Fixup& oth)
 {
     Value::swap(oth);
-    std::swap(m_line, oth.m_line);
     std::swap(m_off, oth.m_off);
 }
 

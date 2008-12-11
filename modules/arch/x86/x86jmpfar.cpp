@@ -45,7 +45,8 @@ void append_jmpfar(BytecodeContainer& container,
                    const X86Common& common,
                    const X86Opcode& opcode,
                    std::auto_ptr<Expr> segment,
-                   std::auto_ptr<Expr> offset)
+                   std::auto_ptr<Expr> offset,
+                   unsigned long line)
 {
     Bytecode& bc = container.fresh_bytecode();
     Bytes& bytes = bc.get_fixed();
@@ -55,8 +56,8 @@ void append_jmpfar(BytecodeContainer& container,
 
     // Absolute displacement: segment and offset
     unsigned int size = (common.m_opersize == 16) ? 2 : 4;
-    bc.append_fixed(size, offset);
-    bc.append_fixed(2, segment);
+    bc.append_fixed(size, offset, line);
+    bc.append_fixed(2, segment, line);
 }
 
 }}} // namespace yasm::arch::x86

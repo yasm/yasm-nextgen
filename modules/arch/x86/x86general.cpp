@@ -560,7 +560,8 @@ append_general(BytecodeContainer& container,
                unsigned char special_prefix,
                unsigned char rex,
                GeneralPostOp postop,
-               bool default_rel)
+               bool default_rel,
+               unsigned long line)
 {
     Bytecode& bc = container.fresh_bytecode();
 
@@ -577,6 +578,7 @@ append_general(BytecodeContainer& container,
     // TODO: optimize EA case
     bc.transform(Bytecode::Contents::Ptr(new X86General(
         common, opcode, ea, imm, special_prefix, rex, postop, default_rel)));
+    bc.set_line(line);
 }
 
 }}} // namespace yasm::arch::x86

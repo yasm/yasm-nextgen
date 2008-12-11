@@ -186,6 +186,14 @@ public:
     /// @return True if value has a subtractive relative portion, false if not.
     bool has_sub() const { return m_sub != 0; }
 
+    /// Set line number.
+    /// @param line     Virtual line number
+    void set_line(unsigned long line) { m_line = line; }
+
+    /// Get line number.
+    /// @return Virtual line number.
+    unsigned long get_line() const { return m_line; }
+
     /// Maximum value of #m_rshift.
     static const unsigned int RSHIFT_MAX = 127;
 
@@ -209,6 +217,9 @@ private:
     /// or other modification of m_rel, differences in the same section should
     /// be in m_abs.
     SymbolRef m_sub;
+
+    /// Line number.
+    unsigned long m_line;
 
 public:
     /// Distance from the end of the value to the next instruction, in bytes.

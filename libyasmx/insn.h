@@ -282,7 +282,7 @@ public:
     virtual void put(marg_ostream& os) const = 0;
 
     /// Append instruction to a bytecode container.
-    void append(BytecodeContainer& container);
+    void append(BytecodeContainer& container, unsigned long line);
 
     virtual Insn* clone() const = 0;
 
@@ -291,7 +291,8 @@ protected:
     Insn(const Insn& rhs);
 
     /// Append instruction to a section.
-    virtual void do_append(BytecodeContainer& container) = 0;
+    virtual void do_append(BytecodeContainer& container,
+                           unsigned long line) = 0;
 
     /// Operands.
     Operands m_operands;

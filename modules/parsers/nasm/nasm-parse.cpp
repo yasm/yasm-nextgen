@@ -167,7 +167,6 @@ NasmParser::do_parse()
             m_bc = bc.get();
         else
             m_bc = &m_object->get_cur_section()->fresh_bytecode();
-        m_bc->set_line(cur_line);
         Location loc = {m_bc, m_bc->get_fixed_len()};
 
         try
@@ -459,7 +458,7 @@ NasmParser::parse_exp()
     Insn::Ptr insn = parse_instr();
     if (insn.get() != 0)
     {
-        insn->append(*m_container);
+        insn->append(*m_container, get_cur_line());
         return true;
     }
 
@@ -488,7 +487,7 @@ NasmParser::parse_exp()
                     Expr::Ptr e = parse_bexpr(DV_EXPR);
                     if (e.get() != 0)
                         append_data(*m_container, e, size,
-                                    *m_object->get_arch());
+                                    *m_object->get_arch(), get_cur_line());
                     else
                         throw SyntaxError(N_("expression or string expected"));
                 }

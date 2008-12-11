@@ -68,11 +68,13 @@ void append_data(BytecodeContainer& container,
 /// @param expr         data value
 /// @param size         storage size (in bytes) for the data value
 /// @param arch         architecture
+/// @param line         virtual line number
 YASM_LIB_EXPORT
 void append_data(BytecodeContainer& container,
                  std::auto_ptr<Expr> expr,
                  unsigned int size,
-                 const Arch& arch);
+                 const Arch& arch,
+                 unsigned long line);
 
 /// Append a string value to the end of a section.
 /// @param sect         section

@@ -63,21 +63,25 @@ public:
     X86Insn* clone() const;
 
 protected:
-    void do_append(BytecodeContainer& container);
+    void do_append(BytecodeContainer& container, unsigned long line);
 
 private:
     void do_append_jmpfar(BytecodeContainer& container,
-                          const X86InsnInfo& info);
+                          const X86InsnInfo& info,
+                          unsigned long line);
 
     bool match_jmp_info(const X86InsnInfo& info,
                         unsigned int opersize,
                         X86Opcode& shortop,
                         X86Opcode& nearop) const;
-    void do_append_jmp(BytecodeContainer& container, const X86InsnInfo& jinfo);
+    void do_append_jmp(BytecodeContainer& container,
+                       const X86InsnInfo& jinfo,
+                       unsigned long line);
 
     void do_append_general(BytecodeContainer& container,
                            const X86InsnInfo& info,
-                           const unsigned int* size_lookup);
+                           const unsigned int* size_lookup,
+                           unsigned long line);
 
     const X86InsnInfo* find_match(const unsigned int* size_lookup, int bypass)
         const;

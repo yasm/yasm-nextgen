@@ -62,7 +62,8 @@ void
 append_data(BytecodeContainer& container,
             std::auto_ptr<Expr> expr,
             unsigned int size,
-            const Arch& arch)
+            const Arch& arch,
+            unsigned long line)
 {
     expr->simplify();
     if (IntNum* intn = expr->get_intnum())
@@ -71,7 +72,7 @@ append_data(BytecodeContainer& container,
         return;
     }
     Bytecode& bc = container.fresh_bytecode();
-    bc.append_fixed(size, expr);
+    bc.append_fixed(size, expr, line);
 }
 
 void
