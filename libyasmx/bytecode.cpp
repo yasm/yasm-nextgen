@@ -220,8 +220,17 @@ Bytecode::output(BytecodeOutput& bc_out)
         // Make a copy of the value to ensure things like
         // "TIMES x JMP label" work.
         Value vcopy = *i;
-        bc_out.output(vcopy, vbytes, loc, i->m_sign ? -1 : 1);
-        warn_update_line(i->get_line());
+        try
+        {
+            bc_out.output(vcopy, vbytes, loc, i->m_sign ? -1 : 1);
+        }
+        catch (Error& err)
+        {
+            // associate the error with the value, not the bytecode, line
+            err.m_line = vcopy.get_line();
+            throw;
+        }
+        warn_update_line(vcopy.get_line());
 
         last = off + i->m_size/8;
     }
