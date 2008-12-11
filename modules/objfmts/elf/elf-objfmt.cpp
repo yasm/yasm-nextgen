@@ -547,7 +547,7 @@ ElfObject::build_global(Symbol& sym)
     elfsym.set_type(static_cast<ElfSymbolType>(type));
     elfsym.set_visibility(vis);
     if (size.get() != 0)
-        elfsym.set_size(size);
+        elfsym.set_size(size, sym.get_decl_line());
 }
 
 void
@@ -590,7 +590,8 @@ ElfObject::build_common(Symbol& sym)
     ElfSymbol& elfsym = build_symbol(sym);
     elfsym.set_index(SHN_COMMON);
     elfsym.set_binding(STB_GLOBAL);
-    elfsym.set_size(Expr::Ptr(get_common_size(sym)->clone()));
+    elfsym.set_size(Expr::Ptr(get_common_size(sym)->clone()),
+                    sym.get_decl_line());
     elfsym.set_value(addralign);
 }
 
@@ -1436,7 +1437,7 @@ ElfObject::dir_size(Object& object,
         throw SyntaxError(N_("size must be an expression"));
 
     ElfSymbol& elfsym = build_symbol(*sym);
-    elfsym.set_size(size);
+    elfsym.set_size(size, line);
 }
 
 void

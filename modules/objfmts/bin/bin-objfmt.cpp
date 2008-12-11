@@ -117,6 +117,7 @@ private:
     std::string m_map_filename;
 
     util::scoped_ptr<Expr> m_org;
+    unsigned long m_org_line;
 };
 
 BinObject::BinObject()
@@ -258,20 +259,19 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
         IntNum ssymval;
         unsigned int rshift = static_cast<unsigned int>(value.m_rshift);
         Expr::Ptr syme(0);
-        unsigned long line = loc.bc->get_line();
         SymbolRef rel = value.get_rel();
 
         if (rel->is_abs())
         {
-            syme.reset(new Expr(IntNum(0), line));
+            syme.reset(new Expr(IntNum(0)));
         }
         else if (rel->get_label(&label_loc) && label_loc.bc->get_container())
         {
-            syme.reset(new Expr(rel, line));
+            syme.reset(new Expr(rel));
         }
         else if (get_ssym_value(*rel, &ssymval))
         {
-            syme.reset(new Expr(ssymval, line));
+            syme.reset(new Expr(ssymval));
         }
         else
             goto done;
@@ -280,11 +280,11 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
         if (value.has_sub() && value.get_sub()->get_label(&label_loc)
             && label_loc.bc->get_container())
         {
-            syme.reset(new Expr(syme, Op::SUB, value.get_sub(), line));
+            syme.reset(new Expr(syme, Op::SUB, value.get_sub()));
         }
 
         if (value.m_rshift > 0)
-            syme.reset(new Expr(syme, Op::SHR, IntNum(rshift), line));
+            syme.reset(new Expr(syme, Op::SHR, IntNum(rshift)));
 
         // Add into absolute portion
         value.add_abs(syme);
@@ -348,13 +348,13 @@ BinObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
         const IntNum* orgi = m_org->get_intnum();
         if (!orgi)
         {
-            errwarns.propagate(m_org->get_line(),
+            errwarns.propagate(m_org_line,
                 TooComplexError(N_("ORG expression is too complex")));
             return;
         }
         if (orgi->sign() < 0)
         {
-            errwarns.propagate(m_org->get_line(),
+            errwarns.propagate(m_org_line,
                 ValueError(N_("ORG expression is negative")));
             return;
         }
@@ -498,9 +498,15 @@ BinObject::dir_section(Object& object,
     helpers(++nvs.begin(), nvs.end(), dir_nameval_warn);
 
     if (start.get() != 0)
+    {
         bsd->start.reset(start.release());
+        bsd->start_line = line;
+    }
     if (vstart.get() != 0)
+    {
         bsd->vstart.reset(vstart.release());
+        bsd->vstart_line = line;
+    }
 
     if (bsd->start.get() != 0 && !bsd->follows.empty())
     {
@@ -557,6 +563,7 @@ BinObject::dir_org(Object& object,
     if (!nv.is_expr())
         throw SyntaxError(N_("argument to ORG must be expression"));
     m_org.reset(nv.get_expr(object, line).release());
+    m_org_line = line;
 }
 
 bool

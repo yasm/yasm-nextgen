@@ -166,7 +166,7 @@ Link::lma_create_group(Section& section)
         const IntNum* istart = bsd->start->get_intnum();
         if (!istart)
         {
-            m_errwarns.propagate(bsd->start->get_line(),
+            m_errwarns.propagate(bsd->start_line,
                 TooComplexError(N_("start expression is too complex")));
             return false;
         }
@@ -183,7 +183,7 @@ Link::lma_create_group(Section& section)
         const IntNum* ivstart = bsd->vstart->get_intnum();
         if (!ivstart)
         {
-            m_errwarns.propagate(bsd->vstart->get_line(),
+            m_errwarns.propagate(bsd->vstart_line,
                 TooComplexError(N_("vstart expression is too complex")));
             return false;
         }
@@ -480,7 +480,7 @@ BinGroup::assign_start_recurse(IntNum& start,
         {
             warn_set(WARN_GENERAL,
                 N_("start inconsistent with align; using aligned value"));
-            errwarns.propagate(m_bsd.start->get_line());
+            errwarns.propagate(m_bsd.start_line);
         }
     }
     else
@@ -563,7 +563,7 @@ BinGroup::assign_vstart_recurse(IntNum& start, Errwarns& errwarns)
         m_section.set_vma(align_start(start, m_bsd.valign));
         if (m_bsd.has_ivstart && start != m_section.get_vma())
         {
-            errwarns.propagate(m_bsd.vstart->get_line(),
+            errwarns.propagate(m_bsd.vstart_line,
                 ValueError(N_("vstart inconsistent with valign")));
         }
     }

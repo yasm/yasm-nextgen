@@ -1097,11 +1097,10 @@ NasmParser::dir_align(Object& object, NameValues& namevals,
     {
         Expr::Ptr boundval = namevals.front().get_expr(object, line);
         Expr::Ptr e(new Expr(
-            new Expr(m_absstart->clone(), Op::SUB, m_abspos->clone(), line),
+            new Expr(m_absstart->clone(), Op::SUB, m_abspos->clone()),
             Op::AND,
-            new Expr(boundval, Op::SUB, IntNum(1), line),
-            line));
-        m_abspos.reset(new Expr(m_abspos, Op::ADD, e, line));
+            new Expr(boundval, Op::SUB, IntNum(1))));
+        m_abspos.reset(new Expr(m_abspos, Op::ADD, e));
     }
     else
     {

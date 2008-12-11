@@ -152,9 +152,9 @@ std::auto_ptr<Expr>
 ElfReloc::get_value() const
 {
     if (m_addend.is_zero())
-        return Expr::Ptr(new Expr(m_sym, 0));
+        return Expr::Ptr(new Expr(m_sym));
     else
-        return Expr::Ptr(new Expr(m_sym, Op::ADD, m_addend, 0));
+        return Expr::Ptr(new Expr(m_sym, Op::ADD, m_addend));
 }
 
 void
@@ -277,7 +277,7 @@ ElfSymbol::create_symbol(Object& object, const StringTable& strtab) const
 
     if (m_index == SHN_ABS)
     {
-        sym->define_equ(Expr::Ptr(new Expr(m_size, 0)), 0);
+        sym->define_equ(Expr::Ptr(new Expr(m_size)), 0);
     }
     else if (m_index == SHN_COMMON)
     {
@@ -364,7 +364,7 @@ ElfSymbol::finalize(Symbol& sym, Errwarns& errwarns)
         if (xsize)
             m_size = *xsize;
         else
-            errwarns.propagate(m_xsize->get_line(), ValueError(
+            errwarns.propagate(m_size_line, ValueError(
                 N_("size specifier not an integer expression")));
     }
 
@@ -380,7 +380,7 @@ ElfSymbol::finalize(Symbol& sym, Errwarns& errwarns)
         if (equ_intn)
             m_value = *equ_intn;
         else
-            errwarns.propagate(equ_expr->get_line(), ValueError(
+            errwarns.propagate(sym.get_def_line(), ValueError(
                 N_("EQU value not an integer expression")));
 
         m_index = SHN_ABS;
@@ -522,9 +522,10 @@ ElfConfig::symtab_read(std::istream&      is,
 }
 
 void
-ElfSymbol::set_size(std::auto_ptr<Expr> size)
+ElfSymbol::set_size(std::auto_ptr<Expr> size, unsigned long line)
 {
     m_xsize.reset(size.release());
+    m_size_line = line;
 }                            
 
 ElfSection::ElfSection(const ElfConfig&     config,

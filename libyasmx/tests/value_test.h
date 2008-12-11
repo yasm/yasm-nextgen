@@ -65,7 +65,7 @@ public:
 
     void test_construct_expr()
     {
-        Expr::Ptr ep(new Expr(sym1, 0));
+        Expr::Ptr ep(new Expr(sym1));
         Expr* e = ep.get();
         Value v(6, ep);
         TS_ASSERT_EQUALS(v.get_abs(), e);
@@ -103,13 +103,14 @@ public:
 
     void test_clear()
     {
-        Value v(6, Expr::Ptr(new Expr(sym1, Op::WRT, wrt, 0)));
+        Value v(6, Expr::Ptr(new Expr(sym1, Op::WRT, wrt)));
         v.finalize();
         v.sub_rel(0, sym2);
         TS_ASSERT_EQUALS(v.has_abs(), false);
         TS_ASSERT_EQUALS(v.get_rel(), sym1);
         TS_ASSERT_EQUALS(v.get_wrt(), wrt);
         TS_ASSERT_EQUALS(v.get_sub(), sym2);
+        v.set_line(4);
         v.m_next_insn = 3;
         v.m_seg_of = true;
         v.m_rshift = 5;
@@ -125,6 +126,7 @@ public:
         TS_ASSERT_EQUALS(v.is_relative(), false);
         TS_ASSERT_EQUALS(v.is_wrt(), false);
         TS_ASSERT_EQUALS(v.has_sub(), false);
+        TS_ASSERT_EQUALS(v.get_line(), 0U);
         TS_ASSERT_EQUALS(v.m_next_insn, 0U);
         TS_ASSERT_EQUALS(v.m_seg_of, false);
         TS_ASSERT_EQUALS(v.m_rshift, 0U);
@@ -138,7 +140,7 @@ public:
 
     void test_clear_rel()
     {
-        Value v(6, Expr::Ptr(new Expr(sym1, Op::WRT, wrt, 0)));
+        Value v(6, Expr::Ptr(new Expr(sym1, Op::WRT, wrt)));
         v.finalize();
         v.sub_rel(0, sym2);
         v.m_next_insn = 3;
@@ -186,14 +188,12 @@ public:
         Value v(4);
         TS_ASSERT_EQUALS(v.has_abs(), false);
         // add to an empty abs
-        v.add_abs(Expr::Ptr(new Expr(IntNum(6), 2)));
+        v.add_abs(Expr::Ptr(new Expr(IntNum(6))));
         TS_ASSERT_EQUALS(v.has_abs(), true);
-        TS_ASSERT_EQUALS(v.get_abs()->get_line(), 2U);
         v.get_abs()->simplify();
         TS_ASSERT_EQUALS(*v.get_abs()->get_intnum(), 6);
         // add to an abs with a value
-        v.add_abs(Expr::Ptr(new Expr(IntNum(8), 4)));
-        TS_ASSERT_EQUALS(v.get_abs()->get_line(), 2U); // shouldn't change line
+        v.add_abs(Expr::Ptr(new Expr(IntNum(8))));
         v.get_abs()->simplify();
         TS_ASSERT_EQUALS(*v.get_abs()->get_intnum(), 14);
     }
@@ -215,7 +215,7 @@ public:
         TS_ASSERT_EQUALS(v1.is_wrt(), false);
         TS_ASSERT_EQUALS(v1.get_wrt(), SymbolRef(0));
 
-        Value v2(6, Expr::Ptr(new Expr(sym1, Op::WRT, wrt, 0)));
+        Value v2(6, Expr::Ptr(new Expr(sym1, Op::WRT, wrt)));
         v2.finalize();
         TS_ASSERT_EQUALS(v2.is_wrt(), true);
         TS_ASSERT_EQUALS(v2.get_wrt(), wrt);
@@ -254,6 +254,14 @@ public:
     void test_calc_pcrel_sub()
     {
         // TODO
+    }
+
+    void test_get_set_line()
+    {
+        Value v(4);
+        TS_ASSERT_EQUALS(v.get_line(), 0U);
+        v.set_line(5);
+        TS_ASSERT_EQUALS(v.get_line(), 5U);
     }
 
     void test_get_intnum()

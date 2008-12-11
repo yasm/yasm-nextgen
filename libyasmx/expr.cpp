@@ -189,23 +189,23 @@ Expr::add_term(const ExprTerm& term)
     }
 }
 
-Expr::Expr(const ExprTerm& a, Op::Op op, const ExprTerm& b, unsigned long line)
-    : m_op(op), m_line(line)
+Expr::Expr(const ExprTerm& a, Op::Op op, const ExprTerm& b)
+    : m_op(op)
 {
     add_term(a);
     add_term(b);
 }
 
-Expr::Expr(Op::Op op, const ExprTerm& a, unsigned long line)
-    : m_op(op), m_line(line)
+Expr::Expr(Op::Op op, const ExprTerm& a)
+    : m_op(op)
 {
     if (!is_unary(op))
         throw ValueError(N_("expression with one term must be unary"));
     add_term(a);
 }
 
-Expr::Expr(Op::Op op, const ExprTerms& terms, unsigned long line)
-    : m_op(op), m_line(line)
+Expr::Expr(Op::Op op, const ExprTerms& terms)
+    : m_op(op)
 {
     switch (terms.size())
     {
@@ -226,8 +226,8 @@ Expr::Expr(Op::Op op, const ExprTerms& terms, unsigned long line)
                    MEMFN::mem_fn(&ExprTerm::clone));
 }
 
-Expr::Expr(const ExprTerm& a, unsigned long line)
-    : m_op(Op::IDENT), m_line(line)
+Expr::Expr(const ExprTerm& a)
+    : m_op(Op::IDENT)
 {
     add_term(a);
 }
@@ -238,7 +238,6 @@ Expr::operator= (const Expr& rhs)
     if (this != &rhs)
     {
         m_op = rhs.m_op;
-        m_line = rhs.m_line;
         std::for_each(m_terms.begin(), m_terms.end(),
                       MEMFN::mem_fn(&ExprTerm::destroy));
         m_terms.clear();
@@ -250,15 +249,15 @@ Expr::operator= (const Expr& rhs)
 }
 
 Expr::Expr(const Expr& e)
-    : m_op(e.m_op), m_line(e.m_line)
+    : m_op(e.m_op)
 {
     std::transform(e.m_terms.begin(), e.m_terms.end(),
                    std::back_inserter(m_terms),
                    MEMFN::mem_fn(&ExprTerm::clone));
 }
 
-Expr::Expr(unsigned long line, Op::Op op)
-    : m_op(op), m_line(line)
+Expr::Expr(Op::Op op)
+    : m_op(op)
 {
 }
 
@@ -272,7 +271,7 @@ Expr::~Expr()
 inline void
 Expr::xform_neg_term(ExprTerms::iterator term)
 {
-    Expr *sube = new Expr(m_line, Op::MUL);
+    Expr *sube = new Expr(Op::MUL);
     sube->m_terms.push_back(IntNum(-1));
     sube->m_terms.push_back(*term);
     *term = sube;
@@ -331,7 +330,7 @@ Expr::xform_neg_helper()
         default:
             // Everything else.  MUL will be combined when it's leveled.
             // Replace ourselves with -1*e.
-            Expr *ne = new Expr(m_line, m_op);
+            Expr *ne = new Expr(m_op);
             m_op = Op::MUL;
             m_terms.swap(ne->m_terms);
             m_terms.push_back(IntNum(-1));
@@ -504,7 +503,6 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
     if (m_op == Op::IDENT && (e = m_terms.front().get_expr()))
     {
         m_op = e->m_op;
-        m_line = e->m_line;
         m_terms.clear();
         m_terms.swap(e->m_terms);
         delete e;
@@ -578,7 +576,6 @@ Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
     if (m_op == Op::IDENT && (e = m_terms.front().get_expr()))
     {
         m_op = e->m_op;
-        m_line = e->m_line;
         m_terms.clear();
         m_terms.swap(e->m_terms);
         delete e;
@@ -649,7 +646,7 @@ Expr::clone(int except) const
     if (except == -1 || m_terms.size() == 1)
         return new Expr(*this);
 
-    std::auto_ptr<Expr> e(new Expr(m_line, m_op));
+    std::auto_ptr<Expr> e(new Expr(m_op));
     int j = 0;
     for (ExprTerms::const_iterator i=m_terms.begin(), end=m_terms.end();
          i != end; ++i, ++j)
@@ -763,7 +760,7 @@ Expr::extract_segoff()
     else
     {
         // Need to build IDENT expression to hold non-expression contents
-        retval.reset(new Expr(m_line, Op::IDENT));
+        retval.reset(new Expr(Op::IDENT));
         retval->m_terms.push_back(left);
     }
 
@@ -790,7 +787,7 @@ Expr::extract_wrt()
     else
     {
         // Need to build IDENT expression to hold non-expression contents
-        retval.reset(new Expr(m_line, Op::IDENT));
+        retval.reset(new Expr(Op::IDENT));
         retval->m_terms.push_back(right);
     }
 

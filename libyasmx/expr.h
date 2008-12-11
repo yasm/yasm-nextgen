@@ -218,27 +218,23 @@ public:
     /// @param a        expression a
     /// @param op       operation
     /// @param b        expression b
-    /// @param line     virtual line (where expression defined)
-    Expr(const ExprTerm& a, Op::Op op, const ExprTerm& b, unsigned long line=0);
+    Expr(const ExprTerm& a, Op::Op op, const ExprTerm& b);
 
     /// Create a new expression e=op a.
     /// @param o        operation
     /// @param a        expression a
-    /// @param l        virtual line (where expression defined)
-    Expr(Op::Op op, const ExprTerm& a, unsigned long line=0);
+    Expr(Op::Op op, const ExprTerm& a);
 
     /// Create a new expression e=a op b op c op ....
     /// @param op       operation
     /// @param terms    expression terms
-    /// @param line     virtual line (where expression defined)
     /// @note Only ADD, MUL, OR, AND, XOR operations are valid for more than
     ///       two terms.
-    Expr(Op::Op op, const ExprTerms& terms, unsigned long line=0);
+    Expr(Op::Op op, const ExprTerms& terms);
 
     /// Create a new expression identity e=a.
     /// @param a        identity within new expression
-    /// @param line     line
-    explicit Expr(const ExprTerm& a, unsigned long line=0);
+    explicit Expr(const ExprTerm& a);
 
     /// Determine if an expression is a specified operation (at the top
     /// level).
@@ -349,7 +345,6 @@ public:
 
     Expr* clone(int except = -1) const;
 
-    unsigned long get_line() const { return m_line; }
     ExprTerms& get_terms() { return m_terms; }
 
     /// Make expression an ident if it only has one term.
@@ -364,16 +359,13 @@ private:
     /// Operation.
     Op::Op m_op;
 
-    /// Line number.
-    unsigned long m_line;
-
     /// Terms of the expression.
     /// Some operations may allow more than two operand terms:
     /// ADD, MUL, OR, AND, XOR.
     ExprTerms m_terms;
 
     void add_term(const ExprTerm& term);
-    Expr(unsigned long line, Op::Op op);
+    Expr(Op::Op op);
 
     // Internal callbacks
     bool substitute_cb(const ExprTerms& subst_terms);

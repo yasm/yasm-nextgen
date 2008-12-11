@@ -363,7 +363,7 @@ X86Insn::do_append_jmpfar(BytecodeContainer& container,
     if (segment.get() == 0 && tmod && tmod->type() == X86TargetModifier::FAR)
     {
         // "FAR imm" target needs to become "seg imm:imm".
-        segment.reset(new Expr(Op::SEG, imm->clone(), imm->get_line()));
+        segment.reset(new Expr(Op::SEG, imm->clone()));
     }
     else if (segment.get() == 0)
         throw InternalError(N_("didn't get FAR expression in jmpfar"));
@@ -1127,7 +1127,7 @@ BuildGeneral::apply_modifiers(unsigned char* mod_data)
                 m_opersize = mod_data[i];
                 break;
             case MOD_Imm8:
-                m_imm.reset(new Expr(IntNum(mod_data[i]), 0));
+                m_imm.reset(new Expr(IntNum(mod_data[i])));
                 m_im_len = 8;
                 break;
             case MOD_DOpS64R:

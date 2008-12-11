@@ -74,6 +74,7 @@ Value::Value(unsigned int size)
       m_rel(0),
       m_wrt(0),
       m_sub(0),
+      m_line(0),
       m_next_insn(0),
       m_seg_of(false),
       m_rshift(0),
@@ -91,6 +92,7 @@ Value::Value(unsigned int size, std::auto_ptr<Expr> e)
       m_rel(0),
       m_wrt(0),
       m_sub(0),
+      m_line(0),
       m_next_insn(0),
       m_seg_of(false),
       m_rshift(0),
@@ -108,6 +110,7 @@ Value::Value(unsigned int size, SymbolRef sym)
       m_rel(sym),
       m_wrt(0),
       m_sub(0),
+      m_line(0),
       m_next_insn(0),
       m_seg_of(false),
       m_rshift(0),
@@ -125,6 +128,7 @@ Value::Value(const Value& oth)
       m_rel(oth.m_rel),
       m_wrt(oth.m_wrt),
       m_sub(oth.m_sub),
+      m_line(oth.m_line),
       m_next_insn(oth.m_next_insn),
       m_seg_of(oth.m_seg_of),
       m_rshift(oth.m_rshift),
@@ -172,6 +176,7 @@ Value::clear()
     m_rel = SymbolRef(0);
     m_wrt = SymbolRef(0);
     m_sub = SymbolRef(0);
+    m_line = 0;
     m_next_insn = 0;
     m_seg_of = false;
     m_rshift = 0;
@@ -206,6 +211,7 @@ Value::operator= (const Value& rhs)
         m_rel = rhs.m_rel;
         m_wrt = rhs.m_wrt;
         m_sub = rhs.m_sub;
+        m_line = rhs.m_line;
         m_next_insn = rhs.m_next_insn;
         m_seg_of = rhs.m_seg_of;
         m_rshift = rhs.m_rshift;
@@ -242,8 +248,7 @@ Value::sub_rel(Object* object, SymbolRef sub)
             && sub->get_label(&sub_loc)
             && loc.bc->get_container() == sub_loc.bc->get_container())
         {
-            add_abs(Expr::Ptr(new Expr(m_rel, Op::SUB, sub,
-                                       m_abs ? m_abs->get_line() : 0)));
+            add_abs(Expr::Ptr(new Expr(m_rel, Op::SUB, sub)));
             m_rel = SymbolRef(0);
         }
         else
@@ -278,7 +283,7 @@ Value::finalize_scan(Expr* e, bool ssym_not_ok)
             if (terms.size() > 32)
                 throw Fatal(String::compose(
                     N_("expression on line %1 has too many add terms; internal limit of 32"),
-                    e->get_line()));
+                    m_line));
 
             // Yes, this has a maximum upper bound on 32 terms, based on an
             // "insane number of terms" (and ease of implementation) WAG.
@@ -700,7 +705,7 @@ Value::add_abs(const IntNum& delta)
     if (!m_abs)
         m_abs = new Expr(delta);
     else
-        m_abs = new Expr(m_abs, Op::ADD, delta, m_abs->get_line());
+        m_abs = new Expr(m_abs, Op::ADD, delta);
 }
 
 void
@@ -709,7 +714,7 @@ Value::add_abs(std::auto_ptr<Expr> delta)
     if (!m_abs)
         m_abs = delta.release();
     else
-        m_abs = new Expr(m_abs, Op::ADD, delta, m_abs->get_line());
+        m_abs = new Expr(m_abs, Op::ADD, delta);
 }
 
 bool

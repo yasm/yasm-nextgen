@@ -175,7 +175,7 @@ fixup(bool xform_rip_plus, std::auto_ptr<Expr> e)
             // replace register with 0
             e->get_terms()[0] = IntNum(0);
             // build new wrt expression
-            e.reset(new Expr(e.release(), Op::WRT, reg, e->get_line()));
+            e.reset(new Expr(e.release(), Op::WRT, reg));
         }
     }
     return e;

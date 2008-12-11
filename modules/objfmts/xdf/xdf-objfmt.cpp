@@ -350,12 +350,12 @@ XdfReloc::get_value() const
 {
     std::auto_ptr<Expr> e;
     if (m_type == XDF_WRT)
-        e.reset(new Expr(m_sym, Op::WRT, m_base, 0));
+        e.reset(new Expr(m_sym, Op::WRT, m_base));
     else
-        e.reset(new Expr(m_sym, 0));
+        e.reset(new Expr(m_sym));
 
     if (m_shift > 0)
-        e.reset(new Expr(e, Op::SHR, IntNum(m_shift), 0));
+        e.reset(new Expr(e, Op::SHR, IntNum(m_shift)));
 
     return e;
 }
@@ -674,7 +674,7 @@ Output::output_sym(const Symbol& sym,
         {
             if (vis & Symbol::GLOBAL)
             {
-                errwarns.propagate(equ_val->get_line(),
+                errwarns.propagate(sym.get_def_line(),
                     NotConstantError(
                         N_("global EQU value not an integer expression")));
             }
@@ -948,7 +948,7 @@ XdfObject::read(std::istream& is)
             sym->declare(Symbol::EXTERN, 0);
 
         if ((flags & XdfSymbolData::XDF_EQU) != 0)
-            sym->define_equ(std::auto_ptr<Expr>(new Expr(IntNum(value), 0)), 0);
+            sym->define_equ(std::auto_ptr<Expr>(new Expr(IntNum(value))), 0);
         else if (sym_scnum < scnum)
         {
             Section& sect = m_object->get_section(sym_scnum);

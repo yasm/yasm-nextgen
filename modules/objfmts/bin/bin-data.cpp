@@ -46,6 +46,8 @@ const char* BinSectionData::key = "objfmt::bin::BinSectionData";
 BinSectionData::BinSectionData()
     : has_align(false),
       has_valign(false),
+      start_line(0),
+      vstart_line(0),
       has_istart(false),
       has_ivstart(false),
       has_length(false)

@@ -61,6 +61,8 @@ struct BinSectionData : public AssocData
     // User-provided starts
     util::scoped_ptr<Expr> start;
     util::scoped_ptr<Expr> vstart;
+    unsigned long start_line;
+    unsigned long vstart_line;
 
     // User-provided follows
     std::string follows;

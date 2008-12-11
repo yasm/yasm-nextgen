@@ -43,7 +43,7 @@ Reloc::~Reloc()
 std::auto_ptr<Expr>
 Reloc::get_value() const
 {
-    return std::auto_ptr<Expr>(new Expr(m_sym, 0));
+    return std::auto_ptr<Expr>(new Expr(m_sym));
 }
 
 } // namespace yasm
