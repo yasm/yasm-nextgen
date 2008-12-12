@@ -49,6 +49,7 @@
 #include <libyasmx/bytecode.h>
 #include <libyasmx/compose.h>
 #include <libyasmx/directive.h>
+#include <libyasmx/dir_helpers.h>
 #include <libyasmx/errwarn.h>
 #include <libyasmx/errwarns.h>
 #include <libyasmx/location_util.h>

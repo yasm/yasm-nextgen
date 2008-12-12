@@ -34,6 +34,7 @@
 #include <libyasmx/bytes_util.h>
 #include <libyasmx/compose.h>
 #include <libyasmx/directive.h>
+#include <libyasmx/dir_helpers.h>
 #include <libyasmx/errwarn.h>
 #include <libyasmx/errwarns.h>
 #include <libyasmx/intnum.h>

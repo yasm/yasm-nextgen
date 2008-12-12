@@ -22,6 +22,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     compose.cpp
     debug_format.cpp
     directive.cpp
+    dir_helpers.cpp
     effaddr.cpp
     errwarn.cpp
     errwarns.cpp
@@ -90,6 +91,7 @@ IF(NOT BUILD_STATIC)
         compose.h
         debug_format.h
         directive.h
+        dir_helpers.h
         effaddr.h
         errwarn.h
         errwarns.h
