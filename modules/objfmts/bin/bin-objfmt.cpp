@@ -258,7 +258,6 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
     {
         Location label_loc;
         IntNum ssymval;
-        unsigned int rshift = static_cast<unsigned int>(value.m_rshift);
         Expr::Ptr syme(0);
         SymbolRef rel = value.get_rel();
 
@@ -284,8 +283,8 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
             syme.reset(new Expr(syme, Op::SUB, value.get_sub()));
         }
 
-        if (value.m_rshift > 0)
-            syme.reset(new Expr(syme, Op::SHR, IntNum(rshift)));
+        if (value.get_rshift() > 0)
+            syme.reset(new Expr(syme, Op::SHR, IntNum(value.get_rshift())));
 
         // Add into absolute portion
         value.add_abs(syme);

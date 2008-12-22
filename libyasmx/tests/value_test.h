@@ -29,13 +29,13 @@
 #include "symbol.h"
 #include "value.h"
 
-class ValueTestSuite : public CxxTest::TestSuite
+class ValueTest : public CxxTest::TestSuite
 {
 public:
     Symbol sym1_sym, sym2_sym, wrt_sym;
     SymbolRef sym1, sym2, wrt;
 
-    ValueTestSuite()
+    ValueTest()
         : sym1_sym("sym1")
         , sym2_sym("sym2")
         , wrt_sym("wrt")

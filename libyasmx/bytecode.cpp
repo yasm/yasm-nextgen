@@ -155,15 +155,14 @@ Bytecode::finalize()
     {
         if (i->finalize())
         {
-            if (i->m_jump_target)
+            if (i->is_jump_target())
                 throw TooComplexError(i->get_line(),
                                       N_("jump target expression too complex"));
             else
                 throw TooComplexError(i->get_line(),
                                       N_("expression too complex"));
         }
-        if (i->m_jump_target &&
-            (i->m_seg_of || i->m_rshift || i->m_section_rel))
+        if (i->is_jump_target() && i->is_complex_rel())
             throw ValueError(i->get_line(), N_("invalid jump target"));
         warn_update_line(i->get_line());
     }
@@ -216,13 +215,13 @@ Bytecode::output(BytecodeOutput& bc_out)
         // Output value.
         Bytes& vbytes = bc_out.get_scratch();
         vbytes.insert(vbytes.end(), m_fixed.begin() + off,
-                      m_fixed.begin() + off + i->m_size/8);
+                      m_fixed.begin() + off + i->get_size()/8);
         // Make a copy of the value to ensure things like
         // "TIMES x JMP label" work.
         Value vcopy = *i;
         try
         {
-            bc_out.output(vcopy, vbytes, loc, i->m_sign ? -1 : 1);
+            bc_out.output(vcopy, vbytes, loc, i->is_signed() ? -1 : 1);
         }
         catch (Error& err)
         {
@@ -232,7 +231,7 @@ Bytecode::output(BytecodeOutput& bc_out)
         }
         warn_update_line(vcopy.get_line());
 
-        last = off + i->m_size/8;
+        last = off + i->get_size()/8;
     }
     // handle last part of fixed
     if (last < m_fixed.size())
@@ -265,7 +264,7 @@ Bytecode::update_offset(unsigned long offset)
 void
 Bytecode::append_fixed(const Value& val)
 {
-    unsigned int valsize = val.m_size/8;
+    unsigned int valsize = val.get_size()/8;
     m_fixed_fixups.push_back(Fixup(m_fixed.size(), val));
     m_fixed.write(valsize, 0);
 }
@@ -273,7 +272,7 @@ Bytecode::append_fixed(const Value& val)
 void
 Bytecode::append_fixed(std::auto_ptr<Value> val)
 {
-    unsigned int valsize = val->m_size/8;
+    unsigned int valsize = val->get_size()/8;
     m_fixed_fixups.push_back(Fixup(m_fixed.size(), val));
     m_fixed.write(valsize, 0);
 }

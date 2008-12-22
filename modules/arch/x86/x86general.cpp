@@ -243,7 +243,7 @@ X86General::finalize(Bytecode& bc)
 
                 // Make the imm32s form permanent.
                 m_opcode.make_alt_1();
-                m_imm->m_size = 32;
+                m_imm->set_size(32);
             }
             m_postop = POSTOP_NONE;
             break;
@@ -308,17 +308,17 @@ X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
             Location sub_loc = {&bc, bc.get_fixed_len()};
             sub_sym->define_label(sub_loc, bc.get_line());
             m_ea->m_disp.sub_rel(object, sub_sym);
-            m_ea->m_disp.m_ip_rel = true;
+            m_ea->m_disp.set_ip_rel();
         }
 
-        if (m_ea->m_disp.m_size == 0 && m_ea->m_need_nonzero_len)
+        if (m_ea->m_disp.get_size() == 0 && m_ea->m_need_nonzero_len)
         {
             // Handle unknown case, default to byte-sized and set as
             // critical expression.
-            m_ea->m_disp.m_size = 8;
+            m_ea->m_disp.set_size(8);
             add_span(bc, 1, m_ea->m_disp, -128, 127);
         }
-        len += m_ea->m_disp.m_size/8;
+        len += m_ea->m_disp.get_size()/8;
 
         // Handle address16 postop case
         if (m_postop == POSTOP_ADDRESS16)
@@ -332,7 +332,7 @@ X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
 
     if (m_imm != 0)
     {
-        unsigned int immlen = m_imm->m_size;
+        unsigned int immlen = m_imm->get_size();
 
         // TODO: check imm->len vs. sized len from expr?
 
@@ -354,8 +354,8 @@ X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
                     // We can use the sign-extended byte form: shorten
                     // the immediate length to 1 and make the byte form
                     // permanent.
-                    m_imm->m_size = 8;
-                    m_imm->m_sign = 1;
+                    m_imm->set_size(8);
+                    m_imm->set_signed();
                     immlen = 8;
                 }
                 else
@@ -393,13 +393,14 @@ X86General::expand(Bytecode& bc, unsigned long& len, int span,
     if (m_ea != 0 && span == 1)
     {
         // Change displacement length into word-sized
-        if (m_ea->m_disp.m_size == 8)
+        if (m_ea->m_disp.get_size() == 8)
         {
-            m_ea->m_disp.m_size = (m_common.m_addrsize == 16) ? 16 : 32;
+            unsigned int size = (m_common.m_addrsize == 16) ? 16 : 32;
+            m_ea->m_disp.set_size(size);
             m_ea->m_modrm &= ~0300;
             m_ea->m_modrm |= 0200;
             len--;
-            len += m_ea->m_disp.m_size/8;
+            len += size/8;
         }
     }
 
@@ -409,7 +410,7 @@ X86General::expand(Bytecode& bc, unsigned long& len, int span,
         {
             // Update len for new opcode and immediate size
             len -= m_opcode.get_len();
-            len += m_imm->m_size/8;
+            len += m_imm->get_size()/8;
 
             // Change to the word-sized opcode
             m_opcode.make_alt_1();
@@ -507,26 +508,26 @@ X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
         {
             // If we got here with this postop still set, we need to force
             // imm size to 8 here.
-            m_imm->m_size = 8;
-            m_imm->m_sign = 1;
+            m_imm->set_size(8);
+            m_imm->set_signed();
             imm_len = 1;
         }
         else
-            imm_len = m_imm->m_size/8;
+            imm_len = m_imm->get_size()/8;
     }
 
     // Displacement (if required)
     if (m_ea != 0 && m_ea->m_need_disp)
     {
-        unsigned int disp_len = m_ea->m_disp.m_size/8;
+        unsigned int disp_len = m_ea->m_disp.get_size()/8;
 
-        if (m_ea->m_disp.m_ip_rel)
+        if (m_ea->m_disp.is_ip_rel())
         {
             // Adjust relative displacement to end of bytecode
             m_ea->m_disp.add_abs(
                 -static_cast<long>(pos-bc.get_fixed_len()+disp_len+imm_len));
             // Distance to end of instruction is the immediate length
-            m_ea->m_disp.m_next_insn = imm_len;
+            m_ea->m_disp.set_next_insn(imm_len);
         }
         Location loc = {&bc, pos};
         pos += disp_len;

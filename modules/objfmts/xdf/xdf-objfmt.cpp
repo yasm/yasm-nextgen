@@ -330,10 +330,10 @@ inline
 XdfReloc::XdfReloc(const IntNum& addr, const Value& value, bool ip_rel)
     : Reloc(addr, value.get_rel())
     , m_base(0)
-    , m_size(static_cast<Size>(value.m_size/8))
-    , m_shift(value.m_rshift)
+    , m_size(static_cast<Size>(value.get_size()/8))
+    , m_shift(value.get_rshift())
 {
-    if (value.m_seg_of)
+    if (value.is_seg_of())
         m_type = XDF_SEG;
     else if (value.is_wrt())
     {
@@ -525,7 +525,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
         return;
     }
 
-    if (value.m_section_rel)
+    if (value.is_section_rel())
         throw TooComplexError(N_("xdf: relocation too complex"));
 
     IntNum intn(0);
@@ -558,7 +558,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
         intn += *intn2;
     }
 
-    m_object.get_arch()->tobytes(intn, bytes, value.m_size, 0, warn);
+    m_object.get_arch()->tobytes(intn, bytes, value.get_size(), 0, warn);
     m_os << bytes;
 }
 

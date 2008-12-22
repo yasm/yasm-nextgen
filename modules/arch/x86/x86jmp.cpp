@@ -97,8 +97,8 @@ X86Jmp::X86Jmp(const X86Common& common,
       m_target(0, target),
       m_op_sel(op_sel)
 {
-    m_target.m_jump_target = true;
-    m_target.m_sign = 1;
+    m_target.set_jump_target();
+    m_target.set_signed();
 }
 
 X86Jmp::~X86Jmp()
@@ -160,7 +160,7 @@ X86Jmp::finalize(Bytecode& bc)
 {
     if (m_target.finalize())
         throw TooComplexError(N_("jump target expression too complex"));
-    if (m_target.m_seg_of || m_target.m_rshift || m_target.m_section_rel)
+    if (m_target.is_complex_rel())
         throw ValueError(N_("invalid jump target"));
 
     // Need to adjust target to the end of the instruction.
@@ -173,7 +173,7 @@ X86Jmp::finalize(Bytecode& bc)
     Location sub_loc = {&bc, bc.get_fixed_len()};
     sub_sym->define_label(sub_loc, bc.get_line());
     m_target.sub_rel(object, sub_sym);
-    m_target.m_ip_rel = true;
+    m_target.set_ip_rel();
 
     Location target_loc;
     if (m_target.is_relative()
@@ -267,10 +267,10 @@ X86Jmp::output(Bytecode& bc, BytecodeOutput& bc_out)
 
     // Adjust relative displacement to end of instruction
     m_target.add_abs(-static_cast<long>(bytes.size()+size));
-    m_target.m_size = size*8;
+    m_target.set_size(size*8);
 
     // Distance from displacement to end of instruction is always 0.
-    m_target.m_next_insn = 0;
+    m_target.set_next_insn(0);
 
     // Output displacement
     Location loc = {&bc, bc.get_fixed_len()+bytes.size()};
@@ -320,8 +320,8 @@ append_jmp(BytecodeContainer& container,
 
     Value targetv(0, target);
     targetv.set_line(line);
-    targetv.m_jump_target = true;
-    targetv.m_sign = 1;
+    targetv.set_jump_target();
+    targetv.set_signed();
     if (op_sel == JMP_SHORT)
     {
         // Opcode
@@ -329,7 +329,7 @@ append_jmp(BytecodeContainer& container,
 
         // Adjust relative displacement to end of bytecode
         targetv.add_abs(-1);
-        targetv.m_size = 8;
+        targetv.set_size(8);
     }
     else
     {
@@ -340,7 +340,7 @@ append_jmp(BytecodeContainer& container,
 
         // Adjust relative displacement to end of bytecode
         targetv.add_abs(-static_cast<long>(i));
-        targetv.m_size = i*8;
+        targetv.set_size(i*8);
     }
     bc.append_fixed(targetv);
 }

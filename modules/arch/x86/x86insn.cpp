@@ -645,7 +645,8 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
             if (!ea ||
                 ea->m_disp.get_abs()->contains(ExprTerm::REG) ||
                 ea->m_pc_rel ||
-                (!ea->m_not_pc_rel && m_default_rel && ea->m_disp.m_size != 64))
+                (!ea->m_not_pc_rel && m_default_rel &&
+                 ea->m_disp.get_size() != 64))
                 return false;
             break;
         case OPT_Imm1:
@@ -754,10 +755,10 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
     {
         if (info_op.eas64)
         {
-            if (ea->m_disp.m_size != 64)
+            if (ea->m_disp.get_size() != 64)
                 return false;
         }
-        else if (ea->m_disp.m_size == 64)
+        else if (ea->m_disp.get_size() == 64)
             return false;
     }
 
@@ -1475,7 +1476,7 @@ BuildGeneral::finish(BytecodeContainer& container,
     if (m_imm.get() != 0)
     {
         imm_val.reset(new Value(m_im_len, m_imm));
-        imm_val->m_sign = m_im_sign;
+        imm_val->set_signed(m_im_sign);
     }
 
     X86Common common;

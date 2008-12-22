@@ -724,7 +724,7 @@ NasmParser::parse_memaddr()
             unsigned int size = SIZE_OVERRIDE_val;
             get_next_token();
             Insn::Operand op = parse_memaddr();
-            op.get_memory()->m_disp.m_size = size;
+            op.get_memory()->m_disp.set_size(size);
             return op;
         }
         case NOSPLIT:

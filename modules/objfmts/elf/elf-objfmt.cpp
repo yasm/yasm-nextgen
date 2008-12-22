@@ -756,7 +756,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
     }
 
     // Handle other expressions, with relocation if necessary
-    if (value.m_seg_of || value.m_section_rel || value.m_rshift > 0)
+    if (value.is_seg_of() || value.is_section_rel() || value.get_rshift() > 0)
         throw TooComplexError(N_("elf: relocation too complex"));
 
     IntNum intn(0);
@@ -808,7 +808,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
         Section* sect = loc.bc->get_container()->as_section();
         std::auto_ptr<ElfReloc> reloc_auto =
             m_objfmt.m_machine->make_reloc(sym, wrt, loc.get_offset(), pc_rel,
-                                           value.m_size);
+                                           value.get_size());
         reloc = reloc_auto.get();
         sect->add_reloc(std::auto_ptr<Reloc>(reloc_auto.release()));
     }
@@ -823,7 +823,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
 
     if (reloc)
         reloc->handle_addend(&intn, m_objfmt.m_config);
-    m_object.get_arch()->tobytes(intn, bytes, value.m_size, 0, warn);
+    m_object.get_arch()->tobytes(intn, bytes, value.get_size(), 0, warn);
     m_os << bytes;
 }
 #if 0

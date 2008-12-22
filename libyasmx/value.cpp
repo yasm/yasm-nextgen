@@ -755,8 +755,8 @@ Value::output_basic(Bytes& bytes, int warn, const Arch& arch)
 marg_ostream&
 operator<< (marg_ostream& os, const Value& value)
 {
-    os << value.m_size << "-bit, ";
-    os << (value.m_sign ? "" : "un") << "signed\n";
+    os << value.get_size() << "-bit, ";
+    os << (value.is_signed() ? "" : "un") << "signed\n";
     os << "Absolute portion=";
     if (!value.has_abs())
         os << "0";
@@ -766,7 +766,7 @@ operator<< (marg_ostream& os, const Value& value)
     if (value.is_relative())
     {
         os << "Relative to=";
-        os << (value.m_seg_of ? "SEG " : "");
+        os << (value.is_seg_of() ? "SEG " : "");
         os << value.get_rel()->get_name();
         if (value.has_sub())
             os << " - " << value.get_sub()->get_name();
@@ -775,17 +775,17 @@ operator<< (marg_ostream& os, const Value& value)
         {
             os << "(With respect to=" << value.get_wrt()->get_name() << ")\n";
         }
-        if (value.m_rshift > 0)
+        if (value.get_rshift() > 0)
         {
-            os << "(Right shifted by=" << value.m_rshift << ")\n";
+            os << "(Right shifted by=" << value.get_rshift() << ")\n";
         }
-        if (value.m_ip_rel)
+        if (value.is_ip_rel())
             os << "(IP-relative)\n";
-        if (value.m_jump_target)
+        if (value.is_jump_target())
             os << "(Jump target)\n";
-        if (value.m_section_rel)
+        if (value.is_section_rel())
             os << "(Section-relative)\n";
-        if (value.m_no_warn)
+        if (!value.is_warn_enabled())
             os << "(Overflow warnings disabled)\n";
     }
     return os;

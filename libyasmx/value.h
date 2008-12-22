@@ -39,6 +39,8 @@
 #include "symbolref.h"
 
 
+class ValueTest;
+
 namespace yasm
 {
 
@@ -52,6 +54,8 @@ class Object;
 /// a relocatable value should use this structure instead.
 class YASM_LIB_EXPORT Value
 {
+    friend class ::ValueTest;
+
 public:
     explicit Value(unsigned int size);
 
@@ -178,6 +182,45 @@ public:
     /// @return True if value has a relative portion, false if not.
     bool is_relative() const { return m_rel != 0; }
 
+    /// Determine if value's relative portion is "complex".
+    /// A relative is considered to be complex if its segment should be used
+    /// (is_seg_of() is true), it has a right shift (get_rshift() > 0), or
+    /// if it is section relative (is_section_rel() is true).
+    bool is_complex_rel() const
+    {
+        return (m_seg_of != 0 || m_rshift > 0 || m_section_rel != 0);
+    }
+
+    /// Determine if the segment of the relative portion should be used.
+    /// @return True if segment should be used, false if not.
+    bool is_seg_of() const { return m_seg_of; }
+
+    /// Get the amount the relative portion should be shifted right by.
+    /// @return Right shift amount, in bits.
+    unsigned int get_rshift() const { return m_rshift; }
+
+    /// Indicate the value should be treated as IP-relative.
+    /// @param ip_rel   true if value should be treated as IP-relative
+    void set_ip_rel(bool ip_rel = true) { m_ip_rel = ip_rel; }
+
+    /// Determine if the value should be treated as an IP-relative relocation.
+    /// @return True if value is IP-relative, false if not.
+    bool is_ip_rel() const { return m_ip_rel; }
+
+    /// Indicate the value is a jump target address.
+    /// @param jump_target  true if value is a jump target address
+    void set_jump_target(bool jump_target = true)
+    { m_jump_target = jump_target; }
+
+    /// Determine if the value is a jump target address.
+    /// @return True if value is a jump target address, false if not.
+    bool is_jump_target() const { return m_jump_target; }
+
+    /// Determine if the value should be relocated relative to its relative
+    /// portion's section rather than the section containing the value.
+    /// @return True if value is section-relative, false if not.
+    bool is_section_rel() const { return m_section_rel; }
+
     /// Determine if the value is WRT anything.
     /// @return True if value has WRT portion, false if not.
     bool is_wrt() const { return m_wrt != 0; }
@@ -185,6 +228,40 @@ public:
     /// Determine if there is a subtractive relative portion of the value.
     /// @return True if value has a subtractive relative portion, false if not.
     bool has_sub() const { return m_sub != 0; }
+
+    /// Enable overflow warnings for this value.
+    void enable_warn() { m_no_warn = 0; }
+
+    /// Disable overflow warnings for this value.
+    void disable_warn() { m_no_warn = 1; }
+
+    /// Determine if overflow warnings are enabled for this value.
+    /// @return True if overflow warnings are enabled, false if not.
+    bool is_warn_enabled() const { return !m_no_warn; }
+
+    /// Set sign of the value.
+    /// @param sign     true if signed, false if unsigned.
+    void set_signed(bool sign = true) { m_sign = sign; }
+
+    /// Get sign of the value.
+    /// @return True if signed, false if unsigned.
+    bool is_signed() const { return m_sign; }
+
+    /// Set value size.
+    /// @param size     size of the value, in bits
+    void set_size(unsigned int size) { m_size = size; }
+
+    /// Get value size.
+    /// @return Size of the value, in bits.
+    unsigned int get_size() const { return m_size; }
+
+    /// Set distance from the end of the value to the next instruction.
+    /// @param dist     distance in bytes
+    void set_next_insn(unsigned int dist) { m_next_insn = dist; }
+
+    /// Get distance from the end of the value to the next instruction.
+    /// @return Distance in bytes.
+    unsigned int get_next_insn() const { return m_next_insn; }
 
     /// Set line number.
     /// @param line     Virtual line number
@@ -194,7 +271,7 @@ public:
     /// @return Virtual line number.
     unsigned long get_line() const { return m_line; }
 
-    /// Maximum value of #m_rshift.
+    /// Maximum value of right shift.
     static const unsigned int RSHIFT_MAX = 127;
 
 private:
@@ -221,7 +298,6 @@ private:
     /// Line number.
     unsigned long m_line;
 
-public:
     /// Distance from the end of the value to the next instruction, in bytes.
     /// Used to generate special relocations in some object formats.
     /// Only needs to be set for IP-relative values (m_ip_rel is true).
@@ -253,7 +329,7 @@ public:
     /// section start.  Boolean.
     unsigned int m_section_rel : 1;
 
-    /// Indicates overflow warnings have been disabled for this value.
+    /// Indicates if overflow warnings are disabled for this value.
     unsigned int m_no_warn : 1;
 
     /// Sign of the value.  Nonzero if the final value should be treated as
@@ -270,7 +346,7 @@ public:
 YASM_LIB_EXPORT
 marg_ostream& operator<< (marg_ostream& os, const Value& value);
 
-/// Specialized swap for algorithms.
+/// Specialized swap for Value.
 inline void
 swap(Value& left, Value& right)
 {
@@ -282,7 +358,7 @@ swap(Value& left, Value& right)
 namespace std
 {
 
-/// Specialized std::swap.
+/// Specialized std::swap for Value.
 template <>
 inline void
 swap(yasm::Value& left, yasm::Value& right)

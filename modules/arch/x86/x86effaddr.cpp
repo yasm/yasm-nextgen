@@ -208,7 +208,7 @@ X86EffAddr::X86EffAddr(std::auto_ptr<Expr> imm, unsigned int im_len)
       m_valid_sib(false),
       m_need_drex(false)
 {
-    m_disp.m_size = im_len;
+    m_disp.set_size(im_len);
     m_need_disp = true;
 }
 
@@ -616,7 +616,7 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
 {
     m_valid_modrm = false;      // default to not yet valid
 
-    switch (m_disp.m_size)
+    switch (m_disp.get_size())
     {
         case 0:
             break;
@@ -628,7 +628,7 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
             if (noreg)
             {
                 warn_set(WARN_GENERAL, N_("invalid displacement size; fixed"));
-                m_disp.m_size = wordsize;
+                m_disp.set_size(wordsize);
             }
             else
                 m_modrm |= 0100;
@@ -638,7 +638,7 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
         case 32:
             // Don't allow changing displacement different from BITS setting
             // directly; require an address-size override to change it.
-            if (wordsize != m_disp.m_size)
+            if (wordsize != m_disp.get_size())
             {
                 throw ValueError(
                     N_("invalid effective address (displacement size)"));
@@ -659,7 +659,7 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
         // No register in ModRM expression, so it must be disp16/32,
         // and as the Mod bits are set to 0 by the caller, we're done
         // with the ModRM byte.
-        m_disp.m_size = wordsize;
+        m_disp.set_size(wordsize);
         m_valid_modrm = true;
         return;
     }
@@ -676,7 +676,7 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
         // Relative displacement; basically all object formats need non-byte
         // for relocation here, so just do that. (TODO: handle this
         // differently?)
-        m_disp.m_size = wordsize;
+        m_disp.set_size(wordsize);
         m_modrm |= 0200;
         m_valid_modrm = true;
         return;
@@ -714,13 +714,13 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
     else if (num.in_range(-128, 127))
     {
         // It fits into a signed byte
-        m_disp.m_size = 8;
+        m_disp.set_size(8);
         m_modrm |= 0100;
     }
     else
     {
         // It's a 16/32-bit displacement
-        m_disp.m_size = wordsize;
+        m_disp.set_size(wordsize);
         m_modrm |= 0200;
     }
     m_valid_modrm = true;   // We're done with ModRM
@@ -936,7 +936,7 @@ X86EffAddr::check_3264(unsigned int addrsize,
         m_need_sib = 0;
         // RIP always requires a 32-bit displacement
         m_valid_modrm = true;
-        m_disp.m_size = 32;
+        m_disp.set_size(32);
         return true;
     }
     else if (indexreg == REG3264_NONE)
@@ -1115,7 +1115,7 @@ X86EffAddr::check(unsigned char* addrsize,
         // - the displacement length
         // - what registers are used in the expression
         // - the bits setting
-        switch (m_disp.m_size)
+        switch (m_disp.get_size())
         {
             case 16:
                 // must be 16-bit
@@ -1174,10 +1174,10 @@ X86EffAddr::check(unsigned char* addrsize,
                     throw TypeError(
                         N_("invalid effective address (64-bit in non-64-bit mode)"));
                 }
-                m_disp.m_size = 64;
+                m_disp.set_size(64);
                 break;
             case 32:
-                m_disp.m_size = 32;
+                m_disp.set_size(32);
                 break;
             case 16:
                 // 64-bit mode does not allow 16-bit addresses
@@ -1186,7 +1186,7 @@ X86EffAddr::check(unsigned char* addrsize,
                     throw TypeError(
                         N_("16-bit addresses not supported in 64-bit mode"));
                 }
-                m_disp.m_size = 16;
+                m_disp.set_size(16);
                 break;
         }
     }
