@@ -51,6 +51,12 @@ struct YASM_LIB_EXPORT Location
     unsigned long get_offset() const;
 };
 
+inline bool
+operator==(const Location& lhs, const Location& rhs)
+{
+    return (lhs.bc == rhs.bc && lhs.off == rhs.off);
+}
+
 /// Determine the distance between the starting offsets of two locations.
 /// @param loc1         location 1
 /// @param loc2         location 2
