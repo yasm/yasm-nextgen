@@ -105,11 +105,13 @@ public:
     {
         Value v(6, Expr::Ptr(new Expr(sym1, Op::WRT, wrt)));
         v.finalize();
-        v.sub_rel(0, sym2);
+        Bytecode bc;
+        Location loc = {&bc, 0};
+        v.sub_rel(0, loc);
         TS_ASSERT_EQUALS(v.has_abs(), false);
         TS_ASSERT_EQUALS(v.get_rel(), sym1);
         TS_ASSERT_EQUALS(v.get_wrt(), wrt);
-        TS_ASSERT_EQUALS(v.get_sub(), sym2);
+        TS_ASSERT_EQUALS(v.has_sub(), true);
         v.set_line(4);
         v.m_next_insn = 3;
         v.m_seg_of = true;
@@ -142,7 +144,9 @@ public:
     {
         Value v(6, Expr::Ptr(new Expr(sym1, Op::WRT, wrt)));
         v.finalize();
-        v.sub_rel(0, sym2);
+        Bytecode bc;
+        Location loc = {&bc, 0};
+        v.sub_rel(0, loc);
         v.m_next_insn = 3;
         v.m_seg_of = true;
         v.m_rshift = 5;
@@ -234,21 +238,30 @@ public:
 
     void test_sub_rel()
     {
+        Bytecode bc;
+        Location loc = {&bc, 0};
+        Location loc2;
         Value v(4, sym1);
         TS_ASSERT_EQUALS(v.get_rel(), sym1);
-        v.sub_rel(0, sym2); // object=0 okay if m_rel set
+        v.sub_rel(0, loc); // object=0 okay if m_rel set
         TS_ASSERT_EQUALS(v.get_rel(), sym1);
-        TS_ASSERT_EQUALS(v.get_sub(), sym2);
+        TS_ASSERT_EQUALS(v.get_sub_loc(&loc2), true);
+        TS_ASSERT_EQUALS(loc, loc2);
 
         Object object("x", "y", 0);
-        v.sub_rel(&object, sym2);
+        v = Value(4, sym1);
+        v.sub_rel(&object, loc);
         TS_ASSERT_EQUALS(v.get_rel(), sym1);    // shouldn't change m_rel
-        TS_ASSERT_EQUALS(v.get_sub(), sym2);
+        loc2.bc = 0;
+        TS_ASSERT_EQUALS(v.get_sub_loc(&loc2), true);
+        TS_ASSERT_EQUALS(loc, loc2);
 
         v = Value(4);
-        v.sub_rel(&object, sym2);
+        v.sub_rel(&object, loc);
         TS_ASSERT_EQUALS(v.get_rel(), object.get_absolute_symbol());
-        TS_ASSERT_EQUALS(v.get_sub(), sym2);
+        loc2.bc = 0;
+        TS_ASSERT_EQUALS(v.get_sub_loc(&loc2), true);
+        TS_ASSERT_EQUALS(loc, loc2);
     }
 
     void test_calc_pcrel_sub()

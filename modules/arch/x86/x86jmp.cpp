@@ -36,7 +36,6 @@
 #include <libyasmx/expr.h>
 #include <libyasmx/intnum.h>
 #include <libyasmx/marg_ostream.h>
-#include <libyasmx/object.h>
 #include <libyasmx/symbol.h>
 
 #include "x86common.h"
@@ -167,12 +166,8 @@ X86Jmp::finalize(Bytecode& bc)
     // However, we don't know the instruction length yet (short/near).
     // So just adjust to the start of the instruction, and handle the
     // difference in calc_len() and tobytes().
-    Object* object = bc.get_container()->get_object();
-
-    SymbolRef sub_sym = object->add_non_table_symbol("$");
     Location sub_loc = {&bc, bc.get_fixed_len()};
-    sub_sym->define_label(sub_loc, bc.get_line());
-    m_target.sub_rel(object, sub_sym);
+    m_target.sub_rel(bc.get_container()->get_object(), sub_loc);
     m_target.set_ip_rel();
 
     Location target_loc;

@@ -73,8 +73,9 @@ Value::Value(unsigned int size)
     : m_abs(0),
       m_rel(0),
       m_wrt(0),
-      m_sub(0),
       m_line(0),
+      m_sub_sym(false),
+      m_sub_loc(false),
       m_next_insn(0),
       m_seg_of(false),
       m_rshift(0),
@@ -91,8 +92,9 @@ Value::Value(unsigned int size, std::auto_ptr<Expr> e)
     : m_abs(e.release()),
       m_rel(0),
       m_wrt(0),
-      m_sub(0),
       m_line(0),
+      m_sub_sym(false),
+      m_sub_loc(false),
       m_next_insn(0),
       m_seg_of(false),
       m_rshift(0),
@@ -109,8 +111,9 @@ Value::Value(unsigned int size, SymbolRef sym)
     : m_abs(0),
       m_rel(sym),
       m_wrt(0),
-      m_sub(0),
       m_line(0),
+      m_sub_sym(false),
+      m_sub_loc(false),
       m_next_insn(0),
       m_seg_of(false),
       m_rshift(0),
@@ -129,6 +132,8 @@ Value::Value(const Value& oth)
       m_wrt(oth.m_wrt),
       m_sub(oth.m_sub),
       m_line(oth.m_line),
+      m_sub_sym(oth.m_sub_sym),
+      m_sub_loc(oth.m_sub_loc),
       m_next_insn(oth.m_next_insn),
       m_seg_of(oth.m_seg_of),
       m_rshift(oth.m_rshift),
@@ -175,8 +180,9 @@ Value::clear()
     m_abs = 0;
     m_rel = SymbolRef(0);
     m_wrt = SymbolRef(0);
-    m_sub = SymbolRef(0);
     m_line = 0;
+    m_sub_sym = false;
+    m_sub_loc = false;
     m_next_insn = 0;
     m_seg_of = false;
     m_rshift = 0;
@@ -193,7 +199,8 @@ Value::clear_rel()
 {
     m_rel = SymbolRef(0);
     m_wrt = SymbolRef(0);
-    m_sub = SymbolRef(0);
+    m_sub_sym = false;
+    m_sub_loc = false;
     m_seg_of = false;
     m_rshift = 0;
     m_ip_rel = false;
@@ -212,6 +219,8 @@ Value::operator= (const Value& rhs)
         m_wrt = rhs.m_wrt;
         m_sub = rhs.m_sub;
         m_line = rhs.m_line;
+        m_sub_sym = rhs.m_sub_sym;
+        m_sub_loc = rhs.m_sub_loc;
         m_next_insn = rhs.m_next_insn;
         m_seg_of = rhs.m_seg_of;
         m_rshift = rhs.m_rshift;
@@ -226,7 +235,7 @@ Value::operator= (const Value& rhs)
 }
 
 void
-Value::sub_rel(Object* object, SymbolRef sub)
+Value::sub_rel(Object* object, Location sub)
 {
     // In order for us to correctly output subtractive relative values, we must
     // have an additive relative portion of the value.  If one doesn't exist,
@@ -235,24 +244,31 @@ Value::sub_rel(Object* object, SymbolRef sub)
     {
         assert(object != 0);
         m_rel = object->get_absolute_symbol();
-        m_sub = sub;
+        if (has_sub())
+            throw TooComplexError(N_("expression too complex"));
+        m_sub.loc = sub;
+        m_sub_loc = true;
     }
     else
     {
-        Location loc, sub_loc;
+        Location loc;
         // If same section as m_rel, move both into absolute portion.
         // Can't do this if we're doing something fancier with the relative
         // portion.
         if (!m_wrt && !m_seg_of && !m_rshift && !m_section_rel
             && m_rel->get_label(&loc)
-            && sub->get_label(&sub_loc)
-            && loc.bc->get_container() == sub_loc.bc->get_container())
+            && loc.bc->get_container() == sub.bc->get_container())
         {
             add_abs(Expr::Ptr(new Expr(m_rel, Op::SUB, sub)));
             m_rel = SymbolRef(0);
         }
         else
-            m_sub = sub;
+        {
+            if (has_sub())
+                throw TooComplexError(N_("expression too complex"));
+            m_sub.loc = sub;
+            m_sub_loc = true;
+        }
     }
 }
 
@@ -392,9 +408,10 @@ Value::finalize_scan(Expr* e, bool ssym_not_ok)
                 // We didn't match in the same segment.  Save as subtractive
                 // relative value.  If we already have one, don't bother;
                 // the unmatched symrec will be caught below.
-                if (j == end && !m_sub)
+                if (j == end && !has_sub())
                 {
-                    m_sub = SymbolRef(sym);
+                    m_sub.sym = SymbolRef(sym);
+                    m_sub_sym = true;
                     i->destroy();
                     *i = IntNum(0);
                 }
@@ -639,14 +656,10 @@ Value::finalize()
 bool
 Value::calc_pcrel_sub(/*@out@*/ IntNum* out, Location loc) const
 {
-    // Need subtractive portion to do this transformation.
-    if (!m_sub)
-        return false;
-
     // We can handle this as a PC-relative relocation if the
     // subtractive portion is in the current segment.
     Location sub_loc;
-    if (!m_sub->get_label(&sub_loc)
+    if (!get_sub_loc(&sub_loc)
         || sub_loc.bc->get_container() != loc.bc->get_container())
         return false;
 
@@ -666,7 +679,7 @@ Value::get_intnum(IntNum* out, bool calc_bc_dist)
     // Output 0 if no absolute or relative
     *out = 0;
 
-    if (m_rel || m_sub || m_wrt)
+    if (m_rel || has_sub() || m_wrt)
         return false;   // can't handle relative values
 
     if (m_abs != 0)
@@ -715,6 +728,20 @@ Value::add_abs(std::auto_ptr<Expr> delta)
         m_abs = delta.release();
     else
         m_abs = new Expr(m_abs, Op::ADD, delta);
+}
+
+bool
+Value::get_sub_loc(Location* loc) const
+{
+    if (m_sub_loc)
+    {
+        *loc = m_sub.loc;
+        return true;
+    }
+    else if (m_sub_sym)
+        return m_sub.sym->get_label(loc);
+    else
+        return false;
 }
 
 bool
@@ -768,8 +795,11 @@ operator<< (marg_ostream& os, const Value& value)
         os << "Relative to=";
         os << (value.is_seg_of() ? "SEG " : "");
         os << value.get_rel()->get_name();
-        if (value.has_sub())
-            os << " - " << value.get_sub()->get_name();
+        Location sub_loc;
+        if (SymbolRef sub = value.get_sub_sym())
+            os << " - " << sub->get_name();
+        else if (value.get_sub_loc(&sub_loc))
+            os << " - " << sub_loc;
         os << '\n';
         if (value.is_wrt())
         {

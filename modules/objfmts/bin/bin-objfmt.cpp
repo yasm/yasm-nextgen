@@ -277,10 +277,9 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
             goto done;
 
         // Handle PC-relative
-        if (value.has_sub() && value.get_sub()->get_label(&label_loc)
-            && label_loc.bc->get_container())
+        if (value.get_sub_loc(&label_loc) && label_loc.bc->get_container())
         {
-            syme.reset(new Expr(syme, Op::SUB, value.get_sub()));
+            syme.reset(new Expr(syme, Op::SUB, label_loc));
         }
 
         if (value.get_rshift() > 0)

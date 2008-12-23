@@ -302,12 +302,8 @@ X86General::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
         // We couldn't do this if effective addresses were variable length.
         if (ip_rel)
         {
-            Object* object = bc.get_container()->get_object();
-
-            SymbolRef sub_sym = object->add_non_table_symbol("$");
             Location sub_loc = {&bc, bc.get_fixed_len()};
-            sub_sym->define_label(sub_loc, bc.get_line());
-            m_ea->m_disp.sub_rel(object, sub_sym);
+            m_ea->m_disp.sub_rel(bc.get_container()->get_object(), sub_loc);
             m_ea->m_disp.set_ip_rel();
         }
 

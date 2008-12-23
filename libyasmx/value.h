@@ -98,13 +98,13 @@ public:
     /// m_ip_rel, and m_section_rel.
     void clear_rel();
 
-    /// Add a subtractive relative to the value.  Commonly used to subtract
+    /// Subtract a relative location from the value.  Commonly used to subtract
     /// the current assembly position.
     /// Creates absolute symbol to refer to if no existing additive relative
     /// portion.
     /// @param object   object
-    /// @param sub      symbol to subtract
-    void sub_rel(Object* object, SymbolRef sub);
+    /// @param sub      location to subtract
+    void sub_rel(Object* object, Location sub);
 
     /// Break an #Expr into a #Value constituent parts.  Extracts the
     /// relative portion of the value, SEG and WRT portions, and top-level
@@ -174,9 +174,16 @@ public:
     /// @return WRT symbol, or NULL if there isn't one.
     SymbolRef get_wrt() const { return m_wrt; }
 
-    /// Get the subtractive relative portion of the value.
+    /// Get the subtractive relative portion of the value as a symbol.
     /// @return Subtractive symbol, or NULL if there isn't one.
-    SymbolRef get_sub() const { return m_sub; }
+    SymbolRef get_sub_sym() const
+    { return SymbolRef(m_sub_sym ? m_sub.sym : 0); }
+
+    /// Get the subtractive relative portion of the value as a location.
+    /// Handles both locations and labels.
+    /// @param loc      Subtractive location (output)
+    /// @return True if loc set, false if not.
+    bool get_sub_loc(/*@out@*/ Location* loc) const;
 
     /// Determine if the value is relative.
     /// @return True if value has a relative portion, false if not.
@@ -227,7 +234,7 @@ public:
 
     /// Determine if there is a subtractive relative portion of the value.
     /// @return True if value has a subtractive relative portion, false if not.
-    bool has_sub() const { return m_sub != 0; }
+    bool has_sub() const { return m_sub_sym != 0 || m_sub_loc != 0; }
 
     /// Enable overflow warnings for this value.
     void enable_warn() { m_no_warn = 0; }
@@ -289,14 +296,26 @@ private:
     /// What the relative portion is in reference to.  NULL if the default.
     SymbolRef m_wrt;
 
-    /// Subtractive relative element.  NULL if none.
+    /// Subtractive relative element.
     /// Usually in a different section than m_rel; unless there's a WRT portion
     /// or other modification of m_rel, differences in the same section should
     /// be in m_abs.
-    SymbolRef m_sub;
+    union
+    {
+        Symbol* sym;        ///< Symbol if m_sub_sym is nonzero.
+        Location loc;       ///< Location if m_sub_loc is nonzero.
+    } m_sub;
 
     /// Line number.
     unsigned long m_line;
+
+    /// If m_sub is a symbol.  Boolean.
+    /// Should not be set if m_sub_loc is set.
+    unsigned int m_sub_sym : 1;
+
+    /// If m_sub is a location.  Boolean.
+    /// Should not be set if m_sub_sym is set.
+    unsigned int m_sub_loc : 1;
 
     /// Distance from the end of the value to the next instruction, in bytes.
     /// Used to generate special relocations in some object formats.
