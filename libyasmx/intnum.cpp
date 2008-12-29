@@ -217,15 +217,10 @@ IntNum::IntNum(const unsigned char* ptr,
 IntNum::IntNum(const IntNum& rhs)
 {
     m_type = rhs.m_type;
-    switch (rhs.m_type)
-    {
-        case INTNUM_L:
-            m_val.l = rhs.m_val.l;
-            break;
-        case INTNUM_BV:
-            m_val.bv = BitVector::Clone(rhs.m_val.bv);
-            break;
-    }
+    if (rhs.m_type == INTNUM_BV)
+        m_val.bv = BitVector::Clone(rhs.m_val.bv);
+    else
+        m_val.l = rhs.m_val.l;
 }
 
 void
@@ -460,57 +455,47 @@ IntNum::sign() const
 unsigned long
 IntNum::get_uint() const
 {
-    switch (m_type)
+    if (m_type == INTNUM_L)
     {
-        case INTNUM_L:
-            if (m_val.l < 0)
-                return 0;
-            return static_cast<unsigned long>(m_val.l);
-        case INTNUM_BV:
-            if (BitVector::msb_(m_val.bv))
-                return 0;
-            if (BitVector::Set_Max(m_val.bv) > ULONG_BITS)
-                return ULONG_MAX;
-            return BitVector::Chunk_Read(m_val.bv, ULONG_BITS, 0);
-        default:
-            throw InternalError(N_("unknown intnum type"));
-            /*@notreached@*/
+        if (m_val.l < 0)
             return 0;
+        return static_cast<unsigned long>(m_val.l);
     }
+
+    // Handle bitvect
+    if (BitVector::msb_(m_val.bv))
+        return 0;
+    if (BitVector::Set_Max(m_val.bv) > ULONG_BITS)
+        return ULONG_MAX;
+    return BitVector::Chunk_Read(m_val.bv, ULONG_BITS, 0);
 }
 
 long
 IntNum::get_int() const
 {
-    switch (m_type)
+    if (m_type == INTNUM_L)
+        return m_val.l;
+
+    // Handle bitvect
+    if (BitVector::msb_(m_val.bv))
     {
-        case INTNUM_L:
-            return m_val.l;
-        case INTNUM_BV:
-            if (BitVector::msb_(m_val.bv))
-            {
-                // it's negative: negate the bitvector to get a positive
-                // number, then negate the positive number.
-                unsigned long ul;
+        // it's negative: negate the bitvector to get a positive
+        // number, then negate the positive number.
+        unsigned long ul;
 
-                BitVector::Negate(conv_bv, m_val.bv);
-                if (BitVector::Set_Max(conv_bv) >= LONG_BITS)
-                {
-                    // too negative
-                    return LONG_MIN;
-                }
-                ul = BitVector::Chunk_Read(conv_bv, LONG_BITS, 0);
-                // check for too negative
-                return -static_cast<long>(ul);
-            }
-
-            // it's positive, and since it's a BV, it must be >0x7FFFFFFF
-            return LONG_MAX;
-        default:
-            throw InternalError(N_("unknown intnum type"));
-            /*@notreached@*/
-            return 0;
+        BitVector::Negate(conv_bv, m_val.bv);
+        if (BitVector::Set_Max(conv_bv) >= LONG_BITS)
+        {
+            // too negative
+            return LONG_MIN;
+        }
+        ul = BitVector::Chunk_Read(conv_bv, LONG_BITS, 0);
+        // check for too negative
+        return -static_cast<long>(ul);
     }
+
+    // it's positive, and since it's a BV, it must be >0x7FFFFFFF
+    return LONG_MAX;
 }
 
 void
@@ -789,20 +774,12 @@ operator>(const IntNum& lhs, const IntNum& rhs)
 char*
 IntNum::get_str() const
 {
-    char *s;
-    switch (m_type)
-    {
-        case INTNUM_L:
-            s = static_cast<char*>(malloc(16));
-            sprintf(s, "%ld", m_val.l);
-            return s;
-            break;
-        case INTNUM_BV:
-            return reinterpret_cast<char*>(BitVector::to_Dec(m_val.bv));
-            break;
-    }
-    /*@notreached@*/
-    return NULL;
+    if (m_type == INTNUM_BV)
+        return reinterpret_cast<char*>(BitVector::to_Dec(m_val.bv));
+
+    char* s = static_cast<char*>(malloc(16));
+    sprintf(s, "%ld", m_val.l);
+    return s;
 }
 
 std::ostream&
