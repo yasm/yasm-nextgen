@@ -590,20 +590,55 @@ IntNum::get_sized(unsigned char* ptr,
 bool
 IntNum::ok_size(size_t size, size_t rshift, int rangetype) const
 {
-    // If not already a bitvect, convert value to a bitvect
-    wordptr val;
-    if (m_type == INTNUM_BV)
+    // Non-bitvect (for speed)
+    if (m_type == INTNUM_L)
     {
-        if (rshift > 0)
+        long v = m_val.l;
+        v >>= rshift;
+        switch (rangetype)
         {
-            val = conv_bv;
-            BitVector::Copy(val, m_val.bv);
+            case 0:
+                if (v < 0)
+                    return false;
+                if (size >= LONG_BITS)
+                    return true;
+                return (v < (1L<<size));
+            case 1:
+                if (v < 0)
+                {
+                    if (size >= LONG_BITS+1)
+                        return true;
+                    v = 0-v;
+                    return (v <= (1L<<(size-1)));
+                }
+                if (size >= LONG_BITS+1)
+                    return true;
+                return (v < (1L<<(size-1)));
+            case 2:
+                if (v < 0)
+                {
+                    if (size >= LONG_BITS+1)
+                        return true;
+                    v = 0-v;
+                    return (v <= (1L<<(size-1)));
+                }
+                if (size >= LONG_BITS)
+                    return true;
+                return (v < (1L<<size));
+            default:
+                assert(false);
         }
-        else
-            val = m_val.bv;
+    }
+
+    // Handle bitvect
+    wordptr val;
+    if (rshift > 0)
+    {
+        val = conv_bv;
+        BitVector::Copy(val, m_val.bv);
     }
     else
-        val = to_bv(conv_bv);
+        val = m_val.bv;
 
     if (size >= BITVECT_NATIVE_SIZE)
         return 1;
