@@ -229,12 +229,134 @@ IntNum::swap(IntNum& oth)
     std::swap(static_cast<IntNumData&>(*this), static_cast<IntNumData&>(oth));
 }
 
+// Speedup function for non-bitvect calculations.
+// Always makes conservative assumptions; we fall back to bitvect if this
+// function returns false.
+static bool
+calc_long(Op::Op op, long* lhs, long rhs)
+{
+    switch (op)
+    {
+        case Op::ADD:
+            if (*lhs >= LONG_MAX/2 || *lhs <= LONG_MIN/2 ||
+                rhs >= LONG_MAX/2 || rhs <= LONG_MIN/2)
+                return false;
+            *lhs += rhs;
+            break;
+        case Op::SUB:
+            if (*lhs >= LONG_MAX/2 || *lhs <= LONG_MIN/2 ||
+                rhs >= LONG_MAX/2 || rhs <= LONG_MIN/2)
+                return false;
+            *lhs -= rhs;
+            break;
+        case Op::MUL:
+            // half range
+            if (*lhs > -(1L<<(LONG_BITS/2)) && *lhs < (1L<<(LONG_BITS/2)))
+            {
+                if (rhs <= -(1L<<(LONG_BITS/2)) || rhs >= (1L<<(LONG_BITS/2)))
+                    return false;
+                *lhs *= rhs;
+                break;
+            }
+            // maybe someday?
+            return false;
+        case Op::DIV:
+            // TODO: make sure lhs and rhs are unsigned
+        case Op::SIGNDIV:
+            if (rhs == 0)
+                throw ZeroDivisionError(N_("divide by zero"));
+            *lhs /= rhs;
+            break;
+        case Op::MOD:
+            // TODO: make sure lhs and rhs are unsigned
+        case Op::SIGNMOD:
+            if (rhs == 0)
+                throw ZeroDivisionError(N_("divide by zero"));
+            *lhs %= rhs;
+            break;
+        case Op::NEG:
+            *lhs = -(*lhs);
+            break;
+        case Op::NOT:
+            *lhs = ~(*lhs);
+            break;
+        case Op::OR:
+            *lhs |= rhs;
+            break;
+        case Op::AND:
+            *lhs &= rhs;
+            break;
+        case Op::XOR:
+            *lhs ^= rhs;
+            break;
+        case Op::XNOR:
+            *lhs = ~(*lhs ^ rhs);
+            break;
+        case Op::NOR:
+            *lhs = ~(*lhs | rhs);
+            break;
+        case Op::SHL:
+            // maybe someday?
+            return false;
+        case Op::SHR:
+            *lhs >>= rhs;
+            break;
+        case Op::LOR:
+            *lhs = (*lhs || rhs);
+            break;
+        case Op::LAND:
+            *lhs = (*lhs && rhs);
+            break;
+        case Op::LNOT:
+            *lhs = !*lhs;
+            break;
+        case Op::LXOR:
+            *lhs = (!!(*lhs) ^ !!rhs);
+            break;
+        case Op::LXNOR:
+            *lhs = !(!!(*lhs) ^ !!rhs);
+            break;
+        case Op::LNOR:
+            *lhs = !(*lhs || rhs);
+            break;
+        case Op::EQ:
+            *lhs = (*lhs == rhs);
+            break;
+        case Op::LT:
+            *lhs = (*lhs < rhs);
+            break;
+        case Op::GT:
+            *lhs = (*lhs > rhs);
+            break;
+        case Op::LE:
+            *lhs = (*lhs <= rhs);
+            break;
+        case Op::GE:
+            *lhs = (*lhs >= rhs);
+            break;
+        case Op::NE:
+            *lhs = (*lhs != rhs);
+            break;
+        case Op::IDENT:
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
 /*@-nullderef -nullpass -branchstate@*/
 void
 IntNum::calc(Op::Op op, const IntNum* operand)
 {
     if (!operand && op != Op::NEG && op != Op::NOT && op != Op::LNOT)
         throw ArithmeticError(N_("operation needs an operand"));
+
+    if (m_type == INTNUM_L && (!operand || operand->m_type == INTNUM_L))
+    {
+        if (calc_long(op, &m_val.l, operand ? operand->m_val.l : 0))
+            return;
+    }
 
     // Always do computations with in full bit vector.
     // Bit vector results must be calculated through intermediate storage.
