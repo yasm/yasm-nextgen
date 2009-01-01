@@ -84,7 +84,7 @@ public:
 
         for (const LTest* ltest=lvals; ltest!=lvals+NELEMS(lvals); ++ltest)
         {
-            TS_TRACE(ltest->val);
+            //TS_TRACE(ltest->val);
 
             Bytes bytes;
             write_8(bytes, ltest->val);
@@ -99,7 +99,7 @@ public:
 
         for (const ULTest* ultest=ulvals; ultest!=ulvals+NELEMS(ulvals); ++ultest)
         {
-            TS_TRACE(ultest->val);
+            //TS_TRACE(ultest->val);
 
             Bytes bytes;
             write_8(bytes, ultest->val);
@@ -148,7 +148,7 @@ public:
 
         for (const LTest* ltest=lvals; ltest!=lvals+NELEMS(lvals); ++ltest)
         {
-            TS_TRACE(ltest->val);
+            //TS_TRACE(ltest->val);
 
             Bytes bytes;
             bytes << little_endian;
@@ -181,7 +181,7 @@ public:
         for (const ULTest* ultest=ulvals; ultest!=ulvals+NELEMS(ulvals);
              ++ultest)
         {
-            TS_TRACE(ultest->val);
+            //TS_TRACE(ultest->val);
 
             Bytes bytes;
             bytes << little_endian;
@@ -238,7 +238,7 @@ public:
 
         for (const LTest* ltest=lvals; ltest!=lvals+NELEMS(lvals); ++ltest)
         {
-            TS_TRACE(ltest->val);
+            //TS_TRACE(ltest->val);
 
             Bytes bytes;
             bytes << little_endian;
@@ -279,7 +279,7 @@ public:
         for (const ULTest* ultest=ulvals; ultest!=ulvals+NELEMS(ulvals);
              ++ultest)
         {
-            TS_TRACE(ultest->val);
+            //TS_TRACE(ultest->val);
 
             Bytes bytes;
             bytes << little_endian;
@@ -344,7 +344,7 @@ public:
 
         for (const LTest* ltest=lvals; ltest!=lvals+NELEMS(lvals); ++ltest)
         {
-            TS_TRACE(ltest->val);
+            //TS_TRACE(ltest->val);
 
             Bytes bytes;
             bytes << little_endian;
@@ -401,7 +401,7 @@ public:
         for (const ULTest* ultest=ulvals; ultest!=ulvals+NELEMS(ulvals);
              ++ultest)
         {
-            TS_TRACE(ultest->val);
+            //TS_TRACE(ultest->val);
 
             Bytes bytes;
             bytes << little_endian;
@@ -462,7 +462,7 @@ public:
         {
             IntNum intn(1);
             intn <<= i;
-            TS_TRACE(intn);
+            //TS_TRACE(intn);
 
             Bytes bytes;
             bytes << little_endian;
