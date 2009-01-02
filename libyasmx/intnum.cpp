@@ -632,8 +632,15 @@ IntNum::get_sized(unsigned char* ptr,
     if (destsize*8 > BITVECT_NATIVE_SIZE)
         throw InternalError(N_("destination too large"));
 
+    // Split shift into left (shift) and right (rshift) components.
+    size_t rshift = 0;
+    if (shift < 0)
+    {
+        rshift = static_cast<size_t>(-shift);
+        shift = 0;
+    }
+
     // General size warnings
-    size_t rshift = shift < 0 ? static_cast<size_t>(-shift) : 0;
     if (warn<0 && !ok_size(valsize, rshift, 1))
         warn_set(WARN_GENERAL,
                  String::compose(N_("value does not fit in signed %1 bit field"),
@@ -642,6 +649,71 @@ IntNum::get_sized(unsigned char* ptr,
         warn_set(WARN_GENERAL,
                  String::compose(N_("value does not fit in %1 bit field"),
                                  valsize));
+
+    // Non-bitvect (for speed)
+    if (m_type == INTNUM_L)
+    {
+        long v = m_val.l;
+
+        // Check low bits if right shifting and warnings enabled
+        if (warn && rshift > 0)
+        {
+            long mask = (1L<<rshift)-1;
+            if (v & mask)
+                warn_set(WARN_GENERAL,
+                         N_("misaligned value, truncating to boundary"));
+        }
+
+        // Shift right if needed
+        v >>= rshift;
+        rshift = 0;
+
+        // Write out the new data, 8 bits at a time.
+        if (bigendian)
+            throw InternalError(N_("big endian not implemented"));
+        for (int i = 0, sz = valsize;
+             i < static_cast<int>(destsize) && sz > 0; ++i)
+        {
+            // handle left shift past whole bytes
+            if (shift >= 8)
+            {
+                shift -= 8;
+                continue;
+            }
+
+            // Handle first chunk specially for left shifted values
+            if (shift > 0 && sz == static_cast<int>(valsize))
+            {
+                unsigned char chunk =
+                    ((static_cast<unsigned char>(v) & 0xff) << shift) & 0xff;
+                unsigned char mask = ~((1U<<shift)-1);  // keep MSBs
+
+                // write appropriate bits
+                ptr[i] &= ~mask;
+                ptr[i] |= chunk & mask;
+
+                v >>= (8-shift);
+                sz -= (8-shift);
+            }
+            else
+            {
+                unsigned char chunk = static_cast<unsigned char>(v) & 0xff;
+                unsigned char mask = 0xff;
+                // for last chunk, need to keep least significant bits
+                if (sz < 8)
+                    mask = (1U<<sz)-1;
+
+                // write appropriate bits
+                ptr[i] &= ~mask;
+                ptr[i] |= chunk & mask;
+
+                v >>= 8;
+                sz -= 8;
+            }
+        }
+
+        return;
+    }
 
     // Read the original data into a bitvect
     wordptr op1 = op1static;
@@ -674,7 +746,6 @@ IntNum::get_sized(unsigned char* ptr,
         bool carry_in = BitVector::msb_(op2);
         while (rshift-- > 0)
             BitVector::shift_right(op2, carry_in);
-        shift = 0;
     }
 
     // Write the new value into the destination bitvect

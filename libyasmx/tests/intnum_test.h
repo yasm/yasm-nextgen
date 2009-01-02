@@ -451,4 +451,58 @@ public:
         TS_ASSERT(IntNum(-256).ok_size(8, 1, 2));
         TS_ASSERT(!IntNum(-257).ok_size(8, 1, 2));
     }
+
+    void testGetSized_long()
+    {
+        struct LongTest
+        {
+            long val;
+            size_t destsize;
+            size_t valsize;
+            int shift;
+            bool bigendian;
+            unsigned char inbuf[4];
+            unsigned char outbuf[4];
+        };
+        LongTest tests[] =
+        {
+            // full value should overwrite completely
+            {0x1234, 2, 16, 0, false, {0x00, 0x00}, {0x34, 0x12}},
+            {0x1234, 2, 16, 0, false, {0xff, 0xff}, {0x34, 0x12}},
+            // single byte
+            {0x1234, 2, 8, 0, false, {0x55, 0xaa}, {0x34, 0xaa}},
+            // bit-level masking
+            {0x1234, 2, 4, 0, false, {0xff, 0x55}, {0xf4, 0x55}},
+            {0x1234, 2, 12, 0, false, {0xff, 0xee}, {0x34, 0xe2}},
+            {0x1234, 2, 14, 0, false, {0xff, 0xff}, {0x34, 0xd2}},
+            // right shifts
+            {0x1234, 2, 16, -4, false, {0xff, 0xff}, {0x23, 0x01}},
+            {0x1234, 2, 12, -4, false, {0xff, 0xff}, {0x23, 0xf1}},
+            // left shifts preserve what was to the right
+            {0x1234, 3, 16, 4, false, {0xff, 0xff, 0xff}, {0x4f, 0x23, 0xf1}},
+            {0x1234, 3, 12, 4, false, {0xff, 0xff, 0xff}, {0x4f, 0x23, 0xff}},
+            {0x1234, 2, 16, 4, false, {0xff, 0xff, 0x00}, {0x4f, 0x23, 0x00}},
+            {0x1234, 2, 12, 4, false, {0xff, 0xff, 0x00}, {0x4f, 0x23, 0x00}},
+            {0x1234, 3, 16, 8, false, {0xff, 0xff, 0xff}, {0xff, 0x34, 0x12}},
+            {0x1234, 3, 12, 12, false, {0x55, 0xaa, 0xff}, {0x55, 0x4a, 0x23}},
+            //
+            // negative numbers
+            //
+            {-1, 2, 16, 0, false, {0x00, 0x00}, {0xff, 0xff}},
+            {-1, 2, 12, 0, false, {0x00, 0x00}, {0xff, 0x0f}},
+            {-1, 2, 12, 4, false, {0x55, 0xaa}, {0xf5, 0xff}},
+        };
+        unsigned char buf[4];
+        IntNum intn;
+        for (unsigned int i=0; i<NELEMS(tests); ++i)
+        {
+            LongTest& test = tests[i];
+            intn = test.val;
+            memcpy(buf, test.inbuf, 4);
+            intn.get_sized(buf, test.destsize, test.valsize, test.shift,
+                           test.bigendian, 0);
+            //TS_TRACE(i);
+            TS_ASSERT_SAME_DATA(buf, test.outbuf, 4);
+        }
+    }
 };
