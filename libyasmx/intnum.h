@@ -130,7 +130,7 @@ public:
     /// @param bigendian    endianness (true=big, false=little)
     IntNum(const unsigned char* ptr,
            bool sign,
-           size_t srcsize,
+           unsigned int srcsize,
            bool bigendian);
 
     /// Copy constructor.
@@ -246,8 +246,8 @@ public:
     ///                     valsize bits): <0=signed warnings,
     ///                     >0=unsigned warnings, 0=no warn
     void get_sized(unsigned char *ptr,
-                   size_t destsize,
-                   size_t valsize,
+                   unsigned int destsize,
+                   unsigned int valsize,
                    int shift,
                    bool bigendian,
                    int warn) const;
@@ -260,7 +260,7 @@ public:
     ///                     1 => (signed min, signed max);
     ///                     2 => (signed min, unsigned max)
     /// @return True if intnum will fit.
-    bool ok_size(size_t size, size_t rshift, int rangetype) const;
+    bool ok_size(unsigned int size, unsigned int rshift, int rangetype) const;
 
     /// Check to see if intnum will fit into a particular numeric range.
     /// @param low      low end of range (inclusive)

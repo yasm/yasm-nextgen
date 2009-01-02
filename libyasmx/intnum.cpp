@@ -186,7 +186,7 @@ IntNum::IntNum(const unsigned char* ptr, bool sign, unsigned long& size)
 
 IntNum::IntNum(const unsigned char* ptr,
                bool sign,
-               size_t srcsize,
+               unsigned int srcsize,
                bool bigendian)
 {
     if (srcsize*8 > BITVECT_NATIVE_SIZE)
@@ -622,8 +622,8 @@ IntNum::get_int() const
 
 void
 IntNum::get_sized(unsigned char* ptr,
-                  size_t destsize,
-                  size_t valsize,
+                  unsigned int destsize,
+                  unsigned int valsize,
                   int shift,
                   bool bigendian,
                   int warn) const
@@ -633,10 +633,10 @@ IntNum::get_sized(unsigned char* ptr,
         throw InternalError(N_("destination too large"));
 
     // Split shift into left (shift) and right (rshift) components.
-    size_t rshift = 0;
+    unsigned int rshift = 0;
     if (shift < 0)
     {
-        rshift = static_cast<size_t>(-shift);
+        rshift = static_cast<unsigned int>(-shift);
         shift = 0;
     }
 
@@ -766,7 +766,7 @@ IntNum::get_sized(unsigned char* ptr,
 }
 
 bool
-IntNum::ok_size(size_t size, size_t rshift, int rangetype) const
+IntNum::ok_size(unsigned int size, unsigned int rshift, int rangetype) const
 {
     // Non-bitvect (for speed)
     if (m_type == INTNUM_L)

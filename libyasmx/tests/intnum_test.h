@@ -457,8 +457,8 @@ public:
         struct LongTest
         {
             long val;
-            size_t destsize;
-            size_t valsize;
+            unsigned int destsize;
+            unsigned int valsize;
             int shift;
             bool bigendian;
             unsigned char inbuf[4];
