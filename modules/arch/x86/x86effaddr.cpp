@@ -463,7 +463,7 @@ x86_expr_checkea_distcheck_reg(Expr* e, unsigned int bits)
 static int
 x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
     bool* ip_rel, unsigned int bits,
-    FUNCTION::function <int* (ExprTerm& term, int& regnum)> get_reg)
+    const FUNCTION::function <int* (ExprTerm& term, int& regnum)>& get_reg)
 {
     int* reg;
     int regnum;

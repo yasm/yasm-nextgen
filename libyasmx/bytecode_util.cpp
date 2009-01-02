@@ -51,7 +51,9 @@ finalize(Bytecode& bc, Errwarns& errwarns)
 }
 
 void
-calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span, Errwarns& errwarns)
+calc_len(Bytecode& bc,
+         const Bytecode::AddSpanFunc& add_span,
+         Errwarns& errwarns)
 {
     try
     {

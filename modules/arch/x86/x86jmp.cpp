@@ -61,7 +61,7 @@ public:
 
     void put(marg_ostream& os) const;
     void finalize(Bytecode& bc);
-    unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
+    unsigned long calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
     bool expand(Bytecode& bc,
                 unsigned long& len,
                 int span,
@@ -188,7 +188,7 @@ X86Jmp::finalize(Bytecode& bc)
 }
 
 unsigned long
-X86Jmp::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
+X86Jmp::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 {
     unsigned long len = 0;
 

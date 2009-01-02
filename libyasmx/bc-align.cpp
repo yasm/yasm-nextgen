@@ -61,7 +61,7 @@ public:
     void finalize(Bytecode& bc);
 
     /// Calculates the minimum size of a bytecode.
-    unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
+    unsigned long calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
 
     /// Recalculates the bytecode's length based on an expanded span
     /// length.
@@ -129,7 +129,7 @@ AlignBytecode::finalize(Bytecode& bc)
 }
 
 unsigned long
-AlignBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
+AlignBytecode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 {
     unsigned long len = 0;
     long neg_thres = 0;

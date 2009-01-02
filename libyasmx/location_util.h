@@ -59,9 +59,9 @@ void xform_calc_dist_no_bc(Expr* e);
 
 YASM_LIB_EXPORT
 int subst_dist(Expr* e,
-               FUNCTION::function<void (unsigned int subst,
-                                        Location loc,
-                                        Location loc2)> func);
+               const FUNCTION::function<void (unsigned int subst,
+                                              Location loc,
+                                              Location loc2)>& func);
 
 } // namespace yasm
 

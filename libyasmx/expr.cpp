@@ -586,7 +586,7 @@ void
 Expr::level_tree(bool fold_const,
                  bool simplify_ident,
                  bool simplify_reg_mul,
-                 FUNCTION::function<void (Expr*)> xform_extra)
+                 const FUNCTION::function<void (Expr*)>& xform_extra)
 {
     xform_neg();
 
@@ -687,7 +687,7 @@ Expr::substitute(const ExprTerms& subst_terms)
 }
 
 bool
-Expr::traverse_post(FUNCTION::function<bool (Expr*)> func)
+Expr::traverse_post(const FUNCTION::function<bool (Expr*)>& func)
 {
     for (ExprTerms::iterator i=m_terms.begin(), end=m_terms.end(); i != end;
          ++i)
@@ -700,7 +700,8 @@ Expr::traverse_post(FUNCTION::function<bool (Expr*)> func)
 }
 
 bool
-Expr::traverse_leaves_in(FUNCTION::function<bool (const ExprTerm&)> func) const
+Expr::traverse_leaves_in(const FUNCTION::function<bool (const ExprTerm&)>& func)
+    const
 {
     for (ExprTerms::const_iterator i=m_terms.begin(), end=m_terms.end();
          i != end; ++i)

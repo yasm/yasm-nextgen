@@ -51,7 +51,9 @@ void finalize(Bytecode& bc, Errwarns& errwarns);
 /// @param add_span     function to call to add a span
 /// @param errwarns     error/warning set
 YASM_LIB_EXPORT
-void calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span, Errwarns& errwarns);
+void calc_len(Bytecode& bc,
+              const Bytecode::AddSpanFunc& add_span,
+              Errwarns& errwarns);
 
 /// Recalculate a bytecode's length based on an expanded span length
 /// (wrapping Bytecode::expand()).

@@ -64,7 +64,7 @@ public:
     void finalize(Bytecode& bc);
 
     /// Calculates the minimum size of a bytecode.
-    unsigned long calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span);
+    unsigned long calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
 
     /// Convert a bytecode into its byte representation.
     void output(Bytecode& bc, BytecodeOutput& bc_out);
@@ -138,7 +138,7 @@ IncbinBytecode::finalize(Bytecode& bc)
 }
 
 unsigned long
-IncbinBytecode::calc_len(Bytecode& bc, Bytecode::AddSpanFunc add_span)
+IncbinBytecode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 {
     unsigned long start = 0, maxlen = 0xFFFFFFFFUL, flen;
 

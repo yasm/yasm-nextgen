@@ -108,7 +108,8 @@ public:
         /// @return Length in bytes.
         /// @note May store to bytecode updated expressions.
         virtual unsigned long calc_len(Bytecode& bc,
-                                       Bytecode::AddSpanFunc add_span) = 0;
+                                       const Bytecode::AddSpanFunc& add_span)
+            = 0;
 
         /// Recalculates the bytecode's length based on an expanded span
         /// length.  Called from Bytecode::expand().
@@ -263,7 +264,7 @@ public:
     /// spanned increases, it could cause the bytecode size to increase.
     /// @param add_span     function to call to add a span
     /// @note May store to bytecode updated expressions and the short length.
-    void calc_len(AddSpanFunc add_span);
+    void calc_len(const AddSpanFunc& add_span);
 
     /// Recalculate a bytecode's length based on an expanded span length.
     /// @param span         span ID (as given to yasm_bc_add_span_func in

@@ -256,12 +256,12 @@ public:
     void level_tree(bool fold_const,
                     bool simplify_ident,
                     bool simplify_reg_mul,
-                    FUNCTION::function<void (Expr*)> xform_extra = 0);
+                    const FUNCTION::function<void (Expr*)>& xform_extra = 0);
 
     /// Simplify an expression as much as possible.  Eliminates extraneous
     /// branches and simplifies integer-only subexpressions.  Simplified
     /// version of level_tree().
-    void simplify(FUNCTION::function<void (Expr*)> xform_extra = 0)
+    void simplify(const FUNCTION::function<void (Expr*)>& xform_extra = 0)
     {
         level_tree(true, true, true, xform_extra);
     }
@@ -317,15 +317,15 @@ public:
     ///         value of the expression.
     /*@dependent@*/ /*@null@*/ const Register* get_reg() const;
 
-    bool traverse_post(FUNCTION::function<bool (Expr*)> func);
+    bool traverse_post(const FUNCTION::function<bool (Expr*)>& func);
 
     /// Traverse over expression tree in order, calling func for each leaf
     /// (non-operation).
     ///
     /// Stops early (and returns true) if func returns true.
     /// Otherwise returns false.
-    bool traverse_leaves_in(FUNCTION::function<bool (const ExprTerm&)> func)
-        const;
+    bool traverse_leaves_in
+        (const FUNCTION::function<bool (const ExprTerm&)>& func) const;
 
     /// Reorder terms of e into canonical order.  Only reorders if reordering
     /// doesn't change meaning of expression.  (eg, doesn't reorder SUB).

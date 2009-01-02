@@ -39,9 +39,9 @@ namespace yasm
 // ExprTerms if possible.  Uses a simple n^2 algorithm because n is usually
 // quite small.  Also works for loc-loc (or Symbol-loc, loc-Symbol).
 static void
-xform_dist_base(Expr* e, FUNCTION::function<bool (ExprTerm& term,
-                                                  Location loc1,
-                                                  Location loc2)> func)
+xform_dist_base(Expr* e, const FUNCTION::function<bool (ExprTerm& term,
+                                                        Location loc1,
+                                                        Location loc2)>& func)
 {
     // Handle Symbol-Symbol in ADD exprs by looking for (-1*Symbol) and
     // Symbol term pairs (where both Symbols are in the same segment).
@@ -164,9 +164,9 @@ xform_calc_dist_no_bc(Expr* e)
 static inline bool
 subst_dist_cb(ExprTerm& term, Location loc, Location loc2,
               unsigned int* subst,
-              FUNCTION::function<void (unsigned int subst,
-                                       Location loc,
-                                       Location loc2)> func)
+              const FUNCTION::function<void (unsigned int subst,
+                                             Location loc,
+                                             Location loc2)>& func)
 {
     // Call higher-level callback
     func(*subst, loc, loc2);
@@ -178,20 +178,22 @@ subst_dist_cb(ExprTerm& term, Location loc, Location loc2,
 
 static inline void
 xform_subst_dist(Expr* e, unsigned int* subst,
-                 FUNCTION::function<void (unsigned int subst,
-                                          Location loc,
-                                          Location loc2)> func)
+                 const FUNCTION::function<void (unsigned int subst,
+                                                Location loc,
+                                                Location loc2)>& func)
 {
-    xform_dist_base(e, BIND::bind(&subst_dist_cb, _1, _2, _3, subst, func));
+    xform_dist_base(e, BIND::bind(&subst_dist_cb, _1, _2, _3, subst,
+                                  REF::ref(func)));
 }
 
 int
 subst_dist(Expr* e,
-           FUNCTION::function<void (unsigned int subst, Location loc,
-                                    Location loc2)> func)
+           const FUNCTION::function<void (unsigned int subst,
+                                          Location loc,
+                                          Location loc2)>& func)
 {
     unsigned int subst = 0;
-    e->simplify(BIND::bind(&xform_subst_dist, _1, &subst, func));
+    e->simplify(BIND::bind(&xform_subst_dist, _1, &subst, REF::ref(func)));
     return subst;
 }
 

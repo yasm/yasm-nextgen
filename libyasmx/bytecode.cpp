@@ -172,7 +172,7 @@ Bytecode::finalize()
 }
 
 void
-Bytecode::calc_len(AddSpanFunc add_span)
+Bytecode::calc_len(const AddSpanFunc& add_span)
 {
     if (m_contents.get() == 0)
     {
