@@ -261,7 +261,7 @@ X86EffAddr::clone() const
 // Only works if term.type == Expr::REG (doesn't check).
 // Overwrites term with intnum of 0 (to eliminate regs from the final expr).
 static /*@null@*/ /*@dependent@*/ int*
-get_reg3264(ExprTerm& term, int& regnum, int* regs, unsigned char bits,
+get_reg3264(ExprTerm& term, int* regnum, int* regs, unsigned char bits,
             unsigned char addrsize)
 {
     const X86Register* reg = static_cast<const X86Register*>(term.get_reg());
@@ -271,17 +271,17 @@ get_reg3264(ExprTerm& term, int& regnum, int* regs, unsigned char bits,
         case X86Register::REG32:
             if (addrsize != 32)
                 return 0;
-            regnum = reg->num();
+            *regnum = reg->num();
             break;
         case X86Register::REG64:
             if (addrsize != 64)
                 return 0;
-            regnum = reg->num();
+            *regnum = reg->num();
             break;
         case X86Register::RIP:
             if (bits != 64)
                 return 0;
-            regnum = 16;
+            *regnum = 16;
             break;
         default:
             return 0;
@@ -291,13 +291,13 @@ get_reg3264(ExprTerm& term, int& regnum, int* regs, unsigned char bits,
     term = IntNum(0);
 
     // we're okay
-    return &regs[regnum];
+    return &regs[*regnum];
 }
 
 // Only works if term.type == Expr::REG (doesn't check).
 // Overwrites term with intnum of 0 (to eliminate regs from the final expr).
 static /*@null@*/ int*
-x86_expr_checkea_get_reg16(ExprTerm& term, int& regnum, int* bx, int* si,
+x86_expr_checkea_get_reg16(ExprTerm& term, int* regnum, int* bx, int* si,
                            int* di, int* bp)
 {
     // in order: ax,cx,dx,bx,sp,bp,si,di
@@ -318,17 +318,17 @@ x86_expr_checkea_get_reg16(ExprTerm& term, int& regnum, int* bx, int* si,
         return 0;
 
     // & 7 for sanity check
-    regnum = reg->num() & 0x7;
+    *regnum = reg->num() & 0x7;
 
     // only allow BX, SI, DI, BP
-    if (!reg16[regnum])
+    if (!reg16[*regnum])
         return 0;
 
     // overwrite with 0 to eliminate register from displacement expr
     term = IntNum(0);
 
     // we're okay
-    return reg16[regnum];
+    return reg16[*regnum];
 }
 
 // Distribute over registers to help bring them to the topmost level of e.
@@ -463,7 +463,7 @@ x86_expr_checkea_distcheck_reg(Expr* e, unsigned int bits)
 static int
 x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
     bool* ip_rel, unsigned int bits,
-    const FUNCTION::function <int* (ExprTerm& term, int& regnum)>& get_reg)
+    const FUNCTION::function <int* (ExprTerm& term, int* regnum)>& get_reg)
 {
     int* reg;
     int regnum;
@@ -480,7 +480,7 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
     {
         if (bits != 64)     // only valid in 64-bit mode
             return 1;
-        reg = get_reg(wrt->get_terms()[0], regnum);
+        reg = get_reg(wrt->get_terms()[0], &regnum);
         if (!reg || regnum != 16)   // only accept rip
             return 1;
         (*reg)++;
@@ -535,7 +535,7 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
             {
                 if (i->is_type(ExprTerm::REG))
                 {
-                    reg = get_reg(*i, regnum);
+                    reg = get_reg(*i, &regnum);
                     if (!reg)
                         return 1;
                     (*reg)++;
@@ -558,7 +558,7 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
                         if (!intn)
                             throw InternalError(
                                 N_("Non-integer value in reg expn"));
-                        reg = get_reg(terms[0], regnum);
+                        reg = get_reg(terms[0], &regnum);
                         if (!reg)
                             return 1;
                         (*reg) += intn->get_int();
@@ -585,7 +585,7 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
                 IntNum* intn = terms[1].get_int();
                 if (!intn)
                     return 1;
-                reg = get_reg(terms[0], regnum);
+                reg = get_reg(terms[0], &regnum);
                 if (!reg)
                     return 1;
                 (*reg) += intn->get_int();
