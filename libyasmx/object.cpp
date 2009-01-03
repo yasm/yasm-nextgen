@@ -32,6 +32,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <queue>
 #include <vector>
 
 #include <boost/pool/pool.hpp>
@@ -497,7 +498,7 @@ private:
     void term_expand(IntervalTreeNode<Span::Term*> * node, long len_diff);
 
     std::list<Span*> m_spans;   // ownership list
-    std::list<Span*> m_QA, m_QB;
+    std::queue<Span*> m_QA, m_QB;
     IntervalTree<Span::Term*> m_itree;
     std::vector<OffsetSetter> m_offset_setters;
 };
@@ -755,9 +756,9 @@ Optimize::term_expand(IntervalTreeNode<Span::Term*> * node, long len_diff)
 
     // Exceeded thresholds, need to add to Q for expansion
     if (span->m_id <= 0)
-        m_QA.push_back(span);
+        m_QA.push(span);
     else
-        m_QB.push_back(span);
+        m_QB.push(span);
     span->m_active = Span::ON_Q;    // Mark as being in Q
 }
 
@@ -836,7 +837,7 @@ Optimize::step_1d()
         if (span->recalc_normal())
         {
             // Exceeded threshold, add span to QB
-            m_QB.push_back(&(*span));
+            m_QB.push(&(*span));
             span->m_active = Span::ON_Q;
         }
     }
@@ -910,12 +911,12 @@ Optimize::step_2(Errwarns& errwarns)
         if (!m_QA.empty())
         {
             span = m_QA.front();
-            m_QA.pop_front();
+            m_QA.pop();
         }
         else
         {
             span = m_QB.front();
-            m_QB.pop_front();
+            m_QB.pop();
         }
 
         if (span->m_active == Span::INACTIVE)
