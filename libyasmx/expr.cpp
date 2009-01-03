@@ -39,58 +39,51 @@
 #include "symbol.h"
 
 
-namespace
+namespace yasm
 {
-
-using namespace yasm;
 
 /// Look for simple identities that make the entire result constant:
 /// 0*&x, -1|x, etc.
-bool
-is_constant(Op::Op op, const IntNum* intn)
+static inline bool
+is_constant(Op::Op op, const IntNum& intn)
 {
-    bool iszero = intn->is_zero();
+    bool iszero = intn.is_zero();
     return ((iszero && op == Op::MUL) ||
             (iszero && op == Op::AND) ||
             (iszero && op == Op::LAND) ||
-            (intn->is_neg1() && op == Op::OR));
+            (intn.is_neg1() && op == Op::OR));
 }
 
 /// Look for simple "left" identities like 0+x, 1*x, etc.
-bool
-can_destroy_int_left(Op::Op op, const IntNum* intn)
+static inline bool
+can_destroy_int_left(Op::Op op, const IntNum& intn)
 {
-    bool iszero = intn->is_zero();
-    return ((intn->is_pos1() && op == Op::MUL) ||
+    bool iszero = intn.is_zero();
+    return ((intn.is_pos1() && op == Op::MUL) ||
             (iszero && op == Op::ADD) ||
-            (intn->is_neg1() && op == Op::AND) ||
+            (intn.is_neg1() && op == Op::AND) ||
             (!iszero && op == Op::LAND) ||
             (iszero && op == Op::OR) ||
             (iszero && op == Op::LOR));
 }
 
 /// Look for simple "right" identities like x+|-0, x*&/1
-bool
-can_destroy_int_right(Op::Op op, const IntNum* intn)
+static inline bool
+can_destroy_int_right(Op::Op op, const IntNum& intn)
 {
-    bool iszero = intn->is_zero();
-    bool ispos1 = intn->is_pos1();
+    bool iszero = intn.is_zero();
+    bool ispos1 = intn.is_pos1();
     return ((ispos1 && op == Op::MUL) ||
             (ispos1 && op == Op::DIV) ||
             (iszero && op == Op::ADD) ||
             (iszero && op == Op::SUB) ||
-            (intn->is_neg1() && op == Op::AND) ||
+            (intn.is_neg1() && op == Op::AND) ||
             (!iszero && op == Op::LAND) ||
             (iszero && op == Op::OR) ||
             (iszero && op == Op::LOR) ||
             (iszero && op == Op::SHL) ||
             (iszero && op == Op::SHR));
 }
-
-} // anonymous namespace
-
-namespace yasm
-{
 
 ExprTerm::ExprTerm(std::auto_ptr<IntNum> intn)
     : m_type(INT)
@@ -389,8 +382,8 @@ Expr::simplify_identity(IntNum* &intn, bool simplify_reg_mul)
         // Don't do this step if it's 1*REG.
         if ((simplify_reg_mul || m_op != Op::MUL || !intn->is_pos1() ||
              !contains(ExprTerm::REG)) &&
-            ((is_first && can_destroy_int_left(m_op, intn)) ||
-             (!is_first && can_destroy_int_right(m_op, intn))))
+            ((is_first && can_destroy_int_left(m_op, *intn)) ||
+             (!is_first && can_destroy_int_right(m_op, *intn))))
         {
             // delete int term
             intn->~IntNum();
@@ -399,7 +392,7 @@ Expr::simplify_identity(IntNum* &intn, bool simplify_reg_mul)
                 BIND::bind(&ExprTerm::is_type, _1, ExprTerm::INT)));
         }
         // Check for simple identites that delete everything BUT the intnum.
-        else if (is_constant(m_op, intn))
+        else if (is_constant(m_op, *intn))
         {
             // Delete everything but the integer term
             ExprTerms terms;
