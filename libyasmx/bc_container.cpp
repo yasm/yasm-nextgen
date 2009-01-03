@@ -210,6 +210,7 @@ marg_ostream&
 operator<< (marg_ostream& os, const BytecodeContainer& container)
 {
     os << "Bytecodes:\n";
+    ++os;
     for (BytecodeContainer::const_bc_iterator bc=container.bcs_begin(),
          end=container.bcs_end(); bc != end; ++bc)
     {
@@ -218,6 +219,7 @@ operator<< (marg_ostream& os, const BytecodeContainer& container)
         os << *bc;
         --os;
     }
+    --os;
     return os;
 }
 

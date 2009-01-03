@@ -88,12 +88,7 @@ Section::put(marg_ostream& os, bool with_bcs) const
     --os;
 
     if (with_bcs)
-    {
-        os << "Bytecodes:\n";
-        ++os;
         os << static_cast<const BytecodeContainer&>(*this);
-        --os;
-    }
 
     // TODO: relocs
 }
