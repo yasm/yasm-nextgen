@@ -83,6 +83,7 @@ public:
     const AssocData* get_assoc_data(const void* key) const;
 };
 
+YASM_LIB_EXPORT
 marg_ostream& operator<< (marg_ostream& os,
                           const AssocDataContainer& container);
 
