@@ -597,7 +597,7 @@ BinObject::dir_map(Object& object,
 
     m_map_flags |= MAP_NONE;
 
-    helpers(namevals.begin(), namevals.end(), 
+    helpers(namevals.begin(), namevals.end(),
             BIND::bind(&BinObject::map_filename, this, _1));
 }
 

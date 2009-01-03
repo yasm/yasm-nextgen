@@ -105,7 +105,7 @@ enum ElfMagic
     ELFMAG0 = 0x7f,
     ELFMAG1 = 0x45,
     ELFMAG2 = 0x4c,
-    ELFMAG3 = 0x46 
+    ELFMAG3 = 0x46
 };
 
 enum ElfVersion

@@ -27,7 +27,7 @@ struct gencode
 {
   char **line;                       /* array of text lines, 80 bytes apiece */
   /*
-   * The code placed here must declare "ub4 rsl" 
+   * The code placed here must declare "ub4 rsl"
    * and assign it the value of the perfect hash using the function inputs.
    * Later code will be tacked on which returns rsl or manipulates it according
    * to the user directives.
@@ -122,7 +122,7 @@ ub4 phash_log2(ub4 x);
 
 /* Given the keys, scramble[], and hash mode, find the perfect hash */
 void findhash(bstuff **tabb, hstuff **tabh, ub4 *alen, ub4 *blen, ub4 *salt,
-                gencode *final, ub4 *scramble, ub4 *smax, key *keys, ub4 nkeys, 
+                gencode *final, ub4 *scramble, ub4 *smax, key *keys, ub4 nkeys,
                 hashform *form);
 
 /* private, but in a different file because it's excessively verbose */

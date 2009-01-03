@@ -384,7 +384,7 @@ Link::do_link(const IntNum& origin)
         start = i->m_section.get_vma();
         i->assign_vstart_recurse(start, m_errwarns);
     }
-    
+
     return true;
 }
 

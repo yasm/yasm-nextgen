@@ -157,7 +157,7 @@ make_c_tab(
                   << tab[i+8].val_b << ',' << tab[i+9].val_b << ','
                   << tab[i+10].val_b << ',' << tab[i+11].val_b << ','
                   << tab[i+12].val_b << ',' << tab[i+13].val_b << ','
-                  << tab[i+14].val_b << ',' << tab[i+15].val_b << ",\n"; 
+                  << tab[i+14].val_b << ',' << tab[i+15].val_b << ",\n";
         }
         f << "  };\n";
         f << '\n';
@@ -218,7 +218,7 @@ perfect_gen(std::ostream& out,
     }
 
     /* find the hash */
-    findhash(&tab, &tabh, &alen, &blen, &salt, &final, 
+    findhash(&tab, &tabh, &alen, &blen, &salt, &final,
              scramble, &smax, keys, nkeys, &form);
 
     /* The hash function beginning */

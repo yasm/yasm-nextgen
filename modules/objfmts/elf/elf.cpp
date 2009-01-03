@@ -461,7 +461,7 @@ ElfConfig::symtab_write(std::ostream& os,
     // write undef symbol
     ElfSymbol undef;
     scratch.resize(0);
-    undef.write(scratch, *this); 
+    undef.write(scratch, *this);
     os << scratch;
     size += scratch.size();
 
@@ -526,7 +526,7 @@ ElfSymbol::set_size(std::auto_ptr<Expr> size, unsigned long line)
 {
     m_xsize.reset(size.release());
     m_size_line = line;
-}                            
+}
 
 ElfSection::ElfSection(const ElfConfig&     config,
                        std::istream&        is,

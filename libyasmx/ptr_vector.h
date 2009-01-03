@@ -220,7 +220,7 @@ private:
    static bool check_not_null (const ptr_vec_iter_imp& left, const ptr_vec_iter_imp& right) {
       return left.get_base_vec() && right.get_base_vec();
    }
-   
+
    static bool same_base_vector (const ptr_vec_iter_imp& left, const ptr_vec_iter_imp& right) {
       return left.get_base_vec() == right.get_base_vec();
    }
@@ -299,7 +299,7 @@ public:
    ptr_vec_iter  operator++ (int) { return impl.op_pp_post(); }
    ptr_vec_iter& operator-- ()    { impl.op_mm(); return *this; }
    ptr_vec_iter  operator-- (int) { return impl.op_mm_post(); }
-   
+
 private:
    stdx::ptr_vec_iter_imp <PTV_INTERNAL_T> impl;
 };
@@ -322,7 +322,7 @@ private:
    typedef stdx::ptr_vec_iter_imp<PTV_INTERNAL_T> imp;
    typedef typename imp::base_vector base_vector;
    friend PTV_KW_CLASS stdx::ptr_vector<T>;
-   
+
 public:
    typedef T  value_type;
    typedef const T& reference;
@@ -537,7 +537,7 @@ public:
    /** @return is the ptr_vector empty */
    bool empty() const          { return baseVec.empty(); }
 
-   /** 
+   /**
      @return number of elements that the ptr_vector can hold without requiring reallocation;  <br/>
 	 Note: reallocation neither copies pointed-to objects nor invalidates ptr_vector iterators!
    */
@@ -748,7 +748,7 @@ private:
       }
       return !found;
    }
-   
+
    static bool same_base_vector (iterator left, iterator right) {
       return left.get_base_vec() == right.get_base_vec();
    }
@@ -786,7 +786,7 @@ inline bool operator== (const ptr_vector<T>& x, const ptr_vector<T>& y) {
   bool eq = x.size() == y.size();
   if (eq) {
 #if defined (_MSC_VER) && _MSC_VER >= 1400  // VC++ 8.0
-    // std::equal is depricated for VC++ 8.0; 
+    // std::equal is depricated for VC++ 8.0;
     eq = (!(x < y) && !(y < x));
 #else
     eq = std::equal (x.begin(), x.end(), y.begin());
@@ -887,8 +887,8 @@ public:
       difference_type d =
          std::distance (first1.base_iter(),
                         std::swap_ranges (first1.base_iter(), last1.base_iter(), first2.base_iter()));
-      util::advance (first1, d);      
-      
+      util::advance (first1, d);
+
       return first1;
    }
 
@@ -902,7 +902,7 @@ public:
    static It remove_if (It first, It last, Predicate pred) {
       It current = first,
          end     = last;
-         
+
       while (current != end && ((current = std::find_if (current, end, pred)) != end)) {
          It next = current; ++next;
          if (next != end) {
@@ -922,7 +922,7 @@ public:
    static It unique (It first, It last, Predicate pred) {
       It current = first,
          end     = last;
-         
+
       if (current != end) {
          ++current;
          while (current != end) {
@@ -966,8 +966,8 @@ public:
       difference_type d =
          std::distance (first.base_iter(),
                         std::partition (first.base_iter(), last.base_iter(), derefPred));
-      util::advance (first, d); 
-      
+      util::advance (first, d);
+
       return first;
    }
 
@@ -978,7 +978,7 @@ public:
       difference_type d =
          std::distance (first.base_iter(),
                         std::stable_partition (first.base_iter(), last.base_iter(), derefPred));
-      util::advance (first, d); 
+      util::advance (first, d);
 
       return first;
    }
@@ -1388,7 +1388,7 @@ inline bool prev_permutation (PtrBidirectionalIterator first, PtrBidirectionalIt
 
 /**
  * <h2> ptr_vector_owner </h2>
- * is a <b>scope-guard</b> that takes ownership of dynamically created 
+ * is a <b>scope-guard</b> that takes ownership of dynamically created
  * elememts in a ptr_vector; <br/>
  * pointed-to objects are deleted when ptr_vector_owner goes out of scope; <br/>
  * Note that ptr_vector is <b>not</b> dependent on ptr_vector_owner!
