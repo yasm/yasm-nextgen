@@ -146,19 +146,6 @@ BytecodeContainer::as_section() const
 }
 
 void
-BytecodeContainer::put(marg_ostream& os) const
-{
-    for (const_bc_iterator bc=m_bcs.begin(), end=m_bcs.end();
-         bc != end; ++bc)
-    {
-        os << "Next Bytecode:\n";
-        ++os;
-        os << *bc;
-        --os;
-    }
-}
-
-void
 BytecodeContainer::append_bytecode(std::auto_ptr<Bytecode> bc)
 {
     if (bc.get() != 0)
@@ -217,6 +204,21 @@ BytecodeContainer::update_offsets(Errwarns& errwarns)
     m_bcs.front().set_offset(0);
     for (bc_iterator bc=m_bcs.begin(), end=m_bcs.end(); bc != end; ++bc)
         offset = update_offset(*bc, offset, errwarns);
+}
+
+marg_ostream&
+operator<< (marg_ostream& os, const BytecodeContainer& container)
+{
+    os << "Bytecodes:\n";
+    for (BytecodeContainer::const_bc_iterator bc=container.bcs_begin(),
+         end=container.bcs_end(); bc != end; ++bc)
+    {
+        os << "Next Bytecode:\n";
+        ++os;
+        os << *bc;
+        --os;
+    }
+    return os;
 }
 
 } // namespace yasm

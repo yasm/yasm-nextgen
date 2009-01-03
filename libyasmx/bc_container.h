@@ -66,10 +66,6 @@ public:
     /// @return Object this section is a part of.
     Object* get_object() const { return m_object; }
 
-    /// Print a bytecode container.  For debugging purposes.
-    /// @param os           output stream
-    void put(marg_ostream& os) const;
-
     /// Add bytecode to the end of the container.
     /// @param bc       bytecode (may be NULL)
     void append_bytecode(/*@null@*/ std::auto_ptr<Bytecode> bc);
@@ -128,12 +124,8 @@ private:
 
 /// Print a bytecode container.  For debugging purposes.
 /// @param os           output stream
-inline marg_ostream&
-operator<< (marg_ostream& os, const BytecodeContainer& container)
-{
-    container.put(os);
-    return os;
-}
+YASM_LIB_EXPORT
+marg_ostream& operator<< (marg_ostream& os, const BytecodeContainer& container);
 
 } // namespace yasm
 
