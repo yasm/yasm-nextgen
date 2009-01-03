@@ -265,7 +265,9 @@ MapOutput::output_symbols(const Section* sect)
         if (sect == 0 && (equ = sym->get_equ()))
         {
             std::auto_ptr<Expr> realequ(equ->clone());
-            realequ->level_tree(true, true, true, expr_xform);
+            realequ->simplify();
+            bin_simplify(*realequ);
+            realequ->simplify();
             IntNum* intn = realequ->get_intnum();
             assert(intn != 0);
             output_intnum(*intn);

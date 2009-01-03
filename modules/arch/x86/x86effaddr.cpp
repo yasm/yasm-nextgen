@@ -29,10 +29,12 @@
 #include <util.h>
 
 #include <iomanip>
+#include <iostream>
 
 #include <libyasmx/errwarn.h>
 #include <libyasmx/expr.h>
 #include <libyasmx/expr_util.h>
+#include <libyasmx/functional.h>
 #include <libyasmx/intnum.h>
 #include <libyasmx/marg_ostream.h>
 
@@ -163,21 +165,36 @@ X86EffAddr::set_reg(const X86Register* reg, unsigned char* rex,
 static std::auto_ptr<Expr>
 fixup(bool xform_rip_plus, std::auto_ptr<Expr> e)
 {
-    if (xform_rip_plus)
-    {
-        // Need to change foo+rip into foo wrt rip.
-        // Note this assumes a particular ordering coming from the parser
-        // to work (it's not very smart)!
-        const X86Register* reg =
-            static_cast<const X86Register*>(e->get_terms()[0].get_reg());
-        if (e->is_op(Op::ADD) && reg && reg->type() == X86Register::RIP)
-        {
-            // replace register with 0
-            e->get_terms()[0] = IntNum(0);
-            // build new wrt expression
-            e.reset(new Expr(e.release(), Op::WRT, reg));
-        }
-    }
+    if (!xform_rip_plus || !e->is_op(Op::ADD))
+        return e;
+
+    // Look for foo+rip or rip+foo.
+    int pos = -1;
+    int lhs, rhs;
+    if (!get_children(*e, &lhs, &rhs, &pos))
+        return e;
+
+    ExprTerms& terms = e->get_terms();
+    int regterm;
+    if (terms[lhs].is_type(ExprTerm::REG))
+        regterm = lhs;
+    else if (terms[rhs].is_type(ExprTerm::REG))
+        regterm = rhs;
+    else
+        return e;
+
+    const X86Register* reg =
+        static_cast<const X86Register*>(terms[regterm].get_reg());
+    if (reg->type() != X86Register::RIP)
+        return e;
+
+    // replace register with 0
+    terms[regterm].zero();
+
+    // build new wrt expression
+    e->append(*reg);
+    e->append_op(Op::WRT, 2);
+
     return e;
 }
 
@@ -288,7 +305,7 @@ get_reg3264(ExprTerm& term, int* regnum, int* regs, unsigned char bits,
     }
 
     // overwrite with 0 to eliminate register from displacement expr
-    term = IntNum(0);
+    term.zero();
 
     // we're okay
     return &regs[*regnum];
@@ -325,7 +342,7 @@ x86_expr_checkea_get_reg16(ExprTerm& term, int* regnum, int* bx, int* si,
         return 0;
 
     // overwrite with 0 to eliminate register from displacement expr
-    term = IntNum(0);
+    term.zero();
 
     // we're okay
     return reg16[*regnum];
@@ -348,107 +365,196 @@ x86_expr_checkea_get_reg16(ExprTerm& term, int* regnum, int* bx, int* si,
 // IMPLEMENTATION NOTE: About the only thing this function really needs to
 // "distribute" is: (non-float-expn or intnum) * (sum expn of registers).
 //
-// TODO: Clean up this code, make it easier to understand.
-static int
-x86_expr_checkea_distcheck_reg(Expr* e, unsigned int bits)
+// XXX: pos is taken by reference so we can update it.  This is somewhat
+//      underhanded.
+static void
+x86_expr_checkea_dist_reg(Expr& e, int& pos, bool simplify_reg_mul)
 {
-    ExprTerms::iterator end = e->get_terms().end();
-    ExprTerms::iterator havereg = end;
-    ExprTerms::iterator havereg_expr = end;
-    int retval = 1;     // default to legal, no changes
+    ExprTerms& terms = e.get_terms();
+    ExprTerm& root = terms[pos];
 
-    for (ExprTerms::iterator i=e->get_terms().begin(); i != end; ++i)
+    // The *only* case we need to distribute is INT*(REG+...)
+    if (!root.is_op(Op::MUL))
+        return;
+
+    int throwaway = pos;
+    int lhs, rhs;
+    if (!get_children(e, &lhs, &rhs, &throwaway))
+        return;
+
+    int intpos, otherpos;
+    if (terms[lhs].is_type(ExprTerm::INT))
     {
-        switch (i->get_type())
+        intpos = lhs;
+        otherpos = rhs;
+    }
+    else if (terms[rhs].is_type(ExprTerm::INT))
+    {
+        intpos = rhs;
+        otherpos = lhs;
+    }
+    else
+        return; // no integer
+
+    if (!terms[otherpos].is_op(Op::ADD) || !e.contains(ExprTerm::REG, otherpos))
+        return; // not an additive REG-containing term
+
+    // We know we have INT*(REG+...); distribute it.
+
+    // Grab integer multiplier and delete that term.
+    IntNum intmult;
+    intmult.swap(*terms[intpos].get_int());
+    terms[intpos].clear();
+
+    // Make MUL operator ADD now; use number of ADD terms from REG+... ADD.
+    // While we could theoretically use the existing ADD, it's not safe, as
+    // this operator could be the topmost operator and we can't clobber that.
+    terms[pos] = ExprTerm(Op::ADD, terms[otherpos].get_nchild(),
+                          terms[pos].m_depth);
+
+    // Get ADD depth before deletion.  This will be the new MUL depth for the
+    // added (distributed) MUL operations.
+    int depth = terms[otherpos].m_depth;
+
+    // Delete ADD operator.
+    terms[otherpos].clear();
+
+    // for each term in ADD expression, insert *intnum.
+    for (int n=otherpos-1; n >= 0; --n)
+    {
+        ExprTerm& child = terms[n];
+        if (child.is_empty())
+            continue;
+        if (child.m_depth <= depth)
+            break;
+        if (child.m_depth != depth+1)
+            continue;
+
+        // Simply multiply directly into integers
+        if (IntNum* intn = child.get_int())
         {
-            case ExprTerm::REG:
-                // Check op to make sure it's valid to use w/register.
-                switch (e->get_op())
-                {
-                    case Op::MUL:
-                        // Check for reg*reg
-                        if (havereg != end)
-                            return 0;
-                        break;
-                    case Op::ADD:
-                    case Op::IDENT:
-                        break;
-                    default:
-                        return 0;
-                }
-                havereg = i;
-                break;
-            case ExprTerm::FLOAT:
-                // Floats not allowed.
-                return 0;
-            case ExprTerm::EXPR:
+            *intn *= intmult;
+            --child.m_depth;    // bring up
+            continue;
+        }
+
+        // Otherwise add *INT
+        terms.insert(terms.begin()+n+1, 2,
+                     ExprTerm(Op::MUL, 2, depth));
+        // Set multiplier
+        terms[n+1] = ExprTerm(intmult, terms[n].m_depth);
+
+        // Level if child is also a MUL
+        if (terms[n].is_op(Op::MUL))
+        {
+            e.level_op(simplify_reg_mul, n+2);
+            // Leveling may have brought up terms, so we need to skip
+            // all children explicitly.
+            int childnum = terms[n+2].get_nchild();
+            int m = n+1;
+            for (; m >= 0; --m)
             {
-                Expr* sube = i->get_expr();
-                assert(sube != 0);
-                if (sube->contains(ExprTerm::REG))
-                {
-                    int ret2;
-
-                    // Check op to make sure it's valid to use w/register.
-                    if (!e->is_op(Op::ADD) && !e->is_op(Op::MUL))
-                        return 0;
-                    // Check for reg*reg
-                    if (e->is_op(Op::MUL) && havereg != end)
-                        return 0;
-                    havereg = i;
-                    havereg_expr = i;
-                    // Recurse to check lower levels
-                    ret2 = x86_expr_checkea_distcheck_reg(sube, bits);
-                    if (ret2 == 0)
-                        return 0;
-                    if (ret2 == 2)
-                        retval = 2;
-                }
-                else if (sube->contains(ExprTerm::FLOAT))
-                    return 0;   // Disallow floats
-                break;
+                ExprTerm& child2 = terms[m];
+                if (child2.is_empty())
+                    continue;
+                if (child2.m_depth <= depth)
+                    break;
+                if (child2.m_depth != depth+1)
+                    continue;
+                --childnum;
+                if (childnum < 0)
+                    break;
             }
-            default:
-                break;
+            n = m+1;
         }
+
+        // Update pos
+        pos += 2;
     }
+}
 
-    // just exit if no registers were used
-    if (havereg == end)
-        return retval;
+static int
+x86_exprterm_getregusage(Expr& e,
+                         int pos,
+                         /*@null@*/ int* indexreg,
+                         int* indexval,
+                         bool* indexmult,
+    const FUNCTION::function <int* (ExprTerm& term, int* regnum)>& get_reg)
+{
+    ExprTerms& terms = e.get_terms();
+    ExprTerm& child = terms[pos];
 
-    // Distribute
-    if (e->is_op(Op::MUL) && havereg_expr != end)
+    if (child.is_type(ExprTerm::REG))
     {
-        Expr* sube = havereg_expr->get_expr();
-        assert(sube != 0);
+        int regnum;
+        int* reg = get_reg(child, &regnum);
+        if (!reg)
+            return 1;
+        (*reg)++;
 
-        retval = 2;     // we're going to change it
-
-        // The reg expn *must* be ADD at this point.  Sanity check.
-        assert(sube->is_op(Op::ADD));
-
-        // Iterate over each term in reg expn
-        for (ExprTerms::iterator i=sube->get_terms().begin(),
-             end2=sube->get_terms().end(); i != end2; ++i)
+        // Let last, largest multipler win indexreg
+        if (indexreg && *reg > 0 && *indexval <= *reg && !*indexmult)
         {
-            // Copy everything EXCEPT havereg_expr term into new expression
-            std::auto_ptr<Expr>
-                ne(e->clone(havereg_expr - e->get_terms().begin()));
-            // Add reg expr term to new expn
-            ne->get_terms().push_back(*i);
-            // Don't destroy it, as we copied directly
-            i->release();
-            // Overwrite old reg expr term with new expn
-            *i = ne;
+            *indexreg = regnum;
+            *indexval = *reg;
         }
-
-        // Replace e with expanded reg expn
-        havereg_expr->release();    // don't delete it!
-        *e = *sube;
     }
+    else if (child.is_op(Op::MUL))
+    {
+        int lhs, rhs;
+        if (!get_children(e, &lhs, &rhs, &pos))
+            return 1;
 
-    return retval;
+        ExprTerm* regterm;
+        ExprTerm* intterm;
+        if (terms[lhs].is_type(ExprTerm::REG) &&
+            terms[rhs].is_type(ExprTerm::INT))
+        {
+            regterm = &terms[lhs];
+            intterm = &terms[rhs];
+        }
+        else if (terms[rhs].is_type(ExprTerm::REG) &&
+                 terms[lhs].is_type(ExprTerm::INT))
+        {
+            regterm = &terms[rhs];
+            intterm = &terms[lhs];
+        }
+        else
+            return 1;
+
+        IntNum* intn = intterm->get_int();
+        assert(intn);
+
+        int regnum;
+        int* reg = get_reg(*regterm, &regnum);
+        if (!reg)
+            return 1;
+
+        long delta = intn->get_int();
+        (*reg) += delta;
+
+        // Let last, largest positive multiplier win indexreg
+        // If we subtracted from the multiplier such that it dropped to 1 or
+        // less, remove indexreg status (and the calling code will try and
+        // auto-determine the multiplier).
+        if (indexreg && delta > 0 && *indexval <= *reg)
+        {
+            *indexreg = regnum;
+            *indexval = *reg;
+            *indexmult = true;
+        }
+        else if (indexreg && *indexreg == regnum && delta < 0 && *reg <= 1)
+        {
+            *indexreg = -1;
+            *indexval = 0;
+            *indexmult = false;
+        }
+    }
+    else if (child.is_op() && e.contains(ExprTerm::REG, pos))
+        return 1;   // can't contain reg elsewhere
+    else
+        return 2;
+    return 0;
 }
 
 // Simplify and determine if expression is superficially valid:
@@ -461,26 +567,30 @@ x86_expr_checkea_distcheck_reg(Expr* e, unsigned int bits)
 // Returns 1 if invalid register usage, 2 if unable to determine all values,
 // and 0 if all values successfully determined and saved in data.
 static int
-x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
-    bool* ip_rel, unsigned int bits,
+x86_expr_checkea_getregusage(Expr& e,
+                             /*@null@*/ int* indexreg,
+                             bool* ip_rel,
+                             unsigned int bits,
     const FUNCTION::function <int* (ExprTerm& term, int* regnum)>& get_reg)
 {
     int* reg;
     int regnum;
-    int indexval = 0;
-    int indexmult = 0;
 
     expand_equ(e);
-    e->level_tree(true, true, indexreg == 0);
+    e.simplify(BIND::bind(&x86_expr_checkea_dist_reg, _1, _2, indexreg == 0),
+               indexreg == 0);
 
     // Check for WRT rip first
-    std::auto_ptr<Expr> wrt = e->extract_wrt();
-    if (wrt.get() != 0 && wrt->is_op(Op::IDENT) &&
-        wrt->get_terms()[0].is_type(ExprTerm::REG))
+    Expr wrt = e.extract_wrt();
+    if (!wrt.is_empty())
     {
+        ExprTerm& wrt_term = wrt.get_terms().front();
+        if (!wrt_term.is_type(ExprTerm::REG))
+            return 1;
+
         if (bits != 64)     // only valid in 64-bit mode
             return 1;
-        reg = get_reg(wrt->get_terms()[0], &regnum);
+        reg = get_reg(wrt_term, &regnum);
         if (!reg || regnum != 16)   // only accept rip
             return 1;
         (*reg)++;
@@ -489,124 +599,50 @@ x86_expr_checkea_getregusage(Expr* e, /*@null@*/ int* indexreg,
         // bytecode code to do IP-relative displacement transform.
         *ip_rel = true;
     }
-    else if (wrt.get() != 0)
-    {
-        return 1;
-    }
 
-    switch (x86_expr_checkea_distcheck_reg(e, bits))
+    int indexval = 0;
+    bool indexmult = false;
+    if (e.is_op(Op::ADD))
     {
-        case 0:
-            return 1;
-        case 2:
-            // Need to simplify again
-            e->level_tree(true, true, indexreg == 0);
-            break;
-        default:
-            break;
-    }
-
-    switch (e->get_op())
-    {
-        case Op::ADD:
-            // Prescan for non-int multipliers against a reg.
-            // This is invalid due to the optimizer structure.
-            for (ExprTerms::iterator i=e->get_terms().begin(),
-                 end=e->get_terms().end(); i != end; ++i)
-            {
-                if (Expr* sube = i->get_expr())
-                {
-                    sube->order_terms();
-                    ExprTerms& terms = sube->get_terms();
-                    if (terms[0].is_type(ExprTerm::REG))
-                    {
-                        if (terms.size() > 2)
-                            return 1;
-                        if (!terms[1].is_type(ExprTerm::INT))
-                            return 1;
-                    }
-                }
-            }
-            /*@fallthrough@*/
-        case Op::IDENT:
-            // Check each term for register (and possible multiplier).
-            for (ExprTerms::iterator i=e->get_terms().begin(),
-                 end=e->get_terms().end(); i != end; ++i)
-            {
-                if (i->is_type(ExprTerm::REG))
-                {
-                    reg = get_reg(*i, &regnum);
-                    if (!reg)
-                        return 1;
-                    (*reg)++;
-                    // Let last, largest multipler win indexreg
-                    if (indexreg && *reg > 0 && indexval <= *reg &&
-                        !indexmult)
-                    {
-                        *indexreg = regnum;
-                        indexval = *reg;
-                    }
-                }
-                else if (Expr* sube = i->get_expr())
-                {
-                    // Already ordered from ADD above, just grab the value.
-                    // Sanity check for EXPR_INT.
-                    ExprTerms& terms = sube->get_terms();
-                    if (terms[0].is_type(ExprTerm::REG))
-                    {
-                        IntNum* intn = terms[1].get_int();
-                        if (!intn)
-                            throw InternalError(
-                                N_("Non-integer value in reg expn"));
-                        reg = get_reg(terms[0], &regnum);
-                        if (!reg)
-                            return 1;
-                        (*reg) += intn->get_int();
-                        // Let last, largest multipler win indexreg
-                        if (indexreg && *reg > 0 && indexval <= *reg)
-                        {
-                            *indexreg = regnum;
-                            indexval = *reg;
-                            indexmult = 1;
-                        }
-                    }
-                }
-            }
-            break;
-        case Op::MUL:
+        // Check each term for register (and possible multiplier).
+        ExprTerms& terms = e.get_terms();
+        ExprTerm& root = terms.back();
+        int pos = terms.size()-2;
+        for (; pos >= 0; --pos)
         {
-            // Here, too, check for non-int multipliers against a reg.
-            e->order_terms();
-            ExprTerms& terms = e->get_terms();
-            if (terms[0].is_type(ExprTerm::REG))
-            {
-                if (terms.size() > 2)
-                    return 1;
-                IntNum* intn = terms[1].get_int();
-                if (!intn)
-                    return 1;
-                reg = get_reg(terms[0], &regnum);
-                if (!reg)
-                    return 1;
-                (*reg) += intn->get_int();
-                if (indexreg)
-                    *indexreg = regnum;
-            }
-            break;
+            ExprTerm& child = terms[pos];
+            if (child.is_empty())
+                continue;
+            if (child.m_depth <= root.m_depth)
+                break;
+            if (child.m_depth != root.m_depth+1)
+                continue;
         }
-        case Op::SEGOFF:
-            // No registers are allowed on either side.
-            if (e->contains(ExprTerm::REG))
+        ++pos;
+
+        for (;; ++pos)
+        {
+            ExprTerm& child = terms[pos];
+            if (child.is_empty())
+                continue;
+            if (child.m_depth <= root.m_depth)
+                break;
+            if (child.m_depth != root.m_depth+1)
+                continue;
+
+            if (x86_exprterm_getregusage(e, pos, indexreg, &indexval,
+                                         &indexmult, get_reg) == 1)
                 return 1;
-            break;
-        default:
-            // Should never get here!
-            assert(false); // unexpected expr op
+        }
     }
+    else if (x86_exprterm_getregusage(e, e.get_terms().size()-1, indexreg,
+                                      &indexval, &indexmult, get_reg) == 1)
+        return 1;
 
     // Simplify expr, which is now really just the displacement. This
     // should get rid of the 0's we put in for registers in the callback.
-    e->simplify();
+    e.simplify();
+
     return 0;
 }
 
@@ -728,29 +764,35 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
 /*@=nullstate@*/
 
 static bool
-getregsize(const ExprTerm& term, unsigned char* addrsize)
+getregsize(const Expr& e, unsigned char* addrsize)
 {
-    if (const X86Register* reg =
-        static_cast<const X86Register*>(term.get_reg()))
+    const ExprTerms& terms = e.get_terms();
+
+    for (ExprTerms::const_iterator i=terms.begin(), end=terms.end(); i != end;
+         ++i)
     {
-        switch (reg->type())
+        if (const X86Register* reg =
+            static_cast<const X86Register*>(i->get_reg()))
         {
-            case X86Register::REG16:
-                *addrsize = 16;
-                break;
-            case X86Register::REG32:
-                *addrsize = 32;
-                break;
-            case X86Register::REG64:
-            case X86Register::RIP:
-                *addrsize = 64;
-                break;
-            default:
-                return false;
+            switch (reg->type())
+            {
+                case X86Register::REG16:
+                    *addrsize = 16;
+                    break;
+                case X86Register::REG32:
+                    *addrsize = 32;
+                    break;
+                case X86Register::REG64:
+                case X86Register::RIP:
+                    *addrsize = 64;
+                    break;
+                default:
+                    return false;
+            }
+            return true;
         }
-        return true;
-    } else
-        return false;
+    }
+    return false;
 }
 
 bool
@@ -805,7 +847,7 @@ X86EffAddr::check_3264(unsigned int addrsize,
     if (m_disp.has_abs())
     {
         switch (x86_expr_checkea_getregusage
-                (m_disp.get_abs(), &indexreg, ip_rel, bits,
+                (*m_disp.get_abs(), &indexreg, ip_rel, bits,
                  BIND::bind(&get_reg3264, _1, _2, reg3264mult, bits,
                             addrsize)))
         {
@@ -1063,7 +1105,7 @@ X86EffAddr::check_16(unsigned int bits, bool address16_op, bool* ip_rel)
     if (m_disp.has_abs())
     {
         switch (x86_expr_checkea_getregusage
-                (m_disp.get_abs(), 0, ip_rel, bits,
+                (*m_disp.get_abs(), 0, ip_rel, bits,
                  BIND::bind(&x86_expr_checkea_get_reg16, _1, _2, &bx, &si,
                             &di, &bp)))
         {
@@ -1145,8 +1187,7 @@ X86EffAddr::check(unsigned char* addrsize,
                 // check for use of 16 or 32-bit registers; if none are used
                 // default to bits setting.
                 if (!m_disp.has_abs() ||
-                    !m_disp.get_abs()->traverse_leaves_in(
-                        BIND::bind(&getregsize, _1, addrsize)))
+                    !getregsize(*m_disp.get_abs(), addrsize))
                     *addrsize = bits;
                 // TODO: Add optional warning here if switched address size
                 // from bits setting just by register use.. eg [ax] in

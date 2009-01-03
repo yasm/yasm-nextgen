@@ -145,39 +145,54 @@ Value::Value(const Value& oth)
       m_size(oth.m_size)
 {
     if (oth.m_abs)
-        m_abs = oth.m_abs->clone();
+        m_abs.reset(oth.m_abs->clone());
 }
 
 Value::~Value()
 {
-    delete m_abs;
 }
 
 void
 Value::swap(Value& oth)
 {
-    // Have to use hybrid approach of zeroing what would otherwise be cloned,
-    // and then doing copy-construct/assignment "swap", as we can't std::swap
-    // individual bitfield members.
-    Expr* othabs = oth.m_abs;
-    Expr* myabs = m_abs;
-    oth.m_abs = 0;
-    m_abs = 0;
+    m_abs.swap(oth.m_abs);
+    std::swap(m_rel, oth.m_rel);
+    std::swap(m_wrt, oth.m_wrt);
 
-    // std::swap(*this, oth);
-    Value tmpv = oth;
-    oth = *this;
-    *this = tmpv;
+    // XXX: Have to do manual copy-construct/assignment "swap", as we can't
+    // std::swap individual bitfield members.
+    unsigned int seg_of = m_seg_of;
+    unsigned int rshift = m_rshift;
+    unsigned int ip_rel = m_ip_rel;
+    unsigned int jump_target = m_jump_target;
+    unsigned int section_rel = m_section_rel;
+    unsigned int no_warn = m_no_warn;
+    unsigned int sign = m_sign;
+    unsigned int size = m_size;
 
-    oth.m_abs = myabs;
-    m_abs = othabs;
+    m_seg_of = oth.m_seg_of;
+    m_rshift = oth.m_rshift;
+    m_ip_rel = oth.m_ip_rel;
+    m_jump_target = oth.m_jump_target;
+    m_section_rel = oth.m_section_rel;
+    m_no_warn = oth.m_no_warn;
+    m_sign = oth.m_sign;
+    m_size = oth.m_size;
+
+    oth.m_seg_of = seg_of;
+    oth.m_rshift = rshift;
+    oth.m_ip_rel = ip_rel;
+    oth.m_jump_target = jump_target;
+    oth.m_section_rel = section_rel;
+    oth.m_no_warn = no_warn;
+    oth.m_sign = sign;
+    oth.m_size = size;
 }
 
 void
 Value::clear()
 {
-    delete m_abs;
-    m_abs = 0;
+    m_abs.reset(0);
     m_rel = SymbolRef(0);
     m_wrt = SymbolRef(0);
     m_line = 0;
@@ -212,9 +227,10 @@ Value::operator= (const Value& rhs)
 {
     if (this != &rhs)
     {
-        m_abs = 0;
         if (rhs.m_abs)
-            m_abs = rhs.m_abs->clone();
+            m_abs.reset(rhs.m_abs->clone());
+        else
+            m_abs.reset(0);
         m_rel = rhs.m_rel;
         m_wrt = rhs.m_wrt;
         m_sub = rhs.m_sub;
@@ -259,7 +275,9 @@ Value::sub_rel(Object* object, Location sub)
             && m_rel->get_label(&loc)
             && loc.bc->get_container() == sub.bc->get_container())
         {
-            add_abs(Expr::Ptr(new Expr(m_rel, Op::SUB, sub)));
+            if (!m_abs)
+                m_abs.reset(new Expr());
+            *m_abs += SUB(m_rel, sub);
             m_rel = SymbolRef(0);
         }
         else
@@ -273,9 +291,15 @@ Value::sub_rel(Object* object, Location sub)
 }
 
 bool
-Value::finalize_scan(Expr* e, bool ssym_not_ok)
+Value::finalize_scan(Expr& e, bool ssym_ok, int* pos)
 {
-    ExprTerms& terms = e->get_terms();
+    ExprTerms& terms = e.get_terms();
+    if (*pos < 0)
+        *pos += terms.size();
+
+    ExprTerm& root = terms[*pos];
+    if (!root.is_op())
+        return false;
 
     // Thanks to this running after a simplify, we don't need to iterate
     // down through IDENTs or handle SUB.
@@ -287,7 +311,7 @@ Value::finalize_scan(Expr* e, bool ssym_not_ok)
     //
     // Also, if we find a float anywhere, we don't allow mixing of a single
     // symrec with it.
-    switch (e->get_op())
+    switch (root.get_op())
     {
         case Op::ADD:
         {
@@ -296,147 +320,147 @@ Value::finalize_scan(Expr* e, bool ssym_not_ok)
             // Handle symrec-symrec by checking for (-1*symrec)
             // and symrec term pairs (where both symrecs are in the same
             // segment).
-            if (terms.size() > 32)
-                throw Fatal(String::compose(
-                    N_("expression on line %1 has too many add terms; internal limit of 32"),
-                    m_line));
+            if (root.get_nchild() > 32)
+                throw TooComplexError(
+                    N_("too many add terms; internal limit of 32"));
 
             // Yes, this has a maximum upper bound on 32 terms, based on an
             // "insane number of terms" (and ease of implementation) WAG.
             // The right way to do this would be a stack-based alloca, but
-            // that's not possible with bitset.  We really don't want to alloc
+            // that's not portable.  We really don't want to alloc
             // here as this function is hit a lot!
             //
-            // This is a bitmask to keep things small, as this is a recursive
+            // We use chars to keep things small, as this is a recursive
             // routine and we don't want to eat up stack space.
-            std::bitset<32> used;
+            unsigned char relpos[32], subpos[32];
+            int num_rel = 0, num_sub = 0;
 
-            for (ExprTerms::iterator i=terms.begin(), end=terms.end();
-                 i != end; ++i)
+            // Scan for symrec and (-1*symrec) terms
+            int n = *pos-1;
+            while (n >= 0)
             {
-
-                // First look for an (-1*symrec) term
-                Expr* sube = i->get_expr();
-                if (!sube)
-                    continue;
-
-                ExprTerms& sube_terms = sube->get_terms();
-                if (!sube->is_op(Op::MUL) || sube_terms.size() != 2)
+                ExprTerm& child = terms[n];
+                if (child.is_empty())
                 {
-                    // recurse instead
-                    if (finalize_scan(sube, ssym_not_ok))
+                    --n;
+                    continue;
+                }
+                if (child.m_depth <= root.m_depth)
+                    break;
+                if (child.m_depth != root.m_depth+1)
+                {
+                    --n;
+                    continue;
+                }
+
+                // Remember symrec terms
+                if (SymbolRef sym = child.get_sym())
+                {
+                    if ((*pos-n) >= 0xff)
+                        throw TooComplexError(N_("expression too large"));
+                    relpos[num_rel++] = *pos-n;
+                    --n;
+                    continue;
+                }
+
+                int sym, neg1;
+                // Remember (-1*symrec) terms
+                if (is_neg1_sym(e, &sym, &neg1, &n, false))
+                {
+                    if ((*pos-sym) >= 0xff)
+                        throw TooComplexError(N_("expression too large"));
+                    subpos[num_sub++] = *pos-sym;
+                    continue;
+                }
+
+                // recurse for all other expr
+                if (child.is_op())
+                {
+                    if (finalize_scan(e, ssym_ok, &n))
                         return true;
                     continue;
                 }
 
-                IntNum* intn;
-                Symbol* sym;
-                if ((intn = sube_terms[0].get_int()) &&
-                    (sym = sube_terms[1].get_sym()))
-                {
-                    ;
-                }
-                else if ((sym = sube_terms[0].get_sym()) &&
-                         (intn = sube_terms[1].get_int()))
-                {
-                    ;
-                }
-                else
-                {
-                    if (finalize_scan(sube, ssym_not_ok))
-                        return true;
-                    continue;
-                }
-
-                if (!intn->is_neg1())
-                {
-                    if (finalize_scan(sube, ssym_not_ok))
-                        return true;
-                    continue;
-                }
-
-                // Look for the same symrec term; even if both are external,
-                // they should cancel out.
-                ExprTerms::iterator j = terms.begin();
-                for (; j != end; ++j)
-                {
-                    if (j->get_sym() == sym && !used[j-terms.begin()])
-                    {
-                        // Mark as used
-                        used[j-terms.begin()] = 1;
-
-                        // Replace both symrec portions with 0
-                        i->destroy();
-                        *i = IntNum(0);
-                        //j->destroy(); // unneeded as it's a symbol
-                        *j = IntNum(0);
-
-                        break;  // stop looking
-                    }
-                }
-                if (j != end)
-                    continue;
-
-                Location loc;
-                if (!sym->get_label(&loc))
-                {
-                    if (finalize_scan(sube, ssym_not_ok))
-                        return true;
-                    continue;
-                }
-                BytecodeContainer* container = loc.bc->get_container();
-
-                // Now look for a unused symrec term in the same segment
-                j = terms.begin();
-                for (; j != end; ++j)
-                {
-                    Symbol* sym2;
-                    Location loc2;
-                    BytecodeContainer* container2;
-                    if ((sym2 = j->get_sym())
-                        && sym2->get_label(&loc2)
-                        && (container2 = loc2.bc->get_container())
-                        && container == container2
-                        && !used[j-terms.begin()])
-                    {
-                        // Mark as used
-                        used[j-terms.begin()] = 1;
-                        break;  // stop looking
-                    }
-                }
-
-                // We didn't match in the same segment.  Save as subtractive
-                // relative value.  If we already have one, don't bother;
-                // the unmatched symrec will be caught below.
-                if (j == end && !has_sub())
-                {
-                    m_sub.sym = SymbolRef(sym);
-                    m_sub_sym = true;
-                    i->destroy();
-                    *i = IntNum(0);
-                }
-
-
-                if (j == end)
-                    return true;    // We didn't find a match!
+                --n;
             }
 
-            // Look for unmatched symrecs.  If we've already found one or
-            // we don't WANT to find one, error out.
-            for (ExprTerms::iterator i=terms.begin(), end=terms.end();
-                 i != end; ++i)
+            // Match additive and subtractive symbols.
+            for (int i=0; i<num_rel; ++i)
             {
-                SymbolRef sym = i->get_sym();
-                if (sym && !used[i-terms.begin()])
+                ExprTerm& relterm = terms[*pos-relpos[i]];
+                SymbolRef rel = relterm.get_sym();
+                assert(rel != 0);
+
+                bool matched = false;
+                for (int j=0; j<num_sub; ++j)
                 {
-                    if (m_rel || ssym_not_ok)
-                        return true;
-                    m_rel = sym;
-                    // and replace with 0
-                    //i->destroy(); // unneeded as it's a symbol
-                    *i = IntNum(0);
+                    if (subpos[j] == 0xff)
+                        continue;   // previously matched
+                    ExprTerm& subterm = terms[*pos-subpos[j]];
+                    SymbolRef sub = subterm.get_sym();
+                    assert(sub != 0);
+
+                    // If it's the same symrec term, even if it's external,
+                    // they should cancel out.
+                    if (rel == sub)
+                    {
+                        relterm.zero();
+                        subterm.zero();
+                        subpos[j] = 0xff;   // mark as matched
+                        matched = true;
+                        break;
+                    }
+
+                    // If both are in the same segment, we leave them in the
+                    // expression but consider them to "match".
+                    Location rel_loc;
+                    if (!rel->get_label(&rel_loc))
+                        continue;   // external
+
+                    Location sub_loc;
+                    if (!sub->get_label(&sub_loc))
+                        continue;   // external
+
+                    if (rel_loc.bc->get_container() ==
+                        sub_loc.bc->get_container())
+                    {
+                        subpos[j] = 0xff;   // mark as matched
+                        matched = true;
+                        break;
+                    }
                 }
+                if (matched)
+                    continue;
+
+                // Must be relative portion
+                if (m_rel || !ssym_ok)
+                    return true;    // already have one
+                m_rel = rel;
+
+                // Set term to 0 (will remove from expression during simplify)
+                relterm.zero();
             }
+
+            // Handle any remaining subtractive symbols.
+            for (int i=0; i<num_sub; ++i)
+            {
+                if (subpos[i] == 0xff)
+                    continue;   // previously matched
+                ExprTerm& subterm = terms[*pos-subpos[i]];
+                SymbolRef sub = subterm.get_sym();
+                assert(sub != 0);
+
+                // Must be subtractive portion
+                if (has_sub())
+                    return true;    // already have one
+                m_sub.sym = sub;
+                m_sub_sym = true;
+
+                // Set term to 0 (will remove from expression during simplify)
+                subterm.zero();
+            }
+
+            *pos = n;
             break;
         }
         case Op::SHR:
@@ -445,52 +469,42 @@ Value::finalize_scan(Expr* e, bool ssym_not_ok)
             // Single symrecs are not okay on RHS.
             // If RHS is non-constant, don't allow single symrec on LHS.
             // XXX: should rshift be an expr instead??
+            int lhs, rhs;
+            if (!get_children(e, &lhs, &rhs, pos))
+                return true;
 
-            // Check for not allowed cases on RHS
-            switch (terms[1].get_type())
+            // Check for single sym or expr on LHS
+            if (SymbolRef sym = terms[lhs].get_sym())
             {
-                case ExprTerm::REG:
-                case ExprTerm::FLOAT:
-                    return true;        // not legal
-                case ExprTerm::SYM:
+                if (m_rel || !ssym_ok)
                     return true;
-                case ExprTerm::EXPR:
-                    if (finalize_scan(terms[1].get_expr(), true))
-                        return true;
-                    break;
-                default:
-                    break;
+                m_rel = sym;
+                // and replace with 0
+                terms[lhs].zero();
             }
-
-            // Check for single sym and allowed cases on LHS
-            switch (terms[0].get_type())
+            else if (terms[lhs].is_op())
             {
-                //case ExprTerm::REG:   ????? should this be illegal ?????
-                case ExprTerm::FLOAT:
-                    return true;        // not legal
-                case ExprTerm::SYM:
-                    if (m_rel || ssym_not_ok)
-                        return true;
-                    m_rel = terms[0].get_sym();
-                    // and replace with 0
-                    //terms[0].destroy(); // unneeded as it's a symbol
-                    terms[0] = IntNum(0);
+                // recurse
+                if (finalize_scan(e, ssym_ok, &lhs))
+                    return true;
+                // we still want to handle SHR if we found a relative portion.
+                if (!m_rel)
                     break;
-                case ExprTerm::EXPR:
-                    // recurse
-                    if (finalize_scan(terms[0].get_expr(), ssym_not_ok))
-                        return true;
-                    break;
-                default:
-                    break;      // ignore
+            }
+            else
+            {
+                // ensure RHS has no relative portion
+                if (terms[rhs].is_type(ExprTerm::SYM))
+                    return true;
+                if (terms[rhs].is_op() && finalize_scan(e, false, &rhs))
+                    return true;
+                break;  // ignore SHR
             }
 
-            // Handle RHS
-            if (!m_rel)
-                break;          // no handling needed
-            IntNum* intn = terms[1].get_int();
-            if (!intn)
-                return true;    // can't shift sym by non-constant integer
+            // RHS must be a positive integer.
+            IntNum* intn = terms[rhs].get_int();
+            if (!intn || intn->sign() < 0)
+                return true;
             unsigned long shamt = intn->get_uint();
             if ((shamt + m_rshift) > RSHIFT_MAX)
                 return true;    // total shift would be too large
@@ -504,7 +518,11 @@ Value::finalize_scan(Expr* e, bool ssym_not_ok)
             // Okay for single symrec (can only be done once).
             // Not okay for anything BUT a single symrec as an immediate
             // child.
-            SymbolRef sym = terms[0].get_sym();
+            int sympos;
+            if (!get_children(e, 0, &sympos, pos))
+                return true;
+
+            SymbolRef sym = terms[sympos].get_sym();
             if (!sym)
                 return true;
 
@@ -512,12 +530,13 @@ Value::finalize_scan(Expr* e, bool ssym_not_ok)
                 return true;    // multiple SEG not legal
             m_seg_of = true;
 
-            if (m_rel || ssym_not_ok)
+            if (m_rel || !ssym_ok)
                 return true;    // got a relative portion somewhere else?
             m_rel = sym;
 
-            // replace with ident'ed 0
-            *e = Expr(IntNum(0));
+            // replace with 0 (at root level)
+            terms[sympos].clear();
+            root.zero();
             break;
         }
         case Op::WRT:
@@ -526,59 +545,80 @@ Value::finalize_scan(Expr* e, bool ssym_not_ok)
             // symrec (as an immediate child) on RHS.
             // If a single symrec on RHS, can only be done once.
             // WRT reg is left in expr for arch to look at.
+            int lhs, rhs;
+            if (!get_children(e, &lhs, &rhs, pos))
+                return true;
 
             // Handle RHS
-            if (SymbolRef sym = terms[1].get_sym())
+            if (SymbolRef sym = terms[rhs].get_sym())
             {
                 if (m_wrt)
                     return true;
                 m_wrt = sym;
-                // and drop the WRT portion
-                //terms[1].destroy(); // unneeded as it's a symbol
-                terms.pop_back();
-                e->make_ident();
+                // change the WRT into a +0 expression
+                terms[rhs].zero();
+                root.set_op(Op::ADD);
             }
-            else if (terms[1].is_type(ExprTerm::REG))
+            else if (terms[rhs].is_type(ExprTerm::REG))
                 ;  // ignore
             else
                 return true;
 
             // Handle LHS
-            if (SymbolRef sym = terms[0].get_sym())
+            if (SymbolRef sym = terms[lhs].get_sym())
             {
-                if (m_rel || ssym_not_ok)
+                if (m_rel || !ssym_ok)
                     return true;
                 m_rel = sym;
-                // and replace with 0
-                //terms[0].destroy(); // unneeded as it's a symbol
-                terms[0] = IntNum(0);
+                // replace with 0
+                terms[lhs].zero();
             }
-            else if (Expr* sube = terms[0].get_expr())
+            else if (terms[lhs].is_op())
             {
                 // recurse
-                return finalize_scan(sube, ssym_not_ok);
+                if (finalize_scan(e, ssym_ok, &lhs))
+                    return true;
             }
-
             break;
         }
         default:
         {
             // Single symrec not allowed anywhere
-            for (ExprTerms::iterator i=terms.begin(), end=terms.end();
-                 i != end; ++i)
+            int n = *pos-1;
+            while (n >= 0)
             {
-                if (i->is_type(ExprTerm::SYM))
-                    return true;
-                else if (Expr* sube = i->get_expr())
+                ExprTerm& child = terms[n];
+                if (child.is_empty())
                 {
-                    // recurse
-                    return finalize_scan(sube, true);
+                    --n;
+                    continue;
                 }
+                if (child.m_depth <= root.m_depth)
+                    break;
+                if (child.m_depth != root.m_depth+1)
+                {
+                    --n;
+                    continue;
+                }
+
+                if (child.is_type(ExprTerm::SYM))
+                    return true;
+
+                // recurse all expr
+                if (child.is_op())
+                {
+                    if (finalize_scan(e, false, &n))
+                        return true;
+                    continue;
+                }
+
+                --n;
             }
+
+            *pos = n;
             break;
         }
     }
-
     return false;
 }
 
@@ -588,68 +628,80 @@ Value::finalize()
     if (!m_abs)
         return false;
 
-    expand_equ(m_abs);
-    m_abs->level_tree(true, true, false);
+    if (m_abs->is_empty())
+    {
+        m_abs.reset(0);
+        return false;
+    }
+
+    expand_equ(*m_abs);
+    m_abs->simplify(false);
 
     // Strip top-level AND masking to an all-1s mask the same size
     // of the value size.  This allows forced avoidance of overflow warnings.
     if (m_abs->is_op(Op::AND))
     {
         // Calculate 1<<size - 1 value
-        IntNum m_mask = 1;
-        m_mask <<= m_size;
-        m_mask -= 1;
+        IntNum mask = 1;
+        mask <<= m_size;
+        mask -= 1;
 
         ExprTerms& terms = m_abs->get_terms();
 
-        // See if any terms match mask
-        if (std::count_if(terms.begin(), terms.end(), TermIsInt(m_mask)) > 0)
+        // See if any top-level terms match mask and remove them.
+        bool found = false;
+        TermIsInt is_mask(mask);
+        ExprTerm& root = terms.back();
+        for (ExprTerms::reverse_iterator i=terms.rbegin();
+             i != terms.rend(); ++i)
         {
-            // Walk terms and delete all matching masks
-            ExprTerms::iterator erasefrom =
-                std::remove_if(terms.begin(), terms.end(), TermIsInt(m_mask));
-            std::for_each(erasefrom, terms.end(),
-                          MEMFN::mem_fn(&ExprTerm::destroy));
-            terms.erase(erasefrom, terms.end());
-            m_abs->make_ident();
+            if (i->is_empty())
+                continue;
+            if (i->m_depth != root.m_depth+1)
+                continue;
+
+            if (is_mask(*i))
+            {
+                i->clear();
+                root.add_nchild(-1);
+                found = true;
+            }
+        }
+
+        if (found)
+        {
             m_no_warn = true;
+            m_abs->make_ident();
         }
     }
 
     // Handle trivial (IDENT) cases immediately
-    if (m_abs->is_op(Op::IDENT))
+    if (IntNum* intn = m_abs->get_intnum())
     {
-        if (IntNum* intn = m_abs->get_intnum())
-        {
-            if (intn->is_zero())
-            {
-                delete m_abs;
-                m_abs = 0;
-            }
-        }
-        else if (SymbolRef sym = m_abs->get_symbol())
-        {
-            m_rel = sym;
-            delete m_abs;
-            m_abs = 0;
-        }
+        if (intn->is_zero())
+            m_abs.reset(0);
+        return false;
+    }
+    else if (SymbolRef sym = m_abs->get_symbol())
+    {
+        m_rel = sym;
+        m_abs.reset(0);
         return false;
     }
 
-    if (finalize_scan(m_abs, false))
+    int pos = -1;
+    if (finalize_scan(*m_abs, true, &pos))
         return true;
 
-    m_abs->level_tree(true, true, false);
+    m_abs->simplify(false);
 
     // Simplify 0 in abs to NULL
-    IntNum* intn;
-    if (m_abs->is_op(Op::IDENT)
-        && (intn = m_abs->get_terms()[0].get_int())
-        && intn->is_zero())
+    if (IntNum* intn = m_abs->get_intnum())
     {
-        delete m_abs;
-        m_abs = 0;
+        if (intn->is_zero())
+            m_abs.reset(0);
     }
+
     return false;
 }
 
@@ -687,7 +739,7 @@ Value::get_intnum(IntNum* out, bool calc_bc_dist)
         // Handle integer expressions, if non-integer or too complex, return
         // NULL.
         if (calc_bc_dist)
-            m_abs->simplify(xform_calc_dist);
+            simplify_calc_dist(*m_abs);
         IntNum* intn = m_abs->get_intnum();
 
         if (!intn)
@@ -696,7 +748,7 @@ Value::get_intnum(IntNum* out, bool calc_bc_dist)
             // SEG:OFF, so try simplifying out any to just the OFF portion,
             // then getting the intnum again.
             m_abs->extract_deep_segoff(); // returns auto_ptr, so ok to drop
-            m_abs->simplify(xform_calc_dist);
+            simplify_calc_dist(*m_abs);
             intn = m_abs->get_intnum();
         }
 
@@ -715,19 +767,19 @@ Value::get_intnum(IntNum* out, bool calc_bc_dist)
 void
 Value::add_abs(const IntNum& delta)
 {
-    if (!m_abs)
-        m_abs = new Expr(delta);
+    if (m_abs.get() == 0)
+        m_abs.reset(new Expr(delta));
     else
-        m_abs = new Expr(m_abs, Op::ADD, delta);
+        *m_abs += delta;
 }
 
 void
-Value::add_abs(std::auto_ptr<Expr> delta)
+Value::add_abs(const Expr& delta)
 {
-    if (!m_abs)
-        m_abs = delta.release();
+    if (m_abs.get() == 0)
+        m_abs.reset(delta.clone());
     else
-        m_abs = new Expr(m_abs, Op::ADD, delta);
+        *m_abs += delta;
 }
 
 bool
@@ -799,7 +851,7 @@ operator<< (marg_ostream& os, const Value& value)
         if (SymbolRef sub = value.get_sub_sym())
             os << " - " << sub->get_name();
         else if (value.get_sub_loc(&sub_loc))
-            os << " - " << sub_loc;
+            os << " - {LOC}";
         os << '\n';
         if (value.is_wrt())
         {

@@ -41,7 +41,7 @@ class Expr;
 /// Detects circular references, and will throw TooComplexError if one found.
 /// @param e        Expression
 YASM_LIB_EXPORT
-void expand_equ(Expr* e);
+void expand_equ(Expr& e);
 
 } // namespace yasm
 

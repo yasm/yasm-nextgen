@@ -332,8 +332,8 @@ NasmParser::parse_line()
             {
                 // label EQU expr
                 get_next_token();
-                Expr::Ptr e = parse_expr(NORM_EXPR);
-                if (e.get() == 0)
+                Expr::Ptr e(new Expr);
+                if (!parse_expr(*e, NORM_EXPR))
                 {
                     throw SyntaxError(String::compose(
                         N_("expression expected after %1"), "EQU"));
@@ -413,8 +413,8 @@ NasmParser::parse_directive_namevals(/*@out@*/ NameValues& nvs)
                 /*@fallthrough@*/
             default:
             {
-                Expr::Ptr e = parse_expr(DIR_EXPR);
-                if (e.get() == 0)
+                Expr::Ptr e(new Expr);
+                if (!parse_expr(*e, DIR_EXPR))
                     return false;
                 nv.reset(new NameValue(id, e));
                 break;
@@ -432,8 +432,8 @@ next:
 void
 NasmParser::parse_times()
 {
-    Expr::Ptr multiple = parse_bexpr(DV_EXPR);
-    if (multiple.get() == 0)
+    Expr::Ptr multiple(new Expr);
+    if (!parse_bexpr(*multiple, DV_EXPR))
     {
         throw SyntaxError(String::compose(N_("expression expected after %1"),
                                           "TIMES"));
@@ -484,8 +484,8 @@ NasmParser::parse_exp()
                     }
                 }
                 {
-                    Expr::Ptr e = parse_bexpr(DV_EXPR);
-                    if (e.get() != 0)
+                    Expr::Ptr e(new Expr);
+                    if (parse_bexpr(*e, DV_EXPR))
                         append_data(*m_container, e, size,
                                     *m_object->get_arch(), get_cur_line());
                     else
@@ -505,8 +505,8 @@ dv_done:
         {
             unsigned int size = RESERVE_SPACE_val/8;
             get_next_token();
-            Expr::Ptr e = parse_bexpr(DV_EXPR);
-            if (e.get() == 0)
+            Expr::Ptr e(new Expr);
+            if (!parse_bexpr(*e, DV_EXPR))
             {
                 throw SyntaxError(String::compose(
                     N_("expression expected after %1"), "RESx"));
@@ -533,8 +533,8 @@ dv_done:
                 get_next_token();
             if (is_eol())
                 goto incbin_done;
-            start = parse_bexpr(DV_EXPR);
-            if (start.get() == 0)
+            start.reset(new Expr);
+            if (!parse_bexpr(*start, DV_EXPR))
                 throw SyntaxError(N_("expression expected for INCBIN start"));
 
             // optional maxlen expression
@@ -542,8 +542,8 @@ dv_done:
                 get_next_token();
             if (is_eol())
                 goto incbin_done;
-            maxlen = parse_bexpr(DV_EXPR);
-            if (maxlen.get() == 0)
+            maxlen.reset(new Expr);
+            if (!parse_bexpr(*maxlen, DV_EXPR))
             {
                 throw SyntaxError(
                     N_("expression expected for INCBIN maximum length"));
@@ -684,16 +684,16 @@ NasmParser::parse_operand()
         }
         default:
         {
-            Expr::Ptr e = parse_bexpr(NORM_EXPR);
-            if (e.get() == 0)
+            Expr::Ptr e(new Expr);
+            if (!parse_bexpr(*e, NORM_EXPR))
                 throw SyntaxError(
                     String::compose(N_("expected operand, got %1"),
                                     describe_token(m_token)));
             if (m_token != ':')
                 return Insn::Operand(e);
             get_next_token();
-            Expr::Ptr off = parse_bexpr(NORM_EXPR);
-            if (off.get() == 0)
+            Expr::Ptr off(new Expr);
+            if (!parse_bexpr(*off, NORM_EXPR))
                 throw SyntaxError(N_("offset expected after ':'"));
             Insn::Operand op(off);
             op.set_seg(e);
@@ -754,14 +754,14 @@ NasmParser::parse_memaddr()
         }
         default:
         {
-            Expr::Ptr e = parse_bexpr(NORM_EXPR);
-            if (e.get() == 0)
+            Expr::Ptr e(new Expr);
+            if (!parse_bexpr(*e, NORM_EXPR))
                 throw SyntaxError(N_("memory address expected"));
             if (m_token != ':')
                 return m_object->get_arch()->ea_create(e);
             get_next_token();
-            Expr::Ptr off = parse_bexpr(NORM_EXPR);
-            if (e.get() == 0)
+            Expr::Ptr off(new Expr);
+            if (!parse_bexpr(*off, NORM_EXPR))
                 throw SyntaxError(N_("offset expected after ':'"));
             Insn::Operand op(m_object->get_arch()->ea_create(off));
             op.set_seg(e);
@@ -788,141 +788,135 @@ NasmParser::parse_memaddr()
 
 #define parse_expr_common(leftfunc, tok, rightfunc, op) \
     do {                                                \
-        Expr::Ptr e = leftfunc(type);                   \
-        if (e.get() == 0)                               \
-            return e;                                   \
+        if (!leftfunc(e, type))                         \
+            return false;                               \
                                                         \
         while (m_token == tok)                          \
         {                                               \
             get_next_token();                           \
-            Expr::Ptr f = rightfunc(type);              \
-            if (f.get() == 0)                           \
-                return f;                               \
-            e.reset(new Expr(e, op, f));                \
+            Expr f;                                     \
+            if (!rightfunc(f, type))                    \
+                return false;                           \
+            e.calc(op, f);                              \
         }                                               \
-        return e;                                       \
+        return true;                                    \
     } while(0)
 
-Expr::Ptr
-NasmParser::parse_expr(ExprType type)
+bool
+NasmParser::parse_expr(Expr& e, ExprType type)
 {
     switch (type)
     {
         case DIR_EXPR:
             // directive expressions can't handle seg:off or WRT
-            return parse_expr0(type);
+            return parse_expr0(e, type);
         default:
             parse_expr_common(parse_bexpr, ':', parse_bexpr, Op::SEGOFF);
     }
     /*@notreached@*/
-    return Expr::Ptr(0);
+    return false;
 }
 
-Expr::Ptr
-NasmParser::parse_bexpr(ExprType type)
+bool
+NasmParser::parse_bexpr(Expr& e, ExprType type)
 {
     parse_expr_common(parse_expr0, WRT, parse_expr6, Op::WRT);
 }
 
-Expr::Ptr
-NasmParser::parse_expr0(ExprType type)
+bool
+NasmParser::parse_expr0(Expr& e, ExprType type)
 {
     parse_expr_common(parse_expr1, '|', parse_expr1, Op::OR);
 }
 
-Expr::Ptr
-NasmParser::parse_expr1(ExprType type)
+bool
+NasmParser::parse_expr1(Expr& e, ExprType type)
 {
     parse_expr_common(parse_expr2, '^', parse_expr2, Op::XOR);
 }
 
-Expr::Ptr
-NasmParser::parse_expr2(ExprType type)
+bool
+NasmParser::parse_expr2(Expr& e, ExprType type)
 {
     parse_expr_common(parse_expr3, '&', parse_expr3, Op::AND);
 }
 
-Expr::Ptr
-NasmParser::parse_expr3(ExprType type)
+bool
+NasmParser::parse_expr3(Expr& e, ExprType type)
 {
-    Expr::Ptr e = parse_expr4(type);
-    if (e.get() == 0)
-        return e;
+    if (!parse_expr4(e, type))
+        return false;
 
     while (m_token == LEFT_OP || m_token == RIGHT_OP)
     {
         int op = m_token;
         get_next_token();
-        Expr::Ptr f = parse_expr4(type);
-        if (f.get() == 0)
-            return f;
+        Expr f;
+        if (!parse_expr4(f, type))
+            return false;
 
         switch (op)
         {
-            case LEFT_OP: e.reset(new Expr(e, Op::SHL, f)); break;
-            case RIGHT_OP: e.reset(new Expr(e, Op::SHR, f)); break;
+            case LEFT_OP: e.calc(Op::SHL, f); break;
+            case RIGHT_OP: e.calc(Op::SHR, f); break;
         }
     }
-    return e;
+    return true;
 }
 
-Expr::Ptr
-NasmParser::parse_expr4(ExprType type)
+bool
+NasmParser::parse_expr4(Expr& e, ExprType type)
 {
-    Expr::Ptr e = parse_expr5(type);
-    if (e.get() == 0)
-        return e;
+    if (!parse_expr5(e, type))
+        return false;
 
     while (m_token == '+' || m_token == '-')
     {
         int op = m_token;
         get_next_token();
-        Expr::Ptr f = parse_expr5(type);
-        if (f.get() == 0)
-            return f;
+        Expr f;
+        if (!parse_expr5(f, type))
+            return false;
 
         switch (op)
         {
-            case '+': e.reset(new Expr(e, Op::ADD, f)); break;
-            case '-': e.reset(new Expr(e, Op::SUB, f)); break;
+            case '+': e.calc(Op::ADD, f); break;
+            case '-': e.calc(Op::SUB, f); break;
         }
     }
-    return e;
+    return true;
 }
 
-Expr::Ptr
-NasmParser::parse_expr5(ExprType type)
+bool
+NasmParser::parse_expr5(Expr& e, ExprType type)
 {
-    Expr::Ptr e = parse_expr6(type);
-    if (e.get() == 0)
-        return e;
+    if (!parse_expr6(e, type))
+        return false;
 
     while (m_token == '*' || m_token == '/' || m_token == '%'
            || m_token == SIGNDIV || m_token == SIGNMOD)
     {
         int op = m_token;
         get_next_token();
-        Expr::Ptr f = parse_expr6(type);
-        if (f.get() == 0)
-            return f;
+        Expr f;
+        if (!parse_expr6(f, type))
+            return false;
 
         switch (op)
         {
-            case '*': e.reset(new Expr(e, Op::MUL, f)); break;
-            case '/': e.reset(new Expr(e, Op::DIV, f)); break;
-            case '%': e.reset(new Expr(e, Op::MOD, f)); break;
-            case SIGNDIV: e.reset(new Expr(e, Op::SIGNDIV, f)); break;
-            case SIGNMOD: e.reset(new Expr(e, Op::SIGNMOD, f)); break;
+            case '*': e.calc(Op::MUL, f); break;
+            case '/': e.calc(Op::DIV, f); break;
+            case '%': e.calc(Op::MOD, f); break;
+            case SIGNDIV: e.calc(Op::SIGNDIV, f); break;
+            case SIGNMOD: e.calc(Op::SIGNMOD, f); break;
         }
     }
-    return e;
+    return true;
 }
 
-Expr::Ptr
-NasmParser::parse_expr6(ExprType type)
+bool
+NasmParser::parse_expr6(Expr& e, ExprType type)
 {
-    Expr::Ptr e(0);
-
     /* directives allow very little and handle IDs specially */
     if (type == DIR_EXPR)
     {
@@ -930,83 +924,81 @@ NasmParser::parse_expr6(ExprType type)
         {
         case '~':
             get_next_token();
-            e = parse_expr6(type);
-            if (e.get() == 0)
-                return e;
-            return Expr::Ptr(new Expr(Op::NOT, e));
+            if (!parse_expr6(e, type))
+                return false;
+            e.calc(Op::NOT);
+            return true;
         case '(':
             get_next_token();
-            e = parse_expr(type);
-            if (e.get() == 0)
-                return e;
+            if (!parse_expr(e, type))
+                return false;
             if (m_token != ')')
                 throw SyntaxError(N_("missing parenthesis"));
             break;
         case INTNUM:
-            e.reset(new Expr(INTNUM_val));
+            e = INTNUM_val;
             break;
         case REG:
-            e.reset(new Expr(REG_val));
+            e = *REG_val;
             break;
         case ID:
         {
             SymbolRef sym = m_object->get_symbol(ID_val);
             sym->use(get_cur_line());
-            e.reset(new Expr(sym));
+            e = sym;
             break;
         }
         default:
-            return e;
+            return false;
         }
     }
     else switch (m_token)
     {
         case '+':
             get_next_token();
-            return parse_expr6(type);
+            return parse_expr6(e, type);
         case '-':
             get_next_token();
-            e = parse_expr6(type);
-            if (e.get() == 0)
-                return e;
-            return Expr::Ptr(new Expr(Op::NEG, e));
+            if (!parse_expr6(e, type))
+                return false;
+            e.calc(Op::NEG);
+            return true;
         case '~':
             get_next_token();
-            e = parse_expr6(type);
-            if (e.get() == 0)
-                return e;
-            return Expr::Ptr(new Expr(Op::NOT, e));
+            if (!parse_expr6(e, type))
+                return false;
+            e.calc(Op::NOT);
+            return true;
         case SEG:
             get_next_token();
-            e = parse_expr6(type);
-            if (e.get() == 0)
-                return e;
-            return Expr::Ptr(new Expr(Op::SEG, e));
+            if (!parse_expr6(e, type))
+                return false;
+            e.calc(Op::SEG);
+            return true;
         case '(':
             get_next_token();
-            e = parse_expr(type);
-            if (e.get() == 0)
-                return e;
+            if (!parse_expr(e, type))
+                return false;
             if (m_token != ')')
                 throw SyntaxError(N_("missing parenthesis"));
             break;
         case INTNUM:
-            e.reset(new Expr(INTNUM_val));
+            e = INTNUM_val;
             break;
         case FLTNUM:
-            e.reset(new Expr(FLTNUM_val));
+            e = FLTNUM_val;
             break;
         case REG:
             if (type == DV_EXPR)
                 throw SyntaxError(N_("data values can't have registers"));
-            e.reset(new Expr(REG_val));
+            e = *REG_val;
             break;
         case STRING:
-            e.reset(new Expr(IntNum(
+            e = IntNum(
                 reinterpret_cast<const unsigned char*>(STRING_val.c_str()),
                 false,
                 STRING_val.length(),
-                false)));
+                false);
             break;
         case SPECIAL_ID:
         {
@@ -1014,7 +1006,7 @@ NasmParser::parse_expr6(ExprType type)
                 m_object->find_special_symbol(ID_val.c_str()+2);
             if (sym)
             {
-                e.reset(new Expr(sym));
+                e = sym;
                 break;
             }
             /*@fallthrough@*/
@@ -1025,39 +1017,39 @@ NasmParser::parse_expr6(ExprType type)
         {
             SymbolRef sym = m_object->get_symbol(ID_val);
             sym->use(get_cur_line());
-            e.reset(new Expr(sym));
+            e = sym;
             break;
         }
         case '$':
             // "$" references the current assembly position
             if (m_abspos.get() != 0)
-                e.reset(m_abspos->clone());
+                e = *m_abspos;
             else
             {
                 SymbolRef sym = m_object->add_non_table_symbol("$");
                 m_bc = &m_container->fresh_bytecode();
                 Location loc = {m_bc, m_bc->get_fixed_len()};
                 sym->define_label(loc, get_cur_line());
-                e.reset(new Expr(sym));
+                e = sym;
             }
             break;
         case START_SECTION_ID:
             // "$$" references the start of the current section
             if (m_absstart.get() != 0)
-                e.reset(m_absstart->clone());
+                e = *m_absstart;
             else
             {
                 SymbolRef sym = m_object->add_non_table_symbol("$$");
                 Location loc = {&m_container->bcs_first(), 0};
                 sym->define_label(loc, get_cur_line());
-                e.reset(new Expr(sym));
+                e = sym;
             }
             break;
         default:
-            return e;
+            return false;
     }
     get_next_token();
-    return e;
+    return true;
 }
 
 void
@@ -1095,12 +1087,9 @@ NasmParser::dir_align(Object& object, NameValues& namevals,
     // it gracefully anyway.
     if (m_abspos.get() != 0)
     {
-        Expr::Ptr boundval = namevals.front().get_expr(object, line);
-        Expr::Ptr e(new Expr(
-            new Expr(m_absstart->clone(), Op::SUB, m_abspos->clone()),
-            Op::AND,
-            new Expr(boundval, Op::SUB, IntNum(1))));
-        m_abspos.reset(new Expr(m_abspos, Op::ADD, e));
+        Expr e = SUB(*m_absstart, *m_abspos);
+        e &= SUB(*namevals.front().get_expr(object, line), 1);
+        *m_abspos += e;
     }
     else
     {

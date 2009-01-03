@@ -341,10 +341,10 @@ public:
             {
                 ExprTerms terms;
                 if (reg[0] != 0)
-                    terms.push_back(reg[0]);
+                    terms.push_back(ExprTerm(*reg[0]));
                 if (reg[1] != 0)
-                    terms.push_back(reg[1]);
-                terms.push_back(IntNum(*disp));
+                    terms.push_back(ExprTerm(*reg[1]));
+                terms.push_back(ExprTerm(*disp));
 
                 do
                 {
@@ -358,17 +358,13 @@ public:
 
                     expect_modrm |= form->rm;
 
-                    Expr::Ptr e(0);
-                    if (terms.size() == 1)
-                        e.reset(new Expr(Op::IDENT, terms));
-                    else
-                        e.reset(new Expr(Op::ADD, terms));
-                    TS_TRACE(*e);
-                    X86EffAddr ea(false, e);
+                    Expr e = ADD(terms);
+                    TS_TRACE(String::format(e));
+                    X86EffAddr ea(false, Expr::Ptr(e.clone()));
                     unsigned char addrsize = 0;
                     unsigned char rex = 0;
                     TS_ASSERT_EQUALS(ea.check(&addrsize, 16, false, &rex, 0),
-                                      true);
+                                     true);
                     TS_ASSERT_EQUALS(ea.m_need_modrm, true);
                     TS_ASSERT_EQUALS(ea.m_modrm, expect_modrm);
                     TS_ASSERT_EQUALS(ea.m_need_sib, 0);
@@ -378,9 +374,6 @@ public:
                     TS_ASSERT_EQUALS(rex, 0);
                 }
                 while (std::next_permutation(terms.begin(), terms.end()));
-                // clean up after ourselves
-                std::for_each(terms.begin(), terms.end(),
-                              MEMFN::mem_fn(&ExprTerm::destroy));
             }
         }
     }
@@ -414,18 +407,17 @@ public:
                     for (const long* disp=disps; disp != disps+NELEMS(disps);
                          ++disp)
                     {
-                        ExprTerms terms;
+                        Expr e;
                         if (*basereg != 0)
-                            terms.push_back(*basereg);
+                            e += **basereg;
                         if (*indexreg != 0)
                         {
                             if (*index == 0)
-                                terms.push_back(*indexreg);
+                                e += **indexreg;
                             else
-                                terms.push_back(Expr::Ptr(
-                                    new Expr(*indexreg, Op::MUL, IntNum(*index))));
+                                e += MUL(**indexreg, *index);
                         }
-                        terms.push_back(IntNum(*disp));
+                        e += IntNum(*disp);
 
                         //do
                         {
@@ -507,13 +499,8 @@ public:
                 else
                     expect_modrm |= 5;
 
-                Expr::Ptr e(0);
-                if (terms.size() == 1)
-                    e.reset(new Expr(Op::IDENT, terms));
-                else
-                    e.reset(new Expr(Op::ADD, terms));
-                TS_TRACE(*e);
-                X86EffAddr ea(false, e);
+                TS_TRACE(String::format(e));
+                X86EffAddr ea(false, Expr::Ptr(e.clone()));
                 unsigned char addrsize = 0;
                 unsigned char rex = 0;
                 if (expect_error)
@@ -524,7 +511,7 @@ public:
                 else
                 {
                     TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0),
-                                      true);
+                                     true);
                     TS_ASSERT_EQUALS(ea.m_need_modrm, true);
                     TS_ASSERT_EQUALS(ea.m_modrm, expect_modrm);
                     TS_ASSERT_EQUALS(ea.m_need_sib, need_sib);
@@ -538,9 +525,6 @@ public:
 
                         }
                         //while (std::next_permutation(terms.begin(), terms.end()));
-                        // clean up after ourselves
-                        std::for_each(terms.begin(), terms.end(),
-                                      MEMFN::mem_fn(&ExprTerm::destroy));
                     }
                 }
             }
@@ -563,22 +547,19 @@ public:
             for (const X86Register** indexreg=indexregs;
                  indexreg != indexregs+NELEMS(indexregs); ++indexreg)
             {
-                Expr::Ptr e(
-                    new Expr(
-                        new Expr(*indexreg, Op::MUL, IntNum(1)),
-                        Op::ADD,
-                        *basereg));
+                Expr e(**indexreg);
+                e *= IntNum(1);
+                e += **basereg;
 
                 unsigned char expect_sib = 0;
                 expect_sib |= ((*indexreg)->num()&7)<<3;
                 expect_sib |= (*basereg)->num()&7;
 
-                TS_TRACE(*e);
-                X86EffAddr ea(false, e);
+                TS_TRACE(String::format(e));
+                X86EffAddr ea(false, Expr::Ptr(e.clone()));
                 unsigned char addrsize = 0;
                 unsigned char rex = 0;
-                TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0),
-                                  true);
+                TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
                 TS_ASSERT_EQUALS(ea.m_need_modrm, true);
                 TS_ASSERT_EQUALS(ea.m_need_sib, true);
                 TS_ASSERT_EQUALS(ea.m_valid_sib, true);
@@ -596,26 +577,181 @@ public:
         for (const X86Register** indexreg=indexregs;
              indexreg != indexregs+NELEMS(indexregs); ++indexreg)
         {
-            Expr::Ptr e(
-                new Expr(
-                    new Expr(&ESP, Op::MUL, IntNum(1)),
-                    Op::ADD,
-                    *indexreg));
+            Expr e(ESP);
+            e *= IntNum(1);
+            e += **indexreg;
 
             unsigned char expect_sib = 0;
             expect_sib |= ((*indexreg)->num()&7)<<3;
             expect_sib |= ESP.num()&7;
 
-            TS_TRACE(*e);
-            X86EffAddr ea(false, e);
+            TS_TRACE(String::format(e));
+            X86EffAddr ea(false, Expr::Ptr(e.clone()));
             unsigned char addrsize = 0;
             unsigned char rex = 0;
-            TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0),
-                              true);
+            TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
             TS_ASSERT_EQUALS(ea.m_need_modrm, true);
             TS_ASSERT_EQUALS(ea.m_need_sib, true);
             TS_ASSERT_EQUALS(ea.m_valid_sib, true);
             TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
         }
+    }
+
+    void testCheck32MulSub()
+    {
+        // eax*2+ebx*2-ebx
+        // Needs to realize ebx can't be an indexreg
+        Expr e = ADD(MUL(EAX, 2), MUL(EBX, 2), NEG(EBX));
+        TS_TRACE(String::format(e));
+        X86EffAddr ea(false, Expr::Ptr(e.clone()));
+        unsigned char addrsize = 0;
+        unsigned char rex = 0;
+        TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
+        TS_ASSERT_EQUALS(ea.m_need_modrm, true);
+        TS_ASSERT_EQUALS(ea.m_need_sib, true);
+        TS_ASSERT_EQUALS(ea.m_valid_sib, true);
+        unsigned char expect_sib = 1<<6;
+        expect_sib |= (EAX.num()&7)<<3;
+        expect_sib |= EBX.num()&7;
+        TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
+    }
+
+    void testDistExpr()
+    {
+        int mults[] = {2, 3, 4, 5, 8, 9};
+        for (size_t i=0; i<NELEMS(mults); ++i)
+        {
+            int mult = mults[i];
+            Expr e = ADD(EAX, 5);
+            e *= IntNum(mult);
+            TS_TRACE(String::format(e));
+            X86EffAddr ea(false, Expr::Ptr(e.clone()));
+            unsigned char addrsize = 0;
+            unsigned char rex = 0;
+            TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
+            TS_ASSERT_EQUALS(ea.m_need_modrm, true);
+            TS_ASSERT_EQUALS(ea.m_need_sib, true);
+            TS_ASSERT_EQUALS(ea.m_valid_sib, true);
+            // EAX*2 will get split to EAX+EAX
+            unsigned char expect_sib;
+            if (mult>7)
+                expect_sib = 3<<6;
+            else if (mult>3)
+                expect_sib = 2<<6;
+            else if (mult>2)
+                expect_sib = 1<<6;
+            else
+                expect_sib = 0;
+            expect_sib |= (EAX.num()&7)<<3;
+            expect_sib |= (mult % 2 == 0 && mult != 2) ? 5 : (EAX.num()&7);
+            TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
+            TS_ASSERT_EQUALS(String::format(*ea.m_disp.get_abs()),
+                             String::format(mult*5));
+
+            // try it one level down too
+            e += 6;
+            TS_TRACE(String::format(e));
+            X86EffAddr ea2(false, Expr::Ptr(e.clone()));
+            addrsize = 0;
+            rex = 0;
+            TS_ASSERT_EQUALS(ea2.check(&addrsize, 32, false, &rex, 0), true);
+            TS_ASSERT_EQUALS(ea2.m_need_modrm, true);
+            TS_ASSERT_EQUALS(ea2.m_need_sib, true);
+            TS_ASSERT_EQUALS(ea2.m_valid_sib, true);
+            TS_ASSERT_EQUALS(ea2.m_sib, expect_sib);
+            TS_ASSERT_EQUALS(String::format(*ea2.m_disp.get_abs()),
+                             String::format(mult*5+6));
+
+        }
+    }
+
+    void testDistExprMultilevel()
+    {
+        // (((eax+5)*2)+6)*2 ==> eax*4+32
+        // ((eax*2+10)+6)*2
+        // (eax*2+16)*2
+        // eax*4+32
+        Expr e = ADD(EAX, 5);
+        e *= 2;
+        e += 6;
+        e *= 2;
+        TS_TRACE(String::format(e));
+        X86EffAddr ea(false, Expr::Ptr(e.clone()));
+        unsigned char addrsize = 0;
+        unsigned char rex = 0;
+        TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
+        TS_ASSERT_EQUALS(ea.m_need_modrm, true);
+        TS_ASSERT_EQUALS(ea.m_need_sib, true);
+        TS_ASSERT_EQUALS(ea.m_valid_sib, true);
+        unsigned char expect_sib = 2<<6;
+        expect_sib |= (EAX.num()&7)<<3;
+        expect_sib |= 5;
+        TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
+        TS_ASSERT_EQUALS(String::format(*ea.m_disp.get_abs()),
+                         String::format(((5*2)+6)*2));
+
+        // (6+(eax+5)*2)*2 ==> 32+eax*4
+        // (6+eax*2+10)*2
+        // (16+eax*2)*2
+        // 32+eax*4
+        e = 6;
+        e += MUL(ADD(EAX, 5), 2);
+        e *= 2;
+        TS_TRACE(String::format(e));
+        X86EffAddr ea2(false, Expr::Ptr(e.clone()));
+        addrsize = 0;
+        rex = 0;
+        TS_ASSERT_EQUALS(ea2.check(&addrsize, 32, false, &rex, 0), true);
+        TS_ASSERT_EQUALS(ea2.m_need_modrm, true);
+        TS_ASSERT_EQUALS(ea2.m_need_sib, true);
+        TS_ASSERT_EQUALS(ea2.m_valid_sib, true);
+        TS_ASSERT_EQUALS(ea2.m_sib, expect_sib);
+        TS_ASSERT_EQUALS(String::format(*ea2.m_disp.get_abs()),
+                         String::format((6+(5*2))*2));
+
+    }
+
+    void testDistExprMultiple()
+    {
+        // (eax+1)*2+(eax+1)*3
+        Expr e = ADD(EAX, 1);
+        e *= 2;
+        e += MUL(ADD(EAX, 1), 3);
+        TS_TRACE(String::format(e));
+        X86EffAddr ea(false, Expr::Ptr(e.clone()));
+        unsigned char addrsize = 0;
+        unsigned char rex = 0;
+        TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
+        TS_ASSERT_EQUALS(ea.m_need_modrm, true);
+        TS_ASSERT_EQUALS(ea.m_need_sib, true);
+        TS_ASSERT_EQUALS(ea.m_valid_sib, true);
+        unsigned char expect_sib = 2<<6;
+        expect_sib |= (EAX.num()&7)<<3;
+        expect_sib |= EAX.num()&7;
+        TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
+        TS_ASSERT_EQUALS(String::format(*ea.m_disp.get_abs()),
+                         String::format(5));
+    }
+
+    void testDistExprMultiple2()
+    {
+        // (eax+ebx+1)*2-ebx
+        Expr e = ADD(EAX, EBX, 1);
+        e *= 2;
+        e -= EBX;
+        TS_TRACE(String::format(e));
+        X86EffAddr ea(false, Expr::Ptr(e.clone()));
+        unsigned char addrsize = 0;
+        unsigned char rex = 0;
+        TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
+        TS_ASSERT_EQUALS(ea.m_need_modrm, true);
+        TS_ASSERT_EQUALS(ea.m_need_sib, true);
+        TS_ASSERT_EQUALS(ea.m_valid_sib, true);
+        unsigned char expect_sib = 1<<6;
+        expect_sib |= (EAX.num()&7)<<3;
+        expect_sib |= EBX.num()&7;
+        TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
+        TS_ASSERT_EQUALS(String::format(*ea.m_disp.get_abs()),
+                         String::format(2));
     }
 };

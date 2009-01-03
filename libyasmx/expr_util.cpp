@@ -41,8 +41,9 @@ namespace
 using yasm::Expr;
 
 void
-do_expand_equ(Expr* expr, std::vector<const Expr*>& seen)
+do_expand_equ(Expr& expr, std::vector<const Expr*>& seen)
 {
+#if 0
     for (yasm::ExprTerms::iterator i=expr->get_terms().begin(),
          end=expr->get_terms().end(); i != end; ++i)
     {
@@ -66,6 +67,7 @@ do_expand_equ(Expr* expr, std::vector<const Expr*>& seen)
         else if (Expr* e = i->get_expr())
             do_expand_equ(e, seen);     // Recurse
     }
+#endif
 }
 
 } // anonymous namespace
@@ -74,7 +76,7 @@ namespace yasm
 {
 
 void
-expand_equ(Expr* expr)
+expand_equ(Expr& expr)
 {
     std::vector<const Expr*> seen;
     do_expand_equ(expr, seen);

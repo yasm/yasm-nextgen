@@ -180,15 +180,15 @@ private:
 
     Insn::Operand parse_memaddr();
 
-    std::auto_ptr<Expr> parse_expr(ExprType type);
-    std::auto_ptr<Expr> parse_bexpr(ExprType type);
-    std::auto_ptr<Expr> parse_expr0(ExprType type);
-    std::auto_ptr<Expr> parse_expr1(ExprType type);
-    std::auto_ptr<Expr> parse_expr2(ExprType type);
-    std::auto_ptr<Expr> parse_expr3(ExprType type);
-    std::auto_ptr<Expr> parse_expr4(ExprType type);
-    std::auto_ptr<Expr> parse_expr5(ExprType type);
-    std::auto_ptr<Expr> parse_expr6(ExprType type);
+    bool parse_expr(Expr& e, ExprType type);
+    bool parse_bexpr(Expr& e, ExprType type);
+    bool parse_expr0(Expr& e, ExprType type);
+    bool parse_expr1(Expr& e, ExprType type);
+    bool parse_expr2(Expr& e, ExprType type);
+    bool parse_expr3(Expr& e, ExprType type);
+    bool parse_expr4(Expr& e, ExprType type);
+    bool parse_expr5(Expr& e, ExprType type);
+    bool parse_expr6(Expr& e, ExprType type);
 
     void dir_absolute(Object& object,
                       NameValues& namevals,

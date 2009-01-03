@@ -36,6 +36,7 @@
 #include "errwarn.h"
 #include "expr.h"
 #include "expr_util.h"
+#include "functional.h"
 #include "marg_ostream.h"
 
 
@@ -201,8 +202,8 @@ Insn::Operand::finalize()
                 {
                     if (Expr* abs = m_ea->m_disp.get_abs())
                     {
-                        expand_equ(abs);
-                        abs->level_tree(true, true, false);
+                        expand_equ(*abs);
+                        abs->simplify(false);
                     }
                 }
             }
@@ -216,8 +217,8 @@ Insn::Operand::finalize()
         case IMM:
             try
             {
-                expand_equ(m_val);
-                m_val->level_tree(true, true, true);
+                expand_equ(*m_val);
+                m_val->simplify();
             }
             catch (Error& err)
             {

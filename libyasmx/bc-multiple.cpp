@@ -124,7 +124,7 @@ MultipleBytecode::finalize(Bytecode& bc)
     if (const Expr* e = val.get_abs())
         m_multiple.reset(e->clone());
     else
-        m_multiple.reset(new Expr(IntNum(0)));
+        m_multiple.reset(new Expr(0));
 
     for (BytecodeContainer::bc_iterator i = m_contents.bcs_begin(),
          end = m_contents.bcs_end(); i != end; ++i)
@@ -199,7 +199,7 @@ MultipleBytecode::expand(Bytecode& bc,
 void
 MultipleBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
 {
-    m_multiple->simplify(xform_calc_dist);
+    simplify_calc_dist(*m_multiple);
     const IntNum* num = m_multiple->get_intnum();
     if (!num)
         throw ValueError(N_("could not determine multiple"));

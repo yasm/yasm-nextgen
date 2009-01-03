@@ -42,6 +42,7 @@ Location::get_offset() const
 bool
 calc_dist(Location loc1, Location loc2, IntNum* dist)
 {
+    assert(loc1.bc && loc2.bc);
     if (loc1.bc->get_container() != loc2.bc->get_container())
         return false;
 
@@ -53,6 +54,7 @@ calc_dist(Location loc1, Location loc2, IntNum* dist)
 bool
 calc_dist_no_bc(Location loc1, Location loc2, IntNum* dist)
 {
+    assert(loc1.bc && loc2.bc);
     if (loc1.bc != loc2.bc)
         return false;
 

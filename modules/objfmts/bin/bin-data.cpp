@@ -116,17 +116,17 @@ BinSymbolData::get_value(IntNum* val) const
 }
 
 void
-expr_xform(Expr* e)
+bin_simplify(Expr& e)
 {
-    for (ExprTerms::iterator i=e->get_terms().begin(),
-         end=e->get_terms().end(); i != end; ++i)
+    for (ExprTerms::iterator i=e.get_terms().begin(),
+         end=e.get_terms().end(); i != end; ++i)
     {
         Symbol* sym;
 
         // Transform our special symrecs into the appropriate value
         IntNum ssymval;
         if ((sym = i->get_sym()) && get_ssym_value(*sym, &ssymval))
-            *i = ssymval;
+            i->set_int(ssymval);
 
         // Transform symrecs or precbcs that reference sections into
         // vstart + intnum(dist).
@@ -145,8 +145,7 @@ expr_xform(Expr* e)
         {
             const Section* sect = container->as_section();
             dist += sect->get_vma();
-            //i->destroy(); // don't need to, as it's a sym or loc
-            *i = dist;
+            i->set_int(dist);
         }
     }
 }

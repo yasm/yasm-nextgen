@@ -319,7 +319,7 @@ dump_relocs(const yasm::Object& object)
             std::cout << std::hex << (sect->get_vma()+reloc->get_addr()) << ' ';
             std::cout << std::setw(16) << reloc->get_type_name() << "  ";
             std::cout << std::showbase;
-            std::cout << *reloc->get_value();
+            std::cout << reloc->get_value();
             std::cout << '\n';
         }
         std::cout << std::noshowbase;

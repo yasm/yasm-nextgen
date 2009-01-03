@@ -102,7 +102,7 @@ private:
     SpecialSym m_which;
 };
 
-void expr_xform(Expr* e);
+void bin_simplify(Expr& e);
 
 inline const BinSectionData*
 get_bin_sect(const Section& sect)

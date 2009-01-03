@@ -744,7 +744,7 @@ void
 Output::output(Value& value, Bytes& bytes, Location loc, int warn)
 {
     if (Expr* e = value.get_abs())
-        e->simplify(&xform_calc_dist);
+        simplify_calc_dist(*e);
 
     // Try to output constant and PC-relative section-local first.
     // Note this does NOT output any value with a SEG, WRT, external,

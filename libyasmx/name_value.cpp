@@ -115,7 +115,7 @@ NameValue::swap(NameValue& oth)
     std::swap(m_id_prefix, oth.m_id_prefix);
 }
 
-/*@null@*/ std::auto_ptr<Expr>
+std::auto_ptr<Expr>
 NameValue::get_expr(Object& object, unsigned long line) const
 {
     switch (m_type)
@@ -133,7 +133,7 @@ NameValue::get_expr(Object& object, unsigned long line) const
     }
 }
 
-/*@null@*/ std::auto_ptr<Expr>
+std::auto_ptr<Expr>
 NameValue::release_expr(Object& object, unsigned long line)
 {
     switch (m_type)

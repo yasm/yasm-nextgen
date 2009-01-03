@@ -196,7 +196,7 @@ Object::get_absolute_symbol()
         return sym;
 
     // Define it
-    std::auto_ptr<Expr> v(new Expr(IntNum(0)));
+    std::auto_ptr<Expr> v(new Expr(0));
     sym->define_equ(v, 0);
     sym->use(0);
     return sym;
@@ -571,7 +571,7 @@ Span::create_terms(Optimize* optimize)
     // Split out sym-sym terms in absolute portion of dependent value
     if (m_depval.has_abs())
     {
-        subst_dist(m_depval.get_abs(),
+        subst_dist(*m_depval.get_abs(),
                    BIND::bind(&Span::add_term, this, _1, _2, _3));
         if (m_span_terms.size() > 0)
         {
@@ -579,7 +579,7 @@ Span::create_terms(Optimize* optimize)
                  end=m_span_terms.end(); i != end; ++i)
             {
                 // Create expression terms with dummy value
-                m_expr_terms.push_back(IntNum(0));
+                m_expr_terms.push_back(ExprTerm(0));
 
                 // Check for circular references
                 if (m_id <= 0 &&

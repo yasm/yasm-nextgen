@@ -37,6 +37,7 @@
 #include <libyasmx/effaddr.h>
 #include <libyasmx/errwarn.h>
 #include <libyasmx/expr.h>
+#include <libyasmx/functional.h>
 #include <libyasmx/intnum.h>
 #include <libyasmx/marg_ostream.h>
 #include <libyasmx/phash.h>
@@ -363,7 +364,7 @@ X86Insn::do_append_jmpfar(BytecodeContainer& container,
     if (segment.get() == 0 && tmod && tmod->type() == X86TargetModifier::FAR)
     {
         // "FAR imm" target needs to become "seg imm:imm".
-        segment.reset(new Expr(Op::SEG, imm->clone()));
+        segment.reset(new Expr(SEG(*imm)));
     }
     else if (segment.get() == 0)
         throw InternalError(N_("didn't get FAR expression in jmpfar"));
@@ -1378,13 +1379,11 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
                 static_cast<const X86Register*>(op.get_reg()))
             {
                 if (m_imm.get() == 0)
-                    m_imm.reset(new Expr(IntNum((reg->num() << 4) & 0xF0)));
+                    m_imm.reset(new Expr((reg->num() << 4) & 0xF0));
                 else
                 {
-                    m_imm.reset(new Expr(
-                        new Expr(m_imm, Op::AND, IntNum(0x0F)),
-                        Op::OR,
-                        IntNum((reg->num() << 4) & 0xF0)));
+                    *m_imm &= IntNum(0x0F);
+                    *m_imm |= IntNum((reg->num() << 4) & 0xF0);
                 }
                 m_im_len = 8;
             }
@@ -1398,10 +1397,10 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
                     m_imm = op.release_imm();
                 else
                 {
-                    m_imm.reset(new Expr(
-                        new Expr(op.release_imm(), Op::AND, IntNum(0x0F)),
-                        Op::OR,
-                        new Expr(m_imm, Op::AND, IntNum(0xF0))));
+                    *m_imm &= IntNum(0xF0);
+                    *op.get_imm() &= IntNum(0x0F);
+                    *m_imm |= *op.get_imm();
+                    op.release_imm();
                 }
                 m_im_len = 8;
             }

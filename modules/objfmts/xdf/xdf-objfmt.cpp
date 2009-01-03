@@ -297,7 +297,7 @@ public:
     XdfReloc(const IntNum& addr, const Value& value, bool ip_rel);
     ~XdfReloc() {}
 
-    std::auto_ptr<Expr> get_value() const;
+    Expr get_value() const;
     std::string get_type_name() const;
 
     Type get_type() const { return m_type; }
@@ -346,17 +346,15 @@ XdfReloc::XdfReloc(const IntNum& addr, const Value& value, bool ip_rel)
         m_type = XDF_REL;
 }
 
-std::auto_ptr<Expr>
+Expr
 XdfReloc::get_value() const
 {
-    std::auto_ptr<Expr> e;
+    Expr e(m_sym);
     if (m_type == XDF_WRT)
-        e.reset(new Expr(m_sym, Op::WRT, m_base));
-    else
-        e.reset(new Expr(m_sym));
+        e.calc(Op::WRT, m_base);
 
     if (m_shift > 0)
-        e.reset(new Expr(e, Op::SHR, IntNum(m_shift)));
+        e.calc(Op::SHR, m_shift);
 
     return e;
 }
@@ -514,7 +512,7 @@ void
 Output::output(Value& value, Bytes& bytes, Location loc, int warn)
 {
     if (Expr* abs = value.get_abs())
-        abs->simplify(&xform_calc_dist);
+        simplify_calc_dist(*abs);
 
     // Try to output constant and PC-relative section-local first.
     // Note this does NOT output any value with a SEG, WRT, external,
@@ -949,7 +947,7 @@ XdfObject::read(std::istream& is)
             sym->declare(Symbol::EXTERN, 0);
 
         if ((flags & XdfSymbolData::XDF_EQU) != 0)
-            sym->define_equ(std::auto_ptr<Expr>(new Expr(IntNum(value))), 0);
+            sym->define_equ(std::auto_ptr<Expr>(new Expr(value)), 0);
         else if (sym_scnum < scnum)
         {
             Section& sect = m_object->get_section(sym_scnum);

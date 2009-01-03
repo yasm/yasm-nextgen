@@ -35,6 +35,7 @@
 #include "arch.h"
 #include "errwarn.h"
 #include "floatnum.h"
+#include "functional.h"
 #include "intnum.h"
 #include "symbol.h"
 
@@ -85,579 +86,550 @@ is_right_identity(Op::Op op, const IntNum& intn)
             (iszero && op == Op::SHR));
 }
 
-ExprTerm::ExprTerm(std::auto_ptr<IntNum> intn)
-    : m_type(INT)
+const ExprBuilder ADD = {Op::ADD};
+const ExprBuilder SUB = {Op::SUB};
+const ExprBuilder MUL = {Op::MUL};
+const ExprBuilder DIV = {Op::DIV};
+const ExprBuilder SIGNDIV = {Op::SIGNDIV};
+const ExprBuilder MOD = {Op::MOD};
+const ExprBuilder SIGNMOD = {Op::SIGNMOD};
+const ExprBuilder NEG = {Op::NEG};
+const ExprBuilder NOT = {Op::NOT};
+const ExprBuilder OR = {Op::OR};
+const ExprBuilder AND = {Op::AND};
+const ExprBuilder XOR = {Op::XOR};
+const ExprBuilder XNOR = {Op::XNOR};
+const ExprBuilder NOR = {Op::NOR};
+const ExprBuilder SHL = {Op::SHL};
+const ExprBuilder SHR = {Op::SHR};
+const ExprBuilder LOR = {Op::LOR};
+const ExprBuilder LAND = {Op::LAND};
+const ExprBuilder LNOT = {Op::LNOT};
+const ExprBuilder LXOR = {Op::LXOR};
+const ExprBuilder LXNOR = {Op::LXNOR};
+const ExprBuilder LNOR = {Op::LNOR};
+const ExprBuilder LT = {Op::LT};
+const ExprBuilder GT = {Op::GT};
+const ExprBuilder EQ = {Op::EQ};
+const ExprBuilder LE = {Op::LE};
+const ExprBuilder GE = {Op::GE};
+const ExprBuilder NE = {Op::NE};
+const ExprBuilder SEG = {Op::SEG};
+const ExprBuilder WRT = {Op::WRT};
+const ExprBuilder SEGOFF = {Op::SEGOFF};
+
+ExprTerm::ExprTerm(std::auto_ptr<IntNum> intn, int depth)
+    : m_type(INT), m_depth(depth)
 {
-    m_intn.m_type = IntNumData::INTNUM_L;
-    intn->swap(static_cast<IntNum&>(m_intn));
+    m_data.intn.m_type = IntNumData::INTNUM_L;
+    intn->swap(static_cast<IntNum&>(m_data.intn));
 }
 
-ExprTerm::ExprTerm(std::auto_ptr<FloatNum> flt)
-    : m_type(FLOAT), m_flt(flt.release())
+ExprTerm::ExprTerm(std::auto_ptr<FloatNum> flt, int depth)
+    : m_type(FLOAT), m_depth(depth)
 {
+    m_data.flt = flt.release();
 }
 
-ExprTerm::ExprTerm(std::auto_ptr<Expr> expr)
-    : m_type(EXPR), m_expr(expr.release())
+ExprTerm::ExprTerm(const ExprTerm& term)
+    : m_data(term.m_data), m_type(term.m_type), m_depth(term.m_depth)
 {
-}
-
-ExprTerm
-ExprTerm::clone() const
-{
-    switch (m_type)
-    {
-        case INT:   return static_cast<const IntNum&>(m_intn);
-        case FLOAT: return std::auto_ptr<FloatNum>(m_flt->clone());
-        case EXPR:  return m_expr->clone();
-        default:    return *this;
-    }
+    if (m_type == INT)
+        m_data.intn = IntNum(static_cast<const IntNum&>(m_data.intn));
+    else if (m_type == FLOAT)
+        m_data.flt = m_data.flt->clone();
 }
 
 void
-ExprTerm::destroy()
+ExprTerm::swap(ExprTerm& oth)
 {
-    switch (m_type)
-    {
-        case INT:
-            static_cast<IntNum&>(m_intn).~IntNum();
-            break;
-        case FLOAT:
-            delete m_flt;
-            m_flt = 0;
-            break;
-        case EXPR:
-            delete m_expr;
-            m_expr = 0;
-            break;
-        default:
-            break;
-    }
+    std::swap(m_type, oth.m_type);
+    std::swap(m_depth, oth.m_depth);
+    std::swap(m_data, oth.m_data);
+}
+
+void
+ExprTerm::clear()
+{
+    if (m_type == INT)
+        static_cast<IntNum&>(m_data.intn).~IntNum();
+    else if (m_type == FLOAT)
+        delete m_data.flt;
     m_type = NONE;
 }
 
 void
-Expr::add_term(const ExprTerm& term)
+ExprTerm::zero()
 {
-    Expr* base_e = term.get_expr();
-    if (!base_e)
-    {
-        m_terms.push_back(term);
-        return;
-    }
-
-    Expr* e = base_e;
-    Expr* copyfrom = 0;
-
-    // Search downward until we find something *other* than an
-    // IDENT, then bring it up to the current level.
-    for (;;)
-    {
-        if (e->m_op != Op::IDENT)
-            break;
-        copyfrom = e;
-
-        if (e->m_terms.size() != 1)
-            break;
-
-        Expr* sube = e->m_terms.front().get_expr();
-        if (!sube)
-            break;
-
-        e = sube;
-    }
-
-    if (!copyfrom)
-    {
-        m_terms.push_back(base_e);
-    }
-    else
-    {
-        // Transfer the terms up
-        m_terms.insert(m_terms.end(), copyfrom->m_terms.begin(),
-                       copyfrom->m_terms.end());
-        copyfrom->m_terms.clear();
-        // Delete the rest
-        delete base_e;
-    }
+    clear();
+    m_type = INT;
+    m_data.intn = IntNum(0);
 }
 
-Expr::Expr(const ExprTerm& a, Op::Op op, const ExprTerm& b)
-    : m_op(op)
+void
+Expr::append_op(Op::Op op, int nchild)
 {
-    add_term(a);
-    add_term(b);
-}
-
-Expr::Expr(Op::Op op, const ExprTerm& a)
-    : m_op(op)
-{
-    if (!is_unary(op))
-        throw ValueError(N_("expression with one term must be unary"));
-    add_term(a);
-}
-
-Expr::Expr(Op::Op op, const ExprTerms& terms)
-    : m_op(op)
-{
-    switch (terms.size())
+    switch (nchild)
     {
         case 0:
             throw ValueError(N_("expression must have more than 0 terms"));
         case 1:
             if (!is_unary(op))
-                throw ValueError(N_("expression with one term must be unary"));
+                op = Op::IDENT;
             break;
         case 2:
+            if (is_unary(op))
+                throw ValueError(N_("unary expression may only have single term"));
             break;
         default:
             // more than 2 terms
             if (!is_associative(op))
                 throw ValueError(N_("expression with more than two terms must be associative"));
     }
-    std::transform(terms.begin(), terms.end(), std::back_inserter(m_terms),
-                   MEMFN::mem_fn(&ExprTerm::clone));
-}
 
-Expr::Expr(const ExprTerm& a)
-    : m_op(Op::IDENT)
-{
-    add_term(a);
-}
+    for (ExprTerms::iterator i=m_terms.begin(), end=m_terms.end(); i != end;
+         ++i)
+        i->m_depth++;
 
-Expr&
-Expr::operator= (const Expr& rhs)
-{
-    if (this != &rhs)
-    {
-        m_op = rhs.m_op;
-        std::for_each(m_terms.begin(), m_terms.end(),
-                      MEMFN::mem_fn(&ExprTerm::destroy));
-        m_terms.clear();
-        std::transform(rhs.m_terms.begin(), rhs.m_terms.end(),
-                       std::back_inserter(m_terms),
-                       MEMFN::mem_fn(&ExprTerm::clone));
-    }
-    return *this;
+    if (op != Op::IDENT)
+        m_terms.push_back(ExprTerm(op, nchild, 0));
 }
 
 Expr::Expr(const Expr& e)
-    : m_op(e.m_op)
+    : m_terms(e.m_terms)
 {
-    std::transform(e.m_terms.begin(), e.m_terms.end(),
-                   std::back_inserter(m_terms),
-                   MEMFN::mem_fn(&ExprTerm::clone));
 }
 
-Expr::Expr(Op::Op op)
-    : m_op(op)
+Expr::Expr(std::auto_ptr<IntNum> intn)
 {
+    m_terms.push_back(ExprTerm(intn));
+}
+
+Expr::Expr(std::auto_ptr<FloatNum> flt)
+{
+    m_terms.push_back(ExprTerm(flt));
 }
 
 Expr::~Expr()
 {
-    std::for_each(m_terms.begin(), m_terms.end(),
-                  MEMFN::mem_fn(&ExprTerm::destroy));
 }
 
-/// Negate just a single ExprTerm by building a -1*ei subexpression.
-inline void
-Expr::xform_neg_term(ExprTerms::iterator term)
-{
-    Expr *sube = new Expr(Op::MUL);
-    sube->m_terms.push_back(IntNum(-1));
-    sube->m_terms.push_back(*term);
-    *term = sube;
-}
-
-/// Negates e by multiplying by -1, with distribution over lower-precedence
-/// operators (eg ADD) and special handling to simplify result w/ADD, NEG,
-/// and others.
 void
-Expr::xform_neg_helper()
+Expr::swap(Expr& oth)
 {
-    switch (m_op)
+    std::swap(m_terms, oth.m_terms);
+}
+
+void
+Expr::cleanup()
+{
+    ExprTerms::iterator erasefrom =
+        std::remove_if(m_terms.begin(), m_terms.end(),
+                       BIND::bind(&ExprTerm::is_empty, _1));
+    m_terms.erase(erasefrom, m_terms.end());
+}
+
+void
+Expr::reduce_depth(int pos, int delta)
+{
+    if (pos < 0)
+        pos += m_terms.size();
+    ExprTerm& parent = m_terms[pos];
+    if (parent.is_op())
     {
-        case Op::ADD:
-            // distribute (recursively if expr) over terms
-            for (ExprTerms::iterator i=m_terms.begin(), end=m_terms.end();
-                 i != end; ++i)
-            {
-                if (Expr* sube = i->get_expr())
-                    sube->xform_neg_helper();
-                else
-                    xform_neg_term(i);
-            }
-            break;
-        case Op::SUB:
-            // change op to ADD, and recursively negate left side (if expr)
-            m_op = Op::ADD;
-            if (Expr* sube = m_terms.front().get_expr())
-                sube->xform_neg_helper();
-            else
-                xform_neg_term(m_terms.begin());
-            break;
-        case Op::NEG:
-            // Negating a negated value?  Make it an IDENT.
-            m_op = Op::IDENT;
-            break;
-        case Op::IDENT:
+        for (int n=pos-1; n >= 0; --n)
         {
-            // Negating an ident?  Change it into a MUL w/ -1 if there's no
-            // floatnums present below; if there ARE floatnums, recurse.
-            ExprTerm& first = m_terms.front();
-            Expr* e;
-            if (FloatNum* flt = first.get_float())
-                flt->calc(Op::NEG);
-            else if (IntNum* intn = first.get_int())
-                intn->calc(Op::NEG);
-            else if ((e = first.get_expr()) && e->contains(ExprTerm::FLOAT))
-                e->xform_neg_helper();
-            else
+            ExprTerm& child = m_terms[n];
+            if (child.is_empty())
+                continue;
+            if (child.m_depth <= parent.m_depth)
+                break;      // Stop when we're out of children
+            child.m_depth -= delta;
+        }
+    }
+    parent.m_depth -= delta;    // Bring up parent
+}
+
+void
+Expr::make_ident(int pos)
+{
+    if (pos < 0)
+        pos += m_terms.size();
+
+    ExprTerm& root = m_terms[pos];
+    if (!root.is_op())
+        return;
+
+    // If operator has no children, replace it with a zero.
+    if (root.get_nchild() == 0)
+    {
+        root.zero();
+        return;
+    }
+
+    // If operator only has one child, may be able to delete operator
+    if (root.get_nchild() != 1)
+        return;
+
+    Op::Op op = root.get_op();
+    bool unary = is_unary(op);
+    if (!unary)
+    {
+        // delete one-term non-unary operators
+        reduce_depth(pos);      // bring up child
+        root.clear();
+    }
+    else if (op < Op::NONNUM)
+    {
+        // find child
+        for (int n=pos-1; n >= 0; --n)
+        {
+            ExprTerm& child = m_terms[n];
+            if (child.is_empty())
+                continue;
+            assert(child.m_depth >= root.m_depth);  // must have one child
+            if (child.m_depth != root.m_depth+1)
+                continue;
+
+            // if a simple integer, compute it
+            if (IntNum* intn = child.get_int())
             {
-                m_op = Op::MUL;
-                m_terms.push_back(IntNum(-1));
+                intn->calc(op);
+                child.m_depth -= 1;
+                root.clear();
             }
             break;
         }
-        default:
-            // Everything else.  MUL will be combined when it's leveled.
-            // Replace ourselves with -1*e.
-            Expr *ne = new Expr(m_op);
-            m_op = Op::MUL;
-            m_terms.swap(ne->m_terms);
-            m_terms.push_back(IntNum(-1));
-            m_terms.push_back(ne);
-            break;
+    }
+
+    cleanup();
+}
+
+void
+Expr::clear_except(int pos, int keep)
+{
+    if (keep > 0)
+        assert(!m_terms[keep].is_op());       // unsupported
+    if (pos < 0)
+        pos += m_terms.size();
+    assert(pos >= 0 && pos < static_cast<int>(m_terms.size()));
+
+    ExprTerm& parent = m_terms[pos];
+    for (int n=pos-1; n >= 0; --n)
+    {
+        ExprTerm& child = m_terms[n];
+        if (child.is_empty())
+            continue;
+        if (child.m_depth <= parent.m_depth)
+            break;      // Stop when we're out of children
+        if (n == keep)
+            continue;
+        child.clear();
     }
 }
 
-/// Transforms negatives into expressions that are easier to combine:
-/// -x -> -1*x
-/// a-b -> a+(-1*b)
-///
-/// Call post-order on an expression tree to transform the entire tree.
+int
+xform_neg_impl(Expr& e, int pos, int stop_depth, int depth_delta, bool negating)
+{
+    ExprTerms& terms = e.get_terms();
+
+    int n = pos;
+    for (; n >= 0; --n)
+    {
+        ExprTerm* child = &terms[n];
+        if (child->is_empty())
+            continue;
+
+        // Update depth as required
+        child->m_depth += depth_delta;
+        int child_depth = child->m_depth;
+
+        switch (child->get_op())
+        {
+            case Op::NEG:
+            {
+                int new_depth = child->m_depth;
+                child->clear();
+                // Invert current negation state and bring up children
+                n = xform_neg_impl(e, n-1, new_depth, depth_delta - 1,
+                                   !negating);
+                break;
+            }
+            case Op::SUB:
+            {
+                child->set_op(Op::ADD);
+                int new_depth = child->m_depth+1;
+                if (negating)
+                {
+                    // -(a-b) ==> -a+b, so don't negate right side,
+                    // but do negate left side.
+                    n = xform_neg_impl(e, n-1, new_depth, depth_delta, false);
+                    n = xform_neg_impl(e, n-1, new_depth, depth_delta, true);
+                }
+                else
+                {
+                    // a-b ==> a+(-1*b), so negate right side only.
+                    n = xform_neg_impl(e, n-1, new_depth, depth_delta, true);
+                    n = xform_neg_impl(e, n-1, new_depth, depth_delta, false);
+                }
+                break;
+            }
+            case Op::ADD:
+            {
+                if (!negating)
+                    break;
+
+                // Negate all children
+                int new_depth = child->m_depth+1;
+                for (int x = 0, nchild = child->get_nchild(); x < nchild; ++x)
+                    n = xform_neg_impl(e, n-1, new_depth, depth_delta, true);
+                break;
+            }
+            case Op::MUL:
+            {
+                if (!negating)
+                    break;
+
+                // Insert -1 term.  Do this by inserting a new MUL op
+                // and changing this term to -1, to avoid having to
+                // deal with updating n.
+                terms.insert(terms.begin()+n+1,
+                             ExprTerm(child->get_op(),
+                                      child->get_nchild()+1,
+                                      child->m_depth));
+                child = &terms[n];      // need to re-get as terms may move
+                *child = ExprTerm(-1, child->m_depth+1);
+                break;
+            }
+            default:
+            {
+                if (!negating)
+                    break;
+
+                // Directly negate if possible (integers or floats)
+                if (IntNum* intn = child->get_int())
+                {
+                    intn->calc(Op::NEG);
+                    break;
+                }
+
+                if (FloatNum* fltn = child->get_float())
+                {
+                    fltn->calc(Op::NEG);
+                    break;
+                }
+
+                // Couldn't replace directly; instead replace with -1*e
+                // Insert -1 one level down, add operator at this level,
+                // and move all subterms one level down.
+                terms.insert(terms.begin()+n+1, 2,
+                             ExprTerm(Op::MUL, 2, child->m_depth));
+                child = &terms[n];      // need to re-get as terms may move
+                terms[n+1] = ExprTerm(-1, child->m_depth+1);
+                child->m_depth++;
+                int new_depth = child->m_depth+1;
+                for (int x = 0; x < child->get_nchild(); ++x)
+                    n = xform_neg_impl(e, n-1, new_depth, depth_delta+1, false);
+            }
+        }
+
+        if (child_depth <= stop_depth)
+            break;
+    }
+
+    return n;
+}
+
 void
 Expr::xform_neg()
 {
-    switch (m_op)
-    {
-        case Op::NEG:
-            // Turn -x into -1*x
-            m_op = Op::IDENT;
-            xform_neg_helper();
-            break;
-        case Op::SUB:
-        {
-            // Turn a-b into a+(-1*b)
-            // change op to ADD, and recursively negate right side (if expr)
-            m_op = Op::ADD;
-            ExprTerms::iterator rhs = m_terms.begin()+1;
-            if (Expr* sube = rhs->get_expr())
-                sube->xform_neg_helper();
-            else
-                xform_neg_term(rhs);
-            break;
-        }
-        default:
-            break;
-    }
-}
-
-/// Check for and simplify identities.  Returns new number of expr terms.
-/// Sets e->op = IDENT if numterms ends up being 1.
-/// Uses numterms parameter instead of e->numterms for basis of "new" number
-/// of terms.
-/// Assumes int_term is *only* integer term in e.
-/// @note Really designed to only be used by level_op().
-void
-Expr::simplify_identity(IntNum* &intn, bool simplify_reg_mul)
-{
-    IntNum* first = m_terms.front().get_int();
-    bool is_first = (first && intn == first);
-
-    if (m_terms.size() > 1)
-    {
-        // Check for simple identities that delete the intnum.
-        // Don't do this step if it's 1*REG.
-        if ((simplify_reg_mul || m_op != Op::MUL || !intn->is_pos1() ||
-             !contains(ExprTerm::REG)) &&
-            ((is_first && is_left_identity(m_op, *intn)) ||
-             (!is_first && is_right_identity(m_op, *intn))))
-        {
-            // delete int term
-            intn->~IntNum();
-            intn = 0;
-            m_terms.erase(std::find_if(m_terms.begin(), m_terms.end(),
-                BIND::bind(&ExprTerm::is_type, _1, ExprTerm::INT)));
-        }
-        // Check for simple identites that delete everything BUT the intnum.
-        else if (is_constant_identity(m_op, *intn))
-        {
-            // Delete everything but the integer term
-            ExprTerms terms;
-            ExprTerms::iterator i;
-            i = std::find_if(m_terms.begin(), m_terms.end(),
-                             BIND::bind(&ExprTerm::is_type, _1, ExprTerm::INT));
-            terms.push_back(*i);
-            i->release(); // don't delete it now we've moved it
-            m_terms.swap(terms);
-            intn = m_terms.front().get_int();
-            // delete old terms
-            std::for_each(terms.begin(), terms.end(),
-                          MEMFN::mem_fn(&ExprTerm::destroy));
-        }
-    }
-
-    // Compute NOT, NEG, and LNOT on single intnum.
-    if (intn && m_terms.size() == 1 && is_first &&
-        (m_op == Op::NOT || m_op == Op::NEG || m_op == Op::LNOT))
-        intn->calc(m_op);
-
-    // Change expression to IDENT if possible.
-    if (m_terms.size() == 1)
-        m_op = Op::IDENT;
-}
-
-/// Levels the expression tree.  Eg:
-/// a+(b+c) -> a+b+c
-/// (a+b)+(c+d) -> a+b+c+d
-/// Naturally, only levels operators that allow more than two operand terms.
-/// @note Only does *one* level of leveling (no recursion).  Should be called
-///       post-order on a tree to combine deeper levels.
-/// Also brings up any IDENT values into the current level (for ALL operators).
-/// Folds (combines by evaluation) *integer* constant values if fold_const.
-void
-Expr::level_op(bool fold_const, bool simplify_ident, bool simplify_reg_mul)
-{
-    int int_term;
-    bool do_level = false;
-    Expr* e;
-
-    // If non-numeric expression, don't fold constants.
-    if (m_op > Op::NONNUM)
-        fold_const = false;
-
-    int_term = -1;
-    for (ExprTerms::iterator i=m_terms.begin(), end=m_terms.end(); i != end;
-         ++i)
-    {
-        // Search downward until we find something *other* than an
-        // IDENT, then bring it up to the current level.
-        if ((e = i->get_expr()))
-        {
-            while (e && e->m_op == Op::IDENT)
-            {
-                *i = e->m_terms.back();
-                e->m_terms.pop_back();
-                delete e;
-                e = i->get_expr();
-            }
-
-            // Shortcut check for possible leveling later
-            if (e && e->m_op == m_op)
-                do_level = true;
-        }
-
-        // Find the first integer term (if one is present) if we're folding
-        // constants and combine other integers with it.
-        IntNum* intn_temp;
-        if (fold_const && (intn_temp = i->get_int()))
-        {
-            if (int_term < 0)
-                int_term = i - m_terms.begin();
-            else
-            {
-                m_terms[int_term].get_int()->calc(m_op, intn_temp);
-                i->destroy();
-            }
-        }
-    }
-
-    if (int_term >= 0)
-    {
-        // Erase folded integer terms; we already deleted their contents above
-        ExprTerms::iterator erasefrom =
-            std::remove_if(m_terms.begin()+int_term+1, m_terms.end(),
-                           MEMFN::mem_fn(&ExprTerm::is_empty));
-        m_terms.erase(erasefrom, m_terms.end());
-
-        // Simplify identities and make IDENT if possible.
-        if (simplify_ident)
-        {
-            IntNum* intn = m_terms[int_term].get_int();
-            simplify_identity(intn, simplify_reg_mul);
-        }
-        else if (m_terms.size() == 1)
-            m_op = Op::IDENT;
-    }
-
-    // If just an IDENT'ed expression, bring up expression to this level.
-    if (m_op == Op::IDENT && (e = m_terms.front().get_expr()))
-    {
-        m_op = e->m_op;
-        m_terms.clear();
-        m_terms.swap(e->m_terms);
-        delete e;
-    }
-
-    // Only level associative operators.
-    // Also don't bother leveling if it's not necessary to bring up any terms.
-    if (!do_level || !is_associative(m_op))
-    {
-        // trim capacity before returning
-        ExprTerms(m_terms).swap(m_terms);
+    ExprTerm& root = m_terms.back();
+    if (!root.is_op())
         return;
-    }
 
-    // Copy up ExprTerms.  Combine integer terms as necessary.
-    // This is a two-step process; we do this part in reverse order (to
-    // use constant time operations), and then reverse the vector at the end.
-    ExprTerms terms;
-    int_term = -1;
-    for (ExprTerms::reverse_iterator i=m_terms.rbegin(), end=m_terms.rend();
-         i != end; ++i)
-    {
-        if ((e = i->get_expr()) && e->m_op == m_op)
-        {
-            // move up terms, folding constants as we go
-            while (!e->m_terms.empty())
-            {
-                ExprTerm& last = e->m_terms.back();
-                IntNum* intn_temp;
-                if (fold_const && (intn_temp = last.get_int()))
-                {
-                    // Need to fold it in.. but if there's no int term
-                    // already, just move this one up to become it.
-                    if (int_term >= 0)
-                    {
-                        terms[int_term].get_int()->calc(m_op, intn_temp);
-                        last.destroy();
-                    }
-                    else
-                    {
-                        int_term = terms.size();
-                        terms.push_back(last);
-                    }
-                }
-                else
-                    terms.push_back(last);
-                e->m_terms.pop_back();
-            }
-            i->destroy();
-        }
-        else
-        {
-            if (int_term < 0 && i->is_type(ExprTerm::INT))
-                int_term = terms.size();
-            terms.push_back(*i);
-        }
-    }
-    std::reverse(terms.begin(), terms.end());
-    m_terms.swap(terms);
-
-    // Simplify identities, make IDENT if possible.
-    if (simplify_ident && int_term >= 0)
-    {
-        IntNum* intn = m_terms[(m_terms.size()-1)-int_term].get_int();
-        simplify_identity(intn, simplify_reg_mul);
-    }
-    else if (m_terms.size() == 1)
-        m_op = Op::IDENT;
-
-    // If just an IDENT'ed expression, bring up expression to this level.
-    if (m_op == Op::IDENT && (e = m_terms.front().get_expr()))
-    {
-        m_op = e->m_op;
-        m_terms.clear();
-        m_terms.swap(e->m_terms);
-        delete e;
-    }
+    xform_neg_impl(*this, m_terms.size()-1, root.m_depth-1, 0, false);
 }
 
 void
-Expr::level_tree(bool fold_const,
-                 bool simplify_ident,
-                 bool simplify_reg_mul,
-                 const FUNCTION::function<void (Expr*)>& xform_extra)
+Expr::level_op(bool simplify_reg_mul, int pos)
+{
+    if (pos < 0)
+        pos += m_terms.size();
+    assert(pos >= 0 && pos < static_cast<int>(m_terms.size()));
+
+    ExprTerm& root = m_terms[pos];
+    if (!root.is_op())
+        return;
+    Op::Op op = root.get_op();
+    bool do_level = is_associative(op);
+
+    ExprTerm* intchild = 0;             // first (really last) integer child
+    int childnum = root.get_nchild();   // which child this is (0=first)
+
+    for (int n=pos-1; n >= 0; --n)
+    {
+        ExprTerm& child = m_terms[n];
+        if (child.is_empty())
+            continue;
+        if (child.m_depth <= root.m_depth)
+            break;
+        if (child.m_depth != root.m_depth+1)
+            continue;
+        --childnum;
+
+        // Check for SEG of SEG:OFF, if we match, simplify to just the segment
+        if (op == Op::SEG && child.is_op(Op::SEGOFF))
+        {
+            // Find LHS of SEG:OFF, clearing RHS (OFF) as we go.
+            int m = n-1;
+            for (int cnum=0; m >= 0; --m)
+            {
+                ExprTerm& child2 = m_terms[m];
+                if (child2.is_empty())
+                    continue;
+                if (child2.m_depth <= child.m_depth)
+                    break;
+                if (child2.m_depth == child.m_depth+1)
+                    cnum++;
+                if (cnum == 2)
+                    break;
+                child2.clear();
+            }
+            assert(m >= 0);
+
+            // Bring up the SEG portion by two levels
+            for (; m >= 0; --m)
+            {
+                ExprTerm& child2 = m_terms[m];
+                if (child2.is_empty())
+                    continue;
+                if (child2.m_depth <= child.m_depth)
+                    break;
+                child2.m_depth -= 2;
+            }
+
+            // Delete the operators.
+            child.clear();
+            root.clear();
+            return;                 // End immediately since we cleared root.
+        }
+
+        if (IntNum* intn = child.get_int())
+        {
+            // Look for identities that will delete the intnum term.
+            // Don't simplify 1*REG if simplify_reg_mul is disabled.
+            if ((simplify_reg_mul ||
+                 op != Op::MUL ||
+                 !intn->is_pos1() ||
+                 !contains(ExprTerm::REG, pos))
+                &&
+                ((childnum != 0 && is_right_identity(op, *intn)) ||
+                 (childnum == 0 && is_left_identity(op, *intn))))
+            {
+                // Delete intnum from expression
+                child.clear();
+                root.add_nchild(-1);
+                continue;
+            }
+            else if (is_constant_identity(op, *intn))
+            {
+                // This is special; it deletes all terms except for
+                // the integer.  This means we can terminate
+                // immediately after deleting all other terms.
+                clear_except(pos, n);
+                --child.m_depth;            // bring up intnum
+                root.clear();               // delete operator
+                return;
+            }
+
+            if (intchild == 0)
+            {
+                intchild = &child;
+                continue;
+            }
+
+            if (op < Op::NONNUM)
+            {
+                std::swap(*intchild->get_int(), *intn);
+                intchild->get_int()->calc(op, *intn);
+                child.clear();
+                root.add_nchild(-1);
+            }
+        }
+        else if (do_level && child.is_op(op))
+        {
+            root.add_nchild(child.get_nchild() - 1);
+            reduce_depth(n);        // bring up children
+            child.clear();          // delete levelled op
+        }
+    }
+
+    // If operator only has one child, may be able to delete operator
+    if (root.get_nchild() == 1)
+    {
+        bool unary = is_unary(op);
+        if (unary && op < Op::NONNUM && intchild != 0)
+        {
+            // if unary on a simple integer, compute it
+            intchild->get_int()->calc(op);
+            intchild->m_depth -= 1;
+            root.clear();
+        }
+        else if (!unary)
+        {
+            // delete one-term non-unary operators
+            reduce_depth(pos);      // bring up children
+            root.clear();
+        }
+    }
+    else if (root.get_nchild() == 0)
+        root.zero();    // If operator has no children, replace it with a zero.
+}
+
+void
+Expr::simplify(bool simplify_reg_mul)
 {
     xform_neg();
 
-    // Recurse into all expr terms first
-    for (ExprTerms::iterator i=m_terms.begin(), end=m_terms.end(); i != end;
-         ++i)
+    for (int pos=0, size=m_terms.size(); pos<size; ++pos)
     {
-        if (Expr* e = i->get_expr())
-            e->level_tree(fold_const, simplify_ident, simplify_reg_mul,
-                          xform_extra);
+        if (!m_terms[pos].is_op())
+            continue;
+        level_op(simplify_reg_mul, pos);
     }
 
-    // Check for SEG of SEG:OFF, if we match, simplify to just the segment
-    Expr* e;
-    if (m_op == Op::SEG && (e = m_terms.front().get_expr()) &&
-        e->m_op == Op::SEGOFF)
-    {
-        m_op = Op::IDENT;
-        e->m_op = Op::IDENT;
-        // Destroy the second (offset) term
-        e->m_terms.back().destroy();
-        e->m_terms.pop_back();
-    }
-
-    // Do this level
-    level_op(fold_const, simplify_ident, simplify_reg_mul);
-
-    // Do callback
-    if (xform_extra)
-    {
-        xform_extra(this);
-        // Cleanup recursion pass; zero out callback so we don't
-        // infinite loop (come back here again).
-        level_tree(fold_const, simplify_ident, simplify_reg_mul, 0);
-    }
-}
-
-void
-Expr::order_terms()
-{
-    // don't bother reordering if only one element
-    if (m_terms.size() == 1)
-        return;
-
-    // only reorder commutative operators
-    if (!is_commutative(m_op))
-        return;
-
-    // Use a stable sort (multiple terms of same type are kept in the same
-    // order).
-    std::stable_sort(m_terms.begin(), m_terms.end());
-}
-
-Expr*
-Expr::clone(int except) const
-{
-    if (except == -1 || m_terms.size() == 1)
-        return new Expr(*this);
-
-    std::auto_ptr<Expr> e(new Expr(m_op));
-    int j = 0;
-    for (ExprTerms::const_iterator i=m_terms.begin(), end=m_terms.end();
-         i != end; ++i, ++j)
-    {
-        if (j != except)
-            e->m_terms.push_back(i->clone());
-    }
-    return e.release();
+    cleanup();
 }
 
 bool
-Expr::contains(int type) const
+Expr::contains(int type, int pos) const
 {
-    return traverse_leaves_in(BIND::bind(&ExprTerm::is_type, _1, type));
+    if (pos < 0)
+        pos += m_terms.size();
+    assert(pos >= 0 && pos < static_cast<int>(m_terms.size()));
+
+    const ExprTerm& parent = m_terms[pos];
+    if (!parent.is_op())
+    {
+        if (parent.is_type(type))
+            return true;
+        return false;
+    }
+    for (int n=pos-1; n>=0; --n)
+    {
+        const ExprTerm& child = m_terms[n];
+        if (child.is_empty())
+            continue;
+        if (child.m_depth <= parent.m_depth)
+            break;  // Stop when we're out of children
+        if (child.is_type(type))
+            return true;
+    }
+    return false;
 }
 
 bool
-Expr::substitute_cb(const ExprTerms& subst_terms)
+Expr::substitute(const ExprTerms& subst_terms)
 {
     for (ExprTerms::iterator i=m_terms.begin(), end=m_terms.end(); i != end;
          ++i)
@@ -667,134 +639,104 @@ Expr::substitute_cb(const ExprTerms& subst_terms)
             continue;
         if (*substp >= subst_terms.size())
             return true;   // error
-        *i = subst_terms[*substp].clone();
+        int depth = i->m_depth;
+        *i = subst_terms[*substp];
+        i->m_depth = depth;
     }
     return false;
 }
 
-bool
-Expr::substitute(const ExprTerms& subst_terms)
+Expr
+Expr::extract_lhs(ExprTerms::reverse_iterator op)
 {
-    return traverse_post(BIND::bind(&Expr::substitute_cb, _1,
-                                    REF::ref(subst_terms)));
-}
+    Expr retval;
 
-bool
-Expr::traverse_post(const FUNCTION::function<bool (Expr*)>& func)
-{
-    for (ExprTerms::iterator i=m_terms.begin(), end=m_terms.end(); i != end;
-         ++i)
+    ExprTerms::reverse_iterator end = m_terms.rend();
+    if (op == end)
+        return retval;
+
+    // Delete the operator
+    int parent_depth = op->m_depth;
+    op->clear();
+
+    // Bring up the RHS terms
+    ExprTerms::reverse_iterator child = ++op;
+    for (; child != end; ++child)
     {
-        Expr* e = i->get_expr();
-        if (e && e->traverse_post(func))
-            return true;
+        if (child->is_empty())
+            continue;
+        if (child->m_depth <= parent_depth)
+            break;
+        if (child != op && child->m_depth == parent_depth+1)
+            break;      // stop when we've reached the second (LHS) child
+        child->m_depth--;
     }
-    return func(this);
-}
 
-bool
-Expr::traverse_leaves_in(const FUNCTION::function<bool (const ExprTerm&)>& func)
-    const
-{
-    for (ExprTerms::const_iterator i=m_terms.begin(), end=m_terms.end();
-         i != end; ++i)
+    // Extract the LHS terms.
+    for (; child != end; ++child)
     {
-        if (const Expr* e = i->get_expr())
-        {
-            if (e->traverse_leaves_in(func))
-                return true;
-        }
-        else
-        {
-            if (func(*i))
-                return true;
-        }
+        if (child->is_empty())
+            continue;
+        if (child->m_depth <= parent_depth)
+            break;
+        // Fix up depth for new expression.
+        child->m_depth -= parent_depth+1;
+        // Add a NONE term to retval, then swap it with the child.
+        retval.m_terms.push_back(ExprTerm());
+        std::swap(retval.m_terms.back(), *child);
     }
-    return false;
+
+    // We added in reverse order, so fix up.
+    std::reverse(retval.m_terms.begin(), retval.m_terms.end());
+
+    // Clean up NONE terms.
+    cleanup();
+
+    return retval;
 }
 
-std::auto_ptr<Expr>
+Expr
 Expr::extract_deep_segoff()
 {
-    // Try to extract at this level
-    std::auto_ptr<Expr> retval = extract_segoff();
-    if (retval.get() != 0)
-        return retval;
-
-    // Not at this level?  Search any expr children.
-    for (ExprTerms::iterator i=m_terms.begin(), end=m_terms.end(); i != end;
-         ++i)
+    // Look through terms for the first SEG:OFF operator
+    for (ExprTerms::reverse_iterator i = m_terms.rbegin(), end = m_terms.rend();
+         i != end; ++i)
     {
-        if (Expr* e = i->get_expr())
-        {
-            retval = e->extract_deep_segoff();
-            if (retval.get() != 0)
-                return retval;
-        }
+        if (i->is_op(Op::SEGOFF))
+            return extract_lhs(i);
     }
 
-    // Didn't find one
-    return retval;
+    return Expr();
 }
 
-std::auto_ptr<Expr>
+Expr
 Expr::extract_segoff()
 {
-    std::auto_ptr<Expr> retval(0);
-
     // If not SEG:OFF, we can't do this transformation
-    if (m_op != Op::SEGOFF || m_terms.size() != 2)
-        return retval;
+    if (!m_terms.back().is_op(Op::SEGOFF))
+        return Expr();
 
-    ExprTerm& left = m_terms.front();
-
-    // Extract the SEG portion out to its own expression
-    if (Expr* e = left.get_expr())
-        retval.reset(e);
-    else
-    {
-        // Need to build IDENT expression to hold non-expression contents
-        retval.reset(new Expr(Op::IDENT));
-        retval->m_terms.push_back(left);
-    }
-
-    // Change the expression into an IDENT
-    m_terms.erase(m_terms.begin());
-    m_op = Op::IDENT;
-    return retval;
+    return extract_lhs(m_terms.rbegin());
 }
 
-std::auto_ptr<Expr>
+Expr
 Expr::extract_wrt()
 {
-    std::auto_ptr<Expr> retval(0);
-
     // If not WRT, we can't do this transformation
-    if (m_op != Op::WRT || m_terms.size() != 2)
-        return retval;
+    if (!m_terms.back().is_op(Op::WRT))
+        return Expr();
 
-    ExprTerm& right = m_terms.back();
+    Expr lhs = extract_lhs(m_terms.rbegin());
 
-    // Extract the right side portion out to its own expression
-    if (Expr* e = right.get_expr())
-        retval.reset(e);
-    else
-    {
-        // Need to build IDENT expression to hold non-expression contents
-        retval.reset(new Expr(Op::IDENT));
-        retval->m_terms.push_back(right);
-    }
-
-    // Change the expr into an IDENT
-    m_terms.pop_back();
-    m_op = Op::IDENT;
-    return retval;
+    // need to keep LHS, and return RHS, so swap before returning.
+    swap(lhs);
+    return lhs;
 }
 
 FloatNum*
 Expr::get_float() const
 {
-    if (m_op == Op::IDENT)
+    if (m_terms.size() == 1)
         return m_terms.front().get_float();
     else
         return 0;
@@ -803,7 +745,7 @@ Expr::get_float() const
 const IntNum*
 Expr::get_intnum() const
 {
-    if (m_op == Op::IDENT)
+    if (m_terms.size() == 1)
         return m_terms.front().get_int();
     else
         return 0;
@@ -812,7 +754,7 @@ Expr::get_intnum() const
 IntNum*
 Expr::get_intnum()
 {
-    if (m_op == Op::IDENT)
+    if (m_terms.size() == 1)
         return m_terms.front().get_int();
     else
         return 0;
@@ -821,7 +763,7 @@ Expr::get_intnum()
 SymbolRef
 Expr::get_symbol() const
 {
-    if (m_op == Op::IDENT)
+    if (m_terms.size() == 1)
         return m_terms.front().get_sym();
     else
         return SymbolRef(0);
@@ -830,7 +772,7 @@ Expr::get_symbol() const
 const Register*
 Expr::get_reg() const
 {
-    if (m_op == Op::IDENT)
+    if (m_terms.size() == 1)
         return m_terms.front().get_reg();
     else
         return 0;
@@ -839,26 +781,50 @@ Expr::get_reg() const
 std::ostream&
 operator<< (std::ostream& os, const ExprTerm& term)
 {
-    switch (term.m_type)
+    switch (term.get_type())
     {
         case ExprTerm::NONE:    os << "NONE"; break;
-        case ExprTerm::REG:     os << *term.m_reg; break;
+        case ExprTerm::REG:     os << *term.get_reg(); break;
         case ExprTerm::INT:     os << *term.get_int(); break;
-        case ExprTerm::SUBST:   os << "[" << term.m_subst << "]"; break;
+        case ExprTerm::SUBST:   os << "[" << *term.get_subst() << "]"; break;
         case ExprTerm::FLOAT:   os << "FLTN"; break;
-        case ExprTerm::SYM:     os << term.m_sym->get_name(); break;
+        case ExprTerm::SYM:     os << term.get_sym()->get_name(); break;
         case ExprTerm::LOC:     os << "{LOC}"; break;
-        case ExprTerm::EXPR:    os << "(" << *term.m_expr << ")"; break;
+        case ExprTerm::OP:
+            os << "(" << ((int)term.get_op())
+               << ", " << term.get_nchild() << ")";
+            break;
     }
     return os;
 }
 
-std::ostream&
-operator<< (std::ostream& os, const Expr& e)
+static void
+infix(std::ostream& os, const Expr& e, int pos=-1)
 {
     const char* opstr = "";
+    const ExprTerms& terms = e.get_terms();
 
-    switch (e.m_op)
+    if (terms.size() == 0)
+        return;
+
+    if (pos < 0)
+        pos += terms.size();
+    assert(pos >= 0 && pos < static_cast<int>(terms.size()));
+
+    while (pos >= 0 && terms[pos].is_empty())
+        --pos;
+
+    if (pos == -1)
+        return;
+
+    if (!terms[pos].is_op())
+    {
+        os << terms[pos];
+        return;
+    }
+
+    Op::Op op = terms[pos].get_op();
+    switch (op)
     {
         case Op::ADD:       opstr = "+"; break;
         case Op::SUB:       opstr = "-"; break;
@@ -892,29 +858,155 @@ operator<< (std::ostream& os, const Expr& e)
         case Op::WRT:       opstr = " WRT "; break;
         case Op::SEGOFF:    opstr = ":"; break;
         case Op::IDENT:     break;
+        case Op::NONNUM:    return;
         default:            opstr = " !UNK! "; break;
     }
 
-    for (ExprTerms::const_iterator i=e.m_terms.begin(), end=e.m_terms.end();
-         i != end; ++i)
+    std::vector<int> children;
+    const ExprTerm& root = terms[pos];
+    --pos;
+    for (; pos >= 0; --pos)
     {
-        if (i != e.m_terms.begin())
+        const ExprTerm& child = terms[pos];
+        if (child.is_empty())
+            continue;
+        if (child.m_depth <= root.m_depth)
+            break;
+        if (child.m_depth != root.m_depth+1)
+            continue;
+        children.push_back(pos);
+    }
+
+    for (std::vector<int>::const_reverse_iterator i=children.rbegin(),
+         end=children.rend(); i != end; ++i)
+    {
+        std::ios_base::fmtflags ff = os.flags();
+
+        if (i != children.rbegin())
         {
             os << opstr;
             // Force RHS of shift operations to decimal
-            if (e.m_op == Op::SHL || e.m_op == Op::SHR)
-            {
-                std::ios_base::fmtflags ff =
-                    os.setf(std::ios::dec, std::ios::basefield);
-                os << *i;
-                os.setf(ff);
-                continue;
-            }
+            if (op == Op::SHL || op == Op::SHR)
+                ff = os.setf(std::ios::dec, std::ios::basefield);
         }
-        os << *i;
+
+        if (terms[*i].is_op())
+        {
+            os << '(';
+            infix(os, e, *i);
+            os << ')';
+        }
+        else
+            os << terms[*i];
+
+        os.setf(ff);
+    }
+}
+
+std::ostream&
+operator<< (std::ostream& os, const Expr& e)
+{
+    infix(os, e);
+    return os;
+}
+
+bool
+get_children(Expr& e, /*@out@*/ int* lhs, /*@out@*/ int* rhs, int* pos)
+{
+    ExprTerms& terms = e.get_terms();
+    if (*pos < 0)
+        *pos += terms.size();
+
+    ExprTerm& root = terms[*pos];
+    if (!root.is_op())
+        return false;
+
+    *rhs = -1;
+    if (lhs)
+    {
+        if (root.get_nchild() != 2)
+            return false;
+        *lhs = -1;
+    }
+    else if (root.get_nchild() != 1)
+        return false;
+
+    int n;
+    for (n = *pos-1; n >= 0; --n)
+    {
+        ExprTerm& child = terms[n];
+        if (child.is_empty())
+            continue;
+        if (child.m_depth <= root.m_depth)
+            break;
+        if (child.m_depth != root.m_depth+1)
+            continue;       // not an immediate child
+
+        if (*rhs < 0)
+            *rhs = n;
+        else if (lhs && *lhs < 0)
+            *lhs = n;
+        else
+            return false;   // too many children
+    }
+    *pos = n;
+    if (*rhs >= 0 && (!lhs || *lhs >= 0))
+        return true;
+    return false;   // too few children
+}
+
+bool
+is_neg1_sym(Expr& e,
+            /*@out@*/ int* sym,
+            /*@out@*/ int* neg1,
+            int* pos,
+            bool loc_ok)
+{
+    ExprTerms& terms = e.get_terms();
+    if (*pos < 0)
+        *pos += terms.size();
+    assert(*pos >= 0 && *pos < static_cast<int>(terms.size()));
+
+    ExprTerm& root = terms[*pos];
+    if (!root.is_op(Op::MUL) || root.get_nchild() != 2)
+        return false;
+
+    bool have_neg1 = false, have_sym = false;
+    int n;
+    for (n = *pos-1; n >= 0; --n)
+    {
+        ExprTerm& child = terms[n];
+        if (child.is_empty())
+            continue;
+        if (child.m_depth <= root.m_depth)
+            break;
+        if (child.m_depth != root.m_depth+1)
+            return false;   // more than one level
+
+        if (IntNum* intn = child.get_int())
+        {
+            if (!intn->is_neg1())
+                return false;
+            *neg1 = n;
+            have_neg1 = true;
+        }
+        else if (child.is_type(ExprTerm::SYM) ||
+                 (loc_ok && child.is_type(ExprTerm::LOC)))
+        {
+            *sym = n;
+            have_sym = true;
+        }
+        else
+            return false;   // something else
     }
 
-    return os;
+    if (have_neg1 && have_sym)
+    {
+        *pos = n;
+        return true;
+    }
+
+    return false;
 }
 
 } // namespace yasm

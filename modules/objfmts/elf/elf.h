@@ -458,7 +458,7 @@ public:
     ElfReloc(SymbolRef sym, SymbolRef wrt, const IntNum& addr, size_t valsize);
     virtual ~ElfReloc();
 
-    std::auto_ptr<Expr> get_value() const;
+    Expr get_value() const;
     virtual std::string get_type_name() const = 0;
 
     void handle_addend(IntNum* intn, const ElfConfig& config);

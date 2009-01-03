@@ -148,13 +148,13 @@ ElfReloc::~ElfReloc()
 {
 }
 
-std::auto_ptr<Expr>
+Expr
 ElfReloc::get_value() const
 {
-    if (m_addend.is_zero())
-        return Expr::Ptr(new Expr(m_sym));
-    else
-        return Expr::Ptr(new Expr(m_sym, Op::ADD, m_addend));
+    Expr e(m_sym);
+    if (!m_addend.is_zero())
+        e += m_addend;
+    return e;
 }
 
 void
@@ -359,7 +359,7 @@ ElfSymbol::finalize(Symbol& sym, Errwarns& errwarns)
     // get size (if specified); expr overrides stored integer
     if (m_xsize)
     {
-        m_xsize->simplify(&xform_calc_dist);
+        simplify_calc_dist(*m_xsize);
         IntNum* xsize = m_xsize->get_intnum();
         if (xsize)
             m_size = *xsize;
@@ -373,9 +373,9 @@ ElfSymbol::finalize(Symbol& sym, Errwarns& errwarns)
 
     if (equ_expr_c != 0)
     {
-        std::auto_ptr<Expr> equ_expr(equ_expr_c->clone());
-        equ_expr->simplify(&xform_calc_dist);
-        IntNum* equ_intn = equ_expr->get_intnum();
+        Expr equ_expr = *equ_expr_c;
+        simplify_calc_dist(equ_expr);
+        IntNum* equ_intn = equ_expr.get_intnum();
 
         if (equ_intn)
             m_value = *equ_intn;

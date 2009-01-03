@@ -58,7 +58,7 @@ public:
     /// Should be overloaded by derived classes that have addends.
     /// The default implementation simply returns the symbol as the value.
     /// @return Relocated value.
-    virtual std::auto_ptr<Expr> get_value() const;
+    virtual Expr get_value() const;
 
     /// Get the name of the relocation type (a string).
     /// @return Type name.

@@ -77,10 +77,6 @@ ADD_SUBDIRECTORY(modules)
 ADD_SUBDIRECTORY(libyasmx)
 ADD_SUBDIRECTORY(frontends)
 
-YASM_ADD_UNIT_TEST(test_expr TESTNAME expr_basic
-    test_expr.cpp
-    )
-
 YASM_ADD_UNIT_TEST(test_preproc TESTNAME preproc_basic
     test_preproc.cpp
     )

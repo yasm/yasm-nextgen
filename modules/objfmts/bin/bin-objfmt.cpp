@@ -258,32 +258,24 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
     {
         Location label_loc;
         IntNum ssymval;
-        Expr::Ptr syme(0);
+        Expr syme;
         SymbolRef rel = value.get_rel();
 
         if (rel->is_abs())
-        {
-            syme.reset(new Expr(IntNum(0)));
-        }
+            syme = Expr(0);
         else if (rel->get_label(&label_loc) && label_loc.bc->get_container())
-        {
-            syme.reset(new Expr(rel));
-        }
+            syme = Expr(rel);
         else if (get_ssym_value(*rel, &ssymval))
-        {
-            syme.reset(new Expr(ssymval));
-        }
+            syme = Expr(ssymval);
         else
             goto done;
 
         // Handle PC-relative
         if (value.get_sub_loc(&label_loc) && label_loc.bc->get_container())
-        {
-            syme.reset(new Expr(syme, Op::SUB, label_loc));
-        }
+            syme -= label_loc;
 
         if (value.get_rshift() > 0)
-            syme.reset(new Expr(syme, Op::SHR, IntNum(value.get_rshift())));
+            syme >>= IntNum(value.get_rshift());
 
         // Add into absolute portion
         value.add_abs(syme);
@@ -292,7 +284,10 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
 done:
     // Simplify absolute portion of value, transforming symrecs
     if (Expr* abs = value.get_abs())
-        abs->simplify(expr_xform);
+    {
+        bin_simplify(*abs);
+        abs->simplify();
+    }
 
     // Output
     Arch* arch = m_object.get_arch();

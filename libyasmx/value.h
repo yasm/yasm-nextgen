@@ -32,6 +32,8 @@
 #include <algorithm>
 #include <memory>
 
+#include <boost/scoped_ptr.hpp>
+
 #include "export.h"
 #include "intnum.h"
 #include "location.h"
@@ -153,18 +155,18 @@ public:
 
     /// Get the absolute portion of the value.
     /// @return Absolute expression, or NULL if there is no absolute portion.
-    Expr* get_abs() { return m_abs; }
-    const Expr* get_abs() const { return m_abs; }
+    Expr* get_abs() { return m_abs.get(); }
+    const Expr* get_abs() const { return m_abs.get(); }
 
     /// Determine if the value has an absolute portion.
     /// @return True if value has absolute portion, false if not.
-    bool has_abs() const { return m_abs != 0; }
+    bool has_abs() const { return m_abs.get() != 0; }
 
     /// Add integer to the absolute portion of the value.
     void add_abs(const IntNum& delta);
 
     /// Add expression to the absolute portion of the value.
-    void add_abs(std::auto_ptr<Expr> delta);
+    void add_abs(const Expr& delta);
 
     /// Get the additive relative portion of the value.
     /// @return Relative symbol, or NULL if there is no relative portion.
@@ -282,12 +284,12 @@ public:
     static const unsigned int RSHIFT_MAX = 127;
 
 private:
-    bool finalize_scan(Expr* e, bool ssym_not_ok);
+    bool finalize_scan(Expr& e, bool ssym_ok, int* pos);
 
     /// The absolute portion of the value.  May contain *differences* between
     /// symrecs but not standalone symrecs.  May be NULL if there is no
     /// absolute portion (e.g. the absolute portion is 0).
-    Expr* m_abs;    // can't use scoped_ptr as we want to internally modify
+    boost::scoped_ptr<Expr> m_abs;
 
     /// The relative portion of the value.  This is the portion that may
     /// need to generate a relocation.  May be NULL if no relative portion.
