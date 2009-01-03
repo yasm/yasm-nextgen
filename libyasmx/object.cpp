@@ -157,7 +157,7 @@ operator<< (marg_ostream& os, const Object& object)
          end=object.m_sections.end(); i != end; ++i)
     {
         os << "Section:\n";
-        i->put(os, true);
+        os << *i;
     }
     return os;
 }

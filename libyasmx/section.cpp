@@ -74,23 +74,28 @@ Section::add_reloc(std::auto_ptr<Reloc> reloc)
     m_relocs.push_back(reloc.release());
 }
 
-void
-Section::put(marg_ostream& os, bool with_bcs) const
+marg_ostream&
+operator<< (marg_ostream& os, const Section& section)
 {
-    os << "name=" << m_name << '\n';
-    os << "align=" << m_align << '\n';
-    os << "code=" << m_code << '\n';
-    os << "bss=" << m_bss << '\n';
-    os << "default=" << m_def << '\n';
+    os << "name=" << section.get_name() << '\n';
+    os << "vma=" << section.get_vma() << '\n';
+    os << "lma=" << section.get_lma() << '\n';
+    os << "filepos=" << section.get_filepos() << '\n';
+    os << "align=" << section.get_align() << '\n';
+    os << "code=" << section.is_code() << '\n';
+    os << "bss=" << section.is_bss() << '\n';
+    os << "default=" << section.is_default() << '\n';
+
     os << "Associated data:\n";
     ++os;
-    os << static_cast<const AssocDataContainer&>(*this);
+    os << static_cast<const AssocDataContainer&>(section);
     --os;
 
-    if (with_bcs)
-        os << static_cast<const BytecodeContainer&>(*this);
+    os << static_cast<const BytecodeContainer&>(section);
 
     // TODO: relocs
+
+    return os;
 }
 
 } // namespace yasm

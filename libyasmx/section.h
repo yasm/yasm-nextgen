@@ -160,11 +160,6 @@ public:
     /// @param filepos  File position
     void set_filepos(unsigned long filepos) { m_filepos = filepos; }
 
-    /// Print a section.  For debugging purposes.
-    /// @param os           output stream
-    /// @param with_bcs     if true, print bytecodes within section
-    void put(marg_ostream& os, bool with_bcs=false) const;
-
 private:
     std::string m_name;                 ///< name (given by user)
 
@@ -186,12 +181,13 @@ private:
     stdx::ptr_vector_owner<Reloc> m_relocs_owner;
 };
 
-inline marg_ostream&
-operator<< (marg_ostream& os, const Section& section)
-{
-    section.put(os);
-    return os;
-}
+/// Print a section.  For debugging purposes.  Bytecodes within the section
+/// are printed.
+/// @param os           output stream
+/// @param section      section
+/// @return Output stream.
+YASM_LIB_EXPORT
+marg_ostream& operator<< (marg_ostream& os, const Section& section);
 
 } // namespace yasm
 
