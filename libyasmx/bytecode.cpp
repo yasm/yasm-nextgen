@@ -162,8 +162,17 @@ Bytecode::finalize()
                 throw TooComplexError(i->get_line(),
                                       N_("expression too complex"));
         }
+
         if (i->is_jump_target() && i->is_complex_rel())
             throw ValueError(i->get_line(), N_("invalid jump target"));
+
+        // Do curpos subtraction for IP-relative flagged values.
+        if (i->is_ip_rel())
+        {
+            Location sub_loc = {this, i->get_off()};
+            i->sub_rel(m_container->get_object(), sub_loc);
+        }
+
         warn_update_line(i->get_line());
     }
 

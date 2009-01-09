@@ -316,7 +316,10 @@ append_jmp(BytecodeContainer& container,
     Value targetv(0, target);
     targetv.set_line(line);
     targetv.set_jump_target();
+    targetv.set_ip_rel();
     targetv.set_signed();
+    targetv.set_next_insn(0);   // always 0.
+
     if (op_sel == JMP_SHORT)
     {
         // Opcode
