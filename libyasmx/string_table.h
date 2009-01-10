@@ -45,7 +45,10 @@ class YASM_LIB_EXPORT StringTable
 {
 public:
     /// Constructor.
-    StringTable();
+    /// @param first_index  Indexes will be returned and interpreted
+    ///                     as if the first string starts at this offset.
+    ///                     Defaults to 0.
+    StringTable(unsigned long first_index=0);
     /// Destructor.
     ~StringTable();
 
@@ -79,6 +82,7 @@ public:
 
 private:
     std::vector<char> m_storage;
+    unsigned long m_first_index;
 };
 
 } // namespace yasm

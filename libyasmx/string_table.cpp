@@ -33,7 +33,8 @@
 namespace yasm
 {
 
-StringTable::StringTable()
+StringTable::StringTable(unsigned long first_index)
+    : m_first_index(first_index)
 {
     m_storage.push_back('\0');
 }
@@ -49,13 +50,13 @@ StringTable::get_index(const std::string& str)
     std::string::size_type len = str.length()+1;    // include trailing 0
     std::string::size_type end = m_storage.size();
     std::copy(cstr, cstr+len, std::back_inserter(m_storage));
-    return end;
+    return m_first_index+end;
 }
 
 std::string
 StringTable::get_str(unsigned long index) const
 {
-    return &m_storage.at(index);
+    return &m_storage.at(index-m_first_index);
 }
 
 void
