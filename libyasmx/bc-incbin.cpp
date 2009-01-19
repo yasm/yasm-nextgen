@@ -208,9 +208,7 @@ IncbinBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
     if (m_start)
     {
         const IntNum* num = m_start->get_intnum();
-        if (!num)
-            throw InternalError(
-                N_("could not determine start in incbin::output"));
+        assert(num && "could not determine start in incbin::output");
         start = num->get_uint();
     }
 

@@ -629,8 +629,7 @@ IntNum::get_sized(unsigned char* ptr,
                   int warn) const
 {
     // Currently don't support destinations larger than our native size
-    if (destsize*8 > BITVECT_NATIVE_SIZE)
-        throw InternalError(N_("destination too large"));
+    assert(destsize*8 <= BITVECT_NATIVE_SIZE && "destination too large");
 
     // Split shift into left (shift) and right (rshift) components.
     unsigned int rshift = 0;
@@ -669,8 +668,7 @@ IntNum::get_sized(unsigned char* ptr,
         rshift = 0;
 
         // Write out the new data, 8 bits at a time.
-        if (bigendian)
-            throw InternalError(N_("big endian not implemented"));
+        assert(!bigendian && "big endian not implemented");
         for (int i = 0, sz = valsize;
              i < static_cast<int>(destsize) && sz > 0; ++i)
         {
@@ -721,7 +719,7 @@ IntNum::get_sized(unsigned char* ptr,
     if (bigendian)
     {
         // TODO
-        throw InternalError(N_("big endian not implemented"));
+        assert(false && "big endian not implemented");
     }
     else
         BitVector::Block_Store(op1, ptr, static_cast<N_int>(destsize));
@@ -758,7 +756,7 @@ IntNum::get_sized(unsigned char* ptr,
     if (bigendian)
     {
         // TODO
-        throw InternalError(N_("big endian not implemented"));
+        assert(false && "big endian not implemented");
     }
     else
         std::memcpy(ptr, buf, destsize);

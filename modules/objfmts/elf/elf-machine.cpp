@@ -106,7 +106,7 @@ create_elf_machine(const Arch& arch, ElfClass cls)
         if (machines[i].match(keyword, machine, cls))
             return machines[i].create();
     }
-    throw InternalError(N_("could not find elf machine"));
+    assert(false && "could not find elf machine");
 }
 
 void

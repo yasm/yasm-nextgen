@@ -50,24 +50,12 @@ enum WarnClass
     WARN_SIZE_OVERRIDE      ///< Double size override
 };
 
-/// Exception for internal errors.  These are usually due to sanity
-/// check failures in the code.
-class YASM_LIB_EXPORT InternalError : public std::runtime_error
-{
-public:
-    /// Constructor.
-    /// @param message  internal error message
-    explicit InternalError(const std::string& message);
-    virtual ~InternalError() throw();
-};
-
 /// Not implemented error.
-class YASM_LIB_EXPORT NotImplementedError : public InternalError
+class YASM_LIB_EXPORT NotImplementedError : public std::runtime_error
 {
 public:
-    explicit NotImplementedError(const std::string& message)
-        : InternalError(message)
-    {}
+    explicit NotImplementedError(const std::string& message);
+    virtual ~NotImplementedError() throw();
 };
 
 /// Exception for fatal errors.

@@ -64,8 +64,7 @@ void
 NasmParser::get_peek_token()
 {
     char savech = m_tokch;
-    if (m_peek_token != NONE)
-        throw InternalError(N_("only can have one token of lookahead"));
+    assert(m_peek_token == NONE && "only can have one token of lookahead");
     m_peek_token = lex(&m_peek_tokval);
     m_peek_tokch = m_tokch;
     m_tokch = savech;

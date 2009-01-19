@@ -103,8 +103,7 @@ ElfReloc::ElfReloc(SymbolRef sym,
         m_type = ssym->reloc;
     }
 
-    if (sym == 0)
-        throw InternalError("sym is null");
+    assert(sym != 0 && "sym is null");
 }
 
 ElfReloc::ElfReloc(const ElfConfig& config,
@@ -855,9 +854,8 @@ ElfSection::set_file_offset(unsigned long pos)
         m_offset = pos;
         return pos;
     }
-    else if (align & (align - 1))
-        throw InternalError(String::compose(
-            N_("alignment %1 is not a power of 2"), align));
+    else
+        assert((align & (align - 1)) == 0 && "alignment is not a power of 2");
 
     m_offset = (pos + align - 1) & ~(align - 1);
     return m_offset;
@@ -1000,8 +998,6 @@ ElfConfig::proghead_write(std::ostream& os, Bytes& scratch)
     assert(scratch.size() == proghead_get_size());
 
     os << scratch;
-    if (!os.good())
-        throw InternalError(N_("Failed to write ELF program header"));
 }
 
 std::string

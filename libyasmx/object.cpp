@@ -558,8 +558,8 @@ void
 Span::add_term(unsigned int subst, Location loc, Location loc2)
 {
     IntNum intn;
-    if (!calc_dist(loc, loc2, &intn))
-        throw InternalError(N_("could not calculate bc distance"));
+    bool ok = calc_dist(loc, loc2, &intn);
+    assert(ok && "could not calculate bc distance");
 
     if (subst >= m_span_terms.size())
         m_span_terms.resize(subst+1);
@@ -828,8 +828,8 @@ Optimize::step_1d()
              endterm=span->m_span_terms.end(); term != endterm; ++term)
         {
             IntNum intn;
-            if (!calc_dist(term->m_loc, term->m_loc2, &intn))
-                throw InternalError(N_("could not calculate bc distance"));
+            bool ok = calc_dist(term->m_loc, term->m_loc2, &intn);
+            assert(ok && "could not calculate bc distance");
             term->m_cur_val = term->m_new_val;
             term->m_new_val = intn.get_int();
         }
@@ -977,9 +977,9 @@ Optimize::step_2(Errwarns& errwarns)
             unsigned long old_next_offset =
                 os->m_cur_val + os->m_bc->get_total_len();
 
-            if (offset_diff < 0
-                && static_cast<unsigned long>(-offset_diff) > os->m_new_val)
-                throw InternalError(N_("org/align went to negative offset"));
+            assert((offset_diff >= 0 ||
+                    static_cast<unsigned long>(-offset_diff) <= os->m_new_val)
+                   && "org/align went to negative offset");
             os->m_new_val += offset_diff;
 
             orig_len = os->m_bc->get_tail_len();

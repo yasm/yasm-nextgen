@@ -367,7 +367,7 @@ X86Insn::do_append_jmpfar(BytecodeContainer& container,
         segment.reset(new Expr(SEG(*imm)));
     }
     else if (segment.get() == 0)
-        throw InternalError(N_("didn't get FAR expression in jmpfar"));
+        assert(false && "didn't get FAR expression in jmpfar");
 
     X86Common common;
     common.m_opersize = info.opersize;
@@ -696,7 +696,7 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
             break;
         }
         default:
-            throw InternalError(N_("invalid operand type"));
+            assert(false && "invalid operand type");
     }
 
     // Check operand size
@@ -789,7 +789,8 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
                 return false;
             break;
         default:
-            throw InternalError(N_("invalid target modifier type"));
+            assert(false && "invalid target modifier type");
+            return false;
     }
 
     return true;
@@ -1196,16 +1197,16 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             switch (op.get_type())
             {
                 case Insn::Operand::NONE:
-                    throw InternalError(
-                        N_("invalid operand conversion"));
+                    assert(false && "invalid operand conversion");
+                    break;
                 case Insn::Operand::REG:
                     m_x86_ea.reset(new X86EffAddr(
                         static_cast<const X86Register*>(op.get_reg()),
                         &m_rex, m_pdrex, m_mode_bits));
                     break;
                 case Insn::Operand::SEGREG:
-                    throw InternalError(
-                        N_("invalid operand conversion"));
+                    assert(false && "invalid operand conversion");
+                    break;
                 case Insn::Operand::MEMORY:
                 {
                     if (op.get_seg() != 0)
@@ -1239,22 +1240,19 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             }
             break;
         case OPA_EAVEX:
-            if (const X86Register* reg =
-                static_cast<const X86Register*>(op.get_reg()))
-            {
-                m_x86_ea.reset(new X86EffAddr(reg, &m_rex, m_pdrex,
-                                              m_mode_bits));
-                m_vexreg = reg->num() & 0xF;
-            }
-            else
-                throw InternalError(N_("invalid operand conversion"));
+        {
+            const X86Register* reg =
+                static_cast<const X86Register*>(op.get_reg());
+            assert(reg != 0 && "invalid operand conversion");
+            m_x86_ea.reset(new X86EffAddr(reg, &m_rex, m_pdrex, m_mode_bits));
+            m_vexreg = reg->num() & 0xF;
             break;
+        }
         case OPA_Imm:
             if (op.get_seg() != 0)
                 throw ValueError(N_("immediate does not support segment"));
             m_imm = op.release_imm();
-            if (m_imm.get() == 0)
-                throw InternalError(N_("invalid operand conversion"));
+            assert(m_imm.get() != 0 && "invalid operand conversion");
 
             m_im_len = m_size_lookup[info_op.size];
             break;
@@ -1262,8 +1260,7 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             if (op.get_seg() != 0)
                 throw ValueError(N_("immediate does not support segment"));
             m_imm = op.release_imm();
-            if (m_imm.get() == 0)
-                throw InternalError(N_("invalid operand conversion"));
+            assert(m_imm.get() != 0 && "invalid operand conversion");
 
             m_im_len = m_size_lookup[info_op.size];
             m_im_sign = 1;
@@ -1281,56 +1278,51 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
                                  m_mode_bits, X86_REX_R);
             }
             else
-                throw InternalError(N_("invalid operand conversion"));
+                assert(false && "invalid operand conversion");
             break;
         case OPA_SpareVEX:
-            if (const X86Register* reg =
-                static_cast<const X86Register*>(op.get_reg()))
-            {
-                set_rex_from_reg(&m_rex, m_pdrex, &m_spare, reg, m_mode_bits,
-                                 X86_REX_R);
-                m_vexreg = reg->num() & 0xF;
-            }
-            else
-                throw InternalError(N_("invalid operand conversion"));
+        {
+            const X86Register* reg =
+                static_cast<const X86Register*>(op.get_reg());
+            assert(reg != 0 && "invalid operand conversion");
+            set_rex_from_reg(&m_rex, m_pdrex, &m_spare, reg, m_mode_bits,
+                             X86_REX_R);
+            m_vexreg = reg->num() & 0xF;
             break;
+        }
         case OPA_Op0Add:
-            if (const Register* reg = op.get_reg())
-            {
-                unsigned char opadd;
-                set_rex_from_reg(&m_rex, m_pdrex, &opadd,
-                                 static_cast<const X86Register*>(reg),
-                                 m_mode_bits, X86_REX_B);
-                m_opcode.add(0, opadd);
-            }
-            else
-                throw InternalError(N_("invalid operand conversion"));
+        {
+            const Register* reg = op.get_reg();
+            assert(reg != 0 && "invalid operand conversion");
+            unsigned char opadd;
+            set_rex_from_reg(&m_rex, m_pdrex, &opadd,
+                             static_cast<const X86Register*>(reg),
+                             m_mode_bits, X86_REX_B);
+            m_opcode.add(0, opadd);
             break;
+        }
         case OPA_Op1Add:
-            if (const Register* reg = op.get_reg())
-            {
-                unsigned char opadd;
-                set_rex_from_reg(&m_rex, m_pdrex, &opadd,
-                                 static_cast<const X86Register*>(reg),
-                                 m_mode_bits, X86_REX_B);
-                m_opcode.add(1, opadd);
-            }
-            else
-                throw InternalError(N_("invalid operand conversion"));
+        {
+            const Register* reg = op.get_reg();
+            assert(reg != 0 && "invalid operand conversion");
+            unsigned char opadd;
+            set_rex_from_reg(&m_rex, m_pdrex, &opadd,
+                             static_cast<const X86Register*>(reg),
+                             m_mode_bits, X86_REX_B);
+            m_opcode.add(1, opadd);
             break;
+        }
         case OPA_SpareEA:
-            if (const Register* reg = op.get_reg())
-            {
-                const X86Register* x86_reg =
-                    static_cast<const X86Register*>(reg);
-                m_x86_ea.reset(new X86EffAddr(x86_reg, &m_rex, m_pdrex,
-                                              m_mode_bits));
-                set_rex_from_reg(&m_rex, m_pdrex, &m_spare, x86_reg,
-                                 m_mode_bits, X86_REX_R);
-            }
-            else
-                throw InternalError(N_("invalid operand conversion"));
+        {
+            const Register* reg = op.get_reg();
+            assert(reg != 0 && "invalid operand conversion");
+            const X86Register* x86_reg = static_cast<const X86Register*>(reg);
+            m_x86_ea.reset(new X86EffAddr(x86_reg, &m_rex, m_pdrex,
+                                          m_mode_bits));
+            set_rex_from_reg(&m_rex, m_pdrex, &m_spare, x86_reg, m_mode_bits,
+                             X86_REX_R);
             break;
+        }
         case OPA_AdSizeEA:
         {
             // Only implement this for OPT_MemrAX and OPT_MemEAX
@@ -1338,8 +1330,7 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             EffAddr* ea = op.get_memory();
             const X86Register* reg = static_cast<const X86Register*>
                 (ea->m_disp.get_abs()->get_reg());
-            if (!ea || !reg)
-                throw InternalError(N_("invalid operand conversion"));
+            assert(ea && reg && "invalid operand conversion");
             X86Register::Type regtype = reg->type();
             unsigned int regnum = reg->num();
             // 64-bit mode does not allow 16-bit addresses
@@ -1359,56 +1350,53 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             break;
         }
         case OPA_DREX:
-            if (const Register* reg = op.get_reg())
-            {
-                m_drex &= 0x0F;
-                m_drex |= (static_cast<const X86Register*>(reg)->num() << 4)
-                    & 0xF0;
-            }
-            else
-                throw InternalError(N_("invalid operand conversion"));
+        {
+            const Register* reg = op.get_reg();
+            assert(reg != 0 && "invalid operand conversion");
+            m_drex &= 0x0F;
+            m_drex |= (static_cast<const X86Register*>(reg)->num() << 4) & 0xF0;
             break;
+        }
         case OPA_VEX:
-            if (const Register* reg = op.get_reg())
-                m_vexreg = static_cast<const X86Register*>(reg)->num() & 0xF;
-            else
-                throw InternalError(N_("invalid operand conversion"));
+        {
+            const Register* reg = op.get_reg();
+            assert(reg != 0 && "invalid operand conversion");
+            m_vexreg = static_cast<const X86Register*>(reg)->num() & 0xF;
             break;
+        }
         case OPA_VEXImmSrc:
-            if (const X86Register* reg =
-                static_cast<const X86Register*>(op.get_reg()))
-            {
-                if (m_imm.get() == 0)
-                    m_imm.reset(new Expr((reg->num() << 4) & 0xF0));
-                else
-                {
-                    *m_imm &= IntNum(0x0F);
-                    *m_imm |= IntNum((reg->num() << 4) & 0xF0);
-                }
-                m_im_len = 8;
-            }
+        {
+            const X86Register* reg =
+                static_cast<const X86Register*>(op.get_reg());
+            assert(reg != 0 && "invalid operand conversion");
+            if (m_imm.get() == 0)
+                m_imm.reset(new Expr((reg->num() << 4) & 0xF0));
             else
-                throw InternalError(N_("invalid operand conversion"));
+            {
+                *m_imm &= IntNum(0x0F);
+                *m_imm |= IntNum((reg->num() << 4) & 0xF0);
+            }
+            m_im_len = 8;
             break;
+        }
         case OPA_VEXImm:
-            if (op.get_type() == Insn::Operand::IMM)
-            {
-                if (m_imm.get() == 0)
-                    m_imm = op.release_imm();
-                else
-                {
-                    *m_imm &= IntNum(0xF0);
-                    *op.get_imm() &= IntNum(0x0F);
-                    *m_imm |= *op.get_imm();
-                    op.release_imm();
-                }
-                m_im_len = 8;
-            }
+        {
+            assert(op.get_type() == Insn::Operand::IMM &&
+                   "invalid operand conversion");
+            if (m_imm.get() == 0)
+                m_imm = op.release_imm();
             else
-                throw InternalError(N_("invalid operand conversion"));
+            {
+                *m_imm &= IntNum(0xF0);
+                *op.get_imm() &= IntNum(0x0F);
+                *m_imm |= *op.get_imm();
+                op.release_imm();
+            }
+            m_im_len = 8;
             break;
+        }
         default:
-            throw InternalError(N_("unknown operand action"));
+            assert(false && "unknown operand action");
     }
 
     if (info_op.size == OPS_BITS)
@@ -1438,7 +1426,7 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             m_postop = POSTOP_SIMM32_AVAIL;
             break;
         default:
-            throw InternalError(N_("unknown operand postponed action"));
+            assert(false && "unknown operand postponed action");
     }
 }
 
@@ -1462,7 +1450,7 @@ BuildGeneral::apply_segregs(const Insn::SegRegs& segregs)
             static_cast<const X86SegmentRegister*>(segregs.back())->prefix();
     }
     else if (segregs.size() > 0)
-        throw InternalError(N_("unhandled segment prefix"));
+        assert(false && "unhandled segment prefix");
 }
 
 void
@@ -1494,8 +1482,8 @@ BuildGeneral::finish(BytecodeContainer& container,
     {
         // Look at the first bytes of the opcode to see what leading bytes
         // to encode in the VEX mmmmm field.  Leave R=X=B=1 for now.
-        if (m_opcode.get(0) != 0x0F)
-            throw InternalError(N_("first opcode byte of VEX must be 0x0F"));
+        assert(m_opcode.get(0) == 0x0F &&
+               "first opcode byte of VEX must be 0x0F");
 
         unsigned char opcode[3];    // VEX opcode; 0=VEX1, 1=VEX2, 2=Opcode
         opcode[0] = 0xE0;           // R=X=B=1, mmmmm=0
@@ -1532,7 +1520,7 @@ BuildGeneral::finish(BytecodeContainer& container,
                     m_vexdata |= 0x03;
                     break;
                 default:
-                    throw InternalError(N_("unrecognized special prefix"));
+                    assert(false && "unrecognized special prefix");
             }
         }
 

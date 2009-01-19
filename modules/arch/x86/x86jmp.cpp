@@ -217,11 +217,8 @@ X86Jmp::expand(Bytecode& bc,
                /*@out@*/ long* neg_thres,
                /*@out@*/ long* pos_thres)
 {
-    if (span != 1)
-        throw InternalError(N_("unrecognized span id"));
-
-    if (m_op_sel == JMP_NEAR)
-        throw InternalError(N_("trying to expand an already-near jump"));
+    assert(span == 1 && "unrecognized span id");
+    assert(m_op_sel != JMP_NEAR && "trying to expand an already-near jump");
 
     // Upgrade to a near jump
     m_op_sel = JMP_NEAR;

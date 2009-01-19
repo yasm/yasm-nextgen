@@ -62,7 +62,7 @@ Bytecode::Contents::expand(Bytecode& bc,
                            /*@out@*/ long* neg_thres,
                            /*@out@*/ long* pos_thres)
 {
-    throw InternalError(N_("bytecode does not have any dependent spans"));
+    assert(false && "bytecode does not have any dependent spans");
 }
 
 Bytecode::Contents::SpecialType

@@ -685,7 +685,8 @@ X86EffAddr::calc_displen(unsigned int wordsize, bool noreg, bool dispreq)
             return;
         default:
             // we shouldn't ever get any other size!
-            throw InternalError(N_("strange EA displacement size"));
+            assert(false && "strange EA displacement size");
+            return;
     }
 
     // The displacement length hasn't been forced (or the forcing wasn't

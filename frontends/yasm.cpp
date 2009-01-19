@@ -905,10 +905,6 @@ main(int argc, const char* argv[])
     {
         return do_assemble();
     }
-    catch (yasm::InternalError& err)
-    {
-        print_error(String::compose(_("INTERNAL ERROR: %1"), err.what()));
-    }
     catch (yasm::Error& err)
     {
         print_error(String::compose(_("FATAL: %1"), err.what()));

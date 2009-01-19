@@ -450,13 +450,13 @@ general_tobytes(Bytes& bytes,
         if (rex != 0xff && (rex & 0x4) == 0)
             opcode.merge(0, 0x80);
         // No other REX bits should be set
-        if (rex != 0xff && (rex & 0xB) != 0)
-            throw InternalError(N_("x86: REX.WXB set, but 2-byte VEX"));
+        assert((rex == 0xff || (rex & 0xB) == 0)
+               && "x86: REX.WXB set, but 2-byte VEX");
     }
     else if (rex != 0xff && rex != 0)
     {
-        if (common.m_mode_bits != 64)
-            throw InternalError(N_("x86: got a REX prefix in non-64-bit mode"));
+        assert(common.m_mode_bits == 64 &&
+               "x86: got a REX prefix in non-64-bit mode");
         write_8(bytes, rex);
     }
 
@@ -477,15 +477,13 @@ X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
     {
         if (m_ea->m_need_modrm)
         {
-            if (!m_ea->m_valid_modrm)
-                throw InternalError(N_("invalid Mod/RM in x86 tobytes_insn"));
+            assert(m_ea->m_valid_modrm && "invalid Mod/RM in x86 tobytes_insn");
             write_8(bytes, m_ea->m_modrm);
         }
 
         if (m_ea->m_need_sib)
         {
-            if (!m_ea->m_valid_sib)
-                throw InternalError(N_("invalid SIB in x86 tobytes_insn"));
+            assert(m_ea->m_valid_sib && "invalid SIB in x86 tobytes_insn");
             write_8(bytes, m_ea->m_sib);
         }
 

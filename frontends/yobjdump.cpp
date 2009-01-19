@@ -575,12 +575,6 @@ main(int argc, const char* argv[])
         {
             do_dump(*i);
         }
-        catch (yasm::InternalError& err)
-        {
-            print_error(String::compose(
-                _("%1: INTERNAL ERROR: %2"), *i, err.what()));
-            retval = EXIT_FAILURE;
-        }
         catch (yasm::Error& err)
         {
             print_error(String::compose(_("%1: %2"), *i, err.what()));

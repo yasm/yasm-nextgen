@@ -115,12 +115,12 @@ conv_unprint(int ch)
     return unprint;
 }
 
-InternalError::InternalError(const std::string& message)
+NotImplementedError::NotImplementedError(const std::string& message)
     : std::runtime_error(message.c_str())
 {
 }
 
-InternalError::~InternalError() throw()
+NotImplementedError::~NotImplementedError() throw()
 {
 }
 

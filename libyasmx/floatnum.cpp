@@ -590,8 +590,7 @@ FloatNum::get_common(/*@out@*/ unsigned char* ptr,
         underflow = true;
 
     // underflow and overflow both set!?
-    if (underflow && overflow)
-        throw InternalError(N_("Both underflow and overflow set"));
+    assert(!(underflow && overflow) && "Both underflow and overflow set");
 
     // check for underflow or overflow and set up appropriate output
     if (underflow)
@@ -618,9 +617,8 @@ FloatNum::get_common(/*@out@*/ unsigned char* ptr,
     // get little-endian bytes
     unsigned int len;
     charptr buf = BitVector::Block_Read(output, &len);
-    if (len < byte_size)
-        throw InternalError(
-            N_("Byte length of BitVector does not match bit length"));
+    assert(len >= byte_size &&
+           "Byte length of BitVector does not match bit length");
 
     // copy to output
     std::memcpy(ptr, buf, byte_size*sizeof(unsigned char));
@@ -672,7 +670,7 @@ FloatNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize,
     if (destsize*8 != valsize || shift>0 || bigendian)
     {
         // TODO
-        throw InternalError(N_("unsupported floatnum functionality"));
+        assert(false && "unsupported floatnum functionality");
     }
 
     switch (destsize)
@@ -687,8 +685,7 @@ FloatNum::get_sized(unsigned char *ptr, size_t destsize, size_t valsize,
             retval = get_common(ptr, 10, 64, false, 15);
             break;
         default:
-            throw InternalError(N_("Invalid float conversion size"));
-            /*@notreached@*/
+            assert(false && "Invalid float conversion size");
             return 1;
     }
 

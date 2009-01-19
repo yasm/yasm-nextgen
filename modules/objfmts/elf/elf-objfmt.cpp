@@ -947,8 +947,7 @@ Output::output_section(Section& sect,
 unsigned long
 output_align(std::ostream& os, unsigned int align)
 {
-    if (!is_exp2(align))
-        throw InternalError("requested alignment not a power of two");
+    assert(is_exp2(align) && "requested alignment not a power of two");
 
     std::streampos pos = os.tellp();
     if (pos < 0)
@@ -1114,10 +1113,8 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
         {
             ElfSection* stab = get_elf(*stabsect);
             ElfSection* stabstr = get_elf(*stabstrsect);
-            if (stab && stabstr)
-                stab->set_link(stabstr->get_index());
-            else
-                throw InternalError(N_("missing .stab or .stabstr section/data"));
+            assert(stab && stabstr && "missing .stab or .stabstr section/data");
+            stab->set_link(stabstr->get_index());
         }
     }
 #endif
