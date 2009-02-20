@@ -61,6 +61,10 @@ public:
     ///         size.
     virtual unsigned int get_size() const = 0;
 
+    /// Get the register number.  This is typically the binary encoding of
+    /// the register used in the instruction encoding.
+    virtual unsigned int get_num() const = 0;
+
     /// Print a register.  For debugging purposes.
     /// @param os   output stream
     virtual void put(std::ostream& os) const = 0;
@@ -102,6 +106,10 @@ class YASM_LIB_EXPORT SegmentRegister
 public:
     SegmentRegister() {}
     virtual ~SegmentRegister();
+
+    /// Get the register number.  This is typically the binary encoding of
+    /// the register used in the instruction encoding.
+    virtual unsigned int get_num() const = 0;
 
     /// Print a segment register.  For debugging purposes.
     /// @param os   output stream

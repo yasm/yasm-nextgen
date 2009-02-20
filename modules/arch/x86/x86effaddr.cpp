@@ -288,12 +288,12 @@ get_reg3264(ExprTerm& term, int* regnum, int* regs, unsigned char bits,
         case X86Register::REG32:
             if (addrsize != 32)
                 return 0;
-            *regnum = reg->num();
+            *regnum = reg->get_num();
             break;
         case X86Register::REG64:
             if (addrsize != 64)
                 return 0;
-            *regnum = reg->num();
+            *regnum = reg->get_num();
             break;
         case X86Register::RIP:
             if (bits != 64)
@@ -335,7 +335,7 @@ x86_expr_checkea_get_reg16(ExprTerm& term, int* regnum, int* bx, int* si,
         return 0;
 
     // & 7 for sanity check
-    *regnum = reg->num() & 0x7;
+    *regnum = reg->get_num() & 0x7;
 
     // only allow BX, SI, DI, BP
     if (!reg16[*regnum])

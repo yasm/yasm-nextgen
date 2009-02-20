@@ -585,7 +585,7 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
                 return false;
             break;
         case OPT_Areg:
-            if (!reg || reg->num() != 0 ||
+            if (!reg || reg->get_num() != 0 ||
                 (info_op.size == OPS_8 &&
                  reg->type() != X86Register::REG8 &&
                  reg->type() != X86Register::REG8X) ||
@@ -595,7 +595,7 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
                 return false;
             break;
         case OPT_Creg:
-            if (!reg || reg->num() != 1 ||
+            if (!reg || reg->get_num() != 1 ||
                 (info_op.size == OPS_8 &&
                  reg->type() != X86Register::REG8 &&
                  reg->type() != X86Register::REG8X) ||
@@ -605,7 +605,7 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
                 return false;
             break;
         case OPT_Dreg:
-            if (!reg || reg->num() != 2 ||
+            if (!reg || reg->get_num() != 2 ||
                 (info_op.size == OPS_8 &&
                  reg->type() != X86Register::REG8 &&
                  reg->type() != X86Register::REG8X) ||
@@ -639,7 +639,8 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
                 return false;
             break;
         case OPT_CR4:
-            if (!reg || reg->type() != X86Register::CRREG || reg->num() != 4)
+            if (!reg || reg->type() != X86Register::CRREG ||
+                reg->get_num() != 4)
                 return false;
             break;
         case OPT_MemOffs:
@@ -670,7 +671,8 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
             break;
         }
         case OPT_XMM0:
-            if (!reg || reg->type() != X86Register::XMMREG || reg->num() != 0)
+            if (!reg || reg->type() != X86Register::XMMREG ||
+                reg->get_num() != 0)
                 return false;
             break;
         case OPT_MemrAX:
@@ -678,7 +680,7 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
             const Register* reg2;
             if (!ea ||
                 !(reg2 = ea->m_disp.get_abs()->get_reg()) ||
-                reg->num() != 0 ||
+                reg->get_num() != 0 ||
                 (reg->type() != X86Register::REG16 &&
                  reg->type() != X86Register::REG32 &&
                  reg->type() != X86Register::REG64))
@@ -691,7 +693,7 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
             if (!ea ||
                 !(reg2 = ea->m_disp.get_abs()->get_reg()) ||
                 reg->type() != X86Register::REG32 ||
-                reg->num() != 0)
+                reg->get_num() != 0)
                 return false;
             break;
         }
@@ -1245,7 +1247,7 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
                 static_cast<const X86Register*>(op.get_reg());
             assert(reg != 0 && "invalid operand conversion");
             m_x86_ea.reset(new X86EffAddr(reg, &m_rex, m_pdrex, m_mode_bits));
-            m_vexreg = reg->num() & 0xF;
+            m_vexreg = reg->get_num() & 0xF;
             break;
         }
         case OPA_Imm:
@@ -1269,7 +1271,7 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             if (const SegmentRegister* segreg = op.get_segreg())
             {
                 m_spare =
-                    (static_cast<const X86SegmentRegister*>(segreg))->num();
+                    (static_cast<const X86SegmentRegister*>(segreg))->get_num();
             }
             else if (const Register* reg = op.get_reg())
             {
@@ -1287,7 +1289,7 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             assert(reg != 0 && "invalid operand conversion");
             set_rex_from_reg(&m_rex, m_pdrex, &m_spare, reg, m_mode_bits,
                              X86_REX_R);
-            m_vexreg = reg->num() & 0xF;
+            m_vexreg = reg->get_num() & 0xF;
             break;
         }
         case OPA_Op0Add:
@@ -1332,7 +1334,7 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
                 (ea->m_disp.get_abs()->get_reg());
             assert(ea && reg && "invalid operand conversion");
             X86Register::Type regtype = reg->type();
-            unsigned int regnum = reg->num();
+            unsigned int regnum = reg->get_num();
             // 64-bit mode does not allow 16-bit addresses
             if (m_mode_bits == 64 && regtype == X86Register::REG16 &&
                 regnum == 0)
@@ -1354,14 +1356,15 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             const Register* reg = op.get_reg();
             assert(reg != 0 && "invalid operand conversion");
             m_drex &= 0x0F;
-            m_drex |= (static_cast<const X86Register*>(reg)->num() << 4) & 0xF0;
+            m_drex |=
+                (static_cast<const X86Register*>(reg)->get_num() << 4) & 0xF0;
             break;
         }
         case OPA_VEX:
         {
             const Register* reg = op.get_reg();
             assert(reg != 0 && "invalid operand conversion");
-            m_vexreg = static_cast<const X86Register*>(reg)->num() & 0xF;
+            m_vexreg = static_cast<const X86Register*>(reg)->get_num() & 0xF;
             break;
         }
         case OPA_VEXImmSrc:
@@ -1370,11 +1373,11 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
                 static_cast<const X86Register*>(op.get_reg());
             assert(reg != 0 && "invalid operand conversion");
             if (m_imm.get() == 0)
-                m_imm.reset(new Expr((reg->num() << 4) & 0xF0));
+                m_imm.reset(new Expr((reg->get_num() << 4) & 0xF0));
             else
             {
                 *m_imm &= IntNum(0x0F);
-                *m_imm |= IntNum((reg->num() << 4) & 0xF0);
+                *m_imm |= IntNum((reg->get_num() << 4) & 0xF0);
             }
             m_im_len = 8;
             break;

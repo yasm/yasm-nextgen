@@ -58,7 +58,7 @@ public:
     };
 
     X86Register(Type type, unsigned int num) : m_type(type), m_num(num) {}
-    ~X86Register() {}
+    ~X86Register();
 
     /// Get the equivalent size of a register in bits.
     /// @param reg  register
@@ -71,7 +71,7 @@ public:
     void put(std::ostream& os) const;
 
     Type type() const { return m_type; }
-    unsigned int num() const { return m_num; }
+    unsigned int get_num() const { return m_num; }
 
 private:
     // Register type.
@@ -98,14 +98,14 @@ public:
 
     X86SegmentRegister(Type type, unsigned char prefix)
         : m_type(type), m_prefix(prefix) {}
-    ~X86SegmentRegister() {}
+    ~X86SegmentRegister();
 
     /// Print a segment register.  For debugging purposes.
     /// @param os   output stream
     void put(std::ostream& os) const;
 
     Type type() const { return m_type; }
-    unsigned int num() const { return static_cast<unsigned int>(m_type); }
+    unsigned int get_num() const { return static_cast<unsigned int>(m_type); }
     unsigned char prefix() const { return m_prefix; }
 
 private:

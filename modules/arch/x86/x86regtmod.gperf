@@ -46,6 +46,11 @@ namespace arch
 namespace x86
 {
 
+inline
+X86Register::~X86Register()
+{
+}
+
 unsigned int
 X86Register::get_size() const
 {
@@ -150,6 +155,11 @@ X86RegisterGroup::get_reg(unsigned long regindex) const
     if ((m_get_bits() != 64 && regindex >= 8) || regindex >= m_size)
         throw ValueError(N_("invalid register index"));
     return m_regs[regindex];
+}
+
+inline
+X86SegmentRegister::~X86SegmentRegister()
+{
 }
 
 void

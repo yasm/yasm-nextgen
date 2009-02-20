@@ -65,7 +65,8 @@ set_rex_from_reg(unsigned char *rex,
                  unsigned int bits,
                  X86RexBitPos rexbit)
 {
-    set_rex_from_reg(rex, drex, low3, reg->type(), reg->num(), bits, rexbit);
+    set_rex_from_reg(rex, drex, low3, reg->type(), reg->get_num(), bits,
+                     rexbit);
 }
 
 // Effective address type
