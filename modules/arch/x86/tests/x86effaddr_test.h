@@ -485,17 +485,17 @@ public:
                         expect_error = true;
 
                     if (ireg)
-                        expect_sib |= (ireg->num()&7)<<3;
+                        expect_sib |= (ireg->get_num()&7)<<3;
                     else
                         expect_sib |= 4<<3;
 
                     if (breg)
-                        expect_sib |= breg->num()&7;
+                        expect_sib |= breg->get_num()&7;
                     else
                         expect_sib |= 5;
                 }
                 else if (breg)
-                    expect_modrm |= breg->num();
+                    expect_modrm |= breg->get_num();
                 else
                     expect_modrm |= 5;
 
@@ -552,8 +552,8 @@ public:
                 e += **basereg;
 
                 unsigned char expect_sib = 0;
-                expect_sib |= ((*indexreg)->num()&7)<<3;
-                expect_sib |= (*basereg)->num()&7;
+                expect_sib |= ((*indexreg)->get_num()&7)<<3;
+                expect_sib |= (*basereg)->get_num()&7;
 
                 TS_TRACE(String::format(e));
                 X86EffAddr ea(false, Expr::Ptr(e.clone()));
@@ -582,8 +582,8 @@ public:
             e += **indexreg;
 
             unsigned char expect_sib = 0;
-            expect_sib |= ((*indexreg)->num()&7)<<3;
-            expect_sib |= ESP.num()&7;
+            expect_sib |= ((*indexreg)->get_num()&7)<<3;
+            expect_sib |= ESP.get_num()&7;
 
             TS_TRACE(String::format(e));
             X86EffAddr ea(false, Expr::Ptr(e.clone()));
@@ -611,8 +611,8 @@ public:
         TS_ASSERT_EQUALS(ea.m_need_sib, true);
         TS_ASSERT_EQUALS(ea.m_valid_sib, true);
         unsigned char expect_sib = 1<<6;
-        expect_sib |= (EAX.num()&7)<<3;
-        expect_sib |= EBX.num()&7;
+        expect_sib |= (EAX.get_num()&7)<<3;
+        expect_sib |= EBX.get_num()&7;
         TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
     }
 
@@ -642,8 +642,8 @@ public:
                 expect_sib = 1<<6;
             else
                 expect_sib = 0;
-            expect_sib |= (EAX.num()&7)<<3;
-            expect_sib |= (mult % 2 == 0 && mult != 2) ? 5 : (EAX.num()&7);
+            expect_sib |= (EAX.get_num()&7)<<3;
+            expect_sib |= (mult % 2 == 0 && mult != 2) ? 5 : (EAX.get_num()&7);
             TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
             TS_ASSERT_EQUALS(String::format(*ea.m_disp.get_abs()),
                              String::format(mult*5));
@@ -684,7 +684,7 @@ public:
         TS_ASSERT_EQUALS(ea.m_need_sib, true);
         TS_ASSERT_EQUALS(ea.m_valid_sib, true);
         unsigned char expect_sib = 2<<6;
-        expect_sib |= (EAX.num()&7)<<3;
+        expect_sib |= (EAX.get_num()&7)<<3;
         expect_sib |= 5;
         TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
         TS_ASSERT_EQUALS(String::format(*ea.m_disp.get_abs()),
@@ -726,8 +726,8 @@ public:
         TS_ASSERT_EQUALS(ea.m_need_sib, true);
         TS_ASSERT_EQUALS(ea.m_valid_sib, true);
         unsigned char expect_sib = 2<<6;
-        expect_sib |= (EAX.num()&7)<<3;
-        expect_sib |= EAX.num()&7;
+        expect_sib |= (EAX.get_num()&7)<<3;
+        expect_sib |= EAX.get_num()&7;
         TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
         TS_ASSERT_EQUALS(String::format(*ea.m_disp.get_abs()),
                          String::format(5));
@@ -748,8 +748,8 @@ public:
         TS_ASSERT_EQUALS(ea.m_need_sib, true);
         TS_ASSERT_EQUALS(ea.m_valid_sib, true);
         unsigned char expect_sib = 1<<6;
-        expect_sib |= (EAX.num()&7)<<3;
-        expect_sib |= EBX.num()&7;
+        expect_sib |= (EAX.get_num()&7)<<3;
+        expect_sib |= EBX.get_num()&7;
         TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
         TS_ASSERT_EQUALS(String::format(*ea.m_disp.get_abs()),
                          String::format(2));

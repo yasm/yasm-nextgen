@@ -56,6 +56,7 @@ public:
     public:
         MockRegister(const char* name) : m_name(name) {}
         unsigned int get_size() const { return 0; }
+        unsigned int get_num() const { return m_name[0]-'a'; }
         void put(std::ostream& os) const { os << m_name; }
 
     private:
