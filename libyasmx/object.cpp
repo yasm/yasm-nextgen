@@ -610,6 +610,7 @@ Span::recalc_normal()
              i != end; ++i)
             m_expr_terms[i->m_subst].get_int()->set(i->m_new_val);
         abs_copy->substitute(m_expr_terms);
+        abs_copy->simplify();
         if (const IntNum* num = abs_copy->get_intnum())
             m_new_val = num->get_int();
         else
