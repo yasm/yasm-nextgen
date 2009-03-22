@@ -153,7 +153,7 @@ Bytecode::finalize()
     for (std::vector<Fixup>::iterator i=m_fixed_fixups.begin(),
          end=m_fixed_fixups.end(); i != end; ++i)
     {
-        if (i->finalize())
+        if (!i->finalize())
         {
             if (i->is_jump_target())
                 throw TooComplexError(i->get_line(),

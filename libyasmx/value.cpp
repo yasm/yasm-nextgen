@@ -299,7 +299,7 @@ Value::finalize_scan(Expr& e, bool ssym_ok, int* pos)
 
     ExprTerm& root = terms[*pos];
     if (!root.is_op())
-        return false;
+        return true;
 
     // Thanks to this running after a simplify, we don't need to iterate
     // down through IDENTs or handle SUB.
@@ -376,8 +376,8 @@ Value::finalize_scan(Expr& e, bool ssym_ok, int* pos)
                 // recurse for all other expr
                 if (child.is_op())
                 {
-                    if (finalize_scan(e, ssym_ok, &n))
-                        return true;
+                    if (!finalize_scan(e, ssym_ok, &n))
+                        return false;
                     continue;
                 }
 
@@ -434,7 +434,7 @@ Value::finalize_scan(Expr& e, bool ssym_ok, int* pos)
 
                 // Must be relative portion
                 if (m_rel || !ssym_ok)
-                    return true;    // already have one
+                    return false;   // already have one
                 m_rel = rel;
 
                 // Set term to 0 (will remove from expression during simplify)
@@ -452,7 +452,7 @@ Value::finalize_scan(Expr& e, bool ssym_ok, int* pos)
 
                 // Must be subtractive portion
                 if (has_sub())
-                    return true;    // already have one
+                    return false;   // already have one
                 m_sub.sym = sub;
                 m_sub_sym = true;
 
@@ -471,13 +471,13 @@ Value::finalize_scan(Expr& e, bool ssym_ok, int* pos)
             // XXX: should rshift be an expr instead??
             int lhs, rhs;
             if (!get_children(e, &lhs, &rhs, pos))
-                return true;
+                return false;
 
             // Check for single sym or expr on LHS
             if (SymbolRef sym = terms[lhs].get_sym())
             {
                 if (m_rel || !ssym_ok)
-                    return true;
+                    return false;
                 m_rel = sym;
                 // and replace with 0
                 terms[lhs].zero();
@@ -485,8 +485,8 @@ Value::finalize_scan(Expr& e, bool ssym_ok, int* pos)
             else if (terms[lhs].is_op())
             {
                 // recurse
-                if (finalize_scan(e, ssym_ok, &lhs))
-                    return true;
+                if (!finalize_scan(e, ssym_ok, &lhs))
+                    return false;
                 // we still want to handle SHR if we found a relative portion.
                 if (!m_rel)
                     break;
@@ -495,19 +495,19 @@ Value::finalize_scan(Expr& e, bool ssym_ok, int* pos)
             {
                 // ensure RHS has no relative portion
                 if (terms[rhs].is_type(ExprTerm::SYM))
-                    return true;
-                if (terms[rhs].is_op() && finalize_scan(e, false, &rhs))
-                    return true;
+                    return false;
+                if (terms[rhs].is_op() && !finalize_scan(e, false, &rhs))
+                    return false;
                 break;  // ignore SHR
             }
 
             // RHS must be a positive integer.
             IntNum* intn = terms[rhs].get_int();
             if (!intn || intn->sign() < 0)
-                return true;
+                return false;
             unsigned long shamt = intn->get_uint();
             if ((shamt + m_rshift) > RSHIFT_MAX)
-                return true;    // total shift would be too large
+                return false;   // total shift would be too large
             m_rshift += shamt;
 
             // Just leave SHR in place
@@ -520,18 +520,18 @@ Value::finalize_scan(Expr& e, bool ssym_ok, int* pos)
             // child.
             int sympos;
             if (!get_children(e, 0, &sympos, pos))
-                return true;
+                return false;
 
             SymbolRef sym = terms[sympos].get_sym();
             if (!sym)
-                return true;
+                return false;
 
             if (m_seg_of)
-                return true;    // multiple SEG not legal
+                return false;   // multiple SEG not legal
             m_seg_of = true;
 
             if (m_rel || !ssym_ok)
-                return true;    // got a relative portion somewhere else?
+                return false;   // got a relative portion somewhere else?
             m_rel = sym;
 
             // replace with 0 (at root level)
@@ -547,13 +547,13 @@ Value::finalize_scan(Expr& e, bool ssym_ok, int* pos)
             // WRT reg is left in expr for arch to look at.
             int lhs, rhs;
             if (!get_children(e, &lhs, &rhs, pos))
-                return true;
+                return false;
 
             // Handle RHS
             if (SymbolRef sym = terms[rhs].get_sym())
             {
                 if (m_wrt)
-                    return true;
+                    return false;
                 m_wrt = sym;
                 // change the WRT into a +0 expression
                 terms[rhs].zero();
@@ -562,13 +562,13 @@ Value::finalize_scan(Expr& e, bool ssym_ok, int* pos)
             else if (terms[rhs].is_type(ExprTerm::REG))
                 ;  // ignore
             else
-                return true;
+                return false;
 
             // Handle LHS
             if (SymbolRef sym = terms[lhs].get_sym())
             {
                 if (m_rel || !ssym_ok)
-                    return true;
+                    return false;
                 m_rel = sym;
                 // replace with 0
                 terms[lhs].zero();
@@ -576,8 +576,8 @@ Value::finalize_scan(Expr& e, bool ssym_ok, int* pos)
             else if (terms[lhs].is_op())
             {
                 // recurse
-                if (finalize_scan(e, ssym_ok, &lhs))
-                    return true;
+                if (!finalize_scan(e, ssym_ok, &lhs))
+                    return false;
             }
             break;
         }
@@ -602,13 +602,13 @@ Value::finalize_scan(Expr& e, bool ssym_ok, int* pos)
                 }
 
                 if (child.is_type(ExprTerm::SYM))
-                    return true;
+                    return false;
 
                 // recurse all expr
                 if (child.is_op())
                 {
-                    if (finalize_scan(e, false, &n))
-                        return true;
+                    if (!finalize_scan(e, false, &n))
+                        return false;
                     continue;
                 }
 
@@ -619,19 +619,19 @@ Value::finalize_scan(Expr& e, bool ssym_ok, int* pos)
             break;
         }
     }
-    return false;
+    return true;
 }
 
 bool
 Value::finalize()
 {
     if (!m_abs)
-        return false;
+        return true;
 
     if (m_abs->is_empty())
     {
         m_abs.reset(0);
-        return false;
+        return true;
     }
 
     expand_equ(*m_abs);
@@ -680,18 +680,18 @@ Value::finalize()
     {
         if (intn->is_zero())
             m_abs.reset(0);
-        return false;
+        return true;
     }
     else if (SymbolRef sym = m_abs->get_symbol())
     {
         m_rel = sym;
         m_abs.reset(0);
-        return false;
+        return true;
     }
 
     int pos = -1;
-    if (finalize_scan(*m_abs, true, &pos))
-        return true;
+    if (!finalize_scan(*m_abs, true, &pos))
+        return false;
 
     m_abs->simplify(false);
 
@@ -702,7 +702,7 @@ Value::finalize()
             m_abs.reset(0);
     }
 
-    return false;
+    return true;
 }
 
 bool

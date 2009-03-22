@@ -1238,7 +1238,7 @@ X86EffAddr::check(unsigned char* addrsize,
 void
 X86EffAddr::finalize()
 {
-    if (m_disp.finalize())
+    if (!m_disp.finalize())
         throw TooComplexError(N_("effective address too complex"));
 }
 

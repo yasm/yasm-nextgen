@@ -186,7 +186,7 @@ X86General::finalize(Bytecode& bc)
 {
     if (m_ea)
         m_ea->finalize();
-    if (m_imm.get() != 0 && m_imm->finalize())
+    if (m_imm.get() != 0 && !m_imm->finalize())
         throw TooComplexError(N_("immediate expression too complex"));
 
     if (m_postop == POSTOP_ADDRESS16 && m_common.m_addrsize != 0)

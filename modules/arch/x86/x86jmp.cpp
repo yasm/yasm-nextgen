@@ -157,7 +157,7 @@ X86Jmp::put(marg_ostream& os) const
 void
 X86Jmp::finalize(Bytecode& bc)
 {
-    if (m_target.finalize())
+    if (!m_target.finalize())
         throw TooComplexError(N_("jump target expression too complex"));
     if (m_target.is_complex_rel())
         throw ValueError(N_("invalid jump target"));

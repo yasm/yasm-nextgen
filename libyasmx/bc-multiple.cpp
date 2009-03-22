@@ -113,7 +113,7 @@ MultipleBytecode::finalize(Bytecode& bc)
 {
     Value val(0, std::auto_ptr<Expr>(m_multiple->clone()));
 
-    if (val.finalize())
+    if (!val.finalize())
         throw TooComplexError(N_("multiple expression too complex"));
     else if (val.is_relative())
         throw NotAbsoluteError(N_("multiple expression not absolute"));

@@ -118,7 +118,7 @@ IncbinBytecode::finalize(Bytecode& bc)
     if (m_start)
     {
         Value val(0, Expr::Ptr(m_start->clone()));
-        if (val.finalize())
+        if (!val.finalize())
             throw TooComplexError(N_("start expression too complex"));
         else if (val.is_relative())
             throw NotAbsoluteError(N_("start expression not absolute"));
@@ -128,7 +128,7 @@ IncbinBytecode::finalize(Bytecode& bc)
     if (m_maxlen)
     {
         Value val(0, Expr::Ptr(m_maxlen->clone()));
-        if (val.finalize())
+        if (!val.finalize())
             throw TooComplexError(N_("maximum length expression too complex"));
         else if (val.is_relative())
             throw NotAbsoluteError(

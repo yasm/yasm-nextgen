@@ -141,26 +141,26 @@ public:
 
         // just an integer
         v = Value(8, Expr::Ptr(new Expr(4)));
-        TS_ASSERT_EQUALS(v.finalize(), false);
+        TS_ASSERT_EQUALS(v.finalize(), true);
         TS_ASSERT_EQUALS(v.has_abs(), true);
         TS_ASSERT_EQUALS(String::format(*v.get_abs()), "4");
         TS_ASSERT_EQUALS(v.is_relative(), false);
 
         // simple relative
         v = Value(8, Expr::Ptr(new Expr(a)));
-        TS_ASSERT_EQUALS(v.finalize(), false);
+        TS_ASSERT_EQUALS(v.finalize(), true);
         TS_ASSERT_EQUALS(v.has_abs(), false);
         TS_ASSERT_EQUALS(v.get_rel(), a);
 
         // masked relative
         v = Value(8, Expr::Ptr(new Expr(AND(a, 0xff))));
-        TS_ASSERT_EQUALS(v.finalize(), false);
+        TS_ASSERT_EQUALS(v.finalize(), true);
         TS_ASSERT_EQUALS(v.has_abs(), false);
         TS_ASSERT_EQUALS(v.get_rel(), a);
         TS_ASSERT_EQUALS(v.m_no_warn, true);
 
         v = Value(8, Expr::Ptr(new Expr(AND(a, 0x7f))));
-        TS_ASSERT_EQUALS(v.finalize(), true);       // invalid
+        TS_ASSERT_EQUALS(v.finalize(), false);      // invalid
         TS_ASSERT_EQUALS(v.has_abs(), true);
         TS_ASSERT_EQUALS(String::format(*v.get_abs()), "a&127");
         TS_ASSERT_EQUALS(v.is_relative(), false);
@@ -168,62 +168,62 @@ public:
 
         // rel-rel (rel may be external)
         v = Value(8, Expr::Ptr(new Expr(SUB(a, a))));
-        TS_ASSERT_EQUALS(v.finalize(), false);
+        TS_ASSERT_EQUALS(v.finalize(), true);
         TS_ASSERT_EQUALS(v.has_abs(), false);
         TS_ASSERT_EQUALS(v.is_relative(), false);
 
         // abs+(rel-rel)
         v = Value(8, Expr::Ptr(new Expr(ADD(5, SUB(a, a)))));
-        TS_ASSERT_EQUALS(v.finalize(), false);
+        TS_ASSERT_EQUALS(v.finalize(), true);
         TS_ASSERT_EQUALS(v.has_abs(), true);
         TS_ASSERT_EQUALS(String::format(*v.get_abs()), "5");
         TS_ASSERT_EQUALS(v.is_relative(), false);
 
         // (rel1+rel2)-rel2, all external
         v = Value(8, Expr::Ptr(new Expr(SUB(ADD(a, b), b))));
-        TS_ASSERT_EQUALS(v.finalize(), false);
+        TS_ASSERT_EQUALS(v.finalize(), true);
         TS_ASSERT_EQUALS(v.has_abs(), false);
         TS_ASSERT_EQUALS(v.get_rel(), a);
 
         // rel1-rel2 in same section gets left in abs portion
         v = Value(8, Expr::Ptr(new Expr(SUB(c, d))));
-        TS_ASSERT_EQUALS(v.finalize(), false);
+        TS_ASSERT_EQUALS(v.finalize(), true);
         TS_ASSERT_EQUALS(v.has_abs(), true);
         TS_ASSERT_EQUALS(String::format(*v.get_abs()), "c+(d*-1)");
         TS_ASSERT_EQUALS(v.is_relative(), false);
 
         // rel1-rel2 in different sections -> rel and sub portions, no abs
         v = Value(8, Expr::Ptr(new Expr(SUB(d, e))));
-        TS_ASSERT_EQUALS(v.finalize(), false);
+        TS_ASSERT_EQUALS(v.finalize(), true);
         TS_ASSERT_EQUALS(v.has_abs(), false);
         TS_ASSERT_EQUALS(v.get_rel(), d);
         TS_ASSERT_EQUALS(v.get_sub_sym(), e);
 
         // rel1 WRT rel2
         v = Value(8, Expr::Ptr(new Expr(WRT(a, b))));
-        TS_ASSERT_EQUALS(v.finalize(), false);
+        TS_ASSERT_EQUALS(v.finalize(), true);
         TS_ASSERT_EQUALS(v.has_abs(), false);
         TS_ASSERT_EQUALS(v.get_rel(), a);
         TS_ASSERT_EQUALS(v.get_wrt(), b);
 
         // rel1 WRT reg
         v = Value(8, Expr::Ptr(new Expr(WRT(a, g))));
-        TS_ASSERT_EQUALS(v.finalize(), false);
+        TS_ASSERT_EQUALS(v.finalize(), true);
         TS_ASSERT_EQUALS(v.has_abs(), true);
         TS_ASSERT_EQUALS(String::format(*v.get_abs()), "0 WRT g");
         TS_ASSERT_EQUALS(v.get_rel(), a);
 
         // rel1 WRT 5 --> error
         v = Value(8, Expr::Ptr(new Expr(WRT(a, 5))));
-        TS_ASSERT_EQUALS(v.finalize(), true);
+        TS_ASSERT_EQUALS(v.finalize(), false);
 
         // rel1 WRT (5+rel2) --> error
         v = Value(8, Expr::Ptr(new Expr(WRT(a, ADD(5, b)))));
-        TS_ASSERT_EQUALS(v.finalize(), true);
+        TS_ASSERT_EQUALS(v.finalize(), false);
 
         // 5+(rel1 WRT rel2)
         v = Value(8, Expr::Ptr(new Expr(ADD(5, WRT(a, b)))));
-        TS_ASSERT_EQUALS(v.finalize(), false);
+        TS_ASSERT_EQUALS(v.finalize(), true);
         TS_ASSERT_EQUALS(v.has_abs(), true);
         TS_ASSERT_EQUALS(String::format(*v.get_abs()), "5");
         TS_ASSERT_EQUALS(v.get_rel(), a);
@@ -231,7 +231,7 @@ public:
 
         // (5+rel1) WRT rel2
         v = Value(8, Expr::Ptr(new Expr(WRT(ADD(5, a), b))));
-        TS_ASSERT_EQUALS(v.finalize(), false);
+        TS_ASSERT_EQUALS(v.finalize(), true);
         TS_ASSERT_EQUALS(v.has_abs(), true);
         TS_ASSERT_EQUALS(String::format(*v.get_abs()), "5");
         TS_ASSERT_EQUALS(v.get_rel(), a);
@@ -239,7 +239,7 @@ public:
 
         // (rel1 WRT reg) WRT rel2 --> OK
         v = Value(8, Expr::Ptr(new Expr(WRT(ADD(5, a), b))));
-        TS_ASSERT_EQUALS(v.finalize(), false);
+        TS_ASSERT_EQUALS(v.finalize(), true);
         TS_ASSERT_EQUALS(v.has_abs(), true);
         TS_ASSERT_EQUALS(String::format(*v.get_abs()), "5");
         TS_ASSERT_EQUALS(v.get_rel(), a);
@@ -247,26 +247,26 @@ public:
 
         // (rel1 WRT rel2) WRT rel3 --> error
         v = Value(8, Expr::Ptr(new Expr(WRT(WRT(a, b), c))));
-        TS_ASSERT_EQUALS(v.finalize(), true);
+        TS_ASSERT_EQUALS(v.finalize(), false);
 
         // SEG reg1
         v = Value(8, Expr::Ptr(new Expr(SEG(a))));
-        TS_ASSERT_EQUALS(v.finalize(), false);
+        TS_ASSERT_EQUALS(v.finalize(), true);
         TS_ASSERT_EQUALS(v.has_abs(), false);
         TS_ASSERT_EQUALS(v.get_rel(), a);
         TS_ASSERT_EQUALS(v.m_seg_of, true);
 
         // SEG 5 --> error
         v = Value(8, Expr::Ptr(new Expr(SEG(5))));
-        TS_ASSERT_EQUALS(v.finalize(), true);
+        TS_ASSERT_EQUALS(v.finalize(), false);
 
         // rel1+SEG rel1 --> error
         v = Value(8, Expr::Ptr(new Expr(ADD(a, SEG(a)))));
-        TS_ASSERT_EQUALS(v.finalize(), true);
+        TS_ASSERT_EQUALS(v.finalize(), false);
 
         // rel1>>5
         v = Value(8, Expr::Ptr(new Expr(SHR(a, 5))));
-        TS_ASSERT_EQUALS(v.finalize(), false);
+        TS_ASSERT_EQUALS(v.finalize(), true);
         TS_ASSERT_EQUALS(v.has_abs(), false);
         if (Expr* expr = v.get_abs())
             TS_TRACE(String::format(*expr));
@@ -275,22 +275,22 @@ public:
 
         // (rel1>>5)>>6
         v = Value(8, Expr::Ptr(new Expr(SHR(SHR(a, 5), 6))));
-        TS_ASSERT_EQUALS(v.finalize(), false);
+        TS_ASSERT_EQUALS(v.finalize(), true);
         TS_ASSERT_EQUALS(v.has_abs(), false);
         TS_ASSERT_EQUALS(v.get_rel(), a);
         TS_ASSERT_EQUALS(v.m_rshift, 11U);
 
         // rel1>>reg --> error
         v = Value(8, Expr::Ptr(new Expr(SHR(a, g))));
-        TS_ASSERT_EQUALS(v.finalize(), true);
+        TS_ASSERT_EQUALS(v.finalize(), false);
 
         // rel1+rel1>>5 --> error
         v = Value(8, Expr::Ptr(new Expr(ADD(a, SHR(a, 5)))));
-        TS_ASSERT_EQUALS(v.finalize(), true);
+        TS_ASSERT_EQUALS(v.finalize(), false);
 
         // 5>>rel1 --> error
         v = Value(8, Expr::Ptr(new Expr(SHR(5, a))));
-        TS_ASSERT_EQUALS(v.finalize(), true);
+        TS_ASSERT_EQUALS(v.finalize(), false);
     }
 
     void test_clear()

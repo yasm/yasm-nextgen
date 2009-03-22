@@ -114,7 +114,7 @@ public:
     /// portion of the value.  First expands references to symrecs in
     /// absolute sections by expanding with the absolute section start plus
     /// the symrec offset within the absolute section.
-    /// @return True if the expr could not be split into a value for some
+    /// @return False if the expr could not be split into a value for some
     ///         reason (e.g. the relative portion was not added, but
     ///         multiplied etc).
     /// @note This should only be called after the parse is complete.
