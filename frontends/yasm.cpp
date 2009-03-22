@@ -720,13 +720,21 @@ do_assemble(void)
     assembler.get_arch()->set_var("force_strict", force_strict);
 
     // open the input file
-    std::ifstream in_file(in_filename.c_str());
-    if (!in_file)
-        throw yasm::Error(String::compose(_("could not open file `%1'"),
-                          in_filename));
+    std::istream* in;
+    std::ifstream in_file;
+    if (in_filename == "-")
+        in = &std::cin;
+    else
+    {
+        in_file.open(in_filename.c_str());
+        if (!in_file)
+            throw yasm::Error(String::compose(_("could not open file `%1'"),
+                              in_filename));
+        in = &in_file;
+    }
 
     // assemble the input.
-    if (!assembler.assemble(in_file, in_filename, warning_error))
+    if (!assembler.assemble(*in, in_filename, warning_error))
     {
         // An error occurred during assembly; output all errors and warnings
         // and then exit.
@@ -736,18 +744,23 @@ do_assemble(void)
                                              print_yasm_warning);
         return EXIT_FAILURE;
     }
+    in_file.close();
 
     // open the object file for output (if not already opened by dbg objfmt)
-    std::ofstream of;
-    if (objfmt_keyword != "dbg")
+    std::ostream* out;
+    std::ofstream out_file;
+    if (objfmt_keyword == "dbg")
+        out = &std::cerr;
+    else
     {
-        of.open(assembler.get_obj_filename().c_str(), std::ios::binary);
-        if (!of)
+        out_file.open(assembler.get_obj_filename().c_str(), std::ios::binary);
+        if (!out_file)
             throw yasm::Error(String::compose(_("could not open file `%1'"),
                               obj_filename));
+        out = &out_file;
     }
 
-    if (!assembler.output(of ? of : std::cerr, warning_error))
+    if (!assembler.output(*out, warning_error))
     {
         // An error occurred during output; output all errors and warnings.
         // If we had an error at this point, we also need to delete the output
@@ -756,15 +769,13 @@ do_assemble(void)
                                              warning_error,
                                              print_yasm_error,
                                              print_yasm_warning);
-        if (of)
-            of.close();
+        out_file.close();
         remove(assembler.get_obj_filename().c_str());
         return EXIT_FAILURE;
     }
 
     // close object file
-    if (of)
-        of.close();
+    out_file.close();
 #if 0
     // Open and write the list file
     if (list_filename)
