@@ -272,7 +272,8 @@ Bytecode::update_offset(unsigned long offset)
         // Recalculate/adjust len of offset-based bytecodes here
         long neg_thres = 0;
         long pos_thres = static_cast<long>(next_offset());
-        expand(1, 0, static_cast<long>(offset), &neg_thres, &pos_thres);
+        expand(1, 0, static_cast<long>(offset+get_fixed_len()), &neg_thres,
+               &pos_thres);
     }
     m_offset = offset;
     return next_offset();
