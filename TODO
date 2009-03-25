@@ -6,7 +6,6 @@ Key:
 * Significant work performed
 
 - Translate more object formats from C version:
--   coff/win32/win64
 -   dbg
 -   macho
 -   rdf
@@ -17,7 +16,6 @@ Key:
 - Object format reading for various formats
 - Disassembly core support
 - x86 disassembly
-* "Flattened" expression trees (Expr reimplementation) to reduce memory allocs
 - More unit tests
 - Optimize align to detect already aligned case and not create new bytecode
   (will need adding align member to bytecode?)
