@@ -36,6 +36,7 @@ namespace yasm
 {
 
 BytecodeOutput::BytecodeOutput()
+    : m_num_output(0)
 {
 }
 
@@ -44,13 +45,12 @@ BytecodeOutput::~BytecodeOutput()
 }
 
 void
-BytecodeOutput::output(SymbolRef sym,
-                       Bytes& bytes,
-                       Location loc,
-                       unsigned int valsize,
-                       int warn)
+BytecodeOutput::sym_to_bytes(SymbolRef sym,
+                             Bytes& bytes,
+                             Location loc,
+                             unsigned int valsize,
+                             int warn)
 {
-    output(bytes);
 }
 
 BytecodeNoOutput::~BytecodeNoOutput()
@@ -58,19 +58,22 @@ BytecodeNoOutput::~BytecodeNoOutput()
 }
 
 void
-BytecodeNoOutput::output(Value& value, Bytes& bytes, Location loc, int warn)
+BytecodeNoOutput::value_to_bytes(Value& value,
+                                 Bytes& bytes,
+                                 Location loc,
+                                 int warn)
 {
     // unnecessary; we don't actually output it anyway
 }
 
 void
-BytecodeNoOutput::output_gap(unsigned int size)
+BytecodeNoOutput::do_output_gap(unsigned int size)
 {
     // expected
 }
 
 void
-BytecodeNoOutput::output(const Bytes& bytes)
+BytecodeNoOutput::do_output_bytes(const Bytes& bytes)
 {
     warn_set(WARN_GENERAL,
         N_("initialized space declared in nobits section: ignoring"));
@@ -81,7 +84,7 @@ BytecodeStreamOutput::~BytecodeStreamOutput()
 }
 
 void
-BytecodeStreamOutput::output_gap(unsigned int size)
+BytecodeStreamOutput::do_output_gap(unsigned int size)
 {
     // Warn that gaps are converted to 0 and write out the 0's.
     static const unsigned long BLOCK_SIZE = 4096;
@@ -101,7 +104,7 @@ BytecodeStreamOutput::output_gap(unsigned int size)
 }
 
 void
-BytecodeStreamOutput::output(const Bytes& bytes)
+BytecodeStreamOutput::do_output_bytes(const Bytes& bytes)
 {
     // Output bytes to file
     m_os << bytes;

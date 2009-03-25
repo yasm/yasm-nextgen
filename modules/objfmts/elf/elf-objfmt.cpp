@@ -696,13 +696,12 @@ public:
                         Errwarns& errwarns);
 
     // OutputBytecode overrides
-    using BytecodeStreamOutput::output;
-    void output(Value& value, Bytes& bytes, Location loc, int warn);
-    void output(SymbolRef sym,
-                Bytes& bytes,
-                Location loc,
-                unsigned int valsize,
-                int warn);
+    void value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn);
+    void sym_to_bytes(SymbolRef sym,
+                      Bytes& bytes,
+                      Location loc,
+                      unsigned int valsize,
+                      int warn);
 
 private:
     ElfObject& m_objfmt;
@@ -722,11 +721,11 @@ Output::~Output()
 }
 
 void
-Output::output(SymbolRef sym,
-               Bytes& bytes,
-               Location loc,
-               unsigned int valsize,
-               int warn)
+Output::sym_to_bytes(SymbolRef sym,
+                     Bytes& bytes,
+                     Location loc,
+                     unsigned int valsize,
+                     int warn)
 {
     std::auto_ptr<ElfReloc> reloc =
         m_objfmt.m_machine->make_reloc(sym, SymbolRef(0), loc.get_offset(),
@@ -737,11 +736,10 @@ Output::output(SymbolRef sym,
     sect->add_reloc(std::auto_ptr<Reloc>(reloc.release()));
 
     m_object.get_arch()->tobytes(0, bytes, valsize, 0, warn);
-    m_os << bytes;
 }
 
 void
-Output::output(Value& value, Bytes& bytes, Location loc, int warn)
+Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
 {
     if (Expr* e = value.get_abs())
         simplify_calc_dist(*e);
@@ -750,10 +748,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
     // Note this does NOT output any value with a SEG, WRT, external,
     // cross-section, or non-PC-relative reference (those are handled below).
     if (value.output_basic(bytes, warn, *m_object.get_arch()))
-    {
-        m_os << bytes;
         return;
-    }
 
     // Handle other expressions, with relocation if necessary
     if (value.is_seg_of() || value.is_section_rel() || value.get_rshift() > 0)
@@ -824,7 +819,6 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
     if (reloc)
         reloc->handle_addend(&intn, m_objfmt.m_config);
     m_object.get_arch()->tobytes(intn, bytes, value.get_size(), 0, warn);
-    m_os << bytes;
 }
 #if 0
 static int

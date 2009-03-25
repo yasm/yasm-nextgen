@@ -44,11 +44,13 @@ class Bytecode;
 class Value;
 
 /// Bytecode output interface.
+///
 /// Object formats should implement this interface for output of bytecodes.
-/// value_to_bytes() and reloc_to_bytes() are called to convert values and
-/// relocations into byte format first, then output_bytes() is called to
-/// actually output the bytes to the object file.  The function output_gap()
-/// will be called for gaps in the output.
+/// Implementator notes: value_to_bytes() and sym_to_bytes() are called to
+/// convert values and relocations into byte format first, then
+/// do_output_bytes() is called.  It is assumed that do_output_bytes()
+/// actually outputs the bytes to the object file.  The implementation
+/// function do_output_gap() will be called for gaps in the output.
 class YASM_LIB_EXPORT BytecodeOutput
 {
 public:
@@ -69,17 +71,21 @@ public:
         return m_scratch;
     }
 
-    /// Output value.  Usual implementations will keep track of relocations
-    /// and verify legal expressions.
+    /// Reset the number of bytes output to zero.
+    void reset_num_output() { m_num_output = 0; }
+
+    /// Get the total number of bytes (and gap) output.
+    /// @return Number of bytes output.
+    unsigned long get_num_output() const { return m_num_output; }
+
+    /// Output a value.
     ///
-    /// Implementations must put the value into the least significant bits of
-    /// the destination, unless shifted into more significant bits by
-    /// value.m_shift.
+    /// The value is put into the least significant bits of the destination,
+    /// unless shifted into more significant bits by value.m_shift.
     ///
-    /// The bytes parameter is the destination; it is sized prior to this call
-    /// to the correct number of bytes to be output, and may contain non-zero
-    /// bits.  Implementations should only overwrite the bits specified by the
-    /// value.
+    /// The bytes parameter is the destination; callers must size this prior
+    /// to calling this function to the correct number of bytes to be output.
+    /// It may contain non-zero bits.
     ///
     /// May raise an exception if an error occurs.
     ///
@@ -90,22 +96,19 @@ public:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    virtual void output(Value& value,
-                        Bytes& bytes,
-                        Location loc,
-                        int warn) = 0;
+    void output(Value& value, Bytes& bytes, Location loc, int warn)
+    {
+        value_to_bytes(value, bytes, loc, warn);
+        output(bytes);
+    }
 
-    /// Convert a symbol reference to its byte representation.  Usual
-    /// implementations will keep track of relocations generated this way.
+    /// Output a symbol reference.
     ///
-    /// The bytes parameter is the destination; it is sized prior to this call
-    /// to the correct number of bytes to be output, and may contain non-zero
-    /// bits.  Implementations should only overwrite the bits specified by
-    /// valsize.
+    /// The bytes parameter is the destination; callers must size this prior
+    /// to calling this function to the correct number of bytes to be output.
+    /// It may contain non-zero bits.
     ///
     /// May raise an exception if an error occurs.
-    ///
-    /// The default implementation just calls output(Bytes).
     ///
     /// @param sym          symbol
     /// @param bytes        storage for byte representation
@@ -115,27 +118,102 @@ public:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    virtual void output(SymbolRef sym,
-                        Bytes& bytes,
-                        Location loc,
-                        unsigned int valsize,
-                        int warn);
+    void output(SymbolRef sym,
+                Bytes& bytes,
+                Location loc,
+                unsigned int valsize,
+                int warn)
+    {
+        sym_to_bytes(sym, bytes, loc, valsize, warn);
+        output(bytes);
+    }
 
     /// Output a "gap" in the object file: the data does not really need to
     /// exist in the object file, but should be initialized to 0 when the
     /// program is run.
     /// @param size         gap size, in bytes
-    virtual void output_gap(unsigned int size) = 0;
+    void output_gap(unsigned int size)
+    {
+        do_output_gap(size);
+        m_num_output += size;
+    }
 
     /// Output a sequence of bytes.
     /// @param bytes        bytes to output
-    virtual void output(const Bytes& bytes) = 0;
+    void output(const Bytes& bytes)
+    {
+        do_output_bytes(bytes);
+        m_num_output += bytes.size();
+    }
+
+protected:
+    /// Convert a value to bytes.  Called by output_value() so that
+    /// implementations can keep track of relocations and verify legal
+    /// expressions.
+    ///
+    /// Implementations must put the value into the least significant bits of
+    /// the destination, unless shifted into more significant bits by
+    /// value.m_shift.
+    ///
+    /// The bytes parameter is the destination; it is sized prior to this call
+    /// to the correct number of bytes to be output, and may contain non-zero
+    /// bits.  Implementations should only overwrite the bits specified by the
+    /// value.
+    ///
+    /// Implementations may raise an exception if an error occurs.
+    ///
+    /// @param value        value
+    /// @param bytes        storage for byte representation
+    /// @param loc          location of the expr contents (needed for relative)
+    /// @param warn         enables standard warnings.  Zero for none; nonzero
+    ///                     for overflow/underflow floating point warnings;
+    ///                     negative for signed integer warnings,
+    ///                     positive for unsigned integer warnings
+    virtual void value_to_bytes(Value& value,
+                                Bytes& bytes,
+                                Location loc,
+                                int warn) = 0;
+
+    /// Convert a symbol to bytes.  Called by output_sym() so that
+    /// implementations may keep track of relocations generated this way.
+    ///
+    /// The bytes parameter is the destination; it is sized prior to this call
+    /// to the correct number of bytes to be output, and may contain non-zero
+    /// bits.  Implementations should only overwrite the bits specified by
+    /// valsize.
+    ///
+    /// Implementations may raise an exception if an error occurs.
+    ///
+    /// The default implementation does nothing.
+    ///
+    /// @param sym          symbol
+    /// @param bytes        storage for byte representation
+    /// @param loc          location of the symbol reference
+    /// @param valsize      size (in bits)
+    /// @param warn         enables standard warnings.  Zero for none; nonzero
+    ///                     for overflow/underflow floating point warnings;
+    ///                     negative for signed integer warnings,
+    ///                     positive for unsigned integer warnings
+    virtual void sym_to_bytes(SymbolRef sym,
+                              Bytes& bytes,
+                              Location loc,
+                              unsigned int valsize,
+                              int warn);
+
+    /// Overrideable implementation of output_gap().
+    /// @param size         gap size, in bytes
+    virtual void do_output_gap(unsigned int size) = 0;
+
+    /// Overrideable implementation of output_bytes().
+    /// @param bytes        bytes to output
+    virtual void do_output_bytes(const Bytes& bytes) = 0;
 
 private:
     BytecodeOutput(const BytecodeOutput&);                  // not implemented
     const BytecodeOutput& operator=(const BytecodeOutput&); // not implemented
 
-    Bytes m_scratch;
+    Bytes m_scratch;            ///< Reusable scratch area
+    unsigned long m_num_output; ///< Total number of bytes+gap output
 };
 
 /// No-output specialization of BytecodeOutput.
@@ -146,15 +224,15 @@ public:
     BytecodeNoOutput() {}
     ~BytecodeNoOutput();
 
-    using BytecodeOutput::output;
-    void output(Value& value, Bytes& bytes, Location loc, int warn);
-    void output_gap(unsigned int size);
-    void output(const Bytes& bytes);
+protected:
+    void value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn);
+    void do_output_gap(unsigned int size);
+    void do_output_bytes(const Bytes& bytes);
 };
 
 /// Stream output specialization of BytecodeOutput.
 /// Handles gaps by converting to 0 and generating a warning.
-/// This does not implement Value output function, so it's still a virtual
+/// This does not implement value_to_bytes(), so it's still a virtual
 /// base class.
 class YASM_LIB_EXPORT BytecodeStreamOutput : public BytecodeOutput
 {
@@ -162,11 +240,10 @@ public:
     BytecodeStreamOutput(std::ostream& os) : m_os(os) {}
     ~BytecodeStreamOutput();
 
-    using BytecodeOutput::output;
-    void output_gap(unsigned int size);
-    void output(const Bytes& bytes);
-
 protected:
+    void do_output_gap(unsigned int size);
+    void do_output_bytes(const Bytes& bytes);
+
     std::ostream& m_os;
 };
 

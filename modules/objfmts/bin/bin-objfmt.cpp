@@ -183,8 +183,7 @@ public:
                         Errwarns& errwarns);
 
     // OutputBytecode overrides
-    using BytecodeStreamOutput::output;
-    void output(Value& value, Bytes& bytes, Location loc, int warn);
+    void value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn);
 
 private:
     Object& m_object;
@@ -251,7 +250,7 @@ Output::output_section(Section& sect, const IntNum& origin, Errwarns& errwarns)
 }
 
 void
-Output::output(Value& value, Bytes& bytes, Location loc, int warn)
+Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
 {
     // Binary objects we need to resolve against object, not against section.
     if (value.is_relative())
@@ -292,10 +291,7 @@ done:
     // Output
     Arch* arch = m_object.get_arch();
     if (value.output_basic(bytes, warn, *arch))
-    {
-        m_os << bytes;
         return;
-    }
 
     // Couldn't output, assume it contains an external reference.
     throw Error(

@@ -490,8 +490,7 @@ public:
                     unsigned long* strtab_offset);
 
     // OutputBytecode overrides
-    using BytecodeStreamOutput::output;
-    void output(Value& value, Bytes& bytes, Location loc, int warn);
+    void value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn);
 
 private:
     Object& m_object;
@@ -509,7 +508,7 @@ Output::~Output()
 }
 
 void
-Output::output(Value& value, Bytes& bytes, Location loc, int warn)
+Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
 {
     if (Expr* abs = value.get_abs())
         simplify_calc_dist(*abs);
@@ -518,10 +517,7 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
     // Note this does NOT output any value with a SEG, WRT, external,
     // cross-section, or non-PC-relative reference (those are handled below).
     if (value.output_basic(bytes, warn, *m_object.get_arch()))
-    {
-        m_os << bytes;
         return;
-    }
 
     if (value.is_section_rel())
         throw TooComplexError(N_("xdf: relocation too complex"));
@@ -557,7 +553,6 @@ Output::output(Value& value, Bytes& bytes, Location loc, int warn)
     }
 
     m_object.get_arch()->tobytes(intn, bytes, value.get_size(), 0, warn);
-    m_os << bytes;
 }
 
 void
