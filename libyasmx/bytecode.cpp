@@ -207,6 +207,8 @@ Bytecode::expand(int span,
 void
 Bytecode::output(BytecodeOutput& bc_out)
 {
+    unsigned long start = bc_out.get_num_output();
+
     // output fixups, outputting the fixed portions in between each one
     unsigned int last = 0;
     for (std::vector<Fixup>::iterator i=m_fixed_fixups.begin(),
@@ -250,9 +252,15 @@ Bytecode::output(BytecodeOutput& bc_out)
         bc_out.output(fixed);
     }
 
+    assert((bc_out.get_num_output() - start) == get_fixed_len() &&
+           "failed to output correct number of fixed bytes");
+
     // handle tail contents
     if (m_contents.get() != 0)
         m_contents->output(*this, bc_out);
+
+    assert((bc_out.get_num_output() - start) == get_total_len() &&
+           "failed to output correct number of bytes");
 }
 
 unsigned long
