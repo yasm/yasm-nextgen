@@ -63,6 +63,7 @@ Bytecode::Contents::expand(Bytecode& bc,
                            /*@out@*/ long* pos_thres)
 {
     assert(false && "bytecode does not have any dependent spans");
+    return false;
 }
 
 Bytecode::Contents::SpecialType
@@ -252,6 +253,7 @@ Bytecode::output(BytecodeOutput& bc_out)
         bc_out.output(fixed);
     }
 
+    start = start;  // avoid warning due to assert usage
     assert((bc_out.get_num_output() - start) == get_fixed_len() &&
            "failed to output correct number of fixed bytes");
 

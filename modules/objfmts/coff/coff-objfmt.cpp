@@ -368,11 +368,13 @@ Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
             assert(false);  // unrecognized machine
 
         Section* sect = loc.bc->get_container()->as_section();
-        Reloc* reloc;
+        Reloc* reloc = 0;
         if (machine == CoffObject::MACHINE_I386)
             reloc = new Coff32Reloc(addr, sym, rtype);
         else if (machine == CoffObject::MACHINE_AMD64)
             reloc = new Coff64Reloc(addr, sym, rtype);
+        else
+            assert(false && "nonexistent machine");
         sect->add_reloc(std::auto_ptr<Reloc>(reloc));
     }
 

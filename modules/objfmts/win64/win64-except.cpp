@@ -115,6 +115,7 @@ UnwindCode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
             break;
         default:
             assert(false && "unrecognied unwind opcode");
+            return 0;
     }
 
     IntNum intn;
@@ -232,6 +233,7 @@ UnwindCode::output(Bytecode& bc, BytecodeOutput& bc_out)
             break;
         default:
             assert(false && "unrecognied unwind opcode");
+            return;
     }
 
     // Check for overflow

@@ -559,6 +559,7 @@ Span::add_term(unsigned int subst, Location loc, Location loc2)
 {
     IntNum intn;
     bool ok = calc_dist(loc, loc2, &intn);
+    ok = ok;    // avoid warning due to assert usage
     assert(ok && "could not calculate bc distance");
 
     if (subst >= m_span_terms.size())
@@ -830,6 +831,7 @@ Optimize::step_1d()
         {
             IntNum intn;
             bool ok = calc_dist(term->m_loc, term->m_loc2, &intn);
+            ok = ok;    // avoid warning due to assert usage
             assert(ok && "could not calculate bc distance");
             term->m_cur_val = term->m_new_val;
             term->m_new_val = intn.get_int();

@@ -107,6 +107,7 @@ create_elf_machine(const Arch& arch, ElfClass cls)
             return machines[i].create();
     }
     assert(false && "could not find elf machine");
+    return machines[0].create();
 }
 
 void
