@@ -33,8 +33,8 @@
 #include <cstring>
 #include <limits>
 
-#include "yasmx/BitVector.h"
-#include "yasmx/Compose.h"
+#include "yasmx/Support/BitVector.h"
+#include "yasmx/Support/Compose.h"
 #include "yasmx/errwarn.h"
 
 

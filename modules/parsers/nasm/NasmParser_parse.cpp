@@ -29,10 +29,10 @@
 #include <math.h>
 
 #include <yasmx/Support/bitcount.h>
+#include <yasmx/Support/Compose.h>
 #include <yasmx/Support/nocase.h>
 #include <yasmx/Arch.h>
 #include <yasmx/BytecodeContainer_util.h>
-#include <yasmx/Compose.h>
 #include <yasmx/Directive.h>
 #include <yasmx/EffAddr.h>
 #include <yasmx/errwarn.h>

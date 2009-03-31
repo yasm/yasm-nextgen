@@ -30,13 +30,13 @@
 #include <iostream>
 #include <fstream>
 
+#include <yasmx/Support/Compose.h>
 #include <yasmx/Support/nocase.h>
 #include <yasmx/Support/registry.h>
 #include <yasmx/System/file.h>
 #include <yasmx/System/plugin.h>
 #include <yasmx/Arch.h>
 #include <yasmx/Assembler.h>
-#include <yasmx/Compose.h>
 #include <yasmx/DebugFormat.h>
 #include <yasmx/errwarn.h>
 #include <yasmx/Errwarns.h>

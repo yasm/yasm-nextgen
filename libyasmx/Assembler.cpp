@@ -28,12 +28,12 @@
 
 #include "util.h"
 
+#include "yasmx/Support/Compose.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/System/file.h"
 
 #include "yasmx/Arch.h"
-#include "yasmx/Compose.h"
 #include "yasmx/DebugFormat.h"
 #include "yasmx/Directive.h"
 #include "yasmx/errwarn.h"

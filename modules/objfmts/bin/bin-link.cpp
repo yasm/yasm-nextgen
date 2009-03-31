@@ -30,9 +30,9 @@
 
 #include <algorithm>
 
+#include <yasmx/Support/Compose.h>
 #include <yasmx/Support/marg_ostream.h>
 #include <yasmx/Bytecode.h>
-#include <yasmx/Compose.h>
 #include <yasmx/errwarn.h>
 #include <yasmx/Errwarns.h>
 #include <yasmx/Expr.h>

@@ -29,8 +29,8 @@
 #include <cctype>
 #include <cstring>
 
+#include <yasmx/Support/Compose.h>
 #include <yasmx/Support/phash.h>
-#include <yasmx/Compose.h>
 #include <yasmx/errwarn.h>
 
 #include "modules/arch/x86/X86Arch.h"

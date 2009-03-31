@@ -31,11 +31,11 @@
 #include <iomanip>
 #include <ostream>
 
+#include <yasmx/Support/Compose.h>
 #include <yasmx/Support/marg_ostream.h>
 #include <yasmx/Bytecode.h>
 #include <yasmx/Bytes.h>
 #include <yasmx/Bytes_util.h>
-#include <yasmx/Compose.h>
 #include <yasmx/errwarn.h>
 #include <yasmx/Errwarns.h>
 #include <yasmx/Expr.h>

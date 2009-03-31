@@ -30,7 +30,7 @@
 
 #include <map>
 
-#include "yasmx/Compose.h"
+#include "yasmx/Support/Compose.h"
 #include "yasmx/errwarn.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"

@@ -1,4 +1,4 @@
-#include "yasmx/BitVector.h"
+#include "yasmx/Support/BitVector.h"
 
 #include "util.h"
 #include "yasmx/Support/scoped_array.h"

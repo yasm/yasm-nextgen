@@ -28,6 +28,7 @@
 
 #include "util.h"
 
+#include "yasmx/Support/Compose.h"
 #include "yasmx/Support/marg_ostream.h"
 #include "yasmx/Support/scoped_ptr.h"
 
@@ -35,7 +36,6 @@
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
-#include "yasmx/Compose.h"
 #include "yasmx/errwarn.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"

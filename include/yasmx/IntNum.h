@@ -34,8 +34,7 @@
 #include <iosfwd>
 
 #include "yasmx/Config/export.h"
-
-#include "yasmx/BitVector.h"
+#include "yasmx/Support/BitVector.h"
 #include "yasmx/Op.h"
 
 

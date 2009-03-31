@@ -24,7 +24,7 @@
 //
 #include <cxxtest/TestSuite.h>
 
-#include "yasmx/Compose.h"
+#include "yasmx/Support/Compose.h"
 
 #include <iomanip>
 

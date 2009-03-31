@@ -34,7 +34,7 @@
 #include <iomanip>
 #include <ostream>
 
-#include "yasmx/BitVector.h"
+#include "yasmx/Support/BitVector.h"
 #include "yasmx/errwarn.h"
 
 

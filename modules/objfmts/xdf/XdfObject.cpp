@@ -27,6 +27,7 @@
 #include <util.h>
 
 #include <yasmx/Support/bitcount.h>
+#include <yasmx/Support/Compose.h>
 #include <yasmx/Support/marg_ostream.h>
 #include <yasmx/Support/nocase.h>
 #include <yasmx/Support/registry.h>
@@ -35,7 +36,6 @@
 #include <yasmx/Bytecode.h>
 #include <yasmx/Bytes.h>
 #include <yasmx/Bytes_util.h>
-#include <yasmx/Compose.h>
 #include <yasmx/Directive.h>
 #include <yasmx/DirHelpers.h>
 #include <yasmx/errwarn.h>

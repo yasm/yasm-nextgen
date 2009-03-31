@@ -30,9 +30,8 @@
 
 #include <map>
 
+#include "yasmx/Support/Compose.h"
 #include "yasmx/Support/nocase.h"
-
-#include "yasmx/Compose.h"
 #include "yasmx/errwarn.h"
 #include "yasmx/NameValue.h"
 
