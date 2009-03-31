@@ -36,9 +36,10 @@
 #include <libyasmx/NameValue.h>
 #include <libyasmx/nocase.h>
 #include <libyasmx/registry.h>
+#include <libyasmx/Symbol.h>
 
 #include "modules/objfmts/win32/Win32Object.h"
-#include "modules/objfmts/coff/coff-data.h"
+#include "modules/objfmts/coff/CoffSection.h"
 #include "win64-except.h"
 
 namespace yasm

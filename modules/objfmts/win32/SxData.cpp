@@ -26,11 +26,12 @@
 //
 #include "SxData.h"
 
+#include <libyasmx/BytecodeContainer.h>
 #include <libyasmx/BytecodeOutput.h>
 #include <libyasmx/Bytecode.h>
 #include <libyasmx/Bytes_util.h>
 
-#include "modules/objfmts/coff/coff-data.h"
+#include "modules/objfmts/coff/CoffSymbol.h"
 
 
 namespace

@@ -38,8 +38,9 @@
 #include <libyasmx/NameValue.h>
 #include <libyasmx/nocase.h>
 #include <libyasmx/registry.h>
+#include <libyasmx/Symbol.h>
 
-#include "modules/objfmts/coff/coff-data.h"
+#include "modules/objfmts/coff/CoffSection.h"
 #include "SxData.h"
 
 

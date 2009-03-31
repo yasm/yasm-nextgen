@@ -57,7 +57,9 @@
 #include <libyasmx/Symbol.h>
 #include <libyasmx/Symbol_util.h>
 
-#include "coff-data.h"
+#include "CoffReloc.h"
+#include "CoffSection.h"
+#include "CoffSymbol.h"
 
 
 namespace yasm
