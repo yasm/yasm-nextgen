@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "x86jmp.h"
+#include "X86Jmp.h"
 
 #include "util.h"
 
@@ -38,8 +38,8 @@
 #include <libyasmx/marg_ostream.h>
 #include <libyasmx/Symbol.h>
 
-#include "x86common.h"
-#include "x86opcode.h"
+#include "X86Common.h"
+#include "X86Opcode.h"
 
 
 namespace yasm

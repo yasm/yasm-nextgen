@@ -27,13 +27,13 @@
 
 #include <cxxtest/TestSuite.h>
 
-#include "x86effaddr.h"
+#include "X86EffAddr.h"
 #include <libyasmx/errwarn.h>
-#include <libyasmx/expr.h>
-#include <libyasmx/intnum.h>
-#include <libyasmx/symbol.h>
+#include <libyasmx/Expr.h>
+#include <libyasmx/IntNum.h>
+#include <libyasmx/Symbol.h>
 
-#include "x86regtmod.cpp"
+#include "X86Register.cpp"
 
 #ifndef NELEMS
 #define NELEMS(array)   (sizeof(array) / sizeof(array[0]))

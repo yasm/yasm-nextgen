@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "x86insn.h"
+#include "X86Insn.h"
 
 #include <util.h>
 
@@ -42,14 +42,14 @@
 #include <libyasmx/marg_ostream.h>
 #include <libyasmx/phash.h>
 
-#include "x86arch.h"
-#include "x86common.h"
-#include "x86effaddr.h"
-#include "x86general.h"
-#include "x86jmp.h"
-#include "x86jmpfar.h"
-#include "x86opcode.h"
-#include "x86prefix.h"
+#include "X86Arch.h"
+#include "X86Common.h"
+#include "X86EffAddr.h"
+#include "X86General.h"
+#include "X86Jmp.h"
+#include "X86JmpFar.h"
+#include "X86Opcode.h"
+#include "X86Prefix.h"
 
 
 namespace yasm

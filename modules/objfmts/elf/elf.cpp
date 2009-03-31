@@ -44,7 +44,7 @@
 #include <libyasmx/StringTable.h>
 #include <libyasmx/Object.h>
 
-#include "elf-machine.h"
+#include "ElfMachine.h"
 
 
 namespace yasm

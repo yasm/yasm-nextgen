@@ -44,7 +44,7 @@
 #include <libyasmx/Section.h>
 #include <libyasmx/Symbol.h>
 
-#include "modules/parsers/nasm/nasm-parser.h"
+#include "modules/parsers/nasm/NasmParser.h"
 
 
 namespace yasm

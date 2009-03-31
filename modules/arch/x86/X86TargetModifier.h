@@ -1,7 +1,9 @@
+#ifndef YASM_X86TARGETMODIFIER_H
+#define YASM_X86TARGETMODIFIER_H
 //
-// x86 jump far bytecode
+// x86 target modifier header file
 //
-//  Copyright (C) 2001-2007  Peter Johnson
+//  Copyright (C) 2001-2008  Peter Johnson
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -24,15 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "x86jmpfar.h"
-
-#include <libyasmx/BytecodeContainer.h>
-#include <libyasmx/Bytecode.h>
-#include <libyasmx/Expr.h>
-
-#include "x86common.h"
-#include "x86opcode.h"
-
+#include <libyasmx/Insn.h>
 
 namespace yasm
 {
@@ -41,23 +35,29 @@ namespace arch
 namespace x86
 {
 
-void append_jmpfar(BytecodeContainer& container,
-                   const X86Common& common,
-                   const X86Opcode& opcode,
-                   std::auto_ptr<Expr> segment,
-                   std::auto_ptr<Expr> offset,
-                   unsigned long line)
+class X86TargetModifier : public Insn::Operand::TargetModifier
 {
-    Bytecode& bc = container.fresh_bytecode();
-    Bytes& bytes = bc.get_fixed();
+public:
+    enum Type
+    {
+        NEAR = 0,
+        SHORT,
+        FAR,
+        TO,
+        TYPE_COUNT
+    };
 
-    common.to_bytes(bytes, 0);
-    opcode.to_bytes(bytes);
+    explicit X86TargetModifier(Type type) : m_type(type) {}
+    ~X86TargetModifier() {}
 
-    // Absolute displacement: segment and offset
-    unsigned int size = (common.m_opersize == 16) ? 2 : 4;
-    bc.append_fixed(size, offset, line);
-    bc.append_fixed(2, segment, line);
-}
+    Type type() const { return m_type; }
+
+    void put(std::ostream& os) const;
+
+private:
+    Type m_type;
+};
 
 }}} // namespace yasm::arch::x86
+
+#endif

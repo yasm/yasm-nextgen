@@ -1,5 +1,5 @@
-#ifndef COFF_OBJFMT_H
-#define COFF_OBJFMT_H
+#ifndef YASM_COFFOBJECT_H
+#define YASM_COFFOBJECT_H
 //
 // COFF (DJGPP) object format
 //

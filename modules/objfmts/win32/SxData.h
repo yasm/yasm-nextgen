@@ -1,5 +1,5 @@
-#ifndef WIN32_SXDATA_H
-#define WIN32_SXDATA_H
+#ifndef YASM_SXDATA_H
+#define YASM_SXDATA_H
 //
 // Bytecode for Win32 .sxdata sections
 //

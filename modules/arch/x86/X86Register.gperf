@@ -24,9 +24,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 %{
-#include "modules/arch/x86/x86reggroup.h"
-#include "modules/arch/x86/x86register.h"
-#include "modules/arch/x86/x86tmod.h"
+#include "modules/arch/x86/X86RegisterGroup.h"
+#include "modules/arch/x86/X86Register.h"
+#include "modules/arch/x86/X86TargetModifier.h"
 
 #include <util.h>
 
@@ -37,7 +37,7 @@
 #include <libyasmx/errwarn.h>
 #include <libyasmx/phash.h>
 
-#include "modules/arch/x86/x86arch.h"
+#include "modules/arch/x86/X86Arch.h"
 
 namespace yasm
 {

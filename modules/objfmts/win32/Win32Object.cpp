@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "win32-objfmt.h"
+#include "Win32Object.h"
 
 #include <util.h>
 
@@ -40,7 +40,7 @@
 #include <libyasmx/registry.h>
 
 #include "modules/objfmts/coff/coff-data.h"
-#include "win32-sxdata.h"
+#include "SxData.h"
 
 
 namespace yasm

@@ -37,7 +37,7 @@
 #include <libyasmx/nocase.h>
 #include <libyasmx/registry.h>
 
-#include "modules/objfmts/win32/win32-objfmt.h"
+#include "modules/objfmts/win32/Win32Object.h"
 #include "modules/objfmts/coff/coff-data.h"
 #include "win64-except.h"
 

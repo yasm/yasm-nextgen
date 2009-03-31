@@ -23,7 +23,7 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-#include "x86arch.h"
+#include "X86Arch.h"
 
 #include "util.h"
 
@@ -39,8 +39,8 @@
 #include <libyasmx/nocase.h>
 #include <libyasmx/registry.h>
 
-#include "x86effaddr.h"
-#include "x86reggroup.h"
+#include "X86EffAddr.h"
+#include "X86RegisterGroup.h"
 
 
 namespace yasm

@@ -30,8 +30,8 @@
 
 #include <libyasmx/Arch.h>
 
-#include "x86register.h"
-#include "x86tmod.h"
+#include "X86Register.h"
+#include "X86TargetModifier.h"
 
 
 namespace yasm

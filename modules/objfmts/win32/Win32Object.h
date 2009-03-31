@@ -1,5 +1,5 @@
-#ifndef WIN32_OBJFMT_H
-#define WIN32_OBJFMT_H
+#ifndef YASM_WIN32OBJECT_H
+#define YASM_WIN32OBJECT_H
 //
 // Win32 object format
 //
@@ -26,7 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "modules/objfmts/coff/coff-objfmt.h"
+#include "modules/objfmts/coff/CoffObject.h"
 
 namespace yasm
 {

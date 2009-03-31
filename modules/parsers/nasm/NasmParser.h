@@ -1,5 +1,5 @@
-#ifndef YASM_NASM_PARSER_H
-#define YASM_NASM_PARSER_H
+#ifndef YASM_NASMPARSER_H
+#define YASM_NASMPARSER_H
 //
 // NASM-compatible parser header file
 //

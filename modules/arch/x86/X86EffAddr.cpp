@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "x86effaddr.h"
+#include "X86EffAddr.h"
 
 #include <util.h>
 
@@ -38,7 +38,7 @@
 #include <libyasmx/IntNum.h>
 #include <libyasmx/marg_ostream.h>
 
-#include "x86register.h"
+#include "X86Register.h"
 
 
 namespace yasm

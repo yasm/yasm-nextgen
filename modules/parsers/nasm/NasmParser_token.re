@@ -35,7 +35,7 @@
 #include <libyasmx/nocase.h>
 #include <libyasmx/Object.h>
 
-#include "modules/parsers/nasm/nasm-parser.h"
+#include "modules/parsers/nasm/NasmParser.h"
 
 
 namespace yasm

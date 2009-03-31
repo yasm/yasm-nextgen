@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "win32-sxdata.h"
+#include "SxData.h"
 
 #include <libyasmx/BytecodeOutput.h>
 #include <libyasmx/Bytecode.h>

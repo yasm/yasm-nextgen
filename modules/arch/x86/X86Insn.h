@@ -28,7 +28,7 @@
 //
 #include <libyasmx/Insn.h>
 
-#include "x86arch.h"
+#include "X86Arch.h"
 
 namespace yasm
 {

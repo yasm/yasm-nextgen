@@ -65,7 +65,7 @@
 #include <libyasmx/Symbol_util.h>
 
 #include "elf.h"
-#include "elf-machine.h"
+#include "ElfMachine.h"
 
 
 namespace yasm

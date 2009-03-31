@@ -30,7 +30,7 @@
 #include <libyasmx/nocase.h>
 
 #include "elf.h"
-#include "elf-machine.h"
+#include "ElfMachine.h"
 
 
 namespace yasm

@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "x86general.h"
+#include "X86General.h"
 
 #include "util.h"
 
@@ -42,11 +42,11 @@
 #include <libyasmx/Object.h>
 #include <libyasmx/Symbol.h>
 
-#include "x86arch.h"
-#include "x86common.h"
-#include "x86effaddr.h"
-#include "x86opcode.h"
-#include "x86register.h"
+#include "X86Arch.h"
+#include "X86Common.h"
+#include "X86EffAddr.h"
+#include "X86Opcode.h"
+#include "X86Register.h"
 
 
 namespace yasm

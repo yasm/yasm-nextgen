@@ -1,9 +1,7 @@
-#ifndef YASM_X86REGGROUP_H
-#define YASM_X86REGGROUP_H
 //
-// x86 register group header file
+// x86 core bytecode
 //
-//  Copyright (C) 2001-2008  Peter Johnson
+//  Copyright (C) 2001-2007  Peter Johnson
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -26,10 +24,14 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <libyasmx/Arch.h>
-#include <libyasmx/functional.h>
+#include "X86Opcode.h"
 
-#include "x86register.h"
+#include "util.h"
+
+#include <iomanip>
+
+#include <libyasmx/Bytes.h>
+#include <libyasmx/marg_ostream.h>
 
 
 namespace yasm
@@ -39,27 +41,43 @@ namespace arch
 namespace x86
 {
 
-class X86RegisterGroup : public RegisterGroup
+marg_ostream&
+operator<< (marg_ostream& os, const X86Opcode& opcode)
 {
-public:
-    X86RegisterGroup(FUNCTION::function<unsigned int ()> get_bits,
-                     X86Register** regs, unsigned long size)
-        : m_get_bits(get_bits), m_regs(regs), m_size(size) {}
-    ~X86RegisterGroup() {}
+    os << "Opcode: ";
 
-    /// Get a specific register of a register group, based on the register
-    /// group and the index within the group.
-    /// @param regindex     register index
-    /// @return 0 if regindex is not valid for that register group,
-    ///         otherwise the specific register.
-    const X86Register* get_reg(unsigned long regindex) const;
+    std::ios_base::fmtflags origff = os.flags();
+    os << std::hex << std::setfill('0')
+       << std::setw(2) << static_cast<unsigned int>(opcode.m_opcode[0]) << ' '
+       << std::setw(2) << static_cast<unsigned int>(opcode.m_opcode[1]) << ' '
+       << std::setw(2) << static_cast<unsigned int>(opcode.m_opcode[2])
+       << std::setfill(' ');
+    os.flags(origff);
 
-private:
-    FUNCTION::function<unsigned int ()> m_get_bits;
-    X86Register** m_regs;
-    unsigned long m_size;
-};
+    os << " OpLen=" << static_cast<unsigned int>(opcode.m_len);
+    os << '\n';
+    return os;
+}
+
+void
+X86Opcode::to_bytes(Bytes& bytes) const
+{
+    bytes.write(m_opcode, m_len);
+}
+
+void
+X86Opcode::make_alt_1()
+{
+    m_opcode[0] = m_opcode[m_len];
+    m_len = 1;
+}
+
+void
+X86Opcode::make_alt_2()
+{
+    m_opcode[0] = m_opcode[1];
+    m_opcode[1] = m_opcode[2];
+    m_len = 2;
+}
 
 }}} // namespace yasm::arch::x86
-
-#endif
