@@ -16,6 +16,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     Bytecode_util.cpp
     Bytes.cpp
     Bytes_util.cpp
+    Bytes_leb128.cpp
     Compose.cpp
     DebugFormat.cpp
     Directive.cpp
@@ -30,7 +31,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     IncbinBytecode.cpp
     Insn.cpp
     IntNum.cpp
-    leb128.cpp
     Linemap.cpp
     ListFormat.cpp
     Location.cpp
@@ -88,6 +88,7 @@ IF(NOT BUILD_STATIC)
         Bytecode_util.h
         Bytes.h
         Bytes_util.h
+	Bytes_leb128.h
         Compose.h
         DebugFormat.h
         Directive.h
@@ -106,7 +107,6 @@ IF(NOT BUILD_STATIC)
         IntervalTree.h
         IntNum.h
         IntNum_iomanip.h
-	leb128.h
         Linemap.h
         ListFormat.h
         Location.h

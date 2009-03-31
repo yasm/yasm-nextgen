@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "leb128.h"
+#include "Bytes_leb128.h"
 
 #include "Bytes.h"
 #include "IntNum.h"
