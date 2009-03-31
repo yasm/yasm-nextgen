@@ -29,12 +29,12 @@
 #include <iosfwd>
 #include <vector>
 
+#include <libyasmx/Support/marg_ostream_fwd.h>
+#include <libyasmx/Support/scoped_ptr.h>
 #include <libyasmx/AssocData.h>
 #include <libyasmx/Bytes.h>
 #include <libyasmx/IntNum.h>
-#include <libyasmx/marg_ostream_fwd.h>
 #include <libyasmx/Reloc.h>
-#include <libyasmx/scoped_ptr.h>
 #include <libyasmx/Section.h>
 #include <libyasmx/Symbol.h>
 #include <libyasmx/SymbolRef.h>

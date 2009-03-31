@@ -28,6 +28,10 @@
 
 #include <fstream>
 
+#include "Support/marg_ostream.h"
+#include "Support/scoped_ptr.h"
+#include "System/file.h"
+
 #include "BytecodeContainer.h"
 #include "BytecodeContainer_util.h"
 #include "BytecodeOutput.h"
@@ -36,11 +40,8 @@
 #include "Compose.h"
 #include "errwarn.h"
 #include "Expr.h"
-#include "file.h"
 #include "IntNum.h"
 #include "Linemap.h"
-#include "marg_ostream.h"
-#include "scoped_ptr.h"
 #include "Value.h"
 
 

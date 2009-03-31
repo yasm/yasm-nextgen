@@ -28,6 +28,8 @@
 
 #include "util.h"
 
+#include "Support/marg_ostream.h"
+
 #include "BytecodeContainer.h"
 #include "BytecodeOutput.h"
 #include "Bytes.h"
@@ -35,7 +37,6 @@
 #include "Expr.h"
 #include "IntNum.h"
 #include "Location_util.h"
-#include "marg_ostream.h"
 #include "Object.h"
 #include "Op.h"
 #include "Symbol.h"

@@ -34,8 +34,9 @@
 #include <algorithm>
 #include <iosfwd>
 
+#include "Config/export.h"
+
 #include "BitVector.h"
-#include "export.h"
 #include "Op.h"
 
 

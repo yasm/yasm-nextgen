@@ -31,11 +31,12 @@
 ///
 #include <string>
 
+#include "Config/export.h"
+#include "Support/marg_ostream_fwd.h"
+#include "Support/scoped_ptr.h"
+
 #include "AssocData.h"
-#include "export.h"
 #include "Location.h"
-#include "marg_ostream_fwd.h"
-#include "scoped_ptr.h"
 
 
 namespace yasm

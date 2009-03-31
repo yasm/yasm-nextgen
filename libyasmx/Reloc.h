@@ -32,7 +32,8 @@
 #include <memory>
 #include <string>
 
-#include "export.h"
+#include "Config/export.h"
+
 #include "Expr.h"
 #include "IntNum.h"
 #include "SymbolRef.h"

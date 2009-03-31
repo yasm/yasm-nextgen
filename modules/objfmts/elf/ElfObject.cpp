@@ -42,10 +42,13 @@
 //
 #include <util.h>
 
+#include <libyasmx/Support/bitcount.h>
+#include <libyasmx/Support/nocase.h>
+#include <libyasmx/Support/registry.h>
+#include <libyasmx/Support/scoped_array.h>
 #include <libyasmx/Arch.h>
 #include <libyasmx/BytecodeContainer_util.h>
 #include <libyasmx/BytecodeOutput.h>
-#include <libyasmx/bitcount.h>
 #include <libyasmx/Bytecode.h>
 #include <libyasmx/Compose.h>
 #include <libyasmx/Directive.h>
@@ -57,9 +60,6 @@
 #include <libyasmx/ObjectFormat.h>
 #include <libyasmx/Object_util.h>
 #include <libyasmx/NameValue.h>
-#include <libyasmx/nocase.h>
-#include <libyasmx/registry.h>
-#include <libyasmx/scoped_array.h>
 #include <libyasmx/Section.h>
 #include <libyasmx/StringTable.h>
 #include <libyasmx/Symbol_util.h>

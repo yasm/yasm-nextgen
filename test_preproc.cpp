@@ -4,12 +4,12 @@
 
 #include "config.h"
 
+#include <libyasmx/Support/registry.h>
+#include <libyasmx/System/plugin.h>
 #include <libyasmx/errwarn.h>
-#include <libyasmx/errwarns.h>
-#include <libyasmx/linemap.h>
-#include <libyasmx/plugin.h>
-#include <libyasmx/preproc.h>
-#include <libyasmx/registry.h>
+#include <libyasmx/Errwarns.h>
+#include <libyasmx/Linemap.h>
+#include <libyasmx/Preprocessor.h>
 
 using namespace yasm;
 

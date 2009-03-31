@@ -31,8 +31,9 @@
 ///
 #include <iosfwd>
 
+#include "Config/export.h"
+
 #include "Bytes.h"
-#include "export.h"
 #include "Location.h"
 #include "SymbolRef.h"
 

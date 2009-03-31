@@ -30,10 +30,11 @@
 
 #include <map>
 
+#include "Support/nocase.h"
+
 #include "Compose.h"
 #include "errwarn.h"
 #include "NameValue.h"
-#include "nocase.h"
 
 
 namespace yasm

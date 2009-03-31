@@ -1,7 +1,7 @@
 #include "BitVector.h"
 
 #include "util.h"
-#include "scoped_array.h"
+#include "Support/scoped_array.h"
 
 /*****************************************************************************/
 /*  MODULE NAME:  BitVector.c                           MODULE TYPE:  (adt)  */

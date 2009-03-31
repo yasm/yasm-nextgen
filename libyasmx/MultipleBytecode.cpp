@@ -28,13 +28,14 @@
 
 #include "util.h"
 
+#include "Support/marg_ostream.h"
+
 #include "BytecodeContainer.h"
 #include "Bytecode.h"
 #include "errwarn.h"
 #include "Expr.h"
 #include "IntNum.h"
 #include "Location_util.h"
-#include "marg_ostream.h"
 
 
 namespace

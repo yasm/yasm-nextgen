@@ -34,9 +34,10 @@
 #include <string>
 #include <vector>
 
-#include "export.h"
+#include "Config/export.h"
+#include "Support/ptr_vector.h"
+
 #include "Expr.h"
-#include "ptr_vector.h"
 
 
 namespace yasm

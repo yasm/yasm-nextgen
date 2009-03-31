@@ -31,9 +31,9 @@
 ///
 #include <string>
 
-#include "export.h"
-#include "functional.h"
-#include "scoped_ptr.h"
+#include "Config/export.h"
+#include "Config/functional.h"
+#include "Support/scoped_ptr.h"
 
 
 namespace yasm

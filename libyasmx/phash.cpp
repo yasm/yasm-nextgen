@@ -1,5 +1,5 @@
 // Modified for use with yasm by Peter Johnson.
-#include "phash.h"
+#include "Support/phash.h"
 
 #include "util.h"
 

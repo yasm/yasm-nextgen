@@ -27,7 +27,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "registry.h"
+#include "Support/registry.h"
 
 #include <map>
 

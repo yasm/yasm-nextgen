@@ -33,10 +33,11 @@
 #include <memory>
 #include <vector>
 
+#include "Config/export.h"
+#include "Support/marg_ostream_fwd.h"
+
 #include "EffAddr.h"
 #include "Expr.h"
-#include "export.h"
-#include "marg_ostream_fwd.h"
 
 
 namespace yasm

@@ -25,7 +25,7 @@
 #include <cxxtest/TestSuite.h>
 
 #include "errwarn.h"
-#include "file.h"
+#include "System/file.h"
 
 using namespace yasm;
 

@@ -30,14 +30,14 @@
 
 #include <vector>
 
+#include <libyasmx/Support/nocase.h>
+#include <libyasmx/Support/registry.h>
 #include <libyasmx/BytecodeContainer_util.h>
 #include <libyasmx/Directive.h>
 #include <libyasmx/DirHelpers.h>
 #include <libyasmx/errwarn.h>
 #include <libyasmx/Object.h>
 #include <libyasmx/NameValue.h>
-#include <libyasmx/nocase.h>
-#include <libyasmx/registry.h>
 #include <libyasmx/Symbol.h>
 
 #include "modules/objfmts/coff/CoffSection.h"

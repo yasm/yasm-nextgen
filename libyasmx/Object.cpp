@@ -37,6 +37,9 @@
 
 #include <boost/pool/pool.hpp>
 
+#include "Support/IntervalTree.h"
+#include "Support/marg_ostream.h"
+
 #include "Arch.h"
 #include "Bytecode.h"
 #include "Bytecode_util.h"
@@ -44,15 +47,14 @@
 #include "errwarn.h"
 #include "Errwarns.h"
 #include "Expr.h"
-#include "hamt.h"
-#include "IntervalTree.h"
 #include "IntNum.h"
 #include "Location_util.h"
-#include "marg_ostream.h"
 #include "ObjectFormat.h"
 #include "Section.h"
 #include "Symbol.h"
 #include "Value.h"
+
+#include "hamt.h"
 
 
 namespace

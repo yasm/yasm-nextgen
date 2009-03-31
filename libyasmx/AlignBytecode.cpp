@@ -28,6 +28,9 @@
 
 #include "util.h"
 
+#include "Support/marg_ostream.h"
+#include "Support/scoped_ptr.h"
+
 #include "BytecodeContainer.h"
 #include "BytecodeOutput.h"
 #include "Bytecode.h"
@@ -36,8 +39,6 @@
 #include "errwarn.h"
 #include "Expr.h"
 #include "IntNum.h"
-#include "marg_ostream.h"
-#include "scoped_ptr.h"
 
 
 namespace

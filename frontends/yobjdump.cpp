@@ -34,17 +34,17 @@
 #include <string>
 #include <vector>
 
+#include <libyasmx/Support/nocase.h>
+#include <libyasmx/Support/registry.h>
+#include <libyasmx/System/plugin.h>
 #include <libyasmx/Arch.h>
 #include <libyasmx/Bytecode.h>
 #include <libyasmx/Compose.h>
 #include <libyasmx/errwarn.h>
 #include <libyasmx/IntNum_iomanip.h>
 #include <libyasmx/Location.h>
-#include <libyasmx/nocase.h>
 #include <libyasmx/Object.h>
 #include <libyasmx/ObjectFormat.h>
-#include <libyasmx/plugin.h>
-#include <libyasmx/registry.h>
 #include <libyasmx/Reloc.h>
 #include <libyasmx/Section.h>
 #include <libyasmx/Symbol.h>

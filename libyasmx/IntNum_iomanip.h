@@ -31,7 +31,7 @@
 ///
 #include <ostream>
 
-#include "export.h"
+#include "Config/export.h"
 
 
 namespace yasm

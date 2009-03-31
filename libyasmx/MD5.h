@@ -7,7 +7,7 @@
  * $Id: md5.h 1825 2007-04-22 03:32:46Z peter $
  */
 
-#include "export.h"
+#include "Config/export.h"
 
 
 namespace yasm

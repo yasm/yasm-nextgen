@@ -34,7 +34,8 @@
 #include <memory>
 #include <vector>
 
-#include "export.h"
+#include "Config/export.h"
+
 #include "IntNum.h"
 #include "Location.h"
 #include "Op.h"

@@ -33,8 +33,8 @@
 #include <stdexcept>
 #include <vector>
 
-#include "export.h"
-#include "marg_ostream_fwd.h"
+#include "Config/export.h"
+#include "Support/marg_ostream_fwd.h"
 
 
 namespace yasm

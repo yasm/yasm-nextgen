@@ -31,6 +31,8 @@
 #include <algorithm>
 #include <bitset>
 
+#include "Support/marg_ostream.h"
+
 #include "Arch.h"
 #include "Bytecode.h"
 #include "Bytes.h"
@@ -41,7 +43,6 @@
 #include "FloatNum.h"
 #include "IntNum.h"
 #include "Location_util.h"
-#include "marg_ostream.h"
 #include "Object.h"
 #include "Section.h"
 #include "Symbol.h"

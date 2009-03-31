@@ -32,10 +32,11 @@
 #include <iterator>
 #include <ostream>
 
+#include "Config/functional.h"
+
 #include "Arch.h"
 #include "errwarn.h"
 #include "FloatNum.h"
-#include "functional.h"
 #include "IntNum.h"
 #include "Symbol.h"
 

@@ -28,10 +28,11 @@
 
 #include "util.h"
 
+#include "Support/marg_ostream.h"
+
 #include "Arch.h"
 #include "errwarn.h"
 #include "Expr.h"
-#include "marg_ostream.h"
 
 
 namespace yasm

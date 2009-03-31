@@ -29,8 +29,9 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "export.h"
-#include "functional.h"
+#include "Config/export.h"
+#include "Config/functional.h"
+
 #include "Location.h"
 
 

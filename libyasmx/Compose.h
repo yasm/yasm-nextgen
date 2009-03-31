@@ -32,7 +32,7 @@
 #include <sstream>
 #include <string>
 
-#include "export.h"
+#include "Config/export.h"
 
 
 namespace String

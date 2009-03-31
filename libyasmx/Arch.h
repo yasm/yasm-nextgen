@@ -35,7 +35,8 @@
 #include <utility>
 #include <vector>
 
-#include "export.h"
+#include "Config/export.h"
+
 #include "Insn.h"
 #include "Location.h"
 #include "Module.h"

@@ -28,9 +28,9 @@
 //
 #include <string>
 
+#include <libyasmx/Support/scoped_ptr.h>
 #include <libyasmx/AssocData.h>
 #include <libyasmx/IntNum.h>
-#include <libyasmx/scoped_ptr.h>
 #include <libyasmx/Section.h>
 #include <libyasmx/Symbol.h>
 

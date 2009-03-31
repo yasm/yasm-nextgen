@@ -28,7 +28,7 @@
 
 #include "util.h"
 
-#include "marg_ostream.h"
+#include "Support/marg_ostream.h"
 
 
 namespace yasm

@@ -28,8 +28,9 @@
 
 #include "util.h"
 
+#include "Support/marg_ostream.h"
+
 #include "IntNum.h"
-#include "marg_ostream.h"
 #include "Reloc.h"
 
 

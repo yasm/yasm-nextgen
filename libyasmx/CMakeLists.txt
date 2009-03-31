@@ -68,10 +68,6 @@ IF(NOT BUILD_STATIC)
 	)
 ENDIF(NOT BUILD_STATIC)
 
-CONFIGURE_FILE(export.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/export.h)
-
-INCLUDE(YasmCXXTR1)
-
 IF(NOT BUILD_STATIC)
     INSTALL(TARGETS libyasmx ${INSTALL_TARGETS_DEFAULT_ARGS})
 
@@ -82,7 +78,6 @@ IF(NOT BUILD_STATIC)
         BytecodeContainer.h
         BytecodeContainer_util.h
         BytecodeOutput.h
-        bitcount.h
         BitVector.h
         Bytecode.h
         Bytecode_util.h
@@ -96,40 +91,26 @@ IF(NOT BUILD_STATIC)
         EffAddr.h
         errwarn.h
         Errwarns.h
-        ${CMAKE_CURRENT_BINARY_DIR}/export.h
         Expr.h
         Expr_util.h
-        file.h
         FloatNum.h
-        ${CMAKE_CURRENT_BINARY_DIR}/functional.h
-        #hamt.h         # Don't install; only included by Object.cpp.
         Insn.h
-        IntervalTree.h
         IntNum.h
         IntNum_iomanip.h
         Linemap.h
         ListFormat.h
         Location.h
         Location_util.h
-        marg_ostream_fwd.h
-        marg_ostream.h
         MD5.h
         Module.h
         NameValue.h
-        nocase.h
         ObjectFormat.h
         Object.h
         Object_util.h
         Op.h
         Parser.h
-        phash.h
-        plugin.h
         Preprocessor.h
-        ptr_vector.h
-        registry.h
         Reloc.h
-        scoped_array.h
-        scoped_ptr.h
         Section.h
         StringTable.h
         Symbol.h
@@ -140,4 +121,7 @@ IF(NOT BUILD_STATIC)
         )
 ENDIF(NOT BUILD_STATIC)
 
+ADD_SUBDIRECTORY(Config)
+ADD_SUBDIRECTORY(Support)
+ADD_SUBDIRECTORY(System)
 ADD_SUBDIRECTORY(tests)

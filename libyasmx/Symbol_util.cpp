@@ -28,13 +28,14 @@
 
 #include <util.h>
 
+#include "Support/marg_ostream.h"
+#include "Support/scoped_ptr.h"
+
 #include "AssocData.h"
 #include "errwarn.h"
 #include "Expr.h"
-#include "marg_ostream.h"
 #include "NameValue.h"
 #include "Object.h"
-#include "scoped_ptr.h"
 #include "Symbol.h"
 
 

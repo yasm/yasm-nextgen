@@ -32,8 +32,8 @@
 #include <iosfwd>
 #include <string>
 
-#include "export.h"
-#include "scoped_ptr.h"
+#include "Config/export.h"
+#include "Support/scoped_ptr.h"
 
 /// Namespace for classes, functions, and templates related to the Yasm
 /// assembler.

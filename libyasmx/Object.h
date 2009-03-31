@@ -32,10 +32,11 @@
 #include <memory>
 #include <string>
 
-#include "export.h"
-#include "marg_ostream_fwd.h"
-#include "ptr_vector.h"
-#include "scoped_ptr.h"
+#include "Config/export.h"
+#include "Support/marg_ostream_fwd.h"
+#include "Support/ptr_vector.h"
+#include "Support/scoped_ptr.h"
+
 #include "SymbolRef.h"
 
 

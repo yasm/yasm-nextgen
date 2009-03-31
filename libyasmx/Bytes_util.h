@@ -29,8 +29,9 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include "Config/export.h"
+
 #include "Bytes.h"
-#include "export.h"
 
 
 namespace yasm

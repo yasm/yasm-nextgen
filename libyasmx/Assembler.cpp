@@ -28,21 +28,22 @@
 
 #include "util.h"
 
+#include "Support/registry.h"
+#include "Support/scoped_ptr.h"
+#include "System/file.h"
+
 #include "Arch.h"
 #include "Compose.h"
 #include "DebugFormat.h"
 #include "Directive.h"
 #include "errwarn.h"
 #include "Errwarns.h"
-#include "file.h"
 #include "Linemap.h"
 #include "ListFormat.h"
 #include "Object.h"
 #include "ObjectFormat.h"
 #include "Parser.h"
 #include "Preprocessor.h"
-#include "registry.h"
-#include "scoped_ptr.h"
 
 
 namespace yasm

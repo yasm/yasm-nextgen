@@ -32,6 +32,9 @@
 #include <ctime>
 #include <vector>
 
+#include <libyasmx/Support/marg_ostream.h>
+#include <libyasmx/Support/nocase.h>
+#include <libyasmx/Support/registry.h>
 #include <libyasmx/Arch.h>
 #include <libyasmx/BytecodeOutput.h>
 #include <libyasmx/bitcount.h>
@@ -45,12 +48,9 @@
 #include <libyasmx/Errwarns.h>
 #include <libyasmx/IntNum.h>
 #include <libyasmx/Location_util.h>
-#include <libyasmx/marg_ostream.h>
 #include <libyasmx/NameValue.h>
-#include <libyasmx/nocase.h>
 #include <libyasmx/Object.h>
 #include <libyasmx/Object_util.h>
-#include <libyasmx/registry.h>
 #include <libyasmx/Reloc.h>
 #include <libyasmx/Section.h>
 #include <libyasmx/StringTable.h>

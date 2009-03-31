@@ -33,13 +33,13 @@
 #include <memory>
 #include <vector>
 
-#include "functional.h"
+#include "Config/export.h"
+#include "Config/functional.h"
+#include "Support/marg_ostream_fwd.h"
+#include "Support/scoped_ptr.h"
 
 #include "Bytes.h"
-#include "export.h"
 #include "Location.h"
-#include "marg_ostream_fwd.h"
-#include "scoped_ptr.h"
 #include "SymbolRef.h"
 #include "Value.h"
 

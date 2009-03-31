@@ -34,10 +34,11 @@
 
 #include <boost/scoped_ptr.hpp>
 
-#include "export.h"
+#include "Config/export.h"
+#include "Support/marg_ostream_fwd.h"
+
 #include "IntNum.h"
 #include "Location.h"
-#include "marg_ostream_fwd.h"
 #include "SymbolRef.h"
 
 

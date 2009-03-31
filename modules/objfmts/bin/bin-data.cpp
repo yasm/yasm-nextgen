@@ -26,10 +26,10 @@
 //
 #include "bin-data.h"
 
+#include <libyasmx/Support/marg_ostream.h>
 #include <libyasmx/BytecodeContainer.h>
 #include <libyasmx/Bytecode.h>
 #include <libyasmx/Expr.h>
-#include <libyasmx/marg_ostream.h>
 #include <libyasmx/Section.h>
 #include <libyasmx/Symbol.h>
 

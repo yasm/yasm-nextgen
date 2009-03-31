@@ -32,7 +32,7 @@
 #include <iomanip>
 #include <ostream>
 
-#include "marg_ostream.h"
+#include "Support/marg_ostream.h"
 
 
 namespace yasm
