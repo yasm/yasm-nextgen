@@ -24,11 +24,11 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Arch.h"
+#include "yasmx/Arch.h"
 
 #include "util.h"
 
-#include "Bytecode.h"
+#include "yasmx/Bytecode.h"
 
 
 namespace yasm

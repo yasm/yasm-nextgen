@@ -28,11 +28,11 @@
 
 #include <util.h>
 
-#include <libyasmx/Bytes.h>
-#include <libyasmx/Bytes_util.h>
-#include <libyasmx/Compose.h>
-#include <libyasmx/marg_ostream.h>
-#include <libyasmx/Symbol.h>
+#include <yasmx/Support/marg_ostream.h>
+#include <yasmx/Bytes.h>
+#include <yasmx/Bytes_util.h>
+#include <yasmx/Compose.h>
+#include <yasmx/Symbol.h>
 
 
 namespace yasm

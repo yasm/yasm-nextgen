@@ -26,12 +26,12 @@
 //
 #include "bin-data.h"
 
-#include <libyasmx/Support/marg_ostream.h>
-#include <libyasmx/BytecodeContainer.h>
-#include <libyasmx/Bytecode.h>
-#include <libyasmx/Expr.h>
-#include <libyasmx/Section.h>
-#include <libyasmx/Symbol.h>
+#include <yasmx/Support/marg_ostream.h>
+#include <yasmx/BytecodeContainer.h>
+#include <yasmx/Bytecode.h>
+#include <yasmx/Expr.h>
+#include <yasmx/Section.h>
+#include <yasmx/Symbol.h>
 
 
 namespace yasm

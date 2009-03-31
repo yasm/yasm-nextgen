@@ -33,14 +33,14 @@
 #include <cstring>
 #include <string>
 
-#include <libyasmx/Compose.h>
-#include <libyasmx/EffAddr.h>
-#include <libyasmx/errwarn.h>
-#include <libyasmx/Expr.h>
-#include <libyasmx/functional.h>
-#include <libyasmx/IntNum.h>
-#include <libyasmx/marg_ostream.h>
-#include <libyasmx/phash.h>
+#include <yasmx/Config/functional.h>
+#include <yasmx/Support/marg_ostream.h>
+#include <yasmx/Support/phash.h>
+#include <yasmx/Compose.h>
+#include <yasmx/EffAddr.h>
+#include <yasmx/errwarn.h>
+#include <yasmx/Expr.h>
+#include <yasmx/IntNum.h>
 
 #include "X86Arch.h"
 #include "X86Common.h"

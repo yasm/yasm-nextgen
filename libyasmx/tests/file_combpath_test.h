@@ -24,7 +24,7 @@
 //
 #include <cxxtest/TestSuite.h>
 
-#include "System/file.h"
+#include "yasmx/System/file.h"
 
 using namespace yasm;
 

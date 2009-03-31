@@ -27,17 +27,17 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "Object_util.h"
+#include "yasmx/Object_util.h"
 
 #include "util.h"
 
-#include "BytecodeContainer_util.h"
-#include "Bytecode.h"
-#include "errwarn.h"
-#include "NameValue.h"
-#include "Section.h"
-#include "Object.h"
-#include "ObjectFormat.h"
+#include "yasmx/BytecodeContainer_util.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/errwarn.h"
+#include "yasmx/NameValue.h"
+#include "yasmx/Section.h"
+#include "yasmx/Object.h"
+#include "yasmx/ObjectFormat.h"
 
 namespace yasm
 {

@@ -24,17 +24,17 @@
 /// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 /// POSSIBILITY OF SUCH DAMAGE.
 ///
-#include "Directive.h"
+#include "yasmx/Directive.h"
 
 #include "util.h"
 
 #include <map>
 
-#include "Support/nocase.h"
+#include "yasmx/Support/nocase.h"
 
-#include "Compose.h"
-#include "errwarn.h"
-#include "NameValue.h"
+#include "yasmx/Compose.h"
+#include "yasmx/errwarn.h"
+#include "yasmx/NameValue.h"
 
 
 namespace yasm

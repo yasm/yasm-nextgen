@@ -39,7 +39,7 @@
 
 #include <boost/pool/pool.hpp>
 
-#include "Support/bitcount.h"
+#include "yasmx/Support/bitcount.h"
 
 
 namespace yasm

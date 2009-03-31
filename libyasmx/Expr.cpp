@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Expr.h"
+#include "yasmx/Expr.h"
 
 #include "util.h"
 
@@ -32,13 +32,13 @@
 #include <iterator>
 #include <ostream>
 
-#include "Config/functional.h"
+#include "yasmx/Config/functional.h"
 
-#include "Arch.h"
-#include "errwarn.h"
-#include "FloatNum.h"
-#include "IntNum.h"
-#include "Symbol.h"
+#include "yasmx/Arch.h"
+#include "yasmx/errwarn.h"
+#include "yasmx/FloatNum.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/Symbol.h"
 
 
 namespace yasm

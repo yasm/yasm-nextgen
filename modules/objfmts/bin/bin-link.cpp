@@ -30,14 +30,14 @@
 
 #include <algorithm>
 
-#include <libyasmx/Bytecode.h>
-#include <libyasmx/Compose.h>
-#include <libyasmx/errwarn.h>
-#include <libyasmx/Errwarns.h>
-#include <libyasmx/Expr.h>
-#include <libyasmx/marg_ostream.h>
-#include <libyasmx/Object.h>
-#include <libyasmx/Section.h>
+#include <yasmx/Support/marg_ostream.h>
+#include <yasmx/Bytecode.h>
+#include <yasmx/Compose.h>
+#include <yasmx/errwarn.h>
+#include <yasmx/Errwarns.h>
+#include <yasmx/Expr.h>
+#include <yasmx/Object.h>
+#include <yasmx/Section.h>
 
 #include "bin-data.h"
 

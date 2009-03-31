@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "System/file.h"
+#include "yasmx/System/file.h"
 
 #include <util.h>
 
@@ -41,7 +41,7 @@
 #include <string>
 #include <vector>
 
-#include "errwarn.h"
+#include "yasmx/errwarn.h"
 
 
 namespace

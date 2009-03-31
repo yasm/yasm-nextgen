@@ -26,9 +26,9 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <libyasmx/Bytes.h>
-#include <libyasmx/marg_ostream_fwd.h>
-#include <libyasmx/ptr_vector.h>
+#include <yasmx/Support/marg_ostream_fwd.h>
+#include <yasmx/Support/ptr_vector.h>
+#include <yasmx/Bytes.h>
 
 
 namespace yasm

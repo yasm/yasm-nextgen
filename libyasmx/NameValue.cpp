@@ -24,16 +24,16 @@
 /// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 /// POSSIBILITY OF SUCH DAMAGE.
 ///
-#include "NameValue.h"
+#include "yasmx/NameValue.h"
 
 #include "util.h"
 
 #include <ostream>
 
-#include "errwarn.h"
-#include "Expr.h"
-#include "Object.h"
-#include "Symbol.h"
+#include "yasmx/errwarn.h"
+#include "yasmx/Expr.h"
+#include "yasmx/Object.h"
+#include "yasmx/Symbol.h"
 
 
 namespace yasm

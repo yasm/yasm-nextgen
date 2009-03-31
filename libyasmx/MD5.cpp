@@ -28,7 +28,7 @@
    need to worry about whether the system supplies an MD5 library, as
    this file is only about 3k of object code.  */
 
-#include "MD5.h"
+#include "yasmx/MD5.h"
 
 #include <cstring>
 

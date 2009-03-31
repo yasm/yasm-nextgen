@@ -27,7 +27,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "DebugFormat.h"
+#include "yasmx/DebugFormat.h"
 
 
 namespace yasm

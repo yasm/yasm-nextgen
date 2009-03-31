@@ -30,10 +30,10 @@
 
 #include <string>
 
-#include <libyasmx/Arch.h>
-#include <libyasmx/errwarn.h>
-#include <libyasmx/marg_ostream.h>
-#include <libyasmx/Object.h>
+#include <yasmx/Support/marg_ostream.h>
+#include <yasmx/Arch.h>
+#include <yasmx/errwarn.h>
+#include <yasmx/Object.h>
 
 
 namespace yasm

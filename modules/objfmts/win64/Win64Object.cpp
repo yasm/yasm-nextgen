@@ -26,17 +26,17 @@
 //
 #include <util.h>
 
-#include <libyasmx/Arch.h>
-#include <libyasmx/BytecodeContainer_util.h>
-#include <libyasmx/Compose.h>
-#include <libyasmx/Directive.h>
-#include <libyasmx/errwarn.h>
-#include <libyasmx/Errwarns.h>
-#include <libyasmx/Object.h>
-#include <libyasmx/NameValue.h>
-#include <libyasmx/nocase.h>
-#include <libyasmx/registry.h>
-#include <libyasmx/Symbol.h>
+#include <yasmx/Support/nocase.h>
+#include <yasmx/Support/registry.h>
+#include <yasmx/Arch.h>
+#include <yasmx/BytecodeContainer_util.h>
+#include <yasmx/Compose.h>
+#include <yasmx/Directive.h>
+#include <yasmx/errwarn.h>
+#include <yasmx/Errwarns.h>
+#include <yasmx/Object.h>
+#include <yasmx/NameValue.h>
+#include <yasmx/Symbol.h>
 
 #include "modules/objfmts/win32/Win32Object.h"
 #include "modules/objfmts/coff/CoffSection.h"

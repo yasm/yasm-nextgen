@@ -28,7 +28,7 @@
 //
 #include <bitset>
 
-#include <libyasmx/Arch.h>
+#include <yasmx/Arch.h>
 
 #include "X86Register.h"
 #include "X86TargetModifier.h"

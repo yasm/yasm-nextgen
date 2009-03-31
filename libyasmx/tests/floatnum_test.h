@@ -24,7 +24,7 @@
 //
 #include <cxxtest/TestSuite.h>
 
-#include "FloatNum.h"
+#include "yasmx/FloatNum.h"
 
 #ifndef NELEMS
 #define NELEMS(array)   (sizeof(array) / sizeof(array[0]))

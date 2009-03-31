@@ -30,15 +30,15 @@
 
 #include <vector>
 
-#include <libyasmx/Support/nocase.h>
-#include <libyasmx/Support/registry.h>
-#include <libyasmx/BytecodeContainer_util.h>
-#include <libyasmx/Directive.h>
-#include <libyasmx/DirHelpers.h>
-#include <libyasmx/errwarn.h>
-#include <libyasmx/Object.h>
-#include <libyasmx/NameValue.h>
-#include <libyasmx/Symbol.h>
+#include <yasmx/Support/nocase.h>
+#include <yasmx/Support/registry.h>
+#include <yasmx/BytecodeContainer_util.h>
+#include <yasmx/Directive.h>
+#include <yasmx/DirHelpers.h>
+#include <yasmx/errwarn.h>
+#include <yasmx/Object.h>
+#include <yasmx/NameValue.h>
+#include <yasmx/Symbol.h>
 
 #include "modules/objfmts/coff/CoffSection.h"
 #include "SxData.h"

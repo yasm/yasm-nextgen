@@ -28,9 +28,9 @@
 
 #include <util.h>
 
-#include <libyasmx/Bytes.h>
-#include <libyasmx/Bytes_util.h>
-#include <libyasmx/Errwarns.h>
+#include <yasmx/Bytes.h>
+#include <yasmx/Bytes_util.h>
+#include <yasmx/Errwarns.h>
 
 #include "CoffSymbol.h"
 

@@ -28,13 +28,13 @@
 //
 #include <memory>
 
-#include <libyasmx/Support/scoped_ptr.h>
-#include <libyasmx/Bytecode.h>
-#include <libyasmx/FloatNum.h>
-#include <libyasmx/Insn.h>
-#include <libyasmx/IntNum.h>
-#include <libyasmx/Linemap.h>
-#include <libyasmx/Parser.h>
+#include <yasmx/Support/scoped_ptr.h>
+#include <yasmx/Bytecode.h>
+#include <yasmx/FloatNum.h>
+#include <yasmx/Insn.h>
+#include <yasmx/IntNum.h>
+#include <yasmx/Linemap.h>
+#include <yasmx/Parser.h>
 
 
 namespace yasm

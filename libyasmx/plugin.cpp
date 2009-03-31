@@ -27,7 +27,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "System/plugin.h"
+#include "yasmx/System/plugin.h"
 
 #include <iostream>
 #include <vector>

@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Support/nocase.h"
+#include "yasmx/Support/nocase.h"
 
 #include <algorithm>
 #include <cctype>

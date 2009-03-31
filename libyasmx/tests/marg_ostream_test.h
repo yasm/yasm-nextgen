@@ -24,7 +24,7 @@
 //
 #include <cxxtest/TestSuite.h>
 
-#include "Support/marg_ostream.h"
+#include "yasmx/Support/marg_ostream.h"
 
 #include <sstream>
 #include <string>

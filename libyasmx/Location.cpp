@@ -24,10 +24,10 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Location.h"
+#include "yasmx/Location.h"
 
-#include "Bytecode.h"
-#include "IntNum.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/IntNum.h"
 
 
 namespace yasm

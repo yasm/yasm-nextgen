@@ -24,14 +24,14 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Section.h"
+#include "yasmx/Section.h"
 
 #include "util.h"
 
-#include "Support/marg_ostream.h"
+#include "yasmx/Support/marg_ostream.h"
 
-#include "IntNum.h"
-#include "Reloc.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/Reloc.h"
 
 
 namespace yasm

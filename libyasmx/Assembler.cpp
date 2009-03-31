@@ -24,26 +24,26 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Assembler.h"
+#include "yasmx/Assembler.h"
 
 #include "util.h"
 
-#include "Support/registry.h"
-#include "Support/scoped_ptr.h"
-#include "System/file.h"
+#include "yasmx/Support/registry.h"
+#include "yasmx/Support/scoped_ptr.h"
+#include "yasmx/System/file.h"
 
-#include "Arch.h"
-#include "Compose.h"
-#include "DebugFormat.h"
-#include "Directive.h"
-#include "errwarn.h"
-#include "Errwarns.h"
-#include "Linemap.h"
-#include "ListFormat.h"
-#include "Object.h"
-#include "ObjectFormat.h"
-#include "Parser.h"
-#include "Preprocessor.h"
+#include "yasmx/Arch.h"
+#include "yasmx/Compose.h"
+#include "yasmx/DebugFormat.h"
+#include "yasmx/Directive.h"
+#include "yasmx/errwarn.h"
+#include "yasmx/Errwarns.h"
+#include "yasmx/Linemap.h"
+#include "yasmx/ListFormat.h"
+#include "yasmx/Object.h"
+#include "yasmx/ObjectFormat.h"
+#include "yasmx/Parser.h"
+#include "yasmx/Preprocessor.h"
 
 
 namespace yasm

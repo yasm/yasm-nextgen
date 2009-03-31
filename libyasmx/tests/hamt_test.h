@@ -27,7 +27,7 @@
 #include <string>
 #include <iostream>
 
-#include "Support/ptr_vector.h"
+#include "yasmx/Support/ptr_vector.h"
 #include "hamt.h"
 
 class HamtTestSuite : public CxxTest::TestSuite

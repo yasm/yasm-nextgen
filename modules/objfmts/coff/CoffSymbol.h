@@ -29,9 +29,9 @@
 #include <string>
 #include <vector>
 
-#include <libyasmx/AssocData.h>
-#include <libyasmx/marg_ostream_fwd.h>
-#include <libyasmx/Symbol.h>
+#include <yasmx/Support/marg_ostream_fwd.h>
+#include <yasmx/AssocData.h>
+#include <yasmx/Symbol.h>
 
 namespace yasm
 {

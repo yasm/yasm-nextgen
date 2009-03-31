@@ -27,7 +27,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "Parser.h"
+#include "yasmx/Parser.h"
 
 
 namespace yasm

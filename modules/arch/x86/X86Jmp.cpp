@@ -28,15 +28,15 @@
 
 #include "util.h"
 
-#include <libyasmx/BytecodeContainer.h>
-#include <libyasmx/BytecodeOutput.h>
-#include <libyasmx/Bytecode.h>
-#include <libyasmx/Bytes.h>
-#include <libyasmx/errwarn.h>
-#include <libyasmx/Expr.h>
-#include <libyasmx/IntNum.h>
-#include <libyasmx/marg_ostream.h>
-#include <libyasmx/Symbol.h>
+#include <yasmx/Support/marg_ostream.h>
+#include <yasmx/BytecodeContainer.h>
+#include <yasmx/BytecodeOutput.h>
+#include <yasmx/Bytecode.h>
+#include <yasmx/Bytes.h>
+#include <yasmx/errwarn.h>
+#include <yasmx/Expr.h>
+#include <yasmx/IntNum.h>
+#include <yasmx/Symbol.h>
 
 #include "X86Common.h"
 #include "X86Opcode.h"

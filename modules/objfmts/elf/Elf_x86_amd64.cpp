@@ -26,8 +26,8 @@
 //
 #include <util.h>
 
-#include <libyasmx/errwarn.h>
-#include <libyasmx/nocase.h>
+#include <yasmx/Support/nocase.h>
+#include <yasmx/errwarn.h>
 
 #include "elf.h"
 #include "ElfMachine.h"

@@ -24,11 +24,11 @@
 //
 #include <cxxtest/TestSuite.h>
 
-#include "Expr.h"
-#include "Object.h"
-#include "Section.h"
-#include "Symbol.h"
-#include "Value.h"
+#include "yasmx/Expr.h"
+#include "yasmx/Object.h"
+#include "yasmx/Section.h"
+#include "yasmx/Symbol.h"
+#include "yasmx/Value.h"
 
 class ValueTest : public CxxTest::TestSuite
 {

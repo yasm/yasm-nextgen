@@ -26,10 +26,10 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <libyasmx/AssocData.h>
-#include <libyasmx/marg_ostream_fwd.h>
-#include <libyasmx/Section.h>
-#include <libyasmx/SymbolRef.h>
+#include <yasmx/Support/marg_ostream_fwd.h>
+#include <yasmx/AssocData.h>
+#include <yasmx/Section.h>
+#include <yasmx/SymbolRef.h>
 
 namespace yasm
 {

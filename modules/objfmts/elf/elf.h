@@ -29,15 +29,15 @@
 #include <iosfwd>
 #include <vector>
 
-#include <libyasmx/Support/marg_ostream_fwd.h>
-#include <libyasmx/Support/scoped_ptr.h>
-#include <libyasmx/AssocData.h>
-#include <libyasmx/Bytes.h>
-#include <libyasmx/IntNum.h>
-#include <libyasmx/Reloc.h>
-#include <libyasmx/Section.h>
-#include <libyasmx/Symbol.h>
-#include <libyasmx/SymbolRef.h>
+#include <yasmx/Support/marg_ostream_fwd.h>
+#include <yasmx/Support/scoped_ptr.h>
+#include <yasmx/AssocData.h>
+#include <yasmx/Bytes.h>
+#include <yasmx/IntNum.h>
+#include <yasmx/Reloc.h>
+#include <yasmx/Section.h>
+#include <yasmx/Symbol.h>
+#include <yasmx/SymbolRef.h>
 
 
 namespace yasm

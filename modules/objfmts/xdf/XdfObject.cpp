@@ -26,28 +26,28 @@
 //
 #include <util.h>
 
-#include <libyasmx/Arch.h>
-#include <libyasmx/BytecodeOutput.h>
-#include <libyasmx/bitcount.h>
-#include <libyasmx/Bytecode.h>
-#include <libyasmx/Bytes.h>
-#include <libyasmx/Bytes_util.h>
-#include <libyasmx/Compose.h>
-#include <libyasmx/Directive.h>
-#include <libyasmx/DirHelpers.h>
-#include <libyasmx/errwarn.h>
-#include <libyasmx/Errwarns.h>
-#include <libyasmx/IntNum.h>
-#include <libyasmx/Location_util.h>
-#include <libyasmx/marg_ostream.h>
-#include <libyasmx/NameValue.h>
-#include <libyasmx/nocase.h>
-#include <libyasmx/Object.h>
-#include <libyasmx/ObjectFormat.h>
-#include <libyasmx/registry.h>
-#include <libyasmx/Reloc.h>
-#include <libyasmx/Section.h>
-#include <libyasmx/Symbol.h>
+#include <yasmx/Support/bitcount.h>
+#include <yasmx/Support/marg_ostream.h>
+#include <yasmx/Support/nocase.h>
+#include <yasmx/Support/registry.h>
+#include <yasmx/Arch.h>
+#include <yasmx/BytecodeOutput.h>
+#include <yasmx/Bytecode.h>
+#include <yasmx/Bytes.h>
+#include <yasmx/Bytes_util.h>
+#include <yasmx/Compose.h>
+#include <yasmx/Directive.h>
+#include <yasmx/DirHelpers.h>
+#include <yasmx/errwarn.h>
+#include <yasmx/Errwarns.h>
+#include <yasmx/IntNum.h>
+#include <yasmx/Location_util.h>
+#include <yasmx/NameValue.h>
+#include <yasmx/Object.h>
+#include <yasmx/ObjectFormat.h>
+#include <yasmx/Reloc.h>
+#include <yasmx/Section.h>
+#include <yasmx/Symbol.h>
 
 
 namespace yasm

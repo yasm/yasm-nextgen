@@ -24,15 +24,15 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "EffAddr.h"
+#include "yasmx/EffAddr.h"
 
 #include "util.h"
 
-#include "Support/marg_ostream.h"
+#include "yasmx/Support/marg_ostream.h"
 
-#include "Arch.h"
-#include "errwarn.h"
-#include "Expr.h"
+#include "yasmx/Arch.h"
+#include "yasmx/errwarn.h"
+#include "yasmx/Expr.h"
 
 
 namespace yasm

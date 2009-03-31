@@ -28,15 +28,15 @@
 
 #include <util.h>
 
-#include <libyasmx/BytecodeContainer.h>
-#include <libyasmx/BytecodeContainer_util.h>
-#include <libyasmx/BytecodeOutput.h>
-#include <libyasmx/Bytes.h>
-#include <libyasmx/Bytes_util.h>
-#include <libyasmx/Compose.h>
-#include <libyasmx/errwarn.h>
-#include <libyasmx/Expr.h>
-#include <libyasmx/Symbol.h>
+#include <yasmx/BytecodeContainer.h>
+#include <yasmx/BytecodeContainer_util.h>
+#include <yasmx/BytecodeOutput.h>
+#include <yasmx/Bytes.h>
+#include <yasmx/Bytes_util.h>
+#include <yasmx/Compose.h>
+#include <yasmx/errwarn.h>
+#include <yasmx/Expr.h>
+#include <yasmx/Symbol.h>
 
 
 namespace yasm

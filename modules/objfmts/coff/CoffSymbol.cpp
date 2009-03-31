@@ -28,16 +28,16 @@
 
 #include <util.h>
 
-#include <libyasmx/Bytecode.h>
-#include <libyasmx/Bytes_util.h>
-#include <libyasmx/errwarn.h>
-#include <libyasmx/Errwarns.h>
-#include <libyasmx/IntNum.h>
-#include <libyasmx/Location_util.h>
-#include <libyasmx/marg_ostream.h>
-#include <libyasmx/Section.h>
-#include <libyasmx/Symbol_util.h>
-#include <libyasmx/StringTable.h>
+#include <yasmx/Support/marg_ostream.h>
+#include <yasmx/Bytecode.h>
+#include <yasmx/Bytes_util.h>
+#include <yasmx/errwarn.h>
+#include <yasmx/Errwarns.h>
+#include <yasmx/IntNum.h>
+#include <yasmx/Location_util.h>
+#include <yasmx/Section.h>
+#include <yasmx/Symbol_util.h>
+#include <yasmx/StringTable.h>
 
 #include "CoffSection.h"
 

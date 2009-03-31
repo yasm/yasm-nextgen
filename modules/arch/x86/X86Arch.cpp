@@ -27,17 +27,17 @@
 
 #include "util.h"
 
-#include <libyasmx/Bytes.h>
-#include <libyasmx/Compose.h>
-#include <libyasmx/Directive.h>
-#include <libyasmx/errwarn.h>
-#include <libyasmx/Expr.h>
-#include <libyasmx/FloatNum.h>
-#include <libyasmx/IntNum.h>
-#include <libyasmx/Object.h>
-#include <libyasmx/NameValue.h>
-#include <libyasmx/nocase.h>
-#include <libyasmx/registry.h>
+#include <yasmx/Support/nocase.h>
+#include <yasmx/Support/registry.h>
+#include <yasmx/Bytes.h>
+#include <yasmx/Compose.h>
+#include <yasmx/Directive.h>
+#include <yasmx/errwarn.h>
+#include <yasmx/Expr.h>
+#include <yasmx/FloatNum.h>
+#include <yasmx/IntNum.h>
+#include <yasmx/Object.h>
+#include <yasmx/NameValue.h>
 
 #include "X86EffAddr.h"
 #include "X86RegisterGroup.h"

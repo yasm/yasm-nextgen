@@ -28,21 +28,21 @@
 
 #include <fstream>
 
-#include "Support/marg_ostream.h"
-#include "Support/scoped_ptr.h"
-#include "System/file.h"
+#include "yasmx/Support/marg_ostream.h"
+#include "yasmx/Support/scoped_ptr.h"
+#include "yasmx/System/file.h"
 
-#include "BytecodeContainer.h"
-#include "BytecodeContainer_util.h"
-#include "BytecodeOutput.h"
-#include "Bytecode.h"
-#include "Bytes.h"
-#include "Compose.h"
-#include "errwarn.h"
-#include "Expr.h"
-#include "IntNum.h"
-#include "Linemap.h"
-#include "Value.h"
+#include "yasmx/BytecodeContainer.h"
+#include "yasmx/BytecodeContainer_util.h"
+#include "yasmx/BytecodeOutput.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/Bytes.h"
+#include "yasmx/Compose.h"
+#include "yasmx/errwarn.h"
+#include "yasmx/Expr.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/Linemap.h"
+#include "yasmx/Value.h"
 
 
 namespace

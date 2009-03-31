@@ -24,23 +24,23 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Bytecode.h"
+#include "yasmx/Bytecode.h"
 
 #include "util.h"
 
-#include "Support/marg_ostream.h"
+#include "yasmx/Support/marg_ostream.h"
 
-#include "BytecodeContainer.h"
-#include "BytecodeOutput.h"
-#include "Bytes.h"
-#include "errwarn.h"
-#include "Expr.h"
-#include "IntNum.h"
-#include "Location_util.h"
-#include "Object.h"
-#include "Op.h"
-#include "Symbol.h"
-#include "Value.h"
+#include "yasmx/BytecodeContainer.h"
+#include "yasmx/BytecodeOutput.h"
+#include "yasmx/Bytes.h"
+#include "yasmx/errwarn.h"
+#include "yasmx/Expr.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/Location_util.h"
+#include "yasmx/Object.h"
+#include "yasmx/Op.h"
+#include "yasmx/Symbol.h"
+#include "yasmx/Value.h"
 
 
 namespace yasm

@@ -24,15 +24,15 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Expr_util.h"
+#include "yasmx/Expr_util.h"
 
 #include "util.h"
 
 #include <algorithm>
 
-#include "errwarn.h"
-#include "Expr.h"
-#include "Symbol.h"
+#include "yasmx/errwarn.h"
+#include "yasmx/Expr.h"
+#include "yasmx/Symbol.h"
 
 
 namespace

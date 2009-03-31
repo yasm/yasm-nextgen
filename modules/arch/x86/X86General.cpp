@@ -30,17 +30,17 @@
 
 #include <iomanip>
 
-#include <libyasmx/BytecodeContainer.h>
-#include <libyasmx/BytecodeOutput.h>
-#include <libyasmx/Bytecode.h>
-#include <libyasmx/Bytes.h>
-#include <libyasmx/Bytes_util.h>
-#include <libyasmx/errwarn.h>
-#include <libyasmx/Expr.h>
-#include <libyasmx/IntNum.h>
-#include <libyasmx/marg_ostream.h>
-#include <libyasmx/Object.h>
-#include <libyasmx/Symbol.h>
+#include <yasmx/Support/marg_ostream.h>
+#include <yasmx/BytecodeContainer.h>
+#include <yasmx/BytecodeOutput.h>
+#include <yasmx/Bytecode.h>
+#include <yasmx/Bytes.h>
+#include <yasmx/Bytes_util.h>
+#include <yasmx/errwarn.h>
+#include <yasmx/Expr.h>
+#include <yasmx/IntNum.h>
+#include <yasmx/Object.h>
+#include <yasmx/Symbol.h>
 
 #include "X86Arch.h"
 #include "X86Common.h"

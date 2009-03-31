@@ -28,14 +28,14 @@
 
 #include <util.h>
 
-#include <libyasmx/Arch.h>
-#include <libyasmx/Directive.h>
-#include <libyasmx/Expr.h>
-#include <libyasmx/nocase.h>
-#include <libyasmx/Object.h>
-#include <libyasmx/Section.h>
-#include <libyasmx/Symbol_util.h>
-#include <libyasmx/registry.h>
+#include <yasmx/Support/nocase.h>
+#include <yasmx/Support/registry.h>
+#include <yasmx/Arch.h>
+#include <yasmx/Directive.h>
+#include <yasmx/Expr.h>
+#include <yasmx/Object.h>
+#include <yasmx/Section.h>
+#include <yasmx/Symbol_util.h>
 
 
 namespace yasm

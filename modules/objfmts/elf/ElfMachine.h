@@ -29,8 +29,8 @@
 #include <memory>
 #include <string>
 
-#include <libyasmx/AssocData.h>
-#include <libyasmx/Symbol.h>
+#include <yasmx/AssocData.h>
+#include <yasmx/Symbol.h>
 
 #include "elf.h"
 

@@ -27,7 +27,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "ListFormat.h"
+#include "yasmx/ListFormat.h"
 
 
 namespace yasm

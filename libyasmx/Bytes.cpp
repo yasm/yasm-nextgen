@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Bytes.h"
+#include "yasmx/Bytes.h"
 
 #include <algorithm>
 #include <istream>
@@ -32,7 +32,7 @@
 #include <iomanip>
 #include <ostream>
 
-#include "Support/marg_ostream.h"
+#include "yasmx/Support/marg_ostream.h"
 
 
 namespace yasm

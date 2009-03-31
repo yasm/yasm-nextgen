@@ -28,11 +28,11 @@
 //
 #include <string>
 
-#include <libyasmx/Support/scoped_ptr.h>
-#include <libyasmx/AssocData.h>
-#include <libyasmx/IntNum.h>
-#include <libyasmx/Section.h>
-#include <libyasmx/Symbol.h>
+#include <yasmx/Support/scoped_ptr.h>
+#include <yasmx/AssocData.h>
+#include <yasmx/IntNum.h>
+#include <yasmx/Section.h>
+#include <yasmx/Symbol.h>
 
 
 namespace yasm

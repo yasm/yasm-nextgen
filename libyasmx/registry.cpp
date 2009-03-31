@@ -27,7 +27,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "Support/registry.h"
+#include "yasmx/Support/registry.h"
 
 #include <map>
 

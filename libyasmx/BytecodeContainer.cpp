@@ -24,17 +24,17 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "BytecodeContainer.h"
+#include "yasmx/BytecodeContainer.h"
 
 #include "util.h"
 
-#include "Support/marg_ostream.h"
+#include "yasmx/Support/marg_ostream.h"
 
-#include "BytecodeOutput.h"
-#include "Bytecode.h"
-#include "Bytecode_util.h"
-#include "errwarn.h"
-#include "Expr.h"
+#include "yasmx/BytecodeOutput.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/Bytecode_util.h"
+#include "yasmx/errwarn.h"
+#include "yasmx/Expr.h"
 
 
 namespace

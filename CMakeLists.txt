@@ -41,7 +41,8 @@ set (PACKAGE_STRING "yasm ${PACKAGE_VERSION}")
 INCLUDE_DIRECTORIES(BEFORE
     ${CMAKE_BINARY_DIR}
     ${yasm_SOURCE_DIR}
-    ${CMAKE_BINARY_DIR}/libyasmx
+    ${yasm_SOURCE_DIR}/include
+    ${CMAKE_BINARY_DIR}/include
     )
 
 INCLUDE(CTest)
@@ -72,6 +73,7 @@ INCLUDE(CPack)
 INCLUDE(ConfigureChecks.cmake)
 INCLUDE(MacroAddCxxTest)
 
+ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(tools)
 ADD_SUBDIRECTORY(modules)
 ADD_SUBDIRECTORY(libyasmx)

@@ -24,16 +24,16 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Symbol.h"
+#include "yasmx/Symbol.h"
 
 #include "util.h"
 
-#include "Support/marg_ostream.h"
+#include "yasmx/Support/marg_ostream.h"
 
-#include "Bytecode.h"
-#include "Compose.h"
-#include "errwarn.h"
-#include "Expr.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/Compose.h"
+#include "yasmx/errwarn.h"
+#include "yasmx/Expr.h"
 
 
 namespace yasm

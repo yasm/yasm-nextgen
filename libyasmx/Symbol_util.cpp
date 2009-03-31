@@ -24,19 +24,19 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Symbol_util.h"
+#include "yasmx/Symbol_util.h"
 
 #include <util.h>
 
-#include "Support/marg_ostream.h"
-#include "Support/scoped_ptr.h"
+#include "yasmx/Support/marg_ostream.h"
+#include "yasmx/Support/scoped_ptr.h"
 
-#include "AssocData.h"
-#include "errwarn.h"
-#include "Expr.h"
-#include "NameValue.h"
-#include "Object.h"
-#include "Symbol.h"
+#include "yasmx/AssocData.h"
+#include "yasmx/errwarn.h"
+#include "yasmx/Expr.h"
+#include "yasmx/NameValue.h"
+#include "yasmx/Object.h"
+#include "yasmx/Symbol.h"
 
 
 namespace

@@ -30,10 +30,10 @@
 
 #include <iomanip>
 
-#include <libyasmx/Bytes.h>
-#include <libyasmx/Bytes_util.h>
-#include <libyasmx/errwarn.h>
-#include <libyasmx/marg_ostream.h>
+#include <yasmx/Support/marg_ostream.h>
+#include <yasmx/Bytes.h>
+#include <yasmx/Bytes_util.h>
+#include <yasmx/errwarn.h>
 
 #include "X86Prefix.h"
 #include "X86Register.h"

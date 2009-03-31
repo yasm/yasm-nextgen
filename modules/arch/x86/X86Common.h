@@ -28,8 +28,8 @@
 //
 #include <vector>
 
-#include <libyasmx/Insn.h>
-#include <libyasmx/marg_ostream_fwd.h>
+#include <yasmx/Support/marg_ostream_fwd.h>
+#include <yasmx/Insn.h>
 
 
 namespace yasm

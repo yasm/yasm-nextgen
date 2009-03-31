@@ -26,7 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <libyasmx/ObjectFormat.h>
+#include <yasmx/ObjectFormat.h>
 
 namespace yasm
 {

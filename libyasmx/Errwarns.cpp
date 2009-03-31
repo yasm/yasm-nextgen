@@ -24,15 +24,15 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Errwarns.h"
+#include "yasmx/Errwarns.h"
 
 #include "util.h"
 
 #include <algorithm>
 #include <list>
 
-#include "errwarn.h"
-#include "Linemap.h"
+#include "yasmx/errwarn.h"
+#include "yasmx/Linemap.h"
 
 
 namespace yasm

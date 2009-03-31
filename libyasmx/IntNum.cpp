@@ -24,8 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "IntNum.h"
-#include "IntNum_iomanip.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/IntNum_iomanip.h"
 
 #include "util.h"
 
@@ -33,9 +33,9 @@
 #include <cstring>
 #include <limits>
 
-#include "BitVector.h"
-#include "Compose.h"
-#include "errwarn.h"
+#include "yasmx/BitVector.h"
+#include "yasmx/Compose.h"
+#include "yasmx/errwarn.h"
 
 
 using BitVector::wordptr;

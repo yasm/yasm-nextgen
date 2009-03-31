@@ -24,12 +24,13 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "BytecodeOutput.h"
+#include "yasmx/BytecodeOutput.h"
 
 #include <ostream>
 
-#include "errwarn.h"
 #include "util.h"
+
+#include "yasmx/errwarn.h"
 
 
 namespace yasm

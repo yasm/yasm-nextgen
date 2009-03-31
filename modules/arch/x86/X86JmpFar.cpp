@@ -26,9 +26,9 @@
 //
 #include "X86JmpFar.h"
 
-#include <libyasmx/BytecodeContainer.h>
-#include <libyasmx/Bytecode.h>
-#include <libyasmx/Expr.h>
+#include <yasmx/BytecodeContainer.h>
+#include <yasmx/Bytecode.h>
+#include <yasmx/Expr.h>
 
 #include "X86Common.h"
 #include "X86Opcode.h"

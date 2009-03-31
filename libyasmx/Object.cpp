@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Object.h"
+#include "yasmx/Object.h"
 
 #include "util.h"
 
@@ -37,22 +37,22 @@
 
 #include <boost/pool/pool.hpp>
 
-#include "Support/IntervalTree.h"
-#include "Support/marg_ostream.h"
+#include "yasmx/Support/IntervalTree.h"
+#include "yasmx/Support/marg_ostream.h"
 
-#include "Arch.h"
-#include "Bytecode.h"
-#include "Bytecode_util.h"
-#include "DebugFormat.h"
-#include "errwarn.h"
-#include "Errwarns.h"
-#include "Expr.h"
-#include "IntNum.h"
-#include "Location_util.h"
-#include "ObjectFormat.h"
-#include "Section.h"
-#include "Symbol.h"
-#include "Value.h"
+#include "yasmx/Arch.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/Bytecode_util.h"
+#include "yasmx/DebugFormat.h"
+#include "yasmx/errwarn.h"
+#include "yasmx/Errwarns.h"
+#include "yasmx/Expr.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/Location_util.h"
+#include "yasmx/ObjectFormat.h"
+#include "yasmx/Section.h"
+#include "yasmx/Symbol.h"
+#include "yasmx/Value.h"
 
 #include "hamt.h"
 

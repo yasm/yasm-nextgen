@@ -24,21 +24,21 @@
 /// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 /// POSSIBILITY OF SUCH DAMAGE.
 ///
-#include "BytecodeContainer_util.h"
+#include "yasmx/BytecodeContainer_util.h"
 
 #include "util.h"
 
-#include "Support/marg_ostream.h"
-#include "Support/scoped_ptr.h"
+#include "yasmx/Support/marg_ostream.h"
+#include "yasmx/Support/scoped_ptr.h"
 
-#include "BytecodeContainer.h"
-#include "BytecodeOutput.h"
-#include "Bytecode.h"
-#include "Bytes.h"
-#include "Compose.h"
-#include "errwarn.h"
-#include "Expr.h"
-#include "IntNum.h"
+#include "yasmx/BytecodeContainer.h"
+#include "yasmx/BytecodeOutput.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/Bytes.h"
+#include "yasmx/Compose.h"
+#include "yasmx/errwarn.h"
+#include "yasmx/Expr.h"
+#include "yasmx/IntNum.h"
 
 
 namespace

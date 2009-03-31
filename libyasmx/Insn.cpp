@@ -24,21 +24,21 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Insn.h"
+#include "yasmx/Insn.h"
 
 #include "util.h"
 
 #include <algorithm>
 #include <ostream>
 
-#include "Config/functional.h"
-#include "Support/marg_ostream.h"
+#include "yasmx/Config/functional.h"
+#include "yasmx/Support/marg_ostream.h"
 
-#include "Arch.h"
-#include "EffAddr.h"
-#include "errwarn.h"
-#include "Expr.h"
-#include "Expr_util.h"
+#include "yasmx/Arch.h"
+#include "yasmx/EffAddr.h"
+#include "yasmx/errwarn.h"
+#include "yasmx/Expr.h"
+#include "yasmx/Expr_util.h"
 
 
 namespace yasm

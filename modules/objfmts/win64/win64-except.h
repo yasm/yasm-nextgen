@@ -29,9 +29,9 @@
 #include <memory>
 #include <vector>
 
-#include <libyasmx/Bytecode.h>
-#include <libyasmx/SymbolRef.h>
-#include <libyasmx/Value.h>
+#include <yasmx/Bytecode.h>
+#include <yasmx/SymbolRef.h>
+#include <yasmx/Value.h>
 
 
 namespace yasm

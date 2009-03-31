@@ -29,13 +29,13 @@
 #include <iomanip>
 #include <ostream>
 
-#include <libyasmx/Bytecode.h>
-#include <libyasmx/Expr.h>
-#include <libyasmx/IntNum.h>
-#include <libyasmx/Location.h>
-#include <libyasmx/Section.h>
-#include <libyasmx/Symbol.h>
-#include <libyasmx/Object.h>
+#include <yasmx/Bytecode.h>
+#include <yasmx/Expr.h>
+#include <yasmx/IntNum.h>
+#include <yasmx/Location.h>
+#include <yasmx/Section.h>
+#include <yasmx/Symbol.h>
+#include <yasmx/Object.h>
 
 #include "bin-data.h"
 #include "bin-link.h"

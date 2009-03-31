@@ -24,10 +24,10 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Bytes_leb128.h"
+#include "yasmx/Bytes_leb128.h"
 
-#include "Bytes.h"
-#include "IntNum.h"
+#include "yasmx/Bytes.h"
+#include "yasmx/IntNum.h"
 
 
 namespace yasm

@@ -26,7 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "FloatNum.h"
+#include "yasmx/FloatNum.h"
 
 #include "util.h"
 
@@ -34,8 +34,8 @@
 #include <iomanip>
 #include <ostream>
 
-#include "BitVector.h"
-#include "errwarn.h"
+#include "yasmx/BitVector.h"
+#include "yasmx/errwarn.h"
 
 
 using BitVector::charptr;

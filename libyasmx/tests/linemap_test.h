@@ -24,7 +24,7 @@
 //
 #include <cxxtest/TestSuite.h>
 
-#include "Linemap.h"
+#include "yasmx/Linemap.h"
 
 using namespace yasm;
 

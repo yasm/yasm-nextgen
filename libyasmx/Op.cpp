@@ -27,7 +27,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "Op.h"
+#include "yasmx/Op.h"
 
 
 namespace yasm

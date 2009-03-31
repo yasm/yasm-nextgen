@@ -28,10 +28,10 @@
 #include <cxxtest/TestSuite.h>
 
 #include "X86EffAddr.h"
-#include <libyasmx/errwarn.h>
-#include <libyasmx/Expr.h>
-#include <libyasmx/IntNum.h>
-#include <libyasmx/Symbol.h>
+#include <yasmx/errwarn.h>
+#include <yasmx/Expr.h>
+#include <yasmx/IntNum.h>
+#include <yasmx/Symbol.h>
 
 #include "X86Register.cpp"
 

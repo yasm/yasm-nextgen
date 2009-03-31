@@ -24,28 +24,28 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Value.h"
+#include "yasmx/Value.h"
 
 #include "util.h"
 
 #include <algorithm>
 #include <bitset>
 
-#include "Support/marg_ostream.h"
+#include "yasmx/Support/marg_ostream.h"
 
-#include "Arch.h"
-#include "Bytecode.h"
-#include "Bytes.h"
-#include "Compose.h"
-#include "errwarn.h"
-#include "Expr.h"
-#include "Expr_util.h"
-#include "FloatNum.h"
-#include "IntNum.h"
-#include "Location_util.h"
-#include "Object.h"
-#include "Section.h"
-#include "Symbol.h"
+#include "yasmx/Arch.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/Bytes.h"
+#include "yasmx/Compose.h"
+#include "yasmx/errwarn.h"
+#include "yasmx/Expr.h"
+#include "yasmx/Expr_util.h"
+#include "yasmx/FloatNum.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/Location_util.h"
+#include "yasmx/Object.h"
+#include "yasmx/Section.h"
+#include "yasmx/Symbol.h"
 
 namespace {
 
