@@ -28,13 +28,13 @@
 
 #include <util.h>
 
-#include <libyasmx/arch.h>
-#include <libyasmx/directive.h>
-#include <libyasmx/expr.h>
+#include <libyasmx/Arch.h>
+#include <libyasmx/Directive.h>
+#include <libyasmx/Expr.h>
 #include <libyasmx/nocase.h>
-#include <libyasmx/object.h>
-#include <libyasmx/section.h>
-#include <libyasmx/symbol_util.h>
+#include <libyasmx/Object.h>
+#include <libyasmx/Section.h>
+#include <libyasmx/Symbol_util.h>
 #include <libyasmx/registry.h>
 
 

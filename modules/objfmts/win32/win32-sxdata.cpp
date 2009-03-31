@@ -26,9 +26,9 @@
 //
 #include "win32-sxdata.h"
 
-#include <libyasmx/bc_output.h>
-#include <libyasmx/bytecode.h>
-#include <libyasmx/bytes_util.h>
+#include <libyasmx/BytecodeOutput.h>
+#include <libyasmx/Bytecode.h>
+#include <libyasmx/Bytes_util.h>
 
 #include "modules/objfmts/coff/coff-data.h"
 

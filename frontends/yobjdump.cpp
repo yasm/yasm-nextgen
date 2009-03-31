@@ -34,20 +34,20 @@
 #include <string>
 #include <vector>
 
-#include <libyasmx/arch.h>
-#include <libyasmx/bytecode.h>
-#include <libyasmx/compose.h>
+#include <libyasmx/Arch.h>
+#include <libyasmx/Bytecode.h>
+#include <libyasmx/Compose.h>
 #include <libyasmx/errwarn.h>
-#include <libyasmx/intnum_iomanip.h>
-#include <libyasmx/location.h>
+#include <libyasmx/IntNum_iomanip.h>
+#include <libyasmx/Location.h>
 #include <libyasmx/nocase.h>
-#include <libyasmx/object.h>
-#include <libyasmx/object_format.h>
+#include <libyasmx/Object.h>
+#include <libyasmx/ObjectFormat.h>
 #include <libyasmx/plugin.h>
 #include <libyasmx/registry.h>
-#include <libyasmx/reloc.h>
-#include <libyasmx/section.h>
-#include <libyasmx/symbol.h>
+#include <libyasmx/Reloc.h>
+#include <libyasmx/Section.h>
+#include <libyasmx/Symbol.h>
 
 #include "options.h"
 

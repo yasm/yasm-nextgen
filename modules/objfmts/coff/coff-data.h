@@ -29,12 +29,12 @@
 #include <string>
 #include <vector>
 
-#include <libyasmx/assoc_data.h>
+#include <libyasmx/AssocData.h>
 #include <libyasmx/marg_ostream_fwd.h>
-#include <libyasmx/reloc.h>
-#include <libyasmx/section.h>
-#include <libyasmx/symbol.h>
-#include <libyasmx/symbolref.h>
+#include <libyasmx/Reloc.h>
+#include <libyasmx/Section.h>
+#include <libyasmx/Symbol.h>
+#include <libyasmx/SymbolRef.h>
 
 namespace yasm
 {

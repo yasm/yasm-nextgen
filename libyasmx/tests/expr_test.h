@@ -24,9 +24,9 @@
 //
 #include <cxxtest/TestSuite.h>
 
-#include "arch.h"
-#include "expr.h"
-#include "compose.h"
+#include "Arch.h"
+#include "Expr.h"
+#include "Compose.h"
 
 namespace yasm
 {

@@ -30,19 +30,19 @@
 
 #include <cstring>
 
-#include <libyasmx/bytecode.h>
-#include <libyasmx/bytes.h>
-#include <libyasmx/bytes_util.h>
-#include <libyasmx/compose.h>
+#include <libyasmx/Bytecode.h>
+#include <libyasmx/Bytes.h>
+#include <libyasmx/Bytes_util.h>
+#include <libyasmx/Compose.h>
 #include <libyasmx/errwarn.h>
-#include <libyasmx/errwarns.h>
-#include <libyasmx/location_util.h>
+#include <libyasmx/Errwarns.h>
+#include <libyasmx/Location_util.h>
 #include <libyasmx/marg_ostream.h>
 #include <libyasmx/scoped_ptr.h>
-#include <libyasmx/section.h>
-#include <libyasmx/string_table.h>
-#include <libyasmx/symbol.h>
-#include <libyasmx/symbol_util.h>
+#include <libyasmx/Section.h>
+#include <libyasmx/StringTable.h>
+#include <libyasmx/Symbol.h>
+#include <libyasmx/Symbol_util.h>
 
 
 namespace yasm

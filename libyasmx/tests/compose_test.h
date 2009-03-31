@@ -24,7 +24,7 @@
 //
 #include <cxxtest/TestSuite.h>
 
-#include "compose.h"
+#include "Compose.h"
 
 #include <iomanip>
 

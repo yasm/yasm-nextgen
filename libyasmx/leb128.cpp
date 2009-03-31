@@ -26,8 +26,8 @@
 //
 #include "leb128.h"
 
-#include "bytes.h"
-#include "intnum.h"
+#include "Bytes.h"
+#include "IntNum.h"
 
 
 namespace yasm

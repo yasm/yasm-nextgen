@@ -4,58 +4,58 @@ IF (NOT BUILD_STATIC)
 ENDIF (NOT BUILD_STATIC)
 
 YASM_ADD_LIBRARY(libyasmx SHARED
-    arch.cpp
-    assembler.cpp
-    assoc_data.cpp
-    bc_container.cpp
-    bc_output.cpp
-    bc-align.cpp
-    bc-data.cpp
-    bc-incbin.cpp
-    bc-multiple.cpp
-    bc-org.cpp
-    bitvect.cpp
-    bytecode.cpp
-    bytecode_util.cpp
-    bytes.cpp
-    bytes_util.cpp
-    compose.cpp
-    debug_format.cpp
-    directive.cpp
-    dir_helpers.cpp
-    effaddr.cpp
+    AlignBytecode.cpp
+    Arch.cpp
+    Assembler.cpp
+    AssocData.cpp
+    BytecodeContainer.cpp
+    BytecodeContainer_util.cpp
+    BytecodeOutput.cpp
+    BitVector.cpp
+    Bytecode.cpp
+    Bytecode_util.cpp
+    Bytes.cpp
+    Bytes_util.cpp
+    Compose.cpp
+    DebugFormat.cpp
+    Directive.cpp
+    DirHelpers.cpp
+    EffAddr.cpp
     errwarn.cpp
-    errwarns.cpp
-    expr.cpp
-    expr_util.cpp
+    Errwarns.cpp
+    Expr.cpp
+    Expr_util.cpp
     file.cpp
-    floatnum.cpp
-    insn.cpp
-    intnum.cpp
+    FloatNum.cpp
+    IncbinBytecode.cpp
+    Insn.cpp
+    IntNum.cpp
     leb128.cpp
-    linemap.cpp
-    list_format.cpp
-    location.cpp
-    location_util.cpp
-    md5.cpp
-    module.cpp
-    name_value.cpp
+    Linemap.cpp
+    ListFormat.cpp
+    Location.cpp
+    Location_util.cpp
+    MD5.cpp
+    Module.cpp
+    MultipleBytecode.cpp
+    NameValue.cpp
     nocase.cpp
-    object.cpp
-    object_format.cpp
-    object_util.cpp
-    operator.cpp
-    parser.cpp
+    Object.cpp
+    ObjectFormat.cpp
+    Object_util.cpp
+    OrgBytecode.cpp
+    Op.cpp
+    Parser.cpp
     phash.cpp
     ${PLUGIN_CPP}
-    preproc.cpp
+    Preprocessor.cpp
     registry.cpp
-    reloc.cpp
-    section.cpp
-    string_table.cpp
-    symbol.cpp
-    symbol_util.cpp
-    value.cpp
+    Reloc.cpp
+    Section.cpp
+    StringTable.cpp
+    Symbol.cpp
+    Symbol_util.cpp
+    Value.cpp
     )
 SET_TARGET_PROPERTIES(libyasmx PROPERTIES
     OUTPUT_NAME "yasmx"
@@ -76,66 +76,66 @@ IF(NOT BUILD_STATIC)
     INSTALL(TARGETS libyasmx ${INSTALL_TARGETS_DEFAULT_ARGS})
 
     INSTALL(FILES
-        arch.h
-        assembler.h
-        assoc_data.h
-        bc_container.h
-        bc_container_util.h
-        bc_output.h
+        Arch.h
+        Assembler.h
+        AssocData.h
+        BytecodeContainer.h
+        BytecodeContainer_util.h
+        BytecodeOutput.h
         bitcount.h
-        bitvect.h
-        bytecode.h
-        bytecode_util.h
-        bytes.h
-        bytes_util.h
-        compose.h
-        debug_format.h
-        directive.h
-        dir_helpers.h
-        effaddr.h
+        BitVector.h
+        Bytecode.h
+        Bytecode_util.h
+        Bytes.h
+        Bytes_util.h
+        Compose.h
+        DebugFormat.h
+        Directive.h
+        DirHelpers.h
+        EffAddr.h
         errwarn.h
-        errwarns.h
+        Errwarns.h
         ${CMAKE_CURRENT_BINARY_DIR}/export.h
-        expr.h
-        expr_util.h
+        Expr.h
+        Expr_util.h
         file.h
-        floatnum.h
+        FloatNum.h
         ${CMAKE_CURRENT_BINARY_DIR}/functional.h
-        #hamt.h         # Don't install; only included by object.cpp.
-        insn.h
-        interval_tree.h
-        intnum.h
-        intnum_iomanip.h
+        #hamt.h         # Don't install; only included by Object.cpp.
+        Insn.h
+        IntervalTree.h
+        IntNum.h
+        IntNum_iomanip.h
 	leb128.h
-        linemap.h
-        list_format.h
-        location.h
-        location_util.h
+        Linemap.h
+        ListFormat.h
+        Location.h
+        Location_util.h
         marg_ostream_fwd.h
         marg_ostream.h
-        md5.h
-        module.h
-        name_value.h
+        MD5.h
+        Module.h
+        NameValue.h
         nocase.h
-        object_format.h
-        object.h
-        object_util.h
-        operator.h
-        parser.h
+        ObjectFormat.h
+        Object.h
+        Object_util.h
+        Op.h
+        Parser.h
         phash.h
         plugin.h
-        preproc.h
+        Preprocessor.h
         ptr_vector.h
         registry.h
-        reloc.h
+        Reloc.h
         scoped_array.h
         scoped_ptr.h
-        section.h
-        string_table.h
-        symbol.h
-        symbolref.h
-        symbol_util.h
-        value.h
+        Section.h
+        StringTable.h
+        Symbol.h
+        SymbolRef.h
+        Symbol_util.h
+        Value.h
         DESTINATION ${INCLUDE_INSTALL_DIR}/libyasmx
         )
 ENDIF(NOT BUILD_STATIC)

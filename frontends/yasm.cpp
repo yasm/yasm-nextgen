@@ -30,21 +30,21 @@
 #include <iostream>
 #include <fstream>
 
-#include <libyasmx/arch.h>
-#include <libyasmx/assembler.h>
-#include <libyasmx/compose.h>
-#include <libyasmx/debug_format.h>
+#include <libyasmx/Arch.h>
+#include <libyasmx/Assembler.h>
+#include <libyasmx/Compose.h>
+#include <libyasmx/DebugFormat.h>
 #include <libyasmx/errwarn.h>
-#include <libyasmx/errwarns.h>
+#include <libyasmx/Errwarns.h>
 #include <libyasmx/file.h>
-#include <libyasmx/linemap.h>
-#include <libyasmx/list_format.h>
-#include <libyasmx/module.h>
+#include <libyasmx/Linemap.h>
+#include <libyasmx/ListFormat.h>
+#include <libyasmx/Module.h>
 #include <libyasmx/nocase.h>
-#include <libyasmx/object_format.h>
-#include <libyasmx/parser.h>
+#include <libyasmx/ObjectFormat.h>
+#include <libyasmx/Parser.h>
 #include <libyasmx/plugin.h>
-#include <libyasmx/preproc.h>
+#include <libyasmx/Preprocessor.h>
 #include <libyasmx/registry.h>
 
 #ifdef HAVE_LIBGEN_H

@@ -30,7 +30,7 @@
 
 #include <iomanip>
 
-#include <libyasmx/bytes.h>
+#include <libyasmx/Bytes.h>
 #include <libyasmx/marg_ostream.h>
 
 

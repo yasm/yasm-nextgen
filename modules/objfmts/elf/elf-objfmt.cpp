@@ -42,27 +42,27 @@
 //
 #include <util.h>
 
-#include <libyasmx/arch.h>
-#include <libyasmx/bc_container_util.h>
-#include <libyasmx/bc_output.h>
+#include <libyasmx/Arch.h>
+#include <libyasmx/BytecodeContainer_util.h>
+#include <libyasmx/BytecodeOutput.h>
 #include <libyasmx/bitcount.h>
-#include <libyasmx/bytecode.h>
-#include <libyasmx/compose.h>
-#include <libyasmx/directive.h>
-#include <libyasmx/dir_helpers.h>
+#include <libyasmx/Bytecode.h>
+#include <libyasmx/Compose.h>
+#include <libyasmx/Directive.h>
+#include <libyasmx/DirHelpers.h>
 #include <libyasmx/errwarn.h>
-#include <libyasmx/errwarns.h>
-#include <libyasmx/location_util.h>
-#include <libyasmx/object.h>
-#include <libyasmx/object_format.h>
-#include <libyasmx/object_util.h>
-#include <libyasmx/name_value.h>
+#include <libyasmx/Errwarns.h>
+#include <libyasmx/Location_util.h>
+#include <libyasmx/Object.h>
+#include <libyasmx/ObjectFormat.h>
+#include <libyasmx/Object_util.h>
+#include <libyasmx/NameValue.h>
 #include <libyasmx/nocase.h>
 #include <libyasmx/registry.h>
 #include <libyasmx/scoped_array.h>
-#include <libyasmx/section.h>
-#include <libyasmx/string_table.h>
-#include <libyasmx/symbol_util.h>
+#include <libyasmx/Section.h>
+#include <libyasmx/StringTable.h>
+#include <libyasmx/Symbol_util.h>
 
 #include "elf.h"
 #include "elf-machine.h"

@@ -24,9 +24,9 @@
 //
 #include <cxxtest/TestSuite.h>
 
-#include "expr.h"
-#include "location.h"
-#include "location_util.h"
+#include "Expr.h"
+#include "Location.h"
+#include "Location_util.h"
 
 class LocationTestSuite : public CxxTest::TestSuite
 {

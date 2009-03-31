@@ -28,8 +28,8 @@
 #include <iomanip>
 #include <cstdio>
 
-#include "intnum.h"
-#include "intnum_iomanip.h"
+#include "IntNum.h"
+#include "IntNum_iomanip.h"
 
 using namespace yasm;
 

@@ -25,11 +25,11 @@
 //
 #include <cxxtest/TestSuite.h>
 
-#include "bc_container.h"
-#include "bc_container_util.h"
-#include "bytecode.h"
-#include "expr.h"
-#include "intnum.h"
+#include "BytecodeContainer.h"
+#include "BytecodeContainer_util.h"
+#include "Bytecode.h"
+#include "Expr.h"
+#include "IntNum.h"
 
 class AlignTestSuite : public CxxTest::TestSuite
 {

@@ -28,12 +28,12 @@
 //
 #include <memory>
 
-#include <libyasmx/bytecode.h>
-#include <libyasmx/floatnum.h>
-#include <libyasmx/insn.h>
-#include <libyasmx/intnum.h>
-#include <libyasmx/linemap.h>
-#include <libyasmx/parser.h>
+#include <libyasmx/Bytecode.h>
+#include <libyasmx/FloatNum.h>
+#include <libyasmx/Insn.h>
+#include <libyasmx/IntNum.h>
+#include <libyasmx/Linemap.h>
+#include <libyasmx/Parser.h>
 #include <libyasmx/scoped_ptr.h>
 
 

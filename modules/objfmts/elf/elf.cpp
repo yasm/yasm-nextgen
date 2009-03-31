@@ -31,18 +31,18 @@
 #include <iomanip>
 #include <ostream>
 
-#include <libyasmx/bytecode.h>
-#include <libyasmx/bytes.h>
-#include <libyasmx/bytes_util.h>
-#include <libyasmx/compose.h>
+#include <libyasmx/Bytecode.h>
+#include <libyasmx/Bytes.h>
+#include <libyasmx/Bytes_util.h>
+#include <libyasmx/Compose.h>
 #include <libyasmx/errwarn.h>
-#include <libyasmx/errwarns.h>
-#include <libyasmx/expr.h>
-#include <libyasmx/location_util.h>
+#include <libyasmx/Errwarns.h>
+#include <libyasmx/Expr.h>
+#include <libyasmx/Location_util.h>
 #include <libyasmx/marg_ostream.h>
-#include <libyasmx/section.h>
-#include <libyasmx/string_table.h>
-#include <libyasmx/object.h>
+#include <libyasmx/Section.h>
+#include <libyasmx/StringTable.h>
+#include <libyasmx/Object.h>
 
 #include "elf-machine.h"
 

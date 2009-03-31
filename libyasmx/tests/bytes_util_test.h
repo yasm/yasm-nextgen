@@ -24,8 +24,8 @@
 //
 #include <cxxtest/TestSuite.h>
 
-#include "bytes_util.h"
-#include "intnum.h"
+#include "Bytes_util.h"
+#include "IntNum.h"
 
 #ifndef NELEMS
 #define NELEMS(array)   (sizeof(array) / sizeof(array[0]))

@@ -27,15 +27,15 @@
 
 #include "util.h"
 
-#include <libyasmx/bytes.h>
-#include <libyasmx/compose.h>
-#include <libyasmx/directive.h>
+#include <libyasmx/Bytes.h>
+#include <libyasmx/Compose.h>
+#include <libyasmx/Directive.h>
 #include <libyasmx/errwarn.h>
-#include <libyasmx/expr.h>
-#include <libyasmx/floatnum.h>
-#include <libyasmx/intnum.h>
-#include <libyasmx/object.h>
-#include <libyasmx/name_value.h>
+#include <libyasmx/Expr.h>
+#include <libyasmx/FloatNum.h>
+#include <libyasmx/IntNum.h>
+#include <libyasmx/Object.h>
+#include <libyasmx/NameValue.h>
 #include <libyasmx/nocase.h>
 #include <libyasmx/registry.h>
 

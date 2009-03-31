@@ -30,8 +30,8 @@
 
 #include <iomanip>
 
-#include <libyasmx/bytes.h>
-#include <libyasmx/bytes_util.h>
+#include <libyasmx/Bytes.h>
+#include <libyasmx/Bytes_util.h>
 #include <libyasmx/errwarn.h>
 #include <libyasmx/marg_ostream.h>
 

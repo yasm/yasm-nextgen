@@ -26,14 +26,14 @@
 //
 #include <util.h>
 
-#include <libyasmx/arch.h>
-#include <libyasmx/bc_container_util.h>
-#include <libyasmx/compose.h>
-#include <libyasmx/directive.h>
+#include <libyasmx/Arch.h>
+#include <libyasmx/BytecodeContainer_util.h>
+#include <libyasmx/Compose.h>
+#include <libyasmx/Directive.h>
 #include <libyasmx/errwarn.h>
-#include <libyasmx/errwarns.h>
-#include <libyasmx/object.h>
-#include <libyasmx/name_value.h>
+#include <libyasmx/Errwarns.h>
+#include <libyasmx/Object.h>
+#include <libyasmx/NameValue.h>
 #include <libyasmx/nocase.h>
 #include <libyasmx/registry.h>
 

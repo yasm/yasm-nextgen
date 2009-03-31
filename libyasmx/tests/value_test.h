@@ -24,11 +24,11 @@
 //
 #include <cxxtest/TestSuite.h>
 
-#include "expr.h"
-#include "object.h"
-#include "section.h"
-#include "symbol.h"
-#include "value.h"
+#include "Expr.h"
+#include "Object.h"
+#include "Section.h"
+#include "Symbol.h"
+#include "Value.h"
 
 class ValueTest : public CxxTest::TestSuite
 {

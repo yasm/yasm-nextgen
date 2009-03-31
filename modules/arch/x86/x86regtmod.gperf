@@ -33,7 +33,7 @@
 #include <cctype>
 #include <cstring>
 
-#include <libyasmx/compose.h>
+#include <libyasmx/Compose.h>
 #include <libyasmx/errwarn.h>
 #include <libyasmx/phash.h>
 

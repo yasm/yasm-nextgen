@@ -28,7 +28,7 @@
 //
 #include <vector>
 
-#include <libyasmx/insn.h>
+#include <libyasmx/Insn.h>
 #include <libyasmx/marg_ostream_fwd.h>
 
 

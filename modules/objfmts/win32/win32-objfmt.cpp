@@ -30,12 +30,12 @@
 
 #include <vector>
 
-#include <libyasmx/bc_container_util.h>
-#include <libyasmx/directive.h>
-#include <libyasmx/dir_helpers.h>
+#include <libyasmx/BytecodeContainer_util.h>
+#include <libyasmx/Directive.h>
+#include <libyasmx/DirHelpers.h>
 #include <libyasmx/errwarn.h>
-#include <libyasmx/object.h>
-#include <libyasmx/name_value.h>
+#include <libyasmx/Object.h>
+#include <libyasmx/NameValue.h>
 #include <libyasmx/nocase.h>
 #include <libyasmx/registry.h>
 

@@ -28,7 +28,7 @@
 //
 #include <bitset>
 
-#include <libyasmx/arch.h>
+#include <libyasmx/Arch.h>
 
 #include "x86register.h"
 #include "x86tmod.h"

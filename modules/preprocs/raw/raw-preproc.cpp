@@ -29,9 +29,9 @@
 #include <istream>
 
 #include <libyasmx/errwarn.h>
-#include <libyasmx/errwarns.h>
-#include <libyasmx/linemap.h>
-#include <libyasmx/preproc.h>
+#include <libyasmx/Errwarns.h>
+#include <libyasmx/Linemap.h>
+#include <libyasmx/Preprocessor.h>
 #include <libyasmx/registry.h>
 
 namespace yasm

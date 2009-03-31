@@ -26,7 +26,7 @@
 //
 #include <util.h>
 
-#include <libyasmx/debug_format.h>
+#include <libyasmx/DebugFormat.h>
 #include <libyasmx/registry.h>
 
 

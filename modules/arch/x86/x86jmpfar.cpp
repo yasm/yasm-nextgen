@@ -26,9 +26,9 @@
 //
 #include "x86jmpfar.h"
 
-#include <libyasmx/bc_container.h>
-#include <libyasmx/bytecode.h>
-#include <libyasmx/expr.h>
+#include <libyasmx/BytecodeContainer.h>
+#include <libyasmx/Bytecode.h>
+#include <libyasmx/Expr.h>
 
 #include "x86common.h"
 #include "x86opcode.h"

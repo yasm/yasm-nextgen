@@ -32,10 +32,10 @@
 #include <iostream>
 
 #include <libyasmx/errwarn.h>
-#include <libyasmx/expr.h>
-#include <libyasmx/expr_util.h>
+#include <libyasmx/Expr.h>
+#include <libyasmx/Expr_util.h>
 #include <libyasmx/functional.h>
-#include <libyasmx/intnum.h>
+#include <libyasmx/IntNum.h>
 #include <libyasmx/marg_ostream.h>
 
 #include "x86register.h"
