@@ -1,0 +1,12 @@
+CONFIGURE_FILE(export.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/export.h)
+
+INCLUDE(YasmCXXTR1)
+
+IF(NOT BUILD_STATIC)
+    INSTALL(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/export.h
+        ${CMAKE_CURRENT_BINARY_DIR}/functional.h
+        DESTINATION ${INCLUDE_INSTALL_DIR}/libyasmx/Config
+        )
+ENDIF(NOT BUILD_STATIC)
+
