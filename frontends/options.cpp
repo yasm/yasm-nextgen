@@ -35,7 +35,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include <libyasmx/compose.h>
+#include <yasmx/Support/Compose.h>
 
 
 // Options Parser
