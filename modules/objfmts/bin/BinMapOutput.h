@@ -42,14 +42,14 @@ namespace objfmt
 namespace bin
 {
 
-class MapOutput
+class BinMapOutput
 {
 public:
-    MapOutput(std::ostream& os,
-              const Object& object,
-              const IntNum& origin,
-              const BinGroups& groups);
-    ~MapOutput();
+    BinMapOutput(std::ostream& os,
+                 const Object& object,
+                 const IntNum& origin,
+                 const BinGroups& groups);
+    ~BinMapOutput();
 
     void output_header();
     void output_origin();

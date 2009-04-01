@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "bin-map.h"
+#include "BinMapOutput.h"
 
 #include <iomanip>
 #include <ostream>
@@ -60,10 +60,10 @@ map_prescan_bytes(const Section& sect, const BinSection& bsd, int* bytes)
         *bytes *= 2;
 }
 
-MapOutput::MapOutput(std::ostream& os,
-                     const Object& object,
-                     const IntNum& origin,
-                     const BinGroups& groups)
+BinMapOutput::BinMapOutput(std::ostream& os,
+                           const Object& object,
+                           const IntNum& origin,
+                           const BinGroups& groups)
     : m_os(os),
       m_object(object),
       m_origin(origin),
@@ -85,13 +85,13 @@ MapOutput::MapOutput(std::ostream& os,
     m_buf = new unsigned char[m_bytes];
 }
 
-MapOutput::~MapOutput()
+BinMapOutput::~BinMapOutput()
 {
     delete[] m_buf;
 }
 
 void
-MapOutput::output_intnum(const IntNum& intn)
+BinMapOutput::output_intnum(const IntNum& intn)
 {
     intn.get_sized(m_buf, m_bytes, m_bytes*8, 0, false, 0);
     m_os.fill('0');
@@ -104,7 +104,7 @@ MapOutput::output_intnum(const IntNum& intn)
 }
 
 void
-MapOutput::output_header()
+BinMapOutput::output_header()
 {
     m_os << "\n- YASM Map file ";
     m_os.fill('-');
@@ -115,7 +115,7 @@ MapOutput::output_header()
 }
 
 void
-MapOutput::output_origin()
+BinMapOutput::output_origin()
 {
     m_os << "-- Program origin ";
     m_os.fill('-');
@@ -129,7 +129,7 @@ MapOutput::output_origin()
 }
 
 void
-MapOutput::inner_sections_summary(const BinGroups& groups)
+BinMapOutput::inner_sections_summary(const BinGroups& groups)
 {
     for (BinGroups::const_iterator group = groups.begin(), end=groups.end();
          group != end; ++group)
@@ -163,7 +163,7 @@ MapOutput::inner_sections_summary(const BinGroups& groups)
 }
 
 void
-MapOutput::output_sections_summary()
+BinMapOutput::output_sections_summary()
 {
     m_os << "-- Sections (summary) ";
     m_os.fill('-');
@@ -185,7 +185,7 @@ MapOutput::output_sections_summary()
 }
 
 void
-MapOutput::inner_sections_detail(const BinGroups& groups)
+BinMapOutput::inner_sections_detail(const BinGroups& groups)
 {
     for (BinGroups::const_iterator group = groups.begin(), end=groups.end();
          group != end; ++group)
@@ -223,7 +223,7 @@ MapOutput::inner_sections_detail(const BinGroups& groups)
 }
 
 void
-MapOutput::output_sections_detail()
+BinMapOutput::output_sections_detail()
 {
     m_os << "-- Sections (detailed) ";
     m_os.fill('-');
@@ -254,7 +254,7 @@ count_symbols(const Object& object, const Section* sect)
 }
 
 void
-MapOutput::output_symbols(const Section* sect)
+BinMapOutput::output_symbols(const Section* sect)
 {
     for (Object::const_symbol_iterator sym = m_object.symbols_begin(),
          end = m_object.symbols_end(); sym != end; ++sym)
@@ -290,7 +290,7 @@ MapOutput::output_symbols(const Section* sect)
 }
 
 void
-MapOutput::inner_sections_symbols(const BinGroups& groups)
+BinMapOutput::inner_sections_symbols(const BinGroups& groups)
 {
     for (BinGroups::const_iterator group = groups.begin(), end=groups.end();
          group != end; ++group)
@@ -319,7 +319,7 @@ MapOutput::inner_sections_symbols(const BinGroups& groups)
 }
 
 void
-MapOutput::output_sections_symbols()
+BinMapOutput::output_sections_symbols()
 {
     m_os << "-- Symbols ";
     m_os.fill('-');

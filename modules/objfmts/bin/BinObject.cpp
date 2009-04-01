@@ -49,10 +49,10 @@
 #include <yasmx/Symbol.h>
 #include <yasmx/Value.h>
 
+#include "BinMapOutput.h"
 #include "BinSection.h"
 #include "BinSymbol.h"
 #include "bin-link.h"
-#include "bin-map.h"
 
 
 namespace yasm
@@ -159,7 +159,7 @@ BinObject::output_map(const IntNum& origin,
         }
     }
 
-    MapOutput out(os, *m_object, origin, groups);
+    BinMapOutput out(os, *m_object, origin, groups);
     out.output_header();
     out.output_origin();
 
