@@ -30,6 +30,7 @@
 #include "util.h"
 
 #include <cctype>
+#include <climits>
 #include <cstring>
 #include <limits>
 
