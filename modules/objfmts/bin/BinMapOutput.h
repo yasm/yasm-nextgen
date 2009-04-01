@@ -1,5 +1,5 @@
-#ifndef BIN_MAP_H
-#define BIN_MAP_H
+#ifndef YASM_BINMAPOUTPUT_H
+#define YASM_BINMAPOUTPUT_H
 //
 // Flat-format binary object format map file output
 //
