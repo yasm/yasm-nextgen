@@ -346,7 +346,7 @@ X86Prefix::put(std::ostream& os) const
     os << "PREFIX";
 }
 
-#include "x86insns.cpp"
+#include "X86Insns.cpp"
 
 void
 X86Insn::do_append_jmpfar(BytecodeContainer& container,
@@ -984,7 +984,8 @@ X86Insn::do_append(BytecodeContainer& container, unsigned long line)
                 if (ea->m_segreg != 0)
                     warn_set(WARN_GENERAL,
                              N_("skipping prefixes on this instruction"));
-                *op = std::auto_ptr<Expr>(ea->m_disp.get_abs()->clone());
+                *op = Insn::Operand(std::auto_ptr<Expr>(
+                    ea->m_disp.get_abs()->clone()));
                 delete ea;
             }
         }
@@ -1599,8 +1600,8 @@ struct InsnPrefixParseData
 };
 
 // Pull in all parse data
-#include "x86insn_nasm.cpp"
-#include "x86insn_gas.cpp"
+#include "X86Insn_nasm.cpp"
+#include "X86Insn_gas.cpp"
 
 static std::string
 cpu_find_reverse(unsigned int cpu0, unsigned int cpu1, unsigned int cpu2)
@@ -1731,7 +1732,7 @@ X86Arch::parse_check_insnprefix(const char* id, size_t id_len,
             return InsnPrefix();
         }
 
-        return std::auto_ptr<Insn>(new X86Insn(
+        return Arch::InsnPrefix(std::auto_ptr<Insn>(new X86Insn(
             *this,
             static_cast<const X86InsnInfo*>(pdata->struc),
             m_active_cpu,
@@ -1744,7 +1745,7 @@ X86Arch::parse_check_insnprefix(const char* id, size_t id_len,
             pdata->misc_flags,
             m_parser,
             m_force_strict,
-            m_default_rel));
+            m_default_rel)));
     }
     else
     {
