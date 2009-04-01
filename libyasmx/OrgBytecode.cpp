@@ -26,14 +26,13 @@
 ///
 #include "util.h"
 
+#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/marg_ostream.h"
-
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
-#include "yasmx/errwarn.h"
 
 
 namespace

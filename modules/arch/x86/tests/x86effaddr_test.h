@@ -28,7 +28,7 @@
 #include <cxxtest/TestSuite.h>
 
 #include "X86EffAddr.h"
-#include <yasmx/errwarn.h>
+#include <yasmx/Support/errwarn.h>
 #include <yasmx/Expr.h>
 #include <yasmx/IntNum.h>
 #include <yasmx/Symbol.h>

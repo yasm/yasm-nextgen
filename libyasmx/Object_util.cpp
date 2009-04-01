@@ -31,9 +31,9 @@
 
 #include "util.h"
 
+#include "yasmx/Support/errwarn.h"
 #include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/Bytecode.h"
-#include "yasmx/errwarn.h"
 #include "yasmx/NameValue.h"
 #include "yasmx/Section.h"
 #include "yasmx/Object.h"

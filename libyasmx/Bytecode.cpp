@@ -28,12 +28,11 @@
 
 #include "util.h"
 
+#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/marg_ostream.h"
-
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytes.h"
-#include "yasmx/errwarn.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location_util.h"

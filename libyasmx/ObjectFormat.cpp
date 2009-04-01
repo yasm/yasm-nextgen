@@ -28,7 +28,7 @@
 
 #include "util.h"
 
-#include "yasmx/errwarn.h"
+#include "yasmx/Support/errwarn.h"
 
 
 namespace yasm

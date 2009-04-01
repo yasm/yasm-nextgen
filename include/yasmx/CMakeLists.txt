@@ -15,7 +15,6 @@ IF(NOT BUILD_STATIC)
         Directive.h
         DirHelpers.h
         EffAddr.h
-        errwarn.h
         Errwarns.h
         Expr.h
         Expr_util.h

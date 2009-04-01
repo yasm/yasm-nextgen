@@ -31,7 +31,7 @@
 #include <algorithm>
 #include <list>
 
-#include "yasmx/errwarn.h"
+#include "yasmx/Support/errwarn.h"
 #include "yasmx/Linemap.h"
 
 

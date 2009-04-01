@@ -35,12 +35,12 @@
 #include <vector>
 
 #include <yasmx/Support/Compose.h>
+#include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/nocase.h>
 #include <yasmx/Support/registry.h>
 #include <yasmx/System/plugin.h>
 #include <yasmx/Arch.h>
 #include <yasmx/Bytecode.h>
-#include <yasmx/errwarn.h>
 #include <yasmx/IntNum_iomanip.h>
 #include <yasmx/Location.h>
 #include <yasmx/Object.h>

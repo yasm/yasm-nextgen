@@ -35,7 +35,7 @@
 
 #include "yasmx/Support/BitVector.h"
 #include "yasmx/Support/Compose.h"
-#include "yasmx/errwarn.h"
+#include "yasmx/Support/errwarn.h"
 
 
 using BitVector::wordptr;

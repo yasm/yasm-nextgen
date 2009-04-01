@@ -30,7 +30,7 @@
 
 #include <ostream>
 
-#include "yasmx/errwarn.h"
+#include "yasmx/Support/errwarn.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Object.h"
 #include "yasmx/Symbol.h"

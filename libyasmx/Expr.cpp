@@ -33,9 +33,8 @@
 #include <ostream>
 
 #include "yasmx/Config/functional.h"
-
+#include "yasmx/Support/errwarn.h"
 #include "yasmx/Arch.h"
-#include "yasmx/errwarn.h"
 #include "yasmx/FloatNum.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Symbol.h"

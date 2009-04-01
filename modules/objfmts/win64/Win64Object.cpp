@@ -27,12 +27,12 @@
 #include <util.h>
 
 #include <yasmx/Support/Compose.h>
+#include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/nocase.h>
 #include <yasmx/Support/registry.h>
 #include <yasmx/Arch.h>
 #include <yasmx/BytecodeContainer_util.h>
 #include <yasmx/Directive.h>
-#include <yasmx/errwarn.h>
 #include <yasmx/Errwarns.h>
 #include <yasmx/Object.h>
 #include <yasmx/NameValue.h>

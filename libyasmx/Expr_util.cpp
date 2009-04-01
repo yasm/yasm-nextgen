@@ -30,7 +30,7 @@
 
 #include <algorithm>
 
-#include "yasmx/errwarn.h"
+#include "yasmx/Support/errwarn.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Symbol.h"
 

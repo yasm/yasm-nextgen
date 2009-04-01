@@ -31,8 +31,8 @@
 #include <map>
 
 #include "yasmx/Support/Compose.h"
+#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/nocase.h"
-#include "yasmx/errwarn.h"
 #include "yasmx/NameValue.h"
 
 

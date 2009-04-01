@@ -32,11 +32,10 @@
 #include <ostream>
 
 #include "yasmx/Config/functional.h"
+#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/marg_ostream.h"
-
 #include "yasmx/Arch.h"
 #include "yasmx/EffAddr.h"
-#include "yasmx/errwarn.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Expr_util.h"
 

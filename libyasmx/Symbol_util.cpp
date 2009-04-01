@@ -28,11 +28,10 @@
 
 #include <util.h>
 
+#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/marg_ostream.h"
 #include "yasmx/Support/scoped_ptr.h"
-
 #include "yasmx/AssocData.h"
-#include "yasmx/errwarn.h"
 #include "yasmx/Expr.h"
 #include "yasmx/NameValue.h"
 #include "yasmx/Object.h"

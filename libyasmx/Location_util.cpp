@@ -28,8 +28,8 @@
 
 #include "util.h"
 
+#include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytecode.h"
-#include "yasmx/errwarn.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Symbol.h"

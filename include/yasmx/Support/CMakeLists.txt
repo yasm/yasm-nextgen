@@ -3,6 +3,7 @@ IF(NOT BUILD_STATIC)
         bitcount.h
         BitVector.h
         Compose.h
+	errwarn.h
         IntervalTree.h
         marg_ostream_fwd.h
         marg_ostream.h

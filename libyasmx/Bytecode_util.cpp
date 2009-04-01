@@ -29,8 +29,8 @@
 ///
 #include "yasmx/Bytecode_util.h"
 
+#include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytecode.h"
-#include "yasmx/errwarn.h"
 #include "yasmx/Errwarns.h"
 
 namespace yasm

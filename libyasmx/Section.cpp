@@ -29,7 +29,6 @@
 #include "util.h"
 
 #include "yasmx/Support/marg_ostream.h"
-
 #include "yasmx/IntNum.h"
 #include "yasmx/Reloc.h"
 

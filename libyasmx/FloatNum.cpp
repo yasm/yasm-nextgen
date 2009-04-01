@@ -35,7 +35,7 @@
 #include <ostream>
 
 #include "yasmx/Support/BitVector.h"
-#include "yasmx/errwarn.h"
+#include "yasmx/Support/errwarn.h"
 
 
 using BitVector::charptr;

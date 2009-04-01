@@ -41,7 +41,7 @@
 #include <string>
 #include <vector>
 
-#include "yasmx/errwarn.h"
+#include "yasmx/Support/errwarn.h"
 
 
 namespace

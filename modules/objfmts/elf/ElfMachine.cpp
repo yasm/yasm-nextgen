@@ -30,9 +30,9 @@
 
 #include <string>
 
+#include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/marg_ostream.h>
 #include <yasmx/Arch.h>
-#include <yasmx/errwarn.h>
 #include <yasmx/Object.h>
 
 

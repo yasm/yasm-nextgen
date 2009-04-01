@@ -31,7 +31,7 @@
 #include <map>
 
 #include "yasmx/Support/Compose.h"
-#include "yasmx/errwarn.h"
+#include "yasmx/Support/errwarn.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/NameValue.h"

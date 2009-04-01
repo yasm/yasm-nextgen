@@ -35,10 +35,10 @@
 
 #include <yasmx/Config/functional.h>
 #include <yasmx/Support/Compose.h>
+#include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/marg_ostream.h>
 #include <yasmx/Support/phash.h>
 #include <yasmx/EffAddr.h>
-#include <yasmx/errwarn.h>
 #include <yasmx/Expr.h>
 #include <yasmx/IntNum.h>
 
