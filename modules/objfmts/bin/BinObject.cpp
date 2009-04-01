@@ -49,10 +49,10 @@
 #include <yasmx/Symbol.h>
 #include <yasmx/Value.h>
 
+#include "BinLink.h"
 #include "BinMapOutput.h"
 #include "BinSection.h"
 #include "BinSymbol.h"
-#include "bin-link.h"
 
 
 namespace yasm
@@ -357,7 +357,7 @@ BinObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
          end=m_object->symbols_end(); i != end; ++i)
         check_sym(*i, errwarns);
 
-    Link link(*m_object, errwarns);
+    BinLink link(*m_object, errwarns);
 
     if (!link.do_link(origin))
         return;

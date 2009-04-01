@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "bin-link.h"
+#include "BinLink.h"
 
 #include <util.h>
 
@@ -120,7 +120,7 @@ find_group(BinGroups& groups, const Section& section)
     return 0;
 }
 
-Link::Link(Object& object, Errwarns& errwarns)
+BinLink::BinLink(Object& object, Errwarns& errwarns)
     : m_object(object),
       m_errwarns(errwarns),
       m_lma_groups_owner(m_lma_groups),
@@ -128,12 +128,12 @@ Link::Link(Object& object, Errwarns& errwarns)
 {
 }
 
-Link::~Link()
+BinLink::~BinLink()
 {
 }
 
 bool
-Link::lma_create_group(Section& section)
+BinLink::lma_create_group(Section& section)
 {
     BinSection* bsd = get_bin_sect(section);
     assert(bsd);
@@ -222,7 +222,7 @@ compare_istart(const BinGroup& lhs, const BinGroup& rhs)
 }
 
 bool
-Link::do_link(const IntNum& origin)
+BinLink::do_link(const IntNum& origin)
 {
     BinGroups::iterator group;
 
@@ -389,7 +389,7 @@ Link::do_link(const IntNum& origin)
 }
 
 bool
-Link::check_lma_overlap(const Section& sect, const Section& other)
+BinLink::check_lma_overlap(const Section& sect, const Section& other)
 {
     if (&sect == &other)
         return true;
@@ -432,7 +432,7 @@ Link::check_lma_overlap(const Section& sect, const Section& other)
 
 // Check for LMA overlap using a simple N^2 algorithm.
 bool
-Link::check_lma_overlap()
+BinLink::check_lma_overlap()
 {
     for (Object::const_section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)

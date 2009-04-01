@@ -28,7 +28,7 @@
 //
 #include <iosfwd>
 
-#include "bin-link.h"
+#include "BinLink.h"
 
 
 namespace yasm

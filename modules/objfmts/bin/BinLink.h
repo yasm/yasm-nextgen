@@ -1,5 +1,5 @@
-#ifndef BIN_LINK_H
-#define BIN_LINK_H
+#ifndef YASM_BINLINK_H
+#define YASM_BINLINK_H
 //
 // Flat-format binary object format multi-section linking
 //
@@ -78,11 +78,11 @@ public:
 marg_ostream& operator<< (marg_ostream& os, const BinGroup& group);
 marg_ostream& operator<< (marg_ostream& os, const BinGroups& groups);
 
-class Link
+class BinLink
 {
 public:
-    Link(Object& object, Errwarns& errwarns);
-    ~Link();
+    BinLink(Object& object, Errwarns& errwarns);
+    ~BinLink();
 
     bool do_link(const IntNum& origin);
     bool check_lma_overlap();

@@ -39,7 +39,6 @@
 
 #include "BinSection.h"
 #include "BinSymbol.h"
-#include "bin-link.h"
 
 
 namespace yasm

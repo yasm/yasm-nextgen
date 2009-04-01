@@ -1,5 +1,5 @@
 YASM_ADD_MODULE(objfmt_bin
-    objfmts/bin/bin-link.cpp
+    objfmts/bin/BinLink.cpp
     objfmts/bin/BinMapOutput.cpp
     objfmts/bin/BinObject.cpp
     objfmts/bin/BinSection.cpp
