@@ -757,7 +757,7 @@ NasmParser::parse_memaddr()
             if (!parse_bexpr(*e, NORM_EXPR))
                 throw SyntaxError(N_("memory address expected"));
             if (m_token != ':')
-                return m_object->get_arch()->ea_create(e);
+                return Insn::Operand(m_object->get_arch()->ea_create(e));
             get_next_token();
             Expr::Ptr off(new Expr);
             if (!parse_bexpr(*off, NORM_EXPR))
