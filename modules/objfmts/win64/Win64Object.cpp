@@ -40,7 +40,8 @@
 
 #include "modules/objfmts/win32/Win32Object.h"
 #include "modules/objfmts/coff/CoffSection.h"
-#include "win64-except.h"
+#include "UnwindCode.h"
+#include "UnwindInfo.h"
 
 namespace yasm
 {
