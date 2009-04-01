@@ -50,7 +50,7 @@ determined a perfect hash for the whole set of keys.
 #include <cstring>
 #include "standard.h"
 #define YASM_LIB_EXPORT
-#include "libyasmx/phash.h"
+#include "yasmx/Support/phash.h"
 #include "perfect.h"
 
 #define CHECKSTATE 8

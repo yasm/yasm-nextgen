@@ -14,7 +14,7 @@ MESSAGE(STATUS "Standard modules: ${YASM_MODULES}")
 #
 
 SET(INIT_PLUGIN_CPP ${CMAKE_CURRENT_BINARY_DIR}/init_plugin.cpp)
-SET(INIT_PLUGIN_CPP_REV 2)
+SET(INIT_PLUGIN_CPP_REV 3)
 
 # Don't regen if no changes; default to regen
 SET(regen_init_plugin_cpp TRUE)
@@ -45,7 +45,7 @@ IF(regen_init_plugin_cpp)
     STRING(REPLACE ";" " " _modules_str "${YASM_MODULES}")
     FILE(WRITE ${INIT_PLUGIN_CPP} "// ${_modules_str} \n")
     FILE(APPEND ${INIT_PLUGIN_CPP} "// rev ${INIT_PLUGIN_CPP_REV}\n")
-    FILE(APPEND ${INIT_PLUGIN_CPP} "#include <libyasmx/export.h>\n\n")
+    FILE(APPEND ${INIT_PLUGIN_CPP} "#include <yasmx/Config/export.h>\n\n")
     FILE(APPEND ${INIT_PLUGIN_CPP} "namespace yasm {")
     FOREACH(module ${YASM_MODULES})
         FILE(APPEND ${INIT_PLUGIN_CPP} "\n")
