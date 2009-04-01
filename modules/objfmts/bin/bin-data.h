@@ -45,12 +45,12 @@ namespace objfmt
 namespace bin
 {
 
-struct BinSectionData : public AssocData
+struct BinSection : public AssocData
 {
     static const char* key;
 
-    BinSectionData();
-    ~BinSectionData();
+    BinSection();
+    ~BinSection();
     void put(marg_ostream& os) const;
 
     // User-provided alignment
@@ -78,7 +78,7 @@ struct BinSectionData : public AssocData
 
 // Symbol data is used only for the special symbols section<sectname>.start,
 // section<sectname>.vstart, and section<sectname>.length
-class BinSymbolData : public AssocData
+class BinSymbol : public AssocData
 {
 public:
     static const char* key;
@@ -89,56 +89,52 @@ public:
         VSTART,
         LENGTH
     };
-    BinSymbolData(const Section& sect,
-                  const BinSectionData& bsd,
-                  SpecialSym which);
-    ~BinSymbolData();
+    BinSymbol(const Section& sect,
+              const BinSection& bsd,
+              SpecialSym which);
+    ~BinSymbol();
     void put(marg_ostream& os) const;
     bool get_value(/*@out@*/ IntNum* val) const;
 
 private:
     const Section& m_sect;          // referenced section
-    const BinSectionData& m_bsd;    // data for referenced section
+    const BinSection& m_bsd;        // data for referenced section
     SpecialSym m_which;
 };
 
 void bin_simplify(Expr& e);
 
-inline const BinSectionData*
+inline const BinSection*
 get_bin_sect(const Section& sect)
 {
-    return static_cast<const BinSectionData*>
-        (sect.get_assoc_data(BinSectionData::key));
+    return static_cast<const BinSection*>(sect.get_assoc_data(BinSection::key));
 }
 
-inline BinSectionData*
+inline BinSection*
 get_bin_sect(Section& sect)
 {
-    return static_cast<BinSectionData*>
-        (sect.get_assoc_data(BinSectionData::key));
+    return static_cast<BinSection*>(sect.get_assoc_data(BinSection::key));
 }
 
-inline const BinSymbolData*
+inline const BinSymbol*
 get_bin_sym(const Symbol& sym)
 {
-    return static_cast<const BinSymbolData*>
-        (sym.get_assoc_data(BinSymbolData::key));
+    return static_cast<const BinSymbol*>(sym.get_assoc_data(BinSymbol::key));
 }
 
-inline BinSymbolData*
+inline BinSymbol*
 get_bin_sym(Symbol& sym)
 {
-    return static_cast<BinSymbolData*>
-        (sym.get_assoc_data(BinSymbolData::key));
+    return static_cast<BinSymbol*>(sym.get_assoc_data(BinSymbol::key));
 }
 
 inline bool
 get_ssym_value(const Symbol& sym, /*@out@*/ IntNum* val)
 {
-    const BinSymbolData* bsymd = get_bin_sym(sym);
-    if (!bsymd)
+    const BinSymbol* bsym = get_bin_sym(sym);
+    if (!bsym)
         return false;
-    return bsymd->get_value(val);
+    return bsym->get_value(val);
 }
 
 }}} // namespace yasm::objfmt::bin

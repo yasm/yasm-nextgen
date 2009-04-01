@@ -49,7 +49,7 @@ namespace bin
 {
 
 static void
-map_prescan_bytes(const Section& sect, const BinSectionData& bsd, int* bytes)
+map_prescan_bytes(const Section& sect, const BinSection& bsd, int* bytes)
 {
     while (!bsd.length.ok_size(*bytes * 8, 0, 0))
         *bytes *= 2;
@@ -76,7 +76,7 @@ MapOutput::MapOutput(std::ostream& os,
     for (Object::const_section_iterator sect = object.sections_begin(),
          end = object.sections_end(); sect != end; ++sect)
     {
-        const BinSectionData* bsd = get_bin_sect(*sect);
+        const BinSection* bsd = get_bin_sect(*sect);
         assert(bsd != 0);
         map_prescan_bytes(*sect, *bsd, &m_bytes);
     }
@@ -134,7 +134,7 @@ MapOutput::inner_sections_summary(const BinGroups& groups)
          group != end; ++group)
     {
         const Section& sect = group->m_section;
-        const BinSectionData& bsd = group->m_bsd;
+        const BinSection& bsd = group->m_bsd;
 
         output_intnum(sect.get_vma());
         m_os << "  ";
@@ -196,7 +196,7 @@ MapOutput::inner_sections_detail(const BinGroups& groups)
         m_os << std::setw(65-name.length()) << '-';
         m_os.fill(' ');
 
-        const BinSectionData& bsd = group->m_bsd;
+        const BinSection& bsd = group->m_bsd;
 
         m_os << "\n\nclass:     ";
         m_os << (group->m_section.is_bss() ? "nobits" : "progbits");

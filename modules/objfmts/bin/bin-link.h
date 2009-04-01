@@ -47,7 +47,7 @@ namespace bin
 {
 
 class BinObject;
-struct BinSectionData;
+struct BinSection;
 
 class BinGroup;
 typedef stdx::ptr_vector<BinGroup> BinGroups;
@@ -55,7 +55,7 @@ typedef stdx::ptr_vector<BinGroup> BinGroups;
 class BinGroup
 {
 public:
-    BinGroup(Section& section, BinSectionData& bsd);
+    BinGroup(Section& section, BinSection& bsd);
     ~BinGroup();
 
     void put(marg_ostream& os) const;
@@ -67,7 +67,7 @@ public:
     void assign_vstart_recurse(IntNum& start, Errwarns& errwarns);
 
     Section& m_section;
-    BinSectionData& m_bsd;
+    BinSection& m_bsd;
 
     // Groups that (in parallel) logically come immediately after this
     // group's section.

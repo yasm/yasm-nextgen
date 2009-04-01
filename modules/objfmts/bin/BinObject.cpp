@@ -394,24 +394,24 @@ BinObject::append_section(const std::string& name, unsigned long line)
     m_object->append_section(std::auto_ptr<Section>(section));
 
     // Initialize section data and symbols.
-    std::auto_ptr<BinSectionData> bsd(new BinSectionData());
+    std::auto_ptr<BinSection> bsd(new BinSection());
 
     SymbolRef start = m_object->get_symbol("section."+name+".start");
     start->declare(Symbol::EXTERN, line);
-    start->add_assoc_data(BinSymbolData::key, std::auto_ptr<AssocData>
-        (new BinSymbolData(*section, *bsd, BinSymbolData::START)));
+    start->add_assoc_data(BinSymbol::key, std::auto_ptr<AssocData>
+        (new BinSymbol(*section, *bsd, BinSymbol::START)));
 
     SymbolRef vstart = m_object->get_symbol("section."+name+".vstart");
     vstart->declare(Symbol::EXTERN, line);
-    vstart->add_assoc_data(BinSymbolData::key, std::auto_ptr<AssocData>
-        (new BinSymbolData(*section, *bsd, BinSymbolData::VSTART)));
+    vstart->add_assoc_data(BinSymbol::key, std::auto_ptr<AssocData>
+        (new BinSymbol(*section, *bsd, BinSymbol::VSTART)));
 
     SymbolRef length = m_object->get_symbol("section."+name+".length");
     length->declare(Symbol::EXTERN, line);
-    length->add_assoc_data(BinSymbolData::key, std::auto_ptr<AssocData>
-        (new BinSymbolData(*section, *bsd, BinSymbolData::LENGTH)));
+    length->add_assoc_data(BinSymbol::key, std::auto_ptr<AssocData>
+        (new BinSymbol(*section, *bsd, BinSymbol::LENGTH)));
 
-    section->add_assoc_data(BinSectionData::key,
+    section->add_assoc_data(BinSection::key,
                             std::auto_ptr<AssocData>(bsd.release()));
 
     return section;
@@ -457,7 +457,7 @@ BinObject::dir_section(Object& object,
     std::auto_ptr<Expr> start(0);
     std::auto_ptr<Expr> vstart(0);
 
-    BinSectionData* bsd = get_bin_sect(*sect);
+    BinSection* bsd = get_bin_sect(*sect);
     assert(bsd);
     unsigned long bss = sect->is_bss();
     unsigned long code = sect->is_code();

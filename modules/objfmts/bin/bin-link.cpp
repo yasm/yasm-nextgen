@@ -49,7 +49,7 @@ namespace objfmt
 namespace bin
 {
 
-BinGroup::BinGroup(Section& section, BinSectionData& bsd)
+BinGroup::BinGroup(Section& section, BinSection& bsd)
     : m_section(section),
       m_bsd(bsd),
       m_follow_groups_owner(m_follow_groups)
@@ -135,7 +135,7 @@ Link::~Link()
 bool
 Link::lma_create_group(Section& section)
 {
-    BinSectionData* bsd = get_bin_sect(section);
+    BinSection* bsd = get_bin_sect(section);
     assert(bsd);
 
     // Determine section alignment as necessary.
@@ -328,7 +328,7 @@ Link::do_link(const IntNum& origin)
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        BinSectionData* bsd = get_bin_sect(*i);
+        BinSection* bsd = get_bin_sect(*i);
         assert(bsd);
         m_vma_groups.push_back(new BinGroup(*i, *bsd));
     }
@@ -394,8 +394,8 @@ Link::check_lma_overlap(const Section& sect, const Section& other)
     if (&sect == &other)
         return true;
 
-    const BinSectionData* bsd = get_bin_sect(sect);
-    const BinSectionData* bsd2 = get_bin_sect(other);
+    const BinSection* bsd = get_bin_sect(sect);
+    const BinSection* bsd2 = get_bin_sect(other);
 
     assert(bsd);
     assert(bsd2);

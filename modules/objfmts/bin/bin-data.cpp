@@ -41,9 +41,9 @@ namespace objfmt
 namespace bin
 {
 
-const char* BinSectionData::key = "objfmt::bin::BinSectionData";
+const char* BinSection::key = "objfmt::bin::BinSection";
 
-BinSectionData::BinSectionData()
+BinSection::BinSection()
     : has_align(false),
       has_valign(false),
       start_line(0),
@@ -54,30 +54,30 @@ BinSectionData::BinSectionData()
 {
 }
 
-BinSectionData::~BinSectionData()
+BinSection::~BinSection()
 {
 }
 
 void
-BinSectionData::put(marg_ostream& os) const
+BinSection::put(marg_ostream& os) const
 {
 }
 
-const char* BinSymbolData::key = "objfmt::bin::BinSymbolData";
+const char* BinSymbol::key = "objfmt::bin::BinSymbol";
 
-BinSymbolData::BinSymbolData(const Section& sect,
-                             const BinSectionData& bsd,
-                             SpecialSym which)
+BinSymbol::BinSymbol(const Section& sect,
+                     const BinSection& bsd,
+                     SpecialSym which)
     : m_sect(sect), m_bsd(bsd), m_which(which)
 {
 }
 
-BinSymbolData::~BinSymbolData()
+BinSymbol::~BinSymbol()
 {
 }
 
 void
-BinSymbolData::put(marg_ostream& os) const
+BinSymbol::put(marg_ostream& os) const
 {
     os << "which=";
     switch (m_which)
@@ -90,7 +90,7 @@ BinSymbolData::put(marg_ostream& os) const
 }
 
 bool
-BinSymbolData::get_value(IntNum* val) const
+BinSymbol::get_value(IntNum* val) const
 {
     switch (m_which)
     {
