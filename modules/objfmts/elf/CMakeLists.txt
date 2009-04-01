@@ -1,7 +1,10 @@
 YASM_ADD_MODULE(objfmt_elf
-    objfmts/elf/elf.cpp
-    objfmts/elf/ElfObject.cpp
+    objfmts/elf/ElfConfig.cpp
     objfmts/elf/ElfMachine.cpp
+    objfmts/elf/ElfObject.cpp
+    objfmts/elf/ElfReloc.cpp
+    objfmts/elf/ElfSection.cpp
+    objfmts/elf/ElfSymbol.cpp
     objfmts/elf/Elf_x86_x86.cpp
     objfmts/elf/Elf_x86_amd64.cpp
     )

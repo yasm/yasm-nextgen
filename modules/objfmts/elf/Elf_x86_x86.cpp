@@ -29,8 +29,10 @@
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/nocase.h>
 
-#include "elf.h"
+#include "ElfConfig.h"
 #include "ElfMachine.h"
+#include "ElfReloc.h"
+#include "ElfTypes.h"
 
 
 namespace yasm

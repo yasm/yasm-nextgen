@@ -64,8 +64,12 @@
 #include <yasmx/StringTable.h>
 #include <yasmx/Symbol_util.h>
 
-#include "elf.h"
+#include "ElfConfig.h"
 #include "ElfMachine.h"
+#include "ElfReloc.h"
+#include "ElfSection.h"
+#include "ElfSymbol.h"
+#include "ElfTypes.h"
 
 
 namespace yasm

@@ -32,7 +32,7 @@
 #include <yasmx/AssocData.h>
 #include <yasmx/Symbol.h>
 
-#include "elf.h"
+#include "ElfTypes.h"
 
 
 namespace yasm
