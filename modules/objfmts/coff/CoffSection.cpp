@@ -26,6 +26,8 @@
 //
 #include "CoffSection.h"
 
+#include <cstring>
+
 #include <util.h>
 
 #include <yasmx/Support/Compose.h>
