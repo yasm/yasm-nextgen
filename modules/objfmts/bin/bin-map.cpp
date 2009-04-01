@@ -37,7 +37,8 @@
 #include <yasmx/Symbol.h>
 #include <yasmx/Object.h>
 
-#include "bin-data.h"
+#include "BinSection.h"
+#include "BinSymbol.h"
 #include "bin-link.h"
 
 

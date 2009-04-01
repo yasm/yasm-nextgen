@@ -39,7 +39,7 @@
 #include <yasmx/Object.h>
 #include <yasmx/Section.h>
 
-#include "bin-data.h"
+#include "BinSection.h"
 
 
 namespace yasm

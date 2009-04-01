@@ -1,5 +1,5 @@
 //
-// Flat-format binary object format associated data
+// Flat-format binary object format symbol data
 //
 //  Copyright (C) 2002-2008  Peter Johnson
 //
@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "bin-data.h"
+#include "BinSymbol.h"
 
 #include <yasmx/Support/marg_ostream.h>
 #include <yasmx/BytecodeContainer.h>
@@ -33,6 +33,8 @@
 #include <yasmx/Section.h>
 #include <yasmx/Symbol.h>
 
+#include "BinSection.h"
+
 
 namespace yasm
 {
@@ -40,28 +42,6 @@ namespace objfmt
 {
 namespace bin
 {
-
-const char* BinSection::key = "objfmt::bin::BinSection";
-
-BinSection::BinSection()
-    : has_align(false),
-      has_valign(false),
-      start_line(0),
-      vstart_line(0),
-      has_istart(false),
-      has_ivstart(false),
-      has_length(false)
-{
-}
-
-BinSection::~BinSection()
-{
-}
-
-void
-BinSection::put(marg_ostream& os) const
-{
-}
 
 const char* BinSymbol::key = "objfmt::bin::BinSymbol";
 

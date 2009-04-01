@@ -49,7 +49,8 @@
 #include <yasmx/Symbol.h>
 #include <yasmx/Value.h>
 
-#include "bin-data.h"
+#include "BinSection.h"
+#include "BinSymbol.h"
 #include "bin-link.h"
 #include "bin-map.h"
 

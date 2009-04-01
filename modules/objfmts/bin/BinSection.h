@@ -1,7 +1,7 @@
-#ifndef BIN_DATA_H
-#define BIN_DATA_H
+#ifndef YASM_BINSECTION_H
+#define YASM_BINSECTION_H
 //
-// Flat-format binary object format associated data
+// Flat-format binary object format section data
 //
 //  Copyright (C) 2002-2008  Peter Johnson
 //
@@ -32,7 +32,6 @@
 #include <yasmx/AssocData.h>
 #include <yasmx/IntNum.h>
 #include <yasmx/Section.h>
-#include <yasmx/Symbol.h>
 
 
 namespace yasm
@@ -76,34 +75,6 @@ struct BinSection : public AssocData
     IntNum length;
 };
 
-// Symbol data is used only for the special symbols section<sectname>.start,
-// section<sectname>.vstart, and section<sectname>.length
-class BinSymbol : public AssocData
-{
-public:
-    static const char* key;
-
-    enum SpecialSym
-    {
-        START,
-        VSTART,
-        LENGTH
-    };
-    BinSymbol(const Section& sect,
-              const BinSection& bsd,
-              SpecialSym which);
-    ~BinSymbol();
-    void put(marg_ostream& os) const;
-    bool get_value(/*@out@*/ IntNum* val) const;
-
-private:
-    const Section& m_sect;          // referenced section
-    const BinSection& m_bsd;        // data for referenced section
-    SpecialSym m_which;
-};
-
-void bin_simplify(Expr& e);
-
 inline const BinSection*
 get_bin_sect(const Section& sect)
 {
@@ -114,27 +85,6 @@ inline BinSection*
 get_bin_sect(Section& sect)
 {
     return static_cast<BinSection*>(sect.get_assoc_data(BinSection::key));
-}
-
-inline const BinSymbol*
-get_bin_sym(const Symbol& sym)
-{
-    return static_cast<const BinSymbol*>(sym.get_assoc_data(BinSymbol::key));
-}
-
-inline BinSymbol*
-get_bin_sym(Symbol& sym)
-{
-    return static_cast<BinSymbol*>(sym.get_assoc_data(BinSymbol::key));
-}
-
-inline bool
-get_ssym_value(const Symbol& sym, /*@out@*/ IntNum* val)
-{
-    const BinSymbol* bsym = get_bin_sym(sym);
-    if (!bsym)
-        return false;
-    return bsym->get_value(val);
 }
 
 }}} // namespace yasm::objfmt::bin
