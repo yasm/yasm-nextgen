@@ -59,65 +59,6 @@ INCLUDE(FindPythonInterp)
 
 FIND_PROGRAM(RE2C_EXECUTABLE NAMES re2c)
 
-IF (CMAKE_COMPILER_IS_GNUCXX)
-    CHECK_CXX_ACCEPTS_FLAG(-pipe CXX_ACCEPTS_PIPE)
-    CHECK_CXX_ACCEPTS_FLAG(-ansi CXX_ACCEPTS_ANSI)
-    CHECK_CXX_ACCEPTS_FLAG(-pedantic CXX_ACCEPTS_PEDANTIC)
-    CHECK_CXX_ACCEPTS_FLAG(-Wall CXX_ACCEPTS_WALL)
-    CHECK_CXX_ACCEPTS_FLAG(-Wextra CXX_ACCEPTS_WEXTRA)
-    #CHECK_CXX_ACCEPTS_FLAG(-Weffc++ CXX_ACCEPTS_WEFFCPP)
-    #CHECK_CXX_ACCEPTS_FLAG(-Wold-style-cast CXX_ACCEPTS_WOLDSTYLECAST)
-    CHECK_CXX_ACCEPTS_FLAG(-Wstrict-null-sentinel CXX_ACCEPTS_WSTRICTNULL)
-    CHECK_CXX_ACCEPTS_FLAG(-Woverloaded-virtual CXX_ACCEPTS_WOVERVIRTUAL)
-    CHECK_CXX_ACCEPTS_FLAG(-Wno-unused-parameter CXX_ACCEPTS_WNOUNUSEDPARAM)
-
-    IF (CXX_ACCEPTS_PIPE)
-        ADD_DEFINITIONS(-pipe)
-    ENDIF (CXX_ACCEPTS_PIPE)
-
-    IF (CXX_ACCEPTS_ANSI)
-        ADD_DEFINITIONS(-ansi)
-    ENDIF (CXX_ACCEPTS_ANSI)
-
-    IF (CXX_ACCEPTS_PEDANTIC)
-        ADD_DEFINITIONS(-pedantic)
-    ENDIF (CXX_ACCEPTS_PEDANTIC)
-
-    IF (CXX_ACCEPTS_WALL)
-        ADD_DEFINITIONS(-Wall)
-    ENDIF (CXX_ACCEPTS_WALL)
-
-    IF (CXX_ACCEPTS_WEXTRA)
-        ADD_DEFINITIONS(-Wextra)
-    ENDIF (CXX_ACCEPTS_WEXTRA)
-
-    #IF (CXX_ACCEPTS_WEFFCPP)
-    #    ADD_DEFINITIONS(-Weffc++)
-    #ENDIF (CXX_ACCEPTS_WEFFCPP)
-
-    #IF (CXX_ACCEPTS_WOLDSTYLECAST)
-    #    ADD_DEFINITIONS(-Wold-style-cast)
-    #ENDIF (CXX_ACCEPTS_WOLDSTYLECAST)
-
-    IF (CXX_ACCEPTS_WSTRICTNULL)
-        ADD_DEFINITIONS(-Wstrict-null-sentinel)
-    ENDIF (CXX_ACCEPTS_WSTRICTNULL)
-
-    IF (CXX_ACCEPTS_WOVERVIRTUAL)
-        ADD_DEFINITIONS(-Woverloaded-virtual)
-    ENDIF (CXX_ACCEPTS_WOVERVIRTUAL)
-
-    IF (CXX_ACCEPTS_WNOUNUSEDPARAM)
-        ADD_DEFINITIONS(-Wno-unused-parameter)
-    ENDIF (CXX_ACCEPTS_WNOUNUSEDPARAM)
-ENDIF (CMAKE_COMPILER_IS_GNUCXX)
-
-# Disable some annoying Visual Studio warnings
-IF (MSVC)
-    ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS)
-    ADD_DEFINITIONS(-D_CRT_NONSTDC_NO_WARNINGS)
-ENDIF (MSVC)
-
 ######################################################
 #  and now the platform specific stuff
 ######################################################
@@ -204,8 +145,11 @@ if (MSVC)
    # 4275 : non-dll class used as base for dll class
    SET(FLAGS_WARN_OFF "/wd4251 /wd4275")
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLAGS_WARN_OFF}")
-endif(MSVC)
 
+   # Disable some annoying Visual Studio warnings
+   ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS)
+   ADD_DEFINITIONS(-D_CRT_NONSTDC_NO_WARNINGS)
+endif(MSVC)
 
 if (CMAKE_COMPILER_IS_GNUCXX)
    # Select flags.
@@ -221,8 +165,6 @@ if (CMAKE_COMPILER_IS_GNUCXX)
    set(CMAKE_C_FLAGS_PROFILE          "-g3 -fno-inline -ftest-coverage -fprofile-arcs")
 
    if (CMAKE_SYSTEM_NAME MATCHES Linux)
-     set ( CMAKE_C_FLAGS     "${CMAKE_C_FLAGS} -Wno-long-long -std=iso9899:1990 -Wundef -Wcast-align -Werror-implicit-function-declaration -Wchar-subscripts -Wall -W -Wpointer-arith -Wwrite-strings -Wformat-security -Wmissing-format-attribute -fno-common")
-     set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnon-virtual-dtor -Wno-long-long -ansi -Wundef -Wcast-align -Wchar-subscripts -Wall -W -Wpointer-arith -Wformat-security -fno-check-new -fno-common")
      add_definitions (-D_BSD_SOURCE)
    endif (CMAKE_SYSTEM_NAME MATCHES Linux)
 
@@ -242,11 +184,6 @@ if (CMAKE_COMPILER_IS_GNUCXX)
        endif(HAVE_FPIE_SUPPORT)
    endif(YASM_ENABLE_FPIE)
 
-   check_cxx_compiler_flag(-Woverloaded-virtual __YASM_HAVE_W_OVERLOADED_VIRTUAL)
-   if(__YASM_HAVE_W_OVERLOADED_VIRTUAL)
-       set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Woverloaded-virtual")
-   endif(__YASM_HAVE_W_OVERLOADED_VIRTUAL)
-
    # visibility support
    check_cxx_compiler_flag(-fvisibility=hidden YASM_HAVE_GCC_VISIBILITY)
    set(YASM_HAVE_GCC_VISIBILITY ${YASM_HAVE_GCC_VISIBILITY} CACHE BOOL "GCC support for hidden visibility")
@@ -263,6 +200,7 @@ if (CMAKE_COMPILER_IS_GNUCXX)
    macro_ensure_version("4.1.0" "${_gcc_version}" GCC_IS_NEWER_THAN_4_1)
    macro_ensure_version("4.2.0" "${_gcc_version}" GCC_IS_NEWER_THAN_4_2)
    macro_ensure_version("4.3.0" "${_gcc_version}" GCC_IS_NEWER_THAN_4_3)
+   macro_ensure_version("4.4.0" "${_gcc_version}" GCC_IS_NEWER_THAN_4_4)
 
    # save a little by making local statics not threadsafe
    # ### do not enable it for older compilers, see
@@ -288,6 +226,111 @@ if (CMAKE_COMPILER_IS_GNUCXX)
       set (YASM_HAVE_GCC_VISIBILITY 0)
    endif (YASM_HAVE_GCC_VISIBILITY AND GCC_IS_NEWER_THAN_4_1 AND NOT _GCC_COMPILED_WITH_BAD_ALLOCATOR)
 
+    CHECK_CXX_COMPILER_FLAG(-pipe CXX_ACCEPTS_PIPE)
+    CHECK_CXX_COMPILER_FLAG(-ansi CXX_ACCEPTS_ANSI)
+    CHECK_CXX_COMPILER_FLAG(-pedantic CXX_ACCEPTS_PEDANTIC)
+    CHECK_CXX_COMPILER_FLAG(-Wall CXX_ACCEPTS_WALL)
+    CHECK_CXX_COMPILER_FLAG(-Wextra CXX_ACCEPTS_WEXTRA)
+    #CHECK_CXX_COMPILER_FLAG(-Weffc++ CXX_ACCEPTS_WEFFCPP)
+    #CHECK_CXX_COMPILER_FLAG(-Wold-style-cast CXX_ACCEPTS_WOLDSTYLECAST)
+    CHECK_CXX_COMPILER_FLAG(-Wstrict-null-sentinel CXX_ACCEPTS_WSTRICT_NULL)
+    CHECK_CXX_COMPILER_FLAG(-Woverloaded-virtual CXX_ACCEPTS_WOVERLOADED_VIRTUAL)
+    CHECK_CXX_COMPILER_FLAG(-Wno-unused-parameter CXX_ACCEPTS_WNO_UNUSED_PARAM)
+    CHECK_CXX_COMPILER_FLAG(-Wnon-virtual-dtor CXX_ACCEPTS_WNON_VIRTUAL_DTOR)
+    CHECK_CXX_COMPILER_FLAG(-Wno-long-long CXX_ACCEPTS_WNO_LONG_LONG)
+    CHECK_CXX_COMPILER_FLAG(-Wundef CXX_ACCEPTS_WUNDEF)
+    CHECK_CXX_COMPILER_FLAG(-Wcast-align CXX_ACCEPTS_WCAST_ALIGN)
+    CHECK_CXX_COMPILER_FLAG(-Wchar-subscripts CXX_ACCEPTS_WCHAR_SUBSCRIPTS)
+    CHECK_CXX_COMPILER_FLAG(-Wpointer-arith CXX_ACCEPTS_WPOINTER_ARITH)
+    CHECK_CXX_COMPILER_FLAG(-Wformat-security CXX_ACCEPTS_WFORMAT_SECURITY)
+    CHECK_CXX_COMPILER_FLAG(-fno-check-new CXX_ACCEPTS_FNO_CHECK_NEW)
+    CHECK_CXX_COMPILER_FLAG(-fno-common CXX_ACCEPTS_FNO_COMMON)
+
+    IF (CXX_ACCEPTS_PIPE)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pipe")
+    ENDIF (CXX_ACCEPTS_PIPE)
+
+    IF (CXX_ACCEPTS_ANSI)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ansi")
+    ENDIF (CXX_ACCEPTS_ANSI)
+
+    IF (CXX_ACCEPTS_PEDANTIC)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
+    ENDIF (CXX_ACCEPTS_PEDANTIC)
+
+    IF (CXX_ACCEPTS_WALL)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+    ENDIF (CXX_ACCEPTS_WALL)
+
+    IF (CXX_ACCEPTS_WEXTRA)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra")
+    ENDIF (CXX_ACCEPTS_WEXTRA)
+
+    #IF (CXX_ACCEPTS_WEFFCPP)
+    #    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weffc++")
+    #ENDIF (CXX_ACCEPTS_WEFFCPP)
+
+    #IF (CXX_ACCEPTS_WOLDSTYLECAST)
+    #    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wold-style-cast")
+    #ENDIF (CXX_ACCEPTS_WOLDSTYLECAST)
+
+    IF (CXX_ACCEPTS_WSTRICTNULL)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wstrict-null-sentinel")
+    ENDIF (CXX_ACCEPTS_WSTRICTNULL)
+
+    IF (CXX_ACCEPTS_WOVERLOADED_VIRTUAL)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Woverloaded-virtual")
+    ENDIF (CXX_ACCEPTS_WOVERLOADED_VIRTUAL)
+
+    IF (CXX_ACCEPTS_WNO_UNUSED_PARAM)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-parameter")
+    ENDIF (CXX_ACCEPTS_WNO_UNUSED_PARAM)
+
+    IF (CXX_ACCEPTS_WNON_VIRTUAL_DTOR)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnon-virtual-dtor")
+    ENDIF (CXX_ACCEPTS_WNON_VIRTUAL_DTOR)
+
+    IF (CXX_ACCEPTS_WNO_LONG_LONG)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-long-long")
+    ENDIF (CXX_ACCEPTS_WNO_LONG_LONG)
+
+    IF (CXX_ACCEPTS_WUNDEF)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wundef")
+    ENDIF (CXX_ACCEPTS_WUNDEF)
+
+    IF (CXX_ACCEPTS_WCAST_ALIGN)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wcast-align")
+    ENDIF (CXX_ACCEPTS_WCAST_ALIGN)
+
+    IF (CXX_ACCEPTS_WCHAR_SUBSCRIPTS)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wchar-subscripts")
+    ENDIF (CXX_ACCEPTS_WCHAR_SUBSCRIPTS)
+
+    IF (CXX_ACCEPTS_WPOINTER_ARITH)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wpointer-arith")
+    ENDIF (CXX_ACCEPTS_WPOINTER_ARITH)
+
+    IF (CXX_ACCEPTS_WFORMAT_SECURITY)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wformat-security")
+    ENDIF (CXX_ACCEPTS_WFORMAT_SECURITY)
+
+    IF (CXX_ACCEPTS_FNO_CHECK_NEW)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-check-new")
+    ENDIF (CXX_ACCEPTS_FNO_CHECK_NEW)
+
+    IF (CXX_ACCEPTS_FNO_COMMON)
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-common")
+    ENDIF (CXX_ACCEPTS_FNO_COMMON)
+
+    # Work around GCC bug 36760 which causes spurious std::bind warnings.
+    # This is fixed in 4.4.0
+
+    if (GCC_IS_NEWER_THAN_4_3 AND NOT GCC_IS_NEWER_THAN_4_4)
+        CHECK_CXX_COMPILER_FLAG(-Wno-ignored-qualifiers CXX_ACCEPTS_WNO_IGNORED_QUALIFIERS)
+        IF (CXX_ACCEPTS_WNO_IGNORED_QUALIFIERS)
+            SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-ignored-qualifiers")
+        ENDIF (CXX_ACCEPTS_WNO_IGNORED_QUALIFIERS)
+    endif (GCC_IS_NEWER_THAN_4_3 AND NOT GCC_IS_NEWER_THAN_4_4)
 endif (CMAKE_COMPILER_IS_GNUCXX)
 
 
