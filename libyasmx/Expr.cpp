@@ -86,38 +86,6 @@ is_right_identity(Op::Op op, const IntNum& intn)
             (iszero && op == Op::SHR));
 }
 
-const ExprBuilder ADD = {Op::ADD};
-const ExprBuilder SUB = {Op::SUB};
-const ExprBuilder MUL = {Op::MUL};
-const ExprBuilder DIV = {Op::DIV};
-const ExprBuilder SIGNDIV = {Op::SIGNDIV};
-const ExprBuilder MOD = {Op::MOD};
-const ExprBuilder SIGNMOD = {Op::SIGNMOD};
-const ExprBuilder NEG = {Op::NEG};
-const ExprBuilder NOT = {Op::NOT};
-const ExprBuilder OR = {Op::OR};
-const ExprBuilder AND = {Op::AND};
-const ExprBuilder XOR = {Op::XOR};
-const ExprBuilder XNOR = {Op::XNOR};
-const ExprBuilder NOR = {Op::NOR};
-const ExprBuilder SHL = {Op::SHL};
-const ExprBuilder SHR = {Op::SHR};
-const ExprBuilder LOR = {Op::LOR};
-const ExprBuilder LAND = {Op::LAND};
-const ExprBuilder LNOT = {Op::LNOT};
-const ExprBuilder LXOR = {Op::LXOR};
-const ExprBuilder LXNOR = {Op::LXNOR};
-const ExprBuilder LNOR = {Op::LNOR};
-const ExprBuilder LT = {Op::LT};
-const ExprBuilder GT = {Op::GT};
-const ExprBuilder EQ = {Op::EQ};
-const ExprBuilder LE = {Op::LE};
-const ExprBuilder GE = {Op::GE};
-const ExprBuilder NE = {Op::NE};
-const ExprBuilder SEG = {Op::SEG};
-const ExprBuilder WRT = {Op::WRT};
-const ExprBuilder SEGOFF = {Op::SEGOFF};
-
 ExprTerm::ExprTerm(std::auto_ptr<IntNum> intn, int depth)
     : m_type(INT), m_depth(depth)
 {
