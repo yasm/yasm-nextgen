@@ -47,7 +47,6 @@ namespace yasm
 
 class Bytecode;
 class Expr;
-template <Op::Op Operator> class ExprBuilder;
 class ExprTest;
 class FloatNum;
 class Register;
@@ -339,11 +338,6 @@ public:
         return *this;
     }
 
-    template <Op::Op Operator>
-    Expr& operator= (const ExprBuilder<Operator>& rhs);
-    template <Op::Op Operator>
-    Expr& operator= (ExprBuilder<Operator>& rhs);
-
     /// Copy constructor.
     /// @param e        expression to copy from
     Expr(const Expr& e);
@@ -503,9 +497,6 @@ public:
     void append(const T& term)
     { m_terms.push_back(ExprTerm(term)); }
 
-    template <Op::Op Operator>
-    void append(const ExprBuilder<Operator>& e);
-
     /// Append an operator to terms.  Pushes down all current terms and adds
     /// operator term to end.
     /// @param op       operator
@@ -613,16 +604,6 @@ template <>
 inline void Expr::append(const ExprTerm& term)
 { m_terms.push_back(term); }
 
-/// Append expression terms to terms.
-/// @param terms    expression terms
-template <>
-inline void Expr::append(const ExprTerms& terms)
-{
-    for (ExprTerms::const_iterator i=terms.begin(), end=terms.end(); i != end;
-         ++i)
-        m_terms.push_back(*i);
-}
-
 template <typename T>
 void
 Expr::simplify(const T& func, bool simplify_reg_mul)
@@ -650,133 +631,132 @@ Expr::simplify(const T& func, bool simplify_reg_mul)
 
 /// Expression builder based on operator.
 /// Allows building expressions with the syntax Expr e = ADD(0, sym, ...);
-template <Op::Op Operator>
-class ExprBuilder : public Expr
+struct ExprBuilder
 {
-public:
+    Op::Op op;
+
     template <typename T1>
-    ExprBuilder(const T1& t1)
+    Expr operator() (const T1& t1) const
     {
-        append(t1);
-        append_op(Operator, 1);
+        Expr e;
+        e.append(t1);
+        e.append_op(op, 1);
+        return e;
     }
 
     template <typename T1, typename T2>
-    ExprBuilder(const T1& t1, const T2& t2)
+    Expr operator() (const T1& t1, const T2& t2) const
     {
-        append(t1);
-        append(t2);
-        append_op(Operator, 2);
+        Expr e;
+        e.append(t1);
+        e.append(t2);
+        e.append_op(op, 2);
+        return e;
     }
 
     template <typename T1, typename T2, typename T3>
-    ExprBuilder(const T1& t1, const T2& t2, const T3& t3)
+    Expr operator() (const T1& t1, const T2& t2, const T3& t3) const
     {
-        append(t1);
-        append(t2);
-        append(t3);
-        append_op(Operator, 3);
+        Expr e;
+        e.append(t1);
+        e.append(t2);
+        e.append(t3);
+        e.append_op(op, 3);
+        return e;
     }
 
     template <typename T1, typename T2, typename T3, typename T4>
-    ExprBuilder(const T1& t1, const T2& t2, const T3& t3, const T4& t4)
+    Expr operator() (const T1& t1, const T2& t2, const T3& t3,
+                     const T4& t4) const
     {
-        append(t1);
-        append(t2);
-        append(t3);
-        append(t4);
-        append_op(Operator, 4);
+        Expr e;
+        e.append(t1);
+        e.append(t2);
+        e.append(t3);
+        e.append(t4);
+        e.append_op(op, 4);
+        return e;
     }
 
     template <typename T1, typename T2, typename T3, typename T4, typename T5>
-    ExprBuilder(const T1& t1, const T2& t2, const T3& t3, const T4& t4,
-                const T5& t5)
+    Expr operator() (const T1& t1, const T2& t2, const T3& t3, const T4& t4,
+                     const T5& t5) const
     {
-        append(t1);
-        append(t2);
-        append(t3);
-        append(t4);
-        append(t5);
-        append_op(Operator, 5);
+        Expr e;
+        e.append(t1);
+        e.append(t2);
+        e.append(t3);
+        e.append(t4);
+        e.append(t5);
+        e.append_op(op, 5);
+        return e;
     }
 
     template <typename T1, typename T2, typename T3, typename T4, typename T5,
               typename T6>
-    ExprBuilder(const T1& t1, const T2& t2, const T3& t3, const T4& t4,
-                const T5& t5, const T6& t6)
+    Expr operator() (const T1& t1, const T2& t2, const T3& t3, const T4& t4,
+                     const T5& t5, const T6& t6) const
     {
-        append(t1);
-        append(t2);
-        append(t3);
-        append(t4);
-        append(t5);
-        append(t6);
-        append_op(Operator, 6);
+        Expr e;
+        e.append(t1);
+        e.append(t2);
+        e.append(t3);
+        e.append(t4);
+        e.append(t5);
+        e.append(t6);
+        e.append_op(op, 6);
+        return e;
     }
 };
 
-/// Assign an expression builder to an expression.
-/// @param rhs      expression builder
-template <Op::Op Operator>
-inline Expr&
-Expr::operator= (const ExprBuilder<Operator>& rhs)
+/// Specialization of ExprBuilder to allow terms to be passed.
+/// This allows e.g. ADD(terms).
+template <>
+inline Expr ExprBuilder::operator() (const ExprTerms& terms) const
 {
-    if (this != &rhs)
-        Expr(rhs).swap(*this);
-    return *this;
+    Expr e;
+    for (ExprTerms::const_iterator i=terms.begin(), end=terms.end(); i != end;
+         ++i)
+        e.append(*i);
+    e.append_op(op, terms.size());
+    return e;
 }
 
-/// Assign an expression builder to an expression.
-/// @param rhs      expression builder
-template <Op::Op Operator>
-inline Expr&
-Expr::operator= (ExprBuilder<Operator>& rhs)
-{
-    if (this != &rhs)
-        Expr(rhs).swap(*this);
-    return *this;
-}
-
-/// Append an expression builder to terms.
-/// @param e        expression builder
-template <Op::Op Operator>
-inline void Expr::append(const ExprBuilder<Operator>& e)
-{ append(Expr(e)); }
-
-typedef ExprBuilder<Op::ADD> ADD;           ///< Addition (+).
-typedef ExprBuilder<Op::SUB> SUB;           ///< Subtraction (-).
-typedef ExprBuilder<Op::MUL> MUL;           ///< Multiplication (*).
-typedef ExprBuilder<Op::DIV> DIV;           ///< Unsigned division.
-typedef ExprBuilder<Op::SIGNDIV> SIGNDIV;   ///< Signed division.
-typedef ExprBuilder<Op::MOD> MOD;           ///< Unsigned modulus.
-typedef ExprBuilder<Op::SIGNMOD> SIGNMOD;   ///< Signed modulus.
-typedef ExprBuilder<Op::NEG> NEG;           ///< Negation (-).
-typedef ExprBuilder<Op::NOT> NOT;           ///< Bitwise negation.
-typedef ExprBuilder<Op::OR> OR;             ///< Bitwise OR.
-typedef ExprBuilder<Op::AND> AND;           ///< Bitwise AND.
-typedef ExprBuilder<Op::XOR> XOR;           ///< Bitwise XOR.
-typedef ExprBuilder<Op::XNOR> XNOR;         ///< Bitwise XNOR.
-typedef ExprBuilder<Op::NOR> NOR;           ///< Bitwise NOR.
-typedef ExprBuilder<Op::SHL> SHL;           ///< Shift left (logical).
-typedef ExprBuilder<Op::SHR> SHR;           ///< Shift right (logical).
-typedef ExprBuilder<Op::LOR> LOR;           ///< Logical OR.
-typedef ExprBuilder<Op::LAND> LAND;         ///< Logical AND.
-typedef ExprBuilder<Op::LNOT> LNOT;         ///< Logical negation.
-typedef ExprBuilder<Op::LXOR> LXOR;         ///< Logical XOR.
-typedef ExprBuilder<Op::LXNOR> LXNOR;       ///< Logical XNOR.
-typedef ExprBuilder<Op::LNOR> LNOR;         ///< Logical NOR.
-typedef ExprBuilder<Op::LT> LT;             ///< Less than comparison.
-typedef ExprBuilder<Op::GT> GT;             ///< Greater than.
-typedef ExprBuilder<Op::EQ> EQ;             ///< Equality comparison.
-typedef ExprBuilder<Op::LE> LE;             ///< Less than or equal to.
-typedef ExprBuilder<Op::GE> GE;             ///< Greater than or equal.
-typedef ExprBuilder<Op::NE> NE;             ///< Not equal comparison.
+extern YASM_LIB_EXPORT const ExprBuilder ADD;        ///< Addition (+).
+extern YASM_LIB_EXPORT const ExprBuilder SUB;        ///< Subtraction (-).
+extern YASM_LIB_EXPORT const ExprBuilder MUL;        ///< Multiplication (*).
+extern YASM_LIB_EXPORT const ExprBuilder DIV;        ///< Unsigned division.
+extern YASM_LIB_EXPORT const ExprBuilder SIGNDIV;    ///< Signed division.
+extern YASM_LIB_EXPORT const ExprBuilder MOD;        ///< Unsigned modulus.
+extern YASM_LIB_EXPORT const ExprBuilder SIGNMOD;    ///< Signed modulus.
+extern YASM_LIB_EXPORT const ExprBuilder NEG;        ///< Negation (-).
+extern YASM_LIB_EXPORT const ExprBuilder NOT;        ///< Bitwise negation.
+extern YASM_LIB_EXPORT const ExprBuilder OR;         ///< Bitwise OR.
+extern YASM_LIB_EXPORT const ExprBuilder AND;        ///< Bitwise AND.
+extern YASM_LIB_EXPORT const ExprBuilder XOR;        ///< Bitwise XOR.
+extern YASM_LIB_EXPORT const ExprBuilder XNOR;       ///< Bitwise XNOR.
+extern YASM_LIB_EXPORT const ExprBuilder NOR;        ///< Bitwise NOR.
+extern YASM_LIB_EXPORT const ExprBuilder SHL;        ///< Shift left (logical).
+extern YASM_LIB_EXPORT const ExprBuilder SHR;        ///< Shift right (logical).
+extern YASM_LIB_EXPORT const ExprBuilder LOR;        ///< Logical OR.
+extern YASM_LIB_EXPORT const ExprBuilder LAND;       ///< Logical AND.
+extern YASM_LIB_EXPORT const ExprBuilder LNOT;       ///< Logical negation.
+extern YASM_LIB_EXPORT const ExprBuilder LXOR;       ///< Logical XOR.
+extern YASM_LIB_EXPORT const ExprBuilder LXNOR;      ///< Logical XNOR.
+extern YASM_LIB_EXPORT const ExprBuilder LNOR;       ///< Logical NOR.
+extern YASM_LIB_EXPORT const ExprBuilder LT;         ///< Less than comparison.
+extern YASM_LIB_EXPORT const ExprBuilder GT;         ///< Greater than.
+extern YASM_LIB_EXPORT const ExprBuilder EQ;         ///< Equality comparison.
+extern YASM_LIB_EXPORT const ExprBuilder LE;         ///< Less than or equal to.
+extern YASM_LIB_EXPORT const ExprBuilder GE;         ///< Greater than or equal.
+extern YASM_LIB_EXPORT const ExprBuilder NE;         ///< Not equal comparison.
 /// SEG operator (gets segment portion of address).
-typedef ExprBuilder<Op::SEG> SEG;
+extern YASM_LIB_EXPORT const ExprBuilder SEG;
 /// WRT operator (gets offset of address relative to some other
 /// segment).
-typedef ExprBuilder<Op::WRT> WRT;
-typedef ExprBuilder<Op::SEGOFF> SEGOFF;     /// The ':' in segment:offset.
+extern YASM_LIB_EXPORT const ExprBuilder WRT;
+/// The ':' in segment:offset.
+extern YASM_LIB_EXPORT const ExprBuilder SEGOFF;
 
 /// Overloaded assignment binary operators.
 template <typename T> inline Expr& operator+=(Expr& lhs, const T& rhs)
