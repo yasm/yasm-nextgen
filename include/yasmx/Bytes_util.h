@@ -67,6 +67,14 @@ void write_32(Bytes& bytes, const IntNum& intn);
 YASM_LIB_EXPORT
 void write_64(Bytes& bytes, const IntNum& intn);
 
+/// Write an intnum as a N-bit value to a bytes buffer.
+/// @param bytes    output bytes buffer
+/// @param intn     intnum
+/// @param n        number of bits (must be multiple of 8)
+/// @warning Intnum is silently truncated to fit into N bits.
+YASM_LIB_EXPORT
+void write_n(Bytes& bytes, const IntNum& intn, int n);
+
 /// Write an 8-bit value to a bytes buffer.
 /// @param bytes    output bytes buffer
 /// @param val      8-bit value
@@ -115,6 +123,14 @@ write_32(Bytes& bytes, unsigned long val)
         bytes.push_back(static_cast<unsigned char>((val >> 24) & 0xFF));
     }
 }
+
+/// Write a N-bit value to a bytes buffer.
+/// @param bytes    output bytes buffer
+/// @param val      integer value
+/// @param n        number of bits (must be multiple of 8)
+/// @warning Value is silently truncated to fit into N bits.
+YASM_LIB_EXPORT
+void write_n(Bytes& bytes, unsigned long val, int n);
 
 /// Read an unsigned 8-bit value from a bytes buffer.
 /// @param bytes    input bytes buffer
