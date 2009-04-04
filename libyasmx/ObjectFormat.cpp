@@ -35,6 +35,7 @@ namespace yasm
 {
 
 ObjectFormat::ObjectFormat()
+    : m_object(0)
 {
 }
 
