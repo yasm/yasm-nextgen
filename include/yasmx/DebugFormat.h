@@ -50,6 +50,11 @@ class YASM_LIB_EXPORT DebugFormat : public Module
 public:
     enum { module_type = 2 };
 
+    /// Constructor.
+    /// To make debug format truly usable, set_object()
+    /// needs to be called.
+    DebugFormat();
+
     /// Destructor.
     virtual ~DebugFormat();
 
@@ -59,14 +64,28 @@ public:
 
     /// Set associated object.
     /// @param object       object
-    /// @return False on error (object format cannot handle that object).
-    virtual bool set_object(Object* object) = 0;
+    /// @return False on error (debug format cannot handle that object).
+    /// @note The default implementation accepts all objects.
+    bool set_object(Object* object);
 
     /// Generate debugging information bytecodes.
     /// @param linemap      virtual/physical line mapping
     /// @param errwarns     error/warning set
     /// @note Errors and warnings are stored into errwarns.
     virtual void generate(Linemap& linemap, Errwarns& errwarns) = 0;
+
+protected:
+    /// Determine if object is acceptable to debug format.
+    /// @param object       object
+    /// @return False on error (debug format cannot handle the object).
+    /// @note The default implementation accepts all objects.
+    virtual bool ok_object(Object* object) const;
+
+    /// Initialize debug format.  Called by set_object() after m_object
+    /// is initialized.  Default implementation does nothing.
+    virtual void initialize();
+
+    Object* m_object;
 };
 
 } // namespace yasm
