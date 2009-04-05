@@ -46,7 +46,6 @@ public:
     std::string get_name() const { return "No debugging info"; }
     std::string get_keyword() const { return "null"; }
 
-    bool set_object(Object* object) { return true; }
     void generate(Linemap& linemap, Errwarns& errwarns) {}
 };
 
