@@ -14,6 +14,8 @@ IF(NOT BUILD_STATIC)
         registry.h
         scoped_array.h
         scoped_ptr.h
+        SmallVector.h
+        type_traits.h
         DESTINATION ${INCLUDE_INSTALL_DIR}/libyasmx/Support
         )
 ENDIF(NOT BUILD_STATIC)
