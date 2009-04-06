@@ -39,7 +39,6 @@
 #include <cctype>
 #include <cstring>
 #include <string>
-#include <vector>
 
 #include "yasmx/Support/errwarn.h"
 
@@ -470,45 +469,6 @@ replace_extension(const std::string& orig, const std::string& ext,
     std::string out(orig, 0, origext);
     out += ext;
     return out;
-}
-
-std::string
-Includes::open(std::ifstream& ifs,
-               const std::string& iname,
-               const std::string& from,
-               std::ios_base::openmode mode) const
-{
-    // Close the stream if already open
-    if (ifs.is_open())
-        ifs.close();
-    ifs.clear();
-
-    // Try directly relative to from first, then each of the include paths.
-    std::string combine = combpath(from, iname);
-    ifs.open(combine.c_str(), mode);
-    if (ifs)
-        return combine;
-
-    for (const_iterator i = begin(), e = end(); i != e; ++i)
-    {
-        combine = combpath(*i, iname);
-        ifs.open(combine.c_str(), mode);
-        if (ifs)
-            return combine;
-    }
-
-    return "";
-}
-
-void
-Includes::push_back(const std::string& path)
-{
-    // Add trailing slash if it is missing.
-    std::string::size_type len = path.length();
-    if (len > 0 && path[len-1] != '\\' && path[len-1] != '/')
-        std::vector<std::string>::push_back(path+'/');
-    else
-        std::vector<std::string>::push_back(path);
 }
 
 } // namespace yasm

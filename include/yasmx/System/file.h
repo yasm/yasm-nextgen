@@ -29,9 +29,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <fstream>
 #include <string>
-#include <vector>
 
 #include "yasmx/Config/export.h"
 
@@ -180,41 +178,6 @@ YASM_LIB_EXPORT
 std::string replace_extension(const std::string& orig,
                               const std::string& ext,
                               const std::string& def);
-
-/// Include path storage and search.  Paths are stored as std::strings.
-/// If a path is relative, it is treated by Includes::open() as relative to
-/// the current working directory.
-class YASM_LIB_EXPORT Includes : public std::vector<std::string>
-{
-public:
-    /// Try to find and open an include file, searching through include paths.
-    /// First iname is looked for relative to the directory containing "from",
-    /// then it's looked for relative to each of the include paths.
-    ///
-    /// All pathnames may be either absolute or relative; from, oname, and
-    /// include paths, if relative, are relative from the current working
-    /// directory.
-    ///
-    /// First match wins; the full pathname (newly allocated) to the opened file
-    /// is returned, and the ifstream is opened.  If not found, the ifstream
-    /// after the call is not an open ifstream.
-    ///
-    /// If ifs is currently open, it is closed first.
-    ///
-    /// @param ifs      input file stream [modified]
-    /// @param iname    filename to include
-    /// @param from     filename doing the including
-    /// @param mode     file open mode
-    /// @return full pathname of included file (may be relative) [output]
-    std::string open(std::ifstream& ifs,
-                     const std::string& iname,
-                     const std::string& from,
-                     std::ios_base::openmode mode = std::ios_base::in) const;
-
-    /// Add an include path.
-    /// @param path     pathname
-    void push_back(const std::string& path);
-};
 
 } // namespace yasm
 

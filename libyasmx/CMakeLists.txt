@@ -29,6 +29,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     file.cpp
     FloatNum.cpp
     IncbinBytecode.cpp
+    Includes.cpp
     Insn.cpp
     IntNum.cpp
     Linemap.cpp

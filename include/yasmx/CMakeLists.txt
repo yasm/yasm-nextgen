@@ -19,6 +19,7 @@ IF(NOT BUILD_STATIC)
         Expr.h
         Expr_util.h
         FloatNum.h
+        Includes.h
         Insn.h
         IntNum.h
         IntNum_iomanip.h
