@@ -90,6 +90,11 @@ splitpath(const std::string& path, /*@out@*/ std::string& tail)
 # endif
 #endif
 
+/// Get the current working directory.
+/// @return Current working directory pathname.
+YASM_LIB_EXPORT
+std::string get_curdir();
+
 /// Convert a UNIX relative or absolute pathname into an absolute pathname.
 /// @param path     pathname
 /// @return Absolute version of path.

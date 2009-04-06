@@ -35,8 +35,11 @@
 #include <direct.h>
 #endif
 
+#include <errno.h>
+
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <cstring>
 #include <string>
 
@@ -224,18 +227,37 @@ splitpath_win(const std::string& path, /*@out@*/ std::string& tail)
     return head;
 }
 
+std::string
+get_curdir()
+{
+    size_t size = 1024;
+    char* buf = static_cast<char*>(std::malloc(size));
+    if (!buf)
+        throw std::bad_alloc();
+    while (getcwd(buf, size) == NULL)
+    {
+        if (errno != ERANGE)
+        {
+            std::free(buf);
+            throw Fatal(N_("could not determine current working directory"));
+        }
+        size *= 2;
+        buf = static_cast<char*>(realloc(buf, size));
+        if (!buf)
+            throw std::bad_alloc();
+    }
+    std::string str(buf);
+    free(buf);
+    return str;
+}
+
 // FIXME: dumb way for now
 std::string
 abspath_unix(const std::string& path)
 {
-    char* curdir = getcwd(NULL, 0);
-
-    std::string abspath = curdir;
+    std::string abspath = get_curdir();
     abspath += '/';
     abspath += path;
-
-    free(curdir);
-
     return abspath;
 }
 
@@ -243,13 +265,9 @@ abspath_unix(const std::string& path)
 std::string
 abspath_win(const std::string& path)
 {
-    char* curdir = getcwd(NULL, 0);
-
-    std::string abspath = curdir;
+    std::string abspath = get_curdir();
     abspath += '\\';
     abspath += path;
-
-    free(curdir);
 
     // Replace all "/" with "\".
     std::replace(abspath.begin(), abspath.end(), '/', '\\');
