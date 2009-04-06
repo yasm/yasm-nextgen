@@ -217,7 +217,7 @@ AlignBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
         {
             bytes.insert(bytes.end(),
                          &m_code_fill[maxlen][0],
-                         &m_code_fill[maxlen][len]);
+                         &m_code_fill[maxlen][maxlen]);
             len -= maxlen;
         }
 
