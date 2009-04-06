@@ -49,7 +49,8 @@ Includes::open(std::ifstream& ifs,
     if (ifs)
         return combine;
 
-    for (const_iterator i = begin(), e = end(); i != e; ++i)
+    for (Dirs::const_iterator i = m_dirs.begin(), end = m_dirs.end(); i != end;
+         ++i)
     {
         combine = combpath(*i, iname);
         ifs.open(combine.c_str(), mode);
@@ -66,9 +67,9 @@ Includes::push_back(const std::string& path)
     // Add trailing slash if it is missing.
     std::string::size_type len = path.length();
     if (len > 0 && path[len-1] != '\\' && path[len-1] != '/')
-        std::vector<std::string>::push_back(path+'/');
+        m_dirs.push_back(path+'/');
     else
-        std::vector<std::string>::push_back(path);
+        m_dirs.push_back(path);
 }
 
 } // namespace yasm

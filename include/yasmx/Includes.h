@@ -41,7 +41,7 @@ namespace yasm
 /// Include path storage and search.  Paths are stored as std::strings.
 /// If a path is relative, it is treated by Includes::open() as relative to
 /// the current working directory.
-class YASM_LIB_EXPORT Includes : public std::vector<std::string>
+class YASM_LIB_EXPORT Includes
 {
 public:
     /// Try to find and open an include file, searching through include paths.
@@ -71,6 +71,10 @@ public:
     /// Add an include path.
     /// @param path     pathname
     void push_back(const std::string& path);
+
+private:
+    typedef std::vector<std::string> Dirs;
+    Dirs m_dirs;
 };
 
 } // namespace yasm
