@@ -428,7 +428,7 @@ xform_neg_impl(Expr& e, int pos, int stop_depth, int depth_delta, bool negating)
                 terms[n+1] = ExprTerm(-1, child->m_depth+1);
                 child->m_depth++;
                 int new_depth = child->m_depth+1;
-                for (int x = 0; x < child->get_nchild(); ++x)
+                for (int x = 0, nchild = child->get_nchild(); x < nchild; ++x)
                     n = xform_neg_impl(e, n-1, new_depth, depth_delta+1, false);
             }
         }
@@ -862,7 +862,8 @@ infix(std::ostream& os, const Expr& e, int pos=-1)
         default:            opstr = " !UNK! "; break;
     }
 
-    std::vector<int> children;
+    typedef SmallVector<int, 32> CVector;
+    CVector children;
     const ExprTerm& root = terms[pos];
     --pos;
     for (; pos >= 0; --pos)
@@ -877,7 +878,7 @@ infix(std::ostream& os, const Expr& e, int pos=-1)
         children.push_back(pos);
     }
 
-    for (std::vector<int>::const_reverse_iterator i=children.rbegin(),
+    for (CVector::const_reverse_iterator i=children.rbegin(),
          end=children.rend(); i != end; ++i)
     {
         std::ios_base::fmtflags ff = os.flags();

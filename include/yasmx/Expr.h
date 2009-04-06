@@ -32,10 +32,9 @@
 #include <assert.h>
 #include <iosfwd>
 #include <memory>
-#include <vector>
 
 #include "yasmx/Config/export.h"
-
+#include "yasmx/Support/SmallVector.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location.h"
 #include "yasmx/Op.h"
@@ -266,7 +265,7 @@ public:
     int m_depth;                ///< Depth in tree.
 };
 
-typedef std::vector<ExprTerm> ExprTerms;
+typedef SmallVector<ExprTerm, 3> ExprTerms;
 
 /// An expression.
 ///

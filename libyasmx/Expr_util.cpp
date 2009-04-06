@@ -41,7 +41,7 @@ namespace
 using yasm::Expr;
 
 void
-do_expand_equ(Expr& expr, std::vector<const Expr*>& seen)
+do_expand_equ(Expr& expr, yasm::SmallVector<const Expr*, 8>& seen)
 {
 #if 0
     for (yasm::ExprTerms::iterator i=expr->get_terms().begin(),
@@ -78,7 +78,7 @@ namespace yasm
 void
 expand_equ(Expr& expr)
 {
-    std::vector<const Expr*> seen;
+    SmallVector<const Expr*, 8> seen;
     do_expand_equ(expr, seen);
 }
 
