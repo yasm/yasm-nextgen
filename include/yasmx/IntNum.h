@@ -294,13 +294,13 @@ public:
     /// If not, converts into passed bv and returns that instead.
     /// @param bv       bitvector to use if intnum is not bitvector.
     /// @return Passed bv or intnum internal bitvector.
-    BitVector::wordptr to_bv(/*@returned@*/ BitVector::wordptr bv) const;
+    BitVector::wordptr get_bv(/*@returned@*/ BitVector::wordptr bv) const;
 
     /// Store a bitvector into intnum storage.
     /// If saved as a bitvector, clones the passed bitvector.
     /// Can modify the passed bitvector.
     /// @param bv       bitvector
-    void from_bv(BitVector::wordptr bv);
+    void set_bv(BitVector::wordptr bv);
 };
 
 /// Overloaded assignment binary operators.

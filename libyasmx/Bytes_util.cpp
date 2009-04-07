@@ -43,13 +43,13 @@ void
 write_8(Bytes& bytes, const IntNum& intn)
 {
     bytes.push_back(static_cast<unsigned char>(
-        BitVector::Chunk_Read(intn.to_bv(staticbv), 8, 0)));
+        BitVector::Chunk_Read(intn.get_bv(staticbv), 8, 0)));
 }
 
 void
 write_16(Bytes& bytes, const IntNum& intn)
 {
-    BitVector::wordptr bv = intn.to_bv(staticbv);
+    BitVector::wordptr bv = intn.get_bv(staticbv);
     if (bytes.is_bigendian())
     {
         bytes.push_back(static_cast<unsigned char>(
@@ -69,7 +69,7 @@ write_16(Bytes& bytes, const IntNum& intn)
 void
 write_32(Bytes& bytes, const IntNum& intn)
 {
-    BitVector::wordptr bv = intn.to_bv(staticbv);
+    BitVector::wordptr bv = intn.get_bv(staticbv);
     if (bytes.is_bigendian())
     {
         for (int i=32-8; i>=0; i-=8)
@@ -87,7 +87,7 @@ write_32(Bytes& bytes, const IntNum& intn)
 void
 write_64(Bytes& bytes, const IntNum& intn)
 {
-    BitVector::wordptr bv = intn.to_bv(staticbv);
+    BitVector::wordptr bv = intn.get_bv(staticbv);
     if (bytes.is_bigendian())
     {
         for (int i=64-8; i>=0; i-=8)
@@ -106,7 +106,7 @@ void
 write_n(Bytes& bytes, const IntNum& intn, int n)
 {
     assert((n & 7) == 0 && "n must be a multiple of 8");
-    BitVector::wordptr bv = intn.to_bv(staticbv);
+    BitVector::wordptr bv = intn.get_bv(staticbv);
     if (bytes.is_bigendian())
     {
         for (int i=n-8; i>=0; i-=8)

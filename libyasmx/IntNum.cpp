@@ -65,7 +65,7 @@ static BitVector::scoped_wordptr op2static(IntNum::BITVECT_NATIVE_SIZE);
 static BitVector::from_Dec_static my_from_Dec(IntNum::BITVECT_NATIVE_SIZE);
 
 void
-IntNum::from_bv(wordptr bv)
+IntNum::set_bv(wordptr bv)
 {
     if (BitVector::Set_Max(bv) < LONG_BITS)
     {
@@ -98,7 +98,7 @@ IntNum::from_bv(wordptr bv)
 }
 
 wordptr
-IntNum::to_bv(/*@returned@*/ wordptr bv) const
+IntNum::get_bv(/*@returned@*/ wordptr bv) const
 {
     if (m_type == INTNUM_BV)
         return m_val.bv;
@@ -156,7 +156,7 @@ IntNum::IntNum(char* str, int base)
         default:
             break;
     }
-    from_bv(conv_bv);
+    set_bv(conv_bv);
 }
 
 IntNum::IntNum(const unsigned char* ptr,
@@ -186,7 +186,7 @@ IntNum::IntNum(const unsigned char* ptr,
     if (srcsize*8 < BITVECT_NATIVE_SIZE && sign && (ptr[i] & 0x80) == 0x80)
         BitVector::Interval_Fill(conv_bv, i*8, BITVECT_NATIVE_SIZE-1);
 
-    from_bv(conv_bv);
+    set_bv(conv_bv);
 }
 
 IntNum::IntNum(const IntNum& rhs)
@@ -335,10 +335,10 @@ IntNum::calc(Op::Op op, const IntNum* operand)
 
     // Always do computations with in full bit vector.
     // Bit vector results must be calculated through intermediate storage.
-    wordptr op1 = to_bv(op1static);
+    wordptr op1 = get_bv(op1static);
     wordptr op2 = 0;
     if (operand)
-        op2 = operand->to_bv(op2static);
+        op2 = operand->get_bv(op2static);
 
     // A operation does a bitvector computation if result is allocated.
     switch (op)
@@ -506,7 +506,7 @@ IntNum::calc(Op::Op op, const IntNum* operand)
     // Try to fit the result into long if possible
     if (m_type == INTNUM_BV)
         BitVector::Destroy(m_val.bv);
-    from_bv(result);
+    set_bv(result);
 }
 /*@=nullderef =nullpass =branchstate@*/
 
@@ -700,7 +700,7 @@ IntNum::get_sized(unsigned char* ptr,
         BitVector::Block_Store(op1, ptr, static_cast<N_int>(destsize));
 
     // If not already a bitvect, convert value to be written to a bitvect
-    wordptr op2 = to_bv(op2static);
+    wordptr op2 = get_bv(op2static);
 
     // Check low bits if right shifting and warnings enabled
     if (warn && rshift > 0)
@@ -821,7 +821,7 @@ bool
 IntNum::in_range(long low, long high) const
 {
     // If not already a bitvect, convert value to be written to a bitvect
-    wordptr val = to_bv(result);
+    wordptr val = get_bv(result);
 
     // Convert high and low to bitvects
     wordptr lval = op1static;
@@ -862,7 +862,7 @@ IntNum::operator++()
     {
         if (m_type == INTNUM_L)
         {
-            m_val.bv = to_bv(BitVector::Create(BITVECT_NATIVE_SIZE, false));
+            m_val.bv = get_bv(BitVector::Create(BITVECT_NATIVE_SIZE, false));
             m_type = INTNUM_BV;
         }
         BitVector::increment(m_val.bv);
@@ -879,7 +879,7 @@ IntNum::operator--()
     {
         if (m_type == INTNUM_L)
         {
-            m_val.bv = to_bv(BitVector::Create(BITVECT_NATIVE_SIZE, false));
+            m_val.bv = get_bv(BitVector::Create(BITVECT_NATIVE_SIZE, false));
             m_type = INTNUM_BV;
         }
         BitVector::decrement(m_val.bv);
@@ -899,8 +899,8 @@ compare(const IntNum& lhs, const IntNum& rhs)
         return 0;
     }
 
-    wordptr op1 = lhs.to_bv(op1static);
-    wordptr op2 = rhs.to_bv(op2static);
+    wordptr op1 = lhs.get_bv(op1static);
+    wordptr op2 = rhs.get_bv(op2static);
     return BitVector::Compare(op1, op2);
 }
 
@@ -910,8 +910,8 @@ operator==(const IntNum& lhs, const IntNum& rhs)
     if (lhs.m_type == IntNum::INTNUM_L && rhs.m_type == IntNum::INTNUM_L)
         return lhs.m_val.l == rhs.m_val.l;
 
-    wordptr op1 = lhs.to_bv(op1static);
-    wordptr op2 = rhs.to_bv(op2static);
+    wordptr op1 = lhs.get_bv(op1static);
+    wordptr op2 = rhs.get_bv(op2static);
     return BitVector::equal(op1, op2);
 }
 
@@ -921,8 +921,8 @@ operator<(const IntNum& lhs, const IntNum& rhs)
     if (lhs.m_type == IntNum::INTNUM_L && rhs.m_type == IntNum::INTNUM_L)
         return lhs.m_val.l < rhs.m_val.l;
 
-    wordptr op1 = lhs.to_bv(op1static);
-    wordptr op2 = rhs.to_bv(op2static);
+    wordptr op1 = lhs.get_bv(op1static);
+    wordptr op2 = rhs.get_bv(op2static);
     return BitVector::Compare(op1, op2) < 0;
 }
 
@@ -932,8 +932,8 @@ operator>(const IntNum& lhs, const IntNum& rhs)
     if (lhs.m_type == IntNum::INTNUM_L && rhs.m_type == IntNum::INTNUM_L)
         return lhs.m_val.l > rhs.m_val.l;
 
-    wordptr op1 = lhs.to_bv(op1static);
-    wordptr op2 = rhs.to_bv(op2static);
+    wordptr op1 = lhs.get_bv(op1static);
+    wordptr op2 = rhs.get_bv(op2static);
     return BitVector::Compare(op1, op2) > 0;
 }
 
@@ -951,7 +951,7 @@ IntNum::get_str() const
 std::ostream&
 operator<< (std::ostream& os, const IntNum& intn)
 {
-    wordptr bv = intn.to_bv(conv_bv);
+    wordptr bv = intn.get_bv(conv_bv);
 
     BitVector::N_word bits =
         static_cast<BitVector::N_word>(os.iword(set_intnum_bits::m_idx));

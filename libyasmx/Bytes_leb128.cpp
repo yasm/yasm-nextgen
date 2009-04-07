@@ -110,7 +110,7 @@ write_leb128(Bytes& bytes, const IntNum& intn, bool sign)
         return 1;
     }
 
-    return write_leb128(bytes, intn.to_bv(staticbv), sign);
+    return write_leb128(bytes, intn.get_bv(staticbv), sign);
 }
 
 unsigned long
@@ -120,7 +120,7 @@ size_leb128(const IntNum& intn, bool sign)
     if (intn.is_zero())
         return 1;
 
-    return size_leb128(intn.to_bv(staticbv), sign);
+    return size_leb128(intn.get_bv(staticbv), sign);
 }
 
 IntNum
@@ -151,7 +151,7 @@ read_leb128(Bytes& bytes, bool sign, /*@out@*/ unsigned long* size)
         BitVector::Interval_Fill(staticbv, i, IntNum::BITVECT_NATIVE_SIZE-1);
 
     IntNum intn;
-    intn.from_bv(staticbv);
+    intn.set_bv(staticbv);
     return intn;
 }
 
