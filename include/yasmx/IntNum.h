@@ -80,9 +80,6 @@ public:
         m_val.l = 0;
     }
 
-    /// Create a new intnum from a decimal/binary/octal/hexidecimal string.
-    explicit IntNum(char* str, int base=10);
-
     /// Create a new intnum from an unsigned integer value.
     /// @param i        unsigned integer value
     IntNum(unsigned long i)
@@ -261,7 +258,14 @@ public:
     /// @return True if intnum is within range.
     bool in_range(long low, long high) const;
 
-    /// Get an intnum as a signed decimal string.  The returned string will
+    /// Set intnum value from a decimal/binary/octal/hexidecimal string.
+    /// @param str      string
+    /// @param base     numeric base (10=decimal, etc)
+    /// @return False if string could not be converted.
+    /// @note Only base=2,8,10,16 are supported.
+    bool set_str(char* str, int base=10);
+
+    /// Get intnum value as a signed decimal string.  The returned string will
     /// contain a leading '-' if the intnum is negative.
     /// @return String containing the decimal representation of the intnum.
     /*@only@*/ char* get_str() const;

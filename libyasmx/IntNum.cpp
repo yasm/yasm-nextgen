@@ -116,40 +116,37 @@ IntNum::get_bv(/*@returned@*/ wordptr bv) const
     return bv;
 }
 
-IntNum::IntNum(char* str, int base)
+bool
+IntNum::set_str(char* str, int base)
 {
     BitVector::ErrCode err;
-    const char* errstr;
 
     switch (base)
     {
         case 2:
             err = BitVector::from_Bin(conv_bv,
                                       reinterpret_cast<unsigned char *>(str));
-            errstr = N_("invalid binary literal");
             break;
         case 8:
             err = BitVector::from_Oct(conv_bv,
                                       reinterpret_cast<unsigned char *>(str));
-            errstr = N_("invalid octal literal");
             break;
         case 10:
             err = my_from_Dec(conv_bv, reinterpret_cast<unsigned char *>(str));
-            errstr = N_("invalid decimal literal");
             break;
         case 16:
             err = BitVector::from_Hex(conv_bv,
                                       reinterpret_cast<unsigned char *>(str));
-            errstr = N_("invalid hex literal");
             break;
         default:
-            throw ValueError(N_("invalid base"));
+            assert(false && "invalid base");
+            err = BitVector::ErrCode_Pars;
     }
 
     switch (err)
     {
         case BitVector::ErrCode_Pars:
-            throw ValueError(errstr);
+            return false;
         case BitVector::ErrCode_Ovfl:
             throw OverflowError(
                 N_("Numeric constant too large for internal format"));
@@ -157,6 +154,7 @@ IntNum::IntNum(char* str, int base)
             break;
     }
     set_bv(conv_bv);
+    return true;
 }
 
 IntNum::IntNum(const unsigned char* ptr,
