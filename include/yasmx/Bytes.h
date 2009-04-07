@@ -47,6 +47,14 @@ class YASM_LIB_EXPORT Bytes : private std::vector<unsigned char>
 
 public:
     Bytes(bool bigendian=false);
+
+    template <class InputIterator>
+    Bytes(InputIterator first, InputIterator last, bool bigendian=false)
+        : base_vector(first, last)
+        , m_bigendian(bigendian)
+        , m_readpos(0)
+    {}
+
     ~Bytes();
 
     typedef base_vector::reference reference;
