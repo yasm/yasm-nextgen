@@ -218,7 +218,9 @@ scan:
             lvalp->flt.reset(new FloatNum);
             savech = TOK[TOKLEN];
             TOK[TOKLEN] = '\0';
-            lvalp->flt->set_str(TOK);
+            bool ok = lvalp->flt->set_str(TOK);
+            ok = ok; // silence warning
+            assert(ok && "conversion failed");
             TOK[TOKLEN] = savech;
             RETURN(FLTNUM);
         }
