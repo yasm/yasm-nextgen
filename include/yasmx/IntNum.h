@@ -112,17 +112,6 @@ public:
         m_val.l = static_cast<long>(i);
     }
 
-    /// Create a new intnum from a little-endian or big-endian buffer.
-    /// In little endian, the LSB is in ptr[0].
-    /// @param ptr          pointer to start of buffer
-    /// @param sign         signed (true) or unsigned (false) source
-    /// @param srcsize      source buffer size (in bytes)
-    /// @param bigendian    endianness (true=big, false=little)
-    IntNum(const unsigned char* ptr,
-           bool sign,
-           unsigned int srcsize,
-           bool bigendian);
-
     /// Copy constructor.
     IntNum(const IntNum& rhs);
     /// Assignment operators.

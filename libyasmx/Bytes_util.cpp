@@ -137,18 +137,64 @@ write_n(Bytes& bytes, unsigned long val, int n)
     }
 }
 
+static IntNum
+read_n(Bytes& bytes, int n, bool sign)
+{
+    assert((n & 7) == 0 && "n must be a multiple of 8");
+    assert(n <= IntNum::BITVECT_NATIVE_SIZE && "too large for internal format");
+    assert(n > 0 && "can't read 0 bits");
+
+    // Read the buffer into a bitvect
+    const unsigned char* ptr;
+    BitVector::Empty(staticbv);
+    if (bytes.is_bigendian())
+    {
+        for (int i=n-8; i>=0; i-=8)
+        {
+            ptr = bytes.read(1);
+            BitVector::Chunk_Store(staticbv, 8, i, *ptr);
+        }
+    }
+    else
+    {
+        for (int i=0; i<n; i+=8)
+        {
+            ptr = bytes.read(1);
+            BitVector::Chunk_Store(staticbv, 8, i, *ptr);
+        }
+    }
+
+    // Sign extend if needed
+    if (n < IntNum::BITVECT_NATIVE_SIZE && sign && (*ptr & 0x80) == 0x80)
+        BitVector::Interval_Fill(staticbv, n, IntNum::BITVECT_NATIVE_SIZE-1);
+
+    IntNum intn;
+    intn.set_bv(staticbv);
+    return intn;
+}
+
+IntNum
+read_un(Bytes& bytes, int n)
+{
+    return read_n(bytes, n, false);
+}
+
+IntNum
+read_sn(Bytes& bytes, int n)
+{
+    return read_n(bytes, n, true);
+}
+
 IntNum
 read_u64(Bytes& bytes)
 {
-    const unsigned char* ptr = bytes.read(8);
-    return IntNum(ptr, false, 8, bytes.is_bigendian());
+    return read_n(bytes, 64, false);
 }
 
 IntNum
 read_s64(Bytes& bytes)
 {
-    const unsigned char* ptr = bytes.read(8);
-    return IntNum(ptr, true, 8, bytes.is_bigendian());
+    return read_n(bytes, 64, true);
 }
 
 } // namespace yasm

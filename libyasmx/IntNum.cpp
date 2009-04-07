@@ -157,36 +157,6 @@ IntNum::set_str(char* str, int base)
     return true;
 }
 
-IntNum::IntNum(const unsigned char* ptr,
-               bool sign,
-               unsigned int srcsize,
-               bool bigendian)
-{
-    if (srcsize*8 > BITVECT_NATIVE_SIZE)
-        throw OverflowError(
-            N_("Numeric constant too large for internal format"));
-
-    // Read the buffer into a bitvect
-    unsigned long i = 0;
-    BitVector::Empty(conv_bv);
-    if (bigendian)
-    {
-        for (i = 0; i < srcsize; i++)
-            BitVector::Chunk_Store(conv_bv, 8, (srcsize-1-i)*8, ptr[i]);
-    }
-    else
-    {
-        for (i = 0; i < srcsize; i++)
-            BitVector::Chunk_Store(conv_bv, 8, i*8, ptr[i]);
-    }
-
-    // Sign extend if needed
-    if (srcsize*8 < BITVECT_NATIVE_SIZE && sign && (ptr[i] & 0x80) == 0x80)
-        BitVector::Interval_Fill(conv_bv, i*8, BITVECT_NATIVE_SIZE-1);
-
-    set_bv(conv_bv);
-}
-
 IntNum::IntNum(const IntNum& rhs)
 {
     m_type = rhs.m_type;

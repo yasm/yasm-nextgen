@@ -209,6 +209,20 @@ read_s32(Bytes& bytes)
         return static_cast<long>(val);
 }
 
+/// Read an unsigned N-bit value from a bytes buffer.
+/// @param bytes    input bytes buffer
+/// @param n        number of bits (must be multiple of 8)
+/// @return N-bit value (as an IntNum).
+YASM_LIB_EXPORT
+IntNum read_un(Bytes& bytes, int n);
+
+/// Read an signed N-bit value from a bytes buffer.
+/// @param bytes    input bytes buffer
+/// @param n        number of bits (must be multiple of 8)
+/// @return N-bit value (as an IntNum).
+YASM_LIB_EXPORT
+IntNum read_sn(Bytes& bytes, int n);
+
 /// Read an unsigned 64-bit value from a bytes buffer.
 /// @param bytes    input bytes buffer
 /// @return 64-bit value (as an IntNum).
