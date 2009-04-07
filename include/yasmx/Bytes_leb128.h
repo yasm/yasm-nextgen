@@ -31,14 +31,15 @@
 ///
 #include "yasmx/Config/export.h"
 
+#include "yasmx/IntNum.h"
+
 
 namespace yasm
 {
 
 class Bytes;
-class IntNum;
 
-/// Output intnum to bytes in signed LEB128-encoded form.
+/// Output intnum to bytes in LEB128-encoded form.
 /// @param bytes    output bytes buffer
 /// @param intn     intnum
 /// @param sign     true if signed LEB128, false if unsigned LEB128
@@ -46,11 +47,20 @@ class IntNum;
 YASM_LIB_EXPORT
 unsigned long write_leb128(Bytes& bytes, const IntNum& intn, bool sign);
 
-/// Calculate number of bytes signed LEB128-encoded form of intnum will take.
+/// Calculate number of bytes LEB128-encoded form of intnum will take.
 /// @param intn     intnum
+/// @param sign     true if signed LEB128, false if unsigned LEB128
 /// @return Number of bytes.
 YASM_LIB_EXPORT
 unsigned long size_leb128(const IntNum& intn, bool sign);
+
+/// Read a LEB128-encoded value from a bytes buffer.
+/// @param bytes    input bytes buffer
+/// @param sign     true if signed LEB128, false if unsigned LEB128
+/// @param size     number of bytes read (returned)
+/// @return IntNum value; number of bytes read returned in size.
+YASM_LIB_EXPORT
+IntNum read_leb128(Bytes& bytes, bool sign, /*@out@*/ unsigned long* size = 0);
 
 /// Output intnum to bytes in signed LEB128-encoded form.
 /// @param bytes    output bytes buffer
@@ -71,6 +81,16 @@ size_sleb128(const IntNum& intn)
     return size_leb128(intn, true);
 }
 
+/// Read a signed LEB128-encoded value from a bytes buffer.
+/// @param bytes    input bytes buffer
+/// @param size     number of bytes read (returned)
+/// @return IntNum value; number of bytes read returned in size.
+inline IntNum
+read_sleb128(Bytes& bytes, /*@out@*/ unsigned long* size = 0)
+{
+    return read_leb128(bytes, true, size);
+}
+
 /// Output intnum to bytes in unsigned LEB128-encoded form.
 /// @param bytes    output bytes buffer
 /// @param intn     intnum
@@ -88,6 +108,16 @@ inline unsigned long
 size_uleb128(const IntNum& intn)
 {
     return size_leb128(intn, false);
+}
+
+/// Read a unsigned LEB128-encoded value from a bytes buffer.
+/// @param bytes    input bytes buffer
+/// @param size     number of bytes read (returned)
+/// @return IntNum value; number of bytes read returned in size.
+inline IntNum
+read_uleb128(Bytes& bytes, /*@out@*/ unsigned long* size = 0)
+{
+    return read_leb128(bytes, false, size);
 }
 
 /// Output integer to bytes in signed LEB128-encoded form.

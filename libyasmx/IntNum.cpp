@@ -159,32 +159,6 @@ IntNum::IntNum(char* str, int base)
     from_bv(conv_bv);
 }
 
-IntNum::IntNum(const unsigned char* ptr, bool sign, unsigned long& size)
-{
-    const unsigned char* ptr_orig = ptr;
-    unsigned long i = 0;
-
-    BitVector::Empty(conv_bv);
-    for (;;)
-    {
-        BitVector::Chunk_Store(conv_bv, 7, i, *ptr);
-        i += 7;
-        if ((*ptr & 0x80) != 0x80)
-            break;
-        ptr++;
-    }
-
-    size = static_cast<unsigned long>(ptr-ptr_orig)+1;
-
-    if (i > BITVECT_NATIVE_SIZE)
-        throw OverflowError(
-            N_("Numeric constant too large for internal format"));
-    else if (sign && (*ptr & 0x40) == 0x40)
-        BitVector::Interval_Fill(conv_bv, i, BITVECT_NATIVE_SIZE-1);
-
-    from_bv(conv_bv);
-}
-
 IntNum::IntNum(const unsigned char* ptr,
                bool sign,
                unsigned int srcsize,

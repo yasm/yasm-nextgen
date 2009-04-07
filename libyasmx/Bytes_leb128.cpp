@@ -26,6 +26,9 @@
 //
 #include "yasmx/Bytes_leb128.h"
 
+#include <util.h>
+
+#include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/IntNum.h"
 
@@ -118,6 +121,38 @@ size_leb128(const IntNum& intn, bool sign)
         return 1;
 
     return size_leb128(intn.to_bv(staticbv), sign);
+}
+
+IntNum
+read_leb128(Bytes& bytes, bool sign, /*@out@*/ unsigned long* size)
+{
+    const unsigned char* ptr;
+    unsigned long n = 0, i = 0;
+
+    BitVector::Empty(staticbv);
+    for (;;)
+    {
+        ptr = bytes.read(1);
+        BitVector::Chunk_Store(staticbv, 7, i, *ptr);
+        ++n;
+        i += 7;
+        if ((*ptr & 0x80) != 0x80)
+            break;
+    }
+
+    if (size)
+        *size = n;
+
+    if (i > IntNum::BITVECT_NATIVE_SIZE)
+        throw OverflowError(
+            N_("Numeric constant too large for internal format"));
+
+    if (sign && (*ptr & 0x40) == 0x40)
+        BitVector::Interval_Fill(staticbv, i, IntNum::BITVECT_NATIVE_SIZE-1);
+
+    IntNum intn;
+    intn.from_bv(staticbv);
+    return intn;
 }
 
 unsigned long

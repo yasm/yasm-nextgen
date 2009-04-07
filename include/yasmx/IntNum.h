@@ -115,13 +115,6 @@ public:
         m_val.l = static_cast<long>(i);
     }
 
-    /// Create a new intnum from LEB128-encoded form.
-    /// @param ptr      pointer to start of LEB128 encoded form
-    /// @param sign     signed (true) or unsigned (false) LEB128 format
-    /// @param size     number of bytes read from ptr (output)
-    /// @return Number of bytes read returned into size parameter.
-    IntNum(const unsigned char* ptr, bool sign, /*@out@*/ unsigned long& size);
-
     /// Create a new intnum from a little-endian or big-endian buffer.
     /// In little endian, the LSB is in ptr[0].
     /// @param ptr          pointer to start of buffer
@@ -297,17 +290,16 @@ public:
         return old;
     }
 
-    // If intnum is a BV, returns its bitvector directly.
-    // If not, converts into passed bv and returns that instead.
-    // @param bv        bitvector to use if intnum is not bitvector.
-    // @return Passed bv or intnum internal bitvector.
+    /// If intnum is a BV, returns its bitvector directly.
+    /// If not, converts into passed bv and returns that instead.
+    /// @param bv       bitvector to use if intnum is not bitvector.
+    /// @return Passed bv or intnum internal bitvector.
     BitVector::wordptr to_bv(/*@returned@*/ BitVector::wordptr bv) const;
 
-private:
-    // Compress a bitvector into intnum storage.
-    // If saved as a bitvector, clones the passed bitvector.
-    // Can modify the passed bitvector.
-    // @param bv        bitvector
+    /// Store a bitvector into intnum storage.
+    /// If saved as a bitvector, clones the passed bitvector.
+    /// Can modify the passed bitvector.
+    /// @param bv       bitvector
     void from_bv(BitVector::wordptr bv);
 };
 
