@@ -310,6 +310,7 @@ FloatNum::FloatNum()
     , m_flags(FLAG_ISSNAN)
 {
     m_mantissa = BitVector::Create(MANT_BITS, true);
+    BitVector::LSB(m_mantissa, true);
 }
 
 bool
@@ -456,6 +457,7 @@ FloatNum::set_str(const char *str)
         m_exponent = 0xffff;
         m_flags = FLAG_ISSNAN;
         BitVector::Empty(m_mantissa);
+        BitVector::LSB(m_mantissa, true);
         return false;
     }
 
