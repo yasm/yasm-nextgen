@@ -209,7 +209,7 @@ public:
     /// @return Signed 32-bit value of intn.
     long get_int() const;
 
-    /// Output #yasm_intnum to buffer in little-endian or big-endian.
+    /// Output intnum to buffer in little-endian or big-endian.
     /// Puts the value into the least significant bits of the destination,
     /// or may be shifted into more significant bits by the shift parameter.
     /// The destination bits are cleared before being set.
