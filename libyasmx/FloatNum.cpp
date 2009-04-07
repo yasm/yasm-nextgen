@@ -58,7 +58,8 @@ static const unsigned short EXP_MIN = 1;
 static const unsigned short EXP_ZERO = 0;
 
 // Flag settings for flags field
-static const unsigned int FLAG_ISZERO = 1<<0;
+static const unsigned char FLAG_ISZERO = 1<<0;
+static const unsigned char FLAG_ISSNAN = 1<<1;
 
 class FloatNumManager
 {
@@ -303,12 +304,19 @@ FloatNum::mul(const FloatNum* op)
     BitVector::Destroy(op2);
 }
 
-FloatNum::FloatNum(const char *str)
+FloatNum::FloatNum()
+    : m_exponent(0xffff)
+    , m_sign(0)
+    , m_flags(FLAG_ISSNAN)
+{
+    m_mantissa = BitVector::Create(MANT_BITS, true);
+}
+
+bool
+FloatNum::set_str(const char *str)
 {
     FloatNumManager& manager = FloatNumManager::instance();
     bool carry;
-
-    m_mantissa = BitVector::Create(MANT_BITS, true);
 
     // allocate and initialize calculation variables
     wordptr operand[2];
@@ -317,6 +325,10 @@ FloatNum::FloatNum(const char *str)
     int dec_exponent = 0;               // decimal (powers of 10) exponent
     unsigned int sig_digits = 0;
     int decimal_pt = 1;
+    bool valid = true;
+
+    // set initial value to 0
+    BitVector::Empty(m_mantissa);
 
     // set initial flags to 0
     m_flags = 0;
@@ -426,13 +438,26 @@ FloatNum::FloatNum(const char *str)
         // We just saw the "E" character, now read in the exponent value and
         // add it into dec_exponent.
         int dec_exp_add = 0;
-        sscanf(str, "%d", &dec_exp_add);
+        int nconv = sscanf(str, "%d", &dec_exp_add);
+        if (nconv != 1)
+            valid = false;
         dec_exponent += dec_exp_add;
     }
+    else if (*str != '\0' && !isspace(*str))
+        valid = false;  // garbage at end
 
     // Free calculation variables.
     BitVector::Destroy(operand[1]);
     BitVector::Destroy(operand[0]);
+
+    // Set signaling NaN and return if invalid conversion
+    if (!valid)
+    {
+        m_exponent = 0xffff;
+        m_flags = FLAG_ISSNAN;
+        BitVector::Empty(m_mantissa);
+        return false;
+    }
 
     // Normalize the number, checking for 0 first.
     if (BitVector::is_empty(m_mantissa))
@@ -442,7 +467,7 @@ FloatNum::FloatNum(const char *str)
         // Set zero flag so output functions don't see 0 value as underflow.
         m_flags |= FLAG_ISZERO;
         // Return 0 value.
-        return;
+        return true;
     }
     // Exponent if already norm.
     m_exponent = static_cast<unsigned short>(0x7FFF+(MANT_BITS-1));
@@ -501,6 +526,8 @@ FloatNum::FloatNum(const char *str)
     if ((m_exponent != EXP_INF) && (m_exponent != EXP_ZERO) &&
         !BitVector::is_full(m_mantissa))
         BitVector::increment(m_mantissa);
+
+    return true;
 }
 
 FloatNum::FloatNum(const FloatNum& flt)
@@ -530,20 +557,20 @@ FloatNum::calc(Op::Op op, /*@unused@*/ const FloatNum* operand)
 }
 
 int
-FloatNum::get_int(unsigned long& ret_val) const
+FloatNum::get_single(unsigned long* ret_val) const
 {
     unsigned char t[4];
 
     if (get_sized(t, 4, 32, 0, false, 0))
     {
-        ret_val = 0xDEADBEEFUL;     // Obviously incorrect return value
+        *ret_val = 0xDEADBEEFUL;    // Obviously incorrect return value
         return 1;
     }
 
-    ret_val = static_cast<unsigned long>(t[0] & 0xFF);
-    ret_val |= static_cast<unsigned long>((t[1] & 0xFF) << 8);
-    ret_val |= static_cast<unsigned long>((t[2] & 0xFF) << 16);
-    ret_val |= static_cast<unsigned long>((t[3] & 0xFF) << 24);
+    *ret_val = static_cast<unsigned long>(t[0] & 0xFF);
+    *ret_val |= static_cast<unsigned long>((t[1] & 0xFF) << 8);
+    *ret_val |= static_cast<unsigned long>((t[2] & 0xFF) << 16);
+    *ret_val |= static_cast<unsigned long>((t[3] & 0xFF) << 24);
     return 0;
 }
 

@@ -54,10 +54,8 @@ class YASM_LIB_EXPORT FloatNum
     friend class FloatNumTest;
 
 public:
-    /// Create a new floatnum from a decimal string.  The input string
-    /// must be in standard C representation ([+-]123.456e[-+]789).
-    /// @param str  floating point decimal string
-    explicit FloatNum(const char* str);
+    /// Constructor.  The value is initialized to a signaling NaN.
+    FloatNum();
 
     /// Copy constructor.
     FloatNum(const FloatNum& rhs);
@@ -87,12 +85,18 @@ public:
     void calc(Op::Op op, const FloatNum& operand) { calc(op, &operand); }
     void calc(Op::Op op, /*@null@*/ const FloatNum* operand = 0);
 
+    /// Set floatnum value from a decimal string.  The input string
+    /// must be in standard C representation ([+-]123.456e[-+]789).
+    /// @param str  floating point decimal string
+    /// @return False if a conversion error occurred.
+    bool set_str(const char* str);
+
     /// Convert a floatnum to single-precision and return as 32-bit value.
     /// The 32-bit value is a "standard" C value (eg, of unknown endian).
     /// @param ret_val  pointer to storage for 32-bit output
     /// @return Nonzero if flt can't fit into single precision: -1 if
     ///         underflow occurred, 1 if overflow occurred.
-    int get_int(/*@out@*/ unsigned long& ret_val) const;
+    int get_single(/*@out@*/ unsigned long* ret_val) const;
 
     /// Output a floatnum to buffer in little-endian or big-endian.  Puts the
     /// value into the least significant bits of the destination, or may be

@@ -238,19 +238,21 @@ public:
 
     void testNewNormalized()
     {
+        yasm::FloatNum flt;
         for (size_t i=0; i<NELEMS(normalized_vals); i++)
         {
-            check_internal(yasm::FloatNum(normalized_vals[i].ascii),
-                           normalized_vals[i]);
+            TS_ASSERT(flt.set_str(normalized_vals[i].ascii));
+            check_internal(flt, normalized_vals[i]);
         }
     }
 
     void testNewNormalizedEdgecase()
     {
+        yasm::FloatNum flt;
         for (size_t i=0; i<NELEMS(normalized_edgecase_vals); i++)
         {
-            check_internal(yasm::FloatNum(normalized_edgecase_vals[i].ascii),
-                           normalized_edgecase_vals[i]);
+            TS_ASSERT(flt.set_str(normalized_edgecase_vals[i].ascii));
+            check_internal(flt, normalized_edgecase_vals[i]);
         }
     }
 

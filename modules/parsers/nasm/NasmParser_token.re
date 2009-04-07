@@ -215,9 +215,10 @@ scan:
         /* floating point value */
         digit+ "." digit* ('e' [-+]? digit+)?
         {
+            lvalp->flt.reset(new FloatNum);
             savech = TOK[TOKLEN];
             TOK[TOKLEN] = '\0';
-            lvalp->flt.reset(new FloatNum(TOK));
+            lvalp->flt->set_str(TOK);
             TOK[TOKLEN] = savech;
             RETURN(FLTNUM);
         }
