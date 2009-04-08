@@ -1,5 +1,5 @@
 add_executable(genperf
     genperf.cpp
     perfect.cpp
-    ../../libyasmx/phash.cpp
+    ../../lib/yasmx/phash.cpp
     )

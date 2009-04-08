@@ -76,7 +76,7 @@ INCLUDE(MacroAddCxxTest)
 ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(tools)
 ADD_SUBDIRECTORY(modules)
-ADD_SUBDIRECTORY(libyasmx)
+ADD_SUBDIRECTORY(lib)
 ADD_SUBDIRECTORY(frontends)
 
 YASM_ADD_UNIT_TEST(test_preproc TESTNAME preproc_basic

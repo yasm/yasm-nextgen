@@ -1,4 +1,4 @@
-INCLUDE_DIRECTORIES(${yasm_SOURCE_DIR}/libyasmx)
+INCLUDE_DIRECTORIES(${yasm_SOURCE_DIR}/lib/yasmx)
 
 ADD_CXXTEST(libyasmx_tests
     align_test.h
