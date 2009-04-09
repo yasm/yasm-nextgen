@@ -13,7 +13,6 @@
 
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Format.h"
-#include "llvm/System/Program.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Compiler.h"
@@ -251,10 +250,6 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, bool Binary,
   // Handle "-" as stdout.
   if (Filename[0] == '-' && Filename[1] == 0) {
     FD = STDOUT_FILENO;
-    // If user requested binary then put stdout into binary mode if
-    // possible.
-    if (Binary)
-      sys::Program::ChangeStdoutToBinary();
     ShouldClose = false;
     return;
   }
