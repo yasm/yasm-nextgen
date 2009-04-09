@@ -30,8 +30,11 @@ INCLUDE(MacroEnsureVersion)
 # Platform-specific include files (POSIX, Win32)
 CHECK_INCLUDE_FILE(locale.h HAVE_LOCALE_H)
 CHECK_INCLUDE_FILE(libgen.h HAVE_LIBGEN_H)
+CHECK_INCLUDE_FILE(inttypes.h HAVE_INTTYPES_H)
 CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
 CHECK_INCLUDE_FILE(direct.h HAVE_DIRECT_H)
+CHECK_INCLUDE_FILE(stdint.h HAVE_STDINT_H)
+CHECK_INCLUDE_FILE(sys/types.h HAVE_SYS_TYPES_H)
 
 CHECK_SYMBOL_EXISTS(abort "stdlib.h" HAVE_ABORT)
 
@@ -128,6 +131,8 @@ endif (CMAKE_SYSTEM_NAME MATCHES BSD)
 # compiler specific settings
 ############################################################
 
+ADD_DEFINITIONS(-D__STDC_LIMIT_MACROS)
+ADD_DEFINITIONS(-D__STDC_CONSTANT_MACROS)
 
 if (MSVC)
    set (YASM_ENABLE_EXCEPTIONS -EHsc)
