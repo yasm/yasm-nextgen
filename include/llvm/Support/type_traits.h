@@ -14,15 +14,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef YASM_TYPE_TRAITS_H
-#define YASM_TYPE_TRAITS_H
+#ifndef LLVM_SUPPORT_TYPE_TRAITS_H
+#define LLVM_SUPPORT_TYPE_TRAITS_H
 
 // This is actually the conforming implementation which works with abstract
 // classes.  However, enough compilers have trouble with it that most will use
 // the one in boost/type_traits/object_traits.hpp. This implementation actually
 // works with VC7.0, but other interactions seem to fail when we use it.
 
-namespace yasm {
+namespace llvm {
 
 namespace dont_use
 {

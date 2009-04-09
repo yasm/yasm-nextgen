@@ -862,7 +862,7 @@ infix(std::ostream& os, const Expr& e, int pos=-1)
         default:            opstr = " !UNK! "; break;
     }
 
-    typedef SmallVector<int, 32> CVector;
+    typedef llvm::SmallVector<int, 32> CVector;
     CVector children;
     const ExprTerm& root = terms[pos];
     --pos;

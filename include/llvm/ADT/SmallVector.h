@@ -11,14 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef YASM_SMALLVECTOR_H
-#define YASM_SMALLVECTOR_H
+#ifndef LLVM_ADT_SMALLVECTOR_H
+#define LLVM_ADT_SMALLVECTOR_H
 
-#include "yasmx/Support/type_traits.h"
+#include "llvm/ADT/iterator.h"
+#include "llvm/Support/type_traits.h"
 #include <algorithm>
 #include <cassert>
 #include <cstring>
-#include <iterator>
 #include <memory>
 
 #ifdef _MSC_VER
@@ -45,7 +45,7 @@ namespace std {
 }
 #endif
 
-namespace yasm {
+namespace llvm {
 
 /// SmallVectorImpl - This class consists of common code factored out of the
 /// SmallVector class to reduce code duplication based on the SmallVector 'N'
@@ -210,7 +210,7 @@ public:
   void append(in_iter in_start, in_iter in_end) {
     size_type NumInputs = std::distance(in_start, in_end);
     // Grow allocated space if needed.
-    if (End+NumInputs > Capacity)
+    if (NumInputs > size_type(Capacity-End))
       grow(size()+NumInputs);
 
     // Copy the new elements over.
@@ -222,7 +222,7 @@ public:
   ///
   void append(size_type NumInputs, const T &Elt) {
     // Grow allocated space if needed.
-    if (End+NumInputs > Capacity)
+    if (NumInputs > size_type(Capacity-End))
       grow(size()+NumInputs);
 
     // Copy the new elements over.
@@ -302,7 +302,7 @@ public:
       append(End-NumToInsert, End);
 
       // Copy the existing elements that get replaced.
-      std::copy_backward(I, OldEnd-NumToInsert, OldEnd);
+      std::copy(I, OldEnd-NumToInsert, I+NumToInsert);
 
       std::fill_n(I, NumToInsert, Elt);
       return I;
@@ -351,7 +351,7 @@ public:
       append(End-NumToInsert, End);
 
       // Copy the existing elements that get replaced.
-      std::copy_backward(I, OldEnd-NumToInsert, OldEnd);
+      std::copy(I, OldEnd-NumToInsert, I+NumToInsert);
 
       std::copy(From, To, I);
       return I;
@@ -456,9 +456,9 @@ void SmallVectorImpl<T>::swap(SmallVectorImpl<T> &RHS) {
     std::swap(Capacity, RHS.Capacity);
     return;
   }
-  if (Begin+RHS.size() > Capacity)
+  if (RHS.size() > size_type(Capacity-Begin))
     grow(RHS.size());
-  if (RHS.begin()+size() > RHS.Capacity)
+  if (size() > size_type(RHS.Capacity-RHS.begin()))
     RHS.grow(size());
 
   // Swap the shared elements.
@@ -588,20 +588,20 @@ public:
 
 };
 
-} // End yasm namespace
+} // End llvm namespace
 
 namespace std {
   /// Implement std::swap in terms of SmallVector swap.
   template<typename T>
   inline void
-  swap(yasm::SmallVectorImpl<T> &LHS, yasm::SmallVectorImpl<T> &RHS) {
+  swap(llvm::SmallVectorImpl<T> &LHS, llvm::SmallVectorImpl<T> &RHS) {
     LHS.swap(RHS);
   }
 
   /// Implement std::swap in terms of SmallVector swap.
   template<typename T, unsigned N>
   inline void
-  swap(yasm::SmallVector<T, N> &LHS, yasm::SmallVector<T, N> &RHS) {
+  swap(llvm::SmallVector<T, N> &LHS, llvm::SmallVector<T, N> &RHS) {
     LHS.swap(RHS);
   }
 }

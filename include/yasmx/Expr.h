@@ -33,8 +33,9 @@
 #include <iosfwd>
 #include <memory>
 
+#include "llvm/ADT/SmallVector.h"
+
 #include "yasmx/Config/export.h"
-#include "yasmx/Support/SmallVector.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location.h"
 #include "yasmx/Op.h"
@@ -265,7 +266,7 @@ public:
     int m_depth;                ///< Depth in tree.
 };
 
-typedef SmallVector<ExprTerm, 3> ExprTerms;
+typedef llvm::SmallVector<ExprTerm, 3> ExprTerms;
 
 /// An expression.
 ///
