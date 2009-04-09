@@ -196,12 +196,6 @@ namespace llvm {
     ///  APFloat objects, into FoldingSets.
     void Profile(FoldingSetNodeID& NID) const;
 
-    /// @brief Used by the Bitcode serializer to emit APInts to Bitcode.
-    void Emit(Serializer& S) const;
-
-    /// @brief Used by the Bitcode deserializer to deserialize APInts.
-    static APFloat ReadVal(Deserializer& D);
-
     /* Arithmetic.  */
     opStatus add(const APFloat &, roundingMode);
     opStatus subtract(const APFloat &, roundingMode);
