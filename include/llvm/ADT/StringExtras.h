@@ -16,6 +16,7 @@
 
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/APFloat.h"
+#include "yasmx/Config/export.h"
 #include <cctype>
 #include <cstdio>
 #include <string>
@@ -211,11 +212,13 @@ static inline const char* CStrInCStrNoCase(const char *s1, const char *s2) {
 /// there are no tokens in the source string, an empty string is returned.
 /// The Source source string is updated in place to remove the returned string
 /// and any delimiter prefix from it.
+YASM_LIB_EXPORT
 std::string getToken(std::string &Source,
                      const char *Delimiters = " \t\n\v\f\r");
 
 /// SplitString - Split up the specified string according to the specified
 /// delimiters, appending the result fragments to the output list.
+YASM_LIB_EXPORT
 void SplitString(const std::string &Source,
                  std::vector<std::string> &OutFragments,
                  const char *Delimiters = " \t\n\v\f\r");
@@ -223,10 +226,12 @@ void SplitString(const std::string &Source,
 /// UnescapeString - Modify the argument string, turning two character sequences
 /// like '\\' 'n' into '\n'.  This handles: \e \a \b \f \n \r \t \v \' \\ and
 /// \num (where num is a 1-3 byte octal value).
+YASM_LIB_EXPORT
 void UnescapeString(std::string &Str);
 
 /// EscapeString - Modify the argument string, turning '\\' and anything that
 /// doesn't satisfy std::isprint into an escape sequence.
+YASM_LIB_EXPORT
 void EscapeString(std::string &Str);
 
 } // End llvm namespace

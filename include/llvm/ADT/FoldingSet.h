@@ -18,6 +18,7 @@
 
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/SmallVector.h"
+#include "yasmx/Config/export.h"
 #include <string>
 
 namespace llvm {
@@ -107,7 +108,7 @@ class FoldingSetNodeID;
 /// in the bucket via a singly linked list.  The last node in the list points
 /// back to the bucket to facilitate node removal.
 ///
-class FoldingSetImpl {
+class YASM_LIB_EXPORT FoldingSetImpl {
 protected:
   /// Buckets - Array of bucket chains.
   ///
@@ -202,7 +203,7 @@ template<typename T> struct FoldingSetTrait {
 /// a node.  When all the bits are gathered this class is used to produce a
 /// hash value for the node.
 ///
-class FoldingSetNodeID {
+class YASM_LIB_EXPORT FoldingSetNodeID {
   /// Bits - Vector of all the data bits that make the node unique.
   /// Use a SmallVector to avoid a heap allocation in the common case.
   SmallVector<unsigned, 32> Bits;
@@ -306,7 +307,7 @@ public:
 //===----------------------------------------------------------------------===//
 /// FoldingSetIteratorImpl - This is the common iterator support shared by all
 /// folding sets, which knows how to walk the folding set hash table.
-class FoldingSetIteratorImpl {
+class YASM_LIB_EXPORT FoldingSetIteratorImpl {
 protected:
   FoldingSetNode *NodePtr;
   FoldingSetIteratorImpl(void **Bucket);
@@ -349,7 +350,7 @@ public:
 ///  shared by all folding sets, which knows how to walk a particular bucket
 ///  of a folding set hash table.
 
-class FoldingSetBucketIteratorImpl {
+class YASM_LIB_EXPORT FoldingSetBucketIteratorImpl {
 protected:
   void *Ptr;
 

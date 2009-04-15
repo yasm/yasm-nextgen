@@ -102,6 +102,7 @@
 
 // APInt contains static functions implementing bignum arithmetic.
 #include "llvm/ADT/APInt.h"
+#include "yasmx/Config/export.h"
 
 namespace llvm {
 
@@ -120,7 +121,7 @@ namespace llvm {
     lfMoreThanHalf              // 1xxxxx  x's not all zero
   };
 
-  class APFloat {
+  class YASM_LIB_EXPORT APFloat {
   public:
 
     /* We support the following floating point semantics.  */

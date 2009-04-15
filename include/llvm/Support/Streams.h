@@ -15,11 +15,13 @@
 #ifndef LLVM_SUPPORT_STREAMS_H
 #define LLVM_SUPPORT_STREAMS_H
 
+#include "yasmx/Config/export.h"
 #include <iosfwd>
 
 namespace llvm {
 
   /// FlushStream - Function called by BaseStream to flush an ostream.
+  YASM_LIB_EXPORT
   void FlushStream(std::ostream &S);
 
   /// BaseStream - Acts like the STL streams. It's a wrapper for the std::cerr,
@@ -82,8 +84,11 @@ namespace llvm {
   typedef BaseStream<std::istream> IStream;
   typedef BaseStream<std::stringstream> StringStream;
 
+  YASM_LIB_EXPORT
   extern OStream cout;
+  YASM_LIB_EXPORT
   extern OStream cerr;
+  YASM_LIB_EXPORT
   extern IStream cin;
 
 } // End llvm namespace

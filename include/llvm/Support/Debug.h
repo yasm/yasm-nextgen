@@ -27,6 +27,7 @@
 #define LLVM_SUPPORT_DEBUG_H
 
 #include "llvm/Support/Streams.h"
+#include "yasmx/Config/export.h"
 
 namespace llvm {
 
@@ -34,12 +35,14 @@ namespace llvm {
 // is specified.  This should probably not be referenced directly, instead, use
 // the DEBUG macro below.
 //
+YASM_LIB_EXPORT
 extern bool DebugFlag;
 
 // isCurrentDebugType - Return true if the specified string is the debug type
 // specified on the command line, or if none was specified on the command line
 // with the -debug-only=X option.
 //
+YASM_LIB_EXPORT
 bool isCurrentDebugType(const char *Type);
 
 // DEBUG macro - This macro should be used by passes to emit debug information.
@@ -65,6 +68,7 @@ bool isCurrentDebugType(const char *Type);
 /// places the std::c* I/O streams into one .cpp file and relieves the whole
 /// program from having to have hundreds of static c'tor/d'tors for them.
 ///
+YASM_LIB_EXPORT
 OStream &getErrorOutputStream(const char *DebugType);
 
 #ifdef NDEBUG
