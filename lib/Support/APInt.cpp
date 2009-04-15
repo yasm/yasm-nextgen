@@ -2071,6 +2071,75 @@ std::string APInt::toString(unsigned Radix = 10, bool Signed = true) const {
   return S.c_str();
 }
 
+void APInt::fromOctetsLE(const unsigned char *octets, unsigned numOctets) {
+  assert(numOctets*8 <= BitWidth && "Insufficient bit width");
+  clear();
+  if (isSingleWord()) {
+    while (numOctets > 0) {
+      VAL = (VAL<<8) | (octets[numOctets-1] & 0xff);
+      --numOctets;
+    }
+  } else {
+    for (unsigned b=0, w=0, bit=0; b<numOctets; ++b, bit+=8) {
+      // adjust bit and word positions if we finished a word
+      if (bit >= APINT_BITS_PER_WORD) {
+        bit -= APINT_BITS_PER_WORD;
+        ++w;
+        // handle overfill when CHAR_BIT != 8
+        if (CHAR_BIT != 8 && bit > 0)
+          pVal[w] |= octets[b-1] >> (8-bit);
+      }
+      pVal[w] |= ((uint64_t)octets[b] & 0xff) << bit;
+    }
+  }
+}
+
+#if 0
+void APInt::fromOctetsBE(const unsigned char *octets, unsigned numOctets) {
+  assert(numOctets*8 <= BitWidth && "Insufficient bit width");
+  clear();
+  if (isSingleWord()) {
+    for (unsigned i=0; i<numOctets; ++i) {
+      VAL = (VAL<<8) | (octets[i] & 0xff);
+    }
+  } else {
+    for (unsigned b=0, w=0, bit=0; b<numOctets; ++b, bit+=8) {
+      // adjust bit and word positions if we finished a word
+      if (bit >= APINT_BITS_PER_WORD) {
+        bit -= APINT_BITS_PER_WORD;
+        ++w;
+        // handle overfill when CHAR_BIT != 8
+        if (CHAR_BIT != 8 && bit > 0)
+          pVal[w] |= octets[b-1] >> (8-bit);
+      }
+      pVal[w] |= ((uint64_t)octets[b] & 0xff) << bit;
+    }
+  }
+}
+#endif
+
+void APInt::toOctetsLE(unsigned char *octets, unsigned numOctets) const {
+  assert(numOctets*8 >= BitWidth && "Insufficient output space");
+  if (isSingleWord()) {
+    uint64_t Tmp = VAL;
+    for (unsigned i=0; i<numOctets; ++i) {
+      octets[i] = (unsigned char)Tmp & 0xff;
+      Tmp >>= 8;
+    }
+  } else {
+    for (unsigned b=0, w=0, bit=0; b<numOctets; ++b, bit+=8) {
+      // adjust bit and word positions if we finished a word
+      if (bit >= APINT_BITS_PER_WORD) {
+        bit -= APINT_BITS_PER_WORD;
+        ++w;
+        // handle overfill when CHAR_BIT != 8
+        if (CHAR_BIT != 8 && bit > 0)
+          octets[b-1] |= (unsigned char)(pVal[w] << bit);
+      }
+      octets[b] = (unsigned char)(pVal[w] >> bit) & 0xff;
+    }
+  }
+}
 
 void APInt::dump() const {
   SmallString<40> S, U;

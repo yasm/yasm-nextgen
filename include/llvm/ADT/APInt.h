@@ -1133,6 +1133,11 @@ public:
   /// to the methods above to avoid thrashing the heap for the string.
   std::string toString(unsigned Radix, bool Signed) const;
 
+  /// fromOctetsLE - Sets this APInt from octets stored in little endian order.
+  void fromOctetsLE(const unsigned char *octets, unsigned numOctets);
+
+  /// toOctetsLE - Converts an APInt to octets stored in little endian order.
+  void toOctetsLE(unsigned char *octets, unsigned numOctets) const;
 
   /// @returns a byte-swapped representation of this APInt Value.
   APInt byteSwap() const;
