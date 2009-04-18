@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <bitset>
 
+#include "llvm/ADT/APFloat.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/marg_ostream.h"
@@ -39,7 +40,6 @@
 #include "yasmx/Bytes.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Expr_util.h"
-#include "yasmx/FloatNum.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location_util.h"
 #include "yasmx/Object.h"
@@ -806,7 +806,7 @@ Value::output_basic(Bytes& bytes, int warn, const Arch& arch)
     if (m_abs != 0)
     {
         // Handle floating point expressions
-        FloatNum* flt;
+        llvm::APFloat* flt;
         if (!m_rel && (flt = m_abs->get_float()))
         {
             arch.tobytes(*flt, bytes, m_size, 0, warn);

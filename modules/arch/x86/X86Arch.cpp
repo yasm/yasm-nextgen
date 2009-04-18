@@ -27,14 +27,16 @@
 
 #include "util.h"
 
+#include <llvm/ADT/APInt.h>
+#include <llvm/ADT/APFloat.h>
 #include <yasmx/Support/Compose.h>
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/nocase.h>
 #include <yasmx/Support/registry.h>
 #include <yasmx/Bytes.h>
+#include <yasmx/Bytes_util.h>
 #include <yasmx/Directive.h>
 #include <yasmx/Expr.h>
-#include <yasmx/FloatNum.h>
 #include <yasmx/IntNum.h>
 #include <yasmx/Object.h>
 #include <yasmx/NameValue.h>
@@ -536,16 +538,19 @@ X86Arch::add_directives(Directives& dirs, const std::string& parser)
 
 
 void
-X86Arch::tobytes(const FloatNum& flt,
+X86Arch::tobytes(const llvm::APFloat& flt,
                  Bytes& bytes,
                  size_t valsize,
                  size_t shift,
                  int warn) const
 {
-    if (!flt.is_valid_size(valsize))
-        throw FloatingPointError(N_("invalid floating point constant size"));
+    if (valsize != 32 && valsize != 64 && valsize != 80)
+    {
+        assert(false && "invalid floating point constant size");
+        return;
+    }
 
-    flt.get_sized(&bytes[0], bytes.size(), valsize, shift, false, warn);
+    overwrite(bytes, flt, valsize, shift, false, warn);
 }
 
 void

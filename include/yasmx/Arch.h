@@ -42,11 +42,15 @@
 #include "yasmx/Module.h"
 
 
+namespace llvm
+{
+class APFloat;
+}
+
 namespace yasm
 {
 
 class Expr;
-class FloatNum;
 class IntNum;
 
 /// A register.
@@ -322,7 +326,7 @@ public:
     ///         in length.
     virtual const unsigned char** get_fill() const = 0;
 
-    /// Output #FloatNum to buffer.  Puts the value into the least
+    /// Output #APFloat to buffer.  Puts the value into the least
     /// significant bits of the destination, or may be shifted into more
     /// significant bits by the shift parameter.  The destination bits are
     /// cleared before being set.
@@ -332,7 +336,7 @@ public:
     /// @param valsize       size (in bits)
     /// @param shift         left shift (in bits)
     /// @param warn          enables standard overflow/underflow warnings
-    virtual void tobytes(const FloatNum& flt,
+    virtual void tobytes(const llvm::APFloat& flt,
                          Bytes& bytes,
                          size_t valsize,
                          size_t shift,

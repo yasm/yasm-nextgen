@@ -215,12 +215,11 @@ scan:
         /* floating point value */
         digit+ "." digit* ('e' [-+]? digit+)?
         {
-            lvalp->flt.reset(new FloatNum);
             savech = TOK[TOKLEN];
             TOK[TOKLEN] = '\0';
-            bool ok = lvalp->flt->set_str(TOK);
-            ok = ok; // silence warning
-            assert(ok && "conversion failed");
+            // FIXME: Make arch-dependent
+            lvalp->flt.reset(new llvm::APFloat(llvm::APFloat::x87DoubleExtended,
+                                               TOK));
             TOK[TOKLEN] = savech;
             RETURN(FLTNUM);
         }

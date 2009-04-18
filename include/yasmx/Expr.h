@@ -42,13 +42,17 @@
 #include "yasmx/SymbolRef.h"
 
 
+namespace llvm
+{
+class APFloat;
+}
+
 namespace yasm
 {
 
 class Bytecode;
 class Expr;
 class ExprTest;
-class FloatNum;
 class Register;
 class Symbol;
 
@@ -65,7 +69,7 @@ public:
         REG = 1<<0,     ///< Register.
         INT = 1<<1,     ///< Integer (IntNum).
         SUBST = 1<<2,   ///< Substitution value.
-        FLOAT = 1<<3,   ///< Float (FloatNum).
+        FLOAT = 1<<3,   ///< Float (APFloat).
         SYM = 1<<4,     ///< Symbol.
         LOC = 1<<5,     ///< Direct Location ref (rather than via symbol).
         OP = 1<<6       ///< Operator.
@@ -116,7 +120,7 @@ public:
     // auto_ptr constructors
 
     ExprTerm(std::auto_ptr<IntNum> intn, int depth=0);
-    ExprTerm(std::auto_ptr<FloatNum> flt, int depth=0);
+    ExprTerm(std::auto_ptr<llvm::APFloat> flt, int depth=0);
 
     /// Assignment operator.
     ExprTerm& operator= (const ExprTerm& rhs)
@@ -207,7 +211,7 @@ public:
         return (m_type == SUBST ? &m_data.subst : 0);
     }
 
-    FloatNum* get_float() const
+    llvm::APFloat* get_float() const
     {
         return (m_type == FLOAT ? m_data.flt : 0);
     }
@@ -250,7 +254,7 @@ private:
         const Register *reg;    ///< Register (#REG)
         IntNumData intn;        ///< Integer value (#INT)
         unsigned int subst;     ///< Subst placeholder (#SUBST)
-        FloatNum *flt;          ///< Floating point value (#FLOAT)
+        llvm::APFloat *flt;     ///< Floating point value (#FLOAT)
         Symbol *sym;            ///< Symbol (#SYM)
         Location loc;           ///< Direct bytecode ref (#LOC)
         struct
@@ -361,8 +365,8 @@ public:
     /// Single-term constructor for IntNum auto_ptr.
     explicit Expr(std::auto_ptr<IntNum> intn);
 
-    /// Single-term constructor for FloatNum auto_ptr.
-    explicit Expr(std::auto_ptr<FloatNum> flt);
+    /// Single-term constructor for APFloat auto_ptr.
+    explicit Expr(std::auto_ptr<llvm::APFloat> flt);
 
     /// Destructor.
     ~Expr();
@@ -433,7 +437,7 @@ public:
     /// Get the float value of an expression if it's just a float.
     /// @return 0 if the expression is too complex; otherwise the float
     ///         value of the expression.
-    /*@dependent@*/ /*@null@*/ FloatNum* get_float() const;
+    /*@dependent@*/ /*@null@*/ llvm::APFloat* get_float() const;
 
     /// Get the integer value of an expression if it's just an integer.
     /// @return 0 if the expression is too complex (contains anything other

@@ -34,7 +34,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Expr.cpp
     yasmx/Expr_util.cpp
     yasmx/file.cpp
-    yasmx/FloatNum.cpp
     yasmx/IncbinBytecode.cpp
     yasmx/Includes.cpp
     yasmx/Insn.cpp

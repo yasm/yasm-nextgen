@@ -34,6 +34,12 @@
 #include "yasmx/Bytes.h"
 
 
+namespace llvm
+{
+class APFloat;
+class APInt;
+}
+
 namespace yasm
 {
 
@@ -234,6 +240,28 @@ IntNum read_u64(Bytes& bytes);
 /// @return 64-bit value (as an IntNum).
 YASM_LIB_EXPORT
 IntNum read_s64(Bytes& bytes);
+
+YASM_LIB_EXPORT
+bool ok_size(const llvm::APInt& intn,
+             unsigned int size,
+             unsigned int rshift,
+             int rangetype);
+
+YASM_LIB_EXPORT
+void overwrite(Bytes& bytes,
+               const llvm::APInt& intn,
+               unsigned int size,
+               int shift,
+               bool bigendian,
+               int warn);
+
+YASM_LIB_EXPORT
+void overwrite(Bytes& bytes,
+               const llvm::APFloat& flt,
+               unsigned int size,
+               int shift,
+               bool bigendian,
+               int warn);
 
 } // namespace yasm
 

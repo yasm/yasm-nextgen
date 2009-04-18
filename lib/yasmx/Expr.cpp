@@ -32,10 +32,10 @@
 #include <iterator>
 #include <ostream>
 
+#include "llvm/ADT/APFloat.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Arch.h"
-#include "yasmx/FloatNum.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Symbol.h"
 
@@ -125,7 +125,7 @@ ExprTerm::ExprTerm(std::auto_ptr<IntNum> intn, int depth)
     intn->swap(static_cast<IntNum&>(m_data.intn));
 }
 
-ExprTerm::ExprTerm(std::auto_ptr<FloatNum> flt, int depth)
+ExprTerm::ExprTerm(std::auto_ptr<llvm::APFloat> flt, int depth)
     : m_type(FLOAT), m_depth(depth)
 {
     m_data.flt = flt.release();
@@ -137,7 +137,7 @@ ExprTerm::ExprTerm(const ExprTerm& term)
     if (m_type == INT)
         m_data.intn = IntNum(static_cast<const IntNum&>(m_data.intn));
     else if (m_type == FLOAT)
-        m_data.flt = m_data.flt->clone();
+        m_data.flt = new llvm::APFloat(*m_data.flt);
 }
 
 void
@@ -205,7 +205,7 @@ Expr::Expr(std::auto_ptr<IntNum> intn)
     m_terms.push_back(ExprTerm(intn));
 }
 
-Expr::Expr(std::auto_ptr<FloatNum> flt)
+Expr::Expr(std::auto_ptr<llvm::APFloat> flt)
 {
     m_terms.push_back(ExprTerm(flt));
 }
@@ -413,9 +413,9 @@ xform_neg_impl(Expr& e, int pos, int stop_depth, int depth_delta, bool negating)
                     break;
                 }
 
-                if (FloatNum* fltn = child->get_float())
+                if (llvm::APFloat* fltn = child->get_float())
                 {
-                    fltn->calc(Op::NEG);
+                    fltn->changeSign();
                     break;
                 }
 
@@ -733,7 +733,7 @@ Expr::extract_wrt()
     return lhs;
 }
 
-FloatNum*
+llvm::APFloat*
 Expr::get_float() const
 {
     if (m_terms.size() == 1)

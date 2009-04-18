@@ -28,9 +28,9 @@
 //
 #include <memory>
 
+#include <llvm/ADT/APFloat.h>
 #include <yasmx/Support/scoped_ptr.h>
 #include <yasmx/Bytecode.h>
-#include <yasmx/FloatNum.h>
 #include <yasmx/Insn.h>
 #include <yasmx/IntNum.h>
 #include <yasmx/Linemap.h>
@@ -44,8 +44,6 @@ class Arch;
 class Bytecode;
 class Directives;
 class Expr;
-class FloatNum;
-class IntNum;
 class NameValues;
 
 namespace parser
@@ -98,7 +96,7 @@ struct yystype
 {
     std::string str;
     std::auto_ptr<IntNum> intn;
-    std::auto_ptr<FloatNum> flt;
+    std::auto_ptr<llvm::APFloat> flt;
     Insn::Ptr insn;
     union
     {

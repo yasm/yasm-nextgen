@@ -29,8 +29,14 @@
 ///
 #include "yasmx/Bytes_util.h"
 
+#include <util.h>
+
 #include <cassert>
 
+#include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/APInt.h"
+#include "yasmx/Support/Compose.h"
+#include "yasmx/Support/errwarn.h"
 #include "yasmx/IntNum.h"
 
 
@@ -195,6 +201,138 @@ IntNum
 read_s64(Bytes& bytes)
 {
     return read_n(bytes, 64, true);
+}
+
+bool
+ok_size(const llvm::APInt& intn,
+        unsigned int size,
+        unsigned int rshift,
+        int rangetype)
+{
+    unsigned int intn_size;
+    switch (rangetype)
+    {
+        case 0:
+            intn_size = intn.getActiveBits();
+            break;
+        case 1:
+            intn_size = intn.getMinSignedBits();
+            break;
+        case 2:
+            if (intn.isNegative())
+                intn_size = intn.getMinSignedBits();
+            else
+                intn_size = intn.getActiveBits();
+            break;
+        default:
+            assert(false && "invalid range type");
+            return false;
+    }
+    return (intn_size <= (size-rshift));
+}
+
+void
+overwrite(Bytes& bytes,
+          const llvm::APInt& intn,
+          unsigned int size,
+          int shift,
+          bool bigendian,
+          int warn)
+{
+    // Split shift into left (shift) and right (rshift) components.
+    unsigned int rshift = 0;
+    if (shift < 0)
+    {
+        rshift = static_cast<unsigned int>(-shift);
+        shift = 0;
+    }
+
+    // General size warnings
+    if (warn<0 && !ok_size(intn, size, rshift, 1))
+        warn_set(WARN_GENERAL,
+                 String::compose(N_("value does not fit in signed %1 bit field"),
+                                 size));
+    if (warn>0 && !ok_size(intn, size, rshift, 2))
+        warn_set(WARN_GENERAL,
+                 String::compose(N_("value does not fit in %1 bit field"),
+                                 size));
+
+    // Check low bits if right shifting and warnings enabled
+    if (warn && rshift > 0)
+    {
+        if (intn.countTrailingZeros() < rshift)
+            warn_set(WARN_GENERAL,
+                     N_("misaligned value, truncating to boundary"));
+    }
+
+    // Make a working copy of the right-shifted value
+    llvm::APInt work = intn.ashr(rshift);
+
+    // Sign extend (or truncate) to correct size
+    work.sextOrTrunc(size);
+
+    // Shortcut easy case
+    if (shift == 0 && bytes.size()*8 == size)
+    {
+        assert(!bigendian && "big endian not yet supported");
+        work.toOctetsLE(&bytes[0], bytes.size());
+        return;
+    }
+
+    assert(false && "not yet implemented");
+}
+
+void
+overwrite(Bytes& bytes,
+          const llvm::APFloat& flt,
+          unsigned int size,
+          int shift,
+          bool bigendian,
+          int warn)
+{
+    const llvm::fltSemantics* semantics;
+    switch (size)
+    {
+        case 32:
+            semantics = &llvm::APFloat::IEEEsingle;
+            break;
+        case 64:
+            semantics = &llvm::APFloat::IEEEdouble;
+            break;
+        case 80:
+            semantics = &llvm::APFloat::x87DoubleExtended;
+            break;
+        default:
+            assert(false && "invalid floating point constant size");
+            return;
+    }
+
+    llvm::APFloat fltcopy = flt;
+    bool lost_info = false;
+    llvm::APFloat::opStatus status =
+        fltcopy.convert(*semantics, llvm::APFloat::rmNearestTiesToEven,
+                        &lost_info);
+    if (warn)
+    {
+        switch (status)
+        {
+            case llvm::APFloat::opOverflow:
+                warn_set(WARN_GENERAL,
+                         N_("overflow in floating point expression"));
+                break;
+            case llvm::APFloat::opUnderflow:
+                warn_set(WARN_GENERAL,
+                         N_("underflow in floating point expression"));
+                break;
+            default:
+                break;
+        }
+    }
+
+    // use APInt function to actually output
+    llvm::APInt fltbits = fltcopy.bitcastToAPInt();
+    assert(fltbits.getBitWidth() == size && "bad float to bits conversion");
+    overwrite(bytes, fltbits, size, shift, bigendian, warn);
 }
 
 } // namespace yasm

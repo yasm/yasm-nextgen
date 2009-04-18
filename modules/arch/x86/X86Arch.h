@@ -130,7 +130,7 @@ public:
 
     const unsigned char** get_fill() const;
 
-    void tobytes(const FloatNum& flt,
+    void tobytes(const llvm::APFloat& flt,
                  Bytes& bytes,
                  size_t valsize,
                  size_t shift,
