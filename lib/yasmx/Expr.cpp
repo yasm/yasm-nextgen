@@ -86,6 +86,47 @@ is_right_identity(Op::Op op, const IntNum& intn)
             (iszero && op == Op::SHR));
 }
 
+static void
+float_calc(llvm::APFloat* lhs, Op::Op op, const llvm::APFloat& rhs)
+{
+    llvm::APFloat::opStatus status;
+    switch (op)
+    {
+        case Op::ADD:
+            status = lhs->add(rhs, llvm::APFloat::rmNearestTiesToEven);
+            break;
+        case Op::SUB:
+            status = lhs->subtract(rhs, llvm::APFloat::rmNearestTiesToEven);
+            break;
+        case Op::MUL:
+            status = lhs->multiply(rhs, llvm::APFloat::rmNearestTiesToEven);
+            break;
+        case Op::DIV:
+        case Op::SIGNDIV:
+            status = lhs->divide(rhs, llvm::APFloat::rmNearestTiesToEven);
+            break;
+        case Op::MOD:
+        case Op::SIGNMOD:
+            status = lhs->mod(rhs, llvm::APFloat::rmNearestTiesToEven);
+            break;
+        default:
+            assert(false && "unrecognized floating point operation");
+            status = llvm::APFloat::opInvalidOp;
+            break;
+    }
+
+    if (status & llvm::APFloat::opInvalidOp)
+        throw FloatingPointError(N_("invalid floating point operation"));
+    else if (status & llvm::APFloat::opDivByZero)
+        throw ZeroDivisionError(N_("divide by zero"));
+    else if (status & llvm::APFloat::opOverflow)
+        warn_set(WARN_GENERAL, N_("overflow in floating point expression"));
+    else if (status & llvm::APFloat::opUnderflow)
+        warn_set(WARN_GENERAL, N_("underflow in floating point expression"));
+    else if (status & llvm::APFloat::opInexact)
+        warn_set(WARN_GENERAL, N_("inexact floating point result"));
+}
+
 const ExprBuilder ADD = {Op::ADD};
 const ExprBuilder SUB = {Op::SUB};
 const ExprBuilder MUL = {Op::MUL};
@@ -463,7 +504,10 @@ Expr::level_op(bool simplify_reg_mul, int pos)
     Op::Op op = root.get_op();
     bool do_level = is_associative(op);
 
+    // Only one of intchild and fltchild is active.  If we run into a float,
+    // we force all integers to floats.
     ExprTerm* intchild = 0;             // first (really last) integer child
+    ExprTerm* fltchild = 0;             // first (really last) float child
     int childnum = root.get_nchild();   // which child this is (0=first)
 
     for (int n=pos-1; n >= 0; --n)
@@ -514,6 +558,7 @@ Expr::level_op(bool simplify_reg_mul, int pos)
             return;                 // End immediately since we cleared root.
         }
 
+again:
         if (IntNum* intn = child.get_int())
         {
             // Look for identities that will delete the intnum term.
@@ -542,6 +587,19 @@ Expr::level_op(bool simplify_reg_mul, int pos)
                 return;
             }
 
+#if 0
+            // if there's a float child, upconvert and work against it instead
+            if (fltchild != 0 && op < Op::NEG)
+            {
+                std::auto_ptr<llvm::APFloat>
+                    upconvf(new llvm::APFloat(*fltchild));
+                upconvf->convertFromAPInt(*child.get_int(), true,
+                                          llvm::APFloat::rmNearestTiesToEven);
+                child = ExprTerm(upconvf, child.m_depth);
+                goto again;
+            }
+#endif
+
             if (intchild == 0)
             {
                 intchild = &child;
@@ -556,6 +614,36 @@ Expr::level_op(bool simplify_reg_mul, int pos)
                 root.add_nchild(-1);
             }
         }
+        else if (llvm::APFloat* fltn = child.get_float())
+        {
+            // currently can only handle 5 basic ops: +, -, *, /, %
+            if (op >= Op::NEG)
+                continue;
+
+#if 0
+            // if there's an integer child, upconvert it
+            if (intchild != 0)
+            {
+                std::auto_ptr<llvm::APFloat> upconvf(new llvm::APFloat(*fltn));
+                upconvf->convertFromAPInt(*intchild->get_int(), true,
+                                          llvm::APFloat::rmNearestTiesToEven);
+                fltchild = intchild;
+                intchild = 0;
+                *fltchild = ExprTerm(upconvf, fltchild->m_depth);
+            }
+#endif
+
+            if (fltchild == 0)
+            {
+                fltchild = &child;
+                continue;
+            }
+
+            std::swap(*fltchild->get_float(), *fltn);
+            float_calc(fltchild->get_float(), op, *fltn);
+            child.clear();
+            root.add_nchild(-1);
+        }
         else if (do_level && child.is_op(op))
         {
             root.add_nchild(child.get_nchild() - 1);
@@ -567,6 +655,14 @@ Expr::level_op(bool simplify_reg_mul, int pos)
     // If operator only has one child, may be able to delete operator
     if (root.get_nchild() == 1)
     {
+        if ((op == Op::IDENT || op == Op::NEG) && fltchild != 0)
+        {
+            // if unary on a simple float, compute it
+            if (op == Op::NEG)
+                fltchild->get_float()->changeSign();
+            fltchild->m_depth -= 1;
+            root.clear();
+        }
         bool unary = is_unary(op);
         if (unary && op < Op::NONNUM && intchild != 0)
         {
