@@ -1981,7 +1981,7 @@ void APInt::fromString(unsigned numbits, const char *str, unsigned slen,
 }
 
 void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
-                     bool Signed) const {
+                     bool Signed, bool Lowercase) const {
   assert((Radix == 10 || Radix == 8 || Radix == 16 || Radix == 2) &&
          "Radix should be 2, 8, 10, or 16!");
   
@@ -1991,7 +1991,12 @@ void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
     return;
   }
   
-  static const char Digits[] = "0123456789ABCDEF";
+  static const char DigitsUC[] = "0123456789ABCDEF";
+  static const char DigitsLC[] = "0123456789abcdef";
+
+  const char *Digits = DigitsUC;
+  if (Lowercase)
+    Digits = DigitsLC;
   
   if (isSingleWord()) {
     char Buffer[65];
@@ -2065,9 +2070,9 @@ void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
 /// toString - This returns the APInt as a std::string.  Note that this is an
 /// inefficient method.  It is better to pass in a SmallVector/SmallString
 /// to the methods above.
-std::string APInt::toString(unsigned Radix = 10, bool Signed = true) const {
+std::string APInt::toString(unsigned Radix, bool Signed, bool Lowercase) const {
   SmallString<40> S;
-  toString(S, Radix, Signed);
+  toString(S, Radix, Signed, Lowercase);
   return S.c_str();
 }
 

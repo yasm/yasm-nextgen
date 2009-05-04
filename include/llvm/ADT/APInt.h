@@ -1115,24 +1115,28 @@ public:
 
   /// toString - Converts an APInt to a string and append it to Str.  Str is
   /// commonly a SmallString.
-  void toString(SmallVectorImpl<char> &Str, unsigned Radix, bool Signed) const;
+  void toString(SmallVectorImpl<char> &Str, unsigned Radix, bool Signed,
+                bool Lowercase = false) const;
 
   /// Considers the APInt to be unsigned and converts it into a string in the
   /// radix given. The radix can be 2, 8, 10 or 16.
-  void toStringUnsigned(SmallVectorImpl<char> &Str, unsigned Radix = 10) const {
-    toString(Str, Radix, false);
+  void toStringUnsigned(SmallVectorImpl<char> &Str, unsigned Radix = 10,
+                        bool Lowercase = false) const {
+    toString(Str, Radix, false, Lowercase);
   }
 
   /// Considers the APInt to be signed and converts it into a string in the
   /// radix given. The radix can be 2, 8, 10 or 16.
-  void toStringSigned(SmallVectorImpl<char> &Str, unsigned Radix = 10) const {
-    toString(Str, Radix, true);
+  void toStringSigned(SmallVectorImpl<char> &Str, unsigned Radix = 10,
+                      bool Lowercase = false) const {
+    toString(Str, Radix, true, Lowercase);
   }
 
   /// toString - This returns the APInt as a std::string.  Note that this is an
   /// inefficient method.  It is better to pass in a SmallVector/SmallString
   /// to the methods above to avoid thrashing the heap for the string.
-  std::string toString(unsigned Radix, bool Signed) const;
+  std::string toString(unsigned Radix = 10, bool Signed = true,
+                       bool Lowercase = false) const;
 
   /// fromOctetsLE - Sets this APInt from octets stored in little endian order.
   void fromOctetsLE(const unsigned char *octets, unsigned numOctets);
