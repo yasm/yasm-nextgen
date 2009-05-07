@@ -78,7 +78,10 @@ APInt::APInt(unsigned numbits, const char StrStart[], unsigned slen,
              uint8_t radix) 
   : BitWidth(numbits), VAL(0) {
   assert(BitWidth && "bitwidth too small");
-  fromString(numbits, StrStart, slen, radix);
+  // Allocate memory
+  if (!isSingleWord())
+    pVal = getMemory(getNumWords());
+  fromString(StrStart, slen, radix);
 }
 
 APInt& APInt::AssignSlowCase(const APInt& RHS) {
@@ -1908,8 +1911,7 @@ void APInt::udivrem(const APInt &LHS, const APInt &RHS,
   divide(LHS, lhsWords, RHS, rhsWords, &Quotient, &Remainder);
 }
 
-void APInt::fromString(unsigned numbits, const char *str, unsigned slen,
-                       uint8_t radix) {
+void APInt::fromString(const char *str, unsigned slen, uint8_t radix) {
   // Check our assumptions here
   assert((radix == 10 || radix == 8 || radix == 16 || radix == 2) &&
          "Radix should be 2, 8, 10, or 16!");
@@ -1917,14 +1919,12 @@ void APInt::fromString(unsigned numbits, const char *str, unsigned slen,
   bool isNeg = str[0] == '-';
   if (isNeg)
     str++, slen--;
-  assert((slen <= numbits || radix != 2) && "Insufficient bit width");
-  assert((slen*3 <= numbits || radix != 8) && "Insufficient bit width");
-  assert((slen*4 <= numbits || radix != 16) && "Insufficient bit width");
-  assert(((slen*64)/22 <= numbits || radix != 10) && "Insufficient bit width");
+  assert((slen <= BitWidth || radix != 2) && "Insufficient bit width");
+  assert((slen*3 <= BitWidth || radix != 8) && "Insufficient bit width");
+  assert((slen*4 <= BitWidth || radix != 16) && "Insufficient bit width");
+  assert(((slen*64)/22 <= BitWidth || radix != 10) && "Insufficient bit width");
 
-  // Allocate memory
-  if (!isSingleWord())
-    pVal = getClearedMemory(getNumWords());
+  clear();
 
   // Figure out if we can shift instead of multiply
   unsigned shift = (radix == 16 ? 4 : radix == 8 ? 3 : radix == 2 ? 1 : 0);

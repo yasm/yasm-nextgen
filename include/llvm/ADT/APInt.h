@@ -149,11 +149,6 @@ class YASM_LIB_EXPORT APInt {
     return isSingleWord() ? VAL : pVal[whichWord(bitPosition)];
   }
 
-  /// This is used by the constructors that take string arguments.
-  /// @brief Convert a char array into an APInt
-  void fromString(unsigned numBits, const char *strStart, unsigned slen,
-                  uint8_t radix);
-
   /// This is used by the toString method to divide by the radix. It simply
   /// provides a more convenient form of divide for internal use since KnuthDiv
   /// has specific constraints on its inputs. If those constraints are not met
@@ -1112,6 +1107,11 @@ public:
   /// @name Conversion Functions
   /// @{
   void print(raw_ostream &OS, bool isSigned) const;
+
+  /// fromString - Converts a string in the radix given and stores it
+  /// in the APInt.  The radix can be 2, 8, 10 or 16.
+  /// @brief Convert a char array into an APInt
+  void fromString(const char *strStart, unsigned slen, uint8_t radix);
 
   /// toString - Converts an APInt to a string and append it to Str.  Str is
   /// commonly a SmallString.
