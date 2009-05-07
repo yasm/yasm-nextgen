@@ -32,20 +32,11 @@
 #include <cctype>
 #include <climits>
 #include <cstring>
-#include <limits>
 
-#include "yasmx/Support/BitVector.h"
+#include "llvm/ADT/SmallString.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
 
-
-using BitVector::wordptr;
-using BitVector::N_int;
-
-#define LONG_BITS \
-    static_cast<unsigned int>(std::numeric_limits<long>::digits)
-#define ULONG_BITS \
-    static_cast<unsigned int>(std::numeric_limits<unsigned long>::digits)
 
 namespace yasm
 {
@@ -53,115 +44,128 @@ namespace yasm
 YASM_LIB_EXPORT const int set_intnum_bits::m_idx = std::ios_base::xalloc();
 
 /// Static bitvect used for conversions.
-static BitVector::scoped_wordptr conv_bv(IntNum::BITVECT_NATIVE_SIZE);
+static llvm::APInt conv_bv(IntNum::BITVECT_NATIVE_SIZE, 0);
 
 /// Static bitvects used for computation.
-static BitVector::scoped_wordptr result(IntNum::BITVECT_NATIVE_SIZE);
-static BitVector::scoped_wordptr spare(IntNum::BITVECT_NATIVE_SIZE);
-static BitVector::scoped_wordptr op1static(IntNum::BITVECT_NATIVE_SIZE);
-static BitVector::scoped_wordptr op2static(IntNum::BITVECT_NATIVE_SIZE);
+static llvm::APInt result(IntNum::BITVECT_NATIVE_SIZE, 0);
+static llvm::APInt spare(IntNum::BITVECT_NATIVE_SIZE, 0);
+static llvm::APInt op1static(IntNum::BITVECT_NATIVE_SIZE, 0);
+static llvm::APInt op2static(IntNum::BITVECT_NATIVE_SIZE, 0);
 
-/// Static bitvect decimal conversion.
-static BitVector::from_Dec_static my_from_Dec(IntNum::BITVECT_NATIVE_SIZE);
+bool
+ok_size(const llvm::APInt& intn,
+        unsigned int size,
+        unsigned int rshift,
+        int rangetype)
+{
+    unsigned int intn_size;
+    switch (rangetype)
+    {
+        case 0:
+            intn_size = intn.getActiveBits();
+            break;
+        case 1:
+            intn_size = intn.getMinSignedBits();
+            break;
+        case 2:
+            if (intn.isNegative())
+                intn_size = intn.getMinSignedBits();
+            else
+                intn_size = intn.getActiveBits();
+            break;
+        default:
+            assert(false && "invalid range type");
+            return false;
+    }
+    return (intn_size <= (size-rshift));
+}
 
 void
-IntNum::set_bv(wordptr bv)
+IntNum::set_bv(const llvm::APInt& bv)
 {
-    if (BitVector::Set_Max(bv) < LONG_BITS)
+    if (bv.getMinSignedBits() <= LONG_BITS)
     {
+        if (m_type == INTNUM_BV)
+            delete m_val.bv;
         m_type = INTNUM_L;
-        m_val.l = static_cast<long>(BitVector::Chunk_Read(bv, LONG_BITS, 0));
+        m_val.l = static_cast<long>(bv.getSExtValue());
+        return;
     }
-    else if (BitVector::msb_(bv))
+    else if (m_type == INTNUM_BV)
     {
-        // Negative, negate and see if we'll fit into a long.
-        BitVector::Negate(bv, bv);
-        if (BitVector::Set_Max(bv) >= LONG_BITS)
-        {
-            // too negative
-            BitVector::Negate(bv, bv);
-            m_type = INTNUM_BV;
-            m_val.bv = BitVector::Clone(bv);
-        }
-        else
-        {
-            unsigned long ul = BitVector::Chunk_Read(bv, LONG_BITS, 0);
-            m_type = INTNUM_L;
-            m_val.l = -static_cast<long>(ul);
-        }
+        *m_val.bv = bv;
     }
     else
     {
         m_type = INTNUM_BV;
-        m_val.bv = BitVector::Clone(bv);
+        m_val.bv = new llvm::APInt(bv);
     }
+    m_val.bv->sextOrTrunc(BITVECT_NATIVE_SIZE);
 }
 
-wordptr
-IntNum::get_bv(/*@returned@*/ wordptr bv) const
+const llvm::APInt*
+IntNum::get_bv(llvm::APInt* bv) const
 {
     if (m_type == INTNUM_BV)
         return m_val.bv;
 
-    BitVector::Empty(bv);
     if (m_val.l >= 0)
-        BitVector::Chunk_Store(bv, LONG_BITS, 0,
-                               static_cast<unsigned long>(m_val.l));
+        *bv = static_cast<unsigned long>(m_val.l);
     else
     {
-        BitVector::Chunk_Store(bv, LONG_BITS, 0,
-                               static_cast<unsigned long>(-m_val.l));
-        BitVector::Negate(bv, bv);
+        *bv = static_cast<unsigned long>(~m_val.l);
+        bv->flip();
     }
     return bv;
 }
 
-bool
-IntNum::set_str(char* str, int base)
+llvm::APInt*
+IntNum::get_bv(llvm::APInt* bv)
 {
-    BitVector::ErrCode err;
+    if (m_type == INTNUM_BV)
+        return m_val.bv;
 
+    if (m_val.l >= 0)
+        *bv = static_cast<unsigned long>(m_val.l);
+    else
+    {
+        *bv = static_cast<unsigned long>(~m_val.l);
+        bv->flip();
+    }
+    return bv;
+}
+
+void
+IntNum::set_str(const char* str, unsigned int len, int base)
+{
+    // Each computation below needs to know if its negative
+    unsigned int minbits = (str[0] == '-') ? 1 : 0;
+
+    // For radixes of power-of-two values, the bits required is accurately and
+    // easily computed.  For radix 10, we use a rough approximation.
     switch (base)
     {
-        case 2:
-            err = BitVector::from_Bin(conv_bv,
-                                      reinterpret_cast<unsigned char *>(str));
-            break;
-        case 8:
-            err = BitVector::from_Oct(conv_bv,
-                                      reinterpret_cast<unsigned char *>(str));
-            break;
-        case 10:
-            err = my_from_Dec(conv_bv, reinterpret_cast<unsigned char *>(str));
-            break;
-        case 16:
-            err = BitVector::from_Hex(conv_bv,
-                                      reinterpret_cast<unsigned char *>(str));
-            break;
-        default:
-            assert(false && "invalid base");
-            err = BitVector::ErrCode_Pars;
+        case 2:     minbits += (len-minbits); break;
+        case 8:     minbits += (len-minbits) * 3; break;
+        case 16:    minbits += (len-minbits) * 4; break;
+        case 10:    minbits += ((len-minbits) * 64) / 22; break;
+        default:    assert(false && "Invalid radix");
+    }
+    if (minbits > BITVECT_NATIVE_SIZE)
+    {
+        throw OverflowError(
+            N_("Numeric constant too large for internal format"));
     }
 
-    switch (err)
-    {
-        case BitVector::ErrCode_Pars:
-            return false;
-        case BitVector::ErrCode_Ovfl:
-            throw OverflowError(
-                N_("Numeric constant too large for internal format"));
-        default:
-            break;
-    }
+    conv_bv.fromString(str, len, base);
     set_bv(conv_bv);
-    return true;
 }
 
 IntNum::IntNum(const IntNum& rhs)
 {
     m_type = rhs.m_type;
     if (rhs.m_type == INTNUM_BV)
-        m_val.bv = BitVector::Clone(rhs.m_val.bv);
+        m_val.bv = new llvm::APInt(*rhs.m_val.bv);
     else
         m_val.l = rhs.m_val.l;
 }
@@ -194,9 +198,11 @@ calc_long(Op::Op op, long* lhs, long rhs)
             break;
         case Op::MUL:
             // half range
-            if (*lhs > -(1L<<(LONG_BITS/2)) && *lhs < (1L<<(LONG_BITS/2)))
+            if (*lhs > -(1L<<(IntNum::LONG_BITS/2))
+                && *lhs < (1L<<(IntNum::LONG_BITS/2)))
             {
-                if (rhs <= -(1L<<(LONG_BITS/2)) || rhs >= (1L<<(LONG_BITS/2)))
+                if (rhs <= -(1L<<(IntNum::LONG_BITS/2))
+                    || rhs >= (1L<<(IntNum::LONG_BITS/2)))
                     return false;
                 *lhs *= rhs;
                 break;
@@ -303,153 +309,143 @@ IntNum::calc(Op::Op op, const IntNum* operand)
 
     // Always do computations with in full bit vector.
     // Bit vector results must be calculated through intermediate storage.
-    wordptr op1 = get_bv(op1static);
-    wordptr op2 = 0;
+    const llvm::APInt* op1 = get_bv(&op1static);
+    const llvm::APInt* op2 = 0;
     if (operand)
-        op2 = operand->get_bv(op2static);
+        op2 = operand->get_bv(&op2static);
 
     // A operation does a bitvector computation if result is allocated.
     switch (op)
     {
         case Op::ADD:
         {
-            bool carry = false;
-            BitVector::add(result, op1, op2, &carry);
+            result = *op1;
+            result += *op2;
             break;
         }
         case Op::SUB:
         {
-            bool carry = false;
-            BitVector::sub(result, op1, op2, &carry);
+            result = *op1;
+            result -= *op2;
             break;
         }
         case Op::MUL:
-            BitVector::Multiply(result, op1, op2);
+            result = *op1;
+            result *= *op2;
             break;
         case Op::DIV:
             // TODO: make sure op1 and op2 are unsigned
-            if (BitVector::is_empty(op2))
+            if (!*op2)
                 throw ZeroDivisionError(N_("divide by zero"));
             else
-                BitVector::Divide(result, op1, op2, spare);
+                result = op1->udiv(*op2);
             break;
         case Op::SIGNDIV:
-            if (BitVector::is_empty(op2))
+            if (!*op2)
                 throw ZeroDivisionError(N_("divide by zero"));
             else
-                BitVector::Divide(result, op1, op2, spare);
+                result = op1->sdiv(*op2);
             break;
         case Op::MOD:
             // TODO: make sure op1 and op2 are unsigned
-            if (BitVector::is_empty(op2))
+            if (!*op2)
                 throw ZeroDivisionError(N_("divide by zero"));
             else
-                BitVector::Divide(spare, op1, op2, result);
+                result = op1->urem(*op2);
             break;
         case Op::SIGNMOD:
-            if (BitVector::is_empty(op2))
+            if (!*op2)
                 throw ZeroDivisionError(N_("divide by zero"));
             else
-                BitVector::Divide(spare, op1, op2, result);
+                result = op1->srem(*op2);
             break;
         case Op::NEG:
-            BitVector::Negate(result, op1);
+            result = -*op1;
             break;
         case Op::NOT:
-            BitVector::Set_Complement(result, op1);
+            result = *op1;
+            result.flip();
             break;
         case Op::OR:
-            BitVector::Set_Union(result, op1, op2);
+            result = *op1;
+            result |= *op2;
             break;
         case Op::AND:
-            BitVector::Set_Intersection(result, op1, op2);
+            result = *op1;
+            result &= *op2;
             break;
         case Op::XOR:
-            BitVector::Set_ExclusiveOr(result, op1, op2);
+            result = *op1;
+            result ^= *op2;
             break;
         case Op::XNOR:
-            BitVector::Set_ExclusiveOr(result, op1, op2);
-            BitVector::Set_Complement(result, result);
+            result = *op1;
+            result ^= *op2;
+            result.flip();
             break;
         case Op::NOR:
-            BitVector::Set_Union(result, op1, op2);
-            BitVector::Set_Complement(result, result);
+            result = *op1;
+            result |= *op2;
+            result.flip();
             break;
         case Op::SHL:
-            if (operand->m_type == INTNUM_L && operand->m_val.l >= 0)
+            if (operand->m_type == INTNUM_L)
             {
-                BitVector::Copy(result, op1);
-                BitVector::Move_Left(result,
-                                     static_cast<N_int>(operand->m_val.l));
+                if (operand->m_val.l >= 0)
+                    result = op1->shl(operand->m_val.l);
+                else
+                    result = op1->ashr(-operand->m_val.l);
             }
             else    // don't even bother, just zero result
-                BitVector::Empty(result);
+                result.clear();
             break;
         case Op::SHR:
-            if (operand->m_type == INTNUM_L && operand->m_val.l >= 0)
+            if (operand->m_type == INTNUM_L)
             {
-                BitVector::Copy(result, op1);
-                bool carry = BitVector::msb_(op1);
-                N_int count = static_cast<N_int>(operand->m_val.l);
-                while (count-- > 0)
-                    BitVector::shift_right(result, carry);
+                if (operand->m_val.l >= 0)
+                    result = op1->ashr(operand->m_val.l);
+                else
+                    result = op1->shl(-operand->m_val.l);
             }
             else    // don't even bother, just zero result
-                BitVector::Empty(result);
+                result.clear();
             break;
         case Op::LOR:
-            BitVector::Empty(result);
-            BitVector::LSB(result, !BitVector::is_empty(op1) ||
-                           !BitVector::is_empty(op2));
-            break;
+            set(static_cast<long>((!!*op1) || (!!*op2)));
+            return;
         case Op::LAND:
-            BitVector::Empty(result);
-            BitVector::LSB(result, !BitVector::is_empty(op1) &&
-                           !BitVector::is_empty(op2));
-            break;
+            set(static_cast<long>((!!*op1) && (!!*op2)));
+            return;
         case Op::LNOT:
-            BitVector::Empty(result);
-            BitVector::LSB(result, BitVector::is_empty(op1));
-            break;
+            set(static_cast<long>(!*op1));
+            return;
         case Op::LXOR:
-            BitVector::Empty(result);
-            BitVector::LSB(result, !BitVector::is_empty(op1) ^
-                           !BitVector::is_empty(op2));
-            break;
+            set(static_cast<long>((!!*op1) ^ (!!*op2)));
+            return;
         case Op::LXNOR:
-            BitVector::Empty(result);
-            BitVector::LSB(result, !(!BitVector::is_empty(op1) ^
-                           !BitVector::is_empty(op2)));
-            break;
+            set(static_cast<long>(!((!!*op1) ^ (!!*op2))));
+            return;
         case Op::LNOR:
-            BitVector::Empty(result);
-            BitVector::LSB(result, !(!BitVector::is_empty(op1) ||
-                           !BitVector::is_empty(op2)));
-            break;
+            set(static_cast<long>(!((!!*op1) || (!!*op2))));
+            return;
         case Op::EQ:
-            BitVector::Empty(result);
-            BitVector::LSB(result, BitVector::equal(op1, op2));
-            break;
+            set(static_cast<long>(op1->eq(*op2)));
+            return;
         case Op::LT:
-            BitVector::Empty(result);
-            BitVector::LSB(result, BitVector::Compare(op1, op2) < 0);
-            break;
+            set(static_cast<long>(op1->slt(*op2)));
+            return;
         case Op::GT:
-            BitVector::Empty(result);
-            BitVector::LSB(result, BitVector::Compare(op1, op2) > 0);
-            break;
+            set(static_cast<long>(op1->sgt(*op2)));
+            return;
         case Op::LE:
-            BitVector::Empty(result);
-            BitVector::LSB(result, BitVector::Compare(op1, op2) <= 0);
-            break;
+            set(static_cast<long>(op1->sle(*op2)));
+            return;
         case Op::GE:
-            BitVector::Empty(result);
-            BitVector::LSB(result, BitVector::Compare(op1, op2) >= 0);
-            break;
+            set(static_cast<long>(op1->sge(*op2)));
+            return;
         case Op::NE:
-            BitVector::Empty(result);
-            BitVector::LSB(result, !BitVector::equal(op1, op2));
-            break;
+            set(static_cast<long>(op1->ne(*op2)));
+            return;
         case Op::SEG:
             throw ArithmeticError(String::compose(N_("invalid use of '%1'"),
                                                   "SEG"));
@@ -463,8 +459,7 @@ IntNum::calc(Op::Op op, const IntNum* operand)
                                                   ":"));
             break;
         case Op::IDENT:
-            if (result)
-                BitVector::Copy(result, op1);
+            result = *op1;
             break;
         default:
             throw ArithmeticError(
@@ -472,8 +467,6 @@ IntNum::calc(Op::Op op, const IntNum* operand)
     }
 
     // Try to fit the result into long if possible
-    if (m_type == INTNUM_BV)
-        BitVector::Destroy(m_val.bv);
     set_bv(result);
 }
 /*@=nullderef =nullpass =branchstate@*/
@@ -483,18 +476,19 @@ IntNum::set(unsigned long val)
 {
     if (val > LONG_MAX)
     {
-        if (m_type != INTNUM_BV)
+        if (m_type == INTNUM_BV)
+            *m_val.bv = val;
+        else
         {
-            m_val.bv = BitVector::Create(BITVECT_NATIVE_SIZE, true);
+            m_val.bv = new llvm::APInt(BITVECT_NATIVE_SIZE, val);
             m_type = INTNUM_BV;
         }
-        BitVector::Chunk_Store(m_val.bv, ULONG_BITS, 0, val);
     }
     else
     {
         if (m_type == INTNUM_BV)
         {
-            BitVector::Destroy(m_val.bv);
+            delete m_val.bv;
             m_type = INTNUM_L;
         }
         m_val.l = static_cast<long>(val);
@@ -513,8 +507,10 @@ IntNum::sign() const
         else
             return 1;
     }
+    else if (m_val.bv->isNegative())
+        return -1;
     else
-        return BitVector::Sign(m_val.bv);
+        return 1;
 }
 
 unsigned long
@@ -527,12 +523,12 @@ IntNum::get_uint() const
         return static_cast<unsigned long>(m_val.l);
     }
 
-    // Handle bitvect
-    if (BitVector::msb_(m_val.bv))
+    // Handle bigval
+    if (m_val.bv->isNegative())
         return 0;
-    if (BitVector::Set_Max(m_val.bv) > ULONG_BITS)
+    if (m_val.bv->getActiveBits() > ULONG_BITS)
         return ULONG_MAX;
-    return BitVector::Chunk_Read(m_val.bv, ULONG_BITS, 0);
+    return static_cast<unsigned long>(m_val.bv->getZExtValue());
 }
 
 long
@@ -541,175 +537,16 @@ IntNum::get_int() const
     if (m_type == INTNUM_L)
         return m_val.l;
 
-    // Handle bitvect
-    if (BitVector::msb_(m_val.bv))
-    {
-        // it's negative: negate the bitvector to get a positive
-        // number, then negate the positive number.
-        unsigned long ul;
-
-        BitVector::Negate(conv_bv, m_val.bv);
-        if (BitVector::Set_Max(conv_bv) >= LONG_BITS)
-        {
-            // too negative
-            return LONG_MIN;
-        }
-        ul = BitVector::Chunk_Read(conv_bv, LONG_BITS, 0);
-        // check for too negative
-        return -static_cast<long>(ul);
-    }
-
-    // it's positive, and since it's a BV, it must be >0x7FFFFFFF
+    // since it's a BV, it must be >0x7FFFFFFF or <0x80000000
+    if (m_val.bv->isNegative())
+        return LONG_MIN;
     return LONG_MAX;
-}
-
-void
-IntNum::get_sized(unsigned char* ptr,
-                  unsigned int destsize,
-                  unsigned int valsize,
-                  int shift,
-                  bool bigendian,
-                  int warn) const
-{
-    // Currently don't support destinations larger than our native size
-    assert(destsize*8 <= BITVECT_NATIVE_SIZE && "destination too large");
-
-    // Split shift into left (shift) and right (rshift) components.
-    unsigned int rshift = 0;
-    if (shift < 0)
-    {
-        rshift = static_cast<unsigned int>(-shift);
-        shift = 0;
-    }
-
-    // General size warnings
-    if (warn<0 && !ok_size(valsize, rshift, 1))
-        warn_set(WARN_GENERAL,
-                 String::compose(N_("value does not fit in signed %1 bit field"),
-                                valsize));
-    if (warn>0 && !ok_size(valsize, rshift, 2))
-        warn_set(WARN_GENERAL,
-                 String::compose(N_("value does not fit in %1 bit field"),
-                                 valsize));
-
-    // Non-bitvect (for speed)
-    if (m_type == INTNUM_L)
-    {
-        long v = m_val.l;
-
-        // Check low bits if right shifting and warnings enabled
-        if (warn && rshift > 0)
-        {
-            long mask = (1L<<rshift)-1;
-            if (v & mask)
-                warn_set(WARN_GENERAL,
-                         N_("misaligned value, truncating to boundary"));
-        }
-
-        // Shift right if needed
-        v >>= rshift;
-        rshift = 0;
-
-        // Write out the new data, 8 bits at a time.
-        assert(!bigendian && "big endian not implemented");
-        for (int i = 0, sz = valsize;
-             i < static_cast<int>(destsize) && sz > 0; ++i)
-        {
-            // handle left shift past whole bytes
-            if (shift >= 8)
-            {
-                shift -= 8;
-                continue;
-            }
-
-            // Handle first chunk specially for left shifted values
-            if (shift > 0 && sz == static_cast<int>(valsize))
-            {
-                unsigned char chunk =
-                    ((static_cast<unsigned char>(v) & 0xff) << shift) & 0xff;
-                unsigned char mask = ~((1U<<shift)-1);  // keep MSBs
-
-                // write appropriate bits
-                ptr[i] &= ~mask;
-                ptr[i] |= chunk & mask;
-
-                v >>= (8-shift);
-                sz -= (8-shift);
-            }
-            else
-            {
-                unsigned char chunk = static_cast<unsigned char>(v) & 0xff;
-                unsigned char mask = 0xff;
-                // for last chunk, need to keep least significant bits
-                if (sz < 8)
-                    mask = (1U<<sz)-1;
-
-                // write appropriate bits
-                ptr[i] &= ~mask;
-                ptr[i] |= chunk & mask;
-
-                v >>= 8;
-                sz -= 8;
-            }
-        }
-
-        return;
-    }
-
-    // Read the original data into a bitvect
-    wordptr op1 = op1static;
-
-    if (bigendian)
-    {
-        // TODO
-        assert(false && "big endian not implemented");
-    }
-    else
-        BitVector::Block_Store(op1, ptr, static_cast<N_int>(destsize));
-
-    // If not already a bitvect, convert value to be written to a bitvect
-    wordptr op2 = get_bv(op2static);
-
-    // Check low bits if right shifting and warnings enabled
-    if (warn && rshift > 0)
-    {
-        BitVector::Copy(conv_bv, op2);
-        BitVector::Move_Left(conv_bv,
-                             static_cast<N_int>(BITVECT_NATIVE_SIZE-rshift));
-        if (!BitVector::is_empty(conv_bv))
-            warn_set(WARN_GENERAL,
-                     N_("misaligned value, truncating to boundary"));
-    }
-
-    // Shift right if needed
-    if (rshift > 0)
-    {
-        bool carry_in = BitVector::msb_(op2);
-        while (rshift-- > 0)
-            BitVector::shift_right(op2, carry_in);
-    }
-
-    // Write the new value into the destination bitvect
-    BitVector::Interval_Copy(op1, op2, static_cast<unsigned int>(shift), 0,
-                             static_cast<N_int>(valsize));
-
-    // Write out the new data
-    unsigned int len;
-    unsigned char* buf = BitVector::Block_Read(op1, &len);
-    if (bigendian)
-    {
-        // TODO
-        assert(false && "big endian not implemented");
-    }
-    else
-        std::memcpy(ptr, buf, destsize);
-    free(buf);
 }
 
 bool
 IntNum::ok_size(unsigned int size, unsigned int rshift, int rangetype) const
 {
-    // Non-bitvect (for speed)
+    // Non-bigval (for speed)
     if (m_type == INTNUM_L)
     {
         long v = m_val.l;
@@ -719,106 +556,46 @@ IntNum::ok_size(unsigned int size, unsigned int rshift, int rangetype) const
             case 0:
                 if (v < 0)
                     return false;
-                if (size >= LONG_BITS)
+                if (size >= IntNum::LONG_BITS)
                     return true;
                 return (v < (1L<<size));
             case 1:
                 if (v < 0)
                 {
-                    if (size >= LONG_BITS+1)
+                    if (size >= IntNum::LONG_BITS+1)
                         return true;
                     v = 0-v;
                     return (v <= (1L<<(size-1)));
                 }
-                if (size >= LONG_BITS+1)
+                if (size >= IntNum::LONG_BITS+1)
                     return true;
                 return (v < (1L<<(size-1)));
             case 2:
                 if (v < 0)
                 {
-                    if (size >= LONG_BITS+1)
+                    if (size >= IntNum::LONG_BITS+1)
                         return true;
                     v = 0-v;
                     return (v <= (1L<<(size-1)));
                 }
-                if (size >= LONG_BITS)
+                if (size >= IntNum::LONG_BITS)
                     return true;
                 return (v < (1L<<size));
             default:
-                assert(false);
+                assert(false && "invalid range type");
+                return false;
         }
     }
-
-    // Handle bitvect
-    wordptr val;
-    if (rshift > 0)
-    {
-        val = conv_bv;
-        BitVector::Copy(val, m_val.bv);
-    }
-    else
-        val = m_val.bv;
-
-    if (size >= BITVECT_NATIVE_SIZE)
-        return 1;
-
-    if (rshift > 0)
-    {
-        bool carry_in = BitVector::msb_(val);
-        while (rshift-- > 0)
-            BitVector::shift_right(val, carry_in);
-    }
-
-    if (rangetype > 0)
-    {
-        if (BitVector::msb_(val))
-        {
-            // it's negative
-            BitVector::Negate(conv_bv, val);
-            BitVector::dec(conv_bv, conv_bv);
-            return (BitVector::Set_Max(conv_bv) < static_cast<long>(size)-1);
-        }
-
-        if (rangetype == 1)
-            size--;
-    }
-    return (BitVector::Set_Max(val) < static_cast<long>(size));
+    return yasm::ok_size(*get_bv(&conv_bv), size, rshift, rangetype);
 }
 
 bool
 IntNum::in_range(long low, long high) const
 {
-    // If not already a bitvect, convert value to be written to a bitvect
-    wordptr val = get_bv(result);
-
-    // Convert high and low to bitvects
-    wordptr lval = op1static;
-    BitVector::Empty(lval);
-    if (low >= 0)
-        BitVector::Chunk_Store(lval, LONG_BITS, 0,
-                               static_cast<unsigned long>(low));
-    else
-    {
-        BitVector::Chunk_Store(lval, LONG_BITS, 0,
-                               static_cast<unsigned long>(-low));
-        BitVector::Negate(lval, lval);
-    }
-
-    wordptr hval = op2static;
-    BitVector::Empty(hval);
-    if (high >= 0)
-        BitVector::Chunk_Store(hval, LONG_BITS, 0,
-                               static_cast<unsigned long>(high));
-    else
-    {
-        BitVector::Chunk_Store(hval, LONG_BITS, 0,
-                               static_cast<unsigned long>(-high));
-        BitVector::Negate(hval, hval);
-    }
-
-    // Compare!
-    return (BitVector::Compare(val, lval) >= 0
-            && BitVector::Compare(val, hval) <= 0);
+    if (m_type == INTNUM_L)
+        return (m_val.l >= low && m_val.l <= high);
+    // bigval can't be in range
+    return false;
 }
 
 IntNum&
@@ -830,10 +607,10 @@ IntNum::operator++()
     {
         if (m_type == INTNUM_L)
         {
-            m_val.bv = get_bv(BitVector::Create(BITVECT_NATIVE_SIZE, false));
+            m_val.bv = get_bv(new llvm::APInt(BITVECT_NATIVE_SIZE, 0));
             m_type = INTNUM_BV;
         }
-        BitVector::increment(m_val.bv);
+        ++(*m_val.bv);
     }
     return *this;
 }
@@ -847,10 +624,10 @@ IntNum::operator--()
     {
         if (m_type == INTNUM_L)
         {
-            m_val.bv = get_bv(BitVector::Create(BITVECT_NATIVE_SIZE, false));
+            m_val.bv = get_bv(new llvm::APInt(BITVECT_NATIVE_SIZE, 0));
             m_type = INTNUM_BV;
         }
-        BitVector::decrement(m_val.bv);
+        --(*m_val.bv);
     }
     return *this;
 }
@@ -867,9 +644,13 @@ compare(const IntNum& lhs, const IntNum& rhs)
         return 0;
     }
 
-    wordptr op1 = lhs.get_bv(op1static);
-    wordptr op2 = rhs.get_bv(op2static);
-    return BitVector::Compare(op1, op2);
+    const llvm::APInt* op1 = lhs.get_bv(&op1static);
+    const llvm::APInt* op2 = rhs.get_bv(&op2static);
+    if (op1->slt(*op2))
+        return -1;
+    if (op1->sgt(*op2))
+        return 1;
+    return 0;
 }
 
 bool
@@ -878,9 +659,9 @@ operator==(const IntNum& lhs, const IntNum& rhs)
     if (lhs.m_type == IntNum::INTNUM_L && rhs.m_type == IntNum::INTNUM_L)
         return lhs.m_val.l == rhs.m_val.l;
 
-    wordptr op1 = lhs.get_bv(op1static);
-    wordptr op2 = rhs.get_bv(op2static);
-    return BitVector::equal(op1, op2);
+    const llvm::APInt* op1 = lhs.get_bv(&op1static);
+    const llvm::APInt* op2 = rhs.get_bv(&op2static);
+    return op1->eq(*op2);
 }
 
 bool
@@ -889,9 +670,9 @@ operator<(const IntNum& lhs, const IntNum& rhs)
     if (lhs.m_type == IntNum::INTNUM_L && rhs.m_type == IntNum::INTNUM_L)
         return lhs.m_val.l < rhs.m_val.l;
 
-    wordptr op1 = lhs.get_bv(op1static);
-    wordptr op2 = rhs.get_bv(op2static);
-    return BitVector::Compare(op1, op2) < 0;
+    const llvm::APInt* op1 = lhs.get_bv(&op1static);
+    const llvm::APInt* op2 = rhs.get_bv(&op2static);
+    return op1->slt(*op2);
 }
 
 bool
@@ -900,40 +681,101 @@ operator>(const IntNum& lhs, const IntNum& rhs)
     if (lhs.m_type == IntNum::INTNUM_L && rhs.m_type == IntNum::INTNUM_L)
         return lhs.m_val.l > rhs.m_val.l;
 
-    wordptr op1 = lhs.get_bv(op1static);
-    wordptr op2 = rhs.get_bv(op2static);
-    return BitVector::Compare(op1, op2) > 0;
+    const llvm::APInt* op1 = lhs.get_bv(&op1static);
+    const llvm::APInt* op2 = rhs.get_bv(&op2static);
+    return op1->sgt(*op2);
 }
 
-char*
-IntNum::get_str() const
+void
+IntNum::get_str(llvm::SmallVectorImpl<char>& str,
+                int base,
+                bool lowercase) const
 {
     if (m_type == INTNUM_BV)
-        return reinterpret_cast<char*>(BitVector::to_Dec(m_val.bv));
+    {
+        m_val.bv->toString(str, static_cast<unsigned>(base), true, lowercase);
+        return;
+    }
 
-    char* s = static_cast<char*>(malloc(16));
-    sprintf(s, "%ld", m_val.l);
-    return s;
+    long v = m_val.l;
+    if (v < 0)
+    {
+        v = -v;
+        str.push_back('-');
+    }
+
+    const char* fmt = "%ld";
+    switch (base)
+    {
+        case 8:     fmt = "%lo"; break;
+        case 10:    fmt = "%ld"; break;
+        case 16:
+            if (lowercase)
+                fmt = "%lx";
+            else
+                fmt = "%lX";
+            break;
+        default:
+            assert(false && "invalid base");
+    }
+
+    char s[40];
+    sprintf(s, fmt, m_val.l);
+    str.append(s, s+strlen(s));
+}
+
+std::string
+IntNum::get_str(int base, bool lowercase) const
+{
+    llvm::SmallString<40> s;
+    get_str(s, base, lowercase);
+    return s.c_str();
+}
+
+unsigned long
+IntNum::extract(unsigned int width, unsigned int lsb) const
+{
+    assert(width <= ULONG_BITS);
+    if (m_type == INTNUM_L)
+    {
+        // cast after shift to preserve sign bits
+        return (static_cast<unsigned long>(m_val.l >> lsb)
+                & ((1UL << width) - 1));
+    }
+    else
+    {
+        uint64_t v;
+        llvm::APInt::tcExtract(&v, 1, m_val.bv->getRawData(), width, lsb);
+        return static_cast<unsigned long>(v);
+    }
 }
 
 std::ostream&
 operator<< (std::ostream& os, const IntNum& intn)
 {
-    wordptr bv = intn.get_bv(conv_bv);
-
-    BitVector::N_word bits =
-        static_cast<BitVector::N_word>(os.iword(set_intnum_bits::m_idx));
+    llvm::SmallString<40> s;
+    int bits = os.iword(set_intnum_bits::m_idx);
+    int padding = 0;
+    conv_bv = *intn.get_bv(&conv_bv);
 
     std::ios_base::fmtflags ff = os.flags();
-    if ((ff & os.showpos) && (ff & os.dec) && BitVector::Sign(bv) >= 0)
+    if ((ff & os.showpos) && (ff & os.dec) && !conv_bv.isNegative())
         os << '+';
 
-    unsigned char* s;
+    if (conv_bv.isNegative())
+    {
+        // negate in place
+        conv_bv.flip();
+        ++conv_bv;
+        os << '-';
+    }
+
     if (ff & os.oct)
     {
         if (ff & os.showbase)
             os << '0';
-        s = BitVector::to_Oct(bv, bits);
+        conv_bv.toString(s, 8, true);
+        padding = (bits-s.size()*3+2)/3;
     }
     else if (ff & os.hex)
     {
@@ -944,12 +786,14 @@ operator<< (std::ostream& os, const IntNum& intn)
             else
                 os << "0x";
         }
-        s = BitVector::to_Hex(bv, (ff & os.uppercase) != 0, bits);
+        conv_bv.toString(s, 16, true, (ff & os.uppercase) == 0);
+        padding = (bits-s.size()*4+3)/4;
     }
     else
-        s = BitVector::to_Dec(bv);
-    os << s;
-    free(s);
+        conv_bv.toString(s, 10, true);
+    for (int i=0; i<padding; ++i)
+        os << '0';
+    os << s.c_str();
     return os;
 }
 

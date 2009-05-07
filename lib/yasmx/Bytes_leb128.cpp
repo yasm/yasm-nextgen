@@ -28,6 +28,7 @@
 
 #include <util.h>
 
+#include "llvm/ADT/SmallVector.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/IntNum.h"
@@ -36,68 +37,14 @@
 namespace yasm
 {
 
-static BitVector::scoped_wordptr staticbv(IntNum::BITVECT_NATIVE_SIZE);
+static llvm::APInt staticbv(IntNum::BITVECT_NATIVE_SIZE, 0);
 
-static unsigned long
-write_leb128(Bytes& bytes, BitVector::wordptr val, bool sign)
+static inline uint64_t
+extract(const llvm::APInt& bv, unsigned int width, unsigned int lsb)
 {
-    unsigned long size;
-    if (sign)
-    {
-        // Signed mode
-        if (BitVector::msb_(val))
-        {
-            // Negative
-            BitVector::Negate(staticbv, val);
-            size = BitVector::Set_Max(staticbv)+2;
-        }
-        else
-        {
-            // Positive
-            size = BitVector::Set_Max(val)+2;
-        }
-    }
-    else
-    {
-        // Unsigned mode
-        size = BitVector::Set_Max(val)+1;
-    }
-
-    // Positive/Unsigned write
-    Bytes::size_type orig_size = bytes.size();
-    unsigned long i = 0;
-    for (; i<size-7; i += 7)
-        bytes.push_back(static_cast<unsigned char>(
-            BitVector::Chunk_Read(val, 7, i) | 0x80));
-    // last byte does not have MSB set
-    bytes.push_back(static_cast<unsigned char>(
-        BitVector::Chunk_Read(val, 7, i)));
-    return static_cast<unsigned long>(bytes.size()-orig_size);
-}
-
-static unsigned long
-size_leb128(BitVector::wordptr val, bool sign)
-{
-    if (sign)
-    {
-        // Signed mode
-        if (BitVector::msb_(val))
-        {
-            // Negative
-            BitVector::Negate(staticbv, val);
-            return (BitVector::Set_Max(staticbv)+8)/7;
-        }
-        else
-        {
-            // Positive
-            return (BitVector::Set_Max(val)+8)/7;
-        }
-    }
-    else
-    {
-        // Unsigned mode
-        return (BitVector::Set_Max(val)+7)/7;
-    }
+    uint64_t v;
+    llvm::APInt::tcExtract(&v, 1, bv.getRawData(), width, lsb);
+    return v;
 }
 
 unsigned long
@@ -110,7 +57,20 @@ write_leb128(Bytes& bytes, const IntNum& intn, bool sign)
         return 1;
     }
 
-    return write_leb128(bytes, intn.get_bv(staticbv), sign);
+    const llvm::APInt* bv = intn.get_bv(&staticbv);
+    unsigned int size;
+    if (sign)
+        size = bv->getMinSignedBits()+1;
+    else
+        size = bv->getActiveBits()+1;
+
+    Bytes::size_type orig_size = bytes.size();
+    unsigned int i = 0;
+    for (; i<size-7; i += 7)
+        bytes.push_back(static_cast<unsigned char>(extract(*bv, 7, i)) | 0x80);
+    // last byte does not have MSB set
+    bytes.push_back(static_cast<unsigned char>(extract(*bv, 7, i)));
+    return static_cast<unsigned long>(bytes.size()-orig_size);
 }
 
 unsigned long
@@ -120,111 +80,49 @@ size_leb128(const IntNum& intn, bool sign)
     if (intn.is_zero())
         return 1;
 
-    return size_leb128(intn.get_bv(staticbv), sign);
+    const llvm::APInt* bv = intn.get_bv(&staticbv);
+    if (sign)
+        return (bv->getMinSignedBits()+7)/7;
+    else
+        return (bv->getActiveBits()+7)/7;
 }
 
 IntNum
 read_leb128(Bytes& bytes, bool sign, /*@out@*/ unsigned long* size)
 {
-    const unsigned char* ptr;
-    unsigned long n = 0, i = 0;
+    unsigned int nwords = 1;
+    llvm::SmallVector<uint64_t, 4> words(nwords);
+    unsigned int nread = 0, i = 0;
 
-    BitVector::Empty(staticbv);
     for (;;)
     {
-        ptr = bytes.read(1);
-        BitVector::Chunk_Store(staticbv, 7, i, *ptr);
-        ++n;
+        const unsigned char* ptr = bytes.read(1);
+        uint64_t v = *ptr & 0x7F;
+        words[nwords-1] |= v << (i-64*(nwords-1));
+        if ((i+7) > 64*nwords)
+        {
+            // handle word overflow
+            words.push_back(v >> ((i+7)-64*nwords));
+            ++nwords;
+        }
+        ++nread;
         i += 7;
         if ((*ptr & 0x80) != 0x80)
             break;
     }
 
     if (size)
-        *size = n;
+        *size = nread;
 
-    if (i > IntNum::BITVECT_NATIVE_SIZE)
-        throw OverflowError(
-            N_("Numeric constant too large for internal format"));
+    llvm::APInt val(i, nwords, &words[0]);
+    // Zero extend if needed to make positive number
+    if (!sign && val.isNegative())
+        val.zext(i+1);
 
-    if (sign && (*ptr & 0x40) == 0x40)
-        BitVector::Interval_Fill(staticbv, i, IntNum::BITVECT_NATIVE_SIZE-1);
-
+    // Convert to intnum
     IntNum intn;
-    intn.set_bv(staticbv);
+    intn.set_bv(val);
     return intn;
-}
-
-unsigned long
-write_sleb128(Bytes& bytes, long v)
-{
-    // Shortcut 0
-    if (v == 0)
-    {
-        bytes.push_back(0);
-        return 1;
-    }
-
-    BitVector::wordptr val = staticbv;
-
-    BitVector::Empty(val);
-    if (v >= 0)
-        BitVector::Chunk_Store(val, 32, 0, static_cast<unsigned long>(v));
-    else
-    {
-        BitVector::Chunk_Store(val, 32, 0, static_cast<unsigned long>(-v));
-        BitVector::Negate(val, val);
-    }
-    return write_leb128(bytes, val, true);
-}
-
-unsigned long
-size_sleb128(long v)
-{
-    if (v == 0)
-        return 1;
-
-    BitVector::wordptr val = staticbv;
-
-    BitVector::Empty(val);
-    if (v >= 0)
-        BitVector::Chunk_Store(val, 32, 0, static_cast<unsigned long>(v));
-    else
-    {
-        BitVector::Chunk_Store(val, 32, 0, static_cast<unsigned long>(-v));
-        BitVector::Negate(val, val);
-    }
-    return size_leb128(val, true);
-}
-
-unsigned long
-write_uleb128(Bytes& bytes, unsigned long v)
-{
-    // Shortcut 0
-    if (v == 0)
-    {
-        bytes.push_back(0);
-        return 1;
-    }
-
-    BitVector::wordptr val = staticbv;
-
-    BitVector::Empty(val);
-    BitVector::Chunk_Store(val, 32, 0, v);
-    return write_leb128(bytes, val, false);
-}
-
-unsigned long
-size_uleb128(unsigned long v)
-{
-    if (v == 0)
-        return 1;
-
-    BitVector::wordptr val = staticbv;
-
-    BitVector::Empty(val);
-    BitVector::Chunk_Store(val, 32, 0, v);
-    return size_leb128(val, false);
 }
 
 } // namespace yasm

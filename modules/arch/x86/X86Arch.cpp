@@ -560,7 +560,7 @@ X86Arch::tobytes(const IntNum& intn,
                  int shift,
                  int warn) const
 {
-    intn.get_sized(&bytes[0], bytes.size(), valsize, shift, false, warn);
+    overwrite(bytes, intn, valsize, shift, false, warn);
 }
 
 std::auto_ptr<EffAddr>

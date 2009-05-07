@@ -32,14 +32,31 @@
 #include <algorithm>
 #include <cstdlib>
 #include <iosfwd>
+#include <limits>
+#include <string>
 
+#include "llvm/ADT/APInt.h"
 #include "yasmx/Config/export.h"
-#include "yasmx/Support/BitVector.h"
 #include "yasmx/Op.h"
 
 
 namespace yasm
 {
+
+/// Check to see if APInt will fit without overflow into size bits.
+/// @param intn         APInt
+/// @param size         number of bits of output space
+/// @param rshift       right shift
+/// @param rangetype    signed/unsigned range selection:
+///                     0 => (0, unsigned max);
+///                     1 => (signed min, signed max);
+///                     2 => (signed min, unsigned max)
+/// @return True if APInt will fit.
+YASM_LIB_EXPORT
+bool ok_size(const llvm::APInt& intn,
+             unsigned int size,
+             unsigned int rshift,
+             int rangetype);
 
 class ExprTerm;
 
@@ -48,8 +65,8 @@ struct YASM_LIB_EXPORT IntNumData
 {
     union
     {
-        long l;                 ///< integer value (for integers <=32 bits)
-        BitVector::wordptr bv;  ///< bit vector (for integers >32 bits)
+        long l;                 ///< integer value (for integers <=long bits)
+        llvm::APInt* bv;        ///< big value (for integers >long bits)
     } m_val;
     enum { INTNUM_L, INTNUM_BV } m_type;
 };
@@ -72,6 +89,13 @@ class YASM_LIB_EXPORT IntNum : private IntNumData
 public:
     /// "Native" "word" size for intnum calculations.
     enum { BITVECT_NATIVE_SIZE = 256 };
+
+    /// C integer sizes (in bits).
+    enum
+    {
+        LONG_BITS = std::numeric_limits<long>::digits,
+        ULONG_BITS = std::numeric_limits<unsigned long>::digits
+    };
 
     /// Default constructor.  Initializes value to 0.
     IntNum()
@@ -133,7 +157,7 @@ public:
     ~IntNum()
     {
         if (m_type == INTNUM_BV)
-            BitVector::Destroy(m_val.bv);
+            delete m_val.bv;
     }
 
     /// Floating point calculation function: acc = acc op operand.
@@ -156,7 +180,7 @@ public:
     void set(long val)
     {
         if (m_type == INTNUM_BV)
-            BitVector::Destroy(m_val.bv);
+            delete m_val.bv;
         m_type = INTNUM_L;
         m_val.l = val;
     }
@@ -167,7 +191,7 @@ public:
 
     /// Set an intnum to an signed integer.
     /// @param val      integer value
-    void set(int val) { set(long(val)); }
+    void set(int val) { set(static_cast<long>(val)); }
 
     /// Simple value check for 0.
     /// @return True if acc==0.
@@ -202,36 +226,18 @@ public:
     /// @return Unsigned 32-bit value of intn.
     unsigned long get_uint() const;
 
-    /// Convert an intnum to a signed 32-bit value.
+    /// Convert an intnum to a signed "long" value.
     /// The value is in "standard" C format (eg, of unknown endian).
-    /// @note Parameter intnum is saturated to fit into 32 bits.  Use
+    /// @note Parameter intnum is saturated to fit into a long.  Use
     ///       intnum_check_size() to check for overflow.
-    /// @return Signed 32-bit value of intn.
+    /// @return Signed long value of intn.
     long get_int() const;
 
-    /// Output intnum to buffer in little-endian or big-endian.
-    /// Puts the value into the least significant bits of the destination,
-    /// or may be shifted into more significant bits by the shift parameter.
-    /// The destination bits are cleared before being set.
-    /// [0] should be the first byte output to the file.
-    /// @param ptr          pointer to storage for size bytes of output
-    /// @param destsize     destination size (in bytes)
-    /// @param valsize      size (in bits)
-    /// @param shift        left shift (in bits); may be negative to specify
-    ///                     right shift (standard warnings include truncation
-    ///                     to boundary)
-    /// @param bigendian    endianness (true=big, false=little)
-    /// @param warn         enables standard warnings (value doesn't fit into
-    ///                     valsize bits): <0=signed warnings,
-    ///                     >0=unsigned warnings, 0=no warn
-    void get_sized(unsigned char *ptr,
-                   unsigned int destsize,
-                   unsigned int valsize,
-                   int shift,
-                   bool bigendian,
-                   int warn) const;
+    /// Determine if intnum will fit in a signed "long" without saturating.
+    bool is_int() const { return (m_type == INTNUM_L); }
 
     /// Check to see if intnum will fit without overflow into size bits.
+    /// @param intn         intnum
     /// @param size         number of bits of output space
     /// @param rshift       right shift
     /// @param rangetype    signed/unsigned range selection:
@@ -248,16 +254,37 @@ public:
     bool in_range(long low, long high) const;
 
     /// Set intnum value from a decimal/binary/octal/hexidecimal string.
-    /// @param str      string
+    /// @param str      input string
     /// @param base     numeric base (10=decimal, etc)
-    /// @return False if string could not be converted.
     /// @note Only base=2,8,10,16 are supported.
-    bool set_str(char* str, int base=10);
+    void set_str(const char* str, unsigned int len, int base=10);
 
-    /// Get intnum value as a signed decimal string.  The returned string will
+    /// Get intnum value into a SmallString.  The returned string will
     /// contain a leading '-' if the intnum is negative.
-    /// @return String containing the decimal representation of the intnum.
-    /*@only@*/ char* get_str() const;
+    /// @param str          output SmallString
+    /// @param base         numeric base (10=decimal, etc)
+    /// @param lowercase    whether hex digits should be lowercase
+    /// @note Valid bases are 8, 10, and 16.
+    void get_str(llvm::SmallVectorImpl<char>& str,
+                 int base = 10,
+                 bool lowercase = true) const;
+ 
+    /// Converts IntNum to a std::string.  This is an inefficient
+    /// method, your should prefer passing in a SmallString instead.
+    /// @param base         numeric base (10=decimal, etc)
+    /// @param lowercase    whether hex digits should be lowercase
+    /// @return String representing the value of the intnum.
+    /// @note Valid bases are 8, 10, and 16.
+    std::string get_str(int base = 10, bool lowercase = true) const;
+
+    /// Extract width bits from IntNum, starting at bit lsb.
+    /// Returns integer such that the bit lsb becomes the least significant bit
+    /// of the return value.  All high bits above width in the return value are
+    /// zero-filled.
+    /// @param width    Number of bits to extract
+    /// @param lsb      Bit number of least significant bit (0=lsb)
+    /// @return Extracted bits.
+    unsigned long extract(unsigned int width, unsigned int lsb) const;
 
     /// Overloaded unary operators:
 
@@ -287,13 +314,14 @@ public:
     /// If not, converts into passed bv and returns that instead.
     /// @param bv       bitvector to use if intnum is not bitvector.
     /// @return Passed bv or intnum internal bitvector.
-    BitVector::wordptr get_bv(/*@returned@*/ BitVector::wordptr bv) const;
+    const llvm::APInt* get_bv(llvm::APInt* bv) const;
+    llvm::APInt* get_bv(llvm::APInt* bv);
 
     /// Store a bitvector into intnum storage.
     /// If saved as a bitvector, clones the passed bitvector.
     /// Can modify the passed bitvector.
     /// @param bv       bitvector
-    void set_bv(BitVector::wordptr bv);
+    void set_bv(const llvm::APInt& bv);
 };
 
 /// Overloaded assignment binary operators.

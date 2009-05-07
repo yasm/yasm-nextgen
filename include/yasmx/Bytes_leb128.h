@@ -120,33 +120,6 @@ read_uleb128(Bytes& bytes, /*@out@*/ unsigned long* size = 0)
     return read_leb128(bytes, false, size);
 }
 
-/// Output integer to bytes in signed LEB128-encoded form.
-/// @param bytes    output bytes buffer
-/// @param v        integer
-/// @return Number of bytes generated.
-YASM_LIB_EXPORT
-unsigned long write_sleb128(Bytes& bytes, long v);
-
-/// Calculate number of bytes signed LEB128-encoded form of integer will take.
-/// @param v        integer
-/// @return Number of bytes.
-YASM_LIB_EXPORT
-unsigned long size_sleb128(long v);
-
-/// Output integer to bytes in unsigned LEB128-encoded form.
-/// @param bytes    output bytes buffer
-/// @param v        integer
-/// @return Number of bytes generated.
-YASM_LIB_EXPORT
-unsigned long write_uleb128(Bytes& bytes, unsigned long v);
-
-/// Calculate number of bytes unsigned LEB128-encoded form of integer will
-/// take.
-/// @param v        integer
-/// @return Number of bytes.
-YASM_LIB_EXPORT
-unsigned long size_uleb128(unsigned long v);
-
 } // namespace yasm
 
 #endif

@@ -32,6 +32,7 @@
 #include <yasmx/Bytecode.h>
 #include <yasmx/Expr.h>
 #include <yasmx/IntNum.h>
+#include <yasmx/IntNum_iomanip.h>
 #include <yasmx/Location.h>
 #include <yasmx/Section.h>
 #include <yasmx/Symbol.h>
@@ -80,26 +81,17 @@ BinMapOutput::BinMapOutput(std::ostream& os,
         assert(bsd != 0);
         map_prescan_bytes(*sect, *bsd, &m_bytes);
     }
-
-    m_buf = new unsigned char[m_bytes];
 }
 
 BinMapOutput::~BinMapOutput()
 {
-    delete[] m_buf;
 }
 
 void
 BinMapOutput::output_intnum(const IntNum& intn)
 {
-    intn.get_sized(m_buf, m_bytes, m_bytes*8, 0, false, 0);
-    m_os.fill('0');
-    m_os.setf(std::ios::right, std::ios::adjustfield);
-    m_os << std::hex;
-    for (int i=m_bytes; i != 0; i--)
-        m_os << std::setw(2) << static_cast<unsigned int>(m_buf[i-1]);
-    m_os.fill(' ');
-    m_os << std::dec;
+    m_os << set_intnum_bits(m_bytes*8);
+    m_os << std::hex << intn << std::dec;
 }
 
 void

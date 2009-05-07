@@ -153,12 +153,7 @@ scan:
         digit+
         {
             lvalp->intn.reset(new IntNum);
-            savech = TOK[TOKLEN];
-            TOK[TOKLEN] = '\0';
-            bool ok = lvalp->intn->set_str(TOK, 10);
-            ok = ok; // silence warning
-            assert(ok && "conversion failed");
-            TOK[TOKLEN] = savech;
+            lvalp->intn->set_str(TOK, TOKLEN, 10);
             RETURN(INTNUM);
         }
         /* 10010011b - binary number */
@@ -166,10 +161,7 @@ scan:
         [01] bindigit* 'b'
         {
             lvalp->intn.reset(new IntNum);
-            TOK[TOKLEN-1] = '\0'; /* strip off 'b' */
-            bool ok = lvalp->intn->set_str(TOK, 2);
-            ok = ok; // silence warning
-            assert(ok && "conversion failed");
+            lvalp->intn->set_str(TOK, TOKLEN-1, 2);     // strip 'b'
             RETURN(INTNUM);
         }
 
@@ -177,10 +169,7 @@ scan:
         [0-7] octdigit* [qQoO]
         {
             lvalp->intn.reset(new IntNum);
-            TOK[TOKLEN-1] = '\0'; /* strip off 'q' or 'o' */
-            bool ok = lvalp->intn->set_str(TOK, 8);
-            ok = ok; // silence warning
-            assert(ok && "conversion failed");
+            lvalp->intn->set_str(TOK, TOKLEN-1, 8);     // strip 'o'/'q'
             RETURN(INTNUM);
         }
 
@@ -188,27 +177,23 @@ scan:
         digit hexdigit* 'h'
         {
             lvalp->intn.reset(new IntNum);
-            TOK[TOKLEN-1] = '\0'; /* strip off 'h' */
-            bool ok = lvalp->intn->set_str(TOK, 16);
-            ok = ok; // silence warning
-            assert(ok && "conversion failed");
+            lvalp->intn->set_str(TOK, TOKLEN-1, 16);    // strip 'h'
             RETURN(INTNUM);
         }
 
-        /* $0AA and 0xAA forms of hexidecimal number */
-        (("$" digit) | '0x') hexdigit+
+        /* $0AA form of hexidecimal number */
+        "$" digit hexdigit+
         {
             lvalp->intn.reset(new IntNum);
-            savech = TOK[TOKLEN];
-            TOK[TOKLEN] = '\0';
-            bool ok;
-            if (TOK[1] == 'x' || TOK[1] == 'X')
-                ok = lvalp->intn->set_str(TOK+2, 16);   // skip 0 and x
-            else
-                ok = lvalp->intn->set_str(TOK+1, 16);   // don't skip 0
-            ok = ok; // silence warning
-            assert(ok && "conversion failed");
-            TOK[TOKLEN] = savech;
+            lvalp->intn->set_str(TOK+1, TOKLEN-1, 16);  // skip $
+            RETURN(INTNUM);
+        }
+
+        /* 0xAA form of hexidecimal number */
+        '0x' hexdigit+
+        {
+            lvalp->intn.reset(new IntNum);
+            lvalp->intn->set_str(TOK+2, TOKLEN-2, 16);  // skip 0x
             RETURN(INTNUM);
         }
 
@@ -493,12 +478,7 @@ linechg:
         {
             linechg_numcount++;
             lvalp->intn.reset(new IntNum);
-            savech = TOK[TOKLEN];
-            TOK[TOKLEN] = '\0';
-            bool ok = lvalp->intn->set_str(TOK, 10);
-            ok = ok; // silence warning
-            assert(ok && "conversion failed");
-            TOK[TOKLEN] = savech;
+            lvalp->intn->set_str(TOK, TOKLEN, 10);
             RETURN(INTNUM);
         }
 
@@ -627,12 +607,7 @@ directive2:
         digit+
         {
             lvalp->intn.reset(new IntNum);
-            savech = TOK[TOKLEN];
-            TOK[TOKLEN] = '\0';
-            bool ok = lvalp->intn->set_str(TOK, 10);
-            ok = ok; // silence warning
-            assert(ok && "conversion failed");
-            TOK[TOKLEN] = savech;
+            lvalp->intn->set_str(TOK, TOKLEN, 10);
             RETURN(INTNUM);
         }
         /* 10010011b - binary number */
@@ -640,10 +615,7 @@ directive2:
         [01] bindigit* 'b'
         {
             lvalp->intn.reset(new IntNum);
-            TOK[TOKLEN-1] = '\0'; /* strip off 'b' */
-            bool ok = lvalp->intn->set_str(TOK, 2);
-            ok = ok; // silence warning
-            assert(ok && "conversion failed");
+            lvalp->intn->set_str(TOK, TOKLEN-1, 2);     // strip 'b'
             RETURN(INTNUM);
         }
 
@@ -651,10 +623,7 @@ directive2:
         [0-7] octdigit* [qQoO]
         {
             lvalp->intn.reset(new IntNum);
-            TOK[TOKLEN-1] = '\0'; /* strip off 'q' or 'o' */
-            bool ok = lvalp->intn->set_str(TOK, 8);
-            ok = ok; // silence warning
-            assert(ok && "conversion failed");
+            lvalp->intn->set_str(TOK, TOKLEN-1, 8);     // strip 'o'/'q'
             RETURN(INTNUM);
         }
 
@@ -662,26 +631,23 @@ directive2:
         digit hexdigit* 'h'
         {
             lvalp->intn.reset(new IntNum);
-            TOK[TOKLEN-1] = '\0'; /* strip off 'h' */
-            bool ok = lvalp->intn->set_str(TOK, 16);
-            ok = ok; // silence warning
-            assert(ok && "conversion failed");
+            lvalp->intn->set_str(TOK, TOKLEN-1, 16);    // strip 'h'
             RETURN(INTNUM);
         }
 
-        /* $0AA and 0xAA forms of hexidecimal number */
-        (("$" digit) | '0x') hexdigit+
+        /* $0AA form of hexidecimal number */
+        "$" digit hexdigit+
         {
             lvalp->intn.reset(new IntNum);
-            savech = TOK[TOKLEN];
-            TOK[TOKLEN] = '\0';
-            bool ok;
-            if (TOK[1] == 'x' || TOK[1] == 'X')
-                ok = lvalp->intn->set_str(TOK+2, 16);   // skip 0 and x
-            else
-                ok = lvalp->intn->set_str(TOK+1, 16);   // don't skip 0
-            assert(ok && "conversion failed");
-            TOK[TOKLEN] = savech;
+            lvalp->intn->set_str(TOK+1, TOKLEN-1, 16);  // skip $
+            RETURN(INTNUM);
+        }
+
+        /* 0xAA form of hexidecimal number */
+        '0x' hexdigit+
+        {
+            lvalp->intn.reset(new IntNum);
+            lvalp->intn->set_str(TOK+2, TOKLEN-2, 16);  // skip 0x
             RETURN(INTNUM);
         }
 

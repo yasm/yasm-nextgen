@@ -66,7 +66,6 @@ private:
 
     // address width
     int m_bytes;
-    unsigned char* m_buf;
 
     std::ostream& m_os;         // map output file
     const Object& m_object;     // object

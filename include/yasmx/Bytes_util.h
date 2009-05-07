@@ -148,6 +148,19 @@ read_u8(Bytes& bytes)
     return ptr[0] & 0xFF;
 }
 
+/// Read an signed 8-bit value from a bytes buffer.
+/// @param bytes    input bytes buffer
+/// @return 8-bit value.
+inline signed char
+read_s8(Bytes& bytes)
+{
+    unsigned char val = read_u8(bytes);
+    if (val & 0x80)
+        return -static_cast<signed char>((~val)+1);
+    else
+        return static_cast<signed char>(val);
+}
+
 /// Read an unsigned 16-bit value from a bytes buffer.
 /// @param bytes    input bytes buffer
 /// @return 16-bit value.
@@ -171,8 +184,21 @@ read_u16(Bytes& bytes)
     return val;
 }
 
+/// Read an signed 16-bit value from a bytes buffer.
+/// @param bytes    input bytes buffer
+/// @return 16-bit value.
+inline short
+read_s16(Bytes& bytes)
+{
+    unsigned short val = read_u16(bytes);
+    if (val & 0x8000)
+        return -static_cast<short>((~val)+1);
+    else
+        return static_cast<short>(val);
+}
+
 /// Read an unsigned 32-bit value from a bytes buffer.
-/// @param bytes    output bytes buffer
+/// @param bytes    input bytes buffer
 /// @return 32-bit value.
 inline unsigned long
 read_u32(Bytes& bytes)
@@ -203,7 +229,7 @@ read_u32(Bytes& bytes)
 }
 
 /// Read an signed 32-bit value from a bytes buffer.
-/// @param bytes    output bytes buffer
+/// @param bytes    input bytes buffer
 /// @return 32-bit value.
 inline long
 read_s32(Bytes& bytes)
@@ -241,15 +267,47 @@ IntNum read_u64(Bytes& bytes);
 YASM_LIB_EXPORT
 IntNum read_s64(Bytes& bytes);
 
-YASM_LIB_EXPORT
-bool ok_size(const llvm::APInt& intn,
-             unsigned int size,
-             unsigned int rshift,
-             int rangetype);
-
+/// Output APInt to bytes in little-endian or big-endian.
+/// Puts the value into the least significant bits of the destination,
+/// or may be shifted into more significant bits by the shift parameter.
+/// The destination bits are cleared before being set.
+/// [0] should be the first byte output to the file.
+/// @param bytes        output bytes buffer
+/// @param intn         APInt
+/// @param size         size (in bits)
+/// @param shift        left shift (in bits); may be negative to specify
+///                     right shift (standard warnings include truncation
+///                     to boundary)
+/// @param bigendian    endianness (true=big, false=little)
+/// @param warn         enables standard warnings (value doesn't fit into
+///                     valsize bits): <0=signed warnings,
+///                     >0=unsigned warnings, 0=no warn
 YASM_LIB_EXPORT
 void overwrite(Bytes& bytes,
                const llvm::APInt& intn,
+               unsigned int size,
+               int shift,
+               bool bigendian,
+               int warn);
+
+/// Output intnum to bytes in little-endian or big-endian.
+/// Puts the value into the least significant bits of the destination,
+/// or may be shifted into more significant bits by the shift parameter.
+/// The destination bits are cleared before being set.
+/// [0] should be the first byte output to the file.
+/// @param bytes        output bytes buffer
+/// @param intn         intnum
+/// @param size         size (in bits)
+/// @param shift        left shift (in bits); may be negative to specify
+///                     right shift (standard warnings include truncation
+///                     to boundary)
+/// @param bigendian    endianness (true=big, false=little)
+/// @param warn         enables standard warnings (value doesn't fit into
+///                     valsize bits): <0=signed warnings,
+///                     >0=unsigned warnings, 0=no warn
+YASM_LIB_EXPORT
+void overwrite(Bytes& bytes,
+               const IntNum& intn,
                unsigned int size,
                int shift,
                bool bigendian,

@@ -176,7 +176,7 @@ public:
 
             oss << std::oct << x;
             if (v < 0)
-                sprintf(golden, "777777777777%010lo", v&0x3fffffff);
+                sprintf(golden, "-000000000000%010lo", (-v)&0x3fffffff);
             else
                 sprintf(golden, "000000000000%010lo", v&0x3fffffff);
             TS_ASSERT_EQUALS(oss.str(), golden);
@@ -184,7 +184,7 @@ public:
             oss.str("");
             oss << std::hex << std::uppercase << x;
             if (v < 0)
-                sprintf(golden, "FFFFFFFF%08lX", v&0xffffffff);
+                sprintf(golden, "-00000000%08lX", (-v)&0xffffffff);
             else
                 sprintf(golden, "00000000%08lX", v);
             TS_ASSERT_EQUALS(oss.str(), golden);
@@ -192,7 +192,7 @@ public:
             oss.str("");
             oss << std::hex << std::nouppercase << x;
             if (v < 0)
-                sprintf(golden, "ffffffff%08lx", v&0xffffffff);
+                sprintf(golden, "-00000000%08lx", (-v)&0xffffffff);
             else
                 sprintf(golden, "00000000%08lx", v);
             TS_ASSERT_EQUALS(oss.str(), golden);
@@ -209,7 +209,7 @@ public:
             oss.str("");
             oss << std::oct << y;
             if (v < 0)
-                sprintf(golden, "7%010lo7%010lo", (v-1)&0x3fffffff, v&0x3fffffff);
+                sprintf(golden, "-0%010lo0%010lo", (-v)&0x3fffffff, (-v)&0x3fffffff);
             else
                 sprintf(golden, "0%010lo0%010lo", v, v);
             TS_ASSERT_EQUALS(oss.str(), golden);
@@ -218,7 +218,7 @@ public:
             oss.str("");
             oss << std::hex << std::uppercase << y;
             if (v < 0)
-                sprintf(golden, "%08lX%08lX", (v-1)&0xffffffff, v&0xffffffff);
+                sprintf(golden, "-%08lX%08lX", (-v)&0xffffffff, (-v)&0xffffffff);
             else
                 sprintf(golden, "%08lX%08lX", v, v);
             TS_ASSERT_EQUALS(oss.str(), golden);
@@ -227,7 +227,7 @@ public:
             oss.str("");
             oss << std::hex << std::nouppercase << y;
             if (v < 0)
-                sprintf(golden, "%08lx%08lx", (v-1)&0xffffffff, v&0xffffffff);
+                sprintf(golden, "-%08lx%08lx", (-v)&0xffffffff, (-v)&0xffffffff);
             else
                 sprintf(golden, "%08lx%08lx", v, v);
             TS_ASSERT_EQUALS(oss.str(), golden);
@@ -492,17 +492,17 @@ public:
             {-1, 2, 12, 0, false, {0x00, 0x00}, {0xff, 0x0f}},
             {-1, 2, 12, 4, false, {0x55, 0xaa}, {0xf5, 0xff}},
         };
-        unsigned char buf[4];
+        Bytes buf;
         IntNum intn;
         for (unsigned int i=0; i<NELEMS(tests); ++i)
         {
             LongTest& test = tests[i];
             intn = test.val;
-            memcpy(buf, test.inbuf, 4);
-            intn.get_sized(buf, test.destsize, test.valsize, test.shift,
-                           test.bigendian, 0);
+            buf.resize(test.destsize);
+            memcpy(&buf[0], test.inbuf, test.destsize);
+            overwrite(buf, intn, test.valsize, test.shift, test.bigendian, 0);
             //TS_TRACE(i);
-            TS_ASSERT_SAME_DATA(buf, test.outbuf, 4);
+            TS_ASSERT_SAME_DATA(&buf[0], test.outbuf, test.destsize);
         }
     }
 };

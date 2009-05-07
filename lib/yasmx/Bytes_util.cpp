@@ -35,6 +35,7 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/SmallVector.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/IntNum.h"
@@ -43,90 +44,143 @@
 namespace yasm
 {
 
-static BitVector::scoped_wordptr staticbv(IntNum::BITVECT_NATIVE_SIZE);
+static llvm::APInt staticbv(IntNum::BITVECT_NATIVE_SIZE, 0);
 
 void
 write_8(Bytes& bytes, const IntNum& intn)
 {
-    bytes.push_back(static_cast<unsigned char>(
-        BitVector::Chunk_Read(intn.get_bv(staticbv), 8, 0)));
+    bytes.push_back(static_cast<unsigned char>(intn.extract(8, 0)));
 }
 
 void
 write_16(Bytes& bytes, const IntNum& intn)
 {
-    BitVector::wordptr bv = intn.get_bv(staticbv);
-    if (bytes.is_bigendian())
-    {
-        bytes.push_back(static_cast<unsigned char>(
-            BitVector::Chunk_Read(bv, 8, 8)));
-        bytes.push_back(static_cast<unsigned char>(
-            BitVector::Chunk_Read(bv, 8, 0)));
-    }
-    else
-    {
-        bytes.push_back(static_cast<unsigned char>(
-            BitVector::Chunk_Read(bv, 8, 0)));
-        bytes.push_back(static_cast<unsigned char>(
-            BitVector::Chunk_Read(bv, 8, 8)));
-    }
+    write_16(bytes, static_cast<unsigned int>(intn.extract(16, 0)));
 }
 
 void
 write_32(Bytes& bytes, const IntNum& intn)
 {
-    BitVector::wordptr bv = intn.get_bv(staticbv);
-    if (bytes.is_bigendian())
-    {
-        for (int i=32-8; i>=0; i-=8)
-            bytes.push_back(static_cast<unsigned char>(
-                BitVector::Chunk_Read(bv, 8, i)));
-    }
-    else
-    {
-        for (int i=0; i<32; i+=8)
-            bytes.push_back(static_cast<unsigned char>(
-                BitVector::Chunk_Read(bv, 8, i)));
-    }
+    write_32(bytes, intn.extract(32, 0));
 }
 
 void
 write_64(Bytes& bytes, const IntNum& intn)
 {
-    BitVector::wordptr bv = intn.get_bv(staticbv);
+    unsigned long low = intn.extract(32, 0);
+    unsigned long high = intn.extract(32, 32);
     if (bytes.is_bigendian())
     {
-        for (int i=64-8; i>=0; i-=8)
-            bytes.push_back(static_cast<unsigned char>(
-                BitVector::Chunk_Read(bv, 8, i)));
+        write_32(bytes, high);
+        write_32(bytes, low);
     }
     else
     {
-        for (int i=0; i<64; i+=8)
-            bytes.push_back(static_cast<unsigned char>(
-                BitVector::Chunk_Read(bv, 8, i)));
+        write_32(bytes, low);
+        write_32(bytes, high);
     }
+}
+
+static inline void
+write_64i(Bytes& bytes, uint64_t val)
+{
+    unsigned long low = static_cast<unsigned long>(val);
+    unsigned long high = static_cast<unsigned long>(val >> 32);
+    if (bytes.is_bigendian())
+    {
+        write_32(bytes, high);
+        write_32(bytes, low);
+    }
+    else
+    {
+        write_32(bytes, low);
+        write_32(bytes, high);
+    }
+}
+
+static inline uint64_t
+read_u64i(Bytes& bytes)
+{
+    uint64_t low, high;
+    if (bytes.is_bigendian())
+    {
+        high = read_u32(bytes);
+        low = read_u32(bytes);
+    }
+    else
+    {
+        low = read_u32(bytes);
+        high = read_u32(bytes);
+    }
+    return ((high << 32) | low);
 }
 
 void
 write_n(Bytes& bytes, const IntNum& intn, int n)
 {
     assert((n & 7) == 0 && "n must be a multiple of 8");
-    BitVector::wordptr bv = intn.get_bv(staticbv);
+
+    // optimize some fixed cases
+    switch (n)
+    {
+        case 8: write_8(bytes, intn); return;
+        case 16: write_16(bytes, intn); return;
+        case 32: write_32(bytes, intn); return;
+        case 64: write_64(bytes, intn); return;
+        default: break;
+    }
+
+    // harder cases
+    const llvm::APInt* bv = intn.get_bv(&staticbv);
+    const uint64_t* words = bv->getRawData();
+    unsigned int nwords = bv->getNumWords();
+    llvm::APInt tmp;    // must be here so it stays in scope
+    if (bv->getBitWidth() < static_cast<unsigned int>(n*8))
+    {
+        tmp = *bv;
+        tmp.sext(n*8);
+        words = tmp.getRawData();
+        nwords = tmp.getNumWords();
+    }
     if (bytes.is_bigendian())
     {
-        for (int i=n-8; i>=0; i-=8)
-            bytes.push_back(static_cast<unsigned char>(
-                BitVector::Chunk_Read(bv, 8, i)));
+        // start with bytes of most significant word
+        int i = n;
+        if ((n & 63) != 0)
+        {
+            int wend = n & ~63;
+            uint64_t last = words[nwords-1];
+            for (; i>=wend; i-=8)
+            {
+                bytes.push_back(static_cast<unsigned char>
+                                ((last >> (i-wend)) & 0xFF));
+            }
+        }
+        // rest (if any) is whole words
+        unsigned int w = nwords-2;
+        for (; i>=64; i-=64, --w)
+            write_64i(bytes, words[w]);
     }
     else
     {
-        for (int i=0; i<n; i+=8)
-            bytes.push_back(static_cast<unsigned char>(
-                BitVector::Chunk_Read(bv, 8, i)));
+        // whole words first
+        unsigned int w = 0;
+        int i = 0;
+        for (; i<=n-64; i+=64, ++w)
+            write_64i(bytes, words[w]);
+        // finish with bytes
+        if (i < n)
+        {
+            uint64_t last = words[w];
+            for (; i<n; i+=8)
+            {
+                bytes.push_back(static_cast<unsigned char>(last & 0xFF));
+                last >>= 8;
+            }
+        }
     }
 }
-
+ 
 void
 write_n(Bytes& bytes, unsigned long val, int n)
 {
@@ -150,32 +204,80 @@ read_n(Bytes& bytes, int n, bool sign)
     assert(n <= IntNum::BITVECT_NATIVE_SIZE && "too large for internal format");
     assert(n > 0 && "can't read 0 bits");
 
-    // Read the buffer into a bitvect
-    const unsigned char* ptr;
-    BitVector::Empty(staticbv);
-    if (bytes.is_bigendian())
+    // optimize some fixed cases
+    if (sign)
     {
-        for (int i=n-8; i>=0; i-=8)
+        switch (n)
         {
-            ptr = bytes.read(1);
-            BitVector::Chunk_Store(staticbv, 8, i, *ptr);
+            case 8: return read_s8(bytes);
+            case 16: return read_s16(bytes);
+            case 32: return read_s32(bytes);
+            case 64: return read_s64(bytes);
+            default: break;
         }
     }
     else
     {
-        for (int i=0; i<n; i+=8)
+        switch (n)
         {
-            ptr = bytes.read(1);
-            BitVector::Chunk_Store(staticbv, 8, i, *ptr);
+            case 8: return read_u8(bytes);
+            case 16: return read_u16(bytes);
+            case 32: return read_u32(bytes);
+            case 64: return read_u64(bytes);
+            default: break;
         }
     }
 
-    // Sign extend if needed
-    if (n < IntNum::BITVECT_NATIVE_SIZE && sign && (*ptr & 0x80) == 0x80)
-        BitVector::Interval_Fill(staticbv, n, IntNum::BITVECT_NATIVE_SIZE-1);
+    // Read the buffer into an array of words
+    unsigned int nwords = (n+63)/64;
+    llvm::SmallVector<uint64_t, 4> words(nwords);
 
+    if (bytes.is_bigendian())
+    {
+        // start with bytes of most significant word
+        int i = n;
+        if ((n & 63) != 0)
+        {
+            int wend = n & ~63;
+            uint64_t last = words[nwords-1];
+            for (; i>=wend; i-=8)
+            {
+                last |= read_u8(bytes);
+                last <<= 8;
+            }
+        }
+        // rest (if any) is whole words
+        unsigned int w = nwords-2;
+        for (; i>=64; i-=64, --w)
+            words[w] = read_u64i(bytes);
+    }
+    else
+    {
+        // whole words first
+        unsigned int w = 0;
+        int i = 0;
+        for (; i<=n-64; i+=64, ++w)
+            words[w] = read_u64i(bytes);
+        // finish with bytes
+        if (i < n)
+        {
+            uint64_t last = 0;
+            for (; i<n; i+=8)
+            {
+                last |= static_cast<uint64_t>(read_u8(bytes)) << i;
+            }
+            words[w] = last;
+        }
+    }
+
+    llvm::APInt val(n, nwords, &words[0]);
+    // Zero extend if needed to make positive number
+    if (!sign && val.isNegative())
+        val.zext(n+1);
+
+    // Convert to intnum
     IntNum intn;
-    intn.set_bv(staticbv);
+    intn.set_bv(val);
     return intn;
 }
 
@@ -201,34 +303,6 @@ IntNum
 read_s64(Bytes& bytes)
 {
     return read_n(bytes, 64, true);
-}
-
-bool
-ok_size(const llvm::APInt& intn,
-        unsigned int size,
-        unsigned int rshift,
-        int rangetype)
-{
-    unsigned int intn_size;
-    switch (rangetype)
-    {
-        case 0:
-            intn_size = intn.getActiveBits();
-            break;
-        case 1:
-            intn_size = intn.getMinSignedBits();
-            break;
-        case 2:
-            if (intn.isNegative())
-                intn_size = intn.getMinSignedBits();
-            else
-                intn_size = intn.getActiveBits();
-            break;
-        default:
-            assert(false && "invalid range type");
-            return false;
-    }
-    return (intn_size <= (size-rshift));
 }
 
 void
@@ -280,6 +354,145 @@ overwrite(Bytes& bytes,
     }
 
     assert(false && "not yet implemented");
+#if 0
+    if (bigendian)
+    {
+        // TODO
+        assert(false && "big endian not implemented");
+    }
+    else
+        BitVector::Block_Store(op1, ptr, static_cast<N_int>(destsize));
+
+    // If not already a bitvect, convert value to be written to a bitvect
+    wordptr op2 = get_bv(op2static);
+
+    // Check low bits if right shifting and warnings enabled
+    if (warn && rshift > 0)
+    {
+        BitVector::Copy(conv_bv, op2);
+        BitVector::Move_Left(conv_bv,
+                             static_cast<N_int>(BITVECT_NATIVE_SIZE-rshift));
+        if (!BitVector::is_empty(conv_bv))
+            warn_set(WARN_GENERAL,
+                     N_("misaligned value, truncating to boundary"));
+    }
+
+    // Shift right if needed
+    if (rshift > 0)
+    {
+        bool carry_in = BitVector::msb_(op2);
+        while (rshift-- > 0)
+            BitVector::shift_right(op2, carry_in);
+    }
+
+    // Write the new value into the destination bitvect
+    BitVector::Interval_Copy(op1, op2, static_cast<unsigned int>(shift), 0,
+                             static_cast<N_int>(size));
+
+    // Write out the new data
+    unsigned int len;
+    unsigned char* buf = BitVector::Block_Read(op1, &len);
+    if (bigendian)
+    {
+        // TODO
+        assert(false && "big endian not implemented");
+    }
+    else
+        std::memcpy(ptr, buf, destsize);
+    free(buf);
+#endif
+}
+
+void
+overwrite(Bytes& bytes,
+          const IntNum& intn,
+          unsigned int size,
+          int shift,
+          bool bigendian,
+          int warn)
+{
+    int destsize = bytes.size();
+
+    // Split shift into left (shift) and right (rshift) components.
+    unsigned int rshift = 0;
+    if (shift < 0)
+    {
+        rshift = static_cast<unsigned int>(-shift);
+        shift = 0;
+    }
+
+    // General size warnings
+    if (warn<0 && !intn.ok_size(size, rshift, 1))
+        warn_set(WARN_GENERAL,
+                 String::compose(N_("value does not fit in signed %1 bit field"),
+                                size));
+    if (warn>0 && !intn.ok_size(size, rshift, 2))
+        warn_set(WARN_GENERAL,
+                 String::compose(N_("value does not fit in %1 bit field"),
+                                 size));
+
+    // Non-bigval (for speed)
+    if (intn.is_int())
+    {
+        long v = intn.get_int();
+
+        // Check low bits if right shifting and warnings enabled
+        if (warn && rshift > 0)
+        {
+            long mask = (1L<<rshift)-1;
+            if (v & mask)
+                warn_set(WARN_GENERAL,
+                         N_("misaligned value, truncating to boundary"));
+        }
+
+        // Shift right if needed
+        v >>= rshift;
+        rshift = 0;
+
+        // Write out the new data, 8 bits at a time.
+        assert(!bigendian && "big endian not implemented");
+        for (int i = 0, sz = size; i < destsize && sz > 0; ++i)
+        {
+            // handle left shift past whole bytes
+            if (shift >= 8)
+            {
+                shift -= 8;
+                continue;
+            }
+
+            // Handle first chunk specially for left shifted values
+            if (shift > 0 && sz == static_cast<int>(size))
+            {
+                unsigned char chunk =
+                    ((static_cast<unsigned char>(v) & 0xff) << shift) & 0xff;
+                unsigned char mask = ~((1U<<shift)-1);  // keep MSBs
+
+                // write appropriate bits
+                bytes[i] &= ~mask;
+                bytes[i] |= chunk & mask;
+
+                v >>= (8-shift);
+                sz -= (8-shift);
+            }
+            else
+            {
+                unsigned char chunk = static_cast<unsigned char>(v) & 0xff;
+                unsigned char mask = 0xff;
+                // for last chunk, need to keep least significant bits
+                if (sz < 8)
+                    mask = (1U<<sz)-1;
+
+                // write appropriate bits
+                bytes[i] &= ~mask;
+                bytes[i] |= chunk & mask;
+
+                v >>= 8;
+                sz -= 8;
+            }
+        }
+    }
+    else
+        overwrite(bytes, *intn.get_bv(&staticbv), size, shift, bigendian, warn);
 }
 
 void
