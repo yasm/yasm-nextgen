@@ -282,6 +282,8 @@ athlon64,	x86_cpu_amd,	PROC_hammer
 athlon-64,	x86_cpu_amd,	PROC_hammer
 venice,		x86_cpu_amd,	PROC_venice
 k10,		x86_cpu_amd,	PROC_k10
+phenom,		x86_cpu_amd,	PROC_k10
+family10h,	x86_cpu_amd,	PROC_k10
 bulldozer,	x86_cpu_amd,	PROC_bulldozer
 prescott,	x86_cpu_intel,	PROC_prescott
 conroe,		x86_cpu_intel,	PROC_conroe
