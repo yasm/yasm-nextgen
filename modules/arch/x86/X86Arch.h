@@ -84,12 +84,15 @@ enum CPUFeature
     CPU_SSE41,          // Streaming SIMD extensions 4.1 required
     CPU_SSE42,          // Streaming SIMD extensions 4.2 required
     CPU_SSE4a,          // AMD Streaming SIMD extensions 4a required
-    CPU_SSE5,           // AMD Streaming SIMD extensions 5 required
     CPU_XSAVE,          // Intel XSAVE instruction
     CPU_AVX,            // Intel Advanced Vector Extensions
     CPU_FMA,            // Intel Fused-Multiply-Add Extensions
     CPU_AES,            // AES instruction
-    CPU_CLMUL           // PCLMULQDQ instruction
+    CPU_CLMUL,          // PCLMULQDQ instruction
+    CPU_MOVBE,          // MOVBE instruction
+    CPU_XOP,            // AMD XOP extensions
+    CPU_FMA4,           // AMD Fused-Multiply-Add extensions
+    CPU_CVT16           // AMD CVT16 extensions
 };
 
 class X86Arch : public Arch
@@ -101,6 +104,12 @@ public:
         PARSER_NASM = 0,
         PARSER_GAS = 1,
         PARSER_UNKNOWN
+    };
+    enum NopFormat
+    {
+        NOP_BASIC,
+        NOP_INTEL,
+        NOP_AMD
     };
 
     /// Constructor.
@@ -174,6 +183,7 @@ private:
     unsigned int m_mode_bits;
     bool m_force_strict;
     bool m_default_rel;
+    NopFormat m_nop;
 
     // Registers
     X86Register** m_reg[X86Register::TYPE_COUNT];

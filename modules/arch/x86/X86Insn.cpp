@@ -142,9 +142,7 @@ enum X86OperandType
     // AX/EAX/RAX memory operand only (EA) [special case for SVM opcodes]
     OPT_MemrAX = 25,
     // EAX memory operand only (EA) [special case for SVM skinit opcode]
-    OPT_MemEAX = 26,
-    // SIMDReg with value equal to operand 0 SIMDReg
-    OPT_SIMDRegMatch0 = 27
+    OPT_MemEAX = 26
 };
 
 enum X86OperandSize
@@ -193,17 +191,16 @@ enum X86OperandAction
     OPA_JmpFar = 10,
     // ea operand only sets address size (no actual ea field)
     OPA_AdSizeEA = 11,
-    OPA_DREX = 12,  // operand data goes into DREX "dest" field
-    OPA_VEX = 13,   // operand data goes into VEX "vvvv" field
-    // operand data goes into BOTH VEX "vvvv" field and ea field
-    OPA_EAVEX = 14,
-    // operand data goes into BOTH VEX "vvvv" field and spare field
-    OPA_SpareVEX = 15,
-    // operand data goes into upper 4 bits of immediate byte (VEX is4 field)
-    OPA_VEXImmSrc = 16,
+    OPA_VEX = 12,   // operand data goes into VEX/XOP "vvvv" field
+    // operand data goes into BOTH VEX/XOP "vvvv" field and ea field
+    OPA_EAVEX = 13,
+    // operand data goes into BOTH VEX/XOP "vvvv" field and spare field
+    OPA_SpareVEX = 14,
+    // operand data goes into upper 4 bits of immediate byte (VEX/XOP is4 field)
+    OPA_VEXImmSrc = 15,
     // operand data goes into bottom 4 bits of immediate byte
     // (currently only VEX imz2 field)
-    OPA_VEXImm = 17
+    OPA_VEXImm = 16
 };
 
 enum X86OperandPostAction
@@ -264,7 +261,7 @@ struct X86InsnInfo
     // GAS suffix flags
     unsigned int gas_flags:8;      // Enabled for these GAS suffixes
 
-    // Tests against BITS==64 and AVX
+    // Tests against BITS==64, AVX, and XOP
     unsigned int misc_flags:6;
 
     // The CPU feature flags needed to execute this instruction.  This is OR'ed
@@ -301,14 +298,9 @@ struct X86InsnInfo
     //      01: 66
     //      10: F3
     //      11: F2
+    // 0x80 - 0x8F indicate a XOP prefix, with the four LSBs holding "WLpp":
+    //  same meanings as VEX prefix.
     unsigned char special_prefix;
-
-    // The DREX base byte value (almost).  The only bit kept from this
-    // value is the OC0 bit (0x08).  The MSB (0x80) of this value indicates
-    // if the DREX byte needs to be present in the instruction.
-#define NEED_DREX_MASK 0x80
-#define DREX_OC0_MASK 0x08
-    unsigned char drex_oc0;
 
     // The length of the basic opcode
     unsigned char opcode_len;
@@ -547,7 +539,6 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
             if (op.is_type(Insn::Operand::MEMORY))
                 break;
             /*@fallthrough@*/
-        case OPT_SIMDRegMatch0:
         case OPT_SIMDReg:
             if (!reg)
                 return false;
@@ -560,9 +551,6 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
                 default:
                     return false;
             }
-            if (info_op.type == OPT_SIMDRegMatch0 && bypass != 7 &&
-                reg != op0.get_reg())
-                return false;
             break;
         case OPT_SegReg:
             if (!op.is_type(Insn::Operand::SEGREG))
@@ -1050,12 +1038,10 @@ private:
     unsigned int m_def_opersize_64;
     unsigned char m_special_prefix;
     unsigned char m_spare;
-    unsigned char m_drex;
     unsigned char m_im_len;
     unsigned char m_im_sign;
     GeneralPostOp m_postop;
     unsigned char m_rex;
-    unsigned char* m_pdrex;
     unsigned char m_vexdata;
     unsigned char m_vexreg;
     unsigned char m_opersize;
@@ -1079,20 +1065,18 @@ BuildGeneral::BuildGeneral(const X86InsnInfo& info,
       m_def_opersize_64(info.def_opersize_64),
       m_special_prefix(info.special_prefix),
       m_spare(info.spare),
-      m_drex(info.drex_oc0 & DREX_OC0_MASK),
       m_im_len(0),
       m_im_sign(0),
       m_postop(POSTOP_NONE),
       m_rex(0),
-      m_pdrex((info.drex_oc0 & NEED_DREX_MASK) ? &m_drex : 0),
       m_vexdata(0),
       m_vexreg(0),
       m_opersize(info.opersize),
       m_addrsize(0)
 {
-    // Move VEX data (stored in special prefix) to separate location to
+    // Move VEX/XOP data (stored in special prefix) to separate location to
     // allow overriding of special prefix by modifiers.
-    if ((m_special_prefix & 0xF0) == 0xC0)
+    if ((m_special_prefix & 0xF0) == 0xC0 || (m_special_prefix & 0xF0) == 0x80)
     {
         m_vexdata = m_special_prefix;
         m_special_prefix = 0;
@@ -1205,7 +1189,7 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
                 case Insn::Operand::REG:
                     m_x86_ea.reset(new X86EffAddr(
                         static_cast<const X86Register*>(op.get_reg()),
-                        &m_rex, m_pdrex, m_mode_bits));
+                        &m_rex, m_mode_bits));
                     break;
                 case Insn::Operand::SEGREG:
                     assert(false && "invalid operand conversion");
@@ -1247,7 +1231,7 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             const X86Register* reg =
                 static_cast<const X86Register*>(op.get_reg());
             assert(reg != 0 && "invalid operand conversion");
-            m_x86_ea.reset(new X86EffAddr(reg, &m_rex, m_pdrex, m_mode_bits));
+            m_x86_ea.reset(new X86EffAddr(reg, &m_rex, m_mode_bits));
             m_vexreg = reg->get_num() & 0xF;
             break;
         }
@@ -1276,7 +1260,7 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             }
             else if (const Register* reg = op.get_reg())
             {
-                set_rex_from_reg(&m_rex, m_pdrex, &m_spare,
+                set_rex_from_reg(&m_rex, &m_spare,
                                  static_cast<const X86Register*>(reg),
                                  m_mode_bits, X86_REX_R);
             }
@@ -1288,8 +1272,7 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             const X86Register* reg =
                 static_cast<const X86Register*>(op.get_reg());
             assert(reg != 0 && "invalid operand conversion");
-            set_rex_from_reg(&m_rex, m_pdrex, &m_spare, reg, m_mode_bits,
-                             X86_REX_R);
+            set_rex_from_reg(&m_rex, &m_spare, reg, m_mode_bits, X86_REX_R);
             m_vexreg = reg->get_num() & 0xF;
             break;
         }
@@ -1298,7 +1281,7 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             const Register* reg = op.get_reg();
             assert(reg != 0 && "invalid operand conversion");
             unsigned char opadd;
-            set_rex_from_reg(&m_rex, m_pdrex, &opadd,
+            set_rex_from_reg(&m_rex, &opadd,
                              static_cast<const X86Register*>(reg),
                              m_mode_bits, X86_REX_B);
             m_opcode.add(0, opadd);
@@ -1309,7 +1292,7 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             const Register* reg = op.get_reg();
             assert(reg != 0 && "invalid operand conversion");
             unsigned char opadd;
-            set_rex_from_reg(&m_rex, m_pdrex, &opadd,
+            set_rex_from_reg(&m_rex, &opadd,
                              static_cast<const X86Register*>(reg),
                              m_mode_bits, X86_REX_B);
             m_opcode.add(1, opadd);
@@ -1320,10 +1303,8 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             const Register* reg = op.get_reg();
             assert(reg != 0 && "invalid operand conversion");
             const X86Register* x86_reg = static_cast<const X86Register*>(reg);
-            m_x86_ea.reset(new X86EffAddr(x86_reg, &m_rex, m_pdrex,
-                                          m_mode_bits));
-            set_rex_from_reg(&m_rex, m_pdrex, &m_spare, x86_reg, m_mode_bits,
-                             X86_REX_R);
+            m_x86_ea.reset(new X86EffAddr(x86_reg, &m_rex, m_mode_bits));
+            set_rex_from_reg(&m_rex, &m_spare, x86_reg, m_mode_bits, X86_REX_R);
             break;
         }
         case OPA_AdSizeEA:
@@ -1350,15 +1331,6 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
                 m_addrsize = 64;
             else
                 throw TypeError(N_("unsupported address size"));
-            break;
-        }
-        case OPA_DREX:
-        {
-            const Register* reg = op.get_reg();
-            assert(reg != 0 && "invalid operand conversion");
-            m_drex &= 0x0F;
-            m_drex |=
-                (static_cast<const X86Register*>(reg)->get_num() << 4) & 0xF0;
             break;
         }
         case OPA_VEX:
@@ -1440,8 +1412,7 @@ BuildGeneral::apply_segregs(const Insn::SegRegs& segregs)
     X86EffAddr* x86_ea = m_x86_ea.get();
     if (x86_ea)
     {
-        x86_ea->init(m_spare, m_drex,
-                     (m_info.drex_oc0 & NEED_DREX_MASK) != 0);
+        x86_ea->init(m_spare);
         std::for_each(segregs.begin(), segregs.end(),
                       BIND::bind(&X86EffAddr::set_segreg, x86_ea, _1));
     }
@@ -1477,35 +1448,51 @@ BuildGeneral::finish(BytecodeContainer& container,
     common.apply_prefixes(m_def_opersize_64, prefixes, &m_rex);
     common.finish();
 
-    // Convert to VEX prefixes if requested.
-    // To save space in the insn structure, the VEX prefix is written into
+    // Convert to VEX/XOP prefixes if requested.
+    // To save space in the insn structure, the VEX/XOP prefix is written into
     // special_prefix and the first 2 bytes of the instruction are set to
-    // the second two VEX bytes.  During calc_len() it may be shortened to
-    // one VEX byte (this can only be done after knowledge of REX value).
+    // the second two VEX/XOP bytes.  During calc_len() it may be shortened to
+    // one VEX byte (this can only be done after knowledge of REX value); this
+    // further optimization is not possible for XOP.
     if (m_vexdata)
     {
-        // Look at the first bytes of the opcode to see what leading bytes
-        // to encode in the VEX mmmmm field.  Leave R=X=B=1 for now.
-        assert(m_opcode.get(0) == 0x0F &&
-               "first opcode byte of VEX must be 0x0F");
-
+        bool xop = ((m_vexdata & 0xF0) == 0x80);
         unsigned char opcode[3];    // VEX opcode; 0=VEX1, 1=VEX2, 2=Opcode
         opcode[0] = 0xE0;           // R=X=B=1, mmmmm=0
-        if (m_opcode.get(1) == 0x38)
+
+        if (xop)
         {
-            opcode[2] = m_opcode.get(2);
-            opcode[0] |= 0x02;      // implied 0x0F 0x38
-        }
-        else if (m_opcode.get(1) == 0x3A)
-        {
-            opcode[2] = m_opcode.get(2);
-            opcode[0] |= 0x03;      // implied 0x0F 0x3A
+            // Look at the first byte of the opcode for the XOP mmmmm field.
+            // Leave R=X=B=1 for now.
+            assert((m_opcode.get(0) == 0x08 || m_opcode.get(0) == 0x09) &&
+                   "first opcode byte of XOP must be 0x08 or 0x09");
+            // Real opcode is in byte 1.
+            opcode[2] = m_opcode.get(1);
+            opcode[0] |= m_opcode.get(0);
         }
         else
         {
-            // A 0F-only opcode; thus opcode is in byte 1.
-            opcode[2] = m_opcode.get(1);
-            opcode[0] |= 0x01;      // implied 0x0F
+            // Look at the first bytes of the opcode to see what leading bytes
+            // to encode in the VEX mmmmm field.  Leave R=X=B=1 for now.
+            assert(m_opcode.get(0) == 0x0F &&
+                   "first opcode byte of VEX must be 0x0F");
+
+            if (m_opcode.get(1) == 0x38)
+            {
+                opcode[2] = m_opcode.get(2);
+                opcode[0] |= 0x02;      // implied 0x0F 0x38
+            }
+            else if (m_opcode.get(1) == 0x3A)
+            {
+                opcode[2] = m_opcode.get(2);
+                opcode[0] |= 0x03;      // implied 0x0F 0x3A
+            }
+            else
+            {
+                // A 0F-only opcode; thus opcode is in byte 1.
+                opcode[2] = m_opcode.get(1);
+                opcode[0] |= 0x01;      // implied 0x0F
+            }
         }
 
         // Check for update of special prefix by modifiers
@@ -1536,7 +1523,7 @@ BuildGeneral::finish(BytecodeContainer& container,
                      (m_vexdata & 0x7));                 // Lpp
 
         // Save to special_prefix and opcode
-        m_special_prefix = 0xC4;    // VEX prefix
+        m_special_prefix = xop ? 0x8F : 0xC4;   // VEX/XOP prefix
         m_opcode = X86Opcode(3, opcode); // two prefix bytes and 1 opcode byte
     }
 

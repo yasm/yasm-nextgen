@@ -50,7 +50,6 @@ namespace x86
 
 void
 set_rex_from_reg(unsigned char *rex,
-                 unsigned char *drex,
                  unsigned char *low3,
                  X86Register::Type reg_type,
                  unsigned int reg_num,
@@ -63,18 +62,11 @@ set_rex_from_reg(unsigned char *rex,
     {
         if (reg_type == X86Register::REG8X || reg_num >= 8)
         {
-            if (drex)
-            {
-                *drex |= ((reg_num & 8) >> 3) << rexbit;
-            }
-            else
-            {
-                // Check to make sure we can set it
-                if (*rex == 0xff)
-                    throw TypeError(
-                        N_("cannot use A/B/C/DH with instruction needing REX"));
-                *rex |= 0x40 | (((reg_num & 8) >> 3) << rexbit);
-            }
+            // Check to make sure we can set it
+            if (*rex == 0xff)
+                throw TypeError(
+                    N_("cannot use A/B/C/DH with instruction needing REX"));
+            *rex |= 0x40 | (((reg_num & 8) >> 3) << rexbit);
         }
         else if (reg_type == X86Register::REG8 && (reg_num & 7) >= 4)
         {
@@ -88,13 +80,10 @@ set_rex_from_reg(unsigned char *rex,
 }
 
 void
-X86EffAddr::init(unsigned int spare, unsigned char drex,
-                 bool need_drex)
+X86EffAddr::init(unsigned int spare)
 {
     m_modrm &= 0xC7;                  // zero spare/reg bits
     m_modrm |= (spare << 3) & 0x38;   // plug in provided bits
-    m_drex = drex;
-    m_need_drex = need_drex;
 }
 
 void
@@ -104,35 +93,30 @@ X86EffAddr::set_disponly()
     m_need_modrm = 0;
     m_valid_sib = 0;
     m_need_sib = 0;
-    m_need_drex = 0;
 }
 
 X86EffAddr::X86EffAddr()
     : EffAddr(std::auto_ptr<Expr>(0)),
       m_modrm(0),
       m_sib(0),
-      m_drex(0),
       m_need_sib(0),
       m_valid_modrm(false),
       m_need_modrm(false),
-      m_valid_sib(false),
-      m_need_drex(false)
+      m_valid_sib(false)
 {
 }
 
 X86EffAddr::X86EffAddr(const X86Register* reg, unsigned char* rex,
-                       unsigned char* drex, unsigned int bits)
+                       unsigned int bits)
     : EffAddr(std::auto_ptr<Expr>(0)),
       m_sib(0),
-      m_drex(0),
       m_need_sib(0),
       m_valid_modrm(true),
       m_need_modrm(true),
-      m_valid_sib(false),
-      m_need_drex(false)
+      m_valid_sib(false)
 {
     unsigned char rm;
-    set_rex_from_reg(rex, drex, &rm, reg, bits, X86_REX_B);
+    set_rex_from_reg(rex, &rm, reg, bits, X86_REX_B);
     m_modrm = 0xC0 | rm;    // Mod=11, R/M=Reg, Reg=0
 }
 
@@ -140,22 +124,20 @@ X86EffAddr::X86EffAddr(const X86EffAddr& rhs)
     : EffAddr(rhs),
       m_modrm(rhs.m_modrm),
       m_sib(rhs.m_sib),
-      m_drex(rhs.m_drex),
       m_need_sib(rhs.m_need_sib),
       m_valid_modrm(rhs.m_valid_modrm),
       m_need_modrm(rhs.m_need_modrm),
-      m_valid_sib(rhs.m_valid_sib),
-      m_need_drex(rhs.m_need_drex)
+      m_valid_sib(rhs.m_valid_sib)
 {
 }
 
 void
 X86EffAddr::set_reg(const X86Register* reg, unsigned char* rex,
-                    unsigned char* drex, unsigned int bits)
+                    unsigned int bits)
 {
     unsigned char rm;
 
-    set_rex_from_reg(rex, drex, &rm, reg, bits, X86_REX_B);
+    set_rex_from_reg(rex, &rm, reg, bits, X86_REX_B);
 
     m_modrm = 0xC0 | rm;    // Mod=11, R/M=Reg, Reg=0
     m_valid_modrm = true;
@@ -202,14 +184,12 @@ X86EffAddr::X86EffAddr(bool xform_rip_plus, std::auto_ptr<Expr> e)
     : EffAddr(fixup(xform_rip_plus, e)),
       m_modrm(0),
       m_sib(0),
-      m_drex(0),
       // We won't know whether we need an SIB until we know more about expr
       // and the BITS/address override setting.
       m_need_sib(0xff),
       m_valid_modrm(false),
       m_need_modrm(true),
-      m_valid_sib(false),
-      m_need_drex(false)
+      m_valid_sib(false)
 {
     m_need_disp = true;
 }
@@ -218,12 +198,10 @@ X86EffAddr::X86EffAddr(std::auto_ptr<Expr> imm, unsigned int im_len)
     : EffAddr(imm),
       m_modrm(0),
       m_sib(0),
-      m_drex(0),
       m_need_sib(0),
       m_valid_modrm(false),
       m_need_modrm(false),
-      m_valid_sib(false),
-      m_need_drex(false)
+      m_valid_sib(false)
 {
     m_disp.set_size(im_len);
     m_need_disp = true;
@@ -258,14 +236,6 @@ X86EffAddr::put(marg_ostream& os) const
 
     os << " ValidSIB=" << m_valid_sib;
     os << " NeedSIB=" << static_cast<unsigned int>(m_need_sib);
-
-    os << "DREX=";
-    origff = os.flags();
-    os << std::hex << std::setfill('0') << std::setw(2)
-       << static_cast<unsigned int>(m_drex);
-    os.flags(origff);
-
-    os << " NeedDREX=" << m_need_drex;
     os << '\n';
 }
 
@@ -803,7 +773,6 @@ X86EffAddr::check_3264(unsigned int addrsize,
                        bool* ip_rel)
 {
     int i;
-    unsigned char* drex = m_need_drex ? &m_drex : 0;
     unsigned char low3;
     enum Reg3264Type
     {
@@ -988,7 +957,7 @@ X86EffAddr::check_3264(unsigned int addrsize,
         // Don't need to go to the full effort of determining what type
         // of register basereg is, as set_rex_from_reg doesn't pay
         // much attention.
-        set_rex_from_reg(rex, drex, &low3, X86Register::REG64, basereg, bits,
+        set_rex_from_reg(rex, &low3, X86Register::REG64, basereg, bits,
                          X86_REX_B);
         m_modrm |= low3;
         // we don't need an SIB *unless* basereg is ESP or R12
@@ -1018,8 +987,8 @@ X86EffAddr::check_3264(unsigned int addrsize,
             m_sib |= 5;
         else
         {
-            set_rex_from_reg(rex, drex, &low3, X86Register::REG64, basereg,
-                             bits, X86_REX_B);
+            set_rex_from_reg(rex, &low3, X86Register::REG64, basereg, bits,
+                             X86_REX_B);
             m_sib |= low3;
         }
 
@@ -1029,8 +998,8 @@ X86EffAddr::check_3264(unsigned int addrsize,
             // Any scale field is valid, just leave at 0.
         else
         {
-            set_rex_from_reg(rex, drex, &low3, X86Register::REG64, indexreg,
-                             bits, X86_REX_X);
+            set_rex_from_reg(rex, &low3, X86Register::REG64, indexreg, bits,
+                             X86_REX_X);
             m_sib |= low3 << 3;
             // Set scale field, 1 case -> 0, so don't bother.
             switch (reg3264mult[indexreg])
