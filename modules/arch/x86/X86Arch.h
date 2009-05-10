@@ -89,7 +89,8 @@ enum CPUFeature
     CPU_AVX,            // Intel Advanced Vector Extensions
     CPU_FMA,            // Intel Fused-Multiply-Add Extensions
     CPU_AES,            // AES instruction
-    CPU_CLMUL           // PCLMULQDQ instruction
+    CPU_CLMUL,          // PCLMULQDQ instruction
+    CPU_MOVBE           // MOVBE instruction
 };
 
 class X86Arch : public Arch
