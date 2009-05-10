@@ -60,7 +60,7 @@ namespace x86
 #define PROC_sandybridge 15
 
 static void
-x86_cpu_intel(X86Arch::CpuMask& cpu, unsigned int data)
+x86_cpu_intel(X86Arch::CpuMask& cpu, X86Arch::NopFormat& nop, unsigned int data)
 {
     cpu.reset();
 
@@ -118,7 +118,7 @@ x86_cpu_intel(X86Arch::CpuMask& cpu, unsigned int data)
 }
 
 static void
-x86_cpu_ia64(X86Arch::CpuMask& cpu, unsigned int data)
+x86_cpu_ia64(X86Arch::CpuMask& cpu, X86Arch::NopFormat& nop, unsigned int data)
 {
     cpu.reset();
     cpu.set(CPU_Priv);
@@ -148,7 +148,7 @@ x86_cpu_ia64(X86Arch::CpuMask& cpu, unsigned int data)
 #define PROC_k6     6
 
 static void
-x86_cpu_amd(X86Arch::CpuMask& cpu, unsigned int data)
+x86_cpu_amd(X86Arch::CpuMask& cpu, X86Arch::NopFormat& nop, unsigned int data)
 {
     cpu.reset();
 
@@ -190,29 +190,39 @@ x86_cpu_amd(X86Arch::CpuMask& cpu, unsigned int data)
 }
 
 static void
-x86_cpu_set(X86Arch::CpuMask& cpu, unsigned int data)
+x86_cpu_set(X86Arch::CpuMask& cpu, X86Arch::NopFormat& nop, unsigned int data)
 {
     cpu.set(data);
 }
 
 static void
-x86_cpu_clear(X86Arch::CpuMask& cpu, unsigned int data)
+x86_cpu_clear(X86Arch::CpuMask& cpu, X86Arch::NopFormat& nop, unsigned int data)
 {
     cpu.reset(data);
 }
 
 static void
-x86_cpu_set_sse4(X86Arch::CpuMask& cpu, unsigned int data)
+x86_cpu_set_sse4(X86Arch::CpuMask& cpu,
+                 X86Arch::NopFormat& nop,
+                 unsigned int data)
 {
     cpu.set(CPU_SSE41);
     cpu.set(CPU_SSE42);
 }
 
 static void
-x86_cpu_clear_sse4(X86Arch::CpuMask& cpu, unsigned int data)
+x86_cpu_clear_sse4(X86Arch::CpuMask& cpu,
+                   X86Arch::NopFormat& nop,
+                   unsigned int data)
 {
     cpu.reset(CPU_SSE41);
     cpu.reset(CPU_SSE42);
+}
+
+static void
+x86_nop(X86Arch::CpuMask& cpu, X86Arch::NopFormat& nop, unsigned int data)
+{
+    nop = static_cast<X86Arch::NopFormat>(data);
 }
 
 %}
@@ -225,7 +235,9 @@ x86_cpu_clear_sse4(X86Arch::CpuMask& cpu, unsigned int data)
 %define class-name CpuHash
 struct CpuParseData {
     const char *name;
-    void (*handler) (X86Arch::CpuMask& cpu, unsigned int data);
+    void (*handler) (X86Arch::CpuMask& cpu,
+                     X86Arch::NopFormat& nop,
+                     unsigned int data);
     unsigned int data;
 };
 %%
@@ -372,6 +384,10 @@ fma4,		x86_cpu_set,	CPU_FMA4
 nofma4,		x86_cpu_clear,	CPU_FMA4
 cvt16,		x86_cpu_set,	CPU_CVT16
 nocvt16,	x86_cpu_clear,	CPU_CVT16
+# Change NOP patterns
+basicnop,	x86_nop,	X86Arch::NOP_BASIC
+intelnop,	x86_nop,	X86Arch::NOP_INTEL
+amdnop,		x86_nop,	X86Arch::NOP_AMD
 %%
 
 void
@@ -396,7 +412,7 @@ X86Arch::parse_cpu(const std::string& cpuid)
         return;
     }
 
-    pdata->handler(m_active_cpu, pdata->data);
+    pdata->handler(m_active_cpu, m_nop, pdata->data);
 }
 
 }}} // namespace yasm::arch::x86

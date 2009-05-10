@@ -105,6 +105,12 @@ public:
         PARSER_GAS = 1,
         PARSER_UNKNOWN
     };
+    enum NopFormat
+    {
+        NOP_BASIC,
+        NOP_INTEL,
+        NOP_AMD
+    };
 
     /// Constructor.
     X86Arch();
@@ -177,6 +183,7 @@ private:
     unsigned int m_mode_bits;
     bool m_force_strict;
     bool m_default_rel;
+    NopFormat m_nop;
 
     // Registers
     X86Register** m_reg[X86Register::TYPE_COUNT];
