@@ -157,7 +157,11 @@ x86_cpu_amd(X86Arch::CpuMask& cpu, unsigned int data)
     cpu.set(CPU_SMM);
     cpu.set(CPU_3DNow);
     if (data >= PROC_bulldozer)
-        cpu.set(CPU_SSE5);
+    {
+        cpu.set(CPU_XOP);
+        cpu.set(CPU_FMA4);
+        cpu.set(CPU_CVT16);
+    }
     if (data >= PROC_k10)
         cpu.set(CPU_SSE4a);
     if (data >= PROC_venice)
@@ -345,8 +349,6 @@ sse4a,		x86_cpu_set,	CPU_SSE4a
 nosse4a,	x86_cpu_clear,	CPU_SSE4a
 sse4,		x86_cpu_set_sse4,	0
 nosse4,		x86_cpu_clear_sse4,	0
-sse5,		x86_cpu_set,	CPU_SSE5
-nosse5,		x86_cpu_clear,	CPU_SSE5
 xsave,		x86_cpu_set,	CPU_XSAVE
 noxsave,	x86_cpu_clear,	CPU_XSAVE
 avx,		x86_cpu_set,	CPU_AVX
@@ -361,6 +363,12 @@ pclmulqdq,	x86_cpu_set,	CPU_CLMUL
 nopclmulqdq,	x86_cpu_clear,	CPU_CLMUL
 movbe,		x86_cpu_set,	CPU_MOVBE
 nomovbe,	x86_cpu_clear,	CPU_MOVBE
+xop,		x86_cpu_set,	CPU_XOP
+noxop,		x86_cpu_clear,	CPU_XOP
+fma4,		x86_cpu_set,	CPU_FMA4
+nofma4,		x86_cpu_clear,	CPU_FMA4
+cvt16,		x86_cpu_set,	CPU_CVT16
+nocvt16,	x86_cpu_clear,	CPU_CVT16
 %%
 
 void

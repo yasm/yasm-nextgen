@@ -64,94 +64,35 @@ public:
     {
     }
 
-    void testSetRexFromRegDrex()
-    {
-        unsigned char rex;
-        unsigned char drex;
-        unsigned char low3;
-
-        // Test bits != 64; should only set low 3 bits
-        rex = drex = low3 = 0;
-        set_rex_from_reg(&rex, &drex, &low3, X86Register::REG32, 7, 32, X86_REX_W);
-        TS_ASSERT_EQUALS(low3, 7);
-        TS_ASSERT_EQUALS(rex, 0);
-        TS_ASSERT_EQUALS(drex, 0);
-
-        rex = drex = low3 = 0;
-        set_rex_from_reg(&rex, &drex, &low3, X86Register::REG32, 13, 32, X86_REX_W);
-        TS_ASSERT_EQUALS(low3, 5);
-        TS_ASSERT_EQUALS(rex, 0);
-        TS_ASSERT_EQUALS(drex, 0);
-
-        // Test reg < 8 in 64-bit mode, should not set REX or DREX for non-REG8X.
-        rex = drex = low3 = 0;
-        set_rex_from_reg(&rex, &drex, &low3, X86Register::REG32, 4, 64, X86_REX_B);
-        TS_ASSERT_EQUALS(low3, 4);
-        TS_ASSERT_EQUALS(rex, 0);
-        TS_ASSERT_EQUALS(drex, 0);
-
-        // reg >= 8 in 64-bit mode should set drex if provided.
-        rex = drex = low3 = 0;
-        set_rex_from_reg(&rex, &drex, &low3, X86Register::REG32, 13, 64, X86_REX_B);
-        TS_ASSERT_EQUALS(low3, 5);
-        TS_ASSERT_EQUALS(rex, 0);
-        TS_ASSERT_EQUALS(drex, 0x01);
-
-        rex = drex = low3 = 0;
-        set_rex_from_reg(&rex, &drex, &low3, X86Register::REG32, 13, 64, X86_REX_X);
-        TS_ASSERT_EQUALS(low3, 5);
-        TS_ASSERT_EQUALS(rex, 0);
-        TS_ASSERT_EQUALS(drex, 0x02);
-
-        rex = drex = low3 = 0;
-        set_rex_from_reg(&rex, &drex, &low3, X86Register::REG32, 13, 64, X86_REX_R);
-        TS_ASSERT_EQUALS(low3, 5);
-        TS_ASSERT_EQUALS(rex, 0);
-        TS_ASSERT_EQUALS(drex, 0x04);
-
-        rex = drex = low3 = 0;
-        set_rex_from_reg(&rex, &drex, &low3, X86Register::REG32, 13, 64, X86_REX_W);
-        TS_ASSERT_EQUALS(low3, 5);
-        TS_ASSERT_EQUALS(rex, 0);
-        TS_ASSERT_EQUALS(drex, 0x08);
-
-        // DREX should OR into existing value
-        rex = low3 = 0; drex = 0x30;
-        set_rex_from_reg(&rex, &drex, &low3, X86Register::REG32, 13, 64, X86_REX_R);
-        TS_ASSERT_EQUALS(low3, 5);
-        TS_ASSERT_EQUALS(rex, 0);
-        TS_ASSERT_EQUALS(drex, 0x34);
-    }
-
-    void testSetRexFromRegNoDrex()
+    void testSetRexFromReg()
     {
         unsigned char rex;
         unsigned char low3;
 
         // reg >= 8 should set rex.
         rex = low3 = 0;
-        set_rex_from_reg(&rex, 0, &low3, X86Register::REG32, 13, 64, X86_REX_B);
+        set_rex_from_reg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_B);
         TS_ASSERT_EQUALS(low3, 5);
         TS_ASSERT_EQUALS(rex, 0x41);
 
         rex = low3 = 0;
-        set_rex_from_reg(&rex, 0, &low3, X86Register::REG32, 13, 64, X86_REX_X);
+        set_rex_from_reg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_X);
         TS_ASSERT_EQUALS(low3, 5);
         TS_ASSERT_EQUALS(rex, 0x42);
 
         rex = low3 = 0;
-        set_rex_from_reg(&rex, 0, &low3, X86Register::REG32, 13, 64, X86_REX_R);
+        set_rex_from_reg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_R);
         TS_ASSERT_EQUALS(low3, 5);
         TS_ASSERT_EQUALS(rex, 0x44);
 
         rex = low3 = 0;
-        set_rex_from_reg(&rex, 0, &low3, X86Register::REG32, 13, 64, X86_REX_W);
+        set_rex_from_reg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_W);
         TS_ASSERT_EQUALS(low3, 5);
         TS_ASSERT_EQUALS(rex, 0x48);
 
         // REX should OR into existing value
         low3 = 0; rex = 0x44;
-        set_rex_from_reg(&rex, 0, &low3, X86Register::REG32, 13, 64, X86_REX_W);
+        set_rex_from_reg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_W);
         TS_ASSERT_EQUALS(low3, 5);
         TS_ASSERT_EQUALS(rex, 0x4C);
     }
@@ -159,74 +100,36 @@ public:
     void testSetRexFromRegNoRex()
     {
         unsigned char rex;
-        unsigned char drex;
         unsigned char low3;
 
-        // Check for errors with reg_num >= 8 and neither REX or DREX available
+        // Check for errors with reg_num >= 8 and REX not available
         low3 = 0; rex = 0xff;
-        TS_ASSERT_THROWS(set_rex_from_reg(&rex, 0, &low3, X86Register::REG32,
+        TS_ASSERT_THROWS(set_rex_from_reg(&rex, &low3, X86Register::REG32,
                                           13, 64, X86_REX_W),
                          TypeError);
-
-        // If DREX available but REX isn't, reg_num >= 8 should not error
-        drex = low3 = 0; rex = 0xff;
-        set_rex_from_reg(&rex, &drex, &low3, X86Register::REG32, 13, 64, X86_REX_W);
-        TS_ASSERT_EQUALS(low3, 5);
-        TS_ASSERT_EQUALS(rex, 0xff);
-        TS_ASSERT_EQUALS(drex, 0x08);
     }
 
     void testSetRexFromReg8X()
     {
         unsigned char rex;
-        unsigned char drex;
         unsigned char low3;
 
-        // REG8X should always result in a REX value, regardless of reg_num
-
-        // REG8X should set drex if provided.
-        // (note: cannot tell due to no other bits being set in DREX for <8).
-        rex = low3 = 0; drex = 0x10;
-        set_rex_from_reg(&rex, &drex, &low3, X86Register::REG8X, 3, 64, X86_REX_B);
-        TS_ASSERT_EQUALS(low3, 3);
-        TS_ASSERT_EQUALS(rex, 0);
-        TS_ASSERT_EQUALS(drex, 0x10);
-
-        rex = low3 = 0; drex = 0x10;
-        set_rex_from_reg(&rex, &drex, &low3, X86Register::REG8X, 13, 64, X86_REX_B);
-        TS_ASSERT_EQUALS(low3, 5);
-        TS_ASSERT_EQUALS(rex, 0);
-        TS_ASSERT_EQUALS(drex, 0x11);
-
-        // if drex not provided, REG8X should set rex.
+        // REG8X should set rex.
         rex = low3 = 0;
-        set_rex_from_reg(&rex, 0, &low3, X86Register::REG8X, 3, 64, X86_REX_B);
+        set_rex_from_reg(&rex, &low3, X86Register::REG8X, 3, 64, X86_REX_B);
         TS_ASSERT_EQUALS(low3, 3);
         TS_ASSERT_EQUALS(rex, 0x40);
 
         rex = low3 = 0;
-        set_rex_from_reg(&rex, 0, &low3, X86Register::REG8X, 13, 64, X86_REX_B);
+        set_rex_from_reg(&rex, &low3, X86Register::REG8X, 13, 64, X86_REX_B);
         TS_ASSERT_EQUALS(low3, 5);
         TS_ASSERT_EQUALS(rex, 0x41);
 
-        // Check for errors with REG8X and neither REX or DREX available
+        // Check for errors with REG8X and REX not available
         low3 = 0; rex = 0xff;
-        TS_ASSERT_THROWS(set_rex_from_reg(&rex, 0, &low3, X86Register::REG8X, 3,
+        TS_ASSERT_THROWS(set_rex_from_reg(&rex, &low3, X86Register::REG8X, 3,
                                           64, X86_REX_W),
                          yasm::TypeError);
-
-        // If DREX available but REX isn't, REG8X should not error
-        low3 = 0; drex = 0x10; rex = 0xff;
-        set_rex_from_reg(&rex, &drex, &low3, X86Register::REG8X, 3, 64, X86_REX_W);
-        TS_ASSERT_EQUALS(low3, 3);
-        TS_ASSERT_EQUALS(rex, 0xff);
-        TS_ASSERT_EQUALS(drex, 0x10);
-
-        drex = low3 = 0; rex = 0xff;
-        set_rex_from_reg(&rex, &drex, &low3, X86Register::REG8X, 13, 64, X86_REX_W);
-        TS_ASSERT_EQUALS(low3, 5);
-        TS_ASSERT_EQUALS(rex, 0xff);
-        TS_ASSERT_EQUALS(drex, 0x08);
     }
 
     void testSetRexFromReg8High()
@@ -236,25 +139,25 @@ public:
 
         // Use of AH/BH/CH/DH should result in disallowed REX
         rex = low3 = 0;
-        set_rex_from_reg(&rex, 0, &low3, X86Register::REG8, 4, 64, X86_REX_B);
+        set_rex_from_reg(&rex, &low3, X86Register::REG8, 4, 64, X86_REX_B);
         TS_ASSERT_EQUALS(low3, 4);
         TS_ASSERT_EQUALS(rex, 0xff);
 
         // If REX set, use of AH/BH/CH/DH should error
         low3 = 0; rex = 0x40;
-        TS_ASSERT_THROWS(set_rex_from_reg(&rex, 0, &low3, X86Register::REG8, 4,
+        TS_ASSERT_THROWS(set_rex_from_reg(&rex, &low3, X86Register::REG8, 4,
                                           64, X86_REX_W),
                          yasm::TypeError);
 
         // If REX is disallowed, use of AH/BH/CH/DH is still okay
         low3 = 0; rex = 0xff;
-        set_rex_from_reg(&rex, 0, &low3, X86Register::REG8, 4, 64, X86_REX_B);
+        set_rex_from_reg(&rex, &low3, X86Register::REG8, 4, 64, X86_REX_B);
         TS_ASSERT_EQUALS(low3, 4);
         TS_ASSERT_EQUALS(rex, 0xff);
 
         // Use of AL/BL/CL/DL should NOT error and should still allow REX.
         low3 = 0; rex = 0x40;
-        set_rex_from_reg(&rex, 0, &low3, X86Register::REG8, 3, 64, X86_REX_W);
+        set_rex_from_reg(&rex, &low3, X86Register::REG8, 3, 64, X86_REX_W);
         TS_ASSERT_EQUALS(low3, 3);
         TS_ASSERT_EQUALS(rex, 0x40);
     }
@@ -264,35 +167,29 @@ public:
         X86EffAddr ea;
         TS_ASSERT_EQUALS(ea.m_modrm, 0);
         TS_ASSERT_EQUALS(ea.m_sib, 0);
-        TS_ASSERT_EQUALS(ea.m_drex, 0);
         TS_ASSERT_EQUALS(ea.m_need_sib, 0);
         TS_ASSERT_EQUALS(ea.m_valid_modrm, false);
         TS_ASSERT_EQUALS(ea.m_need_modrm, false);
         TS_ASSERT_EQUALS(ea.m_valid_sib, false);
-        TS_ASSERT_EQUALS(ea.m_need_drex, false);
         TS_ASSERT_EQUALS(ea.m_disp.has_abs(), false);
     }
 
     void testInitReg()
     {
         unsigned char rex;
-        unsigned char drex;
 
         {
             X86Register reg32_5(X86Register::REG32, 5);
-            rex = drex = 0;
-            X86EffAddr ea(&reg32_5, &rex, &drex, 32);
+            rex = 0;
+            X86EffAddr ea(&reg32_5, &rex, 32);
             TS_ASSERT_EQUALS(ea.m_modrm, 0xC5);
             TS_ASSERT_EQUALS(ea.m_sib, 0);
-            TS_ASSERT_EQUALS(ea.m_drex, 0);
             TS_ASSERT_EQUALS(ea.m_need_sib, 0);
             TS_ASSERT_EQUALS(ea.m_valid_modrm, true);
             TS_ASSERT_EQUALS(ea.m_need_modrm, true);
             TS_ASSERT_EQUALS(ea.m_valid_sib, false);
-            TS_ASSERT_EQUALS(ea.m_need_drex, false);
             TS_ASSERT_EQUALS(ea.m_disp.has_abs(), false);
             TS_ASSERT_EQUALS(rex, 0);
-            TS_ASSERT_EQUALS(drex, 0);
         }
     }
 
@@ -369,7 +266,6 @@ public:
                     TS_ASSERT_EQUALS(ea.m_modrm, expect_modrm);
                     TS_ASSERT_EQUALS(ea.m_need_sib, 0);
                     TS_ASSERT_EQUALS(ea.m_valid_sib, false);
-                    TS_ASSERT_EQUALS(ea.m_need_drex, false);
                     TS_ASSERT_EQUALS(addrsize, 16);
                     TS_ASSERT_EQUALS(rex, 0);
                 }
@@ -518,7 +414,6 @@ public:
                     TS_ASSERT_EQUALS(ea.m_valid_sib, need_sib);
                     if (need_sib)
                         TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
-                    TS_ASSERT_EQUALS(ea.m_need_drex, false);
                     TS_ASSERT_EQUALS(addrsize, 32);
                     TS_ASSERT_EQUALS(rex, 0);
                 }

@@ -50,7 +50,6 @@ enum X86RexBitPos
 // indicates bit of REX to use if REX is needed.  Will not modify REX if not
 // in 64-bit mode or if it wasn't needed to express reg.
 void set_rex_from_reg(unsigned char *rex,
-                      unsigned char *drex,
                       unsigned char *low3,
                       X86Register::Type reg_type,
                       unsigned int reg_num,
@@ -59,14 +58,12 @@ void set_rex_from_reg(unsigned char *rex,
 
 inline void
 set_rex_from_reg(unsigned char *rex,
-                 unsigned char *drex,
                  unsigned char *low3,
                  const X86Register* reg,
                  unsigned int bits,
                  X86RexBitPos rexbit)
 {
-    set_rex_from_reg(rex, drex, low3, reg->type(), reg->get_num(), bits,
-                     rexbit);
+    set_rex_from_reg(rex, low3, reg->type(), reg->get_num(), bits, rexbit);
 }
 
 // Effective address type
@@ -78,7 +75,6 @@ public:
     // They're set in bytecode_create_insn().
     unsigned char m_modrm;
     unsigned char m_sib;
-    unsigned char m_drex;         // DREX SSE5 extension byte
 
     // 1 if SIB byte needed, 0 if not, 0xff if unknown
     unsigned char m_need_sib;
@@ -86,16 +82,12 @@ public:
     bool m_valid_modrm:1;   // 1 if Mod/RM byte currently valid, 0 if not
     bool m_need_modrm:1;    // 1 if Mod/RM byte needed, 0 if not
     bool m_valid_sib:1;     // 1 if SIB byte currently valid, 0 if not
-    bool m_need_drex:1;     // 1 if DREX byte needed, 0 if not
 
     /// Basic constructor.
     X86EffAddr();
 
     /// Register constructor.
-    X86EffAddr(const X86Register* reg,
-               unsigned char* rex,
-               unsigned char* drex,
-               unsigned int bits);
+    X86EffAddr(const X86Register* reg, unsigned char* rex, unsigned int bits);
 
     /// Immediate constructor.
     X86EffAddr(std::auto_ptr<Expr> imm, unsigned int im_len);
@@ -107,14 +99,13 @@ public:
     X86EffAddr(bool xform_rip_plus, std::auto_ptr<Expr> e);
 
     /// Register setter.
-    void set_reg(const X86Register* reg, unsigned char* rex,
-                 unsigned char* drex, unsigned int bits);
+    void set_reg(const X86Register* reg, unsigned char* rex, unsigned int bits);
 
     /// Immediate setter.
     void set_imm(std::auto_ptr<Expr> imm, unsigned int im_len);
 
-    /// Finalize the EA displacement and init the spare and drex fields.
-    void init(unsigned int spare, unsigned char drex, bool need_drex);
+    /// Finalize the EA displacement and init the spare field.
+    void init(unsigned int spare);
 
     /// Make the EA only a displacement.
     void set_disponly();

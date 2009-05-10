@@ -239,7 +239,7 @@ X86General::finalize(Bytecode& bc)
                 X86Arch* arch = static_cast<X86Arch*>(
                     bc.get_container()->get_object()->get_arch());
                 m_ea.reset(new X86EffAddr(arch->get_reg64(m_opcode.get(0)-0xB8),
-                                          &rex_temp, 0, 64));
+                                          &rex_temp, 64));
 
                 // Make the imm32s form permanent.
                 m_opcode.make_alt_1();
@@ -322,7 +322,6 @@ X86General::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 
         // Compute length of ea and add to total
         len += m_ea->m_need_modrm + (m_ea->m_need_sib ? 1:0);
-        len += m_ea->m_need_drex ? 1:0;
         len += (m_ea->m_segreg != 0) ? 1 : 0;
     }
 
@@ -366,13 +365,14 @@ X86General::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
         len += immlen/8;
     }
 
-    // VEX prefixes never have REX.  We can come into this function with the
-    // three byte form, so we need to see if we can optimize to the two byte
-    // form.  We can't do it earlier, as we don't know all of the REX byte
-    // until now.
+    // VEX and XOP prefixes never have REX (it's embedded in the opcode).
+    // For VEX, we can come into this function with the three byte form,
+    // so we need to see if we can optimize to the two byte form.
+    // We can't do it earlier, as we don't know all of the REX byte until now.
     vex_optimize(m_opcode, m_special_prefix, m_rex);
     if (m_rex != 0xff && m_rex != 0 &&
-        m_special_prefix != 0xC5 && m_special_prefix != 0xC4)
+        m_special_prefix != 0xC5 && m_special_prefix != 0xC4 &&
+        m_special_prefix != 0x8F)
         len++;
 
     len += m_opcode.get_len();
@@ -432,9 +432,9 @@ general_tobytes(Bytes& bytes,
         ea != 0 ? static_cast<const X86SegmentRegister*>(ea->m_segreg) : 0);
     if (special_prefix != 0)
         write_8(bytes, special_prefix);
-    if (special_prefix == 0xC4)
+    if (special_prefix == 0xC4 || special_prefix == 0x8F)
     {
-        // 3-byte VEX; merge in 1s complement of REX.R, REX.X, REX.B
+        // 3-byte VEX/XOP; merge in 1s complement of REX.R, REX.X, REX.B
         opcode.mask(0, 0x1F);
         if (rex != 0xff)
             opcode.merge(0, ((~rex) & 0x07) << 5);
@@ -486,9 +486,6 @@ X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
             assert(m_ea->m_valid_sib && "invalid SIB in x86 tobytes_insn");
             write_8(bytes, m_ea->m_sib);
         }
-
-        if (m_ea->m_need_drex)
-            write_8(bytes, m_ea->m_drex);
     }
 
     bc_out.output(bytes);
