@@ -289,6 +289,7 @@ prescott,	x86_cpu_intel,	PROC_prescott
 conroe,		x86_cpu_intel,	PROC_conroe
 penryn,		x86_cpu_intel,	PROC_penryn
 nehalem,	x86_cpu_intel,	PROC_nehalem
+corei7,		x86_cpu_intel,	PROC_nehalem
 westmere,	x86_cpu_intel,	PROC_westmere
 sandybridge,	x86_cpu_intel,	PROC_sandybridge
 #
