@@ -238,8 +238,8 @@ X86Arch::dir_cpu(Object& object, const NameValues& namevals,
             parse_cpu(nv->get_string());
         else if (nv->is_expr())
         {
-            std::auto_ptr<Expr> e = nv->get_expr(object, line);
-            IntNum* intcpu = e->get_intnum();
+            Expr e = nv->get_expr(object, line);
+            IntNum* intcpu = e.get_intnum();
             if (!intcpu)
                 throw SyntaxError(String::compose(
                     N_("invalid argument to [%1]"), "CPU"));
@@ -263,8 +263,8 @@ X86Arch::dir_bits(Object& object, const NameValues& namevals,
     NameValues::const_iterator nv = namevals.begin();
     if (nv != namevals.end() && nv->is_expr())
     {
-        std::auto_ptr<Expr> e = nv->get_expr(object, line);
-        IntNum* intcpu = e->get_intnum();
+        Expr e = nv->get_expr(object, line);
+        IntNum* intcpu = e.get_intnum();
         if (intcpu)
         {
             unsigned long v = intcpu->get_uint();

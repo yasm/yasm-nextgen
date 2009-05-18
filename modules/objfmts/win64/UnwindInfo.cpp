@@ -215,8 +215,7 @@ generate(std::auto_ptr<UnwindInfo> uwinfo,
     UnwindInfo* info = uwinfo.get();
 
     // 4-byte align the start of unwind info
-    append_align(xdata, Expr::Ptr(new Expr(IntNum(4))), Expr::Ptr(0),
-                 Expr::Ptr(0), 0, line);
+    append_align(xdata, Expr(4), Expr(), Expr(), 0, line);
 
     // Prolog size = end of prolog - start of procedure
     info->m_prolog_size.add_abs(SUB(info->m_prolog, info->m_proc));
@@ -246,8 +245,7 @@ generate(std::auto_ptr<UnwindInfo> uwinfo,
     }
 
     // 4-byte align
-    append_align(xdata, Expr::Ptr(new Expr(IntNum(4))), Expr::Ptr(0),
-                 Expr::Ptr(0), 0, line);
+    append_align(xdata, Expr(4), Expr(), Expr(), 0, line);
 
     // Exception handler, if present.
     if (info->m_ehandler)

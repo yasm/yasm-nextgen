@@ -593,7 +593,7 @@ XdfObject::read(std::istream& is)
             sym->declare(Symbol::EXTERN, 0);
 
         if ((flags & XdfSymbol::XDF_EQU) != 0)
-            sym->define_equ(std::auto_ptr<Expr>(new Expr(value)), 0);
+            sym->define_equ(Expr(value), 0);
         else if (sym_scnum < scnum)
         {
             Section& sect = m_object->get_section(sym_scnum);

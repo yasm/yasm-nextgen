@@ -78,10 +78,10 @@ Symbol::define(Type type, unsigned long line)
 }
 
 void
-Symbol::define_equ(std::auto_ptr<Expr> e, unsigned long line)
+Symbol::define_equ(const Expr& e, unsigned long line)
 {
     define(EQU, line);
-    m_equ.reset(e.release());
+    m_equ.reset(new Expr(e));
     m_status |= VALUED;
 }
 

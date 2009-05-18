@@ -262,7 +262,7 @@ Win64Object::dir_pushreg(Object& object,
     NameValue& nv = namevals.front();
     const Register* reg;
     if (!nv.is_expr() ||
-        !(reg = nv.get_expr(object, line)->get_reg()))
+        !(reg = nv.get_expr(object, line).get_reg()))
     {
         throw SyntaxError(String::compose(
             N_("[%1] requires a register as the first parameter"), "PUSHREG"));
@@ -288,7 +288,7 @@ Win64Object::dir_setframe(Object& object,
     NameValue& nv = namevals.front();
     const Register* reg;
     if (!nv.is_expr() ||
-        !(reg = nv.get_expr(object, line)->get_reg()))
+        !(reg = nv.get_expr(object, line).get_reg()))
     {
         throw SyntaxError(String::compose(
             N_("[%1] requires a register as the first parameter"), "SETFRAME"));
@@ -354,7 +354,7 @@ Win64Object::save_common(Object& object,
     NameValue& nv = namevals.front();
     const Register* reg;
     if (!nv.is_expr() ||
-        !(reg = nv.get_expr(object, line)->get_reg()))
+        !(reg = nv.get_expr(object, line).get_reg()))
     {
         throw SyntaxError(String::compose(
             N_("[%1] requires a register as the first parameter"), dirname));

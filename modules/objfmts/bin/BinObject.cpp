@@ -553,7 +553,7 @@ BinObject::dir_org(Object& object,
     const NameValue& nv = namevals.front();
     if (!nv.is_expr())
         throw SyntaxError(N_("argument to ORG must be expression"));
-    m_org.reset(nv.get_expr(object, line).release());
+    m_org.reset(new Expr(nv.get_expr(object, line)));
     m_org_line = line;
 }
 

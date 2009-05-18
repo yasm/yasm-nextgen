@@ -135,7 +135,7 @@ public:
     /// @param e        EQU value (expression)
     /// @param line     virtual line of EQU
     /// @return Symbol (this).
-    void define_equ(std::auto_ptr<Expr> e, unsigned long line);
+    void define_equ(const Expr& e, unsigned long line);
 
     /// Define as a label.
     /// @param loc      location of label

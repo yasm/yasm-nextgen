@@ -38,11 +38,11 @@ public:
     {
         yasm::BytecodeContainer container;
         yasm::append_align(container,
-                           yasm::Expr::Ptr(new yasm::Expr(yasm::IntNum(4))),
-                           yasm::Expr::Ptr(0),                  // fill
-                           yasm::Expr::Ptr(0),                  // maxskip
-                           0,                                   // code fill
-                           5);                                  // line
+                           yasm::Expr(4),
+                           yasm::Expr(),    // fill
+                           yasm::Expr(),    // maxskip
+                           0,               // code fill
+                           5);              // line
         yasm::Bytecode& align = container.bcs_first();
 
         // align always results in contents

@@ -136,9 +136,9 @@ void append_incbin(BytecodeContainer& container,
 ///       - 0
 YASM_LIB_EXPORT
 void append_align(BytecodeContainer& container,
-                  std::auto_ptr<Expr> boundary,
-                  /*@null@*/ std::auto_ptr<Expr> fill,
-                  /*@null@*/ std::auto_ptr<Expr> maxskip,
+                  const Expr& boundary,
+                  const Expr& fill,
+                  const Expr& maxskip,
                   /*@null@*/ const unsigned char** code_fill,
                   unsigned long line);
 

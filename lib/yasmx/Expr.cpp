@@ -221,6 +221,12 @@ Expr::swap(Expr& oth)
 }
 
 void
+Expr::clear()
+{
+    m_terms.clear();
+}
+
+void
 Expr::cleanup()
 {
     ExprTerms::iterator erasefrom =

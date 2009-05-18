@@ -246,13 +246,13 @@ private:
     yystype m_peek_tokval;
     char m_peek_tokch;
 
-    // Starting point of the absolute section.  NULL if not in an absolute
+    // Starting point of the absolute section.  Empty if not in an absolute
     // section.
-    /*@null@*/ util::scoped_ptr<Expr> m_absstart;
+    Expr m_absstart;
 
     // Current location inside an absolute section (including the start).
-    // NULL if not in an absolute section.
-    /*@null@*/ std::auto_ptr<Expr> m_abspos;
+    // Empty if not in an absolute section.
+    Expr m_abspos;
 };
 
 #define INTNUM_val              (m_tokval.intn)

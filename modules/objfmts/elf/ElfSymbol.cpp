@@ -57,7 +57,6 @@ ElfSymbol::ElfSymbol(const ElfConfig&   config,
                      Section*           sections[])
     : m_sect(0)
     , m_value(0)
-    , m_xsize(0)
     , m_size(0)
     , m_symindex(index)
 {
@@ -69,7 +68,7 @@ ElfSymbol::ElfSymbol(const ElfConfig&   config,
     if (config.cls == ELFCLASS32)
     {
         m_value = read_u32(bytes);
-        m_size = read_u32(bytes);
+        m_size = Expr(read_u32(bytes));
     }
 
     unsigned char info = read_u8(bytes);
@@ -84,7 +83,7 @@ ElfSymbol::ElfSymbol(const ElfConfig&   config,
     if (config.cls == ELFCLASS64)
     {
         m_value = read_u64(bytes);
-        m_size = read_u64(bytes);
+        m_size = Expr(read_u64(bytes));
     }
 }
 
@@ -92,7 +91,6 @@ ElfSymbol::ElfSymbol()
     : m_sect(0)
     , m_name_index(0)
     , m_value(0)
-    , m_xsize(0)
     , m_size(0)
     , m_index(SHN_UNDEF)
     , m_bind(STB_LOCAL)
@@ -128,7 +126,7 @@ ElfSymbol::create_symbol(Object& object, const StringTable& strtab) const
 
     if (m_index == SHN_ABS)
     {
-        sym->define_equ(Expr::Ptr(new Expr(m_size)), 0);
+        sym->define_equ(m_size, 0);
     }
     else if (m_index == SHN_COMMON)
     {
@@ -164,12 +162,7 @@ ElfSymbol::put(marg_ostream& os) const
         case STT_FILE:          os << "file\n";     break;
         default:                os << "undef\n";    break;
     }
-    os << "size=";
-    if (m_xsize)
-        os << (*m_xsize);
-    else
-        os << m_size;
-    os << '\n';
+    os << "size=" << m_size << '\n';
 }
 
 ElfSymbolIndex
@@ -208,13 +201,10 @@ ElfSymbol::finalize(Symbol& sym, Errwarns& errwarns)
     }
 
     // get size (if specified); expr overrides stored integer
-    if (m_xsize)
+    if (!m_size.is_empty())
     {
-        simplify_calc_dist(*m_xsize);
-        IntNum* xsize = m_xsize->get_intnum();
-        if (xsize)
-            m_size = *xsize;
-        else
+        simplify_calc_dist(m_size);
+        if (!m_size.get_intnum())
             errwarns.propagate(m_size_line, ValueError(
                 N_("size specifier not an integer expression")));
     }
@@ -249,7 +239,7 @@ ElfSymbol::write(Bytes& bytes, const ElfConfig& config)
     if (config.cls == ELFCLASS32)
     {
         write_32(bytes, m_value);
-        write_32(bytes, m_size);
+        write_32(bytes, *m_size.get_intnum());
     }
 
     write_8(bytes, ELF_ST_INFO(m_bind, m_type));
@@ -269,20 +259,13 @@ ElfSymbol::write(Bytes& bytes, const ElfConfig& config)
     if (config.cls == ELFCLASS64)
     {
         write_64(bytes, m_value);
-        write_64(bytes, m_size);
+        write_64(bytes, *m_size.get_intnum());
     }
 
     if (config.cls == ELFCLASS32)
         assert(bytes.size() == SYMTAB32_SIZE);
     else if (config.cls == ELFCLASS64)
         assert(bytes.size() == SYMTAB64_SIZE);
-}
-
-void
-ElfSymbol::set_size(std::auto_ptr<Expr> size, unsigned long line)
-{
-    m_xsize.reset(size.release());
-    m_size_line = line;
 }
 
 }}} // namespace yasm::objfmt::elf

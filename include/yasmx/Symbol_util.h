@@ -31,8 +31,6 @@
 ///
 #include "yasmx/Config/export.h"
 
-#include <memory>
-
 
 namespace yasm
 {
@@ -68,7 +66,7 @@ YASM_LIB_EXPORT
 /// @param common_size  common size expression
 /// @return Symbol (this).
 YASM_LIB_EXPORT
-void set_common_size(Symbol& sym, std::auto_ptr<Expr> common_size);
+void set_common_size(Symbol& sym, const Expr& common_size);
 
 /// Get common size of symbol, if symbol is declared #COMMON and a
 /// size was set for it.
