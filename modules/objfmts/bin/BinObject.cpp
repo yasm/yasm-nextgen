@@ -336,20 +336,20 @@ BinObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     if (m_org.get() != 0)
     {
         m_org->simplify();
-        const IntNum* orgi = m_org->get_intnum();
-        if (!orgi)
+        if (!m_org->is_intnum())
         {
             errwarns.propagate(m_org_line,
                 TooComplexError(N_("ORG expression is too complex")));
             return;
         }
-        if (orgi->sign() < 0)
+        IntNum orgi = m_org->get_intnum();
+        if (orgi.sign() < 0)
         {
             errwarns.propagate(m_org_line,
                 ValueError(N_("ORG expression is negative")));
             return;
         }
-        origin = *orgi;
+        origin = orgi;
     }
 
     // Check symbol table

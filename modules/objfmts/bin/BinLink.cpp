@@ -163,8 +163,7 @@ BinLink::lma_create_group(Section& section)
     // Calculate section integer start.
     if (bsd->start.get() != 0)
     {
-        const IntNum* istart = bsd->start->get_intnum();
-        if (!istart)
+        if (!bsd->start->is_intnum())
         {
             m_errwarns.propagate(bsd->start_line,
                 TooComplexError(N_("start expression is too complex")));
@@ -173,15 +172,14 @@ BinLink::lma_create_group(Section& section)
         else
         {
             bsd->has_istart = true;
-            section.set_lma(*istart);
+            section.set_lma(bsd->start->get_intnum());
         }
     }
 
     // Calculate section integer vstart.
     if (bsd->vstart.get() != 0)
     {
-        const IntNum* ivstart = bsd->vstart->get_intnum();
-        if (!ivstart)
+        if (!bsd->vstart->is_intnum())
         {
             m_errwarns.propagate(bsd->vstart_line,
                 TooComplexError(N_("vstart expression is too complex")));
@@ -190,7 +188,7 @@ BinLink::lma_create_group(Section& section)
         else
         {
             bsd->has_ivstart = true;
-            section.set_vma(*ivstart);
+            section.set_vma(bsd->vstart->get_intnum());
         }
     }
 

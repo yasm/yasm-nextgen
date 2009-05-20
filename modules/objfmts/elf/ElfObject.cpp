@@ -578,10 +578,9 @@ ElfObject::build_common(Symbol& sym)
 
             std::auto_ptr<Expr> align_expr =
                 nv->release_expr(*m_object, sym.get_decl_line());
-            const IntNum* align_intn = align_expr->get_intnum();
-            if (!align_intn)
+            if (!align_expr->is_intnum())
                 throw ValueError(N_("alignment constraint is not an integer"));
-            addralign = align_intn->get_uint();
+            addralign = align_expr->get_intnum().get_uint();
 
             // Alignments must be a power of two.
             if (!is_exp2(addralign))
@@ -813,10 +812,9 @@ Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
 
     if (Expr* abs = value.get_abs())
     {
-        IntNum* intn2 = abs->get_intnum();
-        if (!intn2)
+        if (!abs->is_intnum())
             throw TooComplexError(N_("elf: relocation too complex"));
-        intn += *intn2;
+        intn += abs->get_intnum();
     }
 
     if (reloc)

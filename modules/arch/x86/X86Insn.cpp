@@ -643,8 +643,7 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
         {
             if (Expr* imm = op.get_imm())
             {
-                const IntNum* num = imm->get_intnum();
-                if (!num || !num->is_pos1())
+                if (!imm->is_intnum() || !imm->get_intnum().is_pos1())
                     return false;
             }
             else
@@ -665,23 +664,25 @@ X86Insn::match_operand(const Operand& op, const X86InfoOperand& info_op,
             break;
         case OPT_MemrAX:
         {
-            const Register* reg2;
-            if (!ea ||
-                !(reg2 = ea->m_disp.get_abs()->get_reg()) ||
-                reg->get_num() != 0 ||
-                (reg->type() != X86Register::REG16 &&
-                 reg->type() != X86Register::REG32 &&
-                 reg->type() != X86Register::REG64))
+            if (!ea || !ea->m_disp.get_abs()->is_reg())
+                return false;
+            const X86Register* reg2 = static_cast<const X86Register*>
+                (ea->m_disp.get_abs()->get_reg());
+            if (reg2->get_num() != 0 ||
+                (reg2->type() != X86Register::REG16 &&
+                 reg2->type() != X86Register::REG32 &&
+                 reg2->type() != X86Register::REG64))
                 return false;
             break;
         }
         case OPT_MemEAX:
         {
-            const Register* reg2;
-            if (!ea ||
-                !(reg2 = ea->m_disp.get_abs()->get_reg()) ||
-                reg->type() != X86Register::REG32 ||
-                reg->get_num() != 0)
+            if (!ea || !ea->m_disp.get_abs()->is_reg())
+                return false;
+            const X86Register* reg2 = static_cast<const X86Register*>
+                (ea->m_disp.get_abs()->get_reg());
+            if (reg2->type() != X86Register::REG32 ||
+                reg2->get_num() != 0)
                 return false;
             break;
         }
@@ -1312,9 +1313,10 @@ BuildGeneral::apply_operand(const X86InfoOperand& info_op, Insn::Operand& op)
             // Only implement this for OPT_MemrAX and OPT_MemEAX
             // for now.
             EffAddr* ea = op.get_memory();
+            assert(ea && ea->m_disp.get_abs()->is_reg() &&
+                   "invalid operand conversion");
             const X86Register* reg = static_cast<const X86Register*>
                 (ea->m_disp.get_abs()->get_reg());
-            assert(ea && reg && "invalid operand conversion");
             X86Register::Type regtype = reg->type();
             unsigned int regnum = reg->get_num();
             // 64-bit mode does not allow 16-bit addresses

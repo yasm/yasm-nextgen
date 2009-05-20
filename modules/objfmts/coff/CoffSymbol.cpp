@@ -110,8 +110,8 @@ CoffSymbol::write(Bytes& bytes,
     {
         Expr equ_val(*equ_val_c);
         simplify_calc_dist(equ_val);
-        if (const IntNum* intn = equ_val.get_intnum())
-            value = *intn;
+        if (equ_val.is_intnum())
+            value = equ_val.get_intnum();
         else if (vis & Symbol::GLOBAL)
         {
             errwarns.propagate(sym.get_def_line(), NotConstantError(
@@ -127,8 +127,8 @@ CoffSymbol::write(Bytes& bytes,
             assert(get_common_size(sym) != 0);
             Expr csize(*get_common_size(sym));
             simplify_calc_dist(csize);
-            if (const IntNum* intn = csize.get_intnum())
-                value = *intn;
+            if (csize.is_intnum())
+                value = csize.get_intnum();
             else
             {
                 errwarns.propagate(sym.get_def_line(), NotConstantError(

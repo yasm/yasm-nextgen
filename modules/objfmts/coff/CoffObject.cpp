@@ -245,14 +245,14 @@ Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
                 assert(get_common_size(*sym) != 0);
                 Expr csize_expr(*get_common_size(*sym));
                 simplify_calc_dist(csize_expr);
-                const IntNum* common_size = csize_expr.get_intnum();
-                if (!common_size)
+                if (!csize_expr.is_intnum())
                     throw TooComplexError(N_("coff: common size too complex"));
 
-                if (common_size->sign() < 0)
+                IntNum common_size = csize_expr.get_intnum();
+                if (common_size.sign() < 0)
                     throw ValueError(N_("coff: common size is negative"));
 
-                intn += *common_size;
+                intn += common_size;
             }
         }
         else if (!(vis & Symbol::EXTERN) && !m_objfmt.is_win64())
@@ -382,10 +382,9 @@ Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
 
     if (Expr* abs = value.get_abs())
     {
-        IntNum* intn2 = abs->get_intnum();
-        if (!intn2)
+        if (!abs->is_intnum())
             throw TooComplexError(N_("coff: relocation too complex"));
-        intn += *intn2;
+        intn += abs->get_intnum();
     }
 
     intn += dist;

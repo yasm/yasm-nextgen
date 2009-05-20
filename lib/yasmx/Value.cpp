@@ -677,15 +677,15 @@ Value::finalize()
     }
 
     // Handle trivial (IDENT) cases immediately
-    if (IntNum* intn = m_abs->get_intnum())
+    if (m_abs->is_intnum())
     {
-        if (intn->is_zero())
+        if (m_abs->get_intnum().is_zero())
             m_abs.reset(0);
         return true;
     }
-    else if (SymbolRef sym = m_abs->get_symbol())
+    else if (m_abs->is_symbol())
     {
-        m_rel = sym;
+        m_rel = m_abs->get_symbol();
         m_abs.reset(0);
         return true;
     }
@@ -697,9 +697,9 @@ Value::finalize()
     m_abs->simplify(false);
 
     // Simplify 0 in abs to NULL
-    if (IntNum* intn = m_abs->get_intnum())
+    if (m_abs->is_intnum())
     {
-        if (intn->is_zero())
+        if (m_abs->get_intnum().is_zero())
             m_abs.reset(0);
     }
 
@@ -741,25 +741,23 @@ Value::get_intnum(IntNum* out, bool calc_bc_dist)
         // NULL.
         if (calc_bc_dist)
             simplify_calc_dist(*m_abs);
-        IntNum* intn = m_abs->get_intnum();
 
-        if (!intn)
+        if (!m_abs->is_intnum())
         {
             // Second try before erroring: Expr::get_intnum() doesn't handle
             // SEG:OFF, so try simplifying out any to just the OFF portion,
             // then getting the intnum again.
             m_abs->extract_deep_segoff(); // returns auto_ptr, so ok to drop
             simplify_calc_dist(*m_abs);
-            intn = m_abs->get_intnum();
+            if (!m_abs->is_intnum())
+                return false;
         }
 
-        if (!intn)
-            return false;
-
+        // micro-optimization because this is hit a lot
         if (out->is_zero())
-            *out = *intn;   // micro-optimization because this is hit a lot
+            *out = m_abs->get_intnum();
         else
-            *out += *intn;
+            *out += m_abs->get_intnum();
     }
 
     return true;
@@ -806,10 +804,9 @@ Value::output_basic(Bytes& bytes, int warn, const Arch& arch)
     if (m_abs != 0)
     {
         // Handle floating point expressions
-        FloatNum* flt;
-        if (!m_rel && (flt = m_abs->get_float()))
+        if (!m_rel && m_abs->is_float())
         {
-            arch.tobytes(*flt, bytes, m_size, 0, warn);
+            arch.tobytes(*m_abs->get_float(), bytes, m_size, 0, warn);
             return true;
         }
 

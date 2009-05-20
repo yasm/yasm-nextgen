@@ -239,14 +239,13 @@ X86Arch::dir_cpu(Object& object, const NameValues& namevals,
         else if (nv->is_expr())
         {
             Expr e = nv->get_expr(object, line);
-            IntNum* intcpu = e.get_intnum();
-            if (!intcpu)
+            if (!e.is_intnum())
                 throw SyntaxError(String::compose(
                     N_("invalid argument to [%1]"), "CPU"));
             else
             {
                 std::ostringstream strcpu;
-                strcpu << intcpu->get_uint();
+                strcpu << e.get_intnum().get_uint();
                 parse_cpu(strcpu.str());
             }
         }
@@ -264,10 +263,9 @@ X86Arch::dir_bits(Object& object, const NameValues& namevals,
     if (nv != namevals.end() && nv->is_expr())
     {
         Expr e = nv->get_expr(object, line);
-        IntNum* intcpu = e.get_intnum();
-        if (intcpu)
+        if (e.is_intnum())
         {
-            unsigned long v = intcpu->get_uint();
+            unsigned long v = e.get_intnum().get_uint();
             if (v == 16 || v == 32 || v == 64)
             {
                 m_mode_bits = v;

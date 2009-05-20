@@ -372,11 +372,11 @@ public:
         // add to an empty abs
         v.add_abs(6);
         TS_ASSERT_EQUALS(v.has_abs(), true);
-        TS_ASSERT_EQUALS(*v.get_abs()->get_intnum(), 6);
+        TS_ASSERT_EQUALS(v.get_abs()->get_intnum(), 6);
         // add to an abs with a value
         v.add_abs(8);
         v.get_abs()->simplify();
-        TS_ASSERT_EQUALS(*v.get_abs()->get_intnum(), 14);
+        TS_ASSERT_EQUALS(v.get_abs()->get_intnum(), 14);
     }
 
     void test_add_abs_expr()
@@ -387,11 +387,11 @@ public:
         v.add_abs(Expr(6));
         TS_ASSERT_EQUALS(v.has_abs(), true);
         v.get_abs()->simplify();
-        TS_ASSERT_EQUALS(*v.get_abs()->get_intnum(), 6);
+        TS_ASSERT_EQUALS(v.get_abs()->get_intnum(), 6);
         // add to an abs with a value
         v.add_abs(Expr(8));
         v.get_abs()->simplify();
-        TS_ASSERT_EQUALS(*v.get_abs()->get_intnum(), 14);
+        TS_ASSERT_EQUALS(v.get_abs()->get_intnum(), 14);
     }
 
     void test_is_relative()

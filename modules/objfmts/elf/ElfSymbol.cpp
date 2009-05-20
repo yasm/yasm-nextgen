@@ -204,7 +204,7 @@ ElfSymbol::finalize(Symbol& sym, Errwarns& errwarns)
     if (!m_size.is_empty())
     {
         simplify_calc_dist(m_size);
-        if (!m_size.get_intnum())
+        if (!m_size.is_intnum())
             errwarns.propagate(m_size_line, ValueError(
                 N_("size specifier not an integer expression")));
     }
@@ -216,10 +216,9 @@ ElfSymbol::finalize(Symbol& sym, Errwarns& errwarns)
     {
         Expr equ_expr = *equ_expr_c;
         simplify_calc_dist(equ_expr);
-        IntNum* equ_intn = equ_expr.get_intnum();
 
-        if (equ_intn)
-            m_value = *equ_intn;
+        if (equ_expr.is_intnum())
+            m_value = equ_expr.get_intnum();
         else
             errwarns.propagate(sym.get_def_line(), ValueError(
                 N_("EQU value not an integer expression")));
@@ -239,7 +238,7 @@ ElfSymbol::write(Bytes& bytes, const ElfConfig& config)
     if (config.cls == ELFCLASS32)
     {
         write_32(bytes, m_value);
-        write_32(bytes, *m_size.get_intnum());
+        write_32(bytes, m_size.get_intnum());
     }
 
     write_8(bytes, ELF_ST_INFO(m_bind, m_type));
@@ -259,7 +258,7 @@ ElfSymbol::write(Bytes& bytes, const ElfConfig& config)
     if (config.cls == ELFCLASS64)
     {
         write_64(bytes, m_value);
-        write_64(bytes, *m_size.get_intnum());
+        write_64(bytes, m_size.get_intnum());
     }
 
     if (config.cls == ELFCLASS32)

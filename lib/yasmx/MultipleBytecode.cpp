@@ -140,15 +140,16 @@ MultipleBytecode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 {
     // Calculate multiple value as an integer
     m_mult_int = 1;
-    if (const IntNum* num = m_multiple->get_intnum())
+    if (m_multiple->is_intnum())
     {
-        if (num->sign() < 0)
+        IntNum num = m_multiple->get_intnum();
+        if (num.sign() < 0)
         {
             m_mult_int = 0;
             throw ValueError(N_("multiple is negative"));
         }
         else
-            m_mult_int = num->get_int();
+            m_mult_int = num.get_int();
     }
     else
     {
@@ -200,12 +201,12 @@ void
 MultipleBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     simplify_calc_dist(*m_multiple);
-    const IntNum* num = m_multiple->get_intnum();
-    if (!num)
+    if (!m_multiple->is_intnum())
         throw ValueError(N_("could not determine multiple"));
-    if (num->sign() < 0)
+    IntNum num = m_multiple->get_intnum();
+    if (num.sign() < 0)
         throw ValueError(N_("multiple is negative"));
-    m_mult_int = num->get_int();
+    m_mult_int = num.get_int();
     if (m_mult_int == 0)
         return; // nothing to output
 

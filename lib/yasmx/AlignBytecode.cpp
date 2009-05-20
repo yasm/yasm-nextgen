@@ -120,11 +120,11 @@ AlignBytecode::put(marg_ostream& os) const
 void
 AlignBytecode::finalize(Bytecode& bc)
 {
-    if (!m_boundary.get_intnum())
+    if (!m_boundary.is_intnum())
         throw NotConstantError(N_("align boundary must be a constant"));
-    if (!m_fill.is_empty() && !m_fill.get_intnum())
+    if (!m_fill.is_empty() && !m_fill.is_intnum())
         throw NotConstantError(N_("align fill must be a constant"));
-    if (!m_maxskip.is_empty() && !m_maxskip.get_intnum())
+    if (!m_maxskip.is_empty() && !m_maxskip.is_intnum())
         throw NotConstantError(N_("align maximum skip must be a constant"));
 }
 
@@ -145,7 +145,7 @@ AlignBytecode::expand(Bytecode& bc, unsigned long& len, int span,
                       long old_val, long new_val,
                       /*@out@*/ long* neg_thres, /*@out@*/ long* pos_thres)
 {
-    unsigned long boundary = m_boundary.get_intnum()->get_uint();
+    unsigned long boundary = m_boundary.get_intnum().get_uint();
 
     if (boundary == 0)
     {
@@ -163,7 +163,7 @@ AlignBytecode::expand(Bytecode& bc, unsigned long& len, int span,
 
     if (!m_maxskip.is_empty())
     {
-        unsigned long maxskip = m_maxskip.get_intnum()->get_uint();
+        unsigned long maxskip = m_maxskip.get_intnum().get_uint();
         if (len > maxskip)
         {
             *pos_thres = static_cast<long>(end-maxskip)-1;
@@ -177,7 +177,7 @@ void
 AlignBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     unsigned long len;
-    unsigned long boundary = m_boundary.get_intnum()->get_uint();
+    unsigned long boundary = m_boundary.get_intnum().get_uint();
     Bytes& bytes = bc_out.get_scratch();
 
     if (boundary == 0)
@@ -193,7 +193,7 @@ AlignBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
             return;
         if (!m_maxskip.is_empty())
         {
-            unsigned long maxskip = m_maxskip.get_intnum()->get_uint();
+            unsigned long maxskip = m_maxskip.get_intnum().get_uint();
             if (len > maxskip)
                 return;
         }
@@ -201,7 +201,7 @@ AlignBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
 
     if (!m_fill.is_empty())
     {
-        unsigned long v = m_fill.get_intnum()->get_uint();
+        unsigned long v = m_fill.get_intnum().get_uint();
         bytes.insert(bytes.end(), len, static_cast<unsigned char>(v));
     }
     else if (m_code_fill)

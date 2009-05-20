@@ -429,32 +429,50 @@ public:
     ///         the left side of the WRT expression.
     Expr extract_wrt();
 
+    /// Determine if an expression is just a symbol.
+    /// @return True if get_symbol() is safe to call.
+    bool is_float() const
+    {
+        return (m_terms.size() == 1
+                && m_terms.front().is_type(ExprTerm::FLOAT));
+    }
+
     /// Get the float value of an expression if it's just a float.
-    /// @return 0 if the expression is too complex; otherwise the float
-    ///         value of the expression.
+    /// Asserts if the expression is too complex.
+    /// @return The float value of the expression.
     /*@dependent@*/ /*@null@*/ FloatNum* get_float() const;
 
-    /// Get the integer value of an expression if it's just an integer.
-    /// @return 0 if the expression is too complex (contains anything other
-    ///         than integers, ie floats, non-valued labels, registers);
-    ///         otherwise the intnum value of the expression.
-    /*@dependent@*/ /*@null@*/ const IntNum* get_intnum() const;
+    /// Determine if an expression is just an integer.
+    /// Returns false if the expression is too complex (contains anything other
+    /// than integers, eg floats, non-valued labels, or registers).
+    /// @return True if get_intnum() is safe to call.
+    bool is_intnum() const
+    { return (m_terms.size() == 1 && m_terms.front().is_type(ExprTerm::INT)); }
 
     /// Get the integer value of an expression if it's just an integer.
-    /// @return 0 if the expression is too complex (contains anything other
-    ///         than integers, ie floats, non-valued labels, registers);
-    ///         otherwise the intnum value of the expression.
-    /*@dependent@*/ /*@null@*/ IntNum* get_intnum();
+    /// Asserts if expression is not an integer.
+    /// @return The intnum value of the expression.
+    IntNum get_intnum() const;
+
+    /// Determine if an expression is just a symbol.
+    /// @return True if get_symbol() is safe to call.
+    bool is_symbol() const
+    { return (m_terms.size() == 1 && m_terms.front().is_type(ExprTerm::SYM)); }
 
     /// Get the symbol value of an expression if it's just a symbol.
-    /// @return 0 if the expression is too complex; otherwise the symbol
-    ///         value of the expression.
+    /// Asserts if the expression is too complex.
+    /// @return The symbol value of the expression.
     SymbolRef get_symbol() const;
 
+    /// Determine if an expression is just a symbol.
+    /// @return True if get_reg() is safe to call.
+    bool is_reg() const
+    { return (m_terms.size() == 1 && m_terms.front().is_type(ExprTerm::REG)); }
+
     /// Get the register value of an expression if it's just a register.
-    /// @return 0 if the expression is too complex; otherwise the register
-    ///         value of the expression.
-    /*@dependent@*/ /*@null@*/ const Register* get_reg() const;
+    /// Asserts if the expression is too complex.
+    /// @return The register value of the expression.
+    /*@dependent@*/ const Register* get_reg() const;
 
     bool contains(int type, int pos=-1) const;
 

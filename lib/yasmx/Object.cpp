@@ -612,8 +612,8 @@ Span::recalc_normal()
             m_expr_terms[i->m_subst].get_int()->set(i->m_new_val);
         abs_copy->substitute(m_expr_terms);
         abs_copy->simplify();
-        if (const IntNum* num = abs_copy->get_intnum())
-            m_new_val = num->get_int();
+        if (abs_copy->is_intnum())
+            m_new_val = abs_copy->get_intnum().get_int();
         else
             m_new_val = LONG_MAX;   // too complex; force to longest form
     }

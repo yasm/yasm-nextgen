@@ -268,9 +268,7 @@ BinMapOutput::output_symbols(const Section* sect)
             realequ->simplify();
             bin_simplify(*realequ);
             realequ->simplify();
-            IntNum* intn = realequ->get_intnum();
-            assert(intn != 0);
-            output_intnum(*intn);
+            output_intnum(realequ->get_intnum());
             m_os << "  " << name << '\n';
         }
         else if (sym->get_label(&loc) && loc.bc->get_container() == sect)

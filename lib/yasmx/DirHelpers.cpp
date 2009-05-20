@@ -123,13 +123,12 @@ dir_intn(NameValue& nv,
          bool* out_set)
 {
     std::auto_ptr<Expr> e(nv.release_expr(*obj, line));
-    /*@null@*/ IntNum* local;
 
-    if ((e.get() == 0) || ((local = e->get_intnum()) == 0))
+    if ((e.get() == 0) || !e->is_intnum())
         throw NotConstantError(String::compose(
             N_("argument to `%1' is not an integer"), nv.get_name()));
 
-    *out = *local;
+    *out = e->get_intnum();
     *out_set = true;
 }
 
