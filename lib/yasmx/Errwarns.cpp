@@ -161,11 +161,11 @@ Errwarns::output_all(const Linemap& lm, int warning_as_error,
         // Get the physical location
         std::string filename, xref_filename;
         unsigned long line, xref_line;
-        lm.lookup(i->m_line, filename, line);
+        lm.lookup(i->m_line, &filename, &line);
 
         // Get the cross-reference physical location
         if (i->m_xrefline != 0)
-            lm.lookup(i->m_xrefline, xref_filename, xref_line);
+            lm.lookup(i->m_xrefline, &xref_filename, &xref_line);
         else
         {
             xref_filename = "";

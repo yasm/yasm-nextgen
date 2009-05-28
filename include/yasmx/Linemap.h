@@ -109,8 +109,8 @@ public:
     /// @param file_line    physical line number (output)
     /// @return True if information available for line, false if not.
     bool lookup(unsigned long line,
-                /*@out@*/ std::string& filename,
-                /*@out@*/ unsigned long& file_line) const;
+                /*@out@*/ std::string* filename,
+                /*@out@*/ unsigned long* file_line) const;
 
     /// Get all filenames used in a linemap.
     const Filenames& get_filenames() const { return m_filenames; }
