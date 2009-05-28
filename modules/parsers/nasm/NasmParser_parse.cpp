@@ -590,7 +590,7 @@ NasmParser::parse_instr()
             const Insn::Prefix* prefix = PREFIX_val;
             get_next_token();
             Insn::Ptr insn = parse_instr();
-            if (insn.get() != 0)
+            if (insn.get() == 0)
                 insn = m_arch->create_empty_insn();
             insn->add_prefix(prefix);
             return insn;
@@ -600,7 +600,7 @@ NasmParser::parse_instr()
             const SegmentRegister* segreg = SEGREG_val;
             get_next_token();
             Insn::Ptr insn = parse_instr();
-            if (insn.get() != 0)
+            if (insn.get() == 0)
                 insn = m_arch->create_empty_insn();
             insn->add_seg_prefix(segreg);
             return insn;
