@@ -1101,6 +1101,7 @@ NasmParser::dir_align(Object& object, NameValues& namevals,
         // Largest .align in the section specifies section alignment.
         // Note: this doesn't match NASM behavior, but is a lot more
         // intelligent!
+        boundval.simplify();
         if (boundval.is_intnum())
         {
             unsigned long boundint = boundval.get_intnum().get_uint();
