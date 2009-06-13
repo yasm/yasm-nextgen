@@ -102,6 +102,8 @@ Leb128Bytecode::finalize(Bytecode& bc)
     m_expr.simplify();
     if (!m_expr.is_intnum())
         throw NotConstantError(N_("LEB128 value must be a constant"));
+    if (m_expr.get_intnum().sign() < 0 && !m_sign)
+        warn_set(WARN_GENERAL, N_("negative value in unsigned LEB128"));
 }
 
 unsigned long
