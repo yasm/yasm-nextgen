@@ -1,5 +1,5 @@
-#ifndef YASM_LEB128_H
-#define YASM_LEB128_H
+#ifndef YASM_BYTES_LEB128_H
+#define YASM_BYTES_LEB128_H
 ///
 /// @file
 /// @brief LEB128 interface.
