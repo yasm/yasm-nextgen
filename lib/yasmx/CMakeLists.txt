@@ -32,6 +32,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     Includes.cpp
     Insn.cpp
     IntNum.cpp
+    Leb128Bytecode.cpp
     Linemap.cpp
     ListFormat.cpp
     Location.cpp

@@ -98,6 +98,18 @@ void append_data(BytecodeContainer& container,
 
 /// Append an LEB128-encoded data value to the end of a section.
 /// @param sect         section
+/// @param intn         data value
+/// @param sign         signedness (True=signed, False=unsigned) of the
+///                     data value
+/// @param line         virtual line number
+YASM_LIB_EXPORT
+void append_leb128(BytecodeContainer& container,
+                   const IntNum& intn,
+                   bool sign,
+                   unsigned long line);
+
+/// Append an LEB128-encoded data value to the end of a section.
+/// @param sect         section
 /// @param expr         data value
 /// @param sign         signedness (True=signed, False=unsigned) of the
 ///                     data value
