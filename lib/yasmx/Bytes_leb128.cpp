@@ -60,9 +60,9 @@ write_leb128(Bytes& bytes, const IntNum& intn, bool sign)
     const llvm::APInt* bv = intn.get_bv(&staticbv);
     int size;
     if (sign)
-        size = bv->getMinSignedBits()+1;
+        size = bv->getMinSignedBits();
     else
-        size = bv->getActiveBits()+1;
+        size = bv->getActiveBits();
 
     Bytes::size_type orig_size = bytes.size();
     int i = 0;
@@ -82,9 +82,9 @@ size_leb128(const IntNum& intn, bool sign)
 
     const llvm::APInt* bv = intn.get_bv(&staticbv);
     if (sign)
-        return (bv->getMinSignedBits()+7)/7;
+        return (bv->getMinSignedBits()+6)/7;
     else
-        return (bv->getActiveBits()+7)/7;
+        return (bv->getActiveBits()+6)/7;
 }
 
 IntNum
