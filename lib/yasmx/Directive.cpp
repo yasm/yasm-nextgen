@@ -28,8 +28,7 @@
 
 #include "util.h"
 
-#include <map>
-
+#include "llvm/ADT/StringMap.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/nocase.h"
@@ -48,6 +47,7 @@ public:
     class Dir
     {
     public:
+        Dir() {}
         Dir(Directive handler, Directives::Flags flags)
             : m_handler(handler), m_flags(flags)
         {}
@@ -63,7 +63,7 @@ public:
         Directives::Flags m_flags;
     };
 
-    typedef std::map<std::string, Dir> DirMap;
+    typedef llvm::StringMap<Dir> DirMap;
     DirMap m_dirs;
 };
 
@@ -79,8 +79,7 @@ Directives::~Directives()
 void
 Directives::add(const char* name, Directive handler, Flags flags)
 {
-    m_impl->m_dirs.insert(std::make_pair(String::lowercase(name),
-                                         Impl::Dir(handler, flags)));
+    m_impl->m_dirs[String::lowercase(name)] = Impl::Dir(handler, flags);
 }
 
 Directive
