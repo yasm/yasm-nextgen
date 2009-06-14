@@ -11,6 +11,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     Support/raw_ostream.cpp
     Support/Streams.cpp
     Support/StringExtras.cpp
+    Support/StringMap.cpp
     yasmx/AlignBytecode.cpp
     yasmx/Arch.cpp
     yasmx/Assembler.cpp
