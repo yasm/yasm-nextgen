@@ -41,7 +41,7 @@ static BitVector::scoped_wordptr staticbv(IntNum::BITVECT_NATIVE_SIZE);
 static unsigned long
 write_leb128(Bytes& bytes, BitVector::wordptr val, bool sign)
 {
-    unsigned long size;
+    long size;
     if (sign)
     {
         // Signed mode
@@ -65,7 +65,7 @@ write_leb128(Bytes& bytes, BitVector::wordptr val, bool sign)
 
     // Positive/Unsigned write
     Bytes::size_type orig_size = bytes.size();
-    unsigned long i = 0;
+    long i = 0;
     for (; i<size-7; i += 7)
         bytes.push_back(static_cast<unsigned char>(
             BitVector::Chunk_Read(val, 7, i) | 0x80));
