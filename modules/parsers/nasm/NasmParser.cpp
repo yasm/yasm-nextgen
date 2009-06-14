@@ -89,8 +89,8 @@ NasmParser::parse(Object& object,
 
     m_peek_token = NONE;
 
-    m_absstart.reset(0);
-    m_abspos.reset(0);
+    m_absstart.clear();
+    m_abspos.clear();
 
     m_state = INITIAL;
 

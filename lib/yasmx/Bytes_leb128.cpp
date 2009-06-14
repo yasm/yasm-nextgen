@@ -58,14 +58,14 @@ write_leb128(Bytes& bytes, const IntNum& intn, bool sign)
     }
 
     const llvm::APInt* bv = intn.get_bv(&staticbv);
-    unsigned int size;
+    int size;
     if (sign)
         size = bv->getMinSignedBits()+1;
     else
         size = bv->getActiveBits()+1;
 
     Bytes::size_type orig_size = bytes.size();
-    unsigned int i = 0;
+    int i = 0;
     for (; i<size-7; i += 7)
         bytes.push_back(static_cast<unsigned char>(extract(*bv, 7, i)) | 0x80);
     // last byte does not have MSB set

@@ -48,9 +48,9 @@ using namespace yasm;
 class AlignBytecode : public Bytecode::Contents
 {
 public:
-    AlignBytecode(std::auto_ptr<Expr> boundary,
-                  /*@null@*/ std::auto_ptr<Expr> fill,
-                  /*@null@*/ std::auto_ptr<Expr> maxskip,
+    AlignBytecode(const Expr& boundary,
+                  const Expr& fill,
+                  const Expr& maxskip,
                   /*@null@*/ const unsigned char** code_fill);
     ~AlignBytecode();
 
@@ -78,26 +78,26 @@ public:
     AlignBytecode* clone() const;
 
 private:
-    util::scoped_ptr<Expr> m_boundary;      ///< alignment boundary
+    Expr m_boundary;    ///< alignment boundary
 
-    /// What to fill intervening locations with, NULL if using code_fill
-    util::scoped_ptr<Expr> m_fill;
+    /// What to fill intervening locations with, empty if using code_fill
+    Expr m_fill;
 
-    /// Maximum number of bytes to skip, NULL if no maximum.
-    util::scoped_ptr<Expr> m_maxskip;
+    /// Maximum number of bytes to skip, empty if no maximum.
+    Expr m_maxskip;
 
     /// Code fill, NULL if using 0 fill
     /*@null@*/ const unsigned char** m_code_fill;
 };
 
 
-AlignBytecode::AlignBytecode(std::auto_ptr<Expr> boundary,
-                             /*@null@*/ std::auto_ptr<Expr> fill,
-                             /*@null@*/ std::auto_ptr<Expr> maxskip,
+AlignBytecode::AlignBytecode(const Expr& boundary,
+                             const Expr& fill,
+                             const Expr& maxskip,
                              /*@null@*/ const unsigned char** code_fill)
-    : m_boundary(boundary.release()),
-      m_fill(fill.release()),
-      m_maxskip(maxskip.release()),
+    : m_boundary(boundary),
+      m_fill(fill),
+      m_maxskip(maxskip),
       m_code_fill(code_fill)
 {
 }
@@ -110,21 +110,21 @@ void
 AlignBytecode::put(marg_ostream& os) const
 {
     os << "_Align_\n";
-    os << "Boundary=" << *m_boundary << '\n';
-    if (m_fill.get() != 0)
-        os << "Fill=" << *m_fill << '\n';
-    if (m_maxskip.get() != 0)
-        os << "Max Skip=" << *m_maxskip << '\n';
+    os << "Boundary=" << m_boundary << '\n';
+    if (!m_fill.is_empty())
+        os << "Fill=" << m_fill << '\n';
+    if (!m_maxskip.is_empty())
+        os << "Max Skip=" << m_maxskip << '\n';
 }
 
 void
 AlignBytecode::finalize(Bytecode& bc)
 {
-    if (!m_boundary->get_intnum())
+    if (!m_boundary.is_intnum())
         throw NotConstantError(N_("align boundary must be a constant"));
-    if (m_fill.get() != 0 && !m_fill->get_intnum())
+    if (!m_fill.is_empty() && !m_fill.is_intnum())
         throw NotConstantError(N_("align fill must be a constant"));
-    if (m_maxskip.get() != 0 && !m_maxskip->get_intnum())
+    if (!m_maxskip.is_empty() && !m_maxskip.is_intnum())
         throw NotConstantError(N_("align maximum skip must be a constant"));
 }
 
@@ -145,7 +145,7 @@ AlignBytecode::expand(Bytecode& bc, unsigned long& len, int span,
                       long old_val, long new_val,
                       /*@out@*/ long* neg_thres, /*@out@*/ long* pos_thres)
 {
-    unsigned long boundary = m_boundary->get_intnum()->get_uint();
+    unsigned long boundary = m_boundary.get_intnum().get_uint();
 
     if (boundary == 0)
     {
@@ -161,9 +161,9 @@ AlignBytecode::expand(Bytecode& bc, unsigned long& len, int span,
     *pos_thres = static_cast<long>(end);
     len = end - static_cast<unsigned long>(new_val);
 
-    if (m_maxskip.get() != 0)
+    if (!m_maxskip.is_empty())
     {
-        unsigned long maxskip = m_maxskip->get_intnum()->get_uint();
+        unsigned long maxskip = m_maxskip.get_intnum().get_uint();
         if (len > maxskip)
         {
             *pos_thres = static_cast<long>(end-maxskip)-1;
@@ -177,7 +177,7 @@ void
 AlignBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     unsigned long len;
-    unsigned long boundary = m_boundary->get_intnum()->get_uint();
+    unsigned long boundary = m_boundary.get_intnum().get_uint();
     Bytes& bytes = bc_out.get_scratch();
 
     if (boundary == 0)
@@ -191,17 +191,17 @@ AlignBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
         len = end - tail;
         if (len == 0)
             return;
-        if (m_maxskip.get() != 0)
+        if (!m_maxskip.is_empty())
         {
-            unsigned long maxskip = m_maxskip->get_intnum()->get_uint();
+            unsigned long maxskip = m_maxskip.get_intnum().get_uint();
             if (len > maxskip)
                 return;
         }
     }
 
-    if (m_fill.get() != 0)
+    if (!m_fill.is_empty())
     {
-        unsigned long v = m_fill->get_intnum()->get_uint();
+        unsigned long v = m_fill.get_intnum().get_uint();
         bytes.insert(bytes.end(), len, static_cast<unsigned char>(v));
     }
     else if (m_code_fill)
@@ -248,26 +248,19 @@ AlignBytecode::get_special() const
 AlignBytecode*
 AlignBytecode::clone() const
 {
-    std::auto_ptr<Expr> fill(0);
-    std::auto_ptr<Expr> maxskip(0);
-
-    if (m_fill.get() != 0)
-        fill.reset(m_fill->clone());
-    if (m_maxskip.get() != 0)
-        fill.reset(m_maxskip->clone());
-    return new AlignBytecode(std::auto_ptr<Expr>(m_boundary->clone()),
-                             fill, maxskip, m_code_fill);
+    return new AlignBytecode(m_boundary, m_fill, m_maxskip, m_code_fill);
 }
 
 } // anonymous namespace
 
-namespace yasm {
+namespace yasm
+{
 
 void
 append_align(BytecodeContainer& container,
-             std::auto_ptr<Expr> boundary,
-             /*@null@*/ std::auto_ptr<Expr> fill,
-             /*@null@*/ std::auto_ptr<Expr> maxskip,
+             const Expr& boundary,
+             const Expr& fill,
+             const Expr& maxskip,
              /*@null@*/ const unsigned char** code_fill,
              unsigned long line)
 {

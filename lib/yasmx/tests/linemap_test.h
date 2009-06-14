@@ -79,7 +79,7 @@ public:
         std::string filename; \
         unsigned long file_line; \
     \
-        bool ok = lm.lookup(line, filename, file_line); \
+        bool ok = lm.lookup(line, &filename, &file_line); \
         TS_ASSERT_EQUALS(ok, true); \
         TS_ASSERT_EQUALS(filename, fn_result); \
         TS_ASSERT_EQUALS(file_line, fl_result); \
@@ -93,7 +93,7 @@ public:
         unsigned long file_line;
 
         // lookup with no filename info available
-        ok = lm.lookup(1, filename, file_line);
+        ok = lm.lookup(1, &filename, &file_line);
         TS_ASSERT_EQUALS(ok, false);
         TS_ASSERT_EQUALS(filename, "unknown");
         TS_ASSERT_EQUALS(file_line, 0UL);

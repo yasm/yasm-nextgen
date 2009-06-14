@@ -185,6 +185,9 @@ public:
         /// Is the operand dereferenced, as in "*foo" in GAS?
         bool is_deref() const { return m_deref; }
 
+        /// Set whether the operand is dereferenced.
+        void make_deref(bool deref=true) { m_deref = deref; }
+
         /// Is the operand strict, as in "strict foo" in NASM?
         bool is_strict() const { return m_strict; }
 

@@ -198,8 +198,7 @@ Object::get_absolute_symbol()
         return sym;
 
     // Define it
-    std::auto_ptr<Expr> v(new Expr(0));
-    sym->define_equ(v, 0);
+    sym->define_equ(Expr(0), 0);
     sym->use(0);
     return sym;
 }
@@ -613,8 +612,8 @@ Span::recalc_normal()
             m_expr_terms[i->m_subst].get_int()->set(i->m_new_val);
         abs_copy->substitute(m_expr_terms);
         abs_copy->simplify();
-        if (const IntNum* num = abs_copy->get_intnum())
-            m_new_val = num->get_int();
+        if (abs_copy->is_intnum())
+            m_new_val = abs_copy->get_intnum().get_int();
         else
             m_new_val = LONG_MAX;   // too complex; force to longest form
     }

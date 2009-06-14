@@ -98,6 +98,18 @@ void append_data(BytecodeContainer& container,
 
 /// Append an LEB128-encoded data value to the end of a section.
 /// @param sect         section
+/// @param intn         data value
+/// @param sign         signedness (True=signed, False=unsigned) of the
+///                     data value
+/// @param line         virtual line number
+YASM_LIB_EXPORT
+void append_leb128(BytecodeContainer& container,
+                   const IntNum& intn,
+                   bool sign,
+                   unsigned long line);
+
+/// Append an LEB128-encoded data value to the end of a section.
+/// @param sect         section
 /// @param expr         data value
 /// @param sign         signedness (True=signed, False=unsigned) of the
 ///                     data value
@@ -136,9 +148,9 @@ void append_incbin(BytecodeContainer& container,
 ///       - 0
 YASM_LIB_EXPORT
 void append_align(BytecodeContainer& container,
-                  std::auto_ptr<Expr> boundary,
-                  /*@null@*/ std::auto_ptr<Expr> fill,
-                  /*@null@*/ std::auto_ptr<Expr> maxskip,
+                  const Expr& boundary,
+                  const Expr& fill,
+                  const Expr& maxskip,
                   /*@null@*/ const unsigned char** code_fill,
                   unsigned long line);
 

@@ -164,7 +164,7 @@ NasmParser::do_parse()
 
     while (m_preproc->get_line(line))
     {
-        if (m_abspos.get() != 0)
+        if (!m_abspos.is_empty())
             m_bc = bc.get();
         else
             m_bc = &m_object->get_cur_section()->fresh_bytecode();
@@ -333,8 +333,8 @@ NasmParser::parse_line()
             {
                 // label EQU expr
                 get_next_token();
-                Expr::Ptr e(new Expr);
-                if (!parse_expr(*e, NORM_EXPR))
+                Expr e;
+                if (!parse_expr(e, NORM_EXPR))
                 {
                     throw SyntaxError(String::compose(
                         N_("expression expected after %1"), "EQU"));
@@ -590,7 +590,7 @@ NasmParser::parse_instr()
             const Insn::Prefix* prefix = PREFIX_val;
             get_next_token();
             Insn::Ptr insn = parse_instr();
-            if (insn.get() != 0)
+            if (insn.get() == 0)
                 insn = m_arch->create_empty_insn();
             insn->add_prefix(prefix);
             return insn;
@@ -600,7 +600,7 @@ NasmParser::parse_instr()
             const SegmentRegister* segreg = SEGREG_val;
             get_next_token();
             Insn::Ptr insn = parse_instr();
-            if (insn.get() != 0)
+            if (insn.get() == 0)
                 insn = m_arch->create_empty_insn();
             insn->add_seg_prefix(segreg);
             return insn;
@@ -1024,8 +1024,8 @@ NasmParser::parse_expr6(Expr& e, ExprType type)
         }
         case '$':
             // "$" references the current assembly position
-            if (m_abspos.get() != 0)
-                e = *m_abspos;
+            if (!m_abspos.is_empty())
+                e = m_abspos;
             else
             {
                 SymbolRef sym = m_object->add_non_table_symbol("$");
@@ -1037,8 +1037,8 @@ NasmParser::parse_expr6(Expr& e, ExprType type)
             break;
         case START_SECTION_ID:
             // "$$" references the start of the current section
-            if (m_absstart.get() != 0)
-                e = *m_absstart;
+            if (!m_absstart.is_empty())
+                e = m_absstart;
             else
             {
                 SymbolRef sym = m_object->add_non_table_symbol("$$");
@@ -1061,8 +1061,8 @@ NasmParser::define_label(const std::string& name, bool local)
         m_locallabel_base = name;
 
     SymbolRef sym = m_object->get_symbol(name);
-    if (m_abspos.get() != 0)
-        sym->define_equ(Expr::Ptr(m_abspos->clone()), get_cur_line());
+    if (!m_abspos.is_empty())
+        sym->define_equ(m_abspos, get_cur_line());
     else
     {
         m_bc = &m_container->fresh_bytecode();
@@ -1075,8 +1075,8 @@ void
 NasmParser::dir_absolute(Object& object, NameValues& namevals,
                          NameValues& objext_namevals, unsigned long line)
 {
-    m_absstart.reset(namevals.front().get_expr(object, line).release());
-    m_abspos.reset(m_absstart->clone());
+    m_absstart = namevals.front().get_expr(object, line);
+    m_abspos = m_absstart;
     object.set_cur_section(0);
 }
 
@@ -1087,24 +1087,24 @@ NasmParser::dir_align(Object& object, NameValues& namevals,
     // Really, we shouldn't end up with an align directive in an absolute
     // section (as it's supposed to be only used for nop fill), but handle
     // it gracefully anyway.
-    if (m_abspos.get() != 0)
+    if (!m_abspos.is_empty())
     {
-        Expr e = SUB(*m_absstart, *m_abspos);
-        e &= SUB(*namevals.front().get_expr(object, line), 1);
-        *m_abspos += e;
+        Expr e = SUB(m_absstart, m_abspos);
+        e &= SUB(namevals.front().get_expr(object, line), 1);
+        m_abspos += e;
     }
     else
     {
         Section* cur_section = object.get_cur_section();
-        Expr::Ptr boundval = namevals.front().get_expr(object, line);
-        IntNum* boundintn;
+        Expr boundval = namevals.front().get_expr(object, line);
 
         // Largest .align in the section specifies section alignment.
         // Note: this doesn't match NASM behavior, but is a lot more
         // intelligent!
-        if (boundval.get() != 0 && (boundintn = boundval->get_intnum()))
+        boundval.simplify();
+        if (boundval.is_intnum())
         {
-            unsigned long boundint = boundintn->get_uint();
+            unsigned long boundint = boundval.get_intnum().get_uint();
 
             // Alignments must be a power of two.
             if (is_exp2(boundint))
@@ -1116,7 +1116,7 @@ NasmParser::dir_align(Object& object, NameValues& namevals,
 
         // As this directive is called only when nop is used as fill, always
         // use arch (nop) fill.
-        append_align(*cur_section, boundval, Expr::Ptr(0), Expr::Ptr(0),
+        append_align(*cur_section, boundval, Expr(), Expr(),
                      /*cur_section->is_code() ?*/
                      object.get_arch()->get_fill()/* : 0*/,
                      line);
@@ -1153,11 +1153,11 @@ NasmParser::directive(const std::string& name,
 {
     (*m_dirs)[name](*m_object, namevals, objext_namevals, get_cur_line());
     Section* cursect = m_object->get_cur_section();
-    if (m_absstart.get() != 0 && cursect)
+    if (!m_absstart.is_empty() && cursect)
     {
         // We switched to a new section.  Get out of absolute section mode.
-        m_absstart.reset(0);
-        m_abspos.reset(0);
+        m_absstart.clear();
+        m_abspos.clear();
     }
 }
 

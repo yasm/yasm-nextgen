@@ -115,7 +115,7 @@ NameValue::swap(NameValue& oth)
     std::swap(m_id_prefix, oth.m_id_prefix);
 }
 
-std::auto_ptr<Expr>
+Expr
 NameValue::get_expr(Object& object, unsigned long line) const
 {
     switch (m_type)
@@ -124,12 +124,12 @@ NameValue::get_expr(Object& object, unsigned long line) const
         {
             SymbolRef sym = object.get_symbol(get_id());
             sym->use(line);
-            return std::auto_ptr<Expr>(new Expr(sym));
+            return Expr(sym);
         }
         case EXPR:
-            return std::auto_ptr<Expr>(m_expr->clone());
+            return *m_expr;
         default:
-            return std::auto_ptr<Expr>(0);
+            throw Error(N_("name/value not convertible to expression"));
     }
 }
 

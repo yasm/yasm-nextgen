@@ -250,6 +250,17 @@ get_curpos(Object& object, const char* dirname, unsigned long line)
     return sym;
 }
 
+static const Register*
+reg_from_nv(Object& object, NameValue& nv, unsigned long line)
+{
+    if (!nv.is_expr())
+        return 0;
+    Expr e = nv.get_expr(object, line);
+    if (!e.is_reg())
+        return 0;
+    return e.get_reg();
+}
+
 void
 Win64Object::dir_pushreg(Object& object,
                          NameValues& namevals,
@@ -259,10 +270,8 @@ Win64Object::dir_pushreg(Object& object,
     assert(!namevals.empty());
     procframe_checkstate("PUSHREG");
 
-    NameValue& nv = namevals.front();
-    const Register* reg;
-    if (!nv.is_expr() ||
-        !(reg = nv.get_expr(object, line)->get_reg()))
+    const Register* reg = reg_from_nv(object, namevals.front(), line);
+    if (!reg)
     {
         throw SyntaxError(String::compose(
             N_("[%1] requires a register as the first parameter"), "PUSHREG"));
@@ -285,10 +294,8 @@ Win64Object::dir_setframe(Object& object,
     assert(!namevals.empty());
     procframe_checkstate("SETFRAME");
 
-    NameValue& nv = namevals.front();
-    const Register* reg;
-    if (!nv.is_expr() ||
-        !(reg = nv.get_expr(object, line)->get_reg()))
+    const Register* reg = reg_from_nv(object, namevals.front(), line);
+    if (!reg)
     {
         throw SyntaxError(String::compose(
             N_("[%1] requires a register as the first parameter"), "SETFRAME"));
@@ -351,10 +358,8 @@ Win64Object::save_common(Object& object,
     assert(!namevals.empty());
     procframe_checkstate(dirname);
 
-    NameValue& nv = namevals.front();
-    const Register* reg;
-    if (!nv.is_expr() ||
-        !(reg = nv.get_expr(object, line)->get_reg()))
+    const Register* reg = reg_from_nv(object, namevals.front(), line);
+    if (!reg)
     {
         throw SyntaxError(String::compose(
             N_("[%1] requires a register as the first parameter"), dirname));

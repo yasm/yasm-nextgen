@@ -88,13 +88,10 @@ Insn::Operand::Operand(std::auto_ptr<Expr> val)
       m_strict(0),
       m_type(IMM)
 {
-    const Register* reg;
-
-    reg = val->get_reg();
-    if (reg)
+    if (val->is_reg())
     {
         m_type = REG;
-        m_reg = reg;
+        m_reg = val->get_reg();
     }
     else
         m_val = val.release();

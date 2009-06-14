@@ -197,10 +197,9 @@ Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
 
     if (Expr* abs = value.get_abs())
     {
-        IntNum* intn2 = abs->get_intnum();
-        if (!intn2)
+        if (!abs->is_intnum())
             throw TooComplexError(N_("xdf: relocation too complex"));
-        intn += *intn2;
+        intn += abs->get_intnum();
     }
 
     m_object.get_arch()->tobytes(intn, bytes, value.get_size(), 0, warn);
@@ -314,8 +313,7 @@ Output::output_sym(const Symbol& sym,
     {
         Expr::Ptr equ_val_copy(equ_val->clone());
         equ_val_copy->simplify();
-        const IntNum* intn = equ_val_copy->get_intnum();
-        if (!intn)
+        if (!equ_val_copy->is_intnum())
         {
             if (vis & Symbol::GLOBAL)
             {
@@ -325,7 +323,7 @@ Output::output_sym(const Symbol& sym,
             }
         }
         else
-            value = intn->get_uint();
+            value = equ_val_copy->get_intnum().get_uint();
 
         flags |= XdfSymbol::XDF_EQU;
         scnum = -2;     // -2 = absolute symbol
@@ -593,7 +591,7 @@ XdfObject::read(std::istream& is)
             sym->declare(Symbol::EXTERN, 0);
 
         if ((flags & XdfSymbol::XDF_EQU) != 0)
-            sym->define_equ(std::auto_ptr<Expr>(new Expr(value)), 0);
+            sym->define_equ(Expr(value), 0);
         else if (sym_scnum < scnum)
         {
             Section& sect = m_object->get_section(sym_scnum);

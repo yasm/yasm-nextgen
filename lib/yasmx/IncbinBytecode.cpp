@@ -146,9 +146,8 @@ IncbinBytecode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
     // Try to convert start to integer value
     if (m_start)
     {
-        const IntNum* num = m_start->get_intnum();
-        if (num)
-            start = num->get_uint();
+        if (m_start->is_intnum())
+            start = m_start->get_intnum().get_uint();
         else
         {
             // FIXME
@@ -160,9 +159,8 @@ IncbinBytecode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
     // Try to convert maxlen to integer value
     if (m_maxlen)
     {
-        const IntNum* num = m_maxlen->get_intnum();
-        if (num)
-            maxlen = num->get_uint();
+        if (m_maxlen->is_intnum())
+            maxlen = m_maxlen->get_intnum().get_uint();
         else
         {
             // FIXME
@@ -208,9 +206,9 @@ IncbinBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
     // Convert start to integer value
     if (m_start)
     {
-        const IntNum* num = m_start->get_intnum();
-        assert(num && "could not determine start in incbin::output");
-        start = num->get_uint();
+        assert(m_start->is_intnum()
+               && "could not determine start in incbin::output");
+        start = m_start->get_intnum().get_uint();
     }
 
     // Open file

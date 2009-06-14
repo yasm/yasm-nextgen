@@ -123,6 +123,10 @@ public:
     void sym_set_sectval(Symbol& sym, ElfSymbol& elfsym);
     void finalize_symbol(Symbol& sym, StringTable& strtab, bool local_names);
 
+    void dir_gas_section(Object& object,
+                         NameValues& namevals,
+                         NameValues& objext_namevals,
+                         unsigned long line);
     void dir_section(Object& object,
                      NameValues& namevals,
                      NameValues& objext_namevals,
@@ -552,7 +556,7 @@ ElfObject::build_global(Symbol& sym)
     elfsym.set_type(static_cast<ElfSymbolType>(type));
     elfsym.set_visibility(vis);
     if (size.get() != 0)
-        elfsym.set_size(size, sym.get_decl_line());
+        elfsym.set_size(*size, sym.get_decl_line());
 }
 
 void
@@ -578,10 +582,9 @@ ElfObject::build_common(Symbol& sym)
 
             std::auto_ptr<Expr> align_expr =
                 nv->release_expr(*m_object, sym.get_decl_line());
-            const IntNum* align_intn = align_expr->get_intnum();
-            if (!align_intn)
+            if (!align_expr->is_intnum())
                 throw ValueError(N_("alignment constraint is not an integer"));
-            addralign = align_intn->get_uint();
+            addralign = align_expr->get_intnum().get_uint();
 
             // Alignments must be a power of two.
             if (!is_exp2(addralign))
@@ -595,8 +598,7 @@ ElfObject::build_common(Symbol& sym)
     ElfSymbol& elfsym = build_symbol(sym);
     elfsym.set_index(SHN_COMMON);
     elfsym.set_binding(STB_GLOBAL);
-    elfsym.set_size(Expr::Ptr(get_common_size(sym)->clone()),
-                    sym.get_decl_line());
+    elfsym.set_size(*get_common_size(sym), sym.get_decl_line());
     elfsym.set_value(addralign);
 }
 
@@ -814,10 +816,9 @@ Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
 
     if (Expr* abs = value.get_abs())
     {
-        IntNum* intn2 = abs->get_intnum();
-        if (!intn2)
+        if (!abs->is_intnum())
             throw TooComplexError(N_("elf: relocation too complex"));
-        intn += *intn2;
+        intn += abs->get_intnum();
     }
 
     if (reloc)
@@ -1219,57 +1220,100 @@ ElfObject::append_section(const std::string& name, unsigned long line)
 
     return section;
 }
-#if 0
-/* GAS-style flags */
-static int
-elf_helper_gasflags(void *obj, yasm_valparam *vp, unsigned long line, void *d,
-                    /*@unused@*/ uintptr_t arg)
+
+void
+ElfObject::dir_gas_section(Object& object,
+                           NameValues& nvs,
+                           NameValues& objext_nvs,
+                           unsigned long line)
 {
-    struct elf_section_switch_data *data = (struct elf_section_switch_data *)d;
-    const char *s = yasm_vp_string(vp);
-    size_t i;
+    assert(&object == m_object);
 
-    if (!s) {
-        yasm_error_set(YASM_ERROR_VALUE,
-                       N_("non-string section attribute"));
-        return -1;
-    }
+    if (!nvs.front().is_string())
+        throw Error(N_("section name must be a string"));
+    std::string sectname = nvs.front().get_string();
 
-    data->flags = 0;
-    for (i=0; i<strlen(s); i++) {
-        switch (s[i]) {
+    Section* sect = m_object->find_section(sectname);
+    bool first = true;
+    if (sect)
+        first = sect->is_default();
+    else
+        sect = append_section(sectname, line);
+
+    m_object->set_cur_section(sect);
+    sect->set_default(false);
+
+    // No name/values, so nothing more to do
+    if (nvs.size() <= 1)
+        return;
+
+    // Section flags must be a string.
+    if (!nvs[1].is_string())
+        throw SyntaxError(N_("flag string expected"));
+
+    // Parse section flags
+    ElfSection* elfsect = get_elf(*sect);
+    assert(elfsect != 0);
+
+    int flags = 0, type = SHT_NULL;
+    std::string flagstr = nvs[1].get_string();
+
+    for (std::string::size_type i=0; i<flagstr.length(); ++i)
+    {
+        switch (flagstr[i])
+        {
             case 'a':
-                data->flags |= SHF_ALLOC;
+                flags |= SHF_ALLOC;
                 break;
             case 'w':
-                data->flags |= SHF_WRITE;
+                flags |= SHF_WRITE;
                 break;
             case 'x':
-                data->flags |= SHF_EXECINSTR;
+                flags |= SHF_EXECINSTR;
                 break;
             case 'M':
-                data->flags |= SHF_MERGE;
+                flags |= SHF_MERGE;
                 break;
             case 'S':
-                data->flags |= SHF_STRINGS;
+                flags |= SHF_STRINGS;
                 break;
             case 'G':
-                data->flags |= SHF_GROUP;
+                flags |= SHF_GROUP;
                 break;
             case 'T':
-                data->flags |= SHF_TLS;
+                flags |= SHF_TLS;
                 break;
             default:
-                yasm_warn_set(YASM_WARN_GENERAL,
-                              N_("unrecognized section attribute: `%c'"),
-                              s[i]);
+                warn_set(WARN_GENERAL, String::compose(
+                    N_("unrecognized section attribute: `%1'"), flagstr[i]));
         }
     }
 
-    data->gasflags = 1;
-    return 0;
+    // Parse section type
+    if (nvs.size() > 2 && nvs[2].is_id())
+    {
+        std::string typestr = nvs[2].get_id();
+        if (typestr == "progbits")
+            type = SHT_PROGBITS;
+        else if (typestr == "nobits")
+            type = SHT_NOBITS;
+        else if (typestr == "note")
+            type = SHT_NOTE;
+        else if (typestr == "init_array")
+            type = SHT_INIT_ARRAY;
+        else if (typestr == "fini_array")
+            type = SHT_FINI_ARRAY;
+        else if (typestr == "preinit_array")
+            type = SHT_PREINIT_ARRAY;
+    }
+
+    // Handle merge entity size
+    elfsect->set_typeflags(static_cast<ElfSectionType>(type),
+                           static_cast<ElfSectionFlags>(flags));
+    sect->set_bss(type == SHT_NOBITS);
+    sect->set_code((flags & SHF_EXECINSTR) != 0);
 }
-#endif
+
 void
 ElfObject::dir_section(Object& object,
                        NameValues& nvs,
@@ -1428,9 +1472,9 @@ ElfObject::dir_size(Object& object,
     // Pull new size from param
     if (namevals.size() < 2)
         throw SyntaxError(N_("no size specified"));
-    Expr::Ptr size = namevals[1].get_expr(object, line);
-    if (size.get() == 0)
+    if (!namevals[1].is_expr())
         throw SyntaxError(N_("size must be an expression"));
+    Expr size = namevals[1].get_expr(object, line);
 
     ElfSymbol& elfsym = build_symbol(*sym);
     elfsym.set_size(size, line);
@@ -1488,7 +1532,7 @@ ElfObject::add_directives(Directives& dirs, const std::string& parser)
     };
     static const Directives::Init<ElfObject> gas_dirs[] =
     {
-        {".section", &ElfObject::dir_section, Directives::ARG_REQUIRED},
+        {".section", &ElfObject::dir_gas_section, Directives::ARG_REQUIRED},
         {".type", &ElfObject::dir_type, Directives::ID_REQUIRED},
         {".size", &ElfObject::dir_size, Directives::ID_REQUIRED},
         {".weak", &ElfObject::dir_weak, Directives::ID_REQUIRED},

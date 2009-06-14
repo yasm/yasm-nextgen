@@ -262,6 +262,12 @@ Expr::swap(Expr& oth)
 }
 
 void
+Expr::clear()
+{
+    m_terms.clear();
+}
+
+void
 Expr::cleanup()
 {
     ExprTerms::iterator erasefrom =
@@ -832,46 +838,29 @@ Expr::extract_wrt()
 llvm::APFloat*
 Expr::get_float() const
 {
-    if (m_terms.size() == 1)
-        return m_terms.front().get_float();
-    else
-        return 0;
+    assert(is_float() && "expression is not float");
+    return m_terms.front().get_float();
 }
 
-const IntNum*
+IntNum
 Expr::get_intnum() const
 {
-    if (m_terms.size() == 1)
-        return m_terms.front().get_int();
-    else
-        return 0;
-}
-
-IntNum*
-Expr::get_intnum()
-{
-    if (m_terms.size() == 1)
-        return m_terms.front().get_int();
-    else
-        return 0;
+    assert(is_intnum() && "expression is not intnum");
+    return *m_terms.front().get_int();
 }
 
 SymbolRef
 Expr::get_symbol() const
 {
-    if (m_terms.size() == 1)
-        return m_terms.front().get_sym();
-    else
-        return SymbolRef(0);
+    assert(is_symbol() && "expression is not symbol");
+    return m_terms.front().get_sym();
 }
 
 const Register*
 Expr::get_reg() const
 {
-    if (m_terms.size() == 1)
-        return m_terms.front().get_reg();
-    else
-        return 0;
+    assert(is_reg() && "expression is not register");
+    return m_terms.front().get_reg();
 }
 
 std::ostream&

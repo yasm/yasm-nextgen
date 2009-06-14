@@ -226,10 +226,9 @@ X86General::finalize(Bytecode& bc)
             // second byte of the opcode and its ModRM byte is put in the third
             // byte of the opcode.
             Expr* abs;
-            IntNum* intn;
             if (!(abs = m_imm->get_abs()) ||
-                ((intn = m_imm->get_abs()->get_intnum()) &&
-                 intn->ok_size(32, 0, 1)))
+                (m_imm->get_abs()->is_intnum() &&
+                 m_imm->get_abs()->get_intnum().ok_size(32, 0, 1)))
             {
                 // Throwaway REX byte
                 unsigned char rex_temp = 0;

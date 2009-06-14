@@ -116,10 +116,9 @@ public:
     /// it's treated as a symbol (Symbol::use() is called to convert it).
     /// @param object       object
     /// @param line         virtual line
-    /// @return Expression, or NULL if the parameter cannot be
+    /// @return Expression; raises an exception if the parameter cannot be
     ///         converted to an expression.
-    /*@null@*/ std::auto_ptr<Expr> get_expr
-        (Object& object, unsigned long line) const;
+    Expr get_expr(Object& object, unsigned long line) const;
 
     /// Release value's expression.  Operates just like get_expr() but moves
     /// the expression instead of copying it.

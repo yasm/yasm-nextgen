@@ -30,7 +30,6 @@
 #include <vector>
 
 #include <yasmx/Support/marg_ostream_fwd.h>
-#include <yasmx/Support/scoped_ptr.h>
 #include <yasmx/AssocData.h>
 #include <yasmx/Bytes.h>
 #include <yasmx/IntNum.h>
@@ -83,7 +82,11 @@ public:
     void set_visibility(ElfSymbolVis vis) { m_vis = ELF_ST_VISIBILITY(vis); }
     void set_binding(ElfSymbolBinding bind) { m_bind = bind; }
     void set_type(ElfSymbolType type) { m_type = type; }
-    void set_size(std::auto_ptr<Expr> size, unsigned long line);
+    void set_size(const Expr& size, unsigned long line)
+    {
+        m_size = size;
+        m_size_line = line;
+    }
     void set_value(ElfAddress value) { m_value = value; }
     void set_symindex(ElfSymbolIndex symindex) { m_symindex = symindex; }
     ElfSymbolIndex get_symindex() const { return m_symindex; }
@@ -94,9 +97,8 @@ private:
     Section*            m_sect;
     ElfStringIndex      m_name_index;
     IntNum              m_value;
-    util::scoped_ptr<Expr> m_xsize;
     unsigned long       m_size_line;
-    IntNum              m_size;
+    Expr                m_size;
     ElfSectionIndex     m_index;
     ElfSymbolBinding    m_bind;
     ElfSymbolType       m_type;

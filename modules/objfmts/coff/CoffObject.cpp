@@ -245,14 +245,14 @@ Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
                 assert(get_common_size(*sym) != 0);
                 Expr csize_expr(*get_common_size(*sym));
                 simplify_calc_dist(csize_expr);
-                const IntNum* common_size = csize_expr.get_intnum();
-                if (!common_size)
+                if (!csize_expr.is_intnum())
                     throw TooComplexError(N_("coff: common size too complex"));
 
-                if (common_size->sign() < 0)
+                IntNum common_size = csize_expr.get_intnum();
+                if (common_size.sign() < 0)
                     throw ValueError(N_("coff: common size is negative"));
 
-                intn += *common_size;
+                intn += common_size;
             }
         }
         else if (!(vis & Symbol::EXTERN) && !m_objfmt.is_win64())
@@ -382,10 +382,9 @@ Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
 
     if (Expr* abs = value.get_abs())
     {
-        IntNum* intn2 = abs->get_intnum();
-        if (!intn2)
+        if (!abs->is_intnum())
             throw TooComplexError(N_("coff: relocation too complex"));
-        intn += *intn2;
+        intn += abs->get_intnum();
     }
 
     intn += dist;
@@ -748,84 +747,127 @@ CoffObject::append_section(const std::string& name, unsigned long line)
 
     return section;
 }
-#if 0
-/* GAS-style flags */
-static int
-coff_helper_gasflags(void *obj, yasm_valparam *vp, unsigned long line, void *d,
-                     /*@unused@*/ uintptr_t arg)
-{
-    struct coff_section_switch_data *data =
-        (struct coff_section_switch_data *)d;
-    int alloc = 0, load = 0, readonly = 0, code = 0, datasect = 0;
-    int shared = 0;
-    const char *s = yasm_vp_string(vp);
-    size_t i;
 
-    if (!s) {
-        yasm_error_set(YASM_ERROR_VALUE, N_("non-string section attribute"));
-        return -1;
+void
+CoffObject::dir_gas_section(Object& object,
+                            NameValues& nvs,
+                            NameValues& objext_nvs,
+                            unsigned long line)
+{
+    assert(&object == m_object);
+
+    if (!nvs.front().is_string())
+        throw Error(N_("section name must be a string"));
+    std::string sectname = nvs.front().get_string();
+
+    if (sectname.length() > 8 && !m_win32)
+    {
+        // win32 format supports >8 character section names in object
+        // files via "/nnnn" (where nnnn is decimal offset into string table),
+        // so only warn for regular COFF.
+        warn_set(WARN_GENERAL,
+                 N_("COFF section names limited to 8 characters: truncating"));
+        sectname.resize(8);
     }
 
-    // For GAS, default to read/write data
-    if (data->isdefault)
-        data->flags = COFF_STYP_TEXT | COFF_STYP_READ | COFF_STYP_WRITE;
+    Section* sect = m_object->find_section(sectname);
+    bool first = true;
+    if (sect)
+        first = sect->is_default();
+    else
+        sect = append_section(sectname, line);
 
-    for (i=0; i<strlen(s); i++)
+    CoffSection* coffsect = get_coff(*sect);
+    assert(coffsect != 0);
+
+    m_object->set_cur_section(sect);
+    sect->set_default(false);
+
+    // Default to read/write data
+    if (first)
     {
-        switch (s[i])
+        coffsect->m_flags =
+            CoffSection::TEXT | CoffSection::READ | CoffSection::WRITE;
+    }
+
+    // No flags, so nothing more to do
+    if (nvs.size() <= 1)
+        return;
+
+    // Section flags must be a string.
+    if (!nvs[1].is_string())
+        throw SyntaxError(N_("flag string expected"));
+
+    // Parse section flags
+    bool alloc = false, load = false, readonly = false, code = false;
+    bool datasect = false, shared = false;
+    std::string flagstr = nvs[1].get_string();
+
+    for (std::string::size_type i=0; i<flagstr.length(); ++i)
+    {
+        switch (flagstr[i])
         {
             case 'a':
                 break;
             case 'b':
-                alloc = 1;
-                load = 0;
+                alloc = true;
+                load = false;
                 break;
             case 'n':
-                load = 0;
+                load = false;
                 break;
             case 's':
-                shared = 1;
+                shared = true;
                 /*@fallthrough@*/
             case 'd':
-                datasect = 1;
-                load = 1;
-                readonly = 0;
+                datasect = true;
+                load = true;
+                readonly = false;
             case 'x':
-                code = 1;
-                load = 1;
+                code = true;
+                load = true;
                 break;
             case 'r':
-                datasect = 1;
-                load = 1;
-                readonly = 1;
+                datasect = true;
+                load = true;
+                readonly = true;
                 break;
             case 'w':
-                readonly = 0;
+                readonly = false;
                 break;
             default:
                 warn_set(WARN_GENERAL, String::compose(
-                    N_("unrecognized section attribute: `%1'"), s[i]));
+                    N_("unrecognized section attribute: `%1'"), flagstr[i]));
         }
     }
 
     if (code)
-        data->flags = COFF_STYP_TEXT | COFF_STYP_EXECUTE | COFF_STYP_READ;
+    {
+        coffsect->m_flags =
+            CoffSection::TEXT | CoffSection::EXECUTE | CoffSection::READ;
+    }
     else if (datasect)
-        data->flags = COFF_STYP_DATA | COFF_STYP_READ | COFF_STYP_WRITE;
+    {
+        coffsect->m_flags =
+            CoffSection::DATA | CoffSection::READ | CoffSection::WRITE;
+    }
     else if (readonly)
-        data->flags = COFF_STYP_DATA | COFF_STYP_READ;
+        coffsect->m_flags = CoffSection::DATA | CoffSection::READ;
     else if (load)
-        data->flags = COFF_STYP_TEXT;
+        coffsect->m_flags = CoffSection::TEXT;
     else if (alloc)
-        data->flags = COFF_STYP_BSS;
+        coffsect->m_flags = CoffSection::BSS;
 
     if (shared)
-        data->flags |= COFF_STYP_SHARED;
+        coffsect->m_flags |= CoffSection::SHARED;
 
-    data->gasflags = 1;
-    return 0;
+    sect->set_bss((coffsect->m_flags & CoffSection::BSS) != 0);
+    sect->set_code((coffsect->m_flags & CoffSection::EXECUTE) != 0);
+
+    if (!m_win32)
+        coffsect->m_flags &= ~CoffSection::WIN32_MASK;
 }
-#endif
+
 void
 CoffObject::dir_section_init_helpers(DirHelpers& helpers,
                                      CoffSection* coffsect,
@@ -967,7 +1009,7 @@ CoffObject::add_directives(Directives& dirs, const std::string& parser)
     };
     static const Directives::Init<CoffObject> gas_dirs[] =
     {
-        {".section", &CoffObject::dir_section, Directives::ARG_REQUIRED},
+        {".section", &CoffObject::dir_gas_section, Directives::ARG_REQUIRED},
         {".ident",   &CoffObject::dir_ident, Directives::ANY},
     };
 

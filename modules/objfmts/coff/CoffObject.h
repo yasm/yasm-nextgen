@@ -122,6 +122,10 @@ private:
 
     CoffSymbol* m_file_coffsym;     // Data for .file symbol
 
+    void dir_gas_section(Object& object,
+                         NameValues& namevals,
+                         NameValues& objext_namevals,
+                         unsigned long line);
     void dir_section(Object& object,
                      NameValues& namevals,
                      NameValues& objext_namevals,

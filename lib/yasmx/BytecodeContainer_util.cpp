@@ -66,9 +66,9 @@ append_data(BytecodeContainer& container,
             unsigned long line)
 {
     expr->simplify();
-    if (IntNum* intn = expr->get_intnum())
+    if (expr->is_intnum())
     {
-        append_data(container, *intn, size, arch);
+        append_data(container, expr->get_intnum(), size, arch);
         return;
     }
     Bytecode& bc = container.fresh_bytecode();

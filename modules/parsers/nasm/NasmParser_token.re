@@ -60,9 +60,6 @@ namespace nasm
 #define TOKLEN          (cursor-TOK)
 
 
-// starting size of string buffer
-#define STRBUF_ALLOC_SIZE       128
-
 static int linechg_numcount;
 
 /*!re2c

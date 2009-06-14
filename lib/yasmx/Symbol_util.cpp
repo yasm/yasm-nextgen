@@ -78,16 +78,16 @@ class CommonSize : public AssocData
 public:
     static const char* key;
 
-    CommonSize(std::auto_ptr<Expr> e) : m_expr(e.release()) {}
+    CommonSize(const Expr& e) : m_expr(e) {}
     ~CommonSize();
 
     void put(marg_ostream& os) const;
 
-    const Expr* get() const { return m_expr.get(); }
-    Expr* get() { return m_expr.get(); }
+    const Expr* get() const { return &m_expr; }
+    Expr* get() { return &m_expr; }
 
 private:
-    util::scoped_ptr<Expr> m_expr;
+    Expr m_expr;
 };
 
 const char* CommonSize::key = "CommonSize";
@@ -99,7 +99,7 @@ CommonSize::~CommonSize()
 void
 CommonSize::put(marg_ostream& os) const
 {
-    os << "Common Size=" << *m_expr << '\n';
+    os << "Common Size=" << m_expr << '\n';
 }
 
 } // anonymous namespace
@@ -135,7 +135,7 @@ get_objext_namevals(Symbol& sym)
 }
 
 void
-set_common_size(Symbol& sym, std::auto_ptr<Expr> common_size)
+set_common_size(Symbol& sym, const Expr& common_size)
 {
     std::auto_ptr<AssocData> ad(new CommonSize(common_size));
     sym.add_assoc_data(CommonSize::key, ad);
