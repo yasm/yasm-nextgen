@@ -110,6 +110,13 @@ public:
     /// @param name         directive name
     Directive operator[] (const std::string& name) const;
 
+    /// Get a directive functor.  Returns false if no match.
+    /// @param handler      directive handler (returned)
+    /// @param name         directive name
+    /// @return True if directive exists, and handler is set to the
+    ///         matching handler.
+    bool get(Directive* handler, const std::string& name) const;
+
 private:
     /// Pimpl for class internals.
     class Impl;

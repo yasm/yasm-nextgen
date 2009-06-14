@@ -86,13 +86,23 @@ Directives::add(const char* name, Directive handler, Flags flags)
 Directive
 Directives::operator[] (const std::string& name) const
 {
-    Impl::DirMap::iterator p = m_impl->m_dirs.find(String::lowercase(name));
-    if (p == m_impl->m_dirs.end())
+    Directive rv;
+    if (!get(&rv, name))
         throw ValueError(String::compose(N_("unrecognized directive `%1'"),
                                          name));
+    return rv;
+}
 
-    return BIND::bind(&Impl::Dir::operator(), REF::ref(p->second),
+bool
+Directives::get(Directive* dir, const std::string& name) const
+{
+    Impl::DirMap::iterator p = m_impl->m_dirs.find(String::lowercase(name));
+    if (p == m_impl->m_dirs.end())
+        return false;
+
+    *dir = BIND::bind(&Impl::Dir::operator(), REF::ref(p->second),
                       _1, name, _2, _3, _4);
+    return true;
 }
 
 void
