@@ -46,35 +46,55 @@ AssocDataContainer::~AssocDataContainer()
 {
     for (AssocMap::iterator i=m_assoc_map.begin(), end=m_assoc_map.end();
          i != end; ++i)
-        delete i->second;
+        delete i->value;
 }
 
 std::auto_ptr<AssocData>
 AssocDataContainer::add_assoc_data(const void* key,
                                    std::auto_ptr<AssocData> data)
 {
-    AssocData*& x = m_assoc_map[key];
-    std::auto_ptr<AssocData> rv(x);
-    x = data.release();
-    return rv;
+    // simple linear search
+    for (AssocMap::iterator i=m_assoc_map.begin(), end=m_assoc_map.end();
+         i != end; ++i)
+    {
+        if (i->key == key)
+        {
+            std::auto_ptr<AssocData> rv(i->value);
+            i->value = data.release();
+            return rv;
+        }
+    }
+
+    // not found, insert at end
+    AssocMapEntry entry = {key, data.release()};
+    m_assoc_map.push_back(entry);
+    return std::auto_ptr<AssocData>(0);
 }
 
 AssocData*
 AssocDataContainer::get_assoc_data(const void* key)
 {
-    AssocMap::iterator i = m_assoc_map.find(key);
-    if (i == m_assoc_map.end())
-        return 0;
-    return i->second;
+    // simple linear search
+    for (AssocMap::iterator i=m_assoc_map.begin(), end=m_assoc_map.end();
+         i != end; ++i)
+    {
+        if (i->key == key)
+            return i->value;
+    }
+    return 0;
 }
 
 const AssocData*
 AssocDataContainer::get_assoc_data(const void* key) const
 {
-    AssocMap::const_iterator i = m_assoc_map.find(key);
-    if (i == m_assoc_map.end())
-        return 0;
-    return i->second;
+    // simple linear search
+    for (AssocMap::const_iterator i=m_assoc_map.begin(), end=m_assoc_map.end();
+         i != end; ++i)
+    {
+        if (i->key == key)
+            return i->value;
+    }
+    return 0;
 }
 
 marg_ostream&
@@ -83,7 +103,7 @@ operator<< (marg_ostream& os, const AssocDataContainer& container)
     for (AssocDataContainer::AssocMap::const_iterator
          i=container.m_assoc_map.begin(), end=container.m_assoc_map.end();
          i != end; ++i)
-        os << *i->second;
+        os << *i->value;
     return os;
 }
 

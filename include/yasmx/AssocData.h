@@ -29,10 +29,10 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <map>
 #include <memory>
 #include <string>
 
+#include "llvm/ADT/SmallVector.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/marg_ostream_fwd.h"
 
@@ -69,7 +69,12 @@ class YASM_LIB_EXPORT AssocDataContainer
     friend marg_ostream& operator<< (marg_ostream& os,
                                      const AssocDataContainer& container);
 
-    typedef std::map<const void*, AssocData*> AssocMap;
+    struct AssocMapEntry
+    {
+        const void* key;
+        AssocData* value;
+    };
+    typedef llvm::SmallVector<AssocMapEntry, 1> AssocMap;
     AssocMap m_assoc_map;
 
 public:
