@@ -28,8 +28,7 @@
 
 #include "util.h"
 
-#include <map>
-
+#include "llvm/ADT/StringMap.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Expr.h"
@@ -46,8 +45,7 @@ public:
     Impl() {}
     ~Impl() {}
 
-    typedef std::map<std::string, FUNCTION::function<void (NameValue&)> >
-        HelperMap;
+    typedef llvm::StringMap<FUNCTION::function<void (NameValue&)> > HelperMap;
     HelperMap m_value_helpers, m_novalue_helpers;
 };
 
@@ -65,9 +63,9 @@ DirHelpers::add(const char* name, bool needsvalue,
                 FUNCTION::function<void (NameValue&)> helper)
 {
     if (needsvalue)
-        m_impl->m_value_helpers.insert(std::make_pair(name, helper));
+        m_impl->m_value_helpers[name] = helper;
     else
-        m_impl->m_novalue_helpers.insert(std::make_pair(name, helper));
+        m_impl->m_novalue_helpers[name] = helper;
 }
 
 bool
