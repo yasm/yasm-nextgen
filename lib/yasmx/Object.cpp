@@ -30,7 +30,6 @@
 
 #include <algorithm>
 #include <list>
-#include <map>
 #include <memory>
 #include <queue>
 #include <vector>
