@@ -608,20 +608,22 @@ BinObject::get_dbgfmt_keywords() const
 void
 BinObject::add_directives(Directives& dirs, const std::string& parser)
 {
-    if (!String::nocase_equal(parser, "nasm"))
-        return;
-    dirs.add("section",
-             BIND::bind(&BinObject::dir_section, this, _1, _2, _3, _4),
-             Directives::ARG_REQUIRED);
-    dirs.add("segment",
-             BIND::bind(&BinObject::dir_section, this, _1, _2, _3, _4),
-             Directives::ARG_REQUIRED);
-    dirs.add("org",
-             BIND::bind(&BinObject::dir_org, this, _1, _2, _3, _4),
-             Directives::ARG_REQUIRED);
-    dirs.add("map",
-             BIND::bind(&BinObject::dir_map, this, _1, _2, _3, _4),
-             Directives::ANY);
+    static const Directives::Init<BinObject> nasm_dirs[] =
+    {
+        {"section", &BinObject::dir_section, Directives::ARG_REQUIRED},
+        {"segment", &BinObject::dir_section, Directives::ARG_REQUIRED},
+        {"org",     &BinObject::dir_org, Directives::ARG_REQUIRED},
+        {"map",     &BinObject::dir_map, Directives::ANY},
+    };
+    static const Directives::Init<BinObject> gas_dirs[] =
+    {
+        {".section", &BinObject::dir_section, Directives::ARG_REQUIRED},
+    };
+
+    if (String::nocase_equal(parser, "nasm"))
+        dirs.add_array(this, nasm_dirs, NELEMS(nasm_dirs));
+    else if (String::nocase_equal(parser, "gas"))
+        dirs.add_array(this, gas_dirs, NELEMS(gas_dirs));
 }
 
 void
