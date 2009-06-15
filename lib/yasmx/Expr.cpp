@@ -182,7 +182,7 @@ ExprTerm::ExprTerm(const ExprTerm& term)
         tmp.swap(static_cast<IntNum&>(m_data.intn));
     }
     else if (m_type == FLOAT)
-        m_data.flt = new llvm::APFloat(*m_data.flt);
+        m_data.flt = new llvm::APFloat(*term.m_data.flt);
     else
         m_data = term.m_data;
 }
