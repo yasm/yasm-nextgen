@@ -173,12 +173,18 @@ ExprTerm::ExprTerm(std::auto_ptr<llvm::APFloat> flt, int depth)
 }
 
 ExprTerm::ExprTerm(const ExprTerm& term)
-    : m_data(term.m_data), m_type(term.m_type), m_depth(term.m_depth)
+    : m_type(term.m_type), m_depth(term.m_depth)
 {
     if (m_type == INT)
-        m_data.intn = IntNum(static_cast<const IntNum&>(m_data.intn));
+    {
+        m_data.intn.m_type = IntNumData::INTNUM_L;
+        IntNum tmp(static_cast<const IntNum&>(term.m_data.intn));
+        tmp.swap(static_cast<IntNum&>(m_data.intn));
+    }
     else if (m_type == FLOAT)
         m_data.flt = new llvm::APFloat(*m_data.flt);
+    else
+        m_data = term.m_data;
 }
 
 void
