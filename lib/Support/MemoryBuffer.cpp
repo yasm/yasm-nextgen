@@ -14,13 +14,14 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/System/Path.h"
-#include "llvm/System/Process.h"
-#include "llvm/System/Program.h"
+//#include "llvm/System/Path.h"
+//#include "llvm/System/Process.h"
+//#include "llvm/System/Program.h"
 #include <cassert>
 #include <cstdio>
 #include <cstring>
 #include <cerrno>
+#include <vector>
 #include <sys/types.h>
 #include <sys/stat.h>
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
@@ -152,6 +153,7 @@ MemoryBuffer *MemoryBuffer::getFileOrSTDIN(const char *Filename,
 //===----------------------------------------------------------------------===//
 
 namespace {
+#if 0
 /// MemoryBufferMMapFile - This represents a file that was mapped in with the
 /// sys::Path::MapInFilePages method.  When destroyed, it calls the
 /// sys::Path::UnMapFilePages method.
@@ -171,6 +173,7 @@ public:
     sys::Path::UnMapFilePages(getBufferStart(), getBufferSize());
   }
 };
+#endif
 }
 
 MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
@@ -199,6 +202,7 @@ MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
   }
   
   
+#if 0
   // If the file is large, try to use mmap to read it in.  We don't use mmap
   // for small files, because this can severely fragment our address space. Also
   // don't try to map files that are exactly a multiple of the system page size,
@@ -211,6 +215,7 @@ MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
       return new MemoryBufferMMapFile(Filename, Pages, FileSize);
     }
   }
+#endif
 
   MemoryBuffer *Buf = MemoryBuffer::getNewUninitMemBuffer(FileSize, Filename);
   if (!Buf) {
@@ -262,7 +267,9 @@ MemoryBuffer *MemoryBuffer::getSTDIN() {
   std::vector<char> FileData;
 
   // Read in all of the data from stdin, we cannot mmap stdin.
+#if 0
   sys::Program::ChangeStdinToBinary();
+#endif
   size_t ReadBytes;
   do {
     ReadBytes = fread(Buffer, sizeof(char), sizeof(Buffer), stdin);

@@ -9,6 +9,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     Support/Debug.cpp
     Support/FoldingSet.cpp
     Support/raw_ostream.cpp
+    Support/MemoryBuffer.cpp
     Support/Streams.cpp
     Support/StringExtras.cpp
     Support/StringMap.cpp
