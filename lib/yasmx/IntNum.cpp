@@ -31,6 +31,7 @@
 
 #include <cctype>
 #include <climits>
+#include <cstdlib>
 #include <cstring>
 
 #include "llvm/ADT/SmallString.h"
@@ -157,8 +158,21 @@ IntNum::set_str(const char* str, unsigned int len, int base)
             N_("Numeric constant too large for internal format"));
     }
 
-    conv_bv.fromString(str, len, base);
-    set_bv(conv_bv);
+    if (minbits < LONG_BITS)
+    {
+        // shortcut "short" case
+        long v;
+        char cstr[LONG_BITS+1];
+        std::strncpy(cstr, str, len);   // len must be < LONG_BITS per minbits
+        cstr[len] = '\0';
+        v = std::strtol(cstr, NULL, base);
+        set(v);
+    }
+    else
+    {
+        conv_bv.fromString(str, len, base);
+        set_bv(conv_bv);
+    }
 }
 
 IntNum::IntNum(const IntNum& rhs)
