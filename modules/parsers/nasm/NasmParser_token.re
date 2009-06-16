@@ -62,13 +62,25 @@ namespace nasm
 
 static int linechg_numcount;
 
+static int
+strip_uscore(char* tok, int toklen)
+{
+    int outlen = 0;
+    for (int i=0; i<toklen; ++i)
+    {
+        if (tok[i] != '_')
+            tok[outlen++] = tok[i];
+    }
+    return outlen;
+}
+
 /*!re2c
   any = [\001-\377];
   digit = [0-9];
   iletter = [a-zA-Z];
-  bindigit = [01_];
-  octdigit = [0-7_];
-  hexdigit = [0-9a-fA-F_];
+  bindigit = [01];
+  octdigit = [0-7];
+  hexdigit = [0-9a-fA-F];
   ws = [ \t\r];
   quot = ["'];
 */
@@ -153,44 +165,128 @@ scan:
             lvalp->intn->set_str(TOK, TOKLEN, 10);
             RETURN(INTNUM);
         }
-        /* 10010011b - binary number */
 
+        /* 10010011b - binary number */
+        [01] bindigit* ("_" bindigit*)+ 'b'
+        {
+            // strip underscores and leading 0s
+            int outlen = strip_uscore(TOK, TOKLEN-1);   // strip 'b'
+            while (*TOK == '0' && outlen > 1)
+            {
+                ++TOK;
+                --outlen;
+            }
+            lvalp->intn.reset(new IntNum);
+            lvalp->intn->set_str(TOK, outlen, 2);
+            RETURN(INTNUM);
+        }
         [01] bindigit* 'b'
         {
+            // strip leading 0s
+            while (*TOK == '0' && TOKLEN > 2)
+                ++TOK;
             lvalp->intn.reset(new IntNum);
             lvalp->intn->set_str(TOK, TOKLEN-1, 2);     // strip 'b'
             RETURN(INTNUM);
         }
 
         /* 777q or 777o - octal number */
+        [0-7] octdigit* ("_" octdigit*)+ [qQoO]
+        {
+            // strip underscores and leading 0s
+            int outlen = strip_uscore(TOK, TOKLEN-1);   // strip 'o'/'q'
+            while (*TOK == '0' && outlen > 1)
+            {
+                ++TOK;
+                --outlen;
+            }
+            lvalp->intn.reset(new IntNum);
+            lvalp->intn->set_str(TOK, outlen, 8);
+            RETURN(INTNUM);
+        }
         [0-7] octdigit* [qQoO]
         {
+            // strip leading 0s
+            while (*TOK == '0' && TOKLEN > 2)
+                ++TOK;
             lvalp->intn.reset(new IntNum);
             lvalp->intn->set_str(TOK, TOKLEN-1, 8);     // strip 'o'/'q'
             RETURN(INTNUM);
         }
 
         /* 0AAh form of hexidecimal number */
+        digit hexdigit* ("_" hexdigit*)+ 'h'
+        {
+            // strip underscores and leading 0s
+            int outlen = strip_uscore(TOK, TOKLEN-1);   // strip 'h'
+            while (*TOK == '0' && outlen > 1)
+            {
+                ++TOK;
+                --outlen;
+            }
+            lvalp->intn.reset(new IntNum);
+            lvalp->intn->set_str(TOK, outlen, 16);
+            RETURN(INTNUM);
+        }
         digit hexdigit* 'h'
         {
+            // strip leading 0s
+            while (*TOK == '0' && TOKLEN > 2)
+                ++TOK;
             lvalp->intn.reset(new IntNum);
             lvalp->intn->set_str(TOK, TOKLEN-1, 16);    // strip 'h'
             RETURN(INTNUM);
         }
 
         /* $0AA form of hexidecimal number */
+        "$" digit hexdigit* ("_" hexdigit*)+
+        {
+            ++TOK;  // skip $
+            // strip underscores and leading 0s
+            int outlen = strip_uscore(TOK, TOKLEN);
+            while (*TOK == '0' && outlen > 1)
+            {
+                ++TOK;
+                --outlen;
+            }
+            lvalp->intn.reset(new IntNum);
+            lvalp->intn->set_str(TOK, outlen, 16);
+            RETURN(INTNUM);
+        }
         "$" digit hexdigit+
         {
+            ++TOK;  // skip $
+            // strip leading 0s
+            while (*TOK == '0' && TOKLEN > 1)
+                ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK+1, TOKLEN-1, 16);  // skip $
+            lvalp->intn->set_str(TOK, TOKLEN, 16);
             RETURN(INTNUM);
         }
 
         /* 0xAA form of hexidecimal number */
+        '0x' hexdigit+ ("_" hexdigit*)+
+        {
+            TOK += 2;  // skip 0x
+            // strip underscores and leading 0s
+            int outlen = strip_uscore(TOK, TOKLEN);
+            while (*TOK == '0' && outlen > 1)
+            {
+                ++TOK;
+                --outlen;
+            }
+            lvalp->intn.reset(new IntNum);
+            lvalp->intn->set_str(TOK, outlen, 16);
+            RETURN(INTNUM);
+        }
         '0x' hexdigit+
         {
+            TOK += 2;  // skip 0x
+            // strip leading 0s
+            while (*TOK == '0' && TOKLEN > 1)
+                ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK+2, TOKLEN-2, 16);  // skip 0x
+            lvalp->intn->set_str(TOK, TOKLEN, 16);
             RETURN(INTNUM);
         }
 
@@ -607,44 +703,128 @@ directive2:
             lvalp->intn->set_str(TOK, TOKLEN, 10);
             RETURN(INTNUM);
         }
-        /* 10010011b - binary number */
 
+        /* 10010011b - binary number */
+        [01] bindigit* ("_" bindigit*)+ 'b'
+        {
+            // strip underscores and leading 0s
+            int outlen = strip_uscore(TOK, TOKLEN-1);   // strip 'b'
+            while (*TOK == '0' && outlen > 1)
+            {
+                ++TOK;
+                --outlen;
+            }
+            lvalp->intn.reset(new IntNum);
+            lvalp->intn->set_str(TOK, outlen, 2);
+            RETURN(INTNUM);
+        }
         [01] bindigit* 'b'
         {
+            // strip leading 0s
+            while (*TOK == '0' && TOKLEN > 2)
+                ++TOK;
             lvalp->intn.reset(new IntNum);
             lvalp->intn->set_str(TOK, TOKLEN-1, 2);     // strip 'b'
             RETURN(INTNUM);
         }
 
         /* 777q or 777o - octal number */
+        [0-7] octdigit* ("_" octdigit*)+ [qQoO]
+        {
+            // strip underscores and leading 0s
+            int outlen = strip_uscore(TOK, TOKLEN-1);   // strip 'o'/'q'
+            while (*TOK == '0' && outlen > 1)
+            {
+                ++TOK;
+                --outlen;
+            }
+            lvalp->intn.reset(new IntNum);
+            lvalp->intn->set_str(TOK, outlen, 8);
+            RETURN(INTNUM);
+        }
         [0-7] octdigit* [qQoO]
         {
+            // strip leading 0s
+            while (*TOK == '0' && TOKLEN > 2)
+                ++TOK;
             lvalp->intn.reset(new IntNum);
             lvalp->intn->set_str(TOK, TOKLEN-1, 8);     // strip 'o'/'q'
             RETURN(INTNUM);
         }
 
         /* 0AAh form of hexidecimal number */
+        digit hexdigit* ("_" hexdigit*)+ 'h'
+        {
+            // strip underscores and leading 0s
+            int outlen = strip_uscore(TOK, TOKLEN-1);   // strip 'h'
+            while (*TOK == '0' && outlen > 1)
+            {
+                ++TOK;
+                --outlen;
+            }
+            lvalp->intn.reset(new IntNum);
+            lvalp->intn->set_str(TOK, outlen, 16);
+            RETURN(INTNUM);
+        }
         digit hexdigit* 'h'
         {
+            // strip leading 0s
+            while (*TOK == '0' && TOKLEN > 2)
+                ++TOK;
             lvalp->intn.reset(new IntNum);
             lvalp->intn->set_str(TOK, TOKLEN-1, 16);    // strip 'h'
             RETURN(INTNUM);
         }
 
         /* $0AA form of hexidecimal number */
+        "$" digit hexdigit* ("_" hexdigit*)+
+        {
+            ++TOK;  // skip $
+            // strip underscores and leading 0s
+            int outlen = strip_uscore(TOK, TOKLEN);
+            while (*TOK == '0' && outlen > 1)
+            {
+                ++TOK;
+                --outlen;
+            }
+            lvalp->intn.reset(new IntNum);
+            lvalp->intn->set_str(TOK, outlen, 16);
+            RETURN(INTNUM);
+        }
         "$" digit hexdigit+
         {
+            ++TOK;  // skip $
+            // strip leading 0s
+            while (*TOK == '0' && TOKLEN > 1)
+                ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK+1, TOKLEN-1, 16);  // skip $
+            lvalp->intn->set_str(TOK, TOKLEN, 16);
             RETURN(INTNUM);
         }
 
         /* 0xAA form of hexidecimal number */
+        '0x' hexdigit+ ("_" hexdigit*)+
+        {
+            TOK += 2;  // skip 0x
+            // strip underscores and leading 0s
+            int outlen = strip_uscore(TOK, TOKLEN);
+            while (*TOK == '0' && outlen > 1)
+            {
+                ++TOK;
+                --outlen;
+            }
+            lvalp->intn.reset(new IntNum);
+            lvalp->intn->set_str(TOK, outlen, 16);
+            RETURN(INTNUM);
+        }
         '0x' hexdigit+
         {
+            TOK += 2;  // skip 0x
+            // strip leading 0s
+            while (*TOK == '0' && TOKLEN > 1)
+                ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK+2, TOKLEN-2, 16);  // skip 0x
+            lvalp->intn->set_str(TOK, TOKLEN, 16);
             RETURN(INTNUM);
         }
 
