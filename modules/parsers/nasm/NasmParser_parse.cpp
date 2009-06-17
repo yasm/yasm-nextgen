@@ -56,50 +56,8 @@ namespace parser
 namespace nasm
 {
 
-inline bool
-is_eol_tok(int tok)
-{
-    return (tok == 0);
-}
-
-void
-NasmParser::get_peek_token()
-{
-    char savech = m_tokch;
-    assert(m_peek_token == NONE && "only can have one token of lookahead");
-    m_peek_token = lex(&m_peek_tokval);
-    m_peek_tokch = m_tokch;
-    m_tokch = savech;
-}
-
-void
-NasmParser::demand_eol_nothrow()
-{
-    if (is_eol())
-        return;
-
-    do {
-        get_next_token();
-    } while (!is_eol());
-}
-
-void
-NasmParser::demand_eol()
-{
-    if (is_eol())
-        return;
-
-    char tokch = m_tokch;
-    demand_eol_nothrow();
-
-    throw SyntaxError(String::compose(
-        N_("junk at end of line, first unrecognized character is `%1'"),
-        tokch));
-
-}
-
-static const char*
-describe_token(int token)
+const char*
+NasmParser::describe_token(int token)
 {
     static char strch[] = "` '";
     const char *str;
@@ -144,15 +102,6 @@ describe_token(int token)
     }
 
     return str;
-}
-
-void
-NasmParser::expect(int token)
-{
-    if (m_token == token)
-        return;
-
-    throw ParseError(String::compose("expected %1", describe_token(token)));
 }
 
 void
