@@ -73,21 +73,11 @@ NasmParser::parse(Object& object,
                   Linemap& linemap,
                   Errwarns& errwarns)
 {
-    m_object = &object;
-    m_preproc = &preproc;
-    m_dirs = &dirs;
-    m_linemap = &linemap;
-    m_errwarns = &errwarns;
-    m_arch = object.get_arch();
-    m_wordsize = m_arch->get_wordsize();
+    init_mixin(object, preproc, save_input, dirs, linemap, errwarns);
 
     m_locallabel_base = "";
 
     m_bc = 0;
-
-    m_save_input = save_input;
-
-    m_peek_token = NONE;
 
     m_absstart.clear();
     m_abspos.clear();

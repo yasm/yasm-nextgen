@@ -34,6 +34,7 @@
 #include <string>
 #include <vector>
 
+#include <yasmx/Mixin/ParserMixin.h>
 #include <yasmx/Support/ptr_vector.h>
 #include <yasmx/Insn.h>
 #include <yasmx/Linemap.h>
@@ -59,26 +60,6 @@ namespace gas
 {
 
 #define YYCTYPE         char
-
-#define MAX_SAVED_LINE_LEN  80
-
-enum TokenType
-{
-    INTNUM = 258,
-    FLTNUM,
-    STRING,
-    REG,
-    REGGROUP,
-    SEGREG,
-    TARGETMOD,
-    LEFT_OP,
-    RIGHT_OP,
-    ID,
-    LABEL,
-    CPP_LINE_MARKER,
-    NASM_LINE_MARKER,
-    NONE                // special token for lookahead
-};
 
 struct yystype
 {
@@ -116,8 +97,6 @@ struct GasRept
     size_t oldbufpos;           // position in previous fill buffer
 };
 
-bool is_eol_tok(int tok);
-
 class GasParser;
 struct GasDirLookup
 {
@@ -126,7 +105,9 @@ struct GasDirLookup
     unsigned int param;
 };
 
-class GasParser : public Parser
+class GasParser
+    : public Parser
+    , public ParserMixin<GasParser, YYSTYPE, YYCTYPE>
 {
 public:
     GasParser();
@@ -146,30 +127,33 @@ public:
                Linemap& linemap,
                Errwarns& errwarns);
 
-private:
-    unsigned long get_cur_line() const { return m_linemap->get_current(); }
+    enum TokenType
+    {
+        INTNUM = 258,
+        FLTNUM,
+        STRING,
+        REG,
+        REGGROUP,
+        SEGREG,
+        TARGETMOD,
+        LEFT_OP,
+        RIGHT_OP,
+        ID,
+        LABEL,
+        CPP_LINE_MARKER,
+        NASM_LINE_MARKER,
+        NONE                // special token for lookahead
+    };
+
+    static bool is_eol_tok(int tok)
+    {
+        return (tok == '\n' || tok == ';' || tok == 0);
+    }
+    static const char* describe_token(int tok);
 
     int lex(YYSTYPE* lvalp);
-    void fill(YYCTYPE* &cursor);
-    size_t fill_input(unsigned char* buf, size_t max);
-    YYCTYPE* save_line(YYCTYPE* cursor);
 
-    int get_next_token()
-    {
-        m_token = lex(&m_tokval);
-        return m_token;
-    }
-    void get_peek_token();
-    bool is_eol() { return is_eol_tok(m_token); }
-
-    // Eat all remaining tokens to EOL, discarding all of them.
-    void demand_eol_nothrow();
-
-    // Eat all remaining tokens to EOL, discarding all of them.  If there's any
-    // intervening tokens, generates an error (junk at end of line).
-    void demand_eol();
-
-    void expect(int token);
+private:
 
     void parse_line();
     void debug_file(NameValues& nvs);
@@ -218,16 +202,6 @@ private:
 
     void do_parse();
 
-    Object* m_object;
-    BytecodeContainer* m_container;
-    Preprocessor *m_preproc;
-    Directives* m_dirs;
-    Linemap* m_linemap;
-    Errwarns* m_errwarns;
-
-    Arch* m_arch;
-    unsigned int m_wordsize;
-
     GasDirLookup m_sized_gas_dirs[1];
     typedef std::map<std::string, const GasDirLookup*> GasDirMap;
     GasDirMap m_gas_dirs;
@@ -249,10 +223,6 @@ private:
     // Have we seen a line marker?
     bool m_seen_line_marker;
 
-    bool m_save_input;
-
-    YYCTYPE *m_bot, *m_tok, *m_ptr, *m_cur, *m_lim;
-
     enum State
     {
         INITIAL,
@@ -260,15 +230,6 @@ private:
         SECTION_DIRECTIVE,
         NASM_FILENAME
     } m_state;
-
-    int m_token;        // enum TokenType or any character
-    yystype m_tokval;
-    char m_tokch;       // first character of token
-
-    // one token of lookahead; used sparingly
-    int m_peek_token;   // NONE if none
-    yystype m_peek_tokval;
-    char m_peek_tokch;
 
     stdx::ptr_vector<GasRept> m_rept;
     stdx::ptr_vector_owner<GasRept> m_rept_owner;

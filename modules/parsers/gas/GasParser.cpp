@@ -140,13 +140,7 @@ GasParser::parse(Object& object,
                  Linemap& linemap,
                  Errwarns& errwarns)
 {
-    m_object = &object;
-    m_preproc = &preproc;
-    m_dirs = &dirs;
-    m_linemap = &linemap;
-    m_errwarns = &errwarns;
-    m_arch = object.get_arch();
-    m_wordsize = m_arch->get_wordsize();
+    init_mixin(object, preproc, save_input, dirs, linemap, errwarns);
 
     m_locallabel_base = "";
 
@@ -154,10 +148,6 @@ GasParser::parse(Object& object,
     m_dir_file.clear();
     m_dir_line = 0;
     m_seen_line_marker = false;
-
-    m_save_input = save_input;
-
-    m_peek_token = NONE;
 
     m_state = INITIAL;
 

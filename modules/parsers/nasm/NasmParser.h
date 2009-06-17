@@ -28,6 +28,7 @@
 //
 #include <memory>
 
+#include <yasmx/Mixin/ParserMixin.h>
 #include <yasmx/Support/scoped_ptr.h>
 #include <yasmx/Bytecode.h>
 #include <yasmx/FloatNum.h>
@@ -55,45 +56,6 @@ namespace nasm
 
 #define YYCTYPE char
 
-#define MAX_SAVED_LINE_LEN  80
-
-enum TokenType
-{
-    INTNUM = 258,
-    FLTNUM,
-    DIRECTIVE_NAME,
-    FILENAME,
-    STRING,
-    SIZE_OVERRIDE,
-    DECLARE_DATA,
-    RESERVE_SPACE,
-    INCBIN,
-    EQU,
-    TIMES,
-    SEG,
-    WRT,
-    ABS,
-    REL,
-    NOSPLIT,
-    STRICT,
-    INSN,
-    PREFIX,
-    REG,
-    SEGREG,
-    TARGETMOD,
-    LEFT_OP,
-    RIGHT_OP,
-    SIGNDIV,
-    SIGNMOD,
-    START_SECTION_ID,
-    ID,
-    LOCAL_ID,
-    SPECIAL_ID,
-    NONLOCAL_ID,
-    LINE,
-    NONE                // special token for lookahead
-};
-
 struct yystype
 {
     std::string str;
@@ -111,9 +73,9 @@ struct yystype
 };
 #define YYSTYPE yystype
 
-bool is_eol_tok(int tok);
-
-class NasmParser : public Parser
+class NasmParser
+    : public Parser
+    , public ParserMixin<NasmParser, YYSTYPE, YYCTYPE>
 {
 public:
     NasmParser();
@@ -133,7 +95,43 @@ public:
                Linemap& linemap,
                Errwarns& errwarns);
 
-private:
+    enum TokenType
+    {
+        INTNUM = 258,
+        FLTNUM,
+        DIRECTIVE_NAME,
+        FILENAME,
+        STRING,
+        SIZE_OVERRIDE,
+        DECLARE_DATA,
+        RESERVE_SPACE,
+        INCBIN,
+        EQU,
+        TIMES,
+        SEG,
+        WRT,
+        ABS,
+        REL,
+        NOSPLIT,
+        STRICT,
+        INSN,
+        PREFIX,
+        REG,
+        SEGREG,
+        TARGETMOD,
+        LEFT_OP,
+        RIGHT_OP,
+        SIGNDIV,
+        SIGNMOD,
+        START_SECTION_ID,
+        ID,
+        LOCAL_ID,
+        SPECIAL_ID,
+        NONLOCAL_ID,
+        LINE,
+        NONE                // special token for lookahead
+    };
+
     enum ExprType
     {
         NORM_EXPR,
@@ -141,32 +139,14 @@ private:
         DV_EXPR         // Can't have registers anywhere
     };
 
-    unsigned long get_cur_line() const { return m_linemap->get_current(); }
+    static bool is_eol_tok(int tok) { return (tok == 0); }
+    static const char* describe_token(int tok);
 
+    int lex(YYSTYPE* lvalp);
+
+private:
     int handle_dot_label(YYSTYPE* lvalp, YYCTYPE* tok, size_t toklen,
                          size_t zeropos);
-    int lex(YYSTYPE* lvalp);
-    void fill(YYCTYPE* &cursor);
-    size_t fill_input(unsigned char* buf, size_t max);
-    YYCTYPE* save_line(YYCTYPE* cursor);
-
-    int get_next_token()
-    {
-        m_token = lex(&m_tokval);
-        return m_token;
-    }
-    void get_peek_token();
-    bool is_eol() { return is_eol_tok(m_token); }
-
-    // Eat all remaining tokens to EOL, discarding all of them.
-    void demand_eol_nothrow();
-
-    // Eat all remaining tokens to EOL, discarding all of them.  If there's any
-    // intervening tokens, generates an error (junk at end of line).
-    void demand_eol();
-
-    void expect(int token);
-
     void define_label(const std::string& name, bool local);
 
     void do_parse();
@@ -207,24 +187,10 @@ private:
                    NameValues& namevals,
                    NameValues& objext_namevals);
 
-    Object* m_object;
-    BytecodeContainer* m_container;
-    Preprocessor* m_preproc;
-    Directives* m_dirs;
-    Linemap* m_linemap;
-    Errwarns* m_errwarns;
-
-    Arch* m_arch;
-    unsigned int m_wordsize;
-
     // last "base" label for local (.) labels
     std::string m_locallabel_base;
 
     /*@null@*/ Bytecode* m_bc;
-
-    bool m_save_input;
-
-    YYCTYPE *m_bot, *m_tok, *m_ptr, *m_cur, *m_lim;
 
     enum State
     {
@@ -236,15 +202,6 @@ private:
         LINECHG2,
         INSTRUCTION
     } m_state;
-
-    int m_token;        // enum TokenType or any character
-    yystype m_tokval;
-    char m_tokch;       // first character of token
-
-    // one token of lookahead; used sparingly
-    int m_peek_token;   // NONE if none
-    yystype m_peek_tokval;
-    char m_peek_tokch;
 
     // Starting point of the absolute section.  Empty if not in an absolute
     // section.
@@ -269,10 +226,6 @@ private:
 #define SEGREG_val              (m_tokval.segreg)
 #define TARGETMOD_val           (m_tokval.targetmod)
 #define ID_val                  (m_tokval.str)
-
-#define p_expr_new_tree(l,o,r)  yasm_expr_create_tree(l,o,r,cur_line)
-#define p_expr_new_branch(o,r)  yasm_expr_create_branch(o,r,cur_line)
-#define p_expr_new_ident(r)     yasm_expr_create_ident(r,cur_line)
 
 }}} // namespace yasm::parser::nasm
 
