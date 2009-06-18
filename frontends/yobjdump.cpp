@@ -105,14 +105,16 @@ static cl::alias show_info_long("info",
 
 // -f, --file-headers
 static cl::opt<bool> show_file_headers("f",
-    cl::desc("Display summary information from the overall header"));
+    cl::desc("Display summary information from the overall header"),
+    cl::Grouping);
 static cl::alias show_file_headers_long("file-headers",
     cl::desc("Alias for -f"),
     cl::aliasopt(show_file_headers));
 
 // -h, --file-headers, --headers
 static cl::opt<bool> show_section_headers("h",
-    cl::desc("Display summary information from the section headers"));
+    cl::desc("Display summary information from the section headers"),
+    cl::Grouping);
 static cl::alias show_section_headers_long("section-headers",
     cl::desc("Alias for -h"),
     cl::aliasopt(show_section_headers));
@@ -122,35 +124,40 @@ static cl::alias show_section_headers_long2("headers",
 
 // -p, --private-headers
 static cl::opt<bool> show_private_headers("p",
-    cl::desc("Display information that is specific to the object format"));
+    cl::desc("Display information that is specific to the object format"),
+    cl::Grouping);
 static cl::alias show_private_headers_long("private-headers",
     cl::desc("Alias for -p"),
     cl::aliasopt(show_private_headers));
 
 // -r, --reloc
 static cl::opt<bool> show_relocs("r",
-    cl::desc("Display relocation entries"));
+    cl::desc("Display relocation entries"),
+    cl::Grouping);
 static cl::alias show_relocs_long("reloc",
     cl::desc("Alias for -r"),
     cl::aliasopt(show_relocs));
 
 // -t, --syms
 static cl::opt<bool> show_symbols("t",
-    cl::desc("Display symbol table entries"));
+    cl::desc("Display symbol table entries"),
+    cl::Grouping);
 static cl::alias show_symbols_long("syms",
     cl::desc("Alias for -t"),
     cl::aliasopt(show_symbols));
 
 // -s, --full-contents
 static cl::opt<bool> show_contents("s",
-    cl::desc("Display full contents of sections"));
+    cl::desc("Display full contents of sections"),
+    cl::Grouping);
 static cl::alias show_contents_long("full-contents",
     cl::desc("Alias for -s"),
     cl::aliasopt(show_contents));
 
 // -x, --all-headers
 static cl::opt<bool> show_all_headers("x",
-    cl::desc("Display all available header information (-f -h -p -r -t)"));
+    cl::desc("Display all available header information (-f -h -p -r -t)"),
+    cl::Grouping);
 static cl::alias show_all_headers_long("all-headers",
     cl::desc("Alias for -x"),
     cl::aliasopt(show_all_headers));
