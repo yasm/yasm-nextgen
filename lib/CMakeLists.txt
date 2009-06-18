@@ -6,13 +6,19 @@ ENDIF (NOT BUILD_STATIC)
 YASM_ADD_LIBRARY(libyasmx SHARED
     Support/APFloat.cpp
     Support/APInt.cpp
+    Support/CommandLine.cpp
     Support/Debug.cpp
     Support/FoldingSet.cpp
     Support/raw_ostream.cpp
+    Support/ManagedStatic.cpp
     Support/MemoryBuffer.cpp
     Support/Streams.cpp
     Support/StringExtras.cpp
     Support/StringMap.cpp
+    System/Atomic.cpp
+    System/Mutex.cpp
+    System/Path.cpp
+    System/TimeValue.cpp
     yasmx/AlignBytecode.cpp
     yasmx/Arch.cpp
     yasmx/Assembler.cpp
