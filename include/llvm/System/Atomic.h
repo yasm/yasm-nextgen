@@ -15,12 +15,15 @@
 #define LLVM_SYSTEM_ATOMIC_H
 
 #include "llvm/Support/DataTypes.h"
+#include "yasmx/Config/export.h"
 
 namespace llvm {
   namespace sys {
+    YASM_LIB_EXPORT
     void MemoryFence();
 
     typedef uint32_t cas_flag;
+    YASM_LIB_EXPORT
     cas_flag CompareAndSwap(volatile cas_flag* ptr,
                             cas_flag new_value,
                             cas_flag old_value);

@@ -15,6 +15,7 @@
 #define LLVM_SUPPORT_MANAGED_STATIC_H
 
 #include "llvm/System/Atomic.h"
+#include "yasmx/Config/export.h"
 
 namespace llvm {
 
@@ -32,7 +33,7 @@ void object_deleter(void *Ptr) {
 }
 
 /// ManagedStaticBase - Common base class for ManagedStatic instances.
-class ManagedStaticBase {
+class YASM_LIB_EXPORT ManagedStaticBase {
 protected:
   // This should only be used as a static variable, which guarantees that this
   // will be zero initialized.
@@ -99,9 +100,11 @@ public:
 /// make LLVM safe for multithreading.  The return value indicates whether
 /// multithreaded initialization succeeded.  LLVM will still be operational
 /// on "failed" return, but will not be safe to run multithreaded.
+YASM_LIB_EXPORT
 bool llvm_start_multithreaded();
 
 /// llvm_shutdown - Deallocate and destroy all ManagedStatic variables.
+YASM_LIB_EXPORT
 void llvm_shutdown();
 
 

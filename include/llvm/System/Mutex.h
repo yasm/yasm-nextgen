@@ -14,12 +14,14 @@
 #ifndef LLVM_SYSTEM_MUTEX_H
 #define LLVM_SYSTEM_MUTEX_H
 
+#include "yasmx/Config/export.h"
+
 namespace llvm
 {
   namespace sys
   {
     /// @brief Platform agnostic Mutex class.
-    class Mutex
+    class YASM_LIB_EXPORT Mutex
     {
     /// @name Constructors
     /// @{

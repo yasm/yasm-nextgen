@@ -24,6 +24,7 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/SmallVector.h"
+#include "yasmx/Config/export.h"
 #include <cassert>
 #include <climits>
 #include <cstdarg>
@@ -41,6 +42,7 @@ namespace cl {
 //===----------------------------------------------------------------------===//
 // ParseCommandLineOptions - Command line option processing entry point.
 //
+YASM_LIB_EXPORT
 void ParseCommandLineOptions(int argc, char **argv,
                              const char *Overview = 0,
                              bool ReadResponseFiles = false);
@@ -49,6 +51,7 @@ void ParseCommandLineOptions(int argc, char **argv,
 // ParseEnvironmentOptions - Environment variable option processing alternate
 //                           entry point.
 //
+YASM_LIB_EXPORT
 void ParseEnvironmentOptions(const char *progName, const char *envvar,
                              const char *Overview = 0,
                              bool ReadResponseFiles = false);
@@ -58,10 +61,12 @@ void ParseEnvironmentOptions(const char *progName, const char *envvar,
 ///                     used to print out the version when --version is given
 ///                     on the command line. This allows other systems using the
 ///                     CommandLine utilities to print their own version string.
+YASM_LIB_EXPORT
 void SetVersionPrinter(void (*func)());
 
 
 // MarkOptionsChanged - Internal helper function.
+YASM_LIB_EXPORT
 void MarkOptionsChanged();
 
 //===----------------------------------------------------------------------===//
@@ -136,7 +141,7 @@ enum MiscFlags {               // Miscellaneous flags to adjust argument
 // Option Base class
 //
 class alias;
-class Option {
+class YASM_LIB_EXPORT Option {
   friend class alias;
 
   // handleOccurrences - Overriden by subclasses to handle the value passed into
@@ -370,7 +375,7 @@ ValuesClass<DataType> END_WITH_NULL values(const char *Arg, DataType Val,
 // not need replicated for every instance of the generic parser.  This also
 // allows us to put stuff into CommandLine.cpp
 //
-struct generic_parser_base {
+struct YASM_LIB_EXPORT generic_parser_base {
   virtual ~generic_parser_base() {}  // Base class should have virtual-dtor
 
   // getNumOptions - Virtual function implemented by generic subclass to
@@ -498,7 +503,7 @@ public:
 //--------------------------------------------------
 // basic_parser - Super class of parsers to provide boilerplate code
 //
-struct basic_parser_impl {  // non-template implementation of basic_parser<t>
+struct YASM_LIB_EXPORT basic_parser_impl {  // non-template implementation of basic_parser<t>
   virtual ~basic_parser_impl() {}
 
   enum ValueExpected getValueExpectedFlagDefault() const {
@@ -536,7 +541,7 @@ struct basic_parser : public basic_parser_impl {
 // parser<bool>
 //
 template<>
-class parser<bool> : public basic_parser<bool> {
+class YASM_LIB_EXPORT parser<bool> : public basic_parser<bool> {
   const char *ArgStr;
 public:
   
@@ -559,13 +564,13 @@ public:
   virtual void anchor();
 };
 
-EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<bool>);
+EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<bool>)
 
 //--------------------------------------------------
 // parser<boolOrDefault>
 enum boolOrDefault { BOU_UNSET, BOU_TRUE, BOU_FALSE };
 template<>
-class parser<boolOrDefault> : public basic_parser<boolOrDefault> {
+class YASM_LIB_EXPORT parser<boolOrDefault> : public basic_parser<boolOrDefault> {
 public:
   // parse - Return true on error.
   bool parse(Option &O, const char *ArgName, const std::string &Arg,
@@ -582,13 +587,13 @@ public:
   virtual void anchor();
 };
 
-EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<boolOrDefault>);
+EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<boolOrDefault>)
 
 //--------------------------------------------------
 // parser<int>
 //
 template<>
-class parser<int> : public basic_parser<int> {
+class YASM_LIB_EXPORT parser<int> : public basic_parser<int> {
 public:
   // parse - Return true on error.
   bool parse(Option &O, const char *ArgName, const std::string &Arg, int &Val);
@@ -600,14 +605,14 @@ public:
   virtual void anchor();
 };
 
-EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<int>);
+EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<int>)
 
 
 //--------------------------------------------------
 // parser<unsigned>
 //
 template<>
-class parser<unsigned> : public basic_parser<unsigned> {
+class YASM_LIB_EXPORT parser<unsigned> : public basic_parser<unsigned> {
 public:
   // parse - Return true on error.
   bool parse(Option &O, const char *AN, const std::string &Arg, unsigned &Val);
@@ -619,13 +624,13 @@ public:
   virtual void anchor();
 };
 
-EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<unsigned>);
+EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<unsigned>)
 
 //--------------------------------------------------
 // parser<double>
 //
 template<>
-class parser<double> : public basic_parser<double> {
+class YASM_LIB_EXPORT parser<double> : public basic_parser<double> {
 public:
   // parse - Return true on error.
   bool parse(Option &O, const char *AN, const std::string &Arg, double &Val);
@@ -637,13 +642,13 @@ public:
   virtual void anchor();
 };
 
-EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<double>);
+EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<double>)
 
 //--------------------------------------------------
 // parser<float>
 //
 template<>
-class parser<float> : public basic_parser<float> {
+class YASM_LIB_EXPORT parser<float> : public basic_parser<float> {
 public:
   // parse - Return true on error.
   bool parse(Option &O, const char *AN, const std::string &Arg, float &Val);
@@ -655,13 +660,13 @@ public:
   virtual void anchor();
 };
 
-EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<float>);
+EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<float>)
 
 //--------------------------------------------------
 // parser<std::string>
 //
 template<>
-class parser<std::string> : public basic_parser<std::string> {
+class YASM_LIB_EXPORT parser<std::string> : public basic_parser<std::string> {
 public:
   // parse - Return true on error.
   bool parse(Option &, const char *, const std::string &Arg,
@@ -677,13 +682,13 @@ public:
   virtual void anchor();
 };
 
-EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<std::string>);
+EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<std::string>)
 
 //--------------------------------------------------
 // parser<char>
 //
 template<>
-class parser<char> : public basic_parser<char> {
+class YASM_LIB_EXPORT parser<char> : public basic_parser<char> {
 public:
   // parse - Return true on error.
   bool parse(Option &, const char *, const std::string &Arg,
@@ -699,7 +704,7 @@ public:
   virtual void anchor();
 };
 
-EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<char>);
+EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<char>)
 
 //===----------------------------------------------------------------------===//
 // applicator class - This class is used because we must use partial
@@ -942,11 +947,11 @@ public:
   }
 };
 
-EXTERN_TEMPLATE_INSTANTIATION(class opt<unsigned>);
-EXTERN_TEMPLATE_INSTANTIATION(class opt<int>);
-EXTERN_TEMPLATE_INSTANTIATION(class opt<std::string>);
-EXTERN_TEMPLATE_INSTANTIATION(class opt<char>);
-EXTERN_TEMPLATE_INSTANTIATION(class opt<bool>);
+EXTERN_TEMPLATE_INSTANTIATION(class opt<unsigned>)
+EXTERN_TEMPLATE_INSTANTIATION(class opt<int>)
+EXTERN_TEMPLATE_INSTANTIATION(class opt<std::string>)
+EXTERN_TEMPLATE_INSTANTIATION(class opt<char>)
+EXTERN_TEMPLATE_INSTANTIATION(class opt<bool>)
 
 //===----------------------------------------------------------------------===//
 // list_storage class
@@ -1305,7 +1310,7 @@ public:
 // Aliased command line option (alias this name to a preexisting name)
 //
 
-class alias : public Option {
+class YASM_LIB_EXPORT alias : public Option {
   Option *AliasFor;
   virtual bool handleOccurrence(unsigned pos, const char * /*ArgName*/,
                                 const std::string &Arg) {
@@ -1368,15 +1373,17 @@ struct aliasopt {
 // output. All occurrences of cl::extrahelp will be accumulated and
 // printed to std::cerr at the end of the regular help, just before
 // exit is called.
-struct extrahelp {
+struct YASM_LIB_EXPORT extrahelp {
   const char * morehelp;
   explicit extrahelp(const char* help);
 };
 
+YASM_LIB_EXPORT
 void PrintVersionMessage();
 // This function just prints the help message, exactly the same way as if the
 // --help option had been given on the command line.
 // NOTE: THIS FUNCTION TERMINATES THE PROGRAM!
+YASM_LIB_EXPORT
 void PrintHelpMessage();
 
 } // End namespace cl

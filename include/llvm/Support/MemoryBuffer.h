@@ -15,6 +15,7 @@
 #define LLVM_SUPPORT_MEMORYBUFFER_H
 
 #include "llvm/Support/DataTypes.h"
+#include "yasmx/Config/export.h"
 #include <string>
 
 namespace llvm {
@@ -24,7 +25,7 @@ namespace llvm {
 /// into a memory buffer.  In addition to basic access to the characters in the
 /// file, this interface guarantees you can read one character past the end of
 /// @verbatim the file, and that this character will read as '\0'. @endverbatim
-class MemoryBuffer {
+class YASM_LIB_EXPORT MemoryBuffer {
   const char *BufferStart; // Start of the buffer.
   const char *BufferEnd;   // End of the buffer.
 

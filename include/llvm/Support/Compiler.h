@@ -40,13 +40,13 @@
 //   EXTERN_TEMPLATE_INSTANTIATION(class foo<bar>);
 // in the .cpp file, use this:
 //   TEMPLATE_INSTANTIATION(class foo<bar>);
-#ifdef __GNUC__
-#define EXTERN_TEMPLATE_INSTANTIATION(X) __extension__ extern template X
-#define TEMPLATE_INSTANTIATION(X) template X
-#else
+//#ifdef __GNUC__
+//#define EXTERN_TEMPLATE_INSTANTIATION(X) __extension__ extern template X;
+//#define TEMPLATE_INSTANTIATION(X) template X;
+//#else
 #define EXTERN_TEMPLATE_INSTANTIATION(X)
 #define TEMPLATE_INSTANTIATION(X)
-#endif
+//#endif
 
 // DISABLE_INLINE - On compilers where we have a directive to do so, mark a
 // method "not for inlining".
