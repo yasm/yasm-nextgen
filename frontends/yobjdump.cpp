@@ -34,6 +34,7 @@
 #include <string>
 #include <vector>
 
+#include <llvm/Support/CommandLine.h>
 #include <yasmx/Support/Compose.h>
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/nocase.h>
@@ -49,25 +50,24 @@
 #include <yasmx/Section.h>
 #include <yasmx/Symbol.h>
 
-#include "options.h"
-
 #include "frontends/license.cpp"
 
+namespace cl = llvm::cl;
 
 // version message
-/*@observer@*/ static const char* version_msg[] =
+static const char* full_version = "yobjdump " PACKAGE_INTVER "." PACKAGE_BUILD;
+void
+print_version()
 {
-    "yobjdump " PACKAGE_INTVER "." PACKAGE_BUILD,
-    "Compiled on " __DATE__ ".",
-    "Copyright (c) 2001-2008 Peter Johnson and other Yasm developers.",
-    "Run yobjdump --license for licensing overview and summary."
-};
+    std::cout
+        << full_version
+        << "Compiled on " __DATE__ ".\n"
+        << "Copyright (c) 2001-2009 Peter Johnson and other Yasm developers.\n"
+        << "Run yobjdump --license for licensing overview and summary.\n";
+}
 
-// help messages
-/*@observer@*/ static const char* help_head = N_(
-    "usage: yobjdump [option]* objfile...\n"
-    "Options:\n");
-/*@observer@*/ static const char* help_tail = N_(
+// extra help messages
+static cl::extrahelp help_tail(
     "\n"
     "Files are object files to be dumped.\n"
     "\n"
@@ -76,22 +76,84 @@
     "\n"
     "Report bugs to bug-yasm@tortall.net\n");
 
-static std::string objfmt_keyword;
-static std::vector<std::string> in_filenames;
-static enum SpecialOption
-{
-    SPECIAL_NONE = 0,
-    SPECIAL_SHOW_HELP,
-    SPECIAL_SHOW_VERSION,
-    SPECIAL_SHOW_LICENSE,
-    SPECIAL_SHOW_INFO
-} special_option = SPECIAL_NONE;
-static bool show_file_headers = false;
-static bool show_section_headers = false;
-static bool show_private_headers = false;
-static bool show_relocs = false;
-static bool show_symbols = false;
-static bool show_contents = false;
+static cl::list<std::string> in_filenames(cl::Positional,
+    cl::desc("objfile..."));
+
+// -b, --target
+static cl::opt<std::string> objfmt_keyword("b",
+    cl::desc("Select object format"),
+    cl::value_desc("target"));
+static cl::alias objfmt_keyword_long("target",
+    cl::desc("Alias for -b"),
+    cl::aliasopt(objfmt_keyword));
+
+// -H
+static cl::opt<bool> show_help("H",
+    cl::desc("Alias for --help"),
+    cl::Hidden);
+
+// --license
+static cl::opt<bool> show_license("license",
+    cl::desc("Show license text"));
+
+// -i, --info
+static cl::opt<bool> show_info("i",
+    cl::desc("List available object formats"));
+static cl::alias show_info_long("info",
+    cl::desc("Alias for -i"),
+    cl::aliasopt(show_info));
+
+// -f, --file-headers
+static cl::opt<bool> show_file_headers("f",
+    cl::desc("Display summary information from the overall header"));
+static cl::alias show_file_headers_long("file-headers",
+    cl::desc("Alias for -f"),
+    cl::aliasopt(show_file_headers));
+
+// -h, --file-headers, --headers
+static cl::opt<bool> show_section_headers("h",
+    cl::desc("Display summary information from the section headers"));
+static cl::alias show_section_headers_long("section-headers",
+    cl::desc("Alias for -h"),
+    cl::aliasopt(show_section_headers));
+static cl::alias show_section_headers_long2("headers",
+    cl::desc("Alias for -h"),
+    cl::aliasopt(show_section_headers));
+
+// -p, --private-headers
+static cl::opt<bool> show_private_headers("p",
+    cl::desc("Display information that is specific to the object format"));
+static cl::alias show_private_headers_long("private-headers",
+    cl::desc("Alias for -p"),
+    cl::aliasopt(show_private_headers));
+
+// -r, --reloc
+static cl::opt<bool> show_relocs("r",
+    cl::desc("Display relocation entries"));
+static cl::alias show_relocs_long("reloc",
+    cl::desc("Alias for -r"),
+    cl::aliasopt(show_relocs));
+
+// -t, --syms
+static cl::opt<bool> show_symbols("t",
+    cl::desc("Display symbol table entries"));
+static cl::alias show_symbols_long("syms",
+    cl::desc("Alias for -t"),
+    cl::aliasopt(show_symbols));
+
+// -s, --full-contents
+static cl::opt<bool> show_contents("s",
+    cl::desc("Display full contents of sections"));
+static cl::alias show_contents_long("full-contents",
+    cl::desc("Alias for -s"),
+    cl::aliasopt(show_contents));
+
+// -x, --all-headers
+static cl::opt<bool> show_all_headers("x",
+    cl::desc("Display all available header information (-f -h -p -r -t)"));
+static cl::alias show_all_headers_long("all-headers",
+    cl::desc("Alias for -x"),
+    cl::aliasopt(show_all_headers));
 
 static void
 print_error(const std::string& msg)
@@ -125,97 +187,6 @@ not_an_option_handler(const std::string& param)
     in_filenames.push_back(param);
     return true;
 }
-
-bool
-other_option_handler(const std::string& option)
-{
-    return false;
-}
-
-static bool
-opt_special_handler(/*@unused@*/ const std::string& cmd,
-                    /*@unused@*/ const std::string& param, int extra)
-{
-    if (special_option == 0)
-        special_option = static_cast<SpecialOption>(extra);
-    return true;
-}
-
-static bool
-opt_objfmt_handler(/*@unused@*/ const std::string& cmd,
-                   const std::string& param, /*@unused@*/ int extra)
-{
-    std::string keyword = String::lowercase(param);
-    if (!yasm::is_module<yasm::ObjectFormat>(keyword))
-    {
-        print_error(String::compose(_("FATAL: unrecognized object format `%1'"),
-                                    param));
-        exit(EXIT_FAILURE);
-    }
-    objfmt_keyword = keyword;
-    return true;
-}
-
-#define OPT_BOOL_HANDLER(func, var) \
-    static bool \
-    opt_##func##_handler(/*@unused@*/ const std::string& cmd, \
-                         /*@unused@*/ const std::string& param, \
-                         /*@unused@*/ int extra) \
-    { \
-        var = true; \
-        return true; \
-    }
-
-OPT_BOOL_HANDLER(file_headers, show_file_headers)
-OPT_BOOL_HANDLER(section_headers, show_section_headers)
-OPT_BOOL_HANDLER(private_headers, show_private_headers)
-OPT_BOOL_HANDLER(relocs, show_relocs)
-OPT_BOOL_HANDLER(symbols, show_symbols)
-OPT_BOOL_HANDLER(contents, show_contents)
-
-static bool
-opt_all_headers_handler(/*@unused@*/ const std::string& cmd,
-                        /*@unused@*/ const std::string& param,
-                        /*@unused@*/ int extra)
-{
-    show_file_headers = true;
-    show_section_headers = true;
-    show_private_headers = true;
-    show_relocs = true;
-    show_symbols = true;
-    return true;
-}
-
-static OptOption options[] =
-{
-    { 0, "version", false, opt_special_handler, SPECIAL_SHOW_VERSION,
-      N_("show version text"), NULL },
-    { 0, "license", false, opt_special_handler, SPECIAL_SHOW_LICENSE,
-      N_("show license text"), NULL },
-    { 'H', "help", false, opt_special_handler, SPECIAL_SHOW_HELP,
-      N_("show help text"), NULL },
-    { 'i', "info", false, opt_special_handler, SPECIAL_SHOW_INFO,
-      N_("list available object formats"), NULL },
-    { 'b', "target", true, opt_objfmt_handler, 0,
-      N_("select object format"), NULL },
-    { 'f', "file-headers", false, opt_file_headers_handler, 0,
-      N_("display summary information from the overall header"), NULL },
-    { 'h', "section-headers", false, opt_section_headers_handler, 0,
-      N_("display summary information from the section headers"), NULL },
-    { 0, "headers", false, opt_section_headers_handler, 0,
-      N_("display summary information from the section headers"), NULL },
-    { 'p', "private-headers", false, opt_private_headers_handler, 0,
-      N_("display information that is specific to the object format"), NULL },
-    { 'r', "reloc", false, opt_relocs_handler, 0,
-      N_("display relocation entries"), NULL },
-    { 't', "syms", false, opt_symbols_handler, 0,
-      N_("display symbol table entries"), NULL },
-    { 'x', "all-headers", false, opt_all_headers_handler, 0,
-      N_("display all available header information (-f -h -p -r -t)"),
-      NULL },
-    { 's', "full-contents", false, opt_contents_handler, 0,
-      N_("display full contents of sections"), NULL },
-};
 
 static const char *
 handle_yasm_gettext(const char *msgid)
@@ -442,12 +413,21 @@ do_dump(const std::string& in_filename)
 
     if (!objfmt_keyword.empty())
     {
+        objfmt_keyword = String::lowercase(objfmt_keyword);
+        if (!yasm::is_module<yasm::ObjectFormat>(objfmt_keyword))
+        {
+            throw yasm::Error(String::compose(
+                _("unrecognized object format `%1'"), objfmt_keyword));
+        }
+
         // Object format forced by user
         objfmt = yasm::load_module<yasm::ObjectFormat>(objfmt_keyword);
 
         if (objfmt.get() == 0)
+        {
             throw yasm::Error(String::compose(
                 _("could not load object format `%1'"), objfmt_keyword));
+        }
 
         if (!objfmt->taste(in_file, &arch_keyword, &machine))
         {
@@ -512,7 +492,7 @@ do_dump(const std::string& in_filename)
 }
 
 int
-main(int argc, const char* argv[])
+main(int argc, char* argv[])
 {
 #if 0
 #if defined(HAVE_SETLOCALE) && defined(HAVE_LC_MESSAGES)
@@ -534,29 +514,33 @@ main(int argc, const char* argv[])
         return EXIT_FAILURE;
     }
 
-    if (!parse_cmdline(argc, argv, options, NELEMS(options), print_error))
-        return EXIT_FAILURE;
+    cl::SetVersionPrinter(&print_version);
+    cl::ParseCommandLineOptions(argc, argv);
 
-    switch (special_option)
+    if (show_all_headers)
     {
-        case SPECIAL_SHOW_HELP:
-            // Does gettext calls internally
-            help_msg(help_head, help_tail, options, NELEMS(options));
-            return EXIT_SUCCESS;
-        case SPECIAL_SHOW_VERSION:
-            for (std::size_t i=0; i<NELEMS(version_msg); i++)
-                std::cout << version_msg[i] << '\n';
-            return EXIT_SUCCESS;
-        case SPECIAL_SHOW_LICENSE:
-            for (std::size_t i=0; i<NELEMS(license_msg); i++)
-                std::cout << license_msg[i] << '\n';
-            return EXIT_SUCCESS;
-        case SPECIAL_SHOW_INFO:
-            std::cout << version_msg[0] << '\n';
-            list_module<yasm::ObjectFormat>();
-            return EXIT_SUCCESS;
-        default:
-            break;
+        show_file_headers = true;
+        show_section_headers = true;
+        show_private_headers = true;
+        show_relocs = true;
+        show_symbols = true;
+    }
+
+    if (show_help)
+        cl::PrintHelpMessage();
+
+    if (show_license)
+    {
+        for (std::size_t i=0; i<NELEMS(license_msg); i++)
+            std::cout << license_msg[i] << '\n';
+        return EXIT_SUCCESS;
+    }
+
+    if (show_info)
+    {
+        std::cout << full_version << '\n';
+        list_module<yasm::ObjectFormat>();
+        return EXIT_SUCCESS;
     }
 
     // Determine input filename and open input file.

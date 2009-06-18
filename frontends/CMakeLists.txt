@@ -21,7 +21,6 @@ SET_SOURCE_FILES_PROPERTIES(yasm.cpp PROPERTIES
 
 YASM_ADD_EXECUTABLE(yobjdump RUN_UNINSTALLED
     yobjdump.cpp
-    options.cpp
     )
 
 SET_SOURCE_FILES_PROPERTIES(yobjdump.cpp PROPERTIES
