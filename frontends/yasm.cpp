@@ -31,6 +31,7 @@
 #include <fstream>
 
 #include <llvm/Support/CommandLine.h>
+#include <llvm/Support/ManagedStatic.h>
 #include <yasmx/Support/Compose.h>
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/nocase.h>
@@ -764,6 +765,7 @@ do_assemble(void)
 int
 main(int argc, char* argv[])
 {
+    llvm::llvm_shutdown_obj llvm_manager(false);
 #if 0
 #if defined(HAVE_SETLOCALE) && defined(HAVE_LC_MESSAGES)
     setlocale(LC_MESSAGES, "");
