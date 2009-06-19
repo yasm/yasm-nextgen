@@ -15,6 +15,7 @@
 #define LLVM_SYSTEM_PROCESS_H
 
 #include "llvm/System/TimeValue.h"
+#include "yasmx/Config/export.h"
 
 namespace llvm {
 namespace sys {
@@ -23,7 +24,7 @@ namespace sys {
   /// currently executing process.
   /// @since 1.4
   /// @brief An abstraction for operating system processes.
-  class Process {
+  class YASM_LIB_EXPORT Process {
     /// @name Accessors
     /// @{
     public:
