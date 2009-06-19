@@ -16,6 +16,7 @@
 #define LLVM_SUPPORT_TIMER_H
 
 #include "llvm/Support/DataTypes.h"
+#include "yasmx/Config/export.h"
 #include <string>
 #include <vector>
 #include <iosfwd>
@@ -33,7 +34,7 @@ class TimerGroup;
 /// when its TimerGroup is destroyed.  Timers do not print their information
 /// if they are never started.
 ///
-class Timer {
+class YASM_LIB_EXPORT Timer {
   double Elapsed;        // Wall clock time elapsed in seconds
   double UserTime;       // User time elapsed
   double SystemTime;     // System time elapsed
@@ -135,7 +136,7 @@ public:
 /// time, all in one statement.  All timers with the same name are merged.  This
 /// is primarily used for debugging and for hunting performance problems.
 ///
-struct NamedRegionTimer : public TimeRegion {
+struct YASM_LIB_EXPORT NamedRegionTimer : public TimeRegion {
   explicit NamedRegionTimer(const std::string &Name);
   explicit NamedRegionTimer(const std::string &Name,
                             const std::string &GroupName);
@@ -147,7 +148,7 @@ struct NamedRegionTimer : public TimeRegion {
 /// destroy a TimerGroup object before all of the Timers in it are gone.  A
 /// TimerGroup can be specified for a newly created timer in its constructor.
 ///
-class TimerGroup {
+class YASM_LIB_EXPORT TimerGroup {
   std::string Name;
   unsigned NumTimers;
   std::vector<Timer> TimersToPrint;
