@@ -853,7 +853,7 @@ void basic_parser_impl::printOptionInfo(const Option &O,
   cout << "  -" << O.ArgStr;
 
   if (const char *ValName = getValueName())
-    cout << "=<" << getValueStr(O, ValName) << ">";
+    cout << " <" << getValueStr(O, ValName) << ">";
 
   cout << std::string(GlobalWidth-getOptionWidth(O), ' ') << " - "
        << O.HelpStr << "\n";
@@ -994,7 +994,7 @@ void generic_parser_base::printOptionInfo(const Option &O,
 
     for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
       size_t NumSpaces = GlobalWidth-strlen(getOption(i))-8;
-      cout << "    =" << getOption(i) << std::string(NumSpaces, ' ')
+      cout << "     " << getOption(i) << std::string(NumSpaces, ' ')
            << " -   " << getDescription(i) << "\n";
     }
   } else {
