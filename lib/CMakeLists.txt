@@ -12,12 +12,15 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     Support/raw_ostream.cpp
     Support/ManagedStatic.cpp
     Support/MemoryBuffer.cpp
+    Support/Statistic.cpp
     Support/Streams.cpp
     Support/StringExtras.cpp
     Support/StringMap.cpp
+    Support/Timer.cpp
     System/Atomic.cpp
     System/Mutex.cpp
     System/Path.cpp
+    System/Process.cpp
     System/TimeValue.cpp
     yasmx/AlignBytecode.cpp
     yasmx/Arch.cpp
