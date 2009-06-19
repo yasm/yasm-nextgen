@@ -26,9 +26,11 @@
 #ifndef LLVM_ADT_STATISTIC_H
 #define LLVM_ADT_STATISTIC_H
 
+#include "yasmx/Config/export.h"
+
 namespace llvm {
 
-class Statistic {
+class YASM_LIB_EXPORT Statistic {
 public:
   const char *Name;
   const char *Desc;
