@@ -24,12 +24,15 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#define DEBUG_TYPE "x86"
+
 #include "X86General.h"
 
 #include "util.h"
 
 #include <iomanip>
 
+#include <llvm/ADT/Statistic.h>
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/marg_ostream.h>
 #include <yasmx/BytecodeContainer.h>
@@ -48,6 +51,9 @@
 #include "X86Opcode.h"
 #include "X86Register.h"
 
+
+STATISTIC(num_generic, "Number of generic instructions appended");
+STATISTIC(num_generic_bc, "Number of generic bytecodes created");
 
 namespace yasm
 {
@@ -555,6 +561,7 @@ append_general(BytecodeContainer& container,
                unsigned long line)
 {
     Bytecode& bc = container.fresh_bytecode();
+    ++num_generic;
 
     // if no postop and no effective address, output the fixed contents
     if (postop == POSTOP_NONE && ea.get() == 0)
@@ -570,6 +577,7 @@ append_general(BytecodeContainer& container,
     bc.transform(Bytecode::Contents::Ptr(new X86General(
         common, opcode, ea, imm, special_prefix, rex, postop, default_rel)));
     bc.set_line(line);
+    ++num_generic_bc;
 }
 
 }}} // namespace yasm::arch::x86

@@ -24,10 +24,13 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#define DEBUG_TYPE "x86"
+
 #include "X86Jmp.h"
 
 #include "util.h"
 
+#include <llvm/ADT/Statistic.h>
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/marg_ostream.h>
 #include <yasmx/BytecodeContainer.h>
@@ -41,6 +44,9 @@
 #include "X86Common.h"
 #include "X86Opcode.h"
 
+
+STATISTIC(num_jmp, "Number of jump instructions appended");
+STATISTIC(num_jmp_bc, "Number of jump bytecodes created");
 
 namespace yasm
 {
@@ -287,6 +293,7 @@ append_jmp(BytecodeContainer& container,
            JmpOpcodeSel op_sel)
 {
     Bytecode& bc = container.fresh_bytecode();
+    ++num_jmp;
 
     if (shortop.get_len() == 0)
         op_sel = JMP_NEAR;
@@ -301,6 +308,7 @@ append_jmp(BytecodeContainer& container,
         bc.transform(Bytecode::Contents::Ptr(new X86Jmp(
             common, op_sel, shortop, nearop, target)));
         bc.set_line(line);
+        ++num_jmp_bc;
         return;
     }
 
