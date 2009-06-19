@@ -190,13 +190,6 @@ list_module()
     }
 }
 
-bool
-not_an_option_handler(const std::string& param)
-{
-    in_filenames.push_back(param);
-    return true;
-}
-
 static const char *
 handle_yasm_gettext(const char *msgid)
 {
