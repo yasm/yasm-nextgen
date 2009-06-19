@@ -30,6 +30,7 @@
 #include <iostream>
 #include <fstream>
 
+#include <llvm/Support/CommandLine.h>
 #include <yasmx/Support/Compose.h>
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/nocase.h>
@@ -51,57 +52,32 @@
 #include <libgen.h>
 #endif
 
-#include "options.h"
-
 #include "frontends/license.cpp"
 
 
 // Preprocess-only buffer size
 #define PREPROC_BUF_SIZE    16384
 
-static std::string obj_filename, in_filename;
-static std::string list_filename;
-static std::string machine_name;
-static enum SpecialOption
-{
-    SPECIAL_NONE = 0,
-    SPECIAL_SHOW_HELP,
-    SPECIAL_SHOW_VERSION,
-    SPECIAL_SHOW_LICENSE,
-    SPECIAL_LISTED
-} special_option = SPECIAL_NONE;
-static std::string arch_keyword;
-static std::string parser_keyword;
-static std::string preproc_keyword;
-static std::string objfmt_keyword;
-static std::string dbgfmt_keyword;
-static std::string listfmt_keyword;
-static bool preproc_only = false;
-static bool force_strict = false;
-static bool generate_make_dependencies = false;
+namespace cl = llvm::cl;
+
 static bool warning_error = false;  // warnings being treated as errors
 static std::ofstream errfile;
-static std::string error_filename;
-static enum
-{
-    EWSTYLE_GNU = 0,
-    EWSTYLE_VC
-} ewmsg_style = EWSTYLE_GNU;
 
 // version message
-/*@observer@*/ static const char* version_msg[] =
+static const char* full_version =
+    PACKAGE_NAME " " PACKAGE_INTVER "." PACKAGE_BUILD;
+void
+print_version()
 {
-    PACKAGE_NAME " " PACKAGE_INTVER "." PACKAGE_BUILD,
-    "Compiled on " __DATE__ ".",
-    "Copyright (c) 2001-2008 Peter Johnson and other Yasm developers.",
-    "Run yasm --license for licensing overview and summary."
-};
+    std::cout
+        << full_version << '\n'
+        << "Compiled on " __DATE__ ".\n"
+        << "Copyright (c) 2001-2009 Peter Johnson and other Yasm developers.\n"
+        << "Run yasm --license for licensing overview and summary.\n";
+}
 
-// help messages
-/*@observer@*/ static const char* help_head = N_(
-    "usage: yasm [option]* file\n"
-    "Options:\n");
-/*@observer@*/ static const char* help_tail = N_(
+// extra help messages
+static cl::extrahelp help_tail(
     "\n"
     "Files are asm sources to be assembled.\n"
     "\n"
@@ -110,9 +86,245 @@ static enum
     "\n"
     "Report bugs to bug-yasm@tortall.net\n");
 
-// parsed command line storage until appropriate modules have been loaded
-typedef std::vector<std::pair<std::string, int> > CommandOptions;
-static CommandOptions preproc_options;
+static cl::opt<std::string> in_filename(cl::Positional,
+    cl::desc("file"));
+
+// -a, --arch
+static cl::opt<std::string> arch_keyword("a",
+    cl::desc("Select architecture (list with -a help)"),
+    cl::value_desc("arch"),
+    cl::Prefix);
+static cl::alias arch_keyword_long("arch",
+    cl::desc("Alias for -a"),
+    cl::value_desc("arch"),
+    cl::aliasopt(arch_keyword));
+
+// -D, -d
+static cl::list<std::string> predefine_macros("D",
+    cl::desc("Pre-define a macro, optionally to value"),
+    cl::value_desc("macro[=value]"),
+    cl::Prefix);
+static cl::alias predefine_macros_alias("d",
+    cl::desc("Alias for -D"),
+    cl::value_desc("macro[=value]"),
+    cl::aliasopt(predefine_macros));
+
+// -E
+static cl::opt<std::string> error_filename("E",
+    cl::desc("redirect error messages to file"),
+    cl::value_desc("file"),
+    cl::Prefix);
+
+// -e
+static cl::opt<bool> preproc_only("e",
+    cl::desc("preprocess only (writes output to stdout by default)"));
+static cl::alias preproc_only_long("preproc-only",
+    cl::desc("Alias for -e"),
+    cl::aliasopt(preproc_only));
+
+// -f, --oformat
+static cl::opt<std::string> objfmt_keyword("f",
+    cl::desc("Select object format (list with -f help)"),
+    cl::value_desc("format"),
+    cl::Prefix);
+static cl::alias objfmt_keyword_long("oformat",
+    cl::desc("Alias for -f"),
+    cl::value_desc("format"),
+    cl::aliasopt(objfmt_keyword));
+
+// -g, --dformat
+static cl::opt<std::string> dbgfmt_keyword("g",
+    cl::desc("Select debugging format (list with -g help)"),
+    cl::value_desc("debug"),
+    cl::Prefix);
+static cl::alias dbgfmt_keyword_long("dformat",
+    cl::desc("Alias for -g"),
+    cl::value_desc("debug"),
+    cl::aliasopt(dbgfmt_keyword));
+
+// --force-strict
+static cl::opt<bool> force_strict("force-strict",
+    cl::desc("treat all sized operands as if `strict' was used"));
+
+// -h
+static cl::opt<bool> show_help("h",
+    cl::desc("Alias for --help"),
+    cl::Hidden);
+
+// -i, -I
+static cl::list<std::string> include_paths("I",
+    cl::desc("Add include path"),
+    cl::value_desc("path"),
+    cl::Prefix);
+static cl::alias include_paths_alias("i",
+    cl::desc("Alias for -I"),
+    cl::aliasopt(include_paths),
+    cl::Prefix);
+
+// -L, --lformat
+static cl::opt<std::string> listfmt_keyword("L",
+    cl::desc("Select list format (list with -L help)"),
+    cl::value_desc("list"),
+    cl::Prefix);
+static cl::alias listfmt_keyword_long("lformat",
+    cl::desc("Alias for -L"),
+    cl::value_desc("list"),
+    cl::aliasopt(listfmt_keyword));
+
+// --license
+static cl::opt<bool> show_license("license",
+    cl::desc("Show license text"));
+
+// -l, --list
+static cl::opt<std::string> list_filename("l",
+    cl::desc("Name of list-file output"),
+    cl::value_desc("listfile"),
+    cl::Prefix);
+static cl::alias list_filename_long("list",
+    cl::desc("Alias for -l"),
+    cl::value_desc("listfile"),
+    cl::aliasopt(list_filename));
+
+// -M
+static cl::opt<bool> generate_make_dependencies("M",
+    cl::desc("generate Makefile dependencies on stdout"));
+
+// -m, --machine
+static cl::opt<std::string> machine_name("m",
+    cl::desc("Select machine (list with -m help)"),
+    cl::value_desc("machine"),
+    cl::Prefix);
+static cl::alias machine_name_long("machine",
+    cl::desc("Alias for -m"),
+    cl::value_desc("machine"),
+    cl::aliasopt(machine_name));
+
+// -O, -Onnn
+static cl::opt<int> optimize_level("O",
+    cl::desc("Set optimization level (ignored)"),
+    cl::value_desc("level"),
+    cl::ValueOptional,
+    cl::ZeroOrMore,
+    cl::Prefix,
+    cl::Hidden);
+
+// -N, --plugin
+#ifndef BUILD_STATIC
+static cl::list<std::string> plugin_names("N",
+    cl::desc("Load plugin module"),
+    cl::value_desc("plugin"),
+    cl::Prefix);
+static cl::alias plugin_names_long("plugin",
+    cl::desc("Alias for -N"),
+    cl::value_desc("plugin"),
+    cl::aliasopt(plugin_names));
+#endif
+
+// -o, --objfile
+static cl::opt<std::string> obj_filename("o",
+    cl::desc("Name of object-file output"),
+    cl::value_desc("filename"),
+    cl::Prefix);
+static cl::alias obj_filename_long("objfile",
+    cl::desc("Alias for -o"),
+    cl::value_desc("filename"),
+    cl::aliasopt(obj_filename));
+
+// -P
+static cl::list<std::string> preinclude_files("P",
+    cl::desc("Pre-include file"),
+    cl::value_desc("filename"),
+    cl::Prefix);
+
+// -p, --parser
+static cl::opt<std::string> parser_keyword("p",
+    cl::desc("Select parser (list with -p help)"),
+    cl::value_desc("parser"),
+    cl::Prefix);
+static cl::alias parser_keyword_long("parser",
+    cl::desc("Alias for -p"),
+    cl::value_desc("parser"),
+    cl::aliasopt(parser_keyword));
+
+// -r, --preproc
+static cl::opt<std::string> preproc_keyword("r",
+    cl::desc("Select preproc (list with -r help)"),
+    cl::value_desc("preproc"),
+    cl::Prefix);
+static cl::alias preproc_keyword_long("preproc",
+    cl::desc("Alias for -r"),
+    cl::value_desc("preproc"),
+    cl::aliasopt(preproc_keyword));
+
+// -s
+static cl::opt<bool> error_stdout("s",
+    cl::desc("redirect error messages to stdout"));
+
+// -U, -u
+static cl::list<std::string> undefine_macros("U",
+    cl::desc("Undefine a macro"),
+    cl::value_desc("macro"),
+    cl::Prefix);
+static cl::alias undefine_macros_alias("u",
+    cl::desc("Alias for -U"),
+    cl::value_desc("macro"),
+    cl::aliasopt(undefine_macros));
+
+// -W
+enum WarningSetting
+{
+    E_ERROR,
+    D_ERROR,
+    E_UNREC_CHAR,
+    D_UNREC_CHAR,
+    E_ORPHAN_LABEL,
+    D_ORPHAN_LABEL,
+    E_UNINIT_CONTENTS,
+    D_UNINIT_CONTENTS,
+    E_SIZE_OVERRIDE,
+    D_SIZE_OVERRIDE
+};
+static cl::list<WarningSetting> warning_settings("W",
+    cl::desc("Enables/disables warning:"),
+    cl::Prefix,
+    cl::values(
+     clEnumValN(E_ERROR, "error",
+                "turns warnings into errors"),
+     clEnumValN(D_ERROR, "no-error", "(default)"),
+     clEnumValN(E_UNREC_CHAR, "unrecognized-char", "(default)"),
+     clEnumValN(D_UNREC_CHAR, "no-unrecognized-char",
+                "do not warn on unrecognized characters"),
+     clEnumValN(E_ORPHAN_LABEL, "orphan-labels",
+                "label alone on a line without a colon (NASM)"),
+     clEnumValN(D_ORPHAN_LABEL, "no-orphan-labels", "(default)"),
+     clEnumValN(E_UNINIT_CONTENTS, "uninit-contents", "(default)"),
+     clEnumValN(D_UNINIT_CONTENTS, "no-uninit-contents",
+                "do not warn on uninitialized space in code/data"),
+     clEnumValN(E_SIZE_OVERRIDE, "size-override",
+                "double size override (NASM)"),
+     clEnumValN(D_SIZE_OVERRIDE, "no-size-override", "(default)"),
+     clEnumValEnd));
+
+// -w
+static cl::list<bool> inhibit_warnings("w",
+    cl::desc("Inhibits warning messages"));
+
+// -X
+enum ErrwarnStyle
+{
+    EWSTYLE_GNU = 0,
+    EWSTYLE_VC
+};
+static cl::opt<ErrwarnStyle> ewmsg_style("X",
+    cl::desc("Set error/warning message style:"),
+    cl::Prefix,
+    cl::ZeroOrMore,
+    cl::init(EWSTYLE_GNU),
+    cl::values(
+     clEnumValN(EWSTYLE_GNU, "gnu", "GNU (GCC) error/warning style (default)"),
+     clEnumValN(EWSTYLE_GNU, "gcc", "Alias for gnu"),
+     clEnumValN(EWSTYLE_VC,  "vc",  "Visual Studio error/warning style"),
+     clEnumValEnd));
 
 static void
 print_error(const std::string& msg)
@@ -141,50 +353,14 @@ list_module()
     }
 }
 
-//
-//  Command line options handlers
-//
-
-bool
-not_an_option_handler(const std::string& param)
-{
-    if (!in_filename.empty())
-    {
-        print_error(
-            _("warning: can open only one input file, only the last file will be processed"));
-    }
-
-    in_filename = param;
-    return true;
-}
-
-bool
-other_option_handler(const std::string& option)
-{
-    // Accept, but ignore, -O and -Onnn, for compatibility with NASM.
-    if (option[0] == '-' && option[1] == 'O')
-    {
-        if (option.find_first_not_of("0123456789", 2) != std::string::npos)
-            return false;
-        return true;
-    }
-    return false;
-}
-
-static bool
-opt_special_handler(/*@unused@*/ const std::string& cmd,
-                    /*@unused@*/ const std::string& param, int extra)
-{
-    if (special_option == 0)
-        special_option = static_cast<SpecialOption>(extra);
-    return true;
-}
-
 template <typename T>
 static std::string
 module_common_handler(const std::string& param, const char* name,
-                      const char* name_plural)
+                      const char* name_plural, bool* listed)
 {
+    if (param.empty())
+        return param;
+
     std::string keyword = String::lowercase(param);
     if (!yasm::is_module<T>(keyword))
     {
@@ -193,7 +369,7 @@ module_common_handler(const std::string& param, const char* name,
             std::cout << String::compose(_("Available yasm %1:"), name_plural)
                       << '\n';
             list_module<T>();
-            special_option = SPECIAL_LISTED;
+            *listed = true;
             return keyword;
         }
         print_error(String::compose(_("%1: unrecognized %2 `%3'"), _("FATAL"),
@@ -203,249 +379,62 @@ module_common_handler(const std::string& param, const char* name,
     return keyword;
 }
 
-static bool
-opt_arch_handler(/*@unused@*/ const std::string& cmd,
-                 const std::string& param, /*@unused@*/ int extra)
+static void
+apply_warning_settings()
 {
-    arch_keyword =
-        module_common_handler<yasm::Arch>(param, _("architecture"),
-                                          _("architectures"));
-    return true;
-}
-
-static bool
-opt_parser_handler(/*@unused@*/ const std::string& cmd,
-                   const std::string& param, /*@unused@*/ int extra)
-{
-    parser_keyword =
-        module_common_handler<yasm::Parser>(param, _("parser"), _("parsers"));
-    return true;
-}
-
-static bool
-opt_preproc_handler(/*@unused@*/ const std::string& cmd,
-                    const std::string& param, /*@unused@*/ int extra)
-{
-    preproc_keyword =
-        module_common_handler<yasm::Preprocessor>(param, _("preprocessor"),
-                                                  _("preprocessors"));
-    return true;
-}
-
-static bool
-opt_objfmt_handler(/*@unused@*/ const std::string& cmd,
-                   const std::string& param, /*@unused@*/ int extra)
-{
-    objfmt_keyword =
-        module_common_handler<yasm::ObjectFormat>(param, _("object format"),
-                                                  _("object formats"));
-    return true;
-}
-
-static bool
-opt_dbgfmt_handler(/*@unused@*/ const std::string& cmd,
-                   const std::string& param, /*@unused@*/ int extra)
-{
-    dbgfmt_keyword =
-        module_common_handler<yasm::DebugFormat>(param, _("debug format"),
-                                                 _("debug formats"));
-    return true;
-}
-
-static bool
-opt_listfmt_handler(/*@unused@*/ const std::string& cmd,
-                    const std::string& param, /*@unused@*/ int extra)
-{
-    listfmt_keyword =
-        module_common_handler<yasm::ListFormat>(param, _("list format"),
-                                                _("list formats"));
-    return true;
-}
-
-static bool
-opt_listfile_handler(/*@unused@*/ const std::string& cmd,
-                     const std::string& param, /*@unused@*/ int extra)
-{
-    if (!list_filename.empty())
+    // Walk through warning_settings and inhibit_warnings in parallel,
+    // ordering by command line argument position.
+    unsigned int setting_num = 0, inhibit_num = 0;
+    unsigned int setting_pos = 0, inhibit_pos = 0;
+    for (;;)
     {
-        print_error(
-            _("warning: can output to only one list file, last specified used"));
+        if (setting_num < warning_settings.size())
+            setting_pos = warning_settings.getPosition(setting_num);
+        else
+            setting_pos = 0;
+        if (inhibit_num < inhibit_warnings.size())
+            inhibit_pos = inhibit_warnings.getPosition(inhibit_num);
+        else
+            inhibit_pos = 0;
+
+        if (inhibit_pos != 0 &&
+            (setting_pos == 0 || inhibit_pos < setting_pos))
+        {
+            // Handle inhibit option
+            yasm::warn_disable_all();
+            ++inhibit_num;
+        }
+        else if (setting_pos != 0 &&
+                 (inhibit_pos == 0 || setting_pos < inhibit_pos))
+        {
+            // Handle setting option
+            switch (warning_settings[setting_num])
+            {
+                case E_ERROR: warning_error = true; break;
+                case D_ERROR: warning_error = false; break;
+                case E_UNREC_CHAR:
+                    yasm::warn_enable(yasm::WARN_UNREC_CHAR); break;
+                case D_UNREC_CHAR:
+                    yasm::warn_disable(yasm::WARN_UNREC_CHAR); break;
+                case E_ORPHAN_LABEL:
+                    yasm::warn_enable(yasm::WARN_ORPHAN_LABEL); break;
+                case D_ORPHAN_LABEL:
+                    yasm::warn_disable(yasm::WARN_ORPHAN_LABEL); break;
+                case E_UNINIT_CONTENTS:
+                    yasm::warn_enable(yasm::WARN_UNINIT_CONTENTS); break;
+                case D_UNINIT_CONTENTS:
+                    yasm::warn_disable(yasm::WARN_UNINIT_CONTENTS); break;
+                case E_SIZE_OVERRIDE:
+                    yasm::warn_enable(yasm::WARN_SIZE_OVERRIDE); break;
+                case D_SIZE_OVERRIDE:
+                    yasm::warn_disable(yasm::WARN_SIZE_OVERRIDE); break;
+            }
+            ++setting_num;
+        }
+        else
+            break; // we're done with the list
     }
-
-    list_filename = param;
-    return true;
 }
-
-static bool
-opt_objfile_handler(/*@unused@*/ const std::string& cmd,
-                    const std::string& param, /*@unused@*/ int extra)
-{
-    if (!obj_filename.empty())
-    {
-        print_error(
-            _("warning: can output to only one object file, last specified used"));
-    }
-
-    obj_filename = param;
-    return true;
-}
-
-static bool
-opt_machine_handler(/*@unused@*/ const std::string& cmd,
-                    const std::string& param, /*@unused@*/ int extra)
-{
-    machine_name = param;
-    return true;
-}
-
-static bool
-opt_strict_handler(/*@unused@*/ const std::string& cmd,
-                   /*@unused@*/ const std::string& param,
-                   /*@unused@*/ int extra)
-{
-    force_strict = true;
-    return true;
-}
-
-static bool
-opt_warning_handler(const std::string& cmd,
-                    /*@unused@*/ const std::string& param, int extra)
-{
-    // is it disabling the warning instead of enabling?
-    void (*action)(yasm::WarnClass wclass) = yasm::warn_enable;
-
-    if (extra == 1)
-    {
-        // -w, disable warnings
-        yasm::warn_disable_all();
-        return true;
-    }
-
-    // skip past 'W'
-    std::string::size_type pos = 1;
-
-    // detect no- prefix to disable the warning
-    if (cmd.compare(pos, 3, "no-") == 0)
-    {
-        action = yasm::warn_disable;
-        pos += 3;   // skip past it to get to the warning name
-    }
-
-    if (pos >= cmd.length())
-        // just -W or -Wno-, so definitely not valid
-        return 1;
-    else if (cmd.compare(pos, std::string::npos, "error") == 0)
-        warning_error = (action == yasm::warn_enable);
-    else if (cmd.compare(pos, std::string::npos, "unrecognized-char") == 0)
-        action(yasm::WARN_UNREC_CHAR);
-    else if (cmd.compare(pos, std::string::npos, "orphan-labels") == 0)
-        action(yasm::WARN_ORPHAN_LABEL);
-    else if (cmd.compare(pos, std::string::npos, "uninit-contents") == 0)
-        action(yasm::WARN_UNINIT_CONTENTS);
-    else if (cmd.compare(pos, std::string::npos, "size-override") == 0)
-        action(yasm::WARN_SIZE_OVERRIDE);
-    else
-        return false;
-
-    return true;
-}
-
-static bool
-opt_error_file(/*@unused@*/ const std::string& cmd,
-               const std::string& param, /*@unused@*/ int extra)
-{
-    if (!error_filename.empty())
-    {
-        print_error(
-            _("warning: can output to only one error file, last specified used"));
-    }
-
-    error_filename = param;
-    return true;
-}
-
-static bool
-opt_error_stdout(/*@unused@*/ const std::string& cmd,
-                 /*@unused@*/ const std::string& param,
-                 /*@unused@*/ int extra)
-{
-    // Clear any specified error filename
-    error_filename.clear();
-    errfile.std::basic_ios<char>::rdbuf(std::cout.rdbuf());
-    return true;
-}
-
-static bool
-preproc_only_handler(/*@unused@*/ const std::string& cmd,
-                     /*@unused@*/ const std::string& param,
-                     /*@unused@*/ int extra)
-{
-    preproc_only = 1;
-    return true;
-}
-
-static bool
-opt_include_option(/*@unused@*/ const std::string& cmd,
-                   const std::string& param, /*@unused@*/ int extra)
-{
-#if 0
-    yasm_add_include_path(param);
-#endif
-    return true;
-}
-
-static bool
-opt_preproc_option(/*@unused@*/ const std::string& cmd,
-                   const std::string& param, int extra)
-{
-    preproc_options.push_back(std::make_pair(param, extra));
-    return true;
-}
-
-static bool
-opt_ewmsg_handler(/*@unused@*/ const std::string& cmd,
-                  const std::string& param, /*@unused@*/ int extra)
-{
-    if (String::nocase_equal(param, "gnu") ||
-        String::nocase_equal(param, "gcc"))
-    {
-        ewmsg_style = EWSTYLE_GNU;
-    }
-    else if (String::nocase_equal(param, "vc"))
-    {
-        ewmsg_style = EWSTYLE_VC;
-    }
-    else
-        print_error(String::compose(
-            _("warning: unrecognized message style `%1'"), param));
-
-    return true;
-}
-
-static bool
-opt_makedep_handler(/*@unused@*/ const std::string& cmd,
-                    /*@unused@*/ const std::string& param,
-                    /*@unused@*/ int extra)
-{
-    // Also set preproc_only to 1, we don't want to generate code
-    preproc_only = true;
-    generate_make_dependencies = true;
-
-    return true;
-}
-
-#ifndef BUILD_STATIC
-static bool
-opt_plugin_handler(/*@unused@*/ const std::string& cmd,
-                   const std::string& param,
-                   /*@unused@*/ int extra)
-{
-    if (!yasm::load_plugin(param))
-        print_error(String::compose(
-            _("warning: could not load plugin `%s'"), param));
-    return true;
-}
-#endif
 
 static void
 apply_preproc_builtins(yasm::Preprocessor* preproc)
@@ -459,18 +448,51 @@ apply_preproc_builtins(yasm::Preprocessor* preproc)
 static void
 apply_preproc_saved_options(yasm::Preprocessor* preproc)
 {
-    for (CommandOptions::const_iterator i = preproc_options.begin(),
-         end = preproc_options.end(); i != end; ++i)
+    // Walk through predefine_macros, undefine_macros, and preinclude_files
+    // in parallel, ordering by command line argument position.
+    unsigned int def_num = 0, undef_num = 0, inc_num = 0;
+    unsigned int def_pos = 0, undef_pos = 0, inc_pos = 0;
+    for (;;)
     {
-        switch (i->second)
+        if (def_num < predefine_macros.size())
+            def_pos = predefine_macros.getPosition(def_num);
+        else
+            def_pos = 0;
+        if (undef_num < undefine_macros.size())
+            undef_pos = undefine_macros.getPosition(undef_num);
+        else
+            undef_pos = 0;
+        if (inc_num < preinclude_files.size())
+            inc_pos = preinclude_files.getPosition(inc_num);
+        else
+            inc_pos = 0;
+
+        if (def_pos != 0 &&
+            (undef_pos == 0 || def_pos < undef_pos) &&
+            (inc_pos == 0 || def_pos < inc_pos))
         {
-            case 0:
-                preproc->add_include_file(i->first);
-            case 1:
-                preproc->predefine_macro(i->first);
-            case 2:
-                preproc->undefine_macro(i->first);
+            // Handle predefine option
+            preproc->predefine_macro(predefine_macros[def_num]);
+            ++def_num;
         }
+        else if (undef_pos != 0 &&
+                 (def_pos == 0 || undef_pos < def_pos) &&
+                 (inc_pos == 0 || undef_pos < inc_pos))
+        {
+            // Handle undefine option
+            preproc->undefine_macro(undefine_macros[undef_num]);
+            ++undef_num;
+        }
+        else if (inc_pos != 0 &&
+                 (def_pos == 0 || inc_pos < def_pos) &&
+                 (undef_pos == 0 || inc_pos < undef_pos))
+        {
+            // Handle preinclude option
+            preproc->add_include_file(preinclude_files[inc_num]);
+            ++inc_num;
+        }
+        else
+            break; // we're done with the list
     }
 }
 
@@ -523,69 +545,6 @@ print_yasm_warning(const std::string& filename,
         String::compose(line ? fmt[ewmsg_style] : fmt_noline[ewmsg_style],
                         filename, line, _("warning: "), msg) << std::endl;
 }
-
-// command line options
-static OptOption options[] =
-{
-    { 0, "version", false, opt_special_handler, SPECIAL_SHOW_VERSION,
-      N_("show version text"), NULL },
-    { 0, "license", false, opt_special_handler, SPECIAL_SHOW_LICENSE,
-      N_("show license text"), NULL },
-    { 'h', "help", false, opt_special_handler, SPECIAL_SHOW_HELP,
-      N_("show help text"), NULL },
-    { 'a', "arch", true, opt_arch_handler, 0,
-      N_("select architecture (list with -a help)"), N_("arch") },
-    { 'p', "parser", true, opt_parser_handler, 0,
-      N_("select parser (list with -p help)"), N_("parser") },
-    { 'r', "preproc", true, opt_preproc_handler, 0,
-      N_("select preprocessor (list with -r help)"), N_("preproc") },
-    { 'f', "oformat", true, opt_objfmt_handler, 0,
-      N_("select object format (list with -f help)"), N_("format") },
-    { 'g', "dformat", true, opt_dbgfmt_handler, 0,
-      N_("select debugging format (list with -g help)"), N_("debug") },
-    { 'L', "lformat", true, opt_listfmt_handler, 0,
-      N_("select list format (list with -L help)"), N_("list") },
-    { 'l', "list", true, opt_listfile_handler, 0,
-      N_("name of list-file output"), N_("listfile") },
-    { 'o', "objfile", true, opt_objfile_handler, 0,
-      N_("name of object-file output"), N_("filename") },
-    { 'm', "machine", true, opt_machine_handler, 0,
-      N_("select machine (list with -m help)"), N_("machine") },
-    { 0, "force-strict", false, opt_strict_handler, 0,
-      N_("treat all sized operands as if `strict' was used"), NULL },
-    { 'w', NULL, false, opt_warning_handler, 1,
-      N_("inhibits warning messages"), NULL },
-    { 'W', NULL, false, opt_warning_handler, 0,
-      N_("enables/disables warning"), NULL },
-    { 'M', NULL, false, opt_makedep_handler, 0,
-      N_("generate Makefile dependencies on stdout"), NULL },
-    { 'E', NULL, true, opt_error_file, 0,
-      N_("redirect error messages to file"), N_("file") },
-    { 's', NULL, false, opt_error_stdout, 0,
-      N_("redirect error messages to stdout"), NULL },
-    { 'e', "preproc-only", false, preproc_only_handler, 0,
-      N_("preprocess only (writes output to stdout by default)"), NULL },
-    { 'i', NULL, true, opt_include_option, 0,
-      N_("add include path"), N_("path") },
-    { 'I', NULL, true, opt_include_option, 0,
-      N_("add include path"), N_("path") },
-    { 'P', NULL, true, opt_preproc_option, 0,
-      N_("pre-include file"), N_("filename") },
-    { 'd', NULL, true, opt_preproc_option, 1,
-      N_("pre-define a macro, optionally to value"), N_("macro[=value]") },
-    { 'D', NULL, true, opt_preproc_option, 1,
-      N_("pre-define a macro, optionally to value"), N_("macro[=value]") },
-    { 'u', NULL, true, opt_preproc_option, 2,
-      N_("undefine a macro"), N_("macro") },
-    { 'U', NULL, true, opt_preproc_option, 2,
-      N_("undefine a macro"), N_("macro") },
-    { 'X', NULL, true, opt_ewmsg_handler, 0,
-      N_("select error/warning message style (`gnu' or `vc')"), N_("style") },
-#ifndef BUILD_STATIC
-    { 'N', "plugin", true, opt_plugin_handler, 0,
-      N_("load plugin module"), N_("plugin") },
-#endif
-};
 
 #if 0
 static int
@@ -803,10 +762,8 @@ do_assemble(void)
 
 // main function
 int
-main(int argc, const char* argv[])
+main(int argc, char* argv[])
 {
-    errfile.std::basic_ios<char>::rdbuf(std::cerr.rdbuf());
-
 #if 0
 #if defined(HAVE_SETLOCALE) && defined(HAVE_LC_MESSAGES)
     setlocale(LC_MESSAGES, "");
@@ -820,39 +777,30 @@ main(int argc, const char* argv[])
     // Initialize errwarn handling
     yasm::gettext_hook = handle_yasm_gettext;
 
-    // Load standard modules
-    if (!yasm::load_standard_plugins())
-    {
-        print_error(_("FATAL: could not load standard modules"));
-        return EXIT_FAILURE;
-    }
+    cl::SetVersionPrinter(&print_version);
+    cl::ParseCommandLineOptions(argc, argv);
 
-    if (!parse_cmdline(argc, argv, options, NELEMS(options), print_error))
-        return EXIT_FAILURE;
+    // Handle special exiting options
+    if (show_help)
+        cl::PrintHelpMessage();
 
-    switch (special_option)
+    if (show_license)
     {
-        case SPECIAL_SHOW_HELP:
-            // Does gettext calls internally
-            help_msg(help_head, help_tail, options, NELEMS(options));
-            return EXIT_SUCCESS;
-        case SPECIAL_SHOW_VERSION:
-            for (std::size_t i=0; i<NELEMS(version_msg); i++)
-                std::cout << version_msg[i] << '\n';
-            return EXIT_SUCCESS;
-        case SPECIAL_SHOW_LICENSE:
-            for (std::size_t i=0; i<NELEMS(license_msg); i++)
-                std::cout << license_msg[i] << '\n';
-            return EXIT_SUCCESS;
-        case SPECIAL_LISTED:
-            // Printed out earlier
-            return EXIT_SUCCESS;
-        default:
-            break;
+        for (std::size_t i=0; i<NELEMS(license_msg); i++)
+            std::cout << license_msg[i] << '\n';
+        return EXIT_SUCCESS;
     }
 
     // Open error file if specified.
-    if (!error_filename.empty())
+    // -s overrides -e if it comes after it on the command line.
+    // Default to stderr if not overridden by -s or -e.
+    if (error_stdout &&
+        error_stdout.getPosition() > error_filename.getPosition())
+    {
+        error_filename.clear();
+        errfile.std::basic_ios<char>::rdbuf(std::cout.rdbuf());
+    }
+    else if (!error_filename.empty())
     {
         errfile.close();
         errfile.open(error_filename.c_str());
@@ -863,12 +811,54 @@ main(int argc, const char* argv[])
             return EXIT_FAILURE;
         }
     }
+    else
+        errfile.std::basic_ios<char>::rdbuf(std::cerr.rdbuf());
+
+    // Load standard modules
+    if (!yasm::load_standard_plugins())
+    {
+        print_error(_("FATAL: could not load standard modules"));
+        return EXIT_FAILURE;
+    }
+
+#ifndef BUILD_STATIC
+    // Load plugins
+    for (std::vector<std::string>::const_iterator i=plugin_names.begin(),
+         end=plugin_names.end(); i != end; ++i)
+    {
+        if (!yasm::load_plugin(*i))
+            print_error(String::compose(
+                _("warning: could not load plugin `%s'"), *i));
+    }
+#endif
+
+    // Handle keywords (including "help").
+    bool listed;
+    arch_keyword = module_common_handler<yasm::Arch>
+        (arch_keyword, _("architecture"), _("architectures"), &listed);
+    parser_keyword = module_common_handler<yasm::Parser>
+        (parser_keyword, _("parser"), _("parsers"), &listed);
+    preproc_keyword = module_common_handler<yasm::Preprocessor>
+        (preproc_keyword, _("preprocessor"), _("preprocessors"), &listed);
+    objfmt_keyword = module_common_handler<yasm::ObjectFormat>
+        (objfmt_keyword, _("object format"), _("object formats"), &listed);
+    dbgfmt_keyword = module_common_handler<yasm::DebugFormat>
+        (dbgfmt_keyword, _("debug format"), _("debug formats"), &listed);
+    listfmt_keyword = module_common_handler<yasm::ListFormat>
+        (listfmt_keyword, _("list format"), _("list formats"), &listed);
+    if (listed)
+        return EXIT_SUCCESS;
+
+    // If generating make dependencies, also set preproc_only to true,
+    // as we don't want to generate code.
+    if (generate_make_dependencies)
+        preproc_only = true;
 
     // Default to x86 as the architecture
     if (arch_keyword.empty())
         arch_keyword = "x86";
 
-    // Check for arch help
+    // Check for machine help
     if (machine_name == "help")
     {
         std::auto_ptr<yasm::Arch> arch_auto =
@@ -884,7 +874,8 @@ main(int argc, const char* argv[])
         return EXIT_SUCCESS;
     }
 
-    // Determine input filename and open input file.
+    // Require an input filename.  We don't use llvm::cl facilities for this
+    // as we want to allow e.g. "yasm --license".
     if (in_filename.empty())
     {
         print_error(_("No input files specified"));
@@ -898,6 +889,9 @@ main(int argc, const char* argv[])
     // Default to NASM as the parser
     if (parser_keyword.empty())
         parser_keyword = "nasm";
+
+    // Apply warning settings
+    apply_warning_settings();
 
 #if 0
     // handle preproc-only case here
