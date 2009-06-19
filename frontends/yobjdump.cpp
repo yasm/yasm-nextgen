@@ -60,7 +60,7 @@ void
 print_version()
 {
     std::cout
-        << full_version
+        << full_version << '\n'
         << "Compiled on " __DATE__ ".\n"
         << "Copyright (c) 2001-2009 Peter Johnson and other Yasm developers.\n"
         << "Run yobjdump --license for licensing overview and summary.\n";
@@ -82,9 +82,11 @@ static cl::list<std::string> in_filenames(cl::Positional,
 // -b, --target
 static cl::opt<std::string> objfmt_keyword("b",
     cl::desc("Select object format"),
-    cl::value_desc("target"));
+    cl::value_desc("target"),
+    cl::Prefix);
 static cl::alias objfmt_keyword_long("target",
     cl::desc("Alias for -b"),
+    cl::value_desc("target"),
     cl::aliasopt(objfmt_keyword));
 
 // -H
