@@ -24,6 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#define DEBUG_TYPE "Object"
+
 #include "yasmx/Object.h"
 
 #include "util.h"
@@ -36,6 +38,7 @@
 
 #include <boost/pool/pool.hpp>
 
+#include "llvm/ADT/Statistic.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/IntervalTree.h"
 #include "yasmx/Support/marg_ostream.h"
@@ -54,6 +57,16 @@
 
 #include "hamt.h"
 
+
+STATISTIC(num_exist_symbol, "Number of existing symbols found by name");
+STATISTIC(num_new_symbol, "Number of symbols created by name");
+STATISTIC(opt_span_terms, "Number of optimizer span terms created");
+STATISTIC(opt_spans, "Number of optimizer spans created");
+STATISTIC(opt_step1d, "Number of optimizer spans after step 1b");
+STATISTIC(opt_itree, "Number of optimizer span terms added to interval tree");
+STATISTIC(opt_offset_setters, "Number of optimizer offset setters");
+STATISTIC(opt_expansions, "Number of optimizer expansions performed");
+STATISTIC(opt_initial_qb, "Number of optimizer spans on initial QB");
 
 namespace
 {
@@ -219,8 +232,12 @@ Object::get_symbol(const std::string& name)
     std::auto_ptr<Symbol> sym(new Symbol(name));
     Symbol* sym2 = m_impl->sym_map.insert(sym.get());
     if (sym2)
+    {
+        ++num_exist_symbol;
         return SymbolRef(sym2);
+    }
 
+    ++num_new_symbol;
     sym2 = sym.get();
     m_symbols.push_back(sym.release());
     return SymbolRef(sym2);
@@ -522,6 +539,7 @@ Span::Term::Term(unsigned int subst,
       m_new_val(new_val),
       m_subst(subst)
 {
+    ++opt_span_terms;
 }
 
 Span::Span(Bytecode& bc,
@@ -540,6 +558,7 @@ Span::Span(Bytecode& bc,
       m_active(ACTIVE),
       m_os_index(os_index)
 {
+    ++opt_spans;
 }
 
 void
@@ -693,6 +712,7 @@ Optimize::itree_add(Span& span, Span::Term& term)
         return;     /* difference is same bc - always 0! */
 
     m_itree.insert(static_cast<long>(low), static_cast<long>(high), &term);
+    ++opt_itree;
 }
 
 void
@@ -822,6 +842,7 @@ Optimize::step_1d()
     for (std::list<Span*>::iterator spani=m_spans.begin(),
          endspan=m_spans.end(); spani != endspan; ++spani)
     {
+        ++opt_step1d;
         Span* span = *spani;
 
         // Update span terms based on new bc offsets
@@ -841,6 +862,7 @@ Optimize::step_1d()
             // Exceeded threshold, add span to QB
             m_QB.push(&(*span));
             span->m_active = Span::ON_Q;
+            ++opt_initial_qb;
         }
     }
 
@@ -862,6 +884,7 @@ Optimize::step_1e(Errwarns& errwarns)
         os->m_thres = os->m_bc->next_offset();
         os->m_new_val = os->m_bc->get_offset();
         os->m_cur_val = os->m_new_val;
+        ++opt_offset_setters;
     }
 
     // Build up interval tree
@@ -930,6 +953,8 @@ Optimize::step_2(Errwarns& errwarns)
         // again.
         if (!span->recalc_normal())
             continue;
+
+        ++opt_expansions;
 
         unsigned long orig_len = span->m_bc.get_total_len();
 
