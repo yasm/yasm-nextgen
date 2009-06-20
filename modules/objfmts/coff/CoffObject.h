@@ -39,7 +39,7 @@ namespace objfmt
 namespace coff
 {
 
-class CoffSection;
+struct CoffSection;
 class CoffSymbol;
 
 class CoffObject : public ObjectFormat
