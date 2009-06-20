@@ -43,7 +43,7 @@ namespace objfmt
 namespace bin
 {
 
-class BinSection;
+struct BinSection;
 
 // Symbol data is used only for the special symbols section<sectname>.start,
 // section<sectname>.vstart, and section<sectname>.length
