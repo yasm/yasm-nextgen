@@ -66,8 +66,9 @@ operator<< (marg_ostream& os, const AssocData& data)
 /// Associated data container.
 class YASM_LIB_EXPORT AssocDataContainer
 {
-    friend marg_ostream& operator<< (marg_ostream& os,
-                                     const AssocDataContainer& container);
+    friend YASM_LIB_EXPORT
+	marg_ostream& operator<< (marg_ostream& os,
+                              const AssocDataContainer& container);
 
     typedef std::map<const void*, AssocData*> AssocMap;
     AssocMap m_assoc_map;
