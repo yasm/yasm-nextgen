@@ -46,7 +46,6 @@ namespace arch
 namespace x86
 {
 
-inline
 X86Register::~X86Register()
 {
 }
@@ -157,7 +156,6 @@ X86RegisterGroup::get_reg(unsigned long regindex) const
     return m_regs[regindex];
 }
 
-inline
 X86SegmentRegister::~X86SegmentRegister()
 {
 }
