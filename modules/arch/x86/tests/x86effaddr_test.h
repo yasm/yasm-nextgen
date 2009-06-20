@@ -410,7 +410,7 @@ public:
                                      true);
                     TS_ASSERT_EQUALS(ea.m_need_modrm, true);
                     TS_ASSERT_EQUALS(ea.m_modrm, expect_modrm);
-                    TS_ASSERT_EQUALS(ea.m_need_sib, need_sib);
+					TS_ASSERT_EQUALS(ea.m_need_sib, need_sib?1:0);
                     TS_ASSERT_EQUALS(ea.m_valid_sib, need_sib);
                     if (need_sib)
                         TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
@@ -456,7 +456,7 @@ public:
                 unsigned char rex = 0;
                 TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
                 TS_ASSERT_EQUALS(ea.m_need_modrm, true);
-                TS_ASSERT_EQUALS(ea.m_need_sib, true);
+                TS_ASSERT_EQUALS(ea.m_need_sib, 1);
                 TS_ASSERT_EQUALS(ea.m_valid_sib, true);
                 TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
             }
@@ -486,7 +486,7 @@ public:
             unsigned char rex = 0;
             TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
             TS_ASSERT_EQUALS(ea.m_need_modrm, true);
-            TS_ASSERT_EQUALS(ea.m_need_sib, true);
+            TS_ASSERT_EQUALS(ea.m_need_sib, 1);
             TS_ASSERT_EQUALS(ea.m_valid_sib, true);
             TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
         }
@@ -503,7 +503,7 @@ public:
         unsigned char rex = 0;
         TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
         TS_ASSERT_EQUALS(ea.m_need_modrm, true);
-        TS_ASSERT_EQUALS(ea.m_need_sib, true);
+        TS_ASSERT_EQUALS(ea.m_need_sib, 1);
         TS_ASSERT_EQUALS(ea.m_valid_sib, true);
         unsigned char expect_sib = 1<<6;
         expect_sib |= (EAX.get_num()&7)<<3;
@@ -525,7 +525,7 @@ public:
             unsigned char rex = 0;
             TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
             TS_ASSERT_EQUALS(ea.m_need_modrm, true);
-            TS_ASSERT_EQUALS(ea.m_need_sib, true);
+            TS_ASSERT_EQUALS(ea.m_need_sib, 1);
             TS_ASSERT_EQUALS(ea.m_valid_sib, true);
             // EAX*2 will get split to EAX+EAX
             unsigned char expect_sib;
@@ -551,7 +551,7 @@ public:
             rex = 0;
             TS_ASSERT_EQUALS(ea2.check(&addrsize, 32, false, &rex, 0), true);
             TS_ASSERT_EQUALS(ea2.m_need_modrm, true);
-            TS_ASSERT_EQUALS(ea2.m_need_sib, true);
+            TS_ASSERT_EQUALS(ea2.m_need_sib, 1);
             TS_ASSERT_EQUALS(ea2.m_valid_sib, true);
             TS_ASSERT_EQUALS(ea2.m_sib, expect_sib);
             TS_ASSERT_EQUALS(String::format(*ea2.m_disp.get_abs()),
@@ -576,7 +576,7 @@ public:
         unsigned char rex = 0;
         TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
         TS_ASSERT_EQUALS(ea.m_need_modrm, true);
-        TS_ASSERT_EQUALS(ea.m_need_sib, true);
+        TS_ASSERT_EQUALS(ea.m_need_sib, 1);
         TS_ASSERT_EQUALS(ea.m_valid_sib, true);
         unsigned char expect_sib = 2<<6;
         expect_sib |= (EAX.get_num()&7)<<3;
@@ -598,7 +598,7 @@ public:
         rex = 0;
         TS_ASSERT_EQUALS(ea2.check(&addrsize, 32, false, &rex, 0), true);
         TS_ASSERT_EQUALS(ea2.m_need_modrm, true);
-        TS_ASSERT_EQUALS(ea2.m_need_sib, true);
+        TS_ASSERT_EQUALS(ea2.m_need_sib, 1);
         TS_ASSERT_EQUALS(ea2.m_valid_sib, true);
         TS_ASSERT_EQUALS(ea2.m_sib, expect_sib);
         TS_ASSERT_EQUALS(String::format(*ea2.m_disp.get_abs()),
@@ -618,7 +618,7 @@ public:
         unsigned char rex = 0;
         TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
         TS_ASSERT_EQUALS(ea.m_need_modrm, true);
-        TS_ASSERT_EQUALS(ea.m_need_sib, true);
+        TS_ASSERT_EQUALS(ea.m_need_sib, 1);
         TS_ASSERT_EQUALS(ea.m_valid_sib, true);
         unsigned char expect_sib = 2<<6;
         expect_sib |= (EAX.get_num()&7)<<3;
@@ -640,7 +640,7 @@ public:
         unsigned char rex = 0;
         TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
         TS_ASSERT_EQUALS(ea.m_need_modrm, true);
-        TS_ASSERT_EQUALS(ea.m_need_sib, true);
+        TS_ASSERT_EQUALS(ea.m_need_sib, 1);
         TS_ASSERT_EQUALS(ea.m_valid_sib, true);
         unsigned char expect_sib = 1<<6;
         expect_sib |= (EAX.get_num()&7)<<3;

@@ -287,12 +287,15 @@ if (MSVC)
    MARK_AS_ADVANCED(CMAKE_CXX_WARNING_LEVEL)
 
    # disable a few warnings that are just useless noise
+   # 4146 : unary minus operator applied to unsigned type (APInt uses this)
    # 4251 : dll interface missing
    # 4275 : non-dll class used as base for dll class
-   SET(FLAGS_WARN_OFF "/wd4251 /wd4275")
+   # 4800 : forcing value to bool (performance warning)
+   SET(FLAGS_WARN_OFF "/wd4146 /wd4251 /wd4275 /wd4800")
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLAGS_WARN_OFF}")
 
    # Disable some annoying Visual Studio warnings
+   ADD_DEFINITIONS(-D_SCL_SECURE_NO_WARNINGS)
    ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS)
    ADD_DEFINITIONS(-D_CRT_NONSTDC_NO_WARNINGS)
 endif(MSVC)

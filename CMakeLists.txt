@@ -11,7 +11,7 @@ set(CMAKE_MODULE_PATH "${YASM_MODULE_DIR}")
 set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
 if (WIN32)
    # we don't want to be forced to set two paths into the build tree 
-   set(LIBRARY_OUTPUT_PATH  ${CMAKE_BINARY_DIR}/bin )
+   set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 endif (WIN32)
 
 OPTION(BUILD_STATIC "Build a monolithic executable with no plugin support" OFF)
