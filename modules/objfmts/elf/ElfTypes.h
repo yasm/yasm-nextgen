@@ -38,7 +38,7 @@ namespace objfmt
 namespace elf
 {
 
-class ElfConfig;
+struct ElfConfig;
 class ElfMachine;
 class ElfReloc;
 class ElfSection;
