@@ -6,20 +6,6 @@ INCLUDE(CheckFunctionExists)
 INCLUDE(CheckIncludeFile)
 INCLUDE(CheckSymbolExists)
 INCLUDE(CheckLibraryExists)
-
-SET(Boost_FOUND FALSE)
-
-option(WITHOUT_BOOST "If set to TRUE, Boost will not be searched for." FALSE)
-IF (NOT WITHOUT_BOOST)
-  FIND_PACKAGE(Boost)
-ENDIF (NOT WITHOUT_BOOST)
-
-IF (Boost_FOUND)
-  INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
-ELSE (Boost_FOUND)
-  INCLUDE_DIRECTORIES(${yasm_SOURCE_DIR}/lwboost)
-ENDIF (Boost_FOUND)
-
 INCLUDE(MacroEnsureVersion)
 
 #FIND_PROGRAM(XMLTO NAMES xmlto)
@@ -44,8 +30,6 @@ IF (HAVE_LIBDL)
 ELSE (HAVE_LIBDL)
     SET(LIBDL "")
 ENDIF (HAVE_LIBDL)
-
-CONFIGURE_FILE(config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 INCLUDE(FindPythonInterp)
@@ -362,3 +346,28 @@ endif (CMAKE_C_COMPILER MATCHES "icc")
 
 
 ###########    end of platform specific stuff  ##########################
+
+# Generate yasm configured files
+CONFIGURE_FILE(config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+
+INCLUDE(YasmCXXTR1)
+IF(BOOST_REQUIRED)
+  FIND_PACKAGE(Boost)
+  IF(Boost_FOUND)
+    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
+  ELSE(Boost_FOUND)
+    MESSAGE(FATAL_ERROR "Couldn't find the Boost libraries and/or include directory to fulfill TR1 requirements.  Please install Boost or a TR1 development package. You can set BOOST_ROOT, BOOST_INCLUDEDIR and BOOST_LIBRARYDIR to help find Boost.")
+  ENDIF(Boost_FOUND)
+ELSE(BOOST_REQUIRED)
+  INCLUDE_DIRECTORIES(${yasm_SOURCE_DIR}/lwboost)
+ENDIF(BOOST_REQUIRED)
+
+CONFIGURE_FILE(
+    include/yasmx/Config/functional.h.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/include/yasmx/Config/functional.h
+    )
+CONFIGURE_FILE(
+    include/yasmx/Config/export.h.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/include/yasmx/Config/export.h
+    )
+

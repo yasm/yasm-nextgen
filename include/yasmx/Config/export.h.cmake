@@ -14,7 +14,7 @@
 # elif defined(WIN32) || defined(_MSC_VER)
 #  define YASM_EXPORT __declspec(dllexport)
 #  define YASM_IMPORT __declspec(dllimport)
-# elif YASM_HAVE_GCC_VISIBILITY
+# elif defined(YASM_HAVE_GCC_VISIBILITY)
 #  define YASM_EXPORT __attribute__((visibility("default")))
 #  define YASM_IMPORT __attribute__((visibility("default")))
 # endif
