@@ -1,3 +1,0 @@
-CONFIGURE_FILE(export.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/export.h)
-
-INCLUDE(YasmCXXTR1)

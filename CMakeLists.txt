@@ -74,7 +74,6 @@ INCLUDE(CPack)
 INCLUDE(ConfigureChecks.cmake)
 INCLUDE(MacroAddCxxTest)
 
-ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(tools)
 ADD_SUBDIRECTORY(modules)
 ADD_SUBDIRECTORY(lib)

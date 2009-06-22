@@ -1,1 +1,0 @@
-CONFIGURE_FILE(DataTypes.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/DataTypes.h)

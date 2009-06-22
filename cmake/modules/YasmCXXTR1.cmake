@@ -150,8 +150,3 @@ ELSE(HAVE_STD_MEMFN1 OR HAVE_STD_MEMFN2)
     SET(BOOST_REQUIRED TRUE)
 ENDIF(HAVE_STD_MEMFN1 OR HAVE_STD_MEMFN2)
 
-IF(BOOST_REQUIRED AND NOT Boost_FOUND)
-  MESSAGE(FATAL_ERROR "Couldn't find the Boost libraries and/or include directory to fulfill TR1 requirements.  Please install Boost or a TR1 development package. You can set BOOST_ROOT, BOOST_INCLUDEDIR and BOOST_LIBRARYDIR to help find Boost.")
-ENDIF(BOOST_REQUIRED AND NOT Boost_FOUND)
-
-CONFIGURE_FILE(functional.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/functional.h)
