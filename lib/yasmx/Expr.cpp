@@ -599,18 +599,17 @@ again:
                 return;
             }
 
-#if 0
             // if there's a float child, upconvert and work against it instead
             if (fltchild != 0 && op < Op::NEG)
             {
                 std::auto_ptr<llvm::APFloat>
-                    upconvf(new llvm::APFloat(*fltchild));
-                upconvf->convertFromAPInt(*child.get_int(), true,
+                    upconvf(new llvm::APFloat(*fltchild->get_float()));
+                llvm::APInt upconvi(IntNum::BITVECT_NATIVE_SIZE, 0);
+                upconvf->convertFromAPInt(*intn->get_bv(&upconvi), true,
                                           llvm::APFloat::rmNearestTiesToEven);
                 child = ExprTerm(upconvf, child.m_depth);
                 goto again;
             }
-#endif
 
             if (intchild == 0)
             {
@@ -632,18 +631,18 @@ again:
             if (op >= Op::NEG)
                 continue;
 
-#if 0
             // if there's an integer child, upconvert it
             if (intchild != 0)
             {
                 std::auto_ptr<llvm::APFloat> upconvf(new llvm::APFloat(*fltn));
-                upconvf->convertFromAPInt(*intchild->get_int(), true,
-                                          llvm::APFloat::rmNearestTiesToEven);
+                llvm::APInt upconvi(IntNum::BITVECT_NATIVE_SIZE, 0);
+                upconvf->convertFromAPInt(
+                    *intchild->get_int()->get_bv(&upconvi), true,
+                    llvm::APFloat::rmNearestTiesToEven);
                 fltchild = intchild;
                 intchild = 0;
                 *fltchild = ExprTerm(upconvf, fltchild->m_depth);
             }
-#endif
 
             if (fltchild == 0)
             {
