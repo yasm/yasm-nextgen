@@ -72,9 +72,15 @@ X86Common::ApplyPrefixes(unsigned int def_opersize_64,
                 break;
             case X86Prefix::ADDRSIZE:
                 m_addrsize = prefix->getValue();
+                if (m_mode_bits == 64 && m_addrsize == 16)
+                    diags.Report(i->second, diag::err_addr16_override_64mode);
                 break;
             case X86Prefix::OPERSIZE:
                 m_opersize = prefix->getValue();
+
+                if (m_mode_bits == 64 && m_opersize == 32)
+                    diags.Report(i->second, diag::err_data32_override_64mode);
+
                 if (m_mode_bits == 64 && m_opersize == 64 &&
                     def_opersize_64 != 64)
                 {

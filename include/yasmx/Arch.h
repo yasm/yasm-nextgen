@@ -201,6 +201,10 @@ operator<< (YAML::Emitter& out, const SegmentRegister& segreg)
 class YASM_LIB_EXPORT Arch
 {
 public:
+    /// Opaque class to be used as a ParseCheckInsnPrefix() return value
+    /// for instructions.
+    class InsnInfo;
+
     /// Return value for ParseCheckInsnPrefix().
     class YASM_LIB_EXPORT InsnPrefix
     {
@@ -213,19 +217,17 @@ public:
         };
 
         InsnPrefix() : m_type(NONE) {}
-        InsnPrefix(std::auto_ptr<Insn> insn);
+        InsnPrefix(const InsnInfo* insn)
+            : m_type(INSN), m_insn(insn)
+        {}
         InsnPrefix(const Prefix* prefix)
             : m_type(PREFIX), m_prefix(prefix)
         {}
 
-        ~InsnPrefix();
-
         Type getType() const { return m_type; }
         bool isType(Type type) const { return m_type == type; }
 
-        std::auto_ptr<Insn> ReleaseInsn();
-
-        const Insn* getInsn() const
+        const InsnInfo* getInsn() const
         {
             return (m_type == INSN ? m_insn : 0);
         }
@@ -237,7 +239,7 @@ public:
         Type m_type;
         union
         {
-            Insn* m_insn;
+            const InsnInfo* m_insn;
             const Prefix* m_prefix;
         };
     };
@@ -415,6 +417,10 @@ public:
     /// instruction.  This is used for handling solitary prefixes.
     /// @return Newly allocated instruction.
     virtual std::auto_ptr<Insn> CreateEmptyInsn() const = 0;
+
+    /// Create an instruction based on an InsnInfo provided by
+    /// ParseCheckInsnPrefix().
+    virtual std::auto_ptr<Insn> CreateInsn(const InsnInfo* info) const = 0;
 
 private:
     Arch(const Arch&);                  // not implemented

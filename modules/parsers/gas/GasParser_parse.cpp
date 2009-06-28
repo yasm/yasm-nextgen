@@ -942,7 +942,7 @@ GasParser::ParseInsn()
 
             getNextToken();   // ID
 
-            Insn::Ptr insn = ip.ReleaseInsn();
+            Insn::Ptr insn = m_arch->CreateInsn(ip.getInsn());
             if (!isEol())
             {
                 // parse operands

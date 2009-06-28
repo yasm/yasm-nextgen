@@ -507,7 +507,7 @@ scan:
                 switch (ip.getType())
                 {
                     case Arch::InsnPrefix::INSN:
-                        lvalp->insn = ip.ReleaseInsn();
+                        lvalp->insn = m_arch->CreateInsn(ip.getInsn());
                         m_state = INSTRUCTION;
                         RETURN(INSN);
                     case Arch::InsnPrefix::PREFIX:

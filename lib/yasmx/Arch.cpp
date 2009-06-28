@@ -73,26 +73,6 @@ SegmentRegister::Dump() const
     llvm::errs() << out.c_str() << '\n';
 }
 
-Arch::InsnPrefix::InsnPrefix(std::auto_ptr<Insn> insn)
-    : m_type(INSN),
-      m_insn(insn.release())
-{}
-
-Arch::InsnPrefix::~InsnPrefix()
-{
-    if (m_type == INSN)
-        delete m_insn;
-}
-
-std::auto_ptr<Insn>
-Arch::InsnPrefix::ReleaseInsn()
-{
-    if (m_type != INSN)
-        return std::auto_ptr<Insn>(0);
-    m_type = NONE;
-    return std::auto_ptr<Insn>(m_insn);
-}
-
 Arch::~Arch()
 {
 }

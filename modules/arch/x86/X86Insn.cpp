@@ -1866,41 +1866,11 @@ X86Arch::ParseCheckInsnPrefix(llvm::StringRef id,
             return InsnPrefix();
         }
 
-        return Arch::InsnPrefix(std::auto_ptr<Insn>(new X86Insn(
-            *this,
-            static_cast<const X86InsnInfo*>(pdata->struc),
-            m_active_cpu,
-            pdata->mod_data0,
-            pdata->mod_data1,
-            pdata->mod_data2,
-            pdata->num_info,
-            m_mode_bits,
-            pdata->flags,
-            pdata->misc_flags,
-            m_parser,
-            m_force_strict,
-            m_default_rel)));
+        return InsnPrefix(reinterpret_cast<const InsnInfo*>(pdata));
     }
     else
     {
         const X86Prefix* prefix = static_cast<const X86Prefix*>(pdata->struc);
-
-        if (m_mode_bits == 64)
-        {
-            unsigned char value = prefix->getValue();
-
-            if (prefix->is(X86Prefix::OPERSIZE) && value == 32)
-            {
-                diags.Report(source, diag::err_data32_override_64mode);
-                return InsnPrefix();
-            }
-
-            if (prefix->is(X86Prefix::ADDRSIZE) && value == 16)
-            {
-                diags.Report(source, diag::err_addr16_override_64mode);
-                return InsnPrefix();
-            }
-        }
 
         if (m_mode_bits != 64 && (pdata->misc_flags & ONLY_64))
         {
@@ -2001,6 +1971,28 @@ X86Arch::CreateEmptyInsn() const
         m_mode_bits,
         (m_parser == PARSER_GAS) ? SUF_Z : 0,
         0,
+        m_parser,
+        m_force_strict,
+        m_default_rel));
+}
+
+std::auto_ptr<Insn>
+X86Arch::CreateInsn(const Arch::InsnInfo* info) const
+{
+    const InsnPrefixParseData* pdata =
+        reinterpret_cast<const InsnPrefixParseData*>(info);
+
+    return std::auto_ptr<Insn>(new X86Insn(
+        *this,
+        static_cast<const X86InsnInfo*>(pdata->struc),
+        m_active_cpu,
+        pdata->mod_data0,
+        pdata->mod_data1,
+        pdata->mod_data2,
+        pdata->num_info,
+        m_mode_bits,
+        pdata->flags,
+        pdata->misc_flags,
         m_parser,
         m_force_strict,
         m_default_rel));

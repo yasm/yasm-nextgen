@@ -248,7 +248,8 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
     llvm::tie(insn_name, insn_in) = insn_in.split(' ');
     Arch::InsnPrefix insnprefix =
         m_arch->ParseCheckInsnPrefix(insn_name, clang::SourceLocation(), diags);
-    std::auto_ptr<Insn> insn = insnprefix.ReleaseInsn();
+    ASSERT_TRUE(insnprefix.isType(Arch::InsnPrefix::INSN));
+    std::auto_ptr<Insn> insn = m_arch->CreateInsn(insnprefix.getInsn());
     ASSERT_TRUE(insn.get() != 0) << "unrecognized instruction '"
         << insn_name.str() << "'";
 

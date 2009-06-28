@@ -188,6 +188,7 @@ public:
     std::auto_ptr<EffAddr> CreateEffAddr(std::auto_ptr<Expr> e) const;
 
     std::auto_ptr<Insn> CreateEmptyInsn() const;
+    std::auto_ptr<Insn> CreateInsn(const InsnInfo* info) const;
 
     ParserSelect getParser() const { return m_parser; }
 
