@@ -12,6 +12,7 @@ ADD_CXXTEST(libyasmx_tests
     floatnum_test.h
     intnum_test.h
     marg_ostream_test.h
+    nocase_test.h
     unescape_test.h
     value_test.h
     )
