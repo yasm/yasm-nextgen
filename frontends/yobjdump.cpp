@@ -411,43 +411,45 @@ do_dump(const std::string& in_filename)
         throw yasm::Error(String::compose(_("could not open file `%1'"),
                           in_filename));
 
-    std::auto_ptr<yasm::ObjectFormat> objfmt(0);
+    std::auto_ptr<yasm::ObjectFormatModule> objfmt_module(0);
     std::string arch_keyword, machine;
 
     if (!objfmt_keyword.empty())
     {
         objfmt_keyword = String::lowercase(objfmt_keyword);
-        if (!yasm::is_module<yasm::ObjectFormat>(objfmt_keyword))
+        if (!yasm::is_module<yasm::ObjectFormatModule>(objfmt_keyword))
         {
             throw yasm::Error(String::compose(
                 _("unrecognized object format `%1'"), objfmt_keyword));
         }
 
         // Object format forced by user
-        objfmt = yasm::load_module<yasm::ObjectFormat>(objfmt_keyword);
+        objfmt_module =
+            yasm::load_module<yasm::ObjectFormatModule>(objfmt_keyword);
 
-        if (objfmt.get() == 0)
+        if (objfmt_module.get() == 0)
         {
             throw yasm::Error(String::compose(
                 _("could not load object format `%1'"), objfmt_keyword));
         }
 
-        if (!objfmt->taste(in_file, &arch_keyword, &machine))
+        if (!objfmt_module->taste(in_file, &arch_keyword, &machine))
         {
             throw yasm::Error(String::compose(
                 _("file is not recognized as a `%1' object file"),
-                objfmt->get_keyword()));
+                objfmt_module->get_keyword()));
         }
     }
     else
     {
         // Need to loop through available object formats, and taste each one
-        std::vector<std::string> list = yasm::get_modules<yasm::ObjectFormat>();
+        std::vector<std::string> list =
+            yasm::get_modules<yasm::ObjectFormatModule>();
         std::vector<std::string>::iterator i=list.begin(), end=list.end();
         for (; i != end; ++i)
         {
-            objfmt = yasm::load_module<yasm::ObjectFormat>(*i);
-            if (objfmt->taste(in_file, &arch_keyword, &machine))
+            objfmt_module = yasm::load_module<yasm::ObjectFormatModule>(*i);
+            if (objfmt_module->taste(in_file, &arch_keyword, &machine))
                 break;
         }
         if (i == end)
@@ -456,33 +458,36 @@ do_dump(const std::string& in_filename)
         }
     }
 
-    std::auto_ptr<yasm::Arch> arch =
-        yasm::load_module<yasm::Arch>(arch_keyword);
-    if (arch.get() == 0)
+    std::auto_ptr<yasm::ArchModule> arch_module =
+        yasm::load_module<yasm::ArchModule>(arch_keyword);
+    if (arch_module.get() == 0)
         throw yasm::Error(String::compose(
             _("could not load architecture `%1'"), arch_keyword));
 
+    std::auto_ptr<yasm::Arch> arch = arch_module->create();
     if (!arch->set_machine(machine))
     {
         throw yasm::Error(String::compose(
             _("`%1' is not a valid machine for architecture `%2'"),
-            machine, arch->get_keyword()));
+            machine, arch_module->get_keyword()));
     }
 
     yasm::Object object("", in_filename, arch.get());
-    if (!objfmt->set_object(&object))
+
+    if (!objfmt_module->ok_object(object))
     {
         throw yasm::Error(String::compose(
             _("object format `%1' does not support architecture `%2' machine `%3'"),
-            objfmt->get_keyword(),
-            arch->get_keyword(),
+            objfmt_module->get_keyword(),
+            arch_module->get_keyword(),
             arch->get_machine()));
     }
 
+    std::auto_ptr<yasm::ObjectFormat> objfmt = objfmt_module->create(object);
     objfmt->read(in_file);
 
-    std::cout << in_filename << ":     file format " << objfmt->get_keyword()
-              << "\n\n";
+    std::cout << in_filename << ":     file format "
+              << objfmt_module->get_keyword() << "\n\n";
 
     if (show_section_headers)
         dump_section_headers(object);
@@ -543,7 +548,7 @@ main(int argc, char* argv[])
     if (show_info)
     {
         std::cout << full_version << '\n';
-        list_module<yasm::ObjectFormat>();
+        list_module<yasm::ObjectFormatModule>();
         return EXIT_SUCCESS;
     }
 

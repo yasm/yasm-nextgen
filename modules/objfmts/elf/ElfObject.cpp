@@ -89,32 +89,32 @@ is_local(const Symbol& sym)
 class ElfObject : public ObjectFormat
 {
 public:
-    ElfObject(unsigned int bits=0);
+    ElfObject(const ObjectFormatModule& module,
+              Object& object,
+              unsigned int bits=0);
     ~ElfObject() {}
 
-    std::string get_name() const;
-    std::string get_keyword() const;
-    void add_directives(Directives& dirs, const std::string& parser);
+    static const char* get_name() { return "ELF"; }
+    static const char* get_keyword() { return "elf"; }
+    static const char* get_extension() { return ".o"; }
+    static unsigned int get_default_x86_mode_bits() { return 0; }
+    static const char* get_default_dbgfmt_keyword() { return "null"; }
+    static std::vector<const char*> get_dbgfmt_keywords();
+    static bool ok_object(Object& object) { return true; }
+    static bool taste(std::istream& is,
+                      /*@out@*/ std::string* arch_keyword,
+                      /*@out@*/ std::string* machine)
+    { return false; }
 
-    std::string get_extension() const { return ".o"; }
-    unsigned int get_default_x86_mode_bits() const;
+    void add_directives(Directives& dirs, const char* parser);
 
-    std::vector<std::string> get_dbgfmt_keywords() const;
-    std::string get_default_dbgfmt_keyword() const { return "null"; }
+    void init_symbols(const char* parser);
 
-    void init_symbols(const std::string& parser);
-
-    bool taste(std::istream& is,
-               /*@out@*/ std::string* arch_keyword,
-               /*@out@*/ std::string* machine);
     void read(std::istream& is);
     void output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* add_default_section();
     Section* append_section(const std::string& name, unsigned long line);
-
-    bool ok_object(Object* object) const;
-    void initialize();
 
     ElfSymbol& build_symbol(Symbol& sym);
     void build_extern(Symbol& sym);
@@ -155,20 +155,70 @@ public:
     SymbolRef m_dotdotsym;                  // ..sym symbol
 };
 
+bool taste_common(std::istream& is,
+                  /*@out@*/ std::string* arch_keyword,
+                  /*@out@*/ std::string* machine,
+                  ElfClass cls);
+
 class Elf32Object : public ElfObject
 {
 public:
-    Elf32Object() : ElfObject(32) {}
+    Elf32Object(const ObjectFormatModule& module, Object& object)
+        : ElfObject(module, object, 32)
+    {}
+
+    static const char* get_name() { return "ELF (32-bit)"; }
+    static const char* get_keyword() { return "elf32"; }
+    static const char* get_extension() { return ElfObject::get_extension(); }
+    static unsigned int get_default_x86_mode_bits() { return 32; }
+
+    static const char* get_default_dbgfmt_keyword()
+    { return ElfObject::get_default_dbgfmt_keyword(); }
+    static std::vector<const char*> get_dbgfmt_keywords()
+    { return ElfObject::get_dbgfmt_keywords(); }
+
+    static bool ok_object(Object& object)
+    { return ok_elf_machine(*object.get_arch(), ELFCLASS32); }
+
+    // For tasting, let main elf handle it.
+    static bool taste(std::istream& is,
+                      /*@out@*/ std::string* arch_keyword,
+                      /*@out@*/ std::string* machine)
+    { return taste_common(is, arch_keyword, machine, ELFCLASS32); }
 };
 
 class Elf64Object : public ElfObject
 {
 public:
-    Elf64Object() : ElfObject(64) {}
+    Elf64Object(const ObjectFormatModule& module, Object& object)
+        : ElfObject(module, object, 64)
+    {}
+
+    static const char* get_name() { return "ELF (64-bit)"; }
+    static const char* get_keyword() { return "elf64"; }
+    static const char* get_extension() { return ElfObject::get_extension(); }
+    static unsigned int get_default_x86_mode_bits() { return 64; }
+
+    static const char* get_default_dbgfmt_keyword()
+    { return ElfObject::get_default_dbgfmt_keyword(); }
+    static std::vector<const char*> get_dbgfmt_keywords()
+    { return ElfObject::get_dbgfmt_keywords(); }
+
+    static bool ok_object(Object& object)
+    { return ok_elf_machine(*object.get_arch(), ELFCLASS64); }
+
+    // For tasting, let main elf handle it.
+    static bool taste(std::istream& is,
+                      /*@out@*/ std::string* arch_keyword,
+                      /*@out@*/ std::string* machine)
+    { return taste_common(is, arch_keyword, machine, ELFCLASS64); }
 };
 
-ElfObject::ElfObject(unsigned int bits)
-    : m_machine(0)
+ElfObject::ElfObject(const ObjectFormatModule& module,
+                     Object& object,
+                     unsigned int bits)
+    : ObjectFormat(module, object)
+    , m_machine(0)
     , m_file_elfsym(0)
     , m_dotdotsym(0)
 {
@@ -179,58 +229,30 @@ ElfObject::ElfObject(unsigned int bits)
     else if (bits != 0)
         throw ValueError(String::compose(N_("unknown ELF bits setting %1"),
                                          bits));
-}
 
-std::string
-ElfObject::get_name() const
-{
-    if (m_config.cls == ELFCLASS32)
-        return "ELF (32-bit)";
-    else if (m_config.cls == ELFCLASS64)
-        return "ELF (64-bit)";
-    else
-        return "ELF";
-}
-
-std::string
-ElfObject::get_keyword() const
-{
-    if (m_config.cls == ELFCLASS32)
-        return "elf32";
-    else if (m_config.cls == ELFCLASS64)
-        return "elf64";
-    else
-        return "elf";
-}
-
-unsigned int
-ElfObject::get_default_x86_mode_bits() const
-{
-    if (m_config.cls == ELFCLASS32)
-        return 32;
-    else if (m_config.cls == ELFCLASS64)
-        return 64;
-    else
-        return 0;
+    m_machine.reset(create_elf_machine(*m_object.get_arch(),
+                                       m_config.cls).release());
+    m_machine->configure(&m_config);
 }
 
 bool
-ElfObject::ok_object(Object* object) const
+taste_common(std::istream& is,
+             /*@out@*/ std::string* arch_keyword,
+             /*@out@*/ std::string* machine,
+             ElfClass cls)
 {
-    return ok_elf_machine(*object->get_arch(), m_config.cls);
-}
+    ElfConfig config;
 
-bool
-ElfObject::taste(std::istream& is,
-                 /*@out@*/ std::string* arch_keyword,
-                 /*@out@*/ std::string* machine)
-{
     // Read header
-    if (!m_config.proghead_read(is))
+    if (!config.proghead_read(is))
+        return false;
+
+    // Check class
+    if (config.cls != cls)
         return false;
 
     // for now, just handle this here
-    switch (m_config.machine_type)
+    switch (config.machine_type)
     {
         case EM_386:
             arch_keyword->assign("x86");
@@ -339,7 +361,7 @@ ElfObject::read(std::istream& is)
                 std::auto_ptr<AssocData>(elfsect.release()));
 
             // Add section to object
-            m_object->append_section(section);
+            m_object.append_section(section);
         }
     }
 
@@ -371,7 +393,7 @@ ElfObject::read(std::istream& is)
         if (symsize == 0)
             throw Error(N_("symbol table entity size is zero"));
         is.seekg(symtab_sect->get_file_offset());
-        if (!m_config.symtab_read(is, symtab, *m_object, symtab_size, symsize,
+        if (!m_config.symtab_read(is, symtab, m_object, symtab_size, symsize,
                                   strtab, &sections[0]))
             throw Error(N_("could not read symbol table"));
     }
@@ -414,18 +436,10 @@ ElfObject::read(std::istream& is)
 }
 
 void
-ElfObject::initialize()
-{
-    m_machine.reset(create_elf_machine(*m_object->get_arch(),
-                                       m_config.cls).release());
-    m_machine->configure(&m_config);
-}
-
-void
-ElfObject::init_symbols(const std::string& parser)
+ElfObject::init_symbols(const char* parser)
 {
     // Add .file symbol
-    SymbolRef filesym = m_object->append_symbol(".file");
+    SymbolRef filesym = m_object.append_symbol(".file");
     filesym->define_special(Symbol::LOCAL);
 
     std::auto_ptr<ElfSymbol> elfsym(new ElfSymbol());
@@ -440,12 +454,12 @@ ElfObject::init_symbols(const std::string& parser)
     // Create ..sym special symbol (NASM only)
     if (String::nocase_equal(parser, "nasm"))
     {
-        m_dotdotsym = m_object->add_special_symbol("sym");
+        m_dotdotsym = m_object.add_special_symbol("sym");
         m_dotdotsym->define_special(Symbol::EXTERN);
     }
 
     // Create machine-specific special symbols
-    m_machine->add_special_syms(*m_object, parser);
+    m_machine->add_special_syms(m_object, parser);
 }
 
 ElfSymbol&
@@ -541,7 +555,7 @@ ElfObject::build_global(Symbol& sym)
     if (objext_nvs)
     {
         helpers(objext_nvs->begin(), objext_nvs->end(),
-                BIND::bind(&global_nameval_fallback, _1, m_object,
+                BIND::bind(&global_nameval_fallback, _1, &m_object,
                            sym.get_decl_line(), &size));
     }
 
@@ -581,7 +595,7 @@ ElfObject::build_common(Symbol& sym)
                 throw ValueError(N_("alignment constraint is not an integer"));
 
             std::auto_ptr<Expr> align_expr =
-                nv->release_expr(*m_object, sym.get_decl_line());
+                nv->release_expr(m_object, sym.get_decl_line());
             if (!align_expr->is_intnum())
                 throw ValueError(N_("alignment constraint is not an integer"));
             addralign = align_expr->get_intnum().get_uint();
@@ -971,7 +985,7 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     // Add filename to strtab and set as .file symbol name
     if (m_file_elfsym)
     {
-        m_file_elfsym->set_name(strtab.get_index(m_object->get_source_fn()));
+        m_file_elfsym->set_name(strtab.get_index(m_object.get_source_fn()));
     }
 
     // Allocate space for Ehdr by seeking forward
@@ -988,8 +1002,8 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     // Finalize symbol table, handling any objfmt-specific extensions given
     // during parse phase.  If all_syms is true, add all local symbols and
     // include name information.
-    for (Object::symbol_iterator i=m_object->symbols_begin(),
-         end=m_object->symbols_end(); i != end; ++i)
+    for (Object::symbol_iterator i=m_object.symbols_begin(),
+         end=m_object.symbols_end(); i != end; ++i)
     {
         try
         {
@@ -1008,12 +1022,12 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     ElfSection null_sect(m_config, SHT_NULL, 0);
     null_sect.set_index(m_config.secthead_count++);
 
-    Output out(os, *this, *m_object);
+    Output out(os, *this, m_object);
 
     // Output user sections.
     // Assign indices and names as we go (including for relocation sections).
-    for (Object::section_iterator i=m_object->sections_begin(),
-         end=m_object->sections_end(); i != end; ++i)
+    for (Object::section_iterator i=m_object.sections_begin(),
+         end=m_object.sections_end(); i != end; ++i)
     {
         out.output_section(*i, &m_config.secthead_count, shstrtab, errwarns);
     }
@@ -1023,8 +1037,8 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     // relocation needs a symtab index.
     if (!all_syms)
     {
-        for (Object::section_iterator sect=m_object->sections_begin(),
-             endsect=m_object->sections_end(); sect != endsect; ++sect)
+        for (Object::section_iterator sect=m_object.sections_begin(),
+             endsect=m_object.sections_end(); sect != endsect; ++sect)
         {
             for (Section::reloc_iterator reloc=sect->relocs_begin(),
                  endreloc=sect->relocs_end(); reloc != endreloc; ++reloc)
@@ -1038,12 +1052,12 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     }
 
     // Partition symbol table to put local symbols first
-    stdx::stable_partition(m_object->symbols_begin(), m_object->symbols_end(),
+    stdx::stable_partition(m_object.symbols_begin(), m_object.symbols_end(),
                            is_local);
 
     // Number symbols.
     ElfSymbolIndex symtab_nlocal;
-    m_config.symtab_setindexes(*m_object, &symtab_nlocal);
+    m_config.symtab_setindexes(m_object, &symtab_nlocal);
 
     unsigned long offset, size;
     ElfStringIndex shstrtab_name = shstrtab.get_index(".shstrtab");
@@ -1075,7 +1089,7 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
 
     // symbol table (.symtab)
     offset = output_align(os, 4);
-    size = m_config.symtab_write(os, *m_object, errwarns, out.get_scratch());
+    size = m_config.symtab_write(os, m_object, errwarns, out.get_scratch());
 
     ElfSection symtab_sect(m_config, SHT_SYMTAB, 0, true);
     symtab_sect.set_name(symtab_name);
@@ -1086,8 +1100,8 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     symtab_sect.set_link(strtab_sect.get_index());  // link to .strtab
 
     // output relocations
-    for (Object::section_iterator i=m_object->sections_begin(),
-         end=m_object->sections_end(); i != end; ++i)
+    for (Object::section_iterator i=m_object.sections_begin(),
+         end=m_object.sections_end(); i != end; ++i)
     {
         // No relocations to output?  Go on to next section
         if (i->get_relocs().size() == 0)
@@ -1106,8 +1120,8 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     // stabs debugging support
     if (strcmp(yasm_dbgfmt_keyword(object->dbgfmt), "stabs")==0)
     {
-        Section* stabsect = m_object->find_section(".stab");
-        Section* stabstrsect = m_object->find_section(".stabstr");
+        Section* stabsect = m_object.find_section(".stab");
+        Section* stabstrsect = m_object.find_section(".stabstr");
         if (stabsect && stabstrsect)
         {
             ElfSection* stab = get_elf(*stabsect);
@@ -1122,8 +1136,8 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     null_sect.write(os, out.get_scratch());
 
     // user section headers (and relocation section headers)
-    for (Object::section_iterator i=m_object->sections_begin(),
-         end=m_object->sections_end(); i != end; ++i)
+    for (Object::section_iterator i=m_object.sections_begin(),
+         end=m_object.sections_end(); i != end; ++i)
     {
         ElfSection* elfsect = get_elf(*i);
         assert(elfsect != 0);
@@ -1205,12 +1219,12 @@ ElfObject::append_section(const std::string& name, unsigned long line)
     bool bss = (type == SHT_NOBITS);
 
     Section* section = new Section(name, code, bss, line);
-    m_object->append_section(std::auto_ptr<Section>(section));
+    m_object.append_section(std::auto_ptr<Section>(section));
     section->set_align(align);
 
     // Define a label for the start of the section
     Location start = {&section->bcs_first(), 0};
-    SymbolRef sym = m_object->get_symbol(name);
+    SymbolRef sym = m_object.get_symbol(name);
     sym->define_label(start, line);
 
     // Add ELF data to the section
@@ -1227,20 +1241,20 @@ ElfObject::dir_gas_section(Object& object,
                            NameValues& objext_nvs,
                            unsigned long line)
 {
-    assert(&object == m_object);
+    assert(&object == &m_object);
 
     if (!nvs.front().is_string())
         throw Error(N_("section name must be a string"));
     std::string sectname = nvs.front().get_string();
 
-    Section* sect = m_object->find_section(sectname);
+    Section* sect = m_object.find_section(sectname);
     bool first = true;
     if (sect)
         first = sect->is_default();
     else
         sect = append_section(sectname, line);
 
-    m_object->set_cur_section(sect);
+    m_object.set_cur_section(sect);
     sect->set_default(false);
 
     // No name/values, so nothing more to do
@@ -1320,20 +1334,20 @@ ElfObject::dir_section(Object& object,
                        NameValues& objext_nvs,
                        unsigned long line)
 {
-    assert(&object == m_object);
+    assert(&object == &m_object);
 
     if (!nvs.front().is_string())
         throw Error(N_("section name must be a string"));
     std::string sectname = nvs.front().get_string();
 
-    Section* sect = m_object->find_section(sectname);
+    Section* sect = m_object.find_section(sectname);
     bool first = true;
     if (sect)
         first = sect->is_default();
     else
         sect = append_section(sectname, line);
 
-    m_object->set_cur_section(sect);
+    m_object.set_cur_section(sect);
     sect->set_default(false);
 
     // No name/values, so nothing more to do
@@ -1391,9 +1405,9 @@ ElfObject::dir_section(Object& object,
                 BIND::bind(&dir_flag_reset, _1, &type, SHT_PROGBITS));
 
     helpers.add("align", true,
-                BIND::bind(&dir_intn, _1, m_object, line, &align, &has_align));
+                BIND::bind(&dir_intn, _1, &m_object, line, &align, &has_align));
     helpers.add("merge", true,
-                BIND::bind(&dir_intn, _1, m_object, line, &merge, &has_merge));
+                BIND::bind(&dir_intn, _1, &m_object, line, &merge, &has_merge));
 
     helpers(++nvs.begin(), nvs.end(), dir_nameval_warn);
 
@@ -1431,7 +1445,7 @@ ElfObject::dir_type(Object& object,
                     NameValues& objext_namevals,
                     unsigned long line)
 {
-    assert(m_object == &object);
+    assert(&m_object == &object);
 
     SymbolRef sym = object.get_symbol(namevals.front().get_id());
     sym->use(line);
@@ -1464,7 +1478,7 @@ ElfObject::dir_size(Object& object,
                     NameValues& objext_namevals,
                     unsigned long line)
 {
-    assert(m_object == &object);
+    assert(&m_object == &object);
 
     SymbolRef sym = object.get_symbol(namevals.front().get_id());
     sym->use(line);
@@ -1486,7 +1500,7 @@ ElfObject::dir_weak(Object& object,
                     NameValues& objext_namevals,
                     unsigned long line)
 {
-    assert(m_object == &object);
+    assert(&m_object == &object);
 
     SymbolRef sym = object.get_symbol(namevals.front().get_id());
     sym->declare(Symbol::GLOBAL, line);
@@ -1501,13 +1515,13 @@ ElfObject::dir_ident(Object& object,
                      NameValues& objext_namevals,
                      unsigned long line)
 {
-    assert(m_object == &object);
+    assert(&m_object == &object);
     dir_ident_common(*this, ".comment", object, namevals, objext_namevals,
                      line);
 }
 
-std::vector<std::string>
-ElfObject::get_dbgfmt_keywords() const
+std::vector<const char*>
+ElfObject::get_dbgfmt_keywords()
 {
     static const char* keywords[] =
     {
@@ -1515,11 +1529,11 @@ ElfObject::get_dbgfmt_keywords() const
         "stabs",
         "dwarf2"
     };
-    return std::vector<std::string>(keywords, keywords+NELEMS(keywords));
+    return std::vector<const char*>(keywords, keywords+NELEMS(keywords));
 }
 
 void
-ElfObject::add_directives(Directives& dirs, const std::string& parser)
+ElfObject::add_directives(Directives& dirs, const char* parser)
 {
     static const Directives::Init<ElfObject> nasm_dirs[] =
     {
@@ -1566,9 +1580,12 @@ static const yasm_stdmac elf_objfmt_stdmacs[] = {
 void
 do_register()
 {
-    register_module<ObjectFormat, ElfObject>("elf");
-    register_module<ObjectFormat, Elf32Object>("elf32");
-    register_module<ObjectFormat, Elf64Object>("elf64");
+    register_module<ObjectFormatModule,
+                    ObjectFormatModuleImpl<ElfObject> >("elf");
+    register_module<ObjectFormatModule,
+                    ObjectFormatModuleImpl<Elf32Object> >("elf32");
+    register_module<ObjectFormatModule,
+                    ObjectFormatModuleImpl<Elf64Object> >("elf64");
 }
 
 }}} // namespace yasm::objfmt::elf

@@ -34,8 +34,17 @@ Preprocessor::~Preprocessor()
 {
 }
 
-std::string
-Preprocessor::get_type() const
+void
+Preprocessor::add_directives(Directives& dirs, const char* parser)
+{
+}
+
+PreprocessorModule::~PreprocessorModule()
+{
+}
+
+const char*
+PreprocessorModule::get_type() const
 {
     return "Preprocessor";
 }

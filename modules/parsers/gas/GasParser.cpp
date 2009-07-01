@@ -49,8 +49,9 @@ namespace parser
 namespace gas
 {
 
-GasParser::GasParser()
-    : m_rept_owner(m_rept)
+GasParser::GasParser(const ParserModule& module, Errwarns& errwarns)
+    : Parser(module, errwarns)
+    , m_rept_owner(m_rept)
 {
     static const GasDirLookup gas_dirs_init[] =
     {
@@ -118,27 +119,14 @@ GasParser::~GasParser()
 {
 }
 
-std::string
-GasParser::get_name() const
-{
-    return "GNU AS (GAS)-compatible parser";
-}
-
-std::string
-GasParser::get_keyword() const
-{
-    return "gas";
-}
-
 void
 GasParser::parse(Object& object,
                  Preprocessor& preproc,
                  bool save_input,
                  Directives& dirs,
-                 Linemap& linemap,
-                 Errwarns& errwarns)
+                 Linemap& linemap)
 {
-    init_mixin(object, preproc, save_input, dirs, linemap, errwarns);
+    init_mixin(object, preproc, save_input, dirs, linemap);
 
     m_locallabel_base = "";
 
@@ -154,13 +142,15 @@ GasParser::parse(Object& object,
     for (int i=0; i<10; i++)
         m_local[i] = 0;
 
-    m_is_cpp_preproc = String::nocase_equal(preproc.get_keyword(), "cpp");
-    m_is_nasm_preproc = String::nocase_equal(preproc.get_keyword(), "nasm");
+    m_is_cpp_preproc =
+        String::nocase_equal(preproc.get_module().get_keyword(), "cpp");
+    m_is_nasm_preproc =
+        String::nocase_equal(preproc.get_module().get_keyword(), "nasm");
 
     // Set up arch-sized directives
     m_sized_gas_dirs[0].name = ".word";
     m_sized_gas_dirs[0].handler = &GasParser::dir_data;
-    m_sized_gas_dirs[0].param = m_arch->get_wordsize()/8;
+    m_sized_gas_dirs[0].param = m_arch->get_module().get_wordsize()/8;
     for (unsigned int i=0; i<NELEMS(m_sized_gas_dirs); ++i)
         m_gas_dirs[m_sized_gas_dirs[i].name] = &m_sized_gas_dirs[i];
 
@@ -169,8 +159,8 @@ GasParser::parse(Object& object,
     // Check for ending inside a rept
     if (!m_rept.empty())
     {
-        m_errwarns->propagate(m_rept.back().startline,
-                              SyntaxError(N_("rept without matching endr")));
+        m_errwarns.propagate(m_rept.back().startline,
+                             SyntaxError(N_("rept without matching endr")));
     }
 
     // Check for ending inside a comment
@@ -179,29 +169,23 @@ GasParser::parse(Object& object,
         warn_set(WARN_GENERAL, N_("end of file in comment"));
         // XXX: Minus two to compensate for already having moved past the EOF
         // in the linemap.
-        m_errwarns->propagate(get_cur_line()-2);
+        m_errwarns.propagate(get_cur_line()-2);
     }
 
     // Convert all undefined symbols into extern symbols
-    object.symbols_finalize(errwarns, true);
+    object.symbols_finalize(m_errwarns, true);
 }
 
-std::vector<std::string>
-GasParser::get_preproc_keywords() const
+std::vector<const char*>
+GasParser::get_preproc_keywords()
 {
     // valid preprocessors to use with this parser
     static const char* keywords[] = {"raw", "cpp", "nasm"};
-    return std::vector<std::string>(keywords, keywords+NELEMS(keywords));
-}
-
-std::string
-GasParser::get_default_preproc_keyword() const
-{
-    return "raw";
+    return std::vector<const char*>(keywords, keywords+NELEMS(keywords));
 }
 
 void
-GasParser::add_directives(Directives& dirs, const std::string& parser)
+GasParser::add_directives(Directives& dirs, const char* parser)
 {
     if (String::nocase_equal(parser, "gas"))
     {
@@ -214,8 +198,8 @@ GasParser::add_directives(Directives& dirs, const std::string& parser)
 void
 do_register()
 {
-    register_module<Parser, GasParser>("gas");
-    register_module<Parser, GasParser>("gnu");
+    register_module<ParserModule, ParserModuleImpl<GasParser> >("gas");
+    register_module<ParserModule, ParserModuleImpl<GasParser> >("gnu");
 }
 
 }}} // namespace yasm::parser::gas

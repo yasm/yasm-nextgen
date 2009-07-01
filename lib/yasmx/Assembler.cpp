@@ -30,6 +30,7 @@
 
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
+#include "yasmx/Support/nocase.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/System/file.h"
@@ -44,6 +45,22 @@
 #include "yasmx/Parser.h"
 #include "yasmx/Preprocessor.h"
 
+
+namespace
+{
+
+class NoCaseEquals
+{
+    const std::string& s;
+public:
+    NoCaseEquals(const std::string& str) : s(str) {}
+    bool operator() (const char* oth)
+    {
+        return String::nocase_equal(s, oth);
+    }
+};
+
+} // anonymous namespace
 
 namespace yasm
 {
@@ -64,6 +81,13 @@ public:
                   const std::string& src_filename,
                   bool warning_error);
 
+    util::scoped_ptr<ArchModule> m_arch_module;
+    util::scoped_ptr<ParserModule> m_parser_module;
+    util::scoped_ptr<PreprocessorModule> m_preproc_module;
+    util::scoped_ptr<ObjectFormatModule> m_objfmt_module;
+    util::scoped_ptr<DebugFormatModule> m_dbgfmt_module;
+    util::scoped_ptr<ListFormatModule> m_listfmt_module;
+
     util::scoped_ptr<Arch> m_arch;
     util::scoped_ptr<Parser> m_parser;
     util::scoped_ptr<Preprocessor> m_preproc;
@@ -83,25 +107,34 @@ public:
 Assembler::Impl::Impl(const std::string& arch_keyword,
                       const std::string& parser_keyword,
                       const std::string& objfmt_keyword)
-    : m_arch(load_module<Arch>(arch_keyword).release()),
-      m_parser(load_module<Parser>(parser_keyword).release()),
+    : m_arch_module(load_module<ArchModule>(arch_keyword).release()),
+      m_parser_module(load_module<ParserModule>(parser_keyword).release()),
+      m_preproc_module(0),
+      m_objfmt_module(load_module<ObjectFormatModule>(objfmt_keyword).release()),
+      m_dbgfmt_module(0),
+      m_listfmt_module(0),
+      m_arch(0),
+      m_parser(0),
       m_preproc(0),
-      m_objfmt(load_module<ObjectFormat>(objfmt_keyword).release()),
+      m_objfmt(0),
       m_dbgfmt(0),
       m_listfmt(0),
       m_object(0)
 {
-    if (m_arch.get() == 0)
+    if (m_arch_module.get() == 0)
         throw Error(String::compose(N_("could not load architecture `%1'"),
                                     arch_keyword));
 
-    if (m_parser.get() == 0)
+    if (m_parser_module.get() == 0)
         throw Error(String::compose(N_("could not load parser `%1'"),
                                     parser_keyword));
 
-    if (m_objfmt.get() == 0)
+    if (m_objfmt_module.get() == 0)
         throw Error(String::compose(N_("could not load object format `%1'"),
                                     objfmt_keyword));
+
+    // Create architecture.
+    m_arch.reset(m_arch_module->create().release());
 
     // Ensure architecture supports parser.
     if (!m_arch->set_parser(parser_keyword))
@@ -110,9 +143,9 @@ Assembler::Impl::Impl(const std::string& arch_keyword,
             parser_keyword, arch_keyword));
 
     // Get initial x86 BITS setting from object format
-    if (m_arch->get_keyword() == "x86")
+    if (String::nocase_equal(m_arch_module->get_keyword(), "x86"))
         m_arch->set_var("mode_bits",
-                        m_objfmt->get_default_x86_mode_bits());
+                        m_objfmt_module->get_default_x86_mode_bits());
 }
 
 Assembler::Impl::~Impl()
@@ -124,7 +157,7 @@ Assembler::Assembler(const std::string& arch_keyword,
                      const std::string& objfmt_keyword)
     : m_impl(new Impl(arch_keyword, parser_keyword, objfmt_keyword))
 {
-    m_impl->set_preproc(m_impl->m_parser->get_default_preproc_keyword());
+    m_impl->set_preproc(m_impl->m_parser_module->get_default_preproc_keyword());
 }
 
 Assembler::~Assembler()
@@ -143,7 +176,7 @@ Assembler::Impl::set_machine(const std::string& machine)
     if (!m_arch->set_machine(machine))
         throw Error(String::compose(
             N_("`%1' is not a valid machine for architecture `%2'"),
-            machine, m_arch->get_keyword()));
+            machine, m_arch_module->get_keyword()));
 
     m_machine = machine;
 }
@@ -159,24 +192,28 @@ Assembler::Impl::set_preproc(const std::string& preproc_keyword)
 {
     // Check to see if the requested preprocessor is in the allowed list
     // for the active parser.
-    std::vector<std::string> preproc_keywords =
-        m_parser->get_preproc_keywords();
-    if (std::find(preproc_keywords.begin(), preproc_keywords.end(),
-                  preproc_keyword) == preproc_keywords.end())
+    std::vector<const char*> preproc_keywords =
+        m_parser_module->get_preproc_keywords();
+    if (std::find_if(preproc_keywords.begin(), preproc_keywords.end(),
+                     NoCaseEquals(preproc_keyword))
+        == preproc_keywords.end())
     {
         throw Error(String::compose(
             N_("`%1' is not a valid preprocessor for parser `%2'"),
-            preproc_keyword, m_parser->get_keyword()));
+            preproc_keyword, m_parser_module->get_keyword()));
     }
 
-    std::auto_ptr<Preprocessor> preproc =
-        load_module<Preprocessor>(preproc_keyword);
-    if (preproc.get() == 0)
+    std::auto_ptr<PreprocessorModule> preproc_module =
+        load_module<PreprocessorModule>(preproc_keyword);
+    if (preproc_module.get() == 0)
     {
         throw Error(String::compose(N_("could not load preprocessor `%1'"),
                                     preproc_keyword));
     }
-    m_preproc.reset(preproc.release());
+    m_preproc_module.reset(preproc_module.release());
+
+    // Create preprocessor.
+    m_preproc.reset(m_preproc_module->create(m_errwarns).release());
 }
 
 void
@@ -190,24 +227,23 @@ Assembler::Impl::set_dbgfmt(const std::string& dbgfmt_keyword)
 {
     // Check to see if the requested debug format is in the allowed list
     // for the active object format.
-    std::vector<std::string> dbgfmt_keywords =
-        m_objfmt->get_dbgfmt_keywords();
-    std::vector<std::string>::iterator f =
-        std::find(dbgfmt_keywords.begin(), dbgfmt_keywords.end(),
-                  dbgfmt_keyword);
-    if (f == dbgfmt_keywords.end())
+    std::vector<const char*> dbgfmt_keywords =
+        m_objfmt_module->get_dbgfmt_keywords();
+    if (std::find_if(dbgfmt_keywords.begin(), dbgfmt_keywords.end(),
+                     NoCaseEquals(dbgfmt_keyword))
+        == dbgfmt_keywords.end())
     {
         throw Error(String::compose(
             N_("`%1' is not a valid debug format for object format `%2'"),
-            dbgfmt_keyword, m_objfmt->get_keyword()));
+            dbgfmt_keyword, m_objfmt_module->get_keyword()));
     }
 
-    std::auto_ptr<DebugFormat> dbgfmt =
-        load_module<DebugFormat>(dbgfmt_keyword);
-    if (dbgfmt.get() == 0)
+    std::auto_ptr<DebugFormatModule> dbgfmt_module =
+        load_module<DebugFormatModule>(dbgfmt_keyword);
+    if (dbgfmt_module.get() == 0)
         throw Error(String::compose(N_("could not load debug format `%1'"),
                                     dbgfmt_keyword));
-    m_dbgfmt.reset(dbgfmt.release());
+    m_dbgfmt_module.reset(dbgfmt_module.release());
 }
 
 void
@@ -219,12 +255,12 @@ Assembler::set_dbgfmt(const std::string& dbgfmt_keyword)
 void
 Assembler::Impl::set_listfmt(const std::string& listfmt_keyword)
 {
-    std::auto_ptr<ListFormat> listfmt =
-        load_module<ListFormat>(listfmt_keyword);
-    if (listfmt.get() == 0)
+    std::auto_ptr<ListFormatModule> listfmt_module =
+        load_module<ListFormatModule>(listfmt_keyword);
+    if (listfmt_module.get() == 0)
         throw Error(String::compose(N_("could not load list format `%1'"),
                                     listfmt_keyword));
-    m_listfmt.reset(listfmt.release());
+    m_listfmt_module.reset(listfmt_module.release());
 }
 
 void
@@ -237,7 +273,7 @@ bool
 Assembler::Impl::assemble(std::istream& is, const std::string& src_filename,
                           bool warning_error)
 {
-    std::string parser_keyword = m_parser->get_keyword();
+    const char* parser_keyword = m_parser_module->get_keyword();
 
     // determine the object filename if not specified
     if (m_obj_filename.empty())
@@ -255,7 +291,7 @@ Assembler::Impl::assemble(std::istream& is, const std::string& src_filename,
             else
                 m_obj_filename =
                     replace_extension(base_filename,
-                                      m_objfmt->get_extension(),
+                                      m_objfmt_module->get_extension(),
                                       "yasm.out");
         }
     }
@@ -265,23 +301,26 @@ Assembler::Impl::assemble(std::istream& is, const std::string& src_filename,
         // If we're using x86 and the default objfmt bits is 64, default the
         // machine to amd64.  When we get more arches with multiple machines,
         // we should do this in a more modular fashion.
-        if (m_arch->get_keyword() == "x86" &&
-            m_objfmt->get_default_x86_mode_bits() == 64)
+        if (String::nocase_equal(m_arch_module->get_keyword(), "x86") &&
+            m_objfmt_module->get_default_x86_mode_bits() == 64)
             set_machine("amd64");
     }
 
     // Create object
     m_object.reset(new Object(src_filename, m_obj_filename, m_arch.get()));
 
-    // Initialize the object format
-    if (!m_objfmt->set_object(m_object.get()))
+    // See if the object format supports such an object
+    if (!m_objfmt_module->ok_object(*m_object))
     {
         throw Error(String::compose(
             N_("object format `%1' does not support architecture `%2' machine `%3'"),
-            m_objfmt->get_keyword(),
-            m_arch->get_keyword(),
+            m_objfmt_module->get_keyword(),
+            m_arch_module->get_keyword(),
             m_arch->get_machine()));
     }
+
+    // Create the object format
+    m_objfmt.reset(m_objfmt_module->create(*m_object).release());
 
     // Add any object-format special symbols
     m_objfmt->init_symbols(parser_keyword);
@@ -290,22 +329,28 @@ Assembler::Impl::assemble(std::istream& is, const std::string& src_filename,
     m_object->set_cur_section(m_objfmt->add_default_section());
 
     // Default to null as the debug format if not specified
-    if (m_dbgfmt.get() == 0)
+    if (m_dbgfmt_module.get() == 0)
         set_dbgfmt("null");
 
-    // Initialize the debug format
-    if (!m_dbgfmt->set_object(m_object.get()))
+    // See if the debug format supports such an object
+    if (!m_dbgfmt_module->ok_object(*m_object))
     {
         throw Error(String::compose(
             N_("debug format `%1' does not work with object format `%2'"),
-            m_dbgfmt->get_keyword(), m_objfmt->get_keyword()));
+            m_dbgfmt_module->get_keyword(), m_objfmt_module->get_keyword()));
     }
+
+    // Create the debug format
+    m_dbgfmt.reset(m_dbgfmt_module->create(*m_object).release());
 
     // Initialize line map
     m_linemap.set(src_filename, 1, 1);
 
     // Initialize preprocessor
-    m_preproc->init(is, src_filename, m_linemap, m_errwarns);
+    m_preproc->initialize(is, src_filename, m_linemap);
+
+    // Create parser
+    m_parser.reset(m_parser_module->create(m_errwarns).release());
 
     // Set up directive handlers
     Directives dirs;
@@ -314,12 +359,15 @@ Assembler::Impl::assemble(std::istream& is, const std::string& src_filename,
     m_preproc->add_directives(dirs, parser_keyword);
     m_objfmt->add_directives(dirs, parser_keyword);
     m_dbgfmt->add_directives(dirs, parser_keyword);
-    if (m_listfmt.get() != 0)
+    if (m_listfmt_module.get() != 0)
+    {
+        m_listfmt.reset(m_listfmt_module->create().release());
         m_listfmt->add_directives(dirs, parser_keyword);
+    }
 
     // Parse!
     m_parser->parse(*m_object, *m_preproc, m_listfmt.get() != 0, dirs,
-                    m_linemap, m_errwarns);
+                    m_linemap);
 
     if (m_errwarns.num_errors(warning_error) > 0)
         return false;
@@ -356,9 +404,10 @@ bool
 Assembler::output(std::ostream& os, bool warning_error)
 {
     // Write the object file
-    m_impl->m_objfmt->output(os,
-                             m_impl->m_dbgfmt->get_keyword() != "null",
-                             m_impl->m_errwarns);
+    m_impl->m_objfmt->output
+        (os,
+         !String::nocase_equal(m_impl->m_dbgfmt_module->get_keyword(), "null"),
+         m_impl->m_errwarns);
 
     if (m_impl->m_errwarns.num_errors(warning_error) > 0)
         return false;

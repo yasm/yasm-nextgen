@@ -29,8 +29,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
-#include <string>
+#include <memory>
 #include <vector>
 
 #include "yasmx/Config/export.h"
@@ -45,30 +44,26 @@ class Directives;
 class Errwarns;
 class Linemap;
 class Object;
+class ParserModule;
 class Preprocessor;
 
 /// Parser interface.  The "front end" of the assembler.
-class YASM_LIB_EXPORT Parser : public Module
+class YASM_LIB_EXPORT Parser
 {
 public:
-    enum { module_type = 5 };
+    /// Constructor.
+    Parser(const ParserModule& module, Errwarns& errwarns)
+        : m_module(module), m_errwarns(errwarns)
+    {}
 
     /// Destructor.
     virtual ~Parser();
 
-    /// Get the module type.
-    /// @return "Parser".
-    std::string get_type() const;
+    /// Get module.
+    const ParserModule& get_module() const { return m_module; }
 
-    /// Get list of preprocessor (Preprocessor) keywords that are
-    /// recommended to use with this parser.  The raw preprocessor
-    /// ("raw") should always be in this list.
-    /// @return Vector of preprocessor keywords.
-    virtual std::vector<std::string> get_preproc_keywords() const = 0;
-
-    /// Get default preprocessor keyword.
-    /// @return Default preprocessor keyword.
-    virtual std::string get_default_preproc_keyword() const = 0;
+    /// Add directive handlers.
+    virtual void add_directives(Directives& dirs, const char* parser);
 
     /// Parse an input stream into an object.
     /// @param object       object to parse into
@@ -78,14 +73,72 @@ public:
     ///                     Linemap::add_source()).
     /// @param dirs         available directives
     /// @param linemap      line mapping repository
-    /// @param errwarns     error/warning set
     /// @note Parse errors and warnings are stored into errwarns.
     virtual void parse(Object& object,
                        Preprocessor& preproc,
                        bool save_input,
                        Directives& dirs,
-                       Linemap& linemap,
-                       Errwarns& errwarns) = 0;
+                       Linemap& linemap) = 0;
+
+private:
+    Parser(const Parser&);                  // not implemented
+    const Parser& operator=(const Parser&); // not implemented
+
+    const ParserModule& m_module;
+
+protected:
+    Errwarns& m_errwarns;
+};
+
+/// Parser module interface.
+class YASM_LIB_EXPORT ParserModule : public Module
+{
+public:
+    enum { module_type = 5 };
+
+    /// Destructor.
+    virtual ~ParserModule();
+
+    /// Get the module type.
+    /// @return "Parser".
+    const char* get_type() const;
+
+    /// Get list of preprocessor (Preprocessor) keywords that are
+    /// recommended to use with this parser.  The raw preprocessor
+    /// ("raw") should always be in this list.
+    /// @return Vector of preprocessor keywords.
+    virtual std::vector<const char*> get_preproc_keywords() const = 0;
+
+    /// Get default preprocessor keyword.
+    /// @return Default preprocessor keyword.
+    virtual const char* get_default_preproc_keyword() const = 0;
+
+    /// Parser factory function.
+    /// @param errwarns     error/warning set
+    /// @return New parser.
+    /// @note Errors/warnings are stored into errwarns.
+    virtual std::auto_ptr<Parser> create(Errwarns& errwarns) const = 0;
+};
+
+template <typename ParserImpl>
+class ParserModuleImpl : public ParserModule
+{
+public:
+    ParserModuleImpl() {}
+    ~ParserModuleImpl() {}
+
+    const char* get_name() const { return ParserImpl::get_name(); }
+    const char* get_keyword() const { return ParserImpl::get_keyword(); }
+
+    std::vector<const char*> get_preproc_keywords() const
+    { return ParserImpl::get_preproc_keywords(); }
+    const char* get_default_preproc_keyword() const
+    { return ParserImpl::get_default_preproc_keyword(); }
+
+    std::auto_ptr<Parser> create(Errwarns& errwarns) const
+    {
+        return std::auto_ptr<Parser>(new ParserImpl(*this, errwarns));
+    }
 };
 
 } // namespace yasm

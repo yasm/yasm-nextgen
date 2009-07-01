@@ -44,14 +44,17 @@ namespace raw
 class RawPreproc : public Preprocessor
 {
 public:
-    RawPreproc() {}
+    RawPreproc(const PreprocessorModule& module, Errwarns& errwarns)
+        : Preprocessor(module, errwarns)
+    {}
     ~RawPreproc() {}
 
-    std::string get_name() const { return "Disable preprocessing"; }
-    std::string get_keyword() const { return "raw"; }
+    static const char* get_name() { return "Disable preprocessing"; }
+    static const char* get_keyword() { return "raw"; }
 
-    void init(std::istream& is, const std::string& in_filename,
-              Linemap& linemap, Errwarns& errwarns);
+    void initialize(std::istream& is,
+                    const std::string& in_filename,
+                    Linemap& linemap);
 
     bool get_line(/*@out@*/ std::string& line);
 
@@ -64,16 +67,15 @@ public:
 private:
     std::istream* m_is;
     Linemap* m_linemap;
-    Errwarns* m_errwarns;
 };
 
 void
-RawPreproc::init(std::istream& is, const std::string& in_filename,
-                 Linemap& linemap, Errwarns& errwarns)
+RawPreproc::initialize(std::istream& is,
+                       const std::string& in_filename,
+                       Linemap& linemap)
 {
     m_is = &is;
     m_linemap = &linemap;
-    m_errwarns = &errwarns;
 }
 
 bool
@@ -86,8 +88,8 @@ RawPreproc::get_line(/*@out@*/ std::string& line)
 
     if (m_is->bad())
     {
-        m_errwarns->propagate(m_linemap->get_current(),
-                              IOError(N_("error when reading from file")));
+        m_errwarns.propagate(m_linemap->get_current(),
+                             IOError(N_("error when reading from file")));
     }
 
     return true;
@@ -96,7 +98,8 @@ RawPreproc::get_line(/*@out@*/ std::string& line)
 void
 do_register()
 {
-    register_module<Preprocessor, RawPreproc>("raw");
+    register_module<PreprocessorModule,
+                    PreprocessorModuleImpl<RawPreproc> >("raw");
 }
 
 }}} // namespace yasm::preproc::raw

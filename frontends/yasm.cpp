@@ -836,17 +836,17 @@ main(int argc, char* argv[])
 
     // Handle keywords (including "help").
     bool listed;
-    arch_keyword = module_common_handler<yasm::Arch>
+    arch_keyword = module_common_handler<yasm::ArchModule>
         (arch_keyword, _("architecture"), _("architectures"), &listed);
-    parser_keyword = module_common_handler<yasm::Parser>
+    parser_keyword = module_common_handler<yasm::ParserModule>
         (parser_keyword, _("parser"), _("parsers"), &listed);
-    preproc_keyword = module_common_handler<yasm::Preprocessor>
+    preproc_keyword = module_common_handler<yasm::PreprocessorModule>
         (preproc_keyword, _("preprocessor"), _("preprocessors"), &listed);
-    objfmt_keyword = module_common_handler<yasm::ObjectFormat>
+    objfmt_keyword = module_common_handler<yasm::ObjectFormatModule>
         (objfmt_keyword, _("object format"), _("object formats"), &listed);
-    dbgfmt_keyword = module_common_handler<yasm::DebugFormat>
+    dbgfmt_keyword = module_common_handler<yasm::DebugFormatModule>
         (dbgfmt_keyword, _("debug format"), _("debug formats"), &listed);
-    listfmt_keyword = module_common_handler<yasm::ListFormat>
+    listfmt_keyword = module_common_handler<yasm::ListFormatModule>
         (listfmt_keyword, _("list format"), _("list formats"), &listed);
     if (listed)
         return EXIT_SUCCESS;
@@ -863,14 +863,14 @@ main(int argc, char* argv[])
     // Check for machine help
     if (machine_name == "help")
     {
-        std::auto_ptr<yasm::Arch> arch_auto =
-            yasm::load_module<yasm::Arch>(arch_keyword);
+        std::auto_ptr<yasm::ArchModule> arch_auto =
+            yasm::load_module<yasm::ArchModule>(arch_keyword);
         std::cout << String::compose(_("Available %1 for %2 `%3':"),
                                      _("machines"), _("architecture"),
                                      arch_keyword) << '\n';
-        yasm::Arch::MachineNames machines = arch_auto->get_machines();
+        yasm::ArchModule::MachineNames machines = arch_auto->get_machines();
 
-        for (yasm::Arch::MachineNames::const_iterator
+        for (yasm::ArchModule::MachineNames::const_iterator
              i=machines.begin(), end=machines.end(); i != end; ++i)
             print_list_keyword_desc(i->second, i->first);
         return EXIT_SUCCESS;

@@ -539,7 +539,7 @@ scan:
                     break;
             }
             /* Propagate errors in case we got a warning from the arch */
-            m_errwarns->propagate(get_cur_line());
+            m_errwarns.propagate(get_cur_line());
             /* Just an identifier, return as such. */
             lvalp->str.assign(TOK, TOKLEN);
             RETURN(ID);
@@ -865,7 +865,7 @@ directive2:
             if (lvalp->reg)
                 RETURN(REG);
             // Propagate errors in case we got a warning from the arch
-            m_errwarns->propagate(get_cur_line());
+            m_errwarns.propagate(get_cur_line());
             /* Just an identifier, return as such. */
             lvalp->str.assign(TOK, TOKLEN);
             RETURN(ID);

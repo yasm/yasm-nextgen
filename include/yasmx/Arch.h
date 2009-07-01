@@ -50,6 +50,8 @@ class APFloat;
 namespace yasm
 {
 
+class ArchModule;
+class Directives;
 class Expr;
 class IntNum;
 
@@ -135,11 +137,9 @@ inline std::ostream& operator<<
 /// Architecture interface.
 /// To make architecture truly usable, set_machine() and set_parser()
 /// need to be called.
-class YASM_LIB_EXPORT Arch : public Module
+class YASM_LIB_EXPORT Arch
 {
 public:
-    enum { module_type = 1 };
-
     /// Return value for parse_check_insnprefix().
     class YASM_LIB_EXPORT InsnPrefix
     {
@@ -242,25 +242,22 @@ public:
         };
     };
 
+    /// Constructor.
+    Arch(const ArchModule& module) : m_module(module) {}
+
     /// Destructor.
     virtual ~Arch();
 
-    /// Get the module type.
-    /// @return "Arch".
-    std::string get_type() const;
+    /// Get module.
+    const ArchModule& get_module() const { return m_module; }
+
+    /// Add directive handlers.
+    virtual void add_directives(Directives& dirs, const char* parser);
 
     /// Set parser to use.
     /// @param parser       keyword of parser to use
     /// @return False if unrecognized parser.
     virtual bool set_parser(const std::string& parser) = 0;
-
-    /// Get the word size of an architecture.
-    /// @return Word size (in bits).
-    virtual unsigned int get_wordsize() const = 0;
-
-    /// Get the minimum instruction length of an architecture.
-    /// @return Minimum instruction length (in bytes).
-    virtual unsigned int get_min_insn_len() const = 0;
 
     /// Set active machine.
     /// @param machine      keyword of machine to use; must be one in the
@@ -272,20 +269,6 @@ public:
     /// @return Active machine name.
     virtual std::string get_machine() const = 0;
 
-    /// Vector of machine keyword/name pairs.  The first element in the pair
-    /// is the keyword used to select the machine with set_machine(), and the
-    /// second element is a one-line description of the machine.
-    typedef std::vector<std::pair<std::string, std::string> > MachineNames;
-
-    /// Get available machines.
-    /// A number of different machine types may be associated with a single
-    /// architecture.  These may be specific CPU's, but the ABI used to
-    /// interface with the architecture should be the primary differentiator
-    /// between machines.  Some object formats (ELF) use the machine to
-    /// determine parameters within the generated output.
-    /// @return Machine keyword/name pairs.
-    virtual MachineNames get_machines() const = 0;
-
     /// Get architecture's active address size, in bits.
     /// @return Active address size (in bits).
     virtual unsigned int get_address_size() const = 0;
@@ -294,7 +277,7 @@ public:
     /// @param var  variable name
     /// @param val  value to set
     /// @return False on success, true on failure (variable does not exist).
-    virtual bool set_var(const std::string& var, unsigned long val) = 0;
+    virtual bool set_var(const char* var, unsigned long val) = 0;
 
     /// Check an generic identifier to see if it matches architecture
     /// specific names for instructions or instruction prefixes.
@@ -370,6 +353,73 @@ public:
     /// instruction.  This is used for handling solitary prefixes.
     /// @return Newly allocated instruction.
     virtual std::auto_ptr<Insn> create_empty_insn() const = 0;
+
+private:
+    Arch(const Arch&);                  // not implemented
+    const Arch& operator=(const Arch&); // not implemented
+
+    const ArchModule& m_module;
+};
+
+/// Arch module interface.
+class YASM_LIB_EXPORT ArchModule : public Module
+{
+public:
+    enum { module_type = 1 };
+
+    /// Destructor.
+    virtual ~ArchModule();
+
+    /// Get the module type.
+    /// @return "Arch".
+    const char* get_type() const;
+
+    /// Get the word size of an architecture.
+    /// @return Word size (in bits).
+    virtual unsigned int get_wordsize() const = 0;
+
+    /// Get the minimum instruction length of an architecture.
+    /// @return Minimum instruction length (in bytes).
+    virtual unsigned int get_min_insn_len() const = 0;
+
+    /// Vector of machine keyword/name pairs.  The first element in the pair
+    /// is the keyword used to select the machine with set_machine(), and the
+    /// second element is a one-line description of the machine.
+    typedef std::vector<std::pair<const char*, const char*> > MachineNames;
+
+    /// Get available machines.
+    /// A number of different machine types may be associated with a single
+    /// architecture.  These may be specific CPU's, but the ABI used to
+    /// interface with the architecture should be the primary differentiator
+    /// between machines.  Some object formats (ELF) use the machine to
+    /// determine parameters within the generated output.
+    /// @return Machine keyword/name pairs.
+    virtual MachineNames get_machines() const = 0;
+
+    /// Arch factory function.
+    /// @return New architecture.
+    virtual std::auto_ptr<Arch> create() const = 0;
+};
+
+template <typename ArchImpl>
+class ArchModuleImpl : public ArchModule
+{
+public:
+    ArchModuleImpl() {}
+    ~ArchModuleImpl() {}
+
+    const char* get_name() const { return ArchImpl::get_name(); }
+    const char* get_keyword() const { return ArchImpl::get_keyword(); }
+
+    unsigned int get_wordsize() const { return ArchImpl::get_wordsize(); }
+    unsigned int get_min_insn_len() const
+    { return ArchImpl::get_min_insn_len(); }
+    MachineNames get_machines() const { return ArchImpl::get_machines(); }
+
+    std::auto_ptr<Arch> create() const
+    {
+        return std::auto_ptr<Arch>(new ArchImpl(*this));
+    }
 };
 
 } // namespace yasm

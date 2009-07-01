@@ -36,32 +36,35 @@ namespace win32
 {
 
 using yasm::objfmt::coff::CoffSection;
+using yasm::objfmt::coff::CoffObject;
 
-class Win32Object : public yasm::objfmt::coff::CoffObject
+class Win32Object : public CoffObject
 {
 public:
-    Win32Object();
+    Win32Object(const ObjectFormatModule& module, Object& object);
     virtual ~Win32Object();
 
-    virtual std::string get_name() const;
-    virtual std::string get_keyword() const;
-    virtual void add_directives(Directives& dirs, const std::string& parser);
+    virtual void add_directives(Directives& dirs, const char* parser);
 
-    //virtual bool ok_object(Object* object) const;
-    //virtual void initialize();
-
-    virtual std::string get_extension() const;
-    virtual unsigned int get_default_x86_mode_bits() const;
-
-    virtual std::vector<std::string> get_dbgfmt_keywords() const;
-    //virtual std::string get_default_dbgfmt_keyword() const;
-
-    //virtual void init_symbols(const std::string& parser);
-    //virtual bool taste(std::istream& is,
-    //                   /*@out@*/ std::string* arch_keyword,
-    //                   /*@out@*/ std::string* machine);
+    //virtual void init_symbols(const char* parser);
     //virtual void read(std::istream& is);
     //virtual void output(std::ostream& os, bool all_syms, Errwarns& errwarns);
+
+    static const char* get_name() { return "Win32"; }
+    static const char* get_keyword() { return "win32"; }
+    static const char* get_extension() { return ".obj"; }
+    static unsigned int get_default_x86_mode_bits() { return 32; }
+
+    static const char* get_default_dbgfmt_keyword()
+    { return CoffObject::get_default_dbgfmt_keyword(); }
+    static std::vector<const char*> get_dbgfmt_keywords();
+
+    static bool ok_object(Object& object)
+    { return CoffObject::ok_object(object); }
+    static bool taste(std::istream& is,
+                      /*@out@*/ std::string* arch_keyword,
+                      /*@out@*/ std::string* machine)
+    { return false; }
 
 protected:
     virtual bool init_section(const std::string& name,

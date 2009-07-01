@@ -86,7 +86,7 @@ ElfMachine::~ElfMachine()
 bool
 ok_elf_machine(const Arch& arch, ElfClass cls)
 {
-    std::string keyword = arch.get_keyword();
+    std::string keyword = arch.get_module().get_keyword();
     std::string machine = arch.get_machine();
     for (unsigned int i=0; i<NELEMS(machines); ++i)
     {
@@ -99,7 +99,7 @@ ok_elf_machine(const Arch& arch, ElfClass cls)
 std::auto_ptr<ElfMachine>
 create_elf_machine(const Arch& arch, ElfClass cls)
 {
-    std::string keyword = arch.get_keyword();
+    std::string keyword = arch.get_module().get_keyword();
     std::string machine = arch.get_machine();
     for (unsigned int i=0; i<NELEMS(machines); ++i)
     {

@@ -40,11 +40,14 @@ namespace null
 class NullDebug : public DebugFormat
 {
 public:
-    NullDebug() {}
+    NullDebug(const DebugFormatModule& module, Object& object)
+        : DebugFormat(module)
+    {}
     ~NullDebug() {}
 
-    std::string get_name() const { return "No debugging info"; }
-    std::string get_keyword() const { return "null"; }
+    static const char* get_name() { return "No debugging info"; }
+    static const char* get_keyword() { return "null"; }
+    static bool ok_object(Object& object) { return true; }
 
     void generate(Linemap& linemap, Errwarns& errwarns) {}
 };
@@ -52,7 +55,8 @@ public:
 void
 do_register()
 {
-    register_module<DebugFormat, NullDebug>("null");
+    register_module<DebugFormatModule,
+                    DebugFormatModuleImpl<NullDebug> >("null");
 }
 
 }}} // namespace yasm::dbgfmt::null

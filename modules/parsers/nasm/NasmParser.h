@@ -76,22 +76,21 @@ class NasmParser
     , public ParserMixin<NasmParser, YYSTYPE, YYCTYPE>
 {
 public:
-    NasmParser();
+    NasmParser(const ParserModule& module, Errwarns& errwarns);
     ~NasmParser();
 
-    std::string get_name() const;
-    std::string get_keyword() const;
-    void add_directives(Directives& dirs, const std::string& parser);
+    void add_directives(Directives& dirs, const char* parser);
 
-    std::vector<std::string> get_preproc_keywords() const;
-    std::string get_default_preproc_keyword() const;
+    static const char* get_name() { return "NASM-compatible parser"; }
+    static const char* get_keyword() { return "nasm"; }
+    static std::vector<const char*> get_preproc_keywords();
+    static const char* get_default_preproc_keyword() { return "raw"; }
 
     void parse(Object& object,
                Preprocessor& preproc,
                bool save_input,
                Directives& dirs,
-               Linemap& linemap,
-               Errwarns& errwarns);
+               Linemap& linemap);
 
     enum TokenType
     {

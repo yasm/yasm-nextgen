@@ -29,7 +29,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <string>
+#include <memory>
 
 #include "yasmx/Config/export.h"
 
@@ -39,34 +39,27 @@
 namespace yasm
 {
 
+class DebugFormatModule;
+class Directives;
 class Errwarns;
 class Linemap;
 class Object;
 
 /// Debug format interface.
-/// To make debug format truly usable, set_object() needs to be called.
-class YASM_LIB_EXPORT DebugFormat : public Module
+class YASM_LIB_EXPORT DebugFormat
 {
 public:
-    enum { module_type = 2 };
-
     /// Constructor.
-    /// To make debug format truly usable, set_object()
-    /// needs to be called.
-    DebugFormat();
+    DebugFormat(const DebugFormatModule& module) : m_module(module) {}
 
     /// Destructor.
     virtual ~DebugFormat();
 
-    /// Get the module type.
-    /// @return "DebugFormat".
-    std::string get_type() const;
+    /// Get module.
+    const DebugFormatModule& get_module() const { return m_module; }
 
-    /// Set associated object.
-    /// @param object       object
-    /// @return False on error (debug format cannot handle that object).
-    /// @note The default implementation accepts all objects.
-    bool set_object(Object* object);
+    /// Add directive handlers.
+    virtual void add_directives(Directives& dirs, const char* parser);
 
     /// Generate debugging information bytecodes.
     /// @param linemap      virtual/physical line mapping
@@ -74,18 +67,53 @@ public:
     /// @note Errors and warnings are stored into errwarns.
     virtual void generate(Linemap& linemap, Errwarns& errwarns) = 0;
 
-protected:
+private:
+    DebugFormat(const DebugFormat&);                  // not implemented
+    const DebugFormat& operator=(const DebugFormat&); // not implemented
+
+    const DebugFormatModule& m_module;
+};
+
+/// Debug format module interface.
+class YASM_LIB_EXPORT DebugFormatModule : public Module
+{
+public:
+    enum { module_type = 2 };
+
+    /// Destructor.
+    virtual ~DebugFormatModule();
+
+    /// Get the module type.
+    /// @return "DebugFormat".
+    const char* get_type() const;
+
     /// Determine if object is acceptable to debug format.
     /// @param object       object
     /// @return False on error (debug format cannot handle the object).
-    /// @note The default implementation accepts all objects.
-    virtual bool ok_object(Object* object) const;
+    virtual bool ok_object(Object& object) const = 0;
 
-    /// Initialize debug format.  Called by set_object() after m_object
-    /// is initialized.  Default implementation does nothing.
-    virtual void initialize();
+    /// DebugFormat factory function.
+    /// @return New debug format.
+    virtual std::auto_ptr<DebugFormat> create(Object& object) const = 0;
+};
 
-    Object* m_object;
+template <typename DebugFormatImpl>
+class DebugFormatModuleImpl : public DebugFormatModule
+{
+public:
+    DebugFormatModuleImpl() {}
+    ~DebugFormatModuleImpl() {}
+
+    const char* get_name() const { return DebugFormatImpl::get_name(); }
+    const char* get_keyword() const { return DebugFormatImpl::get_keyword(); }
+
+    bool ok_object(Object& object) const
+    { return DebugFormatImpl::ok_object(object); }
+
+    std::auto_ptr<DebugFormat> create(Object& object) const
+    {
+        return std::auto_ptr<DebugFormat>(new DebugFormatImpl(*this, object));
+    }
 };
 
 } // namespace yasm

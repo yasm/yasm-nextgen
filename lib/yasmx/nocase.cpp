@@ -26,68 +26,45 @@
 //
 #include "yasmx/Support/nocase.h"
 
-#include <algorithm>
 #include <cctype>
 #include <cstring>
-#include <string>
 
 
 namespace String
 {
 
-static inline bool
-nocase_equal_char(char a, char b)
+bool
+nocase_equal(const char* s1, const char* s2)
 {
-    return toupper(a) == toupper(b);
+    for (; *s1 != '\0' && *s2 != '\0'; ++s1, ++s2)
+    {
+        if (tolower(*s1) != tolower(*s2))
+            return false;
+    }
+    return (tolower(*s1) == tolower(*s2));
 }
 
 bool
-nocase_equal(const std::string& s1, const std::string& s2)
+nocase_equal(const char* s1, const char* s2, std::string::size_type n)
 {
-    return (s1.size() == s2.size() &&
-            std::equal(s1.begin(), s1.end(), s2.begin(), nocase_equal_char));
+    if (n == 0)
+        return true;
+    for (; *s1 != '\0' && *s2 != '\0' && n > 1; ++s1, ++s2, --n)
+    {
+        if (tolower(*s1) != tolower(*s2))
+            return false;
+    }
+    return (tolower(*s1) == tolower(*s2));
 }
 
-bool
-nocase_equal(const std::string& s1, const char* s2)
+std::string
+lowercase(const char* in)
 {
-    return (s1.size() == std::strlen(s2) &&
-            std::equal(s1.begin(), s1.end(), s2, nocase_equal_char));
-}
-
-bool
-nocase_equal(const char* s2, const std::string& s1)
-{
-    return (s1.size() == std::strlen(s2) &&
-            std::equal(s1.begin(), s1.end(), s2, nocase_equal_char));
-}
-
-bool
-nocase_equal(const std::string& s1, const std::string& s2,
-             std::string::size_type n)
-{
-    if (s1.length() > n || s2.length() > n)
-        return false;
-    return (std::equal(s1.begin(), s1.begin()+n, s2.begin(),
-                       nocase_equal_char));
-}
-
-bool
-nocase_equal(const std::string& s1, const char* s2,
-             std::string::size_type n)
-{
-    if (s1.length() > n || std::strlen(s2) > n)
-        return false;
-    return (std::equal(s1.begin(), s1.begin()+n, s2, nocase_equal_char));
-}
-
-bool
-nocase_equal(const char* s2, const std::string& s1,
-             std::string::size_type n)
-{
-    if (s1.length() > n || std::strlen(s2) > n)
-        return false;
-    return (std::equal(s1.begin(), s1.begin()+n, s2, nocase_equal_char));
+    std::string ret;
+    ret.reserve(std::strlen(in));
+    for (; *in != '\0'; ++in)
+        ret += tolower(*in);
+    return ret;
 }
 
 std::string

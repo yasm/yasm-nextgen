@@ -69,58 +69,38 @@ namespace objfmt
 namespace coff
 {
 
-CoffObject::CoffObject(bool set_vma, bool win32, bool win64)
-    : m_set_vma(set_vma)
+CoffObject::CoffObject(const ObjectFormatModule& module,
+                       Object& object,
+                       bool set_vma,
+                       bool win32,
+                       bool win64)
+    : ObjectFormat(module, object)
+    , m_set_vma(set_vma)
     , m_win32(win32)
     , m_win64(win64)
     , m_machine(MACHINE_UNKNOWN)
     , m_file_coffsym(0)
 {
+    // Support x86 and amd64 machines of x86 arch
+    if (String::nocase_equal(m_object.get_arch()->get_machine(), "x86"))
+        m_machine = MACHINE_I386;
+    else if (String::nocase_equal(m_object.get_arch()->get_machine(), "amd64"))
+        m_machine = MACHINE_AMD64;
 }
 
-std::string
-CoffObject::get_name() const
-{
-    return "COFF (DJGPP)";
-}
-
-std::string
-CoffObject::get_keyword() const
-{
-    return "coff";
-}
-
-std::string
-CoffObject::get_extension() const
-{
-    return ".o";
-}
-
-unsigned int
-CoffObject::get_default_x86_mode_bits() const
-{
-    return 32;
-}
-
-std::vector<std::string>
-CoffObject::get_dbgfmt_keywords() const
+std::vector<const char*>
+CoffObject::get_dbgfmt_keywords()
 {
     static const char* keywords[] = {"null", "dwarf2"};
-    return std::vector<std::string>(keywords, keywords+NELEMS(keywords));
-}
-
-std::string
-CoffObject::get_default_dbgfmt_keyword() const
-{
-    return "null";
+    return std::vector<const char*>(keywords, keywords+NELEMS(keywords));
 }
 
 bool
-CoffObject::ok_object(Object* object) const
+CoffObject::ok_object(Object& object)
 {
     // Support x86 and amd64 machines of x86 arch
-    Arch* arch = object->get_arch();
-    if (!String::nocase_equal(arch->get_keyword(), "x86"))
+    Arch* arch = object.get_arch();
+    if (!String::nocase_equal(arch->get_module().get_keyword(), "x86"))
         return false;
 
     if (String::nocase_equal(arch->get_machine(), "x86"))
@@ -131,20 +111,10 @@ CoffObject::ok_object(Object* object) const
 }
 
 void
-CoffObject::initialize()
-{
-    // Support x86 and amd64 machines of x86 arch
-    if (String::nocase_equal(m_object->get_arch()->get_machine(), "x86"))
-        m_machine = MACHINE_I386;
-    else if (String::nocase_equal(m_object->get_arch()->get_machine(), "amd64"))
-        m_machine = MACHINE_AMD64;
-}
-
-void
-CoffObject::init_symbols(const std::string& parser)
+CoffObject::init_symbols(const char* parser)
 {
     // Add .file symbol
-    SymbolRef filesym = m_object->append_symbol(".file");
+    SymbolRef filesym = m_object.append_symbol(".file");
     filesym->define_special(Symbol::GLOBAL);
 
     std::auto_ptr<CoffSymbol> coffsym(
@@ -570,7 +540,7 @@ CoffObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
 {
     // Update file symbol filename
     m_file_coffsym->m_aux.resize(1);
-    m_file_coffsym->m_aux[0].fname = m_object->get_source_fn();
+    m_file_coffsym->m_aux[0].fname = m_object.get_source_fn();
 
     // Number sections and determine each section's addr values.
     // The latter is needed in VMA case before actually outputting
@@ -578,8 +548,8 @@ CoffObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     // addends in the generated code.
     unsigned int scnum = 1;
     unsigned long addr = 0;
-    for (Object::section_iterator i=m_object->sections_begin(),
-         end=m_object->sections_end(); i != end; ++i)
+    for (Object::section_iterator i=m_object.sections_begin(),
+         end=m_object.sections_end(); i != end; ++i)
     {
         CoffSection* coffsect = get_coff(*i);
         coffsect->m_scnum = scnum++;
@@ -605,14 +575,14 @@ CoffObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     if (!os)
         throw IOError(N_("could not seek on output file"));
 
-    Output out(os, *this, *m_object, all_syms);
+    Output out(os, *this, m_object, all_syms);
 
     // Finalize symbol table (assign index to each symbol).
     unsigned long symtab_count = out.count_syms();
 
     // Section data/relocs
-    for (Object::section_iterator i=m_object->sections_begin(),
-         end=m_object->sections_end(); i != end; ++i)
+    for (Object::section_iterator i=m_object.sections_begin(),
+         end=m_object.sections_end(); i != end; ++i)
     {
         out.output_section(*i, errwarns);
     }
@@ -661,8 +631,8 @@ CoffObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     os << bytes;
 
     // Section headers
-    for (Object::section_iterator i=m_object->sections_begin(),
-         end=m_object->sections_end(); i != end; ++i)
+    for (Object::section_iterator i=m_object.sections_begin(),
+         end=m_object.sections_end(); i != end; ++i)
     {
         out.output_secthead(*i);
     }
@@ -728,11 +698,11 @@ Section*
 CoffObject::append_section(const std::string& name, unsigned long line)
 {
     Section* section = new Section(name, false, false, line);
-    m_object->append_section(std::auto_ptr<Section>(section));
+    m_object.append_section(std::auto_ptr<Section>(section));
 
     // Define a label for the start of the section
     Location start = {&section->bcs_first(), 0};
-    SymbolRef sym = m_object->get_symbol(name);
+    SymbolRef sym = m_object.get_symbol(name);
     sym->define_label(start, line);
     sym->declare(Symbol::GLOBAL, line);
     sym->add_assoc_data(CoffSymbol::key,
@@ -754,7 +724,7 @@ CoffObject::dir_gas_section(Object& object,
                             NameValues& objext_nvs,
                             unsigned long line)
 {
-    assert(&object == m_object);
+    assert(&object == &m_object);
 
     if (!nvs.front().is_string())
         throw Error(N_("section name must be a string"));
@@ -770,7 +740,7 @@ CoffObject::dir_gas_section(Object& object,
         sectname.resize(8);
     }
 
-    Section* sect = m_object->find_section(sectname);
+    Section* sect = m_object.find_section(sectname);
     bool first = true;
     if (sect)
         first = sect->is_default();
@@ -780,7 +750,7 @@ CoffObject::dir_gas_section(Object& object,
     CoffSection* coffsect = get_coff(*sect);
     assert(coffsect != 0);
 
-    m_object->set_cur_section(sect);
+    m_object.set_cur_section(sect);
     sect->set_default(false);
 
     // Default to read/write data
@@ -904,7 +874,7 @@ CoffObject::dir_section_init_helpers(DirHelpers& helpers,
                            CoffSection::DISCARD |
                            CoffSection::READ));
     helpers.add("align", true,
-                BIND::bind(&dir_intn, _1, m_object, line, align, has_align));
+                BIND::bind(&dir_intn, _1, &m_object, line, align, has_align));
 }
 
 void
@@ -913,7 +883,7 @@ CoffObject::dir_section(Object& object,
                         NameValues& objext_nvs,
                         unsigned long line)
 {
-    assert(&object == m_object);
+    assert(&object == &m_object);
 
     if (!nvs.front().is_string())
         throw Error(N_("section name must be a string"));
@@ -929,7 +899,7 @@ CoffObject::dir_section(Object& object,
         sectname.resize(8);
     }
 
-    Section* sect = m_object->find_section(sectname);
+    Section* sect = m_object.find_section(sectname);
     bool first = true;
     if (sect)
         first = sect->is_default();
@@ -939,7 +909,7 @@ CoffObject::dir_section(Object& object,
     CoffSection* coffsect = get_coff(*sect);
     assert(coffsect != 0);
 
-    m_object->set_cur_section(sect);
+    m_object.set_cur_section(sect);
     sect->set_default(false);
 
     // No name/values, so nothing more to do
@@ -993,13 +963,13 @@ CoffObject::dir_ident(Object& object,
                       NameValues& objext_namevals,
                       unsigned long line)
 {
-    assert(m_object == &object);
+    assert(&m_object == &object);
     dir_ident_common(*this, ".comment", object, namevals, objext_namevals,
                      line);
 }
 
 void
-CoffObject::add_directives(Directives& dirs, const std::string& parser)
+CoffObject::add_directives(Directives& dirs, const char* parser)
 {
     static const Directives::Init<CoffObject> nasm_dirs[] =
     {
@@ -1022,7 +992,8 @@ CoffObject::add_directives(Directives& dirs, const std::string& parser)
 void
 do_register()
 {
-    register_module<ObjectFormat, CoffObject>("coff");
+    register_module<ObjectFormatModule,
+                    ObjectFormatModuleImpl<CoffObject> >("coff");
 }
 
 }}} // namespace yasm::objfmt::coff

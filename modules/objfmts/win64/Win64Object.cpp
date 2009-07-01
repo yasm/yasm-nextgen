@@ -52,27 +52,36 @@ namespace win64
 
 using yasm::objfmt::coff::CoffSection;
 using yasm::objfmt::coff::get_coff;
+using yasm::objfmt::win32::Win32Object;
 
-class Win64Object : public yasm::objfmt::win32::Win32Object
+class Win64Object : public Win32Object
 {
 public:
-    Win64Object();
+    Win64Object(const ObjectFormatModule& module, Object& object);
     virtual ~Win64Object();
 
-    virtual std::string get_name() const;
-    virtual std::string get_keyword() const;
-    virtual void add_directives(Directives& dirs, const std::string& parser);
+    virtual void add_directives(Directives& dirs, const char* parser);
 
-    //virtual bool ok_object(Object* object) const;
-
-    virtual unsigned int get_default_x86_mode_bits() const;
-
-    //virtual void init_symbols(const std::string& parser);
-    //virtual bool taste(std::istream& is,
-    //                   /*@out@*/ std::string* arch_keyword,
-    //                   /*@out@*/ std::string* machine);
+    //virtual void init_symbols(const char* parser);
     //virtual void read(std::istream& is);
     virtual void output(std::ostream& os, bool all_syms, Errwarns& errwarns);
+
+    static const char* get_name() { return "Win64"; }
+    static const char* get_keyword() { return "win64"; }
+    static const char* get_extension() { return ".obj"; }
+    static unsigned int get_default_x86_mode_bits() { return 64; }
+
+    static const char* get_default_dbgfmt_keyword()
+    { return Win32Object::get_default_dbgfmt_keyword(); }
+    static std::vector<const char*> get_dbgfmt_keywords()
+    { return Win32Object::get_dbgfmt_keywords(); }
+
+    static bool ok_object(Object& object)
+    { return Win32Object::ok_object(object); }
+    static bool taste(std::istream& is,
+                      /*@out@*/ std::string* arch_keyword,
+                      /*@out@*/ std::string* machine)
+    { return false; }
 
 private:
     virtual bool init_section(const std::string& name,
@@ -130,8 +139,9 @@ private:
     std::auto_ptr<UnwindInfo> m_unwind; // Unwind info
 };
 
-Win64Object::Win64Object()
-    : m_proc_frame(0)
+Win64Object::Win64Object(const ObjectFormatModule& module, Object& object)
+    : Win32Object(module, object)
+    , m_proc_frame(0)
     , m_done_prolog(0)
     , m_unwind(0)
 {
@@ -139,24 +149,6 @@ Win64Object::Win64Object()
 
 Win64Object::~Win64Object()
 {
-}
-
-std::string
-Win64Object::get_name() const
-{
-    return "Win64";
-}
-
-std::string
-Win64Object::get_keyword() const
-{
-    return "win64";
-}
-
-unsigned int
-Win64Object::get_default_x86_mode_bits() const
-{
-    return 64;
 }
 
 void
@@ -375,7 +367,7 @@ Win64Object::save_common(Object& object,
     // SAVE_XXX_FAR if necessary.
     m_unwind->add_code(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->get_proc(),
-        get_curpos(*m_object, dirname, line),
+        get_curpos(m_object, dirname, line),
         op,
         reg->get_num() & 0xF,
         16,
@@ -459,14 +451,14 @@ Win64Object::dir_endproc_frame(Object& object,
     // Add unwind info to end of .xdata section.
     //
 
-    Section* xdata = m_object->find_section(".xdata");
+    Section* xdata = m_object.find_section(".xdata");
 
     // Create xdata section if needed.
     if (!xdata)
         xdata = append_section(".xdata", line);
 
     // Get current position in .xdata section.
-    SymbolRef unwindpos = m_object->add_non_table_symbol("$");
+    SymbolRef unwindpos = m_object.add_non_table_symbol("$");
     Location unwindpos_loc =
         {&xdata->bcs_last(), xdata->bcs_last().get_fixed_len()};
     unwindpos->define_label(unwindpos_loc, line);
@@ -481,7 +473,7 @@ Win64Object::dir_endproc_frame(Object& object,
     // Add function lookup to end of .pdata section.
     //
 
-    Section* pdata = m_object->find_section(".pdata");
+    Section* pdata = m_object.find_section(".pdata");
 
     // Initialize pdata section if needed.
     if (!pdata)
@@ -500,7 +492,7 @@ Win64Object::dir_endproc_frame(Object& object,
 }
 
 void
-Win64Object::add_directives(Directives& dirs, const std::string& parser)
+Win64Object::add_directives(Directives& dirs, const char* parser)
 {
     static const Directives::Init<Win64Object> gas_dirs[] =
     {
@@ -582,8 +574,10 @@ static const yasm_stdmac win64_objfmt_stdmacs[] =
 void
 do_register()
 {
-    register_module<ObjectFormat, Win64Object>("win64");
-    register_module<ObjectFormat, Win64Object>("x64");
+    register_module<ObjectFormatModule,
+                    ObjectFormatModuleImpl<Win64Object> >("win64");
+    register_module<ObjectFormatModule,
+                    ObjectFormatModuleImpl<Win64Object> >("x64");
 }
 
 }}} // namespace yasm::objfmt::win64
