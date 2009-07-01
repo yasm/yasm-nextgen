@@ -37,8 +37,17 @@ ListFormat::~ListFormat()
 {
 }
 
-std::string
-ListFormat::get_type() const
+void
+ListFormat::add_directives(Directives& dirs, const char* parser)
+{
+}
+
+ListFormatModule::~ListFormatModule()
+{
+}
+
+const char*
+ListFormatModule::get_type() const
 {
     return "ListFormat";
 }

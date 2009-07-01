@@ -113,25 +113,19 @@ public:
     };
 
     /// Constructor.
-    X86Arch();
+    X86Arch(const ArchModule& module);
 
     /// Destructor.
     ~X86Arch();
 
-    std::string get_name() const;
-    std::string get_keyword() const;
-    std::string get_type() const;
-    void add_directives(Directives& dir, const std::string& parser);
+    void add_directives(Directives& dir, const char* parser);
 
     bool set_parser(const std::string& parser);
-    unsigned int get_wordsize() const;
-    unsigned int get_min_insn_len() const;
     bool set_machine(const std::string& machine);
     std::string get_machine() const;
-    MachineNames get_machines() const;
     unsigned int get_address_size() const;
 
-    bool set_var(const std::string& var, unsigned long val);
+    bool set_var(const char* var, unsigned long val);
 
     InsnPrefix parse_check_insnprefix
         (const char *id, size_t id_len, unsigned long line) const;
@@ -159,6 +153,13 @@ public:
     unsigned int get_mode_bits() const { return m_mode_bits; }
     const X86Register* get_reg64(unsigned int num) const
     { return m_reg[X86Register::REG64][num]; }
+
+    static const char* get_name()
+    { return "x86 (IA-32 and derivatives), AMD64"; }
+    static const char* get_keyword() { return "x86"; }
+    static const unsigned int get_wordsize() { return 16; }
+    static const unsigned int get_min_insn_len() { return 1; }
+    static ArchModule::MachineNames get_machines();
 
 private:
     void parse_cpu(const std::string& cpuid);

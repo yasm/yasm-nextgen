@@ -207,9 +207,8 @@ static bool
 opt_arch_handler(/*@unused@*/ const std::string& cmd,
                  const std::string& param, /*@unused@*/ int extra)
 {
-    arch_keyword =
-        module_common_handler<yasm::Arch>(param, _("architecture"),
-                                          _("architectures"));
+    arch_keyword = module_common_handler<yasm::ArchModule>
+        (param, _("architecture"), _("architectures"));
     return true;
 }
 
@@ -217,8 +216,8 @@ static bool
 opt_parser_handler(/*@unused@*/ const std::string& cmd,
                    const std::string& param, /*@unused@*/ int extra)
 {
-    parser_keyword =
-        module_common_handler<yasm::Parser>(param, _("parser"), _("parsers"));
+    parser_keyword = module_common_handler<yasm::ParserModule>
+        (param, _("parser"), _("parsers"));
     return true;
 }
 
@@ -226,9 +225,8 @@ static bool
 opt_preproc_handler(/*@unused@*/ const std::string& cmd,
                     const std::string& param, /*@unused@*/ int extra)
 {
-    preproc_keyword =
-        module_common_handler<yasm::Preprocessor>(param, _("preprocessor"),
-                                                  _("preprocessors"));
+    preproc_keyword = module_common_handler<yasm::PreprocessorModule>
+        (param, _("preprocessor"), _("preprocessors"));
     return true;
 }
 
@@ -236,9 +234,8 @@ static bool
 opt_objfmt_handler(/*@unused@*/ const std::string& cmd,
                    const std::string& param, /*@unused@*/ int extra)
 {
-    objfmt_keyword =
-        module_common_handler<yasm::ObjectFormat>(param, _("object format"),
-                                                  _("object formats"));
+    objfmt_keyword = module_common_handler<yasm::ObjectFormatModule>
+        (param, _("object format"), _("object formats"));
     return true;
 }
 
@@ -246,9 +243,8 @@ static bool
 opt_dbgfmt_handler(/*@unused@*/ const std::string& cmd,
                    const std::string& param, /*@unused@*/ int extra)
 {
-    dbgfmt_keyword =
-        module_common_handler<yasm::DebugFormat>(param, _("debug format"),
-                                                 _("debug formats"));
+    dbgfmt_keyword = module_common_handler<yasm::DebugFormatModule>
+        (param, _("debug format"), _("debug formats"));
     return true;
 }
 
@@ -256,9 +252,8 @@ static bool
 opt_listfmt_handler(/*@unused@*/ const std::string& cmd,
                     const std::string& param, /*@unused@*/ int extra)
 {
-    listfmt_keyword =
-        module_common_handler<yasm::ListFormat>(param, _("list format"),
-                                                _("list formats"));
+    listfmt_keyword = module_common_handler<yasm::ListFormatModule>
+        (param, _("list format"), _("list formats"));
     return true;
 }
 
@@ -871,14 +866,14 @@ main(int argc, const char* argv[])
     // Check for arch help
     if (machine_name == "help")
     {
-        std::auto_ptr<yasm::Arch> arch_auto =
-            yasm::load_module<yasm::Arch>(arch_keyword);
+        std::auto_ptr<yasm::ArchModule> arch_auto =
+            yasm::load_module<yasm::ArchModule>(arch_keyword);
         std::cout << String::compose(_("Available %1 for %2 `%3':"),
                                      _("machines"), _("architecture"),
                                      arch_keyword) << '\n';
-        yasm::Arch::MachineNames machines = arch_auto->get_machines();
+        yasm::ArchModule::MachineNames machines = arch_auto->get_machines();
 
-        for (yasm::Arch::MachineNames::const_iterator
+        for (yasm::ArchModule::MachineNames::const_iterator
              i=machines.begin(), end=machines.end(); i != end; ++i)
             print_list_keyword_desc(i->second, i->first);
         return EXIT_SUCCESS;

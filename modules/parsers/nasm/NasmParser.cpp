@@ -45,7 +45,8 @@ namespace parser
 namespace nasm
 {
 
-NasmParser::NasmParser()
+NasmParser::NasmParser(const ParserModule& module, Errwarns& errwarns)
+    : Parser(module, errwarns)
 {
 }
 
@@ -53,27 +54,14 @@ NasmParser::~NasmParser()
 {
 }
 
-std::string
-NasmParser::get_name() const
-{
-    return "NASM-compatible parser";
-}
-
-std::string
-NasmParser::get_keyword() const
-{
-    return "nasm";
-}
-
 void
 NasmParser::parse(Object& object,
                   Preprocessor& preproc,
                   bool save_input,
                   Directives& dirs,
-                  Linemap& linemap,
-                  Errwarns& errwarns)
+                  Linemap& linemap)
 {
-    init_mixin(object, preproc, save_input, dirs, linemap, errwarns);
+    init_mixin(object, preproc, save_input, dirs, linemap);
 
     m_locallabel_base = "";
 
@@ -87,26 +75,19 @@ NasmParser::parse(Object& object,
     do_parse();
 
     // Check for undefined symbols
-    object.symbols_finalize(errwarns, false);
+    object.symbols_finalize(m_errwarns, false);
 }
 
-std::vector<std::string>
-NasmParser::get_preproc_keywords() const
+std::vector<const char*>
+NasmParser::get_preproc_keywords()
 {
     // valid preprocessors to use with this parser
     static const char* keywords[] = {"raw", "nasm"};
-    return std::vector<std::string>(keywords, keywords+NELEMS(keywords));
-}
-
-std::string
-NasmParser::get_default_preproc_keyword() const
-{
-    //return "nasm";
-    return "raw";
+    return std::vector<const char*>(keywords, keywords+NELEMS(keywords));
 }
 
 void
-NasmParser::add_directives(Directives& dirs, const std::string& parser)
+NasmParser::add_directives(Directives& dirs, const char* parser)
 {
     static const Directives::Init<NasmParser> nasm_dirs[] =
     {
@@ -127,7 +108,7 @@ NasmParser::add_directives(Directives& dirs, const std::string& parser)
 void
 do_register()
 {
-    register_module<Parser, NasmParser>("nasm");
+    register_module<ParserModule, ParserModuleImpl<NasmParser> >("nasm");
 }
 
 }}} // namespace yasm::parser::nasm

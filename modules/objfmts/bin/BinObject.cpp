@@ -66,27 +66,29 @@ class BinObject : public ObjectFormat
 {
 public:
     /// Constructor.
-    /// To make object format truly usable, set_object()
-    /// needs to be called.
-    BinObject();
+    BinObject(const ObjectFormatModule& module, Object& object);
 
     /// Destructor.
     ~BinObject();
 
-    std::string get_name() const { return "Flat format binary"; }
-    std::string get_keyword() const { return "bin"; }
-    void add_directives(Directives& dirs, const std::string& parser);
-
-    std::string get_extension() const { return ""; }
-    unsigned int get_default_x86_mode_bits() const { return 16; }
-
-    std::vector<std::string> get_dbgfmt_keywords() const;
-    std::string get_default_dbgfmt_keyword() const { return "null"; }
+    void add_directives(Directives& dirs, const char* parser);
 
     void output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* add_default_section();
     Section* append_section(const std::string& name, unsigned long line);
+
+    static const char* get_name() { return "Flat format binary"; }
+    static const char* get_keyword() { return "bin"; }
+    static const char* get_extension() { return ""; }
+    static const unsigned int get_default_x86_mode_bits() { return 16; }
+    static const char* get_default_dbgfmt_keyword() { return "null"; }
+    static std::vector<const char*> get_dbgfmt_keywords();
+    static bool ok_object(Object& object) { return true; }
+    static bool taste(std::istream& is,
+                      /*@out@*/ std::string* arch_keyword,
+                      /*@out@*/ std::string* machine)
+    { return false; }
 
 private:
     void dir_section(Object& object,
@@ -122,8 +124,8 @@ private:
     unsigned long m_org_line;
 };
 
-BinObject::BinObject()
-    : m_map_flags(NO_MAP), m_org(0)
+BinObject::BinObject(const ObjectFormatModule& module, Object& object)
+    : ObjectFormat(module, object), m_map_flags(NO_MAP), m_org(0)
 {
 }
 
@@ -159,7 +161,7 @@ BinObject::output_map(const IntNum& origin,
         }
     }
 
-    BinMapOutput out(os, *m_object, origin, groups);
+    BinMapOutput out(os, m_object, origin, groups);
     out.output_header();
     out.output_origin();
 
@@ -353,11 +355,11 @@ BinObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     }
 
     // Check symbol table
-    for (Object::const_symbol_iterator i=m_object->symbols_begin(),
-         end=m_object->symbols_end(); i != end; ++i)
+    for (Object::const_symbol_iterator i=m_object.symbols_begin(),
+         end=m_object.symbols_end(); i != end; ++i)
         check_sym(*i, errwarns);
 
-    BinLink link(*m_object, errwarns);
+    BinLink link(m_object, errwarns);
 
     if (!link.do_link(origin))
         return;
@@ -370,9 +372,9 @@ BinObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
         return;
 
     // Output sections
-    Output out(os, *m_object);
-    for (Object::section_iterator i=m_object->sections_begin(),
-         end=m_object->sections_end(); i != end; ++i)
+    Output out(os, m_object);
+    for (Object::section_iterator i=m_object.sections_begin(),
+         end=m_object.sections_end(); i != end; ++i)
     {
         out.output_section(*i, origin, errwarns);
     }
@@ -392,22 +394,22 @@ BinObject::append_section(const std::string& name, unsigned long line)
     bool bss = (name == ".bss");
     bool code = (name == ".text");
     Section* section = new Section(name, code, bss, line);
-    m_object->append_section(std::auto_ptr<Section>(section));
+    m_object.append_section(std::auto_ptr<Section>(section));
 
     // Initialize section data and symbols.
     std::auto_ptr<BinSection> bsd(new BinSection());
 
-    SymbolRef start = m_object->get_symbol("section."+name+".start");
+    SymbolRef start = m_object.get_symbol("section."+name+".start");
     start->declare(Symbol::EXTERN, line);
     start->add_assoc_data(BinSymbol::key, std::auto_ptr<AssocData>
         (new BinSymbol(*section, *bsd, BinSymbol::START)));
 
-    SymbolRef vstart = m_object->get_symbol("section."+name+".vstart");
+    SymbolRef vstart = m_object.get_symbol("section."+name+".vstart");
     vstart->declare(Symbol::EXTERN, line);
     vstart->add_assoc_data(BinSymbol::key, std::auto_ptr<AssocData>
         (new BinSymbol(*section, *bsd, BinSymbol::VSTART)));
 
-    SymbolRef length = m_object->get_symbol("section."+name+".length");
+    SymbolRef length = m_object.get_symbol("section."+name+".length");
     length->declare(Symbol::EXTERN, line);
     length->add_assoc_data(BinSymbol::key, std::auto_ptr<AssocData>
         (new BinSymbol(*section, *bsd, BinSymbol::LENGTH)));
@@ -424,20 +426,20 @@ BinObject::dir_section(Object& object,
                        NameValues& objext_nvs,
                        unsigned long line)
 {
-    assert(&object == m_object);
+    assert(&object == &m_object);
 
     if (!nvs.front().is_string())
         throw Error(N_("section name must be a string"));
     std::string sectname = nvs.front().get_string();
 
-    Section* sect = m_object->find_section(sectname);
+    Section* sect = m_object.find_section(sectname);
     bool first = true;
     if (sect)
         first = sect->is_default();
     else
         sect = append_section(sectname, line);
 
-    m_object->set_cur_section(sect);
+    m_object.set_cur_section(sect);
     sect->set_default(false);
 
     // No name/values, so nothing more to do
@@ -469,15 +471,15 @@ BinObject::dir_section(Object& object,
     helpers.add("vfollows", true,
                 BIND::bind(&dir_string, _1, &bsd->vfollows, &has_vfollows));
     helpers.add("start", true,
-                BIND::bind(&dir_expr, _1, m_object, line, &start, &has_start));
+                BIND::bind(&dir_expr, _1, &m_object, line, &start, &has_start));
     helpers.add("vstart", true,
-                BIND::bind(&dir_expr, _1, m_object, line, &vstart,
+                BIND::bind(&dir_expr, _1, &m_object, line, &vstart,
                            &has_vstart));
     helpers.add("align", true,
-                BIND::bind(&dir_intn, _1, m_object, line, &bsd->align,
+                BIND::bind(&dir_intn, _1, &m_object, line, &bsd->align,
                            &bsd->has_align));
     helpers.add("valign", true,
-                BIND::bind(&dir_intn, _1, m_object, line, &bsd->valign,
+                BIND::bind(&dir_intn, _1, &m_object, line, &bsd->valign,
                            &bsd->has_valign));
     helpers.add("nobits", false, BIND::bind(&dir_flag_set, _1, &bss, 1));
     helpers.add("progbits", false, BIND::bind(&dir_flag_clear, _1, &bss, 1));
@@ -598,15 +600,15 @@ BinObject::dir_map(Object& object,
             BIND::bind(&BinObject::map_filename, this, _1));
 }
 
-std::vector<std::string>
-BinObject::get_dbgfmt_keywords() const
+std::vector<const char*>
+BinObject::get_dbgfmt_keywords()
 {
     static const char* keywords[] = {"null"};
-    return std::vector<std::string>(keywords, keywords+NELEMS(keywords));
+    return std::vector<const char*>(keywords, keywords+NELEMS(keywords));
 }
 
 void
-BinObject::add_directives(Directives& dirs, const std::string& parser)
+BinObject::add_directives(Directives& dirs, const char* parser)
 {
     static const Directives::Init<BinObject> nasm_dirs[] =
     {
@@ -629,7 +631,8 @@ BinObject::add_directives(Directives& dirs, const std::string& parser)
 void
 do_register()
 {
-    register_module<ObjectFormat, BinObject>("bin");
+    register_module<ObjectFormatModule,
+                    ObjectFormatModuleImpl<BinObject> >("bin");
 }
 
 }}} // namespace yasm::objfmt::bin

@@ -51,8 +51,8 @@ namespace objfmt
 namespace win32
 {
 
-Win32Object::Win32Object()
-    : CoffObject(false, true)
+Win32Object::Win32Object(const ObjectFormatModule& module, Object& object)
+    : CoffObject(module, object, false, true)
 {
 }
 
@@ -60,35 +60,11 @@ Win32Object::~Win32Object()
 {
 }
 
-std::string
-Win32Object::get_name() const
-{
-    return "Win32";
-}
-
-std::string
-Win32Object::get_keyword() const
-{
-    return "win32";
-}
-
-std::string
-Win32Object::get_extension() const
-{
-    return ".obj";
-}
-
-unsigned int
-Win32Object::get_default_x86_mode_bits() const
-{
-    return 32;
-}
-
-std::vector<std::string>
-Win32Object::get_dbgfmt_keywords() const
+std::vector<const char*>
+Win32Object::get_dbgfmt_keywords()
 {
     static const char* keywords[] = {"null", "dwarf2", "cv8"};
-    return std::vector<std::string>(keywords, keywords+NELEMS(keywords));
+    return std::vector<const char*>(keywords, keywords+NELEMS(keywords));
 }
 
 static inline void
@@ -165,10 +141,10 @@ Win32Object::dir_export(Object& object,
     std::string symname = namevals.front().get_id();
 
     // Reference exported symbol (to generate error if not declared)
-    m_object->get_symbol(symname)->use(line);
+    m_object.get_symbol(symname)->use(line);
 
     // Add to end of linker directives, creating directive section if needed.
-    Section* sect = m_object->find_section(".drectve");
+    Section* sect = m_object.find_section(".drectve");
     if (!sect)
         sect = append_section(".drectve", line);
 
@@ -189,14 +165,14 @@ Win32Object::dir_safeseh(Object& object,
     std::string symname = namevals.front().get_id();
 
     // Reference symbol (to generate error if not declared)
-    SymbolRef sym = m_object->get_symbol(symname);
+    SymbolRef sym = m_object.get_symbol(symname);
     sym->use(line);
 
     // Symbol must be externally visible, so force global.
     sym->declare(Symbol::GLOBAL, line);
 
     // Add symbol number to end of .sxdata section (creating if necessary)
-    Section* sect = m_object->find_section(".sxdata");
+    Section* sect = m_object.find_section(".sxdata");
     if (!sect)
         sect = append_section(".sxdata", line);
 
@@ -204,7 +180,7 @@ Win32Object::dir_safeseh(Object& object,
 }
 
 void
-Win32Object::add_directives(Directives& dirs, const std::string& parser)
+Win32Object::add_directives(Directives& dirs, const char* parser)
 {
     static const Directives::Init<Win32Object> gas_dirs[] =
     {
@@ -316,7 +292,8 @@ static const yasm_stdmac win32_objfmt_stdmacs[] =
 void
 do_register()
 {
-    register_module<ObjectFormat, Win32Object>("win32");
+    register_module<ObjectFormatModule,
+                    ObjectFormatModuleImpl<Win32Object> >("win32");
 }
 
 }}} // namespace yasm::objfmt::win32

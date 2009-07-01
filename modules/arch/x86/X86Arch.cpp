@@ -68,8 +68,9 @@ static const unsigned int reg_count[X86Register::TYPE_COUNT] =
      8,     // TRREG
      1};    // RIP
 
-X86Arch::X86Arch()
-    : m_amd64_machine(false),
+X86Arch::X86Arch(const ArchModule& module)
+    : Arch(module),
+      m_amd64_machine(false),
       m_parser(PARSER_UNKNOWN),
       m_mode_bits(0),
       m_force_strict(false),
@@ -166,18 +167,6 @@ X86Arch::~X86Arch()
     }
 }
 
-unsigned int
-X86Arch::get_wordsize() const
-{
-    return 16;
-}
-
-unsigned int
-X86Arch::get_min_insn_len() const
-{
-    return 1;
-}
-
 std::string
 X86Arch::get_machine() const
 {
@@ -187,10 +176,10 @@ X86Arch::get_machine() const
         return "x86";
 }
 
-Arch::MachineNames
-X86Arch::get_machines() const
+ArchModule::MachineNames
+X86Arch::get_machines()
 {
-    MachineNames machines;
+    ArchModule::MachineNames machines;
     machines.push_back(std::make_pair("x86", "IA-32 and derivatives"));
     machines.push_back(std::make_pair("amd64", "AMD64"));
     return machines;
@@ -208,7 +197,7 @@ X86Arch::get_address_size() const
 }
 
 bool
-X86Arch::set_var(const std::string& var, unsigned long val)
+X86Arch::set_var(const char* var, unsigned long val)
 {
     if (String::nocase_equal(var, "mode_bits"))
         m_mode_bits = static_cast<unsigned int>(val);
@@ -527,26 +516,8 @@ X86Arch::get_fill() const
     }
 }
 
-std::string
-X86Arch::get_name() const
-{
-    return "x86 (IA-32 and derivatives), AMD64";
-}
-
-std::string
-X86Arch::get_keyword() const
-{
-    return "x86";
-}
-
-std::string
-X86Arch::get_type() const
-{
-    return "Arch";
-}
-
 void
-X86Arch::add_directives(Directives& dirs, const std::string& parser)
+X86Arch::add_directives(Directives& dirs, const char* parser)
 {
     if (String::nocase_equal(parser, "nasm"))
     {
@@ -605,7 +576,7 @@ X86Arch::ea_create(std::auto_ptr<Expr> e) const
 void
 do_register()
 {
-    register_module<Arch, X86Arch>("x86");
+    register_module<ArchModule, ArchModuleImpl<X86Arch> >("x86");
 }
 
 }}} // namespace yasm::arch::x86

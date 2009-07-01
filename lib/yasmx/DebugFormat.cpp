@@ -33,40 +33,23 @@
 namespace yasm
 {
 
-DebugFormat::DebugFormat()
-    : m_object(0)
-{
-}
-
 DebugFormat::~DebugFormat()
 {
 }
 
-std::string
-DebugFormat::get_type() const
+void
+DebugFormat::add_directives(Directives& dirs, const char* parser)
+{
+}
+
+DebugFormatModule::~DebugFormatModule()
+{
+}
+
+const char*
+DebugFormatModule::get_type() const
 {
     return "DebugFormat";
-}
-
-bool
-DebugFormat::set_object(Object* object)
-{
-    if (!ok_object(object))
-        return false;
-    m_object = object;
-    initialize();
-    return true;
-}
-
-bool
-DebugFormat::ok_object(Object* object) const
-{
-    return true;
-}
-
-void
-DebugFormat::initialize()
-{
 }
 
 } // namespace yasm

@@ -169,11 +169,11 @@ NasmParser::do_parse()
             {
                 m_linemap->add_source(loc, line);
             }
-            m_errwarns->propagate(cur_line);
+            m_errwarns.propagate(cur_line);
         }
         catch (Error& err)
         {
-            m_errwarns->propagate(cur_line, err);
+            m_errwarns.propagate(cur_line, err);
             demand_eol_nothrow();
             m_state = INITIAL;
         }

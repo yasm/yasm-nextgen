@@ -29,15 +29,11 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <string>
-
 #include "yasmx/Config/export.h"
 
 
 namespace yasm
 {
-
-class Directives;
 
 /// Module interface (abstract base).
 class YASM_LIB_EXPORT Module
@@ -51,18 +47,15 @@ public:
 
     /// Get the one-line description of the module.
     /// @return One-line description of module.
-    virtual std::string get_name() const = 0;
+    virtual const char* get_name() const = 0;
 
     /// Get the keyword used to select the module.
     /// @return Module keyword.
-    virtual std::string get_keyword() const = 0;
+    virtual const char* get_keyword() const = 0;
 
     /// Get the module type name (e.g. "ObjectFormat", "DebugFormat", ...).
     /// @return Module typename.
-    virtual std::string get_type() const = 0;
-
-    /// Add directive handlers.
-    virtual void add_directives(Directives& dirs, const std::string& parser);
+    virtual const char* get_type() const = 0;
 
 private:
     Module(const Module&);                  // not implemented

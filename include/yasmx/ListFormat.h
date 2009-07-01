@@ -30,7 +30,7 @@
 /// @endlicense
 ///
 #include <iosfwd>
-#include <string>
+#include <memory>
 
 #include "yasmx/Config/export.h"
 
@@ -41,20 +41,25 @@ namespace yasm
 {
 
 class Arch;
+class Directives;
 class Linemap;
+class ListFormatModule;
 
 /// List format interface.
-class YASM_LIB_EXPORT ListFormat : public Module
+class YASM_LIB_EXPORT ListFormat
 {
 public:
-    enum { module_type = 3 };
+    /// Constructor.
+    ListFormat(const ListFormatModule& module) : m_module(module) {}
 
     /// Destructor.
     virtual ~ListFormat();
 
-    /// Get the module type.
-    /// @return "ListFormat".
-    std::string get_type() const;
+    /// Get module.
+    const ListFormatModule& get_module() const { return m_module; }
+
+    /// Add directive handlers.
+    virtual void add_directives(Directives& dirs, const char* parser);
 
     /// Write out list to the list file.
     /// This function may call all read-only yasm:: functions as necessary.
@@ -62,6 +67,46 @@ public:
     /// @param linemap      line mapping repository
     /// @param arch         architecture
     virtual void output(std::ostream& os, Linemap& linemap, Arch& arch) = 0;
+
+private:
+    ListFormat(const ListFormat&);                  // not implemented
+    const ListFormat& operator=(const ListFormat&); // not implemented
+
+    const ListFormatModule& m_module;
+};
+
+/// List format module interface.
+class YASM_LIB_EXPORT ListFormatModule : public Module
+{
+public:
+    enum { module_type = 3 };
+
+    /// Destructor.
+    virtual ~ListFormatModule();
+
+    /// Get the module type.
+    /// @return "ListFormat".
+    const char* get_type() const;
+
+    /// ListFormat factory function.
+    /// @return New list format.
+    virtual std::auto_ptr<ListFormat> create() const = 0;
+};
+
+template <typename ListFormatImpl>
+class ListFormatModuleImpl : public ListFormatModule
+{
+public:
+    ListFormatModuleImpl() {}
+    ~ListFormatModuleImpl() {}
+
+    const char* get_name() const { return ListFormatImpl::get_name(); }
+    const char* get_keyword() const { return ListFormatImpl::get_keyword(); }
+
+    std::auto_ptr<ListFormat> create() const
+    {
+        return std::auto_ptr<ListFormat>(new ListFormatImpl(*this));
+    }
 };
 
 } // namespace yasm

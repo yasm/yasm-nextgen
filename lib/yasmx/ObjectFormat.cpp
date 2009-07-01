@@ -34,37 +34,13 @@
 namespace yasm
 {
 
-ObjectFormat::ObjectFormat()
-    : m_object(0)
-{
-}
-
 ObjectFormat::~ObjectFormat()
 {
 }
 
-std::string
-ObjectFormat::get_type() const
+void
+ObjectFormat::add_directives(Directives& dirs, const char* parser)
 {
-    return "ObjectFormat";
-}
-
-bool
-ObjectFormat::set_object(Object* object)
-{
-    if (!ok_object(object))
-        return false;
-    m_object = object;
-    initialize();
-    return true;
-}
-
-bool
-ObjectFormat::taste(std::istream& is,
-                    /*@out@*/ std::string* arch_keyword,
-                    /*@out@*/ std::string* machine)
-{
-    return false;
 }
 
 void
@@ -73,20 +49,19 @@ ObjectFormat::read(std::istream& is)
     throw NotImplementedError(N_("object format does not support reading"));
 }
 
-bool
-ObjectFormat::ok_object(Object* object) const
-{
-    return true;
-}
-
 void
-ObjectFormat::init_symbols(const std::string& parser)
+ObjectFormat::init_symbols(const char* parser)
 {
 }
 
-void
-ObjectFormat::initialize()
+ObjectFormatModule::~ObjectFormatModule()
 {
+}
+
+const char*
+ObjectFormatModule::get_type() const
+{
+    return "ObjectFormat";
 }
 
 } // namespace yasm

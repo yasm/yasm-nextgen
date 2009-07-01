@@ -56,8 +56,7 @@ struct ParserMixin
                     Preprocessor& preproc,
                     bool save_input,
                     Directives& dirs,
-                    Linemap& linemap,
-                    Errwarns& errwarns);
+                    Linemap& linemap);
     unsigned long get_cur_line() const { return m_linemap->get_current(); }
 
     int get_next_token();
@@ -78,7 +77,6 @@ struct ParserMixin
     Preprocessor* m_preproc;
     Directives* m_dirs;
     Linemap* m_linemap;
-    Errwarns* m_errwarns;
 
     Arch* m_arch;
     unsigned int m_wordsize;
@@ -103,16 +101,14 @@ ParserMixin<T, S, C>::init_mixin(Object& object,
                                  Preprocessor& preproc,
                                  bool save_input,
                                  Directives& dirs,
-                                 Linemap& linemap,
-                                 Errwarns& errwarns)
+                                 Linemap& linemap)
 {
     m_object = &object;
     m_preproc = &preproc;
     m_dirs = &dirs;
     m_linemap = &linemap;
-    m_errwarns = &errwarns;
     m_arch = object.get_arch();
-    m_wordsize = m_arch->get_wordsize();
+    m_wordsize = m_arch->get_module().get_wordsize();
 
     m_save_input = save_input;
     m_token = T::NONE;

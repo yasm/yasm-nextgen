@@ -52,29 +52,17 @@ public:
         MACHINE_AMD64 = 0x8664
     };
 
-    CoffObject(bool set_vma = true,
+    CoffObject(const ObjectFormatModule& module,
+               Object& object,
+               bool set_vma = true,
                bool win32 = false,
                bool win64 = false);
     virtual ~CoffObject();
 
-    virtual std::string get_name() const;
-    virtual std::string get_keyword() const;
-    virtual void add_directives(Directives& dirs, const std::string& parser);
+    virtual void add_directives(Directives& dirs, const char* parser);
 
-    virtual bool ok_object(Object* object) const;
-    virtual void initialize();
-
-    virtual std::string get_extension() const;
-    virtual unsigned int get_default_x86_mode_bits() const;
-
-    virtual std::vector<std::string> get_dbgfmt_keywords() const;
-    virtual std::string get_default_dbgfmt_keyword() const;
-
-    virtual void init_symbols(const std::string& parser);
+    virtual void init_symbols(const char* parser);
 #if 0
-    virtual bool taste(std::istream& is,
-                       /*@out@*/ std::string* arch_keyword,
-                       /*@out@*/ std::string* machine);
     virtual void read(std::istream& is);
 #endif
     virtual void output(std::ostream& os, bool all_syms, Errwarns& errwarns);
@@ -87,6 +75,18 @@ public:
 
     bool is_win32() const { return m_win32; }
     bool is_win64() const { return m_win64; }
+
+    static const char* get_name() { return "COFF (DJGPP)"; }
+    static const char* get_keyword() { return "coff"; }
+    static const char* get_extension() { return ".o"; }
+    static unsigned int get_default_x86_mode_bits() { return 32; }
+    static const char* get_default_dbgfmt_keyword() { return "null"; }
+    static std::vector<const char*> get_dbgfmt_keywords();
+    static bool ok_object(Object& object);
+    static bool taste(std::istream& is,
+                      /*@out@*/ std::string* arch_keyword,
+                      /*@out@*/ std::string* machine)
+    { return false; }
 
 protected:
     /// Initialize section (and COFF data) based on section name.

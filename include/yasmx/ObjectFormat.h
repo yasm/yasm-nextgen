@@ -30,6 +30,7 @@
 /// @endlicense
 ///
 #include <iosfwd>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -41,70 +42,36 @@
 namespace yasm
 {
 
+class Directives;
 class Errwarns;
 class NameValues;
 class Object;
+class ObjectFormatModule;
 class Section;
 
 /// Object format interface.
-class YASM_LIB_EXPORT ObjectFormat : public Module
+class YASM_LIB_EXPORT ObjectFormat
 {
 public:
-    enum { module_type = 4 };
-
     /// Constructor.
-    /// To make object format truly usable, set_object()
-    /// needs to be called.
-    ObjectFormat();
+    ObjectFormat(const ObjectFormatModule& module, Object& object)
+        : m_module(module), m_object(object)
+    {}
 
     /// Destructor.
     virtual ~ObjectFormat();
 
-    /// Get the module type.
-    /// @return "ObjectFormat".
-    std::string get_type() const;
+    /// Get module.
+    const ObjectFormatModule& get_module() const { return m_module; }
 
-    /// Set associated object.
-    /// @param object       object
-    /// @return False on error (object format cannot handle that object).
-    /// @note The default implementation accepts all objects.
-    bool set_object(Object* object);
-
-    /// Get the default file extension (including the '.').
-    /// @return File extension.
-    virtual std::string get_extension() const = 0;
-
-    /// Get default (starting) x86 BITS setting.  This only appies to the
-    /// x86 architecture; other architectures ignore this setting.
-    /// @return Default x86 BITS setting.
-    virtual unsigned int get_default_x86_mode_bits() const = 0;
-
-    /// Get list of debug format (DebugFormat) keywords that are
-    /// valid to use with this object format.  The null debug format
-    /// ("null") should always be in this list so it's possible to
-    /// have no debug output.
-    /// @return Vector of debug format keywords.
-    virtual std::vector<std::string> get_dbgfmt_keywords() const = 0;
-
-    /// Get default debug format keyword.
-    /// @return Default debug format keyword.
-    virtual std::string get_default_dbgfmt_keyword() const = 0;
+    /// Add directive handlers.
+    virtual void add_directives(Directives& dirs, const char* parser);
 
     /// Initialize symbols (default and special symbols).
-    /// Called after set_object() but prior to assembly process.
+    /// Called prior to assembly process.
     /// Default implementation does nothing.
     /// @param parser       parser keyword
-    virtual void init_symbols(const std::string& parser);
-
-    /// Taste object file to see if it is readable by this object format.
-    /// The default implementation always returns false.
-    /// @param is           input object file
-    /// @param arch_keyword architecture keyword (output)
-    /// @param machine      machine (output)
-    /// @return True if object file readable, false otherwise.
-    virtual bool taste(std::istream& is,
-                       /*@out@*/ std::string* arch_keyword,
-                       /*@out@*/ std::string* machine);
+    virtual void init_symbols(const char* parser);
 
     /// Read object file into associated object.
     /// May create sections, relocations, and bytecodes, as well as modify
@@ -137,18 +104,100 @@ public:
     virtual Section* append_section(const std::string& name,
                                     unsigned long line) = 0;
 
+private:
+    ObjectFormat(const ObjectFormat&);                  // not implemented
+    const ObjectFormat& operator=(const ObjectFormat&); // not implemented
+
+    const ObjectFormatModule& m_module;
+
 protected:
+    Object& m_object;
+};
+
+/// Object format module interface.
+class YASM_LIB_EXPORT ObjectFormatModule : public Module
+{
+public:
+    enum { module_type = 4 };
+
+    /// Destructor.
+    virtual ~ObjectFormatModule();
+
+    /// Get the module type.
+    /// @return "ObjectFormat".
+    const char* get_type() const;
+
+    /// Get the default file extension (including the '.').
+    /// @return File extension.
+    virtual const char* get_extension() const = 0;
+
+    /// Get default (starting) x86 BITS setting.  This only appies to the
+    /// x86 architecture; other architectures ignore this setting.
+    /// @return Default x86 BITS setting.
+    virtual unsigned int get_default_x86_mode_bits() const = 0;
+
+    /// Get list of debug format (DebugFormat) keywords that are
+    /// valid to use with this object format.  The null debug format
+    /// ("null") should always be in this list so it's possible to
+    /// have no debug output.
+    /// @return Vector of debug format keywords.
+    virtual std::vector<const char*> get_dbgfmt_keywords() const = 0;
+
+    /// Get default debug format keyword.
+    /// @return Default debug format keyword.
+    virtual const char* get_default_dbgfmt_keyword() const = 0;
+
     /// Determine if object is acceptable to object format.
     /// @param object       object
     /// @return False on error (object format cannot handle the object).
-    /// @note The default implementation accepts all objects.
-    virtual bool ok_object(Object* object) const;
+    virtual bool ok_object(Object& object) const = 0;
 
-    /// Initialize object format.  Called by set_object() after m_object
-    /// is initialized.  Default implementation does nothing.
-    virtual void initialize();
+    /// Taste object file to see if it is readable by this object format.
+    /// The default implementation always returns false.
+    /// @param is           input object file
+    /// @param arch_keyword architecture keyword (output)
+    /// @param machine      machine (output)
+    /// @return True if object file readable, false otherwise.
+    virtual bool taste(std::istream& is,
+                       /*@out@*/ std::string* arch_keyword,
+                       /*@out@*/ std::string* machine) const = 0;
 
-    Object* m_object;
+    /// ObjectFormat factory function.
+    /// @return New object format.
+    virtual std::auto_ptr<ObjectFormat> create(Object& object) const = 0;
+};
+
+template <typename ObjectFormatImpl>
+class ObjectFormatModuleImpl : public ObjectFormatModule
+{
+public:
+    ObjectFormatModuleImpl() {}
+    ~ObjectFormatModuleImpl() {}
+
+    const char* get_name() const { return ObjectFormatImpl::get_name(); }
+    const char* get_keyword() const { return ObjectFormatImpl::get_keyword(); }
+
+    const char* get_extension() const
+    { return ObjectFormatImpl::get_extension(); }
+    unsigned int get_default_x86_mode_bits() const
+    { return ObjectFormatImpl::get_default_x86_mode_bits(); }
+
+    std::vector<const char*> get_dbgfmt_keywords() const
+    { return ObjectFormatImpl::get_dbgfmt_keywords(); }
+    const char* get_default_dbgfmt_keyword() const
+    { return ObjectFormatImpl::get_default_dbgfmt_keyword(); }
+
+    bool ok_object(Object& object) const
+    { return ObjectFormatImpl::ok_object(object); }
+    bool taste(std::istream& is,
+               /*@out@*/ std::string* arch_keyword,
+               /*@out@*/ std::string* machine) const
+    { return ObjectFormatImpl::taste(is, arch_keyword, machine); }
+
+    std::auto_ptr<ObjectFormat> create(Object& object) const
+    {
+        return std::auto_ptr<ObjectFormat>(new ObjectFormatImpl(*this, object));
+    }
 };
 
 } // namespace yasm

@@ -37,8 +37,17 @@ Parser::~Parser()
 {
 }
 
-std::string
-Parser::get_type() const
+void
+Parser::add_directives(Directives& dirs, const char* parser)
+{
+}
+
+ParserModule::~ParserModule()
+{
+}
+
+const char*
+ParserModule::get_type() const
 {
     return "Parser";
 }

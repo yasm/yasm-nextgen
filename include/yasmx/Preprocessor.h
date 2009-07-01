@@ -30,6 +30,7 @@
 /// @endlicense
 ///
 #include <iosfwd>
+#include <memory>
 #include <string>
 
 #include "yasmx/Config/export.h"
@@ -40,34 +41,33 @@
 namespace yasm
 {
 
+class Directives;
 class Errwarns;
 class Linemap;
+class PreprocessorModule;
 
 /// Preprocesor interface.
-/// To make preprocessor usable, init() needs to be called.
-class YASM_LIB_EXPORT Preprocessor : public Module
+class YASM_LIB_EXPORT Preprocessor
 {
 public:
-    enum { module_type = 6 };
+    /// Constructor.
+    Preprocessor(const PreprocessorModule& module, Errwarns& errwarns)
+        : m_module(module), m_errwarns(errwarns)
+    {}
 
     /// Destructor.
     virtual ~Preprocessor();
 
-    /// Get the module type.
-    /// @return "Preprocessor".
-    std::string get_type() const;
+    /// Get module.
+    const PreprocessorModule& get_module() const { return m_module; }
 
-    /// Initialize preprocessor.
-    /// The preprocessor needs access to the object format to find out
-    /// any object format specific macros.
-    /// @param is           initial starting stream
-    /// @param in_filename  initial starting file filename
-    /// @param linemap      line mapping repository
-    /// @param errwarns     error/warning set
-    /// @return New preprocessor.
-    /// @note Errors/warnings are stored into errwarns.
-    virtual void init(std::istream& is, const std::string& in_filename,
-                      Linemap& linemap, Errwarns& errwarns) = 0;
+    /// Add directive handlers.
+    virtual void add_directives(Directives& dirs, const char* parser);
+
+    /// Initialize preprocessor.  Must be called prior to first get_line() call.
+    virtual void initialize(std::istream& is,
+                            const std::string& in_filename,
+                            Linemap& linemap) = 0;
 
     /// Gets a line of preprocessed source code.
     /// @param line     destination string for line of preprocessed source
@@ -93,6 +93,57 @@ public:
     /// Define a builtin macro, preprocessed before the "standard" macros.
     /// @param macronameval "name=value" string
     virtual void define_builtin(const std::string& macronameval) = 0;
+
+private:
+    Preprocessor(const Preprocessor&);                  // not implemented
+    const Preprocessor& operator=(const Preprocessor&); // not implemented
+
+    const PreprocessorModule& m_module;
+
+protected:
+    Errwarns& m_errwarns;
+};
+
+/// Preprocessor module interface.
+class YASM_LIB_EXPORT PreprocessorModule : public Module
+{
+public:
+    enum { module_type = 6 };
+
+    /// Destructor.
+    virtual ~PreprocessorModule();
+
+    /// Get the module type.
+    /// @return "Preprocessor".
+    const char* get_type() const;
+
+    /// Preprocessor factory function.
+    /// The preprocessor needs access to the object format to find out
+    /// any object format specific macros.
+    /// @param is           initial starting stream
+    /// @param in_filename  initial starting file filename
+    /// @param linemap      line mapping repository
+    /// @param errwarns     error/warning set
+    /// @return New preprocessor.
+    /// @note Errors/warnings are stored into errwarns.
+    virtual std::auto_ptr<Preprocessor> create(Errwarns& errwarns) const = 0;
+};
+
+template <typename PreprocessorImpl>
+class PreprocessorModuleImpl : public PreprocessorModule
+{
+public:
+    PreprocessorModuleImpl() {}
+    ~PreprocessorModuleImpl() {}
+
+    const char* get_name() const { return PreprocessorImpl::get_name(); }
+    const char* get_keyword() const { return PreprocessorImpl::get_keyword(); }
+
+    std::auto_ptr<Preprocessor> create(Errwarns& errwarns) const
+    {
+        return std::auto_ptr<Preprocessor>
+            (new PreprocessorImpl(*this, errwarns));
+    }
 };
 
 } // namespace yasm

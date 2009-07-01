@@ -70,8 +70,17 @@ Arch::~Arch()
 {
 }
 
-std::string
-Arch::get_type() const
+void
+Arch::add_directives(Directives& dirs, const char* parser)
+{
+}
+
+ArchModule::~ArchModule()
+{
+}
+
+const char*
+ArchModule::get_type() const
 {
     return "Arch";
 }

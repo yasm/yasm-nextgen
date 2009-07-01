@@ -848,7 +848,7 @@ GasParser::parse_instr()
         case Arch::InsnPrefix::INSN:
         {
             // Propagate errors in case we got a warning from the arch
-            m_errwarns->propagate(get_cur_line());
+            m_errwarns.propagate(get_cur_line());
 
             get_next_token();   // ID
 
@@ -870,7 +870,7 @@ GasParser::parse_instr()
         case Arch::InsnPrefix::PREFIX:
         {
             // Propagate errors in case we got a warning from the arch
-            m_errwarns->propagate(get_cur_line());
+            m_errwarns.propagate(get_cur_line());
 
             get_next_token();   // ID
 
@@ -1413,11 +1413,11 @@ GasParser::do_parse()
 
             if (m_save_input)
                 m_linemap->add_source(loc, line);
-            m_errwarns->propagate(cur_line);
+            m_errwarns.propagate(cur_line);
         }
         catch (Error& err)
         {
-            m_errwarns->propagate(cur_line, err);
+            m_errwarns.propagate(cur_line, err);
             demand_eol_nothrow();
             m_state = INITIAL;
         }
