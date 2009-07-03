@@ -167,7 +167,7 @@ Fixup(bool xform_rip_plus, std::auto_ptr<Expr> e)
 
     const X86Register* reg =
         static_cast<const X86Register*>(terms[regterm].getRegister());
-    if (reg->getType() != X86Register::RIP)
+    if (reg->isNot(X86Register::RIP))
         return e;
 
     // replace register with 0
@@ -303,7 +303,7 @@ X86ExprCheckEAGetReg16(ExprTerm& term, int* regnum, int* bx, int* si,
     assert(reg != 0);
 
     // don't allow 32-bit registers
-    if (reg->getType() != X86Register::REG16)
+    if (reg->isNot(X86Register::REG16))
         return 0;
 
     // & 7 for sanity check
