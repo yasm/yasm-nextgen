@@ -73,6 +73,9 @@ public:
     Type getType() const { return m_type; }
     unsigned int getNum() const { return m_num; }
 
+    bool is(Type type) const { return m_type == type; }
+    bool isNot(Type type) const { return m_type != type; }
+
 private:
     // Register type.
     Type m_type;
@@ -107,6 +110,9 @@ public:
     Type getType() const { return m_type; }
     unsigned int getNum() const { return static_cast<unsigned int>(m_type); }
     unsigned char getPrefix() const { return m_prefix; }
+
+    bool is(Type type) const { return m_type == type; }
+    bool isNot(Type type) const { return m_type != type; }
 
 private:
     Type m_type;

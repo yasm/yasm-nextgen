@@ -55,6 +55,9 @@ public:
     Type getType() const { return m_type; }
     unsigned char getValue() const { return m_value; }
 
+    bool is(Type type) const { return m_type == type; }
+    bool isNot(Type type) const { return m_type != type; }
+
 private:
     Type m_type;
     unsigned char m_value;

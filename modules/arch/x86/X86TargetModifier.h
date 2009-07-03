@@ -54,6 +54,9 @@ public:
 
     void Put(std::ostream& os) const;
 
+    bool is(Type type) const { return m_type == type; }
+    bool isNot(Type type) const { return m_type != type; }
+
 private:
     Type m_type;
 };
