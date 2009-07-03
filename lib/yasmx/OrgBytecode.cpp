@@ -47,17 +47,17 @@ public:
     ~OrgBytecode();
 
     /// Prints the implementation-specific data (for debugging purposes).
-    void put(marg_ostream& os) const;
+    void Put(marg_ostream& os) const;
 
     /// Finalizes the bytecode after parsing.
-    void finalize(Bytecode& bc);
+    void Finalize(Bytecode& bc);
 
     /// Calculates the minimum size of a bytecode.
-    unsigned long calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
+    unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
 
     /// Recalculates the bytecode's length based on an expanded span
     /// length.
-    bool expand(Bytecode& bc,
+    bool Expand(Bytecode& bc,
                 unsigned long& len,
                 int span,
                 long old_val,
@@ -66,9 +66,9 @@ public:
                 /*@out@*/ long* pos_thres);
 
     /// Convert a bytecode into its byte representation.
-    void output(Bytecode& bc, BytecodeOutput& bc_out);
+    void Output(Bytecode& bc, BytecodeOutput& bc_out);
 
-    SpecialType get_special() const;
+    SpecialType getSpecial() const;
 
     OrgBytecode* clone() const;
 
@@ -89,7 +89,7 @@ OrgBytecode::~OrgBytecode()
 }
 
 void
-OrgBytecode::put(marg_ostream& os) const
+OrgBytecode::Put(marg_ostream& os) const
 {
     os << "_Org_\n";
     os << "Start=" << m_start << '\n';
@@ -97,25 +97,25 @@ OrgBytecode::put(marg_ostream& os) const
 }
 
 void
-OrgBytecode::finalize(Bytecode& bc)
+OrgBytecode::Finalize(Bytecode& bc)
 {
 }
 
 unsigned long
-OrgBytecode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+OrgBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 {
     unsigned long len = 0;
     long neg_thres = 0;
     long pos_thres = m_start;
 
-    expand(bc, len, 0, 0, static_cast<long>(bc.tail_offset()), &neg_thres,
+    Expand(bc, len, 0, 0, static_cast<long>(bc.getTailOffset()), &neg_thres,
            &pos_thres);
 
     return len;
 }
 
 bool
-OrgBytecode::expand(Bytecode& bc,
+OrgBytecode::Expand(Bytecode& bc,
                     unsigned long& len,
                     int span,
                     long old_val,
@@ -133,20 +133,20 @@ OrgBytecode::expand(Bytecode& bc,
 }
 
 void
-OrgBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
+OrgBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     // Sanity check for overrun
-    if (bc.tail_offset() > m_start)
+    if (bc.getTailOffset() > m_start)
         throw Error(N_("ORG overlap with already existing data"));
-    unsigned long len = m_start - bc.tail_offset();
-    Bytes& bytes = bc_out.get_scratch();
+    unsigned long len = m_start - bc.getTailOffset();
+    Bytes& bytes = bc_out.getScratch();
     // XXX: handle more than 8 bit?
     bytes.insert(bytes.end(), len, static_cast<unsigned char>(m_fill));
-    bc_out.output(bytes);
+    bc_out.Output(bytes);
 }
 
 OrgBytecode::SpecialType
-OrgBytecode::get_special() const
+OrgBytecode::getSpecial() const
 {
     return SPECIAL_OFFSET;
 }
@@ -163,14 +163,14 @@ namespace yasm
 {
 
 void
-append_org(BytecodeContainer& container,
-           unsigned long start,
-           unsigned long fill,
-           unsigned long line)
+AppendOrg(BytecodeContainer& container,
+          unsigned long start,
+          unsigned long fill,
+          unsigned long line)
 {
-    Bytecode& bc = container.fresh_bytecode();
-    bc.transform(Bytecode::Contents::Ptr(new OrgBytecode(start, fill)));
-    bc.set_line(line);
+    Bytecode& bc = container.FreshBytecode();
+    bc.Transform(Bytecode::Contents::Ptr(new OrgBytecode(start, fill)));
+    bc.setLine(line);
 }
 
 } // namespace yasm

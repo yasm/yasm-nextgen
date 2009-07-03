@@ -49,21 +49,21 @@ enum X86RexBitPos
 // TypeError if impossible to fit reg into REX.  Input parameter rexbit
 // indicates bit of REX to use if REX is needed.  Will not modify REX if not
 // in 64-bit mode or if it wasn't needed to express reg.
-void set_rex_from_reg(unsigned char *rex,
-                      unsigned char *low3,
-                      X86Register::Type reg_type,
-                      unsigned int reg_num,
-                      unsigned int bits,
-                      X86RexBitPos rexbit);
+void setRexFromReg(unsigned char *rex,
+                   unsigned char *low3,
+                   X86Register::Type reg_type,
+                   unsigned int reg_num,
+                   unsigned int bits,
+                   X86RexBitPos rexbit);
 
 inline void
-set_rex_from_reg(unsigned char *rex,
-                 unsigned char *low3,
-                 const X86Register* reg,
-                 unsigned int bits,
-                 X86RexBitPos rexbit)
+setRexFromReg(unsigned char *rex,
+              unsigned char *low3,
+              const X86Register* reg,
+              unsigned int bits,
+              X86RexBitPos rexbit)
 {
-    set_rex_from_reg(rex, low3, reg->type(), reg->get_num(), bits, rexbit);
+    setRexFromReg(rex, low3, reg->getType(), reg->getNum(), bits, rexbit);
 }
 
 // Effective address type
@@ -99,30 +99,30 @@ public:
     X86EffAddr(bool xform_rip_plus, std::auto_ptr<Expr> e);
 
     /// Register setter.
-    void set_reg(const X86Register* reg, unsigned char* rex, unsigned int bits);
+    void setReg(const X86Register* reg, unsigned char* rex, unsigned int bits);
 
     /// Immediate setter.
-    void set_imm(std::auto_ptr<Expr> imm, unsigned int im_len);
+    void setImm(std::auto_ptr<Expr> imm, unsigned int im_len);
 
     /// Finalize the EA displacement and init the spare field.
-    void init(unsigned int spare);
+    void Init(unsigned int spare);
 
     /// Make the EA only a displacement.
-    void set_disponly();
+    void setDispOnly();
 
-    void put(marg_ostream& os) const;
+    void Put(marg_ostream& os) const;
     X86EffAddr* clone() const;
 
     // Check an effective address.  Returns true if EA was successfully
     // determined, false if indeterminate EA.
-    bool check(unsigned char* addrsize,
+    bool Check(unsigned char* addrsize,
                unsigned int bits,
                bool address16_op,
                unsigned char* rex,
                bool* ip_rel);
 
     /// Finalize the effective address.
-    void finalize();
+    void Finalize();
 
 private:
     /// Copy constructor.
@@ -135,13 +135,13 @@ private:
     //  noreg=true if the *ModRM byte* has no registers used.
     //  dispreq=true if a displacement value is *required* (even if =0).
     // Throws error if not successfully calculated.
-    void calc_displen(unsigned int wordsize, bool noreg, bool dispreq);
+    void CalcDispLen(unsigned int wordsize, bool noreg, bool dispreq);
 
-    bool check_3264(unsigned int addrsize,
-                    unsigned int bits,
-                    unsigned char* rex,
-                    bool* ip_rel);
-    bool check_16(unsigned int bits, bool address16_op, bool* ip_rel);
+    bool Check3264(unsigned int addrsize,
+                   unsigned int bits,
+                   unsigned char* rex,
+                   bool* ip_rel);
+    bool Check16(unsigned int bits, bool address16_op, bool* ip_rel);
 };
 
 }}} // namespace yasm::arch::x86

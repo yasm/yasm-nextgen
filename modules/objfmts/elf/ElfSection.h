@@ -69,72 +69,72 @@ public:
 
     ~ElfSection();
 
-    void put(marg_ostream& os) const;
+    void Put(marg_ostream& os) const;
 
-    unsigned long write(std::ostream& os, Bytes& scratch) const;
+    unsigned long Write(std::ostream& os, Bytes& scratch) const;
 
-    std::auto_ptr<Section> create_section(const StringTable& shstrtab) const;
-    void load_section_data(Section& sect, std::istream& is) const;
+    std::auto_ptr<Section> CreateSection(const StringTable& shstrtab) const;
+    void LoadSectionData(Section& sect, std::istream& is) const;
 
-    ElfSectionType get_type() const { return m_type; }
+    ElfSectionType getType() const { return m_type; }
 
-    void set_name(ElfStringIndex index) { m_name_index = index; }
-    ElfStringIndex get_name() const { return m_name_index; }
+    void setName(ElfStringIndex index) { m_name_index = index; }
+    ElfStringIndex getName() const { return m_name_index; }
 
-    void set_typeflags(ElfSectionType type, ElfSectionFlags flags)
+    void setTypeFlags(ElfSectionType type, ElfSectionFlags flags)
     {
         m_type = type;
         m_flags = flags;
     }
-    ElfSectionFlags get_flags() const { return m_flags; }
+    ElfSectionFlags getFlags() const { return m_flags; }
 
-    bool is_empty() const { return m_size.is_zero(); }
+    bool isEmpty() const { return m_size.isZero(); }
 
-    SymbolRef get_sym() const { return m_sym; }
+    SymbolRef getSymbol() const { return m_sym; }
 
-    unsigned long get_align() const { return m_align; }
-    void set_align(unsigned long align) { m_align = align; }
+    unsigned long getAlign() const { return m_align; }
+    void setAlign(unsigned long align) { m_align = align; }
 
-    ElfSectionIndex get_index() { return m_index; }
+    ElfSectionIndex getIndex() { return m_index; }
 
-    void set_info(ElfSectionInfo info) { m_info = info; }
-    ElfSectionInfo get_info() const { return m_info; }
+    void setInfo(ElfSectionInfo info) { m_info = info; }
+    ElfSectionInfo getInfo() const { return m_info; }
 
-    void set_index(ElfSectionIndex sectidx) { m_index = sectidx; }
+    void setIndex(ElfSectionIndex sectidx) { m_index = sectidx; }
 
-    void set_link(ElfSectionIndex link) { m_link = link; }
-    ElfSectionIndex get_link() const { return m_link; }
+    void setLink(ElfSectionIndex link) { m_link = link; }
+    ElfSectionIndex getLink() const { return m_link; }
 
-    void set_rel_index(ElfSectionIndex sectidx) { m_rel_index = sectidx; }
-    void set_rel_name(ElfStringIndex nameidx) { m_rel_name_index = nameidx; }
+    void setRelIndex(ElfSectionIndex sectidx) { m_rel_index = sectidx; }
+    void setRelName(ElfStringIndex nameidx) { m_rel_name_index = nameidx; }
 
-    void set_entsize(ElfSize size) { m_entsize = size; }
-    ElfSize get_entsize() const { return m_entsize; }
+    void setEntSize(ElfSize size) { m_entsize = size; }
+    ElfSize getEntSize() const { return m_entsize; }
 
-    void set_sym(SymbolRef sym) { m_sym = sym; }
+    void setSymbol(SymbolRef sym) { m_sym = sym; }
 
-    void add_size(const IntNum& size) { m_size += size; }
-    void set_size(const IntNum& size) { m_size = size; }
-    IntNum get_size() const { return m_size; }
+    void AddSize(const IntNum& size) { m_size += size; }
+    void setSize(const IntNum& size) { m_size = size; }
+    IntNum getSize() const { return m_size; }
 
-    unsigned long write_rel(std::ostream& os,
-                            ElfSectionIndex symtab,
-                            Section& sect,
-                            Bytes& scratch);
-    unsigned long write_relocs(std::ostream& os,
-                               Section& sect,
-                               Errwarns& errwarns,
-                               Bytes& scratch,
-                               const ElfMachine& machine);
-    bool read_relocs(std::istream& is,
-                     Section& sect,
-                     unsigned long size,
-                     const ElfMachine& machine,
-                     const ElfSymtab& symtab,
-                     bool rela) const;
+    unsigned long WriteRel(std::ostream& os,
+                           ElfSectionIndex symtab,
+                           Section& sect,
+                           Bytes& scratch);
+    unsigned long WriteRelocs(std::ostream& os,
+                              Section& sect,
+                              Errwarns& errwarns,
+                              Bytes& scratch,
+                              const ElfMachine& machine);
+    bool ReadRelocs(std::istream& is,
+                    Section& sect,
+                    unsigned long size,
+                    const ElfMachine& machine,
+                    const ElfSymtab& symtab,
+                    bool rela) const;
 
-    unsigned long set_file_offset(unsigned long pos);
-    unsigned long get_file_offset() const { return m_offset; }
+    unsigned long setFileOffset(unsigned long pos);
+    unsigned long getFileOffset() const { return m_offset; }
 
 private:
     const ElfConfig&    m_config;
@@ -159,9 +159,9 @@ private:
 };
 
 inline ElfSection*
-get_elf(Section& sym)
+getElf(Section& sym)
 {
-    return static_cast<ElfSection*>(sym.get_assoc_data(ElfSection::key));
+    return static_cast<ElfSection*>(sym.getAssocData(ElfSection::key));
 }
 
 // Note ESD1:

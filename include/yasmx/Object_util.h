@@ -51,12 +51,12 @@ class ObjectFormat;
 /// @param namevals     Directive name/values
 /// @param line         Line number
 YASM_LIB_EXPORT
-void dir_ident_common(ObjectFormat& objfmt,
-                      const std::string& sectname,
-                      Object& object,
-                      NameValues& namevals,
-                      NameValues& objext_namevals,
-                      unsigned long line);
+void DirIdentCommon(ObjectFormat& objfmt,
+                    const std::string& sectname,
+                    Object& object,
+                    NameValues& namevals,
+                    NameValues& objext_namevals,
+                    unsigned long line);
 
 } // namespace yasm
 

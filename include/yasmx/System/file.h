@@ -46,7 +46,7 @@ namespace yasm
 /// @param str          C-style string
 /// @return Unescaped string
 YASM_LIB_EXPORT
-std::string unescape(const std::string& str);
+std::string Unescape(const std::string& str);
 
 /// Split a UNIX pathname into head (directory) and tail (base filename)
 /// portions.
@@ -54,7 +54,7 @@ std::string unescape(const std::string& str);
 /// @param tail     (returned) base filename
 /// @return Head (directory).
 YASM_LIB_EXPORT
-std::string splitpath_unix(const std::string& path,
+std::string SplitPath_unix(const std::string& path,
                            /*@out@*/ std::string& tail);
 
 /// Split a Windows pathname into head (directory) and tail (base filename)
@@ -63,7 +63,7 @@ std::string splitpath_unix(const std::string& path,
 /// @param tail     (returned) base filename
 /// @return Head (directory).
 YASM_LIB_EXPORT
-std::string splitpath_win(const std::string& path,
+std::string SplitPath_win(const std::string& path,
                           /*@out@*/ std::string& tail);
 
 /// Split a pathname into head (directory) and tail (base filename) portions.
@@ -77,15 +77,15 @@ std::string splitpath_win(const std::string& path,
  defined (__DJGPP__) || defined (__OS2__) || defined (__CYGWIN__) || \
  defined (__CYGWIN32__)
 inline std::string
-splitpath(const std::string& path, /*@out@*/ std::string& tail)
+SplitPath(const std::string& path, /*@out@*/ std::string& tail)
 {
-    return splitpath_win(path, tail);
+    return SplitPath_win(path, tail);
 }
 # else
 inline std::string
-splitpath(const std::string& path, /*@out@*/ std::string& tail)
+SplitPath(const std::string& path, /*@out@*/ std::string& tail)
 {
-    return splitpath_unix(path, tail);
+    return SplitPath_unix(path, tail);
 }
 # endif
 #endif
@@ -93,19 +93,19 @@ splitpath(const std::string& path, /*@out@*/ std::string& tail)
 /// Get the current working directory.
 /// @return Current working directory pathname.
 YASM_LIB_EXPORT
-std::string get_curdir();
+std::string getCurDir();
 
 /// Convert a UNIX relative or absolute pathname into an absolute pathname.
 /// @param path     pathname
 /// @return Absolute version of path.
 YASM_LIB_EXPORT
-std::string abspath_unix(const std::string& path);
+std::string AbsPath_unix(const std::string& path);
 
 /// Convert a Windows relative or absolute pathname into an absolute pathname.
 /// @param path     pathname
 /// @return Absolute version of path.
 YASM_LIB_EXPORT
-std::string abspath_win(const std::string& path);
+std::string AbsPath_win(const std::string& path);
 
 /// Convert a relative or absolute pathname into an absolute pathname.
 /// Unless otherwise defined, defaults to abspath_unix().
@@ -117,15 +117,15 @@ std::string abspath_win(const std::string& path);
  defined (__DJGPP__) || defined (__OS2__) || defined (__CYGWIN__) || \
  defined (__CYGWIN32__)
 inline std::string
-abspath(const std::string& path)
+AbsPath(const std::string& path)
 {
-    return abspath_win(path);
+    return AbsPath_win(path);
 }
 # else
 inline std::string
-abspath(const std::string& path)
+AbsPath(const std::string& path)
 {
-    return abspath_unix(path);
+    return AbsPath_unix(path);
 }
 # endif
 #endif
@@ -137,7 +137,7 @@ abspath(const std::string& path)
 /// @param to       to pathname
 /// @return Combined path (newly allocated).
 YASM_LIB_EXPORT
-std::string combpath_unix(const std::string& from, const std::string& to);
+std::string CombPath_unix(const std::string& from, const std::string& to);
 
 /// Build a Windows pathname that is equivalent to accessing the "to" pathname
 /// when you're in the directory containing "from".  Result is relative if
@@ -146,7 +146,7 @@ std::string combpath_unix(const std::string& from, const std::string& to);
 /// @param to       to pathname
 /// @return Combined path (newly allocated).
 YASM_LIB_EXPORT
-std::string combpath_win(const std::string& from, const std::string& to);
+std::string CombPath_win(const std::string& from, const std::string& to);
 
 /// Build a pathname that is equivalent to accessing the "to" pathname
 /// when you're in the directory containing "from".  Result is relative if
@@ -161,15 +161,15 @@ std::string combpath_win(const std::string& from, const std::string& to);
  defined (__DJGPP__) || defined (__OS2__) || defined (__CYGWIN__) || \
  defined (__CYGWIN32__)
 inline std::string
-combpath(const std::string& from, const std::string& to)
+CombPath(const std::string& from, const std::string& to)
 {
-    return combpath_win(from, to);
+    return CombPath_win(from, to);
 }
 # else
 inline std::string
-combpath(const std::string& from, const std::string& to)
+CombPath(const std::string& from, const std::string& to)
 {
-    return combpath_unix(from, to);
+    return CombPath_unix(from, to);
 }
 # endif
 #endif
@@ -180,9 +180,9 @@ combpath(const std::string& from, const std::string& to)
 /// @param def      default output filename if orig == new.
 /// @return Filename with new extension, or default filename.
 YASM_LIB_EXPORT
-std::string replace_extension(const std::string& orig,
-                              const std::string& ext,
-                              const std::string& def);
+std::string ReplaceExtension(const std::string& orig,
+                             const std::string& ext,
+                             const std::string& def);
 
 } // namespace yasm
 

@@ -66,17 +66,16 @@ EffAddr::~EffAddr()
 }
 
 void
-EffAddr::set_segreg(const SegmentRegister* segreg)
+EffAddr::setSegReg(const SegmentRegister* segreg)
 {
     if (segreg != 0 && m_segreg != 0)
-        warn_set(WARN_GENERAL,
-                 N_("multiple segment overrides, using leftmost"));
+        setWarn(WARN_GENERAL, N_("multiple segment overrides, using leftmost"));
 
     m_segreg = segreg;
 }
 
 void
-EffAddr::put(marg_ostream& os) const
+EffAddr::Put(marg_ostream& os) const
 {
     os << "Disp:\n";
     ++os;

@@ -260,8 +260,8 @@ enum ElfSymbolVis
 #define ELF32_R_INFO(s, t)          (((s)<<8)+(unsigned char)(t & 0xff))
 
 #define ELF64_R_SYM(i) \
-    static_cast<ElfSymbolIndex>(((i) >> 32).get_uint())
-#define ELF64_R_TYPE(i)             ((i.get_uint()) & 0xffffffff)
+    static_cast<ElfSymbolIndex>(((i) >> 32).getUInt())
+#define ELF64_R_TYPE(i)             ((i.getUInt()) & 0xffffffff)
 #define ELF64_R_INFO(s, t)          ((IntNum(s)<<32) + ((t) & 0xffffffffUL))
 
 #define EHDR32_SIZE 52

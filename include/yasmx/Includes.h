@@ -63,14 +63,14 @@ public:
     /// @param from     filename doing the including
     /// @param mode     file open mode
     /// @return full pathname of included file (may be relative) [output]
-    std::string open(std::ifstream& ifs,
+    std::string Open(std::ifstream& ifs,
                      const std::string& iname,
                      const std::string& from,
                      std::ios_base::openmode mode = std::ios_base::in) const;
 
     /// Add an include path.
     /// @param path     pathname
-    void push_back(const std::string& path);
+    void AddPath(const std::string& path);
 
 private:
     typedef std::vector<std::string> Dirs;

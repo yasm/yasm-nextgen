@@ -67,7 +67,7 @@ namespace yasm
  * initialization constants.
  */
 void
-MD5::init()
+MD5::Init()
 {
         m_buf[0] = 0x67452301;
         m_buf[1] = 0xefcdab89;
@@ -83,7 +83,7 @@ MD5::init()
  * of bytes.
  */
 void
-MD5::update(const unsigned char* buf, unsigned long len)
+MD5::Update(const unsigned char* buf, unsigned long len)
 {
         unsigned long t;
 
@@ -108,7 +108,7 @@ MD5::update(const unsigned char* buf, unsigned long len)
                         return;
                 }
                 std::memcpy(p, buf, t);
-                transform (m_buf, m_in);
+                Transform (m_buf, m_in);
                 buf += t;
                 len -= t;
         }
@@ -117,7 +117,7 @@ MD5::update(const unsigned char* buf, unsigned long len)
 
         while (len >= 64) {
                 std::memcpy(m_in, buf, 64);
-                transform (m_buf, m_in);
+                Transform (m_buf, m_in);
                 buf += 64;
                 len -= 64;
         }
@@ -132,7 +132,7 @@ MD5::update(const unsigned char* buf, unsigned long len)
  * 1 0* (64-bit count of bits processed, MSB-first)
  */
 void
-MD5::final(unsigned char digest[16])
+MD5::Final(unsigned char digest[16])
 {
         unsigned count;
         unsigned char *p;
@@ -152,7 +152,7 @@ MD5::final(unsigned char digest[16])
         if (count < 8) {
                 /* Two lots of padding:  Pad the first block to 64 bytes */
                 std::memset(p, 0, count);
-                transform (m_buf, m_in);
+                Transform (m_buf, m_in);
 
                 /* Now fill the next block with 56 bytes */
                 std::memset(m_in, 0, 56);
@@ -165,7 +165,7 @@ MD5::final(unsigned char digest[16])
         putu32(m_bits[0], m_in + 56);
         putu32(m_bits[1], m_in + 60);
 
-        transform (m_buf, m_in);
+        Transform (m_buf, m_in);
         putu32(m_buf[0], digest);
         putu32(m_buf[1], digest + 4);
         putu32(m_buf[2], digest + 8);
@@ -197,7 +197,7 @@ MD5::final(unsigned char digest[16])
  * the data and converts bytes into longwords for this routine.
  */
 void
-MD5::transform(unsigned long buf[4], const unsigned char inraw[64])
+MD5::Transform(unsigned long buf[4], const unsigned char inraw[64])
 {
         register unsigned long a, b, c, d;
         unsigned long in[16];
@@ -309,9 +309,9 @@ main (int argc, char **argv)
         for (j = 1; j < argc; ++j)
         {
                 printf ("MD5 (\"%s\") = ", argv[j]);
-                context.init ();
-                context.update (argv[j], strlen (argv[j]));
-                context.final (checksum);
+                context.Init ();
+                context.Update (argv[j], strlen (argv[j]));
+                context.Final (checksum);
                 for (i = 0; i < 16; i++)
                 {
                         printf ("%02x", (unsigned int) checksum[i]);

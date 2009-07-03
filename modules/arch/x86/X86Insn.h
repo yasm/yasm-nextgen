@@ -59,41 +59,41 @@ public:
             bool default_rel);
     ~X86Insn();
 
-    void put(marg_ostream& os) const;
+    void Put(marg_ostream& os) const;
     X86Insn* clone() const;
 
 protected:
-    void do_append(BytecodeContainer& container, unsigned long line);
+    void DoAppend(BytecodeContainer& container, unsigned long line);
 
 private:
-    void do_append_jmpfar(BytecodeContainer& container,
-                          const X86InsnInfo& info,
-                          unsigned long line);
+    void DoAppendJmpFar(BytecodeContainer& container,
+                        const X86InsnInfo& info,
+                        unsigned long line);
 
-    bool match_jmp_info(const X86InsnInfo& info,
-                        unsigned int opersize,
-                        X86Opcode& shortop,
-                        X86Opcode& nearop) const;
-    void do_append_jmp(BytecodeContainer& container,
-                       const X86InsnInfo& jinfo,
-                       unsigned long line);
+    bool MatchJmpInfo(const X86InsnInfo& info,
+                      unsigned int opersize,
+                      X86Opcode& shortop,
+                      X86Opcode& nearop) const;
+    void DoAppendJmp(BytecodeContainer& container,
+                     const X86InsnInfo& jinfo,
+                     unsigned long line);
 
-    void do_append_general(BytecodeContainer& container,
-                           const X86InsnInfo& info,
-                           const unsigned int* size_lookup,
-                           unsigned long line);
+    void DoAppendGeneral(BytecodeContainer& container,
+                         const X86InsnInfo& info,
+                         const unsigned int* size_lookup,
+                         unsigned long line);
 
-    const X86InsnInfo* find_match(const unsigned int* size_lookup, int bypass)
+    const X86InsnInfo* FindMatch(const unsigned int* size_lookup, int bypass)
         const;
-    bool match_info(const X86InsnInfo& info,
-                    const unsigned int* size_lookup,
-                    int bypass) const;
-    bool match_operand(const Operand& op,
-                       const X86InfoOperand& info_op,
-                       const Operand& op0,
-                       const unsigned int* size_lookup,
-                       int bypass) const;
-    void match_error(const unsigned int* size_lookup) const;
+    bool MatchInfo(const X86InsnInfo& info,
+                   const unsigned int* size_lookup,
+                   int bypass) const;
+    bool MatchOperand(const Operand& op,
+                      const X86InfoOperand& info_op,
+                      const Operand& op0,
+                      const unsigned int* size_lookup,
+                      int bypass) const;
+    void MatchError(const unsigned int* size_lookup) const;
 
     // architecture
     const X86Arch& m_arch;

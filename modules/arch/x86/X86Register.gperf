@@ -51,7 +51,7 @@ X86Register::~X86Register()
 }
 
 unsigned int
-X86Register::get_size() const
+X86Register::getSize() const
 {
     switch (m_type)
     {
@@ -81,7 +81,7 @@ X86Register::get_size() const
 }
 
 void
-X86Register::put(std::ostream& os) const
+X86Register::Put(std::ostream& os) const
 {
     static const char *name8[] = {"al","cl","dl","bl","ah","ch","dh","bh"};
     static const char *name8x[] =
@@ -149,7 +149,7 @@ X86Register::put(std::ostream& os) const
 }
 
 const X86Register*
-X86RegisterGroup::get_reg(unsigned long regindex) const
+X86RegisterGroup::getReg(unsigned long regindex) const
 {
     if ((m_get_bits() != 64 && regindex >= 8) || regindex >= m_size)
         throw ValueError(N_("invalid register index"));
@@ -161,14 +161,14 @@ X86SegmentRegister::~X86SegmentRegister()
 }
 
 void
-X86SegmentRegister::put(std::ostream& os) const
+X86SegmentRegister::Put(std::ostream& os) const
 {
     static const char *name[] = {"es","cs","ss","ds","fs","gs"};
     os << name[m_type];
 }
 
 void
-X86TargetModifier::put(std::ostream& os) const
+X86TargetModifier::Put(std::ostream& os) const
 {
     switch (m_type) {
         case NEAR:
@@ -402,7 +402,7 @@ to,	TARGETMOD,	0,	X86TargetModifier::TO,		0
 %%
 
 Arch::RegTmod
-X86Arch::parse_check_regtmod(const char* id, size_t id_len) const
+X86Arch::ParseCheckRegTmod(const char* id, size_t id_len) const
 {
     if (id_len > 7)
         return RegTmod();
@@ -423,8 +423,8 @@ X86Arch::parse_check_regtmod(const char* id, size_t id_len) const
         case REG:
             if (bits != 0 && m_mode_bits != bits)
             {
-                warn_set(WARN_GENERAL,
-                    String::compose(N_("`%1' is a register in %2-bit mode"),
+                setWarn(WARN_GENERAL,
+                    String::Compose(N_("`%1' is a register in %2-bit mode"),
                                     id, bits));
                 return RegTmod();
             }
@@ -434,7 +434,7 @@ X86Arch::parse_check_regtmod(const char* id, size_t id_len) const
         case SEGREG:
             if (bits != 0 && m_mode_bits == bits)
             {
-                warn_set(WARN_GENERAL, String::compose(
+                setWarn(WARN_GENERAL, String::Compose(
                     N_("`%1' segment register ignored in %2-bit mode"),
                     id, bits));
             }

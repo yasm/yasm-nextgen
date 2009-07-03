@@ -49,14 +49,14 @@
 namespace
 {
 
-class NoCaseEquals
+class NocaseEquals
 {
     const std::string& s;
 public:
-    NoCaseEquals(const std::string& str) : s(str) {}
+    NocaseEquals(const std::string& str) : s(str) {}
     bool operator() (const char* oth)
     {
-        return String::nocase_equal(s, oth);
+        return String::NocaseEqual(s, oth);
     }
 };
 
@@ -73,11 +73,11 @@ public:
          const std::string& objfmt_keyword);
     ~Impl();
 
-    void set_machine(const std::string& machine);
-    void set_preproc(const std::string& preproc_keyword);
-    void set_dbgfmt(const std::string& dbgfmt_keyword);
-    void set_listfmt(const std::string& listfmt_keyword);
-    bool assemble(std::istream& is,
+    void setMachine(const std::string& machine);
+    void setPreprocessor(const std::string& preproc_keyword);
+    void setDebugFormat(const std::string& dbgfmt_keyword);
+    void setListFormat(const std::string& listfmt_keyword);
+    bool Assemble(std::istream& is,
                   const std::string& src_filename,
                   bool warning_error);
 
@@ -107,10 +107,10 @@ public:
 Assembler::Impl::Impl(const std::string& arch_keyword,
                       const std::string& parser_keyword,
                       const std::string& objfmt_keyword)
-    : m_arch_module(load_module<ArchModule>(arch_keyword).release()),
-      m_parser_module(load_module<ParserModule>(parser_keyword).release()),
+    : m_arch_module(LoadModule<ArchModule>(arch_keyword).release()),
+      m_parser_module(LoadModule<ParserModule>(parser_keyword).release()),
       m_preproc_module(0),
-      m_objfmt_module(load_module<ObjectFormatModule>(objfmt_keyword).release()),
+      m_objfmt_module(LoadModule<ObjectFormatModule>(objfmt_keyword).release()),
       m_dbgfmt_module(0),
       m_listfmt_module(0),
       m_arch(0),
@@ -122,30 +122,30 @@ Assembler::Impl::Impl(const std::string& arch_keyword,
       m_object(0)
 {
     if (m_arch_module.get() == 0)
-        throw Error(String::compose(N_("could not load architecture `%1'"),
+        throw Error(String::Compose(N_("could not load architecture `%1'"),
                                     arch_keyword));
 
     if (m_parser_module.get() == 0)
-        throw Error(String::compose(N_("could not load parser `%1'"),
+        throw Error(String::Compose(N_("could not load parser `%1'"),
                                     parser_keyword));
 
     if (m_objfmt_module.get() == 0)
-        throw Error(String::compose(N_("could not load object format `%1'"),
+        throw Error(String::Compose(N_("could not load object format `%1'"),
                                     objfmt_keyword));
 
     // Create architecture.
-    m_arch.reset(m_arch_module->create().release());
+    m_arch.reset(m_arch_module->Create().release());
 
     // Ensure architecture supports parser.
-    if (!m_arch->set_parser(parser_keyword))
-        throw Error(String::compose(
+    if (!m_arch->setParser(parser_keyword))
+        throw Error(String::Compose(
             _("`%1' is not a valid parser for architecture `%2'"),
             parser_keyword, arch_keyword));
 
     // Get initial x86 BITS setting from object format
-    if (String::nocase_equal(m_arch_module->get_keyword(), "x86"))
-        m_arch->set_var("mode_bits",
-                        m_objfmt_module->get_default_x86_mode_bits());
+    if (String::NocaseEqual(m_arch_module->getKeyword(), "x86"))
+        m_arch->setVar("mode_bits",
+                       m_objfmt_module->getDefaultX86ModeBits());
 }
 
 Assembler::Impl::~Impl()
@@ -157,7 +157,8 @@ Assembler::Assembler(const std::string& arch_keyword,
                      const std::string& objfmt_keyword)
     : m_impl(new Impl(arch_keyword, parser_keyword, objfmt_keyword))
 {
-    m_impl->set_preproc(m_impl->m_parser_module->get_default_preproc_keyword());
+    m_impl->setPreprocessor
+        (m_impl->m_parser_module->getDefaultPreprocessorKeyword());
 }
 
 Assembler::~Assembler()
@@ -165,115 +166,116 @@ Assembler::~Assembler()
 }
 
 void
-Assembler::set_obj_filename(const std::string& obj_filename)
+Assembler::setObjectFilename(const std::string& obj_filename)
 {
     m_impl->m_obj_filename = obj_filename;
 }
 
 void
-Assembler::Impl::set_machine(const std::string& machine)
+Assembler::Impl::setMachine(const std::string& machine)
 {
-    if (!m_arch->set_machine(machine))
-        throw Error(String::compose(
+    if (!m_arch->setMachine(machine))
+        throw Error(String::Compose(
             N_("`%1' is not a valid machine for architecture `%2'"),
-            machine, m_arch_module->get_keyword()));
+            machine, m_arch_module->getKeyword()));
 
     m_machine = machine;
 }
 
 void
-Assembler::set_machine(const std::string& machine)
+Assembler::setMachine(const std::string& machine)
 {
-    m_impl->set_machine(machine);
+    m_impl->setMachine(machine);
 }
 
 void
-Assembler::Impl::set_preproc(const std::string& preproc_keyword)
+Assembler::Impl::setPreprocessor(const std::string& preproc_keyword)
 {
     // Check to see if the requested preprocessor is in the allowed list
     // for the active parser.
     std::vector<const char*> preproc_keywords =
-        m_parser_module->get_preproc_keywords();
+        m_parser_module->getPreprocessorKeywords();
     if (std::find_if(preproc_keywords.begin(), preproc_keywords.end(),
-                     NoCaseEquals(preproc_keyword))
+                     NocaseEquals(preproc_keyword))
         == preproc_keywords.end())
     {
-        throw Error(String::compose(
+        throw Error(String::Compose(
             N_("`%1' is not a valid preprocessor for parser `%2'"),
-            preproc_keyword, m_parser_module->get_keyword()));
+            preproc_keyword, m_parser_module->getKeyword()));
     }
 
     std::auto_ptr<PreprocessorModule> preproc_module =
-        load_module<PreprocessorModule>(preproc_keyword);
+        LoadModule<PreprocessorModule>(preproc_keyword);
     if (preproc_module.get() == 0)
     {
-        throw Error(String::compose(N_("could not load preprocessor `%1'"),
+        throw Error(String::Compose(N_("could not load preprocessor `%1'"),
                                     preproc_keyword));
     }
     m_preproc_module.reset(preproc_module.release());
 
     // Create preprocessor.
-    m_preproc.reset(m_preproc_module->create(m_errwarns).release());
+    m_preproc.reset(m_preproc_module->Create(m_errwarns).release());
 }
 
 void
-Assembler::set_preproc(const std::string& preproc_keyword)
+Assembler::setPreprocessor(const std::string& preproc_keyword)
 {
-    m_impl->set_preproc(preproc_keyword);
+    m_impl->setPreprocessor(preproc_keyword);
 }
 
 void
-Assembler::Impl::set_dbgfmt(const std::string& dbgfmt_keyword)
+Assembler::Impl::setDebugFormat(const std::string& dbgfmt_keyword)
 {
     // Check to see if the requested debug format is in the allowed list
     // for the active object format.
     std::vector<const char*> dbgfmt_keywords =
-        m_objfmt_module->get_dbgfmt_keywords();
+        m_objfmt_module->getDebugFormatKeywords();
     if (std::find_if(dbgfmt_keywords.begin(), dbgfmt_keywords.end(),
-                     NoCaseEquals(dbgfmt_keyword))
+                     NocaseEquals(dbgfmt_keyword))
         == dbgfmt_keywords.end())
     {
-        throw Error(String::compose(
+        throw Error(String::Compose(
             N_("`%1' is not a valid debug format for object format `%2'"),
-            dbgfmt_keyword, m_objfmt_module->get_keyword()));
+            dbgfmt_keyword, m_objfmt_module->getKeyword()));
     }
 
     std::auto_ptr<DebugFormatModule> dbgfmt_module =
-        load_module<DebugFormatModule>(dbgfmt_keyword);
+        LoadModule<DebugFormatModule>(dbgfmt_keyword);
     if (dbgfmt_module.get() == 0)
-        throw Error(String::compose(N_("could not load debug format `%1'"),
+        throw Error(String::Compose(N_("could not load debug format `%1'"),
                                     dbgfmt_keyword));
     m_dbgfmt_module.reset(dbgfmt_module.release());
 }
 
 void
-Assembler::set_dbgfmt(const std::string& dbgfmt_keyword)
+Assembler::setDebugFormat(const std::string& dbgfmt_keyword)
 {
-    m_impl->set_dbgfmt(dbgfmt_keyword);
+    m_impl->setDebugFormat(dbgfmt_keyword);
 }
 
 void
-Assembler::Impl::set_listfmt(const std::string& listfmt_keyword)
+Assembler::Impl::setListFormat(const std::string& listfmt_keyword)
 {
     std::auto_ptr<ListFormatModule> listfmt_module =
-        load_module<ListFormatModule>(listfmt_keyword);
+        LoadModule<ListFormatModule>(listfmt_keyword);
     if (listfmt_module.get() == 0)
-        throw Error(String::compose(N_("could not load list format `%1'"),
+        throw Error(String::Compose(N_("could not load list format `%1'"),
                                     listfmt_keyword));
     m_listfmt_module.reset(listfmt_module.release());
 }
 
 void
-Assembler::set_listfmt(const std::string& listfmt_keyword)
+Assembler::setListFormat(const std::string& listfmt_keyword)
 {
-    m_impl->set_listfmt(listfmt_keyword);
+    m_impl->setListFormat(listfmt_keyword);
 }
 
 bool
-Assembler::Impl::assemble(std::istream& is, const std::string& src_filename,
+Assembler::Impl::Assemble(std::istream& is,
+                          const std::string& src_filename,
                           bool warning_error)
 {
-    const char* parser_keyword = m_parser_module->get_keyword();
+    const char* parser_keyword = m_parser_module->getKeyword();
 
     // determine the object filename if not specified
     if (m_obj_filename.empty())
@@ -285,14 +287,14 @@ Assembler::Impl::assemble(std::istream& is, const std::string& src_filename,
         {
             // replace (or add) extension to base filename
             std::string base_filename;
-            splitpath(src_filename, base_filename);
+            SplitPath(src_filename, base_filename);
             if (base_filename.empty())
                 m_obj_filename = "yasm.out";
             else
                 m_obj_filename =
-                    replace_extension(base_filename,
-                                      m_objfmt_module->get_extension(),
-                                      "yasm.out");
+                    ReplaceExtension(base_filename,
+                                     m_objfmt_module->getExtension(),
+                                     "yasm.out");
         }
     }
 
@@ -301,152 +303,153 @@ Assembler::Impl::assemble(std::istream& is, const std::string& src_filename,
         // If we're using x86 and the default objfmt bits is 64, default the
         // machine to amd64.  When we get more arches with multiple machines,
         // we should do this in a more modular fashion.
-        if (String::nocase_equal(m_arch_module->get_keyword(), "x86") &&
-            m_objfmt_module->get_default_x86_mode_bits() == 64)
-            set_machine("amd64");
+        if (String::NocaseEqual(m_arch_module->getKeyword(), "x86") &&
+            m_objfmt_module->getDefaultX86ModeBits() == 64)
+            setMachine("amd64");
     }
 
     // Create object
     m_object.reset(new Object(src_filename, m_obj_filename, m_arch.get()));
 
     // See if the object format supports such an object
-    if (!m_objfmt_module->ok_object(*m_object))
+    if (!m_objfmt_module->isOkObject(*m_object))
     {
-        throw Error(String::compose(
+        throw Error(String::Compose(
             N_("object format `%1' does not support architecture `%2' machine `%3'"),
-            m_objfmt_module->get_keyword(),
-            m_arch_module->get_keyword(),
-            m_arch->get_machine()));
+            m_objfmt_module->getKeyword(),
+            m_arch_module->getKeyword(),
+            m_arch->getMachine()));
     }
 
     // Create the object format
-    m_objfmt.reset(m_objfmt_module->create(*m_object).release());
+    m_objfmt.reset(m_objfmt_module->Create(*m_object).release());
 
     // Add any object-format special symbols
-    m_objfmt->init_symbols(parser_keyword);
+    m_objfmt->InitSymbols(parser_keyword);
 
     // Add an initial "default" section to object
-    m_object->set_cur_section(m_objfmt->add_default_section());
+    m_object->setCurSection(m_objfmt->AddDefaultSection());
 
     // Default to null as the debug format if not specified
     if (m_dbgfmt_module.get() == 0)
-        set_dbgfmt("null");
+        setDebugFormat("null");
 
     // See if the debug format supports such an object
-    if (!m_dbgfmt_module->ok_object(*m_object))
+    if (!m_dbgfmt_module->isOkObject(*m_object))
     {
-        throw Error(String::compose(
+        throw Error(String::Compose(
             N_("debug format `%1' does not work with object format `%2'"),
-            m_dbgfmt_module->get_keyword(), m_objfmt_module->get_keyword()));
+            m_dbgfmt_module->getKeyword(), m_objfmt_module->getKeyword()));
     }
 
     // Create the debug format
-    m_dbgfmt.reset(m_dbgfmt_module->create(*m_object).release());
+    m_dbgfmt.reset(m_dbgfmt_module->Create(*m_object).release());
 
     // Initialize line map
     m_linemap.set(src_filename, 1, 1);
 
     // Initialize preprocessor
-    m_preproc->initialize(is, src_filename, m_linemap);
+    m_preproc->Initialize(is, src_filename, m_linemap);
 
     // Create parser
-    m_parser.reset(m_parser_module->create(m_errwarns).release());
+    m_parser.reset(m_parser_module->Create(m_errwarns).release());
 
     // Set up directive handlers
     Directives dirs;
-    m_arch->add_directives(dirs, parser_keyword);
-    m_parser->add_directives(dirs, parser_keyword);
-    m_preproc->add_directives(dirs, parser_keyword);
-    m_objfmt->add_directives(dirs, parser_keyword);
-    m_dbgfmt->add_directives(dirs, parser_keyword);
+    m_arch->AddDirectives(dirs, parser_keyword);
+    m_parser->AddDirectives(dirs, parser_keyword);
+    m_preproc->AddDirectives(dirs, parser_keyword);
+    m_objfmt->AddDirectives(dirs, parser_keyword);
+    m_dbgfmt->AddDirectives(dirs, parser_keyword);
     if (m_listfmt_module.get() != 0)
     {
-        m_listfmt.reset(m_listfmt_module->create().release());
-        m_listfmt->add_directives(dirs, parser_keyword);
+        m_listfmt.reset(m_listfmt_module->Create().release());
+        m_listfmt->AddDirectives(dirs, parser_keyword);
     }
 
     // Parse!
-    m_parser->parse(*m_object, *m_preproc, m_listfmt.get() != 0, dirs,
+    m_parser->Parse(*m_object, *m_preproc, m_listfmt.get() != 0, dirs,
                     m_linemap);
 
-    if (m_errwarns.num_errors(warning_error) > 0)
+    if (m_errwarns.getNumErrors(warning_error) > 0)
         return false;
 
     // Finalize parse
-    m_object->finalize(m_errwarns);
-    if (m_errwarns.num_errors(warning_error) > 0)
+    m_object->Finalize(m_errwarns);
+    if (m_errwarns.getNumErrors(warning_error) > 0)
         return false;
 
     // Optimize
-    m_object->optimize(m_errwarns);
+    m_object->Optimize(m_errwarns);
 
     //object.put(std::cout, 0);
 
-    if (m_errwarns.num_errors(warning_error) > 0)
+    if (m_errwarns.getNumErrors(warning_error) > 0)
         return false;
 
     // generate any debugging information
     //m_dbgfmt->generate(m_linemap, m_errwarns);
-    if (m_errwarns.num_errors(warning_error) > 0)
+    if (m_errwarns.getNumErrors(warning_error) > 0)
         return false;
 
     return true;
 }
 
 bool
-Assembler::assemble(std::istream& is, const std::string& src_filename,
+Assembler::Assemble(std::istream& is,
+                    const std::string& src_filename,
                     bool warning_error)
 {
-    return m_impl->assemble(is, src_filename, warning_error);
+    return m_impl->Assemble(is, src_filename, warning_error);
 }
 
 bool
-Assembler::output(std::ostream& os, bool warning_error)
+Assembler::Output(std::ostream& os, bool warning_error)
 {
     // Write the object file
-    m_impl->m_objfmt->output
+    m_impl->m_objfmt->Output
         (os,
-         !String::nocase_equal(m_impl->m_dbgfmt_module->get_keyword(), "null"),
+         !String::NocaseEqual(m_impl->m_dbgfmt_module->getKeyword(), "null"),
          m_impl->m_errwarns);
 
-    if (m_impl->m_errwarns.num_errors(warning_error) > 0)
+    if (m_impl->m_errwarns.getNumErrors(warning_error) > 0)
         return false;
 
     return true;
 }
 
 Object*
-Assembler::get_object()
+Assembler::getObject()
 {
     return m_impl->m_object.get();
 }
 
 Preprocessor*
-Assembler::get_preproc()
+Assembler::getPreprocessor()
 {
     return m_impl->m_preproc.get();
 }
 
 Arch*
-Assembler::get_arch()
+Assembler::getArch()
 {
     return m_impl->m_arch.get();
 }
 
 Errwarns*
-Assembler::get_errwarns()
+Assembler::getErrwarns()
 {
     return &m_impl->m_errwarns;
 }
 
 Linemap*
-Assembler::get_linemap()
+Assembler::getLinemap()
 {
     return &m_impl->m_linemap;
 }
 
 std::string
-Assembler::get_obj_filename() const
+Assembler::getObjectFilename() const
 {
     return m_impl->m_obj_filename;
 }

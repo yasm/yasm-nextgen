@@ -81,10 +81,10 @@ public:
     CoffReloc(const IntNum& addr, SymbolRef sym, Type type);
     virtual ~CoffReloc();
 
-    virtual Expr get_value() const;
-    virtual std::string get_type_name() const = 0;
+    virtual Expr getValue() const;
+    virtual std::string getTypeName() const = 0;
 
-    void write(Bytes& bytes) const;
+    void Write(Bytes& bytes) const;
 
 protected:
     Type m_type;    ///< type of relocation
@@ -98,7 +98,7 @@ public:
     {}
     virtual ~Coff32Reloc();
 
-    virtual std::string get_type_name() const;
+    virtual std::string getTypeName() const;
 };
 
 class Coff64Reloc : public CoffReloc
@@ -109,7 +109,7 @@ public:
     {}
     virtual ~Coff64Reloc();
 
-    virtual std::string get_type_name() const;
+    virtual std::string getTypeName() const;
 };
 
 }}} // namespace yasm::objfmt::coff

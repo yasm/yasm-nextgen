@@ -50,9 +50,9 @@ public:
     explicit X86TargetModifier(Type type) : m_type(type) {}
     ~X86TargetModifier() {}
 
-    Type type() const { return m_type; }
+    Type getType() const { return m_type; }
 
-    void put(std::ostream& os) const;
+    void Put(std::ostream& os) const;
 
 private:
     Type m_type;

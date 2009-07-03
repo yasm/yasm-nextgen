@@ -43,7 +43,7 @@
 static std::vector<void*> loaded_plugins;
 
 static void*
-load_dll(const std::string& name)
+LoadDLL(const std::string& name)
 {
 #if defined(_MSC_VER)
     return LoadLibrary(name.c_str());
@@ -58,7 +58,7 @@ namespace yasm
 {
 
 bool
-load_plugin(const std::string& name)
+LoadPlugin(const std::string& name)
 {
     // Load library
     void* lib = 0;
@@ -75,7 +75,7 @@ load_plugin(const std::string& name)
     if (path.compare(path.length()-3, 3, ".so") != 0)
         path += ".so";
 #endif
-    lib = load_dll(path);
+    lib = LoadDLL(path);
 
     // Second attempt: PLUGIN_INSTALL_DIR/FOO.so
     if (!lib && name.find_first_of("\\/") == std::string::npos)
@@ -85,12 +85,12 @@ load_plugin(const std::string& name)
 #elif defined(__GNUC__)
         path.insert(0, PLUGIN_INSTALL_DIR "/");
 #endif
-        lib = load_dll(path);
+        lib = LoadDLL(path);
     }
 
     // Last attempt: FOO
     if (!lib)
-        lib = load_dll(name);
+        lib = LoadDLL(name);
 
     if (!lib)
         return false;   // Didn't load successfully
@@ -117,7 +117,7 @@ load_plugin(const std::string& name)
 }
 
 void
-unload_plugins(void)
+UnloadPlugins(void)
 {
     while (!loaded_plugins.empty()) {
         void* plugin = loaded_plugins.back();

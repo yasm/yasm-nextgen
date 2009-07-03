@@ -33,36 +33,36 @@ class NocaseTestSuite : public CxxTest::TestSuite
 public:
     void testNoN()
     {
-        TS_ASSERT_EQUALS(String::nocase_equal("foo", "foo"), true);
-        TS_ASSERT_EQUALS(String::nocase_equal("foo", "foo1"), false);
-        TS_ASSERT_EQUALS(String::nocase_equal("foo1", "foo"), false);
+        TS_ASSERT_EQUALS(String::NocaseEqual("foo", "foo"), true);
+        TS_ASSERT_EQUALS(String::NocaseEqual("foo", "foo1"), false);
+        TS_ASSERT_EQUALS(String::NocaseEqual("foo1", "foo"), false);
     }
 
     void testN()
     {
-        TS_ASSERT_EQUALS(String::nocase_equal("foo", "foo", 2), true);
-        TS_ASSERT_EQUALS(String::nocase_equal("foo", "foo", 3), true);
-        TS_ASSERT_EQUALS(String::nocase_equal("foo", "foo", 4), true);
-        TS_ASSERT_EQUALS(String::nocase_equal("foo", "foo", 5), true);
-        TS_ASSERT_EQUALS(String::nocase_equal("foo", "foo1", 3), true);
-        TS_ASSERT_EQUALS(String::nocase_equal("foo", "foo1", 4), false);
-        TS_ASSERT_EQUALS(String::nocase_equal("foo1", "foo", 3), true);
-        TS_ASSERT_EQUALS(String::nocase_equal("foo1", "foo", 4), false);
-        TS_ASSERT_EQUALS(String::nocase_equal("foo", "bar", 0), true);
+        TS_ASSERT_EQUALS(String::NocaseEqual("foo", "foo", 2), true);
+        TS_ASSERT_EQUALS(String::NocaseEqual("foo", "foo", 3), true);
+        TS_ASSERT_EQUALS(String::NocaseEqual("foo", "foo", 4), true);
+        TS_ASSERT_EQUALS(String::NocaseEqual("foo", "foo", 5), true);
+        TS_ASSERT_EQUALS(String::NocaseEqual("foo", "foo1", 3), true);
+        TS_ASSERT_EQUALS(String::NocaseEqual("foo", "foo1", 4), false);
+        TS_ASSERT_EQUALS(String::NocaseEqual("foo1", "foo", 3), true);
+        TS_ASSERT_EQUALS(String::NocaseEqual("foo1", "foo", 4), false);
+        TS_ASSERT_EQUALS(String::NocaseEqual("foo", "bar", 0), true);
     }
 
     void testLowercase()
     {
-        TS_ASSERT_EQUALS(String::lowercase("foo"), "foo");
-        TS_ASSERT_EQUALS(String::lowercase("Foo"), "foo");
-        TS_ASSERT_EQUALS(String::lowercase("BAR"), "bar");
+        TS_ASSERT_EQUALS(String::Lowercase("foo"), "foo");
+        TS_ASSERT_EQUALS(String::Lowercase("Foo"), "foo");
+        TS_ASSERT_EQUALS(String::Lowercase("BAR"), "bar");
         // std::string version has separate implementation
-        TS_ASSERT_EQUALS(String::lowercase(std::string("foo")), "foo");
-        TS_ASSERT_EQUALS(String::lowercase(std::string("Foo")), "foo");
-        TS_ASSERT_EQUALS(String::lowercase(std::string("BAR")), "bar");
+        TS_ASSERT_EQUALS(String::Lowercase(std::string("foo")), "foo");
+        TS_ASSERT_EQUALS(String::Lowercase(std::string("Foo")), "foo");
+        TS_ASSERT_EQUALS(String::Lowercase(std::string("BAR")), "bar");
         // std::string version accepts embedded nuls
-        TS_ASSERT_EQUALS(String::lowercase(std::string("foo\0ba")), "foo\0ba");
-        TS_ASSERT_EQUALS(String::lowercase(std::string("Foo\0Ba")), "foo\0ba");
-        TS_ASSERT_EQUALS(String::lowercase(std::string("FOO\0BA")), "foo\0ba");
+        TS_ASSERT_EQUALS(String::Lowercase(std::string("foo\0ba")), "foo\0ba");
+        TS_ASSERT_EQUALS(String::Lowercase(std::string("Foo\0Ba")), "foo\0ba");
+        TS_ASSERT_EQUALS(String::Lowercase(std::string("FOO\0BA")), "foo\0ba");
     }
 };

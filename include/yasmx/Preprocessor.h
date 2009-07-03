@@ -59,40 +59,40 @@ public:
     virtual ~Preprocessor();
 
     /// Get module.
-    const PreprocessorModule& get_module() const { return m_module; }
+    const PreprocessorModule& getModule() const { return m_module; }
 
     /// Add directive handlers.
-    virtual void add_directives(Directives& dirs, const char* parser);
+    virtual void AddDirectives(Directives& dirs, const char* parser);
 
     /// Initialize preprocessor.  Must be called prior to first get_line() call.
-    virtual void initialize(std::istream& is,
+    virtual void Initialize(std::istream& is,
                             const std::string& in_filename,
                             Linemap& linemap) = 0;
 
     /// Gets a line of preprocessed source code.
     /// @param line     destination string for line of preprocessed source
     /// @return True if line read; false if no more lines.
-    virtual bool get_line(/*@out@*/ std::string& line) = 0;
+    virtual bool getLine(/*@out@*/ std::string& line) = 0;
 
     /// Get the next filename included by the source code.
     /// @return Filename.
-    virtual std::string get_included_file() = 0;
+    virtual std::string getIncludedFile() = 0;
 
     /// Pre-include a file.
     /// @param filename     filename
-    virtual void add_include_file(const std::string& filename) = 0;
+    virtual void AddIncludeFile(const std::string& filename) = 0;
 
     /// Pre-define a macro.
     /// @param macronameval "name=value" string
-    virtual void predefine_macro(const std::string& macronameval) = 0;
+    virtual void PredefineMacro(const std::string& macronameval) = 0;
 
     /// Un-define a macro.
     /// @param macroname    macro name
-    virtual void undefine_macro(const std::string& macroname) = 0;
+    virtual void UndefineMacro(const std::string& macroname) = 0;
 
     /// Define a builtin macro, preprocessed before the "standard" macros.
     /// @param macronameval "name=value" string
-    virtual void define_builtin(const std::string& macronameval) = 0;
+    virtual void DefineBuiltin(const std::string& macronameval) = 0;
 
 private:
     Preprocessor(const Preprocessor&);                  // not implemented
@@ -115,7 +115,7 @@ public:
 
     /// Get the module type.
     /// @return "Preprocessor".
-    const char* get_type() const;
+    const char* getType() const;
 
     /// Preprocessor factory function.
     /// The preprocessor needs access to the object format to find out
@@ -126,7 +126,7 @@ public:
     /// @param errwarns     error/warning set
     /// @return New preprocessor.
     /// @note Errors/warnings are stored into errwarns.
-    virtual std::auto_ptr<Preprocessor> create(Errwarns& errwarns) const = 0;
+    virtual std::auto_ptr<Preprocessor> Create(Errwarns& errwarns) const = 0;
 };
 
 template <typename PreprocessorImpl>
@@ -136,10 +136,10 @@ public:
     PreprocessorModuleImpl() {}
     ~PreprocessorModuleImpl() {}
 
-    const char* get_name() const { return PreprocessorImpl::get_name(); }
-    const char* get_keyword() const { return PreprocessorImpl::get_keyword(); }
+    const char* getName() const { return PreprocessorImpl::getName(); }
+    const char* getKeyword() const { return PreprocessorImpl::getKeyword(); }
 
-    std::auto_ptr<Preprocessor> create(Errwarns& errwarns) const
+    std::auto_ptr<Preprocessor> Create(Errwarns& errwarns) const
     {
         return std::auto_ptr<Preprocessor>
             (new PreprocessorImpl(*this, errwarns));

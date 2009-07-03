@@ -108,22 +108,22 @@ Errwarns::~Errwarns()
 }
 
 void
-Errwarns::propagate(unsigned long line, const Error& err)
+Errwarns::Propagate(unsigned long line, const Error& err)
 {
     unsigned long real_line = err.m_line == 0 ? line : err.m_line;
     m_impl->m_errwarns.push_back(Impl::Data(real_line, err));
     m_impl->m_ecount++;
-    propagate(line);    // propagate warnings
+    Propagate(line);    // propagate warnings
 }
 
 void
-Errwarns::propagate(unsigned long line)
+Errwarns::Propagate(unsigned long line)
 {
     WarnClass wclass;
     std::string wmsg;
     unsigned long wline;
 
-    while ((wclass = warn_fetch(&wmsg, &wline)) != WARN_NONE)
+    while ((wclass = FetchWarn(&wmsg, &wline)) != WARN_NONE)
     {
         unsigned long real_line = wline == 0 ? line : wline;
         m_impl->m_errwarns.push_back(Impl::Data(real_line, wmsg));
@@ -132,7 +132,7 @@ Errwarns::propagate(unsigned long line)
 }
 
 unsigned int
-Errwarns::num_errors(bool warning_as_error) const
+Errwarns::getNumErrors(bool warning_as_error) const
 {
     if (warning_as_error)
         return m_impl->m_ecount + m_impl->m_wcount;
@@ -141,9 +141,10 @@ Errwarns::num_errors(bool warning_as_error) const
 }
 
 void
-Errwarns::output_all(const Linemap& lm, int warning_as_error,
-                     yasm_print_error_func print_error,
-                     yasm_print_warning_func print_warning)
+Errwarns::OutputAll(const Linemap& lm,
+                    int warning_as_error,
+                    PrintErrorFunc print_error,
+                    PrintWarningFunc print_warning)
 {
     // If we're treating warnings as errors, tell the user about it.
     if (warning_as_error == 1)
@@ -161,11 +162,11 @@ Errwarns::output_all(const Linemap& lm, int warning_as_error,
         // Get the physical location
         std::string filename, xref_filename;
         unsigned long line, xref_line;
-        lm.lookup(i->m_line, &filename, &line);
+        lm.Lookup(i->m_line, &filename, &line);
 
         // Get the cross-reference physical location
         if (i->m_xrefline != 0)
-            lm.lookup(i->m_xrefline, &xref_filename, &xref_line);
+            lm.Lookup(i->m_xrefline, &xref_filename, &xref_line);
         else
         {
             xref_filename = "";

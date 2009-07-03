@@ -74,7 +74,7 @@ Bytes::swap(Bytes& oth)
 }
 
 void
-Bytes::write(std::istream& is, size_type n)
+Bytes::Write(std::istream& is, size_type n)
 {
     if (n == 0)
         return;
@@ -85,7 +85,7 @@ Bytes::write(std::istream& is, size_type n)
 }
 
 void
-Bytes::write(const unsigned char* buf, size_type n)
+Bytes::Write(const unsigned char* buf, size_type n)
 {
     if (n == 0)
         return;
@@ -95,7 +95,7 @@ Bytes::write(const unsigned char* buf, size_type n)
 }
 
 void
-Bytes::write(size_type n, unsigned char v)
+Bytes::Write(size_type n, unsigned char v)
 {
     if (n == 0)
         return;

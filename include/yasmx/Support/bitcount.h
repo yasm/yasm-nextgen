@@ -58,7 +58,7 @@ BC_COUNT(unsigned long& x, int c)
 }
 
 inline unsigned long
-bit_count(unsigned long s)
+BitCount(unsigned long s)
 {
     unsigned long d=s;
     BC_COUNT(d, 0);
@@ -74,7 +74,7 @@ bit_count(unsigned long s)
 /// @param x    value
 /// @return Nonzero if x is a power of 2.
 inline bool
-is_exp2(unsigned long x)
+isExp2(unsigned long x)
 {
     return ((x & (x - 1)) == 0);
 }

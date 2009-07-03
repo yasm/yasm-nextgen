@@ -45,26 +45,26 @@ namespace
 
 using namespace yasm;
 
-class Leb128Bytecode : public Bytecode::Contents
+class LEB128Bytecode : public Bytecode::Contents
 {
 public:
-    Leb128Bytecode(const Expr& expr, bool sign);
-    Leb128Bytecode(std::auto_ptr<Expr> expr, bool sign);
-    ~Leb128Bytecode();
+    LEB128Bytecode(const Expr& expr, bool sign);
+    LEB128Bytecode(std::auto_ptr<Expr> expr, bool sign);
+    ~LEB128Bytecode();
 
     /// Prints the implementation-specific data (for debugging purposes).
-    void put(marg_ostream& os) const;
+    void Put(marg_ostream& os) const;
 
     /// Finalizes the bytecode after parsing.
-    void finalize(Bytecode& bc);
+    void Finalize(Bytecode& bc);
 
     /// Calculates the minimum size of a bytecode.
-    unsigned long calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
+    unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
 
     /// Convert a bytecode into its byte representation.
-    void output(Bytecode& bc, BytecodeOutput& bc_out);
+    void Output(Bytecode& bc, BytecodeOutput& bc_out);
 
-    Leb128Bytecode* clone() const;
+    LEB128Bytecode* clone() const;
 
 private:
     Expr m_expr;
@@ -72,24 +72,24 @@ private:
 };
 
 
-Leb128Bytecode::Leb128Bytecode(const Expr& expr, bool sign)
+LEB128Bytecode::LEB128Bytecode(const Expr& expr, bool sign)
     : m_expr(expr),
       m_sign(sign)
 {
 }
 
-Leb128Bytecode::Leb128Bytecode(std::auto_ptr<Expr> expr, bool sign)
+LEB128Bytecode::LEB128Bytecode(std::auto_ptr<Expr> expr, bool sign)
     : m_sign(sign)
 {
     std::swap(m_expr, *expr);
 }
 
-Leb128Bytecode::~Leb128Bytecode()
+LEB128Bytecode::~LEB128Bytecode()
 {
 }
 
 void
-Leb128Bytecode::put(marg_ostream& os) const
+LEB128Bytecode::Put(marg_ostream& os) const
 {
     os << "_LEB128_\n";
     os << "Expr=" << m_expr << '\n';
@@ -97,33 +97,33 @@ Leb128Bytecode::put(marg_ostream& os) const
 }
 
 void
-Leb128Bytecode::finalize(Bytecode& bc)
+LEB128Bytecode::Finalize(Bytecode& bc)
 {
-    m_expr.simplify();
-    if (!m_expr.is_intnum())
+    m_expr.Simplify();
+    if (!m_expr.isIntNum())
         throw NotConstantError(N_("LEB128 value must be a constant"));
-    if (m_expr.get_intnum().sign() < 0 && !m_sign)
-        warn_set(WARN_GENERAL, N_("negative value in unsigned LEB128"));
+    if (m_expr.getIntNum().getSign() < 0 && !m_sign)
+        setWarn(WARN_GENERAL, N_("negative value in unsigned LEB128"));
 }
 
 unsigned long
-Leb128Bytecode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+LEB128Bytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 {
-    return size_leb128(m_expr.get_intnum(), m_sign);
+    return SizeLEB128(m_expr.getIntNum(), m_sign);
 }
 
 void
-Leb128Bytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
+LEB128Bytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
-    Bytes& bytes = bc_out.get_scratch();
-    write_leb128(bytes, m_expr.get_intnum(), m_sign);
-    bc_out.output(bytes);
+    Bytes& bytes = bc_out.getScratch();
+    WriteLEB128(bytes, m_expr.getIntNum(), m_sign);
+    bc_out.Output(bytes);
 }
 
-Leb128Bytecode*
-Leb128Bytecode::clone() const
+LEB128Bytecode*
+LEB128Bytecode::clone() const
 {
-    return new Leb128Bytecode(m_expr, m_sign);
+    return new LEB128Bytecode(m_expr, m_sign);
 }
 
 } // anonymous namespace
@@ -131,34 +131,34 @@ Leb128Bytecode::clone() const
 namespace yasm
 {
 
-void append_leb128(BytecodeContainer& container,
-                   const IntNum& intn,
-                   bool sign,
-                   unsigned long line)
+void AppendLEB128(BytecodeContainer& container,
+                  const IntNum& intn,
+                  bool sign,
+                  unsigned long line)
 {
-    if (intn.sign() < 0 && !sign)
-        warn_set(WARN_GENERAL, N_("negative value in unsigned LEB128"));
-    Bytecode& bc = container.fresh_bytecode();
-    write_leb128(bc.get_fixed(), intn, sign);
+    if (intn.getSign() < 0 && !sign)
+        setWarn(WARN_GENERAL, N_("negative value in unsigned LEB128"));
+    Bytecode& bc = container.FreshBytecode();
+    WriteLEB128(bc.getFixed(), intn, sign);
 }
 
-void append_leb128(BytecodeContainer& container,
-                   std::auto_ptr<Expr> expr,
-                   bool sign,
-                   unsigned long line)
+void AppendLEB128(BytecodeContainer& container,
+                  std::auto_ptr<Expr> expr,
+                  bool sign,
+                  unsigned long line)
 {
     // If expression is just an integer, output directly.
-    expr->simplify();
-    if (expr->is_intnum())
+    expr->Simplify();
+    if (expr->isIntNum())
     {
-        append_leb128(container, expr->get_intnum(), sign, line);
+        AppendLEB128(container, expr->getIntNum(), sign, line);
         return;
     }
 
-    // More complex; append Leb128 bytecode.
-    Bytecode& bc = container.fresh_bytecode();
-    bc.transform(Bytecode::Contents::Ptr(new Leb128Bytecode(expr, sign)));
-    bc.set_line(line);
+    // More complex; append LEB128 bytecode.
+    Bytecode& bc = container.FreshBytecode();
+    bc.Transform(Bytecode::Contents::Ptr(new LEB128Bytecode(expr, sign)));
+    bc.setLine(line);
 }
 
 } // namespace yasm

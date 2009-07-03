@@ -49,17 +49,17 @@ public:
     ~MultipleBytecode();
 
     /// Prints the implementation-specific data (for debugging purposes).
-    void put(marg_ostream& os) const;
+    void Put(marg_ostream& os) const;
 
     /// Finalizes the bytecode after parsing.
-    void finalize(Bytecode& bc);
+    void Finalize(Bytecode& bc);
 
     /// Calculates the minimum size of a bytecode.
-    unsigned long calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
+    unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
 
     /// Recalculates the bytecode's length based on an expanded span
     /// length.
-    bool expand(Bytecode& bc,
+    bool Expand(Bytecode& bc,
                 unsigned long& len,
                 int span,
                 long old_val,
@@ -68,11 +68,11 @@ public:
                 /*@out@*/ long* pos_thres);
 
     /// Convert a bytecode into its byte representation.
-    void output(Bytecode& bc, BytecodeOutput& bc_out);
+    void Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     MultipleBytecode* clone() const;
 
-    BytecodeContainer& get_contents() { return m_contents; }
+    BytecodeContainer& getContents() { return m_contents; }
 
 private:
     /// Number of times contents is repeated.
@@ -97,7 +97,7 @@ MultipleBytecode::~MultipleBytecode()
 }
 
 void
-MultipleBytecode::put(marg_ostream& os) const
+MultipleBytecode::Put(marg_ostream& os) const
 {
     os << "_Multiple_\n";
     os << "Multiple=" << *m_multiple << '\n';
@@ -109,51 +109,51 @@ MultipleBytecode::put(marg_ostream& os) const
 }
 
 void
-MultipleBytecode::finalize(Bytecode& bc)
+MultipleBytecode::Finalize(Bytecode& bc)
 {
     Value val(0, std::auto_ptr<Expr>(m_multiple->clone()));
 
-    if (!val.finalize())
+    if (!val.Finalize())
         throw TooComplexError(N_("multiple expression too complex"));
-    else if (val.is_relative())
+    else if (val.isRelative())
         throw NotAbsoluteError(N_("multiple expression not absolute"));
     // Finalize creates NULL output if value=0, but bc->multiple is NULL
     // if value=1 (this difference is to make the common case small).
     // However, this means we need to set bc->multiple explicitly to 0
     // here if val.abs is NULL.
-    if (const Expr* e = val.get_abs())
+    if (const Expr* e = val.getAbs())
         m_multiple.reset(e->clone());
     else
         m_multiple.reset(new Expr(0));
 
-    for (BytecodeContainer::bc_iterator i = m_contents.bcs_begin(),
-         end = m_contents.bcs_end(); i != end; ++i)
+    for (BytecodeContainer::bc_iterator i = m_contents.bytecodes_begin(),
+         end = m_contents.bytecodes_end(); i != end; ++i)
     {
-        if (i->get_special() == Bytecode::Contents::SPECIAL_OFFSET)
+        if (i->getSpecial() == Bytecode::Contents::SPECIAL_OFFSET)
             throw ValueError(N_("cannot combine multiples and setting assembly position"));
-        i->finalize();
+        i->Finalize();
     }
 }
 
 unsigned long
-MultipleBytecode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+MultipleBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 {
     // Calculate multiple value as an integer
     m_mult_int = 1;
-    if (m_multiple->is_intnum())
+    if (m_multiple->isIntNum())
     {
-        IntNum num = m_multiple->get_intnum();
-        if (num.sign() < 0)
+        IntNum num = m_multiple->getIntNum();
+        if (num.getSign() < 0)
         {
             m_mult_int = 0;
             throw ValueError(N_("multiple is negative"));
         }
         else
-            m_mult_int = num.get_int();
+            m_mult_int = num.getInt();
     }
     else
     {
-        if (m_multiple->contains(ExprTerm::FLOAT))
+        if (m_multiple->Contains(ExprTerm::FLOAT))
         {
             m_mult_int = 0;
             throw ValueError(
@@ -168,18 +168,18 @@ MultipleBytecode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
     }
 
     unsigned long len = 0;
-    for (BytecodeContainer::bc_iterator i = m_contents.bcs_begin(),
-         end = m_contents.bcs_end(); i != end; ++i)
+    for (BytecodeContainer::bc_iterator i = m_contents.bytecodes_begin(),
+         end = m_contents.bytecodes_end(); i != end; ++i)
     {
-        i->calc_len(add_span);
-        len += i->get_total_len();
+        i->CalcLen(add_span);
+        len += i->getTotalLen();
     }
 
     return len * m_mult_int;
 }
 
 bool
-MultipleBytecode::expand(Bytecode& bc,
+MultipleBytecode::Expand(Bytecode& bc,
                          unsigned long& len,
                          int span,
                          long old_val,
@@ -193,20 +193,20 @@ MultipleBytecode::expand(Bytecode& bc,
         return true;
     }
     // XXX: support more than one bytecode here
-    return m_contents.bcs_first().expand(span, old_val, new_val, neg_thres,
-                                         pos_thres);
+    return m_contents.bytecodes_first().Expand(span, old_val, new_val,
+                                               neg_thres, pos_thres);
 }
 
 void
-MultipleBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
+MultipleBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
-    simplify_calc_dist(*m_multiple);
-    if (!m_multiple->is_intnum())
+    SimplifyCalcDist(*m_multiple);
+    if (!m_multiple->isIntNum())
         throw ValueError(N_("could not determine multiple"));
-    IntNum num = m_multiple->get_intnum();
-    if (num.sign() < 0)
+    IntNum num = m_multiple->getIntNum();
+    if (num.getSign() < 0)
         throw ValueError(N_("multiple is negative"));
-    m_mult_int = num.get_int();
+    m_mult_int = num.getInt();
     if (m_mult_int == 0)
         return; // nothing to output
 
@@ -214,10 +214,10 @@ MultipleBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
     unsigned long pos = 0;
     for (long mult=0; mult<m_mult_int; mult++, pos += total_len)
     {
-        for (BytecodeContainer::bc_iterator i = m_contents.bcs_begin(),
-             end = m_contents.bcs_end(); i != end; ++i)
+        for (BytecodeContainer::bc_iterator i = m_contents.bytecodes_begin(),
+             end = m_contents.bytecodes_end(); i != end; ++i)
         {
-            i->output(bc_out);
+            i->Output(bc_out);
         }
     }
 }
@@ -236,15 +236,15 @@ namespace yasm
 {
 
 BytecodeContainer&
-append_multiple(BytecodeContainer& container,
-                std::auto_ptr<Expr> multiple,
-                unsigned long line)
+AppendMultiple(BytecodeContainer& container,
+               std::auto_ptr<Expr> multiple,
+               unsigned long line)
 {
-    Bytecode& bc = container.fresh_bytecode();
+    Bytecode& bc = container.FreshBytecode();
     MultipleBytecode* multbc(new MultipleBytecode(multiple));
-    BytecodeContainer& retval = multbc->get_contents();
-    bc.transform(Bytecode::Contents::Ptr(multbc));
-    bc.set_line(line);
+    BytecodeContainer& retval = multbc->getContents();
+    bc.Transform(Bytecode::Contents::Ptr(multbc));
+    bc.setLine(line);
     return retval;
 }
 

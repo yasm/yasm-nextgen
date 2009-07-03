@@ -84,7 +84,7 @@ public:
     /// Set a cross-reference for the error
     /// @param xrefline virtual line to cross-reference to (should not be 0)
     /// @param message  cross-reference message
-    void set_xref(unsigned long xrefline, const std::string& message);
+    void setXRef(unsigned long xrefline, const std::string& message);
 
     virtual const char* what() const throw();
 
@@ -261,36 +261,36 @@ public:
 /// Unconditionally clear all warning indicators, freeing any associated data.
 /// Has no effect if no warning indicators have been set.
 YASM_LIB_EXPORT
-void warn_clear();
+void ClearWarn();
 
 /// Get the first warning indicator.  YASM_WARN_NONE is returned if no warning
 /// has been set.  Note that as YASM_WARN_NONE is 0, the return value can also
 /// be treated as a boolean value.
 /// @return First warning indicator.
 YASM_LIB_EXPORT
-WarnClass warn_occurred();
+WarnClass WarnOccurred();
 
 /// Add a warning indicator.
 /// @param line     line
 /// @param wclass   warning class
 /// @param wstr     warning message
 YASM_LIB_EXPORT
-void warn_set(unsigned long line, WarnClass wclass, const std::string& wstr);
+void setWarn(unsigned long line, WarnClass wclass, const std::string& wstr);
 
 /// Add a warning indicator.
 /// @param wclass   warning class
 /// @param wstr     warning message
 inline void
-warn_set(WarnClass wclass, const std::string& wstr)
+setWarn(WarnClass wclass, const std::string& wstr)
 {
-    warn_set(0, wclass, wstr);
+    setWarn(0, wclass, wstr);
 }
 
 /// Update all warning indicators that do not have a line number set with
 /// a line number.
 /// @param line     line number
 YASM_LIB_EXPORT
-void warn_update_line(unsigned long line);
+void WarnUpdateLine(unsigned long line);
 
 /// Fetch the first warning indicator.  If there is at least one warning
 /// indicator, the output string is set to the first warning indicator
@@ -302,29 +302,29 @@ void warn_update_line(unsigned long line);
 ///         #WARN_NONE is returned; otherwise, the first warning indicator
 ///         is returned.
 YASM_LIB_EXPORT
-WarnClass warn_fetch(/*@out@*/ std::string* wmsg,
-                     /*@out@*/ unsigned long *wline = 0);
+WarnClass FetchWarn(/*@out@*/ std::string* wmsg,
+                    /*@out@*/ unsigned long *wline = 0);
 
 /// Enable a class of warnings.
 /// @param wclass   warning class
 YASM_LIB_EXPORT
-void warn_enable(WarnClass wclass);
+void EnableWarn(WarnClass wclass);
 
 /// Disable a class of warnings.
 /// @param wclass   warning class
 YASM_LIB_EXPORT
-void warn_disable(WarnClass wclass);
+void DisableWarn(WarnClass wclass);
 
 /// Disable all classes of warnings.
 YASM_LIB_EXPORT
-void warn_disable_all();
+void DisableAllWarn();
 
 /// Convert a possibly unprintable character into a printable string.
 /// Uses standard cat(1) convention for unprintable characters.
 /// @param ch   possibly unprintable character
 /// @return Printable string representation.
 YASM_LIB_EXPORT
-std::string conv_unprint(int ch);
+std::string ConvUnprint(int ch);
 
 /// Hook for library users to map to gettext() if GNU gettext is being used.
 /// @param msgid    message catalog identifier

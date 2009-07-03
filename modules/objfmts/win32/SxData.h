@@ -38,9 +38,9 @@ namespace objfmt
 namespace win32
 {
 
-void append_sxdata(BytecodeContainer& container,
-                   SymbolRef sym,
-                   unsigned long line);
+void AppendSxData(BytecodeContainer& container,
+                  SymbolRef sym,
+                  unsigned long line);
 
 }}} // namespace yasm::objfmt::win32
 

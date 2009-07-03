@@ -56,7 +56,7 @@ public:
     /// of an existing string in the table, it may be reused.
     /// @param str      String
     /// @return String index.
-    unsigned long get_index(const std::string& str);
+    unsigned long getIndex(const std::string& str);
 
     /// Get the string corresponding to a particular index.  Due to legal use
     /// of substrings, no error checking is performed except for trying to read
@@ -64,21 +64,21 @@ public:
     /// @param index    String index (offset into string table)
     /// @return String.
     /// Throws out_of_range exception if index is out of range.
-    std::string get_str(unsigned long index) const;
+    std::string getString(unsigned long index) const;
 
     /// Get the size of the string table.
     /// @return Size in bytes.
-    unsigned long get_size() const { return m_storage.size(); }
+    unsigned long getSize() const { return m_storage.size(); }
 
     /// Write the string table to an output stream.
     /// @param os       output stream
-    void write(std::ostream& os) const;
+    void Write(std::ostream& os) const;
 
     /// Read the string table from an input stream.
     /// Deletes any pre-existing string table data.
     /// @param is       input stream
     /// @param size     string table size, in bytes
-    void read(std::istream& is, unsigned long size);
+    void Read(std::istream& is, unsigned long size);
 
 private:
     std::vector<char> m_storage;

@@ -68,16 +68,16 @@ enum GeneralPostOp
     POSTOP_SIMM32_AVAIL
 };
 
-void append_general(BytecodeContainer& container,
-                    const X86Common& common,
-                    const X86Opcode& opcode,
-                    std::auto_ptr<X86EffAddr> ea,
-                    std::auto_ptr<Value> imm,
-                    unsigned char special_prefix,
-                    unsigned char rex,
-                    GeneralPostOp postop,
-                    bool default_rel,
-                    unsigned long line);
+void AppendGeneral(BytecodeContainer& container,
+                   const X86Common& common,
+                   const X86Opcode& opcode,
+                   std::auto_ptr<X86EffAddr> ea,
+                   std::auto_ptr<Value> imm,
+                   unsigned char special_prefix,
+                   unsigned char rex,
+                   GeneralPostOp postop,
+                   bool default_rel,
+                   unsigned long line);
 
 }}} // namespace yasm::arch::x86
 

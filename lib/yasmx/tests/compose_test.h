@@ -36,42 +36,42 @@ public:
         std::string out;
 
         // demonstrate basic usage
-        out = String::Compose("There are %1 cows in them %2.") % 15 % "fields";
+        out = String::Composer("There are %1 cows in them %2.") % 15 % "fields";
         TS_ASSERT_EQUALS(out, "There are 15 cows in them fields.");
 
-        using String::Compose;
+        using String::Composer;
 
         // demonstrate argument repetition
-        out = Compose("To %1, or not to %1... is actually not a question.") % "be";
+        out = Composer("To %1, or not to %1... is actually not a question.") % "be";
         TS_ASSERT_EQUALS(out, "To be, or not to be... is actually not a question.");
 
         // demonstrate leaving out arguments
-        out = Compose("Primetime: %2  %3  %5  %7") % 1 % 2 % 3 % 4 % 5 % 6 % 7;
+        out = Composer("Primetime: %2  %3  %5  %7") % 1 % 2 % 3 % 4 % 5 % 6 % 7;
         TS_ASSERT_EQUALS(out, "Primetime: 2  3  5  7");
 
         // demonstrate % escaping
-        out = Compose("Using % before a %%1 causes the %1 to be escaped") % "%1";
+        out = Composer("Using % before a %%1 causes the %1 to be escaped") % "%1";
         TS_ASSERT_EQUALS(out, "Using % before a %1 causes the %1 to be escaped");
 
-        out = Compose("Four percent in a row: %%%%%%%%");
+        out = Composer("Four percent in a row: %%%%%%%%");
         TS_ASSERT_EQUALS(out, "Four percent in a row: %%%%");
 
         // demonstrate use of manipulators
-        // parenthesis around String::format are required
-        out = Compose("With lots of precision, %2 equals %1%!") %
-            (String::format(std::setprecision(15), (1.0 / 3 * 100))) % "one third";
+        // parenthesis around String::Format are required
+        out = Composer("With lots of precision, %2 equals %1%!") %
+            (String::Format(std::setprecision(15), (1.0 / 3 * 100))) % "one third";
         TS_ASSERT_EQUALS(out, "With lots of precision, one third equals 33.3333333333333%!");
 
         // test % escaping at the string ends
-        out = Compose("%% This is like a LaTeX comment %%");
+        out = Composer("%% This is like a LaTeX comment %%");
         TS_ASSERT_EQUALS(out, "% This is like a LaTeX comment %");
 
         // test % specs at the string ends
-        out = Compose("%1 %2") % "Hello" % "World!";
+        out = Composer("%1 %2") % "Hello" % "World!";
         TS_ASSERT_EQUALS(out, "Hello World!");
 
         // test a bunch of arguments
-        out = Compose("%1 %2 %3 %4 %5 %6, %7 %8!") % "May" % "the" % "Force" %
+        out = Composer("%1 %2 %3 %4 %5 %6, %7 %8!") % "May" % "the" % "Force" %
             "be" % "with" % "you" % "Woung" % "Skytalker";
         TS_ASSERT_EQUALS(out, "May the Force be with you, Woung Skytalker!");
     }
@@ -81,41 +81,41 @@ public:
         std::string out;
 
         // demonstrate basic usage
-        out = String::compose("There are %1 cows in them %2.", 15, "fields");
+        out = String::Compose("There are %1 cows in them %2.", 15, "fields");
         TS_ASSERT_EQUALS(out, "There are 15 cows in them fields.");
 
-        using String::compose;
+        using String::Compose;
 
         // demonstrate argument repetition
-        out = compose("To %1, or not to %1... is actually not a question.", "be");
+        out = Compose("To %1, or not to %1... is actually not a question.", "be");
         TS_ASSERT_EQUALS(out, "To be, or not to be... is actually not a question.");
 
         // demonstrate leaving out arguments
-        out = compose("Primetime: %2  %3  %5  %7", 1, 2, 3, 4, 5, 6, 7);
+        out = Compose("Primetime: %2  %3  %5  %7", 1, 2, 3, 4, 5, 6, 7);
         TS_ASSERT_EQUALS(out, "Primetime: 2  3  5  7");
 
         // demonstrate % escaping
-        out = compose("Using % before a %%1 causes the %1 to be escaped", "%1");
+        out = Compose("Using % before a %%1 causes the %1 to be escaped", "%1");
         TS_ASSERT_EQUALS(out, "Using % before a %1 causes the %1 to be escaped");
 
-        out = compose("Four percent in a row: %%%%%%%%");
+        out = Compose("Four percent in a row: %%%%%%%%");
         TS_ASSERT_EQUALS(out, "Four percent in a row: %%%%");
 
         // demonstrate use of manipulators
-        out = compose("With lots of precision, %2 equals %1%!",
-            String::format(std::setprecision(15), (1.0 / 3 * 100)), "one third");
+        out = Compose("With lots of precision, %2 equals %1%!",
+            String::Format(std::setprecision(15), (1.0 / 3 * 100)), "one third");
         TS_ASSERT_EQUALS(out, "With lots of precision, one third equals 33.3333333333333%!");
 
         // test % escaping at the string ends
-        out = compose("%% This is like a LaTeX comment %%");
+        out = Compose("%% This is like a LaTeX comment %%");
         TS_ASSERT_EQUALS(out, "% This is like a LaTeX comment %");
 
         // test % specs at the string ends
-        out = compose("%1 %2", "Hello", "World!");
+        out = Compose("%1 %2", "Hello", "World!");
         TS_ASSERT_EQUALS(out, "Hello World!");
 
         // test a bunch of arguments
-        out = compose("%1 %2 %3 %4 %5 %6, %7 %8!", "May", "the", "Force",
+        out = Compose("%1 %2 %3 %4 %5 %6, %7 %8!", "May", "the", "Force",
                       "be", "with", "you", "Woung", "Skytalker");
         TS_ASSERT_EQUALS(out, "May the Force be with you, Woung Skytalker!");
     }
@@ -124,16 +124,16 @@ public:
     {
         std::string out;
 
-        out = String::Compose("1: %1 2: %2 3: %3") % "" % "b" % "c";
+        out = String::Composer("1: %1 2: %2 3: %3") % "" % "b" % "c";
         TS_ASSERT_EQUALS(out, "1:  2: b 3: c");
 
-        out = String::Compose("1: %1 2: %2 3: %3") % "a" % "" % "c";
+        out = String::Composer("1: %1 2: %2 3: %3") % "a" % "" % "c";
         TS_ASSERT_EQUALS(out, "1: a 2:  3: c");
 
-        out = String::Compose("1: %1 2: %2 3: %3") % "a" % "b" % "";
+        out = String::Composer("1: %1 2: %2 3: %3") % "a" % "b" % "";
         TS_ASSERT_EQUALS(out, "1: a 2: b 3: ");
 
-        out = String::Compose("1: %1 2: %2 3: %3 ") % "a" % "b" % "";
+        out = String::Composer("1: %1 2: %2 3: %3 ") % "a" % "b" % "";
         TS_ASSERT_EQUALS(out, "1: a 2: b 3:  ");
     }
 
@@ -145,36 +145,36 @@ public:
 
     void testFuncOut()
     {
-        using String::Compose;
-        TS_ASSERT_EQUALS(func(Compose("composing in a %1 is fun!") % "function"),
+        using String::Composer;
+        TS_ASSERT_EQUALS(func(Composer("composing in a %1 is fun!") % "function"),
                           "composing in a function is fun!");
     }
 
     void testStreamOut()
     {
         std::ostringstream os;
-        os << "Here's some " << String::Compose("formatted %1 %2") % "text" % "for"
+        os << "Here's some " << String::Composer("formatted %1 %2") % "text" % "for"
             << " you!";
         TS_ASSERT_EQUALS(os.str(), "Here's some formatted text for you!");
     }
 
     void testCopy()
     {
-        using String::Compose;
+        using String::Composer;
 
-        Compose x("%1 %2");
-        x.auto_arg("foo");
+        Composer x("%1 %2");
+        x.AutoArg("foo");
 
-        Compose a = x, b = x;
-        a.auto_arg("bar");
-        b.auto_arg("baz");
+        Composer a = x, b = x;
+        a.AutoArg("bar");
+        b.AutoArg("baz");
 
-        TS_ASSERT_EQUALS(a.str(), "foo bar");
-        TS_ASSERT_EQUALS(b.str(), "foo baz");
+        TS_ASSERT_EQUALS(a.getStr(), "foo bar");
+        TS_ASSERT_EQUALS(b.getStr(), "foo baz");
     }
 
     void testPartial()
     {
-        TS_ASSERT_EQUALS(String::compose("%1 %2 %3", "foo", "bar"), "foo bar %3");
+        TS_ASSERT_EQUALS(String::Compose("%1 %2 %3", "foo", "bar"), "foo bar %3");
     }
 };

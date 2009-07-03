@@ -64,7 +64,7 @@ ElfConfig::ElfConfig()
 }
 
 ElfSymbolIndex
-ElfConfig::symtab_setindexes(Object& object, ElfSymbolIndex* nlocal) const
+ElfConfig::AssignSymbolIndices(Object& object, ElfSymbolIndex* nlocal) const
 {
     // start at 1 due to undefined symbol (0)
     ElfSymbolIndex num = 1;
@@ -72,13 +72,13 @@ ElfConfig::symtab_setindexes(Object& object, ElfSymbolIndex* nlocal) const
     for (Object::symbol_iterator i=object.symbols_begin(),
          end=object.symbols_end(); i != end; ++i)
     {
-        ElfSymbol* elfsym = get_elf(*i);
+        ElfSymbol* elfsym = getElf(*i);
         if (!elfsym)
             continue;
 
-        elfsym->set_symindex(num);
+        elfsym->setSymbolIndex(num);
 
-        if (elfsym->is_local())
+        if (elfsym->isLocal())
             *nlocal = num;
 
         ++num;
@@ -87,17 +87,17 @@ ElfConfig::symtab_setindexes(Object& object, ElfSymbolIndex* nlocal) const
 }
 
 unsigned long
-ElfConfig::symtab_write(std::ostream& os,
-                        Object& object,
-                        Errwarns& errwarns,
-                        Bytes& scratch) const
+ElfConfig::WriteSymbolTable(std::ostream& os,
+                            Object& object,
+                            Errwarns& errwarns,
+                            Bytes& scratch) const
 {
     unsigned long size = 0;
 
     // write undef symbol
     ElfSymbol undef;
     scratch.resize(0);
-    undef.write(scratch, *this);
+    undef.Write(scratch, *this);
     os << scratch;
     size += scratch.size();
 
@@ -105,14 +105,14 @@ ElfConfig::symtab_write(std::ostream& os,
     for (Object::symbol_iterator sym=object.symbols_begin(),
          end=object.symbols_end(); sym != end; ++sym)
     {
-        ElfSymbol* elfsym = get_elf(*sym);
+        ElfSymbol* elfsym = getElf(*sym);
         if (!elfsym)
             continue;
 
-        elfsym->finalize(*sym, errwarns);
+        elfsym->Finalize(*sym, errwarns);
 
         scratch.resize(0);
-        elfsym->write(scratch, *this);
+        elfsym->Write(scratch, *this);
         os << scratch;
         size += scratch.size();
     }
@@ -120,13 +120,13 @@ ElfConfig::symtab_write(std::ostream& os,
 }
 
 bool
-ElfConfig::symtab_read(std::istream&      is,
-                       ElfSymtab&         symtab,
-                       Object&            object,
-                       unsigned long      size,
-                       ElfSize            symsize,
-                       const StringTable& strtab,
-                       Section*           sections[]) const
+ElfConfig::ReadSymbolTable(std::istream&      is,
+                           ElfSymtab&         symtab,
+                           Object&            object,
+                           unsigned long      size,
+                           ElfSize            symsize,
+                           const StringTable& strtab,
+                           Section*           sections[]) const
 {
     is.seekg(symsize, std::ios_base::cur);  // skip first symbol (undef)
     symtab.push_back(SymbolRef(0));
@@ -136,20 +136,20 @@ ElfConfig::symtab_read(std::istream&      is,
     for (unsigned long pos=symsize; pos<size; pos += symsize, ++index)
     {
         bytes.resize(0);
-        bytes.write(is, symsize);
+        bytes.Write(is, symsize);
         if (!is)
             throw Error(N_("could not read symbol entry"));
 
         std::auto_ptr<ElfSymbol> elfsym(
             new ElfSymbol(*this, bytes, index, sections));
 
-        SymbolRef sym = elfsym->create_symbol(object, strtab);
+        SymbolRef sym = elfsym->CreateSymbol(object, strtab);
         symtab.push_back(sym);
 
         if (sym)
         {
             // Associate symbol data with symbol
-            sym->add_assoc_data(ElfSymbol::key,
+            sym->AddAssocData(ElfSymbol::key,
                 std::auto_ptr<AssocData>(elfsym.release()));
         }
     }
@@ -158,7 +158,7 @@ ElfConfig::symtab_read(std::istream&      is,
 }
 
 unsigned long
-ElfConfig::proghead_get_size() const
+ElfConfig::getProgramHeaderSize() const
 {
     if (cls == ELFCLASS32)
         return EHDR32_SIZE;
@@ -169,135 +169,135 @@ ElfConfig::proghead_get_size() const
 }
 
 bool
-ElfConfig::proghead_read(std::istream& is)
+ElfConfig::ReadProgramHeader(std::istream& is)
 {
     Bytes bytes;
 
     // read magic number and elf class
     is.seekg(0);
-    bytes.write(is, 5);
+    bytes.Write(is, 5);
     if (!is)
         return false;
 
-    if (read_u8(bytes) != ELFMAG0)
+    if (ReadU8(bytes) != ELFMAG0)
         return false;
-    if (read_u8(bytes) != ELFMAG1)
+    if (ReadU8(bytes) != ELFMAG1)
         return false;
-    if (read_u8(bytes) != ELFMAG2)
+    if (ReadU8(bytes) != ELFMAG2)
         return false;
-    if (read_u8(bytes) != ELFMAG3)
+    if (ReadU8(bytes) != ELFMAG3)
         return false;
 
-    cls = static_cast<ElfClass>(read_u8(bytes));
+    cls = static_cast<ElfClass>(ReadU8(bytes));
 
     // determine header size
-    unsigned long hdrsize = proghead_get_size();
+    unsigned long hdrsize = getProgramHeaderSize();
     if (hdrsize < 5)
         return false;
 
     // read remainder of header
-    bytes.write(is, hdrsize-5);
+    bytes.Write(is, hdrsize-5);
     if (!is)
         return false;
 
-    encoding = static_cast<ElfDataEncoding>(read_u8(bytes));
-    if (!setup_endian(bytes))
+    encoding = static_cast<ElfDataEncoding>(ReadU8(bytes));
+    if (!setEndian(bytes))
         return false;
 
-    version = static_cast<ElfVersion>(read_u8(bytes));
+    version = static_cast<ElfVersion>(ReadU8(bytes));
     if (version != EV_CURRENT)
         return false;
 
-    osabi = static_cast<ElfOsabiIndex>(read_u8(bytes));
-    abi_version = read_u8(bytes);
-    bytes.set_readpos(EI_NIDENT);
-    file_type = static_cast<ElfFileType>(read_u16(bytes));
-    machine_type = static_cast<ElfMachineType>(read_u16(bytes));
-    version = static_cast<ElfVersion>(read_u32(bytes));
+    osabi = static_cast<ElfOsabiIndex>(ReadU8(bytes));
+    abi_version = ReadU8(bytes);
+    bytes.setReadPosition(EI_NIDENT);
+    file_type = static_cast<ElfFileType>(ReadU16(bytes));
+    machine_type = static_cast<ElfMachineType>(ReadU16(bytes));
+    version = static_cast<ElfVersion>(ReadU32(bytes));
     if (version != EV_CURRENT)
         return false;
 
     if (cls == ELFCLASS32)
     {
-        start = read_u32(bytes);
-        proghead_pos = read_u32(bytes);
-        secthead_pos = read_u32(bytes);
+        start = ReadU32(bytes);
+        proghead_pos = ReadU32(bytes);
+        secthead_pos = ReadU32(bytes);
     }
     else if (cls == ELFCLASS64)
     {
-        start = read_u64(bytes);
-        proghead_pos = read_u64(bytes).get_uint();
-        secthead_pos = read_u64(bytes).get_uint();
+        start = ReadU64(bytes);
+        proghead_pos = ReadU64(bytes).getUInt();
+        secthead_pos = ReadU64(bytes).getUInt();
     }
 
-    machine_flags = read_u32(bytes);
-    read_u16(bytes);                // e_ehsize (don't care)
-    proghead_size = read_u16(bytes);
-    proghead_count = read_u16(bytes);
-    secthead_size = read_u16(bytes);
-    secthead_count = read_u16(bytes);
-    shstrtab_index = read_u16(bytes);
+    machine_flags = ReadU32(bytes);
+    ReadU16(bytes);                 // e_ehsize (don't care)
+    proghead_size = ReadU16(bytes);
+    proghead_count = ReadU16(bytes);
+    secthead_size = ReadU16(bytes);
+    secthead_count = ReadU16(bytes);
+    shstrtab_index = ReadU16(bytes);
 
     return true;
 }
 
 void
-ElfConfig::proghead_write(std::ostream& os, Bytes& scratch)
+ElfConfig::WriteProgramHeader(std::ostream& os, Bytes& scratch)
 {
     scratch.resize(0);
-    setup_endian(scratch);
+    setEndian(scratch);
 
     // ELF magic number
-    write_8(scratch, ELFMAG0);
-    write_8(scratch, ELFMAG1);
-    write_8(scratch, ELFMAG2);
-    write_8(scratch, ELFMAG3);
+    Write8(scratch, ELFMAG0);
+    Write8(scratch, ELFMAG1);
+    Write8(scratch, ELFMAG2);
+    Write8(scratch, ELFMAG3);
 
-    write_8(scratch, cls);              // elf class
-    write_8(scratch, encoding);         // data encoding :: MSB?
-    write_8(scratch, version);          // elf version
-    write_8(scratch, osabi);            // os/abi
-    write_8(scratch, abi_version);      // ABI version
+    Write8(scratch, cls);               // elf class
+    Write8(scratch, encoding);          // data encoding :: MSB?
+    Write8(scratch, version);           // elf version
+    Write8(scratch, osabi);             // os/abi
+    Write8(scratch, abi_version);       // ABI version
     while (scratch.size() < EI_NIDENT)
-        write_8(scratch, 0);            // e_ident padding
+        Write8(scratch, 0);             // e_ident padding
 
-    write_16(scratch, file_type);       // e_type
-    write_16(scratch, machine_type);    // e_machine - or others
-    write_32(scratch, version);         // elf version
+    Write16(scratch, file_type);        // e_type
+    Write16(scratch, machine_type);     // e_machine - or others
+    Write32(scratch, version);          // elf version
 
     unsigned int ehdr_size = 0;
     if (cls == ELFCLASS32)
     {
-        write_32(scratch, start);           // e_entry execution startaddr
-        write_32(scratch, proghead_pos);    // e_phoff program header off
-        write_32(scratch, secthead_pos);    // e_shoff section header off
+        Write32(scratch, start);            // e_entry execution startaddr
+        Write32(scratch, proghead_pos);     // e_phoff program header off
+        Write32(scratch, secthead_pos);     // e_shoff section header off
         ehdr_size = EHDR32_SIZE;
         secthead_size = SHDR32_SIZE;
     }
     else if (cls == ELFCLASS64)
     {
-        write_64(scratch, start);           // e_entry execution startaddr
-        write_64(scratch, proghead_pos);    // e_phoff program header off
-        write_64(scratch, secthead_pos);    // e_shoff section header off
+        Write64(scratch, start);            // e_entry execution startaddr
+        Write64(scratch, proghead_pos);     // e_phoff program header off
+        Write64(scratch, secthead_pos);     // e_shoff section header off
         ehdr_size = EHDR64_SIZE;
         secthead_size = SHDR64_SIZE;
     }
 
-    write_32(scratch, machine_flags);   // e_flags
-    write_16(scratch, ehdr_size);       // e_ehsize
-    write_16(scratch, proghead_size);   // e_phentsize
-    write_16(scratch, proghead_count);  // e_phnum
-    write_16(scratch, secthead_size);   // e_shentsize
-    write_16(scratch, secthead_count);  // e_shnum
-    write_16(scratch, shstrtab_index);  // e_shstrndx
+    Write32(scratch, machine_flags);    // e_flags
+    Write16(scratch, ehdr_size);        // e_ehsize
+    Write16(scratch, proghead_size);    // e_phentsize
+    Write16(scratch, proghead_count);   // e_phnum
+    Write16(scratch, secthead_size);    // e_shentsize
+    Write16(scratch, secthead_count);   // e_shnum
+    Write16(scratch, shstrtab_index);   // e_shstrndx
 
-    assert(scratch.size() == proghead_get_size());
+    assert(scratch.size() == getProgramHeaderSize());
 
     os << scratch;
 }
 
 std::string
-ElfConfig::name_reloc_section(const std::string& basesect) const
+ElfConfig::getRelocSectionName(const std::string& basesect) const
 {
     if (rela)
         return ".rela"+basesect;
@@ -306,7 +306,7 @@ ElfConfig::name_reloc_section(const std::string& basesect) const
 }
 
 bool
-ElfConfig::setup_endian(Bytes& bytes) const
+ElfConfig::setEndian(Bytes& bytes) const
 {
     if (encoding == ELFDATA2LSB)
         bytes << little_endian;

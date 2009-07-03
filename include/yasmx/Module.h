@@ -47,15 +47,15 @@ public:
 
     /// Get the one-line description of the module.
     /// @return One-line description of module.
-    virtual const char* get_name() const = 0;
+    virtual const char* getName() const = 0;
 
     /// Get the keyword used to select the module.
     /// @return Module keyword.
-    virtual const char* get_keyword() const = 0;
+    virtual const char* getKeyword() const = 0;
 
     /// Get the module type name (e.g. "ObjectFormat", "DebugFormat", ...).
     /// @return Module typename.
-    virtual const char* get_type() const = 0;
+    virtual const char* getType() const = 0;
 
 private:
     Module(const Module&);                  // not implemented

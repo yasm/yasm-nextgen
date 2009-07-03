@@ -57,7 +57,7 @@ public:
         }
     }
 
-    void to_bytes(Bytes& bytes) const;
+    void ToBytes(Bytes& bytes) const;
 
     /// Switch to the "alternate" one-byte opcode.  Some optimizations
     /// store two opcodes in the three bytes of opcode storage available;
@@ -65,19 +65,19 @@ public:
     /// "alternate" opcode.  The primary opcode is nominally the active one.
     /// This function makes the alternate opcode the active one by copying
     /// over the first opcode and setting the opcode length to 1.
-    void make_alt_1();
+    void MakeAlt1();
 
     /// Switch to the "alternate" two-byte opcode.  Copies the last two
     /// opcode bytes to the first two, and sets the length to 2.
     /// This is primarily used for VEX opcodes.
-    void make_alt_2();
+    void MakeAlt2();
 
-    bool is_empty() const { return m_len == 0; }
-    unsigned int get_len() const { return m_len; }
+    bool isEmpty() const { return m_len == 0; }
+    unsigned int getLen() const { return m_len; }
 
-    void add(int byte, unsigned char val) { m_opcode[byte] += val; }
-    void mask(int byte, unsigned char mask) { m_opcode[byte] &= mask; }
-    void merge(int byte, unsigned char val) { m_opcode[byte] |= val; }
+    void Add(int byte, unsigned char val) { m_opcode[byte] += val; }
+    void Mask(int byte, unsigned char mask) { m_opcode[byte] &= mask; }
+    void Merge(int byte, unsigned char val) { m_opcode[byte] |= val; }
 
     unsigned char get(int byte) { return m_opcode[byte]; }
 

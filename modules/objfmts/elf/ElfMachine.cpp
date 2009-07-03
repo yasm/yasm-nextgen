@@ -43,28 +43,28 @@ namespace objfmt
 namespace elf
 {
 
-extern bool elf_x86_x86_match(const std::string& arch_keyword,
-                              const std::string& arch_machine,
-                              ElfClass cls);
-extern bool elf_x86_amd64_match(const std::string& arch_keyword,
-                                const std::string& arch_machine,
-                                ElfClass cls);
+extern bool ElfMatch_x86_x86(const std::string& arch_keyword,
+                             const std::string& arch_machine,
+                             ElfClass cls);
+extern bool ElfMatch_x86_amd64(const std::string& arch_keyword,
+                               const std::string& arch_machine,
+                               ElfClass cls);
 
-extern std::auto_ptr<ElfMachine> elf_x86_x86_create();
-extern std::auto_ptr<ElfMachine> elf_x86_amd64_create();
+extern std::auto_ptr<ElfMachine> ElfCreate_x86_x86();
+extern std::auto_ptr<ElfMachine> ElfCreate_x86_amd64();
 
 struct MachineCheckCreate
 {
-    bool (*match) (const std::string& arch_keyword,
+    bool (*Match) (const std::string& arch_keyword,
                    const std::string& arch_machine,
                    ElfClass cls);
-    std::auto_ptr<ElfMachine> (*create) ();
+    std::auto_ptr<ElfMachine> (*Create) ();
 };
 
 static const MachineCheckCreate machines[] =
 {
-    {&elf_x86_x86_match, &elf_x86_x86_create},
-    {&elf_x86_amd64_match, &elf_x86_amd64_create},
+    {&ElfMatch_x86_x86, &ElfCreate_x86_x86},
+    {&ElfMatch_x86_amd64, &ElfCreate_x86_amd64},
 };
 
 const char* ElfSpecialSymbol::key = "objfmt::elf::ElfSpecialSymbol";
@@ -74,7 +74,7 @@ ElfSpecialSymbol::~ElfSpecialSymbol()
 }
 
 void
-ElfSpecialSymbol::put(marg_ostream& os) const
+ElfSpecialSymbol::Put(marg_ostream& os) const
 {
     // TODO
 }
@@ -84,38 +84,38 @@ ElfMachine::~ElfMachine()
 }
 
 bool
-ok_elf_machine(const Arch& arch, ElfClass cls)
+isOkElfMachine(const Arch& arch, ElfClass cls)
 {
-    std::string keyword = arch.get_module().get_keyword();
-    std::string machine = arch.get_machine();
+    std::string keyword = arch.getModule().getKeyword();
+    std::string machine = arch.getMachine();
     for (unsigned int i=0; i<NELEMS(machines); ++i)
     {
-        if (machines[i].match(keyword, machine, cls))
+        if (machines[i].Match(keyword, machine, cls))
             return true;
     }
     return false;
 }
 
 std::auto_ptr<ElfMachine>
-create_elf_machine(const Arch& arch, ElfClass cls)
+CreateElfMachine(const Arch& arch, ElfClass cls)
 {
-    std::string keyword = arch.get_module().get_keyword();
-    std::string machine = arch.get_machine();
+    std::string keyword = arch.getModule().getKeyword();
+    std::string machine = arch.getMachine();
     for (unsigned int i=0; i<NELEMS(machines); ++i)
     {
-        if (machines[i].match(keyword, machine, cls))
-            return machines[i].create();
+        if (machines[i].Match(keyword, machine, cls))
+            return machines[i].Create();
     }
     assert(false && "could not find elf machine");
-    return machines[0].create();
+    return machines[0].Create();
 }
 
 void
-add_ssym(Object& object, const SpecialSymbolData& ssym)
+AddElfSSym(Object& object, const SpecialSymbolData& ssym)
 {
-    SymbolRef sym = object.add_special_symbol(ssym.name);
-    sym->define_special(Symbol::EXTERN);
-    sym->add_assoc_data(ElfSpecialSymbol::key,
+    SymbolRef sym = object.AddSpecialSymbol(ssym.name);
+    sym->DefineSpecial(Symbol::EXTERN);
+    sym->AddAssocData(ElfSpecialSymbol::key,
         std::auto_ptr<AssocData>(new ElfSpecialSymbol(ssym)));
 }
 

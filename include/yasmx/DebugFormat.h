@@ -56,16 +56,16 @@ public:
     virtual ~DebugFormat();
 
     /// Get module.
-    const DebugFormatModule& get_module() const { return m_module; }
+    const DebugFormatModule& getModule() const { return m_module; }
 
     /// Add directive handlers.
-    virtual void add_directives(Directives& dirs, const char* parser);
+    virtual void AddDirectives(Directives& dirs, const char* parser);
 
     /// Generate debugging information bytecodes.
     /// @param linemap      virtual/physical line mapping
     /// @param errwarns     error/warning set
     /// @note Errors and warnings are stored into errwarns.
-    virtual void generate(Linemap& linemap, Errwarns& errwarns) = 0;
+    virtual void Generate(Linemap& linemap, Errwarns& errwarns) = 0;
 
 private:
     DebugFormat(const DebugFormat&);                  // not implemented
@@ -85,16 +85,16 @@ public:
 
     /// Get the module type.
     /// @return "DebugFormat".
-    const char* get_type() const;
+    const char* getType() const;
 
     /// Determine if object is acceptable to debug format.
     /// @param object       object
     /// @return False on error (debug format cannot handle the object).
-    virtual bool ok_object(Object& object) const = 0;
+    virtual bool isOkObject(Object& object) const = 0;
 
     /// DebugFormat factory function.
     /// @return New debug format.
-    virtual std::auto_ptr<DebugFormat> create(Object& object) const = 0;
+    virtual std::auto_ptr<DebugFormat> Create(Object& object) const = 0;
 };
 
 template <typename DebugFormatImpl>
@@ -104,13 +104,13 @@ public:
     DebugFormatModuleImpl() {}
     ~DebugFormatModuleImpl() {}
 
-    const char* get_name() const { return DebugFormatImpl::get_name(); }
-    const char* get_keyword() const { return DebugFormatImpl::get_keyword(); }
+    const char* getName() const { return DebugFormatImpl::getName(); }
+    const char* getKeyword() const { return DebugFormatImpl::getKeyword(); }
 
-    bool ok_object(Object& object) const
-    { return DebugFormatImpl::ok_object(object); }
+    bool isOkObject(Object& object) const
+    { return DebugFormatImpl::isOkObject(object); }
 
-    std::auto_ptr<DebugFormat> create(Object& object) const
+    std::auto_ptr<DebugFormat> Create(Object& object) const
     {
         return std::auto_ptr<DebugFormat>(new DebugFormatImpl(*this, object));
     }

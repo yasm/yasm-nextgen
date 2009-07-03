@@ -75,7 +75,7 @@ public:
         public:
             TargetModifier() {}
             virtual ~TargetModifier();
-            virtual void put(std::ostream& os) const = 0;
+            virtual void Put(std::ostream& os) const = 0;
 
         private:
             // not implemented (noncopyable class)
@@ -112,7 +112,7 @@ public:
         /// Explicit release.
         /// Doesn't destroy contents, just ensures what contents are there
         /// won't be destroyed via the destructor.
-        void release()
+        void Release()
         {
             m_type = NONE;
             m_reg = 0;
@@ -122,77 +122,77 @@ public:
         /// Similar to clone(), we do smart copying and destruction in
         /// #Expr implementation to prevent over-copying of possibly deep
         /// expression trees.
-        void destroy();
+        void Destroy();
 
-        void put(marg_ostream& os) const;
-        void finalize();
+        void Put(marg_ostream& os) const;
+        void Finalize();
 
         /// Match type.
-        bool is_type(Type type) const
+        bool isType(Type type) const
         { return m_type == static_cast<unsigned int>(type); }
 
         /// Get the type.
-        Type get_type() const { return static_cast<Type>(m_type); }
+        Type getType() const { return static_cast<Type>(m_type); }
 
         /// Helper functions to get specific types.
 
-        const Register* get_reg() const
+        const Register* getReg() const
         {
             return (m_type == REG ? m_reg : 0);
         }
 
-        const SegmentRegister* get_segreg() const
+        const SegmentRegister* getSegReg() const
         {
             return (m_type == SEGREG ? m_segreg : 0);
         }
 
-        EffAddr* get_memory() const
+        EffAddr* getMemory() const
         {
             return (m_type == MEMORY ? m_ea : 0);
         }
 
-        Expr* get_imm() const
+        Expr* getImm() const
         {
             return (m_type == IMM ? m_val : 0);
         }
 
         /// Helper functions to release specific types
-        std::auto_ptr<EffAddr> release_memory();
-        std::auto_ptr<Expr> release_imm();
+        std::auto_ptr<EffAddr> ReleaseMemory();
+        std::auto_ptr<Expr> ReleaseImm();
 
         /// Release segment expression, 0 if none.
-        std::auto_ptr<Expr> release_seg();
+        std::auto_ptr<Expr> ReleaseSeg();
 
         /// Get segment expression, 0 if none.
-        Expr* get_seg() { return m_seg; }
-        const Expr* get_seg() const { return m_seg; }
+        Expr* getSeg() { return m_seg; }
+        const Expr* getSeg() const { return m_seg; }
 
         /// Set segment expression.
-        void set_seg(std::auto_ptr<Expr> seg);
+        void setSeg(std::auto_ptr<Expr> seg);
 
         /// Get arch target modifier, 0 if none.
-        const TargetModifier* get_targetmod() const { return m_targetmod; }
+        const TargetModifier* getTargetMod() const { return m_targetmod; }
 
         /// Set target modifier.
-        void set_targetmod(const TargetModifier* tmod) { m_targetmod = tmod; }
+        void setTargetMod(const TargetModifier* tmod) { m_targetmod = tmod; }
 
         /// Get operand size, in bits.  0 if not user specified.
-        unsigned int get_size() const { return m_size; }
+        unsigned int getSize() const { return m_size; }
 
         /// Set operand size, in bits.
-        void set_size(unsigned int size) { m_size = size; }
+        void setSize(unsigned int size) { m_size = size; }
 
         /// Is the operand dereferenced, as in "*foo" in GAS?
-        bool is_deref() const { return m_deref; }
+        bool isDeref() const { return m_deref; }
 
         /// Set whether the operand is dereferenced.
-        void make_deref(bool deref=true) { m_deref = deref; }
+        void setDeref(bool deref=true) { m_deref = deref; }
 
         /// Is the operand strict, as in "strict foo" in NASM?
-        bool is_strict() const { return m_strict; }
+        bool isStrict() const { return m_strict; }
 
         /// Set the strictness of the operand.
-        void make_strict(bool strict=true) { m_strict = strict; }
+        void setStrict(bool strict=true) { m_strict = strict; }
 
     private:
         /// Operand data.
@@ -244,7 +244,7 @@ public:
     public:
         Prefix() {}
         virtual ~Prefix();
-        virtual void put(std::ostream& os) const = 0;
+        virtual void Put(std::ostream& os) const = 0;
 
     private:
         Prefix(const Prefix&);                  // not implemented
@@ -260,21 +260,21 @@ public:
 
     /// Add operand to the end of an instruction.
     /// @param op           operand
-    void add_operand(const Operand& op)
+    void AddOperand(const Operand& op)
     {
         m_operands.push_back(op);
     }
 
     /// Associate a prefix with an instruction.
     /// @param prefix       data that identifies the prefix
-    void add_prefix(const Prefix* prefix)
+    void AddPrefix(const Prefix* prefix)
     {
         m_prefixes.push_back(prefix);
     }
 
     /// Associate a segment prefix with an instruction.
     /// @param segreg       data that identifies the segment register
-    void add_seg_prefix(const SegmentRegister* segreg)
+    void AddSegPrefix(const SegmentRegister* segreg)
     {
         m_segregs.push_back(segreg);
     }
@@ -283,10 +283,10 @@ public:
     /// @note A base version of this function is provided.
     /// @param os           output stream
     /// @param indent_level indentation level
-    virtual void put(marg_ostream& os) const = 0;
+    virtual void Put(marg_ostream& os) const = 0;
 
     /// Append instruction to a bytecode container.
-    void append(BytecodeContainer& container, unsigned long line);
+    void Append(BytecodeContainer& container, unsigned long line);
 
     virtual Insn* clone() const = 0;
 
@@ -295,8 +295,8 @@ protected:
     Insn(const Insn& rhs);
 
     /// Append instruction to a section.
-    virtual void do_append(BytecodeContainer& container,
-                           unsigned long line) = 0;
+    virtual void DoAppend(BytecodeContainer& container,
+                          unsigned long line) = 0;
 
     /// Operands.
     Operands m_operands;
@@ -314,28 +314,28 @@ private:
 inline std::ostream&
 operator<< (std::ostream& os, const Insn::Operand::TargetModifier& tmod)
 {
-    tmod.put(os);
+    tmod.Put(os);
     return os;
 }
 
 inline std::ostream&
 operator<< (std::ostream& os, const Insn::Prefix& prefix)
 {
-    prefix.put(os);
+    prefix.Put(os);
     return os;
 }
 
 inline marg_ostream&
 operator<< (marg_ostream& os, const Insn::Operand& operand)
 {
-    operand.put(os);
+    operand.Put(os);
     return os;
 }
 
 inline marg_ostream&
 operator<< (marg_ostream& os, const Insn& insn)
 {
-    insn.put(os);
+    insn.Put(os);
     return os;
 }
 

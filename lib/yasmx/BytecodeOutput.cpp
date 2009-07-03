@@ -46,11 +46,11 @@ BytecodeOutput::~BytecodeOutput()
 }
 
 void
-BytecodeOutput::sym_to_bytes(SymbolRef sym,
-                             Bytes& bytes,
-                             Location loc,
-                             unsigned int valsize,
-                             int warn)
+BytecodeOutput::ConvertSymbolToBytes(SymbolRef sym,
+                                     Bytes& bytes,
+                                     Location loc,
+                                     unsigned int valsize,
+                                     int warn)
 {
 }
 
@@ -59,25 +59,25 @@ BytecodeNoOutput::~BytecodeNoOutput()
 }
 
 void
-BytecodeNoOutput::value_to_bytes(Value& value,
-                                 Bytes& bytes,
-                                 Location loc,
-                                 int warn)
+BytecodeNoOutput::ConvertValueToBytes(Value& value,
+                                      Bytes& bytes,
+                                      Location loc,
+                                      int warn)
 {
     // unnecessary; we don't actually output it anyway
 }
 
 void
-BytecodeNoOutput::do_output_gap(unsigned int size)
+BytecodeNoOutput::DoOutputGap(unsigned int size)
 {
     // expected
 }
 
 void
-BytecodeNoOutput::do_output_bytes(const Bytes& bytes)
+BytecodeNoOutput::DoOutputBytes(const Bytes& bytes)
 {
-    warn_set(WARN_GENERAL,
-        N_("initialized space declared in nobits section: ignoring"));
+    setWarn(WARN_GENERAL,
+            N_("initialized space declared in nobits section: ignoring"));
 }
 
 BytecodeStreamOutput::~BytecodeStreamOutput()
@@ -85,15 +85,15 @@ BytecodeStreamOutput::~BytecodeStreamOutput()
 }
 
 void
-BytecodeStreamOutput::do_output_gap(unsigned int size)
+BytecodeStreamOutput::DoOutputGap(unsigned int size)
 {
     // Warn that gaps are converted to 0 and write out the 0's.
     static const unsigned long BLOCK_SIZE = 4096;
 
-    warn_set(WARN_UNINIT_CONTENTS,
-        N_("uninitialized space declared in code/data section: zeroing"));
+    setWarn(WARN_UNINIT_CONTENTS,
+            N_("uninitialized space declared in code/data section: zeroing"));
     // Write out in chunks
-    Bytes& bytes = get_scratch();
+    Bytes& bytes = getScratch();
     bytes.resize(BLOCK_SIZE);
     while (size > BLOCK_SIZE)
     {
@@ -105,7 +105,7 @@ BytecodeStreamOutput::do_output_gap(unsigned int size)
 }
 
 void
-BytecodeStreamOutput::do_output_bytes(const Bytes& bytes)
+BytecodeStreamOutput::DoOutputBytes(const Bytes& bytes)
 {
     // Output bytes to file
     m_os << bytes;

@@ -38,7 +38,7 @@ DebugFormat::~DebugFormat()
 }
 
 void
-DebugFormat::add_directives(Directives& dirs, const char* parser)
+DebugFormat::AddDirectives(Directives& dirs, const char* parser)
 {
 }
 
@@ -47,7 +47,7 @@ DebugFormatModule::~DebugFormatModule()
 }
 
 const char*
-DebugFormatModule::get_type() const
+DebugFormatModule::getType() const
 {
     return "DebugFormat";
 }

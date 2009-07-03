@@ -34,7 +34,7 @@ namespace yasm
 {
 
 bool
-is_unary(Op::Op op)
+isUnary(Op::Op op)
 {
     switch (op)
     {
@@ -50,7 +50,7 @@ is_unary(Op::Op op)
 }
 
 bool
-is_commutative(Op::Op op)
+isCommutative(Op::Op op)
 {
     switch (op)
     {
@@ -73,7 +73,7 @@ is_commutative(Op::Op op)
 }
 
 bool
-is_associative(Op::Op op)
+isAssociative(Op::Op op)
 {
     switch (op)
     {

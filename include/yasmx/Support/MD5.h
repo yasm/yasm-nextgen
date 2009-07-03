@@ -23,12 +23,12 @@ class YASM_LIB_EXPORT MD5
 {
     MD5();
 
-    void init();
-    void update(const unsigned char* buf, unsigned long len);
-    void final(unsigned char digest[16]);
+    void Init();
+    void Update(const unsigned char* buf, unsigned long len);
+    void Final(unsigned char digest[16]);
 
 private:
-    static void transform(unsigned long buf[4], const unsigned char in[64]);
+    static void Transform(unsigned long buf[4], const unsigned char in[64]);
 
     unsigned long m_buf[4];
     unsigned long m_bits[2];
@@ -38,7 +38,7 @@ private:
 inline
 MD5::MD5()
 {
-    init();
+    Init();
 }
 
 } // namespace yasm

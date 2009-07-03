@@ -46,31 +46,31 @@ class Preprocessor;
 /// Uses the curiously recurring template pattern.
 /// T (the derived class) is expected to implement the following:
 ///   NONE (from enum TokenType)
-///   int lex(TokenValue* lvalp);
-///   static bool is_eol_tok(int tok);
-///   static const char* describe_token(int tok);
+///   int Lex(TokenValue* lvalp);
+///   static bool isEolTok(int tok);
+///   static const char* DescribeToken(int tok);
 template <typename T, typename YYSTYPE, typename YYCTYPE = char>
 struct ParserMixin
 {
-    void init_mixin(Object& object,
-                    Preprocessor& preproc,
-                    bool save_input,
-                    Directives& dirs,
-                    Linemap& linemap);
-    unsigned long get_cur_line() const { return m_linemap->get_current(); }
+    void InitMixin(Object& object,
+                   Preprocessor& preproc,
+                   bool save_input,
+                   Directives& dirs,
+                   Linemap& linemap);
+    unsigned long getCurLine() const { return m_linemap->getCurrent(); }
 
-    int get_next_token();
-    void get_peek_token();
-    bool is_eol() { return T::is_eol_tok(m_token); }
+    int getNextToken();
+    void getPeekToken();
+    bool isEol() { return T::isEolTok(m_token); }
 
     // Eat all remaining tokens to EOL, discarding all of them.
-    void demand_eol_nothrow();
+    void DemandEolNoThrow();
 
     // Eat all remaining tokens to EOL, discarding all of them.  If there's any
     // intervening tokens, generates an error (junk at end of line).
-    void demand_eol();
+    void DemandEol();
 
-    void expect(int token);
+    void Expect(int token);
 
     Object* m_object;
     BytecodeContainer* m_container;
@@ -97,18 +97,18 @@ struct ParserMixin
 
 template <typename T, typename S, typename C>
 inline void
-ParserMixin<T, S, C>::init_mixin(Object& object,
-                                 Preprocessor& preproc,
-                                 bool save_input,
-                                 Directives& dirs,
-                                 Linemap& linemap)
+ParserMixin<T, S, C>::InitMixin(Object& object,
+                                Preprocessor& preproc,
+                                bool save_input,
+                                Directives& dirs,
+                                Linemap& linemap)
 {
     m_object = &object;
     m_preproc = &preproc;
     m_dirs = &dirs;
     m_linemap = &linemap;
-    m_arch = object.get_arch();
-    m_wordsize = m_arch->get_module().get_wordsize();
+    m_arch = object.getArch();
+    m_wordsize = m_arch->getModule().getWordSize();
 
     m_save_input = save_input;
     m_token = T::NONE;
@@ -117,61 +117,61 @@ ParserMixin<T, S, C>::init_mixin(Object& object,
 
 template <typename T, typename S, typename C>
 inline int
-ParserMixin<T, S, C>::get_next_token()
+ParserMixin<T, S, C>::getNextToken()
 {
-    m_token = static_cast<T*>(this)->lex(&m_tokval);
+    m_token = static_cast<T*>(this)->Lex(&m_tokval);
     return m_token;
 }
 
 template <typename T, typename S, typename C>
 void
-ParserMixin<T, S, C>::get_peek_token()
+ParserMixin<T, S, C>::getPeekToken()
 {
     char savech = m_tokch;
     assert(m_peek_token == T::NONE &&
            "only can have one token of lookahead");
-    m_peek_token = static_cast<T*>(this)->lex(&m_peek_tokval);
+    m_peek_token = static_cast<T*>(this)->Lex(&m_peek_tokval);
     m_peek_tokch = m_tokch;
     m_tokch = savech;
 }
 
 template <typename T, typename S, typename C>
 void
-ParserMixin<T, S, C>::demand_eol_nothrow()
+ParserMixin<T, S, C>::DemandEolNoThrow()
 {
-    if (is_eol())
+    if (isEol())
         return;
 
     if (m_peek_token != T::NONE)
-        get_next_token();
+        getNextToken();
 
-    while (!is_eol())
+    while (!isEol())
         m_token = *m_cur++;
 }
 
 template <typename T, typename S, typename C>
 void
-ParserMixin<T, S, C>::demand_eol()
+ParserMixin<T, S, C>::DemandEol()
 {
-    if (is_eol())
+    if (isEol())
         return;
 
     char tokch = m_tokch;
-    demand_eol_nothrow();
+    DemandEolNoThrow();
 
-    throw SyntaxError(String::compose(
+    throw SyntaxError(String::Compose(
         N_("junk at end of line, first unrecognized character is `%1'"),
         tokch));
 }
 
 template <typename T, typename S, typename C>
 void
-ParserMixin<T, S, C>::expect(int token)
+ParserMixin<T, S, C>::Expect(int token)
 {
     if (m_token == token)
         return;
 
-    throw ParseError(String::compose("expected %1", T::describe_token(token)));
+    throw ParseError(String::Compose("expected %1", T::DescribeToken(token)));
 }
 
 } // namespace yasm

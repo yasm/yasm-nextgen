@@ -57,19 +57,19 @@ Section::~Section()
 }
 
 Section*
-Section::as_section()
+Section::AsSection()
 {
     return this;
 }
 
 const Section*
-Section::as_section() const
+Section::AsSection() const
 {
     return this;
 }
 
 void
-Section::add_reloc(std::auto_ptr<Reloc> reloc)
+Section::AddReloc(std::auto_ptr<Reloc> reloc)
 {
     m_relocs.push_back(reloc.release());
 }
@@ -77,14 +77,14 @@ Section::add_reloc(std::auto_ptr<Reloc> reloc)
 marg_ostream&
 operator<< (marg_ostream& os, const Section& section)
 {
-    os << "name=" << section.get_name() << '\n';
-    os << "vma=" << section.get_vma() << '\n';
-    os << "lma=" << section.get_lma() << '\n';
-    os << "filepos=" << section.get_filepos() << '\n';
-    os << "align=" << section.get_align() << '\n';
-    os << "code=" << section.is_code() << '\n';
-    os << "bss=" << section.is_bss() << '\n';
-    os << "default=" << section.is_default() << '\n';
+    os << "name=" << section.getName() << '\n';
+    os << "vma=" << section.getVMA() << '\n';
+    os << "lma=" << section.getLMA() << '\n';
+    os << "filepos=" << section.getFilePos() << '\n';
+    os << "align=" << section.getAlign() << '\n';
+    os << "code=" << section.isCode() << '\n';
+    os << "bss=" << section.isBSS() << '\n';
+    os << "default=" << section.isDefault() << '\n';
 
     os << "Associated data:\n";
     ++os;

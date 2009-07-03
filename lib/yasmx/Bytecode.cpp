@@ -62,7 +62,7 @@ Bytecode::Contents::~Contents()
 }
 
 bool
-Bytecode::Contents::expand(Bytecode& bc,
+Bytecode::Contents::Expand(Bytecode& bc,
                            unsigned long& len,
                            int span,
                            long old_val,
@@ -75,7 +75,7 @@ Bytecode::Contents::expand(Bytecode& bc,
 }
 
 Bytecode::Contents::SpecialType
-Bytecode::Contents::get_special() const
+Bytecode::Contents::getSpecial() const
 {
     return SPECIAL_NONE;
 }
@@ -85,7 +85,7 @@ Bytecode::Contents::Contents(const Contents& rhs)
 }
 
 void
-Bytecode::transform(std::auto_ptr<Contents> contents)
+Bytecode::Transform(std::auto_ptr<Contents> contents)
 {
     m_contents.reset(contents.release());
 }
@@ -157,51 +157,51 @@ operator<< (marg_ostream &os, const Bytecode& bc)
 }
 
 void
-Bytecode::finalize()
+Bytecode::Finalize()
 {
     for (std::vector<Fixup>::iterator i=m_fixed_fixups.begin(),
          end=m_fixed_fixups.end(); i != end; ++i)
     {
-        if (!i->finalize())
+        if (!i->Finalize())
         {
-            if (i->is_jump_target())
-                throw TooComplexError(i->get_line(),
+            if (i->isJumpTarget())
+                throw TooComplexError(i->getLine(),
                                       N_("jump target expression too complex"));
             else
-                throw TooComplexError(i->get_line(),
+                throw TooComplexError(i->getLine(),
                                       N_("expression too complex"));
         }
 
-        if (i->is_jump_target() && i->is_complex_rel())
-            throw ValueError(i->get_line(), N_("invalid jump target"));
+        if (i->isJumpTarget() && i->isComplexRelative())
+            throw ValueError(i->getLine(), N_("invalid jump target"));
 
         // Do curpos subtraction for IP-relative flagged values.
-        if (i->is_ip_rel())
+        if (i->isIPRelative())
         {
-            Location sub_loc = {this, i->get_off()};
-            i->sub_rel(m_container->get_object(), sub_loc);
+            Location sub_loc = {this, i->getOffset()};
+            i->SubRelative(m_container->getObject(), sub_loc);
         }
 
-        warn_update_line(i->get_line());
+        WarnUpdateLine(i->getLine());
     }
 
     if (m_contents.get() != 0)
-        m_contents->finalize(*this);
+        m_contents->Finalize(*this);
 }
 
 void
-Bytecode::calc_len(const AddSpanFunc& add_span)
+Bytecode::CalcLen(const AddSpanFunc& add_span)
 {
     if (m_contents.get() == 0)
     {
         m_len = 0;
         return;
     }
-    m_len = m_contents->calc_len(*this, add_span);
+    m_len = m_contents->CalcLen(*this, add_span);
 }
 
 bool
-Bytecode::expand(int span,
+Bytecode::Expand(int span,
                  long old_val,
                  long new_val,
                  /*@out@*/ long* neg_thres,
@@ -209,115 +209,115 @@ Bytecode::expand(int span,
 {
     if (m_contents.get() == 0)
         return false;
-    return m_contents->expand(*this, m_len, span, old_val, new_val, neg_thres,
+    return m_contents->Expand(*this, m_len, span, old_val, new_val, neg_thres,
                               pos_thres);
 }
 
 void
-Bytecode::output(BytecodeOutput& bc_out)
+Bytecode::Output(BytecodeOutput& bc_out)
 {
-    unsigned long start = bc_out.get_num_output();
+    unsigned long start = bc_out.getNumOutput();
 
     // output fixups, outputting the fixed portions in between each one
     unsigned int last = 0;
     for (std::vector<Fixup>::iterator i=m_fixed_fixups.begin(),
          end=m_fixed_fixups.end(); i != end; ++i)
     {
-        unsigned int off = i->get_off();
+        unsigned int off = i->getOffset();
         Location loc = {this, off};
 
         // Output fixed portion.
-        Bytes& fixed = bc_out.get_scratch();
+        Bytes& fixed = bc_out.getScratch();
         fixed.insert(fixed.end(), m_fixed.begin() + last,
                      m_fixed.begin() + off);
-        bc_out.output(fixed);
+        bc_out.Output(fixed);
 
         // Output value.
-        Bytes& vbytes = bc_out.get_scratch();
+        Bytes& vbytes = bc_out.getScratch();
         vbytes.insert(vbytes.end(), m_fixed.begin() + off,
-                      m_fixed.begin() + off + i->get_size()/8);
+                      m_fixed.begin() + off + i->getSize()/8);
         // Make a copy of the value to ensure things like
         // "TIMES x JMP label" work.
         Value vcopy = *i;
         try
         {
-            bc_out.output(vcopy, vbytes, loc, i->is_signed() ? -1 : 1);
+            bc_out.Output(vcopy, vbytes, loc, i->isSigned() ? -1 : 1);
         }
         catch (Error& err)
         {
             // associate the error with the value, not the bytecode, line
-            err.m_line = vcopy.get_line();
+            err.m_line = vcopy.getLine();
             throw;
         }
-        warn_update_line(vcopy.get_line());
+        WarnUpdateLine(vcopy.getLine());
 
-        last = off + i->get_size()/8;
+        last = off + i->getSize()/8;
     }
     // handle last part of fixed
     if (last < m_fixed.size())
     {
-        Bytes& fixed = bc_out.get_scratch();
+        Bytes& fixed = bc_out.getScratch();
         fixed.insert(fixed.end(), m_fixed.begin() + last, m_fixed.end());
-        bc_out.output(fixed);
+        bc_out.Output(fixed);
     }
 
     start = start;  // avoid warning due to assert usage
-    assert((bc_out.get_num_output() - start) == get_fixed_len() &&
+    assert((bc_out.getNumOutput() - start) == getFixedLen() &&
            "failed to output correct number of fixed bytes");
 
     // handle tail contents
     if (m_contents.get() != 0)
-        m_contents->output(*this, bc_out);
+        m_contents->Output(*this, bc_out);
 
-    assert((bc_out.get_num_output() - start) == get_total_len() &&
+    assert((bc_out.getNumOutput() - start) == getTotalLen() &&
            "failed to output correct number of bytes");
 
     ++num_output;
-    fixed_output += get_fixed_len();
-    tail_output += get_tail_len();
+    fixed_output += getFixedLen();
+    tail_output += getTailLen();
 }
 
 unsigned long
-Bytecode::update_offset(unsigned long offset)
+Bytecode::UpdateOffset(unsigned long offset)
 {
     if (m_contents.get() != 0 &&
-        m_contents->get_special() == Contents::SPECIAL_OFFSET)
+        m_contents->getSpecial() == Contents::SPECIAL_OFFSET)
     {
         // Recalculate/adjust len of offset-based bytecodes here
         long neg_thres = 0;
-        long pos_thres = static_cast<long>(next_offset());
-        expand(1, 0, static_cast<long>(offset+get_fixed_len()), &neg_thres,
+        long pos_thres = static_cast<long>(getNextOffset());
+        Expand(1, 0, static_cast<long>(offset+getFixedLen()), &neg_thres,
                &pos_thres);
     }
     m_offset = offset;
-    return next_offset();
+    return getNextOffset();
 }
 
 void
-Bytecode::append_fixed(const Value& val)
+Bytecode::AppendFixed(const Value& val)
 {
-    unsigned int valsize = val.get_size()/8;
+    unsigned int valsize = val.getSize()/8;
     m_fixed_fixups.push_back(Fixup(m_fixed.size(), val));
-    m_fixed.write(valsize, 0);
+    m_fixed.Write(valsize, 0);
     ++num_fixed_value;
 }
 
 void
-Bytecode::append_fixed(std::auto_ptr<Value> val)
+Bytecode::AppendFixed(std::auto_ptr<Value> val)
 {
-    unsigned int valsize = val->get_size()/8;
+    unsigned int valsize = val->getSize()/8;
     m_fixed_fixups.push_back(Fixup(m_fixed.size(), val));
-    m_fixed.write(valsize, 0);
+    m_fixed.Write(valsize, 0);
     ++num_fixed_value;
 }
 
 void
-Bytecode::append_fixed(unsigned int size,
-                       std::auto_ptr<Expr> e,
-                       unsigned long line)
+Bytecode::AppendFixed(unsigned int size,
+                      std::auto_ptr<Expr> e,
+                      unsigned long line)
 {
     m_fixed_fixups.push_back(Fixup(m_fixed.size(), size*8, e, line));
-    m_fixed.write(size, 0);
+    m_fixed.Write(size, 0);
     ++num_fixed_value;
 }
 
@@ -338,7 +338,7 @@ Bytecode::Fixup::Fixup(unsigned int off,
                        unsigned long line)
     : Value(size, e), m_off(off)
 {
-    set_line(line);
+    setLine(line);
 }
 
 void

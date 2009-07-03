@@ -34,25 +34,25 @@ namespace yasm
 {
 
 unsigned long
-Location::get_offset() const
+Location::getOffset() const
 {
-    return bc->get_offset() + off;
+    return bc->getOffset() + off;
 }
 
 bool
-calc_dist(Location loc1, Location loc2, IntNum* dist)
+CalcDist(Location loc1, Location loc2, IntNum* dist)
 {
     assert(loc1.bc && loc2.bc);
-    if (loc1.bc->get_container() != loc2.bc->get_container())
+    if (loc1.bc->getContainer() != loc2.bc->getContainer())
         return false;
 
-    *dist = loc2.get_offset();
-    *dist -= loc1.get_offset();
+    *dist = loc2.getOffset();
+    *dist -= loc1.getOffset();
     return true;
 }
 
 bool
-calc_dist_no_bc(Location loc1, Location loc2, IntNum* dist)
+CalcDistNoBC(Location loc1, Location loc2, IntNum* dist)
 {
     assert(loc1.bc && loc2.bc);
     if (loc1.bc != loc2.bc)

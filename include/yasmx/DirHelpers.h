@@ -59,7 +59,7 @@ public:
     /// @param needsvalue   True if name requires value, false if it must not
     ///                     have a value.
     /// @param helper       Helper function
-    void add(const char* name,
+    void Add(const char* name,
              bool needsvalue,
              FUNCTION::function<void (NameValue&)> helper);
 
@@ -89,7 +89,7 @@ private:
 /// @param out      reference to unsigned long
 /// @param val      value to set
 inline void
-dir_flag_reset(NameValue& nv, unsigned long* out, unsigned long val)
+DirResetFlag(NameValue& nv, unsigned long* out, unsigned long val)
 {
     *out = val;
 }
@@ -101,7 +101,7 @@ dir_flag_reset(NameValue& nv, unsigned long* out, unsigned long val)
 /// @param out      reference to unsigned long
 /// @param flag     flag bit(s) to set
 inline void
-dir_flag_set(NameValue& nv, unsigned long* out, unsigned long flag)
+DirSetFlag(NameValue& nv, unsigned long* out, unsigned long flag)
 {
     *out |= flag;
 }
@@ -114,7 +114,7 @@ dir_flag_set(NameValue& nv, unsigned long* out, unsigned long flag)
 /// @param out      reference to unsigned long
 /// @param flag     flag bit(s) to clear
 inline void
-dir_flag_clear(NameValue& nv, unsigned long* out, unsigned long flag)
+DirClearFlag(NameValue& nv, unsigned long* out, unsigned long flag)
 {
     *out &= ~flag;
 }
@@ -127,11 +127,11 @@ dir_flag_clear(NameValue& nv, unsigned long* out, unsigned long flag)
 /// @param out      reference to IntNum
 /// @param out_set  reference that is set to 1 when called
 YASM_LIB_EXPORT
-void dir_intn(NameValue& nv,
-              Object* obj,
-              unsigned long line,
-              IntNum* out,
-              bool* out_set);
+void DirIntNum(NameValue& nv,
+               Object* obj,
+               unsigned long line,
+               IntNum* out,
+               bool* out_set);
 
 /// Standard helper for DirHelpers() that parses an IntNum value.
 /// When calling DirHelpers::add(), needsparam should be set to true.
@@ -141,11 +141,11 @@ void dir_intn(NameValue& nv,
 /// @param out      reference to Expr auto_ptr
 /// @param out_set  reference that is set to 1 when called
 YASM_LIB_EXPORT
-void dir_expr(NameValue& nv,
-              Object* obj,
-              unsigned long line,
-              std::auto_ptr<Expr>* out,
-              bool* out_set);
+void DirExpr(NameValue& nv,
+             Object* obj,
+             unsigned long line,
+             std::auto_ptr<Expr>* out,
+             bool* out_set);
 
 /// Standard helper for DirHelpers() that parses an string (or
 /// standalone identifier) value.
@@ -154,14 +154,14 @@ void dir_expr(NameValue& nv,
 /// @param out      reference to string
 /// @param out_set  reference that is set to 1 when called
 YASM_LIB_EXPORT
-void dir_string(NameValue& nv, std::string* out, bool* out_set);
+void DirString(NameValue& nv, std::string* out, bool* out_set);
 
 /// Standard catch-all callback for DirHelpers().  Generates standard
-/// warning for all valparams.
+/// warning for all namevals.
 /// @param nv       name/value
 /// @return False
 YASM_LIB_EXPORT
-bool dir_nameval_warn(NameValue& nv);
+bool DirNameValueWarn(NameValue& nv);
 
 } // namespace yasm
 

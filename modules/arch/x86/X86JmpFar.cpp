@@ -46,24 +46,24 @@ namespace arch
 namespace x86
 {
 
-void append_jmpfar(BytecodeContainer& container,
-                   const X86Common& common,
-                   const X86Opcode& opcode,
-                   std::auto_ptr<Expr> segment,
-                   std::auto_ptr<Expr> offset,
-                   unsigned long line)
+void AppendJmpFar(BytecodeContainer& container,
+                  const X86Common& common,
+                  const X86Opcode& opcode,
+                  std::auto_ptr<Expr> segment,
+                  std::auto_ptr<Expr> offset,
+                  unsigned long line)
 {
-    Bytecode& bc = container.fresh_bytecode();
-    Bytes& bytes = bc.get_fixed();
+    Bytecode& bc = container.FreshBytecode();
+    Bytes& bytes = bc.getFixed();
     ++num_jmpfar;
 
-    common.to_bytes(bytes, 0);
-    opcode.to_bytes(bytes);
+    common.ToBytes(bytes, 0);
+    opcode.ToBytes(bytes);
 
     // Absolute displacement: segment and offset
     unsigned int size = (common.m_opersize == 16) ? 2 : 4;
-    bc.append_fixed(size, offset, line);
-    bc.append_fixed(2, segment, line);
+    bc.AppendFixed(size, offset, line);
+    bc.AppendFixed(2, segment, line);
 }
 
 }}} // namespace yasm::arch::x86

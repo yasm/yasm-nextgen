@@ -47,91 +47,91 @@ namespace yasm
 static llvm::APInt staticbv(IntNum::BITVECT_NATIVE_SIZE, 0);
 
 void
-write_8(Bytes& bytes, const IntNum& intn)
+Write8(Bytes& bytes, const IntNum& intn)
 {
-    bytes.push_back(static_cast<unsigned char>(intn.extract(8, 0)));
+    bytes.push_back(static_cast<unsigned char>(intn.Extract(8, 0)));
 }
 
 void
-write_16(Bytes& bytes, const IntNum& intn)
+Write16(Bytes& bytes, const IntNum& intn)
 {
-    write_16(bytes, static_cast<unsigned int>(intn.extract(16, 0)));
+    Write16(bytes, static_cast<unsigned int>(intn.Extract(16, 0)));
 }
 
 void
-write_32(Bytes& bytes, const IntNum& intn)
+Write32(Bytes& bytes, const IntNum& intn)
 {
-    write_32(bytes, intn.extract(32, 0));
+    Write32(bytes, intn.Extract(32, 0));
 }
 
 void
-write_64(Bytes& bytes, const IntNum& intn)
+Write64(Bytes& bytes, const IntNum& intn)
 {
-    unsigned long low = intn.extract(32, 0);
-    unsigned long high = intn.extract(32, 32);
-    if (bytes.is_bigendian())
+    unsigned long low = intn.Extract(32, 0);
+    unsigned long high = intn.Extract(32, 32);
+    if (bytes.isBigEndian())
     {
-        write_32(bytes, high);
-        write_32(bytes, low);
+        Write32(bytes, high);
+        Write32(bytes, low);
     }
     else
     {
-        write_32(bytes, low);
-        write_32(bytes, high);
+        Write32(bytes, low);
+        Write32(bytes, high);
     }
 }
 
 static inline void
-write_64i(Bytes& bytes, uint64_t val)
+Write64I(Bytes& bytes, uint64_t val)
 {
     unsigned long low = static_cast<unsigned long>(val);
     unsigned long high = static_cast<unsigned long>(val >> 32);
-    if (bytes.is_bigendian())
+    if (bytes.isBigEndian())
     {
-        write_32(bytes, high);
-        write_32(bytes, low);
+        Write32(bytes, high);
+        Write32(bytes, low);
     }
     else
     {
-        write_32(bytes, low);
-        write_32(bytes, high);
+        Write32(bytes, low);
+        Write32(bytes, high);
     }
 }
 
 static inline uint64_t
-read_u64i(Bytes& bytes)
+ReadU64I(Bytes& bytes)
 {
     uint64_t low, high;
-    if (bytes.is_bigendian())
+    if (bytes.isBigEndian())
     {
-        high = read_u32(bytes);
-        low = read_u32(bytes);
+        high = ReadU32(bytes);
+        low = ReadU32(bytes);
     }
     else
     {
-        low = read_u32(bytes);
-        high = read_u32(bytes);
+        low = ReadU32(bytes);
+        high = ReadU32(bytes);
     }
     return ((high << 32) | low);
 }
 
 void
-write_n(Bytes& bytes, const IntNum& intn, int n)
+WriteN(Bytes& bytes, const IntNum& intn, int n)
 {
     assert((n & 7) == 0 && "n must be a multiple of 8");
 
     // optimize some fixed cases
     switch (n)
     {
-        case 8: write_8(bytes, intn); return;
-        case 16: write_16(bytes, intn); return;
-        case 32: write_32(bytes, intn); return;
-        case 64: write_64(bytes, intn); return;
+        case 8: Write8(bytes, intn); return;
+        case 16: Write16(bytes, intn); return;
+        case 32: Write32(bytes, intn); return;
+        case 64: Write64(bytes, intn); return;
         default: break;
     }
 
     // harder cases
-    const llvm::APInt* bv = intn.get_bv(&staticbv);
+    const llvm::APInt* bv = intn.getBV(&staticbv);
     const uint64_t* words = bv->getRawData();
     unsigned int nwords = bv->getNumWords();
     llvm::APInt tmp;    // must be here so it stays in scope
@@ -142,7 +142,7 @@ write_n(Bytes& bytes, const IntNum& intn, int n)
         words = tmp.getRawData();
         nwords = tmp.getNumWords();
     }
-    if (bytes.is_bigendian())
+    if (bytes.isBigEndian())
     {
         // start with bytes of most significant word
         int i = n;
@@ -159,7 +159,7 @@ write_n(Bytes& bytes, const IntNum& intn, int n)
         // rest (if any) is whole words
         unsigned int w = nwords-2;
         for (; i>=64; i-=64, --w)
-            write_64i(bytes, words[w]);
+            Write64I(bytes, words[w]);
     }
     else
     {
@@ -167,7 +167,7 @@ write_n(Bytes& bytes, const IntNum& intn, int n)
         unsigned int w = 0;
         int i = 0;
         for (; i<=n-64; i+=64, ++w)
-            write_64i(bytes, words[w]);
+            Write64I(bytes, words[w]);
         // finish with bytes
         if (i < n)
         {
@@ -182,10 +182,10 @@ write_n(Bytes& bytes, const IntNum& intn, int n)
 }
  
 void
-write_n(Bytes& bytes, unsigned long val, int n)
+WriteN(Bytes& bytes, unsigned long val, int n)
 {
     assert((n & 7) == 0 && "n must be a multiple of 8");
-    if (bytes.is_bigendian())
+    if (bytes.isBigEndian())
     {
         for (int i=n-8; i>=0; i-=8)
             bytes.push_back(static_cast<unsigned char>((val >> i) & 0xFF));
@@ -198,7 +198,7 @@ write_n(Bytes& bytes, unsigned long val, int n)
 }
 
 static IntNum
-read_n(Bytes& bytes, int n, bool sign)
+ReadN(Bytes& bytes, int n, bool sign)
 {
     assert((n & 7) == 0 && "n must be a multiple of 8");
     assert(n <= IntNum::BITVECT_NATIVE_SIZE && "too large for internal format");
@@ -209,10 +209,10 @@ read_n(Bytes& bytes, int n, bool sign)
     {
         switch (n)
         {
-            case 8: return read_s8(bytes);
-            case 16: return read_s16(bytes);
-            case 32: return read_s32(bytes);
-            case 64: return read_s64(bytes);
+            case 8: return ReadS8(bytes);
+            case 16: return ReadS16(bytes);
+            case 32: return ReadS32(bytes);
+            case 64: return ReadS64(bytes);
             default: break;
         }
     }
@@ -220,10 +220,10 @@ read_n(Bytes& bytes, int n, bool sign)
     {
         switch (n)
         {
-            case 8: return read_u8(bytes);
-            case 16: return read_u16(bytes);
-            case 32: return read_u32(bytes);
-            case 64: return read_u64(bytes);
+            case 8: return ReadU8(bytes);
+            case 16: return ReadU16(bytes);
+            case 32: return ReadU32(bytes);
+            case 64: return ReadU64(bytes);
             default: break;
         }
     }
@@ -232,7 +232,7 @@ read_n(Bytes& bytes, int n, bool sign)
     unsigned int nwords = (n+63)/64;
     llvm::SmallVector<uint64_t, 4> words(nwords);
 
-    if (bytes.is_bigendian())
+    if (bytes.isBigEndian())
     {
         // start with bytes of most significant word
         int i = n;
@@ -242,14 +242,14 @@ read_n(Bytes& bytes, int n, bool sign)
             uint64_t last = words[nwords-1];
             for (; i>=wend; i-=8)
             {
-                last |= read_u8(bytes);
+                last |= ReadU8(bytes);
                 last <<= 8;
             }
         }
         // rest (if any) is whole words
         unsigned int w = nwords-2;
         for (; i>=64; i-=64, --w)
-            words[w] = read_u64i(bytes);
+            words[w] = ReadU64I(bytes);
     }
     else
     {
@@ -257,14 +257,14 @@ read_n(Bytes& bytes, int n, bool sign)
         unsigned int w = 0;
         int i = 0;
         for (; i<=n-64; i+=64, ++w)
-            words[w] = read_u64i(bytes);
+            words[w] = ReadU64I(bytes);
         // finish with bytes
         if (i < n)
         {
             uint64_t last = 0;
             for (; i<n; i+=8)
             {
-                last |= static_cast<uint64_t>(read_u8(bytes)) << i;
+                last |= static_cast<uint64_t>(ReadU8(bytes)) << i;
             }
             words[w] = last;
         }
@@ -277,36 +277,36 @@ read_n(Bytes& bytes, int n, bool sign)
 
     // Convert to intnum
     IntNum intn;
-    intn.set_bv(val);
+    intn.setBV(val);
     return intn;
 }
 
 IntNum
-read_un(Bytes& bytes, int n)
+ReadUnsigned(Bytes& bytes, int n)
 {
-    return read_n(bytes, n, false);
+    return ReadN(bytes, n, false);
 }
 
 IntNum
-read_sn(Bytes& bytes, int n)
+ReadSigned(Bytes& bytes, int n)
 {
-    return read_n(bytes, n, true);
+    return ReadN(bytes, n, true);
 }
 
 IntNum
-read_u64(Bytes& bytes)
+ReadU64(Bytes& bytes)
 {
-    return read_n(bytes, 64, false);
+    return ReadN(bytes, 64, false);
 }
 
 IntNum
-read_s64(Bytes& bytes)
+ReadS64(Bytes& bytes)
 {
-    return read_n(bytes, 64, true);
+    return ReadN(bytes, 64, true);
 }
 
 void
-overwrite(Bytes& bytes,
+Overwrite(Bytes& bytes,
           const llvm::APInt& intn,
           unsigned int size,
           int shift,
@@ -322,21 +322,21 @@ overwrite(Bytes& bytes,
     }
 
     // General size warnings
-    if (warn<0 && !ok_size(intn, size, rshift, 1))
-        warn_set(WARN_GENERAL,
-                 String::compose(N_("value does not fit in signed %1 bit field"),
-                                 size));
-    if (warn>0 && !ok_size(intn, size, rshift, 2))
-        warn_set(WARN_GENERAL,
-                 String::compose(N_("value does not fit in %1 bit field"),
-                                 size));
+    if (warn<0 && !isOkSize(intn, size, rshift, 1))
+        setWarn(WARN_GENERAL,
+                String::Compose(N_("value does not fit in signed %1 bit field"),
+                                size));
+    if (warn>0 && !isOkSize(intn, size, rshift, 2))
+        setWarn(WARN_GENERAL,
+                String::Compose(N_("value does not fit in %1 bit field"),
+                                size));
 
     // Check low bits if right shifting and warnings enabled
     if (warn && rshift > 0)
     {
         if (intn.countTrailingZeros() < rshift)
-            warn_set(WARN_GENERAL,
-                     N_("misaligned value, truncating to boundary"));
+            setWarn(WARN_GENERAL,
+                    N_("misaligned value, truncating to boundary"));
     }
 
     // Make a working copy of the right-shifted value
@@ -404,7 +404,7 @@ overwrite(Bytes& bytes,
 }
 
 void
-overwrite(Bytes& bytes,
+Overwrite(Bytes& bytes,
           const IntNum& intn,
           unsigned int size,
           int shift,
@@ -422,27 +422,27 @@ overwrite(Bytes& bytes,
     }
 
     // General size warnings
-    if (warn<0 && !intn.ok_size(size, rshift, 1))
-        warn_set(WARN_GENERAL,
-                 String::compose(N_("value does not fit in signed %1 bit field"),
+    if (warn<0 && !intn.isOkSize(size, rshift, 1))
+        setWarn(WARN_GENERAL,
+                String::Compose(N_("value does not fit in signed %1 bit field"),
                                 size));
-    if (warn>0 && !intn.ok_size(size, rshift, 2))
-        warn_set(WARN_GENERAL,
-                 String::compose(N_("value does not fit in %1 bit field"),
-                                 size));
+    if (warn>0 && !intn.isOkSize(size, rshift, 2))
+        setWarn(WARN_GENERAL,
+                String::Compose(N_("value does not fit in %1 bit field"),
+                                size));
 
     // Non-bigval (for speed)
-    if (intn.is_int())
+    if (intn.isInt())
     {
-        long v = intn.get_int();
+        long v = intn.getInt();
 
         // Check low bits if right shifting and warnings enabled
         if (warn && rshift > 0)
         {
             long mask = (1L<<rshift)-1;
             if (v & mask)
-                warn_set(WARN_GENERAL,
-                         N_("misaligned value, truncating to boundary"));
+                setWarn(WARN_GENERAL,
+                        N_("misaligned value, truncating to boundary"));
         }
 
         // Shift right if needed
@@ -492,11 +492,11 @@ overwrite(Bytes& bytes,
         }
     }
     else
-        overwrite(bytes, *intn.get_bv(&staticbv), size, shift, bigendian, warn);
+        Overwrite(bytes, *intn.getBV(&staticbv), size, shift, bigendian, warn);
 }
 
 void
-overwrite(Bytes& bytes,
+Overwrite(Bytes& bytes,
           const llvm::APFloat& flt,
           unsigned int size,
           int shift,
@@ -530,12 +530,12 @@ overwrite(Bytes& bytes,
         switch (status)
         {
             case llvm::APFloat::opOverflow:
-                warn_set(WARN_GENERAL,
-                         N_("overflow in floating point expression"));
+                setWarn(WARN_GENERAL,
+                        N_("overflow in floating point expression"));
                 break;
             case llvm::APFloat::opUnderflow:
-                warn_set(WARN_GENERAL,
-                         N_("underflow in floating point expression"));
+                setWarn(WARN_GENERAL,
+                        N_("underflow in floating point expression"));
                 break;
             default:
                 break;
@@ -545,7 +545,7 @@ overwrite(Bytes& bytes,
     // use APInt function to actually output
     llvm::APInt fltbits = fltcopy.bitcastToAPInt();
     assert(fltbits.getBitWidth() == size && "bad float to bits conversion");
-    overwrite(bytes, fltbits, size, shift, bigendian, warn);
+    Overwrite(bytes, fltbits, size, shift, bigendian, warn);
 }
 
 } // namespace yasm

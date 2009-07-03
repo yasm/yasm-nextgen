@@ -35,7 +35,7 @@ Preprocessor::~Preprocessor()
 }
 
 void
-Preprocessor::add_directives(Directives& dirs, const char* parser)
+Preprocessor::AddDirectives(Directives& dirs, const char* parser)
 {
 }
 
@@ -44,7 +44,7 @@ PreprocessorModule::~PreprocessorModule()
 }
 
 const char*
-PreprocessorModule::get_type() const
+PreprocessorModule::getType() const
 {
     return "Preprocessor";
 }

@@ -55,25 +55,25 @@ public:
     ~AlignBytecode();
 
     /// Prints the implementation-specific data (for debugging purposes).
-    void put(marg_ostream& os) const;
+    void Put(marg_ostream& os) const;
 
     /// Finalizes the bytecode after parsing.
-    void finalize(Bytecode& bc);
+    void Finalize(Bytecode& bc);
 
     /// Calculates the minimum size of a bytecode.
-    unsigned long calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
+    unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
 
     /// Recalculates the bytecode's length based on an expanded span
     /// length.
-    bool expand(Bytecode& bc, unsigned long& len, int span,
+    bool Expand(Bytecode& bc, unsigned long& len, int span,
                 long old_val, long new_val,
                 /*@out@*/ long* neg_thres,
                 /*@out@*/ long* pos_thres);
 
     /// Convert a bytecode into its byte representation.
-    void output(Bytecode& bc, BytecodeOutput& bc_out);
+    void Output(Bytecode& bc, BytecodeOutput& bc_out);
 
-    SpecialType get_special() const;
+    SpecialType getSpecial() const;
 
     AlignBytecode* clone() const;
 
@@ -107,45 +107,45 @@ AlignBytecode::~AlignBytecode()
 }
 
 void
-AlignBytecode::put(marg_ostream& os) const
+AlignBytecode::Put(marg_ostream& os) const
 {
     os << "_Align_\n";
     os << "Boundary=" << m_boundary << '\n';
-    if (!m_fill.is_empty())
+    if (!m_fill.isEmpty())
         os << "Fill=" << m_fill << '\n';
-    if (!m_maxskip.is_empty())
+    if (!m_maxskip.isEmpty())
         os << "Max Skip=" << m_maxskip << '\n';
 }
 
 void
-AlignBytecode::finalize(Bytecode& bc)
+AlignBytecode::Finalize(Bytecode& bc)
 {
-    if (!m_boundary.is_intnum())
+    if (!m_boundary.isIntNum())
         throw NotConstantError(N_("align boundary must be a constant"));
-    if (!m_fill.is_empty() && !m_fill.is_intnum())
+    if (!m_fill.isEmpty() && !m_fill.isIntNum())
         throw NotConstantError(N_("align fill must be a constant"));
-    if (!m_maxskip.is_empty() && !m_maxskip.is_intnum())
+    if (!m_maxskip.isEmpty() && !m_maxskip.isIntNum())
         throw NotConstantError(N_("align maximum skip must be a constant"));
 }
 
 unsigned long
-AlignBytecode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+AlignBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 {
     unsigned long len = 0;
     long neg_thres = 0;
     long pos_thres = 0;
 
-    expand(bc, len, 0, 0, static_cast<long>(bc.tail_offset()), &neg_thres,
+    Expand(bc, len, 0, 0, static_cast<long>(bc.getTailOffset()), &neg_thres,
            &pos_thres);
     return len;
 }
 
 bool
-AlignBytecode::expand(Bytecode& bc, unsigned long& len, int span,
+AlignBytecode::Expand(Bytecode& bc, unsigned long& len, int span,
                       long old_val, long new_val,
                       /*@out@*/ long* neg_thres, /*@out@*/ long* pos_thres)
 {
-    unsigned long boundary = m_boundary.get_intnum().get_uint();
+    unsigned long boundary = m_boundary.getIntNum().getUInt();
 
     if (boundary == 0)
     {
@@ -161,9 +161,9 @@ AlignBytecode::expand(Bytecode& bc, unsigned long& len, int span,
     *pos_thres = static_cast<long>(end);
     len = end - static_cast<unsigned long>(new_val);
 
-    if (!m_maxskip.is_empty())
+    if (!m_maxskip.isEmpty())
     {
-        unsigned long maxskip = m_maxskip.get_intnum().get_uint();
+        unsigned long maxskip = m_maxskip.getIntNum().getUInt();
         if (len > maxskip)
         {
             *pos_thres = static_cast<long>(end-maxskip)-1;
@@ -174,34 +174,34 @@ AlignBytecode::expand(Bytecode& bc, unsigned long& len, int span,
 }
 
 void
-AlignBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
+AlignBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     unsigned long len;
-    unsigned long boundary = m_boundary.get_intnum().get_uint();
-    Bytes& bytes = bc_out.get_scratch();
+    unsigned long boundary = m_boundary.getIntNum().getUInt();
+    Bytes& bytes = bc_out.getScratch();
 
     if (boundary == 0)
         return;
     else
     {
-        unsigned long tail = bc.tail_offset();
+        unsigned long tail = bc.getTailOffset();
         unsigned long end = tail;
         if (tail & (boundary-1))
             end = (tail & ~(boundary-1)) + boundary;
         len = end - tail;
         if (len == 0)
             return;
-        if (!m_maxskip.is_empty())
+        if (!m_maxskip.isEmpty())
         {
-            unsigned long maxskip = m_maxskip.get_intnum().get_uint();
+            unsigned long maxskip = m_maxskip.getIntNum().getUInt();
             if (len > maxskip)
                 return;
         }
     }
 
-    if (!m_fill.is_empty())
+    if (!m_fill.isEmpty())
     {
-        unsigned long v = m_fill.get_intnum().get_uint();
+        unsigned long v = m_fill.getIntNum().getUInt();
         bytes.insert(bytes.end(), len, static_cast<unsigned char>(v));
     }
     else if (m_code_fill)
@@ -223,7 +223,7 @@ AlignBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
 
         if (!m_code_fill[len])
         {
-            throw ValueError(String::compose(N_("invalid alignment size %1"),
+            throw ValueError(String::Compose(N_("invalid alignment size %1"),
                                              len));
         }
         // Handle rest of code fill
@@ -236,11 +236,11 @@ AlignBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
         // Just fill with 0
         bytes.insert(bytes.end(), len, 0);
     }
-    bc_out.output(bytes);
+    bc_out.Output(bytes);
 }
 
 AlignBytecode::SpecialType
-AlignBytecode::get_special() const
+AlignBytecode::getSpecial() const
 {
     return SPECIAL_OFFSET;
 }
@@ -257,17 +257,17 @@ namespace yasm
 {
 
 void
-append_align(BytecodeContainer& container,
-             const Expr& boundary,
-             const Expr& fill,
-             const Expr& maxskip,
-             /*@null@*/ const unsigned char** code_fill,
-             unsigned long line)
+AppendAlign(BytecodeContainer& container,
+            const Expr& boundary,
+            const Expr& fill,
+            const Expr& maxskip,
+            /*@null@*/ const unsigned char** code_fill,
+            unsigned long line)
 {
-    Bytecode& bc = container.fresh_bytecode();
-    bc.transform(Bytecode::Contents::Ptr(
+    Bytecode& bc = container.FreshBytecode();
+    bc.Transform(Bytecode::Contents::Ptr(
         new AlignBytecode(boundary, fill, maxskip, code_fill)));
-    bc.set_line(line);
+    bc.setLine(line);
 }
 
 } // namespace yasm

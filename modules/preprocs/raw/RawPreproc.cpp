@@ -49,20 +49,20 @@ public:
     {}
     ~RawPreproc() {}
 
-    static const char* get_name() { return "Disable preprocessing"; }
-    static const char* get_keyword() { return "raw"; }
+    static const char* getName() { return "Disable preprocessing"; }
+    static const char* getKeyword() { return "raw"; }
 
-    void initialize(std::istream& is,
+    void Initialize(std::istream& is,
                     const std::string& in_filename,
                     Linemap& linemap);
 
-    bool get_line(/*@out@*/ std::string& line);
+    bool getLine(/*@out@*/ std::string& line);
 
-    std::string get_included_file() { return ""; }
-    void add_include_file(const std::string& filename) {}
-    void predefine_macro(const std::string& macronameval) {}
-    void undefine_macro(const std::string& macroname) {}
-    void define_builtin(const std::string& macronameval) {}
+    std::string getIncludedFile() { return ""; }
+    void AddIncludeFile(const std::string& filename) {}
+    void PredefineMacro(const std::string& macronameval) {}
+    void UndefineMacro(const std::string& macroname) {}
+    void DefineBuiltin(const std::string& macronameval) {}
 
 private:
     std::istream* m_is;
@@ -70,7 +70,7 @@ private:
 };
 
 void
-RawPreproc::initialize(std::istream& is,
+RawPreproc::Initialize(std::istream& is,
                        const std::string& in_filename,
                        Linemap& linemap)
 {
@@ -79,7 +79,7 @@ RawPreproc::initialize(std::istream& is,
 }
 
 bool
-RawPreproc::get_line(/*@out@*/ std::string& line)
+RawPreproc::getLine(/*@out@*/ std::string& line)
 {
     if (m_is->eof())
         return false;
@@ -88,7 +88,7 @@ RawPreproc::get_line(/*@out@*/ std::string& line)
 
     if (m_is->bad())
     {
-        m_errwarns.propagate(m_linemap->get_current(),
+        m_errwarns.Propagate(m_linemap->getCurrent(),
                              IOError(N_("error when reading from file")));
     }
 
@@ -96,10 +96,10 @@ RawPreproc::get_line(/*@out@*/ std::string& line)
 }
 
 void
-do_register()
+DoRegister()
 {
-    register_module<PreprocessorModule,
-                    PreprocessorModuleImpl<RawPreproc> >("raw");
+    RegisterModule<PreprocessorModule,
+                   PreprocessorModuleImpl<RawPreproc> >("raw");
 }
 
 }}} // namespace yasm::preproc::raw

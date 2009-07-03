@@ -38,7 +38,7 @@ Parser::~Parser()
 }
 
 void
-Parser::add_directives(Directives& dirs, const char* parser)
+Parser::AddDirectives(Directives& dirs, const char* parser)
 {
 }
 
@@ -47,7 +47,7 @@ ParserModule::~ParserModule()
 }
 
 const char*
-ParserModule::get_type() const
+ParserModule::getType() const
 {
     return "Parser";
 }

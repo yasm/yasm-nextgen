@@ -49,7 +49,7 @@ public:
     /// Destructor.
     virtual ~AssocData();
 
-    virtual void put(marg_ostream& os) const = 0;
+    virtual void Put(marg_ostream& os) const = 0;
 
 private:
     AssocData(const AssocData&);                    // not implemented
@@ -59,7 +59,7 @@ private:
 inline marg_ostream&
 operator<< (marg_ostream& os, const AssocData& data)
 {
-    data.put(os);
+    data.Put(os);
     return os;
 }
 
@@ -82,11 +82,11 @@ public:
     AssocDataContainer();
     virtual ~AssocDataContainer();
 
-    std::auto_ptr<AssocData> add_assoc_data(const void* key,
-                                            std::auto_ptr<AssocData> data);
+    std::auto_ptr<AssocData> AddAssocData(const void* key,
+                                          std::auto_ptr<AssocData> data);
 
-    AssocData* get_assoc_data(const void* key);
-    const AssocData* get_assoc_data(const void* key) const;
+    AssocData* getAssocData(const void* key);
+    const AssocData* getAssocData(const void* key) const;
 };
 
 YASM_LIB_EXPORT

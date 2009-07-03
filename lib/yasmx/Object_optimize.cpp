@@ -181,11 +181,11 @@ OffsetSetter::OffsetSetter()
 {
 }
 
-class Optimize;
+class Optimizer;
 
 class Span
 {
-    friend class Optimize;
+    friend class Optimizer;
 public:
     class Term
     {
@@ -214,14 +214,14 @@ public:
          size_t os_index);
     ~Span();
 
-    void create_terms(Optimize* optimize);
-    bool recalc_normal();
+    void CreateTerms(Optimizer* optimize);
+    bool RecalcNormal();
 
 private:
     Span(const Span&);                  // not implemented
     const Span& operator=(const Span&); // not implemented
 
-    void add_term(unsigned int subst, Location loc, Location loc2);
+    void AddTerm(unsigned int subst, Location loc, Location loc2);
 
     Bytecode& m_bc;
 
@@ -250,27 +250,27 @@ private:
     size_t m_os_index;
 };
 
-class Optimize
+class Optimizer
 {
 public:
-    Optimize();
-    ~Optimize();
-    void add_span(Bytecode& bc,
-                  int id,
-                  const Value& value,
-                  long neg_thres,
-                  long pos_thres);
-    void add_offset_setter(Bytecode& bc);
+    Optimizer();
+    ~Optimizer();
+    void AddSpan(Bytecode& bc,
+                 int id,
+                 const Value& value,
+                 long neg_thres,
+                 long pos_thres);
+    void AddOffsetSetter(Bytecode& bc);
 
-    bool step_1b(Errwarns& errwarns);
-    bool step_1d();
-    bool step_1e(Errwarns& errwarns);
-    bool step_2(Errwarns& errwarns);
+    bool Step1b(Errwarns& errwarns);
+    bool Step1d();
+    bool Step1e(Errwarns& errwarns);
+    bool Step2(Errwarns& errwarns);
 
 private:
-    void itree_add(Span& span, Span::Term& term);
-    void check_cycle(IntervalTreeNode<Span::Term*> * node, Span& span);
-    void term_expand(IntervalTreeNode<Span::Term*> * node, long len_diff);
+    void ITreeAdd(Span& span, Span::Term& term);
+    void CheckCycle(IntervalTreeNode<Span::Term*> * node, Span& span);
+    void ExpandTerm(IntervalTreeNode<Span::Term*> * node, long len_diff);
 
     std::list<Span*> m_spans;   // ownership list
     std::queue<Span*> m_QA, m_QB;
@@ -321,7 +321,7 @@ Span::Span(Bytecode& bc,
 }
 
 void
-Optimize::add_span(Bytecode& bc,
+Optimizer::AddSpan(Bytecode& bc,
                    int id,
                    const Value& value,
                    long neg_thres,
@@ -332,26 +332,26 @@ Optimize::add_span(Bytecode& bc,
 }
 
 void
-Span::add_term(unsigned int subst, Location loc, Location loc2)
+Span::AddTerm(unsigned int subst, Location loc, Location loc2)
 {
     IntNum intn;
-    bool ok = calc_dist(loc, loc2, &intn);
+    bool ok = CalcDist(loc, loc2, &intn);
     ok = ok;    // avoid warning due to assert usage
     assert(ok && "could not calculate bc distance");
 
     if (subst >= m_span_terms.size())
         m_span_terms.resize(subst+1);
-    m_span_terms[subst] = Term(subst, loc, loc2, this, intn.get_int());
+    m_span_terms[subst] = Term(subst, loc, loc2, this, intn.getInt());
 }
 
 void
-Span::create_terms(Optimize* optimize)
+Span::CreateTerms(Optimizer* optimize)
 {
     // Split out sym-sym terms in absolute portion of dependent value
-    if (m_depval.has_abs())
+    if (m_depval.hasAbs())
     {
-        subst_dist(*m_depval.get_abs(),
-                   BIND::bind(&Span::add_term, this, _1, _2, _3));
+        SubstDist(*m_depval.getAbs(),
+                  BIND::bind(&Span::AddTerm, this, _1, _2, _3));
         if (m_span_terms.size() > 0)
         {
             for (Terms::iterator i=m_span_terms.begin(),
@@ -362,10 +362,10 @@ Span::create_terms(Optimize* optimize)
 
                 // Check for circular references
                 if (m_id <= 0 &&
-                    ((m_bc.get_index() > i->m_loc.bc->get_index()-1 &&
-                      m_bc.get_index() <= i->m_loc2.bc->get_index()-1) ||
-                     (m_bc.get_index() > i->m_loc2.bc->get_index()-1 &&
-                      m_bc.get_index() <= i->m_loc.bc->get_index()-1)))
+                    ((m_bc.getIndex() > i->m_loc.bc->getIndex()-1 &&
+                      m_bc.getIndex() <= i->m_loc2.bc->getIndex()-1) ||
+                     (m_bc.getIndex() > i->m_loc2.bc->getIndex()-1 &&
+                      m_bc.getIndex() <= i->m_loc.bc->getIndex()-1)))
                     throw ValueError(N_("circular reference detected"));
             }
         }
@@ -375,27 +375,27 @@ Span::create_terms(Optimize* optimize)
 // Recalculate span value based on current span replacement values.
 // Returns True if span needs expansion (e.g. exceeded thresholds).
 bool
-Span::recalc_normal()
+Span::RecalcNormal()
 {
     m_new_val = 0;
 
-    if (m_depval.has_abs())
+    if (m_depval.hasAbs())
     {
-        std::auto_ptr<Expr> abs_copy(m_depval.get_abs()->clone());
+        std::auto_ptr<Expr> abs_copy(m_depval.getAbs()->clone());
 
         // Update sym-sym terms and substitute back into expr
         for (Terms::iterator i=m_span_terms.begin(), end=m_span_terms.end();
              i != end; ++i)
-            m_expr_terms[i->m_subst].get_int()->set(i->m_new_val);
-        abs_copy->substitute(m_expr_terms);
-        abs_copy->simplify();
-        if (abs_copy->is_intnum())
-            m_new_val = abs_copy->get_intnum().get_int();
+            m_expr_terms[i->m_subst].getIntNum()->set(i->m_new_val);
+        abs_copy->Substitute(m_expr_terms);
+        abs_copy->Simplify();
+        if (abs_copy->isIntNum())
+            m_new_val = abs_copy->getIntNum().getInt();
         else
             m_new_val = LONG_MAX;   // too complex; force to longest form
     }
 
-    if (m_depval.is_relative())
+    if (m_depval.isRelative())
         m_new_val = LONG_MAX;       // too complex; force to longest form
 
     if (m_new_val == LONG_MAX)
@@ -412,14 +412,14 @@ Span::~Span()
 {
 }
 
-Optimize::Optimize()
+Optimizer::Optimizer()
 {
     // Create an placeholder offset setter for spans to point to; this will
     // get updated if/when we actually run into one.
     m_offset_setters.push_back(OffsetSetter());
 }
 
-Optimize::~Optimize()
+Optimizer::~Optimizer()
 {
     while (!m_spans.empty())
     {
@@ -429,33 +429,33 @@ Optimize::~Optimize()
 }
 
 void
-Optimize::add_offset_setter(Bytecode& bc)
+Optimizer::AddOffsetSetter(Bytecode& bc)
 {
     // Remember it
     OffsetSetter& os = m_offset_setters.back();
     os.m_bc = &bc;
-    os.m_thres = bc.next_offset();
+    os.m_thres = bc.getNextOffset();
 
     // Create new placeholder
     m_offset_setters.push_back(OffsetSetter());
 }
 
 void
-Optimize::itree_add(Span& span, Span::Term& term)
+Optimizer::ITreeAdd(Span& span, Span::Term& term)
 {
     long precbc_index, precbc2_index;
     unsigned long low, high;
 
-    /* Update term length */
+    // Update term length
     if (term.m_loc.bc)
-        precbc_index = term.m_loc.bc->get_index();
+        precbc_index = term.m_loc.bc->getIndex();
     else
-        precbc_index = span.m_bc.get_index()-1;
+        precbc_index = span.m_bc.getIndex()-1;
 
     if (term.m_loc2.bc)
-        precbc2_index = term.m_loc2.bc->get_index();
+        precbc2_index = term.m_loc2.bc->getIndex();
     else
-        precbc2_index = span.m_bc.get_index()-1;
+        precbc2_index = span.m_bc.getIndex()-1;
 
     if (precbc_index < precbc2_index)
     {
@@ -468,16 +468,16 @@ Optimize::itree_add(Span& span, Span::Term& term)
         high = precbc_index;
     }
     else
-        return;     /* difference is same bc - always 0! */
+        return;     // difference is same bc - always 0!
 
-    m_itree.insert(static_cast<long>(low), static_cast<long>(high), &term);
+    m_itree.Insert(static_cast<long>(low), static_cast<long>(high), &term);
     ++num_itree;
 }
 
 void
-Optimize::check_cycle(IntervalTreeNode<Span::Term*> * node, Span& span)
+Optimizer::CheckCycle(IntervalTreeNode<Span::Term*> * node, Span& span)
 {
-    Span::Term* term = node->get_data();
+    Span::Term* term = node->getData();
     Span* depspan = term->m_span;
 
     // Only check for cycles in id=0 spans
@@ -500,9 +500,9 @@ Optimize::check_cycle(IntervalTreeNode<Span::Term*> * node, Span& span)
 }
 
 void
-Optimize::term_expand(IntervalTreeNode<Span::Term*> * node, long len_diff)
+Optimizer::ExpandTerm(IntervalTreeNode<Span::Term*> * node, long len_diff)
 {
-    Span::Term* term = node->get_data();
+    Span::Term* term = node->getData();
     Span* span = term->m_span;
     long precbc_index, precbc2_index;
 
@@ -512,14 +512,14 @@ Optimize::term_expand(IntervalTreeNode<Span::Term*> * node, long len_diff)
 
     // Update term length
     if (term->m_loc.bc)
-        precbc_index = term->m_loc.bc->get_index();
+        precbc_index = term->m_loc.bc->getIndex();
     else
-        precbc_index = span->m_bc.get_index()-1;
+        precbc_index = span->m_bc.getIndex()-1;
 
     if (term->m_loc2.bc)
-        precbc2_index = term->m_loc2.bc->get_index();
+        precbc2_index = term->m_loc2.bc->getIndex();
     else
-        precbc2_index = span->m_bc.get_index()-1;
+        precbc2_index = span->m_bc.getIndex()-1;
 
     if (precbc_index < precbc2_index)
         term->m_new_val += len_diff;
@@ -531,7 +531,7 @@ Optimize::term_expand(IntervalTreeNode<Span::Term*> * node, long len_diff)
         return;
 
     // Update term and check against thresholds
-    if (!span->recalc_normal())
+    if (!span->RecalcNormal())
         return; // didn't exceed thresholds, we're done
 
     // Exceeded thresholds, need to add to Q for expansion
@@ -543,7 +543,7 @@ Optimize::term_expand(IntervalTreeNode<Span::Term*> * node, long len_diff)
 }
 
 bool
-Optimize::step_1b(Errwarns& errwarns)
+Optimizer::Step1b(Errwarns& errwarns)
 {
     bool saw_error = false;
 
@@ -555,28 +555,28 @@ Optimize::step_1b(Errwarns& errwarns)
 
         try
         {
-            span->create_terms(this);
+            span->CreateTerms(this);
         }
         catch (Error& err)
         {
-            errwarns.propagate(span->m_bc.get_line(), err);
+            errwarns.Propagate(span->m_bc.getLine(), err);
             saw_error = true;
             terms_okay = false;
         }
 
-        if (terms_okay && span->recalc_normal())
+        if (terms_okay && span->RecalcNormal())
         {
             bool still_depend =
-                expand(span->m_bc, span->m_id, span->m_cur_val,
+                Expand(span->m_bc, span->m_id, span->m_cur_val,
                        span->m_new_val, &span->m_neg_thres,
                        &span->m_pos_thres, errwarns);
-            if (errwarns.num_errors() > 0)
+            if (errwarns.getNumErrors() > 0)
                 saw_error = true;
             else if (still_depend)
             {
                 if (span->m_active == Span::INACTIVE)
                 {
-                    errwarns.propagate(span->m_bc.get_line(),
+                    errwarns.Propagate(span->m_bc.getLine(),
                         ValueError(N_("secondary expansion of an external/complex value")));
                     saw_error = true;
                 }
@@ -596,7 +596,7 @@ Optimize::step_1b(Errwarns& errwarns)
 }
 
 bool
-Optimize::step_1d()
+Optimizer::Step1d()
 {
     for (std::list<Span*>::iterator spani=m_spans.begin(),
          endspan=m_spans.end(); spani != endspan; ++spani)
@@ -609,14 +609,14 @@ Optimize::step_1d()
              endterm=span->m_span_terms.end(); term != endterm; ++term)
         {
             IntNum intn;
-            bool ok = calc_dist(term->m_loc, term->m_loc2, &intn);
+            bool ok = CalcDist(term->m_loc, term->m_loc2, &intn);
             ok = ok;    // avoid warning due to assert usage
             assert(ok && "could not calculate bc distance");
             term->m_cur_val = term->m_new_val;
-            term->m_new_val = intn.get_int();
+            term->m_new_val = intn.getInt();
         }
 
-        if (span->recalc_normal())
+        if (span->RecalcNormal())
         {
             // Exceeded threshold, add span to QB
             m_QB.push(&(*span));
@@ -630,7 +630,7 @@ Optimize::step_1d()
 }
 
 bool
-Optimize::step_1e(Errwarns& errwarns)
+Optimizer::Step1e(Errwarns& errwarns)
 {
     bool saw_error = false;
 
@@ -640,8 +640,8 @@ Optimize::step_1e(Errwarns& errwarns)
     {
         if (!os->m_bc)
             continue;
-        os->m_thres = os->m_bc->next_offset();
-        os->m_new_val = os->m_bc->get_offset();
+        os->m_thres = os->m_bc->getNextOffset();
+        os->m_new_val = os->m_bc->getOffset();
         os->m_cur_val = os->m_new_val;
         ++num_offset_setters;
     }
@@ -653,7 +653,7 @@ Optimize::step_1e(Errwarns& errwarns)
         Span* span = *spani;
         for (Span::Terms::iterator term=span->m_span_terms.begin(),
              endterm=span->m_span_terms.end(); term != endterm; ++term)
-            itree_add(*span, *term);
+            ITreeAdd(*span, *term);
     }
 
     // Look for cycles in times expansion (span.id==0)
@@ -665,14 +665,14 @@ Optimize::step_1e(Errwarns& errwarns)
             continue;
         try
         {
-            m_itree.enumerate(static_cast<long>(span->m_bc.get_index()),
-                              static_cast<long>(span->m_bc.get_index()),
-                              BIND::bind(&Optimize::check_cycle, this, _1,
+            m_itree.Enumerate(static_cast<long>(span->m_bc.getIndex()),
+                              static_cast<long>(span->m_bc.getIndex()),
+                              BIND::bind(&Optimizer::CheckCycle, this, _1,
                                          REF::ref(*span)));
         }
         catch (Error& err)
         {
-            errwarns.propagate(span->m_bc.get_line(), err);
+            errwarns.Propagate(span->m_bc.getLine(), err);
             saw_error = true;
         }
     }
@@ -681,7 +681,7 @@ Optimize::step_1e(Errwarns& errwarns)
 }
 
 bool
-Optimize::step_2(Errwarns& errwarns)
+Optimizer::Step2(Errwarns& errwarns)
 {
     bool saw_error = false;
 
@@ -710,18 +710,18 @@ Optimize::step_2(Errwarns& errwarns)
         // Make sure we ended up ultimately exceeding thresholds; due to
         // offset BCs we may have been placed on Q and then reduced in size
         // again.
-        if (!span->recalc_normal())
+        if (!span->RecalcNormal())
             continue;
 
         ++num_expansions;
 
-        unsigned long orig_len = span->m_bc.get_total_len();
+        unsigned long orig_len = span->m_bc.getTotalLen();
 
         bool still_depend =
-            expand(span->m_bc, span->m_id, span->m_cur_val, span->m_new_val,
+            Expand(span->m_bc, span->m_id, span->m_cur_val, span->m_new_val,
                    &span->m_neg_thres, &span->m_pos_thres, errwarns);
 
-        if (errwarns.num_errors() > 0)
+        if (errwarns.getNumErrors() > 0)
         {
             // error
             saw_error = true;
@@ -738,14 +738,14 @@ Optimize::step_2(Errwarns& errwarns)
         else
             span->m_active = Span::INACTIVE;    // we're done with this span
 
-        long len_diff = span->m_bc.get_total_len() - orig_len;
+        long len_diff = span->m_bc.getTotalLen() - orig_len;
         if (len_diff == 0)
             continue;   // didn't increase in size
 
         // Iterate over all spans dependent across the bc just expanded
-        m_itree.enumerate(static_cast<long>(span->m_bc.get_index()),
-                          static_cast<long>(span->m_bc.get_index()),
-                          BIND::bind(&Optimize::term_expand, this, _1,
+        m_itree.Enumerate(static_cast<long>(span->m_bc.getIndex()),
+                          static_cast<long>(span->m_bc.getIndex()),
+                          BIND::bind(&Optimizer::ExpandTerm, this, _1,
                                      len_diff));
 
         // Iterate over offset-setters that follow the bc just expanded.
@@ -757,31 +757,31 @@ Optimize::step_2(Errwarns& errwarns)
         long offset_diff = len_diff;
         while (os != m_offset_setters.end()
                && os->m_bc
-               && os->m_bc->get_container() == span->m_bc.get_container()
+               && os->m_bc->getContainer() == span->m_bc.getContainer()
                && offset_diff != 0)
         {
             unsigned long old_next_offset =
-                os->m_cur_val + os->m_bc->get_total_len();
+                os->m_cur_val + os->m_bc->getTotalLen();
 
             assert((offset_diff >= 0 ||
                     static_cast<unsigned long>(-offset_diff) <= os->m_new_val)
                    && "org/align went to negative offset");
             os->m_new_val += offset_diff;
 
-            orig_len = os->m_bc->get_tail_len();
+            orig_len = os->m_bc->getTailLen();
             long neg_thres_temp, pos_thres_temp;
-            expand(*os->m_bc, 1, static_cast<long>(os->m_cur_val),
+            Expand(*os->m_bc, 1, static_cast<long>(os->m_cur_val),
                    static_cast<long>(os->m_new_val), &neg_thres_temp,
                    &pos_thres_temp, errwarns);
             os->m_thres = static_cast<long>(pos_thres_temp);
 
             offset_diff =
-                os->m_new_val + os->m_bc->get_total_len() - old_next_offset;
-            len_diff = os->m_bc->get_tail_len() - orig_len;
+                os->m_new_val + os->m_bc->getTotalLen() - old_next_offset;
+            len_diff = os->m_bc->getTailLen() - orig_len;
             if (len_diff != 0)
-                m_itree.enumerate(static_cast<long>(os->m_bc->get_index()),
-                                  static_cast<long>(os->m_bc->get_index()),
-                                  BIND::bind(&Optimize::term_expand, this, _1,
+                m_itree.Enumerate(static_cast<long>(os->m_bc->getIndex()),
+                                  static_cast<long>(os->m_bc->getIndex()),
+                                  BIND::bind(&Optimizer::ExpandTerm, this, _1,
                                              len_diff));
 
             os->m_cur_val = os->m_new_val;
@@ -797,17 +797,17 @@ Optimize::step_2(Errwarns& errwarns)
 namespace yasm {
 
 void
-Object::update_bc_offsets(Errwarns& errwarns)
+Object::UpdateBytecodeOffsets(Errwarns& errwarns)
 {
     for (section_iterator sect=m_sections.begin(), end=m_sections.end();
          sect != end; ++sect)
-        sect->update_offsets(errwarns);
+        sect->UpdateOffsets(errwarns);
 }
 
 void
-Object::optimize(Errwarns& errwarns)
+Object::Optimize(Errwarns& errwarns)
 {
-    Optimize opt;
+    Optimizer opt;
     unsigned long bc_index = 0;
     bool saw_error = false;
 
@@ -818,27 +818,27 @@ Object::optimize(Errwarns& errwarns)
         unsigned long offset = 0;
 
         // Set the offset of the first (empty) bytecode.
-        sect->bcs_first().set_index(bc_index++);
-        sect->bcs_first().set_offset(0);
+        sect->bytecodes_first().setIndex(bc_index++);
+        sect->bytecodes_first().setOffset(0);
 
         // Iterate through the remainder, if any.
-        for (Section::bc_iterator bc=sect->bcs_begin(), bcend=sect->bcs_end();
-             bc != bcend; ++bc)
+        for (Section::bc_iterator bc=sect->bytecodes_begin(),
+             bcend=sect->bytecodes_end(); bc != bcend; ++bc)
         {
-            bc->set_index(bc_index++);
-            bc->set_offset(offset);
+            bc->setIndex(bc_index++);
+            bc->setOffset(offset);
 
-            calc_len(*bc, BIND::bind(&Optimize::add_span, &opt,
-                                     _1, _2, _3, _4, _5),
-                     errwarns);
-            if (errwarns.num_errors() > 0)
+            CalcLen(*bc, BIND::bind(&Optimizer::AddSpan, &opt,
+                                    _1, _2, _3, _4, _5),
+                    errwarns);
+            if (errwarns.getNumErrors() > 0)
                 saw_error = true;
             else
             {
-                if (bc->get_special() == Bytecode::Contents::SPECIAL_OFFSET)
-                    opt.add_offset_setter(*bc);
+                if (bc->getSpecial() == Bytecode::Contents::SPECIAL_OFFSET)
+                    opt.AddOffsetSetter(*bc);
 
-                offset = bc->next_offset();
+                offset = bc->getNextOffset();
             }
         }
     }
@@ -847,28 +847,28 @@ Object::optimize(Errwarns& errwarns)
         return;
 
     // Step 1b
-    if (opt.step_1b(errwarns))
+    if (opt.Step1b(errwarns))
         return;
 
     // Step 1c
-    update_bc_offsets(errwarns);
-    if (errwarns.num_errors() > 0)
+    UpdateBytecodeOffsets(errwarns);
+    if (errwarns.getNumErrors() > 0)
         return;
 
     // Step 1d
-    if (opt.step_1d())
+    if (opt.Step1d())
         return;
 
     // Step 1e
-    if (opt.step_1e(errwarns))
+    if (opt.Step1e(errwarns))
         return;
 
     // Step 2
-    if (opt.step_2(errwarns))
+    if (opt.Step2(errwarns))
         return;
 
     // Step 3
-    update_bc_offsets(errwarns);
+    UpdateBytecodeOffsets(errwarns);
 }
 
 } // namespace yasm

@@ -115,14 +115,14 @@ public:
     GasParser(const ParserModule& module, Errwarns& errwarns);
     ~GasParser();
 
-    void add_directives(Directives& dirs, const char* parser);
+    void AddDirectives(Directives& dirs, const char* parser);
 
-    static const char* get_name() { return "GNU AS (GAS)-compatible parser"; }
-    static const char* get_keyword() { return "gas"; }
-    static std::vector<const char*> get_preproc_keywords();
-    static const char* get_default_preproc_keyword() { return "raw"; }
+    static const char* getName() { return "GNU AS (GAS)-compatible parser"; }
+    static const char* getKeyword() { return "gas"; }
+    static std::vector<const char*> getPreprocessorKeywords();
+    static const char* getDefaultPreprocessorKeyword() { return "raw"; }
 
-    void parse(Object& object,
+    void Parse(Object& object,
                Preprocessor& preproc,
                bool save_input,
                Directives& dirs,
@@ -146,62 +146,62 @@ public:
         NONE                // special token for lookahead
     };
 
-    static bool is_eol_tok(int tok)
+    static bool isEolTok(int tok)
     {
         return (tok == '\n' || tok == ';' || tok == 0);
     }
-    static const char* describe_token(int tok);
+    static const char* DescribeToken(int tok);
 
-    int lex(YYSTYPE* lvalp);
+    int Lex(YYSTYPE* lvalp);
 
 private:
 
-    void parse_line();
-    void debug_file(NameValues& nvs);
-    void cpp_line_marker();
-    void nasm_line_marker();
+    void ParseLine();
+    void setDebugFile(NameValues& nvs);
+    void ParseCppLineMarker();
+    void ParseNasmLineMarker();
 
-    void dir_line(unsigned int);
-    void dir_rept(unsigned int);
-    void dir_endr(unsigned int);
-    void dir_align(unsigned int power2);
-    void dir_org(unsigned int);
-    void dir_local(unsigned int);
-    void dir_comm(unsigned int is_lcomm);
-    void dir_ascii(unsigned int withzero);
-    void dir_data(unsigned int size);
-    void dir_leb128(unsigned int sign);
-    void dir_zero(unsigned int);
-    void dir_skip(unsigned int);
-    void dir_fill(unsigned int);
-    void dir_bss_section(unsigned int);
-    void dir_data_section(unsigned int);
-    void dir_text_section(unsigned int);
-    void dir_section(unsigned int);
-    void dir_equ(unsigned int);
-    void dir_file(unsigned int);
+    void ParseDirLine(unsigned int);
+    void ParseDirRept(unsigned int);
+    void ParseDirEndr(unsigned int);
+    void ParseDirAlign(unsigned int power2);
+    void ParseDirOrg(unsigned int);
+    void ParseDirLocal(unsigned int);
+    void ParseDirComm(unsigned int is_lcomm);
+    void ParseDirAscii(unsigned int withzero);
+    void ParseDirData(unsigned int size);
+    void ParseDirLeb128(unsigned int sign);
+    void ParseDirZero(unsigned int);
+    void ParseDirSkip(unsigned int);
+    void ParseDirFill(unsigned int);
+    void ParseDirBssSection(unsigned int);
+    void ParseDirDataSection(unsigned int);
+    void ParseDirTextSection(unsigned int);
+    void ParseDirSection(unsigned int);
+    void ParseDirEqu(unsigned int);
+    void ParseDirFile(unsigned int);
 
-    Insn::Ptr parse_instr();
-    void parse_dirvals(NameValues* nvs);
-    Insn::Operand parse_memaddr();
-    Insn::Operand parse_operand();
-    bool parse_expr(Expr& e);
-    bool parse_expr0(Expr& e);
-    bool parse_expr1(Expr& e);
-    bool parse_expr2(Expr& e);
+    Insn::Ptr ParseInsn();
+    void ParseDirective(NameValues* nvs);
+    Insn::Operand ParseMemoryAddress();
+    Insn::Operand ParseOperand();
+    bool ParseExpr(Expr& e);
+    bool ParseExpr0(Expr& e);
+    bool ParseExpr1(Expr& e);
+    bool ParseExpr2(Expr& e);
 
-    void define_label(const std::string& name, bool local);
-    void define_lcomm(const std::string& name,
-                      std::auto_ptr<Expr> size,
-                      const Expr& align);
-    void switch_section(const std::string& name,
+    void DefineLabel(const std::string& name, bool local);
+    void DefineLcomm(const std::string& name,
+                     std::auto_ptr<Expr> size,
+                     const Expr& align);
+    void SwitchSection(const std::string& name,
+                       NameValues& objext_namevals,
+                       bool builtin);
+    Section& getSection(const std::string& name,
                         NameValues& objext_namevals,
                         bool builtin);
-    Section& get_section(const std::string& name,
-                         NameValues& objext_namevals,
-                         bool builtin);
 
-    void do_parse();
+    void DoParse();
 
     GasDirLookup m_sized_gas_dirs[1];
     typedef std::map<std::string, const GasDirLookup*> GasDirMap;

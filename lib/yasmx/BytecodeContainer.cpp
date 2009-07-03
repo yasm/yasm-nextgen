@@ -48,20 +48,20 @@ public:
     ~GapBytecode();
 
     /// Prints the implementation-specific data (for debugging purposes).
-    void put(marg_ostream& os) const;
+    void Put(marg_ostream& os) const;
 
     /// Finalizes the bytecode after parsing.
-    void finalize(Bytecode& bc);
+    void Finalize(Bytecode& bc);
 
     /// Calculates the minimum size of a bytecode.
-    unsigned long calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
+    unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
 
     /// Output a bytecode.
-    void output(Bytecode& bc, BytecodeOutput& bc_out);
+    void Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     /// Increase the gap size.
     /// @param size     size in bytes
-    void extend(unsigned long size);
+    void Extend(unsigned long size);
 
     GapBytecode* clone() const;
 
@@ -80,27 +80,27 @@ GapBytecode::~GapBytecode()
 }
 
 void
-GapBytecode::put(marg_ostream& os) const
+GapBytecode::Put(marg_ostream& os) const
 {
     os << "_Gap_\n";
     os << "Size=" << m_size << '\n';
 }
 
 void
-GapBytecode::finalize(Bytecode& bc)
+GapBytecode::Finalize(Bytecode& bc)
 {
 }
 
 unsigned long
-GapBytecode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+GapBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 {
     return m_size;
 }
 
 void
-GapBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
+GapBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
-    bc_out.output_gap(m_size);
+    bc_out.OutputGap(m_size);
 }
 
 GapBytecode*
@@ -110,7 +110,7 @@ GapBytecode::clone() const
 }
 
 void
-GapBytecode::extend(unsigned long size)
+GapBytecode::Extend(unsigned long size)
 {
     m_size += size;
 }
@@ -126,7 +126,7 @@ BytecodeContainer::BytecodeContainer()
       m_last_gap(false)
 {
     // A container always has at least one bytecode.
-    start_bytecode();
+    StartBytecode();
 }
 
 BytecodeContainer::~BytecodeContainer()
@@ -134,19 +134,19 @@ BytecodeContainer::~BytecodeContainer()
 }
 
 Section*
-BytecodeContainer::as_section()
+BytecodeContainer::AsSection()
 {
     return 0;
 }
 
 const Section*
-BytecodeContainer::as_section() const
+BytecodeContainer::AsSection() const
 {
     return 0;
 }
 
 void
-BytecodeContainer::append_bytecode(std::auto_ptr<Bytecode> bc)
+BytecodeContainer::AppendBytecode(std::auto_ptr<Bytecode> bc)
 {
     if (bc.get() != 0)
     {
@@ -157,22 +157,22 @@ BytecodeContainer::append_bytecode(std::auto_ptr<Bytecode> bc)
 }
 
 Bytecode&
-BytecodeContainer::append_gap(unsigned long size, unsigned long line)
+BytecodeContainer::AppendGap(unsigned long size, unsigned long line)
 {
     if (m_last_gap)
     {
-        static_cast<GapBytecode&>(*m_bcs.back().m_contents).extend(size);
+        static_cast<GapBytecode&>(*m_bcs.back().m_contents).Extend(size);
         return m_bcs.back();
     }
-    Bytecode& bc = fresh_bytecode();
-    bc.transform(Bytecode::Contents::Ptr(new GapBytecode(size)));
-    bc.set_line(line);
+    Bytecode& bc = FreshBytecode();
+    bc.Transform(Bytecode::Contents::Ptr(new GapBytecode(size)));
+    bc.setLine(line);
     m_last_gap = true;
     return bc;
 }
 
 Bytecode&
-BytecodeContainer::start_bytecode()
+BytecodeContainer::StartBytecode()
 {
     Bytecode* bc = new Bytecode;
     bc->m_container = this; // record parent
@@ -182,28 +182,28 @@ BytecodeContainer::start_bytecode()
 }
 
 Bytecode&
-BytecodeContainer::fresh_bytecode()
+BytecodeContainer::FreshBytecode()
 {
-    Bytecode& bc = bcs_last();
-    if (bc.has_contents())
-        return start_bytecode();
+    Bytecode& bc = bytecodes_last();
+    if (bc.hasContents())
+        return StartBytecode();
     return bc;
 }
 
 void
-BytecodeContainer::finalize(Errwarns& errwarns)
+BytecodeContainer::Finalize(Errwarns& errwarns)
 {
     for (bc_iterator bc=m_bcs.begin(), end=m_bcs.end(); bc != end; ++bc)
-        ::finalize(*bc, errwarns);
+        ::Finalize(*bc, errwarns);
 }
 
 void
-BytecodeContainer::update_offsets(Errwarns& errwarns)
+BytecodeContainer::UpdateOffsets(Errwarns& errwarns)
 {
     unsigned long offset = 0;
-    m_bcs.front().set_offset(0);
+    m_bcs.front().setOffset(0);
     for (bc_iterator bc=m_bcs.begin(), end=m_bcs.end(); bc != end; ++bc)
-        offset = update_offset(*bc, offset, errwarns);
+        offset = UpdateOffset(*bc, offset, errwarns);
 }
 
 marg_ostream&
@@ -211,8 +211,8 @@ operator<< (marg_ostream& os, const BytecodeContainer& container)
 {
     os << "Bytecodes:\n";
     ++os;
-    for (BytecodeContainer::const_bc_iterator bc=container.bcs_begin(),
-         end=container.bcs_end(); bc != end; ++bc)
+    for (BytecodeContainer::const_bc_iterator bc=container.bytecodes_begin(),
+         end=container.bytecodes_end(); bc != end; ++bc)
     {
         os << "Next Bytecode:\n";
         ++os;

@@ -59,54 +59,54 @@ public:
 
     /// If container is a section, get it as such.
     /// @return Section if this container is a section, else NULL.
-    /*@null@*/ virtual Section* as_section();
-    /*@null@*/ virtual const Section* as_section() const;
+    /*@null@*/ virtual Section* AsSection();
+    /*@null@*/ virtual const Section* AsSection() const;
 
     /// Get object owner of a section.
     /// @return Object this section is a part of.
-    Object* get_object() const { return m_object; }
+    Object* getObject() const { return m_object; }
 
     /// Add bytecode to the end of the container.
     /// @param bc       bytecode (may be NULL)
-    void append_bytecode(/*@null@*/ std::auto_ptr<Bytecode> bc);
+    void AppendBytecode(/*@null@*/ std::auto_ptr<Bytecode> bc);
 
     /// Add gap space to the end of the container.
     /// @param size     number of bytes of gap
     /// @return Reference to gap bytecode.
-    Bytecode& append_gap(unsigned long size, unsigned long line);
+    Bytecode& AppendGap(unsigned long size, unsigned long line);
 
     /// Start a new bytecode at the end of the container.  Factory function.
     /// @return Reference to new bytecode.
-    Bytecode& start_bytecode();
+    Bytecode& StartBytecode();
 
     /// Ensure the last bytecode in the container has no tail.  If the last
     /// bytecode has no tail, simply returns it; otherwise creates and returns
     /// a fresh bytecode.
     /// @return Reference to last bytecode.
-    Bytecode& fresh_bytecode();
+    Bytecode& FreshBytecode();
 
     typedef stdx::ptr_vector<Bytecode>::iterator bc_iterator;
     typedef stdx::ptr_vector<Bytecode>::const_iterator const_bc_iterator;
 
-    bc_iterator bcs_begin() { return m_bcs.begin(); }
-    const_bc_iterator bcs_begin() const { return m_bcs.begin(); }
-    bc_iterator bcs_end() { return m_bcs.end(); }
-    const_bc_iterator bcs_end() const { return m_bcs.end(); }
+    bc_iterator bytecodes_begin() { return m_bcs.begin(); }
+    const_bc_iterator bytecodes_begin() const { return m_bcs.begin(); }
+    bc_iterator bytecodes_end() { return m_bcs.end(); }
+    const_bc_iterator bytecodes_end() const { return m_bcs.end(); }
 
-    Bytecode& bcs_first() { return m_bcs.front(); }
-    const Bytecode& bcs_first() const { return m_bcs.front(); }
-    Bytecode& bcs_last() { return m_bcs.back(); }
-    const Bytecode& bcs_last() const { return m_bcs.back(); }
+    Bytecode& bytecodes_first() { return m_bcs.front(); }
+    const Bytecode& bytecodes_first() const { return m_bcs.front(); }
+    Bytecode& bytecodes_last() { return m_bcs.back(); }
+    const Bytecode& bytecodes_last() const { return m_bcs.back(); }
 
     /// Finalize all bytecodes after parsing.
     /// @param errwarns     error/warning set
     /// @note Errors/warnings are stored into errwarns.
-    void finalize(Errwarns& errwarns);
+    void Finalize(Errwarns& errwarns);
 
     /// Update all bytecode offsets.
     /// @param errwarns     error/warning set
     /// @note Errors/warnings are stored into errwarns.
-    void update_offsets(Errwarns& errwarns);
+    void UpdateOffsets(Errwarns& errwarns);
 
 private:
     // not implemented (noncopyable class)

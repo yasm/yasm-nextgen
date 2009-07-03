@@ -48,7 +48,7 @@ struct YASM_LIB_EXPORT Location
 
     /// Get real offset (bc offset + off)
     /// @return Offset.
-    unsigned long get_offset() const;
+    unsigned long getOffset() const;
 };
 
 inline bool
@@ -66,7 +66,7 @@ operator==(const Location& lhs, const Location& rhs)
 ///         indeterminate.
 /// @warning Only valid /after/ optimization.
 YASM_LIB_EXPORT
-bool calc_dist(Location loc1, Location loc2, /*@out@*/ IntNum* dist);
+bool CalcDist(Location loc1, Location loc2, /*@out@*/ IntNum* dist);
 
 /// Determine the distance between the starting offsets of two locations.
 /// Unlike calc_dist(), this only calculates the distance if both locations
@@ -79,7 +79,7 @@ bool calc_dist(Location loc1, Location loc2, /*@out@*/ IntNum* dist);
 /// @return True if distance calculated; false if the distance was
 ///         indeterminate (e.g. the locations have different bytecodes).
 YASM_LIB_EXPORT
-bool calc_dist_no_bc(Location loc1, Location loc2, IntNum* dist);
+bool CalcDistNoBC(Location loc1, Location loc2, IntNum* dist);
 
 } // namespace yasm
 

@@ -58,7 +58,7 @@ ModuleFactory::~ModuleFactory()
 }
 
 ModuleFactory&
-ModuleFactory::instance()
+ModuleFactory::Instance()
 {
     static ModuleFactory static_instance;
     return static_instance;
@@ -69,7 +69,7 @@ ModuleFactory::instance()
 // value, which is used to allow static initialization of the registry.
 // See example implementations in base.cc and derived.cc
 void
-ModuleFactory::add_create_fn(int type, const char* keyword, BASE_CREATE_FN func)
+ModuleFactory::AddCreateFn(int type, const char* keyword, BASE_CREATE_FN func)
 {
     m_impl->registry[type][keyword]=func;
 }
@@ -77,7 +77,7 @@ ModuleFactory::add_create_fn(int type, const char* keyword, BASE_CREATE_FN func)
 // The create function simple looks up the class ID, and if it's in the list,
 // the statement "(*i).second();" calls the function.
 ModuleFactory::BASE_CREATE_FN
-ModuleFactory::get_create_fn(int type, const std::string& keyword) const
+ModuleFactory::getCreateFn(int type, const std::string& keyword) const
 {
     Impl::MODULE_REGISTRY::const_iterator module_entry =
         m_impl->registry.find(type);
@@ -94,7 +94,7 @@ ModuleFactory::get_create_fn(int type, const std::string& keyword) const
 
 // Just return a list of the classIDKeys used.
 std::vector<std::string>
-ModuleFactory::get_registered(int type) const
+ModuleFactory::getRegistered(int type) const
 {
     Impl::MODULE_REGISTRY::const_iterator module_entry =
         m_impl->registry.find(type);
@@ -114,7 +114,7 @@ ModuleFactory::get_registered(int type) const
 }
 
 bool
-ModuleFactory::is_registered(int type, const std::string& keyword) const
+ModuleFactory::isRegistered(int type, const std::string& keyword) const
 {
     Impl::MODULE_REGISTRY::const_iterator module_entry =
         m_impl->registry.find(type);

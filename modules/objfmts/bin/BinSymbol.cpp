@@ -57,7 +57,7 @@ BinSymbol::~BinSymbol()
 }
 
 void
-BinSymbol::put(marg_ostream& os) const
+BinSymbol::Put(marg_ostream& os) const
 {
     os << "which=";
     switch (m_which)
@@ -70,19 +70,19 @@ BinSymbol::put(marg_ostream& os) const
 }
 
 bool
-BinSymbol::get_value(IntNum* val) const
+BinSymbol::getValue(IntNum* val) const
 {
     switch (m_which)
     {
         case START:
             if (!m_bsd.has_istart)
                 return false;
-            *val = m_sect.get_lma();
+            *val = m_sect.getLMA();
             return true;
         case VSTART:
             if (!m_bsd.has_ivstart)
                 return false;
-            *val = m_sect.get_vma();
+            *val = m_sect.getVMA();
             return true;
         case LENGTH:
             if (!m_bsd.has_length)
@@ -96,36 +96,36 @@ BinSymbol::get_value(IntNum* val) const
 }
 
 void
-bin_simplify(Expr& e)
+BinSimplify(Expr& e)
 {
-    for (ExprTerms::iterator i=e.get_terms().begin(),
-         end=e.get_terms().end(); i != end; ++i)
+    for (ExprTerms::iterator i=e.getTerms().begin(),
+         end=e.getTerms().end(); i != end; ++i)
     {
         Symbol* sym;
 
         // Transform our special symrecs into the appropriate value
         IntNum ssymval;
-        if ((sym = i->get_sym()) && get_ssym_value(*sym, &ssymval))
-            i->set_int(ssymval);
+        if ((sym = i->getSymbol()) && getBinSSymValue(*sym, &ssymval))
+            i->setIntNum(ssymval);
 
         // Transform symrecs or precbcs that reference sections into
         // vstart + intnum(dist).
         Location loc;
-        if ((sym = i->get_sym()) && sym->get_label(&loc))
+        if ((sym = i->getSymbol()) && sym->getLabel(&loc))
             ;
-        else if (Location* locp = i->get_loc())
+        else if (Location* locp = i->getLocation())
             loc = *locp;
         else
             continue;
 
-        BytecodeContainer* container = loc.bc->get_container();
-        Location first = {&container->bcs_first(), 0};
+        BytecodeContainer* container = loc.bc->getContainer();
+        Location first = {&container->bytecodes_first(), 0};
         IntNum dist;
-        if (calc_dist(first, loc, &dist))
+        if (CalcDist(first, loc, &dist))
         {
-            const Section* sect = container->as_section();
-            dist += sect->get_vma();
-            i->set_int(dist);
+            const Section* sect = container->AsSection();
+            dist += sect->getVMA();
+            i->setIntNum(dist);
         }
     }
 }

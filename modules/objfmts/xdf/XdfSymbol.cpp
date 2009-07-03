@@ -43,7 +43,7 @@ XdfSymbol::~XdfSymbol()
 }
 
 void
-XdfSymbol::put(marg_ostream& os) const
+XdfSymbol::Put(marg_ostream& os) const
 {
     os << "symtab index=" << index << '\n';
 }

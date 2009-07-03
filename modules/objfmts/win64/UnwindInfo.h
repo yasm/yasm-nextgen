@@ -47,7 +47,7 @@ namespace win64
 
 class UnwindInfo : public Bytecode::Contents
 {
-    friend void generate(std::auto_ptr<UnwindInfo> uwinfo,
+    friend void Generate(std::auto_ptr<UnwindInfo> uwinfo,
                          BytecodeContainer& xdata,
                          unsigned long line,
                          const Arch& arch);
@@ -56,27 +56,27 @@ public:
     UnwindInfo();
     ~UnwindInfo();
 
-    virtual void put(marg_ostream& os) const;
-    virtual void finalize(Bytecode& bc);
-    virtual unsigned long calc_len(Bytecode& bc,
-                                   const Bytecode::AddSpanFunc& add_span);
-    virtual bool expand(Bytecode& bc,
+    virtual void Put(marg_ostream& os) const;
+    virtual void Finalize(Bytecode& bc);
+    virtual unsigned long CalcLen(Bytecode& bc,
+                                  const Bytecode::AddSpanFunc& add_span);
+    virtual bool Expand(Bytecode& bc,
                         unsigned long& len,
                         int span,
                         long old_val,
                         long new_val,
                         /*@out@*/ long* neg_thres,
                         /*@out@*/ long* pos_thres);
-    virtual void output(Bytecode& bc, BytecodeOutput& bc_out);
+    virtual void Output(Bytecode& bc, BytecodeOutput& bc_out);
     virtual UnwindInfo* clone() const;
 
-    void set_proc(SymbolRef proc) { m_proc = proc; }
-    SymbolRef get_proc() { return m_proc; }
-    void set_prolog(SymbolRef prolog) { m_prolog = prolog; }
-    void set_ehandler(SymbolRef ehandler) { m_ehandler = ehandler; }
-    void set_framereg(unsigned long framereg) { m_framereg = framereg; }
-    void set_frameoff(const Value& frameoff) { m_frameoff = frameoff; }
-    void add_code(std::auto_ptr<UnwindCode> uwcode)
+    void setProc(SymbolRef proc) { m_proc = proc; }
+    SymbolRef getProc() { return m_proc; }
+    void setProlog(SymbolRef prolog) { m_prolog = prolog; }
+    void setEHandler(SymbolRef ehandler) { m_ehandler = ehandler; }
+    void setFrameReg(unsigned long framereg) { m_framereg = framereg; }
+    void setFrameOff(const Value& frameoff) { m_frameoff = frameoff; }
+    void AddCode(std::auto_ptr<UnwindCode> uwcode)
     { m_codes.push_back(uwcode.release()); }
 
 private:
@@ -98,7 +98,7 @@ private:
     Value m_codes_count;
 };
 
-void generate(std::auto_ptr<UnwindInfo> uwinfo,
+void Generate(std::auto_ptr<UnwindInfo> uwinfo,
               BytecodeContainer& xdata,
               unsigned long line,
               const Arch& arch);

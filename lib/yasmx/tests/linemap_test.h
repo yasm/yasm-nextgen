@@ -40,35 +40,35 @@ public:
         unsigned long line;
 
         // initial line number
-        TS_ASSERT_EQUALS(lm.get_current(), 1UL);
+        TS_ASSERT_EQUALS(lm.getCurrent(), 1UL);
 
         // get source with no source available
-        ok = lm.get_source(1, loc, source);
+        ok = lm.getSource(1, loc, source);
         TS_ASSERT_EQUALS(ok, false);
         TS_ASSERT(loc.bc == 0);
         TS_ASSERT_EQUALS(source, "");
 
         // add source for line 1, no bytecode
         loc.bc = 0;
-        lm.add_source(loc, "line 1 source");
+        lm.AddSource(loc, "line 1 source");
 
         // line number increment
-        line = lm.goto_next();
+        line = lm.GoToNext();
         TS_ASSERT_EQUALS(line, 2UL);
-        TS_ASSERT_EQUALS(lm.get_current(), 2UL);
+        TS_ASSERT_EQUALS(lm.getCurrent(), 2UL);
 
         // add source for line 2, no bytecode
         loc.bc = 0;
-        lm.add_source(loc, "line 2 source");
+        lm.AddSource(loc, "line 2 source");
 
         // get source for line 1
-        ok = lm.get_source(1, loc, source);
+        ok = lm.getSource(1, loc, source);
         TS_ASSERT_EQUALS(ok, true);
         TS_ASSERT(loc.bc == 0);
         TS_ASSERT_EQUALS(source, "line 1 source");
 
         // get source for line 2
-        ok = lm.get_source(2, loc, source);
+        ok = lm.getSource(2, loc, source);
         TS_ASSERT_EQUALS(ok, true);
         TS_ASSERT(loc.bc == 0);
         TS_ASSERT_EQUALS(source, "line 2 source");
@@ -79,7 +79,7 @@ public:
         std::string filename; \
         unsigned long file_line; \
     \
-        bool ok = lm.lookup(line, &filename, &file_line); \
+        bool ok = lm.Lookup(line, &filename, &file_line); \
         TS_ASSERT_EQUALS(ok, true); \
         TS_ASSERT_EQUALS(filename, fn_result); \
         TS_ASSERT_EQUALS(file_line, fl_result); \
@@ -92,42 +92,42 @@ public:
         std::string filename;
         unsigned long file_line;
 
-        // lookup with no filename info available
-        ok = lm.lookup(1, &filename, &file_line);
+        // Lookup with no filename info available
+        ok = lm.Lookup(1, &filename, &file_line);
         TS_ASSERT_EQUALS(ok, false);
         TS_ASSERT_EQUALS(filename, "unknown");
         TS_ASSERT_EQUALS(file_line, 0UL);
 
         // Physical line setup
         lm.set("file 1", 1, 1); // line 1 -> "file 1", 1, +1  --> 1 = "file 1", 1
-        lm.goto_next();         //                            --> 2 = "file 1", 2
-        lm.goto_next();         //                            --> 3 = "file 1", 3
-        lm.goto_next();
+        lm.GoToNext();          //                            --> 2 = "file 1", 2
+        lm.GoToNext();          //                            --> 3 = "file 1", 3
+        lm.GoToNext();
         lm.set(4, 0);           // line 4 -> "file 1", 4, +0  --> 4 = "file 1", 4
-        lm.goto_next();         //                            --> 5 = "file 1", 4
-        lm.goto_next();         //                            --> 6 = "file 1", 4
-        lm.goto_next();
+        lm.GoToNext();          //                            --> 5 = "file 1", 4
+        lm.GoToNext();          //                            --> 6 = "file 1", 4
+        lm.GoToNext();
         lm.set("file 1", 5, 1); // line 7 -> "file 1", 5, +1  --> 7 = "file 1", 5
-        lm.goto_next();         //                            --> 8 = "file 1", 6
-        lm.goto_next();
+        lm.GoToNext();          //                            --> 8 = "file 1", 6
+        lm.GoToNext();
         lm.set("file 2", 1, 1); // line 9 -> "file 2", 1, +1  --> 9 = "file 2", 1
-        lm.goto_next();         //                            --> 10 = "file 2", 2
-        lm.goto_next();         //                            --> 11 = "file 2", 3
-        lm.goto_next();
+        lm.GoToNext();          //                            --> 10 = "file 2", 2
+        lm.GoToNext();          //                            --> 11 = "file 2", 3
+        lm.GoToNext();
         lm.set("file 1", 7, 1); // line 12 -> "file 1", 7, +1 --> 12 = "file 1", 7
-        lm.goto_next();         //                            --> 13 = "file 1", 8
-        lm.goto_next();         //                            --> 14 = "file 1", 9
+        lm.GoToNext();          //                            --> 13 = "file 1", 8
+        lm.GoToNext();          //                            --> 14 = "file 1", 9
 
         // Poke tests
 
         // 15 = "file 3", 5
         // 16 = "file 1", 9
-        file_line = lm.poke("file 3", 5);
+        file_line = lm.Poke("file 3", 5);
         TS_ASSERT_EQUALS(file_line, 15UL);
 
         // 17 = "file 1", 7
         // 18 = "file 1", 9
-        file_line = lm.poke(7);
+        file_line = lm.Poke(7);
         TS_ASSERT_EQUALS(file_line, 17UL);
 
         // Physical line check
@@ -155,6 +155,6 @@ public:
         correct_fns.insert("file 1");
         correct_fns.insert("file 2");
         correct_fns.insert("file 3");
-        TS_ASSERT(lm.get_filenames() == correct_fns);
+        TS_ASSERT(lm.getFilenames() == correct_fns);
     }
 };

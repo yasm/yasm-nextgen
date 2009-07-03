@@ -46,16 +46,16 @@ public:
     ~SxData();
 
     /// Prints the implementation-specific data (for debugging purposes).
-    void put(marg_ostream& os) const;
+    void Put(marg_ostream& os) const;
 
     /// Finalizes the bytecode after parsing.
-    void finalize(Bytecode& bc);
+    void Finalize(Bytecode& bc);
 
     /// Calculates the minimum size of a bytecode.
-    unsigned long calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
+    unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
 
     /// Convert a bytecode into its byte representation.
-    void output(Bytecode& bc, BytecodeOutput& bc_out);
+    void Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     SxData* clone() const;
 
@@ -73,33 +73,33 @@ SxData::~SxData()
 }
 
 void
-SxData::put(marg_ostream& os) const
+SxData::Put(marg_ostream& os) const
 {
     // TODO
 }
 
 void
-SxData::finalize(Bytecode& bc)
+SxData::Finalize(Bytecode& bc)
 {
 }
 
 unsigned long
-SxData::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+SxData::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 {
     return 4;
 }
 
 void
-SxData::output(Bytecode& bc, BytecodeOutput& bc_out)
+SxData::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     yasm::objfmt::coff::CoffSymbol* coffsym =
-        yasm::objfmt::coff::get_coff(*m_sym);
+        yasm::objfmt::coff::getCoff(*m_sym);
     assert(coffsym && "no symbol data for SAFESEH symbol");
 
-    Bytes& bytes = bc_out.get_scratch();
+    Bytes& bytes = bc_out.getScratch();
     bytes << little_endian;
-    write_32(bytes, coffsym->m_index);
-    bc_out.output(bytes);
+    Write32(bytes, coffsym->m_index);
+    bc_out.Output(bytes);
 }
 
 SxData*
@@ -118,11 +118,11 @@ namespace win32
 {
 
 void
-append_sxdata(BytecodeContainer& container, SymbolRef sym, unsigned long line)
+AppendSxData(BytecodeContainer& container, SymbolRef sym, unsigned long line)
 {
-    Bytecode& bc = container.fresh_bytecode();
-    bc.transform(Bytecode::Contents::Ptr(new SxData(sym)));
-    bc.set_line(line);
+    Bytecode& bc = container.FreshBytecode();
+    bc.Transform(Bytecode::Contents::Ptr(new SxData(sym)));
+    bc.setLine(line);
 }
 
 }}} // namespace yasm::objfmt::win32

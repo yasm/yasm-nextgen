@@ -96,8 +96,8 @@ struct CoffSymbol : public AssocData
 
     CoffSymbol(StorageClass sclass, AuxType auxtype = AUX_NONE);
     ~CoffSymbol();
-    void put(marg_ostream& os) const;
-    void write(Bytes& bytes,
+    void Put(marg_ostream& os) const;
+    void Write(Bytes& bytes,
                const Symbol& sym,
                Errwarns& errwarns,
                StringTable& strtab) const;
@@ -109,15 +109,15 @@ struct CoffSymbol : public AssocData
 };
 
 inline CoffSymbol*
-get_coff(Symbol& sym)
+getCoff(Symbol& sym)
 {
-    return static_cast<CoffSymbol*>(sym.get_assoc_data(CoffSymbol::key));
+    return static_cast<CoffSymbol*>(sym.getAssocData(CoffSymbol::key));
 }
 
 inline const CoffSymbol*
-get_coff(const Symbol& sym)
+getCoff(const Symbol& sym)
 {
-    return static_cast<const CoffSymbol*>(sym.get_assoc_data(CoffSymbol::key));
+    return static_cast<const CoffSymbol*>(sym.getAssocData(CoffSymbol::key));
 }
 
 }}} // namespace yasm::objfmt::coff

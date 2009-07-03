@@ -138,10 +138,10 @@ class FloatNumTestSuite : public CxxTest::TestSuite
 {
 public:
 
-    void check_get_sized(const llvm::APFloat& flt,
-                         const Init_Entry& val,
-                         int destsize,
-                         int valsize)
+    void CheckGetSized(const llvm::APFloat& flt,
+                       const Init_Entry& val,
+                       int destsize,
+                       int valsize)
     {
         int correct_retval;
         const unsigned char* correct_result;
@@ -164,7 +164,7 @@ public:
         }
         Bytes result;
         result.resize(destsize);
-        overwrite(result, flt, valsize, 0, false, 0);
+        Overwrite(result, flt, valsize, 0, false, 0);
         TS_ASSERT_SAME_DATA(&result[0], correct_result, destsize);
     }
 
@@ -174,9 +174,9 @@ public:
         {
             llvm::APFloat flt(llvm::APFloat::x87DoubleExtended,
                               normalized_vals[i].ascii);
-            check_get_sized(flt, normalized_vals[i], 4, 32);
-            check_get_sized(flt, normalized_vals[i], 8, 64);
-            check_get_sized(flt, normalized_vals[i], 10, 80);
+            CheckGetSized(flt, normalized_vals[i], 4, 32);
+            CheckGetSized(flt, normalized_vals[i], 8, 64);
+            CheckGetSized(flt, normalized_vals[i], 10, 80);
         }
     }
 
@@ -186,9 +186,9 @@ public:
         {
             llvm::APFloat flt(llvm::APFloat::x87DoubleExtended,
                               normalized_edgecase_vals[i].ascii);
-            check_get_sized(flt, normalized_edgecase_vals[i], 4, 32);
-            check_get_sized(flt, normalized_edgecase_vals[i], 8, 64);
-            check_get_sized(flt, normalized_edgecase_vals[i], 10, 80);
+            CheckGetSized(flt, normalized_edgecase_vals[i], 4, 32);
+            CheckGetSized(flt, normalized_edgecase_vals[i], 8, 64);
+            CheckGetSized(flt, normalized_edgecase_vals[i], 10, 80);
         }
     }
 };

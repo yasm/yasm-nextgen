@@ -43,7 +43,7 @@ public:
         {
         }
 
-        const std::string& get_name() const { return m_name; }
+        const std::string& getName() const { return m_name; }
 
     private:
         std::string m_name;
@@ -53,7 +53,7 @@ public:
     {
     public:
         const std::string& operator() (const Symbol* sym) const
-        { return sym->get_name(); }
+        { return sym->getName(); }
     };
 
     typedef yasm::hamt<std::string, Symbol, SymGetName> myhamt;
@@ -62,7 +62,7 @@ public:
     {
     public:
         GenSym(int nsym);
-        void insert_check_new(myhamt& h);
+        void InsertCheckNew(myhamt& h);
 
         typedef stdx::ptr_vector<Symbol> Symbols;
         Symbols syms;
@@ -76,7 +76,7 @@ public:
         GenSym g(NUM_SYMS);
         myhamt h(false);
 
-        g.insert_check_new(h);
+        g.InsertCheckNew(h);
     }
 
     void testCaseFind()
@@ -84,13 +84,13 @@ public:
         GenSym g(NUM_SYMS);
         myhamt h(false);
 
-        g.insert_check_new(h);
+        g.InsertCheckNew(h);
 
         // find
         for (GenSym::Symbols::iterator i=g.syms.begin(), end=g.syms.end();
              i != end; ++i)
         {
-            Symbol* sym = h.find(i->get_name());
+            Symbol* sym = h.Find(i->getName());
             TS_ASSERT(sym == &(*i));
         }
     }
@@ -101,14 +101,14 @@ public:
         GenSym g2(NUM_SYMS);
         myhamt h(false);
 
-        g1.insert_check_new(h);
+        g1.InsertCheckNew(h);
 
         // duplicate insertion (without replacement)
         for (GenSym::Symbols::iterator i=g1.syms.begin(), end=g1.syms.end(),
              i2=g2.syms.begin(), i2end=g2.syms.end();
              i != end && i2 != i2end; ++i, ++i2)
         {
-            Symbol* old = h.insert(&(*i2));
+            Symbol* old = h.Insert(&(*i2));
             TS_ASSERT(old == &(*i));
         }
 
@@ -116,7 +116,7 @@ public:
         for (GenSym::Symbols::iterator i=g1.syms.begin(), end=g1.syms.end();
              i != end; ++i)
         {
-            Symbol* sym = h.find(i->get_name());
+            Symbol* sym = h.Find(i->getName());
             TS_ASSERT(sym == &(*i));
         }
     }
@@ -127,14 +127,14 @@ public:
         GenSym g2(NUM_SYMS);
         myhamt h(false);
 
-        g1.insert_check_new(h);
+        g1.InsertCheckNew(h);
 
         // duplicate insertion (with replacement)
         for (GenSym::Symbols::iterator i=g1.syms.begin(), end=g1.syms.end(),
              i2=g2.syms.begin(), i2end=g2.syms.end();
              i != end && i2 != i2end; ++i, ++i2)
         {
-            Symbol* old = h.replace(&(*i2));
+            Symbol* old = h.Replace(&(*i2));
             TS_ASSERT(old == &(*i));
         }
 
@@ -142,7 +142,7 @@ public:
         for (GenSym::Symbols::iterator i=g2.syms.begin(), end=g2.syms.end();
              i != end; ++i)
         {
-            Symbol* sym = h.find(i->get_name());
+            Symbol* sym = h.Find(i->getName());
             TS_ASSERT(sym == &(*i));
         }
     }
@@ -160,12 +160,12 @@ HamtTestSuite::GenSym::GenSym(int nsym)
 }
 
 void
-HamtTestSuite::GenSym::insert_check_new(myhamt& h)
+HamtTestSuite::GenSym::InsertCheckNew(myhamt& h)
 {
     for (GenSym::Symbols::iterator i=syms.begin(), end=syms.end();
          i != end; ++i)
     {
-        Symbol* old = h.insert(&(*i));
+        Symbol* old = h.Insert(&(*i));
         TS_ASSERT(old == 0);
     }
 }

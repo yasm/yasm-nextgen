@@ -68,7 +68,7 @@ static std::ofstream errfile;
 static const char* full_version =
     PACKAGE_NAME " " PACKAGE_INTVER "." PACKAGE_BUILD;
 void
-print_version()
+PrintVersion()
 {
     std::cout
         << full_version << '\n'
@@ -328,13 +328,13 @@ static cl::opt<ErrwarnStyle> ewmsg_style("X",
      clEnumValEnd));
 
 static void
-print_error(const std::string& msg)
+PrintError(const std::string& msg)
 {
     errfile << "yasm: " << msg << std::endl;
 }
 
 static void
-print_list_keyword_desc(const std::string& name, const std::string& keyword)
+PrintListKeywordDesc(const std::string& name, const std::string& keyword)
 {
     std::cout << "    "
               << std::left << std::setfill(' ') << std::setw(12) << keyword
@@ -343,37 +343,37 @@ print_list_keyword_desc(const std::string& name, const std::string& keyword)
 
 template <typename T>
 static void
-list_module()
+ListModule()
 {
-    std::vector<std::string> list = yasm::get_modules<T>();
+    std::vector<std::string> list = yasm::getModules<T>();
     for (std::vector<std::string>::iterator i=list.begin(), end=list.end();
          i != end; ++i)
     {
-        std::auto_ptr<T> obj = yasm::load_module<T>(*i);
-        print_list_keyword_desc(obj->get_name(), *i);
+        std::auto_ptr<T> obj = yasm::LoadModule<T>(*i);
+        PrintListKeywordDesc(obj->getName(), *i);
     }
 }
 
 template <typename T>
 static std::string
-module_common_handler(const std::string& param, const char* name,
-                      const char* name_plural, bool* listed)
+ModuleCommonHandler(const std::string& param, const char* name,
+                    const char* name_plural, bool* listed)
 {
     if (param.empty())
         return param;
 
-    std::string keyword = String::lowercase(param);
-    if (!yasm::is_module<T>(keyword))
+    std::string keyword = String::Lowercase(param);
+    if (!yasm::isModule<T>(keyword))
     {
         if (param == "help")
         {
-            std::cout << String::compose(_("Available yasm %1:"), name_plural)
+            std::cout << String::Compose(_("Available yasm %1:"), name_plural)
                       << '\n';
-            list_module<T>();
+            ListModule<T>();
             *listed = true;
             return keyword;
         }
-        print_error(String::compose(_("%1: unrecognized %2 `%3'"), _("FATAL"),
+        PrintError(String::Compose(_("%1: unrecognized %2 `%3'"), _("FATAL"),
                                     name, param));
         exit(EXIT_FAILURE);
     }
@@ -381,7 +381,7 @@ module_common_handler(const std::string& param, const char* name,
 }
 
 static void
-apply_warning_settings()
+ApplyWarningSettings()
 {
     // Walk through warning_settings and inhibit_warnings in parallel,
     // ordering by command line argument position.
@@ -402,7 +402,7 @@ apply_warning_settings()
             (setting_pos == 0 || inhibit_pos < setting_pos))
         {
             // Handle inhibit option
-            yasm::warn_disable_all();
+            yasm::DisableAllWarn();
             ++inhibit_num;
         }
         else if (setting_pos != 0 &&
@@ -414,21 +414,21 @@ apply_warning_settings()
                 case E_ERROR: warning_error = true; break;
                 case D_ERROR: warning_error = false; break;
                 case E_UNREC_CHAR:
-                    yasm::warn_enable(yasm::WARN_UNREC_CHAR); break;
+                    yasm::EnableWarn(yasm::WARN_UNREC_CHAR); break;
                 case D_UNREC_CHAR:
-                    yasm::warn_disable(yasm::WARN_UNREC_CHAR); break;
+                    yasm::DisableWarn(yasm::WARN_UNREC_CHAR); break;
                 case E_ORPHAN_LABEL:
-                    yasm::warn_enable(yasm::WARN_ORPHAN_LABEL); break;
+                    yasm::EnableWarn(yasm::WARN_ORPHAN_LABEL); break;
                 case D_ORPHAN_LABEL:
-                    yasm::warn_disable(yasm::WARN_ORPHAN_LABEL); break;
+                    yasm::DisableWarn(yasm::WARN_ORPHAN_LABEL); break;
                 case E_UNINIT_CONTENTS:
-                    yasm::warn_enable(yasm::WARN_UNINIT_CONTENTS); break;
+                    yasm::EnableWarn(yasm::WARN_UNINIT_CONTENTS); break;
                 case D_UNINIT_CONTENTS:
-                    yasm::warn_disable(yasm::WARN_UNINIT_CONTENTS); break;
+                    yasm::DisableWarn(yasm::WARN_UNINIT_CONTENTS); break;
                 case E_SIZE_OVERRIDE:
-                    yasm::warn_enable(yasm::WARN_SIZE_OVERRIDE); break;
+                    yasm::EnableWarn(yasm::WARN_SIZE_OVERRIDE); break;
                 case D_SIZE_OVERRIDE:
-                    yasm::warn_disable(yasm::WARN_SIZE_OVERRIDE); break;
+                    yasm::DisableWarn(yasm::WARN_SIZE_OVERRIDE); break;
             }
             ++setting_num;
         }
@@ -438,16 +438,16 @@ apply_warning_settings()
 }
 
 static void
-apply_preproc_builtins(yasm::Preprocessor* preproc)
+ApplyPreprocessorBuiltins(yasm::Preprocessor* preproc)
 {
     // Define standard YASM assembly-time macro constants
     std::string predef("__YASM_OBJFMT__=");
     predef += objfmt_keyword;
-    preproc->define_builtin(predef);
+    preproc->DefineBuiltin(predef);
 }
 
 static void
-apply_preproc_saved_options(yasm::Preprocessor* preproc)
+ApplyPreprocessorSavedOptions(yasm::Preprocessor* preproc)
 {
     // Walk through predefine_macros, undefine_macros, and preinclude_files
     // in parallel, ordering by command line argument position.
@@ -473,7 +473,7 @@ apply_preproc_saved_options(yasm::Preprocessor* preproc)
             (inc_pos == 0 || def_pos < inc_pos))
         {
             // Handle predefine option
-            preproc->predefine_macro(predefine_macros[def_num]);
+            preproc->PredefineMacro(predefine_macros[def_num]);
             ++def_num;
         }
         else if (undef_pos != 0 &&
@@ -481,7 +481,7 @@ apply_preproc_saved_options(yasm::Preprocessor* preproc)
                  (inc_pos == 0 || undef_pos < inc_pos))
         {
             // Handle undefine option
-            preproc->undefine_macro(undefine_macros[undef_num]);
+            preproc->UndefineMacro(undefine_macros[undef_num]);
             ++undef_num;
         }
         else if (inc_pos != 0 &&
@@ -489,7 +489,7 @@ apply_preproc_saved_options(yasm::Preprocessor* preproc)
                  (undef_pos == 0 || inc_pos < undef_pos))
         {
             // Handle preinclude option
-            preproc->add_include_file(preinclude_files[inc_num]);
+            preproc->AddIncludeFile(preinclude_files[inc_num]);
             ++inc_num;
         }
         else
@@ -516,21 +516,21 @@ static const char *fmt_noline[2] =
 };
 
 static void
-print_yasm_error(const std::string& filename,
-                 unsigned long line,
-                 const std::string& msg,
-                 const std::string& xref_fn,
-                 unsigned long xref_line,
-                 const std::string& xref_msg)
+PrintYasmError(const std::string& filename,
+               unsigned long line,
+               const std::string& msg,
+               const std::string& xref_fn,
+               unsigned long xref_line,
+               const std::string& xref_msg)
 {
     errfile <<
-        String::compose(line ? fmt[ewmsg_style] : fmt_noline[ewmsg_style],
+        String::Compose(line ? fmt[ewmsg_style] : fmt_noline[ewmsg_style],
                         filename, line, _("error: "), msg) << std::endl;
 
     if (!xref_fn.empty() && !xref_msg.empty())
     {
         errfile <<
-            String::compose(xref_line ?
+            String::Compose(xref_line ?
                             fmt[ewmsg_style] : fmt_noline[ewmsg_style],
                             xref_fn, xref_line, _("error: "), xref_msg)
             << std::endl;
@@ -538,12 +538,12 @@ print_yasm_error(const std::string& filename,
 }
 
 static void
-print_yasm_warning(const std::string& filename,
-                   unsigned long line,
-                   const std::string& msg)
+PrintYasmWarning(const std::string& filename,
+                 unsigned long line,
+                 const std::string& msg)
 {
     errfile <<
-        String::compose(line ? fmt[ewmsg_style] : fmt_noline[ewmsg_style],
+        String::Compose(line ? fmt[ewmsg_style] : fmt_noline[ewmsg_style],
                         filename, line, _("warning: "), msg) << std::endl;
 }
 
@@ -593,7 +593,7 @@ do_preproc_only(void)
         out = open_file(obj_filename, "wt");
         if (!out)
         {
-            print_error(String::compose(_("could not open file `%1'"), filename));
+            PrintError(String::Compose(_("could not open file `%1'"), filename));
             yasm_xfree(preproc_buf);
             return EXIT_FAILURE;
         }
@@ -664,20 +664,20 @@ do_assemble(void)
 
     // Set object filename if specified.
     if (!obj_filename.empty())
-        assembler.set_obj_filename(obj_filename);
+        assembler.setObjectFilename(obj_filename);
 
     // Set machine if specified.
     if (!machine_name.empty())
-        assembler.set_machine(machine_name);
+        assembler.setMachine(machine_name);
 
     // Set preprocessor if specified.
     if (!preproc_keyword.empty())
-        assembler.set_preproc(preproc_keyword);
+        assembler.setPreprocessor(preproc_keyword);
 
-    apply_preproc_builtins(assembler.get_preproc());
-    apply_preproc_saved_options(assembler.get_preproc());
+    ApplyPreprocessorBuiltins(assembler.getPreprocessor());
+    ApplyPreprocessorSavedOptions(assembler.getPreprocessor());
 
-    assembler.get_arch()->set_var("force_strict", force_strict);
+    assembler.getArch()->setVar("force_strict", force_strict);
 
     // open the input file
     std::istream* in;
@@ -688,20 +688,20 @@ do_assemble(void)
     {
         in_file.open(in_filename.c_str());
         if (!in_file)
-            throw yasm::Error(String::compose(_("could not open file `%1'"),
+            throw yasm::Error(String::Compose(_("could not open file `%1'"),
                               in_filename));
         in = &in_file;
     }
 
     // assemble the input.
-    if (!assembler.assemble(*in, in_filename, warning_error))
+    if (!assembler.Assemble(*in, in_filename, warning_error))
     {
         // An error occurred during assembly; output all errors and warnings
         // and then exit.
-        assembler.get_errwarns()->output_all(*assembler.get_linemap(),
-                                             warning_error,
-                                             print_yasm_error,
-                                             print_yasm_warning);
+        assembler.getErrwarns()->OutputAll(*assembler.getLinemap(),
+                                           warning_error,
+                                           PrintYasmError,
+                                           PrintYasmWarning);
         return EXIT_FAILURE;
     }
     in_file.close();
@@ -713,24 +713,24 @@ do_assemble(void)
         out = &std::cerr;
     else
     {
-        out_file.open(assembler.get_obj_filename().c_str(), std::ios::binary);
+        out_file.open(assembler.getObjectFilename().c_str(), std::ios::binary);
         if (!out_file)
-            throw yasm::Error(String::compose(_("could not open file `%1'"),
+            throw yasm::Error(String::Compose(_("could not open file `%1'"),
                               obj_filename));
         out = &out_file;
     }
 
-    if (!assembler.output(*out, warning_error))
+    if (!assembler.Output(*out, warning_error))
     {
         // An error occurred during output; output all errors and warnings.
         // If we had an error at this point, we also need to delete the output
         // object file (to make sure it's not left newer than the source).
-        assembler.get_errwarns()->output_all(*assembler.get_linemap(),
-                                             warning_error,
-                                             print_yasm_error,
-                                             print_yasm_warning);
+        assembler.getErrwarns()->OutputAll(*assembler.getLinemap(),
+                                           warning_error,
+                                           PrintYasmError,
+                                           PrintYasmWarning);
         out_file.close();
-        remove(assembler.get_obj_filename().c_str());
+        remove(assembler.getObjectFilename().c_str());
         return EXIT_FAILURE;
     }
 
@@ -743,7 +743,7 @@ do_assemble(void)
         FILE *list = open_file(list_filename, "wt");
         if (!list)
         {
-            print_error(String::compose(_("could not open file `%1'"), filename));
+            PrintError(String::Compose(_("could not open file `%1'"), filename));
             return EXIT_FAILURE;
         }
         /* Initialize the list format */
@@ -753,10 +753,10 @@ do_assemble(void)
         fclose(list);
     }
 #endif
-    assembler.get_errwarns()->output_all(*assembler.get_linemap(),
-                                         warning_error,
-                                         print_yasm_error,
-                                         print_yasm_warning);
+    assembler.getErrwarns()->OutputAll(*assembler.getLinemap(),
+                                       warning_error,
+                                       PrintYasmError,
+                                       PrintYasmWarning);
 
     return EXIT_SUCCESS;
 }
@@ -779,7 +779,7 @@ main(int argc, char* argv[])
     // Initialize errwarn handling
     yasm::gettext_hook = handle_yasm_gettext;
 
-    cl::SetVersionPrinter(&print_version);
+    cl::SetVersionPrinter(&PrintVersion);
     cl::ParseCommandLineOptions(argc, argv);
 
     // Handle special exiting options
@@ -808,7 +808,7 @@ main(int argc, char* argv[])
         errfile.open(error_filename.c_str());
         if (errfile.fail())
         {
-            print_error(String::compose(_("could not open file `%1'"),
+            PrintError(String::Compose(_("could not open file `%1'"),
                                         error_filename));
             return EXIT_FAILURE;
         }
@@ -817,9 +817,9 @@ main(int argc, char* argv[])
         errfile.std::basic_ios<char>::rdbuf(std::cerr.rdbuf());
 
     // Load standard modules
-    if (!yasm::load_standard_plugins())
+    if (!yasm::LoadStandardPlugins())
     {
-        print_error(_("FATAL: could not load standard modules"));
+        PrintError(_("FATAL: could not load standard modules"));
         return EXIT_FAILURE;
     }
 
@@ -828,25 +828,25 @@ main(int argc, char* argv[])
     for (std::vector<std::string>::const_iterator i=plugin_names.begin(),
          end=plugin_names.end(); i != end; ++i)
     {
-        if (!yasm::load_plugin(*i))
-            print_error(String::compose(
+        if (!yasm::LoadPlugin(*i))
+            PrintError(String::Compose(
                 _("warning: could not load plugin `%s'"), *i));
     }
 #endif
 
     // Handle keywords (including "help").
     bool listed;
-    arch_keyword = module_common_handler<yasm::ArchModule>
+    arch_keyword = ModuleCommonHandler<yasm::ArchModule>
         (arch_keyword, _("architecture"), _("architectures"), &listed);
-    parser_keyword = module_common_handler<yasm::ParserModule>
+    parser_keyword = ModuleCommonHandler<yasm::ParserModule>
         (parser_keyword, _("parser"), _("parsers"), &listed);
-    preproc_keyword = module_common_handler<yasm::PreprocessorModule>
+    preproc_keyword = ModuleCommonHandler<yasm::PreprocessorModule>
         (preproc_keyword, _("preprocessor"), _("preprocessors"), &listed);
-    objfmt_keyword = module_common_handler<yasm::ObjectFormatModule>
+    objfmt_keyword = ModuleCommonHandler<yasm::ObjectFormatModule>
         (objfmt_keyword, _("object format"), _("object formats"), &listed);
-    dbgfmt_keyword = module_common_handler<yasm::DebugFormatModule>
+    dbgfmt_keyword = ModuleCommonHandler<yasm::DebugFormatModule>
         (dbgfmt_keyword, _("debug format"), _("debug formats"), &listed);
-    listfmt_keyword = module_common_handler<yasm::ListFormatModule>
+    listfmt_keyword = ModuleCommonHandler<yasm::ListFormatModule>
         (listfmt_keyword, _("list format"), _("list formats"), &listed);
     if (listed)
         return EXIT_SUCCESS;
@@ -864,15 +864,15 @@ main(int argc, char* argv[])
     if (machine_name == "help")
     {
         std::auto_ptr<yasm::ArchModule> arch_auto =
-            yasm::load_module<yasm::ArchModule>(arch_keyword);
-        std::cout << String::compose(_("Available %1 for %2 `%3':"),
+            yasm::LoadModule<yasm::ArchModule>(arch_keyword);
+        std::cout << String::Compose(_("Available %1 for %2 `%3':"),
                                      _("machines"), _("architecture"),
                                      arch_keyword) << '\n';
-        yasm::ArchModule::MachineNames machines = arch_auto->get_machines();
+        yasm::ArchModule::MachineNames machines = arch_auto->getMachines();
 
         for (yasm::ArchModule::MachineNames::const_iterator
              i=machines.begin(), end=machines.end(); i != end; ++i)
-            print_list_keyword_desc(i->second, i->first);
+            PrintListKeywordDesc(i->second, i->first);
         return EXIT_SUCCESS;
     }
 
@@ -880,7 +880,7 @@ main(int argc, char* argv[])
     // as we want to allow e.g. "yasm --license".
     if (in_filename.empty())
     {
-        print_error(_("No input files specified"));
+        PrintError(_("No input files specified"));
         return EXIT_FAILURE;
     }
 
@@ -893,7 +893,7 @@ main(int argc, char* argv[])
         parser_keyword = "nasm";
 
     // Apply warning settings
-    apply_warning_settings();
+    ApplyWarningSettings();
 
 #if 0
     // handle preproc-only case here
@@ -914,7 +914,7 @@ main(int argc, char* argv[])
     }
     catch (yasm::Error& err)
     {
-        print_error(String::compose(_("FATAL: %1"), err.what()));
+        PrintError(String::Compose(_("FATAL: %1"), err.what()));
     }
     return EXIT_FAILURE;
 }

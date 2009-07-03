@@ -134,20 +134,20 @@ public:
     ExprTerm(const ExprTerm& term);
 
     /// Destructor.
-    ~ExprTerm() { clear(); }
+    ~ExprTerm() { Clear(); }
 
     /// Exchanges this term with another term.
     /// @param oth      other term
     void swap(ExprTerm& oth);
 
     /// Clear the term.
-    void clear();
+    void Clear();
 
     /// Make the term zero.
-    void zero();
+    void Zero();
 
     /// Is term cleared?
-    bool is_empty() const { return (m_type == NONE); }
+    bool isEmpty() const { return (m_type == NONE); }
 
     /// Comparison used for sorting; assumes TermTypes are in sort order.
     bool operator< (const ExprTerm& other) const
@@ -156,26 +156,26 @@ public:
     }
 
     /// Match type.  Can take an OR'ed combination of TermTypes.
-    bool is_type(int type) const { return (m_type & type) != 0; }
+    bool isType(int type) const { return (m_type & type) != 0; }
 
     /// Get the type.
-    Type get_type() const { return m_type; }
+    Type getType() const { return m_type; }
 
     /// Match operator.  Does not match non-operators.
     /// @param op       operator to match
     /// @return True if operator is op, false if non- or other operator.
-    bool is_op(Op::Op op) const
+    bool isOp(Op::Op op) const
     {
         return (m_type == OP && m_data.op.op == op);
     }
 
     /// Test if term is an operator.
     /// @return True if term is an operator, false otherwise.
-    bool is_op() const { return (m_type == OP); }
+    bool isOp() const { return (m_type == OP); }
 
     /// Change operator.  Term must already be an operator.
     /// Maintains existing depth.
-    void set_op(Op::Op op)
+    void setOp(Op::Op op)
     {
         assert(m_type == OP);
         m_data.op.op = op;
@@ -183,65 +183,65 @@ public:
 
     // Helper functions to make it easier to get specific types.
 
-    const Register* get_reg() const
+    const Register* getRegister() const
     {
         return (m_type == REG ? m_data.reg : 0);
     }
 
-    const IntNum* get_int() const
+    const IntNum* getIntNum() const
     {
         return (m_type == INT ? static_cast<const IntNum*>(&m_data.intn) : 0);
     }
 
-    IntNum* get_int()
+    IntNum* getIntNum()
     {
         return (m_type == INT ? static_cast<IntNum*>(&m_data.intn) : 0);
     }
 
-    void set_int(IntNum intn)
+    void setIntNum(IntNum intn)
     {
-        clear();
+        Clear();
         m_type = INT;
         m_data.intn.m_type = IntNumData::INTNUM_L;
         intn.swap(static_cast<IntNum&>(m_data.intn));
     }
 
-    const unsigned int* get_subst() const
+    const unsigned int* getSubst() const
     {
         return (m_type == SUBST ? &m_data.subst : 0);
     }
 
-    llvm::APFloat* get_float() const
+    llvm::APFloat* getFloat() const
     {
         return (m_type == FLOAT ? m_data.flt : 0);
     }
 
-    SymbolRef get_sym() const
+    SymbolRef getSymbol() const
     {
         return SymbolRef(m_type == SYM ? m_data.sym : 0);
     }
 
-    const Location* get_loc() const
+    const Location* getLocation() const
     {
         return (m_type == LOC ? &m_data.loc : 0);
     }
 
-    Location* get_loc()
+    Location* getLocation()
     {
         return (m_type == LOC ? &m_data.loc : 0);
     }
 
-    Op::Op get_op() const
+    Op::Op getOp() const
     {
         return (m_type == OP ? m_data.op.op : Op::NONNUM);
     }
 
-    int get_nchild() const
+    int getNumChild() const
     {
         return (m_type == OP ? m_data.op.nchild : 0);
     }
 
-    void add_nchild(int delta)
+    void AddNumChild(int delta)
     {
         assert(m_type == OP);
         m_data.op.nchild += delta;
@@ -376,8 +376,8 @@ public:
     /// @param op   operator
     /// @return True if the expression was the specified operation at the top
     ///         level.
-    bool is_op(Op::Op op) const
-    { return !is_empty() && m_terms.back().is_op(op); }
+    bool isOp(Op::Op op) const
+    { return !isEmpty() && m_terms.back().isOp(op); }
 
     /// Exchanges this expression with another expression.
     /// @param oth      other expression
@@ -388,16 +388,16 @@ public:
     Expr* clone() const { return new Expr(*this); }
 
     /// Clear the expression.
-    void clear();
+    void Clear();
 
     /// Is expression empty?
-    bool is_empty() const { return m_terms.empty(); }
+    bool isEmpty() const { return m_terms.empty(); }
 
     /// Simplify an expression as much as possible.  Eliminates extraneous
     /// branches and simplifies integer-only subexpressions.  Does *not*
     /// expand EQUs; use expand_equ() in expr_util.h to first expand EQUs.
     /// @param simplify_reg_mul simplify REG*1 identities
-    void simplify(bool simplify_reg_mul = true);
+    void Simplify(bool simplify_reg_mul = true);
 
     /// Simplify an expression as much as possible, taking a functor for
     /// additional processing.  Calls level_op() both before and after the
@@ -406,7 +406,7 @@ public:
     ///                         called as (Expr&, int pos)
     /// @param simplify_reg_mul simplify REG*1 identities
     template <typename T>
-    void simplify(const T& func, bool simplify_reg_mul = true);
+    void Simplify(const T& func, bool simplify_reg_mul = true);
 
     /// Extract the segment portion of an expression containing SEG:OFF,
     /// leaving the offset.
@@ -415,7 +415,7 @@ public:
     ///         expression.
     ///         The input expression is modified such that on return, it's
     ///         the offset expression.
-    Expr extract_deep_segoff();
+    Expr ExtractDeepSegOff();
 
     /// Extract the segment portion of a SEG:OFF expression, leaving the
     /// offset.
@@ -423,7 +423,7 @@ public:
     ///         not the top-level operator), otherwise the segment expression.
     ///         The input expression is modified such that on return, it's the
     ///         offset expression.
-    Expr extract_segoff();
+    Expr ExtractSegOff();
 
     /// Extract the right portion (y) of a x WRT y expression, leaving the
     /// left portion (x).
@@ -432,72 +432,72 @@ public:
     ///         expression.
     ///         The input expression is modified such that on return, it's
     ///         the left side of the WRT expression.
-    Expr extract_wrt();
+    Expr ExtractWRT();
 
     /// Determine if an expression is just a symbol.
     /// @return True if get_symbol() is safe to call.
-    bool is_float() const
+    bool isFloat() const
     {
         return (m_terms.size() == 1
-                && m_terms.front().is_type(ExprTerm::FLOAT));
+                && m_terms.front().isType(ExprTerm::FLOAT));
     }
 
     /// Get the float value of an expression if it's just a float.
     /// Asserts if the expression is too complex.
     /// @return The float value of the expression.
-    /*@dependent@*/ /*@null@*/ llvm::APFloat* get_float() const;
+    /*@dependent@*/ /*@null@*/ llvm::APFloat* getFloat() const;
 
     /// Determine if an expression is just an integer.
     /// Returns false if the expression is too complex (contains anything other
     /// than integers, eg floats, non-valued labels, or registers).
     /// @return True if get_intnum() is safe to call.
-    bool is_intnum() const
-    { return (m_terms.size() == 1 && m_terms.front().is_type(ExprTerm::INT)); }
+    bool isIntNum() const
+    { return (m_terms.size() == 1 && m_terms.front().isType(ExprTerm::INT)); }
 
     /// Get the integer value of an expression if it's just an integer.
     /// Asserts if expression is not an integer.
     /// @return The intnum value of the expression.
-    IntNum get_intnum() const;
+    IntNum getIntNum() const;
 
     /// Determine if an expression is just a symbol.
     /// @return True if get_symbol() is safe to call.
-    bool is_symbol() const
-    { return (m_terms.size() == 1 && m_terms.front().is_type(ExprTerm::SYM)); }
+    bool isSymbol() const
+    { return (m_terms.size() == 1 && m_terms.front().isType(ExprTerm::SYM)); }
 
     /// Get the symbol value of an expression if it's just a symbol.
     /// Asserts if the expression is too complex.
     /// @return The symbol value of the expression.
-    SymbolRef get_symbol() const;
+    SymbolRef getSymbol() const;
 
     /// Determine if an expression is just a symbol.
     /// @return True if get_reg() is safe to call.
-    bool is_reg() const
-    { return (m_terms.size() == 1 && m_terms.front().is_type(ExprTerm::REG)); }
+    bool isRegister() const
+    { return (m_terms.size() == 1 && m_terms.front().isType(ExprTerm::REG)); }
 
     /// Get the register value of an expression if it's just a register.
     /// Asserts if the expression is too complex.
     /// @return The register value of the expression.
-    /*@dependent@*/ const Register* get_reg() const;
+    /*@dependent@*/ const Register* getRegister() const;
 
-    bool contains(int type, int pos=-1) const;
+    bool Contains(int type, int pos=-1) const;
 
     /// Substitute terms into expr SUBST terms (by index).
     /// @param terms        terms
     /// @return True on error (index out of range).
-    bool substitute(const ExprTerms& terms);
+    bool Substitute(const ExprTerms& terms);
 
-    void calc(Op::Op op)
+    void Calc(Op::Op op)
     {
-        if (!is_empty())
-            append_op(op, 1);
+        if (!isEmpty())
+            AppendOp(op, 1);
     }
     template <typename T>
-    void calc(Op::Op op, const T& rhs)
+    void Calc(Op::Op op, const T& rhs)
     {
-        bool was_empty = is_empty();
-        append(rhs);
+        bool was_empty = isEmpty();
+        Append(rhs);
         if (!was_empty)
-            append_op(op, 2);
+            AppendOp(op, 2);
     }
 
     /// @defgroup lowlevel Low Level Manipulators
@@ -507,27 +507,27 @@ public:
 
     /// Get raw expression terms.
     /// @return Terms reference.
-    ExprTerms& get_terms() { return m_terms; }
+    ExprTerms& getTerms() { return m_terms; }
 
     /// Get raw expression terms (const version).
     /// @return Const Terms reference.
-    const ExprTerms& get_terms() const { return m_terms; }
+    const ExprTerms& getTerms() const { return m_terms; }
 
     /// Append an expression term to terms.
     /// @param term     expression term
     template <typename T>
-    void append(const T& term)
+    void Append(const T& term)
     { m_terms.push_back(ExprTerm(term)); }
 
     /// Append an operator to terms.  Pushes down all current terms and adds
     /// operator term to end.
     /// @param op       operator
     /// @param nchild   number of children
-    void append_op(Op::Op op, int nchild);
+    void AppendOp(Op::Op op, int nchild);
 
     /// Make expression an ident if it only has one term.
     /// @param pos      index of operator term, may be negative for "from end"
-    void make_ident(int pos=-1);
+    void MakeIdent(int pos=-1);
 
     /// Levels an expression tree.
     /// a+(b+c) -> a+b+c
@@ -538,7 +538,7 @@ public:
     ///       post-order on a tree to combine deeper levels.
     /// @param simplify_reg_mul simplify REG*1 identities
     /// @param pos              index of top-level operator term
-    void level_op(bool simplify_reg_mul, int pos=-1);
+    void LevelOp(bool simplify_reg_mul, int pos=-1);
 
     //@}
 
@@ -547,27 +547,27 @@ private:
     ExprTerms m_terms;
 
     /// Clean up terms by removing all empty (ExprTerm::NONE) elements.
-    void cleanup();
+    void Cleanup();
 
     /// Reduce depth of a subexpression.
     /// @param pos      term index of subexpression operator
     /// @param delta    delta to reduce depth by
-    void reduce_depth(int pos, int delta=1);
+    void ReduceDepth(int pos, int delta=1);
 
     /// Clear all terms of a subexpression, possibly keeping a single term.
     /// @param pos      term index of subexpression operator
     /// @param keep     term index of term to keep; -1 to clear all terms
-    void clear_except(int pos, int keep=-1);
+    void ClearExcept(int pos, int keep=-1);
 
     /// Transform all Op::SUB and Op::NEG subexpressions into appropriate *-1
     /// variants.  This assists with operator leveling as it transforms the
     /// nonlevelable Op::SUB into the levelable Op::ADD.
-    void xform_neg();
+    void TransformNeg();
 
     /// LHS expression extractor.
     /// @param op   reverse iterator pointing at operator term to be extracted
     ///             from
-    Expr extract_lhs(ExprTerms::reverse_iterator op);
+    Expr ExtractLHS(ExprTerms::reverse_iterator op);
 };
 
 /// Assign an expression.
@@ -617,38 +617,38 @@ Expr::operator= (ExprTerm& term)
 /// Append an expression to terms.
 /// @param e        expression
 template <>
-inline void Expr::append(const Expr& e)
+inline void Expr::Append(const Expr& e)
 { m_terms.insert(m_terms.end(), e.m_terms.begin(), e.m_terms.end()); }
 
 /// Append an expression term to terms.
 /// @param term     expression term
 template <>
-inline void Expr::append(const ExprTerm& term)
+inline void Expr::Append(const ExprTerm& term)
 { m_terms.push_back(term); }
 
 template <typename T>
 void
-Expr::simplify(const T& func, bool simplify_reg_mul)
+Expr::Simplify(const T& func, bool simplify_reg_mul)
 {
-    xform_neg();
+    TransformNeg();
 
     // Must re-call size() in conditional as it may change during execution.
     for (int pos = 0; pos < static_cast<int>(m_terms.size()); ++pos)
     {
-        if (!m_terms[pos].is_op())
+        if (!m_terms[pos].isOp())
             continue;
-        level_op(simplify_reg_mul, pos);
+        LevelOp(simplify_reg_mul, pos);
 
-        if (!m_terms[pos].is_op())
+        if (!m_terms[pos].isOp())
             continue;
         func(*this, pos);
 
-        if (!m_terms[pos].is_op())
+        if (!m_terms[pos].isOp())
             continue;
-        level_op(simplify_reg_mul, pos);
+        LevelOp(simplify_reg_mul, pos);
     }
 
-    cleanup();
+    Cleanup();
 }
 
 /// Expression builder based on operator.
@@ -661,8 +661,8 @@ struct ExprBuilder
     Expr operator() (const T1& t1) const
     {
         Expr e;
-        e.append(t1);
-        e.append_op(op, 1);
+        e.Append(t1);
+        e.AppendOp(op, 1);
         return e;
     }
 
@@ -670,9 +670,9 @@ struct ExprBuilder
     Expr operator() (const T1& t1, const T2& t2) const
     {
         Expr e;
-        e.append(t1);
-        e.append(t2);
-        e.append_op(op, 2);
+        e.Append(t1);
+        e.Append(t2);
+        e.AppendOp(op, 2);
         return e;
     }
 
@@ -680,10 +680,10 @@ struct ExprBuilder
     Expr operator() (const T1& t1, const T2& t2, const T3& t3) const
     {
         Expr e;
-        e.append(t1);
-        e.append(t2);
-        e.append(t3);
-        e.append_op(op, 3);
+        e.Append(t1);
+        e.Append(t2);
+        e.Append(t3);
+        e.AppendOp(op, 3);
         return e;
     }
 
@@ -692,11 +692,11 @@ struct ExprBuilder
                      const T4& t4) const
     {
         Expr e;
-        e.append(t1);
-        e.append(t2);
-        e.append(t3);
-        e.append(t4);
-        e.append_op(op, 4);
+        e.Append(t1);
+        e.Append(t2);
+        e.Append(t3);
+        e.Append(t4);
+        e.AppendOp(op, 4);
         return e;
     }
 
@@ -705,12 +705,12 @@ struct ExprBuilder
                      const T5& t5) const
     {
         Expr e;
-        e.append(t1);
-        e.append(t2);
-        e.append(t3);
-        e.append(t4);
-        e.append(t5);
-        e.append_op(op, 5);
+        e.Append(t1);
+        e.Append(t2);
+        e.Append(t3);
+        e.Append(t4);
+        e.Append(t5);
+        e.AppendOp(op, 5);
         return e;
     }
 
@@ -720,13 +720,13 @@ struct ExprBuilder
                      const T5& t5, const T6& t6) const
     {
         Expr e;
-        e.append(t1);
-        e.append(t2);
-        e.append(t3);
-        e.append(t4);
-        e.append(t5);
-        e.append(t6);
-        e.append_op(op, 6);
+        e.Append(t1);
+        e.Append(t2);
+        e.Append(t3);
+        e.Append(t4);
+        e.Append(t5);
+        e.Append(t6);
+        e.AppendOp(op, 6);
         return e;
     }
 };
@@ -739,8 +739,8 @@ inline Expr ExprBuilder::operator() (const ExprTerms& terms) const
     Expr e;
     for (ExprTerms::const_iterator i=terms.begin(), end=terms.end(); i != end;
          ++i)
-        e.append(*i);
-    e.append_op(op, terms.size());
+        e.Append(*i);
+    e.AppendOp(op, terms.size());
     return e;
 }
 
@@ -782,25 +782,25 @@ extern YASM_LIB_EXPORT const ExprBuilder SEGOFF;
 
 /// Overloaded assignment binary operators.
 template <typename T> inline Expr& operator+=(Expr& lhs, const T& rhs)
-{ lhs.calc(Op::ADD, rhs); return lhs; }
+{ lhs.Calc(Op::ADD, rhs); return lhs; }
 template <typename T> inline Expr& operator-=(Expr& lhs, const T& rhs)
-{ lhs.calc(Op::SUB, rhs); return lhs; }
+{ lhs.Calc(Op::SUB, rhs); return lhs; }
 template <typename T> inline Expr& operator*=(Expr& lhs, const T& rhs)
-{ lhs.calc(Op::MUL, rhs); return lhs; }
+{ lhs.Calc(Op::MUL, rhs); return lhs; }
 template <typename T> inline Expr& operator/=(Expr& lhs, const T& rhs)
-{ lhs.calc(Op::DIV, rhs); return lhs; }
+{ lhs.Calc(Op::DIV, rhs); return lhs; }
 template <typename T> inline Expr& operator%=(Expr& lhs, const T& rhs)
-{ lhs.calc(Op::MOD, rhs); return lhs; }
+{ lhs.Calc(Op::MOD, rhs); return lhs; }
 template <typename T> inline Expr& operator^=(Expr& lhs, const T& rhs)
-{ lhs.calc(Op::XOR, rhs); return lhs; }
+{ lhs.Calc(Op::XOR, rhs); return lhs; }
 template <typename T> inline Expr& operator&=(Expr& lhs, const T& rhs)
-{ lhs.calc(Op::AND, rhs); return lhs; }
+{ lhs.Calc(Op::AND, rhs); return lhs; }
 template <typename T> inline Expr& operator|=(Expr& lhs, const T& rhs)
-{ lhs.calc(Op::OR, rhs); return lhs; }
+{ lhs.Calc(Op::OR, rhs); return lhs; }
 template <typename T> inline Expr& operator>>=(Expr& lhs, const T& rhs)
-{ lhs.calc(Op::SHR, rhs); return lhs; }
+{ lhs.Calc(Op::SHR, rhs); return lhs; }
 template <typename T> inline Expr& operator<<=(Expr& lhs, const T& rhs)
-{ lhs.calc(Op::SHL, rhs); return lhs; }
+{ lhs.Calc(Op::SHL, rhs); return lhs; }
 
 YASM_LIB_EXPORT
 std::ostream& operator<< (std::ostream& os, const ExprTerm& term);
@@ -817,7 +817,7 @@ std::ostream& operator<< (std::ostream& os, const Expr& e);
 /// child.  Passed-in pos may be negative to indicate index "from end".
 /// @return False if too many or too few children found.
 YASM_LIB_EXPORT
-bool get_children(Expr& e, /*@out@*/ int* lhs, /*@out@*/ int* rhs, int* pos);
+bool getChildren(Expr& e, /*@out@*/ int* lhs, /*@out@*/ int* rhs, int* pos);
 
 /// Determine if a expression subtree is of the form Symbol*-1.
 /// @param e        Expression
@@ -829,11 +829,11 @@ bool get_children(Expr& e, /*@out@*/ int* lhs, /*@out@*/ int* rhs, int* pos);
 /// If the subtree matches, pos is updated before return with the term index
 /// following the tree.
 YASM_LIB_EXPORT
-bool is_neg1_sym(Expr& e,
-                 /*@out@*/ int* sym,
-                 /*@out@*/ int* neg1,
-                 int* pos,
-                 bool loc_ok);
+bool isNeg1Sym(Expr& e,
+               /*@out@*/ int* sym,
+               /*@out@*/ int* neg1,
+               int* pos,
+               bool loc_ok);
 
 /// Specialized swap for Expr.
 inline void

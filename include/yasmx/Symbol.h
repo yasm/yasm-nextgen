@@ -80,86 +80,86 @@ public:
 
     /// Get the name of a symbol.
     /// @return Symbol name.
-    const std::string& get_name() const { return m_name; }
+    const std::string& getName() const { return m_name; }
 
     /// Get the visibility of a symbol.
     /// @return Symbol visibility.
-    int get_visibility() const { return m_visibility; }
+    int getVisibility() const { return m_visibility; }
 
     /// Get the status of a symbol.
     /// @return Symbol status.
-    int get_status() const { return m_status; }
+    int getStatus() const { return m_status; }
 
     /// Get the virtual line of where a symbol was first defined.
     /// @return Virtual line.
-    unsigned long get_def_line() const { return m_def_line; }
+    unsigned long getDefLine() const { return m_def_line; }
 
     /// Get the virtual line of where a symbol was first declared.
     /// @return Virtual line.
-    unsigned long get_decl_line() const { return m_decl_line; }
+    unsigned long getDeclLine() const { return m_decl_line; }
 
     /// Get the virtual line of where a symbol was first used.
     /// @return Virtual line.
-    unsigned long get_use_line() const { return m_use_line; }
+    unsigned long getUseLine() const { return m_use_line; }
 
     /// Get EQU value of a symbol.
     /// @return EQU value, or NULL if symbol is not an EQU or is not defined.
-    /*@null@*/ const Expr* get_equ() const;
+    /*@null@*/ const Expr* getEqu() const;
 
     /// Get the label location of a symbol.
     /// @param sym       symbol
     /// @param loc       label location (output)
     /// @return False if not symbol is not a label or if the symbol's
     ///         visibility is #EXTERN or #COMMON (not defined in the file).
-    bool get_label(/*@out@*/ Location* loc) const;
+    bool getLabel(/*@out@*/ Location* loc) const;
 
     /// Determine if symbol is the "absolute" symbol created by
     /// yasm_symtab_abs_sym().
     /// @return False if symbol is not the "absolute" symbol, true otherwise.
-    bool is_abs() const
+    bool isAbsoluteSymbol() const
     {
         return m_def_line == 0 && m_type == EQU && m_name.length() == 0;
     }
 
     /// Determine if symbol is a special symbol.
     /// @return False if symbol is not a special symbol, true otherwise.
-    bool is_special() const { return m_type == SPECIAL; }
+    bool isSpecial() const { return m_type == SPECIAL; }
 
     /// Mark the symbol as used.  The symbol does not necessarily need to
     /// be defined before it is used.
     /// @param line     virtual line where referenced
     /// @return Symbol (this).
-    void use(unsigned long line);
+    void Use(unsigned long line);
 
     /// Define as an EQU value.
     /// @param e        EQU value (expression)
     /// @param line     virtual line of EQU
     /// @return Symbol (this).
-    void define_equ(const Expr& e, unsigned long line);
+    void DefineEqu(const Expr& e, unsigned long line);
 
     /// Define as a label.
     /// @param loc      location of label
     /// @param line     virtual line of label
     /// @return Symbol (this).
-    void define_label(Location loc, unsigned long line);
+    void DefineLabel(Location loc, unsigned long line);
 
     /// Define a special symbol.  Special symbols have no generic associated
     /// data (such as an expression or precbc).
     /// @param vis      symbol visibility
     /// @return Symbol (this).
-    void define_special(Symbol::Visibility vis, unsigned long line=0);
+    void DefineSpecial(Symbol::Visibility vis, unsigned long line=0);
 
     /// Declare external visibility.
     /// @note Not all visibility combinations are allowed.
     /// @param vis      visibility
     /// @param line     virtual line of visibility-setting
     /// @return Symbol (this).
-    void declare(Visibility vis, unsigned long line);
+    void Declare(Visibility vis, unsigned long line);
 
     /// Finalize symbol after parsing stage.  Errors on symbols that
     /// are used but never defined or declared #EXTERN or #COMMON.
     /// @param undef_extern if true, all undef syms should be declared extern
-    void finalize(bool undef_extern);
+    void Finalize(bool undef_extern);
 
 private:
     Symbol(const Symbol&);                  // not implemented
@@ -176,7 +176,7 @@ private:
         SPECIAL
     };
 
-    void define(Type type, unsigned long line);
+    void Define(Type type, unsigned long line);
 
     std::string m_name;
     Type m_type;
@@ -195,7 +195,7 @@ private:
 };
 
 inline void
-Symbol::use(unsigned long line)
+Symbol::Use(unsigned long line)
 {
     if (m_use_line == 0)
         m_use_line = line;      // set line number of first use
@@ -203,7 +203,7 @@ Symbol::use(unsigned long line)
 }
 
 inline const Expr*
-Symbol::get_equ() const
+Symbol::getEqu() const
 {
     if (m_type == EQU && (m_status & VALUED))
         return m_equ.get();

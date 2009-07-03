@@ -42,23 +42,23 @@ namespace yasm
 // ExprTerms if possible.  Uses a simple n^2 algorithm because n is usually
 // quite small.  Also works for loc-loc (or Symbol-loc, loc-Symbol).
 static void
-xform_dist_base(Expr& e, int pos,
-                const FUNCTION::function<bool (ExprTerm& term,
-                                               Location loc1,
-                                               Location loc2)>& func)
+TransformDistBase(Expr& e, int pos,
+                  const FUNCTION::function<bool (ExprTerm& term,
+                                                 Location loc1,
+                                                 Location loc2)>& func)
 {
-    ExprTerms& terms = e.get_terms();
+    ExprTerms& terms = e.getTerms();
     if (pos < 0)
         pos += terms.size();
 
     ExprTerm& root = terms[pos];
-    if (!root.is_op(Op::ADD))
+    if (!root.isOp(Op::ADD))
         return;
 
     // Handle symrec-symrec by checking for (-1*symrec)
     // and symrec term pairs (where both symrecs are in the same
     // segment).
-    if (root.get_nchild() > 32)
+    if (root.getNumChild() > 32)
         throw TooComplexError(N_("too many add terms; internal limit of 32"));
 
     // Yes, this has a maximum upper bound on 32 terms, based on an
@@ -77,7 +77,7 @@ xform_dist_base(Expr& e, int pos,
     while (n >= 0)
     {
         ExprTerm& child = terms[n];
-        if (child.is_empty())
+        if (child.isEmpty())
         {
             --n;
             continue;
@@ -91,7 +91,7 @@ xform_dist_base(Expr& e, int pos,
         }
 
         // Remember symrec terms
-        if (child.is_type(ExprTerm::SYM | ExprTerm::LOC))
+        if (child.isType(ExprTerm::SYM | ExprTerm::LOC))
         {
             if ((pos-n) >= 0xff)
                 throw TooComplexError(N_("expression too large"));
@@ -103,7 +103,7 @@ xform_dist_base(Expr& e, int pos,
         int curpos = n;
         int sym, neg1;
         // Remember (-1*symrec) terms
-        if (is_neg1_sym(e, &sym, &neg1, &n, true))
+        if (isNeg1Sym(e, &sym, &neg1, &n, true))
         {
             if ((pos-sym) >= 0xff || (pos-neg1) >= 0xff)
                 throw TooComplexError(N_("expression too large"));
@@ -121,23 +121,23 @@ xform_dist_base(Expr& e, int pos,
     for (int i=0; i<num_rel; ++i)
     {
         ExprTerm& relterm = terms[pos-relpos[i]];
-        SymbolRef rel = relterm.get_sym();
+        SymbolRef rel = relterm.getSymbol();
 
         for (int j=0; j<num_sub; ++j)
         {
             if (subpos[j] == 0xff)
                 continue;   // previously matched
             ExprTerm& subterm = terms[pos-subpos[j]];
-            SymbolRef sub = subterm.get_sym();
+            SymbolRef sub = subterm.getSymbol();
 
             // If it's the same symbol, even if it's external,
             // they should cancel out.
             if (rel && rel == sub)
             {
-                relterm.zero();
-                terms[pos-subpos[j]].clear();
-                terms[pos-subneg1[j]].clear();
-                terms[pos-subroot[j]].zero();
+                relterm.Zero();
+                terms[pos-subpos[j]].Clear();
+                terms[pos-subneg1[j]].Clear();
+                terms[pos-subroot[j]].Zero();
                 subpos[j] = 0xff;   // mark as matched
                 break;
             }
@@ -145,10 +145,10 @@ xform_dist_base(Expr& e, int pos,
             Location rel_loc;
             if (rel)
             {
-                if (!rel->get_label(&rel_loc))
+                if (!rel->getLabel(&rel_loc))
                     continue;   // external
             }
-            else if (const Location* loc = relterm.get_loc())
+            else if (const Location* loc = relterm.getLocation())
                 rel_loc = *loc;
             else
                 assert(false);
@@ -156,27 +156,27 @@ xform_dist_base(Expr& e, int pos,
             Location sub_loc;
             if (sub)
             {
-                if (!sub->get_label(&sub_loc))
+                if (!sub->getLabel(&sub_loc))
                     continue;   // external
             }
-            else if (const Location* loc = subterm.get_loc())
+            else if (const Location* loc = subterm.getLocation())
                 sub_loc = *loc;
             else
                 assert(false);
 
             // If both are in the same segment, we leave them in the
             // expression but consider them to "match".
-            if (rel_loc.bc->get_container() !=
-                sub_loc.bc->get_container())
+            if (rel_loc.bc->getContainer() !=
+                sub_loc.bc->getContainer())
                 continue;
 
             if (func(relterm, sub_loc, rel_loc))
             {
                 // Set the matching (-1*Symbol) term to 0
                 // (will remove from expression during simplify)
-                terms[pos-subpos[j]].clear();
-                terms[pos-subneg1[j]].clear();
-                terms[pos-subroot[j]].zero();
+                terms[pos-subpos[j]].Clear();
+                terms[pos-subneg1[j]].Clear();
+                terms[pos-subroot[j]].Zero();
                 subpos[j] = 0xff;   // mark as matched
                 break;  // stop looking
             }
@@ -189,7 +189,7 @@ struct CalcDistFunctor
     bool operator() (ExprTerm& term, Location loc, Location loc2)
     {
         IntNum dist;
-        if (!calc_dist(loc, loc2, &dist))
+        if (!CalcDist(loc, loc2, &dist))
             return false;
         // Change the term to an integer
         term = ExprTerm(dist, term.m_depth);
@@ -198,18 +198,18 @@ struct CalcDistFunctor
 };
 
 void
-simplify_calc_dist(Expr& e)
+SimplifyCalcDist(Expr& e)
 {
     CalcDistFunctor functor;
-    e.simplify(BIND::bind(&xform_dist_base, _1, _2, REF::ref(functor)));
+    e.Simplify(BIND::bind(&TransformDistBase, _1, _2, REF::ref(functor)));
 }
 
-struct CalcDistNoBcFunctor
+struct CalcDistNoBCFunctor
 {
     bool operator() (ExprTerm& term, Location loc, Location loc2)
     {
         IntNum dist;
-        if (!calc_dist_no_bc(loc, loc2, &dist))
+        if (!CalcDistNoBC(loc, loc2, &dist))
             return false;
         // Change the term to an integer
         term = ExprTerm(dist, term.m_depth);
@@ -218,10 +218,10 @@ struct CalcDistNoBcFunctor
 };
 
 void
-simplify_calc_dist_no_bc(Expr& e)
+SimplifyCalcDistNoBC(Expr& e)
 {
-    CalcDistNoBcFunctor functor;
-    e.simplify(BIND::bind(&xform_dist_base, _1, _2, REF::ref(functor)));
+    CalcDistNoBCFunctor functor;
+    e.Simplify(BIND::bind(&TransformDistBase, _1, _2, REF::ref(functor)));
 }
 
 struct SubstDistFunctor
@@ -249,13 +249,13 @@ struct SubstDistFunctor
 };
 
 int
-subst_dist(Expr& e,
-           const FUNCTION::function<void (unsigned int subst,
-                                          Location loc,
-                                          Location loc2)>& func)
+SubstDist(Expr& e,
+          const FUNCTION::function<void (unsigned int subst,
+                                         Location loc,
+                                         Location loc2)>& func)
 {
     SubstDistFunctor functor(func);
-    e.simplify(BIND::bind(&xform_dist_base, _1, _2, REF::ref(functor)));
+    e.Simplify(BIND::bind(&TransformDistBase, _1, _2, REF::ref(functor)));
     return functor.m_subst;
 }
 

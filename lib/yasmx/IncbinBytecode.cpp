@@ -59,16 +59,16 @@ public:
     ~IncbinBytecode();
 
     /// Prints the implementation-specific data (for debugging purposes).
-    void put(marg_ostream& os) const;
+    void Put(marg_ostream& os) const;
 
     /// Finalizes the bytecode after parsing.
-    void finalize(Bytecode& bc);
+    void Finalize(Bytecode& bc);
 
     /// Calculates the minimum size of a bytecode.
-    unsigned long calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
+    unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
 
     /// Convert a bytecode into its byte representation.
-    void output(Bytecode& bc, BytecodeOutput& bc_out);
+    void Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     IncbinBytecode* clone() const;
 
@@ -96,7 +96,7 @@ IncbinBytecode::~IncbinBytecode()
 }
 
 void
-IncbinBytecode::put(marg_ostream& os) const
+IncbinBytecode::Put(marg_ostream& os) const
 {
     os << "_IncBin_\n";
     os << "Filename=`" << m_filename << "'\n";
@@ -114,40 +114,40 @@ IncbinBytecode::put(marg_ostream& os) const
 }
 
 void
-IncbinBytecode::finalize(Bytecode& bc)
+IncbinBytecode::Finalize(Bytecode& bc)
 {
     if (m_start)
     {
         Value val(0, Expr::Ptr(m_start->clone()));
-        if (!val.finalize())
+        if (!val.Finalize())
             throw TooComplexError(N_("start expression too complex"));
-        else if (val.is_relative())
+        else if (val.isRelative())
             throw NotAbsoluteError(N_("start expression not absolute"));
-        m_start.reset(val.get_abs()->clone());
+        m_start.reset(val.getAbs()->clone());
     }
 
     if (m_maxlen)
     {
         Value val(0, Expr::Ptr(m_maxlen->clone()));
-        if (!val.finalize())
+        if (!val.Finalize())
             throw TooComplexError(N_("maximum length expression too complex"));
-        else if (val.is_relative())
+        else if (val.isRelative())
             throw NotAbsoluteError(
                 N_("maximum length expression not absolute"));
-        m_maxlen.reset(val.get_abs()->clone());
+        m_maxlen.reset(val.getAbs()->clone());
     }
 }
 
 unsigned long
-IncbinBytecode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+IncbinBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 {
     unsigned long start = 0, maxlen = 0xFFFFFFFFUL, flen;
 
     // Try to convert start to integer value
     if (m_start)
     {
-        if (m_start->is_intnum())
-            start = m_start->get_intnum().get_uint();
+        if (m_start->isIntNum())
+            start = m_start->getIntNum().getUInt();
         else
         {
             // FIXME
@@ -159,8 +159,8 @@ IncbinBytecode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
     // Try to convert maxlen to integer value
     if (m_maxlen)
     {
-        if (m_maxlen->is_intnum())
-            maxlen = m_maxlen->get_intnum().get_uint();
+        if (m_maxlen->isIntNum())
+            maxlen = m_maxlen->getIntNum().getUInt();
         else
         {
             // FIXME
@@ -173,20 +173,20 @@ IncbinBytecode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
     std::ifstream ifs(m_filename.c_str(),
                       std::ifstream::in | std::ifstream::binary);
     if (!ifs)
-        throw IOError(String::compose(N_("`%1': unable to open file `%2'"),
+        throw IOError(String::Compose(N_("`%1': unable to open file `%2'"),
                                       "incbin", m_filename));
     ifs.seekg(0, std::ios_base::end);
     if (!ifs)
-        throw IOError(String::compose(N_("`%1': unable to seek on file `%2'"),
+        throw IOError(String::Compose(N_("`%1': unable to seek on file `%2'"),
                                       "incbin", m_filename));
     flen = static_cast<unsigned long>(ifs.tellg());
 
     // Compute length of incbin from start, maxlen, and len
     if (start > flen)
     {
-        warn_set(WARN_GENERAL,
-                 String::compose(N_("`%1': start past end of file `%2'"),
-                                 "incbin", m_filename));
+        setWarn(WARN_GENERAL,
+                String::Compose(N_("`%1': start past end of file `%2'"),
+                                "incbin", m_filename));
         start = flen;
     }
     flen -= start;
@@ -199,39 +199,39 @@ IncbinBytecode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 }
 
 void
-IncbinBytecode::output(Bytecode& bc, BytecodeOutput& bc_out)
+IncbinBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     unsigned long start = 0;
 
     // Convert start to integer value
     if (m_start)
     {
-        assert(m_start->is_intnum()
+        assert(m_start->isIntNum()
                && "could not determine start in incbin::output");
-        start = m_start->get_intnum().get_uint();
+        start = m_start->getIntNum().getUInt();
     }
 
     // Open file
     std::ifstream ifs(m_filename.c_str(),
                       std::ifstream::in | std::ifstream::binary);
     if (!ifs)
-        throw IOError(String::compose(N_("`%1': unable to open file `%2'"),
+        throw IOError(String::Compose(N_("`%1': unable to open file `%2'"),
                                       "incbin", m_filename));
 
     // Seek to start of data
     ifs.seekg(start, std::ios_base::beg);
     if (!ifs)
-        throw IOError(String::compose(N_("`%1': unable to seek on file `%2'"),
+        throw IOError(String::Compose(N_("`%1': unable to seek on file `%2'"),
                                       "incbin", m_filename));
 
     // Read len bytes
-    Bytes& bytes = bc_out.get_scratch();
-    bytes.write(ifs, bc.get_tail_len());
+    Bytes& bytes = bc_out.getScratch();
+    bytes.Write(ifs, bc.getTailLen());
     if (!ifs)
-        throw IOError(String::compose(
+        throw IOError(String::Compose(
             N_("`%1': unable to read %2 bytes from file `%3'"),
-            "incbin", bc.get_tail_len(), m_filename));
-    bc_out.output(bytes);
+            "incbin", bc.getTailLen(), m_filename));
+    bc_out.Output(bytes);
 }
 
 IncbinBytecode*
@@ -248,16 +248,16 @@ namespace yasm
 {
 
 void
-append_incbin(BytecodeContainer& container,
-              const std::string& filename,
-              /*@null@*/ std::auto_ptr<Expr> start,
-              /*@null@*/ std::auto_ptr<Expr> maxlen,
-              unsigned long line)
+AppendIncbin(BytecodeContainer& container,
+             const std::string& filename,
+             /*@null@*/ std::auto_ptr<Expr> start,
+             /*@null@*/ std::auto_ptr<Expr> maxlen,
+             unsigned long line)
 {
-    Bytecode& bc = container.fresh_bytecode();
-    bc.transform(Bytecode::Contents::Ptr(
+    Bytecode& bc = container.FreshBytecode();
+    bc.Transform(Bytecode::Contents::Ptr(
         new IncbinBytecode(filename, start, maxlen)));
-    bc.set_line(line);
+    bc.setLine(line);
 }
 
 } // namespace yasm

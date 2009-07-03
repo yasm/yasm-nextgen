@@ -38,27 +38,27 @@
 namespace String
 {
 
-class YASM_LIB_EXPORT Compose
+class YASM_LIB_EXPORT Composer
 {
 public:
     // initialize and prepare format string on the form "text %1 text %2 etc."
-    explicit Compose(const std::string& fmt);
-    ~Compose();
+    explicit Composer(const std::string& fmt);
+    ~Composer();
 
     // copy and assignment
-    Compose(const Compose& rhs);
-    Compose& operator=(const Compose& rhs);
+    Composer(const Composer& rhs);
+    Composer& operator=(const Composer& rhs);
 
     // supply an replacement argument starting from %1
     template <typename T>
-    Compose& auto_arg(const T& obj);
+    Composer& AutoArg(const T& obj);
 
     template <typename T>
-    Compose& operator%(const T& obj) { return auto_arg(obj); }
+    Composer& operator%(const T& obj) { return AutoArg(obj); }
 
     // compose and return string
-    std::string str() const;
-    operator std::string () const { return str(); }
+    std::string getStr() const;
+    operator std::string () const { return getStr(); }
 
 private:
     std::string m_fmt;
@@ -71,8 +71,8 @@ private:
 };
 
 template <typename T>
-inline Compose&
-Compose::auto_arg(const T& obj)
+inline Composer&
+Composer::AutoArg(const T& obj)
 {
     m_arg_pos[m_arg] = m_os.tellp();
     m_os << obj;
@@ -81,150 +81,150 @@ Compose::auto_arg(const T& obj)
 }
 
 inline std::ostream&
-operator<< (std::ostream& os, const Compose& c)
+operator<< (std::ostream& os, const Composer& c)
 {
-    os << c.str();
+    os << c.getStr();
     return os;
 }
 
 inline std::string
-compose(const std::string& fmt)
+Compose(const std::string& fmt)
 {
-    Compose c(fmt);
-    return c.str();
+    Composer c(fmt);
+    return c.getStr();
 }
 
 template <typename T1>
 inline std::string
-compose(const std::string& fmt, const T1& a1)
+Compose(const std::string& fmt, const T1& a1)
 {
-    Compose c(fmt);
-    c.auto_arg(a1);
-    return c.str();
+    Composer c(fmt);
+    c.AutoArg(a1);
+    return c.getStr();
 }
 
 template <typename T1, typename T2>
 inline std::string
-compose(const std::string& fmt, const T1& a1, const T2& a2)
+Compose(const std::string& fmt, const T1& a1, const T2& a2)
 {
-    Compose c(fmt);
-    c.auto_arg(a1);
-    c.auto_arg(a2);
-    return c.str();
+    Composer c(fmt);
+    c.AutoArg(a1);
+    c.AutoArg(a2);
+    return c.getStr();
 }
 
 template <typename T1, typename T2, typename T3>
 inline std::string
-compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3)
+Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3)
 {
-    Compose c(fmt);
-    c.auto_arg(a1);
-    c.auto_arg(a2);
-    c.auto_arg(a3);
-    return c.str();
+    Composer c(fmt);
+    c.AutoArg(a1);
+    c.AutoArg(a2);
+    c.AutoArg(a3);
+    return c.getStr();
 }
 
 template <typename T1, typename T2, typename T3, typename T4>
 inline std::string
-compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
+Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
         const T4& a4)
 {
-    Compose c(fmt);
-    c.auto_arg(a1);
-    c.auto_arg(a2);
-    c.auto_arg(a3);
-    c.auto_arg(a4);
-    return c.str();
+    Composer c(fmt);
+    c.AutoArg(a1);
+    c.AutoArg(a2);
+    c.AutoArg(a3);
+    c.AutoArg(a4);
+    return c.getStr();
 }
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5>
 inline std::string
-compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
+Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
         const T4& a4, const T5& a5)
 {
-    Compose c(fmt);
-    c.auto_arg(a1);
-    c.auto_arg(a2);
-    c.auto_arg(a3);
-    c.auto_arg(a4);
-    c.auto_arg(a5);
-    return c.str();
+    Composer c(fmt);
+    c.AutoArg(a1);
+    c.AutoArg(a2);
+    c.AutoArg(a3);
+    c.AutoArg(a4);
+    c.AutoArg(a5);
+    return c.getStr();
 }
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
           typename T6>
 inline std::string
-compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
+Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
         const T4& a4, const T5& a5, const T6& a6)
 {
-    Compose c(fmt);
-    c.auto_arg(a1);
-    c.auto_arg(a2);
-    c.auto_arg(a3);
-    c.auto_arg(a4);
-    c.auto_arg(a5);
-    c.auto_arg(a6);
-    return c.str();
+    Composer c(fmt);
+    c.AutoArg(a1);
+    c.AutoArg(a2);
+    c.AutoArg(a3);
+    c.AutoArg(a4);
+    c.AutoArg(a5);
+    c.AutoArg(a6);
+    return c.getStr();
 }
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
           typename T6, typename T7>
 inline std::string
-compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
+Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
         const T4& a4, const T5& a5, const T6& a6, const T7& a7)
 {
-    Compose c(fmt);
-    c.auto_arg(a1);
-    c.auto_arg(a2);
-    c.auto_arg(a3);
-    c.auto_arg(a4);
-    c.auto_arg(a5);
-    c.auto_arg(a6);
-    c.auto_arg(a7);
-    return c.str();
+    Composer c(fmt);
+    c.AutoArg(a1);
+    c.AutoArg(a2);
+    c.AutoArg(a3);
+    c.AutoArg(a4);
+    c.AutoArg(a5);
+    c.AutoArg(a6);
+    c.AutoArg(a7);
+    return c.getStr();
 }
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
           typename T6, typename T7, typename T8>
 inline std::string
-compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
+Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
         const T4& a4, const T5& a5, const T6& a6, const T7& a7, const T8& a8)
 {
-    Compose c(fmt);
-    c.auto_arg(a1);
-    c.auto_arg(a2);
-    c.auto_arg(a3);
-    c.auto_arg(a4);
-    c.auto_arg(a5);
-    c.auto_arg(a6);
-    c.auto_arg(a7);
-    c.auto_arg(a8);
-    return c.str();
+    Composer c(fmt);
+    c.AutoArg(a1);
+    c.AutoArg(a2);
+    c.AutoArg(a3);
+    c.AutoArg(a4);
+    c.AutoArg(a5);
+    c.AutoArg(a6);
+    c.AutoArg(a7);
+    c.AutoArg(a8);
+    return c.getStr();
 }
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
           typename T6, typename T7, typename T8, typename T9>
 inline std::string
-compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
+Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
         const T4& a4, const T5& a5, const T6& a6, const T7& a7, const T8& a8,
         const T9& a9)
 {
-    Compose c(fmt);
-    c.auto_arg(a1);
-    c.auto_arg(a2);
-    c.auto_arg(a3);
-    c.auto_arg(a4);
-    c.auto_arg(a5);
-    c.auto_arg(a6);
-    c.auto_arg(a7);
-    c.auto_arg(a8);
-    c.auto_arg(a9);
-    return c.str();
+    Composer c(fmt);
+    c.AutoArg(a1);
+    c.AutoArg(a2);
+    c.AutoArg(a3);
+    c.AutoArg(a4);
+    c.AutoArg(a5);
+    c.AutoArg(a6);
+    c.AutoArg(a7);
+    c.AutoArg(a8);
+    c.AutoArg(a9);
+    return c.getStr();
 }
 
 template <typename T1>
 inline std::string
-format(const T1& a1)
+Format(const T1& a1)
 {
     std::ostringstream os;
     os << a1;
@@ -233,7 +233,7 @@ format(const T1& a1)
 
 template <typename T1, typename T2>
 inline std::string
-format(const T1& a1, const T2& a2)
+Format(const T1& a1, const T2& a2)
 {
     std::ostringstream os;
     os << a1 << a2;
@@ -242,7 +242,7 @@ format(const T1& a1, const T2& a2)
 
 template <typename T1, typename T2, typename T3>
 inline std::string
-format(const T1& a1, const T2& a2, const T3& a3)
+Format(const T1& a1, const T2& a2, const T3& a3)
 {
     std::ostringstream os;
     os << a1 << a2 << a3;
@@ -251,7 +251,7 @@ format(const T1& a1, const T2& a2, const T3& a3)
 
 template <typename T1, typename T2, typename T3, typename T4>
 inline std::string
-format(const T1& a1, const T2& a2, const T3& a3, const T4& a4)
+Format(const T1& a1, const T2& a2, const T3& a3, const T4& a4)
 {
     std::ostringstream os;
     os << a1 << a2 << a3 << a4;
@@ -260,7 +260,7 @@ format(const T1& a1, const T2& a2, const T3& a3, const T4& a4)
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5>
 inline std::string
-format(const T1& a1, const T2& a2, const T3& a3, const T4& a4, const T5& a5)
+Format(const T1& a1, const T2& a2, const T3& a3, const T4& a4, const T5& a5)
 {
     std::ostringstream os;
     os << a1 << a2 << a3 << a4 << a5;

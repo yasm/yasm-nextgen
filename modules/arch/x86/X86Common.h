@@ -46,13 +46,13 @@ class X86Common
 public:
     X86Common();
 
-    void apply_prefixes(unsigned int def_opersize_64,
-                        const std::vector<const Insn::Prefix*>& prefixes,
-                        unsigned char* rex = 0);
-    void finish();
+    void ApplyPrefixes(unsigned int def_opersize_64,
+                       const std::vector<const Insn::Prefix*>& prefixes,
+                       unsigned char* rex = 0);
+    void Finish();
 
-    unsigned long get_len() const;
-    void to_bytes(Bytes& bytes, const X86SegmentRegister* segreg) const;
+    unsigned long getLen() const;
+    void ToBytes(Bytes& bytes, const X86SegmentRegister* segreg) const;
 
     unsigned char m_addrsize;       // 0 or =mode_bits => no override
     unsigned char m_opersize;       // 0 or =mode_bits => no override

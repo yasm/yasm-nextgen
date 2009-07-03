@@ -57,7 +57,7 @@ class SymGetName
 {
 public:
     const std::string& operator() (const yasm::Symbol* sym) const
-    { return sym->get_name(); }
+    { return sym->getName(); }
 };
 
 } // anonymous namespace
@@ -75,14 +75,14 @@ public:
     {}
     ~Impl() {}
 
-    Symbol* new_symbol(const std::string& name)
+    Symbol* NewSymbol(const std::string& name)
     {
         Symbol* sym = static_cast<Symbol*>(m_sym_pool.malloc());
         new (sym) Symbol(name);
         return sym;
     }
 
-    void delete_symbol(Symbol* sym)
+    void DeleteSymbol(Symbol* sym)
     {
         if (sym)
         {
@@ -117,13 +117,13 @@ Object::Object(const std::string& src_filename,
 }
 
 void
-Object::set_source_fn(const std::string& src_filename)
+Object::setSourceFilename(const std::string& src_filename)
 {
     m_src_filename = src_filename;
 }
 
 void
-Object::set_object_fn(const std::string& obj_filename)
+Object::setObjectFilename(const std::string& obj_filename)
 {
     m_obj_filename = obj_filename;
 }
@@ -140,7 +140,7 @@ operator<< (marg_ostream& os, const Object& object)
     for (Object::const_symbol_iterator i=object.m_symbols.begin(),
          end=object.m_symbols.end(); i != end; ++i)
     {
-        os << "Symbol `" << i->get_name() << "'\n";
+        os << "Symbol `" << i->getName() << "'\n";
         ++os;
         os << *i;
         --os;
@@ -157,53 +157,53 @@ operator<< (marg_ostream& os, const Object& object)
 }
 
 void
-Object::finalize(Errwarns& errwarns)
+Object::Finalize(Errwarns& errwarns)
 {
     std::for_each(m_sections.begin(), m_sections.end(),
-                  BIND::bind(&Section::finalize, _1, REF::ref(errwarns)));
+                  BIND::bind(&Section::Finalize, _1, REF::ref(errwarns)));
 }
 
 void
-Object::append_section(std::auto_ptr<Section> sect)
+Object::AppendSection(std::auto_ptr<Section> sect)
 {
     sect->m_object = this;
     m_sections.push_back(sect.release());
 }
 
 Section*
-Object::find_section(const std::string& name)
+Object::FindSection(const std::string& name)
 {
     section_iterator i =
         std::find_if(m_sections.begin(), m_sections.end(),
-                     BIND::bind(&Section::is_name, _1, REF::ref(name)));
+                     BIND::bind(&Section::isName, _1, REF::ref(name)));
     if (i == m_sections.end())
         return 0;
     return &(*i);
 }
 
 SymbolRef
-Object::get_absolute_symbol()
+Object::getAbsoluteSymbol()
 {
-    SymbolRef sym = get_symbol("");
+    SymbolRef sym = getSymbol("");
 
     // If we already defined it, we're done.
-    if (sym->get_status() & Symbol::DEFINED)
+    if (sym->getStatus() & Symbol::DEFINED)
         return sym;
 
     // Define it
-    sym->define_equ(Expr(0), 0);
-    sym->use(0);
+    sym->DefineEqu(Expr(0), 0);
+    sym->Use(0);
     return sym;
 }
 
 SymbolRef
-Object::find_symbol(const std::string& name)
+Object::FindSymbol(const std::string& name)
 {
-    return SymbolRef(m_impl->sym_map.find(name));
+    return SymbolRef(m_impl->sym_map.Find(name));
 }
 
 SymbolRef
-Object::get_symbol(const std::string& name)
+Object::getSymbol(const std::string& name)
 {
     // Don't use pool allocator for symbols in the symbol table.
     // We have to maintain an ordered link list of all symbols in the symbol
@@ -211,7 +211,7 @@ Object::get_symbol(const std::string& name)
     // The memory impact of keeping a second linked list (internal to the pool)
     // seems to outweigh the moderate time savings of pool deletion.
     std::auto_ptr<Symbol> sym(new Symbol(name));
-    Symbol* sym2 = m_impl->sym_map.insert(sym.get());
+    Symbol* sym2 = m_impl->sym_map.Insert(sym.get());
     if (sym2)
     {
         ++num_exist_symbol;
@@ -225,7 +225,7 @@ Object::get_symbol(const std::string& name)
 }
 
 SymbolRef
-Object::append_symbol(const std::string& name)
+Object::AppendSymbol(const std::string& name)
 {
     Symbol* sym = new Symbol(name);
     m_symbols.push_back(sym);
@@ -233,14 +233,14 @@ Object::append_symbol(const std::string& name)
 }
 
 SymbolRef
-Object::add_non_table_symbol(const std::string& name)
+Object::AddNonTableSymbol(const std::string& name)
 {
-    Symbol* sym = m_impl->new_symbol(name);
+    Symbol* sym = m_impl->NewSymbol(name);
     return SymbolRef(sym);
 }
 
 void
-Object::symbols_finalize(Errwarns& errwarns, bool undef_extern)
+Object::FinalizeSymbols(Errwarns& errwarns, bool undef_extern)
 {
     unsigned long firstundef_line = ULONG_MAX;
 
@@ -249,33 +249,33 @@ Object::symbols_finalize(Errwarns& errwarns, bool undef_extern)
     {
         try
         {
-            i->finalize(undef_extern);
+            i->Finalize(undef_extern);
         }
         catch (Error& err)
         {
-            unsigned long use_line = i->get_use_line();
-            errwarns.propagate(use_line, err);
+            unsigned long use_line = i->getUseLine();
+            errwarns.Propagate(use_line, err);
             if (use_line < firstundef_line)
                 firstundef_line = use_line;
         }
     }
     if (firstundef_line < ULONG_MAX)
-        errwarns.propagate(firstundef_line,
+        errwarns.Propagate(firstundef_line,
             Error(N_(" (Each undefined symbol is reported only once.)")));
 }
 
 SymbolRef
-Object::add_special_symbol(const std::string& name)
+Object::AddSpecialSymbol(const std::string& name)
 {
-    Symbol* sym = m_impl->new_symbol(name);
-    m_impl->special_sym_map.insert(sym);
+    Symbol* sym = m_impl->NewSymbol(name);
+    m_impl->special_sym_map.Insert(sym);
     return SymbolRef(sym);
 }
 
 SymbolRef
-Object::find_special_symbol(const std::string& name)
+Object::FindSpecialSymbol(const std::string& name)
 {
-    return SymbolRef(m_impl->special_sym_map.find(name));
+    return SymbolRef(m_impl->special_sym_map.Find(name));
 }
 
 } // namespace yasm

@@ -56,59 +56,59 @@ GasParser::GasParser(const ParserModule& module, Errwarns& errwarns)
     static const GasDirLookup gas_dirs_init[] =
     {
         // FIXME: Whether this is power-of-two or not depends on arch and objfmt
-        {".align",      &GasParser::dir_align,  0},
-        {".p2align",    &GasParser::dir_align,  1},
-        {".balign",     &GasParser::dir_align,  0},
-        {".org",        &GasParser::dir_org,    0},
+        {".align",      &GasParser::ParseDirAlign,  0},
+        {".p2align",    &GasParser::ParseDirAlign,  1},
+        {".balign",     &GasParser::ParseDirAlign,  0},
+        {".org",        &GasParser::ParseDirOrg,    0},
         // data visibility directives
-        {".local",      &GasParser::dir_local,  0},
-        {".comm",       &GasParser::dir_comm,   0},
-        {".lcomm",      &GasParser::dir_comm,   1},
+        {".local",      &GasParser::ParseDirLocal,  0},
+        {".comm",       &GasParser::ParseDirComm,   0},
+        {".lcomm",      &GasParser::ParseDirComm,   1},
         // integer data declaration directives
-        {".byte",       &GasParser::dir_data,   1},
-        {".2byte",      &GasParser::dir_data,   2},
-        {".4byte",      &GasParser::dir_data,   4},
-        {".8byte",      &GasParser::dir_data,   8},
-        {".16byte",     &GasParser::dir_data,   16},
+        {".byte",       &GasParser::ParseDirData,   1},
+        {".2byte",      &GasParser::ParseDirData,   2},
+        {".4byte",      &GasParser::ParseDirData,   4},
+        {".8byte",      &GasParser::ParseDirData,   8},
+        {".16byte",     &GasParser::ParseDirData,   16},
         // TODO: These should depend on arch
-        {".short",      &GasParser::dir_data,   2},
-        {".int",        &GasParser::dir_data,   4},
-        {".long",       &GasParser::dir_data,   4},
-        {".hword",      &GasParser::dir_data,   2},
-        {".quad",       &GasParser::dir_data,   8},
-        {".octa",       &GasParser::dir_data,   16},
+        {".short",      &GasParser::ParseDirData,   2},
+        {".int",        &GasParser::ParseDirData,   4},
+        {".long",       &GasParser::ParseDirData,   4},
+        {".hword",      &GasParser::ParseDirData,   2},
+        {".quad",       &GasParser::ParseDirData,   8},
+        {".octa",       &GasParser::ParseDirData,   16},
         // XXX: At least on x86, this is 2 bytes
-        {".value",      &GasParser::dir_data,   2},
+        {".value",      &GasParser::ParseDirData,   2},
         // ASCII data declaration directives
-        {".ascii",      &GasParser::dir_ascii,  0},   // no terminating zero
-        {".asciz",      &GasParser::dir_ascii,  1},   // add terminating zero
-        {".string",     &GasParser::dir_ascii,  1},   // add terminating zero
+        {".ascii",      &GasParser::ParseDirAscii,  0}, // no terminating zero
+        {".asciz",      &GasParser::ParseDirAscii,  1}, // add terminating zero
+        {".string",     &GasParser::ParseDirAscii,  1}, // add terminating zero
         // LEB128 integer data declaration directives
-        {".sleb128",    &GasParser::dir_leb128, 1},   // signed
-        {".uleb128",    &GasParser::dir_leb128, 0},   // unsigned
+        {".sleb128",    &GasParser::ParseDirLeb128, 1}, // signed
+        {".uleb128",    &GasParser::ParseDirLeb128, 0}, // unsigned
         // floating point data declaration directives
-        {".float",      &GasParser::dir_data,   4},
-        {".single",     &GasParser::dir_data,   4},
-        {".double",     &GasParser::dir_data,   8},
-        {".tfloat",     &GasParser::dir_data,   10},
+        {".float",      &GasParser::ParseDirData,   4},
+        {".single",     &GasParser::ParseDirData,   4},
+        {".double",     &GasParser::ParseDirData,   8},
+        {".tfloat",     &GasParser::ParseDirData,   10},
         // section directives
-        {".bss",        &GasParser::dir_bss_section,    0},
-        {".data",       &GasParser::dir_data_section,   0},
-        {".text",       &GasParser::dir_text_section,   0},
-        {".section",    &GasParser::dir_section,        0},
+        {".bss",        &GasParser::ParseDirBssSection,     0},
+        {".data",       &GasParser::ParseDirDataSection,    0},
+        {".text",       &GasParser::ParseDirTextSection,    0},
+        {".section",    &GasParser::ParseDirSection,        0},
         // macro directives
-        {".rept",       &GasParser::dir_rept,   0},
-        {".endr",       &GasParser::dir_endr,   0},
+        {".rept",       &GasParser::ParseDirRept,   0},
+        {".endr",       &GasParser::ParseDirEndr,   0},
         // empty space/fill directives
-        {".skip",       &GasParser::dir_skip,   0},
-        {".space",      &GasParser::dir_skip,   0},
-        {".fill",       &GasParser::dir_fill,   0},
-        {".zero",       &GasParser::dir_zero,   0},
+        {".skip",       &GasParser::ParseDirSkip,   0},
+        {".space",      &GasParser::ParseDirSkip,   0},
+        {".fill",       &GasParser::ParseDirFill,   0},
+        {".zero",       &GasParser::ParseDirZero,   0},
         // other directives
-        {".equ",        &GasParser::dir_equ,    0},
-        {".file",       &GasParser::dir_file,   0},
-        {".line",       &GasParser::dir_line,   0},
-        {".set",        &GasParser::dir_equ,    0}
+        {".equ",        &GasParser::ParseDirEqu,    0},
+        {".file",       &GasParser::ParseDirFile,   0},
+        {".line",       &GasParser::ParseDirLine,   0},
+        {".set",        &GasParser::ParseDirEqu,    0}
     };
 
     for (unsigned int i=0; i<NELEMS(gas_dirs_init); ++i)
@@ -120,13 +120,13 @@ GasParser::~GasParser()
 }
 
 void
-GasParser::parse(Object& object,
+GasParser::Parse(Object& object,
                  Preprocessor& preproc,
                  bool save_input,
                  Directives& dirs,
                  Linemap& linemap)
 {
-    init_mixin(object, preproc, save_input, dirs, linemap);
+    InitMixin(object, preproc, save_input, dirs, linemap);
 
     m_locallabel_base = "";
 
@@ -143,41 +143,41 @@ GasParser::parse(Object& object,
         m_local[i] = 0;
 
     m_is_cpp_preproc =
-        String::nocase_equal(preproc.get_module().get_keyword(), "cpp");
+        String::NocaseEqual(preproc.getModule().getKeyword(), "cpp");
     m_is_nasm_preproc =
-        String::nocase_equal(preproc.get_module().get_keyword(), "nasm");
+        String::NocaseEqual(preproc.getModule().getKeyword(), "nasm");
 
     // Set up arch-sized directives
     m_sized_gas_dirs[0].name = ".word";
-    m_sized_gas_dirs[0].handler = &GasParser::dir_data;
-    m_sized_gas_dirs[0].param = m_arch->get_module().get_wordsize()/8;
+    m_sized_gas_dirs[0].handler = &GasParser::ParseDirData;
+    m_sized_gas_dirs[0].param = m_arch->getModule().getWordSize()/8;
     for (unsigned int i=0; i<NELEMS(m_sized_gas_dirs); ++i)
         m_gas_dirs[m_sized_gas_dirs[i].name] = &m_sized_gas_dirs[i];
 
-    do_parse();
+    DoParse();
 
     // Check for ending inside a rept
     if (!m_rept.empty())
     {
-        m_errwarns.propagate(m_rept.back().startline,
+        m_errwarns.Propagate(m_rept.back().startline,
                              SyntaxError(N_("rept without matching endr")));
     }
 
     // Check for ending inside a comment
     if (m_state == COMMENT)
     {
-        warn_set(WARN_GENERAL, N_("end of file in comment"));
+        setWarn(WARN_GENERAL, N_("end of file in comment"));
         // XXX: Minus two to compensate for already having moved past the EOF
         // in the linemap.
-        m_errwarns.propagate(get_cur_line()-2);
+        m_errwarns.Propagate(getCurLine()-2);
     }
 
     // Convert all undefined symbols into extern symbols
-    object.symbols_finalize(m_errwarns, true);
+    object.FinalizeSymbols(m_errwarns, true);
 }
 
 std::vector<const char*>
-GasParser::get_preproc_keywords()
+GasParser::getPreprocessorKeywords()
 {
     // valid preprocessors to use with this parser
     static const char* keywords[] = {"raw", "cpp", "nasm"};
@@ -185,21 +185,21 @@ GasParser::get_preproc_keywords()
 }
 
 void
-GasParser::add_directives(Directives& dirs, const char* parser)
+GasParser::AddDirectives(Directives& dirs, const char* parser)
 {
-    if (String::nocase_equal(parser, "gas"))
+    if (String::NocaseEqual(parser, "gas"))
     {
-        dirs.add(".extern", &dir_extern, Directives::ID_REQUIRED);
-        dirs.add(".global", &dir_global, Directives::ID_REQUIRED);
-        dirs.add(".globl",  &dir_global, Directives::ID_REQUIRED);
+        dirs.Add(".extern", &DirExtern, Directives::ID_REQUIRED);
+        dirs.Add(".global", &DirGlobal, Directives::ID_REQUIRED);
+        dirs.Add(".globl",  &DirGlobal, Directives::ID_REQUIRED);
     }
 }
 
 void
-do_register()
+DoRegister()
 {
-    register_module<ParserModule, ParserModuleImpl<GasParser> >("gas");
-    register_module<ParserModule, ParserModuleImpl<GasParser> >("gnu");
+    RegisterModule<ParserModule, ParserModuleImpl<GasParser> >("gas");
+    RegisterModule<ParserModule, ParserModuleImpl<GasParser> >("gnu");
 }
 
 }}} // namespace yasm::parser::gas

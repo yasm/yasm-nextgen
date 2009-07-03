@@ -69,36 +69,36 @@ struct ElfSpecialSymbol : public AssocData, public SpecialSymbolData
     {}
     ~ElfSpecialSymbol();
 
-    void put(marg_ostream& os) const;
+    void Put(marg_ostream& os) const;
 };
 
 inline ElfSpecialSymbol*
-get_elf_ssym(Symbol& sym)
+getElfSSym(Symbol& sym)
 {
     return static_cast<ElfSpecialSymbol*>
-        (sym.get_assoc_data(ElfSpecialSymbol::key));
+        (sym.getAssocData(ElfSpecialSymbol::key));
 }
 
 inline const ElfSpecialSymbol*
-get_elf_ssym(const Symbol& sym)
+getElfSSym(const Symbol& sym)
 {
     return static_cast<const ElfSpecialSymbol*>
-        (sym.get_assoc_data(ElfSpecialSymbol::key));
+        (sym.getAssocData(ElfSpecialSymbol::key));
 }
 
 inline bool
-is_wrt_sym_relative(const Symbol& wrt)
+isWRTSymRelative(const Symbol& wrt)
 {
-    const ElfSpecialSymbol* ssym = get_elf_ssym(wrt);
+    const ElfSpecialSymbol* ssym = getElfSSym(wrt);
     if (!ssym)
         return false;
     return ssym->sym_relative;
 }
 
 inline bool
-is_wrt_pos_adjusted(const Symbol& wrt)
+isWRTPosAdjusted(const Symbol& wrt)
 {
-    const ElfSpecialSymbol* ssym = get_elf_ssym(wrt);
+    const ElfSpecialSymbol* ssym = getElfSSym(wrt);
     if (!ssym)
         return false;
     return ssym->curpos_adjust;
@@ -109,28 +109,28 @@ class ElfMachine
 public:
     virtual ~ElfMachine();
 
-    virtual void configure(/*@out@*/ ElfConfig* config) const = 0;
-    virtual void add_special_syms(Object& object,
-                                  const std::string& parser) const = 0;
+    virtual void Configure(/*@out@*/ ElfConfig* config) const = 0;
+    virtual void AddSpecialSymbols(Object& object,
+                                   const std::string& parser) const = 0;
 
     virtual std::auto_ptr<ElfReloc>
-        read_reloc(const ElfConfig& config,
-                   const ElfSymtab& symtab,
-                   std::istream& is,
-                   bool rela) const = 0;
+        ReadReloc(const ElfConfig& config,
+                  const ElfSymtab& symtab,
+                  std::istream& is,
+                  bool rela) const = 0;
 
     virtual std::auto_ptr<ElfReloc>
-        make_reloc(SymbolRef sym,
-                   SymbolRef wrt,
-                   const IntNum& addr,
-                   bool rel,
-                   size_t valsize) const = 0;
+        MakeReloc(SymbolRef sym,
+                  SymbolRef wrt,
+                  const IntNum& addr,
+                  bool rel,
+                  size_t valsize) const = 0;
 };
 
-bool ok_elf_machine(const Arch& arch, ElfClass cls);
-std::auto_ptr<ElfMachine> create_elf_machine(const Arch& arch, ElfClass cls);
+bool isOkElfMachine(const Arch& arch, ElfClass cls);
+std::auto_ptr<ElfMachine> CreateElfMachine(const Arch& arch, ElfClass cls);
 
-void add_ssym(Object& object, const SpecialSymbolData& ssym);
+void AddElfSSym(Object& object, const SpecialSymbolData& ssym);
 
 }}} // namespace yasm::objfmt::elf
 

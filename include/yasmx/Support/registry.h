@@ -63,22 +63,22 @@ public:
     typedef void* (*BASE_CREATE_FN)();
 
     /// Singleton access.
-    static ModuleFactory& instance();
+    static ModuleFactory& Instance();
 
     /// Derived classes call this function once
     /// per program to register the class ID key, and a pointer to
     /// the function that creates the class.
-    void add_create_fn(int type, const char* keyword, BASE_CREATE_FN func);
+    void AddCreateFn(int type, const char* keyword, BASE_CREATE_FN func);
 
     /// Get the creation function for a given type and class name.
     /// @return NULL if not found.
-    BASE_CREATE_FN get_create_fn(int type, const std::string& keyword) const;
+    BASE_CREATE_FN getCreateFn(int type, const std::string& keyword) const;
 
     /// Return a list of classes that are registered.
-    std::vector<std::string> get_registered(int type) const;
+    std::vector<std::string> getRegistered(int type) const;
 
     /// Return true if the specific class is registered.
-    bool is_registered(int type, const std::string& keyword) const;
+    bool isRegistered(int type, const std::string& keyword) const;
 
 private:
     /// Singleton implementation - private ctor.
@@ -93,7 +93,7 @@ private:
 };
 
 template <typename Manufactured>
-void* create_instance()
+void* CreateInstance()
 {
     return new Manufactured;
 }
@@ -102,36 +102,36 @@ void* create_instance()
 
 template <typename Ancestor, typename Manufactured>
 inline void
-register_module(const char* keyword)
+RegisterModule(const char* keyword)
 {
-    impl::ModuleFactory::instance().add_create_fn(
+    impl::ModuleFactory::Instance().AddCreateFn(
         Ancestor::module_type,
         keyword,
-        impl::create_instance<Manufactured>);
+        impl::CreateInstance<Manufactured>);
 }
 
 template <typename T>
 inline std::auto_ptr<T>
-load_module(const std::string& keyword)
+LoadModule(const std::string& keyword)
 {
     impl::ModuleFactory::BASE_CREATE_FN create =
-        impl::ModuleFactory::instance().get_create_fn(T::module_type, keyword);
+        impl::ModuleFactory::Instance().getCreateFn(T::module_type, keyword);
     return std::auto_ptr<T>(static_cast<T*>(create()));
 }
 
 template <typename T>
 inline bool
-is_module(const std::string& keyword)
+isModule(const std::string& keyword)
 {
-    return impl::ModuleFactory::instance().is_registered(T::module_type,
-                                                         keyword);
+    return impl::ModuleFactory::Instance().isRegistered(T::module_type,
+                                                        keyword);
 }
 
 template <typename T>
 inline std::vector<std::string>
-get_modules()
+getModules()
 {
-    return impl::ModuleFactory::instance().get_registered(T::module_type);
+    return impl::ModuleFactory::Instance().getRegistered(T::module_type);
 }
 
 } // namespace yasm

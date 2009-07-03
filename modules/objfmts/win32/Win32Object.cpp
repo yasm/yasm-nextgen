@@ -61,184 +61,184 @@ Win32Object::~Win32Object()
 }
 
 std::vector<const char*>
-Win32Object::get_dbgfmt_keywords()
+Win32Object::getDebugFormatKeywords()
 {
     static const char* keywords[] = {"null", "dwarf2", "cv8"};
     return std::vector<const char*>(keywords, keywords+NELEMS(keywords));
 }
 
 static inline void
-set_bool(NameValue& nv, bool* out, bool value)
+setBool(NameValue& nv, bool* out, bool value)
 {
     *out = value;
 }
 
 void
-Win32Object::dir_section_init_helpers(DirHelpers& helpers,
-                                      CoffSection* csd,
-                                      IntNum* align,
-                                      bool* has_align,
-                                      unsigned long line)
+Win32Object::DirSectionInitHelpers(DirHelpers& helpers,
+                                   CoffSection* csd,
+                                   IntNum* align,
+                                   bool* has_align,
+                                   unsigned long line)
 {
-    CoffObject::dir_section_init_helpers(helpers, csd, align, has_align, line);
+    CoffObject::DirSectionInitHelpers(helpers, csd, align, has_align, line);
 
-    helpers.add("discard", false,
-                BIND::bind(&dir_flag_set, _1, &csd->m_flags,
+    helpers.Add("discard", false,
+                BIND::bind(&DirSetFlag, _1, &csd->m_flags,
                            CoffSection::DISCARD));
-    helpers.add("nodiscard", false,
-                BIND::bind(&dir_flag_clear, _1, &csd->m_flags,
+    helpers.Add("nodiscard", false,
+                BIND::bind(&DirClearFlag, _1, &csd->m_flags,
                            CoffSection::DISCARD));
-    helpers.add("cache", false,
-                BIND::bind(&dir_flag_clear, _1, &csd->m_flags,
+    helpers.Add("cache", false,
+                BIND::bind(&DirClearFlag, _1, &csd->m_flags,
                            CoffSection::NOCACHE));
-    helpers.add("nocache", false,
-                BIND::bind(&dir_flag_set, _1, &csd->m_flags,
+    helpers.Add("nocache", false,
+                BIND::bind(&DirSetFlag, _1, &csd->m_flags,
                            CoffSection::NOCACHE));
-    helpers.add("page", false,
-                BIND::bind(&dir_flag_clear, _1, &csd->m_flags,
+    helpers.Add("page", false,
+                BIND::bind(&DirClearFlag, _1, &csd->m_flags,
                            CoffSection::NOPAGE));
-    helpers.add("nopage", false,
-                BIND::bind(&dir_flag_set, _1, &csd->m_flags,
+    helpers.Add("nopage", false,
+                BIND::bind(&DirSetFlag, _1, &csd->m_flags,
                            CoffSection::NOPAGE));
-    helpers.add("share", false,
-                BIND::bind(&dir_flag_set, _1, &csd->m_flags,
+    helpers.Add("share", false,
+                BIND::bind(&DirSetFlag, _1, &csd->m_flags,
                            CoffSection::SHARED));
-    helpers.add("noshare", false,
-                BIND::bind(&dir_flag_clear, _1, &csd->m_flags,
+    helpers.Add("noshare", false,
+                BIND::bind(&DirClearFlag, _1, &csd->m_flags,
                            CoffSection::SHARED));
-    helpers.add("execute", false,
-                BIND::bind(&dir_flag_set, _1, &csd->m_flags,
+    helpers.Add("execute", false,
+                BIND::bind(&DirSetFlag, _1, &csd->m_flags,
                            CoffSection::EXECUTE));
-    helpers.add("noexecute", false,
-                BIND::bind(&dir_flag_clear, _1, &csd->m_flags,
+    helpers.Add("noexecute", false,
+                BIND::bind(&DirClearFlag, _1, &csd->m_flags,
                            CoffSection::EXECUTE));
-    helpers.add("read", false,
-                BIND::bind(&dir_flag_set, _1, &csd->m_flags,
+    helpers.Add("read", false,
+                BIND::bind(&DirSetFlag, _1, &csd->m_flags,
                            CoffSection::READ));
-    helpers.add("noread", false,
-                BIND::bind(&dir_flag_clear, _1, &csd->m_flags,
+    helpers.Add("noread", false,
+                BIND::bind(&DirClearFlag, _1, &csd->m_flags,
                            CoffSection::READ));
-    helpers.add("write", false,
-                BIND::bind(&dir_flag_set, _1, &csd->m_flags,
+    helpers.Add("write", false,
+                BIND::bind(&DirSetFlag, _1, &csd->m_flags,
                            CoffSection::WRITE));
-    helpers.add("nowrite", false,
-                BIND::bind(&dir_flag_clear, _1, &csd->m_flags,
+    helpers.Add("nowrite", false,
+                BIND::bind(&DirClearFlag, _1, &csd->m_flags,
                            CoffSection::WRITE));
-    helpers.add("base", false,
-                BIND::bind(&set_bool, _1, &csd->m_nobase, false));
-    helpers.add("nobase", false,
-                BIND::bind(&set_bool, _1, &csd->m_nobase, true));
+    helpers.Add("base", false,
+                BIND::bind(&setBool, _1, &csd->m_nobase, false));
+    helpers.Add("nobase", false,
+                BIND::bind(&setBool, _1, &csd->m_nobase, true));
 }
 
 void
-Win32Object::dir_export(Object& object,
+Win32Object::DirExport(Object& object,
+                       NameValues& namevals,
+                       NameValues& objext_namevals,
+                       unsigned long line)
+{
+    if (!namevals.front().isId())
+        throw SyntaxError(N_("argument to EXPORT must be symbol name"));
+    std::string symname = namevals.front().getId();
+
+    // Reference exported symbol (to generate error if not declared)
+    m_object.getSymbol(symname)->Use(line);
+
+    // Add to end of linker directives, creating directive section if needed.
+    Section* sect = m_object.FindSection(".drectve");
+    if (!sect)
+        sect = AppendSection(".drectve", line);
+
+    // Add text to end of section
+    AppendData(*sect, "-export:", 1, false);
+    AppendData(*sect, symname, 1, false);
+    AppendByte(*sect, ' ');
+}
+
+void
+Win32Object::DirSafeSEH(Object& object,
                         NameValues& namevals,
                         NameValues& objext_namevals,
                         unsigned long line)
 {
-    if (!namevals.front().is_id())
-        throw SyntaxError(N_("argument to EXPORT must be symbol name"));
-    std::string symname = namevals.front().get_id();
-
-    // Reference exported symbol (to generate error if not declared)
-    m_object.get_symbol(symname)->use(line);
-
-    // Add to end of linker directives, creating directive section if needed.
-    Section* sect = m_object.find_section(".drectve");
-    if (!sect)
-        sect = append_section(".drectve", line);
-
-    // Add text to end of section
-    append_data(*sect, "-export:", 1, false);
-    append_data(*sect, symname, 1, false);
-    append_byte(*sect, ' ');
-}
-
-void
-Win32Object::dir_safeseh(Object& object,
-                         NameValues& namevals,
-                         NameValues& objext_namevals,
-                         unsigned long line)
-{
-    if (!namevals.front().is_id())
+    if (!namevals.front().isId())
         throw SyntaxError(N_("argument to SAFESEH must be symbol name"));
-    std::string symname = namevals.front().get_id();
+    std::string symname = namevals.front().getId();
 
     // Reference symbol (to generate error if not declared)
-    SymbolRef sym = m_object.get_symbol(symname);
-    sym->use(line);
+    SymbolRef sym = m_object.getSymbol(symname);
+    sym->Use(line);
 
     // Symbol must be externally visible, so force global.
-    sym->declare(Symbol::GLOBAL, line);
+    sym->Declare(Symbol::GLOBAL, line);
 
     // Add symbol number to end of .sxdata section (creating if necessary)
-    Section* sect = m_object.find_section(".sxdata");
+    Section* sect = m_object.FindSection(".sxdata");
     if (!sect)
-        sect = append_section(".sxdata", line);
+        sect = AppendSection(".sxdata", line);
 
-    append_sxdata(*sect, sym, line);
+    AppendSxData(*sect, sym, line);
 }
 
 void
-Win32Object::add_directives(Directives& dirs, const char* parser)
+Win32Object::AddDirectives(Directives& dirs, const char* parser)
 {
     static const Directives::Init<Win32Object> gas_dirs[] =
     {
-        { ".export",  &Win32Object::dir_export,  Directives::ID_REQUIRED },
-        { ".safeseh", &Win32Object::dir_safeseh, Directives::ID_REQUIRED },
+        { ".export",  &Win32Object::DirExport,  Directives::ID_REQUIRED },
+        { ".safeseh", &Win32Object::DirSafeSEH, Directives::ID_REQUIRED },
     };
     static const Directives::Init<Win32Object> nasm_dirs[] =
     {
-        { "export",  &Win32Object::dir_export,  Directives::ID_REQUIRED },
-        { "safeseh", &Win32Object::dir_safeseh, Directives::ID_REQUIRED },
+        { "export",  &Win32Object::DirExport,  Directives::ID_REQUIRED },
+        { "safeseh", &Win32Object::DirSafeSEH, Directives::ID_REQUIRED },
     };
 
-    if (String::nocase_equal(parser, "nasm"))
-        dirs.add_array(this, nasm_dirs, NELEMS(nasm_dirs));
-    else if (String::nocase_equal(parser, "gas"))
-        dirs.add_array(this, gas_dirs, NELEMS(gas_dirs));
+    if (String::NocaseEqual(parser, "nasm"))
+        dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
+    else if (String::NocaseEqual(parser, "gas"))
+        dirs.AddArray(this, gas_dirs, NELEMS(gas_dirs));
 
     // Pull in coff directives
-    CoffObject::add_directives(dirs, parser);
+    CoffObject::AddDirectives(dirs, parser);
 }
 
 bool
-Win32Object::init_section(const std::string& name,
-                          Section& section,
-                          CoffSection* coffsect)
+Win32Object::InitSection(const std::string& name,
+                         Section& section,
+                         CoffSection* coffsect)
 {
     if (name == ".data")
     {
         coffsect->m_flags =
             CoffSection::DATA | CoffSection::READ | CoffSection::WRITE;
-        if (get_machine() == MACHINE_AMD64)
-            section.set_align(16);
+        if (getMachine() == MACHINE_AMD64)
+            section.setAlign(16);
         else
-            section.set_align(4);
+            section.setAlign(4);
     }
     else if (name == ".bss")
     {
         coffsect->m_flags =
             CoffSection::BSS | CoffSection::READ | CoffSection::WRITE;
-        if (get_machine() == MACHINE_AMD64)
-            section.set_align(16);
+        if (getMachine() == MACHINE_AMD64)
+            section.setAlign(16);
         else
-            section.set_align(4);
-        section.set_bss(true);
+            section.setAlign(4);
+        section.setBSS(true);
     }
     else if (name == ".text")
     {
         coffsect->m_flags =
             CoffSection::TEXT | CoffSection::EXECUTE | CoffSection::READ;
-        section.set_align(16);
-        section.set_code(true);
+        section.setAlign(16);
+        section.setCode(true);
     }
     else if (name == ".rdata"
              || (name.length() >= 7 && name.compare(0, 7, ".rodata") == 0)
              || (name.length() >= 7 && name.compare(0, 7, ".rdata$") == 0))
     {
         coffsect->m_flags = CoffSection::DATA | CoffSection::READ;
-        section.set_align(8);
+        section.setAlign(8);
     }
     else if (name == ".drectve")
     {
@@ -252,19 +252,19 @@ Win32Object::init_section(const std::string& name,
         coffsect->m_flags =
             CoffSection::INFO | CoffSection::DISCARD | CoffSection::READ;
     }
-    else if (String::nocase_equal(name, ".debug", 6))
+    else if (String::NocaseEqual(name, ".debug", 6))
     {
         coffsect->m_flags =
             CoffSection::DATA | CoffSection::DISCARD | CoffSection::READ;
-        section.set_align(1);
+        section.setAlign(1);
     }
     else
     {
         // Default to code (NASM default; note GAS has different default.
         coffsect->m_flags =
             CoffSection::TEXT | CoffSection::EXECUTE | CoffSection::READ;
-        section.set_align(16);
-        section.set_code(true);
+        section.setAlign(16);
+        section.setCode(true);
         return false;
     }
     return true;
@@ -290,10 +290,10 @@ static const yasm_stdmac win32_objfmt_stdmacs[] =
 #endif
 
 void
-do_register()
+DoRegister()
 {
-    register_module<ObjectFormatModule,
-                    ObjectFormatModuleImpl<Win32Object> >("win32");
+    RegisterModule<ObjectFormatModule,
+                   ObjectFormatModuleImpl<Win32Object> >("win32");
 }
 
 }}} // namespace yasm::objfmt::win32

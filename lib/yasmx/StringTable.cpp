@@ -44,7 +44,7 @@ StringTable::~StringTable()
 }
 
 unsigned long
-StringTable::get_index(const std::string& str)
+StringTable::getIndex(const std::string& str)
 {
     const char* cstr = str.c_str();
     std::string::size_type len = str.length()+1;    // include trailing 0
@@ -54,19 +54,19 @@ StringTable::get_index(const std::string& str)
 }
 
 std::string
-StringTable::get_str(unsigned long index) const
+StringTable::getString(unsigned long index) const
 {
     return &m_storage.at(index-m_first_index);
 }
 
 void
-StringTable::write(std::ostream& os) const
+StringTable::Write(std::ostream& os) const
 {
     os.write(&m_storage[0], m_storage.size());
 }
 
 void
-StringTable::read(std::istream& is, unsigned long size)
+StringTable::Read(std::istream& is, unsigned long size)
 {
     m_storage.resize(size);
     is.read(&m_storage[0], size);

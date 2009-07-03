@@ -82,20 +82,20 @@ namespace Op
 /// @param op   Operator
 /// @return True if op is unary, false otherwise.
 YASM_LIB_EXPORT
-bool is_unary(Op::Op op);
+bool isUnary(Op::Op op);
 
 /// Determine if operator is commutative.
 /// @param op   Operator
 /// @return True if op is commutative (A op B === B op A), false otherwise.
 YASM_LIB_EXPORT
-bool is_commutative(Op::Op op);
+bool isCommutative(Op::Op op);
 
 /// Determine if operator is associative.
 /// @param op   Operator
 /// @return True if op is associative (A op (B op C) === (A op B) op C),
 ///         false otherwise.
 YASM_LIB_EXPORT
-bool is_associative(Op::Op op);
+bool isAssociative(Op::Op op);
 
 } // namespace yasm
 

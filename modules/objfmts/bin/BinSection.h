@@ -50,7 +50,7 @@ struct BinSection : public AssocData
 
     BinSection();
     ~BinSection();
-    void put(marg_ostream& os) const;
+    void Put(marg_ostream& os) const;
 
     // User-provided alignment
     bool has_align, has_valign;
@@ -76,15 +76,15 @@ struct BinSection : public AssocData
 };
 
 inline const BinSection*
-get_bin_sect(const Section& sect)
+getBin(const Section& sect)
 {
-    return static_cast<const BinSection*>(sect.get_assoc_data(BinSection::key));
+    return static_cast<const BinSection*>(sect.getAssocData(BinSection::key));
 }
 
 inline BinSection*
-get_bin_sect(Section& sect)
+getBin(Section& sect)
 {
-    return static_cast<BinSection*>(sect.get_assoc_data(BinSection::key));
+    return static_cast<BinSection*>(sect.getAssocData(BinSection::key));
 }
 
 }}} // namespace yasm::objfmt::bin

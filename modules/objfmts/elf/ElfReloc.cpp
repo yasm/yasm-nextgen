@@ -53,15 +53,15 @@ ElfReloc::ElfReloc(SymbolRef sym,
 {
     if (wrt)
     {
-        const ElfSpecialSymbol* ssym = get_elf_ssym(*wrt);
+        const ElfSpecialSymbol* ssym = getElfSSym(*wrt);
         if (!ssym || valsize != ssym->size)
             throw TypeError(N_("elf: invalid WRT"));
 
         // Force TLS type; this is required by the linker.
         if (ssym->thread_local)
         {
-            if (ElfSymbol* esym = get_elf(*sym))
-                esym->set_type(STT_TLS);
+            if (ElfSymbol* esym = getElf(*sym))
+                esym->setType(STT_TLS);
         }
         m_type = ssym->reloc;
     }
@@ -76,33 +76,33 @@ ElfReloc::ElfReloc(const ElfConfig& config,
     : Reloc(0, SymbolRef(0))
 {
     Bytes bytes;
-    config.setup_endian(bytes);
+    config.setEndian(bytes);
 
     if (config.cls == ELFCLASS32)
     {
-        bytes.write(is, rela ? RELOC32A_SIZE : RELOC32_SIZE);
+        bytes.Write(is, rela ? RELOC32A_SIZE : RELOC32_SIZE);
 
-        m_addr = read_u32(bytes);
+        m_addr = ReadU32(bytes);
 
-        unsigned long info = read_u32(bytes);
+        unsigned long info = ReadU32(bytes);
         m_sym = symtab.at(ELF32_R_SYM(info));
         m_type = ELF32_R_TYPE(info);
 
         if (rela)
-            m_addend = read_s32(bytes);
+            m_addend = ReadS32(bytes);
     }
     else if (config.cls == ELFCLASS64)
     {
-        bytes.write(is, rela ? RELOC64A_SIZE : RELOC64_SIZE);
+        bytes.Write(is, rela ? RELOC64A_SIZE : RELOC64_SIZE);
 
-        m_addr = read_u64(bytes);
+        m_addr = ReadU64(bytes);
 
-        IntNum info = read_u64(bytes);
+        IntNum info = ReadU64(bytes);
         m_sym = symtab.at(ELF64_R_SYM(info));
         m_type = ELF64_R_TYPE(info);
 
         if (rela)
-            m_addend = read_s64(bytes);
+            m_addend = ReadS64(bytes);
     }
 }
 
@@ -111,16 +111,16 @@ ElfReloc::~ElfReloc()
 }
 
 Expr
-ElfReloc::get_value() const
+ElfReloc::getValue() const
 {
     Expr e(m_sym);
-    if (!m_addend.is_zero())
+    if (!m_addend.isZero())
         e += m_addend;
     return e;
 }
 
 void
-ElfReloc::handle_addend(IntNum* intn, const ElfConfig& config)
+ElfReloc::HandleAddend(IntNum* intn, const ElfConfig& config)
 {
     // rela sections put the addend into the relocation, and write 0 in
     // data area.
@@ -132,32 +132,32 @@ ElfReloc::handle_addend(IntNum* intn, const ElfConfig& config)
 }
 
 void
-ElfReloc::write(Bytes& bytes, const ElfConfig& config)
+ElfReloc::Write(Bytes& bytes, const ElfConfig& config)
 {
     unsigned long r_sym = STN_UNDEF;
 
-    if (ElfSymbol* esym = get_elf(*get_sym()))
-        r_sym = esym->get_symindex();
+    if (ElfSymbol* esym = getElf(*getSymbol()))
+        r_sym = esym->getSymbolIndex();
 
     bytes.resize(0);
-    config.setup_endian(bytes);
+    config.setEndian(bytes);
 
     if (config.cls == ELFCLASS32)
     {
-        write_32(bytes, m_addr);
-        write_32(bytes,
-                 ELF32_R_INFO(r_sym, static_cast<unsigned char>(m_type)));
+        Write32(bytes, m_addr);
+        Write32(bytes,
+                ELF32_R_INFO(r_sym, static_cast<unsigned char>(m_type)));
 
         if (config.rela)
-            write_32(bytes, m_addend);
+            Write32(bytes, m_addend);
     }
     else if (config.cls == ELFCLASS64)
     {
-        write_64(bytes, m_addr);
-        write_64(bytes,
-                 ELF64_R_INFO(r_sym, static_cast<unsigned char>(m_type)));
+        Write64(bytes, m_addr);
+        Write64(bytes,
+                ELF64_R_INFO(r_sym, static_cast<unsigned char>(m_type)));
         if (config.rela)
-            write_64(bytes, m_addend);
+            Write64(bytes, m_addend);
     }
 }
 

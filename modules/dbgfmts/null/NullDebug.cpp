@@ -45,18 +45,18 @@ public:
     {}
     ~NullDebug() {}
 
-    static const char* get_name() { return "No debugging info"; }
-    static const char* get_keyword() { return "null"; }
-    static bool ok_object(Object& object) { return true; }
+    static const char* getName() { return "No debugging info"; }
+    static const char* getKeyword() { return "null"; }
+    static bool isOkObject(Object& object) { return true; }
 
-    void generate(Linemap& linemap, Errwarns& errwarns) {}
+    void Generate(Linemap& linemap, Errwarns& errwarns) {}
 };
 
 void
-do_register()
+DoRegister()
 {
-    register_module<DebugFormatModule,
-                    DebugFormatModuleImpl<NullDebug> >("null");
+    RegisterModule<DebugFormatModule,
+                   DebugFormatModuleImpl<NullDebug> >("null");
 }
 
 }}} // namespace yasm::dbgfmt::null

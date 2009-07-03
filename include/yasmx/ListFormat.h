@@ -56,17 +56,17 @@ public:
     virtual ~ListFormat();
 
     /// Get module.
-    const ListFormatModule& get_module() const { return m_module; }
+    const ListFormatModule& getModule() const { return m_module; }
 
     /// Add directive handlers.
-    virtual void add_directives(Directives& dirs, const char* parser);
+    virtual void AddDirectives(Directives& dirs, const char* parser);
 
     /// Write out list to the list file.
     /// This function may call all read-only yasm:: functions as necessary.
     /// @param os           output stream
     /// @param linemap      line mapping repository
     /// @param arch         architecture
-    virtual void output(std::ostream& os, Linemap& linemap, Arch& arch) = 0;
+    virtual void Output(std::ostream& os, Linemap& linemap, Arch& arch) = 0;
 
 private:
     ListFormat(const ListFormat&);                  // not implemented
@@ -86,11 +86,11 @@ public:
 
     /// Get the module type.
     /// @return "ListFormat".
-    const char* get_type() const;
+    const char* getType() const;
 
     /// ListFormat factory function.
     /// @return New list format.
-    virtual std::auto_ptr<ListFormat> create() const = 0;
+    virtual std::auto_ptr<ListFormat> Create() const = 0;
 };
 
 template <typename ListFormatImpl>
@@ -100,10 +100,10 @@ public:
     ListFormatModuleImpl() {}
     ~ListFormatModuleImpl() {}
 
-    const char* get_name() const { return ListFormatImpl::get_name(); }
-    const char* get_keyword() const { return ListFormatImpl::get_keyword(); }
+    const char* getName() const { return ListFormatImpl::getName(); }
+    const char* getKeyword() const { return ListFormatImpl::getKeyword(); }
 
-    std::auto_ptr<ListFormat> create() const
+    std::auto_ptr<ListFormat> Create() const
     {
         return std::auto_ptr<ListFormat>(new ListFormatImpl(*this));
     }

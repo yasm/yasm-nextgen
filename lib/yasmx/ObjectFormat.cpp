@@ -39,18 +39,18 @@ ObjectFormat::~ObjectFormat()
 }
 
 void
-ObjectFormat::add_directives(Directives& dirs, const char* parser)
+ObjectFormat::AddDirectives(Directives& dirs, const char* parser)
 {
 }
 
 void
-ObjectFormat::read(std::istream& is)
+ObjectFormat::Read(std::istream& is)
 {
     throw NotImplementedError(N_("object format does not support reading"));
 }
 
 void
-ObjectFormat::init_symbols(const char* parser)
+ObjectFormat::InitSymbols(const char* parser)
 {
 }
 
@@ -59,7 +59,7 @@ ObjectFormatModule::~ObjectFormatModule()
 }
 
 const char*
-ObjectFormatModule::get_type() const
+ObjectFormatModule::getType() const
 {
     return "ObjectFormat";
 }

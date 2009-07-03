@@ -94,19 +94,19 @@ X86Arch::X86Arch(const ArchModule& module)
     for (unsigned int i=0; i<NELEMS(m_reg_group); i++)
         m_reg_group[i] = 0;
     m_reg_group[X86Register::FPUREG] =
-        new X86RegisterGroup(BIND::bind(&X86Arch::get_mode_bits, this),
+        new X86RegisterGroup(BIND::bind(&X86Arch::getModeBits, this),
                              m_reg[X86Register::FPUREG],
                              reg_count[X86Register::FPUREG]);
     m_reg_group[X86Register::MMXREG] =
-        new X86RegisterGroup(BIND::bind(&X86Arch::get_mode_bits, this),
+        new X86RegisterGroup(BIND::bind(&X86Arch::getModeBits, this),
                              m_reg[X86Register::MMXREG],
                              reg_count[X86Register::MMXREG]);
     m_reg_group[X86Register::XMMREG] =
-        new X86RegisterGroup(BIND::bind(&X86Arch::get_mode_bits, this),
+        new X86RegisterGroup(BIND::bind(&X86Arch::getModeBits, this),
                              m_reg[X86Register::XMMREG],
                              reg_count[X86Register::XMMREG]);
     m_reg_group[X86Register::YMMREG] =
-        new X86RegisterGroup(BIND::bind(&X86Arch::get_mode_bits, this),
+        new X86RegisterGroup(BIND::bind(&X86Arch::getModeBits, this),
                              m_reg[X86Register::YMMREG],
                              reg_count[X86Register::YMMREG]);
 
@@ -129,12 +129,12 @@ X86Arch::X86Arch(const ArchModule& module)
 }
 
 bool
-X86Arch::set_parser(const std::string& parser)
+X86Arch::setParser(const std::string& parser)
 {
-    if (String::nocase_equal(parser, "nasm"))
+    if (String::NocaseEqual(parser, "nasm"))
         m_parser = PARSER_NASM;
-    else if (String::nocase_equal(parser, "gas") ||
-             String::nocase_equal(parser, "gnu"))
+    else if (String::NocaseEqual(parser, "gas") ||
+             String::NocaseEqual(parser, "gnu"))
         m_parser = PARSER_GAS;
     else
         return false;
@@ -142,11 +142,11 @@ X86Arch::set_parser(const std::string& parser)
 }
 
 bool
-X86Arch::set_machine(const std::string& machine)
+X86Arch::setMachine(const std::string& machine)
 {
-    if (String::nocase_equal(machine, "x86"))
+    if (String::NocaseEqual(machine, "x86"))
         m_amd64_machine = false;
-    else if (String::nocase_equal(machine, "amd64"))
+    else if (String::NocaseEqual(machine, "amd64"))
         m_amd64_machine = true;
     else
         return false;
@@ -170,7 +170,7 @@ X86Arch::~X86Arch()
 }
 
 std::string
-X86Arch::get_machine() const
+X86Arch::getMachine() const
 {
     if (m_amd64_machine)
         return "amd64";
@@ -179,7 +179,7 @@ X86Arch::get_machine() const
 }
 
 ArchModule::MachineNames
-X86Arch::get_machines()
+X86Arch::getMachines()
 {
     ArchModule::MachineNames machines;
     machines.push_back(std::make_pair("x86", "IA-32 and derivatives"));
@@ -188,7 +188,7 @@ X86Arch::get_machines()
 }
 
 unsigned int
-X86Arch::get_address_size() const
+X86Arch::getAddressSize() const
 {
     if (m_mode_bits != 0)
         return m_mode_bits;
@@ -199,17 +199,17 @@ X86Arch::get_address_size() const
 }
 
 bool
-X86Arch::set_var(const char* var, unsigned long val)
+X86Arch::setVar(const char* var, unsigned long val)
 {
-    if (String::nocase_equal(var, "mode_bits"))
+    if (String::NocaseEqual(var, "mode_bits"))
         m_mode_bits = static_cast<unsigned int>(val);
-    else if (String::nocase_equal(var, "force_strict"))
+    else if (String::NocaseEqual(var, "force_strict"))
         m_force_strict = (val != 0);
-    else if (String::nocase_equal(var, "default_rel"))
+    else if (String::NocaseEqual(var, "default_rel"))
     {
         if (m_mode_bits != 64)
-            warn_set(WARN_GENERAL,
-                     N_("ignoring default rel in non-64-bit mode"));
+            setWarn(WARN_GENERAL,
+                    N_("ignoring default rel in non-64-bit mode"));
         else
             m_default_rel = (val != 0);
     }
@@ -219,44 +219,44 @@ X86Arch::set_var(const char* var, unsigned long val)
 }
 
 void
-X86Arch::dir_cpu(Object& object, const NameValues& namevals,
-                 const NameValues& objext_namevals, unsigned long line)
+X86Arch::DirCpu(Object& object, const NameValues& namevals,
+                const NameValues& objext_namevals, unsigned long line)
 {
     for (NameValues::const_iterator nv=namevals.begin(), end=namevals.end();
          nv != end; ++nv)
     {
-        if (nv->is_string())
-            parse_cpu(nv->get_string());
-        else if (nv->is_expr())
+        if (nv->isString())
+            ParseCpu(nv->getString());
+        else if (nv->isExpr())
         {
-            Expr e = nv->get_expr(object, line);
-            if (!e.is_intnum())
-                throw SyntaxError(String::compose(
+            Expr e = nv->getExpr(object, line);
+            if (!e.isIntNum())
+                throw SyntaxError(String::Compose(
                     N_("invalid argument to [%1]"), "CPU"));
             else
             {
                 std::ostringstream strcpu;
-                strcpu << e.get_intnum().get_uint();
-                parse_cpu(strcpu.str());
+                strcpu << e.getIntNum().getUInt();
+                ParseCpu(strcpu.str());
             }
         }
         else
-            throw SyntaxError(String::compose(N_("invalid argument to [%1]"),
+            throw SyntaxError(String::Compose(N_("invalid argument to [%1]"),
                                               "CPU"));
     }
 }
 
 void
-X86Arch::dir_bits(Object& object, const NameValues& namevals,
-                  const NameValues& objext_namevals, unsigned long line)
+X86Arch::DirBits(Object& object, const NameValues& namevals,
+                 const NameValues& objext_namevals, unsigned long line)
 {
     NameValues::const_iterator nv = namevals.begin();
-    if (nv != namevals.end() && nv->is_expr())
+    if (nv != namevals.end() && nv->isExpr())
     {
-        Expr e = nv->get_expr(object, line);
-        if (e.is_intnum())
+        Expr e = nv->getExpr(object, line);
+        if (e.isIntNum())
         {
-            unsigned long v = e.get_intnum().get_uint();
+            unsigned long v = e.getIntNum().getUInt();
             if (v == 16 || v == 32 || v == 64)
             {
                 m_mode_bits = v;
@@ -265,32 +265,32 @@ X86Arch::dir_bits(Object& object, const NameValues& namevals,
         }
     }
 
-    throw ValueError(String::compose(N_("invalid argument to [%1]"), "BITS"));
+    throw ValueError(String::Compose(N_("invalid argument to [%1]"), "BITS"));
 }
 
 void
-X86Arch::dir_code16(Object& object, const NameValues& namevals,
-                    const NameValues& objext_namevals, unsigned long line)
+X86Arch::DirCode16(Object& object, const NameValues& namevals,
+                   const NameValues& objext_namevals, unsigned long line)
 {
     m_mode_bits = 16;
 }
 
 void
-X86Arch::dir_code32(Object& object, const NameValues& namevals,
-                    const NameValues& objext_namevals, unsigned long line)
+X86Arch::DirCode32(Object& object, const NameValues& namevals,
+                   const NameValues& objext_namevals, unsigned long line)
 {
     m_mode_bits = 32;
 }
 
 void
-X86Arch::dir_code64(Object& object, const NameValues& namevals,
-                    const NameValues& objext_namevals, unsigned long line)
+X86Arch::DirCode64(Object& object, const NameValues& namevals,
+                   const NameValues& objext_namevals, unsigned long line)
 {
     m_mode_bits = 64;
 }
 
 const unsigned char **
-X86Arch::get_fill() const
+X86Arch::getFill() const
 {
     // Fill patterns that GAS uses.
     static const unsigned char fill16_1[1] =
@@ -519,35 +519,35 @@ X86Arch::get_fill() const
 }
 
 void
-X86Arch::add_directives(Directives& dirs, const char* parser)
+X86Arch::AddDirectives(Directives& dirs, const char* parser)
 {
-    if (String::nocase_equal(parser, "nasm"))
+    if (String::NocaseEqual(parser, "nasm"))
     {
-        dirs.add("cpu",
-                 BIND::bind(&X86Arch::dir_cpu, this, _1, _2, _3, _4),
+        dirs.Add("cpu",
+                 BIND::bind(&X86Arch::DirCpu, this, _1, _2, _3, _4),
                  Directives::ARG_REQUIRED);
-        dirs.add("bits",
-                 BIND::bind(&X86Arch::dir_bits, this, _1, _2, _3, _4),
+        dirs.Add("bits",
+                 BIND::bind(&X86Arch::DirBits, this, _1, _2, _3, _4),
                  Directives::ARG_REQUIRED);
     }
-    else if (String::nocase_equal(parser, "gas") ||
-             String::nocase_equal(parser, "gnu"))
+    else if (String::NocaseEqual(parser, "gas") ||
+             String::NocaseEqual(parser, "gnu"))
     {
-        dirs.add(".code16",
-                 BIND::bind(&X86Arch::dir_code16, this, _1, _2, _3, _4),
+        dirs.Add(".code16",
+                 BIND::bind(&X86Arch::DirCode16, this, _1, _2, _3, _4),
                  Directives::ANY);
-        dirs.add(".code32",
-                 BIND::bind(&X86Arch::dir_code32, this, _1, _2, _3, _4),
+        dirs.Add(".code32",
+                 BIND::bind(&X86Arch::DirCode32, this, _1, _2, _3, _4),
                  Directives::ANY);
-        dirs.add(".code64",
-                 BIND::bind(&X86Arch::dir_code64, this, _1, _2, _3, _4),
+        dirs.Add(".code64",
+                 BIND::bind(&X86Arch::DirCode64, this, _1, _2, _3, _4),
                  Directives::ANY);
     }
 }
 
 
 void
-X86Arch::tobytes(const llvm::APFloat& flt,
+X86Arch::ToBytes(const llvm::APFloat& flt,
                  Bytes& bytes,
                  size_t valsize,
                  size_t shift,
@@ -559,29 +559,29 @@ X86Arch::tobytes(const llvm::APFloat& flt,
         return;
     }
 
-    overwrite(bytes, flt, valsize, shift, false, warn);
+    Overwrite(bytes, flt, valsize, shift, false, warn);
 }
 
 void
-X86Arch::tobytes(const IntNum& intn,
+X86Arch::ToBytes(const IntNum& intn,
                  Bytes& bytes,
                  size_t valsize,
                  int shift,
                  int warn) const
 {
-    overwrite(bytes, intn, valsize, shift, false, warn);
+    Overwrite(bytes, intn, valsize, shift, false, warn);
 }
 
 std::auto_ptr<EffAddr>
-X86Arch::ea_create(std::auto_ptr<Expr> e) const
+X86Arch::CreateEffAddr(std::auto_ptr<Expr> e) const
 {
     return std::auto_ptr<EffAddr>(new X86EffAddr(m_parser == PARSER_GAS, e));
 }
 
 void
-do_register()
+DoRegister()
 {
-    register_module<ArchModule, ArchModuleImpl<X86Arch> >("x86");
+    RegisterModule<ArchModule, ArchModuleImpl<X86Arch> >("x86");
 }
 
 }}} // namespace yasm::arch::x86

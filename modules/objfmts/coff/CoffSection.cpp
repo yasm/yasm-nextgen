@@ -84,7 +84,7 @@ CoffSection::~CoffSection()
 }
 
 void
-CoffSection::put(marg_ostream& os) const
+CoffSection::Put(marg_ostream& os) const
 {
     os << "sym=\n";
     ++os;
@@ -114,12 +114,12 @@ CoffSection::put(marg_ostream& os) const
 }
 
 void
-CoffSection::write(Bytes& bytes, const Section& sect) const
+CoffSection::Write(Bytes& bytes, const Section& sect) const
 {
     bytes << little_endian;
 
     // Check to see if alignment is supported size
-    unsigned long align = sect.get_align();
+    unsigned long align = sect.getAlign();
     if (align > 8192)
         align = 8192;
 
@@ -134,35 +134,35 @@ CoffSection::write(Bytes& bytes, const Section& sect) const
 
     // section name
     char name[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-    if (sect.get_name().length() > 8)
+    if (sect.getName().length() > 8)
     {
         std::string namenum = "/";
-        namenum += String::format(m_strtab_name);
+        namenum += String::Format(m_strtab_name);
         std::strncpy(name, namenum.c_str(), 8);
     }
     else
-        std::strncpy(name, sect.get_name().c_str(), 8);
-    bytes.write(reinterpret_cast<unsigned char*>(name), 8);
+        std::strncpy(name, sect.getName().c_str(), 8);
+    bytes.Write(reinterpret_cast<unsigned char*>(name), 8);
     if (m_isdebug)
     {
-        write_32(bytes, 0);         // physical address
-        write_32(bytes, 0);         // virtual address
+        Write32(bytes, 0);          // physical address
+        Write32(bytes, 0);          // virtual address
     }
     else
     {
-        write_32(bytes, sect.get_lma());    // physical address
-        write_32(bytes, sect.get_vma());    // virtual address
+        Write32(bytes, sect.getLMA());      // physical address
+        Write32(bytes, sect.getVMA());      // virtual address
     }
-    write_32(bytes, m_size);                // section size
-    write_32(bytes, sect.get_filepos());    // file ptr to data
-    write_32(bytes, m_relptr);              // file ptr to relocs
-    write_32(bytes, 0);                     // file ptr to line nums
-    if (sect.get_relocs().size() >= 64*1024)
-        write_16(bytes, 0xFFFF);            // max out
+    Write32(bytes, m_size);                 // section size
+    Write32(bytes, sect.getFilePos());      // file ptr to data
+    Write32(bytes, m_relptr);               // file ptr to relocs
+    Write32(bytes, 0);                      // file ptr to line nums
+    if (sect.getRelocs().size() >= 64*1024)
+        Write16(bytes, 0xFFFF);             // max out
     else
-        write_16(bytes, sect.get_relocs().size()); // num of relocation entries
-    write_16(bytes, 0);                     // num of line number entries
-    write_32(bytes, flags);                 // flags
+        Write16(bytes, sect.getRelocs().size()); // num of relocation entries
+    Write16(bytes, 0);                      // num of line number entries
+    Write32(bytes, flags);                  // flags
 }
 
 }}} // namespace yasm::objfmt::coff

@@ -45,42 +45,42 @@ class Symbol;
 /// @param objext_namevals  object-extended name/values
 /// @note object_namevals are moved, not copied.
 YASM_LIB_EXPORT
-void set_objext_namevals(Symbol& sym, NameValues& objext_namevals);
+void setObjextNameValues(Symbol& sym, NameValues& objext_namevals);
 
 /// Get object-extended name/values, if any, associated with symbol's
 /// declaration.
 /// @param sym          symbol
 /// @return Object-extended name/values (NULL if none).
 YASM_LIB_EXPORT
-/*@null@*/ const NameValues* get_objext_namevals(const Symbol& sym);
+/*@null@*/ const NameValues* getObjextNameValues(const Symbol& sym);
 
 /// Get object-extended name/values, if any, associated with symbol's
 /// declaration (non-const version).
 /// @param sym          symbol
 /// @return Object-extended name/values (NULL if none).
 YASM_LIB_EXPORT
-/*@null@*/ NameValues* get_objext_namevals(Symbol& sym);
+/*@null@*/ NameValues* getObjextNameValues(Symbol& sym);
 
 /// Set common size of symbol.
 /// @param sym          symbol
 /// @param common_size  common size expression
 /// @return Symbol (this).
 YASM_LIB_EXPORT
-void set_common_size(Symbol& sym, const Expr& common_size);
+void setCommonSize(Symbol& sym, const Expr& common_size);
 
 /// Get common size of symbol, if symbol is declared #COMMON and a
 /// size was set for it.
 /// @param sym          symbol
 /// @return Common size (NULL if none).
 YASM_LIB_EXPORT
-/*@null@*/ const Expr* get_common_size(const Symbol& sym);
+/*@null@*/ const Expr* getCommonSize(const Symbol& sym);
 
 /// Get common size of symbol, if symbol is declared #COMMON and a
 /// size was set for it.
 /// @param sym          symbol
 /// @return Common size (NULL if none).
 YASM_LIB_EXPORT
-/*@null@*/ Expr* get_common_size(Symbol& sym);
+/*@null@*/ Expr* getCommonSize(Symbol& sym);
 
 /// Extern directive handler.  Sets symbol visibility to Symbol::EXTERN and
 /// saves objext_namevals as associated symbol data.
@@ -90,10 +90,10 @@ YASM_LIB_EXPORT
 /// @param objext_namevals  object format-specific name/values
 /// @param line             virtual line (from Linemap)
 YASM_LIB_EXPORT
-void dir_extern(Object& object,
-                NameValues& namevals,
-                NameValues& objext_namevals,
-                unsigned long line);
+void DirExtern(Object& object,
+               NameValues& namevals,
+               NameValues& objext_namevals,
+               unsigned long line);
 
 /// Global directive handler.  Sets symbol visibility to Symbol::GLOBAL and
 /// saves objext_namevals as associated symbol data.
@@ -103,10 +103,10 @@ void dir_extern(Object& object,
 /// @param objext_namevals  object format-specific name/values
 /// @param line             virtual line (from Linemap)
 YASM_LIB_EXPORT
-void dir_global(Object& object,
-                NameValues& namevals,
-                NameValues& objext_namevals,
-                unsigned long line);
+void DirGlobal(Object& object,
+               NameValues& namevals,
+               NameValues& objext_namevals,
+               unsigned long line);
 
 /// Common directive handler.  Sets symbol visibility to Symbol::COMMON and
 /// saves common size and objext_namevals as associated symbol data.
@@ -116,10 +116,10 @@ void dir_global(Object& object,
 /// @param objext_namevals  object format-specific name/values
 /// @param line             virtual line (from Linemap)
 YASM_LIB_EXPORT
-void dir_common(Object& object,
-                NameValues& namevals,
-                NameValues& objext_namevals,
-                unsigned long line);
+void DirCommon(Object& object,
+               NameValues& namevals,
+               NameValues& objext_namevals,
+               unsigned long line);
 
 } // namespace yasm
 

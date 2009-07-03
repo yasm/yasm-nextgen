@@ -63,46 +63,46 @@ ElfSection::ElfSection(const ElfConfig&     config,
 {
     Bytes bytes;
 
-    bytes.write(is, m_config.secthead_size);
+    bytes.Write(is, m_config.secthead_size);
     if (!is)
         throw Error(N_("could not read section header"));
 
-    m_config.setup_endian(bytes);
+    m_config.setEndian(bytes);
 
-    m_name_index = read_u32(bytes);
-    m_type = static_cast<ElfSectionType>(read_u32(bytes));
+    m_name_index = ReadU32(bytes);
+    m_type = static_cast<ElfSectionType>(ReadU32(bytes));
 
     if (m_config.cls == ELFCLASS32)
     {
         if (bytes.size() < SHDR32_SIZE)
             throw Error(N_("section header too small"));
 
-        m_flags = static_cast<ElfSectionFlags>(read_u32(bytes));
-        m_addr = read_u32(bytes);
+        m_flags = static_cast<ElfSectionFlags>(ReadU32(bytes));
+        m_addr = ReadU32(bytes);
 
-        m_offset = static_cast<ElfAddress>(read_u32(bytes));
-        m_size = read_u32(bytes);
-        m_link = static_cast<ElfSectionIndex>(read_u32(bytes));
-        m_info = static_cast<ElfSectionInfo>(read_u32(bytes));
+        m_offset = static_cast<ElfAddress>(ReadU32(bytes));
+        m_size = ReadU32(bytes);
+        m_link = static_cast<ElfSectionIndex>(ReadU32(bytes));
+        m_info = static_cast<ElfSectionInfo>(ReadU32(bytes));
 
-        m_align = read_u32(bytes);
-        m_entsize = static_cast<ElfSize>(read_u32(bytes));
+        m_align = ReadU32(bytes);
+        m_entsize = static_cast<ElfSize>(ReadU32(bytes));
     }
     else if (m_config.cls == ELFCLASS64)
     {
         if (bytes.size() < SHDR64_SIZE)
             throw Error(N_("section header too small"));
 
-        m_flags = static_cast<ElfSectionFlags>(read_u64(bytes).get_uint());
-        m_addr = read_u64(bytes);
+        m_flags = static_cast<ElfSectionFlags>(ReadU64(bytes).getUInt());
+        m_addr = ReadU64(bytes);
 
-        m_offset = static_cast<ElfAddress>(read_u64(bytes).get_uint());
-        m_size = read_u64(bytes);
-        m_link = static_cast<ElfSectionIndex>(read_u32(bytes));
-        m_info = static_cast<ElfSectionInfo>(read_u32(bytes));
+        m_offset = static_cast<ElfAddress>(ReadU64(bytes).getUInt());
+        m_size = ReadU64(bytes);
+        m_link = static_cast<ElfSectionIndex>(ReadU32(bytes));
+        m_info = static_cast<ElfSectionInfo>(ReadU32(bytes));
 
-        m_align = read_u64(bytes).get_uint();
-        m_entsize = static_cast<ElfSize>(read_u64(bytes).get_uint());
+        m_align = ReadU64(bytes).getUInt();
+        m_entsize = static_cast<ElfSize>(ReadU64(bytes).getUInt());
     }
 }
 
@@ -147,7 +147,7 @@ ElfSection::~ElfSection()
 }
 
 void
-ElfSection::put(marg_ostream& os) const
+ElfSection::Put(marg_ostream& os) const
 {
     os << "\nsym=\n";
     ++os;
@@ -172,41 +172,41 @@ ElfSection::put(marg_ostream& os) const
 }
 
 unsigned long
-ElfSection::write(std::ostream& os, Bytes& scratch) const
+ElfSection::Write(std::ostream& os, Bytes& scratch) const
 {
     scratch.resize(0);
-    m_config.setup_endian(scratch);
+    m_config.setEndian(scratch);
 
-    write_32(scratch, m_name_index);
-    write_32(scratch, m_type);
+    Write32(scratch, m_name_index);
+    Write32(scratch, m_type);
 
     if (m_config.cls == ELFCLASS32)
     {
-        write_32(scratch, m_flags);
-        write_32(scratch, m_addr);
+        Write32(scratch, m_flags);
+        Write32(scratch, m_addr);
 
-        write_32(scratch, m_offset);
-        write_32(scratch, m_size);
-        write_32(scratch, m_link);
-        write_32(scratch, m_info);
+        Write32(scratch, m_offset);
+        Write32(scratch, m_size);
+        Write32(scratch, m_link);
+        Write32(scratch, m_info);
 
-        write_32(scratch, m_align);
-        write_32(scratch, m_entsize);
+        Write32(scratch, m_align);
+        Write32(scratch, m_entsize);
 
         assert(scratch.size() == SHDR32_SIZE);
     }
     else if (m_config.cls == ELFCLASS64)
     {
-        write_64(scratch, m_flags);
-        write_64(scratch, m_addr);
+        Write64(scratch, m_flags);
+        Write64(scratch, m_addr);
 
-        write_64(scratch, m_offset);
-        write_64(scratch, m_size);
-        write_32(scratch, m_link);
-        write_32(scratch, m_info);
+        Write64(scratch, m_offset);
+        Write64(scratch, m_size);
+        Write32(scratch, m_link);
+        Write32(scratch, m_info);
 
-        write_64(scratch, m_align);
-        write_64(scratch, m_entsize);
+        Write64(scratch, m_align);
+        Write64(scratch, m_entsize);
 
         assert(scratch.size() == SHDR64_SIZE);
     }
@@ -219,32 +219,32 @@ ElfSection::write(std::ostream& os, Bytes& scratch) const
 }
 
 std::auto_ptr<Section>
-ElfSection::create_section(const StringTable& shstrtab) const
+ElfSection::CreateSection(const StringTable& shstrtab) const
 {
     bool bss = (m_type == SHT_NOBITS || m_offset == 0);
 
     std::auto_ptr<Section> section(
-        new Section(shstrtab.get_str(m_name_index), m_flags & SHF_EXECINSTR,
+        new Section(shstrtab.getString(m_name_index), m_flags & SHF_EXECINSTR,
                     bss, 0));
 
-    section->set_filepos(m_offset);
-    section->set_vma(m_addr);
-    section->set_lma(m_addr);
-    section->set_align(m_align);
+    section->setFilePos(m_offset);
+    section->setVMA(m_addr);
+    section->setLMA(m_addr);
+    section->setAlign(m_align);
 
     if (bss)
     {
-        Bytecode& gap = section->append_gap(m_size.get_uint(), 0);
-        gap.calc_len(0);    // force length calculation of gap
+        Bytecode& gap = section->AppendGap(m_size.getUInt(), 0);
+        gap.CalcLen(0);     // force length calculation of gap
     }
 
     return section;
 }
 
 void
-ElfSection::load_section_data(Section& sect, std::istream& is) const
+ElfSection::LoadSectionData(Section& sect, std::istream& is) const
 {
-    if (sect.is_bss())
+    if (sect.isBSS())
         return;
 
     std::streampos oldpos = is.tellg();
@@ -252,58 +252,58 @@ ElfSection::load_section_data(Section& sect, std::istream& is) const
     // Read section data
     is.seekg(m_offset);
     if (!is)
-        throw Error(String::compose(
-            N_("could not seek to section `%1'"), get_name()));
+        throw Error(String::Compose(
+            N_("could not seek to section `%1'"), getName()));
 
-    sect.bcs_first().get_fixed().write(is, m_size.get_uint());
+    sect.bytecodes_first().getFixed().Write(is, m_size.getUInt());
     if (!is)
-        throw Error(String::compose(
-            N_("could not read section `%1' data"), get_name()));
+        throw Error(String::Compose(
+            N_("could not read section `%1' data"), getName()));
 
     is.seekg(oldpos);
 }
 
 unsigned long
-ElfSection::write_rel(std::ostream& os,
-                      ElfSectionIndex symtab_idx,
-                      Section& sect,
-                      Bytes& scratch)
+ElfSection::WriteRel(std::ostream& os,
+                     ElfSectionIndex symtab_idx,
+                     Section& sect,
+                     Bytes& scratch)
 {
-    if (sect.get_relocs().size() == 0)
+    if (sect.getRelocs().size() == 0)
         return 0;       // no relocations, no .rel.* section header
 
     scratch.resize(0);
-    m_config.setup_endian(scratch);
+    m_config.setEndian(scratch);
 
-    write_32(scratch, m_rel_name_index);
-    write_32(scratch, m_config.rela ? SHT_RELA : SHT_REL);
+    Write32(scratch, m_rel_name_index);
+    Write32(scratch, m_config.rela ? SHT_RELA : SHT_REL);
 
     unsigned int size = 0;
     if (m_config.cls == ELFCLASS32)
     {
         size = m_config.rela ? RELOC32A_SIZE : RELOC32_SIZE;
-        write_32(scratch, 0);                   // flags=0
-        write_32(scratch, 0);                   // vmem address=0
-        write_32(scratch, m_rel_offset);
-        write_32(scratch, size * sect.get_relocs().size());// size
-        write_32(scratch, symtab_idx);          // link: symtab index
-        write_32(scratch, m_index);             // info: relocated's index
-        write_32(scratch, RELOC32_ALIGN);       // align
-        write_32(scratch, size);                // entity size
+        Write32(scratch, 0);                    // flags=0
+        Write32(scratch, 0);                    // vmem address=0
+        Write32(scratch, m_rel_offset);
+        Write32(scratch, size * sect.getRelocs().size());// size
+        Write32(scratch, symtab_idx);           // link: symtab index
+        Write32(scratch, m_index);              // info: relocated's index
+        Write32(scratch, RELOC32_ALIGN);        // align
+        Write32(scratch, size);                 // entity size
 
         assert(scratch.size() == SHDR32_SIZE);
     }
     else if (m_config.cls == ELFCLASS64)
     {
         size = m_config.rela ? RELOC64A_SIZE : RELOC64_SIZE;
-        write_64(scratch, 0);
-        write_64(scratch, 0);
-        write_64(scratch, m_rel_offset);
-        write_64(scratch, size * sect.get_relocs().size());// size
-        write_32(scratch, symtab_idx);          // link: symtab index
-        write_32(scratch, m_index);             // info: relocated's index
-        write_64(scratch, RELOC64_ALIGN);       // align
-        write_64(scratch, size);                // entity size
+        Write64(scratch, 0);
+        Write64(scratch, 0);
+        Write64(scratch, m_rel_offset);
+        Write64(scratch, size * sect.getRelocs().size());// size
+        Write32(scratch, symtab_idx);           // link: symtab index
+        Write32(scratch, m_index);              // info: relocated's index
+        Write64(scratch, RELOC64_ALIGN);        // align
+        Write64(scratch, size);                 // entity size
 
         assert(scratch.size() == SHDR64_SIZE);
     }
@@ -316,13 +316,13 @@ ElfSection::write_rel(std::ostream& os,
 }
 
 unsigned long
-ElfSection::write_relocs(std::ostream& os,
-                         Section& sect,
-                         Errwarns& errwarns,
-                         Bytes& scratch,
-                         const ElfMachine& machine)
+ElfSection::WriteRelocs(std::ostream& os,
+                        Section& sect,
+                        Errwarns& errwarns,
+                        Bytes& scratch,
+                        const ElfMachine& machine)
 {
-    if (sect.get_relocs().size() == 0)
+    if (sect.getRelocs().size() == 0)
         return 0;
 
     // first align section to multiple of 4
@@ -341,7 +341,7 @@ ElfSection::write_relocs(std::ostream& os,
     {
         ElfReloc& reloc = static_cast<ElfReloc&>(*i);
         scratch.resize(0);
-        reloc.write(scratch, m_config);
+        reloc.Write(scratch, m_config);
         os << scratch;
         size += scratch.size();
     }
@@ -349,18 +349,18 @@ ElfSection::write_relocs(std::ostream& os,
 }
 
 bool
-ElfSection::read_relocs(std::istream&       is,
-                        Section&            sect,
-                        unsigned long       size,
-                        const ElfMachine&   machine,
-                        const ElfSymtab&    symtab,
-                        bool                rela) const
+ElfSection::ReadRelocs(std::istream&       is,
+                       Section&            sect,
+                       unsigned long       size,
+                       const ElfMachine&   machine,
+                       const ElfSymtab&    symtab,
+                       bool                rela) const
 {
     for (unsigned long pos=is.tellg();
          static_cast<unsigned long>(is.tellg()) < (pos+size);)
     {
-        sect.add_reloc(std::auto_ptr<Reloc>(
-            machine.read_reloc(m_config, symtab, is, rela).release()));
+        sect.AddReloc(std::auto_ptr<Reloc>(
+            machine.ReadReloc(m_config, symtab, is, rela).release()));
         if (!is)
             throw Error(N_("could not read relocation entry"));
     }
@@ -369,7 +369,7 @@ ElfSection::read_relocs(std::istream&       is,
 }
 
 unsigned long
-ElfSection::set_file_offset(unsigned long pos)
+ElfSection::setFileOffset(unsigned long pos)
 {
     const unsigned long align = m_align;
 

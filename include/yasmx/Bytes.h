@@ -90,38 +90,38 @@ public:
 
     void swap(Bytes& oth);
 
-    void set_bigendian(bool bigendian) { m_bigendian = bigendian; }
-    bool is_bigendian() const { return m_bigendian; }
+    void setBigEndian(bool bigendian) { m_bigendian = bigendian; }
+    bool isBigEndian() const { return m_bigendian; }
 
     /// Copy from an input stream, appending the values to the end.
     /// @param  is  input stream
     /// @param  n   number of bytes
-    void write(std::istream& is, size_type n);
+    void Write(std::istream& is, size_type n);
 
     /// Copy from a byte array, appending the values to the end.
     /// @param  buf input buffer
     /// @param  n   number of bytes
-    void write(const unsigned char* buf, size_type n);
+    void Write(const unsigned char* buf, size_type n);
 
     /// Append n bytes of value v.
     /// @param  n   number of bytes
     /// @param  v   byte value
-    void write(size_type n, unsigned char v);
+    void Write(size_type n, unsigned char v);
 
     /// Set read position.
     /// @param pos  new read position
-    void set_readpos(size_type pos) { m_readpos = pos; }
+    void setReadPosition(size_type pos) { m_readpos = pos; }
 
     /// Get read position.
     /// @return Current read position.
-    size_type get_readpos() const { return m_readpos; }
+    size_type getReadPosition() const { return m_readpos; }
 
     /// Perform a "read" by returning a pointer to the current read position
     /// and then advancing the read position.
     /// @param n    number of bytes to advance read position by
     /// @return Pointer to current read position.
     /// Throws std::out_of_range if not enough bytes left to read n bytes.
-    const unsigned char* read(size_type n)
+    const unsigned char* Read(size_type n)
     {
         size_type oldpos = m_readpos;
         m_readpos += n;
@@ -134,30 +134,35 @@ private:
     size_type m_readpos;
 };
 
+namespace impl
+{
+
 struct SetEndian
 {
     bool m_bigendian;
 };
 
-inline SetEndian
-set_endian(bool bigendian)
+} // namespace impl
+
+inline impl::SetEndian
+SetEndian(bool bigendian)
 {
-    SetEndian x;
+    impl::SetEndian x;
     x.m_bigendian = bigendian;
     return x;
 }
 
 inline Bytes&
-operator<< (Bytes& bytes, const SetEndian& sete)
+operator<< (Bytes& bytes, const impl::SetEndian& sete)
 {
-    bytes.set_bigendian(sete.m_bigendian);
+    bytes.setBigEndian(sete.m_bigendian);
     return bytes;
 }
 
 /// Generates multi-byte output in big endian format.
-static const SetEndian big_endian = { true };
+static const impl::SetEndian big_endian = { true };
 /// Generates multi-byte output in little endian format.
-static const SetEndian little_endian = { false };
+static const impl::SetEndian little_endian = { false };
 
 /// Output the entire contents of a bytes container to an output stream.
 /// @param os    output stream

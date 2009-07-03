@@ -50,13 +50,13 @@ enum JmpOpcodeSel
     JMP_NEAR
 };
 
-void append_jmp(BytecodeContainer& container,
-                const X86Common& common,
-                const X86Opcode& shortop,
-                const X86Opcode& nearop,
-                std::auto_ptr<Expr> target,
-                unsigned long line,
-                JmpOpcodeSel op_sel = JMP_NONE);
+void AppendJmp(BytecodeContainer& container,
+               const X86Common& common,
+               const X86Opcode& shortop,
+               const X86Opcode& nearop,
+               std::auto_ptr<Expr> target,
+               unsigned long line,
+               JmpOpcodeSel op_sel = JMP_NONE);
 
 }}} // namespace yasm::arch::x86
 

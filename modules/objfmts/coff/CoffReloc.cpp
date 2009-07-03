@@ -53,22 +53,22 @@ CoffReloc::~CoffReloc()
 }
 
 Expr
-CoffReloc::get_value() const
+CoffReloc::getValue() const
 {
     return Expr(m_sym);
 }
 
 void
-CoffReloc::write(Bytes& bytes) const
+CoffReloc::Write(Bytes& bytes) const
 {
-    const CoffSymbol* csym = get_coff(*m_sym);
+    const CoffSymbol* csym = getCoff(*m_sym);
     assert(csym != 0);      // need symbol data for relocated symbol
 
     bytes << little_endian;
 
-    write_32(bytes, m_addr);            // address of relocation
-    write_32(bytes, csym->m_index);     // relocated symbol
-    write_16(bytes, m_type);            // type of relocation
+    Write32(bytes, m_addr);             // address of relocation
+    Write32(bytes, csym->m_index);      // relocated symbol
+    Write16(bytes, m_type);             // type of relocation
 }
 
 Coff32Reloc::~Coff32Reloc()
@@ -76,7 +76,7 @@ Coff32Reloc::~Coff32Reloc()
 }
 
 std::string
-Coff32Reloc::get_type_name() const
+Coff32Reloc::getTypeName() const
 {
     const char* name;
     switch (m_type)
@@ -103,7 +103,7 @@ Coff64Reloc::~Coff64Reloc()
 }
 
 std::string
-Coff64Reloc::get_type_name() const
+Coff64Reloc::getTypeName() const
 {
     const char* name;
     switch (m_type)

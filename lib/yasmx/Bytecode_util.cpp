@@ -37,37 +37,37 @@ namespace yasm
 {
 
 void
-finalize(Bytecode& bc, Errwarns& errwarns)
+Finalize(Bytecode& bc, Errwarns& errwarns)
 {
     try
     {
-        bc.finalize();
+        bc.Finalize();
     }
     catch (Error& err)
     {
-        errwarns.propagate(bc.get_line(), err);
+        errwarns.Propagate(bc.getLine(), err);
     }
-    errwarns.propagate(bc.get_line());  // propagate warnings
+    errwarns.Propagate(bc.getLine());   // propagate warnings
 }
 
 void
-calc_len(Bytecode& bc,
-         const Bytecode::AddSpanFunc& add_span,
-         Errwarns& errwarns)
+CalcLen(Bytecode& bc,
+        const Bytecode::AddSpanFunc& add_span,
+        Errwarns& errwarns)
 {
     try
     {
-        bc.calc_len(add_span);
+        bc.CalcLen(add_span);
     }
     catch (Error& err)
     {
-        errwarns.propagate(bc.get_line(), err);
+        errwarns.Propagate(bc.getLine(), err);
     }
-    errwarns.propagate(bc.get_line());  // propagate warnings
+    errwarns.Propagate(bc.getLine());   // propagate warnings
 }
 
 bool
-expand(Bytecode &bc,
+Expand(Bytecode &bc,
        int span,
        long old_val,
        long new_val,
@@ -78,30 +78,30 @@ expand(Bytecode &bc,
     bool retval = false;
     try
     {
-        retval = bc.expand(span, old_val, new_val, neg_thres, pos_thres);
+        retval = bc.Expand(span, old_val, new_val, neg_thres, pos_thres);
     }
     catch (Error& err)
     {
-        errwarns.propagate(bc.get_line(), err);
+        errwarns.Propagate(bc.getLine(), err);
     }
-    errwarns.propagate(bc.get_line());  // propagate warnings
+    errwarns.Propagate(bc.getLine());   // propagate warnings
     return retval;
 }
 
 unsigned long
-update_offset(Bytecode& bc, unsigned long offset, Errwarns& errwarns)
+UpdateOffset(Bytecode& bc, unsigned long offset, Errwarns& errwarns)
 {
     unsigned long retval;
     try
     {
-        retval = bc.update_offset(offset);
+        retval = bc.UpdateOffset(offset);
     }
     catch (Error& err)
     {
-        errwarns.propagate(bc.get_line(), err);
-        retval = bc.next_offset();
+        errwarns.Propagate(bc.getLine(), err);
+        retval = bc.getNextOffset();
     }
-    errwarns.propagate(bc.get_line());  // propagate warnings
+    errwarns.Propagate(bc.getLine());   // propagate warnings
     return retval;
 }
 

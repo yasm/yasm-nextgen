@@ -79,14 +79,14 @@ public:
     NasmParser(const ParserModule& module, Errwarns& errwarns);
     ~NasmParser();
 
-    void add_directives(Directives& dirs, const char* parser);
+    void AddDirectives(Directives& dirs, const char* parser);
 
-    static const char* get_name() { return "NASM-compatible parser"; }
-    static const char* get_keyword() { return "nasm"; }
-    static std::vector<const char*> get_preproc_keywords();
-    static const char* get_default_preproc_keyword() { return "raw"; }
+    static const char* getName() { return "NASM-compatible parser"; }
+    static const char* getKeyword() { return "nasm"; }
+    static std::vector<const char*> getPreprocessorKeywords();
+    static const char* getDefaultPreprocessorKeyword() { return "raw"; }
 
-    void parse(Object& object,
+    void Parse(Object& object,
                Preprocessor& preproc,
                bool save_input,
                Directives& dirs,
@@ -136,53 +136,53 @@ public:
         DV_EXPR         // Can't have registers anywhere
     };
 
-    static bool is_eol_tok(int tok) { return (tok == 0); }
-    static const char* describe_token(int tok);
+    static bool isEolTok(int tok) { return (tok == 0); }
+    static const char* DescribeToken(int tok);
 
-    int lex(YYSTYPE* lvalp);
+    int Lex(YYSTYPE* lvalp);
 
 private:
-    int handle_dot_label(YYSTYPE* lvalp, YYCTYPE* tok, size_t toklen,
-                         size_t zeropos);
-    void define_label(const std::string& name, bool local);
+    int HandleDotLabel(YYSTYPE* lvalp, YYCTYPE* tok, size_t toklen,
+                       size_t zeropos);
+    void DefineLabel(const std::string& name, bool local);
 
-    void do_parse();
-    void parse_line();
-    bool parse_directive_namevals(/*@out@*/ NameValues& nvs);
-    void parse_times();
-    bool parse_exp();
-    Insn::Ptr parse_instr();
+    void DoParse();
+    void ParseLine();
+    bool ParseDirective(/*@out@*/ NameValues& nvs);
+    void ParseTimes();
+    bool ParseExp();
+    Insn::Ptr ParseInsn();
 
-    Insn::Operand parse_operand();
+    Insn::Operand ParseOperand();
 
-    Insn::Operand parse_memaddr();
+    Insn::Operand ParseMemoryAddress();
 
-    bool parse_expr(Expr& e, ExprType type);
-    bool parse_bexpr(Expr& e, ExprType type);
-    bool parse_expr0(Expr& e, ExprType type);
-    bool parse_expr1(Expr& e, ExprType type);
-    bool parse_expr2(Expr& e, ExprType type);
-    bool parse_expr3(Expr& e, ExprType type);
-    bool parse_expr4(Expr& e, ExprType type);
-    bool parse_expr5(Expr& e, ExprType type);
-    bool parse_expr6(Expr& e, ExprType type);
+    bool ParseExpr(Expr& e, ExprType type);
+    bool ParseBExpr(Expr& e, ExprType type);
+    bool ParseExpr0(Expr& e, ExprType type);
+    bool ParseExpr1(Expr& e, ExprType type);
+    bool ParseExpr2(Expr& e, ExprType type);
+    bool ParseExpr3(Expr& e, ExprType type);
+    bool ParseExpr4(Expr& e, ExprType type);
+    bool ParseExpr5(Expr& e, ExprType type);
+    bool ParseExpr6(Expr& e, ExprType type);
 
-    void dir_absolute(Object& object,
-                      NameValues& namevals,
-                      NameValues& objext_namevals,
-                      unsigned long line);
-    void dir_align(Object& object,
-                   NameValues& namevals,
-                   NameValues& objext_namevals,
-                   unsigned long line);
-    void dir_default(Object& object,
+    void DirAbsolute(Object& object,
                      NameValues& namevals,
                      NameValues& objext_namevals,
                      unsigned long line);
+    void DirAlign(Object& object,
+                  NameValues& namevals,
+                  NameValues& objext_namevals,
+                  unsigned long line);
+    void DirDefault(Object& object,
+                    NameValues& namevals,
+                    NameValues& objext_namevals,
+                    unsigned long line);
 
-    void directive(const std::string& name,
-                   NameValues& namevals,
-                   NameValues& objext_namevals);
+    void DoDirective(const std::string& name,
+                     NameValues& namevals,
+                     NameValues& objext_namevals);
 
     // last "base" label for local (.) labels
     std::string m_locallabel_base;

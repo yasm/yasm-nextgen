@@ -78,43 +78,42 @@ public:
     /// Destructor.
     ~XdfObject() {}
 
-    void add_directives(Directives& dirs, const char* parser);
+    void AddDirectives(Directives& dirs, const char* parser);
 
-    void read(std::istream& is);
-    void output(std::ostream& os, bool all_syms, Errwarns& errwarns);
+    void Read(std::istream& is);
+    void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
-    Section* add_default_section();
-    Section* append_section(const std::string& name, unsigned long line);
+    Section* AddDefaultSection();
+    Section* AppendSection(const std::string& name, unsigned long line);
 
-    static const char* get_name() { return "Extended Dynamic Object"; }
-    static const char* get_keyword() { return "xdf"; }
-    static const char* get_extension() { return ".xdf"; }
-    static unsigned int get_default_x86_mode_bits() { return 32; }
-    static const char* get_default_dbgfmt_keyword() { return "null"; }
-    static std::vector<const char*> get_dbgfmt_keywords();
-    static bool ok_object(Object& object);
-    static bool taste(std::istream& is,
+    static const char* getName() { return "Extended Dynamic Object"; }
+    static const char* getKeyword() { return "xdf"; }
+    static const char* getExtension() { return ".xdf"; }
+    static unsigned int getDefaultX86ModeBits() { return 32; }
+    static const char* getDefaultDebugFormatKeyword() { return "null"; }
+    static std::vector<const char*> getDebugFormatKeywords();
+    static bool isOkObject(Object& object);
+    static bool Taste(std::istream& is,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine);
 
 private:
-    void dir_section(Object& object,
-                     NameValues& namevals,
-                     NameValues& objext_namevals,
-                     unsigned long line);
+    void DirSection(Object& object,
+                    NameValues& namevals,
+                    NameValues& objext_namevals,
+                    unsigned long line);
 };
 
 bool
-XdfObject::ok_object(Object& object)
+XdfObject::isOkObject(Object& object)
 {
     // Only support x86 arch
-    if (!String::nocase_equal(object.get_arch()->get_module().get_keyword(),
-                              "x86"))
+    if (!String::NocaseEqual(object.getArch()->getModule().getKeyword(), "x86"))
         return false;
 
     // Support x86 and amd64 machines of x86 arch
-    if (!String::nocase_equal(object.get_arch()->get_machine(), "x86") &&
-        !String::nocase_equal(object.get_arch()->get_machine(), "amd64"))
+    if (!String::NocaseEqual(object.getArch()->getMachine(), "x86") &&
+        !String::NocaseEqual(object.getArch()->getMachine(), "amd64"))
     {
         return false;
     }
@@ -123,105 +122,111 @@ XdfObject::ok_object(Object& object)
 }
 
 std::vector<const char*>
-XdfObject::get_dbgfmt_keywords()
+XdfObject::getDebugFormatKeywords()
 {
     static const char* keywords[] = {"null"};
     return std::vector<const char*>(keywords, keywords+NELEMS(keywords));
 }
 
 
-class Output : public BytecodeStreamOutput
+class XdfOutput : public BytecodeStreamOutput
 {
 public:
-    Output(std::ostream& os, Object& object);
-    ~Output();
+    XdfOutput(std::ostream& os, Object& object);
+    ~XdfOutput();
 
-    void output_section(Section& sect, Errwarns& errwarns);
-    void output_sym(const Symbol& sym,
-                    Errwarns& errwarns,
-                    bool all_syms,
-                    unsigned long* strtab_offset);
+    void OutputSection(Section& sect, Errwarns& errwarns);
+    void OutputSymbol(const Symbol& sym,
+                      Errwarns& errwarns,
+                      bool all_syms,
+                      unsigned long* strtab_offset);
 
     // OutputBytecode overrides
-    void value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn);
+    void ConvertValueToBytes(Value& value,
+                             Bytes& bytes,
+                             Location loc,
+                             int warn);
 
 private:
     Object& m_object;
     BytecodeNoOutput m_no_output;
 };
 
-Output::Output(std::ostream& os, Object& object)
+XdfOutput::XdfOutput(std::ostream& os, Object& object)
     : BytecodeStreamOutput(os)
     , m_object(object)
 {
 }
 
-Output::~Output()
+XdfOutput::~XdfOutput()
 {
 }
 
 void
-Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
+XdfOutput::ConvertValueToBytes(Value& value,
+                               Bytes& bytes,
+                               Location loc,
+                               int warn)
 {
-    if (Expr* abs = value.get_abs())
-        simplify_calc_dist(*abs);
+    if (Expr* abs = value.getAbs())
+        SimplifyCalcDist(*abs);
 
     // Try to output constant and PC-relative section-local first.
     // Note this does NOT output any value with a SEG, WRT, external,
     // cross-section, or non-PC-relative reference (those are handled below).
-    if (value.output_basic(bytes, warn, *m_object.get_arch()))
+    if (value.OutputBasic(bytes, warn, *m_object.getArch()))
         return;
 
-    if (value.is_section_rel())
+    if (value.isSectionRelative())
         throw TooComplexError(N_("xdf: relocation too complex"));
 
     IntNum intn(0);
-    if (value.is_relative())
+    if (value.isRelative())
     {
         bool pc_rel = false;
         IntNum intn2;
-        if (value.calc_pcrel_sub(&intn2, loc))
+        if (value.CalcPCRelSub(&intn2, loc))
         {
             // Create PC-relative relocation type and fix up absolute portion.
             pc_rel = true;
             intn += intn2;
         }
-        else if (value.has_sub())
+        else if (value.hasSubRelative())
             throw TooComplexError(N_("xdf: relocation too complex"));
 
         std::auto_ptr<XdfReloc>
-            reloc(new XdfReloc(loc.get_offset(), value, pc_rel));
+            reloc(new XdfReloc(loc.getOffset(), value, pc_rel));
         if (pc_rel)
-            intn -= loc.get_offset();   // Adjust to start of section
-        Section* sect = loc.bc->get_container()->as_section();
-        sect->add_reloc(std::auto_ptr<Reloc>(reloc.release()));
+            intn -= loc.getOffset();    // Adjust to start of section
+        Section* sect = loc.bc->getContainer()->AsSection();
+        sect->AddReloc(std::auto_ptr<Reloc>(reloc.release()));
     }
 
-    if (Expr* abs = value.get_abs())
+    if (Expr* abs = value.getAbs())
     {
-        if (!abs->is_intnum())
+        if (!abs->isIntNum())
             throw TooComplexError(N_("xdf: relocation too complex"));
-        intn += abs->get_intnum();
+        intn += abs->getIntNum();
     }
 
-    m_object.get_arch()->tobytes(intn, bytes, value.get_size(), 0, warn);
+    m_object.getArch()->ToBytes(intn, bytes, value.getSize(), 0, warn);
 }
 
 void
-Output::output_section(Section& sect, Errwarns& errwarns)
+XdfOutput::OutputSection(Section& sect, Errwarns& errwarns)
 {
     BytecodeOutput* outputter = this;
 
-    XdfSection* xsect = get_xdf(sect);
+    XdfSection* xsect = getXdf(sect);
     assert(xsect != NULL);
 
     std::streampos pos;
-    if (sect.is_bss())
+    if (sect.isBSS())
     {
         // Don't output BSS sections.
         outputter = &m_no_output;
         pos = 0;    // position = 0 because it's not in the file
-        xsect->size = sect.bcs_last().next_offset();
+        xsect->size = sect.bytecodes_last().getNextOffset();
     }
     else
     {
@@ -231,32 +236,32 @@ Output::output_section(Section& sect, Errwarns& errwarns)
     }
 
     // Output bytecodes
-    for (Section::bc_iterator i=sect.bcs_begin(), end=sect.bcs_end();
-         i != end; ++i)
+    for (Section::bc_iterator i=sect.bytecodes_begin(),
+         end=sect.bytecodes_end(); i != end; ++i)
     {
         try
         {
-            i->output(*outputter);
-            xsect->size += i->get_total_len();
+            i->Output(*outputter);
+            xsect->size += i->getTotalLen();
         }
         catch (Error& err)
         {
-            errwarns.propagate(i->get_line(), err);
+            errwarns.Propagate(i->getLine(), err);
         }
-        errwarns.propagate(i->get_line());  // propagate warnings
+        errwarns.Propagate(i->getLine());   // propagate warnings
     }
 
     // Sanity check final section size
-    assert(xsect->size == sect.bcs_last().next_offset());
+    assert(xsect->size == sect.bytecodes_last().getNextOffset());
 
     // Empty?  Go on to next section
     if (xsect->size == 0)
         return;
 
-    sect.set_filepos(static_cast<unsigned long>(pos));
+    sect.setFilePos(static_cast<unsigned long>(pos));
 
     // No relocations to output?  Go on to next section
-    if (sect.get_relocs().size() == 0)
+    if (sect.getRelocs().size() == 0)
         return;
 
     pos = m_os.tellp();
@@ -268,20 +273,20 @@ Output::output_section(Section& sect, Errwarns& errwarns)
          end=sect.relocs_end(); i != end; ++i)
     {
         const XdfReloc& reloc = static_cast<const XdfReloc&>(*i);
-        Bytes& scratch = get_scratch();
-        reloc.write(scratch);
+        Bytes& scratch = getScratch();
+        reloc.Write(scratch);
         assert(scratch.size() == RELOC_SIZE);
         m_os << scratch;
     }
 }
 
 void
-Output::output_sym(const Symbol& sym,
-                   Errwarns& errwarns,
-                   bool all_syms,
-                   unsigned long* strtab_offset)
+XdfOutput::OutputSymbol(const Symbol& sym,
+                        Errwarns& errwarns,
+                        bool all_syms,
+                        unsigned long* strtab_offset)
 {
-    int vis = sym.get_visibility();
+    int vis = sym.getVisibility();
 
     if (!all_syms && vis == Symbol::LOCAL)
         return;
@@ -296,36 +301,36 @@ Output::output_sym(const Symbol& sym,
 
     // Look at symrec for value/scnum/etc.
     Location loc;
-    if (sym.get_label(&loc))
+    if (sym.getLabel(&loc))
     {
         const Section* sect = 0;
         if (loc.bc)
-            sect = loc.bc->get_container()->as_section();
+            sect = loc.bc->getContainer()->AsSection();
         // it's a label: get value and offset.
         // If there is not a section, leave as debugging symbol.
         if (sect)
         {
-            const XdfSection* xsect = get_xdf(*sect);
+            const XdfSection* xsect = getXdf(*sect);
             assert(xsect != 0);
             scnum = xsect->scnum;
-            value += loc.get_offset();
+            value += loc.getOffset();
         }
     }
-    else if (const Expr* equ_val = sym.get_equ())
+    else if (const Expr* equ_val = sym.getEqu())
     {
         Expr::Ptr equ_val_copy(equ_val->clone());
-        equ_val_copy->simplify();
-        if (!equ_val_copy->is_intnum())
+        equ_val_copy->Simplify();
+        if (!equ_val_copy->isIntNum())
         {
             if (vis & Symbol::GLOBAL)
             {
-                errwarns.propagate(sym.get_def_line(),
+                errwarns.Propagate(sym.getDefLine(),
                     NotConstantError(
                         N_("global EQU value not an integer expression")));
             }
         }
         else
-            value = equ_val_copy->get_intnum().get_uint();
+            value = equ_val_copy->getIntNum().getUInt();
 
         flags |= XdfSymbol::XDF_EQU;
         scnum = -2;     // -2 = absolute symbol
@@ -336,21 +341,21 @@ Output::output_sym(const Symbol& sym,
         scnum = -1;
     }
 
-    Bytes& scratch = get_scratch();
+    Bytes& scratch = getScratch();
     scratch << little_endian;
 
-    write_32(scratch, scnum);       // section number
-    write_32(scratch, value);       // value
-    write_32(scratch, *strtab_offset);
-    write_32(scratch, flags);       // flags
+    Write32(scratch, scnum);        // section number
+    Write32(scratch, value);        // value
+    Write32(scratch, *strtab_offset);
+    Write32(scratch, flags);        // flags
     assert(scratch.size() == SYMBOL_SIZE);
     m_os << scratch;
 
-    *strtab_offset += static_cast<unsigned long>(sym.get_name().length()+1);
+    *strtab_offset += static_cast<unsigned long>(sym.getName().length()+1);
 }
 
 void
-XdfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
+XdfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
 {
     all_syms = true;   // force all syms into symbol table
 
@@ -359,17 +364,17 @@ XdfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     for (Object::symbol_iterator sym = m_object.symbols_begin(),
          end = m_object.symbols_end(); sym != end; ++sym)
     {
-        int vis = sym->get_visibility();
+        int vis = sym->getVisibility();
         if (vis & Symbol::COMMON)
         {
-            errwarns.propagate(sym->get_decl_line(),
+            errwarns.Propagate(sym->getDeclLine(),
                 Error(N_("XDF object format does not support common variables")));
             continue;
         }
         if (all_syms || (vis != Symbol::LOCAL && !(vis & Symbol::DLOCAL)))
         {
             // Save index in symrec data
-            sym->add_assoc_data(XdfSymbol::key,
+            sym->AddAssocData(XdfSymbol::key,
                 std::auto_ptr<AssocData>(new XdfSymbol(symtab_count)));
 
             ++symtab_count;
@@ -381,7 +386,7 @@ XdfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     for (Object::section_iterator i = m_object.sections_begin(),
          end = m_object.sections_end(); i != end; ++i)
     {
-        XdfSection* xsect = get_xdf(*i);
+        XdfSection* xsect = getXdf(*i);
         assert(xsect != 0);
         xsect->scnum = scnum++;
     }
@@ -391,7 +396,7 @@ XdfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     if (!os)
         throw Fatal(N_("could not seek on output file"));
 
-    Output out(os, m_object);
+    XdfOutput out(os, m_object);
 
     // Get file offset of start of string table
     unsigned long strtab_offset =
@@ -401,16 +406,16 @@ XdfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     for (Object::const_symbol_iterator sym = m_object.symbols_begin(),
          end = m_object.symbols_end(); sym != end; ++sym)
     {
-        out.output_sym(*sym, errwarns, all_syms, &strtab_offset);
+        out.OutputSymbol(*sym, errwarns, all_syms, &strtab_offset);
     }
 
     // Output string table
     for (Object::const_symbol_iterator sym = m_object.symbols_begin(),
          end = m_object.symbols_end(); sym != end; ++sym)
     {
-        if (all_syms || sym->get_visibility() != Symbol::LOCAL)
+        if (all_syms || sym->getVisibility() != Symbol::LOCAL)
         {
-            const std::string& name = sym->get_name();
+            const std::string& name = sym->getName();
             os << name << '\0';
         }
     }
@@ -419,7 +424,7 @@ XdfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        out.output_section(*i, errwarns);
+        out.OutputSection(*i, errwarns);
     }
 
     // Write headers
@@ -428,13 +433,13 @@ XdfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
         throw Fatal(N_("could not seek on output file"));
 
     // Output object header
-    Bytes& scratch = out.get_scratch();
+    Bytes& scratch = out.getScratch();
     scratch << little_endian;
-    write_32(scratch, XDF_MAGIC);       // magic number
-    write_32(scratch, scnum);           // number of sects
-    write_32(scratch, symtab_count);    // number of symtabs
+    Write32(scratch, XDF_MAGIC);        // magic number
+    Write32(scratch, scnum);            // number of sects
+    Write32(scratch, symtab_count);     // number of symtabs
     // size of sect headers + symbol table + strings
-    write_32(scratch, strtab_offset-FILEHEAD_SIZE);
+    Write32(scratch, strtab_offset-FILEHEAD_SIZE);
     assert(scratch.size() == FILEHEAD_SIZE);
     os << scratch;
 
@@ -442,18 +447,18 @@ XdfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     for (Object::const_section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        const XdfSection* xsect = get_xdf(*i);
+        const XdfSection* xsect = getXdf(*i);
         assert(xsect != 0);
 
-        Bytes& scratch2 = out.get_scratch();
-        xsect->write(scratch2, *i);
+        Bytes& scratch2 = out.getScratch();
+        xsect->Write(scratch2, *i);
         assert(scratch2.size() == SECTHEAD_SIZE);
         os << scratch2;
     }
 }
 
 bool
-XdfObject::taste(std::istream& is,
+XdfObject::Taste(std::istream& is,
                  /*@out@*/ std::string* arch_keyword,
                  /*@out@*/ std::string* machine)
 {
@@ -461,11 +466,11 @@ XdfObject::taste(std::istream& is,
 
     // Check for XDF magic number in header
     is.seekg(0);
-    bytes.write(is, FILEHEAD_SIZE);
+    bytes.Write(is, FILEHEAD_SIZE);
     if (!is)
         return false;
     bytes << little_endian;
-    unsigned long magic = read_u32(bytes);
+    unsigned long magic = ReadU32(bytes);
     if (magic != XDF_MAGIC)
         return false;
 
@@ -476,39 +481,39 @@ XdfObject::taste(std::istream& is,
 }
 
 void
-XdfObject::read(std::istream& is)
+XdfObject::Read(std::istream& is)
 {
     Bytes bytes;
 
     // Read object header
     is.seekg(0);
-    bytes.write(is, FILEHEAD_SIZE);
+    bytes.Write(is, FILEHEAD_SIZE);
     if (!is)
         throw Error(N_("could not read object header"));
     bytes << little_endian;
-    unsigned long magic = read_u32(bytes);
+    unsigned long magic = ReadU32(bytes);
     if (magic != XDF_MAGIC)
         throw Error(N_("not an XDF file"));
-    unsigned long scnum = read_u32(bytes);
-    unsigned long symnum = read_u32(bytes);
-    unsigned long headers_len = read_u32(bytes);
+    unsigned long scnum = ReadU32(bytes);
+    unsigned long symnum = ReadU32(bytes);
+    unsigned long headers_len = ReadU32(bytes);
 
     // Read section headers, symbol table, and strings raw data
     bytes.resize(0);
-    bytes.set_readpos(0);
-    bytes.write(is, scnum*SECTHEAD_SIZE);
+    bytes.setReadPosition(0);
+    bytes.Write(is, scnum*SECTHEAD_SIZE);
     if (!is)
         throw Error(N_("could not read section table"));
 
     Bytes symtab;
-    symtab.write(is, symnum*SYMBOL_SIZE);
+    symtab.Write(is, symnum*SYMBOL_SIZE);
     if (!is)
         throw Error(N_("could not read symbol table"));
 
     unsigned strtab_offset =
         FILEHEAD_SIZE + SECTHEAD_SIZE*scnum + SYMBOL_SIZE*symnum;
     Bytes strtab;
-    strtab.write(is, FILEHEAD_SIZE+headers_len-strtab_offset);
+    strtab.Write(is, FILEHEAD_SIZE+headers_len-strtab_offset);
     strtab.push_back(0);        // add extra 0 in case of data corruption
     if (!is)
         throw Error(N_("could not read string table"));
@@ -528,82 +533,82 @@ XdfObject::read(std::istream& is)
         bool bss;
         unsigned long filepos;
         unsigned long nrelocs;
-        xsect->read(bytes, &name_sym_index, &lma, &vma, &align, &bss, &filepos,
+        xsect->Read(bytes, &name_sym_index, &lma, &vma, &align, &bss, &filepos,
                     &nrelocs);
         xsect->scnum = i;
 
-        symtab.set_readpos(name_sym_index*SYMBOL_SIZE+8);   // strtab offset
-        unsigned long name_strtab_off = read_u32(symtab) - strtab_offset;
+        symtab.setReadPosition(name_sym_index*SYMBOL_SIZE+8);   // strtab offset
+        unsigned long name_strtab_off = ReadU32(symtab) - strtab_offset;
         std::string sectname =
             reinterpret_cast<const char*>(&strtab.at(name_strtab_off));
 
         std::auto_ptr<Section> section(
             new Section(sectname, xsect->bits != 0, bss, 0));
 
-        section->set_filepos(filepos);
-        section->set_vma(vma);
-        section->set_lma(lma);
+        section->setFilePos(filepos);
+        section->setVMA(vma);
+        section->setLMA(lma);
 
         if (bss)
         {
-            Bytecode& gap = section->append_gap(xsect->size, 0);
-            gap.calc_len(0);    // force length calculation of gap
+            Bytecode& gap = section->AppendGap(xsect->size, 0);
+            gap.CalcLen(0);     // force length calculation of gap
         }
         else
         {
             // Read section data
             is.seekg(filepos);
             if (!is)
-                throw Error(String::compose(
+                throw Error(String::Compose(
                     N_("could not read seek to section `%1'"), sectname));
 
-            section->bcs_first().get_fixed().write(is, xsect->size);
+            section->bytecodes_first().getFixed().Write(is, xsect->size);
             if (!is)
-                throw Error(String::compose(
+                throw Error(String::Compose(
                     N_("could not read section `%1' data"), sectname));
         }
 
         // Associate section data with section
-        section->add_assoc_data(XdfSection::key,
-                                std::auto_ptr<AssocData>(xsect.release()));
+        section->AddAssocData(XdfSection::key,
+                              std::auto_ptr<AssocData>(xsect.release()));
 
         // Add section to object
-        m_object.append_section(section);
+        m_object.AppendSection(section);
 
         sects_nrelocs.push_back(nrelocs);
     }
 
     // Create symbols
-    symtab.set_readpos(0);
+    symtab.setReadPosition(0);
     symtab << little_endian;
     for (unsigned long i=0; i<symnum; ++i)
     {
-        unsigned long sym_scnum = read_u32(symtab);     // section number
-        unsigned long value = read_u32(symtab);         // value
-        unsigned long name_strtab_off = read_u32(symtab) - strtab_offset;
-        unsigned long flags = read_u32(symtab);         // flags
+        unsigned long sym_scnum = ReadU32(symtab);      // section number
+        unsigned long value = ReadU32(symtab);          // value
+        unsigned long name_strtab_off = ReadU32(symtab) - strtab_offset;
+        unsigned long flags = ReadU32(symtab);          // flags
 
         std::string symname =
             reinterpret_cast<const char*>(&strtab.at(name_strtab_off));
 
-        SymbolRef sym = m_object.get_symbol(symname);
+        SymbolRef sym = m_object.getSymbol(symname);
         if ((flags & XdfSymbol::XDF_GLOBAL) != 0)
-            sym->declare(Symbol::GLOBAL, 0);
+            sym->Declare(Symbol::GLOBAL, 0);
         else if ((flags & XdfSymbol::XDF_EXTERN) != 0)
-            sym->declare(Symbol::EXTERN, 0);
+            sym->Declare(Symbol::EXTERN, 0);
 
         if ((flags & XdfSymbol::XDF_EQU) != 0)
-            sym->define_equ(Expr(value), 0);
+            sym->DefineEqu(Expr(value), 0);
         else if (sym_scnum < scnum)
         {
-            Section& sect = m_object.get_section(sym_scnum);
-            Location loc = {&sect.bcs_first(), value};
-            sym->define_label(loc, 0);
+            Section& sect = m_object.getSection(sym_scnum);
+            Location loc = {&sect.bytecodes_first(), value};
+            sym->DefineLabel(loc, 0);
         }
 
         // Save index in symrec data
-        sym->add_assoc_data(XdfSymbol::key,
-                            std::auto_ptr<AssocData>(new XdfSymbol(i)));
+        sym->AddAssocData(XdfSymbol::key,
+                          std::auto_ptr<AssocData>(new XdfSymbol(i)));
     }
 
     // Update section symbol info, and create section relocations
@@ -612,96 +617,96 @@ XdfObject::read(std::istream& is)
     for (Object::section_iterator sect=m_object.sections_begin(),
          end=m_object.sections_end(); sect != end; ++sect, ++nrelocsi)
     {
-        XdfSection* xsect = get_xdf(*sect);
+        XdfSection* xsect = getXdf(*sect);
         assert(xsect != 0);
 
         // Read relocations
         is.seekg(xsect->relptr);
         if (!is)
-            throw Error(String::compose(
+            throw Error(String::Compose(
                 N_("could not read seek to section `%1' relocs"),
-                sect->get_name()));
+                sect->getName()));
 
         relocs.resize(0);
-        relocs.set_readpos(0);
-        relocs.write(is, (*nrelocsi) * RELOC_SIZE);
+        relocs.setReadPosition(0);
+        relocs.Write(is, (*nrelocsi) * RELOC_SIZE);
         if (!is)
-            throw Error(String::compose(
+            throw Error(String::Compose(
                 N_("could not read section `%1' relocs"),
-                sect->get_name()));
+                sect->getName()));
 
         relocs << little_endian;
         for (unsigned long i=0; i<(*nrelocsi); ++i)
         {
-            unsigned long addr = read_u32(relocs);
-            unsigned long sym_index = read_u32(relocs);
-            unsigned long basesym_index = read_u32(relocs);
-            XdfReloc::Type type = static_cast<XdfReloc::Type>(read_u8(relocs));
-            XdfReloc::Size size = static_cast<XdfReloc::Size>(read_u8(relocs));
-            unsigned char shift = read_u8(relocs);
-            read_u8(relocs);    // flags; ignored
-            SymbolRef sym = m_object.get_symbol(sym_index);
+            unsigned long addr = ReadU32(relocs);
+            unsigned long sym_index = ReadU32(relocs);
+            unsigned long basesym_index = ReadU32(relocs);
+            XdfReloc::Type type = static_cast<XdfReloc::Type>(ReadU8(relocs));
+            XdfReloc::Size size = static_cast<XdfReloc::Size>(ReadU8(relocs));
+            unsigned char shift = ReadU8(relocs);
+            ReadU8(relocs);     // flags; ignored
+            SymbolRef sym = m_object.getSymbol(sym_index);
             SymbolRef basesym(0);
             if (type == XdfReloc::XDF_WRT)
-                basesym = m_object.get_symbol(basesym_index);
-            sect->add_reloc(std::auto_ptr<Reloc>(
+                basesym = m_object.getSymbol(basesym_index);
+            sect->AddReloc(std::auto_ptr<Reloc>(
                 new XdfReloc(addr, sym, basesym, type, size, shift)));
         }
     }
 }
 
 Section*
-XdfObject::add_default_section()
+XdfObject::AddDefaultSection()
 {
-    Section* section = append_section(".text", 0);
-    section->set_default(true);
+    Section* section = AppendSection(".text", 0);
+    section->setDefault(true);
     return section;
 }
 
 Section*
-XdfObject::append_section(const std::string& name, unsigned long line)
+XdfObject::AppendSection(const std::string& name, unsigned long line)
 {
     bool code = (name == ".text");
     Section* section = new Section(name, code, false, line);
-    m_object.append_section(std::auto_ptr<Section>(section));
+    m_object.AppendSection(std::auto_ptr<Section>(section));
 
     // Define a label for the start of the section
-    Location start = {&section->bcs_first(), 0};
-    SymbolRef sym = m_object.get_symbol(name);
-    sym->define_label(start, line);
+    Location start = {&section->bytecodes_first(), 0};
+    SymbolRef sym = m_object.getSymbol(name);
+    sym->DefineLabel(start, line);
 
     // Add XDF data to the section
-    section->add_assoc_data(XdfSection::key,
-                            std::auto_ptr<AssocData>(new XdfSection(sym)));
+    section->AddAssocData(XdfSection::key,
+                          std::auto_ptr<AssocData>(new XdfSection(sym)));
 
     return section;
 }
 
 void
-XdfObject::dir_section(Object& object,
-                       NameValues& nvs,
-                       NameValues& objext_nvs,
-                       unsigned long line)
+XdfObject::DirSection(Object& object,
+                      NameValues& nvs,
+                      NameValues& objext_nvs,
+                      unsigned long line)
 {
     assert(&object == &m_object);
 
-    if (!nvs.front().is_string())
+    if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
-    std::string sectname = nvs.front().get_string();
+    std::string sectname = nvs.front().getString();
 
-    Section* sect = m_object.find_section(sectname);
+    Section* sect = m_object.FindSection(sectname);
     bool first = true;
     if (sect)
-        first = sect->is_default();
+        first = sect->isDefault();
     else
-        sect = append_section(sectname, line);
+        sect = AppendSection(sectname, line);
 
-    XdfSection* xsect = get_xdf(*sect);
+    XdfSection* xsect = getXdf(*sect);
     assert(xsect != 0);
 
-    m_object.set_cur_section(sect);
-    sect->set_default(false);
-    m_object.get_arch()->set_var("mode_bits", xsect->bits);     // reapply
+    m_object.setCurSection(sect);
+    sect->setDefault(false);
+    m_object.getArch()->setVar("mode_bits", xsect->bits);       // reapply
 
     // No name/values, so nothing more to do
     if (nvs.size() <= 1)
@@ -710,8 +715,8 @@ XdfObject::dir_section(Object& object,
     // Ignore flags if we've seen this section before
     if (!first)
     {
-        warn_set(WARN_GENERAL,
-                 N_("section flags ignored on section redeclaration"));
+        setWarn(WARN_GENERAL,
+                N_("section flags ignored on section redeclaration"));
         return;
     }
 
@@ -719,45 +724,46 @@ XdfObject::dir_section(Object& object,
     IntNum align;
     bool has_align = false;
 
-    unsigned long bss = sect->is_bss();
-    unsigned long code = sect->is_code();
-    IntNum vma = sect->get_vma();
-    IntNum lma = sect->get_lma();
+    unsigned long bss = sect->isBSS();
+    unsigned long code = sect->isCode();
+    IntNum vma = sect->getVMA();
+    IntNum lma = sect->getLMA();
     unsigned long flat = xsect->flat;
 
 
     DirHelpers helpers;
-    helpers.add("use16", false,
-                BIND::bind(&dir_flag_reset, _1, &xsect->bits, 16));
-    helpers.add("use32", false,
-                BIND::bind(&dir_flag_reset, _1, &xsect->bits, 32));
-    helpers.add("use64", false,
-                BIND::bind(&dir_flag_reset, _1, &xsect->bits, 64));
-    helpers.add("bss", false, BIND::bind(&dir_flag_set, _1, &bss, 1));
-    helpers.add("nobss", false, BIND::bind(&dir_flag_clear, _1, &bss, 1));
-    helpers.add("code", false, BIND::bind(&dir_flag_set, _1, &code, 1));
-    helpers.add("data", false, BIND::bind(&dir_flag_clear, _1, &code, 1));
-    helpers.add("flat", false, BIND::bind(&dir_flag_set, _1, &flat, 1));
-    helpers.add("noflat", false, BIND::bind(&dir_flag_clear, _1, &flat, 1));
-    helpers.add("absolute", true,
-                BIND::bind(&dir_intn, _1, &m_object, line, &lma,
+    helpers.Add("use16", false,
+                BIND::bind(&DirResetFlag, _1, &xsect->bits, 16));
+    helpers.Add("use32", false,
+                BIND::bind(&DirResetFlag, _1, &xsect->bits, 32));
+    helpers.Add("use64", false,
+                BIND::bind(&DirResetFlag, _1, &xsect->bits, 64));
+    helpers.Add("bss", false, BIND::bind(&DirSetFlag, _1, &bss, 1));
+    helpers.Add("nobss", false, BIND::bind(&DirClearFlag, _1, &bss, 1));
+    helpers.Add("code", false, BIND::bind(&DirSetFlag, _1, &code, 1));
+    helpers.Add("data", false, BIND::bind(&DirClearFlag, _1, &code, 1));
+    helpers.Add("flat", false, BIND::bind(&DirSetFlag, _1, &flat, 1));
+    helpers.Add("noflat", false, BIND::bind(&DirClearFlag, _1, &flat, 1));
+    helpers.Add("absolute", true,
+                BIND::bind(&DirIntNum, _1, &m_object, line, &lma,
                            &xsect->has_addr));
-    helpers.add("virtual", true,
-                BIND::bind(&dir_intn, _1, &m_object, line, &vma,
+    helpers.Add("virtual", true,
+                BIND::bind(&DirIntNum, _1, &m_object, line, &vma,
                            &xsect->has_vaddr));
-    helpers.add("align", true,
-                BIND::bind(&dir_intn, _1, &m_object, line, &align, &has_align));
+    helpers.Add("align", true,
+                BIND::bind(&DirIntNum, _1, &m_object, line, &align,
+                           &has_align));
 
-    helpers(++nvs.begin(), nvs.end(), dir_nameval_warn);
+    helpers(++nvs.begin(), nvs.end(), DirNameValueWarn);
 
     if (has_align)
     {
-        unsigned long aligni = align.get_uint();
+        unsigned long aligni = align.getUInt();
 
         // Alignments must be a power of two.
-        if (!is_exp2(aligni))
+        if (!isExp2(aligni))
         {
-            throw ValueError(String::compose(
+            throw ValueError(String::Compose(
                 N_("argument to `%1' is not a power of two"), "align"));
         }
 
@@ -765,35 +771,35 @@ XdfObject::dir_section(Object& object,
         if (aligni > 4096)
             throw ValueError(N_("XDF does not support alignments > 4096"));
 
-        sect->set_align(aligni);
+        sect->setAlign(aligni);
     }
 
-    sect->set_bss(bss);
-    sect->set_code(code);
-    sect->set_vma(vma);
-    sect->set_lma(lma);
+    sect->setBSS(bss);
+    sect->setCode(code);
+    sect->setVMA(vma);
+    sect->setLMA(lma);
     xsect->flat = flat;
-    m_object.get_arch()->set_var("mode_bits", xsect->bits);
+    m_object.getArch()->setVar("mode_bits", xsect->bits);
 }
 
 void
-XdfObject::add_directives(Directives& dirs, const char* parser)
+XdfObject::AddDirectives(Directives& dirs, const char* parser)
 {
     static const Directives::Init<XdfObject> nasm_dirs[] =
     {
-        {"section", &XdfObject::dir_section, Directives::ARG_REQUIRED},
-        {"segment", &XdfObject::dir_section, Directives::ARG_REQUIRED},
+        {"section", &XdfObject::DirSection, Directives::ARG_REQUIRED},
+        {"segment", &XdfObject::DirSection, Directives::ARG_REQUIRED},
     };
 
-    if (String::nocase_equal(parser, "nasm"))
-        dirs.add_array(this, nasm_dirs, NELEMS(nasm_dirs));
+    if (String::NocaseEqual(parser, "nasm"))
+        dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
 }
 
 void
-do_register()
+DoRegister()
 {
-    register_module<ObjectFormatModule,
-                    ObjectFormatModuleImpl<XdfObject> >("xdf");
+    RegisterModule<ObjectFormatModule,
+                   ObjectFormatModuleImpl<XdfObject> >("xdf");
 }
 
 }}} // namespace yasm::objfmt::xdf

@@ -63,9 +63,9 @@ BinGroup::~BinGroup()
 marg_ostream&
 operator<< (marg_ostream& os, const BinGroup& group)
 {
-    os << "Section `" << group.m_section.get_name() << "':\n";
+    os << "Section `" << group.m_section.getName() << "':\n";
     ++os;
-    group.m_bsd.put(os);
+    group.m_bsd.Put(os);
     --os;
     if (group.m_follow_groups.size() > 0)
     {
@@ -88,15 +88,15 @@ operator<< (marg_ostream& os, const BinGroups& groups)
 
 // Recursive function to find group containing named section.
 static BinGroup*
-find_group(BinGroups& groups, const std::string& name)
+FindGroup(BinGroups& groups, const std::string& name)
 {
     for (BinGroups::iterator group = groups.begin(), end = groups.end();
          group != end; ++group)
     {
-        if (group->m_section.get_name() == name)
+        if (group->m_section.getName() == name)
             return &(*group);
         // Recurse to loop through follow groups
-        BinGroup* found = find_group(group->m_follow_groups, name);
+        BinGroup* found = FindGroup(group->m_follow_groups, name);
         if (found)
             return found;
     }
@@ -105,7 +105,7 @@ find_group(BinGroups& groups, const std::string& name)
 
 // Recursive function to find group.  Returns NULL if not found.
 static BinGroup*
-find_group(BinGroups& groups, const Section& section)
+FindGroup(BinGroups& groups, const Section& section)
 {
     for (BinGroups::iterator group = groups.begin(), end = groups.end();
          group != end; ++group)
@@ -113,7 +113,7 @@ find_group(BinGroups& groups, const Section& section)
         if (&group->m_section == &section)
             return &(*group);
         // Recurse to loop through follow groups
-        BinGroup* found = find_group(group->m_follow_groups, section);
+        BinGroup* found = FindGroup(group->m_follow_groups, section);
         if (found)
             return found;
     }
@@ -133,13 +133,13 @@ BinLink::~BinLink()
 }
 
 bool
-BinLink::lma_create_group(Section& section)
+BinLink::CreateLMAGroup(Section& section)
 {
-    BinSection* bsd = get_bin_sect(section);
+    BinSection* bsd = getBin(section);
     assert(bsd);
 
     // Determine section alignment as necessary.
-    unsigned long align = section.get_align();
+    unsigned long align = section.getAlign();
     if (!bsd->has_align)
     {
         bsd->has_align = true;
@@ -149,56 +149,57 @@ BinLink::lma_create_group(Section& section)
     {
         if (align > bsd->align)
         {
-            warn_set(WARN_GENERAL, String::compose(
+            setWarn(WARN_GENERAL, String::Compose(
                 N_("section `%1' internal align of %2 is greater than `%3' of %4; using `%5'"),
-                section.get_name(),
+                section.getName(),
                 align,
                 N_("align"),
                 bsd->align,
                 N_("align")));
-            m_errwarns.propagate(0);
+            m_errwarns.Propagate(0);
         }
     }
 
     // Calculate section integer start.
     if (bsd->start.get() != 0)
     {
-        if (!bsd->start->is_intnum())
+        if (!bsd->start->isIntNum())
         {
-            m_errwarns.propagate(bsd->start_line,
+            m_errwarns.Propagate(bsd->start_line,
                 TooComplexError(N_("start expression is too complex")));
             return false;
         }
         else
         {
             bsd->has_istart = true;
-            section.set_lma(bsd->start->get_intnum());
+            section.setLMA(bsd->start->getIntNum());
         }
     }
 
     // Calculate section integer vstart.
     if (bsd->vstart.get() != 0)
     {
-        if (!bsd->vstart->is_intnum())
+        if (!bsd->vstart->isIntNum())
         {
-            m_errwarns.propagate(bsd->vstart_line,
+            m_errwarns.Propagate(bsd->vstart_line,
                 TooComplexError(N_("vstart expression is too complex")));
             return false;
         }
         else
         {
             bsd->has_ivstart = true;
-            section.set_vma(bsd->vstart->get_intnum());
+            section.setVMA(bsd->vstart->getIntNum());
         }
     }
 
     // Calculate section integer length.
-    Location start = {&section.bcs_first(), 0};
-    Location end = {&section.bcs_last(), section.bcs_last().get_total_len()};
-    if (!calc_dist(start, end, &bsd->length))
-        throw ValueError(String::compose(
+    Location start = {&section.bytecodes_first(), 0};
+    Location end = {&section.bytecodes_last(),
+                    section.bytecodes_last().getTotalLen()};
+    if (!CalcDist(start, end, &bsd->length))
+        throw ValueError(String::Compose(
             N_("could not determine length of section `%1'"),
-            section.get_name()));
+            section.getName()));
     bsd->has_length = true;
 
     m_lma_groups.push_back(new BinGroup(section, *bsd));
@@ -206,21 +207,21 @@ BinLink::lma_create_group(Section& section)
 }
 
 static inline bool
-not_bss(const BinGroup& group)
+isNotBSS(const BinGroup& group)
 {
-    return (group.m_bsd.has_istart || !group.m_section.is_bss());
+    return (group.m_bsd.has_istart || !group.m_section.isBSS());
 }
 
 static inline bool
-compare_istart(const BinGroup& lhs, const BinGroup& rhs)
+CompareIStart(const BinGroup& lhs, const BinGroup& rhs)
 {
     if (!lhs.m_bsd.has_istart || !rhs.m_bsd.has_istart)
         return false;
-    return (lhs.m_section.get_lma() < rhs.m_section.get_lma());
+    return (lhs.m_section.getLMA() < rhs.m_section.getLMA());
 }
 
 bool
-BinLink::do_link(const IntNum& origin)
+BinLink::DoLink(const IntNum& origin)
 {
     BinGroups::iterator group;
 
@@ -228,7 +229,7 @@ BinLink::do_link(const IntNum& origin)
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        if (!lma_create_group(*i))
+        if (!CreateLMAGroup(*i))
             return false;
     }
 
@@ -248,24 +249,24 @@ BinLink::do_link(const IntNum& origin)
         {
             BinGroup* found;
             // Need to find group containing section this section follows.
-            found = find_group(m_lma_groups, group->m_bsd.follows);
+            found = FindGroup(m_lma_groups, group->m_bsd.follows);
             if (!found)
             {
-                m_errwarns.propagate(0, ValueError(String::compose(
+                m_errwarns.Propagate(0, ValueError(String::Compose(
                     N_("section `%1' follows an invalid or unknown section `%2'"),
-                    group->m_section.get_name(),
+                    group->m_section.getName(),
                     group->m_bsd.follows)));
                 return false;
             }
 
             // Check for loops
             if (&group->m_section == &found->m_section ||
-                find_group(group->m_follow_groups, found->m_section))
+                FindGroup(group->m_follow_groups, found->m_section))
             {
-                m_errwarns.propagate(0, ValueError(String::compose(
+                m_errwarns.Propagate(0, ValueError(String::Compose(
                     N_("follows loop between section `%1' and section `%2'"),
-                    group->m_section.get_name(),
-                    found->m_section.get_name())));
+                    group->m_section.getName(),
+                    found->m_section.getName())));
                 return false;
             }
 
@@ -280,11 +281,11 @@ BinLink::do_link(const IntNum& origin)
     // Move BSS sections without a start to the end of the top-level groups
     BinGroups::iterator bss_begin =
         stdx::stable_partition(m_lma_groups.begin(), m_lma_groups.end(),
-                               not_bss);
+                               isNotBSS);
 
     // Sort the other top-level groups according to their start address.
     // If no start address is specified for a section, don't change the order.
-    stdx::stable_sort(m_lma_groups.begin(), bss_begin, compare_istart);
+    stdx::stable_sort(m_lma_groups.begin(), bss_begin, CompareIStart);
 
     // Assign a LMA start address to every section.
     // Also assign VMA=LMA unless otherwise specified.
@@ -313,8 +314,8 @@ BinLink::do_link(const IntNum& origin)
          i != end; ++i)
     {
         if (i->m_bsd.has_istart)
-            start = i->m_section.get_lma();
-        i->assign_start_recurse(start, last, vdelta, m_errwarns);
+            start = i->m_section.getLMA();
+        i->AssignStartRecurse(start, last, vdelta, m_errwarns);
         start = last;
     }
 
@@ -326,7 +327,7 @@ BinLink::do_link(const IntNum& origin)
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        BinSection* bsd = get_bin_sect(*i);
+        BinSection* bsd = getBin(*i);
         assert(bsd);
         m_vma_groups.push_back(new BinGroup(*i, *bsd));
     }
@@ -340,24 +341,24 @@ BinLink::do_link(const IntNum& origin)
         {
             BinGroup* found;
             // Need to find group containing section this section follows.
-            found = find_group(m_vma_groups, group->m_bsd.vfollows);
+            found = FindGroup(m_vma_groups, group->m_bsd.vfollows);
             if (!found)
             {
-                m_errwarns.propagate(0, ValueError(String::compose(
+                m_errwarns.Propagate(0, ValueError(String::Compose(
                     N_("section `%1' vfollows an invalid or unknown section `%2'"),
-                    group->m_section.get_name(),
+                    group->m_section.getName(),
                     group->m_bsd.vfollows)));
                 return false;
             }
 
             // Check for loops
             if (&group->m_section == &found->m_section ||
-                find_group(group->m_follow_groups, found->m_section))
+                FindGroup(group->m_follow_groups, found->m_section))
             {
-                m_errwarns.propagate(0, ValueError(String::compose(
+                m_errwarns.Propagate(0, ValueError(String::Compose(
                     N_("vfollows loop between section `%1' and section `%2'"),
-                    group->m_section.get_name(),
-                    found->m_section.get_name())));
+                    group->m_section.getName(),
+                    found->m_section.getName())));
                 return false;
             }
 
@@ -379,48 +380,48 @@ BinLink::do_link(const IntNum& origin)
     for (BinGroups::iterator i=m_vma_groups.begin(), end=m_vma_groups.end();
          i != end; ++i)
     {
-        start = i->m_section.get_vma();
-        i->assign_vstart_recurse(start, m_errwarns);
+        start = i->m_section.getVMA();
+        i->AssignVStartRecurse(start, m_errwarns);
     }
 
     return true;
 }
 
 bool
-BinLink::check_lma_overlap(const Section& sect, const Section& other)
+BinLink::CheckLMAOverlap(const Section& sect, const Section& other)
 {
     if (&sect == &other)
         return true;
 
-    const BinSection* bsd = get_bin_sect(sect);
-    const BinSection* bsd2 = get_bin_sect(other);
+    const BinSection* bsd = getBin(sect);
+    const BinSection* bsd2 = getBin(other);
 
     assert(bsd);
     assert(bsd2);
 
-    if (bsd->length.is_zero() || bsd2->length.is_zero())
+    if (bsd->length.isZero() || bsd2->length.isZero())
         return true;
 
     IntNum overlap;
-    if (sect.get_lma() <= other.get_lma())
+    if (sect.getLMA() <= other.getLMA())
     {
-        overlap = sect.get_lma();
+        overlap = sect.getLMA();
         overlap += bsd->length;
-        overlap -= other.get_lma();
+        overlap -= other.getLMA();
     }
     else
     {
-        overlap = other.get_lma();
+        overlap = other.getLMA();
         overlap += bsd2->length;
-        overlap -= sect.get_lma();
+        overlap -= sect.getLMA();
     }
 
-    if (overlap.sign() > 0)
+    if (overlap.getSign() > 0)
     {
-        m_errwarns.propagate(0, Error(String::compose(
+        m_errwarns.Propagate(0, Error(String::Compose(
             N_("sections `%1' and `%2' overlap by %3 bytes"),
-            sect.get_name(),
-            other.get_name(),
+            sect.getName(),
+            other.getName(),
             overlap)));
         return false;
     }
@@ -430,7 +431,7 @@ BinLink::check_lma_overlap(const Section& sect, const Section& other)
 
 // Check for LMA overlap using a simple N^2 algorithm.
 bool
-BinLink::check_lma_overlap()
+BinLink::CheckLMAOverlap()
 {
     for (Object::const_section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
@@ -438,7 +439,7 @@ BinLink::check_lma_overlap()
         for (Object::const_section_iterator j=i+1, end=m_object.sections_end();
              j != end; ++j)
         {
-            if (!check_lma_overlap(*i, *j))
+            if (!CheckLMAOverlap(*i, *j))
                 return false;
         }
     }
@@ -450,7 +451,7 @@ BinLink::check_lma_overlap()
 // what was passed in.
 // Align must be a power of 2.
 static IntNum
-align_start(const IntNum& start, const IntNum& align)
+AlignStart(const IntNum& start, const IntNum& align)
 {
     // Because alignment is always a power of two, we can use some bit
     // trickery to do this easily.
@@ -465,24 +466,24 @@ align_start(const IntNum& start, const IntNum& align)
 // The tmp parameter is just a working intnum so one doesn't have to be
 // locally allocated for this purpose.
 void
-BinGroup::assign_start_recurse(IntNum& start,
-                               IntNum& last,
-                               IntNum& vdelta,
-                               Errwarns& errwarns)
+BinGroup::AssignStartRecurse(IntNum& start,
+                             IntNum& last,
+                             IntNum& vdelta,
+                             Errwarns& errwarns)
 {
     // Determine LMA
     if (m_bsd.has_align)
     {
-        m_section.set_lma(align_start(start, m_bsd.align));
-        if (m_bsd.has_istart && start != m_section.get_lma())
+        m_section.setLMA(AlignStart(start, m_bsd.align));
+        if (m_bsd.has_istart && start != m_section.getLMA())
         {
-            warn_set(WARN_GENERAL,
+            setWarn(WARN_GENERAL,
                 N_("start inconsistent with align; using aligned value"));
-            errwarns.propagate(m_bsd.start_line);
+            errwarns.Propagate(m_bsd.start_line);
         }
     }
     else
-        m_section.set_lma(start);
+        m_section.setLMA(start);
     m_bsd.has_istart = true;
 
     // Determine VMA if either just valign specified or if no v* specified
@@ -492,23 +493,23 @@ BinGroup::assign_start_recurse(IntNum& start,
         {
             // No v* specified, set VMA=LMA+vdelta.
             m_bsd.has_ivstart = true;
-            m_section.set_vma(m_section.get_lma() + vdelta);
+            m_section.setVMA(m_section.getLMA() + vdelta);
         }
         else if (m_bsd.vfollows.empty())
         {
             // Just valign specified: set VMA=LMA+vdelta, align VMA, then add
             // delta between unaligned and aligned to vdelta parameter.
             m_bsd.has_ivstart = true;
-            IntNum orig_start = m_section.get_lma();
+            IntNum orig_start = m_section.getLMA();
             orig_start += vdelta;
-            m_section.set_vma(align_start(orig_start, m_bsd.valign));
-            vdelta += m_section.get_vma();
+            m_section.setVMA(AlignStart(orig_start, m_bsd.valign));
+            vdelta += m_section.getVMA();
             vdelta -= orig_start;
         }
     }
 
     // Find the maximum end value
-    IntNum tmp = m_section.get_lma();
+    IntNum tmp = m_section.getLMA();
     tmp += m_bsd.length;
     if (tmp > last)
         last = tmp;
@@ -519,10 +520,10 @@ BinGroup::assign_start_recurse(IntNum& start,
     {
         // Following sections have to follow this one,
         // so add length to start.
-        start = m_section.get_lma();
+        start = m_section.getLMA();
         start += m_bsd.length;
 
-        follow_group->assign_start_recurse(start, last, vdelta, errwarns);
+        follow_group->AssignStartRecurse(start, last, vdelta, errwarns);
     }
 }
 
@@ -531,7 +532,7 @@ BinGroup::assign_start_recurse(IntNum& start,
 // The tmp parameter is just a working intnum so one doesn't have to be
 // locally allocated for this purpose.
 void
-BinGroup::assign_vstart_recurse(IntNum& start, Errwarns& errwarns)
+BinGroup::AssignVStartRecurse(IntNum& start, Errwarns& errwarns)
 {
     // Determine VMA section alignment as necessary.
     // Default to LMA alignment if not specified.
@@ -542,31 +543,31 @@ BinGroup::assign_vstart_recurse(IntNum& start, Errwarns& errwarns)
     }
     else
     {
-        if (m_section.get_align() > m_bsd.valign)
+        if (m_section.getAlign() > m_bsd.valign)
         {
-            warn_set(WARN_GENERAL, String::compose(
+            setWarn(WARN_GENERAL, String::Compose(
                 N_("section `%1' internal align of %2 is greater than `%3' of %4; using `%5'"),
-                m_section.get_name(),
-                m_section.get_align(),
+                m_section.getName(),
+                m_section.getAlign(),
                 N_("valign"),
                 m_bsd.valign,
                 N_("valign")));
-            errwarns.propagate(0);
+            errwarns.Propagate(0);
         }
     }
 
     // Determine VMA
     if (m_bsd.has_valign)
     {
-        m_section.set_vma(align_start(start, m_bsd.valign));
-        if (m_bsd.has_ivstart && start != m_section.get_vma())
+        m_section.setVMA(AlignStart(start, m_bsd.valign));
+        if (m_bsd.has_ivstart && start != m_section.getVMA())
         {
-            errwarns.propagate(m_bsd.vstart_line,
+            errwarns.Propagate(m_bsd.vstart_line,
                 ValueError(N_("vstart inconsistent with valign")));
         }
     }
     else
-        m_section.set_vma(start);
+        m_section.setVMA(start);
     m_bsd.has_ivstart = true;
 
     // Recurse for each following group.
@@ -575,10 +576,10 @@ BinGroup::assign_vstart_recurse(IntNum& start, Errwarns& errwarns)
     {
         // Following sections have to follow this one,
         // so add length to start.
-        start = m_section.get_vma();
+        start = m_section.getVMA();
         start += m_bsd.length;
 
-        follow_group->assign_vstart_recurse(start, errwarns);
+        follow_group->AssignVStartRecurse(start, errwarns);
     }
 }
 

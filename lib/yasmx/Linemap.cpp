@@ -62,7 +62,7 @@ Linemap::set(const std::string& filename,
 }
 
 unsigned long
-Linemap::poke(const std::string& filename, unsigned long file_line)
+Linemap::Poke(const std::string& filename, unsigned long file_line)
 {
     m_current++;
     set(filename, file_line, 0);
@@ -80,16 +80,16 @@ Linemap::poke(const std::string& filename, unsigned long file_line)
 }
 
 unsigned long
-Linemap::poke(unsigned long file_line)
+Linemap::Poke(unsigned long file_line)
 {
     if (!m_map.empty())
-        return poke(m_map.back().m_filename, file_line);
+        return Poke(m_map.back().m_filename, file_line);
     else
-        return poke("unknown", file_line);
+        return Poke("unknown", file_line);
 }
 
 void
-Linemap::add_source(Location loc, const std::string& source)
+Linemap::AddSource(Location loc, const std::string& source)
 {
     if (m_source.size() < m_current)
         m_source.resize(m_current);
@@ -97,7 +97,7 @@ Linemap::add_source(Location loc, const std::string& source)
 }
 
 bool
-Linemap::lookup(unsigned long line,
+Linemap::Lookup(unsigned long line,
                 std::string* filename,
                 unsigned long* file_line) const
 {
@@ -122,9 +122,9 @@ Linemap::lookup(unsigned long line,
 }
 
 bool
-Linemap::get_source(unsigned long line,
-                    Location& loc,
-                    std::string& source) const
+Linemap::getSource(unsigned long line,
+                   Location& loc,
+                   std::string& source) const
 {
     if (m_source.size() < line)
     {

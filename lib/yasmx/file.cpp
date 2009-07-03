@@ -64,7 +64,7 @@ namespace yasm
 {
 
 std::string
-unescape(const std::string& str)
+Unescape(const std::string& str)
 {
     std::string out;
     std::string::const_iterator i=str.begin(), end=str.end();
@@ -130,8 +130,8 @@ unescape(const std::string& str)
                         }
                         out.push_back(static_cast<char>(v));
                         if (warn)
-                            warn_set(WARN_GENERAL,
-                                     N_("octal value out of range"));
+                            setWarn(WARN_GENERAL,
+                                    N_("octal value out of range"));
                     }
                     else
                         out.push_back(*i++);
@@ -145,7 +145,7 @@ unescape(const std::string& str)
 }
 
 std::string
-splitpath_unix(const std::string& path, /*@out@*/ std::string& tail)
+SplitPath_unix(const std::string& path, /*@out@*/ std::string& tail)
 {
     std::string::size_type found = path.rfind('/');
     if (found == std::string::npos)
@@ -178,7 +178,7 @@ splitpath_unix(const std::string& path, /*@out@*/ std::string& tail)
 }
 
 std::string
-splitpath_win(const std::string& path, /*@out@*/ std::string& tail)
+SplitPath_win(const std::string& path, /*@out@*/ std::string& tail)
 {
     std::string::size_type found = path.find_last_of("/\\");
     if (found == std::string::npos)
@@ -228,7 +228,7 @@ splitpath_win(const std::string& path, /*@out@*/ std::string& tail)
 }
 
 std::string
-get_curdir()
+getCurDir()
 {
     size_t size = 1024;
     char* buf = static_cast<char*>(std::malloc(size));
@@ -253,9 +253,9 @@ get_curdir()
 
 // FIXME: dumb way for now
 std::string
-abspath_unix(const std::string& path)
+AbsPath_unix(const std::string& path)
 {
-    std::string abspath = get_curdir();
+    std::string abspath = getCurDir();
     abspath += '/';
     abspath += path;
     return abspath;
@@ -263,9 +263,9 @@ abspath_unix(const std::string& path)
 
 // FIXME: dumb way for now
 std::string
-abspath_win(const std::string& path)
+AbsPath_win(const std::string& path)
 {
-    std::string abspath = get_curdir();
+    std::string abspath = getCurDir();
     abspath += '\\';
     abspath += path;
 
@@ -276,7 +276,7 @@ abspath_win(const std::string& path)
 }
 
 std::string
-combpath_unix(const std::string& from, const std::string& to)
+CombPath_unix(const std::string& from, const std::string& to)
 {
     if (to[0] == '/')
     {
@@ -290,7 +290,7 @@ combpath_unix(const std::string& from, const std::string& to)
 
     // Get path component; note this strips trailing slash
     std::string tail;
-    std::string out = splitpath_unix(from, tail);
+    std::string out = SplitPath_unix(from, tail);
 
     // Add trailing slash back in
     if (!out.empty() && out[out.length()-1] != '/')
@@ -356,7 +356,7 @@ combpath_unix(const std::string& from, const std::string& to)
 }
 
 std::string
-combpath_win(const std::string& from, const std::string& to)
+CombPath_win(const std::string& from, const std::string& to)
 {
     if ((to.length() >= 2 && std::isalpha(to[0]) && to[1] == ':') ||
         to[0] == '/' || to[0] == '\\')
@@ -377,7 +377,7 @@ combpath_win(const std::string& from, const std::string& to)
 
     // Get path component; note this strips trailing slash
     std::string tail;
-    std::string out = splitpath_win(from, tail);
+    std::string out = SplitPath_win(from, tail);
 
     // Add trailing slash back in, unless it's only a raw drive letter
     if (!out.empty()
@@ -452,8 +452,8 @@ combpath_win(const std::string& from, const std::string& to)
 }
 
 std::string
-replace_extension(const std::string& orig, const std::string& ext,
-                  const std::string& def)
+ReplaceExtension(const std::string& orig, const std::string& ext,
+                 const std::string& def)
 {
     std::string::size_type origext = orig.find_last_of('.');
     if (origext != std::string::npos)

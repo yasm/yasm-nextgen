@@ -38,7 +38,7 @@ ListFormat::~ListFormat()
 }
 
 void
-ListFormat::add_directives(Directives& dirs, const char* parser)
+ListFormat::AddDirectives(Directives& dirs, const char* parser)
 {
 }
 
@@ -47,7 +47,7 @@ ListFormatModule::~ListFormatModule()
 }
 
 const char*
-ListFormatModule::get_type() const
+ListFormatModule::getType() const
 {
     return "ListFormat";
 }

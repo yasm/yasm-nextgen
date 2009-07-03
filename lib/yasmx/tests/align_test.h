@@ -37,19 +37,19 @@ public:
     void testAppendAlign()
     {
         yasm::BytecodeContainer container;
-        yasm::append_align(container,
-                           yasm::Expr(4),
-                           yasm::Expr(),    // fill
-                           yasm::Expr(),    // maxskip
-                           0,               // code fill
-                           5);              // line
-        yasm::Bytecode& align = container.bcs_first();
+        yasm::AppendAlign(container,
+                          yasm::Expr(4),
+                          yasm::Expr(),    // fill
+                          yasm::Expr(),    // maxskip
+                          0,               // code fill
+                          5);              // line
+        yasm::Bytecode& align = container.bytecodes_first();
 
         // align always results in contents
-        TS_ASSERT(align.has_contents());
-        TS_ASSERT_EQUALS(align.get_special(),
+        TS_ASSERT(align.hasContents());
+        TS_ASSERT_EQUALS(align.getSpecial(),
                          yasm::Bytecode::Contents::SPECIAL_OFFSET);
-        TS_ASSERT_EQUALS(align.get_line(), 5UL);
-        TS_ASSERT(align.get_fixed().empty());
+        TS_ASSERT_EQUALS(align.getLine(), 5UL);
+        TS_ASSERT(align.getFixed().empty());
     }
 };

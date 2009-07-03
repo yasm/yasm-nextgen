@@ -66,15 +66,15 @@ public:
     /// @param reg  register
     /// @return 0 if there is no suitable equivalent size, otherwise the
     ///         size.
-    virtual unsigned int get_size() const = 0;
+    virtual unsigned int getSize() const = 0;
 
     /// Get the register number.  This is typically the binary encoding of
     /// the register used in the instruction encoding.
-    virtual unsigned int get_num() const = 0;
+    virtual unsigned int getNum() const = 0;
 
     /// Print a register.  For debugging purposes.
     /// @param os   output stream
-    virtual void put(std::ostream& os) const = 0;
+    virtual void Put(std::ostream& os) const = 0;
 
 private:
     Register(const Register&);                  // not implemented
@@ -84,7 +84,7 @@ private:
 inline std::ostream& operator<<
 (std::ostream &os, const Register &reg)
 {
-    reg.put(os);
+    reg.Put(os);
     return os;
 }
 
@@ -100,7 +100,7 @@ public:
     /// @param regindex     register index
     /// @return 0 if regindex is not valid for that register group,
     ///         otherwise the specific register.
-    virtual const Register* get_reg(unsigned long regindex) const = 0;
+    virtual const Register* getReg(unsigned long regindex) const = 0;
 
 private:
     RegisterGroup(const RegisterGroup&);                  // not implemented
@@ -116,11 +116,11 @@ public:
 
     /// Get the register number.  This is typically the binary encoding of
     /// the register used in the instruction encoding.
-    virtual unsigned int get_num() const = 0;
+    virtual unsigned int getNum() const = 0;
 
     /// Print a segment register.  For debugging purposes.
     /// @param os   output stream
-    virtual void put(std::ostream& os) const = 0;
+    virtual void Put(std::ostream& os) const = 0;
 
 private:
     SegmentRegister(const SegmentRegister&);                  // not implemented
@@ -130,7 +130,7 @@ private:
 inline std::ostream& operator<<
 (std::ostream &os, const SegmentRegister &segreg)
 {
-    segreg.put(os);
+    segreg.Put(os);
     return os;
 }
 
@@ -159,16 +159,16 @@ public:
 
         ~InsnPrefix();
 
-        Type get_type() const { return m_type; }
-        bool is_type(Type type) const { return m_type == type; }
+        Type getType() const { return m_type; }
+        bool isType(Type type) const { return m_type == type; }
 
-        std::auto_ptr<Insn> release_insn();
+        std::auto_ptr<Insn> ReleaseInsn();
 
-        const Insn* get_insn() const
+        const Insn* getInsn() const
         {
             return (m_type == INSN ? m_insn : 0);
         }
-        const Insn::Prefix* get_prefix() const
+        const Insn::Prefix* getPrefix() const
         {
             return (m_type == PREFIX ? m_prefix : 0);
         }
@@ -208,25 +208,25 @@ public:
             : m_type(TARGETMOD), m_tmod(tmod)
         {}
 
-        Type get_type() const { return m_type; }
-        bool is_type(Type type) const { return m_type == type; }
+        Type getType() const { return m_type; }
+        bool isType(Type type) const { return m_type == type; }
 
-        const Register* get_reg() const
+        const Register* getReg() const
         {
             return (m_type == REG ? m_reg : 0);
         }
 
-        const RegisterGroup* get_reggroup() const
+        const RegisterGroup* getRegGroup() const
         {
             return (m_type == REGGROUP ? m_reggroup : 0);
         }
 
-        const SegmentRegister* get_segreg() const
+        const SegmentRegister* getSegReg() const
         {
             return (m_type == SEGREG ? m_segreg : 0);
         }
 
-        const Insn::Operand::TargetModifier* get_tmod() const
+        const Insn::Operand::TargetModifier* getTargetMod() const
         {
             return (m_type == TARGETMOD ? m_tmod : 0);
         }
@@ -249,35 +249,35 @@ public:
     virtual ~Arch();
 
     /// Get module.
-    const ArchModule& get_module() const { return m_module; }
+    const ArchModule& getModule() const { return m_module; }
 
     /// Add directive handlers.
-    virtual void add_directives(Directives& dirs, const char* parser);
+    virtual void AddDirectives(Directives& dirs, const char* parser);
 
     /// Set parser to use.
     /// @param parser       keyword of parser to use
     /// @return False if unrecognized parser.
-    virtual bool set_parser(const std::string& parser) = 0;
+    virtual bool setParser(const std::string& parser) = 0;
 
     /// Set active machine.
     /// @param machine      keyword of machine to use; must be one in the
     ///                     list returned by get_machines().
     /// @return False if unrecognized machine.
-    virtual bool set_machine(const std::string& machine) = 0;
+    virtual bool setMachine(const std::string& machine) = 0;
 
     /// Get architecture's active machine name.
     /// @return Active machine name.
-    virtual std::string get_machine() const = 0;
+    virtual std::string getMachine() const = 0;
 
     /// Get architecture's active address size, in bits.
     /// @return Active address size (in bits).
-    virtual unsigned int get_address_size() const = 0;
+    virtual unsigned int getAddressSize() const = 0;
 
     /// Set any arch-specific variables.  For example, "mode_bits" in x86.
     /// @param var  variable name
     /// @param val  value to set
     /// @return False on success, true on failure (variable does not exist).
-    virtual bool set_var(const char* var, unsigned long val) = 0;
+    virtual bool setVar(const char* var, unsigned long val) = 0;
 
     /// Check an generic identifier to see if it matches architecture
     /// specific names for instructions or instruction prefixes.
@@ -291,7 +291,7 @@ public:
     /// @param prefix       for prefixes, yasm_arch-specific value is
     ///                     returned (and 0 otherwise)
     /// @return Identifier type (empty if unrecognized)
-    virtual InsnPrefix parse_check_insnprefix
+    virtual InsnPrefix ParseCheckInsnPrefix
         (const char *id, size_t id_len, unsigned long line) const = 0;
 
     /// Check an generic identifier to see if it matches architecture
@@ -300,14 +300,14 @@ public:
     /// @param id           identifier as in the input file
     /// @param id_len       length of id string
     /// @return Identifier type (empty if unrecognized)
-    virtual RegTmod parse_check_regtmod(const char *id, size_t id_len)
+    virtual RegTmod ParseCheckRegTmod(const char *id, size_t id_len)
         const = 0;
 
     /// Get NOP fill patterns for 1-15 bytes of fill.
     /// @return 16-entry array of arrays; [0] is unused,
     ///         [1] - [15] point to arrays of 1-15 bytes (respectively)
     ///         in length.
-    virtual const unsigned char** get_fill() const = 0;
+    virtual const unsigned char** getFill() const = 0;
 
     /// Output #APFloat to buffer.  Puts the value into the least
     /// significant bits of the destination, or may be shifted into more
@@ -319,7 +319,7 @@ public:
     /// @param valsize       size (in bits)
     /// @param shift         left shift (in bits)
     /// @param warn          enables standard overflow/underflow warnings
-    virtual void tobytes(const llvm::APFloat& flt,
+    virtual void ToBytes(const llvm::APFloat& flt,
                          Bytes& bytes,
                          size_t valsize,
                          size_t shift,
@@ -338,7 +338,7 @@ public:
     /// @param loc          location of value
     /// @param warn         enables standard warnings (value doesn't fit into
     ///                     valsize bits)
-    virtual void tobytes(const IntNum& intn,
+    virtual void ToBytes(const IntNum& intn,
                          Bytes& bytes,
                          size_t valsize,
                          int shift,
@@ -347,12 +347,13 @@ public:
     /// Create an effective address from an expression.
     /// @param e    expression
     /// @return Newly allocated effective address.
-    virtual std::auto_ptr<EffAddr> ea_create(std::auto_ptr<Expr> e) const = 0;
+    virtual std::auto_ptr<EffAddr> CreateEffAddr(std::auto_ptr<Expr> e) const
+        = 0;
 
     /// Create an instruction that represents a single empty (0 length)
     /// instruction.  This is used for handling solitary prefixes.
     /// @return Newly allocated instruction.
-    virtual std::auto_ptr<Insn> create_empty_insn() const = 0;
+    virtual std::auto_ptr<Insn> CreateEmptyInsn() const = 0;
 
 private:
     Arch(const Arch&);                  // not implemented
@@ -372,15 +373,15 @@ public:
 
     /// Get the module type.
     /// @return "Arch".
-    const char* get_type() const;
+    const char* getType() const;
 
     /// Get the word size of an architecture.
     /// @return Word size (in bits).
-    virtual unsigned int get_wordsize() const = 0;
+    virtual unsigned int getWordSize() const = 0;
 
     /// Get the minimum instruction length of an architecture.
     /// @return Minimum instruction length (in bytes).
-    virtual unsigned int get_min_insn_len() const = 0;
+    virtual unsigned int getMinInsnLen() const = 0;
 
     /// Vector of machine keyword/name pairs.  The first element in the pair
     /// is the keyword used to select the machine with set_machine(), and the
@@ -394,11 +395,11 @@ public:
     /// between machines.  Some object formats (ELF) use the machine to
     /// determine parameters within the generated output.
     /// @return Machine keyword/name pairs.
-    virtual MachineNames get_machines() const = 0;
+    virtual MachineNames getMachines() const = 0;
 
     /// Arch factory function.
     /// @return New architecture.
-    virtual std::auto_ptr<Arch> create() const = 0;
+    virtual std::auto_ptr<Arch> Create() const = 0;
 };
 
 template <typename ArchImpl>
@@ -408,15 +409,15 @@ public:
     ArchModuleImpl() {}
     ~ArchModuleImpl() {}
 
-    const char* get_name() const { return ArchImpl::get_name(); }
-    const char* get_keyword() const { return ArchImpl::get_keyword(); }
+    const char* getName() const { return ArchImpl::getName(); }
+    const char* getKeyword() const { return ArchImpl::getKeyword(); }
 
-    unsigned int get_wordsize() const { return ArchImpl::get_wordsize(); }
-    unsigned int get_min_insn_len() const
-    { return ArchImpl::get_min_insn_len(); }
-    MachineNames get_machines() const { return ArchImpl::get_machines(); }
+    unsigned int getWordSize() const { return ArchImpl::getWordSize(); }
+    unsigned int getMinInsnLen() const
+    { return ArchImpl::getMinInsnLen(); }
+    MachineNames getMachines() const { return ArchImpl::getMachines(); }
 
-    std::auto_ptr<Arch> create() const
+    std::auto_ptr<Arch> Create() const
     {
         return std::auto_ptr<Arch>(new ArchImpl(*this));
     }

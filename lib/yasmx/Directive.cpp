@@ -77,9 +77,9 @@ Directives::~Directives()
 }
 
 void
-Directives::add(const char* name, Directive handler, Flags flags)
+Directives::Add(const char* name, Directive handler, Flags flags)
 {
-    m_impl->m_dirs[String::lowercase(name)] = Impl::Dir(handler, flags);
+    m_impl->m_dirs[String::Lowercase(name)] = Impl::Dir(handler, flags);
 }
 
 Directive
@@ -87,7 +87,7 @@ Directives::operator[] (const std::string& name) const
 {
     Directive rv;
     if (!get(&rv, name))
-        throw ValueError(String::compose(N_("unrecognized directive `%1'"),
+        throw ValueError(String::Compose(N_("unrecognized directive `%1'"),
                                          name));
     return rv;
 }
@@ -95,7 +95,7 @@ Directives::operator[] (const std::string& name) const
 bool
 Directives::get(Directive* dir, const std::string& name) const
 {
-    Impl::DirMap::iterator p = m_impl->m_dirs.find(String::lowercase(name));
+    Impl::DirMap::iterator p = m_impl->m_dirs.find(String::Lowercase(name));
     if (p == m_impl->m_dirs.end())
         return false;
 
@@ -112,13 +112,13 @@ Directives::Impl::Dir::operator() (Object& object,
                                    unsigned long line)
 {
     if ((m_flags & (ARG_REQUIRED|ID_REQUIRED)) && namevals.empty())
-        throw SyntaxError(String::compose(
+        throw SyntaxError(String::Compose(
             N_("directive `%1' requires an argument"), name));
 
     if (!namevals.empty())
     {
-        if ((m_flags & ID_REQUIRED) && !namevals.front().is_id())
-            throw SyntaxError(String::compose(
+        if ((m_flags & ID_REQUIRED) && !namevals.front().isId())
+            throw SyntaxError(String::Compose(
                 N_("directive `%1' requires an identifier parameter"), name));
     }
 

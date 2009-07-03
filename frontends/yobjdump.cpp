@@ -58,7 +58,7 @@ namespace cl = llvm::cl;
 // version message
 static const char* full_version = "yobjdump " PACKAGE_INTVER "." PACKAGE_BUILD;
 void
-print_version()
+PrintVersion()
 {
     std::cout
         << full_version << '\n'
@@ -166,13 +166,13 @@ static cl::alias show_all_headers_long("all-headers",
     cl::aliasopt(show_all_headers));
 
 static void
-print_error(const std::string& msg)
+PrintError(const std::string& msg)
 {
     std::cerr << "yobjdump: " << msg << std::endl;
 }
 
 static void
-print_list_keyword_desc(const std::string& name, const std::string& keyword)
+PrintListKeywordDesc(const std::string& name, const std::string& keyword)
 {
     std::cout << std::left << std::setfill(' ') << std::setw(12) << keyword
               << name << std::endl;
@@ -182,12 +182,12 @@ template <typename T>
 static void
 list_module()
 {
-    std::vector<std::string> list = yasm::get_modules<T>();
+    std::vector<std::string> list = yasm::getModules<T>();
     for (std::vector<std::string>::iterator i=list.begin(), end=list.end();
          i != end; ++i)
     {
-        std::auto_ptr<T> obj = yasm::load_module<T>(*i);
-        print_list_keyword_desc(obj->get_name(), *i);
+        std::auto_ptr<T> obj = yasm::LoadModule<T>(*i);
+        PrintListKeywordDesc(obj->getName(), *i);
     }
 }
 
@@ -198,7 +198,7 @@ handle_yasm_gettext(const char *msgid)
 }
 
 static void
-dump_section_headers(const yasm::Object& object)
+DumpSectionHeaders(const yasm::Object& object)
 {
     std::cout << "Sections:\n";
     std::cout << "Idx Name          Size      ";
@@ -214,22 +214,23 @@ dump_section_headers(const yasm::Object& object)
     {
         std::cout << std::setfill(' ') << std::dec;
         std::cout << std::right << std::setw(3) << idx << ' ';
-        std::cout << std::left << std::setw(13) << sect->get_name() << ' ';
+        std::cout << std::left << std::setw(13) << sect->getName() << ' ';
         std::cout << std::hex;
         std::cout << yasm::set_intnum_bits(32);
-        std::cout << yasm::IntNum(sect->bcs_last().next_offset()) << "  ";
+        std::cout << yasm::IntNum(sect->bytecodes_last().getNextOffset())
+                  << "  ";
         std::cout << yasm::set_intnum_bits(bits);
-        std::cout << sect->get_vma() << "  ";
-        std::cout << sect->get_lma() << "  ";
+        std::cout << sect->getVMA() << "  ";
+        std::cout << sect->getLMA() << "  ";
         std::cout << yasm::set_intnum_bits(32);
-        std::cout << yasm::IntNum(sect->get_filepos()) << "  ";
-        std::cout << std::dec << sect->get_align();
+        std::cout << yasm::IntNum(sect->getFilePos()) << "  ";
+        std::cout << std::dec << sect->getAlign();
         std::cout << '\n';
     }
 }
 
 static void
-dump_symbols(const yasm::Object& object)
+DumpSymbols(const yasm::Object& object)
 {
     std::cout << "SYMBOL TABLE:\n";
     unsigned int bits = 64; // FIXME
@@ -240,11 +241,11 @@ dump_symbols(const yasm::Object& object)
         std::cout << std::hex;
 
         yasm::Location loc;
-        bool is_label = sym->get_label(&loc);
-        const yasm::Expr* equ = sym->get_equ();
+        bool is_label = sym->getLabel(&loc);
+        const yasm::Expr* equ = sym->getEqu();
 
         if (is_label)
-            std::cout << yasm::IntNum(loc.get_offset());
+            std::cout << yasm::IntNum(loc.getOffset());
         else if (equ)
             std::cout << *equ;
         else
@@ -252,25 +253,24 @@ dump_symbols(const yasm::Object& object)
         std::cout << std::left;
         std::cout << "  ";
         // TODO: symbol flags
-        int vis = sym->get_visibility();
+        int vis = sym->getVisibility();
         if (is_label)
         {
-            std::cout << loc.bc->get_container()->as_section()->get_name()
-                      << '\t';
+            std::cout << loc.bc->getContainer()->AsSection()->getName() << '\t';
         }
-        else if (sym->get_equ())
+        else if (sym->getEqu())
             std::cout << "*ABS*\t";
         else if ((vis & yasm::Symbol::EXTERN) != 0)
             std::cout << "*UND*\t";
         else if ((vis & yasm::Symbol::COMMON) != 0)
             std::cout << "*COM*\t";
-        std::cout << sym->get_name();
+        std::cout << sym->getName();
         std::cout << '\n';
     }
 }
 
 static void
-dump_relocs(const yasm::Object& object)
+DumpRelocs(const yasm::Object& object)
 {
     unsigned int bits = 64; // FIXME
     std::cout << yasm::set_intnum_bits(bits);
@@ -278,10 +278,10 @@ dump_relocs(const yasm::Object& object)
     for (yasm::Object::const_section_iterator sect=object.sections_begin(),
          end=object.sections_end(); sect != end; ++sect)
     {
-        if (sect->get_relocs().empty())
+        if (sect->getRelocs().empty())
             continue;
 
-        std::cout << "RELOCATION RECORDS FOR [" << sect->get_name() << "]:\n";
+        std::cout << "RELOCATION RECORDS FOR [" << sect->getName() << "]:\n";
         std::cout << std::left << std::setfill(' ');
         std::cout << std::setw(bits/4) << "OFFSET";
         std::cout << " TYPE              VALUE\n";
@@ -290,10 +290,11 @@ dump_relocs(const yasm::Object& object)
              endr=sect->relocs_end(); reloc != endr; ++reloc)
         {
             std::cout << std::noshowbase;
-            std::cout << std::hex << (sect->get_vma()+reloc->get_addr()) << ' ';
-            std::cout << std::setw(16) << reloc->get_type_name() << "  ";
+            std::cout << std::hex << (sect->getVMA()+reloc->getAddress())
+                      << ' ';
+            std::cout << std::setw(16) << reloc->getTypeName() << "  ";
             std::cout << std::showbase;
-            std::cout << reloc->get_value();
+            std::cout << reloc->getValue();
             std::cout << '\n';
         }
         std::cout << std::noshowbase;
@@ -302,9 +303,7 @@ dump_relocs(const yasm::Object& object)
 }
 
 static void
-dump_contents_line(const yasm::IntNum& addr,
-                   const unsigned char* data,
-                   int len)
+DumpContentsLine(const yasm::IntNum& addr, const unsigned char* data, int len)
 {
     // address
     std::cout << ' ' << addr;
@@ -336,24 +335,24 @@ dump_contents_line(const yasm::IntNum& addr,
 }
 
 static void
-dump_contents(const yasm::Object& object)
+DumpContents(const yasm::Object& object)
 {
     std::cout << std::hex << std::setfill('0') << std::right;
 
     for (yasm::Object::const_section_iterator sect=object.sections_begin(),
          end=object.sections_end(); sect != end; ++sect)
     {
-        if (sect->is_bss())
+        if (sect->isBSS())
             continue;
 
-        unsigned long size = sect->bcs_last().next_offset();
+        unsigned long size = sect->bytecodes_last().getNextOffset();
         if (size == 0)
             continue;   // empty
 
         // figure out how many hex digits we should have for the address
-        yasm::IntNum last_addr = sect->get_vma() + size;
+        yasm::IntNum last_addr = sect->getVMA() + size;
         unsigned int addr_bits = 0;
-        while (!last_addr.is_zero())
+        while (!last_addr.isZero())
         {
             last_addr >>= 1;
             ++addr_bits;
@@ -362,17 +361,17 @@ dump_contents(const yasm::Object& object)
             addr_bits = 16;
         std::cout << yasm::set_intnum_bits(addr_bits);
 
-        std::cout << "Contents of section " << sect->get_name() << ":\n";
+        std::cout << "Contents of section " << sect->getName() << ":\n";
 
         unsigned char line[16];
         int line_pos = 0;
-        yasm::IntNum addr = sect->get_vma();
+        yasm::IntNum addr = sect->getVMA();
 
-        for (yasm::Section::const_bc_iterator bc=sect->bcs_begin(),
-             endbc=sect->bcs_end(); bc != endbc; ++bc)
+        for (yasm::Section::const_bc_iterator bc=sect->bytecodes_begin(),
+             endbc=sect->bytecodes_end(); bc != endbc; ++bc)
         {
             // XXX: only outputs fixed portions
-            const yasm::Bytes& fixed = bc->get_fixed();
+            const yasm::Bytes& fixed = bc->getFixed();
             long fixed_pos = 0;
             long fixed_size = fixed.size();
             while (fixed_pos < fixed_size)
@@ -387,7 +386,7 @@ dump_contents(const yasm::Object& object)
                 // when we've filled up a line, output it.
                 if (line_pos == 16)
                 {
-                    dump_contents_line(addr, line, 16);
+                    DumpContentsLine(addr, line, 16);
                     addr += 16;
                     line_pos = 0;
                 }
@@ -396,19 +395,19 @@ dump_contents(const yasm::Object& object)
 
         // output any remaining
         if (line_pos != 0)
-            dump_contents_line(addr, line, line_pos);
+            DumpContentsLine(addr, line, line_pos);
     }
 
     std::cout << std::dec << std::setfill(' ');
 }
 
 static void
-do_dump(const std::string& in_filename)
+DoDump(const std::string& in_filename)
 {
     // open the input file
     std::ifstream in_file(in_filename.c_str());
     if (!in_file)
-        throw yasm::Error(String::compose(_("could not open file `%1'"),
+        throw yasm::Error(String::Compose(_("could not open file `%1'"),
                           in_filename));
 
     std::auto_ptr<yasm::ObjectFormatModule> objfmt_module(0);
@@ -416,40 +415,40 @@ do_dump(const std::string& in_filename)
 
     if (!objfmt_keyword.empty())
     {
-        objfmt_keyword = String::lowercase(objfmt_keyword);
-        if (!yasm::is_module<yasm::ObjectFormatModule>(objfmt_keyword))
+        objfmt_keyword = String::Lowercase(objfmt_keyword);
+        if (!yasm::isModule<yasm::ObjectFormatModule>(objfmt_keyword))
         {
-            throw yasm::Error(String::compose(
+            throw yasm::Error(String::Compose(
                 _("unrecognized object format `%1'"), objfmt_keyword));
         }
 
         // Object format forced by user
         objfmt_module =
-            yasm::load_module<yasm::ObjectFormatModule>(objfmt_keyword);
+            yasm::LoadModule<yasm::ObjectFormatModule>(objfmt_keyword);
 
         if (objfmt_module.get() == 0)
         {
-            throw yasm::Error(String::compose(
+            throw yasm::Error(String::Compose(
                 _("could not load object format `%1'"), objfmt_keyword));
         }
 
-        if (!objfmt_module->taste(in_file, &arch_keyword, &machine))
+        if (!objfmt_module->Taste(in_file, &arch_keyword, &machine))
         {
-            throw yasm::Error(String::compose(
+            throw yasm::Error(String::Compose(
                 _("file is not recognized as a `%1' object file"),
-                objfmt_module->get_keyword()));
+                objfmt_module->getKeyword()));
         }
     }
     else
     {
         // Need to loop through available object formats, and taste each one
         std::vector<std::string> list =
-            yasm::get_modules<yasm::ObjectFormatModule>();
+            yasm::getModules<yasm::ObjectFormatModule>();
         std::vector<std::string>::iterator i=list.begin(), end=list.end();
         for (; i != end; ++i)
         {
-            objfmt_module = yasm::load_module<yasm::ObjectFormatModule>(*i);
-            if (objfmt_module->taste(in_file, &arch_keyword, &machine))
+            objfmt_module = yasm::LoadModule<yasm::ObjectFormatModule>(*i);
+            if (objfmt_module->Taste(in_file, &arch_keyword, &machine))
                 break;
         }
         if (i == end)
@@ -459,44 +458,44 @@ do_dump(const std::string& in_filename)
     }
 
     std::auto_ptr<yasm::ArchModule> arch_module =
-        yasm::load_module<yasm::ArchModule>(arch_keyword);
+        yasm::LoadModule<yasm::ArchModule>(arch_keyword);
     if (arch_module.get() == 0)
-        throw yasm::Error(String::compose(
+        throw yasm::Error(String::Compose(
             _("could not load architecture `%1'"), arch_keyword));
 
-    std::auto_ptr<yasm::Arch> arch = arch_module->create();
-    if (!arch->set_machine(machine))
+    std::auto_ptr<yasm::Arch> arch = arch_module->Create();
+    if (!arch->setMachine(machine))
     {
-        throw yasm::Error(String::compose(
+        throw yasm::Error(String::Compose(
             _("`%1' is not a valid machine for architecture `%2'"),
-            machine, arch_module->get_keyword()));
+            machine, arch_module->getKeyword()));
     }
 
     yasm::Object object("", in_filename, arch.get());
 
-    if (!objfmt_module->ok_object(object))
+    if (!objfmt_module->isOkObject(object))
     {
-        throw yasm::Error(String::compose(
+        throw yasm::Error(String::Compose(
             _("object format `%1' does not support architecture `%2' machine `%3'"),
-            objfmt_module->get_keyword(),
-            arch_module->get_keyword(),
-            arch->get_machine()));
+            objfmt_module->getKeyword(),
+            arch_module->getKeyword(),
+            arch->getMachine()));
     }
 
-    std::auto_ptr<yasm::ObjectFormat> objfmt = objfmt_module->create(object);
-    objfmt->read(in_file);
+    std::auto_ptr<yasm::ObjectFormat> objfmt = objfmt_module->Create(object);
+    objfmt->Read(in_file);
 
     std::cout << in_filename << ":     file format "
-              << objfmt_module->get_keyword() << "\n\n";
+              << objfmt_module->getKeyword() << "\n\n";
 
     if (show_section_headers)
-        dump_section_headers(object);
+        DumpSectionHeaders(object);
     if (show_symbols)
-        dump_symbols(object);
+        DumpSymbols(object);
     if (show_relocs)
-        dump_relocs(object);
+        DumpRelocs(object);
     if (show_contents)
-        dump_contents(object);
+        DumpContents(object);
 }
 
 int
@@ -517,13 +516,13 @@ main(int argc, char* argv[])
     yasm::gettext_hook = handle_yasm_gettext;
 
     // Load standard modules
-    if (!yasm::load_standard_plugins())
+    if (!yasm::LoadStandardPlugins())
     {
-        print_error(_("FATAL: could not load standard modules"));
+        PrintError(_("FATAL: could not load standard modules"));
         return EXIT_FAILURE;
     }
 
-    cl::SetVersionPrinter(&print_version);
+    cl::SetVersionPrinter(&PrintVersion);
     cl::ParseCommandLineOptions(argc, argv);
 
     if (show_all_headers)
@@ -555,7 +554,7 @@ main(int argc, char* argv[])
     // Determine input filename and open input file.
     if (in_filenames.empty())
     {
-        print_error(_("No input file specified"));
+        PrintError(_("No input file specified"));
         return EXIT_FAILURE;
     }
 
@@ -566,16 +565,16 @@ main(int argc, char* argv[])
     {
         try
         {
-            do_dump(*i);
+            DoDump(*i);
         }
         catch (yasm::Error& err)
         {
-            print_error(String::compose(_("%1: %2"), *i, err.what()));
+            PrintError(String::Compose(_("%1: %2"), *i, err.what()));
             retval = EXIT_FAILURE;
         }
         catch (std::out_of_range& err)
         {
-            print_error(String::compose(
+            PrintError(String::Compose(
                 _("%1: out of range error while reading (corrupt file?)"), *i));
             retval = EXIT_FAILURE;
         }

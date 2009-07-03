@@ -49,10 +49,10 @@ struct XdfSection : public AssocData
 
     XdfSection(SymbolRef sym_);
     ~XdfSection();
-    void put(marg_ostream& os) const;
+    void Put(marg_ostream& os) const;
 
-    void write(Bytes& bytes, const Section& sect) const;
-    void read(Bytes& bytes,
+    void Write(Bytes& bytes, const Section& sect) const;
+    void Read(Bytes& bytes,
               /*@out@*/ unsigned long* name_sym_index,
               /*@out@*/ IntNum* lma,
               /*@out@*/ IntNum* vma,
@@ -89,15 +89,15 @@ struct XdfSection : public AssocData
 };
 
 inline XdfSection*
-get_xdf(Section& sect)
+getXdf(Section& sect)
 {
-    return static_cast<XdfSection*>(sect.get_assoc_data(XdfSection::key));
+    return static_cast<XdfSection*>(sect.getAssocData(XdfSection::key));
 }
 
 inline const XdfSection*
-get_xdf(const Section& sect)
+getXdf(const Section& sect)
 {
-    return static_cast<const XdfSection*>(sect.get_assoc_data(XdfSection::key));
+    return static_cast<const XdfSection*>(sect.getAssocData(XdfSection::key));
 }
 
 }}} // namespace yasm::objfmt::xdf

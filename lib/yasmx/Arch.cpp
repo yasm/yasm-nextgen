@@ -58,7 +58,7 @@ Arch::InsnPrefix::~InsnPrefix()
 }
 
 std::auto_ptr<Insn>
-Arch::InsnPrefix::release_insn()
+Arch::InsnPrefix::ReleaseInsn()
 {
     if (m_type != INSN)
         return std::auto_ptr<Insn>(0);
@@ -71,7 +71,7 @@ Arch::~Arch()
 }
 
 void
-Arch::add_directives(Directives& dirs, const char* parser)
+Arch::AddDirectives(Directives& dirs, const char* parser)
 {
 }
 
@@ -80,7 +80,7 @@ ArchModule::~ArchModule()
 }
 
 const char*
-ArchModule::get_type() const
+ArchModule::getType() const
 {
     return "Arch";
 }

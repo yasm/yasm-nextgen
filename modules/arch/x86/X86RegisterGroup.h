@@ -52,7 +52,7 @@ public:
     /// @param regindex     register index
     /// @return 0 if regindex is not valid for that register group,
     ///         otherwise the specific register.
-    const X86Register* get_reg(unsigned long regindex) const;
+    const X86Register* getReg(unsigned long regindex) const;
 
 private:
     FUNCTION::function<unsigned int ()> m_get_bits;

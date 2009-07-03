@@ -41,7 +41,7 @@ Reloc::~Reloc()
 }
 
 Expr
-Reloc::get_value() const
+Reloc::getValue() const
 {
     return Expr(m_sym);
 }

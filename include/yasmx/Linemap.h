@@ -57,7 +57,7 @@ public:
 
     /// Get the current line position in a repository.
     /// @return Current virtual line.
-    unsigned long get_current() const { return m_current; }
+    unsigned long getCurrent() const { return m_current; }
 
     /// Get bytecode and source line information, if any, for a virtual line.
     /// @param line         virtual line
@@ -67,20 +67,20 @@ public:
     ///         not.
     /// @note If source line information is not available, loc is set to 0 and
     ///       source is set to "".
-    bool get_source(unsigned long line,
-                    /*@out@*/ Location& loc,
-                    /*@out@*/ std::string& source) const;
+    bool getSource(unsigned long line,
+                   /*@out@*/ Location& loc,
+                   /*@out@*/ std::string& source) const;
 
     /// Add location and source line information to the current virtual line.
     /// @attention Deletes any existing location and source line information for
     ///            the current virtual line.
     /// @param loc          location
     /// @param source       source code line
-    void add_source(Location loc, const std::string& source);
+    void AddSource(Location loc, const std::string& source);
 
     /// Go to the next line (increments the current virtual line).
     /// @return The current (new) virtual line.
-    unsigned long goto_next() { return ++m_current; }
+    unsigned long GoToNext() { return ++m_current; }
 
     /// Set a new file/line physical association starting point at the current
     /// virtual line.  line_inc indicates how much the "real" line is
@@ -99,21 +99,21 @@ public:
     /// @param filename     physical file name (optional)
     /// @param file_line    physical line number
     /// @return The virtual line number of the poked association.
-    unsigned long poke(const std::string& filename,
+    unsigned long Poke(const std::string& filename,
                        unsigned long file_line);
-    unsigned long poke(unsigned long file_line);
+    unsigned long Poke(unsigned long file_line);
 
     /// Look up the associated physical file and line for a virtual line.
     /// @param line         virtual line
     /// @param filename     physical file name (output)
     /// @param file_line    physical line number (output)
     /// @return True if information available for line, false if not.
-    bool lookup(unsigned long line,
+    bool Lookup(unsigned long line,
                 /*@out@*/ std::string* filename,
                 /*@out@*/ unsigned long* file_line) const;
 
     /// Get all filenames used in a linemap.
-    const Filenames& get_filenames() const { return m_filenames; }
+    const Filenames& getFilenames() const { return m_filenames; }
 
 private:
     /// Current virtual line number.

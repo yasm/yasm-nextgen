@@ -50,8 +50,8 @@ AssocDataContainer::~AssocDataContainer()
 }
 
 std::auto_ptr<AssocData>
-AssocDataContainer::add_assoc_data(const void* key,
-                                   std::auto_ptr<AssocData> data)
+AssocDataContainer::AddAssocData(const void* key,
+                                 std::auto_ptr<AssocData> data)
 {
     // simple linear search
     for (AssocMap::iterator i=m_assoc_map.begin(), end=m_assoc_map.end();
@@ -72,7 +72,7 @@ AssocDataContainer::add_assoc_data(const void* key,
 }
 
 AssocData*
-AssocDataContainer::get_assoc_data(const void* key)
+AssocDataContainer::getAssocData(const void* key)
 {
     // simple linear search
     for (AssocMap::iterator i=m_assoc_map.begin(), end=m_assoc_map.end();
@@ -85,7 +85,7 @@ AssocDataContainer::get_assoc_data(const void* key)
 }
 
 const AssocData*
-AssocDataContainer::get_assoc_data(const void* key) const
+AssocDataContainer::getAssocData(const void* key) const
 {
     // simple linear search
     for (AssocMap::const_iterator i=m_assoc_map.begin(), end=m_assoc_map.end();

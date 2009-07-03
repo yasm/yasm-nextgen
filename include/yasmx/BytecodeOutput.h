@@ -66,18 +66,18 @@ public:
     /// available, and calling this function again will clear all previous
     /// usages.
     /// @return Shared scratch buffer.
-    Bytes& get_scratch()
+    Bytes& getScratch()
     {
         m_scratch.resize(0);
         return m_scratch;
     }
 
     /// Reset the number of bytes output to zero.
-    void reset_num_output() { m_num_output = 0; }
+    void ResetNumOutput() { m_num_output = 0; }
 
     /// Get the total number of bytes (and gap) output.
     /// @return Number of bytes output.
-    unsigned long get_num_output() const { return m_num_output; }
+    unsigned long getNumOutput() const { return m_num_output; }
 
     /// Output a value.
     ///
@@ -97,10 +97,10 @@ public:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    void output(Value& value, Bytes& bytes, Location loc, int warn)
+    void Output(Value& value, Bytes& bytes, Location loc, int warn)
     {
-        value_to_bytes(value, bytes, loc, warn);
-        output(bytes);
+        ConvertValueToBytes(value, bytes, loc, warn);
+        Output(bytes);
     }
 
     /// Output a symbol reference.
@@ -119,31 +119,31 @@ public:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    void output(SymbolRef sym,
+    void Output(SymbolRef sym,
                 Bytes& bytes,
                 Location loc,
                 unsigned int valsize,
                 int warn)
     {
-        sym_to_bytes(sym, bytes, loc, valsize, warn);
-        output(bytes);
+        ConvertSymbolToBytes(sym, bytes, loc, valsize, warn);
+        Output(bytes);
     }
 
     /// Output a "gap" in the object file: the data does not really need to
     /// exist in the object file, but should be initialized to 0 when the
     /// program is run.
     /// @param size         gap size, in bytes
-    void output_gap(unsigned int size)
+    void OutputGap(unsigned int size)
     {
-        do_output_gap(size);
+        DoOutputGap(size);
         m_num_output += size;
     }
 
     /// Output a sequence of bytes.
     /// @param bytes        bytes to output
-    void output(const Bytes& bytes)
+    void Output(const Bytes& bytes)
     {
-        do_output_bytes(bytes);
+        DoOutputBytes(bytes);
         m_num_output += bytes.size();
     }
 
@@ -170,10 +170,10 @@ protected:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    virtual void value_to_bytes(Value& value,
-                                Bytes& bytes,
-                                Location loc,
-                                int warn) = 0;
+    virtual void ConvertValueToBytes(Value& value,
+                                     Bytes& bytes,
+                                     Location loc,
+                                     int warn) = 0;
 
     /// Convert a symbol to bytes.  Called by output_sym() so that
     /// implementations may keep track of relocations generated this way.
@@ -195,19 +195,19 @@ protected:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    virtual void sym_to_bytes(SymbolRef sym,
-                              Bytes& bytes,
-                              Location loc,
-                              unsigned int valsize,
-                              int warn);
+    virtual void ConvertSymbolToBytes(SymbolRef sym,
+                                      Bytes& bytes,
+                                      Location loc,
+                                      unsigned int valsize,
+                                      int warn);
 
     /// Overrideable implementation of output_gap().
     /// @param size         gap size, in bytes
-    virtual void do_output_gap(unsigned int size) = 0;
+    virtual void DoOutputGap(unsigned int size) = 0;
 
     /// Overrideable implementation of output_bytes().
     /// @param bytes        bytes to output
-    virtual void do_output_bytes(const Bytes& bytes) = 0;
+    virtual void DoOutputBytes(const Bytes& bytes) = 0;
 
 private:
     BytecodeOutput(const BytecodeOutput&);                  // not implemented
@@ -226,9 +226,12 @@ public:
     ~BytecodeNoOutput();
 
 protected:
-    void value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn);
-    void do_output_gap(unsigned int size);
-    void do_output_bytes(const Bytes& bytes);
+    void ConvertValueToBytes(Value& value,
+                             Bytes& bytes,
+                             Location loc,
+                             int warn);
+    void DoOutputGap(unsigned int size);
+    void DoOutputBytes(const Bytes& bytes);
 };
 
 /// Stream output specialization of BytecodeOutput.
@@ -242,8 +245,8 @@ public:
     ~BytecodeStreamOutput();
 
 protected:
-    void do_output_gap(unsigned int size);
-    void do_output_bytes(const Bytes& bytes);
+    void DoOutputGap(unsigned int size);
+    void DoOutputBytes(const Bytes& bytes);
 
     std::ostream& m_os;
 };

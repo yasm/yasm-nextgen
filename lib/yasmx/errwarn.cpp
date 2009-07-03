@@ -43,7 +43,7 @@ const char * (*gettext_hook) (const char *msgid) = def_gettext_hook;
 class ErrwarnManager
 {
 public:
-    static ErrwarnManager & instance()
+    static ErrwarnManager & Instance()
     {
         static ErrwarnManager inst;
         return inst;
@@ -93,7 +93,7 @@ ErrwarnManager::~ErrwarnManager()
 }
 
 std::string
-conv_unprint(int ch)
+ConvUnprint(int ch)
 {
     std::string unprint;
 
@@ -160,7 +160,7 @@ Error::~Error() throw()
 }
 
 void
-Error::set_xref(unsigned long xrefline, const std::string& message)
+Error::setXRef(unsigned long xrefline, const std::string& message)
 {
     m_xrefline = xrefline;
     m_xrefmsg = message;
@@ -225,15 +225,15 @@ ParseError::~ParseError() throw()
 }
 
 void
-warn_clear()
+ClearWarn()
 {
-    ErrwarnManager::instance().m_warns.clear();
+    ErrwarnManager::Instance().m_warns.clear();
 }
 
 WarnClass
-warn_occurred()
+WarnOccurred()
 {
-    ErrwarnManager &manager = ErrwarnManager::instance();
+    ErrwarnManager &manager = ErrwarnManager::Instance();
     if (manager.m_warns.empty())
         return WARN_NONE;
     return manager.m_warns.front().m_wclass;
@@ -249,9 +249,9 @@ ErrwarnManager::Warning::Warning(unsigned long line,
 }
 
 void
-warn_set(unsigned long line, WarnClass wclass, const std::string& str)
+setWarn(unsigned long line, WarnClass wclass, const std::string& str)
 {
-    ErrwarnManager &manager = ErrwarnManager::instance();
+    ErrwarnManager &manager = ErrwarnManager::Instance();
 
     if (!(manager.m_wclass_enabled & (1UL<<wclass)))
         return;     // warning is part of disabled class
@@ -260,9 +260,9 @@ warn_set(unsigned long line, WarnClass wclass, const std::string& str)
 }
 
 void
-warn_update_line(unsigned long line)
+WarnUpdateLine(unsigned long line)
 {
-    ErrwarnManager &manager = ErrwarnManager::instance();
+    ErrwarnManager &manager = ErrwarnManager::Instance();
 
     for (ErrwarnManager::Warnings::iterator i = manager.m_warns.begin(),
          end = manager.m_warns.end(); i != end; ++i)
@@ -273,9 +273,9 @@ warn_update_line(unsigned long line)
 }
 
 WarnClass
-warn_fetch(std::string* wmsg, unsigned long* wline)
+FetchWarn(std::string* wmsg, unsigned long* wline)
 {
-    ErrwarnManager& manager = ErrwarnManager::instance();
+    ErrwarnManager& manager = ErrwarnManager::Instance();
 
     if (manager.m_warns.empty())
         return WARN_NONE;
@@ -293,21 +293,21 @@ warn_fetch(std::string* wmsg, unsigned long* wline)
 }
 
 void
-warn_enable(WarnClass num)
+EnableWarn(WarnClass num)
 {
-    ErrwarnManager::instance().m_wclass_enabled |= (1UL<<num);
+    ErrwarnManager::Instance().m_wclass_enabled |= (1UL<<num);
 }
 
 void
-warn_disable(WarnClass num)
+DisableWarn(WarnClass num)
 {
-    ErrwarnManager::instance().m_wclass_enabled &= ~(1UL<<num);
+    ErrwarnManager::Instance().m_wclass_enabled &= ~(1UL<<num);
 }
 
 void
-warn_disable_all()
+DisableAllWarn()
 {
-    ErrwarnManager::instance().m_wclass_enabled = 0;
+    ErrwarnManager::Instance().m_wclass_enabled = 0;
 }
 
 } // namespace yasm

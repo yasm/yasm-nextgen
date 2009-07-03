@@ -45,22 +45,22 @@ class Expr;
 /// @param e            expression
 /// @warning Only valid /after/ optimization.
 YASM_LIB_EXPORT
-void simplify_calc_dist(Expr& e);
+void SimplifyCalcDist(Expr& e);
 
 /// Simplify instances of Symbol-Symbol [Symbol+(-1*Symbol)] in an expression
-/// into integers if possible by calling calc_dist_no_bc().
-/// Unlike simplify_calc_dist(), this only calculates the distance if both
+/// into integers if possible by calling CalcDistNoBC().
+/// Unlike SimplifyCalcDist(), this only calculates the distance if both
 /// locations/symbols are within the same bytecode, so it's safe to call
 /// prior to optimization being performed.
 /// @param e            expression
 YASM_LIB_EXPORT
-void simplify_calc_dist_no_bc(Expr& e);
+void SimplifyCalcDistNoBC(Expr& e);
 
 YASM_LIB_EXPORT
-int subst_dist(Expr& e,
-               const FUNCTION::function<void (unsigned int subst,
-                                              Location loc,
-                                              Location loc2)>& func);
+int SubstDist(Expr& e,
+              const FUNCTION::function<void (unsigned int subst,
+                                             Location loc,
+                                             Location loc2)>& func);
 
 } // namespace yasm
 

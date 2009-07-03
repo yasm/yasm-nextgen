@@ -118,63 +118,63 @@ public:
     /// Destructor.
     ~X86Arch();
 
-    void add_directives(Directives& dir, const char* parser);
+    void AddDirectives(Directives& dir, const char* parser);
 
-    bool set_parser(const std::string& parser);
-    bool set_machine(const std::string& machine);
-    std::string get_machine() const;
-    unsigned int get_address_size() const;
+    bool setParser(const std::string& parser);
+    bool setMachine(const std::string& machine);
+    std::string getMachine() const;
+    unsigned int getAddressSize() const;
 
-    bool set_var(const char* var, unsigned long val);
+    bool setVar(const char* var, unsigned long val);
 
-    InsnPrefix parse_check_insnprefix
+    InsnPrefix ParseCheckInsnPrefix
         (const char *id, size_t id_len, unsigned long line) const;
-    RegTmod parse_check_regtmod(const char *id, size_t id_len) const;
+    RegTmod ParseCheckRegTmod(const char *id, size_t id_len) const;
 
-    const unsigned char** get_fill() const;
+    const unsigned char** getFill() const;
 
-    void tobytes(const llvm::APFloat& flt,
+    void ToBytes(const llvm::APFloat& flt,
                  Bytes& bytes,
                  size_t valsize,
                  size_t shift,
                  int warn) const;
-    void tobytes(const IntNum& intn,
+    void ToBytes(const IntNum& intn,
                  Bytes& bytes,
                  size_t valsize,
                  int shift,
                  int warn) const;
 
-    std::auto_ptr<EffAddr> ea_create(std::auto_ptr<Expr> e) const;
+    std::auto_ptr<EffAddr> CreateEffAddr(std::auto_ptr<Expr> e) const;
 
-    std::auto_ptr<Insn> create_empty_insn() const;
+    std::auto_ptr<Insn> CreateEmptyInsn() const;
 
-    ParserSelect parser() const { return m_parser; }
+    ParserSelect getParser() const { return m_parser; }
 
-    unsigned int get_mode_bits() const { return m_mode_bits; }
-    const X86Register* get_reg64(unsigned int num) const
+    unsigned int getModeBits() const { return m_mode_bits; }
+    const X86Register* getReg64(unsigned int num) const
     { return m_reg[X86Register::REG64][num]; }
 
-    static const char* get_name()
+    static const char* getName()
     { return "x86 (IA-32 and derivatives), AMD64"; }
-    static const char* get_keyword() { return "x86"; }
-    static const unsigned int get_wordsize() { return 16; }
-    static const unsigned int get_min_insn_len() { return 1; }
-    static ArchModule::MachineNames get_machines();
+    static const char* getKeyword() { return "x86"; }
+    static const unsigned int getWordSize() { return 16; }
+    static const unsigned int getMinInsnLen() { return 1; }
+    static ArchModule::MachineNames getMachines();
 
 private:
-    void parse_cpu(const std::string& cpuid);
+    void ParseCpu(const std::string& cpuid);
 
     // Directives
-    void dir_cpu(Object& object, const NameValues& namevals,
+    void DirCpu(Object& object, const NameValues& namevals,
+                const NameValues& objext_valparams, unsigned long line);
+    void DirBits(Object& object, const NameValues& namevals,
                  const NameValues& objext_valparams, unsigned long line);
-    void dir_bits(Object& object, const NameValues& namevals,
-                  const NameValues& objext_valparams, unsigned long line);
-    void dir_code16(Object& object, const NameValues& namevals,
-                    const NameValues& objext_namevals, unsigned long line);
-    void dir_code32(Object& object, const NameValues& namevals,
-                    const NameValues& objext_namevals, unsigned long line);
-    void dir_code64(Object& object, const NameValues& namevals,
-                    const NameValues& objext_namevals, unsigned long line);
+    void DirCode16(Object& object, const NameValues& namevals,
+                   const NameValues& objext_namevals, unsigned long line);
+    void DirCode32(Object& object, const NameValues& namevals,
+                   const NameValues& objext_namevals, unsigned long line);
+    void DirCode64(Object& object, const NameValues& namevals,
+                   const NameValues& objext_namevals, unsigned long line);
 
     // What instructions/features are enabled?
     CpuMask m_active_cpu;

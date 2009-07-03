@@ -34,13 +34,13 @@ class UnescapeTestSuite : public CxxTest::TestSuite
 public:
     void testBasic()
     {
-        TS_ASSERT_EQUALS(unescape("noescape"), "noescape");
-        TS_ASSERT_EQUALS(unescape("\\\\\\b\\f\\n\\r\\t\\\""), "\\\b\f\n\r\t\"");
-        TS_ASSERT_EQUALS(unescape("\\a"), "a");
-        TS_ASSERT_EQUALS(unescape("\\"), "\\");
+        TS_ASSERT_EQUALS(Unescape("noescape"), "noescape");
+        TS_ASSERT_EQUALS(Unescape("\\\\\\b\\f\\n\\r\\t\\\""), "\\\b\f\n\r\t\"");
+        TS_ASSERT_EQUALS(Unescape("\\a"), "a");
+        TS_ASSERT_EQUALS(Unescape("\\"), "\\");
 
         // should not have gotten any warnings
-        TS_ASSERT_EQUALS(warn_occurred(), WARN_NONE);
+        TS_ASSERT_EQUALS(WarnOccurred(), WARN_NONE);
     }
 
     // hex tests
@@ -49,20 +49,20 @@ public:
         std::string cmp;
 
         cmp.push_back(0);
-        TS_ASSERT_EQUALS(unescape("\\x"), cmp);
+        TS_ASSERT_EQUALS(Unescape("\\x"), cmp);
 
-        TS_ASSERT_EQUALS(unescape("\\x12"), "\x12");
-        TS_ASSERT_EQUALS(unescape("\\x1234"), "\x34");
+        TS_ASSERT_EQUALS(Unescape("\\x12"), "\x12");
+        TS_ASSERT_EQUALS(Unescape("\\x1234"), "\x34");
 
         cmp.clear(); cmp.push_back(0); cmp.push_back('g');
-        TS_ASSERT_EQUALS(unescape("\\xg"), cmp);
-        TS_ASSERT_EQUALS(unescape("\\xaga"), "\x0aga");
-        TS_ASSERT_EQUALS(unescape("\\xaag"), "\xaag");
-        TS_ASSERT_EQUALS(unescape("\\xaaa"), "\xaa");
-        TS_ASSERT_EQUALS(unescape("\\x55559"), "\x59");
+        TS_ASSERT_EQUALS(Unescape("\\xg"), cmp);
+        TS_ASSERT_EQUALS(Unescape("\\xaga"), "\x0aga");
+        TS_ASSERT_EQUALS(Unescape("\\xaag"), "\xaag");
+        TS_ASSERT_EQUALS(Unescape("\\xaaa"), "\xaa");
+        TS_ASSERT_EQUALS(Unescape("\\x55559"), "\x59");
 
         // should not have gotten any warnings
-        TS_ASSERT_EQUALS(warn_occurred(), WARN_NONE);
+        TS_ASSERT_EQUALS(WarnOccurred(), WARN_NONE);
     }
 
     // oct tests
@@ -71,30 +71,30 @@ public:
         std::string cmp, wmsg;
 
         cmp.push_back(0);
-        TS_ASSERT_EQUALS(unescape("\\778"), cmp);
-        TS_ASSERT_EQUALS(warn_fetch(&wmsg), WARN_GENERAL);
+        TS_ASSERT_EQUALS(Unescape("\\778"), cmp);
+        TS_ASSERT_EQUALS(FetchWarn(&wmsg), WARN_GENERAL);
         TS_ASSERT_EQUALS(wmsg, "octal value out of range");
 
-        TS_ASSERT_EQUALS(unescape("\\779"), "\001");
-        TS_ASSERT_EQUALS(warn_fetch(&wmsg), WARN_GENERAL);
+        TS_ASSERT_EQUALS(Unescape("\\779"), "\001");
+        TS_ASSERT_EQUALS(FetchWarn(&wmsg), WARN_GENERAL);
         TS_ASSERT_EQUALS(wmsg, "octal value out of range");
 
-        TS_ASSERT_EQUALS(unescape("\\1x"), "\001x");
-        TS_ASSERT_EQUALS(warn_occurred(), WARN_NONE);
-        TS_ASSERT_EQUALS(unescape("\\7779"), "\xff" "9");
-        TS_ASSERT_EQUALS(warn_occurred(), WARN_NONE);
+        TS_ASSERT_EQUALS(Unescape("\\1x"), "\001x");
+        TS_ASSERT_EQUALS(WarnOccurred(), WARN_NONE);
+        TS_ASSERT_EQUALS(Unescape("\\7779"), "\xff" "9");
+        TS_ASSERT_EQUALS(WarnOccurred(), WARN_NONE);
 
-        TS_ASSERT_EQUALS(unescape("\\7999"), "\x11" "9");
-        TS_ASSERT_EQUALS(warn_fetch(&wmsg), WARN_GENERAL);
+        TS_ASSERT_EQUALS(Unescape("\\7999"), "\x11" "9");
+        TS_ASSERT_EQUALS(FetchWarn(&wmsg), WARN_GENERAL);
         TS_ASSERT_EQUALS(wmsg, "octal value out of range");
 
-        TS_ASSERT_EQUALS(unescape("\\77a"), "\077a");
-        TS_ASSERT_EQUALS(warn_occurred(), WARN_NONE);
-        TS_ASSERT_EQUALS(unescape("\\5555555"), "\x6d" "5555");
-        TS_ASSERT_EQUALS(warn_occurred(), WARN_NONE);
+        TS_ASSERT_EQUALS(Unescape("\\77a"), "\077a");
+        TS_ASSERT_EQUALS(WarnOccurred(), WARN_NONE);
+        TS_ASSERT_EQUALS(Unescape("\\5555555"), "\x6d" "5555");
+        TS_ASSERT_EQUALS(WarnOccurred(), WARN_NONE);
 
-        TS_ASSERT_EQUALS(unescape("\\9999"), "\x91" "9");
-        TS_ASSERT_EQUALS(warn_fetch(&wmsg), WARN_GENERAL);
+        TS_ASSERT_EQUALS(Unescape("\\9999"), "\x91" "9");
+        TS_ASSERT_EQUALS(FetchWarn(&wmsg), WARN_GENERAL);
         TS_ASSERT_EQUALS(wmsg, "octal value out of range");
     }
 };

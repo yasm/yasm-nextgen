@@ -33,7 +33,7 @@ namespace yasm
 {
 
 std::string
-Includes::open(std::ifstream& ifs,
+Includes::Open(std::ifstream& ifs,
                const std::string& iname,
                const std::string& from,
                std::ios_base::openmode mode) const
@@ -44,7 +44,7 @@ Includes::open(std::ifstream& ifs,
     ifs.clear();
 
     // Try directly relative to from first, then each of the include paths.
-    std::string combine = combpath(from, iname);
+    std::string combine = CombPath(from, iname);
     ifs.open(combine.c_str(), mode);
     if (ifs)
         return combine;
@@ -52,7 +52,7 @@ Includes::open(std::ifstream& ifs,
     for (Dirs::const_iterator i = m_dirs.begin(), end = m_dirs.end(); i != end;
          ++i)
     {
-        combine = combpath(*i, iname);
+        combine = CombPath(*i, iname);
         ifs.open(combine.c_str(), mode);
         if (ifs)
             return combine;
@@ -62,7 +62,7 @@ Includes::open(std::ifstream& ifs,
 }
 
 void
-Includes::push_back(const std::string& path)
+Includes::AddPath(const std::string& path)
 {
     // Add trailing slash if it is missing.
     std::string::size_type len = path.length();

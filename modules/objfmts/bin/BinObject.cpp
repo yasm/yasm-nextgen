@@ -71,43 +71,43 @@ public:
     /// Destructor.
     ~BinObject();
 
-    void add_directives(Directives& dirs, const char* parser);
+    void AddDirectives(Directives& dirs, const char* parser);
 
-    void output(std::ostream& os, bool all_syms, Errwarns& errwarns);
+    void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
-    Section* add_default_section();
-    Section* append_section(const std::string& name, unsigned long line);
+    Section* AddDefaultSection();
+    Section* AppendSection(const std::string& name, unsigned long line);
 
-    static const char* get_name() { return "Flat format binary"; }
-    static const char* get_keyword() { return "bin"; }
-    static const char* get_extension() { return ""; }
-    static const unsigned int get_default_x86_mode_bits() { return 16; }
-    static const char* get_default_dbgfmt_keyword() { return "null"; }
-    static std::vector<const char*> get_dbgfmt_keywords();
-    static bool ok_object(Object& object) { return true; }
-    static bool taste(std::istream& is,
+    static const char* getName() { return "Flat format binary"; }
+    static const char* getKeyword() { return "bin"; }
+    static const char* getExtension() { return ""; }
+    static const unsigned int getDefaultX86ModeBits() { return 16; }
+    static const char* getDefaultDebugFormatKeyword() { return "null"; }
+    static std::vector<const char*> getDebugFormatKeywords();
+    static bool isOkObject(Object& object) { return true; }
+    static bool Taste(std::istream& is,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
     { return false; }
 
 private:
-    void dir_section(Object& object,
-                     NameValues& namevals,
-                     NameValues& objext_namevals,
-                     unsigned long line);
-    void dir_org(Object& object,
-                 NameValues& namevals,
-                 NameValues& objext_namevals,
-                 unsigned long line);
-    void dir_map(Object& object,
-                 NameValues& namevals,
-                 NameValues& objext_namevals,
-                 unsigned long line);
-    bool map_filename(const NameValue& nv);
+    void DirSection(Object& object,
+                    NameValues& namevals,
+                    NameValues& objext_namevals,
+                    unsigned long line);
+    void DirOrg(Object& object,
+                NameValues& namevals,
+                NameValues& objext_namevals,
+                unsigned long line);
+    void DirMap(Object& object,
+                NameValues& namevals,
+                NameValues& objext_namevals,
+                unsigned long line);
+    bool setMapFilename(const NameValue& nv);
 
-    void output_map(const IntNum& origin,
-                    const BinGroups& groups,
-                    Errwarns& errwarns) const;
+    void OutputMap(const IntNum& origin,
+                   const BinGroups& groups,
+                   Errwarns& errwarns) const;
 
     enum
     {
@@ -134,9 +134,9 @@ BinObject::~BinObject()
 }
 
 void
-BinObject::output_map(const IntNum& origin,
-                      const BinGroups& groups,
-                      Errwarns& errwarns) const
+BinObject::OutputMap(const IntNum& origin,
+                     const BinGroups& groups,
+                     Errwarns& errwarns) const
 {
     int map_flags = m_map_flags;
 
@@ -154,146 +154,154 @@ BinObject::output_map(const IntNum& origin,
         os.open(m_map_filename.c_str());
         if (os.fail())
         {
-            warn_set(WARN_GENERAL, String::compose(
+            setWarn(WARN_GENERAL, String::Compose(
                 N_("unable to open map file `%1'"), m_map_filename));
-            errwarns.propagate(0);
+            errwarns.Propagate(0);
             return;
         }
     }
 
     BinMapOutput out(os, m_object, origin, groups);
-    out.output_header();
-    out.output_origin();
+    out.OutputHeader();
+    out.OutputOrigin();
 
     if (map_flags & MAP_BRIEF)
-        out.output_sections_summary();
+        out.OutputSectionsSummary();
 
     if (map_flags & MAP_SECTIONS)
-        out.output_sections_detail();
+        out.OutputSectionsDetail();
 
     if (map_flags & MAP_SYMBOLS)
-        out.output_sections_symbols();
+        out.OutputSectionsSymbols();
 }
 
-class Output : public BytecodeStreamOutput
+class BinOutput : public BytecodeStreamOutput
 {
 public:
-    Output(std::ostream& os, Object& object);
-    ~Output();
+    BinOutput(std::ostream& os, Object& object);
+    ~BinOutput();
 
-    void output_section(Section& sect,
-                        const IntNum& origin,
-                        Errwarns& errwarns);
+    void OutputSection(Section& sect,
+                       const IntNum& origin,
+                       Errwarns& errwarns);
 
     // OutputBytecode overrides
-    void value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn);
+    void ConvertValueToBytes(Value& value,
+                             Bytes& bytes,
+                             Location loc,
+                             int warn);
 
 private:
     Object& m_object;
     BytecodeNoOutput m_no_output;
 };
 
-Output::Output(std::ostream& os, Object& object)
+BinOutput::BinOutput(std::ostream& os, Object& object)
     : BytecodeStreamOutput(os),
       m_object(object)
 {
 }
 
-Output::~Output()
+BinOutput::~BinOutput()
 {
 }
 
 void
-Output::output_section(Section& sect, const IntNum& origin, Errwarns& errwarns)
+BinOutput::OutputSection(Section& sect,
+                         const IntNum& origin,
+                         Errwarns& errwarns)
 {
     BytecodeOutput* outputter;
 
-    if (sect.is_bss())
+    if (sect.isBSS())
     {
         outputter = &m_no_output;
     }
     else
     {
-        IntNum file_start = sect.get_lma();
+        IntNum file_start = sect.getLMA();
         file_start -= origin;
-        if (file_start.sign() < 0)
+        if (file_start.getSign() < 0)
         {
-            errwarns.propagate(0, ValueError(String::compose(
+            errwarns.Propagate(0, ValueError(String::Compose(
                 N_("section `%1' starts before origin (ORG)"),
-                sect.get_name())));
+                sect.getName())));
             return;
         }
-        if (!file_start.ok_size(sizeof(unsigned long)*8, 0, 0))
+        if (!file_start.isOkSize(sizeof(unsigned long)*8, 0, 0))
         {
-            errwarns.propagate(0, ValueError(String::compose(
+            errwarns.Propagate(0, ValueError(String::Compose(
                 N_("section `%1' start value too large"),
-                sect.get_name())));
+                sect.getName())));
             return;
         }
-        m_os.seekp(file_start.get_uint());
+        m_os.seekp(file_start.getUInt());
         if (!m_os.good())
             throw Fatal(N_("could not seek on output file"));
 
         outputter = this;
     }
 
-    for (Section::bc_iterator i=sect.bcs_begin(), end=sect.bcs_end();
-         i != end; ++i)
+    for (Section::bc_iterator i=sect.bytecodes_begin(),
+         end=sect.bytecodes_end(); i != end; ++i)
     {
         try
         {
-            i->output(*outputter);
+            i->Output(*outputter);
         }
         catch (Error& err)
         {
-            errwarns.propagate(i->get_line(), err);
+            errwarns.Propagate(i->getLine(), err);
         }
-        errwarns.propagate(i->get_line());  // propagate warnings
+        errwarns.Propagate(i->getLine());   // propagate warnings
     }
 }
 
 void
-Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
+BinOutput::ConvertValueToBytes(Value& value,
+                               Bytes& bytes,
+                               Location loc,
+                               int warn)
 {
     // Binary objects we need to resolve against object, not against section.
-    if (value.is_relative())
+    if (value.isRelative())
     {
         Location label_loc;
         IntNum ssymval;
         Expr syme;
-        SymbolRef rel = value.get_rel();
+        SymbolRef rel = value.getRelative();
 
-        if (rel->is_abs())
+        if (rel->isAbsoluteSymbol())
             syme = Expr(0);
-        else if (rel->get_label(&label_loc) && label_loc.bc->get_container())
+        else if (rel->getLabel(&label_loc) && label_loc.bc->getContainer())
             syme = Expr(rel);
-        else if (get_ssym_value(*rel, &ssymval))
+        else if (getBinSSymValue(*rel, &ssymval))
             syme = Expr(ssymval);
         else
             goto done;
 
         // Handle PC-relative
-        if (value.get_sub_loc(&label_loc) && label_loc.bc->get_container())
+        if (value.getSubLocation(&label_loc) && label_loc.bc->getContainer())
             syme -= label_loc;
 
-        if (value.get_rshift() > 0)
-            syme >>= IntNum(value.get_rshift());
+        if (value.getRShift() > 0)
+            syme >>= IntNum(value.getRShift());
 
         // Add into absolute portion
-        value.add_abs(syme);
-        value.clear_rel();
+        value.AddAbs(syme);
+        value.ClearRelative();
     }
 done:
     // Simplify absolute portion of value, transforming symrecs
-    if (Expr* abs = value.get_abs())
+    if (Expr* abs = value.getAbs())
     {
-        bin_simplify(*abs);
-        abs->simplify();
+        BinSimplify(*abs);
+        abs->Simplify();
     }
 
     // Output
-    Arch* arch = m_object.get_arch();
-    if (value.output_basic(bytes, warn, *arch))
+    Arch* arch = m_object.getArch();
+    if (value.OutputBasic(bytes, warn, *arch))
         return;
 
     // Couldn't output, assume it contains an external reference.
@@ -302,52 +310,52 @@ done:
 }
 
 static void
-check_sym(const Symbol& sym, Errwarns& errwarns)
+CheckSymbol(const Symbol& sym, Errwarns& errwarns)
 {
-    int vis = sym.get_visibility();
+    int vis = sym.getVisibility();
 
     // Don't check internally-generated symbols.  Only internally generated
     // symbols have symrec data, so simply check for its presence.
-    if (get_bin_sym(sym))
+    if (getBin(sym))
         return;
 
     if (vis & Symbol::EXTERN)
     {
-        warn_set(WARN_GENERAL,
+        setWarn(WARN_GENERAL,
             N_("binary object format does not support extern variables"));
-        errwarns.propagate(sym.get_decl_line());
+        errwarns.Propagate(sym.getDeclLine());
     }
     else if (vis & Symbol::GLOBAL)
     {
-        warn_set(WARN_GENERAL,
+        setWarn(WARN_GENERAL,
             N_("binary object format does not support global variables"));
-        errwarns.propagate(sym.get_decl_line());
+        errwarns.Propagate(sym.getDeclLine());
     }
     else if (vis & Symbol::COMMON)
     {
-        errwarns.propagate(sym.get_decl_line(), TypeError(
+        errwarns.Propagate(sym.getDeclLine(), TypeError(
             N_("binary object format does not support common variables")));
     }
 }
 
 void
-BinObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
+BinObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
 {
     // Set ORG to 0 unless otherwise specified
     IntNum origin(0);
     if (m_org.get() != 0)
     {
-        m_org->simplify();
-        if (!m_org->is_intnum())
+        m_org->Simplify();
+        if (!m_org->isIntNum())
         {
-            errwarns.propagate(m_org_line,
+            errwarns.Propagate(m_org_line,
                 TooComplexError(N_("ORG expression is too complex")));
             return;
         }
-        IntNum orgi = m_org->get_intnum();
-        if (orgi.sign() < 0)
+        IntNum orgi = m_org->getIntNum();
+        if (orgi.getSign() < 0)
         {
-            errwarns.propagate(m_org_line,
+            errwarns.Propagate(m_org_line,
                 ValueError(N_("ORG expression is negative")));
             return;
         }
@@ -357,90 +365,90 @@ BinObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     // Check symbol table
     for (Object::const_symbol_iterator i=m_object.symbols_begin(),
          end=m_object.symbols_end(); i != end; ++i)
-        check_sym(*i, errwarns);
+        CheckSymbol(*i, errwarns);
 
     BinLink link(m_object, errwarns);
 
-    if (!link.do_link(origin))
+    if (!link.DoLink(origin))
         return;
 
     // Output map file
-    output_map(origin, link.get_lma_groups(), errwarns);
+    OutputMap(origin, link.getLMAGroups(), errwarns);
 
     // Ensure we don't have overlapping progbits LMAs.
-    if (!link.check_lma_overlap())
+    if (!link.CheckLMAOverlap())
         return;
 
     // Output sections
-    Output out(os, m_object);
+    BinOutput out(os, m_object);
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        out.output_section(*i, origin, errwarns);
+        out.OutputSection(*i, origin, errwarns);
     }
 }
 
 Section*
-BinObject::add_default_section()
+BinObject::AddDefaultSection()
 {
-    Section* section = append_section(".text", 0);
-    section->set_default(true);
+    Section* section = AppendSection(".text", 0);
+    section->setDefault(true);
     return section;
 }
 
 Section*
-BinObject::append_section(const std::string& name, unsigned long line)
+BinObject::AppendSection(const std::string& name, unsigned long line)
 {
     bool bss = (name == ".bss");
     bool code = (name == ".text");
     Section* section = new Section(name, code, bss, line);
-    m_object.append_section(std::auto_ptr<Section>(section));
+    m_object.AppendSection(std::auto_ptr<Section>(section));
 
     // Initialize section data and symbols.
     std::auto_ptr<BinSection> bsd(new BinSection());
 
-    SymbolRef start = m_object.get_symbol("section."+name+".start");
-    start->declare(Symbol::EXTERN, line);
-    start->add_assoc_data(BinSymbol::key, std::auto_ptr<AssocData>
+    SymbolRef start = m_object.getSymbol("section."+name+".start");
+    start->Declare(Symbol::EXTERN, line);
+    start->AddAssocData(BinSymbol::key, std::auto_ptr<AssocData>
         (new BinSymbol(*section, *bsd, BinSymbol::START)));
 
-    SymbolRef vstart = m_object.get_symbol("section."+name+".vstart");
-    vstart->declare(Symbol::EXTERN, line);
-    vstart->add_assoc_data(BinSymbol::key, std::auto_ptr<AssocData>
+    SymbolRef vstart = m_object.getSymbol("section."+name+".vstart");
+    vstart->Declare(Symbol::EXTERN, line);
+    vstart->AddAssocData(BinSymbol::key, std::auto_ptr<AssocData>
         (new BinSymbol(*section, *bsd, BinSymbol::VSTART)));
 
-    SymbolRef length = m_object.get_symbol("section."+name+".length");
-    length->declare(Symbol::EXTERN, line);
-    length->add_assoc_data(BinSymbol::key, std::auto_ptr<AssocData>
+    SymbolRef length = m_object.getSymbol("section."+name+".length");
+    length->Declare(Symbol::EXTERN, line);
+    length->AddAssocData(BinSymbol::key, std::auto_ptr<AssocData>
         (new BinSymbol(*section, *bsd, BinSymbol::LENGTH)));
 
-    section->add_assoc_data(BinSection::key,
-                            std::auto_ptr<AssocData>(bsd.release()));
+    section->AddAssocData(BinSection::key,
+                          std::auto_ptr<AssocData>(bsd.release()));
 
     return section;
 }
 
 void
-BinObject::dir_section(Object& object,
-                       NameValues& nvs,
-                       NameValues& objext_nvs,
-                       unsigned long line)
+BinObject::DirSection(Object& object,
+                      NameValues& nvs,
+                      NameValues& objext_nvs,
+                      unsigned long line)
 {
     assert(&object == &m_object);
 
-    if (!nvs.front().is_string())
+    if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
-    std::string sectname = nvs.front().get_string();
+    std::string sectname = nvs.front().getString();
 
-    Section* sect = m_object.find_section(sectname);
+    Section* sect = m_object.FindSection(sectname);
     bool first = true;
     if (sect)
-        first = sect->is_default();
+        first = sect->isDefault();
     else
-        sect = append_section(sectname, line);
+        sect = AppendSection(sectname, line);
 
-    m_object.set_cur_section(sect);
-    sect->set_default(false);
+    m_object.setCurSection(sect);
+    sect->setDefault(false);
 
     // No name/values, so nothing more to do
     if (nvs.size() <= 1)
@@ -449,7 +457,7 @@ BinObject::dir_section(Object& object,
     // Ignore flags if we've seen this section before
     if (!first)
     {
-        warn_set(WARN_GENERAL,
+        setWarn(WARN_GENERAL,
                  N_("section flags ignored on section redeclaration"));
         return;
     }
@@ -460,35 +468,35 @@ BinObject::dir_section(Object& object,
     std::auto_ptr<Expr> start(0);
     std::auto_ptr<Expr> vstart(0);
 
-    BinSection* bsd = get_bin_sect(*sect);
+    BinSection* bsd = getBin(*sect);
     assert(bsd);
-    unsigned long bss = sect->is_bss();
-    unsigned long code = sect->is_code();
+    unsigned long bss = sect->isBSS();
+    unsigned long code = sect->isCode();
 
     DirHelpers helpers;
-    helpers.add("follows", true,
-                BIND::bind(&dir_string, _1, &bsd->follows, &has_follows));
-    helpers.add("vfollows", true,
-                BIND::bind(&dir_string, _1, &bsd->vfollows, &has_vfollows));
-    helpers.add("start", true,
-                BIND::bind(&dir_expr, _1, &m_object, line, &start, &has_start));
-    helpers.add("vstart", true,
-                BIND::bind(&dir_expr, _1, &m_object, line, &vstart,
+    helpers.Add("follows", true,
+                BIND::bind(&DirString, _1, &bsd->follows, &has_follows));
+    helpers.Add("vfollows", true,
+                BIND::bind(&DirString, _1, &bsd->vfollows, &has_vfollows));
+    helpers.Add("start", true,
+                BIND::bind(&DirExpr, _1, &m_object, line, &start, &has_start));
+    helpers.Add("vstart", true,
+                BIND::bind(&DirExpr, _1, &m_object, line, &vstart,
                            &has_vstart));
-    helpers.add("align", true,
-                BIND::bind(&dir_intn, _1, &m_object, line, &bsd->align,
+    helpers.Add("align", true,
+                BIND::bind(&DirIntNum, _1, &m_object, line, &bsd->align,
                            &bsd->has_align));
-    helpers.add("valign", true,
-                BIND::bind(&dir_intn, _1, &m_object, line, &bsd->valign,
+    helpers.Add("valign", true,
+                BIND::bind(&DirIntNum, _1, &m_object, line, &bsd->valign,
                            &bsd->has_valign));
-    helpers.add("nobits", false, BIND::bind(&dir_flag_set, _1, &bss, 1));
-    helpers.add("progbits", false, BIND::bind(&dir_flag_clear, _1, &bss, 1));
-    helpers.add("code", false, BIND::bind(&dir_flag_set, _1, &code, 1));
-    helpers.add("data", false, BIND::bind(&dir_flag_clear, _1, &code, 1));
-    helpers.add("execute", false, BIND::bind(&dir_flag_set, _1, &code, 1));
-    helpers.add("noexecute", false, BIND::bind(&dir_flag_clear, _1, &code, 1));
+    helpers.Add("nobits", false, BIND::bind(&DirSetFlag, _1, &bss, 1));
+    helpers.Add("progbits", false, BIND::bind(&DirClearFlag, _1, &bss, 1));
+    helpers.Add("code", false, BIND::bind(&DirSetFlag, _1, &code, 1));
+    helpers.Add("data", false, BIND::bind(&DirClearFlag, _1, &code, 1));
+    helpers.Add("execute", false, BIND::bind(&DirSetFlag, _1, &code, 1));
+    helpers.Add("noexecute", false, BIND::bind(&DirClearFlag, _1, &code, 1));
 
-    helpers(++nvs.begin(), nvs.end(), dir_nameval_warn);
+    helpers(++nvs.begin(), nvs.end(), DirNameValueWarn);
 
     if (start.get() != 0)
     {
@@ -515,37 +523,37 @@ BinObject::dir_section(Object& object,
 
     if (bsd->has_align)
     {
-        unsigned long align = bsd->align.get_uint();
+        unsigned long align = bsd->align.getUInt();
 
         // Alignments must be a power of two.
-        if (!is_exp2(align))
+        if (!isExp2(align))
         {
-            throw ValueError(String::compose(
+            throw ValueError(String::Compose(
                 N_("argument to `%1' is not a power of two"), "align"));
         }
     }
 
     if (bsd->has_valign)
     {
-        unsigned long valign = bsd->valign.get_uint();
+        unsigned long valign = bsd->valign.getUInt();
 
         // Alignments must be a power of two.
-        if (!is_exp2(valign))
+        if (!isExp2(valign))
         {
-            throw ValueError(String::compose(
+            throw ValueError(String::Compose(
                 N_("argument to `%1' is not a power of two"), "valign"));
         }
     }
 
-    sect->set_bss(bss);
-    sect->set_code(code);
+    sect->setBSS(bss);
+    sect->setCode(code);
 }
 
 void
-BinObject::dir_org(Object& object,
-                   NameValues& namevals,
-                   NameValues& objext_namevals,
-                   unsigned long line)
+BinObject::DirOrg(Object& object,
+                  NameValues& namevals,
+                  NameValues& objext_namevals,
+                  unsigned long line)
 {
     // We only allow a single ORG in a program.
     if (m_org.get() != 0)
@@ -553,86 +561,86 @@ BinObject::dir_org(Object& object,
 
     // ORG takes just a simple expression as param
     const NameValue& nv = namevals.front();
-    if (!nv.is_expr())
+    if (!nv.isExpr())
         throw SyntaxError(N_("argument to ORG must be expression"));
-    m_org.reset(new Expr(nv.get_expr(object, line)));
+    m_org.reset(new Expr(nv.getExpr(object, line)));
     m_org_line = line;
 }
 
 bool
-BinObject::map_filename(const NameValue& nv)
+BinObject::setMapFilename(const NameValue& nv)
 {
     if (!m_map_filename.empty())
         throw Error(N_("map file already specified"));
 
-    if (!nv.is_string())
+    if (!nv.isString())
         throw SyntaxError(N_("unexpected expression in [map]"));
-    m_map_filename = nv.get_string();
+    m_map_filename = nv.getString();
     return true;
 }
 
 void
-BinObject::dir_map(Object& object,
-                   NameValues& namevals,
-                   NameValues& objext_namevals,
-                   unsigned long line)
+BinObject::DirMap(Object& object,
+                  NameValues& namevals,
+                  NameValues& objext_namevals,
+                  unsigned long line)
 {
     DirHelpers helpers;
-    helpers.add("all", false,
-                BIND::bind(&dir_flag_set, _1, &m_map_flags,
+    helpers.Add("all", false,
+                BIND::bind(&DirSetFlag, _1, &m_map_flags,
                            MAP_BRIEF|MAP_SECTIONS|MAP_SYMBOLS));
-    helpers.add("brief", false,
-                BIND::bind(&dir_flag_set, _1, &m_map_flags,
+    helpers.Add("brief", false,
+                BIND::bind(&DirSetFlag, _1, &m_map_flags,
                            static_cast<unsigned long>(MAP_BRIEF)));
-    helpers.add("sections", false,
-                BIND::bind(&dir_flag_set, _1, &m_map_flags,
+    helpers.Add("sections", false,
+                BIND::bind(&DirSetFlag, _1, &m_map_flags,
                            static_cast<unsigned long>(MAP_SECTIONS)));
-    helpers.add("segments", false,
-                BIND::bind(&dir_flag_set, _1, &m_map_flags,
+    helpers.Add("segments", false,
+                BIND::bind(&DirSetFlag, _1, &m_map_flags,
                            static_cast<unsigned long>(MAP_SECTIONS)));
-    helpers.add("symbols", false,
-                BIND::bind(&dir_flag_set, _1, &m_map_flags,
+    helpers.Add("symbols", false,
+                BIND::bind(&DirSetFlag, _1, &m_map_flags,
                            static_cast<unsigned long>(MAP_SYMBOLS)));
 
     m_map_flags |= MAP_NONE;
 
     helpers(namevals.begin(), namevals.end(),
-            BIND::bind(&BinObject::map_filename, this, _1));
+            BIND::bind(&BinObject::setMapFilename, this, _1));
 }
 
 std::vector<const char*>
-BinObject::get_dbgfmt_keywords()
+BinObject::getDebugFormatKeywords()
 {
     static const char* keywords[] = {"null"};
     return std::vector<const char*>(keywords, keywords+NELEMS(keywords));
 }
 
 void
-BinObject::add_directives(Directives& dirs, const char* parser)
+BinObject::AddDirectives(Directives& dirs, const char* parser)
 {
     static const Directives::Init<BinObject> nasm_dirs[] =
     {
-        {"section", &BinObject::dir_section, Directives::ARG_REQUIRED},
-        {"segment", &BinObject::dir_section, Directives::ARG_REQUIRED},
-        {"org",     &BinObject::dir_org, Directives::ARG_REQUIRED},
-        {"map",     &BinObject::dir_map, Directives::ANY},
+        {"section", &BinObject::DirSection, Directives::ARG_REQUIRED},
+        {"segment", &BinObject::DirSection, Directives::ARG_REQUIRED},
+        {"org",     &BinObject::DirOrg, Directives::ARG_REQUIRED},
+        {"map",     &BinObject::DirMap, Directives::ANY},
     };
     static const Directives::Init<BinObject> gas_dirs[] =
     {
-        {".section", &BinObject::dir_section, Directives::ARG_REQUIRED},
+        {".section", &BinObject::DirSection, Directives::ARG_REQUIRED},
     };
 
-    if (String::nocase_equal(parser, "nasm"))
-        dirs.add_array(this, nasm_dirs, NELEMS(nasm_dirs));
-    else if (String::nocase_equal(parser, "gas"))
-        dirs.add_array(this, gas_dirs, NELEMS(gas_dirs));
+    if (String::NocaseEqual(parser, "nasm"))
+        dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
+    else if (String::NocaseEqual(parser, "gas"))
+        dirs.AddArray(this, gas_dirs, NELEMS(gas_dirs));
 }
 
 void
-do_register()
+DoRegister()
 {
-    register_module<ObjectFormatModule,
-                    ObjectFormatModuleImpl<BinObject> >("bin");
+    RegisterModule<ObjectFormatModule,
+                   ObjectFormatModuleImpl<BinObject> >("bin");
 }
 
 }}} // namespace yasm::objfmt::bin

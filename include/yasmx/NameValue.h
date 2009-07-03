@@ -98,19 +98,19 @@ public:
 
     /// Get name.
     /// @return Name; empty string if no name.
-    std::string get_name() const { return m_name; }
+    std::string getName() const { return m_name; }
 
-    /// Determine if value is convertible to an expression using get_expr().
+    /// Determine if value is convertible to an expression using getExpr().
     /// @return True if convertible.
-    bool is_expr() const { return (m_type == ID) || (m_type == EXPR); }
+    bool isExpr() const { return (m_type == ID) || (m_type == EXPR); }
 
-    /// Determine if value is convertible to a string using get_string().
+    /// Determine if value is convertible to a string using getString().
     /// @return True if convertible.
-    bool is_string() const { return (m_type == ID) || (m_type == STRING); }
+    bool isString() const { return (m_type == ID) || (m_type == STRING); }
 
-    /// Determine if value is convertible to an identifier using get_id().
+    /// Determine if value is convertible to an identifier using getId().
     /// @return True if convertible.
-    bool is_id() const { return m_type == ID; }
+    bool isId() const { return m_type == ID; }
 
     /// Get value as an expr.  If the parameter is an identifier,
     /// it's treated as a symbol (Symbol::use() is called to convert it).
@@ -118,7 +118,7 @@ public:
     /// @param line         virtual line
     /// @return Expression; raises an exception if the parameter cannot be
     ///         converted to an expression.
-    Expr get_expr(Object& object, unsigned long line) const;
+    Expr getExpr(Object& object, unsigned long line) const;
 
     /// Release value's expression.  Operates just like get_expr() but moves
     /// the expression instead of copying it.
@@ -126,19 +126,19 @@ public:
     /// @param line         virtual line
     /// @return Expression, or NULL if the parameter cannot be
     ///         converted to an expression.
-    /*@null@*/ std::auto_ptr<Expr> release_expr
+    /*@null@*/ std::auto_ptr<Expr> ReleaseExpr
         (Object& object, unsigned long line);
 
     /// Get value as a string.  If the parameter is an identifier,
     /// it's treated as a string.
     /// @return String; raises an exception if the parameter cannot be
     ///         realized as a string.
-    std::string get_string() const;
+    std::string getString() const;
 
     /// Get value as an identifier.
     /// @return Identifier (string); raises an exception if the parameter
     ///         is not an identifier.
-    std::string get_id() const;
+    std::string getId() const;
 
 private:
     std::string m_name; ///< Name (empty string if no name)

@@ -40,61 +40,61 @@ namespace String
 {
 
 YASM_LIB_EXPORT
-bool nocase_equal(const char* s1, const char* s2);
+bool NocaseEqual(const char* s1, const char* s2);
 
 static inline bool
-nocase_equal(const std::string& s1, const std::string& s2)
+NocaseEqual(const std::string& s1, const std::string& s2)
 {
     assert(std::strlen(s1.c_str()) == s1.length() && "embedded nul in string");
     assert(std::strlen(s2.c_str()) == s2.length() && "embedded nul in string");
-    return nocase_equal(s1.c_str(), s2.c_str());
+    return NocaseEqual(s1.c_str(), s2.c_str());
 }
 
 static inline bool
-nocase_equal(const std::string& s1, const char* s2)
+NocaseEqual(const std::string& s1, const char* s2)
 {
     assert(std::strlen(s1.c_str()) == s1.length() && "embedded nul in string");
-    return nocase_equal(s1.c_str(), s2);
+    return NocaseEqual(s1.c_str(), s2);
 }
 
 static inline bool
-nocase_equal(const char* s1, const std::string& s2)
+NocaseEqual(const char* s1, const std::string& s2)
 {
     assert(std::strlen(s2.c_str()) == s2.length() && "embedded nul in string");
-    return nocase_equal(s1, s2.c_str());
+    return NocaseEqual(s1, s2.c_str());
 }
 
 YASM_LIB_EXPORT
-bool nocase_equal(const char* s1, const char* s2,
-                  std::string::size_type n);
+bool NocaseEqual(const char* s1, const char* s2,
+                 std::string::size_type n);
 
 static inline bool
-nocase_equal(const std::string& s1, const std::string& s2,
-             std::string::size_type n)
+NocaseEqual(const std::string& s1, const std::string& s2,
+            std::string::size_type n)
 {
     assert(std::strlen(s1.c_str()) == s1.length() && "embedded nul in string");
     assert(std::strlen(s2.c_str()) == s2.length() && "embedded nul in string");
-    return nocase_equal(s1.c_str(), s2.c_str(), n);
+    return NocaseEqual(s1.c_str(), s2.c_str(), n);
 }
 
 static inline bool
-nocase_equal(const std::string& s1, const char* s2, std::string::size_type n)
+NocaseEqual(const std::string& s1, const char* s2, std::string::size_type n)
 {
     assert(std::strlen(s1.c_str()) == s1.length() && "embedded nul in string");
-    return nocase_equal(s1.c_str(), s2, n);
+    return NocaseEqual(s1.c_str(), s2, n);
 }
 
 static inline bool
-nocase_equal(const char* s1, const std::string& s2, std::string::size_type n)
+NocaseEqual(const char* s1, const std::string& s2, std::string::size_type n)
 {
     assert(std::strlen(s2.c_str()) == s2.length() && "embedded nul in string");
-    return nocase_equal(s1, s2.c_str(), n);
+    return NocaseEqual(s1, s2.c_str(), n);
 }
 
 YASM_LIB_EXPORT
-std::string lowercase(const char* in);
+std::string Lowercase(const char* in);
 YASM_LIB_EXPORT
-std::string lowercase(const std::string& in);
+std::string Lowercase(const std::string& in);
 
 } // namespace String
 

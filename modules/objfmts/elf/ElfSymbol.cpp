@@ -60,30 +60,30 @@ ElfSymbol::ElfSymbol(const ElfConfig&   config,
     , m_size(0)
     , m_symindex(index)
 {
-    bytes.set_readpos(0);
-    config.setup_endian(bytes);
+    bytes.setReadPosition(0);
+    config.setEndian(bytes);
 
-    m_name_index = read_u32(bytes);
+    m_name_index = ReadU32(bytes);
 
     if (config.cls == ELFCLASS32)
     {
-        m_value = read_u32(bytes);
-        m_size = Expr(read_u32(bytes));
+        m_value = ReadU32(bytes);
+        m_size = Expr(ReadU32(bytes));
     }
 
-    unsigned char info = read_u8(bytes);
+    unsigned char info = ReadU8(bytes);
     m_bind = ELF_ST_BIND(info);
     m_type = ELF_ST_TYPE(info);
-    m_vis = ELF_ST_VISIBILITY(read_u8(bytes));
+    m_vis = ELF_ST_VISIBILITY(ReadU8(bytes));
 
-    m_index = static_cast<ElfSectionIndex>(read_u16(bytes));
+    m_index = static_cast<ElfSectionIndex>(ReadU16(bytes));
     if (m_index != SHN_UNDEF && m_index < config.secthead_count)
         m_sect = sections[m_index];
 
     if (config.cls == ELFCLASS64)
     {
-        m_value = read_u64(bytes);
-        m_size = Expr(read_u64(bytes));
+        m_value = ReadU64(bytes);
+        m_size = Expr(ReadU64(bytes));
     }
 }
 
@@ -105,44 +105,44 @@ ElfSymbol::~ElfSymbol()
 }
 
 SymbolRef
-ElfSymbol::create_symbol(Object& object, const StringTable& strtab) const
+ElfSymbol::CreateSymbol(Object& object, const StringTable& strtab) const
 {
     SymbolRef sym(0);
-    std::string name = strtab.get_str(m_name_index);
+    std::string name = strtab.getString(m_name_index);
 
     if (m_bind == STB_GLOBAL || m_bind == STB_WEAK)
     {
-        sym = object.get_symbol(name);
+        sym = object.getSymbol(name);
         if (m_index == SHN_UNDEF)
-            sym->declare(Symbol::EXTERN, 0);
+            sym->Declare(Symbol::EXTERN, 0);
         else
-            sym->declare(Symbol::GLOBAL, 0);
+            sym->Declare(Symbol::GLOBAL, 0);
     }
     else
     {
         // don't index by name, just append
-        sym = object.append_symbol(name);
+        sym = object.AppendSymbol(name);
     }
 
     if (m_index == SHN_ABS)
     {
-        sym->define_equ(m_size, 0);
+        sym->DefineEqu(m_size, 0);
     }
     else if (m_index == SHN_COMMON)
     {
-        sym->declare(Symbol::COMMON, 0);
+        sym->Declare(Symbol::COMMON, 0);
     }
     else if (m_sect != 0)
     {
-        Location loc = {&m_sect->bcs_first(), m_value.get_uint()};
-        sym->define_label(loc, 0);
+        Location loc = {&m_sect->bytecodes_first(), m_value.getUInt()};
+        sym->DefineLabel(loc, 0);
     }
 
     return sym;
 }
 
 void
-ElfSymbol::put(marg_ostream& os) const
+ElfSymbol::Put(marg_ostream& os) const
 {
     os << "bind=";
     switch (m_bind)
@@ -165,62 +165,42 @@ ElfSymbol::put(marg_ostream& os) const
     os << "size=" << m_size << '\n';
 }
 
-ElfSymbolIndex
-assign_sym_indices(Object& object)
-{
-    ElfSymbolIndex symindex=0;
-    ElfSymbolIndex last_local=0;
-
-    for (Object::symbol_iterator sym=object.symbols_begin(),
-         end=object.symbols_end(); sym != end; ++sym)
-    {
-        ElfSymbol* entry = get_elf(*sym);
-        if (!entry)
-            continue;       // XXX: or create?
-        entry->set_symindex(symindex);
-        if (entry->is_local())
-            last_local = symindex;
-        ++symindex;
-    }
-    return last_local + 1;
-}
-
 void
-ElfSymbol::finalize(Symbol& sym, Errwarns& errwarns)
+ElfSymbol::Finalize(Symbol& sym, Errwarns& errwarns)
 {
     // If symbol is in a TLS section, force its type to TLS.
     Location loc;
     Section* sect;
     ElfSection* elfsect;
-    if (sym.get_label(&loc) &&
-        (sect = loc.bc->get_container()->as_section()) &&
-        (elfsect = get_elf(*sect)) &&
-        (elfsect->get_flags() & SHF_TLS))
+    if (sym.getLabel(&loc) &&
+        (sect = loc.bc->getContainer()->AsSection()) &&
+        (elfsect = getElf(*sect)) &&
+        (elfsect->getFlags() & SHF_TLS))
     {
         m_type = STT_TLS;
     }
 
     // get size (if specified); expr overrides stored integer
-    if (!m_size.is_empty())
+    if (!m_size.isEmpty())
     {
-        simplify_calc_dist(m_size);
-        if (!m_size.is_intnum())
-            errwarns.propagate(m_size_line, ValueError(
+        SimplifyCalcDist(m_size);
+        if (!m_size.isIntNum())
+            errwarns.Propagate(m_size_line, ValueError(
                 N_("size specifier not an integer expression")));
     }
 
     // get EQU value for constants
-    const Expr* equ_expr_c = sym.get_equ();
+    const Expr* equ_expr_c = sym.getEqu();
 
     if (equ_expr_c != 0)
     {
         Expr equ_expr = *equ_expr_c;
-        simplify_calc_dist(equ_expr);
+        SimplifyCalcDist(equ_expr);
 
-        if (equ_expr.is_intnum())
-            m_value = equ_expr.get_intnum();
+        if (equ_expr.isIntNum())
+            m_value = equ_expr.getIntNum();
         else
-            errwarns.propagate(sym.get_def_line(), ValueError(
+            errwarns.Propagate(sym.getDefLine(), ValueError(
                 N_("EQU value not an integer expression")));
 
         m_index = SHN_ABS;
@@ -228,37 +208,37 @@ ElfSymbol::finalize(Symbol& sym, Errwarns& errwarns)
 }
 
 void
-ElfSymbol::write(Bytes& bytes, const ElfConfig& config)
+ElfSymbol::Write(Bytes& bytes, const ElfConfig& config)
 {
     bytes.resize(0);
-    config.setup_endian(bytes);
+    config.setEndian(bytes);
 
-    write_32(bytes, m_name_index);
+    Write32(bytes, m_name_index);
 
     if (config.cls == ELFCLASS32)
     {
-        write_32(bytes, m_value);
-        write_32(bytes, m_size.get_intnum());
+        Write32(bytes, m_value);
+        Write32(bytes, m_size.getIntNum());
     }
 
-    write_8(bytes, ELF_ST_INFO(m_bind, m_type));
-    write_8(bytes, ELF_ST_OTHER(m_vis));
+    Write8(bytes, ELF_ST_INFO(m_bind, m_type));
+    Write8(bytes, ELF_ST_OTHER(m_vis));
 
     if (m_sect)
     {
-        ElfSection* elfsect = get_elf(*m_sect);
+        ElfSection* elfsect = getElf(*m_sect);
         assert(elfsect != 0);
-        write_16(bytes, elfsect->get_index());
+        Write16(bytes, elfsect->getIndex());
     }
     else
     {
-        write_16(bytes, m_index);
+        Write16(bytes, m_index);
     }
 
     if (config.cls == ELFCLASS64)
     {
-        write_64(bytes, m_value);
-        write_64(bytes, m_size.get_intnum());
+        Write64(bytes, m_value);
+        Write64(bytes, m_size.getIntNum());
     }
 
     if (config.cls == ELFCLASS32)

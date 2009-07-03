@@ -45,8 +45,8 @@ namespace win64
 
 class UnwindCode : public Bytecode::Contents
 {
-    friend void append_unwind_code(BytecodeContainer& container,
-                                   std::auto_ptr<UnwindCode> uwcode);
+    friend void AppendUnwindCode(BytecodeContainer& container,
+                                 std::auto_ptr<UnwindCode> uwcode);
 
 public:
     // Operation codes
@@ -91,18 +91,18 @@ public:
 
     ~UnwindCode();
 
-    virtual void put(marg_ostream& os) const;
-    virtual void finalize(Bytecode& bc);
-    virtual unsigned long calc_len(Bytecode& bc,
-                                   const Bytecode::AddSpanFunc& add_span);
-    virtual bool expand(Bytecode& bc,
+    virtual void Put(marg_ostream& os) const;
+    virtual void Finalize(Bytecode& bc);
+    virtual unsigned long CalcLen(Bytecode& bc,
+                                  const Bytecode::AddSpanFunc& add_span);
+    virtual bool Expand(Bytecode& bc,
                         unsigned long& len,
                         int span,
                         long old_val,
                         long new_val,
                         /*@out@*/ long* neg_thres,
                         /*@out@*/ long* pos_thres);
-    virtual void output(Bytecode& bc, BytecodeOutput& bc_out);
+    virtual void Output(Bytecode& bc, BytecodeOutput& bc_out);
     virtual UnwindCode* clone() const;
 
 private:
@@ -114,8 +114,8 @@ private:
     Value m_off;            // Offset expression (used for some codes)
 };
 
-void append_unwind_code(BytecodeContainer& container,
-                        std::auto_ptr<UnwindCode> uwcode);
+void AppendUnwindCode(BytecodeContainer& container,
+                      std::auto_ptr<UnwindCode> uwcode);
 
 }}} // namespace yasm::objfmt::win64
 

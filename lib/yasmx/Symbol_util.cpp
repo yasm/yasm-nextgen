@@ -43,15 +43,15 @@ namespace
 
 using namespace yasm;
 
-class ObjextNamevals : public AssocData
+class ObjextNameValues : public AssocData
 {
 public:
     static const char* key;
 
-    ObjextNamevals(NameValues& nvs) { m_nvs.swap(nvs); }
-    ~ObjextNamevals();
+    ObjextNameValues(NameValues& nvs) { m_nvs.swap(nvs); }
+    ~ObjextNameValues();
 
-    void put(marg_ostream& os) const;
+    void Put(marg_ostream& os) const;
 
     const NameValues& get() const { return m_nvs; }
     NameValues& get() { return m_nvs; }
@@ -60,16 +60,16 @@ private:
     NameValues m_nvs;
 };
 
-const char* ObjextNamevals::key = "ObjextNamevals";
+const char* ObjextNameValues::key = "ObjextNameValues";
 
-ObjextNamevals::~ObjextNamevals()
+ObjextNameValues::~ObjextNameValues()
 {
 }
 
 void
-ObjextNamevals::put(marg_ostream& os) const
+ObjextNameValues::Put(marg_ostream& os) const
 {
-    os << "Objext Namevals: " << m_nvs << '\n';
+    os << "Objext NameValues: " << m_nvs << '\n';
 }
 
 
@@ -81,7 +81,7 @@ public:
     CommonSize(const Expr& e) : m_expr(e) {}
     ~CommonSize();
 
-    void put(marg_ostream& os) const;
+    void Put(marg_ostream& os) const;
 
     const Expr* get() const { return &m_expr; }
     Expr* get() { return &m_expr; }
@@ -97,7 +97,7 @@ CommonSize::~CommonSize()
 }
 
 void
-CommonSize::put(marg_ostream& os) const
+CommonSize::Put(marg_ostream& os) const
 {
     os << "Common Size=" << m_expr << '\n';
 }
@@ -108,43 +108,43 @@ namespace yasm
 {
 
 void
-set_objext_namevals(Symbol& sym, NameValues& objext_namevals)
+setObjextNameValues(Symbol& sym, NameValues& objext_namevals)
 {
-    std::auto_ptr<AssocData> ad(new ObjextNamevals(objext_namevals));
-    sym.add_assoc_data(ObjextNamevals::key, ad);
+    std::auto_ptr<AssocData> ad(new ObjextNameValues(objext_namevals));
+    sym.AddAssocData(ObjextNameValues::key, ad);
 }
 
 const NameValues*
-get_objext_namevals(const Symbol& sym)
+getObjextNameValues(const Symbol& sym)
 {
-    const AssocData* ad = sym.get_assoc_data(ObjextNamevals::key);
+    const AssocData* ad = sym.getAssocData(ObjextNameValues::key);
     if (!ad)
         return 0;
-    const ObjextNamevals* x = static_cast<const ObjextNamevals*>(ad);
+    const ObjextNameValues* x = static_cast<const ObjextNameValues*>(ad);
     return &x->get();
 }
 
 NameValues*
-get_objext_namevals(Symbol& sym)
+getObjextNameValues(Symbol& sym)
 {
-    AssocData* ad = sym.get_assoc_data(ObjextNamevals::key);
+    AssocData* ad = sym.getAssocData(ObjextNameValues::key);
     if (!ad)
         return 0;
-    ObjextNamevals* x = static_cast<ObjextNamevals*>(ad);
+    ObjextNameValues* x = static_cast<ObjextNameValues*>(ad);
     return &x->get();
 }
 
 void
-set_common_size(Symbol& sym, const Expr& common_size)
+setCommonSize(Symbol& sym, const Expr& common_size)
 {
     std::auto_ptr<AssocData> ad(new CommonSize(common_size));
-    sym.add_assoc_data(CommonSize::key, ad);
+    sym.AddAssocData(CommonSize::key, ad);
 }
 
 const Expr*
-get_common_size(const Symbol& sym)
+getCommonSize(const Symbol& sym)
 {
-    const AssocData* ad = sym.get_assoc_data(CommonSize::key);
+    const AssocData* ad = sym.getAssocData(CommonSize::key);
     if (!ad)
         return 0;
     const CommonSize* x = static_cast<const CommonSize*>(ad);
@@ -152,9 +152,9 @@ get_common_size(const Symbol& sym)
 }
 
 Expr*
-get_common_size(Symbol& sym)
+getCommonSize(Symbol& sym)
 {
-    AssocData* ad = sym.get_assoc_data(CommonSize::key);
+    AssocData* ad = sym.getAssocData(CommonSize::key);
     if (!ad)
         return 0;
     CommonSize* x = static_cast<CommonSize*>(ad);
@@ -162,49 +162,49 @@ get_common_size(Symbol& sym)
 }
 
 void
-dir_extern(Object& object,
-           NameValues& namevals,
-           NameValues& objext_namevals,
-           unsigned long line)
+DirExtern(Object& object,
+          NameValues& namevals,
+          NameValues& objext_namevals,
+          unsigned long line)
 {
-    SymbolRef sym = object.get_symbol(namevals.front().get_id());
-    sym->declare(Symbol::EXTERN, line);
+    SymbolRef sym = object.getSymbol(namevals.front().getId());
+    sym->Declare(Symbol::EXTERN, line);
 
     if (!objext_namevals.empty())
-        set_objext_namevals(*sym, objext_namevals);
+        setObjextNameValues(*sym, objext_namevals);
 }
 
 void
-dir_global(Object& object,
-           NameValues& namevals,
-           NameValues& objext_namevals,
-           unsigned long line)
+DirGlobal(Object& object,
+          NameValues& namevals,
+          NameValues& objext_namevals,
+          unsigned long line)
 {
-    SymbolRef sym = object.get_symbol(namevals.front().get_id());
-    sym->declare(Symbol::GLOBAL, line);
+    SymbolRef sym = object.getSymbol(namevals.front().getId());
+    sym->Declare(Symbol::GLOBAL, line);
 
     if (!objext_namevals.empty())
-        set_objext_namevals(*sym, objext_namevals);
+        setObjextNameValues(*sym, objext_namevals);
 }
 
 void
-dir_common(Object& object,
-           NameValues& namevals,
-           NameValues& objext_namevals,
-           unsigned long line)
+DirCommon(Object& object,
+          NameValues& namevals,
+          NameValues& objext_namevals,
+          unsigned long line)
 {
     if (namevals.size() < 2)
         throw SyntaxError(N_("no size specified in COMMON declaration"));
-    if (!namevals[1].is_expr())
+    if (!namevals[1].isExpr())
         throw SyntaxError(N_("common size is not an expression"));
 
-    SymbolRef sym = object.get_symbol(namevals.front().get_id());
-    sym->declare(Symbol::COMMON, line);
+    SymbolRef sym = object.getSymbol(namevals.front().getId());
+    sym->Declare(Symbol::COMMON, line);
 
-    set_common_size(*sym, namevals[1].get_expr(object, line));
+    setCommonSize(*sym, namevals[1].getExpr(object, line));
 
     if (!objext_namevals.empty())
-        set_objext_namevals(*sym, objext_namevals);
+        setObjextNameValues(*sym, objext_namevals);
 }
 
 } // namespace yasm

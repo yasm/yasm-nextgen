@@ -64,14 +64,14 @@ public:
     /// @param reg  register
     /// @return 0 if there is no suitable equivalent size, otherwise the
     ///         size.
-    unsigned int get_size() const;
+    unsigned int getSize() const;
 
     /// Print a register.  For debugging purposes.
     /// @param os   output stream
-    void put(std::ostream& os) const;
+    void Put(std::ostream& os) const;
 
-    Type type() const { return m_type; }
-    unsigned int get_num() const { return m_num; }
+    Type getType() const { return m_type; }
+    unsigned int getNum() const { return m_num; }
 
 private:
     // Register type.
@@ -102,11 +102,11 @@ public:
 
     /// Print a segment register.  For debugging purposes.
     /// @param os   output stream
-    void put(std::ostream& os) const;
+    void Put(std::ostream& os) const;
 
-    Type type() const { return m_type; }
-    unsigned int get_num() const { return static_cast<unsigned int>(m_type); }
-    unsigned char prefix() const { return m_prefix; }
+    Type getType() const { return m_type; }
+    unsigned int getNum() const { return static_cast<unsigned int>(m_type); }
+    unsigned char getPrefix() const { return m_prefix; }
 
 private:
     Type m_type;

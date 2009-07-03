@@ -44,49 +44,49 @@ public:
     Win32Object(const ObjectFormatModule& module, Object& object);
     virtual ~Win32Object();
 
-    virtual void add_directives(Directives& dirs, const char* parser);
+    virtual void AddDirectives(Directives& dirs, const char* parser);
 
-    //virtual void init_symbols(const char* parser);
-    //virtual void read(std::istream& is);
-    //virtual void output(std::ostream& os, bool all_syms, Errwarns& errwarns);
+    //virtual void InitSymbols(const char* parser);
+    //virtual void Read(std::istream& is);
+    //virtual void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
-    static const char* get_name() { return "Win32"; }
-    static const char* get_keyword() { return "win32"; }
-    static const char* get_extension() { return ".obj"; }
-    static unsigned int get_default_x86_mode_bits() { return 32; }
+    static const char* getName() { return "Win32"; }
+    static const char* getKeyword() { return "win32"; }
+    static const char* getExtension() { return ".obj"; }
+    static unsigned int getDefaultX86ModeBits() { return 32; }
 
-    static const char* get_default_dbgfmt_keyword()
-    { return CoffObject::get_default_dbgfmt_keyword(); }
-    static std::vector<const char*> get_dbgfmt_keywords();
+    static const char* getDefaultDebugFormatKeyword()
+    { return CoffObject::getDefaultDebugFormatKeyword(); }
+    static std::vector<const char*> getDebugFormatKeywords();
 
-    static bool ok_object(Object& object)
-    { return CoffObject::ok_object(object); }
-    static bool taste(std::istream& is,
+    static bool isOkObject(Object& object)
+    { return CoffObject::isOkObject(object); }
+    static bool Taste(std::istream& is,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
     { return false; }
 
 protected:
-    virtual bool init_section(const std::string& name,
-                              Section& section,
-                              CoffSection* coffsect);
-    virtual void dir_section_init_helpers(DirHelpers& helpers,
-                                          CoffSection* csd,
-                                          IntNum* align,
-                                          bool* has_align,
-                                          unsigned long line);
+    virtual bool InitSection(const std::string& name,
+                             Section& section,
+                             CoffSection* coffsect);
+    virtual void DirSectionInitHelpers(DirHelpers& helpers,
+                                       CoffSection* csd,
+                                       IntNum* align,
+                                       bool* has_align,
+                                       unsigned long line);
 
 protected:
-    void dir_export(Object& object,
+    void DirExport(Object& object,
+                   NameValues& namevals,
+                   NameValues& objext_namevals,
+                   unsigned long line);
+
+private:
+    void DirSafeSEH(Object& object,
                     NameValues& namevals,
                     NameValues& objext_namevals,
                     unsigned long line);
-
-private:
-    void dir_safeseh(Object& object,
-                     NameValues& namevals,
-                     NameValues& objext_namevals,
-                     unsigned long line);
 };
 
 }}} // namespace yasm::objfmt::win32

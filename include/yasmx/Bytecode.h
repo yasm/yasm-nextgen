@@ -97,12 +97,12 @@ public:
         /// Prints the implementation-specific data (for debugging purposes).
         /// Called from Bytecode::put().
         /// @param os           output stream
-        virtual void put(marg_ostream& os) const = 0;
+        virtual void Put(marg_ostream& os) const = 0;
 
         /// Finalizes the bytecode after parsing.
         /// Called from Bytecode::finalize().
         /// @param bc           bytecode
-        virtual void finalize(Bytecode& bc) = 0;
+        virtual void Finalize(Bytecode& bc) = 0;
 
         /// Calculates the minimum size of a bytecode.
         /// Called from Bytecode::calc_len().
@@ -111,8 +111,8 @@ public:
         /// @param add_span     function to call to add a span
         /// @return Length in bytes.
         /// @note May store to bytecode updated expressions.
-        virtual unsigned long calc_len(Bytecode& bc,
-                                       const Bytecode::AddSpanFunc& add_span)
+        virtual unsigned long CalcLen(Bytecode& bc,
+                                      const Bytecode::AddSpanFunc& add_span)
             = 0;
 
         /// Recalculates the bytecode's length based on an expanded span
@@ -136,7 +136,7 @@ public:
         ///         based on the new negative and positive thresholds
         ///         returned.
         /// @note May store to bytecode updated expressions.
-        virtual bool expand(Bytecode& bc,
+        virtual bool Expand(Bytecode& bc,
                             unsigned long& len,
                             int span,
                             long old_val,
@@ -151,7 +151,7 @@ public:
         /// @note May result in non-reversible changes to the bytecode, but
         ///       it's preferable if calling this function twice would result
         ///       in the same output.
-        virtual void output(Bytecode& bc, BytecodeOutput& bc_out) = 0;
+        virtual void Output(Bytecode& bc, BytecodeOutput& bc_out) = 0;
 
         /// Special bytecode classifications.  Most bytecode types should
         /// simply not override the get_special() function (which returns
@@ -166,7 +166,7 @@ public:
             SPECIAL_OFFSET
         };
 
-        virtual SpecialType get_special() const;
+        virtual SpecialType getSpecial() const;
 
         virtual Contents* clone() const = 0;
 
@@ -200,26 +200,26 @@ public:
 
     /// Transform a bytecode of any type into a different type.
     /// @param contents     new type-specific data
-    void transform(Contents::Ptr contents);
+    void Transform(Contents::Ptr contents);
 
     /// Return if bytecode has contents.
     /// @return True if bytecode has contents.
-    bool has_contents() const { return m_contents.get() != 0; }
+    bool hasContents() const { return m_contents.get() != 0; }
 
     /// Set line number of bytecode.
     /// @param line     virtual line (from Linemap)
-    void set_line(unsigned long line) { m_line = line; }
+    void setLine(unsigned long line) { m_line = line; }
 
     /// Get the container the bytecode resides in.
     /// @param bc   bytecode
     /// @return Bytecode container containing bc.
-    const BytecodeContainer* get_container() const { return m_container; }
-    BytecodeContainer* get_container() { return m_container; }
+    const BytecodeContainer* getContainer() const { return m_container; }
+    BytecodeContainer* getContainer() { return m_container; }
 
     /// Add to the list of symbols that reference this bytecode.
     /// @note Intended for #Symbol use only.
     /// @param sym  symbol
-    void add_symbol(SymbolRef sym) { m_symbols.push_back(sym); }
+    void AddSymbol(SymbolRef sym) { m_symbols.push_back(sym); }
 
     /// Get the list of symbols that reference this bytecode.
     /// @return Vector of symbol references.
@@ -230,50 +230,50 @@ public:
     ~Bytecode();
 
     /// Finalize a bytecode after parsing.
-    void finalize();
+    void Finalize();
 
     /// Get the offset of the bytecode.
     /// @return Offset of the bytecode in bytes.
     /// @warning Only valid /after/ optimization.
-    unsigned long get_offset() const { return m_offset; }
+    unsigned long getOffset() const { return m_offset; }
 
     /// Set the offset of the bytecode.
     /// @internal Should be used by Object::optimize() only.
     /// @param offset       new offset of the bytecode
-    void set_offset(unsigned long offset) { m_offset = offset; }
+    void setOffset(unsigned long offset) { m_offset = offset; }
 
     /// Get the offset of the start of the tail of the bytecode.
     /// @return Offset of the tail in bytes.
-    unsigned long tail_offset() const { return m_offset + get_fixed_len(); }
+    unsigned long getTailOffset() const { return m_offset + getFixedLen(); }
 
     /// Get the offset of the next bytecode (the next bytecode doesn't have to
     /// actually exist).
     /// @return Offset of the next bytecode in bytes.
     /// @warning Only valid /after/ optimization.
-    unsigned long next_offset() const
-    { return m_offset + get_total_len(); }
+    unsigned long getNextOffset() const
+    { return m_offset + getTotalLen(); }
 
     /// Get the total length of the bytecode.
     /// @return Total length of the bytecode in bytes.
     /// @warning Only valid /after/ optimization.
-    unsigned long get_total_len() const
+    unsigned long getTotalLen() const
     { return m_fixed.size() + m_len; }
 
     /// Get the fixed length of the bytecode.
     /// @return Length in bytes.
-    unsigned long get_fixed_len() const { return m_fixed.size(); }
+    unsigned long getFixedLen() const { return m_fixed.size(); }
 
     /// Get the tail (dynamic) length of the bytecode.
     /// @return Length of the bytecode in bytes.
     /// @warning Only valid /after/ optimization.
-    unsigned long get_tail_len() const { return m_len; }
+    unsigned long getTailLen() const { return m_len; }
 
     /// Resolve EQUs in a bytecode and calculate its minimum size.
     /// Generates dependent bytecode spans for cases where, if the length
     /// spanned increases, it could cause the bytecode size to increase.
     /// @param add_span     function to call to add a span
     /// @note May store to bytecode updated expressions and the short length.
-    void calc_len(const AddSpanFunc& add_span);
+    void CalcLen(const AddSpanFunc& add_span);
 
     /// Recalculate a bytecode's length based on an expanded span length.
     /// @param span         span ID (as given to yasm_bc_add_span_func in
@@ -289,7 +289,7 @@ public:
     ///         based on the new negative and positive thresholds returned.
     /// @note May store to bytecode updated expressions and the updated
     ///       length.
-    bool expand(int span,
+    bool Expand(int span,
                 long old_val,
                 long new_val,
                 /*@out@*/ long* neg_thres,
@@ -300,7 +300,7 @@ public:
     /// @note Calling twice on the same bytecode may \em not produce the same
     ///       results on the second call, as calling this function may result
     ///       in non-reversible changes to the bytecode.
-    void output(BytecodeOutput& bc_out);
+    void Output(BytecodeOutput& bc_out);
 
     /// Updates bytecode offset.
     /// @note For offset-based bytecodes, calls expand() to determine new
@@ -308,28 +308,28 @@ public:
     /// @param offset       offset to set this bytecode to
     /// @param errwarns     error/warning set
     /// @return Offset of next bytecode.
-    unsigned long update_offset(unsigned long offset);
+    unsigned long UpdateOffset(unsigned long offset);
 
-    unsigned long get_line() const { return m_line; }
+    unsigned long getLine() const { return m_line; }
 
-    unsigned long get_index() const { return m_index; }
-    void set_index(unsigned long idx) { m_index = idx; }
+    unsigned long getIndex() const { return m_index; }
+    void setIndex(unsigned long idx) { m_index = idx; }
 
-    Contents::SpecialType get_special() const
+    Contents::SpecialType getSpecial() const
     {
         if (m_contents.get() == 0)
             return Contents::SPECIAL_NONE;
-        return m_contents->get_special();
+        return m_contents->getSpecial();
     }
 
-    Bytes& get_fixed() { return m_fixed; }
-    const Bytes& get_fixed() const { return m_fixed; }
+    Bytes& getFixed() { return m_fixed; }
+    const Bytes& getFixed() const { return m_fixed; }
 
-    void append_fixed(const Value& val);
-    void append_fixed(std::auto_ptr<Value> val);
-    void append_fixed(unsigned int size,
-                      std::auto_ptr<Expr> e,
-                      unsigned long line);
+    void AppendFixed(const Value& val);
+    void AppendFixed(std::auto_ptr<Value> val);
+    void AppendFixed(unsigned int size,
+                     std::auto_ptr<Expr> e,
+                     unsigned long line);
 
     /// A fixup consists of a value+offset combination.  0's need to be stored
     /// in m_fixed as placeholders.
@@ -343,7 +343,7 @@ public:
               std::auto_ptr<Expr> e,
               unsigned long line);
         void swap(Fixup& oth);
-        unsigned int get_off() const { return m_off; }
+        unsigned int getOffset() const { return m_off; }
     private:
         unsigned int m_off;
     };
@@ -382,7 +382,7 @@ private:
 inline marg_ostream&
 operator<< (marg_ostream& os, const Bytecode::Contents& contents)
 {
-    contents.put(os);
+    contents.Put(os);
     return os;
 }
 

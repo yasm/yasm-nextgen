@@ -54,10 +54,10 @@ static llvm::APInt op1static(IntNum::BITVECT_NATIVE_SIZE, 0);
 static llvm::APInt op2static(IntNum::BITVECT_NATIVE_SIZE, 0);
 
 bool
-ok_size(const llvm::APInt& intn,
-        unsigned int size,
-        unsigned int rshift,
-        int rangetype)
+isOkSize(const llvm::APInt& intn,
+         unsigned int size,
+         unsigned int rshift,
+         int rangetype)
 {
     unsigned int intn_size;
     switch (rangetype)
@@ -82,7 +82,7 @@ ok_size(const llvm::APInt& intn,
 }
 
 void
-IntNum::set_bv(const llvm::APInt& bv)
+IntNum::setBV(const llvm::APInt& bv)
 {
     if (bv.getMinSignedBits() <= LONG_BITS)
     {
@@ -105,7 +105,7 @@ IntNum::set_bv(const llvm::APInt& bv)
 }
 
 const llvm::APInt*
-IntNum::get_bv(llvm::APInt* bv) const
+IntNum::getBV(llvm::APInt* bv) const
 {
     if (m_type == INTNUM_BV)
         return m_val.bv;
@@ -121,7 +121,7 @@ IntNum::get_bv(llvm::APInt* bv) const
 }
 
 llvm::APInt*
-IntNum::get_bv(llvm::APInt* bv)
+IntNum::getBV(llvm::APInt* bv)
 {
     if (m_type == INTNUM_BV)
         return m_val.bv;
@@ -137,7 +137,7 @@ IntNum::get_bv(llvm::APInt* bv)
 }
 
 void
-IntNum::set_str(const char* str, unsigned int len, int base)
+IntNum::setStr(const char* str, unsigned int len, int base)
 {
     // Each computation below needs to know if its negative
     unsigned int minbits = (str[0] == '-') ? 1 : 0;
@@ -171,7 +171,7 @@ IntNum::set_str(const char* str, unsigned int len, int base)
     else
     {
         conv_bv.fromString(str, len, base);
-        set_bv(conv_bv);
+        setBV(conv_bv);
     }
 }
 
@@ -194,7 +194,7 @@ IntNum::swap(IntNum& oth)
 // Always makes conservative assumptions; we fall back to bitvect if this
 // function returns false.
 static bool
-calc_long(Op::Op op, long* lhs, long rhs)
+CalcLong(Op::Op op, long* lhs, long rhs)
 {
     switch (op)
     {
@@ -310,23 +310,23 @@ calc_long(Op::Op op, long* lhs, long rhs)
 
 /*@-nullderef -nullpass -branchstate@*/
 void
-IntNum::calc(Op::Op op, const IntNum* operand)
+IntNum::Calc(Op::Op op, const IntNum* operand)
 {
     if (!operand && op != Op::NEG && op != Op::NOT && op != Op::LNOT)
         throw ArithmeticError(N_("operation needs an operand"));
 
     if (m_type == INTNUM_L && (!operand || operand->m_type == INTNUM_L))
     {
-        if (calc_long(op, &m_val.l, operand ? operand->m_val.l : 0))
+        if (CalcLong(op, &m_val.l, operand ? operand->m_val.l : 0))
             return;
     }
 
     // Always do computations with in full bit vector.
     // Bit vector results must be calculated through intermediate storage.
-    const llvm::APInt* op1 = get_bv(&op1static);
+    const llvm::APInt* op1 = getBV(&op1static);
     const llvm::APInt* op2 = 0;
     if (operand)
-        op2 = operand->get_bv(&op2static);
+        op2 = operand->getBV(&op2static);
 
     // A operation does a bitvector computation if result is allocated.
     switch (op)
@@ -461,15 +461,15 @@ IntNum::calc(Op::Op op, const IntNum* operand)
             set(static_cast<long>(op1->ne(*op2)));
             return;
         case Op::SEG:
-            throw ArithmeticError(String::compose(N_("invalid use of '%1'"),
+            throw ArithmeticError(String::Compose(N_("invalid use of '%1'"),
                                                   "SEG"));
             break;
         case Op::WRT:
-            throw ArithmeticError(String::compose(N_("invalid use of '%1'"),
+            throw ArithmeticError(String::Compose(N_("invalid use of '%1'"),
                                                   "WRT"));
             break;
         case Op::SEGOFF:
-            throw ArithmeticError(String::compose(N_("invalid use of '%1'"),
+            throw ArithmeticError(String::Compose(N_("invalid use of '%1'"),
                                                   ":"));
             break;
         case Op::IDENT:
@@ -481,7 +481,7 @@ IntNum::calc(Op::Op op, const IntNum* operand)
     }
 
     // Try to fit the result into long if possible
-    set_bv(result);
+    setBV(result);
 }
 /*@=nullderef =nullpass =branchstate@*/
 
@@ -510,7 +510,7 @@ IntNum::set(unsigned long val)
 }
 
 int
-IntNum::sign() const
+IntNum::getSign() const
 {
     if (m_type == INTNUM_L)
     {
@@ -528,7 +528,7 @@ IntNum::sign() const
 }
 
 unsigned long
-IntNum::get_uint() const
+IntNum::getUInt() const
 {
     if (m_type == INTNUM_L)
     {
@@ -546,7 +546,7 @@ IntNum::get_uint() const
 }
 
 long
-IntNum::get_int() const
+IntNum::getInt() const
 {
     if (m_type == INTNUM_L)
         return m_val.l;
@@ -558,7 +558,7 @@ IntNum::get_int() const
 }
 
 bool
-IntNum::ok_size(unsigned int size, unsigned int rshift, int rangetype) const
+IntNum::isOkSize(unsigned int size, unsigned int rshift, int rangetype) const
 {
     // Non-bigval (for speed)
     if (m_type == INTNUM_L)
@@ -600,11 +600,11 @@ IntNum::ok_size(unsigned int size, unsigned int rshift, int rangetype) const
                 return false;
         }
     }
-    return yasm::ok_size(*get_bv(&conv_bv), size, rshift, rangetype);
+    return yasm::isOkSize(*getBV(&conv_bv), size, rshift, rangetype);
 }
 
 bool
-IntNum::in_range(long low, long high) const
+IntNum::isInRange(long low, long high) const
 {
     if (m_type == INTNUM_L)
         return (m_val.l >= low && m_val.l <= high);
@@ -621,7 +621,7 @@ IntNum::operator++()
     {
         if (m_type == INTNUM_L)
         {
-            m_val.bv = get_bv(new llvm::APInt(BITVECT_NATIVE_SIZE, 0));
+            m_val.bv = getBV(new llvm::APInt(BITVECT_NATIVE_SIZE, 0));
             m_type = INTNUM_BV;
         }
         ++(*m_val.bv);
@@ -638,7 +638,7 @@ IntNum::operator--()
     {
         if (m_type == INTNUM_L)
         {
-            m_val.bv = get_bv(new llvm::APInt(BITVECT_NATIVE_SIZE, 0));
+            m_val.bv = getBV(new llvm::APInt(BITVECT_NATIVE_SIZE, 0));
             m_type = INTNUM_BV;
         }
         --(*m_val.bv);
@@ -647,7 +647,7 @@ IntNum::operator--()
 }
 
 int
-compare(const IntNum& lhs, const IntNum& rhs)
+Compare(const IntNum& lhs, const IntNum& rhs)
 {
     if (lhs.m_type == IntNum::INTNUM_L && rhs.m_type == IntNum::INTNUM_L)
     {
@@ -658,8 +658,8 @@ compare(const IntNum& lhs, const IntNum& rhs)
         return 0;
     }
 
-    const llvm::APInt* op1 = lhs.get_bv(&op1static);
-    const llvm::APInt* op2 = rhs.get_bv(&op2static);
+    const llvm::APInt* op1 = lhs.getBV(&op1static);
+    const llvm::APInt* op2 = rhs.getBV(&op2static);
     if (op1->slt(*op2))
         return -1;
     if (op1->sgt(*op2))
@@ -673,8 +673,8 @@ operator==(const IntNum& lhs, const IntNum& rhs)
     if (lhs.m_type == IntNum::INTNUM_L && rhs.m_type == IntNum::INTNUM_L)
         return lhs.m_val.l == rhs.m_val.l;
 
-    const llvm::APInt* op1 = lhs.get_bv(&op1static);
-    const llvm::APInt* op2 = rhs.get_bv(&op2static);
+    const llvm::APInt* op1 = lhs.getBV(&op1static);
+    const llvm::APInt* op2 = rhs.getBV(&op2static);
     return op1->eq(*op2);
 }
 
@@ -684,8 +684,8 @@ operator<(const IntNum& lhs, const IntNum& rhs)
     if (lhs.m_type == IntNum::INTNUM_L && rhs.m_type == IntNum::INTNUM_L)
         return lhs.m_val.l < rhs.m_val.l;
 
-    const llvm::APInt* op1 = lhs.get_bv(&op1static);
-    const llvm::APInt* op2 = rhs.get_bv(&op2static);
+    const llvm::APInt* op1 = lhs.getBV(&op1static);
+    const llvm::APInt* op2 = rhs.getBV(&op2static);
     return op1->slt(*op2);
 }
 
@@ -695,15 +695,15 @@ operator>(const IntNum& lhs, const IntNum& rhs)
     if (lhs.m_type == IntNum::INTNUM_L && rhs.m_type == IntNum::INTNUM_L)
         return lhs.m_val.l > rhs.m_val.l;
 
-    const llvm::APInt* op1 = lhs.get_bv(&op1static);
-    const llvm::APInt* op2 = rhs.get_bv(&op2static);
+    const llvm::APInt* op1 = lhs.getBV(&op1static);
+    const llvm::APInt* op2 = rhs.getBV(&op2static);
     return op1->sgt(*op2);
 }
 
 void
-IntNum::get_str(llvm::SmallVectorImpl<char>& str,
-                int base,
-                bool lowercase) const
+IntNum::getStr(llvm::SmallVectorImpl<char>& str,
+               int base,
+               bool lowercase) const
 {
     if (m_type == INTNUM_BV)
     {
@@ -739,15 +739,15 @@ IntNum::get_str(llvm::SmallVectorImpl<char>& str,
 }
 
 std::string
-IntNum::get_str(int base, bool lowercase) const
+IntNum::getStr(int base, bool lowercase) const
 {
     llvm::SmallString<40> s;
-    get_str(s, base, lowercase);
+    getStr(s, base, lowercase);
     return s.c_str();
 }
 
 unsigned long
-IntNum::extract(unsigned int width, unsigned int lsb) const
+IntNum::Extract(unsigned int width, unsigned int lsb) const
 {
     assert(width <= ULONG_BITS);
     if (m_type == INTNUM_L)
@@ -770,7 +770,7 @@ operator<< (std::ostream& os, const IntNum& intn)
     llvm::SmallString<40> s;
     int bits = os.iword(set_intnum_bits::m_idx);
     int padding = 0;
-    conv_bv = *intn.get_bv(&conv_bv);
+    conv_bv = *intn.getBV(&conv_bv);
 
     std::ios_base::fmtflags ff = os.flags();
     if ((ff & os.showpos) && (ff & os.dec) && !conv_bv.isNegative())

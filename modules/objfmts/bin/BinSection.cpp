@@ -52,7 +52,7 @@ BinSection::~BinSection()
 }
 
 void
-BinSection::put(marg_ostream& os) const
+BinSection::Put(marg_ostream& os) const
 {
 }
 

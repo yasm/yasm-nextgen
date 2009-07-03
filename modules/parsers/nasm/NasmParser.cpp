@@ -55,31 +55,31 @@ NasmParser::~NasmParser()
 }
 
 void
-NasmParser::parse(Object& object,
+NasmParser::Parse(Object& object,
                   Preprocessor& preproc,
                   bool save_input,
                   Directives& dirs,
                   Linemap& linemap)
 {
-    init_mixin(object, preproc, save_input, dirs, linemap);
+    InitMixin(object, preproc, save_input, dirs, linemap);
 
     m_locallabel_base = "";
 
     m_bc = 0;
 
-    m_absstart.clear();
-    m_abspos.clear();
+    m_absstart.Clear();
+    m_abspos.Clear();
 
     m_state = INITIAL;
 
-    do_parse();
+    DoParse();
 
     // Check for undefined symbols
-    object.symbols_finalize(m_errwarns, false);
+    object.FinalizeSymbols(m_errwarns, false);
 }
 
 std::vector<const char*>
-NasmParser::get_preproc_keywords()
+NasmParser::getPreprocessorKeywords()
 {
     // valid preprocessors to use with this parser
     static const char* keywords[] = {"raw", "nasm"};
@@ -87,28 +87,28 @@ NasmParser::get_preproc_keywords()
 }
 
 void
-NasmParser::add_directives(Directives& dirs, const char* parser)
+NasmParser::AddDirectives(Directives& dirs, const char* parser)
 {
     static const Directives::Init<NasmParser> nasm_dirs[] =
     {
-        {"absolute", &NasmParser::dir_absolute, Directives::ARG_REQUIRED},
-        {"align", &NasmParser::dir_align, Directives::ARG_REQUIRED},
-        {"default", &NasmParser::dir_default, Directives::ANY},
+        {"absolute", &NasmParser::DirAbsolute, Directives::ARG_REQUIRED},
+        {"align", &NasmParser::DirAlign, Directives::ARG_REQUIRED},
+        {"default", &NasmParser::DirDefault, Directives::ANY},
     };
 
-    if (String::nocase_equal(parser, "nasm"))
+    if (String::NocaseEqual(parser, "nasm"))
     {
-        dirs.add_array(this, nasm_dirs, NELEMS(nasm_dirs));
-        dirs.add("extern", &dir_extern, Directives::ID_REQUIRED);
-        dirs.add("global", &dir_global, Directives::ID_REQUIRED);
-        dirs.add("common", &dir_common, Directives::ID_REQUIRED);
+        dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
+        dirs.Add("extern", &DirExtern, Directives::ID_REQUIRED);
+        dirs.Add("global", &DirGlobal, Directives::ID_REQUIRED);
+        dirs.Add("common", &DirCommon, Directives::ID_REQUIRED);
     }
 }
 
 void
-do_register()
+DoRegister()
 {
-    register_module<ParserModule, ParserModuleImpl<NasmParser> >("nasm");
+    RegisterModule<ParserModule, ParserModuleImpl<NasmParser> >("nasm");
 }
 
 }}} // namespace yasm::parser::nasm

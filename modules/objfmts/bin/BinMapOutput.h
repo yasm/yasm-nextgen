@@ -51,18 +51,18 @@ public:
                  const BinGroups& groups);
     ~BinMapOutput();
 
-    void output_header();
-    void output_origin();
-    void output_sections_summary();
-    void output_sections_detail();
-    void output_sections_symbols();
+    void OutputHeader();
+    void OutputOrigin();
+    void OutputSectionsSummary();
+    void OutputSectionsDetail();
+    void OutputSectionsSymbols();
 
 private:
-    void output_intnum(const IntNum& intn);
-    void inner_sections_summary(const BinGroups& groups);
-    void inner_sections_detail(const BinGroups& groups);
-    void output_symbols(const Section* sect);
-    void inner_sections_symbols(const BinGroups& groups);
+    void OutputIntNum(const IntNum& intn);
+    void InnerSectionsSummary(const BinGroups& groups);
+    void InnerSectionsDetail(const BinGroups& groups);
+    void OutputSymbols(const Section* sect);
+    void InnerSectionsSymbols(const BinGroups& groups);
 
     // address width
     int m_bytes;

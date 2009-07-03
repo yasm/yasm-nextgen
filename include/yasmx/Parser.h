@@ -63,7 +63,7 @@ public:
     const ParserModule& get_module() const { return m_module; }
 
     /// Add directive handlers.
-    virtual void add_directives(Directives& dirs, const char* parser);
+    virtual void AddDirectives(Directives& dirs, const char* parser);
 
     /// Parse an input stream into an object.
     /// @param object       object to parse into
@@ -74,7 +74,7 @@ public:
     /// @param dirs         available directives
     /// @param linemap      line mapping repository
     /// @note Parse errors and warnings are stored into errwarns.
-    virtual void parse(Object& object,
+    virtual void Parse(Object& object,
                        Preprocessor& preproc,
                        bool save_input,
                        Directives& dirs,
@@ -101,23 +101,23 @@ public:
 
     /// Get the module type.
     /// @return "Parser".
-    const char* get_type() const;
+    const char* getType() const;
 
     /// Get list of preprocessor (Preprocessor) keywords that are
     /// recommended to use with this parser.  The raw preprocessor
     /// ("raw") should always be in this list.
     /// @return Vector of preprocessor keywords.
-    virtual std::vector<const char*> get_preproc_keywords() const = 0;
+    virtual std::vector<const char*> getPreprocessorKeywords() const = 0;
 
     /// Get default preprocessor keyword.
     /// @return Default preprocessor keyword.
-    virtual const char* get_default_preproc_keyword() const = 0;
+    virtual const char* getDefaultPreprocessorKeyword() const = 0;
 
     /// Parser factory function.
     /// @param errwarns     error/warning set
     /// @return New parser.
     /// @note Errors/warnings are stored into errwarns.
-    virtual std::auto_ptr<Parser> create(Errwarns& errwarns) const = 0;
+    virtual std::auto_ptr<Parser> Create(Errwarns& errwarns) const = 0;
 };
 
 template <typename ParserImpl>
@@ -127,15 +127,15 @@ public:
     ParserModuleImpl() {}
     ~ParserModuleImpl() {}
 
-    const char* get_name() const { return ParserImpl::get_name(); }
-    const char* get_keyword() const { return ParserImpl::get_keyword(); }
+    const char* getName() const { return ParserImpl::getName(); }
+    const char* getKeyword() const { return ParserImpl::getKeyword(); }
 
-    std::vector<const char*> get_preproc_keywords() const
-    { return ParserImpl::get_preproc_keywords(); }
-    const char* get_default_preproc_keyword() const
-    { return ParserImpl::get_default_preproc_keyword(); }
+    std::vector<const char*> getPreprocessorKeywords() const
+    { return ParserImpl::getPreprocessorKeywords(); }
+    const char* getDefaultPreprocessorKeyword() const
+    { return ParserImpl::getDefaultPreprocessorKeyword(); }
 
-    std::auto_ptr<Parser> create(Errwarns& errwarns) const
+    std::auto_ptr<Parser> Create(Errwarns& errwarns) const
     {
         return std::auto_ptr<Parser>(new ParserImpl(*this, errwarns));
     }

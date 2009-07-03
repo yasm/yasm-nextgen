@@ -43,82 +43,82 @@ public:
         loc3.bc = &bc2;
         loc3.off = 5;
 
-        bc1.set_offset(100);
-        bc2.set_offset(200);
+        bc1.setOffset(100);
+        bc2.setOffset(200);
     }
 
-    void test_get_offset()
+    void testGetOffset()
     {
-        TS_ASSERT_EQUALS(loc2.get_offset(), 140U);
+        TS_ASSERT_EQUALS(loc2.getOffset(), 140U);
     }
 
-    void test_calc_dist_no_bc()
-    {
-        IntNum dist;
-        TS_ASSERT_EQUALS(calc_dist_no_bc(loc1, loc2, &dist), true);
-        TS_ASSERT_EQUALS(dist, 30);
-        TS_ASSERT_EQUALS(calc_dist_no_bc(loc2, loc1, &dist), true);
-        TS_ASSERT_EQUALS(dist, -30);
-        TS_ASSERT_EQUALS(calc_dist_no_bc(loc1, loc3, &dist), false);
-        TS_ASSERT_EQUALS(calc_dist_no_bc(loc3, loc2, &dist), false);
-    }
-
-    void test_calc_dist()
+    void testCalcDistNoBC()
     {
         IntNum dist;
-        TS_ASSERT_EQUALS(calc_dist(loc1, loc2, &dist), true);
+        TS_ASSERT_EQUALS(CalcDistNoBC(loc1, loc2, &dist), true);
         TS_ASSERT_EQUALS(dist, 30);
-        TS_ASSERT_EQUALS(calc_dist(loc2, loc1, &dist), true);
+        TS_ASSERT_EQUALS(CalcDistNoBC(loc2, loc1, &dist), true);
         TS_ASSERT_EQUALS(dist, -30);
-        TS_ASSERT_EQUALS(calc_dist(loc1, loc3, &dist), true);
+        TS_ASSERT_EQUALS(CalcDistNoBC(loc1, loc3, &dist), false);
+        TS_ASSERT_EQUALS(CalcDistNoBC(loc3, loc2, &dist), false);
+    }
+
+    void test_CalcDist()
+    {
+        IntNum dist;
+        TS_ASSERT_EQUALS(CalcDist(loc1, loc2, &dist), true);
+        TS_ASSERT_EQUALS(dist, 30);
+        TS_ASSERT_EQUALS(CalcDist(loc2, loc1, &dist), true);
+        TS_ASSERT_EQUALS(dist, -30);
+        TS_ASSERT_EQUALS(CalcDist(loc1, loc3, &dist), true);
         TS_ASSERT_EQUALS(dist, 95);
-        TS_ASSERT_EQUALS(calc_dist(loc3, loc2, &dist), true);
+        TS_ASSERT_EQUALS(CalcDist(loc3, loc2, &dist), true);
         TS_ASSERT_EQUALS(dist, -65);
     }
 
-    void test_simplify_calc_dist_no_bc()
+    void test_simplify_CalcDistNoBC()
     {
         Expr e;
 
         e = SUB(loc2, loc1);
-        simplify_calc_dist_no_bc(e);
-        TS_ASSERT_EQUALS(String::format(e), "30");
+        SimplifyCalcDistNoBC(e);
+        TS_ASSERT_EQUALS(String::Format(e), "30");
 
         e = ADD(10, SUB(loc2, loc1));
-        simplify_calc_dist_no_bc(e);
-        TS_ASSERT_EQUALS(String::format(e), "40");
+        SimplifyCalcDistNoBC(e);
+        TS_ASSERT_EQUALS(String::Format(e), "40");
 
         e = SUB(loc3, loc1);
-        simplify_calc_dist_no_bc(e);
-        TS_ASSERT_EQUALS(String::format(e), "{LOC}+({LOC}*-1)");
+        SimplifyCalcDistNoBC(e);
+        TS_ASSERT_EQUALS(String::Format(e), "{LOC}+({LOC}*-1)");
     }
 
-    void test_simplify_calc_dist()
+    void test_SimplifyCalcDist()
     {
         Expr e;
 
         e = SUB(loc2, loc1);
-        simplify_calc_dist(e);
-        TS_ASSERT_EQUALS(String::format(e), "30");
+        SimplifyCalcDist(e);
+        TS_ASSERT_EQUALS(String::Format(e), "30");
 
         e = ADD(10, SUB(loc2, loc1));
-        simplify_calc_dist(e);
-        TS_ASSERT_EQUALS(String::format(e), "40");
+        SimplifyCalcDist(e);
+        TS_ASSERT_EQUALS(String::Format(e), "40");
 
         e = SUB(loc3, loc1);
-        simplify_calc_dist(e);
-        TS_ASSERT_EQUALS(String::format(e), "95");
+        SimplifyCalcDist(e);
+        TS_ASSERT_EQUALS(String::Format(e), "95");
 
         e = ADD(SUB(loc3, loc1), SUB(loc2, loc1));
-        simplify_calc_dist(e);
-        TS_ASSERT_EQUALS(String::format(e), "125");
+        SimplifyCalcDist(e);
+        TS_ASSERT_EQUALS(String::Format(e), "125");
 
         e = SUB(SUB(loc3, loc1), SUB(loc2, loc1));
-        simplify_calc_dist(e);
-        TS_ASSERT_EQUALS(String::format(e), "65");
+        SimplifyCalcDist(e);
+        TS_ASSERT_EQUALS(String::Format(e), "65");
 
         e = MUL(SUB(loc2, loc1), SUB(loc3, loc2));
-        simplify_calc_dist(e);
-        TS_ASSERT_EQUALS(String::format(e), "1950");
+        SimplifyCalcDist(e);
+        TS_ASSERT_EQUALS(String::Format(e), "1950");
     }
 };

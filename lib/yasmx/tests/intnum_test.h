@@ -252,204 +252,204 @@ public:
         // range type = 1: (-2^(N-1), 2^(N-1)-1) range
         // range type = 2: (-2^(N-1), 2^N-1) range
         intn = 0;
-        TS_ASSERT( intn.ok_size(8, 0, 0));
-        TS_ASSERT( intn.ok_size(8, 1, 0));
-        TS_ASSERT( intn.ok_size(8, 0, 1));
-        TS_ASSERT( intn.ok_size(8, 1, 1));
-        TS_ASSERT( intn.ok_size(8, 0, 2));
-        TS_ASSERT( intn.ok_size(8, 1, 2));
+        TS_ASSERT( intn.isOkSize(8, 0, 0));
+        TS_ASSERT( intn.isOkSize(8, 1, 0));
+        TS_ASSERT( intn.isOkSize(8, 0, 1));
+        TS_ASSERT( intn.isOkSize(8, 1, 1));
+        TS_ASSERT( intn.isOkSize(8, 0, 2));
+        TS_ASSERT( intn.isOkSize(8, 1, 2));
 
         intn = -1;
-        TS_ASSERT(!intn.ok_size(8, 0, 0));  // <0
-        TS_ASSERT(!intn.ok_size(8, 1, 0));  // <0
-        TS_ASSERT( intn.ok_size(8, 0, 1));
-        TS_ASSERT( intn.ok_size(8, 1, 1));
-        TS_ASSERT( intn.ok_size(8, 0, 2));
-        TS_ASSERT( intn.ok_size(8, 1, 2));
+        TS_ASSERT(!intn.isOkSize(8, 0, 0));  // <0
+        TS_ASSERT(!intn.isOkSize(8, 1, 0));  // <0
+        TS_ASSERT( intn.isOkSize(8, 0, 1));
+        TS_ASSERT( intn.isOkSize(8, 1, 1));
+        TS_ASSERT( intn.isOkSize(8, 0, 2));
+        TS_ASSERT( intn.isOkSize(8, 1, 2));
 
         intn = 1;
-        TS_ASSERT( intn.ok_size(8, 0, 0));
-        TS_ASSERT( intn.ok_size(8, 1, 0));
-        TS_ASSERT( intn.ok_size(8, 0, 1));
-        TS_ASSERT( intn.ok_size(8, 1, 1));
-        TS_ASSERT( intn.ok_size(8, 0, 2));
-        TS_ASSERT( intn.ok_size(8, 1, 2));
+        TS_ASSERT( intn.isOkSize(8, 0, 0));
+        TS_ASSERT( intn.isOkSize(8, 1, 0));
+        TS_ASSERT( intn.isOkSize(8, 0, 1));
+        TS_ASSERT( intn.isOkSize(8, 1, 1));
+        TS_ASSERT( intn.isOkSize(8, 0, 2));
+        TS_ASSERT( intn.isOkSize(8, 1, 2));
 
         intn = 2;
-        TS_ASSERT( intn.ok_size(8, 0, 0));
-        TS_ASSERT( intn.ok_size(8, 1, 0));
-        TS_ASSERT( intn.ok_size(8, 0, 1));
-        TS_ASSERT( intn.ok_size(8, 1, 1));
-        TS_ASSERT( intn.ok_size(8, 0, 2));
-        TS_ASSERT( intn.ok_size(8, 1, 2));
+        TS_ASSERT( intn.isOkSize(8, 0, 0));
+        TS_ASSERT( intn.isOkSize(8, 1, 0));
+        TS_ASSERT( intn.isOkSize(8, 0, 1));
+        TS_ASSERT( intn.isOkSize(8, 1, 1));
+        TS_ASSERT( intn.isOkSize(8, 0, 2));
+        TS_ASSERT( intn.isOkSize(8, 1, 2));
 
         // 8-bit boundary conditions (signed and unsigned)
         intn = -128;
-        TS_ASSERT( intn.ok_size(8, 0, 1));
-        TS_ASSERT( intn.ok_size(8, 0, 2));
+        TS_ASSERT( intn.isOkSize(8, 0, 1));
+        TS_ASSERT( intn.isOkSize(8, 0, 2));
 
         intn = -129;
-        TS_ASSERT(!intn.ok_size(8, 0, 1));
-        TS_ASSERT(!intn.ok_size(8, 0, 2));
+        TS_ASSERT(!intn.isOkSize(8, 0, 1));
+        TS_ASSERT(!intn.isOkSize(8, 0, 2));
 
         intn = 127;
-        TS_ASSERT( intn.ok_size(8, 0, 1));
+        TS_ASSERT( intn.isOkSize(8, 0, 1));
 
         intn = 128;
-        TS_ASSERT(!intn.ok_size(8, 0, 1));
+        TS_ASSERT(!intn.isOkSize(8, 0, 1));
 
         intn = 255;
-        TS_ASSERT( intn.ok_size(8, 0, 0));
-        TS_ASSERT( intn.ok_size(8, 0, 2));
+        TS_ASSERT( intn.isOkSize(8, 0, 0));
+        TS_ASSERT( intn.isOkSize(8, 0, 2));
 
         intn = 256;
-        TS_ASSERT(!intn.ok_size(8, 0, 0));
-        TS_ASSERT(!intn.ok_size(8, 0, 2));
+        TS_ASSERT(!intn.isOkSize(8, 0, 0));
+        TS_ASSERT(!intn.isOkSize(8, 0, 2));
 
         // 16-bit boundary conditions (signed and unsigned)
         intn = -32768;
-        TS_ASSERT( intn.ok_size(16, 0, 1));
-        TS_ASSERT( intn.ok_size(16, 0, 2));
+        TS_ASSERT( intn.isOkSize(16, 0, 1));
+        TS_ASSERT( intn.isOkSize(16, 0, 2));
 
         intn = -32769;
-        TS_ASSERT(!intn.ok_size(16, 0, 1));
-        TS_ASSERT(!intn.ok_size(16, 0, 2));
+        TS_ASSERT(!intn.isOkSize(16, 0, 1));
+        TS_ASSERT(!intn.isOkSize(16, 0, 2));
 
         intn = 32767;
-        TS_ASSERT( intn.ok_size(16, 0, 1));
+        TS_ASSERT( intn.isOkSize(16, 0, 1));
 
         intn = 32768;
-        TS_ASSERT(!intn.ok_size(16, 0, 1));
+        TS_ASSERT(!intn.isOkSize(16, 0, 1));
 
         intn = 65535;
-        TS_ASSERT( intn.ok_size(16, 0, 0));
-        TS_ASSERT( intn.ok_size(16, 0, 2));
+        TS_ASSERT( intn.isOkSize(16, 0, 0));
+        TS_ASSERT( intn.isOkSize(16, 0, 2));
 
         intn = 65536;
-        TS_ASSERT(!intn.ok_size(16, 0, 0));
-        TS_ASSERT(!intn.ok_size(16, 0, 2));
+        TS_ASSERT(!intn.isOkSize(16, 0, 0));
+        TS_ASSERT(!intn.isOkSize(16, 0, 2));
 
         // 31-bit boundary conditions (signed and unsigned)
         intn = 1; intn <<= 30; intn = -intn;
-        TS_ASSERT( intn.ok_size(31, 0, 1));
-        TS_ASSERT( intn.ok_size(31, 0, 2));
-        TS_ASSERT( intn.ok_size(32, 0, 1));
-        TS_ASSERT( intn.ok_size(32, 0, 2));
+        TS_ASSERT( intn.isOkSize(31, 0, 1));
+        TS_ASSERT( intn.isOkSize(31, 0, 2));
+        TS_ASSERT( intn.isOkSize(32, 0, 1));
+        TS_ASSERT( intn.isOkSize(32, 0, 2));
 
         intn = 1; intn <<= 30; intn = -intn; --intn;
-        TS_ASSERT(!intn.ok_size(31, 0, 1));
-        TS_ASSERT(!intn.ok_size(31, 0, 2));
-        TS_ASSERT( intn.ok_size(32, 0, 1));
-        TS_ASSERT( intn.ok_size(32, 0, 2));
+        TS_ASSERT(!intn.isOkSize(31, 0, 1));
+        TS_ASSERT(!intn.isOkSize(31, 0, 2));
+        TS_ASSERT( intn.isOkSize(32, 0, 1));
+        TS_ASSERT( intn.isOkSize(32, 0, 2));
 
         intn = 1; intn <<= 30; --intn;
-        TS_ASSERT( intn.ok_size(31, 0, 1));
-        TS_ASSERT( intn.ok_size(32, 0, 1));
+        TS_ASSERT( intn.isOkSize(31, 0, 1));
+        TS_ASSERT( intn.isOkSize(32, 0, 1));
 
         intn = 1; intn <<= 30;
-        TS_ASSERT(!intn.ok_size(31, 0, 1));
-        TS_ASSERT( intn.ok_size(32, 0, 1));
+        TS_ASSERT(!intn.isOkSize(31, 0, 1));
+        TS_ASSERT( intn.isOkSize(32, 0, 1));
 
         intn = 1; intn <<= 31; --intn;
-        TS_ASSERT( intn.ok_size(31, 0, 0));
-        TS_ASSERT( intn.ok_size(31, 0, 2));
-        TS_ASSERT( intn.ok_size(32, 0, 0));
-        TS_ASSERT( intn.ok_size(32, 0, 2));
+        TS_ASSERT( intn.isOkSize(31, 0, 0));
+        TS_ASSERT( intn.isOkSize(31, 0, 2));
+        TS_ASSERT( intn.isOkSize(32, 0, 0));
+        TS_ASSERT( intn.isOkSize(32, 0, 2));
 
         intn = 1; intn <<= 31;
-        TS_ASSERT(!intn.ok_size(31, 0, 0));
-        TS_ASSERT(!intn.ok_size(31, 0, 2));
-        TS_ASSERT( intn.ok_size(32, 0, 0));
-        TS_ASSERT( intn.ok_size(32, 0, 2));
+        TS_ASSERT(!intn.isOkSize(31, 0, 0));
+        TS_ASSERT(!intn.isOkSize(31, 0, 2));
+        TS_ASSERT( intn.isOkSize(32, 0, 0));
+        TS_ASSERT( intn.isOkSize(32, 0, 2));
 
         // 32-bit boundary conditions (signed and unsigned)
         intn = 1; intn <<= 31; intn = -intn;
-        TS_ASSERT( intn.ok_size(32, 0, 1));
-        TS_ASSERT( intn.ok_size(32, 0, 2));
+        TS_ASSERT( intn.isOkSize(32, 0, 1));
+        TS_ASSERT( intn.isOkSize(32, 0, 2));
 
         intn = 1; intn <<= 31; intn = -intn; --intn;
-        TS_ASSERT(!intn.ok_size(32, 0, 1));
-        TS_ASSERT(!intn.ok_size(32, 0, 2));
+        TS_ASSERT(!intn.isOkSize(32, 0, 1));
+        TS_ASSERT(!intn.isOkSize(32, 0, 2));
 
         intn = 1; intn <<= 31; --intn;
-        TS_ASSERT( intn.ok_size(32, 0, 1));
+        TS_ASSERT( intn.isOkSize(32, 0, 1));
 
         intn = 1; intn <<= 31;
-        TS_ASSERT(!intn.ok_size(32, 0, 1));
+        TS_ASSERT(!intn.isOkSize(32, 0, 1));
 
         intn = 1; intn <<= 32; --intn;
-        TS_ASSERT( intn.ok_size(32, 0, 0));
-        TS_ASSERT( intn.ok_size(32, 0, 2));
+        TS_ASSERT( intn.isOkSize(32, 0, 0));
+        TS_ASSERT( intn.isOkSize(32, 0, 2));
 
         intn = 1; intn <<= 32;
-        TS_ASSERT(!intn.ok_size(32, 0, 0));
-        TS_ASSERT(!intn.ok_size(32, 0, 2));
+        TS_ASSERT(!intn.isOkSize(32, 0, 0));
+        TS_ASSERT(!intn.isOkSize(32, 0, 2));
 
         // 63-bit boundary conditions (signed and unsigned)
         intn = 1; intn <<= 62; intn = -intn;
-        TS_ASSERT( intn.ok_size(63, 0, 1));
-        TS_ASSERT( intn.ok_size(63, 0, 2));
-        TS_ASSERT( intn.ok_size(64, 0, 1));
-        TS_ASSERT( intn.ok_size(64, 0, 2));
+        TS_ASSERT( intn.isOkSize(63, 0, 1));
+        TS_ASSERT( intn.isOkSize(63, 0, 2));
+        TS_ASSERT( intn.isOkSize(64, 0, 1));
+        TS_ASSERT( intn.isOkSize(64, 0, 2));
 
         intn = 1; intn <<= 62; intn = -intn; --intn;
-        TS_ASSERT(!intn.ok_size(63, 0, 1));
-        TS_ASSERT(!intn.ok_size(63, 0, 2));
-        TS_ASSERT( intn.ok_size(64, 0, 1));
-        TS_ASSERT( intn.ok_size(64, 0, 2));
+        TS_ASSERT(!intn.isOkSize(63, 0, 1));
+        TS_ASSERT(!intn.isOkSize(63, 0, 2));
+        TS_ASSERT( intn.isOkSize(64, 0, 1));
+        TS_ASSERT( intn.isOkSize(64, 0, 2));
 
         intn = 1; intn <<= 62; --intn;
-        TS_ASSERT( intn.ok_size(63, 0, 1));
-        TS_ASSERT( intn.ok_size(64, 0, 1));
+        TS_ASSERT( intn.isOkSize(63, 0, 1));
+        TS_ASSERT( intn.isOkSize(64, 0, 1));
 
         intn = 1; intn <<= 62;
-        TS_ASSERT(!intn.ok_size(63, 0, 1));
-        TS_ASSERT( intn.ok_size(64, 0, 1));
+        TS_ASSERT(!intn.isOkSize(63, 0, 1));
+        TS_ASSERT( intn.isOkSize(64, 0, 1));
 
         intn = 1; intn <<= 63; --intn;
-        TS_ASSERT( intn.ok_size(63, 0, 0));
-        TS_ASSERT( intn.ok_size(63, 0, 2));
-        TS_ASSERT( intn.ok_size(64, 0, 0));
-        TS_ASSERT( intn.ok_size(64, 0, 2));
+        TS_ASSERT( intn.isOkSize(63, 0, 0));
+        TS_ASSERT( intn.isOkSize(63, 0, 2));
+        TS_ASSERT( intn.isOkSize(64, 0, 0));
+        TS_ASSERT( intn.isOkSize(64, 0, 2));
 
         intn = 1; intn <<= 63;
-        TS_ASSERT(!intn.ok_size(63, 0, 0));
-        TS_ASSERT(!intn.ok_size(63, 0, 2));
-        TS_ASSERT( intn.ok_size(64, 0, 0));
-        TS_ASSERT( intn.ok_size(64, 0, 2));
+        TS_ASSERT(!intn.isOkSize(63, 0, 0));
+        TS_ASSERT(!intn.isOkSize(63, 0, 2));
+        TS_ASSERT( intn.isOkSize(64, 0, 0));
+        TS_ASSERT( intn.isOkSize(64, 0, 2));
 
         // 64-bit boundary conditions (signed and unsigned)
         intn = 1; intn <<= 63; intn = -intn;
-        TS_ASSERT( intn.ok_size(64, 0, 1));
-        TS_ASSERT( intn.ok_size(64, 0, 2));
+        TS_ASSERT( intn.isOkSize(64, 0, 1));
+        TS_ASSERT( intn.isOkSize(64, 0, 2));
 
         intn = 1; intn <<= 63; intn = -intn; --intn;
-        TS_ASSERT(!intn.ok_size(64, 0, 1));
-        TS_ASSERT(!intn.ok_size(64, 0, 2));
+        TS_ASSERT(!intn.isOkSize(64, 0, 1));
+        TS_ASSERT(!intn.isOkSize(64, 0, 2));
 
         intn = 1; intn <<= 63; --intn;
-        TS_ASSERT( intn.ok_size(64, 0, 1));
+        TS_ASSERT( intn.isOkSize(64, 0, 1));
 
         intn = 1; intn <<= 63;
-        TS_ASSERT(!intn.ok_size(64, 0, 1));
+        TS_ASSERT(!intn.isOkSize(64, 0, 1));
 
         intn = 1; intn <<= 64; --intn;
-        TS_ASSERT( intn.ok_size(64, 0, 0));
-        TS_ASSERT( intn.ok_size(64, 0, 2));
+        TS_ASSERT( intn.isOkSize(64, 0, 0));
+        TS_ASSERT( intn.isOkSize(64, 0, 2));
 
         intn = 1; intn <<= 64;
-        TS_ASSERT(!intn.ok_size(64, 0, 0));
-        TS_ASSERT(!intn.ok_size(64, 0, 2));
+        TS_ASSERT(!intn.isOkSize(64, 0, 0));
+        TS_ASSERT(!intn.isOkSize(64, 0, 2));
 
         // with rshift
-        TS_ASSERT(IntNum(255).ok_size(8, 1, 1));
-        TS_ASSERT(!IntNum(256).ok_size(8, 1, 1));
-        TS_ASSERT(IntNum(-256).ok_size(8, 1, 1));
-        TS_ASSERT(!IntNum(-257).ok_size(8, 1, 1));
-        TS_ASSERT(IntNum(511).ok_size(8, 1, 2));
-        TS_ASSERT(!IntNum(512).ok_size(8, 1, 2));
-        TS_ASSERT(IntNum(-256).ok_size(8, 1, 2));
-        TS_ASSERT(!IntNum(-257).ok_size(8, 1, 2));
+        TS_ASSERT(IntNum(255).isOkSize(8, 1, 1));
+        TS_ASSERT(!IntNum(256).isOkSize(8, 1, 1));
+        TS_ASSERT(IntNum(-256).isOkSize(8, 1, 1));
+        TS_ASSERT(!IntNum(-257).isOkSize(8, 1, 1));
+        TS_ASSERT(IntNum(511).isOkSize(8, 1, 2));
+        TS_ASSERT(!IntNum(512).isOkSize(8, 1, 2));
+        TS_ASSERT(IntNum(-256).isOkSize(8, 1, 2));
+        TS_ASSERT(!IntNum(-257).isOkSize(8, 1, 2));
     }
 
     void testGetSized_long()
@@ -500,7 +500,7 @@ public:
             intn = test.val;
             buf.resize(test.destsize);
             memcpy(&buf[0], test.inbuf, test.destsize);
-            overwrite(buf, intn, test.valsize, test.shift, test.bigendian, 0);
+            Overwrite(buf, intn, test.valsize, test.shift, test.bigendian, 0);
             //TS_TRACE(i);
             TS_ASSERT_SAME_DATA(&buf[0], test.outbuf, test.destsize);
         }

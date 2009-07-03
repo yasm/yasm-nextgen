@@ -71,34 +71,34 @@ public:
     /// Finalize an object after parsing.
     /// @param errwarns     error/warning set
     /// @note Errors/warnings are stored into errwarns.
-    void finalize(Errwarns& errwarns);
+    void Finalize(Errwarns& errwarns);
 
     /// Change the source filename for an object.
     /// @param src_filename new source filename (e.g. "file.asm")
-    void set_source_fn(const std::string& src_filename);
+    void setSourceFilename(const std::string& src_filename);
 
     /// Change the object filename for an object.
     /// @param obj_filename new object filename (e.g. "file.o")
-    void set_object_fn(const std::string& obj_filename);
+    void setObjectFilename(const std::string& obj_filename);
 
     /// Get the source filename for an object.
     /// @return Source filename.
-    std::string get_source_fn() const { return m_src_filename; }
+    std::string getSourceFilename() const { return m_src_filename; }
 
     /// Get the object filename for an object.
     /// @return Object filename.
-    std::string get_object_fn() const { return m_obj_filename; }
+    std::string getObjectFilename() const { return m_obj_filename; }
 
     /// Optimize an object.  Takes the unoptimized object and optimizes it.
     /// If successful, the object is ready for output to an object file.
     /// @param errwarns     error/warning set
     /// @note Optimization failures are stored into errwarns.
-    void optimize(Errwarns& errwarns);
+    void Optimize(Errwarns& errwarns);
 
     /// Updates all bytecode offsets in object.
     /// @param errwarns     error/warning set
     /// @note Errors/warnings are stored into errwarns.
-    void update_bc_offsets(Errwarns& errwarns);
+    void UpdateBytecodeOffsets(Errwarns& errwarns);
 
     // Section functions
 
@@ -107,12 +107,12 @@ public:
     /// should first call find_section() if only unique names
     /// are desired.
     /// @param sect         section
-    void append_section(std::auto_ptr<Section> sect);
+    void AppendSection(std::auto_ptr<Section> sect);
 
     /// Find a general section in an object, based on its name.
     /// @param name         section name
     /// @return Section matching name, or NULL if no match found.
-    /*@null@*/ Section* find_section(const std::string& name);
+    /*@null@*/ Section* FindSection(const std::string& name);
 
     typedef stdx::ptr_vector<Section> Sections;
     typedef Sections::iterator section_iterator;
@@ -122,7 +122,7 @@ public:
     /// @param n            section index
     /// @return Section at index.
     /// Can raise std::out_of_range exception if index out of range.
-    Section& get_section(Sections::size_type n) { return m_sections.at(n); }
+    Section& getSection(Sections::size_type n) { return m_sections.at(n); }
 
     section_iterator sections_begin() { return m_sections.begin(); }
     const_section_iterator sections_begin() const
@@ -138,17 +138,17 @@ public:
     /// relocating subtractive relative values.
     /// @see Value::sub_rel().
     /// @return Absolute symbol.
-    SymbolRef get_absolute_symbol();
+    SymbolRef getAbsoluteSymbol();
 
     /// Find a symbol by name.
     /// @param name         symbol name
     /// @return Symbol matching name, or NULL if no match found.
-    SymbolRef find_symbol(const std::string& name);
+    SymbolRef FindSymbol(const std::string& name);
 
     /// Get (creating if necessary) a symbol by name.
     /// @param name         symbol name
     /// @return Symbol matching name.
-    SymbolRef get_symbol(const std::string& name);
+    SymbolRef getSymbol(const std::string& name);
 
     typedef stdx::ptr_vector<Symbol> Symbols;
     typedef Symbols::iterator symbol_iterator;
@@ -158,7 +158,7 @@ public:
     /// @param n            symbol index
     /// @return Symbol at index.
     /// Can raise std::out_of_range exception if index out of range.
-    SymbolRef get_symbol(Symbols::size_type n)
+    SymbolRef getSymbol(Symbols::size_type n)
     { return SymbolRef(&(m_symbols.at(n))); }
 
     symbol_iterator symbols_begin() { return m_symbols.begin(); }
@@ -171,25 +171,25 @@ public:
     /// @note Does /not/ index the symbol by name.
     /// @param name     symbol name
     /// @return Reference to symbol.
-    SymbolRef append_symbol(const std::string& name);
+    SymbolRef AppendSymbol(const std::string& name);
 
     /// Have the object manage an arbitrary symbol.
     /// @note Does /not/ index the symbol by name.
     /// @param name     symbol name
     /// @return Reference to symbol.
-    SymbolRef add_non_table_symbol(const std::string& name);
+    SymbolRef AddNonTableSymbol(const std::string& name);
 
     /// Finalize symbol table after parsing stage.  Checks for symbols that
     /// are used but never defined or declared #EXTERN or #COMMON.
     /// @param errwarns     error/warning set
     /// @param undef_extern if true, all undef syms should be declared extern
     /// @note Errors/warnings are stored into errwarns.
-    void symbols_finalize(Errwarns& errwarns, bool undef_extern);
+    void FinalizeSymbols(Errwarns& errwarns, bool undef_extern);
 
     /// Add a special symbol.
     /// @param sym      symbol name
     /// @return Reference to symbol.
-    SymbolRef add_special_symbol(const std::string& name);
+    SymbolRef AddSpecialSymbol(const std::string& name);
 
     /// Find a special symbol.  Special symbols are generally used to generate
     /// special relocation types via the WRT mechanism.
@@ -197,15 +197,15 @@ public:
     /// @param name         symbol name (not including any parser-specific
     ///                     prefix)
     /// @return NULL if unrecognized, otherwise special symbol.
-    SymbolRef find_special_symbol(const std::string& name);
+    SymbolRef FindSpecialSymbol(const std::string& name);
 
-    /*@null@*/ Section* get_cur_section() { return m_cur_section; }
-    const /*@null@*/ Section* get_cur_section() const { return m_cur_section; }
-    void set_cur_section(/*@null@*/ Section* section)
+    /*@null@*/ Section* getCurSection() { return m_cur_section; }
+    const /*@null@*/ Section* getCurSection() const { return m_cur_section; }
+    void setCurSection(/*@null@*/ Section* section)
     { m_cur_section = section; }
 
-    Arch* get_arch() { return m_arch; }
-    const Arch* get_arch() const { return m_arch; }
+    Arch* getArch() { return m_arch; }
+    const Arch* getArch() const { return m_arch; }
 
 private:
     Object(const Object&);                  // not implemented

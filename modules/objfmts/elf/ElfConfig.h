@@ -74,28 +74,28 @@ struct ElfConfig
     ElfConfig();
     ~ElfConfig() {}
 
-    unsigned long proghead_get_size() const;
-    bool proghead_read(std::istream& is);
-    void proghead_write(std::ostream& os, Bytes& scratch);
+    unsigned long getProgramHeaderSize() const;
+    bool ReadProgramHeader(std::istream& is);
+    void WriteProgramHeader(std::ostream& os, Bytes& scratch);
 
-    ElfSymbolIndex symtab_setindexes(Object& object, ElfSymbolIndex* nlocal)
+    ElfSymbolIndex AssignSymbolIndices(Object& object, ElfSymbolIndex* nlocal)
         const;
 
-    unsigned long symtab_write(std::ostream& os,
-                               Object& object,
-                               Errwarns& errwarns,
-                               Bytes& scratch) const;
-    bool symtab_read(std::istream&      is,
-                     ElfSymtab&         symtab,
-                     Object&            object,
-                     unsigned long      size,
-                     ElfSize            symsize,
-                     const StringTable& strtab,
-                     Section*           sections[]) const;
+    unsigned long WriteSymbolTable(std::ostream& os,
+                                   Object& object,
+                                   Errwarns& errwarns,
+                                   Bytes& scratch) const;
+    bool ReadSymbolTable(std::istream&      is,
+                         ElfSymtab&         symtab,
+                         Object&            object,
+                         unsigned long      size,
+                         ElfSize            symsize,
+                         const StringTable& strtab,
+                         Section*           sections[]) const;
 
-    std::string name_reloc_section(const std::string& basesect) const;
+    std::string getRelocSectionName(const std::string& basesect) const;
 
-    bool setup_endian(Bytes& bytes) const;
+    bool setEndian(Bytes& bytes) const;
 };
 
 }}} // namespace yasm::objfmt::elf

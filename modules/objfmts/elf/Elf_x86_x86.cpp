@@ -58,7 +58,7 @@ public:
                      size_t valsize);
     ~ElfReloc_x86_x86() {}
 
-    std::string get_type_name() const;
+    std::string getTypeName() const;
 };
 
 class Elf_x86_x86 : public ElfMachine
@@ -66,25 +66,25 @@ class Elf_x86_x86 : public ElfMachine
 public:
     ~Elf_x86_x86() {}
 
-    void configure(ElfConfig* config) const;
-    void add_special_syms(Object& object, const std::string& parser) const;
+    void Configure(ElfConfig* config) const;
+    void AddSpecialSymbols(Object& object, const std::string& parser) const;
 
     std::auto_ptr<ElfReloc>
-    read_reloc(const ElfConfig& config,
-               const ElfSymtab& symtab,
-               std::istream& is,
-               bool rela) const
+    ReadReloc(const ElfConfig& config,
+              const ElfSymtab& symtab,
+              std::istream& is,
+              bool rela) const
     {
         return std::auto_ptr<ElfReloc>
             (new ElfReloc_x86_x86(config, symtab, is, rela));
     }
 
     std::auto_ptr<ElfReloc>
-    make_reloc(SymbolRef sym,
-               SymbolRef wrt,
-               const IntNum& addr,
-               bool rel,
-               size_t valsize) const
+    MakeReloc(SymbolRef sym,
+              SymbolRef wrt,
+              const IntNum& addr,
+              bool rel,
+              size_t valsize) const
     {
         return std::auto_ptr<ElfReloc>
             (new ElfReloc_x86_x86(sym, wrt, addr, rel, valsize));
@@ -92,23 +92,23 @@ public:
 };
 
 bool
-elf_x86_x86_match(const std::string& arch_keyword,
-                  const std::string& arch_machine,
-                  ElfClass cls)
+ElfMatch_x86_x86(const std::string& arch_keyword,
+                 const std::string& arch_machine,
+                 ElfClass cls)
 {
-    return (String::nocase_equal(arch_keyword, "x86") &&
-            String::nocase_equal(arch_machine, "x86") &&
+    return (String::NocaseEqual(arch_keyword, "x86") &&
+            String::NocaseEqual(arch_machine, "x86") &&
             (cls == ELFCLASSNONE || cls == ELFCLASS32));
 }
 
 std::auto_ptr<ElfMachine>
-elf_x86_x86_create()
+ElfCreate_x86_x86()
 {
     return std::auto_ptr<ElfMachine>(new Elf_x86_x86);
 }
 
 void
-Elf_x86_x86::configure(ElfConfig* config) const
+Elf_x86_x86::Configure(ElfConfig* config) const
 {
     config->cls = ELFCLASS32;
     config->encoding = ELFDATA2LSB;
@@ -119,7 +119,7 @@ Elf_x86_x86::configure(ElfConfig* config) const
 }
 
 void
-Elf_x86_x86::add_special_syms(Object& object, const std::string& parser) const
+Elf_x86_x86::AddSpecialSymbols(Object& object, const std::string& parser) const
 {
     static const SpecialSymbolData ssyms[] =
     {
@@ -140,7 +140,7 @@ Elf_x86_x86::add_special_syms(Object& object, const std::string& parser) const
     };
 
     for (unsigned int i=0; i<NELEMS(ssyms); ++i)
-        add_ssym(object, ssyms[i]);
+        AddElfSSym(object, ssyms[i]);
 }
 
 ElfReloc_x86_x86::ElfReloc_x86_x86(SymbolRef sym,
@@ -175,7 +175,7 @@ ElfReloc_x86_x86::ElfReloc_x86_x86(SymbolRef sym,
 }
 
 std::string
-ElfReloc_x86_x86::get_type_name() const
+ElfReloc_x86_x86::getTypeName() const
 {
     const char* name = "***UNKNOWN***";
     switch (static_cast<ElfRelocationType_386>(m_type))

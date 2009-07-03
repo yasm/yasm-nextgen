@@ -71,12 +71,12 @@ public:
     XdfReloc(const IntNum& addr, const Value& value, bool ip_rel);
     ~XdfReloc();
 
-    Expr get_value() const;
-    std::string get_type_name() const;
+    Expr getValue() const;
+    std::string getTypeName() const;
 
-    Type get_type() const { return m_type; }
+    Type getType() const { return m_type; }
 
-    void write(Bytes& bytes) const;
+    void Write(Bytes& bytes) const;
 
 private:
     SymbolRef m_base;       //< base symbol (for WRT)

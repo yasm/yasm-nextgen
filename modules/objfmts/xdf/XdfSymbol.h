@@ -45,7 +45,7 @@ struct XdfSymbol : public AssocData
 
     XdfSymbol(unsigned long index_) : index(index_) {}
     ~XdfSymbol();
-    void put(marg_ostream& os) const;
+    void Put(marg_ostream& os) const;
 
     enum Flags
     {
@@ -58,15 +58,15 @@ struct XdfSymbol : public AssocData
 };
 
 inline XdfSymbol*
-get_xdf(Symbol& sym)
+getXdf(Symbol& sym)
 {
-    return static_cast<XdfSymbol*>(sym.get_assoc_data(XdfSymbol::key));
+    return static_cast<XdfSymbol*>(sym.getAssocData(XdfSymbol::key));
 }
 
 inline XdfSymbol*
-get_xdf(SymbolRef sym)
+getXdf(SymbolRef sym)
 {
-    return static_cast<XdfSymbol*>(sym->get_assoc_data(XdfSymbol::key));
+    return static_cast<XdfSymbol*>(sym->getAssocData(XdfSymbol::key));
 }
 
 }}} // namespace yasm::objfmt::xdf

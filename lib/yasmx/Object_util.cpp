@@ -43,34 +43,35 @@ namespace yasm
 {
 
 void
-dir_ident_common(ObjectFormat& objfmt,
-                 const std::string& sectname,
-                 Object& object,
-                 NameValues& namevals,
-                 NameValues& objext_namevals,
-                 unsigned long line)
+DirIdentCommon(ObjectFormat& objfmt,
+               const std::string& sectname,
+               Object& object,
+               NameValues& namevals,
+               NameValues& objext_namevals,
+               unsigned long line)
 {
     // Accept, but do nothing with empty ident
     if (namevals.empty())
         return;
 
     // Put ident data into .comment section
-    Section* comment = object.find_section(sectname);
+    Section* comment = object.FindSection(sectname);
     if (!comment)
-        comment = objfmt.append_section(sectname, line);
+        comment = objfmt.AppendSection(sectname, line);
 
     // To match GAS output, if the comment section is empty, put an
     // initial 0 byte in the section.
-    Bytecode& bc = comment->fresh_bytecode();
-    if (comment->bcs_begin() == comment->bcs_end() && bc.get_fixed_len() == 0)
-        append_byte(*comment, 0);
+    Bytecode& bc = comment->FreshBytecode();
+    if (comment->bytecodes_begin() == comment->bytecodes_end() &&
+        bc.getFixedLen() == 0)
+        AppendByte(*comment, 0);
 
     for (NameValues::const_iterator nv=namevals.begin(), end=namevals.end();
          nv != end; ++nv)
     {
-        if (!nv->is_string())
+        if (!nv->isString())
             throw ValueError(N_(".comment requires string parameters"));
-        append_data(*comment, nv->get_string(), true);
+        AppendData(*comment, nv->getString(), true);
     }
 }
 

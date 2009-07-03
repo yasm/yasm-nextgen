@@ -116,14 +116,14 @@ NameValue::swap(NameValue& oth)
 }
 
 Expr
-NameValue::get_expr(Object& object, unsigned long line) const
+NameValue::getExpr(Object& object, unsigned long line) const
 {
     switch (m_type)
     {
         case ID:
         {
-            SymbolRef sym = object.get_symbol(get_id());
-            sym->use(line);
+            SymbolRef sym = object.getSymbol(getId());
+            sym->Use(line);
             return Expr(sym);
         }
         case EXPR:
@@ -134,14 +134,14 @@ NameValue::get_expr(Object& object, unsigned long line) const
 }
 
 std::auto_ptr<Expr>
-NameValue::release_expr(Object& object, unsigned long line)
+NameValue::ReleaseExpr(Object& object, unsigned long line)
 {
     switch (m_type)
     {
         case ID:
         {
-            SymbolRef sym = object.get_symbol(get_id());
-            sym->use(line);
+            SymbolRef sym = object.getSymbol(getId());
+            sym->Use(line);
             return std::auto_ptr<Expr>(new Expr(sym));
         }
         case EXPR:
@@ -152,7 +152,7 @@ NameValue::release_expr(Object& object, unsigned long line)
 }
 
 std::string
-NameValue::get_string() const
+NameValue::getString() const
 {
     switch (m_type)
     {
@@ -165,7 +165,7 @@ NameValue::get_string() const
 }
 
 std::string
-NameValue::get_id() const
+NameValue::getId() const
 {
     if (m_type != ID)
         throw Error(N_("name/value not convertible to identifier"));
@@ -179,7 +179,7 @@ NameValue::get_id() const
 std::ostream&
 operator<< (std::ostream& os, const NameValue& nv)
 {
-    os << "(\"" << nv.get_name() << "\",";
+    os << "(\"" << nv.getName() << "\",";
     switch (nv.m_type)
     {
         case NameValue::ID:

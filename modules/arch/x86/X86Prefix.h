@@ -50,10 +50,10 @@ public:
 
     X86Prefix(Type type, unsigned char value);
     ~X86Prefix();
-    void put(std::ostream& os) const;
+    void Put(std::ostream& os) const;
 
-    Type get_type() const { return m_type; }
-    unsigned char get_value() const { return m_value; }
+    Type getType() const { return m_type; }
+    unsigned char getValue() const { return m_value; }
 
 private:
     Type m_type;

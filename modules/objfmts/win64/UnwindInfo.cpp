@@ -71,26 +71,26 @@ UnwindInfo::~UnwindInfo()
 }
 
 void
-UnwindInfo::put(marg_ostream& os) const
+UnwindInfo::Put(marg_ostream& os) const
 {
     // TODO
 }
 
 void
-UnwindInfo::finalize(Bytecode& bc)
+UnwindInfo::Finalize(Bytecode& bc)
 {
-    if (!m_prolog_size.finalize())
+    if (!m_prolog_size.Finalize())
         throw ValueError(N_("prolog size expression too complex"));
 
-    if (!m_codes_count.finalize())
+    if (!m_codes_count.Finalize())
         throw ValueError(N_("codes count expression too complex"));
 
-    if (!m_frameoff.finalize())
+    if (!m_frameoff.Finalize())
         throw ValueError(N_("frame offset expression too complex"));
 }
 
 unsigned long
-UnwindInfo::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+UnwindInfo::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 {
     // Want to make sure prolog size and codes count doesn't exceed
     // byte-size, and scaled frame offset doesn't exceed 4 bits.
@@ -98,14 +98,14 @@ UnwindInfo::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
     add_span(bc, 2, m_codes_count, 0, 255);
 
     IntNum intn;
-    if (m_frameoff.get_intnum(&intn, false))
+    if (m_frameoff.getIntNum(&intn, false))
     {
-        if (!intn.in_range(0, 240))
-            throw ValueError(String::compose(
+        if (!intn.isInRange(0, 240))
+            throw ValueError(String::Compose(
                 N_("frame offset of %1 bytes, must be between 0 and 240"),
                 intn));
-        else if ((intn.get_uint() & 0xF) != 0)
-            throw ValueError(String::compose(
+        else if ((intn.getUInt() & 0xF) != 0)
+            throw ValueError(String::Compose(
                 N_("frame offset of %1 is not a multiple of 16"), intn));
     }
     else
@@ -115,7 +115,7 @@ UnwindInfo::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 }
 
 bool
-UnwindInfo::expand(Bytecode& bc,
+UnwindInfo::Expand(Bytecode& bc,
                    unsigned long& len,
                    int span,
                    long old_val,
@@ -127,16 +127,16 @@ UnwindInfo::expand(Bytecode& bc,
     {
         case 1:
         {
-            ValueError err(String::compose(
+            ValueError err(String::Compose(
                 N_("prologue %1 bytes, must be <256"), new_val));
-            err.set_xref(m_prolog->get_def_line(), N_("prologue ended here"));
+            err.setXRef(m_prolog->getDefLine(), N_("prologue ended here"));
             throw err;
         }
         case 2:
-            throw ValueError(String::compose(
+            throw ValueError(String::Compose(
                 N_("%1 unwind codes, maximum of 255"), new_val));
         case 3:
-            throw ValueError(String::compose(
+            throw ValueError(String::Compose(
                 N_("frame offset of %1 bytes, must be between 0 and 240"),
                 new_val));
         default:
@@ -146,42 +146,42 @@ UnwindInfo::expand(Bytecode& bc,
 }
 
 void
-UnwindInfo::output(Bytecode& bc, BytecodeOutput& bc_out)
+UnwindInfo::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
-    Bytes& bytes = bc_out.get_scratch();
+    Bytes& bytes = bc_out.getScratch();
     Location loc = {&bc, 0};
 
     // Version and flags
     if (m_ehandler)
-        write_8(bytes, 1 | (UNW_FLAG_EHANDLER << 3));
+        Write8(bytes, 1 | (UNW_FLAG_EHANDLER << 3));
     else
-        write_8(bytes, 1);
-    bc_out.output(bytes);
+        Write8(bytes, 1);
+    bc_out.Output(bytes);
 
     // Size of prolog
     bytes.resize(0);
-    write_8(bytes, 0);
-    bc_out.output(m_prolog_size, bytes, loc, 1);
+    Write8(bytes, 0);
+    bc_out.Output(m_prolog_size, bytes, loc, 1);
 
     // Count of codes
     bytes.resize(0);
-    write_8(bytes, 0);
-    bc_out.output(m_codes_count, bytes, loc, 1);
+    Write8(bytes, 0);
+    bc_out.Output(m_codes_count, bytes, loc, 1);
 
     // Frame register and offset
     IntNum intn;
-    if (!m_frameoff.get_intnum(&intn, true))
+    if (!m_frameoff.getIntNum(&intn, true))
         throw ValueError(N_("frame offset expression too complex"));
-    if (!intn.in_range(0, 240))
-        throw ValueError(String::compose(
+    if (!intn.isInRange(0, 240))
+        throw ValueError(String::Compose(
             N_("frame offset of %1 bytes, must be between 0 and 240"), intn));
-    else if ((intn.get_uint() & 0xF) != 0)
-        throw ValueError(String::compose(
+    else if ((intn.getUInt() & 0xF) != 0)
+        throw ValueError(String::Compose(
             N_("frame offset of %1 is not a multiple of 16"), intn));
 
     bytes.resize(0);
-    write_8(bytes, (intn.get_uint() & 0xF0) | (m_framereg & 0x0F));
-    bc_out.output(bytes);
+    Write8(bytes, (intn.getUInt() & 0xF0) | (m_framereg & 0x0F));
+    bc_out.Output(bytes);
 }
 
 UnwindInfo*
@@ -207,7 +207,7 @@ UnwindInfo::clone() const
 }
 
 void
-generate(std::auto_ptr<UnwindInfo> uwinfo,
+Generate(std::auto_ptr<UnwindInfo> uwinfo,
          BytecodeContainer& xdata,
          unsigned long line,
          const Arch& arch)
@@ -215,42 +215,41 @@ generate(std::auto_ptr<UnwindInfo> uwinfo,
     UnwindInfo* info = uwinfo.get();
 
     // 4-byte align the start of unwind info
-    append_align(xdata, Expr(4), Expr(), Expr(), 0, line);
+    AppendAlign(xdata, Expr(4), Expr(), Expr(), 0, line);
 
     // Prolog size = end of prolog - start of procedure
-    info->m_prolog_size.add_abs(SUB(info->m_prolog, info->m_proc));
+    info->m_prolog_size.AddAbs(SUB(info->m_prolog, info->m_proc));
 
     // Unwind info
-    Bytecode& infobc = xdata.fresh_bytecode();
-    infobc.transform(Bytecode::Contents::Ptr(uwinfo));
-    infobc.set_line(line);
+    Bytecode& infobc = xdata.FreshBytecode();
+    infobc.Transform(Bytecode::Contents::Ptr(uwinfo));
+    infobc.setLine(line);
 
-    Bytecode& startbc = xdata.fresh_bytecode();
-    Location startloc = {&startbc, startbc.get_fixed_len()};
+    Bytecode& startbc = xdata.FreshBytecode();
+    Location startloc = {&startbc, startbc.getFixedLen()};
 
     // Code array
     for (std::vector<UnwindCode*>::reverse_iterator i=info->m_codes.rbegin(),
          end=info->m_codes.rend(); i != end; ++i)
     {
-        append_unwind_code(xdata, std::auto_ptr<UnwindCode>(*i));
+        AppendUnwindCode(xdata, std::auto_ptr<UnwindCode>(*i));
         *i = 0; // don't double-free
     }
 
     // Number of codes = (Last code - end of info) >> 1
     if (info->m_codes.size() > 0)
     {
-        Bytecode& bc = xdata.fresh_bytecode();
-        Location endloc = {&bc, bc.get_fixed_len()};
-        info->m_codes_count.add_abs(SHR(SUB(endloc, startloc), 1));
+        Bytecode& bc = xdata.FreshBytecode();
+        Location endloc = {&bc, bc.getFixedLen()};
+        info->m_codes_count.AddAbs(SHR(SUB(endloc, startloc), 1));
     }
 
     // 4-byte align
-    append_align(xdata, Expr(4), Expr(), Expr(), 0, line);
+    AppendAlign(xdata, Expr(4), Expr(), Expr(), 0, line);
 
     // Exception handler, if present.
     if (info->m_ehandler)
-        append_data(xdata, Expr::Ptr(new Expr(info->m_ehandler)), 4, arch,
-                    line);
+        AppendData(xdata, Expr::Ptr(new Expr(info->m_ehandler)), 4, arch, line);
 }
 
 }}} // namespace yasm::objfmt::win64

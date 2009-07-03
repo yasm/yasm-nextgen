@@ -82,63 +82,69 @@ CoffObject::CoffObject(const ObjectFormatModule& module,
     , m_file_coffsym(0)
 {
     // Support x86 and amd64 machines of x86 arch
-    if (String::nocase_equal(m_object.get_arch()->get_machine(), "x86"))
+    if (String::NocaseEqual(m_object.getArch()->getMachine(), "x86"))
         m_machine = MACHINE_I386;
-    else if (String::nocase_equal(m_object.get_arch()->get_machine(), "amd64"))
+    else if (String::NocaseEqual(m_object.getArch()->getMachine(), "amd64"))
         m_machine = MACHINE_AMD64;
 }
 
 std::vector<const char*>
-CoffObject::get_dbgfmt_keywords()
+CoffObject::getDebugFormatKeywords()
 {
     static const char* keywords[] = {"null", "dwarf2"};
     return std::vector<const char*>(keywords, keywords+NELEMS(keywords));
 }
 
 bool
-CoffObject::ok_object(Object& object)
+CoffObject::isOkObject(Object& object)
 {
     // Support x86 and amd64 machines of x86 arch
-    Arch* arch = object.get_arch();
-    if (!String::nocase_equal(arch->get_module().get_keyword(), "x86"))
+    Arch* arch = object.getArch();
+    if (!String::NocaseEqual(arch->getModule().getKeyword(), "x86"))
         return false;
 
-    if (String::nocase_equal(arch->get_machine(), "x86"))
+    if (String::NocaseEqual(arch->getMachine(), "x86"))
         return true;
-    if (String::nocase_equal(arch->get_machine(), "amd64"))
+    if (String::NocaseEqual(arch->getMachine(), "amd64"))
         return true;
     return false;
 }
 
 void
-CoffObject::init_symbols(const char* parser)
+CoffObject::InitSymbols(const char* parser)
 {
     // Add .file symbol
-    SymbolRef filesym = m_object.append_symbol(".file");
-    filesym->define_special(Symbol::GLOBAL);
+    SymbolRef filesym = m_object.AppendSymbol(".file");
+    filesym->DefineSpecial(Symbol::GLOBAL);
 
     std::auto_ptr<CoffSymbol> coffsym(
         new CoffSymbol(CoffSymbol::SCL_FILE, CoffSymbol::AUX_FILE));
     m_file_coffsym = coffsym.get();
 
-    filesym->add_assoc_data(CoffSymbol::key,
-                            std::auto_ptr<AssocData>(coffsym.release()));
+    filesym->AddAssocData(CoffSymbol::key,
+                          std::auto_ptr<AssocData>(coffsym.release()));
 }
 
-class Output : public BytecodeStreamOutput
+class CoffOutput : public BytecodeStreamOutput
 {
 public:
-    Output(std::ostream& os, CoffObject& objfmt, Object& object, bool all_syms);
-    ~Output();
+    CoffOutput(std::ostream& os,
+               CoffObject& objfmt,
+               Object& object,
+               bool all_syms);
+    ~CoffOutput();
 
-    void output_section(Section& sect, Errwarns& errwarns);
-    void output_secthead(const Section& sect);
-    unsigned long count_syms();
-    void output_symtab(Errwarns& errwarns);
-    void output_strtab();
+    void OutputSection(Section& sect, Errwarns& errwarns);
+    void OutputSectionHeader(const Section& sect);
+    unsigned long CountSymbols();
+    void OutputSymbolTable(Errwarns& errwarns);
+    void OutputStringTable();
 
     // OutputBytecode overrides
-    void value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn);
+    void ConvertValueToBytes(Value& value,
+                             Bytes& bytes,
+                             Location loc,
+                             int warn);
 
 private:
     CoffObject& m_objfmt;
@@ -149,10 +155,10 @@ private:
     BytecodeNoOutput m_no_output;
 };
 
-Output::Output(std::ostream& os,
-               CoffObject& objfmt,
-               Object& object,
-               bool all_syms)
+CoffOutput::CoffOutput(std::ostream& os,
+                       CoffObject& objfmt,
+                       Object& object,
+                       bool all_syms)
     : BytecodeStreamOutput(os)
     , m_objfmt(objfmt)
     , m_object(object)
@@ -161,36 +167,40 @@ Output::Output(std::ostream& os,
 {
 }
 
-Output::~Output()
+CoffOutput::~CoffOutput()
 {
 }
 
 void
-Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
+CoffOutput::ConvertValueToBytes(Value& value,
+                                Bytes& bytes,
+                                Location loc,
+                                int warn)
 {
-    if (Expr* abs = value.get_abs())
-        simplify_calc_dist(*abs);
+    if (Expr* abs = value.getAbs())
+        SimplifyCalcDist(*abs);
 
     // Try to output constant and PC-relative section-local first.
     // Note this does NOT output any value with a SEG, WRT, external,
     // cross-section, or non-PC-relative reference (those are handled below).
-    if (value.output_basic(bytes, warn, *m_object.get_arch()))
+    if (value.OutputBasic(bytes, warn, *m_object.getArch()))
         return;
 
     // Handle other expressions, with relocation if necessary
-    if (value.get_rshift() > 0
-        || (value.is_seg_of() && (value.is_wrt() || value.has_sub()))
-        || (value.is_section_rel() && (value.is_wrt() || value.has_sub())))
+    if (value.getRShift() > 0
+        || (value.isSegOf() && (value.isWRT() || value.hasSubRelative()))
+        || (value.isSectionRelative()
+            && (value.isWRT() || value.hasSubRelative())))
     {
         throw TooComplexError(N_("coff: relocation too complex"));
     }
 
     IntNum intn(0);
     IntNum dist(0);
-    if (value.is_relative())
+    if (value.isRelative())
     {
-        SymbolRef sym = value.get_rel();
-        SymbolRef wrt = value.get_wrt();
+        SymbolRef sym = value.getRelative();
+        SymbolRef wrt = value.getWRT();
 
         // Sometimes we want the relocation to be generated against one
         // symbol but the value generated correspond to a different symbol.
@@ -199,57 +209,57 @@ Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
         if (wrt)
         {
             Location wrt_loc, rel_loc;
-            if (!sym->get_label(&rel_loc) || !wrt->get_label(&wrt_loc))
+            if (!sym->getLabel(&rel_loc) || !wrt->getLabel(&wrt_loc))
                 throw TooComplexError(N_("coff: wrt expression too complex"));
-            if (!calc_dist(wrt_loc, rel_loc, &dist))
+            if (!CalcDist(wrt_loc, rel_loc, &dist))
                 throw TooComplexError(N_("coff: cannot wrt across sections"));
             sym = wrt;
         }
 
-        int vis = sym->get_visibility();
+        int vis = sym->getVisibility();
         if (vis & Symbol::COMMON)
         {
             // In standard COFF, COMMON symbols have their length added in
-            if (!m_objfmt.is_win32())
+            if (!m_objfmt.isWin32())
             {
-                assert(get_common_size(*sym) != 0);
-                Expr csize_expr(*get_common_size(*sym));
-                simplify_calc_dist(csize_expr);
-                if (!csize_expr.is_intnum())
+                assert(getCommonSize(*sym) != 0);
+                Expr csize_expr(*getCommonSize(*sym));
+                SimplifyCalcDist(csize_expr);
+                if (!csize_expr.isIntNum())
                     throw TooComplexError(N_("coff: common size too complex"));
 
-                IntNum common_size = csize_expr.get_intnum();
-                if (common_size.sign() < 0)
+                IntNum common_size = csize_expr.getIntNum();
+                if (common_size.getSign() < 0)
                     throw ValueError(N_("coff: common size is negative"));
 
                 intn += common_size;
             }
         }
-        else if (!(vis & Symbol::EXTERN) && !m_objfmt.is_win64())
+        else if (!(vis & Symbol::EXTERN) && !m_objfmt.isWin64())
         {
             // Local symbols need relocation to their section's start
             Location symloc;
-            if (sym->get_label(&symloc))
+            if (sym->getLabel(&symloc))
             {
-                Section* sym_sect = symloc.bc->get_container()->as_section();
-                CoffSection* coffsect = get_coff(*sym_sect);
+                Section* sym_sect = symloc.bc->getContainer()->AsSection();
+                CoffSection* coffsect = getCoff(*sym_sect);
                 assert(coffsect != 0);
                 sym = coffsect->m_sym;
 
-                intn = symloc.get_offset();
-                intn += sym_sect->get_vma();
+                intn = symloc.getOffset();
+                intn += sym_sect->getVMA();
             }
         }
 
         bool pc_rel = false;
         IntNum intn2;
-        if (value.calc_pcrel_sub(&intn2, loc))
+        if (value.CalcPCRelSub(&intn2, loc))
         {
             // Create PC-relative relocation type and fix up absolute portion.
             pc_rel = true;
             intn += intn2;
         }
-        else if (value.has_sub())
+        else if (value.hasSubRelative())
             throw TooComplexError(N_("elf: relocation too complex"));
 
         if (pc_rel)
@@ -259,36 +269,36 @@ Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
             // For Win32 COFF, adjust by value size.
             // For Win64 COFF, adjust to next instruction;
             // the delta is taken care of by special relocation types.
-            if (m_objfmt.is_win64())
-                intn += value.get_next_insn();
-            else if (m_objfmt.is_win32())
-                intn += value.get_size()/8;
+            if (m_objfmt.isWin64())
+                intn += value.getNextInsn();
+            else if (m_objfmt.isWin32())
+                intn += value.getSize()/8;
             else
-                intn -= loc.get_offset();
+                intn -= loc.getOffset();
         }
 
         // Zero value for segment or section-relative generation.
-        if (value.is_seg_of() || value.is_section_rel())
+        if (value.isSegOf() || value.isSectionRelative())
             intn = 0;
 
         // Generate reloc
-        CoffObject::Machine machine = m_objfmt.get_machine();
+        CoffObject::Machine machine = m_objfmt.getMachine();
         CoffReloc::Type rtype = CoffReloc::ABSOLUTE;
-        IntNum addr = loc.get_offset();
-        addr += loc.bc->get_container()->as_section()->get_vma();
+        IntNum addr = loc.getOffset();
+        addr += loc.bc->getContainer()->AsSection()->getVMA();
 
         if (machine == CoffObject::MACHINE_I386)
         {
             if (pc_rel)
             {
-                if (value.get_size() == 32)
+                if (value.getSize() == 32)
                     rtype = CoffReloc::I386_REL32;
                 else
                     throw TypeError(N_("coff: invalid relocation size"));
             }
-            else if (value.is_seg_of())
+            else if (value.isSegOf())
                 rtype = CoffReloc::I386_SECTION;
-            else if (value.is_section_rel())
+            else if (value.isSectionRelative())
                 rtype = CoffReloc::I386_SECREL;
             else
             {
@@ -302,9 +312,9 @@ Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
         {
             if (pc_rel)
             {
-                if (value.get_size() != 32)
+                if (value.getSize() != 32)
                     throw TypeError(N_("coff: invalid relocation size"));
-                switch (value.get_next_insn())
+                switch (value.getNextInsn())
                 {
                     case 0: rtype = CoffReloc::AMD64_REL32; break;
                     case 1: rtype = CoffReloc::AMD64_REL32_1; break;
@@ -316,13 +326,13 @@ Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
                         throw TypeError(N_("coff: invalid relocation size"));
                 }
             }
-            else if (value.is_seg_of())
+            else if (value.isSegOf())
                 rtype = CoffReloc::AMD64_SECTION;
-            else if (value.is_section_rel())
+            else if (value.isSectionRelative())
                 rtype = CoffReloc::AMD64_SECREL;
             else
             {
-                unsigned int size = value.get_size();
+                unsigned int size = value.getSize();
                 if (size == 32)
                 {
                     if (m_coffsect->m_nobase)
@@ -339,7 +349,7 @@ Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
         else
             assert(false);  // unrecognized machine
 
-        Section* sect = loc.bc->get_container()->as_section();
+        Section* sect = loc.bc->getContainer()->AsSection();
         Reloc* reloc = 0;
         if (machine == CoffObject::MACHINE_I386)
             reloc = new Coff32Reloc(addr, sym, rtype);
@@ -347,40 +357,40 @@ Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
             reloc = new Coff64Reloc(addr, sym, rtype);
         else
             assert(false && "nonexistent machine");
-        sect->add_reloc(std::auto_ptr<Reloc>(reloc));
+        sect->AddReloc(std::auto_ptr<Reloc>(reloc));
     }
 
-    if (Expr* abs = value.get_abs())
+    if (Expr* abs = value.getAbs())
     {
-        if (!abs->is_intnum())
+        if (!abs->isIntNum())
             throw TooComplexError(N_("coff: relocation too complex"));
-        intn += abs->get_intnum();
+        intn += abs->getIntNum();
     }
 
     intn += dist;
 
-    m_object.get_arch()->tobytes(intn, bytes, value.get_size(), 0, warn);
+    m_object.getArch()->ToBytes(intn, bytes, value.getSize(), 0, warn);
 }
 
 void
-Output::output_section(Section& sect, Errwarns& errwarns)
+CoffOutput::OutputSection(Section& sect, Errwarns& errwarns)
 {
     BytecodeOutput* outputter = this;
 
-    CoffSection* coffsect = get_coff(sect);
+    CoffSection* coffsect = getCoff(sect);
     assert(coffsect != 0);
     m_coffsect = coffsect;
 
     // Add to strtab if in win32 format and name > 8 chars
-    if (m_objfmt.is_win32())
+    if (m_objfmt.isWin32())
     {
-        size_t namelen = sect.get_name().length();
+        size_t namelen = sect.getName().length();
         if (namelen > 8)
-            coffsect->m_strtab_name = m_strtab.get_index(sect.get_name());
+            coffsect->m_strtab_name = m_strtab.getIndex(sect.getName());
     }
 
     long pos;
-    if (sect.is_bss())
+    if (sect.isBSS())
     {
         // Don't output BSS sections.
         outputter = &m_no_output;
@@ -388,37 +398,37 @@ Output::output_section(Section& sect, Errwarns& errwarns)
     }
     else
     {
-        if (sect.bcs_last().next_offset() == 0)
+        if (sect.bytecodes_last().getNextOffset() == 0)
             return;
 
         pos = m_os.tellp();
         if (pos < 0)
             throw IOError(N_("could not get file position on output file"));
     }
-    sect.set_filepos(static_cast<unsigned long>(pos));
+    sect.setFilePos(static_cast<unsigned long>(pos));
     coffsect->m_size = 0;
 
     // Output bytecodes
-    for (Section::bc_iterator i=sect.bcs_begin(), end=sect.bcs_end();
-         i != end; ++i)
+    for (Section::bc_iterator i=sect.bytecodes_begin(),
+         end=sect.bytecodes_end(); i != end; ++i)
     {
         try
         {
-            i->output(*outputter);
-            coffsect->m_size += i->get_total_len();
+            i->Output(*outputter);
+            coffsect->m_size += i->getTotalLen();
         }
         catch (Error& err)
         {
-            errwarns.propagate(i->get_line(), err);
+            errwarns.Propagate(i->getLine(), err);
         }
-        errwarns.propagate(i->get_line());  // propagate warnings
+        errwarns.Propagate(i->getLine());   // propagate warnings
     }
 
     // Sanity check final section size
-    assert(coffsect->m_size == sect.bcs_last().next_offset());
+    assert(coffsect->m_size == sect.bytecodes_last().getNextOffset());
 
     // No relocations to output?  Go on to next section
-    if (sect.get_relocs().size() == 0)
+    if (sect.getRelocs().size() == 0)
         return;
 
     pos = m_os.tellp();
@@ -428,26 +438,26 @@ Output::output_section(Section& sect, Errwarns& errwarns)
 
     // If >=64K relocs (for Win32/64), we set a flag in the section header
     // (NRELOC_OVFL) and the first relocation contains the number of relocs.
-    if (sect.get_relocs().size() >= 64*1024)
+    if (sect.getRelocs().size() >= 64*1024)
     {
 #if 0
-        if (m_objfmt.is_win32())
+        if (m_objfmt.isWin32())
         {
             coffsect->m_flags |= CoffSection::NRELOC_OVFL;
-            Bytes& bytes = get_scratch();
+            Bytes& bytes = getScratch();
             bytes << little_endian;
-            write_32(bytes, sect.get_relocs().size()+1);// address (# relocs)
-            write_32(bytes, 0);                         // relocated symbol
-            write_16(bytes, 0);                         // type of relocation
+            Write32(bytes, sect.getRelocs().size()+1);  // address (# relocs)
+            Write32(bytes, 0);                          // relocated symbol
+            Write16(bytes, 0);                          // type of relocation
             m_os << bytes;
         }
         else
 #endif
         {
-            warn_set(WARN_GENERAL,
-                     String::compose(N_("too many relocations in section `%1'"),
-                                     sect.get_name()));
-            errwarns.propagate(0);
+            setWarn(WARN_GENERAL,
+                    String::Compose(N_("too many relocations in section `%1'"),
+                                    sect.getName()));
+            errwarns.Propagate(0);
         }
     }
 
@@ -455,28 +465,28 @@ Output::output_section(Section& sect, Errwarns& errwarns)
          end=sect.relocs_end(); i != end; ++i)
     {
         const CoffReloc& reloc = static_cast<const CoffReloc&>(*i);
-        Bytes& scratch = get_scratch();
-        reloc.write(scratch);
+        Bytes& scratch = getScratch();
+        reloc.Write(scratch);
         assert(scratch.size() == 10);
         m_os << scratch;
     }
 }
 
 unsigned long
-Output::count_syms()
+CoffOutput::CountSymbols()
 {
     unsigned long indx = 0;
 
     for (Object::symbol_iterator i = m_object.symbols_begin(),
          end = m_object.symbols_end(); i != end; ++i)
     {
-        int vis = i->get_visibility();
+        int vis = i->getVisibility();
 
         // Don't output local syms unless outputting all syms
-        if (!m_all_syms && vis == Symbol::LOCAL && !i->is_abs())
+        if (!m_all_syms && vis == Symbol::LOCAL && !i->isAbsoluteSymbol())
             continue;
 
-        CoffSymbol* coffsym = get_coff(*i);
+        CoffSymbol* coffsym = getCoff(*i);
 
         // Create basic coff symbol data if it doesn't already exist
         if (!coffsym)
@@ -485,8 +495,7 @@ Output::count_syms()
                 coffsym = new CoffSymbol(CoffSymbol::SCL_EXT);
             else
                 coffsym = new CoffSymbol(CoffSymbol::SCL_STAT);
-            i->add_assoc_data(CoffSymbol::key,
-                              std::auto_ptr<AssocData>(coffsym));
+            i->AddAssocData(CoffSymbol::key, std::auto_ptr<AssocData>(coffsym));
         }
         coffsym->m_index = indx;
 
@@ -497,50 +506,51 @@ Output::count_syms()
 }
 
 void
-Output::output_symtab(Errwarns& errwarns)
+CoffOutput::OutputSymbolTable(Errwarns& errwarns)
 {
     for (Object::const_symbol_iterator i = m_object.symbols_begin(),
          end = m_object.symbols_end(); i != end; ++i)
     {
         // Don't output local syms unless outputting all syms
-        if (!m_all_syms && i->get_visibility() == Symbol::LOCAL && !i->is_abs())
+        if (!m_all_syms && i->getVisibility() == Symbol::LOCAL
+            && !i->isAbsoluteSymbol())
             continue;
 
         // Get symrec data
-        const CoffSymbol* coffsym = get_coff(*i);
+        const CoffSymbol* coffsym = getCoff(*i);
         assert(coffsym != 0);
 
-        Bytes& bytes = get_scratch();
-        coffsym->write(bytes, *i, errwarns, m_strtab);
+        Bytes& bytes = getScratch();
+        coffsym->Write(bytes, *i, errwarns, m_strtab);
         m_os << bytes;
     }
 }
 
 void
-Output::output_strtab()
+CoffOutput::OutputStringTable()
 {
-    Bytes& bytes = get_scratch();
+    Bytes& bytes = getScratch();
     bytes << little_endian;
-    write_32(bytes, m_strtab.get_size()+4); // total length
+    Write32(bytes, m_strtab.getSize()+4);   // total length
     m_os << bytes;
-    m_strtab.write(m_os);                   // strings
+    m_strtab.Write(m_os);                   // strings
 }
 
 void
-Output::output_secthead(const Section& sect)
+CoffOutput::OutputSectionHeader(const Section& sect)
 {
-    Bytes& bytes = get_scratch();
-    const CoffSection* coffsect = get_coff(sect);
-    coffsect->write(bytes, sect);
+    Bytes& bytes = getScratch();
+    const CoffSection* coffsect = getCoff(sect);
+    coffsect->Write(bytes, sect);
     m_os << bytes;
 }
 
 void
-CoffObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
+CoffObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
 {
     // Update file symbol filename
     m_file_coffsym->m_aux.resize(1);
-    m_file_coffsym->m_aux[0].fname = m_object.get_source_fn();
+    m_file_coffsym->m_aux[0].fname = m_object.getSourceFilename();
 
     // Number sections and determine each section's addr values.
     // The latter is needed in VMA case before actually outputting
@@ -551,22 +561,22 @@ CoffObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        CoffSection* coffsect = get_coff(*i);
+        CoffSection* coffsect = getCoff(*i);
         coffsect->m_scnum = scnum++;
 
         if (coffsect->m_isdebug)
         {
-            i->set_lma(0);
-            i->set_vma(0);
+            i->setLMA(0);
+            i->setVMA(0);
         }
         else
         {
-            i->set_lma(addr);
+            i->setLMA(addr);
             if (m_set_vma)
-                i->set_vma(addr);
+                i->setVMA(addr);
             else
-                i->set_vma(0);
-            addr += i->bcs_last().next_offset();
+                i->setVMA(0);
+            addr += i->bytecodes_last().getNextOffset();
         }
     }
 
@@ -575,16 +585,16 @@ CoffObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     if (!os)
         throw IOError(N_("could not seek on output file"));
 
-    Output out(os, *this, m_object, all_syms);
+    CoffOutput out(os, *this, m_object, all_syms);
 
     // Finalize symbol table (assign index to each symbol).
-    unsigned long symtab_count = out.count_syms();
+    unsigned long symtab_count = out.CountSymbols();
 
     // Section data/relocs
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        out.output_section(*i, errwarns);
+        out.OutputSection(*i, errwarns);
     }
 
     // Symbol table
@@ -592,10 +602,10 @@ CoffObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     if (pos < 0)
         throw IOError(N_("could not get file position on output file"));
     unsigned long symtab_pos = static_cast<unsigned long>(pos);
-    out.output_symtab(errwarns);
+    out.OutputSymbolTable(errwarns);
 
     // String table
-    out.output_strtab();
+    out.OutputStringTable();
 
     // Write headers
     os.seekp(0);
@@ -603,38 +613,38 @@ CoffObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
         throw IOError(N_("could not seek on output file"));
 
     // Write file header
-    Bytes& bytes = out.get_scratch();
+    Bytes& bytes = out.getScratch();
     bytes << little_endian;
-    write_16(bytes, m_machine);         // magic number
-    write_16(bytes, scnum-1);           // number of sects
+    Write16(bytes, m_machine);          // magic number
+    Write16(bytes, scnum-1);            // number of sects
     unsigned long ts;
     if (std::getenv("YASM_TEST_SUITE"))
         ts = 0;
     else
         ts = static_cast<unsigned long>(std::time(NULL));
-    write_32(bytes, ts);                // time/date stamp
-    write_32(bytes, symtab_pos);        // file ptr to symtab
-    write_32(bytes, symtab_count);      // number of symtabs
-    write_16(bytes, 0);                 // size of optional header (none)
+    Write32(bytes, ts);                 // time/date stamp
+    Write32(bytes, symtab_pos);         // file ptr to symtab
+    Write32(bytes, symtab_count);       // number of symtabs
+    Write16(bytes, 0);                  // size of optional header (none)
 
     // flags
     unsigned int flags = 0;
 #if 0
-    if (String::nocase_equal(object->dbgfmt, "null"))
+    if (String::NocaseEqual(object->dbgfmt, "null"))
         flags |= F_LNNO;
 #endif
     if (!all_syms)
         flags |= F_LSYMS;
     if (m_machine != MACHINE_AMD64)
         flags |= F_AR32WR;
-    write_16(bytes, flags);
+    Write16(bytes, flags);
     os << bytes;
 
     // Section headers
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        out.output_secthead(*i);
+        out.OutputSectionHeader(*i);
     }
 }
 
@@ -643,17 +653,17 @@ CoffObject::~CoffObject()
 }
 
 Section*
-CoffObject::add_default_section()
+CoffObject::AddDefaultSection()
 {
-    Section* section = append_section(".text", 0);
-    section->set_default(true);
+    Section* section = AppendSection(".text", 0);
+    section->setDefault(true);
     return section;
 }
 
 bool
-CoffObject::init_section(const std::string& name,
-                         Section& section,
-                         CoffSection* coffsect)
+CoffObject::InitSection(const std::string& name,
+                        Section& section,
+                        CoffSection* coffsect)
 {
     unsigned long flags = 0;
 
@@ -662,32 +672,32 @@ CoffObject::init_section(const std::string& name,
     else if (name == ".bss")
     {
         flags = CoffSection::BSS;
-        section.set_bss(true);
+        section.setBSS(true);
     }
     else if (name == ".text")
     {
         flags = CoffSection::TEXT;
-        section.set_code(true);
+        section.setCode(true);
     }
     else if (name == ".rdata"
              || (name.length() >= 7 && name.compare(0, 7, ".rodata") == 0)
              || (name.length() >= 7 && name.compare(0, 7, ".rdata$") == 0))
     {
         flags = CoffSection::DATA;
-        warn_set(WARN_GENERAL,
-                 N_("Standard COFF does not support read-only data sections"));
+        setWarn(WARN_GENERAL,
+                N_("Standard COFF does not support read-only data sections"));
     }
     else if (name == ".drectve")
         flags = CoffSection::INFO;
     else if (name == ".comment")
         flags = CoffSection::INFO;
-    else if (String::nocase_equal(name, ".debug", 6))
+    else if (String::NocaseEqual(name, ".debug", 6))
         flags = CoffSection::DATA;
     else
     {
         // Default to code (NASM default; note GAS has different default.
         flags = CoffSection::TEXT;
-        section.set_code(true);
+        section.setCode(true);
         return false;
     }
     coffsect->m_flags = flags;
@@ -695,63 +705,63 @@ CoffObject::init_section(const std::string& name,
 }
 
 Section*
-CoffObject::append_section(const std::string& name, unsigned long line)
+CoffObject::AppendSection(const std::string& name, unsigned long line)
 {
     Section* section = new Section(name, false, false, line);
-    m_object.append_section(std::auto_ptr<Section>(section));
+    m_object.AppendSection(std::auto_ptr<Section>(section));
 
     // Define a label for the start of the section
-    Location start = {&section->bcs_first(), 0};
-    SymbolRef sym = m_object.get_symbol(name);
-    sym->define_label(start, line);
-    sym->declare(Symbol::GLOBAL, line);
-    sym->add_assoc_data(CoffSymbol::key,
+    Location start = {&section->bytecodes_first(), 0};
+    SymbolRef sym = m_object.getSymbol(name);
+    sym->DefineLabel(start, line);
+    sym->Declare(Symbol::GLOBAL, line);
+    sym->AddAssocData(CoffSymbol::key,
         std::auto_ptr<AssocData>(new CoffSymbol(CoffSymbol::SCL_STAT,
                                                 CoffSymbol::AUX_SECT)));
 
     // Add COFF data to the section
     CoffSection* coffsect = new CoffSection(sym);
-    section->add_assoc_data(CoffSection::key,
-                            std::auto_ptr<AssocData>(coffsect));
-    init_section(name, *section, coffsect);
+    section->AddAssocData(CoffSection::key,
+                          std::auto_ptr<AssocData>(coffsect));
+    InitSection(name, *section, coffsect);
 
     return section;
 }
 
 void
-CoffObject::dir_gas_section(Object& object,
-                            NameValues& nvs,
-                            NameValues& objext_nvs,
-                            unsigned long line)
+CoffObject::DirGasSection(Object& object,
+                          NameValues& nvs,
+                          NameValues& objext_nvs,
+                          unsigned long line)
 {
     assert(&object == &m_object);
 
-    if (!nvs.front().is_string())
+    if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
-    std::string sectname = nvs.front().get_string();
+    std::string sectname = nvs.front().getString();
 
     if (sectname.length() > 8 && !m_win32)
     {
         // win32 format supports >8 character section names in object
         // files via "/nnnn" (where nnnn is decimal offset into string table),
         // so only warn for regular COFF.
-        warn_set(WARN_GENERAL,
-                 N_("COFF section names limited to 8 characters: truncating"));
+        setWarn(WARN_GENERAL,
+                N_("COFF section names limited to 8 characters: truncating"));
         sectname.resize(8);
     }
 
-    Section* sect = m_object.find_section(sectname);
+    Section* sect = m_object.FindSection(sectname);
     bool first = true;
     if (sect)
-        first = sect->is_default();
+        first = sect->isDefault();
     else
-        sect = append_section(sectname, line);
+        sect = AppendSection(sectname, line);
 
-    CoffSection* coffsect = get_coff(*sect);
+    CoffSection* coffsect = getCoff(*sect);
     assert(coffsect != 0);
 
-    m_object.set_cur_section(sect);
-    sect->set_default(false);
+    m_object.setCurSection(sect);
+    sect->setDefault(false);
 
     // Default to read/write data
     if (first)
@@ -765,13 +775,13 @@ CoffObject::dir_gas_section(Object& object,
         return;
 
     // Section flags must be a string.
-    if (!nvs[1].is_string())
+    if (!nvs[1].isString())
         throw SyntaxError(N_("flag string expected"));
 
     // Parse section flags
     bool alloc = false, load = false, readonly = false, code = false;
     bool datasect = false, shared = false;
-    std::string flagstr = nvs[1].get_string();
+    std::string flagstr = nvs[1].getString();
 
     for (std::string::size_type i=0; i<flagstr.length(); ++i)
     {
@@ -806,7 +816,7 @@ CoffObject::dir_gas_section(Object& object,
                 readonly = false;
                 break;
             default:
-                warn_set(WARN_GENERAL, String::compose(
+                setWarn(WARN_GENERAL, String::Compose(
                     N_("unrecognized section attribute: `%1'"), flagstr[i]));
         }
     }
@@ -831,86 +841,86 @@ CoffObject::dir_gas_section(Object& object,
     if (shared)
         coffsect->m_flags |= CoffSection::SHARED;
 
-    sect->set_bss((coffsect->m_flags & CoffSection::BSS) != 0);
-    sect->set_code((coffsect->m_flags & CoffSection::EXECUTE) != 0);
+    sect->setBSS((coffsect->m_flags & CoffSection::BSS) != 0);
+    sect->setCode((coffsect->m_flags & CoffSection::EXECUTE) != 0);
 
     if (!m_win32)
         coffsect->m_flags &= ~CoffSection::WIN32_MASK;
 }
 
 void
-CoffObject::dir_section_init_helpers(DirHelpers& helpers,
-                                     CoffSection* coffsect,
-                                     IntNum* align,
-                                     bool* has_align,
-                                     unsigned long line)
+CoffObject::DirSectionInitHelpers(DirHelpers& helpers,
+                                  CoffSection* coffsect,
+                                  IntNum* align,
+                                  bool* has_align,
+                                  unsigned long line)
 {
-    helpers.add("code", false,
-                BIND::bind(&dir_flag_reset, _1, &coffsect->m_flags,
+    helpers.Add("code", false,
+                BIND::bind(&DirResetFlag, _1, &coffsect->m_flags,
                            CoffSection::TEXT |
                            CoffSection::EXECUTE |
                            CoffSection::READ));
-    helpers.add("text", false,
-                BIND::bind(&dir_flag_reset, _1, &coffsect->m_flags,
+    helpers.Add("text", false,
+                BIND::bind(&DirResetFlag, _1, &coffsect->m_flags,
                            CoffSection::TEXT |
                            CoffSection::EXECUTE |
                            CoffSection::READ));
-    helpers.add("data", false,
-                BIND::bind(&dir_flag_reset, _1, &coffsect->m_flags,
+    helpers.Add("data", false,
+                BIND::bind(&DirResetFlag, _1, &coffsect->m_flags,
                            CoffSection::DATA |
                            CoffSection::READ |
                            CoffSection::WRITE));
-    helpers.add("rdata", false,
-                BIND::bind(&dir_flag_reset, _1, &coffsect->m_flags,
+    helpers.Add("rdata", false,
+                BIND::bind(&DirResetFlag, _1, &coffsect->m_flags,
                            CoffSection::DATA | CoffSection::READ));
-    helpers.add("bss", false,
-                BIND::bind(&dir_flag_reset, _1, &coffsect->m_flags,
+    helpers.Add("bss", false,
+                BIND::bind(&DirResetFlag, _1, &coffsect->m_flags,
                            CoffSection::BSS |
                            CoffSection::READ |
                            CoffSection::WRITE));
-    helpers.add("info", false,
-                BIND::bind(&dir_flag_reset, _1, &coffsect->m_flags,
+    helpers.Add("info", false,
+                BIND::bind(&DirResetFlag, _1, &coffsect->m_flags,
                            CoffSection::INFO |
                            CoffSection::DISCARD |
                            CoffSection::READ));
-    helpers.add("align", true,
-                BIND::bind(&dir_intn, _1, &m_object, line, align, has_align));
+    helpers.Add("align", true,
+                BIND::bind(&DirIntNum, _1, &m_object, line, align, has_align));
 }
 
 void
-CoffObject::dir_section(Object& object,
-                        NameValues& nvs,
-                        NameValues& objext_nvs,
-                        unsigned long line)
+CoffObject::DirSection(Object& object,
+                       NameValues& nvs,
+                       NameValues& objext_nvs,
+                       unsigned long line)
 {
     assert(&object == &m_object);
 
-    if (!nvs.front().is_string())
+    if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
-    std::string sectname = nvs.front().get_string();
+    std::string sectname = nvs.front().getString();
 
     if (sectname.length() > 8 && !m_win32)
     {
         // win32 format supports >8 character section names in object
         // files via "/nnnn" (where nnnn is decimal offset into string table),
         // so only warn for regular COFF.
-        warn_set(WARN_GENERAL,
-                 N_("COFF section names limited to 8 characters: truncating"));
+        setWarn(WARN_GENERAL,
+                N_("COFF section names limited to 8 characters: truncating"));
         sectname.resize(8);
     }
 
-    Section* sect = m_object.find_section(sectname);
+    Section* sect = m_object.FindSection(sectname);
     bool first = true;
     if (sect)
-        first = sect->is_default();
+        first = sect->isDefault();
     else
-        sect = append_section(sectname, line);
+        sect = AppendSection(sectname, line);
 
-    CoffSection* coffsect = get_coff(*sect);
+    CoffSection* coffsect = getCoff(*sect);
     assert(coffsect != 0);
 
-    m_object.set_cur_section(sect);
-    sect->set_default(false);
+    m_object.setCurSection(sect);
+    sect->setDefault(false);
 
     // No name/values, so nothing more to do
     if (nvs.size() <= 1)
@@ -919,8 +929,8 @@ CoffObject::dir_section(Object& object,
     // Ignore flags if we've seen this section before
     if (!first)
     {
-        warn_set(WARN_GENERAL,
-                 N_("section flags ignored on section redeclaration"));
+        setWarn(WARN_GENERAL,
+                N_("section flags ignored on section redeclaration"));
         return;
     }
 
@@ -929,23 +939,23 @@ CoffObject::dir_section(Object& object,
     bool has_align = false;
 
     DirHelpers helpers;
-    dir_section_init_helpers(helpers, coffsect, &align, &has_align, line);
-    helpers(++nvs.begin(), nvs.end(), dir_nameval_warn);
+    DirSectionInitHelpers(helpers, coffsect, &align, &has_align, line);
+    helpers(++nvs.begin(), nvs.end(), DirNameValueWarn);
 
-    sect->set_bss((coffsect->m_flags & CoffSection::BSS) != 0);
-    sect->set_code((coffsect->m_flags & CoffSection::EXECUTE) != 0);
+    sect->setBSS((coffsect->m_flags & CoffSection::BSS) != 0);
+    sect->setCode((coffsect->m_flags & CoffSection::EXECUTE) != 0);
 
     if (!m_win32)
         coffsect->m_flags &= ~CoffSection::WIN32_MASK;
 
     if (has_align)
     {
-        unsigned long aligni = align.get_uint();
+        unsigned long aligni = align.getUInt();
 
         // Alignments must be a power of two.
-        if (!is_exp2(aligni))
+        if (!isExp2(aligni))
         {
-            throw ValueError(String::compose(
+            throw ValueError(String::Compose(
                 N_("argument to `%1' is not a power of two"), "align"));
         }
 
@@ -953,47 +963,46 @@ CoffObject::dir_section(Object& object,
         if (aligni > 8192)
             throw ValueError(N_("Win32 does not support alignments > 8192"));
 
-        sect->set_align(aligni);
+        sect->setAlign(aligni);
     }
 }
 
 void
-CoffObject::dir_ident(Object& object,
-                      NameValues& namevals,
-                      NameValues& objext_namevals,
-                      unsigned long line)
+CoffObject::DirIdent(Object& object,
+                     NameValues& namevals,
+                     NameValues& objext_namevals,
+                     unsigned long line)
 {
     assert(&m_object == &object);
-    dir_ident_common(*this, ".comment", object, namevals, objext_namevals,
-                     line);
+    DirIdentCommon(*this, ".comment", object, namevals, objext_namevals, line);
 }
 
 void
-CoffObject::add_directives(Directives& dirs, const char* parser)
+CoffObject::AddDirectives(Directives& dirs, const char* parser)
 {
     static const Directives::Init<CoffObject> nasm_dirs[] =
     {
-        {"section", &CoffObject::dir_section, Directives::ARG_REQUIRED},
-        {"segment", &CoffObject::dir_section, Directives::ARG_REQUIRED},
-        {"ident",   &CoffObject::dir_ident, Directives::ANY},
+        {"section", &CoffObject::DirSection, Directives::ARG_REQUIRED},
+        {"segment", &CoffObject::DirSection, Directives::ARG_REQUIRED},
+        {"ident",   &CoffObject::DirIdent, Directives::ANY},
     };
     static const Directives::Init<CoffObject> gas_dirs[] =
     {
-        {".section", &CoffObject::dir_gas_section, Directives::ARG_REQUIRED},
-        {".ident",   &CoffObject::dir_ident, Directives::ANY},
+        {".section", &CoffObject::DirGasSection, Directives::ARG_REQUIRED},
+        {".ident",   &CoffObject::DirIdent, Directives::ANY},
     };
 
-    if (String::nocase_equal(parser, "nasm"))
-        dirs.add_array(this, nasm_dirs, NELEMS(nasm_dirs));
-    else if (String::nocase_equal(parser, "gas"))
-        dirs.add_array(this, gas_dirs, NELEMS(gas_dirs));
+    if (String::NocaseEqual(parser, "nasm"))
+        dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
+    else if (String::NocaseEqual(parser, "gas"))
+        dirs.AddArray(this, gas_dirs, NELEMS(gas_dirs));
 }
 
 void
-do_register()
+DoRegister()
 {
-    register_module<ObjectFormatModule,
-                    ObjectFormatModuleImpl<CoffObject> >("coff");
+    RegisterModule<ObjectFormatModule,
+                   ObjectFormatModuleImpl<CoffObject> >("coff");
 }
 
 }}} // namespace yasm::objfmt::coff

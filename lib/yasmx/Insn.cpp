@@ -88,17 +88,17 @@ Insn::Operand::Operand(std::auto_ptr<Expr> val)
       m_strict(0),
       m_type(IMM)
 {
-    if (val->is_reg())
+    if (val->isRegister())
     {
         m_type = REG;
-        m_reg = val->get_reg();
+        m_reg = val->getRegister();
     }
     else
         m_val = val.release();
 }
 
 void
-Insn::Operand::destroy()
+Insn::Operand::Destroy()
 {
     switch (m_type)
     {
@@ -142,7 +142,7 @@ Insn::Operand::clone() const
 }
 
 void
-Insn::Operand::put(marg_ostream& os) const
+Insn::Operand::Put(marg_ostream& os) const
 {
     switch (m_type)
     {
@@ -178,14 +178,14 @@ Insn::Operand::put(marg_ostream& os) const
 }
 
 void
-Insn::put(marg_ostream& os) const
+Insn::Put(marg_ostream& os) const
 {
     std::for_each(m_operands.begin(), m_operands.end(),
-                  BIND::bind(&Insn::Operand::put, _1, REF::ref(os)));
+                  BIND::bind(&Insn::Operand::Put, _1, REF::ref(os)));
 }
 
 void
-Insn::Operand::finalize()
+Insn::Operand::Finalize()
 {
     switch (m_type)
     {
@@ -197,10 +197,10 @@ Insn::Operand::finalize()
             {
                 if (m_ea)
                 {
-                    if (Expr* abs = m_ea->m_disp.get_abs())
+                    if (Expr* abs = m_ea->m_disp.getAbs())
                     {
-                        expand_equ(*abs);
-                        abs->simplify(false);
+                        ExpandEqu(*abs);
+                        abs->Simplify(false);
                     }
                 }
             }
@@ -214,8 +214,8 @@ Insn::Operand::finalize()
         case IMM:
             try
             {
-                expand_equ(*m_val);
-                m_val->simplify();
+                ExpandEqu(*m_val);
+                m_val->Simplify();
             }
             catch (Error& err)
             {
@@ -230,27 +230,27 @@ Insn::Operand::finalize()
 }
 
 std::auto_ptr<EffAddr>
-Insn::Operand::release_memory()
+Insn::Operand::ReleaseMemory()
 {
     if (m_type != MEMORY)
         return std::auto_ptr<EffAddr>(0);
     std::auto_ptr<EffAddr> ea(m_ea);
-    release();
+    Release();
     return ea;
 }
 
 std::auto_ptr<Expr>
-Insn::Operand::release_imm()
+Insn::Operand::ReleaseImm()
 {
     if (m_type != IMM)
         return std::auto_ptr<Expr>(0);
     std::auto_ptr<Expr> imm(m_val);
-    release();
+    Release();
     return imm;
 }
 
 std::auto_ptr<Expr>
-Insn::Operand::release_seg()
+Insn::Operand::ReleaseSeg()
 {
     std::auto_ptr<Expr> seg(m_seg);
     m_seg = 0;
@@ -258,7 +258,7 @@ Insn::Operand::release_seg()
 }
 
 void
-Insn::Operand::set_seg(std::auto_ptr<Expr> seg)
+Insn::Operand::setSeg(std::auto_ptr<Expr> seg)
 {
     if (m_seg)
         delete m_seg;
@@ -286,16 +286,16 @@ Insn::Insn(const Insn& rhs)
 Insn::~Insn()
 {
     std::for_each(m_operands.begin(), m_operands.end(),
-                  MEMFN::mem_fn(&Operand::destroy));
+                  MEMFN::mem_fn(&Operand::Destroy));
 }
 
 void
-Insn::append(BytecodeContainer& container, unsigned long line)
+Insn::Append(BytecodeContainer& container, unsigned long line)
 {
     // Simplify the operands' expressions.
     std::for_each(m_operands.begin(), m_operands.end(),
-                  MEMFN::mem_fn(&Operand::finalize));
-    do_append(container, line);
+                  MEMFN::mem_fn(&Operand::Finalize));
+    DoAppend(container, line);
 }
 
 } // namespace yasm

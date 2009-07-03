@@ -50,28 +50,28 @@ class IntNum;
 /// @param intn     intnum
 /// @warning Intnum is silently truncated to fit into 8 bits.
 YASM_LIB_EXPORT
-void write_8(Bytes& bytes, const IntNum& intn);
+void Write8(Bytes& bytes, const IntNum& intn);
 
 /// Write an intnum as a 16-bit value to a bytes buffer.
 /// @param bytes    output bytes buffer
 /// @param intn     intnum
 /// @warning Intnum is silently truncated to fit into 16 bits.
 YASM_LIB_EXPORT
-void write_16(Bytes& bytes, const IntNum& intn);
+void Write16(Bytes& bytes, const IntNum& intn);
 
 /// Write an intnum as a 32-bit value to a bytes buffer.
 /// @param bytes    output bytes buffer
 /// @param intn     intnum
 /// @warning Intnum is silently truncated to fit into 32 bits.
 YASM_LIB_EXPORT
-void write_32(Bytes& bytes, const IntNum& intn);
+void Write32(Bytes& bytes, const IntNum& intn);
 
 /// Write an intnum as a 64-bit value to a bytes buffer.
 /// @param bytes    output bytes buffer
 /// @param intn     intnum
 /// @warning Intnum is silently truncated to fit into 64 bits.
 YASM_LIB_EXPORT
-void write_64(Bytes& bytes, const IntNum& intn);
+void Write64(Bytes& bytes, const IntNum& intn);
 
 /// Write an intnum as a N-bit value to a bytes buffer.
 /// @param bytes    output bytes buffer
@@ -79,13 +79,13 @@ void write_64(Bytes& bytes, const IntNum& intn);
 /// @param n        number of bits (must be multiple of 8)
 /// @warning Intnum is silently truncated to fit into N bits.
 YASM_LIB_EXPORT
-void write_n(Bytes& bytes, const IntNum& intn, int n);
+void WriteN(Bytes& bytes, const IntNum& intn, int n);
 
 /// Write an 8-bit value to a bytes buffer.
 /// @param bytes    output bytes buffer
 /// @param val      8-bit value
 inline void
-write_8(Bytes& bytes, unsigned char val)
+Write8(Bytes& bytes, unsigned char val)
 {
     bytes.push_back(val & 0xFF);
 }
@@ -94,9 +94,9 @@ write_8(Bytes& bytes, unsigned char val)
 /// @param bytes    output bytes buffer
 /// @param val      16-bit value
 inline void
-write_16(Bytes& bytes, unsigned short val)
+Write16(Bytes& bytes, unsigned short val)
 {
-    if (bytes.is_bigendian())
+    if (bytes.isBigEndian())
     {
         bytes.push_back(static_cast<unsigned char>((val >> 8) & 0xFF));
         bytes.push_back(static_cast<unsigned char>(val & 0xFF));
@@ -112,9 +112,9 @@ write_16(Bytes& bytes, unsigned short val)
 /// @param bytes    output bytes buffer
 /// @param val      32-bit value
 inline void
-write_32(Bytes& bytes, unsigned long val)
+Write32(Bytes& bytes, unsigned long val)
 {
-    if (bytes.is_bigendian())
+    if (bytes.isBigEndian())
     {
         bytes.push_back(static_cast<unsigned char>((val >> 24) & 0xFF));
         bytes.push_back(static_cast<unsigned char>((val >> 16) & 0xFF));
@@ -136,15 +136,15 @@ write_32(Bytes& bytes, unsigned long val)
 /// @param n        number of bits (must be multiple of 8)
 /// @warning Value is silently truncated to fit into N bits.
 YASM_LIB_EXPORT
-void write_n(Bytes& bytes, unsigned long val, int n);
+void WriteN(Bytes& bytes, unsigned long val, int n);
 
 /// Read an unsigned 8-bit value from a bytes buffer.
 /// @param bytes    input bytes buffer
 /// @return 8-bit value.
 inline unsigned char
-read_u8(Bytes& bytes)
+ReadU8(Bytes& bytes)
 {
-    const unsigned char* ptr = bytes.read(1);
+    const unsigned char* ptr = bytes.Read(1);
     return ptr[0] & 0xFF;
 }
 
@@ -152,9 +152,9 @@ read_u8(Bytes& bytes)
 /// @param bytes    input bytes buffer
 /// @return 8-bit value.
 inline signed char
-read_s8(Bytes& bytes)
+ReadS8(Bytes& bytes)
 {
-    unsigned char val = read_u8(bytes);
+    unsigned char val = ReadU8(bytes);
     if (val & 0x80)
         return -static_cast<signed char>((~val)+1);
     else
@@ -165,11 +165,11 @@ read_s8(Bytes& bytes)
 /// @param bytes    input bytes buffer
 /// @return 16-bit value.
 inline unsigned short
-read_u16(Bytes& bytes)
+ReadU16(Bytes& bytes)
 {
-    const unsigned char* ptr = bytes.read(2);
+    const unsigned char* ptr = bytes.Read(2);
     unsigned short val = 0;
-    if (bytes.is_bigendian())
+    if (bytes.isBigEndian())
     {
         val |= ptr[0] & 0xFF;
         val <<= 8;
@@ -188,9 +188,9 @@ read_u16(Bytes& bytes)
 /// @param bytes    input bytes buffer
 /// @return 16-bit value.
 inline short
-read_s16(Bytes& bytes)
+ReadS16(Bytes& bytes)
 {
-    unsigned short val = read_u16(bytes);
+    unsigned short val = ReadU16(bytes);
     if (val & 0x8000)
         return -static_cast<short>((~val)+1);
     else
@@ -201,11 +201,11 @@ read_s16(Bytes& bytes)
 /// @param bytes    input bytes buffer
 /// @return 32-bit value.
 inline unsigned long
-read_u32(Bytes& bytes)
+ReadU32(Bytes& bytes)
 {
-    const unsigned char* ptr = bytes.read(4);
+    const unsigned char* ptr = bytes.Read(4);
     unsigned long val = 0;
-    if (bytes.is_bigendian())
+    if (bytes.isBigEndian())
     {
         val |= ptr[0] & 0xFF;
         val <<= 8;
@@ -232,9 +232,9 @@ read_u32(Bytes& bytes)
 /// @param bytes    input bytes buffer
 /// @return 32-bit value.
 inline long
-read_s32(Bytes& bytes)
+ReadS32(Bytes& bytes)
 {
-    unsigned long val = read_u32(bytes);
+    unsigned long val = ReadU32(bytes);
     if (val & 0x80000000UL)
         return -static_cast<long>((~val)+1);
     else
@@ -246,26 +246,26 @@ read_s32(Bytes& bytes)
 /// @param n        number of bits (must be multiple of 8)
 /// @return N-bit value (as an IntNum).
 YASM_LIB_EXPORT
-IntNum read_un(Bytes& bytes, int n);
+IntNum ReadUnsigned(Bytes& bytes, int n);
 
 /// Read an signed N-bit value from a bytes buffer.
 /// @param bytes    input bytes buffer
 /// @param n        number of bits (must be multiple of 8)
 /// @return N-bit value (as an IntNum).
 YASM_LIB_EXPORT
-IntNum read_sn(Bytes& bytes, int n);
+IntNum ReadSigned(Bytes& bytes, int n);
 
 /// Read an unsigned 64-bit value from a bytes buffer.
 /// @param bytes    input bytes buffer
 /// @return 64-bit value (as an IntNum).
 YASM_LIB_EXPORT
-IntNum read_u64(Bytes& bytes);
+IntNum ReadU64(Bytes& bytes);
 
 /// Read an signed 64-bit value from a bytes buffer.
 /// @param bytes    input bytes buffer
 /// @return 64-bit value (as an IntNum).
 YASM_LIB_EXPORT
-IntNum read_s64(Bytes& bytes);
+IntNum ReadS64(Bytes& bytes);
 
 /// Output APInt to bytes in little-endian or big-endian.
 /// Puts the value into the least significant bits of the destination,
@@ -283,7 +283,7 @@ IntNum read_s64(Bytes& bytes);
 ///                     valsize bits): <0=signed warnings,
 ///                     >0=unsigned warnings, 0=no warn
 YASM_LIB_EXPORT
-void overwrite(Bytes& bytes,
+void Overwrite(Bytes& bytes,
                const llvm::APInt& intn,
                unsigned int size,
                int shift,
@@ -306,7 +306,7 @@ void overwrite(Bytes& bytes,
 ///                     valsize bits): <0=signed warnings,
 ///                     >0=unsigned warnings, 0=no warn
 YASM_LIB_EXPORT
-void overwrite(Bytes& bytes,
+void Overwrite(Bytes& bytes,
                const IntNum& intn,
                unsigned int size,
                int shift,
@@ -314,7 +314,7 @@ void overwrite(Bytes& bytes,
                int warn);
 
 YASM_LIB_EXPORT
-void overwrite(Bytes& bytes,
+void Overwrite(Bytes& bytes,
                const llvm::APFloat& flt,
                unsigned int size,
                int shift,

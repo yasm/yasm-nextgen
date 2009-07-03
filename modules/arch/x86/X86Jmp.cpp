@@ -65,17 +65,17 @@ public:
            std::auto_ptr<Expr> target);
     ~X86Jmp();
 
-    void put(marg_ostream& os) const;
-    void finalize(Bytecode& bc);
-    unsigned long calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
-    bool expand(Bytecode& bc,
+    void Put(marg_ostream& os) const;
+    void Finalize(Bytecode& bc);
+    unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
+    bool Expand(Bytecode& bc,
                 unsigned long& len,
                 int span,
                 long old_val,
                 long new_val,
                 /*@out@*/ long* neg_thres,
                 /*@out@*/ long* pos_thres);
-    void output(Bytecode& bc, BytecodeOutput& bc_out);
+    void Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     X86Jmp* clone() const;
 
@@ -102,8 +102,8 @@ X86Jmp::X86Jmp(const X86Common& common,
       m_target(0, target),
       m_op_sel(op_sel)
 {
-    m_target.set_jump_target();
-    m_target.set_signed();
+    m_target.setJumpTarget();
+    m_target.setSigned();
 }
 
 X86Jmp::~X86Jmp()
@@ -111,7 +111,7 @@ X86Jmp::~X86Jmp()
 }
 
 void
-X86Jmp::put(marg_ostream& os) const
+X86Jmp::Put(marg_ostream& os) const
 {
     os << "_Jump_\n";
 
@@ -126,7 +126,7 @@ X86Jmp::put(marg_ostream& os) const
 
     os << "\nShort Form:\n";
     ++os;
-    if (m_shortop.get_len() == 0)
+    if (m_shortop.getLen() == 0)
         os << "None\n";
     else
         os << m_shortop;
@@ -134,7 +134,7 @@ X86Jmp::put(marg_ostream& os) const
 
     os << "Near Form:\n";
     ++os;
-    if (m_nearop.get_len() == 0)
+    if (m_nearop.getLen() == 0)
         os << "None\n";
     else
         os << m_nearop;
@@ -161,25 +161,25 @@ X86Jmp::put(marg_ostream& os) const
 }
 
 void
-X86Jmp::finalize(Bytecode& bc)
+X86Jmp::Finalize(Bytecode& bc)
 {
-    if (!m_target.finalize())
+    if (!m_target.Finalize())
         throw TooComplexError(N_("jump target expression too complex"));
-    if (m_target.is_complex_rel())
+    if (m_target.isComplexRelative())
         throw ValueError(N_("invalid jump target"));
 
     // Need to adjust target to the end of the instruction.
     // However, we don't know the instruction length yet (short/near).
     // So just adjust to the start of the instruction, and handle the
     // difference in calc_len() and tobytes().
-    Location sub_loc = {&bc, bc.get_fixed_len()};
-    m_target.sub_rel(bc.get_container()->get_object(), sub_loc);
-    m_target.set_ip_rel();
+    Location sub_loc = {&bc, bc.getFixedLen()};
+    m_target.SubRelative(bc.getContainer()->getObject(), sub_loc);
+    m_target.setIPRelative();
 
     Location target_loc;
-    if (m_target.is_relative()
-        && (!m_target.get_rel()->get_label(&target_loc)
-            || target_loc.bc->get_container() != bc.get_container()))
+    if (m_target.isRelative()
+        && (!m_target.getRelative()->getLabel(&target_loc)
+            || target_loc.bc->getContainer() != bc.getContainer()))
     {
         // External or out of segment, so we can't check distance.
         // Default to near (if explicitly overridden, we never get to
@@ -194,28 +194,28 @@ X86Jmp::finalize(Bytecode& bc)
 }
 
 unsigned long
-X86Jmp::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+X86Jmp::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 {
     unsigned long len = 0;
 
-    len += m_common.get_len();
+    len += m_common.getLen();
 
     if (m_op_sel == JMP_NEAR)
     {
-        len += m_nearop.get_len();
+        len += m_nearop.getLen();
         len += (m_common.m_opersize == 16) ? 2 : 4;
     }
     else
     {
         // Short or maybe long; generate span
-        len += m_shortop.get_len() + 1;
+        len += m_shortop.getLen() + 1;
         add_span(bc, 1, m_target, -128+len, 127+len);
     }
     return len;
 }
 
 bool
-X86Jmp::expand(Bytecode& bc,
+X86Jmp::Expand(Bytecode& bc,
                unsigned long& len,
                int span,
                long old_val,
@@ -228,20 +228,20 @@ X86Jmp::expand(Bytecode& bc,
 
     // Upgrade to a near jump
     m_op_sel = JMP_NEAR;
-    len -= m_shortop.get_len() + 1;
-    len += m_nearop.get_len();
+    len -= m_shortop.getLen() + 1;
+    len += m_nearop.getLen();
     len += (m_common.m_opersize == 16) ? 2 : 4;
 
     return false;
 }
 
 void
-X86Jmp::output(Bytecode& bc, BytecodeOutput& bc_out)
+X86Jmp::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
-    Bytes& bytes = bc_out.get_scratch();
+    Bytes& bytes = bc_out.getScratch();
 
     // Prefixes
-    m_common.to_bytes(bytes, 0);
+    m_common.ToBytes(bytes, 0);
 
     unsigned int size;
     if (m_op_sel == JMP_SHORT)
@@ -250,7 +250,7 @@ X86Jmp::output(Bytecode& bc, BytecodeOutput& bc_out)
         size = 1;
 
         // Opcode
-        m_shortop.to_bytes(bytes);
+        m_shortop.ToBytes(bytes);
     }
     else
     {
@@ -258,23 +258,23 @@ X86Jmp::output(Bytecode& bc, BytecodeOutput& bc_out)
         size = (m_common.m_opersize == 16) ? 2 : 4;
 
         // Opcode
-        m_nearop.to_bytes(bytes);
+        m_nearop.ToBytes(bytes);
     }
 
-    bc_out.output(bytes);
+    bc_out.Output(bytes);
 
     // Adjust relative displacement to end of instruction
-    m_target.add_abs(-static_cast<long>(bytes.size()+size));
-    m_target.set_size(size*8);
+    m_target.AddAbs(-static_cast<long>(bytes.size()+size));
+    m_target.setSize(size*8);
 
     // Distance from displacement to end of instruction is always 0.
-    m_target.set_next_insn(0);
+    m_target.setNextInsn(0);
 
     // Output displacement
-    Location loc = {&bc, bc.get_fixed_len()+bytes.size()};
-    Bytes& tbytes = bc_out.get_scratch();
+    Location loc = {&bc, bc.getFixedLen()+bytes.size()};
+    Bytes& tbytes = bc_out.getScratch();
     tbytes.resize(size);
-    bc_out.output(m_target, tbytes, loc, 1);
+    bc_out.Output(m_target, tbytes, loc, 1);
 }
 
 X86Jmp*
@@ -284,20 +284,20 @@ X86Jmp::clone() const
 }
 
 void
-append_jmp(BytecodeContainer& container,
-           const X86Common& common,
-           const X86Opcode& shortop,
-           const X86Opcode& nearop,
-           std::auto_ptr<Expr> target,
-           unsigned long line,
-           JmpOpcodeSel op_sel)
+AppendJmp(BytecodeContainer& container,
+          const X86Common& common,
+          const X86Opcode& shortop,
+          const X86Opcode& nearop,
+          std::auto_ptr<Expr> target,
+          unsigned long line,
+          JmpOpcodeSel op_sel)
 {
-    Bytecode& bc = container.fresh_bytecode();
+    Bytecode& bc = container.FreshBytecode();
     ++num_jmp;
 
-    if (shortop.get_len() == 0)
+    if (shortop.getLen() == 0)
         op_sel = JMP_NEAR;
-    if (nearop.get_len() == 0)
+    if (nearop.getLen() == 0)
         op_sel = JMP_SHORT;
 
     // jump size not forced near or far, so variable size (need contents)
@@ -305,9 +305,9 @@ append_jmp(BytecodeContainer& container,
     // same bytecode (as the distance is known)
     if (op_sel == JMP_NONE)
     {
-        bc.transform(Bytecode::Contents::Ptr(new X86Jmp(
+        bc.Transform(Bytecode::Contents::Ptr(new X86Jmp(
             common, op_sel, shortop, nearop, target)));
-        bc.set_line(line);
+        bc.setLine(line);
         ++num_jmp_bc;
         return;
     }
@@ -315,37 +315,37 @@ append_jmp(BytecodeContainer& container,
     // if jump size selected, generate bytes directly.
     // FIXME: if short jump out of range, this results in an overflow warning
     // instead of a "short jump out of range" error.
-    Bytes& bytes = bc.get_fixed();
-    common.to_bytes(bytes, 0);
+    Bytes& bytes = bc.getFixed();
+    common.ToBytes(bytes, 0);
 
     Value targetv(0, target);
-    targetv.set_line(line);
-    targetv.set_jump_target();
-    targetv.set_ip_rel();
-    targetv.set_signed();
-    targetv.set_next_insn(0);   // always 0.
+    targetv.setLine(line);
+    targetv.setJumpTarget();
+    targetv.setIPRelative();
+    targetv.setSigned();
+    targetv.setNextInsn(0);     // always 0.
 
     if (op_sel == JMP_SHORT)
     {
         // Opcode
-        shortop.to_bytes(bytes);
+        shortop.ToBytes(bytes);
 
         // Adjust relative displacement to end of bytecode
-        targetv.add_abs(-1);
-        targetv.set_size(8);
+        targetv.AddAbs(-1);
+        targetv.setSize(8);
     }
     else
     {
         // Opcode
-        nearop.to_bytes(bytes);
+        nearop.ToBytes(bytes);
 
         unsigned int i = (common.m_opersize == 16) ? 2 : 4;
 
         // Adjust relative displacement to end of bytecode
-        targetv.add_abs(-static_cast<long>(i));
-        targetv.set_size(i*8);
+        targetv.AddAbs(-static_cast<long>(i));
+        targetv.setSize(i*8);
     }
-    bc.append_fixed(targetv);
+    bc.AppendFixed(targetv);
 }
 
 }}} // namespace yasm::arch::x86

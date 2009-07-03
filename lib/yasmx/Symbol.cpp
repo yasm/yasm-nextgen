@@ -55,21 +55,21 @@ Symbol::~Symbol()
 }
 
 void
-Symbol::define(Type type, unsigned long line)
+Symbol::Define(Type type, unsigned long line)
 {
     // Has it been defined before (either by DEFINED or COMMON/EXTERN)?
     if (m_status & DEFINED)
     {
-        Error err(String::compose(N_("redefinition of `%1'"), m_name));
-        err.set_xref(m_def_line != 0 ? m_def_line : m_decl_line,
-                     String::compose(N_("`%1' previously defined here"),
-                                     m_name));
+        Error err(String::Compose(N_("redefinition of `%1'"), m_name));
+        err.setXRef(m_def_line != 0 ? m_def_line : m_decl_line,
+                    String::Compose(N_("`%1' previously defined here"),
+                                    m_name));
         throw err;
     }
     else
     {
         if (m_visibility & EXTERN)
-            warn_set(WARN_GENERAL, String::compose(
+            setWarn(WARN_GENERAL, String::Compose(
                 N_("`%1' both defined and declared extern"), m_name));
         m_def_line = line;      // set line number of definition
         m_type = type;
@@ -78,31 +78,31 @@ Symbol::define(Type type, unsigned long line)
 }
 
 void
-Symbol::define_equ(const Expr& e, unsigned long line)
+Symbol::DefineEqu(const Expr& e, unsigned long line)
 {
-    define(EQU, line);
+    Define(EQU, line);
     m_equ.reset(new Expr(e));
     m_status |= VALUED;
 }
 
 void
-Symbol::define_label(Location loc, unsigned long line)
+Symbol::DefineLabel(Location loc, unsigned long line)
 {
-    define(LABEL, line);
+    Define(LABEL, line);
     m_loc = loc;
-    loc.bc->add_symbol(SymbolRef(this)); /// XXX: should we add if not in table?
+    loc.bc->AddSymbol(SymbolRef(this)); /// XXX: should we add if not in table?
 }
 
 void
-Symbol::define_special(Visibility vis, unsigned long line)
+Symbol::DefineSpecial(Visibility vis, unsigned long line)
 {
-    define(SPECIAL, line);
+    Define(SPECIAL, line);
     m_status |= VALUED;
     m_visibility = vis;
 }
 
 void
-Symbol::declare(Visibility vis, unsigned long line)
+Symbol::Declare(Visibility vis, unsigned long line)
 {
     // Allowable combinations:
     //  Existing State--------------  vis  New State-------------------
@@ -126,16 +126,16 @@ Symbol::declare(Visibility vis, unsigned long line)
     }
     else
     {
-        Error err(String::compose(N_("redefinition of `%1'"), m_name));
-        err.set_xref(m_def_line != 0 ? m_def_line : m_decl_line,
-                     String::compose(N_("`%1' previously defined here"),
-                                     m_name));
+        Error err(String::Compose(N_("redefinition of `%1'"), m_name));
+        err.setXRef(m_def_line != 0 ? m_def_line : m_decl_line,
+                    String::Compose(N_("`%1' previously defined here"),
+                                    m_name));
         throw err;
     }
 }
 
 void
-Symbol::finalize(bool undef_extern)
+Symbol::Finalize(bool undef_extern)
 {
     // error if a symbol is used but never defined or extern/common declared
     if ((m_status & USED) && !(m_status & DEFINED) &&
@@ -144,13 +144,13 @@ Symbol::finalize(bool undef_extern)
         if (undef_extern)
             m_visibility |= EXTERN;
         else
-            throw Error(String::compose(N_("undefined symbol `%1' (first use)"),
+            throw Error(String::Compose(N_("undefined symbol `%1' (first use)"),
                                         m_name));
     }
 }
 
 bool
-Symbol::get_label(Location* loc) const
+Symbol::getLabel(Location* loc) const
 {
     if (m_type != LABEL)
         return false;

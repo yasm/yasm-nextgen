@@ -65,19 +65,19 @@ CoffSymbol::~CoffSymbol()
 }
 
 void
-CoffSymbol::put(marg_ostream& os) const
+CoffSymbol::Put(marg_ostream& os) const
 {
     os << "symtab index=" << m_index << '\n';
     os << "sclass=" << m_sclass << '\n';
 }
 
 void
-CoffSymbol::write(Bytes& bytes,
+CoffSymbol::Write(Bytes& bytes,
                   const Symbol& sym,
                   Errwarns& errwarns,
                   StringTable& strtab) const
 {
-    int vis = sym.get_visibility();
+    int vis = sym.getVisibility();
 
     IntNum value = 0;
     unsigned int scnum = 0xfffe;    // -2 = debugging symbol
@@ -86,35 +86,35 @@ CoffSymbol::write(Bytes& bytes,
 
     // Look at symrec for value/scnum/etc.
     Location loc;
-    if (sym.get_label(&loc))
+    if (sym.getLabel(&loc))
     {
         Section* sect = 0;
         if (loc.bc)
-            sect = loc.bc->get_container()->as_section();
+            sect = loc.bc->getContainer()->AsSection();
         // it's a label: get value and offset.
         // If there is not a section, leave as debugging symbol.
         if (sect)
         {
-            CoffSection* coffsect = get_coff(*sect);
+            CoffSection* coffsect = getCoff(*sect);
             assert(coffsect != 0);
 
             scnum = coffsect->m_scnum;
             scnlen = coffsect->m_size;
-            nreloc = sect->get_relocs().size();
-            value = sect->get_vma();
+            nreloc = sect->getRelocs().size();
+            value = sect->getVMA();
             if (loc.bc)
-                value += loc.get_offset();
+                value += loc.getOffset();
         }
     }
-    else if (const Expr* equ_val_c = sym.get_equ())
+    else if (const Expr* equ_val_c = sym.getEqu())
     {
         Expr equ_val(*equ_val_c);
-        simplify_calc_dist(equ_val);
-        if (equ_val.is_intnum())
-            value = equ_val.get_intnum();
+        SimplifyCalcDist(equ_val);
+        if (equ_val.isIntNum())
+            value = equ_val.getIntNum();
         else if (vis & Symbol::GLOBAL)
         {
-            errwarns.propagate(sym.get_def_line(), NotConstantError(
+            errwarns.Propagate(sym.getDefLine(), NotConstantError(
                 N_("global EQU value not an integer expression")));
         }
 
@@ -124,14 +124,14 @@ CoffSymbol::write(Bytes& bytes,
     {
         if (vis & Symbol::COMMON)
         {
-            assert(get_common_size(sym) != 0);
-            Expr csize(*get_common_size(sym));
-            simplify_calc_dist(csize);
-            if (csize.is_intnum())
-                value = csize.get_intnum();
+            assert(getCommonSize(sym) != 0);
+            Expr csize(*getCommonSize(sym));
+            SimplifyCalcDist(csize);
+            if (csize.isIntNum())
+                value = csize.getIntNum();
             else
             {
-                errwarns.propagate(sym.get_def_line(), NotConstantError(
+                errwarns.Propagate(sym.getDefLine(), NotConstantError(
                     N_("COMMON data size not an integer expression")));
             }
             scnum = 0;
@@ -145,28 +145,28 @@ CoffSymbol::write(Bytes& bytes,
     std::string name;
     size_t len;
 
-    if (sym.is_abs())
+    if (sym.isAbsoluteSymbol())
         name = ".absolut";
     else
-        name = sym.get_name();
+        name = sym.getName();
     len = name.length();
 
     if (len > 8)
     {
-        write_32(bytes, 0);                         // "zeros" field
-        write_32(bytes, strtab.get_index(name));    // strtab offset
+        Write32(bytes, 0);                      // "zeros" field
+        Write32(bytes, strtab.getIndex(name));  // strtab offset
     }
     else
     {
         // <8 chars, so no string table entry needed
-        bytes.write(reinterpret_cast<const unsigned char*>(name.data()), len);
-        bytes.write(8-len, 0);
+        bytes.Write(reinterpret_cast<const unsigned char*>(name.data()), len);
+        bytes.Write(8-len, 0);
     }
-    write_32(bytes, value);         // value
-    write_16(bytes, scnum);         // section number
-    write_16(bytes, 0);             // type is always zero (for now)
-    write_8(bytes, m_sclass);       // storage class
-    write_8(bytes, m_aux.size());   // number of aux entries
+    Write32(bytes, value);          // value
+    Write16(bytes, scnum);          // section number
+    Write16(bytes, 0);              // type is always zero (for now)
+    Write8(bytes, m_sclass);        // storage class
+    Write8(bytes, m_aux.size());    // number of aux entries
 
     assert(bytes.size() == 18);
 
@@ -176,26 +176,26 @@ CoffSymbol::write(Bytes& bytes,
         switch (m_auxtype)
         {
             case AUX_NONE:
-                bytes.write(18, 0);
+                bytes.Write(18, 0);
                 break;
             case AUX_SECT:
-                write_32(bytes, scnlen);    // section length
-                write_16(bytes, nreloc);    // number relocs
-                bytes.write(12, 0);         // number line nums, 0 fill
+                Write32(bytes, scnlen);     // section length
+                Write16(bytes, nreloc);     // number relocs
+                bytes.Write(12, 0);         // number line nums, 0 fill
                 break;
             case AUX_FILE:
                 len = i->fname.length();
                 if (len > 18)
                 {
-                    write_32(bytes, 0);
-                    write_32(bytes, strtab.get_index(i->fname));
-                    bytes.write(18-8, 0);
+                    Write32(bytes, 0);
+                    Write32(bytes, strtab.getIndex(i->fname));
+                    bytes.Write(18-8, 0);
                 }
                 else
                 {
-                    bytes.write(reinterpret_cast<const unsigned char*>
+                    bytes.Write(reinterpret_cast<const unsigned char*>
                                 (i->fname.data()), len);
-                    bytes.write(18-len, 0);
+                    bytes.Write(18-len, 0);
                 }
                 break;
             default:

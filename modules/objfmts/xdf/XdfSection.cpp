@@ -59,7 +59,7 @@ XdfSection::~XdfSection()
 }
 
 void
-XdfSection::put(marg_ostream& os) const
+XdfSection::Put(marg_ostream& os) const
 {
     os << "sym=\n";
     ++os;
@@ -75,22 +75,22 @@ XdfSection::put(marg_ostream& os) const
 }
 
 void
-XdfSection::write(Bytes& bytes, const Section& sect) const
+XdfSection::Write(Bytes& bytes, const Section& sect) const
 {
-    const XdfSymbol* xsym = get_xdf(sym);
+    const XdfSymbol* xsym = getXdf(sym);
     assert(xsym != 0);
 
     bytes << little_endian;
 
-    write_32(bytes, xsym->index);       // section name symbol
-    write_64(bytes, sect.get_lma());    // physical address
+    Write32(bytes, xsym->index);        // section name symbol
+    Write64(bytes, sect.getLMA());      // physical address
 
     if (has_vaddr)
-        write_64(bytes, sect.get_vma());// virtual address
+        Write64(bytes, sect.getVMA());  // virtual address
     else
-        write_64(bytes, sect.get_lma());// virt=phys if unspecified
+        Write64(bytes, sect.getLMA());  // virt=phys if unspecified
 
-    write_16(bytes, sect.get_align());  // alignment
+    Write16(bytes, sect.getAlign());    // alignment
 
     // flags
     unsigned short flags = 0;
@@ -98,7 +98,7 @@ XdfSection::write(Bytes& bytes, const Section& sect) const
         flags |= XDF_ABSOLUTE;
     if (flat)
         flags |= XDF_FLAT;
-    if (sect.is_bss())
+    if (sect.isBSS())
         flags |= XDF_BSS;
     switch (bits)
     {
@@ -106,16 +106,16 @@ XdfSection::write(Bytes& bytes, const Section& sect) const
         case 32: flags |= XDF_USE_32; break;
         case 64: flags |= XDF_USE_64; break;
     }
-    write_16(bytes, flags);
+    Write16(bytes, flags);
 
-    write_32(bytes, sect.get_filepos());// file ptr to data
-    write_32(bytes, size);              // section size
-    write_32(bytes, relptr);            // file ptr to relocs
-    write_32(bytes, sect.get_relocs().size());// num of relocation entries
+    Write32(bytes, sect.getFilePos());  // file ptr to data
+    Write32(bytes, size);               // section size
+    Write32(bytes, relptr);             // file ptr to relocs
+    Write32(bytes, sect.getRelocs().size());// num of relocation entries
 }
 
 void
-XdfSection::read(Bytes& bytes,
+XdfSection::Read(Bytes& bytes,
                  /*@out@*/ unsigned long* name_sym_index,
                  /*@out@*/ IntNum* lma,
                  /*@out@*/ IntNum* vma,
@@ -126,14 +126,14 @@ XdfSection::read(Bytes& bytes,
 {
     bytes << little_endian;
 
-    *name_sym_index = read_u32(bytes);  // section name symbol index
-    *lma = read_u64(bytes);             // physical address
-    *vma = read_u64(bytes);             // virtual address
+    *name_sym_index = ReadU32(bytes);   // section name symbol index
+    *lma = ReadU64(bytes);              // physical address
+    *vma = ReadU64(bytes);              // virtual address
     has_vaddr = true;                   // virtual specified by object file
-    *align = read_u16(bytes);           // alignment
+    *align = ReadU16(bytes);            // alignment
 
     // flags
-    unsigned short flags = read_u16(bytes);
+    unsigned short flags = ReadU16(bytes);
     has_addr = (flags & XDF_ABSOLUTE) != 0;
     flat = (flags & XDF_FLAT) != 0;
     *bss = (flags & XDF_BSS) != 0;
@@ -144,10 +144,10 @@ XdfSection::read(Bytes& bytes,
     else if ((flags & XDF_USE_64) != 0)
         bits = 64;
 
-    *filepos = read_u32(bytes);         // file ptr to data
-    size = read_u32(bytes);             // section size
-    relptr = read_u32(bytes);           // file ptr to relocs
-    *nrelocs = read_u32(bytes);         // num of relocation entries
+    *filepos = ReadU32(bytes);          // file ptr to data
+    size = ReadU32(bytes);              // section size
+    relptr = ReadU32(bytes);            // file ptr to relocs
+    *nrelocs = ReadU32(bytes);          // num of relocation entries
 }
 
 }}} // namespace yasm::objfmt::xdf

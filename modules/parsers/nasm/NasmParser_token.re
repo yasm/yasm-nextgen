@@ -63,7 +63,7 @@ namespace nasm
 static int linechg_numcount;
 
 static int
-strip_uscore(char* tok, int toklen)
+StripUnderscore(char* tok, int toklen)
 {
     int outlen = 0;
     for (int i=0; i<toklen; ++i)
@@ -86,14 +86,14 @@ strip_uscore(char* tok, int toklen)
 */
 
 int
-NasmParser::handle_dot_label(YYSTYPE* lvalp, YYCTYPE* tok, size_t toklen,
-                             size_t zeropos)
+NasmParser::HandleDotLabel(YYSTYPE* lvalp, YYCTYPE* tok, size_t toklen,
+                           size_t zeropos)
 {
-    /* check for special non-local labels like ..start */
+    // check for special non-local labels like ..start
     if (tok[zeropos+1] == '.')
     {
         lvalp->str.assign(tok+zeropos, toklen-zeropos);
-        /* check for special non-local ..@label */
+        // check for special non-local ..@label
         if (lvalp->str[zeropos+2] == '@')
             return NONLOCAL_ID;
         return SPECIAL_ID;
@@ -102,7 +102,7 @@ NasmParser::handle_dot_label(YYSTYPE* lvalp, YYCTYPE* tok, size_t toklen,
     if (m_locallabel_base.empty())
     {
         lvalp->str.assign(tok+zeropos, toklen-zeropos);
-        warn_set(WARN_GENERAL, String::compose(
+        setWarn(WARN_GENERAL, String::Compose(
             N_("no non-local label before `%1'"), lvalp->str));
     }
     else
@@ -115,7 +115,7 @@ NasmParser::handle_dot_label(YYSTYPE* lvalp, YYCTYPE* tok, size_t toklen,
 }
 
 int
-NasmParser::lex(YYSTYPE* lvalp)
+NasmParser::Lex(YYSTYPE* lvalp)
 {
     YYCTYPE* cursor = m_cur;
     YYCTYPE endch;
@@ -162,7 +162,7 @@ scan:
         digit+
         {
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, TOKLEN, 10);
+            lvalp->intn->setStr(TOK, TOKLEN, 10);
             RETURN(INTNUM);
         }
 
@@ -170,14 +170,14 @@ scan:
         [01] bindigit* ("_" bindigit*)+ 'b'
         {
             // strip underscores and leading 0s
-            int outlen = strip_uscore(TOK, TOKLEN-1);   // strip 'b'
+            int outlen = StripUnderscore(TOK, TOKLEN-1);    // strip 'b'
             while (*TOK == '0' && outlen > 1)
             {
                 ++TOK;
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, outlen, 2);
+            lvalp->intn->setStr(TOK, outlen, 2);
             RETURN(INTNUM);
         }
         [01] bindigit* 'b'
@@ -186,7 +186,7 @@ scan:
             while (*TOK == '0' && TOKLEN > 2)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, TOKLEN-1, 2);     // strip 'b'
+            lvalp->intn->setStr(TOK, TOKLEN-1, 2);      // strip 'b'
             RETURN(INTNUM);
         }
 
@@ -194,14 +194,14 @@ scan:
         [0-7] octdigit* ("_" octdigit*)+ [qQoO]
         {
             // strip underscores and leading 0s
-            int outlen = strip_uscore(TOK, TOKLEN-1);   // strip 'o'/'q'
+            int outlen = StripUnderscore(TOK, TOKLEN-1);    // strip 'o'/'q'
             while (*TOK == '0' && outlen > 1)
             {
                 ++TOK;
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, outlen, 8);
+            lvalp->intn->setStr(TOK, outlen, 8);
             RETURN(INTNUM);
         }
         [0-7] octdigit* [qQoO]
@@ -210,7 +210,7 @@ scan:
             while (*TOK == '0' && TOKLEN > 2)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, TOKLEN-1, 8);     // strip 'o'/'q'
+            lvalp->intn->setStr(TOK, TOKLEN-1, 8);      // strip 'o'/'q'
             RETURN(INTNUM);
         }
 
@@ -218,14 +218,14 @@ scan:
         digit hexdigit* ("_" hexdigit*)+ 'h'
         {
             // strip underscores and leading 0s
-            int outlen = strip_uscore(TOK, TOKLEN-1);   // strip 'h'
+            int outlen = StripUnderscore(TOK, TOKLEN-1);    // strip 'h'
             while (*TOK == '0' && outlen > 1)
             {
                 ++TOK;
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, outlen, 16);
+            lvalp->intn->setStr(TOK, outlen, 16);
             RETURN(INTNUM);
         }
         digit hexdigit* 'h'
@@ -234,7 +234,7 @@ scan:
             while (*TOK == '0' && TOKLEN > 2)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, TOKLEN-1, 16);    // strip 'h'
+            lvalp->intn->setStr(TOK, TOKLEN-1, 16);     // strip 'h'
             RETURN(INTNUM);
         }
 
@@ -243,14 +243,14 @@ scan:
         {
             ++TOK;  // skip $
             // strip underscores and leading 0s
-            int outlen = strip_uscore(TOK, TOKLEN);
+            int outlen = StripUnderscore(TOK, TOKLEN);
             while (*TOK == '0' && outlen > 1)
             {
                 ++TOK;
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, outlen, 16);
+            lvalp->intn->setStr(TOK, outlen, 16);
             RETURN(INTNUM);
         }
         "$" digit hexdigit+
@@ -260,7 +260,7 @@ scan:
             while (*TOK == '0' && TOKLEN > 1)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, TOKLEN, 16);
+            lvalp->intn->setStr(TOK, TOKLEN, 16);
             RETURN(INTNUM);
         }
 
@@ -269,14 +269,14 @@ scan:
         {
             TOK += 2;  // skip 0x
             // strip underscores and leading 0s
-            int outlen = strip_uscore(TOK, TOKLEN);
+            int outlen = StripUnderscore(TOK, TOKLEN);
             while (*TOK == '0' && outlen > 1)
             {
                 ++TOK;
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, outlen, 16);
+            lvalp->intn->setStr(TOK, outlen, 16);
             RETURN(INTNUM);
         }
         '0x' hexdigit+
@@ -286,7 +286,7 @@ scan:
             while (*TOK == '0' && TOKLEN > 1)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, TOKLEN, 16);
+            lvalp->intn->setStr(TOK, TOKLEN, 16);
             RETURN(INTNUM);
         }
 
@@ -484,7 +484,7 @@ scan:
         /* local label (.label) */
         "." [a-zA-Z0-9_$#@~.?]+
         {
-            RETURN(handle_dot_label(lvalp, TOK, TOKLEN, 0));
+            RETURN(HandleDotLabel(lvalp, TOK, TOKLEN, 0));
         }
 
         /* forced identifier */
@@ -493,7 +493,7 @@ scan:
             if (TOK[1] == '.')
             {
                 /* handle like .label */
-                RETURN(handle_dot_label(lvalp, TOK, TOKLEN, 1));
+                RETURN(HandleDotLabel(lvalp, TOK, TOKLEN, 1));
             }
             lvalp->str.assign(TOK+1, TOKLEN-1);
             RETURN(ID);
@@ -507,39 +507,39 @@ scan:
             if (m_state != INSTRUCTION)
             {
                 Arch::InsnPrefix ip =
-                    m_arch->parse_check_insnprefix(TOK, TOKLEN, get_cur_line());
+                    m_arch->ParseCheckInsnPrefix(TOK, TOKLEN, getCurLine());
                 TOK[TOKLEN] = savech;
-                switch (ip.get_type())
+                switch (ip.getType())
                 {
                     case Arch::InsnPrefix::INSN:
-                        lvalp->insn = ip.release_insn();
+                        lvalp->insn = ip.ReleaseInsn();
                         m_state = INSTRUCTION;
                         RETURN(INSN);
                     case Arch::InsnPrefix::PREFIX:
-                        lvalp->prefix = ip.get_prefix();
+                        lvalp->prefix = ip.getPrefix();
                         RETURN(PREFIX);
                     default:
                         break;
                 }
             }
-            Arch::RegTmod regtmod = m_arch->parse_check_regtmod(TOK, TOKLEN);
+            Arch::RegTmod regtmod = m_arch->ParseCheckRegTmod(TOK, TOKLEN);
             TOK[TOKLEN] = savech;
-            switch (regtmod.get_type())
+            switch (regtmod.getType())
             {
                 case Arch::RegTmod::REG:
-                    lvalp->reg = regtmod.get_reg();
+                    lvalp->reg = regtmod.getReg();
                     RETURN(REG);
                 case Arch::RegTmod::SEGREG:
-                    lvalp->segreg = regtmod.get_segreg();
+                    lvalp->segreg = regtmod.getSegReg();
                     RETURN(SEGREG);
                 case Arch::RegTmod::TARGETMOD:
-                    lvalp->targetmod = regtmod.get_tmod();
+                    lvalp->targetmod = regtmod.getTargetMod();
                     RETURN(TARGETMOD);
                 default:
                     break;
             }
             /* Propagate errors in case we got a warning from the arch */
-            m_errwarns.propagate(get_cur_line());
+            m_errwarns.Propagate(getCurLine());
             /* Just an identifier, return as such. */
             lvalp->str.assign(TOK, TOKLEN);
             RETURN(ID);
@@ -553,9 +553,9 @@ scan:
 
         any
         {
-            warn_set(WARN_UNREC_CHAR, String::compose(
+            setWarn(WARN_UNREC_CHAR, String::Compose(
                 N_("ignoring unrecognized character `%1'"),
-                conv_unprint(TOK[0])));
+                ConvUnprint(TOK[0])));
             goto scan;
         }
     */
@@ -571,7 +571,7 @@ linechg:
         {
             linechg_numcount++;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, TOKLEN, 10);
+            lvalp->intn->setStr(TOK, TOKLEN, 10);
             RETURN(INTNUM);
         }
 
@@ -597,9 +597,9 @@ linechg:
 
         any
         {
-            warn_set(WARN_UNREC_CHAR, String::compose(
+            setWarn(WARN_UNREC_CHAR, String::Compose(
                 N_("ignoring unrecognized character `%1'"),
-                conv_unprint(TOK[0])));
+                ConvUnprint(TOK[0])));
             goto linechg;
         }
     */
@@ -634,8 +634,8 @@ directive:
         [a-zA-Z_][a-zA-Z_0-9]*
         {
             lvalp->str.assign(TOK, TOKLEN);
-            if (String::nocase_equal(lvalp->str, "section") ||
-                String::nocase_equal(lvalp->str, "segment"))
+            if (String::NocaseEqual(lvalp->str, "section") ||
+                String::NocaseEqual(lvalp->str, "segment"))
                 m_state = SECTION_DIRECTIVE;
             else
                 m_state = DIRECTIVE2;
@@ -644,9 +644,9 @@ directive:
 
         any
         {
-            warn_set(WARN_UNREC_CHAR, String::compose(
+            setWarn(WARN_UNREC_CHAR, String::Compose(
                 N_("ignoring unrecognized character `%1'"),
-                conv_unprint(TOK[0])));
+                ConvUnprint(TOK[0])));
             goto directive;
         }
     */
@@ -682,9 +682,9 @@ section_directive:
 
         any
         {
-            warn_set(WARN_UNREC_CHAR, String::compose(
+            setWarn(WARN_UNREC_CHAR, String::Compose(
                 N_("ignoring unrecognized character `%1'"),
-                conv_unprint(TOK[0])));
+                ConvUnprint(TOK[0])));
             goto section_directive;
         }
     */
@@ -700,7 +700,7 @@ directive2:
         digit+
         {
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, TOKLEN, 10);
+            lvalp->intn->setStr(TOK, TOKLEN, 10);
             RETURN(INTNUM);
         }
 
@@ -708,14 +708,14 @@ directive2:
         [01] bindigit* ("_" bindigit*)+ 'b'
         {
             // strip underscores and leading 0s
-            int outlen = strip_uscore(TOK, TOKLEN-1);   // strip 'b'
+            int outlen = StripUnderscore(TOK, TOKLEN-1);    // strip 'b'
             while (*TOK == '0' && outlen > 1)
             {
                 ++TOK;
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, outlen, 2);
+            lvalp->intn->setStr(TOK, outlen, 2);
             RETURN(INTNUM);
         }
         [01] bindigit* 'b'
@@ -724,7 +724,7 @@ directive2:
             while (*TOK == '0' && TOKLEN > 2)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, TOKLEN-1, 2);     // strip 'b'
+            lvalp->intn->setStr(TOK, TOKLEN-1, 2);      // strip 'b'
             RETURN(INTNUM);
         }
 
@@ -732,14 +732,14 @@ directive2:
         [0-7] octdigit* ("_" octdigit*)+ [qQoO]
         {
             // strip underscores and leading 0s
-            int outlen = strip_uscore(TOK, TOKLEN-1);   // strip 'o'/'q'
+            int outlen = StripUnderscore(TOK, TOKLEN-1);    // strip 'o'/'q'
             while (*TOK == '0' && outlen > 1)
             {
                 ++TOK;
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, outlen, 8);
+            lvalp->intn->setStr(TOK, outlen, 8);
             RETURN(INTNUM);
         }
         [0-7] octdigit* [qQoO]
@@ -748,7 +748,7 @@ directive2:
             while (*TOK == '0' && TOKLEN > 2)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, TOKLEN-1, 8);     // strip 'o'/'q'
+            lvalp->intn->setStr(TOK, TOKLEN-1, 8);      // strip 'o'/'q'
             RETURN(INTNUM);
         }
 
@@ -756,14 +756,14 @@ directive2:
         digit hexdigit* ("_" hexdigit*)+ 'h'
         {
             // strip underscores and leading 0s
-            int outlen = strip_uscore(TOK, TOKLEN-1);   // strip 'h'
+            int outlen = StripUnderscore(TOK, TOKLEN-1);    // strip 'h'
             while (*TOK == '0' && outlen > 1)
             {
                 ++TOK;
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, outlen, 16);
+            lvalp->intn->setStr(TOK, outlen, 16);
             RETURN(INTNUM);
         }
         digit hexdigit* 'h'
@@ -772,7 +772,7 @@ directive2:
             while (*TOK == '0' && TOKLEN > 2)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, TOKLEN-1, 16);    // strip 'h'
+            lvalp->intn->setStr(TOK, TOKLEN-1, 16);     // strip 'h'
             RETURN(INTNUM);
         }
 
@@ -781,14 +781,14 @@ directive2:
         {
             ++TOK;  // skip $
             // strip underscores and leading 0s
-            int outlen = strip_uscore(TOK, TOKLEN);
+            int outlen = StripUnderscore(TOK, TOKLEN);
             while (*TOK == '0' && outlen > 1)
             {
                 ++TOK;
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, outlen, 16);
+            lvalp->intn->setStr(TOK, outlen, 16);
             RETURN(INTNUM);
         }
         "$" digit hexdigit+
@@ -798,7 +798,7 @@ directive2:
             while (*TOK == '0' && TOKLEN > 1)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, TOKLEN, 16);
+            lvalp->intn->setStr(TOK, TOKLEN, 16);
             RETURN(INTNUM);
         }
 
@@ -807,14 +807,14 @@ directive2:
         {
             TOK += 2;  // skip 0x
             // strip underscores and leading 0s
-            int outlen = strip_uscore(TOK, TOKLEN);
+            int outlen = StripUnderscore(TOK, TOKLEN);
             while (*TOK == '0' && outlen > 1)
             {
                 ++TOK;
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, outlen, 16);
+            lvalp->intn->setStr(TOK, outlen, 16);
             RETURN(INTNUM);
         }
         '0x' hexdigit+
@@ -824,7 +824,7 @@ directive2:
             while (*TOK == '0' && TOKLEN > 1)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, TOKLEN, 16);
+            lvalp->intn->setStr(TOK, TOKLEN, 16);
             RETURN(INTNUM);
         }
 
@@ -859,13 +859,13 @@ directive2:
         {
             savech = TOK[TOKLEN];
             TOK[TOKLEN] = '\0';
-            Arch::RegTmod regtmod = m_arch->parse_check_regtmod(TOK, TOKLEN);
+            Arch::RegTmod regtmod = m_arch->ParseCheckRegTmod(TOK, TOKLEN);
             TOK[TOKLEN] = savech;
-            lvalp->reg = regtmod.get_reg();
+            lvalp->reg = regtmod.getReg();
             if (lvalp->reg)
                 RETURN(REG);
             // Propagate errors in case we got a warning from the arch
-            m_errwarns.propagate(get_cur_line());
+            m_errwarns.Propagate(getCurLine());
             /* Just an identifier, return as such. */
             lvalp->str.assign(TOK, TOKLEN);
             RETURN(ID);
@@ -879,9 +879,9 @@ directive2:
 
         any
         {
-            warn_set(WARN_UNREC_CHAR, String::compose(
+            setWarn(WARN_UNREC_CHAR, String::Compose(
                 N_("ignoring unrecognized character `%1'"),
-                conv_unprint(TOK[0])));
+                ConvUnprint(TOK[0])));
             goto scan;
         }
      */

@@ -65,34 +65,34 @@ public:
     /// Set the object filename; if not set prior to assembly, determined
     /// from source filename according to the object format settings.
     /// @param obj_filename     object filename (e.g. "file.o")
-    void set_obj_filename(const std::string& obj_filename);
+    void setObjectFilename(const std::string& obj_filename);
 
     /// Set the machine of architecture; if not set prior to assembly,
     /// determined by object format.
     /// @param machine          machine name
-    void set_machine(const std::string& machine);
+    void setMachine(const std::string& machine);
 
     /// Set the preprocessor; if not set prior to assembly, determined
     /// by parser.
     /// @param preproc_keyword  preprocessor keyword
-    void set_preproc(const std::string& preproc_keyword);
+    void setPreprocessor(const std::string& preproc_keyword);
 
     /// Set the debug format; if not set prior to assembly, defaults to null
     /// debug format (e.g. no debugging information).
     /// @param dbgfmt_keyword   debug format keyword
-    void set_dbgfmt(const std::string& dbgfmt_keyword);
+    void setDebugFormat(const std::string& dbgfmt_keyword);
 
     /// Set the list format; if not set prior to assembly, defaults to null
     /// list format (e.g. no list output).
     /// @param listfmt_keyword  list format keyword
-    void set_listfmt(const std::string& list_keyword);
+    void setListFormat(const std::string& list_keyword);
 
     /// Actually perform assembly.  Does not write to output file.
     /// @param is               input stream
     /// @param src_filename     source filename (e.g. "file.asm")
     /// @param warning_error    treat warnings as errors if true
     /// @return True on success, false on failure.
-    bool assemble(std::istream& is,
+    bool Assemble(std::istream& is,
                   const std::string& src_filename,
                   bool warning_error = false);
 
@@ -101,31 +101,31 @@ public:
     /// @param os               output stream
     /// @param warning_error    treat warnings as errors if true
     /// @return True on success, false on failure.
-    bool output(std::ostream& os, bool warning_error = false);
+    bool Output(std::ostream& os, bool warning_error = false);
 
     /// Get the object.  Returns 0 until after assembly is successful.
     /// @return Object.
-    Object* get_object();
+    Object* getObject();
 
     /// Get the preprocessor.
     /// @return Preprocessor.
-    Preprocessor* get_preproc();
+    Preprocessor* getPreprocessor();
 
     /// Get the architecture.
     /// @return Architecture.
-    Arch* get_arch();
+    Arch* getArch();
 
     /// Get the error/warning set.
     /// @return Errwarns.
-    Errwarns* get_errwarns();
+    Errwarns* getErrwarns();
 
     /// Get the line map.
     /// @return Line map.
-    Linemap* get_linemap();
+    Linemap* getLinemap();
 
     /// Get the object filename.  May return empty string if called prior
     /// to assemble() being called.
-    std::string get_obj_filename() const;
+    std::string getObjectFilename() const;
 
 private:
     Assembler(const Assembler&);                    // not implemented

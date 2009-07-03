@@ -65,19 +65,19 @@ public:
     /// Search for the data associated with a key in the HAMT.
     /// @param key          Key
     /// @return NULL if key/data not present, otherwise data.
-    T* find(const Key& key);
+    T* Find(const Key& key);
 
     /// Insert keyed data into HAMT, without replacement.
     /// @param data         Data to insert
     /// @return If key was already present, data from HAMT with that key.
     ///         If key was not present, NULL.
-    T* insert(T* data) { return insrep(data, false); }
+    T* Insert(T* data) { return InsRep(data, false); }
 
     /// Insert keyed data into HAMT, with replacement.
     /// @param data         Data to insert
     /// @return If key was already present, old data from HAMT with that key.
     ///         If key was not present, NULL.
-    T* replace(T* data) { return insrep(data, true); }
+    T* Replace(T* data) { return InsRep(data, true); }
 
 private:
     hamt(const hamt&);                  // not implemented
@@ -100,7 +100,7 @@ private:
         /// node structure
         T* value;
 
-        Node* & sub_trie(unsigned long i)
+        Node* & SubTrie(unsigned long i)
         {
             return (reinterpret_cast<Node**>(this+1))[i];
         }
@@ -120,17 +120,17 @@ private:
     /// @param data     Data to insert/replace
     /// @param replace  True if should replace
     /// @return Old data from HAMT; if no old data, NULL.
-    T* insrep(T* data, bool replace);
+    T* InsRep(T* data, bool replace);
 
-    static unsigned long hash_key(const Key& key);
-    static unsigned long rehash_key(const Key& key, int Level);
-    static unsigned long hash_key_nocase(const Key& key);
-    static unsigned long rehash_key_nocase(const Key& key, int Level);
+    static unsigned long HashKey(const Key& key);
+    static unsigned long RehashKey(const Key& key, int Level);
+    static unsigned long HashKeyNocase(const Key& key);
+    static unsigned long RehashKeyNocase(const Key& key, int Level);
 };
 
 template <typename Key, typename T, typename GetKey>
 unsigned long
-hamt<Key,T,GetKey>::hash_key(const Key& key)
+hamt<Key,T,GetKey>::HashKey(const Key& key)
 {
     unsigned long a=31415, b=27183, vHash=0;
     for (typename Key::const_iterator i=key.begin(), end=key.end();
@@ -141,7 +141,7 @@ hamt<Key,T,GetKey>::hash_key(const Key& key)
 
 template <typename Key, typename T, typename GetKey>
 unsigned long
-hamt<Key,T,GetKey>::rehash_key(const Key& key, int Level)
+hamt<Key,T,GetKey>::RehashKey(const Key& key, int Level)
 {
     unsigned long a=31415, b=27183, vHash=0;
     for (typename Key::const_iterator i=key.begin(), end=key.end();
@@ -152,7 +152,7 @@ hamt<Key,T,GetKey>::rehash_key(const Key& key, int Level)
 
 template <typename Key, typename T, typename GetKey>
 unsigned long
-hamt<Key,T,GetKey>::hash_key_nocase(const Key& key)
+hamt<Key,T,GetKey>::HashKeyNocase(const Key& key)
 {
     unsigned long a=31415, b=27183, vHash=0;
     for (typename Key::const_iterator i=key.begin(), end=key.end();
@@ -163,7 +163,7 @@ hamt<Key,T,GetKey>::hash_key_nocase(const Key& key)
 
 template <typename Key, typename T, typename GetKey>
 unsigned long
-hamt<Key,T,GetKey>::rehash_key_nocase(const Key& key, int Level)
+hamt<Key,T,GetKey>::RehashKeyNocase(const Key& key, int Level)
 {
     unsigned long a=31415, b=27183, vHash=0;
     for (typename Key::const_iterator i=key.begin(), end=key.end();
@@ -191,9 +191,9 @@ hamt<Key,T,GetKey>::~hamt()
 
 template <typename Key, typename T, typename GetKey>
 T*
-hamt<Key,T,GetKey>::insrep(T* data, bool replace)
+hamt<Key,T,GetKey>::InsRep(T* data, bool replace)
 {
-    unsigned long key = hash_key(get_key(data));
+    unsigned long key = HashKey(get_key(data));
     unsigned long keypart = key & 0x1F;
     Node** pnode = &m_root[keypart];
     Node* node = *pnode;
@@ -231,8 +231,8 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
                     if (keypartbits > 30)
                     {
                         // Exceeded 32 bits: rehash
-                        key = rehash_key(get_key(data), level);
-                        key2 = rehash_key(get_key(node->value), level);
+                        key = RehashKey(get_key(data), level);
+                        key2 = RehashKey(get_key(node->value), level);
                         keypartbits = 0;
                     }
                     keypart = (key >> keypartbits) & 0x1F;
@@ -247,10 +247,10 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
                         node->bitmap_key = key2;    // update in case we rehashed
                         newnode->bitmap_key = 1<<keypart;
                         newnode->value = 0;  // subtrie indication
-                        newnode->sub_trie(0) = node;
+                        newnode->SubTrie(0) = node;
                         *pnode = newnode;
 
-                        pnode = &newnode->sub_trie(0);
+                        pnode = &newnode->SubTrie(0);
                         node = *pnode;
                         level++;
                     }
@@ -278,13 +278,13 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
                         // Copy nodes into subtrie based on order
                         if (keypart2 < keypart)
                         {
-                            newnode->sub_trie(0) = node;
-                            newnode->sub_trie(1) = entry;
+                            newnode->SubTrie(0) = node;
+                            newnode->SubTrie(1) = entry;
                         }
                         else
                         {
-                            newnode->sub_trie(0) = entry;
-                            newnode->sub_trie(1) = node;
+                            newnode->SubTrie(0) = entry;
+                            newnode->SubTrie(1) = node;
                         }
 
                         *pnode = newnode;
@@ -299,7 +299,7 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
         if (keypartbits > 30)
         {
             // Exceeded 32 bits of current key: rehash
-            key = rehash_key(get_key(data), level);
+            key = RehashKey(get_key(data), level);
             keypartbits = 0;
         }
         keypart = (key >> keypartbits) & 0x1F;
@@ -316,7 +316,7 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
             node->bitmap_key |= (1<<keypart);
 
             // Count total number of bits in bitmap to determine new size
-            unsigned long size = bit_count(node->bitmap_key);
+            unsigned long size = BitCount(node->bitmap_key);
             size &= 0x1F;
             if (size == 0)
                 size = 32;
@@ -329,17 +329,17 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
 
             // Count bits below to find where to insert new node at
             unsigned long map =
-                bit_count(node->bitmap_key & ~((~0UL)<<keypart));
+                BitCount(node->bitmap_key & ~((~0UL)<<keypart));
             map &= 0x1F;        // Clamp to <32
 
             // Copy existing nodes leaving gap for new node
-            std::memcpy(&newnode->sub_trie(0), &node->sub_trie(0),
+            std::memcpy(&newnode->SubTrie(0), &node->SubTrie(0),
                         map*sizeof(Node*));
-            std::memcpy(&newnode->sub_trie(map+1), &node->sub_trie(map),
+            std::memcpy(&newnode->SubTrie(map+1), &node->SubTrie(map),
                         (size-map-1)*sizeof(Node*));
 
             // Set up new node
-            newnode->sub_trie(map) = entry;
+            newnode->SubTrie(map) = entry;
 
             // Delete old subtrie
             m_pools[size-1]->free(node);
@@ -349,21 +349,21 @@ hamt<Key,T,GetKey>::insrep(T* data, bool replace)
         }
 
         // Count bits below
-        unsigned long map = bit_count(node->bitmap_key & ~((~0UL)<<keypart));
+        unsigned long map = BitCount(node->bitmap_key & ~((~0UL)<<keypart));
         map &= 0x1F;    // Clamp to <32
 
         // Go down a level
         level++;
-        pnode = &node->sub_trie(map);
+        pnode = &node->SubTrie(map);
         node = *pnode;
     }
 }
 
 template <typename Key, typename T, typename GetKey>
 T*
-hamt<Key,T,GetKey>::find(const Key& str)
+hamt<Key,T,GetKey>::Find(const Key& str)
 {
-    unsigned long key = m_nocase ? hash_key_nocase(str) : hash_key(str);
+    unsigned long key = m_nocase ? HashKeyNocase(str) : HashKey(str);
     unsigned long keypart = key & 0x1F;
     Node* node = m_root[keypart];
 
@@ -387,7 +387,7 @@ hamt<Key,T,GetKey>::find(const Key& str)
         if (keypartbits > 30)
         {
             // Exceeded 32 bits of current key: rehash
-            key = rehash_key(str, level);
+            key = RehashKey(str, level);
             keypartbits = 0;
         }
         keypart = (key >> keypartbits) & 0x1F;
@@ -395,12 +395,12 @@ hamt<Key,T,GetKey>::find(const Key& str)
             return 0;       // bit is 0 in bitmap -> no match
 
         // Count bits below
-        unsigned long map = bit_count(node->bitmap_key & ~((~0UL)<<keypart));
+        unsigned long map = BitCount(node->bitmap_key & ~((~0UL)<<keypart));
         map &= 0x1F;        // Clamp to <32
 
         // Go down a level
         level++;
-        node = node->sub_trie(map);
+        node = node->SubTrie(map);
     }
 }
 

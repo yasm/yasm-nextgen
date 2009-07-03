@@ -60,20 +60,20 @@ operator<< (marg_ostream& os, const X86Opcode& opcode)
 }
 
 void
-X86Opcode::to_bytes(Bytes& bytes) const
+X86Opcode::ToBytes(Bytes& bytes) const
 {
-    bytes.write(m_opcode, m_len);
+    bytes.Write(m_opcode, m_len);
 }
 
 void
-X86Opcode::make_alt_1()
+X86Opcode::MakeAlt1()
 {
     m_opcode[0] = m_opcode[m_len];
     m_len = 1;
 }
 
 void
-X86Opcode::make_alt_2()
+X86Opcode::MakeAlt2()
 {
     m_opcode[0] = m_opcode[1];
     m_opcode[1] = m_opcode[2];

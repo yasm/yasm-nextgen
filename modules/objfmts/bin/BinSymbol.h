@@ -62,8 +62,8 @@ public:
               const BinSection& bsd,
               SpecialSym which);
     ~BinSymbol();
-    void put(marg_ostream& os) const;
-    bool get_value(/*@out@*/ IntNum* val) const;
+    void Put(marg_ostream& os) const;
+    bool getValue(/*@out@*/ IntNum* val) const;
 
 private:
     const Section& m_sect;          // referenced section
@@ -71,27 +71,27 @@ private:
     SpecialSym m_which;
 };
 
-void bin_simplify(Expr& e);
+void BinSimplify(Expr& e);
 
 inline const BinSymbol*
-get_bin_sym(const Symbol& sym)
+getBin(const Symbol& sym)
 {
-    return static_cast<const BinSymbol*>(sym.get_assoc_data(BinSymbol::key));
+    return static_cast<const BinSymbol*>(sym.getAssocData(BinSymbol::key));
 }
 
 inline BinSymbol*
-get_bin_sym(Symbol& sym)
+getBin(Symbol& sym)
 {
-    return static_cast<BinSymbol*>(sym.get_assoc_data(BinSymbol::key));
+    return static_cast<BinSymbol*>(sym.getAssocData(BinSymbol::key));
 }
 
 inline bool
-get_ssym_value(const Symbol& sym, /*@out@*/ IntNum* val)
+getBinSSymValue(const Symbol& sym, /*@out@*/ IntNum* val)
 {
-    const BinSymbol* bsym = get_bin_sym(sym);
+    const BinSymbol* bsym = getBin(sym);
     if (!bsym)
         return false;
-    return bsym->get_value(val);
+    return bsym->getValue(val);
 }
 
 }}} // namespace yasm::objfmt::bin

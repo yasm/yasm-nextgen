@@ -34,7 +34,7 @@ namespace String
 {
 
 bool
-nocase_equal(const char* s1, const char* s2)
+NocaseEqual(const char* s1, const char* s2)
 {
     for (; *s1 != '\0' && *s2 != '\0'; ++s1, ++s2)
     {
@@ -45,7 +45,7 @@ nocase_equal(const char* s1, const char* s2)
 }
 
 bool
-nocase_equal(const char* s1, const char* s2, std::string::size_type n)
+NocaseEqual(const char* s1, const char* s2, std::string::size_type n)
 {
     if (n == 0)
         return true;
@@ -58,7 +58,7 @@ nocase_equal(const char* s1, const char* s2, std::string::size_type n)
 }
 
 std::string
-lowercase(const char* in)
+Lowercase(const char* in)
 {
     std::string ret;
     ret.reserve(std::strlen(in));
@@ -68,7 +68,7 @@ lowercase(const char* in)
 }
 
 std::string
-lowercase(const std::string& in)
+Lowercase(const std::string& in)
 {
     std::string ret;
     ret.reserve(in.length());

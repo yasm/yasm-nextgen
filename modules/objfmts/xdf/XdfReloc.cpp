@@ -56,16 +56,16 @@ XdfReloc::XdfReloc(const IntNum& addr,
 }
 
 XdfReloc::XdfReloc(const IntNum& addr, const Value& value, bool ip_rel)
-    : Reloc(addr, value.get_rel())
+    : Reloc(addr, value.getRelative())
     , m_base(0)
-    , m_size(static_cast<Size>(value.get_size()/8))
-    , m_shift(value.get_rshift())
+    , m_size(static_cast<Size>(value.getSize()/8))
+    , m_shift(value.getRShift())
 {
-    if (value.is_seg_of())
+    if (value.isSegOf())
         m_type = XDF_SEG;
-    else if (value.is_wrt())
+    else if (value.isWRT())
     {
-        m_base = value.get_wrt();
+        m_base = value.getWRT();
         m_type = XDF_WRT;
     }
     else if (ip_rel)
@@ -79,20 +79,20 @@ XdfReloc::~XdfReloc()
 }
 
 Expr
-XdfReloc::get_value() const
+XdfReloc::getValue() const
 {
     Expr e(m_sym);
     if (m_type == XDF_WRT)
-        e.calc(Op::WRT, m_base);
+        e.Calc(Op::WRT, m_base);
 
     if (m_shift > 0)
-        e.calc(Op::SHR, m_shift);
+        e.Calc(Op::SHR, m_shift);
 
     return e;
 }
 
 std::string
-XdfReloc::get_type_name() const
+XdfReloc::getTypeName() const
 {
     std::string s;
 
@@ -116,33 +116,33 @@ XdfReloc::get_type_name() const
 }
 
 void
-XdfReloc::write(Bytes& bytes) const
+XdfReloc::Write(Bytes& bytes) const
 {
-    const XdfSymbol* xsym = get_xdf(m_sym);
+    const XdfSymbol* xsym = getXdf(m_sym);
     assert(xsym != 0);      // need symbol data for relocated symbol
 
     bytes << little_endian;
 
-    write_32(bytes, m_addr);
-    write_32(bytes, xsym->index);       // relocated symbol
+    Write32(bytes, m_addr);
+    Write32(bytes, xsym->index);        // relocated symbol
 
     if (m_base)
     {
-        xsym = get_xdf(m_base);
+        xsym = getXdf(m_base);
         assert(xsym != 0);  // need symbol data for relocated base symbol
-        write_32(bytes, xsym->index);   // base symbol
+        Write32(bytes, xsym->index);    // base symbol
     }
     else
     {
         // need base symbol for WRT relocation
         assert(m_type != XDF_WRT);
-        write_32(bytes, 0);             // no base symbol
+        Write32(bytes, 0);              // no base symbol
     }
 
-    write_8(bytes, m_type);             // type of relocation
-    write_8(bytes, m_size);             // size of relocation
-    write_8(bytes, m_shift);            // relocation shift
-    write_8(bytes, 0);                  // flags
+    Write8(bytes, m_type);              // type of relocation
+    Write8(bytes, m_size);              // size of relocation
+    Write8(bytes, m_shift);             // relocation shift
+    Write8(bytes, 0);                   // flags
 }
 
 }}} // namespace yasm::objfmt::xdf

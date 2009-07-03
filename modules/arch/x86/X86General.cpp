@@ -76,14 +76,14 @@ public:
                bool default_rel);
     ~X86General();
 
-    void put(marg_ostream& os) const;
-    void finalize(Bytecode& bc);
-    unsigned long calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
-    bool expand(Bytecode& bc, unsigned long& len, int span,
+    void Put(marg_ostream& os) const;
+    void Finalize(Bytecode& bc);
+    unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
+    bool Expand(Bytecode& bc, unsigned long& len, int span,
                 long old_val, long new_val,
                 /*@out@*/ long* neg_thres,
                 /*@out@*/ long* pos_thres);
-    void output(Bytecode& bc, BytecodeOutput& bc_out);
+    void Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     X86General* clone() const;
 
@@ -148,7 +148,7 @@ X86General::~X86General()
 }
 
 void
-X86General::put(marg_ostream& os) const
+X86General::Put(marg_ostream& os) const
 {
     os << "_Instruction_\n";
 
@@ -188,16 +188,16 @@ X86General::put(marg_ostream& os) const
 }
 
 void
-X86General::finalize(Bytecode& bc)
+X86General::Finalize(Bytecode& bc)
 {
     if (m_ea)
-        m_ea->finalize();
-    if (m_imm.get() != 0 && !m_imm->finalize())
+        m_ea->Finalize();
+    if (m_imm.get() != 0 && !m_imm->Finalize())
         throw TooComplexError(N_("immediate expression too complex"));
 
     if (m_postop == POSTOP_ADDRESS16 && m_common.m_addrsize != 0)
     {
-        warn_set(WARN_GENERAL, N_("address size override ignored"));
+        setWarn(WARN_GENERAL, N_("address size override ignored"));
         m_common.m_addrsize = 0;
     }
 
@@ -215,12 +215,12 @@ X86General::finalize(Bytecode& bc)
             Expr* abs;
             if (!m_default_rel && m_common.m_mode_bits == 64 &&
                 m_common.m_addrsize == 32 &&
-                (!(abs = m_ea->m_disp.get_abs()) ||
-                 !abs->contains(ExprTerm::REG)))
+                (!(abs = m_ea->m_disp.getAbs()) ||
+                 !abs->Contains(ExprTerm::REG)))
             {
-                m_ea->set_disponly();
+                m_ea->setDispOnly();
                 // Make the short form permanent.
-                m_opcode.make_alt_1();
+                m_opcode.MakeAlt1();
             }
             m_postop = POSTOP_NONE;
             break;
@@ -232,9 +232,9 @@ X86General::finalize(Bytecode& bc)
             // second byte of the opcode and its ModRM byte is put in the third
             // byte of the opcode.
             Expr* abs;
-            if (!(abs = m_imm->get_abs()) ||
-                (m_imm->get_abs()->is_intnum() &&
-                 m_imm->get_abs()->get_intnum().ok_size(32, 0, 1)))
+            if (!(abs = m_imm->getAbs()) ||
+                (m_imm->getAbs()->isIntNum() &&
+                 m_imm->getAbs()->getIntNum().isOkSize(32, 0, 1)))
             {
                 // Throwaway REX byte
                 unsigned char rex_temp = 0;
@@ -242,13 +242,13 @@ X86General::finalize(Bytecode& bc)
                 // Build ModRM EA - CAUTION: this depends on
                 // opcode 0 being a mov instruction!
                 X86Arch* arch = static_cast<X86Arch*>(
-                    bc.get_container()->get_object()->get_arch());
-                m_ea.reset(new X86EffAddr(arch->get_reg64(m_opcode.get(0)-0xB8),
+                    bc.getContainer()->getObject()->getArch());
+                m_ea.reset(new X86EffAddr(arch->getReg64(m_opcode.get(0)-0xB8),
                                           &rex_temp, 64));
 
                 // Make the imm32s form permanent.
-                m_opcode.make_alt_1();
-                m_imm->set_size(32);
+                m_opcode.MakeAlt1();
+                m_imm->setSize(32);
             }
             m_postop = POSTOP_NONE;
             break;
@@ -260,9 +260,9 @@ X86General::finalize(Bytecode& bc)
 
 // See if we can optimize a VEX prefix of three byte form into two byte form.
 inline void
-vex_optimize(X86Opcode& opcode,
-             unsigned char& special_prefix,
-             unsigned char rex)
+VexOptimize(X86Opcode& opcode,
+            unsigned char& special_prefix,
+            unsigned char rex)
 {
     // Don't do anything if we don't have a 3-byte VEX prefix
     if (special_prefix != 0xC4)
@@ -275,13 +275,13 @@ vex_optimize(X86Opcode& opcode,
         (opcode.get(1) & 0x80) == 0 &&
         (rex == 0xff || (rex & 0x0B) == 0))
     {
-        opcode.make_alt_2();
+        opcode.MakeAlt2();
         special_prefix = 0xC5;      // mark as two-byte VEX
     }
 }
 
 unsigned long
-X86General::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+X86General::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 {
     unsigned long len = 0;
 
@@ -292,7 +292,7 @@ X86General::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
         // of the Mod/RM byte until we know more about the
         // displacement.
         bool ip_rel = false;
-        if (!m_ea->check(&m_common.m_addrsize, m_common.m_mode_bits,
+        if (!m_ea->Check(&m_common.m_addrsize, m_common.m_mode_bits,
                          m_postop == POSTOP_ADDRESS16, &m_rex,
                          &ip_rel))
             // failed, don't bother checking rest of insn
@@ -307,19 +307,19 @@ X86General::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
         // We couldn't do this if effective addresses were variable length.
         if (ip_rel)
         {
-            Location sub_loc = {&bc, bc.get_fixed_len()};
-            m_ea->m_disp.sub_rel(bc.get_container()->get_object(), sub_loc);
-            m_ea->m_disp.set_ip_rel();
+            Location sub_loc = {&bc, bc.getFixedLen()};
+            m_ea->m_disp.SubRelative(bc.getContainer()->getObject(), sub_loc);
+            m_ea->m_disp.setIPRelative();
         }
 
-        if (m_ea->m_disp.get_size() == 0 && m_ea->m_need_nonzero_len)
+        if (m_ea->m_disp.getSize() == 0 && m_ea->m_need_nonzero_len)
         {
             // Handle unknown case, default to byte-sized and set as
             // critical expression.
-            m_ea->m_disp.set_size(8);
+            m_ea->m_disp.setSize(8);
             add_span(bc, 1, m_ea->m_disp, -128, 127);
         }
-        len += m_ea->m_disp.get_size()/8;
+        len += m_ea->m_disp.getSize()/8;
 
         // Handle address16 postop case
         if (m_postop == POSTOP_ADDRESS16)
@@ -332,7 +332,7 @@ X86General::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 
     if (m_imm != 0)
     {
-        unsigned int immlen = m_imm->get_size();
+        unsigned int immlen = m_imm->getSize();
 
         // TODO: check imm->len vs. sized len from expr?
 
@@ -340,7 +340,7 @@ X86General::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
         if (m_postop == POSTOP_SIGNEXT_IMM8)
         {
             IntNum num;
-            if (!m_imm->get_intnum(&num, false))
+            if (!m_imm->getIntNum(&num, false))
             {
                 // Unknown; default to byte form and set as critical
                 // expression.
@@ -349,19 +349,19 @@ X86General::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
             }
             else
             {
-                if (num.in_range(-128, 127))
+                if (num.isInRange(-128, 127))
                 {
                     // We can use the sign-extended byte form: shorten
                     // the immediate length to 1 and make the byte form
                     // permanent.
-                    m_imm->set_size(8);
-                    m_imm->set_signed();
+                    m_imm->setSize(8);
+                    m_imm->setSigned();
                     immlen = 8;
                 }
                 else
                 {
                     // We can't.  Copy over the word-sized opcode.
-                    m_opcode.make_alt_1();
+                    m_opcode.MakeAlt1();
                 }
                 m_postop = POSTOP_NONE;
             }
@@ -374,30 +374,30 @@ X86General::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
     // For VEX, we can come into this function with the three byte form,
     // so we need to see if we can optimize to the two byte form.
     // We can't do it earlier, as we don't know all of the REX byte until now.
-    vex_optimize(m_opcode, m_special_prefix, m_rex);
+    VexOptimize(m_opcode, m_special_prefix, m_rex);
     if (m_rex != 0xff && m_rex != 0 &&
         m_special_prefix != 0xC5 && m_special_prefix != 0xC4 &&
         m_special_prefix != 0x8F)
         len++;
 
-    len += m_opcode.get_len();
-    len += m_common.get_len();
+    len += m_opcode.getLen();
+    len += m_common.getLen();
     len += (m_special_prefix != 0) ? 1:0;
     return len;
 }
 
 bool
-X86General::expand(Bytecode& bc, unsigned long& len, int span,
+X86General::Expand(Bytecode& bc, unsigned long& len, int span,
                    long old_val, long new_val,
                    /*@out@*/ long* neg_thres, /*@out@*/ long* pos_thres)
 {
     if (m_ea != 0 && span == 1)
     {
         // Change displacement length into word-sized
-        if (m_ea->m_disp.get_size() == 8)
+        if (m_ea->m_disp.getSize() == 8)
         {
             unsigned int size = (m_common.m_addrsize == 16) ? 16 : 32;
-            m_ea->m_disp.set_size(size);
+            m_ea->m_disp.setSize(size);
             m_ea->m_modrm &= ~0300;
             m_ea->m_modrm |= 0200;
             len--;
@@ -410,11 +410,11 @@ X86General::expand(Bytecode& bc, unsigned long& len, int span,
         if (m_postop == POSTOP_SIGNEXT_IMM8)
         {
             // Update len for new opcode and immediate size
-            len -= m_opcode.get_len();
-            len += m_imm->get_size()/8;
+            len -= m_opcode.getLen();
+            len += m_imm->getSize()/8;
 
             // Change to the word-sized opcode
-            m_opcode.make_alt_1();
+            m_opcode.MakeAlt1();
             m_postop = POSTOP_NONE;
         }
     }
@@ -423,37 +423,37 @@ X86General::expand(Bytecode& bc, unsigned long& len, int span,
 }
 
 void
-general_tobytes(Bytes& bytes,
-                const X86Common& common,
-                X86Opcode opcode,
-                const X86EffAddr* ea,
-                unsigned char special_prefix,
-                unsigned char rex)
+GeneralToBytes(Bytes& bytes,
+               const X86Common& common,
+               X86Opcode opcode,
+               const X86EffAddr* ea,
+               unsigned char special_prefix,
+               unsigned char rex)
 {
-    vex_optimize(opcode, special_prefix, rex);
+    VexOptimize(opcode, special_prefix, rex);
 
     // Prefixes
-    common.to_bytes(bytes,
+    common.ToBytes(bytes,
         ea != 0 ? static_cast<const X86SegmentRegister*>(ea->m_segreg) : 0);
     if (special_prefix != 0)
-        write_8(bytes, special_prefix);
+        Write8(bytes, special_prefix);
     if (special_prefix == 0xC4 || special_prefix == 0x8F)
     {
         // 3-byte VEX/XOP; merge in 1s complement of REX.R, REX.X, REX.B
-        opcode.mask(0, 0x1F);
+        opcode.Mask(0, 0x1F);
         if (rex != 0xff)
-            opcode.merge(0, ((~rex) & 0x07) << 5);
+            opcode.Merge(0, ((~rex) & 0x07) << 5);
         // merge REX.W via ORing; there should never be a case in which REX.W
         // is important when VEX.W is already set by the instruction.
         if (rex != 0xff && (rex & 0x8) != 0)
-            opcode.merge(1, 0x80);
+            opcode.Merge(1, 0x80);
     }
     else if (special_prefix == 0xC5)
     {
         // 2-byte VEX; merge in 1s complement of REX.R
-        opcode.mask(0, 0x7F);
+        opcode.Mask(0, 0x7F);
         if (rex != 0xff && (rex & 0x4) == 0)
-            opcode.merge(0, 0x80);
+            opcode.Merge(0, 0x80);
         // No other REX bits should be set
         assert((rex == 0xff || (rex & 0xB) == 0)
                && "x86: REX.WXB set, but 2-byte VEX");
@@ -462,20 +462,20 @@ general_tobytes(Bytes& bytes,
     {
         assert(common.m_mode_bits == 64 &&
                "x86: got a REX prefix in non-64-bit mode");
-        write_8(bytes, rex);
+        Write8(bytes, rex);
     }
 
     // Opcode
-    opcode.to_bytes(bytes);
+    opcode.ToBytes(bytes);
 }
 
 void
-X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
+X86General::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
-    Bytes& bytes = bc_out.get_scratch();
+    Bytes& bytes = bc_out.getScratch();
 
-    general_tobytes(bytes, m_common, m_opcode, m_ea.get(), m_special_prefix,
-                    m_rex);
+    GeneralToBytes(bytes, m_common, m_opcode, m_ea.get(), m_special_prefix,
+                   m_rex);
 
     // Effective address: ModR/M (if required), SIB (if required)
     if (m_ea != 0)
@@ -483,18 +483,18 @@ X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
         if (m_ea->m_need_modrm)
         {
             assert(m_ea->m_valid_modrm && "invalid Mod/RM in x86 tobytes_insn");
-            write_8(bytes, m_ea->m_modrm);
+            Write8(bytes, m_ea->m_modrm);
         }
 
         if (m_ea->m_need_sib)
         {
             assert(m_ea->m_valid_sib && "invalid SIB in x86 tobytes_insn");
-            write_8(bytes, m_ea->m_sib);
+            Write8(bytes, m_ea->m_sib);
         }
     }
 
-    bc_out.output(bytes);
-    unsigned long pos = bc.get_fixed_len()+bytes.size();
+    bc_out.Output(bytes);
+    unsigned long pos = bc.getFixedLen()+bytes.size();
 
     // Calculate immediate length
     unsigned int imm_len = 0;
@@ -504,41 +504,41 @@ X86General::output(Bytecode& bc, BytecodeOutput& bc_out)
         {
             // If we got here with this postop still set, we need to force
             // imm size to 8 here.
-            m_imm->set_size(8);
-            m_imm->set_signed();
+            m_imm->setSize(8);
+            m_imm->setSigned();
             imm_len = 1;
         }
         else
-            imm_len = m_imm->get_size()/8;
+            imm_len = m_imm->getSize()/8;
     }
 
     // Displacement (if required)
     if (m_ea != 0 && m_ea->m_need_disp)
     {
-        unsigned int disp_len = m_ea->m_disp.get_size()/8;
+        unsigned int disp_len = m_ea->m_disp.getSize()/8;
 
-        if (m_ea->m_disp.is_ip_rel())
+        if (m_ea->m_disp.isIPRelative())
         {
             // Adjust relative displacement to end of bytecode
-            m_ea->m_disp.add_abs(
-                -static_cast<long>(pos-bc.get_fixed_len()+disp_len+imm_len));
+            m_ea->m_disp.AddAbs(
+                -static_cast<long>(pos-bc.getFixedLen()+disp_len+imm_len));
             // Distance to end of instruction is the immediate length
-            m_ea->m_disp.set_next_insn(imm_len);
+            m_ea->m_disp.setNextInsn(imm_len);
         }
         Location loc = {&bc, pos};
         pos += disp_len;
-        Bytes& dbytes = bc_out.get_scratch();
+        Bytes& dbytes = bc_out.getScratch();
         dbytes.resize(disp_len);
-        bc_out.output(m_ea->m_disp, bytes, loc, 1);
+        bc_out.Output(m_ea->m_disp, bytes, loc, 1);
     }
 
     // Immediate (if required)
     if (m_imm != 0)
     {
         Location loc = {&bc, pos};
-        Bytes& ibytes = bc_out.get_scratch();
+        Bytes& ibytes = bc_out.getScratch();
         ibytes.resize(imm_len);
-        bc_out.output(*m_imm, bytes, loc, 1);
+        bc_out.Output(*m_imm, bytes, loc, 1);
     }
 }
 
@@ -549,34 +549,34 @@ X86General::clone() const
 }
 
 void
-append_general(BytecodeContainer& container,
-               const X86Common& common,
-               const X86Opcode& opcode,
-               std::auto_ptr<X86EffAddr> ea,
-               std::auto_ptr<Value> imm,
-               unsigned char special_prefix,
-               unsigned char rex,
-               GeneralPostOp postop,
-               bool default_rel,
-               unsigned long line)
+AppendGeneral(BytecodeContainer& container,
+              const X86Common& common,
+              const X86Opcode& opcode,
+              std::auto_ptr<X86EffAddr> ea,
+              std::auto_ptr<Value> imm,
+              unsigned char special_prefix,
+              unsigned char rex,
+              GeneralPostOp postop,
+              bool default_rel,
+              unsigned long line)
 {
-    Bytecode& bc = container.fresh_bytecode();
+    Bytecode& bc = container.FreshBytecode();
     ++num_generic;
 
     // if no postop and no effective address, output the fixed contents
     if (postop == POSTOP_NONE && ea.get() == 0)
     {
-        Bytes& bytes = bc.get_fixed();
-        general_tobytes(bytes, common, opcode, ea.get(), special_prefix, rex);
+        Bytes& bytes = bc.getFixed();
+        GeneralToBytes(bytes, common, opcode, ea.get(), special_prefix, rex);
         if (imm.get() != 0)
-            bc.append_fixed(imm);
+            bc.AppendFixed(imm);
         return;
     }
 
     // TODO: optimize EA case
-    bc.transform(Bytecode::Contents::Ptr(new X86General(
+    bc.Transform(Bytecode::Contents::Ptr(new X86General(
         common, opcode, ea, imm, special_prefix, rex, postop, default_rel)));
-    bc.set_line(line);
+    bc.setLine(line);
     ++num_generic_bc;
 }
 

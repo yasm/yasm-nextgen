@@ -59,31 +59,31 @@ public:
                bool win64 = false);
     virtual ~CoffObject();
 
-    virtual void add_directives(Directives& dirs, const char* parser);
+    virtual void AddDirectives(Directives& dirs, const char* parser);
 
-    virtual void init_symbols(const char* parser);
+    virtual void InitSymbols(const char* parser);
 #if 0
     virtual void read(std::istream& is);
 #endif
-    virtual void output(std::ostream& os, bool all_syms, Errwarns& errwarns);
+    virtual void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
-    virtual Section* add_default_section();
-    virtual Section* append_section(const std::string& name,
-                                    unsigned long line);
+    virtual Section* AddDefaultSection();
+    virtual Section* AppendSection(const std::string& name,
+                                   unsigned long line);
 
-    Machine get_machine() const { return m_machine; }
+    Machine getMachine() const { return m_machine; }
 
-    bool is_win32() const { return m_win32; }
-    bool is_win64() const { return m_win64; }
+    bool isWin32() const { return m_win32; }
+    bool isWin64() const { return m_win64; }
 
-    static const char* get_name() { return "COFF (DJGPP)"; }
-    static const char* get_keyword() { return "coff"; }
-    static const char* get_extension() { return ".o"; }
-    static unsigned int get_default_x86_mode_bits() { return 32; }
-    static const char* get_default_dbgfmt_keyword() { return "null"; }
-    static std::vector<const char*> get_dbgfmt_keywords();
-    static bool ok_object(Object& object);
-    static bool taste(std::istream& is,
+    static const char* getName() { return "COFF (DJGPP)"; }
+    static const char* getKeyword() { return "coff"; }
+    static const char* getExtension() { return ".o"; }
+    static unsigned int getDefaultX86ModeBits() { return 32; }
+    static const char* getDefaultDebugFormatKeyword() { return "null"; }
+    static std::vector<const char*> getDebugFormatKeywords();
+    static bool isOkObject(Object& object);
+    static bool Taste(std::istream& is,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
     { return false; }
@@ -91,14 +91,14 @@ public:
 protected:
     /// Initialize section (and COFF data) based on section name.
     /// @return True if section name recognized, false otherwise.
-    virtual bool init_section(const std::string& name,
-                              Section& section,
-                              CoffSection* coffsect);
-    virtual void dir_section_init_helpers(DirHelpers& helpers,
-                                          CoffSection* csd,
-                                          IntNum* align,
-                                          bool* has_align,
-                                          unsigned long line);
+    virtual bool InitSection(const std::string& name,
+                             Section& section,
+                             CoffSection* coffsect);
+    virtual void DirSectionInitHelpers(DirHelpers& helpers,
+                                       CoffSection* csd,
+                                       IntNum* align,
+                                       bool* has_align,
+                                       unsigned long line);
 
 private:
     // When this is false, all section VMA's are set to 0 rather than as the
@@ -122,18 +122,18 @@ private:
 
     CoffSymbol* m_file_coffsym;     // Data for .file symbol
 
-    void dir_gas_section(Object& object,
-                         NameValues& namevals,
-                         NameValues& objext_namevals,
-                         unsigned long line);
-    void dir_section(Object& object,
-                     NameValues& namevals,
-                     NameValues& objext_namevals,
-                     unsigned long line);
-    void dir_ident(Object& object,
-                   NameValues& namevals,
-                   NameValues& objext_namevals,
-                   unsigned long line);
+    void DirGasSection(Object& object,
+                       NameValues& namevals,
+                       NameValues& objext_namevals,
+                       unsigned long line);
+    void DirSection(Object& object,
+                    NameValues& namevals,
+                    NameValues& objext_namevals,
+                    unsigned long line);
+    void DirIdent(Object& object,
+                  NameValues& namevals,
+                  NameValues& objext_namevals,
+                  unsigned long line);
 };
 
 }}} // namespace yasm::objfmt::coff

@@ -35,157 +35,157 @@ public:
 
     void testUnixTestCaseCurDir()
     {
-        out = combpath_unix("file1", "file2");
+        out = CombPath_unix("file1", "file2");
         TS_ASSERT_EQUALS(out, "file2");
 
-        out = combpath_unix("./file1.ext", "./file2.ext");
+        out = CombPath_unix("./file1.ext", "./file2.ext");
         TS_ASSERT_EQUALS(out, "file2.ext");
 
-        out = combpath_unix("foo/bar/", "file2");
+        out = CombPath_unix("foo/bar/", "file2");
         TS_ASSERT_EQUALS(out, "foo/bar/file2");
     }
 
     void testUnixTestCaseParentDir()
     {
-        out = combpath_unix("foo/bar/file1", "../file2");
+        out = CombPath_unix("foo/bar/file1", "../file2");
         TS_ASSERT_EQUALS(out, "foo/file2");
 
-        out = combpath_unix("foo/bar/file1", "../../../file2");
+        out = CombPath_unix("foo/bar/file1", "../../../file2");
         TS_ASSERT_EQUALS(out, "../file2");
 
-        out = combpath_unix("foo/bar//file1", "../..//..//file2");
+        out = CombPath_unix("foo/bar//file1", "../..//..//file2");
         TS_ASSERT_EQUALS(out, "../file2");
 
-        out = combpath_unix("../../file1", "../../file2");
+        out = CombPath_unix("../../file1", "../../file2");
         TS_ASSERT_EQUALS(out, "../../../../file2");
 
-        out = combpath_unix("../foo/bar/../file1", "../../file2");
+        out = CombPath_unix("../foo/bar/../file1", "../../file2");
         TS_ASSERT_EQUALS(out, "../foo/bar/../../../file2");
 
-        out = combpath_unix("../foo/", "../file2");
+        out = CombPath_unix("../foo/", "../file2");
         TS_ASSERT_EQUALS(out, "../file2");
 
-        out = combpath_unix("../foo/file1", "../../bar/file2");
+        out = CombPath_unix("../foo/file1", "../../bar/file2");
         TS_ASSERT_EQUALS(out, "../../bar/file2");
     }
 
     void testUnixTestCaseRootDir()
     {
-        out = combpath_unix("/file1", "file2");
+        out = CombPath_unix("/file1", "file2");
         TS_ASSERT_EQUALS(out, "/file2");
 
-        out = combpath_unix("file1", "/file2");
+        out = CombPath_unix("file1", "/file2");
         TS_ASSERT_EQUALS(out, "/file2");
 
-        out = combpath_unix("/foo/file1", "../../file2");
+        out = CombPath_unix("/foo/file1", "../../file2");
         TS_ASSERT_EQUALS(out, "/file2");
 
-        out = combpath_unix("/foo//file1", "../../file2");
+        out = CombPath_unix("/foo//file1", "../../file2");
         TS_ASSERT_EQUALS(out, "/file2");
 
-        out = combpath_unix("/", "../file2");
+        out = CombPath_unix("/", "../file2");
         TS_ASSERT_EQUALS(out, "/file2");
     }
 
     void testWindowsTestCaseCurDir()
     {
-        out = combpath_win("file1", "file2");
+        out = CombPath_win("file1", "file2");
         TS_ASSERT_EQUALS(out, "file2");
 
-        out = combpath_win("./file1.ext", "./file2.ext");
+        out = CombPath_win("./file1.ext", "./file2.ext");
         TS_ASSERT_EQUALS(out, "file2.ext");
 
-        out = combpath_win("./file1.ext", ".\\file2.ext");
+        out = CombPath_win("./file1.ext", ".\\file2.ext");
         TS_ASSERT_EQUALS(out, "file2.ext");
 
-        out = combpath_win(".\\file1.ext", "./file2.ext");
+        out = CombPath_win(".\\file1.ext", "./file2.ext");
         TS_ASSERT_EQUALS(out, "file2.ext");
 
-        out = combpath_win("/file1", "file2");
+        out = CombPath_win("/file1", "file2");
         TS_ASSERT_EQUALS(out, "\\file2");
 
-        out = combpath_win("\\file1", "file2");
+        out = CombPath_win("\\file1", "file2");
         TS_ASSERT_EQUALS(out, "\\file2");
 
-        out = combpath_win("file1", "/file2");
+        out = CombPath_win("file1", "/file2");
         TS_ASSERT_EQUALS(out, "\\file2");
 
-        out = combpath_win("file1", "\\file2");
+        out = CombPath_win("file1", "\\file2");
         TS_ASSERT_EQUALS(out, "\\file2");
     }
 
     void testWindowsTestCaseParentDir()
     {
-        out = combpath_win("/foo\\file1", "../../file2");
+        out = CombPath_win("/foo\\file1", "../../file2");
         TS_ASSERT_EQUALS(out, "\\file2");
 
-        out = combpath_win("\\foo\\\\file1", "..\\../file2");
+        out = CombPath_win("\\foo\\\\file1", "..\\../file2");
         TS_ASSERT_EQUALS(out, "\\file2");
 
-        out = combpath_win("foo/bar/file1", "../file2");
+        out = CombPath_win("foo/bar/file1", "../file2");
         TS_ASSERT_EQUALS(out, "foo\\file2");
 
-        out = combpath_win("foo/bar/file1", "../..\\../file2");
+        out = CombPath_win("foo/bar/file1", "../..\\../file2");
         TS_ASSERT_EQUALS(out, "..\\file2");
 
-        out = combpath_win("foo/bar//file1", "../..\\\\..//file2");
+        out = CombPath_win("foo/bar//file1", "../..\\\\..//file2");
         TS_ASSERT_EQUALS(out, "..\\file2");
 
-        out = combpath_win("foo/bar/", "file2");
+        out = CombPath_win("foo/bar/", "file2");
         TS_ASSERT_EQUALS(out, "foo\\bar\\file2");
 
-        out = combpath_win("..\\../file1", "../..\\file2");
+        out = CombPath_win("..\\../file1", "../..\\file2");
         TS_ASSERT_EQUALS(out, "..\\..\\..\\..\\file2");
 
-        out = combpath_win("../foo/bar\\\\../file1", "../..\\file2");
+        out = CombPath_win("../foo/bar\\\\../file1", "../..\\file2");
         TS_ASSERT_EQUALS(out, "..\\foo\\bar\\..\\..\\..\\file2");
 
-        out = combpath_win("../foo/", "../file2");
+        out = CombPath_win("../foo/", "../file2");
         TS_ASSERT_EQUALS(out, "..\\file2");
 
-        out = combpath_win("../foo/file1", "../..\\bar\\file2");
+        out = CombPath_win("../foo/file1", "../..\\bar\\file2");
         TS_ASSERT_EQUALS(out, "..\\..\\bar\\file2");
     }
 
     void testWindowsTestCaseRootDir()
     {
-        out = combpath_win("/", "../file2");
+        out = CombPath_win("/", "../file2");
         TS_ASSERT_EQUALS(out, "\\file2");
 
-        out = combpath_win("c:/file1.ext", "./file2.ext");
+        out = CombPath_win("c:/file1.ext", "./file2.ext");
         TS_ASSERT_EQUALS(out, "c:\\file2.ext");
 
-        out = combpath_win("c:/file1.ext", "../file2.ext");
+        out = CombPath_win("c:/file1.ext", "../file2.ext");
         TS_ASSERT_EQUALS(out, "c:\\file2.ext");
 
-        out = combpath_win("g:/path/file1.ext", "../file2.ext");
+        out = CombPath_win("g:/path/file1.ext", "../file2.ext");
         TS_ASSERT_EQUALS(out, "g:\\file2.ext");
 
-        out = combpath_win("g:path/file1.ext", "../file2.ext");
+        out = CombPath_win("g:path/file1.ext", "../file2.ext");
         TS_ASSERT_EQUALS(out, "g:file2.ext");
 
-        out = combpath_win("g:path/file1.ext", "../../file2.ext");
+        out = CombPath_win("g:path/file1.ext", "../../file2.ext");
         TS_ASSERT_EQUALS(out, "g:..\\file2.ext");
 
-        out = combpath_win("g:file1.ext", "file2.ext");
+        out = CombPath_win("g:file1.ext", "file2.ext");
         TS_ASSERT_EQUALS(out, "g:file2.ext");
 
-        out = combpath_win("g:file1.ext", "../file2.ext");
+        out = CombPath_win("g:file1.ext", "../file2.ext");
         TS_ASSERT_EQUALS(out, "g:..\\file2.ext");
 
-        out = combpath_win("e:\\path\\to/file1.ext", ".\\file2.ext");
+        out = CombPath_win("e:\\path\\to/file1.ext", ".\\file2.ext");
         TS_ASSERT_EQUALS(out, "e:\\path\\to\\file2.ext");
 
-        out = combpath_win(".\\file1.ext", "g:file2.ext");
+        out = CombPath_win(".\\file1.ext", "g:file2.ext");
         TS_ASSERT_EQUALS(out, "g:file2.ext");
 
-        out = combpath_win(".\\file1.ext", "g:../file2.ext");
+        out = CombPath_win(".\\file1.ext", "g:../file2.ext");
         TS_ASSERT_EQUALS(out, "g:..\\file2.ext");
 
-        out = combpath_win(".\\file1.ext", "g:\\file2.ext");
+        out = CombPath_win(".\\file1.ext", "g:\\file2.ext");
         TS_ASSERT_EQUALS(out, "g:\\file2.ext");
 
-        out = combpath_win("g:", "\\file2.ext");
+        out = CombPath_win("g:", "\\file2.ext");
         TS_ASSERT_EQUALS(out, "\\file2.ext");
     }
 };

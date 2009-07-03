@@ -263,7 +263,7 @@ save_line(yasm_parser_gas *parser_gas, YYCTYPE *cursor)
 
 
 int
-GasParser::lex(YYSTYPE* lvalp)
+GasParser::Lex(YYSTYPE* lvalp)
 {
 #if 0
     /*@null@*/ gas_rept *rept = parser_gas->rept;
@@ -317,7 +317,7 @@ scan:
         ([1-9] digit*) | "0"
         {
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, TOKLEN, 10);
+            lvalp->intn->setStr(TOK, TOKLEN, 10);
             RETURN(INTNUM);
         }
 
@@ -325,7 +325,7 @@ scan:
         '0b' bindigit+
         {
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK+2, TOKLEN-2, 2); // skip "0b"
+            lvalp->intn->setStr(TOK+2, TOKLEN-2, 2); // skip "0b"
             RETURN(INTNUM);
         }
 
@@ -333,7 +333,7 @@ scan:
         "0" octdigit+
         {
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK, TOKLEN, 8);
+            lvalp->intn->setStr(TOK, TOKLEN, 8);
             RETURN(INTNUM);
         }
 
@@ -341,7 +341,7 @@ scan:
         '0x' hexdigit+
         {
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->set_str(TOK+2, TOKLEN-2, 16); // skip "0x"
+            lvalp->intn->setStr(TOK+2, TOKLEN-2, 16); // skip "0x"
             RETURN(INTNUM);
         }
 
@@ -428,22 +428,22 @@ scan:
                 RETURN(NASM_LINE_MARKER);
 
             Arch::RegTmod regtmod =
-                m_arch->parse_check_regtmod(TOK+1, TOKLEN-1);
-            switch (regtmod.get_type())
+                m_arch->ParseCheckRegTmod(TOK+1, TOKLEN-1);
+            switch (regtmod.getType())
             {
                 case Arch::RegTmod::REG:
-                    lvalp->reg = regtmod.get_reg();
+                    lvalp->reg = regtmod.getReg();
                     RETURN(REG);
                 case Arch::RegTmod::REGGROUP:
-                    lvalp->reggroup = regtmod.get_reggroup();
+                    lvalp->reggroup = regtmod.getRegGroup();
                     RETURN(REGGROUP);
                 case Arch::RegTmod::SEGREG:
-                    lvalp->segreg = regtmod.get_segreg();
+                    lvalp->segreg = regtmod.getSegReg();
                     RETURN(SEGREG);
                 default:
                     break;
             }
-            throw Error(String::compose(N_("Unrecognized register name `%1'"),
+            throw Error(String::Compose(N_("Unrecognized register name `%1'"),
                                         std::string(TOK+1, TOKLEN-1)));
         }
 
@@ -501,9 +501,9 @@ scan:
 
         any
         {
-            warn_set(WARN_UNREC_CHAR, String::compose(
+            setWarn(WARN_UNREC_CHAR, String::Compose(
                 N_("ignoring unrecognized character `%1'"),
-                conv_unprint(TOK[0])));
+                ConvUnprint(TOK[0])));
             goto scan;
         }
     */
@@ -571,9 +571,9 @@ section_directive:
 
         any
         {
-            warn_set(WARN_UNREC_CHAR, String::compose(
+            setWarn(WARN_UNREC_CHAR, String::Compose(
                 N_("ignoring unrecognized character `%1'"),
-                conv_unprint(TOK[0])));
+                ConvUnprint(TOK[0])));
             goto section_directive;
         }
     */
@@ -621,7 +621,7 @@ stringconst_scan:
 
         dquot
         {
-            lvalp->str = unescape(lvalp->str);
+            lvalp->str = Unescape(lvalp->str);
             RETURN(STRING);
         }
 

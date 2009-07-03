@@ -40,14 +40,14 @@ namespace yasm
 /// Load a plugin.
 /// @return False on failure
 YASM_LIB_EXPORT
-bool load_plugin(const std::string& name);
+bool LoadPlugin(const std::string& name);
 YASM_LIB_EXPORT
-void unload_plugins(void);
+void UnloadPlugins();
 
 /// Load standard plugins.
 /// @return False on failure
 YASM_LIB_EXPORT
-bool load_standard_plugins();
+bool LoadStandardPlugins();
 
 } // namespace yasm
 

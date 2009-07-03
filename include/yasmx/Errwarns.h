@@ -59,20 +59,20 @@ public:
     /// on the same line.
     /// @param line     virtual line
     /// @param err      error exception
-    void propagate(unsigned long line, const Error& err);
+    void Propagate(unsigned long line, const Error& err);
 
     /// Propagate warning indicator(s) to an error/warning set.
     /// Has no effect if no warnings have occurred.
     /// Does not print immediately; output_all() outputs
     /// accumulated errors and warnings.
     /// @param line     virtual line
-    void propagate(unsigned long line);
+    void Propagate(unsigned long line);
 
     /// Get total number of errors logged.
     /// @param errwarns         error/warning set
     /// @param warning_as_error if true, warnings are treated as errors.
     /// @return Number of errors.
-    unsigned int num_errors(bool warning_as_error = false) const;
+    unsigned int getNumErrors(bool warning_as_error = false) const;
 
     /// Print out an error.
     /// @param fn           filename of source file
@@ -81,7 +81,7 @@ public:
     /// @param xref_fn      cross-referenced source filename
     /// @param xref_line    cross-referenced line number
     /// @param xref_msg     cross-referenced error message
-    typedef void (*yasm_print_error_func)
+    typedef void (*PrintErrorFunc)
         (const std::string& fn,
          unsigned long line,
          const std::string& msg,
@@ -93,7 +93,7 @@ public:
     /// @param fn   filename of source file
     /// @param line line number
     /// @param msg  warning message
-    typedef void (*yasm_print_warning_func)
+    typedef void (*PrintWarningFunc)
         (const std::string& fn, unsigned long line, const std::string& msg);
 
     /// Outputs error/warning set in sorted order (sorted by line number).
@@ -104,10 +104,10 @@ public:
     ///                         error first.
     /// @param print_error      function called to print out errors
     /// @param print_warning    function called to print out warnings
-    void output_all(const Linemap& lm,
-                    int warning_as_error,
-                    yasm_print_error_func print_error,
-                    yasm_print_warning_func print_warning);
+    void OutputAll(const Linemap& lm,
+                   int warning_as_error,
+                   PrintErrorFunc print_error,
+                   PrintWarningFunc print_warning);
 
 private:
     Errwarns(const Errwarns&);                  // not implemented

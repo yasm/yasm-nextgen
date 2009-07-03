@@ -51,20 +51,20 @@ UnwindCode::~UnwindCode()
 }
 
 void
-UnwindCode::put(marg_ostream& os) const
+UnwindCode::Put(marg_ostream& os) const
 {
     // TODO
 }
 
 void
-UnwindCode::finalize(Bytecode& bc)
+UnwindCode::Finalize(Bytecode& bc)
 {
-    if (!m_off.finalize())
+    if (!m_off.Finalize())
         throw ValueError(N_("offset expression too complex"));
 }
 
 unsigned long
-UnwindCode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+UnwindCode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 {
     unsigned long len = 0;
     int span = 0;
@@ -115,19 +115,19 @@ UnwindCode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
     }
 
     IntNum intn;
-    if (m_off.get_intnum(&intn, false))
+    if (m_off.getIntNum(&intn, false))
     {
-        long intv = intn.get_int();
+        long intv = intn.getInt();
         if (intv > high)
         {
             // Expand it ourselves here if we can and we're already larger
-            if (expand(bc, len, span, intv, intv, &low, &high))
+            if (Expand(bc, len, span, intv, intv, &low, &high))
                 add_span(bc, span, m_off, low, high);
         }
         if (intv < low)
             throw ValueError(N_("negative offset not allowed"));
         if ((intv & mask) != 0)
-            throw ValueError(String::compose(
+            throw ValueError(String::Compose(
                 N_("offset of %1 is not a multiple of %2"), intv, mask+1));
     }
     else
@@ -136,7 +136,7 @@ UnwindCode::calc_len(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 }
 
 bool
-UnwindCode::expand(Bytecode& bc,
+UnwindCode::Expand(Bytecode& bc,
                    unsigned long& len,
                    int span,
                    long old_val,
@@ -183,9 +183,9 @@ UnwindCode::expand(Bytecode& bc,
 }
 
 void
-UnwindCode::output(Bytecode& bc, BytecodeOutput& bc_out)
+UnwindCode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
-    Bytes& bytes = bc_out.get_scratch();
+    Bytes& bytes = bc_out.getScratch();
 
     // Offset value
     unsigned int size;
@@ -198,7 +198,7 @@ UnwindCode::output(Bytecode& bc, BytecodeOutput& bc_out)
         case SET_FPREG:
         case PUSH_MACHFRAME:
             // just 1 node, no offset; write opcode and info and we're done
-            write_8(bytes, (m_info << 4) | (m_opcode & 0xF));
+            Write8(bytes, (m_info << 4) | (m_opcode & 0xF));
             return;
         case ALLOC_SMALL:
             // 1 node, but offset stored in info
@@ -234,35 +234,35 @@ UnwindCode::output(Bytecode& bc, BytecodeOutput& bc_out)
 
     // Check for overflow
     IntNum intn;
-    if (!m_off.get_intnum(&intn, true))
+    if (!m_off.getIntNum(&intn, true))
         throw ValueError(N_("offset expression too complex"));
-    if (size != 4 && !intn.in_range(low, high))
+    if (size != 4 && !intn.isInRange(low, high))
     {
-        throw ValueError(String::compose(
+        throw ValueError(String::Compose(
             N_("offset of %1 bytes, must be between %2 and %3"),
             intn, low, high));
     }
 
-    if ((intn.get_uint() & mask) != 0)
+    if ((intn.getUInt() & mask) != 0)
     {
-        throw ValueError(String::compose(
+        throw ValueError(String::Compose(
             N_("offset of %1 is not a multiple of %2"), intn, mask+1));
     }
     intn >>= shift;
 
     // Stored value in info instead of extra code space
     if (size == 0)
-        m_info = intn.get_uint()-1;
+        m_info = intn.getUInt()-1;
 
     // Opcode and info
-    write_8(bytes, (m_info << 4) | (m_opcode & 0xF));
+    Write8(bytes, (m_info << 4) | (m_opcode & 0xF));
 
     bytes << little_endian;
     if (size == 2)
-        write_16(bytes, intn);
+        Write16(bytes, intn);
     else if (size == 4)
-        write_32(bytes, intn);
-    bc_out.output(bytes);
+        Write32(bytes, intn);
+    bc_out.Output(bytes);
 }
 
 UnwindCode*
@@ -274,14 +274,13 @@ UnwindCode::clone() const
 }
 
 void
-append_unwind_code(BytecodeContainer& container,
-                   std::auto_ptr<UnwindCode> uwcode)
+AppendUnwindCode(BytecodeContainer& container,
+                 std::auto_ptr<UnwindCode> uwcode)
 {
     // Offset in prolog
-    Bytecode& bc = container.fresh_bytecode();
-    bc.append_fixed(1,
-                    Expr::Ptr(new Expr(SUB(uwcode->m_loc, uwcode->m_proc))),
-                    0);
+    Bytecode& bc = container.FreshBytecode();
+    bc.AppendFixed(1, Expr::Ptr(new Expr(SUB(uwcode->m_loc, uwcode->m_proc))),
+                   0);
 
     switch (uwcode->m_opcode)
     {
@@ -289,15 +288,15 @@ append_unwind_code(BytecodeContainer& container,
         case UnwindCode::SET_FPREG:
         case UnwindCode::PUSH_MACHFRAME:
             // just 1 node, no offset; write opcode and info and we're done
-            append_byte(container,
-                        (uwcode->m_info << 4) | (uwcode->m_opcode & 0xF));
+            AppendByte(container,
+                       (uwcode->m_info << 4) | (uwcode->m_opcode & 0xF));
             return;
         default:
             break;
     }
 
-    bc.set_line(uwcode->m_loc->get_def_line());
-    bc.transform(Bytecode::Contents::Ptr(uwcode));
+    bc.setLine(uwcode->m_loc->getDefLine());
+    bc.Transform(Bytecode::Contents::Ptr(uwcode));
 }
 
 }}} // namespace yasm::objfmt::win64

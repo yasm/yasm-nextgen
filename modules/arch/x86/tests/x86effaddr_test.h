@@ -71,28 +71,28 @@ public:
 
         // reg >= 8 should set rex.
         rex = low3 = 0;
-        set_rex_from_reg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_B);
+        setRexFromReg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_B);
         TS_ASSERT_EQUALS(low3, 5);
         TS_ASSERT_EQUALS(rex, 0x41);
 
         rex = low3 = 0;
-        set_rex_from_reg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_X);
+        setRexFromReg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_X);
         TS_ASSERT_EQUALS(low3, 5);
         TS_ASSERT_EQUALS(rex, 0x42);
 
         rex = low3 = 0;
-        set_rex_from_reg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_R);
+        setRexFromReg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_R);
         TS_ASSERT_EQUALS(low3, 5);
         TS_ASSERT_EQUALS(rex, 0x44);
 
         rex = low3 = 0;
-        set_rex_from_reg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_W);
+        setRexFromReg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_W);
         TS_ASSERT_EQUALS(low3, 5);
         TS_ASSERT_EQUALS(rex, 0x48);
 
         // REX should OR into existing value
         low3 = 0; rex = 0x44;
-        set_rex_from_reg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_W);
+        setRexFromReg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_W);
         TS_ASSERT_EQUALS(low3, 5);
         TS_ASSERT_EQUALS(rex, 0x4C);
     }
@@ -104,7 +104,7 @@ public:
 
         // Check for errors with reg_num >= 8 and REX not available
         low3 = 0; rex = 0xff;
-        TS_ASSERT_THROWS(set_rex_from_reg(&rex, &low3, X86Register::REG32,
+        TS_ASSERT_THROWS(setRexFromReg(&rex, &low3, X86Register::REG32,
                                           13, 64, X86_REX_W),
                          TypeError);
     }
@@ -116,18 +116,18 @@ public:
 
         // REG8X should set rex.
         rex = low3 = 0;
-        set_rex_from_reg(&rex, &low3, X86Register::REG8X, 3, 64, X86_REX_B);
+        setRexFromReg(&rex, &low3, X86Register::REG8X, 3, 64, X86_REX_B);
         TS_ASSERT_EQUALS(low3, 3);
         TS_ASSERT_EQUALS(rex, 0x40);
 
         rex = low3 = 0;
-        set_rex_from_reg(&rex, &low3, X86Register::REG8X, 13, 64, X86_REX_B);
+        setRexFromReg(&rex, &low3, X86Register::REG8X, 13, 64, X86_REX_B);
         TS_ASSERT_EQUALS(low3, 5);
         TS_ASSERT_EQUALS(rex, 0x41);
 
         // Check for errors with REG8X and REX not available
         low3 = 0; rex = 0xff;
-        TS_ASSERT_THROWS(set_rex_from_reg(&rex, &low3, X86Register::REG8X, 3,
+        TS_ASSERT_THROWS(setRexFromReg(&rex, &low3, X86Register::REG8X, 3,
                                           64, X86_REX_W),
                          yasm::TypeError);
     }
@@ -139,25 +139,25 @@ public:
 
         // Use of AH/BH/CH/DH should result in disallowed REX
         rex = low3 = 0;
-        set_rex_from_reg(&rex, &low3, X86Register::REG8, 4, 64, X86_REX_B);
+        setRexFromReg(&rex, &low3, X86Register::REG8, 4, 64, X86_REX_B);
         TS_ASSERT_EQUALS(low3, 4);
         TS_ASSERT_EQUALS(rex, 0xff);
 
         // If REX set, use of AH/BH/CH/DH should error
         low3 = 0; rex = 0x40;
-        TS_ASSERT_THROWS(set_rex_from_reg(&rex, &low3, X86Register::REG8, 4,
+        TS_ASSERT_THROWS(setRexFromReg(&rex, &low3, X86Register::REG8, 4,
                                           64, X86_REX_W),
                          yasm::TypeError);
 
         // If REX is disallowed, use of AH/BH/CH/DH is still okay
         low3 = 0; rex = 0xff;
-        set_rex_from_reg(&rex, &low3, X86Register::REG8, 4, 64, X86_REX_B);
+        setRexFromReg(&rex, &low3, X86Register::REG8, 4, 64, X86_REX_B);
         TS_ASSERT_EQUALS(low3, 4);
         TS_ASSERT_EQUALS(rex, 0xff);
 
         // Use of AL/BL/CL/DL should NOT error and should still allow REX.
         low3 = 0; rex = 0x40;
-        set_rex_from_reg(&rex, &low3, X86Register::REG8, 3, 64, X86_REX_W);
+        setRexFromReg(&rex, &low3, X86Register::REG8, 3, 64, X86_REX_W);
         TS_ASSERT_EQUALS(low3, 3);
         TS_ASSERT_EQUALS(rex, 0x40);
     }
@@ -171,7 +171,7 @@ public:
         TS_ASSERT_EQUALS(ea.m_valid_modrm, false);
         TS_ASSERT_EQUALS(ea.m_need_modrm, false);
         TS_ASSERT_EQUALS(ea.m_valid_sib, false);
-        TS_ASSERT_EQUALS(ea.m_disp.has_abs(), false);
+        TS_ASSERT_EQUALS(ea.m_disp.hasAbs(), false);
     }
 
     void testInitReg()
@@ -188,7 +188,7 @@ public:
             TS_ASSERT_EQUALS(ea.m_valid_modrm, true);
             TS_ASSERT_EQUALS(ea.m_need_modrm, true);
             TS_ASSERT_EQUALS(ea.m_valid_sib, false);
-            TS_ASSERT_EQUALS(ea.m_disp.has_abs(), false);
+            TS_ASSERT_EQUALS(ea.m_disp.hasAbs(), false);
             TS_ASSERT_EQUALS(rex, 0);
         }
     }
@@ -256,11 +256,11 @@ public:
                     expect_modrm |= form->rm;
 
                     Expr e = ADD(terms);
-                    TS_TRACE(String::format(e));
+                    TS_TRACE(String::Format(e));
                     X86EffAddr ea(false, Expr::Ptr(e.clone()));
                     unsigned char addrsize = 0;
                     unsigned char rex = 0;
-                    TS_ASSERT_EQUALS(ea.check(&addrsize, 16, false, &rex, 0),
+                    TS_ASSERT_EQUALS(ea.Check(&addrsize, 16, false, &rex, 0),
                                      true);
                     TS_ASSERT_EQUALS(ea.m_need_modrm, true);
                     TS_ASSERT_EQUALS(ea.m_modrm, expect_modrm);
@@ -381,36 +381,36 @@ public:
                         expect_error = true;
 
                     if (ireg)
-                        expect_sib |= (ireg->get_num()&7)<<3;
+                        expect_sib |= (ireg->getNum()&7)<<3;
                     else
                         expect_sib |= 4<<3;
 
                     if (breg)
-                        expect_sib |= breg->get_num()&7;
+                        expect_sib |= breg->getNum()&7;
                     else
                         expect_sib |= 5;
                 }
                 else if (breg)
-                    expect_modrm |= breg->get_num();
+                    expect_modrm |= breg->getNum();
                 else
                     expect_modrm |= 5;
 
-                TS_TRACE(String::format(e));
+                TS_TRACE(String::Format(e));
                 X86EffAddr ea(false, Expr::Ptr(e.clone()));
                 unsigned char addrsize = 0;
                 unsigned char rex = 0;
                 if (expect_error)
                 {
-                    TS_ASSERT_THROWS(ea.check(&addrsize, 32, false, &rex, 0),
+                    TS_ASSERT_THROWS(ea.Check(&addrsize, 32, false, &rex, 0),
                                      ValueError);
                 }
                 else
                 {
-                    TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0),
+                    TS_ASSERT_EQUALS(ea.Check(&addrsize, 32, false, &rex, 0),
                                      true);
                     TS_ASSERT_EQUALS(ea.m_need_modrm, true);
                     TS_ASSERT_EQUALS(ea.m_modrm, expect_modrm);
-					TS_ASSERT_EQUALS(ea.m_need_sib, need_sib?1:0);
+		    TS_ASSERT_EQUALS(ea.m_need_sib, need_sib?1:0);
                     TS_ASSERT_EQUALS(ea.m_valid_sib, need_sib);
                     if (need_sib)
                         TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
@@ -447,14 +447,14 @@ public:
                 e += **basereg;
 
                 unsigned char expect_sib = 0;
-                expect_sib |= ((*indexreg)->get_num()&7)<<3;
-                expect_sib |= (*basereg)->get_num()&7;
+                expect_sib |= ((*indexreg)->getNum()&7)<<3;
+                expect_sib |= (*basereg)->getNum()&7;
 
-                TS_TRACE(String::format(e));
+                TS_TRACE(String::Format(e));
                 X86EffAddr ea(false, Expr::Ptr(e.clone()));
                 unsigned char addrsize = 0;
                 unsigned char rex = 0;
-                TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
+                TS_ASSERT_EQUALS(ea.Check(&addrsize, 32, false, &rex, 0), true);
                 TS_ASSERT_EQUALS(ea.m_need_modrm, true);
                 TS_ASSERT_EQUALS(ea.m_need_sib, 1);
                 TS_ASSERT_EQUALS(ea.m_valid_sib, true);
@@ -477,14 +477,14 @@ public:
             e += **indexreg;
 
             unsigned char expect_sib = 0;
-            expect_sib |= ((*indexreg)->get_num()&7)<<3;
-            expect_sib |= ESP.get_num()&7;
+            expect_sib |= ((*indexreg)->getNum()&7)<<3;
+            expect_sib |= ESP.getNum()&7;
 
-            TS_TRACE(String::format(e));
+            TS_TRACE(String::Format(e));
             X86EffAddr ea(false, Expr::Ptr(e.clone()));
             unsigned char addrsize = 0;
             unsigned char rex = 0;
-            TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
+            TS_ASSERT_EQUALS(ea.Check(&addrsize, 32, false, &rex, 0), true);
             TS_ASSERT_EQUALS(ea.m_need_modrm, true);
             TS_ASSERT_EQUALS(ea.m_need_sib, 1);
             TS_ASSERT_EQUALS(ea.m_valid_sib, true);
@@ -497,17 +497,17 @@ public:
         // eax*2+ebx*2-ebx
         // Needs to realize ebx can't be an indexreg
         Expr e = ADD(MUL(EAX, 2), MUL(EBX, 2), NEG(EBX));
-        TS_TRACE(String::format(e));
+        TS_TRACE(String::Format(e));
         X86EffAddr ea(false, Expr::Ptr(e.clone()));
         unsigned char addrsize = 0;
         unsigned char rex = 0;
-        TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
+        TS_ASSERT_EQUALS(ea.Check(&addrsize, 32, false, &rex, 0), true);
         TS_ASSERT_EQUALS(ea.m_need_modrm, true);
         TS_ASSERT_EQUALS(ea.m_need_sib, 1);
         TS_ASSERT_EQUALS(ea.m_valid_sib, true);
         unsigned char expect_sib = 1<<6;
-        expect_sib |= (EAX.get_num()&7)<<3;
-        expect_sib |= EBX.get_num()&7;
+        expect_sib |= (EAX.getNum()&7)<<3;
+        expect_sib |= EBX.getNum()&7;
         TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
     }
 
@@ -519,11 +519,11 @@ public:
             int mult = mults[i];
             Expr e = ADD(EAX, 5);
             e *= IntNum(mult);
-            TS_TRACE(String::format(e));
+            TS_TRACE(String::Format(e));
             X86EffAddr ea(false, Expr::Ptr(e.clone()));
             unsigned char addrsize = 0;
             unsigned char rex = 0;
-            TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
+            TS_ASSERT_EQUALS(ea.Check(&addrsize, 32, false, &rex, 0), true);
             TS_ASSERT_EQUALS(ea.m_need_modrm, true);
             TS_ASSERT_EQUALS(ea.m_need_sib, 1);
             TS_ASSERT_EQUALS(ea.m_valid_sib, true);
@@ -537,25 +537,25 @@ public:
                 expect_sib = 1<<6;
             else
                 expect_sib = 0;
-            expect_sib |= (EAX.get_num()&7)<<3;
-            expect_sib |= (mult % 2 == 0 && mult != 2) ? 5 : (EAX.get_num()&7);
+            expect_sib |= (EAX.getNum()&7)<<3;
+            expect_sib |= (mult % 2 == 0 && mult != 2) ? 5 : (EAX.getNum()&7);
             TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
-            TS_ASSERT_EQUALS(String::format(*ea.m_disp.get_abs()),
-                             String::format(mult*5));
+            TS_ASSERT_EQUALS(String::Format(*ea.m_disp.getAbs()),
+                             String::Format(mult*5));
 
             // try it one level down too
             e += 6;
-            TS_TRACE(String::format(e));
+            TS_TRACE(String::Format(e));
             X86EffAddr ea2(false, Expr::Ptr(e.clone()));
             addrsize = 0;
             rex = 0;
-            TS_ASSERT_EQUALS(ea2.check(&addrsize, 32, false, &rex, 0), true);
+            TS_ASSERT_EQUALS(ea2.Check(&addrsize, 32, false, &rex, 0), true);
             TS_ASSERT_EQUALS(ea2.m_need_modrm, true);
             TS_ASSERT_EQUALS(ea2.m_need_sib, 1);
             TS_ASSERT_EQUALS(ea2.m_valid_sib, true);
             TS_ASSERT_EQUALS(ea2.m_sib, expect_sib);
-            TS_ASSERT_EQUALS(String::format(*ea2.m_disp.get_abs()),
-                             String::format(mult*5+6));
+            TS_ASSERT_EQUALS(String::Format(*ea2.m_disp.getAbs()),
+                             String::Format(mult*5+6));
 
         }
     }
@@ -570,20 +570,20 @@ public:
         e *= 2;
         e += 6;
         e *= 2;
-        TS_TRACE(String::format(e));
+        TS_TRACE(String::Format(e));
         X86EffAddr ea(false, Expr::Ptr(e.clone()));
         unsigned char addrsize = 0;
         unsigned char rex = 0;
-        TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
+        TS_ASSERT_EQUALS(ea.Check(&addrsize, 32, false, &rex, 0), true);
         TS_ASSERT_EQUALS(ea.m_need_modrm, true);
         TS_ASSERT_EQUALS(ea.m_need_sib, 1);
         TS_ASSERT_EQUALS(ea.m_valid_sib, true);
         unsigned char expect_sib = 2<<6;
-        expect_sib |= (EAX.get_num()&7)<<3;
+        expect_sib |= (EAX.getNum()&7)<<3;
         expect_sib |= 5;
         TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
-        TS_ASSERT_EQUALS(String::format(*ea.m_disp.get_abs()),
-                         String::format(((5*2)+6)*2));
+        TS_ASSERT_EQUALS(String::Format(*ea.m_disp.getAbs()),
+                         String::Format(((5*2)+6)*2));
 
         // (6+(eax+5)*2)*2 ==> 32+eax*4
         // (6+eax*2+10)*2
@@ -592,17 +592,17 @@ public:
         e = 6;
         e += MUL(ADD(EAX, 5), 2);
         e *= 2;
-        TS_TRACE(String::format(e));
+        TS_TRACE(String::Format(e));
         X86EffAddr ea2(false, Expr::Ptr(e.clone()));
         addrsize = 0;
         rex = 0;
-        TS_ASSERT_EQUALS(ea2.check(&addrsize, 32, false, &rex, 0), true);
+        TS_ASSERT_EQUALS(ea2.Check(&addrsize, 32, false, &rex, 0), true);
         TS_ASSERT_EQUALS(ea2.m_need_modrm, true);
         TS_ASSERT_EQUALS(ea2.m_need_sib, 1);
         TS_ASSERT_EQUALS(ea2.m_valid_sib, true);
         TS_ASSERT_EQUALS(ea2.m_sib, expect_sib);
-        TS_ASSERT_EQUALS(String::format(*ea2.m_disp.get_abs()),
-                         String::format((6+(5*2))*2));
+        TS_ASSERT_EQUALS(String::Format(*ea2.m_disp.getAbs()),
+                         String::Format((6+(5*2))*2));
 
     }
 
@@ -612,20 +612,20 @@ public:
         Expr e = ADD(EAX, 1);
         e *= 2;
         e += MUL(ADD(EAX, 1), 3);
-        TS_TRACE(String::format(e));
+        TS_TRACE(String::Format(e));
         X86EffAddr ea(false, Expr::Ptr(e.clone()));
         unsigned char addrsize = 0;
         unsigned char rex = 0;
-        TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
+        TS_ASSERT_EQUALS(ea.Check(&addrsize, 32, false, &rex, 0), true);
         TS_ASSERT_EQUALS(ea.m_need_modrm, true);
         TS_ASSERT_EQUALS(ea.m_need_sib, 1);
         TS_ASSERT_EQUALS(ea.m_valid_sib, true);
         unsigned char expect_sib = 2<<6;
-        expect_sib |= (EAX.get_num()&7)<<3;
-        expect_sib |= EAX.get_num()&7;
+        expect_sib |= (EAX.getNum()&7)<<3;
+        expect_sib |= EAX.getNum()&7;
         TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
-        TS_ASSERT_EQUALS(String::format(*ea.m_disp.get_abs()),
-                         String::format(5));
+        TS_ASSERT_EQUALS(String::Format(*ea.m_disp.getAbs()),
+                         String::Format(5));
     }
 
     void testDistExprMultiple2()
@@ -634,19 +634,19 @@ public:
         Expr e = ADD(EAX, EBX, 1);
         e *= 2;
         e -= EBX;
-        TS_TRACE(String::format(e));
+        TS_TRACE(String::Format(e));
         X86EffAddr ea(false, Expr::Ptr(e.clone()));
         unsigned char addrsize = 0;
         unsigned char rex = 0;
-        TS_ASSERT_EQUALS(ea.check(&addrsize, 32, false, &rex, 0), true);
+        TS_ASSERT_EQUALS(ea.Check(&addrsize, 32, false, &rex, 0), true);
         TS_ASSERT_EQUALS(ea.m_need_modrm, true);
         TS_ASSERT_EQUALS(ea.m_need_sib, 1);
         TS_ASSERT_EQUALS(ea.m_valid_sib, true);
         unsigned char expect_sib = 1<<6;
-        expect_sib |= (EAX.get_num()&7)<<3;
-        expect_sib |= EBX.get_num()&7;
+        expect_sib |= (EAX.getNum()&7)<<3;
+        expect_sib |= EBX.getNum()&7;
         TS_ASSERT_EQUALS(ea.m_sib, expect_sib);
-        TS_ASSERT_EQUALS(String::format(*ea.m_disp.get_abs()),
-                         String::format(2));
+        TS_ASSERT_EQUALS(String::Format(*ea.m_disp.getAbs()),
+                         String::Format(2));
     }
 };

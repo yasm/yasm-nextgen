@@ -79,10 +79,10 @@ namespace objfmt
 namespace elf
 {
 
-inline bool
-is_local(const Symbol& sym)
+static inline bool
+isLocal(const Symbol& sym)
 {
-    int vis = sym.get_visibility();
+    int vis = sym.getVisibility();
     return (vis == Symbol::LOCAL || (vis & Symbol::DLOCAL) != 0);
 }
 
@@ -94,59 +94,59 @@ public:
               unsigned int bits=0);
     ~ElfObject() {}
 
-    static const char* get_name() { return "ELF"; }
-    static const char* get_keyword() { return "elf"; }
-    static const char* get_extension() { return ".o"; }
-    static unsigned int get_default_x86_mode_bits() { return 0; }
-    static const char* get_default_dbgfmt_keyword() { return "null"; }
-    static std::vector<const char*> get_dbgfmt_keywords();
-    static bool ok_object(Object& object) { return true; }
-    static bool taste(std::istream& is,
+    static const char* getName() { return "ELF"; }
+    static const char* getKeyword() { return "elf"; }
+    static const char* getExtension() { return ".o"; }
+    static unsigned int getDefaultX86ModeBits() { return 0; }
+    static const char* getDefaultDebugFormatKeyword() { return "null"; }
+    static std::vector<const char*> getDebugFormatKeywords();
+    static bool isOkObject(Object& object) { return true; }
+    static bool Taste(std::istream& is,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
     { return false; }
 
-    void add_directives(Directives& dirs, const char* parser);
+    void AddDirectives(Directives& dirs, const char* parser);
 
-    void init_symbols(const char* parser);
+    void InitSymbols(const char* parser);
 
-    void read(std::istream& is);
-    void output(std::ostream& os, bool all_syms, Errwarns& errwarns);
+    void Read(std::istream& is);
+    void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
-    Section* add_default_section();
-    Section* append_section(const std::string& name, unsigned long line);
+    Section* AddDefaultSection();
+    Section* AppendSection(const std::string& name, unsigned long line);
 
-    ElfSymbol& build_symbol(Symbol& sym);
-    void build_extern(Symbol& sym);
-    void build_global(Symbol& sym);
-    void build_common(Symbol& sym);
-    void sym_set_sectval(Symbol& sym, ElfSymbol& elfsym);
-    void finalize_symbol(Symbol& sym, StringTable& strtab, bool local_names);
+    ElfSymbol& BuildSymbol(Symbol& sym);
+    void BuildExtern(Symbol& sym);
+    void BuildGlobal(Symbol& sym);
+    void BuildCommon(Symbol& sym);
+    void setSymbolSectionValue(Symbol& sym, ElfSymbol& elfsym);
+    void FinalizeSymbol(Symbol& sym, StringTable& strtab, bool local_names);
 
-    void dir_gas_section(Object& object,
-                         NameValues& namevals,
-                         NameValues& objext_namevals,
-                         unsigned long line);
-    void dir_section(Object& object,
-                     NameValues& namevals,
-                     NameValues& objext_namevals,
-                     unsigned long line);
-    void dir_type(Object& object,
+    void DirGasSection(Object& object,
+                       NameValues& namevals,
+                       NameValues& objext_namevals,
+                       unsigned long line);
+    void DirSection(Object& object,
+                    NameValues& namevals,
+                    NameValues& objext_namevals,
+                    unsigned long line);
+    void DirType(Object& object,
+                 NameValues& namevals,
+                 NameValues& objext_namevals,
+                 unsigned long line);
+    void DirSize(Object& object,
+                 NameValues& namevals,
+                 NameValues& objext_namevals,
+                 unsigned long line);
+    void DirWeak(Object& object,
                   NameValues& namevals,
                   NameValues& objext_namevals,
                   unsigned long line);
-    void dir_size(Object& object,
+    void DirIdent(Object& object,
                   NameValues& namevals,
                   NameValues& objext_namevals,
                   unsigned long line);
-    void dir_weak(Object& object,
-                  NameValues& namevals,
-                  NameValues& objext_namevals,
-                  unsigned long line);
-    void dir_ident(Object& object,
-                   NameValues& namevals,
-                   NameValues& objext_namevals,
-                   unsigned long line);
 
     ElfConfig m_config;                     // ELF configuration
     util::scoped_ptr<ElfMachine> m_machine; // ELF machine interface
@@ -155,10 +155,10 @@ public:
     SymbolRef m_dotdotsym;                  // ..sym symbol
 };
 
-bool taste_common(std::istream& is,
-                  /*@out@*/ std::string* arch_keyword,
-                  /*@out@*/ std::string* machine,
-                  ElfClass cls);
+bool TasteCommon(std::istream& is,
+                 /*@out@*/ std::string* arch_keyword,
+                 /*@out@*/ std::string* machine,
+                 ElfClass cls);
 
 class Elf32Object : public ElfObject
 {
@@ -167,24 +167,24 @@ public:
         : ElfObject(module, object, 32)
     {}
 
-    static const char* get_name() { return "ELF (32-bit)"; }
-    static const char* get_keyword() { return "elf32"; }
-    static const char* get_extension() { return ElfObject::get_extension(); }
-    static unsigned int get_default_x86_mode_bits() { return 32; }
+    static const char* getName() { return "ELF (32-bit)"; }
+    static const char* getKeyword() { return "elf32"; }
+    static const char* getExtension() { return ElfObject::getExtension(); }
+    static unsigned int getDefaultX86ModeBits() { return 32; }
 
-    static const char* get_default_dbgfmt_keyword()
-    { return ElfObject::get_default_dbgfmt_keyword(); }
-    static std::vector<const char*> get_dbgfmt_keywords()
-    { return ElfObject::get_dbgfmt_keywords(); }
+    static const char* getDefaultDebugFormatKeyword()
+    { return ElfObject::getDefaultDebugFormatKeyword(); }
+    static std::vector<const char*> getDebugFormatKeywords()
+    { return ElfObject::getDebugFormatKeywords(); }
 
-    static bool ok_object(Object& object)
-    { return ok_elf_machine(*object.get_arch(), ELFCLASS32); }
+    static bool isOkObject(Object& object)
+    { return isOkElfMachine(*object.getArch(), ELFCLASS32); }
 
     // For tasting, let main elf handle it.
-    static bool taste(std::istream& is,
+    static bool Taste(std::istream& is,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
-    { return taste_common(is, arch_keyword, machine, ELFCLASS32); }
+    { return TasteCommon(is, arch_keyword, machine, ELFCLASS32); }
 };
 
 class Elf64Object : public ElfObject
@@ -194,24 +194,24 @@ public:
         : ElfObject(module, object, 64)
     {}
 
-    static const char* get_name() { return "ELF (64-bit)"; }
-    static const char* get_keyword() { return "elf64"; }
-    static const char* get_extension() { return ElfObject::get_extension(); }
-    static unsigned int get_default_x86_mode_bits() { return 64; }
+    static const char* getName() { return "ELF (64-bit)"; }
+    static const char* getKeyword() { return "elf64"; }
+    static const char* getExtension() { return ElfObject::getExtension(); }
+    static unsigned int getDefaultX86ModeBits() { return 64; }
 
-    static const char* get_default_dbgfmt_keyword()
-    { return ElfObject::get_default_dbgfmt_keyword(); }
-    static std::vector<const char*> get_dbgfmt_keywords()
-    { return ElfObject::get_dbgfmt_keywords(); }
+    static const char* getDefaultDebugFormatKeyword()
+    { return ElfObject::getDefaultDebugFormatKeyword(); }
+    static std::vector<const char*> getDebugFormatKeywords()
+    { return ElfObject::getDebugFormatKeywords(); }
 
-    static bool ok_object(Object& object)
-    { return ok_elf_machine(*object.get_arch(), ELFCLASS64); }
+    static bool isOkObject(Object& object)
+    { return isOkElfMachine(*object.getArch(), ELFCLASS64); }
 
     // For tasting, let main elf handle it.
-    static bool taste(std::istream& is,
+    static bool Taste(std::istream& is,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
-    { return taste_common(is, arch_keyword, machine, ELFCLASS64); }
+    { return TasteCommon(is, arch_keyword, machine, ELFCLASS64); }
 };
 
 ElfObject::ElfObject(const ObjectFormatModule& module,
@@ -227,24 +227,24 @@ ElfObject::ElfObject(const ObjectFormatModule& module,
     else if (bits == 64)
         m_config.cls = ELFCLASS64;
     else if (bits != 0)
-        throw ValueError(String::compose(N_("unknown ELF bits setting %1"),
+        throw ValueError(String::Compose(N_("unknown ELF bits setting %1"),
                                          bits));
 
-    m_machine.reset(create_elf_machine(*m_object.get_arch(),
-                                       m_config.cls).release());
-    m_machine->configure(&m_config);
+    m_machine.reset(CreateElfMachine(*m_object.getArch(),
+                                     m_config.cls).release());
+    m_machine->Configure(&m_config);
 }
 
 bool
-taste_common(std::istream& is,
-             /*@out@*/ std::string* arch_keyword,
-             /*@out@*/ std::string* machine,
-             ElfClass cls)
+TasteCommon(std::istream& is,
+            /*@out@*/ std::string* arch_keyword,
+            /*@out@*/ std::string* machine,
+            ElfClass cls)
 {
     ElfConfig config;
 
     // Read header
-    if (!config.proghead_read(is))
+    if (!config.ReadProgramHeader(is))
         return false;
 
     // Check class
@@ -269,10 +269,10 @@ taste_common(std::istream& is,
 }
 
 void
-ElfObject::read(std::istream& is)
+ElfObject::Read(std::istream& is)
 {
     // Read header
-    if (!m_config.proghead_read(is))
+    if (!m_config.ReadProgramHeader(is))
         throw Error(N_("not an ELF file"));
 
     // Can't handle files without section table yet
@@ -289,8 +289,8 @@ ElfObject::read(std::istream& is)
         shstrtab_sect(new ElfSection(m_config, is, m_config.shstrtab_index));
 
     StringTable shstrtab;
-    is.seekg(shstrtab_sect->get_file_offset());
-    shstrtab.read(is, shstrtab_sect->get_size().get_uint());
+    is.seekg(shstrtab_sect->getFileOffset());
+    shstrtab.Read(is, shstrtab_sect->getSize().getUInt());
     if (!is)
         throw Error(N_("could not read .shstrtab string data"));
 
@@ -320,7 +320,7 @@ ElfObject::read(std::istream& is)
         std::auto_ptr<ElfSection> elfsect(new ElfSection(m_config, is, i));
         elfsects[i] = elfsect.get();
 
-        std::string sectname = shstrtab.get_str(elfsect->get_name());
+        std::string sectname = shstrtab.getString(elfsect->getName());
         if (sectname == ".strtab")
         {
             strtab_sect = elfsect.get();
@@ -330,7 +330,7 @@ ElfObject::read(std::istream& is)
             symtab_sect = elfsect.get();
         }
 
-        ElfSectionType secttype = elfsect->get_type();
+        ElfSectionType secttype = elfsect->getType();
         if (secttype == SHT_NULL ||
             secttype == SHT_SYMTAB ||
             secttype == SHT_STRTAB ||
@@ -352,16 +352,16 @@ ElfObject::read(std::istream& is)
         }
         else
         {
-            std::auto_ptr<Section> section = elfsect->create_section(shstrtab);
-            elfsect->load_section_data(*section, is);
+            std::auto_ptr<Section> section = elfsect->CreateSection(shstrtab);
+            elfsect->LoadSectionData(*section, is);
             sections[i] = section.get();
 
             // Associate section data with section
-            section->add_assoc_data(ElfSection::key,
+            section->AddAssocData(ElfSection::key,
                 std::auto_ptr<AssocData>(elfsect.release()));
 
             // Add section to object
-            m_object.append_section(section);
+            m_object.AppendSection(section);
         }
     }
 
@@ -372,9 +372,9 @@ ElfObject::read(std::istream& is)
     if (symtab_sect != 0)
     {
         // get string table section index from symtab link field if reasonable
-        ElfSectionIndex link = symtab_sect->get_link();
+        ElfSectionIndex link = symtab_sect->getLink();
         if (link < m_config.secthead_count &&
-            elfsects[link]->get_type() == SHT_STRTAB)
+            elfsects[link]->getType() == SHT_STRTAB)
             strtab_sect = elfsects[link];
 
         if (strtab_sect == 0)
@@ -382,19 +382,19 @@ ElfObject::read(std::istream& is)
 
         // load symbol string table
         StringTable strtab;
-        is.seekg(strtab_sect->get_file_offset());
-        strtab.read(is, strtab_sect->get_size().get_uint());
+        is.seekg(strtab_sect->getFileOffset());
+        strtab.Read(is, strtab_sect->getSize().getUInt());
         if (!is)
             throw Error(N_("could not read symbol string data"));
 
         // load symbol table
-        unsigned long symtab_size = symtab_sect->get_size().get_uint();
-        ElfSize symsize = symtab_sect->get_entsize();
+        unsigned long symtab_size = symtab_sect->getSize().getUInt();
+        ElfSize symsize = symtab_sect->getEntSize();
         if (symsize == 0)
             throw Error(N_("symbol table entity size is zero"));
-        is.seekg(symtab_sect->get_file_offset());
-        if (!m_config.symtab_read(is, symtab, m_object, symtab_size, symsize,
-                                  strtab, &sections[0]))
+        is.seekg(symtab_sect->getFileOffset());
+        if (!m_config.ReadSymbolTable(is, symtab, m_object, symtab_size,
+                                      symsize, strtab, &sections[0]))
             throw Error(N_("could not read symbol table"));
     }
 
@@ -402,15 +402,15 @@ ElfObject::read(std::istream& is)
     for (unsigned int i=0; i<m_config.secthead_count; ++i)
     {
         ElfSection* reloc_sect = elfsects[i];
-        ElfSectionType secttype = reloc_sect->get_type();
+        ElfSectionType secttype = reloc_sect->getType();
         if (secttype != SHT_REL && secttype != SHT_RELA)
             continue;
 
         // get symbol table section index from link field (if valid)
         ElfSection* rel_symtab_sect = symtab_sect;
-        ElfSectionIndex link = reloc_sect->get_link();
+        ElfSectionIndex link = reloc_sect->getLink();
         if (link < m_config.secthead_count &&
-            elfsects[link]->get_type() == SHT_SYMTAB)
+            elfsects[link]->getType() == SHT_SYMTAB)
         {
             if (rel_symtab_sect != elfsects[link])
             {
@@ -419,107 +419,107 @@ ElfObject::read(std::istream& is)
         }
 
         // section relocs apply to is indicated by info field
-        ElfSectionIndex info = reloc_sect->get_info();
+        ElfSectionIndex info = reloc_sect->getInfo();
         if (link >= m_config.secthead_count || sections[info] == 0)
             continue;
 
         // load relocations
-        is.seekg(reloc_sect->get_file_offset());
-        unsigned long relocs_size = reloc_sect->get_size().get_uint();
-        if (!elfsects[info]->read_relocs(is, *sections[info], relocs_size,
-                                         *m_machine, symtab,
-                                         secttype == SHT_RELA))
-            throw Error(String::compose(
+        is.seekg(reloc_sect->getFileOffset());
+        unsigned long relocs_size = reloc_sect->getSize().getUInt();
+        if (!elfsects[info]->ReadRelocs(is, *sections[info], relocs_size,
+                                        *m_machine, symtab,
+                                        secttype == SHT_RELA))
+            throw Error(String::Compose(
                 N_("could not read section `%1' relocations"),
-                sections[info]->get_name()));
+                sections[info]->getName()));
     }
 }
 
 void
-ElfObject::init_symbols(const char* parser)
+ElfObject::InitSymbols(const char* parser)
 {
     // Add .file symbol
-    SymbolRef filesym = m_object.append_symbol(".file");
-    filesym->define_special(Symbol::LOCAL);
+    SymbolRef filesym = m_object.AppendSymbol(".file");
+    filesym->DefineSpecial(Symbol::LOCAL);
 
     std::auto_ptr<ElfSymbol> elfsym(new ElfSymbol());
-    elfsym->set_index(SHN_ABS);
-    elfsym->set_binding(STB_LOCAL);
-    elfsym->set_type(STT_FILE);
+    elfsym->setSectionIndex(SHN_ABS);
+    elfsym->setBinding(STB_LOCAL);
+    elfsym->setType(STT_FILE);
     m_file_elfsym = elfsym.get();
 
-    filesym->add_assoc_data(ElfSymbol::key,
-                            std::auto_ptr<AssocData>(elfsym.release()));
+    filesym->AddAssocData(ElfSymbol::key,
+                          std::auto_ptr<AssocData>(elfsym.release()));
 
     // Create ..sym special symbol (NASM only)
-    if (String::nocase_equal(parser, "nasm"))
+    if (String::NocaseEqual(parser, "nasm"))
     {
-        m_dotdotsym = m_object.add_special_symbol("sym");
-        m_dotdotsym->define_special(Symbol::EXTERN);
+        m_dotdotsym = m_object.AddSpecialSymbol("sym");
+        m_dotdotsym->DefineSpecial(Symbol::EXTERN);
     }
 
     // Create machine-specific special symbols
-    m_machine->add_special_syms(m_object, parser);
+    m_machine->AddSpecialSymbols(m_object, parser);
 }
 
 ElfSymbol&
-ElfObject::build_symbol(Symbol& sym)
+ElfObject::BuildSymbol(Symbol& sym)
 {
-    ElfSymbol* elfsym = get_elf(sym);
+    ElfSymbol* elfsym = getElf(sym);
 
     if (!elfsym)
     {
         elfsym = new ElfSymbol;
-        sym.add_assoc_data(ElfSymbol::key, std::auto_ptr<AssocData>(elfsym));
+        sym.AddAssocData(ElfSymbol::key, std::auto_ptr<AssocData>(elfsym));
     }
 
     return *elfsym;
 }
 
 void
-ElfObject::build_extern(Symbol& sym)
+ElfObject::BuildExtern(Symbol& sym)
 {
-    const NameValues* objext_nvs = get_objext_namevals(sym);
+    const NameValues* objext_nvs = getObjextNameValues(sym);
 
     if (objext_nvs)
     {
         for (NameValues::const_iterator nv=objext_nvs->begin(),
              end=objext_nvs->end(); nv != end; ++nv)
         {
-            if (nv->is_string())
+            if (nv->isString())
             {
-                throw TypeError(String::compose(
-                    N_("unrecognized symbol type `%1'"), nv->get_string()));
+                throw TypeError(String::Compose(
+                    N_("unrecognized symbol type `%1'"), nv->getString()));
             }
         }
     }
 
-    ElfSymbol& elfsym = build_symbol(sym);
-    elfsym.set_binding(STB_GLOBAL);
+    ElfSymbol& elfsym = BuildSymbol(sym);
+    elfsym.setBinding(STB_GLOBAL);
 }
 
 static bool
-global_nameval_fallback(NameValue& nv, Object* object, unsigned long line,
+GlobalNameValueFallback(NameValue& nv, Object* object, unsigned long line,
                         Expr::Ptr* size)
 
 {
-    if (!nv.is_expr() && nv.is_id())
+    if (!nv.isExpr() && nv.isId())
     {
-        throw TypeError(String::compose(N_("unrecognized symbol type `%s'"),
-                                        nv.get_id()));
+        throw TypeError(String::Compose(N_("unrecognized symbol type `%s'"),
+                                        nv.getId()));
     }
-    else if (nv.is_expr() && size->get() == 0)
+    else if (nv.isExpr() && size->get() == 0)
     {
-        *size = nv.release_expr(*object, line);
+        *size = nv.ReleaseExpr(*object, line);
         return true;
     }
     else
-        return dir_nameval_warn(nv);
+        return DirNameValueWarn(nv);
 }
 
-inline static void
-global_set_vis(NameValue& nv, ElfSymbolVis* vis_out, unsigned int* vis_count,
-               ElfSymbolVis vis)
+static inline void
+GlobalSetVis(NameValue& nv, ElfSymbolVis* vis_out, unsigned int* vis_count,
+             ElfSymbolVis vis)
 {
     *vis_out = vis;
     *vis_count = *vis_count + 1;
@@ -527,7 +527,7 @@ global_set_vis(NameValue& nv, ElfSymbolVis* vis_out, unsigned int* vis_count,
 
 
 void
-ElfObject::build_global(Symbol& sym)
+ElfObject::BuildGlobal(Symbol& sym)
 {
     Expr::Ptr size(0);
     unsigned long type = STT_NOTYPE;    // ElfSymbolType
@@ -536,47 +536,47 @@ ElfObject::build_global(Symbol& sym)
 
     DirHelpers helpers;
 
-    helpers.add("function", false,
-                BIND::bind(&dir_flag_reset, _1, &type, STT_FUNC));
-    helpers.add("data", false,
-                BIND::bind(&dir_flag_reset, _1, &type, STT_OBJECT));
-    helpers.add("object", false,
-                BIND::bind(&dir_flag_reset, _1, &type, STT_OBJECT));
-    helpers.add("object", false,
-                BIND::bind(&dir_flag_reset, _1, &type, STT_OBJECT));
-    helpers.add("internal", false,
-                BIND::bind(&global_set_vis, _1, &vis, &nvis, STV_INTERNAL));
-    helpers.add("hidden", false,
-                BIND::bind(&global_set_vis, _1, &vis, &nvis, STV_HIDDEN));
-    helpers.add("protected", false,
-                BIND::bind(&global_set_vis, _1, &vis, &nvis, STV_PROTECTED));
+    helpers.Add("function", false,
+                BIND::bind(&DirResetFlag, _1, &type, STT_FUNC));
+    helpers.Add("data", false,
+                BIND::bind(&DirResetFlag, _1, &type, STT_OBJECT));
+    helpers.Add("object", false,
+                BIND::bind(&DirResetFlag, _1, &type, STT_OBJECT));
+    helpers.Add("object", false,
+                BIND::bind(&DirResetFlag, _1, &type, STT_OBJECT));
+    helpers.Add("internal", false,
+                BIND::bind(&GlobalSetVis, _1, &vis, &nvis, STV_INTERNAL));
+    helpers.Add("hidden", false,
+                BIND::bind(&GlobalSetVis, _1, &vis, &nvis, STV_HIDDEN));
+    helpers.Add("protected", false,
+                BIND::bind(&GlobalSetVis, _1, &vis, &nvis, STV_PROTECTED));
 
-    NameValues* objext_nvs = get_objext_namevals(sym);
+    NameValues* objext_nvs = getObjextNameValues(sym);
     if (objext_nvs)
     {
         helpers(objext_nvs->begin(), objext_nvs->end(),
-                BIND::bind(&global_nameval_fallback, _1, &m_object,
-                           sym.get_decl_line(), &size));
+                BIND::bind(&GlobalNameValueFallback, _1, &m_object,
+                           sym.getDeclLine(), &size));
     }
 
     if (nvis > 1)
     {
-        warn_set(WARN_GENERAL,
+        setWarn(WARN_GENERAL,
             N_("More than one symbol visibility provided; using last"));
     }
 
-    ElfSymbol& elfsym = build_symbol(sym);
-    elfsym.set_binding(STB_GLOBAL);
-    elfsym.set_type(static_cast<ElfSymbolType>(type));
-    elfsym.set_visibility(vis);
+    ElfSymbol& elfsym = BuildSymbol(sym);
+    elfsym.setBinding(STB_GLOBAL);
+    elfsym.setType(static_cast<ElfSymbolType>(type));
+    elfsym.setVisibility(vis);
     if (size.get() != 0)
-        elfsym.set_size(*size, sym.get_decl_line());
+        elfsym.setSize(*size, sym.getDeclLine());
 }
 
 void
-ElfObject::build_common(Symbol& sym)
+ElfObject::BuildCommon(Symbol& sym)
 {
-    NameValues* objext_nvs = get_objext_namevals(sym);
+    NameValues* objext_nvs = getObjextNameValues(sym);
     unsigned long addralign = 0;
 
     if (objext_nvs)
@@ -584,24 +584,24 @@ ElfObject::build_common(Symbol& sym)
         for (NameValues::iterator nv=objext_nvs->begin(),
              end=objext_nvs->end(); nv != end; ++nv)
         {
-            if (!nv->get_name().empty())
+            if (!nv->getName().empty())
             {
-                warn_set(WARN_GENERAL, String::compose(
-                    N_("Unrecognized qualifier `%1'"), nv->get_name()));
+                setWarn(WARN_GENERAL, String::Compose(
+                    N_("Unrecognized qualifier `%1'"), nv->getName()));
                 continue;
             }
 
-            if (!nv->is_expr())
+            if (!nv->isExpr())
                 throw ValueError(N_("alignment constraint is not an integer"));
 
             std::auto_ptr<Expr> align_expr =
-                nv->release_expr(m_object, sym.get_decl_line());
-            if (!align_expr->is_intnum())
+                nv->ReleaseExpr(m_object, sym.getDeclLine());
+            if (!align_expr->isIntNum())
                 throw ValueError(N_("alignment constraint is not an integer"));
-            addralign = align_expr->get_intnum().get_uint();
+            addralign = align_expr->getIntNum().getUInt();
 
             // Alignments must be a power of two.
-            if (!is_exp2(addralign))
+            if (!isExp2(addralign))
             {
                 throw ValueError(
                     N_("alignment constraint is not a power of two"));
@@ -609,47 +609,47 @@ ElfObject::build_common(Symbol& sym)
         }
     }
 
-    ElfSymbol& elfsym = build_symbol(sym);
-    elfsym.set_index(SHN_COMMON);
-    elfsym.set_binding(STB_GLOBAL);
-    elfsym.set_size(*get_common_size(sym), sym.get_decl_line());
-    elfsym.set_value(addralign);
+    ElfSymbol& elfsym = BuildSymbol(sym);
+    elfsym.setSectionIndex(SHN_COMMON);
+    elfsym.setBinding(STB_GLOBAL);
+    elfsym.setSize(*getCommonSize(sym), sym.getDeclLine());
+    elfsym.setValue(addralign);
 }
 
 void
-ElfObject::sym_set_sectval(Symbol& sym, ElfSymbol& elfsym)
+ElfObject::setSymbolSectionValue(Symbol& sym, ElfSymbol& elfsym)
 {
     Location loc;
-    if (!sym.get_label(&loc))
+    if (!sym.getLabel(&loc))
         return;
 
     if (loc.bc)
     {
-        elfsym.set_section(loc.bc->get_container()->as_section());
-        elfsym.set_value(loc.get_offset());
+        elfsym.setSection(loc.bc->getContainer()->AsSection());
+        elfsym.setValue(loc.getOffset());
     }
 }
 
 void
-ElfObject::finalize_symbol(Symbol& sym, StringTable& strtab, bool local_names)
+ElfObject::FinalizeSymbol(Symbol& sym, StringTable& strtab, bool local_names)
 {
-    int vis = sym.get_visibility();
-    int status = sym.get_status();
-    ElfSymbol* elfsym = get_elf(sym);
+    int vis = sym.getVisibility();
+    int status = sym.getStatus();
+    ElfSymbol* elfsym = getElf(sym);
 
     if (vis & Symbol::EXTERN)
     {
-        build_extern(sym);
-        elfsym = get_elf(sym);
-        elfsym->set_name(strtab.get_index(sym.get_name()));
+        BuildExtern(sym);
+        elfsym = getElf(sym);
+        elfsym->setName(strtab.getIndex(sym.getName()));
         return;
     }
 
     if (vis & Symbol::COMMON)
     {
-        build_common(sym);
-        elfsym = get_elf(sym);
-        elfsym->set_name(strtab.get_index(sym.get_name()));
+        BuildCommon(sym);
+        elfsym = getElf(sym);
+        elfsym->setName(strtab.getIndex(sym.getName()));
         // fall through (check below catches undefined case)
     }
 
@@ -661,67 +661,70 @@ ElfObject::finalize_symbol(Symbol& sym, StringTable& strtab, bool local_names)
         ;
     else if (vis & Symbol::GLOBAL)
     {
-        build_global(sym);
-        elfsym = get_elf(sym);
-        elfsym->set_name(strtab.get_index(sym.get_name()));
+        BuildGlobal(sym);
+        elfsym = getElf(sym);
+        elfsym->setName(strtab.getIndex(sym.getName()));
     }
     else
     {
         Location loc = {0, 0};
-        if (!sym.get_label(&loc))
+        if (!sym.getLabel(&loc))
         {
-            if (!sym.get_equ() && !sym.is_abs())
+            if (!sym.getEqu() && !sym.isAbsoluteSymbol())
                 return;
         }
 
         Section* sect = 0;
         if (loc.bc)
-            sect = loc.bc->get_container()->as_section();
+            sect = loc.bc->getContainer()->AsSection();
 
         // Locals (except when debugging) do not need to be
         // in the symbol table, unless they're a section.
         bool is_sect = false;
         if (sect)
         {
-            ElfSection* elfsect = get_elf(*sect);
-            if (elfsect && elfsect->get_sym() == &sym)
+            ElfSection* elfsect = getElf(*sect);
+            if (elfsect && elfsect->getSymbol() == &sym)
                 is_sect = true;
         }
 
         if (!local_names && !is_sect)
             return;
 
-        if (sym.get_equ() && !sym.is_abs())
+        if (sym.getEqu() && !sym.isAbsoluteSymbol())
             return;
 
-        elfsym = &build_symbol(sym);
+        elfsym = &BuildSymbol(sym);
         if (local_names || is_sect)
-            elfsym->set_name(strtab.get_index(sym.get_name()));
+            elfsym->setName(strtab.getIndex(sym.getName()));
         if (is_sect)
-            elfsym->set_type(STT_SECTION);
+            elfsym->setType(STT_SECTION);
     }
 
-    sym_set_sectval(sym, *elfsym);
+    setSymbolSectionValue(sym, *elfsym);
 }
 
-class Output : public BytecodeStreamOutput
+class ElfOutput : public BytecodeStreamOutput
 {
 public:
-    Output(std::ostream& os, ElfObject& objfmt, Object& object);
-    ~Output();
+    ElfOutput(std::ostream& os, ElfObject& objfmt, Object& object);
+    ~ElfOutput();
 
-    void output_section(Section& sect,
-                        unsigned int* sindex,
-                        StringTable& shstrtab,
-                        Errwarns& errwarns);
+    void OutputSection(Section& sect,
+                       unsigned int* sindex,
+                       StringTable& shstrtab,
+                       Errwarns& errwarns);
 
     // OutputBytecode overrides
-    void value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn);
-    void sym_to_bytes(SymbolRef sym,
-                      Bytes& bytes,
-                      Location loc,
-                      unsigned int valsize,
-                      int warn);
+    void ConvertValueToBytes(Value& value,
+                             Bytes& bytes,
+                             Location loc,
+                             int warn);
+    void ConvertSymbolToBytes(SymbolRef sym,
+                              Bytes& bytes,
+                              Location loc,
+                              unsigned int valsize,
+                              int warn);
 
 private:
     ElfObject& m_objfmt;
@@ -729,65 +732,68 @@ private:
     BytecodeNoOutput m_no_output;
 };
 
-Output::Output(std::ostream& os, ElfObject& objfmt, Object& object)
+ElfOutput::ElfOutput(std::ostream& os, ElfObject& objfmt, Object& object)
     : BytecodeStreamOutput(os)
     , m_objfmt(objfmt)
     , m_object(object)
 {
 }
 
-Output::~Output()
+ElfOutput::~ElfOutput()
 {
 }
 
 void
-Output::sym_to_bytes(SymbolRef sym,
-                     Bytes& bytes,
-                     Location loc,
-                     unsigned int valsize,
-                     int warn)
+ElfOutput::ConvertSymbolToBytes(SymbolRef sym,
+                                Bytes& bytes,
+                                Location loc,
+                                unsigned int valsize,
+                                int warn)
 {
     std::auto_ptr<ElfReloc> reloc =
-        m_objfmt.m_machine->make_reloc(sym, SymbolRef(0), loc.get_offset(),
-                                       false, valsize);
+        m_objfmt.m_machine->MakeReloc(sym, SymbolRef(0), loc.getOffset(),
+                                      false, valsize);
 
     // allocate .rel[a] sections on a need-basis
-    Section* sect = loc.bc->get_container()->as_section();
-    sect->add_reloc(std::auto_ptr<Reloc>(reloc.release()));
+    Section* sect = loc.bc->getContainer()->AsSection();
+    sect->AddReloc(std::auto_ptr<Reloc>(reloc.release()));
 
-    m_object.get_arch()->tobytes(0, bytes, valsize, 0, warn);
+    m_object.getArch()->ToBytes(0, bytes, valsize, 0, warn);
 }
 
 void
-Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
+ElfOutput::ConvertValueToBytes(Value& value,
+                               Bytes& bytes,
+                               Location loc,
+                               int warn)
 {
-    if (Expr* e = value.get_abs())
-        simplify_calc_dist(*e);
+    if (Expr* e = value.getAbs())
+        SimplifyCalcDist(*e);
 
     // Try to output constant and PC-relative section-local first.
     // Note this does NOT output any value with a SEG, WRT, external,
     // cross-section, or non-PC-relative reference (those are handled below).
-    if (value.output_basic(bytes, warn, *m_object.get_arch()))
+    if (value.OutputBasic(bytes, warn, *m_object.getArch()))
         return;
 
     // Handle other expressions, with relocation if necessary
-    if (value.is_seg_of() || value.is_section_rel() || value.get_rshift() > 0)
+    if (value.isSegOf() || value.isSectionRelative() || value.getRShift() > 0)
         throw TooComplexError(N_("elf: relocation too complex"));
 
     IntNum intn(0);
     ElfReloc* reloc = 0;
-    if (value.is_relative())
+    if (value.isRelative())
     {
-        SymbolRef sym = value.get_rel();
-        SymbolRef wrt = value.get_wrt();
+        SymbolRef sym = value.getRelative();
+        SymbolRef wrt = value.getWRT();
 
         if (wrt == m_objfmt.m_dotdotsym)
             wrt = SymbolRef(0);
-        else if (wrt && is_wrt_sym_relative(*wrt))
+        else if (wrt && isWRTSymRelative(*wrt))
             ;
-        else if (wrt && is_wrt_pos_adjusted(*wrt))
-            intn = loc.get_offset();
-        else if (is_local(*sym))
+        else if (wrt && isWRTPosAdjusted(*wrt))
+            intn = loc.getOffset();
+        else if (isLocal(*sym))
         {
             // Local symbols need relocation to their section's start, and
             // add in the offset of the bytecode (within the target section)
@@ -796,48 +802,48 @@ Output::value_to_bytes(Value& value, Bytes& bytes, Location loc, int warn)
             // This is only done if the symbol is relocated against the
             // section instead of the symbol itself.
             Location symloc;
-            if (sym->get_label(&symloc))
+            if (sym->getLabel(&symloc))
             {
                 // Relocate to section start
-                Section* sym_sect = symloc.bc->get_container()->as_section();
-                ElfSection* elfsect = get_elf(*sym_sect);
+                Section* sym_sect = symloc.bc->getContainer()->AsSection();
+                ElfSection* elfsect = getElf(*sym_sect);
                 assert(elfsect != 0);
-                sym = elfsect->get_sym();
+                sym = elfsect->getSymbol();
 
-                intn = symloc.get_offset();
+                intn = symloc.getOffset();
             }
         }
 
         bool pc_rel = false;
         IntNum intn2;
-        if (value.calc_pcrel_sub(&intn2, loc))
+        if (value.CalcPCRelSub(&intn2, loc))
         {
             // Create PC-relative relocation type and fix up absolute portion.
             pc_rel = true;
             intn += intn2;
         }
-        else if (value.has_sub())
+        else if (value.hasSubRelative())
             throw TooComplexError(N_("elf: relocation too complex"));
 
         // Create relocation
-        Section* sect = loc.bc->get_container()->as_section();
+        Section* sect = loc.bc->getContainer()->AsSection();
         std::auto_ptr<ElfReloc> reloc_auto =
-            m_objfmt.m_machine->make_reloc(sym, wrt, loc.get_offset(), pc_rel,
-                                           value.get_size());
+            m_objfmt.m_machine->MakeReloc(sym, wrt, loc.getOffset(), pc_rel,
+                                          value.getSize());
         reloc = reloc_auto.get();
-        sect->add_reloc(std::auto_ptr<Reloc>(reloc_auto.release()));
+        sect->AddReloc(std::auto_ptr<Reloc>(reloc_auto.release()));
     }
 
-    if (Expr* abs = value.get_abs())
+    if (Expr* abs = value.getAbs())
     {
-        if (!abs->is_intnum())
+        if (!abs->isIntNum())
             throw TooComplexError(N_("elf: relocation too complex"));
-        intn += abs->get_intnum();
+        intn += abs->getIntNum();
     }
 
     if (reloc)
-        reloc->handle_addend(&intn, m_objfmt.m_config);
-    m_object.get_arch()->tobytes(intn, bytes, value.get_size(), 0, warn);
+        reloc->HandleAddend(&intn, m_objfmt.m_config);
+    m_object.getArch()->ToBytes(intn, bytes, value.getSize(), 0, warn);
 }
 #if 0
 static int
@@ -880,25 +886,25 @@ elf_objfmt_create_dbg_secthead(yasm_section *sect, /*@null@*/ void *d)
 }
 #endif
 void
-Output::output_section(Section& sect,
-                       unsigned int* sindex,
-                       StringTable& shstrtab,
-                       Errwarns& errwarns)
+ElfOutput::OutputSection(Section& sect,
+                         unsigned int* sindex,
+                         StringTable& shstrtab,
+                         Errwarns& errwarns)
 {
     BytecodeOutput* outputter = this;
 
-    ElfSection* elfsect = get_elf(sect);
+    ElfSection* elfsect = getElf(sect);
     assert(elfsect != 0);
 
-    if (elfsect->get_align() == 0)
-        elfsect->set_align(sect.get_align());
+    if (elfsect->getAlign() == 0)
+        elfsect->setAlign(sect.getAlign());
 
-    elfsect->set_name(shstrtab.get_index(sect.get_name()));
-    elfsect->set_index(*sindex);
+    elfsect->setName(shstrtab.getIndex(sect.getName()));
+    elfsect->setIndex(*sindex);
     *sindex = *sindex + 1;
 
     std::streampos pos;
-    if (sect.is_bss())
+    if (sect.isBSS())
     {
         // Don't output BSS sections.
         outputter = &m_no_output;
@@ -910,57 +916,57 @@ Output::output_section(Section& sect,
         if (pos < 0)
             throw IOError(N_("couldn't read position on output stream"));
 
-        if (sect.bcs_last().next_offset() == 0)
+        if (sect.bytecodes_last().getNextOffset() == 0)
             return;
 
-        m_os.seekp(elfsect->set_file_offset(pos));
+        m_os.seekp(elfsect->setFileOffset(pos));
         if (!m_os)
             throw IOError(N_("couldn't seek on output stream"));
     }
 
     // Output bytecodes
-    for (Section::bc_iterator i=sect.bcs_begin(), end=sect.bcs_end();
-         i != end; ++i)
+    for (Section::bc_iterator i=sect.bytecodes_begin(),
+         end=sect.bytecodes_end(); i != end; ++i)
     {
         try
         {
-            i->output(*outputter);
-            elfsect->add_size(i->get_total_len());
+            i->Output(*outputter);
+            elfsect->AddSize(i->getTotalLen());
         }
         catch (Error& err)
         {
-            errwarns.propagate(i->get_line(), err);
+            errwarns.Propagate(i->getLine(), err);
         }
-        errwarns.propagate(i->get_line());  // propagate warnings
+        errwarns.Propagate(i->getLine());   // propagate warnings
     }
 
-    if (errwarns.num_errors() > 0)
+    if (errwarns.getNumErrors() > 0)
         return;
 
     // Sanity check final section size
-    assert(elfsect->get_size() == sect.bcs_last().next_offset());
+    assert(elfsect->getSize() == sect.bytecodes_last().getNextOffset());
 
     // Empty?  Go on to next section
-    if (elfsect->is_empty())
+    if (elfsect->isEmpty())
         return;
 
     // No relocations?  Go on to next section
-    if (sect.get_relocs().size() == 0)
+    if (sect.getRelocs().size() == 0)
         return;
 
     // need relocation section; set it up
-    elfsect->set_rel_index(*sindex);
+    elfsect->setRelIndex(*sindex);
     *sindex = *sindex + 1;
 
     // name the relocation section .rel[a].foo
-    std::string relname = m_objfmt.m_config.name_reloc_section(sect.get_name());
-    elfsect->set_rel_name(shstrtab.get_index(relname));
+    std::string relname = m_objfmt.m_config.getRelocSectionName(sect.getName());
+    elfsect->setRelName(shstrtab.getIndex(relname));
 }
 
 unsigned long
-output_align(std::ostream& os, unsigned int align)
+ElfAlignOutput(std::ostream& os, unsigned int align)
 {
-    assert(is_exp2(align) && "requested alignment not a power of two");
+    assert(isExp2(align) && "requested alignment not a power of two");
 
     std::streampos pos = os.tellp();
     if (pos < 0)
@@ -978,18 +984,18 @@ output_align(std::ostream& os, unsigned int align)
 }
 
 void
-ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
+ElfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
 {
     StringTable shstrtab, strtab;
 
     // Add filename to strtab and set as .file symbol name
     if (m_file_elfsym)
     {
-        m_file_elfsym->set_name(strtab.get_index(m_object.get_source_fn()));
+        m_file_elfsym->setName(strtab.getIndex(m_object.getSourceFilename()));
     }
 
     // Allocate space for Ehdr by seeking forward
-    os.seekp(m_config.proghead_get_size());
+    os.seekp(m_config.getProgramHeaderSize());
     if (!os)
         throw IOError(N_("could not seek on output file"));
 
@@ -1007,29 +1013,29 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     {
         try
         {
-            finalize_symbol(*i, strtab, all_syms);
+            FinalizeSymbol(*i, strtab, all_syms);
         }
         catch (Error& err)
         {
-            errwarns.propagate(i->get_decl_line(), err);
+            errwarns.Propagate(i->getDeclLine(), err);
         }
-        errwarns.propagate(i->get_decl_line());
+        errwarns.Propagate(i->getDeclLine());
     }
 
     m_config.secthead_count = 0;
 
     // dummy section header
     ElfSection null_sect(m_config, SHT_NULL, 0);
-    null_sect.set_index(m_config.secthead_count++);
+    null_sect.setIndex(m_config.secthead_count++);
 
-    Output out(os, *this, m_object);
+    ElfOutput out(os, *this, m_object);
 
     // Output user sections.
     // Assign indices and names as we go (including for relocation sections).
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        out.output_section(*i, &m_config.secthead_count, shstrtab, errwarns);
+        out.OutputSection(*i, &m_config.secthead_count, shstrtab, errwarns);
     }
 
     // If we're not forcing all symbols to be in the table, go through
@@ -1043,78 +1049,78 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
             for (Section::reloc_iterator reloc=sect->relocs_begin(),
                  endreloc=sect->relocs_end(); reloc != endreloc; ++reloc)
             {
-                SymbolRef sym = reloc->get_sym();
-                ElfSymbol& elfsym = build_symbol(*sym); // XXX
-                elfsym.set_name(strtab.get_index(sym->get_name()));
-                sym_set_sectval(*sym, elfsym);
+                SymbolRef sym = reloc->getSymbol();
+                ElfSymbol& elfsym = BuildSymbol(*sym); // XXX
+                elfsym.setName(strtab.getIndex(sym->getName()));
+                setSymbolSectionValue(*sym, elfsym);
             }
         }
     }
 
     // Partition symbol table to put local symbols first
     stdx::stable_partition(m_object.symbols_begin(), m_object.symbols_end(),
-                           is_local);
+                           isLocal);
 
     // Number symbols.
     ElfSymbolIndex symtab_nlocal;
-    m_config.symtab_setindexes(m_object, &symtab_nlocal);
+    m_config.AssignSymbolIndices(m_object, &symtab_nlocal);
 
     unsigned long offset, size;
-    ElfStringIndex shstrtab_name = shstrtab.get_index(".shstrtab");
-    ElfStringIndex strtab_name = shstrtab.get_index(".strtab");
-    ElfStringIndex symtab_name = shstrtab.get_index(".symtab");
+    ElfStringIndex shstrtab_name = shstrtab.getIndex(".shstrtab");
+    ElfStringIndex strtab_name = shstrtab.getIndex(".strtab");
+    ElfStringIndex symtab_name = shstrtab.getIndex(".symtab");
 
     // section header string table (.shstrtab)
-    offset = output_align(os, 4);
-    size = shstrtab.get_size();
-    shstrtab.write(os);
+    offset = ElfAlignOutput(os, 4);
+    size = shstrtab.getSize();
+    shstrtab.Write(os);
 
     ElfSection shstrtab_sect(m_config, SHT_STRTAB, 0);
     m_config.shstrtab_index = m_config.secthead_count;
-    shstrtab_sect.set_name(shstrtab_name);
-    shstrtab_sect.set_index(m_config.secthead_count++);
-    shstrtab_sect.set_file_offset(offset);
-    shstrtab_sect.set_size(size);
+    shstrtab_sect.setName(shstrtab_name);
+    shstrtab_sect.setIndex(m_config.secthead_count++);
+    shstrtab_sect.setFileOffset(offset);
+    shstrtab_sect.setSize(size);
 
     // string table (.strtab)
-    offset = output_align(os, 4);
-    size = strtab.get_size();
-    strtab.write(os);
+    offset = ElfAlignOutput(os, 4);
+    size = strtab.getSize();
+    strtab.Write(os);
 
     ElfSection strtab_sect(m_config, SHT_STRTAB, 0);
-    strtab_sect.set_name(strtab_name);
-    strtab_sect.set_index(m_config.secthead_count++);
-    strtab_sect.set_file_offset(offset);
-    strtab_sect.set_size(size);
+    strtab_sect.setName(strtab_name);
+    strtab_sect.setIndex(m_config.secthead_count++);
+    strtab_sect.setFileOffset(offset);
+    strtab_sect.setSize(size);
 
     // symbol table (.symtab)
-    offset = output_align(os, 4);
-    size = m_config.symtab_write(os, m_object, errwarns, out.get_scratch());
+    offset = ElfAlignOutput(os, 4);
+    size = m_config.WriteSymbolTable(os, m_object, errwarns, out.getScratch());
 
     ElfSection symtab_sect(m_config, SHT_SYMTAB, 0, true);
-    symtab_sect.set_name(symtab_name);
-    symtab_sect.set_index(m_config.secthead_count++);
-    symtab_sect.set_file_offset(offset);
-    symtab_sect.set_size(size);
-    symtab_sect.set_info(symtab_nlocal);
-    symtab_sect.set_link(strtab_sect.get_index());  // link to .strtab
+    symtab_sect.setName(symtab_name);
+    symtab_sect.setIndex(m_config.secthead_count++);
+    symtab_sect.setFileOffset(offset);
+    symtab_sect.setSize(size);
+    symtab_sect.setInfo(symtab_nlocal);
+    symtab_sect.setLink(strtab_sect.getIndex());    // link to .strtab
 
     // output relocations
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
         // No relocations to output?  Go on to next section
-        if (i->get_relocs().size() == 0)
+        if (i->getRelocs().size() == 0)
             continue;
 
-        ElfSection* elfsect = get_elf(*i);
+        ElfSection* elfsect = getElf(*i);
         assert(elfsect != 0);
-        elfsect->write_relocs(os, *i, errwarns, out.get_scratch(),
-                              *m_machine);
+        elfsect->WriteRelocs(os, *i, errwarns, out.getScratch(),
+                             *m_machine);
     }
 
     // output section header table
-    m_config.secthead_pos = output_align(os, 16);
+    m_config.secthead_pos = ElfAlignOutput(os, 16);
 
 #if 0
     // stabs debugging support
@@ -1133,45 +1139,45 @@ ElfObject::output(std::ostream& os, bool all_syms, Errwarns& errwarns)
 #endif
 
     // null section header
-    null_sect.write(os, out.get_scratch());
+    null_sect.Write(os, out.getScratch());
 
     // user section headers (and relocation section headers)
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        ElfSection* elfsect = get_elf(*i);
+        ElfSection* elfsect = getElf(*i);
         assert(elfsect != 0);
 
-        if (elfsect->write(os, out.get_scratch()) == 0)
+        if (elfsect->Write(os, out.getScratch()) == 0)
             continue;
 
         // relocation entries for .foo are stored in section .rel[a].foo
-        elfsect->write_rel(os, symtab_sect.get_index(), *i, out.get_scratch());
+        elfsect->WriteRel(os, symtab_sect.getIndex(), *i, out.getScratch());
     }
 
     // standard section headers
-    shstrtab_sect.write(os, out.get_scratch());
-    strtab_sect.write(os, out.get_scratch());
-    symtab_sect.write(os, out.get_scratch());
+    shstrtab_sect.Write(os, out.getScratch());
+    strtab_sect.Write(os, out.getScratch());
+    symtab_sect.Write(os, out.getScratch());
 
     // output Ehdr
     os.seekp(0);
     if (!os)
         throw IOError(N_("could not seek on output file"));
 
-    m_config.proghead_write(os, out.get_scratch());
+    m_config.WriteProgramHeader(os, out.getScratch());
 }
 
 Section*
-ElfObject::add_default_section()
+ElfObject::AddDefaultSection()
 {
-    Section* section = append_section(".text", 0);
-    section->set_default(true);
+    Section* section = AppendSection(".text", 0);
+    section->setDefault(true);
     return section;
 }
 
 Section*
-ElfObject::append_section(const std::string& name, unsigned long line)
+ElfObject::AppendSection(const std::string& name, unsigned long line)
 {
     ElfSectionType type = SHT_PROGBITS;
     ElfSectionFlags flags = SHF_ALLOC;
@@ -1219,58 +1225,58 @@ ElfObject::append_section(const std::string& name, unsigned long line)
     bool bss = (type == SHT_NOBITS);
 
     Section* section = new Section(name, code, bss, line);
-    m_object.append_section(std::auto_ptr<Section>(section));
-    section->set_align(align);
+    m_object.AppendSection(std::auto_ptr<Section>(section));
+    section->setAlign(align);
 
     // Define a label for the start of the section
-    Location start = {&section->bcs_first(), 0};
-    SymbolRef sym = m_object.get_symbol(name);
-    sym->define_label(start, line);
+    Location start = {&section->bytecodes_first(), 0};
+    SymbolRef sym = m_object.getSymbol(name);
+    sym->DefineLabel(start, line);
 
     // Add ELF data to the section
     ElfSection* elfsect = new ElfSection(m_config, type, flags);
-    section->add_assoc_data(ElfSection::key, std::auto_ptr<AssocData>(elfsect));
-    elfsect->set_sym(sym);
+    section->AddAssocData(ElfSection::key, std::auto_ptr<AssocData>(elfsect));
+    elfsect->setSymbol(sym);
 
     return section;
 }
 
 void
-ElfObject::dir_gas_section(Object& object,
-                           NameValues& nvs,
-                           NameValues& objext_nvs,
-                           unsigned long line)
+ElfObject::DirGasSection(Object& object,
+                         NameValues& nvs,
+                         NameValues& objext_nvs,
+                         unsigned long line)
 {
     assert(&object == &m_object);
 
-    if (!nvs.front().is_string())
+    if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
-    std::string sectname = nvs.front().get_string();
+    std::string sectname = nvs.front().getString();
 
-    Section* sect = m_object.find_section(sectname);
+    Section* sect = m_object.FindSection(sectname);
     bool first = true;
     if (sect)
-        first = sect->is_default();
+        first = sect->isDefault();
     else
-        sect = append_section(sectname, line);
+        sect = AppendSection(sectname, line);
 
-    m_object.set_cur_section(sect);
-    sect->set_default(false);
+    m_object.setCurSection(sect);
+    sect->setDefault(false);
 
     // No name/values, so nothing more to do
     if (nvs.size() <= 1)
         return;
 
     // Section flags must be a string.
-    if (!nvs[1].is_string())
+    if (!nvs[1].isString())
         throw SyntaxError(N_("flag string expected"));
 
     // Parse section flags
-    ElfSection* elfsect = get_elf(*sect);
+    ElfSection* elfsect = getElf(*sect);
     assert(elfsect != 0);
 
     int flags = 0, type = SHT_NULL;
-    std::string flagstr = nvs[1].get_string();
+    std::string flagstr = nvs[1].getString();
 
     for (std::string::size_type i=0; i<flagstr.length(); ++i)
     {
@@ -1298,15 +1304,15 @@ ElfObject::dir_gas_section(Object& object,
                 flags |= SHF_TLS;
                 break;
             default:
-                warn_set(WARN_GENERAL, String::compose(
+                setWarn(WARN_GENERAL, String::Compose(
                     N_("unrecognized section attribute: `%1'"), flagstr[i]));
         }
     }
 
     // Parse section type
-    if (nvs.size() > 2 && nvs[2].is_id())
+    if (nvs.size() > 2 && nvs[2].isId())
     {
-        std::string typestr = nvs[2].get_id();
+        std::string typestr = nvs[2].getId();
         if (typestr == "progbits")
             type = SHT_PROGBITS;
         else if (typestr == "nobits")
@@ -1322,33 +1328,33 @@ ElfObject::dir_gas_section(Object& object,
     }
 
     // Handle merge entity size
-    elfsect->set_typeflags(static_cast<ElfSectionType>(type),
-                           static_cast<ElfSectionFlags>(flags));
-    sect->set_bss(type == SHT_NOBITS);
-    sect->set_code((flags & SHF_EXECINSTR) != 0);
+    elfsect->setTypeFlags(static_cast<ElfSectionType>(type),
+                          static_cast<ElfSectionFlags>(flags));
+    sect->setBSS(type == SHT_NOBITS);
+    sect->setCode((flags & SHF_EXECINSTR) != 0);
 }
 
 void
-ElfObject::dir_section(Object& object,
-                       NameValues& nvs,
-                       NameValues& objext_nvs,
-                       unsigned long line)
+ElfObject::DirSection(Object& object,
+                      NameValues& nvs,
+                      NameValues& objext_nvs,
+                      unsigned long line)
 {
     assert(&object == &m_object);
 
-    if (!nvs.front().is_string())
+    if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
-    std::string sectname = nvs.front().get_string();
+    std::string sectname = nvs.front().getString();
 
-    Section* sect = m_object.find_section(sectname);
+    Section* sect = m_object.FindSection(sectname);
     bool first = true;
     if (sect)
-        first = sect->is_default();
+        first = sect->isDefault();
     else
-        sect = append_section(sectname, line);
+        sect = AppendSection(sectname, line);
 
-    m_object.set_cur_section(sect);
-    sect->set_default(false);
+    m_object.setCurSection(sect);
+    sect->setDefault(false);
 
     // No name/values, so nothing more to do
     if (nvs.size() <= 1)
@@ -1357,13 +1363,13 @@ ElfObject::dir_section(Object& object,
     // Ignore flags if we've seen this section before
     if (!first)
     {
-        warn_set(WARN_GENERAL,
-                 N_("section flags ignored on section redeclaration"));
+        setWarn(WARN_GENERAL,
+                N_("section flags ignored on section redeclaration"));
         return;
     }
 
     // Parse section flags
-    ElfSection* elfsect = get_elf(*sect);
+    ElfSection* elfsect = getElf(*sect);
     assert(elfsect != 0);
 
     IntNum align;
@@ -1371,8 +1377,8 @@ ElfObject::dir_section(Object& object,
     IntNum merge;
     bool has_merge = false;
 
-    unsigned long type = elfsect->get_type();
-    unsigned long flags = elfsect->get_flags();
+    unsigned long type = elfsect->getType();
+    unsigned long flags = elfsect->getFlags();
 
     DirHelpers helpers;
     static const struct
@@ -1390,138 +1396,138 @@ ElfObject::dir_section(Object& object,
     };
     for (unsigned int i=0; i<NELEMS(name_flags); ++i)
     {
-        helpers.add(name_flags[i].enable, false,
-                    BIND::bind(&dir_flag_set, _1, &flags, name_flags[i].flag));
-        helpers.add(name_flags[i].disable, false,
-                    BIND::bind(&dir_flag_clear, _1, &flags,
+        helpers.Add(name_flags[i].enable, false,
+                    BIND::bind(&DirSetFlag, _1, &flags, name_flags[i].flag));
+        helpers.Add(name_flags[i].disable, false,
+                    BIND::bind(&DirClearFlag, _1, &flags,
                                name_flags[i].flag));
     }
 
-    helpers.add("noprogbits", false,
-                BIND::bind(&dir_flag_reset, _1, &type, SHT_NOBITS));
-    helpers.add("nobits", false,
-                BIND::bind(&dir_flag_reset, _1, &type, SHT_NOBITS));
-    helpers.add("progbits", false,
-                BIND::bind(&dir_flag_reset, _1, &type, SHT_PROGBITS));
+    helpers.Add("noprogbits", false,
+                BIND::bind(&DirResetFlag, _1, &type, SHT_NOBITS));
+    helpers.Add("nobits", false,
+                BIND::bind(&DirResetFlag, _1, &type, SHT_NOBITS));
+    helpers.Add("progbits", false,
+                BIND::bind(&DirResetFlag, _1, &type, SHT_PROGBITS));
 
-    helpers.add("align", true,
-                BIND::bind(&dir_intn, _1, &m_object, line, &align, &has_align));
-    helpers.add("merge", true,
-                BIND::bind(&dir_intn, _1, &m_object, line, &merge, &has_merge));
+    helpers.Add("align", true, BIND::bind(&DirIntNum, _1, &m_object, line,
+                                          &align, &has_align));
+    helpers.Add("merge", true, BIND::bind(&DirIntNum, _1, &m_object, line,
+                                          &merge, &has_merge));
 
-    helpers(++nvs.begin(), nvs.end(), dir_nameval_warn);
+    helpers(++nvs.begin(), nvs.end(), DirNameValueWarn);
 
     // handle align
     if (has_align)
     {
-        unsigned long aligni = align.get_uint();
+        unsigned long aligni = align.getUInt();
 
         // Alignments must be a power of two.
-        if (!is_exp2(aligni))
+        if (!isExp2(aligni))
         {
-            throw ValueError(String::compose(
+            throw ValueError(String::Compose(
                 N_("argument to `%1' is not a power of two"), "align"));
         }
 
-        sect->set_align(aligni);
+        sect->setAlign(aligni);
     }
 
     // Handle merge entity size
     if (has_merge)
     {
         flags |= SHF_MERGE;
-        elfsect->set_entsize(merge.get_uint());
+        elfsect->setEntSize(merge.getUInt());
     }
 
-    elfsect->set_typeflags(static_cast<ElfSectionType>(type),
-                           static_cast<ElfSectionFlags>(flags));
-    sect->set_bss(type == SHT_NOBITS);
-    sect->set_code((flags & SHF_EXECINSTR) != 0);
+    elfsect->setTypeFlags(static_cast<ElfSectionType>(type),
+                          static_cast<ElfSectionFlags>(flags));
+    sect->setBSS(type == SHT_NOBITS);
+    sect->setCode((flags & SHF_EXECINSTR) != 0);
 }
 
 void
-ElfObject::dir_type(Object& object,
-                    NameValues& namevals,
-                    NameValues& objext_namevals,
-                    unsigned long line)
+ElfObject::DirType(Object& object,
+                   NameValues& namevals,
+                   NameValues& objext_namevals,
+                   unsigned long line)
 {
     assert(&m_object == &object);
 
-    SymbolRef sym = object.get_symbol(namevals.front().get_id());
-    sym->use(line);
+    SymbolRef sym = object.getSymbol(namevals.front().getId());
+    sym->Use(line);
 
-    ElfSymbol& elfsym = build_symbol(*sym);
+    ElfSymbol& elfsym = BuildSymbol(*sym);
 
     // Pull new type from param
     if (namevals.size() < 2)
         throw SyntaxError(N_("no type specified"));
-    if (!namevals[1].is_id())
+    if (!namevals[1].isId())
         throw SyntaxError(N_("type must be an identifier"));
 
-    std::string type = namevals[1].get_id();
-    if (String::nocase_equal(type, "function"))
-        elfsym.set_type(STT_FUNC);
-    else if (String::nocase_equal(type, "object"))
-        elfsym.set_type(STT_OBJECT);
-    else if (String::nocase_equal(type, "tls_object"))
-        elfsym.set_type(STT_TLS);
-    else if (String::nocase_equal(type, "notype"))
-        elfsym.set_type(STT_NOTYPE);
+    std::string type = namevals[1].getId();
+    if (String::NocaseEqual(type, "function"))
+        elfsym.setType(STT_FUNC);
+    else if (String::NocaseEqual(type, "object"))
+        elfsym.setType(STT_OBJECT);
+    else if (String::NocaseEqual(type, "tls_object"))
+        elfsym.setType(STT_TLS);
+    else if (String::NocaseEqual(type, "notype"))
+        elfsym.setType(STT_NOTYPE);
     else
-        warn_set(WARN_GENERAL,
-                 String::compose(N_("unrecognized symbol type `%s'"), type));
+        setWarn(WARN_GENERAL,
+                String::Compose(N_("unrecognized symbol type `%s'"), type));
 }
 
 void
-ElfObject::dir_size(Object& object,
-                    NameValues& namevals,
-                    NameValues& objext_namevals,
-                    unsigned long line)
+ElfObject::DirSize(Object& object,
+                   NameValues& namevals,
+                   NameValues& objext_namevals,
+                   unsigned long line)
 {
     assert(&m_object == &object);
 
-    SymbolRef sym = object.get_symbol(namevals.front().get_id());
-    sym->use(line);
+    SymbolRef sym = object.getSymbol(namevals.front().getId());
+    sym->Use(line);
 
     // Pull new size from param
     if (namevals.size() < 2)
         throw SyntaxError(N_("no size specified"));
-    if (!namevals[1].is_expr())
+    if (!namevals[1].isExpr())
         throw SyntaxError(N_("size must be an expression"));
-    Expr size = namevals[1].get_expr(object, line);
+    Expr size = namevals[1].getExpr(object, line);
 
-    ElfSymbol& elfsym = build_symbol(*sym);
-    elfsym.set_size(size, line);
+    ElfSymbol& elfsym = BuildSymbol(*sym);
+    elfsym.setSize(size, line);
 }
 
 void
-ElfObject::dir_weak(Object& object,
+ElfObject::DirWeak(Object& object,
+                   NameValues& namevals,
+                   NameValues& objext_namevals,
+                   unsigned long line)
+{
+    assert(&m_object == &object);
+
+    SymbolRef sym = object.getSymbol(namevals.front().getId());
+    sym->Declare(Symbol::GLOBAL, line);
+
+    ElfSymbol& elfsym = BuildSymbol(*sym);
+    elfsym.setBinding(STB_WEAK);
+}
+
+void
+ElfObject::DirIdent(Object& object,
                     NameValues& namevals,
                     NameValues& objext_namevals,
                     unsigned long line)
 {
     assert(&m_object == &object);
-
-    SymbolRef sym = object.get_symbol(namevals.front().get_id());
-    sym->declare(Symbol::GLOBAL, line);
-
-    ElfSymbol& elfsym = build_symbol(*sym);
-    elfsym.set_binding(STB_WEAK);
-}
-
-void
-ElfObject::dir_ident(Object& object,
-                     NameValues& namevals,
-                     NameValues& objext_namevals,
-                     unsigned long line)
-{
-    assert(&m_object == &object);
-    dir_ident_common(*this, ".comment", object, namevals, objext_namevals,
-                     line);
+    DirIdentCommon(*this, ".comment", object, namevals, objext_namevals,
+                   line);
 }
 
 std::vector<const char*>
-ElfObject::get_dbgfmt_keywords()
+ElfObject::getDebugFormatKeywords()
 {
     static const char* keywords[] =
     {
@@ -1533,30 +1539,30 @@ ElfObject::get_dbgfmt_keywords()
 }
 
 void
-ElfObject::add_directives(Directives& dirs, const char* parser)
+ElfObject::AddDirectives(Directives& dirs, const char* parser)
 {
     static const Directives::Init<ElfObject> nasm_dirs[] =
     {
-        {"section", &ElfObject::dir_section, Directives::ARG_REQUIRED},
-        {"segment", &ElfObject::dir_section, Directives::ARG_REQUIRED},
-        {"type", &ElfObject::dir_type, Directives::ID_REQUIRED},
-        {"size", &ElfObject::dir_size, Directives::ID_REQUIRED},
-        {"weak", &ElfObject::dir_weak, Directives::ID_REQUIRED},
-        {"ident", &ElfObject::dir_ident, Directives::ANY},
+        {"section", &ElfObject::DirSection, Directives::ARG_REQUIRED},
+        {"segment", &ElfObject::DirSection, Directives::ARG_REQUIRED},
+        {"type", &ElfObject::DirType, Directives::ID_REQUIRED},
+        {"size", &ElfObject::DirSize, Directives::ID_REQUIRED},
+        {"weak", &ElfObject::DirWeak, Directives::ID_REQUIRED},
+        {"ident", &ElfObject::DirIdent, Directives::ANY},
     };
     static const Directives::Init<ElfObject> gas_dirs[] =
     {
-        {".section", &ElfObject::dir_gas_section, Directives::ARG_REQUIRED},
-        {".type", &ElfObject::dir_type, Directives::ID_REQUIRED},
-        {".size", &ElfObject::dir_size, Directives::ID_REQUIRED},
-        {".weak", &ElfObject::dir_weak, Directives::ID_REQUIRED},
-        {".ident", &ElfObject::dir_ident, Directives::ANY},
+        {".section", &ElfObject::DirGasSection, Directives::ARG_REQUIRED},
+        {".type", &ElfObject::DirType, Directives::ID_REQUIRED},
+        {".size", &ElfObject::DirSize, Directives::ID_REQUIRED},
+        {".weak", &ElfObject::DirWeak, Directives::ID_REQUIRED},
+        {".ident", &ElfObject::DirIdent, Directives::ANY},
     };
 
-    if (String::nocase_equal(parser, "nasm"))
-        dirs.add_array(this, nasm_dirs, NELEMS(nasm_dirs));
-    else if (String::nocase_equal(parser, "gas"))
-        dirs.add_array(this, gas_dirs, NELEMS(gas_dirs));
+    if (String::NocaseEqual(parser, "nasm"))
+        dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
+    else if (String::NocaseEqual(parser, "gas"))
+        dirs.AddArray(this, gas_dirs, NELEMS(gas_dirs));
 }
 #if 0
 static const char *elf_nasm_stdmac[] = {
@@ -1578,14 +1584,14 @@ static const yasm_stdmac elf_objfmt_stdmacs[] = {
 };
 #endif
 void
-do_register()
+DoRegister()
 {
-    register_module<ObjectFormatModule,
-                    ObjectFormatModuleImpl<ElfObject> >("elf");
-    register_module<ObjectFormatModule,
-                    ObjectFormatModuleImpl<Elf32Object> >("elf32");
-    register_module<ObjectFormatModule,
-                    ObjectFormatModuleImpl<Elf64Object> >("elf64");
+    RegisterModule<ObjectFormatModule,
+                   ObjectFormatModuleImpl<ElfObject> >("elf");
+    RegisterModule<ObjectFormatModule,
+                   ObjectFormatModuleImpl<Elf32Object> >("elf32");
+    RegisterModule<ObjectFormatModule,
+                   ObjectFormatModuleImpl<Elf64Object> >("elf64");
 }
 
 }}} // namespace yasm::objfmt::elf

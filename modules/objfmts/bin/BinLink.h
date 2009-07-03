@@ -58,13 +58,13 @@ public:
     BinGroup(Section& section, BinSection& bsd);
     ~BinGroup();
 
-    void put(marg_ostream& os) const;
+    void Put(marg_ostream& os) const;
 
-    void assign_start_recurse(IntNum& start,
-                              IntNum& last,
-                              IntNum& vdelta,
-                              Errwarns& errwarns);
-    void assign_vstart_recurse(IntNum& start, Errwarns& errwarns);
+    void AssignStartRecurse(IntNum& start,
+                            IntNum& last,
+                            IntNum& vdelta,
+                            Errwarns& errwarns);
+    void AssignVStartRecurse(IntNum& start, Errwarns& errwarns);
 
     Section& m_section;
     BinSection& m_bsd;
@@ -84,19 +84,19 @@ public:
     BinLink(Object& object, Errwarns& errwarns);
     ~BinLink();
 
-    bool do_link(const IntNum& origin);
-    bool check_lma_overlap();
+    bool DoLink(const IntNum& origin);
+    bool CheckLMAOverlap();
 
-    const BinGroups& get_lma_groups() const { return m_lma_groups; }
+    const BinGroups& getLMAGroups() const { return m_lma_groups; }
 
 private:
-    bool lma_create_group(Section& sect);
-    bool check_lma_overlap(const Section& sect, const Section& other);
+    bool CreateLMAGroup(Section& sect);
+    bool CheckLMAOverlap(const Section& sect, const Section& other);
 
-    void output_value(Value& value, Bytes& bytes, unsigned int destsize,
-                      /*@unused@*/ unsigned long offset, Bytecode& bc,
-                      int warn);
-    void output_bytecode(Bytecode& bc);
+    void OutputValue(Value& value, Bytes& bytes, unsigned int destsize,
+                     /*@unused@*/ unsigned long offset, Bytecode& bc,
+                     int warn);
+    void OutputBytecode(Bytecode& bc);
 
     Object& m_object;
     Errwarns& m_errwarns;

@@ -39,67 +39,67 @@ namespace yasm
 {
 
 void
-append_byte(BytecodeContainer& container, unsigned char val)
+AppendByte(BytecodeContainer& container, unsigned char val)
 {
-    Bytecode& bc = container.fresh_bytecode();
-    write_8(bc.get_fixed(), val);
+    Bytecode& bc = container.FreshBytecode();
+    Write8(bc.getFixed(), val);
 }
 
 void
-append_data(BytecodeContainer& container,
-            const IntNum& val,
-            unsigned int size,
-            const Arch& arch)
+AppendData(BytecodeContainer& container,
+           const IntNum& val,
+           unsigned int size,
+           const Arch& arch)
 {
-    Bytecode& bc = container.fresh_bytecode();
+    Bytecode& bc = container.FreshBytecode();
     Bytes zero;
     zero.resize(size);
-    arch.tobytes(val, zero, size*8, 0, 1);
-    bc.get_fixed().insert(bc.get_fixed().end(), zero.begin(), zero.end());
+    arch.ToBytes(val, zero, size*8, 0, 1);
+    bc.getFixed().insert(bc.getFixed().end(), zero.begin(), zero.end());
 }
 
 void
-append_data(BytecodeContainer& container,
-            std::auto_ptr<Expr> expr,
-            unsigned int size,
-            const Arch& arch,
-            unsigned long line)
+AppendData(BytecodeContainer& container,
+           std::auto_ptr<Expr> expr,
+           unsigned int size,
+           const Arch& arch,
+           unsigned long line)
 {
-    expr->simplify();
-    if (expr->is_intnum())
+    expr->Simplify();
+    if (expr->isIntNum())
     {
-        append_data(container, expr->get_intnum(), size, arch);
+        AppendData(container, expr->getIntNum(), size, arch);
         return;
     }
-    Bytecode& bc = container.fresh_bytecode();
-    bc.append_fixed(size, expr, line);
+    Bytecode& bc = container.FreshBytecode();
+    bc.AppendFixed(size, expr, line);
 }
 
 void
-append_data(BytecodeContainer& container,
-            const std::string& str,
-            bool append_zero)
+AppendData(BytecodeContainer& container,
+           const std::string& str,
+           bool append_zero)
 {
-    Bytes& fixed = container.fresh_bytecode().get_fixed();
-    fixed.write(reinterpret_cast<const unsigned char *>(str.data()),
+    Bytes& fixed = container.FreshBytecode().getFixed();
+    fixed.Write(reinterpret_cast<const unsigned char *>(str.data()),
                 str.length());
     if (append_zero)
-        write_8(fixed, 0);
+        Write8(fixed, 0);
 }
 
 void
-append_data(BytecodeContainer& container,
-            const std::string& str,
-            unsigned int size,
-            bool append_zero)
+AppendData(BytecodeContainer& container,
+           const std::string& str,
+           unsigned int size,
+           bool append_zero)
 {
-    Bytes& fixed = container.fresh_bytecode().get_fixed();
+    Bytes& fixed = container.FreshBytecode().getFixed();
     std::string::size_type len = str.length();
-    fixed.write(reinterpret_cast<const unsigned char *>(str.data()), len);
+    fixed.Write(reinterpret_cast<const unsigned char *>(str.data()), len);
     if ((len % size) != 0)
-        fixed.write(size-(len % size), 0);
+        fixed.Write(size-(len % size), 0);
     if (append_zero)
-        write_8(fixed, 0);
+        Write8(fixed, 0);
 }
 
 } // namespace yasm

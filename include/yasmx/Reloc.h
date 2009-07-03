@@ -50,20 +50,20 @@ public:
     Reloc(const IntNum& addr, SymbolRef sym);
     virtual ~Reloc();
 
-    SymbolRef get_sym() { return m_sym; }
-    const SymbolRef get_sym() const { return m_sym; }
+    SymbolRef getSymbol() { return m_sym; }
+    const SymbolRef getSymbol() const { return m_sym; }
 
-    const IntNum& get_addr() const { return m_addr; }
+    const IntNum& getAddress() const { return m_addr; }
 
     /// Get the relocated value as an expression.
     /// Should be overloaded by derived classes that have addends.
     /// The default implementation simply returns the symbol as the value.
     /// @return Relocated value.
-    virtual Expr get_value() const;
+    virtual Expr getValue() const;
 
     /// Get the name of the relocation type (a string).
     /// @return Type name.
-    virtual std::string get_type_name() const = 0;
+    virtual std::string getTypeName() const = 0;
 
 protected:
     IntNum m_addr;      ///< Offset (address) within section

@@ -69,29 +69,29 @@ public:
     ElfSymbol();
     ~ElfSymbol();
 
-    SymbolRef create_symbol(Object& object, const StringTable& strtab) const;
+    SymbolRef CreateSymbol(Object& object, const StringTable& strtab) const;
 
-    void put(marg_ostream& os) const;
+    void Put(marg_ostream& os) const;
 
-    void finalize(Symbol& sym, Errwarns& errwarns);
-    void write(Bytes& bytes, const ElfConfig& config);
+    void Finalize(Symbol& sym, Errwarns& errwarns);
+    void Write(Bytes& bytes, const ElfConfig& config);
 
-    void set_section(Section* sect) { m_sect = sect; }
-    void set_name(ElfStringIndex index) { m_name_index = index; }
-    void set_index(ElfSectionIndex index) { m_index = index; }
-    void set_visibility(ElfSymbolVis vis) { m_vis = ELF_ST_VISIBILITY(vis); }
-    void set_binding(ElfSymbolBinding bind) { m_bind = bind; }
-    void set_type(ElfSymbolType type) { m_type = type; }
-    void set_size(const Expr& size, unsigned long line)
+    void setSection(Section* sect) { m_sect = sect; }
+    void setName(ElfStringIndex index) { m_name_index = index; }
+    void setSectionIndex(ElfSectionIndex index) { m_index = index; }
+    void setVisibility(ElfSymbolVis vis) { m_vis = ELF_ST_VISIBILITY(vis); }
+    void setBinding(ElfSymbolBinding bind) { m_bind = bind; }
+    void setType(ElfSymbolType type) { m_type = type; }
+    void setSize(const Expr& size, unsigned long line)
     {
         m_size = size;
         m_size_line = line;
     }
-    void set_value(ElfAddress value) { m_value = value; }
-    void set_symindex(ElfSymbolIndex symindex) { m_symindex = symindex; }
-    ElfSymbolIndex get_symindex() const { return m_symindex; }
+    void setValue(ElfAddress value) { m_value = value; }
+    void setSymbolIndex(ElfSymbolIndex symindex) { m_symindex = symindex; }
+    ElfSymbolIndex getSymbolIndex() const { return m_symindex; }
 
-    bool is_local() const { return m_bind == STB_LOCAL; }
+    bool isLocal() const { return m_bind == STB_LOCAL; }
 
 private:
     Section*            m_sect;
@@ -107,15 +107,14 @@ private:
 };
 
 inline ElfSymbol*
-get_elf(Symbol& sym)
+getElf(Symbol& sym)
 {
-    return static_cast<ElfSymbol*>(sym.get_assoc_data(ElfSymbol::key));
+    return static_cast<ElfSymbol*>(sym.getAssocData(ElfSymbol::key));
 }
 
-void insert_local_sym(Object& object,
-                      std::auto_ptr<Symbol> sym,
-                      std::auto_ptr<ElfSymbol> entry);
-ElfSymbolIndex assign_sym_indices(Object& object);
+void InsertLocalSymbol(Object& object,
+                       std::auto_ptr<Symbol> sym,
+                       std::auto_ptr<ElfSymbol> entry);
 
 }}} // namespace yasm::objfmt::elf
 

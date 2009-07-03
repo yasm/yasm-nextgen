@@ -31,7 +31,7 @@
 namespace String
 {
 
-Compose::Compose(const std::string& fmt)
+Composer::Composer(const std::string& fmt)
     : m_fmt(fmt), m_arg(0)
 {
     m_arg_pos[0] = 0;
@@ -39,11 +39,11 @@ Compose::Compose(const std::string& fmt)
     m_os.seekp(0);
 }
 
-Compose::~Compose()
+Composer::~Composer()
 {
 }
 
-Compose::Compose(const Compose& rhs)
+Composer::Composer(const Composer& rhs)
     : m_fmt(rhs.m_fmt),
       m_os(rhs.m_os.str()),
       m_arg(rhs.m_arg)
@@ -53,8 +53,8 @@ Compose::Compose(const Compose& rhs)
         m_arg_pos[i] = rhs.m_arg_pos[i];
 }
 
-Compose&
-Compose::operator=(const Compose& rhs)
+Composer&
+Composer::operator=(const Composer& rhs)
 {
     m_fmt = rhs.m_fmt;
     m_os.str(rhs.m_os.str());
@@ -66,7 +66,7 @@ Compose::operator=(const Compose& rhs)
 }
 
 std::string
-Compose::str() const
+Composer::getStr() const
 {
     std::string args = m_os.str();
 

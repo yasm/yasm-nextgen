@@ -53,10 +53,10 @@ namespace yasm
 ///                     2 => (signed min, unsigned max)
 /// @return True if APInt will fit.
 YASM_LIB_EXPORT
-bool ok_size(const llvm::APInt& intn,
-             unsigned int size,
-             unsigned int rshift,
-             int rangetype);
+bool isOkSize(const llvm::APInt& intn,
+              unsigned int size,
+              unsigned int rshift,
+              int rangetype);
 
 class ExprTerm;
 
@@ -77,7 +77,7 @@ class YASM_LIB_EXPORT IntNum : private IntNumData
     friend YASM_LIB_EXPORT
     std::ostream& operator<< (std::ostream& os, const IntNum& intn);
     friend YASM_LIB_EXPORT
-    int compare(const IntNum& intn1, const IntNum& intn2);
+    int Compare(const IntNum& intn1, const IntNum& intn2);
     friend YASM_LIB_EXPORT
     bool operator==(const IntNum& lhs, const IntNum& rhs);
     friend YASM_LIB_EXPORT
@@ -165,11 +165,11 @@ public:
     ///       operations will result in an error.
     /// @param op       operation
     /// @param operand  intnum operand
-    void calc(Op::Op op, const IntNum& operand) { calc(op, &operand); }
-    void calc(Op::Op op, /*@null@*/ const IntNum* operand = 0);
+    void Calc(Op::Op op, const IntNum& operand) { Calc(op, &operand); }
+    void Calc(Op::Op op, /*@null@*/ const IntNum* operand = 0);
 
     /// Zero an intnum.
-    void zero() { set(0); }
+    void Zero() { set(0); }
 
     /// Set an intnum to an unsigned integer.
     /// @param val      integer value
@@ -195,7 +195,7 @@ public:
 
     /// Simple value check for 0.
     /// @return True if acc==0.
-    bool is_zero() const
+    bool isZero() const
     {
         return (m_type == INTNUM_L && m_val.l == 0);
     }
@@ -203,38 +203,38 @@ public:
     /// Simple value check for 1.
     /// @param acc      intnum
     /// @return True if acc==1.
-    bool is_pos1() const
+    bool isPos1() const
     {
         return (m_type == INTNUM_L && m_val.l == 1);
     }
 
     /// Simple value check for -1.
     /// @return True if acc==-1.
-    bool is_neg1() const
+    bool isNeg1() const
     {
         return (m_type == INTNUM_L && m_val.l == -1);
     }
 
     /// Simple sign check.
     /// @return -1 if negative, 0 if zero, +1 if positive
-    int sign() const;
+    int getSign() const;
 
     /// Convert an intnum to an unsigned 32-bit value.
     /// The value is in "standard" C format (eg, of unknown endian).
     /// @note Parameter intnum is saturated to fit into 32 bits.  Use
     ///       intnum_check_size() to check for overflow.
     /// @return Unsigned 32-bit value of intn.
-    unsigned long get_uint() const;
+    unsigned long getUInt() const;
 
     /// Convert an intnum to a signed "long" value.
     /// The value is in "standard" C format (eg, of unknown endian).
     /// @note Parameter intnum is saturated to fit into a long.  Use
     ///       intnum_check_size() to check for overflow.
     /// @return Signed long value of intn.
-    long get_int() const;
+    long getInt() const;
 
     /// Determine if intnum will fit in a signed "long" without saturating.
-    bool is_int() const { return (m_type == INTNUM_L); }
+    bool isInt() const { return (m_type == INTNUM_L); }
 
     /// Check to see if intnum will fit without overflow into size bits.
     /// @param intn         intnum
@@ -245,19 +245,19 @@ public:
     ///                     1 => (signed min, signed max);
     ///                     2 => (signed min, unsigned max)
     /// @return True if intnum will fit.
-    bool ok_size(unsigned int size, unsigned int rshift, int rangetype) const;
+    bool isOkSize(unsigned int size, unsigned int rshift, int rangetype) const;
 
     /// Check to see if intnum will fit into a particular numeric range.
     /// @param low      low end of range (inclusive)
     /// @param high     high end of range (inclusive)
     /// @return True if intnum is within range.
-    bool in_range(long low, long high) const;
+    bool isInRange(long low, long high) const;
 
     /// Set intnum value from a decimal/binary/octal/hexidecimal string.
     /// @param str      input string
     /// @param base     numeric base (10=decimal, etc)
     /// @note Only base=2,8,10,16 are supported.
-    void set_str(const char* str, unsigned int len, int base=10);
+    void setStr(const char* str, unsigned int len, int base=10);
 
     /// Get intnum value into a SmallString.  The returned string will
     /// contain a leading '-' if the intnum is negative.
@@ -265,9 +265,9 @@ public:
     /// @param base         numeric base (10=decimal, etc)
     /// @param lowercase    whether hex digits should be lowercase
     /// @note Valid bases are 8, 10, and 16.
-    void get_str(llvm::SmallVectorImpl<char>& str,
-                 int base = 10,
-                 bool lowercase = true) const;
+    void getStr(llvm::SmallVectorImpl<char>& str,
+                int base = 10,
+                bool lowercase = true) const;
  
     /// Converts IntNum to a std::string.  This is an inefficient
     /// method, your should prefer passing in a SmallString instead.
@@ -275,7 +275,7 @@ public:
     /// @param lowercase    whether hex digits should be lowercase
     /// @return String representing the value of the intnum.
     /// @note Valid bases are 8, 10, and 16.
-    std::string get_str(int base = 10, bool lowercase = true) const;
+    std::string getStr(int base = 10, bool lowercase = true) const;
 
     /// Extract width bits from IntNum, starting at bit lsb.
     /// Returns integer such that the bit lsb becomes the least significant bit
@@ -284,7 +284,7 @@ public:
     /// @param width    Number of bits to extract
     /// @param lsb      Bit number of least significant bit (0=lsb)
     /// @return Extracted bits.
-    unsigned long extract(unsigned int width, unsigned int lsb) const;
+    unsigned long Extract(unsigned int width, unsigned int lsb) const;
 
     /// Overloaded unary operators:
 
@@ -314,47 +314,47 @@ public:
     /// If not, converts into passed bv and returns that instead.
     /// @param bv       bitvector to use if intnum is not bitvector.
     /// @return Passed bv or intnum internal bitvector.
-    const llvm::APInt* get_bv(llvm::APInt* bv) const;
-    llvm::APInt* get_bv(llvm::APInt* bv);
+    const llvm::APInt* getBV(llvm::APInt* bv) const;
+    llvm::APInt* getBV(llvm::APInt* bv);
 
     /// Store a bitvector into intnum storage.
     /// If saved as a bitvector, clones the passed bitvector.
     /// Can modify the passed bitvector.
     /// @param bv       bitvector
-    void set_bv(const llvm::APInt& bv);
+    void setBV(const llvm::APInt& bv);
 };
 
 /// Overloaded assignment binary operators.
 inline IntNum& operator+=(IntNum& lhs, const IntNum& rhs)
-{ lhs.calc(Op::ADD, &rhs); return lhs; }
+{ lhs.Calc(Op::ADD, &rhs); return lhs; }
 inline IntNum& operator-=(IntNum& lhs, const IntNum& rhs)
-{ lhs.calc(Op::SUB, &rhs); return lhs; }
+{ lhs.Calc(Op::SUB, &rhs); return lhs; }
 inline IntNum& operator*=(IntNum& lhs, const IntNum& rhs)
-{ lhs.calc(Op::MUL, &rhs); return lhs; }
+{ lhs.Calc(Op::MUL, &rhs); return lhs; }
 inline IntNum& operator/=(IntNum& lhs, const IntNum& rhs)
-{ lhs.calc(Op::DIV, &rhs); return lhs; }
+{ lhs.Calc(Op::DIV, &rhs); return lhs; }
 inline IntNum& operator%=(IntNum& lhs, const IntNum& rhs)
-{ lhs.calc(Op::MOD, &rhs); return lhs; }
+{ lhs.Calc(Op::MOD, &rhs); return lhs; }
 inline IntNum& operator^=(IntNum& lhs, const IntNum& rhs)
-{ lhs.calc(Op::XOR, &rhs); return lhs; }
+{ lhs.Calc(Op::XOR, &rhs); return lhs; }
 inline IntNum& operator&=(IntNum& lhs, const IntNum& rhs)
-{ lhs.calc(Op::AND, &rhs); return lhs; }
+{ lhs.Calc(Op::AND, &rhs); return lhs; }
 inline IntNum& operator|=(IntNum& lhs, const IntNum& rhs)
-{ lhs.calc(Op::OR, &rhs); return lhs; }
+{ lhs.Calc(Op::OR, &rhs); return lhs; }
 inline IntNum& operator>>=(IntNum& lhs, const IntNum& rhs)
-{ lhs.calc(Op::SHR, &rhs); return lhs; }
+{ lhs.Calc(Op::SHR, &rhs); return lhs; }
 inline IntNum& operator<<=(IntNum& lhs, const IntNum& rhs)
-{ lhs.calc(Op::SHL, &rhs); return lhs; }
+{ lhs.Calc(Op::SHL, &rhs); return lhs; }
 
 /// Overloaded unary operators.
 inline IntNum operator-(IntNum rhs)
-{ rhs.calc(Op::NEG, 0); return rhs; }
+{ rhs.Calc(Op::NEG, 0); return rhs; }
 inline IntNum operator+(const IntNum& rhs)
 { return IntNum(rhs); }
 inline IntNum operator~(IntNum rhs)
-{ rhs.calc(Op::NOT, 0); return rhs; }
+{ rhs.Calc(Op::NOT, 0); return rhs; }
 inline bool operator!(const IntNum& rhs)
-{ return rhs.is_zero(); }
+{ return rhs.isZero(); }
 
 /// Overloaded binary operators.
 inline const IntNum operator+(IntNum lhs, const IntNum& rhs)
@@ -383,7 +383,7 @@ inline const IntNum operator<<(IntNum lhs, const IntNum& rhs)
 /// @param rhs      second intnum
 /// @return -1 if lhs < rhs, 0 if lhs == rhs, 1 if lhs > rhs.
 YASM_LIB_EXPORT
-int compare(const IntNum& lhs, const IntNum& rhs);
+int Compare(const IntNum& lhs, const IntNum& rhs);
 
 /// Overloaded comparison operators.
 YASM_LIB_EXPORT

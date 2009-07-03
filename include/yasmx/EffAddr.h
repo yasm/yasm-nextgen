@@ -59,7 +59,7 @@ public:
     /// effective addresses.  A override of an override will result in a
     /// warning.
     /// @param segreg       segment register (0 if none)
-    void set_segreg(const SegmentRegister* segreg);
+    void setSegReg(const SegmentRegister* segreg);
 
     Value m_disp;       ///< address displacement
 
@@ -94,7 +94,7 @@ public:
     /// Print an effective address.  For debugging purposes.
     /// @param os           output stream
     /// @param indent_level indentation level
-    virtual void put(marg_ostream& os) const = 0;
+    virtual void Put(marg_ostream& os) const = 0;
 
     /// Clone an effective address.
     virtual EffAddr* clone() const = 0;
@@ -110,7 +110,7 @@ private:
 inline marg_ostream&
 operator<< (marg_ostream& os, const EffAddr& ea)
 {
-    ea.put(os);
+    ea.Put(os);
     return os;
 }
 

@@ -47,8 +47,8 @@ struct CoffSection : public AssocData
 
     CoffSection(SymbolRef sym);
     ~CoffSection();
-    void put(marg_ostream& os) const;
-    void write(Bytes& bytes, const Section& sect) const;
+    void Put(marg_ostream& os) const;
+    void Write(Bytes& bytes, const Section& sect) const;
 
     static const unsigned long TEXT;
     static const unsigned long DATA;
@@ -81,16 +81,16 @@ struct CoffSection : public AssocData
 };
 
 inline CoffSection*
-get_coff(Section& sect)
+getCoff(Section& sect)
 {
-    return static_cast<CoffSection*>(sect.get_assoc_data(CoffSection::key));
+    return static_cast<CoffSection*>(sect.getAssocData(CoffSection::key));
 }
 
 inline const CoffSection*
-get_coff(const Section& sect)
+getCoff(const Section& sect)
 {
     return static_cast<const CoffSection*>
-        (sect.get_assoc_data(CoffSection::key));
+        (sect.getAssocData(CoffSection::key));
 }
 
 }}} // namespace yasm::objfmt::coff

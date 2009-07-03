@@ -56,11 +56,11 @@ public:
     ElfReloc(SymbolRef sym, SymbolRef wrt, const IntNum& addr, size_t valsize);
     virtual ~ElfReloc();
 
-    Expr get_value() const;
-    virtual std::string get_type_name() const = 0;
+    Expr getValue() const;
+    virtual std::string getTypeName() const = 0;
 
-    void handle_addend(IntNum* intn, const ElfConfig& config);
-    void write(Bytes& bytes, const ElfConfig& config);
+    void HandleAddend(IntNum* intn, const ElfConfig& config);
+    void Write(Bytes& bytes, const ElfConfig& config);
 
 protected:
     ElfRelocationType   m_type;
