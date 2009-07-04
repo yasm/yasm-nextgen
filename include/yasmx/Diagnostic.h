@@ -15,6 +15,7 @@
 #define YASM_DIAGNOSTIC_H
 
 #include "clang/Basic/SourceLocation.h"
+#include "yasmx/Config/export.h"
 #include <string>
 #include <vector>
 #include <cassert>
@@ -135,7 +136,7 @@ public:
 /// problems and issues.  It massages the diagnostics (e.g. handling things like
 /// "report warnings as errors" and passes them off to the DiagnosticClient for
 /// reporting to the user.
-class Diagnostic {
+class YASM_LIB_EXPORT Diagnostic {
 public:
   /// Level - The level of the diagnostic, after it has been through mapping.
   enum Level {
@@ -625,7 +626,7 @@ inline DiagnosticBuilder Diagnostic::Report(clang::FullSourceLoc Loc,
 /// DiagnosticInfo - This is a little helper class (which is basically a smart
 /// pointer that forward info from Diagnostic) that allows clients to enquire
 /// about the currently in-flight diagnostic.
-class DiagnosticInfo {
+class YASM_LIB_EXPORT DiagnosticInfo {
   const Diagnostic *DiagObj;
 public:
   explicit DiagnosticInfo(const Diagnostic *DO) : DiagObj(DO) {}
@@ -719,7 +720,7 @@ public:
 
 /// DiagnosticClient - This is an abstract interface implemented by clients of
 /// the front-end, which formats and prints fully processed diagnostics.
-class DiagnosticClient {
+class YASM_LIB_EXPORT DiagnosticClient {
 public:
   virtual ~DiagnosticClient();
 
