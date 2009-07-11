@@ -56,13 +56,13 @@ X86Common::X86Common()
 
 void
 X86Common::ApplyPrefixes(unsigned int def_opersize_64,
-                         const std::vector<const Insn::Prefix*>& prefixes,
+                         const Insn::Prefixes& prefixes,
                          unsigned char* rex)
 {
     bool first = true;
 
-    for (std::vector<const Insn::Prefix*>::const_iterator i=prefixes.begin(),
-         end=prefixes.end(); i != end; ++i)
+    for (Insn::Prefixes::const_iterator i=prefixes.begin(), end=prefixes.end();
+         i != end; ++i)
     {
         const X86Prefix* prefix = static_cast<const X86Prefix*>(*i);
         switch (prefix->getType())

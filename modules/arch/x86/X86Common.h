@@ -47,7 +47,7 @@ public:
     X86Common();
 
     void ApplyPrefixes(unsigned int def_opersize_64,
-                       const std::vector<const Insn::Prefix*>& prefixes,
+                       const Insn::Prefixes& prefixes,
                        unsigned char* rex = 0);
     void Finish();
 
