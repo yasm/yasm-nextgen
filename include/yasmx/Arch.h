@@ -135,12 +135,12 @@ inline std::ostream& operator<<
 }
 
 /// Architecture interface.
-/// To make architecture truly usable, set_machine() and set_parser()
+/// To make architecture truly usable, setMachine() and setParser()
 /// need to be called.
 class YASM_LIB_EXPORT Arch
 {
 public:
-    /// Return value for parse_check_insnprefix().
+    /// Return value for ParseCheckInsnPrefix().
     class YASM_LIB_EXPORT InsnPrefix
     {
     public:
@@ -181,7 +181,7 @@ public:
         };
     };
 
-    /// Return value for parse_check_regtmod().
+    /// Return value for ParseCheckRegTmod().
     class YASM_LIB_EXPORT RegTmod
     {
     public:
