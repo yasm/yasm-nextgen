@@ -92,9 +92,8 @@ X86Common::ApplyPrefixes(unsigned int def_opersize_64,
                 }
                 break;
             case X86Prefix::SEGREG:
-                /* This is a hack.. we should really be putting this in the
-                 * the effective address!
-                 */
+                // This is a hack.. we should really be putting this in the
+                // the effective address!
                 m_lockrep_pre = prefix->getValue();
                 break;
             case X86Prefix::REX:
@@ -114,9 +113,8 @@ X86Common::ApplyPrefixes(unsigned int def_opersize_64,
                             setWarn(WARN_GENERAL,
                                 N_("multiple REX prefixes, using leftmost"));
                     }
-                    /* Here we assume that we can't get this prefix in non
-                     * 64 bit mode due to checks in parse_check_prefix().
-                     */
+                    // Here we assume that we can't get this prefix in non
+                    // 64 bit mode due to checks in ParseCheckInsnPrefix().
                     m_mode_bits = 64;
                     *rex = prefix->getValue();
                 }
