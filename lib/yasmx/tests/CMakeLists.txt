@@ -5,6 +5,7 @@ ADD_CXXTEST(libyasmx_tests
     bytes_util_test.h
     compose_test.h
     expr_test.h
+    expr_util_test.h
     hamt_test.h
     linemap_test.h
     location_test.h

@@ -38,37 +38,20 @@
 namespace
 {
 
-using yasm::Expr;
-
-void
-DoExpandEqu(Expr& expr, llvm::SmallVector<const Expr*, 8>& seen)
+struct SawEqu
 {
-#if 0
-    for (yasm::ExprTerms::iterator i=expr->get_terms().begin(),
-         end=expr->get_terms().end(); i != end; ++i)
-    {
-        // Expand equ's.
-        yasm::Symbol* sym;
-        const Expr* equ;
-        if ((sym = i->get_sym()) && (equ = sym->get_equ()))
-        {
-            // Check for circular reference
-            if (std::find(seen.begin(), seen.end(), equ) != seen.end())
-                throw yasm::TooComplexError(N_("circular reference detected"));
+    yasm::Symbol* sym;
+    int depth_delta;
+    int end_n;
+};
 
-            Expr* newe = equ->clone();
-            *i = newe;
-
-            // Remember we saw this equ and recurse
-            seen.push_back(equ);
-            do_expand_equ(newe, seen);
-            seen.pop_back();
-        }
-        else if (Expr* e = i->get_expr())
-            do_expand_equ(e, seen);     // Recurse
-    }
-#endif
-}
+class MatchSawEqu
+{
+    yasm::Symbol* m_sym;
+public:
+    MatchSawEqu(yasm::Symbol* sym) : m_sym(sym) {}
+    bool operator() (SawEqu& sawequ) { return sawequ.sym == m_sym; }
+};
 
 } // anonymous namespace
 
@@ -76,10 +59,57 @@ namespace yasm
 {
 
 void
-ExpandEqu(Expr& expr)
+ExpandEqu(Expr& e)
 {
-    llvm::SmallVector<const Expr*, 8> seen;
-    DoExpandEqu(expr, seen);
+    if (e.isEmpty())
+        return;
+    llvm::SmallVector<SawEqu, 8> seen;
+    yasm::ExprTerms& terms = e.getTerms();
+
+    int n = terms.size()-1;
+    while (n >= 0)
+    {
+        ExprTerm* child = &terms[n];
+        if (child->isEmpty())
+        {
+            --n;
+            continue;
+        }
+
+        while (seen.size() > 0 && seen.back().end_n > n)
+            seen.pop_back();
+
+        // Update depth as needed
+        int depth_delta = 0;
+        if (seen.size() > 0)
+            depth_delta = seen.back().depth_delta;
+        child->m_depth += depth_delta;
+
+        // Only look at equ's.
+        yasm::Symbol* sym;
+        const Expr* equ;
+        if (!(sym = child->getSymbol()) || !(equ = sym->getEqu()))
+        {
+            --n;
+            continue;
+        }
+
+        // Check for circular reference
+        if (std::find_if(seen.begin(), seen.end(), MatchSawEqu(sym))
+            != seen.end())
+            throw yasm::TooComplexError(N_("circular reference detected"));
+
+        // Remember we saw this equ
+        SawEqu justsaw = {sym, child->m_depth, n};
+        seen.push_back(justsaw);
+
+        // Insert copy of equ value and empty current term.
+        terms.insert(terms.begin()+n, equ->getTerms().begin(),
+                     equ->getTerms().end());
+        n += equ->getTerms().size();
+        terms[n].Clear();
+        --n;
+    }
 }
 
 } // namespace yasm
