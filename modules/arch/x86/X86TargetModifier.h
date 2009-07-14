@@ -35,7 +35,7 @@ namespace arch
 namespace x86
 {
 
-class X86TargetModifier : public Insn::Operand::TargetModifier
+class X86TargetModifier : public TargetModifier
 {
 public:
     enum Type

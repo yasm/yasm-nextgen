@@ -29,6 +29,7 @@
 #include "util.h"
 
 #include "yasmx/Bytecode.h"
+#include "yasmx/Insn.h"
 
 
 namespace yasm

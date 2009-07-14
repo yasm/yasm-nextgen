@@ -43,11 +43,11 @@
 namespace yasm
 {
 
-Insn::Operand::TargetModifier::~TargetModifier()
+TargetModifier::~TargetModifier()
 {
 }
 
-Insn::Operand::Operand(const Register* reg)
+Operand::Operand(const Register* reg)
     : m_reg(reg),
       m_seg(0),
       m_targetmod(0),
@@ -58,7 +58,7 @@ Insn::Operand::Operand(const Register* reg)
 {
 }
 
-Insn::Operand::Operand(const SegmentRegister* segreg)
+Operand::Operand(const SegmentRegister* segreg)
     : m_segreg(segreg),
       m_seg(0),
       m_targetmod(0),
@@ -69,7 +69,7 @@ Insn::Operand::Operand(const SegmentRegister* segreg)
 {
 }
 
-Insn::Operand::Operand(std::auto_ptr<EffAddr> ea)
+Operand::Operand(std::auto_ptr<EffAddr> ea)
     : m_ea(ea.release()),
       m_seg(0),
       m_targetmod(0),
@@ -80,7 +80,7 @@ Insn::Operand::Operand(std::auto_ptr<EffAddr> ea)
 {
 }
 
-Insn::Operand::Operand(std::auto_ptr<Expr> val)
+Operand::Operand(std::auto_ptr<Expr> val)
     : m_seg(0),
       m_targetmod(0),
       m_size(0),
@@ -98,7 +98,7 @@ Insn::Operand::Operand(std::auto_ptr<Expr> val)
 }
 
 void
-Insn::Operand::Destroy()
+Operand::Destroy()
 {
     switch (m_type)
     {
@@ -117,8 +117,8 @@ Insn::Operand::Destroy()
     m_seg = 0;
 }
 
-Insn::Operand
-Insn::Operand::clone() const
+Operand
+Operand::clone() const
 {
     Operand op(*this);
 
@@ -142,7 +142,7 @@ Insn::Operand::clone() const
 }
 
 void
-Insn::Operand::Put(marg_ostream& os) const
+Operand::Put(marg_ostream& os) const
 {
     switch (m_type)
     {
@@ -181,11 +181,11 @@ void
 Insn::Put(marg_ostream& os) const
 {
     std::for_each(m_operands.begin(), m_operands.end(),
-                  BIND::bind(&Insn::Operand::Put, _1, REF::ref(os)));
+                  BIND::bind(&Operand::Put, _1, REF::ref(os)));
 }
 
 void
-Insn::Operand::Finalize()
+Operand::Finalize()
 {
     switch (m_type)
     {
@@ -230,7 +230,7 @@ Insn::Operand::Finalize()
 }
 
 std::auto_ptr<EffAddr>
-Insn::Operand::ReleaseMemory()
+Operand::ReleaseMemory()
 {
     if (m_type != MEMORY)
         return std::auto_ptr<EffAddr>(0);
@@ -240,7 +240,7 @@ Insn::Operand::ReleaseMemory()
 }
 
 std::auto_ptr<Expr>
-Insn::Operand::ReleaseImm()
+Operand::ReleaseImm()
 {
     if (m_type != IMM)
         return std::auto_ptr<Expr>(0);
@@ -250,7 +250,7 @@ Insn::Operand::ReleaseImm()
 }
 
 std::auto_ptr<Expr>
-Insn::Operand::ReleaseSeg()
+Operand::ReleaseSeg()
 {
     std::auto_ptr<Expr> seg(m_seg);
     m_seg = 0;
@@ -258,14 +258,14 @@ Insn::Operand::ReleaseSeg()
 }
 
 void
-Insn::Operand::setSeg(std::auto_ptr<Expr> seg)
+Operand::setSeg(std::auto_ptr<Expr> seg)
 {
     if (m_seg)
         delete m_seg;
     m_seg = seg.release();
 }
 
-Insn::Prefix::~Prefix()
+Prefix::~Prefix()
 {
 }
 

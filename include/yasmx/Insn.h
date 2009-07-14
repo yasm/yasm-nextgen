@@ -50,208 +50,208 @@ class Bytes;
 class Register;
 class SegmentRegister;
 
+/// Base class for target modifiers.
+class YASM_LIB_EXPORT TargetModifier
+{
+public:
+    TargetModifier() {}
+    virtual ~TargetModifier();
+    virtual void Put(std::ostream& os) const = 0;
+
+private:
+    // not implemented (noncopyable class)
+    TargetModifier(const TargetModifier&);
+    const TargetModifier& operator=(const TargetModifier&);
+};
+
+/// An instruction operand.
+class YASM_LIB_EXPORT Operand
+{
+public:
+    /// Operand type.
+    enum Type
+    {
+        NONE = 0,   ///< Nothing.
+        REG,        ///< A register.
+        SEGREG,     ///< A segment register.
+        MEMORY,     ///< An effective address (memory reference).
+        IMM         ///< An immediate or jump target.
+    };
+
+    /// Create an instruction operand from a register.
+    /// @param reg  register
+    Operand(const Register* reg);
+
+    /// Create an instruction operand from a segment register.
+    /// @param segreg       segment register
+    Operand(const SegmentRegister* segreg);
+
+    /// Create an instruction operand from an effective address.
+    /// @param ea   effective address
+    Operand(std::auto_ptr<EffAddr> ea);
+
+    /// Create an instruction operand from an immediate expression.
+    /// Looks for cases of a single register and creates a register
+    /// variant.
+    /// @param val  immediate expression
+    /// @return Newly allocated operand.
+    Operand(std::auto_ptr<Expr> val);
+
+    /// Explicit copy creator.
+    /// There's no copy constructor or assignment operator as we want
+    /// to use the default bit-copy ones.  Even though this class
+    /// contains more complex structures, we don't want to be copying
+    /// the contents all the time.
+    Operand clone() const;
+
+    /// Explicit release.
+    /// Doesn't destroy contents, just ensures what contents are there
+    /// won't be destroyed via the destructor.
+    void Release()
+    {
+        m_type = NONE;
+        m_reg = 0;
+    }
+
+    /// Explicit destructor.
+    /// Similar to clone(), we do smart copying and destruction in
+    /// #Expr implementation to prevent over-copying of possibly deep
+    /// expression trees.
+    void Destroy();
+
+    void Put(marg_ostream& os) const;
+    void Finalize();
+
+    /// Match type.
+    bool isType(Type type) const
+    { return m_type == static_cast<unsigned int>(type); }
+
+    /// Get the type.
+    Type getType() const { return static_cast<Type>(m_type); }
+
+    /// Helper functions to get specific types.
+
+    const Register* getReg() const
+    {
+        return (m_type == REG ? m_reg : 0);
+    }
+
+    const SegmentRegister* getSegReg() const
+    {
+        return (m_type == SEGREG ? m_segreg : 0);
+    }
+
+    EffAddr* getMemory() const
+    {
+        return (m_type == MEMORY ? m_ea : 0);
+    }
+
+    Expr* getImm() const
+    {
+        return (m_type == IMM ? m_val : 0);
+    }
+
+    /// Helper functions to release specific types
+    std::auto_ptr<EffAddr> ReleaseMemory();
+    std::auto_ptr<Expr> ReleaseImm();
+
+    /// Release segment expression, 0 if none.
+    std::auto_ptr<Expr> ReleaseSeg();
+
+    /// Get segment expression, 0 if none.
+    Expr* getSeg() { return m_seg; }
+    const Expr* getSeg() const { return m_seg; }
+
+    /// Set segment expression.
+    void setSeg(std::auto_ptr<Expr> seg);
+
+    /// Get arch target modifier, 0 if none.
+    const TargetModifier* getTargetMod() const { return m_targetmod; }
+
+    /// Set target modifier.
+    void setTargetMod(const TargetModifier* tmod) { m_targetmod = tmod; }
+
+    /// Get operand size, in bits.  0 if not user specified.
+    unsigned int getSize() const { return m_size; }
+
+    /// Set operand size, in bits.
+    void setSize(unsigned int size) { m_size = size; }
+
+    /// Is the operand dereferenced, as in "*foo" in GAS?
+    bool isDeref() const { return m_deref; }
+
+    /// Set whether the operand is dereferenced.
+    void setDeref(bool deref=true) { m_deref = deref; }
+
+    /// Is the operand strict, as in "strict foo" in NASM?
+    bool isStrict() const { return m_strict; }
+
+    /// Set the strictness of the operand.
+    void setStrict(bool strict=true) { m_strict = strict; }
+
+private:
+    /// Operand data.
+    union
+    {
+        const SegmentRegister* m_segreg;    ///< Segment register.
+        const Register* m_reg;              ///< Register.
+        EffAddr* m_ea;      ///< Effective address for memory references.
+        Expr* m_val;        ///< Value of immediate or jump target.
+    };
+
+    /// Segment expression.
+    Expr* m_seg;
+
+    /// Arch target modifier, 0 if none.
+    const TargetModifier* m_targetmod;
+
+    /// Specified size of the operand, in bits.
+    /// 0 if not user-specified.
+    unsigned int m_size:16;
+
+    /// Nonzero if dereference.  Used for "*foo" in GAS.
+    /// The reason for this is that by default in GAS, an unprefixed value
+    /// is a memory address, except for jumps/calls, in which case it
+    /// needs a "*" prefix to become a memory address (otherwise it's an
+    /// immediate).  This isn't knowable in the parser stage, so the
+    /// parser sets this flag to indicate the "*" prefix has been used,
+    /// and the arch needs to adjust the operand type appropriately
+    /// depending on the instruction type.
+    unsigned int m_deref:1;
+
+    /// Nonzero if strict.  Used for "strict foo" in NASM.
+    /// This is used to inhibit optimization on otherwise "sized" values.
+    /// For example, the user may just want to be explicit with the size
+    /// on "push dword 4", but not actually want to force the immediate
+    /// size to 4 bytes (rather wanting the optimizer to optimize it down
+    /// to 1 byte as though "dword" was not specified).  To indicate the
+    /// immediate should actually be forced to 4 bytes, the user needs to
+    /// write "push strict dword 4", which sets this flag.
+    unsigned int m_strict:1;
+
+    /// Operand type.
+    unsigned int m_type:4;
+};
+
+/// Base class for instruction prefixes.
+class YASM_LIB_EXPORT Prefix
+{
+public:
+    Prefix() {}
+    virtual ~Prefix();
+    virtual void Put(std::ostream& os) const = 0;
+
+private:
+    Prefix(const Prefix&);                  // not implemented
+    const Prefix& operator=(const Prefix&); // not implemented
+};
+
 /// Base class for instructions.  Architectures should
 /// derive their own implementation from this.
 class YASM_LIB_EXPORT Insn
 {
 public:
     typedef std::auto_ptr<Insn> Ptr;
-
-    /// An instruction operand.
-    class YASM_LIB_EXPORT Operand
-    {
-    public:
-        /// Operand type.
-        enum Type
-        {
-            NONE = 0,   ///< Nothing.
-            REG,        ///< A register.
-            SEGREG,     ///< A segment register.
-            MEMORY,     ///< An effective address (memory reference).
-            IMM         ///< An immediate or jump target.
-        };
-
-        /// Base class for target modifiers.
-        class YASM_LIB_EXPORT TargetModifier
-        {
-        public:
-            TargetModifier() {}
-            virtual ~TargetModifier();
-            virtual void Put(std::ostream& os) const = 0;
-
-        private:
-            // not implemented (noncopyable class)
-            TargetModifier(const TargetModifier&);
-            const TargetModifier& operator=(const TargetModifier&);
-        };
-
-        /// Create an instruction operand from a register.
-        /// @param reg  register
-        Operand(const Register* reg);
-
-        /// Create an instruction operand from a segment register.
-        /// @param segreg       segment register
-        Operand(const SegmentRegister* segreg);
-
-        /// Create an instruction operand from an effective address.
-        /// @param ea   effective address
-        Operand(std::auto_ptr<EffAddr> ea);
-
-        /// Create an instruction operand from an immediate expression.
-        /// Looks for cases of a single register and creates a register
-        /// variant.
-        /// @param val  immediate expression
-        /// @return Newly allocated operand.
-        Operand(std::auto_ptr<Expr> val);
-
-        /// Explicit copy creator.
-        /// There's no copy constructor or assignment operator as we want
-        /// to use the default bit-copy ones.  Even though this class
-        /// contains more complex structures, we don't want to be copying
-        /// the contents all the time.
-        Operand clone() const;
-
-        /// Explicit release.
-        /// Doesn't destroy contents, just ensures what contents are there
-        /// won't be destroyed via the destructor.
-        void Release()
-        {
-            m_type = NONE;
-            m_reg = 0;
-        }
-
-        /// Explicit destructor.
-        /// Similar to clone(), we do smart copying and destruction in
-        /// #Expr implementation to prevent over-copying of possibly deep
-        /// expression trees.
-        void Destroy();
-
-        void Put(marg_ostream& os) const;
-        void Finalize();
-
-        /// Match type.
-        bool isType(Type type) const
-        { return m_type == static_cast<unsigned int>(type); }
-
-        /// Get the type.
-        Type getType() const { return static_cast<Type>(m_type); }
-
-        /// Helper functions to get specific types.
-
-        const Register* getReg() const
-        {
-            return (m_type == REG ? m_reg : 0);
-        }
-
-        const SegmentRegister* getSegReg() const
-        {
-            return (m_type == SEGREG ? m_segreg : 0);
-        }
-
-        EffAddr* getMemory() const
-        {
-            return (m_type == MEMORY ? m_ea : 0);
-        }
-
-        Expr* getImm() const
-        {
-            return (m_type == IMM ? m_val : 0);
-        }
-
-        /// Helper functions to release specific types
-        std::auto_ptr<EffAddr> ReleaseMemory();
-        std::auto_ptr<Expr> ReleaseImm();
-
-        /// Release segment expression, 0 if none.
-        std::auto_ptr<Expr> ReleaseSeg();
-
-        /// Get segment expression, 0 if none.
-        Expr* getSeg() { return m_seg; }
-        const Expr* getSeg() const { return m_seg; }
-
-        /// Set segment expression.
-        void setSeg(std::auto_ptr<Expr> seg);
-
-        /// Get arch target modifier, 0 if none.
-        const TargetModifier* getTargetMod() const { return m_targetmod; }
-
-        /// Set target modifier.
-        void setTargetMod(const TargetModifier* tmod) { m_targetmod = tmod; }
-
-        /// Get operand size, in bits.  0 if not user specified.
-        unsigned int getSize() const { return m_size; }
-
-        /// Set operand size, in bits.
-        void setSize(unsigned int size) { m_size = size; }
-
-        /// Is the operand dereferenced, as in "*foo" in GAS?
-        bool isDeref() const { return m_deref; }
-
-        /// Set whether the operand is dereferenced.
-        void setDeref(bool deref=true) { m_deref = deref; }
-
-        /// Is the operand strict, as in "strict foo" in NASM?
-        bool isStrict() const { return m_strict; }
-
-        /// Set the strictness of the operand.
-        void setStrict(bool strict=true) { m_strict = strict; }
-
-    private:
-        /// Operand data.
-        union
-        {
-            const SegmentRegister* m_segreg;    ///< Segment register.
-            const Register* m_reg;              ///< Register.
-            EffAddr* m_ea;      ///< Effective address for memory references.
-            Expr* m_val;        ///< Value of immediate or jump target.
-        };
-
-        /// Segment expression.
-        Expr* m_seg;
-
-        /// Arch target modifier, 0 if none.
-        const TargetModifier* m_targetmod;
-
-        /// Specified size of the operand, in bits.
-        /// 0 if not user-specified.
-        unsigned int m_size:16;
-
-        /// Nonzero if dereference.  Used for "*foo" in GAS.
-        /// The reason for this is that by default in GAS, an unprefixed value
-        /// is a memory address, except for jumps/calls, in which case it
-        /// needs a "*" prefix to become a memory address (otherwise it's an
-        /// immediate).  This isn't knowable in the parser stage, so the
-        /// parser sets this flag to indicate the "*" prefix has been used,
-        /// and the arch needs to adjust the operand type appropriately
-        /// depending on the instruction type.
-        unsigned int m_deref:1;
-
-        /// Nonzero if strict.  Used for "strict foo" in NASM.
-        /// This is used to inhibit optimization on otherwise "sized" values.
-        /// For example, the user may just want to be explicit with the size
-        /// on "push dword 4", but not actually want to force the immediate
-        /// size to 4 bytes (rather wanting the optimizer to optimize it down
-        /// to 1 byte as though "dword" was not specified).  To indicate the
-        /// immediate should actually be forced to 4 bytes, the user needs to
-        /// write "push strict dword 4", which sets this flag.
-        unsigned int m_strict:1;
-
-        /// Operand type.
-        unsigned int m_type:4;
-    };
-
-    /// Base class for instruction prefixes.
-    class YASM_LIB_EXPORT Prefix
-    {
-    public:
-        Prefix() {}
-        virtual ~Prefix();
-        virtual void Put(std::ostream& os) const = 0;
-
-    private:
-        Prefix(const Prefix&);                  // not implemented
-        const Prefix& operator=(const Prefix&); // not implemented
-    };
 
     typedef llvm::SmallVector<Operand, 3> Operands;
     typedef std::vector<const Prefix*> Prefixes;
@@ -314,21 +314,21 @@ private:
 };
 
 inline std::ostream&
-operator<< (std::ostream& os, const Insn::Operand::TargetModifier& tmod)
+operator<< (std::ostream& os, const TargetModifier& tmod)
 {
     tmod.Put(os);
     return os;
 }
 
 inline std::ostream&
-operator<< (std::ostream& os, const Insn::Prefix& prefix)
+operator<< (std::ostream& os, const Prefix& prefix)
 {
     prefix.Put(os);
     return os;
 }
 
 inline marg_ostream&
-operator<< (marg_ostream& os, const Insn::Operand& operand)
+operator<< (marg_ostream& os, const Operand& operand)
 {
     operand.Put(os);
     return os;

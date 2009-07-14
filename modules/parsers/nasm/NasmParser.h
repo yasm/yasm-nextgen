@@ -63,10 +63,10 @@ struct yystype
     union
     {
         unsigned int int_info;
-        const Insn::Prefix* prefix;
+        const Prefix* prefix;
         const SegmentRegister* segreg;
         const Register* reg;
-        const Insn::Operand::TargetModifier* targetmod;
+        const TargetModifier* targetmod;
     };
 };
 #define YYSTYPE yystype
@@ -153,9 +153,9 @@ private:
     bool ParseExp();
     Insn::Ptr ParseInsn();
 
-    Insn::Operand ParseOperand();
+    Operand ParseOperand();
 
-    Insn::Operand ParseMemoryAddress();
+    Operand ParseMemoryAddress();
 
     bool ParseExpr(Expr& e, ExprType type);
     bool ParseBExpr(Expr& e, ExprType type);

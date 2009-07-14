@@ -534,7 +534,7 @@ NasmParser::ParseInsn()
         }
         case PREFIX:
         {
-            const Insn::Prefix* prefix = PREFIX_val;
+            const Prefix* prefix = PREFIX_val;
             getNextToken();
             Insn::Ptr insn = ParseInsn();
             if (insn.get() == 0)
@@ -557,7 +557,7 @@ NasmParser::ParseInsn()
     }
 }
 
-Insn::Operand
+Operand
 NasmParser::ParseOperand()
 {
     switch (m_token)
@@ -565,7 +565,7 @@ NasmParser::ParseOperand()
         case '[':
         {
             getNextToken();
-            Insn::Operand op = ParseMemoryAddress();
+            Operand op = ParseMemoryAddress();
 
             Expect(']');
             getNextToken();
@@ -574,20 +574,20 @@ NasmParser::ParseOperand()
         }
         case SEGREG:
         {
-            Insn::Operand op(SEGREG_val);
+            Operand op(SEGREG_val);
             getNextToken();
             return op;
         }
         case REG:
         {
-            Insn::Operand op(REG_val);
+            Operand op(REG_val);
             getNextToken();
             return op;
         }
         case STRICT:
         {
             getNextToken();
-            Insn::Operand op = ParseOperand();
+            Operand op = ParseOperand();
             op.setStrict();
             return op;
         }
@@ -595,7 +595,7 @@ NasmParser::ParseOperand()
         {
             unsigned int size = SIZE_OVERRIDE_val;
             getNextToken();
-            Insn::Operand op = ParseOperand();
+            Operand op = ParseOperand();
             const Register* reg = op.getReg();
             if (reg && reg->getSize() != size)
                 throw TypeError(N_("cannot override register size"));
@@ -624,9 +624,9 @@ NasmParser::ParseOperand()
         }
         case TARGETMOD:
         {
-            const Insn::Operand::TargetModifier* tmod = TARGETMOD_val;
+            const TargetModifier* tmod = TARGETMOD_val;
             getNextToken();
-            Insn::Operand op = ParseOperand();
+            Operand op = ParseOperand();
             op.setTargetMod(tmod);
             return op;
         }
@@ -638,12 +638,12 @@ NasmParser::ParseOperand()
                     String::Compose(N_("expected operand, got %1"),
                                     DescribeToken(m_token)));
             if (m_token != ':')
-                return Insn::Operand(e);
+                return Operand(e);
             getNextToken();
             Expr::Ptr off(new Expr);
             if (!ParseBExpr(*off, NORM_EXPR))
                 throw SyntaxError(N_("offset expected after ':'"));
-            Insn::Operand op(off);
+            Operand op(off);
             op.setSeg(e);
             return op;
         }
@@ -651,7 +651,7 @@ NasmParser::ParseOperand()
 }
 
 // memory addresses
-Insn::Operand
+Operand
 NasmParser::ParseMemoryAddress()
 {
     switch (m_token)
@@ -663,7 +663,7 @@ NasmParser::ParseMemoryAddress()
             if (m_token != ':')
                 throw SyntaxError(N_("`:' required after segment register"));
             getNextToken();
-            Insn::Operand op = ParseMemoryAddress();
+            Operand op = ParseMemoryAddress();
             op.getMemory()->setSegReg(segreg);
             return op;
         }
@@ -671,21 +671,21 @@ NasmParser::ParseMemoryAddress()
         {
             unsigned int size = SIZE_OVERRIDE_val;
             getNextToken();
-            Insn::Operand op = ParseMemoryAddress();
+            Operand op = ParseMemoryAddress();
             op.getMemory()->m_disp.setSize(size);
             return op;
         }
         case NOSPLIT:
         {
             getNextToken();
-            Insn::Operand op = ParseMemoryAddress();
+            Operand op = ParseMemoryAddress();
             op.getMemory()->m_nosplit = true;
             return op;
         }
         case REL:
         {
             getNextToken();
-            Insn::Operand op = ParseMemoryAddress();
+            Operand op = ParseMemoryAddress();
             EffAddr* ea = op.getMemory();
             ea->m_pc_rel = true;
             ea->m_not_pc_rel = false;
@@ -694,7 +694,7 @@ NasmParser::ParseMemoryAddress()
         case ABS:
         {
             getNextToken();
-            Insn::Operand op = ParseMemoryAddress();
+            Operand op = ParseMemoryAddress();
             EffAddr* ea = op.getMemory();
             ea->m_pc_rel = false;
             ea->m_not_pc_rel = true;
@@ -706,12 +706,12 @@ NasmParser::ParseMemoryAddress()
             if (!ParseBExpr(*e, NORM_EXPR))
                 throw SyntaxError(N_("memory address expected"));
             if (m_token != ':')
-                return Insn::Operand(m_object->getArch()->CreateEffAddr(e));
+                return Operand(m_object->getArch()->CreateEffAddr(e));
             getNextToken();
             Expr::Ptr off(new Expr);
             if (!ParseBExpr(*off, NORM_EXPR))
                 throw SyntaxError(N_("offset expected after ':'"));
-            Insn::Operand op(m_object->getArch()->CreateEffAddr(off));
+            Operand op(m_object->getArch()->CreateEffAddr(off));
             op.setSeg(e);
             return op;
         }

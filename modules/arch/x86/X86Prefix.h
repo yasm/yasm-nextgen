@@ -35,7 +35,7 @@ namespace arch
 namespace x86
 {
 
-class X86Prefix : public Insn::Prefix
+class X86Prefix : public Prefix
 {
 public:
     // Low 8 bits are used for the prefix value, stored in same data area.

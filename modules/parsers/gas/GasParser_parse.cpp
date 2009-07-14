@@ -958,7 +958,7 @@ GasParser::ParseDirective(NameValues* nvs)
 
 // instruction operands
 // memory addresses
-Insn::Operand
+Operand
 GasParser::ParseMemoryAddress()
 {
     bool strong = false;
@@ -969,7 +969,7 @@ GasParser::ParseMemoryAddress()
         getNextToken(); // SEGREG
         Expect(':');
         getNextToken(); // ':'
-        Insn::Operand op = ParseMemoryAddress();
+        Operand op = ParseMemoryAddress();
         op.getMemory()->setSegReg(segreg);
         return op;
     }
@@ -1069,21 +1069,21 @@ done:
 
     Expr::Ptr e1_copy(new Expr);
     std::swap(*e1_copy, e1);
-    Insn::Operand op(m_object->getArch()->CreateEffAddr(e1_copy));
+    Operand op(m_object->getArch()->CreateEffAddr(e1_copy));
 
     if (strong)
         op.getMemory()->m_strong = true;
     return op;
 }
 
-Insn::Operand
+Operand
 GasParser::ParseOperand()
 {
     switch (m_token)
     {
         case REG:
         {
-            Insn::Operand op(REG_val);
+            Operand op(REG_val);
             getNextToken(); // REG
             return op;
         }
@@ -1093,7 +1093,7 @@ GasParser::ParseOperand()
             getPeekToken();
             if (m_peek_token == ':')
                 return ParseMemoryAddress();
-            Insn::Operand op(SEGREG_val);
+            Operand op(SEGREG_val);
             getNextToken(); // SEGREG
             return op;
         }
@@ -1103,7 +1103,7 @@ GasParser::ParseOperand()
             getNextToken(); // REGGROUP
 
             if (m_token != '(')
-                return Insn::Operand(reggroup->getReg(0));
+                return Operand(reggroup->getReg(0));
             getNextToken(); // '('
 
             if (m_token != INTNUM)
@@ -1124,7 +1124,7 @@ GasParser::ParseOperand()
                 throw SyntaxError(String::Compose(
                     N_("bad register index `%u'"), regindex));
             }
-            return Insn::Operand(reg);
+            return Operand(reg);
         }
         case '$':
         {
@@ -1135,20 +1135,20 @@ GasParser::ParseOperand()
                 throw SyntaxError(String::Compose(
                     N_("expression missing after `%1'"), "$"));
             }
-            return Insn::Operand(e);
+            return Operand(e);
         }
         case '*':
             getNextToken(); // '*'
             if (m_token == REG)
             {
-                Insn::Operand op(REG_val);
+                Operand op(REG_val);
                 getNextToken(); // REG
                 op.setDeref();
                 return op;
             }
             else
             {
-                Insn::Operand op = ParseMemoryAddress();
+                Operand op = ParseMemoryAddress();
                 op.setDeref();
                 return op;
             }

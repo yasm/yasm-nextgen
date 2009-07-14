@@ -37,7 +37,6 @@
 
 #include "yasmx/Config/export.h"
 
-#include "yasmx/Insn.h"
 #include "yasmx/Location.h"
 #include "yasmx/Module.h"
 
@@ -51,9 +50,14 @@ namespace yasm
 {
 
 class ArchModule;
+class Bytes;
 class Directives;
+class EffAddr;
 class Expr;
 class IntNum;
+class Insn;
+class Prefix;
+class TargetModifier;
 
 /// A register.
 class YASM_LIB_EXPORT Register
@@ -153,7 +157,7 @@ public:
 
         InsnPrefix() : m_type(NONE) {}
         InsnPrefix(std::auto_ptr<Insn> insn);
-        InsnPrefix(const Insn::Prefix* prefix)
+        InsnPrefix(const Prefix* prefix)
             : m_type(PREFIX), m_prefix(prefix)
         {}
 
@@ -168,7 +172,7 @@ public:
         {
             return (m_type == INSN ? m_insn : 0);
         }
-        const Insn::Prefix* getPrefix() const
+        const Prefix* getPrefix() const
         {
             return (m_type == PREFIX ? m_prefix : 0);
         }
@@ -177,7 +181,7 @@ public:
         union
         {
             Insn* m_insn;
-            const Insn::Prefix* m_prefix;
+            const Prefix* m_prefix;
         };
     };
 
@@ -204,7 +208,7 @@ public:
         RegTmod(const SegmentRegister* segreg)
             : m_type(SEGREG), m_segreg(segreg)
         {}
-        RegTmod(const Insn::Operand::TargetModifier* tmod)
+        RegTmod(const TargetModifier* tmod)
             : m_type(TARGETMOD), m_tmod(tmod)
         {}
 
@@ -226,7 +230,7 @@ public:
             return (m_type == SEGREG ? m_segreg : 0);
         }
 
-        const Insn::Operand::TargetModifier* getTargetMod() const
+        const TargetModifier* getTargetMod() const
         {
             return (m_type == TARGETMOD ? m_tmod : 0);
         }
@@ -238,7 +242,7 @@ public:
             const Register* m_reg;
             const RegisterGroup* m_reggroup;
             const SegmentRegister* m_segreg;
-            const Insn::Operand::TargetModifier* m_tmod;
+            const TargetModifier* m_tmod;
         };
     };
 

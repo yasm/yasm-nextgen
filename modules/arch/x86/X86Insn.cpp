@@ -517,11 +517,11 @@ X86Insn::MatchOperand(const Operand& op, const X86InfoOperand& info_op,
     switch (info_op.type)
     {
         case OPT_Imm:
-            if (!op.isType(Insn::Operand::IMM))
+            if (!op.isType(Operand::IMM))
                 return false;
             break;
         case OPT_RM:
-            if (op.isType(Insn::Operand::MEMORY))
+            if (op.isType(Operand::MEMORY))
                 break;
             /*@fallthrough@*/
         case OPT_Reg:
@@ -541,11 +541,11 @@ X86Insn::MatchOperand(const Operand& op, const X86InfoOperand& info_op,
             }
             break;
         case OPT_Mem:
-            if (!op.isType(Insn::Operand::MEMORY))
+            if (!op.isType(Operand::MEMORY))
                 return false;
             break;
         case OPT_SIMDRM:
-            if (op.isType(Insn::Operand::MEMORY))
+            if (op.isType(Operand::MEMORY))
                 break;
             /*@fallthrough@*/
         case OPT_SIMDReg:
@@ -562,7 +562,7 @@ X86Insn::MatchOperand(const Operand& op, const X86InfoOperand& info_op,
             }
             break;
         case OPT_SegReg:
-            if (!op.isType(Insn::Operand::SEGREG))
+            if (!op.isType(Operand::SEGREG))
                 return false;
             break;
         case OPT_CRReg:
@@ -965,7 +965,7 @@ X86Insn::DoAppend(BytecodeContainer& container, unsigned long line)
     if (m_parser == X86Arch::PARSER_GAS
         && insn_operands[m_group->operands_index+0].action == OPA_JmpRel)
     {
-        for (Insn::Operands::iterator op = m_operands.begin(),
+        for (Operands::iterator op = m_operands.begin(),
              end = m_operands.end(); op != end; ++op)
         {
             const X86Register* reg =
@@ -981,7 +981,7 @@ X86Insn::DoAppend(BytecodeContainer& container, unsigned long line)
                 if (ea->m_segreg != 0)
                     setWarn(WARN_GENERAL,
                             N_("skipping prefixes on this instruction"));
-                *op = Insn::Operand(std::auto_ptr<Expr>(
+                *op = Operand(std::auto_ptr<Expr>(
                     ea->m_disp.getAbs()->clone()));
                 delete ea;
             }
@@ -1033,7 +1033,7 @@ public:
                 unsigned long line);
 
 private:
-    void ApplyOperand(const X86InfoOperand& info_op, Insn::Operand& op);
+    void ApplyOperand(const X86InfoOperand& info_op, Operand& op);
 
     const X86InsnInfo& m_info;
     unsigned int m_mode_bits;
@@ -1182,7 +1182,7 @@ BuildGeneral::ApplyOperands(X86Arch::ParserSelect parser,
 }
 
 void
-BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Insn::Operand& op)
+BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
 {
     switch (info_op.action)
     {
@@ -1192,18 +1192,18 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Insn::Operand& op)
         case OPA_EA:
             switch (op.getType())
             {
-                case Insn::Operand::NONE:
+                case Operand::NONE:
                     assert(false && "invalid operand conversion");
                     break;
-                case Insn::Operand::REG:
+                case Operand::REG:
                     m_x86_ea.reset(new X86EffAddr(
                         static_cast<const X86Register*>(op.getReg()),
                         &m_rex, m_mode_bits));
                     break;
-                case Insn::Operand::SEGREG:
+                case Operand::SEGREG:
                     assert(false && "invalid operand conversion");
                     break;
-                case Insn::Operand::MEMORY:
+                case Operand::MEMORY:
                 {
                     if (op.getSeg() != 0)
                     {
@@ -1229,7 +1229,7 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Insn::Operand& op)
                         m_x86_ea->m_pc_rel = true;
                     break;
                 }
-                case Insn::Operand::IMM:
+                case Operand::IMM:
                     m_x86_ea.reset(new X86EffAddr(op.ReleaseImm(),
                                                   m_size_lookup[info_op.size]));
                     break;
@@ -1365,7 +1365,7 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Insn::Operand& op)
         }
         case OPA_VEXImm:
         {
-            assert(op.getType() == Insn::Operand::IMM &&
+            assert(op.getType() == Operand::IMM &&
                    "invalid operand conversion");
             if (m_imm.get() == 0)
                 m_imm = op.ReleaseImm();
