@@ -1365,8 +1365,7 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
         }
         case OPA_VEXImm:
         {
-            assert(op.getType() == Operand::IMM &&
-                   "invalid operand conversion");
+            assert(op.isType(Operand::IMM) && "invalid operand conversion");
             if (m_imm.get() == 0)
                 m_imm = op.ReleaseImm();
             else
