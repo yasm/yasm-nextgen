@@ -33,6 +33,8 @@
 #include <memory>
 #include <vector>
 
+#include "llvm/ADT/SmallVector.h"
+
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/marg_ostream_fwd.h"
 
@@ -251,7 +253,7 @@ public:
         const Prefix& operator=(const Prefix&); // not implemented
     };
 
-    typedef std::vector<Operand> Operands;
+    typedef llvm::SmallVector<Operand, 3> Operands;
     typedef std::vector<const Prefix*> Prefixes;
     typedef std::vector<const SegmentRegister*> SegRegs;
 
