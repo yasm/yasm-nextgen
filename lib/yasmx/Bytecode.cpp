@@ -162,18 +162,25 @@ Bytecode::Finalize()
     for (std::vector<Fixup>::iterator i=m_fixed_fixups.begin(),
          end=m_fixed_fixups.end(); i != end; ++i)
     {
-        if (!i->Finalize())
+        try
         {
-            if (i->isJumpTarget())
-                throw TooComplexError(i->getLine(),
-                                      N_("jump target expression too complex"));
-            else
-                throw TooComplexError(i->getLine(),
-                                      N_("expression too complex"));
-        }
+            if (!i->Finalize())
+            {
+                if (i->isJumpTarget())
+                    throw TooComplexError(N_("jump target expression too complex"));
+                else
+                    throw TooComplexError(N_("expression too complex"));
+            }
 
-        if (i->isJumpTarget() && i->isComplexRelative())
-            throw ValueError(i->getLine(), N_("invalid jump target"));
+            if (i->isJumpTarget() && i->isComplexRelative())
+                throw ValueError(N_("invalid jump target"));
+        }
+        catch (Error& err)
+        {
+            // associate the error with the value, not the bytecode, line
+            err.m_line = i->getLine();
+            throw;
+        }
 
         // Do curpos subtraction for IP-relative flagged values.
         if (i->isIPRelative())
