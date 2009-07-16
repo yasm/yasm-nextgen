@@ -30,6 +30,7 @@ namespace YAML
 		const RegEx DocStart = RegEx("---") + (BlankOrBreak || RegEx());
 		const RegEx DocEnd = RegEx("...") + (BlankOrBreak || RegEx());
 		const RegEx DocIndicator = DocStart || DocEnd;
+		const RegEx Null = RegEx("Nn", REGEX_OR) + RegEx("ull");
 		const RegEx BlockEntry = RegEx('-') + BlankOrBreak;
 		const RegEx Key = RegEx('?'),
 		            KeyInFlow = RegEx('?') + BlankOrBreak;

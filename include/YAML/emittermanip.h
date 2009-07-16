@@ -14,6 +14,7 @@ namespace YAML
 		SingleQuoted,
 		DoubleQuoted,
 		Literal,
+		Null,
 		
 		// bool manipulators
 		YesNoBool,  // yes, no

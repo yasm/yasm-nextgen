@@ -28,7 +28,8 @@ namespace YAML
 				                          || (Exp::BlankOrBreak + Exp::Comment)
 				                          || (!Exp::Printable)
 				                          || Exp::Break
-				                          || Exp::Tab;
+				                          || Exp::Tab
+				                          || Exp::Null;
 				StringCharSource buffer(str.c_str(), str.size());
 				while(buffer) {
 					if(disallowed.Matches(buffer))

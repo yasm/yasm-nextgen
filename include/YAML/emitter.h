@@ -49,6 +49,8 @@ namespace YAML
 		Emitter& Write(const _Alias& alias);
 		Emitter& Write(const _Anchor& anchor);
 		Emitter& Write(const _Comment& comment);
+
+		Emitter& WriteNull();
 		
 	private:
 		enum ATOMIC_TYPE { AT_SCALAR, AT_SEQ, AT_BLOCK_SEQ, AT_FLOW_SEQ, AT_MAP, AT_BLOCK_MAP, AT_FLOW_MAP };
@@ -78,6 +80,8 @@ namespace YAML
 
 	template <>
 	inline Emitter& operator << (Emitter& emitter, EMITTER_MANIP value) {
+		if (value == Null)
+			return emitter.WriteNull();
 		return emitter.SetLocalValue(value);
 	}
 	
