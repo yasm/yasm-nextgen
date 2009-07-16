@@ -85,7 +85,7 @@ public:
 
     /// Bytecode contents (abstract base class).  Any implementation of a
     /// specific bytecode must implement a class derived from this one.
-    /// The bytecode implementation-specific data is stored in #contents.
+    /// The bytecode implementation-specific data is stored in #m_contents.
     class YASM_LIB_EXPORT Contents
     {
     public:
@@ -95,17 +95,17 @@ public:
         virtual ~Contents();
 
         /// Prints the implementation-specific data (for debugging purposes).
-        /// Called from Bytecode::put().
+        /// Called from Bytecode::Put().
         /// @param os           output stream
         virtual void Put(marg_ostream& os) const = 0;
 
         /// Finalizes the bytecode after parsing.
-        /// Called from Bytecode::finalize().
+        /// Called from Bytecode::Finalize().
         /// @param bc           bytecode
         virtual void Finalize(Bytecode& bc) = 0;
 
         /// Calculates the minimum size of a bytecode.
-        /// Called from Bytecode::calc_len().
+        /// Called from Bytecode::CalcLen().
         ///
         /// @param bc           bytecode
         /// @param add_span     function to call to add a span
@@ -116,7 +116,7 @@ public:
             = 0;
 
         /// Recalculates the bytecode's length based on an expanded span
-        /// length.  Called from Bytecode::expand().
+        /// length.  Called from Bytecode::Expand().
         /// The base version of this function internal errors when called,
         /// so if calc_len() ever adds a span, this function should be
         /// overridden!
@@ -145,7 +145,7 @@ public:
                             /*@out@*/ long* pos_thres);
 
         /// Output a bytecode.
-        /// Called from Bytecode::output().
+        /// Called from Bytecode::Output().
         /// @param bc           bytecode
         /// @param bc_out       bytecode output interface
         /// @note May result in non-reversible changes to the bytecode, but
@@ -154,7 +154,7 @@ public:
         virtual void Output(Bytecode& bc, BytecodeOutput& bc_out) = 0;
 
         /// Special bytecode classifications.  Most bytecode types should
-        /// simply not override the get_special() function (which returns
+        /// simply not override the getSpecial() function (which returns
         /// #SPECIAL_NONE).  Other return values cause special handling to
         /// kick in in various parts of yasm.
         enum SpecialType
@@ -276,8 +276,7 @@ public:
     void CalcLen(const AddSpanFunc& add_span);
 
     /// Recalculate a bytecode's length based on an expanded span length.
-    /// @param span         span ID (as given to yasm_bc_add_span_func in
-    ///                     yasm_bc_calc_len)
+    /// @param span         span ID (as given to add_span in CalcLen())
     /// @param old_val      previous span value
     /// @param new_val      new span value
     /// @param neg_thres    negative threshold for long/short decision
@@ -303,7 +302,7 @@ public:
     void Output(BytecodeOutput& bc_out);
 
     /// Updates bytecode offset.
-    /// @note For offset-based bytecodes, calls expand() to determine new
+    /// @note For offset-based bytecodes, calls Expand() to determine new
     ///       length.
     /// @param offset       offset to set this bytecode to
     /// @param errwarns     error/warning set
