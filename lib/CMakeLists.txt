@@ -22,6 +22,12 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     System/Path.cpp
     System/Process.cpp
     System/TimeValue.cpp
+    YAML/emitter.cpp
+    YAML/emitterstate.cpp
+    YAML/emitterutils.cpp
+    YAML/ostream.cpp
+    YAML/regex.cpp
+    YAML/stream.cpp
     yasmx/AlignBytecode.cpp
     yasmx/Arch.cpp
     yasmx/Assembler.cpp
