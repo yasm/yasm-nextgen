@@ -524,7 +524,7 @@ namespace YAML
 		return Write(std::string(str));
 	}
 	
-	Emitter& Emitter::Write(int i)
+	Emitter& Emitter::Write(long i)
 	{
 		if(!good())
 			return *this;
@@ -534,6 +534,7 @@ namespace YAML
 		
 		EMITTER_MANIP intFmt = m_pState->GetIntFormat();
 		std::stringstream str;
+                str << std::showbase;
 		switch(intFmt) {
 			case Dec:
 				str << std::dec;
@@ -553,6 +554,48 @@ namespace YAML
 		
 		PostAtomicWrite();
 		return *this;
+	}
+	
+	Emitter& Emitter::Write(int i)
+	{
+		return Write(static_cast<long>(i));
+	}
+	
+	Emitter& Emitter::Write(unsigned long i)
+	{
+		if(!good())
+			return *this;
+		
+		PreAtomicWrite();
+		EmitSeparationIfNecessary();
+		
+		EMITTER_MANIP intFmt = m_pState->GetIntFormat();
+		std::stringstream str;
+                str << std::showbase;
+		switch(intFmt) {
+			case Dec:
+				str << std::dec;
+				break;
+			case Hex:
+				str << std::hex;
+				break;
+			case Oct:
+				str << std::oct;
+				break;
+			default:
+				assert(false);
+		}
+		
+		str << i;
+		m_stream << str.str();
+		
+		PostAtomicWrite();
+		return *this;
+	}
+	
+	Emitter& Emitter::Write(unsigned int i)
+	{
+		return Write(static_cast<unsigned long>(i));
 	}
 	
 	Emitter& Emitter::Write(bool b)

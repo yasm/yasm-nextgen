@@ -43,6 +43,9 @@ namespace YAML
 		Emitter& Write(const std::string& str);
 		Emitter& Write(const char *str);
 		Emitter& Write(int i);
+		Emitter& Write(unsigned int i);
+		Emitter& Write(long i);
+		Emitter& Write(unsigned long i);
 		Emitter& Write(bool b);
 		Emitter& Write(float f);
 		Emitter& Write(double d);
