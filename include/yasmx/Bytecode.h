@@ -35,7 +35,6 @@
 
 #include "yasmx/Config/export.h"
 #include "yasmx/Config/functional.h"
-#include "yasmx/Support/marg_ostream_fwd.h"
 #include "yasmx/Support/scoped_ptr.h"
 
 #include "yasmx/Bytes.h"
@@ -43,6 +42,8 @@
 #include "yasmx/SymbolRef.h"
 #include "yasmx/Value.h"
 
+
+namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -54,8 +55,6 @@ class Expr;
 /// A bytecode.
 class YASM_LIB_EXPORT Bytecode
 {
-    friend YASM_LIB_EXPORT
-    marg_ostream& operator<< (marg_ostream &os, const Bytecode &bc);
     friend class BytecodeContainer;
 
 public:
@@ -93,11 +92,6 @@ public:
 
         Contents();
         virtual ~Contents();
-
-        /// Prints the implementation-specific data (for debugging purposes).
-        /// Called from Bytecode::Put().
-        /// @param os           output stream
-        virtual void Put(marg_ostream& os) const = 0;
 
         /// Finalizes the bytecode after parsing.
         /// Called from Bytecode::Finalize().
@@ -169,6 +163,15 @@ public:
         virtual SpecialType getSpecial() const;
 
         virtual Contents* clone() const = 0;
+
+        /// Write a YAML representation.  For debugging purposes.
+        /// Called by Bytecode::Write(YAML::Emitter&).
+        /// @param out          YAML emitter
+        virtual void Write(YAML::Emitter& out) const = 0;
+
+        /// Dump a YAML representation to stderr.
+        /// For debugging purposes.
+        void Dump() const;
 
     protected:
         /// Copy constructor so that derived classes can sanely have one.
@@ -343,9 +346,26 @@ public:
               unsigned long line);
         void swap(Fixup& oth);
         unsigned int getOffset() const { return m_off; }
+
+        /// Write a YAML representation.  For debugging purposes.
+        /// @param out          YAML emitter
+        void Write(YAML::Emitter& out) const;
+
+        /// Dump a YAML representation to stderr.
+        /// For debugging purposes.
+        void Dump() const;
+
     private:
         unsigned int m_off;
     };
+
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    void Write(YAML::Emitter& out) const;
+
+    /// Dump a YAML representation to stderr.
+    /// For debugging purposes.
+    void Dump() const;
 
 private:
     /// Fixed data that comes before the possibly dynamic length data generated
@@ -378,15 +398,26 @@ private:
     SymbolRefs m_symbols;
 };
 
-inline marg_ostream&
-operator<< (marg_ostream& os, const Bytecode::Contents& contents)
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const Bytecode::Contents& contents)
 {
-    contents.Put(os);
-    return os;
+    contents.Write(out);
+    return out;
 }
 
-YASM_LIB_EXPORT
-marg_ostream& operator<< (marg_ostream &os, const Bytecode& bc);
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const Bytecode::Fixup& fixup)
+{
+    fixup.Write(out);
+    return out;
+}
+
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const Bytecode& bc)
+{
+    bc.Write(out);
+    return out;
+}
 
 /// Specialized swap for algorithms.
 inline void

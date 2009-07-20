@@ -26,8 +26,8 @@
 ///
 #include "util.h"
 
+#include "YAML/emitter.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/marg_ostream.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/BytecodeOutput.h"
@@ -45,9 +45,6 @@ class OrgBytecode : public Bytecode::Contents
 public:
     OrgBytecode(unsigned long start, unsigned long fill);
     ~OrgBytecode();
-
-    /// Prints the implementation-specific data (for debugging purposes).
-    void Put(marg_ostream& os) const;
 
     /// Finalizes the bytecode after parsing.
     void Finalize(Bytecode& bc);
@@ -72,6 +69,9 @@ public:
 
     OrgBytecode* clone() const;
 
+    /// Write a YAML representation.  For debugging purposes.
+    void Write(YAML::Emitter& out) const;
+
 private:
     unsigned long m_start;      ///< target starting offset within section
     unsigned long m_fill;       ///< fill value
@@ -86,14 +86,6 @@ OrgBytecode::OrgBytecode(unsigned long start, unsigned long fill)
 
 OrgBytecode::~OrgBytecode()
 {
-}
-
-void
-OrgBytecode::Put(marg_ostream& os) const
-{
-    os << "_Org_\n";
-    os << "Start=" << m_start << '\n';
-    os << "Fill=" << m_fill << '\n';
 }
 
 void
@@ -155,6 +147,16 @@ OrgBytecode*
 OrgBytecode::clone() const
 {
     return new OrgBytecode(m_start, m_fill);
+}
+
+void
+OrgBytecode::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << "Org";
+    out << YAML::Key << "start" << YAML::Value << m_start;
+    out << YAML::Key << "fill" << YAML::Value << m_fill;
+    out << YAML::EndMap;
 }
 
 } // anonymous namespace

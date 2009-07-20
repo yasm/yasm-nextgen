@@ -29,7 +29,6 @@
 #include <iosfwd>
 #include <vector>
 
-#include <yasmx/Support/marg_ostream_fwd.h>
 #include <yasmx/AssocData.h>
 #include <yasmx/Bytes.h>
 #include <yasmx/IntNum.h>
@@ -71,7 +70,7 @@ public:
 
     SymbolRef CreateSymbol(Object& object, const StringTable& strtab) const;
 
-    void Put(marg_ostream& os) const;
+    void Write(YAML::Emitter& out) const;
 
     void Finalize(Symbol& sym, Errwarns& errwarns);
     void Write(Bytes& bytes, const ElfConfig& config);

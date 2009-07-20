@@ -28,9 +28,9 @@
 
 #include "util.h"
 
+#include "YAML/emitter.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/marg_ostream.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
@@ -52,9 +52,6 @@ public:
     LEB128Bytecode(std::auto_ptr<Expr> expr, bool sign);
     ~LEB128Bytecode();
 
-    /// Prints the implementation-specific data (for debugging purposes).
-    void Put(marg_ostream& os) const;
-
     /// Finalizes the bytecode after parsing.
     void Finalize(Bytecode& bc);
 
@@ -65,6 +62,9 @@ public:
     void Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     LEB128Bytecode* clone() const;
+
+    /// Write a YAML representation.  For debugging purposes.
+    void Write(YAML::Emitter& out) const;
 
 private:
     Expr m_expr;
@@ -86,14 +86,6 @@ LEB128Bytecode::LEB128Bytecode(std::auto_ptr<Expr> expr, bool sign)
 
 LEB128Bytecode::~LEB128Bytecode()
 {
-}
-
-void
-LEB128Bytecode::Put(marg_ostream& os) const
-{
-    os << "_LEB128_\n";
-    os << "Expr=" << m_expr << '\n';
-    os << "Sign=" << m_sign << '\n';
 }
 
 void
@@ -124,6 +116,16 @@ LEB128Bytecode*
 LEB128Bytecode::clone() const
 {
     return new LEB128Bytecode(m_expr, m_sign);
+}
+
+void
+LEB128Bytecode::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << "LEB128";
+    out << YAML::Key << "expr" << YAML::Value << m_expr;
+    out << YAML::Key << "sign" << YAML::Value << m_sign;
+    out << YAML::EndMap;
 }
 
 } // anonymous namespace

@@ -28,9 +28,9 @@
 
 #include <util.h>
 
+#include "YAML/emitter.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/marg_ostream.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
@@ -147,28 +147,50 @@ ElfSection::~ElfSection()
 }
 
 void
-ElfSection::Put(marg_ostream& os) const
+ElfSection::Write(YAML::Emitter& out) const
 {
-    os << "\nsym=\n";
-    ++os;
-    os << *m_sym;
-    --os;
-    os << std::hex << std::showbase;
-    os << "index=" << m_index << '\n';
-    os << "flags=";
-    if (m_flags & SHF_WRITE)
-        os << "WRITE ";
-    if (m_flags & SHF_ALLOC)
-        os << "ALLOC ";
-    if (m_flags & SHF_EXECINSTR)
-        os << "EXEC ";
-    /*if (m_flags & SHF_MASKPROC)
-        os << "PROC-SPECIFIC "; */
-    os << "\noffset=" << m_offset << '\n';
-    os << "size=" << m_size << '\n';
-    os << "link=" << m_link << '\n';
-    os << std::dec << std::noshowbase;
-    os << "align=" << m_align << '\n';
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << key;
+    out << YAML::Key << "config" << YAML::Value << m_config;
+
+    out << YAML::Key << "secttype" << YAML::Value;
+    switch (m_type)
+    {
+        case SHT_NULL:              out << "NULL"; break;
+        case SHT_PROGBITS:          out << "PROGBITS"; break;
+        case SHT_SYMTAB:            out << "SYMTAB"; break;
+        case SHT_STRTAB:            out << "STRTAB"; break;
+        case SHT_RELA:              out << "RELA"; break;
+        case SHT_HASH:              out << "HASH"; break;
+        case SHT_DYNAMIC:           out << "DYNAMIC"; break;
+        case SHT_NOTE:              out << "NOTE"; break;
+        case SHT_NOBITS:            out << "NOBITS"; break;
+        case SHT_REL:               out << "REL"; break;
+        case SHT_SHLIB:             out << "SHLIB"; break;
+        case SHT_DYNSYM:            out << "DYNSYM"; break;
+        case SHT_INIT_ARRAY:        out << "INIT_ARRAY"; break;
+        case SHT_FINI_ARRAY:        out << "FINI_ARRAY"; break;
+        case SHT_PREINIT_ARRAY:     out << "PREINIT_ARRAY"; break;
+        case SHT_GROUP:             out << "GROUP"; break;
+        case SHT_SYMTAB_SHNDX:      out << "SYMTAB_SHNDX"; break;
+        default: out << YAML::Hex << static_cast<unsigned int>(m_type); break;
+    }
+
+    out << YAML::Key << "flags" << YAML::Value << m_flags;
+    out << YAML::Key << "addr" << YAML::Value << m_addr;
+    out << YAML::Key << "offset" << YAML::Value << m_offset;
+    out << YAML::Key << "size" << YAML::Value << m_size;
+    out << YAML::Key << "link" << YAML::Value << m_link;
+    out << YAML::Key << "info" << YAML::Value << m_info;
+    out << YAML::Key << "align" << YAML::Value << m_align;
+    out << YAML::Key << "entsize" << YAML::Value << m_entsize;
+    out << YAML::Key << "sym" << YAML::Value << m_sym;
+    out << YAML::Key << "name index" << YAML::Value << m_name_index;
+    out << YAML::Key << "sect index" << YAML::Value << m_index;
+    out << YAML::Key << "rel name index" << YAML::Value << m_rel_name_index;
+    out << YAML::Key << "rel sect index" << YAML::Value << m_rel_index;
+    out << YAML::Key << "rel offset" << YAML::Value << m_rel_offset;
+    out << YAML::EndMap;
 }
 
 unsigned long

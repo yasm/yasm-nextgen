@@ -28,8 +28,11 @@
 
 #include "util.h"
 
+#include <sstream>
+
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/marg_ostream.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytecode_util.h"
@@ -47,9 +50,6 @@ public:
     GapBytecode(unsigned long size);
     ~GapBytecode();
 
-    /// Prints the implementation-specific data (for debugging purposes).
-    void Put(marg_ostream& os) const;
-
     /// Finalizes the bytecode after parsing.
     void Finalize(Bytecode& bc);
 
@@ -65,6 +65,9 @@ public:
 
     GapBytecode* clone() const;
 
+    /// Write a YAML representation.  For debugging purposes.
+    void Write(YAML::Emitter& out) const;
+
 private:
     unsigned long m_size;       ///< size of gap (in bytes)
 };
@@ -77,13 +80,6 @@ GapBytecode::GapBytecode(unsigned long size)
 
 GapBytecode::~GapBytecode()
 {
-}
-
-void
-GapBytecode::Put(marg_ostream& os) const
-{
-    os << "_Gap_\n";
-    os << "Size=" << m_size << '\n';
 }
 
 void
@@ -113,6 +109,15 @@ void
 GapBytecode::Extend(unsigned long size)
 {
     m_size += size;
+}
+
+void
+GapBytecode::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << "Gap";
+    out << YAML::Key << "size" << YAML::Value << m_size;
+    out << YAML::EndMap;
 }
 
 } // anonymous namespace
@@ -206,21 +211,26 @@ BytecodeContainer::UpdateOffsets(Errwarns& errwarns)
         offset = UpdateOffset(*bc, offset, errwarns);
 }
 
-marg_ostream&
-operator<< (marg_ostream& os, const BytecodeContainer& container)
+void
+BytecodeContainer::Write(YAML::Emitter& out) const
 {
-    os << "Bytecodes:\n";
-    ++os;
-    for (BytecodeContainer::const_bc_iterator bc=container.bytecodes_begin(),
-         end=container.bytecodes_end(); bc != end; ++bc)
+    out << YAML::BeginSeq;
+    for (BytecodeContainer::const_bc_iterator bc=m_bcs.begin(), end=m_bcs.end();
+         bc != end; ++bc)
     {
-        os << "Next Bytecode:\n";
-        ++os;
-        os << *bc;
-        --os;
+        std::ostringstream oss;
+        oss << "BC@" << &(*bc);
+        out << YAML::Anchor(oss.str()) << *bc;
     }
-    --os;
-    return os;
+    out << YAML::EndSeq;
+}
+
+void
+BytecodeContainer::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 } // namespace yasm

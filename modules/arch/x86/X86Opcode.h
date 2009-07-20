@@ -26,7 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <yasmx/Support/marg_ostream_fwd.h>
+namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -40,8 +40,8 @@ namespace x86
 
 class X86Opcode
 {
-    friend marg_ostream& operator<< (marg_ostream& os,
-                                     const X86Opcode& opcode);
+    friend YAML::Emitter& operator<< (YAML::Emitter& out,
+                                      const X86Opcode& opcode);
 
 public:
     X86Opcode() : m_len(0) {}
@@ -86,7 +86,7 @@ private:
     unsigned char m_len;
 };
 
-marg_ostream& operator<< (marg_ostream& os, const X86Opcode& opcode);
+YAML::Emitter& operator<< (YAML::Emitter& os, const X86Opcode& opcode);
 
 }}} // namespace yasm::arch::x86
 

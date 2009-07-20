@@ -70,6 +70,10 @@ public:
     /// @param os   output stream
     void Put(std::ostream& os) const;
 
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    void Write(YAML::Emitter& out) const;
+
     Type getType() const { return m_type; }
     unsigned int getNum() const { return m_num; }
 
@@ -106,6 +110,10 @@ public:
     /// Print a segment register.  For debugging purposes.
     /// @param os   output stream
     void Put(std::ostream& os) const;
+
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    void Write(YAML::Emitter& out) const;
 
     Type getType() const { return m_type; }
     unsigned int getNum() const { return static_cast<unsigned int>(m_type); }

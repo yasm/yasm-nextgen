@@ -28,7 +28,8 @@
 
 #include "util.h"
 
-#include "yasmx/Support/marg_ostream.h"
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Reloc.h"
 
@@ -74,28 +75,42 @@ Section::AddReloc(std::auto_ptr<Reloc> reloc)
     m_relocs.push_back(reloc.release());
 }
 
-marg_ostream&
-operator<< (marg_ostream& os, const Section& section)
+void
+Section::Write(YAML::Emitter& out) const
 {
-    os << "name=" << section.getName() << '\n';
-    os << "vma=" << section.getVMA() << '\n';
-    os << "lma=" << section.getLMA() << '\n';
-    os << "filepos=" << section.getFilePos() << '\n';
-    os << "align=" << section.getAlign() << '\n';
-    os << "code=" << section.isCode() << '\n';
-    os << "bss=" << section.isBSS() << '\n';
-    os << "default=" << section.isDefault() << '\n';
+    out << YAML::BeginMap;
+    out << YAML::Key << "name" << YAML::Value << m_name;
+    out << YAML::Key << "vma" << YAML::Value << m_vma;
+    out << YAML::Key << "lma" << YAML::Value << m_lma;
+    out << YAML::Key << "filepos" << YAML::Value << m_filepos;
+    out << YAML::Key << "align" << YAML::Value << m_align;
+    out << YAML::Key << "code" << YAML::Value << m_code;
+    out << YAML::Key << "bss" << YAML::Value << m_bss;
+    out << YAML::Key << "default" << YAML::Value << m_def;
 
-    os << "Associated data:\n";
-    ++os;
-    os << static_cast<const AssocDataContainer&>(section);
-    --os;
+    out << YAML::Key << "assoc data" << YAML::Value;
+    AssocDataContainer::Write(out);
 
-    os << static_cast<const BytecodeContainer&>(section);
+    out << YAML::Key << "bytecodes" << YAML::Value;
+    BytecodeContainer::Write(out);
 
-    // TODO: relocs
+    out << YAML::Key << "relocs" << YAML::Value;
+    if (m_relocs.empty())
+        out << YAML::Flow;
+    out << YAML::BeginSeq;
+    for (Relocs::const_iterator i=m_relocs.begin(), end=m_relocs.end();
+         i != end; ++i)
+        out << *i;
+    out << YAML::EndSeq;
+    out << YAML::EndMap;
+}
 
-    return os;
+void
+Section::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 } // namespace yasm

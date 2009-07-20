@@ -26,7 +26,7 @@
 //
 #include "XdfSymbol.h"
 
-#include <yasmx/Support/marg_ostream.h>
+#include <YAML/emitter.h>
 
 
 namespace yasm
@@ -43,9 +43,12 @@ XdfSymbol::~XdfSymbol()
 }
 
 void
-XdfSymbol::Put(marg_ostream& os) const
+XdfSymbol::Write(YAML::Emitter& out) const
 {
-    os << "symtab index=" << index << '\n';
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << key;
+    out << YAML::Key << "index" << YAML::Value << index;
+    out << YAML::EndMap;
 }
 
 }}} // namespace yasm::objfmt::xdf

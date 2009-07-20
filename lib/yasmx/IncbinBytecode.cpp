@@ -28,12 +28,11 @@
 
 #include <fstream>
 
+#include "YAML/emitter.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/marg_ostream.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/System/file.h"
-
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/BytecodeOutput.h"
@@ -58,9 +57,6 @@ public:
                    std::auto_ptr<Expr> maxlen);
     ~IncbinBytecode();
 
-    /// Prints the implementation-specific data (for debugging purposes).
-    void Put(marg_ostream& os) const;
-
     /// Finalizes the bytecode after parsing.
     void Finalize(Bytecode& bc);
 
@@ -71,6 +67,9 @@ public:
     void Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     IncbinBytecode* clone() const;
+
+    /// Write a YAML representation.  For debugging purposes.
+    void Write(YAML::Emitter& out) const;
 
 private:
     std::string m_filename;     ///< file to include data from
@@ -93,24 +92,6 @@ IncbinBytecode::IncbinBytecode(const std::string& filename,
 
 IncbinBytecode::~IncbinBytecode()
 {
-}
-
-void
-IncbinBytecode::Put(marg_ostream& os) const
-{
-    os << "_IncBin_\n";
-    os << "Filename=`" << m_filename << "'\n";
-    os << "Start=";
-    if (!m_start)
-        os << "nil (0)";
-    else
-        os << *m_start;
-    os << "\nMax Len=";
-    if (!m_maxlen)
-        os << "nil (unlimited)";
-    else
-        os << *m_maxlen;
-    os << '\n';
 }
 
 void
@@ -240,6 +221,25 @@ IncbinBytecode::clone() const
     return new IncbinBytecode(m_filename,
                               std::auto_ptr<Expr>(m_start->clone()),
                               std::auto_ptr<Expr>(m_maxlen->clone()));
+}
+
+void
+IncbinBytecode::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << "IncBin";
+    out << YAML::Key << "filename" << YAML::Value << m_filename;
+    out << YAML::Key << "start" << YAML::Value;
+    if (m_start)
+        out << *m_start;
+    else
+        out << YAML::Null;
+    out << YAML::Key << "max length" << YAML::Value;
+    if (m_maxlen)
+        out << *m_maxlen;
+    else
+        out << YAML::Null;
+    out << YAML::EndMap;
 }
 
 } // anonymous namespace

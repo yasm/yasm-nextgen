@@ -30,11 +30,9 @@
 
 #include "util.h"
 
-#include <iomanip>
-
 #include <llvm/ADT/Statistic.h>
+#include <YAML/emitter.h>
 #include <yasmx/Support/errwarn.h>
-#include <yasmx/Support/marg_ostream.h>
 #include <yasmx/BytecodeContainer.h>
 #include <yasmx/BytecodeOutput.h>
 #include <yasmx/Bytecode.h>
@@ -76,7 +74,6 @@ public:
                bool default_rel);
     ~X86General();
 
-    void Put(marg_ostream& os) const;
     void Finalize(Bytecode& bc);
     unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
     bool Expand(Bytecode& bc, unsigned long& len, int span,
@@ -86,6 +83,8 @@ public:
     void Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     X86General* clone() const;
+
+    void Write(YAML::Emitter& out) const;
 
 private:
     X86General(const X86General& rhs);
@@ -145,46 +144,6 @@ X86General::X86General(const X86General& rhs)
 
 X86General::~X86General()
 {
-}
-
-void
-X86General::Put(marg_ostream& os) const
-{
-    os << "_Instruction_\n";
-
-    os << "Effective Address:";
-    if (m_ea)
-    {
-        os << '\n';
-        ++os;
-        os << *m_ea;
-        --os;
-    }
-    else
-        os << " (nil)\n";
-
-    os << "Immediate Value:";
-    if (m_imm)
-    {
-        os << '\n';
-        ++os;
-        os << *m_imm;
-        --os;
-    }
-    else
-        os << " (nil)\n";
-
-    os << m_opcode;
-    os << m_common;
-
-    std::ios_base::fmtflags origff = os.flags();
-    os << "SpPre=" << std::hex << std::setfill('0') << std::setw(2)
-       << static_cast<unsigned int>(m_special_prefix);
-    os << " REX=" << std::oct << std::setfill('0') << std::setw(3)
-       << static_cast<unsigned int>(m_rex);
-    os << std::setfill(' ');
-    os.flags(origff);
-    os << " PostOp=" << static_cast<unsigned int>(m_postop) << '\n';
 }
 
 void
@@ -546,6 +505,46 @@ X86General*
 X86General::clone() const
 {
     return new X86General(*this);
+}
+
+void
+X86General::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << "X86General";
+    out << YAML::Key << "common" << YAML::Value << m_common;
+    out << YAML::Key << "opcode" << YAML::Value << m_opcode;
+
+    // effective address
+    out << YAML::Key << "effective address" << YAML::Value;
+    if (m_ea)
+        m_ea->Write(out);
+    else
+        out << YAML::Null;
+
+    out << YAML::Key << "immediate:" << YAML::Value;
+    if (m_imm)
+        m_imm->Write(out);
+    else
+        out << YAML::Null;
+
+    out << YAML::Key << "special prefix" << YAML::Value;
+    out << YAML::Hex << static_cast<unsigned int>(m_special_prefix);
+    out << YAML::Key << "rex";
+    out << YAML::Value << YAML::Oct << static_cast<unsigned int>(m_rex);
+    out << YAML::Key << "default rel";
+    out << YAML::Value << static_cast<bool>(m_default_rel);
+    out << YAML::Key << "postop" << YAML::Value;
+    switch (m_postop)
+    {
+        case POSTOP_SIGNEXT_IMM8:   out << "SIGNEXT_IMM8"; break;
+        case POSTOP_SHORT_MOV:      out << "SHORT_MOV"; break;
+        case POSTOP_ADDRESS16:      out << "ADDRESS16"; break;
+        case POSTOP_SIMM32_AVAIL:   out << "SIMM32_AVAIL"; break;
+        case POSTOP_NONE:
+        default:                    out << YAML::Null; break;
+    }
+    out << YAML::EndMap;
 }
 
 void

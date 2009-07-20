@@ -32,7 +32,9 @@
 
 #include <cctype>
 #include <cstring>
+#include <sstream>
 
+#include <YAML/emitter.h>
 #include <yasmx/Support/Compose.h>
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/phash.h>
@@ -148,12 +150,34 @@ X86Register::Put(std::ostream& os) const
     }
 }
 
+void
+X86Register::Write(YAML::Emitter& out) const
+{
+    out << YAML::Flow << YAML::BeginMap;
+    out << YAML::Key << "arch" << YAML::Value << "x86";
+    std::ostringstream oss;
+    Put(oss);
+    out << YAML::Key << "type" << YAML::Value << oss.str();
+    out << YAML::EndMap;
+}
+
 const X86Register*
 X86RegisterGroup::getReg(unsigned long regindex) const
 {
     if ((m_get_bits() != 64 && regindex >= 8) || regindex >= m_size)
         throw ValueError(N_("invalid register index"));
     return m_regs[regindex];
+}
+
+void
+X86RegisterGroup::Write(YAML::Emitter& out) const
+{
+    out << YAML::Flow << YAML::BeginMap;
+    out << YAML::Key << "arch" << YAML::Value << "x86";
+    out << YAML::Key << "reg0" << YAML::Value;
+    m_regs[0]->Write(out);
+    out << YAML::Key << "size" << YAML::Value << m_size;
+    out << YAML::EndMap;
 }
 
 X86SegmentRegister::~X86SegmentRegister()
@@ -165,6 +189,19 @@ X86SegmentRegister::Put(std::ostream& os) const
 {
     static const char *name[] = {"es","cs","ss","ds","fs","gs"};
     os << name[m_type];
+}
+
+void
+X86SegmentRegister::Write(YAML::Emitter& out) const
+{
+    out << YAML::Flow << YAML::BeginMap;
+    out << YAML::Key << "arch" << YAML::Value << "x86";
+    std::ostringstream oss;
+    Put(oss);
+    out << YAML::Key << "type" << YAML::Value << oss.str();
+    out << YAML::Key << "prefix";
+    out << YAML::Value << static_cast<unsigned int>(m_prefix);
+    out << YAML::EndMap;
 }
 
 void
@@ -182,6 +219,17 @@ X86TargetModifier::Put(std::ostream& os) const
         default:
             assert(false);   // unknown
     }
+}
+
+void
+X86TargetModifier::Write(YAML::Emitter& out) const
+{
+    out << YAML::Flow << YAML::BeginMap;
+    out << YAML::Key << "arch" << YAML::Value << "x86";
+    std::ostringstream oss;
+    Put(oss);
+    out << YAML::Key << "type" << YAML::Value << oss.str();
+    out << YAML::EndMap;
 }
 
 enum RegTmodType

@@ -30,8 +30,8 @@
 
 #include <util.h>
 
+#include <YAML/emitter.h>
 #include <yasmx/Support/Compose.h>
-#include <yasmx/Support/marg_ostream.h>
 #include <yasmx/Bytes.h>
 #include <yasmx/Bytes_util.h>
 #include <yasmx/Symbol.h>
@@ -84,33 +84,36 @@ CoffSection::~CoffSection()
 }
 
 void
-CoffSection::Put(marg_ostream& os) const
+CoffSection::Write(YAML::Emitter& out) const
 {
-    os << "sym=\n";
-    ++os;
-    os << *m_sym;
-    --os;
-    os << "scnum=" << m_scnum << '\n';
-    os << "flags=";
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << key;
+    out << YAML::Key << "sym" << YAML::Value << m_sym;
+    out << YAML::Key << "scnum" << YAML::Value << m_scnum;
+    out << YAML::Key << "flags" << YAML::Value;
     switch (m_flags & STD_MASK)
     {
         case TEXT:
-            os << "TEXT";
+            out << "TEXT";
             break;
         case DATA:
-            os << "DATA";
+            out << "DATA";
             break;
         case BSS:
-            os << "BSS";
+            out << "BSS";
             break;
         default:
-            os << "UNKNOWN";
+            out << "UNKNOWN";
             break;
     }
-    os << std::showbase;
-    os << '(' << std::hex << m_flags << std::dec << ")\n";
-    os << "size=" << m_size << '\n';
-    os << "relptr=" << std::hex << m_relptr << std::dec << '\n';
+    out << YAML::Key << "flags value" << YAML::Value << YAML::Hex << m_flags;
+    out << YAML::Key << "size" << YAML::Value << m_size;
+    out << YAML::Key << "relptr" << YAML::Value << m_relptr;
+    out << YAML::Key << "strtab name offset" << YAML::Value << m_strtab_name;
+    out << YAML::Key << "no base" << YAML::Value << m_nobase;
+    out << YAML::Key << "debug" << YAML::Value << m_isdebug;
+    out << YAML::Key << "set align" << YAML::Value << m_setalign;
+    out << YAML::EndMap;
 }
 
 void

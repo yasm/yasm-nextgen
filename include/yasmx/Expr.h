@@ -42,10 +42,8 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace llvm
-{
-class APFloat;
-}
+namespace llvm { class APFloat; }
+namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -246,6 +244,14 @@ public:
         assert(m_type == OP);
         m_data.op.nchild += delta;
     }
+
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    void Write(YAML::Emitter& out) const;
+
+    /// Dump a YAML representation to stderr.
+    /// For debugging purposes.
+    void Dump() const;
 
 private:
     /// Expression item data.  Correct value depends on type.
@@ -542,6 +548,14 @@ public:
 
     //@}
 
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    void Write(YAML::Emitter& out) const;
+
+    /// Dump a YAML representation to stderr.
+    /// For debugging purposes.
+    void Dump() const;
+
 private:
     /// Terms of the expression.  The entire tree is stored here.
     ExprTerms m_terms;
@@ -806,6 +820,28 @@ YASM_LIB_EXPORT
 std::ostream& operator<< (std::ostream& os, const ExprTerm& term);
 YASM_LIB_EXPORT
 std::ostream& operator<< (std::ostream& os, const Expr& e);
+
+/// Dump a YAML representation of expression term.  For debugging purposes.
+/// @param out          YAML emitter
+/// @param term         expression term
+/// @return Emitter.
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const ExprTerm& term)
+{
+    term.Write(out);
+    return out;
+}
+
+/// Dump a YAML representation of expression.  For debugging purposes.
+/// @param out          YAML emitter
+/// @param e            expression
+/// @return Emitter.
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const Expr& e)
+{
+    e.Write(out);
+    return out;
+}
 
 /// Get left and right hand immediate children, or single immediate child.
 /// @param e        Expression

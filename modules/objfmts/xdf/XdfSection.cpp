@@ -26,7 +26,7 @@
 //
 #include "XdfSection.h"
 
-#include <yasmx/Support/marg_ostream.h>
+#include <YAML/emitter.h>
 #include <yasmx/Bytes.h>
 #include <yasmx/Bytes_util.h>
 
@@ -59,19 +59,19 @@ XdfSection::~XdfSection()
 }
 
 void
-XdfSection::Put(marg_ostream& os) const
+XdfSection::Write(YAML::Emitter& out) const
 {
-    os << "sym=\n";
-    ++os;
-    os << *sym;
-    --os;
-    os << "has_addr=" << has_addr << '\n';
-    os << "has_vaddr=" << has_vaddr << '\n';
-    os << "scnum=" << scnum << '\n';
-    os << "flat=" << flat << '\n';
-    os << "bits=" << bits << '\n';
-    os << "size=" << size << '\n';
-    os << "relptr=0x" << std::hex << relptr << std::dec << '\n';
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << key;
+    out << YAML::Key << "sym" << YAML::Value << sym;
+    out << YAML::Key << "has addr" << YAML::Value << has_addr;
+    out << YAML::Key << "has vaddr" << YAML::Value << has_vaddr;
+    out << YAML::Key << "scnum" << YAML::Value << scnum;
+    out << YAML::Key << "flat" << YAML::Value << flat;
+    out << YAML::Key << "bits" << YAML::Value << bits;
+    out << YAML::Key << "size" << YAML::Value << size;
+    out << YAML::Key << "relptr" << YAML::Value << relptr;
+    out << YAML::EndMap;
 }
 
 void

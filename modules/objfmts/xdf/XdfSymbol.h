@@ -26,7 +26,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <yasmx/Support/marg_ostream_fwd.h>
 #include <yasmx/AssocData.h>
 #include <yasmx/Symbol.h>
 #include <yasmx/SymbolRef.h>
@@ -45,7 +44,7 @@ struct XdfSymbol : public AssocData
 
     XdfSymbol(unsigned long index_) : index(index_) {}
     ~XdfSymbol();
-    void Put(marg_ostream& os) const;
+    void Write(YAML::Emitter& out) const;
 
     enum Flags
     {

@@ -32,9 +32,10 @@
 #include <memory>
 
 #include "yasmx/Config/export.h"
-#include "yasmx/Support/marg_ostream_fwd.h"
-
 #include "yasmx/Value.h"
+
+
+namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -91,27 +92,34 @@ public:
     /// 1 if effective address is forced non-PC-relative.
     bool m_not_pc_rel:1;
 
-    /// Print an effective address.  For debugging purposes.
-    /// @param os           output stream
-    /// @param indent_level indentation level
-    virtual void Put(marg_ostream& os) const = 0;
-
     /// Clone an effective address.
     virtual EffAddr* clone() const = 0;
+
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    void Write(YAML::Emitter& out) const;
+
+    /// Dump a YAML representation to stderr.
+    /// For debugging purposes.
+    void Dump() const;
 
 protected:
     /// Copy constructor so that derived classes can sanely have one.
     EffAddr(const EffAddr& rhs);
 
+    /// Write derived class YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    virtual void DoWrite(YAML::Emitter& out) const = 0;
+
 private:
     const EffAddr& operator=(const EffAddr&);
 };
 
-inline marg_ostream&
-operator<< (marg_ostream& os, const EffAddr& ea)
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const EffAddr& ea)
 {
-    ea.Put(os);
-    return os;
+    ea.Write(out);
+    return out;
 }
 
 } // namespace yasm

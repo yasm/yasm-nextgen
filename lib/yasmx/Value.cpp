@@ -32,9 +32,10 @@
 #include <bitset>
 
 #include "llvm/ADT/APFloat.h"
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/marg_ostream.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
@@ -829,46 +830,64 @@ Value::OutputBasic(Bytes& bytes, int warn, const Arch& arch)
     return true;
 }
 
-marg_ostream&
-operator<< (marg_ostream& os, const Value& value)
+void
+Value::Write(YAML::Emitter& out) const
 {
-    os << value.getSize() << "-bit, ";
-    os << (value.isSigned() ? "" : "un") << "signed\n";
-    os << "Absolute portion=";
-    if (!value.hasAbs())
-        os << "0";
+    out << YAML::BeginMap;
+
+    // abs
+    out << YAML::Key << "abs" << YAML::Value;
+    if (m_abs.get() != 0)
+        out << *m_abs;
     else
-        os << *value.getAbs();
-    os << '\n';
-    if (value.isRelative())
-    {
-        os << "Relative to=";
-        os << (value.isSegOf() ? "SEG " : "");
-        os << value.getRelative()->getName();
-        Location sub_loc;
-        if (SymbolRef sub = value.getSubSymbol())
-            os << " - " << sub->getName();
-        else if (value.getSubLocation(&sub_loc))
-            os << " - {LOC}";
-        os << '\n';
-        if (value.isWRT())
-        {
-            os << "(With respect to=" << value.getWRT()->getName() << ")\n";
-        }
-        if (value.getRShift() > 0)
-        {
-            os << "(Right shifted by=" << value.getRShift() << ")\n";
-        }
-        if (value.isIPRelative())
-            os << "(IP-relative)\n";
-        if (value.isJumpTarget())
-            os << "(Jump target)\n";
-        if (value.isSectionRelative())
-            os << "(Section-relative)\n";
-        if (!value.isWarnEnabled())
-            os << "(Overflow warnings disabled)\n";
-    }
-    return os;
+        out << YAML::Null;
+
+    // rel
+    out << YAML::Key << "rel" << YAML::Value;
+    if (m_rel)
+        out << m_rel->getName();
+    else
+        out << YAML::Null;
+
+    // wrt
+    out << YAML::Key << "wrt" << YAML::Value;
+    if (m_wrt)
+        out << m_wrt->getName();
+    else
+        out << YAML::Null;
+
+    // sub
+    out << YAML::Key << "sub" << YAML::Value;
+    if (m_sub_sym)
+        out << m_sub.sym->getName();
+    else if (m_sub_loc)
+        out << m_sub.loc;
+    else
+        out << YAML::Null;
+
+    out << YAML::Key << "line" << YAML::Value << m_line;
+    out << YAML::Key << "next insn" << YAML::Value << m_next_insn;
+    out << YAML::Key << "seg of" << YAML::Value << static_cast<bool>(m_seg_of);
+    out << YAML::Key << "right shift" << YAML::Value << m_rshift;
+    out << YAML::Key << "IP relative";
+    out << YAML::Value << static_cast<bool>(m_ip_rel);
+    out << YAML::Key << "jump target";
+    out << YAML::Value << static_cast<bool>(m_jump_target);
+    out << YAML::Key << "section relative";
+    out << YAML::Value << static_cast<bool>(m_section_rel);
+    out << YAML::Key << "warnings disabled";
+    out << YAML::Value << static_cast<bool>(m_no_warn);
+    out << YAML::Key << "sign" << YAML::Value << static_cast<bool>(m_sign);
+    out << YAML::Key << "size" << YAML::Value << m_size;
+    out << YAML::EndMap;
+}
+
+void
+Value::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 } // namespace yasm

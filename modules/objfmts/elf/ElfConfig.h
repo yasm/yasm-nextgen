@@ -31,6 +31,8 @@
 #include "ElfTypes.h"
 
 
+namespace YAML { class Emitter; }
+
 namespace yasm
 {
 
@@ -96,7 +98,17 @@ struct ElfConfig
     std::string getRelocSectionName(const std::string& basesect) const;
 
     bool setEndian(Bytes& bytes) const;
+
+    void Write(YAML::Emitter& out) const;
+    void Dump() const;
 };
+
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const ElfConfig& config)
+{
+    config.Write(out);
+    return out;
+}
 
 }}} // namespace yasm::objfmt::elf
 

@@ -33,12 +33,13 @@
 #include <string>
 
 #include "yasmx/Config/export.h"
-#include "yasmx/Support/marg_ostream_fwd.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "yasmx/Support/scoped_ptr.h"
 
 #include "yasmx/SymbolRef.h"
 
+
+namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -52,7 +53,7 @@ class Symbol;
 class YASM_LIB_EXPORT Object
 {
     friend YASM_LIB_EXPORT
-    marg_ostream& operator<< (marg_ostream& os, const Object& object);
+    YAML::Emitter& operator<< (YAML::Emitter& out, const Object& object);
 
 public:
     /// Constructor.  A default section is created as the first
@@ -207,6 +208,14 @@ public:
     Arch* getArch() { return m_arch; }
     const Arch* getArch() const { return m_arch; }
 
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    void Write(YAML::Emitter& out) const;
+
+    /// Dump a YAML representation to stderr.
+    /// For debugging purposes.
+    void Dump() const;
+
 private:
     Object(const Object&);                  // not implemented
     const Object& operator=(const Object&); // not implemented
@@ -233,11 +242,16 @@ private:
     util::scoped_ptr<Impl> m_impl;
 };
 
-/// Print an object.  For debugging purposes.
-/// @param os           output stream
+/// Dump a YAML representation of object.  For debugging purposes.
+/// @param out          YAML emitter
 /// @param object       object
-YASM_LIB_EXPORT
-marg_ostream& operator<< (marg_ostream& os, const Object& object);
+/// @return Emitter.
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const Object& object)
+{
+    object.Write(out);
+    return out;
+}
 
 } // namespace yasm
 

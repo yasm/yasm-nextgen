@@ -34,13 +34,12 @@
 #include <vector>
 
 #include "llvm/ADT/SmallVector.h"
-
 #include "yasmx/Config/export.h"
-#include "yasmx/Support/marg_ostream_fwd.h"
-
 #include "yasmx/EffAddr.h"
 #include "yasmx/Expr.h"
 
+
+namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -57,6 +56,14 @@ public:
     TargetModifier() {}
     virtual ~TargetModifier();
     virtual void Put(std::ostream& os) const = 0;
+
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    virtual void Write(YAML::Emitter& out) const = 0;
+
+    /// Dump a YAML representation to stderr.
+    /// For debugging purposes.
+    void Dump() const;
 
 private:
     // not implemented (noncopyable class)
@@ -119,7 +126,6 @@ public:
     /// expression trees.
     void Destroy();
 
-    void Put(marg_ostream& os) const;
     void Finalize();
 
     /// Match type.
@@ -189,6 +195,14 @@ public:
     /// Set the strictness of the operand.
     void setStrict(bool strict=true) { m_strict = strict; }
 
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    void Write(YAML::Emitter& out) const;
+
+    /// Dump a YAML representation to stderr.
+    /// For debugging purposes.
+    void Dump() const;
+
 private:
     /// Operand data.
     union
@@ -241,6 +255,14 @@ public:
     virtual ~Prefix();
     virtual void Put(std::ostream& os) const = 0;
 
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    virtual void Write(YAML::Emitter& out) const = 0;
+
+    /// Dump a YAML representation to stderr.
+    /// For debugging purposes.
+    void Dump() const;
+
 private:
     Prefix(const Prefix&);                  // not implemented
     const Prefix& operator=(const Prefix&); // not implemented
@@ -281,16 +303,18 @@ public:
         m_segregs.push_back(segreg);
     }
 
-    /// Print a list of instruction operands.  For debugging purposes.
-    /// @note A base version of this function is provided.
-    /// @param os           output stream
-    /// @param indent_level indentation level
-    virtual void Put(marg_ostream& os) const = 0;
-
     /// Append instruction to a bytecode container.
     void Append(BytecodeContainer& container, unsigned long line);
 
     virtual Insn* clone() const = 0;
+
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    void Write(YAML::Emitter& out) const;
+
+    /// Dump a YAML representation to stderr.
+    /// For debugging purposes.
+    void Dump() const;
 
 protected:
     /// Copy constructor.
@@ -299,6 +323,10 @@ protected:
     /// Append instruction to a section.
     virtual void DoAppend(BytecodeContainer& container,
                           unsigned long line) = 0;
+
+    /// Write derived class YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    virtual void DoWrite(YAML::Emitter& out) const = 0;
 
     /// Operands.
     Operands m_operands;
@@ -327,18 +355,48 @@ operator<< (std::ostream& os, const Prefix& prefix)
     return os;
 }
 
-inline marg_ostream&
-operator<< (marg_ostream& os, const Operand& operand)
+/// Dump a YAML representation of a target modifier.  For debugging purposes.
+/// @param out          YAML emitter
+/// @param tmod         target modifier
+/// @return Emitter.
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const TargetModifier& tmod)
 {
-    operand.Put(os);
-    return os;
+    tmod.Write(out);
+    return out;
 }
 
-inline marg_ostream&
-operator<< (marg_ostream& os, const Insn& insn)
+/// Dump a YAML representation of a prefix.  For debugging purposes.
+/// @param out          YAML emitter
+/// @param prefix       prefix
+/// @return Emitter.
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const Prefix& prefix)
 {
-    insn.Put(os);
-    return os;
+    prefix.Write(out);
+    return out;
+}
+
+/// Dump a YAML representation of an operand.  For debugging purposes.
+/// @param out          YAML emitter
+/// @param operand      operand
+/// @return Emitter.
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const Operand& operand)
+{
+    operand.Write(out);
+    return out;
+}
+
+/// Dump a YAML representation of an instruction.  For debugging purposes.
+/// @param out          YAML emitter
+/// @param insn         instruction
+/// @return Emitter.
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const Insn& insn)
+{
+    insn.Write(out);
+    return out;
 }
 
 } // namespace yasm

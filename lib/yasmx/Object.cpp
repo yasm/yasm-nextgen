@@ -36,9 +36,11 @@
 #include <boost/pool/pool.hpp>
 
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/marg_ostream.h"
+#include "yasmx/Arch.h"
 #include "yasmx/Errwarns.h"
 #include "yasmx/Section.h"
 #include "yasmx/Symbol.h"
@@ -130,30 +132,6 @@ Object::setObjectFilename(const std::string& obj_filename)
 
 Object::~Object()
 {
-}
-
-marg_ostream&
-operator<< (marg_ostream& os, const Object& object)
-{
-    // Print symbol table
-    os << "Symbol Table:\n";
-    for (Object::const_symbol_iterator i=object.m_symbols.begin(),
-         end=object.m_symbols.end(); i != end; ++i)
-    {
-        os << "Symbol `" << i->getName() << "'\n";
-        ++os;
-        os << *i;
-        --os;
-    }
-
-    // Print sections and bytecodes
-    for (Object::const_section_iterator i=object.m_sections.begin(),
-         end=object.m_sections.end(); i != end; ++i)
-    {
-        os << "Section:\n";
-        os << *i;
-    }
-    return os;
 }
 
 void
@@ -276,6 +254,56 @@ SymbolRef
 Object::FindSpecialSymbol(const std::string& name)
 {
     return SymbolRef(m_impl->special_sym_map.Find(name));
+}
+
+void
+Object::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "source filename" << YAML::Value << m_src_filename;
+    out << YAML::Key << "object filename" << YAML::Value << m_obj_filename;
+
+    out << YAML::Key << "architecture keyword" << YAML::Value;
+    if (m_arch)
+        out << m_arch->getModule().getKeyword();
+    else
+        out << YAML::Null;
+
+    out << YAML::Key << "current section name" << YAML::Value;
+    if (m_cur_section)
+        out << m_cur_section->getName();
+    else
+        out << YAML::Null;
+
+    // sections (and their bytecodes)
+    out << YAML::Key << "sections" << YAML::Value;
+    if (m_sections.empty())
+        out << YAML::Flow;
+    out << YAML::BeginSeq;
+    for (const_section_iterator i=m_sections.begin(), end=m_sections.end();
+         i != end; ++i)
+        out << YAML::Anchor("SECT@" + i->getName()) << *i;
+    out << YAML::EndSeq;
+
+    // symbols
+    out << YAML::Key << "symbols" << YAML::Value;
+    if (m_symbols.empty())
+        out << YAML::Flow;
+    out << YAML::BeginSeq;
+    for (const_symbol_iterator i=m_symbols.begin(), end=m_symbols.end();
+         i != end; ++i)
+        out << YAML::Anchor("SYM@" + i->getName()) << *i;
+    out << YAML::EndSeq;
+
+    out << YAML::EndMap;
+}
+
+void
+Object::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 } // namespace yasm

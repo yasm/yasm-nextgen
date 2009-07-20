@@ -50,7 +50,7 @@ struct BinSection : public AssocData
 
     BinSection();
     ~BinSection();
-    void Put(marg_ostream& os) const;
+    void Write(YAML::Emitter& out) const;
 
     // User-provided alignment
     bool has_align, has_valign;

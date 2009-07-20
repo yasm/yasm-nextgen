@@ -56,7 +56,6 @@ public:
     UnwindInfo();
     ~UnwindInfo();
 
-    virtual void Put(marg_ostream& os) const;
     virtual void Finalize(Bytecode& bc);
     virtual unsigned long CalcLen(Bytecode& bc,
                                   const Bytecode::AddSpanFunc& add_span);
@@ -69,6 +68,7 @@ public:
                         /*@out@*/ long* pos_thres);
     virtual void Output(Bytecode& bc, BytecodeOutput& bc_out);
     virtual UnwindInfo* clone() const;
+    virtual void Write(YAML::Emitter& out) const;
 
     void setProc(SymbolRef proc) { m_proc = proc; }
     SymbolRef getProc() { return m_proc; }

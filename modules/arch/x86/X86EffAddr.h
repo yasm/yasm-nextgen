@@ -110,8 +110,9 @@ public:
     /// Make the EA only a displacement.
     void setDispOnly();
 
-    void Put(marg_ostream& os) const;
     X86EffAddr* clone() const;
+
+    void DoWrite(YAML::Emitter& out) const;
 
     // Check an effective address.  Returns true if EA was successfully
     // determined, false if indeterminate EA.

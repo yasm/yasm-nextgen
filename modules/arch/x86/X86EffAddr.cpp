@@ -28,9 +28,7 @@
 
 #include <util.h>
 
-#include <iomanip>
-#include <iostream>
-
+#include <YAML/emitter.h>
 #include <yasmx/Config/functional.h>
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/marg_ostream.h>
@@ -214,35 +212,27 @@ X86EffAddr::setImm(std::auto_ptr<Expr> imm, unsigned int im_len)
     m_need_disp = true;
 }
 
-void
-X86EffAddr::Put(marg_ostream& os) const
-{
-    EffAddr::Put(os);
-
-    os << "ModRM=";
-    std::ios_base::fmtflags origff = os.flags();
-    os << std::oct << std::setfill('0') << std::setw(3)
-       << static_cast<unsigned int>(m_modrm);
-    os.flags(origff);
-
-    os << " ValidRM=" << m_valid_modrm;
-    os << " NeedRM=" << m_need_modrm;
-
-    os << "\nSIB=";
-    origff = os.flags();
-    os << std::oct << std::setfill('0') << std::setw(3)
-       << static_cast<unsigned int>(m_sib);
-    os.flags(origff);
-
-    os << " ValidSIB=" << m_valid_sib;
-    os << " NeedSIB=" << static_cast<unsigned int>(m_need_sib);
-    os << '\n';
-}
-
 X86EffAddr*
 X86EffAddr::clone() const
 {
     return new X86EffAddr(*this);
+}
+
+void
+X86EffAddr::DoWrite(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "modrm";
+    out << YAML::Value << YAML::Oct << static_cast<unsigned int>(m_modrm);
+    out << YAML::Key << "need modrm" << YAML::Value << m_need_modrm;
+    out << YAML::Key << "valid modrm" << YAML::Value << m_valid_modrm;
+
+    out << YAML::Key << "sib";
+    out << YAML::Value << YAML::Oct << static_cast<unsigned int>(m_sib);
+    out << YAML::Key << "need sib";
+    out << YAML::Value << static_cast<unsigned int>(m_need_sib);
+    out << YAML::Key << "valid sib" << YAML::Value << m_valid_sib;
+    out << YAML::EndMap;
 }
 
 // Only works if term.type == Expr::REG (doesn't check).

@@ -26,7 +26,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <yasmx/Support/marg_ostream_fwd.h>
 #include <yasmx/AssocData.h>
 #include <yasmx/Section.h>
 #include <yasmx/SymbolRef.h>
@@ -49,7 +48,7 @@ struct XdfSection : public AssocData
 
     XdfSection(SymbolRef sym_);
     ~XdfSection();
-    void Put(marg_ostream& os) const;
+    void Write(YAML::Emitter& out) const;
 
     void Write(Bytes& bytes, const Section& sect) const;
     void Read(Bytes& bytes,

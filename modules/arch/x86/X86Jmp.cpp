@@ -31,8 +31,8 @@
 #include "util.h"
 
 #include <llvm/ADT/Statistic.h>
+#include <YAML/emitter.h>
 #include <yasmx/Support/errwarn.h>
-#include <yasmx/Support/marg_ostream.h>
 #include <yasmx/BytecodeContainer.h>
 #include <yasmx/BytecodeOutput.h>
 #include <yasmx/Bytecode.h>
@@ -65,7 +65,6 @@ public:
            std::auto_ptr<Expr> target);
     ~X86Jmp();
 
-    void Put(marg_ostream& os) const;
     void Finalize(Bytecode& bc);
     unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
     bool Expand(Bytecode& bc,
@@ -78,6 +77,8 @@ public:
     void Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     X86Jmp* clone() const;
+
+    void Write(YAML::Emitter& out) const;
 
 private:
     X86Common m_common;
@@ -108,56 +109,6 @@ X86Jmp::X86Jmp(const X86Common& common,
 
 X86Jmp::~X86Jmp()
 {
-}
-
-void
-X86Jmp::Put(marg_ostream& os) const
-{
-    os << "_Jump_\n";
-
-    os << "Target:\n";
-    ++os;
-    os << m_target;
-    --os;
-    /* FIXME
-    fprintf(f, "%*sOrigin=\n", indent_level, "");
-    yasm_symrec_print(jmp->origin, f, indent_level+1);
-    */
-
-    os << "\nShort Form:\n";
-    ++os;
-    if (m_shortop.getLen() == 0)
-        os << "None\n";
-    else
-        os << m_shortop;
-    --os;
-
-    os << "Near Form:\n";
-    ++os;
-    if (m_nearop.getLen() == 0)
-        os << "None\n";
-    else
-        os << m_nearop;
-    --os;
-
-    os << "OpSel=";
-    switch (m_op_sel)
-    {
-        case JMP_NONE:
-            os << "None";
-            break;
-        case JMP_SHORT:
-            os << "Short";
-            break;
-        case JMP_NEAR:
-            os << "Near";
-            break;
-        default:
-            os << "UNKNOWN!!";
-            break;
-    }
-
-    os << m_common;
 }
 
 void
@@ -281,6 +232,27 @@ X86Jmp*
 X86Jmp::clone() const
 {
     return new X86Jmp(*this);
+}
+
+void
+X86Jmp::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << "X86Jmp";
+    out << YAML::Key << "common" << YAML::Value << m_common;
+    out << YAML::Key << "short opcode" << YAML::Value << m_shortop;
+    out << YAML::Key << "near opcode" << YAML::Value << m_nearop;
+    out << YAML::Key << "target" << YAML::Value << m_target;
+
+    out << YAML::Key << "opcode selection" << YAML::Value;
+    switch (m_op_sel)
+    {
+        case JMP_NONE:  out << "None"; break;
+        case JMP_SHORT: out << "Short"; break;
+        case JMP_NEAR:  out << "Near"; break;
+        default:        out << YAML::Null; break;
+    }
+    out << YAML::EndMap;
 }
 
 void

@@ -34,8 +34,9 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "yasmx/Config/export.h"
-#include "yasmx/Support/marg_ostream_fwd.h"
 
+
+namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -49,27 +50,33 @@ public:
     /// Destructor.
     virtual ~AssocData();
 
-    virtual void Put(marg_ostream& os) const = 0;
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    virtual void Write(YAML::Emitter& out) const = 0;
+
+    /// Dump a YAML representation to stderr.
+    /// For debugging purposes.
+    void Dump() const;
 
 private:
     AssocData(const AssocData&);                    // not implemented
     const AssocData& operator=(const AssocData&);   // not implemented
 };
 
-inline marg_ostream&
-operator<< (marg_ostream& os, const AssocData& data)
+/// Dump a YAML representation of associated data.  For debugging purposes.
+/// @param out          YAML emitter
+/// @param data         associated data
+/// @return Emitter.
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const AssocData& data)
 {
-    data.Put(os);
-    return os;
+    data.Write(out);
+    return out;
 }
 
 /// Associated data container.
 class YASM_LIB_EXPORT AssocDataContainer
 {
-    friend YASM_LIB_EXPORT
-	marg_ostream& operator<< (marg_ostream& os,
-                              const AssocDataContainer& container);
-
     struct AssocMapEntry
     {
         const void* key;
@@ -87,11 +94,27 @@ public:
 
     AssocData* getAssocData(const void* key);
     const AssocData* getAssocData(const void* key) const;
+
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    virtual void Write(YAML::Emitter& out) const = 0;
+
+    /// Dump a YAML representation to stderr.
+    /// For debugging purposes.
+    void Dump() const;
 };
 
-YASM_LIB_EXPORT
-marg_ostream& operator<< (marg_ostream& os,
-                          const AssocDataContainer& container);
+/// Dump a YAML representation of associated data container.
+/// For debugging purposes.
+/// @param out          YAML emitter
+/// @param container    associated data container
+/// @return Emitter.
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const AssocDataContainer& container)
+{
+    container.Write(out);
+    return out;
+}
 
 } // namespace yasm
 

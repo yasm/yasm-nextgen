@@ -26,6 +26,9 @@
 //
 #include "yasmx/Reloc.h"
 
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
+
 
 namespace yasm
 {
@@ -44,6 +47,32 @@ Expr
 Reloc::getValue() const
 {
     return Expr(m_sym);
+}
+
+void
+Reloc::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "reloc type" << YAML::Value << getTypeName();
+    out << YAML::Key << "addr" << YAML::Value << m_addr;
+    out << YAML::Key << "sym" << YAML::Value << m_sym;
+    out << YAML::Key << "implementation" << YAML::Value;
+    DoWrite(out);
+    out << YAML::EndMap;
+}
+
+void
+Reloc::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
+}
+
+void
+Reloc::DoWrite(YAML::Emitter& out) const
+{
+    out << YAML::Null;
 }
 
 } // namespace yasm

@@ -65,6 +65,8 @@ public:
 protected:
     ElfRelocationType   m_type;
     IntNum              m_addend;
+
+    virtual void DoWrite(YAML::Emitter& out) const;
 };
 
 }}} // namespace yasm::objfmt::elf

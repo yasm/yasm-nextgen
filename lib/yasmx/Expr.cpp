@@ -33,6 +33,8 @@
 #include <ostream>
 
 #include "llvm/ADT/APFloat.h"
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Arch.h"
@@ -211,6 +213,78 @@ ExprTerm::Zero()
     Clear();
     m_type = INT;
     m_data.intn = IntNum(0);
+}
+
+void
+ExprTerm::Write(YAML::Emitter& out) const
+{
+    if (m_type == NONE)
+    {
+        out << YAML::Null;
+        return;
+    }
+
+    out << YAML::Flow << YAML::BeginMap << YAML::Key;
+    switch (m_type)
+    {
+        case REG:   out << "reg" << YAML::Value << *m_data.reg; break;
+        case INT:   out << "int" << YAML::Value << *getIntNum(); break;
+        case SUBST: out << "subst" << YAML::Value << m_data.subst; break;
+        case FLOAT: out << "float" << YAML::Value << YAML::Null; break;
+        case SYM:   out << "sym" << YAML::Value << SymbolRef(m_data.sym); break;
+        case LOC:   out << "loc" << YAML::Value << m_data.loc; break;
+        case OP:
+            out << "op" << YAML::Value;
+            switch (m_data.op.op)
+            {
+                case Op::ADD:       out << "ADD"; break;
+                case Op::SUB:       out << "SUB"; break;
+                case Op::MUL:       out << "MUL"; break;
+                case Op::DIV:       out << "DIV"; break;
+                case Op::SIGNDIV:   out << "SIGNDIV"; break;
+                case Op::MOD:       out << "MOD"; break;
+                case Op::SIGNMOD:   out << "SIGNMOD"; break;
+                case Op::NEG:       out << "NEG"; break;
+                case Op::NOT:       out << "NOT"; break;
+                case Op::OR:        out << "OR"; break;
+                case Op::AND:       out << "AND"; break;
+                case Op::XOR:       out << "XOR"; break;
+                case Op::XNOR:      out << "XNOR"; break;
+                case Op::NOR:       out << "NOR"; break;
+                case Op::SHL:       out << "SHL"; break;
+                case Op::SHR:       out << "SHR"; break;
+                case Op::LOR:       out << "LOR"; break;
+                case Op::LAND:      out << "LAND"; break;
+                case Op::LNOT:      out << "LNOT"; break;
+                case Op::LXOR:      out << "LXOR"; break;
+                case Op::LXNOR:     out << "LXNOR"; break;
+                case Op::LNOR:      out << "LNOR"; break;
+                case Op::LT:        out << "LT"; break;
+                case Op::GT:        out << "GT"; break;
+                case Op::LE:        out << "LE"; break;
+                case Op::GE:        out << "GE"; break;
+                case Op::NE:        out << "NE"; break;
+                case Op::EQ:        out << "EQ"; break;
+                case Op::SEG:       out << "SEG"; break;
+                case Op::WRT:       out << "WRT"; break;
+                case Op::SEGOFF:    out << "SEGOFF"; break;
+                case Op::IDENT:     out << "IDENT"; break;
+                default:            out << YAML::Null; break;
+            }
+            out << YAML::Key << "nchild" << YAML::Value << m_data.op.nchild;
+            break;
+        default: break;
+    }
+    out << YAML::Key << "depth" << YAML::Value << m_depth;
+    out << YAML::EndMap;
+}
+
+void
+ExprTerm::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 void
@@ -871,6 +945,30 @@ Expr::getRegister() const
 {
     assert(isRegister() && "expression is not register");
     return m_terms.front().getRegister();
+}
+
+void
+Expr::Write(YAML::Emitter& out) const
+{
+    if (m_terms.empty())
+    {
+        out << YAML::Null;
+        return;
+    }
+    out << YAML::Flow;
+    out << YAML::BeginSeq;
+    for (ExprTerms::const_iterator i=m_terms.begin(), end=m_terms.end();
+         i != end; ++i)
+        out << *i;
+    out << YAML::EndSeq;
+}
+
+void
+Expr::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 std::ostream&

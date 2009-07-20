@@ -36,10 +36,10 @@
 #include <string>
 
 #include <llvm/ADT/Statistic.h>
+#include <YAML/emitter.h>
 #include <yasmx/Config/functional.h>
 #include <yasmx/Support/Compose.h>
 #include <yasmx/Support/errwarn.h>
-#include <yasmx/Support/marg_ostream.h>
 #include <yasmx/Support/phash.h>
 #include <yasmx/EffAddr.h>
 #include <yasmx/Expr.h>
@@ -343,6 +343,25 @@ X86Prefix::Put(std::ostream& os) const
 {
     // TODO
     os << "PREFIX";
+}
+
+void
+X86Prefix::Write(YAML::Emitter& out) const
+{
+    out << YAML::Flow << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value;
+    switch (m_type)
+    {
+        case LOCKREP:   out << "LOCKREP"; break;
+        case ADDRSIZE:  out << "ADDRSIZE"; break;
+        case OPERSIZE:  out << "OPERSIZE"; break;
+        case SEGREG:    out << "SEGREG"; break;
+        case REX:       out << "REX"; break;
+        default:        out << YAML::Null; break;
+    }
+    out << YAML::Key << "value";
+    out << YAML::Value << YAML::Hex << static_cast<unsigned int>(m_value);
+    out << YAML::EndMap;
 }
 
 #include "X86Insns.cpp"
@@ -1806,17 +1825,44 @@ X86Insn::~X86Insn()
 {
 }
 
-void
-X86Insn::Put(marg_ostream& os) const
-{
-    Insn::Put(os);
-    // TODO
-}
-
 X86Insn*
 X86Insn::clone() const
 {
     return new X86Insn(*this);
+}
+
+void
+X86Insn::DoWrite(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << "X86Insn";
+
+    out << YAML::Key << "active cpu" << YAML::Value;
+    out << m_active_cpu.to_string<char, std::char_traits<char>,
+                                  std::allocator<char> >();
+
+    out << YAML::Key << "mod data";
+    out << YAML::Value << YAML::Flow << YAML::BeginSeq;
+    out << YAML::Hex << m_mod_data[0];
+    out << YAML::Hex << m_mod_data[1];
+    out << YAML::Hex << m_mod_data[2];
+    out << YAML::EndSeq;
+
+    out << YAML::Key << "num info" << YAML::Value << m_num_info;
+    out << YAML::Key << "bits" << YAML::Value << m_mode_bits;
+
+    out << YAML::Key << "suffix flags";
+    out << YAML::Value << YAML::Hex << m_suffix;
+    out << YAML::Key << "misc flags";
+    out << YAML::Value << YAML::Hex << m_misc_flags;
+    out << YAML::Key << "parser" << YAML::Value << m_parser;
+
+    out << YAML::Key << "force strict";
+    out << YAML::Value << static_cast<bool>(m_mode_bits);
+    out << YAML::Key << "default rel";
+    out << YAML::Value << static_cast<bool>(m_default_rel);
+
+    out << YAML::EndMap;
 }
 
 std::auto_ptr<Insn>

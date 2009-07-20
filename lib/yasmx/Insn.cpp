@@ -31,9 +31,10 @@
 #include <algorithm>
 #include <ostream>
 
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/marg_ostream.h"
 #include "yasmx/Arch.h"
 #include "yasmx/EffAddr.h"
 #include "yasmx/Expr.h"
@@ -45,6 +46,14 @@ namespace yasm
 
 TargetModifier::~TargetModifier()
 {
+}
+
+void
+TargetModifier::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 Operand::Operand(const Register* reg)
@@ -142,49 +151,6 @@ Operand::clone() const
 }
 
 void
-Operand::Put(marg_ostream& os) const
-{
-    switch (m_type)
-    {
-        case NONE:
-            os << "None\n";
-            break;
-        case REG:
-            os << "Reg=" << *m_reg << '\n';
-            break;
-        case SEGREG:
-            os << "SegReg=" << *m_segreg << '\n';
-            break;
-        case MEMORY:
-            os << "Memory=\n";
-            ++os;
-            os << *m_ea;
-            --os;
-            break;
-        case IMM:
-            os << "Imm=" << *m_val << '\n';
-            break;
-    }
-    ++os;
-    os << "Seg=";
-    if (m_seg)
-        os << *m_seg;
-    else
-        os << "None";
-    os << "\nTargetMod=" << *m_targetmod << '\n';
-    os << "Size=" << m_size << '\n';
-    os << "Deref=" << m_deref << ", Strict=" << m_strict << '\n';
-    --os;
-}
-
-void
-Insn::Put(marg_ostream& os) const
-{
-    std::for_each(m_operands.begin(), m_operands.end(),
-                  BIND::bind(&Operand::Put, _1, REF::ref(os)));
-}
-
-void
 Operand::Finalize()
 {
     switch (m_type)
@@ -265,8 +231,70 @@ Operand::setSeg(std::auto_ptr<Expr> seg)
     m_seg = seg.release();
 }
 
+void
+Operand::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value;
+    switch (m_type)
+    {
+        case NONE:
+            out << "None";
+            break;
+        case REG:
+            out << "Reg";
+            out << YAML::Key << "reg" << YAML::Value << *m_reg;
+            break;
+        case SEGREG:
+            out << "SegReg";
+            out << YAML::Key << "segreg" << YAML::Value << *m_segreg;
+            break;
+        case MEMORY:
+            out << "Memory";
+            out << YAML::Key << "ea" << YAML::Value << *m_ea;
+            break;
+        case IMM:
+            out << "Imm";
+            out << YAML::Key << "immval" << YAML::Value << *m_val;
+            break;
+    }
+
+    out << YAML::Key << "seg" << YAML::Value;
+    if (m_seg)
+        out << *m_seg;
+    else
+        out << YAML::Null;
+
+    out << YAML::Key << "targetmod" << YAML::Value;
+    if (m_targetmod)
+        out << *m_targetmod;
+    else
+        out << YAML::Null;
+
+    out << YAML::Key << "size" << YAML::Value << m_size;
+    out << YAML::Key << "deref" << YAML::Value << static_cast<bool>(m_deref);
+    out << YAML::Key << "strict" << YAML::Value << static_cast<bool>(m_strict);
+    out << YAML::EndMap;
+}
+
+void
+Operand::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
+}
+
 Prefix::~Prefix()
 {
+}
+
+void
+Prefix::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 Insn::Insn()
@@ -296,6 +324,51 @@ Insn::Append(BytecodeContainer& container, unsigned long line)
     std::for_each(m_operands.begin(), m_operands.end(),
                   MEMFN::mem_fn(&Operand::Finalize));
     DoAppend(container, line);
+}
+
+void
+Insn::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+
+    // operands
+    out << YAML::Key << "operands" << YAML::Value;
+    if (m_operands.empty())
+        out << YAML::Flow;
+    out << YAML::BeginSeq;
+    std::for_each(m_operands.begin(), m_operands.end(),
+                  BIND::bind(&Operand::Write, _1, REF::ref(out)));
+    out << YAML::EndSeq;
+
+    // prefixes
+    out << YAML::Key << "prefixes" << YAML::Value;
+    if (m_prefixes.empty())
+        out << YAML::Flow;
+    out << YAML::BeginSeq;
+    std::for_each(m_prefixes.begin(), m_prefixes.end(),
+                  BIND::bind(&Prefix::Write, _1, REF::ref(out)));
+    out << YAML::EndSeq;
+
+    // segregs
+    out << YAML::Key << "segregs" << YAML::Value;
+    if (m_segregs.empty())
+        out << YAML::Flow;
+    out << YAML::BeginSeq;
+    std::for_each(m_segregs.begin(), m_segregs.end(),
+                  BIND::bind(&SegmentRegister::Write, _1, REF::ref(out)));
+    out << YAML::EndSeq;
+
+    out << YAML::Key << "implementation" << YAML::Value;
+    DoWrite(out);
+    out << YAML::EndMap;
+}
+
+void
+Insn::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 } // namespace yasm

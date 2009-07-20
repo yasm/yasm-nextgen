@@ -28,6 +28,8 @@
 
 #include "util.h"
 
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Insn.h"
 
@@ -39,12 +41,36 @@ Register::~Register()
 {
 }
 
+void
+Register::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
+}
+
 RegisterGroup::~RegisterGroup()
 {
 }
 
+void
+RegisterGroup::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
+}
+
 SegmentRegister::~SegmentRegister()
 {
+}
+
+void
+SegmentRegister::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 Arch::InsnPrefix::InsnPrefix(std::auto_ptr<Insn> insn)

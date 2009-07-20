@@ -28,9 +28,10 @@
 
 #include "util.h"
 
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/marg_ostream.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"
 
@@ -158,70 +159,73 @@ Symbol::getLabel(Location* loc) const
     return true;
 }
 
-marg_ostream&
-operator<< (marg_ostream& os, const Symbol& sym)
+void
+Symbol::Write(YAML::Emitter& out) const
 {
-    switch (sym.m_type)
+    out << YAML::BeginMap;
+    out << YAML::Key << "name" << YAML::Value << m_name;
+    out << YAML::Key << "type" << YAML::Value;
+    switch (m_type)
     {
-        case Symbol::UNKNOWN:
-            os << "-Unknown (Common/Extern)-\n";
-            break;
-        case Symbol::EQU:
-            os << "_EQU_\n";
-            os << "Expn=";
-            if (sym.m_status & Symbol::VALUED)
-                os << *sym.m_equ;
+        case EQU:
+            out << "EQU";
+            out << YAML::Key << "value" << YAML::Value;
+            if (m_status & VALUED)
+                out << *m_equ;
             else
-                os << "***UNVALUED***";
-            os << '\n';
+                out << YAML::Null;
             break;
-        case Symbol::LABEL:
-            os << "_Label_\n";
-            //os << std::setw(indent_level) << "" << "Section:\n";
-            //m_precbc->get_section()->put(os, indent_level+1, false);
-            //os << std::setw(indent_level) << "" << "Preceding bytecode:\n";
-            //m_precbc->put(os, indent_level+1);
+        case LABEL:
+            out << "Label";
+            out << YAML::Key << "loc" << YAML::Value << m_loc;
             break;
-        case Symbol::SPECIAL:
-            os << "-Special-\n";
+        case SPECIAL:
+            out << "Special";
+            break;
+        case UNKNOWN:
+            out << "Unknown (Common/Extern)";
+            break;
+        default:
+            out << YAML::Null;
             break;
     }
 
-    os << "Status=";
-    if (sym.m_status == Symbol::NOSTATUS)
-        os << "None\n";
-    else
-    {
-        if (sym.m_status & Symbol::USED)
-            os << "Used,";
-        if (sym.m_status & Symbol::DEFINED)
-            os << "Defined,";
-        if (sym.m_status & Symbol::VALUED)
-            os << "Valued,";
-        os << '\n';
-    }
+    out << YAML::Key << "status" << YAML::Value << YAML::Flow << YAML::BeginSeq;
+    if (m_status & USED)
+        out << "Used";
+    if (m_status & DEFINED)
+        out << "Defined";
+    if (m_status & VALUED)
+        out << "Valued";
+    out << YAML::EndSeq;
 
-    os << "Visibility=";
-    if (sym.m_visibility == Symbol::LOCAL)
-        os << "Local\n";
-    else
-    {
-        if (sym.m_visibility & Symbol::GLOBAL)
-            os << "Global,";
-        if (sym.m_visibility & Symbol::COMMON)
-            os << "Common,";
-        if (sym.m_visibility & Symbol::EXTERN)
-            os << "Extern,";
-        os << '\n';
-    }
-    os << "Associated data:\n";
-    ++os;
-    os << static_cast<const AssocDataContainer&>(sym);
-    --os;
-    os << "Line Index (Defined)=" << sym.m_def_line << '\n';
-    os << "Line Index (Declared)=" << sym.m_decl_line << '\n';
-    os << "Line Index (Used)=" << sym.m_use_line << '\n';
-    return os;
+    out << YAML::Key << "visibility";
+    out << YAML::Value << YAML::Flow << YAML::BeginSeq;
+    if (m_visibility & GLOBAL)
+        out << "Global";
+    if (m_visibility & COMMON)
+        out << "Common";
+    if (m_visibility & EXTERN)
+        out << "Extern";
+    if (m_visibility & DLOCAL)
+        out << "DLocal";
+    out << YAML::EndSeq;
+
+    out << YAML::Key << "define line" << YAML::Value << m_def_line;
+    out << YAML::Key << "declare line" << YAML::Value << m_decl_line;
+    out << YAML::Key << "use line" << YAML::Value << m_use_line;
+
+    out << YAML::Key << "assoc data" << YAML::Value;
+    AssocDataContainer::Write(out);
+    out << YAML::EndMap;
+}
+
+void
+Symbol::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 } // namespace yasm

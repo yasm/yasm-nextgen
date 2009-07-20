@@ -28,8 +28,8 @@
 
 #include <util.h>
 
+#include <YAML/emitter.h>
 #include <yasmx/Support/errwarn.h>
-#include <yasmx/Support/marg_ostream.h>
 #include <yasmx/Bytecode.h>
 #include <yasmx/Bytes_util.h>
 #include <yasmx/Errwarns.h>
@@ -65,10 +65,31 @@ CoffSymbol::~CoffSymbol()
 }
 
 void
-CoffSymbol::Put(marg_ostream& os) const
+CoffSymbol::Write(YAML::Emitter& out) const
 {
-    os << "symtab index=" << m_index << '\n';
-    os << "sclass=" << m_sclass << '\n';
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << key;
+    out << YAML::Key << "symtab index" << YAML::Value << m_index;
+    out << YAML::Key << "sclass" << YAML::Value << static_cast<int>(m_sclass);
+
+    out << YAML::Key << "aux type" << YAML::Value;
+    switch (m_auxtype)
+    {
+        case AUX_SECT:  out << "SECT"; break;
+        case AUX_FILE:  out << "FILE"; break;
+        case AUX_NONE:
+        default:        out << YAML::Null; break;
+    }
+
+    out << YAML::Key << "aux" << YAML::Value;
+    if (m_aux.empty())
+        out << YAML::Flow;
+    out << YAML::BeginSeq;
+    for (std::vector<AuxEntry>::const_iterator i=m_aux.begin(), end=m_aux.end();
+         i != end; ++i)
+        out << i->fname;
+    out << YAML::EndSeq;
+    out << YAML::EndMap;
 }
 
 void

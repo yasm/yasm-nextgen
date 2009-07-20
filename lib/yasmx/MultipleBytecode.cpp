@@ -28,8 +28,8 @@
 
 #include "util.h"
 
+#include "YAML/emitter.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/marg_ostream.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"
@@ -47,9 +47,6 @@ class MultipleBytecode : public Bytecode::Contents
 public:
     MultipleBytecode(std::auto_ptr<Expr> e);
     ~MultipleBytecode();
-
-    /// Prints the implementation-specific data (for debugging purposes).
-    void Put(marg_ostream& os) const;
 
     /// Finalizes the bytecode after parsing.
     void Finalize(Bytecode& bc);
@@ -71,6 +68,9 @@ public:
     void Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     MultipleBytecode* clone() const;
+
+    /// Write a YAML representation.  For debugging purposes.
+    void Write(YAML::Emitter& out) const;
 
     BytecodeContainer& getContents() { return m_contents; }
 
@@ -94,18 +94,6 @@ MultipleBytecode::MultipleBytecode(std::auto_ptr<Expr> e)
 
 MultipleBytecode::~MultipleBytecode()
 {
-}
-
-void
-MultipleBytecode::Put(marg_ostream& os) const
-{
-    os << "_Multiple_\n";
-    os << "Multiple=" << *m_multiple << '\n';
-    os << "Multiple (int)=" << m_mult_int << '\n';
-    os << "Contents:\n";
-    ++os;
-    os << m_contents;
-    --os;
 }
 
 void
@@ -228,6 +216,17 @@ MultipleBytecode::clone() const
     // TODO: cloning
     assert(false);
     return 0;
+}
+
+void
+MultipleBytecode::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << "Multiple";
+    out << YAML::Key << "multiple" << YAML::Value << *m_multiple;
+    out << YAML::Key << "multiple int" << YAML::Value << m_mult_int;
+    out << YAML::Key << "contents" << YAML::Value << m_contents;
+    out << YAML::EndMap;
 }
 
 } // anonymous namespace

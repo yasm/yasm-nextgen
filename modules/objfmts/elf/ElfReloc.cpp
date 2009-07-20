@@ -28,6 +28,7 @@
 
 #include <util.h>
 
+#include "YAML/emitter.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytes_util.h"
 
@@ -159,6 +160,15 @@ ElfReloc::Write(Bytes& bytes, const ElfConfig& config)
         if (config.rela)
             Write64(bytes, m_addend);
     }
+}
+
+void
+ElfReloc::DoWrite(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << "ElfReloc";
+    out << YAML::Key << "addend" << YAML::Value << m_addend;
+    out << YAML::EndMap;
 }
 
 }}} // namespace yasm::objfmt::elf

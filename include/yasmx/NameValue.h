@@ -29,7 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
 #include <memory>
 #include <string>
 #include <vector>
@@ -40,6 +39,8 @@
 #include "yasmx/Expr.h"
 
 
+namespace YAML { class Emitter; }
+
 namespace yasm
 {
 
@@ -48,9 +49,6 @@ class Object;
 /// Name/value pair.
 class YASM_LIB_EXPORT NameValue
 {
-    friend YASM_LIB_EXPORT
-    std::ostream& operator<< (std::ostream& os, const NameValue& nv);
-
 public:
     /// Identifier value constructor.
     /// @param name         name; may be empty string if no name
@@ -140,6 +138,14 @@ public:
     ///         is not an identifier.
     std::string getId() const;
 
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    void Write(YAML::Emitter& out) const;
+
+    /// Dump a YAML representation to stderr.
+    /// For debugging purposes.
+    void Dump() const;
+
 private:
     std::string m_name; ///< Name (empty string if no name)
 
@@ -165,11 +171,16 @@ private:
     char m_id_prefix;
 };
 
-/// Print name/value.  For debugging purposes.
-/// @param os   output stream
-/// @param nv   name/value
-YASM_LIB_EXPORT
-std::ostream& operator<< (std::ostream& os, const NameValue& nv);
+/// Dump a YAML representation of a name/value.  For debugging purposes.
+/// @param out          YAML emitter
+/// @param nv           name/value
+/// @return Emitter.
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const NameValue& nv)
+{
+    nv.Write(out);
+    return out;
+}
 
 /// Vector of name/values.
 class YASM_LIB_EXPORT NameValues : private stdx::ptr_vector<NameValue>
@@ -204,13 +215,27 @@ public:
 
     // Exchanges this vector with another one.
     void swap(NameValues& oth) { base_vector::swap(oth); }
+
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    void Write(YAML::Emitter& out) const;
+
+    /// Dump a YAML representation to stderr.
+    /// For debugging purposes.
+    void Dump() const;
 };
 
-/// Print vector of name/values.  For debugging purposes.
-/// @param os       output stream
-/// @param namevals name/values
-YASM_LIB_EXPORT
-std::ostream& operator<< (std::ostream& os, const NameValues& namevals);
+/// Dump a YAML representation of vector of name/values.
+/// For debugging purposes.
+/// @param out          YAML emitter
+/// @param namevals     name/values
+/// @return Emitter.
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const NameValues& namevals)
+{
+    namevals.Write(out);
+    return out;
+}
 
 /// Specialized swap for algorithms.
 inline void

@@ -78,6 +78,9 @@ public:
 
     void Write(Bytes& bytes) const;
 
+protected:
+    void DoWrite(YAML::Emitter& out) const;
+
 private:
     SymbolRef m_base;       //< base symbol (for WRT)
     Type m_type;            //< type of relocation

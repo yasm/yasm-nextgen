@@ -59,11 +59,11 @@ public:
             bool default_rel);
     ~X86Insn();
 
-    void Put(marg_ostream& os) const;
     X86Insn* clone() const;
 
 protected:
     void DoAppend(BytecodeContainer& container, unsigned long line);
+    void DoWrite(YAML::Emitter& out) const;
 
 private:
     void DoAppendJmpFar(BytecodeContainer& container,

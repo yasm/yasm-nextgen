@@ -32,7 +32,8 @@
 #include <iomanip>
 #include <ostream>
 
-#include "yasmx/Support/marg_ostream.h"
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
 
 
 namespace yasm
@@ -52,16 +53,6 @@ std::ostream&
 operator<< (std::ostream& os, const Bytes& bytes)
 {
     os.write(reinterpret_cast<const char*>(&bytes[0]), bytes.size());
-    return os;
-}
-
-marg_ostream&
-operator<< (marg_ostream& os, const Bytes& bytes)
-{
-    os << std::hex << std::setfill('0');
-    for (Bytes::size_type i=0; i<bytes.size(); ++i)
-        os << std::setw(2) << static_cast<unsigned int>(bytes[i]) << ' ';
-    os << std::setfill(' ') << '\n';
     return os;
 }
 
@@ -103,6 +94,24 @@ Bytes::Write(size_type n, unsigned char v)
         push_back(v);
         n--;
     } while (n != 0);
+}
+
+void
+Bytes::Dump() const
+{
+    YAML::Emitter out;
+    out << *this;
+    llvm::cerr << out.c_str() << std::endl;
+}
+
+YAML::Emitter&
+operator<< (YAML::Emitter& out, const Bytes& bytes)
+{
+    out << YAML::Flow << YAML::BeginSeq;
+    for (Bytes::size_type i=0; i<bytes.size(); ++i)
+        out << YAML::Hex << static_cast<unsigned int>(bytes[i]);
+    out << YAML::EndSeq;
+    return out;
 }
 
 } // namespace yasm

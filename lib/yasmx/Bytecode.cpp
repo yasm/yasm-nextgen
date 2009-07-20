@@ -31,8 +31,9 @@
 #include "util.h"
 
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/marg_ostream.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytes.h"
@@ -82,6 +83,14 @@ Bytecode::Contents::getSpecial() const
 
 Bytecode::Contents::Contents(const Contents& rhs)
 {
+}
+
+void
+Bytecode::Contents::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 void
@@ -136,24 +145,6 @@ Bytecode::swap(Bytecode& oth)
     std::swap(m_offset, oth.m_offset);
     std::swap(m_index, oth.m_index);
     m_symbols.swap(oth.m_symbols);
-}
-
-marg_ostream&
-operator<< (marg_ostream &os, const Bytecode& bc)
-{
-    if (bc.m_fixed.size() > 0)
-    {
-        os << "Fixed: ";
-        os << bc.m_fixed;
-    }
-    if (bc.m_contents.get() != 0)
-        os << *bc.m_contents;
-    else
-        os << "EMPTY\n";
-    os << "Length=" << bc.m_len << '\n';
-    os << "Line Index=" << bc.m_line << '\n';
-    os << "Offset=" << bc.m_offset << '\n';
-    return os;
 }
 
 void
@@ -328,6 +319,51 @@ Bytecode::AppendFixed(unsigned int size,
     ++num_fixed_value;
 }
 
+void
+Bytecode::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "fixed" << YAML::Value << m_fixed;
+
+    // fixups
+    out << YAML::Key << "fixed fixups" << YAML::Value;
+    if (m_fixed_fixups.empty())
+        out << YAML::Flow;
+    out << YAML::BeginSeq;
+    for (std::vector<Fixup>::const_iterator i=m_fixed_fixups.begin(),
+         end=m_fixed_fixups.end(); i != end; ++i)
+        out << *i;
+    out << YAML::EndSeq;
+
+    // tail contents
+    out << YAML::Key << "tail" << YAML::Value;
+    if (m_contents.get() != 0)
+        out << *m_contents;
+    else
+        out << YAML::Null;
+
+    out << YAML::Key << "tail length" << YAML::Value << m_len;
+    out << YAML::Key << "line" << YAML::Value << m_line;
+    out << YAML::Key << "offset" << YAML::Value << m_offset;
+    out << YAML::Key << "index" << YAML::Value;
+    if (m_index != ~0UL)
+        out << m_index;
+    else
+        out << YAML::Null;
+
+    // TODO: symbols
+
+    out << YAML::EndMap;
+}
+
+void
+Bytecode::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
+}
+
 Bytecode::Fixup::Fixup(unsigned int off, const Value& val)
     : Value(val), m_off(off)
 {
@@ -353,6 +389,24 @@ Bytecode::Fixup::swap(Fixup& oth)
 {
     Value::swap(oth);
     std::swap(m_off, oth.m_off);
+}
+
+void
+Bytecode::Fixup::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "offset" << YAML::Value << m_off;
+    out << YAML::Key << "value" << YAML::Value;
+    Value::Write(out);
+    out << YAML::EndMap;
+}
+
+void
+Bytecode::Fixup::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 } // namespace yasm

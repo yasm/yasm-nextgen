@@ -28,6 +28,7 @@
 
 #include <util.h>
 
+#include <YAML/emitter.h>
 #include <yasmx/Support/Compose.h>
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/BytecodeContainer.h>
@@ -48,12 +49,6 @@ namespace win64
 
 UnwindCode::~UnwindCode()
 {
-}
-
-void
-UnwindCode::Put(marg_ostream& os) const
-{
-    // TODO
 }
 
 void
@@ -271,6 +266,32 @@ UnwindCode::clone() const
     UnwindCode* uwcode = new UnwindCode(m_proc, m_loc, m_opcode, m_info);
     uwcode->m_off = m_off;
     return uwcode;
+}
+
+void
+UnwindCode::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << "UnwindCode";
+    out << YAML::Key << "proc" << YAML::Value << m_proc;
+    out << YAML::Key << "loc" << YAML::Value << m_loc;
+    out << YAML::Key << "opcode" << YAML::Value;
+    switch (m_opcode)
+    {
+        case PUSH_NONVOL:       out << "PUSH_NONVOL"; break;
+        case ALLOC_LARGE:       out << "ALLOC_LARGE"; break;
+        case ALLOC_SMALL:       out << "ALLOC_SMALL"; break;
+        case SET_FPREG:         out << "SET_FPREG"; break;
+        case SAVE_NONVOL:       out << "SAVE_NONVOL"; break;
+        case SAVE_NONVOL_FAR:   out << "SAVE_NONVOL_FAR"; break;
+        case SAVE_XMM128:       out << "SAVE_XMM128"; break;
+        case SAVE_XMM128_FAR:   out << "SAVE_XMM128_FAR"; break;
+        case PUSH_MACHFRAME:    out << "PUSH_MACHFRAME"; break;
+        default:                out << YAML::Null; break;
+    }
+    out << YAML::Key << "info" << YAML::Value << m_info;
+    out << YAML::Key << "off" << YAML::Value << m_off;
+    out << YAML::EndMap;
 }
 
 void

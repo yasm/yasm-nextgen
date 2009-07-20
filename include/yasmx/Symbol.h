@@ -32,12 +32,13 @@
 #include <string>
 
 #include "yasmx/Config/export.h"
-#include "yasmx/Support/marg_ostream_fwd.h"
 #include "yasmx/Support/scoped_ptr.h"
 
 #include "yasmx/AssocData.h"
 #include "yasmx/Location.h"
 
+
+namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -47,9 +48,6 @@ class Expr;
 /// A symbol.
 class YASM_LIB_EXPORT Symbol : public AssocDataContainer
 {
-    friend YASM_LIB_EXPORT
-    marg_ostream& operator<< (marg_ostream& os, const Symbol& sym);
-
 public:
     /// Constructor.
     explicit Symbol(const std::string& name);
@@ -161,6 +159,14 @@ public:
     /// @param undef_extern if true, all undef syms should be declared extern
     void Finalize(bool undef_extern);
 
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    void Write(YAML::Emitter& out) const;
+
+    /// Dump a YAML representation to stderr.
+    /// For debugging purposes.
+    void Dump() const;
+
 private:
     Symbol(const Symbol&);                  // not implemented
     const Symbol& operator=(const Symbol&); // not implemented
@@ -210,11 +216,16 @@ Symbol::getEqu() const
     return 0;
 }
 
-/// Print a symbol.  For debugging purposes.
-/// @param os           output stream
-/// @param sym          symbol
-YASM_LIB_EXPORT
-marg_ostream& operator<< (marg_ostream& os, const Symbol& sym);
+/// Dump a YAML representation of a symbol.  For debugging purposes.
+/// @param out          YAML emitter
+/// @param symbol       symbol
+/// @return Emitter.
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const Symbol& symbol)
+{
+    symbol.Write(out);
+    return out;
+}
 
 } // namespace yasm
 

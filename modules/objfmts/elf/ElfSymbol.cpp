@@ -28,8 +28,8 @@
 
 #include <util.h>
 
+#include "YAML/emitter.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/marg_ostream.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes_util.h"
 #include "yasmx/Errwarns.h"
@@ -142,27 +142,54 @@ ElfSymbol::CreateSymbol(Object& object, const StringTable& strtab) const
 }
 
 void
-ElfSymbol::Put(marg_ostream& os) const
+ElfSymbol::Write(YAML::Emitter& out) const
 {
-    os << "bind=";
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << key;
+    out << YAML::Key << "sect" << YAML::Value;
+    if (m_sect)
+        out << YAML::Alias("SECT@" + m_sect->getName());
+    else
+        out << YAML::Null;
+    out << YAML::Key << "value" << YAML::Value << m_value;
+    out << YAML::Key << "size line" << YAML::Value << m_size_line;
+    out << YAML::Key << "size" << YAML::Value << m_size;
+    out << YAML::Key << "index" << YAML::Value << m_index;
+
+    out << YAML::Key << "bind" << YAML::Value;
     switch (m_bind)
     {
-        case STB_LOCAL:         os << "local\n";    break;
-        case STB_GLOBAL:        os << "global\n";   break;
-        case STB_WEAK:          os << "weak\n";     break;
-        default:                os << "undef\n";    break;
+        case STB_LOCAL:     out << "local";     break;
+        case STB_GLOBAL:    out << "global";    break;
+        case STB_WEAK:      out << "weak";      break;
+        default:            out << static_cast<int>(m_bind); break;
     }
-    os << "type=";
+
+    out << YAML::Key << "symtype" << YAML::Value;
     switch (m_type)
     {
-        case STT_NOTYPE:        os << "notype\n";   break;
-        case STT_OBJECT:        os << "object\n";   break;
-        case STT_FUNC:          os << "func\n";     break;
-        case STT_SECTION:       os << "section\n";  break;
-        case STT_FILE:          os << "file\n";     break;
-        default:                os << "undef\n";    break;
+        case STT_NOTYPE:    out << "notype";    break;
+        case STT_OBJECT:    out << "object";    break;
+        case STT_FUNC:      out << "func";      break;
+        case STT_SECTION:   out << "section";   break;
+        case STT_FILE:      out << "file";      break;
+        case STT_COMMON:    out << "common";    break;
+        case STT_TLS:       out << "tls";       break;
+        default:            out << static_cast<int>(m_type); break;
     }
-    os << "size=" << m_size << '\n';
+
+    out << YAML::Key << "vis" << YAML::Value;
+    switch (m_vis)
+    {
+        case STV_DEFAULT:   out << "default";   break;
+        case STV_INTERNAL:  out << "internal";  break;
+        case STV_HIDDEN:    out << "hidden";    break;
+        case STV_PROTECTED: out << "protected"; break;
+        default:            out << static_cast<int>(m_vis); break;
+    }
+
+    out << YAML::Key << "symindex" << YAML::Value << m_symindex;
+    out << YAML::EndMap;
 }
 
 void

@@ -26,6 +26,10 @@
 //
 #include "yasmx/Location.h"
 
+#include <sstream>
+
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/IntNum.h"
 
@@ -37,6 +41,25 @@ unsigned long
 Location::getOffset() const
 {
     return bc->getOffset() + off;
+}
+
+void
+Location::Write(YAML::Emitter& out) const
+{
+    out << YAML::Flow << YAML::BeginMap;
+    std::ostringstream oss;
+    oss << "BC@" << bc;
+    out << YAML::Key << "bc" << YAML::Value << YAML::Alias(oss.str());
+    out << YAML::Key << "off" << YAML::Value << off;
+    out << YAML::EndMap;
+}
+
+void
+Location::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 bool

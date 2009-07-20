@@ -26,6 +26,8 @@
 //
 #include "BinSection.h"
 
+#include <YAML/emitter.h>
+
 
 namespace yasm
 {
@@ -52,8 +54,33 @@ BinSection::~BinSection()
 }
 
 void
-BinSection::Put(marg_ostream& os) const
+BinSection::Write(YAML::Emitter& out) const
 {
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << key;
+    if (has_align)
+        out << YAML::Key << "align" << YAML::Value << align;
+    if (has_valign)
+        out << YAML::Key << "valign" << YAML::Value << valign;
+
+    out << YAML::Key << "start" << YAML::Value;
+    if (start)
+        out << *start;
+    else
+        out << YAML::Null;
+
+    out << YAML::Key << "vstart" << YAML::Value;
+    if (vstart)
+        out << *vstart;
+    else
+        out << YAML::Null;
+
+    out << YAML::Key << "follows" << YAML::Value << follows;
+    out << YAML::Key << "vfollows" << YAML::Value << vfollows;
+
+    if (has_length)
+        out << YAML::Key << "length" << YAML::Value << length;
+    out << YAML::EndMap;
 }
 
 }}} // namespace yasm::objfmt::bin

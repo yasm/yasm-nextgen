@@ -28,9 +28,10 @@
 //
 #include <vector>
 
-#include <yasmx/Support/marg_ostream_fwd.h>
 #include <yasmx/Insn.h>
 
+
+namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -61,7 +62,7 @@ public:
     unsigned char m_mode_bits;
 };
 
-marg_ostream& operator<< (marg_ostream& os, const X86Common& common);
+YAML::Emitter& operator<< (YAML::Emitter& out, const X86Common& common);
 
 }}} // namespace yasm::arch::x86
 

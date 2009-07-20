@@ -28,8 +28,9 @@
 
 #include "util.h"
 
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/marg_ostream.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Expr.h"
 
@@ -75,20 +76,32 @@ EffAddr::setSegReg(const SegmentRegister* segreg)
 }
 
 void
-EffAddr::Put(marg_ostream& os) const
+EffAddr::Write(YAML::Emitter& out) const
 {
-    os << "Disp:\n";
-    ++os;
-    os << m_disp;
-    --os;
+    out << YAML::BeginMap;
+    out << YAML::Key << "disp" << YAML::Value << m_disp;
+    out << YAML::Key << "segreg" << YAML::Value;
     if (m_segreg != 0)
-        os << "SegReg=" << *m_segreg << '\n';
-    os << "NeedNonzeroLen=" << m_need_nonzero_len << '\n';
-    os << "NeedDisp=" << m_need_disp << '\n';
-    os << "NoSplit=" << m_nosplit << '\n';
-    os << "Strong=" << m_strong << '\n';
-    os << "PCRel=" << m_pc_rel << '\n';
-    os << "NotPCRel=" << m_not_pc_rel << '\n';
+        out << *m_segreg;
+    else
+        out << YAML::Null;
+    out << YAML::Key << "need nonzero len" << YAML::Value << m_need_nonzero_len;
+    out << YAML::Key << "need disp" << YAML::Value << m_need_disp;
+    out << YAML::Key << "no split" << YAML::Value << m_nosplit;
+    out << YAML::Key << "strong" << YAML::Value << m_strong;
+    out << YAML::Key << "PC relative" << YAML::Value << m_pc_rel;
+    out << YAML::Key << "not PC relative" << YAML::Value << m_not_pc_rel;
+    out << YAML::Key << "implementation" << YAML::Value;
+    DoWrite(out);
+    out << YAML::EndMap;
+}
+
+void
+EffAddr::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 } // namespace yasm

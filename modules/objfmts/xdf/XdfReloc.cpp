@@ -26,6 +26,7 @@
 //
 #include "XdfReloc.h"
 
+#include <YAML/emitter.h>
 #include <yasmx/Bytes.h>
 #include <yasmx/Bytes_util.h>
 #include <yasmx/IntNum.h>
@@ -143,6 +144,17 @@ XdfReloc::Write(Bytes& bytes) const
     Write8(bytes, m_size);              // size of relocation
     Write8(bytes, m_shift);             // relocation shift
     Write8(bytes, 0);                   // flags
+}
+
+void
+XdfReloc::DoWrite(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << "XdfReloc";
+    out << YAML::Key << "base" << YAML::Value << m_base;
+    out << YAML::Key << "size" << YAML::Value << m_size;
+    out << YAML::Key << "shift" << YAML::Value << m_shift;
+    out << YAML::EndMap;
 }
 
 }}} // namespace yasm::objfmt::xdf

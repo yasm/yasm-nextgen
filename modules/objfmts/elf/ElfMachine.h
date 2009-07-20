@@ -69,7 +69,7 @@ struct ElfSpecialSymbol : public AssocData, public SpecialSymbolData
     {}
     ~ElfSpecialSymbol();
 
-    void Put(marg_ostream& os) const;
+    void Write(YAML::Emitter& out) const;
 };
 
 inline ElfSpecialSymbol*

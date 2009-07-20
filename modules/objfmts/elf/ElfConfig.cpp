@@ -28,6 +28,8 @@
 
 #include <util.h>
 
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
@@ -315,6 +317,101 @@ ElfConfig::setEndian(Bytes& bytes) const
     else
         return false;
     return true;
+}
+
+void
+ElfConfig::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "cls" << YAML::Value;
+    switch (cls)
+    {
+        case ELFCLASS32:    out << "ELFCLASS32"; break;
+        case ELFCLASS64:    out << "ELFCLASS64"; break;
+        default:            out << static_cast<int>(cls); break;
+    }
+
+    out << YAML::Key << "encoding" << YAML::Value;
+    switch (encoding)
+    {
+        case ELFDATA2LSB:   out << "2LSB"; break;
+        case ELFDATA2MSB:   out << "2MSB"; break;
+        default:            out << static_cast<int>(encoding); break;
+    }
+
+    out << YAML::Key << "version" << YAML::Value;
+    if (version == EV_CURRENT)
+        out << "EV_CURRENT";
+    else
+        out << static_cast<int>(version);
+
+    out << YAML::Key << "osabi" << YAML::Value;
+    switch (osabi)
+    {
+        case ELFOSABI_SYSV:         out << "SYSV"; break;
+        case ELFOSABI_HPUX:         out << "HPUX"; break;
+        case ELFOSABI_STANDALONE:   out << "STANDALONE"; break;
+        default:                    out << static_cast<int>(osabi); break;
+    }
+
+    out << YAML::Key << "abi version" << YAML::Value << abi_version;
+
+    out << YAML::Key << "file type" << YAML::Value;
+    switch (file_type)
+    {
+        case ET_NONE:   out << "NONE"; break;
+        case ET_REL:    out << "REL"; break;
+        case ET_EXEC:   out << "EXEC"; break;
+        case ET_DYN:    out << "DYN"; break;
+        case ET_CORE:   out << "CORE"; break;
+        default:        out << YAML::Hex << static_cast<int>(file_type); break;
+    }
+
+    out << YAML::Key << "machine type" << YAML::Value;
+    switch (machine_type)
+    {
+        case EM_NONE:           out << "NONE"; break;
+        case EM_M32:            out << "M32"; break;
+        case EM_SPARC:          out << "SPARC"; break;
+        case EM_386:            out << "386"; break;
+        case EM_68K:            out << "68K"; break;
+        case EM_88K:            out << "88K"; break;
+        case EM_860:            out << "860"; break;
+        case EM_MIPS:           out << "MIPS"; break;
+        case EM_S370:           out << "S370"; break;
+        case EM_MIPS_RS4_BE:    out << "MIPS_RS4_BE"; break;
+        case EM_PARISC:         out << "PARISC"; break;
+        case EM_SPARC32PLUS:    out << "SPARC32PLUS"; break;
+        case EM_PPC:            out << "PPC"; break;
+        case EM_PPC64:          out << "PPC64"; break;
+        case EM_ARM:            out << "ARM"; break;
+        case EM_SPARCV9:        out << "SPARCV9"; break;
+        case EM_IA_64:          out << "IA_64"; break;
+        case EM_X86_64:         out << "X86_64"; break;
+        case EM_ALPHA:          out << "ALPHA"; break;
+        default:    out << YAML::Hex << static_cast<int>(machine_type); break;
+    }
+
+    out << YAML::Key << "start" << YAML::Value << start;
+    out << YAML::Key << "rela" << YAML::Value << rela;
+    out << YAML::Key << "proghead pos" << YAML::Value << proghead_pos;
+    out << YAML::Key << "proghead count" << YAML::Value << proghead_count;
+    out << YAML::Key << "proghead size" << YAML::Value << proghead_size;
+    out << YAML::Key << "secthead pos" << YAML::Value << secthead_pos;
+    out << YAML::Key << "secthead count" << YAML::Value << secthead_count;
+    out << YAML::Key << "secthead size" << YAML::Value << secthead_size;
+    out << YAML::Key << "machine flags";
+    out << YAML::Value << YAML::Hex << machine_flags;
+    out << YAML::Key << "shstrtab index" << YAML::Value << shstrtab_index;
+    out << YAML::EndMap;
+}
+
+void
+ElfConfig::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 }}} // namespace yasm::objfmt::elf

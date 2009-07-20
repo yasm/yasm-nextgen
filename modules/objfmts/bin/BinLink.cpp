@@ -30,9 +30,10 @@
 
 #include <algorithm>
 
+#include <llvm/Support/Streams.h>
+#include <YAML/emitter.h>
 #include <yasmx/Support/Compose.h>
 #include <yasmx/Support/errwarn.h>
-#include <yasmx/Support/marg_ostream.h>
 #include <yasmx/Bytecode.h>
 #include <yasmx/Errwarns.h>
 #include <yasmx/Expr.h>
@@ -60,30 +61,35 @@ BinGroup::~BinGroup()
 {
 }
 
-marg_ostream&
-operator<< (marg_ostream& os, const BinGroup& group)
+void
+BinGroup::Write(YAML::Emitter& out) const
 {
-    os << "Section `" << group.m_section.getName() << "':\n";
-    ++os;
-    group.m_bsd.Put(os);
-    --os;
-    if (group.m_follow_groups.size() > 0)
-    {
-        os << "Following groups:\n";
-        ++os;
-        os << group.m_follow_groups;
-        --os;
-    }
-    return os;
+    out << YAML::BeginMap;
+    out << YAML::Key << "section";
+    out << YAML::Value << YAML::Alias("SECT@" + m_section.getName());
+    out << YAML::Key << "following groups" << YAML::Value << m_follow_groups;
+    out << YAML::EndMap;
 }
 
-marg_ostream&
-operator<< (marg_ostream& os, const BinGroups& groups)
+void
+BinGroup::Dump() const
 {
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
+}
+
+YAML::Emitter&
+operator<< (YAML::Emitter& out, const BinGroups& groups)
+{
+    if (groups.empty())
+        out << YAML::Flow;
+    out << YAML::BeginSeq;
     for (BinGroups::const_iterator group = groups.begin(), end = groups.end();
          group != end; ++group)
-        os << *group;
-    return os;
+        out << *group;
+    out << YAML::EndSeq;
+    return out;
 }
 
 // Recursive function to find group containing named section.
@@ -130,6 +136,23 @@ BinLink::BinLink(Object& object, Errwarns& errwarns)
 
 BinLink::~BinLink()
 {
+}
+
+void
+BinLink::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "lma groups" << YAML::Value << m_lma_groups;
+    out << YAML::Key << "vma groups" << YAML::Value << m_vma_groups;
+    out << YAML::EndMap;
+}
+
+void
+BinLink::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 bool

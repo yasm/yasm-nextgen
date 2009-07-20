@@ -26,10 +26,11 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <yasmx/Support/marg_ostream_fwd.h>
 #include <yasmx/Support/ptr_vector.h>
 #include <yasmx/Bytes.h>
 
+
+namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -58,7 +59,8 @@ public:
     BinGroup(Section& section, BinSection& bsd);
     ~BinGroup();
 
-    void Put(marg_ostream& os) const;
+    void Write(YAML::Emitter& out) const;
+    void Dump() const;
 
     void AssignStartRecurse(IntNum& start,
                             IntNum& last,
@@ -75,14 +77,23 @@ public:
     stdx::ptr_vector_owner<BinGroup> m_follow_groups_owner;
 };
 
-marg_ostream& operator<< (marg_ostream& os, const BinGroup& group);
-marg_ostream& operator<< (marg_ostream& os, const BinGroups& groups);
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const BinGroup& group)
+{
+    group.Write(out);
+    return out;
+}
+
+YAML::Emitter& operator<< (YAML::Emitter& os, const BinGroups& groups);
 
 class BinLink
 {
 public:
     BinLink(Object& object, Errwarns& errwarns);
     ~BinLink();
+
+    void Write(YAML::Emitter& out) const;
+    void Dump() const;
 
     bool DoLink(const IntNum& origin);
     bool CheckLMAOverlap();

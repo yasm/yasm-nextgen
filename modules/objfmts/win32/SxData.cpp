@@ -26,6 +26,7 @@
 //
 #include "SxData.h"
 
+#include <YAML/emitter.h>
 #include <yasmx/BytecodeContainer.h>
 #include <yasmx/BytecodeOutput.h>
 #include <yasmx/Bytecode.h>
@@ -45,9 +46,6 @@ public:
     SxData(SymbolRef sym);
     ~SxData();
 
-    /// Prints the implementation-specific data (for debugging purposes).
-    void Put(marg_ostream& os) const;
-
     /// Finalizes the bytecode after parsing.
     void Finalize(Bytecode& bc);
 
@@ -58,6 +56,9 @@ public:
     void Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     SxData* clone() const;
+
+    /// Write a YAML representation.  For debugging purposes.
+    void Write(YAML::Emitter& out) const;
 
 private:
     SymbolRef m_sym;            ///< symbol
@@ -70,12 +71,6 @@ SxData::SxData(SymbolRef sym)
 
 SxData::~SxData()
 {
-}
-
-void
-SxData::Put(marg_ostream& os) const
-{
-    // TODO
 }
 
 void
@@ -106,6 +101,15 @@ SxData*
 SxData::clone() const
 {
     return new SxData(m_sym);
+}
+
+void
+SxData::Write(YAML::Emitter& out) const
+{
+    out << YAML::Flow << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << "SxData";
+    out << YAML::Key << "sym" << YAML::Value << m_sym;
+    out << YAML::EndMap;
 }
 
 } // anonymous namespace

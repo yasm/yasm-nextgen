@@ -33,7 +33,6 @@
 #include <string>
 
 #include "yasmx/Config/export.h"
-#include "yasmx/Support/marg_ostream_fwd.h"
 #include "yasmx/Support/ptr_vector.h"
 
 #include "yasmx/AssocData.h"
@@ -42,6 +41,8 @@
 #include "yasmx/IntNum.h"
 #include "yasmx/SymbolRef.h"
 
+
+namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -161,6 +162,14 @@ public:
     /// @param filepos  File position
     void setFilePos(unsigned long filepos) { m_filepos = filepos; }
 
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    void Write(YAML::Emitter& out) const;
+
+    /// Dump a YAML representation to stderr.
+    /// For debugging purposes.
+    void Dump() const;
+
 private:
     std::string m_name;                 ///< name (given by user)
 
@@ -182,13 +191,16 @@ private:
     stdx::ptr_vector_owner<Reloc> m_relocs_owner;
 };
 
-/// Print a section.  For debugging purposes.  Bytecodes within the section
-/// are printed.
-/// @param os           output stream
+/// Dump a YAML representation of a section.  For debugging purposes.
+/// @param out          YAML emitter
 /// @param section      section
-/// @return Output stream.
-YASM_LIB_EXPORT
-marg_ostream& operator<< (marg_ostream& os, const Section& section);
+/// @return Emitter.
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const Section& section)
+{
+    section.Write(out);
+    return out;
+}
 
 } // namespace yasm
 

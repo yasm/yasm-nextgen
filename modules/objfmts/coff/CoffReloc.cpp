@@ -28,6 +28,7 @@
 
 #include <util.h>
 
+#include <YAML/emitter.h>
 #include <yasmx/Bytes.h>
 #include <yasmx/Bytes_util.h>
 #include <yasmx/Errwarns.h>

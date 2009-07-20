@@ -35,7 +35,6 @@
 #include <boost/scoped_ptr.hpp>
 
 #include "yasmx/Config/export.h"
-#include "yasmx/Support/marg_ostream_fwd.h"
 
 #include "yasmx/IntNum.h"
 #include "yasmx/Location.h"
@@ -43,6 +42,8 @@
 
 
 class ValueTest;
+
+namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -281,6 +282,14 @@ public:
     /// @return Virtual line number.
     unsigned long getLine() const { return m_line; }
 
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    void Write(YAML::Emitter& out) const;
+
+    /// Dump a YAML representation to stderr.
+    /// For debugging purposes.
+    void Dump() const;
+
     /// Maximum value of right shift.
     static const unsigned int RSHIFT_MAX = 127;
 
@@ -362,11 +371,16 @@ private:
     unsigned int m_size : 8;
 };
 
-/// Print a value.  For debugging purposes.
-/// @param os           output stream
+/// Dump a YAML representation of value.  For debugging purposes.
+/// @param out          YAML emitter
 /// @param value        value
-YASM_LIB_EXPORT
-marg_ostream& operator<< (marg_ostream& os, const Value& value);
+/// @return Emitter.
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const Value& value)
+{
+    value.Write(out);
+    return out;
+}
 
 /// Specialized swap for Value.
 inline void

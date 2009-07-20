@@ -29,7 +29,6 @@
 #include <iosfwd>
 #include <vector>
 
-#include <yasmx/Support/marg_ostream_fwd.h>
 #include <yasmx/AssocData.h>
 #include <yasmx/IntNum.h>
 #include <yasmx/Section.h>
@@ -69,7 +68,7 @@ public:
 
     ~ElfSection();
 
-    void Put(marg_ostream& os) const;
+    void Write(YAML::Emitter& out) const;
 
     unsigned long Write(std::ostream& os, Bytes& scratch) const;
 

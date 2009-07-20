@@ -28,9 +28,7 @@
 
 #include "util.h"
 
-#include <iomanip>
-
-#include <yasmx/Support/marg_ostream.h>
+#include <YAML/emitter.h>
 #include <yasmx/Bytes.h>
 
 
@@ -41,22 +39,26 @@ namespace arch
 namespace x86
 {
 
-marg_ostream&
-operator<< (marg_ostream& os, const X86Opcode& opcode)
+YAML::Emitter&
+operator<< (YAML::Emitter& out, const X86Opcode& opcode)
 {
-    os << "Opcode: ";
+    if (opcode.m_len == 0)
+    {
+        out << YAML::Null;
+        return out;
+    }
 
-    std::ios_base::fmtflags origff = os.flags();
-    os << std::hex << std::setfill('0')
-       << std::setw(2) << static_cast<unsigned int>(opcode.m_opcode[0]) << ' '
-       << std::setw(2) << static_cast<unsigned int>(opcode.m_opcode[1]) << ' '
-       << std::setw(2) << static_cast<unsigned int>(opcode.m_opcode[2])
-       << std::setfill(' ');
-    os.flags(origff);
+    out << YAML::Flow << YAML::BeginMap;
+    out << YAML::Key << "opcode" << YAML::Value << YAML::Flow << YAML::BeginSeq;
+    out << YAML::Hex << static_cast<unsigned int>(opcode.m_opcode[0]);
+    out << YAML::Hex << static_cast<unsigned int>(opcode.m_opcode[1]);
+    out << YAML::Hex << static_cast<unsigned int>(opcode.m_opcode[2]);
+    out << YAML::EndSeq;
 
-    os << " OpLen=" << static_cast<unsigned int>(opcode.m_len);
-    os << '\n';
-    return os;
+    out << YAML::Key << "length";
+    out << YAML::Value << static_cast<unsigned int>(opcode.m_len);
+    out << YAML::EndMap;
+    return out;
 }
 
 void

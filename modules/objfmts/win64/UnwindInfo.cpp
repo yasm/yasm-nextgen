@@ -28,6 +28,7 @@
 
 #include <util.h>
 
+#include <YAML/emitter.h>
 #include <yasmx/Support/Compose.h>
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/BytecodeContainer.h>
@@ -68,12 +69,6 @@ UnwindInfo::~UnwindInfo()
     {
         delete *i;
     }
-}
-
-void
-UnwindInfo::Put(marg_ostream& os) const
-{
-    // TODO
 }
 
 void
@@ -204,6 +199,45 @@ UnwindInfo::clone() const
     info->m_prolog_size = m_prolog_size;
     info->m_codes_count = m_codes_count;
     return info.release();
+}
+
+void
+UnwindInfo::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << "UnwindInfo";
+
+    out << YAML::Key << "proc" << YAML::Value;
+    if (m_proc)
+        out << m_proc->getName();
+    else
+        out << YAML::Null;
+
+    out << YAML::Key << "prolog" << YAML::Value;
+    if (m_prolog)
+        out << m_prolog->getName();
+    else
+        out << YAML::Null;
+
+    out << YAML::Key << "ehandler" << YAML::Value;
+    if (m_ehandler)
+        out << m_ehandler->getName();
+    else
+        out << YAML::Null;
+
+    out << YAML::Key << "frame reg" << YAML::Value << m_framereg;
+    out << YAML::Key << "frame off" << YAML::Value << m_frameoff;
+
+    out << YAML::Key << "codes" << YAML::Value << YAML::BeginSeq;
+    for (std::vector<UnwindCode*>::const_iterator i=m_codes.begin(),
+        end=m_codes.end(); i != end; ++i)
+        (*i)->Write(out);
+    out << YAML::EndSeq;
+
+    out << YAML::Key << "prolog size" << YAML::Value << m_prolog_size;
+    out << YAML::Key << "codes count" << YAML::Value << m_codes_count;
+
+    out << YAML::EndMap;
 }
 
 void

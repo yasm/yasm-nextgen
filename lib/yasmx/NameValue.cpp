@@ -28,8 +28,8 @@
 
 #include "util.h"
 
-#include <ostream>
-
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Object.h"
@@ -176,24 +176,33 @@ NameValue::getId() const
         return m_idstr;
 }
 
-std::ostream&
-operator<< (std::ostream& os, const NameValue& nv)
+void
+NameValue::Write(YAML::Emitter& out) const
 {
-    os << "(\"" << nv.getName() << "\",";
-    switch (nv.m_type)
+    out << YAML::BeginMap;
+    out << YAML::Key << "name" << YAML::Value << m_name;
+    switch (m_type)
     {
-        case NameValue::ID:
-            os << nv.m_idstr;
+        case ID:
+            out << YAML::Key << "id" << YAML::Value << m_idstr;
+            out << YAML::Key << "prefix" << YAML::Value << m_id_prefix;
             break;
-        case NameValue::STRING:
-            os << '"' << nv.m_idstr << '"';
+        case STRING:
+            out << YAML::Key << "string" << YAML::Value << m_idstr;
             break;
-        case NameValue::EXPR:
-            os << *(nv.m_expr);
+        case EXPR:
+            out << YAML::Key << "expr" << YAML::Value << *m_expr;
             break;
     }
-    os << ')';
-    return os;
+    out << YAML::EndMap;
+}
+
+void
+NameValue::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 NameValues::~NameValues()
@@ -204,23 +213,21 @@ NameValues::~NameValues()
     stdx::ptr_vector_owner<NameValue> owner(*this);
 }
 
-std::ostream&
-operator<< (std::ostream& os, const NameValues& namevals)
+void
+NameValues::Write(YAML::Emitter& out) const
 {
-    if (namevals.empty())
-    {
-        os << "(none)";
-        return os;
-    }
+    out << YAML::Flow << YAML::BeginSeq;
+    for (const_iterator i=begin(), endi=end(); i != endi; ++i)
+        out << *i;
+    out << YAML::EndSeq;
+}
 
-    for (NameValues::const_iterator i=namevals.begin(), end=namevals.end();
-         i != end; ++i)
-    {
-        if (i != namevals.begin())
-            os << ',';
-        os << *i;
-    }
-    return os;
+void
+NameValues::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 } // namespace yasm

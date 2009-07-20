@@ -28,7 +28,10 @@
 
 #include "util.h"
 
-#include "yasmx/Support/marg_ostream.h"
+#include <sstream>
+
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
 
 
 namespace yasm
@@ -36,6 +39,14 @@ namespace yasm
 
 AssocData::~AssocData()
 {
+}
+
+void
+AssocData::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 AssocDataContainer::AssocDataContainer()
@@ -97,14 +108,28 @@ AssocDataContainer::getAssocData(const void* key) const
     return 0;
 }
 
-marg_ostream&
-operator<< (marg_ostream& os, const AssocDataContainer& container)
+void
+AssocDataContainer::Write(YAML::Emitter& out) const
 {
-    for (AssocDataContainer::AssocMap::const_iterator
-         i=container.m_assoc_map.begin(), end=container.m_assoc_map.end();
+    if (m_assoc_map.empty())
+        out << YAML::Flow;
+    out << YAML::BeginMap;
+    for (AssocMap::const_iterator i=m_assoc_map.begin(), end=m_assoc_map.end();
          i != end; ++i)
-        os << *i->value;
-    return os;
+    {
+        std::ostringstream oss;
+        oss << i->key;
+        out << YAML::Key << oss.str() << YAML::Value << *i->value;
+    }
+    out << YAML::EndMap;
+}
+
+void
+AssocDataContainer::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 } // namespace yasm

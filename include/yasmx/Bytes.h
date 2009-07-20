@@ -34,8 +34,9 @@
 #include <vector>
 
 #include "yasmx/Config/export.h"
-#include "yasmx/Support/marg_ostream_fwd.h"
 
+
+namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -129,6 +130,11 @@ public:
             throw std::out_of_range("read past end of Bytes buffer");
         return &(at(oldpos));
     }
+
+    /// Dump a YAML representation to stderr.
+    /// For debugging purposes.
+    void Dump() const;
+
 private:
     bool m_bigendian;
     size_type m_readpos;
@@ -171,12 +177,12 @@ static const impl::SetEndian little_endian = { false };
 YASM_LIB_EXPORT
 std::ostream& operator<< (std::ostream& os, const Bytes& bytes);
 
-/// Output a bytes container in user-readable format to an debug output stream.
-/// @param os    debug stream
-/// @param bytes bytes
-/// @return Debug stream
+/// Dump a YAML representation of bytes.  For debugging purposes.
+/// @param out          YAML emitter
+/// @param bytes        bytes
+/// @return Emitter.
 YASM_LIB_EXPORT
-marg_ostream& operator<< (marg_ostream& os, const Bytes& bytes);
+YAML::Emitter& operator<< (YAML::Emitter& out, const Bytes& bytes);
 
 /// Specialized swap for algorithms.
 inline void

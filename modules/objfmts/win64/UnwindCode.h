@@ -91,7 +91,6 @@ public:
 
     ~UnwindCode();
 
-    virtual void Put(marg_ostream& os) const;
     virtual void Finalize(Bytecode& bc);
     virtual unsigned long CalcLen(Bytecode& bc,
                                   const Bytecode::AddSpanFunc& add_span);
@@ -104,6 +103,7 @@ public:
                         /*@out@*/ long* pos_thres);
     virtual void Output(Bytecode& bc, BytecodeOutput& bc_out);
     virtual UnwindCode* clone() const;
+    virtual void Write(YAML::Emitter& out) const;
 
 private:
     SymbolRef m_proc;       // Start of procedure

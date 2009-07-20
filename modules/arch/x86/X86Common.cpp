@@ -28,10 +28,8 @@
 
 #include "util.h"
 
-#include <iomanip>
-
+#include <YAML/emitter.h>
 #include <yasmx/Support/errwarn.h>
-#include <yasmx/Support/marg_ostream.h>
 #include <yasmx/Bytes.h>
 #include <yasmx/Bytes_util.h>
 
@@ -135,20 +133,20 @@ X86Common::Finish()
         m_opersize = (m_mode_bits == 64 ? 32 : m_mode_bits);
 }
 
-marg_ostream&
-operator<< (marg_ostream& os, const X86Common& common)
+YAML::Emitter&
+operator<< (YAML::Emitter& out, const X86Common& common)
 {
-    os << "AddrSize=" << static_cast<unsigned int>(common.m_addrsize);
-    os << " OperSize=" << static_cast<unsigned int>(common.m_opersize);
-
-    std::ios_base::fmtflags origff = os.flags();
-    os << " LockRepPre=" << std::hex << std::setfill('0') << std::setw(2)
-       << static_cast<unsigned int>(common.m_lockrep_pre) << std::setfill(' ');
-    os.flags(origff);
-
-    os << " BITS=" << static_cast<unsigned int>(common.m_mode_bits);
-    os << '\n';
-    return os;
+    out << YAML::Flow << YAML::BeginMap;
+    out << YAML::Key << "addrsize";
+    out << YAML::Value << static_cast<unsigned int>(common.m_addrsize);
+    out << YAML::Key << "opersize";
+    out << YAML::Value << static_cast<unsigned int>(common.m_opersize);
+    out << YAML::Key << "lockrep" << YAML::Value;
+    out << YAML::Hex << static_cast<unsigned int>(common.m_lockrep_pre);
+    out << YAML::Key << "bits";
+    out << YAML::Value << static_cast<unsigned int>(common.m_mode_bits);
+    out << YAML::EndMap;
+    return out;
 }
 
 unsigned long

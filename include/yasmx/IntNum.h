@@ -40,6 +40,8 @@
 #include "yasmx/Op.h"
 
 
+namespace YAML { class Emitter; }
+
 namespace yasm
 {
 
@@ -322,6 +324,14 @@ public:
     /// Can modify the passed bitvector.
     /// @param bv       bitvector
     void setBV(const llvm::APInt& bv);
+
+    /// Write a YAML representation.  For debugging purposes.
+    /// @param out          YAML emitter
+    void Write(YAML::Emitter& out) const;
+
+    /// Dump a YAML representation to stderr.
+    /// For debugging purposes.
+    void Dump() const;
 };
 
 /// Overloaded assignment binary operators.
@@ -409,6 +419,17 @@ swap(IntNum& left, IntNum& right)
 
 YASM_LIB_EXPORT
 std::ostream& operator<< (std::ostream& os, const IntNum& intn);
+
+/// Dump a YAML representation of intnum.  For debugging purposes.
+/// @param out          YAML emitter
+/// @param intn         intnum
+/// @return Emitter.
+inline YAML::Emitter&
+operator<< (YAML::Emitter& out, const IntNum& intn)
+{
+    intn.Write(out);
+    return out;
+}
 
 } // namespace yasm
 

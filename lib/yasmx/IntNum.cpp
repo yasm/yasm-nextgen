@@ -35,6 +35,8 @@
 #include <cstring>
 
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
 
@@ -762,6 +764,22 @@ IntNum::Extract(unsigned int width, unsigned int lsb) const
         llvm::APInt::tcExtract(&v, 1, m_val.bv->getRawData(), width, lsb);
         return static_cast<unsigned long>(v);
     }
+}
+
+void
+IntNum::Write(YAML::Emitter& out) const
+{
+    llvm::SmallString<40> s;
+    getStr(s);
+    out << s.c_str();
+}
+
+void
+IntNum::Dump() const
+{
+    llvm::SmallString<40> s;
+    getStr(s);
+    llvm::cerr << s.c_str() << std::endl;
 }
 
 std::ostream&

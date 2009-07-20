@@ -29,9 +29,11 @@
 #include <string>
 #include <vector>
 
-#include <yasmx/Support/marg_ostream_fwd.h>
 #include <yasmx/AssocData.h>
 #include <yasmx/Symbol.h>
+
+
+namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -96,7 +98,7 @@ struct CoffSymbol : public AssocData
 
     CoffSymbol(StorageClass sclass, AuxType auxtype = AUX_NONE);
     ~CoffSymbol();
-    void Put(marg_ostream& os) const;
+    void Write(YAML::Emitter& out) const;
     void Write(Bytes& bytes,
                const Symbol& sym,
                Errwarns& errwarns,

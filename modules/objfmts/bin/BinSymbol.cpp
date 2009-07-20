@@ -26,7 +26,7 @@
 //
 #include "BinSymbol.h"
 
-#include <yasmx/Support/marg_ostream.h>
+#include <YAML/emitter.h>
 #include <yasmx/BytecodeContainer.h>
 #include <yasmx/Bytecode.h>
 #include <yasmx/Expr.h>
@@ -57,16 +57,21 @@ BinSymbol::~BinSymbol()
 }
 
 void
-BinSymbol::Put(marg_ostream& os) const
+BinSymbol::Write(YAML::Emitter& out) const
 {
-    os << "which=";
+    out << YAML::Flow << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << key;
+    out << YAML::Key << "section";
+    out << YAML::Value << YAML::Alias("SECT@" + m_sect.getName());
+    out << YAML::Key << "ssym" << YAML::Value;
     switch (m_which)
     {
-        case START: os << "START"; break;
-        case VSTART: os << "VSTART"; break;
-        case LENGTH: os << "LENGTH"; break;
+        case START:     out << "START"; break;
+        case VSTART:    out << "VSTART"; break;
+        case LENGTH:    out << "LENGTH"; break;
+        default:        out << YAML::Null; break;
     }
-    os << '\n';
+    out << YAML::EndMap;
 }
 
 bool

@@ -28,9 +28,9 @@
 
 #include "util.h"
 
+#include "YAML/emitter.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/marg_ostream.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
@@ -54,9 +54,6 @@ public:
                   /*@null@*/ const unsigned char** code_fill);
     ~AlignBytecode();
 
-    /// Prints the implementation-specific data (for debugging purposes).
-    void Put(marg_ostream& os) const;
-
     /// Finalizes the bytecode after parsing.
     void Finalize(Bytecode& bc);
 
@@ -76,6 +73,9 @@ public:
     SpecialType getSpecial() const;
 
     AlignBytecode* clone() const;
+
+    /// Write a YAML representation.  For debugging purposes.
+    void Write(YAML::Emitter& out) const;
 
 private:
     Expr m_boundary;    ///< alignment boundary
@@ -104,17 +104,6 @@ AlignBytecode::AlignBytecode(const Expr& boundary,
 
 AlignBytecode::~AlignBytecode()
 {
-}
-
-void
-AlignBytecode::Put(marg_ostream& os) const
-{
-    os << "_Align_\n";
-    os << "Boundary=" << m_boundary << '\n';
-    if (!m_fill.isEmpty())
-        os << "Fill=" << m_fill << '\n';
-    if (!m_maxskip.isEmpty())
-        os << "Max Skip=" << m_maxskip << '\n';
 }
 
 void
@@ -249,6 +238,18 @@ AlignBytecode*
 AlignBytecode::clone() const
 {
     return new AlignBytecode(m_boundary, m_fill, m_maxskip, m_code_fill);
+}
+
+void
+AlignBytecode::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << "Align";
+    out << YAML::Key << "boundary" << YAML::Value << m_boundary;
+    out << YAML::Key << "fill" << YAML::Value << m_fill;
+    out << YAML::Key << "max skip" << YAML::Value << m_maxskip;
+    out << YAML::Key << "code fill" << YAML::Value << (m_code_fill != 0);
+    out << YAML::EndMap;
 }
 
 } // anonymous namespace

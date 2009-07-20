@@ -40,6 +40,7 @@ public:
         unsigned int getSize() const { return 0; }
         unsigned int getNum() const { return m_name[0]-'a'; }
         void Put(std::ostream& os) const { os << m_name; }
+        void Write(YAML::Emitter& out) const {}
 
     private:
         const char* m_name;

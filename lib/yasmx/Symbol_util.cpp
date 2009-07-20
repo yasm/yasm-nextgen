@@ -28,8 +28,8 @@
 
 #include <util.h>
 
+#include "YAML/emitter.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/marg_ostream.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/AssocData.h"
 #include "yasmx/Expr.h"
@@ -51,7 +51,7 @@ public:
     ObjextNameValues(NameValues& nvs) { m_nvs.swap(nvs); }
     ~ObjextNameValues();
 
-    void Put(marg_ostream& os) const;
+    void Write(YAML::Emitter& out) const;
 
     const NameValues& get() const { return m_nvs; }
     NameValues& get() { return m_nvs; }
@@ -67,9 +67,12 @@ ObjextNameValues::~ObjextNameValues()
 }
 
 void
-ObjextNameValues::Put(marg_ostream& os) const
+ObjextNameValues::Write(YAML::Emitter& out) const
 {
-    os << "Objext NameValues: " << m_nvs << '\n';
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << key;
+    out << YAML::Key << "namevalues" << YAML::Value << m_nvs;
+    out << YAML::EndMap;
 }
 
 
@@ -81,7 +84,7 @@ public:
     CommonSize(const Expr& e) : m_expr(e) {}
     ~CommonSize();
 
-    void Put(marg_ostream& os) const;
+    void Write(YAML::Emitter& out) const;
 
     const Expr* get() const { return &m_expr; }
     Expr* get() { return &m_expr; }
@@ -97,9 +100,12 @@ CommonSize::~CommonSize()
 }
 
 void
-CommonSize::Put(marg_ostream& os) const
+CommonSize::Write(YAML::Emitter& out) const
 {
-    os << "Common Size=" << m_expr << '\n';
+    out << YAML::BeginMap;
+    out << YAML::Key << "type" << YAML::Value << key;
+    out << YAML::Key << "size" << YAML::Value << m_expr;
+    out << YAML::EndMap;
 }
 
 } // anonymous namespace
