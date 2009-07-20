@@ -56,7 +56,5 @@ of the BSD and Artistic licenses), or may reference the GPL or LGPL license
 file.
 
 BSD.txt - 2-clause and 3-clause BSD licenses
-GNU_GPL-2.0 - GNU General Public License
-GNU_LGPL-2.0 - GNU Library General Public License
 LLVM.txt - University of Illinois/NCSA Open Source License (3-clause BSD-like)
 yaml-cpp.txt - yaml-cpp license (MIT license, equivalent to 2-clause BSD)
