@@ -1,11 +1,9 @@
-#ifndef YASM_SYMBOLREF_H
-#define YASM_SYMBOLREF_H
 ///
 /// @file
-/// @brief Symbol reference interface/implementation.
+/// @brief Symbol reference implementation.
 ///
 /// @license
-///  Copyright (C) 2008  Peter Johnson
+///  Copyright (C) 2009  Peter Johnson
 ///
 /// Redistribution and use in source and binary forms, with or without
 /// modification, are permitted provided that the following conditions
@@ -29,37 +27,22 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "yasmx/Config/export.h"
+#include "yasmx/SymbolRef.h"
 
-
-namespace YAML { class Emitter; }
+#include "YAML/emitter.h"
+#include "yasmx/Symbol.h"
 
 namespace yasm
 {
 
-class Symbol;
-
-/// Reference to a symbol.  References are not counted, so the reference
-/// becomes invalid when the referred-to Symbol is destroyed.
-class SymbolRef
+YAML::Emitter&
+operator<< (YAML::Emitter& out, const SymbolRef& sym)
 {
-public:
-    explicit SymbolRef(Symbol* sym) : m_sym(sym) {}
-    operator Symbol* () const { return m_sym; }
-    Symbol& operator*() const { return *m_sym; }
-    Symbol* operator->() const { return m_sym; }
-
-private:
-    Symbol* m_sym;
-};
-
-/// Dump a YAML representation of a symbol reference.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param sym          symbol reference
-/// @return Emitter.
-YASM_LIB_EXPORT
-YAML::Emitter& operator<< (YAML::Emitter& out, const SymbolRef& sym);
+    if (!sym)
+        out << YAML::Null;
+    else
+        out << YAML::Alias("SYM@" + sym->getName());
+    return out;
+}
 
 } // namespace yasm
-
-#endif

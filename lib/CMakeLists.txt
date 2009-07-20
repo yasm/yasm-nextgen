@@ -80,6 +80,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/StringTable.cpp
     yasmx/Symbol.cpp
     yasmx/Symbol_util.cpp
+    yasmx/SymbolRef.cpp
     yasmx/Value.cpp
     )
 SET_TARGET_PROPERTIES(libyasmx PROPERTIES
