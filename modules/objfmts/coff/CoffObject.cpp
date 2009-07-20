@@ -35,7 +35,6 @@
 #include <yasmx/Support/bitcount.h>
 #include <yasmx/Support/Compose.h>
 #include <yasmx/Support/errwarn.h>
-#include <yasmx/Support/marg_ostream.h>
 #include <yasmx/Support/nocase.h>
 #include <yasmx/Support/registry.h>
 #include <yasmx/Arch.h>
