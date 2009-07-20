@@ -110,6 +110,21 @@ static cl::alias predefine_macros_alias("d",
     cl::value_desc("macro[=value]"),
     cl::aliasopt(predefine_macros));
 
+// -dump-object
+static llvm::cl::opt<yasm::Assembler::ObjectDumpTime> dump_object("dump-object",
+    llvm::cl::desc("Dump object in YAML after this phase:"),
+    llvm::cl::values(
+        clEnumValN(yasm::Assembler::DUMP_NEVER, "never", "never dump"),
+        clEnumValN(yasm::Assembler::DUMP_AFTER_PARSE, "parsed",
+                   "after parse phase"),
+        clEnumValN(yasm::Assembler::DUMP_AFTER_FINALIZE, "finalized",
+                   "after finalization"),
+        clEnumValN(yasm::Assembler::DUMP_AFTER_OPTIMIZE, "optimized",
+                   "after optimization"),
+        clEnumValN(yasm::Assembler::DUMP_AFTER_OUTPUT, "output",
+                   "after output"),
+        clEnumValEnd));
+
 // -E
 static cl::opt<std::string> error_filename("E",
     cl::desc("redirect error messages to file"),
@@ -660,7 +675,8 @@ do_preproc_only(void)
 static int
 do_assemble(void)
 {
-    yasm::Assembler assembler(arch_keyword, parser_keyword, objfmt_keyword);
+    yasm::Assembler assembler(arch_keyword, parser_keyword, objfmt_keyword,
+                              dump_object);
 
     // Set object filename if specified.
     if (!obj_filename.empty())

@@ -28,6 +28,7 @@
 
 #include "util.h"
 
+#include "llvm/Support/CommandLine.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/nocase.h"
@@ -70,7 +71,8 @@ class Assembler::Impl
 public:
     Impl(const std::string& arch_keyword,
          const std::string& parser_keyword,
-         const std::string& objfmt_keyword);
+         const std::string& objfmt_keyword,
+         ObjectDumpTime dump_time);
     ~Impl();
 
     void setMachine(const std::string& machine);
@@ -102,11 +104,13 @@ public:
 
     std::string m_obj_filename;
     std::string m_machine;
+    ObjectDumpTime m_dump_time;
 };
 
 Assembler::Impl::Impl(const std::string& arch_keyword,
                       const std::string& parser_keyword,
-                      const std::string& objfmt_keyword)
+                      const std::string& objfmt_keyword,
+                      ObjectDumpTime dump_time)
     : m_arch_module(LoadModule<ArchModule>(arch_keyword).release()),
       m_parser_module(LoadModule<ParserModule>(parser_keyword).release()),
       m_preproc_module(0),
@@ -119,7 +123,8 @@ Assembler::Impl::Impl(const std::string& arch_keyword,
       m_objfmt(0),
       m_dbgfmt(0),
       m_listfmt(0),
-      m_object(0)
+      m_object(0),
+      m_dump_time(dump_time)
 {
     if (m_arch_module.get() == 0)
         throw Error(String::Compose(N_("could not load architecture `%1'"),
@@ -154,8 +159,9 @@ Assembler::Impl::~Impl()
 
 Assembler::Assembler(const std::string& arch_keyword,
                      const std::string& parser_keyword,
-                     const std::string& objfmt_keyword)
-    : m_impl(new Impl(arch_keyword, parser_keyword, objfmt_keyword))
+                     const std::string& objfmt_keyword,
+                     ObjectDumpTime dump_time)
+    : m_impl(new Impl(arch_keyword, parser_keyword, objfmt_keyword, dump_time))
 {
     m_impl->setPreprocessor
         (m_impl->m_parser_module->getDefaultPreprocessorKeyword());
@@ -371,18 +377,23 @@ Assembler::Impl::Assemble(std::istream& is,
     m_parser->Parse(*m_object, *m_preproc, m_listfmt.get() != 0, dirs,
                     m_linemap);
 
+    if (m_dump_time == DUMP_AFTER_PARSE)
+        m_object->Dump();
     if (m_errwarns.getNumErrors(warning_error) > 0)
         return false;
 
     // Finalize parse
     m_object->Finalize(m_errwarns);
+    if (m_dump_time == DUMP_AFTER_FINALIZE)
+        m_object->Dump();
     if (m_errwarns.getNumErrors(warning_error) > 0)
         return false;
 
     // Optimize
     m_object->Optimize(m_errwarns);
 
-    //object.put(std::cout, 0);
+    if (m_dump_time == DUMP_AFTER_OPTIMIZE)
+        m_object->Dump();
 
     if (m_errwarns.getNumErrors(warning_error) > 0)
         return false;
@@ -411,6 +422,9 @@ Assembler::Output(std::ostream& os, bool warning_error)
         (os,
          !String::NocaseEqual(m_impl->m_dbgfmt_module->getKeyword(), "null"),
          m_impl->m_errwarns);
+
+    if (m_impl->m_dump_time == DUMP_AFTER_OUTPUT)
+        m_impl->m_object->Dump();
 
     if (m_impl->m_errwarns.getNumErrors(warning_error) > 0)
         return false;
