@@ -40,8 +40,7 @@ Libyasm is also GPL and LGPL compatible.
 -------
 Modules
 -------
-The modules are 2-clause or 3-clause BSD licensed, with the exception of:
- preprocs/nasm - LGPL licensed
+The modules are 2-clause or 3-clause BSD licensed.
 
 ---------
 Frontends
@@ -60,3 +59,4 @@ BSD.txt - 2-clause and 3-clause BSD licenses
 GNU_GPL-2.0 - GNU General Public License
 GNU_LGPL-2.0 - GNU Library General Public License
 LLVM.txt - University of Illinois/NCSA Open Source License (3-clause BSD-like)
+yaml-cpp.txt - yaml-cpp license (MIT license, equivalent to 2-clause BSD)
