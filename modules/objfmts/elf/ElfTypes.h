@@ -339,7 +339,10 @@ enum ElfRelocationType_386
     R_386_TLS_LE_32 = 34,       // Offset relative to static TLS block
     R_386_TLS_DTPMOD32 = 35,    // ID of module containing symbol
     R_386_TLS_DTPOFF32 = 36,    // Offset in TLS block
-    R_386_TLS_TPOFF32 = 37      // Offset in static TLS block
+    R_386_TLS_TPOFF32 = 37,     // Offset in static TLS block
+    R_386_TLS_GOTDESC = 39,
+    R_386_TLS_DESC_CALL = 40,
+    R_386_TLS_DESC = 41
 };
 
 enum ElfRelocationType_x86_64

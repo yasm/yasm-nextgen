@@ -141,7 +141,9 @@ Elf_x86_x86::AddSpecialSymbols(Object& object, const std::string& parser) const
         {"dtpoff",      R_386_TLS_LDO_32,   32,  true,  true, false},
         {"gotntpoff",   R_386_TLS_GOTIE,    32,  true,  true, false},
         {"indntpoff",   R_386_TLS_IE,       32,  true,  true, false},
-        {"got",         R_386_GOT32,        32,  true, false, false}
+        {"got",         R_386_GOT32,        32,  true, false, false},
+        {"tlsdesc",     R_386_TLS_GOTDESC,  32,  true,  true, false},
+        {"tlscall",     R_386_TLS_DESC_CALL,32,  true,  true, false}
     };
 
     for (unsigned int i=0; i<NELEMS(ssyms); ++i)
@@ -223,6 +225,9 @@ ElfReloc_x86_x86::getTypeName() const
         case R_386_TLS_DTPMOD32: name = "R_386_TLS_DTPMOD32"; break;
         case R_386_TLS_DTPOFF32: name = "R_386_TLS_DTPOFF32"; break;
         case R_386_TLS_TPOFF32: name = "R_386_TLS_TPOFF32"; break;
+        case R_386_TLS_GOTDESC: name = "R_386_TLS_GOTDESC"; break;
+        case R_386_TLS_DESC_CALL: name = "R_386_TLS_DESC_CALL"; break;
+        case R_386_TLS_DESC: name = "R_386_TLS_DESC"; break;
     }
 
     return name;
