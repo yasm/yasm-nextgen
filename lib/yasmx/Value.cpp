@@ -78,6 +78,7 @@ Value::Value(unsigned int size)
       m_line(0),
       m_sub_sym(false),
       m_sub_loc(false),
+      m_insn_start(0),
       m_next_insn(0),
       m_seg_of(false),
       m_rshift(0),
@@ -97,6 +98,7 @@ Value::Value(unsigned int size, std::auto_ptr<Expr> e)
       m_line(0),
       m_sub_sym(false),
       m_sub_loc(false),
+      m_insn_start(0),
       m_next_insn(0),
       m_seg_of(false),
       m_rshift(0),
@@ -116,6 +118,7 @@ Value::Value(unsigned int size, SymbolRef sym)
       m_line(0),
       m_sub_sym(false),
       m_sub_loc(false),
+      m_insn_start(0),
       m_next_insn(0),
       m_seg_of(false),
       m_rshift(0),
@@ -136,6 +139,7 @@ Value::Value(const Value& oth)
       m_line(oth.m_line),
       m_sub_sym(oth.m_sub_sym),
       m_sub_loc(oth.m_sub_loc),
+      m_insn_start(oth.m_insn_start),
       m_next_insn(oth.m_next_insn),
       m_seg_of(oth.m_seg_of),
       m_rshift(oth.m_rshift),
@@ -182,6 +186,7 @@ Value::swap(Value& oth)
     // std::swap individual bitfield members.
     unsigned int sub_sym = m_sub_sym;
     unsigned int sub_loc = m_sub_loc;
+    unsigned int insn_start = m_insn_start;
     unsigned int next_insn = m_next_insn;
     unsigned int seg_of = m_seg_of;
     unsigned int rshift = m_rshift;
@@ -194,6 +199,7 @@ Value::swap(Value& oth)
 
     m_sub_sym = oth.m_sub_sym;
     m_sub_loc = oth.m_sub_loc;
+    m_insn_start = oth.m_insn_start;
     m_next_insn = oth.m_next_insn;
     m_seg_of = oth.m_seg_of;
     m_rshift = oth.m_rshift;
@@ -206,6 +212,7 @@ Value::swap(Value& oth)
 
     oth.m_sub_sym = sub_sym;
     oth.m_sub_loc = sub_loc;
+    oth.m_insn_start = insn_start;
     oth.m_next_insn = next_insn;
     oth.m_seg_of = seg_of;
     oth.m_rshift = rshift;
@@ -226,6 +233,7 @@ Value::Clear()
     m_line = 0;
     m_sub_sym = false;
     m_sub_loc = false;
+    m_insn_start = 0;
     m_next_insn = 0;
     m_seg_of = false;
     m_rshift = 0;
@@ -265,6 +273,7 @@ Value::operator= (const Value& rhs)
         m_line = rhs.m_line;
         m_sub_sym = rhs.m_sub_sym;
         m_sub_loc = rhs.m_sub_loc;
+        m_insn_start = rhs.m_insn_start;
         m_next_insn = rhs.m_next_insn;
         m_seg_of = rhs.m_seg_of;
         m_rshift = rhs.m_rshift;

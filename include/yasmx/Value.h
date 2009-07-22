@@ -266,6 +266,16 @@ public:
     /// @return Size of the value, in bits.
     unsigned int getSize() const { return m_size; }
 
+    /// Set distance from the start of the instruction to the start of the
+    /// value.
+    /// @param dist     distance in bytes
+    void setInsnStart(unsigned int dist) { m_insn_start = dist; }
+
+    /// Get distance from the start of the instruction to the start of the
+    /// value.
+    /// @return Distance in bytes.
+    unsigned int getInsnStart() const { return m_insn_start; }
+
     /// Set distance from the end of the value to the next instruction.
     /// @param dist     distance in bytes
     void setNextInsn(unsigned int dist) { m_next_insn = dist; }
@@ -328,6 +338,11 @@ private:
     /// If m_sub is a location.  Boolean.
     /// Should not be set if m_sub_sym is set.
     unsigned int m_sub_loc : 1;
+
+    /// Distance from the start of the machine instruction, in bytes.
+    /// Used to make special relocation adjustments in some object formats.
+    /// Should be 0 for non-instructions.
+    unsigned int m_insn_start : 4;
 
     /// Distance from the end of the value to the next instruction, in bytes.
     /// Used to generate special relocations in some object formats.
