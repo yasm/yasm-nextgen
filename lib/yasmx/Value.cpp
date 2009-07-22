@@ -901,6 +901,7 @@ Value::Write(YAML::Emitter& out) const
         out << YAML::Null;
 
     out << YAML::Key << "line" << YAML::Value << m_line;
+    out << YAML::Key << "insn start" << YAML::Value << m_insn_start;
     out << YAML::Key << "next insn" << YAML::Value << m_next_insn;
     out << YAML::Key << "seg of" << YAML::Value << static_cast<bool>(m_seg_of);
     out << YAML::Key << "right shift" << YAML::Value << m_rshift;
