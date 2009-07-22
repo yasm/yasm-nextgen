@@ -87,18 +87,6 @@ struct XdfSection : public AssocData
     unsigned long relptr;   //< file ptr to relocation
 };
 
-inline XdfSection*
-getXdf(Section& sect)
-{
-    return static_cast<XdfSection*>(sect.getAssocData(XdfSection::key));
-}
-
-inline const XdfSection*
-getXdf(const Section& sect)
-{
-    return static_cast<const XdfSection*>(sect.getAssocData(XdfSection::key));
-}
-
 }}} // namespace yasm::objfmt::xdf
 
 #endif

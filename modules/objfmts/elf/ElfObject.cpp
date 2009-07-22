@@ -357,8 +357,7 @@ ElfObject::Read(std::istream& is)
             sections[i] = section.get();
 
             // Associate section data with section
-            section->AddAssocData(ElfSection::key,
-                std::auto_ptr<AssocData>(elfsect.release()));
+            section->AddAssocData(elfsect);
 
             // Add section to object
             m_object.AppendSection(section);
@@ -448,8 +447,7 @@ ElfObject::InitSymbols(const char* parser)
     elfsym->setType(STT_FILE);
     m_file_elfsym = elfsym.get();
 
-    filesym->AddAssocData(ElfSymbol::key,
-                          std::auto_ptr<AssocData>(elfsym.release()));
+    filesym->AddAssocData(elfsym);
 
     // Create ..sym special symbol (NASM only)
     if (String::NocaseEqual(parser, "nasm"))
@@ -465,12 +463,12 @@ ElfObject::InitSymbols(const char* parser)
 ElfSymbol&
 ElfObject::BuildSymbol(Symbol& sym)
 {
-    ElfSymbol* elfsym = getElf(sym);
+    ElfSymbol* elfsym = sym.getAssocData<ElfSymbol>();
 
     if (!elfsym)
     {
         elfsym = new ElfSymbol;
-        sym.AddAssocData(ElfSymbol::key, std::auto_ptr<AssocData>(elfsym));
+        sym.AddAssocData(std::auto_ptr<ElfSymbol>(elfsym));
     }
 
     return *elfsym;
@@ -635,12 +633,12 @@ ElfObject::FinalizeSymbol(Symbol& sym, StringTable& strtab, bool local_names)
 {
     int vis = sym.getVisibility();
     int status = sym.getStatus();
-    ElfSymbol* elfsym = getElf(sym);
+    ElfSymbol* elfsym = sym.getAssocData<ElfSymbol>();
 
     if (vis & Symbol::EXTERN)
     {
         BuildExtern(sym);
-        elfsym = getElf(sym);
+        elfsym = sym.getAssocData<ElfSymbol>();
         elfsym->setName(strtab.getIndex(sym.getName()));
         return;
     }
@@ -648,7 +646,7 @@ ElfObject::FinalizeSymbol(Symbol& sym, StringTable& strtab, bool local_names)
     if (vis & Symbol::COMMON)
     {
         BuildCommon(sym);
-        elfsym = getElf(sym);
+        elfsym = sym.getAssocData<ElfSymbol>();
         elfsym->setName(strtab.getIndex(sym.getName()));
         // fall through (check below catches undefined case)
     }
@@ -662,7 +660,7 @@ ElfObject::FinalizeSymbol(Symbol& sym, StringTable& strtab, bool local_names)
     else if (vis & Symbol::GLOBAL)
     {
         BuildGlobal(sym);
-        elfsym = getElf(sym);
+        elfsym = sym.getAssocData<ElfSymbol>();
         elfsym->setName(strtab.getIndex(sym.getName()));
     }
     else
@@ -683,7 +681,7 @@ ElfObject::FinalizeSymbol(Symbol& sym, StringTable& strtab, bool local_names)
         bool is_sect = false;
         if (sect)
         {
-            ElfSection* elfsect = getElf(*sect);
+            ElfSection* elfsect = sect->getAssocData<ElfSection>();
             if (elfsect && elfsect->getSymbol() == &sym)
                 is_sect = true;
         }
@@ -806,7 +804,7 @@ ElfOutput::ConvertValueToBytes(Value& value,
             {
                 // Relocate to section start
                 Section* sym_sect = symloc.bc->getContainer()->AsSection();
-                ElfSection* elfsect = getElf(*sym_sect);
+                ElfSection* elfsect = sym_sect->getAssocData<ElfSection>();
                 assert(elfsect != 0);
                 sym = elfsect->getSymbol();
 
@@ -893,7 +891,7 @@ ElfOutput::OutputSection(Section& sect,
 {
     BytecodeOutput* outputter = this;
 
-    ElfSection* elfsect = getElf(sect);
+    ElfSection* elfsect = sect.getAssocData<ElfSection>();
     assert(elfsect != 0);
 
     if (elfsect->getAlign() == 0)
@@ -1113,7 +1111,7 @@ ElfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
         if (i->getRelocs().size() == 0)
             continue;
 
-        ElfSection* elfsect = getElf(*i);
+        ElfSection* elfsect = i->getAssocData<ElfSection>();
         assert(elfsect != 0);
         elfsect->WriteRelocs(os, *i, errwarns, out.getScratch(),
                              *m_machine);
@@ -1145,7 +1143,7 @@ ElfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        ElfSection* elfsect = getElf(*i);
+        ElfSection* elfsect = i->getAssocData<ElfSection>();
         assert(elfsect != 0);
 
         if (elfsect->Write(os, out.getScratch()) == 0)
@@ -1235,7 +1233,7 @@ ElfObject::AppendSection(const std::string& name, unsigned long line)
 
     // Add ELF data to the section
     ElfSection* elfsect = new ElfSection(m_config, type, flags);
-    section->AddAssocData(ElfSection::key, std::auto_ptr<AssocData>(elfsect));
+    section->AddAssocData(std::auto_ptr<ElfSection>(elfsect));
     elfsect->setSymbol(sym);
 
     return section;
@@ -1272,7 +1270,7 @@ ElfObject::DirGasSection(Object& object,
         throw SyntaxError(N_("flag string expected"));
 
     // Parse section flags
-    ElfSection* elfsect = getElf(*sect);
+    ElfSection* elfsect = sect->getAssocData<ElfSection>();
     assert(elfsect != 0);
 
     int flags = 0, type = SHT_NULL;
@@ -1369,7 +1367,7 @@ ElfObject::DirSection(Object& object,
     }
 
     // Parse section flags
-    ElfSection* elfsect = getElf(*sect);
+    ElfSection* elfsect = sect->getAssocData<ElfSection>();
     assert(elfsect != 0);
 
     IntNum align;

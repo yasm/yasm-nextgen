@@ -72,24 +72,10 @@ struct ElfSpecialSymbol : public AssocData, public SpecialSymbolData
     void Write(YAML::Emitter& out) const;
 };
 
-inline ElfSpecialSymbol*
-getElfSSym(Symbol& sym)
-{
-    return static_cast<ElfSpecialSymbol*>
-        (sym.getAssocData(ElfSpecialSymbol::key));
-}
-
-inline const ElfSpecialSymbol*
-getElfSSym(const Symbol& sym)
-{
-    return static_cast<const ElfSpecialSymbol*>
-        (sym.getAssocData(ElfSpecialSymbol::key));
-}
-
 inline bool
 isWRTSymRelative(const Symbol& wrt)
 {
-    const ElfSpecialSymbol* ssym = getElfSSym(wrt);
+    const ElfSpecialSymbol* ssym = wrt.getAssocData<ElfSpecialSymbol>();
     if (!ssym)
         return false;
     return ssym->sym_relative;
@@ -98,7 +84,7 @@ isWRTSymRelative(const Symbol& wrt)
 inline bool
 isWRTPosAdjusted(const Symbol& wrt)
 {
-    const ElfSpecialSymbol* ssym = getElfSSym(wrt);
+    const ElfSpecialSymbol* ssym = wrt.getAssocData<ElfSpecialSymbol>();
     if (!ssym)
         return false;
     return ssym->curpos_adjust;

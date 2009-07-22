@@ -88,7 +88,7 @@ void
 SxData::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     yasm::objfmt::coff::CoffSymbol* coffsym =
-        yasm::objfmt::coff::getCoff(*m_sym);
+        m_sym->getAssocData<yasm::objfmt::coff::CoffSymbol>();
     assert(coffsym && "no symbol data for SAFESEH symbol");
 
     Bytes& bytes = bc_out.getScratch();

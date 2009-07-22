@@ -77,7 +77,7 @@ BinMapOutput::BinMapOutput(std::ostream& os,
     for (Object::const_section_iterator sect = object.sections_begin(),
          end = object.sections_end(); sect != end; ++sect)
     {
-        const BinSection* bsd = getBin(*sect);
+        const BinSection* bsd = sect->getAssocData<BinSection>();
         assert(bsd != 0);
         MapPrescanBytes(*sect, *bsd, &m_bytes);
     }

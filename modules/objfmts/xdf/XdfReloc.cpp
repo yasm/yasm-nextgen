@@ -119,7 +119,7 @@ XdfReloc::getTypeName() const
 void
 XdfReloc::Write(Bytes& bytes) const
 {
-    const XdfSymbol* xsym = getXdf(m_sym);
+    const XdfSymbol* xsym = m_sym->getAssocData<XdfSymbol>();
     assert(xsym != 0);      // need symbol data for relocated symbol
 
     bytes << little_endian;
@@ -129,7 +129,7 @@ XdfReloc::Write(Bytes& bytes) const
 
     if (m_base)
     {
-        xsym = getXdf(m_base);
+        xsym = m_base->getAssocData<XdfSymbol>();
         assert(xsym != 0);  // need symbol data for relocated base symbol
         Write32(bytes, xsym->index);    // base symbol
     }

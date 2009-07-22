@@ -123,8 +123,8 @@ AddElfSSym(Object& object, const SpecialSymbolData& ssym)
 {
     SymbolRef sym = object.AddSpecialSymbol(ssym.name);
     sym->DefineSpecial(Symbol::EXTERN);
-    sym->AddAssocData(ElfSpecialSymbol::key,
-        std::auto_ptr<AssocData>(new ElfSpecialSymbol(ssym)));
+    sym->AddAssocData(
+        std::auto_ptr<ElfSpecialSymbol>(new ElfSpecialSymbol(ssym)));
 }
 
 }}} // namespace yasm::objfmt::elf

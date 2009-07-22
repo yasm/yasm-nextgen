@@ -74,7 +74,7 @@ ElfConfig::AssignSymbolIndices(Object& object, ElfSymbolIndex* nlocal) const
     for (Object::symbol_iterator i=object.symbols_begin(),
          end=object.symbols_end(); i != end; ++i)
     {
-        ElfSymbol* elfsym = getElf(*i);
+        ElfSymbol* elfsym = i->getAssocData<ElfSymbol>();
         if (!elfsym)
             continue;
 
@@ -107,7 +107,7 @@ ElfConfig::WriteSymbolTable(std::ostream& os,
     for (Object::symbol_iterator sym=object.symbols_begin(),
          end=object.symbols_end(); sym != end; ++sym)
     {
-        ElfSymbol* elfsym = getElf(*sym);
+        ElfSymbol* elfsym = sym->getAssocData<ElfSymbol>();
         if (!elfsym)
             continue;
 
@@ -149,11 +149,7 @@ ElfConfig::ReadSymbolTable(std::istream&      is,
         symtab.push_back(sym);
 
         if (sym)
-        {
-            // Associate symbol data with symbol
-            sym->AddAssocData(ElfSymbol::key,
-                std::auto_ptr<AssocData>(elfsym.release()));
-        }
+            sym->AddAssocData(elfsym);  // Associate symbol data with symbol
     }
 
     return true;

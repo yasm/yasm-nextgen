@@ -73,22 +73,10 @@ private:
 
 void BinSimplify(Expr& e);
 
-inline const BinSymbol*
-getBin(const Symbol& sym)
-{
-    return static_cast<const BinSymbol*>(sym.getAssocData(BinSymbol::key));
-}
-
-inline BinSymbol*
-getBin(Symbol& sym)
-{
-    return static_cast<BinSymbol*>(sym.getAssocData(BinSymbol::key));
-}
-
 inline bool
 getBinSSymValue(const Symbol& sym, /*@out@*/ IntNum* val)
 {
-    const BinSymbol* bsym = getBin(sym);
+    const BinSymbol* bsym = sym.getAssocData<BinSymbol>();
     if (!bsym)
         return false;
     return bsym->getValue(val);

@@ -316,7 +316,7 @@ CheckSymbol(const Symbol& sym, Errwarns& errwarns)
 
     // Don't check internally-generated symbols.  Only internally generated
     // symbols have symrec data, so simply check for its presence.
-    if (getBin(sym))
+    if (sym.getAssocData<BinSymbol>())
         return;
 
     if (vis & Symbol::EXTERN)
@@ -409,21 +409,20 @@ BinObject::AppendSection(const std::string& name, unsigned long line)
 
     SymbolRef start = m_object.getSymbol("section."+name+".start");
     start->Declare(Symbol::EXTERN, line);
-    start->AddAssocData(BinSymbol::key, std::auto_ptr<AssocData>
+    start->AddAssocData(std::auto_ptr<BinSymbol>
         (new BinSymbol(*section, *bsd, BinSymbol::START)));
 
     SymbolRef vstart = m_object.getSymbol("section."+name+".vstart");
     vstart->Declare(Symbol::EXTERN, line);
-    vstart->AddAssocData(BinSymbol::key, std::auto_ptr<AssocData>
+    vstart->AddAssocData(std::auto_ptr<BinSymbol>
         (new BinSymbol(*section, *bsd, BinSymbol::VSTART)));
 
     SymbolRef length = m_object.getSymbol("section."+name+".length");
     length->Declare(Symbol::EXTERN, line);
-    length->AddAssocData(BinSymbol::key, std::auto_ptr<AssocData>
+    length->AddAssocData(std::auto_ptr<BinSymbol>
         (new BinSymbol(*section, *bsd, BinSymbol::LENGTH)));
 
-    section->AddAssocData(BinSection::key,
-                          std::auto_ptr<AssocData>(bsd.release()));
+    section->AddAssocData(std::auto_ptr<BinSection>(bsd.release()));
 
     return section;
 }
@@ -468,7 +467,7 @@ BinObject::DirSection(Object& object,
     std::auto_ptr<Expr> start(0);
     std::auto_ptr<Expr> vstart(0);
 
-    BinSection* bsd = getBin(*sect);
+    BinSection* bsd = sect->getAssocData<BinSection>();
     assert(bsd);
     unsigned long bss = sect->isBSS();
     unsigned long code = sect->isCode();

@@ -158,7 +158,7 @@ BinLink::Dump() const
 bool
 BinLink::CreateLMAGroup(Section& section)
 {
-    BinSection* bsd = getBin(section);
+    BinSection* bsd = section.getAssocData<BinSection>();
     assert(bsd);
 
     // Determine section alignment as necessary.
@@ -350,7 +350,7 @@ BinLink::DoLink(const IntNum& origin)
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        BinSection* bsd = getBin(*i);
+        BinSection* bsd = i->getAssocData<BinSection>();
         assert(bsd);
         m_vma_groups.push_back(new BinGroup(*i, *bsd));
     }
@@ -416,8 +416,8 @@ BinLink::CheckLMAOverlap(const Section& sect, const Section& other)
     if (&sect == &other)
         return true;
 
-    const BinSection* bsd = getBin(sect);
-    const BinSection* bsd2 = getBin(other);
+    const BinSection* bsd = sect.getAssocData<BinSection>();
+    const BinSection* bsd2 = other.getAssocData<BinSection>();
 
     assert(bsd);
     assert(bsd2);

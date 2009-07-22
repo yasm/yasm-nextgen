@@ -82,19 +82,6 @@ struct CoffSection : public AssocData
     bool m_setalign;            ///< Set alignment in section flags
 };
 
-inline CoffSection*
-getCoff(Section& sect)
-{
-    return static_cast<CoffSection*>(sect.getAssocData(CoffSection::key));
-}
-
-inline const CoffSection*
-getCoff(const Section& sect)
-{
-    return static_cast<const CoffSection*>
-        (sect.getAssocData(CoffSection::key));
-}
-
 }}} // namespace yasm::objfmt::coff
 
 #endif

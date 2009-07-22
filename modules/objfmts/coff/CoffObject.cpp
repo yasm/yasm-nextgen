@@ -120,8 +120,7 @@ CoffObject::InitSymbols(const char* parser)
         new CoffSymbol(CoffSymbol::SCL_FILE, CoffSymbol::AUX_FILE));
     m_file_coffsym = coffsym.get();
 
-    filesym->AddAssocData(CoffSymbol::key,
-                          std::auto_ptr<AssocData>(coffsym.release()));
+    filesym->AddAssocData(coffsym);
 }
 
 class CoffOutput : public BytecodeStreamOutput
@@ -241,7 +240,7 @@ CoffOutput::ConvertValueToBytes(Value& value,
             if (sym->getLabel(&symloc))
             {
                 Section* sym_sect = symloc.bc->getContainer()->AsSection();
-                CoffSection* coffsect = getCoff(*sym_sect);
+                CoffSection* coffsect = sym_sect->getAssocData<CoffSection>();
                 assert(coffsect != 0);
                 sym = coffsect->m_sym;
 
@@ -376,7 +375,7 @@ CoffOutput::OutputSection(Section& sect, Errwarns& errwarns)
 {
     BytecodeOutput* outputter = this;
 
-    CoffSection* coffsect = getCoff(sect);
+    CoffSection* coffsect = sect.getAssocData<CoffSection>();
     assert(coffsect != 0);
     m_coffsect = coffsect;
 
@@ -485,7 +484,7 @@ CoffOutput::CountSymbols()
         if (!m_all_syms && vis == Symbol::LOCAL && !i->isAbsoluteSymbol())
             continue;
 
-        CoffSymbol* coffsym = getCoff(*i);
+        CoffSymbol* coffsym = i->getAssocData<CoffSymbol>();
 
         // Create basic coff symbol data if it doesn't already exist
         if (!coffsym)
@@ -494,7 +493,7 @@ CoffOutput::CountSymbols()
                 coffsym = new CoffSymbol(CoffSymbol::SCL_EXT);
             else
                 coffsym = new CoffSymbol(CoffSymbol::SCL_STAT);
-            i->AddAssocData(CoffSymbol::key, std::auto_ptr<AssocData>(coffsym));
+            i->AddAssocData(std::auto_ptr<CoffSymbol>(coffsym));
         }
         coffsym->m_index = indx;
 
@@ -516,7 +515,7 @@ CoffOutput::OutputSymbolTable(Errwarns& errwarns)
             continue;
 
         // Get symrec data
-        const CoffSymbol* coffsym = getCoff(*i);
+        const CoffSymbol* coffsym = i->getAssocData<CoffSymbol>();
         assert(coffsym != 0);
 
         Bytes& bytes = getScratch();
@@ -539,7 +538,7 @@ void
 CoffOutput::OutputSectionHeader(const Section& sect)
 {
     Bytes& bytes = getScratch();
-    const CoffSection* coffsect = getCoff(sect);
+    const CoffSection* coffsect = sect.getAssocData<CoffSection>();
     coffsect->Write(bytes, sect);
     m_os << bytes;
 }
@@ -560,7 +559,7 @@ CoffObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        CoffSection* coffsect = getCoff(*i);
+        CoffSection* coffsect = i->getAssocData<CoffSection>();
         coffsect->m_scnum = scnum++;
 
         if (coffsect->m_isdebug)
@@ -714,14 +713,13 @@ CoffObject::AppendSection(const std::string& name, unsigned long line)
     SymbolRef sym = m_object.getSymbol(name);
     sym->DefineLabel(start, line);
     sym->Declare(Symbol::GLOBAL, line);
-    sym->AddAssocData(CoffSymbol::key,
-        std::auto_ptr<AssocData>(new CoffSymbol(CoffSymbol::SCL_STAT,
+    sym->AddAssocData(
+        std::auto_ptr<CoffSymbol>(new CoffSymbol(CoffSymbol::SCL_STAT,
                                                 CoffSymbol::AUX_SECT)));
 
     // Add COFF data to the section
     CoffSection* coffsect = new CoffSection(sym);
-    section->AddAssocData(CoffSection::key,
-                          std::auto_ptr<AssocData>(coffsect));
+    section->AddAssocData(std::auto_ptr<CoffSection>(coffsect));
     InitSection(name, *section, coffsect);
 
     return section;
@@ -756,7 +754,7 @@ CoffObject::DirGasSection(Object& object,
     else
         sect = AppendSection(sectname, line);
 
-    CoffSection* coffsect = getCoff(*sect);
+    CoffSection* coffsect = sect->getAssocData<CoffSection>();
     assert(coffsect != 0);
 
     m_object.setCurSection(sect);
@@ -915,7 +913,7 @@ CoffObject::DirSection(Object& object,
     else
         sect = AppendSection(sectname, line);
 
-    CoffSection* coffsect = getCoff(*sect);
+    CoffSection* coffsect = sect->getAssocData<CoffSection>();
     assert(coffsect != 0);
 
     m_object.setCurSection(sect);

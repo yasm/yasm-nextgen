@@ -110,18 +110,6 @@ struct CoffSymbol : public AssocData
     std::vector<AuxEntry> m_aux;    ///< aux entries
 };
 
-inline CoffSymbol*
-getCoff(Symbol& sym)
-{
-    return static_cast<CoffSymbol*>(sym.getAssocData(CoffSymbol::key));
-}
-
-inline const CoffSymbol*
-getCoff(const Symbol& sym)
-{
-    return static_cast<const CoffSymbol*>(sym.getAssocData(CoffSymbol::key));
-}
-
 }}} // namespace yasm::objfmt::coff
 
 #endif

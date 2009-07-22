@@ -116,54 +116,49 @@ namespace yasm
 void
 setObjextNameValues(Symbol& sym, NameValues& objext_namevals)
 {
-    std::auto_ptr<AssocData> ad(new ObjextNameValues(objext_namevals));
-    sym.AddAssocData(ObjextNameValues::key, ad);
+    sym.AddAssocData(std::auto_ptr<ObjextNameValues>
+                     (new ObjextNameValues(objext_namevals)));
 }
 
 const NameValues*
 getObjextNameValues(const Symbol& sym)
 {
-    const AssocData* ad = sym.getAssocData(ObjextNameValues::key);
-    if (!ad)
+    const ObjextNameValues* x = sym.getAssocData<ObjextNameValues>();
+    if (!x)
         return 0;
-    const ObjextNameValues* x = static_cast<const ObjextNameValues*>(ad);
     return &x->get();
 }
 
 NameValues*
 getObjextNameValues(Symbol& sym)
 {
-    AssocData* ad = sym.getAssocData(ObjextNameValues::key);
-    if (!ad)
+    ObjextNameValues* x = sym.getAssocData<ObjextNameValues>();
+    if (!x)
         return 0;
-    ObjextNameValues* x = static_cast<ObjextNameValues*>(ad);
     return &x->get();
 }
 
 void
 setCommonSize(Symbol& sym, const Expr& common_size)
 {
-    std::auto_ptr<AssocData> ad(new CommonSize(common_size));
-    sym.AddAssocData(CommonSize::key, ad);
+    sym.AddAssocData(std::auto_ptr<CommonSize>(new CommonSize(common_size)));
 }
 
 const Expr*
 getCommonSize(const Symbol& sym)
 {
-    const AssocData* ad = sym.getAssocData(CommonSize::key);
-    if (!ad)
+    const CommonSize* x = sym.getAssocData<CommonSize>();
+    if (!x)
         return 0;
-    const CommonSize* x = static_cast<const CommonSize*>(ad);
     return x->get();
 }
 
 Expr*
 getCommonSize(Symbol& sym)
 {
-    AssocData* ad = sym.getAssocData(CommonSize::key);
-    if (!ad)
+    CommonSize* x = sym.getAssocData<CommonSize>();
+    if (!x)
         return 0;
-    CommonSize* x = static_cast<CommonSize*>(ad);
     return x->get();
 }
 

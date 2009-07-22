@@ -56,18 +56,6 @@ struct XdfSymbol : public AssocData
     unsigned long index;                //< assigned XDF symbol table index
 };
 
-inline XdfSymbol*
-getXdf(Symbol& sym)
-{
-    return static_cast<XdfSymbol*>(sym.getAssocData(XdfSymbol::key));
-}
-
-inline XdfSymbol*
-getXdf(SymbolRef sym)
-{
-    return static_cast<XdfSymbol*>(sym->getAssocData(XdfSymbol::key));
-}
-
 }}} // namespace yasm::objfmt::xdf
 
 #endif

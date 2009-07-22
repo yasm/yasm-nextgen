@@ -75,18 +75,6 @@ struct BinSection : public AssocData
     IntNum length;
 };
 
-inline const BinSection*
-getBin(const Section& sect)
-{
-    return static_cast<const BinSection*>(sect.getAssocData(BinSection::key));
-}
-
-inline BinSection*
-getBin(Section& sect)
-{
-    return static_cast<BinSection*>(sect.getAssocData(BinSection::key));
-}
-
 }}} // namespace yasm::objfmt::bin
 
 #endif

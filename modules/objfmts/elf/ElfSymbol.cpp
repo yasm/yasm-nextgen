@@ -201,7 +201,7 @@ ElfSymbol::Finalize(Symbol& sym, Errwarns& errwarns)
     ElfSection* elfsect;
     if (sym.getLabel(&loc) &&
         (sect = loc.bc->getContainer()->AsSection()) &&
-        (elfsect = getElf(*sect)) &&
+        (elfsect = sect->getAssocData<ElfSection>()) &&
         (elfsect->getFlags() & SHF_TLS))
     {
         m_type = STT_TLS;
@@ -253,7 +253,7 @@ ElfSymbol::Write(Bytes& bytes, const ElfConfig& config)
 
     if (m_sect)
     {
-        ElfSection* elfsect = getElf(*m_sect);
+        ElfSection* elfsect = m_sect->getAssocData<ElfSection>();
         assert(elfsect != 0);
         Write16(bytes, elfsect->getIndex());
     }

@@ -51,7 +51,6 @@ namespace win64
 {
 
 using yasm::objfmt::coff::CoffSection;
-using yasm::objfmt::coff::getCoff;
 using yasm::objfmt::win32::Win32Object;
 
 class Win64Object : public Win32Object
@@ -466,7 +465,7 @@ Win64Object::DirEndProcFrame(Object& object,
         {&xdata->bytecodes_last(), xdata->bytecodes_last().getFixedLen()};
     unwindpos->DefineLabel(unwindpos_loc, line);
     // Get symbol for .xdata as we'll want to reference it with WRT.
-    SymbolRef xdata_sym = getCoff(*xdata)->m_sym;
+    SymbolRef xdata_sym = xdata->getAssocData<CoffSection>()->m_sym;
 
     // Add unwind info.  Use line number of start of procedure.
     Arch& arch = *object.getArch();

@@ -157,12 +157,6 @@ private:
     ElfAddress          m_rel_offset;
 };
 
-inline ElfSection*
-getElf(Section& sym)
-{
-    return static_cast<ElfSection*>(sym.getAssocData(ElfSection::key));
-}
-
 // Note ESD1:
 //   for section types SHT_REL, SHT_RELA:
 //     link -> index of associated symbol table

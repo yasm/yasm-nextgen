@@ -54,14 +54,14 @@ ElfReloc::ElfReloc(SymbolRef sym,
 {
     if (wrt)
     {
-        const ElfSpecialSymbol* ssym = getElfSSym(*wrt);
+        const ElfSpecialSymbol* ssym = wrt->getAssocData<ElfSpecialSymbol>();
         if (!ssym || valsize != ssym->size)
             throw TypeError(N_("elf: invalid WRT"));
 
         // Force TLS type; this is required by the linker.
         if (ssym->thread_local)
         {
-            if (ElfSymbol* esym = getElf(*sym))
+            if (ElfSymbol* esym = sym->getAssocData<ElfSymbol>())
                 esym->setType(STT_TLS);
         }
         m_type = ssym->reloc;
@@ -137,7 +137,7 @@ ElfReloc::Write(Bytes& bytes, const ElfConfig& config)
 {
     unsigned long r_sym = STN_UNDEF;
 
-    if (ElfSymbol* esym = getElf(*getSymbol()))
+    if (ElfSymbol* esym = getSymbol()->getAssocData<ElfSymbol>())
         r_sym = esym->getSymbolIndex();
 
     bytes.resize(0);

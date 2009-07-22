@@ -217,7 +217,7 @@ XdfOutput::OutputSection(Section& sect, Errwarns& errwarns)
 {
     BytecodeOutput* outputter = this;
 
-    XdfSection* xsect = getXdf(sect);
+    XdfSection* xsect = sect.getAssocData<XdfSection>();
     assert(xsect != NULL);
 
     std::streampos pos;
@@ -310,7 +310,7 @@ XdfOutput::OutputSymbol(const Symbol& sym,
         // If there is not a section, leave as debugging symbol.
         if (sect)
         {
-            const XdfSection* xsect = getXdf(*sect);
+            const XdfSection* xsect = sect->getAssocData<XdfSection>();
             assert(xsect != 0);
             scnum = xsect->scnum;
             value += loc.getOffset();
@@ -374,8 +374,8 @@ XdfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
         if (all_syms || (vis != Symbol::LOCAL && !(vis & Symbol::DLOCAL)))
         {
             // Save index in symrec data
-            sym->AddAssocData(XdfSymbol::key,
-                std::auto_ptr<AssocData>(new XdfSymbol(symtab_count)));
+            sym->AddAssocData(
+                std::auto_ptr<XdfSymbol>(new XdfSymbol(symtab_count)));
 
             ++symtab_count;
         }
@@ -386,7 +386,7 @@ XdfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     for (Object::section_iterator i = m_object.sections_begin(),
          end = m_object.sections_end(); i != end; ++i)
     {
-        XdfSection* xsect = getXdf(*i);
+        XdfSection* xsect = i->getAssocData<XdfSection>();
         assert(xsect != 0);
         xsect->scnum = scnum++;
     }
@@ -447,7 +447,7 @@ XdfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     for (Object::const_section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        const XdfSection* xsect = getXdf(*i);
+        const XdfSection* xsect = i->getAssocData<XdfSection>();
         assert(xsect != 0);
 
         Bytes& scratch2 = out.getScratch();
@@ -569,8 +569,7 @@ XdfObject::Read(std::istream& is)
         }
 
         // Associate section data with section
-        section->AddAssocData(XdfSection::key,
-                              std::auto_ptr<AssocData>(xsect.release()));
+        section->AddAssocData(std::auto_ptr<XdfSection>(xsect.release()));
 
         // Add section to object
         m_object.AppendSection(section);
@@ -607,8 +606,7 @@ XdfObject::Read(std::istream& is)
         }
 
         // Save index in symrec data
-        sym->AddAssocData(XdfSymbol::key,
-                          std::auto_ptr<AssocData>(new XdfSymbol(i)));
+        sym->AddAssocData(std::auto_ptr<XdfSymbol>(new XdfSymbol(i)));
     }
 
     // Update section symbol info, and create section relocations
@@ -617,7 +615,7 @@ XdfObject::Read(std::istream& is)
     for (Object::section_iterator sect=m_object.sections_begin(),
          end=m_object.sections_end(); sect != end; ++sect, ++nrelocsi)
     {
-        XdfSection* xsect = getXdf(*sect);
+        XdfSection* xsect = sect->getAssocData<XdfSection>();
         assert(xsect != 0);
 
         // Read relocations
@@ -676,8 +674,7 @@ XdfObject::AppendSection(const std::string& name, unsigned long line)
     sym->DefineLabel(start, line);
 
     // Add XDF data to the section
-    section->AddAssocData(XdfSection::key,
-                          std::auto_ptr<AssocData>(new XdfSection(sym)));
+    section->AddAssocData(std::auto_ptr<XdfSection>(new XdfSection(sym)));
 
     return section;
 }
@@ -701,7 +698,7 @@ XdfObject::DirSection(Object& object,
     else
         sect = AppendSection(sectname, line);
 
-    XdfSection* xsect = getXdf(*sect);
+    XdfSection* xsect = sect->getAssocData<XdfSection>();
     assert(xsect != 0);
 
     m_object.setCurSection(sect);

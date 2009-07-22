@@ -77,7 +77,7 @@ XdfSection::Write(YAML::Emitter& out) const
 void
 XdfSection::Write(Bytes& bytes, const Section& sect) const
 {
-    const XdfSymbol* xsym = getXdf(sym);
+    const XdfSymbol* xsym = sym->getAssocData<XdfSymbol>();
     assert(xsym != 0);
 
     bytes << little_endian;

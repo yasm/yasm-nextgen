@@ -116,7 +116,7 @@ CoffSymbol::Write(Bytes& bytes,
         // If there is not a section, leave as debugging symbol.
         if (sect)
         {
-            CoffSection* coffsect = getCoff(*sect);
+            CoffSection* coffsect = sect->getAssocData<CoffSection>();
             assert(coffsect != 0);
 
             scnum = coffsect->m_scnum;

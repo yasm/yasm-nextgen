@@ -105,12 +105,6 @@ private:
     ElfSymbolIndex      m_symindex;
 };
 
-inline ElfSymbol*
-getElf(Symbol& sym)
-{
-    return static_cast<ElfSymbol*>(sym.getAssocData(ElfSymbol::key));
-}
-
 void InsertLocalSymbol(Object& object,
                        std::auto_ptr<Symbol> sym,
                        std::auto_ptr<ElfSymbol> entry);
