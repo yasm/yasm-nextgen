@@ -212,13 +212,15 @@ X86Jmp::Output(Bytecode& bc, BytecodeOutput& bc_out)
         m_nearop.ToBytes(bytes);
     }
 
+    unsigned long pos = bytes.size();
     bc_out.Output(bytes);
 
     // Adjust relative displacement to end of instruction
-    m_target.AddAbs(-static_cast<long>(bytes.size()+size));
+    m_target.AddAbs(-static_cast<long>(pos+size));
     m_target.setSize(size*8);
 
     // Distance from displacement to end of instruction is always 0.
+    m_target.setInsnStart(pos);
     m_target.setNextInsn(0);
 
     // Output displacement
@@ -288,6 +290,7 @@ AppendJmp(BytecodeContainer& container,
     // FIXME: if short jump out of range, this results in an overflow warning
     // instead of a "short jump out of range" error.
     Bytes& bytes = bc.getFixed();
+    unsigned long orig_size = bytes.size();
     common.ToBytes(bytes, 0);
 
     Value targetv(0, target);
@@ -317,6 +320,7 @@ AppendJmp(BytecodeContainer& container,
         targetv.AddAbs(-static_cast<long>(i));
         targetv.setSize(i*8);
     }
+    targetv.setInsnStart(bytes.size()-orig_size);
     bc.AppendFixed(targetv);
 }
 

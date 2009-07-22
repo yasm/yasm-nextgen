@@ -55,6 +55,7 @@ void AppendJmpFar(BytecodeContainer& container,
 {
     Bytecode& bc = container.FreshBytecode();
     Bytes& bytes = bc.getFixed();
+    unsigned long orig_size = bytes.size();
     ++num_jmpfar;
 
     common.ToBytes(bytes, 0);
@@ -62,8 +63,8 @@ void AppendJmpFar(BytecodeContainer& container,
 
     // Absolute displacement: segment and offset
     unsigned int size = (common.m_opersize == 16) ? 2 : 4;
-    bc.AppendFixed(size, offset, line);
-    bc.AppendFixed(2, segment, line);
+    bc.AppendFixed(size, offset, line).setInsnStart(bytes.size()-orig_size);
+    bc.AppendFixed(2, segment, line).setInsnStart(bytes.size()-orig_size);
 }
 
 }}} // namespace yasm::arch::x86

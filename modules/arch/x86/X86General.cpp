@@ -452,8 +452,8 @@ X86General::Output(Bytecode& bc, BytecodeOutput& bc_out)
         }
     }
 
+    unsigned long pos = bytes.size();
     bc_out.Output(bytes);
-    unsigned long pos = bc.getFixedLen()+bytes.size();
 
     // Calculate immediate length
     unsigned int imm_len = 0;
@@ -476,15 +476,15 @@ X86General::Output(Bytecode& bc, BytecodeOutput& bc_out)
     {
         unsigned int disp_len = m_ea->m_disp.getSize()/8;
 
+        m_ea->m_disp.setInsnStart(pos);
         if (m_ea->m_disp.isIPRelative())
         {
             // Adjust relative displacement to end of bytecode
-            m_ea->m_disp.AddAbs(
-                -static_cast<long>(pos-bc.getFixedLen()+disp_len+imm_len));
+            m_ea->m_disp.AddAbs(-static_cast<long>(pos+disp_len+imm_len));
             // Distance to end of instruction is the immediate length
             m_ea->m_disp.setNextInsn(imm_len);
         }
-        Location loc = {&bc, pos};
+        Location loc = {&bc, bc.getFixedLen()+pos};
         pos += disp_len;
         Bytes& dbytes = bc_out.getScratch();
         dbytes.resize(disp_len);
@@ -494,7 +494,8 @@ X86General::Output(Bytecode& bc, BytecodeOutput& bc_out)
     // Immediate (if required)
     if (m_imm != 0)
     {
-        Location loc = {&bc, pos};
+        m_imm->setInsnStart(pos);
+        Location loc = {&bc, bc.getFixedLen()+pos};
         Bytes& ibytes = bc_out.getScratch();
         ibytes.resize(imm_len);
         bc_out.Output(*m_imm, bytes, loc, 1);
@@ -566,9 +567,13 @@ AppendGeneral(BytecodeContainer& container,
     if (postop == POSTOP_NONE && ea.get() == 0)
     {
         Bytes& bytes = bc.getFixed();
+        unsigned long orig_size = bytes.size();
         GeneralToBytes(bytes, common, opcode, ea.get(), special_prefix, rex);
         if (imm.get() != 0)
+        {
+            imm->setInsnStart(bytes.size()-orig_size);
             bc.AppendFixed(imm);
+        }
         return;
     }
 
