@@ -367,7 +367,18 @@ enum ElfRelocationType_x86_64
     R_X86_64_TLSLD = 20,        // word32, PC-rel offset to LD GOT block
     R_X86_64_DTPOFF32 = 21,     // word32, offset to TLS block
     R_X86_64_GOTTPOFF = 22,     // word32, PC-rel offset to IE GOT entry
-    R_X86_64_TPOFF32 = 23       // word32, offset in initial TLS block
+    R_X86_64_TPOFF32 = 23,      // word32, offset in initial TLS block
+    R_X86_64_PC64 = 24,         // word64, PC relative
+    R_X86_64_GOTOFF64 = 25,     // word64, offset to GOT
+    R_X86_64_GOTPC32 = 26,      // word32, signed pc relative to GOT
+    R_X86_64_GOT64 = 27,        // word64, GOT entry offset
+    R_X86_64_GOTPCREL64 = 28,   // word64, signed pc relative to GOT entry
+    R_X86_64_GOTPC64 = 29,      // word64, signed pc relative to GOT
+    R_X86_64_GOTPLT64 = 30,     // like GOT64, but indicates PLT entry needed
+    R_X86_64_PLTOFF64 = 31,     // word64, GOT relative offset to PLT entry
+    R_X86_64_GOTPC32_TLSDESC = 34, // GOT offset for TLS descriptor
+    R_X86_64_TLSDESC_CALL = 35, // Marker for call through TLS descriptor
+    R_X86_64_TLSDESC = 36       // TLS descriptor
 };
 
 typedef std::vector<SymbolRef> ElfSymtab;

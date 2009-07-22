@@ -204,6 +204,17 @@ ElfReloc_x86_amd64::getTypeName() const
         case R_X86_64_DTPOFF32: name = "R_X86_64_DTPOFF32"; break;
         case R_X86_64_GOTTPOFF: name = "R_X86_64_GOTTPOFF"; break;
         case R_X86_64_TPOFF32: name = "R_X86_64_TPOFF32"; break;
+        case R_X86_64_PC64: name = "R_X86_64_PC64"; break;
+        case R_X86_64_GOTOFF64: name = "R_X86_64_GOTOFF64"; break;
+        case R_X86_64_GOTPC32: name = "R_X86_64_GOTPC32"; break;
+        case R_X86_64_GOT64: name = "R_X86_64_GOT64"; break;
+        case R_X86_64_GOTPCREL64: name = "R_X86_64_GOTPCREL64"; break;
+        case R_X86_64_GOTPC64: name = "R_X86_64_GOTPC64"; break;
+        case R_X86_64_GOTPLT64: name = "R_X86_64_GOTPLT64"; break;
+        case R_X86_64_PLTOFF64: name = "R_X86_64_PLTOFF64"; break;
+        case R_X86_64_GOTPC32_TLSDESC: name = "R_X86_64_GOTPC32_TLSDESC"; break;
+        case R_X86_64_TLSDESC_CALL: name = "R_X86_64_TLSDESC_CALL"; break;
+        case R_X86_64_TLSDESC: name = "R_X86_64_TLSDESC"; break;
     }
 
     return name;
