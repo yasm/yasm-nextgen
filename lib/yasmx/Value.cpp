@@ -160,9 +160,29 @@ Value::swap(Value& oth)
     m_abs.swap(oth.m_abs);
     std::swap(m_rel, oth.m_rel);
     std::swap(m_wrt, oth.m_wrt);
+    std::swap(m_line, oth.m_line);
+
+    // XXX: Can't std::swap the union, so do it the hard way.
+    Symbol* sym;
+    Location loc;
+    if (m_sub_sym)
+        sym = m_sub.sym;
+    else if (m_sub_loc)
+        loc = m_sub.loc;
+    if (oth.m_sub_sym)
+        m_sub.sym = oth.m_sub.sym;
+    else if (oth.m_sub_loc)
+        m_sub.loc = oth.m_sub.loc;
+    if (m_sub_sym)
+        oth.m_sub.sym = sym;
+    else if (m_sub_loc)
+        oth.m_sub.loc = loc;
 
     // XXX: Have to do manual copy-construct/assignment "swap", as we can't
     // std::swap individual bitfield members.
+    unsigned int sub_sym = m_sub_sym;
+    unsigned int sub_loc = m_sub_loc;
+    unsigned int next_insn = m_next_insn;
     unsigned int seg_of = m_seg_of;
     unsigned int rshift = m_rshift;
     unsigned int ip_rel = m_ip_rel;
@@ -172,6 +192,9 @@ Value::swap(Value& oth)
     unsigned int sign = m_sign;
     unsigned int size = m_size;
 
+    m_sub_sym = oth.m_sub_sym;
+    m_sub_loc = oth.m_sub_loc;
+    m_next_insn = oth.m_next_insn;
     m_seg_of = oth.m_seg_of;
     m_rshift = oth.m_rshift;
     m_ip_rel = oth.m_ip_rel;
@@ -181,6 +204,9 @@ Value::swap(Value& oth)
     m_sign = oth.m_sign;
     m_size = oth.m_size;
 
+    oth.m_sub_sym = sub_sym;
+    oth.m_sub_loc = sub_loc;
+    oth.m_next_insn = next_insn;
     oth.m_seg_of = seg_of;
     oth.m_rshift = rshift;
     oth.m_ip_rel = ip_rel;
