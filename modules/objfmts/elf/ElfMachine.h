@@ -110,6 +110,7 @@ public:
                   SymbolRef wrt,
                   const IntNum& addr,
                   bool rel,
+                  SymbolRef GOT_sym,
                   size_t valsize) const = 0;
 };
 

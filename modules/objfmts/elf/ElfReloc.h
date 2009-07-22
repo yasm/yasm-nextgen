@@ -59,7 +59,9 @@ public:
     Expr getValue() const;
     virtual std::string getTypeName() const = 0;
 
-    void HandleAddend(IntNum* intn, const ElfConfig& config);
+    virtual void HandleAddend(IntNum* intn,
+                              const ElfConfig& config,
+                              unsigned int insn_start);
     void Write(Bytes& bytes, const ElfConfig& config);
 
 protected:

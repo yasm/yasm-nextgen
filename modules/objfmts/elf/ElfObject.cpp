@@ -728,12 +728,14 @@ private:
     ElfObject& m_objfmt;
     Object& m_object;
     BytecodeNoOutput m_no_output;
+    SymbolRef m_GOT_sym;
 };
 
 ElfOutput::ElfOutput(std::ostream& os, ElfObject& objfmt, Object& object)
     : BytecodeStreamOutput(os)
     , m_objfmt(objfmt)
     , m_object(object)
+    , m_GOT_sym(object.FindSymbol("_GLOBAL_OFFSET_TABLE_"))
 {
 }
 
@@ -750,7 +752,7 @@ ElfOutput::ConvertSymbolToBytes(SymbolRef sym,
 {
     std::auto_ptr<ElfReloc> reloc =
         m_objfmt.m_machine->MakeReloc(sym, SymbolRef(0), loc.getOffset(),
-                                      false, valsize);
+                                      false, m_GOT_sym, valsize);
 
     // allocate .rel[a] sections on a need-basis
     Section* sect = loc.bc->getContainer()->AsSection();
@@ -827,7 +829,7 @@ ElfOutput::ConvertValueToBytes(Value& value,
         Section* sect = loc.bc->getContainer()->AsSection();
         std::auto_ptr<ElfReloc> reloc_auto =
             m_objfmt.m_machine->MakeReloc(sym, wrt, loc.getOffset(), pc_rel,
-                                          value.getSize());
+                                          m_GOT_sym, value.getSize());
         reloc = reloc_auto.get();
         sect->AddReloc(std::auto_ptr<Reloc>(reloc_auto.release()));
     }
@@ -840,7 +842,7 @@ ElfOutput::ConvertValueToBytes(Value& value,
     }
 
     if (reloc)
-        reloc->HandleAddend(&intn, m_objfmt.m_config);
+        reloc->HandleAddend(&intn, m_objfmt.m_config, value.getInsnStart());
     m_object.getArch()->ToBytes(intn, bytes, value.getSize(), 0, warn);
 }
 #if 0

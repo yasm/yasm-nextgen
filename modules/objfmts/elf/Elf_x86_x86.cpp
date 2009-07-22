@@ -55,10 +55,14 @@ public:
                      SymbolRef wrt,
                      const IntNum& addr,
                      bool rel,
+                     SymbolRef GOT_sym,
                      size_t valsize);
     ~ElfReloc_x86_x86() {}
 
     std::string getTypeName() const;
+    void HandleAddend(IntNum* intn,
+                      const ElfConfig& config,
+                      unsigned int insn_start);
 };
 
 class Elf_x86_x86 : public ElfMachine
@@ -84,10 +88,11 @@ public:
               SymbolRef wrt,
               const IntNum& addr,
               bool rel,
+              SymbolRef GOT_sym,
               size_t valsize) const
     {
         return std::auto_ptr<ElfReloc>
-            (new ElfReloc_x86_x86(sym, wrt, addr, rel, valsize));
+            (new ElfReloc_x86_x86(sym, wrt, addr, rel, GOT_sym, valsize));
     }
 };
 
@@ -147,11 +152,14 @@ ElfReloc_x86_x86::ElfReloc_x86_x86(SymbolRef sym,
                                    SymbolRef wrt,
                                    const IntNum& addr,
                                    bool rel,
+                                   SymbolRef GOT_sym,
                                    size_t valsize)
     : ElfReloc(sym, wrt, addr, valsize)
 {
     if (m_type != 0)
         ;
+    else if (sym == GOT_sym && valsize == 32)
+        m_type = R_386_GOTPC;
     else if (rel)
     {
         switch (valsize)
@@ -218,6 +226,19 @@ ElfReloc_x86_x86::getTypeName() const
     }
 
     return name;
+}
+
+void
+ElfReloc_x86_x86::HandleAddend(IntNum* intn,
+                               const ElfConfig& config,
+                               unsigned int insn_start)
+{
+    if (m_type == R_386_GOTPC)
+    {
+        // Need fixup to the value position within the instruction.
+        *intn += insn_start;
+    }
+    ElfReloc::HandleAddend(intn, config, insn_start);
 }
 
 }}} // namespace yasm::objfmt::elf

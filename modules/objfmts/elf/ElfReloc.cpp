@@ -121,7 +121,9 @@ ElfReloc::getValue() const
 }
 
 void
-ElfReloc::HandleAddend(IntNum* intn, const ElfConfig& config)
+ElfReloc::HandleAddend(IntNum* intn,
+                       const ElfConfig& config,
+                       unsigned int insn_start)
 {
     // rela sections put the addend into the relocation, and write 0 in
     // data area.

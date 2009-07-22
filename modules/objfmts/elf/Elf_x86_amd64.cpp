@@ -55,6 +55,7 @@ public:
                        SymbolRef wrt,
                        const IntNum& addr,
                        bool rel,
+                       SymbolRef GOT_sym,
                        size_t valsize);
     ~ElfReloc_x86_amd64() {}
 
@@ -84,10 +85,11 @@ public:
               SymbolRef wrt,
               const IntNum& addr,
               bool rel,
+              SymbolRef GOT_sym,
               size_t valsize) const
     {
         return std::auto_ptr<ElfReloc>
-            (new ElfReloc_x86_amd64(sym, wrt, addr, rel, valsize));
+            (new ElfReloc_x86_amd64(sym, wrt, addr, rel, GOT_sym, valsize));
     }
 };
 
@@ -143,6 +145,7 @@ ElfReloc_x86_amd64::ElfReloc_x86_amd64(SymbolRef sym,
                                        SymbolRef wrt,
                                        const IntNum& addr,
                                        bool rel,
+                                       SymbolRef GOT_sym,
                                        size_t valsize)
     : ElfReloc(sym, wrt, addr, valsize)
 {
@@ -151,6 +154,10 @@ ElfReloc_x86_amd64::ElfReloc_x86_amd64(SymbolRef sym,
         m_type = R_X86_64_GOTPCREL;
     else if (m_type != 0)
         ;
+    else if (sym == GOT_sym && valsize == 32)
+        m_type = R_X86_64_GOTPC32;
+    else if (sym == GOT_sym && valsize == 64)
+        m_type = R_X86_64_GOTPC64;
     else if (rel)
     {
         switch (valsize)
