@@ -329,9 +329,9 @@ public:
 
     void AppendFixed(const Value& val);
     void AppendFixed(std::auto_ptr<Value> val);
-    void AppendFixed(unsigned int size,
-                     std::auto_ptr<Expr> e,
-                     unsigned long line);
+    Value& AppendFixed(unsigned int size,
+                       std::auto_ptr<Expr> e,
+                       unsigned long line);
 
     /// A fixup consists of a value+offset combination.  0's need to be stored
     /// in m_fixed as placeholders.

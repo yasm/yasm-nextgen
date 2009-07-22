@@ -309,7 +309,7 @@ Bytecode::AppendFixed(std::auto_ptr<Value> val)
     ++num_fixed_value;
 }
 
-void
+Value&
 Bytecode::AppendFixed(unsigned int size,
                       std::auto_ptr<Expr> e,
                       unsigned long line)
@@ -317,6 +317,7 @@ Bytecode::AppendFixed(unsigned int size,
     m_fixed_fixups.push_back(Fixup(m_fixed.size(), size*8, e, line));
     m_fixed.Write(size, 0);
     ++num_fixed_value;
+    return m_fixed_fixups.back();
 }
 
 void
