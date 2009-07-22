@@ -95,6 +95,23 @@ public:
     AssocData* getAssocData(const void* key);
     const AssocData* getAssocData(const void* key) const;
 
+    template <typename T>
+    std::auto_ptr<AssocData> AddAssocData(std::auto_ptr<T> data)
+    {
+        return AddAssocData(T::key, std::auto_ptr<AssocData>(data.release()));
+    }
+
+    template <typename T>
+    T* getAssocData()
+    {
+        return static_cast<T*>(getAssocData(T::key));
+    }
+    template <typename T>
+    const T* getAssocData() const
+    {
+        return static_cast<const T*>(getAssocData(T::key));
+    }
+
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     virtual void Write(YAML::Emitter& out) const = 0;
