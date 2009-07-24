@@ -569,7 +569,7 @@ XdfObject::Read(std::istream& is)
         }
 
         // Associate section data with section
-        section->AddAssocData(std::auto_ptr<XdfSection>(xsect.release()));
+        section->AddAssocData(xsect);
 
         // Add section to object
         m_object.AppendSection(section);
