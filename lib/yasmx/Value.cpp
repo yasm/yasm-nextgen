@@ -510,33 +510,14 @@ Value::FinalizeScan(Expr& e, bool ssym_ok, int* pos)
             if (!getChildren(e, &lhs, &rhs, pos))
                 return false;
 
-            // Check for single sym or expr on LHS
-            if (SymbolRef sym = terms[lhs].getSymbol())
-            {
-                if (m_rel || !ssym_ok)
-                    return false;
-                m_rel = sym;
-                // and replace with 0
-                terms[lhs].Zero();
-            }
-            else if (terms[lhs].isOp())
-            {
-                // recurse
-                if (!FinalizeScan(e, ssym_ok, &lhs))
-                    return false;
-                // we still want to handle SHR if we found a relative portion.
-                if (!m_rel)
-                    break;
-            }
-            else
-            {
-                // ensure RHS has no relative portion
-                if (terms[rhs].isType(ExprTerm::SYM))
-                    return false;
-                if (terms[rhs].isOp() && !FinalizeScan(e, false, &rhs))
-                    return false;
-                break;  // ignore SHR
-            }
+            // Check for single sym on LHS
+            SymbolRef sym = terms[lhs].getSymbol();
+            if (!sym)
+                break;  // ignore if not shifting symbol directly
+
+            // If we already have a sym, we can't take another one
+            if (m_rel || !ssym_ok)
+                return false;
 
             // RHS must be a positive integer.
             IntNum* intn = terms[rhs].getIntNum();
@@ -545,7 +526,13 @@ Value::FinalizeScan(Expr& e, bool ssym_ok, int* pos)
             unsigned long shamt = intn->getUInt();
             if ((shamt + m_rshift) > RSHIFT_MAX)
                 return false;   // total shift would be too large
+
+            // Update value parameters
             m_rshift += shamt;
+            m_rel = sym;
+
+            // Replace symbol with 0
+            terms[lhs].Zero();
 
             // Just leave SHR in place
             break;
