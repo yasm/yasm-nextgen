@@ -31,6 +31,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
+#include "yasmx/Support/nocase.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/NameValue.h"
@@ -63,9 +64,9 @@ DirHelpers::Add(const char* name, bool needsvalue,
                 FUNCTION::function<void (NameValue&)> helper)
 {
     if (needsvalue)
-        m_impl->m_value_helpers[name] = helper;
+        m_impl->m_value_helpers[String::Lowercase(name)] = helper;
     else
-        m_impl->m_novalue_helpers[name] = helper;
+        m_impl->m_novalue_helpers[String::Lowercase(name)] = helper;
 }
 
 bool
@@ -83,7 +84,7 @@ DirHelpers::operator()
         if (nv->getName().empty() && nv->isId())
         {
             Impl::HelperMap::iterator helper =
-                m_impl->m_novalue_helpers.find(nv->getId());
+                m_impl->m_novalue_helpers.find(String::Lowercase(nv->getId()));
             if (helper != m_impl->m_novalue_helpers.end())
             {
                 helper->second(*nv);
@@ -94,7 +95,7 @@ DirHelpers::operator()
         else if (!nv->getName().empty())
         {
             Impl::HelperMap::iterator helper =
-                m_impl->m_value_helpers.find(nv->getName());
+                m_impl->m_value_helpers.find(String::Lowercase(nv->getName()));
             if (helper != m_impl->m_value_helpers.end())
             {
                 helper->second(*nv);
