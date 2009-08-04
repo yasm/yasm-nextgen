@@ -44,11 +44,21 @@ namespace yasm
 class YASM_LIB_EXPORT StringTable
 {
 public:
-    /// Constructor.
+    /// Empty table constructor.
     /// @param first_index  Indexes will be returned and interpreted
     ///                     as if the first string starts at this offset.
     ///                     Defaults to 0.
-    StringTable(unsigned long first_index=0);
+    explicit StringTable(unsigned long first_index=0);
+
+    /// Construct from iterator.
+    template <typename InputIterator>
+    StringTable(InputIterator first,
+                InputIterator last,
+                unsigned long first_index=0)
+        : m_storage(first, last)
+        , m_first_index(first_index)
+    {}
+
     /// Destructor.
     ~StringTable();
 
