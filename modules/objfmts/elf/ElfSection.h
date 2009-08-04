@@ -37,6 +37,8 @@
 #include "ElfTypes.h"
 
 
+namespace llvm { class MemoryBuffer; }
+
 namespace yasm
 {
 
@@ -55,11 +57,10 @@ class ElfSection : public AssocData
 public:
     static const char* key;
 
-    // Constructor that reads from file.  Assumes input stream is already
-    // positioned at the beginning of the section header.
-    ElfSection(const ElfConfig&     config,
-               std::istream&        is,
-               ElfSectionIndex      index);
+    // Constructor that reads from memory buffer.
+    ElfSection(const ElfConfig&             config,
+               const llvm::MemoryBuffer&    in,
+               ElfSectionIndex              index);
 
     ElfSection(const ElfConfig&     config,
                ElfSectionType       type,
@@ -73,7 +74,7 @@ public:
     unsigned long Write(std::ostream& os, Bytes& scratch) const;
 
     std::auto_ptr<Section> CreateSection(const StringTable& shstrtab) const;
-    void LoadSectionData(Section& sect, std::istream& is) const;
+    void LoadSectionData(Section& sect, const llvm::MemoryBuffer& in) const;
 
     ElfSectionType getType() const { return m_type; }
 
@@ -125,9 +126,9 @@ public:
                               Errwarns& errwarns,
                               Bytes& scratch,
                               const ElfMachine& machine);
-    bool ReadRelocs(std::istream& is,
+    void ReadRelocs(const llvm::MemoryBuffer& in,
+                    const ElfSection& reloc_sect,
                     Section& sect,
-                    unsigned long size,
                     const ElfMachine& machine,
                     const ElfSymtab& symtab,
                     bool rela) const;

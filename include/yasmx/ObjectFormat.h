@@ -39,6 +39,11 @@
 #include "yasmx/Module.h"
 
 
+namespace llvm
+{
+class MemoryBuffer;
+}
+
 namespace yasm
 {
 
@@ -77,8 +82,8 @@ public:
     /// May create sections, relocations, and bytecodes, as well as modify
     /// any other portion of associated object.
     /// The default implementation always throws NotImplementedError.
-    /// @param is           input object file
-    virtual void Read(std::istream& is);
+    /// @param in           input object file
+    virtual void Read(const llvm::MemoryBuffer& in);
 
     /// Write out (post-optimized) sections to the object file.
     /// This function may call #Symbol and #Object functions as necessary
@@ -154,11 +159,11 @@ public:
 
     /// Taste object file to see if it is readable by this object format.
     /// The default implementation always returns false.
-    /// @param is           input object file
+    /// @param in           input object file
     /// @param arch_keyword architecture keyword (output)
     /// @param machine      machine (output)
     /// @return True if object file readable, false otherwise.
-    virtual bool Taste(std::istream& is,
+    virtual bool Taste(const llvm::MemoryBuffer& in,
                        /*@out@*/ std::string* arch_keyword,
                        /*@out@*/ std::string* machine) const = 0;
 
@@ -189,10 +194,10 @@ public:
 
     bool isOkObject(Object& object) const
     { return ObjectFormatImpl::isOkObject(object); }
-    bool Taste(std::istream& is,
+    bool Taste(const llvm::MemoryBuffer& in,
                /*@out@*/ std::string* arch_keyword,
                /*@out@*/ std::string* machine) const
-    { return ObjectFormatImpl::Taste(is, arch_keyword, machine); }
+    { return ObjectFormatImpl::Taste(in, arch_keyword, machine); }
 
     std::auto_ptr<ObjectFormat> Create(Object& object) const
     {

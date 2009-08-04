@@ -38,6 +38,7 @@ namespace yasm
 {
 
 class Bytes;
+class InputBuffer;
 
 /// Output intnum to bytes in LEB128-encoded form.
 /// @param bytes    output bytes buffer
@@ -54,13 +55,15 @@ unsigned long WriteLEB128(Bytes& bytes, const IntNum& intn, bool sign);
 YASM_LIB_EXPORT
 unsigned long SizeLEB128(const IntNum& intn, bool sign);
 
-/// Read a LEB128-encoded value from a bytes buffer.
-/// @param bytes    input bytes buffer
+/// Read a LEB128-encoded value from an input buffer.
+/// @param input    input buffer
 /// @param sign     true if signed LEB128, false if unsigned LEB128
 /// @param size     number of bytes read (returned)
 /// @return IntNum value; number of bytes read returned in size.
 YASM_LIB_EXPORT
-IntNum ReadLEB128(Bytes& bytes, bool sign, /*@out@*/ unsigned long* size = 0);
+IntNum ReadLEB128(InputBuffer& input,
+                  bool sign,
+                  /*@out@*/ unsigned long* size = 0);
 
 /// Output intnum to bytes in signed LEB128-encoded form.
 /// @param bytes    output bytes buffer
@@ -81,14 +84,14 @@ SizeSLEB128(const IntNum& intn)
     return SizeLEB128(intn, true);
 }
 
-/// Read a signed LEB128-encoded value from a bytes buffer.
-/// @param bytes    input bytes buffer
+/// Read a signed LEB128-encoded value from an input buffer.
+/// @param input    input buffer
 /// @param size     number of bytes read (returned)
 /// @return IntNum value; number of bytes read returned in size.
 inline IntNum
-ReadSLEB128(Bytes& bytes, /*@out@*/ unsigned long* size = 0)
+ReadSLEB128(InputBuffer& input, /*@out@*/ unsigned long* size = 0)
 {
-    return ReadLEB128(bytes, true, size);
+    return ReadLEB128(input, true, size);
 }
 
 /// Output intnum to bytes in unsigned LEB128-encoded form.
@@ -110,14 +113,14 @@ SizeULEB128(const IntNum& intn)
     return SizeLEB128(intn, false);
 }
 
-/// Read a unsigned LEB128-encoded value from a bytes buffer.
-/// @param bytes    input bytes buffer
+/// Read a unsigned LEB128-encoded value from an input buffer.
+/// @param input    input buffer
 /// @param size     number of bytes read (returned)
 /// @return IntNum value; number of bytes read returned in size.
 inline IntNum
-ReadULEB128(Bytes& bytes, /*@out@*/ unsigned long* size = 0)
+ReadULEB128(InputBuffer& input, /*@out@*/ unsigned long* size = 0)
 {
-    return ReadLEB128(bytes, false, size);
+    return ReadLEB128(input, false, size);
 }
 
 } // namespace yasm

@@ -83,7 +83,7 @@ public:
     static const char* getDefaultDebugFormatKeyword() { return "null"; }
     static std::vector<const char*> getDebugFormatKeywords();
     static bool isOkObject(Object& object);
-    static bool Taste(std::istream& is,
+    static bool Taste(const llvm::MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
     { return false; }

@@ -29,6 +29,7 @@
 #include <YAML/emitter.h>
 #include <yasmx/Bytes.h>
 #include <yasmx/Bytes_util.h>
+#include <yasmx/InputBuffer.h>
 
 #include "XdfSymbol.h"
 
@@ -115,7 +116,8 @@ XdfSection::Write(Bytes& bytes, const Section& sect) const
 }
 
 void
-XdfSection::Read(Bytes& bytes,
+XdfSection::Read(const llvm::MemoryBuffer& in,
+                 unsigned long headpos,
                  /*@out@*/ unsigned long* name_sym_index,
                  /*@out@*/ IntNum* lma,
                  /*@out@*/ IntNum* vma,
@@ -124,16 +126,17 @@ XdfSection::Read(Bytes& bytes,
                  /*@out@*/ unsigned long* filepos,
                  /*@out@*/ unsigned long* nrelocs)
 {
-    bytes << little_endian;
+    InputBuffer inbuf(in, headpos);
+    inbuf.setLittleEndian();
 
-    *name_sym_index = ReadU32(bytes);   // section name symbol index
-    *lma = ReadU64(bytes);              // physical address
-    *vma = ReadU64(bytes);              // virtual address
+    *name_sym_index = ReadU32(inbuf);   // section name symbol index
+    *lma = ReadU64(inbuf);              // physical address
+    *vma = ReadU64(inbuf);              // virtual address
     has_vaddr = true;                   // virtual specified by object file
-    *align = ReadU16(bytes);            // alignment
+    *align = ReadU16(inbuf);            // alignment
 
     // flags
-    unsigned short flags = ReadU16(bytes);
+    unsigned short flags = ReadU16(inbuf);
     has_addr = (flags & XDF_ABSOLUTE) != 0;
     flat = (flags & XDF_FLAT) != 0;
     *bss = (flags & XDF_BSS) != 0;
@@ -144,10 +147,10 @@ XdfSection::Read(Bytes& bytes,
     else if ((flags & XDF_USE_64) != 0)
         bits = 64;
 
-    *filepos = ReadU32(bytes);          // file ptr to data
-    size = ReadU32(bytes);              // section size
-    relptr = ReadU32(bytes);            // file ptr to relocs
-    *nrelocs = ReadU32(bytes);          // num of relocation entries
+    *filepos = ReadU32(inbuf);          // file ptr to data
+    size = ReadU32(inbuf);              // section size
+    relptr = ReadU32(inbuf);            // file ptr to relocs
+    *nrelocs = ReadU32(inbuf);          // num of relocation entries
 }
 
 }}} // namespace yasm::objfmt::xdf

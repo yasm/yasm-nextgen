@@ -35,7 +35,6 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
-#include "llvm/ADT/SmallVector.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/IntNum.h"
@@ -96,23 +95,6 @@ Write64I(Bytes& bytes, uint64_t val)
         Write32(bytes, low);
         Write32(bytes, high);
     }
-}
-
-static inline uint64_t
-ReadU64I(Bytes& bytes)
-{
-    uint64_t low, high;
-    if (bytes.isBigEndian())
-    {
-        high = ReadU32(bytes);
-        low = ReadU32(bytes);
-    }
-    else
-    {
-        low = ReadU32(bytes);
-        high = ReadU32(bytes);
-    }
-    return ((high << 32) | low);
 }
 
 void
@@ -195,114 +177,6 @@ WriteN(Bytes& bytes, unsigned long val, int n)
         for (int i=0; i<n; i+=8)
             bytes.push_back(static_cast<unsigned char>((val >> i) & 0xFF));
     }
-}
-
-static IntNum
-ReadN(Bytes& bytes, int n, bool sign)
-{
-    assert((n & 7) == 0 && "n must be a multiple of 8");
-    assert(n <= IntNum::BITVECT_NATIVE_SIZE && "too large for internal format");
-    assert(n > 0 && "can't read 0 bits");
-
-    // optimize some fixed cases
-    if (sign)
-    {
-        switch (n)
-        {
-            case 8: return ReadS8(bytes);
-            case 16: return ReadS16(bytes);
-            case 32: return ReadS32(bytes);
-            case 64: return ReadS64(bytes);
-            default: break;
-        }
-    }
-    else
-    {
-        switch (n)
-        {
-            case 8: return ReadU8(bytes);
-            case 16: return ReadU16(bytes);
-            case 32: return ReadU32(bytes);
-            case 64: return ReadU64(bytes);
-            default: break;
-        }
-    }
-
-    // Read the buffer into an array of words
-    unsigned int nwords = (n+63)/64;
-    llvm::SmallVector<uint64_t, 4> words(nwords);
-
-    if (bytes.isBigEndian())
-    {
-        // start with bytes of most significant word
-        int i = n;
-        if ((n & 63) != 0)
-        {
-            int wend = n & ~63;
-            uint64_t last = words[nwords-1];
-            for (; i>=wend; i-=8)
-            {
-                last |= ReadU8(bytes);
-                last <<= 8;
-            }
-        }
-        // rest (if any) is whole words
-        unsigned int w = nwords-2;
-        for (; i>=64; i-=64, --w)
-            words[w] = ReadU64I(bytes);
-    }
-    else
-    {
-        // whole words first
-        unsigned int w = 0;
-        int i = 0;
-        for (; i<=n-64; i+=64, ++w)
-            words[w] = ReadU64I(bytes);
-        // finish with bytes
-        if (i < n)
-        {
-            uint64_t last = 0;
-            for (; i<n; i+=8)
-            {
-                last |= static_cast<uint64_t>(ReadU8(bytes)) << i;
-            }
-            words[w] = last;
-        }
-    }
-
-    llvm::APInt val(n, nwords, &words[0]);
-    // Zero extend if needed to make positive number
-    if (!sign && val.isNegative())
-        val.zext(n+1);
-
-    // Convert to intnum
-    IntNum intn;
-    intn.setBV(val);
-    return intn;
-}
-
-IntNum
-ReadUnsigned(Bytes& bytes, int n)
-{
-    return ReadN(bytes, n, false);
-}
-
-IntNum
-ReadSigned(Bytes& bytes, int n)
-{
-    return ReadN(bytes, n, true);
-}
-
-IntNum
-ReadU64(Bytes& bytes)
-{
-    return ReadN(bytes, 64, false);
-}
-
-IntNum
-ReadS64(Bytes& bytes)
-{
-    return ReadN(bytes, 64, true);
 }
 
 void

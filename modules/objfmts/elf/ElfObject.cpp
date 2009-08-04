@@ -42,6 +42,7 @@
 //
 #include <util.h>
 
+#include <llvm/Support/MemoryBuffer.h>
 #include <yasmx/Support/bitcount.h>
 #include <yasmx/Support/Compose.h>
 #include <yasmx/Support/errwarn.h>
@@ -101,7 +102,7 @@ public:
     static const char* getDefaultDebugFormatKeyword() { return "null"; }
     static std::vector<const char*> getDebugFormatKeywords();
     static bool isOkObject(Object& object) { return true; }
-    static bool Taste(std::istream& is,
+    static bool Taste(const llvm::MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
     { return false; }
@@ -110,7 +111,7 @@ public:
 
     void InitSymbols(const char* parser);
 
-    void Read(std::istream& is);
+    void Read(const llvm::MemoryBuffer& in);
     void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* AddDefaultSection();
@@ -155,7 +156,7 @@ public:
     SymbolRef m_dotdotsym;                  // ..sym symbol
 };
 
-bool TasteCommon(std::istream& is,
+bool TasteCommon(const llvm::MemoryBuffer& in,
                  /*@out@*/ std::string* arch_keyword,
                  /*@out@*/ std::string* machine,
                  ElfClass cls);
@@ -181,10 +182,10 @@ public:
     { return isOkElfMachine(*object.getArch(), ELFCLASS32); }
 
     // For tasting, let main elf handle it.
-    static bool Taste(std::istream& is,
+    static bool Taste(const llvm::MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
-    { return TasteCommon(is, arch_keyword, machine, ELFCLASS32); }
+    { return TasteCommon(in, arch_keyword, machine, ELFCLASS32); }
 };
 
 class Elf64Object : public ElfObject
@@ -208,10 +209,10 @@ public:
     { return isOkElfMachine(*object.getArch(), ELFCLASS64); }
 
     // For tasting, let main elf handle it.
-    static bool Taste(std::istream& is,
+    static bool Taste(const llvm::MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
-    { return TasteCommon(is, arch_keyword, machine, ELFCLASS64); }
+    { return TasteCommon(in, arch_keyword, machine, ELFCLASS64); }
 };
 
 ElfObject::ElfObject(const ObjectFormatModule& module,
@@ -236,7 +237,7 @@ ElfObject::ElfObject(const ObjectFormatModule& module,
 }
 
 bool
-TasteCommon(std::istream& is,
+TasteCommon(const llvm::MemoryBuffer& in,
             /*@out@*/ std::string* arch_keyword,
             /*@out@*/ std::string* machine,
             ElfClass cls)
@@ -244,7 +245,7 @@ TasteCommon(std::istream& is,
     ElfConfig config;
 
     // Read header
-    if (!config.ReadProgramHeader(is))
+    if (!config.ReadProgramHeader(in))
         return false;
 
     // Check class
@@ -268,11 +269,21 @@ TasteCommon(std::istream& is,
     return true;
 }
 
+static inline StringTable
+LoadStringTable(const llvm::MemoryBuffer& in, const ElfSection& elfsect)
+{
+    const char* start = in.getBufferStart() + elfsect.getFileOffset();
+    const char* end = start + elfsect.getSize().getUInt();
+    if (end > in.getBufferEnd())
+        throw Error(N_("could not read string table data"));
+    return StringTable(start, end);
+}
+
 void
-ElfObject::Read(std::istream& is)
+ElfObject::Read(const llvm::MemoryBuffer& in)
 {
     // Read header
-    if (!m_config.ReadProgramHeader(is))
+    if (!m_config.ReadProgramHeader(in))
         throw Error(N_("not an ELF file"));
 
     // Can't handle files without section table yet
@@ -280,19 +291,9 @@ ElfObject::Read(std::istream& is)
         throw Error(N_("no section table"));
 
     // Read section string table (needed for section names)
-    is.seekg(m_config.secthead_pos +
-             m_config.shstrtab_index * m_config.secthead_size);
-    if (!is)
-        throw Error(N_("could not read .shstrtab section header"));
-
     std::auto_ptr<ElfSection>
-        shstrtab_sect(new ElfSection(m_config, is, m_config.shstrtab_index));
-
-    StringTable shstrtab;
-    is.seekg(shstrtab_sect->getFileOffset());
-    shstrtab.Read(is, shstrtab_sect->getSize().getUInt());
-    if (!is)
-        throw Error(N_("could not read .shstrtab string data"));
+        shstrtab_sect(new ElfSection(m_config, in, m_config.shstrtab_index));
+    StringTable shstrtab = LoadStringTable(in, *shstrtab_sect);
 
     // Read all section headers
 
@@ -313,11 +314,10 @@ ElfObject::Read(std::istream& is)
     ElfSection* symtab_sect = 0;
 
     // read section headers
-    is.seekg(m_config.secthead_pos);
     for (unsigned int i=0; i<m_config.secthead_count; ++i)
     {
         // read section header and save by index
-        std::auto_ptr<ElfSection> elfsect(new ElfSection(m_config, is, i));
+        std::auto_ptr<ElfSection> elfsect(new ElfSection(m_config, in, i));
         elfsects[i] = elfsect.get();
 
         std::string sectname = shstrtab.getString(elfsect->getName());
@@ -353,7 +353,7 @@ ElfObject::Read(std::istream& is)
         else
         {
             std::auto_ptr<Section> section = elfsect->CreateSection(shstrtab);
-            elfsect->LoadSectionData(*section, is);
+            elfsect->LoadSectionData(*section, in);
             sections[i] = section.get();
 
             // Associate section data with section
@@ -380,21 +380,11 @@ ElfObject::Read(std::istream& is)
             throw Error(N_("could not find symbol string table"));
 
         // load symbol string table
-        StringTable strtab;
-        is.seekg(strtab_sect->getFileOffset());
-        strtab.Read(is, strtab_sect->getSize().getUInt());
-        if (!is)
-            throw Error(N_("could not read symbol string data"));
+        StringTable strtab = LoadStringTable(in, *strtab_sect);
 
         // load symbol table
-        unsigned long symtab_size = symtab_sect->getSize().getUInt();
-        ElfSize symsize = symtab_sect->getEntSize();
-        if (symsize == 0)
-            throw Error(N_("symbol table entity size is zero"));
-        is.seekg(symtab_sect->getFileOffset());
-        if (!m_config.ReadSymbolTable(is, symtab, m_object, symtab_size,
-                                      symsize, strtab, &sections[0]))
-            throw Error(N_("could not read symbol table"));
+        m_config.ReadSymbolTable(in, *symtab_sect, symtab, m_object, strtab,
+                                 &sections[0]);
     }
 
     // go through misc sections to load relocations
@@ -423,14 +413,8 @@ ElfObject::Read(std::istream& is)
             continue;
 
         // load relocations
-        is.seekg(reloc_sect->getFileOffset());
-        unsigned long relocs_size = reloc_sect->getSize().getUInt();
-        if (!elfsects[info]->ReadRelocs(is, *sections[info], relocs_size,
-                                        *m_machine, symtab,
-                                        secttype == SHT_RELA))
-            throw Error(String::Compose(
-                N_("could not read section `%1' relocations"),
-                sections[info]->getName()));
+        elfsects[info]->ReadRelocs(in, *reloc_sect, *sections[info],
+                                   *m_machine, symtab, secttype == SHT_RELA);
     }
 }
 

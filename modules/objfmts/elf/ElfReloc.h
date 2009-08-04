@@ -33,6 +33,8 @@
 #include "ElfTypes.h"
 
 
+namespace llvm { class MemoryBuffer; }
+
 namespace yasm
 {
 
@@ -47,11 +49,11 @@ namespace elf
 class ElfReloc : public Reloc
 {
 public:
-    // Constructor that reads from file.  Assumes input stream is already
-    // positioned at the beginning of the relocation.
+    // Constructor that reads from memory buffer.
     ElfReloc(const ElfConfig& config,
              const ElfSymtab& symtab,
-             std::istream& is,
+             const llvm::MemoryBuffer& in,
+             unsigned long* pos,
              bool rela);
     ElfReloc(SymbolRef sym, SymbolRef wrt, const IntNum& addr, size_t valsize);
     virtual ~ElfReloc();

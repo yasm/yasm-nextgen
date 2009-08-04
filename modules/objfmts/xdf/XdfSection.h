@@ -31,6 +31,8 @@
 #include <yasmx/SymbolRef.h>
 
 
+namespace llvm { class MemoryBuffer; }
+
 namespace yasm
 {
 
@@ -51,7 +53,8 @@ struct XdfSection : public AssocData
     void Write(YAML::Emitter& out) const;
 
     void Write(Bytes& bytes, const Section& sect) const;
-    void Read(Bytes& bytes,
+    void Read(const llvm::MemoryBuffer& in,
+              unsigned long headpos,
               /*@out@*/ unsigned long* name_sym_index,
               /*@out@*/ IntNum* lma,
               /*@out@*/ IntNum* vma,

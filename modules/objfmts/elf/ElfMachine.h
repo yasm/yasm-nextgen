@@ -35,6 +35,8 @@
 #include "ElfTypes.h"
 
 
+namespace llvm { class MemoryBuffer; }
+
 namespace yasm
 {
 
@@ -102,7 +104,8 @@ public:
     virtual std::auto_ptr<ElfReloc>
         ReadReloc(const ElfConfig& config,
                   const ElfSymtab& symtab,
-                  std::istream& is,
+                  const llvm::MemoryBuffer& in,
+                  unsigned long* pos,
                   bool rela) const = 0;
 
     virtual std::auto_ptr<ElfReloc>

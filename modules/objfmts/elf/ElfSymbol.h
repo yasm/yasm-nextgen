@@ -40,6 +40,8 @@
 #include "ElfTypes.h"
 
 
+namespace llvm { class MemoryBuffer; }
+
 namespace yasm
 {
 
@@ -59,11 +61,12 @@ class ElfSymbol : public AssocData
 public:
     static const char* key;
 
-    // Constructor that reads from bytes (e.g. from file)
-    ElfSymbol(const ElfConfig&  config,
-              Bytes&            bytes,
-              ElfSymbolIndex    index,
-              Section*          sections[]);
+    // Constructor that reads from memory buffer (e.g. from file)
+    ElfSymbol(const ElfConfig&          config,
+              const llvm::MemoryBuffer& in,
+              const ElfSection&         symtab_sect,
+              ElfSymbolIndex            index,
+              Section*                  sections[]);
 
     ElfSymbol();
     ~ElfSymbol();

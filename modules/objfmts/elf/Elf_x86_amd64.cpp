@@ -47,9 +47,10 @@ class ElfReloc_x86_amd64 : public ElfReloc
 public:
     ElfReloc_x86_amd64(const ElfConfig& config,
                        const ElfSymtab& symtab,
-                       std::istream& is,
+                       const llvm::MemoryBuffer& in,
+                       unsigned long* pos,
                        bool rela)
-        : ElfReloc(config, symtab, is, rela)
+        : ElfReloc(config, symtab, in, pos, rela)
     {}
     ElfReloc_x86_amd64(SymbolRef sym,
                        SymbolRef wrt,
@@ -73,11 +74,12 @@ public:
     std::auto_ptr<ElfReloc>
     ReadReloc(const ElfConfig& config,
               const ElfSymtab& symtab,
-              std::istream& is,
+              const llvm::MemoryBuffer& in,
+              unsigned long* pos,
               bool rela) const
     {
         return std::auto_ptr<ElfReloc>
-            (new ElfReloc_x86_amd64(config, symtab, is, rela));
+            (new ElfReloc_x86_amd64(config, symtab, in, pos, rela));
     }
 
     std::auto_ptr<ElfReloc>

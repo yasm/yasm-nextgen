@@ -31,6 +31,7 @@
 #include "YAML/emitter.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytes_util.h"
+#include "yasmx/InputBuffer.h"
 
 #include "ElfConfig.h"
 #include "ElfMachine.h"
@@ -72,39 +73,47 @@ ElfReloc::ElfReloc(SymbolRef sym,
 
 ElfReloc::ElfReloc(const ElfConfig& config,
                    const ElfSymtab& symtab,
-                   std::istream& is,
+                   const llvm::MemoryBuffer& in,
+                   unsigned long* pos,
                    bool rela)
     : Reloc(0, SymbolRef(0))
 {
-    Bytes bytes;
-    config.setEndian(bytes);
+    InputBuffer inbuf(in, *pos);
+    config.setEndian(inbuf);
 
+    unsigned long size;
     if (config.cls == ELFCLASS32)
     {
-        bytes.Write(is, rela ? RELOC32A_SIZE : RELOC32_SIZE);
+        size = rela ? RELOC32A_SIZE : RELOC32_SIZE;
+        if (size > inbuf.getReadableSize())
+            throw Error(N_("could not read relocation entry"));
 
-        m_addr = ReadU32(bytes);
+        m_addr = ReadU32(inbuf);
 
-        unsigned long info = ReadU32(bytes);
+        unsigned long info = ReadU32(inbuf);
         m_sym = symtab.at(ELF32_R_SYM(info));
         m_type = ELF32_R_TYPE(info);
 
         if (rela)
-            m_addend = ReadS32(bytes);
+            m_addend = ReadS32(inbuf);
     }
     else if (config.cls == ELFCLASS64)
     {
-        bytes.Write(is, rela ? RELOC64A_SIZE : RELOC64_SIZE);
+        size = rela ? RELOC64A_SIZE : RELOC64_SIZE;
+        if (size > inbuf.getReadableSize())
+            throw Error(N_("could not read relocation entry"));
 
-        m_addr = ReadU64(bytes);
+        m_addr = ReadU64(inbuf);
 
-        IntNum info = ReadU64(bytes);
+        IntNum info = ReadU64(inbuf);
         m_sym = symtab.at(ELF64_R_SYM(info));
         m_type = ELF64_R_TYPE(info);
 
         if (rela)
-            m_addend = ReadS64(bytes);
+            m_addend = ReadS64(inbuf);
     }
+
+    *pos += size;
 }
 
 ElfReloc::~ElfReloc()

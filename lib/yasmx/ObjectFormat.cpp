@@ -44,7 +44,7 @@ ObjectFormat::AddDirectives(Directives& dirs, const char* parser)
 }
 
 void
-ObjectFormat::Read(std::istream& is)
+ObjectFormat::Read(const llvm::MemoryBuffer& in)
 {
     throw NotImplementedError(N_("object format does not support reading"));
 }

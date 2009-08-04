@@ -39,16 +39,6 @@
 namespace yasm
 {
 
-Bytes::Bytes(bool bigendian)
-    : m_bigendian(bigendian)
-    , m_readpos(0)
-{
-}
-
-Bytes::~Bytes()
-{
-}
-
 std::ostream&
 operator<< (std::ostream& os, const Bytes& bytes)
 {
@@ -61,7 +51,6 @@ Bytes::swap(Bytes& oth)
 {
     base_vector::swap(*this);
     std::swap(m_bigendian, oth.m_bigendian);
-    std::swap(m_readpos, oth.m_readpos);
 }
 
 void

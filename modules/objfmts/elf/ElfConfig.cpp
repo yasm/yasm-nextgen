@@ -33,8 +33,10 @@
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
+#include "yasmx/InputBuffer.h"
 #include "yasmx/Object.h"
 
+#include "ElfSection.h"
 #include "ElfSymbol.h"
 
 
@@ -121,29 +123,28 @@ ElfConfig::WriteSymbolTable(std::ostream& os,
     return size;
 }
 
-bool
-ElfConfig::ReadSymbolTable(std::istream&      is,
-                           ElfSymtab&         symtab,
-                           Object&            object,
-                           unsigned long      size,
-                           ElfSize            symsize,
-                           const StringTable& strtab,
-                           Section*           sections[]) const
+void
+ElfConfig::ReadSymbolTable(const llvm::MemoryBuffer&    in,
+                           const ElfSection&            symtab_sect,
+                           ElfSymtab&                   symtab,
+                           Object&                      object,
+                           const StringTable&           strtab,
+                           Section*                     sections[]) const
 {
-    is.seekg(symsize, std::ios_base::cur);  // skip first symbol (undef)
+    ElfSize symsize = symtab_sect.getEntSize();
+    if (symsize == 0)
+        throw Error(N_("symbol table entity size is zero"));
+
+    unsigned long size = symtab_sect.getSize().getUInt();
+
+    // Symbol table always starts with null entry
     symtab.push_back(SymbolRef(0));
 
-    Bytes bytes;
     ElfSymbolIndex index = 1;
     for (unsigned long pos=symsize; pos<size; pos += symsize, ++index)
     {
-        bytes.resize(0);
-        bytes.Write(is, symsize);
-        if (!is)
-            throw Error(N_("could not read symbol entry"));
-
         std::auto_ptr<ElfSymbol> elfsym(
-            new ElfSymbol(*this, bytes, index, sections));
+            new ElfSymbol(*this, in, symtab_sect, index, sections));
 
         SymbolRef sym = elfsym->CreateSymbol(object, strtab);
         symtab.push_back(sym);
@@ -151,8 +152,6 @@ ElfConfig::ReadSymbolTable(std::istream&      is,
         if (sym)
             sym->AddAssocData(elfsym);  // Associate symbol data with symbol
     }
-
-    return true;
 }
 
 unsigned long
@@ -167,26 +166,24 @@ ElfConfig::getProgramHeaderSize() const
 }
 
 bool
-ElfConfig::ReadProgramHeader(std::istream& is)
+ElfConfig::ReadProgramHeader(const llvm::MemoryBuffer& in)
 {
-    Bytes bytes;
+    InputBuffer inbuf(in);
 
-    // read magic number and elf class
-    is.seekg(0);
-    bytes.Write(is, 5);
-    if (!is)
+    // check magic number and read elf class
+    if (inbuf.getReadableSize() < 5)
         return false;
 
-    if (ReadU8(bytes) != ELFMAG0)
+    if (ReadU8(inbuf) != ELFMAG0)
         return false;
-    if (ReadU8(bytes) != ELFMAG1)
+    if (ReadU8(inbuf) != ELFMAG1)
         return false;
-    if (ReadU8(bytes) != ELFMAG2)
+    if (ReadU8(inbuf) != ELFMAG2)
         return false;
-    if (ReadU8(bytes) != ELFMAG3)
+    if (ReadU8(inbuf) != ELFMAG3)
         return false;
 
-    cls = static_cast<ElfClass>(ReadU8(bytes));
+    cls = static_cast<ElfClass>(ReadU8(inbuf));
 
     // determine header size
     unsigned long hdrsize = getProgramHeaderSize();
@@ -194,47 +191,46 @@ ElfConfig::ReadProgramHeader(std::istream& is)
         return false;
 
     // read remainder of header
-    bytes.Write(is, hdrsize-5);
-    if (!is)
+    if (inbuf.getReadableSize() < hdrsize-5)
         return false;
 
-    encoding = static_cast<ElfDataEncoding>(ReadU8(bytes));
-    if (!setEndian(bytes))
+    encoding = static_cast<ElfDataEncoding>(ReadU8(inbuf));
+    if (!setEndian(inbuf))
         return false;
 
-    version = static_cast<ElfVersion>(ReadU8(bytes));
+    version = static_cast<ElfVersion>(ReadU8(inbuf));
     if (version != EV_CURRENT)
         return false;
 
-    osabi = static_cast<ElfOsabiIndex>(ReadU8(bytes));
-    abi_version = ReadU8(bytes);
-    bytes.setReadPosition(EI_NIDENT);
-    file_type = static_cast<ElfFileType>(ReadU16(bytes));
-    machine_type = static_cast<ElfMachineType>(ReadU16(bytes));
-    version = static_cast<ElfVersion>(ReadU32(bytes));
+    osabi = static_cast<ElfOsabiIndex>(ReadU8(inbuf));
+    abi_version = ReadU8(inbuf);
+    inbuf.setPosition(EI_NIDENT);
+    file_type = static_cast<ElfFileType>(ReadU16(inbuf));
+    machine_type = static_cast<ElfMachineType>(ReadU16(inbuf));
+    version = static_cast<ElfVersion>(ReadU32(inbuf));
     if (version != EV_CURRENT)
         return false;
 
     if (cls == ELFCLASS32)
     {
-        start = ReadU32(bytes);
-        proghead_pos = ReadU32(bytes);
-        secthead_pos = ReadU32(bytes);
+        start = ReadU32(inbuf);
+        proghead_pos = ReadU32(inbuf);
+        secthead_pos = ReadU32(inbuf);
     }
     else if (cls == ELFCLASS64)
     {
-        start = ReadU64(bytes);
-        proghead_pos = ReadU64(bytes).getUInt();
-        secthead_pos = ReadU64(bytes).getUInt();
+        start = ReadU64(inbuf);
+        proghead_pos = ReadU64(inbuf).getUInt();
+        secthead_pos = ReadU64(inbuf).getUInt();
     }
 
-    machine_flags = ReadU32(bytes);
-    ReadU16(bytes);                 // e_ehsize (don't care)
-    proghead_size = ReadU16(bytes);
-    proghead_count = ReadU16(bytes);
-    secthead_size = ReadU16(bytes);
-    secthead_count = ReadU16(bytes);
-    shstrtab_index = ReadU16(bytes);
+    machine_flags = ReadU32(inbuf);
+    ReadU16(inbuf);                 // e_ehsize (don't care)
+    proghead_size = ReadU16(inbuf);
+    proghead_count = ReadU16(inbuf);
+    secthead_size = ReadU16(inbuf);
+    secthead_count = ReadU16(inbuf);
+    shstrtab_index = ReadU16(inbuf);
 
     return true;
 }
@@ -310,6 +306,18 @@ ElfConfig::setEndian(Bytes& bytes) const
         bytes << little_endian;
     else if (encoding == ELFDATA2MSB)
         bytes << big_endian;
+    else
+        return false;
+    return true;
+}
+
+bool
+ElfConfig::setEndian(InputBuffer& inbuf) const
+{
+    if (encoding == ELFDATA2LSB)
+        inbuf.setLittleEndian();
+    else if (encoding == ELFDATA2MSB)
+        inbuf.setBigEndian();
     else
         return false;
     return true;

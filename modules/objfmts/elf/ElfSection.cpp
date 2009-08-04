@@ -34,6 +34,7 @@
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
+#include "yasmx/InputBuffer.h"
 #include "yasmx/StringTable.h"
 #include "yasmx/Symbol.h"
 
@@ -51,9 +52,9 @@ namespace elf
 
 const char* ElfSection::key = "objfmt::elf::ElfSection";
 
-ElfSection::ElfSection(const ElfConfig&     config,
-                       std::istream&        is,
-                       ElfSectionIndex      index)
+ElfSection::ElfSection(const ElfConfig&             config,
+                       const llvm::MemoryBuffer&    in,
+                       ElfSectionIndex              index)
     : m_config(config)
     , m_sym(0)
     , m_index(index)
@@ -61,48 +62,49 @@ ElfSection::ElfSection(const ElfConfig&     config,
     , m_rel_index(0)
     , m_rel_offset(0)
 {
-    Bytes bytes;
+    InputBuffer inbuf(in);
 
-    bytes.Write(is, m_config.secthead_size);
-    if (!is)
-        throw Error(N_("could not read section header"));
+    // Go to section header
+    inbuf.setPosition(config.secthead_pos + index * config.secthead_size);
+    if (inbuf.getReadableSize() < 8)
+        throw Error(N_("section header too small"));
 
-    m_config.setEndian(bytes);
+    m_config.setEndian(inbuf);
 
-    m_name_index = ReadU32(bytes);
-    m_type = static_cast<ElfSectionType>(ReadU32(bytes));
+    m_name_index = ReadU32(inbuf);
+    m_type = static_cast<ElfSectionType>(ReadU32(inbuf));
 
     if (m_config.cls == ELFCLASS32)
     {
-        if (bytes.size() < SHDR32_SIZE)
+        if (inbuf.getReadableSize() < SHDR32_SIZE-8)
             throw Error(N_("section header too small"));
 
-        m_flags = static_cast<ElfSectionFlags>(ReadU32(bytes));
-        m_addr = ReadU32(bytes);
+        m_flags = static_cast<ElfSectionFlags>(ReadU32(inbuf));
+        m_addr = ReadU32(inbuf);
 
-        m_offset = static_cast<ElfAddress>(ReadU32(bytes));
-        m_size = ReadU32(bytes);
-        m_link = static_cast<ElfSectionIndex>(ReadU32(bytes));
-        m_info = static_cast<ElfSectionInfo>(ReadU32(bytes));
+        m_offset = static_cast<ElfAddress>(ReadU32(inbuf));
+        m_size = ReadU32(inbuf);
+        m_link = static_cast<ElfSectionIndex>(ReadU32(inbuf));
+        m_info = static_cast<ElfSectionInfo>(ReadU32(inbuf));
 
-        m_align = ReadU32(bytes);
-        m_entsize = static_cast<ElfSize>(ReadU32(bytes));
+        m_align = ReadU32(inbuf);
+        m_entsize = static_cast<ElfSize>(ReadU32(inbuf));
     }
     else if (m_config.cls == ELFCLASS64)
     {
-        if (bytes.size() < SHDR64_SIZE)
+        if (inbuf.getReadableSize() < SHDR64_SIZE-8)
             throw Error(N_("section header too small"));
 
-        m_flags = static_cast<ElfSectionFlags>(ReadU64(bytes).getUInt());
-        m_addr = ReadU64(bytes);
+        m_flags = static_cast<ElfSectionFlags>(ReadU64(inbuf).getUInt());
+        m_addr = ReadU64(inbuf);
 
-        m_offset = static_cast<ElfAddress>(ReadU64(bytes).getUInt());
-        m_size = ReadU64(bytes);
-        m_link = static_cast<ElfSectionIndex>(ReadU32(bytes));
-        m_info = static_cast<ElfSectionInfo>(ReadU32(bytes));
+        m_offset = static_cast<ElfAddress>(ReadU64(inbuf).getUInt());
+        m_size = ReadU64(inbuf);
+        m_link = static_cast<ElfSectionIndex>(ReadU32(inbuf));
+        m_info = static_cast<ElfSectionInfo>(ReadU32(inbuf));
 
-        m_align = ReadU64(bytes).getUInt();
-        m_entsize = static_cast<ElfSize>(ReadU64(bytes).getUInt());
+        m_align = ReadU64(inbuf).getUInt();
+        m_entsize = static_cast<ElfSize>(ReadU64(inbuf).getUInt());
     }
 }
 
@@ -264,25 +266,20 @@ ElfSection::CreateSection(const StringTable& shstrtab) const
 }
 
 void
-ElfSection::LoadSectionData(Section& sect, std::istream& is) const
+ElfSection::LoadSectionData(Section& sect, const llvm::MemoryBuffer& in) const
 {
     if (sect.isBSS())
         return;
 
-    std::streampos oldpos = is.tellg();
-
     // Read section data
-    is.seekg(m_offset);
-    if (!is)
-        throw Error(String::Compose(
-            N_("could not seek to section `%1'"), getName()));
+    InputBuffer inbuf(in, m_offset);
 
-    sect.bytecodes_first().getFixed().Write(is, m_size.getUInt());
-    if (!is)
+    unsigned long size = m_size.getUInt();
+    if (inbuf.getReadableSize() < size)
         throw Error(String::Compose(
             N_("could not read section `%1' data"), getName()));
 
-    is.seekg(oldpos);
+    sect.bytecodes_first().getFixed().Write(inbuf.Read(size), size);
 }
 
 unsigned long
@@ -370,24 +367,21 @@ ElfSection::WriteRelocs(std::ostream& os,
     return size;
 }
 
-bool
-ElfSection::ReadRelocs(std::istream&       is,
-                       Section&            sect,
-                       unsigned long       size,
-                       const ElfMachine&   machine,
-                       const ElfSymtab&    symtab,
-                       bool                rela) const
+void
+ElfSection::ReadRelocs(const llvm::MemoryBuffer&    in,
+                       const ElfSection&            reloc_sect,
+                       Section&                     sect,
+                       const ElfMachine&            machine,
+                       const ElfSymtab&             symtab,
+                       bool                         rela) const
 {
-    for (unsigned long pos=is.tellg();
-         static_cast<unsigned long>(is.tellg()) < (pos+size);)
+    unsigned long start = reloc_sect.getFileOffset();
+    unsigned long end = start + reloc_sect.getSize().getUInt();
+    for (unsigned long pos = start; pos < end; )
     {
         sect.AddReloc(std::auto_ptr<Reloc>(
-            machine.ReadReloc(m_config, symtab, is, rela).release()));
-        if (!is)
-            throw Error(N_("could not read relocation entry"));
+            machine.ReadReloc(m_config, symtab, in, &pos, rela).release()));
     }
-
-    return true;
 }
 
 unsigned long

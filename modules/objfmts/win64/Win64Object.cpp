@@ -62,7 +62,7 @@ public:
     virtual void AddDirectives(Directives& dirs, const char* parser);
 
     //virtual void InitSymbols(const char* parser);
-    //virtual void Read(std::istream& is);
+    //virtual void Read(const llvm::MemoryBuffer& in);
     virtual void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
     static const char* getName() { return "Win64"; }
@@ -77,7 +77,7 @@ public:
 
     static bool isOkObject(Object& object)
     { return Win32Object::isOkObject(object); }
-    static bool Taste(std::istream& is,
+    static bool Taste(const llvm::MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
     { return false; }

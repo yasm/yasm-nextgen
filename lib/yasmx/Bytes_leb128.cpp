@@ -31,6 +31,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytes.h"
+#include "yasmx/InputBuffer.h"
 #include "yasmx/IntNum.h"
 
 
@@ -88,7 +89,7 @@ SizeLEB128(const IntNum& intn, bool sign)
 }
 
 IntNum
-ReadLEB128(Bytes& bytes, bool sign, /*@out@*/ unsigned long* size)
+ReadLEB128(InputBuffer& input, bool sign, /*@out@*/ unsigned long* size)
 {
     unsigned int nwords = 1;
     llvm::SmallVector<uint64_t, 4> words(nwords);
@@ -96,7 +97,7 @@ ReadLEB128(Bytes& bytes, bool sign, /*@out@*/ unsigned long* size)
 
     for (;;)
     {
-        const unsigned char* ptr = bytes.Read(1);
+        const unsigned char* ptr = input.Read(1);
         uint64_t v = *ptr & 0x7F;
         words[nwords-1] |= v << (i-64*(nwords-1));
         if ((i+7) > 64*nwords)

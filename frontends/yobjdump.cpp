@@ -36,6 +36,7 @@
 
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/ManagedStatic.h>
+#include <llvm/Support/MemoryBuffer.h>
 #include <yasmx/Support/Compose.h>
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/nocase.h>
@@ -405,8 +406,9 @@ static void
 DoDump(const std::string& in_filename)
 {
     // open the input file
-    std::ifstream in_file(in_filename.c_str());
-    if (!in_file)
+    std::auto_ptr<llvm::MemoryBuffer>
+        in_file(llvm::MemoryBuffer::getFileOrSTDIN(in_filename));
+    if (in_file.get() == 0)
         throw yasm::Error(String::Compose(_("could not open file `%1'"),
                           in_filename));
 
@@ -432,7 +434,7 @@ DoDump(const std::string& in_filename)
                 _("could not load object format `%1'"), objfmt_keyword));
         }
 
-        if (!objfmt_module->Taste(in_file, &arch_keyword, &machine))
+        if (!objfmt_module->Taste(*in_file, &arch_keyword, &machine))
         {
             throw yasm::Error(String::Compose(
                 _("file is not recognized as a `%1' object file"),
@@ -448,7 +450,7 @@ DoDump(const std::string& in_filename)
         for (; i != end; ++i)
         {
             objfmt_module = yasm::LoadModule<yasm::ObjectFormatModule>(*i);
-            if (objfmt_module->Taste(in_file, &arch_keyword, &machine))
+            if (objfmt_module->Taste(*in_file, &arch_keyword, &machine))
                 break;
         }
         if (i == end)
@@ -483,7 +485,7 @@ DoDump(const std::string& in_filename)
     }
 
     std::auto_ptr<yasm::ObjectFormat> objfmt = objfmt_module->Create(object);
-    objfmt->Read(in_file);
+    objfmt->Read(*in_file);
 
     std::cout << in_filename << ":     file format "
               << objfmt_module->getKeyword() << "\n\n";

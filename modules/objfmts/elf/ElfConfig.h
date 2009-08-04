@@ -31,6 +31,8 @@
 #include "ElfTypes.h"
 
 
+namespace llvm { class MemoryBuffer; }
+
 namespace YAML { class Emitter; }
 
 namespace yasm
@@ -38,6 +40,7 @@ namespace yasm
 
 class Bytes;
 class Errwarns;
+class InputBuffer;
 class Object;
 class Section;
 class StringTable;
@@ -77,7 +80,7 @@ struct ElfConfig
     ~ElfConfig() {}
 
     unsigned long getProgramHeaderSize() const;
-    bool ReadProgramHeader(std::istream& is);
+    bool ReadProgramHeader(const llvm::MemoryBuffer& in);
     void WriteProgramHeader(std::ostream& os, Bytes& scratch);
 
     ElfSymbolIndex AssignSymbolIndices(Object& object, ElfSymbolIndex* nlocal)
@@ -87,17 +90,17 @@ struct ElfConfig
                                    Object& object,
                                    Errwarns& errwarns,
                                    Bytes& scratch) const;
-    bool ReadSymbolTable(std::istream&      is,
-                         ElfSymtab&         symtab,
-                         Object&            object,
-                         unsigned long      size,
-                         ElfSize            symsize,
-                         const StringTable& strtab,
-                         Section*           sections[]) const;
+    void ReadSymbolTable(const llvm::MemoryBuffer&  in,
+                         const ElfSection&          symtab_sect,
+                         ElfSymtab&                 symtab,
+                         Object&                    object,
+                         const StringTable&         strtab,
+                         Section*                   sections[]) const;
 
     std::string getRelocSectionName(const std::string& basesect) const;
 
     bool setEndian(Bytes& bytes) const;
+    bool setEndian(InputBuffer& inbuf) const;
 
     void Write(YAML::Emitter& out) const;
     void Dump() const;

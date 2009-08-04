@@ -39,6 +39,7 @@
 #include <yasmx/Directive.h>
 #include <yasmx/DirHelpers.h>
 #include <yasmx/Errwarns.h>
+#include <yasmx/InputBuffer.h>
 #include <yasmx/IntNum.h>
 #include <yasmx/Location_util.h>
 #include <yasmx/NameValue.h>
@@ -80,7 +81,7 @@ public:
 
     void AddDirectives(Directives& dirs, const char* parser);
 
-    void Read(std::istream& is);
+    void Read(const llvm::MemoryBuffer& in);
     void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* AddDefaultSection();
@@ -93,7 +94,7 @@ public:
     static const char* getDefaultDebugFormatKeyword() { return "null"; }
     static std::vector<const char*> getDebugFormatKeywords();
     static bool isOkObject(Object& object);
-    static bool Taste(std::istream& is,
+    static bool Taste(const llvm::MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine);
 
@@ -458,19 +459,17 @@ XdfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
 }
 
 bool
-XdfObject::Taste(std::istream& is,
+XdfObject::Taste(const llvm::MemoryBuffer& in,
                  /*@out@*/ std::string* arch_keyword,
                  /*@out@*/ std::string* machine)
 {
-    Bytes bytes;
+    InputBuffer inbuf(in);
 
     // Check for XDF magic number in header
-    is.seekg(0);
-    bytes.Write(is, FILEHEAD_SIZE);
-    if (!is)
+    if (inbuf.getReadableSize() < FILEHEAD_SIZE)
         return false;
-    bytes << little_endian;
-    unsigned long magic = ReadU32(bytes);
+    inbuf.setLittleEndian();
+    unsigned long magic = ReadU32(inbuf);
     if (magic != XDF_MAGIC)
         return false;
 
@@ -480,43 +479,54 @@ XdfObject::Taste(std::istream& is,
     return true;
 }
 
-void
-XdfObject::Read(std::istream& is)
+class ReadString
 {
-    Bytes bytes;
+public:
+    ReadString(const llvm::MemoryBuffer& in,
+               unsigned long strtab_offset,
+               unsigned long strtab_len)
+        : m_in(in)
+        , m_offset(strtab_offset)
+        , m_len(strtab_len)
+    {}
+
+    std::string
+    operator() (unsigned long str_index)
+    {
+        if (str_index < m_offset || str_index >= m_offset+m_len)
+            throw Error(N_("invalid string table offset"));
+        return m_in.getBufferStart() + str_index;
+    }
+
+private:
+    const llvm::MemoryBuffer& m_in;
+    unsigned long m_offset;
+    unsigned long m_len;
+};
+
+void
+XdfObject::Read(const llvm::MemoryBuffer& in)
+{
+    InputBuffer inbuf(in);
+    inbuf.setLittleEndian();
 
     // Read object header
-    is.seekg(0);
-    bytes.Write(is, FILEHEAD_SIZE);
-    if (!is)
+    if (inbuf.getReadableSize() < FILEHEAD_SIZE)
         throw Error(N_("could not read object header"));
-    bytes << little_endian;
-    unsigned long magic = ReadU32(bytes);
+    unsigned long magic = ReadU32(inbuf);
     if (magic != XDF_MAGIC)
         throw Error(N_("not an XDF file"));
-    unsigned long scnum = ReadU32(bytes);
-    unsigned long symnum = ReadU32(bytes);
-    unsigned long headers_len = ReadU32(bytes);
+    unsigned long scnum = ReadU32(inbuf);
+    unsigned long symnum = ReadU32(inbuf);
+    unsigned long headers_len = ReadU32(inbuf);
+    if (inbuf.getReadableSize() < headers_len)
+        throw Error(N_("could not read XDF header tables"));
 
-    // Read section headers, symbol table, and strings raw data
-    bytes.resize(0);
-    bytes.setReadPosition(0);
-    bytes.Write(is, scnum*SECTHEAD_SIZE);
-    if (!is)
-        throw Error(N_("could not read section table"));
-
-    Bytes symtab;
-    symtab.Write(is, symnum*SYMBOL_SIZE);
-    if (!is)
-        throw Error(N_("could not read symbol table"));
-
-    unsigned strtab_offset =
-        FILEHEAD_SIZE + SECTHEAD_SIZE*scnum + SYMBOL_SIZE*symnum;
-    Bytes strtab;
-    strtab.Write(is, FILEHEAD_SIZE+headers_len-strtab_offset);
-    strtab.push_back(0);        // add extra 0 in case of data corruption
-    if (!is)
-        throw Error(N_("could not read string table"));
+    unsigned long section_offset = FILEHEAD_SIZE;
+    unsigned long symtab_offset = section_offset + SECTHEAD_SIZE*scnum;
+    unsigned long strtab_offset = symtab_offset + SYMBOL_SIZE*symnum;
+    ReadString read_string(in, strtab_offset,
+                           FILEHEAD_SIZE+headers_len-strtab_offset);
 
     // Storage for nrelocs, indexed by section number
     std::vector<unsigned long> sects_nrelocs;
@@ -533,14 +543,13 @@ XdfObject::Read(std::istream& is)
         bool bss;
         unsigned long filepos;
         unsigned long nrelocs;
-        xsect->Read(bytes, &name_sym_index, &lma, &vma, &align, &bss, &filepos,
-                    &nrelocs);
+        xsect->Read(in, section_offset+SECTHEAD_SIZE*i, &name_sym_index, &lma,
+                    &vma, &align, &bss, &filepos, &nrelocs);
         xsect->scnum = i;
 
-        symtab.setReadPosition(name_sym_index*SYMBOL_SIZE+8);   // strtab offset
-        unsigned long name_strtab_off = ReadU32(symtab) - strtab_offset;
-        std::string sectname =
-            reinterpret_cast<const char*>(&strtab.at(name_strtab_off));
+        // get section name from section symbol entry
+        inbuf.setPosition(symtab_offset+name_sym_index*SYMBOL_SIZE+8);
+        std::string sectname = read_string(ReadU32(inbuf));
 
         std::auto_ptr<Section> section(
             new Section(sectname, xsect->bits != 0, bss, 0));
@@ -557,15 +566,13 @@ XdfObject::Read(std::istream& is)
         else
         {
             // Read section data
-            is.seekg(filepos);
-            if (!is)
-                throw Error(String::Compose(
-                    N_("could not read seek to section `%1'"), sectname));
-
-            section->bytecodes_first().getFixed().Write(is, xsect->size);
-            if (!is)
+            inbuf.setPosition(filepos);
+            if (inbuf.getReadableSize() < xsect->size)
                 throw Error(String::Compose(
                     N_("could not read section `%1' data"), sectname));
+
+            section->bytecodes_first().getFixed().Write(inbuf.Read(xsect->size),
+                                                        xsect->size);
         }
 
         // Associate section data with section
@@ -578,17 +585,13 @@ XdfObject::Read(std::istream& is)
     }
 
     // Create symbols
-    symtab.setReadPosition(0);
-    symtab << little_endian;
+    inbuf.setPosition(symtab_offset);
     for (unsigned long i=0; i<symnum; ++i)
     {
-        unsigned long sym_scnum = ReadU32(symtab);      // section number
-        unsigned long value = ReadU32(symtab);          // value
-        unsigned long name_strtab_off = ReadU32(symtab) - strtab_offset;
-        unsigned long flags = ReadU32(symtab);          // flags
-
-        std::string symname =
-            reinterpret_cast<const char*>(&strtab.at(name_strtab_off));
+        unsigned long sym_scnum = ReadU32(inbuf);           // section number
+        unsigned long value = ReadU32(inbuf);               // value
+        std::string symname = read_string(ReadU32(inbuf));  // name
+        unsigned long flags = ReadU32(inbuf);               // flags
 
         SymbolRef sym = m_object.getSymbol(symname);
         if ((flags & XdfSymbol::XDF_GLOBAL) != 0)
@@ -610,7 +613,6 @@ XdfObject::Read(std::istream& is)
     }
 
     // Update section symbol info, and create section relocations
-    Bytes relocs;
     std::vector<unsigned long>::iterator nrelocsi = sects_nrelocs.begin();
     for (Object::section_iterator sect=m_object.sections_begin(),
          end=m_object.sections_end(); sect != end; ++sect, ++nrelocsi)
@@ -619,30 +621,20 @@ XdfObject::Read(std::istream& is)
         assert(xsect != 0);
 
         // Read relocations
-        is.seekg(xsect->relptr);
-        if (!is)
+        inbuf.setPosition(xsect->relptr);
+        if (inbuf.getReadableSize() < (*nrelocsi) * RELOC_SIZE)
             throw Error(String::Compose(
-                N_("could not read seek to section `%1' relocs"),
-                sect->getName()));
+                N_("could not read section `%1' relocs"), sect->getName()));
 
-        relocs.resize(0);
-        relocs.setReadPosition(0);
-        relocs.Write(is, (*nrelocsi) * RELOC_SIZE);
-        if (!is)
-            throw Error(String::Compose(
-                N_("could not read section `%1' relocs"),
-                sect->getName()));
-
-        relocs << little_endian;
         for (unsigned long i=0; i<(*nrelocsi); ++i)
         {
-            unsigned long addr = ReadU32(relocs);
-            unsigned long sym_index = ReadU32(relocs);
-            unsigned long basesym_index = ReadU32(relocs);
-            XdfReloc::Type type = static_cast<XdfReloc::Type>(ReadU8(relocs));
-            XdfReloc::Size size = static_cast<XdfReloc::Size>(ReadU8(relocs));
-            unsigned char shift = ReadU8(relocs);
-            ReadU8(relocs);     // flags; ignored
+            unsigned long addr = ReadU32(inbuf);
+            unsigned long sym_index = ReadU32(inbuf);
+            unsigned long basesym_index = ReadU32(inbuf);
+            XdfReloc::Type type = static_cast<XdfReloc::Type>(ReadU8(inbuf));
+            XdfReloc::Size size = static_cast<XdfReloc::Size>(ReadU8(inbuf));
+            unsigned char shift = ReadU8(inbuf);
+            ReadU8(inbuf);      // flags; ignored
             SymbolRef sym = m_object.getSymbol(sym_index);
             SymbolRef basesym(0);
             if (type == XdfReloc::XDF_WRT)

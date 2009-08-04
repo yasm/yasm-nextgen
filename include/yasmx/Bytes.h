@@ -30,7 +30,6 @@
 /// @endlicense
 ///
 #include <iosfwd>
-#include <stdexcept>
 #include <vector>
 
 #include "yasmx/Config/export.h"
@@ -47,16 +46,15 @@ class YASM_LIB_EXPORT Bytes : private std::vector<unsigned char>
     typedef std::vector<unsigned char> base_vector;
 
 public:
-    Bytes(bool bigendian=false);
+    Bytes(bool bigendian=false)
+        : m_bigendian(bigendian)
+    {}
 
     template <class InputIterator>
     Bytes(InputIterator first, InputIterator last, bool bigendian=false)
         : base_vector(first, last)
         , m_bigendian(bigendian)
-        , m_readpos(0)
     {}
-
-    ~Bytes();
 
     typedef base_vector::reference reference;
     typedef base_vector::const_reference const_reference;
@@ -109,35 +107,12 @@ public:
     /// @param  v   byte value
     void Write(size_type n, unsigned char v);
 
-    /// Set read position.
-    /// @param pos  new read position
-    void setReadPosition(size_type pos) { m_readpos = pos; }
-
-    /// Get read position.
-    /// @return Current read position.
-    size_type getReadPosition() const { return m_readpos; }
-
-    /// Perform a "read" by returning a pointer to the current read position
-    /// and then advancing the read position.
-    /// @param n    number of bytes to advance read position by
-    /// @return Pointer to current read position.
-    /// Throws std::out_of_range if not enough bytes left to read n bytes.
-    const unsigned char* Read(size_type n)
-    {
-        size_type oldpos = m_readpos;
-        m_readpos += n;
-        if (m_readpos > size())
-            throw std::out_of_range("read past end of Bytes buffer");
-        return &(at(oldpos));
-    }
-
     /// Dump a YAML representation to stderr.
     /// For debugging purposes.
     void Dump() const;
 
 private:
     bool m_bigendian;
-    size_type m_readpos;
 };
 
 namespace impl

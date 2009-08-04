@@ -34,6 +34,7 @@
 #include "yasmx/Bytes_util.h"
 #include "yasmx/Errwarns.h"
 #include "yasmx/Expr.h"
+#include "yasmx/InputBuffer.h"
 #include "yasmx/Location_util.h"
 #include "yasmx/Object.h"
 #include "yasmx/StringTable.h"
@@ -51,39 +52,46 @@ namespace elf
 
 const char* ElfSymbol::key = "objfmt::elf::ElfSymbol";
 
-ElfSymbol::ElfSymbol(const ElfConfig&   config,
-                     Bytes&             bytes,
-                     ElfSymbolIndex     index,
-                     Section*           sections[])
+ElfSymbol::ElfSymbol(const ElfConfig&           config,
+                     const llvm::MemoryBuffer&  in,
+                     const ElfSection&          symtab_sect,
+                     ElfSymbolIndex             index,
+                     Section*                   sections[])
     : m_sect(0)
     , m_value(0)
     , m_size(0)
     , m_symindex(index)
 {
-    bytes.setReadPosition(0);
-    config.setEndian(bytes);
+    InputBuffer inbuf(in);
 
-    m_name_index = ReadU32(bytes);
+    ElfSize symsize = symtab_sect.getEntSize();
+    inbuf.setPosition(symtab_sect.getFileOffset() + index * symsize);
+    if (inbuf.getReadableSize() < symsize)
+        throw Error(N_("could not read symbol table entry"));
+
+    config.setEndian(inbuf);
+
+    m_name_index = ReadU32(inbuf);
 
     if (config.cls == ELFCLASS32)
     {
-        m_value = ReadU32(bytes);
-        m_size = Expr(ReadU32(bytes));
+        m_value = ReadU32(inbuf);
+        m_size = Expr(ReadU32(inbuf));
     }
 
-    unsigned char info = ReadU8(bytes);
+    unsigned char info = ReadU8(inbuf);
     m_bind = ELF_ST_BIND(info);
     m_type = ELF_ST_TYPE(info);
-    m_vis = ELF_ST_VISIBILITY(ReadU8(bytes));
+    m_vis = ELF_ST_VISIBILITY(ReadU8(inbuf));
 
-    m_index = static_cast<ElfSectionIndex>(ReadU16(bytes));
+    m_index = static_cast<ElfSectionIndex>(ReadU16(inbuf));
     if (m_index != SHN_UNDEF && m_index < config.secthead_count)
         m_sect = sections[m_index];
 
     if (config.cls == ELFCLASS64)
     {
-        m_value = ReadU64(bytes);
-        m_size = Expr(ReadU64(bytes));
+        m_value = ReadU64(inbuf);
+        m_size = Expr(ReadU64(inbuf));
     }
 }
 
