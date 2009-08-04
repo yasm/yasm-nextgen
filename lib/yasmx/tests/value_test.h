@@ -274,12 +274,12 @@ public:
         TS_ASSERT_EQUALS(v.getRelative(), a);
         TS_ASSERT_EQUALS(v.m_rshift, 5U);
 
-        // (rel1>>5)>>6
+        // (rel1>>5)>>6 --> left as-is.
         v = Value(8, Expr::Ptr(new Expr(SHR(SHR(a, 5), 6))));
         TS_ASSERT_EQUALS(v.Finalize(), true);
-        TS_ASSERT_EQUALS(v.hasAbs(), false);
-        TS_ASSERT_EQUALS(v.getRelative(), a);
-        TS_ASSERT_EQUALS(v.m_rshift, 11U);
+        TS_ASSERT_EQUALS(v.hasAbs(), true);
+        TS_ASSERT_EQUALS(String::Format(*v.getAbs()), "(a>>5)>>6");
+        TS_ASSERT_EQUALS(v.isRelative(), false);
 
         // rel1>>reg --> error
         v = Value(8, Expr::Ptr(new Expr(SHR(a, g))));
@@ -289,9 +289,12 @@ public:
         v = Value(8, Expr::Ptr(new Expr(ADD(a, SHR(a, 5)))));
         TS_ASSERT_EQUALS(v.Finalize(), false);
 
-        // 5>>rel1 --> error
+        // 5>>rel1 --> left as-is.
         v = Value(8, Expr::Ptr(new Expr(SHR(5, a))));
-        TS_ASSERT_EQUALS(v.Finalize(), false);
+        TS_ASSERT_EQUALS(v.Finalize(), true);
+        TS_ASSERT_EQUALS(v.hasAbs(), true);
+        TS_ASSERT_EQUALS(String::Format(*v.getAbs()), "5>>a");
+        TS_ASSERT_EQUALS(v.isRelative(), false);
     }
 
     void testClear()
