@@ -34,8 +34,6 @@
 #include <yasmx/Support/nocase.h>
 #include <yasmx/Arch.h>
 #include <yasmx/BytecodeContainer_util.h>
-#include <yasmx/Bytes.h>
-#include <yasmx/Bytes_util.h>
 #include <yasmx/Directive.h>
 #include <yasmx/EffAddr.h>
 #include <yasmx/Errwarns.h>
@@ -943,10 +941,15 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
             break;
         case STRING:
         {
-            const unsigned char* strv =
-                reinterpret_cast<const unsigned char*>(STRING_val.c_str());
-            Bytes bytes(&strv[0], &strv[STRING_val.length()], false);
-            e = ReadUnsigned(bytes, STRING_val.length()*8);
+            const char* strbegin = STRING_val.data();
+            const char* p = strbegin+STRING_val.length();
+            IntNum intn(0);
+            while (p > strbegin)
+            {
+                intn <<= 8;
+                intn |= static_cast<unsigned int>(*--p);
+            }
+            e = intn;
             break;
         }
         case SPECIAL_ID:
