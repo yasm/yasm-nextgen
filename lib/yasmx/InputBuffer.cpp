@@ -72,7 +72,6 @@ ReadN(InputBuffer& input, int n, bool sign)
             case 8: return ReadS8(input);
             case 16: return ReadS16(input);
             case 32: return ReadS32(input);
-            case 64: return ReadS64(input);
             default: break;
         }
     }
@@ -83,7 +82,7 @@ ReadN(InputBuffer& input, int n, bool sign)
             case 8: return ReadU8(input);
             case 16: return ReadU16(input);
             case 32: return ReadU32(input);
-            case 64: return ReadU64(input);
+            case 64: return ReadU64I(input);
             default: break;
         }
     }
