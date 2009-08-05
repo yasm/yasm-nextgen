@@ -45,8 +45,12 @@ class InputBuffer
 {
 public:
     InputBuffer(const llvm::MemoryBuffer& input, size_t startpos=0)
-        : m_input(input), m_bigendian(false), m_pos(startpos)
-    {}
+        : m_start(reinterpret_cast<const unsigned char*>(input.getBufferStart()))
+        , m_end(reinterpret_cast<const unsigned char*>(input.getBufferEnd()))
+        , m_bigendian(false)
+    {
+        m_ptr = m_start + startpos;
+    }
 
     void setBigEndian() { m_bigendian = true; }
     void setLittleEndian() { m_bigendian = false; }
@@ -55,23 +59,23 @@ public:
 
     /// Get buffer size.
     /// @return Buffer size.
-    size_t getSize() const { return m_input.getBufferSize(); }
+    size_t getSize() const { return m_end-m_start; }
 
     /// Set read position.
     /// @param pos  new read position
-    void setPosition(size_t pos) { m_pos = pos; }
+    void setPosition(size_t pos) { m_ptr = m_start + pos; }
 
     /// Get read position.
     /// @return Current read position.
-    size_t getPosition() const { return m_pos; }
+    size_t getPosition() const { return m_ptr - m_start; }
 
     /// Get remaining bytes after read position.
     /// @return Number of bytes.
     size_t getReadableSize() const
     {
-        if (m_pos > getSize())
+        if (m_ptr > m_end)
             return 0;
-        return getSize()-m_pos;
+        return m_end-m_ptr;
     }
 
     /// Perform a "read" by returning a pointer to the current read position
@@ -81,18 +85,18 @@ public:
     /// Throws std::out_of_range if not enough bytes left to read n bytes.
     const unsigned char* Read(size_t n)
     {
-        size_t oldpos = m_pos;
-        m_pos += n;
-        if (m_pos > m_input.getBufferSize())
+        const unsigned char* oldptr = m_ptr;
+        m_ptr += n;
+        if (m_ptr > m_end)
             throw std::out_of_range("read past end of buffer");
-        return reinterpret_cast<const unsigned char*>(m_input.getBufferStart())
-            + oldpos;
+        return oldptr;
     }
 
 private:
-    const llvm::MemoryBuffer& m_input;
+    const unsigned char* m_start;
+    const unsigned char* m_end;
+    const unsigned char* m_ptr;
     bool m_bigendian;
-    size_t m_pos;
 };
 
 /// Read an unsigned 8-bit value from an input buffer.
