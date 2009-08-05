@@ -252,7 +252,7 @@ UnwindCode::Output(Bytecode& bc, BytecodeOutput& bc_out)
     // Opcode and info
     Write8(bytes, (m_info << 4) | (m_opcode & 0xF));
 
-    bytes << little_endian;
+    bytes.setLittleEndian();
     if (size == 2)
         Write16(bytes, intn);
     else if (size == 4)

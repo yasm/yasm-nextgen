@@ -343,7 +343,7 @@ XdfOutput::OutputSymbol(const Symbol& sym,
     }
 
     Bytes& scratch = getScratch();
-    scratch << little_endian;
+    scratch.setLittleEndian();
 
     Write32(scratch, scnum);        // section number
     Write32(scratch, value);        // value
@@ -435,7 +435,7 @@ XdfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
 
     // Output object header
     Bytes& scratch = out.getScratch();
-    scratch << little_endian;
+    scratch.setLittleEndian();
     Write32(scratch, XDF_MAGIC);        // magic number
     Write32(scratch, scnum);            // number of sects
     Write32(scratch, symtab_count);     // number of symtabs

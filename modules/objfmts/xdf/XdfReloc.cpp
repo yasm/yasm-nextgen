@@ -122,7 +122,7 @@ XdfReloc::Write(Bytes& bytes) const
     const XdfSymbol* xsym = m_sym->getAssocData<XdfSymbol>();
     assert(xsym != 0);      // need symbol data for relocated symbol
 
-    bytes << little_endian;
+    bytes.setLittleEndian();
 
     Write32(bytes, m_addr);
     Write32(bytes, xsym->index);        // relocated symbol

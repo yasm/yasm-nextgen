@@ -39,8 +39,8 @@ namespace yasm
 {
 
 class Bytes;
+class EndianState;
 class Errwarns;
-class InputBuffer;
 class Object;
 class Section;
 class StringTable;
@@ -99,8 +99,7 @@ struct ElfConfig
 
     std::string getRelocSectionName(const std::string& basesect) const;
 
-    bool setEndian(Bytes& bytes) const;
-    bool setEndian(InputBuffer& inbuf) const;
+    bool setEndian(EndianState& state) const;
 
     void Write(YAML::Emitter& out) const;
     void Dump() const;

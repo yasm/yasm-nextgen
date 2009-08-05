@@ -528,7 +528,7 @@ void
 CoffOutput::OutputStringTable()
 {
     Bytes& bytes = getScratch();
-    bytes << little_endian;
+    bytes.setLittleEndian();
     Write32(bytes, m_strtab.getSize()+4);   // total length
     m_os << bytes;
     m_strtab.Write(m_os);                   // strings
@@ -612,7 +612,7 @@ CoffObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
 
     // Write file header
     Bytes& bytes = out.getScratch();
-    bytes << little_endian;
+    bytes.setLittleEndian();
     Write16(bytes, m_machine);          // magic number
     Write16(bytes, scnum-1);            // number of sects
     unsigned long ts;

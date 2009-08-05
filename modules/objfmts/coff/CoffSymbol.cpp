@@ -161,7 +161,7 @@ CoffSymbol::Write(Bytes& bytes,
             scnum = 0;
     }
 
-    bytes << little_endian;
+    bytes.setLittleEndian();
 
     std::string name;
     size_t len;

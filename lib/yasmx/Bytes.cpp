@@ -50,7 +50,7 @@ void
 Bytes::swap(Bytes& oth)
 {
     base_vector::swap(*this);
-    std::swap(m_bigendian, oth.m_bigendian);
+    EndianState::swap(*this);
 }
 
 void

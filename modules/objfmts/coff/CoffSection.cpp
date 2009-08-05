@@ -119,7 +119,7 @@ CoffSection::Write(YAML::Emitter& out) const
 void
 CoffSection::Write(Bytes& bytes, const Section& sect) const
 {
-    bytes << little_endian;
+    bytes.setLittleEndian();
 
     // Check to see if alignment is supported size
     unsigned long align = sect.getAlign();

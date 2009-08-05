@@ -65,7 +65,7 @@ CoffReloc::Write(Bytes& bytes) const
     const CoffSymbol* csym = m_sym->getAssocData<CoffSymbol>();
     assert(csym != 0);      // need symbol data for relocated symbol
 
-    bytes << little_endian;
+    bytes.setLittleEndian();
 
     Write32(bytes, m_addr);             // address of relocation
     Write32(bytes, csym->m_index);      // relocated symbol

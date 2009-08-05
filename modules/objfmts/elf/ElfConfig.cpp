@@ -300,24 +300,12 @@ ElfConfig::getRelocSectionName(const std::string& basesect) const
 }
 
 bool
-ElfConfig::setEndian(Bytes& bytes) const
+ElfConfig::setEndian(EndianState& state) const
 {
     if (encoding == ELFDATA2LSB)
-        bytes << little_endian;
+        state.setLittleEndian();
     else if (encoding == ELFDATA2MSB)
-        bytes << big_endian;
-    else
-        return false;
-    return true;
-}
-
-bool
-ElfConfig::setEndian(InputBuffer& inbuf) const
-{
-    if (encoding == ELFDATA2LSB)
-        inbuf.setLittleEndian();
-    else if (encoding == ELFDATA2MSB)
-        inbuf.setBigEndian();
+        state.setBigEndian();
     else
         return false;
     return true;

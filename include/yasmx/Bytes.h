@@ -33,6 +33,7 @@
 #include <vector>
 
 #include "yasmx/Config/export.h"
+#include "yasmx/Support/EndianState.h"
 
 
 namespace YAML { class Emitter; }
@@ -41,20 +42,17 @@ namespace yasm
 {
 
 /// A vector of bytes.
-class YASM_LIB_EXPORT Bytes : private std::vector<unsigned char>
+class YASM_LIB_EXPORT Bytes
+    : private std::vector<unsigned char>
+    , public EndianState
 {
     typedef std::vector<unsigned char> base_vector;
 
 public:
-    Bytes(bool bigendian=false)
-        : m_bigendian(bigendian)
-    {}
+    Bytes() {}
 
     template <class InputIterator>
-    Bytes(InputIterator first, InputIterator last, bool bigendian=false)
-        : base_vector(first, last)
-        , m_bigendian(bigendian)
-    {}
+    Bytes(InputIterator first, InputIterator last) : base_vector(first, last) {}
 
     typedef base_vector::reference reference;
     typedef base_vector::const_reference const_reference;
@@ -89,9 +87,6 @@ public:
 
     void swap(Bytes& oth);
 
-    void setBigEndian(bool bigendian) { m_bigendian = bigendian; }
-    bool isBigEndian() const { return m_bigendian; }
-
     /// Copy from an input stream, appending the values to the end.
     /// @param  is  input stream
     /// @param  n   number of bytes
@@ -113,40 +108,7 @@ public:
     /// Dump a YAML representation to stderr.
     /// For debugging purposes.
     void Dump() const;
-
-private:
-    bool m_bigendian;
 };
-
-namespace impl
-{
-
-struct SetEndian
-{
-    bool m_bigendian;
-};
-
-} // namespace impl
-
-inline impl::SetEndian
-SetEndian(bool bigendian)
-{
-    impl::SetEndian x;
-    x.m_bigendian = bigendian;
-    return x;
-}
-
-inline Bytes&
-operator<< (Bytes& bytes, const impl::SetEndian& sete)
-{
-    bytes.setBigEndian(sete.m_bigendian);
-    return bytes;
-}
-
-/// Generates multi-byte output in big endian format.
-static const impl::SetEndian big_endian = { true };
-/// Generates multi-byte output in little endian format.
-static const impl::SetEndian little_endian = { false };
 
 /// Output the entire contents of a bytes container to an output stream.
 /// @param os    output stream

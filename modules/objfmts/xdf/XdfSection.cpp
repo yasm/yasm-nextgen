@@ -81,7 +81,7 @@ XdfSection::Write(Bytes& bytes, const Section& sect) const
     const XdfSymbol* xsym = sym->getAssocData<XdfSymbol>();
     assert(xsym != 0);
 
-    bytes << little_endian;
+    bytes.setLittleEndian();
 
     Write32(bytes, xsym->index);        // section name symbol
     Write64(bytes, sect.getLMA());      // physical address

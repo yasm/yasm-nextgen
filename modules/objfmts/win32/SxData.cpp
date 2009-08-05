@@ -92,7 +92,7 @@ SxData::Output(Bytecode& bc, BytecodeOutput& bc_out)
     assert(coffsym && "no symbol data for SAFESEH symbol");
 
     Bytes& bytes = bc_out.getScratch();
-    bytes << little_endian;
+    bytes.setLittleEndian();
     Write32(bytes, coffsym->m_index);
     bc_out.Output(bytes);
 }

@@ -151,7 +151,7 @@ public:
             //TS_TRACE(ltest->val);
 
             Bytes bytes;
-            bytes << little_endian;
+            bytes.setLittleEndian();
             Write16(bytes, ltest->val);
             TS_ASSERT_EQUALS(bytes.size(), 2U);
             TS_ASSERT_EQUALS(bytes[0], ltest->expect[0]);
@@ -163,7 +163,7 @@ public:
             TS_ASSERT_EQUALS(bytes[0], ltest->expect[0]);
             TS_ASSERT_EQUALS(bytes[1], ltest->expect[1]);
 
-            bytes << big_endian;
+            bytes.setBigEndian();
 
             bytes.clear();
             Write16(bytes, ltest->val);
@@ -184,7 +184,7 @@ public:
             //TS_TRACE(ultest->val);
 
             Bytes bytes;
-            bytes << little_endian;
+            bytes.setLittleEndian();
             Write16(bytes, ultest->val);
             TS_ASSERT_EQUALS(bytes.size(), 2U);
             TS_ASSERT_EQUALS(bytes[0], ultest->expect[0]);
@@ -196,7 +196,7 @@ public:
             TS_ASSERT_EQUALS(bytes[0], ultest->expect[0]);
             TS_ASSERT_EQUALS(bytes[1], ultest->expect[1]);
 
-            bytes << big_endian;
+            bytes.setBigEndian();
 
             bytes.clear();
             Write16(bytes, ultest->val);
@@ -241,7 +241,7 @@ public:
             //TS_TRACE(ltest->val);
 
             Bytes bytes;
-            bytes << little_endian;
+            bytes.setLittleEndian();
             Write32(bytes, ltest->val);
             TS_ASSERT_EQUALS(bytes.size(), 4U);
             TS_ASSERT_EQUALS(bytes[0], ltest->expect[0]);
@@ -257,7 +257,7 @@ public:
             TS_ASSERT_EQUALS(bytes[2], ltest->expect[2]);
             TS_ASSERT_EQUALS(bytes[3], ltest->expect[3]);
 
-            bytes << big_endian;
+            bytes.setBigEndian();
 
             bytes.clear();
             Write32(bytes, ltest->val);
@@ -282,7 +282,7 @@ public:
             //TS_TRACE(ultest->val);
 
             Bytes bytes;
-            bytes << little_endian;
+            bytes.setLittleEndian();
             Write32(bytes, ultest->val);
             TS_ASSERT_EQUALS(bytes.size(), 4U);
             TS_ASSERT_EQUALS(bytes[0], ultest->expect[0]);
@@ -298,7 +298,7 @@ public:
             TS_ASSERT_EQUALS(bytes[2], ultest->expect[2]);
             TS_ASSERT_EQUALS(bytes[3], ultest->expect[3]);
 
-            bytes << big_endian;
+            bytes.setBigEndian();
 
             bytes.clear();
             Write32(bytes, ultest->val);
@@ -347,7 +347,7 @@ public:
             //TS_TRACE(ltest->val);
 
             Bytes bytes;
-            bytes << little_endian;
+            bytes.setLittleEndian();
             Write64(bytes, ltest->val);
             TS_ASSERT_EQUALS(bytes.size(), 8U);
             TS_ASSERT_EQUALS(bytes[0], ltest->expect[0]);
@@ -371,7 +371,7 @@ public:
             TS_ASSERT_EQUALS(bytes[6], (ltest->expect[3]&0x80) ? 0xff : 0x00);
             TS_ASSERT_EQUALS(bytes[7], (ltest->expect[3]&0x80) ? 0xff : 0x00);
 
-            bytes << big_endian;
+            bytes.setBigEndian();
 
             bytes.clear();
             Write64(bytes, ltest->val);
@@ -404,7 +404,7 @@ public:
             //TS_TRACE(ultest->val);
 
             Bytes bytes;
-            bytes << little_endian;
+            bytes.setLittleEndian();
             Write64(bytes, ultest->val);
             TS_ASSERT_EQUALS(bytes.size(), 8U);
             TS_ASSERT_EQUALS(bytes[0], ultest->expect[0]);
@@ -428,7 +428,7 @@ public:
             TS_ASSERT_EQUALS(bytes[6], 0x00);
             TS_ASSERT_EQUALS(bytes[7], 0x00);
 
-            bytes << big_endian;
+            bytes.setBigEndian();
 
             bytes.clear();
             Write64(bytes, ultest->val);
@@ -465,7 +465,7 @@ public:
             //TS_TRACE(intn);
 
             Bytes bytes;
-            bytes << little_endian;
+            bytes.setLittleEndian();
             Write64(bytes, intn);
             TS_ASSERT_EQUALS(bytes.size(), 8U);
             TS_ASSERT_EQUALS(bytes[0], (i < 8) ? (1<<i) : 0x00);
@@ -477,7 +477,7 @@ public:
             TS_ASSERT_EQUALS(bytes[6], (i >= 48 && i < 56) ? (1<<(i-48)) : 0x00);
             TS_ASSERT_EQUALS(bytes[7], (i >= 56 && i < 64) ? (1<<(i-56)) : 0x00);
 
-            bytes << big_endian;
+            bytes.setBigEndian();
 
             bytes.clear();
             Write64(bytes, intn);
@@ -493,7 +493,7 @@ public:
 
             intn.Calc(Op::NOT);
 
-            bytes << little_endian;
+            bytes.setLittleEndian();
 
             bytes.clear();
             Write64(bytes, intn);
@@ -507,7 +507,7 @@ public:
             TS_ASSERT_EQUALS(bytes[6], 0xff & ((i >= 48 && i < 56) ? ~(1<<(i-48)) : 0xff));
             TS_ASSERT_EQUALS(bytes[7], 0xff & ((i >= 56 && i < 64) ? ~(1<<(i-56)) : 0xff));
 
-            bytes << big_endian;
+            bytes.setBigEndian();
 
             bytes.clear();
             Write64(bytes, intn);

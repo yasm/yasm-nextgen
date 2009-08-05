@@ -33,6 +33,7 @@
 
 #include "llvm/Support/MemoryBuffer.h"
 #include "yasmx/Config/export.h"
+#include "yasmx/Support/EndianState.h"
 
 
 namespace yasm
@@ -41,21 +42,15 @@ namespace yasm
 class IntNum;
 
 /// An input buffer.
-class InputBuffer
+class InputBuffer : public EndianState
 {
 public:
     InputBuffer(const llvm::MemoryBuffer& input, size_t startpos=0)
         : m_start(reinterpret_cast<const unsigned char*>(input.getBufferStart()))
         , m_end(reinterpret_cast<const unsigned char*>(input.getBufferEnd()))
-        , m_bigendian(false)
     {
         m_ptr = m_start + startpos;
     }
-
-    void setBigEndian() { m_bigendian = true; }
-    void setLittleEndian() { m_bigendian = false; }
-    bool isBigEndian() const { return m_bigendian; }
-    bool isLittleEndian() const { return !m_bigendian; }
 
     /// Get buffer size.
     /// @return Buffer size.
@@ -96,7 +91,6 @@ private:
     const unsigned char* m_start;
     const unsigned char* m_end;
     const unsigned char* m_ptr;
-    bool m_bigendian;
 };
 
 /// Read an unsigned 8-bit value from an input buffer.
