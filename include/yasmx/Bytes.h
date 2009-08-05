@@ -100,7 +100,10 @@ public:
     /// Copy from a byte array, appending the values to the end.
     /// @param  buf input buffer
     /// @param  n   number of bytes
-    void Write(const unsigned char* buf, size_type n);
+    void Write(const unsigned char* buf, size_type n)
+    {
+        insert(end(), buf, buf+n);
+    }
 
     /// Append n bytes of value v.
     /// @param  n   number of bytes

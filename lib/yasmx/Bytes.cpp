@@ -65,16 +65,6 @@ Bytes::Write(std::istream& is, size_type n)
 }
 
 void
-Bytes::Write(const unsigned char* buf, size_type n)
-{
-    if (n == 0)
-        return;
-    size_type sz = size();
-    reserve(sz+n);
-    std::copy(buf, buf+n, std::back_inserter(*this));
-}
-
-void
 Bytes::Write(size_type n, unsigned char v)
 {
     if (n == 0)
