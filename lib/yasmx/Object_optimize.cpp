@@ -36,6 +36,7 @@
 #include <queue>
 #include <vector>
 
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/errwarn.h"
@@ -244,7 +245,7 @@ private:
 
     // Spans that led to this span.  Used only for
     // checking for circular references (cycles) with id=0 spans.
-    std::vector<Span*> m_backtrace;
+    llvm::SmallPtrSet<Span*, 4> m_backtrace;
 
     // Index of first offset setter following this span's bytecode
     size_t m_os_index;
@@ -486,17 +487,14 @@ Optimizer::CheckCycle(IntervalTreeNode<Span::Term*> * node, Span& span)
 
     // Check for a circular reference by looking to see if this dependent
     // span is in our backtrace.
-    std::vector<Span*>::iterator iter;
-    iter = std::find(span.m_backtrace.begin(), span.m_backtrace.end(),
-                     depspan);
-    if (iter != span.m_backtrace.end())
+    if (span.m_backtrace.count(depspan))
         throw ValueError(N_("circular reference detected"));
 
     // Add our complete backtrace and ourselves to backtrace of dependent
     // span.
-    std::copy(span.m_backtrace.begin(), span.m_backtrace.end(),
-              depspan->m_backtrace.end());
-    depspan->m_backtrace.push_back(&span);
+    depspan->m_backtrace.insert(span.m_backtrace.begin(),
+                                span.m_backtrace.end());
+    depspan->m_backtrace.insert(&span);
 }
 
 void
