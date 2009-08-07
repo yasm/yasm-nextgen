@@ -31,13 +31,17 @@
 #include "util.h"
 
 #include <algorithm>
+#include <deque>
 #include <list>
 #include <memory>
-#include <queue>
+#include <sstream>
 #include <vector>
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/IntervalTree.h"
@@ -56,6 +60,7 @@ STATISTIC(num_spans, "Number of spans created");
 STATISTIC(num_step1d, "Number of spans after step 1b");
 STATISTIC(num_itree, "Number of span terms added to interval tree");
 STATISTIC(num_offset_setters, "Number of offset setters");
+STATISTIC(num_recalc, "Number of span recalculations performed");
 STATISTIC(num_expansions, "Number of expansions performed");
 STATISTIC(num_initial_qb, "Number of spans on initial QB");
 
@@ -167,6 +172,8 @@ class OffsetSetter
 public:
     OffsetSetter();
     ~OffsetSetter() {}
+    void Write(YAML::Emitter& out) const;
+    void Dump() const;
 
     Bytecode* m_bc;
     unsigned long m_cur_val;
@@ -180,6 +187,27 @@ OffsetSetter::OffsetSetter()
       m_new_val(0),
       m_thres(0)
 {
+}
+
+void
+OffsetSetter::Write(YAML::Emitter& out) const
+{
+    out << YAML::Flow << YAML::BeginMap;
+    std::ostringstream oss;
+    oss << "BC@" << m_bc;
+    out << YAML::Key << "bc" << YAML::Value << YAML::Alias(oss.str());
+    out << YAML::Key << "curval" << YAML::Value << m_cur_val;
+    out << YAML::Key << "newval" << YAML::Value << m_new_val;
+    out << YAML::Key << "thres" << YAML::Value << m_thres;
+    out << YAML::EndMap;
+}
+
+void
+OffsetSetter::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 class Optimizer;
@@ -198,6 +226,8 @@ public:
              Span* span,
              long new_val);
         ~Term() {}
+        void Write(YAML::Emitter& out) const;
+        void Dump() const;
 
         Location m_loc;
         Location m_loc2;
@@ -217,6 +247,9 @@ public:
 
     void CreateTerms(Optimizer* optimize);
     bool RecalcNormal();
+
+    void Write(YAML::Emitter& out) const;
+    void Dump() const;
 
 private:
     Span(const Span&);                  // not implemented
@@ -245,7 +278,8 @@ private:
 
     // Spans that led to this span.  Used only for
     // checking for circular references (cycles) with id=0 spans.
-    llvm::SmallPtrSet<Span*, 4> m_backtrace;
+    typedef llvm::SmallPtrSet<Span*, 4> BacktraceSpans;
+    BacktraceSpans m_backtrace;
 
     // Index of first offset setter following this span's bytecode
     size_t m_os_index;
@@ -268,13 +302,20 @@ public:
     bool Step1e(Errwarns& errwarns);
     bool Step2(Errwarns& errwarns);
 
+    void Write(YAML::Emitter& out) const;
+    void Dump() const;
+
 private:
     void ITreeAdd(Span& span, Span::Term& term);
     void CheckCycle(IntervalTreeNode<Span::Term*> * node, Span& span);
     void ExpandTerm(IntervalTreeNode<Span::Term*> * node, long len_diff);
 
-    std::list<Span*> m_spans;   // ownership list
-    std::queue<Span*> m_QA, m_QB;
+    typedef std::list<Span*> Spans;
+    Spans m_spans;      // ownership list
+
+    typedef std::deque<Span*> SpanQueue;
+    SpanQueue m_QA, m_QB;
+
     IntervalTree<Span::Term*> m_itree;
     std::vector<OffsetSetter> m_offset_setters;
 };
@@ -300,6 +341,26 @@ Span::Term::Term(unsigned int subst,
       m_subst(subst)
 {
     ++num_span_terms;
+}
+
+void
+Span::Term::Write(YAML::Emitter& out) const
+{
+    out << YAML::Flow << YAML::BeginMap;
+    out << YAML::Key << "loc" << YAML::Value << m_loc;
+    out << YAML::Key << "loc2" << YAML::Value << m_loc2;
+    out << YAML::Key << "curval" << YAML::Value << m_cur_val;
+    out << YAML::Key << "newval" << YAML::Value << m_new_val;
+    out << YAML::Key << "subst" << YAML::Value << m_subst;
+    out << YAML::EndMap;
+}
+
+void
+Span::Term::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 Span::Span(Bytecode& bc,
@@ -378,6 +439,7 @@ Span::CreateTerms(Optimizer* optimize)
 bool
 Span::RecalcNormal()
 {
+    ++num_recalc;
     m_new_val = 0;
 
     if (m_depval.hasAbs())
@@ -402,6 +464,9 @@ Span::RecalcNormal()
     if (m_new_val == LONG_MAX)
         m_active = INACTIVE;
 
+    DEBUG(llvm::cerr << "updated SPAN@" << this << " newval to "
+          << m_new_val << '\n');
+
     // If id<=0, flag update on any change
     if (m_id <= 0)
         return (m_new_val != m_cur_val);
@@ -411,6 +476,67 @@ Span::RecalcNormal()
 
 Span::~Span()
 {
+}
+
+void
+Span::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+    std::ostringstream oss;
+    oss << "BC@" << &m_bc;
+    out << YAML::Key << "bc" << YAML::Value << YAML::Alias(oss.str());
+    if (!m_depval.hasAbs() || m_depval.isRelative())
+        out << YAML::Key << "depval" << YAML::Value << m_depval;
+    else
+    {
+        std::ostringstream oss2;
+        oss2 << *m_depval.getAbs();
+        out << YAML::Key << "depval" << YAML::Value << oss2.str();
+    }
+
+    out << YAML::Key << "span terms" << YAML::Value << YAML::BeginSeq;
+    for (Terms::const_iterator i=m_span_terms.begin(), end=m_span_terms.end();
+         i != end; ++i)
+    {
+        i->Write(out);
+    }
+    out << YAML::EndSeq;
+
+    out << YAML::Key << "curval" << YAML::Value << m_cur_val;
+    out << YAML::Key << "newval" << YAML::Value << m_new_val;
+    out << YAML::Key << "negthres" << YAML::Value << m_neg_thres;
+    out << YAML::Key << "posthres" << YAML::Value << m_pos_thres;
+    out << YAML::Key << "id" << YAML::Value << m_id;
+
+    out << YAML::Key << "active" << YAML::Value;
+    switch (m_active)
+    {
+        case INACTIVE: out << "inactive"; break;
+        case ACTIVE: out << "active"; break;
+        case ON_Q: out << "on queue"; break;
+    }
+
+    out << YAML::Key << "backtrace" << YAML::Value;
+    out << YAML::Flow << YAML::BeginSeq;
+    for (BacktraceSpans::const_iterator i=m_backtrace.begin(),
+         end=m_backtrace.end(); i != end; ++i)
+    {
+        std::ostringstream oss;
+        oss << "SPAN@" << *i;
+        out << YAML::Alias(oss.str());
+    }
+    out << YAML::EndSeq;
+
+    out << YAML::Key << "offset setter index" << YAML::Value << m_os_index;
+    out << YAML::EndMap;
+}
+
+void
+Span::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 Optimizer::Optimizer()
@@ -427,6 +553,71 @@ Optimizer::~Optimizer()
         delete m_spans.back();
         m_spans.pop_back();
     }
+}
+
+void
+Optimizer::Write(YAML::Emitter& out) const
+{
+    out << YAML::BeginMap;
+
+    // spans
+    out << YAML::Key << "spans" << YAML::Value;
+    if (m_spans.empty())
+        out << YAML::Flow;
+    out << YAML::BeginSeq;
+    for (Spans::const_iterator i=m_spans.begin(), end=m_spans.end();
+         i != end; ++i)
+    {
+        std::ostringstream oss;
+        oss << "SPAN@" << *i;
+        out << YAML::Anchor(oss.str());
+        (*i)->Write(out);
+    }
+    out << YAML::EndSeq;
+
+    // queue A
+    out << YAML::Key << "QA" << YAML::Value << YAML::Flow << YAML::BeginSeq;
+    for (SpanQueue::const_iterator j=m_QA.begin(), end=m_QA.end();
+         j != end; ++j)
+    {
+        std::ostringstream oss;
+        oss << "SPAN@" << *j;
+        out << YAML::Alias(oss.str());
+    }
+    out << YAML::EndSeq;
+
+    // queue B
+    out << YAML::Key << "QB" << YAML::Value << YAML::Flow << YAML::BeginSeq;
+    for (SpanQueue::const_iterator k=m_QB.begin(), end=m_QB.end();
+         k != end; ++k)
+    {
+        std::ostringstream oss;
+        oss << "SPAN@" << *k;
+        out << YAML::Alias(oss.str());
+    }
+    out << YAML::EndSeq;
+
+    // offset setters
+    out << YAML::Key << "offset setters" << YAML::Value;
+    if (m_offset_setters.empty())
+        out << YAML::Flow;
+    out << YAML::BeginSeq;
+    for (std::vector<OffsetSetter>::const_iterator m=m_offset_setters.begin(),
+         end=m_offset_setters.end(); m != end; ++m)
+    {
+        m->Write(out);
+    }
+    out << YAML::EndSeq;
+
+    out << YAML::EndMap;
+}
+
+void
+Optimizer::Dump() const
+{
+    YAML::Emitter out;
+    Write(out);
+    llvm::cerr << out.c_str() << std::endl;
 }
 
 void
@@ -508,6 +699,8 @@ Optimizer::ExpandTerm(IntervalTreeNode<Span::Term*> * node, long len_diff)
     if (span->m_active == Span::INACTIVE)
         return;
 
+    DEBUG(llvm::cerr << "expand SPAN@" << span << " by " << len_diff << '\n');
+
     // Update term length
     if (term->m_loc.bc)
         precbc_index = term->m_loc.bc->getIndex();
@@ -523,20 +716,30 @@ Optimizer::ExpandTerm(IntervalTreeNode<Span::Term*> * node, long len_diff)
         term->m_new_val += len_diff;
     else
         term->m_new_val -= len_diff;
+    DEBUG(llvm::cerr << "updated SPAN@" << span << " term "
+          << (term-&span->m_span_terms.front())
+          << " newval to " << term->m_new_val << '\n');
 
     // If already on Q, don't re-add
     if (span->m_active == Span::ON_Q)
+    {
+        DEBUG(llvm::cerr << "SPAN@" << span << " already on queue\n");
         return;
+    }
 
     // Update term and check against thresholds
     if (!span->RecalcNormal())
+    {
+        DEBUG(llvm::cerr << "SPAN@" << span << " didn't change, not readded\n");
         return; // didn't exceed thresholds, we're done
+    }
 
     // Exceeded thresholds, need to add to Q for expansion
+    DEBUG(llvm::cerr << "SPAN@" << span << " added back on queue\n");
     if (span->m_id <= 0)
-        m_QA.push(span);
+        m_QA.push_back(span);
     else
-        m_QB.push(span);
+        m_QB.push_back(span);
     span->m_active = Span::ON_Q;    // Mark as being in Q
 }
 
@@ -545,7 +748,7 @@ Optimizer::Step1b(Errwarns& errwarns)
 {
     bool saw_error = false;
 
-    std::list<Span*>::iterator spani = m_spans.begin();
+    Spans::iterator spani = m_spans.begin();
     while (spani != m_spans.end())
     {
         Span* span = *spani;
@@ -586,6 +789,8 @@ Optimizer::Step1b(Errwarns& errwarns)
                 continue;
             }
         }
+        DEBUG(llvm::cerr << "updated SPAN@" << span << " curval from "
+              << span->m_cur_val << " to " << span->m_new_val << '\n');
         span->m_cur_val = span->m_new_val;
         ++spani;
     }
@@ -596,8 +801,8 @@ Optimizer::Step1b(Errwarns& errwarns)
 bool
 Optimizer::Step1d()
 {
-    for (std::list<Span*>::iterator spani=m_spans.begin(),
-         endspan=m_spans.end(); spani != endspan; ++spani)
+    for (Spans::iterator spani=m_spans.begin(), endspan=m_spans.end();
+         spani != endspan; ++spani)
     {
         ++num_step1d;
         Span* span = *spani;
@@ -612,12 +817,15 @@ Optimizer::Step1d()
             assert(ok && "could not calculate bc distance");
             term->m_cur_val = term->m_new_val;
             term->m_new_val = intn.getInt();
+            DEBUG(llvm::cerr << "updated SPAN@" << span << " term "
+                  << (term-span->m_span_terms.begin())
+                  << " newval to " << term->m_new_val << '\n');
         }
 
         if (span->RecalcNormal())
         {
             // Exceeded threshold, add span to QB
-            m_QB.push(&(*span));
+            m_QB.push_back(&(*span));
             span->m_active = Span::ON_Q;
             ++num_initial_qb;
         }
@@ -645,8 +853,8 @@ Optimizer::Step1e(Errwarns& errwarns)
     }
 
     // Build up interval tree
-    for (std::list<Span*>::iterator spani=m_spans.begin(),
-         endspan=m_spans.end(); spani != endspan; ++spani)
+    for (Spans::iterator spani=m_spans.begin(), endspan=m_spans.end();
+         spani != endspan; ++spani)
     {
         Span* span = *spani;
         for (Span::Terms::iterator term=span->m_span_terms.begin(),
@@ -655,8 +863,8 @@ Optimizer::Step1e(Errwarns& errwarns)
     }
 
     // Look for cycles in times expansion (span.id==0)
-    for (std::list<Span*>::iterator spani=m_spans.begin(),
-         endspan=m_spans.end(); spani != endspan; ++spani)
+    for (Spans::iterator spani=m_spans.begin(), endspan=m_spans.end();
+         spani != endspan; ++spani)
     {
         Span* span = *spani;
         if (span->m_id > 0)
@@ -683,6 +891,8 @@ Optimizer::Step2(Errwarns& errwarns)
 {
     bool saw_error = false;
 
+    DEBUG(Dump());
+
     while (!m_QA.empty() || !m_QB.empty())
     {
         Span* span;
@@ -693,12 +903,12 @@ Optimizer::Step2(Errwarns& errwarns)
         if (!m_QA.empty())
         {
             span = m_QA.front();
-            m_QA.pop();
+            m_QA.pop_front();
         }
         else
         {
             span = m_QB.front();
-            m_QB.pop();
+            m_QB.pop_front();
         }
 
         if (span->m_active == Span::INACTIVE)
@@ -731,6 +941,8 @@ Optimizer::Step2(Errwarns& errwarns)
             for (Span::Terms::iterator term=span->m_span_terms.begin(),
                  endterm=span->m_span_terms.end(); term != endterm; ++term)
                 term->m_cur_val = term->m_new_val;
+            DEBUG(llvm::cerr << "updated SPAN@" << span << " curval from "
+                  << span->m_cur_val << " to " << span->m_new_val << '\n');
             span->m_cur_val = span->m_new_val;
         }
         else
@@ -740,6 +952,8 @@ Optimizer::Step2(Errwarns& errwarns)
         if (len_diff == 0)
             continue;   // didn't increase in size
 
+        DEBUG(llvm::cerr << "BC@" << &span->m_bc << " expansion by "
+              << len_diff << ":\n");
         // Iterate over all spans dependent across the bc just expanded
         m_itree.Enumerate(static_cast<long>(span->m_bc.getIndex()),
                           static_cast<long>(span->m_bc.getIndex()),
