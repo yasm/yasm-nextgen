@@ -61,7 +61,7 @@ bool isCurrentDebugType(const char *Type);
 #define DEBUG(X)
 #else
 #define DEBUG(X) \
-  do { if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) { X; } } while (0)
+  do { if (llvm::DebugFlag && llvm::isCurrentDebugType(DEBUG_TYPE)) { X; } } while (0)
 #endif
 
 /// getErrorOutputStream - Returns the error output stream (std::cerr). This
