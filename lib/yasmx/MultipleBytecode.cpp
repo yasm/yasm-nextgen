@@ -175,14 +175,18 @@ MultipleBytecode::Expand(Bytecode& bc,
                          /*@out@*/ long* neg_thres,
                          /*@out@*/ long* pos_thres)
 {
+    // XXX: support more than one bytecode here
+    bool rv;
     if (span == 0)
     {
         m_mult_int = new_val;
-        return true;
+        rv = true;
     }
-    // XXX: support more than one bytecode here
-    return m_contents.bytecodes_first().Expand(span, old_val, new_val,
-                                               neg_thres, pos_thres);
+    else
+        rv = m_contents.bytecodes_first().Expand(span, old_val, new_val,
+                                                 neg_thres, pos_thres);
+    len = m_contents.bytecodes_first().getTotalLen() * m_mult_int;
+    return rv;
 }
 
 void
@@ -194,6 +198,7 @@ MultipleBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
     IntNum num = m_multiple->getIntNum();
     if (num.getSign() < 0)
         throw ValueError(N_("multiple is negative"));
+    assert(m_mult_int == num.getInt() && "multiple changed after optimize");
     m_mult_int = num.getInt();
     if (m_mult_int == 0)
         return; // nothing to output
