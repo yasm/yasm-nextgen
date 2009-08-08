@@ -342,7 +342,9 @@ namespace YAML
 		if(m_pState->GetCurGroupType() != GT_SEQ)
 			return m_pState->SetError(ErrorMsg::UNEXPECTED_END_SEQ);
 		
+#ifndef NDEBUG
 		EMITTER_STATE curState = m_pState->GetCurState();
+#endif
 		FLOW_TYPE flowType = m_pState->GetCurGroupFlowType();
 		if(flowType == FT_BLOCK)
 			assert(curState == ES_DONE_WITH_BLOCK_SEQ_ENTRY);
@@ -397,7 +399,9 @@ namespace YAML
 		if(m_pState->GetCurGroupType() != GT_MAP)
 			return m_pState->SetError(ErrorMsg::UNEXPECTED_END_MAP);
 
+#ifndef NDEBUG
 		EMITTER_STATE curState = m_pState->GetCurState();
+#endif
 		FLOW_TYPE flowType = m_pState->GetCurGroupFlowType();
 		if(flowType == FT_BLOCK)
 			assert(curState == ES_DONE_WITH_BLOCK_MAP_VALUE);
