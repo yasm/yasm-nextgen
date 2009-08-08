@@ -38,7 +38,6 @@
 #include "yasmx/Support/scoped_ptr.h"
 
 #include "yasmx/Bytes.h"
-#include "yasmx/Location.h"
 #include "yasmx/SymbolRef.h"
 #include "yasmx/Value.h"
 
