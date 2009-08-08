@@ -25,7 +25,7 @@
 #include <cxxtest/TestSuite.h>
 
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/System/file.h"
+#include "yasmx/Support/StringExtras.h"
 
 using namespace yasm;
 

@@ -84,6 +84,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/registry.cpp
     yasmx/Reloc.cpp
     yasmx/Section.cpp
+    yasmx/StringExtras.cpp
     yasmx/StringTable.cpp
     yasmx/Symbol.cpp
     yasmx/Symbol_util.cpp

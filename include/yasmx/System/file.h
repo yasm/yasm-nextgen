@@ -37,17 +37,6 @@
 namespace yasm
 {
 
-/// Unescape a string with C-style escapes.  Handles b, f, n, r, t, and hex
-/// and octal escapes.
-/// Edge cases:
-/// - hex escapes: reads as many hex digits as possible, takes last 2 as value.
-/// - oct escapes: takes up to 3 digits 0-9 and scales appropriately, with
-///                warning.
-/// @param str          C-style string
-/// @return Unescaped string
-YASM_LIB_EXPORT
-std::string Unescape(const std::string& str);
-
 /// Split a UNIX pathname into head (directory) and tail (base filename)
 /// portions.
 /// @param path     pathname
