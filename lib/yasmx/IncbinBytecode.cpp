@@ -32,7 +32,6 @@
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/scoped_ptr.h"
-#include "yasmx/System/file.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/BytecodeOutput.h"
