@@ -6,7 +6,6 @@ Key:
 * Significant work performed
 
 - Translate more object formats from C version:
--   dbg
 -   macho
 -   rdf
 - Translate debug formats from C version:
@@ -23,7 +22,6 @@ Key:
 - Optimize x86 append_foo functions for less new bytecode creation
 - Make object format output const (no modification of Object)
 - Translate NASM preprocessor from C version
-- Translate GAS parser from C version
 - Translate list format support from C version
 - Re-examine standard plugin handling: shared lib or like "external" plugin?
 - Scan plugin directory and load all plugins present?
