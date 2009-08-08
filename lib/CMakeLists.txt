@@ -57,7 +57,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Expr_util.cpp
     yasmx/file.cpp
     yasmx/IncbinBytecode.cpp
-    yasmx/Includes.cpp
     yasmx/InputBuffer.cpp
     yasmx/Insn.cpp
     yasmx/IntNum.cpp
