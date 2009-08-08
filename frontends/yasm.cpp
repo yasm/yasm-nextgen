@@ -36,7 +36,6 @@
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/nocase.h>
 #include <yasmx/Support/registry.h>
-#include <yasmx/System/file.h>
 #include <yasmx/System/plugin.h>
 #include <yasmx/Arch.h>
 #include <yasmx/Assembler.h>
