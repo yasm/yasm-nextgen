@@ -29,12 +29,12 @@
 #include "util.h"
 
 #include "llvm/Support/CommandLine.h"
+#include "llvm/System/Path.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/nocase.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Support/scoped_ptr.h"
-#include "yasmx/System/file.h"
 #include "yasmx/Arch.h"
 #include "yasmx/DebugFormat.h"
 #include "yasmx/Directive.h"
@@ -292,15 +292,16 @@ Assembler::Impl::Assemble(std::istream& is,
         else
         {
             // replace (or add) extension to base filename
-            std::string base_filename;
-            SplitPath(src_filename, base_filename);
+            llvm::sys::Path fn(src_filename);
+            std::string base_filename = fn.getBasename();
             if (base_filename.empty())
                 m_obj_filename = "yasm.out";
             else
-                m_obj_filename =
-                    ReplaceExtension(base_filename,
-                                     m_objfmt_module->getExtension(),
-                                     "yasm.out");
+            {
+                m_obj_filename = base_filename+m_objfmt_module->getExtension();
+                if (m_obj_filename == src_filename)
+                    m_obj_filename = "yasm.out";
+            }
         }
     }
 
