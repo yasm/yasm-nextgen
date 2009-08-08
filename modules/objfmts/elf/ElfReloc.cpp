@@ -112,6 +112,8 @@ ElfReloc::ElfReloc(const ElfConfig& config,
         if (rela)
             m_addend = ReadS64(inbuf);
     }
+    else
+        throw Error(N_("unknown elf class"));
 
     *pos += size;
 }
