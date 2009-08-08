@@ -43,10 +43,10 @@ namespace yasm
 /// - hex escapes: reads as many hex digits as possible, takes last 2 as value.
 /// - oct escapes: takes up to 3 digits 0-9 and scales appropriately, with
 ///                warning.
-/// @param str          C-style string
-/// @return Unescaped string
+/// @param str      C-style string (modified in place)
+/// @return False if octal warning should be issued (octal value out of range).
 YASM_LIB_EXPORT
-std::string Unescape(const std::string& str);
+bool Unescape(std::string* str);
 
 } // namespace yasm
 

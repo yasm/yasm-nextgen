@@ -621,7 +621,8 @@ stringconst_scan:
 
         dquot
         {
-            lvalp->str = Unescape(lvalp->str);
+            if (!Unescape(&lvalp->str))
+                setWarn(WARN_GENERAL, N_("octal value out of range"));
             RETURN(STRING);
         }
 
