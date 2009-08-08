@@ -223,7 +223,33 @@ Overwrite(Bytes& bytes,
     if (shift == 0 && bytes.size()*8 == size)
     {
         assert(!bigendian && "big endian not yet supported");
-        work.toOctetsLE(&bytes[0], bytes.size());
+
+        const uint64_t* words = work.getRawData();
+
+        // whole words first
+        unsigned int w = 0;
+        int i = 0, o = 0;
+        int n = static_cast<int>(size);
+        for (; i<=n-64; i+=64, ++w)
+        {
+            uint64_t wrd = words[w];
+            for (int j=0; j<8; ++j)
+            {
+                bytes[o++] = static_cast<unsigned char>(wrd) & 0xFF;
+                wrd >>= 8;
+            }
+        }
+
+        // finish with bytes
+        if (i < n)
+        {
+            uint64_t last = words[w];
+            for (; i<n; i+=8)
+            {
+                bytes[o++] = static_cast<unsigned char>(last) & 0xFF;
+                last >>= 8;
+            }
+        }
         return;
     }
 
