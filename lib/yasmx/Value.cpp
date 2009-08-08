@@ -167,8 +167,8 @@ Value::swap(Value& oth)
     std::swap(m_line, oth.m_line);
 
     // XXX: Can't std::swap the union, so do it the hard way.
-    Symbol* sym;
-    Location loc;
+    Symbol* sym = 0;        // avoid warning
+    Location loc = {0, 0};  // avoid warning
     if (m_sub_sym)
         sym = m_sub.sym;
     else if (m_sub_loc)
