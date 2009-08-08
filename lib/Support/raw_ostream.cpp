@@ -13,9 +13,12 @@
 
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Format.h"
+#include "llvm/System/Program.h"
+#include "llvm/System/Process.h"
 #include "llvm/ADT/SmallVector.h"
-#include "config.h"
+#include "llvm/Config/config.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <ostream>
 
 #if defined(HAVE_UNISTD_H)
@@ -41,6 +44,21 @@
 
 using namespace llvm;
 
+raw_ostream::~raw_ostream() {
+  // raw_ostream's subclasses should take care to flush the buffer
+  // in their destructors.
+  assert(OutBufCur == OutBufStart &&
+         "raw_ostream destructor called with non-empty buffer!");
+
+  delete [] OutBufStart;
+
+  // If there are any pending errors, report them now. Clients wishing
+  // to avoid llvm_report_error calls should check for errors with
+  // has_error() and clear the error flag with clear_error() before
+  // destructing raw_ostream objects which may have errors.
+  if (Error)
+    llvm_report_error("IO failure on output stream.");
+}
 
 // An out of line virtual method to provide a home for the class vtable.
 void raw_ostream::handle() {}
@@ -71,10 +89,10 @@ raw_ostream &raw_ostream::operator<<(long N) {
 }
 
 raw_ostream &raw_ostream::operator<<(unsigned long long N) {
-  // Zero is a special case.
-  if (N == 0)
-    return *this << '0';
-  
+  // Output using 32-bit div/mod when possible.
+  if (N == static_cast<unsigned long>(N))
+    return this->operator<<(static_cast<unsigned long>(N));
+
   char NumberBuffer[20];
   char *EndPtr = NumberBuffer+sizeof(NumberBuffer);
   char *CurPtr = EndPtr;
@@ -95,10 +113,7 @@ raw_ostream &raw_ostream::operator<<(long long N) {
   return this->operator<<(static_cast<unsigned long long>(N));
 }
 
-raw_ostream &raw_ostream::operator<<(const void *P) {
-  uintptr_t N = (uintptr_t) P;
-  *this << '0' << 'x';
-  
+raw_ostream &raw_ostream::write_hex(unsigned long long N) {
   // Zero is a special case.
   if (N == 0)
     return *this << '0';
@@ -108,12 +123,18 @@ raw_ostream &raw_ostream::operator<<(const void *P) {
   char *CurPtr = EndPtr;
 
   while (N) {
-    unsigned x = N % 16;
+    uintptr_t x = N % 16;
     *--CurPtr = (x < 10 ? '0' + x : 'a' + x - 10);
     N /= 16;
   }
 
   return write(CurPtr, EndPtr-CurPtr);
+}
+
+raw_ostream &raw_ostream::operator<<(const void *P) {
+  *this << '0' << 'x';
+
+  return write_hex((uintptr_t) P);
 }
 
 void raw_ostream::flush_nonempty() {
@@ -140,7 +161,7 @@ raw_ostream &raw_ostream::write(unsigned char C) {
   return *this;
 }
 
-raw_ostream &raw_ostream::write(const char *Ptr, unsigned Size) {
+raw_ostream &raw_ostream::write(const char *Ptr, size_t Size) {
   // Group exceptional cases into a single branch.
   if (BUILTIN_EXPECT(OutBufCur+Size > OutBufEnd, false)) {
     if (Unbuffered) {
@@ -164,7 +185,7 @@ raw_ostream &raw_ostream::write(const char *Ptr, unsigned Size) {
   case 0: break;
   default:
     // Normally the string to emit is shorter than the buffer.
-    if (Size <= unsigned(OutBufEnd-OutBufStart)) {
+    if (Size <= unsigned(OutBufEnd-OutBufCur)) {
       memcpy(OutBufCur, Ptr, Size);
       break;
     } 
@@ -190,10 +211,10 @@ raw_ostream &raw_ostream::operator<<(const format_object_base &Fmt) {
   // anyway. We should just flush upfront in such cases, and use the
   // whole buffer as our scratch pad. Note, however, that this case is
   // also necessary for correctness on unbuffered streams.
-  unsigned NextBufferSize = 127;
+  size_t NextBufferSize = 127;
   if (OutBufEnd-OutBufCur > 3) {
-    unsigned BufferBytesLeft = OutBufEnd-OutBufCur;
-    unsigned BytesUsed = Fmt.print(OutBufCur, BufferBytesLeft);
+    size_t BufferBytesLeft = OutBufEnd-OutBufCur;
+    size_t BytesUsed = Fmt.print(OutBufCur, BufferBytesLeft);
     
     // Common case is that we have plenty of space.
     if (BytesUsed < BufferBytesLeft) {
@@ -215,7 +236,7 @@ raw_ostream &raw_ostream::operator<<(const format_object_base &Fmt) {
     V.resize(NextBufferSize);
     
     // Try formatting into the SmallVector.
-    unsigned BytesUsed = Fmt.print(&V[0], NextBufferSize);
+    size_t BytesUsed = Fmt.print(&V[0], NextBufferSize);
     
     // If BytesUsed fit into the vector, we win.
     if (BytesUsed <= NextBufferSize)
@@ -243,13 +264,17 @@ void format_object_base::home() {
 /// occurs, information about the error is put into ErrorInfo, and the
 /// stream should be immediately destroyed; the string will be empty
 /// if no error occurred.
-raw_fd_ostream::raw_fd_ostream(const char *Filename, bool Binary,
+raw_fd_ostream::raw_fd_ostream(const char *Filename, bool Binary, bool Force,
                                std::string &ErrorInfo) : pos(0) {
   ErrorInfo.clear();
 
   // Handle "-" as stdout.
   if (Filename[0] == '-' && Filename[1] == 0) {
     FD = STDOUT_FILENO;
+    // If user requested binary then put stdout into binary mode if
+    // possible.
+    if (Binary)
+      sys::Program::ChangeStdoutToBinary();
     ShouldClose = false;
     return;
   }
@@ -259,7 +284,9 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, bool Binary,
   if (Binary)
     Flags |= O_BINARY;
 #endif
-  FD = open(Filename, Flags, 0644);
+  if (!Force)
+    Flags |= O_EXCL;
+  FD = open(Filename, Flags, 0664);
   if (FD < 0) {
     ErrorInfo = "Error opening output file '" + std::string(Filename) + "'";
     ShouldClose = false;
@@ -272,28 +299,62 @@ raw_fd_ostream::~raw_fd_ostream() {
   if (FD >= 0) {
     flush();
     if (ShouldClose)
-      ::close(FD);
+      if (::close(FD) != 0)
+        error_detected();
   }
 }
 
-void raw_fd_ostream::write_impl(const char *Ptr, unsigned Size) {
+void raw_fd_ostream::write_impl(const char *Ptr, size_t Size) {
   assert (FD >= 0 && "File already closed.");
   pos += Size;
-  ::write(FD, Ptr, Size);
+  if (::write(FD, Ptr, Size) != (ssize_t) Size)
+    error_detected();
 }
 
 void raw_fd_ostream::close() {
   assert (ShouldClose);
   ShouldClose = false;
   flush();
-  ::close(FD);
+  if (::close(FD) != 0)
+    error_detected();
   FD = -1;
 }
 
 uint64_t raw_fd_ostream::seek(uint64_t off) {
   flush();
-  pos = lseek(FD, off, SEEK_SET);
+  pos = ::lseek(FD, off, SEEK_SET);
+  if (pos != off)
+    error_detected();
   return pos;  
+}
+
+raw_ostream &raw_fd_ostream::changeColor(enum Colors colors, bool bold,
+                                         bool bg) {
+  if (sys::Process::ColorNeedsFlush())
+    flush();
+  const char *colorcode =
+    (colors == SAVEDCOLOR) ? sys::Process::OutputBold(bg)
+    : sys::Process::OutputColor(colors, bold, bg);
+  if (colorcode) {
+    size_t len = strlen(colorcode);
+    write(colorcode, len);
+    // don't account colors towards output characters
+    pos -= len;
+  }
+  return *this;
+}
+
+raw_ostream &raw_fd_ostream::resetColor() {
+  if (sys::Process::ColorNeedsFlush())
+    flush();
+  const char *colorcode = sys::Process::ResetColor();
+  if (colorcode) {
+    size_t len = strlen(colorcode);
+    write(colorcode, len);
+    // don't account colors towards output characters
+    pos -= len;
+  }
+  return *this;
 }
 
 //===----------------------------------------------------------------------===//
@@ -322,6 +383,12 @@ raw_ostream &llvm::errs() {
   return S;
 }
 
+/// nulls() - This returns a reference to a raw_ostream which discards output.
+raw_ostream &llvm::nulls() {
+  static raw_null_ostream S;
+  return S;
+}
+
 //===----------------------------------------------------------------------===//
 //  raw_os_ostream
 //===----------------------------------------------------------------------===//
@@ -330,8 +397,14 @@ raw_os_ostream::~raw_os_ostream() {
   flush();
 }
 
-void raw_os_ostream::write_impl(const char *Ptr, unsigned Size) {
+void raw_os_ostream::write_impl(const char *Ptr, size_t Size) {
   OS.write(Ptr, Size);
+}
+
+uint64_t raw_os_ostream::current_pos() { return OS.tellp(); }
+
+uint64_t raw_os_ostream::tell() { 
+  return (uint64_t)OS.tellp() + GetNumBytesInBuffer(); 
 }
 
 //===----------------------------------------------------------------------===//
@@ -342,7 +415,7 @@ raw_string_ostream::~raw_string_ostream() {
   flush();
 }
 
-void raw_string_ostream::write_impl(const char *Ptr, unsigned Size) {
+void raw_string_ostream::write_impl(const char *Ptr, size_t Size) {
   OS.append(Ptr, Size);
 }
 
@@ -354,7 +427,32 @@ raw_svector_ostream::~raw_svector_ostream() {
   flush();
 }
 
-void raw_svector_ostream::write_impl(const char *Ptr, unsigned Size) {
+void raw_svector_ostream::write_impl(const char *Ptr, size_t Size) {
   OS.append(Ptr, Ptr + Size);
 }
 
+uint64_t raw_svector_ostream::current_pos() { return OS.size(); }
+
+uint64_t raw_svector_ostream::tell() { 
+  return OS.size() + GetNumBytesInBuffer(); 
+}
+
+//===----------------------------------------------------------------------===//
+//  raw_null_ostream
+//===----------------------------------------------------------------------===//
+
+raw_null_ostream::~raw_null_ostream() {
+#ifndef NDEBUG
+  // ~raw_ostream asserts that the buffer is empty. This isn't necessary
+  // with raw_null_ostream, but it's better to have raw_null_ostream follow
+  // the rules than to change the rules just for raw_null_ostream.
+  flush();
+#endif
+}
+
+void raw_null_ostream::write_impl(const char *Ptr, size_t Size) {
+}
+
+uint64_t raw_null_ostream::current_pos() {
+  return 0;
+}

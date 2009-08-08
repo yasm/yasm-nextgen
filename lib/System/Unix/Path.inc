@@ -92,15 +92,7 @@ Path::isValid() const {
   // Check some obvious things
   if (path.empty())
     return false;
-  else if (path.length() >= MAXPATHLEN)
-    return false;
-
-  // Check that the characters are ascii chars
-  size_t len = path.length();
-  unsigned i = 0;
-  while (i < len && isascii(path[i]))
-    ++i;
-  return i >= len;
+  return path.length() < MAXPATHLEN;
 }
 
 bool
@@ -117,6 +109,19 @@ Path::isAbsolute() const {
     return false;
   return path[0] == '/';
 }
+
+void Path::makeAbsolute() {
+  if (isAbsolute())
+    return;
+
+  Path CWD = Path::GetCurrentDirectory();
+  assert(CWD.isAbsolute() && "GetCurrentDirectory returned relative path!");
+
+  CWD.appendComponent(path);
+
+  path = CWD.toString();
+}
+
 Path
 Path::GetRootDirectory() {
   Path result;
@@ -426,12 +431,12 @@ Path::isDirectory() const {
 
 bool
 Path::canRead() const {
-  return 0 == access(path.c_str(), F_OK | R_OK );
+  return 0 == access(path.c_str(), R_OK);
 }
 
 bool
 Path::canWrite() const {
-  return 0 == access(path.c_str(), F_OK | W_OK );
+  return 0 == access(path.c_str(), W_OK);
 }
 
 bool
@@ -631,7 +636,7 @@ Path::eraseSuffix() {
 
 static bool createDirectoryHelper(char* beg, char* end, bool create_parents) {
 
-  if (access(beg, F_OK | R_OK | W_OK) == 0)
+  if (access(beg, R_OK | W_OK) == 0)
     return false;
 
   if (create_parents) {

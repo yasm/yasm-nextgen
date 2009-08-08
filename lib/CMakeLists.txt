@@ -8,6 +8,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     Support/APInt.cpp
     Support/CommandLine.cpp
     Support/Debug.cpp
+    Support/ErrorHandling.cpp
     Support/FoldingSet.cpp
     Support/raw_ostream.cpp
     Support/ManagedStatic.cpp
@@ -18,10 +19,14 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     Support/StringExtras.cpp
     Support/StringMap.cpp
     Support/Timer.cpp
+    Support/Twine.cpp
     System/Atomic.cpp
+    System/Errno.cpp
     System/Mutex.cpp
     System/Path.cpp
     System/Process.cpp
+    System/Program.cpp
+    System/Threading.cpp
     System/TimeValue.cpp
     YAML/emitter.cpp
     YAML/emitterstate.cpp

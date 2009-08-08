@@ -15,6 +15,7 @@
 #define LLVM_SUPPORT_MANAGED_STATIC_H
 
 #include "llvm/System/Atomic.h"
+#include "llvm/System/Threading.h"
 #include "yasmx/Config/export.h"
 
 namespace llvm {
@@ -27,10 +28,12 @@ void* object_creator() {
 
 /// object_deleter - Helper method for ManagedStatic.
 ///
-template<class C>
-void object_deleter(void *Ptr) {
-  delete (C*)Ptr;
-}
+template<typename T> struct object_deleter {
+  static void call(void * Ptr) { delete (T*)Ptr; }
+};
+template<typename T, size_t N> struct object_deleter<T[N]> {
+  static void call(void * Ptr) { delete[] (T*)Ptr; }
+};
 
 /// ManagedStaticBase - Common base class for ManagedStatic instances.
 class YASM_LIB_EXPORT ManagedStaticBase {
@@ -61,29 +64,29 @@ public:
   // Accessors.
   C &operator*() {
     void* tmp = Ptr;
-    sys::MemoryFence();
-    if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>);
+    if (llvm_is_multithreaded()) sys::MemoryFence();
+    if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>::call);
 
     return *static_cast<C*>(Ptr);
   }
   C *operator->() {
     void* tmp = Ptr;
-    sys::MemoryFence();
-    if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>);
+    if (llvm_is_multithreaded()) sys::MemoryFence();
+    if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>::call);
 
     return static_cast<C*>(Ptr);
   }
   const C &operator*() const {
     void* tmp = Ptr;
-    sys::MemoryFence();
-    if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>);
+    if (llvm_is_multithreaded()) sys::MemoryFence();
+    if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>::call);
 
     return *static_cast<C*>(Ptr);
   }
   const C *operator->() const {
     void* tmp = Ptr;
-    sys::MemoryFence();
-    if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>);
+    if (llvm_is_multithreaded()) sys::MemoryFence();
+    if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>::call);
 
     return static_cast<C*>(Ptr);
   }
@@ -94,14 +97,6 @@ class ManagedCleanup : public ManagedStaticBase {
 public:
   void Register() { RegisterManagedStatic(0, CleanupFn); }
 };
-
-
-/// llvm_start_multithreaded - Allocate and initialize structures needed to
-/// make LLVM safe for multithreading.  The return value indicates whether
-/// multithreaded initialization succeeded.  LLVM will still be operational
-/// on "failed" return, but will not be safe to run multithreaded.
-YASM_LIB_EXPORT
-bool llvm_start_multithreaded();
 
 /// llvm_shutdown - Deallocate and destroy all ManagedStatic variables.
 YASM_LIB_EXPORT

@@ -478,7 +478,7 @@ public:
         return false;
       }
 
-    return O.error(": Cannot find option named '" + ArgVal + "'!");
+    return O.error("Cannot find option named '" + ArgVal + "'!");
   }
 
   /// addLiteralOption - Add an entry to the mapping table.
@@ -544,7 +544,7 @@ template<>
 class YASM_LIB_EXPORT parser<bool> : public basic_parser<bool> {
   const char *ArgStr;
 public:
-  
+
   // parse - Return true on error.
   bool parse(Option &O, const char *ArgName, const std::string &Arg, bool &Val);
 
@@ -775,7 +775,7 @@ public:
 
   bool setLocation(Option &O, DataType &L) {
     if (Location)
-      return O.error(": cl::location(x) specified more than once!");
+      return O.error("cl::location(x) specified more than once!");
     Location = &L;
     return false;
   }
@@ -969,7 +969,7 @@ public:
 
   bool setLocation(Option &O, StorageClass &L) {
     if (Location)
-      return O.error(": cl::location(x) specified more than once!");
+      return O.error("cl::location(x) specified more than once!");
     Location = &L;
     return false;
   }
@@ -1110,7 +1110,7 @@ public:
   }
 };
 
-// multi_arg - Modifier to set the number of additional values.
+// multi_val - Modifier to set the number of additional values.
 struct multi_val {
   unsigned AdditionalVals;
   explicit multi_val(unsigned N) : AdditionalVals(N) {}
@@ -1144,7 +1144,7 @@ public:
 
   bool setLocation(Option &O, unsigned &L) {
     if (Location)
-      return O.error(": cl::location(x) specified more than once!");
+      return O.error("cl::location(x) specified more than once!");
     Location = &L;
     return false;
   }
@@ -1322,15 +1322,15 @@ class YASM_LIB_EXPORT alias : public Option {
 
   void done() {
     if (!hasArgStr())
-      error(": cl::alias must have argument name specified!");
+      error("cl::alias must have argument name specified!");
     if (AliasFor == 0)
-      error(": cl::alias must have an cl::aliasopt(option) specified!");
+      error("cl::alias must have an cl::aliasopt(option) specified!");
       addArgument();
   }
 public:
   void setAliasFor(Option &O) {
     if (AliasFor)
-      error(": cl::alias must only have one cl::aliasopt(...) specified!");
+      error("cl::alias must only have one cl::aliasopt(...) specified!");
     AliasFor = &O;
   }
 
@@ -1371,7 +1371,7 @@ struct aliasopt {
 
 // extrahelp - provide additional help at the end of the normal help
 // output. All occurrences of cl::extrahelp will be accumulated and
-// printed to std::cerr at the end of the regular help, just before
+// printed to stderr at the end of the regular help, just before
 // exit is called.
 struct YASM_LIB_EXPORT extrahelp {
   const char * morehelp;

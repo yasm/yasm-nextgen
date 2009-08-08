@@ -18,8 +18,8 @@
 // can specify '-debug-only=foo' to enable JUST the debug information for the
 // foo class.
 //
-// When compiling in release mode, the -debug-* options and all code in DEBUG()
-// statements disappears, so it does not effect the runtime of the code.
+// When compiling without assertions, the -debug-* options and all code in
+// DEBUG() statements disappears, so it does not effect the runtime of the code.
 //
 //===----------------------------------------------------------------------===//
 
@@ -64,6 +64,12 @@ bool isCurrentDebugType(const char *Type);
   do { if (llvm::DebugFlag && llvm::isCurrentDebugType(DEBUG_TYPE)) { X; } } while (0)
 #endif
 
+/// getNullOutputStream - Return a null string that does not output
+/// anything.  This hides the static variable from other modules.
+///
+YASM_LIB_EXPORT
+OStream &getNullOutputStream();
+
 /// getErrorOutputStream - Returns the error output stream (std::cerr). This
 /// places the std::c* I/O streams into one .cpp file and relieves the whole
 /// program from having to have hundreds of static c'tor/d'tors for them.
@@ -72,7 +78,7 @@ YASM_LIB_EXPORT
 OStream &getErrorOutputStream(const char *DebugType);
 
 #ifdef NDEBUG
-#define DOUT llvm::OStream(0)
+#define DOUT llvm::getNullOutputStream()
 #else
 #define DOUT llvm::getErrorOutputStream(DEBUG_TYPE)
 #endif

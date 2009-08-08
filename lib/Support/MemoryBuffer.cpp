@@ -16,12 +16,11 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Process.h"
-//#include "llvm/System/Program.h"
+#include "llvm/System/Program.h"
 #include <cassert>
 #include <cstdio>
 #include <cstring>
 #include <cerrno>
-#include <vector>
 #include <sys/types.h>
 #include <sys/stat.h>
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
@@ -263,9 +262,7 @@ MemoryBuffer *MemoryBuffer::getSTDIN() {
   std::vector<char> FileData;
 
   // Read in all of the data from stdin, we cannot mmap stdin.
-#if 0
   sys::Program::ChangeStdinToBinary();
-#endif
   size_t ReadBytes;
   do {
     ReadBytes = fread(Buffer, sizeof(char), sizeof(Buffer), stdin);

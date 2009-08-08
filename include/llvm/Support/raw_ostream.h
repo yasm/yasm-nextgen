@@ -15,6 +15,7 @@
 #define LLVM_SUPPORT_RAW_OSTREAM_H
 
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 #include <cassert>
 #include <cstring>
@@ -45,14 +46,47 @@ private:
   char *OutBufStart, *OutBufEnd, *OutBufCur;
   bool Unbuffered;
 
+  /// Error This flag is true if an error of any kind has been detected.
+  ///
+  bool Error;
+
 public:
-  explicit raw_ostream(bool unbuffered=false) : Unbuffered(unbuffered) {
+  // color order matches ANSI escape sequence, don't change
+  enum Colors {
+    BLACK=0,
+    RED,
+    GREEN,
+    YELLOW,
+    BLUE,
+    MAGENTA,
+    CYAN,
+    WHITE,
+    SAVEDCOLOR
+  };
+
+  explicit raw_ostream(bool unbuffered=false)
+    : Unbuffered(unbuffered), Error(false) {
     // Start out ready to flush.
     OutBufStart = OutBufEnd = OutBufCur = 0;
   }
 
-  virtual ~raw_ostream() {
-    delete [] OutBufStart;
+  virtual ~raw_ostream();
+
+  /// tell - Return the current offset with the file.
+  uint64_t tell() { return current_pos() + GetNumBytesInBuffer(); }
+
+  /// has_error - Return the value of the flag in this raw_ostream indicating
+  /// whether an output error has been encountered.
+  bool has_error() const {
+    return Error;
+  }
+
+  /// clear_error - Set the flag read by has_error() to false. If the error
+  /// flag is set at the time when this raw_ostream's destructor is called,
+  /// llvm_report_error is called to report the error. Use clear_error()
+  /// after handling the error to avoid this behavior.
+  void clear_error() {
+    Error = false;
   }
 
   //===--------------------------------------------------------------------===//
@@ -61,7 +95,7 @@ public:
 
   /// SetBufferSize - Set the internal buffer size to the specified amount
   /// instead of the default.
-  void SetBufferSize(unsigned Size=4096) {
+  void SetBufferSize(size_t Size=4096) {
     assert(Size >= 64 &&
            "Buffer size must be somewhat large for invariants to hold");
     flush();
@@ -85,7 +119,7 @@ public:
     Unbuffered = true;
   }
 
-  unsigned GetNumBytesInBuffer() const {
+  size_t GetNumBytesInBuffer() const {
     return OutBufCur - OutBufStart;
   }
 
@@ -119,18 +153,24 @@ public:
     return *this;
   }
 
-  raw_ostream &operator<<(const char *Str) {
-    // Inline fast path, particulary for constant strings where a
-    // sufficiently smart compiler will simplify strlen.
-
-    unsigned Size = strlen(Str);
+  raw_ostream &operator<<(const StringRef &Str) {
+    // Inline fast path, particularly for strings with a known length.
+    size_t Size = Str.size();
 
     // Make sure we can use the fast path.
     if (OutBufCur+Size > OutBufEnd)
-      return write(Str, Size);
+      return write(Str.data(), Size);
 
-    memcpy(OutBufCur, Str, Size);
+    memcpy(OutBufCur, Str.data(), Size);
     OutBufCur += Size;
+    return *this;
+  }
+
+  raw_ostream &operator<<(const char *Str) {
+    // Inline fast path, particulary for constant strings where a sufficiently
+    // smart compiler will simplify strlen.
+
+    this->operator<<(StringRef(Str));
     return *this;
   }
 
@@ -159,11 +199,28 @@ public:
     return *this;
   }
 
+  /// write_hex - Output \arg N in hexadecimal, without any prefix or padding.
+  raw_ostream &write_hex(unsigned long long N);
+
   raw_ostream &write(unsigned char C);
-  raw_ostream &write(const char *Ptr, unsigned Size);
+  raw_ostream &write(const char *Ptr, size_t Size);
 
   // Formatted output, see the format() function in Support/Format.h.
   raw_ostream &operator<<(const format_object_base &Fmt);
+
+  /// Changes the foreground color of text that will be output from this point
+  /// forward.
+  /// @param colors ANSI color to use, the special SAVEDCOLOR can be used to
+  /// change only the bold attribute, and keep colors untouched
+  /// @param bold bold/brighter text, default false
+  /// @param bg if true change the background, default: change foreground
+  /// @returns itself so it can be used within << invocations
+  virtual raw_ostream &changeColor(enum Colors colors, bool bold=false,
+                                   bool  bg=false) { return *this; }
+
+  /// Resets the colors to terminal defaults. Call this when you are done
+  /// outputting colored text, or before program exit.
+  virtual raw_ostream &resetColor() { return *this; }
 
   //===--------------------------------------------------------------------===//
   // Subclass Interface
@@ -175,10 +232,23 @@ private:
   /// \arg Ptr to the underlying stream.
   /// 
   /// \invariant { Size > 0 }
-  virtual void write_impl(const char *Ptr, unsigned Size) = 0;
+  virtual void write_impl(const char *Ptr, size_t Size) = 0;
 
   // An out of line virtual method to provide a home for the class vtable.
   virtual void handle();
+
+  /// current_pos - Return the current position within the stream, not
+  /// counting the bytes currently in the buffer.
+  virtual uint64_t current_pos() = 0;
+
+protected:
+  /// error_detected - Set the flag indicating that an output error has
+  /// been encountered.
+  void error_detected() { Error = true; }
+
+  typedef char * iterator;
+  iterator begin(void) { return OutBufStart; }
+  iterator end(void) { return OutBufCur; }
 
   //===--------------------------------------------------------------------===//
   // Private Interface
@@ -202,7 +272,12 @@ class YASM_LIB_EXPORT raw_fd_ostream : public raw_ostream {
   uint64_t pos;
 
   /// write_impl - See raw_ostream::write_impl.
-  virtual void write_impl(const char *Ptr, unsigned Size);
+  virtual void write_impl(const char *Ptr, size_t Size);
+
+  /// current_pos - Return the current position within the stream, not
+  /// counting the bytes currently in the buffer.
+  virtual uint64_t current_pos() { return pos; }
+
 public:
   /// raw_fd_ostream - Open the specified file for writing. If an
   /// error occurs, information about the error is put into ErrorInfo,
@@ -213,7 +288,10 @@ public:
   /// stream will use stdout instead.
   /// \param Binary - The file should be opened in binary mode on
   /// platforms that support this distinction.
-  raw_fd_ostream(const char *Filename, bool Binary, std::string &ErrorInfo);
+  /// \param Force - Don't consider the case where the file already
+  /// exists to be an error.
+  raw_fd_ostream(const char *Filename, bool Binary, bool Force,
+                 std::string &ErrorInfo);
 
   /// raw_fd_ostream ctor - FD is the file descriptor that this writes to.  If
   /// ShouldClose is true, this closes the file when the stream is destroyed.
@@ -232,6 +310,10 @@ public:
   /// seek - Flushes the stream and repositions the underlying file descriptor
   ///  positition to the offset specified from the beginning of the file.
   uint64_t seek(uint64_t off);
+
+  virtual raw_ostream &changeColor(enum Colors colors, bool bold=false,
+                                   bool bg=false);
+  virtual raw_ostream &resetColor();
 };
 
 /// raw_stdout_ostream - This is a stream that always prints to stdout.
@@ -262,33 +344,53 @@ raw_ostream &outs();
 YASM_LIB_EXPORT
 raw_ostream &errs();
 
+/// nulls() - This returns a reference to a raw_ostream which simply discards
+/// output.
+YASM_LIB_EXPORT
+raw_ostream &nulls();
 
 //===----------------------------------------------------------------------===//
 // Output Stream Adaptors
 //===----------------------------------------------------------------------===//
 
 /// raw_os_ostream - A raw_ostream that writes to an std::ostream.  This is a
-/// simple adaptor class.
+/// simple adaptor class.  It does not check for output errors; clients should
+/// use the underlying stream to detect errors.
 class YASM_LIB_EXPORT raw_os_ostream : public raw_ostream {
   std::ostream &OS;
 
   /// write_impl - See raw_ostream::write_impl.
-  virtual void write_impl(const char *Ptr, unsigned Size);
+  virtual void write_impl(const char *Ptr, size_t Size);
+
+  /// current_pos - Return the current position within the stream, not
+  /// counting the bytes currently in the buffer.
+  virtual uint64_t current_pos();
+
 public:
   raw_os_ostream(std::ostream &O) : OS(O) {}
   ~raw_os_ostream();
+
+  /// tell - Return the current offset with the stream.
+  uint64_t tell();
 };
 
 /// raw_string_ostream - A raw_ostream that writes to an std::string.  This is a
-/// simple adaptor class.
+/// simple adaptor class. This class does not encounter output errors.
 class YASM_LIB_EXPORT raw_string_ostream : public raw_ostream {
   std::string &OS;
 
   /// write_impl - See raw_ostream::write_impl.
-  virtual void write_impl(const char *Ptr, unsigned Size);
+  virtual void write_impl(const char *Ptr, size_t Size);
+
+  /// current_pos - Return the current position within the stream, not
+  /// counting the bytes currently in the buffer.
+  virtual uint64_t current_pos() { return OS.size(); }
 public:
-  raw_string_ostream(std::string &O) : OS(O) {}
+  explicit raw_string_ostream(std::string &O) : OS(O) {}
   ~raw_string_ostream();
+
+  /// tell - Return the current offset with the stream.
+  uint64_t tell() { return OS.size() + GetNumBytesInBuffer(); }
 
   /// str - Flushes the stream contents to the target string and returns
   ///  the string's reference.
@@ -299,15 +401,37 @@ public:
 };
 
 /// raw_svector_ostream - A raw_ostream that writes to an SmallVector or
-/// SmallString.  This is a simple adaptor class.
+/// SmallString.  This is a simple adaptor class. This class does not
+/// encounter output errors.
 class YASM_LIB_EXPORT raw_svector_ostream : public raw_ostream {
   SmallVectorImpl<char> &OS;
 
   /// write_impl - See raw_ostream::write_impl.
-  virtual void write_impl(const char *Ptr, unsigned Size);
+  virtual void write_impl(const char *Ptr, size_t Size);
+
+  /// current_pos - Return the current position within the stream, not
+  /// counting the bytes currently in the buffer.
+  virtual uint64_t current_pos();
 public:
-  raw_svector_ostream(SmallVectorImpl<char> &O) : OS(O) {}
+  explicit raw_svector_ostream(SmallVectorImpl<char> &O) : OS(O) {}
   ~raw_svector_ostream();
+
+  /// tell - Return the current offset with the stream.
+  uint64_t tell();
+};
+
+/// raw_null_ostream - A raw_ostream that discards all output.
+class YASM_LIB_EXPORT raw_null_ostream : public raw_ostream {
+  /// write_impl - See raw_ostream::write_impl.
+  virtual void write_impl(const char *Ptr, size_t size);
+  
+  /// current_pos - Return the current position within the stream, not
+  /// counting the bytes currently in the buffer.
+  virtual uint64_t current_pos();
+
+public:
+  explicit raw_null_ostream() {}
+  ~raw_null_ostream();
 };
 
 } // end llvm namespace

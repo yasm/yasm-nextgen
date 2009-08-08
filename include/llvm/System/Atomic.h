@@ -27,6 +27,16 @@ namespace llvm {
     cas_flag CompareAndSwap(volatile cas_flag* ptr,
                             cas_flag new_value,
                             cas_flag old_value);
+    YASM_LIB_EXPORT
+    cas_flag AtomicIncrement(volatile cas_flag* ptr);
+    YASM_LIB_EXPORT
+    cas_flag AtomicDecrement(volatile cas_flag* ptr);
+    YASM_LIB_EXPORT
+    cas_flag AtomicAdd(volatile cas_flag* ptr, cas_flag val);
+    YASM_LIB_EXPORT
+    cas_flag AtomicMul(volatile cas_flag* ptr, cas_flag val);
+    YASM_LIB_EXPORT
+    cas_flag AtomicDiv(volatile cas_flag* ptr, cas_flag val);
   }
 }
 

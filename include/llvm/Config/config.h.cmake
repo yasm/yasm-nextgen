@@ -181,9 +181,6 @@
 /* Define if you have the libdl library or equivalent. */
 #undef HAVE_LIBDL
 
-/* Define to 1 if you have the `elf' library (-lelf). */
-#undef HAVE_LIBELF
-
 /* Define to 1 if you have the `imagehlp' library (-limagehlp). */
 #cmakedefine HAVE_LIBIMAGEHLP ${HAVE_LIBIMAGEHLP}
 
@@ -240,13 +237,13 @@
 #cmakedefine HAVE_MEMORY_H ${HAVE_MEMORY_H}
 
 /* Define to 1 if you have the `mkdtemp' function. */
-#undef HAVE_MKDTEMP
+#cmakedefine HAVE_MKDTEMP ${HAVE_MKDTEMP}
 
 /* Define to 1 if you have the `mkstemp' function. */
-#undef HAVE_MKSTEMP
+#cmakedefine HAVE_MKSTEMP ${HAVE_MKSTEMP}
 
 /* Define to 1 if you have the `mktemp' function. */
-#undef HAVE_MKTEMP
+#cmakedefine HAVE_MKTEMP ${HAVE_MKTEMP}
 
 /* Define to 1 if you have a working `mmap' system call. */
 #undef HAVE_MMAP
@@ -281,6 +278,12 @@
 
 /* Have pthread_mutex_lock */
 #cmakedefine HAVE_PTHREAD_MUTEX_LOCK ${HAVE_PTHREAD_MUTEX_LOCK}
+
+/* Have pthread_rwlock_init */
+#cmakedefine HAVE_PTHREAD_RWLOCK_INIT ${HAVE_PTHREAD_RWLOCK_INIT}
+
+/* Have pthread_getspecific */
+#cmakedefine HAVE_PTHREAD_GETSPECIFIC ${HAVE_PTHREAD_GETSPECIFIC}
 
 /* Define to 1 if srand48/lrand48/drand48 exist in <stdlib.h> */
 #undef HAVE_RAND48
@@ -362,6 +365,9 @@
 
 /* Define to 1 if you have the `strerror_r' function. */
 #cmakedefine HAVE_STRERROR_R ${HAVE_STRERROR_R}
+
+/* Define to 1 if you have the `strerror_s' function. */
+#cmakedefine HAVE_STRERROR_S ${HAVE_STRERROR_S}
 
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
@@ -465,7 +471,7 @@
 #undef LLVM_MANDIR
 
 /* Build multithreading support into LLVM */
-#define LLVM_MULTITHREADED ${LLVM_MULTITHREADED}
+#cmakedefine LLVM_MULTITHREADED ${LLVM_MULTITHREADED}
 
 /* Define if this is Unixish platform */
 #cmakedefine LLVM_ON_UNIX ${LLVM_ON_UNIX}
@@ -586,3 +592,6 @@
 
 /* Define to a function implementing strdup */
 #cmakedefine strdup ${strdup}
+
+/* Native LLVM architecture */
+#cmakedefine LLVM_NATIVE_ARCH ${LLVM_NATIVE_ARCH}Target

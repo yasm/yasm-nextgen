@@ -15,6 +15,7 @@
 #define LLVM_SYSTEM_PATH_H
 
 #include "llvm/System/TimeValue.h"
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Config/export.h"
 #include <set>
 #include <string>
@@ -716,6 +717,17 @@ namespace sys {
   /// on Windows.
   YASM_LIB_EXPORT
   extern const char PathSeparator;
+}
+
+inline raw_ostream& operator<<(raw_ostream& strm, const sys::Path& aPath) {
+  strm << aPath.toString();
+  return strm;
+}
+
+inline raw_ostream& operator<<(raw_ostream& strm,
+                               const sys::PathWithStatus& aPath) {
+  strm << static_cast<const sys::Path&>(aPath);
+  return strm;
 }
 
 std::ostream& operator<<(std::ostream& strm, const sys::Path& aPath);

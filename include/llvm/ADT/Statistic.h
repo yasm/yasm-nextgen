@@ -26,6 +26,7 @@
 #ifndef LLVM_ADT_STATISTIC_H
 #define LLVM_ADT_STATISTIC_H
 
+#include "llvm/System/Atomic.h"
 #include "yasmx/Config/export.h"
 
 namespace llvm {
@@ -34,10 +35,10 @@ class YASM_LIB_EXPORT Statistic {
 public:
   const char *Name;
   const char *Desc;
-  unsigned Value : 31;
-  bool Initialized : 1;
+  volatile llvm::sys::cas_flag Value;
+  bool Initialized;
 
-  unsigned getValue() const { return Value; }
+  llvm::sys::cas_flag getValue() const { return Value; }
   const char *getName() const { return Name; }
   const char *getDesc() const { return Desc; }
 
@@ -49,19 +50,60 @@ public:
 
   // Allow use of this class as the value itself.
   operator unsigned() const { return Value; }
-  const Statistic &operator=(unsigned Val) { Value = Val; return init(); }
-  const Statistic &operator++() { ++Value; return init(); }
-  unsigned operator++(int) { init(); return Value++; }
-  const Statistic &operator--() { --Value; return init(); }
-  unsigned operator--(int) { init(); return Value--; }
-  const Statistic &operator+=(const unsigned &V) { Value += V; return init(); }
-  const Statistic &operator-=(const unsigned &V) { Value -= V; return init(); }
-  const Statistic &operator*=(const unsigned &V) { Value *= V; return init(); }
-  const Statistic &operator/=(const unsigned &V) { Value /= V; return init(); }
+  const Statistic &operator=(unsigned Val) {
+    Value = Val;
+    return init();
+  }
+  
+  const Statistic &operator++() {
+    sys::AtomicIncrement(&Value);
+    return init();
+  }
+  
+  unsigned operator++(int) {
+    init();
+    unsigned OldValue = Value;
+    sys::AtomicIncrement(&Value);
+    return OldValue;
+  }
+  
+  const Statistic &operator--() {
+    sys::AtomicDecrement(&Value);
+    return init();
+  }
+  
+  unsigned operator--(int) {
+    init();
+    unsigned OldValue = Value;
+    sys::AtomicDecrement(&Value);
+    return OldValue;
+  }
+  
+  const Statistic &operator+=(const unsigned &V) {
+    sys::AtomicAdd(&Value, V);
+    return init();
+  }
+  
+  const Statistic &operator-=(const unsigned &V) {
+    sys::AtomicAdd(&Value, -V);
+    return init();
+  }
+  
+  const Statistic &operator*=(const unsigned &V) {
+    sys::AtomicMul(&Value, V);
+    return init();
+  }
+  
+  const Statistic &operator/=(const unsigned &V) {
+    sys::AtomicDiv(&Value, V);
+    return init();
+  }
 
 protected:
   Statistic &init() {
-    if (!Initialized) RegisterStatistic();
+    bool tmp = Initialized;
+    sys::MemoryFence();
+    if (!tmp) RegisterStatistic();
     return *this;
   }
   void RegisterStatistic();

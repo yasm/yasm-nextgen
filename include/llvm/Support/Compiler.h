@@ -37,16 +37,11 @@
 
 // C++ doesn't support 'extern template' of template specializations.  GCC does,
 // but requires __extension__ before it.  In the header, use this:
-//   EXTERN_TEMPLATE_INSTANTIATION(class foo<bar>);
+//   EXTERN_TEMPLATE_INSTANTIATION(class foo<bar>)
 // in the .cpp file, use this:
-//   TEMPLATE_INSTANTIATION(class foo<bar>);
-//#ifdef __GNUC__
-//#define EXTERN_TEMPLATE_INSTANTIATION(X) __extension__ extern template X;
-//#define TEMPLATE_INSTANTIATION(X) template X;
-//#else
+//   TEMPLATE_INSTANTIATION(class foo<bar>)
 #define EXTERN_TEMPLATE_INSTANTIATION(X)
 #define TEMPLATE_INSTANTIATION(X)
-//#endif
 
 // DISABLE_INLINE - On compilers where we have a directive to do so, mark a
 // method "not for inlining".
@@ -54,6 +49,12 @@
 #define DISABLE_INLINE __attribute__((noinline))
 #else
 #define DISABLE_INLINE
+#endif
+
+#ifdef __GNUC__
+#define NORETURN __attribute__((noreturn))
+#else
+#define NORETURN
 #endif
 
 #endif

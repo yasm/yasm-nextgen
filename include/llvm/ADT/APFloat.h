@@ -175,7 +175,7 @@ namespace llvm {
     // Constructors.
     APFloat(const fltSemantics &, const char *);
     APFloat(const fltSemantics &, integerPart);
-    APFloat(const fltSemantics &, fltCategory, bool negative);
+    APFloat(const fltSemantics &, fltCategory, bool negative, unsigned type=0);
     explicit APFloat(double d);
     explicit APFloat(float f);
     explicit APFloat(const APInt &, bool isIEEE = false);
@@ -189,13 +189,25 @@ namespace llvm {
     static APFloat getInf(const fltSemantics &Sem, bool Negative = false) {
       return APFloat(Sem, fcInfinity, Negative);
     }
-    static APFloat getNaN(const fltSemantics &Sem, bool Negative = false) {
-      return APFloat(Sem, fcNaN, Negative);
+    /// getNaN - Factory for QNaN values.
+    ///
+    /// \param Negative - True iff the NaN generated should be negative.
+    /// \param type - The unspecified fill bits for creating the NaN, 0 by
+    /// default.  The value is truncated as necessary.
+    static APFloat getNaN(const fltSemantics &Sem, bool Negative = false,
+                          unsigned type = 0) {
+      return APFloat(Sem, fcNaN, Negative, type);
     }
 
     /// Profile - Used to insert APFloat objects, or objects that contain
     ///  APFloat objects, into FoldingSets.
     void Profile(FoldingSetNodeID& NID) const;
+
+    /// @brief Used by the Bitcode serializer to emit APInts to Bitcode.
+    void Emit(Serializer& S) const;
+
+    /// @brief Used by the Bitcode deserializer to deserialize APInts.
+    static APFloat ReadVal(Deserializer& D);
 
     /* Arithmetic.  */
     opStatus add(const APFloat &, roundingMode);
@@ -291,7 +303,7 @@ namespace llvm {
     opStatus modSpecials(const APFloat &);
 
     /* Miscellany.  */
-    void makeNaN(void);
+    void makeNaN(unsigned = 0);
     opStatus normalize(roundingMode, lostFraction);
     opStatus addOrSubtract(const APFloat &, roundingMode, bool subtract);
     cmpResult compareAbsoluteValue(const APFloat &) const;

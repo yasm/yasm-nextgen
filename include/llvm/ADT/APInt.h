@@ -24,6 +24,8 @@
 #include <string>
 
 namespace llvm {
+  class Serializer;
+  class Deserializer;
   class FoldingSetNodeID;
   class raw_ostream;
 
@@ -259,6 +261,12 @@ public:
   /// Profile - Used to insert APInt objects, or objects that contain APInt
   ///  objects, into FoldingSets.
   void Profile(FoldingSetNodeID& id) const;
+
+  /// @brief Used by the Bitcode serializer to emit APInts to Bitcode.
+  void Emit(Serializer& S) const;
+
+  /// @brief Used by the Bitcode deserializer to deserialize APInts.
+  void Read(Deserializer& D);
 
   /// @}
   /// @name Value Tests
@@ -988,6 +996,14 @@ public:
   /// @returns the number of words to hold the integer value of this APInt.
   /// @brief Get the number of words.
   unsigned getNumWords() const {
+    return getNumWords(BitWidth);
+  }
+
+  /// Here one word's bitwidth equals to that of uint64_t.
+  /// @returns the number of words to hold the integer value with a
+  /// given bit width.
+  /// @brief Get the number of words.
+  static unsigned getNumWords(unsigned BitWidth) {
     return (BitWidth + APINT_BITS_PER_WORD - 1) / APINT_BITS_PER_WORD;
   }
 
@@ -1138,11 +1154,6 @@ public:
   std::string toString(unsigned Radix = 10, bool Signed = true,
                        bool Lowercase = false) const;
 
-  /// fromOctetsLE - Sets this APInt from octets stored in little endian order.
-  void fromOctetsLE(const unsigned char *octets, unsigned numOctets);
-
-  /// toOctetsLE - Converts an APInt to octets stored in little endian order.
-  void toOctetsLE(unsigned char *octets, unsigned numOctets) const;
 
   /// @returns a byte-swapped representation of this APInt Value.
   APInt byteSwap() const;
@@ -1250,6 +1261,18 @@ public:
 
   /// @returns the multiplicative inverse for a given modulo.
   APInt multiplicativeInverse(const APInt& modulo) const;
+
+  /// @}
+  /// @name Support for division by constant
+  /// @{
+
+  /// Calculate the magic number for signed division by a constant.
+  struct ms;
+  ms magic() const;
+
+  /// Calculate the magic number for unsigned division by a constant.
+  struct mu;
+  mu magicu() const;
 
   /// @}
   /// @name Building-block Operations for APInt and APFloat
@@ -1382,6 +1405,19 @@ public:
   /// @}
 };
 
+/// Magic data for optimising signed division by a constant.
+struct APInt::ms {
+  APInt m;  ///< magic number
+  unsigned s;  ///< shift amount
+};
+
+/// Magic data for optimising unsigned division by a constant.
+struct APInt::mu {
+  APInt m;     ///< magic number
+  bool a;      ///< add indicator
+  unsigned s;  ///< shift amount
+};
+
 inline bool operator==(uint64_t V1, const APInt& V2) {
   return V2 == V1;
 }
@@ -1394,6 +1430,8 @@ inline raw_ostream &operator<<(raw_ostream &OS, const APInt &I) {
   I.print(OS, true);
   return OS;
 }
+
+std::ostream &operator<<(std::ostream &o, const APInt &I);
 
 namespace APIntOps {
 

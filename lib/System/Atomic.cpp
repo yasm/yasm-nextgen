@@ -21,6 +21,10 @@ using namespace llvm;
 #undef MemoryFence
 #endif
 
+#ifndef LLVM_MULTITHREADED
+#define LLVM_MULTITHREADED 0
+#endif
+
 void sys::MemoryFence() {
 #if LLVM_MULTITHREADED==0
   return;
@@ -50,4 +54,63 @@ sys::cas_flag sys::CompareAndSwap(volatile sys::cas_flag* ptr,
 #else
 #  error No compare-and-swap implementation for your platform!
 #endif
+}
+
+sys::cas_flag sys::AtomicIncrement(volatile sys::cas_flag* ptr) {
+#if LLVM_MULTITHREADED==0
+  ++(*ptr);
+  return *ptr;
+#elif defined(__GNUC__)
+  return __sync_add_and_fetch(ptr, 1);
+#elif defined(_MSC_VER)
+  return InterlockedIncrement(ptr);
+#else
+#  error No atomic increment implementation for your platform!
+#endif
+}
+
+sys::cas_flag sys::AtomicDecrement(volatile sys::cas_flag* ptr) {
+#if LLVM_MULTITHREADED==0
+  --(*ptr);
+  return *ptr;
+#elif defined(__GNUC__)
+  return __sync_sub_and_fetch(ptr, 1);
+#elif defined(_MSC_VER)
+  return InterlockedDecrement(ptr);
+#else
+#  error No atomic decrement implementation for your platform!
+#endif
+}
+
+sys::cas_flag sys::AtomicAdd(volatile sys::cas_flag* ptr, sys::cas_flag val) {
+#if LLVM_MULTITHREADED==0
+  *ptr += val;
+  return *ptr;
+#elif defined(__GNUC__)
+  return __sync_add_and_fetch(ptr, val);
+#elif defined(_MSC_VER)
+  return InterlockedAdd(ptr, val);
+#else
+#  error No atomic add implementation for your platform!
+#endif
+}
+
+sys::cas_flag sys::AtomicMul(volatile sys::cas_flag* ptr, sys::cas_flag val) {
+  sys::cas_flag original, result;
+  do {
+    original = *ptr;
+    result = original * val;
+  } while (sys::CompareAndSwap(ptr, result, original) != original);
+
+  return result;
+}
+
+sys::cas_flag sys::AtomicDiv(volatile sys::cas_flag* ptr, sys::cas_flag val) {
+  sys::cas_flag original, result;
+  do {
+    original = *ptr;
+    result = original / val;
+  } while (sys::CompareAndSwap(ptr, result, original) != original);
+
+  return result;
 }

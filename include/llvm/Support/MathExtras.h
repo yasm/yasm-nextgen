@@ -108,7 +108,7 @@ inline uint16_t ByteSwap_16(uint16_t Value) {
 /// ByteSwap_32 - This function returns a byte-swapped representation of the
 /// 32-bit argument, Value.
 inline uint32_t ByteSwap_32(uint32_t Value) {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
+#if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)) && !defined(__ICC)
   return __builtin_bswap32(Value);
 #elif defined(_MSC_VER) && !defined(_DEBUG)
   return _byteswap_ulong(Value);
@@ -124,7 +124,7 @@ inline uint32_t ByteSwap_32(uint32_t Value) {
 /// ByteSwap_64 - This function returns a byte-swapped representation of the
 /// 64-bit argument, Value.
 inline uint64_t ByteSwap_64(uint64_t Value) {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
+#if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)) && !defined(__ICC)
   return __builtin_bswap64(Value);
 #elif defined(_MSC_VER) && !defined(_DEBUG)
   return _byteswap_uint64(Value);
@@ -321,8 +321,8 @@ inline unsigned Log2_32_Ceil(uint32_t Value) {
   return 32-CountLeadingZeros_32(Value-1);
 }
 
-/// Log2_64 - This function returns the ceil log base 2 of the specified value,
-/// 64 if the value is zero. (64 bit edition.)
+/// Log2_64_Ceil - This function returns the ceil log base 2 of the specified
+/// value, 64 if the value is zero. (64 bit edition.)
 inline unsigned Log2_64_Ceil(uint64_t Value) {
   return 64-CountLeadingZeros_64(Value-1);
 }
@@ -423,6 +423,13 @@ static inline uint64_t NextPowerOf2(uint64_t A) {
 /// RoundUpToAlignment(~0LL, 8) = 0
 inline uint64_t RoundUpToAlignment(uint64_t Value, uint64_t Align) {
   return ((Value + Align - 1) / Align) * Align;
+}
+
+/// abs64 - absolute value of a 64-bit int.  Not all environments support
+/// "abs" on whatever their name for the 64-bit int type is.  The absolute
+/// value of the largest negative number is undefined, as with "abs".
+inline int64_t abs64(int64_t x) {
+  return (x < 0) ? -x : x;
 }
 
 } // End llvm namespace

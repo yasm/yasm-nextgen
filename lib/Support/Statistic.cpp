@@ -25,6 +25,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/System/Mutex.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <ostream>
@@ -57,17 +58,22 @@ public:
 }
 
 static ManagedStatic<StatisticInfo> StatInfo;
-
+static ManagedStatic<sys::Mutex> StatLock;
 
 /// RegisterStatistic - The first time a statistic is bumped, this method is
 /// called.
 void Statistic::RegisterStatistic() {
   // If stats are enabled, inform StatInfo that this statistic should be
   // printed.
-  if (Enabled)
-    StatInfo->addStatistic(this);
-  // Remember we have been registered.
-  Initialized = true;
+  sys::ScopedLock Writer(*StatLock);
+  if (!Initialized) {
+    if (Enabled)
+      StatInfo->addStatistic(this);
+    
+    sys::MemoryFence();
+    // Remember we have been registered.
+    Initialized = true;
+  }
 }
 
 namespace {
