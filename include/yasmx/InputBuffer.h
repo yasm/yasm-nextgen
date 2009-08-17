@@ -52,6 +52,10 @@ public:
         m_ptr = m_start + startpos;
     }
 
+    InputBuffer(const unsigned char* input, size_t len)
+        : m_start(input), m_end(input+len), m_ptr(input)
+    {}
+
     /// Get buffer size.
     /// @return Buffer size.
     size_t getSize() const { return m_end-m_start; }
