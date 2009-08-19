@@ -29,11 +29,13 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
 #include <string>
 
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
+
+
+namespace llvm { class MemoryBuffer; }
 
 /// Namespace for classes, functions, and templates related to the Yasm
 /// assembler.
@@ -99,13 +101,10 @@ public:
     void setListFormat(const std::string& list_keyword);
 
     /// Actually perform assembly.  Does not write to output file.
-    /// @param is               input stream
-    /// @param src_filename     source filename (e.g. "file.asm")
+    /// @param in               initial source memory buffer
     /// @param warning_error    treat warnings as errors if true
     /// @return True on success, false on failure.
-    bool Assemble(std::istream& is,
-                  const std::string& src_filename,
-                  bool warning_error = false);
+    bool Assemble(const llvm::MemoryBuffer& in, bool warning_error = false);
 
     /// Write assembly results to output file.  Fails if assembly not
     /// performed first.

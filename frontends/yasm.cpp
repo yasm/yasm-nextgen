@@ -32,6 +32,7 @@
 
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/ManagedStatic.h>
+#include <llvm/Support/MemoryBuffer.h>
 #include <yasmx/Support/Compose.h>
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/nocase.h>
@@ -695,21 +696,17 @@ do_assemble(void)
     assembler.getArch()->setVar("force_strict", force_strict);
 
     // open the input file
-    std::istream* in;
-    std::ifstream in_file;
-    if (in_filename == "-")
-        in = &std::cin;
-    else
+    std::string open_err;
+    std::auto_ptr<llvm::MemoryBuffer>
+        in(llvm::MemoryBuffer::getFileOrSTDIN(in_filename, &open_err));
+    if (in.get() == 0)
     {
-        in_file.open(in_filename.c_str());
-        if (!in_file)
-            throw yasm::Error(String::Compose(_("could not open file `%1'"),
-                              in_filename));
-        in = &in_file;
+        throw yasm::Error(String::Compose(_("could not open file `%1': %2"),
+                          in_filename, open_err));
     }
 
     // assemble the input.
-    if (!assembler.Assemble(*in, in_filename, warning_error))
+    if (!assembler.Assemble(*in, warning_error))
     {
         // An error occurred during assembly; output all errors and warnings
         // and then exit.
@@ -719,7 +716,6 @@ do_assemble(void)
                                            PrintYasmWarning);
         return EXIT_FAILURE;
     }
-    in_file.close();
 
     // open the object file for output (if not already opened by dbg objfmt)
     std::ostream* out;

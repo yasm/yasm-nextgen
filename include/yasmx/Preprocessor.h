@@ -29,7 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
 #include <memory>
 #include <string>
 
@@ -37,6 +36,8 @@
 
 #include "yasmx/Module.h"
 
+
+namespace llvm { class MemoryBuffer; }
 
 namespace yasm
 {
@@ -64,10 +65,10 @@ public:
     /// Add directive handlers.
     virtual void AddDirectives(Directives& dirs, const char* parser);
 
-    /// Initialize preprocessor.  Must be called prior to first get_line() call.
-    virtual void Initialize(std::istream& is,
-                            const std::string& in_filename,
-                            Linemap& linemap) = 0;
+    /// Initialize preprocessor.  Must be called prior to first getLine() call.
+    /// @param in           memory buffer containing initial file contents
+    /// @param linemap      line mapping repository
+    virtual void Initialize(const llvm::MemoryBuffer& in, Linemap& linemap) = 0;
 
     /// Gets a line of preprocessed source code.
     /// @param line     destination string for line of preprocessed source
@@ -120,9 +121,6 @@ public:
     /// Preprocessor factory function.
     /// The preprocessor needs access to the object format to find out
     /// any object format specific macros.
-    /// @param is           initial starting stream
-    /// @param in_filename  initial starting file filename
-    /// @param linemap      line mapping repository
     /// @param errwarns     error/warning set
     /// @return New preprocessor.
     /// @note Errors/warnings are stored into errwarns.

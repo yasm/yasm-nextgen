@@ -1,9 +1,9 @@
 #include <cstdlib>
 #include <iostream>
-#include <sstream>
 
 #include "config.h"
 
+#include <llvm/Support/MemoryBuffer.h>
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/registry.h>
 #include <yasmx/System/plugin.h>
@@ -21,11 +21,14 @@ main()
     std::auto_ptr<PreprocessorModule> preproc_module =
         LoadModule<PreprocessorModule>("raw");
     std::string instr("test text");
-    std::istringstream iss(instr);
+    std::auto_ptr<llvm::MemoryBuffer>
+        inbuf(llvm::MemoryBuffer::getMemBuffer(instr.c_str(),
+                                               instr.c_str()+instr.size(),
+                                               "<string>"));
     Linemap linemap;
     Errwarns errwarns;
     std::auto_ptr<Preprocessor> preproc = preproc_module->Create(errwarns);
-    preproc->Initialize(iss, "<string>", linemap);
+    preproc->Initialize(*inbuf, linemap);
 
     std::string outstr;
     if (!preproc->getLine(outstr))

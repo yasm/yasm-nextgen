@@ -29,6 +29,7 @@
 #include "util.h"
 
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
@@ -79,9 +80,7 @@ public:
     void setPreprocessor(const std::string& preproc_keyword);
     void setDebugFormat(const std::string& dbgfmt_keyword);
     void setListFormat(const std::string& listfmt_keyword);
-    bool Assemble(std::istream& is,
-                  const std::string& src_filename,
-                  bool warning_error);
+    bool Assemble(const llvm::MemoryBuffer& in, bool warning_error);
 
     util::scoped_ptr<ArchModule> m_arch_module;
     util::scoped_ptr<ParserModule> m_parser_module;
@@ -277,29 +276,28 @@ Assembler::setListFormat(const std::string& listfmt_keyword)
 }
 
 bool
-Assembler::Impl::Assemble(std::istream& is,
-                          const std::string& src_filename,
-                          bool warning_error)
+Assembler::Impl::Assemble(const llvm::MemoryBuffer& in, bool warning_error)
 {
+    const char* in_filename = in.getBufferIdentifier();
     const char* parser_keyword = m_parser_module->getKeyword();
 
     // determine the object filename if not specified
     if (m_obj_filename.empty())
     {
-        if (src_filename.empty())
+        if (in_filename[0] == '\0')
             // Default to yasm.out if no obj filename specified
             m_obj_filename = "yasm.out";
         else
         {
             // replace (or add) extension to base filename
-            llvm::sys::Path fn(src_filename);
+            llvm::sys::Path fn(in_filename);
             std::string base_filename = fn.getBasename();
             if (base_filename.empty())
                 m_obj_filename = "yasm.out";
             else
             {
                 m_obj_filename = base_filename+m_objfmt_module->getExtension();
-                if (m_obj_filename == src_filename)
+                if (m_obj_filename == in_filename)
                     m_obj_filename = "yasm.out";
             }
         }
@@ -316,7 +314,7 @@ Assembler::Impl::Assemble(std::istream& is,
     }
 
     // Create object
-    m_object.reset(new Object(src_filename, m_obj_filename, m_arch.get()));
+    m_object.reset(new Object(in_filename, m_obj_filename, m_arch.get()));
 
     // See if the object format supports such an object
     if (!m_objfmt_module->isOkObject(*m_object))
@@ -353,10 +351,10 @@ Assembler::Impl::Assemble(std::istream& is,
     m_dbgfmt.reset(m_dbgfmt_module->Create(*m_object).release());
 
     // Initialize line map
-    m_linemap.set(src_filename, 1, 1);
+    m_linemap.set(in_filename, 1, 1);
 
     // Initialize preprocessor
-    m_preproc->Initialize(is, src_filename, m_linemap);
+    m_preproc->Initialize(in, m_linemap);
 
     // Create parser
     m_parser.reset(m_parser_module->Create(m_errwarns).release());
@@ -408,11 +406,9 @@ Assembler::Impl::Assemble(std::istream& is,
 }
 
 bool
-Assembler::Assemble(std::istream& is,
-                    const std::string& src_filename,
-                    bool warning_error)
+Assembler::Assemble(const llvm::MemoryBuffer& in, bool warning_error)
 {
-    return m_impl->Assemble(is, src_filename, warning_error);
+    return m_impl->Assemble(in, warning_error);
 }
 
 bool

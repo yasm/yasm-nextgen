@@ -26,8 +26,7 @@
 //
 #include "util.h"
 
-#include <istream>
-
+#include <llvm/Support/MemoryBuffer.h>
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/registry.h>
 #include <yasmx/Errwarns.h>
@@ -52,9 +51,7 @@ public:
     static const char* getName() { return "Disable preprocessing"; }
     static const char* getKeyword() { return "raw"; }
 
-    void Initialize(std::istream& is,
-                    const std::string& in_filename,
-                    Linemap& linemap);
+    void Initialize(const llvm::MemoryBuffer& in, Linemap& linemap);
 
     bool getLine(/*@out@*/ std::string& line);
 
@@ -65,32 +62,32 @@ public:
     void DefineBuiltin(const std::string& macronameval) {}
 
 private:
-    std::istream* m_is;
+    const llvm::MemoryBuffer* m_in;
+    const char* m_pos;
     Linemap* m_linemap;
 };
 
 void
-RawPreproc::Initialize(std::istream& is,
-                       const std::string& in_filename,
-                       Linemap& linemap)
+RawPreproc::Initialize(const llvm::MemoryBuffer& in, Linemap& linemap)
 {
-    m_is = &is;
+    m_in = &in;
+    m_pos = in.getBufferStart();
     m_linemap = &linemap;
 }
 
 bool
 RawPreproc::getLine(/*@out@*/ std::string& line)
 {
-    if (m_is->eof())
+    const char* end = m_in->getBufferEnd();
+
+    if (m_pos >= end)
         return false;
 
-    std::getline(*m_is, line);
-
-    if (m_is->bad())
-    {
-        m_errwarns.Propagate(m_linemap->getCurrent(),
-                             IOError(N_("error when reading from file")));
-    }
+    const char* nextline = m_pos+1;
+    while (nextline < end && *nextline != '\n')
+        ++nextline;
+    line.assign(m_pos, nextline-m_pos); // strip '\n'
+    m_pos = nextline+1;                 // skip over '\n' for next line
 
     return true;
 }
