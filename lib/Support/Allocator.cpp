@@ -13,7 +13,6 @@
 
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/Recycler.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstring>
 
@@ -156,14 +155,6 @@ MemSlab *MallocSlabAllocator::Allocate(size_t Size) {
 
 void MallocSlabAllocator::Deallocate(MemSlab *Slab) {
   Allocator.Deallocate(Slab);
-}
-
-void PrintRecyclerStats(size_t Size,
-                        size_t Align,
-                        size_t FreeListSize) {
-  errs() << "Recycler element size: " << Size << '\n'
-         << "Recycler element alignment: " << Align << '\n'
-         << "Number of elements free for recycling: " << FreeListSize << '\n';
 }
 
 }
