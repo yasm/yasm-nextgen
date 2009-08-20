@@ -4,6 +4,7 @@ IF (NOT BUILD_STATIC)
 ENDIF (NOT BUILD_STATIC)
 
 YASM_ADD_LIBRARY(libyasmx SHARED
+    Support/Allocator.cpp
     Support/APFloat.cpp
     Support/APInt.cpp
     Support/CommandLine.cpp
