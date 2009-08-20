@@ -13,6 +13,7 @@ namespace YAML
 	
 	Emitter::~Emitter()
 	{
+		delete m_pState;
 	}
 	
 	const char *Emitter::c_str() const

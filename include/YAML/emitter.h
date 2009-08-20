@@ -3,7 +3,6 @@
 
 #include "YAML/emittermanip.h"
 #include "YAML/ostream.h"
-#include <memory>
 #include <string>
 #include "yasmx/Config/export.h"
 
@@ -72,7 +71,7 @@ namespace YAML
 		
 	private:
 		ostream m_stream;
-		std::auto_ptr <EmitterState> m_pState;
+		EmitterState* m_pState;
 	};
 	
 	// overloads of insertion
