@@ -26,6 +26,8 @@
 //
 #include "yasmx/Support/StringExtras.h"
 
+#include <cctype>
+
 
 namespace yasm
 {
