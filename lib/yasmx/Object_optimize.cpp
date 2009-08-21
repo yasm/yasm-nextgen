@@ -527,7 +527,8 @@ Span::Write(YAML::Emitter& out) const
     }
     out << YAML::EndSeq;
 
-    out << YAML::Key << "offset setter index" << YAML::Value << m_os_index;
+    out << YAML::Key << "offset setter index";
+	out << YAML::Value << static_cast<unsigned long>(m_os_index);
     out << YAML::EndMap;
 }
 
