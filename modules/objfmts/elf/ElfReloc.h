@@ -26,9 +26,9 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include <yasmx/IntNum.h>
-#include <yasmx/Reloc.h>
-#include <yasmx/SymbolRef.h>
+#include "yasmx/IntNum.h"
+#include "yasmx/Reloc.h"
+#include "yasmx/SymbolRef.h"
 
 #include "ElfTypes.h"
 

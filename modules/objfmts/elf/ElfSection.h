@@ -29,10 +29,10 @@
 #include <iosfwd>
 #include <vector>
 
-#include <yasmx/AssocData.h>
-#include <yasmx/IntNum.h>
-#include <yasmx/Section.h>
-#include <yasmx/SymbolRef.h>
+#include "yasmx/AssocData.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/Section.h"
+#include "yasmx/SymbolRef.h"
 
 #include "ElfTypes.h"
 

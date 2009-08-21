@@ -3,13 +3,13 @@
 
 #include "config.h"
 
-#include <llvm/Support/MemoryBuffer.h>
-#include <yasmx/Support/errwarn.h>
-#include <yasmx/Support/registry.h>
-#include <yasmx/System/plugin.h>
-#include <yasmx/Errwarns.h>
-#include <yasmx/Linemap.h>
-#include <yasmx/Preprocessor.h>
+#include "llvm/Support/MemoryBuffer.h"
+#include "yasmx/Support/errwarn.h"
+#include "yasmx/Support/registry.h"
+#include "yasmx/System/plugin.h"
+#include "yasmx/Errwarns.h"
+#include "yasmx/Linemap.h"
+#include "yasmx/Preprocessor.h"
 
 using namespace yasm;
 

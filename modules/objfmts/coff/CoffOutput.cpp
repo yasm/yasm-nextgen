@@ -26,29 +26,29 @@
 //
 #include "CoffObject.h"
 
-#include <util.h>
+#include "util.h"
 
 #include <cstdlib>
 #include <ctime>
 #include <vector>
 
-#include <yasmx/Support/Compose.h>
-#include <yasmx/Support/errwarn.h>
-#include <yasmx/Support/nocase.h>
-#include <yasmx/Arch.h>
-#include <yasmx/BytecodeOutput.h>
-#include <yasmx/Bytecode.h>
-#include <yasmx/Bytes.h>
-#include <yasmx/Bytes_util.h>
-#include <yasmx/Errwarns.h>
-#include <yasmx/IntNum.h>
-#include <yasmx/Location_util.h>
-#include <yasmx/Object.h>
-#include <yasmx/Reloc.h>
-#include <yasmx/Section.h>
-#include <yasmx/StringTable.h>
-#include <yasmx/Symbol.h>
-#include <yasmx/Symbol_util.h>
+#include "yasmx/Support/Compose.h"
+#include "yasmx/Support/errwarn.h"
+#include "yasmx/Support/nocase.h"
+#include "yasmx/Arch.h"
+#include "yasmx/BytecodeOutput.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/Bytes.h"
+#include "yasmx/Bytes_util.h"
+#include "yasmx/Errwarns.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/Location_util.h"
+#include "yasmx/Object.h"
+#include "yasmx/Reloc.h"
+#include "yasmx/Section.h"
+#include "yasmx/StringTable.h"
+#include "yasmx/Symbol.h"
+#include "yasmx/Symbol_util.h"
 
 #include "CoffReloc.h"
 #include "CoffSection.h"

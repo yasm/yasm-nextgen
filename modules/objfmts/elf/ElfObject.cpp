@@ -40,30 +40,30 @@
 //
 // Each Section is spatially disjoint, and has exactly one SHT entry.
 //
-#include <util.h>
+#include "util.h"
 
-#include <llvm/Support/MemoryBuffer.h>
-#include <yasmx/Support/bitcount.h>
-#include <yasmx/Support/Compose.h>
-#include <yasmx/Support/errwarn.h>
-#include <yasmx/Support/nocase.h>
-#include <yasmx/Support/registry.h>
-#include <yasmx/Support/scoped_array.h>
-#include <yasmx/Arch.h>
-#include <yasmx/BytecodeContainer_util.h>
-#include <yasmx/BytecodeOutput.h>
-#include <yasmx/Bytecode.h>
-#include <yasmx/Directive.h>
-#include <yasmx/DirHelpers.h>
-#include <yasmx/Errwarns.h>
-#include <yasmx/Location_util.h>
-#include <yasmx/Object.h>
-#include <yasmx/ObjectFormat.h>
-#include <yasmx/Object_util.h>
-#include <yasmx/NameValue.h>
-#include <yasmx/Section.h>
-#include <yasmx/StringTable.h>
-#include <yasmx/Symbol_util.h>
+#include "llvm/Support/MemoryBuffer.h"
+#include "yasmx/Support/bitcount.h"
+#include "yasmx/Support/Compose.h"
+#include "yasmx/Support/errwarn.h"
+#include "yasmx/Support/nocase.h"
+#include "yasmx/Support/registry.h"
+#include "yasmx/Support/scoped_array.h"
+#include "yasmx/Arch.h"
+#include "yasmx/BytecodeContainer_util.h"
+#include "yasmx/BytecodeOutput.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/Directive.h"
+#include "yasmx/DirHelpers.h"
+#include "yasmx/Errwarns.h"
+#include "yasmx/Location_util.h"
+#include "yasmx/Object.h"
+#include "yasmx/ObjectFormat.h"
+#include "yasmx/Object_util.h"
+#include "yasmx/NameValue.h"
+#include "yasmx/Section.h"
+#include "yasmx/StringTable.h"
+#include "yasmx/Symbol_util.h"
 
 #include "ElfConfig.h"
 #include "ElfMachine.h"

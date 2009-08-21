@@ -24,19 +24,19 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <util.h>
+#include "util.h"
 
-#include <yasmx/Support/Compose.h>
-#include <yasmx/Support/errwarn.h>
-#include <yasmx/Support/nocase.h>
-#include <yasmx/Support/registry.h>
-#include <yasmx/Arch.h>
-#include <yasmx/BytecodeContainer_util.h>
-#include <yasmx/Directive.h>
-#include <yasmx/Errwarns.h>
-#include <yasmx/Object.h>
-#include <yasmx/NameValue.h>
-#include <yasmx/Symbol.h>
+#include "yasmx/Support/Compose.h"
+#include "yasmx/Support/errwarn.h"
+#include "yasmx/Support/nocase.h"
+#include "yasmx/Support/registry.h"
+#include "yasmx/Arch.h"
+#include "yasmx/BytecodeContainer_util.h"
+#include "yasmx/Directive.h"
+#include "yasmx/Errwarns.h"
+#include "yasmx/Object.h"
+#include "yasmx/NameValue.h"
+#include "yasmx/Symbol.h"
 
 #include "modules/objfmts/win32/Win32Object.h"
 #include "modules/objfmts/coff/CoffSection.h"

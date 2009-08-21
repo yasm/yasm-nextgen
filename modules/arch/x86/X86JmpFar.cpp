@@ -28,10 +28,10 @@
 
 #include "X86JmpFar.h"
 
-#include <llvm/ADT/Statistic.h>
-#include <yasmx/BytecodeContainer.h>
-#include <yasmx/Bytecode.h>
-#include <yasmx/Expr.h>
+#include "llvm/ADT/Statistic.h"
+#include "yasmx/BytecodeContainer.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/Expr.h"
 
 #include "X86Common.h"
 #include "X86Opcode.h"

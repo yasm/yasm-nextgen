@@ -26,7 +26,7 @@
 //
 #include "ElfSection.h"
 
-#include <util.h>
+#include "util.h"
 
 #include "YAML/emitter.h"
 #include "yasmx/Support/Compose.h"

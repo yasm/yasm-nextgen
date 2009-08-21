@@ -26,7 +26,7 @@
 //
 #include "ElfConfig.h"
 
-#include <util.h>
+#include "util.h"
 
 #include "llvm/Support/Streams.h"
 #include "YAML/emitter.h"

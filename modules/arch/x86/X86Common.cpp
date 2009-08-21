@@ -28,10 +28,10 @@
 
 #include "util.h"
 
-#include <YAML/emitter.h>
-#include <yasmx/Support/errwarn.h>
-#include <yasmx/Bytes.h>
-#include <yasmx/Bytes_util.h>
+#include "YAML/emitter.h"
+#include "yasmx/Support/errwarn.h"
+#include "yasmx/Bytes.h"
+#include "yasmx/Bytes_util.h"
 
 #include "X86Prefix.h"
 #include "X86Register.h"

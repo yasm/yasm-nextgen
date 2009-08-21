@@ -28,8 +28,8 @@
 //
 #include <string>
 
-#include <yasmx/AssocData.h>
-#include <yasmx/Symbol.h>
+#include "yasmx/AssocData.h"
+#include "yasmx/Symbol.h"
 
 
 namespace yasm

@@ -26,10 +26,10 @@
 //
 #include "XdfSection.h"
 
-#include <YAML/emitter.h>
-#include <yasmx/Bytes.h>
-#include <yasmx/Bytes_util.h>
-#include <yasmx/InputBuffer.h>
+#include "YAML/emitter.h"
+#include "yasmx/Bytes.h"
+#include "yasmx/Bytes_util.h"
+#include "yasmx/InputBuffer.h"
 
 #include "XdfSymbol.h"
 

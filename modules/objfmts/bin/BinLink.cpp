@@ -26,19 +26,19 @@
 //
 #include "BinLink.h"
 
-#include <util.h>
+#include "util.h"
 
 #include <algorithm>
 
-#include <llvm/Support/Streams.h>
-#include <YAML/emitter.h>
-#include <yasmx/Support/Compose.h>
-#include <yasmx/Support/errwarn.h>
-#include <yasmx/Bytecode.h>
-#include <yasmx/Errwarns.h>
-#include <yasmx/Expr.h>
-#include <yasmx/Object.h>
-#include <yasmx/Section.h>
+#include "llvm/Support/Streams.h"
+#include "YAML/emitter.h"
+#include "yasmx/Support/Compose.h"
+#include "yasmx/Support/errwarn.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/Errwarns.h"
+#include "yasmx/Expr.h"
+#include "yasmx/Object.h"
+#include "yasmx/Section.h"
 
 #include "BinSection.h"
 

@@ -26,9 +26,9 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <yasmx/AssocData.h>
-#include <yasmx/Symbol.h>
-#include <yasmx/SymbolRef.h>
+#include "yasmx/AssocData.h"
+#include "yasmx/Symbol.h"
+#include "yasmx/SymbolRef.h"
 
 
 namespace yasm

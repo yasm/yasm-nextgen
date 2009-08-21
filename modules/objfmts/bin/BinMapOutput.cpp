@@ -29,14 +29,14 @@
 #include <iomanip>
 #include <ostream>
 
-#include <yasmx/Bytecode.h>
-#include <yasmx/Expr.h>
-#include <yasmx/IntNum.h>
-#include <yasmx/IntNum_iomanip.h>
-#include <yasmx/Location.h>
-#include <yasmx/Section.h>
-#include <yasmx/Symbol.h>
-#include <yasmx/Object.h>
+#include "yasmx/Bytecode.h"
+#include "yasmx/Expr.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/IntNum_iomanip.h"
+#include "yasmx/Location.h"
+#include "yasmx/Section.h"
+#include "yasmx/Symbol.h"
+#include "yasmx/Object.h"
 
 #include "BinSection.h"
 #include "BinSymbol.h"

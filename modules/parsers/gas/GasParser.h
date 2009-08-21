@@ -34,13 +34,13 @@
 #include <string>
 #include <vector>
 
-#include <llvm/ADT/APFloat.h>
-#include <yasmx/Mixin/ParserMixin.h>
-#include <yasmx/Support/ptr_vector.h>
-#include <yasmx/Insn.h>
-#include <yasmx/IntNum.h>
-#include <yasmx/Linemap.h>
-#include <yasmx/Parser.h>
+#include "llvm/ADT/APFloat.h"
+#include "yasmx/Mixin/ParserMixin.h"
+#include "yasmx/Support/ptr_vector.h"
+#include "yasmx/Insn.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/Linemap.h"
+#include "yasmx/Parser.h"
 
 namespace yasm
 {

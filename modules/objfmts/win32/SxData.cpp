@@ -26,11 +26,11 @@
 //
 #include "SxData.h"
 
-#include <YAML/emitter.h>
-#include <yasmx/BytecodeContainer.h>
-#include <yasmx/BytecodeOutput.h>
-#include <yasmx/Bytecode.h>
-#include <yasmx/Bytes_util.h>
+#include "YAML/emitter.h"
+#include "yasmx/BytecodeContainer.h"
+#include "yasmx/BytecodeOutput.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/Bytes_util.h"
 
 #include "modules/objfmts/coff/CoffSymbol.h"
 

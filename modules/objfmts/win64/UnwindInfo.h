@@ -29,9 +29,9 @@
 #include <memory>
 #include <vector>
 
-#include <yasmx/Bytecode.h>
-#include <yasmx/SymbolRef.h>
-#include <yasmx/Value.h>
+#include "yasmx/Bytecode.h"
+#include "yasmx/SymbolRef.h"
+#include "yasmx/Value.h"
 
 #include "UnwindCode.h"
 

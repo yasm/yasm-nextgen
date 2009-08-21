@@ -26,7 +26,7 @@
 //
 #include "ElfReloc.h"
 
-#include <util.h>
+#include "util.h"
 
 #include "YAML/emitter.h"
 #include "yasmx/Support/errwarn.h"

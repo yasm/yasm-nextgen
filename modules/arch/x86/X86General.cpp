@@ -30,18 +30,18 @@
 
 #include "util.h"
 
-#include <llvm/ADT/Statistic.h>
-#include <YAML/emitter.h>
-#include <yasmx/Support/errwarn.h>
-#include <yasmx/BytecodeContainer.h>
-#include <yasmx/BytecodeOutput.h>
-#include <yasmx/Bytecode.h>
-#include <yasmx/Bytes.h>
-#include <yasmx/Bytes_util.h>
-#include <yasmx/Expr.h>
-#include <yasmx/IntNum.h>
-#include <yasmx/Object.h>
-#include <yasmx/Symbol.h>
+#include "llvm/ADT/Statistic.h"
+#include "YAML/emitter.h"
+#include "yasmx/Support/errwarn.h"
+#include "yasmx/BytecodeContainer.h"
+#include "yasmx/BytecodeOutput.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/Bytes.h"
+#include "yasmx/Bytes_util.h"
+#include "yasmx/Expr.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/Object.h"
+#include "yasmx/Symbol.h"
 
 #include "X86Arch.h"
 #include "X86Common.h"

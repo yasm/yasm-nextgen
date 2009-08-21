@@ -26,19 +26,19 @@
 //
 #include "Win32Object.h"
 
-#include <util.h>
+#include "util.h"
 
 #include <vector>
 
-#include <yasmx/Support/errwarn.h>
-#include <yasmx/Support/nocase.h>
-#include <yasmx/Support/registry.h>
-#include <yasmx/BytecodeContainer_util.h>
-#include <yasmx/Directive.h>
-#include <yasmx/DirHelpers.h>
-#include <yasmx/Object.h>
-#include <yasmx/NameValue.h>
-#include <yasmx/Symbol.h>
+#include "yasmx/Support/errwarn.h"
+#include "yasmx/Support/nocase.h"
+#include "yasmx/Support/registry.h"
+#include "yasmx/BytecodeContainer_util.h"
+#include "yasmx/Directive.h"
+#include "yasmx/DirHelpers.h"
+#include "yasmx/Object.h"
+#include "yasmx/NameValue.h"
+#include "yasmx/Symbol.h"
 
 #include "modules/objfmts/coff/CoffSection.h"
 #include "SxData.h"

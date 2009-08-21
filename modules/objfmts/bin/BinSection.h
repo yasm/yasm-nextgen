@@ -28,10 +28,10 @@
 //
 #include <string>
 
-#include <yasmx/Support/scoped_ptr.h>
-#include <yasmx/AssocData.h>
-#include <yasmx/IntNum.h>
-#include <yasmx/Section.h>
+#include "yasmx/Support/scoped_ptr.h"
+#include "yasmx/AssocData.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/Section.h"
 
 
 namespace yasm

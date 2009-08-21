@@ -28,14 +28,14 @@
 //
 #include <memory>
 
-#include <llvm/ADT/APFloat.h>
-#include <yasmx/Mixin/ParserMixin.h>
-#include <yasmx/Support/scoped_ptr.h>
-#include <yasmx/Bytecode.h>
-#include <yasmx/Insn.h>
-#include <yasmx/IntNum.h>
-#include <yasmx/Linemap.h>
-#include <yasmx/Parser.h>
+#include "llvm/ADT/APFloat.h"
+#include "yasmx/Mixin/ParserMixin.h"
+#include "yasmx/Support/scoped_ptr.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/Insn.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/Linemap.h"
+#include "yasmx/Parser.h"
 
 
 namespace yasm

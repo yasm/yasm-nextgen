@@ -27,19 +27,19 @@
 
 #include "util.h"
 
-#include <llvm/ADT/APInt.h>
-#include <llvm/ADT/APFloat.h>
-#include <yasmx/Support/Compose.h>
-#include <yasmx/Support/errwarn.h>
-#include <yasmx/Support/nocase.h>
-#include <yasmx/Support/registry.h>
-#include <yasmx/Bytes.h>
-#include <yasmx/Bytes_util.h>
-#include <yasmx/Directive.h>
-#include <yasmx/Expr.h>
-#include <yasmx/IntNum.h>
-#include <yasmx/Object.h>
-#include <yasmx/NameValue.h>
+#include "llvm/ADT/APInt.h"
+#include "llvm/ADT/APFloat.h"
+#include "yasmx/Support/Compose.h"
+#include "yasmx/Support/errwarn.h"
+#include "yasmx/Support/nocase.h"
+#include "yasmx/Support/registry.h"
+#include "yasmx/Bytes.h"
+#include "yasmx/Bytes_util.h"
+#include "yasmx/Directive.h"
+#include "yasmx/Expr.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/Object.h"
+#include "yasmx/NameValue.h"
 
 #include "X86EffAddr.h"
 #include "X86RegisterGroup.h"

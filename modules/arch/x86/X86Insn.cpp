@@ -28,22 +28,22 @@
 
 #include "X86Insn.h"
 
-#include <util.h>
+#include "util.h"
 
 #include <algorithm>
 #include <cctype>
 #include <cstring>
 #include <string>
 
-#include <llvm/ADT/Statistic.h>
-#include <YAML/emitter.h>
-#include <yasmx/Config/functional.h>
-#include <yasmx/Support/Compose.h>
-#include <yasmx/Support/errwarn.h>
-#include <yasmx/Support/phash.h>
-#include <yasmx/EffAddr.h>
-#include <yasmx/Expr.h>
-#include <yasmx/IntNum.h>
+#include "llvm/ADT/Statistic.h"
+#include "YAML/emitter.h"
+#include "yasmx/Config/functional.h"
+#include "yasmx/Support/Compose.h"
+#include "yasmx/Support/errwarn.h"
+#include "yasmx/Support/phash.h"
+#include "yasmx/EffAddr.h"
+#include "yasmx/Expr.h"
+#include "yasmx/IntNum.h"
 
 #include "X86Arch.h"
 #include "X86Common.h"

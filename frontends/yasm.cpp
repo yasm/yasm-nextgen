@@ -24,30 +24,30 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <util.h>
+#include "util.h"
 
 #include <iomanip>
 #include <iostream>
 #include <fstream>
 
-#include <llvm/Support/CommandLine.h>
-#include <llvm/Support/ManagedStatic.h>
-#include <llvm/Support/MemoryBuffer.h>
-#include <yasmx/Support/Compose.h>
-#include <yasmx/Support/errwarn.h>
-#include <yasmx/Support/nocase.h>
-#include <yasmx/Support/registry.h>
-#include <yasmx/System/plugin.h>
-#include <yasmx/Arch.h>
-#include <yasmx/Assembler.h>
-#include <yasmx/DebugFormat.h>
-#include <yasmx/Errwarns.h>
-#include <yasmx/Linemap.h>
-#include <yasmx/ListFormat.h>
-#include <yasmx/Module.h>
-#include <yasmx/ObjectFormat.h>
-#include <yasmx/Parser.h>
-#include <yasmx/Preprocessor.h>
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "yasmx/Support/Compose.h"
+#include "yasmx/Support/errwarn.h"
+#include "yasmx/Support/nocase.h"
+#include "yasmx/Support/registry.h"
+#include "yasmx/System/plugin.h"
+#include "yasmx/Arch.h"
+#include "yasmx/Assembler.h"
+#include "yasmx/DebugFormat.h"
+#include "yasmx/Errwarns.h"
+#include "yasmx/Linemap.h"
+#include "yasmx/ListFormat.h"
+#include "yasmx/Module.h"
+#include "yasmx/ObjectFormat.h"
+#include "yasmx/Parser.h"
+#include "yasmx/Preprocessor.h"
 
 #ifdef HAVE_LIBGEN_H
 #include <libgen.h>

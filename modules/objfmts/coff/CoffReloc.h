@@ -28,9 +28,9 @@
 //
 #include <string>
 
-#include <yasmx/Expr.h>
-#include <yasmx/Reloc.h>
-#include <yasmx/SymbolRef.h>
+#include "yasmx/Expr.h"
+#include "yasmx/Reloc.h"
+#include "yasmx/SymbolRef.h"
 
 namespace yasm
 {

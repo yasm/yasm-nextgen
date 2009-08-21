@@ -26,7 +26,7 @@
 //
 #include "XdfSymbol.h"
 
-#include <YAML/emitter.h>
+#include "YAML/emitter.h"
 
 
 namespace yasm

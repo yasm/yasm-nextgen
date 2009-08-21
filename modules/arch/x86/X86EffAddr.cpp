@@ -26,14 +26,14 @@
 //
 #include "X86EffAddr.h"
 
-#include <util.h>
+#include "util.h"
 
-#include <YAML/emitter.h>
-#include <yasmx/Config/functional.h>
-#include <yasmx/Support/errwarn.h>
-#include <yasmx/Expr.h>
-#include <yasmx/Expr_util.h>
-#include <yasmx/IntNum.h>
+#include "YAML/emitter.h"
+#include "yasmx/Config/functional.h"
+#include "yasmx/Support/errwarn.h"
+#include "yasmx/Expr.h"
+#include "yasmx/Expr_util.h"
+#include "yasmx/IntNum.h"
 
 #include "X86Register.h"
 

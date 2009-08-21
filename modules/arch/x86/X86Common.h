@@ -28,7 +28,7 @@
 //
 #include <vector>
 
-#include <yasmx/Insn.h>
+#include "yasmx/Insn.h"
 
 
 namespace YAML { class Emitter; }

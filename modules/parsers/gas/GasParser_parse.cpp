@@ -27,27 +27,27 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <util.h>
+#include "util.h"
 
 #include <cctype>
 #include <climits>
 #include <cmath>
 
-#include <yasmx/Support/bitcount.h>
-#include <yasmx/Support/Compose.h>
-#include <yasmx/Support/errwarn.h>
-#include <yasmx/Arch.h>
-#include <yasmx/Bytecode.h>
-#include <yasmx/BytecodeContainer.h>
-#include <yasmx/BytecodeContainer_util.h>
-#include <yasmx/Directive.h>
-#include <yasmx/Errwarns.h>
-#include <yasmx/NameValue.h>
-#include <yasmx/Object.h>
-#include <yasmx/Preprocessor.h>
-#include <yasmx/Section.h>
-#include <yasmx/Symbol.h>
-#include <yasmx/Symbol_util.h>
+#include "yasmx/Support/bitcount.h"
+#include "yasmx/Support/Compose.h"
+#include "yasmx/Support/errwarn.h"
+#include "yasmx/Arch.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/BytecodeContainer.h"
+#include "yasmx/BytecodeContainer_util.h"
+#include "yasmx/Directive.h"
+#include "yasmx/Errwarns.h"
+#include "yasmx/NameValue.h"
+#include "yasmx/Object.h"
+#include "yasmx/Preprocessor.h"
+#include "yasmx/Section.h"
+#include "yasmx/Symbol.h"
+#include "yasmx/Symbol_util.h"
 
 #include "GasParser.h"
 

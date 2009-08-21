@@ -26,16 +26,16 @@
 //
 #include "NasmParser.h"
 
-#include <util.h>
+#include "util.h"
 
-#include <yasmx/Support/nocase.h>
-#include <yasmx/Support/registry.h>
-#include <yasmx/Arch.h>
-#include <yasmx/Directive.h>
-#include <yasmx/Expr.h>
-#include <yasmx/Object.h>
-#include <yasmx/Section.h>
-#include <yasmx/Symbol_util.h>
+#include "yasmx/Support/nocase.h"
+#include "yasmx/Support/registry.h"
+#include "yasmx/Arch.h"
+#include "yasmx/Directive.h"
+#include "yasmx/Expr.h"
+#include "yasmx/Object.h"
+#include "yasmx/Section.h"
+#include "yasmx/Symbol_util.h"
 
 
 namespace yasm

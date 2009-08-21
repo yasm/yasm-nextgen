@@ -26,11 +26,11 @@
 //
 #include "XdfReloc.h"
 
-#include <YAML/emitter.h>
-#include <yasmx/Bytes.h>
-#include <yasmx/Bytes_util.h>
-#include <yasmx/IntNum.h>
-#include <yasmx/Value.h>
+#include "YAML/emitter.h"
+#include "yasmx/Bytes.h"
+#include "yasmx/Bytes_util.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/Value.h"
 
 #include "XdfSymbol.h"
 

@@ -26,8 +26,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <yasmx/Support/ptr_vector.h>
-#include <yasmx/Bytes.h>
+#include "yasmx/Support/ptr_vector.h"
+#include "yasmx/Bytes.h"
 
 
 namespace YAML { class Emitter; }

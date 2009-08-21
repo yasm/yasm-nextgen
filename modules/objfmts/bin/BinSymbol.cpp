@@ -26,12 +26,12 @@
 //
 #include "BinSymbol.h"
 
-#include <YAML/emitter.h>
-#include <yasmx/BytecodeContainer.h>
-#include <yasmx/Bytecode.h>
-#include <yasmx/Expr.h>
-#include <yasmx/Section.h>
-#include <yasmx/Symbol.h>
+#include "YAML/emitter.h"
+#include "yasmx/BytecodeContainer.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/Expr.h"
+#include "yasmx/Section.h"
+#include "yasmx/Symbol.h"
 
 #include "BinSection.h"
 

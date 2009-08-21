@@ -29,13 +29,13 @@
 #include <iosfwd>
 #include <vector>
 
-#include <yasmx/AssocData.h>
-#include <yasmx/Bytes.h>
-#include <yasmx/IntNum.h>
-#include <yasmx/Reloc.h>
-#include <yasmx/Section.h>
-#include <yasmx/Symbol.h>
-#include <yasmx/SymbolRef.h>
+#include "yasmx/AssocData.h"
+#include "yasmx/Bytes.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/Reloc.h"
+#include "yasmx/Section.h"
+#include "yasmx/Symbol.h"
+#include "yasmx/SymbolRef.h"
 
 #include "ElfTypes.h"
 

@@ -28,13 +28,13 @@
 
 #include <cstring>
 
-#include <util.h>
+#include "util.h"
 
-#include <YAML/emitter.h>
-#include <yasmx/Support/Compose.h>
-#include <yasmx/Bytes.h>
-#include <yasmx/Bytes_util.h>
-#include <yasmx/Symbol.h>
+#include "YAML/emitter.h"
+#include "yasmx/Support/Compose.h"
+#include "yasmx/Bytes.h"
+#include "yasmx/Bytes_util.h"
+#include "yasmx/Symbol.h"
 
 
 namespace yasm

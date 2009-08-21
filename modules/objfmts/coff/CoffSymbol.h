@@ -29,8 +29,8 @@
 #include <string>
 #include <vector>
 
-#include <yasmx/AssocData.h>
-#include <yasmx/Symbol.h>
+#include "yasmx/AssocData.h"
+#include "yasmx/Symbol.h"
 
 
 namespace YAML { class Emitter; }

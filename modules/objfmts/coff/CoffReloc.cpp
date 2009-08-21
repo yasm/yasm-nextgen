@@ -26,12 +26,12 @@
 //
 #include "CoffReloc.h"
 
-#include <util.h>
+#include "util.h"
 
-#include <YAML/emitter.h>
-#include <yasmx/Bytes.h>
-#include <yasmx/Bytes_util.h>
-#include <yasmx/Errwarns.h>
+#include "YAML/emitter.h"
+#include "yasmx/Bytes.h"
+#include "yasmx/Bytes_util.h"
+#include "yasmx/Errwarns.h"
 
 #include "CoffSymbol.h"
 

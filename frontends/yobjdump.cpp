@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <util.h>
+#include "util.h"
 
 #include <cctype>
 #include <cstring>
@@ -34,23 +34,23 @@
 #include <string>
 #include <vector>
 
-#include <llvm/Support/CommandLine.h>
-#include <llvm/Support/ManagedStatic.h>
-#include <llvm/Support/MemoryBuffer.h>
-#include <yasmx/Support/Compose.h>
-#include <yasmx/Support/errwarn.h>
-#include <yasmx/Support/nocase.h>
-#include <yasmx/Support/registry.h>
-#include <yasmx/System/plugin.h>
-#include <yasmx/Arch.h>
-#include <yasmx/Bytecode.h>
-#include <yasmx/IntNum_iomanip.h>
-#include <yasmx/Location.h>
-#include <yasmx/Object.h>
-#include <yasmx/ObjectFormat.h>
-#include <yasmx/Reloc.h>
-#include <yasmx/Section.h>
-#include <yasmx/Symbol.h>
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "yasmx/Support/Compose.h"
+#include "yasmx/Support/errwarn.h"
+#include "yasmx/Support/nocase.h"
+#include "yasmx/Support/registry.h"
+#include "yasmx/System/plugin.h"
+#include "yasmx/Arch.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/IntNum_iomanip.h"
+#include "yasmx/Location.h"
+#include "yasmx/Object.h"
+#include "yasmx/ObjectFormat.h"
+#include "yasmx/Reloc.h"
+#include "yasmx/Section.h"
+#include "yasmx/Symbol.h"
 
 #include "frontends/license.cpp"
 

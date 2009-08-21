@@ -26,18 +26,18 @@
 //
 #include "CoffSymbol.h"
 
-#include <util.h>
+#include "util.h"
 
-#include <YAML/emitter.h>
-#include <yasmx/Support/errwarn.h>
-#include <yasmx/Bytecode.h>
-#include <yasmx/Bytes_util.h>
-#include <yasmx/Errwarns.h>
-#include <yasmx/IntNum.h>
-#include <yasmx/Location_util.h>
-#include <yasmx/Section.h>
-#include <yasmx/Symbol_util.h>
-#include <yasmx/StringTable.h>
+#include "YAML/emitter.h"
+#include "yasmx/Support/errwarn.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/Bytes_util.h"
+#include "yasmx/Errwarns.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/Location_util.h"
+#include "yasmx/Section.h"
+#include "yasmx/Symbol_util.h"
+#include "yasmx/StringTable.h"
 
 #include "CoffSection.h"
 
