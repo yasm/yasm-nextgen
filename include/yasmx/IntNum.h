@@ -127,7 +127,7 @@ public:
     IntNum(unsigned int i)
     {
         m_type = INTNUM_L;
-        set(i);
+        set(static_cast<unsigned long>(i));
     }
 
     /// Create a new intnum from an signed integer value.
@@ -140,11 +140,32 @@ public:
 
     /// Copy constructor.
     IntNum(const IntNum& rhs);
+
     /// Assignment operators.
     IntNum& operator= (const IntNum& rhs)
     {
         if (this != &rhs)
             IntNum(rhs).swap(*this);
+        return *this;
+    }
+    IntNum& operator= (unsigned long val)
+    {
+        set(val);
+        return *this;
+    }
+    IntNum& operator= (long val)
+    {
+        set(val);
+        return *this;
+    }
+    IntNum& operator= (unsigned int val)
+    {
+        set(static_cast<unsigned long>(val));
+        return *this;
+    }
+    IntNum& operator= (int val)
+    {
+        set(static_cast<long>(val));
         return *this;
     }
 
@@ -171,29 +192,7 @@ public:
     void Calc(Op::Op op, /*@null@*/ const IntNum* operand = 0);
 
     /// Zero an intnum.
-    void Zero() { set(0); }
-
-    /// Set an intnum to an unsigned integer.
-    /// @param val      integer value
-    void set(unsigned long val);
-
-    /// Set an intnum to an signed integer.
-    /// @param val      integer value
-    void set(long val)
-    {
-        if (m_type == INTNUM_BV)
-            delete m_val.bv;
-        m_type = INTNUM_L;
-        m_val.l = val;
-    }
-
-    /// Set an intnum to an unsigned integer.
-    /// @param val      integer value
-    void set(unsigned int val) { set(static_cast<unsigned long>(val)); }
-
-    /// Set an intnum to an signed integer.
-    /// @param val      integer value
-    void set(int val) { set(static_cast<long>(val)); }
+    void Zero() { set(0L); }
 
     /// Simple value check for 0.
     /// @return True if acc==0.
@@ -332,6 +331,21 @@ public:
     /// Dump a YAML representation to stderr.
     /// For debugging purposes.
     void Dump() const;
+
+private:
+    /// Set an intnum to an unsigned integer.
+    /// @param val      integer value
+    void set(unsigned long val);
+
+    /// Set an intnum to an signed integer.
+    /// @param val      integer value
+    void set(long val)
+    {
+        if (m_type == INTNUM_BV)
+            delete m_val.bv;
+        m_type = INTNUM_L;
+        m_val.l = val;
+    }
 };
 
 /// Overloaded assignment binary operators.

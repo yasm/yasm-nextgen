@@ -449,7 +449,7 @@ Span::RecalcNormal()
         // Update sym-sym terms and substitute back into expr
         for (Terms::iterator i=m_span_terms.begin(), end=m_span_terms.end();
              i != end; ++i)
-            m_expr_terms[i->m_subst].getIntNum()->set(i->m_new_val);
+            *m_expr_terms[i->m_subst].getIntNum() = i->m_new_val;
         abs_copy->Substitute(m_expr_terms);
         abs_copy->Simplify();
         if (abs_copy->isIntNum())
