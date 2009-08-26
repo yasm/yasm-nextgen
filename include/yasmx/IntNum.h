@@ -36,6 +36,7 @@
 
 #include "llvm/ADT/APInt.h"
 #include "yasmx/Config/export.h"
+#include "yasmx/Config/longlong.h"
 #include "yasmx/Op.h"
 
 
@@ -64,8 +65,13 @@ class ExprTerm;
 /// Raw storage for IntNum.
 struct YASM_LIB_EXPORT IntNumData
 {
+#ifdef YASM_HAVE_LONG_LONG
+    typedef long long SmallValue;
+    typedef unsigned long long USmallValue;
+#else
     typedef long SmallValue;
     typedef unsigned long USmallValue;
+#endif
     union
     {
         SmallValue sv;          ///< integer value (for integers <=long bits)
@@ -100,12 +106,29 @@ public:
         m_val.sv = 0;
     }
 
+#ifdef YASM_HAVE_LONG_LONG
+    /// Create a new intnum from an unsigned integer value.
+    /// @param i        unsigned integer value
+    IntNum(unsigned long long i)
+    {
+        m_type = INTNUM_SV;
+        set(i);
+    }
+
+    /// Create a new intnum from an signed integer value.
+    /// @param i        signed integer value
+    IntNum(long long i)
+    {
+        m_type = INTNUM_SV;
+        m_val.sv = static_cast<SmallValue>(i);
+    }
+#endif
     /// Create a new intnum from an unsigned integer value.
     /// @param i        unsigned integer value
     IntNum(unsigned long i)
     {
         m_type = INTNUM_SV;
-        set(i);
+        set(static_cast<USmallValue>(i));
     }
 
     /// Create a new intnum from an signed integer value.
@@ -121,7 +144,7 @@ public:
     IntNum(unsigned int i)
     {
         m_type = INTNUM_SV;
-        set(static_cast<unsigned long>(i));
+        set(static_cast<USmallValue>(i));
     }
 
     /// Create a new intnum from an signed integer value.
@@ -142,24 +165,36 @@ public:
             IntNum(rhs).swap(*this);
         return *this;
     }
-    IntNum& operator= (unsigned long val)
+#ifdef YASM_HAVE_LONG_LONG
+    IntNum& operator= (unsigned long long val)
     {
         set(val);
+        return *this;
+    }
+    IntNum& operator= (long long val)
+    {
+        set(val);
+        return *this;
+    }
+#endif
+    IntNum& operator= (unsigned long val)
+    {
+        set(static_cast<USmallValue>(val));
         return *this;
     }
     IntNum& operator= (long val)
     {
-        set(val);
+        set(static_cast<SmallValue>(val));
         return *this;
     }
     IntNum& operator= (unsigned int val)
     {
-        set(static_cast<unsigned long>(val));
+        set(static_cast<USmallValue>(val));
         return *this;
     }
     IntNum& operator= (int val)
     {
-        set(static_cast<long>(val));
+        set(static_cast<SmallValue>(val));
         return *this;
     }
 
@@ -186,7 +221,7 @@ public:
     void Calc(Op::Op op, /*@null@*/ const IntNum* operand = 0);
 
     /// Zero an intnum.
-    void Zero() { set(0L); }
+    void Zero() { set(static_cast<SmallValue>(0)); }
 
     /// Simple value check for 0.
     /// @return True if acc==0.
@@ -229,7 +264,7 @@ public:
     long getInt() const;
 
     /// Determine if intnum will fit in a signed "long" without saturating.
-    bool isInt() const { return (m_type == INTNUM_SV); }
+    bool isInt() const;
 
     /// Check to see if intnum will fit without overflow into size bits.
     /// @param intn         intnum
@@ -329,11 +364,11 @@ public:
 private:
     /// Set an intnum to an unsigned integer.
     /// @param val      integer value
-    void set(unsigned long val);
+    void set(USmallValue val);
 
     /// Set an intnum to an signed integer.
     /// @param val      integer value
-    void set(long val)
+    void set(SmallValue val)
     {
         if (m_type == INTNUM_BV)
             delete m_val.bv;

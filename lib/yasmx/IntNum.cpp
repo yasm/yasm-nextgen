@@ -176,7 +176,7 @@ IntNum::setStr(const char* str, unsigned int len, int base)
         std::strncpy(cstr, str, len);   // len must be < LONG_BITS per minbits
         cstr[len] = '\0';
         v = std::strtol(cstr, NULL, base);
-        set(v);
+        set(static_cast<SmallValue>(v));
     }
     else
     {
@@ -440,40 +440,40 @@ IntNum::Calc(Op::Op op, const IntNum* operand)
                 result.clear();
             break;
         case Op::LOR:
-            set(static_cast<long>((!!*op1) || (!!*op2)));
+            set(static_cast<SmallValue>((!!*op1) || (!!*op2)));
             return;
         case Op::LAND:
-            set(static_cast<long>((!!*op1) && (!!*op2)));
+            set(static_cast<SmallValue>((!!*op1) && (!!*op2)));
             return;
         case Op::LNOT:
-            set(static_cast<long>(!*op1));
+            set(static_cast<SmallValue>(!*op1));
             return;
         case Op::LXOR:
-            set(static_cast<long>((!!*op1) ^ (!!*op2)));
+            set(static_cast<SmallValue>((!!*op1) ^ (!!*op2)));
             return;
         case Op::LXNOR:
-            set(static_cast<long>(!((!!*op1) ^ (!!*op2))));
+            set(static_cast<SmallValue>(!((!!*op1) ^ (!!*op2))));
             return;
         case Op::LNOR:
-            set(static_cast<long>(!((!!*op1) || (!!*op2))));
+            set(static_cast<SmallValue>(!((!!*op1) || (!!*op2))));
             return;
         case Op::EQ:
-            set(static_cast<long>(op1->eq(*op2)));
+            set(static_cast<SmallValue>(op1->eq(*op2)));
             return;
         case Op::LT:
-            set(static_cast<long>(op1->slt(*op2)));
+            set(static_cast<SmallValue>(op1->slt(*op2)));
             return;
         case Op::GT:
-            set(static_cast<long>(op1->sgt(*op2)));
+            set(static_cast<SmallValue>(op1->sgt(*op2)));
             return;
         case Op::LE:
-            set(static_cast<long>(op1->sle(*op2)));
+            set(static_cast<SmallValue>(op1->sle(*op2)));
             return;
         case Op::GE:
-            set(static_cast<long>(op1->sge(*op2)));
+            set(static_cast<SmallValue>(op1->sge(*op2)));
             return;
         case Op::NE:
-            set(static_cast<long>(op1->ne(*op2)));
+            set(static_cast<SmallValue>(op1->ne(*op2)));
             return;
         case Op::SEG:
             throw ArithmeticError(String::Compose(N_("invalid use of '%1'"),
@@ -501,7 +501,7 @@ IntNum::Calc(Op::Op op, const IntNum* operand)
 /*@=nullderef =nullpass =branchstate@*/
 
 void
-IntNum::set(unsigned long val)
+IntNum::set(IntNum::USmallValue val)
 {
     if (val > static_cast<USmallValue>(std::numeric_limits<SmallValue>::max()))
     {
@@ -564,12 +564,27 @@ long
 IntNum::getInt() const
 {
     if (m_type == INTNUM_SV)
+    {
+        if (m_val.sv < LONG_MIN)
+            return LONG_MIN;
+        if (m_val.sv > LONG_MAX)
+            return LONG_MAX;
         return m_val.sv;
+    }
 
     // since it's a BV, it must be >0x7FFFFFFF or <0x80000000
     if (m_val.bv->isNegative())
         return LONG_MIN;
     return LONG_MAX;
+}
+
+bool
+IntNum::isInt() const
+{
+    if (m_type != INTNUM_SV)
+        return false;
+
+    return (m_val.sv >= LONG_MIN && m_val.sv <= LONG_MAX);
 }
 
 bool
