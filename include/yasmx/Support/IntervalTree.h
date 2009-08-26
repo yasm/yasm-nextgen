@@ -916,7 +916,8 @@ IntervalTree<T>::Enumerate(long low, long high,
         {
             recursionNodeStack.push_back(RecursionNode(x, currentParent,
                                                        false));
-            currentParent = recursionNodeStack.size()-1;
+            currentParent =
+                static_cast<unsigned int>(recursionNodeStack.size())-1;
             x = x->left;
         }
         else

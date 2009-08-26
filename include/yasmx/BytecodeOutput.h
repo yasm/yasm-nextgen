@@ -144,7 +144,7 @@ public:
     void Output(const Bytes& bytes)
     {
         DoOutputBytes(bytes);
-        m_num_output += bytes.size();
+        m_num_output += static_cast<unsigned long>(bytes.size());
     }
 
 protected:

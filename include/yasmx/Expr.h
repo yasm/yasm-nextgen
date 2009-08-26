@@ -754,7 +754,7 @@ inline Expr ExprBuilder::operator() (const ExprTerms& terms) const
     for (ExprTerms::const_iterator i=terms.begin(), end=terms.end(); i != end;
          ++i)
         e.Append(*i);
-    e.AppendOp(op, terms.size());
+    e.AppendOp(op, static_cast<int>(terms.size()));
     return e;
 }
 

@@ -259,11 +259,12 @@ public:
     /// @return Total length of the bytecode in bytes.
     /// @warning Only valid /after/ optimization.
     unsigned long getTotalLen() const
-    { return m_fixed.size() + m_len; }
+    { return static_cast<unsigned long>(m_fixed.size()) + m_len; }
 
     /// Get the fixed length of the bytecode.
     /// @return Length in bytes.
-    unsigned long getFixedLen() const { return m_fixed.size(); }
+    unsigned long getFixedLen() const
+    { return static_cast<unsigned long>(m_fixed.size()); }
 
     /// Get the tail (dynamic) length of the bytecode.
     /// @return Length of the bytecode in bytes.
