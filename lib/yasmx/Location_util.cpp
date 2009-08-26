@@ -49,7 +49,7 @@ TransformDistBase(Expr& e, int pos,
 {
     ExprTerms& terms = e.getTerms();
     if (pos < 0)
-        pos += terms.size();
+        pos += static_cast<int>(terms.size());
 
     ExprTerm& root = terms[pos];
     if (!root.isOp(Op::ADD))
