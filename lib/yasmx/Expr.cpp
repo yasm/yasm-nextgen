@@ -164,7 +164,7 @@ const ExprBuilder SEGOFF = {Op::SEGOFF};
 ExprTerm::ExprTerm(std::auto_ptr<IntNum> intn, int depth)
     : m_type(INT), m_depth(depth)
 {
-    m_data.intn.m_type = IntNumData::INTNUM_L;
+    m_data.intn.m_type = IntNumData::INTNUM_SV;
     intn->swap(static_cast<IntNum&>(m_data.intn));
 }
 
@@ -179,7 +179,7 @@ ExprTerm::ExprTerm(const ExprTerm& term)
 {
     if (m_type == INT)
     {
-        m_data.intn.m_type = IntNumData::INTNUM_L;
+        m_data.intn.m_type = IntNumData::INTNUM_SV;
         IntNum tmp(static_cast<const IntNum&>(term.m_data.intn));
         tmp.swap(static_cast<IntNum&>(m_data.intn));
     }

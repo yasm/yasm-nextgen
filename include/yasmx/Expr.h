@@ -89,7 +89,7 @@ public:
     explicit ExprTerm(IntNum intn, int depth=0)
         : m_type(INT), m_depth(depth)
     {
-        m_data.intn.m_type = IntNumData::INTNUM_L;
+        m_data.intn.m_type = IntNumData::INTNUM_SV;
         intn.swap(static_cast<IntNum&>(m_data.intn));
     }
     explicit ExprTerm(const Subst& subst, int depth=0)
@@ -200,7 +200,7 @@ public:
     {
         Clear();
         m_type = INT;
-        m_data.intn.m_type = IntNumData::INTNUM_L;
+        m_data.intn.m_type = IntNumData::INTNUM_SV;
         intn.swap(static_cast<IntNum&>(m_data.intn));
     }
 

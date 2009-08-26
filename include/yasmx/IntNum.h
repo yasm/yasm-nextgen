@@ -32,7 +32,6 @@
 #include <algorithm>
 #include <cstdlib>
 #include <iosfwd>
-#include <limits>
 #include <string>
 
 #include "llvm/ADT/APInt.h"
@@ -65,12 +64,14 @@ class ExprTerm;
 /// Raw storage for IntNum.
 struct YASM_LIB_EXPORT IntNumData
 {
+    typedef long SmallValue;
+    typedef unsigned long USmallValue;
     union
     {
-        long l;                 ///< integer value (for integers <=long bits)
+        SmallValue sv;          ///< integer value (for integers <=long bits)
         llvm::APInt* bv;        ///< big value (for integers >long bits)
     } m_val;
-    enum { INTNUM_L, INTNUM_BV } m_type;
+    enum { INTNUM_SV, INTNUM_BV } m_type;
 };
 
 /// Big integer number.
@@ -92,25 +93,18 @@ public:
     /// "Native" "word" size for intnum calculations.
     enum { BITVECT_NATIVE_SIZE = 256 };
 
-    /// C integer sizes (in bits).
-    enum
-    {
-        LONG_BITS = std::numeric_limits<long>::digits,
-        ULONG_BITS = std::numeric_limits<unsigned long>::digits
-    };
-
     /// Default constructor.  Initializes value to 0.
     IntNum()
     {
-        m_type = INTNUM_L;
-        m_val.l = 0;
+        m_type = INTNUM_SV;
+        m_val.sv = 0;
     }
 
     /// Create a new intnum from an unsigned integer value.
     /// @param i        unsigned integer value
     IntNum(unsigned long i)
     {
-        m_type = INTNUM_L;
+        m_type = INTNUM_SV;
         set(i);
     }
 
@@ -118,15 +112,15 @@ public:
     /// @param i        signed integer value
     IntNum(long i)
     {
-        m_type = INTNUM_L;
-        m_val.l = i;
+        m_type = INTNUM_SV;
+        m_val.sv = static_cast<SmallValue>(i);
     }
 
     /// Create a new intnum from an unsigned integer value.
     /// @param i        unsigned integer value
     IntNum(unsigned int i)
     {
-        m_type = INTNUM_L;
+        m_type = INTNUM_SV;
         set(static_cast<unsigned long>(i));
     }
 
@@ -134,8 +128,8 @@ public:
     /// @param i        signed integer value
     IntNum(int i)
     {
-        m_type = INTNUM_L;
-        m_val.l = static_cast<long>(i);
+        m_type = INTNUM_SV;
+        m_val.sv = static_cast<SmallValue>(i);
     }
 
     /// Copy constructor.
@@ -198,7 +192,7 @@ public:
     /// @return True if acc==0.
     bool isZero() const
     {
-        return (m_type == INTNUM_L && m_val.l == 0);
+        return (m_type == INTNUM_SV && m_val.sv == 0);
     }
 
     /// Simple value check for 1.
@@ -206,14 +200,14 @@ public:
     /// @return True if acc==1.
     bool isPos1() const
     {
-        return (m_type == INTNUM_L && m_val.l == 1);
+        return (m_type == INTNUM_SV && m_val.sv == 1);
     }
 
     /// Simple value check for -1.
     /// @return True if acc==-1.
     bool isNeg1() const
     {
-        return (m_type == INTNUM_L && m_val.l == -1);
+        return (m_type == INTNUM_SV && m_val.sv == -1);
     }
 
     /// Simple sign check.
@@ -235,7 +229,7 @@ public:
     long getInt() const;
 
     /// Determine if intnum will fit in a signed "long" without saturating.
-    bool isInt() const { return (m_type == INTNUM_L); }
+    bool isInt() const { return (m_type == INTNUM_SV); }
 
     /// Check to see if intnum will fit without overflow into size bits.
     /// @param intn         intnum
@@ -343,8 +337,8 @@ private:
     {
         if (m_type == INTNUM_BV)
             delete m_val.bv;
-        m_type = INTNUM_L;
-        m_val.l = val;
+        m_type = INTNUM_SV;
+        m_val.sv = val;
     }
 };
 
