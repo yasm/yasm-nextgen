@@ -40,7 +40,7 @@ namespace coff
 {
 
 struct CoffSection;
-class CoffSymbol;
+struct CoffSymbol;
 
 class CoffObject : public ObjectFormat
 {
