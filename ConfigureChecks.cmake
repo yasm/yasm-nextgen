@@ -1,5 +1,6 @@
 INCLUDE(CheckCXXSourceCompiles)
 INCLUDE(CheckCXXCompilerFlag)
+INCLUDE(CheckTypeSize)
 INCLUDE(TestCXXAcceptsFlag)
 INCLUDE(CMakeBackwardCompatibilityCXX)
 INCLUDE(MacroEnsureVersion)
@@ -54,6 +55,12 @@ check_include_file(time.h HAVE_TIME_H)
 check_include_file(unistd.h HAVE_UNISTD_H)
 check_include_file(utime.h HAVE_UTIME_H)
 check_include_file(windows.h HAVE_WINDOWS_H)
+
+check_type_size("long long" LONG_LONG)
+check_type_size("unsigned long long" UNSIGNED_LONG_LONG)
+IF (HAVE_LONG_LONG AND HAVE_UNSIGNED_LONG_LONG)
+    SET(YASM_HAVE_LONG_LONG 1)
+ENDIF (HAVE_LONG_LONG AND HAVE_UNSIGNED_LONG_LONG)
 
 # library checks
 INCLUDE(CheckLibraryExists)
@@ -510,6 +517,10 @@ CONFIGURE_FILE(
 CONFIGURE_FILE(
     include/yasmx/Config/export.h.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/include/yasmx/Config/export.h
+    )
+CONFIGURE_FILE(
+    include/yasmx/Config/longlong.h.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/include/yasmx/Config/longlong.h
     )
 
 # Generate LLVM configured files
