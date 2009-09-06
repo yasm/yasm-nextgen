@@ -7,7 +7,6 @@ Key:
 
 - Translate more object formats from C version:
 -   macho
--   rdf
 - Translate debug formats from C version:
 -   stabs
 -   dwarf2
