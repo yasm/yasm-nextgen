@@ -125,6 +125,10 @@ public:
     /// Can raise std::out_of_range exception if index out of range.
     Section& getSection(Sections::size_type n) { return m_sections.at(n); }
 
+    /// Get number of sections.
+    /// @return Number of sections.
+    Sections::size_type getNumSections() const { return m_sections.size(); }
+
     section_iterator sections_begin() { return m_sections.begin(); }
     const_section_iterator sections_begin() const
     { return m_sections.begin(); }
