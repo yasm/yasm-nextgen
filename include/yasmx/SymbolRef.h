@@ -29,8 +29,9 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "yasmx/Config/export.h"
+#include <cassert>
 
+#include "yasmx/Config/export.h"
 
 namespace YAML { class Emitter; }
 
@@ -44,10 +45,19 @@ class Symbol;
 class SymbolRef
 {
 public:
+    SymbolRef() : m_sym(0) {}
     explicit SymbolRef(Symbol* sym) : m_sym(sym) {}
     operator Symbol* () const { return m_sym; }
-    Symbol& operator*() const { return *m_sym; }
-    Symbol* operator->() const { return m_sym; }
+    Symbol& operator*() const
+    {
+        assert(m_sym && "deref of null symbol reference");
+        return *m_sym;
+    }
+    Symbol* operator->() const
+    {
+        assert(m_sym && "deref of null symbol reference");
+        return m_sym;
+    }
 
 private:
     Symbol* m_sym;
