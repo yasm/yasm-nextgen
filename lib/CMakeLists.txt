@@ -16,7 +16,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     Support/MemoryBuffer.cpp
     Support/SmallPtrSet.cpp
     Support/Statistic.cpp
-    Support/Streams.cpp
     Support/StringExtras.cpp
     Support/StringMap.cpp
     Support/Timer.cpp

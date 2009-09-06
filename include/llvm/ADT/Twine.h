@@ -322,6 +322,16 @@ namespace llvm {
     }
 
     /// @}
+    /// @name Predicate Operations
+    /// @{
+
+    /// isTriviallyEmpty - Check if this twine is trivially empty; a false
+    /// return value does not necessarily mean the twine is empty.
+    bool isTriviallyEmpty() const {
+      return isNullary();
+    }
+
+    /// @}
     /// @name String Operations
     /// @{
 

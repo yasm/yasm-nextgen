@@ -20,12 +20,12 @@
 #include "yasmx/Config/export.h"
 #include <string>
 #include <vector>
-#include <iosfwd>
 #include <cassert>
 
 namespace llvm {
 
 class TimerGroup;
+class raw_ostream;
 
 /// Timer - This class is used to track the amount of time spent between
 /// invocations of it's startTimer()/stopTimer() methods.  Given appropriate OS
@@ -113,7 +113,7 @@ public:
 
   /// print - Print the current timer to standard error, and reset the "Started"
   /// flag.
-  void print(const Timer &Total, std::ostream &OS);
+  void print(const Timer &Total, raw_ostream &OS);
 
 private:
   friend class TimerGroup;

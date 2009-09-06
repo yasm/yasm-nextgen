@@ -156,7 +156,8 @@ Path::isAbsolute(const char *NameStart, unsigned NameLen) {
   case 2:
     return NameStart[0] == '/';
   default:
-    return NameStart[0] == '/' || (NameStart[1] == ':' && NameStart[2] == '/');
+    return (NameStart[0] == '/' || (NameStart[1] == ':' && NameStart[2] == '/')) ||
+           (NameStart[0] == '\\' || (NameStart[1] == ':' && NameStart[2] == '\\'));
   }
 }
 
@@ -807,8 +808,8 @@ CopyFile(const sys::Path &Dest, const sys::Path &Src, std::string* ErrMsg) {
   // Can't use CopyFile macro defined in Windows.h because it would mess up the
   // above line.  We use the expansion it would have in a non-UNICODE build.
   if (!::CopyFileA(Src.c_str(), Dest.c_str(), false))
-    return MakeErrMsg(ErrMsg, "Can't copy '" + Src.toString() +
-               "' to '" + Dest.toString() + "': ");
+    return MakeErrMsg(ErrMsg, "Can't copy '" + Src.str() +
+               "' to '" + Dest.str() + "': ");
   return false;
 }
 

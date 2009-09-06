@@ -32,7 +32,7 @@
 #include <iomanip>
 #include <ostream>
 
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 
 
@@ -80,7 +80,7 @@ Bytes::Dump() const
 {
     YAML::Emitter out;
     out << *this;
-    llvm::cerr << out.c_str() << std::endl;
+    llvm::errs() << out.c_str() << '\n';
 }
 
 YAML::Emitter&

@@ -31,6 +31,7 @@
 
 #include <cstring>
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/StringExtras.h"
@@ -272,7 +273,6 @@ GasParser::Lex(YYSTYPE* lvalp)
     int linestart;
 #endif
     YYCTYPE* cursor = m_cur;
-    YYCTYPE savech;
 
     // Handle one token of lookahead
     if (m_peek_token != NONE)
@@ -348,32 +348,24 @@ scan:
         /* floating point value */
         [-+]? digit* "." digit+ ('e' [-+]? digit+)?
         {
-            savech = TOK[TOKLEN];
-            TOK[TOKLEN] = '\0';
             // FIXME: Make arch-dependent
             lvalp->flt.reset(new llvm::APFloat(llvm::APFloat::x87DoubleExtended,
-                                               TOK));
-            TOK[TOKLEN] = savech;
+                                               llvm::StringRef(TOK, TOKLEN)));
             RETURN(FLTNUM);
         }
         [-+]? digit+ "." digit* ('e' [-+]? digit+)?
         {
-            savech = TOK[TOKLEN];
-            TOK[TOKLEN] = '\0';
             // FIXME: Make arch-dependent
             lvalp->flt.reset(new llvm::APFloat(llvm::APFloat::x87DoubleExtended,
-                                               TOK));
-            TOK[TOKLEN] = savech;
+                                               llvm::StringRef(TOK, TOKLEN)));
             RETURN(FLTNUM);
         }
         "0" [DdEeFfTt] [-+]? digit* ("." digit*)? ('e' [-+]? digit+)?
         {
-            savech = TOK[TOKLEN];
-            TOK[TOKLEN] = '\0';
             // FIXME: Make arch-dependent
-            lvalp->flt.reset(new llvm::APFloat(llvm::APFloat::x87DoubleExtended,
-                                               TOK+2));
-            TOK[TOKLEN] = savech;
+            lvalp->flt.reset(
+                new llvm::APFloat(llvm::APFloat::x87DoubleExtended,
+                                  llvm::StringRef(TOK+2, TOKLEN-2)));
             RETURN(FLTNUM);
         }
 

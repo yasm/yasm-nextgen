@@ -25,6 +25,7 @@
 #include <cxxtest/TestSuite.h>
 
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Bytes_util.h"
 
 #ifndef NELEMS

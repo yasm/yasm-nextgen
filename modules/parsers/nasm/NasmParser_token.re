@@ -28,6 +28,7 @@
 //
 #include "util.h"
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/nocase.h"
@@ -293,12 +294,9 @@ scan:
         /* floating point value */
         digit+ "." digit* ('e' [-+]? digit+)?
         {
-            savech = TOK[TOKLEN];
-            TOK[TOKLEN] = '\0';
             // FIXME: Make arch-dependent
             lvalp->flt.reset(new llvm::APFloat(llvm::APFloat::x87DoubleExtended,
-                                               TOK));
-            TOK[TOKLEN] = savech;
+                                               llvm::StringRef(TOK, TOKLEN)));
             RETURN(FLTNUM);
         }
 

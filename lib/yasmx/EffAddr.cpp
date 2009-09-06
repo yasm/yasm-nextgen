@@ -28,7 +28,7 @@
 
 #include "util.h"
 
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Arch.h"
@@ -101,7 +101,7 @@ EffAddr::Dump() const
 {
     YAML::Emitter out;
     Write(out);
-    llvm::cerr << out.c_str() << std::endl;
+    llvm::errs() << out.c_str() << '\n';
 }
 
 } // namespace yasm

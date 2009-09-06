@@ -28,7 +28,7 @@
 
 #include "util.h"
 
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Insn.h"
@@ -46,7 +46,7 @@ Register::Dump() const
 {
     YAML::Emitter out;
     Write(out);
-    llvm::cerr << out.c_str() << std::endl;
+    llvm::errs() << out.c_str() << '\n';
 }
 
 RegisterGroup::~RegisterGroup()
@@ -58,7 +58,7 @@ RegisterGroup::Dump() const
 {
     YAML::Emitter out;
     Write(out);
-    llvm::cerr << out.c_str() << std::endl;
+    llvm::errs() << out.c_str() << '\n';
 }
 
 SegmentRegister::~SegmentRegister()
@@ -70,7 +70,7 @@ SegmentRegister::Dump() const
 {
     YAML::Emitter out;
     Write(out);
-    llvm::cerr << out.c_str() << std::endl;
+    llvm::errs() << out.c_str() << '\n';
 }
 
 Arch::InsnPrefix::InsnPrefix(std::auto_ptr<Insn> insn)

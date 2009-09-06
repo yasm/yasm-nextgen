@@ -23,28 +23,42 @@ namespace llvm {
   class Twine;
 
   /// An error handler callback.
-  typedef void (*llvm_error_handler_t)(const std::string& reason);
+  typedef void (*llvm_error_handler_t)(void *user_data,
+                                       const std::string& reason);
 
-  /// Installs a new error handler: this function will be called whenever a
-  /// serious error is encountered by LLVM.
+  /// llvm_instal_error_handler - Installs a new error handler to be used
+  /// whenever a serious (non-recoverable) error is encountered by LLVM.
+  ///
   /// If you are using llvm_start_multithreaded, you should register the handler
   /// before doing that.
   ///
   /// If no error handler is installed the default is to print the error message
-  /// to stderr, and call exit(1).
-  /// If an error handler is installed then it is the handler's responsibility
-  /// to log the message, it will no longer be printed to stderr.
-  /// If the error handler returns, then exit(1) will be called.
+  /// to stderr, and call exit(1).  If an error handler is installed then it is
+  /// the handler's responsibility to log the message, it will no longer be
+  /// printed to stderr.  If the error handler returns, then exit(1) will be
+  /// called.
+  ///
+  /// It is dangerous to naively use an error handler which throws an exception.
+  /// Even though some applications desire to gracefully recover from arbitrary
+  /// faults, blindly throwing exceptions through unfamiliar code isn't a way to
+  /// achieve this.
+  ///
+  /// \param user_data - An argument which will be passed to the install error
+  /// handler.
   YASM_LIB_EXPORT
-  void llvm_install_error_handler(llvm_error_handler_t handler);
+  void llvm_install_error_handler(llvm_error_handler_t handler,
+                                  void *user_data = 0);
 
   /// Restores default error handling behaviour.
   /// This must not be called between llvm_start_multithreaded() and
   /// llvm_stop_multithreaded().
   YASM_LIB_EXPORT
-  void llvm_remove_error_handler(void);
+  void llvm_remove_error_handler();
 
-  /// Reports a serious error, calling any installed error handler.
+  /// Reports a serious error, calling any installed error handler. These
+  /// functions are intended to be used for error conditions which are outside
+  /// the control of the compiler (I/O errors, invalid user input, etc.)
+  ///
   /// If no error handler is installed the default is to print the message to
   /// standard error, followed by a newline.
   /// After the error handler is called this function will call exit(1), it 
@@ -65,6 +79,9 @@ namespace llvm {
 }
 
 /// Prints the message and location info to stderr in !NDEBUG builds.
+/// This is intended to be used for "impossible" situations that imply
+/// a bug in the compiler.
+///
 /// In NDEBUG mode it only prints "UNREACHABLE executed".
 /// Use this instead of assert(0), so that the compiler knows this path
 /// is not reachable even for NDEBUG builds.
@@ -75,4 +92,3 @@ namespace llvm {
 #endif
 
 #endif
-

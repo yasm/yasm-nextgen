@@ -1,4 +1,5 @@
 #include "YAML/emitter.h"
+#include "llvm/ADT/StringRef.h"
 #include "emitterstate.h"
 #include "emitterutils.h"
 #include "indentation.h"
@@ -477,6 +478,14 @@ namespace YAML
 
 	// *******************************************************************************************
 	// overloads of Write
+	
+	Emitter& Emitter::Write(const llvm::StringRef& str)
+	{
+		if(!good())
+			return *this;
+		
+		return Write(std::string(str));
+	}
 	
 	Emitter& Emitter::Write(const std::string& str)
 	{

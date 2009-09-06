@@ -26,7 +26,6 @@
 #ifndef LLVM_SUPPORT_DEBUG_H
 #define LLVM_SUPPORT_DEBUG_H
 
-#include "llvm/Support/Streams.h"
 #include "yasmx/Config/export.h"
 
 namespace llvm {
@@ -35,54 +34,53 @@ namespace llvm {
 // is specified.  This should probably not be referenced directly, instead, use
 // the DEBUG macro below.
 //
+#ifndef NDEBUG
 YASM_LIB_EXPORT
 extern bool DebugFlag;
+#endif
 
 // isCurrentDebugType - Return true if the specified string is the debug type
 // specified on the command line, or if none was specified on the command line
 // with the -debug-only=X option.
 //
+#ifndef NDEBUG
 YASM_LIB_EXPORT
 bool isCurrentDebugType(const char *Type);
+#else
+#define isCurrentDebugType(X) (false)
+#endif
+
+// DEBUG_WITH_TYPE macro - This macro should be used by passes to emit debug
+// information.  In the '-debug' option is specified on the commandline, and if
+// this is a debug build, then the code specified as the option to the macro
+// will be executed.  Otherwise it will not be.  Example:
+//
+// DEBUG_WITH_TYPE("bitset", errs() << "Bitset contains: " << Bitset << "\n");
+//
+// This will emit the debug information if -debug is present, and -debug-only is
+// not specified, or is specified as "bitset".
+
+#ifdef NDEBUG
+#define DEBUG_WITH_TYPE(TYPE, X) do { } while (0)
+#else
+#define DEBUG_WITH_TYPE(TYPE, X)                                        \
+  do { if (llvm::DebugFlag && llvm::isCurrentDebugType(TYPE)) { X; } } while (0)
+#endif
 
 // DEBUG macro - This macro should be used by passes to emit debug information.
 // In the '-debug' option is specified on the commandline, and if this is a
 // debug build, then the code specified as the option to the macro will be
 // executed.  Otherwise it will not be.  Example:
 //
-// DEBUG(cerr << "Bitset contains: " << Bitset << "\n");
+// DEBUG(errs() << "Bitset contains: " << Bitset << "\n");
 //
 
 #ifndef DEBUG_TYPE
 #define DEBUG_TYPE ""
 #endif
 
-#ifdef NDEBUG
-#define DEBUG(X)
-#else
-#define DEBUG(X) \
-  do { if (llvm::DebugFlag && llvm::isCurrentDebugType(DEBUG_TYPE)) { X; } } while (0)
-#endif
-
-/// getNullOutputStream - Return a null string that does not output
-/// anything.  This hides the static variable from other modules.
-///
-YASM_LIB_EXPORT
-OStream &getNullOutputStream();
-
-/// getErrorOutputStream - Returns the error output stream (std::cerr). This
-/// places the std::c* I/O streams into one .cpp file and relieves the whole
-/// program from having to have hundreds of static c'tor/d'tors for them.
-///
-YASM_LIB_EXPORT
-OStream &getErrorOutputStream(const char *DebugType);
-
-#ifdef NDEBUG
-#define DOUT llvm::getNullOutputStream()
-#else
-#define DOUT llvm::getErrorOutputStream(DEBUG_TYPE)
-#endif
-
+#define DEBUG(X) DEBUG_WITH_TYPE(DEBUG_TYPE, X)
+  
 } // End llvm namespace
 
 #endif

@@ -40,7 +40,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/errwarn.h"
@@ -207,7 +207,7 @@ OffsetSetter::Dump() const
 {
     YAML::Emitter out;
     Write(out);
-    llvm::cerr << out.c_str() << std::endl;
+    llvm::errs() << out.c_str() << '\n';
 }
 
 class Optimizer;
@@ -360,7 +360,7 @@ Span::Term::Dump() const
 {
     YAML::Emitter out;
     Write(out);
-    llvm::cerr << out.c_str() << std::endl;
+    llvm::errs() << out.c_str() << '\n';
 }
 
 Span::Span(Bytecode& bc,
@@ -464,7 +464,7 @@ Span::RecalcNormal()
     if (m_new_val == LONG_MAX)
         m_active = INACTIVE;
 
-    DEBUG(llvm::cerr << "updated SPAN@" << this << " newval to "
+    DEBUG(llvm::errs() << "updated SPAN@" << this << " newval to "
           << m_new_val << '\n');
 
     // If id<=0, flag update on any change
@@ -537,7 +537,7 @@ Span::Dump() const
 {
     YAML::Emitter out;
     Write(out);
-    llvm::cerr << out.c_str() << std::endl;
+    llvm::errs() << out.c_str() << '\n';
 }
 
 Optimizer::Optimizer()
@@ -618,7 +618,7 @@ Optimizer::Dump() const
 {
     YAML::Emitter out;
     Write(out);
-    llvm::cerr << out.c_str() << std::endl;
+    llvm::errs() << out.c_str() << '\n';
 }
 
 void
@@ -700,7 +700,7 @@ Optimizer::ExpandTerm(IntervalTreeNode<Span::Term*> * node, long len_diff)
     if (span->m_active == Span::INACTIVE)
         return;
 
-    DEBUG(llvm::cerr << "expand SPAN@" << span << " by " << len_diff << '\n');
+    DEBUG(llvm::errs() << "expand SPAN@" << span << " by " << len_diff << '\n');
 
     // Update term length
     if (term->m_loc.bc)
@@ -717,26 +717,27 @@ Optimizer::ExpandTerm(IntervalTreeNode<Span::Term*> * node, long len_diff)
         term->m_new_val += len_diff;
     else
         term->m_new_val -= len_diff;
-    DEBUG(llvm::cerr << "updated SPAN@" << span << " term "
+    DEBUG(llvm::errs() << "updated SPAN@" << span << " term "
           << (term-&span->m_span_terms.front())
           << " newval to " << term->m_new_val << '\n');
 
     // If already on Q, don't re-add
     if (span->m_active == Span::ON_Q)
     {
-        DEBUG(llvm::cerr << "SPAN@" << span << " already on queue\n");
+        DEBUG(llvm::errs() << "SPAN@" << span << " already on queue\n");
         return;
     }
 
     // Update term and check against thresholds
     if (!span->RecalcNormal())
     {
-        DEBUG(llvm::cerr << "SPAN@" << span << " didn't change, not readded\n");
+        DEBUG(llvm::errs() << "SPAN@" << span
+              << " didn't change, not readded\n");
         return; // didn't exceed thresholds, we're done
     }
 
     // Exceeded thresholds, need to add to Q for expansion
-    DEBUG(llvm::cerr << "SPAN@" << span << " added back on queue\n");
+    DEBUG(llvm::errs() << "SPAN@" << span << " added back on queue\n");
     if (span->m_id <= 0)
         m_QA.push_back(span);
     else
@@ -790,7 +791,7 @@ Optimizer::Step1b(Errwarns& errwarns)
                 continue;
             }
         }
-        DEBUG(llvm::cerr << "updated SPAN@" << span << " curval from "
+        DEBUG(llvm::errs() << "updated SPAN@" << span << " curval from "
               << span->m_cur_val << " to " << span->m_new_val << '\n');
         span->m_cur_val = span->m_new_val;
         ++spani;
@@ -818,7 +819,7 @@ Optimizer::Step1d()
             assert(ok && "could not calculate bc distance");
             term->m_cur_val = term->m_new_val;
             term->m_new_val = intn.getInt();
-            DEBUG(llvm::cerr << "updated SPAN@" << span << " term "
+            DEBUG(llvm::errs() << "updated SPAN@" << span << " term "
                   << (term-span->m_span_terms.begin())
                   << " newval to " << term->m_new_val << '\n');
         }
@@ -942,7 +943,7 @@ Optimizer::Step2(Errwarns& errwarns)
             for (Span::Terms::iterator term=span->m_span_terms.begin(),
                  endterm=span->m_span_terms.end(); term != endterm; ++term)
                 term->m_cur_val = term->m_new_val;
-            DEBUG(llvm::cerr << "updated SPAN@" << span << " curval from "
+            DEBUG(llvm::errs() << "updated SPAN@" << span << " curval from "
                   << span->m_cur_val << " to " << span->m_new_val << '\n');
             span->m_cur_val = span->m_new_val;
         }
@@ -953,7 +954,7 @@ Optimizer::Step2(Errwarns& errwarns)
         if (len_diff == 0)
             continue;   // didn't increase in size
 
-        DEBUG(llvm::cerr << "BC@" << &span->m_bc << " expansion by "
+        DEBUG(llvm::errs() << "BC@" << &span->m_bc << " expansion by "
               << len_diff << ":\n");
         // Iterate over all spans dependent across the bc just expanded
         m_itree.Enumerate(static_cast<long>(span->m_bc.getIndex()),

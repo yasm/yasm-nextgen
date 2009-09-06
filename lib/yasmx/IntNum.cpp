@@ -36,7 +36,7 @@
 #include <limits>
 
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
@@ -180,7 +180,7 @@ IntNum::setStr(const char* str, unsigned int len, int base)
     }
     else
     {
-        conv_bv.fromString(str, len, base);
+        conv_bv.fromString(llvm::StringRef(str, len), base);
         setBV(conv_bv);
     }
 }
@@ -775,7 +775,7 @@ IntNum::getStr(int base, bool lowercase) const
 {
     llvm::SmallString<40> s;
     getStr(s, base, lowercase);
-    return s.c_str();
+    return s.str();
 }
 
 unsigned long
@@ -801,7 +801,7 @@ IntNum::Write(YAML::Emitter& out) const
 {
     llvm::SmallString<40> s;
     getStr(s);
-    out << s.c_str();
+    out << s.str();
 }
 
 void
@@ -809,7 +809,7 @@ IntNum::Dump() const
 {
     llvm::SmallString<40> s;
     getStr(s);
-    llvm::cerr << s.c_str() << std::endl;
+    llvm::errs() << s.str() << '\n';
 }
 
 std::ostream&
@@ -855,7 +855,7 @@ operator<< (std::ostream& os, const IntNum& intn)
         conv_bv.toString(s, 10, true);
     for (int i=0; i<padding; ++i)
         os << '0';
-    os << s.c_str();
+    os << s.str().str();
     return os;
 }
 

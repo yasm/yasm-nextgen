@@ -14,13 +14,9 @@
 #ifndef LLVM_SUPPORT_RAW_OSTREAM_H
 #define LLVM_SUPPORT_RAW_OSTREAM_H
 
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/DataTypes.h"
 #include "yasmx/Config/export.h"
-#include <cassert>
-#include <cstring>
-#include <string>
-#include <iosfwd>
 
 namespace llvm {
   class format_object_base;
@@ -33,18 +29,35 @@ namespace llvm {
 /// a chunk at a time.
 class YASM_LIB_EXPORT raw_ostream {
 private:
+  // Do not implement. raw_ostream is noncopyable.
+  void operator=(const raw_ostream &);
+  raw_ostream(const raw_ostream &);
+
   /// The buffer is handled in such a way that the buffer is
   /// uninitialized, unbuffered, or out of space when OutBufCur >=
   /// OutBufEnd. Thus a single comparison suffices to determine if we
   /// need to take the slow path to write a single character.
   ///
   /// The buffer is in one of three states:
-  ///  1. Unbuffered (Unbuffered == true)
-  ///  1. Uninitialized (Unbuffered == false && OutBufStart == 0).
-  ///  2. Buffered (Unbuffered == false && OutBufStart != 0 &&
+  ///  1. Unbuffered (BufferMode == Unbuffered)
+  ///  1. Uninitialized (BufferMode != Unbuffered && OutBufStart == 0).
+  ///  2. Buffered (BufferMode != Unbuffered && OutBufStart != 0 &&
   ///               OutBufEnd - OutBufStart >= 64).
+  ///
+  /// If buffered, then the raw_ostream owns the buffer if (BufferMode ==
+  /// InternalBuffer); otherwise the buffer has been set via SetBuffer and is
+  /// managed by the subclass.
+  ///
+  /// If a subclass installs an external buffer using SetBuffer then it can wait
+  /// for a \see write_impl() call to handle the data which has been put into
+  /// this buffer.
   char *OutBufStart, *OutBufEnd, *OutBufCur;
-  bool Unbuffered;
+  
+  enum BufferKind {
+    Unbuffered = 0,
+    InternalBuffer,
+    ExternalBuffer
+  } BufferMode;
 
   /// Error This flag is true if an error of any kind has been detected.
   ///
@@ -65,7 +78,7 @@ public:
   };
 
   explicit raw_ostream(bool unbuffered=false)
-    : Unbuffered(unbuffered), Error(false) {
+    : BufferMode(unbuffered ? Unbuffered : InternalBuffer), Error(false) {
     // Start out ready to flush.
     OutBufStart = OutBufEnd = OutBufCur = 0;
   }
@@ -93,30 +106,34 @@ public:
   // Configuration Interface
   //===--------------------------------------------------------------------===//
 
-  /// SetBufferSize - Set the internal buffer size to the specified amount
-  /// instead of the default.
-  void SetBufferSize(size_t Size=4096) {
-    assert(Size >= 64 &&
-           "Buffer size must be somewhat large for invariants to hold");
-    flush();
+  /// SetBuffered - Set the stream to be buffered, with an automatically
+  /// determined buffer size.
+  void SetBuffered();
 
-    delete [] OutBufStart;
-    OutBufStart = new char[Size];
-    OutBufEnd = OutBufStart+Size;
-    OutBufCur = OutBufStart;
-    Unbuffered = false;
+  /// SetBufferSize - Set the stream to be buffered, using the
+  /// specified buffer size.
+  void SetBufferSize(size_t Size) {
+    flush();
+    SetBufferAndMode(new char[Size], Size, InternalBuffer);
   }
 
-  /// SetUnbuffered - Set the streams buffering status. When
-  /// unbuffered the stream will flush after every write. This routine
+  size_t GetBufferSize() {
+    // If we're supposed to be buffered but haven't actually gotten around
+    // to allocating the buffer yet, return the value that would be used.
+    if (BufferMode != Unbuffered && OutBufStart == 0)
+      return preferred_buffer_size();
+
+    // Otherwise just return the size of the allocated buffer.
+    return OutBufEnd - OutBufStart;
+  }
+
+  /// SetUnbuffered - Set the stream to be unbuffered. When
+  /// unbuffered, the stream will flush after every write. This routine
   /// will also flush the buffer immediately when the stream is being
   /// set to unbuffered.
   void SetUnbuffered() {
     flush();
-    
-    delete [] OutBufStart;
-    OutBufStart = OutBufEnd = OutBufCur = 0;
-    Unbuffered = true;
+    SetBufferAndMode(0, 0, Unbuffered);
   }
 
   size_t GetNumBytesInBuffer() const {
@@ -174,7 +191,8 @@ public:
     return *this;
   }
 
-  raw_ostream &operator<<(const std::string& Str) {
+  raw_ostream &operator<<(const std::string &Str) {
+    // Avoid the fast path, it would only increase code size for a marginal win.
     write(Str.data(), Str.length());
     return *this;
   }
@@ -194,10 +212,7 @@ public:
     return *this;
   }
 
-  raw_ostream &operator<<(double N) {
-    this->operator<<(ftostr(N));
-    return *this;
-  }
+  raw_ostream &operator<<(double N);  
 
   /// write_hex - Output \arg N in hexadecimal, without any prefix or padding.
   raw_ostream &write_hex(unsigned long long N);
@@ -208,6 +223,10 @@ public:
   // Formatted output, see the format() function in Support/Format.h.
   raw_ostream &operator<<(const format_object_base &Fmt);
 
+  /// indent - Insert 'NumSpaces' spaces.
+  raw_ostream &indent(unsigned NumSpaces);
+  
+  
   /// Changes the foreground color of text that will be output from this point
   /// forward.
   /// @param colors ANSI color to use, the special SAVEDCOLOR can be used to
@@ -231,6 +250,13 @@ private:
   /// by subclasses.  This writes the \args Size bytes starting at
   /// \arg Ptr to the underlying stream.
   /// 
+  /// This function is guaranteed to only be called at a point at which it is
+  /// safe for the subclass to install a new buffer via SetBuffer.
+  ///
+  /// \arg Ptr - The start of the data to be written. For buffered streams this
+  /// is guaranteed to be the start of the buffer.
+  /// \arg Size - The number of bytes to be written.
+  ///
   /// \invariant { Size > 0 }
   virtual void write_impl(const char *Ptr, size_t Size) = 0;
 
@@ -242,22 +268,41 @@ private:
   virtual uint64_t current_pos() = 0;
 
 protected:
+  /// SetBuffer - Use the provided buffer as the raw_ostream buffer. This is
+  /// intended for use only by subclasses which can arrange for the output to go
+  /// directly into the desired output buffer, instead of being copied on each
+  /// flush.
+  void SetBuffer(char *BufferStart, size_t Size) {
+    SetBufferAndMode(BufferStart, Size, ExternalBuffer);
+  }
+
+  /// preferred_buffer_size - Return an efficient buffer size for the
+  /// underlying output mechanism.
+  virtual size_t preferred_buffer_size();
+
   /// error_detected - Set the flag indicating that an output error has
   /// been encountered.
   void error_detected() { Error = true; }
 
-  typedef char * iterator;
-  iterator begin(void) { return OutBufStart; }
-  iterator end(void) { return OutBufCur; }
+  /// getBufferStart - Return the beginning of the current stream buffer, or 0
+  /// if the stream is unbuffered.
+  const char *getBufferStart() const { return OutBufStart; }
 
   //===--------------------------------------------------------------------===//
   // Private Interface
   //===--------------------------------------------------------------------===//
 private:
+  /// SetBufferAndMode - Install the given buffer and mode.
+  void SetBufferAndMode(char *BufferStart, size_t Size, BufferKind Mode);
+
   /// flush_nonempty - Flush the current buffer, which is known to be
   /// non-empty. This outputs the currently buffered data and resets
   /// the buffer to empty.
   void flush_nonempty();
+
+  /// copy_to_buffer - Copy data into the buffer. Size must not be
+  /// greater than the number of unused bytes in the buffer.
+  void copy_to_buffer(const char *Ptr, size_t Size);
 };
 
 //===----------------------------------------------------------------------===//
@@ -278,20 +323,35 @@ class YASM_LIB_EXPORT raw_fd_ostream : public raw_ostream {
   /// counting the bytes currently in the buffer.
   virtual uint64_t current_pos() { return pos; }
 
+  /// preferred_buffer_size - Determine an efficient buffer size.
+  virtual size_t preferred_buffer_size();
+
 public:
-  /// raw_fd_ostream - Open the specified file for writing. If an
-  /// error occurs, information about the error is put into ErrorInfo,
-  /// and the stream should be immediately destroyed; the string will
-  /// be empty if no error occurred.
+  
+  enum {
+    /// F_Excl - When opening a file, this flag makes raw_fd_ostream
+    /// report an error if the file already exists.
+    F_Excl  = 1,
+
+    /// F_Append - When opening a file, if it already exists append to the
+    /// existing file instead of returning an error.  This may not be specified
+    /// with F_Excl.
+    F_Append = 2,
+
+    /// F_Binary - The file should be opened in binary mode on platforms that
+    /// make this distinction.
+    F_Binary = 4
+  };
+  
+  /// raw_fd_ostream - Open the specified file for writing. If an error occurs,
+  /// information about the error is put into ErrorInfo, and the stream should
+  /// be immediately destroyed; the string will be empty if no error occurred.
+  /// This allows optional flags to control how the file will be opened.
   ///
   /// \param Filename - The file to open. If this is "-" then the
   /// stream will use stdout instead.
-  /// \param Binary - The file should be opened in binary mode on
-  /// platforms that support this distinction.
-  /// \param Force - Don't consider the case where the file already
-  /// exists to be an error.
-  raw_fd_ostream(const char *Filename, bool Binary, bool Force,
-                 std::string &ErrorInfo);
+  raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
+                 unsigned Flags = 0);
 
   /// raw_fd_ostream ctor - FD is the file descriptor that this writes to.  If
   /// ShouldClose is true, this closes the file when the stream is destroyed.
@@ -303,9 +363,6 @@ public:
 
   /// close - Manually flush the stream and close the file.
   void close();
-
-  /// tell - Return the current offset with the file.
-  uint64_t tell() { return pos + GetNumBytesInBuffer(); }
 
   /// seek - Flushes the stream and repositions the underlying file descriptor
   ///  positition to the offset specified from the beginning of the file.
@@ -353,27 +410,6 @@ raw_ostream &nulls();
 // Output Stream Adaptors
 //===----------------------------------------------------------------------===//
 
-/// raw_os_ostream - A raw_ostream that writes to an std::ostream.  This is a
-/// simple adaptor class.  It does not check for output errors; clients should
-/// use the underlying stream to detect errors.
-class YASM_LIB_EXPORT raw_os_ostream : public raw_ostream {
-  std::ostream &OS;
-
-  /// write_impl - See raw_ostream::write_impl.
-  virtual void write_impl(const char *Ptr, size_t Size);
-
-  /// current_pos - Return the current position within the stream, not
-  /// counting the bytes currently in the buffer.
-  virtual uint64_t current_pos();
-
-public:
-  raw_os_ostream(std::ostream &O) : OS(O) {}
-  ~raw_os_ostream();
-
-  /// tell - Return the current offset with the stream.
-  uint64_t tell();
-};
-
 /// raw_string_ostream - A raw_ostream that writes to an std::string.  This is a
 /// simple adaptor class. This class does not encounter output errors.
 class YASM_LIB_EXPORT raw_string_ostream : public raw_ostream {
@@ -388,9 +424,6 @@ class YASM_LIB_EXPORT raw_string_ostream : public raw_ostream {
 public:
   explicit raw_string_ostream(std::string &O) : OS(O) {}
   ~raw_string_ostream();
-
-  /// tell - Return the current offset with the stream.
-  uint64_t tell() { return OS.size() + GetNumBytesInBuffer(); }
 
   /// str - Flushes the stream contents to the target string and returns
   ///  the string's reference.
@@ -413,11 +446,16 @@ class YASM_LIB_EXPORT raw_svector_ostream : public raw_ostream {
   /// counting the bytes currently in the buffer.
   virtual uint64_t current_pos();
 public:
-  explicit raw_svector_ostream(SmallVectorImpl<char> &O) : OS(O) {}
+  /// Construct a new raw_svector_ostream.
+  ///
+  /// \arg O - The vector to write to; this should generally have at least 128
+  /// bytes free to avoid any extraneous memory overhead.
+  explicit raw_svector_ostream(SmallVectorImpl<char> &O);
   ~raw_svector_ostream();
 
-  /// tell - Return the current offset with the stream.
-  uint64_t tell();
+  /// str - Flushes the stream contents to the target vector and return a
+  /// StringRef for the vector contents.
+  StringRef str();
 };
 
 /// raw_null_ostream - A raw_ostream that discards all output.

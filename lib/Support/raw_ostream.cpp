@@ -19,7 +19,10 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
-#include <ostream>
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringExtras.h"
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #if defined(HAVE_UNISTD_H)
 # include <unistd.h>
@@ -50,7 +53,8 @@ raw_ostream::~raw_ostream() {
   assert(OutBufCur == OutBufStart &&
          "raw_ostream destructor called with non-empty buffer!");
 
-  delete [] OutBufStart;
+  if (BufferMode == InternalBuffer)
+    delete [] OutBufStart;
 
   // If there are any pending errors, report them now. Clients wishing
   // to avoid llvm_report_error calls should check for errors with
@@ -62,6 +66,39 @@ raw_ostream::~raw_ostream() {
 
 // An out of line virtual method to provide a home for the class vtable.
 void raw_ostream::handle() {}
+
+size_t raw_ostream::preferred_buffer_size() {
+  // BUFSIZ is intended to be a reasonable default.
+  return BUFSIZ;
+}
+
+void raw_ostream::SetBuffered() {
+  // Ask the subclass to determine an appropriate buffer size.
+  if (size_t Size = preferred_buffer_size())
+    SetBufferSize(Size);
+  else
+    // It may return 0, meaning this stream should be unbuffered.
+    SetUnbuffered();
+}
+
+void raw_ostream::SetBufferAndMode(char *BufferStart, size_t Size, 
+                                    BufferKind Mode) {
+  assert(((Mode == Unbuffered && BufferStart == 0 && Size == 0) || 
+          (Mode != Unbuffered && BufferStart && Size >= 64)) &&
+         "stream must be unbuffered, or have >= 64 bytes of buffer");
+  // Make sure the current buffer is free of content (we can't flush here; the
+  // child buffer management logic will be in write_impl).
+  assert(GetNumBytesInBuffer() == 0 && "Current buffer is non-empty!");
+
+  if (BufferMode == InternalBuffer)
+    delete [] OutBufStart;
+  OutBufStart = BufferStart;
+  OutBufEnd = OutBufStart+Size;
+  OutBufCur = OutBufStart;
+  BufferMode = Mode;
+
+  assert(OutBufStart <= OutBufEnd && "Invalid size!");
+}
 
 raw_ostream &raw_ostream::operator<<(unsigned long N) {
   // Zero is a special case.
@@ -137,24 +174,34 @@ raw_ostream &raw_ostream::operator<<(const void *P) {
   return write_hex((uintptr_t) P);
 }
 
+raw_ostream &raw_ostream::operator<<(double N) {
+  this->operator<<(ftostr(N));
+  return *this;
+}
+
+
+
 void raw_ostream::flush_nonempty() {
   assert(OutBufCur > OutBufStart && "Invalid call to flush_nonempty.");
-  write_impl(OutBufStart, OutBufCur - OutBufStart);
-  OutBufCur = OutBufStart;    
+  size_t Length = OutBufCur - OutBufStart;
+  OutBufCur = OutBufStart;
+  write_impl(OutBufStart, Length);
 }
 
 raw_ostream &raw_ostream::write(unsigned char C) {
   // Group exceptional cases into a single branch.
-  if (OutBufCur >= OutBufEnd) {
-    if (Unbuffered) {
-      write_impl(reinterpret_cast<char*>(&C), 1);
-      return *this;
+  if (BUILTIN_EXPECT(OutBufCur >= OutBufEnd, false)) {
+    if (BUILTIN_EXPECT(!OutBufStart, false)) {
+      if (BufferMode == Unbuffered) {
+        write_impl(reinterpret_cast<char*>(&C), 1);
+        return *this;
+      }
+      // Set up a buffer and start over.
+      SetBuffered();
+      return write(C);
     }
-    
-    if (!OutBufStart)
-      SetBufferSize();
-    else
-      flush_nonempty();
+
+    flush_nonempty();
   }
 
   *OutBufCur++ = C;
@@ -164,17 +211,35 @@ raw_ostream &raw_ostream::write(unsigned char C) {
 raw_ostream &raw_ostream::write(const char *Ptr, size_t Size) {
   // Group exceptional cases into a single branch.
   if (BUILTIN_EXPECT(OutBufCur+Size > OutBufEnd, false)) {
-    if (Unbuffered) {
-      write_impl(Ptr, Size);
-      return *this;
+    if (BUILTIN_EXPECT(!OutBufStart, false)) {
+      if (BufferMode == Unbuffered) {
+        write_impl(Ptr, Size);
+        return *this;
+      }
+      // Set up a buffer and start over.
+      SetBuffered();
+      return write(Ptr, Size);
     }
-    
-    if (!OutBufStart)
-      SetBufferSize();
-    else
+
+    // Write out the data in buffer-sized blocks until the remainder
+    // fits within the buffer.
+    do {
+      size_t NumBytes = OutBufEnd - OutBufCur;
+      copy_to_buffer(Ptr, NumBytes);
       flush_nonempty();
+      Ptr += NumBytes;
+      Size -= NumBytes;
+    } while (OutBufCur+Size > OutBufEnd);
   }
-  
+
+  copy_to_buffer(Ptr, Size);
+
+  return *this;
+}
+
+void raw_ostream::copy_to_buffer(const char *Ptr, size_t Size) {
+  assert(Size <= size_t(OutBufEnd - OutBufCur) && "Buffer overrun!");
+
   // Handle short strings specially, memcpy isn't very good at very short
   // strings.
   switch (Size) {
@@ -184,40 +249,24 @@ raw_ostream &raw_ostream::write(const char *Ptr, size_t Size) {
   case 1: OutBufCur[0] = Ptr[0]; // FALL THROUGH
   case 0: break;
   default:
-    // Normally the string to emit is shorter than the buffer.
-    if (Size <= unsigned(OutBufEnd-OutBufCur)) {
-      memcpy(OutBufCur, Ptr, Size);
-      break;
-    } 
-
-    // Otherwise we are emitting a string larger than our buffer. We
-    // know we already flushed, so just write it out directly.
-    write_impl(Ptr, Size);
-    Size = 0;
+    memcpy(OutBufCur, Ptr, Size);
     break;
   }
-  OutBufCur += Size;
 
-  return *this;
+  OutBufCur += Size;
 }
 
 // Formatted output.
 raw_ostream &raw_ostream::operator<<(const format_object_base &Fmt) {
   // If we have more than a few bytes left in our output buffer, try
   // formatting directly onto its end.
-  //
-  // FIXME: This test is a bit silly, since if we don't have enough
-  // space in the buffer we will have to flush the formatted output
-  // anyway. We should just flush upfront in such cases, and use the
-  // whole buffer as our scratch pad. Note, however, that this case is
-  // also necessary for correctness on unbuffered streams.
   size_t NextBufferSize = 127;
-  if (OutBufEnd-OutBufCur > 3) {
-    size_t BufferBytesLeft = OutBufEnd-OutBufCur;
+  size_t BufferBytesLeft = OutBufEnd - OutBufCur;
+  if (BufferBytesLeft > 3) {
     size_t BytesUsed = Fmt.print(OutBufCur, BufferBytesLeft);
     
     // Common case is that we have plenty of space.
-    if (BytesUsed < BufferBytesLeft) {
+    if (BytesUsed <= BufferBytesLeft) {
       OutBufCur += BytesUsed;
       return *this;
     }
@@ -236,17 +285,37 @@ raw_ostream &raw_ostream::operator<<(const format_object_base &Fmt) {
     V.resize(NextBufferSize);
     
     // Try formatting into the SmallVector.
-    size_t BytesUsed = Fmt.print(&V[0], NextBufferSize);
+    size_t BytesUsed = Fmt.print(V.data(), NextBufferSize);
     
     // If BytesUsed fit into the vector, we win.
     if (BytesUsed <= NextBufferSize)
-      return write(&V[0], BytesUsed);
+      return write(V.data(), BytesUsed);
     
     // Otherwise, try again with a new size.
     assert(BytesUsed > NextBufferSize && "Didn't grow buffer!?");
     NextBufferSize = BytesUsed;
   }
 }
+
+/// indent - Insert 'NumSpaces' spaces.
+raw_ostream &raw_ostream::indent(unsigned NumSpaces) {
+  static const char Spaces[] = "                                "
+                               "                                "
+                               "                ";
+
+  // Usually the indentation is small, handle it with a fastpath.
+  if (NumSpaces < array_lengthof(Spaces))
+    return write(Spaces, NumSpaces);
+  
+  while (NumSpaces) {
+    unsigned NumToWrite = std::min(NumSpaces,
+                                   (unsigned)array_lengthof(Spaces)-1);
+    write(Spaces, NumToWrite);
+    NumSpaces -= NumToWrite;
+  }
+  return *this;
+}
+
 
 //===----------------------------------------------------------------------===//
 //  Formatted Output
@@ -264,8 +333,12 @@ void format_object_base::home() {
 /// occurs, information about the error is put into ErrorInfo, and the
 /// stream should be immediately destroyed; the string will be empty
 /// if no error occurred.
-raw_fd_ostream::raw_fd_ostream(const char *Filename, bool Binary, bool Force,
-                               std::string &ErrorInfo) : pos(0) {
+raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
+                               unsigned Flags) : pos(0) {
+  // Verify that we don't have both "append" and "excl".
+  assert((!(Flags & F_Excl) || !(Flags & F_Append)) &&
+         "Cannot specify both 'excl' and 'append' file creation flags!");
+  
   ErrorInfo.clear();
 
   // Handle "-" as stdout.
@@ -273,20 +346,26 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, bool Binary, bool Force,
     FD = STDOUT_FILENO;
     // If user requested binary then put stdout into binary mode if
     // possible.
-    if (Binary)
+    if (Flags & F_Binary)
       sys::Program::ChangeStdoutToBinary();
     ShouldClose = false;
     return;
   }
   
-  int Flags = O_WRONLY|O_CREAT|O_TRUNC;
+  int OpenFlags = O_WRONLY|O_CREAT;
 #ifdef O_BINARY
-  if (Binary)
-    Flags |= O_BINARY;
+  if (Flags & F_Binary)
+    OpenFlags |= O_BINARY;
 #endif
-  if (!Force)
-    Flags |= O_EXCL;
-  FD = open(Filename, Flags, 0664);
+  
+  if (Flags & F_Append)
+    OpenFlags |= O_APPEND;
+  else
+    OpenFlags |= O_TRUNC;
+  if (Flags & F_Excl)
+    OpenFlags |= O_EXCL;
+  
+  FD = open(Filename, OpenFlags, 0664);
   if (FD < 0) {
     ErrorInfo = "Error opening output file '" + std::string(Filename) + "'";
     ShouldClose = false;
@@ -296,13 +375,13 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, bool Binary, bool Force,
 }
 
 raw_fd_ostream::~raw_fd_ostream() {
-  if (FD >= 0) {
-    flush();
-    if (ShouldClose)
-      if (::close(FD) != 0)
-        error_detected();
-  }
+  if (FD < 0) return;
+  flush();
+  if (ShouldClose)
+    if (::close(FD) != 0)
+      error_detected();
 }
+
 
 void raw_fd_ostream::write_impl(const char *Ptr, size_t Size) {
   assert (FD >= 0 && "File already closed.");
@@ -326,6 +405,24 @@ uint64_t raw_fd_ostream::seek(uint64_t off) {
   if (pos != off)
     error_detected();
   return pos;  
+}
+
+size_t raw_fd_ostream::preferred_buffer_size() {
+#if !defined(_MSC_VER) && !defined(__MINGW32__) // Windows has no st_blksize.
+  assert(FD >= 0 && "File not yet open!");
+  struct stat statbuf;
+  if (fstat(FD, &statbuf) == 0) {
+    // If this is a terminal, don't use buffering. Line buffering
+    // would be a more traditional thing to do, but it's not worth
+    // the complexity.
+    if (S_ISCHR(statbuf.st_mode) && isatty(FD))
+      return 0;
+    // Return the preferred block size.
+    return statbuf.st_blksize;
+  }
+  error_detected();
+#endif
+  return raw_ostream::preferred_buffer_size();
 }
 
 raw_ostream &raw_fd_ostream::changeColor(enum Colors colors, bool bold,
@@ -361,8 +458,10 @@ raw_ostream &raw_fd_ostream::resetColor() {
 //  raw_stdout/err_ostream
 //===----------------------------------------------------------------------===//
 
+// Set buffer settings to model stdout and stderr behavior.
+// Set standard error to be unbuffered by default.
 raw_stdout_ostream::raw_stdout_ostream():raw_fd_ostream(STDOUT_FILENO, false) {}
-raw_stderr_ostream::raw_stderr_ostream():raw_fd_ostream(STDERR_FILENO, false, 
+raw_stderr_ostream::raw_stderr_ostream():raw_fd_ostream(STDERR_FILENO, false,
                                                         true) {}
 
 // An out of line virtual method to provide a home for the class vtable.
@@ -389,23 +488,6 @@ raw_ostream &llvm::nulls() {
   return S;
 }
 
-//===----------------------------------------------------------------------===//
-//  raw_os_ostream
-//===----------------------------------------------------------------------===//
-
-raw_os_ostream::~raw_os_ostream() {
-  flush();
-}
-
-void raw_os_ostream::write_impl(const char *Ptr, size_t Size) {
-  OS.write(Ptr, Size);
-}
-
-uint64_t raw_os_ostream::current_pos() { return OS.tellp(); }
-
-uint64_t raw_os_ostream::tell() { 
-  return (uint64_t)OS.tellp() + GetNumBytesInBuffer(); 
-}
 
 //===----------------------------------------------------------------------===//
 //  raw_string_ostream
@@ -423,18 +505,47 @@ void raw_string_ostream::write_impl(const char *Ptr, size_t Size) {
 //  raw_svector_ostream
 //===----------------------------------------------------------------------===//
 
+// The raw_svector_ostream implementation uses the SmallVector itself as the
+// buffer for the raw_ostream. We guarantee that the raw_ostream buffer is
+// always pointing past the end of the vector, but within the vector
+// capacity. This allows raw_ostream to write directly into the correct place,
+// and we only need to set the vector size when the data is flushed.
+
+raw_svector_ostream::raw_svector_ostream(SmallVectorImpl<char> &O) : OS(O) {
+  // Set up the initial external buffer. We make sure that the buffer has at
+  // least 128 bytes free; raw_ostream itself only requires 64, but we want to
+  // make sure that we don't grow the buffer unnecessarily on destruction (when
+  // the data is flushed). See the FIXME below.
+  OS.reserve(OS.size() + 128);
+  SetBuffer(OS.end(), OS.capacity() - OS.size());
+}
+
 raw_svector_ostream::~raw_svector_ostream() {
+  // FIXME: Prevent resizing during this flush().
   flush();
 }
 
 void raw_svector_ostream::write_impl(const char *Ptr, size_t Size) {
-  OS.append(Ptr, Ptr + Size);
+  assert(Ptr == OS.end() && OS.size() + Size <= OS.capacity() &&
+         "Invalid write_impl() call!");
+
+  // We don't need to copy the bytes, just commit the bytes to the
+  // SmallVector.
+  OS.set_size(OS.size() + Size);
+
+  // Grow the vector if necessary.
+  if (OS.capacity() - OS.size() < 64)
+    OS.reserve(OS.capacity() * 2);
+
+  // Update the buffer position.
+  SetBuffer(OS.end(), OS.capacity() - OS.size());
 }
 
 uint64_t raw_svector_ostream::current_pos() { return OS.size(); }
 
-uint64_t raw_svector_ostream::tell() { 
-  return OS.size() + GetNumBytesInBuffer(); 
+StringRef raw_svector_ostream::str() {
+  flush();
+  return StringRef(OS.begin(), OS.size());
 }
 
 //===----------------------------------------------------------------------===//

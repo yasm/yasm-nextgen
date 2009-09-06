@@ -77,8 +77,20 @@ namespace llvm {
     /// size - Get the string size.
     size_t size() const { return Length; }
 
+    /// front - Get the first character in the string.
+    char front() const {
+      assert(!empty());
+      return Data[0];
+    }
+    
+    /// back - Get the last character in the string.
+    char back() const {
+      assert(!empty());
+      return Data[Length-1];
+    }
+
     /// equals - Check for string equality, this is more efficient than
-    /// compare() in when the relative ordering of inequal strings isn't needed.
+    /// compare() when the relative ordering of inequal strings isn't needed.
     bool equals(const StringRef &RHS) const {
       return (Length == RHS.Length && 
               memcmp(Data, RHS.Data, RHS.Length) == 0);
@@ -118,7 +130,72 @@ namespace llvm {
     }
 
     /// @}
-    /// @name Utility Functions
+    /// @name String Predicates
+    /// @{
+
+    /// startswith - Check if this string starts with the given \arg Prefix.
+    bool startswith(const StringRef &Prefix) const { 
+      return substr(0, Prefix.Length).equals(Prefix);
+    }
+
+    /// endswith - Check if this string ends with the given \arg Suffix.
+    bool endswith(const StringRef &Suffix) const {
+      return slice(size() - Suffix.Length, size()).equals(Suffix);
+    }
+
+    /// @}
+    /// @name String Searching
+    /// @{
+
+    /// find - Search for the character \arg C in the string.
+    ///
+    /// \return - The index of the first occurence of \arg C, or npos if not
+    /// found.
+    size_t find(char C) const {
+      for (size_t i = 0, e = Length; i != e; ++i)
+        if (Data[i] == C)
+          return i;
+      return npos;
+    }
+
+    /// find - Search for the string \arg Str in the string.
+    ///
+    /// \return - The index of the first occurence of \arg Str, or npos if not
+    /// found.
+    size_t find(const StringRef &Str) const {
+      size_t N = Str.size();
+      if (N > Length)
+        return npos;
+      for (size_t i = 0, e = Length - N + 1; i != e; ++i)
+        if (substr(i, N).equals(Str))
+          return i;
+      return npos;
+    }
+
+    /// count - Return the number of occurrences of \arg C in the string.
+    size_t count(char C) const {
+      size_t Count = 0;
+      for (size_t i = 0, e = Length; i != e; ++i)
+        if (Data[i] == C)
+          ++Count;
+      return Count;
+    }
+
+    /// count - Return the number of non-overlapped occurrences of \arg Str in
+    /// the string.
+    size_t count(const StringRef &Str) const {
+      size_t Count = 0;
+      size_t N = Str.size();
+      if (N > Length)
+        return 0;
+      for (size_t i = 0, e = Length - N + 1; i != e; ++i)
+        if (substr(i, N).equals(Str))
+          ++Count;
+      return Count;
+    }
+
+    /// @}
+    /// @name Substring Operations
     /// @{
 
     /// substr - Return a reference to the substring from [Start, Start + N).
@@ -162,21 +239,10 @@ namespace llvm {
     /// \param Separator - The character to split on.
     /// \return - The split substrings.
     std::pair<StringRef, StringRef> split(char Separator) const {
-      iterator it = std::find(begin(), end(), Separator);
-      if (it == end())
+      size_t Idx = find(Separator);
+      if (Idx == npos)
         return std::make_pair(*this, StringRef());
-      return std::make_pair(StringRef(begin(), it - begin()),
-                            StringRef(it + 1, end() - (it + 1)));
-    }
-
-    /// startswith - Check if this string starts with the given \arg Prefix.
-    bool startswith(const StringRef &Prefix) const { 
-      return substr(0, Prefix.Length).equals(Prefix);
-    }
-
-    /// endswith - Check if this string ends with the given \arg Suffix.
-    bool endswith(const StringRef &Suffix) const {
-      return slice(size() - Suffix.Length, size()).equals(Suffix);
+      return std::make_pair(slice(0, Idx), slice(Idx+1, npos));
     }
 
     /// @}
