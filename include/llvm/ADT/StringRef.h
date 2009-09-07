@@ -28,6 +28,7 @@ namespace llvm {
   class StringRef {
   public:
     typedef const char *iterator;
+    typedef const char *const_iterator;
     static const size_t npos = ~size_t(0);
 
   private:
