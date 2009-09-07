@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 
 #include "yasmx/Location.h"
@@ -76,7 +77,7 @@ public:
     ///            the current virtual line.
     /// @param loc          location
     /// @param source       source code line
-    void AddSource(Location loc, const std::string& source);
+    void AddSource(Location loc, const llvm::StringRef& source);
 
     /// Go to the next line (increments the current virtual line).
     /// @return The current (new) virtual line.
@@ -89,7 +90,7 @@ public:
     /// @param file_line    physical line number
     /// @param line_inc     line increment
     void set(unsigned long file_line, unsigned long line_inc);
-    void set(const std::string& filename,
+    void set(const llvm::StringRef& filename,
              unsigned long file_line,
              unsigned long line_inc);
 
@@ -99,7 +100,7 @@ public:
     /// @param filename     physical file name (optional)
     /// @param file_line    physical line number
     /// @return The virtual line number of the poked association.
-    unsigned long Poke(const std::string& filename,
+    unsigned long Poke(const llvm::StringRef& filename,
                        unsigned long file_line);
     unsigned long Poke(unsigned long file_line);
 
@@ -123,7 +124,7 @@ private:
     class Mapping
     {
     public:
-        Mapping(unsigned long line, const std::string& filename,
+        Mapping(unsigned long line, const llvm::StringRef& filename,
                 unsigned long file_line, unsigned long line_inc)
             : m_line(line), m_filename(filename), m_file_line(file_line),
               m_line_inc(line_inc)
@@ -157,7 +158,7 @@ private:
     {
     public:
         Source() {}
-        Source(Location loc, const std::string& source)
+        Source(Location loc, const llvm::StringRef& source)
             : m_loc(loc), m_source(source)
         {}
 

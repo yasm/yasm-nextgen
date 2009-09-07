@@ -53,7 +53,7 @@ Linemap::set(unsigned long file_line, unsigned long line_inc)
 }
 
 void
-Linemap::set(const std::string& filename,
+Linemap::set(const llvm::StringRef& filename,
              unsigned long file_line,
              unsigned long line_inc)
 {
@@ -62,7 +62,7 @@ Linemap::set(const std::string& filename,
 }
 
 unsigned long
-Linemap::Poke(const std::string& filename, unsigned long file_line)
+Linemap::Poke(const llvm::StringRef& filename, unsigned long file_line)
 {
     m_current++;
     set(filename, file_line, 0);
@@ -89,7 +89,7 @@ Linemap::Poke(unsigned long file_line)
 }
 
 void
-Linemap::AddSource(Location loc, const std::string& source)
+Linemap::AddSource(Location loc, const llvm::StringRef& source)
 {
     if (m_source.size() < m_current)
         m_source.resize(m_current);

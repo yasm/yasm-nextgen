@@ -317,7 +317,7 @@ scan:
         ([1-9] digit*) | "0"
         {
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, TOKLEN, 10);
+            lvalp->intn->setStr(llvm::StringRef(TOK, TOKLEN), 10);
             RETURN(INTNUM);
         }
 
@@ -325,7 +325,7 @@ scan:
         '0b' bindigit+
         {
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK+2, TOKLEN-2, 2); // skip "0b"
+            lvalp->intn->setStr(llvm::StringRef(TOK+2, TOKLEN-2), 2); // "0b"
             RETURN(INTNUM);
         }
 
@@ -333,7 +333,7 @@ scan:
         "0" octdigit+
         {
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, TOKLEN, 8);
+            lvalp->intn->setStr(llvm::StringRef(TOK, TOKLEN), 8);
             RETURN(INTNUM);
         }
 
@@ -341,7 +341,7 @@ scan:
         '0x' hexdigit+
         {
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK+2, TOKLEN-2, 16); // skip "0x"
+            lvalp->intn->setStr(llvm::StringRef(TOK+2, TOKLEN-2), 16); // "0x"
             RETURN(INTNUM);
         }
 
@@ -420,7 +420,7 @@ scan:
                 RETURN(NASM_LINE_MARKER);
 
             Arch::RegTmod regtmod =
-                m_arch->ParseCheckRegTmod(TOK+1, TOKLEN-1);
+                m_arch->ParseCheckRegTmod(llvm::StringRef(TOK+1, TOKLEN-1));
             switch (regtmod.getType())
             {
                 case Arch::RegTmod::REG:

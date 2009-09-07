@@ -36,6 +36,7 @@
 #include <boost/pool/pool.hpp>
 
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Config/functional.h"
@@ -58,7 +59,7 @@ namespace
 class SymGetName
 {
 public:
-    const std::string& operator() (const yasm::Symbol* sym) const
+    llvm::StringRef operator() (const yasm::Symbol* sym) const
     { return sym->getName(); }
 };
 
@@ -77,7 +78,7 @@ public:
     {}
     ~Impl() {}
 
-    Symbol* NewSymbol(const std::string& name)
+    Symbol* NewSymbol(const llvm::StringRef& name)
     {
         Symbol* sym = static_cast<Symbol*>(m_sym_pool.malloc());
         new (sym) Symbol(name);
@@ -93,7 +94,7 @@ public:
         }
     }
 
-    typedef hamt<std::string, Symbol, SymGetName> SymbolTable;
+    typedef hamt<llvm::StringRef, Symbol, SymGetName> SymbolTable;
 
     /// Symbol table symbols, indexed by name.
     SymbolTable sym_map;
@@ -106,8 +107,8 @@ private:
     boost::pool<> m_sym_pool;
 };
 
-Object::Object(const std::string& src_filename,
-               const std::string& obj_filename,
+Object::Object(const llvm::StringRef& src_filename,
+               const llvm::StringRef& obj_filename,
                Arch* arch)
     : m_src_filename(src_filename),
       m_arch(arch),
@@ -119,13 +120,13 @@ Object::Object(const std::string& src_filename,
 }
 
 void
-Object::setSourceFilename(const std::string& src_filename)
+Object::setSourceFilename(const llvm::StringRef& src_filename)
 {
     m_src_filename = src_filename;
 }
 
 void
-Object::setObjectFilename(const std::string& obj_filename)
+Object::setObjectFilename(const llvm::StringRef& obj_filename)
 {
     m_obj_filename = obj_filename;
 }
@@ -149,7 +150,7 @@ Object::AppendSection(std::auto_ptr<Section> sect)
 }
 
 Section*
-Object::FindSection(const std::string& name)
+Object::FindSection(const llvm::StringRef& name)
 {
     section_iterator i =
         std::find_if(m_sections.begin(), m_sections.end(),
@@ -175,13 +176,13 @@ Object::getAbsoluteSymbol()
 }
 
 SymbolRef
-Object::FindSymbol(const std::string& name)
+Object::FindSymbol(const llvm::StringRef& name)
 {
     return SymbolRef(m_impl->sym_map.Find(name));
 }
 
 SymbolRef
-Object::getSymbol(const std::string& name)
+Object::getSymbol(const llvm::StringRef& name)
 {
     // Don't use pool allocator for symbols in the symbol table.
     // We have to maintain an ordered link list of all symbols in the symbol
@@ -203,7 +204,7 @@ Object::getSymbol(const std::string& name)
 }
 
 SymbolRef
-Object::AppendSymbol(const std::string& name)
+Object::AppendSymbol(const llvm::StringRef& name)
 {
     Symbol* sym = new Symbol(name);
     m_symbols.push_back(sym);
@@ -211,7 +212,7 @@ Object::AppendSymbol(const std::string& name)
 }
 
 SymbolRef
-Object::AddNonTableSymbol(const std::string& name)
+Object::AddNonTableSymbol(const llvm::StringRef& name)
 {
     Symbol* sym = m_impl->NewSymbol(name);
     return SymbolRef(sym);
@@ -243,7 +244,7 @@ Object::FinalizeSymbols(Errwarns& errwarns, bool undef_extern)
 }
 
 SymbolRef
-Object::AddSpecialSymbol(const std::string& name)
+Object::AddSpecialSymbol(const llvm::StringRef& name)
 {
     Symbol* sym = m_impl->NewSymbol(name);
     m_impl->special_sym_map.Insert(sym);
@@ -251,7 +252,7 @@ Object::AddSpecialSymbol(const std::string& name)
 }
 
 SymbolRef
-Object::FindSpecialSymbol(const std::string& name)
+Object::FindSpecialSymbol(const llvm::StringRef& name)
 {
     return SymbolRef(m_impl->special_sym_map.Find(name));
 }
@@ -282,7 +283,7 @@ Object::Write(YAML::Emitter& out) const
     out << YAML::BeginSeq;
     for (const_section_iterator i=m_sections.begin(), end=m_sections.end();
          i != end; ++i)
-        out << YAML::Anchor("SECT@" + i->getName()) << *i;
+        out << YAML::Anchor(("SECT@" + i->getName()).str()) << *i;
     out << YAML::EndSeq;
 
     // symbols
@@ -292,7 +293,7 @@ Object::Write(YAML::Emitter& out) const
     out << YAML::BeginSeq;
     for (const_symbol_iterator i=m_symbols.begin(), end=m_symbols.end();
          i != end; ++i)
-        out << YAML::Anchor("SYM@" + i->getName()) << *i;
+        out << YAML::Anchor(("SYM@" + i->getName()).str()) << *i;
     out << YAML::EndSeq;
 
     out << YAML::EndMap;

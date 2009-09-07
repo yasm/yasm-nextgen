@@ -39,6 +39,8 @@
 #include "yasmx/NameValue.h"
 
 
+namespace llvm { class StringRef; }
+
 namespace yasm
 {
 
@@ -59,7 +61,7 @@ public:
     /// @param needsvalue   True if name requires value, false if it must not
     ///                     have a value.
     /// @param helper       Helper function
-    void Add(const char* name,
+    void Add(const llvm::StringRef& name,
              bool needsvalue,
              FUNCTION::function<void (NameValue&)> helper);
 

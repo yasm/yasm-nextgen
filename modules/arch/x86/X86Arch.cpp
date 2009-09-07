@@ -129,7 +129,7 @@ X86Arch::X86Arch(const ArchModule& module)
 }
 
 bool
-X86Arch::setParser(const std::string& parser)
+X86Arch::setParser(const llvm::StringRef& parser)
 {
     if (String::NocaseEqual(parser, "nasm"))
         m_parser = PARSER_NASM;
@@ -142,7 +142,7 @@ X86Arch::setParser(const std::string& parser)
 }
 
 bool
-X86Arch::setMachine(const std::string& machine)
+X86Arch::setMachine(const llvm::StringRef& machine)
 {
     if (String::NocaseEqual(machine, "x86"))
         m_amd64_machine = false;
@@ -199,7 +199,7 @@ X86Arch::getAddressSize() const
 }
 
 bool
-X86Arch::setVar(const char* var, unsigned long val)
+X86Arch::setVar(const llvm::StringRef& var, unsigned long val)
 {
     if (String::NocaseEqual(var, "mode_bits"))
         m_mode_bits = static_cast<unsigned int>(val);
@@ -519,7 +519,7 @@ X86Arch::getFill() const
 }
 
 void
-X86Arch::AddDirectives(Directives& dirs, const char* parser)
+X86Arch::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
 {
     if (String::NocaseEqual(parser, "nasm"))
     {

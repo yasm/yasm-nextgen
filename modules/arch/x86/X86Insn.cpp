@@ -1694,9 +1694,10 @@ CpuFindReverse(unsigned int cpu0, unsigned int cpu1, unsigned int cpu2)
 }
 
 Arch::InsnPrefix
-X86Arch::ParseCheckInsnPrefix(const char* id, size_t id_len,
+X86Arch::ParseCheckInsnPrefix(const llvm::StringRef& id,
                               unsigned long line) const
 {
+    size_t id_len = id.size();
     if (id_len > 16)
         return InsnPrefix();
 

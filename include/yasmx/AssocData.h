@@ -30,7 +30,6 @@
 /// @endlicense
 ///
 #include <memory>
-#include <string>
 
 #include "llvm/ADT/SmallVector.h"
 #include "yasmx/Config/export.h"

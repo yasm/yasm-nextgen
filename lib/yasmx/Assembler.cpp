@@ -28,6 +28,7 @@
 
 #include "util.h"
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
@@ -53,10 +54,10 @@ namespace
 
 class NocaseEquals
 {
-    const std::string& s;
+    llvm::StringRef s;
 public:
-    NocaseEquals(const std::string& str) : s(str) {}
-    bool operator() (const char* oth)
+    NocaseEquals(const llvm::StringRef& str) : s(str) {}
+    bool operator() (const llvm::StringRef& oth)
     {
         return String::NocaseEqual(s, oth);
     }
@@ -70,16 +71,16 @@ namespace yasm
 class Assembler::Impl
 {
 public:
-    Impl(const std::string& arch_keyword,
-         const std::string& parser_keyword,
-         const std::string& objfmt_keyword,
+    Impl(const llvm::StringRef& arch_keyword,
+         const llvm::StringRef& parser_keyword,
+         const llvm::StringRef& objfmt_keyword,
          ObjectDumpTime dump_time);
     ~Impl();
 
-    void setMachine(const std::string& machine);
-    void setPreprocessor(const std::string& preproc_keyword);
-    void setDebugFormat(const std::string& dbgfmt_keyword);
-    void setListFormat(const std::string& listfmt_keyword);
+    void setMachine(const llvm::StringRef& machine);
+    void setPreprocessor(const llvm::StringRef& preproc_keyword);
+    void setDebugFormat(const llvm::StringRef& dbgfmt_keyword);
+    void setListFormat(const llvm::StringRef& listfmt_keyword);
     bool Assemble(const llvm::MemoryBuffer& in, bool warning_error);
 
     util::scoped_ptr<ArchModule> m_arch_module;
@@ -106,9 +107,9 @@ public:
     ObjectDumpTime m_dump_time;
 };
 
-Assembler::Impl::Impl(const std::string& arch_keyword,
-                      const std::string& parser_keyword,
-                      const std::string& objfmt_keyword,
+Assembler::Impl::Impl(const llvm::StringRef& arch_keyword,
+                      const llvm::StringRef& parser_keyword,
+                      const llvm::StringRef& objfmt_keyword,
                       ObjectDumpTime dump_time)
     : m_arch_module(LoadModule<ArchModule>(arch_keyword).release()),
       m_parser_module(LoadModule<ParserModule>(parser_keyword).release()),
@@ -156,9 +157,9 @@ Assembler::Impl::~Impl()
 {
 }
 
-Assembler::Assembler(const std::string& arch_keyword,
-                     const std::string& parser_keyword,
-                     const std::string& objfmt_keyword,
+Assembler::Assembler(const llvm::StringRef& arch_keyword,
+                     const llvm::StringRef& parser_keyword,
+                     const llvm::StringRef& objfmt_keyword,
                      ObjectDumpTime dump_time)
     : m_impl(new Impl(arch_keyword, parser_keyword, objfmt_keyword, dump_time))
 {
@@ -171,13 +172,13 @@ Assembler::~Assembler()
 }
 
 void
-Assembler::setObjectFilename(const std::string& obj_filename)
+Assembler::setObjectFilename(const llvm::StringRef& obj_filename)
 {
     m_impl->m_obj_filename = obj_filename;
 }
 
 void
-Assembler::Impl::setMachine(const std::string& machine)
+Assembler::Impl::setMachine(const llvm::StringRef& machine)
 {
     if (!m_arch->setMachine(machine))
         throw Error(String::Compose(
@@ -188,13 +189,13 @@ Assembler::Impl::setMachine(const std::string& machine)
 }
 
 void
-Assembler::setMachine(const std::string& machine)
+Assembler::setMachine(const llvm::StringRef& machine)
 {
     m_impl->setMachine(machine);
 }
 
 void
-Assembler::Impl::setPreprocessor(const std::string& preproc_keyword)
+Assembler::Impl::setPreprocessor(const llvm::StringRef& preproc_keyword)
 {
     // Check to see if the requested preprocessor is in the allowed list
     // for the active parser.
@@ -223,13 +224,13 @@ Assembler::Impl::setPreprocessor(const std::string& preproc_keyword)
 }
 
 void
-Assembler::setPreprocessor(const std::string& preproc_keyword)
+Assembler::setPreprocessor(const llvm::StringRef& preproc_keyword)
 {
     m_impl->setPreprocessor(preproc_keyword);
 }
 
 void
-Assembler::Impl::setDebugFormat(const std::string& dbgfmt_keyword)
+Assembler::Impl::setDebugFormat(const llvm::StringRef& dbgfmt_keyword)
 {
     // Check to see if the requested debug format is in the allowed list
     // for the active object format.
@@ -253,13 +254,13 @@ Assembler::Impl::setDebugFormat(const std::string& dbgfmt_keyword)
 }
 
 void
-Assembler::setDebugFormat(const std::string& dbgfmt_keyword)
+Assembler::setDebugFormat(const llvm::StringRef& dbgfmt_keyword)
 {
     m_impl->setDebugFormat(dbgfmt_keyword);
 }
 
 void
-Assembler::Impl::setListFormat(const std::string& listfmt_keyword)
+Assembler::Impl::setListFormat(const llvm::StringRef& listfmt_keyword)
 {
     std::auto_ptr<ListFormatModule> listfmt_module =
         LoadModule<ListFormatModule>(listfmt_keyword);
@@ -270,7 +271,7 @@ Assembler::Impl::setListFormat(const std::string& listfmt_keyword)
 }
 
 void
-Assembler::setListFormat(const std::string& listfmt_keyword)
+Assembler::setListFormat(const llvm::StringRef& listfmt_keyword)
 {
     m_impl->setListFormat(listfmt_keyword);
 }
@@ -459,7 +460,7 @@ Assembler::getLinemap()
     return &m_impl->m_linemap;
 }
 
-std::string
+llvm::StringRef
 Assembler::getObjectFilename() const
 {
     return m_impl->m_obj_filename;

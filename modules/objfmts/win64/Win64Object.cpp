@@ -59,7 +59,7 @@ public:
     Win64Object(const ObjectFormatModule& module, Object& object);
     virtual ~Win64Object();
 
-    virtual void AddDirectives(Directives& dirs, const char* parser);
+    virtual void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
 
     //virtual void InitSymbols(const char* parser);
     //virtual void Read(const llvm::MemoryBuffer& in);
@@ -83,7 +83,7 @@ public:
     { return false; }
 
 private:
-    virtual bool InitSection(const std::string& name,
+    virtual bool InitSection(const llvm::StringRef& name,
                              Section& section,
                              CoffSection* coffsect);
 
@@ -175,7 +175,7 @@ Win64Object::DirProcFrame(Object& object,
 {
     if (!namevals.front().isId())
         throw SyntaxError(N_("argument to [PROC_FRAME] must be symbol name"));
-    std::string name = namevals.front().getId();
+    llvm::StringRef name = namevals.front().getId();
 
     if (m_proc_frame != 0)
     {
@@ -494,7 +494,7 @@ Win64Object::DirEndProcFrame(Object& object,
 }
 
 void
-Win64Object::AddDirectives(Directives& dirs, const char* parser)
+Win64Object::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
 {
     static const Directives::Init<Win64Object> gas_dirs[] =
     {
@@ -533,7 +533,7 @@ Win64Object::AddDirectives(Directives& dirs, const char* parser)
 }
 
 bool
-Win64Object::InitSection(const std::string& name,
+Win64Object::InitSection(const llvm::StringRef& name,
                          Section& section,
                          CoffSection* coffsect)
 {

@@ -32,6 +32,7 @@
 #include <sstream>
 #include <string>
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 
 
@@ -42,7 +43,7 @@ class YASM_LIB_EXPORT Composer
 {
 public:
     // initialize and prepare format string on the form "text %1 text %2 etc."
-    explicit Composer(const std::string& fmt);
+    explicit Composer(const llvm::StringRef& fmt);
     ~Composer();
 
     // copy and assignment
@@ -61,7 +62,7 @@ public:
     operator std::string () const { return getStr(); }
 
 private:
-    std::string m_fmt;
+    llvm::StringRef m_fmt;
     std::ostringstream m_os;
     int m_arg;
 
@@ -88,7 +89,7 @@ operator<< (std::ostream& os, const Composer& c)
 }
 
 inline std::string
-Compose(const std::string& fmt)
+Compose(const llvm::StringRef& fmt)
 {
     Composer c(fmt);
     return c.getStr();
@@ -96,7 +97,7 @@ Compose(const std::string& fmt)
 
 template <typename T1>
 inline std::string
-Compose(const std::string& fmt, const T1& a1)
+Compose(const llvm::StringRef& fmt, const T1& a1)
 {
     Composer c(fmt);
     c.AutoArg(a1);
@@ -105,7 +106,7 @@ Compose(const std::string& fmt, const T1& a1)
 
 template <typename T1, typename T2>
 inline std::string
-Compose(const std::string& fmt, const T1& a1, const T2& a2)
+Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2)
 {
     Composer c(fmt);
     c.AutoArg(a1);
@@ -115,7 +116,7 @@ Compose(const std::string& fmt, const T1& a1, const T2& a2)
 
 template <typename T1, typename T2, typename T3>
 inline std::string
-Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3)
+Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3)
 {
     Composer c(fmt);
     c.AutoArg(a1);
@@ -126,7 +127,7 @@ Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3)
 
 template <typename T1, typename T2, typename T3, typename T4>
 inline std::string
-Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
+Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3,
         const T4& a4)
 {
     Composer c(fmt);
@@ -139,7 +140,7 @@ Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5>
 inline std::string
-Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
+Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3,
         const T4& a4, const T5& a5)
 {
     Composer c(fmt);
@@ -154,7 +155,7 @@ Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
           typename T6>
 inline std::string
-Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
+Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3,
         const T4& a4, const T5& a5, const T6& a6)
 {
     Composer c(fmt);
@@ -170,7 +171,7 @@ Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
           typename T6, typename T7>
 inline std::string
-Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
+Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3,
         const T4& a4, const T5& a5, const T6& a6, const T7& a7)
 {
     Composer c(fmt);
@@ -187,7 +188,7 @@ Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
           typename T6, typename T7, typename T8>
 inline std::string
-Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
+Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3,
         const T4& a4, const T5& a5, const T6& a6, const T7& a7, const T8& a8)
 {
     Composer c(fmt);
@@ -205,7 +206,7 @@ Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
           typename T6, typename T7, typename T8, typename T9>
 inline std::string
-Compose(const std::string& fmt, const T1& a1, const T2& a2, const T3& a3,
+Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3,
         const T4& a4, const T5& a5, const T6& a6, const T7& a7, const T8& a8,
         const T9& a9)
 {

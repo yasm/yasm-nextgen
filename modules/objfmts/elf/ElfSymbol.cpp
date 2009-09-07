@@ -28,6 +28,7 @@
 
 #include "util.h"
 
+#include "llvm/ADT/Twine.h"
 #include "YAML/emitter.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytecode.h"
@@ -156,7 +157,7 @@ ElfSymbol::Write(YAML::Emitter& out) const
     out << YAML::Key << "type" << YAML::Value << key;
     out << YAML::Key << "sect" << YAML::Value;
     if (m_sect)
-        out << YAML::Alias("SECT@" + m_sect->getName());
+        out << YAML::Alias(("SECT@" + m_sect->getName()).str());
     else
         out << YAML::Null;
     out << YAML::Key << "value" << YAML::Value << m_value;

@@ -38,6 +38,8 @@
 #include <dlfcn.h>
 #endif
 
+#include "llvm/ADT/StringRef.h"
+
 #include "config.h"
 
 static std::vector<void*> loaded_plugins;
@@ -58,7 +60,7 @@ namespace yasm
 {
 
 bool
-LoadPlugin(const std::string& name)
+LoadPlugin(const llvm::StringRef& name)
 {
     // Load library
     void* lib = 0;
@@ -66,19 +68,19 @@ LoadPlugin(const std::string& name)
     // First attempt: FOO.so
     std::string path = name;
 #if defined(_MSC_VER)
-    if (path.compare(path.length()-4, 4, ".dll") != 0)
+    if (!name.endswith(".dll"))
         path += ".dll";
 #elif defined(__MACH__) || defined(__APPLE__)
-    if (path.compare(path.length()-3, 3, ".dylib") != 0)
+    if (!name.endswith(".dylib"))
         path += ".dylib";
 #elif defined(__GNUC__)
-    if (path.compare(path.length()-3, 3, ".so") != 0)
+    if (!name.endswith(".so") != 0)
         path += ".so";
 #endif
     lib = LoadDLL(path);
 
     // Second attempt: PLUGIN_INSTALL_DIR/FOO.so
-    if (!lib && name.find_first_of("\\/") == std::string::npos)
+    if (!lib && path.find_first_of("\\/") == std::string::npos)
     {
 #if defined(_MSC_VER)
         path.insert(0, PLUGIN_INSTALL_DIR "\\");

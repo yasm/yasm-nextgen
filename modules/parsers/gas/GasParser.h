@@ -35,6 +35,7 @@
 #include <vector>
 
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/StringMap.h"
 #include "yasmx/Mixin/ParserMixin.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "yasmx/Insn.h"
@@ -115,7 +116,7 @@ public:
     GasParser(const ParserModule& module, Errwarns& errwarns);
     ~GasParser();
 
-    void AddDirectives(Directives& dirs, const char* parser);
+    void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
 
     static const char* getName() { return "GNU AS (GAS)-compatible parser"; }
     static const char* getKeyword() { return "gas"; }
@@ -190,21 +191,21 @@ private:
     bool ParseExpr1(Expr& e);
     bool ParseExpr2(Expr& e);
 
-    void DefineLabel(const std::string& name, bool local);
-    void DefineLcomm(const std::string& name,
+    void DefineLabel(const llvm::StringRef& name, bool local);
+    void DefineLcomm(const llvm::StringRef& name,
                      std::auto_ptr<Expr> size,
                      const Expr& align);
-    void SwitchSection(const std::string& name,
+    void SwitchSection(const llvm::StringRef& name,
                        NameValues& objext_namevals,
                        bool builtin);
-    Section& getSection(const std::string& name,
+    Section& getSection(const llvm::StringRef& name,
                         NameValues& objext_namevals,
                         bool builtin);
 
     void DoParse();
 
     GasDirLookup m_sized_gas_dirs[1];
-    typedef std::map<std::string, const GasDirLookup*> GasDirMap;
+    typedef llvm::StringMap<const GasDirLookup*> GasDirMap;
     GasDirMap m_gas_dirs;
 
     // last "base" label for local (.) labels

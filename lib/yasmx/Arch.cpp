@@ -98,7 +98,7 @@ Arch::~Arch()
 }
 
 void
-Arch::AddDirectives(Directives& dirs, const char* parser)
+Arch::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
 {
 }
 

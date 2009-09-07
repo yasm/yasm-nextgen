@@ -38,7 +38,7 @@ ListFormat::~ListFormat()
 }
 
 void
-ListFormat::AddDirectives(Directives& dirs, const char* parser)
+ListFormat::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
 {
 }
 

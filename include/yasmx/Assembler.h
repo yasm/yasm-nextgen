@@ -29,13 +29,13 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <string>
+#include <iosfwd>
 
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
 
 
-namespace llvm { class MemoryBuffer; }
+namespace llvm { class MemoryBuffer; class StringRef; }
 
 /// Namespace for classes, functions, and templates related to the Yasm
 /// assembler.
@@ -67,9 +67,9 @@ public:
     /// @param parser_keyword   parser keyword
     /// @param objfmt_keyword   object format keyword
     /// @param dump_time        when (if ever) to dump object YAML to stderr
-    Assembler(const std::string& arch_keyword,
-              const std::string& parser_keyword,
-              const std::string& objfmt_keyword,
+    Assembler(const llvm::StringRef& arch_keyword,
+              const llvm::StringRef& parser_keyword,
+              const llvm::StringRef& objfmt_keyword,
               ObjectDumpTime dump_time = DUMP_NEVER);
 
     /// Destructor.
@@ -78,27 +78,27 @@ public:
     /// Set the object filename; if not set prior to assembly, determined
     /// from source filename according to the object format settings.
     /// @param obj_filename     object filename (e.g. "file.o")
-    void setObjectFilename(const std::string& obj_filename);
+    void setObjectFilename(const llvm::StringRef& obj_filename);
 
     /// Set the machine of architecture; if not set prior to assembly,
     /// determined by object format.
     /// @param machine          machine name
-    void setMachine(const std::string& machine);
+    void setMachine(const llvm::StringRef& machine);
 
     /// Set the preprocessor; if not set prior to assembly, determined
     /// by parser.
     /// @param preproc_keyword  preprocessor keyword
-    void setPreprocessor(const std::string& preproc_keyword);
+    void setPreprocessor(const llvm::StringRef& preproc_keyword);
 
     /// Set the debug format; if not set prior to assembly, defaults to null
     /// debug format (e.g. no debugging information).
     /// @param dbgfmt_keyword   debug format keyword
-    void setDebugFormat(const std::string& dbgfmt_keyword);
+    void setDebugFormat(const llvm::StringRef& dbgfmt_keyword);
 
     /// Set the list format; if not set prior to assembly, defaults to null
     /// list format (e.g. no list output).
     /// @param listfmt_keyword  list format keyword
-    void setListFormat(const std::string& list_keyword);
+    void setListFormat(const llvm::StringRef& list_keyword);
 
     /// Actually perform assembly.  Does not write to output file.
     /// @param in               initial source memory buffer
@@ -135,7 +135,7 @@ public:
 
     /// Get the object filename.  May return empty string if called prior
     /// to assemble() being called.
-    std::string getObjectFilename() const;
+    llvm::StringRef getObjectFilename() const;
 
 private:
     Assembler(const Assembler&);                    // not implemented

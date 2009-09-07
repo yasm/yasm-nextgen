@@ -39,10 +39,7 @@
 #include "yasmx/Module.h"
 
 
-namespace llvm
-{
-class MemoryBuffer;
-}
+namespace llvm { class MemoryBuffer; class StringRef; }
 
 namespace yasm
 {
@@ -70,13 +67,13 @@ public:
     const ObjectFormatModule& getModule() const { return m_module; }
 
     /// Add directive handlers.
-    virtual void AddDirectives(Directives& dirs, const char* parser);
+    virtual void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
 
     /// Initialize symbols (default and special symbols).
     /// Called prior to assembly process.
     /// Default implementation does nothing.
     /// @param parser       parser keyword
-    virtual void InitSymbols(const char* parser);
+    virtual void InitSymbols(const llvm::StringRef& parser);
 
     /// Read object file into associated object.
     /// May create sections, relocations, and bytecodes, as well as modify
@@ -106,7 +103,7 @@ public:
     /// section.  As with Object::append_section(), this does not check to see
     /// if the section already exists; use Object::find_section() first.
     /// @return New section.
-    virtual Section* AppendSection(const std::string& name,
+    virtual Section* AppendSection(const llvm::StringRef& name,
                                    unsigned long line) = 0;
 
 private:

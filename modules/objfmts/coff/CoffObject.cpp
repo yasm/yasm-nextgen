@@ -95,7 +95,7 @@ CoffObject::isOkObject(Object& object)
 }
 
 void
-CoffObject::InitSymbols(const char* parser)
+CoffObject::InitSymbols(const llvm::StringRef& parser)
 {
     // Add .file symbol
     SymbolRef filesym = m_object.AppendSymbol(".file");
@@ -121,7 +121,7 @@ CoffObject::AddDefaultSection()
 }
 
 bool
-CoffObject::InitSection(const std::string& name,
+CoffObject::InitSection(const llvm::StringRef& name,
                         Section& section,
                         CoffSection* coffsect)
 {
@@ -140,8 +140,7 @@ CoffObject::InitSection(const std::string& name,
         section.setCode(true);
     }
     else if (name == ".rdata"
-             || (name.length() >= 7 && name.compare(0, 7, ".rodata") == 0)
-             || (name.length() >= 7 && name.compare(0, 7, ".rdata$") == 0))
+             || name.startswith(".rodata") || name.startswith(".rdata$"))
     {
         flags = CoffSection::DATA;
         setWarn(WARN_GENERAL,
@@ -165,7 +164,7 @@ CoffObject::InitSection(const std::string& name,
 }
 
 Section*
-CoffObject::AppendSection(const std::string& name, unsigned long line)
+CoffObject::AppendSection(const llvm::StringRef& name, unsigned long line)
 {
     Section* section = new Section(name, false, false, line);
     m_object.AppendSection(std::auto_ptr<Section>(section));
@@ -197,16 +196,16 @@ CoffObject::DirGasSection(Object& object,
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
-    std::string sectname = nvs.front().getString();
+    llvm::StringRef sectname = nvs.front().getString();
 
-    if (sectname.length() > 8 && !m_win32)
+    if (sectname.size() > 8 && !m_win32)
     {
         // win32 format supports >8 character section names in object
         // files via "/nnnn" (where nnnn is decimal offset into string table),
         // so only warn for regular COFF.
         setWarn(WARN_GENERAL,
                 N_("COFF section names limited to 8 characters: truncating"));
-        sectname.resize(8);
+        sectname = sectname.substr(0, 8);
     }
 
     Section* sect = m_object.FindSection(sectname);
@@ -240,9 +239,9 @@ CoffObject::DirGasSection(Object& object,
     // Parse section flags
     bool alloc = false, load = false, readonly = false, code = false;
     bool datasect = false, shared = false;
-    std::string flagstr = nvs[1].getString();
+    llvm::StringRef flagstr = nvs[1].getString();
 
-    for (std::string::size_type i=0; i<flagstr.length(); ++i)
+    for (size_t i=0; i<flagstr.size(); ++i)
     {
         switch (flagstr[i])
         {
@@ -356,16 +355,16 @@ CoffObject::DirSection(Object& object,
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
-    std::string sectname = nvs.front().getString();
+    llvm::StringRef sectname = nvs.front().getString();
 
-    if (sectname.length() > 8 && !m_win32)
+    if (sectname.size() > 8 && !m_win32)
     {
         // win32 format supports >8 character section names in object
         // files via "/nnnn" (where nnnn is decimal offset into string table),
         // so only warn for regular COFF.
         setWarn(WARN_GENERAL,
                 N_("COFF section names limited to 8 characters: truncating"));
-        sectname.resize(8);
+        sectname = sectname.substr(0, 8);
     }
 
     Section* sect = m_object.FindSection(sectname);
@@ -437,7 +436,7 @@ CoffObject::DirIdent(Object& object,
 }
 
 void
-CoffObject::AddDirectives(Directives& dirs, const char* parser)
+CoffObject::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
 {
     static const Directives::Init<CoffObject> nasm_dirs[] =
     {

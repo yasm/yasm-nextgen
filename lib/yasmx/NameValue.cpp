@@ -39,7 +39,7 @@
 namespace yasm
 {
 
-NameValue::NameValue(const std::string& name, const std::string& id,
+NameValue::NameValue(const llvm::StringRef& name, const llvm::StringRef& id,
                      char id_prefix)
     : m_name(name),
       m_type(ID),
@@ -49,7 +49,7 @@ NameValue::NameValue(const std::string& name, const std::string& id,
 {
 }
 
-NameValue::NameValue(const std::string& name, const std::string& str)
+NameValue::NameValue(const llvm::StringRef& name, const llvm::StringRef& str)
     : m_name(name),
       m_type(STRING),
       m_idstr(str),
@@ -58,7 +58,7 @@ NameValue::NameValue(const std::string& name, const std::string& str)
 {
 }
 
-NameValue::NameValue(const std::string& name, std::auto_ptr<Expr> e)
+NameValue::NameValue(const llvm::StringRef& name, std::auto_ptr<Expr> e)
     : m_name(name),
       m_type(EXPR),
       m_expr(e.release()),
@@ -66,7 +66,7 @@ NameValue::NameValue(const std::string& name, std::auto_ptr<Expr> e)
 {
 }
 
-NameValue::NameValue(const std::string& id, char id_prefix)
+NameValue::NameValue(const llvm::StringRef& id, char id_prefix)
     : m_name(""),
       m_type(ID),
       m_idstr(id),
@@ -75,7 +75,7 @@ NameValue::NameValue(const std::string& id, char id_prefix)
 {
 }
 
-NameValue::NameValue(const std::string& str)
+NameValue::NameValue(const llvm::StringRef& str)
     : m_name(""),
       m_type(STRING),
       m_idstr(str),
@@ -151,7 +151,7 @@ NameValue::ReleaseExpr(Object& object, unsigned long line)
     }
 }
 
-std::string
+llvm::StringRef
 NameValue::getString() const
 {
     switch (m_type)
@@ -164,7 +164,7 @@ NameValue::getString() const
     }
 }
 
-std::string
+llvm::StringRef
 NameValue::getId() const
 {
     if (m_type != ID)

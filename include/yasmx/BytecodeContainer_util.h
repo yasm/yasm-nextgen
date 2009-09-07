@@ -30,10 +30,11 @@
 /// @endlicense
 ///
 #include <memory>
-#include <string>
 
 #include "yasmx/Config/export.h"
 
+
+namespace llvm { class StringRef; }
 
 namespace yasm
 {
@@ -82,7 +83,7 @@ void AppendData(BytecodeContainer& container,
 /// @param append_zero  append a single zero byte after the string (if true)
 YASM_LIB_EXPORT
 void AppendData(BytecodeContainer& container,
-                const std::string& str,
+                const llvm::StringRef& str,
                 bool append_zero);
 
 /// Append a sized string value to the end of a section.
@@ -92,7 +93,7 @@ void AppendData(BytecodeContainer& container,
 /// @param append_zero  append a single zero byte after the string (if true)
 YASM_LIB_EXPORT
 void AppendData(BytecodeContainer& container,
-                const std::string& str,
+                const llvm::StringRef& str,
                 unsigned int size,
                 bool append_zero);
 
@@ -130,7 +131,7 @@ void AppendLEB128(BytecodeContainer& container,
 /// @param line             virtual line number
 YASM_LIB_EXPORT
 void AppendIncbin(BytecodeContainer& container,
-                  const std::string& filename,
+                  const llvm::StringRef& filename,
                   /*@null@*/ std::auto_ptr<Expr> start,
                   /*@null@*/ std::auto_ptr<Expr> maxlen,
                   unsigned long line);

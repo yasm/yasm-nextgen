@@ -29,6 +29,7 @@
 ///
 #include "yasmx/SymbolRef.h"
 
+#include "llvm/ADT/Twine.h"
 #include "YAML/emitter.h"
 #include "yasmx/Symbol.h"
 
@@ -41,7 +42,7 @@ operator<< (YAML::Emitter& out, const SymbolRef& sym)
     if (!sym)
         out << YAML::Null;
     else
-        out << YAML::Alias("SYM@" + sym->getName());
+        out << YAML::Alias(("SYM@" + sym->getName()).str());
     return out;
 }
 

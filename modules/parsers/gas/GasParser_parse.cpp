@@ -839,9 +839,7 @@ GasParser::ParseInsn()
     if (m_peek_token == ':' || m_peek_token == '=')
         return Insn::Ptr(0);
 
-    Arch::InsnPrefix ip =
-        m_arch->ParseCheckInsnPrefix(ID_val.c_str(), ID_val.length(),
-                                     getCurLine());
+    Arch::InsnPrefix ip = m_arch->ParseCheckInsnPrefix(ID_val, getCurLine());
     switch (ip.getType())
     {
         case Arch::InsnPrefix::INSN:
@@ -884,8 +882,7 @@ GasParser::ParseInsn()
     }
 
     // Check for segment register used as prefix
-    Arch::RegTmod regtmod =
-        m_arch->ParseCheckRegTmod(ID_val.c_str(), ID_val.length());
+    Arch::RegTmod regtmod = m_arch->ParseCheckRegTmod(ID_val);
     switch (regtmod.getType())
     {
         case Arch::RegTmod::SEGREG:
@@ -1321,7 +1318,7 @@ GasParser::ParseExpr2(Expr& e)
 }
 
 void
-GasParser::DefineLabel(const std::string& name, bool local)
+GasParser::DefineLabel(const llvm::StringRef& name, bool local)
 {
     if (!local)
         m_locallabel_base = name;
@@ -1333,7 +1330,7 @@ GasParser::DefineLabel(const std::string& name, bool local)
 }
 
 void
-GasParser::DefineLcomm(const std::string& name,
+GasParser::DefineLcomm(const llvm::StringRef& name,
                        std::auto_ptr<Expr> size,
                        const Expr& align)
 {
@@ -1364,7 +1361,7 @@ GasParser::DefineLcomm(const std::string& name,
 }
 
 void
-GasParser::SwitchSection(const std::string& name,
+GasParser::SwitchSection(const llvm::StringRef& name,
                          NameValues& objext_nvs,
                          bool builtin)
 {
@@ -1374,7 +1371,7 @@ GasParser::SwitchSection(const std::string& name,
 }
 
 Section&
-GasParser::getSection(const std::string& name,
+GasParser::getSection(const llvm::StringRef& name,
                       NameValues& objext_nvs,
                       bool builtin)
 {

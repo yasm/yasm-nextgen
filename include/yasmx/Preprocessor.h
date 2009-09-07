@@ -37,7 +37,7 @@
 #include "yasmx/Module.h"
 
 
-namespace llvm { class MemoryBuffer; }
+namespace llvm { class MemoryBuffer; class StringRef; }
 
 namespace yasm
 {
@@ -63,7 +63,7 @@ public:
     const PreprocessorModule& getModule() const { return m_module; }
 
     /// Add directive handlers.
-    virtual void AddDirectives(Directives& dirs, const char* parser);
+    virtual void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
 
     /// Initialize preprocessor.  Must be called prior to first getLine() call.
     /// @param in           memory buffer containing initial file contents
@@ -81,19 +81,19 @@ public:
 
     /// Pre-include a file.
     /// @param filename     filename
-    virtual void AddIncludeFile(const std::string& filename) = 0;
+    virtual void AddIncludeFile(const llvm::StringRef& filename) = 0;
 
     /// Pre-define a macro.
     /// @param macronameval "name=value" string
-    virtual void PredefineMacro(const std::string& macronameval) = 0;
+    virtual void PredefineMacro(const llvm::StringRef& macronameval) = 0;
 
     /// Un-define a macro.
     /// @param macroname    macro name
-    virtual void UndefineMacro(const std::string& macroname) = 0;
+    virtual void UndefineMacro(const llvm::StringRef& macroname) = 0;
 
     /// Define a builtin macro, preprocessed before the "standard" macros.
     /// @param macronameval "name=value" string
-    virtual void DefineBuiltin(const std::string& macronameval) = 0;
+    virtual void DefineBuiltin(const llvm::StringRef& macronameval) = 0;
 
 private:
     Preprocessor(const Preprocessor&);                  // not implemented

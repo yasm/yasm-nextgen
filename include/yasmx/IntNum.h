@@ -40,7 +40,7 @@
 #include "yasmx/Op.h"
 
 
-namespace YAML { class Emitter; }
+namespace YAML { class Emitter; class StringRef; }
 
 namespace yasm
 {
@@ -287,7 +287,7 @@ public:
     /// @param str      input string
     /// @param base     numeric base (10=decimal, etc)
     /// @note Only base=2,8,10,16 are supported.
-    void setStr(const char* str, unsigned int len, int base=10);
+    void setStr(const llvm::StringRef& str, int base=10);
 
     /// Get intnum value into a SmallString.  The returned string will
     /// contain a leading '-' if the intnum is negative.

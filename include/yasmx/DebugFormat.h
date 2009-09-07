@@ -36,6 +36,8 @@
 #include "yasmx/Module.h"
 
 
+namespace llvm { class StringRef; }
+
 namespace yasm
 {
 
@@ -59,7 +61,7 @@ public:
     const DebugFormatModule& getModule() const { return m_module; }
 
     /// Add directive handlers.
-    virtual void AddDirectives(Directives& dirs, const char* parser);
+    virtual void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
 
     /// Generate debugging information bytecodes.
     /// @param linemap      virtual/physical line mapping

@@ -531,12 +531,12 @@ static const char *fmt_noline[2] =
 };
 
 static void
-PrintYasmError(const std::string& filename,
+PrintYasmError(const llvm::StringRef& filename,
                unsigned long line,
-               const std::string& msg,
-               const std::string& xref_fn,
+               const llvm::StringRef& msg,
+               const llvm::StringRef& xref_fn,
                unsigned long xref_line,
-               const std::string& xref_msg)
+               const llvm::StringRef& xref_msg)
 {
     errfile <<
         String::Compose(line ? fmt[ewmsg_style] : fmt_noline[ewmsg_style],
@@ -553,9 +553,9 @@ PrintYasmError(const std::string& filename,
 }
 
 static void
-PrintYasmWarning(const std::string& filename,
+PrintYasmWarning(const llvm::StringRef& filename,
                  unsigned long line,
-                 const std::string& msg)
+                 const llvm::StringRef& msg)
 {
     errfile <<
         String::Compose(line ? fmt[ewmsg_style] : fmt_noline[ewmsg_style],
@@ -724,7 +724,8 @@ do_assemble(void)
         out = &std::cerr;
     else
     {
-        out_file.open(assembler.getObjectFilename().c_str(), std::ios::binary);
+        out_file.open(assembler.getObjectFilename().str().c_str(),
+                      std::ios::binary);
         if (!out_file)
             throw yasm::Error(String::Compose(_("could not open file `%1'"),
                               obj_filename));
@@ -741,7 +742,7 @@ do_assemble(void)
                                            PrintYasmError,
                                            PrintYasmWarning);
         out_file.close();
-        remove(assembler.getObjectFilename().c_str());
+        remove(assembler.getObjectFilename().str().c_str());
         return EXIT_FAILURE;
     }
 

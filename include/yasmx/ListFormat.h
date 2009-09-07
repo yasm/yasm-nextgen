@@ -37,6 +37,8 @@
 #include "yasmx/Module.h"
 
 
+namespace llvm { class StringRef; }
+
 namespace yasm
 {
 
@@ -59,7 +61,7 @@ public:
     const ListFormatModule& getModule() const { return m_module; }
 
     /// Add directive handlers.
-    virtual void AddDirectives(Directives& dirs, const char* parser);
+    virtual void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
 
     /// Write out list to the list file.
     /// This function may call all read-only yasm:: functions as necessary.

@@ -27,52 +27,47 @@
 #include "yasmx/Support/nocase.h"
 
 #include <cctype>
-#include <cstring>
+
+#include "llvm/ADT/StringRef.h"
 
 
 namespace String
 {
 
 bool
-NocaseEqual(const char* s1, const char* s2)
+NocaseEqual(const llvm::StringRef& s1, const llvm::StringRef& s2)
 {
-    for (; *s1 != '\0' && *s2 != '\0'; ++s1, ++s2)
+    if (s1.size() != s2.size())
+        return false;
+    for (llvm::StringRef::iterator i = s1.begin(), end = s1.end(),
+         j = s2.begin(); i != end; ++i, ++j)
     {
-        if (tolower(*s1) != tolower(*s2))
+        if (tolower(*i) != tolower(*j))
             return false;
     }
-    return (tolower(*s1) == tolower(*s2));
+    return true;
 }
 
 bool
-NocaseEqual(const char* s1, const char* s2, std::string::size_type n)
+NocaseEqual(const llvm::StringRef& s1, const llvm::StringRef& s2, std::size_t n)
 {
-    if (n == 0)
-        return true;
-    for (; *s1 != '\0' && *s2 != '\0' && n > 1; ++s1, ++s2, --n)
+    size_t i, s1len = s1.size(), s2len = s2.size();
+    for (i = 0; i < n && i < s1len && i < s2len; ++i)
     {
-        if (tolower(*s1) != tolower(*s2))
+        if (tolower(s1[i]) != tolower(s2[i]))
             return false;
     }
-    return (tolower(*s1) == tolower(*s2));
+    if (i != n && s1len != s2len)
+        return false;
+    return true;
 }
 
 std::string
-Lowercase(const char* in)
+Lowercase(const llvm::StringRef& in)
 {
     std::string ret;
-    ret.reserve(std::strlen(in));
-    for (; *in != '\0'; ++in)
-        ret += tolower(*in);
-    return ret;
-}
-
-std::string
-Lowercase(const std::string& in)
-{
-    std::string ret;
-    ret.reserve(in.length());
-    for (std::string::const_iterator i = in.begin(), end = in.end();
+    ret.reserve(in.size());
+    for (llvm::StringRef::iterator i = in.begin(), end = in.end();
          i != end; ++i)
         ret += tolower(*i);
     return ret;

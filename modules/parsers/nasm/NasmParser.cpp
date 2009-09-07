@@ -87,7 +87,7 @@ NasmParser::getPreprocessorKeywords()
 }
 
 void
-NasmParser::AddDirectives(Directives& dirs, const char* parser)
+NasmParser::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
 {
     static const Directives::Init<NasmParser> nasm_dirs[] =
     {

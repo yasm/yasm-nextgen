@@ -30,6 +30,7 @@
 
 #include <algorithm>
 
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Support/Compose.h"
@@ -66,7 +67,7 @@ BinGroup::Write(YAML::Emitter& out) const
 {
     out << YAML::BeginMap;
     out << YAML::Key << "section";
-    out << YAML::Value << YAML::Alias("SECT@" + m_section.getName());
+    out << YAML::Value << YAML::Alias(("SECT@" + m_section.getName()).str());
     out << YAML::Key << "following groups" << YAML::Value << m_follow_groups;
     out << YAML::EndMap;
 }

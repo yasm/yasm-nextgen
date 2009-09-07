@@ -32,6 +32,7 @@
 #include <memory>
 #include <string>
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/ptr_vector.h"
 
@@ -68,7 +69,10 @@ public:
     /// @param isnew    output; set to true if section did not already exist
     /// @param line     virtual line of section declaration (ignored if
     ///                 section already exists)
-    Section(const std::string& name, bool code, bool bss, unsigned long line);
+    Section(const llvm::StringRef& name,
+            bool code,
+            bool bss,
+            unsigned long line);
 
     ~Section();
 
@@ -121,12 +125,12 @@ public:
 
     /// Get name of a section.
     /// @return Section name.
-    const std::string& getName() const { return m_name; }
+    llvm::StringRef getName() const { return m_name; }
 
     /// Match name of a section.
     /// @param Section name.
     /// @return True if section name matches, false if not.
-    bool isName(const std::string& name) const { return m_name == name; }
+    bool isName(const llvm::StringRef& name) const { return m_name == name; }
 
     /// Change alignment of a section.
     /// @param align    alignment in bytes

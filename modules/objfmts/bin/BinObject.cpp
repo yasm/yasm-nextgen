@@ -29,6 +29,7 @@
 #include <fstream>
 #include <iostream>
 
+#include "llvm/ADT/Twine.h"
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
@@ -71,12 +72,12 @@ public:
     /// Destructor.
     ~BinObject();
 
-    void AddDirectives(Directives& dirs, const char* parser);
+    void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
 
     void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* AddDefaultSection();
-    Section* AppendSection(const std::string& name, unsigned long line);
+    Section* AppendSection(const llvm::StringRef& name, unsigned long line);
 
     static const char* getName() { return "Flat format binary"; }
     static const char* getKeyword() { return "bin"; }
@@ -397,7 +398,7 @@ BinObject::AddDefaultSection()
 }
 
 Section*
-BinObject::AppendSection(const std::string& name, unsigned long line)
+BinObject::AppendSection(const llvm::StringRef& name, unsigned long line)
 {
     bool bss = (name == ".bss");
     bool code = (name == ".text");
@@ -407,17 +408,17 @@ BinObject::AppendSection(const std::string& name, unsigned long line)
     // Initialize section data and symbols.
     std::auto_ptr<BinSection> bsd(new BinSection());
 
-    SymbolRef start = m_object.getSymbol("section."+name+".start");
+    SymbolRef start = m_object.getSymbol(("section."+name+".start").str());
     start->Declare(Symbol::EXTERN, line);
     start->AddAssocData(std::auto_ptr<BinSymbol>
         (new BinSymbol(*section, *bsd, BinSymbol::START)));
 
-    SymbolRef vstart = m_object.getSymbol("section."+name+".vstart");
+    SymbolRef vstart = m_object.getSymbol(("section."+name+".vstart").str());
     vstart->Declare(Symbol::EXTERN, line);
     vstart->AddAssocData(std::auto_ptr<BinSymbol>
         (new BinSymbol(*section, *bsd, BinSymbol::VSTART)));
 
-    SymbolRef length = m_object.getSymbol("section."+name+".length");
+    SymbolRef length = m_object.getSymbol(("section."+name+".length").str());
     length->Declare(Symbol::EXTERN, line);
     length->AddAssocData(std::auto_ptr<BinSymbol>
         (new BinSymbol(*section, *bsd, BinSymbol::LENGTH)));
@@ -437,7 +438,7 @@ BinObject::DirSection(Object& object,
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
-    std::string sectname = nvs.front().getString();
+    llvm::StringRef sectname = nvs.front().getString();
 
     Section* sect = m_object.FindSection(sectname);
     bool first = true;
@@ -615,7 +616,7 @@ BinObject::getDebugFormatKeywords()
 }
 
 void
-BinObject::AddDirectives(Directives& dirs, const char* parser)
+BinObject::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
 {
     static const Directives::Init<BinObject> nasm_dirs[] =
     {

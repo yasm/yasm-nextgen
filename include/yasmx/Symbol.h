@@ -31,6 +31,7 @@
 ///
 #include <string>
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
 
@@ -50,7 +51,7 @@ class YASM_LIB_EXPORT Symbol : public AssocDataContainer
 {
 public:
     /// Constructor.
-    explicit Symbol(const std::string& name);
+    explicit Symbol(const llvm::StringRef& name);
 
     /// Destructor.
     ~Symbol();
@@ -78,7 +79,7 @@ public:
 
     /// Get the name of a symbol.
     /// @return Symbol name.
-    const std::string& getName() const { return m_name; }
+    llvm::StringRef getName() const { return m_name; }
 
     /// Get the visibility of a symbol.
     /// @return Symbol visibility.

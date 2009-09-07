@@ -30,11 +30,12 @@
 /// @endlicense
 ///
 #include <iosfwd>
-#include <string>
 #include <vector>
 
 #include "yasmx/Config/export.h"
 
+
+namespace llvm { class StringRef; }
 
 namespace yasm
 {
@@ -66,7 +67,7 @@ public:
     /// of an existing string in the table, it may be reused.
     /// @param str      String
     /// @return String index.
-    unsigned long getIndex(const std::string& str);
+    unsigned long getIndex(const llvm::StringRef& str);
 
     /// Get the string corresponding to a particular index.  Due to legal use
     /// of substrings, no error checking is performed except for trying to read
@@ -74,7 +75,7 @@ public:
     /// @param index    String index (offset into string table)
     /// @return String.
     /// Throws out_of_range exception if index is out of range.
-    std::string getString(unsigned long index) const;
+    llvm::StringRef getString(unsigned long index) const;
 
     /// Get the size of the string table.
     /// @return Size in bytes.

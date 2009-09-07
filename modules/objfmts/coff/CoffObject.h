@@ -59,16 +59,16 @@ public:
                bool win64 = false);
     virtual ~CoffObject();
 
-    virtual void AddDirectives(Directives& dirs, const char* parser);
+    virtual void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
 
-    virtual void InitSymbols(const char* parser);
+    virtual void InitSymbols(const llvm::StringRef& parser);
 #if 0
     virtual void read(std::istream& is);
 #endif
     virtual void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
     virtual Section* AddDefaultSection();
-    virtual Section* AppendSection(const std::string& name,
+    virtual Section* AppendSection(const llvm::StringRef& name,
                                    unsigned long line);
 
     Machine getMachine() const { return m_machine; }
@@ -91,7 +91,7 @@ public:
 protected:
     /// Initialize section (and COFF data) based on section name.
     /// @return True if section name recognized, false otherwise.
-    virtual bool InitSection(const std::string& name,
+    virtual bool InitSection(const llvm::StringRef& name,
                              Section& section,
                              CoffSection* coffsect);
     virtual void DirSectionInitHelpers(DirHelpers& helpers,

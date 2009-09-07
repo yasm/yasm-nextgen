@@ -107,15 +107,15 @@ public:
                       /*@out@*/ std::string* machine)
     { return false; }
 
-    void AddDirectives(Directives& dirs, const char* parser);
+    void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
 
-    void InitSymbols(const char* parser);
+    void InitSymbols(const llvm::StringRef& parser);
 
     void Read(const llvm::MemoryBuffer& in);
     void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* AddDefaultSection();
-    Section* AppendSection(const std::string& name, unsigned long line);
+    Section* AppendSection(const llvm::StringRef& name, unsigned long line);
 
     ElfSymbol& BuildSymbol(Symbol& sym);
     void BuildExtern(Symbol& sym);
@@ -320,7 +320,7 @@ ElfObject::Read(const llvm::MemoryBuffer& in)
         std::auto_ptr<ElfSection> elfsect(new ElfSection(m_config, in, i));
         elfsects[i] = elfsect.get();
 
-        std::string sectname = shstrtab.getString(elfsect->getName());
+        llvm::StringRef sectname = shstrtab.getString(elfsect->getName());
         if (sectname == ".strtab")
         {
             strtab_sect = elfsect.get();
@@ -419,7 +419,7 @@ ElfObject::Read(const llvm::MemoryBuffer& in)
 }
 
 void
-ElfObject::InitSymbols(const char* parser)
+ElfObject::InitSymbols(const llvm::StringRef& parser)
 {
     // Add .file symbol
     SymbolRef filesym = m_object.AppendSymbol(".file");
@@ -1161,7 +1161,7 @@ ElfObject::AddDefaultSection()
 }
 
 Section*
-ElfObject::AppendSection(const std::string& name, unsigned long line)
+ElfObject::AppendSection(const llvm::StringRef& name, unsigned long line)
 {
     ElfSectionType type = SHT_PROGBITS;
     ElfSectionFlags flags = SHF_ALLOC;
@@ -1235,7 +1235,7 @@ ElfObject::DirGasSection(Object& object,
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
-    std::string sectname = nvs.front().getString();
+    llvm::StringRef sectname = nvs.front().getString();
 
     Section* sect = m_object.FindSection(sectname);
     bool first = true;
@@ -1260,9 +1260,9 @@ ElfObject::DirGasSection(Object& object,
     assert(elfsect != 0);
 
     int flags = 0, type = SHT_NULL;
-    std::string flagstr = nvs[1].getString();
+    llvm::StringRef flagstr = nvs[1].getString();
 
-    for (std::string::size_type i=0; i<flagstr.length(); ++i)
+    for (size_t i=0; i<flagstr.size(); ++i)
     {
         switch (flagstr[i])
         {
@@ -1296,7 +1296,7 @@ ElfObject::DirGasSection(Object& object,
     // Parse section type
     if (nvs.size() > 2 && nvs[2].isId())
     {
-        std::string typestr = nvs[2].getId();
+        llvm::StringRef typestr = nvs[2].getId();
         if (typestr == "progbits")
             type = SHT_PROGBITS;
         else if (typestr == "nobits")
@@ -1328,7 +1328,7 @@ ElfObject::DirSection(Object& object,
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
-    std::string sectname = nvs.front().getString();
+    llvm::StringRef sectname = nvs.front().getString();
 
     Section* sect = m_object.FindSection(sectname);
     bool first = true;
@@ -1448,7 +1448,7 @@ ElfObject::DirType(Object& object,
     if (!namevals[1].isId())
         throw SyntaxError(N_("type must be an identifier"));
 
-    std::string type = namevals[1].getId();
+    llvm::StringRef type = namevals[1].getId();
     if (String::NocaseEqual(type, "function"))
         elfsym.setType(STT_FUNC);
     else if (String::NocaseEqual(type, "object"))
@@ -1523,7 +1523,7 @@ ElfObject::getDebugFormatKeywords()
 }
 
 void
-ElfObject::AddDirectives(Directives& dirs, const char* parser)
+ElfObject::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
 {
     static const Directives::Init<ElfObject> nasm_dirs[] =
     {

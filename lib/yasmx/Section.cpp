@@ -37,7 +37,7 @@
 namespace yasm
 {
 
-Section::Section(const std::string& name,
+Section::Section(const llvm::StringRef& name,
                  bool code,
                  bool bss,
                  unsigned long line)

@@ -163,7 +163,7 @@ scan:
         digit+
         {
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, TOKLEN, 10);
+            lvalp->intn->setStr(llvm::StringRef(TOK, TOKLEN), 10);
             RETURN(INTNUM);
         }
 
@@ -178,7 +178,7 @@ scan:
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, outlen, 2);
+            lvalp->intn->setStr(llvm::StringRef(TOK, outlen), 2);
             RETURN(INTNUM);
         }
         [01] bindigit* 'b'
@@ -187,7 +187,7 @@ scan:
             while (*TOK == '0' && TOKLEN > 2)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, TOKLEN-1, 2);      // strip 'b'
+            lvalp->intn->setStr(llvm::StringRef(TOK, TOKLEN-1), 2); // strip 'b'
             RETURN(INTNUM);
         }
 
@@ -202,7 +202,7 @@ scan:
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, outlen, 8);
+            lvalp->intn->setStr(llvm::StringRef(TOK, outlen), 8);
             RETURN(INTNUM);
         }
         [0-7] octdigit* [qQoO]
@@ -211,7 +211,7 @@ scan:
             while (*TOK == '0' && TOKLEN > 2)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, TOKLEN-1, 8);      // strip 'o'/'q'
+            lvalp->intn->setStr(llvm::StringRef(TOK, TOKLEN-1), 8); // 'o'/'q'
             RETURN(INTNUM);
         }
 
@@ -226,7 +226,7 @@ scan:
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, outlen, 16);
+            lvalp->intn->setStr(llvm::StringRef(TOK, outlen), 16);
             RETURN(INTNUM);
         }
         digit hexdigit* 'h'
@@ -235,7 +235,7 @@ scan:
             while (*TOK == '0' && TOKLEN > 2)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, TOKLEN-1, 16);     // strip 'h'
+            lvalp->intn->setStr(llvm::StringRef(TOK, TOKLEN-1), 16);// strip 'h'
             RETURN(INTNUM);
         }
 
@@ -251,7 +251,7 @@ scan:
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, outlen, 16);
+            lvalp->intn->setStr(llvm::StringRef(TOK, outlen), 16);
             RETURN(INTNUM);
         }
         "$" digit hexdigit+
@@ -261,7 +261,7 @@ scan:
             while (*TOK == '0' && TOKLEN > 1)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, TOKLEN, 16);
+            lvalp->intn->setStr(llvm::StringRef(TOK, TOKLEN), 16);
             RETURN(INTNUM);
         }
 
@@ -277,7 +277,7 @@ scan:
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, outlen, 16);
+            lvalp->intn->setStr(llvm::StringRef(TOK, outlen), 16);
             RETURN(INTNUM);
         }
         '0x' hexdigit+
@@ -287,7 +287,7 @@ scan:
             while (*TOK == '0' && TOKLEN > 1)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, TOKLEN, 16);
+            lvalp->intn->setStr(llvm::StringRef(TOK, TOKLEN), 16);
             RETURN(INTNUM);
         }
 
@@ -505,7 +505,8 @@ scan:
             if (m_state != INSTRUCTION)
             {
                 Arch::InsnPrefix ip =
-                    m_arch->ParseCheckInsnPrefix(TOK, TOKLEN, getCurLine());
+                    m_arch->ParseCheckInsnPrefix(llvm::StringRef(TOK, TOKLEN),
+                                                 getCurLine());
                 TOK[TOKLEN] = savech;
                 switch (ip.getType())
                 {
@@ -520,7 +521,8 @@ scan:
                         break;
                 }
             }
-            Arch::RegTmod regtmod = m_arch->ParseCheckRegTmod(TOK, TOKLEN);
+            Arch::RegTmod regtmod =
+                m_arch->ParseCheckRegTmod(llvm::StringRef(TOK, TOKLEN));
             TOK[TOKLEN] = savech;
             switch (regtmod.getType())
             {
@@ -569,7 +571,7 @@ linechg:
         {
             linechg_numcount++;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, TOKLEN, 10);
+            lvalp->intn->setStr(llvm::StringRef(TOK, TOKLEN), 10);
             RETURN(INTNUM);
         }
 
@@ -698,7 +700,7 @@ directive2:
         digit+
         {
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, TOKLEN, 10);
+            lvalp->intn->setStr(llvm::StringRef(TOK, TOKLEN), 10);
             RETURN(INTNUM);
         }
 
@@ -713,7 +715,7 @@ directive2:
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, outlen, 2);
+            lvalp->intn->setStr(llvm::StringRef(TOK, outlen), 2);
             RETURN(INTNUM);
         }
         [01] bindigit* 'b'
@@ -722,7 +724,7 @@ directive2:
             while (*TOK == '0' && TOKLEN > 2)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, TOKLEN-1, 2);      // strip 'b'
+            lvalp->intn->setStr(llvm::StringRef(TOK, TOKLEN-1), 2); // strip 'b'
             RETURN(INTNUM);
         }
 
@@ -737,7 +739,7 @@ directive2:
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, outlen, 8);
+            lvalp->intn->setStr(llvm::StringRef(TOK, outlen), 8);
             RETURN(INTNUM);
         }
         [0-7] octdigit* [qQoO]
@@ -746,7 +748,7 @@ directive2:
             while (*TOK == '0' && TOKLEN > 2)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, TOKLEN-1, 8);      // strip 'o'/'q'
+            lvalp->intn->setStr(llvm::StringRef(TOK, TOKLEN-1), 8); // 'o'/'q'
             RETURN(INTNUM);
         }
 
@@ -761,7 +763,7 @@ directive2:
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, outlen, 16);
+            lvalp->intn->setStr(llvm::StringRef(TOK, outlen), 16);
             RETURN(INTNUM);
         }
         digit hexdigit* 'h'
@@ -770,7 +772,7 @@ directive2:
             while (*TOK == '0' && TOKLEN > 2)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, TOKLEN-1, 16);     // strip 'h'
+            lvalp->intn->setStr(llvm::StringRef(TOK, TOKLEN-1), 16);// strip 'h'
             RETURN(INTNUM);
         }
 
@@ -786,7 +788,7 @@ directive2:
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, outlen, 16);
+            lvalp->intn->setStr(llvm::StringRef(TOK, outlen), 16);
             RETURN(INTNUM);
         }
         "$" digit hexdigit+
@@ -796,7 +798,7 @@ directive2:
             while (*TOK == '0' && TOKLEN > 1)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, TOKLEN, 16);
+            lvalp->intn->setStr(llvm::StringRef(TOK, TOKLEN), 16);
             RETURN(INTNUM);
         }
 
@@ -812,7 +814,7 @@ directive2:
                 --outlen;
             }
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, outlen, 16);
+            lvalp->intn->setStr(llvm::StringRef(TOK, outlen), 16);
             RETURN(INTNUM);
         }
         '0x' hexdigit+
@@ -822,7 +824,7 @@ directive2:
             while (*TOK == '0' && TOKLEN > 1)
                 ++TOK;
             lvalp->intn.reset(new IntNum);
-            lvalp->intn->setStr(TOK, TOKLEN, 16);
+            lvalp->intn->setStr(llvm::StringRef(TOK, TOKLEN), 16);
             RETURN(INTNUM);
         }
 
@@ -857,7 +859,8 @@ directive2:
         {
             savech = TOK[TOKLEN];
             TOK[TOKLEN] = '\0';
-            Arch::RegTmod regtmod = m_arch->ParseCheckRegTmod(TOK, TOKLEN);
+            Arch::RegTmod regtmod =
+                m_arch->ParseCheckRegTmod(llvm::StringRef(TOK, TOKLEN));
             TOK[TOKLEN] = savech;
             lvalp->reg = regtmod.getReg();
             if (lvalp->reg)

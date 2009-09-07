@@ -147,10 +147,11 @@ IntNum::getBV(llvm::APInt* bv)
 }
 
 void
-IntNum::setStr(const char* str, unsigned int len, int base)
+IntNum::setStr(const llvm::StringRef& str, int base)
 {
     // Each computation below needs to know if its negative
     unsigned int minbits = (str[0] == '-') ? 1 : 0;
+    size_t len = str.size();
 
     // For radixes of power-of-two values, the bits required is accurately and
     // easily computed.  For radix 10, we use a rough approximation.
@@ -173,14 +174,14 @@ IntNum::setStr(const char* str, unsigned int len, int base)
         // shortcut "short" case
         long v;
         char cstr[LONG_BITS+1];
-        std::strncpy(cstr, str, len);   // len must be < LONG_BITS per minbits
+        std::strncpy(cstr, str.data(), len); // len is < LONG_BITS per minbits
         cstr[len] = '\0';
         v = std::strtol(cstr, NULL, base);
         set(static_cast<SmallValue>(v));
     }
     else
     {
-        conv_bv.fromString(llvm::StringRef(str, len), base);
+        conv_bv.fromString(str, base);
         setBV(conv_bv);
     }
 }

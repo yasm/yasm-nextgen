@@ -79,7 +79,7 @@ public:
     NasmParser(const ParserModule& module, Errwarns& errwarns);
     ~NasmParser();
 
-    void AddDirectives(Directives& dirs, const char* parser);
+    void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
 
     static const char* getName() { return "NASM-compatible parser"; }
     static const char* getKeyword() { return "nasm"; }
@@ -144,7 +144,7 @@ public:
 private:
     int HandleDotLabel(YYSTYPE* lvalp, YYCTYPE* tok, size_t toklen,
                        size_t zeropos);
-    void DefineLabel(const std::string& name, bool local);
+    void DefineLabel(const llvm::StringRef& name, bool local);
 
     void DoParse();
     void ParseLine();
@@ -180,7 +180,7 @@ private:
                     NameValues& objext_namevals,
                     unsigned long line);
 
-    void DoDirective(const std::string& name,
+    void DoDirective(const llvm::StringRef& name,
                      NameValues& namevals,
                      NameValues& objext_namevals);
 

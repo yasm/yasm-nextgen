@@ -38,7 +38,7 @@ DebugFormat::~DebugFormat()
 }
 
 void
-DebugFormat::AddDirectives(Directives& dirs, const char* parser)
+DebugFormat::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
 {
 }
 

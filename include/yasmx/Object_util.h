@@ -29,10 +29,10 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <string>
-
 #include "yasmx/Config/export.h"
 
+
+namespace llvm { class StringRef; }
 
 namespace yasm
 {
@@ -52,7 +52,7 @@ class ObjectFormat;
 /// @param line         Line number
 YASM_LIB_EXPORT
 void DirIdentCommon(ObjectFormat& objfmt,
-                    const std::string& sectname,
+                    const llvm::StringRef& sectname,
                     Object& object,
                     NameValues& namevals,
                     NameValues& objext_namevals,

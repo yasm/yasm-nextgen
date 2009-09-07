@@ -138,7 +138,7 @@ Win32Object::DirExport(Object& object,
 {
     if (!namevals.front().isId())
         throw SyntaxError(N_("argument to EXPORT must be symbol name"));
-    std::string symname = namevals.front().getId();
+    llvm::StringRef symname = namevals.front().getId();
 
     // Reference exported symbol (to generate error if not declared)
     m_object.getSymbol(symname)->Use(line);
@@ -162,7 +162,7 @@ Win32Object::DirSafeSEH(Object& object,
 {
     if (!namevals.front().isId())
         throw SyntaxError(N_("argument to SAFESEH must be symbol name"));
-    std::string symname = namevals.front().getId();
+    llvm::StringRef symname = namevals.front().getId();
 
     // Reference symbol (to generate error if not declared)
     SymbolRef sym = m_object.getSymbol(symname);
@@ -180,7 +180,7 @@ Win32Object::DirSafeSEH(Object& object,
 }
 
 void
-Win32Object::AddDirectives(Directives& dirs, const char* parser)
+Win32Object::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
 {
     static const Directives::Init<Win32Object> gas_dirs[] =
     {
@@ -203,7 +203,7 @@ Win32Object::AddDirectives(Directives& dirs, const char* parser)
 }
 
 bool
-Win32Object::InitSection(const std::string& name,
+Win32Object::InitSection(const llvm::StringRef& name,
                          Section& section,
                          CoffSection* coffsect)
 {
@@ -234,8 +234,7 @@ Win32Object::InitSection(const std::string& name,
         section.setCode(true);
     }
     else if (name == ".rdata"
-             || (name.length() >= 7 && name.compare(0, 7, ".rodata") == 0)
-             || (name.length() >= 7 && name.compare(0, 7, ".rdata$") == 0))
+             || name.startswith(".rodata") || name.startswith(".rdata$"))
     {
         coffsect->m_flags = CoffSection::DATA | CoffSection::READ;
         section.setAlign(8);

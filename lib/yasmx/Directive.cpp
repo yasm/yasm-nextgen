@@ -53,7 +53,7 @@ public:
         {}
         ~Dir() {}
         void operator() (Object& object,
-                         const std::string& name,
+                         const llvm::StringRef& name,
                          NameValues& namevals,
                          NameValues& objext_namevals,
                          unsigned long line);
@@ -77,13 +77,13 @@ Directives::~Directives()
 }
 
 void
-Directives::Add(const char* name, Directive handler, Flags flags)
+Directives::Add(const llvm::StringRef& name, Directive handler, Flags flags)
 {
     m_impl->m_dirs[String::Lowercase(name)] = Impl::Dir(handler, flags);
 }
 
 Directive
-Directives::operator[] (const std::string& name) const
+Directives::operator[] (const llvm::StringRef& name) const
 {
     Directive rv;
     if (!get(&rv, name))
@@ -93,7 +93,7 @@ Directives::operator[] (const std::string& name) const
 }
 
 bool
-Directives::get(Directive* dir, const std::string& name) const
+Directives::get(Directive* dir, const llvm::StringRef& name) const
 {
     Impl::DirMap::iterator p = m_impl->m_dirs.find(String::Lowercase(name));
     if (p == m_impl->m_dirs.end())
@@ -106,7 +106,7 @@ Directives::get(Directive* dir, const std::string& name) const
 
 void
 Directives::Impl::Dir::operator() (Object& object,
-                                   const std::string& name,
+                                   const llvm::StringRef& name,
                                    NameValues& namevals,
                                    NameValues& objext_namevals,
                                    unsigned long line)

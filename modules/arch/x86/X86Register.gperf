@@ -450,8 +450,9 @@ to,	TARGETMOD,	0,	X86TargetModifier::TO,		0
 %%
 
 Arch::RegTmod
-X86Arch::ParseCheckRegTmod(const char* id, size_t id_len) const
+X86Arch::ParseCheckRegTmod(const llvm::StringRef& id) const
 {
+    size_t id_len = id.size();
     if (id_len > 7)
         return RegTmod();
 

@@ -136,15 +136,16 @@ CoffSection::Write(Bytes& bytes, const Section& sect) const
     }
 
     // section name
+    llvm::StringRef fullname = sect.getName();
     char name[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-    if (sect.getName().length() > 8)
+    if (fullname.size() > 8)
     {
         std::string namenum = "/";
         namenum += String::Format(m_strtab_name);
         std::strncpy(name, namenum.c_str(), 8);
     }
     else
-        std::strncpy(name, sect.getName().c_str(), 8);
+        std::memcpy(name, fullname.data(), fullname.size());
     bytes.Write(reinterpret_cast<unsigned char*>(name), 8);
     if (m_isdebug)
     {

@@ -1005,7 +1005,7 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
 }
 
 void
-NasmParser::DefineLabel(const std::string& name, bool local)
+NasmParser::DefineLabel(const llvm::StringRef& name, bool local)
 {
     if (!local)
         m_locallabel_base = name;
@@ -1082,7 +1082,7 @@ NasmParser::DirDefault(Object& object, NameValues& namevals,
     {
         if (nv->isId())
         {
-            std::string id = nv->getId();
+            llvm::StringRef id = nv->getId();
             if (String::NocaseEqual(id, "rel") == 0)
                 object.getArch()->setVar("default_rel", 1);
             else if (String::NocaseEqual(id, "abs") == 0)
@@ -1097,7 +1097,7 @@ NasmParser::DirDefault(Object& object, NameValues& namevals,
 }
 
 void
-NasmParser::DoDirective(const std::string& name,
+NasmParser::DoDirective(const llvm::StringRef& name,
                         NameValues& namevals,
                         NameValues& objext_namevals)
 {

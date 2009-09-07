@@ -321,7 +321,7 @@ CoffOutput::OutputSection(Section& sect, Errwarns& errwarns)
     // Add to strtab if in win32 format and name > 8 chars
     if (m_objfmt.isWin32())
     {
-        size_t namelen = sect.getName().length();
+        size_t namelen = sect.getName().size();
         if (namelen > 8)
             coffsect->m_strtab_name = m_strtab.getIndex(sect.getName());
     }

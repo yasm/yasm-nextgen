@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/ptr_vector.h"
 
@@ -54,27 +55,29 @@ public:
     /// @param name         name; may be empty string if no name
     /// @param id           identifier value
     /// @param id_prefix    identifier prefix for raw identifiers
-    NameValue(const std::string& name, const std::string& id, char id_prefix);
+    NameValue(const llvm::StringRef& name,
+              const llvm::StringRef& id,
+              char id_prefix);
 
     /// String value constructor.
     /// @param name         name; may be empty string if no name
     /// @param str          string value
-    NameValue(const std::string& name, const std::string& str);
+    NameValue(const llvm::StringRef& name, const llvm::StringRef& str);
 
     /// Expression value constructor.
     /// @param name         name; may be empty string if no name
     /// @param e            expression
-    NameValue(const std::string& name, std::auto_ptr<Expr> e);
+    NameValue(const llvm::StringRef& name, std::auto_ptr<Expr> e);
 
     /// Identifier value constructor with no name.
     /// @param id           identifier value
     /// @param id_prefix    identifier prefix for raw identifiers
-    NameValue(const std::string& id, char id_prefix);
+    NameValue(const llvm::StringRef& id, char id_prefix);
 
     /// String value constructor with no name.
     /// @param name         name; may be empty string if no name
     /// @param str          string value
-    explicit NameValue(const std::string& str);
+    explicit NameValue(const llvm::StringRef& str);
 
     /// Expression value constructor with no name.
     /// @param e            expression
@@ -96,7 +99,7 @@ public:
 
     /// Get name.
     /// @return Name; empty string if no name.
-    std::string getName() const { return m_name; }
+    llvm::StringRef getName() const { return m_name; }
 
     /// Determine if value is convertible to an expression using getExpr().
     /// @return True if convertible.
@@ -131,12 +134,12 @@ public:
     /// it's treated as a string.
     /// @return String; raises an exception if the parameter cannot be
     ///         realized as a string.
-    std::string getString() const;
+    llvm::StringRef getString() const;
 
     /// Get value as an identifier.
     /// @return Identifier (string); raises an exception if the parameter
     ///         is not an identifier.
-    std::string getId() const;
+    llvm::StringRef getId() const;
 
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter

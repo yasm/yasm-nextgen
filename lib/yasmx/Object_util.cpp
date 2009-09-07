@@ -44,7 +44,7 @@ namespace yasm
 
 void
 DirIdentCommon(ObjectFormat& objfmt,
-               const std::string& sectname,
+               const llvm::StringRef& sectname,
                Object& object,
                NameValues& namevals,
                NameValues& objext_namevals,

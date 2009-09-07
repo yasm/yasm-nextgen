@@ -31,7 +31,7 @@
 namespace String
 {
 
-Composer::Composer(const std::string& fmt)
+Composer::Composer(const llvm::StringRef& fmt)
     : m_fmt(fmt), m_arg(0)
 {
     m_arg_pos[0] = 0;
@@ -76,10 +76,12 @@ Composer::getStr() const
 
     // fill in output with the strings between the %1 %2 %3 etc. and
     // fill in specs with the arg data
-    std::string::size_type start = 0, stop;
-    while ((stop = m_fmt.find_first_of('%', start)) != std::string::npos)
+    size_t start = 0, stop;
+    while ((stop = m_fmt.substr(start).find('%')) != llvm::StringRef::npos)
     {
-        str.append(m_fmt, start, stop - start);
+        stop += start;  // offset from start of original string
+        llvm::StringRef before = m_fmt.slice(start, stop);
+        str.append(before.data(), before.size());
         if (m_fmt[stop + 1] == '%')     // catch %%
         {
             str += '%';
@@ -113,7 +115,8 @@ Composer::getStr() const
     }
 
     // tail end of string
-    str.append(m_fmt, start, m_fmt.size() - start);
+    llvm::StringRef after = m_fmt.substr(start);
+    str.append(after.data(), after.size());
 
     return str;
 }

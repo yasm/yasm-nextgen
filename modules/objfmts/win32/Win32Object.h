@@ -44,9 +44,9 @@ public:
     Win32Object(const ObjectFormatModule& module, Object& object);
     virtual ~Win32Object();
 
-    virtual void AddDirectives(Directives& dirs, const char* parser);
+    virtual void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
 
-    //virtual void InitSymbols(const char* parser);
+    //virtual void InitSymbols(const llvm::StringRef& parser);
     //virtual void Read(const llvm::MemoryBuffer& in);
     //virtual void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
@@ -67,7 +67,7 @@ public:
     { return false; }
 
 protected:
-    virtual bool InitSection(const std::string& name,
+    virtual bool InitSection(const llvm::StringRef& name,
                              Section& section,
                              CoffSection* coffsect);
     virtual void DirSectionInitHelpers(DirHelpers& helpers,

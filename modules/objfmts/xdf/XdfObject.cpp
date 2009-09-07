@@ -79,13 +79,13 @@ public:
     /// Destructor.
     ~XdfObject() {}
 
-    void AddDirectives(Directives& dirs, const char* parser);
+    void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
 
     void Read(const llvm::MemoryBuffer& in);
     void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* AddDefaultSection();
-    Section* AppendSection(const std::string& name, unsigned long line);
+    Section* AppendSection(const llvm::StringRef& name, unsigned long line);
 
     static const char* getName() { return "Extended Dynamic Object"; }
     static const char* getKeyword() { return "xdf"; }
@@ -352,7 +352,7 @@ XdfOutput::OutputSymbol(const Symbol& sym,
     assert(scratch.size() == SYMBOL_SIZE);
     m_os << scratch;
 
-    *strtab_offset += static_cast<unsigned long>(sym.getName().length()+1);
+    *strtab_offset += static_cast<unsigned long>(sym.getName().size()+1);
 }
 
 void
@@ -415,10 +415,7 @@ XdfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
          end = m_object.symbols_end(); sym != end; ++sym)
     {
         if (all_syms || sym->getVisibility() != Symbol::LOCAL)
-        {
-            const std::string& name = sym->getName();
-            os << name << '\0';
-        }
+            os << sym->getName() << '\0';
     }
 
     // Output section data/relocs
@@ -490,7 +487,7 @@ public:
         , m_len(strtab_len)
     {}
 
-    std::string
+    llvm::StringRef
     operator() (unsigned long str_index)
     {
         if (str_index < m_offset || str_index >= m_offset+m_len)
@@ -549,7 +546,7 @@ XdfObject::Read(const llvm::MemoryBuffer& in)
 
         // get section name from section symbol entry
         inbuf.setPosition(symtab_offset+name_sym_index*SYMBOL_SIZE+8);
-        std::string sectname = read_string(ReadU32(inbuf));
+        llvm::StringRef sectname = read_string(ReadU32(inbuf));
 
         std::auto_ptr<Section> section(
             new Section(sectname, xsect->bits != 0, bss, 0));
@@ -590,7 +587,7 @@ XdfObject::Read(const llvm::MemoryBuffer& in)
     {
         unsigned long sym_scnum = ReadU32(inbuf);           // section number
         unsigned long value = ReadU32(inbuf);               // value
-        std::string symname = read_string(ReadU32(inbuf));  // name
+        llvm::StringRef symname = read_string(ReadU32(inbuf));// name
         unsigned long flags = ReadU32(inbuf);               // flags
 
         SymbolRef sym = m_object.getSymbol(symname);
@@ -654,7 +651,7 @@ XdfObject::AddDefaultSection()
 }
 
 Section*
-XdfObject::AppendSection(const std::string& name, unsigned long line)
+XdfObject::AppendSection(const llvm::StringRef& name, unsigned long line)
 {
     bool code = (name == ".text");
     Section* section = new Section(name, code, false, line);
@@ -681,7 +678,7 @@ XdfObject::DirSection(Object& object,
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
-    std::string sectname = nvs.front().getString();
+    llvm::StringRef sectname = nvs.front().getString();
 
     Section* sect = m_object.FindSection(sectname);
     bool first = true;
@@ -772,7 +769,7 @@ XdfObject::DirSection(Object& object,
 }
 
 void
-XdfObject::AddDirectives(Directives& dirs, const char* parser)
+XdfObject::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
 {
     static const Directives::Init<XdfObject> nasm_dirs[] =
     {

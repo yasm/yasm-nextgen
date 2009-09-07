@@ -29,11 +29,11 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <string>
-
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
 
+
+namespace llvm { class StringRef; }
 
 namespace yasm
 {
@@ -82,19 +82,21 @@ public:
     /// @param xref_line    cross-referenced line number
     /// @param xref_msg     cross-referenced error message
     typedef void (*PrintErrorFunc)
-        (const std::string& fn,
+        (const llvm::StringRef& fn,
          unsigned long line,
-         const std::string& msg,
-         const std::string& xref_fn,
+         const llvm::StringRef& msg,
+         const llvm::StringRef& xref_fn,
          unsigned long xref_line,
-         const std::string& xref_msg);
+         const llvm::StringRef& xref_msg);
 
     /// Print out a warning.
     /// @param fn   filename of source file
     /// @param line line number
     /// @param msg  warning message
     typedef void (*PrintWarningFunc)
-        (const std::string& fn, unsigned long line, const std::string& msg);
+        (const llvm::StringRef& fn,
+         unsigned long line,
+         const llvm::StringRef& msg);
 
     /// Outputs error/warning set in sorted order (sorted by line number).
     /// @param lm               line map (to convert virtual lines into

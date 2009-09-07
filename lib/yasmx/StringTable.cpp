@@ -29,6 +29,8 @@
 #include <istream>
 #include <ostream>
 
+#include "llvm/ADT/StringRef.h"
+
 
 namespace yasm
 {
@@ -44,16 +46,15 @@ StringTable::~StringTable()
 }
 
 unsigned long
-StringTable::getIndex(const std::string& str)
+StringTable::getIndex(const llvm::StringRef& str)
 {
-    const char* cstr = str.c_str();
-    std::string::size_type len = str.length()+1;    // include trailing 0
-    std::string::size_type end = m_storage.size();
-    std::copy(cstr, cstr+len, std::back_inserter(m_storage));
+    unsigned long end = m_storage.size();
+    m_storage.insert(m_storage.end(), str.begin(), str.end());
+    m_storage.push_back('\0');
     return m_first_index+end;
 }
 
-std::string
+llvm::StringRef
 StringTable::getString(unsigned long index) const
 {
     return &m_storage.at(index-m_first_index);

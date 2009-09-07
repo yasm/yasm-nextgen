@@ -29,12 +29,12 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <string>
-
 #include "yasmx/Config/export.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/scoped_ptr.h"
 
+
+namespace llvm { class StringRef; }
 
 namespace yasm
 {
@@ -91,7 +91,7 @@ public:
     ///                     name (not including the []).
     /// @param handler      Directive function
     /// @param flags        Flags for pre-handler parameter checking.
-    void Add(const char* name, Directive handler, Flags flags = ANY);
+    void Add(const llvm::StringRef& name, Directive handler, Flags flags = ANY);
 
     /// Add directives from an initializer array.
     /// @param me           this pointer to associate
@@ -108,14 +108,14 @@ public:
 
     /// Get a directive functor.  Throws an exception if no match.
     /// @param name         directive name
-    Directive operator[] (const std::string& name) const;
+    Directive operator[] (const llvm::StringRef& name) const;
 
     /// Get a directive functor.  Returns false if no match.
     /// @param handler      directive handler (returned)
     /// @param name         directive name
     /// @return True if directive exists, and handler is set to the
     ///         matching handler.
-    bool get(Directive* handler, const std::string& name) const;
+    bool get(Directive* handler, const llvm::StringRef& name) const;
 
 private:
     /// Pimpl for class internals.

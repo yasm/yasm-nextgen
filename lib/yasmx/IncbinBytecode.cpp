@@ -51,7 +51,7 @@ using namespace yasm;
 class IncbinBytecode : public Bytecode::Contents
 {
 public:
-    IncbinBytecode(const std::string& filename,
+    IncbinBytecode(const llvm::StringRef& filename,
                    std::auto_ptr<Expr> start,
                    std::auto_ptr<Expr> maxlen);
     ~IncbinBytecode();
@@ -80,7 +80,7 @@ private:
     /*@null@*/ util::scoped_ptr<Expr> m_maxlen;
 };
 
-IncbinBytecode::IncbinBytecode(const std::string& filename,
+IncbinBytecode::IncbinBytecode(const llvm::StringRef& filename,
                                std::auto_ptr<Expr> start,
                                std::auto_ptr<Expr> maxlen)
     : m_filename(filename),
@@ -248,7 +248,7 @@ namespace yasm
 
 void
 AppendIncbin(BytecodeContainer& container,
-             const std::string& filename,
+             const llvm::StringRef& filename,
              /*@null@*/ std::auto_ptr<Expr> start,
              /*@null@*/ std::auto_ptr<Expr> maxlen,
              unsigned long line)

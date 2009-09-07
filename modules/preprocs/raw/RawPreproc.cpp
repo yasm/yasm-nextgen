@@ -56,10 +56,10 @@ public:
     bool getLine(/*@out@*/ std::string& line);
 
     std::string getIncludedFile() { return ""; }
-    void AddIncludeFile(const std::string& filename) {}
-    void PredefineMacro(const std::string& macronameval) {}
-    void UndefineMacro(const std::string& macroname) {}
-    void DefineBuiltin(const std::string& macronameval) {}
+    void AddIncludeFile(const llvm::StringRef& filename) {}
+    void PredefineMacro(const llvm::StringRef& macronameval) {}
+    void UndefineMacro(const llvm::StringRef& macroname) {}
+    void DefineBuiltin(const llvm::StringRef& macronameval) {}
 
 private:
     const llvm::MemoryBuffer* m_in;

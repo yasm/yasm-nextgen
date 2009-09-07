@@ -90,13 +90,13 @@ public:
     /// Destructor.
     ~RdfObject() {}
 
-    void AddDirectives(Directives& dirs, const char* parser);
+    void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
 
     void Read(const llvm::MemoryBuffer& in);
     void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* AddDefaultSection();
-    Section* AppendSection(const std::string& name, unsigned long line);
+    Section* AppendSection(const llvm::StringRef& name, unsigned long line);
 
     static const char* getName()
     { return "Relocatable Dynamic Object File Format (RDOFF) v2.0"; }
@@ -124,7 +124,7 @@ private:
                    NameValues& objext_namevals,
                    unsigned long line);
 
-    void AddLibOrModule(std::string name, bool lib);
+    void AddLibOrModule(const llvm::StringRef& name, bool lib);
 
     std::vector<std::string> m_module_names;
     std::vector<std::string> m_library_names;
@@ -462,8 +462,8 @@ RdfOutput::OutputSymbol(Symbol& sym,
         return;
     }
 
-    const std::string& name = sym.getName();
-    std::string::size_type len = name.length();
+    llvm::StringRef name = sym.getName();
+    size_t len = name.size();
 
     if (len > EXIM_LABEL_MAX-1)
     {
@@ -826,7 +826,7 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
                 unsigned long value = ReadU32(recbuf);
                 /*unsigned int align = */ReadU16(recbuf);
                 size_t namelen = recbuf.getReadableSize();
-                std::string symname(
+                llvm::StringRef symname(
                     reinterpret_cast<const char*>(recbuf.Read(namelen)),
                     namelen-1);
 
@@ -851,7 +851,7 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
                 /*unsigned int flags = */ReadU8(recbuf);
                 unsigned int scnum = ReadU16(recbuf);
                 size_t namelen = recbuf.getReadableSize();
-                std::string symname(
+                llvm::StringRef symname(
                     reinterpret_cast<const char*>(recbuf.Read(namelen)),
                     namelen-1);
 
@@ -874,7 +874,7 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
                 unsigned int scnum = ReadU8(recbuf);
                 unsigned long value = ReadU32(recbuf);
                 size_t namelen = recbuf.getReadableSize();
-                std::string symname(
+                llvm::StringRef symname(
                     reinterpret_cast<const char*>(recbuf.Read(namelen)),
                     namelen-1);
 
@@ -983,7 +983,7 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
 }
 
 Section*
-RdfObject::AppendSection(const std::string& name, unsigned long line)
+RdfObject::AppendSection(const llvm::StringRef& name, unsigned long line)
 {
     RdfSection::Type type = RdfSection::RDF_UNKNOWN;
     if (name == ".text")
@@ -1047,7 +1047,7 @@ RdfObject::DirSection(Object& object,
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
-    std::string sectname = nvs.front().getString();
+    llvm::StringRef sectname = nvs.front().getString();
 
     Section* sect = m_object.FindSection(sectname);
     bool first = true;
@@ -1122,20 +1122,21 @@ RdfObject::DirSection(Object& object,
 }
 
 void
-RdfObject::AddLibOrModule(std::string name, bool lib)
+RdfObject::AddLibOrModule(const llvm::StringRef& name, bool lib)
 {
-    if (name.length() > MODLIB_NAME_MAX)
+    llvm::StringRef name2 = name;
+    if (name2.size() > MODLIB_NAME_MAX)
     {
         setWarn(WARN_GENERAL,
                 String::Compose(N_("name too long, truncating to %1 bytes"),
                                 MODLIB_NAME_MAX));
-        name.resize(MODLIB_NAME_MAX);
+        name2 = name2.substr(0, MODLIB_NAME_MAX);
     }
 
     if (lib)
-        m_library_names.push_back(name);
+        m_library_names.push_back(name2);
     else
-        m_module_names.push_back(name);
+        m_module_names.push_back(name2);
 }
 
 void
@@ -1157,7 +1158,7 @@ RdfObject::DirModule(Object& object,
 }
 
 void
-RdfObject::AddDirectives(Directives& dirs, const char* parser)
+RdfObject::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
 {
     static const Directives::Init<RdfObject> nasm_dirs[] =
     {

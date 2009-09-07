@@ -38,7 +38,7 @@ Parser::~Parser()
 }
 
 void
-Parser::AddDirectives(Directives& dirs, const char* parser)
+Parser::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
 {
 }
 
