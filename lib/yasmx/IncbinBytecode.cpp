@@ -26,8 +26,7 @@
 ///
 #include "util.h"
 
-#include <fstream>
-
+#include "llvm/Support/MemoryBuffer.h"
 #include "YAML/emitter.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
@@ -73,6 +72,8 @@ public:
 private:
     std::string m_filename;     ///< file to include data from
 
+    llvm::MemoryBuffer* m_buf;  ///< Buffer for file data
+
     /// starting offset to read from (NULL=0)
     /*@null@*/ util::scoped_ptr<Expr> m_start;
 
@@ -87,10 +88,16 @@ IncbinBytecode::IncbinBytecode(const llvm::StringRef& filename,
       m_start(start.release()),
       m_maxlen(maxlen.release())
 {
+    std::string err;
+    m_buf = llvm::MemoryBuffer::getFile(filename.str().c_str(), &err);
+    if (!m_buf)
+        throw IOError(String::Compose(N_("`%1': unable to read file `%2': %3"),
+                                      "incbin", filename, err));
 }
 
 IncbinBytecode::~IncbinBytecode()
 {
+    delete m_buf;
 }
 
 void
@@ -121,7 +128,7 @@ IncbinBytecode::Finalize(Bytecode& bc)
 unsigned long
 IncbinBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
 {
-    unsigned long start = 0, maxlen = 0xFFFFFFFFUL, flen;
+    unsigned long start = 0, maxlen = 0xFFFFFFFFUL;
 
     // Try to convert start to integer value
     if (m_start)
@@ -149,19 +156,8 @@ IncbinBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
         }
     }
 
-    // Open file and determine its length
-    std::ifstream ifs(m_filename.c_str(),
-                      std::ifstream::in | std::ifstream::binary);
-    if (!ifs)
-        throw IOError(String::Compose(N_("`%1': unable to open file `%2'"),
-                                      "incbin", m_filename));
-    ifs.seekg(0, std::ios_base::end);
-    if (!ifs)
-        throw IOError(String::Compose(N_("`%1': unable to seek on file `%2'"),
-                                      "incbin", m_filename));
-    flen = static_cast<unsigned long>(ifs.tellg());
-
     // Compute length of incbin from start, maxlen, and len
+    unsigned long flen = m_buf->getBufferSize();
     if (start > flen)
     {
         setWarn(WARN_GENERAL,
@@ -191,26 +187,10 @@ IncbinBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
         start = m_start->getIntNum().getUInt();
     }
 
-    // Open file
-    std::ifstream ifs(m_filename.c_str(),
-                      std::ifstream::in | std::ifstream::binary);
-    if (!ifs)
-        throw IOError(String::Compose(N_("`%1': unable to open file `%2'"),
-                                      "incbin", m_filename));
-
-    // Seek to start of data
-    ifs.seekg(start, std::ios_base::beg);
-    if (!ifs)
-        throw IOError(String::Compose(N_("`%1': unable to seek on file `%2'"),
-                                      "incbin", m_filename));
-
-    // Read len bytes
+    // Copy len bytes
     Bytes& bytes = bc_out.getScratch();
-    bytes.Write(ifs, bc.getTailLen());
-    if (!ifs)
-        throw IOError(String::Compose(
-            N_("`%1': unable to read %2 bytes from file `%3'"),
-            "incbin", bc.getTailLen(), m_filename));
+    bytes.Write(reinterpret_cast<const unsigned char*>(m_buf->getBufferStart())
+                + start, bc.getTailLen());
     bc_out.Output(bytes);
 }
 
