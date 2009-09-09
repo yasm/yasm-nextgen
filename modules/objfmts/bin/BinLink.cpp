@@ -67,7 +67,7 @@ BinGroup::Write(YAML::Emitter& out) const
 {
     out << YAML::BeginMap;
     out << YAML::Key << "section";
-    out << YAML::Value << YAML::Alias(("SECT@" + m_section.getName()).str());
+    out << YAML::Value << YAML::Alias("SECT@" + m_section.getName());
     out << YAML::Key << "following groups" << YAML::Value << m_follow_groups;
     out << YAML::EndMap;
 }

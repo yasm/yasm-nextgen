@@ -4,17 +4,17 @@
 #include "stream.h"
 #include "stringsource.h"
 #include "streamcharsource.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace YAML
 {
 	// query matches
 	inline bool RegEx::Matches(char ch) const {
-		std::string str;
-		str += ch;
-		return Matches(str);
+		StringCharSource source(&ch, 1);
+		return Match(source) >= 0;
 	}
 	
-	inline bool RegEx::Matches(const std::string& str) const {
+	inline bool RegEx::Matches(const llvm::StringRef& str) const {
 		return Match(str) >= 0;
 	}
 	
@@ -34,9 +34,9 @@ namespace YAML
 	//   not returning zero is that we may have an empty regex
 	//   which is ALWAYS successful at matching zero characters).
 	// . REMEMBER that we only match from the start of the buffer!	
-	inline int RegEx::Match(const std::string& str) const
+	inline int RegEx::Match(const llvm::StringRef& str) const
 	{
-		StringCharSource source(str.c_str(), str.size());
+		StringCharSource source(str.data(), str.size());
 		return Match(source);
 	}
 	

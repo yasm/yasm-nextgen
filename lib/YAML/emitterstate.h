@@ -7,6 +7,7 @@
 #include <vector>
 #include <stack>
 #include <memory>
+#include <string>
 
 namespace YAML
 {

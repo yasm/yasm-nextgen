@@ -1,5 +1,6 @@
 #include "YAML/ostream.h"
 #include <cstring>
+#include "llvm/ADT/StringRef.h"
 
 namespace YAML
 {
@@ -41,17 +42,11 @@ namespace YAML
 			m_col++;
 	}
 
-	ostream& operator << (ostream& out, const char *str)
+	ostream& operator << (ostream& out, const llvm::StringRef& str)
 	{
-		unsigned length = std::strlen(str);
-		for(unsigned i=0;i<length;i++)
+		size_t length = str.size();
+		for(size_t i=0;i<length;i++)
 			out.put(str[i]);
-		return out;
-	}
-	
-	ostream& operator << (ostream& out, const std::string& str)
-	{
-		out << str.c_str();
 		return out;
 	}
 	

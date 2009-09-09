@@ -42,7 +42,6 @@ namespace YAML
 		
 		// overloads of write
 		Emitter& Write(const llvm::StringRef& str);
-		Emitter& Write(const std::string& str);
 		Emitter& Write(const char *str);
 		Emitter& Write(int i);
 		Emitter& Write(unsigned int i);

@@ -39,6 +39,7 @@
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
@@ -193,9 +194,8 @@ void
 OffsetSetter::Write(YAML::Emitter& out) const
 {
     out << YAML::Flow << YAML::BeginMap;
-    std::ostringstream oss;
-    oss << "BC@" << m_bc;
-    out << YAML::Key << "bc" << YAML::Value << YAML::Alias(oss.str());
+    out << YAML::Key << "bc" << YAML::Value
+        << YAML::Alias("BC@" + llvm::Twine::utohexstr((uint64_t)m_bc));
     out << YAML::Key << "curval" << YAML::Value << m_cur_val;
     out << YAML::Key << "newval" << YAML::Value << m_new_val;
     out << YAML::Key << "thres" << YAML::Value << m_thres;
@@ -482,9 +482,8 @@ void
 Span::Write(YAML::Emitter& out) const
 {
     out << YAML::BeginMap;
-    std::ostringstream oss;
-    oss << "BC@" << &m_bc;
-    out << YAML::Key << "bc" << YAML::Value << YAML::Alias(oss.str());
+    out << YAML::Key << "bc" << YAML::Value
+        << YAML::Alias("BC@" + llvm::Twine::utohexstr((uint64_t)(&m_bc)));
     if (!m_depval.hasAbs() || m_depval.isRelative())
         out << YAML::Key << "depval" << YAML::Value << m_depval;
     else
@@ -521,9 +520,7 @@ Span::Write(YAML::Emitter& out) const
     for (BacktraceSpans::const_iterator i=m_backtrace.begin(),
          end=m_backtrace.end(); i != end; ++i)
     {
-        std::ostringstream oss;
-        oss << "SPAN@" << *i;
-        out << YAML::Alias(oss.str());
+        out << YAML::Alias("SPAN@" + llvm::Twine::utohexstr((uint64_t)(*i)));
     }
     out << YAML::EndSeq;
 
@@ -569,9 +566,7 @@ Optimizer::Write(YAML::Emitter& out) const
     for (Spans::const_iterator i=m_spans.begin(), end=m_spans.end();
          i != end; ++i)
     {
-        std::ostringstream oss;
-        oss << "SPAN@" << *i;
-        out << YAML::Anchor(oss.str());
+        out << YAML::Alias("SPAN@" + llvm::Twine::utohexstr((uint64_t)(*i)));
         (*i)->Write(out);
     }
     out << YAML::EndSeq;
@@ -581,9 +576,7 @@ Optimizer::Write(YAML::Emitter& out) const
     for (SpanQueue::const_iterator j=m_QA.begin(), end=m_QA.end();
          j != end; ++j)
     {
-        std::ostringstream oss;
-        oss << "SPAN@" << *j;
-        out << YAML::Alias(oss.str());
+        out << YAML::Alias("SPAN@" + llvm::Twine::utohexstr((uint64_t)(*j)));
     }
     out << YAML::EndSeq;
 
@@ -592,9 +585,7 @@ Optimizer::Write(YAML::Emitter& out) const
     for (SpanQueue::const_iterator k=m_QB.begin(), end=m_QB.end();
          k != end; ++k)
     {
-        std::ostringstream oss;
-        oss << "SPAN@" << *k;
-        out << YAML::Alias(oss.str());
+        out << YAML::Alias("SPAN@" + llvm::Twine::utohexstr((uint64_t)(*k)));
     }
     out << YAML::EndSeq;
 

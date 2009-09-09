@@ -42,7 +42,7 @@ operator<< (YAML::Emitter& out, const SymbolRef& sym)
     if (!sym)
         out << YAML::Null;
     else
-        out << YAML::Alias(("SYM@" + sym->getName()).str());
+        out << YAML::Alias("SYM@" + sym->getName());
     return out;
 }
 

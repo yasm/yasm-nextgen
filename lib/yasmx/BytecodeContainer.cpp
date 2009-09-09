@@ -28,8 +28,7 @@
 
 #include "util.h"
 
-#include <sstream>
-
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Support/errwarn.h"
@@ -218,9 +217,8 @@ BytecodeContainer::Write(YAML::Emitter& out) const
     for (BytecodeContainer::const_bc_iterator bc=m_bcs.begin(), end=m_bcs.end();
          bc != end; ++bc)
     {
-        std::ostringstream oss;
-        oss << "BC@" << &(*bc);
-        out << YAML::Anchor(oss.str()) << *bc;
+        out << YAML::Anchor("BC@" + llvm::Twine::utohexstr((uint64_t)&(*bc)))
+            << *bc;
     }
     out << YAML::EndSeq;
 }

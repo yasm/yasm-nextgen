@@ -26,8 +26,7 @@
 //
 #include "yasmx/Location.h"
 
-#include <sstream>
-
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Bytecode.h"
@@ -47,9 +46,8 @@ void
 Location::Write(YAML::Emitter& out) const
 {
     out << YAML::Flow << YAML::BeginMap;
-    std::ostringstream oss;
-    oss << "BC@" << bc;
-    out << YAML::Key << "bc" << YAML::Value << YAML::Alias(oss.str());
+    out << YAML::Key << "bc" << YAML::Value
+        << YAML::Alias("BC@" + llvm::Twine::utohexstr((uint64_t)bc));
     out << YAML::Key << "off" << YAML::Value << off;
     out << YAML::EndMap;
 }

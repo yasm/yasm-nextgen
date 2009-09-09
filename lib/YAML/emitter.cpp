@@ -484,14 +484,6 @@ namespace YAML
 		if(!good())
 			return *this;
 		
-		return Write(std::string(str));
-	}
-	
-	Emitter& Emitter::Write(const std::string& str)
-	{
-		if(!good())
-			return *this;
-		
 		// literal scalars must use long keys
 		if(m_pState->GetStringFormat() == Literal && m_pState->GetCurGroupFlowType() != FT_FLOW)
 			m_pState->StartLongKey();
@@ -535,7 +527,7 @@ namespace YAML
 		if(!good())
 			return *this;
 		
-		return Write(std::string(str));
+		return Write(llvm::StringRef(str));
 	}
 	
 	Emitter& Emitter::Write(long i)

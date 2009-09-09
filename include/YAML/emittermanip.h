@@ -1,7 +1,7 @@
 #ifndef YAML_EMITTERMANIP_H
 #define YAML_EMITTERMANIP_H
 
-#include <string>
+namespace llvm { class StringRef; class Twine; }
 
 namespace YAML
 {
@@ -58,29 +58,29 @@ namespace YAML
 	}
 	
 	struct _Alias {
-		_Alias(const std::string& content_): content(content_) {}
-		std::string content;
+		_Alias(const llvm::Twine& content_): content(content_) {}
+		const llvm::Twine& content;
 	};
 	
-	inline _Alias Alias(const std::string content) {
+	inline _Alias Alias(const llvm::Twine& content) {
 		return _Alias(content);
 	}
 	
 	struct _Anchor {
-		_Anchor(const std::string& content_): content(content_) {}
-		std::string content;
+		_Anchor(const llvm::Twine& content_): content(content_) {}
+		const llvm::Twine& content;
 	};
 
-	inline _Anchor Anchor(const std::string content) {
+	inline _Anchor Anchor(const llvm::Twine& content) {
 		return _Anchor(content);
 	}
 
 	struct _Comment {
-		_Comment(const std::string& content_): content(content_) {}
-		std::string content;
+		_Comment(const llvm::StringRef& content_): content(content_) {}
+		const llvm::StringRef& content;
 	};
 	
-	inline _Comment Comment(const std::string content) {
+	inline _Comment Comment(const llvm::StringRef& content) {
 		return _Comment(content);
 	}
 }

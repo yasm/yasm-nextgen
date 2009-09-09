@@ -283,7 +283,7 @@ Object::Write(YAML::Emitter& out) const
     out << YAML::BeginSeq;
     for (const_section_iterator i=m_sections.begin(), end=m_sections.end();
          i != end; ++i)
-        out << YAML::Anchor(("SECT@" + i->getName()).str()) << *i;
+        out << YAML::Anchor("SECT@" + i->getName()) << *i;
     out << YAML::EndSeq;
 
     // symbols
@@ -293,7 +293,7 @@ Object::Write(YAML::Emitter& out) const
     out << YAML::BeginSeq;
     for (const_symbol_iterator i=m_symbols.begin(), end=m_symbols.end();
          i != end; ++i)
-        out << YAML::Anchor(("SYM@" + i->getName()).str()) << *i;
+        out << YAML::Anchor("SYM@" + i->getName()) << *i;
     out << YAML::EndSeq;
 
     out << YAML::EndMap;

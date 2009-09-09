@@ -3,6 +3,9 @@
 #include "indentation.h"
 #include <sstream>
 #include "stringsource.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Twine.h"
 
 namespace YAML
 {
@@ -13,14 +16,14 @@ namespace YAML
 				return (0x20 <= ch && ch <= 0x7E);
 			}
 			
-			bool IsValidPlainScalar(const std::string& str, bool inFlow) {
+			bool IsValidPlainScalar(const llvm::StringRef& str, bool inFlow) {
 				// first check the start
 				const RegEx& start = (inFlow ? Exp::PlainScalarInFlow : Exp::PlainScalar);
 				if(!start.Matches(str))
 					return false;
 				
 				// and check the end for plain whitespace (which can't be faithfully kept in a plain scalar)
-				if(!str.empty() && *str.rbegin() == ' ')
+				if(!str.empty() && str.back() == ' ')
 					return false;
 
 				// then check until something is disallowed
@@ -30,7 +33,7 @@ namespace YAML
 				                          || Exp::Break
 				                          || Exp::Tab
 				                          || Exp::Null;
-				StringCharSource buffer(str.c_str(), str.size());
+				StringCharSource buffer(str.data(), str.size());
 				while(buffer) {
 					if(disallowed.Matches(buffer))
 						return false;
@@ -41,7 +44,7 @@ namespace YAML
 			}
 		}
 		
-		bool WriteString(ostream& out, const std::string& str, bool inFlow)
+		bool WriteString(ostream& out, const llvm::StringRef& str, bool inFlow)
 		{
 			if(IsValidPlainScalar(str, inFlow)) {
 				out << str;
@@ -50,10 +53,10 @@ namespace YAML
 				return WriteDoubleQuotedString(out, str);
 		}
 		
-		bool WriteSingleQuotedString(ostream& out, const std::string& str)
+		bool WriteSingleQuotedString(ostream& out, const llvm::StringRef& str)
 		{
 			out << "'";
-			for(unsigned i=0;i<str.size();i++) {
+			for(size_t i=0;i<str.size();i++) {
 				char ch = str[i];
 				if(!IsPrintable(ch))
 					return false;
@@ -67,10 +70,10 @@ namespace YAML
 			return true;
 		}
 		
-		bool WriteDoubleQuotedString(ostream& out, const std::string& str)
+		bool WriteDoubleQuotedString(ostream& out, const llvm::StringRef& str)
 		{
 			out << "\"";
-			for(unsigned i=0;i<str.size();i++) {
+			for(size_t i=0;i<str.size();i++) {
 				char ch = str[i];
 				if(IsPrintable(ch)) {
 					if(ch == '\"')
@@ -81,20 +84,20 @@ namespace YAML
 						out << ch;
 				} else {
 					// TODO: for the common escaped characters, give their usual symbol
-					std::stringstream str;
-					str << "\\x" << std::hex << static_cast <int>(ch);
-					out << str.str();
+					std::stringstream ss;
+					ss << "\\x" << std::hex << static_cast <int>(ch);
+					out << ss.str();
 				}
 			}
 			out << "\"";
 			return true;
 		}
 
-		bool WriteLiteralString(ostream& out, const std::string& str, int indent)
+		bool WriteLiteralString(ostream& out, const llvm::StringRef& str, int indent)
 		{
 			out << "|\n";
 			out << IndentTo(indent);
-			for(unsigned i=0;i<str.size();i++) {
+			for(size_t i=0;i<str.size();i++) {
 				if(str[i] == '\n')
 					out << "\n" << IndentTo(indent);
 				else
@@ -103,11 +106,11 @@ namespace YAML
 			return true;
 		}
 		
-		bool WriteComment(ostream& out, const std::string& str, int postCommentIndent)
+		bool WriteComment(ostream& out, const llvm::StringRef& str, int postCommentIndent)
 		{
 			unsigned curIndent = out.col();
 			out << "#" << Indentation(postCommentIndent);
-			for(unsigned i=0;i<str.size();i++) {
+			for(size_t i=0;i<str.size();i++) {
 				if(str[i] == '\n')
 					out << "\n" << IndentTo(curIndent) << "#" << Indentation(postCommentIndent);
 				else
@@ -116,8 +119,10 @@ namespace YAML
 			return true;
 		}
 
-		bool WriteAlias(ostream& out, const std::string& str)
+		bool WriteAlias(ostream& out, const llvm::Twine& twine)
 		{
+			llvm::SmallString<256> str;
+			twine.toVector(str);
 			out << "*";
 			for(unsigned i=0;i<str.size();i++) {
 				if(!IsPrintable(str[i]) || str[i] == ' ' || str[i] == '\t' || str[i] == '\n' || str[i] == '\r')
@@ -128,8 +133,10 @@ namespace YAML
 			return true;
 		}
 		
-		bool WriteAnchor(ostream& out, const std::string& str)
+		bool WriteAnchor(ostream& out, const llvm::Twine& twine)
 		{
+			llvm::SmallString<256> str;
+			twine.toVector(str);
 			out << "&";
 			for(unsigned i=0;i<str.size();i++) {
 				if(!IsPrintable(str[i]) || str[i] == ' ' || str[i] == '\t' || str[i] == '\n' || str[i] == '\r')
