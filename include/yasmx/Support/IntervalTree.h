@@ -17,9 +17,9 @@
 #include <cassert>
 #include <climits>
 #include <cstdlib>
-#include <ostream>
 #include <vector>
 
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Config/functional.h"
 
 
@@ -42,7 +42,7 @@ public:
     const T& getData() const { return data; }
 
 protected:
-    void Put(std::ostream& os, IntervalTreeNode<T>* nil,
+    void Put(llvm::raw_ostream& os, IntervalTreeNode<T>* nil,
              IntervalTreeNode<T>* root) const;
 
     IntervalTreeNode<T>* left;
@@ -59,7 +59,8 @@ template <typename T>
 class IntervalTree
 {
     template <typename U> friend
-    std::ostream& operator<< (std::ostream& os, const IntervalTree<U>& it);
+    llvm::raw_ostream& operator<< (llvm::raw_ostream& os,
+                                   const IntervalTree<U>& it);
 
 public:
     IntervalTree();
@@ -70,7 +71,7 @@ public:
     IntervalTreeNode<T>* getSuccessor(IntervalTreeNode<T>*) const;
     void Enumerate(long low, long high,
                    FUNCTION::function<void (IntervalTreeNode<T>*)> callback);
-    void Put(std::ostream& os) const;
+    void Put(llvm::raw_ostream& os) const;
 #ifdef YASM_INTERVAL_TREE_CHECK_ASSUMPTIONS
     void CheckAssumptions() const;
 #endif
@@ -104,7 +105,7 @@ protected:
     void LeftRotate(IntervalTreeNode<T>*);
     void RightRotate(IntervalTreeNode<T>*);
     void TreeInsertHelp(IntervalTreeNode<T>*);
-    void Put(std::ostream& os, IntervalTreeNode<T>*) const;
+    void Put(llvm::raw_ostream& os, IntervalTreeNode<T>*) const;
     void FixUpMaxHigh(IntervalTreeNode<T>*);
     void DeleteFixUp(IntervalTreeNode<T>*);
 
@@ -122,8 +123,8 @@ protected:
 };
 
 template <typename U>
-inline std::ostream&
-operator<< (std::ostream& os, const IntervalTree<U>& it)
+inline llvm::raw_ostream&
+operator<< (llvm::raw_ostream& os, const IntervalTree<U>& it)
 {
     it.Put(os, it.m_root->left);
     return os;
@@ -598,7 +599,7 @@ IntervalTree<T>::getPredecessor(IntervalTreeNode<T>* x) const
 
 template <typename T>
 void
-IntervalTreeNode<T>::Put(std::ostream& os,
+IntervalTreeNode<T>::Put(llvm::raw_ostream& os,
                          IntervalTreeNode<T>* nil,
                          IntervalTreeNode<T>* root) const
 {
@@ -618,12 +619,12 @@ IntervalTreeNode<T>::Put(std::ostream& os,
         os << "NULL";
     else
         os << parent->low;
-    os << "  red=" << red << std::endl;
+    os << "  red=" << red << '\n';
 }
 
 template <typename T>
 void
-IntervalTree<T>::Put(std::ostream& os, IntervalTreeNode<T>* x) const
+IntervalTree<T>::Put(llvm::raw_ostream& os, IntervalTreeNode<T>* x) const
 {
     if (x != m_nil)
     {
@@ -635,7 +636,7 @@ IntervalTree<T>::Put(std::ostream& os, IntervalTreeNode<T>* x) const
 
 template <typename T>
 void
-IntervalTree<T>::Put(std::ostream& os) const
+IntervalTree<T>::Put(llvm::raw_ostream& os) const
 {
     Put(os, m_root->left);
 }
@@ -948,9 +949,9 @@ IntervalTree<T>::Verify(bool condition, const char* condstr, const char* file,
 {
     if (!condition)
     {
-        std::cerr << "Assumption \"" << condstr << "\"" << std::endl;
-        std::cerr << "Failed in file " << file << ": at line:" << line;
-        std::cerr << std::endl;
+        llvm::errs() << "Assumption \"" << condstr << "\"" << '\n';
+                     << "Failed in file " << file << ": at line:" << line
+                     << '\n';
         abort();
     }
 }
@@ -987,7 +988,7 @@ IntervalTree<T>::CheckMaxHighFields(IntervalTreeNode<T>* x) const
         CheckMaxHighFields(x->left);
         if(CheckMaxHighFieldsHelper(x, x->maxHigh, false))
         {
-            std::cerr << "error found in CheckMaxHighFields." << std::endl;
+            llvm::errs() << "error found in CheckMaxHighFields.\n";
             abort();
         }
         CheckMaxHighFields(x->right);
