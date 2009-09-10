@@ -2,7 +2,6 @@
 #define YAML_EXCEPTIONS_H
 
 #include <string>
-#include <sstream>
 
 namespace YAML
 {

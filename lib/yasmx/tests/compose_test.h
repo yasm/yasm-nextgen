@@ -24,9 +24,8 @@
 //
 #include <cxxtest/TestSuite.h>
 
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Support/Compose.h"
-
-#include <iomanip>
 
 class ComposeTestSuite : public CxxTest::TestSuite
 {
@@ -141,7 +140,8 @@ public:
 
     void testStreamOut()
     {
-        std::ostringstream os;
+        std::string s;
+        llvm::raw_string_ostream os(s);
         os << "Here's some " << String::Composer("formatted %1 %2") % "text" % "for"
             << " you!";
         TS_ASSERT_EQUALS(os.str(), "Here's some formatted text for you!");

@@ -28,8 +28,7 @@
 
 #include "util.h"
 
-#include <sstream>
-
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 
@@ -117,8 +116,9 @@ AssocDataContainer::Write(YAML::Emitter& out) const
     for (AssocMap::const_iterator i=m_assoc_map.begin(), end=m_assoc_map.end();
          i != end; ++i)
     {
-        std::ostringstream oss;
-        oss << i->key;
+        llvm::SmallString<128> ss;
+        llvm::raw_svector_ostream oss(ss);
+        oss << (uint64_t)(i->key);
         out << YAML::Key << oss.str() << YAML::Value << *i->value;
     }
     out << YAML::EndMap;

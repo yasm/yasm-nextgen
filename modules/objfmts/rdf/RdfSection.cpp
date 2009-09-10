@@ -26,8 +26,7 @@
 //
 #include "RdfSection.h"
 
-#include <sstream>
-
+#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
@@ -87,7 +86,8 @@ RdfSection::Read(InputBuffer& inbuf, unsigned long* size, std::string* name)
     *size = ReadU32(inbuf);                     // length
 
     // Manufacture a name based on the type and scnum
-    std::ostringstream oss;
+    name->clear();
+    llvm::raw_string_ostream oss(*name);
     switch (type)
     {
         case RDF_BSS:       oss << ".bss"; break;
@@ -103,7 +103,7 @@ RdfSection::Read(InputBuffer& inbuf, unsigned long* size, std::string* name)
     // Don't suffix the most common combinations
     if (type == RDF_BSS || scnum+1 != static_cast<unsigned int>(type))
         oss << scnum;
-    *name = oss.str();
+    oss.flush();
 }
 
 }}} // namespace yasm::objfmt::rdf

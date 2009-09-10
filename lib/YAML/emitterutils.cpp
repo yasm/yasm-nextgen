@@ -1,11 +1,12 @@
 #include "emitterutils.h"
 #include "exp.h"
 #include "indentation.h"
-#include <sstream>
 #include "stringsource.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/Format.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace YAML
 {
@@ -84,8 +85,9 @@ namespace YAML
 						out << ch;
 				} else {
 					// TODO: for the common escaped characters, give their usual symbol
-					std::stringstream ss;
-					ss << "\\x" << std::hex << static_cast <int>(ch);
+					llvm::SmallString<128> s;
+					llvm::raw_svector_ostream ss(s);
+					ss << "\\x" << llvm::format("%x", static_cast <int>(ch));
 					out << ss.str();
 				}
 			}

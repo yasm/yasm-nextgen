@@ -26,6 +26,8 @@
 
 #include <string>
 
+#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "hamt.h"
 
@@ -152,7 +154,8 @@ HamtTestSuite::GenSym::GenSym(int nsym)
 {
     for (int i=0; i<nsym; i++)
     {
-        std::ostringstream os;
+        llvm::SmallString<128> ss;
+        llvm::raw_svector_ostream os(ss);
         os << "sym" << i;
         syms.push_back(new Symbol(os.str()));
     }

@@ -26,8 +26,7 @@
 //
 #include "RdfReloc.h"
 
-#include <sstream>
-
+#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
@@ -71,7 +70,8 @@ RdfReloc::getValue() const
 std::string
 RdfReloc::getTypeName() const
 {
-    std::ostringstream oss;
+    std::string s;
+    llvm::raw_string_ostream oss(s);
 
     switch (m_type)
     {
@@ -82,7 +82,8 @@ RdfReloc::getTypeName() const
 
     oss << m_size;
 
-    return oss.str();
+    oss.flush();
+    return s;
 }
 
 void

@@ -1,10 +1,12 @@
 #include "YAML/emitter.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Format.h"
+#include "llvm/Support/raw_ostream.h"
 #include "emitterstate.h"
 #include "emitterutils.h"
 #include "indentation.h"
 #include "exceptions.h"
-#include <sstream>
 
 namespace YAML
 {	
@@ -539,23 +541,30 @@ namespace YAML
 		EmitSeparationIfNecessary();
 		
 		EMITTER_MANIP intFmt = m_pState->GetIntFormat();
-		std::stringstream str;
-                str << std::showbase;
+                llvm::SmallString<128> ss;
+		llvm::raw_svector_ostream str(ss);
 		switch(intFmt) {
 			case Dec:
-				str << std::dec;
+				str << llvm::format("%ld", i);
 				break;
 			case Hex:
-				str << std::hex;
+                                if (i < 0)
+                                    str << '-' << llvm::format("0x%lx", -i);
+                                else
+				    str << llvm::format("0x%lx", i);
 				break;
 			case Oct:
-				str << std::oct;
+                                if (i == 0)
+                                    str << '0';
+                                else if (i < 0)
+                                    str << '-' << llvm::format("0%lo", -i);
+                                else
+				    str << llvm::format("0%lo", i);
 				break;
 			default:
 				assert(false);
 		}
 		
-		str << i;
 		m_stream << str.str();
 		
 		PostAtomicWrite();
@@ -576,23 +585,25 @@ namespace YAML
 		EmitSeparationIfNecessary();
 		
 		EMITTER_MANIP intFmt = m_pState->GetIntFormat();
-		std::stringstream str;
-                str << std::showbase;
+                llvm::SmallString<128> ss;
+		llvm::raw_svector_ostream str(ss);
 		switch(intFmt) {
 			case Dec:
-				str << std::dec;
+				str << llvm::format("%lu", i);
 				break;
 			case Hex:
-				str << std::hex;
+				str << llvm::format("0x%lx", i);
 				break;
 			case Oct:
-				str << std::oct;
+                                if (i == 0)
+                                    str << '0';
+                                else
+				    str << llvm::format("0%lo", i);
 				break;
 			default:
 				assert(false);
 		}
 		
-		str << i;
 		m_stream << str.str();
 		
 		PostAtomicWrite();
@@ -651,7 +662,8 @@ namespace YAML
 		PreAtomicWrite();
 		EmitSeparationIfNecessary();
 		
-		std::stringstream str;
+                llvm::SmallString<128> ss;
+		llvm::raw_svector_ostream str(ss);
 		str << f;
 		m_stream << str.str();
 		
@@ -667,7 +679,8 @@ namespace YAML
 		PreAtomicWrite();
 		EmitSeparationIfNecessary();
 		
-		std::stringstream str;
+                llvm::SmallString<128> ss;
+		llvm::raw_svector_ostream str(ss);
 		str << d;
 		m_stream << str.str();
 		
