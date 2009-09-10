@@ -29,7 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
 #include <memory>
 
 #include "yasmx/Config/export.h"
@@ -37,7 +36,7 @@
 #include "yasmx/Module.h"
 
 
-namespace llvm { class StringRef; }
+namespace llvm { class raw_ostream; class StringRef; }
 
 namespace yasm
 {
@@ -68,7 +67,9 @@ public:
     /// @param os           output stream
     /// @param linemap      line mapping repository
     /// @param arch         architecture
-    virtual void Output(std::ostream& os, Linemap& linemap, Arch& arch) = 0;
+    virtual void Output(llvm::raw_ostream& os,
+                        Linemap& linemap,
+                        Arch& arch) = 0;
 
 private:
     ListFormat(const ListFormat&);                  // not implemented

@@ -29,7 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
 #include <memory>
 #include <vector>
 
@@ -39,7 +38,7 @@
 #include "yasmx/Expr.h"
 
 
-namespace YAML { class Emitter; }
+namespace YAML { class Emitter; class raw_ostream; }
 
 namespace yasm
 {
@@ -55,7 +54,7 @@ class YASM_LIB_EXPORT TargetModifier
 public:
     TargetModifier() {}
     virtual ~TargetModifier();
-    virtual void Put(std::ostream& os) const = 0;
+    virtual void Put(llvm::raw_ostream& os) const = 0;
 
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
@@ -253,7 +252,7 @@ class YASM_LIB_EXPORT Prefix
 public:
     Prefix() {}
     virtual ~Prefix();
-    virtual void Put(std::ostream& os) const = 0;
+    virtual void Put(llvm::raw_ostream& os) const = 0;
 
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
@@ -341,15 +340,15 @@ private:
     const Insn& operator=(const Insn&);
 };
 
-inline std::ostream&
-operator<< (std::ostream& os, const TargetModifier& tmod)
+inline llvm::raw_ostream&
+operator<< (llvm::raw_ostream& os, const TargetModifier& tmod)
 {
     tmod.Put(os);
     return os;
 }
 
-inline std::ostream&
-operator<< (std::ostream& os, const Prefix& prefix)
+inline llvm::raw_ostream&
+operator<< (llvm::raw_ostream& os, const Prefix& prefix)
 {
     prefix.Put(os);
     return os;

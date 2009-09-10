@@ -34,10 +34,10 @@
 #include <deque>
 #include <list>
 #include <memory>
-#include <sstream>
 #include <vector>
 
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
@@ -488,9 +488,10 @@ Span::Write(YAML::Emitter& out) const
         out << YAML::Key << "depval" << YAML::Value << m_depval;
     else
     {
-        std::ostringstream oss2;
-        oss2 << *m_depval.getAbs();
-        out << YAML::Key << "depval" << YAML::Value << oss2.str();
+        llvm::SmallString<256> ss;
+        llvm::raw_svector_ostream oss(ss);
+        oss << *m_depval.getAbs();
+        out << YAML::Key << "depval" << YAML::Value << oss.str();
     }
 
     out << YAML::Key << "span terms" << YAML::Value << YAML::BeginSeq;

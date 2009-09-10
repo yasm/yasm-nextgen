@@ -31,7 +31,6 @@
 ///
 #include <algorithm>
 #include <cstdlib>
-#include <iosfwd>
 #include <string>
 
 #include "llvm/ADT/APInt.h"
@@ -40,7 +39,7 @@
 #include "yasmx/Op.h"
 
 
-namespace YAML { class Emitter; class StringRef; }
+namespace YAML { class Emitter; class raw_ostream; class StringRef; }
 
 namespace yasm
 {
@@ -84,7 +83,7 @@ struct YASM_LIB_EXPORT IntNumData
 class YASM_LIB_EXPORT IntNum : private IntNumData
 {
     friend YASM_LIB_EXPORT
-    std::ostream& operator<< (std::ostream& os, const IntNum& intn);
+    llvm::raw_ostream& operator<< (llvm::raw_ostream& os, const IntNum& intn);
     friend YASM_LIB_EXPORT
     int Compare(const IntNum& intn1, const IntNum& intn2);
     friend YASM_LIB_EXPORT
@@ -286,7 +285,6 @@ public:
     /// Set intnum value from a decimal/binary/octal/hexidecimal string.
     /// @param str      input string
     /// @param base     numeric base (10=decimal, etc)
-    /// @note Only base=2,8,10,16 are supported.
     void setStr(const llvm::StringRef& str, int base=10);
 
     /// Get intnum value into a SmallString.  The returned string will
@@ -294,7 +292,6 @@ public:
     /// @param str          output SmallString
     /// @param base         numeric base (10=decimal, etc)
     /// @param lowercase    whether hex digits should be lowercase
-    /// @note Valid bases are 8, 10, and 16.
     void getStr(llvm::SmallVectorImpl<char>& str,
                 int base = 10,
                 bool lowercase = true) const;
@@ -304,7 +301,6 @@ public:
     /// @param base         numeric base (10=decimal, etc)
     /// @param lowercase    whether hex digits should be lowercase
     /// @return String representing the value of the intnum.
-    /// @note Valid bases are 8, 10, and 16.
     std::string getStr(int base = 10, bool lowercase = true) const;
 
     /// Extract width bits from IntNum, starting at bit lsb.
@@ -360,6 +356,21 @@ public:
     /// Dump a YAML representation to stderr.
     /// For debugging purposes.
     void Dump() const;
+
+    /// Print to stream.
+    /// @param os           output stream
+    /// @param base         numeric base (10=decimal, etc)
+    /// @param lowercase    whether hex digits should be lowercase
+    /// @param showbase     whether C-style non-decimal prefixes should be used:
+    ///                     "0x" for hex, "0b" for bin, "0" for octal.
+    /// @param bits         number of bits to pad output to (-1 for no padding);
+    ///                     applys only to non-decimal output
+    /// The negative sign (if required) is output before the non-decimal prefix.
+    void Print(llvm::raw_ostream& os,
+               int base = 10,
+               bool lowercase = true,
+               bool showbase = true,
+               int bits = -1) const;
 
 private:
     /// Set an intnum to an unsigned integer.
@@ -460,8 +471,12 @@ swap(IntNum& left, IntNum& right)
     left.swap(right);
 }
 
-YASM_LIB_EXPORT
-std::ostream& operator<< (std::ostream& os, const IntNum& intn);
+inline llvm::raw_ostream&
+operator<< (llvm::raw_ostream& os, const IntNum& intn)
+{
+    intn.Print(os);
+    return os;
+}
 
 /// Dump a YAML representation of intnum.  For debugging purposes.
 /// @param out          YAML emitter

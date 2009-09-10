@@ -65,7 +65,9 @@ public:
 #if 0
     virtual void read(std::istream& is);
 #endif
-    virtual void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
+    virtual void Output(llvm::raw_fd_ostream& os,
+                        bool all_syms,
+                        Errwarns& errwarns);
 
     virtual Section* AddDefaultSection();
     virtual Section* AppendSection(const llvm::StringRef& name,

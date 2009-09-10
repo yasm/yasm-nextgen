@@ -1,9 +1,9 @@
 #include <cstdlib>
-#include <iostream>
 
 #include "config.h"
 
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/System/plugin.h"
@@ -34,7 +34,7 @@ main()
     if (!preproc->getLine(outstr))
         return EXIT_FAILURE;
 
-    std::cout << outstr << std::endl;
+    llvm::outs() << outstr << '\n';
 
     if (outstr != instr)
         return EXIT_FAILURE;

@@ -65,7 +65,7 @@ namespace coff
 class CoffOutput : public BytecodeStreamOutput
 {
 public:
-    CoffOutput(std::ostream& os,
+    CoffOutput(llvm::raw_ostream& os,
                CoffObject& objfmt,
                Object& object,
                bool all_syms);
@@ -92,7 +92,7 @@ private:
     BytecodeNoOutput m_no_output;
 };
 
-CoffOutput::CoffOutput(std::ostream& os,
+CoffOutput::CoffOutput(llvm::raw_ostream& os,
                        CoffObject& objfmt,
                        Object& object,
                        bool all_syms)
@@ -338,7 +338,7 @@ CoffOutput::OutputSection(Section& sect, Errwarns& errwarns)
         if (sect.bytecodes_last().getNextOffset() == 0)
             return;
 
-        pos = m_os.tellp();
+        pos = m_os.tell();
         if (pos < 0)
             throw IOError(N_("could not get file position on output file"));
     }
@@ -368,7 +368,7 @@ CoffOutput::OutputSection(Section& sect, Errwarns& errwarns)
     if (sect.getRelocs().size() == 0)
         return;
 
-    pos = m_os.tellp();
+    pos = m_os.tell();
     if (pos < 0)
         throw IOError(N_("could not get file position on output file"));
     coffsect->m_relptr = static_cast<unsigned long>(pos);
@@ -483,7 +483,7 @@ CoffOutput::OutputSectionHeader(const Section& sect)
 }
 
 void
-CoffObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
+CoffObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
 {
     // Update file symbol filename
     m_file_coffsym->m_aux.resize(1);
@@ -518,8 +518,8 @@ CoffObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     }
 
     // Allocate space for headers by seeking forward.
-    os.seekp(20+40*(scnum-1));
-    if (!os)
+    os.seek(20+40*(scnum-1));
+    if (os.has_error())
         throw IOError(N_("could not seek on output file"));
 
     CoffOutput out(os, *this, m_object, all_syms);
@@ -535,7 +535,7 @@ CoffObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     }
 
     // Symbol table
-    long pos = os.tellp();
+    long pos = os.tell();
     if (pos < 0)
         throw IOError(N_("could not get file position on output file"));
     unsigned long symtab_pos = static_cast<unsigned long>(pos);
@@ -545,8 +545,8 @@ CoffObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     out.OutputStringTable();
 
     // Write headers
-    os.seekp(0);
-    if (!os)
+    os.seek(0);
+    if (os.has_error())
         throw IOError(N_("could not seek on output file"));
 
     // Write file header

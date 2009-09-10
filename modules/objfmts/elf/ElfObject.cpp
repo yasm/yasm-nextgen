@@ -112,7 +112,7 @@ public:
     void InitSymbols(const llvm::StringRef& parser);
 
     void Read(const llvm::MemoryBuffer& in);
-    void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
+    void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* AddDefaultSection();
     Section* AppendSection(const llvm::StringRef& name, unsigned long line);
@@ -689,7 +689,7 @@ ElfObject::FinalizeSymbol(Symbol& sym, StringTable& strtab, bool local_names)
 class ElfOutput : public BytecodeStreamOutput
 {
 public:
-    ElfOutput(std::ostream& os, ElfObject& objfmt, Object& object);
+    ElfOutput(llvm::raw_fd_ostream& os, ElfObject& objfmt, Object& object);
     ~ElfOutput();
 
     void OutputSection(Section& sect,
@@ -711,14 +711,18 @@ public:
 private:
     ElfObject& m_objfmt;
     Object& m_object;
+    llvm::raw_fd_ostream& m_fd_os;
     BytecodeNoOutput m_no_output;
     SymbolRef m_GOT_sym;
 };
 
-ElfOutput::ElfOutput(std::ostream& os, ElfObject& objfmt, Object& object)
+ElfOutput::ElfOutput(llvm::raw_fd_ostream& os,
+                     ElfObject& objfmt,
+                     Object& object)
     : BytecodeStreamOutput(os)
     , m_objfmt(objfmt)
     , m_object(object)
+    , m_fd_os(os)
     , m_GOT_sym(object.FindSymbol("_GLOBAL_OFFSET_TABLE_"))
 {
 }
@@ -887,7 +891,7 @@ ElfOutput::OutputSection(Section& sect,
     elfsect->setIndex(*sindex);
     *sindex = *sindex + 1;
 
-    std::streampos pos;
+    uint64_t pos;
     if (sect.isBSS())
     {
         // Don't output BSS sections.
@@ -896,15 +900,15 @@ ElfOutput::OutputSection(Section& sect,
     }
     else
     {
-        pos = m_os.tellp();
-        if (pos < 0)
+        pos = m_os.tell();
+        if (m_os.has_error())
             throw IOError(N_("couldn't read position on output stream"));
 
         if (sect.bytecodes_last().getNextOffset() == 0)
             return;
 
-        m_os.seekp(elfsect->setFileOffset(pos));
-        if (!m_os)
+        m_fd_os.seek(elfsect->setFileOffset(pos));
+        if (m_os.has_error())
             throw IOError(N_("couldn't seek on output stream"));
     }
 
@@ -948,27 +952,27 @@ ElfOutput::OutputSection(Section& sect,
 }
 
 unsigned long
-ElfAlignOutput(std::ostream& os, unsigned int align)
+ElfAlignOutput(llvm::raw_fd_ostream& os, unsigned int align)
 {
     assert(isExp2(align) && "requested alignment not a power of two");
 
-    std::streampos pos = os.tellp();
-    if (pos < 0)
+    uint64_t pos = os.tell();
+    if (os.has_error())
         throw IOError(N_("could not get file position on output file"));
 
     unsigned long delta = align - (pos & (align-1));
     if (delta != align)
     {
         pos += delta;
-        os.seekp(pos);
-        if (!os)
+        os.seek(pos);
+        if (os.has_error())
             throw IOError(N_("could not set file position on output file"));
     }
     return static_cast<unsigned long>(pos);
 }
 
 void
-ElfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
+ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
 {
     StringTable shstrtab, strtab;
 
@@ -979,8 +983,8 @@ ElfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     }
 
     // Allocate space for Ehdr by seeking forward
-    os.seekp(m_config.getProgramHeaderSize());
-    if (!os)
+    os.seek(m_config.getProgramHeaderSize());
+    if (os.has_error())
         throw IOError(N_("could not seek on output file"));
 
     // Create missing section headers
@@ -1145,8 +1149,8 @@ ElfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     symtab_sect.Write(os, out.getScratch());
 
     // output Ehdr
-    os.seekp(0);
-    if (!os)
+    os.seek(0);
+    if (os.has_error())
         throw IOError(N_("could not seek on output file"));
 
     m_config.WriteProgramHeader(os, out.getScratch());

@@ -71,7 +71,7 @@ public:
 
     void Write(YAML::Emitter& out) const;
 
-    unsigned long Write(std::ostream& os, Bytes& scratch) const;
+    unsigned long Write(llvm::raw_ostream& os, Bytes& scratch) const;
 
     std::auto_ptr<Section> CreateSection(const StringTable& shstrtab) const;
     void LoadSectionData(Section& sect, const llvm::MemoryBuffer& in) const;
@@ -117,11 +117,11 @@ public:
     void setSize(const IntNum& size) { m_size = size; }
     IntNum getSize() const { return m_size; }
 
-    unsigned long WriteRel(std::ostream& os,
+    unsigned long WriteRel(llvm::raw_ostream& os,
                            ElfSectionIndex symtab,
                            Section& sect,
                            Bytes& scratch);
-    unsigned long WriteRelocs(std::ostream& os,
+    unsigned long WriteRelocs(llvm::raw_ostream& os,
                               Section& sect,
                               Errwarns& errwarns,
                               Bytes& scratch,

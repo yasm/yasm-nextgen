@@ -24,6 +24,7 @@
 //
 #include <cxxtest/TestSuite.h>
 
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Expr.h"
@@ -57,7 +58,7 @@ public:
         MockRegister(const char* name) : m_name(name) {}
         unsigned int getSize() const { return 0; }
         unsigned int getNum() const { return m_name[0]-'a'; }
-        void Put(std::ostream& os) const { os << m_name; }
+        void Put(llvm::raw_ostream& os) const { os << m_name; }
         void Write(YAML::Emitter& out) const {}
 
     private:

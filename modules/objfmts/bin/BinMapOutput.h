@@ -26,10 +26,10 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <iosfwd>
-
 #include "BinLink.h"
 
+
+namespace llvm { class raw_ostream; }
 
 namespace yasm
 {
@@ -45,7 +45,7 @@ namespace bin
 class BinMapOutput
 {
 public:
-    BinMapOutput(std::ostream& os,
+    BinMapOutput(llvm::raw_ostream& os,
                  const Object& object,
                  const IntNum& origin,
                  const BinGroups& groups);
@@ -67,7 +67,7 @@ private:
     // address width
     int m_bytes;
 
-    std::ostream& m_os;         // map output file
+    llvm::raw_ostream& m_os;        // map output file
     const Object& m_object;     // object
     const IntNum& m_origin;     // origin
     const BinGroups& m_groups;  // section groups

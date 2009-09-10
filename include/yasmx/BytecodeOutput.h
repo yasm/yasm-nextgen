@@ -29,14 +29,14 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
-
 #include "yasmx/Config/export.h"
 
 #include "yasmx/Bytes.h"
 #include "yasmx/Location.h"
 #include "yasmx/SymbolRef.h"
 
+
+namespace llvm { class raw_ostream; }
 
 namespace yasm
 {
@@ -241,14 +241,14 @@ protected:
 class YASM_LIB_EXPORT BytecodeStreamOutput : public BytecodeOutput
 {
 public:
-    BytecodeStreamOutput(std::ostream& os) : m_os(os) {}
+    BytecodeStreamOutput(llvm::raw_ostream& os) : m_os(os) {}
     ~BytecodeStreamOutput();
 
 protected:
     void DoOutputGap(unsigned int size);
     void DoOutputBytes(const Bytes& bytes);
 
-    std::ostream& m_os;
+    llvm::raw_ostream& m_os;
 };
 
 } // namespace yasm

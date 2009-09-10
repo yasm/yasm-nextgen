@@ -29,7 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
 #include <memory>
 #include <string>
 #include <utility>
@@ -41,7 +40,7 @@
 #include "yasmx/Module.h"
 
 
-namespace llvm { class APFloat; class StringRef; }
+namespace llvm { class APFloat; class raw_ostream; class StringRef; }
 namespace YAML { class Emitter; }
 
 namespace yasm
@@ -76,7 +75,7 @@ public:
 
     /// Print the register name.
     /// @param os   output stream
-    virtual void Put(std::ostream& os) const = 0;
+    virtual void Put(llvm::raw_ostream& os) const = 0;
 
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
@@ -91,8 +90,8 @@ private:
     const Register& operator=(const Register&); // not implemented
 };
 
-inline std::ostream& operator<<
-(std::ostream &os, const Register &reg)
+inline llvm::raw_ostream& operator<<
+(llvm::raw_ostream& os, const Register& reg)
 {
     reg.Put(os);
     return os;
@@ -160,7 +159,7 @@ public:
 
     /// Print a segment register.  For debugging purposes.
     /// @param os   output stream
-    virtual void Put(std::ostream& os) const = 0;
+    virtual void Put(llvm::raw_ostream& os) const = 0;
 
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
@@ -175,8 +174,8 @@ private:
     const SegmentRegister& operator=(const SegmentRegister&); // not implemented
 };
 
-inline std::ostream& operator<<
-(std::ostream &os, const SegmentRegister &segreg)
+inline llvm::raw_ostream& operator<<
+(llvm::raw_ostream& os, const SegmentRegister& segreg)
 {
     segreg.Put(os);
     return os;

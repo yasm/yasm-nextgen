@@ -29,7 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
 #include <memory>
 #include <string>
 #include <vector>
@@ -39,7 +38,7 @@
 #include "yasmx/Module.h"
 
 
-namespace llvm { class MemoryBuffer; class StringRef; }
+namespace llvm { class MemoryBuffer; class raw_fd_ostream; class StringRef; }
 
 namespace yasm
 {
@@ -90,7 +89,7 @@ public:
     ///                     the object file
     /// @param errwarns     error/warning set
     /// @note Errors and warnings are stored into errwarns.
-    virtual void Output(std::ostream& os,
+    virtual void Output(llvm::raw_fd_ostream& os,
                         bool all_syms,
                         Errwarns& errwarns) = 0;
 

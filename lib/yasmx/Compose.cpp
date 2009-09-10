@@ -31,24 +31,16 @@
 namespace String
 {
 
-Composer::Composer(const llvm::StringRef& fmt)
-    : m_fmt(fmt), m_arg(0)
-{
-    m_arg_pos[0] = 0;
-    m_os << ' ';
-    m_os.seekp(0);
-}
-
 Composer::~Composer()
 {
 }
 
 Composer::Composer(const Composer& rhs)
     : m_fmt(rhs.m_fmt),
-      m_os(rhs.m_os.str()),
+      m_os(m_ss),
       m_arg(rhs.m_arg)
 {
-    m_os.seekp(0, std::ios_base::end);
+    m_os << rhs.m_os.str();
     for (int i=0; i<10; i++)
         m_arg_pos[i] = rhs.m_arg_pos[i];
 }
@@ -57,8 +49,9 @@ Composer&
 Composer::operator=(const Composer& rhs)
 {
     m_fmt = rhs.m_fmt;
-    m_os.str(rhs.m_os.str());
-    m_os.seekp(0, std::ios_base::end);
+    m_os.flush();
+    m_ss.clear();
+    m_os << rhs.m_os.str();
     m_arg = rhs.m_arg;
     for (int i=0; i<10; i++)
         m_arg_pos[i] = rhs.m_arg_pos[i];
@@ -68,7 +61,7 @@ Composer::operator=(const Composer& rhs)
 std::string
 Composer::getStr() const
 {
-    std::string args = m_os.str();
+    llvm::StringRef args = m_os.str();
 
     std::string str;
     // Estimate the final string size

@@ -36,6 +36,7 @@
 #include <string>
 
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/Compose.h"
@@ -339,7 +340,7 @@ X86Prefix::~X86Prefix()
 }
 
 void
-X86Prefix::Put(std::ostream& os) const
+X86Prefix::Put(llvm::raw_ostream& os) const
 {
     // TODO
     os << "PREFIX";
@@ -1618,7 +1619,8 @@ struct InsnPrefixParseData
 static std::string
 CpuFindReverse(unsigned int cpu0, unsigned int cpu1, unsigned int cpu2)
 {
-    std::ostringstream cpuname;
+    std::string s;
+    llvm::raw_string_ostream cpuname(s);
     std::bitset<64> cpu;
 
     cpu.set(cpu0);
@@ -1690,7 +1692,8 @@ CpuFindReverse(unsigned int cpu0, unsigned int cpu1, unsigned int cpu2)
     if (cpu[CPU_Hammer])
         cpuname << " Hammer";
 
-    return cpuname.str();
+    cpuname.flush();
+    return s;
 }
 
 Arch::InsnPrefix

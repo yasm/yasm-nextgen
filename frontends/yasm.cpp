@@ -26,13 +26,13 @@
 //
 #include "util.h"
 
-#include <iomanip>
-#include <iostream>
-#include <fstream>
+#include <memory>
 
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/nocase.h"
@@ -62,7 +62,7 @@
 namespace cl = llvm::cl;
 
 static bool warning_error = false;  // warnings being treated as errors
-static std::ofstream errfile;
+static std::auto_ptr<llvm::raw_ostream> errfile;
 
 // version message
 static const char* full_version =
@@ -70,7 +70,7 @@ static const char* full_version =
 void
 PrintVersion()
 {
-    std::cout
+    llvm::outs()
         << full_version << '\n'
         << "Compiled on " __DATE__ ".\n"
         << "Copyright (c) 2001-2009 Peter Johnson and other Yasm developers.\n"
@@ -345,15 +345,14 @@ static cl::opt<ErrwarnStyle> ewmsg_style("X",
 static void
 PrintError(const std::string& msg)
 {
-    errfile << "yasm: " << msg << std::endl;
+    *errfile << "yasm: " << msg << '\n';
 }
 
 static void
 PrintListKeywordDesc(const std::string& name, const std::string& keyword)
 {
-    std::cout << "    "
-              << std::left << std::setfill(' ') << std::setw(12) << keyword
-              << name << std::endl;
+    llvm::outs() << "    " << llvm::format("%-12s", keyword.c_str())
+                 << name << '\n';
 }
 
 template <typename T>
@@ -382,8 +381,9 @@ ModuleCommonHandler(const std::string& param, const char* name,
     {
         if (param == "help")
         {
-            std::cout << String::Compose(_("Available yasm %1:"), name_plural)
-                      << '\n';
+            llvm::outs()
+                << String::Compose(_("Available yasm %1:"), name_plural)
+                << '\n';
             ListModule<T>();
             *listed = true;
             return keyword;
@@ -538,17 +538,17 @@ PrintYasmError(const llvm::StringRef& filename,
                unsigned long xref_line,
                const llvm::StringRef& xref_msg)
 {
-    errfile <<
+    *errfile <<
         String::Compose(line ? fmt[ewmsg_style] : fmt_noline[ewmsg_style],
-                        filename, line, _("error: "), msg) << std::endl;
+                        filename, line, _("error: "), msg) << '\n';
 
     if (!xref_fn.empty() && !xref_msg.empty())
     {
-        errfile <<
+        *errfile <<
             String::Compose(xref_line ?
                             fmt[ewmsg_style] : fmt_noline[ewmsg_style],
                             xref_fn, xref_line, _("error: "), xref_msg)
-            << std::endl;
+            << '\n';
     }
 }
 
@@ -557,9 +557,9 @@ PrintYasmWarning(const llvm::StringRef& filename,
                  unsigned long line,
                  const llvm::StringRef& msg)
 {
-    errfile <<
+    *errfile <<
         String::Compose(line ? fmt[ewmsg_style] : fmt_noline[ewmsg_style],
-                        filename, line, _("warning: "), msg) << std::endl;
+                        filename, line, _("warning: "), msg) << '\n';
 }
 
 #if 0
@@ -717,22 +717,15 @@ do_assemble(void)
         return EXIT_FAILURE;
     }
 
-    // open the object file for output (if not already opened by dbg objfmt)
-    std::ostream* out;
-    std::ofstream out_file;
-    if (objfmt_keyword == "dbg")
-        out = &std::cerr;
-    else
-    {
-        out_file.open(assembler.getObjectFilename().str().c_str(),
-                      std::ios::binary);
-        if (!out_file)
-            throw yasm::Error(String::Compose(_("could not open file `%1'"),
-                              obj_filename));
-        out = &out_file;
-    }
+    // open the object file for output
+    std::string err;
+    llvm::raw_fd_ostream out(assembler.getObjectFilename().str().c_str(),
+                             err, llvm::raw_fd_ostream::F_Binary);
+    if (!err.empty())
+        throw yasm::Error(String::Compose(_("could not open file `%1': %2"),
+                          obj_filename, err));
 
-    if (!assembler.Output(*out, warning_error))
+    if (!assembler.Output(out, warning_error))
     {
         // An error occurred during output; output all errors and warnings.
         // If we had an error at this point, we also need to delete the output
@@ -741,13 +734,13 @@ do_assemble(void)
                                            warning_error,
                                            PrintYasmError,
                                            PrintYasmWarning);
-        out_file.close();
+        out.close();
         remove(assembler.getObjectFilename().str().c_str());
         return EXIT_FAILURE;
     }
 
     // close object file
-    out_file.close();
+    out.close();
 #if 0
     // Open and write the list file
     if (list_filename)
@@ -801,7 +794,7 @@ main(int argc, char* argv[])
     if (show_license)
     {
         for (std::size_t i=0; i<NELEMS(license_msg); i++)
-            std::cout << license_msg[i] << '\n';
+            llvm::outs() << license_msg[i] << '\n';
         return EXIT_SUCCESS;
     }
 
@@ -812,21 +805,21 @@ main(int argc, char* argv[])
         error_stdout.getPosition() > error_filename.getPosition())
     {
         error_filename.clear();
-        errfile.std::basic_ios<char>::rdbuf(std::cout.rdbuf());
+        errfile.reset(new llvm::raw_stdout_ostream);
     }
     else if (!error_filename.empty())
     {
-        errfile.close();
-        errfile.open(error_filename.c_str());
-        if (errfile.fail())
+        std::string err;
+        errfile.reset(new llvm::raw_fd_ostream(error_filename.c_str(), err));
+        if (!err.empty())
         {
-            PrintError(String::Compose(_("could not open file `%1'"),
-                                        error_filename));
+            PrintError(String::Compose(_("could not open file `%1': %2"),
+                                        error_filename, err));
             return EXIT_FAILURE;
         }
     }
     else
-        errfile.std::basic_ios<char>::rdbuf(std::cerr.rdbuf());
+        errfile.reset(new llvm::raw_stderr_ostream);
 
     // Load standard modules
     if (!yasm::LoadStandardPlugins())
@@ -877,9 +870,9 @@ main(int argc, char* argv[])
     {
         std::auto_ptr<yasm::ArchModule> arch_auto =
             yasm::LoadModule<yasm::ArchModule>(arch_keyword);
-        std::cout << String::Compose(_("Available %1 for %2 `%3':"),
-                                     _("machines"), _("architecture"),
-                                     arch_keyword) << '\n';
+        llvm::outs() << String::Compose(_("Available %1 for %2 `%3':"),
+                                        _("machines"), _("architecture"),
+                                        arch_keyword) << '\n';
         yasm::ArchModule::MachineNames machines = arch_auto->getMachines();
 
         for (yasm::ArchModule::MachineNames::const_iterator

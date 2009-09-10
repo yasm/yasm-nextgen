@@ -27,10 +27,7 @@
 #include "yasmx/Bytes.h"
 
 #include <algorithm>
-#include <istream>
 #include <iterator>
-#include <iomanip>
-#include <ostream>
 
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
@@ -39,8 +36,8 @@
 namespace yasm
 {
 
-std::ostream&
-operator<< (std::ostream& os, const Bytes& bytes)
+llvm::raw_ostream&
+operator<< (llvm::raw_ostream& os, const Bytes& bytes)
 {
     os.write(reinterpret_cast<const char*>(&bytes[0]), bytes.size());
     return os;
@@ -51,17 +48,6 @@ Bytes::swap(Bytes& oth)
 {
     base_vector::swap(*this);
     EndianState::swap(*this);
-}
-
-void
-Bytes::Write(std::istream& is, size_type n)
-{
-    if (n == 0)
-        return;
-    size_type sz = size();
-    resize(sz+n);
-    is.read(reinterpret_cast<char*>(&(at(sz))), n);
-    resize(sz+is.gcount());
 }
 
 void

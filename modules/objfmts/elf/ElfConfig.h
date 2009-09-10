@@ -81,12 +81,12 @@ struct ElfConfig
 
     unsigned long getProgramHeaderSize() const;
     bool ReadProgramHeader(const llvm::MemoryBuffer& in);
-    void WriteProgramHeader(std::ostream& os, Bytes& scratch);
+    void WriteProgramHeader(llvm::raw_ostream& os, Bytes& scratch);
 
     ElfSymbolIndex AssignSymbolIndices(Object& object, ElfSymbolIndex* nlocal)
         const;
 
-    unsigned long WriteSymbolTable(std::ostream& os,
+    unsigned long WriteSymbolTable(llvm::raw_ostream& os,
                                    Object& object,
                                    Errwarns& errwarns,
                                    Bytes& scratch) const;

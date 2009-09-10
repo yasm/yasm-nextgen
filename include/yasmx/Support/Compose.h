@@ -29,10 +29,11 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <sstream>
 #include <string>
 
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Config/export.h"
 
 
@@ -43,7 +44,11 @@ class YASM_LIB_EXPORT Composer
 {
 public:
     // initialize and prepare format string on the form "text %1 text %2 etc."
-    explicit Composer(const llvm::StringRef& fmt);
+    explicit Composer(const llvm::StringRef& fmt)
+        : m_fmt(fmt), m_os(m_ss), m_arg(0)
+    {
+        m_arg_pos[0] = 0;
+    }
     ~Composer();
 
     // copy and assignment
@@ -63,7 +68,8 @@ public:
 
 private:
     llvm::StringRef m_fmt;
-    std::ostringstream m_os;
+    llvm::SmallString<128> m_ss;
+    mutable llvm::raw_svector_ostream m_os;
     int m_arg;
 
     // Starting positions of each of the args in m_os string.
@@ -75,7 +81,7 @@ template <typename T>
 inline Composer&
 Composer::AutoArg(const T& obj)
 {
-    m_arg_pos[m_arg] = m_os.tellp();
+    m_arg_pos[m_arg] = m_os.tell();
     m_os << obj;
     ++m_arg;
     return *this;
@@ -227,45 +233,55 @@ template <typename T1>
 inline std::string
 Format(const T1& a1)
 {
-    std::ostringstream os;
+    std::string s;
+    llvm::raw_string_ostream os(s);
     os << a1;
-    return os.str();
+    os.flush();
+    return s;
 }
 
 template <typename T1, typename T2>
 inline std::string
 Format(const T1& a1, const T2& a2)
 {
-    std::ostringstream os;
+    std::string s;
+    llvm::raw_string_ostream os(s);
     os << a1 << a2;
-    return os.str();
+    os.flush();
+    return s;
 }
 
 template <typename T1, typename T2, typename T3>
 inline std::string
 Format(const T1& a1, const T2& a2, const T3& a3)
 {
-    std::ostringstream os;
+    std::string s;
+    llvm::raw_string_ostream os(s);
     os << a1 << a2 << a3;
-    return os.str();
+    os.flush();
+    return s;
 }
 
 template <typename T1, typename T2, typename T3, typename T4>
 inline std::string
 Format(const T1& a1, const T2& a2, const T3& a3, const T4& a4)
 {
-    std::ostringstream os;
+    std::string s;
+    llvm::raw_string_ostream os(s);
     os << a1 << a2 << a3 << a4;
-    return os.str();
+    os.flush();
+    return s;
 }
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5>
 inline std::string
 Format(const T1& a1, const T2& a2, const T3& a3, const T4& a4, const T5& a5)
 {
-    std::ostringstream os;
+    std::string s;
+    llvm::raw_string_ostream os(s);
     os << a1 << a2 << a3 << a4 << a5;
-    return os.str();
+    os.flush();
+    return s;
 }
 
 } // namespace String

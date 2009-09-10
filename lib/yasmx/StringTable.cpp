@@ -26,10 +26,8 @@
 
 #include "yasmx/StringTable.h"
 
-#include <istream>
-#include <ostream>
-
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/raw_ostream.h"
 
 
 namespace yasm
@@ -61,17 +59,16 @@ StringTable::getString(unsigned long index) const
 }
 
 void
-StringTable::Write(std::ostream& os) const
+StringTable::Write(llvm::raw_ostream& os) const
 {
     os.write(&m_storage[0], m_storage.size());
 }
 
 void
-StringTable::Read(std::istream& is, unsigned long size)
+StringTable::Read(const unsigned char* buf, unsigned long size)
 {
-    m_storage.resize(size);
-    is.read(&m_storage[0], size);
-    m_storage.resize(is.gcount());
+    m_storage.clear();
+    m_storage.insert(m_storage.end(), buf, buf+size);
 }
 
 } // namespace yasm

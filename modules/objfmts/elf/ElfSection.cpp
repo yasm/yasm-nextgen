@@ -196,7 +196,7 @@ ElfSection::Write(YAML::Emitter& out) const
 }
 
 unsigned long
-ElfSection::Write(std::ostream& os, Bytes& scratch) const
+ElfSection::Write(llvm::raw_ostream& os, Bytes& scratch) const
 {
     scratch.resize(0);
     m_config.setEndian(scratch);
@@ -236,7 +236,7 @@ ElfSection::Write(std::ostream& os, Bytes& scratch) const
     }
 
     os << scratch;
-    if (!os)
+    if (os.has_error())
         throw IOError(N_("Failed to write an elf section header"));
 
     return scratch.size();
@@ -283,7 +283,7 @@ ElfSection::LoadSectionData(Section& sect, const llvm::MemoryBuffer& in) const
 }
 
 unsigned long
-ElfSection::WriteRel(std::ostream& os,
+ElfSection::WriteRel(llvm::raw_ostream& os,
                      ElfSectionIndex symtab_idx,
                      Section& sect,
                      Bytes& scratch)
@@ -328,14 +328,14 @@ ElfSection::WriteRel(std::ostream& os,
     }
 
     os << scratch;
-    if (!os)
+    if (os.has_error())
         throw IOError(N_("Failed to write an elf section header"));
 
     return scratch.size();
 }
 
 unsigned long
-ElfSection::WriteRelocs(std::ostream& os,
+ElfSection::WriteRelocs(llvm::raw_ostream& os,
                         Section& sect,
                         Errwarns& errwarns,
                         Bytes& scratch,
@@ -345,13 +345,12 @@ ElfSection::WriteRelocs(std::ostream& os,
         return 0;
 
     // first align section to multiple of 4
-    long pos = os.tellp();
-    if (pos < 0)
+    uint64_t pos = os.tell();
+    if (os.has_error())
         throw IOError(N_("couldn't read position on output stream"));
-    pos = (pos + 3) & ~3;
-    os.seekp(pos);
-    if (!os)
-        throw IOError(N_("couldn't seek on output stream"));
+    uint64_t apos = (pos + 3) & ~3;
+    for (; pos < apos; ++pos)
+        os << '\0';
     m_rel_offset = static_cast<unsigned long>(pos);
 
     unsigned long size = 0;

@@ -413,7 +413,7 @@ Assembler::Assemble(const llvm::MemoryBuffer& in, bool warning_error)
 }
 
 bool
-Assembler::Output(std::ostream& os, bool warning_error)
+Assembler::Output(llvm::raw_fd_ostream& os, bool warning_error)
 {
     // Write the object file
     m_impl->m_objfmt->Output

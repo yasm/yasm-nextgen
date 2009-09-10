@@ -32,7 +32,6 @@
 
 #include <cctype>
 #include <cstring>
-#include <sstream>
 
 #include <YAML/emitter.h>
 #include <yasmx/Support/Compose.h>
@@ -83,7 +82,7 @@ X86Register::getSize() const
 }
 
 void
-X86Register::Put(std::ostream& os) const
+X86Register::Put(llvm::raw_ostream& os) const
 {
     static const char *name8[] = {"al","cl","dl","bl","ah","ch","dh","bh"};
     static const char *name8x[] =
@@ -155,7 +154,8 @@ X86Register::Write(YAML::Emitter& out) const
 {
     out << YAML::Flow << YAML::BeginMap;
     out << YAML::Key << "arch" << YAML::Value << "x86";
-    std::ostringstream oss;
+    llvm::SmallString<256> ss;
+    llvm::raw_svector_ostream oss(ss);
     Put(oss);
     out << YAML::Key << "type" << YAML::Value << oss.str();
     out << YAML::EndMap;
@@ -185,7 +185,7 @@ X86SegmentRegister::~X86SegmentRegister()
 }
 
 void
-X86SegmentRegister::Put(std::ostream& os) const
+X86SegmentRegister::Put(llvm::raw_ostream& os) const
 {
     static const char *name[] = {"es","cs","ss","ds","fs","gs"};
     os << name[m_type];
@@ -196,7 +196,8 @@ X86SegmentRegister::Write(YAML::Emitter& out) const
 {
     out << YAML::Flow << YAML::BeginMap;
     out << YAML::Key << "arch" << YAML::Value << "x86";
-    std::ostringstream oss;
+    llvm::SmallString<256> ss;
+    llvm::raw_svector_ostream oss(ss);
     Put(oss);
     out << YAML::Key << "type" << YAML::Value << oss.str();
     out << YAML::Key << "prefix";
@@ -205,7 +206,7 @@ X86SegmentRegister::Write(YAML::Emitter& out) const
 }
 
 void
-X86TargetModifier::Put(std::ostream& os) const
+X86TargetModifier::Put(llvm::raw_ostream& os) const
 {
     switch (m_type) {
         case NEAR:
@@ -226,7 +227,8 @@ X86TargetModifier::Write(YAML::Emitter& out) const
 {
     out << YAML::Flow << YAML::BeginMap;
     out << YAML::Key << "arch" << YAML::Value << "x86";
-    std::ostringstream oss;
+    llvm::SmallString<256> ss;
+    llvm::raw_svector_ostream oss(ss);
     Put(oss);
     out << YAML::Key << "type" << YAML::Value << oss.str();
     out << YAML::EndMap;

@@ -29,13 +29,12 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
 #include <vector>
 
 #include "yasmx/Config/export.h"
 
 
-namespace llvm { class StringRef; }
+namespace llvm { class raw_ostream; class StringRef; }
 
 namespace yasm
 {
@@ -83,13 +82,13 @@ public:
 
     /// Write the string table to an output stream.
     /// @param os       output stream
-    void Write(std::ostream& os) const;
+    void Write(llvm::raw_ostream& os) const;
 
-    /// Read the string table from an input stream.
+    /// Read the string table from a byte array.
     /// Deletes any pre-existing string table data.
-    /// @param is       input stream
+    /// @param buf      byte array
     /// @param size     string table size, in bytes
-    void Read(std::istream& is, unsigned long size);
+    void Read(const unsigned char* buf, unsigned long size);
 
 private:
     std::vector<char> m_storage;

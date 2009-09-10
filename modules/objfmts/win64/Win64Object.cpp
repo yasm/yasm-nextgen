@@ -63,7 +63,9 @@ public:
 
     //virtual void InitSymbols(const char* parser);
     //virtual void Read(const llvm::MemoryBuffer& in);
-    virtual void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
+    virtual void Output(llvm::raw_fd_ostream& os,
+                        bool all_syms,
+                        Errwarns& errwarns);
 
     static const char* getName() { return "Win64"; }
     static const char* getKeyword() { return "win64"; }
@@ -151,7 +153,7 @@ Win64Object::~Win64Object()
 }
 
 void
-Win64Object::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
+Win64Object::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
 {
     if (m_proc_frame != 0)
     {

@@ -29,13 +29,13 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
 #include <vector>
 
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/EndianState.h"
 
 
+namespace llvm { class raw_ostream; }
 namespace YAML { class Emitter; }
 
 namespace yasm
@@ -87,11 +87,6 @@ public:
 
     void swap(Bytes& oth);
 
-    /// Copy from an input stream, appending the values to the end.
-    /// @param  is  input stream
-    /// @param  n   number of bytes
-    void Write(std::istream& is, size_type n);
-
     /// Copy from a byte array, appending the values to the end.
     /// @param  buf input buffer
     /// @param  n   number of bytes
@@ -115,7 +110,7 @@ public:
 /// @param bytes bytes
 /// @return Output stream
 YASM_LIB_EXPORT
-std::ostream& operator<< (std::ostream& os, const Bytes& bytes);
+llvm::raw_ostream& operator<< (llvm::raw_ostream& os, const Bytes& bytes);
 
 /// Dump a YAML representation of bytes.  For debugging purposes.
 /// @param out          YAML emitter

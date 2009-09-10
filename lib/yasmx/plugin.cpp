@@ -29,7 +29,6 @@
 ///
 #include "yasmx/System/plugin.h"
 
-#include <iostream>
 #include <vector>
 
 #if defined(_MSC_VER)

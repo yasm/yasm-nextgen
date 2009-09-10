@@ -25,7 +25,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 #include "yasmx/IntNum.h"
-#include "yasmx/IntNum_iomanip.h"
 
 #include "util.h"
 
@@ -44,8 +43,6 @@
 
 namespace yasm
 {
-
-YASM_LIB_EXPORT const int set_intnum_bits::m_idx = std::ios_base::xalloc();
 
 /// Static bitvect used for conversions.
 static llvm::APInt conv_bv(IntNum::BITVECT_NATIVE_SIZE, 0);
@@ -763,7 +760,10 @@ IntNum::getStr(llvm::SmallVectorImpl<char>& str,
                 fmt = "%lX";
             break;
         default:
-            assert(false && "invalid base");
+            // fall back to bigval
+            getBV(&conv_bv)->toString(str, static_cast<unsigned>(base), true,
+                                      lowercase);
+            return;
     }
 
     char s[40];
@@ -813,51 +813,56 @@ IntNum::Dump() const
     llvm::errs() << s.str() << '\n';
 }
 
-std::ostream&
-operator<< (std::ostream& os, const IntNum& intn)
+void
+IntNum::Print(llvm::raw_ostream& os,
+              int base,
+              bool lowercase,
+              bool showbase,
+              int bits) const
 {
-    llvm::SmallString<40> s;
-    int bits = os.iword(set_intnum_bits::m_idx);
-    int padding = 0;
-    conv_bv = *intn.getBV(&conv_bv);
+    const llvm::APInt* bv = getBV(&conv_bv);
 
-    std::ios_base::fmtflags ff = os.flags();
-    if ((ff & os.showpos) && (ff & os.dec) && !conv_bv.isNegative())
-        os << '+';
-
-    if (conv_bv.isNegative())
+    if (bv->isNegative())
     {
         // negate in place
+        conv_bv = *bv;
         conv_bv.flip();
         ++conv_bv;
+        bv = &conv_bv;
         os << '-';
     }
 
-    if (ff & os.oct)
+    llvm::SmallString<40> s;
+    bv->toString(s, base, true, lowercase);
+
+    // prefix and 0 padding, if required
+    int padding = 0;
+    if (base == 2)
     {
-        if (ff & os.showbase)
+        if (showbase)
+            os << '0' << (lowercase ? 'b' : 'B');
+        if (bits > 0)
+            padding = bits-s.size();
+    }
+    else if (base == 8)
+    {
+        if (showbase)
             os << '0';
-        conv_bv.toString(s, 8, true);
-        padding = (bits-s.size()*3+2)/3;
+        if (bits > 0)
+            padding = (bits-s.size()*3+2)/3;
     }
-    else if (ff & os.hex)
+    else if (base == 16)
     {
-        if (ff & os.showbase)
-        {
-            if (ff & os.uppercase)
-                os << "0X";
-            else
-                os << "0x";
-        }
-        conv_bv.toString(s, 16, true, (ff & os.uppercase) == 0);
-        padding = (bits-s.size()*4+3)/4;
+        if (showbase)
+            os << '0' << (lowercase ? 'x' : 'X');
+        if (bits > 0)
+            padding = (bits-s.size()*4+3)/4;
     }
-    else
-        conv_bv.toString(s, 10, true);
     for (int i=0; i<padding; ++i)
         os << '0';
-    os << s.str().str();
-    return os;
+
+    // value
+    os << s.str();
 }
 
 } // namespace yasm

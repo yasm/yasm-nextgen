@@ -30,7 +30,6 @@
 /// @endlicense
 ///
 #include <assert.h>
-#include <iosfwd>
 #include <memory>
 
 #include "llvm/ADT/SmallVector.h"
@@ -42,7 +41,7 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace llvm { class APFloat; }
+namespace llvm { class APFloat; class raw_ostream; }
 namespace YAML { class Emitter; }
 
 namespace yasm
@@ -252,6 +251,11 @@ public:
     /// Dump a YAML representation to stderr.
     /// For debugging purposes.
     void Dump() const;
+
+    /// Print to stream.
+    /// @param os           output stream
+    /// @param base         numeric base (10=decimal, etc)
+    void Print(llvm::raw_ostream& os, int base=10) const;
 
 private:
     /// Expression item data.  Correct value depends on type.
@@ -556,6 +560,11 @@ public:
     /// For debugging purposes.
     void Dump() const;
 
+    /// Print to stream.
+    /// @param os           output stream
+    /// @param base         numeric base (10=decimal, etc)
+    void Print(llvm::raw_ostream& os, int base=10) const;
+
 private:
     /// Terms of the expression.  The entire tree is stored here.
     ExprTerms m_terms;
@@ -816,10 +825,19 @@ template <typename T> inline Expr& operator>>=(Expr& lhs, const T& rhs)
 template <typename T> inline Expr& operator<<=(Expr& lhs, const T& rhs)
 { lhs.Calc(Op::SHL, rhs); return lhs; }
 
-YASM_LIB_EXPORT
-std::ostream& operator<< (std::ostream& os, const ExprTerm& term);
-YASM_LIB_EXPORT
-std::ostream& operator<< (std::ostream& os, const Expr& e);
+inline llvm::raw_ostream&
+operator<< (llvm::raw_ostream& os, const ExprTerm& term)
+{
+    term.Print(os);
+    return os;
+}
+
+inline llvm::raw_ostream&
+operator<< (llvm::raw_ostream& os, const Expr& e)
+{
+    e.Print(os);
+    return os;
+}
 
 /// Dump a YAML representation of expression term.  For debugging purposes.
 /// @param out          YAML emitter

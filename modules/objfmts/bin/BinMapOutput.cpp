@@ -26,13 +26,11 @@
 //
 #include "BinMapOutput.h"
 
-#include <iomanip>
-#include <ostream>
-
+#include "llvm/Support/Format.h"
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
-#include "yasmx/IntNum_iomanip.h"
 #include "yasmx/Location.h"
 #include "yasmx/Section.h"
 #include "yasmx/Symbol.h"
@@ -60,7 +58,7 @@ MapPrescanBytes(const Section& sect, const BinSection& bsd, int* bytes)
         *bytes *= 2;
 }
 
-BinMapOutput::BinMapOutput(std::ostream& os,
+BinMapOutput::BinMapOutput(llvm::raw_ostream& os,
                            const Object& object,
                            const IntNum& origin,
                            const BinGroups& groups)
@@ -87,20 +85,18 @@ BinMapOutput::~BinMapOutput()
 {
 }
 
-void
+inline void
 BinMapOutput::OutputIntNum(const IntNum& intn)
 {
-    m_os << set_intnum_bits(m_bytes*8);
-    m_os << std::hex << intn << std::dec;
+    intn.Print(m_os, 16, true, false, m_bytes*8);
 }
 
 void
 BinMapOutput::OutputHeader()
 {
     m_os << "\n- YASM Map file ";
-    m_os.fill('-');
-    m_os << std::setw(63) << '-';
-    m_os.fill(' ');
+    for (int i=0; i<63; ++i)
+        m_os << '-';
     m_os << "\n\nSource file:  " << m_object.getSourceFilename() << '\n';
     m_os << "Output file:  " << m_object.getObjectFilename() << "\n\n";
 }
@@ -109,11 +105,8 @@ void
 BinMapOutput::OutputOrigin()
 {
     m_os << "-- Program origin ";
-    m_os.fill('-');
-    m_os << std::setw(61) << '-';
-
-    m_os.fill(' ');
-
+    for (int i=0; i<61; ++i)
+        m_os << '-';
     m_os << "\n\n";
     OutputIntNum(m_origin);
     m_os << "\n\n";
@@ -143,9 +136,7 @@ BinMapOutput::InnerSectionsSummary(const BinGroups& groups)
         OutputIntNum(bsd.length);
         m_os << "  ";
 
-        m_os.setf(std::ios::left, std::ios::adjustfield);
-        m_os << std::setw(10)
-             << (group->m_section.isBSS() ? "nobits" : "progbits");
+        m_os << (group->m_section.isBSS() ? "nobits    " : "progbits  ");
         m_os << group->m_section.getName() << '\n';
 
         // Recurse to loop through follow groups
@@ -157,19 +148,16 @@ void
 BinMapOutput::OutputSectionsSummary()
 {
     m_os << "-- Sections (summary) ";
-    m_os.fill('-');
-    m_os << std::setw(57) << '-';
-
-    m_os.fill(' ');
-    m_os.setf(std::ios::left, std::ios::adjustfield);
+    for (int i=0; i<57; ++i)
+        m_os << '-';
 
     m_os << "\n\n";
-    m_os << std::setw(m_bytes*2+2) << "Vstart";
-    m_os << std::setw(m_bytes*2+2) << "Vstop";
-    m_os << std::setw(m_bytes*2+2) << "Start";
-    m_os << std::setw(m_bytes*2+2) << "Stop";
-    m_os << std::setw(m_bytes*2+2) << "Length";
-    m_os << std::setw(10) << "Class";
+    m_os << llvm::format("%-*s", m_bytes*2+2, (const char*)"Vstart");
+    m_os << llvm::format("%-*s", m_bytes*2+2, (const char*)"Vstop");
+    m_os << llvm::format("%-*s", m_bytes*2+2, (const char*)"Start");
+    m_os << llvm::format("%-*s", m_bytes*2+2, (const char*)"Stop");
+    m_os << llvm::format("%-*s", m_bytes*2+2, (const char*)"Length");
+    m_os << llvm::format("%-10s", (const char*)"Class");
     m_os << "Name\n";
     InnerSectionsSummary(m_groups);
     m_os << '\n';
@@ -182,11 +170,10 @@ BinMapOutput::InnerSectionsDetail(const BinGroups& groups)
          group != end; ++group)
     {
         const Section& sect = group->m_section;
-        const std::string& name = sect.getName();
+        llvm::StringRef name = sect.getName();
         m_os << "---- Section " << name << " ";
-        m_os.fill('-');
-        m_os << std::setw(65-name.length()) << '-';
-        m_os.fill(' ');
+        for (size_t i=0; i<65-name.size(); ++i)
+            m_os << '-';
 
         const BinSection& bsd = group->m_bsd;
 
@@ -217,11 +204,8 @@ void
 BinMapOutput::OutputSectionsDetail()
 {
     m_os << "-- Sections (detailed) ";
-    m_os.fill('-');
-    m_os << std::setw(56) << '-';
-
-    m_os.fill(' ');
-
+    for (int i=0; i<56; ++i)
+        m_os << '-';
     m_os << "\n\n";
     InnerSectionsDetail(m_groups);
 }
@@ -286,17 +270,14 @@ BinMapOutput::InnerSectionsSymbols(const BinGroups& groups)
     {
         if (CountSymbols(m_object, &group->m_section) > 0)
         {
-            const std::string& name = group->m_section.getName();
+            llvm::StringRef name = group->m_section.getName();
             m_os << "---- Section " << name << ' ';
-            m_os.fill('-');
-            m_os << std::setw(65-name.length()) << '-';
-
-            m_os.fill(' ');
-            m_os.setf(std::ios::left, std::ios::adjustfield);
+            for (size_t i=0; i<65-name.size(); ++i)
+                m_os << '-';
 
             m_os << "\n\n";
-            m_os << std::setw(m_bytes*2+2) << "Real";
-            m_os << std::setw(m_bytes*2+2) << "Virtual";
+            m_os << llvm::format("%-*s", m_bytes*2+2, (const char*)"Real");
+            m_os << llvm::format("%-*s", m_bytes*2+2, (const char*)"Virtual");
             m_os << "Name\n";
             OutputSymbols(&group->m_section);
             m_os << "\n\n";
@@ -311,11 +292,8 @@ void
 BinMapOutput::OutputSectionsSymbols()
 {
     m_os << "-- Symbols ";
-    m_os.fill('-');
-    m_os << std::setw(68) << '-';
-
-    m_os.fill(' ');
-
+    for (int i=0; i<68; ++i)
+        m_os << '-';
     m_os << "\n\n";
 
     // We do two passes for EQU and each section; the first pass
@@ -326,11 +304,10 @@ BinMapOutput::OutputSectionsSymbols()
     if (CountSymbols(m_object, 0) > 0)
     {
         m_os << "---- No Section ";
-        m_os.fill('-');
-        m_os << std::setw(63) << '-';
-        m_os.fill(' ');
+        for (int i=0; i<63; ++i)
+            m_os << '-';
         m_os << "\n\n";
-        m_os << std::setw(m_bytes*2+2) << "Value";
+        m_os << llvm::format("%-*s", m_bytes*2+2, (const char*)"Value");
         m_os << "Name\n";
         OutputSymbols(0);
         m_os << "\n\n";

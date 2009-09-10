@@ -26,9 +26,6 @@
 //
 #include "util.h"
 
-#include <fstream>
-#include <iostream>
-
 #include "llvm/ADT/Twine.h"
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/Compose.h"
@@ -74,7 +71,7 @@ public:
 
     void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
 
-    void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
+    void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* AddDefaultSection();
     Section* AppendSection(const llvm::StringRef& name, unsigned long line);
@@ -147,19 +144,15 @@ BinObject::OutputMap(const IntNum& origin,
     if (map_flags == MAP_NONE)
         map_flags = MAP_BRIEF;          // default to brief
 
-    std::ofstream os;
-    if (m_map_filename.empty())
-        os.std::basic_ios<char>::rdbuf(std::cout.rdbuf()); // stdout
-    else
+    std::string err;
+    llvm::raw_fd_ostream os
+        (m_map_filename.empty() ? "-" : m_map_filename.c_str(), err);
+    if (!err.empty())
     {
-        os.open(m_map_filename.c_str());
-        if (os.fail())
-        {
-            setWarn(WARN_GENERAL, String::Compose(
-                N_("unable to open map file `%1'"), m_map_filename));
-            errwarns.Propagate(0);
-            return;
-        }
+        setWarn(WARN_GENERAL, String::Compose(
+            N_("unable to open map file `%1': %2"), m_map_filename, err));
+        errwarns.Propagate(0);
+        return;
     }
 
     BinMapOutput out(os, m_object, origin, groups);
@@ -179,7 +172,7 @@ BinObject::OutputMap(const IntNum& origin,
 class BinOutput : public BytecodeStreamOutput
 {
 public:
-    BinOutput(std::ostream& os, Object& object);
+    BinOutput(llvm::raw_fd_ostream& os, Object& object);
     ~BinOutput();
 
     void OutputSection(Section& sect,
@@ -194,12 +187,14 @@ public:
 
 private:
     Object& m_object;
+    llvm::raw_fd_ostream& m_fd_os;
     BytecodeNoOutput m_no_output;
 };
 
-BinOutput::BinOutput(std::ostream& os, Object& object)
+BinOutput::BinOutput(llvm::raw_fd_ostream& os, Object& object)
     : BytecodeStreamOutput(os),
-      m_object(object)
+      m_object(object),
+      m_fd_os(os)
 {
 }
 
@@ -236,8 +231,8 @@ BinOutput::OutputSection(Section& sect,
                 sect.getName())));
             return;
         }
-        m_os.seekp(file_start.getUInt());
-        if (!m_os.good())
+        m_fd_os.seek(file_start.getUInt());
+        if (m_os.has_error())
             throw Fatal(N_("could not seek on output file"));
 
         outputter = this;
@@ -340,7 +335,7 @@ CheckSymbol(const Symbol& sym, Errwarns& errwarns)
 }
 
 void
-BinObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
+BinObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
 {
     // Set ORG to 0 unless otherwise specified
     IntNum origin(0);

@@ -93,7 +93,7 @@ public:
     void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
 
     void Read(const llvm::MemoryBuffer& in);
-    void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
+    void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* AddDefaultSection();
     Section* AppendSection(const llvm::StringRef& name, unsigned long line);
@@ -140,7 +140,7 @@ RdfObject::getDebugFormatKeywords()
 class RdfOutput : public BytecodeOutput
 {
 public:
-    RdfOutput(std::ostream& os, Object& object);
+    RdfOutput(llvm::raw_ostream& os, Object& object);
     ~RdfOutput();
 
     void OutputSectionToMemory(Section& sect, Errwarns& errwarns);
@@ -163,7 +163,7 @@ public:
     void DoOutputBytes(const Bytes& bytes);
 
 private:
-    std::ostream& m_os;
+    llvm::raw_ostream& m_os;
 
     RdfSection* m_rdfsect;
     Object& m_object;
@@ -172,7 +172,7 @@ private:
     unsigned long m_bss_size;       // total BSS size
 };
 
-RdfOutput::RdfOutput(std::ostream& os, Object& object)
+RdfOutput::RdfOutput(llvm::raw_ostream& os, Object& object)
     : m_os(os)
     , m_object(object)
     , m_bss_size(0)
@@ -592,7 +592,7 @@ RdfOutput::OutputBSS()
 }
 
 void
-RdfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
+RdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
 {
     // Number sections
     unsigned int scnum = 0;     // section numbering starts at 0
@@ -605,8 +605,8 @@ RdfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     }
 
     // Allocate space for file header by seeking forward
-    os.seekp(sizeof(RDF_MAGIC)+8);
-    if (!os)
+    os.seek(sizeof(RDF_MAGIC)+8);
+    if (os.has_error())
         throw Fatal(N_("could not seek on output file"));
 
     RdfOutput out(os, m_object);
@@ -668,8 +668,8 @@ RdfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     out.OutputBSS();
 
     // Determine header length
-    long pos = os.tellp();
-    if (pos < 0)
+    uint64_t pos = os.tell();
+    if (os.has_error())
         throw IOError(N_("could not get file position on output file"));
     unsigned long headerlen = static_cast<unsigned long>(pos);
 
@@ -688,14 +688,14 @@ RdfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     }
 
     // Determine object length
-    pos = os.tellp();
-    if (pos < 0)
+    pos = os.tell();
+    if (os.has_error())
         throw IOError(N_("could not get file position on output file"));
     unsigned long filelen = static_cast<unsigned long>(pos);
 
     // Write file header
-    os.seekp(0);
-    if (!os)
+    os.seek(0);
+    if (os.has_error())
         throw IOError(N_("could not seek on output file"));
 
     {

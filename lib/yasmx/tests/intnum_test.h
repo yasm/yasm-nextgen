@@ -24,12 +24,10 @@
 //
 #include <cxxtest/TestSuite.h>
 
-#include <sstream>
-#include <iomanip>
 #include <cstdio>
 
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/IntNum.h"
-#include "yasmx/IntNum_iomanip.h"
 
 using namespace yasm;
 
@@ -166,39 +164,38 @@ public:
     {
         for (long v=-1000; v<=1000; ++v)
         {
-            std::ostringstream oss;
+            std::string s;
+            llvm::raw_string_ostream oss(s);
             char golden[100];
-
-            oss << set_intnum_bits(64);
 
             // Test small values
             IntNum x(v);
 
-            oss << std::oct << x;
+            x.Print(oss, 8, true, false, 64);
             if (v < 0)
                 sprintf(golden, "-000000000000%010lo", (-v)&0x3fffffff);
             else
                 sprintf(golden, "000000000000%010lo", v&0x3fffffff);
             TS_ASSERT_EQUALS(oss.str(), golden);
 
-            oss.str("");
-            oss << std::hex << std::uppercase << x;
+            s.clear();
+            x.Print(oss, 16, false, false, 64);
             if (v < 0)
                 sprintf(golden, "-00000000%08lX", (-v)&0xffffffff);
             else
                 sprintf(golden, "00000000%08lX", v);
             TS_ASSERT_EQUALS(oss.str(), golden);
 
-            oss.str("");
-            oss << std::hex << std::nouppercase << x;
+            s.clear();
+            x.Print(oss, 16, true, false, 64);
             if (v < 0)
                 sprintf(golden, "-00000000%08lx", (-v)&0xffffffff);
             else
                 sprintf(golden, "00000000%08lx", v);
             TS_ASSERT_EQUALS(oss.str(), golden);
 
-            oss.str("");
-            oss << std::dec << x;
+            s.clear();
+            x.Print(oss);
             sprintf(golden, "%ld", v);
             TS_ASSERT_EQUALS(oss.str(), golden);
 
@@ -206,8 +203,8 @@ public:
             IntNum y;
 
             y = (x<<33) + x;
-            oss.str("");
-            oss << std::oct << y;
+            s.clear();
+            y.Print(oss, 8, true, false, 64);
             if (v < 0)
                 sprintf(golden, "-0%010lo0%010lo", (-v)&0x3fffffff, (-v)&0x3fffffff);
             else
@@ -215,8 +212,8 @@ public:
             TS_ASSERT_EQUALS(oss.str(), golden);
 
             y = (x<<32) + x;
-            oss.str("");
-            oss << std::hex << std::uppercase << y;
+            s.clear();
+            y.Print(oss, 16, false, false, 64);
             if (v < 0)
                 sprintf(golden, "-%08lX%08lX", (-v)&0xffffffff, (-v)&0xffffffff);
             else
@@ -224,8 +221,8 @@ public:
             TS_ASSERT_EQUALS(oss.str(), golden);
 
             y = (x<<32) + x;
-            oss.str("");
-            oss << std::hex << std::nouppercase << y;
+            s.clear();
+            y.Print(oss, 16, true, false, 64);
             if (v < 0)
                 sprintf(golden, "-%08lx%08lx", (-v)&0xffffffff, (-v)&0xffffffff);
             else
@@ -233,8 +230,8 @@ public:
             TS_ASSERT_EQUALS(oss.str(), golden);
 
             y = x * 1000 * 1000 * 1000;
-            oss.str("");
-            oss << std::dec << y;
+            s.clear();
+            y.Print(oss, 10);
             if (v == 0)
                 sprintf(golden, "0");
             else

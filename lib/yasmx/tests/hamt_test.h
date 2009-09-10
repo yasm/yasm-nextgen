@@ -25,7 +25,6 @@
 #include <cxxtest/TestSuite.h>
 
 #include <string>
-#include <iostream>
 
 #include "yasmx/Support/ptr_vector.h"
 #include "hamt.h"

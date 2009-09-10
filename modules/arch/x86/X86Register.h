@@ -68,7 +68,7 @@ public:
 
     /// Print a register.  For debugging purposes.
     /// @param os   output stream
-    void Put(std::ostream& os) const;
+    void Put(llvm::raw_ostream& os) const;
 
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
@@ -109,7 +109,7 @@ public:
 
     /// Print a segment register.  For debugging purposes.
     /// @param os   output stream
-    void Put(std::ostream& os) const;
+    void Put(llvm::raw_ostream& os) const;
 
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter

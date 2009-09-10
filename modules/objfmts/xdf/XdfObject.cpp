@@ -82,7 +82,7 @@ public:
     void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
 
     void Read(const llvm::MemoryBuffer& in);
-    void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
+    void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* AddDefaultSection();
     Section* AppendSection(const llvm::StringRef& name, unsigned long line);
@@ -133,7 +133,7 @@ XdfObject::getDebugFormatKeywords()
 class XdfOutput : public BytecodeStreamOutput
 {
 public:
-    XdfOutput(std::ostream& os, Object& object);
+    XdfOutput(llvm::raw_ostream& os, Object& object);
     ~XdfOutput();
 
     void OutputSection(Section& sect, Errwarns& errwarns);
@@ -153,7 +153,7 @@ private:
     BytecodeNoOutput m_no_output;
 };
 
-XdfOutput::XdfOutput(std::ostream& os, Object& object)
+XdfOutput::XdfOutput(llvm::raw_ostream& os, Object& object)
     : BytecodeStreamOutput(os)
     , m_object(object)
 {
@@ -221,7 +221,7 @@ XdfOutput::OutputSection(Section& sect, Errwarns& errwarns)
     XdfSection* xsect = sect.getAssocData<XdfSection>();
     assert(xsect != NULL);
 
-    std::streampos pos;
+    uint64_t pos;
     if (sect.isBSS())
     {
         // Don't output BSS sections.
@@ -231,8 +231,8 @@ XdfOutput::OutputSection(Section& sect, Errwarns& errwarns)
     }
     else
     {
-        pos = m_os.tellp();
-        if (pos < 0)
+        pos = m_os.tell();
+        if (m_os.has_error())
             throw Fatal(N_("could not get file position on output file"));
     }
 
@@ -265,8 +265,8 @@ XdfOutput::OutputSection(Section& sect, Errwarns& errwarns)
     if (sect.getRelocs().size() == 0)
         return;
 
-    pos = m_os.tellp();
-    if (pos < 0)
+    pos = m_os.tell();
+    if (m_os.has_error())
         throw Fatal(N_("could not get file position on output file"));
     xsect->relptr = static_cast<unsigned long>(pos);
 
@@ -356,7 +356,7 @@ XdfOutput::OutputSymbol(const Symbol& sym,
 }
 
 void
-XdfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
+XdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
 {
     all_syms = true;   // force all syms into symbol table
 
@@ -393,8 +393,8 @@ XdfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     }
 
     // Allocate space for headers by seeking forward
-    os.seekp(FILEHEAD_SIZE+SECTHEAD_SIZE*scnum);
-    if (!os)
+    os.seek(FILEHEAD_SIZE+SECTHEAD_SIZE*scnum);
+    if (os.has_error())
         throw Fatal(N_("could not seek on output file"));
 
     XdfOutput out(os, m_object);
@@ -426,8 +426,8 @@ XdfObject::Output(std::ostream& os, bool all_syms, Errwarns& errwarns)
     }
 
     // Write headers
-    os.seekp(0);
-    if (!os)
+    os.seek(0);
+    if (os.has_error())
         throw Fatal(N_("could not seek on output file"));
 
     // Output object header

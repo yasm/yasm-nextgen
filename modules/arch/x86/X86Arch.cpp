@@ -235,9 +235,10 @@ X86Arch::DirCpu(Object& object, const NameValues& namevals,
                     N_("invalid argument to [%1]"), "CPU"));
             else
             {
-                std::ostringstream strcpu;
-                strcpu << e.getIntNum().getUInt();
-                ParseCpu(strcpu.str());
+                llvm::SmallString<128> ss;
+                llvm::raw_svector_ostream oss(ss);
+                oss << e.getIntNum().getUInt();
+                ParseCpu(oss.str());
             }
         }
         else

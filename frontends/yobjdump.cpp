@@ -28,15 +28,14 @@
 
 #include <cctype>
 #include <cstring>
-#include <iomanip>
-#include <iostream>
-#include <fstream>
 #include <string>
 #include <vector>
 
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/nocase.h"
@@ -44,7 +43,6 @@
 #include "yasmx/System/plugin.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Bytecode.h"
-#include "yasmx/IntNum_iomanip.h"
 #include "yasmx/Location.h"
 #include "yasmx/Object.h"
 #include "yasmx/ObjectFormat.h"
@@ -61,7 +59,7 @@ static const char* full_version = "yobjdump " PACKAGE_INTVER "." PACKAGE_BUILD;
 void
 PrintVersion()
 {
-    std::cout
+    llvm::outs()
         << full_version << '\n'
         << "Compiled on " __DATE__ ".\n"
         << "Copyright (c) 2001-2009 Peter Johnson and other Yasm developers.\n"
@@ -169,14 +167,13 @@ static cl::alias show_all_headers_long("all-headers",
 static void
 PrintError(const std::string& msg)
 {
-    std::cerr << "yobjdump: " << msg << std::endl;
+    llvm::errs() << "yobjdump: " << msg << '\n';
 }
 
 static void
 PrintListKeywordDesc(const std::string& name, const std::string& keyword)
 {
-    std::cout << std::left << std::setfill(' ') << std::setw(12) << keyword
-              << name << std::endl;
+    llvm::outs() << llvm::format("%-12s", keyword.c_str()) << name << '\n';
 }
 
 template <typename T>
@@ -201,80 +198,75 @@ handle_yasm_gettext(const char *msgid)
 static void
 DumpSectionHeaders(const yasm::Object& object)
 {
-    std::cout << "Sections:\n";
-    std::cout << "Idx Name          Size      ";
+    llvm::raw_ostream& os = llvm::outs();
+    os << "Sections:\n"
+       << "Idx Name          Size      ";
     unsigned int bits = 64; // FIXME
-    std::cout << std::left << std::setfill(' ');
-    std::cout << std::setw(bits/4) << "VMA" << "  ";
-    std::cout << std::setw(bits/4) << "LMA" << "  ";
-    std::cout << "File off  Algn\n";
+    os << llvm::format("%-*s", bits/4, (const char*)"VMA") << "  "
+       << llvm::format("%-*s", bits/4, (const char*)"LMA") << "  "
+       << "File off  Algn\n";
 
     unsigned int idx = 0;
     for (yasm::Object::const_section_iterator sect=object.sections_begin(),
          end=object.sections_end(); sect != end; ++sect, ++idx)
     {
-        std::cout << std::setfill(' ') << std::dec;
-        std::cout << std::right << std::setw(3) << idx << ' ';
-        std::cout << std::left << std::setw(13) << sect->getName() << ' ';
-        std::cout << std::hex;
-        std::cout << yasm::set_intnum_bits(32);
-        std::cout << yasm::IntNum(sect->bytecodes_last().getNextOffset())
-                  << "  ";
-        std::cout << yasm::set_intnum_bits(bits);
-        std::cout << sect->getVMA() << "  ";
-        std::cout << sect->getLMA() << "  ";
-        std::cout << yasm::set_intnum_bits(32);
-        std::cout << yasm::IntNum(sect->getFilePos()) << "  ";
-        std::cout << std::dec << sect->getAlign();
-        std::cout << '\n';
+        os << llvm::format("%3d", idx) << ' '
+           << llvm::format("%-13s", sect->getName().str().c_str()) << ' ';
+        yasm::IntNum(sect->bytecodes_last().getNextOffset())
+            .Print(os, 16, true, false, 32);
+        os << "  ";
+        sect->getVMA().Print(os, 16, true, false, bits);
+        os << "  ";
+        sect->getLMA().Print(os, 16, true, false, bits);
+        os << "  ";
+        yasm::IntNum(sect->getFilePos()).Print(os, 16, true, false, 32);
+        os << "  "
+           << sect->getAlign()
+           << '\n';
     }
 }
 
 static void
 DumpSymbols(const yasm::Object& object)
 {
-    std::cout << "SYMBOL TABLE:\n";
+    llvm::raw_ostream& os = llvm::outs();
+    os << "SYMBOL TABLE:\n";
     unsigned int bits = 64; // FIXME
-    std::cout << yasm::set_intnum_bits(bits);
     for (yasm::Object::const_symbol_iterator sym=object.symbols_begin(),
          end=object.symbols_end(); sym != end; ++sym)
     {
-        std::cout << std::hex;
-
         yasm::Location loc;
         bool is_label = sym->getLabel(&loc);
         const yasm::Expr* equ = sym->getEqu();
 
         if (is_label)
-            std::cout << yasm::IntNum(loc.getOffset());
+            yasm::IntNum(loc.getOffset()).Print(os, 16, true, false, bits);
         else if (equ)
-            std::cout << *equ;
+            equ->Print(os, 16);
         else
-            std::cout << yasm::IntNum(0);
-        std::cout << std::left;
-        std::cout << "  ";
+            yasm::IntNum(0).Print(os, 16, true, false, bits);
+
+        os << "  ";
         // TODO: symbol flags
         int vis = sym->getVisibility();
         if (is_label)
-        {
-            std::cout << loc.bc->getContainer()->AsSection()->getName() << '\t';
-        }
+            os << loc.bc->getContainer()->AsSection()->getName() << '\t';
         else if (sym->getEqu())
-            std::cout << "*ABS*\t";
+            os << "*ABS*\t";
         else if ((vis & yasm::Symbol::EXTERN) != 0)
-            std::cout << "*UND*\t";
+            os << "*UND*\t";
         else if ((vis & yasm::Symbol::COMMON) != 0)
-            std::cout << "*COM*\t";
-        std::cout << sym->getName();
-        std::cout << '\n';
+            os << "*COM*\t";
+        os << sym->getName()
+           << '\n';
     }
 }
 
 static void
 DumpRelocs(const yasm::Object& object)
 {
+    llvm::raw_ostream& os = llvm::outs();
     unsigned int bits = 64; // FIXME
-    std::cout << yasm::set_intnum_bits(bits);
 
     for (yasm::Object::const_section_iterator sect=object.sections_begin(),
          end=object.sections_end(); sect != end; ++sect)
@@ -282,63 +274,66 @@ DumpRelocs(const yasm::Object& object)
         if (sect->getRelocs().empty())
             continue;
 
-        std::cout << "RELOCATION RECORDS FOR [" << sect->getName() << "]:\n";
-        std::cout << std::left << std::setfill(' ');
-        std::cout << std::setw(bits/4) << "OFFSET";
-        std::cout << " TYPE              VALUE\n";
+        os << "RELOCATION RECORDS FOR [" << sect->getName() << "]:\n"
+           << llvm::format("%-*s", bits/4, (const char*)"OFFSET")
+           << " TYPE              VALUE\n";
 
         for (yasm::Section::const_reloc_iterator reloc=sect->relocs_begin(),
              endr=sect->relocs_end(); reloc != endr; ++reloc)
         {
-            std::cout << std::noshowbase;
-            std::cout << std::hex << (sect->getVMA()+reloc->getAddress())
-                      << ' ';
-            std::cout << std::setw(16) << reloc->getTypeName() << "  ";
-            std::cout << std::showbase;
-            std::cout << reloc->getValue();
-            std::cout << '\n';
+            (sect->getVMA()+reloc->getAddress())
+                .Print(os, 16, true, false, bits);
+            os << ' ';
+            os << llvm::format("%-16s", reloc->getTypeName().c_str()) << "  ";
+            reloc->getValue().Print(os, 16);
+            os << '\n';
         }
-        std::cout << std::noshowbase;
-        std::cout << "\n\n";
+        os << "\n\n";
     }
 }
 
 static void
-DumpContentsLine(const yasm::IntNum& addr, const unsigned char* data, int len)
+DumpContentsLine(const yasm::IntNum& addr,
+                 const unsigned char* data,
+                 int len,
+                 int addr_bits)
 {
+    llvm::raw_ostream& os = llvm::outs();
+
     // address
-    std::cout << ' ' << addr;
+    os << ' ';
+    addr.Print(os, 16, true, false, addr_bits);
 
     // hex dump
     for (int i=0; i<16; ++i)
     {
         if ((i & 3) == 0)
-            std::cout << ' ';
+            os << ' ';
         if (i<len)
-            std::cout << std::setw(2) << static_cast<unsigned int>(data[i]);
+            os << llvm::format("%02x", static_cast<unsigned int>(data[i]));
         else
-            std::cout << "  ";
+            os << "  ";
     }
 
     // ascii dump
-    std::cout << "  ";
+    os << "  ";
     for (int i=0; i<16; ++i)
     {
         if (i>=len)
-            std::cout << ' ';
+            os << ' ';
         else if (!std::isprint(data[i]))
-            std::cout << '.';
+            os << '.';
         else
-            std::cout << data[i];
+            os << data[i];
     }
 
-    std::cout << '\n';
+    os << '\n';
 }
 
 static void
 DumpContents(const yasm::Object& object)
 {
-    std::cout << std::hex << std::setfill('0') << std::right;
+    llvm::raw_ostream& os = llvm::outs();
 
     for (yasm::Object::const_section_iterator sect=object.sections_begin(),
          end=object.sections_end(); sect != end; ++sect)
@@ -360,9 +355,8 @@ DumpContents(const yasm::Object& object)
         }
         if (addr_bits < 16)
             addr_bits = 16;
-        std::cout << yasm::set_intnum_bits(addr_bits);
 
-        std::cout << "Contents of section " << sect->getName() << ":\n";
+        os << "Contents of section " << sect->getName() << ":\n";
 
         unsigned char line[16];
         int line_pos = 0;
@@ -387,7 +381,7 @@ DumpContents(const yasm::Object& object)
                 // when we've filled up a line, output it.
                 if (line_pos == 16)
                 {
-                    DumpContentsLine(addr, line, 16);
+                    DumpContentsLine(addr, line, 16, addr_bits);
                     addr += 16;
                     line_pos = 0;
                 }
@@ -396,10 +390,8 @@ DumpContents(const yasm::Object& object)
 
         // output any remaining
         if (line_pos != 0)
-            DumpContentsLine(addr, line, line_pos);
+            DumpContentsLine(addr, line, line_pos, addr_bits);
     }
-
-    std::cout << std::dec << std::setfill(' ');
 }
 
 static void
@@ -487,8 +479,8 @@ DoDump(const std::string& in_filename)
     std::auto_ptr<yasm::ObjectFormat> objfmt = objfmt_module->Create(object);
     objfmt->Read(*in_file);
 
-    std::cout << in_filename << ":     file format "
-              << objfmt_module->getKeyword() << "\n\n";
+    llvm::outs() << in_filename << ":     file format "
+                 << objfmt_module->getKeyword() << "\n\n";
 
     if (show_section_headers)
         DumpSectionHeaders(object);
@@ -542,13 +534,13 @@ main(int argc, char* argv[])
     if (show_license)
     {
         for (std::size_t i=0; i<NELEMS(license_msg); i++)
-            std::cout << license_msg[i] << '\n';
+            llvm::outs() << license_msg[i] << '\n';
         return EXIT_SUCCESS;
     }
 
     if (show_info)
     {
-        std::cout << full_version << '\n';
+        llvm::outs() << full_version << '\n';
         list_module<yasm::ObjectFormatModule>();
         return EXIT_SUCCESS;
     }

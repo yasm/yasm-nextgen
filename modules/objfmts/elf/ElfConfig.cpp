@@ -91,7 +91,7 @@ ElfConfig::AssignSymbolIndices(Object& object, ElfSymbolIndex* nlocal) const
 }
 
 unsigned long
-ElfConfig::WriteSymbolTable(std::ostream& os,
+ElfConfig::WriteSymbolTable(llvm::raw_ostream& os,
                             Object& object,
                             Errwarns& errwarns,
                             Bytes& scratch) const
@@ -236,7 +236,7 @@ ElfConfig::ReadProgramHeader(const llvm::MemoryBuffer& in)
 }
 
 void
-ElfConfig::WriteProgramHeader(std::ostream& os, Bytes& scratch)
+ElfConfig::WriteProgramHeader(llvm::raw_ostream& os, Bytes& scratch)
 {
     scratch.resize(0);
     setEndian(scratch);

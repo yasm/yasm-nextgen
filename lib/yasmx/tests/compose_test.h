@@ -56,12 +56,6 @@ public:
         out = Composer("Four percent in a row: %%%%%%%%");
         TS_ASSERT_EQUALS(out, "Four percent in a row: %%%%");
 
-        // demonstrate use of manipulators
-        // parenthesis around String::Format are required
-        out = Composer("With lots of precision, %2 equals %1%!") %
-            (String::Format(std::setprecision(15), (1.0 / 3 * 100))) % "one third";
-        TS_ASSERT_EQUALS(out, "With lots of precision, one third equals 33.3333333333333%!");
-
         // test % escaping at the string ends
         out = Composer("%% This is like a LaTeX comment %%");
         TS_ASSERT_EQUALS(out, "% This is like a LaTeX comment %");
@@ -100,11 +94,6 @@ public:
 
         out = Compose("Four percent in a row: %%%%%%%%");
         TS_ASSERT_EQUALS(out, "Four percent in a row: %%%%");
-
-        // demonstrate use of manipulators
-        out = Compose("With lots of precision, %2 equals %1%!",
-            String::Format(std::setprecision(15), (1.0 / 3 * 100)), "one third");
-        TS_ASSERT_EQUALS(out, "With lots of precision, one third equals 33.3333333333333%!");
 
         // test % escaping at the string ends
         out = Compose("%% This is like a LaTeX comment %%");

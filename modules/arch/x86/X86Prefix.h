@@ -50,7 +50,7 @@ public:
 
     X86Prefix(Type type, unsigned char value);
     ~X86Prefix();
-    void Put(std::ostream& os) const;
+    void Put(llvm::raw_ostream& os) const;
     void Write(YAML::Emitter& out) const;
 
     Type getType() const { return m_type; }

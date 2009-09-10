@@ -29,13 +29,11 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include <iosfwd>
-
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
 
 
-namespace llvm { class MemoryBuffer; class StringRef; }
+namespace llvm { class MemoryBuffer; class raw_fd_ostream; class StringRef; }
 
 /// Namespace for classes, functions, and templates related to the Yasm
 /// assembler.
@@ -111,7 +109,7 @@ public:
     /// @param os               output stream
     /// @param warning_error    treat warnings as errors if true
     /// @return True on success, false on failure.
-    bool Output(std::ostream& os, bool warning_error = false);
+    bool Output(llvm::raw_fd_ostream& os, bool warning_error = false);
 
     /// Get the object.  Returns 0 until after assembly is successful.
     /// @return Object.

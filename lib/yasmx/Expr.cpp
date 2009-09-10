@@ -30,7 +30,6 @@
 
 #include <algorithm>
 #include <iterator>
-#include <ostream>
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/Support/raw_ostream.h"
@@ -971,28 +970,27 @@ Expr::Dump() const
     llvm::errs() << out.c_str() << '\n';
 }
 
-std::ostream&
-operator<< (std::ostream& os, const ExprTerm& term)
+void
+ExprTerm::Print(llvm::raw_ostream& os, int base) const
 {
-    switch (term.getType())
+    switch (m_type)
     {
-        case ExprTerm::NONE:    os << "NONE"; break;
-        case ExprTerm::REG:     os << *term.getRegister(); break;
-        case ExprTerm::INT:     os << *term.getIntNum(); break;
-        case ExprTerm::SUBST:   os << "[" << *term.getSubst() << "]"; break;
-        case ExprTerm::FLOAT:   os << "FLTN"; break;
-        case ExprTerm::SYM:     os << term.getSymbol()->getName(); break;
-        case ExprTerm::LOC:     os << "{LOC}"; break;
-        case ExprTerm::OP:
-            os << "(" << ((int)term.getOp())
-               << ", " << term.getNumChild() << ")";
+        case NONE:  os << "NONE"; break;
+        case REG:   os << *m_data.reg; break;
+        case INT:   getIntNum()->Print(os, base); break;
+        case SUBST: os << "[" << m_data.subst << "]"; break;
+        case FLOAT: os << "FLTN"; break;
+        case SYM:   os << m_data.sym->getName(); break;
+        case LOC:   os << "{LOC}"; break;
+        case OP:
+            os << "(" << ((int)m_data.op.op)
+               << ", " << m_data.op.nchild << ")";
             break;
     }
-    return os;
 }
 
 static void
-Infix(std::ostream& os, const Expr& e, int pos=-1)
+Infix(llvm::raw_ostream& os, const Expr& e, int base, int pos=-1)
 {
     const char* opstr = "";
     const ExprTerms& terms = e.getTerms();
@@ -1012,7 +1010,7 @@ Infix(std::ostream& os, const Expr& e, int pos=-1)
 
     if (!terms[pos].isOp())
     {
-        os << terms[pos];
+        terms[pos].Print(os, base);
         return;
     }
 
@@ -1074,34 +1072,29 @@ Infix(std::ostream& os, const Expr& e, int pos=-1)
     for (CVector::const_reverse_iterator i=children.rbegin(),
          end=children.rend(); i != end; ++i)
     {
-        std::ios_base::fmtflags ff = os.flags();
-
         if (i != children.rbegin())
         {
             os << opstr;
             // Force RHS of shift operations to decimal
             if (op == Op::SHL || op == Op::SHR)
-                ff = os.setf(std::ios::dec, std::ios::basefield);
+                base = 10;
         }
 
         if (terms[*i].isOp())
         {
             os << '(';
-            Infix(os, e, *i);
+            Infix(os, e, base, *i);
             os << ')';
         }
         else
-            os << terms[*i];
-
-        os.setf(ff);
+            terms[*i].Print(os, base);
     }
 }
 
-std::ostream&
-operator<< (std::ostream& os, const Expr& e)
+void
+Expr::Print(llvm::raw_ostream& os, int base) const
 {
-    Infix(os, e);
-    return os;
+    Infix(os, *this, base);
 }
 
 bool
