@@ -16,7 +16,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include <cassert>
 #include <cstring>
-#include <ostream>
 using namespace llvm;
 using namespace sys;
 
