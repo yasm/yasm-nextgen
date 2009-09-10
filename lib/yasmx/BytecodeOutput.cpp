@@ -26,8 +26,6 @@
 //
 #include "yasmx/BytecodeOutput.h"
 
-#include <ostream>
-
 #include "util.h"
 
 #include "yasmx/Support/errwarn.h"
