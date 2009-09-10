@@ -13,7 +13,6 @@
 #include <algorithm>
 #include <cassert>
 #include <cstring>
-#include <ostream>
 #include <string>
 
 namespace llvm {
@@ -278,13 +277,6 @@ namespace llvm {
   }
 
   /// @}
-
-inline std::ostream&
-operator<< (std::ostream& os, const StringRef& str)
-{
-    os.write(str.data(), str.size());
-    return os;
-}
 
 }
 
