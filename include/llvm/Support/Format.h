@@ -27,12 +27,13 @@
 #ifdef WIN32
 #define snprintf _snprintf
 #endif
+#include "yasmx/Config/export.h"
 
 namespace llvm {
 
 /// format_object_base - This is a helper class used for handling formatted
 /// output.  It is the abstract base class of a templated derived class.
-class format_object_base {
+class YASM_LIB_EXPORT format_object_base {
 protected:
   const char *Fmt;
   virtual void home(); // Out of line virtual method.
