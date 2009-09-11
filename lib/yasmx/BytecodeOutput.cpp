@@ -28,6 +28,7 @@
 
 #include "util.h"
 
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Support/errwarn.h"
 
 
