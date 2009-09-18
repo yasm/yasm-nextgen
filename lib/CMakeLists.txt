@@ -14,6 +14,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     Support/raw_ostream.cpp
     Support/ManagedStatic.cpp
     Support/MemoryBuffer.cpp
+    Support/PrettyStackTrace.cpp
     Support/SmallPtrSet.cpp
     Support/Statistic.cpp
     Support/StringExtras.cpp
@@ -26,7 +27,9 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     System/Path.cpp
     System/Process.cpp
     System/Program.cpp
+    System/Signals.cpp
     System/Threading.cpp
+    System/ThreadLocal.cpp
     System/TimeValue.cpp
     YAML/emitter.cpp
     YAML/emitterstate.cpp
