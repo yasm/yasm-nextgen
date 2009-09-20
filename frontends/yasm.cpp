@@ -840,7 +840,7 @@ main(int argc, char* argv[])
 #endif
 
     // Handle keywords (including "help").
-    bool listed;
+    bool listed = false;
     arch_keyword = ModuleCommonHandler<yasm::ArchModule>
         (arch_keyword, _("architecture"), _("architectures"), &listed);
     parser_keyword = ModuleCommonHandler<yasm::ParserModule>
