@@ -311,6 +311,13 @@ Overwrite(Bytes& bytes,
           bool bigendian,
           int warn)
 {
+    // Handle bigval specially
+    if (!intn.isInt())
+    {
+        Overwrite(bytes, *intn.getBV(&staticbv), size, shift, bigendian, warn);
+        return;
+    }
+
     int destsize = bytes.size();
 
     // Split shift into left (shift) and right (rshift) components.
@@ -331,68 +338,62 @@ Overwrite(Bytes& bytes,
                 String::Compose(N_("value does not fit in %1 bit field"),
                                 size));
 
-    // Non-bigval (for speed)
-    if (intn.isInt())
-    {
-        long v = intn.getInt();
+    long v = intn.getInt();
 
-        // Check low bits if right shifting and warnings enabled
-        if (warn && rshift > 0)
+    // Check low bits if right shifting and warnings enabled
+    if (warn && rshift > 0)
+    {
+        long mask = (1L<<rshift)-1;
+        if (v & mask)
+            setWarn(WARN_GENERAL,
+                    N_("misaligned value, truncating to boundary"));
+    }
+
+    // Shift right if needed
+    v >>= rshift;
+    rshift = 0;
+
+    // Write out the new data, 8 bits at a time.
+    assert(!bigendian && "big endian not implemented");
+    for (int i = 0, sz = size; i < destsize && sz > 0; ++i)
+    {
+        // handle left shift past whole bytes
+        if (shift >= 8)
         {
-            long mask = (1L<<rshift)-1;
-            if (v & mask)
-                setWarn(WARN_GENERAL,
-                        N_("misaligned value, truncating to boundary"));
+            shift -= 8;
+            continue;
         }
 
-        // Shift right if needed
-        v >>= rshift;
-        rshift = 0;
-
-        // Write out the new data, 8 bits at a time.
-        assert(!bigendian && "big endian not implemented");
-        for (int i = 0, sz = size; i < destsize && sz > 0; ++i)
+        // Handle first chunk specially for left shifted values
+        if (shift > 0 && sz == static_cast<int>(size))
         {
-            // handle left shift past whole bytes
-            if (shift >= 8)
-            {
-                shift -= 8;
-                continue;
-            }
+            unsigned char chunk =
+                ((static_cast<unsigned char>(v) & 0xff) << shift) & 0xff;
+            unsigned char mask = ~((1U<<shift)-1);  // keep MSBs
 
-            // Handle first chunk specially for left shifted values
-            if (shift > 0 && sz == static_cast<int>(size))
-            {
-                unsigned char chunk =
-                    ((static_cast<unsigned char>(v) & 0xff) << shift) & 0xff;
-                unsigned char mask = ~((1U<<shift)-1);  // keep MSBs
+            // write appropriate bits
+            bytes[i] &= ~mask;
+            bytes[i] |= chunk & mask;
 
-                // write appropriate bits
-                bytes[i] &= ~mask;
-                bytes[i] |= chunk & mask;
+            v >>= (8-shift);
+            sz -= (8-shift);
+        }
+        else
+        {
+            unsigned char chunk = static_cast<unsigned char>(v) & 0xff;
+            unsigned char mask = 0xff;
+            // for last chunk, need to keep least significant bits
+            if (sz < 8)
+                mask = (1U<<sz)-1;
 
-                v >>= (8-shift);
-                sz -= (8-shift);
-            }
-            else
-            {
-                unsigned char chunk = static_cast<unsigned char>(v) & 0xff;
-                unsigned char mask = 0xff;
-                // for last chunk, need to keep least significant bits
-                if (sz < 8)
-                    mask = (1U<<sz)-1;
+            // write appropriate bits
+            bytes[i] &= ~mask;
+            bytes[i] |= chunk & mask;
 
-                // write appropriate bits
-                bytes[i] &= ~mask;
-                bytes[i] |= chunk & mask;
-
-                v >>= 8;
-                sz -= 8;
-            }
+            v >>= 8;
+            sz -= 8;
         }
     }
-    else
-        Overwrite(bytes, *intn.getBV(&staticbv), size, shift, bigendian, warn);
 }
 
 void
