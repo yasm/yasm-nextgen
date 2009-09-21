@@ -4,6 +4,9 @@ IF (NOT BUILD_STATIC)
 ENDIF (NOT BUILD_STATIC)
 
 YASM_ADD_LIBRARY(libyasmx SHARED
+    Basic/FileManager.cpp
+    Basic/SourceLocation.cpp
+    Basic/SourceManager.cpp
     Support/Allocator.cpp
     Support/APFloat.cpp
     Support/APInt.cpp
