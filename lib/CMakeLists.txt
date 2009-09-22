@@ -59,6 +59,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Bytes_leb128.cpp
     yasmx/Compose.cpp
     yasmx/DebugFormat.cpp
+    yasmx/Diagnostic.cpp
     yasmx/Directive.cpp
     yasmx/DirHelpers.cpp
     yasmx/EffAddr.cpp
@@ -109,6 +110,7 @@ IF(NOT BUILD_STATIC)
 	SOVERSION 0
 	)
 ENDIF(NOT BUILD_STATIC)
+ADD_DEPENDENCIES(libyasmx DiagnosticIncludes)
 
 IF(NOT BUILD_STATIC)
     INSTALL(TARGETS libyasmx ${INSTALL_TARGETS_DEFAULT_ARGS})

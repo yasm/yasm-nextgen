@@ -78,6 +78,20 @@ INCLUDE(CPack)
 
 INCLUDE(ConfigureChecks.cmake)
 
+# Generate diagnostic includes
+ADD_CUSTOM_COMMAND(
+    OUTPUT
+        ${CMAKE_BINARY_DIR}/include/yasmx/DiagnosticGroups.inc
+        ${CMAKE_BINARY_DIR}/include/yasmx/DiagnosticKinds.inc
+    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/include/yasmx/gen_diag.py
+        ${CMAKE_BINARY_DIR}/include/yasmx/DiagnosticGroups.inc
+        ${CMAKE_BINARY_DIR}/include/yasmx/DiagnosticKinds.inc
+    MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/include/yasmx/gen_diag.py
+    )
+ADD_CUSTOM_TARGET(DiagnosticIncludes
+    DEPENDS ${CMAKE_BINARY_DIR}/include/yasmx/DiagnosticKinds.inc
+    DEPENDS ${CMAKE_BINARY_DIR}/include/yasmx/DiagnosticGroups.inc)
+
 ADD_SUBDIRECTORY(tools)
 ADD_SUBDIRECTORY(modules)
 ADD_SUBDIRECTORY(lib)
