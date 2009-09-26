@@ -43,6 +43,7 @@
 #include "yasmx/Arch.h"
 #include "yasmx/Assembler.h"
 #include "yasmx/DebugFormat.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Errwarns.h"
 #include "yasmx/ListFormat.h"
 #include "yasmx/Module.h"
@@ -55,6 +56,7 @@
 #endif
 
 #include "frontends/license.cpp"
+#include "frontends/TextDiagnosticPrinter.h"
 
 
 // Preprocess-only buffer size
@@ -695,6 +697,8 @@ do_preproc_only(void)
 static int
 do_assemble(void)
 {
+    yasm::TextDiagnosticPrinter diag_printer(*errfile);
+    yasm::Diagnostic diags(&diag_printer);
     clang::FileManager file_mgr;
     clang::SourceManager source_mgr;
     yasm::Assembler assembler(arch_keyword, parser_keyword, objfmt_keyword,
@@ -734,7 +738,7 @@ do_assemble(void)
     }
 
     // assemble the input.
-    if (!assembler.Assemble(source_mgr, file_mgr, warning_error))
+    if (!assembler.Assemble(source_mgr, file_mgr, diags, warning_error))
     {
         // An error occurred during assembly; output all errors and warnings
         // and then exit.

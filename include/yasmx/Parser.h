@@ -41,6 +41,7 @@
 namespace yasm
 {
 
+class Diagnostic;
 class Directives;
 class Errwarns;
 class Linemap;
@@ -70,10 +71,12 @@ public:
     /// @param object       object to parse into
     /// @param preproc      preprocessor
     /// @param dirs         available directives
+    /// @param diags        diagnostic reporter
     /// @note Parse errors and warnings are stored into errwarns.
     virtual void Parse(Object& object,
                        Preprocessor& preproc,
-                       Directives& dirs) = 0;
+                       Directives& dirs,
+                       Diagnostic& diags) = 0;
 
 private:
     Parser(const Parser&);                  // not implemented

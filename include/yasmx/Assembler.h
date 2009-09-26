@@ -43,6 +43,7 @@ namespace yasm
 {
 
 class Arch;
+class Diagnostic;
 class Errwarns;
 class Object;
 class Preprocessor;
@@ -107,6 +108,7 @@ public:
     /// @return True on success, false on failure.
     bool Assemble(clang::SourceManager& source_mgr,
                   clang::FileManager& file_mgr,
+                  Diagnostic& diags,
                   bool warning_error = false);
 
     /// Write assembly results to output file.  Fails if assembly not

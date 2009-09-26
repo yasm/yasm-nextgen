@@ -122,7 +122,10 @@ public:
     static std::vector<llvm::StringRef> getPreprocessorKeywords();
     static llvm::StringRef getDefaultPreprocessorKeyword() { return "raw"; }
 
-    void Parse(Object& object, Preprocessor& preproc, Directives& dirs);
+    void Parse(Object& object,
+               Preprocessor& preproc,
+               Directives& dirs,
+               Diagnostic& diags);
 
     enum TokenType
     {

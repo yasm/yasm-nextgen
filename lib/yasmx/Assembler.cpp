@@ -38,6 +38,7 @@
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/Arch.h"
 #include "yasmx/DebugFormat.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/Errwarns.h"
 #include "yasmx/ListFormat.h"
@@ -81,6 +82,7 @@ public:
     void setListFormat(llvm::StringRef listfmt_keyword);
     bool Assemble(clang::SourceManager& source_mgr,
                   clang::FileManager& file_mgr,
+                  Diagnostic& diags,
                   bool warning_error);
 
     util::scoped_ptr<ArchModule> m_arch_module;
@@ -278,6 +280,7 @@ Assembler::setListFormat(llvm::StringRef listfmt_keyword)
 bool
 Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
                           clang::FileManager& file_mgr,
+                          Diagnostic& diags,
                           bool warning_error)
 {
     llvm::StringRef in_filename =
@@ -374,10 +377,12 @@ Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
     }
 
     // Parse!
-    m_parser->Parse(*m_object, *m_preproc, dirs);
+    m_parser->Parse(*m_object, *m_preproc, dirs, diags);
 
     if (m_dump_time == DUMP_AFTER_PARSE)
         m_object->Dump();
+    if (diags.hasErrorOccurred())
+        return false;
     if (m_errwarns.getNumErrors(warning_error) > 0)
         return false;
 
@@ -408,9 +413,10 @@ Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
 bool
 Assembler::Assemble(clang::SourceManager& source_mgr,
                     clang::FileManager& file_mgr,
+                    Diagnostic& diags,
                     bool warning_error)
 {
-    return m_impl->Assemble(source_mgr, file_mgr, warning_error);
+    return m_impl->Assemble(source_mgr, file_mgr, diags, warning_error);
 }
 
 bool

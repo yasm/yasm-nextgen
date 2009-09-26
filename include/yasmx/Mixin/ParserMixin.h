@@ -32,7 +32,9 @@
 #include <yasmx/Support/Compose.h>
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/Arch.h>
+#include <yasmx/Diagnostic.h>
 #include <yasmx/Object.h>
+#include <yasmx/Preprocessor.h>
 
 namespace yasm
 {
@@ -40,7 +42,6 @@ namespace yasm
 class BytecodeContainer;
 class Directives;
 class Errwarns;
-class Preprocessor;
 
 /// Parser mixin to reduce code duplication in recursive descent parsers.
 /// Uses the curiously recurring template pattern.
@@ -52,9 +53,18 @@ class Preprocessor;
 template <typename T, typename YYSTYPE, typename YYCTYPE = char>
 struct ParserMixin
 {
-    void InitMixin(Object& object, Preprocessor& preproc, Directives& dirs);
+    void InitMixin(Object& object,
+                   Preprocessor& preproc,
+                   Directives& dirs,
+                   Diagnostic& diags);
     clang::SourceLocation getTokenSource() const
     { return m_source.getFileLocWithOffset(m_tok-m_bot); }
+
+    DiagnosticBuilder Diag(clang::SourceLocation loc, unsigned int id)
+    {
+        clang::SourceManager& smgr = m_preproc->getSourceManager();
+        return m_diags->Report(clang::FullSourceLoc(loc, smgr), id);
+    }
 
     int getNextToken();
     void getPeekToken();
@@ -73,6 +83,7 @@ struct ParserMixin
     BytecodeContainer* m_container;
     Preprocessor* m_preproc;
     Directives* m_dirs;
+    Diagnostic* m_diags;
 
     Arch* m_arch;
     unsigned int m_wordsize;
@@ -95,11 +106,13 @@ template <typename T, typename S, typename C>
 inline void
 ParserMixin<T, S, C>::InitMixin(Object& object,
                                 Preprocessor& preproc,
-                                Directives& dirs)
+                                Directives& dirs,
+                                Diagnostic& diags)
 {
     m_object = &object;
     m_preproc = &preproc;
     m_dirs = &dirs;
+    m_diags = &diags;
     m_arch = object.getArch();
     m_wordsize = m_arch->getModule().getWordSize();
 
