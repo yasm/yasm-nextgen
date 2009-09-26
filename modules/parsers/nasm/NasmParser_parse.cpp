@@ -1083,9 +1083,9 @@ NasmParser::DirDefault(Object& object, NameValues& namevals,
         if (nv->isId())
         {
             llvm::StringRef id = nv->getId();
-            if (String::NocaseEqual(id, "rel") == 0)
+            if (String::NocaseEqual(id, "rel"))
                 object.getArch()->setVar("default_rel", 1);
-            else if (String::NocaseEqual(id, "abs") == 0)
+            else if (String::NocaseEqual(id, "abs"))
                 object.getArch()->setVar("default_rel", 0);
             else
                 throw SyntaxError(String::Compose(
