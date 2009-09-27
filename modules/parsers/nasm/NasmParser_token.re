@@ -29,7 +29,6 @@
 #include "util.h"
 
 #include "llvm/ADT/StringRef.h"
-#include "yasmx/Support/Compose.h"
 #include "yasmx/Support/StringExtras.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Object.h"
