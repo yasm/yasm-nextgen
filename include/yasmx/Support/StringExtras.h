@@ -37,6 +37,13 @@
 namespace yasm
 {
 
+/// Convert a possibly unprintable character into a printable string.
+/// Uses standard cat(1) convention for unprintable characters.
+/// @param ch   possibly unprintable character
+/// @return Printable string representation.
+YASM_LIB_EXPORT
+std::string ConvUnprint(int ch);
+
 /// Unescape a string with C-style escapes.  Handles b, f, n, r, t, and hex
 /// and octal escapes.
 /// Edge cases:

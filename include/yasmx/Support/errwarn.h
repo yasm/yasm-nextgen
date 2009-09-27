@@ -319,13 +319,6 @@ void DisableWarn(WarnClass wclass);
 YASM_LIB_EXPORT
 void DisableAllWarn();
 
-/// Convert a possibly unprintable character into a printable string.
-/// Uses standard cat(1) convention for unprintable characters.
-/// @param ch   possibly unprintable character
-/// @return Printable string representation.
-YASM_LIB_EXPORT
-std::string ConvUnprint(int ch);
-
 /// Hook for library users to map to gettext() if GNU gettext is being used.
 /// @param msgid    message catalog identifier
 /// @return Translated message.

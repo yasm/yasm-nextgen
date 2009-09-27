@@ -92,29 +92,6 @@ ErrwarnManager::~ErrwarnManager()
 {
 }
 
-std::string
-ConvUnprint(int ch)
-{
-    std::string unprint;
-
-    if (((ch & ~0x7F) != 0) /*!isascii(ch)*/ && !isprint(ch))
-    {
-        unprint += 'M';
-        unprint += '-';
-        ch &= 0x7F; /*toascii(ch)*/
-    }
-
-    if (iscntrl(ch))
-    {
-        unprint += '^';
-        unprint += (ch == '\177') ? '?' : ch | 0100;
-    }
-    else
-        unprint += ch;
-
-    return unprint;
-}
-
 NotImplementedError::NotImplementedError(const std::string& message)
     : std::runtime_error(message.c_str())
 {
