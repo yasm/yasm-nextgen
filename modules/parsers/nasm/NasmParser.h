@@ -146,9 +146,9 @@ private:
     void DefineLabel(llvm::StringRef name, bool local);
 
     void DoParse();
-    void ParseLine();
+    bool ParseLine();
     bool ParseDirective(/*@out@*/ NameValues& nvs);
-    void ParseTimes();
+    bool ParseTimes();
     bool ParseExp();
     Insn::Ptr ParseInsn();
 

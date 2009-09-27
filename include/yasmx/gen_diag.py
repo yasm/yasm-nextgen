@@ -143,9 +143,12 @@ add_error("err_expected_lparen_after", "expected '(' after '%0'")
 add_error("err_expected_lparen_after_id", "expected '(' after %0")
 add_error("err_expected_comma", "expected ','")
 add_error("err_expected_colon", "expected ':'")
+add_error("err_expected_colon_after_segreg", "expected ':' after segment register")
 add_error("err_expected_operand", "expected operand")
 add_error("err_expected_memory_address", "expected memory address")
 add_error("err_expected_expression", "expected expression")
+add_error("err_expected_expression_after", "expected expression after '%0'")
+add_error("err_expected_expression_after_id", "expected expression after %0")
 add_error("err_expected_expression_or_string",
           "expression or string expected")
 add_error("err_unrecognized_value", "unrecognized value")
@@ -169,6 +172,7 @@ add_warning("warn_orphan_label",
 add_warning("warn_no_nonlocal", "no preceding non-local label")
 
 # Directive
+add_error("err_expected_directive_name", "expected directive name")
 add_error("err_invalid_directive_argument", "invalid argument to directive")
 
 # Operand size override
@@ -189,6 +193,8 @@ add_warning("null_in_file", "null character ignored",
             group="unrecognized-char")
 add_warning("backslash_newline_space",
             "backslash and newline separated by space")
+add_warning("warn_unrecognized_char", "ignoring unrecognized character '%0'",
+            group="unrecognized-char")
 
 add_warning("warn_multi_line_eol_comment", "multi-line end-of-line comment",
             group="comment")

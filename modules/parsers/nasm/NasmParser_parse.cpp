@@ -30,8 +30,6 @@
 
 #include "clang/Basic/SourceManager.h"
 #include "yasmx/Support/bitcount.h"
-#include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Arch.h"
 #include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/Directive.h"
@@ -123,8 +121,14 @@ NasmParser::DoParse()
             getNextToken();
             if (!isEol())
             {
-                ParseLine();
-                DemandEol();
+                bool ok = ParseLine();
+                if (!ok)
+                {
+                    DemandEolNoThrow();
+                    m_state = INITIAL;
+                }
+                else
+                    DemandEol();
             }
 #if 0
             if (m_abspos.get() != 0)
@@ -176,13 +180,13 @@ NasmParser::DoParse()
 // token.  They should return with m_token being the token *after* their
 // information.
 
-void
+bool
 NasmParser::ParseLine()
 {
     m_container = m_object->getCurSection();
 
     if (ParseExp())
-        return;
+        return true;
 
     switch (m_token)
     {
@@ -217,39 +221,50 @@ NasmParser::ParseLine()
         }
         case '[': // [ directive ]
         {
+            clang::SourceLocation lhsrc = getTokenSource();
             m_state = DIRECTIVE;
             getNextToken();
 
-            Expect(DIRECTIVE_NAME);
+            if (m_token != DIRECTIVE_NAME)
+            {
+                Diag(getTokenSource(), diag::err_expected_directive_name);
+                return false;
+            }
             std::string dirname;
             std::swap(dirname, DIRECTIVE_NAME_val);
             getNextToken();
 
+            // catch [directive<eol> early (XXX: better way to do this?)
+            if (isEol())
+            {
+                Diag(getTokenSource(), diag::err_expected_rsquare);
+                Diag(lhsrc, diag::note_matching) << "[";
+                return false;
+            }
+
             DirectiveInfo info(*m_object, m_source);
             if (m_token != ']' && m_token != ':' &&
                 !ParseDirective(info.getNameValues()))
-            {
-                throw SyntaxError(String::Compose(
-                    N_("invalid arguments to [%s]"), dirname));
-            }
+                return false;
             if (m_token == ':')
             {
                 getNextToken();
                 if (!ParseDirective(info.getObjextNameValues()))
-                {
-                    throw SyntaxError(String::Compose(
-                        N_("invalid arguments to [%1]"), dirname));
-                }
+                    return false;
             }
             DoDirective(dirname, info);
-            Expect(']');
+            if (m_token != ']')
+            {
+                Diag(getTokenSource(), diag::err_expected_rsquare);
+                Diag(lhsrc, diag::note_matching) << "[";
+                return false;
+            }
             getNextToken();
             break;
         }
         case TIMES: // TIMES expr exp
             getNextToken();
-            ParseTimes();
-            return;
+            return ParseTimes();
         case ID:
         case SPECIAL_ID:
         case NONLOCAL_ID:
@@ -263,8 +278,7 @@ NasmParser::ParseLine()
             if (isEol())
             {
                 // label alone on the line
-                setWarn(WARN_ORPHAN_LABEL,
-                    N_("label alone on a line without a colon might be in error"));
+                Diag(getTokenSource(), diag::warn_orphan_label);
                 DefineLabel(name, local);
                 break;
             }
@@ -278,8 +292,10 @@ NasmParser::ParseLine()
                 Expr e;
                 if (!ParseExpr(e, NORM_EXPR))
                 {
-                    throw SyntaxError(String::Compose(
-                        N_("expression expected after %1"), "EQU"));
+                    Diag(getTokenSource(),
+                         diag::err_expected_expression_after_id)
+                        << "EQU";
+                    return false;
                 }
                 m_object->getSymbol(name)->DefineEqu(e, m_source);
                 break;
@@ -294,13 +310,17 @@ NasmParser::ParseLine()
                 return ParseTimes();
             }
             if (!ParseExp())
-                throw SyntaxError(N_("instruction expected after label"));
-            return;
+            {
+                Diag(getTokenSource(), diag::err_expected_insn_after_label);
+                return false;
+            }
+            break;
         }
         default:
-            throw SyntaxError(
-                N_("label or instruction expected at start of line"));
+            Diag(getTokenSource(), diag::err_expected_insn_label_after_eol);
+            return false;
     }
+    return true;
 }
 
 bool
@@ -372,27 +392,28 @@ next:
     }
 }
 
-void
+bool
 NasmParser::ParseTimes()
 {
     Expr::Ptr multiple(new Expr);
     if (!ParseBExpr(*multiple, DV_EXPR))
     {
-        throw SyntaxError(String::Compose(N_("expression expected after %1"),
-                                          "TIMES"));
+        Diag(getTokenSource(), diag::err_expected_expression_after_id)
+            << "TIMES";
+        return false;
     }
     BytecodeContainer* orig_container = m_container;
     m_container = &AppendMultiple(*m_container, multiple, m_source);
-    try
+
+    clang::SourceLocation cursource = getTokenSource();
+    if (!ParseExp())
     {
-        if (!ParseExp())
-            throw SyntaxError(N_("instruction expected after TIMES expression"));
-    }
-    catch (...)
-    {
+        Diag(cursource, diag::err_expected_insn_after_times);
         m_container = orig_container;
-        throw;
+        return false;
     }
+    m_container = orig_container;
+    return true;
 }
 
 bool
@@ -432,13 +453,16 @@ NasmParser::ParseExp()
                         AppendData(*m_container, e, size,
                                     *m_object->getArch(), m_source);
                     else
-                        throw SyntaxError(N_("expression or string expected"));
+                    {
+                        Diag(getTokenSource(),
+                             diag::err_expected_expression_or_string);
+                        return false;
+                    }
                 }
 dv_done:
                 if (isEol())
                     break;
-                Expect(',');
-                getNextToken();
+                ExpectAndConsume(',', diag::err_expected_comma);
                 if (isEol())   // allow trailing , on list
                     break;
             }
@@ -451,8 +475,9 @@ dv_done:
             Expr::Ptr e(new Expr);
             if (!ParseBExpr(*e, DV_EXPR))
             {
-                throw SyntaxError(String::Compose(
-                    N_("expression expected after %1"), "RESx"));
+                Diag(getTokenSource(), diag::err_expected_expression_after_id)
+                    << "RESx";
+                return false;
             }
             BytecodeContainer& multc =
                 AppendMultiple(*m_container, e, m_source);
@@ -466,7 +491,12 @@ dv_done:
             getNextToken();
 
             if (m_token != STRING)
-                throw SyntaxError(N_("filename string expected after INCBIN"));
+            {
+                Diag(getTokenSource(),
+                     m_diags->getCustomDiagID(Diagnostic::Error,
+                        "expected filename string after INCBIN"));
+                return false;
+            }
             std::string filename;
             std::swap(filename, STRING_val);
             getNextToken();
@@ -478,7 +508,12 @@ dv_done:
                 goto incbin_done;
             start.reset(new Expr);
             if (!ParseBExpr(*start, DV_EXPR))
-                throw SyntaxError(N_("expression expected for INCBIN start"));
+            {
+                Diag(getTokenSource(),
+                     m_diags->getCustomDiagID(Diagnostic::Error,
+                        "expected expression for INCBIN start"));
+                return false;
+            }
 
             // optional maxlen expression
             if (m_token == ',')
@@ -488,8 +523,10 @@ dv_done:
             maxlen.reset(new Expr);
             if (!ParseBExpr(*maxlen, DV_EXPR))
             {
-                throw SyntaxError(
-                    N_("expression expected for INCBIN maximum length"));
+                Diag(getTokenSource(),
+                     m_diags->getCustomDiagID(Diagnostic::Error,
+                        "expected expression for INCBIN maximum length"));
+                return false;
             }
 
 incbin_done:
@@ -521,8 +558,7 @@ NasmParser::ParseInsn()
 
                 if (isEol())
                     break;
-                Expect(',');
-                getNextToken();
+                ExpectAndConsume(',', diag::err_expected_comma);
             }
             return insn;
         }
@@ -558,11 +594,12 @@ NasmParser::ParseOperand()
     {
         case '[':
         {
+            clang::SourceLocation lhsrc = getTokenSource();
             getNextToken();
             Operand op = ParseMemoryAddress();
 
-            Expect(']');
-            getNextToken();
+            if (!ExpectAndConsume(']', diag::err_expected_rsquare))
+                Diag(lhsrc, diag::note_matching) << "[";
 
             return op;
         }
@@ -592,7 +629,10 @@ NasmParser::ParseOperand()
             Operand op = ParseOperand();
             const Register* reg = op.getReg();
             if (reg && reg->getSize() != size)
-                throw TypeError(N_("cannot override register size"));
+            {
+                Diag(getTokenSource(), diag::err_register_size_override);
+                return op;
+            }
             else
             {
                 // Silently override others unless a warning is turned on.
@@ -605,12 +645,11 @@ NasmParser::ParseOperand()
                 if (opsize != 0)
                 {
                     if (opsize != size)
-                        setWarn(WARN_SIZE_OVERRIDE, String::Compose(
-                            N_("overriding operand size from %1-bit to %2-bit"),
-                            opsize, size));
+                        Diag(getTokenSource(), diag::warn_operand_size_override)
+                            << opsize << size;
                     else
-                        setWarn(WARN_SIZE_OVERRIDE,
-                                N_("double operand size override"));
+                        Diag(getTokenSource(),
+                             diag::warn_operand_size_duplicate);
                 }
                 op.setSize(size);
             }
@@ -628,15 +667,20 @@ NasmParser::ParseOperand()
         {
             Expr::Ptr e(new Expr);
             if (!ParseBExpr(*e, NORM_EXPR))
-                throw SyntaxError(
-                    String::Compose(N_("expected operand, got %1"),
-                                    DescribeToken(m_token)));
+            {
+                Diag(getTokenSource(), diag::err_expected_operand);
+                return Operand(e);
+            }
             if (m_token != ':')
                 return Operand(e);
             getNextToken();
             Expr::Ptr off(new Expr);
             if (!ParseBExpr(*off, NORM_EXPR))
-                throw SyntaxError(N_("offset expected after ':'"));
+            {
+                Diag(getTokenSource(), diag::err_expected_expression_after)
+                    << ":";
+                return Operand(e);
+            }
             Operand op(off);
             op.setSeg(e);
             return op;
@@ -654,9 +698,8 @@ NasmParser::ParseMemoryAddress()
         {
             const SegmentRegister* segreg = SEGREG_val;
             getNextToken();
-            if (m_token != ':')
-                throw SyntaxError(N_("`:' required after segment register"));
-            getNextToken();
+            if (!ExpectAndConsume(':', diag::err_expected_colon_after_segreg))
+                return Operand(segreg);
             Operand op = ParseMemoryAddress();
             op.getMemory()->setSegReg(segreg);
             return op;
@@ -698,13 +741,20 @@ NasmParser::ParseMemoryAddress()
         {
             Expr::Ptr e(new Expr);
             if (!ParseBExpr(*e, NORM_EXPR))
-                throw SyntaxError(N_("memory address expected"));
+            {
+                Diag(getTokenSource(), diag::err_expected_memory_address);
+                return Operand(e);
+            }
             if (m_token != ':')
                 return Operand(m_object->getArch()->CreateEffAddr(e));
             getNextToken();
             Expr::Ptr off(new Expr);
             if (!ParseBExpr(*off, NORM_EXPR))
-                throw SyntaxError(N_("offset expected after ':'"));
+            {
+                Diag(getTokenSource(), diag::err_expected_expression_after)
+                    << ":";
+                return Operand(e);
+            }
             Operand op(m_object->getArch()->CreateEffAddr(off));
             op.setSeg(e);
             return op;
@@ -871,12 +921,17 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
             e.Calc(Op::NOT);
             return true;
         case '(':
+        {
+            clang::SourceLocation lhsrc = getTokenSource();
             getNextToken();
             if (!ParseExpr(e, type))
                 return false;
-            if (m_token != ')')
-                throw SyntaxError(N_("missing parenthesis"));
-            break;
+            // If missing closing paren, emit an error but otherwise assume
+            // it was there.
+            if (!ExpectAndConsume(')', diag::err_expected_rparen))
+                Diag(lhsrc, diag::note_matching) << "(";
+            return true;
+        }
         case INTNUM:
             e = INTNUM_val;
             break;
@@ -918,12 +973,17 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
             e.Calc(Op::SEG);
             return true;
         case '(':
+        {
+            clang::SourceLocation lhsrc = getTokenSource();
             getNextToken();
             if (!ParseExpr(e, type))
                 return false;
-            if (m_token != ')')
-                throw SyntaxError(N_("missing parenthesis"));
-            break;
+            // If missing closing paren, emit an error but otherwise assume
+            // it was there.
+            if (!ExpectAndConsume(')', diag::err_expected_rparen))
+                Diag(lhsrc, diag::note_matching) << "(";
+            return true;
+        }
         case INTNUM:
             e = INTNUM_val;
             break;
@@ -932,7 +992,7 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
             break;
         case REG:
             if (type == DV_EXPR)
-                throw SyntaxError(N_("data values can't have registers"));
+                Diag(getTokenSource(), diag::err_data_value_register);
             e = *REG_val;
             break;
         case STRING:
@@ -1075,6 +1135,7 @@ NasmParser::DirAlign(DirectiveInfo& info)
 void
 NasmParser::DirDefault(DirectiveInfo& info)
 {
+    clang::SourceLocation source = info.getSource();
     for (NameValues::const_iterator nv=info.getNameValues().begin(),
          end=info.getNameValues().end(); nv != end; ++nv)
     {
@@ -1086,11 +1147,16 @@ NasmParser::DirDefault(DirectiveInfo& info)
             else if (id.equals_lower("abs"))
                 info.getObject().getArch()->setVar("default_rel", 0);
             else
-                throw SyntaxError(String::Compose(
-                    N_("unrecognized default `%1'"), id));
+            {
+                Diag(source, m_diags->getCustomDiagID(Diagnostic::Error,
+                    "unrecognized default '%0'")) << id;
+            }
         }
         else
-            throw SyntaxError(N_("unrecognized default value"));
+        {
+            Diag(source, m_diags->getCustomDiagID(Diagnostic::Error,
+                "unrecognized default value"));
+        }
     }
 }
 

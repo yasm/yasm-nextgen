@@ -30,10 +30,8 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/StringExtras.h"
 #include "yasmx/Arch.h"
-#include "yasmx/Errwarns.h"
 #include "yasmx/Object.h"
 
 #include "modules/parsers/nasm/NasmParser.h"
@@ -103,8 +101,7 @@ NasmParser::HandleDotLabel(YYSTYPE* lvalp, YYCTYPE* tok, size_t toklen,
     if (m_locallabel_base.empty())
     {
         lvalp->str.assign(tok+zeropos, toklen-zeropos);
-        setWarn(WARN_GENERAL, String::Compose(
-            N_("no non-local label before `%1'"), lvalp->str));
+        Diag(getTokenSource(), diag::warn_no_nonlocal);
     }
     else
     {
@@ -537,8 +534,6 @@ scan:
                 default:
                     break;
             }
-            /* Propagate errors in case we got a warning from the arch */
-            m_errwarns.Propagate(m_source);
             /* Just an identifier, return as such. */
             lvalp->str.assign(TOK, TOKLEN);
             RETURN(ID);
@@ -552,9 +547,8 @@ scan:
 
         any
         {
-            setWarn(WARN_UNREC_CHAR, String::Compose(
-                N_("ignoring unrecognized character `%1'"),
-                ConvUnprint(TOK[0])));
+            Diag(getTokenSource(), diag::warn_unrecognized_char)
+                << ConvUnprint(TOK[0]);
             goto scan;
         }
     */
@@ -596,9 +590,8 @@ linechg:
 
         any
         {
-            setWarn(WARN_UNREC_CHAR, String::Compose(
-                N_("ignoring unrecognized character `%1'"),
-                ConvUnprint(TOK[0])));
+            Diag(getTokenSource(), diag::warn_unrecognized_char)
+                << ConvUnprint(TOK[0]);
             goto linechg;
         }
     */
@@ -643,9 +636,8 @@ directive:
 
         any
         {
-            setWarn(WARN_UNREC_CHAR, String::Compose(
-                N_("ignoring unrecognized character `%1'"),
-                ConvUnprint(TOK[0])));
+            Diag(getTokenSource(), diag::warn_unrecognized_char)
+                << ConvUnprint(TOK[0]);
             goto directive;
         }
     */
@@ -681,9 +673,8 @@ section_directive:
 
         any
         {
-            setWarn(WARN_UNREC_CHAR, String::Compose(
-                N_("ignoring unrecognized character `%1'"),
-                ConvUnprint(TOK[0])));
+            Diag(getTokenSource(), diag::warn_unrecognized_char)
+                << ConvUnprint(TOK[0]);
             goto section_directive;
         }
     */
@@ -864,8 +855,6 @@ directive2:
             lvalp->reg = regtmod.getReg();
             if (lvalp->reg)
                 RETURN(REG);
-            // Propagate errors in case we got a warning from the arch
-            m_errwarns.Propagate(m_source);
             /* Just an identifier, return as such. */
             lvalp->str.assign(TOK, TOKLEN);
             RETURN(ID);
@@ -879,9 +868,8 @@ directive2:
 
         any
         {
-            setWarn(WARN_UNREC_CHAR, String::Compose(
-                N_("ignoring unrecognized character `%1'"),
-                ConvUnprint(TOK[0])));
+            Diag(getTokenSource(), diag::warn_unrecognized_char)
+                << ConvUnprint(TOK[0]);
             goto scan;
         }
      */
@@ -893,12 +881,18 @@ stringconst:
 stringconst_scan:
     SCANINIT();
     if (*cursor == '\0')
-        throw SyntaxError(N_("unterminated string"));
+    {
+        char endchstr[] = {endch, 0};
+        Diag(getTokenSource(), diag::err_unterminated_string) << endchstr;
+        RETURN(STRING);
+    }
 
     /*!re2c
         [\000]
         {
-            throw SyntaxError(N_("unterminated string"));
+            char endchstr[] = {endch, 0};
+            Diag(getTokenSource(), diag::err_unterminated_string) << endchstr;
+            RETURN(STRING);
         }
 
         any
