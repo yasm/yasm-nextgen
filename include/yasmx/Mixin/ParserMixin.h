@@ -78,6 +78,7 @@ struct ParserMixin
     void DemandEol();
 
     void Expect(int token);
+    bool ExpectAndConsume(int token, unsigned int diag);
 
     Object* m_object;
     BytecodeContainer* m_container;
@@ -177,6 +178,20 @@ ParserMixin<T, S, C>::Expect(int token)
         return;
 
     throw ParseError(String::Compose("expected %1", T::DescribeToken(token)));
+}
+
+template <typename T, typename S, typename C>
+bool
+ParserMixin<T, S, C>::ExpectAndConsume(int token, unsigned int diag)
+{
+    if (m_token == token)
+    {
+        getNextToken();
+        return true;
+    }
+
+    Diag(getTokenSource(), diag);
+    return false;
 }
 
 } // namespace yasm
