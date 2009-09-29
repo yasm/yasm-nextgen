@@ -89,11 +89,11 @@ GasParser::DescribeToken(int token)
     return str;
 }
 
-void
+bool
 GasParser::ParseLine()
 {
     if (isEol())
-        return;
+        return true;
 
     m_container = m_object->getCurSection();
 
@@ -101,13 +101,14 @@ GasParser::ParseLine()
     if (insn.get() != 0)
     {
         insn->Append(*m_container, m_source);
-        return;
+        return true;
     }
 
     switch (m_token)
     {
         case ID:
         {
+            clang::SourceLocation name_src = getTokenSource();
             std::string name;
             std::swap(name, ID_val);
             getNextToken(); // ID
@@ -117,8 +118,7 @@ GasParser::ParseLine()
             if (p != m_gas_dirs.end())
             {
                 // call directive handler (function in this class) w/parameter
-                (this->*(p->second->handler))(p->second->param);
-                return;
+                return (this->*(p->second->handler))(p->second->param);
             }
 
             if (m_token == ':')
@@ -127,7 +127,8 @@ GasParser::ParseLine()
                 m_state = INITIAL;
                 getNextToken(); // :
                 DefineLabel(name, false);
-                ParseLine();
+                if (!ParseLine())
+                    return false;
                 break;
             }
             else if (m_token == '=')
@@ -139,8 +140,9 @@ GasParser::ParseLine()
                 Expr e;
                 if (!ParseExpr(e))
                 {
-                    throw SyntaxError(String::Compose(
-                        N_("expression expected after `%1'"), "="));
+                    Diag(getTokenSource(), diag::err_expected_expression_after)
+                        << "=";
+                    return false;
                 }
                 m_object->getSymbol(name)->DefineEqu(e, m_source);
                 break;
@@ -158,17 +160,19 @@ GasParser::ParseLine()
 
             // didn't match, warn/error as appropriate
             if (name[0] == '.')
-                setWarn(WARN_GENERAL, String::Compose(
-                    N_("directive `%1' not recognized"), name));
+                Diag(name_src, diag::warn_unrecognized_directive);
             else
-                throw SyntaxError(String::Compose(
-                    N_("instruction not recognized: `%1'"), name));
+            {
+                Diag(name_src, diag::err_unrecognized_instruction);
+                return false;
+            }
             break;
         }
         case LABEL:
             DefineLabel(LABEL_val, false);
             getNextToken(); // LABEL
-            ParseLine();
+            if (!ParseLine())
+                return false;
             break;
         case CPP_LINE_MARKER:
             getNextToken();
@@ -179,9 +183,10 @@ GasParser::ParseLine()
             ParseNasmLineMarker();
             break;
         default:
-            throw SyntaxError(
-                N_("label or instruction expected at start of line"));
+            Diag(getTokenSource(), diag::err_expected_insn_label_after_eol);
+            return false;
     }
+    return true;
 }
 
 void
@@ -376,14 +381,18 @@ GasParser::ParseNasmLineMarker()
 }
 
 // Line directive
-void
+bool
 GasParser::ParseDirLine(unsigned int param)
 {
-    Expect(INTNUM);
+    if (!Expect(INTNUM, diag::err_expected_integer))
+        return false;
+
     if (INTNUM_val->getSign() < 0)
     {
+        Diag(getTokenSource(), m_diags->getCustomDiagID(Diagnostic::Error,
+            "line number is negative"));
         getNextToken(); // INTNUM
-        throw SyntaxError(N_("line number is negative"));
+        return false;
     }
 
     m_dir_line = INTNUM_val->getUInt();
@@ -408,6 +417,7 @@ GasParser::ParseDirLine(unsigned int param)
         // Didn't see file yet
         m_dir_fileline = FL_LINE;
     }
+    return true;
 }
 
 //
@@ -431,7 +441,7 @@ GasRept::~GasRept()
 {
 }
 
-void
+bool
 GasParser::ParseDirRept(unsigned int param)
 {
     Expr e;
@@ -450,26 +460,32 @@ GasParser::ParseDirRept(unsigned int param)
         throw ValueError(N_("rept expression is negative"));
 
     m_rept.push_back(new GasRept(m_source, intn.getUInt()));
+    return true;
 }
 
-void
+bool
 GasParser::ParseDirEndr(unsigned int param)
 {
     // Shouldn't ever get here unless we didn't get a DIR_REPT first
     throw SyntaxError(N_("endr without matching rept"));
+    return false;
 }
 #endif
 //
 // Alignment directives
 //
 
-void
+bool
 GasParser::ParseDirAlign(unsigned int power2)
 {
     Expr bound, fill, maxskip;
 
     if (!ParseExpr(bound))
-        throw SyntaxError(N_(".align directive must specify alignment"));
+    {
+        Diag(getTokenSource(), m_diags->getCustomDiagID(Diagnostic::Error,
+            ".align directive must specify alignment"));
+        return false;
+    }
 
     if (m_token == ',')
     {
@@ -505,13 +521,15 @@ GasParser::ParseDirAlign(unsigned int power2)
     AppendAlign(*cur_section, bound, fill, maxskip,
                 cur_section->isCode() ?  m_object->getArch()->getFill() : 0,
                 m_source);
+    return true;
 }
 
-void
+bool
 GasParser::ParseDirOrg(unsigned int param)
 {
     // TODO: support expr instead of intnum
-    Expect(INTNUM);
+    if (!Expect(INTNUM, diag::err_expected_integer))
+        return false;
     unsigned long start = INTNUM_val->getUInt();
     getNextToken(); // INTNUM
 
@@ -520,42 +538,47 @@ GasParser::ParseDirOrg(unsigned int param)
     {
         getNextToken(); // ','
         // TODO: support expr instead of intnum
-        Expect(INTNUM);
+        if (!Expect(INTNUM, diag::err_expected_integer))
+            return false;
         value = INTNUM_val->getUInt();
         getNextToken(); // INTNUM
     }
 
     AppendOrg(*m_container, start, value, m_source);
+    return true;
 }
 
 //
 // Data visibility directives
 //
 
-void
+bool
 GasParser::ParseDirLocal(unsigned int param)
 {
-    Expect(ID);
+    if (!Expect(ID, diag::err_expected_ident))
+        return false;
     m_object->getSymbol(ID_val)->Declare(Symbol::DLOCAL, m_source);
     getNextToken(); // ID
+    return true;
 }
 
-void
+bool
 GasParser::ParseDirComm(unsigned int is_lcomm)
 {
-    Expect(ID);
+    if (!Expect(ID, diag::err_expected_ident))
+        return false;
     std::string id;
     std::swap(id, ID_val);
     getNextToken(); // ID
 
-    Expect(',');
-    getNextToken(); // ,
+    ExpectAndConsume(',', diag::err_expected_comma);
 
     Expr e, align;
     if (!ParseExpr(e))
     {
-        throw SyntaxError(String::Compose(N_("size expected for `%1'"),
-                                          ".COMM"));
+        Diag(getTokenSource(), m_diags->getCustomDiagID(Diagnostic::Error,
+            "size expected for .COMM"));
+        return false;
     }
     if (m_token == ',')
     {
@@ -591,120 +614,148 @@ GasParser::ParseDirComm(unsigned int is_lcomm)
         sym->Declare(Symbol::COMMON, m_source);
         setCommonSize(*sym, e);
     }
+    return true;
 }
 
 //
 // Integer data definition directives
 //
 
-void
+bool
 GasParser::ParseDirAscii(unsigned int withzero)
 {
     for (;;)
     {
-        Expect(STRING);
+        if (!Expect(STRING, diag::err_expected_string))
+            return false;
         AppendData(*m_container, STRING_val, withzero);
         getNextToken(); // STRING
         if (m_token != ',')
             break;
         getNextToken(); // ','
     }
+    return true;
 }
 
-void
+bool
 GasParser::ParseDirData(unsigned int size)
 {
     for (;;)
     {
         std::auto_ptr<Expr> e(new Expr);
         if (!ParseExpr(*e))
-            throw SyntaxError(N_("expression expected after `,'"));
+        {
+            Diag(getTokenSource(), diag::err_expected_expression_after) << ",";
+            return false;
+        }
         AppendData(*m_container, e, size, *m_arch, m_source);
         if (m_token != ',')
             break;
         getNextToken(); // ','
     }
+    return true;
 }
 
-void
+bool
 GasParser::ParseDirLeb128(unsigned int sign)
 {
     for (;;)
     {
         std::auto_ptr<Expr> e(new Expr);
         if (!ParseExpr(*e))
-            throw SyntaxError(N_("expression expected after `,'"));
+        {
+            Diag(getTokenSource(), diag::err_expected_expression_after) << ",";
+            return false;
+        }
         AppendLEB128(*m_container, e, sign, m_source);
         if (m_token != ',')
             break;
         getNextToken(); // ','
     }
+    return true;
 }
 
 //
 // Empty space / fill data definition directives
 //
 
-void
+bool
 GasParser::ParseDirZero(unsigned int param)
 {
     std::auto_ptr<Expr> e(new Expr);
     if (!ParseExpr(*e))
     {
-        throw SyntaxError(String::Compose(N_("expression expected after `%1'"),
-                                          ".ZERO"));
+        Diag(getTokenSource(), diag::err_expected_expression_after_id)
+            << ".ZERO";
+        return false;
     }
 
     BytecodeContainer& inner = AppendMultiple(*m_container, e, m_source);
     AppendByte(inner, 0);
+    return true;
 }
 
-void
+bool
 GasParser::ParseDirSkip(unsigned int param)
 {
     std::auto_ptr<Expr> e(new Expr);
     if (!ParseExpr(*e))
     {
-        throw SyntaxError(String::Compose(N_("expression expected after `%1'"),
-                                          ".SKIP"));
+        Diag(getTokenSource(), diag::err_expected_expression_after_id)
+            << ".SKIP";
+        return false;
     }
 
     BytecodeContainer& inner = AppendMultiple(*m_container, e, m_source);
     if (m_token != ',')
     {
         inner.AppendGap(1, m_source);
-        return;
+        return true;
     }
     getNextToken(); // ','
 
     // expression after comma forces fill of that value (as a byte)
     std::auto_ptr<Expr> e_val(new Expr);
     if (!ParseExpr(*e_val))
-        throw SyntaxError(N_("expression expected after `,'"));
+    {
+        Diag(getTokenSource(), diag::err_expected_expression_after) << ",";
+        return false;
+    }
     AppendData(inner, e_val, 1, *m_arch, m_source);
+    return true;
 }
 
 // fill data definition directive
-void
+bool
 GasParser::ParseDirFill(unsigned int param)
 {
     std::auto_ptr<Expr> repeat(new Expr);
     Expr size, value;
+    clang::SourceLocation size_src;
     if (!ParseExpr(*repeat))
     {
-        throw SyntaxError(String::Compose(N_("expression expected after `%1'"),
-                                          ".FILL"));
+        Diag(getTokenSource(), diag::err_expected_expression_after_id)
+            << ".FILL";
+        return false;
     }
     if (m_token == ',')
     {
         getNextToken(); // ','
+        size_src = getTokenSource();
         if (!ParseExpr(size))
-            throw SyntaxError(N_("expression expected after `,'"));
+        {
+            Diag(getTokenSource(), diag::err_expected_expression_after) << ",";
+            return false;
+        }
         if (m_token == ',')
         {
             getNextToken(); // ','
             if (!ParseExpr(value))
-                throw SyntaxError(N_("expression expected after `,'"));
+            {
+                Diag(getTokenSource(), diag::err_expected_expression_after)
+                    << ",";
+                return false;
+            }
         }
     }
 
@@ -713,7 +764,11 @@ GasParser::ParseDirFill(unsigned int param)
     {
         size.Simplify();
         if (!size.isIntNum())
-            throw NotAbsoluteError(N_("size must be an absolute expression"));
+        {
+            Diag(size_src, m_diags->getCustomDiagID(Diagnostic::Error,
+                "size must be an absolute expression"));
+            return false;
+        }
         ssize = size.getIntNum().getUInt();
     }
 
@@ -728,31 +783,35 @@ GasParser::ParseDirFill(unsigned int param)
         std::swap(*value_copy, value);
         AppendData(inner, value_copy, ssize, *m_arch, m_source);
     }
+    return true;
 }
 
 //
 // Section directives
 //
 
-void
+bool
 GasParser::ParseDirBssSection(unsigned int param)
 {
     SwitchSection(".bss", true);
+    return true;
 }
 
-void
+bool
 GasParser::ParseDirDataSection(unsigned int param)
 {
     SwitchSection(".data", true);
+    return true;
 }
 
-void
+bool
 GasParser::ParseDirTextSection(unsigned int param)
 {
     SwitchSection(".text", true);
+    return true;
 }
 
-void
+bool
 GasParser::ParseDirSection(unsigned int param)
 {
     // DIR_SECTION ID ',' STRING ',' '@' ID ',' dirvals
@@ -760,34 +819,40 @@ GasParser::ParseDirSection(unsigned int param)
     // function to set parser state appropriately.
     m_state = SECTION_DIRECTIVE;
     DirectiveInfo info(*m_object, m_source);
-    ParseDirective(&info.getNameValues());
+    if (!ParseDirective(&info.getNameValues()))
+        return false;
     (*m_dirs)[".section"](info);
     m_state = INITIAL;
+    return true;
 }
 
 //
 // Other directives
 //
 
-void
+bool
 GasParser::ParseDirEqu(unsigned int param)
 {
     // ID ',' expr
-    Expect(ID);
+    if (!Expect(ID, diag::err_expected_ident))
+        return false;
     std::string id;
     std::swap(id, ID_val);
     getNextToken(); // ID
 
-    Expect(',');
-    getNextToken(); // ','
+    ExpectAndConsume(',', diag::err_expected_comma);
 
     Expr e;
     if (!ParseExpr(e))
-        throw SyntaxError(N_("expression expected after `,'"));
+    {
+        Diag(getTokenSource(), diag::err_expected_expression_after) << ",";
+        return false;
+    }
     m_object->getSymbol(id)->DefineEqu(e, m_source);
+    return true;
 }
 
-void
+bool
 GasParser::ParseDirFile(unsigned int param)
 {
     if (m_token == STRING)
@@ -823,21 +888,23 @@ GasParser::ParseDirFile(unsigned int param)
 #endif
         // Pass change along to debug format
         setDebugFile(filename);
-        return;
+        return true;
     }
 
     // fileno filename form
     if (m_token != INTNUM)
-        return;
+        return true;
     std::auto_ptr<IntNum> fileno = INTNUM_val;
     getNextToken(); // INTNUM
 
-    Expect(STRING);
+    if (!Expect(STRING, diag::err_expected_string))
+        return false;
     std::string filename;
     std::swap(filename, STRING_val);
     getNextToken(); // STRING
 
     setDebugFile(*fileno, filename);
+    return true;
 }
 
 Insn::Ptr
@@ -874,8 +941,7 @@ GasParser::ParseInsn()
                     insn->AddOperand(ParseOperand());
                     if (isEol())
                         break;
-                    Expect(',');
-                    getNextToken();
+                    ExpectAndConsume(',', diag::err_expected_comma);
                 }
             }
             return insn;
@@ -915,7 +981,7 @@ GasParser::ParseInsn()
     }
 }
 
-void
+bool
 GasParser::ParseDirective(NameValues* nvs)
 {
     for (;;)
@@ -932,7 +998,7 @@ GasParser::ParseDirective(NameValues* nvs)
                     {
                         Expr::Ptr e(new Expr);
                         if (!ParseExpr(*e))
-                            return;
+                            return false;
                         nvs->push_back(new NameValue(e));
                         break;
                     }
@@ -959,7 +1025,7 @@ GasParser::ParseDirective(NameValues* nvs)
             {
                 Expr::Ptr e(new Expr);
                 if (!ParseExpr(*e))
-                    return;
+                    return false;
                 nvs->push_back(new NameValue(e));
                 break;
             }
@@ -967,6 +1033,7 @@ GasParser::ParseDirective(NameValues* nvs)
         if (m_token == ',')
             getNextToken(); // ','
     }
+    return true;
 }
 
 // instruction operands
@@ -980,8 +1047,7 @@ GasParser::ParseMemoryAddress()
     {
         const SegmentRegister* segreg = SEGREG_val;
         getNextToken(); // SEGREG
-        Expect(':');
-        getNextToken(); // ':'
+        ExpectAndConsume(':', diag::err_expected_colon_after_segreg);
         Operand op = ParseMemoryAddress();
         op.getMemory()->setSegReg(segreg);
         return op;
@@ -999,6 +1065,7 @@ GasParser::ParseMemoryAddress()
     {
         bool havereg = false;
         const Register* reg = 0;
+        clang::SourceLocation scale_src;
         bool havescale = false;
         IntNum scale;
         Expr e2;
@@ -1041,6 +1108,7 @@ GasParser::ParseMemoryAddress()
         }
 
         // scale
+        scale_src = getTokenSource();
         if (m_token != INTNUM)
             throw SyntaxError(N_("non-integer scale"));
         scale = *INTNUM_val;
@@ -1056,9 +1124,7 @@ done:
             if (!havereg)
             {
                 if (scale.getUInt() != 1)
-                    setWarn(WARN_GENERAL, String::Compose(
-                        N_("scale factor of %u without an index register"),
-                        scale));
+                    Diag(scale_src, diag::warn_scale_without_index);
             }
             else
             {
@@ -1312,16 +1378,16 @@ GasParser::ParseExpr2(Expr& e)
                 // TODO: this is needed for shared objects, e.g. sym@PLT
                 getNextToken(); // '@'
                 if (m_token != ID)
-                    throw SyntaxError(N_("expected identifier after `@'"));
+                {
+                    Diag(getTokenSource(), diag::err_expected_ident);
+                    return false;
+                }
                 SymbolRef wrt = m_object->FindSpecialSymbol(ID_val);
-                getNextToken(); // ID
                 if (wrt)
                     e.Calc(Op::WRT, wrt);
                 else
-                {
-                    setWarn(WARN_GENERAL,
-                            N_("unrecognized identifier after `@'"));
-                }
+                    Diag(getTokenSource(), diag::warn_unrecognized_ident);
+                getNextToken(); // ID
             }
             return true;
         }
@@ -1409,8 +1475,14 @@ GasParser::DoParse()
                 getNextToken();
                 if (!isEol())
                 {
-                    ParseLine();
-                    DemandEol();
+                    bool ok = ParseLine();
+                    if (!ok)
+                    {
+                        DemandEolNoThrow();
+                        m_state = INITIAL;
+                    }
+                    else
+                        DemandEol();
                 }
             } while (m_token != '\0');
 

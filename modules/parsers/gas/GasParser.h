@@ -103,7 +103,7 @@ class GasParser;
 struct GasDirLookup
 {
     const char* name;
-    void (GasParser::*handler) (unsigned int);
+    bool (GasParser::*handler) (unsigned int);
     unsigned int param;
 };
 
@@ -155,36 +155,36 @@ public:
 
 private:
 
-    void ParseLine();
+    bool ParseLine();
     void setDebugFile(llvm::StringRef filename);
     void setDebugFile(const IntNum& fileno, llvm::StringRef filename);
     void ParseCppLineMarker();
     void ParseNasmLineMarker();
 
-    void ParseDirLine(unsigned int);
+    bool ParseDirLine(unsigned int);
 #if 0
-    void ParseDirRept(unsigned int);
-    void ParseDirEndr(unsigned int);
+    bool ParseDirRept(unsigned int);
+    bool ParseDirEndr(unsigned int);
 #endif
-    void ParseDirAlign(unsigned int power2);
-    void ParseDirOrg(unsigned int);
-    void ParseDirLocal(unsigned int);
-    void ParseDirComm(unsigned int is_lcomm);
-    void ParseDirAscii(unsigned int withzero);
-    void ParseDirData(unsigned int size);
-    void ParseDirLeb128(unsigned int sign);
-    void ParseDirZero(unsigned int);
-    void ParseDirSkip(unsigned int);
-    void ParseDirFill(unsigned int);
-    void ParseDirBssSection(unsigned int);
-    void ParseDirDataSection(unsigned int);
-    void ParseDirTextSection(unsigned int);
-    void ParseDirSection(unsigned int);
-    void ParseDirEqu(unsigned int);
-    void ParseDirFile(unsigned int);
+    bool ParseDirAlign(unsigned int power2);
+    bool ParseDirOrg(unsigned int);
+    bool ParseDirLocal(unsigned int);
+    bool ParseDirComm(unsigned int is_lcomm);
+    bool ParseDirAscii(unsigned int withzero);
+    bool ParseDirData(unsigned int size);
+    bool ParseDirLeb128(unsigned int sign);
+    bool ParseDirZero(unsigned int);
+    bool ParseDirSkip(unsigned int);
+    bool ParseDirFill(unsigned int);
+    bool ParseDirBssSection(unsigned int);
+    bool ParseDirDataSection(unsigned int);
+    bool ParseDirTextSection(unsigned int);
+    bool ParseDirSection(unsigned int);
+    bool ParseDirEqu(unsigned int);
+    bool ParseDirFile(unsigned int);
 
     Insn::Ptr ParseInsn();
-    void ParseDirective(NameValues* nvs);
+    bool ParseDirective(NameValues* nvs);
     Operand ParseMemoryAddress();
     Operand ParseOperand();
     bool ParseExpr(Expr& e);

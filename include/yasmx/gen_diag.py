@@ -141,6 +141,7 @@ add_error("err_expected_lsquare", "expected '['")
 add_error("err_expected_rsquare", "expected ']'")
 add_error("err_expected_lparen_after", "expected '(' after '%0'")
 add_error("err_expected_lparen_after_id", "expected '(' after %0")
+add_error("err_expected_plus", "expected '+'")
 add_error("err_expected_comma", "expected ','")
 add_error("err_expected_colon", "expected ':'")
 add_error("err_expected_colon_after_segreg", "expected ':' after segment register")
@@ -151,7 +152,21 @@ add_error("err_expected_expression_after", "expected expression after '%0'")
 add_error("err_expected_expression_after_id", "expected expression after %0")
 add_error("err_expected_expression_or_string",
           "expression or string expected")
+add_error("err_expected_string", "expected string")
+add_error("err_expected_integer", "expected integer");
+add_error("err_expected_filename", "expected filename");
+add_error("err_eol_junk", "junk at end of line")
+
+# Unrecognized errors/warnings
 add_error("err_unrecognized_value", "unrecognized value")
+add_error("err_unrecognized_register", "unrecognized register name")
+add_error("err_unrecognized_instruction", "unrecognized instruction")
+add_warning("warn_unrecognized_directive", "unrecognized directive")
+add_warning("warn_unrecognized_ident", "unrecognized identifier")
+
+# GAS warnings
+add_warning("warn_scale_without_index",
+            "scale factor without an index register")
 
 # Expression
 add_error("err_data_value_register", "data values cannot have registers")
@@ -206,6 +221,8 @@ add_warning("warn_integer_too_large", "integer constant is too large")
 add_warning("warn_integer_too_large_for_signed",
             "integer constant is so large that it is unsigned")
 add_warning("warn_unknown_escape", "unknown escape sequence '\\%0'")
+add_warning("warn_oct_escape_out_of_range",
+            "octal escape sequence out of range")
 add_error("err_hex_escape_no_digits",
           "\\x used with no following hex digits")
 add_error("err_invalid_decimal_digit",

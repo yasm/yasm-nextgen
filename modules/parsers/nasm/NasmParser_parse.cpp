@@ -194,18 +194,21 @@ NasmParser::ParseLine()
         {
             getNextToken();
 
-            Expect(INTNUM);
+            if (!Expect(INTNUM, diag::err_expected_integer))
+                return false;
             std::auto_ptr<IntNum> line(INTNUM_val);
             getNextToken();
 
-            Expect('+');
-            getNextToken();
+            if (!ExpectAndConsume('+', diag::err_expected_plus))
+                return false;
 
-            Expect(INTNUM);
+            if (!Expect(INTNUM, diag::err_expected_integer))
+                return false;
             std::auto_ptr<IntNum> incr(INTNUM_val);
             getNextToken();
 
-            Expect(FILENAME);
+            if (!Expect(FILENAME, diag::err_expected_filename))
+                return false;
             std::string filename;
             std::swap(filename, FILENAME_val);
             getNextToken();
@@ -225,11 +228,8 @@ NasmParser::ParseLine()
             m_state = DIRECTIVE;
             getNextToken();
 
-            if (m_token != DIRECTIVE_NAME)
-            {
-                Diag(getTokenSource(), diag::err_expected_directive_name);
+            if (!Expect(DIRECTIVE_NAME, diag::err_expected_directive_name))
                 return false;
-            }
             std::string dirname;
             std::swap(dirname, DIRECTIVE_NAME_val);
             getNextToken();
@@ -253,13 +253,11 @@ NasmParser::ParseLine()
                     return false;
             }
             DoDirective(dirname, info);
-            if (m_token != ']')
+            if (!ExpectAndConsume(']', diag::err_expected_rsquare))
             {
-                Diag(getTokenSource(), diag::err_expected_rsquare);
                 Diag(lhsrc, diag::note_matching) << "[";
                 return false;
             }
-            getNextToken();
             break;
         }
         case TIMES: // TIMES expr exp
@@ -490,13 +488,8 @@ dv_done:
 
             getNextToken();
 
-            if (m_token != STRING)
-            {
-                Diag(getTokenSource(),
-                     m_diags->getCustomDiagID(Diagnostic::Error,
-                        "expected filename string after INCBIN"));
+            if (!Expect(STRING, diag::err_expected_string))
                 return false;
-            }
             std::string filename;
             std::swap(filename, STRING_val);
             getNextToken();
@@ -509,9 +502,7 @@ dv_done:
             start.reset(new Expr);
             if (!ParseBExpr(*start, DV_EXPR))
             {
-                Diag(getTokenSource(),
-                     m_diags->getCustomDiagID(Diagnostic::Error,
-                        "expected expression for INCBIN start"));
+                Diag(getTokenSource(), diag::err_expected_expression);
                 return false;
             }
 
@@ -523,9 +514,7 @@ dv_done:
             maxlen.reset(new Expr);
             if (!ParseBExpr(*maxlen, DV_EXPR))
             {
-                Diag(getTokenSource(),
-                     m_diags->getCustomDiagID(Diagnostic::Error,
-                        "expected expression for INCBIN maximum length"));
+                Diag(getTokenSource(), diag::err_expected_expression);
                 return false;
             }
 

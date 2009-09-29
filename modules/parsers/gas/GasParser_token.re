@@ -33,8 +33,6 @@
 #include <cstring>
 
 #include "llvm/ADT/StringRef.h"
-#include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/StringExtras.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Object.h"
@@ -436,8 +434,10 @@ scan:
                 default:
                     break;
             }
-            throw Error(String::Compose(N_("Unrecognized register name `%1'"),
-                                        std::string(TOK+1, TOKLEN-1)));
+            Diag(m_source.getFileLocWithOffset(m_tok+1-m_bot),
+                 diag::err_unrecognized_register);
+            lvalp->str.assign(TOK, TOKLEN);
+            RETURN(ID);
         }
 
         /* local label */
@@ -500,9 +500,8 @@ scan:
 
         any
         {
-            setWarn(WARN_UNREC_CHAR, String::Compose(
-                N_("ignoring unrecognized character `%1'"),
-                ConvUnprint(TOK[0])));
+            Diag(getTokenSource(), diag::warn_unrecognized_char)
+                << ConvUnprint(TOK[0]);
             goto scan;
         }
     */
@@ -570,9 +569,8 @@ section_directive:
 
         any
         {
-            setWarn(WARN_UNREC_CHAR, String::Compose(
-                N_("ignoring unrecognized character `%1'"),
-                ConvUnprint(TOK[0])));
+            Diag(getTokenSource(), diag::warn_unrecognized_char)
+                << ConvUnprint(TOK[0]);
             goto section_directive;
         }
     */
@@ -608,7 +606,10 @@ stringconst:
 stringconst_scan:
     SCANINIT();
     if (*cursor == '\0')
-        throw SyntaxError(N_("unexpected end of file in string"));
+    {
+        Diag(getTokenSource(), diag::err_unterminated_string) << "\"";
+        RETURN(STRING);
+    }
 
     /*!re2c
         /* Handle escaped double-quote by copying and continuing */
@@ -621,13 +622,14 @@ stringconst_scan:
         dquot
         {
             if (!Unescape(&lvalp->str))
-                setWarn(WARN_GENERAL, N_("octal value out of range"));
+                Diag(getTokenSource(), diag::warn_oct_escape_out_of_range);
             RETURN(STRING);
         }
 
         [\000]
         {
-            throw SyntaxError(N_("unexpected end of file in string"));
+            Diag(getTokenSource(), diag::err_unterminated_string) << "\"";
+            RETURN(STRING);
         }
 
         any

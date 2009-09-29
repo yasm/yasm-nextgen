@@ -29,8 +29,6 @@
 #include <util.h>
 
 #include "clang/Basic/SourceLocation.h"
-#include <yasmx/Support/Compose.h>
-#include <yasmx/Support/errwarn.h>
 #include <yasmx/Arch.h>
 #include <yasmx/Diagnostic.h>
 #include <yasmx/Object.h>
@@ -77,7 +75,7 @@ struct ParserMixin
     // intervening tokens, generates an error (junk at end of line).
     void DemandEol();
 
-    void Expect(int token);
+    bool Expect(int token, unsigned int diag);
     bool ExpectAndConsume(int token, unsigned int diag);
 
     Object* m_object;
@@ -162,22 +160,19 @@ ParserMixin<T, S, C>::DemandEol()
     if (isEol())
         return;
 
-    char tokch = m_tokch;
+    Diag(getTokenSource(), diag::err_eol_junk);
     DemandEolNoThrow();
-
-    throw SyntaxError(String::Compose(
-        N_("junk at end of line, first unrecognized character is `%1'"),
-        tokch));
 }
 
 template <typename T, typename S, typename C>
-void
-ParserMixin<T, S, C>::Expect(int token)
+bool
+ParserMixin<T, S, C>::Expect(int token, unsigned int diag)
 {
     if (m_token == token)
-        return;
+        return true;
 
-    throw ParseError(String::Compose("expected %1", T::DescribeToken(token)));
+    Diag(getTokenSource(), diag);
+    return false;
 }
 
 template <typename T, typename S, typename C>
