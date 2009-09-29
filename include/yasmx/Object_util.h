@@ -37,7 +37,7 @@ namespace llvm { class StringRef; }
 namespace yasm
 {
 
-class NameValues;
+class DirectiveInfo;
 class Object;
 class ObjectFormat;
 
@@ -47,16 +47,11 @@ class ObjectFormat;
 /// Directives::ANY.
 /// @param objfmt       Object format
 /// @param sectname     Ident section name
-/// @param object       Object
-/// @param namevals     Directive name/values
-/// @param line         Line number
+/// @param info         Directive info
 YASM_LIB_EXPORT
 void DirIdentCommon(ObjectFormat& objfmt,
                     const llvm::StringRef& sectname,
-                    Object& object,
-                    NameValues& namevals,
-                    NameValues& objext_namevals,
-                    unsigned long line);
+                    DirectiveInfo& info);
 
 } // namespace yasm
 

@@ -77,16 +77,10 @@ protected:
                                        unsigned long line);
 
 protected:
-    void DirExport(Object& object,
-                   NameValues& namevals,
-                   NameValues& objext_namevals,
-                   unsigned long line);
+    void DirExport(DirectiveInfo& info);
 
 private:
-    void DirSafeSEH(Object& object,
-                    NameValues& namevals,
-                    NameValues& objext_namevals,
-                    unsigned long line);
+    void DirSafeSEH(DirectiveInfo& info);
 };
 
 }}} // namespace yasm::objfmt::win32

@@ -91,48 +91,19 @@ private:
 
     void CheckProcFrameState(const char* dirname);
 
-    void DirProcFrame(Object& object,
-                      NameValues& namevals,
-                      NameValues& objext_namevals,
-                      unsigned long line);
-    void DirPushReg(Object& object,
-                    NameValues& namevals,
-                    NameValues& objext_namevals,
-                    unsigned long line);
-    void DirSetFrame(Object& object,
-                     NameValues& namevals,
-                     NameValues& objext_namevals,
-                     unsigned long line);
-    void DirAllocStack(Object& object,
-                       NameValues& namevals,
-                       NameValues& objext_namevals,
-                       unsigned long line);
+    void DirProcFrame(DirectiveInfo& info);
+    void DirPushReg(DirectiveInfo& info);
+    void DirSetFrame(DirectiveInfo& info);
+    void DirAllocStack(DirectiveInfo& info);
 
-    void SaveCommon(Object& object,
-                    NameValues& namevals,
-                    unsigned long line,
+    void SaveCommon(DirectiveInfo& info,
                     const char* dirname,
                     UnwindCode::Opcode op);
-    void DirSaveReg(Object& object,
-                    NameValues& namevals,
-                    NameValues& objext_namevals,
-                    unsigned long line);
-    void DirSaveXMM128(Object& object,
-                       NameValues& namevals,
-                       NameValues& objext_namevals,
-                       unsigned long line);
-    void DirPushFrame(Object& object,
-                      NameValues& namevals,
-                      NameValues& objext_namevals,
-                      unsigned long line);
-    void DirEndProlog(Object& object,
-                      NameValues& namevals,
-                      NameValues& objext_namevals,
-                      unsigned long line);
-    void DirEndProcFrame(Object& object,
-                         NameValues& namevals,
-                         NameValues& objext_namevals,
-                         unsigned long line);
+    void DirSaveReg(DirectiveInfo& info);
+    void DirSaveXMM128(DirectiveInfo& info);
+    void DirPushFrame(DirectiveInfo& info);
+    void DirEndProlog(DirectiveInfo& info);
+    void DirEndProcFrame(DirectiveInfo& info);
 
     // data for proc_frame and related directives
     unsigned long m_proc_frame;         // Line number of start of proc, or 0
@@ -170,11 +141,12 @@ Win64Object::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
 }
 
 void
-Win64Object::DirProcFrame(Object& object,
-                          NameValues& namevals,
-                          NameValues& objext_namevals,
-                          unsigned long line)
+Win64Object::DirProcFrame(DirectiveInfo& info)
 {
+    assert(info.isObject(m_object));
+    NameValues& namevals = info.getNameValues();
+    unsigned long line = info.getLine();
+
     if (!namevals.front().isId())
         throw SyntaxError(N_("argument to [PROC_FRAME] must be symbol name"));
     llvm::StringRef name = namevals.front().getId();
@@ -190,7 +162,7 @@ Win64Object::DirProcFrame(Object& object,
     m_done_prolog = 0;
     m_unwind.reset(new UnwindInfo);
 
-    SymbolRef proc = object.getSymbol(name);
+    SymbolRef proc = m_object.getSymbol(name);
     proc->Use(line);
     m_unwind->setProc(proc);
 
@@ -202,7 +174,7 @@ Win64Object::DirProcFrame(Object& object,
             throw SyntaxError(
                 N_("[PROC_FRAME] error handler must be symbol name"));
         }
-        SymbolRef ehandler = object.getSymbol(namevals[1].getId());
+        SymbolRef ehandler = m_object.getSymbol(namevals[1].getId());
         ehandler->Use(line);
         m_unwind->setEHandler(ehandler);
     }
@@ -255,16 +227,16 @@ getRegisterFromNameValue(Object& object, NameValue& nv, unsigned long line)
 }
 
 void
-Win64Object::DirPushReg(Object& object,
-                        NameValues& namevals,
-                        NameValues& objext_namevals,
-                        unsigned long line)
+Win64Object::DirPushReg(DirectiveInfo& info)
 {
+    assert(info.isObject(m_object));
+    NameValues& namevals = info.getNameValues();
+
     assert(!namevals.empty());
     CheckProcFrameState("PUSHREG");
 
     const Register* reg =
-        getRegisterFromNameValue(object, namevals.front(), line);
+        getRegisterFromNameValue(m_object, namevals.front(), info.getLine());
     if (!reg)
     {
         throw SyntaxError(String::Compose(
@@ -274,22 +246,23 @@ Win64Object::DirPushReg(Object& object,
     // Generate a PUSH_NONVOL unwind code.
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(object, "PUSHREG", line),
+        getCurPos(m_object, "PUSHREG", info.getLine()),
         UnwindCode::PUSH_NONVOL,
         reg->getNum() & 0xF)));
 }
 
 void
-Win64Object::DirSetFrame(Object& object,
-                         NameValues& namevals,
-                         NameValues& objext_namevals,
-                         unsigned long line)
+Win64Object::DirSetFrame(DirectiveInfo& info)
 {
+    assert(info.isObject(m_object));
+    NameValues& namevals = info.getNameValues();
+    unsigned long line = info.getLine();
+
     assert(!namevals.empty());
     CheckProcFrameState("SETFRAME");
 
     const Register* reg =
-        getRegisterFromNameValue(object, namevals.front(), line);
+        getRegisterFromNameValue(m_object, namevals.front(), line);
     if (!reg)
     {
         throw SyntaxError(String::Compose(
@@ -298,7 +271,7 @@ Win64Object::DirSetFrame(Object& object,
 
     std::auto_ptr<Expr> off(0);
     if (namevals.size() > 1)
-        off = namevals[1].ReleaseExpr(object, line);
+        off = namevals[1].ReleaseExpr(m_object, line);
     else
         off.reset(new Expr(0));
 
@@ -309,7 +282,7 @@ Win64Object::DirSetFrame(Object& object,
     // Generate a SET_FPREG unwind code
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(object, "SETFRAME", line),
+        getCurPos(m_object, "SETFRAME", line),
         UnwindCode::SET_FPREG,
         reg->getNum() & 0xF,
         8,
@@ -317,11 +290,11 @@ Win64Object::DirSetFrame(Object& object,
 }
 
 void
-Win64Object::DirAllocStack(Object& object,
-                           NameValues& namevals,
-                           NameValues& objext_namevals,
-                           unsigned long line)
+Win64Object::DirAllocStack(DirectiveInfo& info)
 {
+    assert(info.isObject(m_object));
+    NameValues& namevals = info.getNameValues();
+
     assert(!namevals.empty());
     CheckProcFrameState("ALLOCSTACK");
 
@@ -336,25 +309,27 @@ Win64Object::DirAllocStack(Object& object,
     // ALLOC_LARGE if necessary.
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(object, "ALLOCSTACK", line),
+        getCurPos(m_object, "ALLOCSTACK", info.getLine()),
         UnwindCode::ALLOC_SMALL,
         0,
         7,
-        nv.ReleaseExpr(object, line))));
+        nv.ReleaseExpr(m_object, info.getLine()))));
 }
 
 void
-Win64Object::SaveCommon(Object& object,
-                        NameValues& namevals,
-                        unsigned long line,
+Win64Object::SaveCommon(DirectiveInfo& info,
                         const char* dirname,
                         UnwindCode::Opcode op)
 {
+    assert(info.isObject(m_object));
+    NameValues& namevals = info.getNameValues();
+    unsigned long line = info.getLine();
+
     assert(!namevals.empty());
     CheckProcFrameState(dirname);
 
     const Register* reg =
-        getRegisterFromNameValue(object, namevals.front(), line);
+        getRegisterFromNameValue(m_object, namevals.front(), line);
     if (!reg)
     {
         throw SyntaxError(String::Compose(
@@ -375,62 +350,52 @@ Win64Object::SaveCommon(Object& object,
         op,
         reg->getNum() & 0xF,
         16,
-        namevals[1].ReleaseExpr(object, line))));
+        namevals[1].ReleaseExpr(m_object, line))));
 }
 
 void
-Win64Object::DirSaveReg(Object& object,
-                        NameValues& namevals,
-                        NameValues& objext_namevals,
-                        unsigned long line)
+Win64Object::DirSaveReg(DirectiveInfo& info)
 {
-    SaveCommon(object, namevals, line, "SAVEREG", UnwindCode::SAVE_NONVOL);
+    SaveCommon(info, "SAVEREG", UnwindCode::SAVE_NONVOL);
 }
 
 void
-Win64Object::DirSaveXMM128(Object& object,
-                           NameValues& namevals,
-                           NameValues& objext_namevals,
-                           unsigned long line)
+Win64Object::DirSaveXMM128(DirectiveInfo& info)
 {
-    SaveCommon(object, namevals, line, "SAVEXMM128", UnwindCode::SAVE_XMM128);
+    SaveCommon(info, "SAVEXMM128", UnwindCode::SAVE_XMM128);
 }
 
 void
-Win64Object::DirPushFrame(Object& object,
-                          NameValues& namevals,
-                          NameValues& objext_namevals,
-                          unsigned long line)
+Win64Object::DirPushFrame(DirectiveInfo& info)
 {
+    assert(info.isObject(m_object));
     CheckProcFrameState("PUSHFRAME");
 
     // Generate a PUSH_MACHFRAME unwind code.  If there's any parameter,
     // we set info to 1.  Otherwise we set info to 0.
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(object, "PUSHFRAME", line),
+        getCurPos(m_object, "PUSHFRAME", info.getLine()),
         UnwindCode::PUSH_MACHFRAME,
-        namevals.empty() ? 0 : 1)));
+        info.getNameValues().empty() ? 0 : 1)));
 }
 
 void
-Win64Object::DirEndProlog(Object& object,
-                          NameValues& namevals,
-                          NameValues& objext_namevals,
-                          unsigned long line)
+Win64Object::DirEndProlog(DirectiveInfo& info)
 {
+    assert(info.isObject(m_object));
     CheckProcFrameState("ENDPROLOG");
-    m_done_prolog = line;
+    m_done_prolog = info.getLine();
 
-    m_unwind->setProlog(getCurPos(object, "ENDPROLOG", line));
+    m_unwind->setProlog(getCurPos(m_object, "ENDPROLOG", info.getLine()));
 }
 
 void
-Win64Object::DirEndProcFrame(Object& object,
-                             NameValues& namevals,
-                             NameValues& objext_namevals,
-                             unsigned long line)
+Win64Object::DirEndProcFrame(DirectiveInfo& info)
 {
+    assert(info.isObject(m_object));
+    unsigned long line = info.getLine();
+
     if (m_proc_frame == 0)
     {
         throw SyntaxError(String::Compose(
@@ -449,7 +414,7 @@ Win64Object::DirEndProcFrame(Object& object,
 
     SymbolRef proc_sym = m_unwind->getProc();
 
-    SymbolRef curpos = getCurPos(object, "ENDPROC_FRAME", line);
+    SymbolRef curpos = getCurPos(m_object, "ENDPROC_FRAME", line);
 
     //
     // Add unwind info to end of .xdata section.
@@ -470,7 +435,7 @@ Win64Object::DirEndProcFrame(Object& object,
     SymbolRef xdata_sym = xdata->getAssocData<CoffSection>()->m_sym;
 
     // Add unwind info.  Use line number of start of procedure.
-    Arch& arch = *object.getArch();
+    Arch& arch = *m_object.getArch();
     Generate(m_unwind, *xdata, m_proc_frame, arch);
 
     //

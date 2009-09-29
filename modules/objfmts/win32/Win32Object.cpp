@@ -131,22 +131,22 @@ Win32Object::DirSectionInitHelpers(DirHelpers& helpers,
 }
 
 void
-Win32Object::DirExport(Object& object,
-                       NameValues& namevals,
-                       NameValues& objext_namevals,
-                       unsigned long line)
+Win32Object::DirExport(DirectiveInfo& info)
 {
+    assert(info.isObject(m_object));
+    NameValues& namevals = info.getNameValues();
+
     if (!namevals.front().isId())
         throw SyntaxError(N_("argument to EXPORT must be symbol name"));
     llvm::StringRef symname = namevals.front().getId();
 
     // Reference exported symbol (to generate error if not declared)
-    m_object.getSymbol(symname)->Use(line);
+    m_object.getSymbol(symname)->Use(info.getLine());
 
     // Add to end of linker directives, creating directive section if needed.
     Section* sect = m_object.FindSection(".drectve");
     if (!sect)
-        sect = AppendSection(".drectve", line);
+        sect = AppendSection(".drectve", info.getLine());
 
     // Add text to end of section
     AppendData(*sect, "-export:", 1, false);
@@ -155,11 +155,12 @@ Win32Object::DirExport(Object& object,
 }
 
 void
-Win32Object::DirSafeSEH(Object& object,
-                        NameValues& namevals,
-                        NameValues& objext_namevals,
-                        unsigned long line)
+Win32Object::DirSafeSEH(DirectiveInfo& info)
 {
+    assert(info.isObject(m_object));
+    NameValues& namevals = info.getNameValues();
+    unsigned long line = info.getLine();
+
     if (!namevals.front().isId())
         throw SyntaxError(N_("argument to SAFESEH must be symbol name"));
     llvm::StringRef symname = namevals.front().getId();

@@ -31,9 +31,9 @@
 namespace yasm
 {
 
+class DirectiveInfo;
 class DirHelpers;
 class IntNum;
-class NameValues;
 
 namespace objfmt
 {
@@ -125,18 +125,9 @@ private:
 
     CoffSymbol* m_file_coffsym;     // Data for .file symbol
 
-    void DirGasSection(Object& object,
-                       NameValues& namevals,
-                       NameValues& objext_namevals,
-                       unsigned long line);
-    void DirSection(Object& object,
-                    NameValues& namevals,
-                    NameValues& objext_namevals,
-                    unsigned long line);
-    void DirIdent(Object& object,
-                  NameValues& namevals,
-                  NameValues& objext_namevals,
-                  unsigned long line);
+    void DirGasSection(DirectiveInfo& info);
+    void DirSection(DirectiveInfo& info);
+    void DirIdent(DirectiveInfo& info);
 };
 
 }}} // namespace yasm::objfmt::coff

@@ -230,8 +230,9 @@ NasmParser::ParseLine()
             std::swap(dirname, DIRECTIVE_NAME_val);
             getNextToken();
 
-            NameValues dir_nvs, ext_nvs;
-            if (m_token != ']' && m_token != ':' && !ParseDirective(dir_nvs))
+            DirectiveInfo info(*m_object, getCurLine());
+            if (m_token != ']' && m_token != ':' &&
+                !ParseDirective(info.getNameValues()))
             {
                 throw SyntaxError(String::Compose(
                     N_("invalid arguments to [%s]"), dirname));
@@ -239,13 +240,13 @@ NasmParser::ParseLine()
             if (m_token == ':')
             {
                 getNextToken();
-                if (!ParseDirective(ext_nvs))
+                if (!ParseDirective(info.getObjextNameValues()))
                 {
                     throw SyntaxError(String::Compose(
                         N_("invalid arguments to [%1]"), dirname));
                 }
             }
-            DoDirective(dirname, dir_nvs, ext_nvs);
+            DoDirective(dirname, info);
             Expect(']');
             getNextToken();
             break;
@@ -1022,18 +1023,21 @@ NasmParser::DefineLabel(const llvm::StringRef& name, bool local)
 }
 
 void
-NasmParser::DirAbsolute(Object& object, NameValues& namevals,
-                        NameValues& objext_namevals, unsigned long line)
+NasmParser::DirAbsolute(DirectiveInfo& info)
 {
-    m_absstart = namevals.front().getExpr(object, line);
+    Object& object = info.getObject();
+    m_absstart = info.getNameValues().front().getExpr(object, info.getLine());
     m_abspos = m_absstart;
     object.setCurSection(0);
 }
 
 void
-NasmParser::DirAlign(Object& object, NameValues& namevals,
-                     NameValues& objext_namevals, unsigned long line)
+NasmParser::DirAlign(DirectiveInfo& info)
 {
+    Object& object = info.getObject();
+    NameValues& namevals = info.getNameValues();
+    unsigned long line = info.getLine();
+
     // Really, we shouldn't end up with an align directive in an absolute
     // section (as it's supposed to be only used for nop fill), but handle
     // it gracefully anyway.
@@ -1074,19 +1078,18 @@ NasmParser::DirAlign(Object& object, NameValues& namevals,
 }
 
 void
-NasmParser::DirDefault(Object& object, NameValues& namevals,
-                       NameValues& objext_namevals, unsigned long line)
+NasmParser::DirDefault(DirectiveInfo& info)
 {
-    for (NameValues::const_iterator nv=namevals.begin(), end=namevals.end();
-         nv != end; ++nv)
+    for (NameValues::const_iterator nv=info.getNameValues().begin(),
+         end=info.getNameValues().end(); nv != end; ++nv)
     {
         if (nv->isId())
         {
             llvm::StringRef id = nv->getId();
             if (String::NocaseEqual(id, "rel"))
-                object.getArch()->setVar("default_rel", 1);
+                info.getObject().getArch()->setVar("default_rel", 1);
             else if (String::NocaseEqual(id, "abs"))
-                object.getArch()->setVar("default_rel", 0);
+                info.getObject().getArch()->setVar("default_rel", 0);
             else
                 throw SyntaxError(String::Compose(
                     N_("unrecognized default `%1'"), id));
@@ -1097,11 +1100,9 @@ NasmParser::DirDefault(Object& object, NameValues& namevals,
 }
 
 void
-NasmParser::DoDirective(const llvm::StringRef& name,
-                        NameValues& namevals,
-                        NameValues& objext_namevals)
+NasmParser::DoDirective(const llvm::StringRef& name, DirectiveInfo& info)
 {
-    (*m_dirs)[name](*m_object, namevals, objext_namevals, getCurLine());
+    (*m_dirs)[name](info);
     Section* cursect = m_object->getCurSection();
     if (!m_absstart.isEmpty() && cursect)
     {

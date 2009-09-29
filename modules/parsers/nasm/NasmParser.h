@@ -43,6 +43,7 @@ namespace yasm
 
 class Arch;
 class Bytecode;
+class DirectiveInfo;
 class Directives;
 class Expr;
 class NameValues;
@@ -167,22 +168,11 @@ private:
     bool ParseExpr5(Expr& e, ExprType type);
     bool ParseExpr6(Expr& e, ExprType type);
 
-    void DirAbsolute(Object& object,
-                     NameValues& namevals,
-                     NameValues& objext_namevals,
-                     unsigned long line);
-    void DirAlign(Object& object,
-                  NameValues& namevals,
-                  NameValues& objext_namevals,
-                  unsigned long line);
-    void DirDefault(Object& object,
-                    NameValues& namevals,
-                    NameValues& objext_namevals,
-                    unsigned long line);
+    void DirAbsolute(DirectiveInfo& info);
+    void DirAlign(DirectiveInfo& info);
+    void DirDefault(DirectiveInfo& info);
 
-    void DoDirective(const llvm::StringRef& name,
-                     NameValues& namevals,
-                     NameValues& objext_namevals);
+    void DoDirective(const llvm::StringRef& name, DirectiveInfo& info);
 
     // last "base" label for local (.) labels
     std::string m_locallabel_base;

@@ -32,7 +32,7 @@
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/nocase.h"
-#include "yasmx/NameValue.h"
+#include "yasmx/Directive.h"
 
 
 namespace yasm
@@ -52,11 +52,7 @@ public:
             : m_handler(handler), m_flags(flags)
         {}
         ~Dir() {}
-        void operator() (Object& object,
-                         const llvm::StringRef& name,
-                         NameValues& namevals,
-                         NameValues& objext_namevals,
-                         unsigned long line);
+        void operator() (const llvm::StringRef& name, DirectiveInfo& info);
 
     private:
         Directive m_handler;
@@ -99,18 +95,15 @@ Directives::get(Directive* dir, const llvm::StringRef& name) const
     if (p == m_impl->m_dirs.end())
         return false;
 
-    *dir = BIND::bind(&Impl::Dir::operator(), REF::ref(p->second),
-                      _1, name, _2, _3, _4);
+    *dir = BIND::bind(&Impl::Dir::operator(), REF::ref(p->second), name, _1);
     return true;
 }
 
 void
-Directives::Impl::Dir::operator() (Object& object,
-                                   const llvm::StringRef& name,
-                                   NameValues& namevals,
-                                   NameValues& objext_namevals,
-                                   unsigned long line)
+Directives::Impl::Dir::operator() (const llvm::StringRef& name,
+                                   DirectiveInfo& info)
 {
+    NameValues& namevals = info.getNameValues();
     if ((m_flags & (ARG_REQUIRED|ID_REQUIRED)) && namevals.empty())
         throw SyntaxError(String::Compose(
             N_("directive `%1' requires an argument"), name));
@@ -122,7 +115,7 @@ Directives::Impl::Dir::operator() (Object& object,
                 N_("directive `%1' requires an identifier parameter"), name));
     }
 
-    m_handler(object, namevals, objext_namevals, line);
+    m_handler(info);
 }
 
 } // namespace yasm

@@ -34,7 +34,7 @@
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/Bytecode.h"
-#include "yasmx/NameValue.h"
+#include "yasmx/Directive.h"
 #include "yasmx/Section.h"
 #include "yasmx/Object.h"
 #include "yasmx/ObjectFormat.h"
@@ -45,19 +45,17 @@ namespace yasm
 void
 DirIdentCommon(ObjectFormat& objfmt,
                const llvm::StringRef& sectname,
-               Object& object,
-               NameValues& namevals,
-               NameValues& objext_namevals,
-               unsigned long line)
+               DirectiveInfo& info)
 {
+    NameValues& namevals = info.getNameValues();
     // Accept, but do nothing with empty ident
     if (namevals.empty())
         return;
 
     // Put ident data into .comment section
-    Section* comment = object.FindSection(sectname);
+    Section* comment = info.getObject().FindSection(sectname);
     if (!comment)
-        comment = objfmt.AppendSection(sectname, line);
+        comment = objfmt.AppendSection(sectname, info.getLine());
 
     // To match GAS output, if the comment section is empty, put an
     // initial 0 byte in the section.

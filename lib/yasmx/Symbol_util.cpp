@@ -32,8 +32,8 @@
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/AssocData.h"
+#include "yasmx/Directive.h"
 #include "yasmx/Expr.h"
-#include "yasmx/NameValue.h"
 #include "yasmx/Object.h"
 #include "yasmx/Symbol.h"
 
@@ -163,49 +163,44 @@ getCommonSize(Symbol& sym)
 }
 
 void
-DirExtern(Object& object,
-          NameValues& namevals,
-          NameValues& objext_namevals,
-          unsigned long line)
+DirExtern(DirectiveInfo& info)
 {
-    SymbolRef sym = object.getSymbol(namevals.front().getId());
-    sym->Declare(Symbol::EXTERN, line);
+    Object& object = info.getObject();
+    SymbolRef sym = object.getSymbol(info.getNameValues().front().getId());
+    sym->Declare(Symbol::EXTERN, info.getLine());
 
-    if (!objext_namevals.empty())
-        setObjextNameValues(*sym, objext_namevals);
+    if (!info.getObjextNameValues().empty())
+        setObjextNameValues(*sym, info.getObjextNameValues());
 }
 
 void
-DirGlobal(Object& object,
-          NameValues& namevals,
-          NameValues& objext_namevals,
-          unsigned long line)
+DirGlobal(DirectiveInfo& info)
 {
-    SymbolRef sym = object.getSymbol(namevals.front().getId());
-    sym->Declare(Symbol::GLOBAL, line);
+    Object& object = info.getObject();
+    SymbolRef sym = object.getSymbol(info.getNameValues().front().getId());
+    sym->Declare(Symbol::GLOBAL, info.getLine());
 
-    if (!objext_namevals.empty())
-        setObjextNameValues(*sym, objext_namevals);
+    if (!info.getObjextNameValues().empty())
+        setObjextNameValues(*sym, info.getObjextNameValues());
 }
 
 void
-DirCommon(Object& object,
-          NameValues& namevals,
-          NameValues& objext_namevals,
-          unsigned long line)
+DirCommon(DirectiveInfo& info)
 {
+    NameValues& namevals = info.getNameValues();
     if (namevals.size() < 2)
         throw SyntaxError(N_("no size specified in COMMON declaration"));
     if (!namevals[1].isExpr())
         throw SyntaxError(N_("common size is not an expression"));
 
+    Object& object = info.getObject();
     SymbolRef sym = object.getSymbol(namevals.front().getId());
-    sym->Declare(Symbol::COMMON, line);
+    sym->Declare(Symbol::COMMON, info.getLine());
 
-    setCommonSize(*sym, namevals[1].getExpr(object, line));
+    setCommonSize(*sym, namevals[1].getExpr(object, info.getLine()));
 
-    if (!objext_namevals.empty())
-        setObjextNameValues(*sym, objext_namevals);
+    if (!info.getObjextNameValues().empty())
+        setObjextNameValues(*sym, info.getObjextNameValues());
 }
 
 } // namespace yasm

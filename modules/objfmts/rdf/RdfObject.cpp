@@ -111,18 +111,9 @@ public:
                       /*@out@*/ std::string* machine);
 
 private:
-    void DirSection(Object& object,
-                    NameValues& namevals,
-                    NameValues& objext_namevals,
-                    unsigned long line);
-    void DirLibrary(Object& object,
-                    NameValues& namevals,
-                    NameValues& objext_namevals,
-                    unsigned long line);
-    void DirModule(Object& object,
-                   NameValues& namevals,
-                   NameValues& objext_namevals,
-                   unsigned long line);
+    void DirSection(DirectiveInfo& info);
+    void DirLibrary(DirectiveInfo& info);
+    void DirModule(DirectiveInfo& info);
 
     void AddLibOrModule(const llvm::StringRef& name, bool lib);
 
@@ -1038,12 +1029,11 @@ SetReserved(NameValue& nv,
 }
 
 void
-RdfObject::DirSection(Object& object,
-                      NameValues& nvs,
-                      NameValues& objext_nvs,
-                      unsigned long line)
+RdfObject::DirSection(DirectiveInfo& info)
 {
-    assert(&object == &m_object);
+    assert(info.isObject(m_object));
+    NameValues& nvs = info.getNameValues();
+    unsigned long line = info.getLine();
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
@@ -1140,21 +1130,15 @@ RdfObject::AddLibOrModule(const llvm::StringRef& name, bool lib)
 }
 
 void
-RdfObject::DirLibrary(Object& object,
-                      NameValues& namevals,
-                      NameValues& objext_namevals,
-                      unsigned long line)
+RdfObject::DirLibrary(DirectiveInfo& info)
 {
-    AddLibOrModule(namevals.front().getString(), true);
+    AddLibOrModule(info.getNameValues().front().getString(), true);
 }
 
 void
-RdfObject::DirModule(Object& object,
-                     NameValues& namevals,
-                     NameValues& objext_namevals,
-                     unsigned long line)
+RdfObject::DirModule(DirectiveInfo& info)
 {
-    AddLibOrModule(namevals.front().getString(), false);
+    AddLibOrModule(info.getNameValues().front().getString(), false);
 }
 
 void

@@ -37,8 +37,8 @@
 namespace yasm
 {
 
+class DirectiveInfo;
 class Object;
-class NameValues;
 
 namespace arch
 {
@@ -165,16 +165,11 @@ private:
     void ParseCpu(const llvm::StringRef& cpuid);
 
     // Directives
-    void DirCpu(Object& object, const NameValues& namevals,
-                const NameValues& objext_valparams, unsigned long line);
-    void DirBits(Object& object, const NameValues& namevals,
-                 const NameValues& objext_valparams, unsigned long line);
-    void DirCode16(Object& object, const NameValues& namevals,
-                   const NameValues& objext_namevals, unsigned long line);
-    void DirCode32(Object& object, const NameValues& namevals,
-                   const NameValues& objext_namevals, unsigned long line);
-    void DirCode64(Object& object, const NameValues& namevals,
-                   const NameValues& objext_namevals, unsigned long line);
+    void DirCpu(DirectiveInfo& info);
+    void DirBits(DirectiveInfo& info);
+    void DirCode16(DirectiveInfo& info);
+    void DirCode32(DirectiveInfo& info);
+    void DirCode64(DirectiveInfo& info);
 
     // What instructions/features are enabled?
     CpuMask m_active_cpu;

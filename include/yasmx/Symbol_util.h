@@ -35,6 +35,7 @@
 namespace yasm
 {
 
+class DirectiveInfo;
 class Expr;
 class NameValues;
 class Object;
@@ -84,42 +85,21 @@ YASM_LIB_EXPORT
 
 /// Extern directive handler.  Sets symbol visibility to Symbol::EXTERN and
 /// saves objext_namevals as associated symbol data.
-/// @param object           object
-/// @param name             directive name
-/// @param namevals         name/values
-/// @param objext_namevals  object format-specific name/values
-/// @param line             virtual line (from Linemap)
+/// @param info     directive info
 YASM_LIB_EXPORT
-void DirExtern(Object& object,
-               NameValues& namevals,
-               NameValues& objext_namevals,
-               unsigned long line);
+void DirExtern(DirectiveInfo& info);
 
 /// Global directive handler.  Sets symbol visibility to Symbol::GLOBAL and
 /// saves objext_namevals as associated symbol data.
-/// @param object           object
-/// @param name             directive name
-/// @param namevals         name/values
-/// @param objext_namevals  object format-specific name/values
-/// @param line             virtual line (from Linemap)
+/// @param info     directive info
 YASM_LIB_EXPORT
-void DirGlobal(Object& object,
-               NameValues& namevals,
-               NameValues& objext_namevals,
-               unsigned long line);
+void DirGlobal(DirectiveInfo& info);
 
 /// Common directive handler.  Sets symbol visibility to Symbol::COMMON and
 /// saves common size and objext_namevals as associated symbol data.
-/// @param object           object
-/// @param name             directive name
-/// @param namevals         name/values
-/// @param objext_namevals  object format-specific name/values
-/// @param line             virtual line (from Linemap)
+/// @param info     directive info
 YASM_LIB_EXPORT
-void DirCommon(Object& object,
-               NameValues& namevals,
-               NameValues& objext_namevals,
-               unsigned long line);
+void DirCommon(DirectiveInfo& info);
 
 } // namespace yasm
 

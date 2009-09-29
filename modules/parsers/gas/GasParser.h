@@ -158,7 +158,8 @@ public:
 private:
 
     void ParseLine();
-    void setDebugFile(NameValues& nvs);
+    void setDebugFile(const llvm::StringRef& filename);
+    void setDebugFile(const IntNum& fileno, const llvm::StringRef& filename);
     void ParseCppLineMarker();
     void ParseNasmLineMarker();
 
@@ -195,12 +196,8 @@ private:
     void DefineLcomm(const llvm::StringRef& name,
                      std::auto_ptr<Expr> size,
                      const Expr& align);
-    void SwitchSection(const llvm::StringRef& name,
-                       NameValues& objext_namevals,
-                       bool builtin);
-    Section& getSection(const llvm::StringRef& name,
-                        NameValues& objext_namevals,
-                        bool builtin);
+    void SwitchSection(const llvm::StringRef& name, bool builtin);
+    Section& getSection(const llvm::StringRef& name, bool builtin);
 
     void DoParse();
 

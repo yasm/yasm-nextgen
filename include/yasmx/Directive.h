@@ -32,6 +32,7 @@
 #include "yasmx/Config/export.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/scoped_ptr.h"
+#include "yasmx/NameValue.h"
 
 
 namespace llvm { class StringRef; }
@@ -39,24 +40,37 @@ namespace llvm { class StringRef; }
 namespace yasm
 {
 
-class NameValues;
 class Object;
 
+/// Directive information.  Helper class for passing all information about
+/// a directive to a handler.
+class DirectiveInfo
+{
+public:
+    DirectiveInfo(Object& object, unsigned long line)
+        : m_object(object), m_line(line)
+    {}
+
+    bool isObject(const Object& oth) const { return &m_object == &oth; }
+    Object& getObject() { return m_object; }
+    NameValues& getNameValues() { return m_namevals; }
+    NameValues& getObjextNameValues() { return m_objext_namevals; }
+    unsigned long getLine() const { return m_line; }
+
+private:
+    Object& m_object;               ///< object
+    NameValues m_namevals;          ///< name/values
+    NameValues m_objext_namevals;   ///< object format-specific name/values
+    unsigned long m_line;           ///< virtual line (from Linemap)
+};
+
 /// Directive handler function.
-/// @param object           object
-/// @param name             directive name
-/// @param namevals         name/values
-/// @param objext_namevals  object format-specific name/values
-/// @param line             virtual line (from Linemap)
-/// @note The namevals and objext_namevals parameter are *not* constant;
-///       the callee (directive handler) is free to modify these.  The
-///       typical modification performed is to swap or otherwise remove
-///       values without copying.
-typedef FUNCTION::function<void (Object& object,
-                                 NameValues& namevals,
-                                 NameValues& objext_namevals,
-                                 unsigned long line)>
-    Directive;
+/// @param info     directive information
+/// @note The directive parameter are *not* constant; the callee (directive
+///       handler) is free to modify it (specifically the name/values
+///       portions).  The typical modification performed is to swap or
+///       otherwise remove values without copying.
+typedef FUNCTION::function<void (DirectiveInfo& info)> Directive;
 
 /// Container to manage and call directive handlers.
 class YASM_LIB_EXPORT Directives
@@ -75,10 +89,7 @@ public:
     struct Init
     {
         const char* name;
-        void (T::*func) (Object& object,
-                         NameValues& namevals,
-                         NameValues& objext_namevals,
-                         unsigned long line);
+        void (T::*func) (DirectiveInfo& info);
         Flags flags;
     };
 
@@ -102,7 +113,7 @@ public:
     {
         for (unsigned int i=0; i<size; ++i)
             Add(inits[i].name,
-                BIND::bind(inits[i].func, me, _1, _2, _3, _4),
+                BIND::bind(inits[i].func, me, _1),
                 inits[i].flags);
     }
 

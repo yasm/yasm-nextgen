@@ -124,30 +124,12 @@ public:
     void setSymbolSectionValue(Symbol& sym, ElfSymbol& elfsym);
     void FinalizeSymbol(Symbol& sym, StringTable& strtab, bool local_names);
 
-    void DirGasSection(Object& object,
-                       NameValues& namevals,
-                       NameValues& objext_namevals,
-                       unsigned long line);
-    void DirSection(Object& object,
-                    NameValues& namevals,
-                    NameValues& objext_namevals,
-                    unsigned long line);
-    void DirType(Object& object,
-                 NameValues& namevals,
-                 NameValues& objext_namevals,
-                 unsigned long line);
-    void DirSize(Object& object,
-                 NameValues& namevals,
-                 NameValues& objext_namevals,
-                 unsigned long line);
-    void DirWeak(Object& object,
-                  NameValues& namevals,
-                  NameValues& objext_namevals,
-                  unsigned long line);
-    void DirIdent(Object& object,
-                  NameValues& namevals,
-                  NameValues& objext_namevals,
-                  unsigned long line);
+    void DirGasSection(DirectiveInfo& info);
+    void DirSection(DirectiveInfo& info);
+    void DirType(DirectiveInfo& info);
+    void DirSize(DirectiveInfo& info);
+    void DirWeak(DirectiveInfo& info);
+    void DirIdent(DirectiveInfo& info);
 
     ElfConfig m_config;                     // ELF configuration
     util::scoped_ptr<ElfMachine> m_machine; // ELF machine interface
@@ -1230,12 +1212,10 @@ ElfObject::AppendSection(const llvm::StringRef& name, unsigned long line)
 }
 
 void
-ElfObject::DirGasSection(Object& object,
-                         NameValues& nvs,
-                         NameValues& objext_nvs,
-                         unsigned long line)
+ElfObject::DirGasSection(DirectiveInfo& info)
 {
-    assert(&object == &m_object);
+    assert(info.isObject(m_object));
+    NameValues& nvs = info.getNameValues();
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
@@ -1246,7 +1226,7 @@ ElfObject::DirGasSection(Object& object,
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, line);
+        sect = AppendSection(sectname, info.getLine());
 
     m_object.setCurSection(sect);
     sect->setDefault(false);
@@ -1323,12 +1303,11 @@ ElfObject::DirGasSection(Object& object,
 }
 
 void
-ElfObject::DirSection(Object& object,
-                      NameValues& nvs,
-                      NameValues& objext_nvs,
-                      unsigned long line)
+ElfObject::DirSection(DirectiveInfo& info)
 {
-    assert(&object == &m_object);
+    assert(info.isObject(m_object));
+    NameValues& nvs = info.getNameValues();
+    unsigned long line = info.getLine();
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
@@ -1434,15 +1413,13 @@ ElfObject::DirSection(Object& object,
 }
 
 void
-ElfObject::DirType(Object& object,
-                   NameValues& namevals,
-                   NameValues& objext_namevals,
-                   unsigned long line)
+ElfObject::DirType(DirectiveInfo& info)
 {
-    assert(&m_object == &object);
+    assert(info.isObject(m_object));
+    NameValues& namevals = info.getNameValues();
 
-    SymbolRef sym = object.getSymbol(namevals.front().getId());
-    sym->Use(line);
+    SymbolRef sym = info.getObject().getSymbol(namevals.front().getId());
+    sym->Use(info.getLine());
 
     ElfSymbol& elfsym = BuildSymbol(*sym);
 
@@ -1467,14 +1444,13 @@ ElfObject::DirType(Object& object,
 }
 
 void
-ElfObject::DirSize(Object& object,
-                   NameValues& namevals,
-                   NameValues& objext_namevals,
-                   unsigned long line)
+ElfObject::DirSize(DirectiveInfo& info)
 {
-    assert(&m_object == &object);
+    assert(info.isObject(m_object));
+    NameValues& namevals = info.getNameValues();
+    unsigned long line = info.getLine();
 
-    SymbolRef sym = object.getSymbol(namevals.front().getId());
+    SymbolRef sym = info.getObject().getSymbol(namevals.front().getId());
     sym->Use(line);
 
     // Pull new size from param
@@ -1482,36 +1458,30 @@ ElfObject::DirSize(Object& object,
         throw SyntaxError(N_("no size specified"));
     if (!namevals[1].isExpr())
         throw SyntaxError(N_("size must be an expression"));
-    Expr size = namevals[1].getExpr(object, line);
+    Expr size = namevals[1].getExpr(info.getObject(), line);
 
     ElfSymbol& elfsym = BuildSymbol(*sym);
     elfsym.setSize(size, line);
 }
 
 void
-ElfObject::DirWeak(Object& object,
-                   NameValues& namevals,
-                   NameValues& objext_namevals,
-                   unsigned long line)
+ElfObject::DirWeak(DirectiveInfo& info)
 {
-    assert(&m_object == &object);
+    assert(info.isObject(m_object));
+    NameValues& namevals = info.getNameValues();
 
-    SymbolRef sym = object.getSymbol(namevals.front().getId());
-    sym->Declare(Symbol::GLOBAL, line);
+    SymbolRef sym = info.getObject().getSymbol(namevals.front().getId());
+    sym->Declare(Symbol::GLOBAL, info.getLine());
 
     ElfSymbol& elfsym = BuildSymbol(*sym);
     elfsym.setBinding(STB_WEAK);
 }
 
 void
-ElfObject::DirIdent(Object& object,
-                    NameValues& namevals,
-                    NameValues& objext_namevals,
-                    unsigned long line)
+ElfObject::DirIdent(DirectiveInfo& info)
 {
-    assert(&m_object == &object);
-    DirIdentCommon(*this, ".comment", object, namevals, objext_namevals,
-                   line);
+    assert(info.isObject(m_object));
+    DirIdentCommon(*this, ".comment", info);
 }
 
 std::vector<const char*>

@@ -219,17 +219,16 @@ X86Arch::setVar(const llvm::StringRef& var, unsigned long val)
 }
 
 void
-X86Arch::DirCpu(Object& object, const NameValues& namevals,
-                const NameValues& objext_namevals, unsigned long line)
+X86Arch::DirCpu(DirectiveInfo& info)
 {
-    for (NameValues::const_iterator nv=namevals.begin(), end=namevals.end();
-         nv != end; ++nv)
+    for (NameValues::const_iterator nv=info.getNameValues().begin(),
+         end=info.getNameValues().end(); nv != end; ++nv)
     {
         if (nv->isString())
             ParseCpu(nv->getString());
         else if (nv->isExpr())
         {
-            Expr e = nv->getExpr(object, line);
+            Expr e = nv->getExpr(info.getObject(), info.getLine());
             if (!e.isIntNum())
                 throw SyntaxError(String::Compose(
                     N_("invalid argument to [%1]"), "CPU"));
@@ -248,13 +247,12 @@ X86Arch::DirCpu(Object& object, const NameValues& namevals,
 }
 
 void
-X86Arch::DirBits(Object& object, const NameValues& namevals,
-                 const NameValues& objext_namevals, unsigned long line)
+X86Arch::DirBits(DirectiveInfo& info)
 {
-    NameValues::const_iterator nv = namevals.begin();
-    if (nv != namevals.end() && nv->isExpr())
+    NameValues::const_iterator nv = info.getNameValues().begin();
+    if (nv != info.getNameValues().end() && nv->isExpr())
     {
-        Expr e = nv->getExpr(object, line);
+        Expr e = nv->getExpr(info.getObject(), info.getLine());
         if (e.isIntNum())
         {
             unsigned long v = e.getIntNum().getUInt();
@@ -270,22 +268,19 @@ X86Arch::DirBits(Object& object, const NameValues& namevals,
 }
 
 void
-X86Arch::DirCode16(Object& object, const NameValues& namevals,
-                   const NameValues& objext_namevals, unsigned long line)
+X86Arch::DirCode16(DirectiveInfo& info)
 {
     m_mode_bits = 16;
 }
 
 void
-X86Arch::DirCode32(Object& object, const NameValues& namevals,
-                   const NameValues& objext_namevals, unsigned long line)
+X86Arch::DirCode32(DirectiveInfo& info)
 {
     m_mode_bits = 32;
 }
 
 void
-X86Arch::DirCode64(Object& object, const NameValues& namevals,
-                   const NameValues& objext_namevals, unsigned long line)
+X86Arch::DirCode64(DirectiveInfo& info)
 {
     m_mode_bits = 64;
 }
@@ -522,28 +517,23 @@ X86Arch::getFill() const
 void
 X86Arch::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
 {
-    if (String::NocaseEqual(parser, "nasm"))
+    static const Directives::Init<X86Arch> nasm_dirs[] =
     {
-        dirs.Add("cpu",
-                 BIND::bind(&X86Arch::DirCpu, this, _1, _2, _3, _4),
-                 Directives::ARG_REQUIRED);
-        dirs.Add("bits",
-                 BIND::bind(&X86Arch::DirBits, this, _1, _2, _3, _4),
-                 Directives::ARG_REQUIRED);
-    }
+        {"cpu",     &X86Arch::DirCpu, Directives::ARG_REQUIRED},
+        {"bits",    &X86Arch::DirBits, Directives::ARG_REQUIRED},
+    };
+    static const Directives::Init<X86Arch> gas_dirs[] =
+    {
+        {".code16", &X86Arch::DirCode16, Directives::ANY},
+        {".code32", &X86Arch::DirCode32, Directives::ANY},
+        {".code64", &X86Arch::DirCode64, Directives::ANY},
+    };
+
+    if (String::NocaseEqual(parser, "nasm"))
+        dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
     else if (String::NocaseEqual(parser, "gas") ||
              String::NocaseEqual(parser, "gnu"))
-    {
-        dirs.Add(".code16",
-                 BIND::bind(&X86Arch::DirCode16, this, _1, _2, _3, _4),
-                 Directives::ANY);
-        dirs.Add(".code32",
-                 BIND::bind(&X86Arch::DirCode32, this, _1, _2, _3, _4),
-                 Directives::ANY);
-        dirs.Add(".code64",
-                 BIND::bind(&X86Arch::DirCode64, this, _1, _2, _3, _4),
-                 Directives::ANY);
-    }
+        dirs.AddArray(this, gas_dirs, NELEMS(gas_dirs));
 }
 
 

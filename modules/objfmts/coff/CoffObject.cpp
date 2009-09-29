@@ -187,12 +187,10 @@ CoffObject::AppendSection(const llvm::StringRef& name, unsigned long line)
 }
 
 void
-CoffObject::DirGasSection(Object& object,
-                          NameValues& nvs,
-                          NameValues& objext_nvs,
-                          unsigned long line)
+CoffObject::DirGasSection(DirectiveInfo& info)
 {
-    assert(&object == &m_object);
+    assert(info.isObject(m_object));
+    NameValues& nvs = info.getNameValues();
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
@@ -213,7 +211,7 @@ CoffObject::DirGasSection(Object& object,
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, line);
+        sect = AppendSection(sectname, info.getLine());
 
     CoffSection* coffsect = sect->getAssocData<CoffSection>();
     assert(coffsect != 0);
@@ -346,12 +344,11 @@ CoffObject::DirSectionInitHelpers(DirHelpers& helpers,
 }
 
 void
-CoffObject::DirSection(Object& object,
-                       NameValues& nvs,
-                       NameValues& objext_nvs,
-                       unsigned long line)
+CoffObject::DirSection(DirectiveInfo& info)
 {
-    assert(&object == &m_object);
+    assert(info.isObject(m_object));
+    NameValues& nvs = info.getNameValues();
+    unsigned long line = info.getLine();
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
@@ -426,13 +423,10 @@ CoffObject::DirSection(Object& object,
 }
 
 void
-CoffObject::DirIdent(Object& object,
-                     NameValues& namevals,
-                     NameValues& objext_namevals,
-                     unsigned long line)
+CoffObject::DirIdent(DirectiveInfo& info)
 {
-    assert(&m_object == &object);
-    DirIdentCommon(*this, ".comment", object, namevals, objext_namevals, line);
+    assert(info.isObject(m_object));
+    DirIdentCommon(*this, ".comment", info);
 }
 
 void

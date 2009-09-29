@@ -99,10 +99,7 @@ public:
                       /*@out@*/ std::string* machine);
 
 private:
-    void DirSection(Object& object,
-                    NameValues& namevals,
-                    NameValues& objext_namevals,
-                    unsigned long line);
+    void DirSection(DirectiveInfo& info);
 };
 
 bool
@@ -669,12 +666,11 @@ XdfObject::AppendSection(const llvm::StringRef& name, unsigned long line)
 }
 
 void
-XdfObject::DirSection(Object& object,
-                      NameValues& nvs,
-                      NameValues& objext_nvs,
-                      unsigned long line)
+XdfObject::DirSection(DirectiveInfo& info)
 {
-    assert(&object == &m_object);
+    assert(info.isObject(m_object));
+    NameValues& nvs = info.getNameValues();
+    unsigned long line = info.getLine();
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));

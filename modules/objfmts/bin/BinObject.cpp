@@ -89,18 +89,9 @@ public:
     { return false; }
 
 private:
-    void DirSection(Object& object,
-                    NameValues& namevals,
-                    NameValues& objext_namevals,
-                    unsigned long line);
-    void DirOrg(Object& object,
-                NameValues& namevals,
-                NameValues& objext_namevals,
-                unsigned long line);
-    void DirMap(Object& object,
-                NameValues& namevals,
-                NameValues& objext_namevals,
-                unsigned long line);
+    void DirSection(DirectiveInfo& info);
+    void DirOrg(DirectiveInfo& info);
+    void DirMap(DirectiveInfo& info);
     bool setMapFilename(const NameValue& nv);
 
     void OutputMap(const IntNum& origin,
@@ -424,12 +415,11 @@ BinObject::AppendSection(const llvm::StringRef& name, unsigned long line)
 }
 
 void
-BinObject::DirSection(Object& object,
-                      NameValues& nvs,
-                      NameValues& objext_nvs,
-                      unsigned long line)
+BinObject::DirSection(DirectiveInfo& info)
 {
-    assert(&object == &m_object);
+    assert(info.isObject(m_object));
+    NameValues& nvs = info.getNameValues();
+    unsigned long line = info.getLine();
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
@@ -545,21 +535,18 @@ BinObject::DirSection(Object& object,
 }
 
 void
-BinObject::DirOrg(Object& object,
-                  NameValues& namevals,
-                  NameValues& objext_namevals,
-                  unsigned long line)
+BinObject::DirOrg(DirectiveInfo& info)
 {
     // We only allow a single ORG in a program.
     if (m_org.get() != 0)
         throw Error(N_("program origin redefined"));
 
     // ORG takes just a simple expression as param
-    const NameValue& nv = namevals.front();
+    const NameValue& nv = info.getNameValues().front();
     if (!nv.isExpr())
         throw SyntaxError(N_("argument to ORG must be expression"));
-    m_org.reset(new Expr(nv.getExpr(object, line)));
-    m_org_line = line;
+    m_org.reset(new Expr(nv.getExpr(info.getObject(), info.getLine())));
+    m_org_line = info.getLine();
 }
 
 bool
@@ -575,10 +562,7 @@ BinObject::setMapFilename(const NameValue& nv)
 }
 
 void
-BinObject::DirMap(Object& object,
-                  NameValues& namevals,
-                  NameValues& objext_namevals,
-                  unsigned long line)
+BinObject::DirMap(DirectiveInfo& info)
 {
     DirHelpers helpers;
     helpers.Add("all", false,
@@ -599,7 +583,7 @@ BinObject::DirMap(Object& object,
 
     m_map_flags |= MAP_NONE;
 
-    helpers(namevals.begin(), namevals.end(),
+    helpers(info.getNameValues().begin(), info.getNameValues().end(),
             BIND::bind(&BinObject::setMapFilename, this, _1));
 }
 
