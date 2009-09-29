@@ -45,7 +45,6 @@ namespace yasm
 
 class Directives;
 class Errwarns;
-class NameValues;
 class Object;
 class ObjectFormatModule;
 class Section;

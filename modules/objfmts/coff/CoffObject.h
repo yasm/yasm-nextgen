@@ -33,6 +33,7 @@ namespace yasm
 
 class DirHelpers;
 class IntNum;
+class NameValues;
 
 namespace objfmt
 {
