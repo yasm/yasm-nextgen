@@ -242,7 +242,7 @@ NasmParser::ParseLine()
                 return false;
             }
 
-            DirectiveInfo info(*m_object, m_source);
+            DirectiveInfo info(*m_object, getFullSource());
             if (m_token != ']' && m_token != ':' &&
                 !ParseDirective(info.getNameValues()))
                 return false;

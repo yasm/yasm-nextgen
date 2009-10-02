@@ -47,7 +47,7 @@ class Object;
 class DirectiveInfo
 {
 public:
-    DirectiveInfo(Object& object, clang::SourceLocation source)
+    DirectiveInfo(Object& object, clang::FullSourceLoc source)
         : m_object(object), m_source(source)
     {}
 
@@ -55,13 +55,13 @@ public:
     Object& getObject() { return m_object; }
     NameValues& getNameValues() { return m_namevals; }
     NameValues& getObjextNameValues() { return m_objext_namevals; }
-    clang::SourceLocation getSource() const { return m_source; }
+    clang::FullSourceLoc getSource() const { return m_source; }
 
 private:
     Object& m_object;               ///< object
     NameValues m_namevals;          ///< name/values
     NameValues m_objext_namevals;   ///< object format-specific name/values
-    clang::SourceLocation m_source; ///< source location
+    clang::FullSourceLoc m_source;  ///< source location
 };
 
 /// Directive handler function.
