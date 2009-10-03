@@ -58,12 +58,6 @@ struct ParserMixin
     clang::SourceLocation getTokenSource() const
     { return m_source.getFileLocWithOffset(m_tok-m_bot); }
 
-    clang::FullSourceLoc getFullSource() const
-    {
-        clang::SourceManager& smgr = m_preproc->getSourceManager();
-        return clang::FullSourceLoc(m_source, smgr);
-    }
-
     DiagnosticBuilder Diag(clang::SourceLocation loc, unsigned int id)
     {
         clang::SourceManager& smgr = m_preproc->getSourceManager();

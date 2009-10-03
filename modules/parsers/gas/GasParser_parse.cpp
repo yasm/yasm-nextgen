@@ -149,7 +149,7 @@ GasParser::ParseLine()
             }
 
             // possibly a directive; try to parse it
-            DirectiveInfo dirinfo(*m_object, getFullSource());
+            DirectiveInfo dirinfo(*m_object, m_source);
             ParseDirective(&dirinfo.getNameValues());
             Directive dir;
             if (m_dirs->get(&dir, name))
@@ -196,7 +196,7 @@ GasParser::setDebugFile(llvm::StringRef filename)
     if (!m_dirs->get(&dir, ".file"))
         return;
 
-    DirectiveInfo info(*m_object, getFullSource());
+    DirectiveInfo info(*m_object, m_source);
     info.getNameValues().push_back(new NameValue(filename));
     dir(info);
 }
@@ -208,7 +208,7 @@ GasParser::setDebugFile(const IntNum& fileno, llvm::StringRef filename)
     if (!m_dirs->get(&dir, ".file"))
         return;
 
-    DirectiveInfo info(*m_object, getFullSource());
+    DirectiveInfo info(*m_object, m_source);
     NameValues& nvs = info.getNameValues();
     nvs.push_back(new NameValue(Expr::Ptr(new Expr(fileno))));
     nvs.push_back(new NameValue(filename));
@@ -818,7 +818,7 @@ GasParser::ParseDirSection(unsigned int param)
     // Really parsed as just a bunch of dirvals; only needs to be unique
     // function to set parser state appropriately.
     m_state = SECTION_DIRECTIVE;
-    DirectiveInfo info(*m_object, getFullSource());
+    DirectiveInfo info(*m_object, m_source);
     if (!ParseDirective(&info.getNameValues()))
         return false;
     (*m_dirs)[".section"](info);
@@ -1444,7 +1444,7 @@ GasParser::DefineLcomm(llvm::StringRef name,
 void
 GasParser::SwitchSection(llvm::StringRef name, bool builtin)
 {
-    DirectiveInfo info(*m_object, getFullSource());
+    DirectiveInfo info(*m_object, m_source);
     info.getNameValues().push_back(new NameValue(name, '\0'));
     (*m_dirs)[".section"](info);
 }
