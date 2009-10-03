@@ -169,7 +169,8 @@ static void DummyArgToStringFn(Diagnostic::ArgumentKind AK, intptr_t QT,
 }
 
 
-Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
+Diagnostic::Diagnostic(clang::SourceManager& smgr, DiagnosticClient *client)
+  : Client(client), SrcMgr(smgr) {
   AllExtensionsSilenced = 0;
   IgnoreAllWarnings = false;
   WarningsAsErrors = false;

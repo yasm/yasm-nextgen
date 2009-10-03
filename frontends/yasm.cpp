@@ -698,9 +698,9 @@ static int
 do_assemble(void)
 {
     yasm::TextDiagnosticPrinter diag_printer(*errfile);
-    yasm::Diagnostic diags(&diag_printer);
-    clang::FileManager file_mgr;
     clang::SourceManager source_mgr;
+    yasm::Diagnostic diags(source_mgr, &diag_printer);
+    clang::FileManager file_mgr;
     yasm::Assembler assembler(arch_keyword, parser_keyword, objfmt_keyword,
                               dump_object);
 

@@ -149,7 +149,7 @@ GasParser::ParseLine()
             }
 
             // possibly a directive; try to parse it
-            DirectiveInfo dirinfo(*m_object, m_source);
+            DirectiveInfo dirinfo(*m_object, name_src);
             ParseDirective(&dirinfo.getNameValues());
             Directive dir;
             if (m_dirs->get(&dir, name))

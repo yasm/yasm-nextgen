@@ -60,8 +60,7 @@ struct ParserMixin
 
     DiagnosticBuilder Diag(clang::SourceLocation loc, unsigned int id)
     {
-        clang::SourceManager& smgr = m_preproc->getSourceManager();
-        return m_diags->Report(clang::FullSourceLoc(loc, smgr), id);
+        return m_diags->Report(loc, id);
     }
 
     int getNextToken();

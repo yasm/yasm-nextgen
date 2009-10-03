@@ -168,6 +168,7 @@ private:
   bool SuppressAllDiagnostics;   // Suppress all diagnostics.
   ExtensionHandling ExtBehavior; // Map extensions onto warnings or errors?
   DiagnosticClient *Client;
+  clang::SourceManager& SrcMgr;
 
   /// DiagMappings - Mapping information for diagnostics.  Mapping info is
   /// packed into four bits per diagnostic.  The low three bits are the mapping
@@ -207,7 +208,7 @@ private:
   void *ArgToStringCookie;
   ArgToStringFnTy ArgToStringFn;
 public:
-  explicit Diagnostic(DiagnosticClient *client = 0);
+  explicit Diagnostic(clang::SourceManager& smgr, DiagnosticClient *client = 0);
   ~Diagnostic();
 
   //===--------------------------------------------------------------------===//
@@ -348,7 +349,7 @@ public:
   /// which emits the diagnostics (through @c ProcessDiag) when it is destroyed.
   /// @c Pos represents the source location associated with the diagnostic,
   /// which can be an invalid location if no position information is available.
-  inline DiagnosticBuilder Report(clang::FullSourceLoc Pos, unsigned DiagID);
+  inline DiagnosticBuilder Report(clang::SourceLocation Pos, unsigned DiagID);
 
   /// \brief Clear out the current diagnostic.
   void Clear() { CurDiagID = ~0U; }
@@ -611,10 +612,10 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
 /// Report - Issue the message to the client.  DiagID is a member of the
 /// diag::kind enum.  This actually returns a new instance of DiagnosticBuilder
 /// which emits the diagnostics (through ProcessDiag) when it is destroyed.
-inline DiagnosticBuilder Diagnostic::Report(clang::FullSourceLoc Loc,
+inline DiagnosticBuilder Diagnostic::Report(clang::SourceLocation Loc,
                                             unsigned DiagID){
   assert(CurDiagID == ~0U && "Multiple diagnostics in flight at once!");
-  CurDiagLoc = Loc;
+  CurDiagLoc = clang::FullSourceLoc(Loc, SrcMgr);
   CurDiagID = DiagID;
   return DiagnosticBuilder(this);
 }
