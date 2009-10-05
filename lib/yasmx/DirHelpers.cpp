@@ -30,8 +30,7 @@
 
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
-#include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/NameValue.h"
@@ -40,13 +39,12 @@
 namespace yasm
 {
 
+static llvm::APInt staticbv(IntNum::BITVECT_NATIVE_SIZE, 0);
+
 class DirHelpers::Impl
 {
 public:
-    Impl() {}
-    ~Impl() {}
-
-    typedef llvm::StringMap<FUNCTION::function<void (NameValue&)> > HelperMap;
+    typedef llvm::StringMap<DirHelper> HelperMap;
     HelperMap m_value_helpers, m_novalue_helpers;
 };
 
@@ -62,7 +60,7 @@ DirHelpers::~DirHelpers()
 void
 DirHelpers::Add(llvm::StringRef name,
                 bool needsvalue,
-                FUNCTION::function<void (NameValue&)> helper)
+                DirHelper helper)
 {
     if (needsvalue)
         m_impl->m_value_helpers[llvm::LowercaseString(name)] = helper;
@@ -74,7 +72,12 @@ bool
 DirHelpers::operator()
     (NameValues::iterator nv_first,
      NameValues::iterator nv_last,
-     FUNCTION::function<bool (NameValue&)> helper_nameval)
+     clang::SourceLocation dir_source,
+     Diagnostic& diags,
+     FUNCTION::function<bool (NameValue& nv,
+                              clang::SourceLocation dir_source,
+                              Diagnostic& diags)>
+         helper_nameval)
 {
     bool anymatched = false;
 
@@ -88,7 +91,7 @@ DirHelpers::operator()
                 m_impl->m_novalue_helpers.find(llvm::LowercaseString(nv->getId()));
             if (helper != m_impl->m_novalue_helpers.end())
             {
-                helper->second(*nv);
+                helper->second(*nv, diags);
                 matched = true;
                 anymatched = true;
             }
@@ -99,7 +102,7 @@ DirHelpers::operator()
                 m_impl->m_value_helpers.find(llvm::LowercaseString(nv->getName()));
             if (helper != m_impl->m_value_helpers.end())
             {
-                helper->second(*nv);
+                helper->second(*nv, diags);
                 matched = true;
                 anymatched = true;
             }
@@ -107,7 +110,7 @@ DirHelpers::operator()
 
         if (!matched)
         {
-            if (helper_nameval(*nv))
+            if (helper_nameval(*nv, dir_source, diags))
                 anymatched = true;
         }
     }
@@ -116,17 +119,47 @@ DirHelpers::operator()
 }
 
 void
+DirIntNumPower2(NameValue& nv,
+                Diagnostic& diags,
+                Object* obj,
+                IntNum* out,
+                bool* out_set)
+{
+    std::auto_ptr<Expr> e(nv.ReleaseExpr(*obj));
+
+    if ((e.get() == 0) || !e->isIntNum())
+    {
+        diags.Report(nv.getNameSource(), diag::err_value_integer)
+            << nv.getValueSource();
+        return;
+    }
+
+    if (!e->getIntNum().getBV(&staticbv)->isPowerOf2())
+    {
+        diags.Report(nv.getNameSource(), diag::err_value_power2)
+            << nv.getValueSource();
+        return;
+    }
+
+    *out = e->getIntNum();
+    *out_set = true;
+}
+
+void
 DirIntNum(NameValue& nv,
+          Diagnostic& diags,
           Object* obj,
-          clang::SourceLocation source,
           IntNum* out,
           bool* out_set)
 {
-    std::auto_ptr<Expr> e(nv.ReleaseExpr(*obj, source));
+    std::auto_ptr<Expr> e(nv.ReleaseExpr(*obj));
 
     if ((e.get() == 0) || !e->isIntNum())
-        throw NotConstantError(String::Compose(
-            N_("argument to `%1' is not an integer"), nv.getName()));
+    {
+        diags.Report(nv.getNameSource(), diag::err_value_integer)
+            << nv.getValueSource();
+        return;
+    }
 
     *out = e->getIntNum();
     *out_set = true;
@@ -134,48 +167,51 @@ DirIntNum(NameValue& nv,
 
 void
 DirExpr(NameValue& nv,
+        Diagnostic& diags,
         Object* obj,
-        clang::SourceLocation source,
         std::auto_ptr<Expr>* out,
         bool* out_set)
 {
     if (!nv.isExpr())
-        throw ValueError(String::Compose(
-            N_("argument to `%1' is not an expression"), nv.getName()));
-    *out = nv.ReleaseExpr(*obj, source);
+    {
+        diags.Report(nv.getNameSource(), diag::err_value_expression)
+            << nv.getValueSource();
+        return;
+    }
+    *out = nv.ReleaseExpr(*obj);
     *out_set = true;
 }
 
 void
-DirString(NameValue& nv, std::string* out, bool* out_set)
+DirString(NameValue& nv,
+          Diagnostic& diags,
+          std::string* out,
+          bool* out_set)
 {
     if (!nv.isString())
-        throw ValueError(String::Compose(
-            N_("argument to `%1' is not a string or identifier"),
-            nv.getName()));
+    {
+        diags.Report(nv.getNameSource(), diag::err_value_string_or_id)
+            << nv.getValueSource();
+        return;
+    }
     *out = nv.getString();
     *out_set = true;
 }
 
 bool
-DirNameValueWarn(NameValue& nv)
+DirNameValueWarn(NameValue& nv,
+                 clang::SourceLocation dir_source,
+                 Diagnostic& diags)
 {
-    if (!nv.getName().empty())
+    if (nv.getNameSource().isValid())
     {
-        setWarn(WARN_GENERAL,
-                String::Compose(N_("Unrecognized qualifier `%1'"),
-                                nv.getName()));
+        diags.Report(dir_source, diag::warn_unrecognized_qualifier)
+            << nv.getNameSource();
         return false;
     }
 
-    if (nv.isId())
-        setWarn(WARN_GENERAL,
-                String::Compose(N_("Unrecognized qualifier `%1'"),
-                                nv.getId()));
-    else if (nv.isString())
-        setWarn(WARN_GENERAL, N_("Unrecognized string qualifier"));
-    else
-        setWarn(WARN_GENERAL, N_("Unrecognized numeric qualifier"));
+    diags.Report(dir_source, diag::warn_unrecognized_qualifier)
+        << nv.getValueSource();
 
     return false;
 }

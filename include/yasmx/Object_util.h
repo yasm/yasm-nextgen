@@ -36,6 +36,7 @@
 namespace yasm
 {
 
+class Diagnostic;
 class DirectiveInfo;
 class ObjectFormat;
 
@@ -46,10 +47,12 @@ class ObjectFormat;
 /// @param objfmt       Object format
 /// @param sectname     Ident section name
 /// @param info         Directive info
+/// @param diags        Diagnostic reporting
 YASM_LIB_EXPORT
 void DirIdentCommon(ObjectFormat& objfmt,
                     llvm::StringRef sectname,
-                    DirectiveInfo& info);
+                    DirectiveInfo& info,
+                    Diagnostic& diags);
 
 } // namespace yasm
 

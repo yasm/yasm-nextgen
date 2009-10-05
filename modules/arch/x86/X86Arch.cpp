@@ -29,11 +29,13 @@
 
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/APFloat.h"
-#include "yasmx/Support/Compose.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
@@ -142,40 +144,46 @@ X86Arch::setVar(llvm::StringRef var, unsigned long val)
 }
 
 void
-X86Arch::DirCpu(DirectiveInfo& info)
+X86Arch::DirCpu(DirectiveInfo& info, Diagnostic& diags)
 {
     for (NameValues::const_iterator nv=info.getNameValues().begin(),
          end=info.getNameValues().end(); nv != end; ++nv)
     {
+        bool recognized = false;
+
         if (nv->isString())
-            ParseCpu(nv->getString());
+            recognized = ParseCpu(nv->getString());
         else if (nv->isExpr())
         {
-            Expr e = nv->getExpr(info.getObject(), info.getSource());
-            if (!e.isIntNum())
-                throw SyntaxError(String::Compose(
-                    N_("invalid argument to [%1]"), "CPU"));
-            else
+            Expr e = nv->getExpr(info.getObject());
+            if (e.isIntNum())
             {
                 llvm::SmallString<128> ss;
                 llvm::raw_svector_ostream oss(ss);
                 oss << e.getIntNum().getUInt();
-                ParseCpu(oss.str());
+                recognized = ParseCpu(oss.str());
             }
         }
-        else
-            throw SyntaxError(String::Compose(N_("invalid argument to [%1]"),
-                                              "CPU"));
+
+        if (!recognized)
+        {
+            diags.Report(info.getSource(),
+                diags.getCustomDiagID(Diagnostic::Warning,
+                                      "ignored unrecognized CPU identifier"))
+                << nv->getValueSource();
+        }
     }
 }
 
 void
-X86Arch::DirBits(DirectiveInfo& info)
+X86Arch::DirBits(DirectiveInfo& info, Diagnostic& diags)
 {
-    NameValues::const_iterator nv = info.getNameValues().begin();
-    if (nv != info.getNameValues().end() && nv->isExpr())
+    if (info.getNameValues().size() > 1)
+        diags.Report(info.getSource(), diag::warn_directive_one_arg);
+    NameValue& nv = info.getNameValues().front();
+    if (nv.isExpr())
     {
-        Expr e = nv->getExpr(info.getObject(), info.getSource());
+        Expr e = nv.getExpr(info.getObject());
         if (e.isIntNum())
         {
             unsigned long v = e.getIntNum().getUInt();
@@ -187,23 +195,25 @@ X86Arch::DirBits(DirectiveInfo& info)
         }
     }
 
-    throw ValueError(String::Compose(N_("invalid argument to [%1]"), "BITS"));
+    diags.Report(info.getSource(),
+        diags.getCustomDiagID(Diagnostic::Error, "BITS must be 16, 32, or 64"))
+        << nv.getValueSource();
 }
 
 void
-X86Arch::DirCode16(DirectiveInfo& info)
+X86Arch::DirCode16(DirectiveInfo& info, Diagnostic& diags)
 {
     m_mode_bits = 16;
 }
 
 void
-X86Arch::DirCode32(DirectiveInfo& info)
+X86Arch::DirCode32(DirectiveInfo& info, Diagnostic& diags)
 {
     m_mode_bits = 32;
 }
 
 void
-X86Arch::DirCode64(DirectiveInfo& info)
+X86Arch::DirCode64(DirectiveInfo& info, Diagnostic& diags)
 {
     m_mode_bits = 64;
 }
@@ -433,7 +443,8 @@ X86Arch::getFill() const
             else
                 return fill32_intel;
         default:
-            throw ValueError(N_("Invalid mode_bits in x86_get_fill"));
+            assert(false && "Invalid mode_bits in x86_get_fill");
+            return 0;
     }
 }
 

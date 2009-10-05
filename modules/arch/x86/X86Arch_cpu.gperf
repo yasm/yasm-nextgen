@@ -29,8 +29,7 @@
 #include <cctype>
 #include <cstring>
 
-#include <yasmx/Support/Compose.h>
-#include <yasmx/Support/errwarn.h>
+#include "llvm/ADT/StringRef.h"
 #include <yasmx/Support/phash.h>
 
 #include "modules/arch/x86/X86Arch.h"
@@ -390,13 +389,13 @@ intelnop,	X86Nop,	X86Arch::NOP_INTEL
 amdnop,		X86Nop,	X86Arch::NOP_AMD
 %%
 
-void
+bool
 X86Arch::ParseCpu(llvm::StringRef cpuid)
 {
     size_t cpuid_len = cpuid.size();
 
     if (cpuid_len > 15)
-        return;
+        return false;
 
     static char lcaseid[16];
     for (size_t i=0; i<cpuid_len; i++)
@@ -405,14 +404,10 @@ X86Arch::ParseCpu(llvm::StringRef cpuid)
 
     const CpuParseData* pdata = CpuHash::in_word_set(lcaseid, cpuid_len);
     if (!pdata)
-    {
-        setWarn(WARN_GENERAL,
-                String::Compose(N_("unrecognized CPU identifier `%1'"),
-                                cpuid));
-        return;
-    }
+        return false;
 
     pdata->handler(m_active_cpu, m_nop, pdata->data);
+    return true;
 }
 
 }}} // namespace yasm::arch::x86

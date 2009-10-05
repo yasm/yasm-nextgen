@@ -37,6 +37,7 @@
 namespace yasm
 {
 
+class Diagnostic;
 class DirectiveInfo;
 class Object;
 
@@ -196,14 +197,15 @@ public:
     static ArchModule::MachineNames getMachines();
 
 private:
-    void ParseCpu(llvm::StringRef cpuid);
+    // Returns false if cpuid not recognized
+    bool ParseCpu(llvm::StringRef cpuid);
 
     // Directives
-    void DirCpu(DirectiveInfo& info);
-    void DirBits(DirectiveInfo& info);
-    void DirCode16(DirectiveInfo& info);
-    void DirCode32(DirectiveInfo& info);
-    void DirCode64(DirectiveInfo& info);
+    void DirCpu(DirectiveInfo& info, Diagnostic& diags);
+    void DirBits(DirectiveInfo& info, Diagnostic& diags);
+    void DirCode16(DirectiveInfo& info, Diagnostic& diags);
+    void DirCode32(DirectiveInfo& info, Diagnostic& diags);
+    void DirCode64(DirectiveInfo& info, Diagnostic& diags);
 
     // What instructions/features are enabled?
     CpuMask m_active_cpu;

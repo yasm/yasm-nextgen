@@ -37,6 +37,7 @@ namespace clang { class SourceLocation; }
 namespace yasm
 {
 
+class Diagnostic;
 class DirectiveInfo;
 class Expr;
 class NameValues;
@@ -88,20 +89,23 @@ YASM_LIB_EXPORT
 /// Extern directive handler.  Sets symbol visibility to Symbol::EXTERN and
 /// saves objext_namevals as associated symbol data.
 /// @param info     directive info
+/// @param diags    diagnostic reporter
 YASM_LIB_EXPORT
-void DirExtern(DirectiveInfo& info);
+void DirExtern(DirectiveInfo& info, Diagnostic& diags);
 
 /// Global directive handler.  Sets symbol visibility to Symbol::GLOBAL and
 /// saves objext_namevals as associated symbol data.
 /// @param info     directive info
+/// @param diags    diagnostic reporter
 YASM_LIB_EXPORT
-void DirGlobal(DirectiveInfo& info);
+void DirGlobal(DirectiveInfo& info, Diagnostic& diags);
 
 /// Common directive handler.  Sets symbol visibility to Symbol::COMMON and
 /// saves common size and objext_namevals as associated symbol data.
 /// @param info     directive info
+/// @param diags    diagnostic reporter
 YASM_LIB_EXPORT
-void DirCommon(DirectiveInfo& info);
+void DirCommon(DirectiveInfo& info, Diagnostic& diags);
 
 } // namespace yasm
 

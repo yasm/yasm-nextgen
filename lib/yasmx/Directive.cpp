@@ -30,8 +30,7 @@
 
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
-#include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 
 
@@ -52,7 +51,9 @@ public:
             : m_handler(handler), m_flags(flags)
         {}
         ~Dir() {}
-        void operator() (llvm::StringRef name, DirectiveInfo& info);
+        void operator() (llvm::StringRef name,
+                         DirectiveInfo& info,
+                         Diagnostic& diags);
 
     private:
         Directive m_handler;
@@ -78,16 +79,6 @@ Directives::Add(llvm::StringRef name, Directive handler, Flags flags)
     m_impl->m_dirs[llvm::LowercaseString(name)] = Impl::Dir(handler, flags);
 }
 
-Directive
-Directives::operator[] (llvm::StringRef name) const
-{
-    Directive rv;
-    if (!get(&rv, name))
-        throw ValueError(String::Compose(N_("unrecognized directive `%1'"),
-                                         name));
-    return rv;
-}
-
 bool
 Directives::get(Directive* dir, llvm::StringRef name) const
 {
@@ -95,26 +86,32 @@ Directives::get(Directive* dir, llvm::StringRef name) const
     if (p == m_impl->m_dirs.end())
         return false;
 
-    *dir = BIND::bind(&Impl::Dir::operator(), REF::ref(p->second), name, _1);
+    *dir =
+        BIND::bind(&Impl::Dir::operator(), REF::ref(p->second), name, _1, _2);
     return true;
 }
 
 void
-Directives::Impl::Dir::operator() (llvm::StringRef name, DirectiveInfo& info)
+Directives::Impl::Dir::operator() (llvm::StringRef name,
+                                   DirectiveInfo& info,
+                                   Diagnostic& diags)
 {
     NameValues& namevals = info.getNameValues();
     if ((m_flags & (ARG_REQUIRED|ID_REQUIRED)) && namevals.empty())
-        throw SyntaxError(String::Compose(
-            N_("directive `%1' requires an argument"), name));
-
-    if (!namevals.empty())
     {
-        if ((m_flags & ID_REQUIRED) && !namevals.front().isId())
-            throw SyntaxError(String::Compose(
-                N_("directive `%1' requires an identifier parameter"), name));
+        diags.Report(info.getSource(), diag::err_directive_no_args);
+        return;
     }
 
-    m_handler(info);
+    if (!namevals.empty() && (m_flags & ID_REQUIRED) &&
+        !namevals.front().isId())
+    {
+        diags.Report(info.getSource(), diag::err_value_id)
+            << namevals.front().getValueSource();
+        return;
+    }
+
+    m_handler(info, diags);
 }
 
 } // namespace yasm

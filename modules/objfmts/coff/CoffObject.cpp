@@ -35,6 +35,7 @@
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/DirHelpers.h"
 #include "yasmx/NameValue.h"
@@ -186,22 +187,24 @@ CoffObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
 }
 
 void
-CoffObject::DirGasSection(DirectiveInfo& info)
+CoffObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
 
-    if (!nvs.front().isString())
+    NameValue& sectname_nv = nvs.front();
+    if (!sectname_nv.isString())
         throw Error(N_("section name must be a string"));
-    llvm::StringRef sectname = nvs.front().getString();
+    llvm::StringRef sectname = sectname_nv.getString();
 
     if (sectname.size() > 8 && !m_win32)
     {
         // win32 format supports >8 character section names in object
         // files via "/nnnn" (where nnnn is decimal offset into string table),
         // so only warn for regular COFF.
-        setWarn(WARN_GENERAL,
-                N_("COFF section names limited to 8 characters: truncating"));
+        diags.Report(sectname_nv.getValueSource().getBegin(),
+            diags.getCustomDiagID(Diagnostic::Warning,
+                "COFF section names limited to 8 characters: truncating"));
         sectname = sectname.substr(0, 8);
     }
 
@@ -230,13 +233,18 @@ CoffObject::DirGasSection(DirectiveInfo& info)
         return;
 
     // Section flags must be a string.
-    if (!nvs[1].isString())
-        throw SyntaxError(N_("flag string expected"));
+    NameValue& flags_nv = nvs[1];
+    if (!flags_nv.isString())
+    {
+        diags.Report(flags_nv.getValueSource().getBegin(),
+            diags.getCustomDiagID(Diagnostic::Error, "flag string expected"));
+        return;
+    }
 
     // Parse section flags
     bool alloc = false, load = false, readonly = false, code = false;
     bool datasect = false, shared = false;
-    llvm::StringRef flagstr = nvs[1].getString();
+    llvm::StringRef flagstr = flags_nv.getString();
 
     for (size_t i=0; i<flagstr.size(); ++i)
     {
@@ -271,8 +279,11 @@ CoffObject::DirGasSection(DirectiveInfo& info)
                 readonly = false;
                 break;
             default:
-                setWarn(WARN_GENERAL, String::Compose(
-                    N_("unrecognized section attribute: `%1'"), flagstr[i]));
+                diags.Report(flags_nv.getValueSource().getBegin()
+                    .getFileLocWithOffset(i),
+                    diags.getCustomDiagID(Diagnostic::Warning,
+                        "unrecognized section attribute: '%0'"))
+                    << flagstr[i];
         }
     }
 
@@ -307,60 +318,64 @@ void
 CoffObject::DirSectionInitHelpers(DirHelpers& helpers,
                                   CoffSection* coffsect,
                                   IntNum* align,
-                                  bool* has_align,
-                                  clang::SourceLocation source)
+                                  bool* has_align)
 {
     helpers.Add("code", false,
-                BIND::bind(&DirResetFlag, _1, &coffsect->m_flags,
+                BIND::bind(&DirResetFlag, _1, _2, &coffsect->m_flags,
                            CoffSection::TEXT |
                            CoffSection::EXECUTE |
                            CoffSection::READ));
     helpers.Add("text", false,
-                BIND::bind(&DirResetFlag, _1, &coffsect->m_flags,
+                BIND::bind(&DirResetFlag, _1, _2, &coffsect->m_flags,
                            CoffSection::TEXT |
                            CoffSection::EXECUTE |
                            CoffSection::READ));
     helpers.Add("data", false,
-                BIND::bind(&DirResetFlag, _1, &coffsect->m_flags,
+                BIND::bind(&DirResetFlag, _1, _2, &coffsect->m_flags,
                            CoffSection::DATA |
                            CoffSection::READ |
                            CoffSection::WRITE));
     helpers.Add("rdata", false,
-                BIND::bind(&DirResetFlag, _1, &coffsect->m_flags,
+                BIND::bind(&DirResetFlag, _1, _2, &coffsect->m_flags,
                            CoffSection::DATA | CoffSection::READ));
     helpers.Add("bss", false,
-                BIND::bind(&DirResetFlag, _1, &coffsect->m_flags,
+                BIND::bind(&DirResetFlag, _1, _2, &coffsect->m_flags,
                            CoffSection::BSS |
                            CoffSection::READ |
                            CoffSection::WRITE));
     helpers.Add("info", false,
-                BIND::bind(&DirResetFlag, _1, &coffsect->m_flags,
+                BIND::bind(&DirResetFlag, _1, _2, &coffsect->m_flags,
                            CoffSection::INFO |
                            CoffSection::DISCARD |
                            CoffSection::READ));
     helpers.Add("align", true,
-                BIND::bind(&DirIntNum, _1, &m_object, source, align,
+                BIND::bind(&DirIntNumPower2, _1, _2, &m_object, align,
                            has_align));
 }
 
 void
-CoffObject::DirSection(DirectiveInfo& info)
+CoffObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
-    clang::SourceLocation source = info.getSource();
 
-    if (!nvs.front().isString())
-        throw Error(N_("section name must be a string"));
-    llvm::StringRef sectname = nvs.front().getString();
+    NameValue& sectname_nv = nvs.front();
+    if (!sectname_nv.isString())
+    {
+        diags.Report(sectname_nv.getValueSource().getBegin(),
+                     diag::err_value_string_or_id);
+        return;
+    }
+    llvm::StringRef sectname = sectname_nv.getString();
 
     if (sectname.size() > 8 && !m_win32)
     {
         // win32 format supports >8 character section names in object
         // files via "/nnnn" (where nnnn is decimal offset into string table),
         // so only warn for regular COFF.
-        setWarn(WARN_GENERAL,
-                N_("COFF section names limited to 8 characters: truncating"));
+        diags.Report(sectname_nv.getValueSource().getBegin(),
+            diags.getCustomDiagID(Diagnostic::Warning,
+                "COFF section names limited to 8 characters: truncating"));
         sectname = sectname.substr(0, 8);
     }
 
@@ -369,7 +384,7 @@ CoffObject::DirSection(DirectiveInfo& info)
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, source);
+        sect = AppendSection(sectname, info.getSource());
 
     CoffSection* coffsect = sect->getAssocData<CoffSection>();
     assert(coffsect != 0);
@@ -384,8 +399,7 @@ CoffObject::DirSection(DirectiveInfo& info)
     // Ignore flags if we've seen this section before
     if (!first)
     {
-        setWarn(WARN_GENERAL,
-                N_("section flags ignored on section redeclaration"));
+        diags.Report(info.getSource(), diag::warn_section_redef_flags);
         return;
     }
 
@@ -394,8 +408,9 @@ CoffObject::DirSection(DirectiveInfo& info)
     bool has_align = false;
 
     DirHelpers helpers;
-    DirSectionInitHelpers(helpers, coffsect, &align, &has_align, source);
-    helpers(++nvs.begin(), nvs.end(), DirNameValueWarn);
+    DirSectionInitHelpers(helpers, coffsect, &align, &has_align);
+    helpers(++nvs.begin(), nvs.end(), info.getSource(), diags,
+            DirNameValueWarn);
 
     sect->setBSS((coffsect->m_flags & CoffSection::BSS) != 0);
     sect->setCode((coffsect->m_flags & CoffSection::EXECUTE) != 0);
@@ -407,26 +422,24 @@ CoffObject::DirSection(DirectiveInfo& info)
     {
         unsigned long aligni = align.getUInt();
 
-        // Alignments must be a power of two.
-        if (!isExp2(aligni))
-        {
-            throw ValueError(String::Compose(
-                N_("argument to `%1' is not a power of two"), "align"));
-        }
-
         // Check to see if alignment is supported size
+        // FIXME: Use actual value source location
         if (aligni > 8192)
-            throw ValueError(N_("Win32 does not support alignments > 8192"));
+        {
+            diags.Report(info.getSource(),
+                diags.getCustomDiagID(Diagnostic::Error,
+                    "Win32 does not support alignments > 8192"));
+        }
 
         sect->setAlign(aligni);
     }
 }
 
 void
-CoffObject::DirIdent(DirectiveInfo& info)
+CoffObject::DirIdent(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
-    DirIdentCommon(*this, ".comment", info);
+    DirIdentCommon(*this, ".comment", info, diags);
 }
 
 void

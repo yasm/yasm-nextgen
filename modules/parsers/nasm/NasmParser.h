@@ -166,9 +166,9 @@ private:
     bool ParseExpr5(Expr& e, ExprType type);
     bool ParseExpr6(Expr& e, ExprType type);
 
-    void DirAbsolute(DirectiveInfo& info);
-    void DirAlign(DirectiveInfo& info);
-    void DirDefault(DirectiveInfo& info);
+    void DirAbsolute(DirectiveInfo& info, Diagnostic& diags);
+    void DirAlign(DirectiveInfo& info, Diagnostic& diags);
+    void DirDefault(DirectiveInfo& info, Diagnostic& diags);
 
     void DoDirective(llvm::StringRef name, DirectiveInfo& info);
 

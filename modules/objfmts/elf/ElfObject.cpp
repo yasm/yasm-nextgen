@@ -52,6 +52,7 @@
 #include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/DirHelpers.h"
 #include "yasmx/Errwarns.h"
@@ -118,18 +119,21 @@ public:
     Section* AppendSection(llvm::StringRef name, clang::SourceLocation source);
 
     ElfSymbol& BuildSymbol(Symbol& sym);
-    void BuildExtern(Symbol& sym);
-    void BuildGlobal(Symbol& sym);
-    void BuildCommon(Symbol& sym);
+    void BuildExtern(Symbol& sym, Diagnostic& diags);
+    void BuildGlobal(Symbol& sym, Diagnostic& diags);
+    void BuildCommon(Symbol& sym, Diagnostic& diags);
     void setSymbolSectionValue(Symbol& sym, ElfSymbol& elfsym);
-    void FinalizeSymbol(Symbol& sym, StringTable& strtab, bool local_names);
+    void FinalizeSymbol(Symbol& sym,
+                        StringTable& strtab,
+                        bool local_names,
+                        Diagnostic& diags);
 
-    void DirGasSection(DirectiveInfo& info);
-    void DirSection(DirectiveInfo& info);
-    void DirType(DirectiveInfo& info);
-    void DirSize(DirectiveInfo& info);
-    void DirWeak(DirectiveInfo& info);
-    void DirIdent(DirectiveInfo& info);
+    void DirGasSection(DirectiveInfo& info, Diagnostic& diags);
+    void DirSection(DirectiveInfo& info, Diagnostic& diags);
+    void DirType(DirectiveInfo& info, Diagnostic& diags);
+    void DirSize(DirectiveInfo& info, Diagnostic& diags);
+    void DirWeak(DirectiveInfo& info, Diagnostic& diags);
+    void DirIdent(DirectiveInfo& info, Diagnostic& diags);
 
     ElfConfig m_config;                     // ELF configuration
     util::scoped_ptr<ElfMachine> m_machine; // ELF machine interface
@@ -441,7 +445,7 @@ ElfObject::BuildSymbol(Symbol& sym)
 }
 
 void
-ElfObject::BuildExtern(Symbol& sym)
+ElfObject::BuildExtern(Symbol& sym, Diagnostic& diags)
 {
     const NameValues* objext_nvs = getObjextNameValues(sym);
 
@@ -452,8 +456,10 @@ ElfObject::BuildExtern(Symbol& sym)
         {
             if (nv->isString())
             {
-                throw TypeError(String::Compose(
-                    N_("unrecognized symbol type `%1'"), nv->getString()));
+                diags.Report(nv->getValueSource().getBegin(),
+                             diags.getCustomDiagID(Diagnostic::Error,
+                                                   "unrecognized symbol type"));
+                return;
             }
         }
     }
@@ -464,71 +470,83 @@ ElfObject::BuildExtern(Symbol& sym)
 
 static bool
 GlobalNameValueFallback(NameValue& nv,
+                        clang::SourceLocation dir_source,
+                        Diagnostic& diags,
                         Object* object,
-                        clang::SourceLocation source,
                         Expr::Ptr* size)
 
 {
     if (!nv.isExpr() && nv.isId())
     {
-        throw TypeError(String::Compose(N_("unrecognized symbol type `%s'"),
-                                        nv.getId()));
+        diags.Report(nv.getValueSource().getBegin(),
+                     diags.getCustomDiagID(Diagnostic::Error,
+                                           "unrecognized symbol type"));
+        return true;
     }
     else if (nv.isExpr() && size->get() == 0)
     {
-        *size = nv.ReleaseExpr(*object, source);
+        *size = nv.ReleaseExpr(*object);
         return true;
     }
     else
-        return DirNameValueWarn(nv);
+        return DirNameValueWarn(nv, dir_source, diags);
 }
 
 static inline void
-GlobalSetVis(NameValue& nv, ElfSymbolVis* vis_out, unsigned int* vis_count,
+GlobalSetVis(NameValue& nv,
+             Diagnostic& diags,
+             ElfSymbolVis* vis_out,
+             unsigned int* vis_count,
+             clang::SourceLocation* vis_source,
              ElfSymbolVis vis)
 {
     *vis_out = vis;
     *vis_count = *vis_count + 1;
+    *vis_source = nv.getValueSource().getBegin();
 }
 
 
 void
-ElfObject::BuildGlobal(Symbol& sym)
+ElfObject::BuildGlobal(Symbol& sym, Diagnostic& diags)
 {
     Expr::Ptr size(0);
     unsigned long type = STT_NOTYPE;    // ElfSymbolType
     ElfSymbolVis vis = STV_DEFAULT;
     unsigned int nvis = 0;
+    clang::SourceLocation vis_source;
 
     DirHelpers helpers;
 
     helpers.Add("function", false,
-                BIND::bind(&DirResetFlag, _1, &type, STT_FUNC));
+                BIND::bind(&DirResetFlag, _1, _2, &type, STT_FUNC));
     helpers.Add("data", false,
-                BIND::bind(&DirResetFlag, _1, &type, STT_OBJECT));
+                BIND::bind(&DirResetFlag, _1, _2, &type, STT_OBJECT));
     helpers.Add("object", false,
-                BIND::bind(&DirResetFlag, _1, &type, STT_OBJECT));
+                BIND::bind(&DirResetFlag, _1, _2, &type, STT_OBJECT));
     helpers.Add("object", false,
-                BIND::bind(&DirResetFlag, _1, &type, STT_OBJECT));
+                BIND::bind(&DirResetFlag, _1, _2, &type, STT_OBJECT));
     helpers.Add("internal", false,
-                BIND::bind(&GlobalSetVis, _1, &vis, &nvis, STV_INTERNAL));
+                BIND::bind(&GlobalSetVis, _1, _2, &vis, &nvis, &vis_source,
+                           STV_INTERNAL));
     helpers.Add("hidden", false,
-                BIND::bind(&GlobalSetVis, _1, &vis, &nvis, STV_HIDDEN));
+                BIND::bind(&GlobalSetVis, _1, _2, &vis, &nvis, &vis_source,
+                           STV_HIDDEN));
     helpers.Add("protected", false,
-                BIND::bind(&GlobalSetVis, _1, &vis, &nvis, STV_PROTECTED));
+                BIND::bind(&GlobalSetVis, _1, _2, &vis, &nvis, &vis_source,
+                           STV_PROTECTED));
 
     NameValues* objext_nvs = getObjextNameValues(sym);
     if (objext_nvs)
     {
-        helpers(objext_nvs->begin(), objext_nvs->end(),
-                BIND::bind(&GlobalNameValueFallback, _1, &m_object,
-                           sym.getDeclSource(), &size));
+        helpers(objext_nvs->begin(), objext_nvs->end(), sym.getDeclSource(),
+                diags, BIND::bind(&GlobalNameValueFallback, _1, _2, _3,
+                                  &m_object, &size));
     }
 
     if (nvis > 1)
     {
-        setWarn(WARN_GENERAL,
-            N_("More than one symbol visibility provided; using last"));
+        diags.Report(vis_source, diags.getCustomDiagID(Diagnostic::Warning,
+            "More than one symbol visibility provided; using last"));
     }
 
     ElfSymbol& elfsym = BuildSymbol(sym);
@@ -540,7 +558,7 @@ ElfObject::BuildGlobal(Symbol& sym)
 }
 
 void
-ElfObject::BuildCommon(Symbol& sym)
+ElfObject::BuildCommon(Symbol& sym, Diagnostic& diags)
 {
     NameValues* objext_nvs = getObjextNameValues(sym);
     unsigned long addralign = 0;
@@ -552,25 +570,38 @@ ElfObject::BuildCommon(Symbol& sym)
         {
             if (!nv->getName().empty())
             {
-                setWarn(WARN_GENERAL, String::Compose(
-                    N_("Unrecognized qualifier `%1'"), nv->getName()));
+                diags.Report(nv->getNameSource(),
+                             diag::warn_unrecognized_qualifier);
                 continue;
             }
 
             if (!nv->isExpr())
-                throw ValueError(N_("alignment constraint is not an integer"));
+            {
+                diags.Report(nv->getValueSource().getBegin(),
+                             diags.getCustomDiagID(Diagnostic::Error,
+                                 "alignment constraint is not an integer"))
+                    << nv->getValueSource();
+                return;
+            }
 
-            std::auto_ptr<Expr> align_expr =
-                nv->ReleaseExpr(m_object, sym.getDeclSource());
+            std::auto_ptr<Expr> align_expr = nv->ReleaseExpr(m_object);
             if (!align_expr->isIntNum())
-                throw ValueError(N_("alignment constraint is not an integer"));
+            {
+                diags.Report(nv->getValueSource().getBegin(),
+                             diags.getCustomDiagID(Diagnostic::Error,
+                                 "alignment constraint is not an integer"))
+                    << nv->getValueSource();
+                return;
+            }
             addralign = align_expr->getIntNum().getUInt();
 
             // Alignments must be a power of two.
             if (!isExp2(addralign))
             {
-                throw ValueError(
-                    N_("alignment constraint is not a power of two"));
+                diags.Report(nv->getValueSource().getBegin(),
+                             diag::err_value_power2)
+                    << nv->getValueSource();
+                return;
             }
         }
     }
@@ -597,7 +628,10 @@ ElfObject::setSymbolSectionValue(Symbol& sym, ElfSymbol& elfsym)
 }
 
 void
-ElfObject::FinalizeSymbol(Symbol& sym, StringTable& strtab, bool local_names)
+ElfObject::FinalizeSymbol(Symbol& sym,
+                          StringTable& strtab,
+                          bool local_names,
+                          Diagnostic& diags)
 {
     int vis = sym.getVisibility();
     int status = sym.getStatus();
@@ -605,7 +639,7 @@ ElfObject::FinalizeSymbol(Symbol& sym, StringTable& strtab, bool local_names)
 
     if (vis & Symbol::EXTERN)
     {
-        BuildExtern(sym);
+        BuildExtern(sym, diags);
         elfsym = sym.getAssocData<ElfSymbol>();
         elfsym->setName(strtab.getIndex(sym.getName()));
         return;
@@ -613,7 +647,7 @@ ElfObject::FinalizeSymbol(Symbol& sym, StringTable& strtab, bool local_names)
 
     if (vis & Symbol::COMMON)
     {
-        BuildCommon(sym);
+        BuildCommon(sym, diags);
         elfsym = sym.getAssocData<ElfSymbol>();
         elfsym->setName(strtab.getIndex(sym.getName()));
         // fall through (check below catches undefined case)
@@ -627,7 +661,7 @@ ElfObject::FinalizeSymbol(Symbol& sym, StringTable& strtab, bool local_names)
         ;
     else if (vis & Symbol::GLOBAL)
     {
-        BuildGlobal(sym);
+        BuildGlobal(sym, diags);
         elfsym = sym.getAssocData<ElfSymbol>();
         elfsym->setName(strtab.getIndex(sym.getName()));
     }
@@ -968,15 +1002,7 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     for (Object::symbol_iterator i=m_object.symbols_begin(),
          end=m_object.symbols_end(); i != end; ++i)
     {
-        try
-        {
-            FinalizeSymbol(*i, strtab, all_syms);
-        }
-        catch (Error& err)
-        {
-            errwarns.Propagate(i->getDeclSource(), err);
-        }
-        errwarns.Propagate(i->getDeclSource());
+        FinalizeSymbol(*i, strtab, all_syms, diags);
     }
 
     m_config.secthead_count = 0;
@@ -1199,7 +1225,7 @@ ElfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
 }
 
 void
-ElfObject::DirGasSection(DirectiveInfo& info)
+ElfObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
@@ -1290,22 +1316,26 @@ ElfObject::DirGasSection(DirectiveInfo& info)
 }
 
 void
-ElfObject::DirSection(DirectiveInfo& info)
+ElfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
-    clang::SourceLocation source = info.getSource();
 
-    if (!nvs.front().isString())
-        throw Error(N_("section name must be a string"));
-    llvm::StringRef sectname = nvs.front().getString();
+    NameValue& sectname_nv = nvs.front();
+    if (!sectname_nv.isString())
+    {
+        diags.Report(sectname_nv.getValueSource().getBegin(),
+                     diag::err_value_string_or_id);
+        return;
+    }
+    llvm::StringRef sectname = sectname_nv.getString();
 
     Section* sect = m_object.FindSection(sectname);
     bool first = true;
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, source);
+        sect = AppendSection(sectname, info.getSource());
 
     m_object.setCurSection(sect);
     sect->setDefault(false);
@@ -1317,8 +1347,7 @@ ElfObject::DirSection(DirectiveInfo& info)
     // Ignore flags if we've seen this section before
     if (!first)
     {
-        setWarn(WARN_GENERAL,
-                N_("section flags ignored on section redeclaration"));
+        diags.Report(info.getSource(), diag::warn_section_redef_flags);
         return;
     }
 
@@ -1351,25 +1380,27 @@ ElfObject::DirSection(DirectiveInfo& info)
     for (unsigned int i=0; i<NELEMS(name_flags); ++i)
     {
         helpers.Add(name_flags[i].enable, false,
-                    BIND::bind(&DirSetFlag, _1, &flags, name_flags[i].flag));
+                    BIND::bind(&DirSetFlag, _1, _2, &flags,
+                               name_flags[i].flag));
         helpers.Add(name_flags[i].disable, false,
-                    BIND::bind(&DirClearFlag, _1, &flags,
+                    BIND::bind(&DirClearFlag, _1, _2, &flags,
                                name_flags[i].flag));
     }
 
     helpers.Add("noprogbits", false,
-                BIND::bind(&DirResetFlag, _1, &type, SHT_NOBITS));
+                BIND::bind(&DirResetFlag, _1, _2, &type, SHT_NOBITS));
     helpers.Add("nobits", false,
-                BIND::bind(&DirResetFlag, _1, &type, SHT_NOBITS));
+                BIND::bind(&DirResetFlag, _1, _2, &type, SHT_NOBITS));
     helpers.Add("progbits", false,
-                BIND::bind(&DirResetFlag, _1, &type, SHT_PROGBITS));
+                BIND::bind(&DirResetFlag, _1, _2, &type, SHT_PROGBITS));
 
-    helpers.Add("align", true, BIND::bind(&DirIntNum, _1, &m_object, source,
+    helpers.Add("align", true, BIND::bind(&DirIntNum, _1, _2, &m_object,
                                           &align, &has_align));
-    helpers.Add("merge", true, BIND::bind(&DirIntNum, _1, &m_object, source,
+    helpers.Add("merge", true, BIND::bind(&DirIntNum, _1, _2, &m_object,
                                           &merge, &has_merge));
 
-    helpers(++nvs.begin(), nvs.end(), DirNameValueWarn);
+    helpers(++nvs.begin(), nvs.end(), info.getSource(), diags,
+            DirNameValueWarn);
 
     // handle align
     if (has_align)
@@ -1400,7 +1431,7 @@ ElfObject::DirSection(DirectiveInfo& info)
 }
 
 void
-ElfObject::DirType(DirectiveInfo& info)
+ElfObject::DirType(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
@@ -1431,28 +1462,36 @@ ElfObject::DirType(DirectiveInfo& info)
 }
 
 void
-ElfObject::DirSize(DirectiveInfo& info)
+ElfObject::DirSize(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
-    clang::SourceLocation source = info.getSource();
 
-    SymbolRef sym = info.getObject().getSymbol(namevals.front().getId());
-    sym->Use(source);
+    NameValue& name_nv = namevals.front();
+    SymbolRef sym = info.getObject().getSymbol(name_nv.getId());
+    sym->Use(name_nv.getValueSource().getBegin());
 
     // Pull new size from param
     if (namevals.size() < 2)
-        throw SyntaxError(N_("no size specified"));
-    if (!namevals[1].isExpr())
-        throw SyntaxError(N_("size must be an expression"));
-    Expr size = namevals[1].getExpr(info.getObject(), source);
+    {
+        diags.Report(info.getSource(), diag::err_no_size);
+        return;
+    }
+    NameValue& size_nv = namevals[1];
+    if (!size_nv.isExpr())
+    {
+        diags.Report(info.getSource(), diag::err_size_expression)
+            << size_nv.getValueSource();
+        return;
+    }
+    Expr size = size_nv.getExpr(info.getObject());
 
     ElfSymbol& elfsym = BuildSymbol(*sym);
-    elfsym.setSize(size, source);
+    elfsym.setSize(size, size_nv.getValueSource().getBegin());
 }
 
 void
-ElfObject::DirWeak(DirectiveInfo& info)
+ElfObject::DirWeak(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
@@ -1465,10 +1504,10 @@ ElfObject::DirWeak(DirectiveInfo& info)
 }
 
 void
-ElfObject::DirIdent(DirectiveInfo& info)
+ElfObject::DirIdent(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
-    DirIdentCommon(*this, ".comment", info);
+    DirIdentCommon(*this, ".comment", info, diags);
 }
 
 std::vector<llvm::StringRef>

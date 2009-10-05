@@ -29,9 +29,9 @@
 #include <util.h>
 
 #include "YAML/emitter.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/AssocData.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Object.h"
@@ -163,41 +163,53 @@ getCommonSize(Symbol& sym)
 }
 
 void
-DirExtern(DirectiveInfo& info)
+DirExtern(DirectiveInfo& info, Diagnostic& diags)
 {
     Object& object = info.getObject();
-    SymbolRef sym = object.getSymbol(info.getNameValues().front().getId());
-    sym->Declare(Symbol::EXTERN, info.getSource());
+    NameValue& nv = info.getNameValues().front();
+    SymbolRef sym = object.getSymbol(nv.getId());
+    sym->Declare(Symbol::EXTERN, nv.getValueSource().getBegin());
 
     if (!info.getObjextNameValues().empty())
         setObjextNameValues(*sym, info.getObjextNameValues());
 }
 
 void
-DirGlobal(DirectiveInfo& info)
+DirGlobal(DirectiveInfo& info, Diagnostic& diags)
 {
     Object& object = info.getObject();
-    SymbolRef sym = object.getSymbol(info.getNameValues().front().getId());
-    sym->Declare(Symbol::GLOBAL, info.getSource());
+    NameValue& nv = info.getNameValues().front();
+    SymbolRef sym = object.getSymbol(nv.getId());
+    sym->Declare(Symbol::GLOBAL, nv.getValueSource().getBegin());
 
     if (!info.getObjextNameValues().empty())
         setObjextNameValues(*sym, info.getObjextNameValues());
 }
 
 void
-DirCommon(DirectiveInfo& info)
+DirCommon(DirectiveInfo& info, Diagnostic& diags)
 {
     NameValues& namevals = info.getNameValues();
     if (namevals.size() < 2)
-        throw SyntaxError(N_("no size specified in COMMON declaration"));
-    if (!namevals[1].isExpr())
-        throw SyntaxError(N_("common size is not an expression"));
+    {
+        diags.Report(info.getSource(), diag::err_no_size);
+        return;
+    }
+
+    NameValue& size_nv = namevals[1];
+    if (!size_nv.isExpr())
+    {
+        diags.Report(info.getSource(), diag::err_size_expression)
+            << size_nv.getValueSource();
+        return;
+    }
 
     Object& object = info.getObject();
-    SymbolRef sym = object.getSymbol(namevals.front().getId());
-    sym->Declare(Symbol::COMMON, info.getSource());
+    NameValue& name_nv = namevals.front();
+    SymbolRef sym = object.getSymbol(name_nv.getId());
+    sym->Declare(Symbol::COMMON, name_nv.getValueSource().getBegin());
 
-    setCommonSize(*sym, namevals[1].getExpr(object, info.getSource()));
+    setCommonSize(*sym, size_nv.getExpr(object));
 
     if (!info.getObjextNameValues().empty())
         setObjextNameValues(*sym, info.getObjextNameValues());

@@ -31,15 +31,14 @@
 ///
 #include <memory>
 #include <string>
-#include <vector>
 
+#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "yasmx/Expr.h"
 
 
-namespace clang { class SourceLocation; }
 namespace YAML { class Emitter; }
 
 namespace yasm
@@ -55,31 +54,45 @@ public:
     /// @param name         name; may be empty string if no name
     /// @param id           identifier value
     /// @param id_prefix    identifier prefix for raw identifiers
-    NameValue(llvm::StringRef name, llvm::StringRef id, char id_prefix);
+    NameValue(llvm::StringRef name,
+              llvm::StringRef id,
+              char id_prefix,
+              clang::SourceLocation name_src = clang::SourceLocation(),
+              clang::SourceLocation id_src = clang::SourceLocation());
 
     /// String value constructor.
     /// @param name         name; may be empty string if no name
     /// @param str          string value
-    NameValue(llvm::StringRef name, llvm::StringRef str);
+    NameValue(llvm::StringRef name,
+              llvm::StringRef str,
+              clang::SourceLocation name_src = clang::SourceLocation(),
+              clang::SourceLocation str_src = clang::SourceLocation());
 
     /// Expression value constructor.
     /// @param name         name; may be empty string if no name
     /// @param e            expression
-    NameValue(llvm::StringRef name, std::auto_ptr<Expr> e);
+    NameValue(llvm::StringRef name,
+              std::auto_ptr<Expr> e,
+              clang::SourceLocation name_src = clang::SourceLocation(),
+              clang::SourceRange e_src = clang::SourceRange());
 
     /// Identifier value constructor with no name.
     /// @param id           identifier value
     /// @param id_prefix    identifier prefix for raw identifiers
-    NameValue(llvm::StringRef id, char id_prefix);
+    NameValue(llvm::StringRef id,
+              char id_prefix,
+              clang::SourceLocation id_src = clang::SourceLocation());
 
     /// String value constructor with no name.
     /// @param name         name; may be empty string if no name
     /// @param str          string value
-    explicit NameValue(llvm::StringRef str);
+    explicit NameValue(llvm::StringRef str,
+                       clang::SourceLocation str_src = clang::SourceLocation());
 
     /// Expression value constructor with no name.
     /// @param e            expression
-    explicit NameValue(std::auto_ptr<Expr> e);
+    explicit NameValue(std::auto_ptr<Expr> e,
+                       clang::SourceRange e_src = clang::SourceRange());
 
     NameValue(const NameValue& oth);
     NameValue& operator= (const NameValue& rhs)
@@ -115,9 +128,9 @@ public:
     /// it's treated as a symbol (Symbol::use() is called to convert it).
     /// @param object       object
     /// @param source       source location
-    /// @return Expression; raises an exception if the parameter cannot be
-    ///         converted to an expression.
-    Expr getExpr(Object& object, clang::SourceLocation source) const;
+    /// @return Expression; asserts if the parameter cannot be converted to
+    ///         an expression.
+    Expr getExpr(Object& object) const;
 
     /// Release value's expression.  Operates just like get_expr() but moves
     /// the expression instead of copying it.
@@ -125,8 +138,7 @@ public:
     /// @param source       source location
     /// @return Expression, or NULL if the parameter cannot be
     ///         converted to an expression.
-    /*@null@*/ std::auto_ptr<Expr> ReleaseExpr
-        (Object& object, clang::SourceLocation source);
+    /*@null@*/ std::auto_ptr<Expr> ReleaseExpr(Object& object);
 
     /// Get value as a string.  If the parameter is an identifier,
     /// it's treated as a string.
@@ -135,9 +147,15 @@ public:
     llvm::StringRef getString() const;
 
     /// Get value as an identifier.
-    /// @return Identifier (string); raises an exception if the parameter
-    ///         is not an identifier.
+    /// @return Identifier (string); asserts if the parameter is not an
+    ///         identifier.
     llvm::StringRef getId() const;
+
+    /// Get source location of name.
+    clang::SourceLocation getNameSource() const { return m_name_source; }
+
+    /// Get source location of value.
+    clang::SourceRange getValueSource() const { return m_value_source; }
 
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
@@ -150,6 +168,8 @@ public:
 private:
     std::string m_name; ///< Name (empty string if no name)
 
+    clang::SourceLocation m_name_source;    ///< Name source
+
     /// Value type.
     enum Type
     {
@@ -159,6 +179,7 @@ private:
     };
 
     Type m_type;
+    clang::SourceRange m_value_source;      ///< Value source
 
     /// Possible values
     std::string m_idstr;            ///< Identifier or string

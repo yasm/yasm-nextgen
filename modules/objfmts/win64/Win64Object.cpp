@@ -31,6 +31,7 @@
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
 #include "yasmx/BytecodeContainer_util.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/Errwarns.h"
 #include "yasmx/Object.h"
@@ -89,21 +90,22 @@ private:
                              Section& section,
                              CoffSection* coffsect);
 
-    void CheckProcFrameState(llvm::StringRef dirname);
+    bool CheckProcFrameState(clang::SourceLocation dir_source,
+                             Diagnostic& diags);
 
-    void DirProcFrame(DirectiveInfo& info);
-    void DirPushReg(DirectiveInfo& info);
-    void DirSetFrame(DirectiveInfo& info);
-    void DirAllocStack(DirectiveInfo& info);
+    void DirProcFrame(DirectiveInfo& info, Diagnostic& diags);
+    void DirPushReg(DirectiveInfo& info, Diagnostic& diags);
+    void DirSetFrame(DirectiveInfo& info, Diagnostic& diags);
+    void DirAllocStack(DirectiveInfo& info, Diagnostic& diags);
 
     void SaveCommon(DirectiveInfo& info,
-                    llvm::StringRef dirname,
-                    UnwindCode::Opcode op);
-    void DirSaveReg(DirectiveInfo& info);
-    void DirSaveXMM128(DirectiveInfo& info);
-    void DirPushFrame(DirectiveInfo& info);
-    void DirEndProlog(DirectiveInfo& info);
-    void DirEndProcFrame(DirectiveInfo& info);
+                    UnwindCode::Opcode op,
+                    Diagnostic& diags);
+    void DirSaveReg(DirectiveInfo& info, Diagnostic& diags);
+    void DirSaveXMM128(DirectiveInfo& info, Diagnostic& diags);
+    void DirPushFrame(DirectiveInfo& info, Diagnostic& diags);
+    void DirEndProlog(DirectiveInfo& info, Diagnostic& diags);
+    void DirEndProcFrame(DirectiveInfo& info, Diagnostic& diags);
 
     // data for proc_frame and related directives
     clang::SourceLocation m_proc_frame;     // start of proc source location
@@ -140,22 +142,30 @@ Win64Object::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
 }
 
 void
-Win64Object::DirProcFrame(DirectiveInfo& info)
+Win64Object::DirProcFrame(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
     clang::SourceLocation source = info.getSource();
 
-    if (!namevals.front().isId())
-        throw SyntaxError(N_("argument to [PROC_FRAME] must be symbol name"));
-    llvm::StringRef name = namevals.front().getId();
+    NameValue& name_nv = namevals.front();
+    if (!name_nv.isId())
+    {
+        diags.Report(info.getSource(), diag::err_value_id)
+            << name_nv.getValueSource();
+        return;
+    }
+    llvm::StringRef name = name_nv.getId();
 
     if (m_proc_frame.isValid())
     {
-        SyntaxError err(
-            N_("nested procedures not supported (didn't use [ENDPROC_FRAME]?)"));
-        err.setXRef(m_proc_frame, N_("previous procedure started here"));
-        throw err;
+        diags.Report(info.getSource(),
+                     diags.getCustomDiagID(Diagnostic::Error,
+            "nested procedures not supported (didn't use [ENDPROC_FRAME]?)"));
+        diags.Report(m_proc_frame,
+                     diags.getCustomDiagID(Diagnostic::Note,
+                                           "previous procedure started here"));
+        return;
     }
     m_proc_frame = source;
     m_done_prolog = clang::SourceLocation();
@@ -168,44 +178,54 @@ Win64Object::DirProcFrame(DirectiveInfo& info)
     // Optional error handler
     if (namevals.size() > 1)
     {
-        if (!namevals[1].isId())
+        NameValue& ehandler_nv = namevals[1];
+        if (!ehandler_nv.isId())
         {
-            throw SyntaxError(
-                N_("[PROC_FRAME] error handler must be symbol name"));
+            diags.Report(info.getSource(), diag::err_value_id)
+                << ehandler_nv.getValueSource();
+            return;
         }
-        SymbolRef ehandler = m_object.getSymbol(namevals[1].getId());
-        ehandler->Use(source);
+        SymbolRef ehandler = m_object.getSymbol(ehandler_nv.getId());
+        ehandler->Use(ehandler_nv.getValueSource().getBegin());
         m_unwind->setEHandler(ehandler);
     }
 }
 
-void
-Win64Object::CheckProcFrameState(llvm::StringRef dirname)
+bool
+Win64Object::CheckProcFrameState(clang::SourceLocation dir_source,
+                                 Diagnostic& diags)
 {
     if (!m_proc_frame.isValid())
     {
-        throw SyntaxError(String::Compose(
-            N_("[%1] without preceding [PROC_FRAME]"), dirname));
+        diags.Report(dir_source,
+                     diags.getCustomDiagID(Diagnostic::Error,
+                                           "no preceding [PROC_FRAME]"));
+        return false;
     }
 
     if (m_done_prolog.isValid())
     {
-        SyntaxError err(String::Compose(
-            N_("[%1] after end of prologue"), dirname));
-        err.setXRef(m_done_prolog, N_("prologue ended here"));
-        throw err;
+        diags.Report(dir_source,
+                     diags.getCustomDiagID(Diagnostic::Error,
+                                           "must come before [END_PROLOGUE]"));
+        diags.Report(m_done_prolog,
+            diags.getCustomDiagID(Diagnostic::Note, "prologue ended here"));
+        return false;
     }
+    return true;
 }
 
 // Get current assembly position.
 static SymbolRef
-getCurPos(Object& object, llvm::StringRef dirname, clang::SourceLocation source)
+getCurPos(Object& object, clang::SourceLocation source, Diagnostic& diags)
 {
     Section* sect = object.getCurSection();
     if (!sect)
     {
-        throw SyntaxError(String::Compose(
-            N_("[%1] can only be used inside of a section"), dirname));
+        diags.Report(source,
+                     diags.getCustomDiagID(Diagnostic::Error,
+                         "directive can only be used inside of a section"));
+        return SymbolRef();
     }
     SymbolRef sym = object.AddNonTableSymbol("$");
     Bytecode& bc = sect->FreshBytecode();
@@ -215,63 +235,63 @@ getCurPos(Object& object, llvm::StringRef dirname, clang::SourceLocation source)
 }
 
 static const Register*
-getRegisterFromNameValue(Object& object, NameValue& nv,
-                         clang::SourceLocation source)
+getRegisterFromNameValue(Object& object, NameValue& nv)
 {
     if (!nv.isExpr())
         return 0;
-    Expr e = nv.getExpr(object, source);
+    Expr e = nv.getExpr(object);
     if (!e.isRegister())
         return 0;
     return e.getRegister();
 }
 
 void
-Win64Object::DirPushReg(DirectiveInfo& info)
+Win64Object::DirPushReg(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
 
     assert(!namevals.empty());
-    CheckProcFrameState("PUSHREG");
+    if (!CheckProcFrameState(info.getSource(), diags))
+        return;
 
-    const Register* reg =
-        getRegisterFromNameValue(m_object, namevals.front(), info.getSource());
+    const Register* reg = getRegisterFromNameValue(m_object, namevals.front());
     if (!reg)
     {
-        throw SyntaxError(String::Compose(
-            N_("[%1] requires a register as the first parameter"), "PUSHREG"));
+        diags.Report(info.getSource(), diag::err_value_register)
+            << namevals.front().getValueSource();
+        return;
     }
 
     // Generate a PUSH_NONVOL unwind code.
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(m_object, "PUSHREG", info.getSource()),
+        getCurPos(m_object, info.getSource(), diags),
         UnwindCode::PUSH_NONVOL,
         reg->getNum() & 0xF)));
 }
 
 void
-Win64Object::DirSetFrame(DirectiveInfo& info)
+Win64Object::DirSetFrame(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
-    clang::SourceLocation source = info.getSource();
 
     assert(!namevals.empty());
-    CheckProcFrameState("SETFRAME");
+    if (!CheckProcFrameState(info.getSource(), diags))
+        return;
 
-    const Register* reg =
-        getRegisterFromNameValue(m_object, namevals.front(), source);
+    const Register* reg = getRegisterFromNameValue(m_object, namevals.front());
     if (!reg)
     {
-        throw SyntaxError(String::Compose(
-            N_("[%1] requires a register as the first parameter"), "SETFRAME"));
+        diags.Report(info.getSource(), diag::err_value_register)
+            << namevals.front().getValueSource();
+        return;
     }
 
     std::auto_ptr<Expr> off(0);
     if (namevals.size() > 1)
-        off = namevals[1].ReleaseExpr(m_object, source);
+        off = namevals[1].ReleaseExpr(m_object);
     else
         off.reset(new Expr(0));
 
@@ -282,7 +302,7 @@ Win64Object::DirSetFrame(DirectiveInfo& info)
     // Generate a SET_FPREG unwind code
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(m_object, "SETFRAME", source),
+        getCurPos(m_object, info.getSource(), diags),
         UnwindCode::SET_FPREG,
         reg->getNum() & 0xF,
         8,
@@ -290,131 +310,148 @@ Win64Object::DirSetFrame(DirectiveInfo& info)
 }
 
 void
-Win64Object::DirAllocStack(DirectiveInfo& info)
+Win64Object::DirAllocStack(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
 
     assert(!namevals.empty());
-    CheckProcFrameState("ALLOCSTACK");
+    if (!CheckProcFrameState(info.getSource(), diags))
+        return;
 
     NameValue& nv = namevals.front();
     if (!nv.isExpr())
     {
-        throw SyntaxError(String::Compose(
-            N_("[%1] requires a size"), "ALLOCSTACK"));
+        diags.Report(info.getSource(), diag::err_value_expression)
+            << nv.getValueSource();
+        return;
     }
 
     // Generate an ALLOC_SMALL unwind code; this will get enlarged to an
     // ALLOC_LARGE if necessary.
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(m_object, "ALLOCSTACK", info.getSource()),
+        getCurPos(m_object, info.getSource(), diags),
         UnwindCode::ALLOC_SMALL,
         0,
         7,
-        nv.ReleaseExpr(m_object, info.getSource()))));
+        nv.ReleaseExpr(m_object))));
 }
 
 void
 Win64Object::SaveCommon(DirectiveInfo& info,
-                        llvm::StringRef dirname,
-                        UnwindCode::Opcode op)
+                        UnwindCode::Opcode op,
+                        Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
     clang::SourceLocation source = info.getSource();
 
     assert(!namevals.empty());
-    CheckProcFrameState(dirname);
+    if (!CheckProcFrameState(info.getSource(), diags))
+        return;
 
-    const Register* reg =
-        getRegisterFromNameValue(m_object, namevals.front(), source);
+    const Register* reg = getRegisterFromNameValue(m_object, namevals.front());
     if (!reg)
     {
-        throw SyntaxError(String::Compose(
-            N_("[%1] requires a register as the first parameter"), dirname));
+        diags.Report(source, diag::err_value_register)
+            << namevals.front().getValueSource();
+        return;
     }
 
-    if (namevals.size() < 2 || !namevals[1].isExpr())
+    if (namevals.size() < 2)
     {
-        throw SyntaxError(String::Compose(
-            N_("[%1] requires an offset as the second parameter"), dirname));
+        diags.Report(source, diag::err_no_offset);
+        return;
+    }
+
+    if (!namevals[1].isExpr())
+    {
+        diags.Report(source, diag::err_offset_expression)
+            << namevals[1].getValueSource();
+        return;
     }
 
     // Generate a SAVE_XXX unwind code; this will get enlarged to a
     // SAVE_XXX_FAR if necessary.
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(m_object, dirname, source),
+        getCurPos(m_object, source, diags),
         op,
         reg->getNum() & 0xF,
         16,
-        namevals[1].ReleaseExpr(m_object, source))));
+        namevals[1].ReleaseExpr(m_object))));
 }
 
 void
-Win64Object::DirSaveReg(DirectiveInfo& info)
+Win64Object::DirSaveReg(DirectiveInfo& info, Diagnostic& diags)
 {
-    SaveCommon(info, "SAVEREG", UnwindCode::SAVE_NONVOL);
+    SaveCommon(info, UnwindCode::SAVE_NONVOL, diags);
 }
 
 void
-Win64Object::DirSaveXMM128(DirectiveInfo& info)
+Win64Object::DirSaveXMM128(DirectiveInfo& info, Diagnostic& diags)
 {
-    SaveCommon(info, "SAVEXMM128", UnwindCode::SAVE_XMM128);
+    SaveCommon(info, UnwindCode::SAVE_XMM128, diags);
 }
 
 void
-Win64Object::DirPushFrame(DirectiveInfo& info)
+Win64Object::DirPushFrame(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
-    CheckProcFrameState("PUSHFRAME");
+    if (!CheckProcFrameState(info.getSource(), diags))
+        return;
 
     // Generate a PUSH_MACHFRAME unwind code.  If there's any parameter,
     // we set info to 1.  Otherwise we set info to 0.
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(m_object, "PUSHFRAME", info.getSource()),
+        getCurPos(m_object, info.getSource(), diags),
         UnwindCode::PUSH_MACHFRAME,
         info.getNameValues().empty() ? 0 : 1)));
 }
 
 void
-Win64Object::DirEndProlog(DirectiveInfo& info)
+Win64Object::DirEndProlog(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
-    CheckProcFrameState("ENDPROLOG");
+    if (!CheckProcFrameState(info.getSource(), diags))
+        return;
     m_done_prolog = info.getSource();
 
-    m_unwind->setProlog(getCurPos(m_object, "ENDPROLOG", info.getSource()));
+    m_unwind->setProlog(getCurPos(m_object, info.getSource(), diags));
 }
 
 void
-Win64Object::DirEndProcFrame(DirectiveInfo& info)
+Win64Object::DirEndProcFrame(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     clang::SourceLocation source = info.getSource();
 
     if (!m_proc_frame.isValid())
     {
-        throw SyntaxError(String::Compose(
-            N_("[%1] without preceding [PROC_FRAME]"), "ENDPROC_FRAME"));
+        diags.Report(source,
+                     diags.getCustomDiagID(Diagnostic::Error,
+                                           "no preceding [PROC_FRAME]"));
+        return;
     }
     if (!m_done_prolog.isValid())
     {
-        SyntaxError err(N_("ended procedure without ending prologue"));
-        err.setXRef(m_proc_frame, N_("procedure started here"));
-
+        diags.Report(info.getSource(),
+                     diags.getCustomDiagID(Diagnostic::Error,
+            "ended procedure without ending prologue"));
+        diags.Report(m_proc_frame,
+                     diags.getCustomDiagID(Diagnostic::Note,
+                                           "procedure started here"));
         m_unwind.reset(0);
         m_proc_frame = clang::SourceLocation();
-        throw err;
+        return;
     }
     assert(m_unwind.get() != 0 && "unwind info not present");
 
     SymbolRef proc_sym = m_unwind->getProc();
 
-    SymbolRef curpos = getCurPos(m_object, "ENDPROC_FRAME", source);
+    SymbolRef curpos = getCurPos(m_object, source, diags);
 
     //
     // Add unwind info to end of .xdata section.

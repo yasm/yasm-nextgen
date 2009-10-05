@@ -36,6 +36,7 @@
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/DirHelpers.h"
 #include "yasmx/Errwarns.h"
@@ -112,11 +113,13 @@ public:
                       /*@out@*/ std::string* machine);
 
 private:
-    void DirSection(DirectiveInfo& info);
-    void DirLibrary(DirectiveInfo& info);
-    void DirModule(DirectiveInfo& info);
+    void DirSection(DirectiveInfo& info, Diagnostic& diags);
+    void DirLibrary(DirectiveInfo& info, Diagnostic& diags);
+    void DirModule(DirectiveInfo& info, Diagnostic& diags);
 
-    void AddLibOrModule(llvm::StringRef name, bool lib);
+    void AddLibOrModule(llvm::StringRef name,
+                        bool lib,
+                        Diagnostic& diags);
 
     std::vector<std::string> m_module_names;
     std::vector<std::string> m_library_names;
@@ -140,6 +143,7 @@ public:
     void OutputSectionToFile(const Section& sect);
 
     void OutputSymbol(Symbol& sym,
+                      Diagnostic& diags,
                       Errwarns& errwarns,
                       bool all_syms,
                       unsigned int* indx);
@@ -373,7 +377,7 @@ enum RdfSymbolFlags
 };
 
 static unsigned int
-ParseFlags(Symbol& sym)
+ParseFlags(Symbol& sym, Diagnostic& diags)
 {
     unsigned long flags = 0;
     int vis = sym.getVisibility();
@@ -383,34 +387,39 @@ ParseFlags(Symbol& sym)
         return 0;
 
     DirHelpers helpers;
-    helpers.Add("data", false, BIND::bind(&DirSetFlag, _1, &flags, SYM_DATA));
-    helpers.Add("object", false, BIND::bind(&DirSetFlag, _1, &flags, SYM_DATA));
+    helpers.Add("data", false,
+                BIND::bind(&DirSetFlag, _1, _2, &flags, SYM_DATA));
+    helpers.Add("object", false,
+                BIND::bind(&DirSetFlag, _1, _2, &flags, SYM_DATA));
     helpers.Add("proc", false,
-                BIND::bind(&DirSetFlag, _1, &flags, SYM_FUNCTION));
+                BIND::bind(&DirSetFlag, _1, _2, &flags, SYM_FUNCTION));
     helpers.Add("function", false,
-                BIND::bind(&DirSetFlag, _1, &flags, SYM_FUNCTION));
+                BIND::bind(&DirSetFlag, _1, _2, &flags, SYM_FUNCTION));
 
     if (vis & Symbol::GLOBAL)
     {
         helpers.Add("export", false,
-                    BIND::bind(&DirSetFlag, _1, &flags, SYM_GLOBAL));
+                    BIND::bind(&DirSetFlag, _1, _2, &flags, SYM_GLOBAL));
     }
     if (vis & Symbol::EXTERN)
     {
         helpers.Add("import", false,
-                    BIND::bind(&DirSetFlag, _1, &flags, SYM_IMPORT));
-        helpers.Add("far", false, BIND::bind(&DirSetFlag, _1, &flags, SYM_FAR));
+                    BIND::bind(&DirSetFlag, _1, _2, &flags, SYM_IMPORT));
+        helpers.Add("far", false,
+                    BIND::bind(&DirSetFlag, _1, _2, &flags, SYM_FAR));
         helpers.Add("near", false,
-                    BIND::bind(&DirClearFlag, _1, &flags, SYM_FAR));
+                    BIND::bind(&DirClearFlag, _1, _2, &flags, SYM_FAR));
     }
 
-    helpers(objext_nvs->begin(), objext_nvs->end(), DirNameValueWarn);
+    helpers(objext_nvs->begin(), objext_nvs->end(), sym.getDeclSource(), diags,
+            DirNameValueWarn);
 
     return static_cast<unsigned int>(flags);
 }
 
 void
 RdfOutput::OutputSymbol(Symbol& sym,
+                        Diagnostic& diags,
                         Errwarns& errwarns,
                         bool all_syms,
                         unsigned int* indx)
@@ -461,7 +470,7 @@ RdfOutput::OutputSymbol(Symbol& sym,
     {
         Write8(bytes, RDFREC_GLOBAL);
         Write8(bytes, 6+len+1);                 // record length
-        Write8(bytes, ParseFlags(sym));         // flags
+        Write8(bytes, ParseFlags(sym, diags));  // flags
         Write8(bytes, scnum);                   // segment referred to
         Write32(bytes, value);                  // offset
     }
@@ -498,38 +507,37 @@ RdfOutput::OutputSymbol(Symbol& sym,
                 for (NameValues::iterator nv=objext_nvs->begin(),
                      end=objext_nvs->end(); nv != end; ++nv)
                 {
-                    if (nv->getName().empty())
+                    if (!nv->getName().empty())
                     {
-                        if (!nv->isExpr())
-                        {
-                            errwarns.Propagate(sym.getDeclSource(),
-                                ValueError(N_("alignment is not an integer")));
-                            continue;
-                        }
-                        Expr aligne =
-                            nv->getExpr(m_object, sym.getDeclSource());
-                        SimplifyCalcDist(aligne);
-                        if (!aligne.isIntNum())
-                        {
-                            errwarns.Propagate(sym.getDeclSource(),
-                                ValueError(N_("alignment is not an integer")));
-                            continue;
-                        }
-                        addralign = aligne.getIntNum().getUInt();
-
-                        // Alignments must be a power of two.
-                        if (!isExp2(addralign))
-                        {
-                            errwarns.Propagate(sym.getDeclSource(), ValueError(
-                                N_("alignment constraint is not a power of two")));
-                            continue;
-                        }
+                        diags.Report(nv->getNameSource(),
+                                     diag::warn_unrecognized_qualifier);
+                        continue;
                     }
-                    else
+                    if (!nv->isExpr())
                     {
-                        setWarn(WARN_GENERAL, String::Compose(
-                            N_("Unrecognized qualifier `%1'"), nv->getName()));
-                        errwarns.Propagate(sym.getDeclSource());
+                        diags.Report(nv->getValueSource().getBegin(),
+                                     diag::err_value_integer)
+                            << nv->getValueSource();
+                        continue;
+                    }
+                    Expr aligne = nv->getExpr(m_object);
+                    SimplifyCalcDist(aligne);
+                    if (!aligne.isIntNum())
+                    {
+                        diags.Report(nv->getValueSource().getBegin(),
+                                     diag::err_value_integer)
+                            << nv->getValueSource();
+                        continue;
+                    }
+                    addralign = aligne.getIntNum().getUInt();
+
+                    // Alignments must be a power of two.
+                    if (!isExp2(addralign))
+                    {
+                        diags.Report(nv->getValueSource().getBegin(),
+                                     diag::err_value_power2)
+                            << nv->getValueSource();
+                        continue;
                     }
                 }
             }
@@ -537,7 +545,7 @@ RdfOutput::OutputSymbol(Symbol& sym,
         }
         else if (vis & Symbol::EXTERN)
         {
-            unsigned int flags = ParseFlags(sym);
+            unsigned int flags = ParseFlags(sym, diags);
             if (flags & SYM_FAR)
             {
                 Write8(bytes, RDFREC_FARIMPORT);
@@ -618,7 +626,7 @@ RdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     for (Object::symbol_iterator sym = m_object.symbols_begin(),
          end = m_object.symbols_end(); sym != end; ++sym)
     {
-        out.OutputSymbol(*sym, errwarns, all_syms, &scnum);
+        out.OutputSymbol(*sym, diags, errwarns, all_syms, &scnum);
     }
 
     // UGH! Due to the fact the relocs go at the beginning of the file, and
@@ -1002,19 +1010,24 @@ RdfObject::AddDefaultSection()
 
 inline bool
 SetReserved(NameValue& nv,
+            clang::SourceLocation dir_source,
+            Diagnostic& diags,
             Object* obj,
-            clang::SourceLocation source,
             IntNum* out,
             bool* out_set)
 {
     if (!nv.getName().empty() || !nv.isExpr())
-        return DirNameValueWarn(nv);
+        return DirNameValueWarn(nv, dir_source, diags);
 
-    std::auto_ptr<Expr> e(nv.ReleaseExpr(*obj, source));
+    std::auto_ptr<Expr> e(nv.ReleaseExpr(*obj));
 
     if ((e.get() == 0) || !e->isIntNum())
-        throw NotConstantError(String::Compose(
-            N_("implicit reserved size is not an integer")));
+    {
+        diags.Report(nv.getValueSource().getBegin(),
+                     diags.getCustomDiagID(Diagnostic::Error,
+                         "implicit reserved size is not an integer"));
+        return false;
+    }
 
     *out = e->getIntNum();
     *out_set = true;
@@ -1022,22 +1035,26 @@ SetReserved(NameValue& nv,
 }
 
 void
-RdfObject::DirSection(DirectiveInfo& info)
+RdfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
-    clang::SourceLocation source = info.getSource();
 
-    if (!nvs.front().isString())
-        throw Error(N_("section name must be a string"));
-    llvm::StringRef sectname = nvs.front().getString();
+    NameValue& sectname_nv = nvs.front();
+    if (!sectname_nv.isString())
+    {
+        diags.Report(sectname_nv.getValueSource().getBegin(),
+                     diag::err_value_string_or_id);
+        return;
+    }
+    llvm::StringRef sectname = sectname_nv.getString();
 
     Section* sect = m_object.FindSection(sectname);
     bool first = true;
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, source);
+        sect = AppendSection(sectname, info.getSource());
 
     RdfSection* rsect = sect->getAssocData<RdfSection>();
     assert(rsect != 0);
@@ -1052,8 +1069,7 @@ RdfObject::DirSection(DirectiveInfo& info)
     // Ignore flags if we've seen this section before
     if (!first)
     {
-        setWarn(WARN_GENERAL,
-                N_("section flags ignored on section redeclaration"));
+        diags.Report(info.getSource(), diag::warn_section_redef_flags);
         return;
     }
 
@@ -1066,28 +1082,28 @@ RdfObject::DirSection(DirectiveInfo& info)
     // FIXME: We don't allow multiple bss sections (for now) because we'd have
     // to merge them before output into a single section.
     //helpers.Add("bss", false,
-    //            BIND::bind(&DirResetFlag, _1, &type, RdfSection::RDF_BSS));
+    //            BIND::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_BSS));
     helpers.Add("code", false,
-                BIND::bind(&DirResetFlag, _1, &type, RdfSection::RDF_CODE));
+                BIND::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_CODE));
     helpers.Add("text", false,
-                BIND::bind(&DirResetFlag, _1, &type, RdfSection::RDF_CODE));
+                BIND::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_CODE));
     helpers.Add("data", false,
-                BIND::bind(&DirResetFlag, _1, &type, RdfSection::RDF_DATA));
+                BIND::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_DATA));
     helpers.Add("comment", false,
-                BIND::bind(&DirResetFlag, _1, &type, RdfSection::RDF_COMMENT));
+                BIND::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_COMMENT));
     helpers.Add("lcomment", false,
-                BIND::bind(&DirResetFlag, _1, &type, RdfSection::RDF_LCOMMENT));
+                BIND::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_LCOMMENT));
     helpers.Add("pcomment", false,
-                BIND::bind(&DirResetFlag, _1, &type, RdfSection::RDF_PCOMMENT));
+                BIND::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_PCOMMENT));
     helpers.Add("symdebug", false,
-                BIND::bind(&DirResetFlag, _1, &type, RdfSection::RDF_SYMDEBUG));
-    helpers.Add("linedebug", false, BIND::bind(&DirResetFlag, _1, &type,
+                BIND::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_SYMDEBUG));
+    helpers.Add("linedebug", false, BIND::bind(&DirResetFlag, _1, _2, &type,
                                                RdfSection::RDF_LINEDEBUG));
-    helpers.Add("reserved", true, BIND::bind(&DirIntNum, _1, &m_object, source,
+    helpers.Add("reserved", true, BIND::bind(&DirIntNum, _1, _2, &m_object,
                                              &reserved, &has_reserved));
 
-    helpers(++nvs.begin(), nvs.end(),
-            BIND::bind(&SetReserved, _1, &m_object, source, &reserved,
+    helpers(++nvs.begin(), nvs.end(), info.getSource(), diags,
+            BIND::bind(&SetReserved, _1, _2, _3, &m_object, &reserved,
                        &has_reserved));
 
     rsect->type = static_cast<RdfSection::Type>(type);
@@ -1105,7 +1121,9 @@ RdfObject::DirSection(DirectiveInfo& info)
 }
 
 void
-RdfObject::AddLibOrModule(llvm::StringRef name, bool lib)
+RdfObject::AddLibOrModule(llvm::StringRef name,
+                          bool lib,
+                          Diagnostic& diags)
 {
     llvm::StringRef name2 = name;
     if (name2.size() > MODLIB_NAME_MAX)
@@ -1123,15 +1141,15 @@ RdfObject::AddLibOrModule(llvm::StringRef name, bool lib)
 }
 
 void
-RdfObject::DirLibrary(DirectiveInfo& info)
+RdfObject::DirLibrary(DirectiveInfo& info, Diagnostic& diags)
 {
-    AddLibOrModule(info.getNameValues().front().getString(), true);
+    AddLibOrModule(info.getNameValues().front().getString(), true, diags);
 }
 
 void
-RdfObject::DirModule(DirectiveInfo& info)
+RdfObject::DirModule(DirectiveInfo& info, Diagnostic& diags)
 {
-    AddLibOrModule(info.getNameValues().front().getString(), false);
+    AddLibOrModule(info.getNameValues().front().getString(), false, diags);
 }
 
 void

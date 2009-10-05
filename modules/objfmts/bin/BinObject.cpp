@@ -35,6 +35,7 @@
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/DirHelpers.h"
 #include "yasmx/Errwarns.h"
@@ -90,10 +91,12 @@ public:
     { return false; }
 
 private:
-    void DirSection(DirectiveInfo& info);
-    void DirOrg(DirectiveInfo& info);
-    void DirMap(DirectiveInfo& info);
-    bool setMapFilename(const NameValue& nv);
+    void DirSection(DirectiveInfo& info, Diagnostic& diags);
+    void DirOrg(DirectiveInfo& info, Diagnostic& diags);
+    void DirMap(DirectiveInfo& info, Diagnostic& diags);
+    bool setMapFilename(const NameValue& nv,
+                        clang::SourceLocation dir_source,
+                        Diagnostic& diags);
 
     void OutputMap(const IntNum& origin,
                    const BinGroups& groups,
@@ -417,15 +420,20 @@ BinObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
 }
 
 void
-BinObject::DirSection(DirectiveInfo& info)
+BinObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
     clang::SourceLocation source = info.getSource();
 
-    if (!nvs.front().isString())
-        throw Error(N_("section name must be a string"));
-    llvm::StringRef sectname = nvs.front().getString();
+    NameValue& sectname_nv = nvs.front();
+    if (!sectname_nv.isString())
+    {
+        diags.Report(sectname_nv.getValueSource().getBegin(),
+                     diag::err_value_string_or_id);
+        return;
+    }
+    llvm::StringRef sectname = sectname_nv.getString();
 
     Section* sect = m_object.FindSection(sectname);
     bool first = true;
@@ -444,8 +452,7 @@ BinObject::DirSection(DirectiveInfo& info)
     // Ignore flags if we've seen this section before
     if (!first)
     {
-        setWarn(WARN_GENERAL,
-                 N_("section flags ignored on section redeclaration"));
+        diags.Report(info.getSource(), diag::warn_section_redef_flags);
         return;
     }
 
@@ -462,29 +469,29 @@ BinObject::DirSection(DirectiveInfo& info)
 
     DirHelpers helpers;
     helpers.Add("follows", true,
-                BIND::bind(&DirString, _1, &bsd->follows, &has_follows));
+                BIND::bind(&DirString, _1, _2, &bsd->follows, &has_follows));
     helpers.Add("vfollows", true,
-                BIND::bind(&DirString, _1, &bsd->vfollows, &has_vfollows));
+                BIND::bind(&DirString, _1, _2, &bsd->vfollows, &has_vfollows));
     helpers.Add("start", true,
-                BIND::bind(&DirExpr, _1, &m_object, source, &start,
-                           &has_start));
+                BIND::bind(&DirExpr, _1, _2, &m_object, &start, &has_start));
     helpers.Add("vstart", true,
-                BIND::bind(&DirExpr, _1, &m_object, source, &vstart,
-                           &has_vstart));
+                BIND::bind(&DirExpr, _1, _2, &m_object, &vstart, &has_vstart));
     helpers.Add("align", true,
-                BIND::bind(&DirIntNum, _1, &m_object, source, &bsd->align,
+                BIND::bind(&DirIntNumPower2, _1, _2, &m_object, &bsd->align,
                            &bsd->has_align));
     helpers.Add("valign", true,
-                BIND::bind(&DirIntNum, _1, &m_object, source, &bsd->valign,
+                BIND::bind(&DirIntNumPower2, _1, _2, &m_object, &bsd->valign,
                            &bsd->has_valign));
-    helpers.Add("nobits", false, BIND::bind(&DirSetFlag, _1, &bss, 1));
-    helpers.Add("progbits", false, BIND::bind(&DirClearFlag, _1, &bss, 1));
-    helpers.Add("code", false, BIND::bind(&DirSetFlag, _1, &code, 1));
-    helpers.Add("data", false, BIND::bind(&DirClearFlag, _1, &code, 1));
-    helpers.Add("execute", false, BIND::bind(&DirSetFlag, _1, &code, 1));
-    helpers.Add("noexecute", false, BIND::bind(&DirClearFlag, _1, &code, 1));
+    helpers.Add("nobits", false, BIND::bind(&DirSetFlag, _1, _2, &bss, 1));
+    helpers.Add("progbits", false, BIND::bind(&DirClearFlag, _1, _2, &bss, 1));
+    helpers.Add("code", false, BIND::bind(&DirSetFlag, _1, _2, &code, 1));
+    helpers.Add("data", false, BIND::bind(&DirClearFlag, _1, _2, &code, 1));
+    helpers.Add("execute", false, BIND::bind(&DirSetFlag, _1, _2, &code, 1));
+    helpers.Add("noexecute", false,
+                BIND::bind(&DirClearFlag, _1, _2, &code, 1));
 
-    helpers(++nvs.begin(), nvs.end(), DirNameValueWarn);
+    helpers(++nvs.begin(), nvs.end(), info.getSource(), diags,
+            DirNameValueWarn);
 
     if (start.get() != 0)
     {
@@ -499,38 +506,16 @@ BinObject::DirSection(DirectiveInfo& info)
 
     if (bsd->start.get() != 0 && !bsd->follows.empty())
     {
-        throw Error(
-            N_("cannot combine `start' and `follows' section attributes"));
+        diags.Report(info.getSource(), diags.getCustomDiagID(Diagnostic::Error,
+            "cannot combine '%0' and '%1' section attributes"))
+            << "START" << "FOLLOWS";
     }
 
     if (bsd->vstart.get() != 0 && !bsd->vfollows.empty())
     {
-        throw Error(
-            N_("cannot combine `vstart' and `vfollows' section attributes"));
-    }
-
-    if (bsd->has_align)
-    {
-        unsigned long align = bsd->align.getUInt();
-
-        // Alignments must be a power of two.
-        if (!isExp2(align))
-        {
-            throw ValueError(String::Compose(
-                N_("argument to `%1' is not a power of two"), "align"));
-        }
-    }
-
-    if (bsd->has_valign)
-    {
-        unsigned long valign = bsd->valign.getUInt();
-
-        // Alignments must be a power of two.
-        if (!isExp2(valign))
-        {
-            throw ValueError(String::Compose(
-                N_("argument to `%1' is not a power of two"), "valign"));
-        }
+        diags.Report(info.getSource(), diags.getCustomDiagID(Diagnostic::Error,
+            "cannot combine '%0' and '%1' section attributes"))
+            << "VSTART" << "VFOLLOWS";
     }
 
     sect->setBSS(bss);
@@ -538,56 +523,77 @@ BinObject::DirSection(DirectiveInfo& info)
 }
 
 void
-BinObject::DirOrg(DirectiveInfo& info)
+BinObject::DirOrg(DirectiveInfo& info, Diagnostic& diags)
 {
     // We only allow a single ORG in a program.
     if (m_org.get() != 0)
-        throw Error(N_("program origin redefined"));
+    {
+        diags.Report(info.getSource(),
+            diags.getCustomDiagID(Diagnostic::Error,
+                                  "program origin redefined"));
+        return;
+    }
 
     // ORG takes just a simple expression as param
     const NameValue& nv = info.getNameValues().front();
     if (!nv.isExpr())
-        throw SyntaxError(N_("argument to ORG must be expression"));
-    m_org.reset(new Expr(nv.getExpr(info.getObject(), info.getSource())));
+    {
+        diags.Report(info.getSource(), diag::err_value_expression)
+            << nv.getValueSource();
+        return;
+    }
+    m_org.reset(new Expr(nv.getExpr(info.getObject())));
     m_org_source = info.getSource();
 }
 
 bool
-BinObject::setMapFilename(const NameValue& nv)
+BinObject::setMapFilename(const NameValue& nv,
+                          clang::SourceLocation dir_source,
+                          Diagnostic& diags)
 {
     if (!m_map_filename.empty())
-        throw Error(N_("map file already specified"));
+    {
+        diags.Report(nv.getValueSource().getBegin(),
+            diags.getCustomDiagID(Diagnostic::Error,
+                                  "map file already specified"));
+        return true;
+    }
 
     if (!nv.isString())
-        throw SyntaxError(N_("unexpected expression in [map]"));
+    {
+        diags.Report(nv.getValueSource().getBegin(),
+                     diag::err_value_string_or_id);
+        return false;
+    }
     m_map_filename = nv.getString();
     return true;
 }
 
 void
-BinObject::DirMap(DirectiveInfo& info)
+BinObject::DirMap(DirectiveInfo& info, Diagnostic& diags)
 {
     DirHelpers helpers;
     helpers.Add("all", false,
-                BIND::bind(&DirSetFlag, _1, &m_map_flags,
+                BIND::bind(&DirSetFlag, _1, _2, &m_map_flags,
                            MAP_BRIEF|MAP_SECTIONS|MAP_SYMBOLS));
     helpers.Add("brief", false,
-                BIND::bind(&DirSetFlag, _1, &m_map_flags,
+                BIND::bind(&DirSetFlag, _1, _2, &m_map_flags,
                            static_cast<unsigned long>(MAP_BRIEF)));
     helpers.Add("sections", false,
-                BIND::bind(&DirSetFlag, _1, &m_map_flags,
+                BIND::bind(&DirSetFlag, _1, _2, &m_map_flags,
                            static_cast<unsigned long>(MAP_SECTIONS)));
     helpers.Add("segments", false,
-                BIND::bind(&DirSetFlag, _1, &m_map_flags,
+                BIND::bind(&DirSetFlag, _1, _2, &m_map_flags,
                            static_cast<unsigned long>(MAP_SECTIONS)));
     helpers.Add("symbols", false,
-                BIND::bind(&DirSetFlag, _1, &m_map_flags,
+                BIND::bind(&DirSetFlag, _1, _2, &m_map_flags,
                            static_cast<unsigned long>(MAP_SYMBOLS)));
 
     m_map_flags |= MAP_NONE;
 
     helpers(info.getNameValues().begin(), info.getNameValues().end(),
-            BIND::bind(&BinObject::setMapFilename, this, _1));
+            info.getSource(), diags,
+            BIND::bind(&BinObject::setMapFilename, this, _1, _2, _3));
 }
 
 std::vector<llvm::StringRef>

@@ -327,6 +327,7 @@ NasmParser::ParseDirective(/*@out@*/ NameValues& nvs)
     for (;;)
     {
         std::string id;
+        clang::SourceLocation id_src;
         std::auto_ptr<NameValue> nv(0);
 
         // Look for value first
@@ -336,6 +337,7 @@ NasmParser::ParseDirective(/*@out@*/ NameValues& nvs)
             if (m_peek_token == '=')
             {
                 std::swap(id, ID_val);
+                id_src = getTokenSource();
                 getNextToken(); // id
                 getNextToken(); // '='
             }
@@ -345,7 +347,8 @@ NasmParser::ParseDirective(/*@out@*/ NameValues& nvs)
         switch (m_token)
         {
             case STRING:
-                nv.reset(new NameValue(id, STRING_val));
+                nv.reset(new NameValue(id, STRING_val, id_src,
+                                       getTokenSource()));
                 getNextToken();
                 break;
             case ID:
@@ -367,17 +370,20 @@ NasmParser::ParseDirective(/*@out@*/ NameValues& nvs)
                         break;
                     default:
                         // Just an id
-                        nv.reset(new NameValue(id, ID_val, '$'));
+                        nv.reset(new NameValue(id, ID_val, '$', id_src,
+                                               getTokenSource()));
                         getNextToken();
                         goto next;
                 }
                 /*@fallthrough@*/
             default:
             {
+                clang::SourceLocation e_src;
                 Expr::Ptr e(new Expr);
                 if (!ParseExpr(*e, DIR_EXPR))
                     return false;
-                nv.reset(new NameValue(id, e));
+                nv.reset(new NameValue(id, e, id_src,
+                    clang::SourceRange(e_src, getTokenSource())));
                 break;
             }
         }
@@ -1067,16 +1073,16 @@ NasmParser::DefineLabel(llvm::StringRef name, bool local)
 }
 
 void
-NasmParser::DirAbsolute(DirectiveInfo& info)
+NasmParser::DirAbsolute(DirectiveInfo& info, Diagnostic& diags)
 {
     Object& object = info.getObject();
-    m_absstart = info.getNameValues().front().getExpr(object, info.getSource());
+    m_absstart = info.getNameValues().front().getExpr(object);
     m_abspos = m_absstart;
     object.setCurSection(0);
 }
 
 void
-NasmParser::DirAlign(DirectiveInfo& info)
+NasmParser::DirAlign(DirectiveInfo& info, Diagnostic& diags)
 {
     Object& object = info.getObject();
     NameValues& namevals = info.getNameValues();
@@ -1088,13 +1094,13 @@ NasmParser::DirAlign(DirectiveInfo& info)
     if (!m_abspos.isEmpty())
     {
         Expr e = SUB(m_absstart, m_abspos);
-        e &= SUB(namevals.front().getExpr(object, source), 1);
+        e &= SUB(namevals.front().getExpr(object), 1);
         m_abspos += e;
     }
     else
     {
         Section* cur_section = object.getCurSection();
-        Expr boundval = namevals.front().getExpr(object, source);
+        Expr boundval = namevals.front().getExpr(object);
 
         // Largest .align in the section specifies section alignment.
         // Note: this doesn't match NASM behavior, but is a lot more
@@ -1122,7 +1128,7 @@ NasmParser::DirAlign(DirectiveInfo& info)
 }
 
 void
-NasmParser::DirDefault(DirectiveInfo& info)
+NasmParser::DirDefault(DirectiveInfo& info, Diagnostic& diags)
 {
     clang::SourceLocation source = info.getSource();
     for (NameValues::const_iterator nv=info.getNameValues().begin(),
@@ -1137,13 +1143,13 @@ NasmParser::DirDefault(DirectiveInfo& info)
                 info.getObject().getArch()->setVar("default_rel", 0);
             else
             {
-                Diag(source, m_diags->getCustomDiagID(Diagnostic::Error,
+                diags.Report(source, diags.getCustomDiagID(Diagnostic::Error,
                     "unrecognized default '%0'")) << id;
             }
         }
         else
         {
-            Diag(source, m_diags->getCustomDiagID(Diagnostic::Error,
+            diags.Report(source, diags.getCustomDiagID(Diagnostic::Error,
                 "unrecognized default value"));
         }
     }
@@ -1152,7 +1158,14 @@ NasmParser::DirDefault(DirectiveInfo& info)
 void
 NasmParser::DoDirective(llvm::StringRef name, DirectiveInfo& info)
 {
-    (*m_dirs)[name](info);
+    Directive handler;
+    if (m_dirs->get(&handler, name))
+        handler(info, *m_diags);
+    else
+    {
+        Diag(info.getSource(), diag::err_unrecognized_directive);
+        return;
+    }
     Section* cursect = m_object->getCurSection();
     if (!m_absstart.isEmpty() && cursect)
     {

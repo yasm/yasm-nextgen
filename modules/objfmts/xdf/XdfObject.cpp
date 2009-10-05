@@ -35,6 +35,7 @@
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/DirHelpers.h"
 #include "yasmx/Errwarns.h"
@@ -99,7 +100,7 @@ public:
                       /*@out@*/ std::string* machine);
 
 private:
-    void DirSection(DirectiveInfo& info);
+    void DirSection(DirectiveInfo& info, Diagnostic& diags);
 };
 
 bool
@@ -657,22 +658,26 @@ XdfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
 }
 
 void
-XdfObject::DirSection(DirectiveInfo& info)
+XdfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
-    clang::SourceLocation source = info.getSource();
 
-    if (!nvs.front().isString())
-        throw Error(N_("section name must be a string"));
-    llvm::StringRef sectname = nvs.front().getString();
+    NameValue& sectname_nv = nvs.front();
+    if (!sectname_nv.isString())
+    {
+        diags.Report(sectname_nv.getValueSource().getBegin(),
+                     diag::err_value_string_or_id);
+        return;
+    }
+    llvm::StringRef sectname = sectname_nv.getString();
 
     Section* sect = m_object.FindSection(sectname);
     bool first = true;
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, source);
+        sect = AppendSection(sectname, info.getSource());
 
     XdfSection* xsect = sect->getAssocData<XdfSection>();
     assert(xsect != 0);
@@ -688,8 +693,7 @@ XdfObject::DirSection(DirectiveInfo& info)
     // Ignore flags if we've seen this section before
     if (!first)
     {
-        setWarn(WARN_GENERAL,
-                N_("section flags ignored on section redeclaration"));
+        diags.Report(info.getSource(), diag::warn_section_redef_flags);
         return;
     }
 
@@ -706,43 +710,42 @@ XdfObject::DirSection(DirectiveInfo& info)
 
     DirHelpers helpers;
     helpers.Add("use16", false,
-                BIND::bind(&DirResetFlag, _1, &xsect->bits, 16));
+                BIND::bind(&DirResetFlag, _1, _2, &xsect->bits, 16));
     helpers.Add("use32", false,
-                BIND::bind(&DirResetFlag, _1, &xsect->bits, 32));
+                BIND::bind(&DirResetFlag, _1, _2, &xsect->bits, 32));
     helpers.Add("use64", false,
-                BIND::bind(&DirResetFlag, _1, &xsect->bits, 64));
-    helpers.Add("bss", false, BIND::bind(&DirSetFlag, _1, &bss, 1));
-    helpers.Add("nobss", false, BIND::bind(&DirClearFlag, _1, &bss, 1));
-    helpers.Add("code", false, BIND::bind(&DirSetFlag, _1, &code, 1));
-    helpers.Add("data", false, BIND::bind(&DirClearFlag, _1, &code, 1));
-    helpers.Add("flat", false, BIND::bind(&DirSetFlag, _1, &flat, 1));
-    helpers.Add("noflat", false, BIND::bind(&DirClearFlag, _1, &flat, 1));
+                BIND::bind(&DirResetFlag, _1, _2, &xsect->bits, 64));
+    helpers.Add("bss", false, BIND::bind(&DirSetFlag, _1, _2, &bss, 1));
+    helpers.Add("nobss", false, BIND::bind(&DirClearFlag, _1, _2, &bss, 1));
+    helpers.Add("code", false, BIND::bind(&DirSetFlag, _1, _2, &code, 1));
+    helpers.Add("data", false, BIND::bind(&DirClearFlag, _1, _2, &code, 1));
+    helpers.Add("flat", false, BIND::bind(&DirSetFlag, _1, _2, &flat, 1));
+    helpers.Add("noflat", false, BIND::bind(&DirClearFlag, _1, _2, &flat, 1));
     helpers.Add("absolute", true,
-                BIND::bind(&DirIntNum, _1, &m_object, source, &lma,
+                BIND::bind(&DirIntNum, _1, _2, &m_object, &lma,
                            &xsect->has_addr));
     helpers.Add("virtual", true,
-                BIND::bind(&DirIntNum, _1, &m_object, source, &vma,
+                BIND::bind(&DirIntNum, _1, _2, &m_object, &vma,
                            &xsect->has_vaddr));
     helpers.Add("align", true,
-                BIND::bind(&DirIntNum, _1, &m_object, source, &align,
+                BIND::bind(&DirIntNumPower2, _1, _2, &m_object, &align,
                            &has_align));
 
-    helpers(++nvs.begin(), nvs.end(), DirNameValueWarn);
+    helpers(++nvs.begin(), nvs.end(), info.getSource(), diags,
+            DirNameValueWarn);
 
     if (has_align)
     {
         unsigned long aligni = align.getUInt();
 
-        // Alignments must be a power of two.
-        if (!isExp2(aligni))
-        {
-            throw ValueError(String::Compose(
-                N_("argument to `%1' is not a power of two"), "align"));
-        }
-
         // Check to see if alignment is supported size
+        // FIXME: Use actual value source location
         if (aligni > 4096)
-            throw ValueError(N_("XDF does not support alignments > 4096"));
+        {
+            diags.Report(info.getSource(),
+                diags.getCustomDiagID(Diagnostic::Error,
+                    "XDF does not support alignments > 4096"));
+        }
 
         sect->setAlign(aligni);
     }

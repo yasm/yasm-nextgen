@@ -31,6 +31,7 @@
 namespace yasm
 {
 
+class Diagnostic;
 class DirectiveInfo;
 class DirHelpers;
 class IntNum;
@@ -101,8 +102,7 @@ protected:
     virtual void DirSectionInitHelpers(DirHelpers& helpers,
                                        CoffSection* csd,
                                        IntNum* align,
-                                       bool* has_align,
-                                       clang::SourceLocation source);
+                                       bool* has_align);
 
 private:
     // When this is false, all section VMA's are set to 0 rather than as the
@@ -126,9 +126,9 @@ private:
 
     CoffSymbol* m_file_coffsym;     // Data for .file symbol
 
-    void DirGasSection(DirectiveInfo& info);
-    void DirSection(DirectiveInfo& info);
-    void DirIdent(DirectiveInfo& info);
+    void DirGasSection(DirectiveInfo& info, Diagnostic& diags);
+    void DirSection(DirectiveInfo& info, Diagnostic& diags);
+    void DirIdent(DirectiveInfo& info, Diagnostic& diags);
 };
 
 }}} // namespace yasm::objfmt::coff

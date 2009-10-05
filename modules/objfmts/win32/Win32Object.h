@@ -73,14 +73,13 @@ protected:
     virtual void DirSectionInitHelpers(DirHelpers& helpers,
                                        CoffSection* csd,
                                        IntNum* align,
-                                       bool* has_align,
-                                       clang::SourceLocation source);
+                                       bool* has_align);
 
 protected:
-    void DirExport(DirectiveInfo& info);
+    void DirExport(DirectiveInfo& info, Diagnostic& diags);
 
 private:
-    void DirSafeSEH(DirectiveInfo& info);
+    void DirSafeSEH(DirectiveInfo& info, Diagnostic& diags);
 };
 
 }}} // namespace yasm::objfmt::win32

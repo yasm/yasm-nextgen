@@ -161,6 +161,7 @@ add_error("err_eol_junk", "junk at end of line")
 add_error("err_unrecognized_value", "unrecognized value")
 add_error("err_unrecognized_register", "unrecognized register name")
 add_error("err_unrecognized_instruction", "unrecognized instruction")
+add_error("err_unrecognized_directive", "unrecognized directive")
 add_warning("warn_unrecognized_directive", "unrecognized directive")
 add_warning("warn_unrecognized_ident", "unrecognized identifier")
 
@@ -189,6 +190,27 @@ add_warning("warn_no_nonlocal", "no preceding non-local label")
 # Directive
 add_error("err_expected_directive_name", "expected directive name")
 add_error("err_invalid_directive_argument", "invalid argument to directive")
+add_error("err_directive_no_args", "directive requires an argument")
+add_warning("warn_directive_one_arg", "directive only uses first argument")
+add_error("err_value_id", "value must be an identifier")
+add_error("err_value_integer", "value must be an integer")
+add_error("err_value_expression", "value must be an expression")
+add_error("err_value_string", "value must be a string")
+add_error("err_value_string_or_id",
+          "value must be a string or an identifier")
+add_error("err_value_power2", "value is not a power of 2")
+add_error("err_value_register", "value must be a register")
+add_warning("warn_unrecognized_qualifier", "unrecognized qualifier")
+
+# Size/offset
+add_error("err_no_size", "no size specified")
+add_error("err_size_expression", "size must be an expression")
+add_error("err_no_offset", "no offset specified")
+add_error("err_offset_expression", "offset must be an expression")
+
+# Section directive
+add_warning("warn_section_redef_flags",
+            "section flags ignored on section redeclaration")
 
 # Operand size override
 add_error("err_register_size_override", "cannot override register size")

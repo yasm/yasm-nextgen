@@ -45,9 +45,15 @@ namespace clang { class SourceLocation; }
 namespace yasm
 {
 
+class Diagnostic;
 class Expr;
 class IntNum;
 class Object;
+
+/// Directive helper function.
+/// @param nv       name/value
+/// @param diags    diagnostic reporting
+typedef FUNCTION::function<void (NameValue& nv, Diagnostic& diags)> DirHelper;
 
 /// Helper class to make writing directive handlers easier.
 class YASM_LIB_EXPORT DirHelpers
@@ -62,22 +68,28 @@ public:
     /// @param needsvalue   True if name requires value, false if it must not
     ///                     have a value.
     /// @param helper       Helper function
-    void Add(llvm::StringRef name,
-             bool needsvalue,
-             FUNCTION::function<void (NameValue&)> helper);
+    void Add(llvm::StringRef name, bool needsvalue, DirHelper helper);
 
     /// Help parse a list of directive name/values.  Matches name=value
     /// (or just value) against each of the added helper functions.
     /// When no match is found, calls helper_nameval.
-    /// @param nv_begin iterator to first value/parameter to examine
-    /// @param nv_end   iterator to last value/parameter to examine
+    /// @param nv_begin     iterator to first value/parameter to examine
+    /// @param nv_end       iterator to last value/parameter to examine
+    /// @param dir_source   source location of directive name
+    /// @param diags        diagnostic reporting
     /// @param helper_nameval   catch-all callback; should return
     ///                         false if not matched, true if matched.
     /// @return True if any arguments matched (including via
     ///         catch-all callback), false if no match.
-    bool operator() (NameValues::iterator nv_first,
-                     NameValues::iterator nv_last,
-                     FUNCTION::function<bool (NameValue&)> helper_nameval);
+    bool operator()
+        (NameValues::iterator nv_first,
+         NameValues::iterator nv_last,
+         clang::SourceLocation dir_source,
+         Diagnostic& diags,
+         FUNCTION::function<bool (NameValue& nv,
+                                  clang::SourceLocation dir_source,
+                                  Diagnostic& diags)>
+             helper_nameval);
 
 private:
     /// Pimpl for class internals.
@@ -89,10 +101,14 @@ private:
 /// called.  It does not look at the nv; rather, it uses the value of the
 /// val parameter, and stores it to out.
 /// @param nv       unused
+/// @param diags    diagnostic reporting
 /// @param out      reference to unsigned long
 /// @param val      value to set
 inline void
-DirResetFlag(NameValue& nv, unsigned long* out, unsigned long val)
+DirResetFlag(NameValue& nv,
+             Diagnostic& diags,
+             unsigned long* out,
+             unsigned long val)
 {
     *out = val;
 }
@@ -101,10 +117,14 @@ DirResetFlag(NameValue& nv, unsigned long* out, unsigned long val)
 /// called.  It does not look at the nv; rather, it uses the value of the
 /// flag parameter, and ORs it with the unsigned long value in out.
 /// @param nv       unused
+/// @param diags    diagnostic reporting
 /// @param out      reference to unsigned long
 /// @param flag     flag bit(s) to set
 inline void
-DirSetFlag(NameValue& nv, unsigned long* out, unsigned long flag)
+DirSetFlag(NameValue& nv,
+           Diagnostic& diags,
+           unsigned long* out,
+           unsigned long flag)
 {
     *out |= flag;
 }
@@ -114,57 +134,84 @@ DirSetFlag(NameValue& nv, unsigned long* out, unsigned long flag)
 /// flag parameter, and ANDs its bitwise inverse with the unsigned long
 /// value in out.
 /// @param nv       unused
+/// @param diags    diagnostic reporting
 /// @param out      reference to unsigned long
 /// @param flag     flag bit(s) to clear
 inline void
-DirClearFlag(NameValue& nv, unsigned long* out, unsigned long flag)
+DirClearFlag(NameValue& nv,
+             Diagnostic& diags,
+             unsigned long* out,
+             unsigned long flag)
 {
     *out &= ~flag;
 }
 
-/// Standard helper for DirHelpers() that parses an IntNum value.
-/// When calling DirHelpers::add(), needsparam should be set to true.
+/// Standard helper for DirHelpers() that parses a power-of-2 IntNum value.
+/// Only powers of 2 are accepted; others generate an error.
+/// When calling DirHelpers::add(), needsvalue should be set to true.
 /// @param nv       name/value
+/// @param diags    diagnostic reporting
 /// @param obj      object
-/// @param source   source location
+/// @param out      reference to IntNum
+/// @param out_set  reference that is set to 1 when called
+YASM_LIB_EXPORT
+void DirIntNumPower2(NameValue& nv,
+                     Diagnostic& diags,
+                     Object* obj,
+                     IntNum* out,
+                     bool* out_set);
+
+/// Standard helper for DirHelpers() that parses an IntNum value.
+/// When calling DirHelpers::add(), needsvalue should be set to true.
+/// @param nv       name/value
+/// @param diags    diagnostic reporting
+/// @param obj      object
 /// @param out      reference to IntNum
 /// @param out_set  reference that is set to 1 when called
 YASM_LIB_EXPORT
 void DirIntNum(NameValue& nv,
+               Diagnostic& diags,
                Object* obj,
-               clang::SourceLocation source,
                IntNum* out,
                bool* out_set);
 
 /// Standard helper for DirHelpers() that parses an IntNum value.
-/// When calling DirHelpers::add(), needsparam should be set to true.
+/// When calling DirHelpers::add(), needsvalue should be set to true.
 /// @param nv       name/value
+/// @param diags    diagnostic reporting
 /// @param obj      object
-/// @param source   source location
 /// @param out      reference to Expr auto_ptr
 /// @param out_set  reference that is set to 1 when called
 YASM_LIB_EXPORT
 void DirExpr(NameValue& nv,
+             Diagnostic& diags,
              Object* obj,
-             clang::SourceLocation source,
              std::auto_ptr<Expr>* out,
              bool* out_set);
 
 /// Standard helper for DirHelpers() that parses an string (or
 /// standalone identifier) value.
-/// When calling DirHelpers::add(), needsparam should be set to true.
+/// When calling DirHelpers::add(), needsvalue should be set to true.
 /// @param nv       name/value
+/// @param diags    diagnostic reporting
 /// @param out      reference to string
 /// @param out_set  reference that is set to 1 when called
 YASM_LIB_EXPORT
-void DirString(NameValue& nv, std::string* out, bool* out_set);
+void DirString(NameValue& nv,
+               Diagnostic& diags,
+               std::string* out,
+               bool* out_set);
 
 /// Standard catch-all callback for DirHelpers().  Generates standard
 /// warning for all namevals.
-/// @param nv       name/value
+/// @param nv           name/value
+/// @param dir_source   source location of directive name
+/// @param diags        diagnostic reporting
 /// @return False
 YASM_LIB_EXPORT
-bool DirNameValueWarn(NameValue& nv);
+bool DirNameValueWarn(NameValue& nv,
+                      clang::SourceLocation dir_source,
+                      Diagnostic& diags);
 
 } // namespace yasm
 

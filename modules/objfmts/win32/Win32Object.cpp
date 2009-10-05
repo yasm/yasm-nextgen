@@ -33,6 +33,7 @@
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/BytecodeContainer_util.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/DirHelpers.h"
 #include "yasmx/Object.h"
@@ -67,7 +68,7 @@ Win32Object::getDebugFormatKeywords()
 }
 
 static inline void
-setBool(NameValue& nv, bool* out, bool value)
+setBool(NameValue& nv, Diagnostic& diags, bool* out, bool value)
 {
     *out = value;
 }
@@ -76,68 +77,72 @@ void
 Win32Object::DirSectionInitHelpers(DirHelpers& helpers,
                                    CoffSection* csd,
                                    IntNum* align,
-                                   bool* has_align,
-                                   clang::SourceLocation source)
+                                   bool* has_align)
 {
-    CoffObject::DirSectionInitHelpers(helpers, csd, align, has_align, source);
+    CoffObject::DirSectionInitHelpers(helpers, csd, align, has_align);
 
     helpers.Add("discard", false,
-                BIND::bind(&DirSetFlag, _1, &csd->m_flags,
+                BIND::bind(&DirSetFlag, _1, _2, &csd->m_flags,
                            CoffSection::DISCARD));
     helpers.Add("nodiscard", false,
-                BIND::bind(&DirClearFlag, _1, &csd->m_flags,
+                BIND::bind(&DirClearFlag, _1, _2, &csd->m_flags,
                            CoffSection::DISCARD));
     helpers.Add("cache", false,
-                BIND::bind(&DirClearFlag, _1, &csd->m_flags,
+                BIND::bind(&DirClearFlag, _1, _2, &csd->m_flags,
                            CoffSection::NOCACHE));
     helpers.Add("nocache", false,
-                BIND::bind(&DirSetFlag, _1, &csd->m_flags,
+                BIND::bind(&DirSetFlag, _1, _2, &csd->m_flags,
                            CoffSection::NOCACHE));
     helpers.Add("page", false,
-                BIND::bind(&DirClearFlag, _1, &csd->m_flags,
+                BIND::bind(&DirClearFlag, _1, _2, &csd->m_flags,
                            CoffSection::NOPAGE));
     helpers.Add("nopage", false,
-                BIND::bind(&DirSetFlag, _1, &csd->m_flags,
+                BIND::bind(&DirSetFlag, _1, _2, &csd->m_flags,
                            CoffSection::NOPAGE));
     helpers.Add("share", false,
-                BIND::bind(&DirSetFlag, _1, &csd->m_flags,
+                BIND::bind(&DirSetFlag, _1, _2, &csd->m_flags,
                            CoffSection::SHARED));
     helpers.Add("noshare", false,
-                BIND::bind(&DirClearFlag, _1, &csd->m_flags,
+                BIND::bind(&DirClearFlag, _1, _2, &csd->m_flags,
                            CoffSection::SHARED));
     helpers.Add("execute", false,
-                BIND::bind(&DirSetFlag, _1, &csd->m_flags,
+                BIND::bind(&DirSetFlag, _1, _2, &csd->m_flags,
                            CoffSection::EXECUTE));
     helpers.Add("noexecute", false,
-                BIND::bind(&DirClearFlag, _1, &csd->m_flags,
+                BIND::bind(&DirClearFlag, _1, _2, &csd->m_flags,
                            CoffSection::EXECUTE));
     helpers.Add("read", false,
-                BIND::bind(&DirSetFlag, _1, &csd->m_flags,
+                BIND::bind(&DirSetFlag, _1, _2, &csd->m_flags,
                            CoffSection::READ));
     helpers.Add("noread", false,
-                BIND::bind(&DirClearFlag, _1, &csd->m_flags,
+                BIND::bind(&DirClearFlag, _1, _2, &csd->m_flags,
                            CoffSection::READ));
     helpers.Add("write", false,
-                BIND::bind(&DirSetFlag, _1, &csd->m_flags,
+                BIND::bind(&DirSetFlag, _1, _2, &csd->m_flags,
                            CoffSection::WRITE));
     helpers.Add("nowrite", false,
-                BIND::bind(&DirClearFlag, _1, &csd->m_flags,
+                BIND::bind(&DirClearFlag, _1, _2, &csd->m_flags,
                            CoffSection::WRITE));
     helpers.Add("base", false,
-                BIND::bind(&setBool, _1, &csd->m_nobase, false));
+                BIND::bind(&setBool, _1, _2, &csd->m_nobase, false));
     helpers.Add("nobase", false,
-                BIND::bind(&setBool, _1, &csd->m_nobase, true));
+                BIND::bind(&setBool, _1, _2, &csd->m_nobase, true));
 }
 
 void
-Win32Object::DirExport(DirectiveInfo& info)
+Win32Object::DirExport(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
 
-    if (!namevals.front().isId())
-        throw SyntaxError(N_("argument to EXPORT must be symbol name"));
-    llvm::StringRef symname = namevals.front().getId();
+    NameValue& name_nv = namevals.front();
+    if (!name_nv.isId())
+    {
+        diags.Report(info.getSource(), diag::err_value_id)
+            << name_nv.getValueSource();
+        return;
+    }
+    llvm::StringRef symname = name_nv.getId();
 
     // Reference exported symbol (to generate error if not declared)
     m_object.getSymbol(symname)->Use(info.getSource());
@@ -154,15 +159,20 @@ Win32Object::DirExport(DirectiveInfo& info)
 }
 
 void
-Win32Object::DirSafeSEH(DirectiveInfo& info)
+Win32Object::DirSafeSEH(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
     clang::SourceLocation source = info.getSource();
 
-    if (!namevals.front().isId())
-        throw SyntaxError(N_("argument to SAFESEH must be symbol name"));
-    llvm::StringRef symname = namevals.front().getId();
+    NameValue& name_nv = namevals.front();
+    if (!name_nv.isId())
+    {
+        diags.Report(info.getSource(), diag::err_value_id)
+            << name_nv.getValueSource();
+        return;
+    }
+    llvm::StringRef symname = name_nv.getId();
 
     // Reference symbol (to generate error if not declared)
     SymbolRef sym = m_object.getSymbol(symname);

@@ -40,6 +40,7 @@
 namespace yasm
 {
 
+class Diagnostic;
 class Object;
 
 /// Directive information.  Helper class for passing all information about
@@ -61,16 +62,18 @@ private:
     Object& m_object;               ///< object
     NameValues m_namevals;          ///< name/values
     NameValues m_objext_namevals;   ///< object format-specific name/values
-    clang::SourceLocation m_source; ///< source location
+    clang::SourceLocation m_source; ///< source location of directive name
 };
 
 /// Directive handler function.
 /// @param info     directive information
+/// @param diags    diagnostic reporting
 /// @note The directive parameter are *not* constant; the callee (directive
 ///       handler) is free to modify it (specifically the name/values
 ///       portions).  The typical modification performed is to swap or
 ///       otherwise remove values without copying.
-typedef FUNCTION::function<void (DirectiveInfo& info)> Directive;
+typedef FUNCTION::function<void (DirectiveInfo& info,
+                                 Diagnostic& diags)> Directive;
 
 /// Container to manage and call directive handlers.
 class YASM_LIB_EXPORT Directives
@@ -89,7 +92,7 @@ public:
     struct Init
     {
         const char* name;
-        void (T::*func) (DirectiveInfo& info);
+        void (T::*func) (DirectiveInfo& info, Diagnostic& diags);
         Flags flags;
     };
 
@@ -113,13 +116,9 @@ public:
     {
         for (unsigned int i=0; i<size; ++i)
             Add(inits[i].name,
-                BIND::bind(inits[i].func, me, _1),
+                BIND::bind(inits[i].func, me, _1, _2),
                 inits[i].flags);
     }
-
-    /// Get a directive functor.  Throws an exception if no match.
-    /// @param name         directive name
-    Directive operator[] (llvm::StringRef name) const;
 
     /// Get a directive functor.  Returns false if no match.
     /// @param handler      directive handler (returned)

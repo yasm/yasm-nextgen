@@ -31,9 +31,9 @@
 
 #include "util.h"
 
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/Bytecode.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/Section.h"
 #include "yasmx/Object.h"
@@ -45,7 +45,8 @@ namespace yasm
 void
 DirIdentCommon(ObjectFormat& objfmt,
                llvm::StringRef sectname,
-               DirectiveInfo& info)
+               DirectiveInfo& info,
+               Diagnostic& diags)
 {
     NameValues& namevals = info.getNameValues();
     // Accept, but do nothing with empty ident
@@ -67,9 +68,11 @@ DirIdentCommon(ObjectFormat& objfmt,
     for (NameValues::const_iterator nv=namevals.begin(), end=namevals.end();
          nv != end; ++nv)
     {
-        if (!nv->isString())
-            throw ValueError(N_(".comment requires string parameters"));
-        AppendData(*comment, nv->getString(), true);
+        if (nv->isString())
+            AppendData(*comment, nv->getString(), true);
+        else
+            diags.Report(nv->getValueSource().getBegin(),
+                         diag::err_value_string);
     }
 }
 
