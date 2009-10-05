@@ -81,7 +81,8 @@ public:
     void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
     void Read(const llvm::MemoryBuffer& in);
-    void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns);
+    void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
+                Diagnostic& diags);
 
     Section* AddDefaultSection();
     Section* AppendSection(llvm::StringRef name, clang::SourceLocation source);
@@ -340,7 +341,8 @@ XdfOutput::OutputSymbol(const Symbol& sym,
 }
 
 void
-XdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
+XdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
+                  Diagnostic& diags)
 {
     all_syms = true;   // force all syms into symbol table
 

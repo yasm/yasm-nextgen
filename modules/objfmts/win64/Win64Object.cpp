@@ -64,7 +64,8 @@ public:
     //virtual void Read(const llvm::MemoryBuffer& in);
     virtual void Output(llvm::raw_fd_ostream& os,
                         bool all_syms,
-                        Errwarns& errwarns);
+                        Errwarns& errwarns,
+                        Diagnostic& diags);
 
     static llvm::StringRef getName() { return "Win64"; }
     static llvm::StringRef getKeyword() { return "win64"; }
@@ -121,7 +122,8 @@ Win64Object::~Win64Object()
 }
 
 void
-Win64Object::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
+Win64Object::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
+                    Diagnostic& diags)
 {
     if (m_proc_frame.isValid())
     {
@@ -134,7 +136,7 @@ Win64Object::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
     // Force all syms for win64 because they're needed for relocations.
     // FIXME: Not *all* syms need to be output, only the ones needed for
     // relocation.  Find a way to do that someday.
-    Win32Object::Output(os, true, errwarns);
+    Win32Object::Output(os, true, errwarns, diags);
 }
 
 void

@@ -420,17 +420,22 @@ Assembler::Assemble(clang::SourceManager& source_mgr,
 }
 
 bool
-Assembler::Output(llvm::raw_fd_ostream& os, bool warning_error)
+Assembler::Output(llvm::raw_fd_ostream& os,
+                  Diagnostic& diags,
+                  bool warning_error)
 {
     // Write the object file
     m_impl->m_objfmt->Output
         (os,
          !m_impl->m_dbgfmt_module->getKeyword().equals_lower("null"),
-         m_impl->m_errwarns);
+         m_impl->m_errwarns,
+         diags);
 
     if (m_impl->m_dump_time == DUMP_AFTER_OUTPUT)
         m_impl->m_object->Dump();
 
+    if (diags.hasErrorOccurred())
+        return false;
     if (m_impl->m_errwarns.getNumErrors(warning_error) > 0)
         return false;
 

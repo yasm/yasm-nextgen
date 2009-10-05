@@ -71,7 +71,8 @@ public:
 
     void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
-    void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns);
+    void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
+                Diagnostic& diags);
 
     Section* AddDefaultSection();
     Section* AppendSection(llvm::StringRef name, clang::SourceLocation source);
@@ -326,7 +327,8 @@ CheckSymbol(const Symbol& sym, Errwarns& errwarns)
 }
 
 void
-BinObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
+BinObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
+                  Diagnostic& diags)
 {
     // Set ORG to 0 unless otherwise specified
     IntNum origin(0);

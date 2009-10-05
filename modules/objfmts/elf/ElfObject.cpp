@@ -111,7 +111,8 @@ public:
     void InitSymbols(llvm::StringRef parser);
 
     void Read(const llvm::MemoryBuffer& in);
-    void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns);
+    void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
+                Diagnostic& diags);
 
     Section* AddDefaultSection();
     Section* AppendSection(llvm::StringRef name, clang::SourceLocation source);
@@ -939,7 +940,8 @@ ElfAlignOutput(llvm::raw_fd_ostream& os, unsigned int align)
 }
 
 void
-ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
+ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
+                  Diagnostic& diags)
 {
     StringTable shstrtab, strtab;
 

@@ -92,7 +92,8 @@ public:
     void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
     void Read(const llvm::MemoryBuffer& in);
-    void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns);
+    void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
+                Diagnostic& diags);
 
     Section* AddDefaultSection();
     Section* AppendSection(llvm::StringRef name,
@@ -572,7 +573,8 @@ RdfOutput::OutputBSS()
 }
 
 void
-RdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
+RdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
+                  Diagnostic& diags)
 {
     // Number sections
     unsigned int scnum = 0;     // section numbering starts at 0

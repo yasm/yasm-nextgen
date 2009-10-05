@@ -68,7 +68,8 @@ public:
 #endif
     virtual void Output(llvm::raw_fd_ostream& os,
                         bool all_syms,
-                        Errwarns& errwarns);
+                        Errwarns& errwarns,
+                        Diagnostic& diags);
 
     virtual Section* AddDefaultSection();
     virtual Section* AppendSection(llvm::StringRef name,

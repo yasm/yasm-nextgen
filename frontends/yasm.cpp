@@ -757,7 +757,7 @@ do_assemble(void)
         throw yasm::Error(String::Compose(_("could not open file `%1': %2"),
                           obj_filename, err));
 
-    if (!assembler.Output(out, warning_error))
+    if (!assembler.Output(out, diags, warning_error))
     {
         // An error occurred during output; output all errors and warnings.
         // If we had an error at this point, we also need to delete the output

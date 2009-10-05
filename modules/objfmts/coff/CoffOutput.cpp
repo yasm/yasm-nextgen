@@ -471,7 +471,8 @@ CoffOutput::OutputSectionHeader(const Section& sect)
 }
 
 void
-CoffObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
+CoffObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
+                   Diagnostic& diags)
 {
     // Update file symbol filename
     m_file_coffsym->m_aux.resize(1);

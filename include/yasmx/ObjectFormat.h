@@ -45,6 +45,7 @@ namespace llvm { class MemoryBuffer; class raw_fd_ostream; }
 namespace yasm
 {
 
+class Diagnostic;
 class Directives;
 class Errwarns;
 class Object;
@@ -92,7 +93,8 @@ public:
     /// @note Errors and warnings are stored into errwarns.
     virtual void Output(llvm::raw_fd_ostream& os,
                         bool all_syms,
-                        Errwarns& errwarns) = 0;
+                        Errwarns& errwarns,
+                        Diagnostic& diags) = 0;
 
     /// Add a default section to an object.
     /// @return Default section.

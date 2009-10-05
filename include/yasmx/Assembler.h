@@ -116,7 +116,9 @@ public:
     /// @param os               output stream
     /// @param warning_error    treat warnings as errors if true
     /// @return True on success, false on failure.
-    bool Output(llvm::raw_fd_ostream& os, bool warning_error = false);
+    bool Output(llvm::raw_fd_ostream& os,
+                Diagnostic& diags,
+                bool warning_error = false);
 
     /// Get the object.  Returns 0 until after assembly is successful.
     /// @return Object.
