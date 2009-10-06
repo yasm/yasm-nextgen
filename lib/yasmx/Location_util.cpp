@@ -174,7 +174,7 @@ struct CalcDistFunctor
         if (!CalcDist(loc, loc2, &dist))
             return false;
         // Change the term to an integer
-        term = ExprTerm(dist, term.m_depth);
+        term = ExprTerm(dist, term.getSource(), term.m_depth);
         return true;
     }
 };
@@ -196,7 +196,7 @@ struct CalcDistNoBCFunctor
         if (!CalcDistNoBC(loc, loc2, &dist))
             return false;
         // Change the term to an integer
-        term = ExprTerm(dist, term.m_depth);
+        term = ExprTerm(dist, term.getSource(), term.m_depth);
         return true;
     }
 };
@@ -228,7 +228,8 @@ struct SubstDistFunctor
         // Call higher-level callback
         m_func(m_subst, loc, loc2);
         // Change the term to an subst
-        term = ExprTerm(ExprTerm::Subst(m_subst), term.m_depth);
+        term = ExprTerm(ExprTerm::Subst(m_subst), term.getSource(),
+                        term.m_depth);
         m_subst++;
         return true;
     }
@@ -341,7 +342,8 @@ yasm::Evaluate(const Expr& e,
                 case ExprTerm::REG:
                     if (!zeroreg)
                         return false;
-                    stack.push_back(ExprTerm(0, term.m_depth));
+                    stack.push_back(ExprTerm(0, term.getSource(),
+                                             term.m_depth));
                     break;
                 case ExprTerm::SUBST:
                 {
@@ -364,7 +366,8 @@ yasm::Evaluate(const Expr& e,
                     if (!valueloc || !term.getSymbol()->getLabel(&loc) ||
                         !loc.bc)
                         return false;
-                    stack.push_back(ExprTerm(loc.getOffset(), term.m_depth));
+                    stack.push_back(ExprTerm(loc.getOffset(), term.getSource(),
+                                             term.m_depth));
                     break;
                 }
                 case ExprTerm::LOC:
@@ -372,7 +375,8 @@ yasm::Evaluate(const Expr& e,
                     Location loc = *term.getLocation();
                     if (!valueloc || !loc.bc)
                         return false;
-                    stack.push_back(ExprTerm(loc.getOffset(), term.m_depth));
+                    stack.push_back(ExprTerm(loc.getOffset(), term.getSource(),
+                                             term.m_depth));
                     break;
                 }
                 default:

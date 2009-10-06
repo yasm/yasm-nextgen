@@ -159,21 +159,25 @@ const ExprBuilder yasm::SEG = {Op::SEG};
 const ExprBuilder yasm::WRT = {Op::WRT};
 const ExprBuilder yasm::SEGOFF = {Op::SEGOFF};
 
-ExprTerm::ExprTerm(std::auto_ptr<IntNum> intn, int depth)
-    : m_type(INT), m_depth(depth)
+ExprTerm::ExprTerm(std::auto_ptr<IntNum> intn,
+                   clang::SourceLocation source,
+                   int depth)
+    : m_source(source), m_type(INT), m_depth(depth)
 {
     m_data.intn.m_type = IntNumData::INTNUM_SV;
     intn->swap(static_cast<IntNum&>(m_data.intn));
 }
 
-ExprTerm::ExprTerm(std::auto_ptr<llvm::APFloat> flt, int depth)
-    : m_type(FLOAT), m_depth(depth)
+ExprTerm::ExprTerm(std::auto_ptr<llvm::APFloat> flt,
+                   clang::SourceLocation source,
+                   int depth)
+    : m_source(source), m_type(FLOAT), m_depth(depth)
 {
     m_data.flt = flt.release();
 }
 
 ExprTerm::ExprTerm(const ExprTerm& term)
-    : m_type(term.m_type), m_depth(term.m_depth)
+    : m_source(term.m_source), m_type(term.m_type), m_depth(term.m_depth)
 {
     if (m_type == INT)
     {
@@ -190,6 +194,7 @@ ExprTerm::ExprTerm(const ExprTerm& term)
 void
 ExprTerm::swap(ExprTerm& oth)
 {
+    std::swap(m_source, oth.m_source);
     std::swap(m_type, oth.m_type);
     std::swap(m_depth, oth.m_depth);
     std::swap(m_data, oth.m_data);
@@ -286,7 +291,7 @@ ExprTerm::Dump() const
 }
 
 void
-Expr::AppendOp(Op::Op op, int nchild)
+Expr::AppendOp(Op::Op op, int nchild, clang::SourceLocation source)
 {
     assert(nchild != 0 && "expression must have more than 0 terms");
     switch (nchild)
@@ -311,7 +316,7 @@ Expr::AppendOp(Op::Op op, int nchild)
         i->m_depth++;
 
     if (op != Op::IDENT)
-        m_terms.push_back(ExprTerm(op, nchild, 0));
+        m_terms.push_back(ExprTerm(op, nchild, source, 0));
 }
 
 Expr::Expr(const Expr& e)
@@ -319,14 +324,14 @@ Expr::Expr(const Expr& e)
 {
 }
 
-Expr::Expr(std::auto_ptr<IntNum> intn)
+Expr::Expr(std::auto_ptr<IntNum> intn, clang::SourceLocation source)
 {
-    m_terms.push_back(ExprTerm(intn));
+    m_terms.push_back(ExprTerm(intn, source));
 }
 
-Expr::Expr(std::auto_ptr<llvm::APFloat> flt)
+Expr::Expr(std::auto_ptr<llvm::APFloat> flt, clang::SourceLocation source)
 {
-    m_terms.push_back(ExprTerm(flt));
+    m_terms.push_back(ExprTerm(flt, source));
 }
 
 Expr::~Expr()
@@ -525,9 +530,10 @@ TransformNegImpl(Expr& e,
                 terms.insert(terms.begin()+n+1,
                              ExprTerm(child->getOp(),
                                       child->getNumChild()+1,
+                                      child->getSource(),
                                       child->m_depth));
                 child = &terms[n];      // need to re-get as terms may move
-                *child = ExprTerm(-1, child->m_depth+1);
+                *child = ExprTerm(-1, child->getSource(), child->m_depth+1);
                 break;
             }
             default:
@@ -552,9 +558,10 @@ TransformNegImpl(Expr& e,
                 // Insert -1 one level down, add operator at this level,
                 // and move all subterms one level down.
                 terms.insert(terms.begin()+n+1, 2,
-                             ExprTerm(Op::MUL, 2, child->m_depth));
+                             ExprTerm(Op::MUL, 2, child->getSource(),
+                                      child->m_depth));
                 child = &terms[n];      // need to re-get as terms may move
-                terms[n+1] = ExprTerm(-1, child->m_depth+1);
+                terms[n+1] = ExprTerm(-1, child->getSource(), child->m_depth+1);
                 child->m_depth++;
                 int new_depth = child->m_depth+1;
                 for (int x = 0, nchild = child->getNumChild(); x < nchild; ++x)

@@ -352,7 +352,7 @@ X86EAChecker::DistReg(Expr& e, int& pos, bool simplify_reg_mul)
     // While we could theoretically use the existing ADD, it's not safe, as
     // this operator could be the topmost operator and we can't clobber that.
     terms[pos] = ExprTerm(Op::ADD, terms[otherpos].getNumChild(),
-                          terms[pos].m_depth);
+                          terms[pos].getSource(), terms[pos].m_depth);
 
     // Get ADD depth before deletion.  This will be the new MUL depth for the
     // added (distributed) MUL operations.
@@ -382,9 +382,9 @@ X86EAChecker::DistReg(Expr& e, int& pos, bool simplify_reg_mul)
 
         // Otherwise add *INT
         terms.insert(terms.begin()+n+1, 2,
-                     ExprTerm(Op::MUL, 2, depth));
+                     ExprTerm(Op::MUL, 2, terms[n].getSource(), depth));
         // Set multiplier
-        terms[n+1] = ExprTerm(intmult, terms[n].m_depth);
+        terms[n+1] = ExprTerm(intmult, terms[n].getSource(), terms[n].m_depth);
 
         // Level if child is also a MUL
         if (terms[n].isOp(Op::MUL))

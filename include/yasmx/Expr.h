@@ -32,9 +32,9 @@
 #include <assert.h>
 #include <memory>
 
+#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
-
 #include "yasmx/Config/export.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location.h"
@@ -81,35 +81,45 @@ public:
     };
 
     ExprTerm() : m_type(NONE), m_depth(0) {}
-    explicit ExprTerm(const Register& reg, int depth=0)
-        : m_type(REG), m_depth(depth)
+    explicit ExprTerm(const Register& reg,
+                      clang::SourceLocation source = clang::SourceLocation(),
+                      int depth=0)
+        : m_source(source), m_type(REG), m_depth(depth)
     {
         m_data.reg = &reg;
     }
-    explicit ExprTerm(IntNum intn, int depth=0)
-        : m_type(INT), m_depth(depth)
+    explicit ExprTerm(IntNum intn,
+                      clang::SourceLocation source = clang::SourceLocation(),
+                      int depth=0)
+        : m_source(source), m_type(INT), m_depth(depth)
     {
         m_data.intn.m_type = IntNumData::INTNUM_SV;
         intn.swap(static_cast<IntNum&>(m_data.intn));
     }
-    explicit ExprTerm(const Subst& subst, int depth=0)
-        : m_type(SUBST), m_depth(depth)
+    explicit ExprTerm(const Subst& subst,
+                      clang::SourceLocation source = clang::SourceLocation(),
+                      int depth=0)
+        : m_source(source), m_type(SUBST), m_depth(depth)
     {
         m_data.subst = subst.subst;
     }
-    explicit ExprTerm(SymbolRef sym, int depth=0)
-        : m_type(SYM), m_depth(depth)
+    explicit ExprTerm(SymbolRef sym,
+                      clang::SourceLocation source = clang::SourceLocation(),
+                      int depth=0)
+        : m_source(source), m_type(SYM), m_depth(depth)
     {
         m_data.sym = sym;
     }
-    explicit ExprTerm(Location loc, int depth=0)
-        : m_type(LOC), m_depth(depth)
+    explicit ExprTerm(Location loc,
+                      clang::SourceLocation source = clang::SourceLocation(),
+                      int depth=0)
+        : m_source(source), m_type(LOC), m_depth(depth)
     {
         m_data.loc = loc;
     }
     // Depth must be explicit to avoid conflict with IntNum constructor.
-    ExprTerm(Op::Op op, int nchild, int depth)
-        : m_type(OP), m_depth(depth)
+    ExprTerm(Op::Op op, int nchild, clang::SourceLocation source, int depth)
+        : m_source(source), m_type(OP), m_depth(depth)
     {
         m_data.op.op = op;
         m_data.op.nchild = nchild;
@@ -117,8 +127,12 @@ public:
 
     // auto_ptr constructors
 
-    ExprTerm(std::auto_ptr<IntNum> intn, int depth=0);
-    ExprTerm(std::auto_ptr<llvm::APFloat> flt, int depth=0);
+    ExprTerm(std::auto_ptr<IntNum> intn,
+             clang::SourceLocation source = clang::SourceLocation(),
+             int depth=0);
+    ExprTerm(std::auto_ptr<llvm::APFloat> flt,
+             clang::SourceLocation source = clang::SourceLocation(),
+             int depth=0);
 
     /// Assignment operator.
     ExprTerm& operator= (const ExprTerm& rhs)
@@ -170,6 +184,12 @@ public:
 
     /// Get the type.
     Type getType() const { return m_type; }
+
+    /// Set the source location.
+    void setSource(clang::SourceLocation source) { m_source = source; }
+
+    /// Get the source location.
+    clang::SourceLocation getSource() const { return m_source; }
 
     /// Match operator.  Does not match non-operators.
     /// @param op       operator to match
@@ -292,6 +312,7 @@ private:
         }
         op;                     ///< Operator (#OP)
     } m_data;                   ///< Data.
+    clang::SourceLocation m_source;     ///< Source location.
     Type m_type;                ///< Type.
 
 public:
@@ -377,26 +398,32 @@ public:
     Expr(const Expr& e);
 
     /// Single-term constructor for register.
-    explicit Expr(const Register& reg)
+    explicit Expr(const Register& reg,
+                  clang::SourceLocation source = clang::SourceLocation())
     { m_terms.push_back(ExprTerm(reg)); }
 
     /// Single-term constructor for integer.
-    explicit Expr(IntNum intn)
+    explicit Expr(IntNum intn,
+                  clang::SourceLocation source = clang::SourceLocation())
     { m_terms.push_back(ExprTerm(intn)); }
 
     /// Single-term constructor for symbol.
-    explicit Expr(SymbolRef sym)
+    explicit Expr(SymbolRef sym,
+                  clang::SourceLocation source = clang::SourceLocation())
     { m_terms.push_back(ExprTerm(sym)); }
 
     /// Single-term constructor for location.
-    explicit Expr(Location loc)
+    explicit Expr(Location loc,
+                  clang::SourceLocation source = clang::SourceLocation())
     { m_terms.push_back(ExprTerm(loc)); }
 
     /// Single-term constructor for IntNum auto_ptr.
-    explicit Expr(std::auto_ptr<IntNum> intn);
+    explicit Expr(std::auto_ptr<IntNum> intn,
+                  clang::SourceLocation source = clang::SourceLocation());
 
     /// Single-term constructor for APFloat auto_ptr.
-    explicit Expr(std::auto_ptr<llvm::APFloat> flt);
+    explicit Expr(std::auto_ptr<llvm::APFloat> flt,
+                  clang::SourceLocation source = clang::SourceLocation());
 
     /// Destructor.
     ~Expr();
@@ -516,18 +543,19 @@ public:
     /// @return True on error (index out of range).
     bool Substitute(const ExprTerms& terms);
 
-    void Calc(Op::Op op)
+    void Calc(Op::Op op, clang::SourceLocation source = clang::SourceLocation())
     {
         if (!isEmpty())
-            AppendOp(op, 1);
+            AppendOp(op, 1, source);
     }
     template <typename T>
-    void Calc(Op::Op op, const T& rhs)
+    void Calc(Op::Op op, const T& rhs,
+              clang::SourceLocation source = clang::SourceLocation())
     {
         bool was_empty = isEmpty();
         Append(rhs);
         if (!was_empty)
-            AppendOp(op, 2);
+            AppendOp(op, 2, source);
     }
 
     /// @defgroup lowlevel Low Level Manipulators
@@ -553,7 +581,8 @@ public:
     /// operator term to end.
     /// @param op       operator
     /// @param nchild   number of children
-    void AppendOp(Op::Op op, int nchild);
+    void AppendOp(Op::Op op, int nchild,
+                  clang::SourceLocation source = clang::SourceLocation());
 
     /// Make expression an ident if it only has one term.
     /// @param pos      index of operator term, may be negative for "from end"
