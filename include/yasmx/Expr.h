@@ -41,7 +41,7 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace llvm { class APFloat; class raw_ostream; }
+namespace llvm { class APFloat; class raw_ostream; struct fltSemantics; }
 namespace YAML { class Emitter; }
 
 namespace yasm
@@ -243,6 +243,11 @@ public:
         assert(m_type == OP);
         m_data.op.nchild += delta;
     }
+
+    /// Promote from int to float.  No-op if term is already float.
+    /// @note Asserts if term is not int or float.
+    /// @param semantics    float semantics to use for converted value
+    void PromoteToFloat(const llvm::fltSemantics& semantics);
 
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
@@ -860,6 +865,14 @@ operator<< (YAML::Emitter& out, const Expr& e)
     e.Write(out);
     return out;
 }
+
+/// Perform a floating point calculation based on an #Op operator.
+/// @note Throws on error.  Asserts on invalid operation for floats.
+/// @param lhs      left hand side of expression (also modified as result)
+/// @param op       operator
+/// @param rhs      right hand side of expression
+YASM_LIB_EXPORT
+void CalcFloat(llvm::APFloat* lhs, Op::Op op, const llvm::APFloat& rhs);
 
 /// Get left and right hand immediate children, or single immediate child.
 /// @param e        Expression

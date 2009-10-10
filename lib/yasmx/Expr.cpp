@@ -87,7 +87,7 @@ isRightIdentity(Op::Op op, const IntNum& intn)
             (iszero && op == Op::SHR));
 }
 
-static void
+void
 CalcFloat(llvm::APFloat* lhs, Op::Op op, const llvm::APFloat& rhs)
 {
     llvm::APFloat::opStatus status;
@@ -212,6 +212,24 @@ ExprTerm::Zero()
     Clear();
     m_type = INT;
     m_data.intn = IntNum(0);
+}
+
+void
+ExprTerm::PromoteToFloat(const llvm::fltSemantics& semantics)
+{
+    if (m_type == FLOAT)
+        return;
+    assert (m_type == INT && "trying to promote non-integer");
+
+    std::auto_ptr<llvm::APFloat>
+        upconvf(new llvm::APFloat(semantics, llvm::APFloat::fcZero, false));
+    llvm::APInt upconvi(IntNum::BITVECT_NATIVE_SIZE, 0);
+    upconvf->convertFromAPInt(*getIntNum()->getBV(&upconvi), true,
+                              llvm::APFloat::rmNearestTiesToEven);
+
+    Clear();
+    m_type = FLOAT;
+    m_data.flt = upconvf.release();
 }
 
 void
@@ -680,12 +698,7 @@ again:
             // if there's a float child, upconvert and work against it instead
             if (fltchild != 0 && op < Op::NEG)
             {
-                std::auto_ptr<llvm::APFloat>
-                    upconvf(new llvm::APFloat(*fltchild->getFloat()));
-                llvm::APInt upconvi(IntNum::BITVECT_NATIVE_SIZE, 0);
-                upconvf->convertFromAPInt(*intn->getBV(&upconvi), true,
-                                          llvm::APFloat::rmNearestTiesToEven);
-                child = ExprTerm(upconvf, child.m_depth);
+                child.PromoteToFloat(fltchild->getFloat()->getSemantics());
                 goto again;
             }
 
@@ -712,14 +725,9 @@ again:
             // if there's an integer child, upconvert it
             if (intchild != 0)
             {
-                std::auto_ptr<llvm::APFloat> upconvf(new llvm::APFloat(*fltn));
-                llvm::APInt upconvi(IntNum::BITVECT_NATIVE_SIZE, 0);
-                upconvf->convertFromAPInt(
-                    *intchild->getIntNum()->getBV(&upconvi), true,
-                    llvm::APFloat::rmNearestTiesToEven);
                 fltchild = intchild;
                 intchild = 0;
-                *fltchild = ExprTerm(upconvf, fltchild->m_depth);
+                fltchild->PromoteToFloat(fltn->getSemantics());
             }
 
             if (fltchild == 0)
