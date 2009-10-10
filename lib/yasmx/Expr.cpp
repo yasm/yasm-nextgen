@@ -197,24 +197,6 @@ ExprTerm::swap(ExprTerm& oth)
 }
 
 void
-ExprTerm::Clear()
-{
-    if (m_type == INT)
-        static_cast<IntNum&>(m_data.intn).~IntNum();
-    else if (m_type == FLOAT)
-        delete m_data.flt;
-    m_type = NONE;
-}
-
-void
-ExprTerm::Zero()
-{
-    Clear();
-    m_type = INT;
-    m_data.intn = IntNum(0);
-}
-
-void
 ExprTerm::PromoteToFloat(const llvm::fltSemantics& semantics)
 {
     if (m_type == FLOAT)

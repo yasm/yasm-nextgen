@@ -32,6 +32,7 @@
 #include <assert.h>
 #include <memory>
 
+#include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
 
 #include "yasmx/Config/export.h"
@@ -138,10 +139,22 @@ public:
     void swap(ExprTerm& oth);
 
     /// Clear the term.
-    void Clear();
+    void Clear()
+    {
+        if (m_type == INT)
+            static_cast<IntNum&>(m_data.intn).~IntNum();
+        else if (m_type == FLOAT)
+            delete m_data.flt;
+        m_type = NONE;
+    }
 
     /// Make the term zero.
-    void Zero();
+    void Zero()
+    {
+        Clear();
+        m_type = INT;
+        m_data.intn = IntNum(0);
+    }
 
     /// Is term cleared?
     bool isEmpty() const { return (m_type == NONE); }
