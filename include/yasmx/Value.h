@@ -147,13 +147,14 @@ public:
     /// Output value if absolute constant (no relative portion).  This should
     /// be used from BytecodeOutput::output_value() implementations.
     /// @param bytes        storage for byte representation
+    /// @param outval       output integer value (set on false return)
     /// @param warn         enables standard warnings: zero for none;
     ///                     nonzero for overflow/underflow floating point and
     ///                     integer warnings
     /// @param arch         architecture
     /// @return False if no value output due to value needing relocation;
     ///         true if value output.
-    bool OutputBasic(Bytes& bytes, int warn, const Arch& arch);
+    bool OutputBasic(Bytes& bytes, IntNum* outval, int warn, const Arch& arch);
 
     /// Get the absolute portion of the value.
     /// @return Absolute expression, or NULL if there is no absolute portion.
@@ -249,6 +250,11 @@ public:
     /// Determine if overflow warnings are enabled for this value.
     /// @return True if overflow warnings are enabled, false if not.
     bool isWarnEnabled() const { return !m_no_warn; }
+
+    /// Adjust warning based on value settings
+    /// @param warn     warning setting
+    /// @return Adjusted warning setting.
+    int AdjustWarn(int warn) const { return m_no_warn ? 0 : (m_sign ? -1 : 1); }
 
     /// Set sign of the value.
     /// @param sign     true if signed, false if unsigned.

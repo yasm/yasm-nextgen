@@ -28,6 +28,7 @@
 
 #include "util.h"
 
+#include "llvm/ADT/APFloat.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"
@@ -257,6 +258,135 @@ SubstDist(Expr& e,
     SubstDistFunctor functor(func);
     e.Simplify(BIND::bind(&TransformDistBase, _1, _2, REF::ref(functor)));
     return functor.m_subst;
+}
+
+bool
+Evaluate(const Expr& e,
+         ExprTerm* result,
+         const ExprTerm* subst,
+         unsigned int nsubst,
+         bool valueloc,
+         bool zeroreg)
+{
+    if (e.isEmpty())
+        return false;
+
+    const ExprTerms& terms = e.getTerms();
+
+    // Shortcut the most common case: a single integer or float
+    if (terms.size() == 1
+        && terms.front().isType(ExprTerm::INT|ExprTerm::FLOAT))
+    {
+        *result = terms.front();
+        return true;
+    }
+
+    llvm::SmallVector<ExprTerm, 8> stack;
+
+    for (ExprTerms::const_iterator i=terms.begin(), end=terms.end();
+         i != end; ++i)
+    {
+        const ExprTerm& term = *i;
+        if (term.isOp())
+        {
+            size_t nchild = term.getNumChild();
+            assert(stack.size() >= nchild && "not enough terms to evaluate op");
+            Op::Op op = term.getOp();
+            if (op >= Op::NONNUM)
+                return false;
+
+            // Get first child (will be used as result)
+            size_t resultindex = stack.size()-nchild;
+            ExprTerm& result = stack[resultindex];
+
+            // Calculate through other children
+            for (size_t j = resultindex+1; j<stack.size(); ++j)
+            {
+                ExprTerm& child = stack[j];
+
+                // Promote to float as needed
+                if (result.isType(ExprTerm::FLOAT))
+                    child.PromoteToFloat(result.getFloat()->getSemantics());
+                else if (child.isType(ExprTerm::FLOAT))
+                    result.PromoteToFloat(child.getFloat()->getSemantics());
+
+                // Perform calculation
+                if (result.isType(ExprTerm::INT))
+                    result.getIntNum()->Calc(op, *child.getIntNum());
+                else if (op < Op::NEG)
+                    CalcFloat(result.getFloat(), op, *child.getFloat());
+                else
+                    return false;
+            }
+
+            // Handle unary op
+            if (nchild == 1)
+            {
+                assert(isUnary(op) && "single-term subexpression is non-unary");
+                if (result.isType(ExprTerm::INT))
+                    result.getIntNum()->Calc(op);
+                else if (op == Op::NEG)
+                    result.getFloat()->changeSign();
+                else
+                    return false;
+            }
+
+            // Pop other children off stack, leaving first child as result
+            result.m_depth = term.m_depth;
+            stack.erase(stack.begin()+resultindex+1, stack.end());
+        }
+        else if (!term.isEmpty())
+        {
+            // Convert term to int or float before pushing onto stack.
+            // If cannot convert, return false.
+            switch (term.getType())
+            {
+                case ExprTerm::REG:
+                    if (!zeroreg)
+                        return false;
+                    stack.push_back(ExprTerm(0, term.m_depth));
+                    break;
+                case ExprTerm::SUBST:
+                {
+                    unsigned int substindex = *term.getSubst();
+                    if (!subst || substindex >= nsubst)
+                        return false;
+                    assert((subst[substindex].getType() == ExprTerm::INT ||
+                            subst[substindex].getType() == ExprTerm::FLOAT) &&
+                           "substitution must be integer or float");
+                    stack.push_back(subst[substindex]);
+                    break;
+                }
+                case ExprTerm::INT:
+                case ExprTerm::FLOAT:
+                    stack.push_back(term);
+                    break;
+                case ExprTerm::SYM:
+                {
+                    Location loc;
+                    if (!valueloc || !term.getSymbol()->getLabel(&loc) ||
+                        !loc.bc)
+                        return false;
+                    stack.push_back(ExprTerm(loc.getOffset(), term.m_depth));
+                    break;
+                }
+                case ExprTerm::LOC:
+                {
+                    Location loc = *term.getLocation();
+                    if (!valueloc || !loc.bc)
+                        return false;
+                    stack.push_back(ExprTerm(loc.getOffset(), term.m_depth));
+                    break;
+                }
+                default:
+                    return false;
+            }
+        }
+    }
+
+    assert(stack.size() == 1 && "did not fully evaluate expression");
+    result->swap(stack.back());
+    return true;
 }
 
 } // namespace yasm

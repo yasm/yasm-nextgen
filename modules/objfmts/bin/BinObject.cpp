@@ -287,8 +287,8 @@ done:
     }
 
     // Output
-    Arch* arch = m_object.getArch();
-    if (value.OutputBasic(bytes, warn, *arch))
+    IntNum intn;
+    if (value.OutputBasic(bytes, &intn, warn, *m_object.getArch()))
         return;
 
     // Couldn't output, assume it contains an external reference.

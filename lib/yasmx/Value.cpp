@@ -752,35 +752,24 @@ Value::CalcPCRelSub(/*@out@*/ IntNum* out, Location loc) const
 bool
 Value::getIntNum(IntNum* out, bool calc_bc_dist)
 {
-    // Output 0 if no absolute or relative
-    *out = 0;
-
+    // This code could be written more simply, but this is a very hot method,
+    // so we need to shortcut all of the common cases.
     if (m_rel || hasSubRelative() || m_wrt)
         return false;   // can't handle relative values
 
-    if (m_abs != 0)
+    if (!m_abs)
+        *out = 0;
+    else if (m_abs->isIntNum())
+        *out = m_abs->getIntNum();
+    else if (m_abs->isFloat())
+        return false;   // a float
+    else
     {
-        // Handle integer expressions, if non-integer or too complex, return
-        // NULL.
-        if (calc_bc_dist)
-            SimplifyCalcDist(*m_abs);
-
-        if (!m_abs->isIntNum())
-        {
-            // Second try before erroring: Expr::get_intnum() doesn't handle
-            // SEG:OFF, so try simplifying out any to just the OFF portion,
-            // then getting the intnum again.
-            m_abs->ExtractDeepSegOff(); // returns auto_ptr, so ok to drop
-            SimplifyCalcDist(*m_abs);
-            if (!m_abs->isIntNum())
-                return false;
-        }
-
-        // micro-optimization because this is hit a lot
-        if (out->isZero())
-            *out = m_abs->getIntNum();
-        else
-            *out += m_abs->getIntNum();
+        ExprTerm term;
+        if (!Evaluate(*m_abs, &term, calc_bc_dist, false)
+            || !term.isType(ExprTerm::INT))
+            return false;
+        out->swap(*term.getIntNum());
     }
 
     return true;
@@ -819,37 +808,79 @@ Value::getSubLocation(Location* loc) const
 }
 
 bool
-Value::OutputBasic(Bytes& bytes, int warn, const Arch& arch)
+Value::OutputBasic(Bytes& bytes, IntNum* outval, int warn, const Arch& arch)
 {
-    if (m_no_warn)
-        warn = 0;
+    // This code could be written more simply, but this is a very hot method,
+    // so we need to shortcut all of the common cases.
+    bool rel = m_rel || hasSubRelative() || m_wrt;
 
-    if (m_abs != 0)
+    // Try to handle common cases first
+    if (!rel)
     {
-        // Handle floating point expressions
-        if (!m_rel && m_abs->isFloat())
+        if (!m_abs)
+        {
+            arch.ToBytes(0, bytes, m_size, 0, warn);
+            return true;
+        }
+        else if (m_abs->isIntNum())
+        {
+            arch.ToBytes(*m_abs->getTerms().front().getIntNum(), bytes, m_size,
+                         0, warn);
+            return true;
+        }
+        else if (m_abs->isFloat())
         {
             arch.ToBytes(*m_abs->getFloat(), bytes, m_size, 0, warn);
             return true;
         }
+    }
+    else
+    {
+        if (!m_abs)
+        {
+            *outval = 0;
+            return false;
+        }
+        else if (m_abs->isIntNum())
+        {
+            *outval = m_abs->getIntNum();
+            return false;
+        }
+        else if (m_abs->isFloat())
+            throw TooComplexError(N_("cannot relocate float"));
+    }
 
+    // Not trivial, need to evaluate
+    ExprTerm term;
+    if (!Evaluate(*m_abs, &term))
+    {
         // Check for complex float expressions
         if (m_abs->Contains(ExprTerm::FLOAT))
             throw FloatingPointError(
                 N_("floating point expression too complex"));
+        throw TooComplexError(N_("relocation too complex"));
     }
 
-    IntNum outval;
-    if (!getIntNum(&outval, true))
+    // Handle float result
+    if (term.isType(ExprTerm::FLOAT))
+    {
+        if (rel)
+            throw TooComplexError(N_("cannot relocate float"));
+        arch.ToBytes(*term.getFloat(), bytes, m_size, 0, warn);
+        return true;
+    }
+
+    // Handle integer result
+    if (!rel)
+    {
+        arch.ToBytes(*term.getIntNum(), bytes, m_size, 0, warn);
+        return true;
+    }
+    else
+    {
+        term.getIntNum()->swap(*outval);
         return false;
-
-    // Adjust warn for signed/unsigned integer warnings
-    if (warn != 0)
-        warn = m_sign ? -1 : 1;
-
-    // Output!
-    arch.ToBytes(outval, bytes, m_size, 0, warn);
-    return true;
+    }
 }
 
 void

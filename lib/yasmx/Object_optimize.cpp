@@ -442,24 +442,23 @@ Span::RecalcNormal()
     ++num_recalc;
     m_new_val = 0;
 
-    if (m_depval.hasAbs())
+    if (m_depval.isRelative())
+        m_new_val = LONG_MAX;       // too complex; force to longest form
+    else if (m_depval.hasAbs())
     {
-        std::auto_ptr<Expr> abs_copy(m_depval.getAbs()->clone());
+        ExprTerm result;
 
         // Update sym-sym terms and substitute back into expr
         for (Terms::iterator i=m_span_terms.begin(), end=m_span_terms.end();
              i != end; ++i)
             *m_expr_terms[i->m_subst].getIntNum() = i->m_new_val;
-        abs_copy->Substitute(m_expr_terms);
-        abs_copy->Simplify();
-        if (abs_copy->isIntNum())
-            m_new_val = abs_copy->getIntNum().getInt();
-        else
+        if (!Evaluate(*m_depval.getAbs(), &result, &m_expr_terms[0],
+                      m_expr_terms.size(), false, false)
+            || !result.isType(ExprTerm::INT))
             m_new_val = LONG_MAX;   // too complex; force to longest form
+        else
+            m_new_val = result.getIntNum()->getInt();
     }
-
-    if (m_depval.isRelative())
-        m_new_val = LONG_MAX;       // too complex; force to longest form
 
     if (m_new_val == LONG_MAX)
         m_active = INACTIVE;

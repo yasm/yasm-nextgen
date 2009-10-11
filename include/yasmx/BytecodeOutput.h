@@ -34,6 +34,7 @@
 #include "yasmx/Bytes.h"
 #include "yasmx/Location.h"
 #include "yasmx/SymbolRef.h"
+#include "yasmx/Value.h"
 
 
 namespace llvm { class raw_ostream; }
@@ -42,7 +43,6 @@ namespace yasm
 {
 
 class Bytecode;
-class Value;
 
 /// Bytecode output interface.
 ///
@@ -99,7 +99,7 @@ public:
     ///                     positive for unsigned integer warnings
     void Output(Value& value, Bytes& bytes, Location loc, int warn)
     {
-        ConvertValueToBytes(value, bytes, loc, warn);
+        ConvertValueToBytes(value, bytes, loc, value.AdjustWarn(warn));
         Output(bytes);
     }
 

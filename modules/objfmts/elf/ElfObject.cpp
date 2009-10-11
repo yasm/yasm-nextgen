@@ -737,21 +737,14 @@ ElfOutput::ConvertValueToBytes(Value& value,
                                Location loc,
                                int warn)
 {
-    if (Expr* e = value.getAbs())
-        SimplifyCalcDist(*e);
-
-    // Try to output constant and PC-relative section-local first.
-    // Note this does NOT output any value with a SEG, WRT, external,
-    // cross-section, or non-PC-relative reference (those are handled below).
-    if (value.OutputBasic(bytes, warn, *m_object.getArch()))
-        return;
-
-    // Handle other expressions, with relocation if necessary
+    // We can't handle these types of values
     if (value.isSegOf() || value.isSectionRelative() || value.getRShift() > 0)
         throw TooComplexError(N_("elf: relocation too complex"));
 
     IntNum intn(0);
-    ElfReloc* reloc = 0;
+    if (value.OutputBasic(bytes, &intn, warn, *m_object.getArch()))
+        return;
+
     if (value.isRelative())
     {
         SymbolRef sym = value.getRelative();
@@ -762,7 +755,7 @@ ElfOutput::ConvertValueToBytes(Value& value,
         else if (wrt && isWRTSymRelative(*wrt))
             ;
         else if (wrt && isWRTPosAdjusted(*wrt))
-            intn = loc.getOffset();
+            intn += loc.getOffset();
         else if (isLocal(*sym))
         {
             // Local symbols need relocation to their section's start, and
@@ -780,7 +773,7 @@ ElfOutput::ConvertValueToBytes(Value& value,
                 assert(elfsect != 0);
                 sym = elfsect->getSymbol();
 
-                intn = symloc.getOffset();
+                intn += symloc.getOffset();
             }
         }
 
@@ -797,22 +790,13 @@ ElfOutput::ConvertValueToBytes(Value& value,
 
         // Create relocation
         Section* sect = loc.bc->getContainer()->AsSection();
-        std::auto_ptr<ElfReloc> reloc_auto =
+        std::auto_ptr<ElfReloc> reloc =
             m_objfmt.m_machine->MakeReloc(sym, wrt, loc.getOffset(), pc_rel,
                                           m_GOT_sym, value.getSize());
-        reloc = reloc_auto.get();
-        sect->AddReloc(std::auto_ptr<Reloc>(reloc_auto.release()));
-    }
-
-    if (Expr* abs = value.getAbs())
-    {
-        if (!abs->isIntNum())
-            throw TooComplexError(N_("elf: relocation too complex"));
-        intn += abs->getIntNum();
-    }
-
-    if (reloc)
         reloc->HandleAddend(&intn, m_objfmt.m_config, value.getInsnStart());
+        sect->AddReloc(std::auto_ptr<Reloc>(reloc.release()));
+    }
+
     m_object.getArch()->ToBytes(intn, bytes, value.getSize(), 0, warn);
 }
 #if 0

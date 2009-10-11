@@ -114,16 +114,7 @@ CoffOutput::ConvertValueToBytes(Value& value,
                                 Location loc,
                                 int warn)
 {
-    if (Expr* abs = value.getAbs())
-        SimplifyCalcDist(*abs);
-
-    // Try to output constant and PC-relative section-local first.
-    // Note this does NOT output any value with a SEG, WRT, external,
-    // cross-section, or non-PC-relative reference (those are handled below).
-    if (value.OutputBasic(bytes, warn, *m_object.getArch()))
-        return;
-
-    // Handle other expressions, with relocation if necessary
+    // We can't handle these types of values
     if (value.getRShift() > 0
         || (value.isSegOf() && (value.isWRT() || value.hasSubRelative()))
         || (value.isSectionRelative()
@@ -131,6 +122,10 @@ CoffOutput::ConvertValueToBytes(Value& value,
     {
         throw TooComplexError(N_("coff: relocation too complex"));
     }
+
+    IntNum base(0);
+    if (value.OutputBasic(bytes, &base, warn, *m_object.getArch()))
+        return;
 
     IntNum intn(0);
     IntNum dist(0);
@@ -297,13 +292,7 @@ CoffOutput::ConvertValueToBytes(Value& value,
         sect->AddReloc(std::auto_ptr<Reloc>(reloc));
     }
 
-    if (Expr* abs = value.getAbs())
-    {
-        if (!abs->isIntNum())
-            throw TooComplexError(N_("coff: relocation too complex"));
-        intn += abs->getIntNum();
-    }
-
+    intn += base;
     intn += dist;
 
     m_object.getArch()->ToBytes(intn, bytes, value.getSize(), 0, warn);

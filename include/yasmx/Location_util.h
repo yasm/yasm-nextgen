@@ -39,6 +39,7 @@ namespace yasm
 {
 
 class Expr;
+class ExprTerm;
 
 /// Simplify instances of Symbol-Symbol [Symbol+(-1*Symbol)] in an expression
 /// into integers if possible by calling calc_dist().
@@ -61,6 +62,40 @@ int SubstDist(Expr& e,
               const FUNCTION::function<void (unsigned int subst,
                                              Location loc,
                                              Location loc2)>& func);
+
+/// Try to evaluate an expression down to a single integer or float term.
+/// Unlike SimplifyCalcDist(), does not modify the expression.
+/// If the expression cannot be evaluated to int or float, false is returned.
+/// @note If valueloc is true, replaces symbols/locations with bytecode offsets
+///       without checking whether such combinations make sense (e.g. are
+///       within the same section).
+///       If you need such checking, use SimplifyCalcDist() instead.
+/// @param e            expression
+/// @param result       result expression term (output)
+/// @param subst        Substitution terms ([0]=subst 0, [1]=subst 1, etc).
+///                     Substitutions must be integer or float terms.
+///                     If null, any substitution in the expr will result in
+///                     evaluation failure and a false return
+/// @param nsubst       size of substitution terms array
+/// @param valueloc     replace symbols and locations with their values
+/// @param zeroreg      replace registers with zero?
+/// @return True if successful.
+YASM_LIB_EXPORT
+bool Evaluate(const Expr& e,
+              ExprTerm* result,
+              const ExprTerm* subst,
+              unsigned int nsubst,
+              bool valueloc=true,
+              bool zeroreg=false);
+
+inline bool
+Evaluate(const Expr& e,
+         ExprTerm* result,
+         bool valueloc=true,
+         bool zeroreg=false)
+{
+    return Evaluate(e, result, 0, 0, valueloc, zeroreg);
+}
 
 } // namespace yasm
 

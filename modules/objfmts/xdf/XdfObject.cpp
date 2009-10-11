@@ -166,19 +166,14 @@ XdfOutput::ConvertValueToBytes(Value& value,
                                Location loc,
                                int warn)
 {
-    if (Expr* abs = value.getAbs())
-        SimplifyCalcDist(*abs);
-
-    // Try to output constant and PC-relative section-local first.
-    // Note this does NOT output any value with a SEG, WRT, external,
-    // cross-section, or non-PC-relative reference (those are handled below).
-    if (value.OutputBasic(bytes, warn, *m_object.getArch()))
-        return;
-
+    // We can't handle these types of values
     if (value.isSectionRelative())
         throw TooComplexError(N_("xdf: relocation too complex"));
 
     IntNum intn(0);
+    if (value.OutputBasic(bytes, &intn, warn, *m_object.getArch()))
+        return;
+
     if (value.isRelative())
     {
         bool pc_rel = false;
@@ -198,13 +193,6 @@ XdfOutput::ConvertValueToBytes(Value& value,
             intn -= loc.getOffset();    // Adjust to start of section
         Section* sect = loc.bc->getContainer()->AsSection();
         sect->AddReloc(std::auto_ptr<Reloc>(reloc.release()));
-    }
-
-    if (Expr* abs = value.getAbs())
-    {
-        if (!abs->isIntNum())
-            throw TooComplexError(N_("xdf: relocation too complex"));
-        intn += abs->getIntNum();
     }
 
     m_object.getArch()->ToBytes(intn, bytes, value.getSize(), 0, warn);

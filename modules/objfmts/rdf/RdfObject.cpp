@@ -185,19 +185,14 @@ RdfOutput::ConvertValueToBytes(Value& value,
                                Location loc,
                                int warn)
 {
-    if (Expr* abs = value.getAbs())
-        SimplifyCalcDist(*abs);
-
-    // Try to output constant and PC-relative section-local first.
-    // Note this does NOT output any value with a SEG, WRT, external,
-    // cross-section, or non-PC-relative reference (those are handled below).
-    if (value.OutputBasic(bytes, warn, *m_object.getArch()))
-        return;
-
+    // We can't handle these types of values
     if (value.isSectionRelative())
         throw TooComplexError(N_("rdf: relocation too complex"));
 
     IntNum intn(0);
+    if (value.OutputBasic(bytes, &intn, warn, *m_object.getArch()))
+        return;
+
     if (value.isRelative())
     {
         if (value.isWRT())
@@ -249,13 +244,6 @@ RdfOutput::ConvertValueToBytes(Value& value,
 
         sect->AddReloc(std::auto_ptr<Reloc>(
             new RdfReloc(addr, sym, type, value.getSize()/8, refseg)));
-    }
-
-    if (Expr* abs = value.getAbs())
-    {
-        if (!abs->isIntNum())
-            throw TooComplexError(N_("rdf: relocation too complex"));
-        intn += abs->getIntNum();
     }
 
     m_object.getArch()->ToBytes(intn, bytes, value.getSize(), 0, warn);
