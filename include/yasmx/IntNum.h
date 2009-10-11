@@ -199,7 +199,11 @@ public:
 
     /// Exchanges this integer with another one.
     /// @param oth      other integer number
-    void swap(IntNum& oth);
+    void swap(IntNum& oth)
+    {
+        std::swap(static_cast<IntNumData&>(*this),
+                  static_cast<IntNumData&>(oth));
+    }
 
     /// Get an allocated copy.
     IntNum* clone() const { return new IntNum(*this); }

@@ -192,12 +192,6 @@ IntNum::IntNum(const IntNum& rhs)
         m_val.sv = rhs.m_val.sv;
 }
 
-void
-IntNum::swap(IntNum& oth)
-{
-    std::swap(static_cast<IntNumData&>(*this), static_cast<IntNumData&>(oth));
-}
-
 // Speedup function for non-bitvect calculations.
 // Always makes conservative assumptions; we fall back to bitvect if this
 // function returns false.
