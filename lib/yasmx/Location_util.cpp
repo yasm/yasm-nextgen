@@ -292,12 +292,23 @@ Evaluate(const Expr& e,
             size_t nchild = term.getNumChild();
             assert(stack.size() >= nchild && "not enough terms to evaluate op");
             Op::Op op = term.getOp();
-            if (op >= Op::NONNUM)
-                return false;
 
             // Get first child (will be used as result)
             size_t resultindex = stack.size()-nchild;
             ExprTerm& result = stack[resultindex];
+
+            // For SEG:OFF, throw away the SEG and keep the OFF.
+            if (op == Op::SEGOFF)
+            {
+                assert(nchild == 2 && "SEGOFF without 2 terms");
+                stack[resultindex].swap(stack[resultindex+1]);
+                stack.pop_back();
+                continue;
+            }
+
+            // Don't allow any other non-numeric operators (e.g. WRT).
+            if (op >= Op::NONNUM)
+                return false;
 
             // Calculate through other children
             for (size_t j = resultindex+1; j<stack.size(); ++j)
