@@ -28,6 +28,7 @@
 
 #include <math.h>
 
+#include "clang/Basic/SourceManager.h"
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
@@ -105,17 +106,15 @@ NasmParser::DescribeToken(int token)
 void
 NasmParser::DoParse()
 {
-    unsigned long cur_line = getCurLine();
     std::string line;
     Bytecode::Ptr bc(new Bytecode());
 
-    while (m_preproc->getLine(line))
+    while (m_preproc->getLine(&line, &m_source))
     {
         if (!m_abspos.isEmpty())
             m_bc = bc.get();
         else
             m_bc = &m_object->getCurSection()->FreshBytecode();
-        Location loc = {m_bc, m_bc->getFixedLen()};
 
         try
         {
@@ -163,20 +162,14 @@ NasmParser::DoParse()
                 }
             }
 #endif
-            if (m_save_input)
-            {
-                m_linemap->AddSource(loc, line);
-            }
-            m_errwarns.Propagate(cur_line);
+            m_errwarns.Propagate(m_source);
         }
         catch (Error& err)
         {
-            m_errwarns.Propagate(cur_line, err);
+            m_errwarns.Propagate(m_source, err);
             DemandEolNoThrow();
             m_state = INITIAL;
         }
-
-        cur_line = m_linemap->GoToNext();
     }
 }
 
@@ -216,8 +209,11 @@ NasmParser::ParseLine()
 
             // %line indicates the line number of the *next* line, so subtract
             // out the increment when setting the line number.
-            m_linemap->set(filename, line->getUInt() - incr->getUInt(),
-                           incr->getUInt());
+            // FIXME: handle incr
+            clang::SourceManager& smgr = m_preproc->getSourceManager();
+            smgr.AddLineNote(m_source, line->getUInt(),
+                             smgr.getLineTableFilenameID(filename.data(),
+                                                         filename.size()));
             break;
         }
         case '[': // [ directive ]
@@ -230,7 +226,7 @@ NasmParser::ParseLine()
             std::swap(dirname, DIRECTIVE_NAME_val);
             getNextToken();
 
-            DirectiveInfo info(*m_object, getCurLine());
+            DirectiveInfo info(*m_object, m_source);
             if (m_token != ']' && m_token != ':' &&
                 !ParseDirective(info.getNameValues()))
             {
@@ -286,7 +282,7 @@ NasmParser::ParseLine()
                     throw SyntaxError(String::Compose(
                         N_("expression expected after %1"), "EQU"));
                 }
-                m_object->getSymbol(name)->DefineEqu(e, getCurLine());
+                m_object->getSymbol(name)->DefineEqu(e, m_source);
                 break;
             }
 
@@ -387,7 +383,7 @@ NasmParser::ParseTimes()
                                           "TIMES"));
     }
     BytecodeContainer* orig_container = m_container;
-    m_container = &AppendMultiple(*m_container, multiple, getCurLine());
+    m_container = &AppendMultiple(*m_container, multiple, m_source);
     try
     {
         if (!ParseExp())
@@ -406,7 +402,7 @@ NasmParser::ParseExp()
     Insn::Ptr insn = ParseInsn();
     if (insn.get() != 0)
     {
-        insn->Append(*m_container, getCurLine());
+        insn->Append(*m_container, m_source);
         return true;
     }
 
@@ -435,7 +431,7 @@ NasmParser::ParseExp()
                     Expr::Ptr e(new Expr);
                     if (ParseBExpr(*e, DV_EXPR))
                         AppendData(*m_container, e, size,
-                                    *m_object->getArch(), getCurLine());
+                                    *m_object->getArch(), m_source);
                     else
                         throw SyntaxError(N_("expression or string expected"));
                 }
@@ -460,8 +456,8 @@ dv_done:
                     N_("expression expected after %1"), "RESx"));
             }
             BytecodeContainer& multc =
-                AppendMultiple(*m_container, e, getCurLine());
-            multc.AppendGap(size, getCurLine());
+                AppendMultiple(*m_container, e, m_source);
+            multc.AppendGap(size, m_source);
             return true;
         }
         case INCBIN:
@@ -498,7 +494,7 @@ dv_done:
             }
 
 incbin_done:
-            AppendIncbin(*m_container, filename, start, maxlen, getCurLine());
+            AppendIncbin(*m_container, filename, start, maxlen, m_source);
             return true;
         }
         default:
@@ -891,7 +887,7 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
         case ID:
         {
             SymbolRef sym = m_object->getSymbol(ID_val);
-            sym->Use(getCurLine());
+            sym->Use(m_source);
             e = sym;
             break;
         }
@@ -969,7 +965,7 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
         case NONLOCAL_ID:
         {
             SymbolRef sym = m_object->getSymbol(ID_val);
-            sym->Use(getCurLine());
+            sym->Use(m_source);
             e = sym;
             break;
         }
@@ -982,7 +978,7 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
                 SymbolRef sym = m_object->AddNonTableSymbol("$");
                 m_bc = &m_container->FreshBytecode();
                 Location loc = {m_bc, m_bc->getFixedLen()};
-                sym->DefineLabel(loc, getCurLine());
+                sym->DefineLabel(loc, m_source);
                 e = sym;
             }
             break;
@@ -994,7 +990,7 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
             {
                 SymbolRef sym = m_object->AddNonTableSymbol("$$");
                 Location loc = {&m_container->bytecodes_first(), 0};
-                sym->DefineLabel(loc, getCurLine());
+                sym->DefineLabel(loc, m_source);
                 e = sym;
             }
             break;
@@ -1013,12 +1009,12 @@ NasmParser::DefineLabel(const llvm::StringRef& name, bool local)
 
     SymbolRef sym = m_object->getSymbol(name);
     if (!m_abspos.isEmpty())
-        sym->DefineEqu(m_abspos, getCurLine());
+        sym->DefineEqu(m_abspos, m_source);
     else
     {
         m_bc = &m_container->FreshBytecode();
         Location loc = {m_bc, m_bc->getFixedLen()};
-        sym->DefineLabel(loc, getCurLine());
+        sym->DefineLabel(loc, m_source);
     }
 }
 
@@ -1026,7 +1022,7 @@ void
 NasmParser::DirAbsolute(DirectiveInfo& info)
 {
     Object& object = info.getObject();
-    m_absstart = info.getNameValues().front().getExpr(object, info.getLine());
+    m_absstart = info.getNameValues().front().getExpr(object, info.getSource());
     m_abspos = m_absstart;
     object.setCurSection(0);
 }
@@ -1036,7 +1032,7 @@ NasmParser::DirAlign(DirectiveInfo& info)
 {
     Object& object = info.getObject();
     NameValues& namevals = info.getNameValues();
-    unsigned long line = info.getLine();
+    clang::SourceLocation source = info.getSource();
 
     // Really, we shouldn't end up with an align directive in an absolute
     // section (as it's supposed to be only used for nop fill), but handle
@@ -1044,13 +1040,13 @@ NasmParser::DirAlign(DirectiveInfo& info)
     if (!m_abspos.isEmpty())
     {
         Expr e = SUB(m_absstart, m_abspos);
-        e &= SUB(namevals.front().getExpr(object, line), 1);
+        e &= SUB(namevals.front().getExpr(object, source), 1);
         m_abspos += e;
     }
     else
     {
         Section* cur_section = object.getCurSection();
-        Expr boundval = namevals.front().getExpr(object, line);
+        Expr boundval = namevals.front().getExpr(object, source);
 
         // Largest .align in the section specifies section alignment.
         // Note: this doesn't match NASM behavior, but is a lot more
@@ -1073,7 +1069,7 @@ NasmParser::DirAlign(DirectiveInfo& info)
         AppendAlign(*cur_section, boundval, Expr(), Expr(),
                     /*cur_section->isCode() ?*/
                     object.getArch()->getFill()/* : 0*/,
-                    line);
+                    source);
     }
 }
 

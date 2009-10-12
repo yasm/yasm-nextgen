@@ -35,6 +35,7 @@
 #include "yasmx/Support/ptr_vector.h"
 
 
+namespace clang { class SourceLocation; }
 namespace YAML { class Emitter; }
 
 namespace yasm
@@ -73,8 +74,9 @@ public:
 
     /// Add gap space to the end of the container.
     /// @param size     number of bytes of gap
+    /// @param source   source location
     /// @return Reference to gap bytecode.
-    Bytecode& AppendGap(unsigned long size, unsigned long line);
+    Bytecode& AppendGap(unsigned long size, clang::SourceLocation source);
 
     /// Start a new bytecode at the end of the container.  Factory function.
     /// @return Reference to new bytecode.

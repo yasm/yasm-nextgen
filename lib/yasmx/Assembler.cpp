@@ -28,6 +28,7 @@
 
 #include "util.h"
 
+#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -41,7 +42,6 @@
 #include "yasmx/DebugFormat.h"
 #include "yasmx/Directive.h"
 #include "yasmx/Errwarns.h"
-#include "yasmx/Linemap.h"
 #include "yasmx/ListFormat.h"
 #include "yasmx/Object.h"
 #include "yasmx/ObjectFormat.h"
@@ -81,7 +81,9 @@ public:
     void setPreprocessor(const llvm::StringRef& preproc_keyword);
     void setDebugFormat(const llvm::StringRef& dbgfmt_keyword);
     void setListFormat(const llvm::StringRef& listfmt_keyword);
-    bool Assemble(const llvm::MemoryBuffer& in, bool warning_error);
+    bool Assemble(clang::SourceManager& source_mgr,
+                  clang::FileManager& file_mgr,
+                  bool warning_error);
 
     util::scoped_ptr<ArchModule> m_arch_module;
     util::scoped_ptr<ParserModule> m_parser_module;
@@ -99,7 +101,6 @@ public:
 
     util::scoped_ptr<Object> m_object;
 
-    Linemap m_linemap;
     Errwarns m_errwarns;
 
     std::string m_obj_filename;
@@ -277,9 +278,12 @@ Assembler::setListFormat(const llvm::StringRef& listfmt_keyword)
 }
 
 bool
-Assembler::Impl::Assemble(const llvm::MemoryBuffer& in, bool warning_error)
+Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
+                          clang::FileManager& file_mgr,
+                          bool warning_error)
 {
-    const char* in_filename = in.getBufferIdentifier();
+    const char* in_filename =
+        source_mgr.getBuffer(source_mgr.getMainFileID())->getBufferIdentifier();
     const char* parser_keyword = m_parser_module->getKeyword();
 
     // determine the object filename if not specified
@@ -351,11 +355,8 @@ Assembler::Impl::Assemble(const llvm::MemoryBuffer& in, bool warning_error)
     // Create the debug format
     m_dbgfmt.reset(m_dbgfmt_module->Create(*m_object).release());
 
-    // Initialize line map
-    m_linemap.set(in_filename, 1, 1);
-
     // Initialize preprocessor
-    m_preproc->Initialize(in, m_linemap);
+    m_preproc->Initialize(source_mgr, file_mgr);
 
     // Create parser
     m_parser.reset(m_parser_module->Create(m_errwarns).release());
@@ -374,8 +375,7 @@ Assembler::Impl::Assemble(const llvm::MemoryBuffer& in, bool warning_error)
     }
 
     // Parse!
-    m_parser->Parse(*m_object, *m_preproc, m_listfmt.get() != 0, dirs,
-                    m_linemap);
+    m_parser->Parse(*m_object, *m_preproc, dirs);
 
     if (m_dump_time == DUMP_AFTER_PARSE)
         m_object->Dump();
@@ -407,9 +407,11 @@ Assembler::Impl::Assemble(const llvm::MemoryBuffer& in, bool warning_error)
 }
 
 bool
-Assembler::Assemble(const llvm::MemoryBuffer& in, bool warning_error)
+Assembler::Assemble(clang::SourceManager& source_mgr,
+                    clang::FileManager& file_mgr,
+                    bool warning_error)
 {
-    return m_impl->Assemble(in, warning_error);
+    return m_impl->Assemble(source_mgr, file_mgr, warning_error);
 }
 
 bool
@@ -452,12 +454,6 @@ Errwarns*
 Assembler::getErrwarns()
 {
     return &m_impl->m_errwarns;
-}
-
-Linemap*
-Assembler::getLinemap()
-{
-    return &m_impl->m_linemap;
 }
 
 llvm::StringRef

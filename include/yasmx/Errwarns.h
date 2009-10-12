@@ -33,6 +33,7 @@
 #include "yasmx/Support/scoped_ptr.h"
 
 
+namespace clang { class SourceManager; class SourceRange; }
 namespace llvm { class StringRef; }
 
 namespace yasm
@@ -57,16 +58,16 @@ public:
     /// Generally multiple errors on the same line will be reported, but
     /// errors of class #ERROR_PARSE will get overwritten by any other class
     /// on the same line.
-    /// @param line     virtual line
+    /// @param source   source range
     /// @param err      error exception
-    void Propagate(unsigned long line, const Error& err);
+    void Propagate(clang::SourceRange source, const Error& err);
 
     /// Propagate warning indicator(s) to an error/warning set.
     /// Has no effect if no warnings have occurred.
     /// Does not print immediately; output_all() outputs
     /// accumulated errors and warnings.
-    /// @param line     virtual line
-    void Propagate(unsigned long line);
+    /// @param source   source range
+    void Propagate(clang::SourceRange source);
 
     /// Get total number of errors logged.
     /// @param errwarns         error/warning set
@@ -75,38 +76,35 @@ public:
     unsigned int getNumErrors(bool warning_as_error = false) const;
 
     /// Print out an error.
-    /// @param fn           filename of source file
-    /// @param line         line number
+    /// @param source_mgr   source manager
+    /// @param source       source range
     /// @param msg          error message
-    /// @param xref_fn      cross-referenced source filename
-    /// @param xref_line    cross-referenced line number
+    /// @param xref_source  cross-referenced source range
     /// @param xref_msg     cross-referenced error message
     typedef void (*PrintErrorFunc)
-        (const llvm::StringRef& fn,
-         unsigned long line,
+        (const clang::SourceManager& source_mgr,
+         clang::SourceRange source,
          const llvm::StringRef& msg,
-         const llvm::StringRef& xref_fn,
-         unsigned long xref_line,
+         clang::SourceRange xref_source,
          const llvm::StringRef& xref_msg);
 
     /// Print out a warning.
-    /// @param fn   filename of source file
-    /// @param line line number
-    /// @param msg  warning message
+    /// @param source_mgr   source manager
+    /// @param source   source range
+    /// @param msg      warning message
     typedef void (*PrintWarningFunc)
-        (const llvm::StringRef& fn,
-         unsigned long line,
+        (const clang::SourceManager& source_mgr,
+         clang::SourceRange source,
          const llvm::StringRef& msg);
 
-    /// Outputs error/warning set in sorted order (sorted by line number).
-    /// @param lm               line map (to convert virtual lines into
-    ///                         filename/line pairs)
+    /// Outputs error/warning set in sorted order.
+    /// @param source_mgr       source manager (to sort source locations)
     /// @param warning_as_error if non-zero, treat warnings as errors.
-    ///                         if 1, prints a "warnings being treated as errors"
-    ///                         error first.
+    ///                         if 1, prints a "warnings being treated as
+    ///                         errors" error first.
     /// @param print_error      function called to print out errors
     /// @param print_warning    function called to print out warnings
-    void OutputAll(const Linemap& lm,
+    void OutputAll(const clang::SourceManager& source_mgr,
                    int warning_as_error,
                    PrintErrorFunc print_error,
                    PrintWarningFunc print_warning);

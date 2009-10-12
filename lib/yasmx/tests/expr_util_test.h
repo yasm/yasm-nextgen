@@ -36,7 +36,7 @@ public:
     void testSingle()
     {
         Symbol a("a");
-        a.DefineEqu(Expr(5), 0);
+        a.DefineEqu(Expr(5));
         Expr v = Expr(SymbolRef(&a));
         ExpandEqu(v);
         TS_ASSERT_EQUALS(String::Format(v), "5");
@@ -45,8 +45,8 @@ public:
     void testDual()
     {
         Symbol a("a"), b("b");
-        a.DefineEqu(Expr(5), 0);
-        b.DefineEqu(Expr(4), 0);
+        a.DefineEqu(Expr(5));
+        b.DefineEqu(Expr(4));
         Expr v = MUL(SymbolRef(&a), SymbolRef(&b));
         ExpandEqu(v);
         TS_ASSERT_EQUALS(String::Format(v), "5*4");
@@ -55,7 +55,7 @@ public:
     void testNestedSingle()
     {
         Symbol a("a");
-        a.DefineEqu(MUL(5, 4), 0);
+        a.DefineEqu(MUL(5, 4));
         Expr v = ADD(SymbolRef(&a), 2);
         ExpandEqu(v);
         TS_ASSERT_EQUALS(String::Format(v), "(5*4)+2");
@@ -68,7 +68,7 @@ public:
     void testNestedTwice()
     {
         Symbol a("a");
-        a.DefineEqu(MUL(5, 4), 0);
+        a.DefineEqu(MUL(5, 4));
         Expr v = ADD(SymbolRef(&a), SymbolRef(&a));
         ExpandEqu(v);
         TS_ASSERT_EQUALS(String::Format(v), "(5*4)+(5*4)");
@@ -77,8 +77,8 @@ public:
     void testDoubleNested()
     {
         Symbol a("a"), b("b");
-        a.DefineEqu(MUL(5, 4), 0);
-        b.DefineEqu(ADD(SymbolRef(&a), 1), 0);
+        a.DefineEqu(MUL(5, 4));
+        b.DefineEqu(ADD(SymbolRef(&a), 1));
         Expr v = SUB(SymbolRef(&a), SymbolRef(&b));
         ExpandEqu(v);
         TS_ASSERT_EQUALS(String::Format(v), "(5*4)-((5*4)+1)");
@@ -87,9 +87,9 @@ public:
     void testCircular()
     {
         Symbol a("a"), b("b"), c("c");
-        a.DefineEqu(ADD(SymbolRef(&b), 1), 0);
-        b.DefineEqu(MUL(2, SymbolRef(&c)), 0);
-        c.DefineEqu(SUB(SymbolRef(&a), 3), 0);
+        a.DefineEqu(ADD(SymbolRef(&b), 1));
+        b.DefineEqu(MUL(2, SymbolRef(&c)));
+        c.DefineEqu(SUB(SymbolRef(&a), 3));
         Expr v = Expr(SymbolRef(&a));
         TS_ASSERT_THROWS(ExpandEqu(v), yasm::TooComplexError);
     }

@@ -345,9 +345,9 @@ CoffOutput::OutputSection(Section& sect, Errwarns& errwarns)
         }
         catch (Error& err)
         {
-            errwarns.Propagate(i->getLine(), err);
+            errwarns.Propagate(i->getSource(), err);
         }
-        errwarns.Propagate(i->getLine());   // propagate warnings
+        errwarns.Propagate(i->getSource()); // propagate warnings
     }
 
     // Sanity check final section size
@@ -383,7 +383,7 @@ CoffOutput::OutputSection(Section& sect, Errwarns& errwarns)
             setWarn(WARN_GENERAL,
                     String::Compose(N_("too many relocations in section `%1'"),
                                     sect.getName()));
-            errwarns.Propagate(0);
+            errwarns.Propagate(clang::SourceRange());
         }
     }
 

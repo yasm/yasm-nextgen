@@ -472,7 +472,12 @@ scan:
             RETURN(ID);
         }
 
-        "/*"                    { m_state = COMMENT; goto comment; }
+        "/*"
+        {
+            m_state = COMMENT;
+            m_comment_start = getTokenSource();
+            goto comment;
+        }
         "#"
         {
             if (m_is_cpp_preproc)

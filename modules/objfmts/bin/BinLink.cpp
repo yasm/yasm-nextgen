@@ -180,7 +180,7 @@ BinLink::CreateLMAGroup(Section& section)
                 N_("align"),
                 bsd->align,
                 N_("align")));
-            m_errwarns.Propagate(0);
+            m_errwarns.Propagate(clang::SourceRange());
         }
     }
 
@@ -189,7 +189,7 @@ BinLink::CreateLMAGroup(Section& section)
     {
         if (!bsd->start->isIntNum())
         {
-            m_errwarns.Propagate(bsd->start_line,
+            m_errwarns.Propagate(bsd->start_source,
                 TooComplexError(N_("start expression is too complex")));
             return false;
         }
@@ -205,7 +205,7 @@ BinLink::CreateLMAGroup(Section& section)
     {
         if (!bsd->vstart->isIntNum())
         {
-            m_errwarns.Propagate(bsd->vstart_line,
+            m_errwarns.Propagate(bsd->vstart_source,
                 TooComplexError(N_("vstart expression is too complex")));
             return false;
         }
@@ -276,7 +276,8 @@ BinLink::DoLink(const IntNum& origin)
             found = FindGroup(m_lma_groups, group->m_bsd.follows);
             if (!found)
             {
-                m_errwarns.Propagate(0, ValueError(String::Compose(
+                m_errwarns.Propagate(clang::SourceRange(),
+                                     ValueError(String::Compose(
                     N_("section `%1' follows an invalid or unknown section `%2'"),
                     group->m_section.getName(),
                     group->m_bsd.follows)));
@@ -287,7 +288,8 @@ BinLink::DoLink(const IntNum& origin)
             if (&group->m_section == &found->m_section ||
                 FindGroup(group->m_follow_groups, found->m_section))
             {
-                m_errwarns.Propagate(0, ValueError(String::Compose(
+                m_errwarns.Propagate(clang::SourceRange(),
+                                     ValueError(String::Compose(
                     N_("follows loop between section `%1' and section `%2'"),
                     group->m_section.getName(),
                     found->m_section.getName())));
@@ -368,7 +370,8 @@ BinLink::DoLink(const IntNum& origin)
             found = FindGroup(m_vma_groups, group->m_bsd.vfollows);
             if (!found)
             {
-                m_errwarns.Propagate(0, ValueError(String::Compose(
+                m_errwarns.Propagate(clang::SourceRange(),
+                                     ValueError(String::Compose(
                     N_("section `%1' vfollows an invalid or unknown section `%2'"),
                     group->m_section.getName(),
                     group->m_bsd.vfollows)));
@@ -379,7 +382,8 @@ BinLink::DoLink(const IntNum& origin)
             if (&group->m_section == &found->m_section ||
                 FindGroup(group->m_follow_groups, found->m_section))
             {
-                m_errwarns.Propagate(0, ValueError(String::Compose(
+                m_errwarns.Propagate(clang::SourceRange(),
+                                     ValueError(String::Compose(
                     N_("vfollows loop between section `%1' and section `%2'"),
                     group->m_section.getName(),
                     found->m_section.getName())));
@@ -442,7 +446,7 @@ BinLink::CheckLMAOverlap(const Section& sect, const Section& other)
 
     if (overlap.getSign() > 0)
     {
-        m_errwarns.Propagate(0, Error(String::Compose(
+        m_errwarns.Propagate(clang::SourceRange(), Error(String::Compose(
             N_("sections `%1' and `%2' overlap by %3 bytes"),
             sect.getName(),
             other.getName(),
@@ -503,7 +507,7 @@ BinGroup::AssignStartRecurse(IntNum& start,
         {
             setWarn(WARN_GENERAL,
                 N_("start inconsistent with align; using aligned value"));
-            errwarns.Propagate(m_bsd.start_line);
+            errwarns.Propagate(m_bsd.start_source);
         }
     }
     else
@@ -576,7 +580,7 @@ BinGroup::AssignVStartRecurse(IntNum& start, Errwarns& errwarns)
                 N_("valign"),
                 m_bsd.valign,
                 N_("valign")));
-            errwarns.Propagate(0);
+            errwarns.Propagate(clang::SourceRange());
         }
     }
 
@@ -586,7 +590,7 @@ BinGroup::AssignVStartRecurse(IntNum& start, Errwarns& errwarns)
         m_section.setVMA(AlignStart(start, m_bsd.valign));
         if (m_bsd.has_ivstart && start != m_section.getVMA())
         {
-            errwarns.Propagate(m_bsd.vstart_line,
+            errwarns.Propagate(m_bsd.vstart_source,
                 ValueError(N_("vstart inconsistent with valign")));
         }
     }

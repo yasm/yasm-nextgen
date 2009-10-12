@@ -116,14 +116,14 @@ NameValue::swap(NameValue& oth)
 }
 
 Expr
-NameValue::getExpr(Object& object, unsigned long line) const
+NameValue::getExpr(Object& object, clang::SourceLocation source) const
 {
     switch (m_type)
     {
         case ID:
         {
             SymbolRef sym = object.getSymbol(getId());
-            sym->Use(line);
+            sym->Use(source);
             return Expr(sym);
         }
         case EXPR:
@@ -134,14 +134,14 @@ NameValue::getExpr(Object& object, unsigned long line) const
 }
 
 std::auto_ptr<Expr>
-NameValue::ReleaseExpr(Object& object, unsigned long line)
+NameValue::ReleaseExpr(Object& object, clang::SourceLocation source)
 {
     switch (m_type)
     {
         case ID:
         {
             SymbolRef sym = object.getSymbol(getId());
-            sym->Use(line);
+            sym->Use(source);
             return std::auto_ptr<Expr>(new Expr(sym));
         }
         case EXPR:

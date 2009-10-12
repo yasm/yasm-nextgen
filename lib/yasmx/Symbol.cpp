@@ -44,9 +44,6 @@ Symbol::Symbol(const llvm::StringRef& name)
       m_type(UNKNOWN),
       m_status(NOSTATUS),
       m_visibility(LOCAL),
-      m_def_line(0),
-      m_decl_line(0),
-      m_use_line(0),
       m_equ(0)
 {
 }
@@ -56,13 +53,13 @@ Symbol::~Symbol()
 }
 
 void
-Symbol::Define(Type type, unsigned long line)
+Symbol::Define(Type type, clang::SourceLocation source)
 {
     // Has it been defined before (either by DEFINED or COMMON/EXTERN)?
     if (m_status & DEFINED)
     {
         Error err(String::Compose(N_("redefinition of `%1'"), m_name));
-        err.setXRef(m_def_line != 0 ? m_def_line : m_decl_line,
+        err.setXRef(m_def_source.isValid() ? m_def_source : m_decl_source,
                     String::Compose(N_("`%1' previously defined here"),
                                     m_name));
         throw err;
@@ -72,38 +69,38 @@ Symbol::Define(Type type, unsigned long line)
         if (m_visibility & EXTERN)
             setWarn(WARN_GENERAL, String::Compose(
                 N_("`%1' both defined and declared extern"), m_name));
-        m_def_line = line;      // set line number of definition
+        m_def_source = source;  // set source location of definition
         m_type = type;
         m_status |= DEFINED;
     }
 }
 
 void
-Symbol::DefineEqu(const Expr& e, unsigned long line)
+Symbol::DefineEqu(const Expr& e, clang::SourceLocation source)
 {
-    Define(EQU, line);
+    Define(EQU, source);
     m_equ.reset(new Expr(e));
     m_status |= VALUED;
 }
 
 void
-Symbol::DefineLabel(Location loc, unsigned long line)
+Symbol::DefineLabel(Location loc, clang::SourceLocation source)
 {
-    Define(LABEL, line);
+    Define(LABEL, source);
     m_loc = loc;
     loc.bc->AddSymbol(SymbolRef(this)); /// XXX: should we add if not in table?
 }
 
 void
-Symbol::DefineSpecial(Visibility vis, unsigned long line)
+Symbol::DefineSpecial(Visibility vis, clang::SourceLocation source)
 {
-    Define(SPECIAL, line);
+    Define(SPECIAL, source);
     m_status |= VALUED;
     m_visibility = vis;
 }
 
 void
-Symbol::Declare(Visibility vis, unsigned long line)
+Symbol::Declare(Visibility vis, clang::SourceLocation source)
 {
     // Allowable combinations:
     //  Existing State--------------  vis  New State-------------------
@@ -122,13 +119,13 @@ Symbol::Declare(Visibility vis, unsigned long line)
           ((m_visibility & COMMON) && (vis == COMMON)) ||
           ((m_visibility & EXTERN) && (vis == EXTERN)))))
     {
-        m_decl_line = line;
+        m_decl_source = source;
         m_visibility |= vis;
     }
     else
     {
         Error err(String::Compose(N_("redefinition of `%1'"), m_name));
-        err.setXRef(m_def_line != 0 ? m_def_line : m_decl_line,
+        err.setXRef(m_def_source.isValid() ? m_def_source : m_decl_source,
                     String::Compose(N_("`%1' previously defined here"),
                                     m_name));
         throw err;
@@ -211,9 +208,12 @@ Symbol::Write(YAML::Emitter& out) const
         out << "DLocal";
     out << YAML::EndSeq;
 
-    out << YAML::Key << "define line" << YAML::Value << m_def_line;
-    out << YAML::Key << "declare line" << YAML::Value << m_decl_line;
-    out << YAML::Key << "use line" << YAML::Value << m_use_line;
+    out << YAML::Key << "define source"
+        << YAML::Value << m_def_source.getRawEncoding();
+    out << YAML::Key << "declare source"
+        << YAML::Value << m_decl_source.getRawEncoding();
+    out << YAML::Key << "use source"
+        << YAML::Value << m_use_source.getRawEncoding();
 
     out << YAML::Key << "assoc data" << YAML::Value;
     AssocDataContainer::Write(out);

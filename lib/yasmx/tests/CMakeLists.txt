@@ -7,7 +7,6 @@ ADD_CXXTEST(libyasmx_tests
     expr_test.h
     expr_util_test.h
     hamt_test.h
-    linemap_test.h
     location_test.h
     file_combpath_test.h
     floatnum_test.h

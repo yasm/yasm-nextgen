@@ -38,7 +38,6 @@
 #include "yasmx/Bytes.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
-#include "yasmx/Linemap.h"
 #include "yasmx/Value.h"
 
 
@@ -231,12 +230,12 @@ AppendIncbin(BytecodeContainer& container,
              const llvm::StringRef& filename,
              /*@null@*/ std::auto_ptr<Expr> start,
              /*@null@*/ std::auto_ptr<Expr> maxlen,
-             unsigned long line)
+             clang::SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     bc.Transform(Bytecode::Contents::Ptr(
         new IncbinBytecode(filename, start, maxlen)));
-    bc.setLine(line);
+    bc.setSource(source);
 }
 
 } // namespace yasm

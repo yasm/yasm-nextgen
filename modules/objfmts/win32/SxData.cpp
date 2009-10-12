@@ -122,11 +122,13 @@ namespace win32
 {
 
 void
-AppendSxData(BytecodeContainer& container, SymbolRef sym, unsigned long line)
+AppendSxData(BytecodeContainer& container,
+             SymbolRef sym,
+             clang::SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     bc.Transform(Bytecode::Contents::Ptr(new SxData(sym)));
-    bc.setLine(line);
+    bc.setSource(source);
 }
 
 }}} // namespace yasm::objfmt::win32

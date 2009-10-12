@@ -136,7 +136,7 @@ namespace yasm
 void AppendLEB128(BytecodeContainer& container,
                   const IntNum& intn,
                   bool sign,
-                  unsigned long line)
+                  clang::SourceLocation source)
 {
     if (intn.getSign() < 0 && !sign)
         setWarn(WARN_GENERAL, N_("negative value in unsigned LEB128"));
@@ -147,20 +147,20 @@ void AppendLEB128(BytecodeContainer& container,
 void AppendLEB128(BytecodeContainer& container,
                   std::auto_ptr<Expr> expr,
                   bool sign,
-                  unsigned long line)
+                  clang::SourceLocation source)
 {
     // If expression is just an integer, output directly.
     expr->Simplify();
     if (expr->isIntNum())
     {
-        AppendLEB128(container, expr->getIntNum(), sign, line);
+        AppendLEB128(container, expr->getIntNum(), sign, source);
         return;
     }
 
     // More complex; append LEB128 bytecode.
     Bytecode& bc = container.FreshBytecode();
     bc.Transform(Bytecode::Contents::Ptr(new LEB128Bytecode(expr, sign)));
-    bc.setLine(line);
+    bc.setSource(source);
 }
 
 } // namespace yasm

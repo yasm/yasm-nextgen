@@ -168,11 +168,11 @@ void
 AppendOrg(BytecodeContainer& container,
           unsigned long start,
           unsigned long fill,
-          unsigned long line)
+          clang::SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     bc.Transform(Bytecode::Contents::Ptr(new OrgBytecode(start, fill)));
-    bc.setLine(line);
+    bc.setSource(source);
 }
 
 } // namespace yasm

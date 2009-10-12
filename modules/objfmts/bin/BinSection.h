@@ -28,6 +28,7 @@
 //
 #include <string>
 
+#include "clang/Basic/SourceLocation.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/AssocData.h"
 #include "yasmx/IntNum.h"
@@ -60,8 +61,8 @@ struct BinSection : public AssocData
     // User-provided starts
     util::scoped_ptr<Expr> start;
     util::scoped_ptr<Expr> vstart;
-    unsigned long start_line;
-    unsigned long vstart_line;
+    clang::SourceLocation start_source;
+    clang::SourceLocation vstart_source;
 
     // User-provided follows
     std::string follows;

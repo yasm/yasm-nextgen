@@ -32,6 +32,7 @@
 #include "yasmx/Config/export.h"
 
 
+namespace clang { class SourceLocation; }
 namespace llvm { class StringRef; }
 
 namespace yasm

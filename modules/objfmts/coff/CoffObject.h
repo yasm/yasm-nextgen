@@ -72,7 +72,7 @@ public:
 
     virtual Section* AddDefaultSection();
     virtual Section* AppendSection(const llvm::StringRef& name,
-                                   unsigned long line);
+                                   clang::SourceLocation source);
 
     Machine getMachine() const { return m_machine; }
 
@@ -101,7 +101,7 @@ protected:
                                        CoffSection* csd,
                                        IntNum* align,
                                        bool* has_align,
-                                       unsigned long line);
+                                       clang::SourceLocation source);
 
 private:
     // When this is false, all section VMA's are set to 0 rather than as the

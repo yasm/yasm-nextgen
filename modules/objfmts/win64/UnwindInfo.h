@@ -49,7 +49,7 @@ class UnwindInfo : public Bytecode::Contents
 {
     friend void Generate(std::auto_ptr<UnwindInfo> uwinfo,
                          BytecodeContainer& xdata,
-                         unsigned long line,
+                         clang::SourceLocation source,
                          const Arch& arch);
 
 public:
@@ -100,7 +100,7 @@ private:
 
 void Generate(std::auto_ptr<UnwindInfo> uwinfo,
               BytecodeContainer& xdata,
-              unsigned long line,
+              clang::SourceLocation source,
               const Arch& arch);
 
 }}} // namespace yasm::objfmt::win64

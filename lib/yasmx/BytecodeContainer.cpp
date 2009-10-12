@@ -161,7 +161,7 @@ BytecodeContainer::AppendBytecode(std::auto_ptr<Bytecode> bc)
 }
 
 Bytecode&
-BytecodeContainer::AppendGap(unsigned long size, unsigned long line)
+BytecodeContainer::AppendGap(unsigned long size, clang::SourceLocation source)
 {
     if (m_last_gap)
     {
@@ -170,7 +170,7 @@ BytecodeContainer::AppendGap(unsigned long size, unsigned long line)
     }
     Bytecode& bc = FreshBytecode();
     bc.Transform(Bytecode::Contents::Ptr(new GapBytecode(size)));
-    bc.setLine(line);
+    bc.setSource(source);
     m_last_gap = true;
     return bc;
 }

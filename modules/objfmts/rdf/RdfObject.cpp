@@ -96,7 +96,8 @@ public:
     void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* AddDefaultSection();
-    Section* AppendSection(const llvm::StringRef& name, unsigned long line);
+    Section* AppendSection(const llvm::StringRef& name,
+                           clang::SourceLocation source);
 
     static const char* getName()
     { return "Relocatable Dynamic Object File Format (RDOFF) v2.0"; }
@@ -293,9 +294,9 @@ RdfOutput::OutputSectionToMemory(Section& sect, Errwarns& errwarns)
         }
         catch (Error& err)
         {
-            errwarns.Propagate(i->getLine(), err);
+            errwarns.Propagate(i->getSource(), err);
         }
-        errwarns.Propagate(i->getLine());   // propagate warnings
+        errwarns.Propagate(i->getSource()); // propagate warnings
     }
 
     // Sanity check final section size
@@ -437,7 +438,7 @@ RdfOutput::OutputSymbol(Symbol& sym,
     {
         setWarn(WARN_GENERAL,
                 N_("rdf does not support exporting EQU/absolute values"));
-        errwarns.Propagate(sym.getDeclLine());
+        errwarns.Propagate(sym.getDeclSource());
         return;
     }
 
@@ -449,7 +450,7 @@ RdfOutput::OutputSymbol(Symbol& sym,
         setWarn(WARN_GENERAL, String::Compose(
                 N_("label name too long, truncating to %1 bytes"),
                 EXIM_LABEL_MAX));
-        errwarns.Propagate(sym.getDeclLine());
+        errwarns.Propagate(sym.getDeclSource());
 
         len = EXIM_LABEL_MAX-1;
     }
@@ -484,7 +485,7 @@ RdfOutput::OutputSymbol(Symbol& sym,
             SimplifyCalcDist(csize_expr);
             if (!csize_expr.isIntNum())
             {
-                errwarns.Propagate(sym.getDeclLine(), NotConstantError(
+                errwarns.Propagate(sym.getDeclSource(), NotConstantError(
                     N_("COMMON data size not an integer expression")));
             }
             else
@@ -501,15 +502,16 @@ RdfOutput::OutputSymbol(Symbol& sym,
                     {
                         if (!nv->isExpr())
                         {
-                            errwarns.Propagate(sym.getDeclLine(),
+                            errwarns.Propagate(sym.getDeclSource(),
                                 ValueError(N_("alignment is not an integer")));
                             continue;
                         }
-                        Expr aligne = nv->getExpr(m_object, sym.getDeclLine());
+                        Expr aligne =
+                            nv->getExpr(m_object, sym.getDeclSource());
                         SimplifyCalcDist(aligne);
                         if (!aligne.isIntNum())
                         {
-                            errwarns.Propagate(sym.getDeclLine(),
+                            errwarns.Propagate(sym.getDeclSource(),
                                 ValueError(N_("alignment is not an integer")));
                             continue;
                         }
@@ -518,7 +520,7 @@ RdfOutput::OutputSymbol(Symbol& sym,
                         // Alignments must be a power of two.
                         if (!isExp2(addralign))
                         {
-                            errwarns.Propagate(sym.getDeclLine(), ValueError(
+                            errwarns.Propagate(sym.getDeclSource(), ValueError(
                                 N_("alignment constraint is not a power of two")));
                             continue;
                         }
@@ -527,7 +529,7 @@ RdfOutput::OutputSymbol(Symbol& sym,
                     {
                         setWarn(WARN_GENERAL, String::Compose(
                             N_("Unrecognized qualifier `%1'"), nv->getName()));
-                        errwarns.Propagate(sym.getDeclLine());
+                        errwarns.Propagate(sym.getDeclSource());
                     }
                 }
             }
@@ -754,13 +756,14 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
         // Create and initialize section
         std::auto_ptr<Section> section(
             new Section(sectname, rsect->type == RdfSection::RDF_CODE,
-                        rsect->type == RdfSection::RDF_BSS, 0));
+                        rsect->type == RdfSection::RDF_BSS,
+                        clang::SourceLocation()));
 
         section->setFilePos(inbuf.getPosition());
 
         if (rsect->type == RdfSection::RDF_BSS)
         {
-            Bytecode& gap = section->AppendGap(size, 0);
+            Bytecode& gap = section->AppendGap(size, clang::SourceLocation());
             gap.CalcLen(0);     // force length calculation of gap
         }
         else
@@ -775,7 +778,7 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
         // Create symbol for section start (used for relocations)
         SymbolRef sym = m_object.AddNonTableSymbol(sectname);
         Location loc = {&section->bytecodes_first(), 0};
-        sym->DefineLabel(loc, 0);
+        sym->DefineLabel(loc);
         // and keep in symtab map
         symtab.grow(rsect->scnum);
         symtab[rsect->scnum] = sym;
@@ -811,7 +814,7 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
 
                 // Create symbol
                 SymbolRef sym = m_object.getSymbol(symname);
-                sym->Declare(Symbol::COMMON, 0);
+                sym->Declare(Symbol::COMMON);
                 setCommonSize(*sym, Expr(value));
                 // TODO: align
                 sym->AddAssocData(std::auto_ptr<RdfSymbol>
@@ -836,7 +839,7 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
 
                 // Create symbol
                 SymbolRef sym = m_object.getSymbol(symname);
-                sym->Declare(Symbol::EXTERN, 0);
+                sym->Declare(Symbol::EXTERN);
                 sym->AddAssocData(std::auto_ptr<RdfSymbol>
                                   (new RdfSymbol(scnum)));
 
@@ -861,8 +864,8 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
                 SymbolRef sym = m_object.getSymbol(symname);
                 Section& sect = m_object.getSection(scnum);
                 Location loc = {&sect.bytecodes_first(), value};
-                sym->DefineLabel(loc, 0);
-                sym->Declare(Symbol::GLOBAL, 0);
+                sym->DefineLabel(loc);
+                sym->Declare(Symbol::GLOBAL);
                 break;
             }
             case RDFREC_MODNAME:
@@ -886,14 +889,15 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
                     new RdfSection(RdfSection::RDF_BSS, SymbolRef(0)));
                 rsect->scnum = 0;
                 std::auto_ptr<Section> section(
-                    new Section(".bss", false, true, 0));
-                Bytecode& gap = section->AppendGap(size, 0);
+                    new Section(".bss", false, true, clang::SourceLocation()));
+                Bytecode& gap =
+                    section->AppendGap(size, clang::SourceLocation());
                 gap.CalcLen(0);     // force length calculation of gap
 
                 // Create symbol for section start (used for relocations)
                 SymbolRef sym = m_object.AddNonTableSymbol(".bss");
                 Location loc = {&section->bytecodes_first(), 0};
-                sym->DefineLabel(loc, 0);
+                sym->DefineLabel(loc);
                 // and keep in symtab map
                 unsigned int scnum = m_object.getNumSections();
                 symtab.grow(scnum);
@@ -962,7 +966,8 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
 }
 
 Section*
-RdfObject::AppendSection(const llvm::StringRef& name, unsigned long line)
+RdfObject::AppendSection(const llvm::StringRef& name,
+                         clang::SourceLocation source)
 {
     RdfSection::Type type = RdfSection::RDF_UNKNOWN;
     if (name == ".text")
@@ -973,13 +978,13 @@ RdfObject::AppendSection(const llvm::StringRef& name, unsigned long line)
         type = RdfSection::RDF_BSS;
 
     Section* section = new Section(name, type == RdfSection::RDF_CODE,
-                                   type == RdfSection::RDF_BSS, line);
+                                   type == RdfSection::RDF_BSS, source);
     m_object.AppendSection(std::auto_ptr<Section>(section));
 
     // Define a label for the start of the section
     Location start = {&section->bytecodes_first(), 0};
     SymbolRef sym = m_object.getSymbol(name);
-    sym->DefineLabel(start, line);
+    sym->DefineLabel(start, source);
 
     // Add RDF data to the section
     section->AddAssocData(std::auto_ptr<RdfSection>(new RdfSection(type, sym)));
@@ -990,7 +995,7 @@ RdfObject::AppendSection(const llvm::StringRef& name, unsigned long line)
 Section*
 RdfObject::AddDefaultSection()
 {
-    Section* section = AppendSection(".text", 0);
+    Section* section = AppendSection(".text", clang::SourceLocation());
     section->setDefault(true);
     return section;
 }
@@ -998,14 +1003,14 @@ RdfObject::AddDefaultSection()
 inline bool
 SetReserved(NameValue& nv,
             Object* obj,
-            unsigned long line,
+            clang::SourceLocation source,
             IntNum* out,
             bool* out_set)
 {
     if (!nv.getName().empty() || !nv.isExpr())
         return DirNameValueWarn(nv);
 
-    std::auto_ptr<Expr> e(nv.ReleaseExpr(*obj, line));
+    std::auto_ptr<Expr> e(nv.ReleaseExpr(*obj, source));
 
     if ((e.get() == 0) || !e->isIntNum())
         throw NotConstantError(String::Compose(
@@ -1021,7 +1026,7 @@ RdfObject::DirSection(DirectiveInfo& info)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
-    unsigned long line = info.getLine();
+    clang::SourceLocation source = info.getSource();
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
@@ -1032,7 +1037,7 @@ RdfObject::DirSection(DirectiveInfo& info)
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, line);
+        sect = AppendSection(sectname, source);
 
     RdfSection* rsect = sect->getAssocData<RdfSection>();
     assert(rsect != 0);
@@ -1078,11 +1083,11 @@ RdfObject::DirSection(DirectiveInfo& info)
                 BIND::bind(&DirResetFlag, _1, &type, RdfSection::RDF_SYMDEBUG));
     helpers.Add("linedebug", false, BIND::bind(&DirResetFlag, _1, &type,
                                                RdfSection::RDF_LINEDEBUG));
-    helpers.Add("reserved", true, BIND::bind(&DirIntNum, _1, &m_object, line,
+    helpers.Add("reserved", true, BIND::bind(&DirIntNum, _1, &m_object, source,
                                              &reserved, &has_reserved));
 
     helpers(++nvs.begin(), nvs.end(),
-            BIND::bind(&SetReserved, _1, &m_object, line, &reserved,
+            BIND::bind(&SetReserved, _1, &m_object, source, &reserved,
                        &has_reserved));
 
     rsect->type = static_cast<RdfSection::Type>(type);

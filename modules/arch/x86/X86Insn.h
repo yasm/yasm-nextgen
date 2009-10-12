@@ -30,6 +30,8 @@
 
 #include "X86Arch.h"
 
+namespace clang { class SourceLocation; }
+
 namespace yasm
 {
 namespace arch
@@ -62,13 +64,13 @@ public:
     X86Insn* clone() const;
 
 protected:
-    void DoAppend(BytecodeContainer& container, unsigned long line);
+    void DoAppend(BytecodeContainer& container, clang::SourceLocation source);
     void DoWrite(YAML::Emitter& out) const;
 
 private:
     void DoAppendJmpFar(BytecodeContainer& container,
                         const X86InsnInfo& info,
-                        unsigned long line);
+                        clang::SourceLocation source);
 
     bool MatchJmpInfo(const X86InsnInfo& info,
                       unsigned int opersize,
@@ -76,12 +78,12 @@ private:
                       X86Opcode& nearop) const;
     void DoAppendJmp(BytecodeContainer& container,
                      const X86InsnInfo& jinfo,
-                     unsigned long line);
+                     clang::SourceLocation source);
 
     void DoAppendGeneral(BytecodeContainer& container,
                          const X86InsnInfo& info,
                          const unsigned int* size_lookup,
-                         unsigned long line);
+                         clang::SourceLocation source);
 
     const X86InsnInfo* FindMatch(const unsigned int* size_lookup, int bypass)
         const;

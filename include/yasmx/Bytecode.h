@@ -33,10 +33,10 @@
 #include <memory>
 #include <vector>
 
+#include "clang/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/scoped_ptr.h"
-
 #include "yasmx/Bytes.h"
 #include "yasmx/SymbolRef.h"
 #include "yasmx/Value.h"
@@ -182,8 +182,8 @@ public:
 
     /// Create a bytecode of given contents.
     /// @param contents     type-specific data
-    /// @param line         virtual line (from Linemap)
-    Bytecode(Contents::Ptr contents, unsigned long line);
+    /// @param source       source location
+    Bytecode(Contents::Ptr contents, clang::SourceLocation source);
 
     /// Create a bytecode of no type.
     Bytecode();
@@ -208,9 +208,9 @@ public:
     /// @return True if bytecode has contents.
     bool hasContents() const { return m_contents.get() != 0; }
 
-    /// Set line number of bytecode.
-    /// @param line     virtual line (from Linemap)
-    void setLine(unsigned long line) { m_line = line; }
+    /// Set source location of bytecode.
+    /// @param source   source location
+    void setSource(clang::SourceLocation source) { m_source = source; }
 
     /// Get the container the bytecode resides in.
     /// @param bc   bytecode
@@ -312,7 +312,7 @@ public:
     /// @return Offset of next bytecode.
     unsigned long UpdateOffset(unsigned long offset);
 
-    unsigned long getLine() const { return m_line; }
+    clang::SourceLocation getSource() const { return m_source; }
 
     unsigned long getIndex() const { return m_index; }
     void setIndex(unsigned long idx) { m_index = idx; }
@@ -331,7 +331,7 @@ public:
     void AppendFixed(std::auto_ptr<Value> val);
     Value& AppendFixed(unsigned int size,
                        std::auto_ptr<Expr> e,
-                       unsigned long line);
+                       clang::SourceLocation source);
 
     /// A fixup consists of a value+offset combination.  0's need to be stored
     /// in m_fixed as placeholders.
@@ -343,7 +343,7 @@ public:
         Fixup(unsigned int off,
               unsigned int size,
               std::auto_ptr<Expr> e,
-              unsigned long line);
+              clang::SourceLocation source);
         void swap(Fixup& oth);
         unsigned int getOffset() const { return m_off; }
 
@@ -384,8 +384,8 @@ private:
     /// Total length of tail contents (not including multiple copies).
     unsigned long m_len;
 
-    /// Line number where bytecode tail was defined.
-    unsigned long m_line;
+    /// Source location where bytecode tail was defined.
+    clang::SourceLocation m_source;
 
     /// Offset of bytecode from beginning of its section.
     /// 0-based, ~0UL (e.g. all 1 bits) if unknown.

@@ -29,6 +29,8 @@
 #include <memory>
 
 
+namespace clang { class SourceLocation; }
+
 namespace yasm
 {
 
@@ -51,7 +53,7 @@ void AppendJmpFar(BytecodeContainer& container,
                   const X86Opcode& opcode,
                   std::auto_ptr<Expr> segment,
                   std::auto_ptr<Expr> offset,
-                  unsigned long line);
+                  clang::SourceLocation source);
 
 }}} // namespace yasm::arch::x86
 

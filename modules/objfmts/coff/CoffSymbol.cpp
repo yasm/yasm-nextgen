@@ -135,7 +135,7 @@ CoffSymbol::Write(Bytes& bytes,
             value = equ_val.getIntNum();
         else if (vis & Symbol::GLOBAL)
         {
-            errwarns.Propagate(sym.getDefLine(), NotConstantError(
+            errwarns.Propagate(sym.getDefSource(), NotConstantError(
                 N_("global EQU value not an integer expression")));
         }
 
@@ -152,7 +152,7 @@ CoffSymbol::Write(Bytes& bytes,
                 value = csize.getIntNum();
             else
             {
-                errwarns.Propagate(sym.getDefLine(), NotConstantError(
+                errwarns.Propagate(sym.getDefSource(), NotConstantError(
                     N_("COMMON data size not an integer expression")));
             }
             scnum = 0;

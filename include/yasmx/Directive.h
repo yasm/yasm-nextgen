@@ -29,6 +29,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include "clang/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/scoped_ptr.h"
@@ -47,21 +48,21 @@ class Object;
 class DirectiveInfo
 {
 public:
-    DirectiveInfo(Object& object, unsigned long line)
-        : m_object(object), m_line(line)
+    DirectiveInfo(Object& object, clang::SourceLocation source)
+        : m_object(object), m_source(source)
     {}
 
     bool isObject(const Object& oth) const { return &m_object == &oth; }
     Object& getObject() { return m_object; }
     NameValues& getNameValues() { return m_namevals; }
     NameValues& getObjextNameValues() { return m_objext_namevals; }
-    unsigned long getLine() const { return m_line; }
+    clang::SourceLocation getSource() const { return m_source; }
 
 private:
     Object& m_object;               ///< object
     NameValues m_namevals;          ///< name/values
     NameValues m_objext_namevals;   ///< object format-specific name/values
-    unsigned long m_line;           ///< virtual line (from Linemap)
+    clang::SourceLocation m_source; ///< source location
 };
 
 /// Directive handler function.

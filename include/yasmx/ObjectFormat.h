@@ -38,6 +38,7 @@
 #include "yasmx/Module.h"
 
 
+namespace clang { class SourceLocation; }
 namespace llvm { class MemoryBuffer; class raw_fd_ostream; class StringRef; }
 
 namespace yasm
@@ -102,7 +103,7 @@ public:
     /// if the section already exists; use Object::find_section() first.
     /// @return New section.
     virtual Section* AppendSection(const llvm::StringRef& name,
-                                   unsigned long line) = 0;
+                                   clang::SourceLocation source) = 0;
 
 private:
     ObjectFormat(const ObjectFormat&);                  // not implemented

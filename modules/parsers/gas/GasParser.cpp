@@ -51,7 +51,7 @@ namespace gas
 
 GasParser::GasParser(const ParserModule& module, Errwarns& errwarns)
     : Parser(module, errwarns)
-    , m_rept_owner(m_rept)
+    //, m_rept_owner(m_rept)
 {
     static const GasDirLookup gas_dirs_init[] =
     {
@@ -97,8 +97,10 @@ GasParser::GasParser(const ParserModule& module, Errwarns& errwarns)
         {".text",       &GasParser::ParseDirTextSection,    0},
         {".section",    &GasParser::ParseDirSection,        0},
         // macro directives
+#if 0
         {".rept",       &GasParser::ParseDirRept,   0},
         {".endr",       &GasParser::ParseDirEndr,   0},
+#endif
         // empty space/fill directives
         {".skip",       &GasParser::ParseDirSkip,   0},
         {".space",      &GasParser::ParseDirSkip,   0},
@@ -120,13 +122,9 @@ GasParser::~GasParser()
 }
 
 void
-GasParser::Parse(Object& object,
-                 Preprocessor& preproc,
-                 bool save_input,
-                 Directives& dirs,
-                 Linemap& linemap)
+GasParser::Parse(Object& object, Preprocessor& preproc, Directives& dirs)
 {
-    InitMixin(object, preproc, save_input, dirs, linemap);
+    InitMixin(object, preproc, dirs);
 
     m_locallabel_base = "";
 
@@ -137,7 +135,7 @@ GasParser::Parse(Object& object,
 
     m_state = INITIAL;
 
-    stdx::ptr_vector<GasRept>().swap(m_rept);   // clear the m_rept stack
+    //stdx::ptr_vector<GasRept>().swap(m_rept);   // clear the m_rept stack
 
     for (int i=0; i<10; i++)
         m_local[i] = 0;
@@ -157,19 +155,19 @@ GasParser::Parse(Object& object,
     DoParse();
 
     // Check for ending inside a rept
+#if 0
     if (!m_rept.empty())
     {
         m_errwarns.Propagate(m_rept.back().startline,
                              SyntaxError(N_("rept without matching endr")));
     }
+#endif
 
     // Check for ending inside a comment
     if (m_state == COMMENT)
     {
         setWarn(WARN_GENERAL, N_("end of file in comment"));
-        // XXX: Minus two to compensate for already having moved past the EOF
-        // in the linemap.
-        m_errwarns.Propagate(getCurLine()-2);
+        m_errwarns.Propagate(m_comment_start);
     }
 
     // Convert all undefined symbols into extern symbols

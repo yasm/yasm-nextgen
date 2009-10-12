@@ -167,7 +167,7 @@ DirExtern(DirectiveInfo& info)
 {
     Object& object = info.getObject();
     SymbolRef sym = object.getSymbol(info.getNameValues().front().getId());
-    sym->Declare(Symbol::EXTERN, info.getLine());
+    sym->Declare(Symbol::EXTERN, info.getSource());
 
     if (!info.getObjextNameValues().empty())
         setObjextNameValues(*sym, info.getObjextNameValues());
@@ -178,7 +178,7 @@ DirGlobal(DirectiveInfo& info)
 {
     Object& object = info.getObject();
     SymbolRef sym = object.getSymbol(info.getNameValues().front().getId());
-    sym->Declare(Symbol::GLOBAL, info.getLine());
+    sym->Declare(Symbol::GLOBAL, info.getSource());
 
     if (!info.getObjextNameValues().empty())
         setObjextNameValues(*sym, info.getObjextNameValues());
@@ -195,9 +195,9 @@ DirCommon(DirectiveInfo& info)
 
     Object& object = info.getObject();
     SymbolRef sym = object.getSymbol(namevals.front().getId());
-    sym->Declare(Symbol::COMMON, info.getLine());
+    sym->Declare(Symbol::COMMON, info.getSource());
 
-    setCommonSize(*sym, namevals[1].getExpr(object, info.getLine()));
+    setCommonSize(*sym, namevals[1].getExpr(object, info.getSource()));
 
     if (!info.getObjextNameValues().empty())
         setObjextNameValues(*sym, info.getObjextNameValues());

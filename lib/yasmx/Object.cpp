@@ -170,8 +170,8 @@ Object::getAbsoluteSymbol()
         return sym;
 
     // Define it
-    sym->DefineEqu(Expr(0), 0);
-    sym->Use(0);
+    sym->DefineEqu(Expr(0), clang::SourceLocation());
+    sym->Use(clang::SourceLocation());
     return sym;
 }
 
@@ -221,7 +221,7 @@ Object::AddNonTableSymbol(const llvm::StringRef& name)
 void
 Object::FinalizeSymbols(Errwarns& errwarns, bool undef_extern)
 {
-    unsigned long firstundef_line = ULONG_MAX;
+    clang::SourceLocation firstundef;
 
     for (symbol_iterator i=m_symbols.begin(), end=m_symbols.end();
          i != end; ++i)
@@ -232,14 +232,14 @@ Object::FinalizeSymbols(Errwarns& errwarns, bool undef_extern)
         }
         catch (Error& err)
         {
-            unsigned long use_line = i->getUseLine();
-            errwarns.Propagate(use_line, err);
-            if (use_line < firstundef_line)
-                firstundef_line = use_line;
+            clang::SourceLocation use_source = i->getUseSource();
+            errwarns.Propagate(use_source, err);
+            if (!firstundef.isValid() || use_source < firstundef)
+                firstundef = use_source;
         }
     }
-    if (firstundef_line < ULONG_MAX)
-        errwarns.Propagate(firstundef_line,
+    if (firstundef.isValid())
+        errwarns.Propagate(firstundef,
             Error(N_(" (Each undefined symbol is reported only once.)")));
 }
 

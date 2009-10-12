@@ -38,6 +38,7 @@
 #include "yasmx/Expr.h"
 
 
+namespace clang { class SourceLocation; }
 namespace YAML { class Emitter; class raw_ostream; }
 
 namespace yasm
@@ -303,7 +304,7 @@ public:
     }
 
     /// Append instruction to a bytecode container.
-    void Append(BytecodeContainer& container, unsigned long line);
+    void Append(BytecodeContainer& container, clang::SourceLocation source);
 
     virtual Insn* clone() const = 0;
 
@@ -321,7 +322,7 @@ protected:
 
     /// Append instruction to a section.
     virtual void DoAppend(BytecodeContainer& container,
-                          unsigned long line) = 0;
+                          clang::SourceLocation source) = 0;
 
     /// Write derived class YAML representation.  For debugging purposes.
     /// @param out          YAML emitter

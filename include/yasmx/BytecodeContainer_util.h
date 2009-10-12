@@ -34,6 +34,7 @@
 #include "yasmx/Config/export.h"
 
 
+namespace clang { class SourceLocation; }
 namespace llvm { class StringRef; }
 
 namespace yasm
@@ -69,13 +70,13 @@ void AppendData(BytecodeContainer& container,
 /// @param expr         data value
 /// @param size         storage size (in bytes) for the data value
 /// @param arch         architecture
-/// @param line         virtual line number
+/// @param source       source location
 YASM_LIB_EXPORT
 void AppendData(BytecodeContainer& container,
                 std::auto_ptr<Expr> expr,
                 unsigned int size,
                 const Arch& arch,
-                unsigned long line);
+                clang::SourceLocation source);
 
 /// Append a string value to the end of a section.
 /// @param sect         section
@@ -102,24 +103,24 @@ void AppendData(BytecodeContainer& container,
 /// @param intn         data value
 /// @param sign         signedness (True=signed, False=unsigned) of the
 ///                     data value
-/// @param line         virtual line number
+/// @param source       source location
 YASM_LIB_EXPORT
 void AppendLEB128(BytecodeContainer& container,
                   const IntNum& intn,
                   bool sign,
-                  unsigned long line);
+                  clang::SourceLocation source);
 
 /// Append an LEB128-encoded data value to the end of a section.
 /// @param sect         section
 /// @param expr         data value
 /// @param sign         signedness (True=signed, False=unsigned) of the
 ///                     data value
-/// @param line         virtual line number
+/// @param source       source location
 YASM_LIB_EXPORT
 void AppendLEB128(BytecodeContainer& container,
                   std::auto_ptr<Expr> expr,
                   bool sign,
-                  unsigned long line);
+                  clang::SourceLocation source);
 
 /// Append a binary file verbatim to the end of a section.
 /// @param sect             section
@@ -128,13 +129,13 @@ void AppendLEB128(BytecodeContainer& container,
 ///                         from; may be NULL to indicate 0.
 /// @param maxlen           maximum number of bytes to read from the file;
 ///                         may be NULL to indicate no maximum
-/// @param line             virtual line number
+/// @param source           source location
 YASM_LIB_EXPORT
 void AppendIncbin(BytecodeContainer& container,
                   const llvm::StringRef& filename,
                   /*@null@*/ std::auto_ptr<Expr> start,
                   /*@null@*/ std::auto_ptr<Expr> maxlen,
-                  unsigned long line);
+                  clang::SourceLocation source);
 
 /// Append an alignment constraint that aligns the following data to a boundary.
 /// @param sect         section
@@ -142,7 +143,7 @@ void AppendIncbin(BytecodeContainer& container,
 /// @param fill         fill data (if NULL, code_fill or 0 is used)
 /// @param maxskip      maximum number of bytes to skip
 /// @param code_fill    code fill data (if NULL, 0 is used)
-/// @param line         virtual line number
+/// @param source       source location
 /// @note The precedence on generated fill is as follows:
 ///       - from fill parameter (if not NULL)
 ///       - from code_fill parameter (if not NULL)
@@ -153,29 +154,29 @@ void AppendAlign(BytecodeContainer& container,
                  const Expr& fill,
                  const Expr& maxskip,
                  /*@null@*/ const unsigned char** code_fill,
-                 unsigned long line);
+                 clang::SourceLocation source);
 
 /// Append a location constraint that puts the following data at a fixed
 /// section offset.
 /// @param sect         section
 /// @param start        section offset of following bytecode
 /// @param fill         fill value
-/// @param line         virtual line number
+/// @param source       source location
 YASM_LIB_EXPORT
 void AppendOrg(BytecodeContainer& container,
                unsigned long start,
                unsigned long fill,
-               unsigned long line);
+               clang::SourceLocation source);
 
 /// Append a multiple container.
 /// @param container    bytecode container
 /// @param multiple     multiple expression
-/// @param line         virtual line number
+/// @param source       source location
 /// @return Multiple inner container.
 YASM_LIB_EXPORT
 BytecodeContainer& AppendMultiple(BytecodeContainer& container,
                                   std::auto_ptr<Expr> multiple,
-                                  unsigned long line);
+                                  clang::SourceLocation source);
 
 } // namespace yasm
 

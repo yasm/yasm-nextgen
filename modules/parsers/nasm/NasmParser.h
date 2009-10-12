@@ -34,7 +34,6 @@
 #include "yasmx/Bytecode.h"
 #include "yasmx/Insn.h"
 #include "yasmx/IntNum.h"
-#include "yasmx/Linemap.h"
 #include "yasmx/Parser.h"
 
 
@@ -87,11 +86,7 @@ public:
     static std::vector<const char*> getPreprocessorKeywords();
     static const char* getDefaultPreprocessorKeyword() { return "raw"; }
 
-    void Parse(Object& object,
-               Preprocessor& preproc,
-               bool save_input,
-               Directives& dirs,
-               Linemap& linemap);
+    void Parse(Object& object, Preprocessor& preproc, Directives& dirs);
 
     enum TokenType
     {

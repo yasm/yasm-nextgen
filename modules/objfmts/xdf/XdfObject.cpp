@@ -85,7 +85,8 @@ public:
     void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* AddDefaultSection();
-    Section* AppendSection(const llvm::StringRef& name, unsigned long line);
+    Section* AppendSection(const llvm::StringRef& name,
+                           clang::SourceLocation source);
 
     static const char* getName() { return "Extended Dynamic Object"; }
     static const char* getKeyword() { return "xdf"; }
@@ -232,9 +233,9 @@ XdfOutput::OutputSection(Section& sect, Errwarns& errwarns)
         }
         catch (Error& err)
         {
-            errwarns.Propagate(i->getLine(), err);
+            errwarns.Propagate(i->getSource(), err);
         }
-        errwarns.Propagate(i->getLine());   // propagate warnings
+        errwarns.Propagate(i->getSource()); // propagate warnings
     }
 
     // Sanity check final section size
@@ -310,7 +311,7 @@ XdfOutput::OutputSymbol(const Symbol& sym,
         {
             if (vis & Symbol::GLOBAL)
             {
-                errwarns.Propagate(sym.getDefLine(),
+                errwarns.Propagate(sym.getDefSource(),
                     NotConstantError(
                         N_("global EQU value not an integer expression")));
             }
@@ -353,7 +354,7 @@ XdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
         int vis = sym->getVisibility();
         if (vis & Symbol::COMMON)
         {
-            errwarns.Propagate(sym->getDeclLine(),
+            errwarns.Propagate(sym->getDeclSource(),
                 Error(N_("XDF object format does not support common variables")));
             continue;
         }
@@ -534,7 +535,8 @@ XdfObject::Read(const llvm::MemoryBuffer& in)
         llvm::StringRef sectname = read_string(ReadU32(inbuf));
 
         std::auto_ptr<Section> section(
-            new Section(sectname, xsect->bits != 0, bss, 0));
+            new Section(sectname, xsect->bits != 0, bss,
+                        clang::SourceLocation()));
 
         section->setFilePos(filepos);
         section->setVMA(vma);
@@ -542,7 +544,8 @@ XdfObject::Read(const llvm::MemoryBuffer& in)
 
         if (bss)
         {
-            Bytecode& gap = section->AppendGap(xsect->size, 0);
+            Bytecode& gap =
+                section->AppendGap(xsect->size, clang::SourceLocation());
             gap.CalcLen(0);     // force length calculation of gap
         }
         else
@@ -577,17 +580,17 @@ XdfObject::Read(const llvm::MemoryBuffer& in)
 
         SymbolRef sym = m_object.getSymbol(symname);
         if ((flags & XdfSymbol::XDF_GLOBAL) != 0)
-            sym->Declare(Symbol::GLOBAL, 0);
+            sym->Declare(Symbol::GLOBAL);
         else if ((flags & XdfSymbol::XDF_EXTERN) != 0)
-            sym->Declare(Symbol::EXTERN, 0);
+            sym->Declare(Symbol::EXTERN);
 
         if ((flags & XdfSymbol::XDF_EQU) != 0)
-            sym->DefineEqu(Expr(value), 0);
+            sym->DefineEqu(Expr(value));
         else if (sym_scnum < scnum)
         {
             Section& sect = m_object.getSection(sym_scnum);
             Location loc = {&sect.bytecodes_first(), value};
-            sym->DefineLabel(loc, 0);
+            sym->DefineLabel(loc);
         }
 
         // Save index in symrec data
@@ -630,22 +633,23 @@ XdfObject::Read(const llvm::MemoryBuffer& in)
 Section*
 XdfObject::AddDefaultSection()
 {
-    Section* section = AppendSection(".text", 0);
+    Section* section = AppendSection(".text", clang::SourceLocation());
     section->setDefault(true);
     return section;
 }
 
 Section*
-XdfObject::AppendSection(const llvm::StringRef& name, unsigned long line)
+XdfObject::AppendSection(const llvm::StringRef& name,
+                         clang::SourceLocation source)
 {
     bool code = (name == ".text");
-    Section* section = new Section(name, code, false, line);
+    Section* section = new Section(name, code, false, source);
     m_object.AppendSection(std::auto_ptr<Section>(section));
 
     // Define a label for the start of the section
     Location start = {&section->bytecodes_first(), 0};
     SymbolRef sym = m_object.getSymbol(name);
-    sym->DefineLabel(start, line);
+    sym->DefineLabel(start, source);
 
     // Add XDF data to the section
     section->AddAssocData(std::auto_ptr<XdfSection>(new XdfSection(sym)));
@@ -658,7 +662,7 @@ XdfObject::DirSection(DirectiveInfo& info)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
-    unsigned long line = info.getLine();
+    clang::SourceLocation source = info.getSource();
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
@@ -669,7 +673,7 @@ XdfObject::DirSection(DirectiveInfo& info)
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, line);
+        sect = AppendSection(sectname, source);
 
     XdfSection* xsect = sect->getAssocData<XdfSection>();
     assert(xsect != 0);
@@ -715,13 +719,13 @@ XdfObject::DirSection(DirectiveInfo& info)
     helpers.Add("flat", false, BIND::bind(&DirSetFlag, _1, &flat, 1));
     helpers.Add("noflat", false, BIND::bind(&DirClearFlag, _1, &flat, 1));
     helpers.Add("absolute", true,
-                BIND::bind(&DirIntNum, _1, &m_object, line, &lma,
+                BIND::bind(&DirIntNum, _1, &m_object, source, &lma,
                            &xsect->has_addr));
     helpers.Add("virtual", true,
-                BIND::bind(&DirIntNum, _1, &m_object, line, &vma,
+                BIND::bind(&DirIntNum, _1, &m_object, source, &vma,
                            &xsect->has_vaddr));
     helpers.Add("align", true,
-                BIND::bind(&DirIntNum, _1, &m_object, line, &align,
+                BIND::bind(&DirIntNum, _1, &m_object, source, &align,
                            &has_align));
 
     helpers(++nvs.begin(), nvs.end(), DirNameValueWarn);

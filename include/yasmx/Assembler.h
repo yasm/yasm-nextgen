@@ -33,6 +33,7 @@
 #include "yasmx/Support/scoped_ptr.h"
 
 
+namespace clang { class FileManager; class SourceManager; }
 namespace llvm { class MemoryBuffer; class raw_fd_ostream; class StringRef; }
 
 /// Namespace for classes, functions, and templates related to the Yasm
@@ -42,7 +43,6 @@ namespace yasm
 
 class Arch;
 class Errwarns;
-class Linemap;
 class Object;
 class Preprocessor;
 
@@ -99,10 +99,14 @@ public:
     void setListFormat(const llvm::StringRef& list_keyword);
 
     /// Actually perform assembly.  Does not write to output file.
-    /// @param in               initial source memory buffer
+    /// It is assumed source_mgr is already loaded with a main file.
+    /// @param source_mgr       source manager
+    /// @param file_mgr         file manager
     /// @param warning_error    treat warnings as errors if true
     /// @return True on success, false on failure.
-    bool Assemble(const llvm::MemoryBuffer& in, bool warning_error = false);
+    bool Assemble(clang::SourceManager& source_mgr,
+                  clang::FileManager& file_mgr,
+                  bool warning_error = false);
 
     /// Write assembly results to output file.  Fails if assembly not
     /// performed first.
@@ -126,10 +130,6 @@ public:
     /// Get the error/warning set.
     /// @return Errwarns.
     Errwarns* getErrwarns();
-
-    /// Get the line map.
-    /// @return Line map.
-    Linemap* getLinemap();
 
     /// Get the object filename.  May return empty string if called prior
     /// to assemble() being called.

@@ -115,7 +115,7 @@ CoffObject::~CoffObject()
 Section*
 CoffObject::AddDefaultSection()
 {
-    Section* section = AppendSection(".text", 0);
+    Section* section = AppendSection(".text", clang::SourceLocation());
     section->setDefault(true);
     return section;
 }
@@ -164,16 +164,17 @@ CoffObject::InitSection(const llvm::StringRef& name,
 }
 
 Section*
-CoffObject::AppendSection(const llvm::StringRef& name, unsigned long line)
+CoffObject::AppendSection(const llvm::StringRef& name,
+                          clang::SourceLocation source)
 {
-    Section* section = new Section(name, false, false, line);
+    Section* section = new Section(name, false, false, source);
     m_object.AppendSection(std::auto_ptr<Section>(section));
 
     // Define a label for the start of the section
     Location start = {&section->bytecodes_first(), 0};
     SymbolRef sym = m_object.getSymbol(name);
-    sym->DefineLabel(start, line);
-    sym->Declare(Symbol::GLOBAL, line);
+    sym->DefineLabel(start, source);
+    sym->Declare(Symbol::GLOBAL, source);
     sym->AddAssocData(
         std::auto_ptr<CoffSymbol>(new CoffSymbol(CoffSymbol::SCL_STAT,
                                                 CoffSymbol::AUX_SECT)));
@@ -211,7 +212,7 @@ CoffObject::DirGasSection(DirectiveInfo& info)
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, info.getLine());
+        sect = AppendSection(sectname, info.getSource());
 
     CoffSection* coffsect = sect->getAssocData<CoffSection>();
     assert(coffsect != 0);
@@ -309,7 +310,7 @@ CoffObject::DirSectionInitHelpers(DirHelpers& helpers,
                                   CoffSection* coffsect,
                                   IntNum* align,
                                   bool* has_align,
-                                  unsigned long line)
+                                  clang::SourceLocation source)
 {
     helpers.Add("code", false,
                 BIND::bind(&DirResetFlag, _1, &coffsect->m_flags,
@@ -340,7 +341,8 @@ CoffObject::DirSectionInitHelpers(DirHelpers& helpers,
                            CoffSection::DISCARD |
                            CoffSection::READ));
     helpers.Add("align", true,
-                BIND::bind(&DirIntNum, _1, &m_object, line, align, has_align));
+                BIND::bind(&DirIntNum, _1, &m_object, source, align,
+                           has_align));
 }
 
 void
@@ -348,7 +350,7 @@ CoffObject::DirSection(DirectiveInfo& info)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
-    unsigned long line = info.getLine();
+    clang::SourceLocation source = info.getSource();
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
@@ -369,7 +371,7 @@ CoffObject::DirSection(DirectiveInfo& info)
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, line);
+        sect = AppendSection(sectname, source);
 
     CoffSection* coffsect = sect->getAssocData<CoffSection>();
     assert(coffsect != 0);
@@ -394,7 +396,7 @@ CoffObject::DirSection(DirectiveInfo& info)
     bool has_align = false;
 
     DirHelpers helpers;
-    DirSectionInitHelpers(helpers, coffsect, &align, &has_align, line);
+    DirSectionInitHelpers(helpers, coffsect, &align, &has_align, source);
     helpers(++nvs.begin(), nvs.end(), DirNameValueWarn);
 
     sect->setBSS((coffsect->m_flags & CoffSection::BSS) != 0);

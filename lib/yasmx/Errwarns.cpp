@@ -29,11 +29,68 @@
 #include "util.h"
 
 #include <algorithm>
-#include <list>
 
+#include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/SourceManager.h"
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Linemap.h"
 
+
+namespace
+{
+
+class EWData
+{
+public:
+    EWData(clang::SourceRange source, const yasm::Error& err);
+    EWData(clang::SourceRange source, const std::string& wmsg);
+    ~EWData();
+
+    enum { ERROR, WARNING, PARSERERROR } m_type;
+
+    clang::SourceRange m_source;
+    clang::SourceRange m_xrefsource;
+    std::string m_message;
+    std::string m_xrefmsg;
+};
+
+class EWDataCompare
+{
+    const clang::SourceManager& m_mgr;
+
+public:
+    EWDataCompare(const clang::SourceManager& mgr) : m_mgr(mgr) {}
+    bool operator() (const EWData& lhs,
+                     const EWData& rhs)
+    {
+        return m_mgr.isBeforeInTranslationUnit(lhs.m_source.getBegin(),
+                                               rhs.m_source.getBegin());
+    }
+};
+
+EWData::EWData(clang::SourceRange source, const yasm::Error& err)
+    : m_type(ERROR),
+      m_source(source),
+      m_xrefsource(err.m_xrefsource),
+      m_message(err.m_message),
+      m_xrefmsg(err.m_xrefmsg)
+{
+    if (err.m_parse_error)
+        m_type = PARSERERROR;
+}
+
+EWData::EWData(clang::SourceRange source, const std::string& wmsg)
+    : m_type(WARNING),
+      m_source(source),
+      m_message(wmsg)
+{
+}
+
+EWData::~EWData()
+{
+}
+
+} // anonymous namespace
 
 namespace yasm
 {
@@ -44,25 +101,7 @@ public:
     Impl();
     ~Impl();
 
-    class Data
-    {
-    public:
-        Data(unsigned long line, const Error& err);
-        Data(unsigned long line, const std::string& wmsg);
-        ~Data();
-
-        bool operator< (const Data& other) const
-        { return m_line < other.m_line; }
-
-        enum { ERROR, WARNING, PARSERERROR } m_type;
-
-        unsigned long m_line;
-        unsigned long m_xrefline;
-        std::string m_message;
-        std::string m_xrefmsg;
-    };
-
-    std::vector<Data> m_errwarns;
+    std::vector<EWData> m_errwarns;
     int m_ecount, m_wcount;
 };
 
@@ -72,29 +111,6 @@ Errwarns::Impl::Impl()
 }
 
 Errwarns::Impl::~Impl()
-{
-}
-
-Errwarns::Impl::Data::Data(unsigned long line, const Error& err)
-    : m_type(ERROR),
-      m_line(line),
-      m_xrefline(err.m_xrefline),
-      m_message(err.m_message),
-      m_xrefmsg(err.m_xrefmsg)
-{
-    if (err.m_parse_error)
-        m_type = PARSERERROR;
-}
-
-Errwarns::Impl::Data::Data(unsigned long line, const std::string& wmsg)
-    : m_type(WARNING),
-      m_line(line),
-      m_xrefline(0),
-      m_message(wmsg)
-{
-}
-
-Errwarns::Impl::Data::~Data()
 {
 }
 
@@ -108,25 +124,27 @@ Errwarns::~Errwarns()
 }
 
 void
-Errwarns::Propagate(unsigned long line, const Error& err)
+Errwarns::Propagate(clang::SourceRange source, const Error& err)
 {
-    unsigned long real_line = err.m_line == 0 ? line : err.m_line;
-    m_impl->m_errwarns.push_back(Impl::Data(real_line, err));
+    clang::SourceRange real_source =
+        err.m_source.isValid() ? err.m_source : source;
+    m_impl->m_errwarns.push_back(EWData(real_source, err));
     m_impl->m_ecount++;
-    Propagate(line);    // propagate warnings
+    Propagate(source);  // propagate warnings
 }
 
 void
-Errwarns::Propagate(unsigned long line)
+Errwarns::Propagate(clang::SourceRange source)
 {
     WarnClass wclass;
     std::string wmsg;
-    unsigned long wline;
+    clang::SourceRange wsource;
 
-    while ((wclass = FetchWarn(&wmsg, &wline)) != WARN_NONE)
+    while ((wclass = FetchWarn(&wmsg, &wsource)) != WARN_NONE)
     {
-        unsigned long real_line = wline == 0 ? line : wline;
-        m_impl->m_errwarns.push_back(Impl::Data(real_line, wmsg));
+        clang::SourceRange real_source =
+            wsource.isValid() ? wsource : source;
+        m_impl->m_errwarns.push_back(EWData(real_source, wmsg));
         m_impl->m_wcount++;
     }
 }
@@ -141,51 +159,39 @@ Errwarns::getNumErrors(bool warning_as_error) const
 }
 
 void
-Errwarns::OutputAll(const Linemap& lm,
+Errwarns::OutputAll(const clang::SourceManager& source_mgr,
                     int warning_as_error,
                     PrintErrorFunc print_error,
                     PrintWarningFunc print_warning)
 {
     // If we're treating warnings as errors, tell the user about it.
     if (warning_as_error == 1)
-        print_error("", 0,
+        print_error(source_mgr, clang::SourceRange(),
                     gettext_hook(N_("warnings being treated as errors")),
-                    NULL, 0, NULL);
+                    clang::SourceRange(), "");
 
-    // Sort the error/warnings in virtual line order before output.
-    std::stable_sort(m_impl->m_errwarns.begin(), m_impl->m_errwarns.end());
+    // Sort the error/warnings before output.
+    std::stable_sort(m_impl->m_errwarns.begin(), m_impl->m_errwarns.end(),
+                     EWDataCompare(source_mgr));
 
     // Output error/warnings.
-    for (std::vector<Impl::Data>::iterator i=m_impl->m_errwarns.begin(),
+    for (std::vector<EWData>::iterator i=m_impl->m_errwarns.begin(),
          end=m_impl->m_errwarns.end(); i != end; ++i)
     {
-        // Get the physical location
-        std::string filename, xref_filename;
-        unsigned long line, xref_line;
-        lm.Lookup(i->m_line, &filename, &line);
-
-        // Get the cross-reference physical location
-        if (i->m_xrefline != 0)
-            lm.Lookup(i->m_xrefline, &xref_filename, &xref_line);
-        else
-        {
-            xref_filename = "";
-            xref_line = 0;
-        }
-
         // Don't output a PARSERERROR if there's another error on the same
         // line.
-        if (i->m_type == Impl::Data::PARSERERROR && i->m_line == (i+1)->m_line
-            && (i+1)->m_type == Impl::Data::ERROR)
+        if (i->m_type == EWData::PARSERERROR
+            && i->m_source == (i+1)->m_source
+            && (i+1)->m_type == EWData::ERROR)
             continue;
 
         // Output error/warning
-        if (i->m_type == Impl::Data::ERROR
-            || i->m_type == Impl::Data::PARSERERROR)
-            print_error(filename, line, i->m_message, xref_filename,
-                        xref_line, i->m_xrefmsg);
+        if (i->m_type == EWData::ERROR
+            || i->m_type == EWData::PARSERERROR)
+            print_error(source_mgr, i->m_source, i->m_message,
+                        i->m_xrefsource, i->m_xrefmsg);
         else
-            print_warning(filename, line, i->m_message);
+            print_warning(source_mgr, i->m_source, i->m_message);
     }
 }
 

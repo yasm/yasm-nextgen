@@ -117,11 +117,11 @@ DirHelpers::operator()
 void
 DirIntNum(NameValue& nv,
           Object* obj,
-          unsigned long line,
+          clang::SourceLocation source,
           IntNum* out,
           bool* out_set)
 {
-    std::auto_ptr<Expr> e(nv.ReleaseExpr(*obj, line));
+    std::auto_ptr<Expr> e(nv.ReleaseExpr(*obj, source));
 
     if ((e.get() == 0) || !e->isIntNum())
         throw NotConstantError(String::Compose(
@@ -134,14 +134,14 @@ DirIntNum(NameValue& nv,
 void
 DirExpr(NameValue& nv,
         Object* obj,
-        unsigned long line,
+        clang::SourceLocation source,
         std::auto_ptr<Expr>* out,
         bool* out_set)
 {
     if (!nv.isExpr())
         throw ValueError(String::Compose(
             N_("argument to `%1' is not an expression"), nv.getName()));
-    *out = nv.ReleaseExpr(*obj, line);
+    *out = nv.ReleaseExpr(*obj, source);
     *out_set = true;
 }
 

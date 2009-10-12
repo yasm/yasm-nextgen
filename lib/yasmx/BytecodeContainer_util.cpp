@@ -64,7 +64,7 @@ AppendData(BytecodeContainer& container,
            std::auto_ptr<Expr> expr,
            unsigned int size,
            const Arch& arch,
-           unsigned long line)
+           clang::SourceLocation source)
 {
     expr->Simplify();
     if (expr->isIntNum())
@@ -73,7 +73,7 @@ AppendData(BytecodeContainer& container,
         return;
     }
     Bytecode& bc = container.FreshBytecode();
-    bc.AppendFixed(size, expr, line);
+    bc.AppendFixed(size, expr, source);
 }
 
 void

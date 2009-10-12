@@ -43,6 +43,7 @@
 #include "yasmx/SymbolRef.h"
 
 
+namespace clang { class SourceLocation; }
 namespace YAML { class Emitter; }
 
 namespace yasm
@@ -67,12 +68,12 @@ public:
     /// @param bss      if true, section is intended to contain only
     ///                 uninitialized space
     /// @param isnew    output; set to true if section did not already exist
-    /// @param line     virtual line of section declaration (ignored if
+    /// @param source   source location of section declaration (ignored if
     ///                 section already exists)
     Section(const llvm::StringRef& name,
             bool code,
             bool bss,
-            unsigned long line);
+            clang::SourceLocation source);
 
     ~Section();
 
@@ -134,7 +135,6 @@ public:
 
     /// Change alignment of a section.
     /// @param align    alignment in bytes
-    /// @param line     virtual line
     void setAlign(unsigned long align) { m_align = align; }
 
     /// Get alignment of a section.

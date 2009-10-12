@@ -123,9 +123,9 @@ ElfSymbol::CreateSymbol(Object& object, const StringTable& strtab) const
     {
         sym = object.getSymbol(name);
         if (m_index == SHN_UNDEF)
-            sym->Declare(Symbol::EXTERN, 0);
+            sym->Declare(Symbol::EXTERN);
         else
-            sym->Declare(Symbol::GLOBAL, 0);
+            sym->Declare(Symbol::GLOBAL);
     }
     else
     {
@@ -135,16 +135,16 @@ ElfSymbol::CreateSymbol(Object& object, const StringTable& strtab) const
 
     if (m_index == SHN_ABS)
     {
-        sym->DefineEqu(m_size, 0);
+        sym->DefineEqu(m_size);
     }
     else if (m_index == SHN_COMMON)
     {
-        sym->Declare(Symbol::COMMON, 0);
+        sym->Declare(Symbol::COMMON);
     }
     else if (m_sect != 0)
     {
         Location loc = {&m_sect->bytecodes_first(), m_value.getUInt()};
-        sym->DefineLabel(loc, 0);
+        sym->DefineLabel(loc);
     }
 
     return sym;
@@ -161,7 +161,8 @@ ElfSymbol::Write(YAML::Emitter& out) const
     else
         out << YAML::Null;
     out << YAML::Key << "value" << YAML::Value << m_value;
-    out << YAML::Key << "size line" << YAML::Value << m_size_line;
+    out << YAML::Key << "size source"
+        << YAML::Value << m_size_source.getRawEncoding();
     out << YAML::Key << "size" << YAML::Value << m_size;
     out << YAML::Key << "index" << YAML::Value << m_index;
 
@@ -221,7 +222,7 @@ ElfSymbol::Finalize(Symbol& sym, Errwarns& errwarns)
     {
         SimplifyCalcDist(m_size);
         if (!m_size.isIntNum())
-            errwarns.Propagate(m_size_line, ValueError(
+            errwarns.Propagate(m_size_source, ValueError(
                 N_("size specifier not an integer expression")));
     }
 
@@ -236,7 +237,7 @@ ElfSymbol::Finalize(Symbol& sym, Errwarns& errwarns)
         if (equ_expr.isIntNum())
             m_value = equ_expr.getIntNum();
         else
-            errwarns.Propagate(sym.getDefLine(), ValueError(
+            errwarns.Propagate(sym.getDefSource(), ValueError(
                 N_("EQU value not an integer expression")));
 
         m_index = SHN_ABS;

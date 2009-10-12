@@ -106,15 +106,13 @@ private:
     void DirEndProcFrame(DirectiveInfo& info);
 
     // data for proc_frame and related directives
-    unsigned long m_proc_frame;         // Line number of start of proc, or 0
-    unsigned long m_done_prolog;        // Line number of end of prologue, or 0
+    clang::SourceLocation m_proc_frame;     // start of proc source location
+    clang::SourceLocation m_done_prolog;    // end of prologue source location
     std::auto_ptr<UnwindInfo> m_unwind; // Unwind info
 };
 
 Win64Object::Win64Object(const ObjectFormatModule& module, Object& object)
     : Win32Object(module, object)
-    , m_proc_frame(0)
-    , m_done_prolog(0)
     , m_unwind(0)
 {
 }
@@ -126,11 +124,11 @@ Win64Object::~Win64Object()
 void
 Win64Object::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
 {
-    if (m_proc_frame != 0)
+    if (m_proc_frame.isValid())
     {
         Error err(N_("end of file in procedure frame"));
         err.setXRef(m_proc_frame, N_("procedure started here"));
-        errwarns.Propagate(0, err);
+        errwarns.Propagate(clang::SourceRange(), err);
         return;
     }
 
@@ -145,25 +143,25 @@ Win64Object::DirProcFrame(DirectiveInfo& info)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
-    unsigned long line = info.getLine();
+    clang::SourceLocation source = info.getSource();
 
     if (!namevals.front().isId())
         throw SyntaxError(N_("argument to [PROC_FRAME] must be symbol name"));
     llvm::StringRef name = namevals.front().getId();
 
-    if (m_proc_frame != 0)
+    if (m_proc_frame.isValid())
     {
         SyntaxError err(
             N_("nested procedures not supported (didn't use [ENDPROC_FRAME]?)"));
         err.setXRef(m_proc_frame, N_("previous procedure started here"));
         throw err;
     }
-    m_proc_frame = line;
-    m_done_prolog = 0;
+    m_proc_frame = source;
+    m_done_prolog = clang::SourceLocation();
     m_unwind.reset(new UnwindInfo);
 
     SymbolRef proc = m_object.getSymbol(name);
-    proc->Use(line);
+    proc->Use(source);
     m_unwind->setProc(proc);
 
     // Optional error handler
@@ -175,7 +173,7 @@ Win64Object::DirProcFrame(DirectiveInfo& info)
                 N_("[PROC_FRAME] error handler must be symbol name"));
         }
         SymbolRef ehandler = m_object.getSymbol(namevals[1].getId());
-        ehandler->Use(line);
+        ehandler->Use(source);
         m_unwind->setEHandler(ehandler);
     }
 }
@@ -183,13 +181,13 @@ Win64Object::DirProcFrame(DirectiveInfo& info)
 void
 Win64Object::CheckProcFrameState(const char* dirname)
 {
-    if (m_proc_frame == 0)
+    if (!m_proc_frame.isValid())
     {
         throw SyntaxError(String::Compose(
             N_("[%1] without preceding [PROC_FRAME]"), dirname));
     }
 
-    if (m_done_prolog != 0)
+    if (m_done_prolog.isValid())
     {
         SyntaxError err(String::Compose(
             N_("[%1] after end of prologue"), dirname));
@@ -200,7 +198,7 @@ Win64Object::CheckProcFrameState(const char* dirname)
 
 // Get current assembly position.
 static SymbolRef
-getCurPos(Object& object, const char* dirname, unsigned long line)
+getCurPos(Object& object, const char* dirname, clang::SourceLocation source)
 {
     Section* sect = object.getCurSection();
     if (!sect)
@@ -211,16 +209,17 @@ getCurPos(Object& object, const char* dirname, unsigned long line)
     SymbolRef sym = object.AddNonTableSymbol("$");
     Bytecode& bc = sect->FreshBytecode();
     Location loc = {&bc, bc.getFixedLen()};
-    sym->DefineLabel(loc, line);
+    sym->DefineLabel(loc, source);
     return sym;
 }
 
 static const Register*
-getRegisterFromNameValue(Object& object, NameValue& nv, unsigned long line)
+getRegisterFromNameValue(Object& object, NameValue& nv,
+                         clang::SourceLocation source)
 {
     if (!nv.isExpr())
         return 0;
-    Expr e = nv.getExpr(object, line);
+    Expr e = nv.getExpr(object, source);
     if (!e.isRegister())
         return 0;
     return e.getRegister();
@@ -236,7 +235,7 @@ Win64Object::DirPushReg(DirectiveInfo& info)
     CheckProcFrameState("PUSHREG");
 
     const Register* reg =
-        getRegisterFromNameValue(m_object, namevals.front(), info.getLine());
+        getRegisterFromNameValue(m_object, namevals.front(), info.getSource());
     if (!reg)
     {
         throw SyntaxError(String::Compose(
@@ -246,7 +245,7 @@ Win64Object::DirPushReg(DirectiveInfo& info)
     // Generate a PUSH_NONVOL unwind code.
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(m_object, "PUSHREG", info.getLine()),
+        getCurPos(m_object, "PUSHREG", info.getSource()),
         UnwindCode::PUSH_NONVOL,
         reg->getNum() & 0xF)));
 }
@@ -256,13 +255,13 @@ Win64Object::DirSetFrame(DirectiveInfo& info)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
-    unsigned long line = info.getLine();
+    clang::SourceLocation source = info.getSource();
 
     assert(!namevals.empty());
     CheckProcFrameState("SETFRAME");
 
     const Register* reg =
-        getRegisterFromNameValue(m_object, namevals.front(), line);
+        getRegisterFromNameValue(m_object, namevals.front(), source);
     if (!reg)
     {
         throw SyntaxError(String::Compose(
@@ -271,7 +270,7 @@ Win64Object::DirSetFrame(DirectiveInfo& info)
 
     std::auto_ptr<Expr> off(0);
     if (namevals.size() > 1)
-        off = namevals[1].ReleaseExpr(m_object, line);
+        off = namevals[1].ReleaseExpr(m_object, source);
     else
         off.reset(new Expr(0));
 
@@ -282,7 +281,7 @@ Win64Object::DirSetFrame(DirectiveInfo& info)
     // Generate a SET_FPREG unwind code
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(m_object, "SETFRAME", line),
+        getCurPos(m_object, "SETFRAME", source),
         UnwindCode::SET_FPREG,
         reg->getNum() & 0xF,
         8,
@@ -309,11 +308,11 @@ Win64Object::DirAllocStack(DirectiveInfo& info)
     // ALLOC_LARGE if necessary.
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(m_object, "ALLOCSTACK", info.getLine()),
+        getCurPos(m_object, "ALLOCSTACK", info.getSource()),
         UnwindCode::ALLOC_SMALL,
         0,
         7,
-        nv.ReleaseExpr(m_object, info.getLine()))));
+        nv.ReleaseExpr(m_object, info.getSource()))));
 }
 
 void
@@ -323,13 +322,13 @@ Win64Object::SaveCommon(DirectiveInfo& info,
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
-    unsigned long line = info.getLine();
+    clang::SourceLocation source = info.getSource();
 
     assert(!namevals.empty());
     CheckProcFrameState(dirname);
 
     const Register* reg =
-        getRegisterFromNameValue(m_object, namevals.front(), line);
+        getRegisterFromNameValue(m_object, namevals.front(), source);
     if (!reg)
     {
         throw SyntaxError(String::Compose(
@@ -346,11 +345,11 @@ Win64Object::SaveCommon(DirectiveInfo& info,
     // SAVE_XXX_FAR if necessary.
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(m_object, dirname, line),
+        getCurPos(m_object, dirname, source),
         op,
         reg->getNum() & 0xF,
         16,
-        namevals[1].ReleaseExpr(m_object, line))));
+        namevals[1].ReleaseExpr(m_object, source))));
 }
 
 void
@@ -375,7 +374,7 @@ Win64Object::DirPushFrame(DirectiveInfo& info)
     // we set info to 1.  Otherwise we set info to 0.
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(m_object, "PUSHFRAME", info.getLine()),
+        getCurPos(m_object, "PUSHFRAME", info.getSource()),
         UnwindCode::PUSH_MACHFRAME,
         info.getNameValues().empty() ? 0 : 1)));
 }
@@ -385,36 +384,36 @@ Win64Object::DirEndProlog(DirectiveInfo& info)
 {
     assert(info.isObject(m_object));
     CheckProcFrameState("ENDPROLOG");
-    m_done_prolog = info.getLine();
+    m_done_prolog = info.getSource();
 
-    m_unwind->setProlog(getCurPos(m_object, "ENDPROLOG", info.getLine()));
+    m_unwind->setProlog(getCurPos(m_object, "ENDPROLOG", info.getSource()));
 }
 
 void
 Win64Object::DirEndProcFrame(DirectiveInfo& info)
 {
     assert(info.isObject(m_object));
-    unsigned long line = info.getLine();
+    clang::SourceLocation source = info.getSource();
 
-    if (m_proc_frame == 0)
+    if (!m_proc_frame.isValid())
     {
         throw SyntaxError(String::Compose(
             N_("[%1] without preceding [PROC_FRAME]"), "ENDPROC_FRAME"));
     }
-    if (m_done_prolog == 0)
+    if (!m_done_prolog.isValid())
     {
         SyntaxError err(N_("ended procedure without ending prologue"));
         err.setXRef(m_proc_frame, N_("procedure started here"));
 
         m_unwind.reset(0);
-        m_proc_frame = 0;
+        m_proc_frame = clang::SourceLocation();
         throw err;
     }
     assert(m_unwind.get() != 0 && "unwind info not present");
 
     SymbolRef proc_sym = m_unwind->getProc();
 
-    SymbolRef curpos = getCurPos(m_object, "ENDPROC_FRAME", line);
+    SymbolRef curpos = getCurPos(m_object, "ENDPROC_FRAME", source);
 
     //
     // Add unwind info to end of .xdata section.
@@ -424,13 +423,13 @@ Win64Object::DirEndProcFrame(DirectiveInfo& info)
 
     // Create xdata section if needed.
     if (!xdata)
-        xdata = AppendSection(".xdata", line);
+        xdata = AppendSection(".xdata", source);
 
     // Get current position in .xdata section.
     SymbolRef unwindpos = m_object.AddNonTableSymbol("$");
     Location unwindpos_loc =
         {&xdata->bytecodes_last(), xdata->bytecodes_last().getFixedLen()};
-    unwindpos->DefineLabel(unwindpos_loc, line);
+    unwindpos->DefineLabel(unwindpos_loc, source);
     // Get symbol for .xdata as we'll want to reference it with WRT.
     SymbolRef xdata_sym = xdata->getAssocData<CoffSection>()->m_sym;
 
@@ -446,18 +445,19 @@ Win64Object::DirEndProcFrame(DirectiveInfo& info)
 
     // Initialize pdata section if needed.
     if (!pdata)
-        pdata = AppendSection(".pdata", line);
+        pdata = AppendSection(".pdata", source);
 
     // Add function structure to end of .pdata
-    AppendData(*pdata, std::auto_ptr<Expr>(new Expr(proc_sym)), 4, arch, line);
+    AppendData(*pdata, std::auto_ptr<Expr>(new Expr(proc_sym)), 4, arch,
+               source);
     AppendData(*pdata, std::auto_ptr<Expr>(new Expr(WRT(curpos, proc_sym))),
-               4, arch, line);
+               4, arch, source);
     AppendData(*pdata,
                std::auto_ptr<Expr>(new Expr(WRT(unwindpos, xdata_sym))),
-               4, arch, line);
+               4, arch, source);
 
-    m_proc_frame = 0;
-    m_done_prolog = 0;
+    m_proc_frame = clang::SourceLocation();
+    m_done_prolog = clang::SourceLocation();
 }
 
 void

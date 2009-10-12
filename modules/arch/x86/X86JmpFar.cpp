@@ -51,7 +51,7 @@ void AppendJmpFar(BytecodeContainer& container,
                   const X86Opcode& opcode,
                   std::auto_ptr<Expr> segment,
                   std::auto_ptr<Expr> offset,
-                  unsigned long line)
+                  clang::SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     Bytes& bytes = bc.getFixed();
@@ -63,8 +63,8 @@ void AppendJmpFar(BytecodeContainer& container,
 
     // Absolute displacement: segment and offset
     unsigned int size = (common.m_opersize == 16) ? 2 : 4;
-    bc.AppendFixed(size, offset, line).setInsnStart(bytes.size()-orig_size);
-    bc.AppendFixed(2, segment, line).setInsnStart(bytes.size()-orig_size);
+    bc.AppendFixed(size, offset, source).setInsnStart(bytes.size()-orig_size);
+    bc.AppendFixed(2, segment, source).setInsnStart(bytes.size()-orig_size);
 }
 
 }}} // namespace yasm::arch::x86

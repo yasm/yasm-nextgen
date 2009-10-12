@@ -29,6 +29,7 @@
 #include <iosfwd>
 #include <vector>
 
+#include "clang/Basic/SourceLocation.h"
 #include "yasmx/AssocData.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/IntNum.h"
@@ -84,10 +85,10 @@ public:
     void setVisibility(ElfSymbolVis vis) { m_vis = ELF_ST_VISIBILITY(vis); }
     void setBinding(ElfSymbolBinding bind) { m_bind = bind; }
     void setType(ElfSymbolType type) { m_type = type; }
-    void setSize(const Expr& size, unsigned long line)
+    void setSize(const Expr& size, clang::SourceLocation source)
     {
         m_size = size;
-        m_size_line = line;
+        m_size_source = source;
     }
     void setValue(ElfAddress value) { m_value = value; }
     void setSymbolIndex(ElfSymbolIndex symindex) { m_symindex = symindex; }
@@ -96,16 +97,16 @@ public:
     bool isLocal() const { return m_bind == STB_LOCAL; }
 
 private:
-    Section*            m_sect;
-    ElfStringIndex      m_name_index;
-    IntNum              m_value;
-    unsigned long       m_size_line;
-    Expr                m_size;
-    ElfSectionIndex     m_index;
-    ElfSymbolBinding    m_bind;
-    ElfSymbolType       m_type;
-    ElfSymbolVis        m_vis;
-    ElfSymbolIndex      m_symindex;
+    Section*                m_sect;
+    ElfStringIndex          m_name_index;
+    IntNum                  m_value;
+    clang::SourceLocation   m_size_source;
+    Expr                    m_size;
+    ElfSectionIndex         m_index;
+    ElfSymbolBinding        m_bind;
+    ElfSymbolType           m_type;
+    ElfSymbolVis            m_vis;
+    ElfSymbolIndex          m_symindex;
 };
 
 void InsertLocalSymbol(Object& object,

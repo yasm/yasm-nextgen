@@ -29,6 +29,8 @@
 #include <memory>
 
 
+namespace clang { class SourceLocation; }
+
 namespace yasm
 {
 
@@ -77,7 +79,7 @@ void AppendGeneral(BytecodeContainer& container,
                    unsigned char rex,
                    GeneralPostOp postop,
                    bool default_rel,
-                   unsigned long line);
+                   clang::SourceLocation source);
 
 }}} // namespace yasm::arch::x86
 

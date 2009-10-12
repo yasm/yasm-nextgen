@@ -37,6 +37,9 @@
 #include "yasmx/Module.h"
 
 
+namespace clang {
+class FileManager; class SourceLocation; class SourceManager;
+}
 namespace llvm { class MemoryBuffer; class StringRef; }
 
 namespace yasm
@@ -66,14 +69,21 @@ public:
     virtual void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
 
     /// Initialize preprocessor.  Must be called prior to first getLine() call.
-    /// @param in           memory buffer containing initial file contents
-    /// @param linemap      line mapping repository
-    virtual void Initialize(const llvm::MemoryBuffer& in, Linemap& linemap) = 0;
+    /// It is assumed source_mgr is already loaded with a main file.
+    /// @param source_mgr   source manager
+    /// @param file_mgr     file manager
+    virtual void Initialize(clang::SourceManager& source_mgr,
+                            clang::FileManager& file_mgr) = 0;
 
     /// Gets a line of preprocessed source code.
     /// @param line     destination string for line of preprocessed source
+    /// @param source   source location of beginning of line
     /// @return True if line read; false if no more lines.
-    virtual bool getLine(/*@out@*/ std::string& line) = 0;
+    virtual bool getLine(/*@out@*/ std::string* line,
+                         /*@out@*/ clang::SourceLocation* source) = 0;
+
+    /// Gets the source manager.
+    virtual clang::SourceManager& getSourceManager() = 0;
 
     /// Get the next filename included by the source code.
     /// @return Filename.

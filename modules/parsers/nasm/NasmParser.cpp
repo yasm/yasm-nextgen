@@ -55,13 +55,9 @@ NasmParser::~NasmParser()
 }
 
 void
-NasmParser::Parse(Object& object,
-                  Preprocessor& preproc,
-                  bool save_input,
-                  Directives& dirs,
-                  Linemap& linemap)
+NasmParser::Parse(Object& object, Preprocessor& preproc, Directives& dirs)
 {
-    InitMixin(object, preproc, save_input, dirs, linemap);
+    InitMixin(object, preproc, dirs);
 
     m_locallabel_base = "";
 

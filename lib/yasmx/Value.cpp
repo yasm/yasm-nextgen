@@ -75,7 +75,6 @@ Value::Value(unsigned int size)
     : m_abs(0),
       m_rel(0),
       m_wrt(0),
-      m_line(0),
       m_sub_sym(false),
       m_sub_loc(false),
       m_insn_start(0),
@@ -95,7 +94,6 @@ Value::Value(unsigned int size, std::auto_ptr<Expr> e)
     : m_abs(e.release()),
       m_rel(0),
       m_wrt(0),
-      m_line(0),
       m_sub_sym(false),
       m_sub_loc(false),
       m_insn_start(0),
@@ -115,7 +113,6 @@ Value::Value(unsigned int size, SymbolRef sym)
     : m_abs(0),
       m_rel(sym),
       m_wrt(0),
-      m_line(0),
       m_sub_sym(false),
       m_sub_loc(false),
       m_insn_start(0),
@@ -136,7 +133,7 @@ Value::Value(const Value& oth)
       m_rel(oth.m_rel),
       m_wrt(oth.m_wrt),
       m_sub(oth.m_sub),
-      m_line(oth.m_line),
+      m_source(oth.m_source),
       m_sub_sym(oth.m_sub_sym),
       m_sub_loc(oth.m_sub_loc),
       m_insn_start(oth.m_insn_start),
@@ -164,7 +161,7 @@ Value::swap(Value& oth)
     m_abs.swap(oth.m_abs);
     std::swap(m_rel, oth.m_rel);
     std::swap(m_wrt, oth.m_wrt);
-    std::swap(m_line, oth.m_line);
+    std::swap(m_source, oth.m_source);
 
     // XXX: Can't std::swap the union, so do it the hard way.
     Symbol* sym = 0;        // avoid warning
@@ -230,7 +227,7 @@ Value::Clear()
     m_abs.reset(0);
     m_rel = SymbolRef(0);
     m_wrt = SymbolRef(0);
-    m_line = 0;
+    m_source = clang::SourceRange();
     m_sub_sym = false;
     m_sub_loc = false;
     m_insn_start = 0;
@@ -270,7 +267,7 @@ Value::operator= (const Value& rhs)
         m_rel = rhs.m_rel;
         m_wrt = rhs.m_wrt;
         m_sub = rhs.m_sub;
-        m_line = rhs.m_line;
+        m_source = rhs.m_source;
         m_sub_sym = rhs.m_sub_sym;
         m_sub_loc = rhs.m_sub_loc;
         m_insn_start = rhs.m_insn_start;
@@ -918,7 +915,10 @@ Value::Write(YAML::Emitter& out) const
     else
         out << YAML::Null;
 
-    out << YAML::Key << "line" << YAML::Value << m_line;
+    out << YAML::Key << "source" << YAML::Value << YAML::Flow << YAML::BeginSeq
+        << m_source.getBegin().getRawEncoding()
+        << m_source.getEnd().getRawEncoding()
+        << YAML::EndSeq;
     out << YAML::Key << "insn start" << YAML::Value << m_insn_start;
     out << YAML::Key << "next insn" << YAML::Value << m_next_insn;
     out << YAML::Key << "seg of" << YAML::Value << static_cast<bool>(m_seg_of);

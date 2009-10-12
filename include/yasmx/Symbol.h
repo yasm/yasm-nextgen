@@ -31,10 +31,10 @@
 ///
 #include <string>
 
+#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
-
 #include "yasmx/AssocData.h"
 #include "yasmx/Location.h"
 
@@ -89,17 +89,17 @@ public:
     /// @return Symbol status.
     int getStatus() const { return m_status; }
 
-    /// Get the virtual line of where a symbol was first defined.
-    /// @return Virtual line.
-    unsigned long getDefLine() const { return m_def_line; }
+    /// Get the source location where a symbol was first defined.
+    /// @return Source location.
+    clang::SourceLocation getDefSource() const { return m_def_source; }
 
-    /// Get the virtual line of where a symbol was first declared.
-    /// @return Virtual line.
-    unsigned long getDeclLine() const { return m_decl_line; }
+    /// Get the source location where a symbol was first declared.
+    /// @return Source location.
+    clang::SourceLocation getDeclSource() const { return m_decl_source; }
 
-    /// Get the virtual line of where a symbol was first used.
-    /// @return Virtual line.
-    unsigned long getUseLine() const { return m_use_line; }
+    /// Get the source location where a symbol was first used.
+    /// @return Source location.
+    clang::SourceLocation getUseSource() const { return m_use_source; }
 
     /// Get EQU value of a symbol.
     /// @return EQU value, or NULL if symbol is not an EQU or is not defined.
@@ -117,7 +117,7 @@ public:
     /// @return False if symbol is not the "absolute" symbol, true otherwise.
     bool isAbsoluteSymbol() const
     {
-        return m_def_line == 0 && m_type == EQU && m_name.length() == 0;
+        return !m_def_source.isValid() && m_type == EQU && m_name.empty();
     }
 
     /// Determine if symbol is a special symbol.
@@ -126,34 +126,34 @@ public:
 
     /// Mark the symbol as used.  The symbol does not necessarily need to
     /// be defined before it is used.
-    /// @param line     virtual line where referenced
-    /// @return Symbol (this).
-    void Use(unsigned long line);
+    /// @param source   source location
+    void Use(clang::SourceLocation source);
 
     /// Define as an EQU value.
     /// @param e        EQU value (expression)
-    /// @param line     virtual line of EQU
-    /// @return Symbol (this).
-    void DefineEqu(const Expr& e, unsigned long line);
+    /// @param source   source location
+    void DefineEqu(const Expr& e,
+                   clang::SourceLocation source = clang::SourceLocation());
 
     /// Define as a label.
     /// @param loc      location of label
-    /// @param line     virtual line of label
-    /// @return Symbol (this).
-    void DefineLabel(Location loc, unsigned long line);
+    /// @param source   source location
+    void DefineLabel(Location loc,
+                     clang::SourceLocation source = clang::SourceLocation());
 
     /// Define a special symbol.  Special symbols have no generic associated
     /// data (such as an expression or precbc).
     /// @param vis      symbol visibility
-    /// @return Symbol (this).
-    void DefineSpecial(Symbol::Visibility vis, unsigned long line=0);
+    /// @param source   source location
+    void DefineSpecial(Symbol::Visibility vis,
+                       clang::SourceLocation source = clang::SourceLocation());
 
     /// Declare external visibility.
     /// @note Not all visibility combinations are allowed.
     /// @param vis      visibility
-    /// @param line     virtual line of visibility-setting
-    /// @return Symbol (this).
-    void Declare(Visibility vis, unsigned long line);
+    /// @param source   source location
+    void Declare(Visibility vis,
+                 clang::SourceLocation source = clang::SourceLocation());
 
     /// Finalize symbol after parsing stage.  Errors on symbols that
     /// are used but never defined or declared #EXTERN or #COMMON.
@@ -183,15 +183,15 @@ private:
         SPECIAL
     };
 
-    void Define(Type type, unsigned long line);
+    void Define(Type type, clang::SourceLocation source);
 
     std::string m_name;
     Type m_type;
     int m_status;
     int m_visibility;
-    unsigned long m_def_line;   ///< line where symbol was first defined
-    unsigned long m_decl_line;  ///< line where symbol was first declared
-    unsigned long m_use_line;   ///< line where symbol was first used
+    clang::SourceLocation m_def_source;     ///< where symbol was first defined
+    clang::SourceLocation m_decl_source;    ///< where symbol was first declared
+    clang::SourceLocation m_use_source;     ///< where symbol was first used
 
     // Possible data
 
@@ -202,10 +202,10 @@ private:
 };
 
 inline void
-Symbol::Use(unsigned long line)
+Symbol::Use(clang::SourceLocation source)
 {
-    if (m_use_line == 0)
-        m_use_line = line;      // set line number of first use
+    if (!m_use_source.isValid())
+        m_use_source = source;      // set source location of first use
     m_status |= USED;
 }
 

@@ -78,9 +78,9 @@ Win32Object::DirSectionInitHelpers(DirHelpers& helpers,
                                    CoffSection* csd,
                                    IntNum* align,
                                    bool* has_align,
-                                   unsigned long line)
+                                   clang::SourceLocation source)
 {
-    CoffObject::DirSectionInitHelpers(helpers, csd, align, has_align, line);
+    CoffObject::DirSectionInitHelpers(helpers, csd, align, has_align, source);
 
     helpers.Add("discard", false,
                 BIND::bind(&DirSetFlag, _1, &csd->m_flags,
@@ -141,12 +141,12 @@ Win32Object::DirExport(DirectiveInfo& info)
     llvm::StringRef symname = namevals.front().getId();
 
     // Reference exported symbol (to generate error if not declared)
-    m_object.getSymbol(symname)->Use(info.getLine());
+    m_object.getSymbol(symname)->Use(info.getSource());
 
     // Add to end of linker directives, creating directive section if needed.
     Section* sect = m_object.FindSection(".drectve");
     if (!sect)
-        sect = AppendSection(".drectve", info.getLine());
+        sect = AppendSection(".drectve", info.getSource());
 
     // Add text to end of section
     AppendData(*sect, "-export:", 1, false);
@@ -159,7 +159,7 @@ Win32Object::DirSafeSEH(DirectiveInfo& info)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
-    unsigned long line = info.getLine();
+    clang::SourceLocation source = info.getSource();
 
     if (!namevals.front().isId())
         throw SyntaxError(N_("argument to SAFESEH must be symbol name"));
@@ -167,17 +167,17 @@ Win32Object::DirSafeSEH(DirectiveInfo& info)
 
     // Reference symbol (to generate error if not declared)
     SymbolRef sym = m_object.getSymbol(symname);
-    sym->Use(line);
+    sym->Use(source);
 
     // Symbol must be externally visible, so force global.
-    sym->Declare(Symbol::GLOBAL, line);
+    sym->Declare(Symbol::GLOBAL, source);
 
     // Add symbol number to end of .sxdata section (creating if necessary)
     Section* sect = m_object.FindSection(".sxdata");
     if (!sect)
-        sect = AppendSection(".sxdata", line);
+        sect = AppendSection(".sxdata", source);
 
-    AppendSxData(*sect, sym, line);
+    AppendSxData(*sect, sym, source);
 }
 
 void

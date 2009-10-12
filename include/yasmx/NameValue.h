@@ -36,10 +36,10 @@
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/ptr_vector.h"
-
 #include "yasmx/Expr.h"
 
 
+namespace clang { class SourceLocation; }
 namespace YAML { class Emitter; }
 
 namespace yasm
@@ -116,19 +116,19 @@ public:
     /// Get value as an expr.  If the parameter is an identifier,
     /// it's treated as a symbol (Symbol::use() is called to convert it).
     /// @param object       object
-    /// @param line         virtual line
+    /// @param source       source location
     /// @return Expression; raises an exception if the parameter cannot be
     ///         converted to an expression.
-    Expr getExpr(Object& object, unsigned long line) const;
+    Expr getExpr(Object& object, clang::SourceLocation source) const;
 
     /// Release value's expression.  Operates just like get_expr() but moves
     /// the expression instead of copying it.
     /// @param object       object
-    /// @param line         virtual line
+    /// @param source       source location
     /// @return Expression, or NULL if the parameter cannot be
     ///         converted to an expression.
     /*@null@*/ std::auto_ptr<Expr> ReleaseExpr
-        (Object& object, unsigned long line);
+        (Object& object, clang::SourceLocation source);
 
     /// Get value as a string.  If the parameter is an identifier,
     /// it's treated as a string.

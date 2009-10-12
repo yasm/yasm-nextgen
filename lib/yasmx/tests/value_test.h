@@ -127,17 +127,17 @@ public:
         SymbolRef f = object.getSymbol("f");    // in section y
         const MockRegister g("g");
 
-        Section* x = new Section("x", false, false, 0);
+        Section* x = new Section("x", false, false, clang::SourceLocation());
         object.AppendSection(std::auto_ptr<Section>(x));
-        Section* y = new Section("y", false, false, 0);
+        Section* y = new Section("y", false, false, clang::SourceLocation());
         object.AppendSection(std::auto_ptr<Section>(y));
 
         Location loc = {&x->FreshBytecode(), 0};
-        c->DefineLabel(loc, 0);
-        d->DefineLabel(loc, 0);
+        c->DefineLabel(loc);
+        d->DefineLabel(loc);
         loc.bc = &y->FreshBytecode();
-        e->DefineLabel(loc, 0);
-        f->DefineLabel(loc, 0);
+        e->DefineLabel(loc);
+        f->DefineLabel(loc);
 
         Value v(8);
 
@@ -309,7 +309,7 @@ public:
         TS_ASSERT_EQUALS(v.getRelative(), sym1);
         TS_ASSERT_EQUALS(v.getWRT(), wrt);
         TS_ASSERT_EQUALS(v.hasSubRelative(), true);
-        v.setLine(4);
+        v.setSource(clang::SourceLocation::getFromRawEncoding(4));
         v.m_next_insn = 3;
         v.m_seg_of = true;
         v.m_rshift = 5;
@@ -325,7 +325,7 @@ public:
         TS_ASSERT_EQUALS(v.isRelative(), false);
         TS_ASSERT_EQUALS(v.isWRT(), false);
         TS_ASSERT_EQUALS(v.hasSubRelative(), false);
-        TS_ASSERT_EQUALS(v.getLine(), 0U);
+        TS_ASSERT_EQUALS(v.getSource().isValid(), false);
         TS_ASSERT_EQUALS(v.m_next_insn, 0U);
         TS_ASSERT_EQUALS(v.m_seg_of, false);
         TS_ASSERT_EQUALS(v.m_rshift, 0U);
@@ -466,12 +466,13 @@ public:
         // TODO
     }
 
-    void testGetSetLine()
+    void testGetSetSource()
     {
         Value v(4);
-        TS_ASSERT_EQUALS(v.getLine(), 0U);
-        v.setLine(5);
-        TS_ASSERT_EQUALS(v.getLine(), 5U);
+        TS_ASSERT_EQUALS(v.getSource().isValid(), false);
+        v.setSource(clang::SourceLocation::getFromRawEncoding(5));
+        TS_ASSERT_EQUALS(v.getSource(),
+                         clang::SourceLocation::getFromRawEncoding(5));
     }
 
     void testGetIntNum()

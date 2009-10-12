@@ -28,6 +28,8 @@
 
 #include <memory>
 
+#include "clang/Basic/FileManager.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -42,7 +44,6 @@
 #include "yasmx/Assembler.h"
 #include "yasmx/DebugFormat.h"
 #include "yasmx/Errwarns.h"
-#include "yasmx/Linemap.h"
 #include "yasmx/ListFormat.h"
 #include "yasmx/Module.h"
 #include "yasmx/ObjectFormat.h"
@@ -526,40 +527,59 @@ static const char *fmt[2] =
 
 static const char *fmt_noline[2] =
 {
-    "%1: %3%4",         // GNU
-    "%1 : %3%4"         // VC
+    "%1: %2%3",         // GNU
+    "%1 : %2%3"         // VC
 };
 
 static void
-PrintYasmError(const llvm::StringRef& filename,
-               unsigned long line,
+PrintYasmError(const clang::SourceManager& source_mgr,
+               clang::SourceRange source,
                const llvm::StringRef& msg,
-               const llvm::StringRef& xref_fn,
-               unsigned long xref_line,
+               clang::SourceRange xref_source,
                const llvm::StringRef& xref_msg)
 {
-    *errfile <<
-        String::Compose(line ? fmt[ewmsg_style] : fmt_noline[ewmsg_style],
-                        filename, line, _("error: "), msg) << '\n';
-
-    if (!xref_fn.empty() && !xref_msg.empty())
+    if (source.isValid())
+    {
+        clang::PresumedLoc loc = source_mgr.getPresumedLoc(source.getBegin());
+        *errfile <<
+            String::Compose(fmt[ewmsg_style], loc.getFilename(), loc.getLine(),
+                            _("error: "), msg) << '\n';
+    }
+    else
     {
         *errfile <<
-            String::Compose(xref_line ?
-                            fmt[ewmsg_style] : fmt_noline[ewmsg_style],
-                            xref_fn, xref_line, _("error: "), xref_msg)
-            << '\n';
+            String::Compose(fmt_noline[ewmsg_style], in_filename, _("error: "),
+                            msg) << '\n';
+    }
+
+    if (xref_source.isValid() && !xref_msg.empty())
+    {
+        clang::PresumedLoc loc =
+            source_mgr.getPresumedLoc(xref_source.getBegin());
+        *errfile <<
+            String::Compose(fmt[ewmsg_style], loc.getFilename(), loc.getLine(),
+                            _("error: "), xref_msg) << '\n';
     }
 }
 
 static void
-PrintYasmWarning(const llvm::StringRef& filename,
-                 unsigned long line,
+PrintYasmWarning(const clang::SourceManager& source_mgr,
+                 clang::SourceRange source,
                  const llvm::StringRef& msg)
 {
-    *errfile <<
-        String::Compose(line ? fmt[ewmsg_style] : fmt_noline[ewmsg_style],
-                        filename, line, _("warning: "), msg) << '\n';
+    if (source.isValid())
+    {
+        clang::PresumedLoc loc = source_mgr.getPresumedLoc(source.getBegin());
+        *errfile <<
+            String::Compose(fmt[ewmsg_style], loc.getFilename(), loc.getLine(),
+                            _("warning: "), msg) << '\n';
+    }
+    else
+    {
+        *errfile <<
+            String::Compose(fmt_noline[ewmsg_style], in_filename,
+                            _("warning: "), msg) << '\n';
+    }
 }
 
 #if 0
@@ -675,6 +695,8 @@ do_preproc_only(void)
 static int
 do_assemble(void)
 {
+    clang::FileManager file_mgr;
+    clang::SourceManager source_mgr;
     yasm::Assembler assembler(arch_keyword, parser_keyword, objfmt_keyword,
                               dump_object);
 
@@ -695,22 +717,28 @@ do_assemble(void)
 
     assembler.getArch()->setVar("force_strict", force_strict);
 
-    // open the input file
-    std::string open_err;
-    std::auto_ptr<llvm::MemoryBuffer>
-        in(llvm::MemoryBuffer::getFileOrSTDIN(in_filename, &open_err));
-    if (in.get() == 0)
+    // open the input file or STDIN (for filename of "-")
+    if (in_filename == "-")
     {
-        throw yasm::Error(String::Compose(_("could not open file `%1': %2"),
-                          in_filename, open_err));
+        source_mgr.createMainFileIDForMemBuffer(llvm::MemoryBuffer::getSTDIN());
+    }
+    else
+    {
+        const clang::FileEntry* in = file_mgr.getFile(in_filename);
+        if (!in)
+        {
+            throw yasm::Error(String::Compose(_("could not open file `%1'"),
+                              in_filename));
+        }
+        source_mgr.createMainFileID(in, clang::SourceLocation());
     }
 
     // assemble the input.
-    if (!assembler.Assemble(*in, warning_error))
+    if (!assembler.Assemble(source_mgr, file_mgr, warning_error))
     {
         // An error occurred during assembly; output all errors and warnings
         // and then exit.
-        assembler.getErrwarns()->OutputAll(*assembler.getLinemap(),
+        assembler.getErrwarns()->OutputAll(source_mgr,
                                            warning_error,
                                            PrintYasmError,
                                            PrintYasmWarning);
@@ -730,7 +758,7 @@ do_assemble(void)
         // An error occurred during output; output all errors and warnings.
         // If we had an error at this point, we also need to delete the output
         // object file (to make sure it's not left newer than the source).
-        assembler.getErrwarns()->OutputAll(*assembler.getLinemap(),
+        assembler.getErrwarns()->OutputAll(source_mgr,
                                            warning_error,
                                            PrintYasmError,
                                            PrintYasmWarning);
@@ -758,7 +786,7 @@ do_assemble(void)
         fclose(list);
     }
 #endif
-    assembler.getErrwarns()->OutputAll(*assembler.getLinemap(),
+    assembler.getErrwarns()->OutputAll(source_mgr,
                                        warning_error,
                                        PrintYasmError,
                                        PrintYasmWarning);

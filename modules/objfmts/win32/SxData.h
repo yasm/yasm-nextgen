@@ -28,6 +28,9 @@
 //
 #include "yasmx/SymbolRef.h"
 
+
+namespace clang { class SourceLocation; }
+
 namespace yasm
 {
 
@@ -40,7 +43,7 @@ namespace win32
 
 void AppendSxData(BytecodeContainer& container,
                   SymbolRef sym,
-                  unsigned long line);
+                  clang::SourceLocation source);
 
 }}} // namespace yasm::objfmt::win32
 

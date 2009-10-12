@@ -115,7 +115,8 @@ public:
     void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* AddDefaultSection();
-    Section* AppendSection(const llvm::StringRef& name, unsigned long line);
+    Section* AppendSection(const llvm::StringRef& name,
+                           clang::SourceLocation source);
 
     ElfSymbol& BuildSymbol(Symbol& sym);
     void BuildExtern(Symbol& sym);
@@ -463,7 +464,9 @@ ElfObject::BuildExtern(Symbol& sym)
 }
 
 static bool
-GlobalNameValueFallback(NameValue& nv, Object* object, unsigned long line,
+GlobalNameValueFallback(NameValue& nv,
+                        Object* object,
+                        clang::SourceLocation source,
                         Expr::Ptr* size)
 
 {
@@ -474,7 +477,7 @@ GlobalNameValueFallback(NameValue& nv, Object* object, unsigned long line,
     }
     else if (nv.isExpr() && size->get() == 0)
     {
-        *size = nv.ReleaseExpr(*object, line);
+        *size = nv.ReleaseExpr(*object, source);
         return true;
     }
     else
@@ -520,7 +523,7 @@ ElfObject::BuildGlobal(Symbol& sym)
     {
         helpers(objext_nvs->begin(), objext_nvs->end(),
                 BIND::bind(&GlobalNameValueFallback, _1, &m_object,
-                           sym.getDeclLine(), &size));
+                           sym.getDeclSource(), &size));
     }
 
     if (nvis > 1)
@@ -534,7 +537,7 @@ ElfObject::BuildGlobal(Symbol& sym)
     elfsym.setType(static_cast<ElfSymbolType>(type));
     elfsym.setVisibility(vis);
     if (size.get() != 0)
-        elfsym.setSize(*size, sym.getDeclLine());
+        elfsym.setSize(*size, sym.getDeclSource());
 }
 
 void
@@ -559,7 +562,7 @@ ElfObject::BuildCommon(Symbol& sym)
                 throw ValueError(N_("alignment constraint is not an integer"));
 
             std::auto_ptr<Expr> align_expr =
-                nv->ReleaseExpr(m_object, sym.getDeclLine());
+                nv->ReleaseExpr(m_object, sym.getDeclSource());
             if (!align_expr->isIntNum())
                 throw ValueError(N_("alignment constraint is not an integer"));
             addralign = align_expr->getIntNum().getUInt();
@@ -576,7 +579,7 @@ ElfObject::BuildCommon(Symbol& sym)
     ElfSymbol& elfsym = BuildSymbol(sym);
     elfsym.setSectionIndex(SHN_COMMON);
     elfsym.setBinding(STB_GLOBAL);
-    elfsym.setSize(*getCommonSize(sym), sym.getDeclLine());
+    elfsym.setSize(*getCommonSize(sym), sym.getDeclSource());
     elfsym.setValue(addralign);
 }
 
@@ -889,9 +892,9 @@ ElfOutput::OutputSection(Section& sect,
         }
         catch (Error& err)
         {
-            errwarns.Propagate(i->getLine(), err);
+            errwarns.Propagate(i->getSource(), err);
         }
-        errwarns.Propagate(i->getLine());   // propagate warnings
+        errwarns.Propagate(i->getSource()); // propagate warnings
     }
 
     if (errwarns.getNumErrors() > 0)
@@ -971,9 +974,9 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
         }
         catch (Error& err)
         {
-            errwarns.Propagate(i->getDeclLine(), err);
+            errwarns.Propagate(i->getDeclSource(), err);
         }
-        errwarns.Propagate(i->getDeclLine());
+        errwarns.Propagate(i->getDeclSource());
     }
 
     m_config.secthead_count = 0;
@@ -1125,13 +1128,14 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
 Section*
 ElfObject::AddDefaultSection()
 {
-    Section* section = AppendSection(".text", 0);
+    Section* section = AppendSection(".text", clang::SourceLocation());
     section->setDefault(true);
     return section;
 }
 
 Section*
-ElfObject::AppendSection(const llvm::StringRef& name, unsigned long line)
+ElfObject::AppendSection(const llvm::StringRef& name,
+                         clang::SourceLocation source)
 {
     ElfSectionType type = SHT_PROGBITS;
     ElfSectionFlags flags = SHF_ALLOC;
@@ -1178,14 +1182,14 @@ ElfObject::AppendSection(const llvm::StringRef& name, unsigned long line)
     bool code = (flags & SHF_EXECINSTR) != 0;
     bool bss = (type == SHT_NOBITS);
 
-    Section* section = new Section(name, code, bss, line);
+    Section* section = new Section(name, code, bss, source);
     m_object.AppendSection(std::auto_ptr<Section>(section));
     section->setAlign(align);
 
     // Define a label for the start of the section
     Location start = {&section->bytecodes_first(), 0};
     SymbolRef sym = m_object.getSymbol(name);
-    sym->DefineLabel(start, line);
+    sym->DefineLabel(start, source);
 
     // Add ELF data to the section
     ElfSection* elfsect = new ElfSection(m_config, type, flags);
@@ -1210,7 +1214,7 @@ ElfObject::DirGasSection(DirectiveInfo& info)
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, info.getLine());
+        sect = AppendSection(sectname, info.getSource());
 
     m_object.setCurSection(sect);
     sect->setDefault(false);
@@ -1291,7 +1295,7 @@ ElfObject::DirSection(DirectiveInfo& info)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
-    unsigned long line = info.getLine();
+    clang::SourceLocation source = info.getSource();
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
@@ -1302,7 +1306,7 @@ ElfObject::DirSection(DirectiveInfo& info)
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, line);
+        sect = AppendSection(sectname, source);
 
     m_object.setCurSection(sect);
     sect->setDefault(false);
@@ -1361,9 +1365,9 @@ ElfObject::DirSection(DirectiveInfo& info)
     helpers.Add("progbits", false,
                 BIND::bind(&DirResetFlag, _1, &type, SHT_PROGBITS));
 
-    helpers.Add("align", true, BIND::bind(&DirIntNum, _1, &m_object, line,
+    helpers.Add("align", true, BIND::bind(&DirIntNum, _1, &m_object, source,
                                           &align, &has_align));
-    helpers.Add("merge", true, BIND::bind(&DirIntNum, _1, &m_object, line,
+    helpers.Add("merge", true, BIND::bind(&DirIntNum, _1, &m_object, source,
                                           &merge, &has_merge));
 
     helpers(++nvs.begin(), nvs.end(), DirNameValueWarn);
@@ -1403,7 +1407,7 @@ ElfObject::DirType(DirectiveInfo& info)
     NameValues& namevals = info.getNameValues();
 
     SymbolRef sym = info.getObject().getSymbol(namevals.front().getId());
-    sym->Use(info.getLine());
+    sym->Use(info.getSource());
 
     ElfSymbol& elfsym = BuildSymbol(*sym);
 
@@ -1432,20 +1436,20 @@ ElfObject::DirSize(DirectiveInfo& info)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
-    unsigned long line = info.getLine();
+    clang::SourceLocation source = info.getSource();
 
     SymbolRef sym = info.getObject().getSymbol(namevals.front().getId());
-    sym->Use(line);
+    sym->Use(source);
 
     // Pull new size from param
     if (namevals.size() < 2)
         throw SyntaxError(N_("no size specified"));
     if (!namevals[1].isExpr())
         throw SyntaxError(N_("size must be an expression"));
-    Expr size = namevals[1].getExpr(info.getObject(), line);
+    Expr size = namevals[1].getExpr(info.getObject(), source);
 
     ElfSymbol& elfsym = BuildSymbol(*sym);
-    elfsym.setSize(size, line);
+    elfsym.setSize(size, source);
 }
 
 void
@@ -1455,7 +1459,7 @@ ElfObject::DirWeak(DirectiveInfo& info)
     NameValues& namevals = info.getNameValues();
 
     SymbolRef sym = info.getObject().getSymbol(namevals.front().getId());
-    sym->Declare(Symbol::GLOBAL, info.getLine());
+    sym->Declare(Symbol::GLOBAL, info.getSource());
 
     ElfSymbol& elfsym = BuildSymbol(*sym);
     elfsym.setBinding(STB_WEAK);

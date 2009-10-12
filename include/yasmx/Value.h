@@ -34,8 +34,8 @@
 
 #include <boost/scoped_ptr.hpp>
 
+#include "clang/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
-
 #include "yasmx/IntNum.h"
 #include "yasmx/Location.h"
 #include "yasmx/SymbolRef.h"
@@ -290,13 +290,13 @@ public:
     /// @return Distance in bytes.
     unsigned int getNextInsn() const { return m_next_insn; }
 
-    /// Set line number.
-    /// @param line     Virtual line number
-    void setLine(unsigned long line) { m_line = line; }
+    /// Set source range.
+    /// @param range    Source range
+    void setSource(clang::SourceRange range) { m_source = range; }
 
-    /// Get line number.
-    /// @return Virtual line number.
-    unsigned long getLine() const { return m_line; }
+    /// Get source range.
+    /// @return Source range.
+    clang::SourceRange getSource() const { return m_source; }
 
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
@@ -334,8 +334,8 @@ private:
         Location loc;       ///< Location if m_sub_loc is nonzero.
     } m_sub;
 
-    /// Line number.
-    unsigned long m_line;
+    /// Source range.
+    clang::SourceRange m_source;
 
     /// If m_sub is a symbol.  Boolean.
     /// Should not be set if m_sub_loc is set.

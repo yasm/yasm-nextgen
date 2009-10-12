@@ -45,9 +45,9 @@ Finalize(Bytecode& bc, Errwarns& errwarns)
     }
     catch (Error& err)
     {
-        errwarns.Propagate(bc.getLine(), err);
+        errwarns.Propagate(bc.getSource(), err);
     }
-    errwarns.Propagate(bc.getLine());   // propagate warnings
+    errwarns.Propagate(bc.getSource()); // propagate warnings
 }
 
 void
@@ -61,9 +61,9 @@ CalcLen(Bytecode& bc,
     }
     catch (Error& err)
     {
-        errwarns.Propagate(bc.getLine(), err);
+        errwarns.Propagate(bc.getSource(), err);
     }
-    errwarns.Propagate(bc.getLine());   // propagate warnings
+    errwarns.Propagate(bc.getSource()); // propagate warnings
 }
 
 bool
@@ -82,9 +82,9 @@ Expand(Bytecode &bc,
     }
     catch (Error& err)
     {
-        errwarns.Propagate(bc.getLine(), err);
+        errwarns.Propagate(bc.getSource(), err);
     }
-    errwarns.Propagate(bc.getLine());   // propagate warnings
+    errwarns.Propagate(bc.getSource()); // propagate warnings
     return retval;
 }
 
@@ -98,10 +98,10 @@ UpdateOffset(Bytecode& bc, unsigned long offset, Errwarns& errwarns)
     }
     catch (Error& err)
     {
-        errwarns.Propagate(bc.getLine(), err);
+        errwarns.Propagate(bc.getSource(), err);
         retval = bc.getNextOffset();
     }
-    errwarns.Propagate(bc.getLine());   // propagate warnings
+    errwarns.Propagate(bc.getSource()); // propagate warnings
     return retval;
 }
 

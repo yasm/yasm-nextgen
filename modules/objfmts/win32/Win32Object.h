@@ -74,7 +74,7 @@ protected:
                                        CoffSection* csd,
                                        IntNum* align,
                                        bool* has_align,
-                                       unsigned long line);
+                                       clang::SourceLocation source);
 
 protected:
     void DirExport(DirectiveInfo& info);

@@ -506,8 +506,7 @@ scan:
             if (m_state != INSTRUCTION)
             {
                 Arch::InsnPrefix ip =
-                    m_arch->ParseCheckInsnPrefix(llvm::StringRef(TOK, TOKLEN),
-                                                 getCurLine());
+                    m_arch->ParseCheckInsnPrefix(llvm::StringRef(TOK, TOKLEN));
                 TOK[TOKLEN] = savech;
                 switch (ip.getType())
                 {
@@ -540,7 +539,7 @@ scan:
                     break;
             }
             /* Propagate errors in case we got a warning from the arch */
-            m_errwarns.Propagate(getCurLine());
+            m_errwarns.Propagate(m_source);
             /* Just an identifier, return as such. */
             lvalp->str.assign(TOK, TOKLEN);
             RETURN(ID);
@@ -867,7 +866,7 @@ directive2:
             if (lvalp->reg)
                 RETURN(REG);
             // Propagate errors in case we got a warning from the arch
-            m_errwarns.Propagate(getCurLine());
+            m_errwarns.Propagate(m_source);
             /* Just an identifier, return as such. */
             lvalp->str.assign(TOK, TOKLEN);
             RETURN(ID);

@@ -28,6 +28,7 @@
 
 #include "util.h"
 
+#include "clang/Basic/SourceLocation.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/IntNum.h"
@@ -40,7 +41,7 @@ namespace yasm
 Section::Section(const llvm::StringRef& name,
                  bool code,
                  bool bss,
-                 unsigned long line)
+                 clang::SourceLocation source)
     : m_name(name),
       m_vma(0),
       m_lma(0),

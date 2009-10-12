@@ -26,11 +26,12 @@
 //
 #include "util.h"
 
+#include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Errwarns.h"
-#include "yasmx/Linemap.h"
 #include "yasmx/Preprocessor.h"
 
 namespace yasm
@@ -51,9 +52,13 @@ public:
     static const char* getName() { return "Disable preprocessing"; }
     static const char* getKeyword() { return "raw"; }
 
-    void Initialize(const llvm::MemoryBuffer& in, Linemap& linemap);
+    void Initialize(clang::SourceManager& source_mgr,
+                    clang::FileManager& file_mgr);
 
-    bool getLine(/*@out@*/ std::string& line);
+    bool getLine(/*@out@*/ std::string* line,
+                 /*@out@*/ clang::SourceLocation* source);
+
+    clang::SourceManager& getSourceManager() { return *m_source_mgr; }
 
     std::string getIncludedFile() { return ""; }
     void AddIncludeFile(const llvm::StringRef& filename) {}
@@ -63,31 +68,38 @@ public:
 
 private:
     const llvm::MemoryBuffer* m_in;
+    clang::SourceLocation m_source_start;
     const char* m_pos;
-    Linemap* m_linemap;
+    clang::SourceManager* m_source_mgr;
 };
 
 void
-RawPreproc::Initialize(const llvm::MemoryBuffer& in, Linemap& linemap)
+RawPreproc::Initialize(clang::SourceManager& source_mgr,
+                       clang::FileManager& file_mgr)
 {
-    m_in = &in;
-    m_pos = in.getBufferStart();
-    m_linemap = &linemap;
+    clang::FileID main_file = source_mgr.getMainFileID();
+    m_in = source_mgr.getBuffer(main_file);
+    m_source_start = source_mgr.getLocForStartOfFile(main_file);
+    m_pos = m_in->getBufferStart();
+    m_source_mgr = &source_mgr;
 }
 
 bool
-RawPreproc::getLine(/*@out@*/ std::string& line)
+RawPreproc::getLine(/*@out@*/ std::string* line,
+                    /*@out@*/ clang::SourceLocation* source)
 {
     const char* end = m_in->getBufferEnd();
 
     if (m_pos >= end)
         return false;
 
+    *source = m_source_start.getFileLocWithOffset(m_pos-m_in->getBufferStart());
+
     const char* nextline = m_pos+1;
     while (nextline < end && *nextline != '\n')
         ++nextline;
-    line.assign(m_pos, nextline-m_pos); // strip '\n'
-    m_pos = nextline+1;                 // skip over '\n' for next line
+    line->assign(m_pos, nextline-m_pos);    // strip '\n'
+    m_pos = nextline+1;                     // skip over '\n' for next line
 
     return true;
 }

@@ -263,12 +263,12 @@ AppendAlign(BytecodeContainer& container,
             const Expr& fill,
             const Expr& maxskip,
             /*@null@*/ const unsigned char** code_fill,
-            unsigned long line)
+            clang::SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     bc.Transform(Bytecode::Contents::Ptr(
         new AlignBytecode(boundary, fill, maxskip, code_fill)));
-    bc.setLine(line);
+    bc.setSource(source);
 }
 
 } // namespace yasm

@@ -55,7 +55,7 @@ DirIdentCommon(ObjectFormat& objfmt,
     // Put ident data into .comment section
     Section* comment = info.getObject().FindSection(sectname);
     if (!comment)
-        comment = objfmt.AppendSection(sectname, info.getLine());
+        comment = objfmt.AppendSection(sectname, info.getSource());
 
     // To match GAS output, if the comment section is empty, put an
     // initial 0 byte in the section.

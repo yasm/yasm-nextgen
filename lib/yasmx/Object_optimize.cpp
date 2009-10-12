@@ -753,7 +753,7 @@ Optimizer::Step1b(Errwarns& errwarns)
         }
         catch (Error& err)
         {
-            errwarns.Propagate(span->m_bc.getLine(), err);
+            errwarns.Propagate(span->m_bc.getSource(), err);
             saw_error = true;
             terms_okay = false;
         }
@@ -770,7 +770,7 @@ Optimizer::Step1b(Errwarns& errwarns)
             {
                 if (span->m_active == Span::INACTIVE)
                 {
-                    errwarns.Propagate(span->m_bc.getLine(),
+                    errwarns.Propagate(span->m_bc.getSource(),
                         ValueError(N_("secondary expansion of an external/complex value")));
                     saw_error = true;
                 }
@@ -871,7 +871,7 @@ Optimizer::Step1e(Errwarns& errwarns)
         }
         catch (Error& err)
         {
-            errwarns.Propagate(span->m_bc.getLine(), err);
+            errwarns.Propagate(span->m_bc.getSource(), err);
             saw_error = true;
         }
     }

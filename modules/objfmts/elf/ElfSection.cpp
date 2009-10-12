@@ -249,7 +249,7 @@ ElfSection::CreateSection(const StringTable& shstrtab) const
 
     std::auto_ptr<Section> section(
         new Section(shstrtab.getString(m_name_index), m_flags & SHF_EXECINSTR,
-                    bss, 0));
+                    bss, clang::SourceLocation()));
 
     section->setFilePos(m_offset);
     section->setVMA(m_addr);
@@ -258,7 +258,8 @@ ElfSection::CreateSection(const StringTable& shstrtab) const
 
     if (bss)
     {
-        Bytecode& gap = section->AppendGap(m_size.getUInt(), 0);
+        Bytecode& gap =
+            section->AppendGap(m_size.getUInt(), clang::SourceLocation());
         gap.CalcLen(0);     // force length calculation of gap
     }
 

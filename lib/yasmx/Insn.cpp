@@ -317,12 +317,12 @@ Insn::~Insn()
 }
 
 void
-Insn::Append(BytecodeContainer& container, unsigned long line)
+Insn::Append(BytecodeContainer& container, clang::SourceLocation source)
 {
     // Simplify the operands' expressions.
     std::for_each(m_operands.begin(), m_operands.end(),
                   MEMFN::mem_fn(&Operand::Finalize));
-    DoAppend(container, line);
+    DoAppend(container, source);
 }
 
 void

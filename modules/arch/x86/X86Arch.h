@@ -127,8 +127,7 @@ public:
 
     bool setVar(const llvm::StringRef& var, unsigned long val);
 
-    InsnPrefix ParseCheckInsnPrefix(const llvm::StringRef& id,
-                                    unsigned long line) const;
+    InsnPrefix ParseCheckInsnPrefix(const llvm::StringRef& id) const;
     RegTmod ParseCheckRegTmod(const llvm::StringRef& id) const;
 
     const unsigned char** getFill() const;

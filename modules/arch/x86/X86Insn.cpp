@@ -370,7 +370,7 @@ X86Prefix::Write(YAML::Emitter& out) const
 void
 X86Insn::DoAppendJmpFar(BytecodeContainer& container,
                         const X86InsnInfo& info,
-                        unsigned long line)
+                        clang::SourceLocation source)
 {
     Operand& op = m_operands.front();
     std::auto_ptr<Expr> imm = op.ReleaseImm();
@@ -394,7 +394,7 @@ X86Insn::DoAppendJmpFar(BytecodeContainer& container,
     common.ApplyPrefixes(info.def_opersize_64, m_prefixes);
     common.Finish();
     AppendJmpFar(container, common, X86Opcode(info.opcode_len, info.opcode),
-                 segment, imm, line);
+                 segment, imm, source);
 }
 
 bool
@@ -452,7 +452,7 @@ X86Insn::MatchJmpInfo(const X86InsnInfo& info, unsigned int opersize,
 void
 X86Insn::DoAppendJmp(BytecodeContainer& container,
                      const X86InsnInfo& jinfo,
-                     unsigned long line)
+                     clang::SourceLocation source)
 {
     static const unsigned char size_lookup[] =
         {0, 8, 16, 32, 64, 80, 128, 0, 0};  // 256 not needed
@@ -520,7 +520,7 @@ X86Insn::DoAppendJmp(BytecodeContainer& container,
     common.ApplyPrefixes(jinfo.def_opersize_64, m_prefixes);
     common.Finish();
 
-    AppendJmp(container, common, shortop, nearop, imm, line, op_sel);
+    AppendJmp(container, common, shortop, nearop, imm, source, op_sel);
 }
 
 bool
@@ -971,7 +971,7 @@ X86Insn::MatchError(const unsigned int* size_lookup) const
 }
 
 void
-X86Insn::DoAppend(BytecodeContainer& container, unsigned long line)
+X86Insn::DoAppend(BytecodeContainer& container, clang::SourceLocation source)
 {
     unsigned int size_lookup[] = {0, 8, 16, 32, 64, 80, 128, 256, 0};
     size_lookup[OPS_BITS] = m_mode_bits;
@@ -1023,16 +1023,16 @@ X86Insn::DoAppend(BytecodeContainer& container, unsigned long line)
         {
             case OPA_JmpRel:
                 // Shortcut to JmpRel
-                DoAppendJmp(container, *info, line);
+                DoAppendJmp(container, *info, source);
                 return;
             case OPA_JmpFar:
                 // Shortcut to JmpFar
-                DoAppendJmpFar(container, *info, line);
+                DoAppendJmpFar(container, *info, source);
                 return;
         }
     }
 
-    DoAppendGeneral(container, *info, size_lookup, line);
+    DoAppendGeneral(container, *info, size_lookup, source);
 }
 
 class BuildGeneral
@@ -1050,7 +1050,7 @@ public:
     void ApplySegRegs(const Insn::SegRegs& segregs);
     void Finish(BytecodeContainer& container,
                 const Insn::Prefixes& prefixes,
-                unsigned long line);
+                clang::SourceLocation source);
 
 private:
     void ApplyOperand(const X86InfoOperand& info_op, Operand& op);
@@ -1457,7 +1457,7 @@ BuildGeneral::ApplySegRegs(const Insn::SegRegs& segregs)
 void
 BuildGeneral::Finish(BytecodeContainer& container,
                      const Insn::Prefixes& prefixes,
-                     unsigned long line)
+                     clang::SourceLocation source)
 {
     std::auto_ptr<Value> imm_val(0);
 
@@ -1562,14 +1562,14 @@ BuildGeneral::Finish(BytecodeContainer& container,
                   m_rex,
                   m_postop,
                   m_default_rel,
-                  line);
+                  source);
 }
 
 void
 X86Insn::DoAppendGeneral(BytecodeContainer& container,
                          const X86InsnInfo& info,
                          const unsigned int* size_lookup,
-                         unsigned long line)
+                         clang::SourceLocation source)
 {
     BuildGeneral buildgen(info, m_mode_bits, size_lookup, m_force_strict,
                           m_default_rel);
@@ -1579,7 +1579,7 @@ X86Insn::DoAppendGeneral(BytecodeContainer& container,
     buildgen.ApplyOperands(static_cast<X86Arch::ParserSelect>(m_parser),
                            m_operands);
     buildgen.ApplySegRegs(m_segregs);
-    buildgen.Finish(container, m_prefixes, line);
+    buildgen.Finish(container, m_prefixes, source);
 }
 
 // Static parse data structure for instructions
@@ -1697,8 +1697,7 @@ CpuFindReverse(unsigned int cpu0, unsigned int cpu1, unsigned int cpu2)
 }
 
 Arch::InsnPrefix
-X86Arch::ParseCheckInsnPrefix(const llvm::StringRef& id,
-                              unsigned long line) const
+X86Arch::ParseCheckInsnPrefix(const llvm::StringRef& id) const
 {
     size_t id_len = id.size();
     if (id_len > 16)

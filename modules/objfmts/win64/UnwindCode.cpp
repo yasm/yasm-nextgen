@@ -301,7 +301,7 @@ AppendUnwindCode(BytecodeContainer& container,
     // Offset in prolog
     Bytecode& bc = container.FreshBytecode();
     bc.AppendFixed(1, Expr::Ptr(new Expr(SUB(uwcode->m_loc, uwcode->m_proc))),
-                   0);
+                   clang::SourceLocation());
 
     switch (uwcode->m_opcode)
     {
@@ -316,7 +316,7 @@ AppendUnwindCode(BytecodeContainer& container,
             break;
     }
 
-    bc.setLine(uwcode->m_loc->getDefLine());
+    bc.setSource(uwcode->m_loc->getDefSource());
     bc.Transform(Bytecode::Contents::Ptr(uwcode));
 }
 

@@ -39,6 +39,7 @@
 #include "yasmx/NameValue.h"
 
 
+namespace clang { class SourceLocation; }
 namespace llvm { class StringRef; }
 
 namespace yasm
@@ -125,13 +126,13 @@ DirClearFlag(NameValue& nv, unsigned long* out, unsigned long flag)
 /// When calling DirHelpers::add(), needsparam should be set to true.
 /// @param nv       name/value
 /// @param obj      object
-/// @param line     virtual line number
+/// @param source   source location
 /// @param out      reference to IntNum
 /// @param out_set  reference that is set to 1 when called
 YASM_LIB_EXPORT
 void DirIntNum(NameValue& nv,
                Object* obj,
-               unsigned long line,
+               clang::SourceLocation source,
                IntNum* out,
                bool* out_set);
 
@@ -139,13 +140,13 @@ void DirIntNum(NameValue& nv,
 /// When calling DirHelpers::add(), needsparam should be set to true.
 /// @param nv       name/value
 /// @param obj      object
-/// @param line     virtual line number
+/// @param source   source location
 /// @param out      reference to Expr auto_ptr
 /// @param out_set  reference that is set to 1 when called
 YASM_LIB_EXPORT
 void DirExpr(NameValue& nv,
              Object* obj,
-             unsigned long line,
+             clang::SourceLocation source,
              std::auto_ptr<Expr>* out,
              bool* out_set);
 

@@ -33,6 +33,7 @@
 #include <climits>
 #include <cmath>
 
+#include "clang/Basic/SourceManager.h"
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
@@ -99,7 +100,7 @@ GasParser::ParseLine()
     Insn::Ptr insn = ParseInsn();
     if (insn.get() != 0)
     {
-        insn->Append(*m_container, getCurLine());
+        insn->Append(*m_container, m_source);
         return;
     }
 
@@ -141,12 +142,12 @@ GasParser::ParseLine()
                     throw SyntaxError(String::Compose(
                         N_("expression expected after `%1'"), "="));
                 }
-                m_object->getSymbol(name)->DefineEqu(e, getCurLine());
+                m_object->getSymbol(name)->DefineEqu(e, m_source);
                 break;
             }
 
             // possibly a directive; try to parse it
-            DirectiveInfo dirinfo(*m_object, getCurLine());
+            DirectiveInfo dirinfo(*m_object, m_source);
             ParseDirective(&dirinfo.getNameValues());
             Directive dir;
             if (m_dirs->get(&dir, name))
@@ -190,7 +191,7 @@ GasParser::setDebugFile(const llvm::StringRef& filename)
     if (!m_dirs->get(&dir, ".file"))
         return;
 
-    DirectiveInfo info(*m_object, getCurLine());
+    DirectiveInfo info(*m_object, m_source);
     info.getNameValues().push_back(new NameValue(filename));
     dir(info);
 }
@@ -202,7 +203,7 @@ GasParser::setDebugFile(const IntNum& fileno, const llvm::StringRef& filename)
     if (!m_dirs->get(&dir, ".file"))
         return;
 
-    DirectiveInfo info(*m_object, getCurLine());
+    DirectiveInfo info(*m_object, m_source);
     NameValues& nvs = info.getNameValues();
     nvs.push_back(new NameValue(Expr::Ptr(new Expr(fileno))));
     nvs.push_back(new NameValue(filename));
@@ -264,8 +265,11 @@ GasParser::ParseCppLineMarker()
     std::swap(filename, STRING_val);
     getNextToken();
 
-    // Set linemap.
-    m_linemap->set(filename, line, 1);
+    // Add a line note.
+    clang::SourceManager& smgr = m_preproc->getSourceManager();
+    smgr.AddLineNote(m_source, line,
+                     smgr.getLineTableFilenameID(filename.data(),
+                                                 filename.size()));
 
     // The first line marker in the file (which should be on the first line
     // of the file) will give us the name of the source file. This information
@@ -335,6 +339,7 @@ GasParser::ParseNasmLineMarker()
     }
 
     unsigned long incr = INTNUM_val->getUInt();
+    incr = incr;
 
     // File name is not in quotes, so need to switch to a different tokenizer
     // state.
@@ -349,8 +354,12 @@ GasParser::ParseNasmLineMarker()
     std::string filename;
     std::swap(filename, STRING_val);
 
-    // Set linemap.
-    m_linemap->set(filename, line, incr);
+    // Add a line note.
+    // FIXME: handle increment
+    clang::SourceManager& smgr = m_preproc->getSourceManager();
+    smgr.AddLineNote(m_source, line,
+                     smgr.getLineTableFilenameID(filename.data(),
+                                                 filename.size()));
 
     // The first line marker in the file (which should be on the first line
     // of the file) will give us the name of the source file. This information
@@ -383,13 +392,16 @@ GasParser::ParseDirLine(unsigned int param)
     if (m_dir_fileline == FL_BOTH)
     {
         // Have both file and line
-        m_linemap->set(m_dir_line, 1);
+        m_preproc->getSourceManager().AddLineNote(m_source, m_dir_line, -1);
     }
     else if (m_dir_fileline == FL_FILE)
     {
         // Had previous file directive only
         m_dir_fileline = FL_BOTH;
-        m_linemap->set(m_dir_file, m_dir_line, 1);
+        clang::SourceManager& smgr = m_preproc->getSourceManager();
+        smgr.AddLineNote(m_source, m_dir_line,
+                         smgr.getLineTableFilenameID(m_dir_file.data(),
+                                                     m_dir_file.size()));
     }
     else
     {
@@ -401,7 +413,7 @@ GasParser::ParseDirLine(unsigned int param)
 //
 // Macro directives
 //
-
+#if 0
 GasRept::GasRept(unsigned long line, unsigned long n)
     : startline(line)
     , numrept(n)
@@ -437,7 +449,7 @@ GasParser::ParseDirRept(unsigned int param)
     if (intn.getSign() < 0)
         throw ValueError(N_("rept expression is negative"));
 
-    m_rept.push_back(new GasRept(getCurLine(), intn.getUInt()));
+    m_rept.push_back(new GasRept(m_source, intn.getUInt()));
 }
 
 void
@@ -446,7 +458,7 @@ GasParser::ParseDirEndr(unsigned int param)
     // Shouldn't ever get here unless we didn't get a DIR_REPT first
     throw SyntaxError(N_("endr without matching rept"));
 }
-
+#endif
 //
 // Alignment directives
 //
@@ -492,7 +504,7 @@ GasParser::ParseDirAlign(unsigned int power2)
 
     AppendAlign(*cur_section, bound, fill, maxskip,
                 cur_section->isCode() ?  m_object->getArch()->getFill() : 0,
-                getCurLine());
+                m_source);
 }
 
 void
@@ -513,7 +525,7 @@ GasParser::ParseDirOrg(unsigned int param)
         getNextToken(); // INTNUM
     }
 
-    AppendOrg(*m_container, start, value, getCurLine());
+    AppendOrg(*m_container, start, value, m_source);
 }
 
 //
@@ -524,7 +536,7 @@ void
 GasParser::ParseDirLocal(unsigned int param)
 {
     Expect(ID);
-    m_object->getSymbol(ID_val)->Declare(Symbol::DLOCAL, getCurLine());
+    m_object->getSymbol(ID_val)->Declare(Symbol::DLOCAL, m_source);
     getNextToken(); // ID
 }
 
@@ -569,14 +581,14 @@ GasParser::ParseDirComm(unsigned int is_lcomm)
         extvps.push_back(new NameValue(align_copy));
 
         SymbolRef sym = m_object->getSymbol(id);
-        sym->Declare(Symbol::COMMON, getCurLine());
+        sym->Declare(Symbol::COMMON, m_source);
         setCommonSize(*sym, e);
         setObjextNameValues(*sym, extvps);
     }
     else
     {
         SymbolRef sym = m_object->getSymbol(id);
-        sym->Declare(Symbol::COMMON, getCurLine());
+        sym->Declare(Symbol::COMMON, m_source);
         setCommonSize(*sym, e);
     }
 }
@@ -607,7 +619,7 @@ GasParser::ParseDirData(unsigned int size)
         std::auto_ptr<Expr> e(new Expr);
         if (!ParseExpr(*e))
             throw SyntaxError(N_("expression expected after `,'"));
-        AppendData(*m_container, e, size, *m_arch, getCurLine());
+        AppendData(*m_container, e, size, *m_arch, m_source);
         if (m_token != ',')
             break;
         getNextToken(); // ','
@@ -622,7 +634,7 @@ GasParser::ParseDirLeb128(unsigned int sign)
         std::auto_ptr<Expr> e(new Expr);
         if (!ParseExpr(*e))
             throw SyntaxError(N_("expression expected after `,'"));
-        AppendLEB128(*m_container, e, sign, getCurLine());
+        AppendLEB128(*m_container, e, sign, m_source);
         if (m_token != ',')
             break;
         getNextToken(); // ','
@@ -643,7 +655,7 @@ GasParser::ParseDirZero(unsigned int param)
                                           ".ZERO"));
     }
 
-    BytecodeContainer& inner = AppendMultiple(*m_container, e, getCurLine());
+    BytecodeContainer& inner = AppendMultiple(*m_container, e, m_source);
     AppendByte(inner, 0);
 }
 
@@ -657,10 +669,10 @@ GasParser::ParseDirSkip(unsigned int param)
                                           ".SKIP"));
     }
 
-    BytecodeContainer& inner = AppendMultiple(*m_container, e, getCurLine());
+    BytecodeContainer& inner = AppendMultiple(*m_container, e, m_source);
     if (m_token != ',')
     {
-        inner.AppendGap(1, getCurLine());
+        inner.AppendGap(1, m_source);
         return;
     }
     getNextToken(); // ','
@@ -669,7 +681,7 @@ GasParser::ParseDirSkip(unsigned int param)
     std::auto_ptr<Expr> e_val(new Expr);
     if (!ParseExpr(*e_val))
         throw SyntaxError(N_("expression expected after `,'"));
-    AppendData(inner, e_val, 1, *m_arch, getCurLine());
+    AppendData(inner, e_val, 1, *m_arch, m_source);
 }
 
 // fill data definition directive
@@ -705,8 +717,7 @@ GasParser::ParseDirFill(unsigned int param)
         ssize = size.getIntNum().getUInt();
     }
 
-    BytecodeContainer& inner =
-        AppendMultiple(*m_container, repeat, getCurLine());
+    BytecodeContainer& inner = AppendMultiple(*m_container, repeat, m_source);
     if (value.isEmpty())
     {
         AppendData(inner, 0, ssize, *m_arch);
@@ -715,7 +726,7 @@ GasParser::ParseDirFill(unsigned int param)
     {
         std::auto_ptr<Expr> value_copy(new Expr);
         std::swap(*value_copy, value);
-        AppendData(inner, value_copy, ssize, *m_arch, getCurLine());
+        AppendData(inner, value_copy, ssize, *m_arch, m_source);
     }
 }
 
@@ -748,7 +759,7 @@ GasParser::ParseDirSection(unsigned int param)
     // Really parsed as just a bunch of dirvals; only needs to be unique
     // function to set parser state appropriately.
     m_state = SECTION_DIRECTIVE;
-    DirectiveInfo info(*m_object, getCurLine());
+    DirectiveInfo info(*m_object, m_source);
     ParseDirective(&info.getNameValues());
     (*m_dirs)[".section"](info);
     m_state = INITIAL;
@@ -773,7 +784,7 @@ GasParser::ParseDirEqu(unsigned int param)
     Expr e;
     if (!ParseExpr(e))
         throw SyntaxError(N_("expression expected after `,'"));
-    m_object->getSymbol(id)->DefineEqu(e, getCurLine());
+    m_object->getSymbol(id)->DefineEqu(e, m_source);
 }
 
 void
@@ -786,14 +797,15 @@ GasParser::ParseDirFile(unsigned int param)
         std::string filename;
         std::swap(filename, STRING_val);
         getNextToken(); // STRING
-
+#if 0
+        // FIXME
         if (m_dir_fileline == FL_BOTH)
         {
             // Have both file and line
             std::string old_fn;
             unsigned long old_line;
 
-            m_linemap->Lookup(getCurLine(), &old_fn, &old_line);
+            m_linemap->Lookup(m_source, &old_fn, &old_line);
             m_linemap->set(filename, old_line, 1);
         }
         else if (m_dir_fileline == FL_LINE)
@@ -808,7 +820,7 @@ GasParser::ParseDirFile(unsigned int param)
             m_dir_fileline = FL_FILE;
             m_dir_file = filename;
         }
-
+#endif
         // Pass change along to debug format
         setDebugFile(filename);
         return;
@@ -843,13 +855,13 @@ GasParser::ParseInsn()
     if (m_peek_token == ':' || m_peek_token == '=')
         return Insn::Ptr(0);
 
-    Arch::InsnPrefix ip = m_arch->ParseCheckInsnPrefix(ID_val, getCurLine());
+    Arch::InsnPrefix ip = m_arch->ParseCheckInsnPrefix(ID_val);
     switch (ip.getType())
     {
         case Arch::InsnPrefix::INSN:
         {
             // Propagate errors in case we got a warning from the arch
-            m_errwarns.Propagate(getCurLine());
+            m_errwarns.Propagate(m_source);
 
             getNextToken();   // ID
 
@@ -871,7 +883,7 @@ GasParser::ParseInsn()
         case Arch::InsnPrefix::PREFIX:
         {
             // Propagate errors in case we got a warning from the arch
-            m_errwarns.Propagate(getCurLine());
+            m_errwarns.Propagate(m_source);
 
             getNextToken();   // ID
 
@@ -1284,13 +1296,13 @@ GasParser::ParseExpr2(Expr& e)
                 SymbolRef sym = m_object->AddNonTableSymbol(".");
                 Bytecode& bc = m_container->FreshBytecode();
                 Location loc = {&bc, bc.getFixedLen()};
-                sym->DefineLabel(loc, getCurLine());
+                sym->DefineLabel(loc, m_source);
                 e = sym;
             }
             else
             {
                 SymbolRef sym = m_object->getSymbol(ID_val);
-                sym->Use(getCurLine());
+                sym->Use(m_source);
                 e = sym;
             }
             getNextToken(); // ID
@@ -1330,7 +1342,7 @@ GasParser::DefineLabel(const llvm::StringRef& name, bool local)
     SymbolRef sym = m_object->getSymbol(name);
     Bytecode& bc = m_container->FreshBytecode();
     Location loc = {&bc, bc.getFixedLen()};
-    sym->DefineLabel(loc, getCurLine());
+    sym->DefineLabel(loc, m_source);
 }
 
 void
@@ -1344,29 +1356,29 @@ GasParser::DefineLcomm(const llvm::StringRef& name,
     if (!align.isEmpty())
     {
         // XXX: assume alignment is in bytes, not power-of-two
-        AppendAlign(bss, align, Expr(), Expr(), 0, getCurLine());
+        AppendAlign(bss, align, Expr(), Expr(), 0, m_source);
     }
 
     // Create common symbol
     Bytecode *bc = &bss.FreshBytecode();
     Location loc = {bc, bc->getFixedLen()};
-    m_object->getSymbol(name)->DefineLabel(loc, getCurLine());
+    m_object->getSymbol(name)->DefineLabel(loc, m_source);
 
     // Append gap for symbol storage
     size->Simplify();
     if (size->isIntNum())
-        bss.AppendGap(size->getIntNum().getUInt(), getCurLine());
+        bss.AppendGap(size->getIntNum().getUInt(), m_source);
     else
     {
-        BytecodeContainer& multc = AppendMultiple(bss, size, getCurLine());
-        multc.AppendGap(1, getCurLine());
+        BytecodeContainer& multc = AppendMultiple(bss, size, m_source);
+        multc.AppendGap(1, m_source);
     }
 }
 
 void
 GasParser::SwitchSection(const llvm::StringRef& name, bool builtin)
 {
-    DirectiveInfo info(*m_object, getCurLine());
+    DirectiveInfo info(*m_object, m_source);
     info.getNameValues().push_back(new NameValue(name, '\0'));
     (*m_dirs)[".section"](info);
 }
@@ -1384,14 +1396,10 @@ GasParser::getSection(const llvm::StringRef& name, bool builtin)
 void
 GasParser::DoParse()
 {
-    unsigned long cur_line = getCurLine();
     std::string line;
 
-    while (m_preproc->getLine(line))
+    while (m_preproc->getLine(&line, &m_source))
     {
-        Bytecode* bc = &m_object->getCurSection()->FreshBytecode();
-        Location loc = {bc, bc->getFixedLen()};
-
         try
         {
             m_bot = m_tok = m_ptr = m_cur = &line[0];
@@ -1406,18 +1414,14 @@ GasParser::DoParse()
                 }
             } while (m_token != '\0');
 
-            if (m_save_input)
-                m_linemap->AddSource(loc, line);
-            m_errwarns.Propagate(cur_line);
+            m_errwarns.Propagate(m_source);
         }
         catch (Error& err)
         {
-            m_errwarns.Propagate(cur_line, err);
+            m_errwarns.Propagate(m_source, err);
             DemandEolNoThrow();
             m_state = INITIAL;
         }
-
-        cur_line = m_linemap->GoToNext();
     }
 }
 

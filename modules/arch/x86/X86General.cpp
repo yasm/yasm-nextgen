@@ -558,7 +558,7 @@ AppendGeneral(BytecodeContainer& container,
               unsigned char rex,
               GeneralPostOp postop,
               bool default_rel,
-              unsigned long line)
+              clang::SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     ++num_generic;
@@ -580,7 +580,7 @@ AppendGeneral(BytecodeContainer& container,
     // TODO: optimize EA case
     bc.Transform(Bytecode::Contents::Ptr(new X86General(
         common, opcode, ea, imm, special_prefix, rex, postop, default_rel)));
-    bc.setLine(line);
+    bc.setSource(source);
     ++num_generic_bc;
 }
 

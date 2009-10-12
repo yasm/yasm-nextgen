@@ -349,7 +349,7 @@ public:
     ///                     returned (and 0 otherwise)
     /// @return Identifier type (empty if unrecognized)
     virtual InsnPrefix ParseCheckInsnPrefix
-        (const llvm::StringRef& id, unsigned long line) const = 0;
+        (const llvm::StringRef& id) const = 0;
 
     /// Check an generic identifier to see if it matches architecture
     /// specific names for registers or target modifiers.  Unrecognized

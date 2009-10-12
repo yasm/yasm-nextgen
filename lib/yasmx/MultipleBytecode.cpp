@@ -242,13 +242,13 @@ namespace yasm
 BytecodeContainer&
 AppendMultiple(BytecodeContainer& container,
                std::auto_ptr<Expr> multiple,
-               unsigned long line)
+               clang::SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     MultipleBytecode* multbc(new MultipleBytecode(multiple));
     BytecodeContainer& retval = multbc->getContents();
     bc.Transform(Bytecode::Contents::Ptr(multbc));
-    bc.setLine(line);
+    bc.setSource(source);
     return retval;
 }
 

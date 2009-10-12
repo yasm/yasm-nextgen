@@ -99,11 +99,12 @@ Bytecode::Transform(std::auto_ptr<Contents> contents)
     m_contents.reset(contents.release());
 }
 
-Bytecode::Bytecode(std::auto_ptr<Contents> contents, unsigned long line)
+Bytecode::Bytecode(std::auto_ptr<Contents> contents,
+                   clang::SourceLocation source)
     : m_contents(contents),
       m_container(0),
       m_len(0),
-      m_line(line),
+      m_source(source),
       m_offset(0),
       m_index(~0UL)
 {
@@ -113,7 +114,6 @@ Bytecode::Bytecode()
     : m_contents(0),
       m_container(0),
       m_len(0),
-      m_line(0),
       m_offset(0),
       m_index(~0UL)
 {
@@ -123,7 +123,7 @@ Bytecode::Bytecode(const Bytecode& oth)
     : m_contents(oth.m_contents->clone()),
       m_container(oth.m_container),
       m_len(oth.m_len),
-      m_line(oth.m_line),
+      m_source(oth.m_source),
       m_offset(oth.m_offset),
       m_index(oth.m_index),
       m_symbols(oth.m_symbols)
@@ -141,7 +141,7 @@ Bytecode::swap(Bytecode& oth)
     m_contents.swap(oth.m_contents);
     std::swap(m_container, oth.m_container);
     std::swap(m_len, oth.m_len);
-    std::swap(m_line, oth.m_line);
+    std::swap(m_source, oth.m_source);
     std::swap(m_offset, oth.m_offset);
     std::swap(m_index, oth.m_index);
     m_symbols.swap(oth.m_symbols);
@@ -169,7 +169,7 @@ Bytecode::Finalize()
         catch (Error& err)
         {
             // associate the error with the value, not the bytecode, line
-            err.m_line = i->getLine();
+            err.m_source = i->getSource();
             throw;
         }
 
@@ -180,7 +180,7 @@ Bytecode::Finalize()
             i->SubRelative(m_container->getObject(), sub_loc);
         }
 
-        WarnUpdateLine(i->getLine());
+        WarnUpdateSource(i->getSource());
     }
 
     if (m_contents.get() != 0)
@@ -244,10 +244,10 @@ Bytecode::Output(BytecodeOutput& bc_out)
         catch (Error& err)
         {
             // associate the error with the value, not the bytecode, line
-            err.m_line = vcopy.getLine();
+            err.m_source = vcopy.getSource();
             throw;
         }
-        WarnUpdateLine(vcopy.getLine());
+        WarnUpdateSource(vcopy.getSource());
 
         last = off + i->getSize()/8;
     }
@@ -312,9 +312,9 @@ Bytecode::AppendFixed(std::auto_ptr<Value> val)
 Value&
 Bytecode::AppendFixed(unsigned int size,
                       std::auto_ptr<Expr> e,
-                      unsigned long line)
+                      clang::SourceLocation source)
 {
-    m_fixed_fixups.push_back(Fixup(m_fixed.size(), size*8, e, line));
+    m_fixed_fixups.push_back(Fixup(m_fixed.size(), size*8, e, source));
     m_fixed.Write(size, 0);
     ++num_fixed_value;
     return m_fixed_fixups.back();
@@ -344,7 +344,7 @@ Bytecode::Write(YAML::Emitter& out) const
         out << YAML::Null;
 
     out << YAML::Key << "tail length" << YAML::Value << m_len;
-    out << YAML::Key << "line" << YAML::Value << m_line;
+    out << YAML::Key << "source" << YAML::Value << m_source.getRawEncoding();
     out << YAML::Key << "offset" << YAML::Value << m_offset;
     out << YAML::Key << "index" << YAML::Value;
     if (m_index != ~0UL)
@@ -379,10 +379,10 @@ Bytecode::Fixup::Fixup(unsigned int off, std::auto_ptr<Value> val)
 Bytecode::Fixup::Fixup(unsigned int off,
                        unsigned int size,
                        std::auto_ptr<Expr> e,
-                       unsigned long line)
+                       clang::SourceLocation source)
     : Value(size, e), m_off(off)
 {
-    setLine(line);
+    setSource(source);
 }
 
 void

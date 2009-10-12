@@ -41,8 +41,6 @@ const char* BinSection::key = "objfmt::bin::BinSection";
 BinSection::BinSection()
     : has_align(false),
       has_valign(false),
-      start_line(0),
-      vstart_line(0),
       has_istart(false),
       has_ivstart(false),
       has_length(false)

@@ -40,7 +40,6 @@
 #include "yasmx/Support/ptr_vector.h"
 #include "yasmx/Insn.h"
 #include "yasmx/IntNum.h"
-#include "yasmx/Linemap.h"
 #include "yasmx/Parser.h"
 
 namespace yasm
@@ -81,7 +80,7 @@ struct yystype
     };
 };
 #define YYSTYPE yystype
-
+#if 0
 struct GasRept
 {
     GasRept(unsigned long line, unsigned long n);
@@ -99,7 +98,7 @@ struct GasRept
     size_t oldbuflen;           // previous fill buffer length
     size_t oldbufpos;           // position in previous fill buffer
 };
-
+#endif
 class GasParser;
 struct GasDirLookup
 {
@@ -123,11 +122,7 @@ public:
     static std::vector<const char*> getPreprocessorKeywords();
     static const char* getDefaultPreprocessorKeyword() { return "raw"; }
 
-    void Parse(Object& object,
-               Preprocessor& preproc,
-               bool save_input,
-               Directives& dirs,
-               Linemap& linemap);
+    void Parse(Object& object, Preprocessor& preproc, Directives& dirs);
 
     enum TokenType
     {
@@ -164,8 +159,10 @@ private:
     void ParseNasmLineMarker();
 
     void ParseDirLine(unsigned int);
+#if 0
     void ParseDirRept(unsigned int);
     void ParseDirEndr(unsigned int);
+#endif
     void ParseDirAlign(unsigned int power2);
     void ParseDirOrg(unsigned int);
     void ParseDirLocal(unsigned int);
@@ -229,13 +226,16 @@ private:
         SECTION_DIRECTIVE,
         NASM_FILENAME
     } m_state;
-
+#if 0
     stdx::ptr_vector<GasRept> m_rept;
     stdx::ptr_vector_owner<GasRept> m_rept_owner;
-
+#endif
     // Index of local labels; what's stored here is the /next/ index,
     // so these are all 0 at start.
     unsigned long m_local[10];
+
+    // Start of comment.
+    clang::SourceLocation m_comment_start;
 
     bool m_is_nasm_preproc;
     bool m_is_cpp_preproc;

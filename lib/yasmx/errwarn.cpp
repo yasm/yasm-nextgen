@@ -53,9 +53,11 @@ public:
     class Warning
     {
     public:
-        Warning(unsigned long line, WarnClass wclass, const std::string& wmsg);
+        Warning(clang::SourceRange source,
+                WarnClass wclass,
+                const std::string& wmsg);
 
-        unsigned long m_line;
+        clang::SourceRange m_source;
         WarnClass m_wclass;
         std::string m_wmsg;
     };
@@ -117,17 +119,14 @@ Fatal::what() const throw()
 }
 
 Error::Error(const std::string& message)
-    : m_line(0),
-      m_message(message),
-      m_xrefline(0),
+    : m_message(message),
       m_parse_error(false)
 {
 }
 
-Error::Error(unsigned long line, const std::string& message)
-    : m_line(line),
+Error::Error(clang::SourceRange source, const std::string& message)
+    : m_source(source),
       m_message(message),
-      m_xrefline(0),
       m_parse_error(false)
 {
 }
@@ -137,9 +136,9 @@ Error::~Error() throw()
 }
 
 void
-Error::setXRef(unsigned long xrefline, const std::string& message)
+Error::setXRef(clang::SourceRange xrefsource, const std::string& message)
 {
-    m_xrefline = xrefline;
+    m_xrefsource = xrefsource;
     m_xrefmsg = message;
 }
 
@@ -216,41 +215,41 @@ WarnOccurred()
     return manager.m_warns.front().m_wclass;
 }
 
-ErrwarnManager::Warning::Warning(unsigned long line,
+ErrwarnManager::Warning::Warning(clang::SourceRange source,
                                  WarnClass wclass,
                                  const std::string& msg)
-    : m_line(line),
+    : m_source(source),
       m_wclass(wclass),
       m_wmsg(msg)
 {
 }
 
 void
-setWarn(unsigned long line, WarnClass wclass, const std::string& str)
+setWarn(clang::SourceRange source, WarnClass wclass, const std::string& str)
 {
     ErrwarnManager &manager = ErrwarnManager::Instance();
 
     if (!(manager.m_wclass_enabled & (1UL<<wclass)))
         return;     // warning is part of disabled class
 
-    manager.m_warns.push_back(ErrwarnManager::Warning(line, wclass, str));
+    manager.m_warns.push_back(ErrwarnManager::Warning(source, wclass, str));
 }
 
 void
-WarnUpdateLine(unsigned long line)
+WarnUpdateSource(clang::SourceRange source)
 {
     ErrwarnManager &manager = ErrwarnManager::Instance();
 
     for (ErrwarnManager::Warnings::iterator i = manager.m_warns.begin(),
          end = manager.m_warns.end(); i != end; ++i)
     {
-        if (i->m_line == 0)
-            i->m_line = line;
+        if (!i->m_source.isValid())
+            i->m_source = source;
     }
 }
 
 WarnClass
-FetchWarn(std::string* wmsg, unsigned long* wline)
+FetchWarn(std::string* wmsg, clang::SourceRange* wsource)
 {
     ErrwarnManager& manager = ErrwarnManager::Instance();
 
@@ -262,8 +261,8 @@ FetchWarn(std::string* wmsg, unsigned long* wline)
     WarnClass wclass = w.m_wclass;
     if (wmsg)
         *wmsg = w.m_wmsg;
-    if (wline)
-        *wline = w.m_line;
+    if (wsource)
+        *wsource = w.m_source;
 
     manager.m_warns.pop_front();
     return wclass;

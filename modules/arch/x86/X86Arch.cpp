@@ -228,7 +228,7 @@ X86Arch::DirCpu(DirectiveInfo& info)
             ParseCpu(nv->getString());
         else if (nv->isExpr())
         {
-            Expr e = nv->getExpr(info.getObject(), info.getLine());
+            Expr e = nv->getExpr(info.getObject(), info.getSource());
             if (!e.isIntNum())
                 throw SyntaxError(String::Compose(
                     N_("invalid argument to [%1]"), "CPU"));
@@ -252,7 +252,7 @@ X86Arch::DirBits(DirectiveInfo& info)
     NameValues::const_iterator nv = info.getNameValues().begin();
     if (nv != info.getNameValues().end() && nv->isExpr())
     {
-        Expr e = nv->getExpr(info.getObject(), info.getLine());
+        Expr e = nv->getExpr(info.getObject(), info.getSource());
         if (e.isIntNum())
         {
             unsigned long v = e.getIntNum().getUInt();

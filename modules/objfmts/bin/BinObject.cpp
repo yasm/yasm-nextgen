@@ -26,6 +26,7 @@
 //
 #include "util.h"
 
+#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/Twine.h"
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/Compose.h"
@@ -74,7 +75,8 @@ public:
     void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* AddDefaultSection();
-    Section* AppendSection(const llvm::StringRef& name, unsigned long line);
+    Section* AppendSection(const llvm::StringRef& name,
+                           clang::SourceLocation source);
 
     static const char* getName() { return "Flat format binary"; }
     static const char* getKeyword() { return "bin"; }
@@ -110,7 +112,7 @@ private:
     std::string m_map_filename;
 
     util::scoped_ptr<Expr> m_org;
-    unsigned long m_org_line;
+    clang::SourceLocation m_org_source;
 };
 
 BinObject::BinObject(const ObjectFormatModule& module, Object& object)
@@ -142,7 +144,7 @@ BinObject::OutputMap(const IntNum& origin,
     {
         setWarn(WARN_GENERAL, String::Compose(
             N_("unable to open map file `%1': %2"), m_map_filename, err));
-        errwarns.Propagate(0);
+        errwarns.Propagate(clang::SourceRange());
         return;
     }
 
@@ -210,14 +212,14 @@ BinOutput::OutputSection(Section& sect,
         file_start -= origin;
         if (file_start.getSign() < 0)
         {
-            errwarns.Propagate(0, ValueError(String::Compose(
+            errwarns.Propagate(clang::SourceRange(), ValueError(String::Compose(
                 N_("section `%1' starts before origin (ORG)"),
                 sect.getName())));
             return;
         }
         if (!file_start.isOkSize(sizeof(unsigned long)*8, 0, 0))
         {
-            errwarns.Propagate(0, ValueError(String::Compose(
+            errwarns.Propagate(clang::SourceRange(), ValueError(String::Compose(
                 N_("section `%1' start value too large"),
                 sect.getName())));
             return;
@@ -238,9 +240,9 @@ BinOutput::OutputSection(Section& sect,
         }
         catch (Error& err)
         {
-            errwarns.Propagate(i->getLine(), err);
+            errwarns.Propagate(i->getSource(), err);
         }
-        errwarns.Propagate(i->getLine());   // propagate warnings
+        errwarns.Propagate(i->getSource()); // propagate warnings
     }
 }
 
@@ -310,17 +312,17 @@ CheckSymbol(const Symbol& sym, Errwarns& errwarns)
     {
         setWarn(WARN_GENERAL,
             N_("binary object format does not support extern variables"));
-        errwarns.Propagate(sym.getDeclLine());
+        errwarns.Propagate(sym.getDeclSource());
     }
     else if (vis & Symbol::GLOBAL)
     {
         setWarn(WARN_GENERAL,
             N_("binary object format does not support global variables"));
-        errwarns.Propagate(sym.getDeclLine());
+        errwarns.Propagate(sym.getDeclSource());
     }
     else if (vis & Symbol::COMMON)
     {
-        errwarns.Propagate(sym.getDeclLine(), TypeError(
+        errwarns.Propagate(sym.getDeclSource(), TypeError(
             N_("binary object format does not support common variables")));
     }
 }
@@ -335,14 +337,14 @@ BinObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
         m_org->Simplify();
         if (!m_org->isIntNum())
         {
-            errwarns.Propagate(m_org_line,
+            errwarns.Propagate(m_org_source,
                 TooComplexError(N_("ORG expression is too complex")));
             return;
         }
         IntNum orgi = m_org->getIntNum();
         if (orgi.getSign() < 0)
         {
-            errwarns.Propagate(m_org_line,
+            errwarns.Propagate(m_org_source,
                 ValueError(N_("ORG expression is negative")));
             return;
         }
@@ -378,34 +380,35 @@ BinObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns)
 Section*
 BinObject::AddDefaultSection()
 {
-    Section* section = AppendSection(".text", 0);
+    Section* section = AppendSection(".text", clang::SourceLocation());
     section->setDefault(true);
     return section;
 }
 
 Section*
-BinObject::AppendSection(const llvm::StringRef& name, unsigned long line)
+BinObject::AppendSection(const llvm::StringRef& name,
+                         clang::SourceLocation source)
 {
     bool bss = (name == ".bss");
     bool code = (name == ".text");
-    Section* section = new Section(name, code, bss, line);
+    Section* section = new Section(name, code, bss, source);
     m_object.AppendSection(std::auto_ptr<Section>(section));
 
     // Initialize section data and symbols.
     std::auto_ptr<BinSection> bsd(new BinSection());
 
     SymbolRef start = m_object.getSymbol(("section."+name+".start").str());
-    start->Declare(Symbol::EXTERN, line);
+    start->Declare(Symbol::EXTERN, source);
     start->AddAssocData(std::auto_ptr<BinSymbol>
         (new BinSymbol(*section, *bsd, BinSymbol::START)));
 
     SymbolRef vstart = m_object.getSymbol(("section."+name+".vstart").str());
-    vstart->Declare(Symbol::EXTERN, line);
+    vstart->Declare(Symbol::EXTERN, source);
     vstart->AddAssocData(std::auto_ptr<BinSymbol>
         (new BinSymbol(*section, *bsd, BinSymbol::VSTART)));
 
     SymbolRef length = m_object.getSymbol(("section."+name+".length").str());
-    length->Declare(Symbol::EXTERN, line);
+    length->Declare(Symbol::EXTERN, source);
     length->AddAssocData(std::auto_ptr<BinSymbol>
         (new BinSymbol(*section, *bsd, BinSymbol::LENGTH)));
 
@@ -419,7 +422,7 @@ BinObject::DirSection(DirectiveInfo& info)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
-    unsigned long line = info.getLine();
+    clang::SourceLocation source = info.getSource();
 
     if (!nvs.front().isString())
         throw Error(N_("section name must be a string"));
@@ -430,7 +433,7 @@ BinObject::DirSection(DirectiveInfo& info)
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, line);
+        sect = AppendSection(sectname, source);
 
     m_object.setCurSection(sect);
     sect->setDefault(false);
@@ -464,15 +467,16 @@ BinObject::DirSection(DirectiveInfo& info)
     helpers.Add("vfollows", true,
                 BIND::bind(&DirString, _1, &bsd->vfollows, &has_vfollows));
     helpers.Add("start", true,
-                BIND::bind(&DirExpr, _1, &m_object, line, &start, &has_start));
+                BIND::bind(&DirExpr, _1, &m_object, source, &start,
+                           &has_start));
     helpers.Add("vstart", true,
-                BIND::bind(&DirExpr, _1, &m_object, line, &vstart,
+                BIND::bind(&DirExpr, _1, &m_object, source, &vstart,
                            &has_vstart));
     helpers.Add("align", true,
-                BIND::bind(&DirIntNum, _1, &m_object, line, &bsd->align,
+                BIND::bind(&DirIntNum, _1, &m_object, source, &bsd->align,
                            &bsd->has_align));
     helpers.Add("valign", true,
-                BIND::bind(&DirIntNum, _1, &m_object, line, &bsd->valign,
+                BIND::bind(&DirIntNum, _1, &m_object, source, &bsd->valign,
                            &bsd->has_valign));
     helpers.Add("nobits", false, BIND::bind(&DirSetFlag, _1, &bss, 1));
     helpers.Add("progbits", false, BIND::bind(&DirClearFlag, _1, &bss, 1));
@@ -486,12 +490,12 @@ BinObject::DirSection(DirectiveInfo& info)
     if (start.get() != 0)
     {
         bsd->start.reset(start.release());
-        bsd->start_line = line;
+        bsd->start_source = source;
     }
     if (vstart.get() != 0)
     {
         bsd->vstart.reset(vstart.release());
-        bsd->vstart_line = line;
+        bsd->vstart_source = source;
     }
 
     if (bsd->start.get() != 0 && !bsd->follows.empty())
@@ -545,8 +549,8 @@ BinObject::DirOrg(DirectiveInfo& info)
     const NameValue& nv = info.getNameValues().front();
     if (!nv.isExpr())
         throw SyntaxError(N_("argument to ORG must be expression"));
-    m_org.reset(new Expr(nv.getExpr(info.getObject(), info.getLine())));
-    m_org_line = info.getLine();
+    m_org.reset(new Expr(nv.getExpr(info.getObject(), info.getSource())));
+    m_org_source = info.getSource();
 }
 
 bool

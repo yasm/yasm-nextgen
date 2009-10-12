@@ -28,10 +28,10 @@
 //
 #include <util.h>
 
+#include "clang/Basic/SourceLocation.h"
 #include <yasmx/Support/Compose.h>
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/Arch.h>
-#include <yasmx/Linemap.h>
 #include <yasmx/Object.h>
 
 namespace yasm
@@ -52,12 +52,9 @@ class Preprocessor;
 template <typename T, typename YYSTYPE, typename YYCTYPE = char>
 struct ParserMixin
 {
-    void InitMixin(Object& object,
-                   Preprocessor& preproc,
-                   bool save_input,
-                   Directives& dirs,
-                   Linemap& linemap);
-    unsigned long getCurLine() const { return m_linemap->getCurrent(); }
+    void InitMixin(Object& object, Preprocessor& preproc, Directives& dirs);
+    clang::SourceLocation getTokenSource() const
+    { return m_source.getFileLocWithOffset(m_tok-m_bot); }
 
     int getNextToken();
     void getPeekToken();
@@ -76,12 +73,11 @@ struct ParserMixin
     BytecodeContainer* m_container;
     Preprocessor* m_preproc;
     Directives* m_dirs;
-    Linemap* m_linemap;
 
     Arch* m_arch;
     unsigned int m_wordsize;
 
-    bool m_save_input;
+    clang::SourceLocation m_source;
 
     YYCTYPE *m_bot, *m_tok, *m_ptr, *m_cur, *m_lim;
 
@@ -99,18 +95,14 @@ template <typename T, typename S, typename C>
 inline void
 ParserMixin<T, S, C>::InitMixin(Object& object,
                                 Preprocessor& preproc,
-                                bool save_input,
-                                Directives& dirs,
-                                Linemap& linemap)
+                                Directives& dirs)
 {
     m_object = &object;
     m_preproc = &preproc;
     m_dirs = &dirs;
-    m_linemap = &linemap;
     m_arch = object.getArch();
     m_wordsize = m_arch->getModule().getWordSize();
 
-    m_save_input = save_input;
     m_token = T::NONE;
     m_peek_token = T::NONE;
 }

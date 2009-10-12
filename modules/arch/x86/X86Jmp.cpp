@@ -263,7 +263,7 @@ AppendJmp(BytecodeContainer& container,
           const X86Opcode& shortop,
           const X86Opcode& nearop,
           std::auto_ptr<Expr> target,
-          unsigned long line,
+          clang::SourceLocation source,
           JmpOpcodeSel op_sel)
 {
     Bytecode& bc = container.FreshBytecode();
@@ -281,7 +281,7 @@ AppendJmp(BytecodeContainer& container,
     {
         bc.Transform(Bytecode::Contents::Ptr(new X86Jmp(
             common, op_sel, shortop, nearop, target)));
-        bc.setLine(line);
+        bc.setSource(source);
         ++num_jmp_bc;
         return;
     }
@@ -294,7 +294,7 @@ AppendJmp(BytecodeContainer& container,
     common.ToBytes(bytes, 0);
 
     Value targetv(0, target);
-    targetv.setLine(line);
+    targetv.setSource(source);
     targetv.setJumpTarget();
     targetv.setIPRelative();
     targetv.setSigned();

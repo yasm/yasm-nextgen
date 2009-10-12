@@ -32,6 +32,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "clang/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 
 
@@ -78,20 +79,20 @@ class YASM_LIB_EXPORT Error : public virtual std::exception
 {
 public:
     explicit Error(const std::string& message);
-    Error(unsigned long line, const std::string& message);
+    Error(clang::SourceRange source, const std::string& message);
     virtual ~Error() throw();
 
     /// Set a cross-reference for the error
-    /// @param xrefline virtual line to cross-reference to (should not be 0)
+    /// @param xrefsource source range cross-reference (should be valid)
     /// @param message  cross-reference message
-    void setXRef(unsigned long xrefline, const std::string& message);
+    void setXRef(clang::SourceRange xrefsource, const std::string& message);
 
     virtual const char* what() const throw();
 
-    unsigned long m_line;
+    clang::SourceRange m_source;
     std::string m_message;
     std::string m_xrefmsg;
-    unsigned long m_xrefline;
+    clang::SourceRange m_xrefsource;
     bool m_parse_error;
 };
 
@@ -104,8 +105,8 @@ public:
     explicit ArithmeticError(const std::string& message)
         : Error(message)
     {}
-    ArithmeticError(unsigned long line, const std::string& message)
-        : Error(line, message)
+    ArithmeticError(clang::SourceRange source, const std::string& message)
+        : Error(source, message)
     {}
     ~ArithmeticError() throw();
 };
@@ -116,8 +117,8 @@ public:
     explicit OverflowError(const std::string& message)
         : ArithmeticError(message)
     {}
-    OverflowError(unsigned long line, const std::string& message)
-        : ArithmeticError(line, message)
+    OverflowError(clang::SourceRange source, const std::string& message)
+        : ArithmeticError(source, message)
     {}
     ~OverflowError() throw();
 };
@@ -128,8 +129,8 @@ public:
     explicit FloatingPointError(const std::string& message)
         : ArithmeticError(message)
     {}
-    FloatingPointError(unsigned long line, const std::string& message)
-        : ArithmeticError(line, message)
+    FloatingPointError(clang::SourceRange source, const std::string& message)
+        : ArithmeticError(source, message)
     {}
     ~FloatingPointError() throw();
 };
@@ -140,8 +141,8 @@ public:
     explicit ZeroDivisionError(const std::string& message)
         : ArithmeticError(message)
     {}
-    ZeroDivisionError(unsigned long line, const std::string& message)
-        : ArithmeticError(line, message)
+    ZeroDivisionError(clang::SourceRange source, const std::string& message)
+        : ArithmeticError(source, message)
     {}
     ~ZeroDivisionError() throw();
 };
@@ -152,8 +153,8 @@ class YASM_LIB_EXPORT AssertionError : public Error
 public:
     explicit AssertionError(const std::string& message) : Error(message)
     {}
-    AssertionError(unsigned long line, const std::string& message)
-        : Error(line, message)
+    AssertionError(clang::SourceRange source, const std::string& message)
+        : Error(source, message)
     {}
     ~AssertionError() throw();
 };
@@ -164,8 +165,8 @@ class YASM_LIB_EXPORT ValueError : public Error
 public:
     explicit ValueError(const std::string& message) : Error(message)
     {}
-    ValueError(unsigned long line, const std::string& message)
-        : Error(line, message)
+    ValueError(clang::SourceRange source, const std::string& message)
+        : Error(source, message)
     {}
     ~ValueError() throw();
 };
@@ -176,8 +177,8 @@ public:
     explicit NotAbsoluteError(const std::string& message)
         : ValueError(message)
     {}
-    NotAbsoluteError(unsigned long line, const std::string& message)
-        : ValueError(line, message)
+    NotAbsoluteError(clang::SourceRange source, const std::string& message)
+        : ValueError(source, message)
     {}
     ~NotAbsoluteError() throw();
 };
@@ -188,8 +189,8 @@ public:
     explicit TooComplexError(const std::string& message)
         : ValueError(message)
     {}
-    TooComplexError(unsigned long line, const std::string& message)
-        : ValueError(line, message)
+    TooComplexError(clang::SourceRange source, const std::string& message)
+        : ValueError(source, message)
     {}
     ~TooComplexError() throw();
 };
@@ -200,8 +201,8 @@ public:
     explicit NotConstantError(const std::string& message)
         : ValueError(message)
     {}
-    NotConstantError(unsigned long line, const std::string& message)
-        : ValueError(line, message)
+    NotConstantError(clang::SourceRange source, const std::string& message)
+        : ValueError(source, message)
     {}
     ~NotConstantError() throw();
 };
@@ -212,8 +213,8 @@ class YASM_LIB_EXPORT IOError : public Error
 public:
     explicit IOError(const std::string& message) : Error(message)
     {}
-    IOError(unsigned long line, const std::string& message)
-        : Error(line, message)
+    IOError(clang::SourceRange source, const std::string& message)
+        : Error(source, message)
     {}
     ~IOError() throw();
 };
@@ -224,8 +225,8 @@ class YASM_LIB_EXPORT TypeError : public Error
 public:
     explicit TypeError(const std::string& message) : Error(message)
     {}
-    TypeError(unsigned long line, const std::string& message)
-        : Error(line, message)
+    TypeError(clang::SourceRange source, const std::string& message)
+        : Error(source, message)
     {}
     ~TypeError() throw();
 };
@@ -236,8 +237,8 @@ class YASM_LIB_EXPORT SyntaxError : public Error
 public:
     explicit SyntaxError(const std::string& message) : Error(message)
     {}
-    SyntaxError(unsigned long line, const std::string& message)
-        : Error(line, message)
+    SyntaxError(clang::SourceRange source, const std::string& message)
+        : Error(source, message)
     {}
     ~SyntaxError() throw();
 };
@@ -250,8 +251,8 @@ public:
     {
         m_parse_error = true;
     }
-    ParseError(unsigned long line, const std::string& message)
-        : Error(line, message)
+    ParseError(clang::SourceRange source, const std::string& message)
+        : Error(source, message)
     {
         m_parse_error = true;
     }
@@ -271,11 +272,13 @@ YASM_LIB_EXPORT
 WarnClass WarnOccurred();
 
 /// Add a warning indicator.
-/// @param line     line
+/// @param source   source range
 /// @param wclass   warning class
 /// @param wstr     warning message
 YASM_LIB_EXPORT
-void setWarn(unsigned long line, WarnClass wclass, const std::string& wstr);
+void setWarn(clang::SourceRange source,
+             WarnClass wclass,
+             const std::string& wstr);
 
 /// Add a warning indicator.
 /// @param wclass   warning class
@@ -283,27 +286,27 @@ void setWarn(unsigned long line, WarnClass wclass, const std::string& wstr);
 inline void
 setWarn(WarnClass wclass, const std::string& wstr)
 {
-    setWarn(0, wclass, wstr);
+    setWarn(clang::SourceRange(), wclass, wstr);
 }
 
-/// Update all warning indicators that do not have a line number set with
-/// a line number.
-/// @param line     line number
+/// Update all warning indicators that do not have source set with a source
+/// range.
+/// @param source   source range
 YASM_LIB_EXPORT
-void WarnUpdateLine(unsigned long line);
+void WarnUpdateSource(clang::SourceRange source);
 
 /// Fetch the first warning indicator.  If there is at least one warning
 /// indicator, the output string is set to the first warning indicator
 /// value, the first warning indicator is removed, and the warning
 /// indicator is returned.
 /// @param wstr     warning message (output)
-/// @param wline    warning line (output)
+/// @param wsource  warning source range (output)
 /// @return If there is no warning indicator set, wstr is unchanged, and
 ///         #WARN_NONE is returned; otherwise, the first warning indicator
 ///         is returned.
 YASM_LIB_EXPORT
 WarnClass FetchWarn(/*@out@*/ std::string* wmsg,
-                    /*@out@*/ unsigned long *wline = 0);
+                    /*@out@*/ clang::SourceRange* wsource = 0);
 
 /// Enable a class of warnings.
 /// @param wclass   warning class

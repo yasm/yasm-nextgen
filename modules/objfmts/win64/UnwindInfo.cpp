@@ -124,7 +124,7 @@ UnwindInfo::Expand(Bytecode& bc,
         {
             ValueError err(String::Compose(
                 N_("prologue %1 bytes, must be <256"), new_val));
-            err.setXRef(m_prolog->getDefLine(), N_("prologue ended here"));
+            err.setXRef(m_prolog->getDefSource(), N_("prologue ended here"));
             throw err;
         }
         case 2:
@@ -243,13 +243,13 @@ UnwindInfo::Write(YAML::Emitter& out) const
 void
 Generate(std::auto_ptr<UnwindInfo> uwinfo,
          BytecodeContainer& xdata,
-         unsigned long line,
+         clang::SourceLocation source,
          const Arch& arch)
 {
     UnwindInfo* info = uwinfo.get();
 
     // 4-byte align the start of unwind info
-    AppendAlign(xdata, Expr(4), Expr(), Expr(), 0, line);
+    AppendAlign(xdata, Expr(4), Expr(), Expr(), 0, source);
 
     // Prolog size = end of prolog - start of procedure
     info->m_prolog_size.AddAbs(SUB(info->m_prolog, info->m_proc));
@@ -257,7 +257,7 @@ Generate(std::auto_ptr<UnwindInfo> uwinfo,
     // Unwind info
     Bytecode& infobc = xdata.FreshBytecode();
     infobc.Transform(Bytecode::Contents::Ptr(uwinfo));
-    infobc.setLine(line);
+    infobc.setSource(source);
 
     Bytecode& startbc = xdata.FreshBytecode();
     Location startloc = {&startbc, startbc.getFixedLen()};
@@ -279,11 +279,12 @@ Generate(std::auto_ptr<UnwindInfo> uwinfo,
     }
 
     // 4-byte align
-    AppendAlign(xdata, Expr(4), Expr(), Expr(), 0, line);
+    AppendAlign(xdata, Expr(4), Expr(), Expr(), 0, source);
 
     // Exception handler, if present.
     if (info->m_ehandler)
-        AppendData(xdata, Expr::Ptr(new Expr(info->m_ehandler)), 4, arch, line);
+        AppendData(xdata, Expr::Ptr(new Expr(info->m_ehandler)), 4, arch,
+                   source);
 }
 
 }}} // namespace yasm::objfmt::win64
