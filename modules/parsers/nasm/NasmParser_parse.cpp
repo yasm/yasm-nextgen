@@ -1171,11 +1171,11 @@ NasmParser::ParseMemoryAddress()
                                                       \
         while (m_token.is(tok))                       \
         {                                             \
-            ConsumeToken();                           \
+            clang::SourceLocation op_source = ConsumeToken(); \
             Expr f;                                   \
             if (!rightfunc(f, parse_term))            \
                 return false;                         \
-            e.Calc(op, f);                            \
+            e.Calc(op, f, op_source);                 \
         }                                             \
         return true;                                  \
     } while(0)
@@ -1244,12 +1244,12 @@ NasmParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
             case NasmToken::greatergreater: op = Op::SHR; break;
             default: return true;
         }
-        ConsumeToken();
+        clang::SourceLocation op_source = ConsumeToken();
 
         Expr f;
         if (!ParseExpr4(f, parse_term))
             return false;
-        e.Calc(op, f);
+        e.Calc(op, f, op_source);
     }
 }
 
@@ -1268,12 +1268,12 @@ NasmParser::ParseExpr4(Expr& e, const ParseExprTerm* parse_term)
             case NasmToken::minus:  op = Op::SUB; break;
             default: return true;
         }
-        ConsumeToken();
+        clang::SourceLocation op_source = ConsumeToken();
 
         Expr f;
         if (!ParseExpr5(f, parse_term))
             return false;
-        e.Calc(op, f);
+        e.Calc(op, f, op_source);
     }
 }
 
@@ -1295,12 +1295,12 @@ NasmParser::ParseExpr5(Expr& e, const ParseExprTerm* parse_term)
             case NasmToken::percentpercent: op = Op::SIGNMOD; break;
             default: return true;
         }
-        ConsumeToken();
+        clang::SourceLocation op_source = ConsumeToken();
 
         Expr f;
         if (!ParseExpr6(f, parse_term))
             return false;
-        e.Calc(op, f);
+        e.Calc(op, f, op_source);
     }
 }
 
@@ -1322,7 +1322,7 @@ NasmParseDirExprTerm::operator() (Expr& e,
             parser.ConsumeToken();
             if (!nasm_parser->ParseExpr6(e, this))
                 return false;
-            e.Calc(Op::NOT);
+            e.Calc(Op::NOT, parser.m_token.getLocation());
             *handled = true;
             return true;
         case NasmToken::l_paren:
@@ -1345,12 +1345,12 @@ NasmParseDirExprTerm::operator() (Expr& e,
             {
                 IntNum val;
                 num.getIntegerValue(&val);
-                e = val;
+                e = Expr(val, parser.m_token.getLocation());
             }
             else if (num.isFloat())
             {
                 parser.Diag(parser.m_token, diag::err_float_in_directive);
-                e = IntNum(0);
+                e = Expr(IntNum(0), parser.m_token.getLocation());
             }
             break;
         }
@@ -1362,7 +1362,7 @@ NasmParseDirExprTerm::operator() (Expr& e,
                             parser.m_preproc.getDiagnostics());
             if (const Register* reg = ii->getRegister())
             {
-                e = *reg;
+                e = Expr(*reg, parser.m_token.getLocation());
                 break;
             }
             // Otherwise it must be a symbol; fall through.
@@ -1382,7 +1382,7 @@ NasmParseDirExprTerm::operator() (Expr& e,
                 ii->setSymbol(sym);
             }
             sym->Use(parser.m_token.getLocation());
-            e = sym;
+            e = Expr(sym, parser.m_token.getLocation());
             break;
         }
         default:
@@ -1445,19 +1445,19 @@ NasmParser::ParseExpr6(Expr& e, const ParseExprTerm* parse_term)
             ConsumeToken();
             if (!ParseExpr6(e, parse_term))
                 return false;
-            e.Calc(Op::NEG);
+            e.Calc(Op::NEG, m_token.getLocation());
             return true;
         case NasmToken::tilde:
             ConsumeToken();
             if (!ParseExpr6(e, parse_term))
                 return false;
-            e.Calc(Op::NOT);
+            e.Calc(Op::NOT, m_token.getLocation());
             return true;
         case NasmToken::kw_seg:
             ConsumeToken();
             if (!ParseExpr6(e, parse_term))
                 return false;
-            e.Calc(Op::SEG);
+            e.Calc(Op::SEG, m_token.getLocation());
             return true;
         case NasmToken::l_paren:
         {
@@ -1477,13 +1477,14 @@ NasmParser::ParseExpr6(Expr& e, const ParseExprTerm* parse_term)
             {
                 IntNum val;
                 num.getIntegerValue(&val);
-                e = val;
+                e = Expr(val, m_token.getLocation());
             }
             else if (num.isFloat())
             {
                 // FIXME: Make arch-dependent
                 e = Expr(std::auto_ptr<llvm::APFloat>(new llvm::APFloat(
-                    num.getFloatValue(llvm::APFloat::x87DoubleExtended))));
+                    num.getFloatValue(llvm::APFloat::x87DoubleExtended))),
+                         m_token.getLocation());
             }
             break;
         }
@@ -1492,12 +1493,12 @@ NasmParser::ParseExpr6(Expr& e, const ParseExprTerm* parse_term)
             NasmStringParser str(m_token.getLiteral(), m_token.getLocation(),
                                  m_preproc);
             if (str.hadError())
-                e = IntNum(0);
+                e = Expr(IntNum(0), m_token.getLocation());
             else
             {
                 IntNum val;
                 str.getIntegerValue(&val);
-                e = val;
+                e = Expr(val, m_token.getLocation());
             }
             break;
         }
@@ -1509,7 +1510,7 @@ NasmParser::ParseExpr6(Expr& e, const ParseExprTerm* parse_term)
                             m_preproc.getDiagnostics());
             if (const Register* reg = ii->getRegister())
             {
-                e = *reg;
+                e = Expr(*reg, m_token.getLocation());
                 break;
             }
             // Might be an unrecognized keyword.
@@ -1522,7 +1523,7 @@ NasmParser::ParseExpr6(Expr& e, const ParseExprTerm* parse_term)
             IdentifierInfo* ii = m_token.getIdentifierInfo();
             SymbolRef sym = ParseSymbol(ii);
             sym->Use(m_token.getLocation());
-            e = sym;
+            e = Expr(sym, m_token.getLocation());
             break;
         }
         case NasmToken::dollar:
@@ -1536,7 +1537,7 @@ NasmParser::ParseExpr6(Expr& e, const ParseExprTerm* parse_term)
                 Location loc = {m_bc, m_bc->getFixedLen()};
                 sym->CheckedDefineLabel(loc, m_token.getLocation(),
                                         m_preproc.getDiagnostics());
-                e = sym;
+                e = Expr(sym, m_token.getLocation());
             }
             break;
         case NasmToken::dollardollar:
@@ -1549,7 +1550,7 @@ NasmParser::ParseExpr6(Expr& e, const ParseExprTerm* parse_term)
                 Location loc = {&m_container->bytecodes_front(), 0};
                 sym->CheckedDefineLabel(loc, m_token.getLocation(),
                                         m_preproc.getDiagnostics());
-                e = sym;
+                e = Expr(sym, m_token.getLocation());
             }
             break;
         default:

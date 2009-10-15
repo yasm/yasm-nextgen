@@ -279,6 +279,7 @@ ExprTerm::Write(YAML::Emitter& out) const
         default: break;
     }
     out << YAML::Key << "depth" << YAML::Value << m_depth;
+    out << YAML::Key << "source" << YAML::Value << m_source.getRawEncoding();
     out << YAML::EndMap;
 }
 
