@@ -407,6 +407,9 @@ Overwrite(Bytes& bytes,
     const llvm::fltSemantics* semantics;
     switch (size)
     {
+        case 16:
+            semantics = &llvm::APFloat::IEEEhalf;
+            break;
         case 32:
             semantics = &llvm::APFloat::IEEEsingle;
             break;

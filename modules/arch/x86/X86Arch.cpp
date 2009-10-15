@@ -544,7 +544,7 @@ X86Arch::ToBytes(const llvm::APFloat& flt,
                  size_t shift,
                  int warn) const
 {
-    if (valsize != 32 && valsize != 64 && valsize != 80)
+    if (valsize != 16 && valsize != 32 && valsize != 64 && valsize != 80)
     {
         assert(false && "invalid floating point constant size");
         return;
