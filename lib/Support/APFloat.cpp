@@ -2822,11 +2822,11 @@ APFloat::convertHalfAPFloatToAPInt() const
     myexponent = 0;
     mysignificand = 0;
   } else if (category==fcInfinity) {
-    myexponent = 0xff;
+    myexponent = 0x1f;
     mysignificand = 0;
   } else {
     assert(category == fcNaN && "Unknown category!");
-    myexponent = 0xff;
+    myexponent = 0x1f;
     mysignificand = (uint32_t)*significandParts();
   }
 
