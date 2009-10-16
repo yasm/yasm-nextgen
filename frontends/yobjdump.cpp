@@ -180,8 +180,8 @@ template <typename T>
 static void
 list_module()
 {
-    std::vector<std::string> list = yasm::getModules<T>();
-    for (std::vector<std::string>::iterator i=list.begin(), end=list.end();
+    yasm::ModuleNames list = yasm::getModules<T>();
+    for (yasm::ModuleNames::iterator i=list.begin(), end=list.end();
          i != end; ++i)
     {
         std::auto_ptr<T> obj = yasm::LoadModule<T>(*i);
@@ -436,9 +436,8 @@ DoDump(const std::string& in_filename)
     else
     {
         // Need to loop through available object formats, and taste each one
-        std::vector<std::string> list =
-            yasm::getModules<yasm::ObjectFormatModule>();
-        std::vector<std::string>::iterator i=list.begin(), end=list.end();
+        yasm::ModuleNames list = yasm::getModules<yasm::ObjectFormatModule>();
+        yasm::ModuleNames::iterator i=list.begin(), end=list.end();
         for (; i != end; ++i)
         {
             objfmt_module = yasm::LoadModule<yasm::ObjectFormatModule>(*i);

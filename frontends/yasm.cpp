@@ -360,8 +360,8 @@ template <typename T>
 static void
 ListModule()
 {
-    std::vector<std::string> list = yasm::getModules<T>();
-    for (std::vector<std::string>::iterator i=list.begin(), end=list.end();
+    yasm::ModuleNames list = yasm::getModules<T>();
+    for (yasm::ModuleNames::iterator i=list.begin(), end=list.end();
          i != end; ++i)
     {
         std::auto_ptr<T> obj = yasm::LoadModule<T>(*i);

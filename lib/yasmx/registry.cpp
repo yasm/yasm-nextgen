@@ -29,7 +29,11 @@
 ///
 #include "yasmx/Support/registry.h"
 
-#include <map>
+#include <algorithm>
+
+#include "llvm/ADT/IndexedMap.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringRef.h"
 
 
 namespace yasm
@@ -40,11 +44,17 @@ namespace impl
 class ModuleFactory::Impl
 {
 public:
+    ~Impl()
+    {
+        for (unsigned int i=0; i<registry.size(); ++i)
+            delete registry[i];
+    }
+
     /// FN_REGISTRY is the registry of all the BASE_CREATE_FN
     /// pointers registered.  Functions are registered using the
     /// regCreateFn member function (see below).
-    typedef std::map<std::string, BASE_CREATE_FN> FN_REGISTRY;
-    typedef std::map<int, FN_REGISTRY> MODULE_REGISTRY;
+    typedef llvm::StringMap<BASE_CREATE_FN> FN_REGISTRY;
+    typedef llvm::IndexedMap<FN_REGISTRY*> MODULE_REGISTRY;
     MODULE_REGISTRY registry;
 };
 
@@ -69,58 +79,67 @@ ModuleFactory::Instance()
 // value, which is used to allow static initialization of the registry.
 // See example implementations in base.cc and derived.cc
 void
-ModuleFactory::AddCreateFn(int type, const char* keyword, BASE_CREATE_FN func)
+ModuleFactory::AddCreateFn(unsigned int type,
+                           const llvm::StringRef& keyword,
+                           BASE_CREATE_FN func)
 {
-    m_impl->registry[type][keyword]=func;
+    m_impl->registry.grow(type);
+    if (!m_impl->registry[type])
+        m_impl->registry[type] = new Impl::FN_REGISTRY();
+    (*m_impl->registry[type])[keyword] = func;
 }
 
 // The create function simple looks up the class ID, and if it's in the list,
 // the statement "(*i).second();" calls the function.
 ModuleFactory::BASE_CREATE_FN
-ModuleFactory::getCreateFn(int type, const std::string& keyword) const
+ModuleFactory::getCreateFn(unsigned int type,
+                           const llvm::StringRef& keyword) const
 {
-    Impl::MODULE_REGISTRY::const_iterator module_entry =
-        m_impl->registry.find(type);
-    if (module_entry == m_impl->registry.end())
+    if (type >= m_impl->registry.size())
+        return 0;
+    Impl::FN_REGISTRY* module_entry = m_impl->registry[type];
+    if (!module_entry)
         return 0;
 
-    Impl::FN_REGISTRY::const_iterator func_entry =
-        module_entry->second.find(keyword);
-    if (func_entry == module_entry->second.end())
+    Impl::FN_REGISTRY::const_iterator func_entry = module_entry->find(keyword);
+    if (func_entry == module_entry->end())
         return 0;
 
-    return func_entry->second;
+    return func_entry->getValue();
 }
 
 // Just return a list of the classIDKeys used.
-std::vector<std::string>
-ModuleFactory::getRegistered(int type) const
+ModuleNames
+ModuleFactory::getRegistered(unsigned int type) const
 {
-    Impl::MODULE_REGISTRY::const_iterator module_entry =
-        m_impl->registry.find(type);
-    if (module_entry == m_impl->registry.end())
-        return std::vector<std::string>();
+    if (type >= m_impl->registry.size())
+        return ModuleNames();
 
-    std::vector<std::string> ret(module_entry->second.size());
+    Impl::FN_REGISTRY* module_entry = m_impl->registry[type];
+    if (!module_entry)
+        return ModuleNames();
+
+    ModuleNames ret(module_entry->size());
     int count = 0;
-    for (Impl::FN_REGISTRY::const_iterator
-         func_entry = module_entry->second.begin(),
-         end = module_entry->second.end();
-         func_entry != end; ++func_entry, ++count)
+    for (Impl::FN_REGISTRY::const_iterator func_entry = module_entry->begin(),
+         end = module_entry->end(); func_entry != end; ++func_entry, ++count)
     {
-        ret[count] = func_entry->first;
+        ret[count] = func_entry->getKey();
     }
+    std::sort(ret.begin(), ret.end());
     return ret;
 }
 
 bool
-ModuleFactory::isRegistered(int type, const std::string& keyword) const
+ModuleFactory::isRegistered(unsigned int type,
+                            const llvm::StringRef& keyword) const
 {
-    Impl::MODULE_REGISTRY::const_iterator module_entry =
-        m_impl->registry.find(type);
-    if (module_entry == m_impl->registry.end())
+    if (type >= m_impl->registry.size())
         return false;
-    return module_entry->second.find(keyword) != module_entry->second.end();
+    Impl::FN_REGISTRY* module_entry = m_impl->registry[type];
+    if (!module_entry)
+        return false;
+    return module_entry->find(keyword) != module_entry->end();
 }
 
 }} // namespace yasm::impl
