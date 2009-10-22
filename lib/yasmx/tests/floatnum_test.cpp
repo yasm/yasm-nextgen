@@ -22,22 +22,19 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <cxxtest/TestSuite.h>
+#include <gtest/gtest.h>
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/StringRef.h"
+#include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
-
-#ifndef NELEMS
-#define NELEMS(array)   (sizeof(array) / sizeof(array[0]))
-#endif
 
 // constants describing parameters of internal floating point format.
 //  (these should match those in libyasmx/floatnum.cpp !)
 static const unsigned int MANT_BITS = 80;
 static const unsigned int MANT_BYTES = 10;
 
-struct Init_Entry {
+struct InitEntry {
     // input ASCII value
     const char *ascii;
 
@@ -51,7 +48,7 @@ struct Init_Entry {
 };
 
 // Values used for normalized tests
-static const Init_Entry normalized_vals[] = {
+static const InitEntry normalized_vals[] = {
     {   "3.141592653589793",
          0, {0xdb,0x0f,0x49,0x40},
          0, {0x18,0x2d,0x44,0x54,0xfb,0x21,0x09,0x40},
@@ -92,7 +89,7 @@ static const Init_Entry normalized_vals[] = {
 
 // Still normalized values, but edge cases of various sizes, testing
 // underflow/overflow checks as well.
-static const Init_Entry normalized_edgecase_vals[] = {
+static const InitEntry normalized_edgecase_vals[] = {
     // 32-bit edges
     {   "1.1754943508222875e-38",
          0, {0x00,0x00,0x80,0x00},
@@ -135,61 +132,39 @@ static const Init_Entry normalized_edgecase_vals[] = {
     },*/
 };
 
-class FloatNumTestSuite : public CxxTest::TestSuite
+class FloatNumTest : public testing::TestWithParam<InitEntry>
 {
-public:
-
-    void CheckGetSized(const llvm::APFloat& flt,
-                       const Init_Entry& val,
-                       int destsize,
-                       int valsize)
+protected:
+    void CheckGetSized(int destsize,
+                       int valsize,
+                       int correct_retval,
+                       const unsigned char* correct_result)
     {
-        int correct_retval;
-        const unsigned char* correct_result;
-        switch (valsize)
-        {
-            case 32:
-                correct_retval = val.ret32;
-                correct_result = val.result32;
-                break;
-            case 64:
-                correct_retval = val.ret64;
-                correct_result = val.result64;
-                break;
-            case 80:
-                correct_retval = val.ret80;
-                correct_result = val.result80;
-                break;
-            default:
-                return;
-        }
-        Bytes result;
+        llvm::APFloat flt(llvm::APFloat::x87DoubleExtended, GetParam().ascii);
+        yasm::Bytes result;
         result.resize(destsize);
-        Overwrite(result, flt, valsize, 0, false, 0);
-        TS_ASSERT_SAME_DATA(&result[0], correct_result, destsize);
-    }
-
-    void testGetNormalized()
-    {
-        for (size_t i=0; i<NELEMS(normalized_vals); i++)
-        {
-            llvm::APFloat flt(llvm::APFloat::x87DoubleExtended,
-                              normalized_vals[i].ascii);
-            CheckGetSized(flt, normalized_vals[i], 4, 32);
-            CheckGetSized(flt, normalized_vals[i], 8, 64);
-            CheckGetSized(flt, normalized_vals[i], 10, 80);
-        }
-    }
-
-    void testGetNormalizedEdgecase()
-    {
-        for (size_t i=0; i<NELEMS(normalized_edgecase_vals); i++)
-        {
-            llvm::APFloat flt(llvm::APFloat::x87DoubleExtended,
-                              normalized_edgecase_vals[i].ascii);
-            CheckGetSized(flt, normalized_edgecase_vals[i], 4, 32);
-            CheckGetSized(flt, normalized_edgecase_vals[i], 8, 64);
-            CheckGetSized(flt, normalized_edgecase_vals[i], 10, 80);
-        }
+        yasm::Overwrite(result, flt, valsize, 0, false, 0);
+        for (int i=0; i<destsize; ++i)
+            EXPECT_EQ(correct_result[i], result[i]);
     }
 };
+
+TEST_P(FloatNumTest, Test32)
+{
+    CheckGetSized(4, 32, GetParam().ret32, GetParam().result32);
+}
+
+TEST_P(FloatNumTest, Test64)
+{
+    CheckGetSized(8, 64, GetParam().ret64, GetParam().result64);
+}
+
+TEST_P(FloatNumTest, Test80)
+{
+    CheckGetSized(10, 80, GetParam().ret80, GetParam().result80);
+}
+
+INSTANTIATE_TEST_CASE_P(FloatNumNormalizedTest, FloatNumTest,
+                        ::testing::ValuesIn(normalized_vals));
+INSTANTIATE_TEST_CASE_P(FloatNumNormalizedEdgecaseTest, FloatNumTest,
+                        ::testing::ValuesIn(normalized_edgecase_vals));

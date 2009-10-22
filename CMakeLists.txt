@@ -23,6 +23,11 @@ OPTION(ENABLE_NLS "Enable message translations" OFF)
 
 OPTION(BUILD_TEST_COVERAGE "Enable test coverage if possible" ON)
 
+FIND_PACKAGE(GTest)
+IF(GTEST_FOUND)
+    INCLUDE_DIRECTORIES(${GTEST_INCLUDE_DIRS})
+ENDIF(GTEST_FOUND)
+
 # Default build type to debug if not set
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Debug CACHE STRING

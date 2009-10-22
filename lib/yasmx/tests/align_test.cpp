@@ -23,7 +23,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include <cxxtest/TestSuite.h>
+#include <gtest/gtest.h>
 
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeContainer_util.h"
@@ -31,25 +31,21 @@
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 
-class AlignTestSuite : public CxxTest::TestSuite
+TEST(AlignTest, Append)
 {
-public:
-    void testAppendAlign()
-    {
-        yasm::BytecodeContainer container;
-        yasm::AppendAlign(container,
-                          yasm::Expr(4),
-                          yasm::Expr(),    // fill
-                          yasm::Expr(),    // maxskip
-                          0,               // code fill
-                          clang::SourceLocation::getFromRawEncoding(5));
-        yasm::Bytecode& align = container.bytecodes_first();
+    yasm::BytecodeContainer container;
+    yasm::AppendAlign(container,
+                      yasm::Expr(4),
+                      yasm::Expr(),    // fill
+                      yasm::Expr(),    // maxskip
+                      0,               // code fill
+                      clang::SourceLocation::getFromRawEncoding(5));
+    yasm::Bytecode& align = container.bytecodes_first();
 
-        // align always results in contents
-        TS_ASSERT(align.hasContents());
-        TS_ASSERT_EQUALS(align.getSpecial(),
-                         yasm::Bytecode::Contents::SPECIAL_OFFSET);
-        TS_ASSERT_EQUALS(align.getSource().getRawEncoding(), 5U);
-        TS_ASSERT(align.getFixed().empty());
-    }
-};
+    // align always results in contents
+    EXPECT_TRUE(align.hasContents());
+    EXPECT_EQ(yasm::Bytecode::Contents::SPECIAL_OFFSET,
+              align.getSpecial());
+    EXPECT_EQ(5U, align.getSource().getRawEncoding());
+    EXPECT_TRUE(align.getFixed().empty());
+}

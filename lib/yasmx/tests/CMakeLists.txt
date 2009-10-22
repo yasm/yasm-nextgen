@@ -1,18 +1,18 @@
 INCLUDE_DIRECTORIES(${yasm_SOURCE_DIR}/lib/yasmx)
 
-ADD_CXXTEST(libyasmx_tests
-    align_test.h
-    bytes_util_test.h
-    compose_test.h
-    expr_test.h
-    expr_util_test.h
-    hamt_test.h
-    location_test.h
-    file_combpath_test.h
-    floatnum_test.h
-    intnum_test.h
-    nocase_test.h
-    unescape_test.h
-    value_test.h
+YASM_ADD_UNIT_TEST(libyasmx_tests
+    align_test.cpp
+    bytes_util_test.cpp
+    compose_test.cpp
+    expr_test.cpp
+    expr_util_test.cpp
+    file_combpath_test.cpp
+    floatnum_test.cpp
+    hamt_test.cpp
+    intnum_test.cpp
+    location_test.cpp
+    nocase_test.cpp
+    unescape_test.cpp
+    value_test.cpp
     )
-target_link_libraries(libyasmx_tests libyasmx)
+target_link_libraries(libyasmx_tests libyasmx ${GTEST_BOTH_LIBRARIES})
