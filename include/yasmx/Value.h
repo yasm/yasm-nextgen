@@ -307,7 +307,7 @@ public:
     void Dump() const;
 
     /// Maximum value of right shift.
-    static const unsigned int RSHIFT_MAX = 127;
+    enum { RSHIFT_MAX = 127 };
 
 private:
     bool FinalizeScan(Expr& e, bool ssym_ok, int* pos);
