@@ -77,7 +77,6 @@ set (CPACK_SOURCE_IGNORE_FILES
 INCLUDE(CPack)
 
 INCLUDE(ConfigureChecks.cmake)
-INCLUDE(MacroAddCxxTest)
 
 ADD_SUBDIRECTORY(tools)
 ADD_SUBDIRECTORY(modules)
