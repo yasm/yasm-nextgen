@@ -87,3 +87,4 @@ ADD_SUBDIRECTORY(frontends)
 YASM_ADD_UNIT_TEST(test_preproc TESTNAME preproc_basic
     test_preproc.cpp
     )
+target_link_libraries(test_preproc libyasmx ${GTEST_BOTH_LIBRARIES})

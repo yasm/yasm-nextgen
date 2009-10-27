@@ -1,6 +1,6 @@
 #include <cstdlib>
 
-#include "config.h"
+#include <gtest/gtest.h>
 
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -14,13 +14,12 @@
 
 using namespace yasm;
 
-int
-main()
+TEST(RawPreprocTest, Basic)
 {
-    if (!LoadStandardPlugins())
-        return EXIT_FAILURE;
+    ASSERT_TRUE(LoadStandardPlugins());
     std::auto_ptr<PreprocessorModule> preproc_module =
         LoadModule<PreprocessorModule>("raw");
+    ASSERT_TRUE(preproc_module.get());
     std::string instr("test text");
     clang::FileManager file_mgr;
     clang::SourceManager source_mgr;
@@ -31,20 +30,14 @@ main()
     source_mgr.createMainFileIDForMemBuffer(inbuf);
     Errwarns errwarns;
     std::auto_ptr<Preprocessor> preproc = preproc_module->Create(errwarns);
+    ASSERT_TRUE(preproc.get());
     preproc->Initialize(source_mgr, file_mgr);
 
     std::string outstr;
     clang::SourceLocation sourceloc;
-    if (!preproc->getLine(&outstr, &sourceloc))
-        return EXIT_FAILURE;
+    ASSERT_TRUE(preproc->getLine(&outstr, &sourceloc));
 
-    llvm::outs() << outstr << '\n';
+    EXPECT_EQ(instr, outstr);
 
-    if (outstr != instr)
-        return EXIT_FAILURE;
-
-    if (preproc->getLine(&outstr, &sourceloc))
-        return EXIT_FAILURE;
-
-    return EXIT_SUCCESS;
+    EXPECT_FALSE(preproc->getLine(&outstr, &sourceloc));
 }
