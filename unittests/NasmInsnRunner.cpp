@@ -79,6 +79,20 @@ fromoctdigit(char ch)
     return 0x100;
 }
 
+static IntNum
+strtoint(const llvm::StringRef& str)
+{
+    IntNum intn;
+    int neg = (str[0] == '-') ? 1:0;
+    if (str.startswith("0x"))
+        intn.setStr(str.substr(2+neg), 16);
+    else
+        intn.setStr(str.substr(neg));
+    if (neg != 0)
+        intn = -intn;
+    return intn;
+}
+
 void
 AddSpanTest(Bytecode& bc,
             int id,
@@ -189,6 +203,9 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
         llvm::StringRef byte_str;
         llvm::tie(byte_str, golden_in) = golden_in.split(' ');
 
+        if (!isxdigit(byte_str[0]))
+            break;
+
         unsigned int byte_val = 0x100;
         if (byte_str.size() == 2)   // assume hex
             byte_val = (fromhexdigit(byte_str[0]) << 4)
@@ -230,7 +247,7 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
         for (;;)
         {
             int next;
-            int nsize;
+            int nsize = 0;
             // operand overrides (size and strict)
             if (arg_str.startswith("byte ")) { nsize = 8; next = 5; }
             else if (arg_str.startswith("hword ")) { nsize = wsize/2; next = 6; }
@@ -267,11 +284,7 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
                     // figure out this token
                     llvm::StringRef tok = strip(estr.slice(tokstart, pos));
                     if (isdigit(estr[tokstart]))
-                    {
-                        IntNum intn;
-                        intn.setStr(tok);
-                        e->Append(intn);
-                    }
+                        e->Append(strtoint(tok));
                     else
                     {
                         Arch::RegTmod regtmod = m_arch->ParseCheckRegTmod(tok);
@@ -327,13 +340,14 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
         }
 
         // Can't handle labels
-        ASSERT_TRUE(isdigit(arg_str[0]))
+        ASSERT_TRUE(isdigit(arg_str[0]) || arg_str[0] == '-')
             << "cannot handle label '" << arg_str.str() << "'";
 
         // Convert to integer expression
-        IntNum intn;
-        intn.setStr(arg_str);
-        insn->AddOperand(Operand(Expr::Ptr(new Expr(intn))));
+        Operand intop(Expr::Ptr(new Expr(strtoint(arg_str))));
+        intop.setSize(size);
+        intop.setStrict(strict);
+        insn->AddOperand(intop);
     }
 
     //
