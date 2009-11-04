@@ -172,7 +172,7 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
                                  llvm::StringRef line,
                                  int linenum)
 {
-    SCOPED_TRACE(llvm::format("%s line %d", filename, linenum));
+    SCOPED_TRACE(llvm::format("%s:%d", filename, linenum));
 
     llvm::StringRef insn_in, golden_in;
     llvm::tie(insn_in, golden_in) = line.split(';');
@@ -233,6 +233,9 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
 
     // parse insn arguments
     unsigned int wsize = m_arch_module->getWordSize();
+
+    // strip whitespace from arguments
+    insn_in = strip(insn_in);
 
     while (!insn_in.empty())
     {
