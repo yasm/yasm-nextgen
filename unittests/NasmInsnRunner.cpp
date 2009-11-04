@@ -196,17 +196,19 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
     // parse the golden result
     //
     std::vector<unsigned char> golden;
+    llvm::StringRef golden_errwarn;
 
-    do {
+    for (;;)
+    {
         // strip whitespace
         golden_in = strip(golden_in);
-        llvm::StringRef byte_str;
-        llvm::tie(byte_str, golden_in) = golden_in.split(' ');
-
-        if (!isxdigit(byte_str[0]))
+        if (golden_in.empty() || !isxdigit(golden_in[0]))
             break;
 
         unsigned int byte_val = 0x100;
+        llvm::StringRef byte_str;
+        llvm::tie(byte_str, golden_in) = golden_in.split(' ');
+
         if (byte_str.size() == 2)   // assume hex
             byte_val = (fromhexdigit(byte_str[0]) << 4)
                 | fromhexdigit(byte_str[1]);
@@ -217,7 +219,11 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
 
         ASSERT_LE(byte_val, 0xff) << "invalid golden value";
         golden.push_back(byte_val);
-    } while (!golden_in.empty());
+    }
+
+    // interpret string in [] as error/warning
+    if (!golden_in.empty() && golden_in[0] == '[')
+        llvm::tie(golden_errwarn, golden_in) = golden_in.split(']');
 
     //
     // parse the instruction
