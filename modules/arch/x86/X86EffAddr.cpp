@@ -103,20 +103,6 @@ X86EffAddr::X86EffAddr()
 {
 }
 
-X86EffAddr::X86EffAddr(const X86Register* reg, unsigned char* rex,
-                       unsigned int bits)
-    : EffAddr(std::auto_ptr<Expr>(0)),
-      m_sib(0),
-      m_need_sib(0),
-      m_valid_modrm(true),
-      m_need_modrm(true),
-      m_valid_sib(false)
-{
-    unsigned char rm;
-    setRexFromReg(rex, &rm, reg, bits, X86_REX_B);
-    m_modrm = 0xC0 | rm;    // Mod=11, R/M=Reg, Reg=0
-}
-
 X86EffAddr::X86EffAddr(const X86EffAddr& rhs)
     : EffAddr(rhs),
       m_modrm(rhs.m_modrm),
@@ -188,19 +174,6 @@ X86EffAddr::X86EffAddr(bool xform_rip_plus, std::auto_ptr<Expr> e)
       m_need_modrm(true),
       m_valid_sib(false)
 {
-    m_need_disp = true;
-}
-
-X86EffAddr::X86EffAddr(std::auto_ptr<Expr> imm, unsigned int im_len)
-    : EffAddr(imm),
-      m_modrm(0),
-      m_sib(0),
-      m_need_sib(0),
-      m_valid_modrm(false),
-      m_need_modrm(false),
-      m_valid_sib(false)
-{
-    m_disp.setSize(im_len);
     m_need_disp = true;
 }
 

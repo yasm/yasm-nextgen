@@ -202,8 +202,9 @@ X86General::Finalize(Bytecode& bc)
                 // opcode 0 being a mov instruction!
                 X86Arch* arch = static_cast<X86Arch*>(
                     bc.getContainer()->getObject()->getArch());
-                m_ea.reset(new X86EffAddr(arch->getReg64(m_opcode.get(0)-0xB8),
-                                          &rex_temp, 64));
+                m_ea.reset(new X86EffAddr());
+                m_ea->setReg(arch->getReg64(m_opcode.get(0)-0xB8), &rex_temp,
+                             64);
 
                 // Make the imm32s form permanent.
                 m_opcode.MakeAlt1();

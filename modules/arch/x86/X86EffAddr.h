@@ -86,12 +86,6 @@ public:
     /// Basic constructor.
     X86EffAddr();
 
-    /// Register constructor.
-    X86EffAddr(const X86Register* reg, unsigned char* rex, unsigned int bits);
-
-    /// Immediate constructor.
-    X86EffAddr(std::auto_ptr<Expr> imm, unsigned int im_len);
-
     /// Expression constructor.
     /// @param xform_rip_plus   Transform foo+rip into foo wrt rip; used
     ///                         for GAS parser

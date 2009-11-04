@@ -180,7 +180,8 @@ TEST_F(X86EffAddrTest, InitReg)
 
     X86Register reg32_5(X86Register::REG32, 5);
     rex = 0;
-    X86EffAddr ea(&reg32_5, &rex, 32);
+    X86EffAddr ea;
+    ea.setReg(&reg32_5, &rex, 32);
     EXPECT_EQ(0xC5, ea.m_modrm);
     EXPECT_EQ(0, ea.m_sib);
     EXPECT_EQ(0, ea.m_need_sib);

@@ -1216,9 +1216,10 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
                     assert(false && "invalid operand conversion");
                     break;
                 case Operand::REG:
-                    m_x86_ea.reset(new X86EffAddr(
-                        static_cast<const X86Register*>(op.getReg()),
-                        &m_rex, m_mode_bits));
+                    if (m_x86_ea.get() == 0)
+                        m_x86_ea.reset(new X86EffAddr());
+                    m_x86_ea->setReg(static_cast<const X86Register*>(op.getReg()),
+                                     &m_rex, m_mode_bits);
                     break;
                 case Operand::SEGREG:
                     assert(false && "invalid operand conversion");
@@ -1250,8 +1251,10 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
                     break;
                 }
                 case Operand::IMM:
-                    m_x86_ea.reset(new X86EffAddr(op.ReleaseImm(),
-                                                  m_size_lookup[info_op.size]));
+                    if (m_x86_ea.get() == 0)
+                        m_x86_ea.reset(new X86EffAddr());
+                    m_x86_ea->setImm(op.ReleaseImm(),
+                                     m_size_lookup[info_op.size]);
                     break;
             }
             break;
@@ -1260,7 +1263,9 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
             const X86Register* reg =
                 static_cast<const X86Register*>(op.getReg());
             assert(reg != 0 && "invalid operand conversion");
-            m_x86_ea.reset(new X86EffAddr(reg, &m_rex, m_mode_bits));
+            if (m_x86_ea.get() == 0)
+                m_x86_ea.reset(new X86EffAddr());
+            m_x86_ea->setReg(reg, &m_rex, m_mode_bits);
             m_vexreg = reg->getNum() & 0xF;
             break;
         }
@@ -1332,7 +1337,9 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
             const Register* reg = op.getReg();
             assert(reg != 0 && "invalid operand conversion");
             const X86Register* x86_reg = static_cast<const X86Register*>(reg);
-            m_x86_ea.reset(new X86EffAddr(x86_reg, &m_rex, m_mode_bits));
+            if (m_x86_ea.get() == 0)
+                m_x86_ea.reset(new X86EffAddr());
+            m_x86_ea->setReg(x86_reg, &m_rex, m_mode_bits);
             setRexFromReg(&m_rex, &m_spare, x86_reg, m_mode_bits, X86_REX_R);
             break;
         }
