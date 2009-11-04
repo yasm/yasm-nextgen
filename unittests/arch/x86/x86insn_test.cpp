@@ -67,7 +67,8 @@ TEST_P(X86NasmInsnRunner, Run)
     ParseAndTestFile(GetParam().c_str());
 }
 
-std::vector<std::string> GetTestFiles()
+std::vector<std::string>
+GetTestFiles()
 {
     std::string srcdir;
     if (const char* srcdirc = getenv("CMAKE_SOURCE_DIR"))
