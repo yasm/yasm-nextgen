@@ -36,8 +36,6 @@
 #include "unittests/unittest_util.h"
 #include "unittests/unittest_config.h"
 
-using llvm::sys::Path;
-
 
 class X86NasmInsnRunner : public yasmunit::NasmInsnRunner
 {
@@ -77,6 +75,7 @@ GetTestFiles()
         srcdir = CMAKE_SOURCE_DIR;
     srcdir += "/unittests/arch/x86/insn/";
 
+    using llvm::sys::Path;
     Path srcpath(srcdir);
     std::set<Path> paths;
     if (srcpath.getDirectoryContents(paths, NULL))
