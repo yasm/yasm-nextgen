@@ -308,8 +308,10 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
                 }
             }
 
-            std::auto_ptr<EffAddr> ea = m_arch->CreateEffAddr(e);
-            insn->AddOperand(ea);
+            Operand operand(m_arch->CreateEffAddr(e));
+            operand.setSize(size);
+            operand.setStrict(strict);
+            insn->AddOperand(operand);
             continue;
         }
 
