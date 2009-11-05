@@ -84,7 +84,7 @@ strtoint(const llvm::StringRef& str)
 {
     IntNum intn;
     int neg = (str[0] == '-') ? 1:0;
-    if (str.startswith("0x"))
+    if (str.substr(neg).startswith("0x"))
         intn.setStr(str.substr(2+neg), 16);
     else if (str.endswith("h"))
         intn.setStr(str.substr(0, str.size()-1), 16);
