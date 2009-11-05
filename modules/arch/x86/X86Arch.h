@@ -95,6 +95,43 @@ enum CPUFeature
     CPU_CVT16           // AMD CVT16 extensions
 };
 
+class X86RegTmod
+{
+public:
+    static const X86RegTmod& Instance();
+
+    const X86Register* getReg(X86Register::Type type, unsigned int num) const
+    { return m_reg[type][num]; }
+
+    const X86RegisterGroup* getRegGroup(X86Register::Type type) const
+    { return m_reg_group[type]; }
+
+    const X86SegmentRegister* getSegReg(X86SegmentRegister::Type type) const
+    { return m_segreg[type]; }
+
+    const X86TargetModifier* getTargetMod(X86TargetModifier::Type type) const
+    { return m_targetmod[type]; }
+
+private:
+    // Registers
+    X86Register** m_reg[X86Register::TYPE_COUNT];
+
+    // Register groups
+    X86RegisterGroup* m_reg_group[X86Register::TYPE_COUNT];
+
+    // Segment registers
+    X86SegmentRegister* m_segreg[X86SegmentRegister::TYPE_COUNT];
+
+    // Target modifiers
+    X86TargetModifier* m_targetmod[X86TargetModifier::TYPE_COUNT];
+
+private:
+    X86RegTmod();
+    X86RegTmod(const X86RegTmod &) {}
+    X86RegTmod & operator= (const X86RegTmod &) { return *this; }
+    ~X86RegTmod();
+};
+
 class X86Arch : public Arch
 {
 public:
@@ -150,8 +187,6 @@ public:
     ParserSelect getParser() const { return m_parser; }
 
     unsigned int getModeBits() const { return m_mode_bits; }
-    const X86Register* getReg64(unsigned int num) const
-    { return m_reg[X86Register::REG64][num]; }
 
     static const char* getName()
     { return "x86 (IA-32 and derivatives), AMD64"; }
@@ -179,18 +214,6 @@ private:
     bool m_force_strict;
     bool m_default_rel;
     NopFormat m_nop;
-
-    // Registers
-    X86Register** m_reg[X86Register::TYPE_COUNT];
-
-    // Register groups
-    X86RegisterGroup* m_reg_group[X86Register::TYPE_COUNT];
-
-    // Segment registers
-    X86SegmentRegister* m_segreg[X86SegmentRegister::TYPE_COUNT];
-
-    // Target modifiers
-    X86TargetModifier* m_targetmod[X86TargetModifier::TYPE_COUNT];
 };
 
 }}} // namespace yasm::arch::x86

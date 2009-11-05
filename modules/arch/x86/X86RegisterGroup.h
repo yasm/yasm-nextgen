@@ -26,7 +26,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "yasmx/Config/functional.h"
 #include "yasmx/Arch.h"
 
 #include "X86Register.h"
@@ -42,9 +41,8 @@ namespace x86
 class X86RegisterGroup : public RegisterGroup
 {
 public:
-    X86RegisterGroup(FUNCTION::function<unsigned int ()> get_bits,
-                     X86Register** regs, unsigned long size)
-        : m_get_bits(get_bits), m_regs(regs), m_size(size) {}
+    X86RegisterGroup(X86Register** regs, unsigned long size)
+        : m_regs(regs), m_size(size) {}
     ~X86RegisterGroup() {}
 
     /// Get a specific register of a register group, based on the register
@@ -59,7 +57,6 @@ public:
     void Write(YAML::Emitter& out) const;
 
 private:
-    FUNCTION::function<unsigned int ()> m_get_bits;
     X86Register** m_regs;
     unsigned long m_size;
 };
