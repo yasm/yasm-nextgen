@@ -948,15 +948,15 @@ X86Insn::MatchError(const unsigned int* size_lookup) const
         case 1:
         case 4:
             throw TypeError(
-                String::Compose(N_("invalid size for operand %d"), 1));
+                String::Compose(N_("invalid size for operand %1"), 1));
         case 2:
         case 5:
             throw TypeError(
-                String::Compose(N_("invalid size for operand %d"), 2));
+                String::Compose(N_("invalid size for operand %1"), 2));
         case 3:
         case 6:
             throw TypeError(
-                String::Compose(N_("invalid size for operand %d"), 3));
+                String::Compose(N_("invalid size for operand %1"), 3));
         case 7:
             throw TypeError(
                 N_("one of source operand 1 or 3 must match dest operand"));
@@ -964,7 +964,7 @@ X86Insn::MatchError(const unsigned int* size_lookup) const
         {
             unsigned int cpu0 = i->cpu0, cpu1 = i->cpu1, cpu2 = i->cpu2;
             throw TypeError(
-                String::Compose(N_("requires CPU%s"),
+                String::Compose(N_("requires CPU%1"),
                                 CpuFindReverse(cpu0, cpu1, cpu2)));
         }
     }
