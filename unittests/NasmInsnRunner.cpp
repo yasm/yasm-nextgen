@@ -86,6 +86,8 @@ strtoint(const llvm::StringRef& str)
     int neg = (str[0] == '-') ? 1:0;
     if (str.startswith("0x"))
         intn.setStr(str.substr(2+neg), 16);
+    else if (str.endswith("h"))
+        intn.setStr(str.substr(0, str.size()-1), 16);
     else
         intn.setStr(str.substr(neg));
     if (neg != 0)
@@ -169,13 +171,16 @@ NasmInsnRunner::ParseAndTestFile(const char* filename)
 
 void
 NasmInsnRunner::ParseAndTestLine(const char* filename,
-                                 llvm::StringRef line,
+                                 const llvm::StringRef& line,
                                  int linenum)
 {
     SCOPED_TRACE(llvm::format("%s:%d", filename, linenum));
 
     llvm::StringRef insn_in, golden_in;
     llvm::tie(insn_in, golden_in) = line.split(';');
+
+    insn_in = strip(insn_in);
+    golden_in = strip(golden_in);
 
     // Handle bits directive
     if (golden_in.empty() && insn_in.startswith("[bits "))
@@ -195,7 +200,7 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
     //
     // parse the golden result
     //
-    std::vector<unsigned char> golden;
+    llvm::SmallVector<unsigned char, 64> golden;
     llvm::StringRef golden_errwarn;
 
     for (;;)
@@ -361,6 +366,15 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
         insn->AddOperand(intop);
     }
 
+    TestInsn(insn.get(), golden.size(), golden.data(), golden_errwarn);
+}
+
+void
+NasmInsnRunner::TestInsn(yasm::Insn* insn,
+                         std::size_t golden_len,
+                         const unsigned char* golden,
+                         const llvm::StringRef& ew_msg)
+{
     //
     // Turn the instruction into bytes
     //
@@ -380,10 +394,30 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
     //
     // Compare the result against the golden result
     //
-    ASSERT_EQ(golden.size(), outbytes.size());
-    for (size_t i=0; i<golden.size(); ++i)
-        EXPECT_EQ((int)(golden[i] & 0xff), (int)(outbytes[i] & 0xff))
-            << "difference at byte " << i;
+    if (golden_len != outbytes.size())
+        goto bad;
+
+    for (std::size_t i=0; i<golden_len; ++i)
+    {
+        if ((int)(golden[i] & 0xff) != (int)(outbytes[i] & 0xff))
+            goto bad;
+    }
+
+    return;
+
+bad:
+    std::string golden_str, outbytes_str;
+    llvm::raw_string_ostream golden_ss(golden_str), outbytes_ss(outbytes_str);
+
+    for (std::size_t i=0; i<golden_len; ++i)
+        golden_ss << llvm::format("%02x ", (int)(golden[i] & 0xff));
+    golden_ss.flush();
+
+    for (std::size_t i=0; i<outbytes.size(); ++i)
+        outbytes_ss << llvm::format("%02x ", (int)(outbytes[i] & 0xff));
+    outbytes_ss.flush();
+
+    ASSERT_EQ(golden_str, outbytes_str);
 }
 
 } // namespace yasmunit

@@ -34,11 +34,11 @@
 
 #include <gtest/gtest.h>
 
-#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 
 
-namespace yasm { class Arch; class ArchModule; }
+namespace llvm { class StringRef; }
+namespace yasm { class Arch; class ArchModule; class Insn; }
 
 namespace yasmunit
 {
@@ -59,8 +59,14 @@ protected:
 private:
     // Parse line into instruction and expected data.
     void ParseAndTestLine(const char* filename,
-                          llvm::StringRef line,
+                          const llvm::StringRef& line,
                           int linenum);
+
+    // Test instruction against expected data and error/warning message.
+    void TestInsn(yasm::Insn* insn,
+                  std::size_t golden_len,
+                  const unsigned char* golden,
+                  const llvm::StringRef& ew_msg);
 
 };
 
