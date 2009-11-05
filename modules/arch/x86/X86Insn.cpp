@@ -598,7 +598,7 @@ X86Insn::MatchOperand(const Operand& op, const X86InfoOperand& info_op,
                 return false;
             break;
         case OPT_ST0:
-            if (!reg || reg->isNot(X86Register::FPUREG))
+            if (!reg || reg->isNot(X86Register::FPUREG) || reg->getNum() != 0)
                 return false;
             break;
         case OPT_Areg:
