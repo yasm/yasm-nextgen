@@ -522,11 +522,11 @@ ymm,	REGGROUP,	0,	X86Register::YMMREG,	0
 # segment registers
 #
 es,	SEGREG,	0,	X86SegmentRegister::ES,		64
-cs,	SEGREG,	0,	X86SegmentRegister::ES,		0
-ss,	SEGREG,	0,	X86SegmentRegister::ES,		64
-ds,	SEGREG,	0,	X86SegmentRegister::ES,		64
-fs,	SEGREG,	0,	X86SegmentRegister::ES,		0
-gs,	SEGREG,	0,	X86SegmentRegister::ES,		0
+cs,	SEGREG,	0,	X86SegmentRegister::CS,		0
+ss,	SEGREG,	0,	X86SegmentRegister::SS,		64
+ds,	SEGREG,	0,	X86SegmentRegister::DS,		64
+fs,	SEGREG,	0,	X86SegmentRegister::FS,		0
+gs,	SEGREG,	0,	X86SegmentRegister::GS,		0
 #
 # target modifiers
 #
