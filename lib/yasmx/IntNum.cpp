@@ -30,6 +30,7 @@
 
 #include <cctype>
 #include <climits>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <limits>
@@ -761,8 +762,8 @@ IntNum::getStr(llvm::SmallVectorImpl<char>& str,
     }
 
     char s[40];
-    sprintf(s, fmt, m_val.sv);
-    str.append(s, s+strlen(s));
+    std::sprintf(s, fmt, m_val.sv);
+    str.append(s, s+std::strlen(s));
 }
 
 std::string

@@ -29,6 +29,7 @@
 //
 #include "util.h"
 
+#include <cstdio>
 #include <cstring>
 
 #include "llvm/ADT/StringRef.h"
