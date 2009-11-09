@@ -41,6 +41,10 @@
 
 #include "config.h"
 
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+
 static std::vector<void*> loaded_plugins;
 
 static void*
