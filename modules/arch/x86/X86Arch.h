@@ -191,8 +191,8 @@ public:
     static const char* getName()
     { return "x86 (IA-32 and derivatives), AMD64"; }
     static const char* getKeyword() { return "x86"; }
-    static const unsigned int getWordSize() { return 16; }
-    static const unsigned int getMinInsnLen() { return 1; }
+    static unsigned int getWordSize() { return 16; }
+    static unsigned int getMinInsnLen() { return 1; }
     static ArchModule::MachineNames getMachines();
 
 private:
