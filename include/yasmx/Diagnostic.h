@@ -168,7 +168,7 @@ private:
   bool SuppressAllDiagnostics;   // Suppress all diagnostics.
   ExtensionHandling ExtBehavior; // Map extensions onto warnings or errors?
   DiagnosticClient *Client;
-  clang::SourceManager& SrcMgr;
+  clang::SourceManager* SrcMgr;
 
   /// DiagMappings - Mapping information for diagnostics.  Mapping info is
   /// packed into four bits per diagnostic.  The low three bits are the mapping
@@ -208,7 +208,7 @@ private:
   void *ArgToStringCookie;
   ArgToStringFnTy ArgToStringFn;
 public:
-  explicit Diagnostic(clang::SourceManager& smgr, DiagnosticClient *client = 0);
+  explicit Diagnostic(clang::SourceManager* smgr, DiagnosticClient *client = 0);
   ~Diagnostic();
 
   //===--------------------------------------------------------------------===//
@@ -615,7 +615,8 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
 inline DiagnosticBuilder Diagnostic::Report(clang::SourceLocation Loc,
                                             unsigned DiagID){
   assert(CurDiagID == ~0U && "Multiple diagnostics in flight at once!");
-  CurDiagLoc = clang::FullSourceLoc(Loc, SrcMgr);
+  assert(SrcMgr != 0 && "Generated unexpected diagnostic!");
+  CurDiagLoc = clang::FullSourceLoc(Loc, *SrcMgr);
   CurDiagID = DiagID;
   return DiagnosticBuilder(this);
 }
