@@ -171,7 +171,7 @@ GasParser::Parse(Object& object,
     }
 
     // Convert all undefined symbols into extern symbols
-    object.FinalizeSymbols(m_errwarns, true);
+    object.ExternUndefinedSymbols();
 }
 
 std::vector<llvm::StringRef>

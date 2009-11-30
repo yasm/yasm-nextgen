@@ -29,9 +29,9 @@
 #include "util.h"
 
 #include "YAML/emitter.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/Bytecode.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location_util.h"
@@ -49,23 +49,28 @@ public:
     ~MultipleBytecode();
 
     /// Finalizes the bytecode after parsing.
-    void Finalize(Bytecode& bc);
+    bool Finalize(Bytecode& bc, Diagnostic& diags);
 
     /// Calculates the minimum size of a bytecode.
-    unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
+    bool CalcLen(Bytecode& bc,
+                 /*@out@*/ unsigned long* len,
+                 const Bytecode::AddSpanFunc& add_span,
+                 Diagnostic& diags);
 
     /// Recalculates the bytecode's length based on an expanded span
     /// length.
     bool Expand(Bytecode& bc,
-                unsigned long& len,
+                unsigned long* len,
                 int span,
                 long old_val,
                 long new_val,
+                bool* keep,
                 /*@out@*/ long* neg_thres,
-                /*@out@*/ long* pos_thres);
+                /*@out@*/ long* pos_thres,
+                Diagnostic& diags);
 
     /// Convert a bytecode into its byte representation.
-    void Output(Bytecode& bc, BytecodeOutput& bc_out);
+    bool Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags);
 
     MultipleBytecode* clone() const;
 
@@ -96,15 +101,21 @@ MultipleBytecode::~MultipleBytecode()
 {
 }
 
-void
-MultipleBytecode::Finalize(Bytecode& bc)
+bool
+MultipleBytecode::Finalize(Bytecode& bc, Diagnostic& diags)
 {
     Value val(0, std::auto_ptr<Expr>(m_multiple->clone()));
 
     if (!val.Finalize())
-        throw TooComplexError(N_("multiple expression too complex"));
+    {
+        diags.Report(bc.getSource(), diag::err_multiple_too_complex);
+        return false;
+    }
     else if (val.isRelative())
-        throw NotAbsoluteError(N_("multiple expression not absolute"));
+    {
+        diags.Report(bc.getSource(), diag::err_multiple_not_absolute);
+        return false;
+    }
     // Finalize creates NULL output if value=0, but bc->multiple is NULL
     // if value=1 (this difference is to make the common case small).
     // However, this means we need to set bc->multiple explicitly to 0
@@ -118,13 +129,21 @@ MultipleBytecode::Finalize(Bytecode& bc)
          end = m_contents.bytecodes_end(); i != end; ++i)
     {
         if (i->getSpecial() == Bytecode::Contents::SPECIAL_OFFSET)
-            throw ValueError(N_("cannot combine multiples and setting assembly position"));
-        i->Finalize();
+        {
+            diags.Report(bc.getSource(), diag::err_multiple_setpos);
+            return false;
+        }
+        if (!i->Finalize(diags))
+            return false;
     }
+    return true;
 }
 
-unsigned long
-MultipleBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+bool
+MultipleBytecode::CalcLen(Bytecode& bc,
+                          /*@out@*/ unsigned long* len,
+                          const Bytecode::AddSpanFunc& add_span,
+                          Diagnostic& diags)
 {
     // Calculate multiple value as an integer
     m_mult_int = 1;
@@ -134,7 +153,8 @@ MultipleBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
         if (num.getSign() < 0)
         {
             m_mult_int = 0;
-            throw ValueError(N_("multiple is negative"));
+            diags.Report(bc.getSource(), diag::err_multiple_negative);
+            return false;
         }
         else
             m_mult_int = num.getInt();
@@ -144,8 +164,8 @@ MultipleBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
         if (m_multiple->Contains(ExprTerm::FLOAT))
         {
             m_mult_int = 0;
-            throw ValueError(
-                N_("expression must not contain floating point value"));
+            diags.Report(bc.getSource(), diag::err_expr_contains_float);
+            return false;
         }
         else
         {
@@ -155,53 +175,67 @@ MultipleBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
         }
     }
 
-    unsigned long len = 0;
+    unsigned long ilen = 0;
     for (BytecodeContainer::bc_iterator i = m_contents.bytecodes_begin(),
          end = m_contents.bytecodes_end(); i != end; ++i)
     {
-        i->CalcLen(add_span);
-        len += i->getTotalLen();
+        if (!i->CalcLen(add_span, diags))
+            return false;
+        ilen += i->getTotalLen();
     }
 
-    return len * m_mult_int;
+    *len = ilen * m_mult_int;
+    return true;
 }
 
 bool
 MultipleBytecode::Expand(Bytecode& bc,
-                         unsigned long& len,
+                         unsigned long* len,
                          int span,
                          long old_val,
                          long new_val,
+                         bool* keep,
                          /*@out@*/ long* neg_thres,
-                         /*@out@*/ long* pos_thres)
+                         /*@out@*/ long* pos_thres,
+                         Diagnostic& diags)
 {
     // XXX: support more than one bytecode here
-    bool rv;
     if (span == 0)
     {
         m_mult_int = new_val;
-        rv = true;
+        *keep = true;
     }
     else
-        rv = m_contents.bytecodes_first().Expand(span, old_val, new_val,
-                                                 neg_thres, pos_thres);
-    len = m_contents.bytecodes_first().getTotalLen() * m_mult_int;
-    return rv;
+    {
+        if (!m_contents.bytecodes_first().Expand(span, old_val, new_val, keep,
+                                                 neg_thres, pos_thres, diags))
+            return false;
+    }
+    *len = m_contents.bytecodes_first().getTotalLen() * m_mult_int;
+    return true;
 }
 
-void
-MultipleBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
+bool
+MultipleBytecode::Output(Bytecode& bc,
+                         BytecodeOutput& bc_out,
+                         Diagnostic& diags)
 {
     SimplifyCalcDist(*m_multiple);
     if (!m_multiple->isIntNum())
-        throw ValueError(N_("could not determine multiple"));
+    {
+        diags.Report(bc.getSource(), diag::err_multiple_unknown);
+        return false;
+    }
     IntNum num = m_multiple->getIntNum();
     if (num.getSign() < 0)
-        throw ValueError(N_("multiple is negative"));
+    {
+        diags.Report(bc.getSource(), diag::err_multiple_negative);
+        return false;
+    }
     assert(m_mult_int == num.getInt() && "multiple changed after optimize");
     m_mult_int = num.getInt();
     if (m_mult_int == 0)
-        return; // nothing to output
+        return true;    // nothing to output
 
     unsigned long total_len = 0;
     unsigned long pos = 0;
@@ -210,9 +244,11 @@ MultipleBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
         for (BytecodeContainer::bc_iterator i = m_contents.bytecodes_begin(),
              end = m_contents.bytecodes_end(); i != end; ++i)
         {
-            i->Output(bc_out);
+            if (!i->Output(bc_out, diags))
+                return false;
         }
     }
+    return true;
 }
 
 MultipleBytecode*

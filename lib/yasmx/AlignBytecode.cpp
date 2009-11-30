@@ -30,12 +30,12 @@
 
 #include "YAML/emitter.h"
 #include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 
@@ -55,20 +55,28 @@ public:
     ~AlignBytecode();
 
     /// Finalizes the bytecode after parsing.
-    void Finalize(Bytecode& bc);
+    bool Finalize(Bytecode& bc, Diagnostic& diags);
 
     /// Calculates the minimum size of a bytecode.
-    unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
+    bool CalcLen(Bytecode& bc,
+                 /*@out@*/ unsigned long* len,
+                 const Bytecode::AddSpanFunc& add_span,
+                 Diagnostic& diags);
 
     /// Recalculates the bytecode's length based on an expanded span
     /// length.
-    bool Expand(Bytecode& bc, unsigned long& len, int span,
-                long old_val, long new_val,
+    bool Expand(Bytecode& bc,
+                unsigned long* len,
+                int span,
+                long old_val,
+                long new_val,
+                bool* keep,
                 /*@out@*/ long* neg_thres,
-                /*@out@*/ long* pos_thres);
+                /*@out@*/ long* pos_thres,
+                Diagnostic& diags);
 
     /// Convert a bytecode into its byte representation.
-    void Output(Bytecode& bc, BytecodeOutput& bc_out);
+    bool Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags);
 
     SpecialType getSpecial() const;
 
@@ -106,41 +114,61 @@ AlignBytecode::~AlignBytecode()
 {
 }
 
-void
-AlignBytecode::Finalize(Bytecode& bc)
+bool
+AlignBytecode::Finalize(Bytecode& bc, Diagnostic& diags)
 {
     if (!m_boundary.isIntNum())
-        throw NotConstantError(N_("align boundary must be a constant"));
+    {
+        diags.Report(bc.getSource(), diag::err_align_boundary_not_const);
+        return false;
+    }
     if (!m_fill.isEmpty() && !m_fill.isIntNum())
-        throw NotConstantError(N_("align fill must be a constant"));
+    {
+        diags.Report(bc.getSource(), diag::err_align_fill_not_const);
+        return false;
+    }
     if (!m_maxskip.isEmpty() && !m_maxskip.isIntNum())
-        throw NotConstantError(N_("align maximum skip must be a constant"));
-}
-
-unsigned long
-AlignBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
-{
-    unsigned long len = 0;
-    long neg_thres = 0;
-    long pos_thres = 0;
-
-    Expand(bc, len, 0, 0, static_cast<long>(bc.getTailOffset()), &neg_thres,
-           &pos_thres);
-    return len;
+    {
+        diags.Report(bc.getSource(), diag::err_align_skip_not_const);
+        return false;
+    }
+    return true;
 }
 
 bool
-AlignBytecode::Expand(Bytecode& bc, unsigned long& len, int span,
-                      long old_val, long new_val,
-                      /*@out@*/ long* neg_thres, /*@out@*/ long* pos_thres)
+AlignBytecode::CalcLen(Bytecode& bc,
+                       /*@out@*/ unsigned long* len,
+                       const Bytecode::AddSpanFunc& add_span,
+                       Diagnostic& diags)
+{
+    bool keep = false;
+    long neg_thres = 0;
+    long pos_thres = 0;
+
+    *len = 0;
+    return Expand(bc, len, 0, 0, static_cast<long>(bc.getTailOffset()),
+                  &keep, &neg_thres, &pos_thres, diags);
+}
+
+bool
+AlignBytecode::Expand(Bytecode& bc,
+                      unsigned long* len,
+                      int span,
+                      long old_val,
+                      long new_val,
+                      bool* keep,
+                      /*@out@*/ long* neg_thres,
+                      /*@out@*/ long* pos_thres,
+                      Diagnostic& diags)
 {
     unsigned long boundary = m_boundary.getIntNum().getUInt();
 
     if (boundary == 0)
     {
-        len = 0;
+        *len = 0;
         *pos_thres = new_val;
-        return false;
+        *keep = false;
+        return true;
     }
 
     unsigned long end = static_cast<unsigned long>(new_val);
@@ -148,29 +176,30 @@ AlignBytecode::Expand(Bytecode& bc, unsigned long& len, int span,
         end = (end & ~(boundary-1)) + boundary;
 
     *pos_thres = static_cast<long>(end);
-    len = end - static_cast<unsigned long>(new_val);
+    *len = end - static_cast<unsigned long>(new_val);
 
     if (!m_maxskip.isEmpty())
     {
         unsigned long maxskip = m_maxskip.getIntNum().getUInt();
-        if (len > maxskip)
+        if (*len > maxskip)
         {
             *pos_thres = static_cast<long>(end-maxskip)-1;
-            len = 0;
+            *len = 0;
         }
     }
+    *keep = true;
     return true;
 }
 
-void
-AlignBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
+bool
+AlignBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
 {
     unsigned long len;
     unsigned long boundary = m_boundary.getIntNum().getUInt();
     Bytes& bytes = bc_out.getScratch();
 
     if (boundary == 0)
-        return;
+        return true;
     else
     {
         unsigned long tail = bc.getTailOffset();
@@ -179,12 +208,12 @@ AlignBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
             end = (tail & ~(boundary-1)) + boundary;
         len = end - tail;
         if (len == 0)
-            return;
+            return true;
         if (!m_maxskip.isEmpty())
         {
             unsigned long maxskip = m_maxskip.getIntNum().getUInt();
             if (len > maxskip)
-                return;
+                return true;
         }
     }
 
@@ -199,7 +228,10 @@ AlignBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
         while (!m_code_fill[maxlen] && maxlen>0)
             maxlen--;
         if (maxlen == 0)
-            throw Error(N_("could not find any code alignment size"));
+        {
+            diags.Report(bc.getSource(), diag::err_align_code_not_found);
+            return false;
+        }
 
         // Fill with maximum code fill as much as possible
         while (len > maxlen)
@@ -212,8 +244,9 @@ AlignBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 
         if (!m_code_fill[len])
         {
-            throw ValueError(String::Compose(N_("invalid alignment size %1"),
-                                             len));
+            diags.Report(bc.getSource(), diag::err_align_invalid_code_size)
+                << static_cast<unsigned int>(len);
+            return false;
         }
         // Handle rest of code fill
         bytes.insert(bytes.end(),
@@ -226,6 +259,7 @@ AlignBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
         bytes.insert(bytes.end(), len, 0);
     }
     bc_out.Output(bytes);
+    return true;
 }
 
 AlignBytecode::SpecialType

@@ -34,9 +34,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytecode.h"
-#include "yasmx/Errwarns.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Object.h"
 #include "yasmx/Section.h"
@@ -127,9 +126,9 @@ FindGroup(BinGroups& groups, const Section& section)
     return 0;
 }
 
-BinLink::BinLink(Object& object, Errwarns& errwarns)
+BinLink::BinLink(Object& object, Diagnostic& diags)
     : m_object(object),
-      m_errwarns(errwarns),
+      m_diags(diags),
       m_lma_groups_owner(m_lma_groups),
       m_vma_groups_owner(m_vma_groups)
 {
@@ -173,14 +172,14 @@ BinLink::CreateLMAGroup(Section& section)
     {
         if (align > bsd->align)
         {
-            setWarn(WARN_GENERAL, String::Compose(
-                N_("section `%1' internal align of %2 is greater than `%3' of %4; using `%5'"),
-                section.getName(),
-                align,
-                N_("align"),
-                bsd->align,
-                N_("align")));
-            m_errwarns.Propagate(clang::SourceRange());
+            m_diags.Report(clang::SourceLocation(),
+                           m_diags.getCustomDiagID(Diagnostic::Warning,
+                N_("section '%0' internal align of %1 is greater than '%2' of %3; using '%4'")))
+                << section.getName()
+                << static_cast<unsigned int>(align)
+                << "align"
+                << bsd->align.getStr()
+                << "align";
         }
     }
 
@@ -189,8 +188,9 @@ BinLink::CreateLMAGroup(Section& section)
     {
         if (!bsd->start->isIntNum())
         {
-            m_errwarns.Propagate(bsd->start_source,
-                TooComplexError(N_("start expression is too complex")));
+            m_diags.Report(bsd->start_source,
+                           m_diags.getCustomDiagID(Diagnostic::Error,
+                                 N_("start expression is too complex")));
             return false;
         }
         else
@@ -205,8 +205,9 @@ BinLink::CreateLMAGroup(Section& section)
     {
         if (!bsd->vstart->isIntNum())
         {
-            m_errwarns.Propagate(bsd->vstart_source,
-                TooComplexError(N_("vstart expression is too complex")));
+            m_diags.Report(bsd->vstart_source,
+                           m_diags.getCustomDiagID(Diagnostic::Error,
+                                 N_("vstart expression is too complex")));
             return false;
         }
         else
@@ -221,9 +222,13 @@ BinLink::CreateLMAGroup(Section& section)
     Location end = {&section.bytecodes_last(),
                     section.bytecodes_last().getTotalLen()};
     if (!CalcDist(start, end, &bsd->length))
-        throw ValueError(String::Compose(
-            N_("could not determine length of section `%1'"),
-            section.getName()));
+    {
+        m_diags.Report(bsd->vstart_source,
+                       m_diags.getCustomDiagID(Diagnostic::Error,
+            N_("could not determine length of section '%1'")))
+            << section.getName();
+        return false;
+    }
     bsd->has_length = true;
 
     m_lma_groups.push_back(new BinGroup(section, *bsd));
@@ -276,11 +281,11 @@ BinLink::DoLink(const IntNum& origin)
             found = FindGroup(m_lma_groups, group->m_bsd.follows);
             if (!found)
             {
-                m_errwarns.Propagate(clang::SourceRange(),
-                                     ValueError(String::Compose(
-                    N_("section `%1' follows an invalid or unknown section `%2'"),
-                    group->m_section.getName(),
-                    group->m_bsd.follows)));
+                m_diags.Report(clang::SourceLocation(),
+                               m_diags.getCustomDiagID(Diagnostic::Error,
+                    N_("section '%0' follows an invalid or unknown section '%1'")))
+                    << group->m_section.getName()
+                    << group->m_bsd.follows;
                 return false;
             }
 
@@ -288,11 +293,11 @@ BinLink::DoLink(const IntNum& origin)
             if (&group->m_section == &found->m_section ||
                 FindGroup(group->m_follow_groups, found->m_section))
             {
-                m_errwarns.Propagate(clang::SourceRange(),
-                                     ValueError(String::Compose(
-                    N_("follows loop between section `%1' and section `%2'"),
-                    group->m_section.getName(),
-                    found->m_section.getName())));
+                m_diags.Report(clang::SourceLocation(),
+                               m_diags.getCustomDiagID(Diagnostic::Error,
+                    N_("follows loop between section '%0' and section '%1'")))
+                    << group->m_section.getName()
+                    << found->m_section.getName();
                 return false;
             }
 
@@ -341,7 +346,7 @@ BinLink::DoLink(const IntNum& origin)
     {
         if (i->m_bsd.has_istart)
             start = i->m_section.getLMA();
-        i->AssignStartRecurse(start, last, vdelta, m_errwarns);
+        i->AssignStartRecurse(start, last, vdelta, m_diags);
         start = last;
     }
 
@@ -370,11 +375,11 @@ BinLink::DoLink(const IntNum& origin)
             found = FindGroup(m_vma_groups, group->m_bsd.vfollows);
             if (!found)
             {
-                m_errwarns.Propagate(clang::SourceRange(),
-                                     ValueError(String::Compose(
-                    N_("section `%1' vfollows an invalid or unknown section `%2'"),
-                    group->m_section.getName(),
-                    group->m_bsd.vfollows)));
+                m_diags.Report(clang::SourceLocation(),
+                               m_diags.getCustomDiagID(Diagnostic::Error,
+                    N_("section '%0' vfollows an invalid or unknown section '%1'")))
+                    << group->m_section.getName()
+                    << group->m_bsd.vfollows;
                 return false;
             }
 
@@ -382,11 +387,11 @@ BinLink::DoLink(const IntNum& origin)
             if (&group->m_section == &found->m_section ||
                 FindGroup(group->m_follow_groups, found->m_section))
             {
-                m_errwarns.Propagate(clang::SourceRange(),
-                                     ValueError(String::Compose(
-                    N_("vfollows loop between section `%1' and section `%2'"),
-                    group->m_section.getName(),
-                    found->m_section.getName())));
+                m_diags.Report(clang::SourceLocation(),
+                               m_diags.getCustomDiagID(Diagnostic::Error,
+                    N_("vfollows loop between section '%0' and section '%1'")))
+                    << group->m_section.getName()
+                    << found->m_section.getName();
                 return false;
             }
 
@@ -409,7 +414,7 @@ BinLink::DoLink(const IntNum& origin)
          i != end; ++i)
     {
         start = i->m_section.getVMA();
-        i->AssignVStartRecurse(start, m_errwarns);
+        i->AssignVStartRecurse(start, m_diags);
     }
 
     return true;
@@ -446,11 +451,12 @@ BinLink::CheckLMAOverlap(const Section& sect, const Section& other)
 
     if (overlap.getSign() > 0)
     {
-        m_errwarns.Propagate(clang::SourceRange(), Error(String::Compose(
-            N_("sections `%1' and `%2' overlap by %3 bytes"),
-            sect.getName(),
-            other.getName(),
-            overlap)));
+        m_diags.Report(clang::SourceLocation(),
+                       m_diags.getCustomDiagID(Diagnostic::Error,
+            N_("sections '%0' and '%1' overlap by %2 bytes")))
+            << sect.getName()
+            << other.getName()
+            << overlap.getStr();
         return false;
     }
 
@@ -497,7 +503,7 @@ void
 BinGroup::AssignStartRecurse(IntNum& start,
                              IntNum& last,
                              IntNum& vdelta,
-                             Errwarns& errwarns)
+                             Diagnostic& diags)
 {
     // Determine LMA
     if (m_bsd.has_align)
@@ -505,9 +511,9 @@ BinGroup::AssignStartRecurse(IntNum& start,
         m_section.setLMA(AlignStart(start, m_bsd.align));
         if (m_bsd.has_istart && start != m_section.getLMA())
         {
-            setWarn(WARN_GENERAL,
-                N_("start inconsistent with align; using aligned value"));
-            errwarns.Propagate(m_bsd.start_source);
+            diags.Report(m_bsd.start_source,
+                         diags.getCustomDiagID(Diagnostic::Warning,
+                N_("start inconsistent with align; using aligned value")));
         }
     }
     else
@@ -551,7 +557,7 @@ BinGroup::AssignStartRecurse(IntNum& start,
         start = m_section.getLMA();
         start += m_bsd.length;
 
-        follow_group->AssignStartRecurse(start, last, vdelta, errwarns);
+        follow_group->AssignStartRecurse(start, last, vdelta, diags);
     }
 }
 
@@ -560,7 +566,7 @@ BinGroup::AssignStartRecurse(IntNum& start,
 // The tmp parameter is just a working intnum so one doesn't have to be
 // locally allocated for this purpose.
 void
-BinGroup::AssignVStartRecurse(IntNum& start, Errwarns& errwarns)
+BinGroup::AssignVStartRecurse(IntNum& start, Diagnostic& diags)
 {
     // Determine VMA section alignment as necessary.
     // Default to LMA alignment if not specified.
@@ -573,14 +579,14 @@ BinGroup::AssignVStartRecurse(IntNum& start, Errwarns& errwarns)
     {
         if (m_section.getAlign() > m_bsd.valign)
         {
-            setWarn(WARN_GENERAL, String::Compose(
-                N_("section `%1' internal align of %2 is greater than `%3' of %4; using `%5'"),
-                m_section.getName(),
-                m_section.getAlign(),
-                N_("valign"),
-                m_bsd.valign,
-                N_("valign")));
-            errwarns.Propagate(clang::SourceRange());
+            diags.Report(clang::SourceLocation(),
+                         diags.getCustomDiagID(Diagnostic::Warning,
+                N_("section '%0' internal align of %1 is greater than '%2' of %3; using '%4'")))
+                << m_section.getName()
+                << static_cast<unsigned int>(m_section.getAlign())
+                << "valign"
+                << m_bsd.valign.getStr()
+                << "valign";
         }
     }
 
@@ -590,8 +596,9 @@ BinGroup::AssignVStartRecurse(IntNum& start, Errwarns& errwarns)
         m_section.setVMA(AlignStart(start, m_bsd.valign));
         if (m_bsd.has_ivstart && start != m_section.getVMA())
         {
-            errwarns.Propagate(m_bsd.vstart_source,
-                ValueError(N_("vstart inconsistent with valign")));
+            diags.Report(m_bsd.vstart_source,
+                         diags.getCustomDiagID(Diagnostic::Error,
+                             N_("vstart inconsistent with valign")));
         }
     }
     else
@@ -607,7 +614,7 @@ BinGroup::AssignVStartRecurse(IntNum& start, Errwarns& errwarns)
         start = m_section.getVMA();
         start += m_bsd.length;
 
-        follow_group->AssignVStartRecurse(start, errwarns);
+        follow_group->AssignVStartRecurse(start, diags);
     }
 }
 

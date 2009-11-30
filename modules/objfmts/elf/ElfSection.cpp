@@ -34,6 +34,7 @@
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/InputBuffer.h"
 #include "yasmx/StringTable.h"
 #include "yasmx/Symbol.h"
@@ -260,7 +261,8 @@ ElfSection::CreateSection(const StringTable& shstrtab) const
     {
         Bytecode& gap =
             section->AppendGap(m_size.getUInt(), clang::SourceLocation());
-        gap.CalcLen(0);     // force length calculation of gap
+        Diagnostic nodiags(0);
+        gap.CalcLen(0, nodiags);    // force length calculation of gap
     }
 
     return section;
@@ -338,9 +340,9 @@ ElfSection::WriteRel(llvm::raw_ostream& os,
 unsigned long
 ElfSection::WriteRelocs(llvm::raw_ostream& os,
                         Section& sect,
-                        Errwarns& errwarns,
                         Bytes& scratch,
-                        const ElfMachine& machine)
+                        const ElfMachine& machine,
+                        Diagnostic& diags)
 {
     if (sect.getRelocs().size() == 0)
         return 0;
@@ -348,7 +350,10 @@ ElfSection::WriteRelocs(llvm::raw_ostream& os,
     // first align section to multiple of 4
     uint64_t pos = os.tell();
     if (os.has_error())
-        throw IOError(N_("couldn't read position on output stream"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_file_output_position);
+        pos = 0;
+    }
     uint64_t apos = (pos + 3) & ~3;
     for (; pos < apos; ++pos)
         os << '\0';

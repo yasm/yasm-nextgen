@@ -669,7 +669,7 @@ GasParser::ParseDirLeb128(unsigned int sign)
             Diag(getTokenSource(), diag::err_expected_expression_after) << ",";
             return false;
         }
-        AppendLEB128(*m_container, e, sign, m_source);
+        AppendLEB128(*m_container, e, sign, m_source, *m_diags);
         if (m_token != ',')
             break;
         getNextToken(); // ','

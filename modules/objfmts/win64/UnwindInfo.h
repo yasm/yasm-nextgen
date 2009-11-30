@@ -56,17 +56,23 @@ public:
     UnwindInfo();
     ~UnwindInfo();
 
-    virtual void Finalize(Bytecode& bc);
-    virtual unsigned long CalcLen(Bytecode& bc,
-                                  const Bytecode::AddSpanFunc& add_span);
+    virtual bool Finalize(Bytecode& bc, Diagnostic& diags);
+    virtual bool CalcLen(Bytecode& bc,
+                         /*@out@*/ unsigned long* len,
+                         const Bytecode::AddSpanFunc& add_span,
+                         Diagnostic& diags);
     virtual bool Expand(Bytecode& bc,
-                        unsigned long& len,
+                        unsigned long* len,
                         int span,
                         long old_val,
                         long new_val,
+                        bool* keep,
                         /*@out@*/ long* neg_thres,
-                        /*@out@*/ long* pos_thres);
-    virtual void Output(Bytecode& bc, BytecodeOutput& bc_out);
+                        /*@out@*/ long* pos_thres,
+                        Diagnostic& diags);
+    virtual bool Output(Bytecode& bc,
+                        BytecodeOutput& bc_out,
+                        Diagnostic& diags);
     virtual UnwindInfo* clone() const;
     virtual void Write(YAML::Emitter& out) const;
 

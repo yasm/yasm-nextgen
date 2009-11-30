@@ -30,12 +30,12 @@
 
 #include "YAML/emitter.h"
 #include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_leb128.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 
@@ -53,13 +53,16 @@ public:
     ~LEB128Bytecode();
 
     /// Finalizes the bytecode after parsing.
-    void Finalize(Bytecode& bc);
+    bool Finalize(Bytecode& bc, Diagnostic& diags);
 
     /// Calculates the minimum size of a bytecode.
-    unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
+    bool CalcLen(Bytecode& bc,
+                 /*@out@*/ unsigned long* len,
+                 const Bytecode::AddSpanFunc& add_span,
+                 Diagnostic& diags);
 
     /// Convert a bytecode into its byte representation.
-    void Output(Bytecode& bc, BytecodeOutput& bc_out);
+    bool Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags);
 
     LEB128Bytecode* clone() const;
 
@@ -88,28 +91,37 @@ LEB128Bytecode::~LEB128Bytecode()
 {
 }
 
-void
-LEB128Bytecode::Finalize(Bytecode& bc)
+bool
+LEB128Bytecode::Finalize(Bytecode& bc, Diagnostic& diags)
 {
     m_expr.Simplify();
     if (!m_expr.isIntNum())
-        throw NotConstantError(N_("LEB128 value must be a constant"));
+    {
+        diags.Report(bc.getSource(), diag::err_value_not_constant);
+        return false;
+    }
     if (m_expr.getIntNum().getSign() < 0 && !m_sign)
-        setWarn(WARN_GENERAL, N_("negative value in unsigned LEB128"));
+        diags.Report(bc.getSource(), diag::warn_negative_uleb128);
+    return true;
 }
 
-unsigned long
-LEB128Bytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+bool
+LEB128Bytecode::CalcLen(Bytecode& bc,
+                        /*@out@*/ unsigned long* len,
+                        const Bytecode::AddSpanFunc& add_span,
+                        Diagnostic& diags)
 {
-    return SizeLEB128(m_expr.getIntNum(), m_sign);
+    *len = SizeLEB128(m_expr.getIntNum(), m_sign);
+    return true;
 }
 
-void
-LEB128Bytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
+bool
+LEB128Bytecode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
 {
     Bytes& bytes = bc_out.getScratch();
     WriteLEB128(bytes, m_expr.getIntNum(), m_sign);
     bc_out.Output(bytes);
+    return true;
 }
 
 LEB128Bytecode*
@@ -133,27 +145,31 @@ LEB128Bytecode::Write(YAML::Emitter& out) const
 namespace yasm
 {
 
-void AppendLEB128(BytecodeContainer& container,
-                  const IntNum& intn,
-                  bool sign,
-                  clang::SourceLocation source)
+void
+AppendLEB128(BytecodeContainer& container,
+             const IntNum& intn,
+             bool sign,
+             clang::SourceLocation source,
+             Diagnostic& diags)
 {
     if (intn.getSign() < 0 && !sign)
-        setWarn(WARN_GENERAL, N_("negative value in unsigned LEB128"));
+        diags.Report(source, diag::warn_negative_uleb128);
     Bytecode& bc = container.FreshBytecode();
     WriteLEB128(bc.getFixed(), intn, sign);
 }
 
-void AppendLEB128(BytecodeContainer& container,
-                  std::auto_ptr<Expr> expr,
-                  bool sign,
-                  clang::SourceLocation source)
+void
+AppendLEB128(BytecodeContainer& container,
+             std::auto_ptr<Expr> expr,
+             bool sign,
+             clang::SourceLocation source,
+             Diagnostic& diags)
 {
     // If expression is just an integer, output directly.
     expr->Simplify();
     if (expr->isIntNum())
     {
-        AppendLEB128(container, expr->getIntNum(), sign, source);
+        AppendLEB128(container, expr->getIntNum(), sign, source, diags);
         return;
     }
 

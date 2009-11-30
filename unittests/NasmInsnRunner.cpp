@@ -27,6 +27,7 @@
 #include <memory>
 #include <string>
 
+#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/STLExtras.h"
@@ -37,13 +38,16 @@
 #include "yasmx/Bytecode.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/EffAddr.h"
-#include "yasmx/Errwarns.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Insn.h"
 #include "yasmx/IntNum.h"
 
 #include "unittest_util.h"
+
+#include <gmock/gmock.h>
+
 
 using namespace yasm;
 using namespace yasmunit;
@@ -113,20 +117,22 @@ public:
     ~RawOutput() {}
 
     // OutputBytecode overrides
-    void ConvertValueToBytes(Value& value,
+    bool ConvertValueToBytes(Value& value,
                              Bytes& bytes,
                              Location loc,
-                             int warn);
+                             int warn,
+                             Diagnostic& diags);
 
 private:
     const Arch& m_arch;
 };
 
-void
+bool
 RawOutput::ConvertValueToBytes(Value& value,
                                Bytes& bytes,
                                Location loc,
-                               int warn)
+                               int warn,
+                               Diagnostic& diags)
 {
     // Simplify absolute portion of value
     if (Expr* abs = value.getAbs())
@@ -135,6 +141,7 @@ RawOutput::ConvertValueToBytes(Value& value,
     // Output
     IntNum intn;
     value.OutputBasic(bytes, &intn, warn, m_arch);
+    return true;
 }
 
 } // anonymous namespace
@@ -369,6 +376,14 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
     TestInsn(insn.get(), golden.size(), golden.data(), golden_errwarn);
 }
 
+class MockDiagnosticClient : public DiagnosticClient
+{
+public:
+    MOCK_METHOD2(HandleDiagnostic, void(Diagnostic::Level DiagLevel,
+                                        const DiagnosticInfo& Info));
+
+};
+
 void
 NasmInsnRunner::TestInsn(yasm::Insn* insn,
                          std::size_t golden_len,
@@ -379,16 +394,28 @@ NasmInsnRunner::TestInsn(yasm::Insn* insn,
     // Turn the instruction into bytes
     //
     BytecodeContainer container;
-    Errwarns errwarns;
-    ASSERT_NO_THROW({ insn->Append(container, clang::SourceLocation()); });
-    ASSERT_NO_THROW({ container.Finalize(errwarns); });
-    ASSERT_NO_THROW({ container.bytecodes_first().CalcLen(AddSpanTest); });
-    container.UpdateOffsets(errwarns);
+    clang::SourceManager smgr;
+    ::testing::StrictMock<MockDiagnosticClient> mock_client;
+    Diagnostic diags(&smgr, &mock_client);
+    insn->Append(container, clang::SourceLocation());
+
+    container.Finalize(diags);
+    if (diags.hasErrorOccurred())
+        return;
+
+    container.bytecodes_first().CalcLen(AddSpanTest, diags);
+    ASSERT_EQ(golden_len, container.bytecodes_first().getTotalLen());
+    if (diags.hasErrorOccurred())
+        return;
+
+    container.UpdateOffsets(diags);
+    if (diags.hasErrorOccurred())
+        return;
 
     llvm::SmallString<64> outbytes;
     llvm::raw_svector_ostream outstream(outbytes);
     RawOutput outputter(outstream, *m_arch);
-    ASSERT_NO_THROW({ container.bytecodes_first().Output(outputter); });
+    container.bytecodes_first().Output(outputter, diags);
     outstream.flush();
 
     //

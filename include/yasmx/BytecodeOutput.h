@@ -43,6 +43,7 @@ namespace yasm
 {
 
 class Bytecode;
+class Diagnostic;
 
 /// Bytecode output interface.
 ///
@@ -97,10 +98,19 @@ public:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    void Output(Value& value, Bytes& bytes, Location loc, int warn)
+    /// @param diags        diagnostic reporting
+    /// @return False if an error occurred.
+    bool Output(Value& value,
+                Bytes& bytes,
+                Location loc,
+                int warn,
+                Diagnostic& diags)
     {
-        ConvertValueToBytes(value, bytes, loc, value.AdjustWarn(warn));
+        if (!ConvertValueToBytes(value, bytes, loc, value.AdjustWarn(warn),
+                                 diags))
+            return false;
         Output(bytes);
+        return true;
     }
 
     /// Output a symbol reference.
@@ -119,13 +129,17 @@ public:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    void Output(SymbolRef sym,
+    /// @param diags        diagnostic reporting
+    /// @return False if an error occurred.
+    bool Output(SymbolRef sym,
                 Bytes& bytes,
                 Location loc,
                 unsigned int valsize,
-                int warn)
+                int warn,
+                Diagnostic& diags)
     {
-        ConvertSymbolToBytes(sym, bytes, loc, valsize, warn);
+        if (!ConvertSymbolToBytes(sym, bytes, loc, valsize, warn, diags))
+            return false;
         Output(bytes);
     }
 
@@ -170,10 +184,13 @@ protected:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    virtual void ConvertValueToBytes(Value& value,
+    /// @param diags        diagnostic reporting
+    /// @return False if an error occurred.
+    virtual bool ConvertValueToBytes(Value& value,
                                      Bytes& bytes,
                                      Location loc,
-                                     int warn) = 0;
+                                     int warn,
+                                     Diagnostic& diags) = 0;
 
     /// Convert a symbol to bytes.  Called by output_sym() so that
     /// implementations may keep track of relocations generated this way.
@@ -195,11 +212,14 @@ protected:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    virtual void ConvertSymbolToBytes(SymbolRef sym,
+    /// @param diags        diagnostic reporting
+    /// @return False if an error occurred.
+    virtual bool ConvertSymbolToBytes(SymbolRef sym,
                                       Bytes& bytes,
                                       Location loc,
                                       unsigned int valsize,
-                                      int warn);
+                                      int warn,
+                                      Diagnostic& diags);
 
     /// Overrideable implementation of output_gap().
     /// @param size         gap size, in bytes
@@ -226,10 +246,11 @@ public:
     ~BytecodeNoOutput();
 
 protected:
-    void ConvertValueToBytes(Value& value,
+    bool ConvertValueToBytes(Value& value,
                              Bytes& bytes,
                              Location loc,
-                             int warn);
+                             int warn,
+                             Diagnostic& diags);
     void DoOutputGap(unsigned int size);
     void DoOutputBytes(const Bytes& bytes);
 };

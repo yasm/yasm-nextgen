@@ -36,7 +36,7 @@ namespace yasm
 {
 
 class Bytecode;
-class Errwarns;
+class Diagnostic;
 class IntNum;
 class Object;
 class Section;
@@ -65,8 +65,8 @@ public:
     void AssignStartRecurse(IntNum& start,
                             IntNum& last,
                             IntNum& vdelta,
-                            Errwarns& errwarns);
-    void AssignVStartRecurse(IntNum& start, Errwarns& errwarns);
+                            Diagnostic& diags);
+    void AssignVStartRecurse(IntNum& start, Diagnostic& diags);
 
     Section& m_section;
     BinSection& m_bsd;
@@ -89,7 +89,7 @@ YAML::Emitter& operator<< (YAML::Emitter& os, const BinGroups& groups);
 class BinLink
 {
 public:
-    BinLink(Object& object, Errwarns& errwarns);
+    BinLink(Object& object, Diagnostic& diags);
     ~BinLink();
 
     void Write(YAML::Emitter& out) const;
@@ -110,7 +110,7 @@ private:
     void OutputBytecode(Bytecode& bc);
 
     Object& m_object;
-    Errwarns& m_errwarns;
+    Diagnostic& m_diags;
 
     BinGroups m_lma_groups, m_vma_groups;
     stdx::ptr_vector_owner<BinGroup> m_lma_groups_owner, m_vma_groups_owner;

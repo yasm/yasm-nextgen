@@ -134,17 +134,18 @@ public:
     XdfOutput(llvm::raw_ostream& os, Object& object);
     ~XdfOutput();
 
-    void OutputSection(Section& sect, Errwarns& errwarns);
+    void OutputSection(Section& sect, Diagnostic& diags);
     void OutputSymbol(const Symbol& sym,
                       Errwarns& errwarns,
                       bool all_syms,
                       unsigned long* strtab_offset);
 
     // OutputBytecode overrides
-    void ConvertValueToBytes(Value& value,
+    bool ConvertValueToBytes(Value& value,
                              Bytes& bytes,
                              Location loc,
-                             int warn);
+                             int warn,
+                             Diagnostic& diags);
 
 private:
     Object& m_object;
@@ -161,19 +162,23 @@ XdfOutput::~XdfOutput()
 {
 }
 
-void
+bool
 XdfOutput::ConvertValueToBytes(Value& value,
                                Bytes& bytes,
                                Location loc,
-                               int warn)
+                               int warn,
+                               Diagnostic& diags)
 {
     // We can't handle these types of values
     if (value.isSectionRelative())
-        throw TooComplexError(N_("xdf: relocation too complex"));
+    {
+        diags.Report(value.getSource().getBegin(), diag::err_reloc_too_complex);
+        return false;
+    }
 
     IntNum intn(0);
     if (value.OutputBasic(bytes, &intn, warn, *m_object.getArch()))
-        return;
+        return true;
 
     if (value.isRelative())
     {
@@ -186,7 +191,11 @@ XdfOutput::ConvertValueToBytes(Value& value,
             intn += intn2;
         }
         else if (value.hasSubRelative())
-            throw TooComplexError(N_("xdf: relocation too complex"));
+        {
+            diags.Report(value.getSource().getBegin(),
+                         diag::err_reloc_too_complex);
+            return false;
+        }
 
         std::auto_ptr<XdfReloc>
             reloc(new XdfReloc(loc.getOffset(), value, pc_rel));
@@ -197,10 +206,11 @@ XdfOutput::ConvertValueToBytes(Value& value,
     }
 
     m_object.getArch()->ToBytes(intn, bytes, value.getSize(), 0, warn);
+    return true;
 }
 
 void
-XdfOutput::OutputSection(Section& sect, Errwarns& errwarns)
+XdfOutput::OutputSection(Section& sect, Diagnostic& diags)
 {
     BytecodeOutput* outputter = this;
 
@@ -219,23 +229,19 @@ XdfOutput::OutputSection(Section& sect, Errwarns& errwarns)
     {
         pos = m_os.tell();
         if (m_os.has_error())
-            throw Fatal(N_("could not get file position on output file"));
+        {
+            diags.Report(clang::SourceLocation(),
+                         diag::err_file_output_position);
+            return;
+        }
     }
 
     // Output bytecodes
     for (Section::bc_iterator i=sect.bytecodes_begin(),
          end=sect.bytecodes_end(); i != end; ++i)
     {
-        try
-        {
-            i->Output(*outputter);
+        if (i->Output(*outputter, diags))
             xsect->size += i->getTotalLen();
-        }
-        catch (Error& err)
-        {
-            errwarns.Propagate(i->getSource(), err);
-        }
-        errwarns.Propagate(i->getSource()); // propagate warnings
     }
 
     // Sanity check final section size
@@ -253,7 +259,10 @@ XdfOutput::OutputSection(Section& sect, Errwarns& errwarns)
 
     pos = m_os.tell();
     if (m_os.has_error())
-        throw Fatal(N_("could not get file position on output file"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_file_output_position);
+        return;
+    }
     xsect->relptr = static_cast<unsigned long>(pos);
 
     for (Section::const_reloc_iterator i=sect.relocs_begin(),
@@ -355,8 +364,9 @@ XdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
         int vis = sym->getVisibility();
         if (vis & Symbol::COMMON)
         {
-            errwarns.Propagate(sym->getDeclSource(),
-                Error(N_("XDF object format does not support common variables")));
+            diags.Report(sym->getDeclSource(),
+                         diags.getCustomDiagID(Diagnostic::Error,
+                N_("XDF object format does not support common variables")));
             continue;
         }
         if (all_syms || (vis != Symbol::LOCAL && !(vis & Symbol::DLOCAL)))
@@ -382,7 +392,10 @@ XdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     // Allocate space for headers by seeking forward
     os.seek(FILEHEAD_SIZE+SECTHEAD_SIZE*scnum);
     if (os.has_error())
-        throw Fatal(N_("could not seek on output file"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+        return;
+    }
 
     XdfOutput out(os, m_object);
 
@@ -409,13 +422,16 @@ XdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        out.OutputSection(*i, errwarns);
+        out.OutputSection(*i, diags);
     }
 
     // Write headers
     os.seek(0);
     if (os.has_error())
-        throw Fatal(N_("could not seek on output file"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+        return;
+    }
 
     // Output object header
     Bytes& scratch = out.getScratch();
@@ -547,7 +563,8 @@ XdfObject::Read(const llvm::MemoryBuffer& in)
         {
             Bytecode& gap =
                 section->AppendGap(xsect->size, clang::SourceLocation());
-            gap.CalcLen(0);     // force length calculation of gap
+            Diagnostic nodiags(0);
+            gap.CalcLen(0, nodiags);    // force length calculation of gap
         }
         else
         {

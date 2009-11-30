@@ -29,13 +29,13 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "YAML/emitter.h"
 #include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Value.h"
@@ -55,13 +55,16 @@ public:
     ~IncbinBytecode();
 
     /// Finalizes the bytecode after parsing.
-    void Finalize(Bytecode& bc);
+    bool Finalize(Bytecode& bc, Diagnostic& diags);
 
     /// Calculates the minimum size of a bytecode.
-    unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
+    bool CalcLen(Bytecode& bc,
+                 /*@out@*/ unsigned long* len,
+                 const Bytecode::AddSpanFunc& add_span,
+                 Diagnostic& diags);
 
     /// Convert a bytecode into its byte representation.
-    void Output(Bytecode& bc, BytecodeOutput& bc_out);
+    bool Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags);
 
     IncbinBytecode* clone() const;
 
@@ -84,14 +87,10 @@ IncbinBytecode::IncbinBytecode(llvm::StringRef filename,
                                std::auto_ptr<Expr> start,
                                std::auto_ptr<Expr> maxlen)
     : m_filename(filename),
+      m_buf(0),
       m_start(start.release()),
       m_maxlen(maxlen.release())
 {
-    std::string err;
-    m_buf = llvm::MemoryBuffer::getFile(filename.str().c_str(), &err);
-    if (!m_buf)
-        throw IOError(String::Compose(N_("`%1': unable to read file `%2': %3"),
-                                      "incbin", filename, err));
 }
 
 IncbinBytecode::~IncbinBytecode()
@@ -99,16 +98,30 @@ IncbinBytecode::~IncbinBytecode()
     delete m_buf;
 }
 
-void
-IncbinBytecode::Finalize(Bytecode& bc)
+bool
+IncbinBytecode::Finalize(Bytecode& bc, Diagnostic& diags)
 {
+    std::string err;
+    m_buf = llvm::MemoryBuffer::getFile(m_filename.c_str(), &err);
+    if (!m_buf)
+    {
+        diags.Report(bc.getSource(), diag::err_file_read) << m_filename << err;
+        return false;
+    }
+
     if (m_start)
     {
         Value val(0, Expr::Ptr(m_start->clone()));
         if (!val.Finalize())
-            throw TooComplexError(N_("start expression too complex"));
+        {
+            diags.Report(bc.getSource(), diag::err_incbin_start_too_complex);
+            return false;
+        }
         else if (val.isRelative())
-            throw NotAbsoluteError(N_("start expression not absolute"));
+        {
+            diags.Report(bc.getSource(), diag::err_incbin_start_not_absolute);
+            return false;
+        }
         m_start.reset(val.getAbs()->clone());
     }
 
@@ -116,16 +129,25 @@ IncbinBytecode::Finalize(Bytecode& bc)
     {
         Value val(0, Expr::Ptr(m_maxlen->clone()));
         if (!val.Finalize())
-            throw TooComplexError(N_("maximum length expression too complex"));
+        {
+            diags.Report(bc.getSource(), diag::err_incbin_maxlen_too_complex);
+            return false;
+        }
         else if (val.isRelative())
-            throw NotAbsoluteError(
-                N_("maximum length expression not absolute"));
+        {
+            diags.Report(bc.getSource(), diag::err_incbin_maxlen_not_absolute);
+            return false;
+        }
         m_maxlen.reset(val.getAbs()->clone());
     }
+    return true;
 }
 
-unsigned long
-IncbinBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+bool
+IncbinBytecode::CalcLen(Bytecode& bc,
+                        /*@out@*/ unsigned long* len,
+                        const Bytecode::AddSpanFunc& add_span,
+                        Diagnostic& diags)
 {
     unsigned long start = 0, maxlen = 0xFFFFFFFFUL;
 
@@ -137,8 +159,8 @@ IncbinBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
         else
         {
             // FIXME
-            throw NotImplementedError(
-                N_("incbin does not yet understand non-constant"));
+            diags.Report(bc.getSource(), diag::err_incbin_start_not_const);
+            return false;
         }
     }
 
@@ -150,8 +172,8 @@ IncbinBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
         else
         {
             // FIXME
-            throw NotImplementedError(
-                N_("incbin does not yet understand non-constant"));
+            diags.Report(bc.getSource(), diag::err_incbin_maxlen_not_const);
+            return false;
         }
     }
 
@@ -159,9 +181,7 @@ IncbinBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
     unsigned long flen = m_buf->getBufferSize();
     if (start > flen)
     {
-        setWarn(WARN_GENERAL,
-                String::Compose(N_("`%1': start past end of file `%2'"),
-                                "incbin", m_filename));
+        diags.Report(bc.getSource(), diag::warn_incbin_start_after_eof);
         start = flen;
     }
     flen -= start;
@@ -170,11 +190,12 @@ IncbinBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
         if (maxlen < flen)
             flen = maxlen;
     }
-    return flen;
+    *len = flen;
+    return true;
 }
 
-void
-IncbinBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
+bool
+IncbinBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
 {
     unsigned long start = 0;
 
@@ -191,6 +212,7 @@ IncbinBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
     bytes.Write(reinterpret_cast<const unsigned char*>(m_buf->getBufferStart())
                 + start, bc.getTailLen());
     bc_out.Output(bytes);
+    return true;
 }
 
 IncbinBytecode*

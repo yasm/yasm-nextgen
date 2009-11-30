@@ -40,9 +40,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Config/functional.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Arch.h"
-#include "yasmx/Errwarns.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Section.h"
 #include "yasmx/Symbol.h"
 
@@ -136,10 +135,10 @@ Object::~Object()
 }
 
 void
-Object::Finalize(Errwarns& errwarns)
+Object::Finalize(Diagnostic& diags)
 {
     std::for_each(m_sections.begin(), m_sections.end(),
-                  BIND::bind(&Section::Finalize, _1, REF::ref(errwarns)));
+                  BIND::bind(&Section::Finalize, _1, REF::ref(diags)));
 }
 
 void
@@ -219,28 +218,36 @@ Object::AddNonTableSymbol(llvm::StringRef name)
 }
 
 void
-Object::FinalizeSymbols(Errwarns& errwarns, bool undef_extern)
+Object::ExternUndefinedSymbols()
 {
-    clang::SourceLocation firstundef;
+    for (symbol_iterator i=m_symbols.begin(), end=m_symbols.end();
+         i != end; ++i)
+    {
+        i->ExternUndefined();
+    }
+}
+
+void
+Object::FinalizeSymbols(Diagnostic& diags)
+{
+    bool firstundef = true;
 
     for (symbol_iterator i=m_symbols.begin(), end=m_symbols.end();
          i != end; ++i)
     {
-        try
+        if (i->isUndefined())
         {
-            i->Finalize(undef_extern);
-        }
-        catch (Error& err)
-        {
-            clang::SourceLocation use_source = i->getUseSource();
-            errwarns.Propagate(use_source, err);
-            if (!firstundef.isValid() || use_source < firstundef)
-                firstundef = use_source;
+            // error if a symbol is used but not defined or extern/common
+            diags.Report(i->getUseSource(), diag::err_symbol_undefined)
+                << i->getName();
+            if (firstundef)
+            {
+                diags.Report(i->getUseSource(),
+                             diag::note_symbol_undefined_once);
+                firstundef = false;
+            }
         }
     }
-    if (firstundef.isValid())
-        errwarns.Propagate(firstundef,
-            Error(N_(" (Each undefined symbol is reported only once.)")));
 }
 
 SymbolRef

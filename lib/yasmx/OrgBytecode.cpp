@@ -27,12 +27,12 @@
 #include "util.h"
 
 #include "YAML/emitter.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
+#include "yasmx/Diagnostic.h"
 
 
 namespace
@@ -47,23 +47,28 @@ public:
     ~OrgBytecode();
 
     /// Finalizes the bytecode after parsing.
-    void Finalize(Bytecode& bc);
+    bool Finalize(Bytecode& bc, Diagnostic& diags);
 
     /// Calculates the minimum size of a bytecode.
-    unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
+    bool CalcLen(Bytecode& bc,
+                 /*@out@*/ unsigned long* len,
+                 const Bytecode::AddSpanFunc& add_span,
+                 Diagnostic& diags);
 
     /// Recalculates the bytecode's length based on an expanded span
     /// length.
     bool Expand(Bytecode& bc,
-                unsigned long& len,
+                unsigned long* len,
                 int span,
                 long old_val,
                 long new_val,
+                bool* keep,
                 /*@out@*/ long* neg_thres,
-                /*@out@*/ long* pos_thres);
+                /*@out@*/ long* pos_thres,
+                Diagnostic& diags);
 
     /// Convert a bytecode into its byte representation.
-    void Output(Bytecode& bc, BytecodeOutput& bc_out);
+    bool Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags);
 
     SpecialType getSpecial() const;
 
@@ -88,53 +93,66 @@ OrgBytecode::~OrgBytecode()
 {
 }
 
-void
-OrgBytecode::Finalize(Bytecode& bc)
+bool
+OrgBytecode::Finalize(Bytecode& bc, Diagnostic& diags)
 {
+    return true;
 }
 
-unsigned long
-OrgBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+bool
+OrgBytecode::CalcLen(Bytecode& bc,
+                     /*@out@*/ unsigned long* len,
+                     const Bytecode::AddSpanFunc& add_span,
+                     Diagnostic& diags)
 {
-    unsigned long len = 0;
+    bool keep = false;
     long neg_thres = 0;
     long pos_thres = m_start;
 
-    Expand(bc, len, 0, 0, static_cast<long>(bc.getTailOffset()), &neg_thres,
-           &pos_thres);
-
-    return len;
+    *len = 0;
+    return Expand(bc, len, 0, 0, static_cast<long>(bc.getTailOffset()), &keep,
+                  &neg_thres, &pos_thres, diags);
 }
 
 bool
 OrgBytecode::Expand(Bytecode& bc,
-                    unsigned long& len,
+                    unsigned long* len,
                     int span,
                     long old_val,
                     long new_val,
+                    bool* keep,
                     /*@out@*/ long* neg_thres,
-                    /*@out@*/ long* pos_thres)
+                    /*@out@*/ long* pos_thres,
+                    Diagnostic& diags)
 {
     // Check for overrun
     if (static_cast<unsigned long>(new_val) > m_start)
-        throw Error(N_("ORG overlap with already existing data"));
+    {
+        diags.Report(bc.getSource(), diag::err_org_overlap);
+        return false;
+    }
 
     // Generate space to start offset
-    len = m_start - new_val;
+    *len = m_start - new_val;
+    *keep = true;
     return true;
 }
 
-void
-OrgBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
+bool
+OrgBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
 {
     // Sanity check for overrun
     if (bc.getTailOffset() > m_start)
-        throw Error(N_("ORG overlap with already existing data"));
+    {
+        diags.Report(bc.getSource(), diag::err_org_overlap);
+        return false;
+    }
     unsigned long len = m_start - bc.getTailOffset();
     Bytes& bytes = bc_out.getScratch();
     // XXX: handle more than 8 bit?
     bytes.insert(bytes.end(), len, static_cast<unsigned char>(m_fill));
     bc_out.Output(bytes);
+    return true;
 }
 
 OrgBytecode::SpecialType

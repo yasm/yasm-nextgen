@@ -42,6 +42,7 @@ namespace yasm
 
 class Arch;
 class BytecodeContainer;
+class Diagnostic;
 class Expr;
 class IntNum;
 
@@ -108,7 +109,8 @@ YASM_LIB_EXPORT
 void AppendLEB128(BytecodeContainer& container,
                   const IntNum& intn,
                   bool sign,
-                  clang::SourceLocation source);
+                  clang::SourceLocation source,
+                  Diagnostic& diags);
 
 /// Append an LEB128-encoded data value to the end of a section.
 /// @param sect         section
@@ -120,7 +122,8 @@ YASM_LIB_EXPORT
 void AppendLEB128(BytecodeContainer& container,
                   std::auto_ptr<Expr> expr,
                   bool sign,
-                  clang::SourceLocation source);
+                  clang::SourceLocation source,
+                  Diagnostic& diags);
 
 /// Append a binary file verbatim to the end of a section.
 /// @param sect             section

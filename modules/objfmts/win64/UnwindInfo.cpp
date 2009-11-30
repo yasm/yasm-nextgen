@@ -29,13 +29,12 @@
 #include "util.h"
 
 #include "YAML/emitter.h"
-#include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Symbol.h"
 
@@ -71,21 +70,38 @@ UnwindInfo::~UnwindInfo()
     }
 }
 
-void
-UnwindInfo::Finalize(Bytecode& bc)
+bool
+UnwindInfo::Finalize(Bytecode& bc, Diagnostic& diags)
 {
     if (!m_prolog_size.Finalize())
-        throw ValueError(N_("prolog size expression too complex"));
+    {
+        diags.Report(m_prolog_size.getSource().getBegin(),
+                     diag::err_too_complex_expression);
+        return false;
+    }
 
     if (!m_codes_count.Finalize())
-        throw ValueError(N_("codes count expression too complex"));
+    {
+        diags.Report(m_codes_count.getSource().getBegin(),
+                     diag::err_too_complex_expression);
+        return false;
+    }
 
     if (!m_frameoff.Finalize())
-        throw ValueError(N_("frame offset expression too complex"));
+    {
+        diags.Report(m_frameoff.getSource().getBegin(),
+                     diag::err_too_complex_expression);
+        return false;
+    }
+
+    return true;
 }
 
-unsigned long
-UnwindInfo::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+bool
+UnwindInfo::CalcLen(Bytecode& bc,
+                    /*@out@*/ unsigned long* len,
+                    const Bytecode::AddSpanFunc& add_span,
+                    Diagnostic& diags)
 {
     // Want to make sure prolog size and codes count doesn't exceed
     // byte-size, and scaled frame offset doesn't exceed 4 bits.
@@ -96,52 +112,74 @@ UnwindInfo::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
     if (m_frameoff.getIntNum(&intn, false))
     {
         if (!intn.isInRange(0, 240))
-            throw ValueError(String::Compose(
-                N_("frame offset of %1 bytes, must be between 0 and 240"),
-                intn));
+        {
+            diags.Report(m_frameoff.getSource().getBegin(),
+                         diags.getCustomDiagID(Diagnostic::Error,
+                N_("frame offset of %0 bytes, must be between 0 and 240")))
+                << intn.getStr();
+            return false;
+        }
         else if ((intn.getUInt() & 0xF) != 0)
-            throw ValueError(String::Compose(
-                N_("frame offset of %1 is not a multiple of 16"), intn));
+        {
+            diags.Report(m_frameoff.getSource().getBegin(),
+                         diags.getCustomDiagID(Diagnostic::Error,
+                N_("frame offset of %0 is not a multiple of 16")))
+                << intn.getStr();
+            return false;
+        }
     }
     else
         add_span(bc, 3, m_frameoff, 0, 240);
 
-    return 4;
+    *len = 4;
+    return true;
 }
 
 bool
 UnwindInfo::Expand(Bytecode& bc,
-                   unsigned long& len,
+                   unsigned long* len,
                    int span,
                    long old_val,
                    long new_val,
+                   bool* keep,
                    /*@out@*/ long* neg_thres,
-                   /*@out@*/ long* pos_thres)
+                   /*@out@*/ long* pos_thres,
+                   Diagnostic& diags)
 {
     switch (span)
     {
         case 1:
         {
-            ValueError err(String::Compose(
-                N_("prologue %1 bytes, must be <256"), new_val));
-            err.setXRef(m_prolog->getDefSource(), N_("prologue ended here"));
-            throw err;
+            diags.Report(m_prolog_size.getSource().getBegin(),
+                         diags.getCustomDiagID(Diagnostic::Error,
+                             N_("prologue %0 bytes, must be <256")))
+                << static_cast<int>(new_val);
+            diags.Report(m_prolog->getDefSource(),
+                         diags.getCustomDiagID(Diagnostic::Error,
+                                               N_("prologue ended here")));
+            return false;
         }
         case 2:
-            throw ValueError(String::Compose(
-                N_("%1 unwind codes, maximum of 255"), new_val));
+            diags.Report(m_frameoff.getSource().getBegin(),
+                         diags.getCustomDiagID(Diagnostic::Error,
+                             N_("%0 unwind codes, maximum of 255")))
+                << static_cast<int>(new_val);
+            return false;
         case 3:
-            throw ValueError(String::Compose(
-                N_("frame offset of %1 bytes, must be between 0 and 240"),
-                new_val));
+            diags.Report(m_frameoff.getSource().getBegin(),
+                         diags.getCustomDiagID(Diagnostic::Error,
+                N_("frame offset of %0 bytes, must be between 0 and 240")))
+                << static_cast<int>(new_val);
+            return false;
         default:
             assert(false && "unrecognized span id");
     }
-    return 0;
+    *keep = false;
+    return true;
 }
 
-void
-UnwindInfo::Output(Bytecode& bc, BytecodeOutput& bc_out)
+bool
+UnwindInfo::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
 {
     Bytes& bytes = bc_out.getScratch();
     Location loc = {&bc, 0};
@@ -156,27 +194,43 @@ UnwindInfo::Output(Bytecode& bc, BytecodeOutput& bc_out)
     // Size of prolog
     bytes.resize(0);
     Write8(bytes, 0);
-    bc_out.Output(m_prolog_size, bytes, loc, 1);
+    bc_out.Output(m_prolog_size, bytes, loc, 1, diags);
 
     // Count of codes
     bytes.resize(0);
     Write8(bytes, 0);
-    bc_out.Output(m_codes_count, bytes, loc, 1);
+    bc_out.Output(m_codes_count, bytes, loc, 1, diags);
 
     // Frame register and offset
     IntNum intn;
     if (!m_frameoff.getIntNum(&intn, true))
-        throw ValueError(N_("frame offset expression too complex"));
+    {
+        diags.Report(m_frameoff.getSource().getBegin(),
+                     diag::err_too_complex_expression);
+        return false;
+    }
+
     if (!intn.isInRange(0, 240))
-        throw ValueError(String::Compose(
-            N_("frame offset of %1 bytes, must be between 0 and 240"), intn));
+    {
+        diags.Report(m_frameoff.getSource().getBegin(),
+                     diags.getCustomDiagID(Diagnostic::Error,
+            N_("frame offset of %0 bytes, must be between 0 and 240")))
+            << intn.getStr();
+        return false;
+    }
     else if ((intn.getUInt() & 0xF) != 0)
-        throw ValueError(String::Compose(
-            N_("frame offset of %1 is not a multiple of 16"), intn));
+    {
+        diags.Report(m_frameoff.getSource().getBegin(),
+                     diags.getCustomDiagID(Diagnostic::Error,
+            N_("frame offset of %0 is not a multiple of 16")))
+            << intn.getStr();
+        return false;
+    }
 
     bytes.resize(0);
     Write8(bytes, (intn.getUInt() & 0xF0) | (m_framereg & 0x0F));
     bc_out.Output(bytes);
+    return true;
 }
 
 UnwindInfo*

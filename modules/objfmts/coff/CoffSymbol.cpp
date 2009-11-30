@@ -29,10 +29,9 @@
 #include "util.h"
 
 #include "YAML/emitter.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes_util.h"
-#include "yasmx/Errwarns.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location_util.h"
 #include "yasmx/Section.h"
@@ -95,7 +94,7 @@ CoffSymbol::Write(YAML::Emitter& out) const
 void
 CoffSymbol::Write(Bytes& bytes,
                   const Symbol& sym,
-                  Errwarns& errwarns,
+                  Diagnostic& diags,
                   StringTable& strtab) const
 {
     int vis = sym.getVisibility();
@@ -134,10 +133,7 @@ CoffSymbol::Write(Bytes& bytes,
         if (equ_val.isIntNum())
             value = equ_val.getIntNum();
         else if (vis & Symbol::GLOBAL)
-        {
-            errwarns.Propagate(sym.getDefSource(), NotConstantError(
-                N_("global EQU value not an integer expression")));
-        }
+            diags.Report(sym.getDefSource(), diag::err_equ_not_integer);
 
         scnum = 0xffff;     // -1 = absolute symbol
     }
@@ -152,8 +148,8 @@ CoffSymbol::Write(Bytes& bytes,
                 value = csize.getIntNum();
             else
             {
-                errwarns.Propagate(sym.getDefSource(), NotConstantError(
-                    N_("COMMON data size not an integer expression")));
+                diags.Report(sym.getDefSource(),
+                             diag::err_common_size_not_integer);
             }
             scnum = 0;
         }

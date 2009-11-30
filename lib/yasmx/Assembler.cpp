@@ -387,19 +387,19 @@ Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
         return false;
 
     // Finalize parse
-    m_object->Finalize(m_errwarns);
+    m_object->Finalize(diags);
     if (m_dump_time == DUMP_AFTER_FINALIZE)
         m_object->Dump();
-    if (m_errwarns.getNumErrors(warning_error) > 0)
+    if (diags.hasErrorOccurred())
         return false;
 
     // Optimize
-    m_object->Optimize(m_errwarns);
+    m_object->Optimize(diags);
 
     if (m_dump_time == DUMP_AFTER_OPTIMIZE)
         m_object->Dump();
 
-    if (m_errwarns.getNumErrors(warning_error) > 0)
+    if (diags.hasErrorOccurred())
         return false;
 
     // generate any debugging information

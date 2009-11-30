@@ -546,7 +546,7 @@ ElfObject::BuildGlobal(Symbol& sym, Diagnostic& diags)
     if (nvis > 1)
     {
         diags.Report(vis_source, diags.getCustomDiagID(Diagnostic::Warning,
-            "More than one symbol visibility provided; using last"));
+            "more than one symbol visibility provided; using last"));
     }
 
     ElfSymbol& elfsym = BuildSymbol(sym);
@@ -713,18 +713,20 @@ public:
     void OutputSection(Section& sect,
                        unsigned int* sindex,
                        StringTable& shstrtab,
-                       Errwarns& errwarns);
+                       Diagnostic& diags);
 
     // OutputBytecode overrides
-    void ConvertValueToBytes(Value& value,
+    bool ConvertValueToBytes(Value& value,
                              Bytes& bytes,
                              Location loc,
-                             int warn);
-    void ConvertSymbolToBytes(SymbolRef sym,
+                             int warn,
+                             Diagnostic& diags);
+    bool ConvertSymbolToBytes(SymbolRef sym,
                               Bytes& bytes,
                               Location loc,
                               unsigned int valsize,
-                              int warn);
+                              int warn,
+                              Diagnostic& diags);
 
 private:
     ElfObject& m_objfmt;
@@ -749,12 +751,13 @@ ElfOutput::~ElfOutput()
 {
 }
 
-void
+bool
 ElfOutput::ConvertSymbolToBytes(SymbolRef sym,
                                 Bytes& bytes,
                                 Location loc,
                                 unsigned int valsize,
-                                int warn)
+                                int warn,
+                                Diagnostic& diags)
 {
     std::auto_ptr<ElfReloc> reloc =
         m_objfmt.m_machine->MakeReloc(sym, SymbolRef(0), loc.getOffset(),
@@ -765,21 +768,26 @@ ElfOutput::ConvertSymbolToBytes(SymbolRef sym,
     sect->AddReloc(std::auto_ptr<Reloc>(reloc.release()));
 
     m_object.getArch()->ToBytes(0, bytes, valsize, 0, warn);
+    return true;
 }
 
-void
+bool
 ElfOutput::ConvertValueToBytes(Value& value,
                                Bytes& bytes,
                                Location loc,
-                               int warn)
+                               int warn,
+                               Diagnostic& diags)
 {
     // We can't handle these types of values
     if (value.isSegOf() || value.isSectionRelative() || value.getRShift() > 0)
-        throw TooComplexError(N_("elf: relocation too complex"));
+    {
+        diags.Report(value.getSource().getBegin(), diag::err_reloc_too_complex);
+        return false;
+    }
 
     IntNum intn(0);
     if (value.OutputBasic(bytes, &intn, warn, *m_object.getArch()))
-        return;
+        return true;
 
     if (value.isRelative())
     {
@@ -822,7 +830,11 @@ ElfOutput::ConvertValueToBytes(Value& value,
             intn += intn2;
         }
         else if (value.hasSubRelative())
-            throw TooComplexError(N_("elf: relocation too complex"));
+        {
+            diags.Report(value.getSource().getBegin(),
+                         diag::err_reloc_too_complex);
+            return false;
+        }
 
         // Create relocation
         Section* sect = loc.bc->getContainer()->AsSection();
@@ -834,6 +846,7 @@ ElfOutput::ConvertValueToBytes(Value& value,
     }
 
     m_object.getArch()->ToBytes(intn, bytes, value.getSize(), 0, warn);
+    return true;
 }
 #if 0
 static int
@@ -879,7 +892,7 @@ void
 ElfOutput::OutputSection(Section& sect,
                          unsigned int* sindex,
                          StringTable& shstrtab,
-                         Errwarns& errwarns)
+                         Diagnostic& diags)
 {
     BytecodeOutput* outputter = this;
 
@@ -904,33 +917,32 @@ ElfOutput::OutputSection(Section& sect,
     {
         pos = m_os.tell();
         if (m_os.has_error())
-            throw IOError(N_("couldn't read position on output stream"));
+        {
+            diags.Report(clang::SourceLocation(),
+                         diag::err_file_output_position);
+            return;
+        }
 
         if (sect.bytecodes_last().getNextOffset() == 0)
             return;
 
         m_fd_os.seek(elfsect->setFileOffset(pos));
         if (m_os.has_error())
-            throw IOError(N_("couldn't seek on output stream"));
+        {
+            diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+            return;
+        }
     }
 
     // Output bytecodes
     for (Section::bc_iterator i=sect.bytecodes_begin(),
          end=sect.bytecodes_end(); i != end; ++i)
     {
-        try
-        {
-            i->Output(*outputter);
+        if (i->Output(*outputter, diags))
             elfsect->AddSize(i->getTotalLen());
-        }
-        catch (Error& err)
-        {
-            errwarns.Propagate(i->getSource(), err);
-        }
-        errwarns.Propagate(i->getSource()); // propagate warnings
     }
 
-    if (errwarns.getNumErrors() > 0)
+    if (diags.hasErrorOccurred())
         return;
 
     // Sanity check final section size
@@ -954,13 +966,16 @@ ElfOutput::OutputSection(Section& sect,
 }
 
 unsigned long
-ElfAlignOutput(llvm::raw_fd_ostream& os, unsigned int align)
+ElfAlignOutput(llvm::raw_fd_ostream& os, unsigned int align, Diagnostic& diags)
 {
     assert(isExp2(align) && "requested alignment not a power of two");
 
     uint64_t pos = os.tell();
     if (os.has_error())
-        throw IOError(N_("could not get file position on output file"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_file_output_position);
+        return 0;
+    }
 
     unsigned long delta = align - (pos & (align-1));
     if (delta != align)
@@ -968,7 +983,10 @@ ElfAlignOutput(llvm::raw_fd_ostream& os, unsigned int align)
         pos += delta;
         os.seek(pos);
         if (os.has_error())
-            throw IOError(N_("could not set file position on output file"));
+        {
+            diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+            return 0;
+        }
     }
     return static_cast<unsigned long>(pos);
 }
@@ -988,7 +1006,10 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     // Allocate space for Ehdr by seeking forward
     os.seek(m_config.getProgramHeaderSize());
     if (os.has_error())
-        throw IOError(N_("could not seek on output file"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+        return;
+    }
 
     // Create missing section headers
 #if 0
@@ -1018,7 +1039,7 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        out.OutputSection(*i, &m_config.secthead_count, shstrtab, errwarns);
+        out.OutputSection(*i, &m_config.secthead_count, shstrtab, diags);
     }
 
     // If we're not forcing all symbols to be in the table, go through
@@ -1054,7 +1075,7 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     ElfStringIndex symtab_name = shstrtab.getIndex(".symtab");
 
     // section header string table (.shstrtab)
-    offset = ElfAlignOutput(os, 4);
+    offset = ElfAlignOutput(os, 4, diags);
     size = shstrtab.getSize();
     shstrtab.Write(os);
 
@@ -1066,7 +1087,7 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     shstrtab_sect.setSize(size);
 
     // string table (.strtab)
-    offset = ElfAlignOutput(os, 4);
+    offset = ElfAlignOutput(os, 4, diags);
     size = strtab.getSize();
     strtab.Write(os);
 
@@ -1077,7 +1098,7 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     strtab_sect.setSize(size);
 
     // symbol table (.symtab)
-    offset = ElfAlignOutput(os, 4);
+    offset = ElfAlignOutput(os, 4, diags);
     size = m_config.WriteSymbolTable(os, m_object, errwarns, out.getScratch());
 
     ElfSection symtab_sect(m_config, SHT_SYMTAB, 0, true);
@@ -1098,12 +1119,11 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
 
         ElfSection* elfsect = i->getAssocData<ElfSection>();
         assert(elfsect != 0);
-        elfsect->WriteRelocs(os, *i, errwarns, out.getScratch(),
-                             *m_machine);
+        elfsect->WriteRelocs(os, *i, out.getScratch(), *m_machine, diags);
     }
 
     // output section header table
-    m_config.secthead_pos = ElfAlignOutput(os, 16);
+    m_config.secthead_pos = ElfAlignOutput(os, 16, diags);
 
 #if 0
     // stabs debugging support
@@ -1146,7 +1166,10 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     // output Ehdr
     os.seek(0);
     if (os.has_error())
-        throw IOError(N_("could not seek on output file"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+        return;
+    }
 
     m_config.WriteProgramHeader(os, out.getScratch());
 }

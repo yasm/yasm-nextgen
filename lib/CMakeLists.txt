@@ -53,7 +53,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/BytecodeContainer_util.cpp
     yasmx/BytecodeOutput.cpp
     yasmx/Bytecode.cpp
-    yasmx/Bytecode_util.cpp
     yasmx/Bytes.cpp
     yasmx/Bytes_util.cpp
     yasmx/Bytes_leb128.cpp

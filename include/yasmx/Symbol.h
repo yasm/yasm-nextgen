@@ -155,10 +155,21 @@ public:
     void Declare(Visibility vis,
                  clang::SourceLocation source = clang::SourceLocation());
 
-    /// Finalize symbol after parsing stage.  Errors on symbols that
-    /// are used but never defined or declared #EXTERN or #COMMON.
-    /// @param undef_extern if true, all undef syms should be declared extern
-    void Finalize(bool undef_extern);
+    /// Determine if symbol is used but is undefined.  Undefined symbols are
+    /// those that are used but never defined or declared #EXTERN or #COMMON.
+    bool isUndefined() const
+    {
+        return ((m_status & USED) && !(m_status & DEFINED) &&
+                !(m_visibility & (EXTERN | COMMON)));
+    }
+
+    /// Declare a used but undefined symbol extern.
+    /// Intended for use after parsing stage.
+    void ExternUndefined()
+    {
+        if (isUndefined())
+            m_visibility |= EXTERN;
+    }
 
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter

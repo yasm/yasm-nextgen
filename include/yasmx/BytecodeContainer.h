@@ -42,7 +42,7 @@ namespace yasm
 {
 
 class Bytecode;
-class Errwarns;
+class Diagnostic;
 class Expr;
 class Section;
 class Object;
@@ -102,14 +102,14 @@ public:
     const Bytecode& bytecodes_last() const { return m_bcs.back(); }
 
     /// Finalize all bytecodes after parsing.
-    /// @param errwarns     error/warning set
+    /// @param diags        diagnostic reporting
     /// @note Errors/warnings are stored into errwarns.
-    void Finalize(Errwarns& errwarns);
+    void Finalize(Diagnostic& diags);
 
     /// Update all bytecode offsets.
-    /// @param errwarns     error/warning set
+    /// @param diags        diagnostic reporting
     /// @note Errors/warnings are stored into errwarns.
-    void UpdateOffsets(Errwarns& errwarns);
+    void UpdateOffsets(Diagnostic& diags);
 
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter

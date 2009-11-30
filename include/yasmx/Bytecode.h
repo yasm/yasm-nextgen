@@ -49,6 +49,7 @@ namespace yasm
 
 class BytecodeContainer;
 class BytecodeOutput;
+class Diagnostic;
 class Expr;
 
 /// A bytecode.
@@ -95,17 +96,23 @@ public:
         /// Finalizes the bytecode after parsing.
         /// Called from Bytecode::Finalize().
         /// @param bc           bytecode
-        virtual void Finalize(Bytecode& bc) = 0;
+        /// @param diags        diagnostic reporting
+        /// @return False if an error occurred.
+        virtual bool Finalize(Bytecode& bc, Diagnostic& diags) = 0;
 
         /// Calculates the minimum size of a bytecode.
         /// Called from Bytecode::CalcLen().
         ///
         /// @param bc           bytecode
+        /// @param len          length in bytes (output)
         /// @param add_span     function to call to add a span
-        /// @return Length in bytes.
+        /// @param diags        diagnostic reporting
+        /// @return False if an error occurred.
         /// @note May store to bytecode updated expressions.
-        virtual unsigned long CalcLen(Bytecode& bc,
-                                      const Bytecode::AddSpanFunc& add_span)
+        virtual bool CalcLen(Bytecode& bc,
+                             /*@out@*/ unsigned long* len,
+                             const Bytecode::AddSpanFunc& add_span,
+                             Diagnostic& diags)
             = 0;
 
         /// Recalculates the bytecode's length based on an expanded span
@@ -120,31 +127,38 @@ public:
         /// @param span         span ID (as given to add_span in calc_len)
         /// @param old_val      previous span value
         /// @param new_val      new span value
+        /// @param keep         function should set to true if bc size may
+        ///                     increase further based on the new neg_thres
+        ///                     and pos_thres returned (returned)
         /// @param neg_thres    negative threshold for long/short decision
         ///                     (returned)
         /// @param pos_thres    positive threshold for long/short decision
         ///                     (returned)
-        /// @return False if bc no longer dependent on this span's length,
-        ///         or true if bc size may increase for this span further
-        ///         based on the new negative and positive thresholds
-        ///         returned.
+        /// @param diags        diagnostic reporting
+        /// @return False if an error occurred.
         /// @note May store to bytecode updated expressions.
         virtual bool Expand(Bytecode& bc,
-                            unsigned long& len,
+                            unsigned long* len,
                             int span,
                             long old_val,
                             long new_val,
+                            bool* keep,
                             /*@out@*/ long* neg_thres,
-                            /*@out@*/ long* pos_thres);
+                            /*@out@*/ long* pos_thres,
+                            Diagnostic& diags);
 
         /// Output a bytecode.
         /// Called from Bytecode::Output().
         /// @param bc           bytecode
         /// @param bc_out       bytecode output interface
+        /// @param diags        diagnostic reporting
+        /// @return False if an error occurred.
         /// @note May result in non-reversible changes to the bytecode, but
         ///       it's preferable if calling this function twice would result
         ///       in the same output.
-        virtual void Output(Bytecode& bc, BytecodeOutput& bc_out) = 0;
+        virtual bool Output(Bytecode& bc,
+                            BytecodeOutput& bc_out,
+                            Diagnostic& diags) = 0;
 
         /// Special bytecode classifications.  Most bytecode types should
         /// simply not override the getSpecial() function (which returns
@@ -232,7 +246,9 @@ public:
     ~Bytecode();
 
     /// Finalize a bytecode after parsing.
-    void Finalize();
+    /// @param diags        diagnostic reporting
+    /// @return False if an error occurred.
+    bool Finalize(Diagnostic& diags);
 
     /// Get the offset of the bytecode.
     /// @return Offset of the bytecode in bytes.
@@ -275,42 +291,49 @@ public:
     /// Generates dependent bytecode spans for cases where, if the length
     /// spanned increases, it could cause the bytecode size to increase.
     /// @param add_span     function to call to add a span
+    /// @param diags        diagnostic reporting
+    /// @return False if an error occurred.
     /// @note May store to bytecode updated expressions and the short length.
-    void CalcLen(const AddSpanFunc& add_span);
+    bool CalcLen(const AddSpanFunc& add_span, Diagnostic& diags);
 
     /// Recalculate a bytecode's length based on an expanded span length.
     /// @param span         span ID (as given to add_span in CalcLen())
     /// @param old_val      previous span value
     /// @param new_val      new span value
+    /// @param keep         set to true if bc size may increase further based on
+    ///                     the new neg_thres and pos_thres returned (returned)
     /// @param neg_thres    negative threshold for long/short decision
     ///                     (returned)
     /// @param pos_thres    positive threshold for long/short decision
     ///                     (returned)
-    /// @return False if bc no longer dependent on this span's length,
-    ///         or true if bc size may increase for this span further
-    ///         based on the new negative and positive thresholds returned.
+    /// @param diags        diagnostic reporting
+    /// @return False if an error occurred.
     /// @note May store to bytecode updated expressions and the updated
     ///       length.
     bool Expand(int span,
                 long old_val,
                 long new_val,
+                bool* keep,
                 /*@out@*/ long* neg_thres,
-                /*@out@*/ long* pos_thres);
+                /*@out@*/ long* pos_thres,
+                Diagnostic& diags);
 
     /// Output a bytecode.
     /// @param bc_out       bytecode output interface
+    /// @param diags        diagnostic reporting
+    /// @return False if an error occurred.
     /// @note Calling twice on the same bytecode may \em not produce the same
     ///       results on the second call, as calling this function may result
     ///       in non-reversible changes to the bytecode.
-    void Output(BytecodeOutput& bc_out);
+    bool Output(BytecodeOutput& bc_out, Diagnostic& diags);
 
     /// Updates bytecode offset.
     /// @note For offset-based bytecodes, calls Expand() to determine new
     ///       length.
     /// @param offset       offset to set this bytecode to
-    /// @param errwarns     error/warning set
+    /// @param diags        diagnostic reporting
     /// @return Offset of next bytecode.
-    unsigned long UpdateOffset(unsigned long offset);
+    unsigned long UpdateOffset(unsigned long offset, Diagnostic& diags);
 
     clang::SourceLocation getSource() const { return m_source; }
 

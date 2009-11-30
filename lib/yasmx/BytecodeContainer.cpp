@@ -31,10 +31,9 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
-#include "yasmx/Bytecode_util.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 
 
@@ -50,13 +49,16 @@ public:
     ~GapBytecode();
 
     /// Finalizes the bytecode after parsing.
-    void Finalize(Bytecode& bc);
+    bool Finalize(Bytecode& bc, Diagnostic& diags);
 
     /// Calculates the minimum size of a bytecode.
-    unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
+    bool CalcLen(Bytecode& bc,
+                 /*@out@*/ unsigned long* len,
+                 const Bytecode::AddSpanFunc& add_span,
+                 Diagnostic& diags);
 
     /// Output a bytecode.
-    void Output(Bytecode& bc, BytecodeOutput& bc_out);
+    bool Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags);
 
     /// Increase the gap size.
     /// @param size     size in bytes
@@ -81,21 +83,27 @@ GapBytecode::~GapBytecode()
 {
 }
 
-void
-GapBytecode::Finalize(Bytecode& bc)
+bool
+GapBytecode::Finalize(Bytecode& bc, Diagnostic& diags)
 {
+    return true;
 }
 
-unsigned long
-GapBytecode::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+bool
+GapBytecode::CalcLen(Bytecode& bc,
+                     /*@out@*/ unsigned long* len,
+                     const Bytecode::AddSpanFunc& add_span,
+                     Diagnostic& diags)
 {
-    return m_size;
+    *len = m_size;
+    return true;
 }
 
-void
-GapBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
+bool
+GapBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
 {
     bc_out.OutputGap(m_size);
+    return true;
 }
 
 GapBytecode*
@@ -195,19 +203,19 @@ BytecodeContainer::FreshBytecode()
 }
 
 void
-BytecodeContainer::Finalize(Errwarns& errwarns)
+BytecodeContainer::Finalize(Diagnostic& diags)
 {
     for (bc_iterator bc=m_bcs.begin(), end=m_bcs.end(); bc != end; ++bc)
-        ::Finalize(*bc, errwarns);
+        bc->Finalize(diags);
 }
 
 void
-BytecodeContainer::UpdateOffsets(Errwarns& errwarns)
+BytecodeContainer::UpdateOffsets(Diagnostic& diags)
 {
     unsigned long offset = 0;
     m_bcs.front().setOffset(0);
     for (bc_iterator bc=m_bcs.begin(), end=m_bcs.end(); bc != end; ++bc)
-        offset = UpdateOffset(*bc, offset, errwarns);
+        offset = bc->UpdateOffset(offset, diags);
 }
 
 void

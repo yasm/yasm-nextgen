@@ -32,12 +32,12 @@
 
 #include "llvm/ADT/Statistic.h"
 #include "YAML/emitter.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Object.h"
@@ -74,13 +74,21 @@ public:
                bool default_rel);
     ~X86General();
 
-    void Finalize(Bytecode& bc);
-    unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
-    bool Expand(Bytecode& bc, unsigned long& len, int span,
-                long old_val, long new_val,
+    bool Finalize(Bytecode& bc, Diagnostic& diags);
+    bool CalcLen(Bytecode& bc,
+                 /*@out@*/ unsigned long* len,
+                 const Bytecode::AddSpanFunc& add_span,
+                 Diagnostic& diags);
+    bool Expand(Bytecode& bc,
+                unsigned long* len,
+                int span,
+                long old_val,
+                long new_val,
+                bool* keep,
                 /*@out@*/ long* neg_thres,
-                /*@out@*/ long* pos_thres);
-    void Output(Bytecode& bc, BytecodeOutput& bc_out);
+                /*@out@*/ long* pos_thres,
+                Diagnostic& diags);
+    bool Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags);
 
     X86General* clone() const;
 
@@ -146,17 +154,24 @@ X86General::~X86General()
 {
 }
 
-void
-X86General::Finalize(Bytecode& bc)
+bool
+X86General::Finalize(Bytecode& bc, Diagnostic& diags)
 {
     if (m_ea)
         m_ea->Finalize();
     if (m_imm.get() != 0 && !m_imm->Finalize())
-        throw TooComplexError(N_("immediate expression too complex"));
+    {
+        diags.Report(m_imm->getSource().getBegin(),
+                     diags.getCustomDiagID(Diagnostic::Error,
+                         N_("immediate expression too complex")));
+        return false;
+    }
 
     if (m_postop == POSTOP_ADDRESS16 && m_common.m_addrsize != 0)
     {
-        setWarn(WARN_GENERAL, N_("address size override ignored"));
+        diags.Report(bc.getSource(),
+                     diags.getCustomDiagID(Diagnostic::Warning,
+                         N_("address size override ignored")));
         m_common.m_addrsize = 0;
     }
 
@@ -215,6 +230,7 @@ X86General::Finalize(Bytecode& bc)
         default:
             break;
     }
+    return true;
 }
 
 // See if we can optimize a VEX prefix of three byte form into two byte form.
@@ -239,11 +255,13 @@ VexOptimize(X86Opcode& opcode,
     }
 }
 
-unsigned long
-X86General::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+bool
+X86General::CalcLen(Bytecode& bc,
+                    /*@out@*/ unsigned long* len,
+                    const Bytecode::AddSpanFunc& add_span,
+                    Diagnostic& diags)
 {
-    unsigned long len = 0;
-
+    unsigned long ilen = 0;
     if (m_ea != 0)
     {
         // Check validity of effective address and calc R/M bits of
@@ -254,8 +272,14 @@ X86General::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
         if (!m_ea->Check(&m_common.m_addrsize, m_common.m_mode_bits,
                          m_postop == POSTOP_ADDRESS16, &m_rex,
                          &ip_rel))
+        {
             // failed, don't bother checking rest of insn
-            throw ValueError(N_("indeterminate effective address during length calculation"));
+            diags.Report(bc.getSource(),
+                         diags.getCustomDiagID(Diagnostic::Error,
+                             N_("indeterminate effective address during length calculation")))
+                << m_ea->m_disp.getSource();
+            return false;
+        }
 
         // IP-relative needs to be adjusted to the end of the instruction.
         // However, we may not know the instruction length yet (due to imm
@@ -278,15 +302,15 @@ X86General::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
             m_ea->m_disp.setSize(8);
             add_span(bc, 1, m_ea->m_disp, -128, 127);
         }
-        len += m_ea->m_disp.getSize()/8;
+        ilen += m_ea->m_disp.getSize()/8;
 
         // Handle address16 postop case
         if (m_postop == POSTOP_ADDRESS16)
             m_common.m_addrsize = 0;
 
         // Compute length of ea and add to total
-        len += m_ea->m_need_modrm + (m_ea->m_need_sib ? 1:0);
-        len += (m_ea->m_segreg != 0) ? 1 : 0;
+        ilen += m_ea->m_need_modrm + (m_ea->m_need_sib ? 1:0);
+        ilen += (m_ea->m_segreg != 0) ? 1 : 0;
     }
 
     if (m_imm != 0)
@@ -326,7 +350,7 @@ X86General::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
             }
         }
 
-        len += immlen/8;
+        ilen += immlen/8;
     }
 
     // VEX and XOP prefixes never have REX (it's embedded in the opcode).
@@ -337,18 +361,26 @@ X86General::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
     if (m_rex != 0xff && m_rex != 0 &&
         m_special_prefix != 0xC5 && m_special_prefix != 0xC4 &&
         m_special_prefix != 0x8F)
-        len++;
+        ilen++;
 
-    len += m_opcode.getLen();
-    len += m_common.getLen();
-    len += (m_special_prefix != 0) ? 1:0;
-    return len;
+    ilen += m_opcode.getLen();
+    ilen += m_common.getLen();
+    ilen += (m_special_prefix != 0) ? 1:0;
+
+    *len = ilen;
+    return true;
 }
 
 bool
-X86General::Expand(Bytecode& bc, unsigned long& len, int span,
-                   long old_val, long new_val,
-                   /*@out@*/ long* neg_thres, /*@out@*/ long* pos_thres)
+X86General::Expand(Bytecode& bc,
+                   unsigned long* len,
+                   int span,
+                   long old_val,
+                   long new_val,
+                   bool* keep,
+                   /*@out@*/ long* neg_thres,
+                   /*@out@*/ long* pos_thres,
+                   Diagnostic& diags)
 {
     if (m_ea != 0 && span == 1)
     {
@@ -359,8 +391,8 @@ X86General::Expand(Bytecode& bc, unsigned long& len, int span,
             m_ea->m_disp.setSize(size);
             m_ea->m_modrm &= ~0300;
             m_ea->m_modrm |= 0200;
-            len--;
-            len += size/8;
+            (*len)--;
+            (*len) += size/8;
         }
     }
 
@@ -369,8 +401,8 @@ X86General::Expand(Bytecode& bc, unsigned long& len, int span,
         if (m_postop == POSTOP_SIGNEXT_IMM8)
         {
             // Update len for new opcode and immediate size
-            len -= m_opcode.getLen();
-            len += m_imm->getSize()/8;
+            (*len) -= m_opcode.getLen();
+            (*len) += m_imm->getSize()/8;
 
             // Change to the word-sized opcode
             m_opcode.MakeAlt1();
@@ -378,7 +410,8 @@ X86General::Expand(Bytecode& bc, unsigned long& len, int span,
         }
     }
 
-    return false;
+    *keep = false;
+    return true;
 }
 
 void
@@ -428,8 +461,8 @@ GeneralToBytes(Bytes& bytes,
     opcode.ToBytes(bytes);
 }
 
-void
-X86General::Output(Bytecode& bc, BytecodeOutput& bc_out)
+bool
+X86General::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
 {
     Bytes& bytes = bc_out.getScratch();
 
@@ -488,7 +521,8 @@ X86General::Output(Bytecode& bc, BytecodeOutput& bc_out)
         pos += disp_len;
         Bytes& dbytes = bc_out.getScratch();
         dbytes.resize(disp_len);
-        bc_out.Output(m_ea->m_disp, bytes, loc, 1);
+        if (!bc_out.Output(m_ea->m_disp, bytes, loc, 1, diags))
+            return false;
     }
 
     // Immediate (if required)
@@ -498,8 +532,10 @@ X86General::Output(Bytecode& bc, BytecodeOutput& bc_out)
         Location loc = {&bc, bc.getFixedLen()+pos};
         Bytes& ibytes = bc_out.getScratch();
         ibytes.resize(imm_len);
-        bc_out.Output(*m_imm, bytes, loc, 1);
+        if (!bc_out.Output(*m_imm, bytes, loc, 1, diags))
+            return false;
     }
+    return true;
 }
 
 X86General*

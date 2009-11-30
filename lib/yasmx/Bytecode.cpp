@@ -33,10 +33,10 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytes.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location_util.h"
@@ -64,12 +64,14 @@ Bytecode::Contents::~Contents()
 
 bool
 Bytecode::Contents::Expand(Bytecode& bc,
-                           unsigned long& len,
+                           unsigned long* len,
                            int span,
                            long old_val,
                            long new_val,
+                           bool* keep,
                            /*@out@*/ long* neg_thres,
-                           /*@out@*/ long* pos_thres)
+                           /*@out@*/ long* pos_thres,
+                           Diagnostic& diags)
 {
     assert(false && "bytecode does not have any dependent spans");
     return false;
@@ -147,30 +149,28 @@ Bytecode::swap(Bytecode& oth)
     m_symbols.swap(oth.m_symbols);
 }
 
-void
-Bytecode::Finalize()
+bool
+Bytecode::Finalize(Diagnostic& diags)
 {
     for (std::vector<Fixup>::iterator i=m_fixed_fixups.begin(),
          end=m_fixed_fixups.end(); i != end; ++i)
     {
-        try
+        if (!i->Finalize())
         {
-            if (!i->Finalize())
-            {
-                if (i->isJumpTarget())
-                    throw TooComplexError(N_("jump target expression too complex"));
-                else
-                    throw TooComplexError(N_("expression too complex"));
-            }
-
-            if (i->isJumpTarget() && i->isComplexRelative())
-                throw ValueError(N_("invalid jump target"));
+            if (i->isJumpTarget())
+                diags.Report(i->getSource().getBegin(),
+                             diag::err_too_complex_jump);
+            else
+                diags.Report(i->getSource().getBegin(),
+                             diag::err_too_complex_expression);
+            return false;
         }
-        catch (Error& err)
+
+        if (i->isJumpTarget() && i->isComplexRelative())
         {
-            // associate the error with the value, not the bytecode, line
-            err.m_source = i->getSource();
-            throw;
+            diags.Report(i->getSource().getBegin(),
+                         diag::err_invalid_jump_target);
+            return false;
         }
 
         // Do curpos subtraction for IP-relative flagged values.
@@ -179,40 +179,49 @@ Bytecode::Finalize()
             Location sub_loc = {this, i->getOffset()};
             i->SubRelative(m_container->getObject(), sub_loc);
         }
-
-        WarnUpdateSource(i->getSource());
     }
 
     if (m_contents.get() != 0)
-        m_contents->Finalize(*this);
+        return m_contents->Finalize(*this, diags);
+    return true;
 }
 
-void
-Bytecode::CalcLen(const AddSpanFunc& add_span)
+bool
+Bytecode::CalcLen(const AddSpanFunc& add_span, Diagnostic& diags)
 {
     if (m_contents.get() == 0)
     {
         m_len = 0;
-        return;
+        return true;
     }
-    m_len = m_contents->CalcLen(*this, add_span);
+    unsigned long len;
+    if (!m_contents->CalcLen(*this, &len, add_span, diags))
+        return false;
+    m_len = len;
+    return true;
 }
 
 bool
 Bytecode::Expand(int span,
                  long old_val,
                  long new_val,
+                 bool* keep,
                  /*@out@*/ long* neg_thres,
-                 /*@out@*/ long* pos_thres)
+                 /*@out@*/ long* pos_thres,
+                 Diagnostic& diags)
 {
     if (m_contents.get() == 0)
+        return true;
+    unsigned long len;
+    if (!m_contents->Expand(*this, &len, span, old_val, new_val, keep,
+                            neg_thres, pos_thres, diags))
         return false;
-    return m_contents->Expand(*this, m_len, span, old_val, new_val, neg_thres,
-                              pos_thres);
+    m_len = len;
+    return true;
 }
 
-void
-Bytecode::Output(BytecodeOutput& bc_out)
+bool
+Bytecode::Output(BytecodeOutput& bc_out, Diagnostic& diags)
 {
     unsigned long start = bc_out.getNumOutput();
 
@@ -237,17 +246,8 @@ Bytecode::Output(BytecodeOutput& bc_out)
         // Make a copy of the value to ensure things like
         // "TIMES x JMP label" work.
         Value vcopy = *i;
-        try
-        {
-            bc_out.Output(vcopy, vbytes, loc, i->isSigned() ? -1 : 1);
-        }
-        catch (Error& err)
-        {
-            // associate the error with the value, not the bytecode, line
-            err.m_source = vcopy.getSource();
-            throw;
-        }
-        WarnUpdateSource(vcopy.getSource());
+        if (!bc_out.Output(vcopy, vbytes, loc, i->isSigned() ? -1 : 1, diags))
+            return false;
 
         last = off + i->getSize()/8;
     }
@@ -265,7 +265,10 @@ Bytecode::Output(BytecodeOutput& bc_out)
 
     // handle tail contents
     if (m_contents.get() != 0)
-        m_contents->Output(*this, bc_out);
+    {
+        if (!m_contents->Output(*this, bc_out, diags))
+            return false;
+    }
 
     assert((bc_out.getNumOutput() - start) == getTotalLen() &&
            "failed to output correct number of bytes");
@@ -273,19 +276,21 @@ Bytecode::Output(BytecodeOutput& bc_out)
     ++num_output;
     fixed_output += getFixedLen();
     tail_output += getTailLen();
+    return true;
 }
 
 unsigned long
-Bytecode::UpdateOffset(unsigned long offset)
+Bytecode::UpdateOffset(unsigned long offset, Diagnostic& diags)
 {
     if (m_contents.get() != 0 &&
         m_contents->getSpecial() == Contents::SPECIAL_OFFSET)
     {
         // Recalculate/adjust len of offset-based bytecodes here
+        bool keep = false;
         long neg_thres = 0;
         long pos_thres = static_cast<long>(getNextOffset());
-        Expand(1, 0, static_cast<long>(offset+getFixedLen()), &neg_thres,
-               &pos_thres);
+        Expand(1, 0, static_cast<long>(offset+getFixedLen()), &keep,
+               &neg_thres, &pos_thres, diags);
     }
     m_offset = offset;
     return getNextOffset();

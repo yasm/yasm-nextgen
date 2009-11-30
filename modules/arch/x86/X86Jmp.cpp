@@ -32,11 +32,11 @@
 
 #include "llvm/ADT/Statistic.h"
 #include "YAML/emitter.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Symbol.h"
@@ -65,16 +65,21 @@ public:
            std::auto_ptr<Expr> target);
     ~X86Jmp();
 
-    void Finalize(Bytecode& bc);
-    unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
+    bool Finalize(Bytecode& bc, Diagnostic& diags);
+    bool CalcLen(Bytecode& bc,
+                 /*@out@*/ unsigned long* len,
+                 const Bytecode::AddSpanFunc& add_span,
+                 Diagnostic& diags);
     bool Expand(Bytecode& bc,
-                unsigned long& len,
+                unsigned long* len,
                 int span,
                 long old_val,
                 long new_val,
+                bool* keep,
                 /*@out@*/ long* neg_thres,
-                /*@out@*/ long* pos_thres);
-    void Output(Bytecode& bc, BytecodeOutput& bc_out);
+                /*@out@*/ long* pos_thres,
+                Diagnostic& diags);
+    bool Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags);
 
     X86Jmp* clone() const;
 
@@ -111,13 +116,21 @@ X86Jmp::~X86Jmp()
 {
 }
 
-void
-X86Jmp::Finalize(Bytecode& bc)
+bool
+X86Jmp::Finalize(Bytecode& bc, Diagnostic& diags)
 {
     if (!m_target.Finalize())
-        throw TooComplexError(N_("jump target expression too complex"));
+    {
+        diags.Report(bc.getSource(), diag::err_too_complex_jump)
+            << m_target.getSource();
+        return false;
+    }
     if (m_target.isComplexRelative())
-        throw ValueError(N_("invalid jump target"));
+    {
+        diags.Report(bc.getSource(), diag::err_invalid_jump_target)
+            << m_target.getSource();
+        return false;
+    }
 
     // Need to adjust target to the end of the instruction.
     // However, we don't know the instruction length yet (short/near).
@@ -142,52 +155,58 @@ X86Jmp::Finalize(Bytecode& bc)
         // Default to short jump
         m_op_sel = JMP_SHORT;
     }
+    return true;
 }
 
-unsigned long
-X86Jmp::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+bool
+X86Jmp::CalcLen(Bytecode& bc,
+                /*@out@*/ unsigned long* len,
+                const Bytecode::AddSpanFunc& add_span,
+                Diagnostic& diags)
 {
-    unsigned long len = 0;
-
-    len += m_common.getLen();
+    unsigned long ilen = m_common.getLen();
 
     if (m_op_sel == JMP_NEAR)
     {
-        len += m_nearop.getLen();
-        len += (m_common.m_opersize == 16) ? 2 : 4;
+        ilen += m_nearop.getLen();
+        ilen += (m_common.m_opersize == 16) ? 2 : 4;
     }
     else
     {
         // Short or maybe long; generate span
-        len += m_shortop.getLen() + 1;
-        add_span(bc, 1, m_target, -128+len, 127+len);
+        ilen += m_shortop.getLen() + 1;
+        add_span(bc, 1, m_target, -128+*len, 127+*len);
     }
-    return len;
+    *len = ilen;
+    return true;
 }
 
 bool
 X86Jmp::Expand(Bytecode& bc,
-               unsigned long& len,
+               unsigned long* len,
                int span,
                long old_val,
                long new_val,
+               bool* keep,
                /*@out@*/ long* neg_thres,
-               /*@out@*/ long* pos_thres)
+               /*@out@*/ long* pos_thres,
+               Diagnostic& diags)
 {
     assert(span == 1 && "unrecognized span id");
     assert(m_op_sel != JMP_NEAR && "trying to expand an already-near jump");
 
     // Upgrade to a near jump
     m_op_sel = JMP_NEAR;
-    len -= m_shortop.getLen() + 1;
-    len += m_nearop.getLen();
-    len += (m_common.m_opersize == 16) ? 2 : 4;
+    (*len) -= m_shortop.getLen() + 1;
+    (*len) += m_nearop.getLen();
+    (*len) += (m_common.m_opersize == 16) ? 2 : 4;
 
-    return false;
+    *keep = false;
+    return true;
 }
 
-void
-X86Jmp::Output(Bytecode& bc, BytecodeOutput& bc_out)
+bool
+X86Jmp::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
 {
     Bytes& bytes = bc_out.getScratch();
 
@@ -227,7 +246,9 @@ X86Jmp::Output(Bytecode& bc, BytecodeOutput& bc_out)
     Location loc = {&bc, bc.getFixedLen()+bytes.size()};
     Bytes& tbytes = bc_out.getScratch();
     tbytes.resize(size);
-    bc_out.Output(m_target, tbytes, loc, 1);
+    if (!bc_out.Output(m_target, tbytes, loc, 1, diags))
+        return false;
+    return true;
 }
 
 X86Jmp*

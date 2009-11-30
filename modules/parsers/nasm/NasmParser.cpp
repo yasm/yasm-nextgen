@@ -73,7 +73,7 @@ NasmParser::Parse(Object& object,
     DoParse();
 
     // Check for undefined symbols
-    object.FinalizeSymbols(m_errwarns, false);
+    object.FinalizeSymbols(*m_diags);
 }
 
 std::vector<llvm::StringRef>

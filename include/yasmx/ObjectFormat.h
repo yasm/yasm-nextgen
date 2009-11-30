@@ -90,6 +90,7 @@ public:
     /// @param all_syms     if true, all symbols should be included in
     ///                     the object file
     /// @param errwarns     error/warning set
+    /// @param diags        diagnostic reporting
     /// @note Errors and warnings are stored into errwarns.
     virtual void Output(llvm::raw_fd_ostream& os,
                         bool all_syms,

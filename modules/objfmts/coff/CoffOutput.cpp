@@ -32,14 +32,13 @@
 #include <ctime>
 #include <vector>
 
-#include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Arch.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
-#include "yasmx/Errwarns.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location_util.h"
 #include "yasmx/Object.h"
@@ -70,17 +69,18 @@ public:
                bool all_syms);
     ~CoffOutput();
 
-    void OutputSection(Section& sect, Errwarns& errwarns);
+    bool OutputSection(Section& sect, Diagnostic& diags);
     void OutputSectionHeader(const Section& sect);
     unsigned long CountSymbols();
-    void OutputSymbolTable(Errwarns& errwarns);
+    void OutputSymbolTable(Diagnostic& diags);
     void OutputStringTable();
 
     // OutputBytecode overrides
-    void ConvertValueToBytes(Value& value,
+    bool ConvertValueToBytes(Value& value,
                              Bytes& bytes,
                              Location loc,
-                             int warn);
+                             int warn,
+                             Diagnostic& diags);
 
 private:
     CoffObject& m_objfmt;
@@ -107,11 +107,12 @@ CoffOutput::~CoffOutput()
 {
 }
 
-void
+bool
 CoffOutput::ConvertValueToBytes(Value& value,
                                 Bytes& bytes,
                                 Location loc,
-                                int warn)
+                                int warn,
+                                Diagnostic& diags)
 {
     // We can't handle these types of values
     if (value.getRShift() > 0
@@ -119,12 +120,13 @@ CoffOutput::ConvertValueToBytes(Value& value,
         || (value.isSectionRelative()
             && (value.isWRT() || value.hasSubRelative())))
     {
-        throw TooComplexError(N_("coff: relocation too complex"));
+        diags.Report(value.getSource().getBegin(), diag::err_reloc_too_complex);
+        return false;
     }
 
     IntNum base(0);
     if (value.OutputBasic(bytes, &base, warn, *m_object.getArch()))
-        return;
+        return true;
 
     IntNum intn(0);
     IntNum dist(0);
@@ -141,9 +143,17 @@ CoffOutput::ConvertValueToBytes(Value& value,
         {
             Location wrt_loc, rel_loc;
             if (!sym->getLabel(&rel_loc) || !wrt->getLabel(&wrt_loc))
-                throw TooComplexError(N_("coff: wrt expression too complex"));
+            {
+                diags.Report(value.getSource().getBegin(),
+                             diag::err_wrt_too_complex);
+                return false;
+            }
             if (!CalcDist(wrt_loc, rel_loc, &dist))
-                throw TooComplexError(N_("coff: cannot wrt across sections"));
+            {
+                diags.Report(value.getSource().getBegin(),
+                             diag::err_wrt_across_sections);
+                return false;
+            }
             sym = wrt;
         }
 
@@ -157,11 +167,19 @@ CoffOutput::ConvertValueToBytes(Value& value,
                 Expr csize_expr(*getCommonSize(*sym));
                 SimplifyCalcDist(csize_expr);
                 if (!csize_expr.isIntNum())
-                    throw TooComplexError(N_("coff: common size too complex"));
+                {
+                    diags.Report(value.getSource().getBegin(),
+                                 diag::err_common_size_too_complex);
+                    return false;
+                }
 
                 IntNum common_size = csize_expr.getIntNum();
                 if (common_size.getSign() < 0)
-                    throw ValueError(N_("coff: common size is negative"));
+                {
+                    diags.Report(value.getSource().getBegin(),
+                                 diag::err_common_size_negative);
+                    return false;
+                }
 
                 intn += common_size;
             }
@@ -191,7 +209,11 @@ CoffOutput::ConvertValueToBytes(Value& value,
             intn += intn2;
         }
         else if (value.hasSubRelative())
-            throw TooComplexError(N_("elf: relocation too complex"));
+        {
+            diags.Report(value.getSource().getBegin(),
+                         diag::err_reloc_too_complex);
+            return false;
+        }
 
         if (pc_rel)
         {
@@ -225,7 +247,11 @@ CoffOutput::ConvertValueToBytes(Value& value,
                 if (value.getSize() == 32)
                     rtype = CoffReloc::I386_REL32;
                 else
-                    throw TypeError(N_("coff: invalid relocation size"));
+                {
+                    diags.Report(value.getSource().getBegin(),
+                                 diag::err_reloc_invalid_size);
+                    return false;
+                }
             }
             else if (value.isSegOf())
                 rtype = CoffReloc::I386_SECTION;
@@ -244,7 +270,11 @@ CoffOutput::ConvertValueToBytes(Value& value,
             if (pc_rel)
             {
                 if (value.getSize() != 32)
-                    throw TypeError(N_("coff: invalid relocation size"));
+                {
+                    diags.Report(value.getSource().getBegin(),
+                                 diag::err_reloc_invalid_size);
+                    return false;
+                }
                 switch (value.getNextInsn())
                 {
                     case 0: rtype = CoffReloc::AMD64_REL32; break;
@@ -254,7 +284,9 @@ CoffOutput::ConvertValueToBytes(Value& value,
                     case 4: rtype = CoffReloc::AMD64_REL32_4; break;
                     case 5: rtype = CoffReloc::AMD64_REL32_5; break;
                     default:
-                        throw TypeError(N_("coff: invalid relocation size"));
+                        diags.Report(value.getSource().getBegin(),
+                                     diag::err_reloc_invalid_size);
+                        return false;
                 }
             }
             else if (value.isSegOf())
@@ -274,7 +306,11 @@ CoffOutput::ConvertValueToBytes(Value& value,
                 else if (size == 64)
                     rtype = CoffReloc::AMD64_ADDR64;
                 else
-                    throw TypeError(N_("coff: invalid relocation size"));
+                {
+                    diags.Report(value.getSource().getBegin(),
+                                 diag::err_reloc_invalid_size);
+                    return false;
+                }
             }
         }
         else
@@ -295,10 +331,11 @@ CoffOutput::ConvertValueToBytes(Value& value,
     intn += dist;
 
     m_object.getArch()->ToBytes(intn, bytes, value.getSize(), 0, warn);
+    return true;
 }
 
-void
-CoffOutput::OutputSection(Section& sect, Errwarns& errwarns)
+bool
+CoffOutput::OutputSection(Section& sect, Diagnostic& diags)
 {
     BytecodeOutput* outputter = this;
 
@@ -324,11 +361,15 @@ CoffOutput::OutputSection(Section& sect, Errwarns& errwarns)
     else
     {
         if (sect.bytecodes_last().getNextOffset() == 0)
-            return;
+            return true;
 
         pos = m_os.tell();
         if (pos < 0)
-            throw IOError(N_("could not get file position on output file"));
+        {
+            diags.Report(clang::SourceLocation(),
+                         diag::err_file_output_position);
+            return false;
+        }
     }
     sect.setFilePos(static_cast<unsigned long>(pos));
     coffsect->m_size = 0;
@@ -337,16 +378,8 @@ CoffOutput::OutputSection(Section& sect, Errwarns& errwarns)
     for (Section::bc_iterator i=sect.bytecodes_begin(),
          end=sect.bytecodes_end(); i != end; ++i)
     {
-        try
-        {
-            i->Output(*outputter);
+        if (i->Output(*outputter, diags))
             coffsect->m_size += i->getTotalLen();
-        }
-        catch (Error& err)
-        {
-            errwarns.Propagate(i->getSource(), err);
-        }
-        errwarns.Propagate(i->getSource()); // propagate warnings
     }
 
     // Sanity check final section size
@@ -354,11 +387,14 @@ CoffOutput::OutputSection(Section& sect, Errwarns& errwarns)
 
     // No relocations to output?  Go on to next section
     if (sect.getRelocs().size() == 0)
-        return;
+        return true;
 
     pos = m_os.tell();
     if (pos < 0)
-        throw IOError(N_("could not get file position on output file"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_file_output_position);
+        return false;
+    }
     coffsect->m_relptr = static_cast<unsigned long>(pos);
 
     // If >=64K relocs (for Win32/64), we set a flag in the section header
@@ -379,10 +415,8 @@ CoffOutput::OutputSection(Section& sect, Errwarns& errwarns)
         else
 #endif
         {
-            setWarn(WARN_GENERAL,
-                    String::Compose(N_("too many relocations in section `%1'"),
-                                    sect.getName()));
-            errwarns.Propagate(clang::SourceRange());
+            diags.Report(clang::SourceLocation(), diag::err_too_many_relocs)
+                << sect.getName();
         }
     }
 
@@ -395,6 +429,7 @@ CoffOutput::OutputSection(Section& sect, Errwarns& errwarns)
         assert(scratch.size() == 10);
         m_os << scratch;
     }
+    return true;
 }
 
 unsigned long
@@ -431,7 +466,7 @@ CoffOutput::CountSymbols()
 }
 
 void
-CoffOutput::OutputSymbolTable(Errwarns& errwarns)
+CoffOutput::OutputSymbolTable(Diagnostic& diags)
 {
     for (Object::const_symbol_iterator i = m_object.symbols_begin(),
          end = m_object.symbols_end(); i != end; ++i)
@@ -446,7 +481,7 @@ CoffOutput::OutputSymbolTable(Errwarns& errwarns)
         assert(coffsym != 0);
 
         Bytes& bytes = getScratch();
-        coffsym->Write(bytes, *i, errwarns, m_strtab);
+        coffsym->Write(bytes, *i, diags, m_strtab);
         m_os << bytes;
     }
 }
@@ -509,7 +544,10 @@ CoffObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     // Allocate space for headers by seeking forward.
     os.seek(20+40*(scnum-1));
     if (os.has_error())
-        throw IOError(N_("could not seek on output file"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+        return;
+    }
 
     CoffOutput out(os, *this, m_object, all_syms);
 
@@ -520,15 +558,19 @@ CoffObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        out.OutputSection(*i, errwarns);
+        if (!out.OutputSection(*i, diags))
+            return;
     }
 
     // Symbol table
     long pos = os.tell();
     if (pos < 0)
-        throw IOError(N_("could not get file position on output file"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_file_output_position);
+        return;
+    }
     unsigned long symtab_pos = static_cast<unsigned long>(pos);
-    out.OutputSymbolTable(errwarns);
+    out.OutputSymbolTable(diags);
 
     // String table
     out.OutputStringTable();
@@ -536,7 +578,10 @@ CoffObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     // Write headers
     os.seek(0);
     if (os.has_error())
-        throw IOError(N_("could not seek on output file"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+        return;
+    }
 
     // Write file header
     Bytes& bytes = out.getScratch();

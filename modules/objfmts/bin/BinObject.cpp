@@ -100,7 +100,7 @@ private:
 
     void OutputMap(const IntNum& origin,
                    const BinGroups& groups,
-                   Errwarns& errwarns) const;
+                   Diagnostic& diags) const;
 
     enum
     {
@@ -129,7 +129,7 @@ BinObject::~BinObject()
 void
 BinObject::OutputMap(const IntNum& origin,
                      const BinGroups& groups,
-                     Errwarns& errwarns) const
+                     Diagnostic& diags) const
 {
     int map_flags = m_map_flags;
 
@@ -144,9 +144,10 @@ BinObject::OutputMap(const IntNum& origin,
         (m_map_filename.empty() ? "-" : m_map_filename.c_str(), err);
     if (!err.empty())
     {
-        setWarn(WARN_GENERAL, String::Compose(
-            N_("unable to open map file `%1': %2"), m_map_filename, err));
-        errwarns.Propagate(clang::SourceRange());
+        diags.Report(clang::SourceLocation(),
+                     diags.getCustomDiagID(Diagnostic::Warning,
+                         N_("unable to open map file '%0': %1")))
+            << m_map_filename << err;
         return;
     }
 
@@ -172,13 +173,14 @@ public:
 
     void OutputSection(Section& sect,
                        const IntNum& origin,
-                       Errwarns& errwarns);
+                       Diagnostic& diags);
 
     // OutputBytecode overrides
-    void ConvertValueToBytes(Value& value,
+    bool ConvertValueToBytes(Value& value,
                              Bytes& bytes,
                              Location loc,
-                             int warn);
+                             int warn,
+                             Diagnostic& diags);
 
 private:
     Object& m_object;
@@ -200,7 +202,7 @@ BinOutput::~BinOutput()
 void
 BinOutput::OutputSection(Section& sect,
                          const IntNum& origin,
-                         Errwarns& errwarns)
+                         Diagnostic& diags)
 {
     BytecodeOutput* outputter;
 
@@ -214,21 +216,26 @@ BinOutput::OutputSection(Section& sect,
         file_start -= origin;
         if (file_start.getSign() < 0)
         {
-            errwarns.Propagate(clang::SourceRange(), ValueError(String::Compose(
-                N_("section `%1' starts before origin (ORG)"),
-                sect.getName())));
+            diags.Report(clang::SourceLocation(),
+                         diags.getCustomDiagID(Diagnostic::Error,
+                             N_("section '%0' starts before origin (ORG)")))
+                << sect.getName();
             return;
         }
         if (!file_start.isOkSize(sizeof(unsigned long)*8, 0, 0))
         {
-            errwarns.Propagate(clang::SourceRange(), ValueError(String::Compose(
-                N_("section `%1' start value too large"),
-                sect.getName())));
+            diags.Report(clang::SourceLocation(),
+                         diags.getCustomDiagID(Diagnostic::Error,
+                             N_("section '%0' start value too large")))
+                << sect.getName();
             return;
         }
         m_fd_os.seek(file_start.getUInt());
         if (m_os.has_error())
-            throw Fatal(N_("could not seek on output file"));
+        {
+            diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+            return;
+        }
 
         outputter = this;
     }
@@ -236,23 +243,16 @@ BinOutput::OutputSection(Section& sect,
     for (Section::bc_iterator i=sect.bytecodes_begin(),
          end=sect.bytecodes_end(); i != end; ++i)
     {
-        try
-        {
-            i->Output(*outputter);
-        }
-        catch (Error& err)
-        {
-            errwarns.Propagate(i->getSource(), err);
-        }
-        errwarns.Propagate(i->getSource()); // propagate warnings
+        i->Output(*outputter, diags);
     }
 }
 
-void
+bool
 BinOutput::ConvertValueToBytes(Value& value,
                                Bytes& bytes,
                                Location loc,
-                               int warn)
+                               int warn,
+                               Diagnostic& diags)
 {
     // Binary objects we need to resolve against object, not against section.
     if (value.isRelative())
@@ -293,15 +293,17 @@ done:
     // Output
     IntNum intn;
     if (value.OutputBasic(bytes, &intn, warn, *m_object.getArch()))
-        return;
+        return true;
 
     // Couldn't output, assume it contains an external reference.
-    throw Error(
-        N_("binary object format does not support external references"));
+    diags.Report(value.getSource().getBegin(),
+                 diags.getCustomDiagID(Diagnostic::Error,
+                     N_("binary object format does not support external references")));
+    return false;
 }
 
 static void
-CheckSymbol(const Symbol& sym, Errwarns& errwarns)
+CheckSymbol(const Symbol& sym, Diagnostic& diags)
 {
     int vis = sym.getVisibility();
 
@@ -312,19 +314,20 @@ CheckSymbol(const Symbol& sym, Errwarns& errwarns)
 
     if (vis & Symbol::EXTERN)
     {
-        setWarn(WARN_GENERAL,
-            N_("binary object format does not support extern variables"));
-        errwarns.Propagate(sym.getDeclSource());
+        diags.Report(sym.getDeclSource(),
+                     diags.getCustomDiagID(Diagnostic::Warning,
+            N_("binary object format does not support extern variables")));
     }
     else if (vis & Symbol::GLOBAL)
     {
-        setWarn(WARN_GENERAL,
-            N_("binary object format does not support global variables"));
-        errwarns.Propagate(sym.getDeclSource());
+        diags.Report(sym.getDeclSource(),
+                     diags.getCustomDiagID(Diagnostic::Warning,
+            N_("binary object format does not support global variables")));
     }
     else if (vis & Symbol::COMMON)
     {
-        errwarns.Propagate(sym.getDeclSource(), TypeError(
+        diags.Report(sym.getDeclSource(),
+                     diags.getCustomDiagID(Diagnostic::Error,
             N_("binary object format does not support common variables")));
     }
 }
@@ -340,15 +343,17 @@ BinObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
         m_org->Simplify();
         if (!m_org->isIntNum())
         {
-            errwarns.Propagate(m_org_source,
-                TooComplexError(N_("ORG expression is too complex")));
+            diags.Report(m_org_source,
+                         diags.getCustomDiagID(Diagnostic::Error,
+                             N_("ORG expression is too complex")));
             return;
         }
         IntNum orgi = m_org->getIntNum();
         if (orgi.getSign() < 0)
         {
-            errwarns.Propagate(m_org_source,
-                ValueError(N_("ORG expression is negative")));
+            diags.Report(m_org_source,
+                         diags.getCustomDiagID(Diagnostic::Error,
+                             N_("ORG expression is negative")));
             return;
         }
         origin = orgi;
@@ -357,15 +362,15 @@ BinObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     // Check symbol table
     for (Object::const_symbol_iterator i=m_object.symbols_begin(),
          end=m_object.symbols_end(); i != end; ++i)
-        CheckSymbol(*i, errwarns);
+        CheckSymbol(*i, diags);
 
-    BinLink link(m_object, errwarns);
+    BinLink link(m_object, diags);
 
     if (!link.DoLink(origin))
         return;
 
     // Output map file
-    OutputMap(origin, link.getLMAGroups(), errwarns);
+    OutputMap(origin, link.getLMAGroups(), diags);
 
     // Ensure we don't have overlapping progbits LMAs.
     if (!link.CheckLMAOverlap())
@@ -376,7 +381,7 @@ BinObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        out.OutputSection(*i, origin, errwarns);
+        out.OutputSection(*i, origin, diags);
     }
 }
 

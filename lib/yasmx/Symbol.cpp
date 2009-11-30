@@ -132,21 +132,6 @@ Symbol::Declare(Visibility vis, clang::SourceLocation source)
     }
 }
 
-void
-Symbol::Finalize(bool undef_extern)
-{
-    // error if a symbol is used but never defined or extern/common declared
-    if ((m_status & USED) && !(m_status & DEFINED) &&
-        !(m_visibility & (EXTERN | COMMON)))
-    {
-        if (undef_extern)
-            m_visibility |= EXTERN;
-        else
-            throw Error(String::Compose(N_("undefined symbol `%1' (first use)"),
-                                        m_name));
-    }
-}
-
 bool
 Symbol::getLabel(Location* loc) const
 {

@@ -39,7 +39,7 @@ namespace yasm
 {
 
 class Bytes;
-class Errwarns;
+class Diagnostic;
 class StringTable;
 
 namespace objfmt
@@ -101,7 +101,7 @@ struct CoffSymbol : public AssocData
     void Write(YAML::Emitter& out) const;
     void Write(Bytes& bytes,
                const Symbol& sym,
-               Errwarns& errwarns,
+               Diagnostic& diags,
                StringTable& strtab) const;
 
     unsigned long m_index;          ///< assigned COFF symbol table index

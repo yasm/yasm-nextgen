@@ -47,13 +47,16 @@ public:
     ~SxData();
 
     /// Finalizes the bytecode after parsing.
-    void Finalize(Bytecode& bc);
+    bool Finalize(Bytecode& bc, Diagnostic& diags);
 
     /// Calculates the minimum size of a bytecode.
-    unsigned long CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span);
+    bool CalcLen(Bytecode& bc,
+                 /*@out@*/ unsigned long* len,
+                 const Bytecode::AddSpanFunc& add_span,
+                 Diagnostic& diags);
 
     /// Convert a bytecode into its byte representation.
-    void Output(Bytecode& bc, BytecodeOutput& bc_out);
+    bool Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags);
 
     SxData* clone() const;
 
@@ -73,19 +76,24 @@ SxData::~SxData()
 {
 }
 
-void
-SxData::Finalize(Bytecode& bc)
+bool
+SxData::Finalize(Bytecode& bc, Diagnostic& diags)
 {
+    return true;
 }
 
-unsigned long
-SxData::CalcLen(Bytecode& bc, const Bytecode::AddSpanFunc& add_span)
+bool
+SxData::CalcLen(Bytecode& bc,
+                /*@out@*/ unsigned long* len,
+                const Bytecode::AddSpanFunc& add_span,
+                Diagnostic& diags)
 {
-    return 4;
+    *len = 4;
+    return true;
 }
 
-void
-SxData::Output(Bytecode& bc, BytecodeOutput& bc_out)
+bool
+SxData::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
 {
     yasm::objfmt::coff::CoffSymbol* coffsym =
         m_sym->getAssocData<yasm::objfmt::coff::CoffSymbol>();
@@ -95,6 +103,7 @@ SxData::Output(Bytecode& bc, BytecodeOutput& bc_out)
     bytes.setLittleEndian();
     Write32(bytes, coffsym->m_index);
     bc_out.Output(bytes);
+    return true;
 }
 
 SxData*

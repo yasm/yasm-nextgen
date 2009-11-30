@@ -169,8 +169,16 @@ add_warning("warn_unrecognized_ident", "unrecognized identifier")
 add_warning("warn_scale_without_index",
             "scale factor without an index register")
 
+# Value
+add_error("err_too_complex_expression", "expression too complex")
+add_error("err_value_not_constant", "value not constant")
+add_error("err_too_complex_jump", "jump target expression too complex")
+add_error("err_invalid_jump_target", "invalid jump target")
+
 # Expression
 add_error("err_data_value_register", "data values cannot have registers")
+add_error("err_expr_contains_float",
+          "expression must not contain floating point value")
 
 # Label/instruction expected
 add_error("err_expected_insn_after_label",
@@ -179,6 +187,71 @@ add_error("err_expected_insn_after_times",
           "instruction expected after TIMES expression")
 add_error("err_expected_insn_label_after_eol",
           "label or instruction expected at start of line")
+
+# File
+add_error("err_file_read", "unable to read file '%0': %1")
+add_error("err_file_output_seek", "unable to seek on output file",
+          mapping="FATAL")
+add_error("err_file_output_position",
+          "could not get file position on output file",
+          mapping="FATAL")
+
+# Align
+add_error("err_align_boundary_not_const", "align boundary must be a constant")
+add_error("err_align_fill_not_const", "align fill must be a constant")
+add_error("err_align_skip_not_const", "align maximum skip must be a constant")
+add_error("err_align_code_not_found",
+          "could not find an appropriate code alignment size")
+add_error("err_align_invalid_code_size", "invalid code alignment size %0")
+
+# Incbin
+add_error("err_incbin_start_too_complex", "start expression too complex")
+add_error("err_incbin_start_not_absolute", "start expression not absolute")
+add_error("err_incbin_start_not_const", "start expression not constant")
+add_error("err_incbin_maxlen_too_complex",
+          "maximum length expression too complex")
+add_error("err_incbin_maxlen_not_absolute",
+          "maximum length expression not absolute")
+add_error("err_incbin_maxlen_not_const",
+          "maximum length expression not constant")
+add_warning("warn_incbin_start_after_eof", "start past end of file")
+
+# LEB128
+add_warning("warn_negative_uleb128", "negative value in unsigned LEB128")
+
+# Multiple
+add_error("err_multiple_too_complex", "multiple expression too complex")
+add_error("err_multiple_not_absolute", "multiple expression not absolute")
+add_error("err_multiple_setpos",
+          "cannot combine multiples and setting assembly position")
+add_error("err_multiple_negative", "multiple cannot be negative")
+add_error("err_multiple_unknown", "could not determine multiple")
+
+# ORG
+add_error("err_org_overlap", "ORG overlap with already existing data")
+
+# Symbol
+add_error("err_symbol_undefined", "undefined symbol '%0' (first use)")
+add_note("note_symbol_undefined_once",
+         "(Each undefined symbol is reported only once.)")
+add_error("err_equ_not_integer", "global EQU value not an integer expression")
+add_error("err_common_size_not_integer",
+          "COMMON data size not an integer expression")
+
+# Optimizer
+add_error("err_optimizer_circular_reference", "circular reference detected")
+add_error("err_optimizer_secondary_expansion",
+          "secondary expansion of an external/complex value")
+
+# Output
+add_error("err_too_many_relocs", "too many relocations in section '%0'")
+add_error("err_reloc_too_complex", "relocation too complex")
+add_error("err_reloc_invalid_size", "invalid relocation size")
+add_error("err_wrt_not_supported", "WRT not supported")
+add_error("err_wrt_too_complex", "WRT expression too complex")
+add_error("err_wrt_across_sections", "cannot WRT across sections")
+add_error("err_common_size_too_complex", "common size too complex")
+add_error("err_common_size_negative", "common size cannot be negative")
 
 # Label
 add_note("note_duplicate_label_prev", "previous label defined here")

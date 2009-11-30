@@ -138,7 +138,7 @@ public:
     RdfOutput(llvm::raw_ostream& os, Object& object);
     ~RdfOutput();
 
-    void OutputSectionToMemory(Section& sect, Errwarns& errwarns);
+    void OutputSectionToMemory(Section& sect, Diagnostic& diags);
     void OutputSectionRelocs(const Section& sect);
     void OutputSectionToFile(const Section& sect);
 
@@ -151,10 +151,11 @@ public:
     void OutputBSS();
 
     // BytecodeOutput overrides
-    void ConvertValueToBytes(Value& value,
+    bool ConvertValueToBytes(Value& value,
                              Bytes& bytes,
                              Location loc,
-                             int warn);
+                             int warn,
+                             Diagnostic& diags);
     void DoOutputGap(unsigned int size);
     void DoOutputBytes(const Bytes& bytes);
 
@@ -184,24 +185,32 @@ typedef struct rdf_objfmt_output_info {
 } rdf_objfmt_output_info;
 
 
-void
+bool
 RdfOutput::ConvertValueToBytes(Value& value,
                                Bytes& bytes,
                                Location loc,
-                               int warn)
+                               int warn,
+                               Diagnostic& diags)
 {
     // We can't handle these types of values
     if (value.isSectionRelative())
-        throw TooComplexError(N_("rdf: relocation too complex"));
+    {
+        diags.Report(value.getSource().getBegin(), diag::err_reloc_too_complex);
+        return false;
+    }
 
     IntNum intn(0);
     if (value.OutputBasic(bytes, &intn, warn, *m_object.getArch()))
-        return;
+        return true;
 
     if (value.isRelative())
     {
         if (value.isWRT())
-            throw TooComplexError(N_("rdf: WRT not supported"));
+        {
+            diags.Report(value.getSource().getBegin(),
+                         diag::err_wrt_not_supported);
+            return false;
+        }
 
         Section* sect = loc.bc->getContainer()->AsSection();
         IntNum addr = loc.getOffset();
@@ -217,7 +226,11 @@ RdfOutput::ConvertValueToBytes(Value& value,
             intn += intn2;
         }
         else if (value.hasSubRelative())
-            throw TooComplexError(N_("rdf: relocation too complex"));
+        {
+            diags.Report(value.getSource().getBegin(),
+                         diag::err_reloc_too_complex);
+            return false;
+        }
 
         if (pc_rel)
         {
@@ -252,6 +265,7 @@ RdfOutput::ConvertValueToBytes(Value& value,
     }
 
     m_object.getArch()->ToBytes(intn, bytes, value.getSize(), 0, warn);
+    return true;
 }
 
 void
@@ -270,7 +284,7 @@ RdfOutput::DoOutputBytes(const Bytes& bytes)
 }
 
 void
-RdfOutput::OutputSectionToMemory(Section& sect, Errwarns& errwarns)
+RdfOutput::OutputSectionToMemory(Section& sect, Diagnostic& diags)
 {
     BytecodeOutput* outputter = this;
 
@@ -291,16 +305,8 @@ RdfOutput::OutputSectionToMemory(Section& sect, Errwarns& errwarns)
     for (Section::bc_iterator i=sect.bytecodes_begin(),
          end=sect.bytecodes_end(); i != end; ++i)
     {
-        try
-        {
-            i->Output(*outputter);
+        if (i->Output(*outputter, diags))
             size += i->getTotalLen();
-        }
-        catch (Error& err)
-        {
-            errwarns.Propagate(i->getSource(), err);
-        }
-        errwarns.Propagate(i->getSource()); // propagate warnings
     }
 
     // Sanity check final section size
@@ -597,7 +603,10 @@ RdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     // Allocate space for file header by seeking forward
     os.seek(sizeof(RDF_MAGIC)+8);
     if (os.has_error())
-        throw Fatal(N_("could not seek on output file"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+        return;
+    }
 
     RdfOutput out(os, m_object);
 
@@ -644,7 +653,7 @@ RdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     for (Object::section_iterator i = m_object.sections_begin(),
          end = m_object.sections_end(); i != end; ++i)
     {
-        out.OutputSectionToMemory(*i, errwarns);
+        out.OutputSectionToMemory(*i, diags);
     }
 
     // Output all relocs
@@ -660,7 +669,10 @@ RdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     // Determine header length
     uint64_t pos = os.tell();
     if (os.has_error())
-        throw IOError(N_("could not get file position on output file"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_file_output_position);
+        return;
+    }
     unsigned long headerlen = static_cast<unsigned long>(pos);
 
     // Section data (to file)
@@ -680,13 +692,19 @@ RdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     // Determine object length
     pos = os.tell();
     if (os.has_error())
-        throw IOError(N_("could not get file position on output file"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_file_output_position);
+        return;
+    }
     unsigned long filelen = static_cast<unsigned long>(pos);
 
     // Write file header
     os.seek(0);
     if (os.has_error())
-        throw IOError(N_("could not seek on output file"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+        return;
+    }
 
     {
         Bytes& bytes = out.getScratch();
@@ -773,7 +791,8 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
         if (rsect->type == RdfSection::RDF_BSS)
         {
             Bytecode& gap = section->AppendGap(size, clang::SourceLocation());
-            gap.CalcLen(0);     // force length calculation of gap
+            Diagnostic nodiags(0);
+            gap.CalcLen(0, nodiags);    // force length calculation of gap
         }
         else
         {
@@ -901,7 +920,8 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
                     new Section(".bss", false, true, clang::SourceLocation()));
                 Bytecode& gap =
                     section->AppendGap(size, clang::SourceLocation());
-                gap.CalcLen(0);     // force length calculation of gap
+                Diagnostic nodiags(0);
+                gap.CalcLen(0, nodiags);    // force length calculation of gap
 
                 // Create symbol for section start (used for relocations)
                 SymbolRef sym = m_object.AddNonTableSymbol(".bss");

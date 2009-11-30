@@ -47,7 +47,7 @@ namespace yasm
 {
 
 class Arch;
-class Errwarns;
+class Diagnostic;
 class Section;
 class Symbol;
 
@@ -72,9 +72,8 @@ public:
     ~Object();
 
     /// Finalize an object after parsing.
-    /// @param errwarns     error/warning set
-    /// @note Errors/warnings are stored into errwarns.
-    void Finalize(Errwarns& errwarns);
+    /// @param diags    diagnostic reporting
+    void Finalize(Diagnostic& diags);
 
     /// Change the source filename for an object.
     /// @param src_filename new source filename (e.g. "file.asm")
@@ -94,14 +93,12 @@ public:
 
     /// Optimize an object.  Takes the unoptimized object and optimizes it.
     /// If successful, the object is ready for output to an object file.
-    /// @param errwarns     error/warning set
-    /// @note Optimization failures are stored into errwarns.
-    void Optimize(Errwarns& errwarns);
+    /// @param diags    diagnostic reporting
+    void Optimize(Diagnostic& diags);
 
     /// Updates all bytecode offsets in object.
-    /// @param errwarns     error/warning set
-    /// @note Errors/warnings are stored into errwarns.
-    void UpdateBytecodeOffsets(Errwarns& errwarns);
+    /// @param diags    diagnostic reporting
+    void UpdateBytecodeOffsets(Diagnostic& diags);
 
     // Section functions
 
@@ -186,12 +183,13 @@ public:
     /// @return Reference to symbol.
     SymbolRef AddNonTableSymbol(llvm::StringRef name);
 
+    /// Declare all used but undefined symbols extern.
+    void ExternUndefinedSymbols();
+
     /// Finalize symbol table after parsing stage.  Checks for symbols that
     /// are used but never defined or declared #EXTERN or #COMMON.
-    /// @param errwarns     error/warning set
-    /// @param undef_extern if true, all undef syms should be declared extern
-    /// @note Errors/warnings are stored into errwarns.
-    void FinalizeSymbols(Errwarns& errwarns, bool undef_extern);
+    /// @param diags        diagnostic reporting
+    void FinalizeSymbols(Diagnostic& diags);
 
     /// Add a special symbol.
     /// @param sym      symbol name

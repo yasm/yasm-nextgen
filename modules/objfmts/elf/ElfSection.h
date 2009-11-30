@@ -43,7 +43,7 @@ namespace yasm
 {
 
 class Bytes;
-class Errwarns;
+class Diagnostic;
 class Section;
 class StringTable;
 
@@ -123,9 +123,9 @@ public:
                            Bytes& scratch);
     unsigned long WriteRelocs(llvm::raw_ostream& os,
                               Section& sect,
-                              Errwarns& errwarns,
                               Bytes& scratch,
-                              const ElfMachine& machine);
+                              const ElfMachine& machine,
+                              Diagnostic& diags);
     void ReadRelocs(const llvm::MemoryBuffer& in,
                     const ElfSection& reloc_sect,
                     Section& sect,

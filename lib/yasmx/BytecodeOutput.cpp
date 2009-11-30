@@ -44,26 +44,30 @@ BytecodeOutput::~BytecodeOutput()
 {
 }
 
-void
+bool
 BytecodeOutput::ConvertSymbolToBytes(SymbolRef sym,
                                      Bytes& bytes,
                                      Location loc,
                                      unsigned int valsize,
-                                     int warn)
+                                     int warn,
+                                     Diagnostic& diags)
 {
+    return true;
 }
 
 BytecodeNoOutput::~BytecodeNoOutput()
 {
 }
 
-void
+bool
 BytecodeNoOutput::ConvertValueToBytes(Value& value,
                                       Bytes& bytes,
                                       Location loc,
-                                      int warn)
+                                      int warn,
+                                      Diagnostic& diags)
 {
     // unnecessary; we don't actually output it anyway
+    return true;
 }
 
 void
