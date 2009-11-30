@@ -160,7 +160,11 @@ macro (YASM_ADD_UNIT_TEST _test_NAME)
     endif( ${ARGV1} STREQUAL "TESTNAME" )
     yasm_add_executable( ${_test_NAME} TEST ${_srcList} )
     set(_executable ${_test_NAME})
-    add_test( ${_targetName} ${_executable} )
+    if(${CMAKE_VERSION} VERSION_LESS "2.8.0")
+        add_test( ${_targetName} ${_executable} )
+    else(${CMAKE_VERSION} VERSION_LESS "2.8.0")
+        add_test(NAME ${_targetName} COMMAND ${_executable} )
+    endif(${CMAKE_VERSION} VERSION_LESS "2.8.0")
 endmacro (YASM_ADD_UNIT_TEST)
 
 # add an executable
