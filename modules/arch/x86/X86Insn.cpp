@@ -90,21 +90,18 @@ enum X86OpcodeModifier
 // GAS suffix flags for instructions
 enum X86GasSuffixFlags
 {
-    NONE = 0,
-    SUF_B = 1<<0,
-    SUF_W = 1<<1,
-    SUF_L = 1<<2,
-    SUF_Q = 1<<3,
-    SUF_S = 1<<4,
-    SUF_MASK = SUF_B|SUF_W|SUF_L|SUF_Q|SUF_S,
+    SUF_Z = 1<<0,           // no suffix
+    SUF_B = 1<<1,
+    SUF_W = 1<<2,
+    SUF_L = 1<<3,
+    SUF_Q = 1<<4,
+    SUF_S = 1<<5,
+    SUF_MASK = SUF_Z|SUF_B|SUF_W|SUF_L|SUF_Q|SUF_S,
 
     // Flags only used in x86_insn_info
-    GAS_ONLY = 1<<5,        // Only available in GAS mode
-    GAS_ILLEGAL = 1<<6,     // Illegal in GAS mode
-    GAS_NO_REV = 1<<7,      // Don't reverse operands in GAS mode
-
-    // Flags only used in InsnPrefixParseData
-    WEAK = 1<<5             // Relaxed operand mode for GAS
+    GAS_ONLY = 1<<6,        // Only available in GAS mode
+    GAS_ILLEGAL = 1<<7,     // Illegal in GAS mode
+    GAS_NO_REV = 1<<8       // Don't reverse operands in GAS mode
 };
 
 // Miscellaneous flag tests for instructions
@@ -267,10 +264,10 @@ struct X86InfoOperand
 struct X86InsnInfo
 {
     // GAS suffix flags
-    unsigned int gas_flags:8;      // Enabled for these GAS suffixes
+    unsigned int gas_flags:9;      // Enabled for these GAS suffixes
 
     // Tests against BITS==64, AVX, and XOP
-    unsigned int misc_flags:6;
+    unsigned int misc_flags:5;
 
     // The CPU feature flags needed to execute this instruction.  This is OR'ed
     // with arch-specific data[2].  This combined value is compared with
@@ -376,6 +373,7 @@ X86Insn::DoAppendJmpFar(BytecodeContainer& container,
     std::auto_ptr<Expr> imm = op.ReleaseImm();
     assert(imm.get() != 0);
 
+    unsigned char opersize = info.opersize;
     std::auto_ptr<Expr> segment(op.ReleaseSeg());
 
     const X86TargetModifier* tmod =
@@ -385,16 +383,50 @@ X86Insn::DoAppendJmpFar(BytecodeContainer& container,
         // "FAR imm" target needs to become "seg imm:imm".
         segment.reset(new Expr(SEG(*imm)));
     }
+    else if (m_operands.size() > 1)
+    {
+        // Two operand form (gas)
+        Operand& op2 = m_operands[1];
+        segment = imm;
+        imm.reset(op2.getImm());
+        if (op2.getSize() == OPS_BITS)
+            opersize = m_mode_bits;
+    }
     else if (segment.get() == 0)
         assert(false && "didn't get FAR expression in jmpfar");
 
+    X86Opcode opcode(info.opcode_len, info.opcode);
+
+    // Apply modifiers
+    for (unsigned int i=0; i<NELEMS(info.modifiers); i++)
+    {
+        switch (info.modifiers[i])
+        {
+            case MOD_Gap:
+                break;
+            case MOD_Op0Add:
+                opcode.Add(0, m_mod_data[i]);
+                break;
+            case MOD_Op1Add:
+                opcode.Add(1, m_mod_data[i]);
+                break;
+            case MOD_Op2Add:
+                opcode.Add(2, m_mod_data[i]);
+                break;
+            case MOD_Op1AddSp:
+                opcode.Add(1, m_mod_data[i]<<3);
+                break;
+            default:
+                break;
+        }
+    }
+
     X86Common common;
-    common.m_opersize = info.opersize;
+    common.m_opersize = opersize;
     common.m_mode_bits = m_mode_bits;
     common.ApplyPrefixes(info.def_opersize_64, m_prefixes);
     common.Finish();
-    AppendJmpFar(container, common, X86Opcode(info.opcode_len, info.opcode),
-                 segment, imm, source);
+    AppendJmpFar(container, common, opcode, segment, imm, source);
 }
 
 bool
@@ -718,7 +750,7 @@ X86Insn::MatchOperand(const Operand& op, const X86InfoOperand& info_op,
 
     // Check operand size
     unsigned int size = size_lookup[info_op.size];
-    if (m_suffix != 0)
+    if (m_parser == X86Arch::PARSER_GAS)
     {
         // Require relaxed operands for GAS mode (don't allow
         // per-operand sizing).
@@ -769,7 +801,7 @@ X86Insn::MatchOperand(const Operand& op, const X86InfoOperand& info_op,
     }
 
     // Check for 64-bit effective address size in NASM mode
-    if (m_suffix == 0 && ea)
+    if (m_parser != X86Arch::PARSER_GAS && ea)
     {
         if (info_op.eas64)
         {
@@ -848,7 +880,7 @@ X86Insn::MatchInfo(const X86InsnInfo& info, const unsigned int* size_lookup,
         return false;
 
     // Match suffix (if required)
-    if (m_suffix != 0 && m_suffix != WEAK
+    if (m_parser == X86Arch::PARSER_GAS
         && ((m_suffix & SUF_MASK) & (gas_flags & SUF_MASK)) == 0)
         return false;
 
@@ -1888,7 +1920,7 @@ X86Arch::CreateEmptyInsn() const
         0,
         NELEMS(empty_insn),
         m_mode_bits,
-        0,
+        (m_parser == PARSER_GAS) ? SUF_Z : 0,
         0,
         m_parser,
         m_force_strict,

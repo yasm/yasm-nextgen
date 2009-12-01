@@ -116,10 +116,10 @@ private:
     unsigned int m_mode_bits:8;
 
     // Suffix flags
-    unsigned int m_suffix:8;
+    unsigned int m_suffix:9;
 
     // Tests against BITS==64 and AVX
-    unsigned int m_misc_flags:6;
+    unsigned int m_misc_flags:5;
 
     // Parser enabled at the time of parsing the instruction
     unsigned int m_parser:2;
