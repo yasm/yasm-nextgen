@@ -655,7 +655,8 @@ Value::Finalize()
         return true;
     }
 
-    ExpandEqu(*m_abs);
+    if (!ExpandEqu(*m_abs))
+        throw Error("circular reference detected");
     m_abs->Simplify(false);
 
     // Strip top-level AND masking to an all-1s mask the same size

@@ -511,7 +511,8 @@ X86ExprCheckEAGetRegUsage(Expr& e,
     int* reg;
     int regnum;
 
-    ExpandEqu(e);
+    if (!ExpandEqu(e))
+        throw Error("circular reference detected");
     e.Simplify(BIND::bind(&X86ExprCheckEADistReg, _1, _2, indexreg == 0),
                indexreg == 0);
 

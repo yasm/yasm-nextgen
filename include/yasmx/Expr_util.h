@@ -38,10 +38,11 @@ namespace yasm
 class Expr;
 
 /// Expand any and all EQU values in an expression.
-/// Detects circular references, and will throw TooComplexError if one found.
+/// Detects circular references, and will return false if one found.
 /// @param e        Expression
+/// @return True if equ expansion successful with no circular references.
 YASM_LIB_EXPORT
-void ExpandEqu(Expr& e);
+bool ExpandEqu(Expr& e);
 
 } // namespace yasm
 

@@ -30,7 +30,6 @@
 
 #include <algorithm>
 
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Symbol.h"
 
@@ -58,11 +57,11 @@ public:
 namespace yasm
 {
 
-void
+bool
 ExpandEqu(Expr& e)
 {
     if (e.isEmpty())
-        return;
+        return true;
     llvm::SmallVector<SawEqu, 8> seen;
     yasm::ExprTerms& terms = e.getTerms();
 
@@ -97,7 +96,7 @@ ExpandEqu(Expr& e)
         // Check for circular reference
         if (std::find_if(seen.begin(), seen.end(), MatchSawEqu(sym))
             != seen.end())
-            throw yasm::TooComplexError(N_("circular reference detected"));
+            return false;
 
         // Remember we saw this equ
         SawEqu justsaw = {sym, child->m_depth, n};
@@ -110,6 +109,7 @@ ExpandEqu(Expr& e)
         terms[n].Clear();
         --n;
     }
+    return true;
 }
 
 } // namespace yasm

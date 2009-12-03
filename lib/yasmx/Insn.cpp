@@ -158,36 +158,20 @@ Operand::Finalize()
             // Don't get over-ambitious here; some archs' memory expr
             // parser are sensitive to the presence of *1, etc, so don't
             // simplify reg*1 identities.
-            try
+            if (m_ea)
             {
-                if (m_ea)
+                if (Expr* abs = m_ea->m_disp.getAbs())
                 {
-                    if (Expr* abs = m_ea->m_disp.getAbs())
-                    {
-                        ExpandEqu(*abs);
-                        abs->Simplify(false);
-                    }
+                    if (!ExpandEqu(*abs))
+                        throw Error("circular reference detected in memory expression");
+                    abs->Simplify(false);
                 }
-            }
-            catch (Error& err)
-            {
-                // Add a pointer to where it was used
-                err.m_message += " in memory expression";
-                throw;
             }
             break;
         case IMM:
-            try
-            {
-                ExpandEqu(*m_val);
-                m_val->Simplify();
-            }
-            catch (Error& err)
-            {
-                // Add a pointer to where it was used
-                err.m_message += " in immediate expression";
-                throw;
-            }
+            if (!ExpandEqu(*m_val))
+                throw Error("circular reference detected in immediate expression");
+            m_val->Simplify();
             break;
         default:
             break;
