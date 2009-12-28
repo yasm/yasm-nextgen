@@ -62,7 +62,7 @@ X86Common::ApplyPrefixes(unsigned int def_opersize_64,
     for (Insn::Prefixes::const_iterator i=prefixes.begin(), end=prefixes.end();
          i != end; ++i)
     {
-        const X86Prefix* prefix = static_cast<const X86Prefix*>(*i);
+        const X86Prefix* prefix = static_cast<const X86Prefix*>(i->first);
         switch (prefix->getType())
         {
             case X86Prefix::LOCKREP:

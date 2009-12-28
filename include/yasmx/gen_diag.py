@@ -180,6 +180,13 @@ add_error("err_data_value_register", "data values cannot have registers")
 add_error("err_expr_contains_float",
           "expression must not contain floating point value")
 
+# Effective address
+add_error("err_invalid_ea_segment", "invalid segment in effective address")
+
+# Immediate
+add_error("err_imm_segment_override",
+          "cannot have segment override on immediate")
+
 # Label/instruction expected
 add_error("err_expected_insn_after_label",
           "instruction expected after label")
@@ -237,6 +244,30 @@ add_note("note_symbol_undefined_once",
 add_error("err_equ_not_integer", "global EQU value not an integer expression")
 add_error("err_common_size_not_integer",
           "COMMON data size not an integer expression")
+
+# Insn
+add_error("err_equ_circular_reference_mem",
+          "circular reference detected in memory expression")
+add_error("err_equ_circular_reference_imm",
+          "circular reference detected in immediate expression")
+add_error("err_too_many_operands", "too many operands, maximum of %0")
+add_warning("warn_prefixes_skipped", "skipping prefixes on this instruction")
+add_error("err_bad_num_operands", "invalid number of operands")
+add_error("err_bad_operand_size", "invalid operand size")
+add_error("err_requires_cpu", "requires CPU%0")
+add_error("err_bad_insn_operands",
+          "invalid combination of opcode and operands")
+add_error("err_missing_jump_form", "no %0 form of that jump instruction exists")
+add_warning("warn_multiple_seg_override",
+            "multiple segment overrides, using leftmost")
+
+# x86
+add_warning("warn_indirect_call_no_deref", "indirect call without '*'")
+add_warning("warn_skip_prefixes", "skipping prefixes on this instruction")
+add_error("err_16addr_64mode", "16-bit addresses not supported in 64-bit mode")
+add_error("err_bad_address_size", "unsupported address size")
+add_error("err_dest_not_src1_or_src3",
+          "one of source operand 1 (%0) or 3 (%1) must match dest operand")
 
 # Optimizer
 add_error("err_optimizer_circular_reference", "circular reference detected")

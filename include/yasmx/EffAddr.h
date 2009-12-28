@@ -55,16 +55,11 @@ public:
     /// Destructor.
     virtual ~EffAddr();
 
-    /// Set segment override for an effective address.
-    /// Some architectures (such as x86) support segment overrides on
-    /// effective addresses.  A override of an override will result in a
-    /// warning.
-    /// @param segreg       segment register (0 if none)
-    void setSegReg(const SegmentRegister* segreg);
-
     Value m_disp;       ///< address displacement
 
     /// Segment register override (0 if none).
+    /// Some architectures (such as x86) support segment overrides on
+    /// effective addresses.
     const SegmentRegister* m_segreg;
 
     /// 1 if length of disp must be >0.

@@ -426,7 +426,7 @@ NasmParser::ParseExp()
     Insn::Ptr insn = ParseInsn();
     if (insn.get() != 0)
     {
-        insn->Append(*m_container, m_source);
+        insn->Append(*m_container, m_source, *m_diags);
         return true;
     }
 
@@ -549,7 +549,10 @@ NasmParser::ParseInsn()
             // parse operands
             for (;;)
             {
-                insn->AddOperand(ParseOperand());
+                clang::SourceLocation start = getTokenSource();
+                Operand op = ParseOperand();
+                op.setSource(start);
+                insn->AddOperand(op);
 
                 if (isEol())
                     break;
@@ -560,21 +563,25 @@ NasmParser::ParseInsn()
         case PREFIX:
         {
             const Prefix* prefix = PREFIX_val;
+            clang::SourceLocation prefix_source = getTokenSource();
             getNextToken();
             Insn::Ptr insn = ParseInsn();
             if (insn.get() == 0)
                 insn = m_arch->CreateEmptyInsn();
-            insn->AddPrefix(prefix);
+            insn->AddPrefix(prefix, prefix_source);
             return insn;
         }
         case SEGREG:
         {
             const SegmentRegister* segreg = SEGREG_val;
+            clang::SourceLocation segreg_source = getTokenSource();
             getNextToken();
             Insn::Ptr insn = ParseInsn();
             if (insn.get() == 0)
                 insn = m_arch->CreateEmptyInsn();
-            insn->AddSegPrefix(segreg);
+            else if (insn->hasSegPrefix())
+                Diag(segreg_source, diag::warn_multiple_seg_override);
+            insn->setSegPrefix(segreg, segreg_source);
             return insn;
         }
         default:
@@ -692,11 +699,17 @@ NasmParser::ParseMemoryAddress()
         case SEGREG:
         {
             const SegmentRegister* segreg = SEGREG_val;
+            clang::SourceLocation segreg_source = getTokenSource();
             getNextToken();
             if (!ExpectAndConsume(':', diag::err_expected_colon_after_segreg))
                 return Operand(segreg);
             Operand op = ParseMemoryAddress();
-            op.getMemory()->setSegReg(segreg);
+            if (EffAddr* ea = op.getMemory())
+            {
+                if (ea->m_segreg != 0)
+                    Diag(segreg_source, diag::warn_multiple_seg_override);
+                ea->m_segreg = segreg;
+            }
             return op;
         }
         case SIZE_OVERRIDE:
@@ -936,7 +949,7 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
         case ID:
         {
             SymbolRef sym = m_object->getSymbol(ID_val);
-            sym->Use(m_source);
+            sym->Use(getTokenSource());
             e = sym;
             break;
         }
@@ -1019,7 +1032,7 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
         case NONLOCAL_ID:
         {
             SymbolRef sym = m_object->getSymbol(ID_val);
-            sym->Use(m_source);
+            sym->Use(getTokenSource());
             e = sym;
             break;
         }
@@ -1032,7 +1045,7 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
                 SymbolRef sym = m_object->AddNonTableSymbol("$");
                 m_bc = &m_container->FreshBytecode();
                 Location loc = {m_bc, m_bc->getFixedLen()};
-                sym->DefineLabel(loc, m_source);
+                sym->DefineLabel(loc, getTokenSource());
                 e = sym;
             }
             break;
@@ -1044,7 +1057,7 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
             {
                 SymbolRef sym = m_object->AddNonTableSymbol("$$");
                 Location loc = {&m_container->bytecodes_first(), 0};
-                sym->DefineLabel(loc, m_source);
+                sym->DefineLabel(loc, getTokenSource());
                 e = sym;
             }
             break;

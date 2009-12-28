@@ -397,7 +397,7 @@ NasmInsnRunner::TestInsn(yasm::Insn* insn,
     clang::SourceManager smgr;
     ::testing::StrictMock<MockDiagnosticClient> mock_client;
     Diagnostic diags(&smgr, &mock_client);
-    insn->Append(container, clang::SourceLocation());
+    insn->Append(container, clang::SourceLocation(), diags);
 
     container.Finalize(diags);
     if (diags.hasErrorOccurred())

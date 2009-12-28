@@ -42,6 +42,7 @@
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/phash.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/EffAddr.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
@@ -364,10 +365,11 @@ X86Prefix::Write(YAML::Emitter& out) const
 
 #include "X86Insns.cpp"
 
-void
+bool
 X86Insn::DoAppendJmpFar(BytecodeContainer& container,
                         const X86InsnInfo& info,
-                        clang::SourceLocation source)
+                        clang::SourceLocation source,
+                        Diagnostic& diags)
 {
     Operand& op = m_operands.front();
     std::auto_ptr<Expr> imm = op.ReleaseImm();
@@ -427,6 +429,7 @@ X86Insn::DoAppendJmpFar(BytecodeContainer& container,
     common.ApplyPrefixes(info.def_opersize_64, m_prefixes);
     common.Finish();
     AppendJmpFar(container, common, opcode, segment, imm, source);
+    return true;
 }
 
 bool
@@ -481,10 +484,11 @@ X86Insn::MatchJmpInfo(const X86InsnInfo& info, unsigned int opersize,
     return false;
 }
 
-void
+bool
 X86Insn::DoAppendJmp(BytecodeContainer& container,
                      const X86InsnInfo& jinfo,
-                     clang::SourceLocation source)
+                     clang::SourceLocation source,
+                     Diagnostic& diags)
 {
     static const unsigned char size_lookup[] =
         {0, 8, 16, 32, 64, 80, 128, 0, 0};  // 256 not needed
@@ -520,9 +524,15 @@ X86Insn::DoAppendJmp(BytecodeContainer& container,
     }
 
     if ((op_sel == JMP_SHORT) && shortop.isEmpty())
-        throw TypeError(N_("no SHORT form of that jump instruction exists"));
+    {
+        diags.Report(source, diag::err_missing_jump_form) << "SHORT";
+        return false;
+    }
     if ((op_sel == JMP_NEAR) && nearop.isEmpty())
-        throw TypeError(N_("no NEAR form of that jump instruction exists"));
+    {
+        diags.Report(source, diag::err_missing_jump_form) << "NEAR";
+        return false;
+    }
 
     if (op_sel == JMP_NONE)
     {
@@ -553,6 +563,7 @@ X86Insn::DoAppendJmp(BytecodeContainer& container,
     common.Finish();
 
     AppendJmp(container, common, shortop, nearop, imm, source, op_sel);
+    return true;
 }
 
 bool
@@ -950,7 +961,9 @@ X86Insn::FindMatch(const unsigned int* size_lookup, int bypass) const
 }
 
 void
-X86Insn::MatchError(const unsigned int* size_lookup) const
+X86Insn::MatchError(const unsigned int* size_lookup,
+                    clang::SourceLocation source,
+                    Diagnostic& diags) const
 {
     const X86InsnInfo* i = m_group;
 
@@ -965,7 +978,10 @@ X86Insn::MatchError(const unsigned int* size_lookup) const
         }
     }
     if (!found)
-        throw TypeError(N_("invalid number of operands"));
+    {
+        diags.Report(source, diag::err_bad_num_operands);
+        return;
+    }
 
     int bypass;
     for (bypass=1; bypass<9; bypass++)
@@ -979,37 +995,53 @@ X86Insn::MatchError(const unsigned int* size_lookup) const
     {
         case 1:
         case 4:
-            throw TypeError(
-                String::Compose(N_("invalid size for operand %1"), 1));
+            assert(m_operands.size() >= 1 && "not enough operands for error");
+            diags.Report(m_operands[0].getSource(), diag::err_bad_operand_size);
+            break;
         case 2:
         case 5:
-            throw TypeError(
-                String::Compose(N_("invalid size for operand %1"), 2));
+            assert(m_operands.size() >= 2 && "not enough operands for error");
+            diags.Report(m_operands[1].getSource(), diag::err_bad_operand_size);
+            break;
         case 3:
         case 6:
-            throw TypeError(
-                String::Compose(N_("invalid size for operand %1"), 3));
+            assert(m_operands.size() >= 3 && "not enough operands for error");
+            diags.Report(m_operands[2].getSource(), diag::err_bad_operand_size);
+            break;
         case 7:
-            throw TypeError(
-                N_("one of source operand 1 or 3 must match dest operand"));
+            assert(m_operands.size() >= 4 && "not enough operands for error");
+            diags.Report(m_operands[0].getSource(),
+                         diag::err_dest_not_src1_or_src3)
+                << m_operands[1].getSource()
+                << m_operands[3].getSource();
+            break;
         case 8:
         {
             unsigned int cpu0 = i->cpu0, cpu1 = i->cpu1, cpu2 = i->cpu2;
-            throw TypeError(
-                String::Compose(N_("requires CPU%1"),
-                                CpuFindReverse(cpu0, cpu1, cpu2)));
+            diags.Report(source, diag::err_requires_cpu)
+                << CpuFindReverse(cpu0, cpu1, cpu2);
+            break;
         }
+        default:
+            diags.Report(source, diag::err_bad_insn_operands);
+            break;
     }
 }
 
-void
-X86Insn::DoAppend(BytecodeContainer& container, clang::SourceLocation source)
+bool
+X86Insn::DoAppend(BytecodeContainer& container,
+                  clang::SourceLocation source,
+                  Diagnostic& diags)
 {
     unsigned int size_lookup[] = {0, 8, 16, 32, 64, 80, 128, 256, 0};
     size_lookup[OPS_BITS] = m_mode_bits;
 
     if (m_operands.size() > 5)
-        throw TypeError(N_("too many operands"));
+    {
+        diags.Report(m_operands[5].getSource(), diag::err_too_many_operands)
+            << 5;
+        return false;
+    }
 
     // If we're running in GAS mode, look at the first insn_info to see
     // if this is a relative jump (OPA_JmpRel).  If so, run through the
@@ -1025,14 +1057,13 @@ X86Insn::DoAppend(BytecodeContainer& container, clang::SourceLocation source)
             EffAddr* ea = op->getMemory();
 
             if (!op->isDeref() && (reg || (ea && ea->m_strong)))
-                setWarn(WARN_GENERAL, N_("indirect call without `*'"));
+                diags.Report(op->getSource(), diag::warn_indirect_call_no_deref);
             if (!op->isDeref() && ea && !ea->m_strong)
             {
                 // Memory that is not dereferenced, and not strong, is
                 // actually an immediate for the purposes of relative jumps.
                 if (ea->m_segreg != 0)
-                    setWarn(WARN_GENERAL,
-                            N_("skipping prefixes on this instruction"));
+                    diags.Report(source, diag::warn_prefixes_skipped);
                 *op = Operand(std::auto_ptr<Expr>(
                     ea->m_disp.getAbs()->clone()));
                 delete ea;
@@ -1045,8 +1076,8 @@ X86Insn::DoAppend(BytecodeContainer& container, clang::SourceLocation source)
     if (!info)
     {
         // Didn't find a match
-        MatchError(size_lookup);
-        throw TypeError(N_("invalid combination of opcode and operands"));
+        MatchError(size_lookup, source, diags);
+        return false;
     }
 
     if (m_operands.size() > 0)
@@ -1055,32 +1086,34 @@ X86Insn::DoAppend(BytecodeContainer& container, clang::SourceLocation source)
         {
             case OPA_JmpRel:
                 // Shortcut to JmpRel
-                DoAppendJmp(container, *info, source);
-                return;
+                return DoAppendJmp(container, *info, source, diags);
             case OPA_JmpFar:
                 // Shortcut to JmpFar
-                DoAppendJmpFar(container, *info, source);
-                return;
+                return DoAppendJmpFar(container, *info, source, diags);
         }
     }
 
-    DoAppendGeneral(container, *info, size_lookup, source);
+    return DoAppendGeneral(container, *info, size_lookup, source, diags);
 }
 
 class BuildGeneral
 {
 public:
-    BuildGeneral(const X86InsnInfo& info, unsigned int mode_bits,
-                 const unsigned int* size_lookup, bool force_strict,
-                 bool default_rel);
+    BuildGeneral(const X86InsnInfo& info,
+                 unsigned int mode_bits,
+                 const unsigned int* size_lookup,
+                 bool force_strict,
+                 bool default_rel,
+                 Diagnostic& diags);
     ~BuildGeneral();
 
     void ApplyModifiers(unsigned char* mod_data);
     void UpdateRex();
     void ApplyOperands(X86Arch::ParserSelect parser,
                        Insn::Operands& operands);
-    void ApplySegRegs(const Insn::SegRegs& segregs);
-    void Finish(BytecodeContainer& container,
+    void ApplySegReg(const SegmentRegister* segreg,
+                     clang::SourceLocation source);
+    bool Finish(BytecodeContainer& container,
                 const Insn::Prefixes& prefixes,
                 clang::SourceLocation source);
 
@@ -1092,6 +1125,7 @@ private:
     const unsigned int* m_size_lookup;
     bool m_force_strict;
     bool m_default_rel;
+    Diagnostic& m_diags;
 
     X86Opcode m_opcode;
     std::auto_ptr<X86EffAddr> m_x86_ea;
@@ -1114,12 +1148,14 @@ BuildGeneral::BuildGeneral(const X86InsnInfo& info,
                            unsigned int mode_bits,
                            const unsigned int* size_lookup,
                            bool force_strict,
-                           bool default_rel)
+                           bool default_rel,
+                           Diagnostic& diags)
     : m_info(info),
       m_mode_bits(mode_bits),
       m_size_lookup(size_lookup),
       m_force_strict(force_strict),
       m_default_rel(default_rel),
+      m_diags(diags),
       m_opcode(info.opcode_len, info.opcode),
       m_x86_ea(0),
       m_imm(0),
@@ -1260,8 +1296,9 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
                 {
                     if (op.getSeg() != 0)
                     {
-                        throw ValueError(
-                            N_("invalid segment in effective address"));
+                        m_diags.Report(op.getSource(),
+                                       diag::err_invalid_ea_segment);
+                        return;
                     }
                     m_x86_ea.reset(static_cast<X86EffAddr*>
                                    (op.ReleaseMemory().release()));
@@ -1303,7 +1340,10 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
         }
         case OPA_Imm:
             if (op.getSeg() != 0)
-                throw ValueError(N_("immediate does not support segment"));
+            {
+                m_diags.Report(op.getSource(), diag::err_imm_segment_override);
+                return;
+            }
             m_imm = op.ReleaseImm();
             assert(m_imm.get() != 0 && "invalid operand conversion");
 
@@ -1311,7 +1351,10 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
             break;
         case OPA_SImm:
             if (op.getSeg() != 0)
-                throw ValueError(N_("immediate does not support segment"));
+            {
+                m_diags.Report(op.getSource(), diag::err_imm_segment_override);
+                return;
+            }
             m_imm = op.ReleaseImm();
             assert(m_imm.get() != 0 && "invalid operand conversion");
 
@@ -1387,8 +1430,10 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
             unsigned int regnum = reg->getNum();
             // 64-bit mode does not allow 16-bit addresses
             if (m_mode_bits == 64 && reg->is(X86Register::REG16) && regnum == 0)
-                throw TypeError(
-                    N_("16-bit addresses not supported in 64-bit mode"));
+            {
+                m_diags.Report(op.getSource(), diag::err_16addr_64mode);
+                return;
+            }
             else if (reg->is(X86Register::REG16) && regnum == 0)
                 m_addrsize = 16;
             else if (reg->is(X86Register::REG32) && regnum == 0)
@@ -1397,7 +1442,10 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
                      regnum == 0)
                 m_addrsize = 64;
             else
-                throw TypeError(N_("unsupported address size"));
+            {
+                m_diags.Report(op.getSource(), diag::err_bad_address_size);
+                return;
+            }
             break;
         }
         case OPA_VEX:
@@ -1472,28 +1520,28 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
 }
 
 void
-BuildGeneral::ApplySegRegs(const Insn::SegRegs& segregs)
+BuildGeneral::ApplySegReg(const SegmentRegister* segreg,
+                          clang::SourceLocation source)
 {
-    X86EffAddr* x86_ea = m_x86_ea.get();
-    if (x86_ea)
+    if (X86EffAddr* x86_ea = m_x86_ea.get())
     {
         x86_ea->Init(m_spare);
-        std::for_each(segregs.begin(), segregs.end(),
-                      BIND::bind(&X86EffAddr::setSegReg, x86_ea, _1));
+        if (segreg == 0)
+            return;
+        if (x86_ea->m_segreg != 0)
+            m_diags.Report(source, diag::warn_multiple_seg_override);
+        x86_ea->m_segreg = segreg;
     }
-    else if (segregs.size() > 0 && m_special_prefix == 0)
+    else if (segreg != 0 && m_special_prefix == 0)
     {
-        if (segregs.size() > 1)
-            setWarn(WARN_GENERAL,
-                    N_("multiple segment overrides, using leftmost"));
         m_special_prefix =
-            static_cast<const X86SegmentRegister*>(segregs.back())->getPrefix();
+            static_cast<const X86SegmentRegister*>(segreg)->getPrefix();
     }
-    else if (segregs.size() > 0)
+    else if (segreg != 0)
         assert(false && "unhandled segment prefix");
 }
 
-void
+bool
 BuildGeneral::Finish(BytecodeContainer& container,
                      const Insn::Prefixes& prefixes,
                      clang::SourceLocation source)
@@ -1602,23 +1650,25 @@ BuildGeneral::Finish(BytecodeContainer& container,
                   m_postop,
                   m_default_rel,
                   source);
+    return true;
 }
 
-void
+bool
 X86Insn::DoAppendGeneral(BytecodeContainer& container,
                          const X86InsnInfo& info,
                          const unsigned int* size_lookup,
-                         clang::SourceLocation source)
+                         clang::SourceLocation source,
+                         Diagnostic& diags)
 {
     BuildGeneral buildgen(info, m_mode_bits, size_lookup, m_force_strict,
-                          m_default_rel);
+                          m_default_rel, diags);
 
     buildgen.ApplyModifiers(m_mod_data);
     buildgen.UpdateRex();
     buildgen.ApplyOperands(static_cast<X86Arch::ParserSelect>(m_parser),
                            m_operands);
-    buildgen.ApplySegRegs(m_segregs);
-    buildgen.Finish(container, m_prefixes, source);
+    buildgen.ApplySegReg(m_segreg, m_segreg_source);
+    return buildgen.Finish(container, m_prefixes, source);
 }
 
 // Static parse data structure for instructions

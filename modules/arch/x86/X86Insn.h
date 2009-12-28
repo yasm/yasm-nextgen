@@ -64,26 +64,31 @@ public:
     X86Insn* clone() const;
 
 protected:
-    void DoAppend(BytecodeContainer& container, clang::SourceLocation source);
+    bool DoAppend(BytecodeContainer& container,
+                  clang::SourceLocation source,
+                  Diagnostic& diags);
     void DoWrite(YAML::Emitter& out) const;
 
 private:
-    void DoAppendJmpFar(BytecodeContainer& container,
+    bool DoAppendJmpFar(BytecodeContainer& container,
                         const X86InsnInfo& info,
-                        clang::SourceLocation source);
+                        clang::SourceLocation source,
+                        Diagnostic& diags);
 
     bool MatchJmpInfo(const X86InsnInfo& info,
                       unsigned int opersize,
                       X86Opcode& shortop,
                       X86Opcode& nearop) const;
-    void DoAppendJmp(BytecodeContainer& container,
+    bool DoAppendJmp(BytecodeContainer& container,
                      const X86InsnInfo& jinfo,
-                     clang::SourceLocation source);
+                     clang::SourceLocation source,
+                     Diagnostic& diags);
 
-    void DoAppendGeneral(BytecodeContainer& container,
+    bool DoAppendGeneral(BytecodeContainer& container,
                          const X86InsnInfo& info,
                          const unsigned int* size_lookup,
-                         clang::SourceLocation source);
+                         clang::SourceLocation source,
+                         Diagnostic& diags);
 
     const X86InsnInfo* FindMatch(const unsigned int* size_lookup, int bypass)
         const;
@@ -95,7 +100,9 @@ private:
                       const Operand& op0,
                       const unsigned int* size_lookup,
                       int bypass) const;
-    void MatchError(const unsigned int* size_lookup) const;
+    void MatchError(const unsigned int* size_lookup,
+                    clang::SourceLocation source,
+                    Diagnostic& diags) const;
 
     // architecture
     const X86Arch& m_arch;

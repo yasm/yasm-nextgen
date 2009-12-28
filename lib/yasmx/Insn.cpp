@@ -33,8 +33,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Config/functional.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Arch.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/EffAddr.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Expr_util.h"
@@ -149,33 +149,40 @@ Operand::clone() const
     return op;
 }
 
-void
-Operand::Finalize()
+bool
+Operand::Finalize(Diagnostic& diags)
 {
     switch (m_type)
     {
         case MEMORY:
-            // Don't get over-ambitious here; some archs' memory expr
-            // parser are sensitive to the presence of *1, etc, so don't
-            // simplify reg*1 identities.
-            if (m_ea)
+            if (!m_ea)
+                break;
+            if (Expr* abs = m_ea->m_disp.getAbs())
             {
-                if (Expr* abs = m_ea->m_disp.getAbs())
+                if (!ExpandEqu(*abs))
                 {
-                    if (!ExpandEqu(*abs))
-                        throw Error("circular reference detected in memory expression");
-                    abs->Simplify(false);
+                    diags.Report(m_source, diag::err_equ_circular_reference_mem);
+                    return false;
                 }
+
+                // Don't get over-ambitious here; some archs' memory expr
+                // parser are sensitive to the presence of *1, etc, so don't
+                // simplify reg*1 identities.
+                abs->Simplify(false);
             }
             break;
         case IMM:
             if (!ExpandEqu(*m_val))
-                throw Error("circular reference detected in immediate expression");
+            {
+                diags.Report(m_source, diag::err_equ_circular_reference_imm);
+                return false;
+            }
             m_val->Simplify();
             break;
         default:
             break;
     }
+    return true;
 }
 
 std::auto_ptr<EffAddr>
@@ -281,13 +288,15 @@ Prefix::Dump() const
 }
 
 Insn::Insn()
+    : m_segreg(0)
 {
 }
 
 Insn::Insn(const Insn& rhs)
     : m_operands(),
       m_prefixes(rhs.m_prefixes),
-      m_segregs(rhs.m_segregs)
+      m_segreg(rhs.m_segreg),
+      m_segreg_source(rhs.m_segreg_source)
 {
     m_operands.reserve(rhs.m_operands.size());
     std::transform(rhs.m_operands.begin(), rhs.m_operands.end(),
@@ -300,13 +309,22 @@ Insn::~Insn()
                   MEMFN::mem_fn(&Operand::Destroy));
 }
 
-void
-Insn::Append(BytecodeContainer& container, clang::SourceLocation source)
+bool
+Insn::Append(BytecodeContainer& container,
+             clang::SourceLocation source,
+             Diagnostic& diags)
 {
     // Simplify the operands' expressions.
-    std::for_each(m_operands.begin(), m_operands.end(),
-                  MEMFN::mem_fn(&Operand::Finalize));
-    DoAppend(container, source);
+    bool ok = true;
+    for (Operands::iterator i = m_operands.begin(), end = m_operands.end();
+         i != end; ++i)
+    {
+         if (!i->Finalize(diags))
+             ok = false;
+    }
+    if (!ok)
+        return false;
+    return DoAppend(container, source, diags);
 }
 
 void
@@ -328,18 +346,16 @@ Insn::Write(YAML::Emitter& out) const
     if (m_prefixes.empty())
         out << YAML::Flow;
     out << YAML::BeginSeq;
-    std::for_each(m_prefixes.begin(), m_prefixes.end(),
-                  BIND::bind(&Prefix::Write, _1, REF::ref(out)));
+    for (Prefixes::const_iterator i=m_prefixes.begin(), end=m_prefixes.end();
+         i != end; ++i)
+        i->first->Write(out);
     out << YAML::EndSeq;
 
-    // segregs
-    out << YAML::Key << "segregs" << YAML::Value;
-    if (m_segregs.empty())
-        out << YAML::Flow;
-    out << YAML::BeginSeq;
-    std::for_each(m_segregs.begin(), m_segregs.end(),
-                  BIND::bind(&SegmentRegister::Write, _1, REF::ref(out)));
-    out << YAML::EndSeq;
+    // segreg
+    out << YAML::Key << "segreg" << YAML::Value;
+    m_segreg->Write(out);
+    out << YAML::Key << "segreg source" << YAML::Value
+        << m_segreg_source.getRawEncoding();
 
     out << YAML::Key << "implementation" << YAML::Value;
     DoWrite(out);

@@ -67,15 +67,6 @@ EffAddr::~EffAddr()
 }
 
 void
-EffAddr::setSegReg(const SegmentRegister* segreg)
-{
-    if (segreg != 0 && m_segreg != 0)
-        setWarn(WARN_GENERAL, N_("multiple segment overrides, using leftmost"));
-
-    m_segreg = segreg;
-}
-
-void
 EffAddr::Write(YAML::Emitter& out) const
 {
     out << YAML::BeginMap;

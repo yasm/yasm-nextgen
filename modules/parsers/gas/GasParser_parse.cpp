@@ -100,7 +100,7 @@ GasParser::ParseLine()
     Insn::Ptr insn = ParseInsn();
     if (insn.get() != 0)
     {
-        insn->Append(*m_container, m_source);
+        insn->Append(*m_container, m_source, *m_diags);
         return true;
     }
 
@@ -930,6 +930,7 @@ GasParser::ParseInsn()
     if (m_peek_token == ':' || m_peek_token == '=')
         return Insn::Ptr(0);
 
+    clang::SourceLocation orig_source = m_source;
     Arch::InsnPrefix ip = m_arch->ParseCheckInsnPrefix(ID_val);
     switch (ip.getType())
     {
@@ -946,7 +947,10 @@ GasParser::ParseInsn()
                 // parse operands
                 for (;;)
                 {
-                    insn->AddOperand(ParseOperand());
+                    clang::SourceLocation start = getTokenSource();
+                    Operand op = ParseOperand();
+                    op.setSource(start);
+                    insn->AddOperand(op);
                     if (isEol())
                         break;
                     ExpectAndConsume(',', diag::err_expected_comma);
@@ -964,7 +968,7 @@ GasParser::ParseInsn()
             Insn::Ptr insn = ParseInsn();
             if (insn.get() == 0)
                 insn = m_arch->CreateEmptyInsn();
-            insn->AddPrefix(ip.getPrefix());
+            insn->AddPrefix(ip.getPrefix(), orig_source);
             return insn;
         }
         default:
@@ -981,7 +985,9 @@ GasParser::ParseInsn()
             Insn::Ptr insn = ParseInsn();
             if (insn.get() == 0)
                 insn = m_arch->CreateEmptyInsn();
-            insn->AddSegPrefix(regtmod.getSegReg());
+            if (insn->hasSegPrefix())
+                Diag(orig_source, diag::warn_multiple_seg_override);
+            insn->setSegPrefix(regtmod.getSegReg(), orig_source);
             return insn;
         }
         default:
@@ -1060,10 +1066,16 @@ GasParser::ParseMemoryAddress()
     if (m_token == SEGREG)
     {
         const SegmentRegister* segreg = SEGREG_val;
+        clang::SourceLocation segreg_source = getTokenSource();
         getNextToken(); // SEGREG
         ExpectAndConsume(':', diag::err_expected_colon_after_segreg);
         Operand op = ParseMemoryAddress();
-        op.getMemory()->setSegReg(segreg);
+        if (EffAddr* ea = op.getMemory())
+        {
+            if (ea->m_segreg != 0)
+                Diag(segreg_source, diag::warn_multiple_seg_override);
+            ea->m_segreg = segreg;
+        }
         return op;
     }
 
