@@ -81,7 +81,7 @@ public:
     static const char* getName() { return "Flat format binary"; }
     static const char* getKeyword() { return "bin"; }
     static const char* getExtension() { return ""; }
-    static const unsigned int getDefaultX86ModeBits() { return 16; }
+    static unsigned int getDefaultX86ModeBits() { return 16; }
     static const char* getDefaultDebugFormatKeyword() { return "null"; }
     static std::vector<const char*> getDebugFormatKeywords();
     static bool isOkObject(Object& object) { return true; }
