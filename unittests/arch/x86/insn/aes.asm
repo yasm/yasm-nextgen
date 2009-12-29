@@ -45,9 +45,9 @@ vaesdeclast xmm1, xmm2, dqword [rax] 	; c4 e2 69 df 08
 aesimc xmm1, xmm2 			; 66 0f 38 db ca
 aesimc xmm1, [rax] 			; 66 0f 38 db 08
 aesimc xmm1, dqword [rax] 		; 66 0f 38 db 08
-vaesimc xmm1, xmm2 			; c4 e2 71 db ca
-vaesimc xmm1, [rax] 			; c4 e2 71 db 08
-vaesimc xmm1, dqword [rax] 		; c4 e2 71 db 08
+vaesimc xmm1, xmm2 			; c4 e2 79 db ca
+vaesimc xmm1, [rax] 			; c4 e2 79 db 08
+vaesimc xmm1, dqword [rax] 		; c4 e2 79 db 08
 ; no 3-operand form
 
 aeskeygenassist xmm1, xmm2, 5 		; 66 0f 3a df ca 05
