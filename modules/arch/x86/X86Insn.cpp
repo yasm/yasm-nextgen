@@ -425,7 +425,7 @@ X86Insn::DoAppendJmpFar(BytecodeContainer& container,
     X86Common common;
     common.m_opersize = opersize;
     common.m_mode_bits = m_mode_bits;
-    common.ApplyPrefixes(info.def_opersize_64, m_prefixes);
+    common.ApplyPrefixes(info.def_opersize_64, m_prefixes, diags);
     common.Finish();
     AppendJmpFar(container, common, opcode, segment, imm, source);
     return true;
@@ -558,7 +558,7 @@ X86Insn::DoAppendJmp(BytecodeContainer& container,
             common.m_addrsize = m_mod_data[i];
     }
 
-    common.ApplyPrefixes(jinfo.def_opersize_64, m_prefixes);
+    common.ApplyPrefixes(jinfo.def_opersize_64, m_prefixes, diags);
     common.Finish();
 
     AppendJmp(container, common, shortop, nearop, imm, source, op_sel);
@@ -1557,7 +1557,7 @@ BuildGeneral::Finish(BytecodeContainer& container,
     common.m_addrsize = m_addrsize;
     common.m_opersize = m_opersize;
     common.m_mode_bits = m_mode_bits;
-    common.ApplyPrefixes(m_def_opersize_64, prefixes, &m_rex);
+    common.ApplyPrefixes(m_def_opersize_64, prefixes, m_diags, &m_rex);
     common.Finish();
 
     // Convert to VEX/XOP prefixes if requested.

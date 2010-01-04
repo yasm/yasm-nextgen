@@ -280,6 +280,13 @@ add_warning("warn_prefix_in_64mode", "identifier is a prefix in 64-bit mode")
 add_warning("warn_reg_in_xxmode", "identifier is a register in %0-bit mode")
 add_warning("warn_seg_ignored_in_xxmode",
             "'%0' segment register ignored in %1-bit mode")
+add_warning("warn_multiple_lock_rep",
+            "multiple LOCK or REP prefixes, using leftmost")
+add_warning("warn_ignore_rex_on_jump", "ignoring REX prefix on jump")
+add_warning("warn_illegal_rex_insn",
+            "REX prefix not allowed on this instruction, ignoring")
+add_warning("warn_rex_overrides_internal", "overriding generated REX prefix")
+add_warning("warn_multiple_rex", "multiple REX prefixes, using leftmost")
 
 # Optimizer
 add_error("err_optimizer_circular_reference", "circular reference detected")

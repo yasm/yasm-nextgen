@@ -29,9 +29,9 @@
 #include "util.h"
 
 #include "YAML/emitter.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
+#include "yasmx/Diagnostic.h"
 
 #include "X86Prefix.h"
 #include "X86Register.h"
@@ -55,6 +55,7 @@ X86Common::X86Common()
 void
 X86Common::ApplyPrefixes(unsigned int def_opersize_64,
                          const Insn::Prefixes& prefixes,
+                         Diagnostic& diags,
                          unsigned char* rex)
 {
     bool first = true;
@@ -66,9 +67,7 @@ X86Common::ApplyPrefixes(unsigned int def_opersize_64,
         switch (prefix->getType())
         {
             case X86Prefix::LOCKREP:
-                if (m_lockrep_pre != 0)
-                    setWarn(WARN_GENERAL,
-                        N_("multiple LOCK or REP prefixes, using leftmost"));
+                diags.Report(i->second, diag::warn_multiple_lock_rep);
                 m_lockrep_pre = prefix->getValue();
                 break;
             case X86Prefix::ADDRSIZE:
@@ -80,11 +79,9 @@ X86Common::ApplyPrefixes(unsigned int def_opersize_64,
                     def_opersize_64 != 64)
                 {
                     if (!rex)
-                        setWarn(WARN_GENERAL,
-                                N_("ignoring REX prefix on jump"));
+                        diags.Report(i->second, diag::warn_ignore_rex_on_jump);
                     else if (*rex == 0xff)
-                        setWarn(WARN_GENERAL,
-                            N_("REX prefix not allowed on this instruction, ignoring"));
+                        diags.Report(i->second, diag::warn_illegal_rex_insn);
                     else
                         *rex = 0x48;
                 }
@@ -96,20 +93,18 @@ X86Common::ApplyPrefixes(unsigned int def_opersize_64,
                 break;
             case X86Prefix::REX:
                 if (!rex)
-                    setWarn(WARN_GENERAL, N_("ignoring REX prefix on jump"));
+                    diags.Report(i->second, diag::warn_ignore_rex_on_jump);
                 else if (*rex == 0xff)
-                    setWarn(WARN_GENERAL,
-                        N_("REX prefix not allowed on this instruction, ignoring"));
+                    diags.Report(i->second, diag::warn_illegal_rex_insn);
                 else
                 {
                     if (*rex != 0)
                     {
                         if (first)
-                            setWarn(WARN_GENERAL,
-                                N_("overriding generated REX prefix"));
+                            diags.Report(i->second,
+                                         diag::warn_rex_overrides_internal);
                         else
-                            setWarn(WARN_GENERAL,
-                                N_("multiple REX prefixes, using leftmost"));
+                            diags.Report(i->second, diag::warn_multiple_rex);
                     }
                     // Here we assume that we can't get this prefix in non
                     // 64 bit mode due to checks in ParseCheckInsnPrefix().
