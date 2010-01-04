@@ -149,6 +149,14 @@ RawOutput::ConvertValueToBytes(Value& value,
 namespace yasmunit
 {
 
+class MockDiagnosticClient : public DiagnosticClient
+{
+public:
+    MOCK_METHOD2(HandleDiagnostic, void(Diagnostic::Level DiagLevel,
+                                        const DiagnosticInfo& Info));
+
+};
+
 NasmInsnRunner::NasmInsnRunner()
 {
 }
@@ -240,11 +248,15 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
     //
     // parse the instruction
     //
+    clang::SourceManager smgr;
+    ::testing::StrictMock<MockDiagnosticClient> mock_client;
+    Diagnostic diags(&smgr, &mock_client);
 
     // instruction name is the first thing on the line
     llvm::StringRef insn_name;
     llvm::tie(insn_name, insn_in) = insn_in.split(' ');
-    Arch::InsnPrefix insnprefix = m_arch->ParseCheckInsnPrefix(insn_name);
+    Arch::InsnPrefix insnprefix =
+        m_arch->ParseCheckInsnPrefix(insn_name, clang::SourceLocation(), diags);
     std::auto_ptr<Insn> insn = insnprefix.ReleaseInsn();
     ASSERT_TRUE(insn.get() != 0) << "unrecognized instruction '"
         << insn_name.str() << "'";
@@ -308,7 +320,10 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
                         e->Append(strtoint(tok));
                     else
                     {
-                        Arch::RegTmod regtmod = m_arch->ParseCheckRegTmod(tok);
+                        Arch::RegTmod regtmod =
+                            m_arch->ParseCheckRegTmod(tok,
+                                                      clang::SourceLocation(),
+                                                      diags);
                         ASSERT_TRUE(regtmod.isType(Arch::RegTmod::REG))
                             << "cannot handle label '" << tok.str() << "'";
                         e->Append(*regtmod.getReg());
@@ -336,7 +351,8 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
         // TODO: split by space to allow target modifiers
 
         // Test for registers
-        Arch::RegTmod regtmod = m_arch->ParseCheckRegTmod(arg_str);
+        Arch::RegTmod regtmod =
+            m_arch->ParseCheckRegTmod(arg_str, clang::SourceLocation(), diags);
         if (const Register* reg = regtmod.getReg())
         {
             Operand operand(reg);
@@ -375,14 +391,6 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
 
     TestInsn(insn.get(), golden.size(), golden.data(), golden_errwarn);
 }
-
-class MockDiagnosticClient : public DiagnosticClient
-{
-public:
-    MOCK_METHOD2(HandleDiagnostic, void(Diagnostic::Level DiagLevel,
-                                        const DiagnosticInfo& Info));
-
-};
 
 void
 NasmInsnRunner::TestInsn(yasm::Insn* insn,

@@ -501,7 +501,8 @@ scan:
             if (m_state != INSTRUCTION)
             {
                 Arch::InsnPrefix ip =
-                    m_arch->ParseCheckInsnPrefix(llvm::StringRef(TOK, TOKLEN));
+                    m_arch->ParseCheckInsnPrefix(llvm::StringRef(TOK, TOKLEN),
+                                                 getTokenSource(), *m_diags);
                 TOK[TOKLEN] = savech;
                 switch (ip.getType())
                 {
@@ -517,7 +518,8 @@ scan:
                 }
             }
             Arch::RegTmod regtmod =
-                m_arch->ParseCheckRegTmod(llvm::StringRef(TOK, TOKLEN));
+                m_arch->ParseCheckRegTmod(llvm::StringRef(TOK, TOKLEN),
+                                          getTokenSource(), *m_diags);
             TOK[TOKLEN] = savech;
             switch (regtmod.getType())
             {
@@ -849,7 +851,8 @@ directive2:
             savech = TOK[TOKLEN];
             TOK[TOKLEN] = '\0';
             Arch::RegTmod regtmod =
-                m_arch->ParseCheckRegTmod(llvm::StringRef(TOK, TOKLEN));
+                m_arch->ParseCheckRegTmod(llvm::StringRef(TOK, TOKLEN),
+                                          getTokenSource(), *m_diags);
             TOK[TOKLEN] = savech;
             lvalp->reg = regtmod.getReg();
             if (lvalp->reg)

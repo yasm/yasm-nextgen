@@ -255,6 +255,7 @@ add_warning("warn_prefixes_skipped", "skipping prefixes on this instruction")
 add_error("err_bad_num_operands", "invalid number of operands")
 add_error("err_bad_operand_size", "invalid operand size")
 add_error("err_requires_cpu", "requires CPU%0")
+add_warning("warn_insn_with_cpu", "identifier is an instruction with CPU%0")
 add_error("err_bad_insn_operands",
           "invalid combination of opcode and operands")
 add_error("err_missing_jump_form", "no %0 form of that jump instruction exists")
@@ -268,6 +269,17 @@ add_error("err_16addr_64mode", "16-bit addresses not supported in 64-bit mode")
 add_error("err_bad_address_size", "unsupported address size")
 add_error("err_dest_not_src1_or_src3",
           "one of source operand 1 (%0) or 3 (%1) must match dest operand")
+add_warning("warn_insn_in_64mode",
+            "identifier is an instruction in 64-bit mode")
+add_error("err_insn_invalid_64mode", "instruction not valid in 64-bit mode")
+add_error("err_data32_override_64mode",
+          "cannot override data size to 32 bits in 64-bit mode")
+add_error("err_addr16_override_64mode",
+          "cannot override address size to 16 bits in 64-bit mode")
+add_warning("warn_prefix_in_64mode", "identifier is a prefix in 64-bit mode")
+add_warning("warn_reg_in_xxmode", "identifier is a register in %0-bit mode")
+add_warning("warn_seg_ignored_in_xxmode",
+            "'%0' segment register ignored in %1-bit mode")
 
 # Optimizer
 add_error("err_optimizer_circular_reference", "circular reference detected")

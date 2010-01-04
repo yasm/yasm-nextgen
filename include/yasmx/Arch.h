@@ -41,6 +41,7 @@
 #include "yasmx/Module.h"
 
 
+namespace clang { class SourceLocation; }
 namespace llvm { class APFloat; class raw_ostream; }
 namespace YAML { class Emitter; }
 
@@ -49,6 +50,7 @@ namespace yasm
 
 class ArchModule;
 class Bytes;
+class Diagnostic;
 class Directives;
 class EffAddr;
 class Expr;
@@ -349,14 +351,18 @@ public:
     /// @param prefix       for prefixes, yasm_arch-specific value is
     ///                     returned (and 0 otherwise)
     /// @return Identifier type (empty if unrecognized)
-    virtual InsnPrefix ParseCheckInsnPrefix(llvm::StringRef id) const = 0;
+    virtual InsnPrefix ParseCheckInsnPrefix(llvm::StringRef id,
+                                            clang::SourceLocation source,
+                                            Diagnostic& diags) const = 0;
 
     /// Check an generic identifier to see if it matches architecture
     /// specific names for registers or target modifiers.  Unrecognized
     /// identifiers should return empty.
     /// @param id           identifier as in the input file
     /// @return Identifier type (empty if unrecognized)
-    virtual RegTmod ParseCheckRegTmod(llvm::StringRef id) const = 0;
+    virtual RegTmod ParseCheckRegTmod(llvm::StringRef id,
+                                      clang::SourceLocation source,
+                                      Diagnostic& diags) const = 0;
 
     /// Get NOP fill patterns for 1-15 bytes of fill.
     /// @return 16-entry array of arrays; [0] is unused,

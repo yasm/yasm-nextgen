@@ -931,7 +931,8 @@ GasParser::ParseInsn()
         return Insn::Ptr(0);
 
     clang::SourceLocation orig_source = m_source;
-    Arch::InsnPrefix ip = m_arch->ParseCheckInsnPrefix(ID_val);
+    Arch::InsnPrefix ip =
+        m_arch->ParseCheckInsnPrefix(ID_val, getTokenSource(), *m_diags);
     switch (ip.getType())
     {
         case Arch::InsnPrefix::INSN:
@@ -976,7 +977,8 @@ GasParser::ParseInsn()
     }
 
     // Check for segment register used as prefix
-    Arch::RegTmod regtmod = m_arch->ParseCheckRegTmod(ID_val);
+    Arch::RegTmod regtmod =
+        m_arch->ParseCheckRegTmod(ID_val, getTokenSource(), *m_diags);
     switch (regtmod.getType())
     {
         case Arch::RegTmod::SEGREG:

@@ -40,7 +40,6 @@
 #include "YAML/emitter.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/phash.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/EffAddr.h"
@@ -1786,7 +1785,9 @@ CpuFindReverse(unsigned int cpu0, unsigned int cpu1, unsigned int cpu2)
 }
 
 Arch::InsnPrefix
-X86Arch::ParseCheckInsnPrefix(llvm::StringRef id) const
+X86Arch::ParseCheckInsnPrefix(llvm::StringRef id,
+                              clang::SourceLocation source,
+                              Diagnostic& diags) const
 {
     size_t id_len = id.size();
     if (id_len > 16)
@@ -1816,23 +1817,21 @@ X86Arch::ParseCheckInsnPrefix(llvm::StringRef id) const
     {
         if (m_mode_bits != 64 && (pdata->misc_flags & ONLY_64))
         {
-            setWarn(WARN_GENERAL, String::Compose(
-                N_("`%s' is an instruction in 64-bit mode"), id));
+            diags.Report(source, diag::warn_insn_in_64mode);
             return InsnPrefix();
         }
         if (m_mode_bits == 64 && (pdata->misc_flags & NOT_64))
         {
-            throw Error(String::Compose(N_("`%s' invalid in 64-bit mode"),
-                                        id));
+            diags.Report(source, diag::err_insn_invalid_64mode);
+            return InsnPrefix();
         }
 
         if (!m_active_cpu[pdata->cpu0] ||
             !m_active_cpu[pdata->cpu1] ||
             !m_active_cpu[pdata->cpu2])
         {
-            setWarn(WARN_GENERAL, String::Compose(
-                N_("`%s' is an instruction in CPU%s"), id,
-                CpuFindReverse(pdata->cpu0, pdata->cpu1, pdata->cpu2)));
+            diags.Report(source, diag::warn_insn_with_cpu)
+                << CpuFindReverse(pdata->cpu0, pdata->cpu1, pdata->cpu2);
             return InsnPrefix();
         }
 
@@ -1861,21 +1860,20 @@ X86Arch::ParseCheckInsnPrefix(llvm::StringRef id) const
 
             if (prefix->is(X86Prefix::OPERSIZE) && value == 32)
             {
-                throw Error(
-                    N_("Cannot override data size to 32 bits in 64-bit mode"));
+                diags.Report(source, diag::err_data32_override_64mode);
+                return InsnPrefix();
             }
 
             if (prefix->is(X86Prefix::ADDRSIZE) && value == 16)
             {
-                throw Error(
-                    N_("Cannot override address size to 16 bits in 64-bit mode"));
+                diags.Report(source, diag::err_addr16_override_64mode);
+                return InsnPrefix();
             }
         }
 
         if (m_mode_bits != 64 && (pdata->misc_flags & ONLY_64))
         {
-            setWarn(WARN_GENERAL, String::Compose(
-                N_("`%s' is a prefix in 64-bit mode"), id));
+            diags.Report(source, diag::warn_prefix_in_64mode);
             return InsnPrefix();
         }
 

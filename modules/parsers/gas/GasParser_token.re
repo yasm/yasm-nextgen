@@ -419,7 +419,8 @@ scan:
                 RETURN(NASM_LINE_MARKER);
 
             Arch::RegTmod regtmod =
-                m_arch->ParseCheckRegTmod(llvm::StringRef(TOK+1, TOKLEN-1));
+                m_arch->ParseCheckRegTmod(llvm::StringRef(TOK+1, TOKLEN-1),
+                    m_source.getFileLocWithOffset(m_tok+1-m_bot), *m_diags);
             switch (regtmod.getType())
             {
                 case Arch::RegTmod::REG:

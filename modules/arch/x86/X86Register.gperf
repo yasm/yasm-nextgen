@@ -37,6 +37,7 @@
 #include <yasmx/Support/Compose.h>
 #include <yasmx/Support/errwarn.h>
 #include <yasmx/Support/phash.h>
+#include <yasmx/Diagnostic.h>
 
 #include "modules/arch/x86/X86Arch.h"
 
@@ -537,7 +538,9 @@ to,	TARGETMOD,	0,	X86TargetModifier::TO,		0
 %%
 
 Arch::RegTmod
-X86Arch::ParseCheckRegTmod(llvm::StringRef id) const
+X86Arch::ParseCheckRegTmod(llvm::StringRef id,
+                           clang::SourceLocation source,
+                           Diagnostic& diags) const
 {
     size_t id_len = id.size();
     if (id_len > 7)
@@ -559,9 +562,7 @@ X86Arch::ParseCheckRegTmod(llvm::StringRef id) const
         case REG:
             if (bits != 0 && m_mode_bits != bits)
             {
-                setWarn(WARN_GENERAL,
-                    String::Compose(N_("`%1' is a register in %2-bit mode"),
-                                    id, bits));
+                diags.Report(source, diag::warn_reg_in_xxmode) << bits;
                 return RegTmod();
             }
             return X86RegTmod::Instance()
@@ -572,9 +573,8 @@ X86Arch::ParseCheckRegTmod(llvm::StringRef id) const
         case SEGREG:
             if (bits != 0 && m_mode_bits == bits)
             {
-                setWarn(WARN_GENERAL, String::Compose(
-                    N_("`%1' segment register ignored in %2-bit mode"),
-                    id, bits));
+                diags.Report(source, diag::warn_seg_ignored_in_xxmode)
+                    << id << bits;
             }
             return X86RegTmod::Instance()
                 .getSegReg(static_cast<X86SegmentRegister::Type>(pdata->data));
