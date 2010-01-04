@@ -139,8 +139,8 @@ X86Arch::setVar(llvm::StringRef var, unsigned long val)
             m_default_rel = (val != 0);
     }
     else
-        return true;
-    return false;
+        return false;
+    return true;
 }
 
 void

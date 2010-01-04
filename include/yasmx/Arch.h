@@ -337,7 +337,7 @@ public:
     /// Set any arch-specific variables.  For example, "mode_bits" in x86.
     /// @param var  variable name
     /// @param val  value to set
-    /// @return False on success, true on failure (variable does not exist).
+    /// @return True on success, false on failure (variable does not exist).
     virtual bool setVar(llvm::StringRef var, unsigned long val) = 0;
 
     /// Check an generic identifier to see if it matches architecture
