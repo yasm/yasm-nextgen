@@ -31,7 +31,6 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
