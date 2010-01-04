@@ -35,7 +35,6 @@
 
 #include "YAML/emitter.h"
 #include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/phash.h"
 #include "yasmx/Diagnostic.h"
 
@@ -251,7 +250,7 @@ const X86Register*
 X86RegisterGroup::getReg(unsigned long regindex) const
 {
     if (regindex >= m_size)
-        throw ValueError(N_("invalid register index"));
+        return 0;
     return m_regs[regindex];
 }
 
