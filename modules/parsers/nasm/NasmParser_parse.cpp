@@ -1141,34 +1141,6 @@ NasmParser::DirAlign(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-NasmParser::DirDefault(DirectiveInfo& info, Diagnostic& diags)
-{
-    clang::SourceLocation source = info.getSource();
-    for (NameValues::const_iterator nv=info.getNameValues().begin(),
-         end=info.getNameValues().end(); nv != end; ++nv)
-    {
-        if (nv->isId())
-        {
-            llvm::StringRef id = nv->getId();
-            if (id.equals_lower("rel"))
-                info.getObject().getArch()->setVar("default_rel", 1);
-            else if (id.equals_lower("abs"))
-                info.getObject().getArch()->setVar("default_rel", 0);
-            else
-            {
-                diags.Report(source, diags.getCustomDiagID(Diagnostic::Error,
-                    "unrecognized default '%0'")) << id;
-            }
-        }
-        else
-        {
-            diags.Report(source, diags.getCustomDiagID(Diagnostic::Error,
-                "unrecognized default value"));
-        }
-    }
-}
-
-void
 NasmParser::DoDirective(llvm::StringRef name, DirectiveInfo& info)
 {
     Directive handler;

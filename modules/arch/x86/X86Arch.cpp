@@ -127,16 +127,18 @@ bool
 X86Arch::setVar(llvm::StringRef var, unsigned long val)
 {
     if (var.equals_lower("mode_bits"))
+    {
+        assert((val == 16 || val == 32 || val == 64) &&
+               "mode_bits must be 16, 32, or 64");
         m_mode_bits = static_cast<unsigned int>(val);
+    }
     else if (var.equals_lower("force_strict"))
         m_force_strict = (val != 0);
     else if (var.equals_lower("default_rel"))
     {
-        if (m_mode_bits != 64)
-            setWarn(WARN_GENERAL,
-                    N_("ignoring default rel in non-64-bit mode"));
-        else
-            m_default_rel = (val != 0);
+        assert((val == 0 || m_mode_bits == 64) &&
+               "default_rel requires bits=64");
+        m_default_rel = (val != 0);
     }
     else
         return false;
@@ -216,6 +218,41 @@ void
 X86Arch::DirCode64(DirectiveInfo& info, Diagnostic& diags)
 {
     m_mode_bits = 64;
+}
+
+void
+X86Arch::DirDefault(DirectiveInfo& info, Diagnostic& diags)
+{
+    clang::SourceLocation source = info.getSource();
+    for (NameValues::const_iterator nv=info.getNameValues().begin(),
+         end=info.getNameValues().end(); nv != end; ++nv)
+    {
+        if (nv->isId())
+        {
+            llvm::StringRef id = nv->getId();
+            if (String::NocaseEqual(id, "rel"))
+            {
+                if (m_mode_bits == 64)
+                    m_default_rel = true;
+                else
+                    diags.Report(source,
+                                 diags.getCustomDiagID(Diagnostic::Warning,
+                        "ignoring default rel in non-64-bit mode"));
+            }
+            else if (String::NocaseEqual(id, "abs"))
+                m_default_rel = false;
+            else
+            {
+                diags.Report(source, diags.getCustomDiagID(Diagnostic::Error,
+                    "unrecognized default '%0'")) << id;
+            }
+        }
+        else
+        {
+            diags.Report(source, diags.getCustomDiagID(Diagnostic::Error,
+                "unrecognized default value"));
+        }
+    }
 }
 
 const unsigned char **
@@ -455,6 +492,7 @@ X86Arch::AddDirectives(Directives& dirs, llvm::StringRef parser)
     {
         {"cpu",     &X86Arch::DirCpu, Directives::ARG_REQUIRED},
         {"bits",    &X86Arch::DirBits, Directives::ARG_REQUIRED},
+        {"default", &X86Arch::DirDefault, Directives::ANY},
     };
     static const Directives::Init<X86Arch> gas_dirs[] =
     {

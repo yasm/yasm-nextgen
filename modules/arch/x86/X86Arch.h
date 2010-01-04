@@ -210,6 +210,7 @@ private:
     void DirCode16(DirectiveInfo& info, Diagnostic& diags);
     void DirCode32(DirectiveInfo& info, Diagnostic& diags);
     void DirCode64(DirectiveInfo& info, Diagnostic& diags);
+    void DirDefault(DirectiveInfo& info, Diagnostic& diags);
 
     // What instructions/features are enabled?
     CpuMask m_active_cpu;

@@ -168,7 +168,6 @@ private:
 
     void DirAbsolute(DirectiveInfo& info, Diagnostic& diags);
     void DirAlign(DirectiveInfo& info, Diagnostic& diags);
-    void DirDefault(DirectiveInfo& info, Diagnostic& diags);
 
     void DoDirective(llvm::StringRef name, DirectiveInfo& info);
 

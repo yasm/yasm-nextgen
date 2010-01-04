@@ -91,7 +91,6 @@ NasmParser::AddDirectives(Directives& dirs, llvm::StringRef parser)
     {
         {"absolute", &NasmParser::DirAbsolute, Directives::ARG_REQUIRED},
         {"align", &NasmParser::DirAlign, Directives::ARG_REQUIRED},
-        {"default", &NasmParser::DirDefault, Directives::ANY},
     };
 
     if (parser.equals_lower("nasm"))
