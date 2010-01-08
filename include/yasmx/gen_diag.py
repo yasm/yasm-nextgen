@@ -262,7 +262,7 @@ add_error("err_missing_jump_form", "no %0 form of that jump instruction exists")
 add_warning("warn_multiple_seg_override",
             "multiple segment overrides, using leftmost")
 
-# x86
+# x86 Insn
 add_warning("warn_indirect_call_no_deref", "indirect call without '*'")
 add_warning("warn_skip_prefixes", "skipping prefixes on this instruction")
 add_error("err_16addr_64mode", "16-bit addresses not supported in 64-bit mode")
@@ -287,6 +287,20 @@ add_warning("warn_illegal_rex_insn",
             "REX prefix not allowed on this instruction, ignoring")
 add_warning("warn_rex_overrides_internal", "overriding generated REX prefix")
 add_warning("warn_multiple_rex", "multiple REX prefixes, using leftmost")
+
+# EffAddr
+add_error("err_invalid_ea", "invalid effective address")
+
+# x86 EffAddr
+add_warning("warn_fixed_invalid_disp_size", "invalid displacement size; fixed")
+add_error("err_invalid_disp_size",
+          "invalid effective address (displacement size)")
+add_error("err_64bit_ea_not64mode",
+          "invalid effective address (64-bit in non-64-bit mode)")
+add_warning("warn_rip_rel_not64mode",
+            "RIP-relative directive ignored in non-64-bit mode")
+add_error("err_16bit_ea_64mode",
+          "16-bit addresses not supported in 64-bit mode")
 
 # Optimizer
 add_error("err_optimizer_circular_reference", "circular reference detected")

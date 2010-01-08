@@ -31,6 +31,7 @@
 #include "YAML/emitter.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/errwarn.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Expr_util.h"
 #include "yasmx/IntNum.h"
@@ -583,8 +584,11 @@ X86ExprCheckEAGetRegUsage(Expr& e,
 }
 
 /*@-nullstate@*/
-void
-X86EffAddr::CalcDispLen(unsigned int wordsize, bool noreg, bool dispreq)
+bool
+X86EffAddr::CalcDispLen(unsigned int wordsize,
+                        bool noreg,
+                        bool dispreq,
+                        Diagnostic& diags)
 {
     m_valid_modrm = false;      // default to not yet valid
 
@@ -599,30 +603,32 @@ X86EffAddr::CalcDispLen(unsigned int wordsize, bool noreg, bool dispreq)
             // EA.  With no registers, we must have a 16/32 value.
             if (noreg)
             {
-                setWarn(WARN_GENERAL, N_("invalid displacement size; fixed"));
+                diags.Report(m_disp.getSource().getBegin(),
+                             diag::warn_fixed_invalid_disp_size);
                 m_disp.setSize(wordsize);
             }
             else
                 m_modrm |= 0100;
             m_valid_modrm = true;
-            return;
+            return true;
         case 16:
         case 32:
             // Don't allow changing displacement different from BITS setting
             // directly; require an address-size override to change it.
             if (wordsize != m_disp.getSize())
             {
-                throw ValueError(
-                    N_("invalid effective address (displacement size)"));
+                diags.Report(m_disp.getSource().getBegin(),
+                             diag::err_invalid_disp_size);
+                return false;
             }
             if (!noreg)
                 m_modrm |= 0200;
             m_valid_modrm = true;
-            return;
+            return true;
         default:
             // we shouldn't ever get any other size!
             assert(false && "strange EA displacement size");
-            return;
+            return false;
     }
 
     // The displacement length hasn't been forced (or the forcing wasn't
@@ -634,7 +640,7 @@ X86EffAddr::CalcDispLen(unsigned int wordsize, bool noreg, bool dispreq)
         // with the ModRM byte.
         m_disp.setSize(wordsize);
         m_valid_modrm = true;
-        return;
+        return true;
     }
 
     if (dispreq)
@@ -652,7 +658,7 @@ X86EffAddr::CalcDispLen(unsigned int wordsize, bool noreg, bool dispreq)
         m_disp.setSize(wordsize);
         m_modrm |= 0200;
         m_valid_modrm = true;
-        return;
+        return true;
     }
 
     // At this point there's 3 possibilities for the displacement:
@@ -670,7 +676,7 @@ X86EffAddr::CalcDispLen(unsigned int wordsize, bool noreg, bool dispreq)
         m_need_nonzero_len = true;
         m_modrm |= 0100;
         m_valid_modrm = true;
-        return;
+        return true;
     }
 
     // Figure out what size displacement we will have.
@@ -697,6 +703,7 @@ X86EffAddr::CalcDispLen(unsigned int wordsize, bool noreg, bool dispreq)
         m_modrm |= 0200;
     }
     m_valid_modrm = true;   // We're done with ModRM
+    return true;
 }
 /*@=nullstate@*/
 
@@ -736,7 +743,8 @@ bool
 X86EffAddr::Check3264(unsigned int addrsize,
                       unsigned int bits,
                       unsigned char* rex,
-                      bool* ip_rel)
+                      bool* ip_rel,
+                      Diagnostic& diags)
 {
     int i;
     unsigned char low3;
@@ -769,14 +777,15 @@ X86EffAddr::Check3264(unsigned int addrsize,
     // We can only do 64-bit addresses in 64-bit mode.
     if (addrsize == 64 && bits != 64)
     {
-        throw TypeError(
-            N_("invalid effective address (64-bit in non-64-bit mode)"));
+        diags.Report(m_disp.getSource().getBegin(),
+                     diag::err_64bit_ea_not64mode);
+        return false;
     }
 
     if (m_pc_rel && bits != 64)
     {
-        setWarn(WARN_GENERAL,
-            N_("RIP-relative directive ignored in non-64-bit mode"));
+        diags.Report(m_disp.getSource().getBegin(),
+                     diag::warn_rip_rel_not64mode);
         m_pc_rel = false;
     }
 
@@ -788,7 +797,9 @@ X86EffAddr::Check3264(unsigned int addrsize,
                             addrsize)))
         {
             case 1:
-                throw ValueError(N_("invalid effective address"));
+                diags.Report(m_disp.getSource().getBegin(),
+                             diag::err_invalid_ea);
+                return false;
             case 2:
                 return false;
             default:
@@ -808,7 +819,10 @@ X86EffAddr::Check3264(unsigned int addrsize,
     for (i=0; i<17; i++)
     {
         if (reg3264mult[i] < 0)
-            throw ValueError(N_("invalid effective address"));
+        {
+            diags.Report(m_disp.getSource().getBegin(), diag::err_invalid_ea);
+            return false;
+        }
         if (i != indexreg && reg3264mult[i] == 1 &&
             basereg == REG3264_NONE)
             basereg = i;
@@ -848,14 +862,22 @@ X86EffAddr::Check3264(unsigned int addrsize,
     // Make sure there's no other registers than the basereg and indexreg
     // we just found.
     for (i=0; i<17; i++)
+    {
         if (i != basereg && i != indexreg && reg3264mult[i] != 0)
-            throw ValueError(N_("invalid effective address"));
+        {
+            diags.Report(m_disp.getSource().getBegin(), diag::err_invalid_ea);
+            return false;
+        }
+    }
 
     // Check the index multiplier value for validity if present.
     if (indexreg != REG3264_NONE && reg3264mult[indexreg] != 1 &&
         reg3264mult[indexreg] != 2 && reg3264mult[indexreg] != 4 &&
         reg3264mult[indexreg] != 8)
-        throw ValueError(N_("invalid effective address"));
+    {
+        diags.Report(m_disp.getSource().getBegin(), diag::err_invalid_ea);
+        return false;
+    }
 
     // ESP is not a legal indexreg.
     if (indexreg == REG3264_ESP)
@@ -863,7 +885,10 @@ X86EffAddr::Check3264(unsigned int addrsize,
         // If mult>1 or basereg is ESP also, there's no way to make it
         // legal.
         if (reg3264mult[REG3264_ESP] > 1 || basereg == REG3264_ESP)
-            throw ValueError(N_("invalid effective address"));
+        {
+            diags.Report(m_disp.getSource().getBegin(), diag::err_invalid_ea);
+            return false;
+        }
 
         // If mult==1 and basereg is not ESP, swap indexreg w/basereg.
         indexreg = basereg;
@@ -873,7 +898,10 @@ X86EffAddr::Check3264(unsigned int addrsize,
     // RIP is only legal if it's the ONLY register used.
     if (indexreg == REG64_RIP ||
         (basereg == REG64_RIP && indexreg != REG3264_NONE))
-        throw ValueError(N_("invalid effective address"));
+    {
+        diags.Report(m_disp.getSource().getBegin(), diag::err_invalid_ea);
+        return false;
+    }
 
     // At this point, we know the base and index registers and that the
     // memory expression is (essentially) valid.  Now build the ModRM and
@@ -986,13 +1014,16 @@ X86EffAddr::Check3264(unsigned int addrsize,
     }
 
     // Calculate displacement length (if possible)
-    CalcDispLen(32, basereg == REG3264_NONE,
-                basereg == REG3264_EBP || basereg == REG64_R13);
-    return true;
+    return CalcDispLen(32, basereg == REG3264_NONE,
+                       basereg == REG3264_EBP || basereg == REG64_R13,
+                       diags);
 }
 
 bool
-X86EffAddr::Check16(unsigned int bits, bool address16_op, bool* ip_rel)
+X86EffAddr::Check16(unsigned int bits,
+                    bool address16_op,
+                    bool* ip_rel,
+                    Diagnostic& diags)
 {
     static const unsigned char modrm16[16] =
     {
@@ -1029,8 +1060,8 @@ X86EffAddr::Check16(unsigned int bits, bool address16_op, bool* ip_rel)
     // 64-bit mode does not allow 16-bit addresses
     if (bits == 64 && !address16_op)
     {
-        throw TypeError(
-            N_("16-bit addresses not supported in 64-bit mode"));
+        diags.Report(m_disp.getSource().getBegin(), diag::err_16bit_ea_64mode);
+        return false;
     }
 
     // 16-bit cannot have SIB
@@ -1046,7 +1077,9 @@ X86EffAddr::Check16(unsigned int bits, bool address16_op, bool* ip_rel)
                             &di, &bp)))
         {
             case 1:
-                throw ValueError(N_("invalid effective address"));
+                diags.Report(m_disp.getSource().getBegin(),
+                             diag::err_invalid_ea);
+                return false;
             case 2:
                 return false;
             default:
@@ -1056,7 +1089,10 @@ X86EffAddr::Check16(unsigned int bits, bool address16_op, bool* ip_rel)
 
     // reg multipliers not 0 or 1 are illegal.
     if (bx & ~1 || si & ~1 || di & ~1 || bp & ~1)
-        throw ValueError(N_("invalid effective address"));
+    {
+        diags.Report(m_disp.getSource().getBegin(), diag::err_invalid_ea);
+        return false;
+    }
 
     // Set havereg appropriately
     if (bx > 0)
@@ -1070,14 +1106,16 @@ X86EffAddr::Check16(unsigned int bits, bool address16_op, bool* ip_rel)
 
     // Check the modrm value for invalid combinations.
     if (modrm16[havereg] & 0070)
-        throw ValueError(N_("invalid effective address"));
+    {
+        diags.Report(m_disp.getSource().getBegin(), diag::err_invalid_ea);
+        return false;
+    }
 
     // Set ModRM byte for registers
     m_modrm |= modrm16[havereg];
 
     // Calculate displacement length (if possible)
-    CalcDispLen(16, havereg == HAVE_NONE, havereg == HAVE_BP);
-    return true;
+    return CalcDispLen(16, havereg == HAVE_NONE, havereg == HAVE_BP, diags);
 }
 
 bool
@@ -1085,7 +1123,8 @@ X86EffAddr::Check(unsigned char* addrsize,
                   unsigned int bits,
                   bool address16_op,
                   unsigned char* rex,
-                  bool* ip_rel)
+                  bool* ip_rel,
+                  Diagnostic& diags)
 {
     if (*addrsize == 0)
     {
@@ -1104,8 +1143,9 @@ X86EffAddr::Check(unsigned char* addrsize,
                 // otherwise illegal.  It's also illegal in non-64-bit mode.
                 if (m_need_modrm || m_need_sib)
                 {
-                    throw ValueError(
-                        N_("invalid effective address (displacement size)"));
+                    diags.Report(m_disp.getSource().getBegin(),
+                                 diag::err_invalid_disp_size);
+                    return false;
                 }
                 *addrsize = 64;
                 break;
@@ -1134,11 +1174,11 @@ X86EffAddr::Check(unsigned char* addrsize,
     if ((*addrsize == 32 || *addrsize == 64) &&
         ((m_need_modrm && !m_valid_modrm) || (m_need_sib && !m_valid_sib)))
     {
-        return Check3264(*addrsize, bits, rex, ip_rel);
+        return Check3264(*addrsize, bits, rex, ip_rel, diags);
     }
     else if (*addrsize == 16 && m_need_modrm && !m_valid_modrm)
     {
-        return Check16(bits, address16_op, ip_rel);
+        return Check16(bits, address16_op, ip_rel, diags);
     }
     else if (!m_need_modrm && !m_need_sib)
     {
@@ -1148,8 +1188,9 @@ X86EffAddr::Check(unsigned char* addrsize,
             case 64:
                 if (bits != 64)
                 {
-                    throw TypeError(
-                        N_("invalid effective address (64-bit in non-64-bit mode)"));
+                    diags.Report(m_disp.getSource().getBegin(),
+                                 diag::err_64bit_ea_not64mode);
+                    return false;
                 }
                 m_disp.setSize(64);
                 break;
@@ -1160,8 +1201,9 @@ X86EffAddr::Check(unsigned char* addrsize,
                 // 64-bit mode does not allow 16-bit addresses
                 if (bits == 64 && !address16_op)
                 {
-                    throw TypeError(
-                        N_("16-bit addresses not supported in 64-bit mode"));
+                    diags.Report(m_disp.getSource().getBegin(),
+                                 diag::err_16bit_ea_64mode);
+                    return false;
                 }
                 m_disp.setSize(16);
                 break;

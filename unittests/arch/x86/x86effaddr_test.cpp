@@ -28,12 +28,17 @@
 #include <gtest/gtest.h>
 
 #include "X86EffAddr.h"
-#include <yasmx/Support/errwarn.h>
-#include <yasmx/Expr.h>
-#include <yasmx/IntNum.h>
-#include <yasmx/Symbol.h>
+#include "clang/Basic/SourceManager.h"
+#include "yasmx/Support/errwarn.h"
+#include "yasmx/Diagnostic.h"
+#include "yasmx/Expr.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/Symbol.h"
 
 #include "modules/X86Register.cpp"
+
+#include "unittests/diag_mock.h"
+
 
 #ifndef NELEMS
 #define NELEMS(array)   (sizeof(array) / sizeof(array[0]))
@@ -48,6 +53,10 @@ protected:
     X86Register BX, BP, SI, DI;
     X86Register EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI;
 
+    clang::SourceManager smgr;
+    ::testing::StrictMock<yasmunit::MockDiagnosticClient> mock_client;
+    Diagnostic diags;
+
     X86EffAddrTestBase()
         : BX(X86Register::REG16, 3)
         , BP(X86Register::REG16, 5)
@@ -61,6 +70,7 @@ protected:
         , EBP(X86Register::REG32, 5)
         , ESI(X86Register::REG32, 6)
         , EDI(X86Register::REG32, 7)
+        , diags(&smgr, &mock_client)
     {
     }
 };
@@ -264,7 +274,7 @@ TEST_P(X86EffAddr16Test, InitExpr16)
             X86EffAddr ea(false, Expr::Ptr(e.clone()));
             unsigned char addrsize = 0;
             unsigned char rex = 0;
-            EXPECT_TRUE(ea.Check(&addrsize, 16, false, &rex, 0));
+            EXPECT_TRUE(ea.Check(&addrsize, 16, false, &rex, 0, diags));
             EXPECT_TRUE(ea.m_need_modrm);
             EXPECT_EQ(expect_modrm, ea.m_modrm);
             EXPECT_EQ(0, ea.m_need_sib);
@@ -282,8 +292,8 @@ TEST_F(X86EffAddrTest, InitExpr32)
     const X86Register* baseregs[] =
     {0, &EAX, &ECX, &EDX, &EBX, &ESP, &EBP, &ESI, &EDI};
     const X86Register* indexregs[] =
-    {0, &EAX, &ECX, &EDX, &EBX, &EBP, &ESI, &EDI};
-    static const unsigned long indexes[] = {0, 1, 2, 4, 8};
+    {0, &EAX, &ECX, &EDX, &EBX, &ESP, &EBP, &ESI, &EDI};
+    static const unsigned long indexes[] = {0, 1, 2, 4, 8, 10};
     static const long disps[] = {0, 16, 127, 128, -128, -129, 255, -256};
 
     for (const X86Register** basereg=baseregs;
@@ -403,13 +413,15 @@ TEST_F(X86EffAddrTest, InitExpr32)
             unsigned char rex = 0;
             if (expect_error)
             {
-                EXPECT_THROW(ea.Check(&addrsize, 32, false, &rex, 0),
-                             ValueError);
+                ::testing::StrictMock<yasmunit::MockDiagnosticClient> mock_client2;
+                Diagnostic diags2(&smgr, &mock_client2);
+                EXPECT_CALL(mock_client2,
+                            HandleDiagnostic(Diagnostic::Error, ::testing::_));
+                EXPECT_FALSE(ea.Check(&addrsize, 32, false, &rex, 0, diags2));
             }
             else
             {
-                EXPECT_EQ(ea.Check(&addrsize, 32, false, &rex, 0),
-                                 true);
+                EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0, diags));
                 EXPECT_TRUE(ea.m_need_modrm);
                 EXPECT_EQ(expect_modrm, ea.m_modrm);
                 EXPECT_EQ(need_sib?1:0, ea.m_need_sib);
@@ -456,7 +468,7 @@ TEST_F(X86EffAddrTest, InitExpr32Hints)
             X86EffAddr ea(false, Expr::Ptr(e.clone()));
             unsigned char addrsize = 0;
             unsigned char rex = 0;
-            EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0));
+            EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0, diags));
             EXPECT_TRUE(ea.m_need_modrm);
             EXPECT_EQ(1, ea.m_need_sib);
             EXPECT_TRUE(ea.m_valid_sib);
@@ -485,7 +497,7 @@ TEST_F(X86EffAddrTest, InitExpr32HintESP)
         X86EffAddr ea(false, Expr::Ptr(e.clone()));
         unsigned char addrsize = 0;
         unsigned char rex = 0;
-        EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0));
+        EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0, diags));
         EXPECT_TRUE(ea.m_need_modrm);
         EXPECT_EQ(1, ea.m_need_sib);
         EXPECT_TRUE(ea.m_valid_sib);
@@ -502,7 +514,7 @@ TEST_F(X86EffAddrTest, Check32MulSub)
     X86EffAddr ea(false, Expr::Ptr(e.clone()));
     unsigned char addrsize = 0;
     unsigned char rex = 0;
-    EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0));
+    EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0, diags));
     EXPECT_TRUE(ea.m_need_modrm);
     EXPECT_EQ(1, ea.m_need_sib);
     EXPECT_TRUE(ea.m_valid_sib);
@@ -530,7 +542,7 @@ TEST_P(X86EffAddrMultTest, DistExpr)
         X86EffAddr ea(false, Expr::Ptr(e.clone()));
         addrsize = 0;
         rex = 0;
-        EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0));
+        EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0, diags));
         EXPECT_TRUE(ea.m_need_modrm);
         EXPECT_EQ(1, ea.m_need_sib);
         EXPECT_TRUE(ea.m_valid_sib);
@@ -557,7 +569,7 @@ TEST_P(X86EffAddrMultTest, DistExpr)
         X86EffAddr ea(false, Expr::Ptr(e.clone()));
         addrsize = 0;
         rex = 0;
-        EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0));
+        EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0, diags));
         EXPECT_TRUE(ea.m_need_modrm);
         EXPECT_EQ(1, ea.m_need_sib);
         EXPECT_TRUE(ea.m_valid_sib);
@@ -585,7 +597,7 @@ TEST_F(X86EffAddrTest, DistExprMultilevel)
         X86EffAddr ea(false, Expr::Ptr(e.clone()));
         addrsize = 0;
         rex = 0;
-        EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0));
+        EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0, diags));
         EXPECT_TRUE(ea.m_need_modrm);
         EXPECT_EQ(1, ea.m_need_sib);
         EXPECT_TRUE(ea.m_valid_sib);
@@ -609,7 +621,7 @@ TEST_F(X86EffAddrTest, DistExprMultilevel)
         X86EffAddr ea(false, Expr::Ptr(e.clone()));
         addrsize = 0;
         rex = 0;
-        EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0));
+        EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0, diags));
         EXPECT_TRUE(ea.m_need_modrm);
         EXPECT_EQ(1, ea.m_need_sib);
         EXPECT_TRUE(ea.m_valid_sib);
@@ -629,7 +641,7 @@ TEST_F(X86EffAddrTest, DistExprMultiple)
     X86EffAddr ea(false, Expr::Ptr(e.clone()));
     unsigned char addrsize = 0;
     unsigned char rex = 0;
-    EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0));
+    EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0, diags));
     EXPECT_TRUE(ea.m_need_modrm);
     EXPECT_EQ(1, ea.m_need_sib);
     EXPECT_TRUE(ea.m_valid_sib);
@@ -650,7 +662,7 @@ TEST_F(X86EffAddrTest, DistExprMultiple2)
     X86EffAddr ea(false, Expr::Ptr(e.clone()));
     unsigned char addrsize = 0;
     unsigned char rex = 0;
-    EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0));
+    EXPECT_TRUE(ea.Check(&addrsize, 32, false, &rex, 0, diags));
     EXPECT_TRUE(ea.m_need_modrm);
     EXPECT_EQ(1, ea.m_need_sib);
     EXPECT_TRUE(ea.m_valid_sib);

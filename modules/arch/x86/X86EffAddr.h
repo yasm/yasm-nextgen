@@ -32,6 +32,9 @@
 
 namespace yasm
 {
+
+class Diagnostic;
+
 namespace arch
 {
 namespace x86
@@ -114,7 +117,8 @@ public:
                unsigned int bits,
                bool address16_op,
                unsigned char* rex,
-               bool* ip_rel);
+               bool* ip_rel,
+               Diagnostic& diags);
 
     /// Finalize the effective address.
     void Finalize();
@@ -129,14 +133,21 @@ private:
     //  wordsize=16 for 16-bit, =32 for 32-bit.
     //  noreg=true if the *ModRM byte* has no registers used.
     //  dispreq=true if a displacement value is *required* (even if =0).
-    // Throws error if not successfully calculated.
-    void CalcDispLen(unsigned int wordsize, bool noreg, bool dispreq);
+    // Returns false if not successfully calculated.
+    bool CalcDispLen(unsigned int wordsize,
+                     bool noreg,
+                     bool dispreq,
+                     Diagnostic& diags);
 
     bool Check3264(unsigned int addrsize,
                    unsigned int bits,
                    unsigned char* rex,
-                   bool* ip_rel);
-    bool Check16(unsigned int bits, bool address16_op, bool* ip_rel);
+                   bool* ip_rel,
+                   Diagnostic& diags);
+    bool Check16(unsigned int bits,
+                 bool address16_op,
+                 bool* ip_rel,
+                 Diagnostic& diags);
 };
 
 }}} // namespace yasm::arch::x86

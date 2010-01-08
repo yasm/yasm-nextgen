@@ -271,7 +271,7 @@ X86General::CalcLen(Bytecode& bc,
         bool ip_rel = false;
         if (!m_ea->Check(&m_common.m_addrsize, m_common.m_mode_bits,
                          m_postop == POSTOP_ADDRESS16, &m_rex,
-                         &ip_rel))
+                         &ip_rel, diags))
         {
             // failed, don't bother checking rest of insn
             diags.Report(bc.getSource(),

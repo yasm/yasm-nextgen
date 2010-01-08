@@ -44,9 +44,8 @@
 #include "yasmx/Insn.h"
 #include "yasmx/IntNum.h"
 
+#include "diag_mock.h"
 #include "unittest_util.h"
-
-#include <gmock/gmock.h>
 
 
 using namespace yasm;
@@ -148,14 +147,6 @@ RawOutput::ConvertValueToBytes(Value& value,
 
 namespace yasmunit
 {
-
-class MockDiagnosticClient : public DiagnosticClient
-{
-public:
-    MOCK_METHOD2(HandleDiagnostic, void(Diagnostic::Level DiagLevel,
-                                        const DiagnosticInfo& Info));
-
-};
 
 NasmInsnRunner::NasmInsnRunner()
 {
