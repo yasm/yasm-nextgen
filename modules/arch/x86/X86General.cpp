@@ -158,7 +158,11 @@ bool
 X86General::Finalize(Bytecode& bc, Diagnostic& diags)
 {
     if (m_ea)
-        m_ea->Finalize();
+    {
+        if (!m_ea->Finalize(diags))
+            return false;
+    }
+
     if (m_imm.get() != 0 && !m_imm->Finalize())
     {
         diags.Report(m_imm->getSource().getBegin(),
@@ -216,9 +220,15 @@ X86General::Finalize(Bytecode& bc, Diagnostic& diags)
                 // Build ModRM EA - CAUTION: this depends on
                 // opcode 0 being a mov instruction!
                 m_ea.reset(new X86EffAddr());
-                m_ea->setReg(X86RegTmod::Instance().getReg(X86Register::REG64,
-                                                           m_opcode.get(0)-0xB8),
-                             &rex_temp, 64);
+                if (!m_ea->setReg(X86RegTmod::Instance().
+                                  getReg(X86Register::REG64,
+                                         m_opcode.get(0)-0xB8),
+                                  &rex_temp, 64))
+                {
+                    diags.Report(m_ea->m_disp.getSource().getBegin(),
+                                 diag::err_high8_rex_conflict);
+                    return false;
+                }
 
                 // Make the imm32s form permanent.
                 m_opcode.MakeAlt1();

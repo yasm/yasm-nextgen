@@ -46,9 +46,9 @@ namespace arch
 namespace x86
 {
 
-void
-setRexFromReg(unsigned char *rex,
-              unsigned char *low3,
+bool
+setRexFromReg(unsigned char* rex,
+              unsigned char* low3,
               X86Register::Type reg_type,
               unsigned int reg_num,
               unsigned int bits,
@@ -62,19 +62,18 @@ setRexFromReg(unsigned char *rex,
         {
             // Check to make sure we can set it
             if (*rex == 0xff)
-                throw TypeError(
-                    N_("cannot use A/B/C/DH with instruction needing REX"));
+                return false;
             *rex |= 0x40 | (((reg_num & 8) >> 3) << rexbit);
         }
         else if (reg_type == X86Register::REG8 && (reg_num & 7) >= 4)
         {
             // AH/BH/CH/DH, so no REX allowed
             if (*rex != 0 && *rex != 0xff)
-                throw TypeError(
-                    N_("cannot use A/B/C/DH with instruction needing REX"));
+                return false;
             *rex = 0xff;    // Flag so we can NEVER set it (see above)
         }
     }
+    return true;
 }
 
 void
@@ -115,17 +114,19 @@ X86EffAddr::X86EffAddr(const X86EffAddr& rhs)
 {
 }
 
-void
+bool
 X86EffAddr::setReg(const X86Register* reg, unsigned char* rex,
                    unsigned int bits)
 {
     unsigned char rm;
 
-    setRexFromReg(rex, &rm, reg, bits, X86_REX_B);
+    if (!setRexFromReg(rex, &rm, reg, bits, X86_REX_B))
+        return false;
 
     m_modrm = 0xC0 | rm;    // Mod=11, R/M=Reg, Reg=0
     m_valid_modrm = true;
     m_need_modrm = true;
+    return true;
 }
 
 static std::auto_ptr<Expr>
@@ -951,8 +952,13 @@ X86EffAddr::Check3264(unsigned int addrsize,
         // Don't need to go to the full effort of determining what type
         // of register basereg is, as set_rex_from_reg doesn't pay
         // much attention.
-        setRexFromReg(rex, &low3, X86Register::REG64, basereg, bits,
-                      X86_REX_B);
+        if (!setRexFromReg(rex, &low3, X86Register::REG64, basereg, bits,
+                           X86_REX_B))
+        {
+            diags.Report(m_disp.getSource().getBegin(),
+                         diag::err_high8_rex_conflict);
+            return false;
+        }
         m_modrm |= low3;
         // we don't need an SIB *unless* basereg is ESP or R12
         if (basereg == REG3264_ESP || basereg == REG64_R12)
@@ -981,8 +987,13 @@ X86EffAddr::Check3264(unsigned int addrsize,
             m_sib |= 5;
         else
         {
-            setRexFromReg(rex, &low3, X86Register::REG64, basereg, bits,
-                          X86_REX_B);
+            if (!setRexFromReg(rex, &low3, X86Register::REG64, basereg, bits,
+                               X86_REX_B))
+            {
+                diags.Report(m_disp.getSource().getBegin(),
+                             diag::err_high8_rex_conflict);
+                return false;
+            }
             m_sib |= low3;
         }
 
@@ -992,8 +1003,14 @@ X86EffAddr::Check3264(unsigned int addrsize,
             // Any scale field is valid, just leave at 0.
         else
         {
-            setRexFromReg(rex, &low3, X86Register::REG64, indexreg, bits,
-                          X86_REX_X);
+            if (!setRexFromReg(rex, &low3, X86Register::REG64, indexreg, bits,
+                               X86_REX_X))
+            {
+                diags.Report(m_disp.getSource().getBegin(),
+                             diag::err_high8_rex_conflict);
+                return false;
+            }
+
             m_sib |= low3 << 3;
             // Set scale field, 1 case -> 0, so don't bother.
             switch (reg3264mult[indexreg])
@@ -1212,11 +1229,15 @@ X86EffAddr::Check(unsigned char* addrsize,
     return true;
 }
 
-void
-X86EffAddr::Finalize()
+bool
+X86EffAddr::Finalize(Diagnostic& diags)
 {
     if (!m_disp.Finalize())
-        throw TooComplexError(N_("effective address too complex"));
+    {
+        diags.Report(m_disp.getSource().getBegin(), diag::err_ea_too_complex);
+        return false;
+    }
+    return true;
 }
 
 }}} // namespace yasm::arch::x86

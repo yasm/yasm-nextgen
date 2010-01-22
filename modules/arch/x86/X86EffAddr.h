@@ -48,25 +48,27 @@ enum X86RexBitPos
     X86_REX_B = 0
 };
 
-// Sets REX (4th bit) and 3 LS bits from register size/number.  Throws
-// TypeError if impossible to fit reg into REX.  Input parameter rexbit
-// indicates bit of REX to use if REX is needed.  Will not modify REX if not
-// in 64-bit mode or if it wasn't needed to express reg.
-void setRexFromReg(unsigned char *rex,
-                   unsigned char *low3,
+/// Sets REX (4th bit) and 3 LS bits from register size/number.  Will not
+/// modify REX if not in 64-bit mode or if it wasn't needed to express reg.
+/// @param rexbit   indicates bit of REX to use if REX is needed
+/// @return True if successful, false if invalid mix of register and REX
+///         (diag::err_high8_rex_conflict should be generated).
+bool setRexFromReg(unsigned char* rex,
+                   unsigned char* low3,
                    X86Register::Type reg_type,
                    unsigned int reg_num,
                    unsigned int bits,
                    X86RexBitPos rexbit);
 
-inline void
+inline bool
 setRexFromReg(unsigned char *rex,
               unsigned char *low3,
               const X86Register* reg,
               unsigned int bits,
               X86RexBitPos rexbit)
 {
-    setRexFromReg(rex, low3, reg->getType(), reg->getNum(), bits, rexbit);
+    return setRexFromReg(rex, low3, reg->getType(), reg->getNum(), bits,
+                         rexbit);
 }
 
 // Effective address type
@@ -96,7 +98,9 @@ public:
     X86EffAddr(bool xform_rip_plus, std::auto_ptr<Expr> e);
 
     /// Register setter.
-    void setReg(const X86Register* reg, unsigned char* rex, unsigned int bits);
+    /// @return True if successful, false if invalid mix of register and REX
+    ///         (diag::err_high8_rex_conflict should be generated).
+    bool setReg(const X86Register* reg, unsigned char* rex, unsigned int bits);
 
     /// Immediate setter.
     void setImm(std::auto_ptr<Expr> imm, unsigned int im_len);
@@ -121,7 +125,7 @@ public:
                Diagnostic& diags);
 
     /// Finalize the effective address.
-    void Finalize();
+    bool Finalize(Diagnostic& diags);
 
 private:
     /// Copy constructor.

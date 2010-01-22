@@ -287,9 +287,12 @@ add_warning("warn_illegal_rex_insn",
             "REX prefix not allowed on this instruction, ignoring")
 add_warning("warn_rex_overrides_internal", "overriding generated REX prefix")
 add_warning("warn_multiple_rex", "multiple REX prefixes, using leftmost")
+add_error("err_high8_rex_conflict",
+          "cannot use A/B/C/DH with instruction needing REX")
 
 # EffAddr
 add_error("err_invalid_ea", "invalid effective address")
+add_error("err_ea_too_complex", "effective address too complex")
 
 # x86 EffAddr
 add_warning("warn_fixed_invalid_disp_size", "invalid displacement size; fixed")

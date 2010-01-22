@@ -84,28 +84,28 @@ TEST_F(X86EffAddrTest, SetRexFromReg)
 
     // reg >= 8 should set rex.
     rex = low3 = 0;
-    setRexFromReg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_B);
+    EXPECT_TRUE(setRexFromReg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_B));
     EXPECT_EQ(5, low3);
     EXPECT_EQ(0x41, rex);
 
     rex = low3 = 0;
-    setRexFromReg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_X);
+    EXPECT_TRUE(setRexFromReg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_X));
     EXPECT_EQ(5, low3);
     EXPECT_EQ(0x42, rex);
 
     rex = low3 = 0;
-    setRexFromReg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_R);
+    EXPECT_TRUE(setRexFromReg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_R));
     EXPECT_EQ(5, low3);
     EXPECT_EQ(0x44, rex);
 
     rex = low3 = 0;
-    setRexFromReg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_W);
+    EXPECT_TRUE(setRexFromReg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_W));
     EXPECT_EQ(5, low3);
     EXPECT_EQ(0x48, rex);
 
     // REX should OR into existing value
     low3 = 0; rex = 0x44;
-    setRexFromReg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_W);
+    EXPECT_TRUE(setRexFromReg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_W));
     EXPECT_EQ(5, low3);
     EXPECT_EQ(0x4C, rex);
 }
@@ -117,8 +117,7 @@ TEST_F(X86EffAddrTest, SetRexFromRegNoRex)
 
     // Check for errors with reg_num >= 8 and REX not available
     low3 = 0; rex = 0xff;
-    EXPECT_THROW(setRexFromReg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_W),
-                 yasm::TypeError);
+    EXPECT_FALSE(setRexFromReg(&rex, &low3, X86Register::REG32, 13, 64, X86_REX_W));
 }
 
 TEST_F(X86EffAddrTest, SetRexFromReg8X)
@@ -128,19 +127,18 @@ TEST_F(X86EffAddrTest, SetRexFromReg8X)
 
     // REG8X should set rex.
     rex = low3 = 0;
-    setRexFromReg(&rex, &low3, X86Register::REG8X, 3, 64, X86_REX_B);
+    EXPECT_TRUE(setRexFromReg(&rex, &low3, X86Register::REG8X, 3, 64, X86_REX_B));
     EXPECT_EQ(3, low3);
     EXPECT_EQ(0x40, rex);
 
     rex = low3 = 0;
-    setRexFromReg(&rex, &low3, X86Register::REG8X, 13, 64, X86_REX_B);
+    EXPECT_TRUE(setRexFromReg(&rex, &low3, X86Register::REG8X, 13, 64, X86_REX_B));
     EXPECT_EQ(5, low3);
     EXPECT_EQ(0x41, rex);
 
     // Check for errors with REG8X and REX not available
     low3 = 0; rex = 0xff;
-    EXPECT_THROW(setRexFromReg(&rex, &low3, X86Register::REG8X, 3, 64, X86_REX_W),
-                 yasm::TypeError);
+    EXPECT_FALSE(setRexFromReg(&rex, &low3, X86Register::REG8X, 3, 64, X86_REX_W));
 }
 
 TEST_F(X86EffAddrTest, SetRexFromReg8High)
@@ -150,24 +148,23 @@ TEST_F(X86EffAddrTest, SetRexFromReg8High)
 
     // Use of AH/BH/CH/DH should result in disallowed REX
     rex = low3 = 0;
-    setRexFromReg(&rex, &low3, X86Register::REG8, 4, 64, X86_REX_B);
+    EXPECT_TRUE(setRexFromReg(&rex, &low3, X86Register::REG8, 4, 64, X86_REX_B));
     EXPECT_EQ(4, low3);
     EXPECT_EQ(0xff, rex);
 
     // If REX set, use of AH/BH/CH/DH should error
     low3 = 0; rex = 0x40;
-    EXPECT_THROW(setRexFromReg(&rex, &low3, X86Register::REG8, 4, 64, X86_REX_W),
-                 yasm::TypeError);
+    EXPECT_FALSE(setRexFromReg(&rex, &low3, X86Register::REG8, 4, 64, X86_REX_W));
 
     // If REX is disallowed, use of AH/BH/CH/DH is still okay
     low3 = 0; rex = 0xff;
-    setRexFromReg(&rex, &low3, X86Register::REG8, 4, 64, X86_REX_B);
+    EXPECT_TRUE(setRexFromReg(&rex, &low3, X86Register::REG8, 4, 64, X86_REX_B));
     EXPECT_EQ(4, low3);
     EXPECT_EQ(0xff, rex);
 
     // Use of AL/BL/CL/DL should NOT error and should still allow REX.
     low3 = 0; rex = 0x40;
-    setRexFromReg(&rex, &low3, X86Register::REG8, 3, 64, X86_REX_W);
+    EXPECT_TRUE(setRexFromReg(&rex, &low3, X86Register::REG8, 3, 64, X86_REX_W));
     EXPECT_EQ(3, low3);
     EXPECT_EQ(0x40, rex);
 }

@@ -1285,8 +1285,13 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
                 case Operand::REG:
                     if (m_x86_ea.get() == 0)
                         m_x86_ea.reset(new X86EffAddr());
-                    m_x86_ea->setReg(static_cast<const X86Register*>(op.getReg()),
-                                     &m_rex, m_mode_bits);
+                    if (!m_x86_ea->setReg(static_cast<const X86Register*>(op.getReg()),
+                                          &m_rex, m_mode_bits))
+                    {
+                        m_diags.Report(op.getSource(),
+                                       diag::err_high8_rex_conflict);
+                        return;
+                    }
                     break;
                 case Operand::SEGREG:
                     assert(false && "invalid operand conversion");
@@ -1333,7 +1338,11 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
             assert(reg != 0 && "invalid operand conversion");
             if (m_x86_ea.get() == 0)
                 m_x86_ea.reset(new X86EffAddr());
-            m_x86_ea->setReg(reg, &m_rex, m_mode_bits);
+            if (!m_x86_ea->setReg(reg, &m_rex, m_mode_bits))
+            {
+                m_diags.Report(op.getSource(), diag::err_high8_rex_conflict);
+                return;
+            }
             m_vexreg = reg->getNum() & 0xF;
             break;
         }
@@ -1368,9 +1377,14 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
             }
             else if (const Register* reg = op.getReg())
             {
-                setRexFromReg(&m_rex, &m_spare,
-                              static_cast<const X86Register*>(reg),
-                              m_mode_bits, X86_REX_R);
+                if (!setRexFromReg(&m_rex, &m_spare,
+                                   static_cast<const X86Register*>(reg),
+                                   m_mode_bits, X86_REX_R))
+                {
+                    m_diags.Report(op.getSource(),
+                                   diag::err_high8_rex_conflict);
+                    return;
+                }
             }
             else
                 assert(false && "invalid operand conversion");
@@ -1380,7 +1394,11 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
             const X86Register* reg =
                 static_cast<const X86Register*>(op.getReg());
             assert(reg != 0 && "invalid operand conversion");
-            setRexFromReg(&m_rex, &m_spare, reg, m_mode_bits, X86_REX_R);
+            if (!setRexFromReg(&m_rex, &m_spare, reg, m_mode_bits, X86_REX_R))
+            {
+                m_diags.Report(op.getSource(), diag::err_high8_rex_conflict);
+                return;
+            }
             m_vexreg = reg->getNum() & 0xF;
             break;
         }
@@ -1389,9 +1407,13 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
             const Register* reg = op.getReg();
             assert(reg != 0 && "invalid operand conversion");
             unsigned char opadd;
-            setRexFromReg(&m_rex, &opadd,
-                          static_cast<const X86Register*>(reg),
-                          m_mode_bits, X86_REX_B);
+            if (!setRexFromReg(&m_rex, &opadd,
+                               static_cast<const X86Register*>(reg),
+                               m_mode_bits, X86_REX_B))
+            {
+                m_diags.Report(op.getSource(), diag::err_high8_rex_conflict);
+                return;
+            }
             m_opcode.Add(0, opadd);
             break;
         }
@@ -1400,9 +1422,13 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
             const Register* reg = op.getReg();
             assert(reg != 0 && "invalid operand conversion");
             unsigned char opadd;
-            setRexFromReg(&m_rex, &opadd,
-                          static_cast<const X86Register*>(reg),
-                          m_mode_bits, X86_REX_B);
+            if (!setRexFromReg(&m_rex, &opadd,
+                               static_cast<const X86Register*>(reg),
+                               m_mode_bits, X86_REX_B))
+            {
+                m_diags.Report(op.getSource(), diag::err_high8_rex_conflict);
+                return;
+            }
             m_opcode.Add(1, opadd);
             break;
         }
@@ -1413,8 +1439,13 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
             const X86Register* x86_reg = static_cast<const X86Register*>(reg);
             if (m_x86_ea.get() == 0)
                 m_x86_ea.reset(new X86EffAddr());
-            m_x86_ea->setReg(x86_reg, &m_rex, m_mode_bits);
-            setRexFromReg(&m_rex, &m_spare, x86_reg, m_mode_bits, X86_REX_R);
+            if (!m_x86_ea->setReg(x86_reg, &m_rex, m_mode_bits) ||
+                !setRexFromReg(&m_rex, &m_spare, x86_reg, m_mode_bits,
+                               X86_REX_R))
+            {
+                m_diags.Report(op.getSource(), diag::err_high8_rex_conflict);
+                return;
+            }
             break;
         }
         case OPA_AdSizeEA:
