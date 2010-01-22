@@ -209,79 +209,91 @@ X86EffAddr::DoWrite(YAML::Emitter& out) const
     out << YAML::EndMap;
 }
 
+namespace {
+
+class X86EAChecker
+{
+public:
+    X86EAChecker(unsigned int bits, unsigned int addrsize)
+        : m_bits(bits), m_addrsize(addrsize)
+    {
+        for (int i=0; i<17; ++i)
+            m_regmult[i] = 0;
+    }
+
+    int GetRegUsage(Expr& e, /*@null@*/ int* indexreg, bool* ip_rel);
+
+    enum RegIndex
+    {
+        REG_NONE = -1,
+        REG_RAX = 0, REG_RCX,   REG_RDX,    REG_RBX,
+        REG_RSP,    REG_RBP,    REG_RSI,    REG_RDI,
+        REG_R8,     REG_R9,     REG_R10,    REG_R11,
+        REG_R12,    REG_R13,    REG_R14,    REG_R15,
+        REG_RIP
+    };
+    int m_regmult[17];
+
+private:
+    void DistReg(Expr& e, int& pos, bool simplify_reg_mul);
+    int GetTermRegUsage(Expr& e,
+                        int pos,
+                        /*@null@*/ int* indexreg,
+                        int* indexval,
+                        bool* indexmult);
+    bool getReg(ExprTerm& term, int* regnum);
+
+private:
+    unsigned int m_bits;
+    unsigned int m_addrsize;
+};
+
+} // anonymous namespace
+
 // Only works if term.type == Expr::REG (doesn't check).
 // Overwrites term with intnum of 0 (to eliminate regs from the final expr).
-static /*@null@*/ /*@dependent@*/ int*
-getReg3264(ExprTerm& term, int* regnum, int* regs, unsigned char bits,
-           unsigned char addrsize)
+bool
+X86EAChecker::getReg(ExprTerm& term, int* regnum)
 {
     const X86Register* reg =
         static_cast<const X86Register*>(term.getRegister());
     assert(reg != 0);
     switch (reg->getType())
     {
+        case X86Register::REG16:
+            if (m_addrsize != 16)
+                return false;
+            *regnum = reg->getNum();
+            // only allow BX, SI, DI, BP
+            if (*regnum != REG_RBX && *regnum != REG_RSI && *regnum != REG_RDI
+                && *regnum != REG_RBP)
+                return false;
+            break;
         case X86Register::REG32:
-            if (addrsize != 32)
-                return 0;
+            if (m_addrsize != 32)
+                return false;
             *regnum = reg->getNum();
             break;
         case X86Register::REG64:
-            if (addrsize != 64)
-                return 0;
+            if (m_addrsize != 64)
+                return false;
             *regnum = reg->getNum();
             break;
         case X86Register::RIP:
-            if (bits != 64)
-                return 0;
+            if (m_bits != 64)
+                return false;
             *regnum = 16;
             break;
         default:
-            return 0;
+            return false;
     }
 
     // overwrite with 0 to eliminate register from displacement expr
     term.Zero();
 
     // we're okay
-    return &regs[*regnum];
-}
-
-// Only works if term.type == Expr::REG (doesn't check).
-// Overwrites term with intnum of 0 (to eliminate regs from the final expr).
-static /*@null@*/ int*
-X86ExprCheckEAGetReg16(ExprTerm& term, int* regnum, int* bx, int* si,
-                       int* di, int* bp)
-{
-    // in order: ax,cx,dx,bx,sp,bp,si,di
-    /*@-nullassign@*/
-    static int* reg16[8] = {0,0,0,0,0,0,0,0};
-    /*@=nullassign@*/
-
-    reg16[3] = bx;
-    reg16[5] = bp;
-    reg16[6] = si;
-    reg16[7] = di;
-
-    const X86Register* reg =
-        static_cast<const X86Register*>(term.getRegister());
-    assert(reg != 0);
-
-    // don't allow 32-bit registers
-    if (reg->isNot(X86Register::REG16))
-        return 0;
-
-    // & 7 for sanity check
-    *regnum = reg->getNum() & 0x7;
-
-    // only allow BX, SI, DI, BP
-    if (!reg16[*regnum])
-        return 0;
-
-    // overwrite with 0 to eliminate register from displacement expr
-    term.Zero();
-
-    // we're okay
-    return reg16[*regnum];
+    assert(*regnum < 17 && "register number too large");
+    return true;
 }
 
 // Distribute over registers to help bring them to the topmost level of e.
@@ -303,8 +315,8 @@ X86ExprCheckEAGetReg16(ExprTerm& term, int* regnum, int* bx, int* si,
 //
 // XXX: pos is taken by reference so we can update it.  This is somewhat
 //      underhanded.
-static void
-X86ExprCheckEADistReg(Expr& e, int& pos, bool simplify_reg_mul)
+void
+X86EAChecker::DistReg(Expr& e, int& pos, bool simplify_reg_mul)
 {
     ExprTerms& terms = e.getTerms();
     ExprTerm& root = terms[pos];
@@ -410,13 +422,12 @@ X86ExprCheckEADistReg(Expr& e, int& pos, bool simplify_reg_mul)
     }
 }
 
-static int
-X86ExprTermGetRegUsage(Expr& e,
-                       int pos,
-                       /*@null@*/ int* indexreg,
-                       int* indexval,
-                       bool* indexmult,
-    const FUNCTION::function <int* (ExprTerm& term, int* regnum)>& get_reg)
+int
+X86EAChecker::GetTermRegUsage(Expr& e,
+                              int pos,
+                              /*@null@*/ int* indexreg,
+                              int* indexval,
+                              bool* indexmult)
 {
     ExprTerms& terms = e.getTerms();
     ExprTerm& child = terms[pos];
@@ -424,16 +435,15 @@ X86ExprTermGetRegUsage(Expr& e,
     if (child.isType(ExprTerm::REG))
     {
         int regnum;
-        int* reg = get_reg(child, &regnum);
-        if (!reg)
+        if (!getReg(child, &regnum))
             return 1;
-        (*reg)++;
+        int regmult = ++m_regmult[regnum];
 
         // Let last, largest multipler win indexreg
-        if (indexreg && *reg > 0 && *indexval <= *reg && !*indexmult)
+        if (indexreg && regmult > 0 && *indexval <= regmult && !*indexmult)
         {
             *indexreg = regnum;
-            *indexval = *reg;
+            *indexval = regmult;
         }
     }
     else if (child.isOp(Op::MUL))
@@ -463,24 +473,24 @@ X86ExprTermGetRegUsage(Expr& e,
         assert(intn);
 
         int regnum;
-        int* reg = get_reg(*regterm, &regnum);
-        if (!reg)
+        if (!getReg(*regterm, &regnum))
             return 1;
 
         long delta = intn->getInt();
-        (*reg) += delta;
+        m_regmult[regnum] += delta;
+        int regmult = m_regmult[regnum];
 
         // Let last, largest positive multiplier win indexreg
         // If we subtracted from the multiplier such that it dropped to 1 or
         // less, remove indexreg status (and the calling code will try and
         // auto-determine the multiplier).
-        if (indexreg && delta > 0 && *indexval <= *reg)
+        if (indexreg && delta > 0 && *indexval <= regmult)
         {
             *indexreg = regnum;
-            *indexval = *reg;
+            *indexval = regmult;
             *indexmult = true;
         }
-        else if (indexreg && *indexreg == regnum && delta < 0 && *reg <= 1)
+        else if (indexreg && *indexreg == regnum && delta < 0 && regmult <= 1)
         {
             *indexreg = -1;
             *indexval = 0;
@@ -503,19 +513,12 @@ X86ExprTermGetRegUsage(Expr& e,
 //
 // Returns 1 if invalid register usage, 2 if unable to determine all values,
 // and 0 if all values successfully determined and saved in data.
-static int
-X86ExprCheckEAGetRegUsage(Expr& e,
-                          /*@null@*/ int* indexreg,
-                          bool* ip_rel,
-                          unsigned int bits,
-    const FUNCTION::function <int* (ExprTerm& term, int* regnum)>& get_reg)
+int
+X86EAChecker::GetRegUsage(Expr& e, /*@null@*/ int* indexreg, bool* ip_rel)
 {
-    int* reg;
-    int regnum;
-
     if (!ExpandEqu(e))
         throw Error("circular reference detected");
-    e.Simplify(BIND::bind(&X86ExprCheckEADistReg, _1, _2, indexreg == 0),
+    e.Simplify(BIND::bind(&X86EAChecker::DistReg, this, _1, _2, indexreg == 0),
                indexreg == 0);
 
     // Check for WRT rip first
@@ -526,12 +529,12 @@ X86ExprCheckEAGetRegUsage(Expr& e,
         if (!wrt_term.isType(ExprTerm::REG))
             return 1;
 
-        if (bits != 64)     // only valid in 64-bit mode
+        if (m_bits != 64)   // only valid in 64-bit mode
             return 1;
-        reg = get_reg(wrt_term, &regnum);
-        if (!reg || regnum != 16)   // only accept rip
+        int regnum;
+        if (!getReg(wrt_term, &regnum) || regnum != 16)   // only accept rip
             return 1;
-        (*reg)++;
+        m_regmult[regnum]++;
 
         // Delete WRT.  Set ip_rel to 1 to indicate to x86
         // bytecode code to do IP-relative displacement transform.
@@ -568,13 +571,12 @@ X86ExprCheckEAGetRegUsage(Expr& e,
             if (child.m_depth != root.m_depth+1)
                 continue;
 
-            if (X86ExprTermGetRegUsage(e, pos, indexreg, &indexval,
-                                       &indexmult, get_reg) == 1)
+            if (GetTermRegUsage(e, pos, indexreg, &indexval, &indexmult) == 1)
                 return 1;
         }
     }
-    else if (X86ExprTermGetRegUsage(e, e.getTerms().size()-1, indexreg,
-                                    &indexval, &indexmult, get_reg) == 1)
+    else if (GetTermRegUsage(e, e.getTerms().size()-1, indexreg, &indexval,
+                             &indexmult) == 1)
         return 1;
 
     // Simplify expr, which is now really just the displacement. This
@@ -749,31 +751,9 @@ X86EffAddr::Check3264(unsigned int addrsize,
 {
     int i;
     unsigned char low3;
-    enum Reg3264Type
-    {
-        REG3264_NONE = -1,
-        REG3264_EAX = 0,
-        REG3264_ECX,
-        REG3264_EDX,
-        REG3264_EBX,
-        REG3264_ESP,
-        REG3264_EBP,
-        REG3264_ESI,
-        REG3264_EDI,
-        REG64_R8,
-        REG64_R9,
-        REG64_R10,
-        REG64_R11,
-        REG64_R12,
-        REG64_R13,
-        REG64_R14,
-        REG64_R15,
-        REG64_RIP
-    };
-    int reg3264mult[17] = {0, 0, 0, 0, 0, 0, 0, 0,
-                           0, 0, 0, 0, 0, 0, 0, 0, 0};
-    int basereg = REG3264_NONE;     // "base" register (for SIB)
-    int indexreg = REG3264_NONE;    // "index" register (for SIB)
+
+    int basereg = X86EAChecker::REG_NONE;   // "base" register (for SIB)
+    int indexreg = X86EAChecker::REG_NONE;  // "index" register (for SIB)
 
     // We can only do 64-bit addresses in 64-bit mode.
     if (addrsize == 64 && bits != 64)
@@ -790,12 +770,11 @@ X86EffAddr::Check3264(unsigned int addrsize,
         m_pc_rel = false;
     }
 
+    X86EAChecker checker(bits, addrsize);
+
     if (m_disp.hasAbs())
     {
-        switch (X86ExprCheckEAGetRegUsage
-                (*m_disp.getAbs(), &indexreg, ip_rel, bits,
-                 BIND::bind(&getReg3264, _1, _2, reg3264mult, bits,
-                            addrsize)))
+        switch (checker.GetRegUsage(*m_disp.getAbs(), &indexreg, ip_rel))
         {
             case 1:
                 diags.Report(m_disp.getSource().getBegin(),
@@ -811,30 +790,30 @@ X86EffAddr::Check3264(unsigned int addrsize,
     // If indexreg mult is 0, discard it.
     // This is possible because of the way indexreg is found in
     // expr_checkea_getregusage().
-    if (indexreg != REG3264_NONE && reg3264mult[indexreg] == 0)
-        indexreg = REG3264_NONE;
+    if (indexreg != X86EAChecker::REG_NONE && checker.m_regmult[indexreg] == 0)
+        indexreg = X86EAChecker::REG_NONE;
 
     // Find a basereg (*1, but not indexreg), if there is one.
     // Also, if an indexreg hasn't been assigned, try to find one.
     // Meanwhile, check to make sure there's no negative register mults.
     for (i=0; i<17; i++)
     {
-        if (reg3264mult[i] < 0)
+        if (checker.m_regmult[i] < 0)
         {
             diags.Report(m_disp.getSource().getBegin(), diag::err_invalid_ea);
             return false;
         }
-        if (i != indexreg && reg3264mult[i] == 1 &&
-            basereg == REG3264_NONE)
+        if (i != indexreg && checker.m_regmult[i] == 1 &&
+            basereg == X86EAChecker::REG_NONE)
             basereg = i;
-        else if (indexreg == REG3264_NONE && reg3264mult[i] > 0)
+        else if (indexreg == X86EAChecker::REG_NONE && checker.m_regmult[i] > 0)
             indexreg = i;
     }
 
     // Handle certain special cases of indexreg mults when basereg is
     // empty.
-    if (indexreg != REG3264_NONE && basereg == REG3264_NONE)
-        switch (reg3264mult[indexreg])
+    if (indexreg != X86EAChecker::REG_NONE && basereg == X86EAChecker::REG_NONE)
+        switch (checker.m_regmult[indexreg])
         {
             case 1:
                 // Only optimize this way if nosplit wasn't specified
@@ -849,14 +828,14 @@ X86EffAddr::Check3264(unsigned int addrsize,
                 if (!m_nosplit)
                 {
                     basereg = indexreg;
-                    reg3264mult[indexreg] = 1;
+                    checker.m_regmult[indexreg] = 1;
                 }
                 break;
             case 3:
             case 5:
             case 9:
                 basereg = indexreg;
-                reg3264mult[indexreg]--;
+                checker.m_regmult[indexreg]--;
                 break;
         }
 
@@ -864,7 +843,7 @@ X86EffAddr::Check3264(unsigned int addrsize,
     // we just found.
     for (i=0; i<17; i++)
     {
-        if (i != basereg && i != indexreg && reg3264mult[i] != 0)
+        if (i != basereg && i != indexreg && checker.m_regmult[i] != 0)
         {
             diags.Report(m_disp.getSource().getBegin(), diag::err_invalid_ea);
             return false;
@@ -872,20 +851,23 @@ X86EffAddr::Check3264(unsigned int addrsize,
     }
 
     // Check the index multiplier value for validity if present.
-    if (indexreg != REG3264_NONE && reg3264mult[indexreg] != 1 &&
-        reg3264mult[indexreg] != 2 && reg3264mult[indexreg] != 4 &&
-        reg3264mult[indexreg] != 8)
+    if (indexreg != X86EAChecker::REG_NONE &&
+        checker.m_regmult[indexreg] != 1 &&
+        checker.m_regmult[indexreg] != 2 &&
+        checker.m_regmult[indexreg] != 4 &&
+        checker.m_regmult[indexreg] != 8)
     {
         diags.Report(m_disp.getSource().getBegin(), diag::err_invalid_ea);
         return false;
     }
 
     // ESP is not a legal indexreg.
-    if (indexreg == REG3264_ESP)
+    if (indexreg == X86EAChecker::REG_RSP)
     {
         // If mult>1 or basereg is ESP also, there's no way to make it
         // legal.
-        if (reg3264mult[REG3264_ESP] > 1 || basereg == REG3264_ESP)
+        if (checker.m_regmult[X86EAChecker::REG_RSP] > 1 ||
+            basereg == X86EAChecker::REG_RSP)
         {
             diags.Report(m_disp.getSource().getBegin(), diag::err_invalid_ea);
             return false;
@@ -893,12 +875,13 @@ X86EffAddr::Check3264(unsigned int addrsize,
 
         // If mult==1 and basereg is not ESP, swap indexreg w/basereg.
         indexreg = basereg;
-        basereg = REG3264_ESP;
+        basereg = X86EAChecker::REG_RSP;
     }
 
     // RIP is only legal if it's the ONLY register used.
-    if (indexreg == REG64_RIP ||
-        (basereg == REG64_RIP && indexreg != REG3264_NONE))
+    if (indexreg == X86EAChecker::REG_RIP ||
+        (basereg == X86EAChecker::REG_RIP &&
+         indexreg != X86EAChecker::REG_NONE))
     {
         diags.Report(m_disp.getSource().getBegin(), diag::err_invalid_ea);
         return false;
@@ -910,15 +893,17 @@ X86EffAddr::Check3264(unsigned int addrsize,
 
     // If we're supposed to be RIP-relative and there's no register
     // usage, change to RIP-relative.
-    if (basereg == REG3264_NONE && indexreg == REG3264_NONE && m_pc_rel)
+    if (basereg == X86EAChecker::REG_NONE &&
+        indexreg == X86EAChecker::REG_NONE &&
+        m_pc_rel)
     {
-        basereg = REG64_RIP;
+        basereg = X86EAChecker::REG_RIP;
         *ip_rel = true;
     }
 
     // First determine R/M (Mod is later determined from disp size)
     m_need_modrm = true;    // we always need ModRM
-    if (basereg == REG3264_NONE && indexreg == REG3264_NONE)
+    if (basereg == X86EAChecker::REG_NONE && indexreg == X86EAChecker::REG_NONE)
     {
         // Just a disp32: in 64-bit mode the RM encoding is used for RIP
         // offset addressing, so we need to use the SIB form instead.
@@ -935,7 +920,7 @@ X86EffAddr::Check3264(unsigned int addrsize,
             m_need_sib = 0;
         }
     }
-    else if (basereg == REG64_RIP)
+    else if (basereg == X86EAChecker::REG_RIP)
     {
         m_modrm |= 5;
         m_sib = 0;
@@ -946,7 +931,7 @@ X86EffAddr::Check3264(unsigned int addrsize,
         m_disp.setSize(32);
         return true;
     }
-    else if (indexreg == REG3264_NONE)
+    else if (indexreg == X86EAChecker::REG_NONE)
     {
         // basereg only
         // Don't need to go to the full effort of determining what type
@@ -961,7 +946,8 @@ X86EffAddr::Check3264(unsigned int addrsize,
         }
         m_modrm |= low3;
         // we don't need an SIB *unless* basereg is ESP or R12
-        if (basereg == REG3264_ESP || basereg == REG64_R12)
+        if (basereg == X86EAChecker::REG_RSP ||
+            basereg == X86EAChecker::REG_R12)
             m_need_sib = 1;
         else
         {
@@ -983,7 +969,7 @@ X86EffAddr::Check3264(unsigned int addrsize,
         m_sib = 0;      // start with 0
 
         // Special case: no basereg
-        if (basereg == REG3264_NONE)
+        if (basereg == X86EAChecker::REG_NONE)
             m_sib |= 5;
         else
         {
@@ -998,7 +984,7 @@ X86EffAddr::Check3264(unsigned int addrsize,
         }
 
         // Put in indexreg, checking for none case
-        if (indexreg == REG3264_NONE)
+        if (indexreg == X86EAChecker::REG_NONE)
             m_sib |= 040;
             // Any scale field is valid, just leave at 0.
         else
@@ -1013,7 +999,7 @@ X86EffAddr::Check3264(unsigned int addrsize,
 
             m_sib |= low3 << 3;
             // Set scale field, 1 case -> 0, so don't bother.
-            switch (reg3264mult[indexreg])
+            switch (checker.m_regmult[indexreg])
             {
                 case 2:
                     m_sib |= 0100;
@@ -1031,8 +1017,9 @@ X86EffAddr::Check3264(unsigned int addrsize,
     }
 
     // Calculate displacement length (if possible)
-    return CalcDispLen(32, basereg == REG3264_NONE,
-                       basereg == REG3264_EBP || basereg == REG64_R13,
+    return CalcDispLen(32, basereg == X86EAChecker::REG_NONE,
+                       basereg == X86EAChecker::REG_RBP ||
+                       basereg == X86EAChecker::REG_R13,
                        diags);
 }
 
@@ -1063,7 +1050,6 @@ X86EffAddr::Check16(unsigned int bits,
         0377,   // 1 1 1 0: invalid
         0377    // 1 1 1 1: invalid
     };
-    int bx=0, si=0, di=0, bp=0; // total multiplier for each reg
     enum HaveReg
     {
         HAVE_NONE = 0,
@@ -1072,7 +1058,6 @@ X86EffAddr::Check16(unsigned int bits,
         HAVE_DI = 1<<2,
         HAVE_BP = 1<<3
     };
-    int havereg = HAVE_NONE;
 
     // 64-bit mode does not allow 16-bit addresses
     if (bits == 64 && !address16_op)
@@ -1086,12 +1071,11 @@ X86EffAddr::Check16(unsigned int bits,
     m_valid_sib = false;
     m_need_sib = 0;
 
+    X86EAChecker checker(bits, 16);
+
     if (m_disp.hasAbs())
     {
-        switch (X86ExprCheckEAGetRegUsage
-                (*m_disp.getAbs(), 0, ip_rel, bits,
-                 BIND::bind(&X86ExprCheckEAGetReg16, _1, _2, &bx, &si,
-                            &di, &bp)))
+        switch (checker.GetRegUsage(*m_disp.getAbs(), 0, ip_rel))
         {
             case 1:
                 diags.Report(m_disp.getSource().getBegin(),
@@ -1104,6 +1088,11 @@ X86EffAddr::Check16(unsigned int bits,
         }
     }
 
+    int bx = checker.m_regmult[X86EAChecker::REG_RBX];
+    int si = checker.m_regmult[X86EAChecker::REG_RSI];
+    int di = checker.m_regmult[X86EAChecker::REG_RDI];
+    int bp = checker.m_regmult[X86EAChecker::REG_RBP];
+
     // reg multipliers not 0 or 1 are illegal.
     if (bx & ~1 || si & ~1 || di & ~1 || bp & ~1)
     {
@@ -1112,6 +1101,7 @@ X86EffAddr::Check16(unsigned int bits,
     }
 
     // Set havereg appropriately
+    int havereg = HAVE_NONE;
     if (bx > 0)
         havereg |= HAVE_BX;
     if (si > 0)
