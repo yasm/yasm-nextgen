@@ -30,7 +30,6 @@
 
 #include "YAML/emitter.h"
 #include "yasmx/Config/functional.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Expr_util.h"
@@ -236,11 +235,11 @@ public:
 
 private:
     void DistReg(Expr& e, int& pos, bool simplify_reg_mul);
-    int GetTermRegUsage(Expr& e,
-                        int pos,
-                        /*@null@*/ int* indexreg,
-                        int* indexval,
-                        bool* indexmult);
+    bool GetTermRegUsage(Expr& e,
+                         int pos,
+                         /*@null@*/ int* indexreg,
+                         int* indexval,
+                         bool* indexmult);
     bool getReg(ExprTerm& term, int* regnum);
 
 private:
@@ -420,7 +419,7 @@ X86EAChecker::DistReg(Expr& e, int& pos, bool simplify_reg_mul)
     }
 }
 
-int
+bool
 X86EAChecker::GetTermRegUsage(Expr& e,
                               int pos,
                               /*@null@*/ int* indexreg,
@@ -434,7 +433,7 @@ X86EAChecker::GetTermRegUsage(Expr& e,
     {
         int regnum;
         if (!getReg(child, &regnum))
-            return 1;
+            return false;
         int regmult = ++m_regmult[regnum];
 
         // Let last, largest multipler win indexreg
@@ -448,7 +447,7 @@ X86EAChecker::GetTermRegUsage(Expr& e,
     {
         int lhs, rhs;
         if (!getChildren(e, &lhs, &rhs, &pos))
-            return 1;
+            return false;
 
         ExprTerm* regterm;
         ExprTerm* intterm;
@@ -465,14 +464,14 @@ X86EAChecker::GetTermRegUsage(Expr& e,
             intterm = &terms[lhs];
         }
         else
-            return 1;
+            return false;
 
         IntNum* intn = intterm->getIntNum();
         assert(intn);
 
         int regnum;
         if (!getReg(*regterm, &regnum))
-            return 1;
+            return false;
 
         long delta = intn->getInt();
         m_regmult[regnum] += delta;
@@ -496,10 +495,8 @@ X86EAChecker::GetTermRegUsage(Expr& e,
         }
     }
     else if (child.isOp() && e.Contains(ExprTerm::REG, pos))
-        return 1;   // can't contain reg elsewhere
-    else
-        return 2;
-    return 0;
+        return false;   // can't contain reg elsewhere
+    return true;
 }
 
 // Simplify and determine if expression is superficially valid:
@@ -509,13 +506,13 @@ X86EAChecker::GetTermRegUsage(Expr& e,
 // Don't simplify out constant identities if we're looking for an indexreg: we
 // may need the multiplier for determining what the indexreg is!
 //
-// Returns 1 if invalid register usage, 2 if unable to determine all values,
+// Returns 1 if invalid register usage, 2 if circular reference,
 // and 0 if all values successfully determined and saved in data.
 int
 X86EAChecker::GetRegUsage(Expr& e, /*@null@*/ int* indexreg, bool* ip_rel)
 {
     if (!ExpandEqu(e))
-        throw Error("circular reference detected");
+        return 2;
     e.Simplify(BIND::bind(&X86EAChecker::DistReg, this, _1, _2, indexreg == 0),
                indexreg == 0);
 
@@ -569,12 +566,12 @@ X86EAChecker::GetRegUsage(Expr& e, /*@null@*/ int* indexreg, bool* ip_rel)
             if (child.m_depth != root.m_depth+1)
                 continue;
 
-            if (GetTermRegUsage(e, pos, indexreg, &indexval, &indexmult) == 1)
+            if (!GetTermRegUsage(e, pos, indexreg, &indexval, &indexmult))
                 return 1;
         }
     }
-    else if (GetTermRegUsage(e, e.getTerms().size()-1, indexreg, &indexval,
-                             &indexmult) == 1)
+    else if (!GetTermRegUsage(e, e.getTerms().size()-1, indexreg, &indexval,
+                              &indexmult))
         return 1;
 
     // Simplify expr, which is now really just the displacement. This
@@ -781,6 +778,8 @@ X86EffAddr::Check3264(unsigned int addrsize,
                              diag::err_invalid_ea);
                 return false;
             case 2:
+                diags.Report(m_disp.getSource().getBegin(),
+                             diag::err_equ_circular_reference_mem);
                 return false;
             default:
                 break;
@@ -1082,6 +1081,8 @@ X86EffAddr::Check16(unsigned int bits,
                              diag::err_invalid_ea);
                 return false;
             case 2:
+                diags.Report(m_disp.getSource().getBegin(),
+                             diag::err_equ_circular_reference_mem);
                 return false;
             default:
                 break;
