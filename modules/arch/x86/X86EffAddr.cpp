@@ -248,8 +248,6 @@ private:
     unsigned int m_addrsize;
 };
 
-} // anonymous namespace
-
 // Only works if term.type == Expr::REG (doesn't check).
 // Overwrites term with intnum of 0 (to eliminate regs from the final expr).
 bool
@@ -585,6 +583,8 @@ X86EAChecker::GetRegUsage(Expr& e, /*@null@*/ int* indexreg, bool* ip_rel)
 
     return 0;
 }
+
+} // anonymous namespace
 
 /*@-nullstate@*/
 bool
