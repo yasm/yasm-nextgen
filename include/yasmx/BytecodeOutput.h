@@ -141,6 +141,7 @@ public:
         if (!ConvertSymbolToBytes(sym, bytes, loc, valsize, warn, diags))
             return false;
         Output(bytes);
+        return true;
     }
 
     /// Output a "gap" in the object file: the data does not really need to
