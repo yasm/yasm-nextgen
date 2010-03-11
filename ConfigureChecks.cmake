@@ -329,6 +329,11 @@ if (CMAKE_COMPILER_IS_GNUCXX)
    # get the gcc version
    exec_program(${CMAKE_C_COMPILER} ARGS --version OUTPUT_VARIABLE _gcc_version_info)
 
+   string (REGEX MATCH "clang version [012]" _clang_version "${_gcc_version_info}")
+   if (_clang_version)
+      set(_gcc_version_info "4.4.1")
+   endif (_clang_version)
+
    string (REGEX MATCH "[345]\\.[0-9]\\.[0-9]" _gcc_version "${_gcc_version_info}")
    # gcc on mac just reports: "gcc (GCC) 3.3 20030304 ..." without the patch level, handle this here:
    if (NOT _gcc_version)
