@@ -97,12 +97,12 @@ protected:
   /// specified bucket will be non-null.  Otherwise, it will be null.  In either
   /// case, the FullHashValue field of the bucket will be set to the hash value
   /// of the string.
-  unsigned LookupBucketFor(const StringRef &Key);
+  unsigned LookupBucketFor(StringRef Key);
 
   /// FindKey - Look up the bucket that contains the specified key. If it exists
   /// in the map, return the bucket number of the key.  Otherwise return -1.
   /// This does not modify the map.
-  int FindKey(const StringRef &Key) const;
+  int FindKey(StringRef Key) const;
 
   /// RemoveKey - Remove the specified StringMapEntry from the table, but do not
   /// delete it.  This aborts if the value isn't in the table.
@@ -110,7 +110,7 @@ protected:
 
   /// RemoveKey - Remove the StringMapEntry for the specified key from the
   /// table, returning it.  If the key is not in the table, this returns null.
-  StringMapEntryBase *RemoveKey(const StringRef &Key);
+  StringMapEntryBase *RemoveKey(StringRef Key);
 private:
   void init(unsigned Size);
 public:
@@ -283,13 +283,13 @@ public:
     return const_iterator(TheTable+NumBuckets, true);
   }
 
-  iterator find(const StringRef &Key) {
+  iterator find(StringRef Key) {
     int Bucket = FindKey(Key);
     if (Bucket == -1) return end();
     return iterator(TheTable+Bucket);
   }
 
-  const_iterator find(const StringRef &Key) const {
+  const_iterator find(StringRef Key) const {
     int Bucket = FindKey(Key);
     if (Bucket == -1) return end();
     return const_iterator(TheTable+Bucket);
@@ -297,18 +297,18 @@ public:
 
    /// lookup - Return the entry for the specified key, or a default
   /// constructed value if no such entry exists.
-  ValueTy lookup(const StringRef &Key) const {
+  ValueTy lookup(StringRef Key) const {
     const_iterator it = find(Key);
     if (it != end())
       return it->second;
     return ValueTy();
   }
 
-  ValueTy& operator[](const StringRef &Key) {
+  ValueTy& operator[](StringRef Key) {
     return GetOrCreateValue(Key).getValue();
   }
 
-  size_type count(const StringRef &Key) const {
+  size_type count(StringRef Key) const {
     return find(Key) == end() ? 0 : 1;
   }
 
@@ -351,7 +351,7 @@ public:
   /// exists, return it.  Otherwise, default construct a value, insert it, and
   /// return.
   template <typename InitTy>
-  StringMapEntry<ValueTy> &GetOrCreateValue(const StringRef &Key,
+  StringMapEntry<ValueTy> &GetOrCreateValue(StringRef Key,
                                             InitTy Val) {
     unsigned BucketNo = LookupBucketFor(Key);
     ItemBucket &Bucket = TheTable[BucketNo];
@@ -374,7 +374,7 @@ public:
     return *NewItem;
   }
 
-  StringMapEntry<ValueTy> &GetOrCreateValue(const StringRef &Key) {
+  StringMapEntry<ValueTy> &GetOrCreateValue(StringRef Key) {
     return GetOrCreateValue(Key, ValueTy());
   }
 
@@ -402,7 +402,7 @@ public:
     V.Destroy(Allocator);
   }
 
-  bool erase(const StringRef &Key) {
+  bool erase(StringRef Key) {
     iterator I = find(Key);
     if (I == end()) return false;
     erase(I);
