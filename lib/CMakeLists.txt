@@ -22,6 +22,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     Support/Statistic.cpp
     Support/StringExtras.cpp
     Support/StringMap.cpp
+    Support/StringRef.cpp
     Support/Timer.cpp
     Support/Twine.cpp
     System/Atomic.cpp
