@@ -21,8 +21,8 @@
 #define LLVM_SUPPORT_COMMANDLINE_H
 
 #include "llvm/Support/type_traits.h"
-#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/System/DataTypes.h"
 #include "llvm/ADT/SmallVector.h"
 #include "yasmx/Config/export.h"
 #include <cassert>

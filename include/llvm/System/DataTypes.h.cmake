@@ -1,4 +1,4 @@
-/*===-- include/Support/DataTypes.h - Define fixed size types -----*- C -*-===*\
+/*===-- include/System/DataTypes.h - Define fixed size types -----*- C -*-===*\
 |*                                                                            *|
 |*                     The LLVM Compiler Infrastructure                       *|
 |*                                                                            *|
@@ -27,11 +27,8 @@
 #cmakedefine HAVE_SYS_TYPES_H ${HAVE_SYS_TYPES_H}
 #cmakedefine HAVE_INTTYPES_H ${HAVE_INTTYPES_H}
 #cmakedefine HAVE_STDINT_H ${HAVE_STDINT_H}
-#undef HAVE_UINT64_T
-#undef HAVE_U_INT64_T
-
-/* FIXME: UGLY HACK (Added by Kevin) */
-#define HAVE_UINT64_T 1
+#cmakedefine HAVE_UINT64_T ${HAVE_UINT64_T}
+#cmakedefine HAVE_U_INT64_T ${HAVE_U_INT64_T}
 
 #ifdef __cplusplus
 #include <cmath>
@@ -46,12 +43,12 @@
    happening when system headers or C++ STL headers include stdint.h before we
    define it here, we define it on the g++ command line (in Makefile.rules). */
 #if !defined(__STDC_LIMIT_MACROS)
-# error "Must #define __STDC_LIMIT_MACROS before #including Support/DataTypes.h"
+# error "Must #define __STDC_LIMIT_MACROS before #including System/DataTypes.h"
 #endif
 
 #if !defined(__STDC_CONSTANT_MACROS)
 # error "Must #define __STDC_CONSTANT_MACROS before " \
-        "#including Support/DataTypes.h"
+        "#including System/DataTypes.h"
 #endif
 
 /* Note that <inttypes.h> includes <stdint.h>, if this is a C99 system. */
@@ -68,7 +65,7 @@
 #endif
 
 #ifdef _AIX
-#include "llvm/Support/AIXDataTypesFix.h"
+#include "llvm/System/AIXDataTypesFix.h"
 #endif
 
 /* Handle incorrect definition of uint64_t as u_int64_t */
@@ -121,14 +118,33 @@ typedef signed int ssize_t;
 #define INT32_MAX 2147483647
 #define INT32_MIN -2147483648
 #define UINT32_MAX 4294967295U
-#define INT8_C(C)   C
-#define UINT8_C(C)  C
-#define INT16_C(C)  C
-#define UINT16_C(C) C
-#define INT32_C(C)  C
-#define UINT32_C(C) C ## U
-#define INT64_C(C)  ((int64_t) C ## LL)
-#define UINT64_C(C) ((uint64_t) C ## ULL)
+/* Certain compatibility updates to VC++ introduce the `cstdint'
+ * header, which defines the INT*_C macros. On default installs they
+ * are absent. */
+#ifndef INT8_C
+# define INT8_C(C)   C
+#endif
+#ifndef UINT8_C
+# define UINT8_C(C)  C
+#endif
+#ifndef INT16_C
+# define INT16_C(C)  C
+#endif
+#ifndef UINT16_C
+# define UINT16_C(C) C
+#endif
+#ifndef INT32_C
+# define INT32_C(C)  C
+#endif
+#ifndef UINT32_C
+# define UINT32_C(C) C ## U
+#endif
+#ifndef INT64_C
+# define INT64_C(C)  ((int64_t) C ## LL)
+#endif
+#ifndef UINT64_C
+# define UINT64_C(C) ((uint64_t) C ## ULL)
+#endif
 #endif /* _MSC_VER */
 
 /* Set defaults for constants which we cannot find. */

@@ -5,6 +5,24 @@ INCLUDE(TestCXXAcceptsFlag)
 INCLUDE(CMakeBackwardCompatibilityCXX)
 INCLUDE(MacroEnsureVersion)
 
+# Helper macros and functions
+macro(add_cxx_include result files)
+  set(${result} "")
+  foreach (file_name ${files})
+     set(${result} "${${result}}#include<${file_name}>\n")
+  endforeach()
+endmacro(add_cxx_include files result)
+
+function(check_type_exists type files variable)
+  add_cxx_include(includes "${files}")
+  CHECK_CXX_SOURCE_COMPILES("
+    ${includes} ${type} typeVar;
+    int main() {
+        return 0;
+    }
+    " ${variable})
+endfunction()
+
 #FIND_PROGRAM(XMLTO NAMES xmlto)
 #IF (XMLTO)
 #    SET(BUILD_MAN ON)
@@ -56,12 +74,6 @@ check_include_file(unistd.h HAVE_UNISTD_H)
 check_include_file(utime.h HAVE_UTIME_H)
 check_include_file(windows.h HAVE_WINDOWS_H)
 
-check_type_size("long long" LONG_LONG)
-check_type_size("unsigned long long" UNSIGNED_LONG_LONG)
-IF (HAVE_LONG_LONG AND HAVE_UNSIGNED_LONG_LONG)
-    SET(YASM_HAVE_LONG_LONG 1)
-ENDIF (HAVE_LONG_LONG AND HAVE_UNSIGNED_LONG_LONG)
-
 # library checks
 INCLUDE(CheckLibraryExists)
 check_library_exists(pthread pthread_create "" HAVE_LIBPTHREAD)
@@ -101,6 +113,29 @@ check_symbol_exists(__GLIBC__ stdio.h LLVM_USING_GLIBC)
 if( LLVM_USING_GLIBC )
   add_definitions( -D_GNU_SOURCE )
 endif( LLVM_USING_GLIBC )
+
+# Type checks
+check_type_size("long long" LONG_LONG)
+check_type_size("unsigned long long" UNSIGNED_LONG_LONG)
+IF (HAVE_LONG_LONG AND HAVE_UNSIGNED_LONG_LONG)
+    SET(YASM_HAVE_LONG_LONG 1)
+ENDIF (HAVE_LONG_LONG AND HAVE_UNSIGNED_LONG_LONG)
+
+set(headers "")
+if (HAVE_SYS_TYPES_H)
+  set(headers ${headers} "sys/types.h")
+endif()
+
+if (HAVE_INTTYPES_H)
+  set(headers ${headers} "inttypes.h")
+endif()
+
+if (HAVE_STDINT_H)
+  set(headers ${headers} "stdint.h")
+endif()
+
+check_type_exists(uint64_t "${headers}" HAVE_UINT64_T)
+check_type_exists(u_int64_t "${headers}" HAVE_U_INT64_T)
 
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("-fPIC" SUPPORTS_FPIC_FLAG)
@@ -541,7 +576,7 @@ CONFIGURE_FILE(
     ${CMAKE_CURRENT_BINARY_DIR}/include/llvm/Config/config.h
     )
 CONFIGURE_FILE(
-    include/llvm/Support/DataTypes.h.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/include/llvm/Support/DataTypes.h
+    include/llvm/System/DataTypes.h.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/include/llvm/System/DataTypes.h
     )
 

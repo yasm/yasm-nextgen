@@ -15,7 +15,7 @@
 #ifndef LLVM_SUPPORT_TIMER_H
 #define LLVM_SUPPORT_TIMER_H
 
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include "llvm/System/Mutex.h"
 #include "yasmx/Config/export.h"
 #include <string>
