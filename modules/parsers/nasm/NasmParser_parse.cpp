@@ -55,7 +55,7 @@ namespace parser
 namespace nasm
 {
 
-const char*
+llvm::StringRef
 NasmParser::DescribeToken(int token)
 {
     static char strch[] = "` '";

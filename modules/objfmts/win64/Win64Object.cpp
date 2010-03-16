@@ -61,20 +61,20 @@ public:
 
     virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
-    //virtual void InitSymbols(const char* parser);
+    //virtual void InitSymbols(llvm::StringRef parser);
     //virtual void Read(const llvm::MemoryBuffer& in);
     virtual void Output(llvm::raw_fd_ostream& os,
                         bool all_syms,
                         Errwarns& errwarns);
 
-    static const char* getName() { return "Win64"; }
-    static const char* getKeyword() { return "win64"; }
-    static const char* getExtension() { return ".obj"; }
+    static llvm::StringRef getName() { return "Win64"; }
+    static llvm::StringRef getKeyword() { return "win64"; }
+    static llvm::StringRef getExtension() { return ".obj"; }
     static unsigned int getDefaultX86ModeBits() { return 64; }
 
-    static const char* getDefaultDebugFormatKeyword()
+    static llvm::StringRef getDefaultDebugFormatKeyword()
     { return Win32Object::getDefaultDebugFormatKeyword(); }
-    static std::vector<const char*> getDebugFormatKeywords()
+    static std::vector<llvm::StringRef> getDebugFormatKeywords()
     { return Win32Object::getDebugFormatKeywords(); }
 
     static bool isOkObject(Object& object)
@@ -89,7 +89,7 @@ private:
                              Section& section,
                              CoffSection* coffsect);
 
-    void CheckProcFrameState(const char* dirname);
+    void CheckProcFrameState(llvm::StringRef dirname);
 
     void DirProcFrame(DirectiveInfo& info);
     void DirPushReg(DirectiveInfo& info);
@@ -97,7 +97,7 @@ private:
     void DirAllocStack(DirectiveInfo& info);
 
     void SaveCommon(DirectiveInfo& info,
-                    const char* dirname,
+                    llvm::StringRef dirname,
                     UnwindCode::Opcode op);
     void DirSaveReg(DirectiveInfo& info);
     void DirSaveXMM128(DirectiveInfo& info);
@@ -179,7 +179,7 @@ Win64Object::DirProcFrame(DirectiveInfo& info)
 }
 
 void
-Win64Object::CheckProcFrameState(const char* dirname)
+Win64Object::CheckProcFrameState(llvm::StringRef dirname)
 {
     if (!m_proc_frame.isValid())
     {
@@ -198,7 +198,7 @@ Win64Object::CheckProcFrameState(const char* dirname)
 
 // Get current assembly position.
 static SymbolRef
-getCurPos(Object& object, const char* dirname, clang::SourceLocation source)
+getCurPos(Object& object, llvm::StringRef dirname, clang::SourceLocation source)
 {
     Section* sect = object.getCurSection();
     if (!sect)
@@ -317,7 +317,7 @@ Win64Object::DirAllocStack(DirectiveInfo& info)
 
 void
 Win64Object::SaveCommon(DirectiveInfo& info,
-                        const char* dirname,
+                        llvm::StringRef dirname,
                         UnwindCode::Opcode op)
 {
     assert(info.isObject(m_object));

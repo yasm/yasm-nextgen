@@ -81,10 +81,10 @@ public:
 
     void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
-    static const char* getName() { return "NASM-compatible parser"; }
-    static const char* getKeyword() { return "nasm"; }
-    static std::vector<const char*> getPreprocessorKeywords();
-    static const char* getDefaultPreprocessorKeyword() { return "raw"; }
+    static llvm::StringRef getName() { return "NASM-compatible parser"; }
+    static llvm::StringRef getKeyword() { return "nasm"; }
+    static std::vector<llvm::StringRef> getPreprocessorKeywords();
+    static llvm::StringRef getDefaultPreprocessorKeyword() { return "raw"; }
 
     void Parse(Object& object, Preprocessor& preproc, Directives& dirs);
 
@@ -133,7 +133,7 @@ public:
     };
 
     static bool isEolTok(int tok) { return (tok == 0); }
-    static const char* DescribeToken(int tok);
+    static llvm::StringRef DescribeToken(int tok);
 
     int Lex(YYSTYPE* lvalp);
 

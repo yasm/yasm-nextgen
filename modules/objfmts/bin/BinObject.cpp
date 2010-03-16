@@ -77,12 +77,12 @@ public:
     Section* AddDefaultSection();
     Section* AppendSection(llvm::StringRef name, clang::SourceLocation source);
 
-    static const char* getName() { return "Flat format binary"; }
-    static const char* getKeyword() { return "bin"; }
-    static const char* getExtension() { return ""; }
+    static llvm::StringRef getName() { return "Flat format binary"; }
+    static llvm::StringRef getKeyword() { return "bin"; }
+    static llvm::StringRef getExtension() { return ""; }
     static unsigned int getDefaultX86ModeBits() { return 16; }
-    static const char* getDefaultDebugFormatKeyword() { return "null"; }
-    static std::vector<const char*> getDebugFormatKeywords();
+    static llvm::StringRef getDefaultDebugFormatKeyword() { return "null"; }
+    static std::vector<llvm::StringRef> getDebugFormatKeywords();
     static bool isOkObject(Object& object) { return true; }
     static bool Taste(const llvm::MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
@@ -589,11 +589,11 @@ BinObject::DirMap(DirectiveInfo& info)
             BIND::bind(&BinObject::setMapFilename, this, _1));
 }
 
-std::vector<const char*>
+std::vector<llvm::StringRef>
 BinObject::getDebugFormatKeywords()
 {
     static const char* keywords[] = {"null"};
-    return std::vector<const char*>(keywords, keywords+NELEMS(keywords));
+    return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
 }
 
 void

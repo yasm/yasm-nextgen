@@ -86,7 +86,7 @@ public:
 
     /// Get the module type.
     /// @return "DebugFormat".
-    const char* getType() const;
+    llvm::StringRef getType() const;
 
     /// Determine if object is acceptable to debug format.
     /// @param object       object
@@ -105,8 +105,8 @@ public:
     DebugFormatModuleImpl() {}
     ~DebugFormatModuleImpl() {}
 
-    const char* getName() const { return DebugFormatImpl::getName(); }
-    const char* getKeyword() const { return DebugFormatImpl::getKeyword(); }
+    llvm::StringRef getName() const { return DebugFormatImpl::getName(); }
+    llvm::StringRef getKeyword() const { return DebugFormatImpl::getKeyword(); }
 
     bool isOkObject(Object& object) const
     { return DebugFormatImpl::isOkObject(object); }

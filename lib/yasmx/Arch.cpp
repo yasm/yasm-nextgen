@@ -106,7 +106,7 @@ ArchModule::~ArchModule()
 {
 }
 
-const char*
+llvm::StringRef
 ArchModule::getType() const
 {
     return "Arch";

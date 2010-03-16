@@ -58,7 +58,7 @@ ObjectFormatModule::~ObjectFormatModule()
 {
 }
 
-const char*
+llvm::StringRef
 ObjectFormatModule::getType() const
 {
     return "ObjectFormat";

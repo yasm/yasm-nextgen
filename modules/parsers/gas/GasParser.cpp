@@ -174,12 +174,12 @@ GasParser::Parse(Object& object, Preprocessor& preproc, Directives& dirs)
     object.FinalizeSymbols(m_errwarns, true);
 }
 
-std::vector<const char*>
+std::vector<llvm::StringRef>
 GasParser::getPreprocessorKeywords()
 {
     // valid preprocessors to use with this parser
     static const char* keywords[] = {"raw", "cpp", "nasm"};
-    return std::vector<const char*>(keywords, keywords+NELEMS(keywords));
+    return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
 }
 
 void

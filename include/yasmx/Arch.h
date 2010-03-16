@@ -428,7 +428,7 @@ public:
 
     /// Get the module type.
     /// @return "Arch".
-    const char* getType() const;
+    llvm::StringRef getType() const;
 
     /// Get the word size of an architecture.
     /// @return Word size (in bits).
@@ -441,7 +441,7 @@ public:
     /// Vector of machine keyword/name pairs.  The first element in the pair
     /// is the keyword used to select the machine with set_machine(), and the
     /// second element is a one-line description of the machine.
-    typedef std::vector<std::pair<const char*, const char*> > MachineNames;
+    typedef std::vector<std::pair<llvm::StringRef, llvm::StringRef> > MachineNames;
 
     /// Get available machines.
     /// A number of different machine types may be associated with a single
@@ -464,8 +464,8 @@ public:
     ArchModuleImpl() {}
     ~ArchModuleImpl() {}
 
-    const char* getName() const { return ArchImpl::getName(); }
-    const char* getKeyword() const { return ArchImpl::getKeyword(); }
+    llvm::StringRef getName() const { return ArchImpl::getName(); }
+    llvm::StringRef getKeyword() const { return ArchImpl::getKeyword(); }
 
     unsigned int getWordSize() const { return ArchImpl::getWordSize(); }
     unsigned int getMinInsnLen() const

@@ -43,7 +43,7 @@ PreprocessorModule::~PreprocessorModule()
 {
 }
 
-const char*
+llvm::StringRef
 PreprocessorModule::getType() const
 {
     return "Preprocessor";

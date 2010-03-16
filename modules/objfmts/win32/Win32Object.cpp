@@ -60,11 +60,11 @@ Win32Object::~Win32Object()
 {
 }
 
-std::vector<const char*>
+std::vector<llvm::StringRef>
 Win32Object::getDebugFormatKeywords()
 {
     static const char* keywords[] = {"null", "dwarf2", "cv8"};
-    return std::vector<const char*>(keywords, keywords+NELEMS(keywords));
+    return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
 }
 
 static inline void

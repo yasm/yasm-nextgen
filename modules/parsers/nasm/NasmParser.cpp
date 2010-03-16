@@ -74,12 +74,12 @@ NasmParser::Parse(Object& object, Preprocessor& preproc, Directives& dirs)
     object.FinalizeSymbols(m_errwarns, false);
 }
 
-std::vector<const char*>
+std::vector<llvm::StringRef>
 NasmParser::getPreprocessorKeywords()
 {
     // valid preprocessors to use with this parser
     static const char* keywords[] = {"raw", "nasm"};
-    return std::vector<const char*>(keywords, keywords+NELEMS(keywords));
+    return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
 }
 
 void

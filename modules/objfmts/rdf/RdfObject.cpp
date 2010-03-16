@@ -99,13 +99,13 @@ public:
     Section* AppendSection(llvm::StringRef name,
                            clang::SourceLocation source);
 
-    static const char* getName()
+    static llvm::StringRef getName()
     { return "Relocatable Dynamic Object File Format (RDOFF) v2.0"; }
-    static const char* getKeyword() { return "rdf"; }
-    static const char* getExtension() { return ".rdf"; }
+    static llvm::StringRef getKeyword() { return "rdf"; }
+    static llvm::StringRef getExtension() { return ".rdf"; }
     static unsigned int getDefaultX86ModeBits() { return 32; }
-    static const char* getDefaultDebugFormatKeyword() { return "null"; }
-    static std::vector<const char*> getDebugFormatKeywords();
+    static llvm::StringRef getDefaultDebugFormatKeyword() { return "null"; }
+    static std::vector<llvm::StringRef> getDebugFormatKeywords();
     static bool isOkObject(Object& object) { return true; }
     static bool Taste(const llvm::MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
@@ -122,11 +122,11 @@ private:
     std::vector<std::string> m_library_names;
 };
 
-std::vector<const char*>
+std::vector<llvm::StringRef>
 RdfObject::getDebugFormatKeywords()
 {
     static const char* keywords[] = {"null"};
-    return std::vector<const char*>(keywords, keywords+NELEMS(keywords));
+    return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
 }
 
 class RdfOutput : public BytecodeOutput

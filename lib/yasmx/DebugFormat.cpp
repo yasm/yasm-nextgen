@@ -46,7 +46,7 @@ DebugFormatModule::~DebugFormatModule()
 {
 }
 
-const char*
+llvm::StringRef
 DebugFormatModule::getType() const
 {
     return "DebugFormat";

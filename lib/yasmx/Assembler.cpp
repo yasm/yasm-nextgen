@@ -199,7 +199,7 @@ Assembler::Impl::setPreprocessor(llvm::StringRef preproc_keyword)
 {
     // Check to see if the requested preprocessor is in the allowed list
     // for the active parser.
-    std::vector<const char*> preproc_keywords =
+    std::vector<llvm::StringRef> preproc_keywords =
         m_parser_module->getPreprocessorKeywords();
     if (std::find_if(preproc_keywords.begin(), preproc_keywords.end(),
                      NocaseEquals(preproc_keyword))
@@ -234,7 +234,7 @@ Assembler::Impl::setDebugFormat(llvm::StringRef dbgfmt_keyword)
 {
     // Check to see if the requested debug format is in the allowed list
     // for the active object format.
-    std::vector<const char*> dbgfmt_keywords =
+    std::vector<llvm::StringRef> dbgfmt_keywords =
         m_objfmt_module->getDebugFormatKeywords();
     if (std::find_if(dbgfmt_keywords.begin(), dbgfmt_keywords.end(),
                      NocaseEquals(dbgfmt_keyword))
@@ -281,9 +281,9 @@ Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
                           clang::FileManager& file_mgr,
                           bool warning_error)
 {
-    const char* in_filename =
+    llvm::StringRef in_filename =
         source_mgr.getBuffer(source_mgr.getMainFileID())->getBufferIdentifier();
-    const char* parser_keyword = m_parser_module->getKeyword();
+    llvm::StringRef parser_keyword = m_parser_module->getKeyword();
 
     // determine the object filename if not specified
     if (m_obj_filename.empty())
@@ -295,12 +295,13 @@ Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
         {
             // replace (or add) extension to base filename
             llvm::sys::Path fn(in_filename);
-            std::string base_filename = fn.getBasename();
+            llvm::StringRef base_filename = fn.getBasename();
             if (base_filename.empty())
                 m_obj_filename = "yasm.out";
             else
             {
-                m_obj_filename = base_filename+m_objfmt_module->getExtension();
+                m_obj_filename =
+                    (base_filename+m_objfmt_module->getExtension()).str();
                 if (m_obj_filename == in_filename)
                     m_obj_filename = "yasm.out";
             }

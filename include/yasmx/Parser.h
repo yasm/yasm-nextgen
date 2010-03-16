@@ -96,17 +96,17 @@ public:
 
     /// Get the module type.
     /// @return "Parser".
-    const char* getType() const;
+    llvm::StringRef getType() const;
 
     /// Get list of preprocessor (Preprocessor) keywords that are
     /// recommended to use with this parser.  The raw preprocessor
     /// ("raw") should always be in this list.
     /// @return Vector of preprocessor keywords.
-    virtual std::vector<const char*> getPreprocessorKeywords() const = 0;
+    virtual std::vector<llvm::StringRef> getPreprocessorKeywords() const = 0;
 
     /// Get default preprocessor keyword.
     /// @return Default preprocessor keyword.
-    virtual const char* getDefaultPreprocessorKeyword() const = 0;
+    virtual llvm::StringRef getDefaultPreprocessorKeyword() const = 0;
 
     /// Parser factory function.
     /// @param errwarns     error/warning set
@@ -122,12 +122,12 @@ public:
     ParserModuleImpl() {}
     ~ParserModuleImpl() {}
 
-    const char* getName() const { return ParserImpl::getName(); }
-    const char* getKeyword() const { return ParserImpl::getKeyword(); }
+    llvm::StringRef getName() const { return ParserImpl::getName(); }
+    llvm::StringRef getKeyword() const { return ParserImpl::getKeyword(); }
 
-    std::vector<const char*> getPreprocessorKeywords() const
+    std::vector<llvm::StringRef> getPreprocessorKeywords() const
     { return ParserImpl::getPreprocessorKeywords(); }
-    const char* getDefaultPreprocessorKeyword() const
+    llvm::StringRef getDefaultPreprocessorKeyword() const
     { return ParserImpl::getDefaultPreprocessorKeyword(); }
 
     std::auto_ptr<Parser> Create(Errwarns& errwarns) const

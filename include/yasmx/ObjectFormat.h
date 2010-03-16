@@ -127,11 +127,11 @@ public:
 
     /// Get the module type.
     /// @return "ObjectFormat".
-    const char* getType() const;
+    llvm::StringRef getType() const;
 
     /// Get the default file extension (including the '.').
     /// @return File extension.
-    virtual const char* getExtension() const = 0;
+    virtual llvm::StringRef getExtension() const = 0;
 
     /// Get default (starting) x86 BITS setting.  This only appies to the
     /// x86 architecture; other architectures ignore this setting.
@@ -143,11 +143,11 @@ public:
     /// ("null") should always be in this list so it's possible to
     /// have no debug output.
     /// @return Vector of debug format keywords.
-    virtual std::vector<const char*> getDebugFormatKeywords() const = 0;
+    virtual std::vector<llvm::StringRef> getDebugFormatKeywords() const = 0;
 
     /// Get default debug format keyword.
     /// @return Default debug format keyword.
-    virtual const char* getDefaultDebugFormatKeyword() const = 0;
+    virtual llvm::StringRef getDefaultDebugFormatKeyword() const = 0;
 
     /// Determine if object is acceptable to object format.
     /// @param object       object
@@ -176,17 +176,17 @@ public:
     ObjectFormatModuleImpl() {}
     ~ObjectFormatModuleImpl() {}
 
-    const char* getName() const { return ObjectFormatImpl::getName(); }
-    const char* getKeyword() const { return ObjectFormatImpl::getKeyword(); }
+    llvm::StringRef getName() const { return ObjectFormatImpl::getName(); }
+    llvm::StringRef getKeyword() const { return ObjectFormatImpl::getKeyword(); }
 
-    const char* getExtension() const
+    llvm::StringRef getExtension() const
     { return ObjectFormatImpl::getExtension(); }
     unsigned int getDefaultX86ModeBits() const
     { return ObjectFormatImpl::getDefaultX86ModeBits(); }
 
-    std::vector<const char*> getDebugFormatKeywords() const
+    std::vector<llvm::StringRef> getDebugFormatKeywords() const
     { return ObjectFormatImpl::getDebugFormatKeywords(); }
-    const char* getDefaultDebugFormatKeyword() const
+    llvm::StringRef getDefaultDebugFormatKeyword() const
     { return ObjectFormatImpl::getDefaultDebugFormatKeyword(); }
 
     bool isOkObject(Object& object) const

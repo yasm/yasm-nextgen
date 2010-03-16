@@ -72,11 +72,11 @@ CoffObject::CoffObject(const ObjectFormatModule& module,
         m_machine = MACHINE_AMD64;
 }
 
-std::vector<const char*>
+std::vector<llvm::StringRef>
 CoffObject::getDebugFormatKeywords()
 {
     static const char* keywords[] = {"null", "dwarf2"};
-    return std::vector<const char*>(keywords, keywords+NELEMS(keywords));
+    return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
 }
 
 bool

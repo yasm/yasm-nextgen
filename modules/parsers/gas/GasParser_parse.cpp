@@ -60,7 +60,7 @@ namespace parser
 namespace gas
 {
 
-const char*
+llvm::StringRef
 GasParser::DescribeToken(int token)
 {
     static char strch[] = "` '";

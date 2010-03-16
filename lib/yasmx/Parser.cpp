@@ -46,7 +46,7 @@ ParserModule::~ParserModule()
 {
 }
 
-const char*
+llvm::StringRef
 ParserModule::getType() const
 {
     return "Parser";

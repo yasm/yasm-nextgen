@@ -79,12 +79,12 @@ public:
     bool isWin32() const { return m_win32; }
     bool isWin64() const { return m_win64; }
 
-    static const char* getName() { return "COFF (DJGPP)"; }
-    static const char* getKeyword() { return "coff"; }
-    static const char* getExtension() { return ".o"; }
+    static llvm::StringRef getName() { return "COFF (DJGPP)"; }
+    static llvm::StringRef getKeyword() { return "coff"; }
+    static llvm::StringRef getExtension() { return ".o"; }
     static unsigned int getDefaultX86ModeBits() { return 32; }
-    static const char* getDefaultDebugFormatKeyword() { return "null"; }
-    static std::vector<const char*> getDebugFormatKeywords();
+    static llvm::StringRef getDefaultDebugFormatKeyword() { return "null"; }
+    static std::vector<llvm::StringRef> getDebugFormatKeywords();
     static bool isOkObject(Object& object);
     static bool Taste(const llvm::MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,

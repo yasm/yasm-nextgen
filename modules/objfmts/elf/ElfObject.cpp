@@ -95,12 +95,12 @@ public:
               unsigned int bits=0);
     ~ElfObject() {}
 
-    static const char* getName() { return "ELF"; }
-    static const char* getKeyword() { return "elf"; }
-    static const char* getExtension() { return ".o"; }
+    static llvm::StringRef getName() { return "ELF"; }
+    static llvm::StringRef getKeyword() { return "elf"; }
+    static llvm::StringRef getExtension() { return ".o"; }
     static unsigned int getDefaultX86ModeBits() { return 0; }
-    static const char* getDefaultDebugFormatKeyword() { return "null"; }
-    static std::vector<const char*> getDebugFormatKeywords();
+    static llvm::StringRef getDefaultDebugFormatKeyword() { return "null"; }
+    static std::vector<llvm::StringRef> getDebugFormatKeywords();
     static bool isOkObject(Object& object) { return true; }
     static bool Taste(const llvm::MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
@@ -150,14 +150,14 @@ public:
         : ElfObject(module, object, 32)
     {}
 
-    static const char* getName() { return "ELF (32-bit)"; }
-    static const char* getKeyword() { return "elf32"; }
-    static const char* getExtension() { return ElfObject::getExtension(); }
+    static llvm::StringRef getName() { return "ELF (32-bit)"; }
+    static llvm::StringRef getKeyword() { return "elf32"; }
+    static llvm::StringRef getExtension() { return ElfObject::getExtension(); }
     static unsigned int getDefaultX86ModeBits() { return 32; }
 
-    static const char* getDefaultDebugFormatKeyword()
+    static llvm::StringRef getDefaultDebugFormatKeyword()
     { return ElfObject::getDefaultDebugFormatKeyword(); }
-    static std::vector<const char*> getDebugFormatKeywords()
+    static std::vector<llvm::StringRef> getDebugFormatKeywords()
     { return ElfObject::getDebugFormatKeywords(); }
 
     static bool isOkObject(Object& object)
@@ -177,14 +177,14 @@ public:
         : ElfObject(module, object, 64)
     {}
 
-    static const char* getName() { return "ELF (64-bit)"; }
-    static const char* getKeyword() { return "elf64"; }
-    static const char* getExtension() { return ElfObject::getExtension(); }
+    static llvm::StringRef getName() { return "ELF (64-bit)"; }
+    static llvm::StringRef getKeyword() { return "elf64"; }
+    static llvm::StringRef getExtension() { return ElfObject::getExtension(); }
     static unsigned int getDefaultX86ModeBits() { return 64; }
 
-    static const char* getDefaultDebugFormatKeyword()
+    static llvm::StringRef getDefaultDebugFormatKeyword()
     { return ElfObject::getDefaultDebugFormatKeyword(); }
-    static std::vector<const char*> getDebugFormatKeywords()
+    static std::vector<llvm::StringRef> getDebugFormatKeywords()
     { return ElfObject::getDebugFormatKeywords(); }
 
     static bool isOkObject(Object& object)
@@ -1470,7 +1470,7 @@ ElfObject::DirIdent(DirectiveInfo& info)
     DirIdentCommon(*this, ".comment", info);
 }
 
-std::vector<const char*>
+std::vector<llvm::StringRef>
 ElfObject::getDebugFormatKeywords()
 {
     static const char* keywords[] =
@@ -1479,7 +1479,7 @@ ElfObject::getDebugFormatKeywords()
         "stabs",
         "dwarf2"
     };
-    return std::vector<const char*>(keywords, keywords+NELEMS(keywords));
+    return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
 }
 
 void

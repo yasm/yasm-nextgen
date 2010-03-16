@@ -50,14 +50,14 @@ public:
     //virtual void Read(const llvm::MemoryBuffer& in);
     //virtual void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
 
-    static const char* getName() { return "Win32"; }
-    static const char* getKeyword() { return "win32"; }
-    static const char* getExtension() { return ".obj"; }
+    static llvm::StringRef getName() { return "Win32"; }
+    static llvm::StringRef getKeyword() { return "win32"; }
+    static llvm::StringRef getExtension() { return ".obj"; }
     static unsigned int getDefaultX86ModeBits() { return 32; }
 
-    static const char* getDefaultDebugFormatKeyword()
+    static llvm::StringRef getDefaultDebugFormatKeyword()
     { return CoffObject::getDefaultDebugFormatKeyword(); }
-    static std::vector<const char*> getDebugFormatKeywords();
+    static std::vector<llvm::StringRef> getDebugFormatKeywords();
 
     static bool isOkObject(Object& object)
     { return CoffObject::isOkObject(object); }

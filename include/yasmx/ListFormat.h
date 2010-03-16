@@ -90,7 +90,7 @@ public:
 
     /// Get the module type.
     /// @return "ListFormat".
-    const char* getType() const;
+    llvm::StringRef getType() const;
 
     /// ListFormat factory function.
     /// @return New list format.
@@ -104,8 +104,8 @@ public:
     ListFormatModuleImpl() {}
     ~ListFormatModuleImpl() {}
 
-    const char* getName() const { return ListFormatImpl::getName(); }
-    const char* getKeyword() const { return ListFormatImpl::getKeyword(); }
+    llvm::StringRef getName() const { return ListFormatImpl::getName(); }
+    llvm::StringRef getKeyword() const { return ListFormatImpl::getKeyword(); }
 
     std::auto_ptr<ListFormat> Create() const
     {

@@ -46,7 +46,7 @@ ListFormatModule::~ListFormatModule()
 {
 }
 
-const char*
+llvm::StringRef
 ListFormatModule::getType() const
 {
     return "ListFormat";

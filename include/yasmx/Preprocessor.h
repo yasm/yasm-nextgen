@@ -127,7 +127,7 @@ public:
 
     /// Get the module type.
     /// @return "Preprocessor".
-    const char* getType() const;
+    llvm::StringRef getType() const;
 
     /// Preprocessor factory function.
     /// The preprocessor needs access to the object format to find out
@@ -145,8 +145,8 @@ public:
     PreprocessorModuleImpl() {}
     ~PreprocessorModuleImpl() {}
 
-    const char* getName() const { return PreprocessorImpl::getName(); }
-    const char* getKeyword() const { return PreprocessorImpl::getKeyword(); }
+    llvm::StringRef getName() const { return PreprocessorImpl::getName(); }
+    llvm::StringRef getKeyword() const { return PreprocessorImpl::getKeyword(); }
 
     std::auto_ptr<Preprocessor> Create(Errwarns& errwarns) const
     {
