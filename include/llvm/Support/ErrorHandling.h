@@ -64,18 +64,18 @@ namespace llvm {
   /// After the error handler is called this function will call exit(1), it 
   /// does not return.
   YASM_LIB_EXPORT
-  void llvm_report_error(const char *reason) NORETURN;
+  NORETURN void llvm_report_error(const char *reason);
   YASM_LIB_EXPORT
-  void llvm_report_error(const std::string &reason) NORETURN;
+  NORETURN void llvm_report_error(const std::string &reason);
   YASM_LIB_EXPORT
-  void llvm_report_error(const Twine &reason) NORETURN;
+  NORETURN void llvm_report_error(const Twine &reason);
 
   /// This function calls abort(), and prints the optional message to stderr.
   /// Use the llvm_unreachable macro (that adds location info), instead of
   /// calling this function directly.
   YASM_LIB_EXPORT
-  void llvm_unreachable_internal(const char *msg=0, const char *file=0,
-                                 unsigned line=0) NORETURN;
+  NORETURN void llvm_unreachable_internal(const char *msg=0,
+                                          const char *file=0, unsigned line=0);
 }
 
 /// Prints the message and location info to stderr in !NDEBUG builds.
@@ -86,9 +86,10 @@ namespace llvm {
 /// Use this instead of assert(0), so that the compiler knows this path
 /// is not reachable even for NDEBUG builds.
 #ifndef NDEBUG
-#define llvm_unreachable(msg) llvm_unreachable_internal(msg, __FILE__, __LINE__)
+#define llvm_unreachable(msg) \
+  ::llvm::llvm_unreachable_internal(msg, __FILE__, __LINE__)
 #else
-#define llvm_unreachable(msg) llvm_unreachable_internal()
+#define llvm_unreachable(msg) ::llvm::llvm_unreachable_internal()
 #endif
 
 #endif

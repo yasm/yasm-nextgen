@@ -18,7 +18,9 @@
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
 #endif
-#ifdef HAVE_MALLOC_H
+// DragonFly BSD has deprecated <malloc.h> for <stdlib.h> instead,
+//  Unix.h includes this for us already.
+#if defined(HAVE_MALLOC_H) && !defined(__DragonFly__)
 #include <malloc.h>
 #endif
 #ifdef HAVE_MALLOC_MALLOC_H
@@ -91,7 +93,7 @@ Process::GetTotalMemoryUsage()
   malloc_statistics_t Stats;
   malloc_zone_statistics(malloc_default_zone(), &Stats);
   return Stats.size_allocated;   // darwin
-#elif defined(HAVE_GETRUSAGE)
+#elif defined(HAVE_GETRUSAGE) && !defined(__HAIKU__)
   struct rusage usage;
   ::getrusage(RUSAGE_SELF, &usage);
   return usage.ru_maxrss;
@@ -179,27 +181,24 @@ void Process::PreventCoreFiles() {
 }
 
 bool Process::StandardInIsUserInput() {
-#if HAVE_ISATTY
-  return isatty(0);
-#endif
-  // If we don't have isatty, just return false.
-  return false;
+  return FileDescriptorIsDisplayed(STDIN_FILENO);
 }
 
 bool Process::StandardOutIsDisplayed() {
-#if HAVE_ISATTY
-  return isatty(1);
-#endif
-  // If we don't have isatty, just return false.
-  return false;
+  return FileDescriptorIsDisplayed(STDOUT_FILENO);
 }
 
 bool Process::StandardErrIsDisplayed() {
+  return FileDescriptorIsDisplayed(STDERR_FILENO);
+}
+
+bool Process::FileDescriptorIsDisplayed(int fd) {
 #if HAVE_ISATTY
-  return isatty(2);
-#endif
+  return isatty(fd);
+#else
   // If we don't have isatty, just return false.
   return false;
+#endif
 }
 
 static unsigned getColumns(int FileID) {
@@ -278,7 +277,7 @@ bool Process::ColorNeedsFlush() {
     COLOR(FGBG, "7", BOLD)\
   }
 
-static const char* colorcodes[2][2][8] = {
+static const char colorcodes[2][2][8][10] = {
  { ALLCOLORS("3",""), ALLCOLORS("3","1;") },
  { ALLCOLORS("4",""), ALLCOLORS("4","1;") }
 };

@@ -17,6 +17,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include <limits.h>
 #include <cstring>
 
 using namespace llvm;
@@ -421,7 +422,7 @@ ulpsFromBoundary(const integerPart *parts, unsigned int bits, bool isNearest)
   unsigned int count, partBits;
   integerPart part, boundary;
 
-  assert (bits != 0);
+  assert(bits != 0);
 
   bits--;
   count = bits / integerPartWidth;
@@ -537,7 +538,7 @@ partAsHex (char *dst, integerPart part, unsigned int count,
 {
   unsigned int result = count;
 
-  assert (count != 0 && count <= integerPartWidth / 4);
+  assert(count != 0 && count <= integerPartWidth / 4);
 
   part >>= (integerPartWidth - 4 * count);
   while (count--) {
@@ -625,17 +626,58 @@ APFloat::copySignificand(const APFloat &rhs)
 /* Make this number a NaN, with an arbitrary but deterministic value
    for the significand.  If double or longer, this is a signalling NaN,
    which may not be ideal.  If float, this is QNaN(0).  */
-void
-APFloat::makeNaN(unsigned type)
+void APFloat::makeNaN(bool SNaN, bool Negative, const APInt *fill)
 {
   category = fcNaN;
-  // FIXME: Add double and long double support for QNaN(0).
-  if (semantics->precision == 24 && semantics->maxExponent == 127) {
-    type |=  0x7fc00000U;
-    type &= ~0x80000000U;
-  } else
-    type = ~0U;
-  APInt::tcSet(significandParts(), type, partCount());
+  sign = Negative;
+
+  integerPart *significand = significandParts();
+  unsigned numParts = partCount();
+
+  // Set the significand bits to the fill.
+  if (!fill || fill->getNumWords() < numParts)
+    APInt::tcSet(significand, 0, numParts);
+  if (fill) {
+    APInt::tcAssign(significand, fill->getRawData(),
+                    std::min(fill->getNumWords(), numParts));
+
+    // Zero out the excess bits of the significand.
+    unsigned bitsToPreserve = semantics->precision - 1;
+    unsigned part = bitsToPreserve / 64;
+    bitsToPreserve %= 64;
+    significand[part] &= ((1ULL << bitsToPreserve) - 1);
+    for (part++; part != numParts; ++part)
+      significand[part] = 0;
+  }
+
+  unsigned QNaNBit = semantics->precision - 2;
+
+  if (SNaN) {
+    // We always have to clear the QNaN bit to make it an SNaN.
+    APInt::tcClearBit(significand, QNaNBit);
+
+    // If there are no bits set in the payload, we have to set
+    // *something* to make it a NaN instead of an infinity;
+    // conventionally, this is the next bit down from the QNaN bit.
+    if (APInt::tcIsZero(significand, numParts))
+      APInt::tcSetBit(significand, QNaNBit - 1);
+  } else {
+    // We always have to set the QNaN bit to make it a QNaN.
+    APInt::tcSetBit(significand, QNaNBit);
+  }
+
+  // For x87 extended precision, we want to make a NaN, not a
+  // pseudo-NaN.  Maybe we should expose the ability to make
+  // pseudo-NaNs?
+  if (semantics == &APFloat::x87DoubleExtended)
+    APInt::tcSetBit(significand, QNaNBit + 1);
+}
+
+APFloat APFloat::makeNaN(const fltSemantics &Sem, bool SNaN, bool Negative,
+                         const APInt *fill) {
+  APFloat value(Sem, uninitialized);
+  value.makeNaN(SNaN, Negative, fill);
+  return value;
 }
 
 APFloat &
@@ -693,8 +735,21 @@ APFloat::APFloat(const fltSemantics &ourSemantics, integerPart value)
   normalize(rmNearestTiesToEven, lfExactlyZero);
 }
 
+APFloat::APFloat(const fltSemantics &ourSemantics) {
+  assertArithmeticOK(ourSemantics);
+  initialize(&ourSemantics);
+  category = fcZero;
+  sign = false;
+}
+
+APFloat::APFloat(const fltSemantics &ourSemantics, uninitializedTag tag) {
+  assertArithmeticOK(ourSemantics);
+  // Allocates storage if necessary but does not initialize it.
+  initialize(&ourSemantics);
+}
+
 APFloat::APFloat(const fltSemantics &ourSemantics,
-                 fltCategory ourCategory, bool negative, unsigned type)
+                 fltCategory ourCategory, bool negative)
 {
   assertArithmeticOK(ourSemantics);
   initialize(&ourSemantics);
@@ -703,7 +758,7 @@ APFloat::APFloat(const fltSemantics &ourSemantics,
   if (category == fcNormal)
     category = fcZero;
   else if (ourCategory == fcNaN)
-    makeNaN(type);
+    makeNaN();
 }
 
 APFloat::APFloat(const fltSemantics &ourSemantics, const StringRef& text)
@@ -752,7 +807,7 @@ APFloat::significandParts()
 {
   assert(category == fcNormal || category == fcNaN);
 
-  if(partCount() > 1)
+  if (partCount() > 1)
     return significand.parts;
   else
     return &significand.part;
@@ -2281,8 +2336,8 @@ APFloat::roundSignificandWithExponent(const integerPart *decSigParts,
 
     /* Both multiplySignificand and divideSignificand return the
        result with the integer bit set.  */
-    assert (APInt::tcExtractBit
-            (decSig.significandParts(), calcSemantics.precision - 1) == 1);
+    assert(APInt::tcExtractBit
+           (decSig.significandParts(), calcSemantics.precision - 1) == 1);
 
     HUerr = HUerrBound(calcLostFraction != lfExactlyZero, sigStatus != opOK,
                        powHUerr);
@@ -2337,11 +2392,24 @@ APFloat::convertFromDecimalString(const StringRef &str, roundingMode rounding_mo
   if (decDigitValue(*D.firstSigDigit) >= 10U) {
     category = fcZero;
     fs = opOK;
-  } else if ((D.normalizedExponent + 1) * 28738
-             <= 8651 * (semantics->minExponent - (int) semantics->precision)) {
+
+  /* Check whether the normalized exponent is high enough to overflow
+     max during the log-rebasing in the max-exponent check below. */
+  } else if (D.normalizedExponent - 1 > INT_MAX / 42039) {
+    fs = handleOverflow(rounding_mode);
+
+  /* If it wasn't, then it also wasn't high enough to overflow max
+     during the log-rebasing in the min-exponent check.  Check that it
+     won't overflow min in either check, then perform the min-exponent
+     check. */
+  } else if (D.normalizedExponent - 1 < INT_MIN / 42039 ||
+             (D.normalizedExponent + 1) * 28738 <=
+               8651 * (semantics->minExponent - (int) semantics->precision)) {
     /* Underflow to zero and round.  */
     zeroSignificand();
     fs = normalize(rounding_mode, lfLessThanHalf);
+
+  /* We can finally safely perform the max-exponent check. */
   } else if ((D.normalizedExponent - 1) * 42039
              >= 12655 * semantics->maxExponent) {
     /* Overflow and round.  */
@@ -2585,7 +2653,7 @@ APFloat::convertNormalToHexString(char *dst, unsigned int hexDigits,
       q--;
       *q = hexDigitChars[hexDigitValue (*q) + 1];
     } while (*q == '0');
-    assert (q >= p);
+    assert(q >= p);
   } else {
     /* Add trailing zeroes.  */
     memset (dst, '0', outputDigits);
@@ -2637,7 +2705,7 @@ APInt
 APFloat::convertF80LongDoubleAPFloatToAPInt() const
 {
   assert(semantics == (const llvm::fltSemantics*)&x87DoubleExtended);
-  assert (partCount()==2);
+  assert(partCount()==2);
 
   uint64_t myexponent, mysignificand;
 
@@ -2669,7 +2737,7 @@ APInt
 APFloat::convertPPCDoubleDoubleAPFloatToAPInt() const
 {
   assert(semantics == (const llvm::fltSemantics*)&PPCDoubleDouble);
-  assert (partCount()==2);
+  assert(partCount()==2);
 
   uint64_t myexponent, mysignificand, myexponent2, mysignificand2;
 
@@ -2714,7 +2782,7 @@ APInt
 APFloat::convertQuadrupleAPFloatToAPInt() const
 {
   assert(semantics == (const llvm::fltSemantics*)&IEEEquad);
-  assert (partCount()==2);
+  assert(partCount()==2);
 
   uint64_t myexponent, mysignificand, mysignificand2;
 
@@ -2750,7 +2818,7 @@ APInt
 APFloat::convertDoubleAPFloatToAPInt() const
 {
   assert(semantics == (const llvm::fltSemantics*)&IEEEdouble);
-  assert (partCount()==1);
+  assert(partCount()==1);
 
   uint64_t myexponent, mysignificand;
 
@@ -2780,7 +2848,7 @@ APInt
 APFloat::convertFloatAPFloatToAPInt() const
 {
   assert(semantics == (const llvm::fltSemantics*)&IEEEsingle);
-  assert (partCount()==1);
+  assert(partCount()==1);
 
   uint32_t myexponent, mysignificand;
 
@@ -2809,7 +2877,7 @@ APInt
 APFloat::convertHalfAPFloatToAPInt() const
 {
   assert(semantics == (const llvm::fltSemantics*)&IEEEhalf);
-  assert (partCount()==1);
+  assert(partCount()==1);
 
   uint32_t myexponent, mysignificand;
 
@@ -2864,7 +2932,8 @@ APFloat::bitcastToAPInt() const
 float
 APFloat::convertToFloat() const
 {
-  assert(semantics == (const llvm::fltSemantics*)&IEEEsingle && "Float semantics are not IEEEsingle");
+  assert(semantics == (const llvm::fltSemantics*)&IEEEsingle &&
+         "Float semantics are not IEEEsingle");
   APInt api = bitcastToAPInt();
   return api.bitsToFloat();
 }
@@ -2872,7 +2941,8 @@ APFloat::convertToFloat() const
 double
 APFloat::convertToDouble() const
 {
-  assert(semantics == (const llvm::fltSemantics*)&IEEEdouble && "Float semantics are not IEEEdouble");
+  assert(semantics == (const llvm::fltSemantics*)&IEEEdouble &&
+         "Float semantics are not IEEEdouble");
   APInt api = bitcastToAPInt();
   return api.bitsToDouble();
 }
@@ -3079,7 +3149,7 @@ APFloat::initFromHalfAPInt(const APInt & api)
 {
   assert(api.getBitWidth()==16);
   uint32_t i = (uint32_t)*api.getRawData();
-  uint32_t myexponent = (i >> 15) & 0x1f;
+  uint32_t myexponent = (i >> 10) & 0x1f;
   uint32_t mysignificand = i & 0x3ff;
 
   initialize(&APFloat::IEEEhalf);
@@ -3129,6 +3199,60 @@ APFloat::initFromAPInt(const APInt& api, bool isIEEE)
     llvm_unreachable(0);
 }
 
+APFloat APFloat::getLargest(const fltSemantics &Sem, bool Negative) {
+  APFloat Val(Sem, fcNormal, Negative);
+
+  // We want (in interchange format):
+  //   sign = {Negative}
+  //   exponent = 1..10
+  //   significand = 1..1
+
+  Val.exponent = Sem.maxExponent; // unbiased
+
+  // 1-initialize all bits....
+  Val.zeroSignificand();
+  integerPart *significand = Val.significandParts();
+  unsigned N = partCountForBits(Sem.precision);
+  for (unsigned i = 0; i != N; ++i)
+    significand[i] = ~((integerPart) 0);
+
+  // ...and then clear the top bits for internal consistency.
+  significand[N-1]
+    &= (((integerPart) 1) << ((Sem.precision % integerPartWidth) - 1)) - 1;
+
+  return Val;
+}
+
+APFloat APFloat::getSmallest(const fltSemantics &Sem, bool Negative) {
+  APFloat Val(Sem, fcNormal, Negative);
+
+  // We want (in interchange format):
+  //   sign = {Negative}
+  //   exponent = 0..0
+  //   significand = 0..01
+
+  Val.exponent = Sem.minExponent; // unbiased
+  Val.zeroSignificand();
+  Val.significandParts()[0] = 1;
+  return Val;
+}
+
+APFloat APFloat::getSmallestNormalized(const fltSemantics &Sem, bool Negative) {
+  APFloat Val(Sem, fcNormal, Negative);
+
+  // We want (in interchange format):
+  //   sign = {Negative}
+  //   exponent = 0..0
+  //   significand = 10..0
+
+  Val.exponent = Sem.minExponent;
+  Val.zeroSignificand();
+  Val.significandParts()[partCountForBits(Sem.precision)-1]
+    |= (((integerPart) 1) << ((Sem.precision % integerPartWidth) - 1));
+
+  return Val;
+}
+
 APFloat::APFloat(const APInt& api, bool isIEEE)
 {
   initFromAPInt(api, isIEEE);
@@ -3144,4 +3268,298 @@ APFloat::APFloat(double d)
 {
   APInt api = APInt(64, 0);
   initFromAPInt(api.doubleToBits(d));
+}
+
+namespace {
+  static void append(SmallVectorImpl<char> &Buffer,
+                     unsigned N, const char *Str) {
+    unsigned Start = Buffer.size();
+    Buffer.set_size(Start + N);
+    memcpy(&Buffer[Start], Str, N);
+  }
+
+  template <unsigned N>
+  void append(SmallVectorImpl<char> &Buffer, const char (&Str)[N]) {
+    append(Buffer, N, Str);
+  }
+
+  /// Removes data from the given significand until it is no more
+  /// precise than is required for the desired precision.
+  void AdjustToPrecision(APInt &significand,
+                         int &exp, unsigned FormatPrecision) {
+    unsigned bits = significand.getActiveBits();
+
+    // 196/59 is a very slight overestimate of lg_2(10).
+    unsigned bitsRequired = (FormatPrecision * 196 + 58) / 59;
+
+    if (bits <= bitsRequired) return;
+
+    unsigned tensRemovable = (bits - bitsRequired) * 59 / 196;
+    if (!tensRemovable) return;
+
+    exp += tensRemovable;
+
+    APInt divisor(significand.getBitWidth(), 1);
+    APInt powten(significand.getBitWidth(), 10);
+    while (true) {
+      if (tensRemovable & 1)
+        divisor *= powten;
+      tensRemovable >>= 1;
+      if (!tensRemovable) break;
+      powten *= powten;
+    }
+
+    significand = significand.udiv(divisor);
+
+    // Truncate the significand down to its active bit count, but
+    // don't try to drop below 32.
+    unsigned newPrecision = std::max(32U, significand.getActiveBits());
+    significand.trunc(newPrecision);
+  }
+
+
+  void AdjustToPrecision(SmallVectorImpl<char> &buffer,
+                         int &exp, unsigned FormatPrecision) {
+    unsigned N = buffer.size();
+    if (N <= FormatPrecision) return;
+
+    // The most significant figures are the last ones in the buffer.
+    unsigned FirstSignificant = N - FormatPrecision;
+
+    // Round.
+    // FIXME: this probably shouldn't use 'round half up'.
+
+    // Rounding down is just a truncation, except we also want to drop
+    // trailing zeros from the new result.
+    if (buffer[FirstSignificant - 1] < '5') {
+      while (buffer[FirstSignificant] == '0')
+        FirstSignificant++;
+
+      exp += FirstSignificant;
+      buffer.erase(&buffer[0], &buffer[FirstSignificant]);
+      return;
+    }
+
+    // Rounding up requires a decimal add-with-carry.  If we continue
+    // the carry, the newly-introduced zeros will just be truncated.
+    for (unsigned I = FirstSignificant; I != N; ++I) {
+      if (buffer[I] == '9') {
+        FirstSignificant++;
+      } else {
+        buffer[I]++;
+        break;
+      }
+    }
+
+    // If we carried through, we have exactly one digit of precision.
+    if (FirstSignificant == N) {
+      exp += FirstSignificant;
+      buffer.clear();
+      buffer.push_back('1');
+      return;
+    }
+
+    exp += FirstSignificant;
+    buffer.erase(&buffer[0], &buffer[FirstSignificant]);
+  }
+}
+
+void APFloat::toString(SmallVectorImpl<char> &Str,
+                       unsigned FormatPrecision,
+                       unsigned FormatMaxPadding) const {
+  switch (category) {
+  case fcInfinity:
+    if (isNegative())
+      return append(Str, "-Inf");
+    else
+      return append(Str, "+Inf");
+
+  case fcNaN: return append(Str, "NaN");
+
+  case fcZero:
+    if (isNegative())
+      Str.push_back('-');
+
+    if (!FormatMaxPadding)
+      append(Str, "0.0E+0");
+    else
+      Str.push_back('0');
+    return;
+
+  case fcNormal:
+    break;
+  }
+
+  if (isNegative())
+    Str.push_back('-');
+
+  // Decompose the number into an APInt and an exponent.
+  int exp = exponent - ((int) semantics->precision - 1);
+  APInt significand(semantics->precision,
+                    partCountForBits(semantics->precision),
+                    significandParts());
+
+  // Set FormatPrecision if zero.  We want to do this before we
+  // truncate trailing zeros, as those are part of the precision.
+  if (!FormatPrecision) {
+    // It's an interesting question whether to use the nominal
+    // precision or the active precision here for denormals.
+
+    // FormatPrecision = ceil(significandBits / lg_2(10))
+    FormatPrecision = (semantics->precision * 59 + 195) / 196;
+  }
+
+  // Ignore trailing binary zeros.
+  int trailingZeros = significand.countTrailingZeros();
+  exp += trailingZeros;
+  significand = significand.lshr(trailingZeros);
+
+  // Change the exponent from 2^e to 10^e.
+  if (exp == 0) {
+    // Nothing to do.
+  } else if (exp > 0) {
+    // Just shift left.
+    significand.zext(semantics->precision + exp);
+    significand <<= exp;
+    exp = 0;
+  } else { /* exp < 0 */
+    int texp = -exp;
+
+    // We transform this using the identity:
+    //   (N)(2^-e) == (N)(5^e)(10^-e)
+    // This means we have to multiply N (the significand) by 5^e.
+    // To avoid overflow, we have to operate on numbers large
+    // enough to store N * 5^e:
+    //   log2(N * 5^e) == log2(N) + e * log2(5)
+    //                 <= semantics->precision + e * 137 / 59
+    //   (log_2(5) ~ 2.321928 < 2.322034 ~ 137/59)
+    
+    unsigned precision = semantics->precision + 137 * texp / 59;
+
+    // Multiply significand by 5^e.
+    //   N * 5^0101 == N * 5^(1*1) * 5^(0*2) * 5^(1*4) * 5^(0*8)
+    significand.zext(precision);
+    APInt five_to_the_i(precision, 5);
+    while (true) {
+      if (texp & 1) significand *= five_to_the_i;
+      
+      texp >>= 1;
+      if (!texp) break;
+      five_to_the_i *= five_to_the_i;
+    }
+  }
+
+  AdjustToPrecision(significand, exp, FormatPrecision);
+
+  llvm::SmallVector<char, 256> buffer;
+
+  // Fill the buffer.
+  unsigned precision = significand.getBitWidth();
+  APInt ten(precision, 10);
+  APInt digit(precision, 0);
+
+  bool inTrail = true;
+  while (significand != 0) {
+    // digit <- significand % 10
+    // significand <- significand / 10
+    APInt::udivrem(significand, ten, significand, digit);
+
+    unsigned d = digit.getZExtValue();
+
+    // Drop trailing zeros.
+    if (inTrail && !d) exp++;
+    else {
+      buffer.push_back((char) ('0' + d));
+      inTrail = false;
+    }
+  }
+
+  assert(!buffer.empty() && "no characters in buffer!");
+
+  // Drop down to FormatPrecision.
+  // TODO: don't do more precise calculations above than are required.
+  AdjustToPrecision(buffer, exp, FormatPrecision);
+
+  unsigned NDigits = buffer.size();
+
+  // Check whether we should use scientific notation.
+  bool FormatScientific;
+  if (!FormatMaxPadding)
+    FormatScientific = true;
+  else {
+    if (exp >= 0) {
+      // 765e3 --> 765000
+      //              ^^^
+      // But we shouldn't make the number look more precise than it is.
+      FormatScientific = ((unsigned) exp > FormatMaxPadding ||
+                          NDigits + (unsigned) exp > FormatPrecision);
+    } else {
+      // Power of the most significant digit.
+      int MSD = exp + (int) (NDigits - 1);
+      if (MSD >= 0) {
+        // 765e-2 == 7.65
+        FormatScientific = false;
+      } else {
+        // 765e-5 == 0.00765
+        //           ^ ^^
+        FormatScientific = ((unsigned) -MSD) > FormatMaxPadding;
+      }
+    }
+  }
+
+  // Scientific formatting is pretty straightforward.
+  if (FormatScientific) {
+    exp += (NDigits - 1);
+
+    Str.push_back(buffer[NDigits-1]);
+    Str.push_back('.');
+    if (NDigits == 1)
+      Str.push_back('0');
+    else
+      for (unsigned I = 1; I != NDigits; ++I)
+        Str.push_back(buffer[NDigits-1-I]);
+    Str.push_back('E');
+
+    Str.push_back(exp >= 0 ? '+' : '-');
+    if (exp < 0) exp = -exp;
+    SmallVector<char, 6> expbuf;
+    do {
+      expbuf.push_back((char) ('0' + (exp % 10)));
+      exp /= 10;
+    } while (exp);
+    for (unsigned I = 0, E = expbuf.size(); I != E; ++I)
+      Str.push_back(expbuf[E-1-I]);
+    return;
+  }
+
+  // Non-scientific, positive exponents.
+  if (exp >= 0) {
+    for (unsigned I = 0; I != NDigits; ++I)
+      Str.push_back(buffer[NDigits-1-I]);
+    for (unsigned I = 0; I != (unsigned) exp; ++I)
+      Str.push_back('0');
+    return;
+  }
+
+  // Non-scientific, negative exponents.
+
+  // The number of digits to the left of the decimal point.
+  int NWholeDigits = exp + (int) NDigits;
+
+  unsigned I = 0;
+  if (NWholeDigits > 0) {
+    for (; I != (unsigned) NWholeDigits; ++I)
+      Str.push_back(buffer[NDigits-I-1]);
+    Str.push_back('.');
+  } else {
+    unsigned NZeros = 1 + (unsigned) -NWholeDigits;
+
+    Str.push_back('0');
+    Str.push_back('.');
+    for (unsigned Z = 1; Z != NZeros; ++Z)
+      Str.push_back('0');
+  }
+
+  for (; I != NDigits; ++I)
+    Str.push_back(buffer[NDigits-I-1]);
 }

@@ -134,9 +134,9 @@ namespace llvm {
     /// Null or Empty kinds.
     const void *RHS;
     /// LHSKind - The NodeKind of the left hand side, \see getLHSKind().
-    NodeKind LHSKind : 8;
+    unsigned char LHSKind;
     /// RHSKind - The NodeKind of the left hand side, \see getLHSKind().
-    NodeKind RHSKind : 8;
+    unsigned char RHSKind;
 
   private:
     /// Construct a nullary twine; the kind must be NullKind or EmptyKind.
@@ -210,10 +210,10 @@ namespace llvm {
     }
 
     /// getLHSKind - Get the NodeKind of the left-hand side.
-    NodeKind getLHSKind() const { return LHSKind; }
+    NodeKind getLHSKind() const { return (NodeKind) LHSKind; }
 
     /// getRHSKind - Get the NodeKind of the left-hand side.
-    NodeKind getRHSKind() const { return RHSKind; }
+    NodeKind getRHSKind() const { return (NodeKind) RHSKind; }
 
     /// printOneChild - Print one child from a twine.
     void printOneChild(raw_ostream &OS, const void *Ptr, NodeKind Kind) const;
@@ -330,6 +330,22 @@ namespace llvm {
     bool isTriviallyEmpty() const {
       return isNullary();
     }
+    
+    /// isSingleStringRef - Return true if this twine can be dynamically
+    /// accessed as a single StringRef value with getSingleStringRef().
+    bool isSingleStringRef() const {
+      if (getRHSKind() != EmptyKind) return false;
+      
+      switch (getLHSKind()) {
+      case EmptyKind:
+      case CStringKind:
+      case StdStringKind:
+      case StringRefKind:
+        return true;
+      default:
+        return false;
+      }
+    }
 
     /// @}
     /// @name String Operations
@@ -347,6 +363,24 @@ namespace llvm {
     /// toVector - Write the concatenated string into the given SmallString or
     /// SmallVector.
     void toVector(SmallVectorImpl<char> &Out) const;
+
+    /// getSingleStringRef - This returns the twine as a single StringRef.  This
+    /// method is only valid if isSingleStringRef() is true.
+    StringRef getSingleStringRef() const {
+      assert(isSingleStringRef() &&"This cannot be had as a single stringref!");
+      switch (getLHSKind()) {
+      default: assert(0 && "Out of sync with isSingleStringRef");
+      case EmptyKind:      return StringRef();
+      case CStringKind:    return StringRef((const char*)LHS);
+      case StdStringKind:  return StringRef(*(const std::string*)LHS);
+      case StringRefKind:  return *(const StringRef*)LHS;
+      }
+    }
+
+    /// toStringRef - This returns the twine as a single StringRef if it can be
+    /// represented as such. Otherwise the twine is written into the given
+    /// SmallVector and a StringRef to the SmallVector's data is returned.
+    StringRef toStringRef(SmallVectorImpl<char> &Out) const;
 
     /// print - Write the concatenated string represented by this twine to the
     /// stream \arg OS.

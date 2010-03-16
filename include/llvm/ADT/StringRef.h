@@ -260,6 +260,34 @@ namespace llvm {
     /// the string.
     size_t count(StringRef Str) const;
 
+    /// getAsInteger - Parse the current string as an integer of the specified
+    /// radix.  If Radix is specified as zero, this does radix autosensing using
+    /// extended C rules: 0 is octal, 0x is hex, 0b is binary.
+    ///
+    /// If the string is invalid or if only a subset of the string is valid,
+    /// this returns true to signify the error.  The string is considered
+    /// erroneous if empty.
+    ///
+    bool getAsInteger(unsigned Radix, long long &Result) const;
+    bool getAsInteger(unsigned Radix, unsigned long long &Result) const;
+    bool getAsInteger(unsigned Radix, int &Result) const;
+    bool getAsInteger(unsigned Radix, unsigned &Result) const;
+
+    // TODO: Provide overloads for int/unsigned that check for overflow.
+
+    /// getAsInteger - Parse the current string as an integer of the
+    /// specified radix, or of an autosensed radix if the radix given
+    /// is 0.  The current value in Result is discarded, and the
+    /// storage is changed to be wide enough to store the parsed
+    /// integer.
+    ///
+    /// Returns true if the string does not solely consist of a valid
+    /// non-empty number in the appropriate base.
+    ///
+    /// APInt::fromString is superficially similar but assumes the
+    /// string is well-formed in the given radix.
+    bool getAsInteger(unsigned Radix, APInt &Result) const;
+
     /// @}
     /// @name Substring Operations
     /// @{

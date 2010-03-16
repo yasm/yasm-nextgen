@@ -174,10 +174,16 @@ namespace llvm {
       fcZero
     };
 
+    enum uninitializedTag {
+      uninitialized
+    };
+
     // Constructors.
+    APFloat(const fltSemantics &); // Default construct to 0.0
     APFloat(const fltSemantics &, const StringRef &);
     APFloat(const fltSemantics &, integerPart);
-    APFloat(const fltSemantics &, fltCategory, bool negative, unsigned type=0);
+    APFloat(const fltSemantics &, fltCategory, bool negative);
+    APFloat(const fltSemantics &, uninitializedTag);
     explicit APFloat(double d);
     explicit APFloat(float f);
     explicit APFloat(const APInt &, bool isIEEE = false);
@@ -191,6 +197,7 @@ namespace llvm {
     static APFloat getInf(const fltSemantics &Sem, bool Negative = false) {
       return APFloat(Sem, fcInfinity, Negative);
     }
+
     /// getNaN - Factory for QNaN values.
     ///
     /// \param Negative - True iff the NaN generated should be negative.
@@ -198,8 +205,47 @@ namespace llvm {
     /// default.  The value is truncated as necessary.
     static APFloat getNaN(const fltSemantics &Sem, bool Negative = false,
                           unsigned type = 0) {
-      return APFloat(Sem, fcNaN, Negative, type);
+      if (type) {
+        APInt fill(64, type);
+        return getQNaN(Sem, Negative, &fill);
+      } else {
+        return getQNaN(Sem, Negative, 0);
+      }
     }
+
+    /// getQNan - Factory for QNaN values.
+    static APFloat getQNaN(const fltSemantics &Sem,
+                           bool Negative = false,
+                           const APInt *payload = 0) {
+      return makeNaN(Sem, false, Negative, payload);
+    }
+
+    /// getSNan - Factory for SNaN values.
+    static APFloat getSNaN(const fltSemantics &Sem,
+                           bool Negative = false,
+                           const APInt *payload = 0) {
+      return makeNaN(Sem, true, Negative, payload);
+    }
+
+    /// getLargest - Returns the largest finite number in the given
+    /// semantics.
+    ///
+    /// \param Negative - True iff the number should be negative
+    static APFloat getLargest(const fltSemantics &Sem, bool Negative = false);
+
+    /// getSmallest - Returns the smallest (by magnitude) finite number
+    /// in the given semantics.  Might be denormalized, which implies a
+    /// relative loss of precision.
+    ///
+    /// \param Negative - True iff the number should be negative
+    static APFloat getSmallest(const fltSemantics &Sem, bool Negative = false);
+
+    /// getSmallestNormalized - Returns the smallest (by magnitude)
+    /// normalized finite number in the given semantics.
+    ///
+    /// \param Negative - True iff the number should be negative
+    static APFloat getSmallestNormalized(const fltSemantics &Sem,
+                                         bool Negative = false);
 
     /// Profile - Used to insert APFloat objects, or objects that contain
     ///  APFloat objects, into FoldingSets.
@@ -277,6 +323,30 @@ namespace llvm {
     /* Return an arbitrary integer value usable for hashing. */
     uint32_t getHashValue() const;
 
+    /// Converts this value into a decimal string.
+    ///
+    /// \param FormatPrecision The maximum number of digits of
+    ///   precision to output.  If there are fewer digits available,
+    ///   zero padding will not be used unless the value is
+    ///   integral and small enough to be expressed in
+    ///   FormatPrecision digits.  0 means to use the natural
+    ///   precision of the number.
+    /// \param FormatMaxPadding The maximum number of zeros to
+    ///   consider inserting before falling back to scientific
+    ///   notation.  0 means to always use scientific notation.
+    ///
+    /// Number       Precision    MaxPadding      Result
+    /// ------       ---------    ----------      ------
+    /// 1.01E+4              5             2       10100
+    /// 1.01E+4              4             2       1.01E+4
+    /// 1.01E+4              5             1       1.01E+4
+    /// 1.01E-2              5             2       0.0101
+    /// 1.01E-2              4             2       0.0101
+    /// 1.01E-2              4             1       1.01E-2
+    void toString(SmallVectorImpl<char> &Str,
+                  unsigned FormatPrecision = 0,
+                  unsigned FormatMaxPadding = 3) const;
+
   private:
 
     /* Trivial queries.  */
@@ -305,7 +375,9 @@ namespace llvm {
     opStatus modSpecials(const APFloat &);
 
     /* Miscellany.  */
-    void makeNaN(unsigned = 0);
+    static APFloat makeNaN(const fltSemantics &Sem, bool SNaN, bool Negative,
+                           const APInt *fill);
+    void makeNaN(bool SNaN = false, bool Neg = false, const APInt *fill = 0);
     opStatus normalize(roundingMode, lostFraction);
     opStatus addOrSubtract(const APFloat &, roundingMode, bool subtract);
     cmpResult compareAbsoluteValue(const APFloat &) const;

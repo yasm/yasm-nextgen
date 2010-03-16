@@ -95,6 +95,11 @@ namespace sys {
       /// the user rather than being put on a pipe or stored in a file.
       static bool StandardErrIsDisplayed();
 
+      /// This function determines if the given file descriptor is connected to
+      /// a "tty" or "console" window. That is, the output would be displayed to
+      /// the user rather than being put on a pipe or stored in a file.
+      static bool FileDescriptorIsDisplayed(int fd);
+
       /// This function determines the number of columns in the window
       /// if standard output is connected to a "tty" or "console"
       /// window. If standard output is not connected to a tty or

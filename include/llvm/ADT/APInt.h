@@ -568,6 +568,21 @@ public:
   /// @brief Bitwise OR assignment operator.
   APInt& operator|=(const APInt& RHS);
 
+  /// Performs a bitwise OR operation on this APInt and RHS. RHS is
+  /// logically zero-extended or truncated to match the bit-width of
+  /// the LHS.
+  /// 
+  /// @brief Bitwise OR assignment operator.
+  APInt& operator|=(uint64_t RHS) {
+    if (isSingleWord()) {
+      VAL |= RHS;
+      clearUnusedBits();
+    } else {
+      pVal[0] |= RHS;
+    }
+    return *this;
+  }
+
   /// Performs a bitwise XOR operation on this APInt and RHS. The result is
   /// assigned to *this.
   /// @returns *this after XORing with RHS.
@@ -1124,10 +1139,19 @@ public:
   /// @{
   void print(raw_ostream &OS, bool isSigned) const;
 
-  /// fromString - Converts a string in the radix given and stores it
-  /// in the APInt.  The radix can be 2, 8, 10 or 16.
+  /// Converts a string into a number.  The string must be non-empty
+  /// and well-formed as a number of the given base. The bit-width
+  /// must be sufficient to hold the result.
+  ///
+  /// This is used by the constructors that take string arguments.
+  ///
+  /// StringRef::getAsInteger is superficially similar but (1) does
+  /// not assume that the string is well-formed and (2) grows the
+  /// result to hold the input.
+  ///
+  /// @param radix 2, 8, 10, or 16
   /// @brief Convert a char array into an APInt
-  void fromString(const StringRef& str, uint8_t radix);
+  void fromString(const StringRef &str, uint8_t radix);
 
   /// toString - Converts an APInt to a string and append it to Str.  Str is
   /// commonly a SmallString.
@@ -1240,6 +1264,11 @@ public:
     return BitWidth - 1 - countLeadingZeros();
   }
 
+  /// @returns the ceil log base 2 of this APInt.
+  unsigned ceilLogBase2() const {
+    return BitWidth - (*this - 1).countLeadingZeros();
+  }
+
   /// @returns the log base 2 of this APInt if its an exact power of two, -1
   /// otherwise
   int32_t exactLogBase2() const {
@@ -1308,6 +1337,9 @@ public:
 
   /// Set the given bit of a bignum.  Zero-based.
   static void tcSetBit(integerPart *, unsigned int bit);
+
+  /// Clear the given bit of a bignum.  Zero-based.
+  static void tcClearBit(integerPart *, unsigned int bit);
 
   /// Returns the bit number of the least or most significant set bit
   /// of a number.  If the input number has no bits set -1U is

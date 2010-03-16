@@ -52,7 +52,16 @@ static const int *const IntSigsEnd =
 // KillSigs - Signals that are synchronous with the program that will cause it
 // to die.
 static const int KillSigs[] = {
-  SIGILL, SIGTRAP, SIGABRT, SIGFPE, SIGBUS, SIGSEGV, SIGSYS, SIGXCPU, SIGXFSZ
+  SIGILL, SIGTRAP, SIGABRT, SIGFPE, SIGBUS, SIGSEGV
+#ifdef SIGSYS
+  , SIGSYS
+#endif
+#ifdef SIGXCPU
+  , SIGXCPU
+#endif
+#ifdef SIGXFSZ
+  , SIGXFSZ
+#endif
 #ifdef SIGEMT
   , SIGEMT
 #endif
@@ -209,7 +218,7 @@ static void PrintStackTrace(void *) {
     Dl_info dlinfo;
     dladdr(StackTrace[i], &dlinfo);
 
-    fprintf(stderr, "%-3d", i);
+    fprintf(stderr, "%-2d", i);
 
     const char* name = strrchr(dlinfo.dli_fname, '/');
     if (name == NULL) fprintf(stderr, " %-*s", width, dlinfo.dli_fname);

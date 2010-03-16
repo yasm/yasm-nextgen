@@ -66,8 +66,8 @@ namespace sys {
   /// @name Types
   /// @{
   public:
-    typedef int64_t SecondsType;        ///< Type used for representing seconds.
-    typedef int32_t NanoSecondsType;    ///< Type used for representing nanoseconds.
+    typedef int64_t SecondsType;    ///< Type used for representing seconds.
+    typedef int32_t NanoSecondsType;///< Type used for representing nanoseconds.
 
     enum TimeConversions {
       NANOSECONDS_PER_SECOND = 1000000000,  ///< One Billion
@@ -252,7 +252,7 @@ namespace sys {
       return seconds_ - PosixZeroTime.seconds_;
     }
 
-    /// Converts the TiemValue into the correspodning number of "ticks" for
+    /// Converts the TimeValue into the corresponding number of "ticks" for
     /// Win32 platforms, correcting for the difference in Win32 zero time.
     /// @brief Convert to windows time (seconds since 12:00:00a Jan 1, 1601)
     uint64_t toWin32Time() const {

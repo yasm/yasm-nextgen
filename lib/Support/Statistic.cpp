@@ -23,6 +23,7 @@
 
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Mutex.h"
@@ -57,14 +58,14 @@ public:
 }
 
 static ManagedStatic<StatisticInfo> StatInfo;
-static ManagedStatic<sys::Mutex> StatLock;
+static ManagedStatic<sys::SmartMutex<true> > StatLock;
 
 /// RegisterStatistic - The first time a statistic is bumped, this method is
 /// called.
 void Statistic::RegisterStatistic() {
   // If stats are enabled, inform StatInfo that this statistic should be
   // printed.
-  sys::ScopedLock Writer(*StatLock);
+  sys::SmartScopedLock<true> Writer(*StatLock);
   if (!Initialized) {
     if (Enabled)
       StatInfo->addStatistic(this);
@@ -127,6 +128,6 @@ StatisticInfo::~StatisticInfo() {
   OutStream << '\n';  // Flush the output stream...
   OutStream.flush();
   
-  if (&OutStream != &outs() && &OutStream != &errs())
+  if (&OutStream != &outs() && &OutStream != &errs() && &OutStream != &dbgs())
     delete &OutStream;   // Close the file.
 }

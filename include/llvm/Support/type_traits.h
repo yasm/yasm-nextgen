@@ -17,13 +17,15 @@
 #ifndef LLVM_SUPPORT_TYPE_TRAITS_H
 #define LLVM_SUPPORT_TYPE_TRAITS_H
 
+#include <utility>
+
 // This is actually the conforming implementation which works with abstract
 // classes.  However, enough compilers have trouble with it that most will use
 // the one in boost/type_traits/object_traits.hpp. This implementation actually
 // works with VC7.0, but other interactions seem to fail when we use it.
 
 namespace llvm {
-
+  
 namespace dont_use
 {
     // These two functions should never be used. They are helpers to
@@ -48,7 +50,35 @@ struct is_class
  public:
     enum { value = sizeof(char) == sizeof(dont_use::is_class_helper<T>(0)) };
 };
+  
+  
+/// isPodLike - This is a type trait that is used to determine whether a given
+/// type can be copied around with memcpy instead of running ctors etc.
+template <typename T>
+struct isPodLike {
+  // If we don't know anything else, we can (at least) assume that all non-class
+  // types are PODs.
+  static const bool value = !is_class<T>::value;
+};
 
+// std::pair's are pod-like if their elements are.
+template<typename T, typename U>
+struct isPodLike<std::pair<T, U> > {
+  static const bool value = isPodLike<T>::value & isPodLike<U>::value;
+};
+  
+
+/// \brief Metafunction that determines whether the two given types are 
+/// equivalent.
+template<typename T, typename U>
+struct is_same {
+  static const bool value = false;
+};
+
+template<typename T>
+struct is_same<T, T> {
+  static const bool value = true;
+};
   
 // enable_if_c - Enable/disable a template based on a metafunction
 template<bool Cond, typename T = void>
@@ -75,6 +105,21 @@ struct is_base_of {
     = is_class<Base>::value && is_class<Derived>::value &&
       sizeof(char) == sizeof(dont_use::base_of_helper<Base>((Derived*)0));
 };
+
+// remove_pointer - Metafunction to turn Foo* into Foo.  Defined in
+// C++0x [meta.trans.ptr].
+template <typename T> struct remove_pointer { typedef T type; };
+template <typename T> struct remove_pointer<T*> { typedef T type; };
+template <typename T> struct remove_pointer<T*const> { typedef T type; };
+template <typename T> struct remove_pointer<T*volatile> { typedef T type; };
+template <typename T> struct remove_pointer<T*const volatile> {
+    typedef T type; };
+
+template <bool, typename T, typename F>
+struct conditional { typedef T type; };
+
+template <typename T, typename F>
+struct conditional<false, T, F> { typedef F type; };
 
 }
 

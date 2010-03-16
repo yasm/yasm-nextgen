@@ -10,6 +10,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     Support/Allocator.cpp
     Support/APFloat.cpp
     Support/APInt.cpp
+    Support/circular_raw_ostream.cpp
     Support/CommandLine.cpp
     Support/Debug.cpp
     Support/ErrorHandling.cpp
@@ -19,6 +20,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     Support/MemoryBuffer.cpp
     Support/PrettyStackTrace.cpp
     Support/SmallPtrSet.cpp
+    Support/SmallVector.cpp
     Support/Statistic.cpp
     Support/StringExtras.cpp
     Support/StringMap.cpp
@@ -27,6 +29,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     Support/Twine.cpp
     System/Atomic.cpp
     System/Errno.cpp
+    System/Memory.cpp
     System/Mutex.cpp
     System/Path.cpp
     System/Process.cpp
@@ -35,6 +38,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     System/Threading.cpp
     System/ThreadLocal.cpp
     System/TimeValue.cpp
+    System/Valgrind.cpp
     YAML/emitter.cpp
     YAML/emitterstate.cpp
     YAML/emitterutils.cpp

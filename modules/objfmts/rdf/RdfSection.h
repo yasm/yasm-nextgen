@@ -26,6 +26,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include <string>
+
 #include "yasmx/AssocData.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/SymbolRef.h"

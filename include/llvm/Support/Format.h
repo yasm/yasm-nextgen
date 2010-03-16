@@ -23,8 +23,14 @@
 #ifndef LLVM_SUPPORT_FORMAT_H
 #define LLVM_SUPPORT_FORMAT_H
 
+#include <cassert>
 #include <cstdio>
-#ifdef WIN32
+#ifdef _MSC_VER
+// FIXME: This define is wrong:
+//  - _snprintf does not guarantee that trailing null is always added - if
+//    there is no space for null, it does not report any error.
+//  - According to C++ standard, snprintf should be visible in the 'std' 
+//    namespace - this define makes this impossible.
 #define snprintf _snprintf
 #endif
 #include "yasmx/Config/export.h"

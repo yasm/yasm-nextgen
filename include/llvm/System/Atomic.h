@@ -22,7 +22,11 @@ namespace llvm {
     YASM_LIB_EXPORT
     void MemoryFence();
 
+#ifdef _MSC_VER
+    typedef long cas_flag;
+#else
     typedef uint32_t cas_flag;
+#endif
     YASM_LIB_EXPORT
     cas_flag CompareAndSwap(volatile cas_flag* ptr,
                             cas_flag new_value,
