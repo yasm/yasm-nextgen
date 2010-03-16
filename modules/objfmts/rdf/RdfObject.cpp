@@ -90,13 +90,13 @@ public:
     /// Destructor.
     ~RdfObject() {}
 
-    void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
+    void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
     void Read(const llvm::MemoryBuffer& in);
     void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* AddDefaultSection();
-    Section* AppendSection(const llvm::StringRef& name,
+    Section* AppendSection(llvm::StringRef name,
                            clang::SourceLocation source);
 
     static const char* getName()
@@ -116,7 +116,7 @@ private:
     void DirLibrary(DirectiveInfo& info);
     void DirModule(DirectiveInfo& info);
 
-    void AddLibOrModule(const llvm::StringRef& name, bool lib);
+    void AddLibOrModule(llvm::StringRef name, bool lib);
 
     std::vector<std::string> m_module_names;
     std::vector<std::string> m_library_names;
@@ -966,8 +966,7 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
 }
 
 Section*
-RdfObject::AppendSection(const llvm::StringRef& name,
-                         clang::SourceLocation source)
+RdfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
 {
     RdfSection::Type type = RdfSection::RDF_UNKNOWN;
     if (name == ".text")
@@ -1105,7 +1104,7 @@ RdfObject::DirSection(DirectiveInfo& info)
 }
 
 void
-RdfObject::AddLibOrModule(const llvm::StringRef& name, bool lib)
+RdfObject::AddLibOrModule(llvm::StringRef name, bool lib)
 {
     llvm::StringRef name2 = name;
     if (name2.size() > MODLIB_NAME_MAX)
@@ -1135,7 +1134,7 @@ RdfObject::DirModule(DirectiveInfo& info)
 }
 
 void
-RdfObject::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
+RdfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
 {
     static const Directives::Init<RdfObject> nasm_dirs[] =
     {

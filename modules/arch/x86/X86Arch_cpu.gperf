@@ -391,7 +391,7 @@ amdnop,		X86Nop,	X86Arch::NOP_AMD
 %%
 
 void
-X86Arch::ParseCpu(const llvm::StringRef& cpuid)
+X86Arch::ParseCpu(llvm::StringRef cpuid)
 {
     size_t cpuid_len = cpuid.size();
 

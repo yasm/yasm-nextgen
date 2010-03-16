@@ -28,7 +28,6 @@
 
 #include "util.h"
 
-#include "llvm/ADT/StringRef.h"
 #include "yasmx/Arch.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/Bytecode.h"
@@ -77,9 +76,7 @@ AppendData(BytecodeContainer& container,
 }
 
 void
-AppendData(BytecodeContainer& container,
-           const llvm::StringRef& str,
-           bool append_zero)
+AppendData(BytecodeContainer& container, llvm::StringRef str, bool append_zero)
 {
     Bytes& fixed = container.FreshBytecode().getFixed();
     fixed.Write(reinterpret_cast<const unsigned char *>(str.data()),
@@ -90,7 +87,7 @@ AppendData(BytecodeContainer& container,
 
 void
 AppendData(BytecodeContainer& container,
-           const llvm::StringRef& str,
+           llvm::StringRef str,
            unsigned int size,
            bool append_zero)
 {

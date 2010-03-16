@@ -71,19 +71,19 @@ public:
     /// per program to register the class ID key, and a pointer to
     /// the function that creates the class.
     void AddCreateFn(unsigned int type,
-                     const llvm::StringRef& keyword,
+                     llvm::StringRef keyword,
                      BASE_CREATE_FN func);
 
     /// Get the creation function for a given type and class name.
     /// @return NULL if not found.
     BASE_CREATE_FN getCreateFn(unsigned int type,
-                               const llvm::StringRef& keyword) const;
+                               llvm::StringRef keyword) const;
 
     /// Return a list of classes that are registered.
     ModuleNames getRegistered(unsigned int type) const;
 
     /// Return true if the specific class is registered.
-    bool isRegistered(unsigned int type, const llvm::StringRef& keyword) const;
+    bool isRegistered(unsigned int type, llvm::StringRef keyword) const;
 
 private:
     /// Singleton implementation - private ctor.
@@ -107,7 +107,7 @@ void* CreateInstance()
 
 template <typename Ancestor, typename Manufactured>
 inline void
-RegisterModule(const llvm::StringRef& keyword)
+RegisterModule(llvm::StringRef keyword)
 {
     impl::ModuleFactory::Instance().AddCreateFn(
         Ancestor::module_type,
@@ -117,7 +117,7 @@ RegisterModule(const llvm::StringRef& keyword)
 
 template <typename T>
 inline std::auto_ptr<T>
-LoadModule(const llvm::StringRef& keyword)
+LoadModule(llvm::StringRef keyword)
 {
     impl::ModuleFactory::BASE_CREATE_FN create =
         impl::ModuleFactory::Instance().getCreateFn(T::module_type, keyword);
@@ -126,7 +126,7 @@ LoadModule(const llvm::StringRef& keyword)
 
 template <typename T>
 inline bool
-isModule(const llvm::StringRef& keyword)
+isModule(llvm::StringRef keyword)
 {
     return impl::ModuleFactory::Instance().isRegistered(T::module_type,
                                                         keyword);

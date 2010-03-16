@@ -79,7 +79,7 @@ public:
     NasmParser(const ParserModule& module, Errwarns& errwarns);
     ~NasmParser();
 
-    void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
+    void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
     static const char* getName() { return "NASM-compatible parser"; }
     static const char* getKeyword() { return "nasm"; }
@@ -140,7 +140,7 @@ public:
 private:
     int HandleDotLabel(YYSTYPE* lvalp, YYCTYPE* tok, size_t toklen,
                        size_t zeropos);
-    void DefineLabel(const llvm::StringRef& name, bool local);
+    void DefineLabel(llvm::StringRef name, bool local);
 
     void DoParse();
     void ParseLine();
@@ -167,7 +167,7 @@ private:
     void DirAlign(DirectiveInfo& info);
     void DirDefault(DirectiveInfo& info);
 
-    void DoDirective(const llvm::StringRef& name, DirectiveInfo& info);
+    void DoDirective(llvm::StringRef name, DirectiveInfo& info);
 
     // last "base" label for local (.) labels
     std::string m_locallabel_base;

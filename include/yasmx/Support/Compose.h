@@ -44,7 +44,7 @@ class YASM_LIB_EXPORT Composer
 {
 public:
     // initialize and prepare format string on the form "text %1 text %2 etc."
-    explicit Composer(const llvm::StringRef& fmt)
+    explicit Composer(llvm::StringRef fmt)
         : m_fmt(fmt), m_os(m_ss), m_arg(0)
     {
         m_arg_pos[0] = 0;
@@ -95,7 +95,7 @@ operator<< (std::ostream& os, const Composer& c)
 }
 
 inline std::string
-Compose(const llvm::StringRef& fmt)
+Compose(llvm::StringRef fmt)
 {
     Composer c(fmt);
     return c.getStr();
@@ -103,7 +103,7 @@ Compose(const llvm::StringRef& fmt)
 
 template <typename T1>
 inline std::string
-Compose(const llvm::StringRef& fmt, const T1& a1)
+Compose(llvm::StringRef fmt, const T1& a1)
 {
     Composer c(fmt);
     c.AutoArg(a1);
@@ -112,7 +112,7 @@ Compose(const llvm::StringRef& fmt, const T1& a1)
 
 template <typename T1, typename T2>
 inline std::string
-Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2)
+Compose(llvm::StringRef fmt, const T1& a1, const T2& a2)
 {
     Composer c(fmt);
     c.AutoArg(a1);
@@ -122,7 +122,7 @@ Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2)
 
 template <typename T1, typename T2, typename T3>
 inline std::string
-Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3)
+Compose(llvm::StringRef fmt, const T1& a1, const T2& a2, const T3& a3)
 {
     Composer c(fmt);
     c.AutoArg(a1);
@@ -133,7 +133,7 @@ Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3)
 
 template <typename T1, typename T2, typename T3, typename T4>
 inline std::string
-Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3,
+Compose(llvm::StringRef fmt, const T1& a1, const T2& a2, const T3& a3,
         const T4& a4)
 {
     Composer c(fmt);
@@ -146,7 +146,7 @@ Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3,
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5>
 inline std::string
-Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3,
+Compose(llvm::StringRef fmt, const T1& a1, const T2& a2, const T3& a3,
         const T4& a4, const T5& a5)
 {
     Composer c(fmt);
@@ -161,7 +161,7 @@ Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3,
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
           typename T6>
 inline std::string
-Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3,
+Compose(llvm::StringRef fmt, const T1& a1, const T2& a2, const T3& a3,
         const T4& a4, const T5& a5, const T6& a6)
 {
     Composer c(fmt);
@@ -177,7 +177,7 @@ Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3,
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
           typename T6, typename T7>
 inline std::string
-Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3,
+Compose(llvm::StringRef fmt, const T1& a1, const T2& a2, const T3& a3,
         const T4& a4, const T5& a5, const T6& a6, const T7& a7)
 {
     Composer c(fmt);
@@ -194,7 +194,7 @@ Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3,
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
           typename T6, typename T7, typename T8>
 inline std::string
-Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3,
+Compose(llvm::StringRef fmt, const T1& a1, const T2& a2, const T3& a3,
         const T4& a4, const T5& a5, const T6& a6, const T7& a7, const T8& a8)
 {
     Composer c(fmt);
@@ -212,7 +212,7 @@ Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3,
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
           typename T6, typename T7, typename T8, typename T9>
 inline std::string
-Compose(const llvm::StringRef& fmt, const T1& a1, const T2& a2, const T3& a3,
+Compose(llvm::StringRef fmt, const T1& a1, const T2& a2, const T3& a3,
         const T4& a4, const T5& a5, const T6& a6, const T7& a7, const T8& a8,
         const T9& a9)
 {

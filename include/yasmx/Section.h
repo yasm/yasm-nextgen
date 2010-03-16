@@ -70,7 +70,7 @@ public:
     /// @param isnew    output; set to true if section did not already exist
     /// @param source   source location of section declaration (ignored if
     ///                 section already exists)
-    Section(const llvm::StringRef& name,
+    Section(llvm::StringRef name,
             bool code,
             bool bss,
             clang::SourceLocation source);
@@ -131,7 +131,7 @@ public:
     /// Match name of a section.
     /// @param Section name.
     /// @return True if section name matches, false if not.
-    bool isName(const llvm::StringRef& name) const { return m_name == name; }
+    bool isName(llvm::StringRef name) const { return m_name == name; }
 
     /// Change alignment of a section.
     /// @param align    alignment in bytes

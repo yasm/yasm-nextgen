@@ -79,14 +79,13 @@ public:
     /// Destructor.
     ~XdfObject() {}
 
-    void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
+    void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
     void Read(const llvm::MemoryBuffer& in);
     void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* AddDefaultSection();
-    Section* AppendSection(const llvm::StringRef& name,
-                           clang::SourceLocation source);
+    Section* AppendSection(llvm::StringRef name, clang::SourceLocation source);
 
     static const char* getName() { return "Extended Dynamic Object"; }
     static const char* getKeyword() { return "xdf"; }
@@ -639,8 +638,7 @@ XdfObject::AddDefaultSection()
 }
 
 Section*
-XdfObject::AppendSection(const llvm::StringRef& name,
-                         clang::SourceLocation source)
+XdfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
 {
     bool code = (name == ".text");
     Section* section = new Section(name, code, false, source);
@@ -757,7 +755,7 @@ XdfObject::DirSection(DirectiveInfo& info)
 }
 
 void
-XdfObject::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
+XdfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
 {
     static const Directives::Init<XdfObject> nasm_dirs[] =
     {

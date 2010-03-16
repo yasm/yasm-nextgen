@@ -32,12 +32,11 @@
 #include <memory>
 #include <vector>
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 
 #include "yasmx/Module.h"
 
-
-namespace llvm { class StringRef; }
 
 namespace yasm
 {
@@ -65,7 +64,7 @@ public:
     const ParserModule& get_module() const { return m_module; }
 
     /// Add directive handlers.
-    virtual void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
+    virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
     /// Parse an input stream into an object.
     /// @param object       object to parse into

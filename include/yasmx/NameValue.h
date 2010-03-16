@@ -55,29 +55,27 @@ public:
     /// @param name         name; may be empty string if no name
     /// @param id           identifier value
     /// @param id_prefix    identifier prefix for raw identifiers
-    NameValue(const llvm::StringRef& name,
-              const llvm::StringRef& id,
-              char id_prefix);
+    NameValue(llvm::StringRef name, llvm::StringRef id, char id_prefix);
 
     /// String value constructor.
     /// @param name         name; may be empty string if no name
     /// @param str          string value
-    NameValue(const llvm::StringRef& name, const llvm::StringRef& str);
+    NameValue(llvm::StringRef name, llvm::StringRef str);
 
     /// Expression value constructor.
     /// @param name         name; may be empty string if no name
     /// @param e            expression
-    NameValue(const llvm::StringRef& name, std::auto_ptr<Expr> e);
+    NameValue(llvm::StringRef name, std::auto_ptr<Expr> e);
 
     /// Identifier value constructor with no name.
     /// @param id           identifier value
     /// @param id_prefix    identifier prefix for raw identifiers
-    NameValue(const llvm::StringRef& id, char id_prefix);
+    NameValue(llvm::StringRef id, char id_prefix);
 
     /// String value constructor with no name.
     /// @param name         name; may be empty string if no name
     /// @param str          string value
-    explicit NameValue(const llvm::StringRef& str);
+    explicit NameValue(llvm::StringRef str);
 
     /// Expression value constructor with no name.
     /// @param e            expression

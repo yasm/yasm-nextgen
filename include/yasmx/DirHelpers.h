@@ -32,6 +32,7 @@
 #include <memory>
 #include <string>
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/scoped_ptr.h"
@@ -40,7 +41,6 @@
 
 
 namespace clang { class SourceLocation; }
-namespace llvm { class StringRef; }
 
 namespace yasm
 {
@@ -62,7 +62,7 @@ public:
     /// @param needsvalue   True if name requires value, false if it must not
     ///                     have a value.
     /// @param helper       Helper function
-    void Add(const llvm::StringRef& name,
+    void Add(llvm::StringRef name,
              bool needsvalue,
              FUNCTION::function<void (NameValue&)> helper);
 

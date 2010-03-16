@@ -4,9 +4,8 @@
 #include "YAML/emittermanip.h"
 #include "YAML/ostream.h"
 #include <string>
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
-
-namespace llvm { class StringRef; }
 
 namespace YAML
 {
@@ -41,7 +40,7 @@ namespace YAML
 		Emitter& SetLocalIndent(const _Indent& indent);
 		
 		// overloads of write
-		Emitter& Write(const llvm::StringRef& str);
+		Emitter& Write(llvm::StringRef str);
 		Emitter& Write(const char *str);
 		Emitter& Write(int i);
 		Emitter& Write(unsigned int i);

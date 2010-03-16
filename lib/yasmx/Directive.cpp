@@ -52,7 +52,7 @@ public:
             : m_handler(handler), m_flags(flags)
         {}
         ~Dir() {}
-        void operator() (const llvm::StringRef& name, DirectiveInfo& info);
+        void operator() (llvm::StringRef name, DirectiveInfo& info);
 
     private:
         Directive m_handler;
@@ -73,13 +73,13 @@ Directives::~Directives()
 }
 
 void
-Directives::Add(const llvm::StringRef& name, Directive handler, Flags flags)
+Directives::Add(llvm::StringRef name, Directive handler, Flags flags)
 {
     m_impl->m_dirs[String::Lowercase(name)] = Impl::Dir(handler, flags);
 }
 
 Directive
-Directives::operator[] (const llvm::StringRef& name) const
+Directives::operator[] (llvm::StringRef name) const
 {
     Directive rv;
     if (!get(&rv, name))
@@ -89,7 +89,7 @@ Directives::operator[] (const llvm::StringRef& name) const
 }
 
 bool
-Directives::get(Directive* dir, const llvm::StringRef& name) const
+Directives::get(Directive* dir, llvm::StringRef name) const
 {
     Impl::DirMap::iterator p = m_impl->m_dirs.find(String::Lowercase(name));
     if (p == m_impl->m_dirs.end())
@@ -100,8 +100,7 @@ Directives::get(Directive* dir, const llvm::StringRef& name) const
 }
 
 void
-Directives::Impl::Dir::operator() (const llvm::StringRef& name,
-                                   DirectiveInfo& info)
+Directives::Impl::Dir::operator() (llvm::StringRef name, DirectiveInfo& info)
 {
     NameValues& namevals = info.getNameValues();
     if ((m_flags & (ARG_REQUIRED|ID_REQUIRED)) && namevals.empty())

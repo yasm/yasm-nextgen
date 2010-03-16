@@ -39,7 +39,7 @@ ObjectFormat::~ObjectFormat()
 }
 
 void
-ObjectFormat::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
+ObjectFormat::AddDirectives(Directives& dirs, llvm::StringRef parser)
 {
 }
 
@@ -50,7 +50,7 @@ ObjectFormat::Read(const llvm::MemoryBuffer& in)
 }
 
 void
-ObjectFormat::InitSymbols(const llvm::StringRef& parser)
+ObjectFormat::InitSymbols(llvm::StringRef parser)
 {
 }
 

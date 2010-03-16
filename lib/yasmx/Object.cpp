@@ -78,7 +78,7 @@ public:
     {}
     ~Impl() {}
 
-    Symbol* NewSymbol(const llvm::StringRef& name)
+    Symbol* NewSymbol(llvm::StringRef name)
     {
         Symbol* sym = static_cast<Symbol*>(m_sym_pool.malloc());
         new (sym) Symbol(name);
@@ -107,8 +107,8 @@ private:
     boost::pool<> m_sym_pool;
 };
 
-Object::Object(const llvm::StringRef& src_filename,
-               const llvm::StringRef& obj_filename,
+Object::Object(llvm::StringRef src_filename,
+               llvm::StringRef obj_filename,
                Arch* arch)
     : m_src_filename(src_filename),
       m_arch(arch),
@@ -120,13 +120,13 @@ Object::Object(const llvm::StringRef& src_filename,
 }
 
 void
-Object::setSourceFilename(const llvm::StringRef& src_filename)
+Object::setSourceFilename(llvm::StringRef src_filename)
 {
     m_src_filename = src_filename;
 }
 
 void
-Object::setObjectFilename(const llvm::StringRef& obj_filename)
+Object::setObjectFilename(llvm::StringRef obj_filename)
 {
     m_obj_filename = obj_filename;
 }
@@ -150,7 +150,7 @@ Object::AppendSection(std::auto_ptr<Section> sect)
 }
 
 Section*
-Object::FindSection(const llvm::StringRef& name)
+Object::FindSection(llvm::StringRef name)
 {
     section_iterator i =
         std::find_if(m_sections.begin(), m_sections.end(),
@@ -176,13 +176,13 @@ Object::getAbsoluteSymbol()
 }
 
 SymbolRef
-Object::FindSymbol(const llvm::StringRef& name)
+Object::FindSymbol(llvm::StringRef name)
 {
     return SymbolRef(m_impl->sym_map.Find(name));
 }
 
 SymbolRef
-Object::getSymbol(const llvm::StringRef& name)
+Object::getSymbol(llvm::StringRef name)
 {
     // Don't use pool allocator for symbols in the symbol table.
     // We have to maintain an ordered link list of all symbols in the symbol
@@ -204,7 +204,7 @@ Object::getSymbol(const llvm::StringRef& name)
 }
 
 SymbolRef
-Object::AppendSymbol(const llvm::StringRef& name)
+Object::AppendSymbol(llvm::StringRef name)
 {
     Symbol* sym = new Symbol(name);
     m_symbols.push_back(sym);
@@ -212,7 +212,7 @@ Object::AppendSymbol(const llvm::StringRef& name)
 }
 
 SymbolRef
-Object::AddNonTableSymbol(const llvm::StringRef& name)
+Object::AddNonTableSymbol(llvm::StringRef name)
 {
     Symbol* sym = m_impl->NewSymbol(name);
     return SymbolRef(sym);
@@ -244,7 +244,7 @@ Object::FinalizeSymbols(Errwarns& errwarns, bool undef_extern)
 }
 
 SymbolRef
-Object::AddSpecialSymbol(const llvm::StringRef& name)
+Object::AddSpecialSymbol(llvm::StringRef name)
 {
     Symbol* sym = m_impl->NewSymbol(name);
     m_impl->special_sym_map.Insert(sym);
@@ -252,7 +252,7 @@ Object::AddSpecialSymbol(const llvm::StringRef& name)
 }
 
 SymbolRef
-Object::FindSpecialSymbol(const llvm::StringRef& name)
+Object::FindSpecialSymbol(llvm::StringRef name)
 {
     return SymbolRef(m_impl->special_sym_map.Find(name));
 }

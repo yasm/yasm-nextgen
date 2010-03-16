@@ -181,7 +181,7 @@ Win32Object::DirSafeSEH(DirectiveInfo& info)
 }
 
 void
-Win32Object::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
+Win32Object::AddDirectives(Directives& dirs, llvm::StringRef parser)
 {
     static const Directives::Init<Win32Object> gas_dirs[] =
     {
@@ -204,7 +204,7 @@ Win32Object::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
 }
 
 bool
-Win32Object::InitSection(const llvm::StringRef& name,
+Win32Object::InitSection(llvm::StringRef name,
                          Section& section,
                          CoffSection* coffsect)
 {

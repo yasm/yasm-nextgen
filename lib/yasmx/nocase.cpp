@@ -28,14 +28,12 @@
 
 #include <cctype>
 
-#include "llvm/ADT/StringRef.h"
-
 
 namespace String
 {
 
 bool
-NocaseEqual(const llvm::StringRef& s1, const llvm::StringRef& s2)
+NocaseEqual(llvm::StringRef s1, llvm::StringRef s2)
 {
     if (s1.size() != s2.size())
         return false;
@@ -49,7 +47,7 @@ NocaseEqual(const llvm::StringRef& s1, const llvm::StringRef& s2)
 }
 
 bool
-NocaseEqual(const llvm::StringRef& s1, const llvm::StringRef& s2, std::size_t n)
+NocaseEqual(llvm::StringRef s1, llvm::StringRef s2, std::size_t n)
 {
     size_t i, s1len = s1.size(), s2len = s2.size();
     for (i = 0; i < n && i < s1len && i < s2len; ++i)
@@ -63,7 +61,7 @@ NocaseEqual(const llvm::StringRef& s1, const llvm::StringRef& s2, std::size_t n)
 }
 
 std::string
-Lowercase(const llvm::StringRef& in)
+Lowercase(llvm::StringRef in)
 {
     std::string ret;
     ret.reserve(in.size());

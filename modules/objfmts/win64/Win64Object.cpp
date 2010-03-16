@@ -59,7 +59,7 @@ public:
     Win64Object(const ObjectFormatModule& module, Object& object);
     virtual ~Win64Object();
 
-    virtual void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
+    virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
     //virtual void InitSymbols(const char* parser);
     //virtual void Read(const llvm::MemoryBuffer& in);
@@ -85,7 +85,7 @@ public:
     { return false; }
 
 private:
-    virtual bool InitSection(const llvm::StringRef& name,
+    virtual bool InitSection(llvm::StringRef name,
                              Section& section,
                              CoffSection* coffsect);
 
@@ -461,7 +461,7 @@ Win64Object::DirEndProcFrame(DirectiveInfo& info)
 }
 
 void
-Win64Object::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
+Win64Object::AddDirectives(Directives& dirs, llvm::StringRef parser)
 {
     static const Directives::Init<Win64Object> gas_dirs[] =
     {
@@ -500,7 +500,7 @@ Win64Object::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
 }
 
 bool
-Win64Object::InitSection(const llvm::StringRef& name,
+Win64Object::InitSection(llvm::StringRef name,
                          Section& section,
                          CoffSection* coffsect)
 {

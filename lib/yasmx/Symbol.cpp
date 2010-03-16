@@ -39,7 +39,7 @@
 namespace yasm
 {
 
-Symbol::Symbol(const llvm::StringRef& name)
+Symbol::Symbol(llvm::StringRef name)
     : m_name(name),
       m_type(UNKNOWN),
       m_status(NOSTATUS),

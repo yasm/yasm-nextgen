@@ -39,8 +39,7 @@
 namespace yasm
 {
 
-NameValue::NameValue(const llvm::StringRef& name, const llvm::StringRef& id,
-                     char id_prefix)
+NameValue::NameValue(llvm::StringRef name, llvm::StringRef id, char id_prefix)
     : m_name(name),
       m_type(ID),
       m_idstr(id),
@@ -49,7 +48,7 @@ NameValue::NameValue(const llvm::StringRef& name, const llvm::StringRef& id,
 {
 }
 
-NameValue::NameValue(const llvm::StringRef& name, const llvm::StringRef& str)
+NameValue::NameValue(llvm::StringRef name, llvm::StringRef str)
     : m_name(name),
       m_type(STRING),
       m_idstr(str),
@@ -58,7 +57,7 @@ NameValue::NameValue(const llvm::StringRef& name, const llvm::StringRef& str)
 {
 }
 
-NameValue::NameValue(const llvm::StringRef& name, std::auto_ptr<Expr> e)
+NameValue::NameValue(llvm::StringRef name, std::auto_ptr<Expr> e)
     : m_name(name),
       m_type(EXPR),
       m_expr(e.release()),
@@ -66,7 +65,7 @@ NameValue::NameValue(const llvm::StringRef& name, std::auto_ptr<Expr> e)
 {
 }
 
-NameValue::NameValue(const llvm::StringRef& id, char id_prefix)
+NameValue::NameValue(llvm::StringRef id, char id_prefix)
     : m_name(""),
       m_type(ID),
       m_idstr(id),
@@ -75,7 +74,7 @@ NameValue::NameValue(const llvm::StringRef& id, char id_prefix)
 {
 }
 
-NameValue::NameValue(const llvm::StringRef& str)
+NameValue::NameValue(llvm::StringRef str)
     : m_name(""),
       m_type(STRING),
       m_idstr(str),

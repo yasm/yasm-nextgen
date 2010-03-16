@@ -44,7 +44,7 @@ namespace yasm
 
 void
 DirIdentCommon(ObjectFormat& objfmt,
-               const llvm::StringRef& sectname,
+               llvm::StringRef sectname,
                DirectiveInfo& info)
 {
     NameValues& namevals = info.getNameValues();

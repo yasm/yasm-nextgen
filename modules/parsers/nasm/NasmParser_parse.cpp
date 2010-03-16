@@ -1002,7 +1002,7 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
 }
 
 void
-NasmParser::DefineLabel(const llvm::StringRef& name, bool local)
+NasmParser::DefineLabel(llvm::StringRef name, bool local)
 {
     if (!local)
         m_locallabel_base = name;
@@ -1096,7 +1096,7 @@ NasmParser::DirDefault(DirectiveInfo& info)
 }
 
 void
-NasmParser::DoDirective(const llvm::StringRef& name, DirectiveInfo& info)
+NasmParser::DoDirective(llvm::StringRef name, DirectiveInfo& info)
 {
     (*m_dirs)[name](info);
     Section* cursect = m_object->getCurSection();

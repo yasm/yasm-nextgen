@@ -32,6 +32,7 @@
 #include <memory>
 #include <string>
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 
 #include "yasmx/Module.h"
@@ -40,7 +41,7 @@
 namespace clang {
 class FileManager; class SourceLocation; class SourceManager;
 }
-namespace llvm { class MemoryBuffer; class StringRef; }
+namespace llvm { class MemoryBuffer; }
 
 namespace yasm
 {
@@ -66,7 +67,7 @@ public:
     const PreprocessorModule& getModule() const { return m_module; }
 
     /// Add directive handlers.
-    virtual void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
+    virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
     /// Initialize preprocessor.  Must be called prior to first getLine() call.
     /// It is assumed source_mgr is already loaded with a main file.
@@ -91,19 +92,19 @@ public:
 
     /// Pre-include a file.
     /// @param filename     filename
-    virtual void AddIncludeFile(const llvm::StringRef& filename) = 0;
+    virtual void AddIncludeFile(llvm::StringRef filename) = 0;
 
     /// Pre-define a macro.
     /// @param macronameval "name=value" string
-    virtual void PredefineMacro(const llvm::StringRef& macronameval) = 0;
+    virtual void PredefineMacro(llvm::StringRef macronameval) = 0;
 
     /// Un-define a macro.
     /// @param macroname    macro name
-    virtual void UndefineMacro(const llvm::StringRef& macroname) = 0;
+    virtual void UndefineMacro(llvm::StringRef macroname) = 0;
 
     /// Define a builtin macro, preprocessed before the "standard" macros.
     /// @param macronameval "name=value" string
-    virtual void DefineBuiltin(const llvm::StringRef& macronameval) = 0;
+    virtual void DefineBuiltin(llvm::StringRef macronameval) = 0;
 
 private:
     Preprocessor(const Preprocessor&);                  // not implemented

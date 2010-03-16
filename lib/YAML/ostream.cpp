@@ -1,6 +1,5 @@
 #include "YAML/ostream.h"
 #include <cstring>
-#include "llvm/ADT/StringRef.h"
 
 namespace YAML
 {
@@ -42,7 +41,7 @@ namespace YAML
 			m_col++;
 	}
 
-	ostream& operator << (ostream& out, const llvm::StringRef& str)
+	ostream& operator << (ostream& out, llvm::StringRef str)
 	{
 		size_t length = str.size();
 		for(size_t i=0;i<length;i++)

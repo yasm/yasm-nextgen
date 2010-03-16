@@ -34,13 +34,14 @@
 #include <utility>
 #include <vector>
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 
 #include "yasmx/Location.h"
 #include "yasmx/Module.h"
 
 
-namespace llvm { class APFloat; class raw_ostream; class StringRef; }
+namespace llvm { class APFloat; class raw_ostream; }
 namespace YAML { class Emitter; }
 
 namespace yasm
@@ -310,18 +311,18 @@ public:
     const ArchModule& getModule() const { return m_module; }
 
     /// Add directive handlers.
-    virtual void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
+    virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
     /// Set parser to use.
     /// @param parser       keyword of parser to use
     /// @return False if unrecognized parser.
-    virtual bool setParser(const llvm::StringRef& parser) = 0;
+    virtual bool setParser(llvm::StringRef parser) = 0;
 
     /// Set active machine.
     /// @param machine      keyword of machine to use; must be one in the
     ///                     list returned by get_machines().
     /// @return False if unrecognized machine.
-    virtual bool setMachine(const llvm::StringRef& machine) = 0;
+    virtual bool setMachine(llvm::StringRef machine) = 0;
 
     /// Get architecture's active machine name.
     /// @return Active machine name.
@@ -335,7 +336,7 @@ public:
     /// @param var  variable name
     /// @param val  value to set
     /// @return False on success, true on failure (variable does not exist).
-    virtual bool setVar(const llvm::StringRef& var, unsigned long val) = 0;
+    virtual bool setVar(llvm::StringRef var, unsigned long val) = 0;
 
     /// Check an generic identifier to see if it matches architecture
     /// specific names for instructions or instruction prefixes.
@@ -348,15 +349,14 @@ public:
     /// @param prefix       for prefixes, yasm_arch-specific value is
     ///                     returned (and 0 otherwise)
     /// @return Identifier type (empty if unrecognized)
-    virtual InsnPrefix ParseCheckInsnPrefix
-        (const llvm::StringRef& id) const = 0;
+    virtual InsnPrefix ParseCheckInsnPrefix(llvm::StringRef id) const = 0;
 
     /// Check an generic identifier to see if it matches architecture
     /// specific names for registers or target modifiers.  Unrecognized
     /// identifiers should return empty.
     /// @param id           identifier as in the input file
     /// @return Identifier type (empty if unrecognized)
-    virtual RegTmod ParseCheckRegTmod(const llvm::StringRef& id) const = 0;
+    virtual RegTmod ParseCheckRegTmod(llvm::StringRef id) const = 0;
 
     /// Get NOP fill patterns for 1-15 bytes of fill.
     /// @return 16-entry array of arrays; [0] is unused,

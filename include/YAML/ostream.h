@@ -1,9 +1,8 @@
 #ifndef YAML_OSTREAM_H
 #define YAML_OSTREAM_H
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
-
-namespace llvm { class StringRef; }
 
 namespace YAML
 {
@@ -29,7 +28,7 @@ namespace YAML
 		unsigned m_row, m_col;
 	};
 	
-	ostream& operator << (ostream& out, const llvm::StringRef& str);
+	ostream& operator << (ostream& out, llvm::StringRef str);
 	ostream& operator << (ostream& out, char ch);
 }
 

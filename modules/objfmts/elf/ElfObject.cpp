@@ -107,16 +107,15 @@ public:
                       /*@out@*/ std::string* machine)
     { return false; }
 
-    void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
+    void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
-    void InitSymbols(const llvm::StringRef& parser);
+    void InitSymbols(llvm::StringRef parser);
 
     void Read(const llvm::MemoryBuffer& in);
     void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* AddDefaultSection();
-    Section* AppendSection(const llvm::StringRef& name,
-                           clang::SourceLocation source);
+    Section* AppendSection(llvm::StringRef name, clang::SourceLocation source);
 
     ElfSymbol& BuildSymbol(Symbol& sym);
     void BuildExtern(Symbol& sym);
@@ -402,7 +401,7 @@ ElfObject::Read(const llvm::MemoryBuffer& in)
 }
 
 void
-ElfObject::InitSymbols(const llvm::StringRef& parser)
+ElfObject::InitSymbols(llvm::StringRef parser)
 {
     // Add .file symbol
     SymbolRef filesym = m_object.AppendSymbol(".file");
@@ -1134,8 +1133,7 @@ ElfObject::AddDefaultSection()
 }
 
 Section*
-ElfObject::AppendSection(const llvm::StringRef& name,
-                         clang::SourceLocation source)
+ElfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
 {
     ElfSectionType type = SHT_PROGBITS;
     ElfSectionFlags flags = SHF_ALLOC;
@@ -1485,7 +1483,7 @@ ElfObject::getDebugFormatKeywords()
 }
 
 void
-ElfObject::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
+ElfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
 {
     static const Directives::Init<ElfObject> nasm_dirs[] =
     {

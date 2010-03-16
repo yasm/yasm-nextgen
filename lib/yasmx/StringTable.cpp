@@ -26,7 +26,6 @@
 
 #include "yasmx/StringTable.h"
 
-#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 
 
@@ -44,7 +43,7 @@ StringTable::~StringTable()
 }
 
 unsigned long
-StringTable::getIndex(const llvm::StringRef& str)
+StringTable::getIndex(llvm::StringRef str)
 {
     unsigned long end = m_storage.size();
     m_storage.insert(m_storage.end(), str.begin(), str.end());

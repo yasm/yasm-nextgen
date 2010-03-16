@@ -115,7 +115,7 @@ public:
     GasParser(const ParserModule& module, Errwarns& errwarns);
     ~GasParser();
 
-    void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
+    void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
     static const char* getName() { return "GNU AS (GAS)-compatible parser"; }
     static const char* getKeyword() { return "gas"; }
@@ -153,8 +153,8 @@ public:
 private:
 
     void ParseLine();
-    void setDebugFile(const llvm::StringRef& filename);
-    void setDebugFile(const IntNum& fileno, const llvm::StringRef& filename);
+    void setDebugFile(llvm::StringRef filename);
+    void setDebugFile(const IntNum& fileno, llvm::StringRef filename);
     void ParseCppLineMarker();
     void ParseNasmLineMarker();
 
@@ -189,12 +189,12 @@ private:
     bool ParseExpr1(Expr& e);
     bool ParseExpr2(Expr& e);
 
-    void DefineLabel(const llvm::StringRef& name, bool local);
-    void DefineLcomm(const llvm::StringRef& name,
+    void DefineLabel(llvm::StringRef name, bool local);
+    void DefineLcomm(llvm::StringRef name,
                      std::auto_ptr<Expr> size,
                      const Expr& align);
-    void SwitchSection(const llvm::StringRef& name, bool builtin);
-    Section& getSection(const llvm::StringRef& name, bool builtin);
+    void SwitchSection(llvm::StringRef name, bool builtin);
+    Section& getSection(llvm::StringRef name, bool builtin);
 
     void DoParse();
 

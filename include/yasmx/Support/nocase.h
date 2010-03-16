@@ -32,23 +32,21 @@
 #include <cstddef>
 #include <string>
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 
-
-namespace llvm { class StringRef; }
 
 namespace String
 {
 
 YASM_LIB_EXPORT
-bool NocaseEqual(const llvm::StringRef& s1, const llvm::StringRef& s2);
+bool NocaseEqual(llvm::StringRef s1, llvm::StringRef s2);
 
 YASM_LIB_EXPORT
-bool NocaseEqual(const llvm::StringRef& s1, const llvm::StringRef& s2,
-                 std::size_t n);
+bool NocaseEqual(llvm::StringRef s1, llvm::StringRef s2, std::size_t n);
 
 YASM_LIB_EXPORT
-std::string Lowercase(const llvm::StringRef& in);
+std::string Lowercase(llvm::StringRef in);
 
 } // namespace String
 

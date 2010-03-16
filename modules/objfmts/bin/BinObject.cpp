@@ -70,13 +70,12 @@ public:
     /// Destructor.
     ~BinObject();
 
-    void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
+    void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
     void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns);
 
     Section* AddDefaultSection();
-    Section* AppendSection(const llvm::StringRef& name,
-                           clang::SourceLocation source);
+    Section* AppendSection(llvm::StringRef name, clang::SourceLocation source);
 
     static const char* getName() { return "Flat format binary"; }
     static const char* getKeyword() { return "bin"; }
@@ -386,8 +385,7 @@ BinObject::AddDefaultSection()
 }
 
 Section*
-BinObject::AppendSection(const llvm::StringRef& name,
-                         clang::SourceLocation source)
+BinObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
 {
     bool bss = (name == ".bss");
     bool code = (name == ".text");
@@ -599,7 +597,7 @@ BinObject::getDebugFormatKeywords()
 }
 
 void
-BinObject::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
+BinObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
 {
     static const Directives::Init<BinObject> nasm_dirs[] =
     {

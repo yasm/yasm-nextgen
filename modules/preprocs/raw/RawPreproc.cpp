@@ -61,10 +61,10 @@ public:
     clang::SourceManager& getSourceManager() { return *m_source_mgr; }
 
     std::string getIncludedFile() { return ""; }
-    void AddIncludeFile(const llvm::StringRef& filename) {}
-    void PredefineMacro(const llvm::StringRef& macronameval) {}
-    void UndefineMacro(const llvm::StringRef& macroname) {}
-    void DefineBuiltin(const llvm::StringRef& macronameval) {}
+    void AddIncludeFile(llvm::StringRef filename) {}
+    void PredefineMacro(llvm::StringRef macronameval) {}
+    void UndefineMacro(llvm::StringRef macroname) {}
+    void DefineBuiltin(llvm::StringRef macronameval) {}
 
 private:
     const llvm::MemoryBuffer* m_in;

@@ -37,8 +37,6 @@
 #include <dlfcn.h>
 #endif
 
-#include "llvm/ADT/StringRef.h"
-
 #include "config.h"
 
 #ifdef HAVE_STDINT_H
@@ -63,7 +61,7 @@ namespace yasm
 {
 
 bool
-LoadPlugin(const llvm::StringRef& name)
+LoadPlugin(llvm::StringRef name)
 {
     // Load library
     void* lib = 0;

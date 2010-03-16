@@ -145,7 +145,7 @@ IntNum::getBV(llvm::APInt* bv)
 }
 
 void
-IntNum::setStr(const llvm::StringRef& str, int base)
+IntNum::setStr(llvm::StringRef str, int base)
 {
     // Each computation below needs to know if its negative
     unsigned int minbits = (str[0] == '-') ? 1 : 0;

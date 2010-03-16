@@ -1,5 +1,4 @@
 #include "regex.h"
-#include "llvm/ADT/StringRef.h"
 
 namespace YAML
 {
@@ -20,7 +19,7 @@ namespace YAML
 	{
 	}
 	
-	RegEx::RegEx(const llvm::StringRef& str, REGEX_OP op): m_op(op)
+	RegEx::RegEx(llvm::StringRef str, REGEX_OP op): m_op(op)
 	{
 		for(size_t i=0;i<str.size();i++)
 			m_params.push_back(RegEx(str[i]));

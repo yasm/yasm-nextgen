@@ -3,7 +3,6 @@
 #include "indentation.h"
 #include "stringsource.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
@@ -17,7 +16,7 @@ namespace YAML
 				return (0x20 <= ch && ch <= 0x7E);
 			}
 			
-			bool IsValidPlainScalar(const llvm::StringRef& str, bool inFlow) {
+			bool IsValidPlainScalar(llvm::StringRef str, bool inFlow) {
 				// first check the start
 				const RegEx& start = (inFlow ? Exp::PlainScalarInFlow : Exp::PlainScalar);
 				if(!start.Matches(str))
@@ -45,7 +44,7 @@ namespace YAML
 			}
 		}
 		
-		bool WriteString(ostream& out, const llvm::StringRef& str, bool inFlow)
+		bool WriteString(ostream& out, llvm::StringRef str, bool inFlow)
 		{
 			if(IsValidPlainScalar(str, inFlow)) {
 				out << str;
@@ -54,7 +53,7 @@ namespace YAML
 				return WriteDoubleQuotedString(out, str);
 		}
 		
-		bool WriteSingleQuotedString(ostream& out, const llvm::StringRef& str)
+		bool WriteSingleQuotedString(ostream& out, llvm::StringRef str)
 		{
 			out << "'";
 			for(size_t i=0;i<str.size();i++) {
@@ -71,7 +70,7 @@ namespace YAML
 			return true;
 		}
 		
-		bool WriteDoubleQuotedString(ostream& out, const llvm::StringRef& str)
+		bool WriteDoubleQuotedString(ostream& out, llvm::StringRef str)
 		{
 			out << "\"";
 			for(size_t i=0;i<str.size();i++) {
@@ -95,7 +94,7 @@ namespace YAML
 			return true;
 		}
 
-		bool WriteLiteralString(ostream& out, const llvm::StringRef& str, int indent)
+		bool WriteLiteralString(ostream& out, llvm::StringRef str, int indent)
 		{
 			out << "|\n";
 			out << IndentTo(indent);
@@ -108,7 +107,7 @@ namespace YAML
 			return true;
 		}
 		
-		bool WriteComment(ostream& out, const llvm::StringRef& str, int postCommentIndent)
+		bool WriteComment(ostream& out, llvm::StringRef str, int postCommentIndent)
 		{
 			unsigned curIndent = out.col();
 			out << "#" << Indentation(postCommentIndent);

@@ -1,7 +1,9 @@
 #ifndef YAML_EMITTERMANIP_H
 #define YAML_EMITTERMANIP_H
 
-namespace llvm { class StringRef; class Twine; }
+#include "llvm/ADT/StringRef.h"
+
+namespace llvm { class Twine; }
 
 namespace YAML
 {
@@ -76,11 +78,11 @@ namespace YAML
 	}
 
 	struct _Comment {
-		_Comment(const llvm::StringRef& content_): content(content_) {}
-		const llvm::StringRef& content;
+		_Comment(llvm::StringRef content_): content(content_) {}
+		llvm::StringRef content;
 	};
 	
-	inline _Comment Comment(const llvm::StringRef& content) {
+	inline _Comment Comment(llvm::StringRef content) {
 		return _Comment(content);
 	}
 }

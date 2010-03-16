@@ -64,8 +64,8 @@ public:
     /// @param src_filename     source filename (e.g. "file.asm")
     /// @param obj_filename     object filename (e.g. "file.o")
     /// @param arch             architecture
-    Object(const llvm::StringRef& src_filename,
-           const llvm::StringRef& obj_filename,
+    Object(llvm::StringRef src_filename,
+           llvm::StringRef obj_filename,
            Arch* arch);
 
     /// Destructor.
@@ -78,11 +78,11 @@ public:
 
     /// Change the source filename for an object.
     /// @param src_filename new source filename (e.g. "file.asm")
-    void setSourceFilename(const llvm::StringRef& src_filename);
+    void setSourceFilename(llvm::StringRef src_filename);
 
     /// Change the object filename for an object.
     /// @param obj_filename new object filename (e.g. "file.o")
-    void setObjectFilename(const llvm::StringRef& obj_filename);
+    void setObjectFilename(llvm::StringRef obj_filename);
 
     /// Get the source filename for an object.
     /// @return Source filename.
@@ -115,7 +115,7 @@ public:
     /// Find a general section in an object, based on its name.
     /// @param name         section name
     /// @return Section matching name, or NULL if no match found.
-    /*@null@*/ Section* FindSection(const llvm::StringRef& name);
+    /*@null@*/ Section* FindSection(llvm::StringRef name);
 
     typedef stdx::ptr_vector<Section> Sections;
     typedef Sections::iterator section_iterator;
@@ -150,12 +150,12 @@ public:
     /// Find a symbol by name.
     /// @param name         symbol name
     /// @return Symbol matching name, or NULL if no match found.
-    SymbolRef FindSymbol(const llvm::StringRef& name);
+    SymbolRef FindSymbol(llvm::StringRef name);
 
     /// Get (creating if necessary) a symbol by name.
     /// @param name         symbol name
     /// @return Symbol matching name.
-    SymbolRef getSymbol(const llvm::StringRef& name);
+    SymbolRef getSymbol(llvm::StringRef name);
 
     typedef stdx::ptr_vector<Symbol> Symbols;
     typedef Symbols::iterator symbol_iterator;
@@ -178,13 +178,13 @@ public:
     /// @note Does /not/ index the symbol by name.
     /// @param name     symbol name
     /// @return Reference to symbol.
-    SymbolRef AppendSymbol(const llvm::StringRef& name);
+    SymbolRef AppendSymbol(llvm::StringRef name);
 
     /// Have the object manage an arbitrary symbol.
     /// @note Does /not/ index the symbol by name.
     /// @param name     symbol name
     /// @return Reference to symbol.
-    SymbolRef AddNonTableSymbol(const llvm::StringRef& name);
+    SymbolRef AddNonTableSymbol(llvm::StringRef name);
 
     /// Finalize symbol table after parsing stage.  Checks for symbols that
     /// are used but never defined or declared #EXTERN or #COMMON.
@@ -196,7 +196,7 @@ public:
     /// Add a special symbol.
     /// @param sym      symbol name
     /// @return Reference to symbol.
-    SymbolRef AddSpecialSymbol(const llvm::StringRef& name);
+    SymbolRef AddSpecialSymbol(llvm::StringRef name);
 
     /// Find a special symbol.  Special symbols are generally used to generate
     /// special relocation types via the WRT mechanism.
@@ -204,7 +204,7 @@ public:
     /// @param name         symbol name (not including any parser-specific
     ///                     prefix)
     /// @return NULL if unrecognized, otherwise special symbol.
-    SymbolRef FindSpecialSymbol(const llvm::StringRef& name);
+    SymbolRef FindSpecialSymbol(llvm::StringRef name);
 
     /*@null@*/ Section* getCurSection() { return m_cur_section; }
     const /*@null@*/ Section* getCurSection() const { return m_cur_section; }

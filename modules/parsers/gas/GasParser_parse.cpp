@@ -185,7 +185,7 @@ GasParser::ParseLine()
 }
 
 void
-GasParser::setDebugFile(const llvm::StringRef& filename)
+GasParser::setDebugFile(llvm::StringRef filename)
 {
     Directive dir;
     if (!m_dirs->get(&dir, ".file"))
@@ -197,7 +197,7 @@ GasParser::setDebugFile(const llvm::StringRef& filename)
 }
 
 void
-GasParser::setDebugFile(const IntNum& fileno, const llvm::StringRef& filename)
+GasParser::setDebugFile(const IntNum& fileno, llvm::StringRef filename)
 {
     Directive dir;
     if (!m_dirs->get(&dir, ".file"))
@@ -1334,7 +1334,7 @@ GasParser::ParseExpr2(Expr& e)
 }
 
 void
-GasParser::DefineLabel(const llvm::StringRef& name, bool local)
+GasParser::DefineLabel(llvm::StringRef name, bool local)
 {
     if (!local)
         m_locallabel_base = name;
@@ -1346,7 +1346,7 @@ GasParser::DefineLabel(const llvm::StringRef& name, bool local)
 }
 
 void
-GasParser::DefineLcomm(const llvm::StringRef& name,
+GasParser::DefineLcomm(llvm::StringRef name,
                        std::auto_ptr<Expr> size,
                        const Expr& align)
 {
@@ -1376,7 +1376,7 @@ GasParser::DefineLcomm(const llvm::StringRef& name,
 }
 
 void
-GasParser::SwitchSection(const llvm::StringRef& name, bool builtin)
+GasParser::SwitchSection(llvm::StringRef name, bool builtin)
 {
     DirectiveInfo info(*m_object, m_source);
     info.getNameValues().push_back(new NameValue(name, '\0'));
@@ -1384,7 +1384,7 @@ GasParser::SwitchSection(const llvm::StringRef& name, bool builtin)
 }
 
 Section&
-GasParser::getSection(const llvm::StringRef& name, bool builtin)
+GasParser::getSection(llvm::StringRef name, bool builtin)
 {
     Section* cur_section = m_object->getCurSection();
     SwitchSection(name, builtin);

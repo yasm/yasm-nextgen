@@ -29,17 +29,14 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 
-
-namespace clang { class SourceLocation; }
-namespace llvm { class StringRef; }
 
 namespace yasm
 {
 
 class DirectiveInfo;
-class Object;
 class ObjectFormat;
 
 /// Ident directive handler.  This is a common implementation that matches
@@ -51,7 +48,7 @@ class ObjectFormat;
 /// @param info         Directive info
 YASM_LIB_EXPORT
 void DirIdentCommon(ObjectFormat& objfmt,
-                    const llvm::StringRef& sectname,
+                    llvm::StringRef sectname,
                     DirectiveInfo& info);
 
 } // namespace yasm

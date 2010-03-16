@@ -33,13 +33,14 @@
 #include <string>
 #include <vector>
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 
 #include "yasmx/Module.h"
 
 
 namespace clang { class SourceLocation; }
-namespace llvm { class MemoryBuffer; class raw_fd_ostream; class StringRef; }
+namespace llvm { class MemoryBuffer; class raw_fd_ostream; }
 
 namespace yasm
 {
@@ -66,13 +67,13 @@ public:
     const ObjectFormatModule& getModule() const { return m_module; }
 
     /// Add directive handlers.
-    virtual void AddDirectives(Directives& dirs, const llvm::StringRef& parser);
+    virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
     /// Initialize symbols (default and special symbols).
     /// Called prior to assembly process.
     /// Default implementation does nothing.
     /// @param parser       parser keyword
-    virtual void InitSymbols(const llvm::StringRef& parser);
+    virtual void InitSymbols(llvm::StringRef parser);
 
     /// Read object file into associated object.
     /// May create sections, relocations, and bytecodes, as well as modify
@@ -102,7 +103,7 @@ public:
     /// section.  As with Object::append_section(), this does not check to see
     /// if the section already exists; use Object::find_section() first.
     /// @return New section.
-    virtual Section* AppendSection(const llvm::StringRef& name,
+    virtual Section* AppendSection(llvm::StringRef name,
                                    clang::SourceLocation source) = 0;
 
 private:

@@ -1,6 +1,5 @@
 #include "YAML/emitter.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "emitterstate.h"
@@ -481,7 +480,7 @@ namespace YAML
 	// *******************************************************************************************
 	// overloads of Write
 	
-	Emitter& Emitter::Write(const llvm::StringRef& str)
+	Emitter& Emitter::Write(llvm::StringRef str)
 	{
 		if(!good())
 			return *this;

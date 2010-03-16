@@ -29,12 +29,12 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
 
 
 namespace clang { class SourceManager; class SourceRange; }
-namespace llvm { class StringRef; }
 
 namespace yasm
 {
@@ -84,9 +84,9 @@ public:
     typedef void (*PrintErrorFunc)
         (const clang::SourceManager& source_mgr,
          clang::SourceRange source,
-         const llvm::StringRef& msg,
+         llvm::StringRef msg,
          clang::SourceRange xref_source,
-         const llvm::StringRef& xref_msg);
+         llvm::StringRef xref_msg);
 
     /// Print out a warning.
     /// @param source_mgr   source manager
@@ -95,7 +95,7 @@ public:
     typedef void (*PrintWarningFunc)
         (const clang::SourceManager& source_mgr,
          clang::SourceRange source,
-         const llvm::StringRef& msg);
+         llvm::StringRef msg);
 
     /// Outputs error/warning set in sorted order.
     /// @param source_mgr       source manager (to sort source locations)

@@ -95,7 +95,7 @@ CoffObject::isOkObject(Object& object)
 }
 
 void
-CoffObject::InitSymbols(const llvm::StringRef& parser)
+CoffObject::InitSymbols(llvm::StringRef parser)
 {
     // Add .file symbol
     SymbolRef filesym = m_object.AppendSymbol(".file");
@@ -121,7 +121,7 @@ CoffObject::AddDefaultSection()
 }
 
 bool
-CoffObject::InitSection(const llvm::StringRef& name,
+CoffObject::InitSection(llvm::StringRef name,
                         Section& section,
                         CoffSection* coffsect)
 {
@@ -164,8 +164,7 @@ CoffObject::InitSection(const llvm::StringRef& name,
 }
 
 Section*
-CoffObject::AppendSection(const llvm::StringRef& name,
-                          clang::SourceLocation source)
+CoffObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
 {
     Section* section = new Section(name, false, false, source);
     m_object.AppendSection(std::auto_ptr<Section>(section));
@@ -432,7 +431,7 @@ CoffObject::DirIdent(DirectiveInfo& info)
 }
 
 void
-CoffObject::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
+CoffObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
 {
     static const Directives::Init<CoffObject> nasm_dirs[] =
     {

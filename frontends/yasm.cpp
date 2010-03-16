@@ -534,9 +534,9 @@ static const char *fmt_noline[2] =
 static void
 PrintYasmError(const clang::SourceManager& source_mgr,
                clang::SourceRange source,
-               const llvm::StringRef& msg,
+               llvm::StringRef msg,
                clang::SourceRange xref_source,
-               const llvm::StringRef& xref_msg)
+               llvm::StringRef xref_msg)
 {
     if (source.isValid())
     {
@@ -565,7 +565,7 @@ PrintYasmError(const clang::SourceManager& source_mgr,
 static void
 PrintYasmWarning(const clang::SourceManager& source_mgr,
                  clang::SourceRange source,
-                 const llvm::StringRef& msg)
+                 llvm::StringRef msg)
 {
     if (source.isValid())
     {

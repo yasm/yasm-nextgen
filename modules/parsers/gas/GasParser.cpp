@@ -183,7 +183,7 @@ GasParser::getPreprocessorKeywords()
 }
 
 void
-GasParser::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
+GasParser::AddDirectives(Directives& dirs, llvm::StringRef parser)
 {
     if (String::NocaseEqual(parser, "gas"))
     {

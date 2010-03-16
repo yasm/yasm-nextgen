@@ -51,7 +51,7 @@ class YASM_LIB_EXPORT Symbol : public AssocDataContainer
 {
 public:
     /// Constructor.
-    explicit Symbol(const llvm::StringRef& name);
+    explicit Symbol(llvm::StringRef name);
 
     /// Destructor.
     ~Symbol();

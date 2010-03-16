@@ -31,10 +31,11 @@
 ///
 #include <vector>
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 
 
-namespace llvm { class raw_ostream; class StringRef; }
+namespace llvm { class raw_ostream; }
 
 namespace yasm
 {
@@ -66,7 +67,7 @@ public:
     /// of an existing string in the table, it may be reused.
     /// @param str      String
     /// @return String index.
-    unsigned long getIndex(const llvm::StringRef& str);
+    unsigned long getIndex(llvm::StringRef str);
 
     /// Get the string corresponding to a particular index.  Due to legal use
     /// of substrings, no error checking is performed except for trying to read

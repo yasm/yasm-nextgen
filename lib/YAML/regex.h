@@ -3,7 +3,7 @@
 
 #include <vector>
 
-namespace llvm { class StringRef; }
+#include "llvm/ADT/StringRef.h"
 
 namespace YAML
 {
@@ -20,7 +20,7 @@ namespace YAML
 		RegEx();
 		RegEx(char ch);
 		RegEx(char a, char z);
-		RegEx(const llvm::StringRef& str, REGEX_OP op = REGEX_SEQ);
+		RegEx(llvm::StringRef str, REGEX_OP op = REGEX_SEQ);
 		~RegEx() {}
 
 		friend RegEx operator ! (const RegEx& ex);
@@ -29,11 +29,11 @@ namespace YAML
 		friend RegEx operator + (const RegEx& ex1, const RegEx& ex2);
 		
 		bool Matches(char ch) const;
-		bool Matches(const llvm::StringRef& str) const;
+		bool Matches(llvm::StringRef str) const;
 		bool Matches(const Stream& in) const;
 		template <typename Source> bool Matches(const Source& source) const;
 
-		int Match(const llvm::StringRef& str) const;
+		int Match(llvm::StringRef str) const;
 		int Match(const Stream& in) const;
 
 	private:

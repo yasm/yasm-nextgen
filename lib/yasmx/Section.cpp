@@ -38,7 +38,7 @@
 namespace yasm
 {
 
-Section::Section(const llvm::StringRef& name,
+Section::Section(llvm::StringRef name,
                  bool code,
                  bool bss,
                  clang::SourceLocation source)

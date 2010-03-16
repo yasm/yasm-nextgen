@@ -60,7 +60,8 @@ DirHelpers::~DirHelpers()
 }
 
 void
-DirHelpers::Add(const llvm::StringRef& name, bool needsvalue,
+DirHelpers::Add(llvm::StringRef name,
+                bool needsvalue,
                 FUNCTION::function<void (NameValue&)> helper)
 {
     if (needsvalue)

@@ -35,7 +35,7 @@ Preprocessor::~Preprocessor()
 }
 
 void
-Preprocessor::AddDirectives(Directives& dirs, const llvm::StringRef& parser)
+Preprocessor::AddDirectives(Directives& dirs, llvm::StringRef parser)
 {
 }
 

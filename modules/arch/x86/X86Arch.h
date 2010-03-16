@@ -155,17 +155,17 @@ public:
     /// Destructor.
     ~X86Arch();
 
-    void AddDirectives(Directives& dir, const llvm::StringRef& parser);
+    void AddDirectives(Directives& dir, llvm::StringRef parser);
 
-    bool setParser(const llvm::StringRef& parser);
-    bool setMachine(const llvm::StringRef& machine);
+    bool setParser(llvm::StringRef parser);
+    bool setMachine(llvm::StringRef machine);
     std::string getMachine() const;
     unsigned int getAddressSize() const;
 
-    bool setVar(const llvm::StringRef& var, unsigned long val);
+    bool setVar(llvm::StringRef var, unsigned long val);
 
-    InsnPrefix ParseCheckInsnPrefix(const llvm::StringRef& id) const;
-    RegTmod ParseCheckRegTmod(const llvm::StringRef& id) const;
+    InsnPrefix ParseCheckInsnPrefix(llvm::StringRef id) const;
+    RegTmod ParseCheckRegTmod(llvm::StringRef id) const;
 
     const unsigned char** getFill() const;
 
@@ -196,7 +196,7 @@ public:
     static ArchModule::MachineNames getMachines();
 
 private:
-    void ParseCpu(const llvm::StringRef& cpuid);
+    void ParseCpu(llvm::StringRef cpuid);
 
     // Directives
     void DirCpu(DirectiveInfo& info);
