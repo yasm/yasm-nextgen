@@ -159,7 +159,7 @@ public:
 
     bool setParser(llvm::StringRef parser);
     bool setMachine(llvm::StringRef machine);
-    std::string getMachine() const;
+    llvm::StringRef getMachine() const;
     unsigned int getAddressSize() const;
 
     bool setVar(llvm::StringRef var, unsigned long val);

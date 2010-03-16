@@ -43,11 +43,11 @@ namespace objfmt
 namespace elf
 {
 
-extern bool ElfMatch_x86_x86(const std::string& arch_keyword,
-                             const std::string& arch_machine,
+extern bool ElfMatch_x86_x86(llvm::StringRef arch_keyword,
+                             llvm::StringRef arch_machine,
                              ElfClass cls);
-extern bool ElfMatch_x86_amd64(const std::string& arch_keyword,
-                               const std::string& arch_machine,
+extern bool ElfMatch_x86_amd64(llvm::StringRef arch_keyword,
+                               llvm::StringRef arch_machine,
                                ElfClass cls);
 
 extern std::auto_ptr<ElfMachine> ElfCreate_x86_x86();
@@ -55,8 +55,8 @@ extern std::auto_ptr<ElfMachine> ElfCreate_x86_amd64();
 
 struct MachineCheckCreate
 {
-    bool (*Match) (const std::string& arch_keyword,
-                   const std::string& arch_machine,
+    bool (*Match) (llvm::StringRef arch_keyword,
+                   llvm::StringRef arch_machine,
                    ElfClass cls);
     std::auto_ptr<ElfMachine> (*Create) ();
 };

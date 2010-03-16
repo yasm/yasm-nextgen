@@ -27,26 +27,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Support/nocase.h"
 
-TEST(NocaseEqualTest, NoLength)
-{
-    EXPECT_EQ(true, String::NocaseEqual("foo", "foo"));
-    EXPECT_EQ(false, String::NocaseEqual("foo", "foo1"));
-    EXPECT_EQ(false, String::NocaseEqual("foo1", "foo"));
-}
-
-TEST(NocaseEqualTest, Length)
-{
-    EXPECT_EQ(true, String::NocaseEqual("foo", "foo", 2));
-    EXPECT_EQ(true, String::NocaseEqual("foo", "foo", 3));
-    EXPECT_EQ(true, String::NocaseEqual("foo", "foo", 4));
-    EXPECT_EQ(true, String::NocaseEqual("foo", "foo", 5));
-    EXPECT_EQ(true, String::NocaseEqual("foo", "foo1", 3));
-    EXPECT_EQ(false, String::NocaseEqual("foo", "foo1", 4));
-    EXPECT_EQ(true, String::NocaseEqual("foo1", "foo", 3));
-    EXPECT_EQ(false, String::NocaseEqual("foo1", "foo", 4));
-    EXPECT_EQ(true, String::NocaseEqual("foo", "bar", 0));
-}
-
 TEST(LowercaseTest, CharPointer)
 {
     EXPECT_EQ("foo", String::Lowercase("foo"));

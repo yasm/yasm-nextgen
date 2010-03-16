@@ -28,7 +28,6 @@
 
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/nocase.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
 #include "yasmx/BytecodeContainer_util.h"
@@ -490,9 +489,9 @@ Win64Object::AddDirectives(Directives& dirs, llvm::StringRef parser)
         {"endproc_frame", &Win64Object::DirEndProcFrame, Directives::ANY},
     };
 
-    if (String::NocaseEqual(parser, "nasm"))
+    if (parser.equals_lower("nasm"))
         dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
-    else if (String::NocaseEqual(parser, "gas"))
+    else if (parser.equals_lower("gas") || parser.equals_lower("gnu"))
         dirs.AddArray(this, gas_dirs, NELEMS(gas_dirs));
 
     // Pull in coff directives (but not win32 directives)

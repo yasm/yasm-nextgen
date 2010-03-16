@@ -32,34 +32,6 @@
 namespace String
 {
 
-bool
-NocaseEqual(llvm::StringRef s1, llvm::StringRef s2)
-{
-    if (s1.size() != s2.size())
-        return false;
-    for (llvm::StringRef::iterator i = s1.begin(), end = s1.end(),
-         j = s2.begin(); i != end; ++i, ++j)
-    {
-        if (tolower(*i) != tolower(*j))
-            return false;
-    }
-    return true;
-}
-
-bool
-NocaseEqual(llvm::StringRef s1, llvm::StringRef s2, std::size_t n)
-{
-    size_t i, s1len = s1.size(), s2len = s2.size();
-    for (i = 0; i < n && i < s1len && i < s2len; ++i)
-    {
-        if (tolower(s1[i]) != tolower(s2[i]))
-            return false;
-    }
-    if (i != n && s1len != s2len)
-        return false;
-    return true;
-}
-
 std::string
 Lowercase(llvm::StringRef in)
 {

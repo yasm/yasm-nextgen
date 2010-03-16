@@ -27,7 +27,6 @@
 #include "util.h"
 
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/nocase.h"
 
 #include "ElfConfig.h"
 #include "ElfMachine.h"
@@ -96,12 +95,12 @@ public:
 };
 
 bool
-ElfMatch_x86_amd64(const std::string& arch_keyword,
-                   const std::string& arch_machine,
+ElfMatch_x86_amd64(llvm::StringRef arch_keyword,
+                   llvm::StringRef arch_machine,
                    ElfClass cls)
 {
-    return (String::NocaseEqual(arch_keyword, "x86") &&
-            String::NocaseEqual(arch_machine, "amd64") &&
+    return (arch_keyword.equals_lower("x86") &&
+            arch_machine.equals_lower("amd64") &&
             (cls == ELFCLASSNONE || cls == ELFCLASS64));
 }
 

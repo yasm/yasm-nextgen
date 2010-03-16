@@ -28,7 +28,6 @@
 
 #include "util.h"
 
-#include "yasmx/Support/nocase.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Directive.h"
@@ -92,7 +91,7 @@ NasmParser::AddDirectives(Directives& dirs, llvm::StringRef parser)
         {"default", &NasmParser::DirDefault, Directives::ANY},
     };
 
-    if (String::NocaseEqual(parser, "nasm"))
+    if (parser.equals_lower("nasm"))
     {
         dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
         dirs.Add("extern", &DirExtern, Directives::ID_REQUIRED);

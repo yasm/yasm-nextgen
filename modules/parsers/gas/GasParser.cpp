@@ -32,7 +32,6 @@
 #include "util.h"
 
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/nocase.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Directive.h"
@@ -140,10 +139,8 @@ GasParser::Parse(Object& object, Preprocessor& preproc, Directives& dirs)
     for (int i=0; i<10; i++)
         m_local[i] = 0;
 
-    m_is_cpp_preproc =
-        String::NocaseEqual(preproc.getModule().getKeyword(), "cpp");
-    m_is_nasm_preproc =
-        String::NocaseEqual(preproc.getModule().getKeyword(), "nasm");
+    m_is_cpp_preproc = preproc.getModule().getKeyword().equals_lower("cpp");
+    m_is_nasm_preproc = preproc.getModule().getKeyword().equals_lower("nasm");
 
     // Set up arch-sized directives
     m_sized_gas_dirs[0].name = ".word";
@@ -185,7 +182,7 @@ GasParser::getPreprocessorKeywords()
 void
 GasParser::AddDirectives(Directives& dirs, llvm::StringRef parser)
 {
-    if (String::NocaseEqual(parser, "gas"))
+    if (parser.equals_lower("gas") || parser.equals_lower("gnu"))
     {
         dirs.Add(".extern", &DirExtern, Directives::ID_REQUIRED);
         dirs.Add(".global", &DirGlobal, Directives::ID_REQUIRED);

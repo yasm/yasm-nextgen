@@ -34,7 +34,6 @@
 
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/nocase.h"
 #include "yasmx/Arch.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"

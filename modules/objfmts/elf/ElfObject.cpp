@@ -46,7 +46,6 @@
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/nocase.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Support/scoped_array.h"
 #include "yasmx/Arch.h"
@@ -416,7 +415,7 @@ ElfObject::InitSymbols(llvm::StringRef parser)
     filesym->AddAssocData(elfsym);
 
     // Create ..sym special symbol (NASM only)
-    if (String::NocaseEqual(parser, "nasm"))
+    if (parser.equals_lower("nasm"))
     {
         m_dotdotsym = m_object.AddSpecialSymbol("sym");
         m_dotdotsym->DefineSpecial(Symbol::EXTERN);
@@ -1416,13 +1415,13 @@ ElfObject::DirType(DirectiveInfo& info)
         throw SyntaxError(N_("type must be an identifier"));
 
     llvm::StringRef type = namevals[1].getId();
-    if (String::NocaseEqual(type, "function"))
+    if (type.equals_lower("function"))
         elfsym.setType(STT_FUNC);
-    else if (String::NocaseEqual(type, "object"))
+    else if (type.equals_lower("object"))
         elfsym.setType(STT_OBJECT);
-    else if (String::NocaseEqual(type, "tls_object"))
+    else if (type.equals_lower("tls_object"))
         elfsym.setType(STT_TLS);
-    else if (String::NocaseEqual(type, "notype"))
+    else if (type.equals_lower("notype"))
         elfsym.setType(STT_NOTYPE);
     else
         setWarn(WARN_GENERAL,
@@ -1503,9 +1502,9 @@ ElfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
         {".ident", &ElfObject::DirIdent, Directives::ANY},
     };
 
-    if (String::NocaseEqual(parser, "nasm"))
+    if (parser.equals_lower("nasm"))
         dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
-    else if (String::NocaseEqual(parser, "gas"))
+    else if (parser.equals_lower("gas") || parser.equals_lower("gnu"))
         dirs.AddArray(this, gas_dirs, NELEMS(gas_dirs));
 }
 #if 0

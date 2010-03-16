@@ -326,7 +326,7 @@ public:
 
     /// Get architecture's active machine name.
     /// @return Active machine name.
-    virtual std::string getMachine() const = 0;
+    virtual llvm::StringRef getMachine() const = 0;
 
     /// Get architecture's active address size, in bits.
     /// @return Active address size (in bits).

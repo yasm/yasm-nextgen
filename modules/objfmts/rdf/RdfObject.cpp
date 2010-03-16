@@ -30,7 +30,6 @@
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/nocase.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Bytecode.h"
@@ -1144,7 +1143,7 @@ RdfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
         {"module",  &RdfObject::DirModule,  Directives::ARG_REQUIRED},
     };
 
-    if (String::NocaseEqual(parser, "nasm"))
+    if (parser.equals_lower("nasm"))
         dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
 }
 

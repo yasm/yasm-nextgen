@@ -31,7 +31,6 @@
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/nocase.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
@@ -611,9 +610,9 @@ BinObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
         {".section", &BinObject::DirSection, Directives::ARG_REQUIRED},
     };
 
-    if (String::NocaseEqual(parser, "nasm"))
+    if (parser.equals_lower("nasm"))
         dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
-    else if (String::NocaseEqual(parser, "gas"))
+    else if (parser.equals_lower("gas") || parser.equals_lower("gnu"))
         dirs.AddArray(this, gas_dirs, NELEMS(gas_dirs));
 }
 

@@ -31,7 +31,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/nocase.h"
 #include "yasmx/Support/StringExtras.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Errwarns.h"
@@ -634,8 +633,8 @@ directive:
         [a-zA-Z_][a-zA-Z_0-9]*
         {
             lvalp->str.assign(TOK, TOKLEN);
-            if (String::NocaseEqual(lvalp->str, "section") ||
-                String::NocaseEqual(lvalp->str, "segment"))
+            if (llvm::StringRef(lvalp->str).equals_lower("section") ||
+                llvm::StringRef(lvalp->str).equals_lower("segment"))
                 m_state = SECTION_DIRECTIVE;
             else
                 m_state = DIRECTIVE2;

@@ -33,7 +33,6 @@
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/nocase.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Directive.h"
@@ -66,9 +65,9 @@ CoffObject::CoffObject(const ObjectFormatModule& module,
     , m_file_coffsym(0)
 {
     // Support x86 and amd64 machines of x86 arch
-    if (String::NocaseEqual(m_object.getArch()->getMachine(), "x86"))
+    if (m_object.getArch()->getMachine().equals_lower("x86"))
         m_machine = MACHINE_I386;
-    else if (String::NocaseEqual(m_object.getArch()->getMachine(), "amd64"))
+    else if (m_object.getArch()->getMachine().equals_lower("amd64"))
         m_machine = MACHINE_AMD64;
 }
 
@@ -84,12 +83,12 @@ CoffObject::isOkObject(Object& object)
 {
     // Support x86 and amd64 machines of x86 arch
     Arch* arch = object.getArch();
-    if (!String::NocaseEqual(arch->getModule().getKeyword(), "x86"))
+    if (!arch->getModule().getKeyword().equals_lower("x86"))
         return false;
 
-    if (String::NocaseEqual(arch->getMachine(), "x86"))
+    if (arch->getMachine().equals_lower("x86"))
         return true;
-    if (String::NocaseEqual(arch->getMachine(), "amd64"))
+    if (arch->getMachine().equals_lower("amd64"))
         return true;
     return false;
 }
@@ -150,7 +149,7 @@ CoffObject::InitSection(llvm::StringRef name,
         flags = CoffSection::INFO;
     else if (name == ".comment")
         flags = CoffSection::INFO;
-    else if (String::NocaseEqual(name, ".debug", 6))
+    else if (name.substr(0, 6).equals_lower(".debug"))
         flags = CoffSection::DATA;
     else
     {
@@ -445,9 +444,9 @@ CoffObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
         {".ident",   &CoffObject::DirIdent, Directives::ANY},
     };
 
-    if (String::NocaseEqual(parser, "nasm"))
+    if (parser.equals_lower("nasm"))
         dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
-    else if (String::NocaseEqual(parser, "gas"))
+    else if (parser.equals_lower("gas") || parser.equals_lower("gnu"))
         dirs.AddArray(this, gas_dirs, NELEMS(gas_dirs));
 }
 

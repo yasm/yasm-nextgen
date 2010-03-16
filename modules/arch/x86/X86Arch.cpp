@@ -31,7 +31,6 @@
 #include "llvm/ADT/APFloat.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/nocase.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
@@ -68,10 +67,9 @@ X86Arch::X86Arch(const ArchModule& module)
 bool
 X86Arch::setParser(llvm::StringRef parser)
 {
-    if (String::NocaseEqual(parser, "nasm"))
+    if (parser.equals_lower("nasm"))
         m_parser = PARSER_NASM;
-    else if (String::NocaseEqual(parser, "gas") ||
-             String::NocaseEqual(parser, "gnu"))
+    else if (parser.equals_lower("gas") || parser.equals_lower("gnu"))
         m_parser = PARSER_GAS;
     else
         return false;
@@ -81,9 +79,9 @@ X86Arch::setParser(llvm::StringRef parser)
 bool
 X86Arch::setMachine(llvm::StringRef machine)
 {
-    if (String::NocaseEqual(machine, "x86"))
+    if (machine.equals_lower("x86"))
         m_amd64_machine = false;
-    else if (String::NocaseEqual(machine, "amd64"))
+    else if (machine.equals_lower("amd64"))
         m_amd64_machine = true;
     else
         return false;
@@ -94,7 +92,7 @@ X86Arch::~X86Arch()
 {
 }
 
-std::string
+llvm::StringRef
 X86Arch::getMachine() const
 {
     if (m_amd64_machine)
@@ -126,11 +124,11 @@ X86Arch::getAddressSize() const
 bool
 X86Arch::setVar(llvm::StringRef var, unsigned long val)
 {
-    if (String::NocaseEqual(var, "mode_bits"))
+    if (var.equals_lower("mode_bits"))
         m_mode_bits = static_cast<unsigned int>(val);
-    else if (String::NocaseEqual(var, "force_strict"))
+    else if (var.equals_lower("force_strict"))
         m_force_strict = (val != 0);
-    else if (String::NocaseEqual(var, "default_rel"))
+    else if (var.equals_lower("default_rel"))
     {
         if (m_mode_bits != 64)
             setWarn(WARN_GENERAL,
@@ -454,10 +452,9 @@ X86Arch::AddDirectives(Directives& dirs, llvm::StringRef parser)
         {".code64", &X86Arch::DirCode64, Directives::ANY},
     };
 
-    if (String::NocaseEqual(parser, "nasm"))
+    if (parser.equals_lower("nasm"))
         dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
-    else if (String::NocaseEqual(parser, "gas") ||
-             String::NocaseEqual(parser, "gnu"))
+    else if (parser.equals_lower("gas") || parser.equals_lower("gnu"))
         dirs.AddArray(this, gas_dirs, NELEMS(gas_dirs));
 }
 

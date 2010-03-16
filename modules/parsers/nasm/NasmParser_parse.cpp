@@ -32,7 +32,6 @@
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/nocase.h"
 #include "yasmx/Arch.h"
 #include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/Directive.h"
@@ -1082,9 +1081,9 @@ NasmParser::DirDefault(DirectiveInfo& info)
         if (nv->isId())
         {
             llvm::StringRef id = nv->getId();
-            if (String::NocaseEqual(id, "rel"))
+            if (id.equals_lower("rel"))
                 info.getObject().getArch()->setVar("default_rel", 1);
-            else if (String::NocaseEqual(id, "abs"))
+            else if (id.equals_lower("abs"))
                 info.getObject().getArch()->setVar("default_rel", 0);
             else
                 throw SyntaxError(String::Compose(

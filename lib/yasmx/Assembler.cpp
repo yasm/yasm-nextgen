@@ -34,7 +34,6 @@
 #include "llvm/System/Path.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/nocase.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/Arch.h"
@@ -58,7 +57,7 @@ public:
     NocaseEquals(llvm::StringRef str) : s(str) {}
     bool operator() (llvm::StringRef oth)
     {
-        return String::NocaseEqual(s, oth);
+        return s.equals_lower(oth);
     }
 };
 
@@ -148,7 +147,7 @@ Assembler::Impl::Impl(llvm::StringRef arch_keyword,
             parser_keyword, arch_keyword));
 
     // Get initial x86 BITS setting from object format
-    if (String::NocaseEqual(m_arch_module->getKeyword(), "x86"))
+    if (m_arch_module->getKeyword().equals_lower("x86"))
         m_arch->setVar("mode_bits",
                        m_objfmt_module->getDefaultX86ModeBits());
 }
@@ -313,7 +312,7 @@ Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
         // If we're using x86 and the default objfmt bits is 64, default the
         // machine to amd64.  When we get more arches with multiple machines,
         // we should do this in a more modular fashion.
-        if (String::NocaseEqual(m_arch_module->getKeyword(), "x86") &&
+        if (m_arch_module->getKeyword().equals_lower("x86") &&
             m_objfmt_module->getDefaultX86ModeBits() == 64)
             setMachine("amd64");
     }
@@ -420,7 +419,7 @@ Assembler::Output(llvm::raw_fd_ostream& os, bool warning_error)
     // Write the object file
     m_impl->m_objfmt->Output
         (os,
-         !String::NocaseEqual(m_impl->m_dbgfmt_module->getKeyword(), "null"),
+         !m_impl->m_dbgfmt_module->getKeyword().equals_lower("null"),
          m_impl->m_errwarns);
 
     if (m_impl->m_dump_time == DUMP_AFTER_OUTPUT)

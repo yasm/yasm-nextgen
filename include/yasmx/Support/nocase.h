@@ -40,12 +40,6 @@ namespace String
 {
 
 YASM_LIB_EXPORT
-bool NocaseEqual(llvm::StringRef s1, llvm::StringRef s2);
-
-YASM_LIB_EXPORT
-bool NocaseEqual(llvm::StringRef s1, llvm::StringRef s2, std::size_t n);
-
-YASM_LIB_EXPORT
 std::string Lowercase(llvm::StringRef in);
 
 } // namespace String

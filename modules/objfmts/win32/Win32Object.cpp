@@ -31,7 +31,6 @@
 #include <vector>
 
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/nocase.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/Directive.h"
@@ -194,9 +193,9 @@ Win32Object::AddDirectives(Directives& dirs, llvm::StringRef parser)
         { "safeseh", &Win32Object::DirSafeSEH, Directives::ID_REQUIRED },
     };
 
-    if (String::NocaseEqual(parser, "nasm"))
+    if (parser.equals_lower("nasm"))
         dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
-    else if (String::NocaseEqual(parser, "gas"))
+    else if (parser.equals_lower("gas") || parser.equals_lower("gnu"))
         dirs.AddArray(this, gas_dirs, NELEMS(gas_dirs));
 
     // Pull in coff directives
@@ -252,7 +251,7 @@ Win32Object::InitSection(llvm::StringRef name,
         coffsect->m_flags =
             CoffSection::INFO | CoffSection::DISCARD | CoffSection::READ;
     }
-    else if (String::NocaseEqual(name, ".debug", 6))
+    else if (name.substr(0, 6).equals_lower(".debug"))
     {
         coffsect->m_flags =
             CoffSection::DATA | CoffSection::DISCARD | CoffSection::READ;

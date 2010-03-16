@@ -29,7 +29,6 @@
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/nocase.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
 #include "yasmx/BytecodeOutput.h"
@@ -106,12 +105,12 @@ bool
 XdfObject::isOkObject(Object& object)
 {
     // Only support x86 arch
-    if (!String::NocaseEqual(object.getArch()->getModule().getKeyword(), "x86"))
+    if (!object.getArch()->getModule().getKeyword().equals_lower("x86"))
         return false;
 
     // Support x86 and amd64 machines of x86 arch
-    if (!String::NocaseEqual(object.getArch()->getMachine(), "x86") &&
-        !String::NocaseEqual(object.getArch()->getMachine(), "amd64"))
+    if (!object.getArch()->getMachine().equals_lower("x86") &&
+        !object.getArch()->getMachine().equals_lower("amd64"))
     {
         return false;
     }
@@ -763,7 +762,7 @@ XdfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
         {"segment", &XdfObject::DirSection, Directives::ARG_REQUIRED},
     };
 
-    if (String::NocaseEqual(parser, "nasm"))
+    if (parser.equals_lower("nasm"))
         dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
 }
 
