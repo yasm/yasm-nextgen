@@ -28,10 +28,10 @@
 
 #include "util.h"
 
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/nocase.h"
 #include "yasmx/Directive.h"
 
 
@@ -75,7 +75,7 @@ Directives::~Directives()
 void
 Directives::Add(llvm::StringRef name, Directive handler, Flags flags)
 {
-    m_impl->m_dirs[String::Lowercase(name)] = Impl::Dir(handler, flags);
+    m_impl->m_dirs[llvm::LowercaseString(name)] = Impl::Dir(handler, flags);
 }
 
 Directive
@@ -91,7 +91,7 @@ Directives::operator[] (llvm::StringRef name) const
 bool
 Directives::get(Directive* dir, llvm::StringRef name) const
 {
-    Impl::DirMap::iterator p = m_impl->m_dirs.find(String::Lowercase(name));
+    Impl::DirMap::iterator p = m_impl->m_dirs.find(llvm::LowercaseString(name));
     if (p == m_impl->m_dirs.end())
         return false;
 

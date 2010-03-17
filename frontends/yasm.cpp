@@ -30,6 +30,7 @@
 
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -37,7 +38,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/nocase.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/System/plugin.h"
 #include "yasmx/Arch.h"
@@ -377,7 +377,7 @@ ModuleCommonHandler(const std::string& param, const char* name,
     if (param.empty())
         return param;
 
-    std::string keyword = String::Lowercase(param);
+    std::string keyword = llvm::LowercaseString(param);
     if (!yasm::isModule<T>(keyword))
     {
         if (param == "help")

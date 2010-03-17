@@ -11,7 +11,6 @@ YASM_ADD_UNIT_TEST(libyasmx_tests
     hamt_test.cpp
     intnum_test.cpp
     location_test.cpp
-    nocase_test.cpp
     unescape_test.cpp
     value_test.cpp
     )

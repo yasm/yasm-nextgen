@@ -122,17 +122,17 @@ static inline std::string ftostr(const APFloat& V) {
   return "<unknown format in ftostr>"; // error
 }
 
-static inline std::string LowercaseString(const std::string &S) {
+static inline std::string LowercaseString(StringRef S) {
   std::string result(S);
-  for (unsigned i = 0; i < S.length(); ++i)
+  for (unsigned i = 0; i < S.size(); ++i)
     if (isupper(result[i]))
       result[i] = char(tolower(result[i]));
   return result;
 }
 
-static inline std::string UppercaseString(const std::string &S) {
+static inline std::string UppercaseString(StringRef S) {
   std::string result(S);
-  for (unsigned i = 0; i < S.length(); ++i)
+  for (unsigned i = 0; i < S.size(); ++i)
     if (islower(result[i]))
       result[i] = char(toupper(result[i]));
   return result;

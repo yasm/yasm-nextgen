@@ -31,6 +31,7 @@
 #include <string>
 #include <vector>
 
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -38,7 +39,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Support/nocase.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/System/plugin.h"
 #include "yasmx/Arch.h"
@@ -409,7 +409,7 @@ DoDump(const std::string& in_filename)
 
     if (!objfmt_keyword.empty())
     {
-        objfmt_keyword = String::Lowercase(objfmt_keyword);
+        objfmt_keyword = llvm::LowercaseString(objfmt_keyword);
         if (!yasm::isModule<yasm::ObjectFormatModule>(objfmt_keyword))
         {
             throw yasm::Error(String::Compose(
