@@ -43,15 +43,39 @@ unsigned ContentCache::getSizeBytesMapped() const {
 ///  scratch buffer.  If the ContentCache encapsulates a source file, that
 ///  file is not lazily brought in from disk to satisfy this query.
 unsigned ContentCache::getSize() const {
-  return Entry ? Entry->getSize() : Buffer->getBufferSize();
+  return Buffer ? (unsigned) Buffer->getBufferSize()
+                : (unsigned) Entry->getSize();
 }
 
-const llvm::MemoryBuffer *ContentCache::getBuffer() const {
+void ContentCache::replaceBuffer(const llvm::MemoryBuffer *B) {
+  assert(B != Buffer);
+  
+  delete Buffer;
+  Buffer = B;
+}
+
+const llvm::MemoryBuffer *ContentCache::getBuffer(std::string *ErrorStr) const {
   // Lazily create the Buffer for ContentCaches that wrap files.
   if (!Buffer && Entry) {
-    // FIXME: Should we support a way to not have to do this check over
-    //   and over if we cannot open the file?
-    Buffer = MemoryBuffer::getFile(Entry->getName(), 0, Entry->getSize());
+    Buffer = MemoryBuffer::getFile(Entry->getName(), ErrorStr,Entry->getSize());
+
+    // If we were unable to open the file, then we are in an inconsistent
+    // situation where the content cache referenced a file which no longer
+    // exists. Most likely, we were using a stat cache with an invalid entry but
+    // the file could also have been removed during processing. Since we can't
+    // really deal with this situation, just create an empty buffer.
+    //
+    // FIXME: This is definitely not ideal, but our immediate clients can't
+    // currently handle returning a null entry here. Ideally we should detect
+    // that we are in an inconsistent situation and error out as quickly as
+    // possible.
+    if (!Buffer) {
+      const llvm::StringRef FillStr("<<<MISSING SOURCE FILE>>>\n");
+      Buffer = MemoryBuffer::getNewMemBuffer(Entry->getSize(), "<invalid>");
+      char *Ptr = const_cast<char*>(Buffer->getBufferStart());
+      for (unsigned i = 0, e = Entry->getSize(); i != e; ++i)
+        Ptr[i] = FillStr[i % FillStr.size()];
+    }
   }
   return Buffer;
 }
@@ -358,8 +382,6 @@ FileID SourceManager::createFileID(const ContentCache *File,
       = SLocEntry::get(Offset, FileInfo::get(IncludePos, File, FileCharacter));
     SLocEntryLoaded[PreallocatedID] = true;
     FileID FID = FileID::get(PreallocatedID);
-    if (File->FirstFID.isInvalid())
-      File->FirstFID = FID;
     return LastFileIDLookup = FID;
   }
 
@@ -373,8 +395,6 @@ FileID SourceManager::createFileID(const ContentCache *File,
   // Set LastFileIDLookup to the newly created file.  The next getFileID call is
   // almost guaranteed to be from that file.
   FileID FID = FileID::get(SLocEntryTable.size()-1);
-  if (File->FirstFID.isInvalid())
-    File->FirstFID = FID;
   return LastFileIDLookup = FID;
 }
 
@@ -404,6 +424,25 @@ SourceLocation SourceManager::createInstantiationLoc(SourceLocation SpellingLoc,
   assert(NextOffset+TokLength+1 > NextOffset && "Ran out of source locations!");
   NextOffset += TokLength+1;
   return SourceLocation::getMacroLoc(NextOffset-(TokLength+1));
+}
+
+const llvm::MemoryBuffer *
+SourceManager::getMemoryBufferForFile(const FileEntry *File) {
+  const SrcMgr::ContentCache *IR = getOrCreateContentCache(File);
+  if (IR == 0)
+    return 0;
+
+  return IR->getBuffer();
+}
+
+bool SourceManager::overrideFileContents(const FileEntry *SourceFile,
+                                         const llvm::MemoryBuffer *Buffer) {
+  const SrcMgr::ContentCache *IR = getOrCreateContentCache(SourceFile);
+  if (IR == 0)
+    return true;
+
+  const_cast<SrcMgr::ContentCache *>(IR)->replaceBuffer(Buffer);
+  return false;
 }
 
 /// getBufferData - Return a pointer to the start and end of the source buffer
@@ -522,10 +561,14 @@ FileID SourceManager::getFileIDSlow(unsigned SLocOffset) const {
 SourceLocation SourceManager::
 getInstantiationLocSlowCase(SourceLocation Loc) const {
   do {
-    std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(Loc);
-    Loc = getSLocEntry(LocInfo.first).getInstantiation()
+    // Note: If Loc indicates an offset into a token that came from a macro
+    // expansion (e.g. the 5th character of the token) we do not want to add
+    // this offset when going to the instantiation location.  The instatiation
+    // location is the macro invocation, which the offset has nothing to do
+    // with.  This is unlike when we get the spelling loc, because the offset
+    // directly correspond to the token whose spelling we're inspecting.
+    Loc = getSLocEntry(getFileID(Loc)).getInstantiation()
                    .getInstantiationLocStart();
-    Loc = Loc.getFileLocWithOffset(LocInfo.second);
   } while (!Loc.isFileID());
 
   return Loc;
@@ -660,8 +703,8 @@ unsigned SourceManager::getInstantiationColumnNumber(SourceLocation Loc) const {
 
 
 
-static void ComputeLineNumbers(ContentCache* FI,
-                               llvm::BumpPtrAllocator &Alloc) DISABLE_INLINE;
+static DISABLE_INLINE void ComputeLineNumbers(ContentCache* FI,
+                                              llvm::BumpPtrAllocator &Alloc);
 static void ComputeLineNumbers(ContentCache* FI, llvm::BumpPtrAllocator &Alloc){
   // Note that calling 'getBuffer()' may lazily page in the file.
   const MemoryBuffer *Buffer = FI->getBuffer();
@@ -938,8 +981,38 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
   if (Content->SourceLineCache == 0)
     ComputeLineNumbers(Content, ContentCacheAlloc);
 
-  if (Line > Content->NumLines)
+  // Find the first file ID that corresponds to the given file.
+  FileID FirstFID;
+
+  // First, check the main file ID, since it is common to look for a
+  // location in the main file.
+  if (!MainFileID.isInvalid()) {
+    const SLocEntry &MainSLoc = getSLocEntry(MainFileID);
+    if (MainSLoc.isFile() && MainSLoc.getFile().getContentCache() == Content)
+      FirstFID = MainFileID;
+  }
+
+  if (FirstFID.isInvalid()) {
+    // The location we're looking for isn't in the main file; look
+    // through all of the source locations.
+    for (unsigned I = 0, N = sloc_entry_size(); I != N; ++I) {
+      const SLocEntry &SLoc = getSLocEntry(I);
+      if (SLoc.isFile() && SLoc.getFile().getContentCache() == Content) {
+        FirstFID = FileID::get(I);
+        break;
+      }
+    }
+  }
+    
+  if (FirstFID.isInvalid())
     return SourceLocation();
+
+  if (Line > Content->NumLines) {
+    unsigned Size = Content->getBuffer()->getBufferSize();
+    if (Size > 0)
+      --Size;
+    return getLocForStartOfFile(FirstFID).getFileLocWithOffset(Size);
+  }
 
   unsigned FilePos = Content->SourceLineCache[Line - 1];
   const char *Buf = Content->getBuffer()->getBufferStart() + FilePos;
@@ -950,10 +1023,9 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
   while (i < BufLength-1 && i < Col-1 && Buf[i] != '\n' && Buf[i] != '\r')
     ++i;
   if (i < Col-1)
-    return SourceLocation();
+    return getLocForStartOfFile(FirstFID).getFileLocWithOffset(FilePos + i);
 
-  return getLocForStartOfFile(Content->FirstFID).
-            getFileLocWithOffset(FilePos + Col - 1);
+  return getLocForStartOfFile(FirstFID).getFileLocWithOffset(FilePos + Col - 1);
 }
 
 /// \brief Determines the order of 2 source locations in the translation unit.
@@ -1032,30 +1104,20 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
       return LastResForBeforeTUCheck = LOffs.second < I->second;
   }
 
-  // No common ancestor.
-  // Now we are getting into murky waters. Most probably this is because one
-  // location is in the predefines buffer.
+  // There is no common ancestor, most probably because one location is in the
+  // predefines buffer.
+  //
+  // FIXME: We should rearrange the external interface so this simply never
+  // happens; it can't conceptually happen. Also see PR5662.
 
-  const FileEntry *LEntry =
-    getSLocEntry(LOffs.first).getFile().getContentCache()->Entry;
-  const FileEntry *REntry =
-    getSLocEntry(ROffs.first).getFile().getContentCache()->Entry;
+  // If exactly one location is a memory buffer, assume it preceeds the other.
+  bool LIsMB = !getSLocEntry(LOffs.first).getFile().getContentCache()->Entry;
+  bool RIsMB = !getSLocEntry(ROffs.first).getFile().getContentCache()->Entry;
+  if (LIsMB != RIsMB)
+    return LastResForBeforeTUCheck = LIsMB;
 
-  // If the locations are in two memory buffers we give up, we can't answer
-  // which one should be considered first.
-  // FIXME: Should there be a way to "include" memory buffers in the translation
-  // unit ?
-  assert((LEntry != 0 || REntry != 0) && "Locations in memory buffers.");
-  (void) REntry;
-
-  // Consider the memory buffer as coming before the file in the translation
-  // unit.
-  if (LEntry == 0)
-    return LastResForBeforeTUCheck = true;
-  else {
-    assert(REntry == 0 && "Locations in not #included files ?");
-    return LastResForBeforeTUCheck = false;
-  }
+  // Otherwise, just assume FileIDs were created in order.
+  return LastResForBeforeTUCheck = (LOffs.first < ROffs.first);
 }
 
 /// PrintStats - Print statistics to stderr.

@@ -70,13 +70,10 @@ namespace SrcMgr {
     /// if SourceLineCache is non-null.
     unsigned NumLines;
 
-    /// FirstFID - First FileID that was created for this ContentCache.
-    /// Represents the first source inclusion of the file associated with this
-    /// ContentCache.
-    mutable FileID FirstFID;
-
-    /// getBuffer - Returns the memory buffer for the associated content.
-    const llvm::MemoryBuffer *getBuffer() const;
+    /// getBuffer - Returns the memory buffer for the associated content.  If
+    /// there is an error opening this buffer the first time, this manufactures
+    /// a temporary buffer and returns a non-empty error string.
+    const llvm::MemoryBuffer *getBuffer(std::string *ErrorStr = 0) const;
 
     /// getSize - Returns the size of the content encapsulated by this
     ///  ContentCache. This can be the size of the source file or the size of an
@@ -93,6 +90,10 @@ namespace SrcMgr {
       assert(!Buffer && "MemoryBuffer already set.");
       Buffer = B;
     }
+
+    /// \brief Replace the existing buffer (which will be deleted)
+    /// with the given buffer.
+    void replaceBuffer(const llvm::MemoryBuffer *B);
 
     ContentCache(const FileEntry *Ent = 0)
       : Buffer(0), Entry(Ent), SourceLineCache(0), NumLines(0) {}
@@ -337,7 +338,7 @@ class YASM_LIB_EXPORT SourceManager {
   void operator=(const SourceManager&);
 public:
   SourceManager()
-    : ExternalSLocEntries(0), LineTable(0), NumLinearScans(0),
+    : ExternalSLocEntries(0), LineTable(0), NumLinearScans(0), 
       NumBinaryProbes(0) {
     clearIDTables();
   }
@@ -407,14 +408,30 @@ public:
                                         unsigned PreallocatedID = 0,
                                         unsigned Offset = 0);
 
+  /// \brief Retrieve the memory buffer associated with the given file.
+  const llvm::MemoryBuffer *getMemoryBufferForFile(const FileEntry *File);
+
+  /// \brief Override the contents of the given source file by providing an
+  /// already-allocated buffer.
+  ///
+  /// \param SourceFile the source file whose contents will be override.
+  ///
+  /// \param Buffer the memory buffer whose contents will be used as the
+  /// data in the given source file.
+  ///
+  /// \returns true if an error occurred, false otherwise.
+  bool overrideFileContents(const FileEntry *SourceFile,
+                            const llvm::MemoryBuffer *Buffer);
+
   //===--------------------------------------------------------------------===//
   // FileID manipulation methods.
   //===--------------------------------------------------------------------===//
 
-  /// getBuffer - Return the buffer for the specified FileID.
-  ///
-  const llvm::MemoryBuffer *getBuffer(FileID FID) const {
-    return getSLocEntry(FID).getFile().getContentCache()->getBuffer();
+  /// getBuffer - Return the buffer for the specified FileID. If there is an
+  /// error opening this buffer the first time, this manufactures a temporary
+  /// buffer and returns a non-empty error string.
+  const llvm::MemoryBuffer *getBuffer(FileID FID, std::string *Error = 0) const{
+    return getSLocEntry(FID).getFile().getContentCache()->getBuffer(Error);
   }
 
   /// getFileEntryForID - Returns the FileEntry record for the provided FileID.
@@ -653,31 +670,32 @@ public:
       ::const_iterator fileinfo_iterator;
   fileinfo_iterator fileinfo_begin() const { return FileInfos.begin(); }
   fileinfo_iterator fileinfo_end() const { return FileInfos.end(); }
+  bool hasFileInfo(const FileEntry *File) const {
+    return FileInfos.find(File) != FileInfos.end();
+  }
 
   /// PrintStats - Print statistics to stderr.
   ///
   void PrintStats() const;
 
-  // Iteration over the source location entry table.
-  typedef std::vector<SrcMgr::SLocEntry>::const_iterator sloc_entry_iterator;
-
-  sloc_entry_iterator sloc_entry_begin() const {
-    return SLocEntryTable.begin();
-  }
-
-  sloc_entry_iterator sloc_entry_end() const {
-    return SLocEntryTable.end();
-  }
-
   unsigned sloc_entry_size() const { return SLocEntryTable.size(); }
+  
+  // FIXME: Exposing this is a little gross; what we want is a good way
+  //  to iterate the entries that were not defined in a PCH file (or
+  //  any other external source).
+  unsigned sloc_loaded_entry_size() const { return SLocEntryLoaded.size(); }
 
-  const SrcMgr::SLocEntry &getSLocEntry(FileID FID) const {
-    assert(FID.ID < SLocEntryTable.size() && "Invalid id");
+  const SrcMgr::SLocEntry &getSLocEntry(unsigned ID) const {
+    assert(ID < SLocEntryTable.size() && "Invalid id");
     if (ExternalSLocEntries &&
-        FID.ID < SLocEntryLoaded.size() &&
-        !SLocEntryLoaded[FID.ID])
-      ExternalSLocEntries->ReadSLocEntry(FID.ID);
-    return SLocEntryTable[FID.ID];
+        ID < SLocEntryLoaded.size() &&
+        !SLocEntryLoaded[ID])
+      ExternalSLocEntries->ReadSLocEntry(ID);
+    return SLocEntryTable[ID];
+  }
+  
+  const SrcMgr::SLocEntry &getSLocEntry(FileID FID) const {    
+    return getSLocEntry(FID.ID);
   }
 
   unsigned getNextOffset() const { return NextOffset; }
