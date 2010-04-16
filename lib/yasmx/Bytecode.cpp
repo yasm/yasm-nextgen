@@ -212,7 +212,7 @@ Bytecode::Expand(int span,
 {
     if (m_contents.get() == 0)
         return true;
-    unsigned long len;
+    unsigned long len = m_len;
     if (!m_contents->Expand(*this, &len, span, old_val, new_val, keep,
                             neg_thres, pos_thres, diags))
         return false;
