@@ -175,7 +175,7 @@ X86Jmp::CalcLen(Bytecode& bc,
     {
         // Short or maybe long; generate span
         ilen += m_shortop.getLen() + 1;
-        add_span(bc, 1, m_target, -128+*len, 127+*len);
+        add_span(bc, 1, m_target, -128+ilen, 127+ilen);
     }
     *len = ilen;
     return true;
