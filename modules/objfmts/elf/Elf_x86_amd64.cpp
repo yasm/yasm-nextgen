@@ -26,8 +26,6 @@
 //
 #include "util.h"
 
-#include "yasmx/Support/errwarn.h"
-
 #include "ElfConfig.h"
 #include "ElfMachine.h"
 #include "ElfReloc.h"
@@ -51,14 +49,13 @@ public:
                        bool rela)
         : ElfReloc(config, symtab, in, pos, rela)
     {}
-    ElfReloc_x86_amd64(SymbolRef sym,
-                       SymbolRef wrt,
-                       const IntNum& addr,
-                       bool rel,
-                       SymbolRef GOT_sym,
-                       size_t valsize);
+    ElfReloc_x86_amd64(SymbolRef sym, const IntNum& addr)
+        : ElfReloc(sym, addr)
+    {}
+
     ~ElfReloc_x86_amd64() {}
 
+    bool setRel(bool rel, SymbolRef GOT_sym, size_t valsize);
     std::string getTypeName() const;
 };
 
@@ -68,7 +65,7 @@ public:
     ~Elf_x86_amd64() {}
 
     void Configure(ElfConfig* config) const;
-    void AddSpecialSymbols(Object& object, const std::string& parser) const;
+    void AddSpecialSymbols(Object& object, llvm::StringRef parser) const;
 
     std::auto_ptr<ElfReloc>
     ReadReloc(const ElfConfig& config,
@@ -82,15 +79,9 @@ public:
     }
 
     std::auto_ptr<ElfReloc>
-    MakeReloc(SymbolRef sym,
-              SymbolRef wrt,
-              const IntNum& addr,
-              bool rel,
-              SymbolRef GOT_sym,
-              size_t valsize) const
+    MakeReloc(SymbolRef sym, const IntNum& addr) const
     {
-        return std::auto_ptr<ElfReloc>
-            (new ElfReloc_x86_amd64(sym, wrt, addr, rel, GOT_sym, valsize));
+        return std::auto_ptr<ElfReloc>(new ElfReloc_x86_amd64(sym, addr));
     }
 };
 
@@ -123,7 +114,7 @@ Elf_x86_amd64::Configure(ElfConfig* config) const
 
 void
 Elf_x86_amd64::AddSpecialSymbols(Object& object,
-                                 const std::string& parser) const
+                                 llvm::StringRef parser) const
 {
     static const SpecialSymbolData ssyms[] =
     {
@@ -147,22 +138,15 @@ Elf_x86_amd64::AddSpecialSymbols(Object& object,
         AddElfSSym(object, ssyms[i]);
 }
 
-ElfReloc_x86_amd64::ElfReloc_x86_amd64(SymbolRef sym,
-                                       SymbolRef wrt,
-                                       const IntNum& addr,
-                                       bool rel,
-                                       SymbolRef GOT_sym,
-                                       size_t valsize)
-    : ElfReloc(sym, wrt, addr, valsize)
+bool
+ElfReloc_x86_amd64::setRel(bool rel, SymbolRef GOT_sym, size_t valsize)
 {
     // Map PC-relative GOT to appropriate relocation
     if (rel && m_type == R_X86_64_GOT32)
         m_type = R_X86_64_GOTPCREL;
-    else if (m_type != 0)
-        ;
-    else if (sym == GOT_sym && valsize == 32)
+    else if (m_sym == GOT_sym && valsize == 32)
         m_type = R_X86_64_GOTPC32;
-    else if (sym == GOT_sym && valsize == 64)
+    else if (m_sym == GOT_sym && valsize == 64)
         m_type = R_X86_64_GOTPC64;
     else if (rel)
     {
@@ -172,7 +156,7 @@ ElfReloc_x86_amd64::ElfReloc_x86_amd64(SymbolRef sym,
             case 16: m_type = R_X86_64_PC16; break;
             case 32: m_type = R_X86_64_PC32; break;
             case 64: m_type = R_X86_64_PC64; break;
-            default: throw TypeError(N_("elf: invalid relocation size"));
+            default: return false;
         }
     }
     else
@@ -183,9 +167,10 @@ ElfReloc_x86_amd64::ElfReloc_x86_amd64(SymbolRef sym,
             case 16: m_type = R_X86_64_16; break;
             case 32: m_type = R_X86_64_32; break;
             case 64: m_type = R_X86_64_64; break;
-            default: throw TypeError(N_("elf: invalid relocation size"));
+            default: return false;
         }
     }
+    return true;
 }
 
 std::string

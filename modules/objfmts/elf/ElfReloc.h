@@ -55,8 +55,22 @@ public:
              const llvm::MemoryBuffer& in,
              unsigned long* pos,
              bool rela);
-    ElfReloc(SymbolRef sym, SymbolRef wrt, const IntNum& addr, size_t valsize);
+    ElfReloc(SymbolRef sym, const IntNum& addr);
     virtual ~ElfReloc();
+
+    /// Set relocation type for relative symbols (typical case).
+    /// @param rel      PC-relative?
+    /// @param GOT_sym  _GLOBAL_OFFSET_TABLE_ symbol
+    /// @param valsize  relocation size (in bits)
+    /// @return False if unable to determine relocation type.
+    virtual bool setRel(bool rel, SymbolRef GOT_sym, size_t valsize) = 0;
+
+    /// Set relocation type via WRT (special symbol) mechanism.
+    /// @param valsize  relocation size (in bits)
+    /// @return False if invalid wrt.
+    bool setWrt(SymbolRef wrt, size_t valsize);
+
+    bool isValid() const { return m_type != 0xff; }
 
     Expr getValue() const;
     virtual std::string getTypeName() const = 0;

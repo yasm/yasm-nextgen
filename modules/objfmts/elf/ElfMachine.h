@@ -99,7 +99,7 @@ public:
 
     virtual void Configure(/*@out@*/ ElfConfig* config) const = 0;
     virtual void AddSpecialSymbols(Object& object,
-                                   const std::string& parser) const = 0;
+                                   llvm::StringRef parser) const = 0;
 
     virtual std::auto_ptr<ElfReloc>
         ReadReloc(const ElfConfig& config,
@@ -109,12 +109,7 @@ public:
                   bool rela) const = 0;
 
     virtual std::auto_ptr<ElfReloc>
-        MakeReloc(SymbolRef sym,
-                  SymbolRef wrt,
-                  const IntNum& addr,
-                  bool rel,
-                  SymbolRef GOT_sym,
-                  size_t valsize) const = 0;
+        MakeReloc(SymbolRef sym, const IntNum& addr) const = 0;
 };
 
 bool isOkElfMachine(const Arch& arch, ElfClass cls);

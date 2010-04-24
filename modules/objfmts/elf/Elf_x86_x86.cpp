@@ -26,8 +26,6 @@
 //
 #include "util.h"
 
-#include "yasmx/Support/errwarn.h"
-
 #include "ElfConfig.h"
 #include "ElfMachine.h"
 #include "ElfReloc.h"
@@ -51,14 +49,13 @@ public:
                      bool rela)
         : ElfReloc(config, symtab, in, pos, rela)
     {}
-    ElfReloc_x86_x86(SymbolRef sym,
-                     SymbolRef wrt,
-                     const IntNum& addr,
-                     bool rel,
-                     SymbolRef GOT_sym,
-                     size_t valsize);
+    ElfReloc_x86_x86(SymbolRef sym, const IntNum& addr)
+        : ElfReloc(sym, addr)
+    {}
+
     ~ElfReloc_x86_x86() {}
 
+    bool setRel(bool rel, SymbolRef GOT_sym, size_t valsize);
     std::string getTypeName() const;
     void HandleAddend(IntNum* intn,
                       const ElfConfig& config,
@@ -71,7 +68,7 @@ public:
     ~Elf_x86_x86() {}
 
     void Configure(ElfConfig* config) const;
-    void AddSpecialSymbols(Object& object, const std::string& parser) const;
+    void AddSpecialSymbols(Object& object, llvm::StringRef parser) const;
 
     std::auto_ptr<ElfReloc>
     ReadReloc(const ElfConfig& config,
@@ -85,15 +82,9 @@ public:
     }
 
     std::auto_ptr<ElfReloc>
-    MakeReloc(SymbolRef sym,
-              SymbolRef wrt,
-              const IntNum& addr,
-              bool rel,
-              SymbolRef GOT_sym,
-              size_t valsize) const
+    MakeReloc(SymbolRef sym, const IntNum& addr) const
     {
-        return std::auto_ptr<ElfReloc>
-            (new ElfReloc_x86_x86(sym, wrt, addr, rel, GOT_sym, valsize));
+        return std::auto_ptr<ElfReloc>(new ElfReloc_x86_x86(sym, addr));
     }
 };
 
@@ -125,7 +116,7 @@ Elf_x86_x86::Configure(ElfConfig* config) const
 }
 
 void
-Elf_x86_x86::AddSpecialSymbols(Object& object, const std::string& parser) const
+Elf_x86_x86::AddSpecialSymbols(Object& object, llvm::StringRef parser) const
 {
     static const SpecialSymbolData ssyms[] =
     {
@@ -151,17 +142,10 @@ Elf_x86_x86::AddSpecialSymbols(Object& object, const std::string& parser) const
         AddElfSSym(object, ssyms[i]);
 }
 
-ElfReloc_x86_x86::ElfReloc_x86_x86(SymbolRef sym,
-                                   SymbolRef wrt,
-                                   const IntNum& addr,
-                                   bool rel,
-                                   SymbolRef GOT_sym,
-                                   size_t valsize)
-    : ElfReloc(sym, wrt, addr, valsize)
+bool
+ElfReloc_x86_x86::setRel(bool rel, SymbolRef GOT_sym, size_t valsize)
 {
-    if (m_type != 0)
-        ;
-    else if (sym == GOT_sym && valsize == 32)
+    if (m_sym == GOT_sym && valsize == 32)
         m_type = R_386_GOTPC;
     else if (rel)
     {
@@ -170,7 +154,7 @@ ElfReloc_x86_x86::ElfReloc_x86_x86(SymbolRef sym,
             case 8: m_type = R_386_PC8; break;
             case 16: m_type = R_386_PC16; break;
             case 32: m_type = R_386_PC32; break;
-            default: throw TypeError(N_("elf: invalid relocation size"));
+            default: return false;
         }
     }
     else
@@ -180,9 +164,10 @@ ElfReloc_x86_x86::ElfReloc_x86_x86(SymbolRef sym,
             case 8: m_type = R_386_8; break;
             case 16: m_type = R_386_16; break;
             case 32: m_type = R_386_32; break;
-            default: throw TypeError(N_("elf: invalid relocation size"));
+            default: return false;
         }
     }
+    return true;
 }
 
 std::string

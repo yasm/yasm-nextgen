@@ -29,7 +29,6 @@
 #include "util.h"
 
 #include "YAML/emitter.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytes_util.h"
 #include "yasmx/InputBuffer.h"
 
@@ -45,29 +44,11 @@ namespace objfmt
 namespace elf
 {
 
-ElfReloc::ElfReloc(SymbolRef sym,
-                   SymbolRef wrt,
-                   const IntNum& addr,
-                   size_t valsize)
+ElfReloc::ElfReloc(SymbolRef sym, const IntNum& addr)
     : Reloc(addr, sym)
-    , m_type(0)         // default to no type
+    , m_type(0xff)      // default to invalid type
     , m_addend(0)
 {
-    if (wrt)
-    {
-        const ElfSpecialSymbol* ssym = wrt->getAssocData<ElfSpecialSymbol>();
-        if (!ssym || valsize != ssym->size)
-            throw TypeError(N_("elf: invalid WRT"));
-
-        // Force TLS type; this is required by the linker.
-        if (ssym->thread_local)
-        {
-            if (ElfSymbol* esym = sym->getAssocData<ElfSymbol>())
-                esym->setType(STT_TLS);
-        }
-        m_type = ssym->reloc;
-    }
-
     assert(sym != 0 && "sym is null");
 }
 
@@ -77,6 +58,8 @@ ElfReloc::ElfReloc(const ElfConfig& config,
                    unsigned long* pos,
                    bool rela)
     : Reloc(0, SymbolRef(0))
+    , m_type(0xff)
+    , m_addend(0)
 {
     InputBuffer inbuf(in, *pos);
     config.setEndian(inbuf);
@@ -86,7 +69,7 @@ ElfReloc::ElfReloc(const ElfConfig& config,
     {
         size = rela ? RELOC32A_SIZE : RELOC32_SIZE;
         if (size > inbuf.getReadableSize())
-            throw Error(N_("could not read relocation entry"));
+            return;
 
         m_addr = ReadU32(inbuf);
 
@@ -101,7 +84,7 @@ ElfReloc::ElfReloc(const ElfConfig& config,
     {
         size = rela ? RELOC64A_SIZE : RELOC64_SIZE;
         if (size > inbuf.getReadableSize())
-            throw Error(N_("could not read relocation entry"));
+            return;
 
         m_addr = ReadU64(inbuf);
 
@@ -113,7 +96,7 @@ ElfReloc::ElfReloc(const ElfConfig& config,
             m_addend = ReadS64(inbuf);
     }
     else
-        throw Error(N_("unknown elf class"));
+        assert(false && "unknown elf class");
 
     *pos += size;
 }
@@ -122,9 +105,29 @@ ElfReloc::~ElfReloc()
 {
 }
 
+bool
+ElfReloc::setWrt(SymbolRef wrt, size_t valsize)
+{
+    assert(wrt != 0 && "wrt is null");
+
+    const ElfSpecialSymbol* ssym = wrt->getAssocData<ElfSpecialSymbol>();
+    if (!ssym || valsize != ssym->size)
+        return false;
+
+    // Force TLS type; this is required by the linker.
+    if (ssym->thread_local)
+    {
+        if (ElfSymbol* esym = m_sym->getAssocData<ElfSymbol>())
+            esym->setType(STT_TLS);
+    }
+    m_type = ssym->reloc;
+    return true;
+}
+
 Expr
 ElfReloc::getValue() const
 {
+    assert(isValid() && "invalid relocation");
     Expr e(m_sym);
     if (!m_addend.isZero())
         e += m_addend;
@@ -136,6 +139,7 @@ ElfReloc::HandleAddend(IntNum* intn,
                        const ElfConfig& config,
                        unsigned int insn_start)
 {
+    assert(isValid() && "invalid relocation");
     // rela sections put the addend into the relocation, and write 0 in
     // data area.
     if (config.rela)
@@ -148,6 +152,7 @@ ElfReloc::HandleAddend(IntNum* intn,
 void
 ElfReloc::Write(Bytes& bytes, const ElfConfig& config)
 {
+    assert(isValid() && "invalid relocation");
     unsigned long r_sym = STN_UNDEF;
 
     if (ElfSymbol* esym = getSymbol()->getAssocData<ElfSymbol>())

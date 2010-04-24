@@ -760,12 +760,17 @@ ElfOutput::ConvertSymbolToBytes(SymbolRef sym,
                                 Diagnostic& diags)
 {
     std::auto_ptr<ElfReloc> reloc =
-        m_objfmt.m_machine->MakeReloc(sym, SymbolRef(0), loc.getOffset(),
-                                      false, m_GOT_sym, valsize);
-
-    // allocate .rel[a] sections on a need-basis
-    Section* sect = loc.bc->getContainer()->AsSection();
-    sect->AddReloc(std::auto_ptr<Reloc>(reloc.release()));
+        m_objfmt.m_machine->MakeReloc(sym, loc.getOffset());
+    if (reloc->setRel(false, m_GOT_sym, valsize))
+    {
+        // allocate .rel[a] sections on a need-basis
+        Section* sect = loc.bc->getContainer()->AsSection();
+        sect->AddReloc(std::auto_ptr<Reloc>(reloc.release()));
+    }
+    else
+    {
+        diags.Report(sym->getUseSource(), diag::err_reloc_invalid_size);
+    }
 
     m_object.getArch()->ToBytes(0, bytes, valsize, 0, warn);
     return true;
@@ -839,10 +844,29 @@ ElfOutput::ConvertValueToBytes(Value& value,
         // Create relocation
         Section* sect = loc.bc->getContainer()->AsSection();
         std::auto_ptr<ElfReloc> reloc =
-            m_objfmt.m_machine->MakeReloc(sym, wrt, loc.getOffset(), pc_rel,
-                                          m_GOT_sym, value.getSize());
-        reloc->HandleAddend(&intn, m_objfmt.m_config, value.getInsnStart());
-        sect->AddReloc(std::auto_ptr<Reloc>(reloc.release()));
+            m_objfmt.m_machine->MakeReloc(sym, loc.getOffset());
+        if (wrt)
+        {
+            if (!reloc->setWrt(wrt, value.getSize()))
+            {
+                diags.Report(value.getSource().getBegin(),
+                             diag::err_invalid_wrt);
+            }
+        }
+        else
+        {
+            if (!reloc->setRel(pc_rel, m_GOT_sym, value.getSize()))
+            {
+                diags.Report(value.getSource().getBegin(),
+                             diag::err_reloc_invalid_size);
+            }
+        }
+
+        if (reloc->isValid())
+        {
+            reloc->HandleAddend(&intn, m_objfmt.m_config, value.getInsnStart());
+            sect->AddReloc(std::auto_ptr<Reloc>(reloc.release()));
+        }
     }
 
     m_object.getArch()->ToBytes(intn, bytes, value.getSize(), 0, warn);

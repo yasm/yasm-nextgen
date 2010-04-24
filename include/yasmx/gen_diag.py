@@ -317,6 +317,7 @@ add_error("err_reloc_invalid_size", "invalid relocation size")
 add_error("err_wrt_not_supported", "WRT not supported")
 add_error("err_wrt_too_complex", "WRT expression too complex")
 add_error("err_wrt_across_sections", "cannot WRT across sections")
+add_error("err_invalid_wrt", "invalid WRT")
 add_error("err_common_size_too_complex", "common size too complex")
 add_error("err_common_size_negative", "common size cannot be negative")
 
