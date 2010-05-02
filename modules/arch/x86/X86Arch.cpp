@@ -229,7 +229,7 @@ X86Arch::DirDefault(DirectiveInfo& info, Diagnostic& diags)
         if (nv->isId())
         {
             llvm::StringRef id = nv->getId();
-            if (String::NocaseEqual(id, "rel"))
+            if (id.equals_lower("rel"))
             {
                 if (m_mode_bits == 64)
                     m_default_rel = true;
@@ -238,7 +238,7 @@ X86Arch::DirDefault(DirectiveInfo& info, Diagnostic& diags)
                                  diags.getCustomDiagID(Diagnostic::Warning,
                         "ignoring default rel in non-64-bit mode"));
             }
-            else if (String::NocaseEqual(id, "abs"))
+            else if (id.equals_lower("abs"))
                 m_default_rel = false;
             else
             {
