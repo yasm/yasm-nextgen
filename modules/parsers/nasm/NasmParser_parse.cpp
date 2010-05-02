@@ -30,6 +30,7 @@
 
 #include "clang/Basic/SourceManager.h"
 #include "yasmx/Support/bitcount.h"
+#include "yasmx/Support/errwarn.h"
 #include "yasmx/Arch.h"
 #include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/Directive.h"
