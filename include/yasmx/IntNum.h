@@ -289,8 +289,9 @@ public:
 
     /// Set intnum value from a decimal/binary/octal/hexidecimal string.
     /// @param str      input string
-    /// @param base     numeric base (10=decimal, etc)
-    void setStr(llvm::StringRef str, int base=10);
+    /// @param radix    numeric base (10=decimal, etc)
+    /// @return False if overflow occurred.
+    bool setStr(llvm::StringRef str, unsigned int radix=10);
 
     /// Get intnum value into a SmallString.  The returned string will
     /// contain a leading '-' if the intnum is negative.

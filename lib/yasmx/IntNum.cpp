@@ -144,44 +144,115 @@ IntNum::getBV(llvm::APInt* bv)
     return bv;
 }
 
-void
-IntNum::setStr(llvm::StringRef str, int base)
+/// Return the value of the specified hex digit, or -1 if it's not valid.
+static unsigned int HexDigitValue(char ch)
+{
+    if (ch >= '0' && ch <= '9') return ch-'0';
+    if (ch >= 'a' && ch <= 'f') return ch-'a'+10;
+    if (ch >= 'A' && ch <= 'F') return ch-'A'+10;
+    if (ch == '_') return 0;
+    return ~0;
+}
+
+bool
+IntNum::setStr(llvm::StringRef str, unsigned int radix)
 {
     // Each computation below needs to know if its negative
-    unsigned int minbits = (str[0] == '-') ? 1 : 0;
+    bool is_neg = (str[0] == '-');
+    unsigned int minbits = is_neg ? 1 : 0;
     size_t len = str.size();
+    llvm::StringRef::iterator begin = str.begin();
+
+    if (is_neg)
+    {
+        ++begin;
+        --len;
+    }
 
     // For radixes of power-of-two values, the bits required is accurately and
     // easily computed.  For radix 10, we use a rough approximation.
-    switch (base)
+    switch (radix)
     {
         case 2:     minbits += (len-minbits); break;
         case 8:     minbits += (len-minbits) * 3; break;
         case 16:    minbits += (len-minbits) * 4; break;
         case 10:    minbits += ((len-minbits) * 64) / 22; break;
-        default:    assert(false && "Invalid radix");
+        default:
+        {
+            unsigned int max_bits_per_digit = 1;
+            while ((1U << max_bits_per_digit) < radix)
+                max_bits_per_digit += 1;
+            minbits += len * max_bits_per_digit;
+        }
     }
     if (minbits > BITVECT_NATIVE_SIZE)
-    {
-        throw OverflowError(
-            N_("Numeric constant too large for internal format"));
-    }
+        return false;
 
     if (minbits < LONG_BITS)
     {
         // shortcut "short" case
-        long v;
-        char cstr[LONG_BITS+1];
-        std::strncpy(cstr, str.data(), len); // len is < LONG_BITS per minbits
-        cstr[len] = '\0';
-        v = std::strtol(cstr, NULL, base);
-        set(static_cast<SmallValue>(v));
+        SmallValue v = 0;
+        for (llvm::StringRef::iterator i = begin, end = str.end();
+             i != end; ++i)
+        {
+            unsigned int c = HexDigitValue(*i);
+            assert(c < radix && "invalid digit for given radix");
+            v = v*radix + c;
+        }
+        set(is_neg ? -v : v);
+        return true;
     }
-    else
+
+    // long case
+    conv_bv = 0;
+
+    // Figure out if we can shift instead of multiply
+    unsigned int shift =
+        (radix == 16 ? 4 : radix == 8 ? 3 : radix == 2 ? 1 : 0);
+
+    llvm::APInt& radixval = op1static;
+    llvm::APInt& charval = op2static;
+    llvm::APInt& oldval = spare;
+
+    radixval = radix;
+    oldval = 0;
+
+    bool overflowed = false;
+    for (llvm::StringRef::iterator i=begin, end=str.end(); i != end; ++i)
     {
-        conv_bv.fromString(str, base);
-        setBV(conv_bv);
+        unsigned int c = HexDigitValue(*i);
+
+        // If this letter is out of bound for this radix, reject it.
+        assert(c < radix && "invalid digit for given radix");
+
+        charval = c;
+
+        // Add the digit to the value in the appropriate radix.  If adding in
+        // digits made the value smaller, then this overflowed.
+        oldval = conv_bv;
+
+        // Shift or multiply by radix, did overflow occur on the multiply?
+        if (shift)
+            conv_bv <<= shift;
+        else
+            conv_bv *= radixval;
+        overflowed |= conv_bv.udiv(radixval) != oldval;
+
+        // Add value, did overflow occur on the value?
+        //   (a + b) ult b  <=> overflow
+        conv_bv += charval;
+        overflowed |= conv_bv.ult(charval);
     }
+
+    // If it's negative, put it in two's complement form
+    if (is_neg)
+    {
+        --conv_bv;
+        conv_bv.flip();
+    }
+
+    setBV(conv_bv);
+    return overflowed;
 }
 
 IntNum::IntNum(const IntNum& rhs)
