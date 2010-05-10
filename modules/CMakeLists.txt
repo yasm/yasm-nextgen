@@ -4,7 +4,6 @@ INCLUDE(arch/CMakeLists.txt)
 INCLUDE(dbgfmts/CMakeLists.txt)
 INCLUDE(objfmts/CMakeLists.txt)
 INCLUDE(parsers/CMakeLists.txt)
-INCLUDE(preprocs/CMakeLists.txt)
 
 MESSAGE(STATUS "Standard modules: ${YASM_MODULES}")
 

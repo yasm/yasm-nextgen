@@ -165,6 +165,13 @@ public:
     /// For debugging purposes.
     void Dump() const;
 
+    void setNameLocation(clang::SourceLocation loc) { m_name_loc = loc; }
+    void setEqualsLocation(clang::SourceLocation loc) { m_equals_loc = loc; }
+    void setValueRange(clang::SourceRange range) { m_value_range = range; }
+
+    clang::SourceLocation getNameLocation() const { return m_name_loc; }
+    clang::SourceLocation getEqualsLocation() const { return m_equals_loc; }
+    clang::SourceRange getValueRange() const { return m_value_range; }
 private:
     std::string m_name; ///< Name (empty string if no name)
 
@@ -191,6 +198,10 @@ private:
     /// identifier begins with this character, this character is stripped
     /// from the returned value.
     char m_id_prefix;
+
+    clang::SourceLocation m_name_loc;
+    clang::SourceLocation m_equals_loc;
+    clang::SourceRange m_value_range;
 };
 
 /// Dump a YAML representation of a name/value.  For debugging purposes.

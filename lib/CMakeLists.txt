@@ -67,11 +67,14 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Expr.cpp
     yasmx/Expr_util.cpp
     yasmx/file.cpp
+    yasmx/HeaderSearch.cpp
+    yasmx/IdentifierTable.cpp
     yasmx/IncbinBytecode.cpp
     yasmx/InputBuffer.cpp
     yasmx/Insn.cpp
     yasmx/IntNum.cpp
     yasmx/Leb128Bytecode.cpp
+    yasmx/Lexer.cpp
     yasmx/ListFormat.cpp
     yasmx/Location.cpp
     yasmx/Location_util.cpp
@@ -86,9 +89,12 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/OrgBytecode.cpp
     yasmx/Op.cpp
     yasmx/Parser.cpp
+    yasmx/ParserImpl.cpp
     yasmx/phash.cpp
     ${PLUGIN_CPP}
     yasmx/Preprocessor.cpp
+    yasmx/PPCaching.cpp
+    yasmx/PPLexerChange.cpp
     yasmx/registry.cpp
     yasmx/Reloc.cpp
     yasmx/Section.cpp
@@ -97,6 +103,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Symbol.cpp
     yasmx/Symbol_util.cpp
     yasmx/SymbolRef.cpp
+    yasmx/TokenLexer.cpp
     yasmx/Value.cpp
     )
 SET_TARGET_PROPERTIES(libyasmx PROPERTIES

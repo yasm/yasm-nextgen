@@ -29,7 +29,9 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include <iosfwd>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "llvm/ADT/StringRef.h"
@@ -38,12 +40,14 @@
 #include "yasmx/Module.h"
 
 
+namespace clang { class SourceManager; }
+
 namespace yasm
 {
 
 class Diagnostic;
 class Directives;
-class Errwarns;
+class HeaderSearch;
 class Linemap;
 class Object;
 class ParserModule;
@@ -54,38 +58,61 @@ class YASM_LIB_EXPORT Parser
 {
 public:
     /// Constructor.
-    Parser(const ParserModule& module, Errwarns& errwarns)
-        : m_module(module), m_errwarns(errwarns)
-    {}
+    Parser(const ParserModule& module) : m_module(module) {}
 
     /// Destructor.
     virtual ~Parser();
 
     /// Get module.
-    const ParserModule& get_module() const { return m_module; }
+    const ParserModule& getModule() const { return m_module; }
 
     /// Add directive handlers.
     virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
+#if 0
+    /// Gets a line of preprocessed source code.
+    /// @param line     destination string for line of preprocessed source
+    /// @param source   source location of beginning of line
+    /// @return True if line read; false if no more lines.
+    virtual bool getLine(/*@out@*/ std::string* line,
+                         /*@out@*/ clang::SourceLocation* source) = 0;
+
+    /// Gets the source manager.
+    virtual clang::SourceManager& getSourceManager() = 0;
+
+    /// Get the next filename included by the source code.
+    /// @return Filename.
+    virtual std::string getIncludedFile() = 0;
+
+    /// Pre-include a file.
+    /// @param filename     filename
+    virtual void AddIncludeFile(llvm::StringRef filename) = 0;
+
+    /// Pre-define a macro.
+    /// @param macronameval "name=value" string
+    virtual void PredefineMacro(llvm::StringRef macronameval) = 0;
+
+    /// Un-define a macro.
+    /// @param macroname    macro name
+    virtual void UndefineMacro(llvm::StringRef macroname) = 0;
+
+    /// Define a builtin macro, preprocessed before the "standard" macros.
+    /// @param macronameval "name=value" string
+    virtual void DefineBuiltin(llvm::StringRef macronameval) = 0;
+#endif
     /// Parse an input stream into an object.
     /// @param object       object to parse into
     /// @param preproc      preprocessor
     /// @param dirs         available directives
     /// @param diags        diagnostic reporter
     /// @note Parse errors and warnings are stored into errwarns.
-    virtual void Parse(Object& object,
-                       Preprocessor& preproc,
-                       Directives& dirs,
-                       Diagnostic& diags) = 0;
+    virtual void Parse(Object& object, Directives& dirs, Diagnostic& diags) = 0;
 
 private:
     Parser(const Parser&);                  // not implemented
     const Parser& operator=(const Parser&); // not implemented
 
     const ParserModule& m_module;
-
-protected:
-    Errwarns& m_errwarns;
 };
 
 /// Parser module interface.
@@ -101,21 +128,14 @@ public:
     /// @return "Parser".
     llvm::StringRef getType() const;
 
-    /// Get list of preprocessor (Preprocessor) keywords that are
-    /// recommended to use with this parser.  The raw preprocessor
-    /// ("raw") should always be in this list.
-    /// @return Vector of preprocessor keywords.
-    virtual std::vector<llvm::StringRef> getPreprocessorKeywords() const = 0;
-
-    /// Get default preprocessor keyword.
-    /// @return Default preprocessor keyword.
-    virtual llvm::StringRef getDefaultPreprocessorKeyword() const = 0;
-
     /// Parser factory function.
-    /// @param errwarns     error/warning set
+    /// @param diags        diagnostic reporting
+    /// @param sm           source manager
     /// @return New parser.
-    /// @note Errors/warnings are stored into errwarns.
-    virtual std::auto_ptr<Parser> Create(Errwarns& errwarns) const = 0;
+    /// @note It is assumed sm is already loaded with a main file.
+    virtual std::auto_ptr<Parser> Create(Diagnostic& diags,
+                                         clang::SourceManager& sm,
+                                         HeaderSearch& headers) const = 0;
 };
 
 template <typename ParserImpl>
@@ -128,14 +148,11 @@ public:
     llvm::StringRef getName() const { return ParserImpl::getName(); }
     llvm::StringRef getKeyword() const { return ParserImpl::getKeyword(); }
 
-    std::vector<llvm::StringRef> getPreprocessorKeywords() const
-    { return ParserImpl::getPreprocessorKeywords(); }
-    llvm::StringRef getDefaultPreprocessorKeyword() const
-    { return ParserImpl::getDefaultPreprocessorKeyword(); }
-
-    std::auto_ptr<Parser> Create(Errwarns& errwarns) const
+    std::auto_ptr<Parser> Create(Diagnostic& diags,
+                                 clang::SourceManager& sm,
+                                 HeaderSearch& headers) const
     {
-        return std::auto_ptr<Parser>(new ParserImpl(*this, errwarns));
+        return std::auto_ptr<Parser>(new ParserImpl(*this, diags, sm, headers));
     }
 };
 

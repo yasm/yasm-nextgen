@@ -36,6 +36,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "yasmx/Parse/HeaderSearch.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
@@ -49,7 +50,6 @@
 #include "yasmx/Module.h"
 #include "yasmx/ObjectFormat.h"
 #include "yasmx/Parser.h"
-#include "yasmx/Preprocessor.h"
 
 #ifdef HAVE_LIBGEN_H
 #include <libgen.h>
@@ -265,16 +265,6 @@ static cl::alias parser_keyword_long("parser",
     cl::value_desc("parser"),
     cl::aliasopt(parser_keyword));
 
-// -r, --preproc
-static cl::opt<std::string> preproc_keyword("r",
-    cl::desc("Select preproc (list with -r help)"),
-    cl::value_desc("preproc"),
-    cl::Prefix);
-static cl::alias preproc_keyword_long("preproc",
-    cl::desc("Alias for -r"),
-    cl::value_desc("preproc"),
-    cl::aliasopt(preproc_keyword));
-
 // -s
 static cl::opt<bool> error_stdout("s",
     cl::desc("redirect error messages to stdout"));
@@ -455,6 +445,7 @@ ApplyWarningSettings()
     }
 }
 
+#if 0
 static void
 ApplyPreprocessorBuiltins(yasm::Preprocessor* preproc)
 {
@@ -514,6 +505,7 @@ ApplyPreprocessorSavedOptions(yasm::Preprocessor* preproc)
             break; // we're done with the list
     }
 }
+#endif
 
 static const char *
 handle_yasm_gettext(const char *msgid)
@@ -703,6 +695,7 @@ do_assemble(void)
     clang::FileManager file_mgr;
     yasm::Assembler assembler(arch_keyword, parser_keyword, objfmt_keyword,
                               dump_object);
+    yasm::HeaderSearch headers(file_mgr);
 
     // Set object filename if specified.
     if (!obj_filename.empty())
@@ -712,12 +705,10 @@ do_assemble(void)
     if (!machine_name.empty())
         assembler.setMachine(machine_name);
 
-    // Set preprocessor if specified.
-    if (!preproc_keyword.empty())
-        assembler.setPreprocessor(preproc_keyword);
-
+#if 0
     ApplyPreprocessorBuiltins(assembler.getPreprocessor());
     ApplyPreprocessorSavedOptions(assembler.getPreprocessor());
+#endif
 
     assembler.getArch()->setVar("force_strict", force_strict);
 
@@ -738,7 +729,8 @@ do_assemble(void)
     }
 
     // assemble the input.
-    if (!assembler.Assemble(source_mgr, file_mgr, diags, warning_error))
+    if (!assembler.Assemble(source_mgr, file_mgr, diags, headers,
+                            warning_error))
     {
         // An error occurred during assembly; output all errors and warnings
         // and then exit.
@@ -877,8 +869,6 @@ main(int argc, char* argv[])
         (arch_keyword, _("architecture"), _("architectures"), &listed);
     parser_keyword = ModuleCommonHandler<yasm::ParserModule>
         (parser_keyword, _("parser"), _("parsers"), &listed);
-    preproc_keyword = ModuleCommonHandler<yasm::PreprocessorModule>
-        (preproc_keyword, _("preprocessor"), _("preprocessors"), &listed);
     objfmt_keyword = ModuleCommonHandler<yasm::ObjectFormatModule>
         (objfmt_keyword, _("object format"), _("object formats"), &listed);
     dbgfmt_keyword = ModuleCommonHandler<yasm::DebugFormatModule>

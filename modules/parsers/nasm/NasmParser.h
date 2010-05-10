@@ -29,12 +29,11 @@
 #include <memory>
 
 #include "llvm/ADT/APFloat.h"
-#include "yasmx/Mixin/ParserMixin.h"
-#include "yasmx/Support/scoped_ptr.h"
-#include "yasmx/Bytecode.h"
+#include "yasmx/Parse/ParserImpl.h"
 #include "yasmx/Insn.h"
-#include "yasmx/IntNum.h"
 #include "yasmx/Parser.h"
+
+#include "NasmPreproc.h"
 
 
 namespace yasm
@@ -52,81 +51,23 @@ namespace parser
 namespace nasm
 {
 
-#define YYCTYPE char
-
-struct yystype
-{
-    std::string str;
-    std::auto_ptr<IntNum> intn;
-    std::auto_ptr<llvm::APFloat> flt;
-    Insn::Ptr insn;
-    union
-    {
-        unsigned int int_info;
-        const Prefix* prefix;
-        const SegmentRegister* segreg;
-        const Register* reg;
-        const TargetModifier* targetmod;
-    };
-};
-#define YYSTYPE yystype
-
-class NasmParser
-    : public Parser
-    , public ParserMixin<NasmParser, YYSTYPE, YYCTYPE>
+class NasmParser : public ParserImpl
 {
 public:
-    NasmParser(const ParserModule& module, Errwarns& errwarns);
+    NasmParser(const ParserModule& module,
+               Diagnostic& diags,
+               clang::SourceManager& sm,
+               HeaderSearch& headers);
     ~NasmParser();
 
     void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
     static llvm::StringRef getName() { return "NASM-compatible parser"; }
     static llvm::StringRef getKeyword() { return "nasm"; }
-    static std::vector<llvm::StringRef> getPreprocessorKeywords();
-    static llvm::StringRef getDefaultPreprocessorKeyword() { return "raw"; }
 
     void Parse(Object& object,
-               Preprocessor& preproc,
                Directives& dirs,
                Diagnostic& diags);
-
-    enum TokenType
-    {
-        INTNUM = 258,
-        FLTNUM,
-        DIRECTIVE_NAME,
-        FILENAME,
-        STRING,
-        SIZE_OVERRIDE,
-        DECLARE_DATA,
-        RESERVE_SPACE,
-        INCBIN,
-        EQU,
-        TIMES,
-        SEG,
-        WRT,
-        ABS,
-        REL,
-        NOSPLIT,
-        STRICT,
-        INSN,
-        PREFIX,
-        REG,
-        SEGREG,
-        TARGETMOD,
-        LEFT_OP,
-        RIGHT_OP,
-        SIGNDIV,
-        SIGNMOD,
-        START_SECTION_ID,
-        ID,
-        LOCAL_ID,
-        SPECIAL_ID,
-        NONLOCAL_ID,
-        LINE,
-        NONE                // special token for lookahead
-    };
 
     enum ExprType
     {
@@ -135,23 +76,35 @@ public:
         DV_EXPR         // Can't have registers anywhere
     };
 
-    static bool isEolTok(int tok) { return (tok == 0); }
     static llvm::StringRef DescribeToken(int tok);
 
-    int Lex(YYSTYPE* lvalp);
-
 private:
-    int HandleDotLabel(YYSTYPE* lvalp, YYCTYPE* tok, size_t toklen,
-                       size_t zeropos);
-    void DefineLabel(llvm::StringRef name, bool local);
+    struct PseudoInsn
+    {
+        enum Type
+        {
+            DECLARE_DATA,
+            RESERVE_SPACE,
+            INCBIN,
+            EQU
+        };
+        Type type;
+        unsigned int size;
+    };
+
+    void CheckPseudoInsn(IdentifierInfo* ii);
+    bool CheckKeyword(IdentifierInfo* ii);
+
+    void DefineLabel(SymbolRef sym, clang::SourceLocation source, bool local);
 
     void DoParse();
     bool ParseLine();
     bool ParseDirective(/*@out@*/ NameValues& nvs);
-    bool ParseTimes();
+    bool ParseTimes(clang::SourceLocation times_source);
     bool ParseExp();
     Insn::Ptr ParseInsn();
 
+    unsigned int getSizeOverride(Token& tok);
     Operand ParseOperand();
 
     Operand ParseMemoryAddress();
@@ -166,26 +119,31 @@ private:
     bool ParseExpr5(Expr& e, ExprType type);
     bool ParseExpr6(Expr& e, ExprType type);
 
+    SymbolRef ParseSymbol(IdentifierInfo* ii, bool* local = 0);
+
     void DirAbsolute(DirectiveInfo& info, Diagnostic& diags);
     void DirAlign(DirectiveInfo& info, Diagnostic& diags);
 
     void DoDirective(llvm::StringRef name, DirectiveInfo& info);
 
+    Object* m_object;
+    Arch* m_arch;
+    Directives* m_dirs;
+    unsigned int m_wordsize;
+
+    clang::SourceManager m_my_sourcemgr;
+    NasmPreproc m_nasm_preproc;
+
+    PseudoInsn m_data_insns[8], m_reserve_insns[8];
+
+    // Indexes into m_data_insns and m_reserve_insns.
+    enum { DB = 0, DT, DY, DHW, DW, DD, DQ, DO };
+
     // last "base" label for local (.) labels
     std::string m_locallabel_base;
 
+    BytecodeContainer* m_container;
     /*@null@*/ Bytecode* m_bc;
-
-    enum State
-    {
-        INITIAL,
-        DIRECTIVE,
-        SECTION_DIRECTIVE,
-        DIRECTIVE2,
-        LINECHG,
-        LINECHG2,
-        INSTRUCTION
-    } m_state;
 
     // Starting point of the absolute section.  Empty if not in an absolute
     // section.
@@ -195,21 +153,6 @@ private:
     // Empty if not in an absolute section.
     Expr m_abspos;
 };
-
-#define INTNUM_val              (m_tokval.intn)
-#define FLTNUM_val              (m_tokval.flt)
-#define DIRECTIVE_NAME_val      (m_tokval.str)
-#define FILENAME_val            (m_tokval.str)
-#define STRING_val              (m_tokval.str)
-#define SIZE_OVERRIDE_val       (m_tokval.int_info)
-#define DECLARE_DATA_val        (m_tokval.int_info)
-#define RESERVE_SPACE_val       (m_tokval.int_info)
-#define INSN_val                (m_tokval.insn)
-#define PREFIX_val              (m_tokval.prefix)
-#define REG_val                 (m_tokval.reg)
-#define SEGREG_val              (m_tokval.segreg)
-#define TARGETMOD_val           (m_tokval.targetmod)
-#define ID_val                  (m_tokval.str)
 
 }}} // namespace yasm::parser::nasm
 

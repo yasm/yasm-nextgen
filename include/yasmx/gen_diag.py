@@ -187,12 +187,24 @@ add_error("err_invalid_ea_segment", "invalid segment in effective address")
 add_error("err_imm_segment_override",
           "cannot have segment override on immediate")
 
+# TIMES
+add_error("err_expected_expression_after_times",
+          "expected expression after TIMES")
+add_error("err_expected_insn_after_times",
+          "instruction expected after TIMES expression")
+
+# INCBIN
+add_error("err_incbin_expected_filename",
+          "filename string expected after INCBIN")
+add_error("err_incbin_expected_start_expression",
+          "expression expected for INCBIN start")
+add_error("err_incbin_expected_length_expression",
+          "expression expected for INCBIN maximum length")
+
 # Label/instruction expected
 add_error("err_expected_insn_after_label",
           "instruction expected after label")
-add_error("err_expected_insn_after_times",
-          "instruction expected after TIMES expression")
-add_error("err_expected_insn_label_after_eol",
+add_error("err_expected_insn_or_label_after_eol",
           "label or instruction expected at start of line")
 
 # File
@@ -333,6 +345,8 @@ add_error("err_expected_directive_name", "expected directive name")
 add_error("err_invalid_directive_argument", "invalid argument to directive")
 add_error("err_directive_no_args", "directive requires an argument")
 add_warning("warn_directive_one_arg", "directive only uses first argument")
+add_error("err_float_in_directive",
+          "directive argument cannot be floating point")
 add_error("err_value_id", "value must be an identifier")
 add_error("err_value_integer", "value must be an integer")
 add_error("err_value_expression", "value must be an expression")
@@ -361,6 +375,14 @@ add_warning("warn_operand_size_override",
 add_warning("warn_operand_size_duplicate",
             "duplicate '%0' operand size override",
             group="size-override")
+
+# Operand
+add_error("err_offset_expected_after_colon", "offset expected after ':'")
+
+# Memory address
+add_error("err_expected_memory_address", "memory address expected")
+add_error("err_colon_required_after_segreg",
+          "':' required after segment register")
 
 # Lexer 
 add_warning("null_in_string",
@@ -399,6 +421,10 @@ add_error("err_invalid_suffix_integer_constant",
 add_error("err_invalid_suffix_float_constant",
           "invalid suffix '%0' on floating constant")
 add_error("err_exponent_has_no_digits", "exponent has no digits")
+
+add_warning("warn_expected_hex_digit", "expected hex digit after \\x")
+add_error("err_unicode_escape_requires_hex",
+          "expected hex digit for Unicode character code (%0 digits required)")
 
 #####################################################################
 # Output generation

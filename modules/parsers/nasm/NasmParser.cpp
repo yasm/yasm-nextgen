@@ -44,8 +44,12 @@ namespace parser
 namespace nasm
 {
 
-NasmParser::NasmParser(const ParserModule& module, Errwarns& errwarns)
-    : Parser(module, errwarns)
+NasmParser::NasmParser(const ParserModule& module,
+                       Diagnostic& diags,
+                       clang::SourceManager& sm,
+                       HeaderSearch& headers)
+    : ParserImpl(module, m_nasm_preproc)
+    , m_nasm_preproc(diags, sm, headers)
 {
 }
 
@@ -54,12 +58,27 @@ NasmParser::~NasmParser()
 }
 
 void
-NasmParser::Parse(Object& object,
-                  Preprocessor& preproc,
-                  Directives& dirs,
-                  Diagnostic& diags)
+NasmParser::Parse(Object& object, Directives& dirs, Diagnostic& diags)
 {
-    InitMixin(object, preproc, dirs, diags);
+    m_object = &object;
+    m_dirs = &dirs;
+    m_arch = object.getArch();
+    m_wordsize = m_arch->getModule().getWordSize();
+
+    // Set up pseudo instructions.
+    for (int i=0; i<8; ++i)
+    {
+        m_data_insns[i].type = PseudoInsn::DECLARE_DATA;
+        m_reserve_insns[i].type = PseudoInsn::RESERVE_SPACE;
+    }
+    m_data_insns[DB].size = m_reserve_insns[DB].size = 1;               // b
+    m_data_insns[DT].size = m_reserve_insns[DT].size = 80/8;            // t
+    m_data_insns[DY].size = m_reserve_insns[DY].size = 256/8;           // y
+    m_data_insns[DHW].size = m_reserve_insns[DHW].size = m_wordsize/8/2;// hw
+    m_data_insns[DW].size = m_reserve_insns[DW].size = m_wordsize/8;    // w
+    m_data_insns[DD].size = m_reserve_insns[DD].size = m_wordsize/8*2;  // d
+    m_data_insns[DQ].size = m_reserve_insns[DQ].size = m_wordsize/8*4;  // q
+    m_data_insns[DO].size = m_reserve_insns[DO].size = m_wordsize/8*8;  // o
 
     m_locallabel_base = "";
 
@@ -68,20 +87,13 @@ NasmParser::Parse(Object& object,
     m_absstart.Clear();
     m_abspos.Clear();
 
-    m_state = INITIAL;
-
+    // Get first token
+    m_preproc.EnterMainSourceFile();
+    m_preproc.Lex(&m_token);
     DoParse();
 
     // Check for undefined symbols
-    object.FinalizeSymbols(*m_diags);
-}
-
-std::vector<llvm::StringRef>
-NasmParser::getPreprocessorKeywords()
-{
-    // valid preprocessors to use with this parser
-    static const char* keywords[] = {"raw", "nasm"};
-    return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
+    object.FinalizeSymbols(m_preproc.getDiagnostics());
 }
 
 void

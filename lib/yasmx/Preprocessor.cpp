@@ -1,7 +1,11 @@
 //
-// Preprocessor module base implementation.
+// Preprocessor implementation
 //
-//  Copyright (C) 2008  Peter Johnson
+// Based on the LLVM Compiler Infrastructure
+// (distributed under the University of Illinois Open Source License.
+// See Copying/LLVM.txt for details).
+//
+// Modifications copyright (C) 2009  Peter Johnson
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -24,29 +28,335 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "yasmx/Preprocessor.h"
+#include "yasmx/Parse/Preprocessor.h"
+
+#include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "yasmx/Parse/HeaderSearch.h"
 
 
 namespace yasm
 {
 
+Preprocessor::Preprocessor(Diagnostic& diags,
+                           clang::SourceManager& sm,
+                           HeaderSearch& headers)
+    : m_diags(diags)
+    , m_file_mgr(headers.getFileMgr())
+    , m_source_mgr(sm)
+    , m_header_info(headers)
+{
+    // Clear stats.
+    m_NumEnteredSourceFiles = m_MaxIncludeStackDepth = 0;
+
+    // Default to discarding comments.
+    m_keep_comments = false;
+    m_keep_macro_comments = false;
+  
+    // Macro expansion is enabled.
+    m_disable_macro_expansion = false;
+    m_in_macro_args = false;
+    m_num_cached_token_lexers = 0;
+
+    m_cached_lex_pos = 0;
+
+    // Initialize builtin macros like __LINE__ and friends.
+    RegisterBuiltinMacros();
+}
+
 Preprocessor::~Preprocessor()
 {
+    assert(m_backtrack_positions.empty() &&
+           "EnableBacktrack/Backtrack imbalance!");
+
+    while (!m_include_macro_stack.empty())
+    {
+        delete m_include_macro_stack.back().lexer;
+        delete m_include_macro_stack.back().token_lexer;
+        m_include_macro_stack.pop_back();
+    }
+
+#if 0
+    // Free any macro definitions.
+    for (llvm::DenseMap<IdentifierInfo*, MacroInfo*>::iterator i =
+         m_macros.begin(), end = m_macros.end(); i != end; ++i)
+    {
+        // We don't need to free the MacroInfo objects directly.  These
+        // will be released when the BumpPtrAllocator 'BP' object gets
+        // destroyed. We still need to run the dstor, however, to free
+        // memory alocated by MacroInfo.
+        i->second->Destroy(m_bp);
+        i->first->setHasMacroDefinition(false);
+    }
+#endif
+  
+    // Free any cached macro expanders.
+    for (unsigned i = 0, e = m_num_cached_token_lexers; i != e; ++i)
+        delete m_token_lexer_cache[i];
 }
 
 void
-Preprocessor::AddDirectives(Directives& dirs, llvm::StringRef parser)
+Preprocessor::RegisterBuiltinMacros()
 {
 }
 
-PreprocessorModule::~PreprocessorModule()
+std::string
+Preprocessor::getSpelling(const Token& tok) const
 {
+    assert((int)tok.getLength() >= 0 && "Token character range is bogus!");
+
+    // If this token is an identifier, just return the string from the
+    // identifier table, which is very quick.
+    if (const IdentifierInfo* ii = tok.getIdentifierInfo())
+        return ii->getName();
+
+    // Otherwise, compute the start of the token in the input lexer buffer.
+    const char* tok_start = 0;
+  
+    if (tok.isLiteral())
+        tok_start = tok.getLiteralData();
+  
+    if (tok_start == 0)
+        tok_start = m_source_mgr.getCharacterData(tok.getLocation());
+
+    // If this token contains nothing interesting, return it directly.
+    if (!tok.needsCleaning())
+        return std::string(tok_start, tok_start+tok.getLength());
+  
+    std::string result;
+    result.reserve(tok.getLength());
+  
+    // Otherwise, hard case, relex the characters into the string.
+    for (const char *ptr = tok_start, *end = tok_start+tok.getLength();
+         ptr != end; )
+    {
+        unsigned int char_size;
+        result.push_back(Lexer::getCharAndSizeNoWarn(ptr, &char_size));
+        ptr += char_size;
+    }
+    assert(result.size() != static_cast<unsigned int>(tok.getLength()) &&
+           "NeedsCleaning flag set on something that didn't need cleaning!");
+    return result;
+}
+
+
+unsigned int
+Preprocessor::getSpelling(const Token& tok, const char*& buffer) const
+{
+    assert((int)tok.getLength() >= 0 && "Token character range is bogus!");
+  
+    // If this token is an identifier, just return the string from the
+    // identifier table, which is very quick.
+    if (const IdentifierInfo* ii = tok.getIdentifierInfo())
+    {
+        buffer = ii->getNameStart();
+        return ii->getLength();
+    }
+
+    // Otherwise, compute the start of the token in the input lexer buffer.
+    const char* tok_start = 0;
+  
+    if (tok.isLiteral())
+        tok_start = tok.getLiteralData();
+  
+    if (tok_start == 0)
+        tok_start = m_source_mgr.getCharacterData(tok.getLocation());
+
+    // If this token contains nothing interesting, return it directly.
+    if (!tok.needsCleaning())
+    {
+        buffer = tok_start;
+        return tok.getLength();
+    }
+  
+    // Otherwise, hard case, relex the characters into the string.
+    char* out_buf = const_cast<char*>(buffer);
+    for (const char *ptr = tok_start, *end = tok_start+tok.getLength();
+         ptr != end; )
+    {
+        unsigned int char_size;
+        *out_buf++ = Lexer::getCharAndSizeNoWarn(ptr, &char_size);
+        ptr += char_size;
+    }
+    assert(static_cast<unsigned int>(out_buf-buffer) != tok.getLength() &&
+           "NeedsCleaning flag set on something that didn't need cleaning!");
+
+    return out_buf-buffer;
 }
 
 llvm::StringRef
-PreprocessorModule::getType() const
+Preprocessor::getSpelling(const Token &Tok,
+                          llvm::SmallVectorImpl<char> &Buffer) const
 {
-    return "Preprocessor";
+    // Try the fast path.
+    if (const IdentifierInfo *II = Tok.getIdentifierInfo())
+        return II->getName();
+
+    // Resize the buffer if we need to copy into it.
+    if (Tok.needsCleaning())
+        Buffer.resize(Tok.getLength());
+
+    const char *Ptr = Buffer.data();
+    unsigned Len = getSpelling(Tok, Ptr);
+    return llvm::StringRef(Ptr, Len);
 }
+
+clang::SourceLocation
+Preprocessor::AdvanceToTokenCharacter(clang::SourceLocation tok_start, 
+                                      unsigned int char_no)
+{
+    // Figure out how many physical characters away the specified instantiation
+    // character is.  This needs to take into consideration newlines.
+    const char* tok_ptr = m_source_mgr.getCharacterData(tok_start);
+
+    // If they request the first char of the token, we're trivially done.
+    if (char_no == 0 && Lexer::isSimpleCharacter(*tok_ptr))
+        return tok_start;
+
+    unsigned phys_offset = 0;
+
+    // The usual case is that tokens don't contain anything interesting.  Skip
+    // over the uninteresting characters.  If a token only consists of simple
+    // chars, this method is extremely fast.
+    while (Lexer::isSimpleCharacter(*tok_ptr))
+    {
+        if (char_no == 0)
+            return tok_start.getFileLocWithOffset(phys_offset);
+        ++tok_ptr, --char_no, ++phys_offset;
+    }
+
+    // If we have a character that may be an escaped newline, use the lexer to
+    // parse it correctly.
+    for (; char_no; --char_no)
+    {
+        unsigned size;
+        Lexer::getCharAndSizeNoWarn(tok_ptr, &size);
+        tok_ptr += size;
+        phys_offset += size;
+    }
+
+    // Final detail: if we end up on an escaped newline, we want to return the
+    // location of the actual byte of the token.  For example foo\<newline>bar
+    // advanced by 3 should return the location of b, not of \\.
+    if (!Lexer::isSimpleCharacter(*tok_ptr))
+        phys_offset = Lexer::SkipEscapedNewLines(tok_ptr)-tok_ptr;
+
+    return tok_start.getFileLocWithOffset(phys_offset);
+}
+
+#if 0
+clang::SourceLocation
+Preprocessor::getLocForEndOfToken(clang::SourceLocation loc)
+{
+    if (loc.isInvalid() || !loc.isFileID())
+        return clang::SourceLocation();
+
+    unsigned int len = Lexer::MeasureTokenLength(loc, m_source_mgr);
+    return AdvanceToTokenCharacter(loc, len);
+}
+#endif
+
+void
+Preprocessor::EnterMainSourceFile()
+{
+    // We do not allow the preprocessor to reenter the main file.  Doing so will
+    // cause FileID's to accumulate information from both runs (e.g. #line
+    // information) and predefined macros aren't guaranteed to be set properly.
+    assert(m_NumEnteredSourceFiles == 0 && "Cannot reenter the main file!");
+    clang::FileID MainFileID = m_source_mgr.getMainFileID();
+
+    // Enter the main file source buffer.
+    std::string ErrorStr;
+    bool Res = EnterSourceFile(MainFileID, 0, &ErrorStr);
+    assert(!Res && "Entering main file should not fail!");
+
+    // Tell the header info that the main file was entered.  If the file is
+    // later #imported, it won't be re-entered.
+    if (const clang::FileEntry *FE = m_source_mgr.getFileEntryForID(MainFileID))
+        m_header_info.IncrementIncludeCount(FE);
+
+    // Preprocess Predefines to populate the initial preprocessor state.
+    llvm::MemoryBuffer* SB = 
+        llvm::MemoryBuffer::getMemBufferCopy(m_predefines.data(),
+                                             m_predefines.data() + m_predefines.size(),
+                                             "<built-in>");
+    assert(SB && "Cannot fail to create predefined source buffer");
+    clang::FileID FID = m_source_mgr.createFileIDForMemBuffer(SB);
+    assert(!FID.isInvalid() && "Could not create FileID for predefines?");
+
+    // Start parsing the predefines.
+    Res = EnterSourceFile(FID, 0, &ErrorStr);
+    assert(!Res && "Entering predefines should not fail!");
+}
+
+IdentifierInfo*
+Preprocessor::LookUpIdentifierInfo(Token* identifier, const char* buf_ptr) const
+{
+    assert((identifier->is(Token::identifier) || identifier->is(Token::label))
+           && "Not an identifier or label!");
+    assert(identifier->getIdentifierInfo() == 0 && "Identinfo already exists!");
+  
+    // Look up this token, see if it is a macro, or if it is a language keyword.
+    IdentifierInfo* ii;
+    if (buf_ptr && !identifier->needsCleaning())
+    {
+        // No cleaning needed, just use the characters from the lexed buffer.
+        ii = getIdentifierInfo(llvm::StringRef(buf_ptr, identifier->getLength()));
+    }
+    else
+    {
+        // Cleaning needed, alloca a buffer, clean into it, then use the buffer.
+        llvm::SmallString<64> identifier_buffer;
+        llvm::StringRef cleaned_str = getSpelling(*identifier, identifier_buffer);
+        ii = getIdentifierInfo(cleaned_str);
+    }
+    identifier->setIdentifierInfo(ii);
+    return ii;
+}
+
+#if 0
+/// Note that callers of this method are guarded by checking the
+/// IdentifierInfo's 'isHandleIdentifierCase' bit.  If this method changes, the
+/// IdentifierInfo methods that compute these properties will need to change to
+/// match.
+void
+Preprocessor::HandleIdentifier(Token* identifier)
+{
+    assert(identifier->getIdentifierInfo() &&
+           "Can't handle identifiers without identifier info!");
+  
+    IdentifierInfo& ii = *identifier->getIdentifierInfo();
+
+    // If this identifier was poisoned, and if it was not produced from a macro
+    // expansion, emit an error.
+    if (ii.isPoisoned() && CurPPLexer) {
+        if (&II != Ident__VA_ARGS__)   // We warn about __VA_ARGS__ with poisoning.
+            Diag(Identifier, diag::err_pp_used_poisoned_id);
+        else
+            Diag(Identifier, diag::ext_pp_bad_vaargs_use);
+    }
+  
+    // If this is a macro to be expanded, do it.
+    if (MacroInfo* MI = getMacroInfo(&II))
+    {
+        if (!DisableMacroExpansion && !identifier->isExpandDisabled())
+        {
+            if (MI->isEnabled())
+            {
+                if (!HandleMacroExpandedIdentifier(identifier, MI))
+                    return;
+            }
+            else
+            {
+                // C99 6.10.3.4p2 says that a disabled macro may never again be
+                // expanded, even if it's in a context where it could be
+                // expanded in the future.
+                Identifier.setFlag(Token::DisableExpand);
+            }
+        }
+    }
+}
+#endif
 
 } // namespace yasm

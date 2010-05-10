@@ -45,7 +45,6 @@
 #include "yasmx/Object.h"
 #include "yasmx/ObjectFormat.h"
 #include "yasmx/Parser.h"
-#include "yasmx/Preprocessor.h"
 
 
 namespace
@@ -77,24 +76,22 @@ public:
     ~Impl();
 
     void setMachine(llvm::StringRef machine);
-    void setPreprocessor(llvm::StringRef preproc_keyword);
     void setDebugFormat(llvm::StringRef dbgfmt_keyword);
     void setListFormat(llvm::StringRef listfmt_keyword);
     bool Assemble(clang::SourceManager& source_mgr,
                   clang::FileManager& file_mgr,
                   Diagnostic& diags,
+                  HeaderSearch& headers,
                   bool warning_error);
 
     util::scoped_ptr<ArchModule> m_arch_module;
     util::scoped_ptr<ParserModule> m_parser_module;
-    util::scoped_ptr<PreprocessorModule> m_preproc_module;
     util::scoped_ptr<ObjectFormatModule> m_objfmt_module;
     util::scoped_ptr<DebugFormatModule> m_dbgfmt_module;
     util::scoped_ptr<ListFormatModule> m_listfmt_module;
 
     util::scoped_ptr<Arch> m_arch;
     util::scoped_ptr<Parser> m_parser;
-    util::scoped_ptr<Preprocessor> m_preproc;
     util::scoped_ptr<ObjectFormat> m_objfmt;
     util::scoped_ptr<DebugFormat> m_dbgfmt;
     util::scoped_ptr<ListFormat> m_listfmt;
@@ -114,13 +111,11 @@ Assembler::Impl::Impl(llvm::StringRef arch_keyword,
                       ObjectDumpTime dump_time)
     : m_arch_module(LoadModule<ArchModule>(arch_keyword).release()),
       m_parser_module(LoadModule<ParserModule>(parser_keyword).release()),
-      m_preproc_module(0),
       m_objfmt_module(LoadModule<ObjectFormatModule>(objfmt_keyword).release()),
       m_dbgfmt_module(0),
       m_listfmt_module(0),
       m_arch(0),
       m_parser(0),
-      m_preproc(0),
       m_objfmt(0),
       m_dbgfmt(0),
       m_listfmt(0),
@@ -164,8 +159,6 @@ Assembler::Assembler(llvm::StringRef arch_keyword,
                      ObjectDumpTime dump_time)
     : m_impl(new Impl(arch_keyword, parser_keyword, objfmt_keyword, dump_time))
 {
-    m_impl->setPreprocessor
-        (m_impl->m_parser_module->getDefaultPreprocessorKeyword());
 }
 
 Assembler::~Assembler()
@@ -193,41 +186,6 @@ void
 Assembler::setMachine(llvm::StringRef machine)
 {
     m_impl->setMachine(machine);
-}
-
-void
-Assembler::Impl::setPreprocessor(llvm::StringRef preproc_keyword)
-{
-    // Check to see if the requested preprocessor is in the allowed list
-    // for the active parser.
-    std::vector<llvm::StringRef> preproc_keywords =
-        m_parser_module->getPreprocessorKeywords();
-    if (std::find_if(preproc_keywords.begin(), preproc_keywords.end(),
-                     NocaseEquals(preproc_keyword))
-        == preproc_keywords.end())
-    {
-        throw Error(String::Compose(
-            N_("`%1' is not a valid preprocessor for parser `%2'"),
-            preproc_keyword, m_parser_module->getKeyword()));
-    }
-
-    std::auto_ptr<PreprocessorModule> preproc_module =
-        LoadModule<PreprocessorModule>(preproc_keyword);
-    if (preproc_module.get() == 0)
-    {
-        throw Error(String::Compose(N_("could not load preprocessor `%1'"),
-                                    preproc_keyword));
-    }
-    m_preproc_module.reset(preproc_module.release());
-
-    // Create preprocessor.
-    m_preproc.reset(m_preproc_module->Create(m_errwarns).release());
-}
-
-void
-Assembler::setPreprocessor(llvm::StringRef preproc_keyword)
-{
-    m_impl->setPreprocessor(preproc_keyword);
 }
 
 void
@@ -281,6 +239,7 @@ bool
 Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
                           clang::FileManager& file_mgr,
                           Diagnostic& diags,
+                          HeaderSearch& headers,
                           bool warning_error)
 {
     llvm::StringRef in_filename =
@@ -357,17 +316,13 @@ Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
     // Create the debug format
     m_dbgfmt.reset(m_dbgfmt_module->Create(*m_object).release());
 
-    // Initialize preprocessor
-    m_preproc->Initialize(source_mgr, file_mgr);
-
     // Create parser
-    m_parser.reset(m_parser_module->Create(m_errwarns).release());
+    m_parser.reset(m_parser_module->Create(diags, source_mgr, headers).release());
 
     // Set up directive handlers
     Directives dirs;
     m_arch->AddDirectives(dirs, parser_keyword);
     m_parser->AddDirectives(dirs, parser_keyword);
-    m_preproc->AddDirectives(dirs, parser_keyword);
     m_objfmt->AddDirectives(dirs, parser_keyword);
     m_dbgfmt->AddDirectives(dirs, parser_keyword);
     if (m_listfmt_module.get() != 0)
@@ -377,7 +332,7 @@ Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
     }
 
     // Parse!
-    m_parser->Parse(*m_object, *m_preproc, dirs, diags);
+    m_parser->Parse(*m_object, dirs, diags);
 
     if (m_dump_time == DUMP_AFTER_PARSE)
         m_object->Dump();
@@ -414,9 +369,11 @@ bool
 Assembler::Assemble(clang::SourceManager& source_mgr,
                     clang::FileManager& file_mgr,
                     Diagnostic& diags,
+                    HeaderSearch& headers,
                     bool warning_error)
 {
-    return m_impl->Assemble(source_mgr, file_mgr, diags, warning_error);
+    return m_impl->Assemble(source_mgr, file_mgr, diags, headers,
+                            warning_error);
 }
 
 bool
@@ -446,12 +403,6 @@ Object*
 Assembler::getObject()
 {
     return m_impl->m_object.get();
-}
-
-Preprocessor*
-Assembler::getPreprocessor()
-{
-    return m_impl->m_preproc.get();
 }
 
 Arch*

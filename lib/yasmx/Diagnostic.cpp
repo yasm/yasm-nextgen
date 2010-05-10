@@ -16,7 +16,8 @@
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
-//#include "yasmx/IdentifierTable.h"
+#include "llvm/Support/raw_ostream.h"
+#include "yasmx/Parse/IdentifierTable.h"
 #include <vector>
 #include <map>
 #include <cstring>
@@ -762,8 +763,6 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
     }
     // ---- NAMES and TYPES ----
     case Diagnostic::ak_identifierinfo: {
-      assert(false && "Not yet implemented");
-#if 0
       const IdentifierInfo *II = getArgIdentifier(ArgNo);
       assert(ModifierLen == 0 && "No modifiers for strings yet");
 
@@ -774,10 +773,7 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
         continue;
       }
 
-      OutStr.push_back('\'');
-      OutStr.append(II->getName(), II->getName() + II->getLength());
-      OutStr.push_back('\'');
-#endif
+      llvm::raw_svector_ostream(OutStr) << '\'' << II->getName() << '\'';
       break;
     }
     case Diagnostic::ak_qualtype:

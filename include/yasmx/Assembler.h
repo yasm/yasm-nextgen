@@ -45,6 +45,7 @@ namespace yasm
 class Arch;
 class Diagnostic;
 class Errwarns;
+class HeaderSearch;
 class Object;
 class Preprocessor;
 
@@ -109,6 +110,7 @@ public:
     bool Assemble(clang::SourceManager& source_mgr,
                   clang::FileManager& file_mgr,
                   Diagnostic& diags,
+                  HeaderSearch& headers,
                   bool warning_error = false);
 
     /// Write assembly results to output file.  Fails if assembly not
