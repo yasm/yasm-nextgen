@@ -69,56 +69,6 @@ namespace parser
 namespace nasm
 {
 
-#if 0
-llvm::StringRef
-NasmParser::DescribeToken(int token)
-{
-    static char strch[] = "` '";
-    const char *str;
-
-    switch (token)
-    {
-        case 0:                 str = "end of line"; break;
-        case INTNUM:            str = "integer"; break;
-        case FLTNUM:            str = "floating point value"; break;
-        case DIRECTIVE_NAME:    str = "directive name"; break;
-        case FILENAME:          str = "filename"; break;
-        case STRING:            str = "string"; break;
-        case SIZE_OVERRIDE:     str = "size override"; break;
-        case DECLARE_DATA:      str = "DB/DW/etc."; break;
-        case RESERVE_SPACE:     str = "RESB/RESW/etc."; break;
-        case INCBIN:            str = "INCBIN"; break;
-        case EQU:               str = "EQU"; break;
-        case TIMES:             str = "TIMES"; break;
-        case SEG:               str = "SEG"; break;
-        case WRT:               str = "WRT"; break;
-        case NOSPLIT:           str = "NOSPLIT"; break;
-        case STRICT:            str = "STRICT"; break;
-        case INSN:              str = "instruction"; break;
-        case PREFIX:            str = "instruction prefix"; break;
-        case REG:               str = "register"; break;
-        case SEGREG:            str = "segment register"; break;
-        case TARGETMOD:         str = "target modifier"; break;
-        case LEFT_OP:           str = "<<"; break;
-        case RIGHT_OP:          str = ">>"; break;
-        case SIGNDIV:           str = "//"; break;
-        case SIGNMOD:           str = "%%"; break;
-        case START_SECTION_ID:  str = "$$"; break;
-        case ID:                str = "identifier"; break;
-        case LOCAL_ID:          str = ".identifier"; break;
-        case SPECIAL_ID:        str = "..identifier"; break;
-        case NONLOCAL_ID:       str = "..@identifier"; break;
-        case LINE:              str = "%line"; break;
-        default:
-            strch[1] = token;
-            str = strch;
-            break;
-    }
-
-    return str;
-}
-#endif
-
 /// Identify pseudo-instructions.  We can't simply pre-populate IdentifierTable
 /// because of large numbers of combinations due to case-insensitivity.
 void

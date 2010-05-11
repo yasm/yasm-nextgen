@@ -65,9 +65,7 @@ public:
     static llvm::StringRef getName() { return "NASM-compatible parser"; }
     static llvm::StringRef getKeyword() { return "nasm"; }
 
-    void Parse(Object& object,
-               Directives& dirs,
-               Diagnostic& diags);
+    void Parse(Object& object, Directives& dirs, Diagnostic& diags);
 
     enum ExprType
     {
@@ -75,8 +73,6 @@ public:
         DIR_EXPR,       // Can't have seg:off or WRT anywhere
         DV_EXPR         // Can't have registers anywhere
     };
-
-    static llvm::StringRef DescribeToken(int tok);
 
 private:
     struct PseudoInsn
