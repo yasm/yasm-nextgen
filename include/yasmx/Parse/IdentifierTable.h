@@ -67,11 +67,11 @@ class YASM_LIB_EXPORT IdentifierInfo
         IS_TARGETMOD    = 0x0080,   // Set if identifier is a target modifier.
 
         // Others
-        IS_SYMBOL       = 0x0100,   // Set if identifier is a symbol.
-        IS_CUSTOM       = 0x0200    // Set if identifier is something custom.
+        IS_CUSTOM       = 0x0100    // Set if identifier is something custom.
     };
 
-    void* m_info;   // Pointer to appropriate data based on flags.
+    SymbolRef m_sym;    // Symbol reference (may be 0 if not a symbol).
+    void* m_info;       // Pointer to appropriate data based on flags.
 
     llvm::StringMapEntry<IdentifierInfo*>* m_entry;
 
@@ -91,7 +91,7 @@ public:
     template <std::size_t StrLen>
     bool isStr(const char (&str)[StrLen]) const
     {
-        return getLength() == StrLen-1 && !memcmp(getName(), str, StrLen-1);
+        return getLength() == StrLen-1 && !memcmp(getNameStart(), str, StrLen-1);
     }
 
     /// Return the actual string for this identifier.  The returned 
@@ -129,8 +129,9 @@ public:
 
     bool isUnknown()
     {
-        if (m_flags & (IS_INSN | IS_PREFIX | IS_REGISTER | IS_REGGROUP |
-                       IS_SEGREG | IS_TARGETMOD | IS_SYMBOL | IS_CUSTOM))
+        if ((m_flags & (IS_INSN | IS_PREFIX | IS_REGISTER | IS_REGGROUP |
+                        IS_SEGREG | IS_TARGETMOD | IS_CUSTOM)) != 0 ||
+            m_sym != 0)
             return false;
         return true;
     }
@@ -186,18 +187,9 @@ public:
     }
 
     // symbol interface
-    bool isSymbol() const { return (m_flags & IS_SYMBOL) ? true : false; }
-    SymbolRef getSymbol() const
-    {
-        if (!(m_flags & IS_SYMBOL))
-            return SymbolRef(0);
-        return SymbolRef(static_cast<Symbol*>(m_info));
-    }
-    void setSymbol(SymbolRef ref)
-    {
-        m_flags = IS_SYMBOL | DID_INSN_LOOKUP | DID_REG_LOOKUP;
-        m_info = ref;
-    }
+    bool isSymbol() const { return m_sym != 0; }
+    SymbolRef getSymbol() const { return m_sym; }
+    void setSymbol(SymbolRef ref) { m_sym = ref; }
 
     // custom data interface
     template<typename T>
