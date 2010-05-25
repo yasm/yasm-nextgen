@@ -127,7 +127,6 @@ private:
     Directives* m_dirs;
     unsigned int m_wordsize;
 
-    clang::SourceManager m_my_sourcemgr;
     NasmPreproc m_nasm_preproc;
 
     PseudoInsn m_data_insns[8], m_reserve_insns[8];

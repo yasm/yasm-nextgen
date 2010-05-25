@@ -367,7 +367,6 @@ NasmParser::CheckKeyword(IdentifierInfo* ii)
 void
 NasmParser::DoParse()
 {
-    std::string line;
     Bytecode::Ptr bc(new Bytecode());
 
     while (m_token.isNot(NasmToken::eof))
