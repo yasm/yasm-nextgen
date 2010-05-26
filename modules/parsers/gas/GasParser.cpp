@@ -37,7 +37,6 @@
 #include "yasmx/Directive.h"
 #include "yasmx/Errwarns.h"
 #include "yasmx/Object.h"
-#include "yasmx/Preprocessor.h"
 #include "yasmx/Symbol_util.h"
 
 
@@ -48,9 +47,12 @@ namespace parser
 namespace gas
 {
 
-GasParser::GasParser(const ParserModule& module, Errwarns& errwarns)
-    : Parser(module, errwarns)
-    //, m_rept_owner(m_rept)
+GasParser::GasParser(const ParserModule& module,
+                     Diagnostic& diags,
+                     clang::SourceManager& sm,
+                     HeaderSearch& headers)
+    : ParserImpl(module, m_gas_preproc)
+    , m_gas_preproc(diags, sm, headers)
 {
     static const GasDirLookup gas_dirs_init[] =
     {
@@ -86,10 +88,10 @@ GasParser::GasParser(const ParserModule& module, Errwarns& errwarns)
         {".sleb128",    &GasParser::ParseDirLeb128, 1}, // signed
         {".uleb128",    &GasParser::ParseDirLeb128, 0}, // unsigned
         // floating point data declaration directives
-        {".float",      &GasParser::ParseDirData,   4},
-        {".single",     &GasParser::ParseDirData,   4},
-        {".double",     &GasParser::ParseDirData,   8},
-        {".tfloat",     &GasParser::ParseDirData,   10},
+        {".float",      &GasParser::ParseDirFloat,   4},
+        {".single",     &GasParser::ParseDirFloat,   4},
+        {".double",     &GasParser::ParseDirFloat,   8},
+        {".tfloat",     &GasParser::ParseDirFloat,   10},
         // section directives
         {".bss",        &GasParser::ParseDirBssSection,     0},
         {".data",       &GasParser::ParseDirDataSection,    0},
@@ -121,12 +123,11 @@ GasParser::~GasParser()
 }
 
 void
-GasParser::Parse(Object& object,
-                 Preprocessor& preproc,
-                 Directives& dirs,
-                 Diagnostic& diags)
+GasParser::Parse(Object& object, Directives& dirs, Diagnostic& diags)
 {
-    InitMixin(object, preproc, dirs, diags);
+    m_object = &object;
+    m_dirs = &dirs;
+    m_arch = object.getArch();
 
     m_locallabel_base = "";
 
@@ -135,15 +136,10 @@ GasParser::Parse(Object& object,
     m_dir_line = 0;
     m_seen_line_marker = false;
 
-    m_state = INITIAL;
-
     //stdx::ptr_vector<GasRept>().swap(m_rept);   // clear the m_rept stack
 
     for (int i=0; i<10; i++)
         m_local[i] = 0;
-
-    m_is_cpp_preproc = preproc.getModule().getKeyword().equals_lower("cpp");
-    m_is_nasm_preproc = preproc.getModule().getKeyword().equals_lower("nasm");
 
     // Set up arch-sized directives
     m_sized_gas_dirs[0].name = ".word";
@@ -152,6 +148,8 @@ GasParser::Parse(Object& object,
     for (unsigned int i=0; i<NELEMS(m_sized_gas_dirs); ++i)
         m_gas_dirs[m_sized_gas_dirs[i].name] = &m_sized_gas_dirs[i];
 
+    m_preproc.EnterMainSourceFile();
+    m_preproc.Lex(&m_token);
     DoParse();
 
     // Check for ending inside a rept
@@ -163,23 +161,8 @@ GasParser::Parse(Object& object,
     }
 #endif
 
-    // Check for ending inside a comment
-    if (m_state == COMMENT)
-    {
-        setWarn(WARN_GENERAL, N_("end of file in comment"));
-        m_errwarns.Propagate(m_comment_start);
-    }
-
     // Convert all undefined symbols into extern symbols
     object.ExternUndefinedSymbols();
-}
-
-std::vector<llvm::StringRef>
-GasParser::getPreprocessorKeywords()
-{
-    // valid preprocessors to use with this parser
-    static const char* keywords[] = {"raw", "cpp", "nasm"};
-    return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
 }
 
 void

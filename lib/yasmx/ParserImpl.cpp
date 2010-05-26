@@ -66,6 +66,7 @@ ParserImpl::MatchRHSPunctuation(unsigned int rhs_tok,
     {
     case Token::r_paren : LHSName = "("; DID = diag::err_expected_rparen; break;
     case Token::r_square: LHSName = "["; DID = diag::err_expected_rsquare; break;
+    case Token::greater: LHSName = "<"; DID = diag::err_expected_greater; break;
     default: break;
     }
     Diag(m_token, DID);

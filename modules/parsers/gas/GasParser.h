@@ -34,13 +34,16 @@
 #include <string>
 #include <vector>
 
+#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/StringMap.h"
-#include "yasmx/Mixin/ParserMixin.h"
+#include "yasmx/Parse/ParserImpl.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "yasmx/Insn.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Parser.h"
+
+#include "GasPreproc.h"
 
 namespace yasm
 {
@@ -63,125 +66,66 @@ namespace gas
 
 #define YYCTYPE         char
 
-struct yystype
-{
-    std::string str;
-    std::auto_ptr<IntNum> intn;
-    std::auto_ptr<llvm::APFloat> flt;
-    Insn::Ptr insn;
-    union
-    {
-        unsigned int int_info;
-        const Prefix* prefix;
-        const SegmentRegister* segreg;
-        const Register* reg;
-        const RegisterGroup* reggroup;
-        const TargetModifier* targetmod;
-    };
-};
-#define YYSTYPE yystype
-#if 0
-struct GasRept
-{
-    GasRept(unsigned long line, unsigned long n);
-    ~GasRept();
-
-    std::vector<std::string> lines;     // repeated lines
-    unsigned long startline;    // line number of rept directive
-    unsigned long numrept;      // number of repititions to generate
-    unsigned long numdone;      // number of repititions executed so far
-    int line;                   // next line to repeat
-    size_t linepos;             // position to start pulling chars from line
-    bool ended;                 // seen endr directive yet?
-
-    YYCTYPE* oldbuf;            // saved previous fill buffer
-    size_t oldbuflen;           // previous fill buffer length
-    size_t oldbufpos;           // position in previous fill buffer
-};
-#endif
 class GasParser;
 struct GasDirLookup
 {
     const char* name;
-    bool (GasParser::*handler) (unsigned int);
+    bool (GasParser::*handler) (unsigned int, clang::SourceLocation source);
     unsigned int param;
 };
 
-class GasParser
-    : public Parser
-    , public ParserMixin<GasParser, YYSTYPE, YYCTYPE>
+class GasParser : public ParserImpl
 {
 public:
-    GasParser(const ParserModule& module, Errwarns& errwarns);
+    GasParser(const ParserModule& module,
+              Diagnostic& diags,
+              clang::SourceManager& sm,
+              HeaderSearch& headers);
     ~GasParser();
 
     void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
     static llvm::StringRef getName() { return "GNU AS (GAS)-compatible parser"; }
     static llvm::StringRef getKeyword() { return "gas"; }
-    static std::vector<llvm::StringRef> getPreprocessorKeywords();
-    static llvm::StringRef getDefaultPreprocessorKeyword() { return "raw"; }
 
-    void Parse(Object& object,
-               Preprocessor& preproc,
-               Directives& dirs,
-               Diagnostic& diags);
-
-    enum TokenType
-    {
-        INTNUM = 258,
-        FLTNUM,
-        STRING,
-        REG,
-        REGGROUP,
-        SEGREG,
-        TARGETMOD,
-        LEFT_OP,
-        RIGHT_OP,
-        ID,
-        LABEL,
-        CPP_LINE_MARKER,
-        NASM_LINE_MARKER,
-        NONE                // special token for lookahead
-    };
-
-    static bool isEolTok(int tok)
-    {
-        return (tok == '\n' || tok == ';' || tok == 0);
-    }
-    static llvm::StringRef DescribeToken(int tok);
-
-    int Lex(YYSTYPE* lvalp);
+    void Parse(Object& object, Directives& dirs, Diagnostic& diags);
 
 private:
 
     bool ParseLine();
-    void setDebugFile(llvm::StringRef filename);
-    void setDebugFile(const IntNum& fileno, llvm::StringRef filename);
+    void setDebugFile(llvm::StringRef filename,
+                      clang::SourceLocation filename_source,
+                      clang::SourceLocation dir_source);
+    void setDebugFile(const IntNum& fileno,
+                      clang::SourceLocation fileno_source,
+                      llvm::StringRef filename,
+                      clang::SourceLocation filename_source,
+                      clang::SourceLocation dir_source);
     void ParseCppLineMarker();
     void ParseNasmLineMarker();
 
-    bool ParseDirLine(unsigned int);
+    bool ParseDirLine(unsigned int, clang::SourceLocation source);
 #if 0
     bool ParseDirRept(unsigned int);
     bool ParseDirEndr(unsigned int);
 #endif
-    bool ParseDirAlign(unsigned int power2);
-    bool ParseDirOrg(unsigned int);
-    bool ParseDirLocal(unsigned int);
-    bool ParseDirComm(unsigned int is_lcomm);
-    bool ParseDirAscii(unsigned int withzero);
-    bool ParseDirData(unsigned int size);
-    bool ParseDirLeb128(unsigned int sign);
-    bool ParseDirZero(unsigned int);
-    bool ParseDirSkip(unsigned int);
-    bool ParseDirFill(unsigned int);
-    bool ParseDirBssSection(unsigned int);
-    bool ParseDirDataSection(unsigned int);
-    bool ParseDirTextSection(unsigned int);
-    bool ParseDirSection(unsigned int);
-    bool ParseDirEqu(unsigned int);
-    bool ParseDirFile(unsigned int);
+    bool ParseDirAlign(unsigned int power2, clang::SourceLocation source);
+    bool ParseDirOrg(unsigned int, clang::SourceLocation source);
+    bool ParseDirLocal(unsigned int, clang::SourceLocation source);
+    bool ParseDirComm(unsigned int is_lcomm, clang::SourceLocation source);
+    bool ParseDirAscii(unsigned int withzero, clang::SourceLocation source);
+    bool ParseDirFloat(unsigned int size, clang::SourceLocation source);
+    bool ParseDirData(unsigned int size, clang::SourceLocation source);
+    bool ParseDirLeb128(unsigned int sign, clang::SourceLocation source);
+    bool ParseDirZero(unsigned int, clang::SourceLocation source);
+    bool ParseDirSkip(unsigned int, clang::SourceLocation source);
+    bool ParseDirFill(unsigned int, clang::SourceLocation source);
+    bool ParseDirBssSection(unsigned int, clang::SourceLocation source);
+    bool ParseDirDataSection(unsigned int, clang::SourceLocation source);
+    bool ParseDirTextSection(unsigned int, clang::SourceLocation source);
+    bool ParseDirSection(unsigned int, clang::SourceLocation source);
+    bool ParseDirEqu(unsigned int, clang::SourceLocation source);
+    bool ParseDirFile(unsigned int, clang::SourceLocation source);
 
     Insn::Ptr ParseInsn();
     bool ParseDirective(NameValues* nvs);
@@ -191,15 +135,34 @@ private:
     bool ParseExpr0(Expr& e);
     bool ParseExpr1(Expr& e);
     bool ParseExpr2(Expr& e);
+    bool ParseExpr3(Expr& e);
 
-    void DefineLabel(llvm::StringRef name, bool local);
-    void DefineLcomm(llvm::StringRef name,
+    SymbolRef ParseSymbol(IdentifierInfo* ii);
+    bool ParseInteger(IntNum* intn);
+    const Register* ParseRegister();
+
+    void DefineLabel(llvm::StringRef name, clang::SourceLocation source);
+    void DefineLcomm(SymbolRef sym,
+                     clang::SourceLocation source,
                      std::auto_ptr<Expr> size,
                      const Expr& align);
-    void SwitchSection(llvm::StringRef name, bool builtin);
-    Section& getSection(llvm::StringRef name, bool builtin);
+    void SwitchSection(llvm::StringRef name,
+                       bool builtin,
+                       clang::SourceLocation source);
+    Section& getSection(llvm::StringRef name,
+                        bool builtin,
+                        clang::SourceLocation source);
 
     void DoParse();
+
+    Object* m_object;
+    Arch* m_arch;
+    Directives* m_dirs;
+
+    GasPreproc m_gas_preproc;
+
+    BytecodeContainer* m_container;
+    /*@null@*/ Bytecode* m_bc;
 
     GasDirLookup m_sized_gas_dirs[1];
     typedef llvm::StringMap<const GasDirLookup*> GasDirMap;
@@ -222,13 +185,6 @@ private:
     // Have we seen a line marker?
     bool m_seen_line_marker;
 
-    enum State
-    {
-        INITIAL,
-        COMMENT,
-        SECTION_DIRECTIVE,
-        NASM_FILENAME
-    } m_state;
 #if 0
     stdx::ptr_vector<GasRept> m_rept;
     stdx::ptr_vector_owner<GasRept> m_rept_owner;
@@ -239,20 +195,7 @@ private:
 
     // Start of comment.
     clang::SourceLocation m_comment_start;
-
-    bool m_is_nasm_preproc;
-    bool m_is_cpp_preproc;
 };
-
-#define INTNUM_val      (m_tokval.intn)
-#define FLTNUM_val      (m_tokval.flt)
-#define STRING_val      (m_tokval.str)
-#define REG_val         (m_tokval.reg)
-#define REGGROUP_val    (m_tokval.reggroup)
-#define SEGREG_val      (m_tokval.segreg)
-#define TARGETMOD_val   (m_tokval.targetmod)
-#define ID_val          (m_tokval.str)
-#define LABEL_val       (m_tokval.str)
 
 }}} // namespace yasm::parser::gas
 

@@ -32,25 +32,28 @@
 #include <cctype>
 #include <climits>
 #include <cmath>
+#include <cstdio>
 
 #include "clang/Basic/SourceManager.h"
+#include "llvm/ADT/SmallString.h"
 #include "yasmx/Support/bitcount.h"
-#include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeContainer_util.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/Errwarns.h"
 #include "yasmx/NameValue.h"
 #include "yasmx/Object.h"
-#include "yasmx/Preprocessor.h"
 #include "yasmx/Section.h"
 #include "yasmx/Symbol.h"
 #include "yasmx/Symbol_util.h"
 
 #include "GasParser.h"
+#include "GasLexer.h"
+#include "GasNumericParser.h"
+#include "GasStringParser.h"
 
 
 namespace yasm
@@ -60,161 +63,153 @@ namespace parser
 namespace gas
 {
 
-llvm::StringRef
-GasParser::DescribeToken(int token)
-{
-    static char strch[] = "` '";
-    const char *str;
-
-    switch (token)
-    {
-        case 0: case '\n':      str = "end of line"; break;
-        case INTNUM:            str = "integer"; break;
-        case FLTNUM:            str = "floating point value"; break;
-        case STRING:            str = "string"; break;
-        case REG:               str = "register"; break;
-        case REGGROUP:          str = "register group"; break;
-        case SEGREG:            str = "segment register"; break;
-        case TARGETMOD:         str = "target modifier"; break;
-        case LEFT_OP:           str = "<<"; break;
-        case RIGHT_OP:          str = ">>"; break;
-        case ID:                str = "identifier"; break;
-        case LABEL:             str = "label"; break;
-        default:
-            strch[1] = token;
-            str = strch;
-            break;
-    }
-
-    return str;
-}
-
 bool
 GasParser::ParseLine()
 {
-    if (isEol())
-        return true;
-
+next:
     m_container = m_object->getCurSection();
 
+    clang::SourceLocation exp_source = m_token.getLocation();
     Insn::Ptr insn = ParseInsn();
     if (insn.get() != 0)
     {
-        insn->Append(*m_container, m_source, *m_diags);
+        insn->Append(*m_container, exp_source, m_preproc.getDiagnostics());
         return true;
     }
 
-    switch (m_token)
+    switch (m_token.getKind())
     {
-        case ID:
+        case GasToken::identifier:
+        case GasToken::label:
         {
-            clang::SourceLocation name_src = getTokenSource();
-            std::string name;
-            std::swap(name, ID_val);
-            getNextToken(); // ID
+            IdentifierInfo* ii = m_token.getIdentifierInfo();
+            clang::SourceLocation id_source = ConsumeToken();
 
-            // See if it's a gas-specific directive
-            GasDirMap::iterator p = m_gas_dirs.find(name);
-            if (p != m_gas_dirs.end())
-            {
-                // call directive handler (function in this class) w/parameter
-                return (this->*(p->second->handler))(p->second->param);
-            }
-
-            if (m_token == ':')
+            if (m_token.is(GasToken::colon))
             {
                 // Label
-                m_state = INITIAL;
-                getNextToken(); // :
-                DefineLabel(name, false);
-                if (!ParseLine())
-                    return false;
-                break;
+                ConsumeToken();
+                DefineLabel(ii->getName(), id_source);
+                goto next;
             }
-            else if (m_token == '=')
+            else if (m_token.is(GasToken::equal))
             {
                 // EQU
                 // TODO: allow redefinition, assigning to . (same as .org)
-                m_state = INITIAL;
-                getNextToken(); // =
+                clang::SourceLocation equ_source = ConsumeToken();
                 Expr e;
                 if (!ParseExpr(e))
                 {
-                    Diag(getTokenSource(), diag::err_expected_expression_after)
+                    Diag(equ_source, diag::err_expected_expression_after)
                         << "=";
                     return false;
                 }
-                m_object->getSymbol(name)->DefineEqu(e, m_source);
+                ParseSymbol(ii)->DefineEqu(e, id_source);
                 break;
             }
 
             // possibly a directive; try to parse it
-            DirectiveInfo dirinfo(*m_object, name_src);
-            ParseDirective(&dirinfo.getNameValues());
-            Directive dir;
-            if (m_dirs->get(&dir, name))
+            llvm::StringRef name = ii->getName();
+            if (name[0] == '.')
             {
-                dir(dirinfo, *m_diags);
+                // See if it's a gas-specific directive
+                GasDirMap::iterator p = m_gas_dirs.find(name);
+                if (p != m_gas_dirs.end())
+                {
+                    // call directive handler (function in this class) w/parameter
+                    return (this->*(p->second->handler))(p->second->param,
+                                                         id_source);
+                }
+
+                DirectiveInfo dirinfo(*m_object, id_source);
+                ParseDirective(&dirinfo.getNameValues());
+                Directive dir;
+                if (m_dirs->get(&dir, name))
+                {
+                    dir(dirinfo, m_preproc.getDiagnostics());
+                    break;
+                }
+
+                // no match
+                Diag(id_source, diag::warn_unrecognized_directive);
                 break;
             }
 
-            // didn't match, warn/error as appropriate
-            if (name[0] == '.')
-                Diag(name_src, diag::warn_unrecognized_directive);
-            else
+            // id with nothing after it that wasn't an instruction
+            Diag(id_source, diag::err_unrecognized_instruction);
+            return false;
+        }
+        case GasToken::numeric_constant:
+        {
+            // If it's a simple integer from 0-9 and followed by a colon,
+            // it's a local label.
+            if (m_token.getLength() != 1 ||
+                !isdigit(m_token.getLiteralData()[0]) ||
+                NextToken().isNot(Token::colon))
             {
-                Diag(name_src, diag::err_unrecognized_instruction);
+                Diag(m_token, diag::err_expected_insn_or_label_after_eol);
                 return false;
             }
-            break;
+            char label = m_token.getLiteralData()[0];
+            // increment label index
+            m_local[label-'0']++;
+            // build local label name and define it
+            char labelname[30];
+            std::sprintf(labelname, "L%c\001%lu", label, m_local[label-'0']);
+            DefineLabel(labelname, m_token.getLocation());
+            ConsumeToken();
+            ConsumeToken(); // also eat the :
+            goto next;
         }
-        case LABEL:
-            DefineLabel(LABEL_val, false);
-            getNextToken(); // LABEL
-            if (!ParseLine())
-                return false;
-            break;
+#if 0
         case CPP_LINE_MARKER:
-            getNextToken();
+            ConsumeToken();
             ParseCppLineMarker();
             break;
         case NASM_LINE_MARKER:
-            getNextToken();
+            ConsumeToken();
             ParseNasmLineMarker();
             break;
+#endif
         default:
-            Diag(getTokenSource(), diag::err_expected_insn_label_after_eol);
+            Diag(m_token, diag::err_expected_insn_or_label_after_eol);
             return false;
     }
     return true;
 }
 
 void
-GasParser::setDebugFile(llvm::StringRef filename)
+GasParser::setDebugFile(llvm::StringRef filename,
+                        clang::SourceLocation filename_source,
+                        clang::SourceLocation dir_source)
 {
     Directive dir;
     if (!m_dirs->get(&dir, ".file"))
         return;
 
-    DirectiveInfo info(*m_object, m_source);
-    info.getNameValues().push_back(new NameValue(filename, m_source));
-    dir(info, *m_diags);
+    DirectiveInfo info(*m_object, dir_source);
+    info.getNameValues().push_back(new NameValue(filename, filename_source));
+    dir(info, m_preproc.getDiagnostics());
 }
 
 void
-GasParser::setDebugFile(const IntNum& fileno, llvm::StringRef filename)
+GasParser::setDebugFile(const IntNum& fileno,
+                        clang::SourceLocation fileno_source,
+                        llvm::StringRef filename,
+                        clang::SourceLocation filename_source,
+                        clang::SourceLocation dir_source)
 {
     Directive dir;
     if (!m_dirs->get(&dir, ".file"))
         return;
 
-    DirectiveInfo info(*m_object, m_source);
+    DirectiveInfo info(*m_object, dir_source);
     NameValues& nvs = info.getNameValues();
-    nvs.push_back(new NameValue(Expr::Ptr(new Expr(fileno)), m_source));
-    nvs.push_back(new NameValue(filename, m_source));
-    dir(info, *m_diags);
+    nvs.push_back(new NameValue(Expr::Ptr(new Expr(fileno)), fileno_source));
+    nvs.push_back(new NameValue(filename, filename_source));
+    dir(info, m_preproc.getDiagnostics());
 }
-
+#if 0
 // Handle line markers generated by cpp.
 //
 // We expect a positive integer (line) followed by a string (filename). If we
@@ -234,14 +229,14 @@ GasParser::ParseCppLineMarker()
     {
         // Skip over a comment.
         while (m_token != '\n')
-            getNextToken();
+            ConsumeToken();
 
         return;
     }
 
     if (INTNUM_val->getSign() < 0)
     {
-        getNextToken(); // INTNUM
+        ConsumeToken(); // INTNUM
         throw SyntaxError(N_("line number is negative"));
     }
 
@@ -254,21 +249,21 @@ GasParser::ParseCppLineMarker()
     if (line != 0)
         line--;
 
-    getNextToken(); // INTNUM
+    ConsumeToken(); // INTNUM
 
     // File name, in quotes.
     if (m_token != STRING)
     {
         // Skip over a comment.
         while (m_token != '\n')
-            getNextToken();
+            ConsumeToken();
 
         return;
     }
 
     std::string filename;
     std::swap(filename, STRING_val);
-    getNextToken();
+    ConsumeToken();
 
     // Add a line note.
     clang::SourceManager& smgr = m_preproc->getSourceManager();
@@ -297,7 +292,7 @@ GasParser::ParseCppLineMarker()
             default:
                 throw SyntaxError(N_("junk at end of cpp line marker"));
         }
-        getNextToken();
+        ConsumeToken();
     }
 }
 
@@ -316,7 +311,7 @@ GasParser::ParseNasmLineMarker()
 
     if (INTNUM_val->getSign() < 0)
     {
-        getNextToken(); // INTNUM
+        ConsumeToken(); // INTNUM
         throw SyntaxError(N_("line number is negative"));
     }
 
@@ -329,17 +324,17 @@ GasParser::ParseNasmLineMarker()
     if (line != 0)
         line--;
 
-    getNextToken(); // INTNUM
+    ConsumeToken(); // INTNUM
 
     if (m_token != '+') return;
-    getNextToken(); // +
+    ConsumeToken(); // +
 
     // Line number increment.
     if (m_token != INTNUM) return;
 
     if (INTNUM_val->getSign() < 0)
     {
-        getNextToken(); // INTNUM
+        ConsumeToken(); // INTNUM
         throw SyntaxError(N_("line increment is negative"));
     }
 
@@ -349,7 +344,7 @@ GasParser::ParseNasmLineMarker()
     // File name is not in quotes, so need to switch to a different tokenizer
     // state.
     m_state = NASM_FILENAME;
-    getNextToken(); // INTNUM
+    ConsumeToken(); // INTNUM
     if (m_token != STRING)
     {
         m_state = INITIAL;
@@ -377,38 +372,35 @@ GasParser::ParseNasmLineMarker()
 
     // We need to poke back on the \n that was consumed by the tokenizer
     m_peek_token = '\n';
-    getNextToken();
+    ConsumeToken();
 }
-
+#endif
 // Line directive
 bool
-GasParser::ParseDirLine(unsigned int param)
+GasParser::ParseDirLine(unsigned int param, clang::SourceLocation source)
 {
-    if (!Expect(INTNUM, diag::err_expected_integer))
-        return false;
-
-    if (INTNUM_val->getSign() < 0)
+    if (m_token.isNot(GasToken::numeric_constant))
     {
-        Diag(getTokenSource(), m_diags->getCustomDiagID(Diagnostic::Error,
-            "line number is negative"));
-        getNextToken(); // INTNUM
+        Diag(m_token, diag::err_expected_integer);
         return false;
     }
 
-    m_dir_line = INTNUM_val->getUInt();
-    getNextToken(); // INTNUM
+    IntNum intn;
+    if (!ParseInteger(&intn))
+        return false;
+    m_dir_line = intn.getUInt();
 
     if (m_dir_fileline == FL_BOTH)
     {
         // Have both file and line
-        m_preproc->getSourceManager().AddLineNote(m_source, m_dir_line, -1);
+        m_preproc.getSourceManager().AddLineNote(source, m_dir_line, -1);
     }
     else if (m_dir_fileline == FL_FILE)
     {
         // Had previous file directive only
         m_dir_fileline = FL_BOTH;
-        clang::SourceManager& smgr = m_preproc->getSourceManager();
-        smgr.AddLineNote(m_source, m_dir_line,
+        clang::SourceManager& smgr = m_preproc.getSourceManager();
+        smgr.AddLineNote(source, m_dir_line,
                          smgr.getLineTableFilenameID(m_dir_file.data(),
                                                      m_dir_file.size()));
     }
@@ -476,24 +468,23 @@ GasParser::ParseDirEndr(unsigned int param)
 //
 
 bool
-GasParser::ParseDirAlign(unsigned int power2)
+GasParser::ParseDirAlign(unsigned int power2, clang::SourceLocation source)
 {
     Expr bound, fill, maxskip;
 
     if (!ParseExpr(bound))
     {
-        Diag(getTokenSource(), m_diags->getCustomDiagID(Diagnostic::Error,
-            ".align directive must specify alignment"));
+        Diag(source, diag::err_align_no_alignment);
         return false;
     }
 
-    if (m_token == ',')
+    if (m_token.is(GasToken::comma))
     {
-        getNextToken(); // ','
+        ConsumeToken();
         ParseExpr(fill);
-        if (m_token == ',')
+        if (m_token.is(GasToken::comma))
         {
-            getNextToken(); // ','
+            ConsumeToken();
             ParseExpr(maxskip);
         }
     }
@@ -520,31 +511,40 @@ GasParser::ParseDirAlign(unsigned int power2)
 
     AppendAlign(*cur_section, bound, fill, maxskip,
                 cur_section->isCode() ?  m_object->getArch()->getFill() : 0,
-                m_source);
+                source);
     return true;
 }
 
 bool
-GasParser::ParseDirOrg(unsigned int param)
+GasParser::ParseDirOrg(unsigned int param, clang::SourceLocation source)
 {
     // TODO: support expr instead of intnum
-    if (!Expect(INTNUM, diag::err_expected_integer))
-        return false;
-    unsigned long start = INTNUM_val->getUInt();
-    getNextToken(); // INTNUM
-
-    unsigned long value = 0;
-    if (m_token == ',')
+    if (m_token.isNot(GasToken::numeric_constant))
     {
-        getNextToken(); // ','
+        Diag(m_token, diag::err_expected_integer);
+        return false;
+    }
+    IntNum start;
+    if (!ParseInteger(&start))
+        return false;
+    ConsumeToken();
+
+    IntNum value;
+    if (m_token.is(GasToken::comma))
+    {
+        ConsumeToken();
         // TODO: support expr instead of intnum
-        if (!Expect(INTNUM, diag::err_expected_integer))
+        if (m_token.isNot(GasToken::numeric_constant))
+        {
+            Diag(m_token, diag::err_expected_integer);
             return false;
-        value = INTNUM_val->getUInt();
-        getNextToken(); // INTNUM
+        }
+        if (!ParseInteger(&value))
+            return false;
+        ConsumeToken();
     }
 
-    AppendOrg(*m_container, start, value, m_source);
+    AppendOrg(*m_container, start.getUInt(), value.getUInt(), source);
     return true;
 }
 
@@ -553,48 +553,55 @@ GasParser::ParseDirOrg(unsigned int param)
 //
 
 bool
-GasParser::ParseDirLocal(unsigned int param)
+GasParser::ParseDirLocal(unsigned int param, clang::SourceLocation source)
 {
-    if (!Expect(ID, diag::err_expected_ident))
+    if (m_token.isNot(GasToken::identifier) && m_token.isNot(GasToken::label))
+    {
+        Diag(m_token, diag::err_expected_ident);
         return false;
-    m_object->getSymbol(ID_val)->Declare(Symbol::DLOCAL, getTokenSource());
-    getNextToken(); // ID
+    }
+
+    IdentifierInfo* ii = m_token.getIdentifierInfo();
+    ParseSymbol(ii)->Declare(Symbol::DLOCAL, ConsumeToken());
     return true;
 }
 
 bool
-GasParser::ParseDirComm(unsigned int is_lcomm)
+GasParser::ParseDirComm(unsigned int is_lcomm, clang::SourceLocation source)
 {
-    if (!Expect(ID, diag::err_expected_ident))
-        return false;
-    std::string id;
-    std::swap(id, ID_val);
-    getNextToken(); // ID
-
-    ExpectAndConsume(',', diag::err_expected_comma);
-
-    Expr e, align;
-    clang::SourceLocation align_source;
-    if (!ParseExpr(e))
+    if (m_token.isNot(GasToken::identifier) && m_token.isNot(GasToken::label))
     {
-        Diag(getTokenSource(), m_diags->getCustomDiagID(Diagnostic::Error,
-            "size expected for .COMM"));
+        Diag(m_token, diag::err_expected_ident);
         return false;
     }
-    if (m_token == ',')
+
+    IdentifierInfo* ii = m_token.getIdentifierInfo();
+    clang::SourceLocation id_source = ConsumeToken();
+
+    ExpectAndConsume(GasToken::comma, diag::err_expected_comma);
+
+    Expr e, align;
+    clang::SourceLocation e_source = m_token.getLocation();
+    if (!ParseExpr(e))
+    {
+        Diag(e_source, diag::err_comm_size_expected);
+        return false;
+    }
+    clang::SourceLocation align_source;
+    if (m_token.is(GasToken::comma))
     {
         // Optional alignment expression
-        getNextToken(); // ','
-        align_source = getTokenSource();
+        ConsumeToken();
+        align_source = m_token.getLocation();
         ParseExpr(align);
     }
     // If already explicitly declared local, treat like LCOMM
-    SymbolRef oldsym = m_object->FindSymbol(id);
-    if (is_lcomm || (oldsym && oldsym->getVisibility() == Symbol::DLOCAL))
+    SymbolRef sym = ParseSymbol(ii);
+    if (is_lcomm || sym->getVisibility() == Symbol::DLOCAL)
     {
         std::auto_ptr<Expr> e_copy(new Expr);
         std::swap(*e_copy, e);
-        DefineLcomm(id, e_copy, align);
+        DefineLcomm(sym, id_source, e_copy, align);
     }
     else if (!align.isEmpty())
     {
@@ -605,15 +612,13 @@ GasParser::ParseDirComm(unsigned int is_lcomm)
         NameValues extvps;
         extvps.push_back(new NameValue(align_copy, align_source));
 
-        SymbolRef sym = m_object->getSymbol(id);
-        sym->Declare(Symbol::COMMON, m_source);
+        sym->Declare(Symbol::COMMON, id_source);
         setCommonSize(*sym, e);
         setObjextNameValues(*sym, extvps);
     }
     else
     {
-        SymbolRef sym = m_object->getSymbol(id);
-        sym->Declare(Symbol::COMMON, m_source);
+        sym->Declare(Symbol::COMMON, id_source);
         setCommonSize(*sym, e);
     }
     return true;
@@ -624,55 +629,141 @@ GasParser::ParseDirComm(unsigned int is_lcomm)
 //
 
 bool
-GasParser::ParseDirAscii(unsigned int withzero)
+GasParser::ParseDirAscii(unsigned int withzero, clang::SourceLocation source)
 {
     for (;;)
     {
-        if (!Expect(STRING, diag::err_expected_string))
+        // <##> character constant
+        if (m_token.is(GasToken::less))
+        {
+            clang::SourceLocation less_loc = ConsumeToken();
+            if (m_token.isNot(GasToken::numeric_constant))
+            {
+                Diag(less_loc, diag::err_expected_string);
+                return false;
+            }
+
+            IntNum val;
+            if (!ParseInteger(&val))
+                return false;
+            clang::SourceLocation val_source = ConsumeToken();
+            AppendByte(*m_container, val.getUInt() & 0xff);
+
+            MatchRHSPunctuation(GasToken::greater, less_loc);
+        }
+        else if (m_token.is(GasToken::string_literal))
+        {
+            llvm::SmallString<64> strbuf;
+            const char* str_start = m_token.getLiteralData();
+            GasStringParser str(str_start, str_start + m_token.getLength(),
+                                m_token.getLocation(), m_preproc);
+            if (!str.hadError())
+                AppendData(*m_container, str.getString(strbuf), withzero);
+            ConsumeToken();
+        }
+        else
+        {
+            Diag(m_token, diag::err_expected_string);
             return false;
-        AppendData(*m_container, STRING_val, withzero);
-        getNextToken(); // STRING
-        if (m_token != ',')
+        }
+
+        if (m_token.isNot(GasToken::comma))
             break;
-        getNextToken(); // ','
+        ConsumeToken();
     }
     return true;
 }
 
 bool
-GasParser::ParseDirData(unsigned int size)
+GasParser::ParseDirFloat(unsigned int size, clang::SourceLocation source)
 {
     for (;;)
     {
-        std::auto_ptr<Expr> e(new Expr);
-        if (!ParseExpr(*e))
+        llvm::StringRef num_str;
+
+        switch (m_token.getKind())
         {
-            Diag(getTokenSource(), diag::err_expected_expression_after) << ",";
-            return false;
+            case GasToken::numeric_constant:
+            {
+                const char* num_start = m_token.getLiteralData();
+                num_str = llvm::StringRef(num_start, m_token.getLength());
+                break;
+            }
+            case GasToken::label:
+            {
+                // Try to parse identifiers starting with . as floating point
+                // numbers; this is to allow e.g. ".float .1" to work.
+                IdentifierInfo* ii = m_token.getIdentifierInfo();
+                num_str = ii->getName();
+                if (num_str[0] == '.')
+                    break;
+                // fallthrough
+            }
+            default:
+                Diag(m_token, diag::err_expected_float);
+                return false;
         }
-        AppendData(*m_container, e, size, *m_arch, m_source);
-        if (m_token != ',')
+
+        GasNumericParser num(num_str.begin(), num_str.end(),
+                             m_token.getLocation(), m_preproc, true);
+        clang::SourceLocation num_source = ConsumeToken();
+        if (num.hadError())
+            ;
+        else if (num.isInteger())
+        {
+            Diag(num_source, diag::err_expected_float);
+        }
+        else if (num.isFloat())
+        {
+            // FIXME: Make arch-dependent
+            Expr::Ptr e(new Expr(std::auto_ptr<llvm::APFloat>(new llvm::APFloat(
+                num.getFloatValue(llvm::APFloat::x87DoubleExtended)))));
+            AppendData(*m_container, e, size, *m_arch, num_source);
+        }
+        if (m_token.isNot(GasToken::comma))
             break;
-        getNextToken(); // ','
+        ConsumeToken();
     }
     return true;
 }
 
 bool
-GasParser::ParseDirLeb128(unsigned int sign)
+GasParser::ParseDirData(unsigned int size, clang::SourceLocation source)
 {
     for (;;)
     {
+        clang::SourceLocation cur_source = m_token.getLocation();
         std::auto_ptr<Expr> e(new Expr);
         if (!ParseExpr(*e))
         {
-            Diag(getTokenSource(), diag::err_expected_expression_after) << ",";
+            Diag(cur_source, diag::err_expected_expression_after) << ",";
             return false;
         }
-        AppendLEB128(*m_container, e, sign, m_source, *m_diags);
-        if (m_token != ',')
+        AppendData(*m_container, e, size, *m_arch, cur_source);
+        if (m_token.isNot(GasToken::comma))
             break;
-        getNextToken(); // ','
+        ConsumeToken();
+    }
+    return true;
+}
+
+bool
+GasParser::ParseDirLeb128(unsigned int sign, clang::SourceLocation source)
+{
+    for (;;)
+    {
+        clang::SourceLocation cur_source = m_token.getLocation();
+        std::auto_ptr<Expr> e(new Expr);
+        if (!ParseExpr(*e))
+        {
+            Diag(cur_source, diag::err_expected_expression_after) << ",";
+            return false;
+        }
+        AppendLEB128(*m_container, e, sign, cur_source,
+                     m_preproc.getDiagnostics());
+        if (m_token.isNot(GasToken::comma))
+            break;
+        ConsumeToken();
     }
     return true;
 }
@@ -682,80 +773,80 @@ GasParser::ParseDirLeb128(unsigned int sign)
 //
 
 bool
-GasParser::ParseDirZero(unsigned int param)
+GasParser::ParseDirZero(unsigned int param, clang::SourceLocation source)
 {
+    clang::SourceLocation cur_source = m_token.getLocation();
     std::auto_ptr<Expr> e(new Expr);
     if (!ParseExpr(*e))
     {
-        Diag(getTokenSource(), diag::err_expected_expression_after_id)
-            << ".ZERO";
+        Diag(cur_source, diag::err_expected_expression_after_id) << ".ZERO";
         return false;
     }
 
-    BytecodeContainer& inner = AppendMultiple(*m_container, e, m_source);
+    BytecodeContainer& inner = AppendMultiple(*m_container, e, source);
     AppendByte(inner, 0);
     return true;
 }
 
 bool
-GasParser::ParseDirSkip(unsigned int param)
+GasParser::ParseDirSkip(unsigned int param, clang::SourceLocation source)
 {
+    clang::SourceLocation cur_source = m_token.getLocation();
     std::auto_ptr<Expr> e(new Expr);
     if (!ParseExpr(*e))
     {
-        Diag(getTokenSource(), diag::err_expected_expression_after_id)
-            << ".SKIP";
+        Diag(cur_source, diag::err_expected_expression_after_id) << ".SKIP";
         return false;
     }
 
-    BytecodeContainer& inner = AppendMultiple(*m_container, e, m_source);
-    if (m_token != ',')
+    BytecodeContainer& inner = AppendMultiple(*m_container, e, source);
+    if (m_token.isNot(GasToken::comma))
     {
-        inner.AppendGap(1, m_source);
+        inner.AppendGap(1, source);
         return true;
     }
-    getNextToken(); // ','
+    ConsumeToken();
 
     // expression after comma forces fill of that value (as a byte)
+    cur_source = m_token.getLocation();
     std::auto_ptr<Expr> e_val(new Expr);
     if (!ParseExpr(*e_val))
     {
-        Diag(getTokenSource(), diag::err_expected_expression_after) << ",";
+        Diag(cur_source, diag::err_expected_expression_after) << ",";
         return false;
     }
-    AppendData(inner, e_val, 1, *m_arch, m_source);
+    AppendData(inner, e_val, 1, *m_arch, source);
     return true;
 }
 
 // fill data definition directive
 bool
-GasParser::ParseDirFill(unsigned int param)
+GasParser::ParseDirFill(unsigned int param, clang::SourceLocation source)
 {
     std::auto_ptr<Expr> repeat(new Expr);
     Expr size, value;
     clang::SourceLocation size_src;
     if (!ParseExpr(*repeat))
     {
-        Diag(getTokenSource(), diag::err_expected_expression_after_id)
-            << ".FILL";
+        Diag(m_token, diag::err_expected_expression_after_id) << ".FILL";
         return false;
     }
-    if (m_token == ',')
+    if (m_token.is(GasToken::comma))
     {
-        getNextToken(); // ','
-        size_src = getTokenSource();
+        ConsumeToken();
+        size_src = m_token.getLocation();
         if (!ParseExpr(size))
         {
-            Diag(getTokenSource(), diag::err_expected_expression_after) << ",";
+            Diag(size_src, diag::err_expected_expression_after) << ",";
             return false;
         }
-        if (m_token == ',')
+        if (m_token.is(GasToken::comma))
         {
-            getNextToken(); // ','
+            ConsumeToken();
+            clang::SourceLocation value_src = m_token.getLocation();
             if (!ParseExpr(value))
             {
-                Diag(getTokenSource(), diag::err_expected_expression_after)
-                    << ",";
+                Diag(value_src, diag::err_expected_expression_after) << ",";
                 return false;
             }
         }
@@ -767,14 +858,13 @@ GasParser::ParseDirFill(unsigned int param)
         size.Simplify();
         if (!size.isIntNum())
         {
-            Diag(size_src, m_diags->getCustomDiagID(Diagnostic::Error,
-                "size must be an absolute expression"));
+            Diag(size_src, diag::err_fill_size_not_absolute);
             return false;
         }
         ssize = size.getIntNum().getUInt();
     }
 
-    BytecodeContainer& inner = AppendMultiple(*m_container, repeat, m_source);
+    BytecodeContainer& inner = AppendMultiple(*m_container, repeat, source);
     if (value.isEmpty())
     {
         AppendData(inner, 0, ssize, *m_arch);
@@ -783,7 +873,7 @@ GasParser::ParseDirFill(unsigned int param)
     {
         std::auto_ptr<Expr> value_copy(new Expr);
         std::swap(*value_copy, value);
-        AppendData(inner, value_copy, ssize, *m_arch, m_source);
+        AppendData(inner, value_copy, ssize, *m_arch, source);
     }
     return true;
 }
@@ -793,44 +883,44 @@ GasParser::ParseDirFill(unsigned int param)
 //
 
 bool
-GasParser::ParseDirBssSection(unsigned int param)
+GasParser::ParseDirBssSection(unsigned int param, clang::SourceLocation source)
 {
-    SwitchSection(".bss", true);
+    SwitchSection(".bss", true, source);
     return true;
 }
 
 bool
-GasParser::ParseDirDataSection(unsigned int param)
+GasParser::ParseDirDataSection(unsigned int param, clang::SourceLocation source)
 {
-    SwitchSection(".data", true);
+    SwitchSection(".data", true, source);
     return true;
 }
 
 bool
-GasParser::ParseDirTextSection(unsigned int param)
+GasParser::ParseDirTextSection(unsigned int param, clang::SourceLocation source)
 {
-    SwitchSection(".text", true);
+    SwitchSection(".text", true, source);
     return true;
 }
 
 bool
-GasParser::ParseDirSection(unsigned int param)
+GasParser::ParseDirSection(unsigned int param, clang::SourceLocation source)
 {
     // DIR_SECTION ID ',' STRING ',' '@' ID ',' dirvals
     // Really parsed as just a bunch of dirvals; only needs to be unique
     // function to set parser state appropriately.
-    m_state = SECTION_DIRECTIVE;
-    DirectiveInfo info(*m_object, m_source);
+    //FIXME: m_state = SECTION_DIRECTIVE;
+    DirectiveInfo info(*m_object, source);
     if (!ParseDirective(&info.getNameValues()))
         return false;
 
     Directive handler;
     if (m_dirs->get(&handler, ".section"))
-        handler(info, *m_diags);
+        handler(info, m_preproc.getDiagnostics());
     else
         Diag(info.getSource(), diag::err_unrecognized_directive);
 
-    m_state = INITIAL;
+    //FIXME: m_state = INITIAL;
     return true;
 }
 
@@ -839,37 +929,47 @@ GasParser::ParseDirSection(unsigned int param)
 //
 
 bool
-GasParser::ParseDirEqu(unsigned int param)
+GasParser::ParseDirEqu(unsigned int param, clang::SourceLocation source)
 {
     // ID ',' expr
-    if (!Expect(ID, diag::err_expected_ident))
+    if (m_token.isNot(GasToken::identifier) && m_token.isNot(GasToken::label))
+    {
+        Diag(m_token, diag::err_expected_ident);
         return false;
-    std::string id;
-    std::swap(id, ID_val);
-    getNextToken(); // ID
+    }
+    IdentifierInfo* ii = m_token.getIdentifierInfo();
+    clang::SourceLocation id_source = ConsumeToken();
 
-    ExpectAndConsume(',', diag::err_expected_comma);
+    if (ExpectAndConsume(GasToken::comma, diag::err_expected_comma))
+        return false;
 
+    clang::SourceLocation expr_source = m_token.getLocation();
     Expr e;
     if (!ParseExpr(e))
     {
-        Diag(getTokenSource(), diag::err_expected_expression_after) << ",";
+        Diag(expr_source, diag::err_expected_expression_after) << ",";
         return false;
     }
-    m_object->getSymbol(id)->DefineEqu(e, m_source);
+    ParseSymbol(ii)->DefineEqu(e, id_source);
     return true;
 }
 
 bool
-GasParser::ParseDirFile(unsigned int param)
+GasParser::ParseDirFile(unsigned int param, clang::SourceLocation source)
 {
-    if (m_token == STRING)
+    llvm::SmallString<64> filename_buf;
+
+    if (m_token.is(GasToken::string_literal))
     {
         // No file number; this form also sets the assembler's
         // internal line number.
-        std::string filename;
-        std::swap(filename, STRING_val);
-        getNextToken(); // STRING
+        const char* str_start = m_token.getLiteralData();
+        GasStringParser filename(str_start, str_start + m_token.getLength(),
+                                 m_token.getLocation(), m_preproc);
+        if (filename.hadError())
+            return false;
+        clang::SourceLocation filename_source = ConsumeToken();
+
 #if 0
         // FIXME
         if (m_dir_fileline == FL_BOTH)
@@ -895,106 +995,105 @@ GasParser::ParseDirFile(unsigned int param)
         }
 #endif
         // Pass change along to debug format
-        setDebugFile(filename);
+        setDebugFile(filename.getString(filename_buf), filename_source, source);
         return true;
     }
 
+    //
     // fileno filename form
-    if (m_token != INTNUM)
+    //
+
+    // file number
+    if (m_token.isNot(GasToken::numeric_constant))
         return true;
-    std::auto_ptr<IntNum> fileno = INTNUM_val;
-    getNextToken(); // INTNUM
-
-    if (!Expect(STRING, diag::err_expected_string))
+    IntNum fileno;
+    if (!ParseInteger(&fileno))
         return false;
-    std::string filename;
-    std::swap(filename, STRING_val);
-    getNextToken(); // STRING
+    clang::SourceLocation fileno_source = ConsumeToken();
 
-    setDebugFile(*fileno, filename);
+    // filename
+    if (m_token.isNot(GasToken::string_literal))
+    {
+        Diag(m_token, diag::err_expected_string);
+        return false;
+    }
+    const char* str_start = m_token.getLiteralData();
+    GasStringParser filename(str_start, str_start + m_token.getLength(),
+                             m_token.getLocation(), m_preproc);
+    if (filename.hadError())
+        return false;
+    clang::SourceLocation filename_source = ConsumeToken();
+
+    // Pass along to debug format
+    setDebugFile(fileno, fileno_source, filename.getString(filename_buf),
+                 filename_source, source);
     return true;
 }
 
 Insn::Ptr
 GasParser::ParseInsn()
 {
-    if (m_token != ID)
-        return Insn::Ptr(0);
-
-    // instructions/prefixes must start with a letter
-    if (!isalpha(ID_val[0]))
+    if (m_token.isNot(GasToken::identifier))
         return Insn::Ptr(0);
 
     // check to be sure it's not a label or equ
-    getPeekToken();
-    if (m_peek_token == ':' || m_peek_token == '=')
+    const Token& peek_token = NextToken();
+    if (peek_token.is(GasToken::colon) || peek_token.is(GasToken::equal))
         return Insn::Ptr(0);
 
-    clang::SourceLocation orig_source = m_source;
-    Arch::InsnPrefix ip =
-        m_arch->ParseCheckInsnPrefix(ID_val, getTokenSource(), *m_diags);
-    switch (ip.getType())
+    IdentifierInfo* ii = m_token.getIdentifierInfo();
+    ii->DoInsnLookup(*m_arch, m_token.getLocation(),
+                     m_preproc.getDiagnostics());
+    if (const Arch::InsnInfo* insninfo = ii->getInsn())
     {
-        case Arch::InsnPrefix::INSN:
+        ConsumeToken();
+
+        Insn::Ptr insn(m_arch->CreateInsn(insninfo));
+        if (m_token.is(GasToken::eol) || m_token.is(GasToken::semi) ||
+            m_token.is(GasToken::eof))
+            return insn; // no operands
+
+        // parse operands
+        for (;;)
         {
-            // Propagate errors in case we got a warning from the arch
-            m_errwarns.Propagate(m_source);
+            clang::SourceLocation start = m_token.getLocation();
+            Operand op = ParseOperand();
+            op.setSource(start);
+            insn->AddOperand(op);
 
-            getNextToken();   // ID
-
-            Insn::Ptr insn = m_arch->CreateInsn(ip.getInsn());
-            if (!isEol())
-            {
-                // parse operands
-                for (;;)
-                {
-                    clang::SourceLocation start = getTokenSource();
-                    Operand op = ParseOperand();
-                    op.setSource(start);
-                    insn->AddOperand(op);
-                    if (isEol())
-                        break;
-                    ExpectAndConsume(',', diag::err_expected_comma);
-                }
-            }
-            return insn;
+            if (m_token.is(GasToken::eol) || m_token.is(GasToken::semi) ||
+                m_token.is(GasToken::eof))
+                break;
+            if (ExpectAndConsume(GasToken::comma, diag::err_expected_comma))
+                break;
         }
-        case Arch::InsnPrefix::PREFIX:
-        {
-            // Propagate errors in case we got a warning from the arch
-            m_errwarns.Propagate(m_source);
-
-            getNextToken();   // ID
-
-            Insn::Ptr insn = ParseInsn();
-            if (insn.get() == 0)
-                insn = m_arch->CreateEmptyInsn();
-            insn->AddPrefix(ip.getPrefix(), orig_source);
-            return insn;
-        }
-        default:
-            break;
+        return insn;
+    }
+    if (const Prefix* prefix = ii->getPrefix())
+    {
+        clang::SourceLocation prefix_source = ConsumeToken();
+        Insn::Ptr insn = ParseInsn();
+        if (insn.get() == 0)
+            insn = m_arch->CreateEmptyInsn();
+        insn->AddPrefix(prefix, prefix_source);
+        return insn;
     }
 
     // Check for segment register used as prefix
-    Arch::RegTmod regtmod =
-        m_arch->ParseCheckRegTmod(ID_val, getTokenSource(), *m_diags);
-    switch (regtmod.getType())
+    ii->DoRegLookup(*m_arch, m_token.getLocation(), m_preproc.getDiagnostics());
+    if (const SegmentRegister* segreg = ii->getSegReg())
     {
-        case Arch::RegTmod::SEGREG:
-        {
-            getNextToken();   // ID
-            Insn::Ptr insn = ParseInsn();
-            if (insn.get() == 0)
-                insn = m_arch->CreateEmptyInsn();
-            if (insn->hasSegPrefix())
-                Diag(orig_source, diag::warn_multiple_seg_override);
-            insn->setSegPrefix(regtmod.getSegReg(), orig_source);
-            return insn;
-        }
-        default:
-            return Insn::Ptr(0);
+        clang::SourceLocation segreg_source = ConsumeToken();
+        Insn::Ptr insn = ParseInsn();
+        if (insn.get() == 0)
+            insn = m_arch->CreateEmptyInsn();
+        else if (insn->hasSegPrefix())
+            Diag(segreg_source, diag::warn_multiple_seg_override);
+        insn->setSegPrefix(segreg, segreg_source);
+        return insn;
     }
+
+    return Insn::Ptr(0);
 }
 
 bool
@@ -1002,58 +1101,70 @@ GasParser::ParseDirective(NameValues* nvs)
 {
     for (;;)
     {
-        switch (m_token)
+        switch (m_token.getKind())
         {
-            case ID:
-                getPeekToken();
-                switch (m_peek_token)
+            case GasToken::identifier:
+            case GasToken::label:
+            {
+                const Token& peek_token = NextToken();
+                switch (peek_token.getKind())
                 {
-                    case '+': case '-':
-                    case '|': case '^': case '&': case '!':
-                    case '*': case '/': case '%': case LEFT_OP: case RIGHT_OP:
+                    case GasToken::plus: case GasToken::minus:
+                    case GasToken::pipe: case GasToken::caret:
+                    case GasToken::amp: case GasToken::exclaim:
+                    case GasToken::star: case GasToken::slash:
+                    case GasToken::percent: case GasToken::lessless:
+                    case GasToken::greatergreater:
                     {
-                        clang::SourceLocation e_src = getTokenSource();
+                        clang::SourceLocation e_src = m_token.getLocation();
                         Expr::Ptr e(new Expr);
                         if (!ParseExpr(*e))
                             return false;
                         nvs->push_back(new NameValue(e,
-                            clang::SourceRange(e_src, getTokenSource())));
+                            clang::SourceRange(e_src, m_token.getLocation())));
                         break;
                     }
                     default:
                         // Just an ID
-                        nvs->push_back(new NameValue(ID_val, '\0',
-                                                     getTokenSource()));
-                        getNextToken(); // ID
+                        nvs->push_back(new NameValue(
+                            m_token.getIdentifierInfo()->getName(),
+                            '\0',
+                            m_token.getLocation()));
+                        ConsumeToken();
                         break;
                 }
                 break;
-            case STRING:
-                nvs->push_back(new NameValue(STRING_val, getTokenSource()));
-                getNextToken(); // STRING
+            }
+            case GasToken::string_literal:
+            {
+                llvm::SmallString<64> strbuf;
+                const char* str_start = m_token.getLiteralData();
+                GasStringParser str(str_start, str_start + m_token.getLength(),
+                                    m_token.getLocation(), m_preproc);
+                clang::SourceLocation str_source = ConsumeToken();
+
+                if (!str.hadError())
+                    nvs->push_back(new NameValue(str.getString(strbuf),
+                                                 str_source));
                 break;
-            case REG:
-                nvs->push_back(new NameValue(Expr::Ptr(new Expr(*REG_val)),
-                                             getTokenSource()));
-                getNextToken(); // REG
-                break;
-            case '@':
+            }
+            case GasToken::at:
                 // XXX: is throwing it away *really* the right thing?
-                getNextToken(); // @
+                ConsumeToken();
                 continue;
             default:
             {
-                clang::SourceLocation e_src = getTokenSource();
+                clang::SourceLocation e_src = m_token.getLocation();
                 Expr::Ptr e(new Expr);
                 if (!ParseExpr(*e))
                     return false;
                 nvs->push_back(new NameValue(e,
-                    clang::SourceRange(e_src, getTokenSource())));
+                    clang::SourceRange(e_src, m_token.getLocation())));
                 break;
             }
         }
-        if (m_token == ',')
-            getNextToken(); // ','
+        if (m_token.is(GasToken::comma))
+            ConsumeToken();
     }
     return true;
 }
@@ -1065,31 +1176,17 @@ GasParser::ParseMemoryAddress()
 {
     bool strong = false;
 
-    if (m_token == SEGREG)
-    {
-        const SegmentRegister* segreg = SEGREG_val;
-        clang::SourceLocation segreg_source = getTokenSource();
-        getNextToken(); // SEGREG
-        ExpectAndConsume(':', diag::err_expected_colon_after_segreg);
-        Operand op = ParseMemoryAddress();
-        if (EffAddr* ea = op.getMemory())
-        {
-            if (ea->m_segreg != 0)
-                Diag(segreg_source, diag::warn_multiple_seg_override);
-            ea->m_segreg = segreg;
-        }
-        return op;
-    }
-
     // We want to parse a leading expression, except when it's actually
     // just a memory address (with no preceding expression) such as
     // (REG...) or (,...).
     Expr e1;
-    getPeekToken();
-    if (m_token != '(' || (m_peek_token != REG && m_peek_token != ','))
+    const Token& next_token = NextToken();
+    if (m_token.isNot(GasToken::l_paren) ||
+        (next_token.isNot(GasToken::percent) &&
+         next_token.isNot(GasToken::comma)))
         ParseExpr(e1);
 
-    if (m_token == '(')
+    if (m_token.is(GasToken::l_paren))
     {
         bool havereg = false;
         const Register* reg = 0;
@@ -1098,54 +1195,67 @@ GasParser::ParseMemoryAddress()
         IntNum scale;
         Expr e2;
 
-        getNextToken(); // '('
+        clang::SourceLocation lparen_loc = ConsumeParen();
 
         // base register
-        if (m_token == REG)
+        if (m_token.is(GasToken::percent))
         {
-            e2 = Expr(*REG_val);
-            getNextToken(); // REG
+            ConsumeToken();
+            const Register* basereg = ParseRegister();
+            if (!basereg)
+            {
+                Diag(m_token, diag::err_bad_register_name);
+                return Operand(m_object->getArch()->CreateEffAddr(Expr::Ptr(new Expr(0))));
+            }
+            ConsumeToken();
+            e2 = Expr(*basereg);
         }
         else
             e2 = Expr(IntNum(0));
 
-        if (m_token == ')')
+        if (m_token.is(GasToken::r_paren))
             goto done;
 
-        if (m_token != ',')
-            throw SyntaxError(N_("invalid memory expression"));
-        getNextToken(); // ','
+        if (ExpectAndConsume(GasToken::comma, diag::err_expected_comma))
+            return Operand(m_object->getArch()->CreateEffAddr(Expr::Ptr(new Expr(0))));
 
-        if (m_token == ')')
+        if (m_token.is(GasToken::r_paren))
             goto done;
 
         havescale = true;
 
         // index register
-        if (m_token == REG)
+        if (m_token.is(GasToken::percent))
         {
-            reg = REG_val;
+            ConsumeToken();
+            reg = ParseRegister();
+            if (!reg)
+            {
+                Diag(m_token, diag::err_bad_register_name);
+                return Operand(m_object->getArch()->CreateEffAddr(Expr::Ptr(new Expr(0))));
+            }
+            ConsumeToken();
             havereg = true;
-            getNextToken(); // REG
-            if (m_token != ',')
+            if (m_token.isNot(GasToken::comma))
             {
                 scale = 1;
                 goto done;
             }
-            getNextToken(); // ','
+            ConsumeToken();
         }
 
         // scale
-        scale_src = getTokenSource();
-        if (m_token != INTNUM)
-            throw SyntaxError(N_("non-integer scale"));
-        scale = *INTNUM_val;
-        getNextToken(); // INTNUM
+        if (m_token.isNot(GasToken::numeric_constant))
+        {
+            Diag(m_token, diag::err_expected_integer);
+            return Operand(m_object->getArch()->CreateEffAddr(Expr::Ptr(new Expr(0))));
+        }
+        if (!ParseInteger(&scale))
+            return Operand(m_object->getArch()->CreateEffAddr(Expr::Ptr(new Expr(0))));
+        scale_src = ConsumeToken();
 
 done:
-        if (m_token != ')')
-            throw SyntaxError(N_("invalid memory expression"));
-        getNextToken(); // ')'
+        MatchRHSPunctuation(GasToken::r_paren, lparen_loc);
 
         if (havescale)
         {
@@ -1170,10 +1280,12 @@ done:
             std::swap(e1, e2);
         strong = true;
     }
-
+/*
     if (e1.isEmpty())
+    {
         throw SyntaxError(N_("expression syntax error"));
-
+    }
+*/
     Expr::Ptr e1_copy(new Expr);
     std::swap(*e1_copy, e1);
     Operand op(m_object->getArch()->CreateEffAddr(e1_copy));
@@ -1186,70 +1298,101 @@ done:
 Operand
 GasParser::ParseOperand()
 {
-    switch (m_token)
+    switch (m_token.getKind())
     {
-        case REG:
+        case GasToken::percent:
         {
-            Operand op(REG_val);
-            getNextToken(); // REG
-            return op;
-        }
-        case SEGREG:
-        {
-            // need to see if it's really a memory address
-            getPeekToken();
-            if (m_peek_token == ':')
-                return ParseMemoryAddress();
-            Operand op(SEGREG_val);
-            getNextToken(); // SEGREG
-            return op;
-        }
-        case REGGROUP:
-        {
-            const RegisterGroup* reggroup = REGGROUP_val;
-            getNextToken(); // REGGROUP
-
-            if (m_token != '(')
-                return Operand(reggroup->getReg(0));
-            getNextToken(); // '('
-
-            if (m_token != INTNUM)
-                throw SyntaxError(N_("integer register index expected"));
-            unsigned long regindex = INTNUM_val->getUInt();
-            getNextToken(); // INTNUM
-
-            if (m_token != ')')
+            // some kind of register operand
+            // may also be a memory address (%segreg:memory)
+            ConsumeToken();
+            if (m_token.isNot(GasToken::identifier))
             {
-                throw SyntaxError(
-                    N_("missing closing parenthesis for register index"));
+                Diag(m_token, diag::err_bad_register_name);
+                return Operand(Expr::Ptr(new Expr));
             }
-            getNextToken(); // ')'
-
-            const Register* reg = reggroup->getReg(regindex);
-            if (!reg)
+            IdentifierInfo* ii = m_token.getIdentifierInfo();
+            ii->DoRegLookup(*m_arch, m_token.getLocation(),
+                            m_preproc.getDiagnostics());
+            if (const SegmentRegister* segreg = ii->getSegReg())
             {
-                throw SyntaxError(String::Compose(
-                    N_("bad register index `%u'"), regindex));
+                clang::SourceLocation segreg_source = ConsumeToken();
+
+                // if followed by ':', it's a memory address
+                if (m_token.is(GasToken::colon))
+                {
+                    ConsumeToken();
+                    Operand op = ParseMemoryAddress();
+                    if (EffAddr* ea = op.getMemory())
+                    {
+                        if (ea->m_segreg != 0)
+                            Diag(segreg_source,
+                                 diag::warn_multiple_seg_override);
+                        ea->m_segreg = segreg;
+                    }
+                    return op;
+                }
+                return Operand(segreg);
             }
-            return Operand(reg);
+            if (const Register* reg = ii->getRegister())
+            {
+                ConsumeToken();
+                return Operand(reg);
+            }
+            if (const RegisterGroup* reggroup = ii->getRegGroup())
+            {
+                clang::SourceLocation reggroup_source = ConsumeToken();
+
+                if (m_token.isNot(GasToken::l_paren))
+                    return Operand(reggroup->getReg(0));
+                clang::SourceLocation lparen_loc = ConsumeParen();
+
+                if (m_token.isNot(GasToken::numeric_constant))
+                {
+                    Diag(m_token, diag::err_expected_integer);
+                    return Operand(reggroup->getReg(0));
+                }
+                IntNum regindex;
+                ParseInteger(&regindex);    // OK to ignore return value
+                clang::SourceLocation regindex_source = ConsumeToken();
+
+                MatchRHSPunctuation(GasToken::r_paren, lparen_loc);
+
+                const Register* reg = reggroup->getReg(regindex.getUInt());
+                if (!reg)
+                {
+                    Diag(regindex_source, diag::err_bad_register_index);
+                    return Operand(reggroup->getReg(0));
+                }
+                return Operand(reg);
+            }
+            // didn't recognize it?
+            Diag(m_token, diag::err_bad_register_name);
+            ConsumeToken();
+            return Operand(Expr::Ptr(new Expr));
         }
-        case '$':
+        case GasToken::dollar:
         {
-            getNextToken(); // '$'
+            ConsumeToken();
+            clang::SourceLocation e_source = m_token.getLocation();
             Expr::Ptr e(new Expr);
             if (!ParseExpr(*e))
-            {
-                throw SyntaxError(String::Compose(
-                    N_("expression missing after `%1'"), "$"));
-            }
+                Diag(e_source, diag::err_missing_or_invalid_immediate);
             return Operand(e);
         }
-        case '*':
-            getNextToken(); // '*'
-            if (m_token == REG)
+        case GasToken::star:
+            ConsumeToken();
+            if (m_token.is(GasToken::percent))
             {
-                Operand op(REG_val);
-                getNextToken(); // REG
+                // register
+                ConsumeToken();
+                const Register* reg = ParseRegister();
+                if (!reg)
+                {
+                    Diag(m_token, diag::err_bad_register_name);
+                    return Operand(Expr::Ptr(new Expr));
+                }
+                ConsumeToken();
+                Operand op(reg);
                 op.setDeref();
                 return op;
             }
@@ -1266,10 +1409,11 @@ GasParser::ParseOperand()
 
 // Expression grammar parsed is:
 //
-// expr  : expr0 [ {+,-} expr0...]
-// expr0 : expr1 [ {|,^,&,!} expr1...]
-// expr1 : expr2 [ {*,/,%,<<,>>} expr2...]
-// expr2 : { ~,+,- } expr2
+// expr  : expr0 [ {&&,||} expr0...]
+// expr0 : expr1 [ {+,-,==,<>,<,>,>=,<=} expr1...]
+// expr1 : expr2 [ {|,^,&,!} expr2...]
+// expr2 : expr3 [ {*,/,%,<<,>>} expr3...]
+// expr3 : { ~,+,- } expr3
 //       | (expr)
 //       | symbol
 //       | number
@@ -1280,21 +1424,22 @@ GasParser::ParseExpr(Expr& e)
     if (!ParseExpr0(e))
         return false;
 
-    while (m_token == '+' || m_token == '-')
+    for (;;)
     {
-        int op = m_token;
-        getNextToken();
+        Op::Op op;
+        switch (m_token.getKind())
+        {
+            case GasToken::ampamp:      op = Op::LAND; break;
+            case GasToken::pipepipe:    op = Op::LOR; break;
+            default: return true;
+        }
+        ConsumeToken();
+
         Expr f;
         if (!ParseExpr0(f))
             return false;
-
-        switch (op)
-        {
-            case '+': e.Calc(Op::ADD, f); break;
-            case '-': e.Calc(Op::SUB, f); break;
-        }
+        e.Calc(op, f);
     }
-    return true;
 }
 
 bool
@@ -1303,23 +1448,28 @@ GasParser::ParseExpr0(Expr& e)
     if (!ParseExpr1(e))
         return false;
 
-    while (m_token == '|' || m_token == '^' || m_token == '&' || m_token == '!')
+    for (;;)
     {
-        int op = m_token;
-        getNextToken();
+        Op::Op op;
+        switch (m_token.getKind())
+        {
+            case GasToken::plus:            op = Op::ADD; break;
+            case GasToken::minus:           op = Op::SUB; break;
+            case GasToken::equalequal:      op = Op::EQ; break;
+            case GasToken::lessgreater:     op = Op::NE; break;
+            case GasToken::less:            op = Op::LT; break;
+            case GasToken::greater:         op = Op::GT; break;
+            case GasToken::lessequal:       op = Op::LE; break;
+            case GasToken::greaterequal:    op = Op::GE; break;
+            default: return true;
+        }
+        ConsumeToken();
+
         Expr f;
         if (!ParseExpr1(f))
             return false;
-
-        switch (op)
-        {
-            case '|': e.Calc(Op::OR, f); break;
-            case '^': e.Calc(Op::XOR, f); break;
-            case '&': e.Calc(Op::AND, f); break;
-            case '!': e.Calc(Op::NOR, f); break;
-        }
+        e.Calc(op, f);
     }
-    return true;
 }
 
 bool
@@ -1328,165 +1478,277 @@ GasParser::ParseExpr1(Expr& e)
     if (!ParseExpr2(e))
         return false;
 
-    while (m_token == '*' || m_token == '/' || m_token == '%'
-           || m_token == LEFT_OP || m_token == RIGHT_OP)
+    for (;;)
     {
-        int op = m_token;
-        getNextToken();
+        Op::Op op;
+        switch (m_token.getKind())
+        {
+            case GasToken::pipe:    op = Op::OR; break;
+            case GasToken::caret:   op = Op::XOR; break;
+            case GasToken::amp:     op = Op::AND; break;
+            case GasToken::exclaim: op = Op::NOR; break;
+            default: return true;
+        }
+        ConsumeToken();
+
         Expr f;
         if (!ParseExpr2(f))
             return false;
-
-        switch (op)
-        {
-            case '*': e.Calc(Op::MUL, f); break;
-            case '/': e.Calc(Op::DIV, f); break;
-            case '%': e.Calc(Op::MOD, f); break;
-            case LEFT_OP: e.Calc(Op::SHL, f); break;
-            case RIGHT_OP: e.Calc(Op::SHR, f); break;
-        }
+        e.Calc(op, f);
     }
-    return true;
 }
 
 bool
 GasParser::ParseExpr2(Expr& e)
 {
-    switch (m_token)
+    if (!ParseExpr3(e))
+        return false;
+
+    for (;;)
     {
-        case '+':
-            getNextToken();
-            return ParseExpr2(e);
-        case '-':
-            getNextToken();
-            if (!ParseExpr2(e))
+        Op::Op op;
+        switch (m_token.getKind())
+        {
+            case GasToken::star:            op = Op::MUL; break;
+            case GasToken::slash:           op = Op::DIV; break;
+            case GasToken::percent:         op = Op::MOD; break;
+            case GasToken::lessless:        op = Op::SHL; break;
+            case GasToken::greatergreater:  op = Op::SHR; break;
+            default: return true;
+        }
+        ConsumeToken();
+
+        Expr f;
+        if (!ParseExpr3(f))
+            return false;
+        e.Calc(op, f);
+    }
+}
+
+bool
+GasParser::ParseExpr3(Expr& e)
+{
+    switch (m_token.getKind())
+    {
+        case GasToken::plus:
+            ConsumeToken();
+            return ParseExpr3(e);
+        case GasToken::minus:
+            ConsumeToken();
+            if (!ParseExpr3(e))
                 return false;
             e.Calc(Op::NEG);
             return true;
-        case '~':
-            getNextToken();
-            if (!ParseExpr2(e))
+        case GasToken::tilde:
+            ConsumeToken();
+            if (!ParseExpr3(e))
                 return false;
             e.Calc(Op::NOT);
             return true;
-        case '(':
-            getNextToken();
+        case GasToken::l_paren:
+        {
+            clang::SourceLocation lparen_loc = ConsumeParen();
             if (!ParseExpr(e))
                 return false;
-            if (m_token != ')')
-                throw SyntaxError(N_("missing parenthesis"));
-            break;
-        case INTNUM:
-            e = INTNUM_val;
-            break;
-        case FLTNUM:
-            e = FLTNUM_val;
-            break;
-        case ID:
+            MatchRHSPunctuation(GasToken::r_paren, lparen_loc);
+            return true;
+        }
+        case GasToken::numeric_constant:
         {
+            const char* num_start = m_token.getLiteralData();
+            GasNumericParser num(num_start, num_start + m_token.getLength(),
+                                 m_token.getLocation(), m_preproc);
+            if (num.hadError())
+                e = IntNum(0);
+            else if (num.isInteger())
+            {
+                IntNum val;
+                num.getIntegerValue(&val);
+                e = val;
+            }
+            else if (num.isFloat())
+            {
+                // FIXME: Make arch-dependent
+                e = Expr(std::auto_ptr<llvm::APFloat>(new llvm::APFloat(
+                    num.getFloatValue(llvm::APFloat::x87DoubleExtended))));
+            }
+            break;
+        }
+        case GasToken::char_constant:
+        {
+            const char* str_start = m_token.getLiteralData();
+            GasStringParser str(str_start, str_start + m_token.getLength(),
+                                m_token.getLocation(), m_preproc);
+            if (str.hadError())
+                e = IntNum(0);
+            else
+            {
+                IntNum val;
+                str.getIntegerValue(&val);
+                val = val.Extract(8, 0);
+                e = val;
+            }
+            break;
+        }
+        case GasToken::identifier:
+        case GasToken::label:
+        {
+            IdentifierInfo* ii = m_token.getIdentifierInfo();
+            clang::SourceLocation id_source = ConsumeToken();
             // "." references the current assembly position
-            if (ID_val == ".")
+            if (ii->isStr("."))
             {
                 SymbolRef sym = m_object->AddNonTableSymbol(".");
                 Bytecode& bc = m_container->FreshBytecode();
                 Location loc = {&bc, bc.getFixedLen()};
-                sym->DefineLabel(loc, getTokenSource());
+                sym->DefineLabel(loc, id_source);
                 e = sym;
             }
             else
             {
-                SymbolRef sym = m_object->getSymbol(ID_val);
-                sym->Use(getTokenSource());
+                SymbolRef sym = ParseSymbol(ii);
+                sym->Use(id_source);
                 e = sym;
             }
-            getNextToken(); // ID
 
-            if (m_token == '@')
+            if (m_token.is(GasToken::at))
             {
-                // TODO: this is needed for shared objects, e.g. sym@PLT
-                getNextToken(); // '@'
-                if (m_token != ID)
+                // This is needed for shared objects, e.g. sym@PLT
+                ConsumeToken();
+                if (m_token.isNot(GasToken::identifier) &&
+                    m_token.isNot(GasToken::label))
                 {
-                    Diag(getTokenSource(), diag::err_expected_ident);
+                    Diag(m_token, diag::err_expected_ident);
                     return false;
                 }
-                SymbolRef wrt = m_object->FindSpecialSymbol(ID_val);
+                SymbolRef wrt = m_object->FindSpecialSymbol(
+                    m_token.getIdentifierInfo()->getName());
                 if (wrt)
                     e.Calc(Op::WRT, wrt);
                 else
-                    Diag(getTokenSource(), diag::warn_unrecognized_ident);
-                getNextToken(); // ID
+                    Diag(m_token, diag::warn_unrecognized_ident);
+                ConsumeToken();
             }
             return true;
         }
         default:
             return false;
     }
-
-    getNextToken();
+    ConsumeToken();
     return true;
 }
 
-void
-GasParser::DefineLabel(llvm::StringRef name, bool local)
+SymbolRef
+GasParser::ParseSymbol(IdentifierInfo* ii)
 {
-    if (!local)
-        m_locallabel_base = name;
+    // see if there's a cached version
+    if (ii->isSymbol())
+        return ii->getSymbol();
 
-    SymbolRef sym = m_object->getSymbol(name);
-    Bytecode& bc = m_container->FreshBytecode();
-    Location loc = {&bc, bc.getFixedLen()};
-    sym->DefineLabel(loc, m_source);
+    // otherwise, get it from object
+    SymbolRef sym = m_object->getSymbol(ii->getName());
+    ii->setSymbol(sym);    // cache it
+    return sym;
+}
+
+bool
+GasParser::ParseInteger(IntNum* intn)
+{
+    assert(m_token.is(GasToken::numeric_constant));
+
+    const char* num_start = m_token.getLiteralData();
+    GasNumericParser num(num_start, num_start + m_token.getLength(),
+                         m_token.getLocation(), m_preproc);
+    if (num.hadError())
+    {
+        intn->Zero();
+        return false;
+    }
+    else if (num.isInteger())
+    {
+        num.getIntegerValue(intn);
+        return true;
+    }
+    else
+    {
+        Diag(m_token, diag::err_expected_integer);
+        intn->Zero();
+        return false;
+    }
+}
+
+const Register*
+GasParser::ParseRegister()
+{
+    if (m_token.isNot(GasToken::identifier))
+        return 0;
+    IdentifierInfo* ii = m_token.getIdentifierInfo();
+    ii->DoRegLookup(*m_arch, m_token.getLocation(), m_preproc.getDiagnostics());
+    return ii->getRegister();
 }
 
 void
-GasParser::DefineLcomm(llvm::StringRef name,
+GasParser::DefineLabel(llvm::StringRef name, clang::SourceLocation source)
+{
+    SymbolRef sym = m_object->getSymbol(name);
+    Bytecode& bc = m_container->FreshBytecode();
+    Location loc = {&bc, bc.getFixedLen()};
+    sym->DefineLabel(loc, source);
+}
+
+void
+GasParser::DefineLcomm(SymbolRef sym,
+                       clang::SourceLocation source,
                        std::auto_ptr<Expr> size,
                        const Expr& align)
 {
     // Put into .bss section.
-    Section& bss = getSection(".bss", true);
+    Section& bss = getSection(".bss", true, source);
 
     if (!align.isEmpty())
     {
         // XXX: assume alignment is in bytes, not power-of-two
-        AppendAlign(bss, align, Expr(), Expr(), 0, m_source);
+        AppendAlign(bss, align, Expr(), Expr(), 0, source);
     }
 
     // Create common symbol
     Bytecode *bc = &bss.FreshBytecode();
     Location loc = {bc, bc->getFixedLen()};
-    m_object->getSymbol(name)->DefineLabel(loc, m_source);
+    sym->DefineLabel(loc, source);
 
     // Append gap for symbol storage
     size->Simplify();
     if (size->isIntNum())
-        bss.AppendGap(size->getIntNum().getUInt(), m_source);
+        bss.AppendGap(size->getIntNum().getUInt(), source);
     else
     {
-        BytecodeContainer& multc = AppendMultiple(bss, size, m_source);
-        multc.AppendGap(1, m_source);
+        BytecodeContainer& multc = AppendMultiple(bss, size, source);
+        multc.AppendGap(1, source);
     }
 }
 
 void
-GasParser::SwitchSection(llvm::StringRef name, bool builtin)
+GasParser::SwitchSection(llvm::StringRef name,
+                         bool builtin,
+                         clang::SourceLocation source)
 {
-    DirectiveInfo info(*m_object, m_source);
-    info.getNameValues().push_back(new NameValue(name, '\0', m_source));
+    DirectiveInfo info(*m_object, source);
+    info.getNameValues().push_back(new NameValue(name, '\0', source));
 
     Directive handler;
     if (m_dirs->get(&handler, ".section"))
-        handler(info, *m_diags);
+        handler(info, m_preproc.getDiagnostics());
     else
         Diag(info.getSource(), diag::err_unrecognized_directive);
 }
 
 Section&
-GasParser::getSection(llvm::StringRef name, bool builtin)
+GasParser::getSection(llvm::StringRef name,
+                      bool builtin,
+                      clang::SourceLocation source)
 {
     Section* cur_section = m_object->getCurSection();
-    SwitchSection(name, builtin);
+    SwitchSection(name, builtin, source);
     Section& new_section = *m_object->getCurSection();
     m_object->setCurSection(cur_section);
     return new_section;
@@ -1495,37 +1757,14 @@ GasParser::getSection(llvm::StringRef name, bool builtin)
 void
 GasParser::DoParse()
 {
-    std::string line;
-
-    while (m_preproc->getLine(&line, &m_source))
+    while (m_token.isNot(GasToken::eof))
     {
-        try
+        if (m_token.is(GasToken::eol) || m_token.is(GasToken::semi))
+            ConsumeToken();
+        else
         {
-            m_bot = m_tok = m_ptr = m_cur = &line[0];
-            m_lim = &line[line.length()+1];
-
-            do {
-                getNextToken();
-                if (!isEol())
-                {
-                    bool ok = ParseLine();
-                    if (!ok)
-                    {
-                        DemandEolNoThrow();
-                        m_state = INITIAL;
-                    }
-                    else
-                        DemandEol();
-                }
-            } while (m_token != '\0');
-
-            m_errwarns.Propagate(m_source);
-        }
-        catch (Error& err)
-        {
-            m_errwarns.Propagate(m_source, err);
-            DemandEolNoThrow();
-            m_state = INITIAL;
+            ParseLine();
+            SkipUntil(GasToken::eol, GasToken::semi, true, false);
         }
     }
 }

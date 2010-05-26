@@ -139,6 +139,7 @@ add_error("err_expected_lparen", "expected '('")
 add_error("err_expected_rparen", "expected ')'")
 add_error("err_expected_lsquare", "expected '['")
 add_error("err_expected_rsquare", "expected ']'")
+add_error("err_expected_greater", "expected '>'")
 add_error("err_expected_lparen_after", "expected '(' after '%0'")
 add_error("err_expected_lparen_after_id", "expected '(' after %0")
 add_error("err_expected_plus", "expected '+'")
@@ -153,8 +154,9 @@ add_error("err_expected_expression_after_id", "expected expression after %0")
 add_error("err_expected_expression_or_string",
           "expression or string expected")
 add_error("err_expected_string", "expected string")
-add_error("err_expected_integer", "expected integer");
-add_error("err_expected_filename", "expected filename");
+add_error("err_expected_integer", "expected integer")
+add_error("err_expected_float", "expected float")
+add_error("err_expected_filename", "expected filename")
 add_error("err_eol_junk", "junk at end of line")
 
 # Unrecognized errors/warnings
@@ -168,6 +170,13 @@ add_warning("warn_unrecognized_ident", "unrecognized identifier")
 # GAS warnings
 add_warning("warn_scale_without_index",
             "scale factor without an index register")
+add_error("err_align_no_alignment", ".ALIGN directive must specify alignment")
+add_error("err_comm_size_expected", "size expected for .COMM")
+add_error("err_fill_size_not_absolute", "size must be an absolute expression")
+add_error("err_bad_register_name", "bad register name")
+add_error("err_bad_register_index", "bad register index")
+add_error("err_missing_or_invalid_immediate",
+          "missing or invalid immediate expression")
 
 # Value
 add_error("err_too_complex_expression", "expression too complex")
@@ -398,8 +407,14 @@ add_warning("warn_unrecognized_char", "ignoring unrecognized character '%0'",
 
 add_warning("warn_multi_line_eol_comment", "multi-line end-of-line comment",
             group="comment")
+add_warning("warn_nested_block_comment", "'/*' within block comment",
+            group="comment")
+add_warning("escaped_newline_block_comment_end",
+            "escaped newline between */ characters at block comment end",
+            group="comment")
 
 add_error("err_unterminated_string", "missing terminating %0 character")
+add_error("err_unterminated_block_comment", "unterminated /* comment")
 
 # Literals
 add_warning("warn_integer_too_large", "integer constant is too large")
