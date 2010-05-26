@@ -30,7 +30,6 @@
 
 #include "YAML/emitter.h"
 #include "yasmx/BytecodeContainer.h"
-#include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"

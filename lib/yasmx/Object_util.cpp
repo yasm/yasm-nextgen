@@ -31,7 +31,6 @@
 
 #include "util.h"
 
-#include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"

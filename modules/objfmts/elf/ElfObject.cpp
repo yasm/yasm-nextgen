@@ -49,7 +49,7 @@
 #include "yasmx/Support/registry.h"
 #include "yasmx/Support/scoped_array.h"
 #include "yasmx/Arch.h"
-#include "yasmx/BytecodeContainer_util.h"
+#include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Diagnostic.h"

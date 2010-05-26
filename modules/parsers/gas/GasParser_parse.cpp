@@ -40,7 +40,6 @@
 #include "yasmx/Arch.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/BytecodeContainer.h"
-#include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/Errwarns.h"

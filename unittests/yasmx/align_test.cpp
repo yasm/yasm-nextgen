@@ -26,7 +26,6 @@
 #include <gtest/gtest.h>
 
 #include "yasmx/BytecodeContainer.h"
-#include "yasmx/BytecodeContainer_util.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"

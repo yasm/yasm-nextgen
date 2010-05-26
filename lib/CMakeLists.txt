@@ -50,13 +50,13 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Assembler.cpp
     yasmx/AssocData.cpp
     yasmx/BytecodeContainer.cpp
-    yasmx/BytecodeContainer_util.cpp
     yasmx/BytecodeOutput.cpp
     yasmx/Bytecode.cpp
     yasmx/Bytes.cpp
     yasmx/Bytes_util.cpp
     yasmx/Bytes_leb128.cpp
     yasmx/Compose.cpp
+    yasmx/DataBytecode.cpp
     yasmx/DebugFormat.cpp
     yasmx/Diagnostic.cpp
     yasmx/Directive.cpp

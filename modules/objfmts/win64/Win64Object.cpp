@@ -30,7 +30,7 @@
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
-#include "yasmx/BytecodeContainer_util.h"
+#include "yasmx/BytecodeContainer.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/Errwarns.h"

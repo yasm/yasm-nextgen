@@ -24,12 +24,11 @@
 /// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 /// POSSIBILITY OF SUCH DAMAGE.
 ///
-#include "yasmx/BytecodeContainer_util.h"
+#include "yasmx/BytecodeContainer.h"
 
 #include "util.h"
 
 #include "yasmx/Arch.h"
-#include "yasmx/BytecodeContainer.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes_util.h"
 #include "yasmx/Expr.h"
