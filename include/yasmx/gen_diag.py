@@ -389,7 +389,6 @@ add_warning("warn_operand_size_duplicate",
 add_error("err_offset_expected_after_colon", "offset expected after ':'")
 
 # Memory address
-add_error("err_expected_memory_address", "memory address expected")
 add_error("err_colon_required_after_segreg",
           "':' required after segment register")
 
