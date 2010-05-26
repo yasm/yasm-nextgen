@@ -161,7 +161,8 @@ NasmNumericParser::NasmNumericParser(const char* begin,
         else
             s = SkipDigits(s);
     }
-    else if (float_ok &&
+
+    if (float_ok &&
         ((m_radix == 10 && (*s == 'e' || *s == 'E')) ||
          (m_radix == 16 && (*s == 'p' || *s == 'P'))))
     {
