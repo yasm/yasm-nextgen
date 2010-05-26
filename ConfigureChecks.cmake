@@ -232,8 +232,6 @@ INCLUDE(FindPythonInterp)
 #                 RETURN_VALUE HAVE_PYREX)
 #ENDIF (PYTHONINTERP_FOUND)
 
-FIND_PROGRAM(RE2C_EXECUTABLE NAMES re2c)
-
 ######################################################
 #  and now the platform specific stuff
 ######################################################
