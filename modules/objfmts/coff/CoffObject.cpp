@@ -279,11 +279,14 @@ CoffObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
                 readonly = false;
                 break;
             default:
+            {
+                char print_flag[2] = {flagstr[i], 0};
                 diags.Report(flags_nv.getValueSource().getBegin()
                     .getFileLocWithOffset(i),
                     diags.getCustomDiagID(Diagnostic::Warning,
                         "unrecognized section attribute: '%0'"))
-                    << flagstr[i];
+                    << print_flag;
+            }
         }
     }
 
