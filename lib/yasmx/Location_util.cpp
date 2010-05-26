@@ -46,7 +46,7 @@ static void
 TransformDistBase(Expr& e, int pos,
                   const FUNCTION::function<bool (ExprTerm& term,
                                                  Location loc1,
-                                                 Location loc2)>& func)
+                                                 Location loc2)> func)
 {
     ExprTerms& terms = e.getTerms();
     if (pos < 0)
@@ -202,7 +202,7 @@ void
 SimplifyCalcDist(Expr& e)
 {
     CalcDistFunctor functor;
-    e.Simplify(BIND::bind(&TransformDistBase, _1, _2, REF::ref(functor)));
+    e.Simplify(BIND::bind(&TransformDistBase, _1, _2, functor));
 }
 
 struct CalcDistNoBCFunctor
@@ -222,7 +222,7 @@ void
 SimplifyCalcDistNoBC(Expr& e)
 {
     CalcDistNoBCFunctor functor;
-    e.Simplify(BIND::bind(&TransformDistBase, _1, _2, REF::ref(functor)));
+    e.Simplify(BIND::bind(&TransformDistBase, _1, _2, functor));
 }
 
 struct SubstDistFunctor
@@ -256,7 +256,7 @@ SubstDist(Expr& e,
                                          Location loc2)>& func)
 {
     SubstDistFunctor functor(func);
-    e.Simplify(BIND::bind(&TransformDistBase, _1, _2, REF::ref(functor)));
+    e.Simplify(BIND::bind(&TransformDistBase, _1, _2, functor));
     return functor.m_subst;
 }
 
