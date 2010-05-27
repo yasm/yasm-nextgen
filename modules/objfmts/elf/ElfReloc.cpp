@@ -64,7 +64,7 @@ ElfReloc::ElfReloc(const ElfConfig& config,
     InputBuffer inbuf(in, *pos);
     config.setEndian(inbuf);
 
-    unsigned long size;
+    unsigned long size = 0;
     if (config.cls == ELFCLASS32)
     {
         size = rela ? RELOC32A_SIZE : RELOC32_SIZE;
