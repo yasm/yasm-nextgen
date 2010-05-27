@@ -26,7 +26,10 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "yasmx/Config/export.h"
+
 #include "modules/objfmts/coff/CoffObject.h"
+
 
 namespace yasm
 {
@@ -38,7 +41,7 @@ namespace win32
 using yasm::objfmt::coff::CoffSection;
 using yasm::objfmt::coff::CoffObject;
 
-class Win32Object : public CoffObject
+class YASM_STD_EXPORT Win32Object : public CoffObject
 {
 public:
     Win32Object(const ObjectFormatModule& module, Object& object);

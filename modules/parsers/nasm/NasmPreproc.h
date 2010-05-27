@@ -31,6 +31,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 #include "clang/Basic/SourceLocation.h"
+#include "yasmx/Config/export.h"
 #include "yasmx/Parse/Preprocessor.h"
 
 
@@ -44,7 +45,7 @@ namespace parser
 namespace nasm
 {
 
-class NasmPreproc : public Preprocessor
+class YASM_STD_EXPORT NasmPreproc : public Preprocessor
 {
 public:
     NasmPreproc(Diagnostic& diags,

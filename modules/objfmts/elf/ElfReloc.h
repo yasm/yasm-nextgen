@@ -25,7 +25,8 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-
+//
+#include "yasmx/Config/export.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Reloc.h"
 #include "yasmx/SymbolRef.h"
@@ -46,7 +47,7 @@ namespace objfmt
 namespace elf
 {
 
-class ElfReloc : public Reloc
+class YASM_STD_EXPORT ElfReloc : public Reloc
 {
 public:
     // Constructor that reads from memory buffer.

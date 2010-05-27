@@ -26,6 +26,7 @@
 //
 #include "util.h"
 
+#include "yasmx/Config/export.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/DebugFormat.h"
 

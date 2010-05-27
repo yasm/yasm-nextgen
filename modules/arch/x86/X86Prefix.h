@@ -26,6 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "yasmx/Config/export.h"
 #include "yasmx/Insn.h"
 
 namespace yasm
@@ -35,7 +36,7 @@ namespace arch
 namespace x86
 {
 
-class X86Prefix : public Prefix
+class YASM_STD_EXPORT X86Prefix : public Prefix
 {
 public:
     // Low 8 bits are used for the prefix value, stored in same data area.

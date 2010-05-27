@@ -32,6 +32,8 @@
 //
 #include <cctype>
 
+#include "yasmx/Config/export.h"
+
 
 namespace clang
 {
@@ -58,7 +60,7 @@ namespace gas
 /// This performs strict semantic analysis of the content of a ppnumber,
 /// classifying it as either integer, floating, or erroneous, determines the
 /// radix of the value and can convert it to a useful value.
-class GasNumericParser
+class YASM_STD_EXPORT GasNumericParser
 {
     const char* m_digits_begin;
     const char* m_digits_end;

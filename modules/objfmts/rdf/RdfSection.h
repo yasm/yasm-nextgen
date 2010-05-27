@@ -28,6 +28,7 @@
 //
 #include <string>
 
+#include "yasmx/Config/export.h"
 #include "yasmx/AssocData.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/SymbolRef.h"
@@ -45,7 +46,7 @@ namespace objfmt
 namespace rdf
 {
 
-struct RdfSection : public AssocData
+struct YASM_STD_EXPORT RdfSection : public AssocData
 {
     static const char* key;
 

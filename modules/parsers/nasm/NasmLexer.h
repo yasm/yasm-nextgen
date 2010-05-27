@@ -30,6 +30,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "yasmx/Config/export.h"
 #include "yasmx/Parse/Lexer.h"
 #include "yasmx/Parse/Token.h"
 
@@ -80,7 +81,7 @@ public:
     };
 };
 
-class NasmLexer : public Lexer
+class YASM_STD_EXPORT NasmLexer : public Lexer
 {
 public:
     NasmLexer(clang::FileID fid,

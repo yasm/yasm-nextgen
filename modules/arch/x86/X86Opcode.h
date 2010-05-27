@@ -26,6 +26,9 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "yasmx/Config/export.h"
+
+
 namespace YAML { class Emitter; }
 
 namespace yasm
@@ -38,7 +41,7 @@ namespace arch
 namespace x86
 {
 
-class X86Opcode
+class YASM_STD_EXPORT X86Opcode
 {
     friend YAML::Emitter& operator<< (YAML::Emitter& out,
                                       const X86Opcode& opcode);
@@ -86,6 +89,7 @@ private:
     unsigned char m_len;
 };
 
+YASM_STD_EXPORT
 YAML::Emitter& operator<< (YAML::Emitter& os, const X86Opcode& opcode);
 
 }}} // namespace yasm::arch::x86

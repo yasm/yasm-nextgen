@@ -29,6 +29,7 @@
 #include <memory>
 #include <vector>
 
+#include "yasmx/Config/export.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/SymbolRef.h"
 #include "yasmx/Value.h"
@@ -45,7 +46,7 @@ namespace objfmt
 namespace win64
 {
 
-class UnwindInfo : public Bytecode::Contents
+class YASM_STD_EXPORT UnwindInfo : public Bytecode::Contents
 {
     friend void Generate(std::auto_ptr<UnwindInfo> uwinfo,
                          BytecodeContainer& xdata,
@@ -104,6 +105,7 @@ private:
     Value m_codes_count;
 };
 
+YASM_STD_EXPORT
 void Generate(std::auto_ptr<UnwindInfo> uwinfo,
               BytecodeContainer& xdata,
               clang::SourceLocation source,

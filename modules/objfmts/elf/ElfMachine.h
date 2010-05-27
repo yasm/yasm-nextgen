@@ -29,6 +29,7 @@
 #include <memory>
 #include <string>
 
+#include "yasmx/Config/export.h"
 #include "yasmx/AssocData.h"
 #include "yasmx/Symbol.h"
 
@@ -62,7 +63,8 @@ struct SpecialSymbolData
     bool curpos_adjust:1;   //
 };
 
-struct ElfSpecialSymbol : public AssocData, public SpecialSymbolData
+struct YASM_STD_EXPORT ElfSpecialSymbol
+    : public AssocData, public SpecialSymbolData
 {
     static const char* key;
 
@@ -92,7 +94,7 @@ isWRTPosAdjusted(const Symbol& wrt)
     return ssym->curpos_adjust;
 }
 
-class ElfMachine
+class YASM_STD_EXPORT ElfMachine
 {
 public:
     virtual ~ElfMachine();
@@ -112,9 +114,13 @@ public:
         MakeReloc(SymbolRef sym, const IntNum& addr) const = 0;
 };
 
+YASM_STD_EXPORT
 bool isOkElfMachine(const Arch& arch, ElfClass cls);
+
+YASM_STD_EXPORT
 std::auto_ptr<ElfMachine> CreateElfMachine(const Arch& arch, ElfClass cls);
 
+YASM_STD_EXPORT
 void AddElfSSym(Object& object, const SpecialSymbolData& ssym);
 
 }}} // namespace yasm::objfmt::elf

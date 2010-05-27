@@ -29,6 +29,7 @@
 #include <string>
 #include <vector>
 
+#include "yasmx/Config/export.h"
 #include "yasmx/AssocData.h"
 #include "yasmx/Symbol.h"
 
@@ -47,7 +48,7 @@ namespace objfmt
 namespace coff
 {
 
-struct CoffSymbol : public AssocData
+struct YASM_STD_EXPORT CoffSymbol : public AssocData
 {
     static const char* key;
 

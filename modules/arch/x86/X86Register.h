@@ -26,6 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "yasmx/Config/export.h"
 #include "yasmx/Arch.h"
 
 namespace yasm
@@ -35,7 +36,7 @@ namespace arch
 namespace x86
 {
 
-class X86Register : public Register
+class YASM_STD_EXPORT X86Register : public Register
 {
 public:
     // Register type.
@@ -89,7 +90,7 @@ private:
     unsigned int m_num;
 };
 
-class X86SegmentRegister : public SegmentRegister
+class YASM_STD_EXPORT X86SegmentRegister : public SegmentRegister
 {
 public:
     enum Type

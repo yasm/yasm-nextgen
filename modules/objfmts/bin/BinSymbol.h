@@ -28,6 +28,7 @@
 //
 #include <string>
 
+#include "yasmx/Config/export.h"
 #include "yasmx/AssocData.h"
 #include "yasmx/Symbol.h"
 
@@ -47,7 +48,7 @@ struct BinSection;
 
 // Symbol data is used only for the special symbols section<sectname>.start,
 // section<sectname>.vstart, and section<sectname>.length
-class BinSymbol : public AssocData
+class YASM_STD_EXPORT BinSymbol : public AssocData
 {
 public:
     static const char* key;
@@ -71,6 +72,7 @@ private:
     SpecialSym m_which;
 };
 
+YASM_STD_EXPORT
 void BinSimplify(Expr& e);
 
 inline bool

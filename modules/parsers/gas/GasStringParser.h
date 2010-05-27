@@ -30,6 +30,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "yasmx/Config/export.h"
 
 
 namespace clang
@@ -50,7 +51,7 @@ namespace gas
 
 /// This performs strict semantic analysis of the content of a string token,
 /// performs unescaping if necessary, and can convert it to a useful value.
-class GasStringParser
+class YASM_STD_EXPORT GasStringParser
 {
     const char* m_chars_begin;
     const char* m_chars_end;

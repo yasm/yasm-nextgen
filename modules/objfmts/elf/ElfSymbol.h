@@ -25,11 +25,12 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-
+//
 #include <iosfwd>
 #include <vector>
 
 #include "clang/Basic/SourceLocation.h"
+#include "yasmx/Config/export.h"
 #include "yasmx/AssocData.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/IntNum.h"
@@ -57,7 +58,7 @@ namespace objfmt
 namespace elf
 {
 
-class ElfSymbol : public AssocData
+class YASM_STD_EXPORT ElfSymbol : public AssocData
 {
 public:
     static const char* key;
@@ -109,6 +110,7 @@ private:
     ElfSymbolIndex          m_symindex;
 };
 
+YASM_STD_EXPORT
 void InsertLocalSymbol(Object& object,
                        std::auto_ptr<Symbol> sym,
                        std::auto_ptr<ElfSymbol> entry);

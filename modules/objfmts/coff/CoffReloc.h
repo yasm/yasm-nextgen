@@ -28,6 +28,7 @@
 //
 #include <string>
 
+#include "yasmx/Config/export.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Reloc.h"
 #include "yasmx/SymbolRef.h"
@@ -43,7 +44,7 @@ namespace objfmt
 namespace coff
 {
 
-class CoffReloc : public Reloc
+class YASM_STD_EXPORT CoffReloc : public Reloc
 {
 public:
     enum Type

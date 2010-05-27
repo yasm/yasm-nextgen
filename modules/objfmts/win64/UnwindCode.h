@@ -29,6 +29,7 @@
 #include <memory>
 #include <vector>
 
+#include "yasmx/Config/export.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/SymbolRef.h"
 #include "yasmx/Value.h"
@@ -43,7 +44,7 @@ namespace objfmt
 namespace win64
 {
 
-class UnwindCode : public Bytecode::Contents
+class YASM_STD_EXPORT UnwindCode : public Bytecode::Contents
 {
     friend void AppendUnwindCode(BytecodeContainer& container,
                                  std::auto_ptr<UnwindCode> uwcode);
@@ -120,6 +121,7 @@ private:
     Value m_off;            // Offset expression (used for some codes)
 };
 
+YASM_STD_EXPORT
 void AppendUnwindCode(BytecodeContainer& container,
                       std::auto_ptr<UnwindCode> uwcode);
 

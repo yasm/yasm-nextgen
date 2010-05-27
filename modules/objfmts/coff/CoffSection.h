@@ -26,6 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "yasmx/Config/export.h"
 #include "yasmx/AssocData.h"
 #include "yasmx/Section.h"
 #include "yasmx/SymbolRef.h"
@@ -43,7 +44,7 @@ namespace objfmt
 namespace coff
 {
 
-struct CoffSection : public AssocData
+struct YASM_STD_EXPORT CoffSection : public AssocData
 {
     static const char* key;
 

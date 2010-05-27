@@ -25,10 +25,11 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-
+//
 #include <iosfwd>
 #include <vector>
 
+#include "yasmx/Config/export.h"
 #include "yasmx/AssocData.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Section.h"
@@ -52,7 +53,7 @@ namespace objfmt
 namespace elf
 {
 
-class ElfSection : public AssocData
+class YASM_STD_EXPORT ElfSection : public AssocData
 {
 public:
     static const char* key;

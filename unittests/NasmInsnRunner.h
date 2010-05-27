@@ -43,7 +43,7 @@ namespace yasm { class Arch; class ArchModule; class Insn; }
 namespace yasmunit
 {
 
-class YASM_LIB_EXPORT NasmInsnRunner
+class YASM_UNIT_EXPORT NasmInsnRunner
     : public ::testing::TestWithParam<std::string>
 {
 public:

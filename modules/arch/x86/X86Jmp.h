@@ -28,6 +28,8 @@
 //
 #include <memory>
 
+#include "yasmx/Config/export.h"
+
 
 namespace clang { class SourceLocation; }
 
@@ -52,6 +54,7 @@ enum JmpOpcodeSel
     JMP_NEAR
 };
 
+YASM_STD_EXPORT
 void AppendJmp(BytecodeContainer& container,
                const X86Common& common,
                const X86Opcode& shortop,

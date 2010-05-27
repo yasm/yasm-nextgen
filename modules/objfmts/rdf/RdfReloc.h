@@ -26,6 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "yasmx/Config/export.h"
 #include "yasmx/Reloc.h"
 
 
@@ -39,7 +40,7 @@ namespace objfmt
 namespace rdf
 {
 
-class RdfReloc : public Reloc
+class YASM_STD_EXPORT RdfReloc : public Reloc
 {
 public:
     enum Type

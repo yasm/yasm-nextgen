@@ -26,6 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "yasmx/Config/export.h"
 #include "yasmx/ObjectFormat.h"
 
 namespace yasm
@@ -44,7 +45,7 @@ namespace coff
 struct CoffSection;
 struct CoffSymbol;
 
-class CoffObject : public ObjectFormat
+class YASM_STD_EXPORT CoffObject : public ObjectFormat
 {
 public:
     enum Machine

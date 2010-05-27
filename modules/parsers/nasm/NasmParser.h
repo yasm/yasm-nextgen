@@ -29,6 +29,7 @@
 #include <memory>
 
 #include "llvm/ADT/APFloat.h"
+#include "yasmx/Config/export.h"
 #include "yasmx/Parse/ParserImpl.h"
 #include "yasmx/Insn.h"
 #include "yasmx/Parser.h"
@@ -51,7 +52,7 @@ namespace parser
 namespace nasm
 {
 
-class NasmParser : public ParserImpl
+class YASM_STD_EXPORT NasmParser : public ParserImpl
 {
 public:
     NasmParser(const ParserModule& module,

@@ -26,9 +26,6 @@
 
 #include <gtest/gtest.h>
 
-#include "NasmPreproc.h"
-#include "NasmStringParser.h"
-
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringRef.h"
@@ -36,8 +33,10 @@
 #include "yasmx/Parse/HeaderSearch.h"
 #include "yasmx/Diagnostic.h"
 
+#include "modules/parsers/nasm/NasmPreproc.h"
+#include "modules/parsers/nasm/NasmStringParser.h"
+
 #include "unittests/diag_mock.h"
-#include "yasmx/Diagnostic.h"
 
 
 using namespace yasm;

@@ -26,6 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "yasmx/Config/export.h"
 #include "yasmx/SymbolRef.h"
 
 
@@ -41,6 +42,7 @@ namespace objfmt
 namespace win32
 {
 
+YASM_STD_EXPORT
 void AppendSxData(BytecodeContainer& container,
                   SymbolRef sym,
                   clang::SourceLocation source);

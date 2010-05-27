@@ -28,6 +28,7 @@
 //
 #include <bitset>
 
+#include "yasmx/Config/export.h"
 #include "yasmx/Arch.h"
 
 #include "X86Register.h"
@@ -96,7 +97,7 @@ enum CPUFeature
     CPU_CVT16           // AMD CVT16 extensions
 };
 
-class X86RegTmod
+class YASM_STD_EXPORT X86RegTmod
 {
 public:
     static const X86RegTmod& Instance();
@@ -133,7 +134,7 @@ private:
     ~X86RegTmod();
 };
 
-class X86Arch : public Arch
+class YASM_STD_EXPORT X86Arch : public Arch
 {
 public:
     typedef std::bitset<64> CpuMask;

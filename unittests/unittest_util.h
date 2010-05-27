@@ -40,7 +40,7 @@ namespace yasmunit
 {
 
 // allow llvm::format to be used with std::ostream.
-YASM_LIB_EXPORT
+YASM_UNIT_EXPORT
 std::ostream& operator<< (std::ostream& os, const llvm::format_object_base& fmt);
 
 } // namespace yasmunit

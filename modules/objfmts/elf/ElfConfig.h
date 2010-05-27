@@ -25,7 +25,8 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-
+//
+#include "yasmx/Config/export.h"
 #include "yasmx/IntNum.h"
 
 #include "ElfTypes.h"
@@ -50,7 +51,7 @@ namespace objfmt
 namespace elf
 {
 
-struct ElfConfig
+struct YASM_STD_EXPORT ElfConfig
 {
     ElfClass        cls;            // ELF class (32/64)
     ElfDataEncoding encoding;       // ELF encoding (MSB/LSB)

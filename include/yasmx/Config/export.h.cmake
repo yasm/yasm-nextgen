@@ -34,4 +34,20 @@
 # endif
 #endif
 
+#ifndef YASM_STD_EXPORT
+# ifdef MAKE_YASMSTDX_LIB
+#  define YASM_STD_EXPORT YASM_EXPORT
+# else
+#  define YASM_STD_EXPORT YASM_IMPORT
+# endif
+#endif
+
+#ifndef YASM_UNIT_EXPORT
+# ifdef MAKE_YASMUNIT_LIB
+#  define YASM_UNIT_EXPORT YASM_EXPORT
+# else
+#  define YASM_UNIT_EXPORT YASM_IMPORT
+# endif
+#endif
+
 #endif

@@ -26,6 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "yasmx/Config/export.h"
 #include "yasmx/Arch.h"
 
 #include "X86Register.h"
@@ -38,7 +39,7 @@ namespace arch
 namespace x86
 {
 
-class X86RegisterGroup : public RegisterGroup
+class YASM_STD_EXPORT X86RegisterGroup : public RegisterGroup
 {
 public:
     X86RegisterGroup(X86Register** regs, unsigned long size)

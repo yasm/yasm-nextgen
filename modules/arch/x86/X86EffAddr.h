@@ -26,6 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "yasmx/Config/export.h"
 #include "yasmx/EffAddr.h"
 
 #include "X86Register.h"
@@ -53,6 +54,7 @@ enum X86RexBitPos
 /// @param rexbit   indicates bit of REX to use if REX is needed
 /// @return True if successful, false if invalid mix of register and REX
 ///         (diag::err_high8_rex_conflict should be generated).
+YASM_STD_EXPORT
 bool setRexFromReg(unsigned char* rex,
                    unsigned char* low3,
                    X86Register::Type reg_type,
@@ -72,7 +74,7 @@ setRexFromReg(unsigned char *rex,
 }
 
 // Effective address type
-class X86EffAddr : public EffAddr
+class YASM_STD_EXPORT X86EffAddr : public EffAddr
 {
 public:
     // How the spare (register) bits in Mod/RM are handled:

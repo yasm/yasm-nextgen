@@ -26,6 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "yasmx/Config/export.h"
 #include "yasmx/AssocData.h"
 
 
@@ -36,7 +37,7 @@ namespace objfmt
 namespace rdf
 {
 
-struct RdfSymbol : public AssocData
+struct YASM_STD_EXPORT RdfSymbol : public AssocData
 {
     static const char* key;
 
