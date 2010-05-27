@@ -119,7 +119,7 @@ TEST_P(NasmStringParserTest, StringTest)
     }
 
     // parse the string
-    NasmStringParser str(in_str.data(), in_str.data()+in_str.size(), sof, pp);
+    NasmStringParser str(in_str, sof, pp);
 
     // check for errors first
     ASSERT_EQ(GetParam().has_error, str.hadError());

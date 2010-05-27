@@ -54,12 +54,11 @@ namespace gas
 /// float: "0" [a-zA-Z except bB or xX]
 ///        [-+]? [0-9]* ([.] [0-9]*)? ([eE] [-+]? [0-9]+)?
 ///
-GasNumericParser::GasNumericParser(const char* begin,
-                                   const char* end,
+GasNumericParser::GasNumericParser(llvm::StringRef str,
                                    clang::SourceLocation loc,
                                    Preprocessor& pp,
                                    bool force_float)
-    : m_digits_end(end)
+    : m_digits_end(str.end())
     , m_is_float(false)
     , m_had_error(false)
 {
@@ -67,9 +66,10 @@ GasNumericParser::GasNumericParser(const char* begin,
     // integer and FP constants, and assumes that the byte at "*end" is both
     // valid and not part of the regex.  Because of this, it doesn't have to
     // check for 'overscan' in various places.
-    assert(!isalnum(*end) && *end != '.' && "Lexer didn't maximally munch?");
+    assert(!isalnum(*m_digits_end) && *m_digits_end != '.' &&
+           "Lexer didn't maximally munch?");
 
-    const char* s = begin;
+    const char* s = str.begin();
 
     // Look for key radix prefixes
     if (force_float)
@@ -136,7 +136,7 @@ GasNumericParser::GasNumericParser(const char* begin,
                 err = diag::err_invalid_decimal_digit;
                 break;
         }
-        pp.Diag(pp.AdvanceToTokenCharacter(loc, s-begin), err)
+        pp.Diag(pp.AdvanceToTokenCharacter(loc, s-str.begin()), err)
             << std::string(s, s+1);
         m_had_error = true;
         return;
@@ -164,7 +164,7 @@ GasNumericParser::GasNumericParser(const char* begin,
             const char* first_non_digit = SkipDigits(s);
             if (first_non_digit == s)
             {
-                pp.Diag(pp.AdvanceToTokenCharacter(loc, exponent-begin),
+                pp.Diag(pp.AdvanceToTokenCharacter(loc, exponent-str.begin()),
                         diag::err_exponent_has_no_digits);
                 m_had_error = true;
                 return;
@@ -176,10 +176,10 @@ GasNumericParser::GasNumericParser(const char* begin,
     // Report an error if there are any.
     if (s != m_digits_end)
     {
-        pp.Diag(pp.AdvanceToTokenCharacter(loc, s-begin),
+        pp.Diag(pp.AdvanceToTokenCharacter(loc, s-str.begin()),
                 m_is_float ? diag::err_invalid_suffix_float_constant :
                              diag::err_invalid_suffix_integer_constant)
-            << std::string(s, end);
+            << std::string(s, str.end());
         m_had_error = true;
         return;
     }

@@ -32,6 +32,7 @@
 //
 #include <cctype>
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 
 
@@ -73,8 +74,7 @@ class YASM_STD_EXPORT GasNumericParser
 public:
     /// @param force_float  If true, always treat as decimal float;
     ///                     0[letter] prefix is optional
-    GasNumericParser(const char* begin,
-                     const char* end,
+    GasNumericParser(llvm::StringRef str,
                      clang::SourceLocation loc,
                      Preprocessor& pp,
                      bool force_float = false);

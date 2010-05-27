@@ -653,9 +653,8 @@ GasParser::ParseDirAscii(unsigned int withzero, clang::SourceLocation source)
         else if (m_token.is(GasToken::string_literal))
         {
             llvm::SmallString<64> strbuf;
-            const char* str_start = m_token.getLiteralData();
-            GasStringParser str(str_start, str_start + m_token.getLength(),
-                                m_token.getLocation(), m_preproc);
+            GasStringParser str(m_token.getLiteral(), m_token.getLocation(),
+                                m_preproc);
             if (!str.hadError())
                 AppendData(*m_container, str.getString(strbuf), withzero);
             ConsumeToken();
@@ -684,8 +683,7 @@ GasParser::ParseDirFloat(unsigned int size, clang::SourceLocation source)
         {
             case GasToken::numeric_constant:
             {
-                const char* num_start = m_token.getLiteralData();
-                num_str = llvm::StringRef(num_start, m_token.getLength());
+                num_str = m_token.getLiteral();
                 break;
             }
             case GasToken::label:
@@ -703,8 +701,7 @@ GasParser::ParseDirFloat(unsigned int size, clang::SourceLocation source)
                 return false;
         }
 
-        GasNumericParser num(num_str.begin(), num_str.end(),
-                             m_token.getLocation(), m_preproc, true);
+        GasNumericParser num(num_str, m_token.getLocation(), m_preproc, true);
         clang::SourceLocation num_source = ConsumeToken();
         if (num.hadError())
             ;
@@ -962,9 +959,8 @@ GasParser::ParseDirFile(unsigned int param, clang::SourceLocation source)
     {
         // No file number; this form also sets the assembler's
         // internal line number.
-        const char* str_start = m_token.getLiteralData();
-        GasStringParser filename(str_start, str_start + m_token.getLength(),
-                                 m_token.getLocation(), m_preproc);
+        GasStringParser filename(m_token.getLiteral(), m_token.getLocation(),
+                                 m_preproc);
         if (filename.hadError())
             return false;
         clang::SourceLocation filename_source = ConsumeToken();
@@ -1016,9 +1012,8 @@ GasParser::ParseDirFile(unsigned int param, clang::SourceLocation source)
         Diag(m_token, diag::err_expected_string);
         return false;
     }
-    const char* str_start = m_token.getLiteralData();
-    GasStringParser filename(str_start, str_start + m_token.getLength(),
-                             m_token.getLocation(), m_preproc);
+    GasStringParser filename(m_token.getLiteral(), m_token.getLocation(),
+                             m_preproc);
     if (filename.hadError())
         return false;
     clang::SourceLocation filename_source = ConsumeToken();
@@ -1137,9 +1132,8 @@ GasParser::ParseDirective(NameValues* nvs)
             case GasToken::string_literal:
             {
                 llvm::SmallString<64> strbuf;
-                const char* str_start = m_token.getLiteralData();
-                GasStringParser str(str_start, str_start + m_token.getLength(),
-                                    m_token.getLocation(), m_preproc);
+                GasStringParser str(m_token.getLiteral(), m_token.getLocation(),
+                                    m_preproc);
                 clang::SourceLocation str_source = ConsumeToken();
 
                 if (!str.hadError())
@@ -1554,9 +1548,8 @@ GasParser::ParseExpr3(Expr& e)
         }
         case GasToken::numeric_constant:
         {
-            const char* num_start = m_token.getLiteralData();
-            GasNumericParser num(num_start, num_start + m_token.getLength(),
-                                 m_token.getLocation(), m_preproc);
+            GasNumericParser num(m_token.getLiteral(), m_token.getLocation(),
+                                 m_preproc);
             if (num.hadError())
                 e = IntNum(0);
             else if (num.isInteger())
@@ -1575,9 +1568,8 @@ GasParser::ParseExpr3(Expr& e)
         }
         case GasToken::char_constant:
         {
-            const char* str_start = m_token.getLiteralData();
-            GasStringParser str(str_start, str_start + m_token.getLength(),
-                                m_token.getLocation(), m_preproc);
+            GasStringParser str(m_token.getLiteral(), m_token.getLocation(),
+                                m_preproc);
             if (str.hadError())
                 e = IntNum(0);
             else
@@ -1655,9 +1647,8 @@ GasParser::ParseInteger(IntNum* intn)
 {
     assert(m_token.is(GasToken::numeric_constant));
 
-    const char* num_start = m_token.getLiteralData();
-    GasNumericParser num(num_start, num_start + m_token.getLength(),
-                         m_token.getLocation(), m_preproc);
+    GasNumericParser num(m_token.getLiteral(), m_token.getLocation(),
+                         m_preproc);
     if (num.hadError())
     {
         intn->Zero();

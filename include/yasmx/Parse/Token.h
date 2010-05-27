@@ -30,9 +30,10 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "clang/Basic/SourceLocation.h"
 #include <cassert>
 
+#include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace yasm
 {
@@ -172,6 +173,11 @@ public:
     /// string, etc.
     bool isLiteral() const
     { return (m_flags & Literal) ? true : false; }
+
+    llvm::StringRef getLiteral() const
+    {
+        return llvm::StringRef(getLiteralData(), getLength());
+    }
 
     /// For a literal token (numeric constant, string, etc), this
     /// returns a pointer to the start of it in the text buffer if known, null

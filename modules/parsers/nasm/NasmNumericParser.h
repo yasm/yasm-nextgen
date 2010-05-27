@@ -32,6 +32,7 @@
 //
 #include <cctype>
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 
 
@@ -71,8 +72,9 @@ class YASM_STD_EXPORT NasmNumericParser
     bool m_had_error;
 
 public:
-    NasmNumericParser(const char* begin, const char* end,
-                      clang::SourceLocation loc, Preprocessor& pp);
+    NasmNumericParser(llvm::StringRef str,
+                      clang::SourceLocation loc,
+                      Preprocessor& pp);
 
     bool hadError() const { return m_had_error; }
     bool isInteger() const { return !m_is_float; }

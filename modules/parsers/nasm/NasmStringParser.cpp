@@ -62,23 +62,22 @@ fromxdigit(char ch)
 /// Supported escape characters in escaped strings: '"`\?abtnvfre
 /// Octal, hex, and Unicode escapes are also supported
 ///
-NasmStringParser::NasmStringParser(const char* begin,
-                                   const char* end,
+NasmStringParser::NasmStringParser(llvm::StringRef str,
                                    clang::SourceLocation loc,
                                    Preprocessor& pp)
-    : m_chars_begin(begin+1)
-    , m_chars_end(end-1)
+    : m_chars_begin(str.begin()+1)
+    , m_chars_end(str.end()-1)
     , m_needs_unescape(false)
     , m_had_error(false)
 {
     // This routine assumes that the range begin/end matches the regex for
     // string constants, and assumes that the byte at end[-1] is the ending
     // string character (e.g. the same as *begin).
-    assert(*begin == end[-1] && (end-begin) >= 2 &&
+    assert(str.size() >= 2 && str.front() == str.back() &&
            "Invalid string from lexer?");
 
     // If we don't need to unescape, we're done.
-    if (*begin != '`')
+    if (str.front() != '`')
         return;
 
     // Prescan escape validity
@@ -113,7 +112,7 @@ NasmStringParser::NasmStringParser(const char* begin,
                     ++s;
                 else
                 {
-                    pp.Diag(pp.AdvanceToTokenCharacter(loc, s-begin),
+                    pp.Diag(pp.AdvanceToTokenCharacter(loc, s-str.begin()),
                             diag::warn_expected_hex_digit);
                 }
                 if (isxdigit(*s))
@@ -131,7 +130,7 @@ NasmStringParser::NasmStringParser(const char* begin,
                     if (!isxdigit(*s))
                     {
                         m_had_error = true;
-                        pp.Diag(pp.AdvanceToTokenCharacter(loc, s-begin),
+                        pp.Diag(pp.AdvanceToTokenCharacter(loc, s-str.begin()),
                                 diag::err_unicode_escape_requires_hex)
                             << nch;
                         break;
@@ -140,7 +139,7 @@ NasmStringParser::NasmStringParser(const char* begin,
                 break;
             }
             default:
-                pp.Diag(pp.AdvanceToTokenCharacter(loc, s-begin-1),
+                pp.Diag(pp.AdvanceToTokenCharacter(loc, s-str.begin()-1),
                         diag::warn_unknown_escape)
                     << std::string(s-1, s);
                 break;

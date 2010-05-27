@@ -612,8 +612,7 @@ NasmParser::ParseDirective(/*@out@*/ NameValues& nvs)
         {
             case NasmToken::string_literal:
             {
-                const char* str_start = m_token.getLiteralData();
-                NasmStringParser str(str_start, str_start + m_token.getLength(),
+                NasmStringParser str(m_token.getLiteral(),
                                      m_token.getLocation(), m_preproc);
                 if (str.hadError())
                     nv.reset(new NameValue(name, ""));
@@ -747,9 +746,7 @@ NasmParser::ParseExp()
                         peek_token.is(NasmToken::eol) ||
                         peek_token.is(NasmToken::eof))
                     {
-                        const char* str_start = m_token.getLiteralData();
-                        NasmStringParser str(str_start,
-                                             str_start + m_token.getLength(),
+                        NasmStringParser str(m_token.getLiteral(),
                                              m_token.getLocation(), m_preproc);
                         if (!str.hadError())
                         {
@@ -806,9 +803,8 @@ dv_done:
                 return false;
             }
 
-            const char* str_start = m_token.getLiteralData();
-            NasmStringParser str(str_start, str_start + m_token.getLength(),
-                                 m_token.getLocation(), m_preproc);
+            NasmStringParser str(m_token.getLiteral(), m_token.getLocation(),
+                                 m_preproc);
             llvm::SmallString<64> strbuf;
             llvm::StringRef filename;
             if (!str.hadError())
@@ -1317,9 +1313,8 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
         }
         case NasmToken::numeric_constant:
         {
-            const char* num_start = m_token.getLiteralData();
-            NasmNumericParser num(num_start, num_start + m_token.getLength(),
-                                  m_token.getLocation(), m_preproc);
+            NasmNumericParser num(m_token.getLiteral(), m_token.getLocation(),
+                                  m_preproc);
             if (num.hadError())
                 e = IntNum(0);
             else if (num.isInteger())
@@ -1403,9 +1398,8 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
         }
         case NasmToken::numeric_constant:
         {
-            const char* num_start = m_token.getLiteralData();
-            NasmNumericParser num(num_start, num_start + m_token.getLength(),
-                                  m_token.getLocation(), m_preproc);
+            NasmNumericParser num(m_token.getLiteral(), m_token.getLocation(),
+                                  m_preproc);
             if (num.hadError())
                 e = IntNum(0);
             else if (num.isInteger())
@@ -1424,9 +1418,8 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
         }
         case NasmToken::string_literal:
         {
-            const char* str_start = m_token.getLiteralData();
-            NasmStringParser str(str_start, str_start + m_token.getLength(),
-                                 m_token.getLocation(), m_preproc);
+            NasmStringParser str(m_token.getLiteral(), m_token.getLocation(),
+                                 m_preproc);
             if (str.hadError())
                 e = IntNum(0);
             else

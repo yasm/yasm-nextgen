@@ -60,8 +60,9 @@ class YASM_STD_EXPORT GasStringParser
     bool m_had_error;
 
 public:
-    GasStringParser(const char* begin, const char* end,
-                    clang::SourceLocation loc, Preprocessor& pp);
+    GasStringParser(llvm::StringRef str,
+                    clang::SourceLocation loc,
+                    Preprocessor& pp);
 
     bool hadError() const { return m_had_error; }
 

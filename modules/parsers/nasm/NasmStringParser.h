@@ -60,8 +60,9 @@ class YASM_STD_EXPORT NasmStringParser
     bool m_had_error;
 
 public:
-    NasmStringParser(const char* begin, const char* end,
-                     clang::SourceLocation loc, Preprocessor& pp);
+    NasmStringParser(llvm::StringRef str,
+                     clang::SourceLocation loc,
+                     Preprocessor& pp);
 
     bool hadError() const { return m_had_error; }
 

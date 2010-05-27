@@ -59,11 +59,10 @@ namespace nasm
 /// hex float: "0x" [0-9a-fA-F_]* [.] [0-9a-fA-F]* ([pP] [-+]? [0-9]+)?
 /// hex float: "0x" [0-9a-fA-F_]+ [pP] [-+]? [0-9]+
 ///
-NasmNumericParser::NasmNumericParser(const char* begin,
-                                     const char* end,
+NasmNumericParser::NasmNumericParser(llvm::StringRef str,
                                      clang::SourceLocation loc,
                                      Preprocessor& pp)
-    : m_digits_end(end)
+    : m_digits_end(str.end())
     , m_is_float(false)
     , m_had_error(false)
 {
@@ -71,10 +70,10 @@ NasmNumericParser::NasmNumericParser(const char* begin,
     // integer and FP constants, and assumes that the byte at "*end" is both
     // valid and not part of the regex.  Because of this, it doesn't have to
     // check for 'overscan' in various places.
-    assert(!isalnum(*end) && *end != '.' && *end != '_' &&
-           "Lexer didn't maximally munch?");
+    assert(!isalnum(*m_digits_end) && *m_digits_end != '.' &&
+           *m_digits_end != '_' && "Lexer didn't maximally munch?");
 
-    const char* s = begin;
+    const char* s = str.begin();
     bool float_ok = false;
 
     // Look for key radix flags (prefixes and suffixes)
@@ -147,7 +146,7 @@ NasmNumericParser::NasmNumericParser(const char* begin,
                 err = diag::err_invalid_decimal_digit;
                 break;
         }
-        pp.Diag(pp.AdvanceToTokenCharacter(loc, s-begin), err)
+        pp.Diag(pp.AdvanceToTokenCharacter(loc, s-str.begin()), err)
             << std::string(s, s+1);
         m_had_error = true;
         return;
@@ -175,7 +174,7 @@ NasmNumericParser::NasmNumericParser(const char* begin,
         const char* first_non_digit = SkipDigits(s);
         if (first_non_digit == s)
         {
-            pp.Diag(pp.AdvanceToTokenCharacter(loc, exponent-begin),
+            pp.Diag(pp.AdvanceToTokenCharacter(loc, exponent-str.begin()),
                     diag::err_exponent_has_no_digits);
             m_had_error = true;
             return;
@@ -186,10 +185,10 @@ NasmNumericParser::NasmNumericParser(const char* begin,
     // Report an error if there are any.
     if (s != m_digits_end)
     {
-        pp.Diag(pp.AdvanceToTokenCharacter(loc, s-begin),
+        pp.Diag(pp.AdvanceToTokenCharacter(loc, s-str.begin()),
                 m_is_float ? diag::err_invalid_suffix_float_constant :
                              diag::err_invalid_suffix_integer_constant)
-            << std::string(s, end);
+            << std::string(s, str.end());
         m_had_error = true;
         return;
     }

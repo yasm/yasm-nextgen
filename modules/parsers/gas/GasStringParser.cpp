@@ -62,24 +62,23 @@ fromxdigit(char ch)
 /// Supported escape characters in escaped strings: '"\btnvfr
 /// Octal and hex escapes are also supported
 ///
-GasStringParser::GasStringParser(const char* begin,
-                                 const char* end,
+GasStringParser::GasStringParser(llvm::StringRef str,
                                  clang::SourceLocation loc,
                                  Preprocessor& pp)
-    : m_chars_begin(begin+1)
+    : m_chars_begin(str.begin()+1)
     , m_needs_unescape(false)
     , m_had_error(false)
 {
-    if (*begin == '\'')
+    if (str.front() == '\'')
     {
         // Character constants don't have a terminating quote character
-        m_chars_end = end;
-        assert((end-begin) >= 2 && "Invalid character constant from lexer?");
+        m_chars_end = str.end();
+        assert(str.size() >= 2 && "Invalid character constant from lexer?");
     }
     else
     {
-        m_chars_end = end-1;
-        assert(*begin == end[-1] && (end-begin) >= 2 &&
+        m_chars_end = str.end()-1;
+        assert(str.size() >= 2 && str.front() == *m_chars_end &&
                "Invalid string from lexer?");
     }
 
@@ -115,14 +114,14 @@ GasStringParser::GasStringParser(const char* begin,
                     ++s;
                 else
                 {
-                    pp.Diag(pp.AdvanceToTokenCharacter(loc, s-begin-1),
+                    pp.Diag(pp.AdvanceToTokenCharacter(loc, s-str.begin()-1),
                             diag::warn_expected_hex_digit);
                 }
                 while (s < m_chars_end && isxdigit(*s))
                     ++s;
                 break;
             default:
-                pp.Diag(pp.AdvanceToTokenCharacter(loc, s-begin-1),
+                pp.Diag(pp.AdvanceToTokenCharacter(loc, s-str.begin()-1),
                         diag::warn_unknown_escape)
                     << std::string(s-1, s);
                 break;
