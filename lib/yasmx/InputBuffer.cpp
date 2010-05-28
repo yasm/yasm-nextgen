@@ -37,8 +37,7 @@
 #include "yasmx/IntNum.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 static inline uint64_t
 ReadU64I(InputBuffer& input)
@@ -140,27 +139,25 @@ ReadN(InputBuffer& input, int n, bool sign)
 }
 
 IntNum
-ReadUnsigned(InputBuffer& input, int n)
+yasm::ReadUnsigned(InputBuffer& input, int n)
 {
     return ReadN(input, n, false);
 }
 
 IntNum
-ReadSigned(InputBuffer& input, int n)
+yasm::ReadSigned(InputBuffer& input, int n)
 {
     return ReadN(input, n, true);
 }
 
 IntNum
-ReadU64(InputBuffer& input)
+yasm::ReadU64(InputBuffer& input)
 {
     return ReadN(input, 64, false);
 }
 
 IntNum
-ReadS64(InputBuffer& input)
+yasm::ReadS64(InputBuffer& input)
 {
     return ReadN(input, 64, true);
 }
-
-} // namespace yasm

@@ -47,6 +47,8 @@
 #include "yasmx/Parser.h"
 
 
+using namespace yasm;
+
 namespace
 {
 
@@ -72,7 +74,7 @@ public:
     Impl(llvm::StringRef arch_keyword,
          llvm::StringRef parser_keyword,
          llvm::StringRef objfmt_keyword,
-         ObjectDumpTime dump_time);
+         Assembler::ObjectDumpTime dump_time);
     ~Impl();
 
     void setMachine(llvm::StringRef machine);
@@ -102,13 +104,15 @@ public:
 
     std::string m_obj_filename;
     std::string m_machine;
-    ObjectDumpTime m_dump_time;
+    Assembler::ObjectDumpTime m_dump_time;
 };
+
+} // namespace yasm
 
 Assembler::Impl::Impl(llvm::StringRef arch_keyword,
                       llvm::StringRef parser_keyword,
                       llvm::StringRef objfmt_keyword,
-                      ObjectDumpTime dump_time)
+                      Assembler::ObjectDumpTime dump_time)
     : m_arch_module(LoadModule<ArchModule>(arch_keyword).release()),
       m_parser_module(LoadModule<ParserModule>(parser_keyword).release()),
       m_objfmt_module(LoadModule<ObjectFormatModule>(objfmt_keyword).release()),
@@ -334,7 +338,7 @@ Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
     // Parse!
     m_parser->Parse(*m_object, dirs, diags);
 
-    if (m_dump_time == DUMP_AFTER_PARSE)
+    if (m_dump_time == Assembler::DUMP_AFTER_PARSE)
         m_object->Dump();
     if (diags.hasErrorOccurred())
         return false;
@@ -343,7 +347,7 @@ Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
 
     // Finalize parse
     m_object->Finalize(diags);
-    if (m_dump_time == DUMP_AFTER_FINALIZE)
+    if (m_dump_time == Assembler::DUMP_AFTER_FINALIZE)
         m_object->Dump();
     if (diags.hasErrorOccurred())
         return false;
@@ -351,7 +355,7 @@ Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
     // Optimize
     m_object->Optimize(diags);
 
-    if (m_dump_time == DUMP_AFTER_OPTIMIZE)
+    if (m_dump_time == Assembler::DUMP_AFTER_OPTIMIZE)
         m_object->Dump();
 
     if (diags.hasErrorOccurred())
@@ -422,5 +426,3 @@ Assembler::getObjectFilename() const
 {
     return m_impl->m_obj_filename;
 }
-
-} // namespace yasm

@@ -36,8 +36,7 @@
 #include "yasmx/Symbol.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 // Transforms instances of Symbol-Symbol [Symbol+(-1*Symbol)] into single
 // ExprTerms if possible.  Uses a simple n^2 algorithm because n is usually
@@ -185,6 +184,7 @@ TransformDistBase(Expr& e, int pos,
     }
 }
 
+namespace {
 struct CalcDistFunctor
 {
     bool operator() (ExprTerm& term, Location loc, Location loc2)
@@ -197,14 +197,16 @@ struct CalcDistFunctor
         return true;
     }
 };
+} // anonymous namespace
 
 void
-SimplifyCalcDist(Expr& e)
+yasm::SimplifyCalcDist(Expr& e)
 {
     CalcDistFunctor functor;
     e.Simplify(BIND::bind(&TransformDistBase, _1, _2, functor));
 }
 
+namespace {
 struct CalcDistNoBCFunctor
 {
     bool operator() (ExprTerm& term, Location loc, Location loc2)
@@ -217,14 +219,16 @@ struct CalcDistNoBCFunctor
         return true;
     }
 };
+} // anonymous namespace
 
 void
-SimplifyCalcDistNoBC(Expr& e)
+yasm::SimplifyCalcDistNoBC(Expr& e)
 {
     CalcDistNoBCFunctor functor;
     e.Simplify(BIND::bind(&TransformDistBase, _1, _2, functor));
 }
 
+namespace {
 struct SubstDistFunctor
 {
     const FUNCTION::function<void (unsigned int subst,
@@ -248,12 +252,13 @@ struct SubstDistFunctor
         return true;
     }
 };
+} // anonymous namespace
 
 int
-SubstDist(Expr& e,
-          const FUNCTION::function<void (unsigned int subst,
-                                         Location loc,
-                                         Location loc2)>& func)
+yasm::SubstDist(Expr& e,
+                const FUNCTION::function<void (unsigned int subst,
+                                               Location loc,
+                                               Location loc2)>& func)
 {
     SubstDistFunctor functor(func);
     e.Simplify(BIND::bind(&TransformDistBase, _1, _2, functor));
@@ -261,12 +266,12 @@ SubstDist(Expr& e,
 }
 
 bool
-Evaluate(const Expr& e,
-         ExprTerm* result,
-         const ExprTerm* subst,
-         unsigned int nsubst,
-         bool valueloc,
-         bool zeroreg)
+yasm::Evaluate(const Expr& e,
+               ExprTerm* result,
+               const ExprTerm* subst,
+               unsigned int nsubst,
+               bool valueloc,
+               bool zeroreg)
 {
     if (e.isEmpty())
         return false;
@@ -399,5 +404,3 @@ Evaluate(const Expr& e,
     result->swap(stack.back());
     return true;
 }
-
-} // namespace yasm

@@ -32,8 +32,7 @@
 #include "yasmx/Support/errwarn.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 BytecodeOutput::BytecodeOutput()
     : m_num_output(0)
@@ -113,5 +112,3 @@ BytecodeStreamOutput::DoOutputBytes(const Bytes& bytes)
     // Output bytes to file
     m_os << bytes;
 }
-
-} // namespace yasm

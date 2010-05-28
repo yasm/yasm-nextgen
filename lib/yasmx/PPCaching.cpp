@@ -15,8 +15,7 @@
 #include "yasmx/Parse/Preprocessor.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 /// EnableBacktrackAtThisPos - From the point that this method is called, and
 /// until CommitBacktrackedTokens() or Backtrack() is called, the Preprocessor
@@ -107,5 +106,3 @@ Preprocessor::PeekAhead(unsigned int n)
     EnterCachingLexMode();
     return m_cached_tokens.back();
 }
-
-} // namespace yasm

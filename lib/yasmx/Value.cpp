@@ -48,28 +48,27 @@
 #include "yasmx/Symbol.h"
 
 
+using namespace yasm;
+
 namespace {
 
 // Predicate used in Value::finalize() to remove matching integers.
 class TermIsInt
 {
 public:
-    TermIsInt(const yasm::IntNum& intn) : m_intn(intn) {}
+    TermIsInt(const IntNum& intn) : m_intn(intn) {}
 
     bool operator() (const yasm::ExprTerm& term) const
     {
-        const yasm::IntNum* intn = term.getIntNum();
+        const IntNum* intn = term.getIntNum();
         return intn && m_intn == *intn;
     }
 
 private:
-    yasm::IntNum m_intn;
+    IntNum m_intn;
 };
 
 } // anonymous namespace
-
-namespace yasm
-{
 
 Value::Value(unsigned int size)
     : m_abs(0),
@@ -944,5 +943,3 @@ Value::Dump() const
     Write(out);
     llvm::errs() << out.c_str() << '\n';
 }
-
-} // namespace yasm

@@ -42,8 +42,7 @@
 #include "yasmx/Support/errwarn.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 /// Static bitvect used for conversions.
 static llvm::APInt conv_bv(IntNum::BITVECT_NATIVE_SIZE, 0);
@@ -62,10 +61,10 @@ enum
 };
 
 bool
-isOkSize(const llvm::APInt& intn,
-         unsigned int size,
-         unsigned int rshift,
-         int rangetype)
+yasm::isOkSize(const llvm::APInt& intn,
+               unsigned int size,
+               unsigned int rshift,
+               int rangetype)
 {
     unsigned int intn_size;
     switch (rangetype)
@@ -145,7 +144,8 @@ IntNum::getBV(llvm::APInt* bv)
 }
 
 /// Return the value of the specified hex digit, or -1 if it's not valid.
-static unsigned int HexDigitValue(char ch)
+static unsigned int
+HexDigitValue(char ch)
 {
     if (ch >= '0' && ch <= '9') return ch-'0';
     if (ch >= 'a' && ch <= 'f') return ch-'a'+10;
@@ -743,7 +743,7 @@ IntNum::operator--()
 }
 
 int
-Compare(const IntNum& lhs, const IntNum& rhs)
+yasm::Compare(const IntNum& lhs, const IntNum& rhs)
 {
     if (lhs.m_type == IntNum::INTNUM_SV && rhs.m_type == IntNum::INTNUM_SV)
     {
@@ -764,7 +764,7 @@ Compare(const IntNum& lhs, const IntNum& rhs)
 }
 
 bool
-operator==(const IntNum& lhs, const IntNum& rhs)
+yasm::operator==(const IntNum& lhs, const IntNum& rhs)
 {
     if (lhs.m_type == IntNum::INTNUM_SV && rhs.m_type == IntNum::INTNUM_SV)
         return lhs.m_val.sv == rhs.m_val.sv;
@@ -775,7 +775,7 @@ operator==(const IntNum& lhs, const IntNum& rhs)
 }
 
 bool
-operator<(const IntNum& lhs, const IntNum& rhs)
+yasm::operator<(const IntNum& lhs, const IntNum& rhs)
 {
     if (lhs.m_type == IntNum::INTNUM_SV && rhs.m_type == IntNum::INTNUM_SV)
         return lhs.m_val.sv < rhs.m_val.sv;
@@ -786,7 +786,7 @@ operator<(const IntNum& lhs, const IntNum& rhs)
 }
 
 bool
-operator>(const IntNum& lhs, const IntNum& rhs)
+yasm::operator>(const IntNum& lhs, const IntNum& rhs)
 {
     if (lhs.m_type == IntNum::INTNUM_SV && rhs.m_type == IntNum::INTNUM_SV)
         return lhs.m_val.sv > rhs.m_val.sv;
@@ -930,5 +930,3 @@ IntNum::Print(llvm::raw_ostream& os,
     // value
     os << s.str();
 }
-
-} // namespace yasm

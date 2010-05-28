@@ -34,8 +34,7 @@
 #include "yasmx/Insn.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 Register::~Register()
 {
@@ -91,5 +90,3 @@ ArchModule::getType() const
 {
     return "Arch";
 }
-
-} // namespace yasm

@@ -31,8 +31,7 @@
 #include "yasmx/Support/errwarn.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 ObjectFormat::~ObjectFormat()
 {
@@ -63,5 +62,3 @@ ObjectFormatModule::getType() const
 {
     return "ObjectFormat";
 }
-
-} // namespace yasm

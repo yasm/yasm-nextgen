@@ -38,11 +38,9 @@
 #include "yasmx/Symbol.h"
 
 
-namespace
-{
-
 using namespace yasm;
 
+namespace {
 class ObjextNameValues : public AssocData
 {
 public:
@@ -59,6 +57,7 @@ public:
 private:
     NameValues m_nvs;
 };
+} // anonymous namespace
 
 const char* ObjextNameValues::key = "ObjextNameValues";
 
@@ -75,7 +74,7 @@ ObjextNameValues::Write(YAML::Emitter& out) const
     out << YAML::EndMap;
 }
 
-
+namespace {
 class CommonSize : public AssocData
 {
 public:
@@ -92,6 +91,7 @@ public:
 private:
     Expr m_expr;
 };
+} // anonymous namespace
 
 const char* CommonSize::key = "CommonSize";
 
@@ -108,20 +108,15 @@ CommonSize::Write(YAML::Emitter& out) const
     out << YAML::EndMap;
 }
 
-} // anonymous namespace
-
-namespace yasm
-{
-
 void
-setObjextNameValues(Symbol& sym, NameValues& objext_namevals)
+yasm::setObjextNameValues(Symbol& sym, NameValues& objext_namevals)
 {
     sym.AddAssocData(std::auto_ptr<ObjextNameValues>
                      (new ObjextNameValues(objext_namevals)));
 }
 
 const NameValues*
-getObjextNameValues(const Symbol& sym)
+yasm::getObjextNameValues(const Symbol& sym)
 {
     const ObjextNameValues* x = sym.getAssocData<ObjextNameValues>();
     if (!x)
@@ -130,7 +125,7 @@ getObjextNameValues(const Symbol& sym)
 }
 
 NameValues*
-getObjextNameValues(Symbol& sym)
+yasm::getObjextNameValues(Symbol& sym)
 {
     ObjextNameValues* x = sym.getAssocData<ObjextNameValues>();
     if (!x)
@@ -139,13 +134,13 @@ getObjextNameValues(Symbol& sym)
 }
 
 void
-setCommonSize(Symbol& sym, const Expr& common_size)
+yasm::setCommonSize(Symbol& sym, const Expr& common_size)
 {
     sym.AddAssocData(std::auto_ptr<CommonSize>(new CommonSize(common_size)));
 }
 
 const Expr*
-getCommonSize(const Symbol& sym)
+yasm::getCommonSize(const Symbol& sym)
 {
     const CommonSize* x = sym.getAssocData<CommonSize>();
     if (!x)
@@ -154,7 +149,7 @@ getCommonSize(const Symbol& sym)
 }
 
 Expr*
-getCommonSize(Symbol& sym)
+yasm::getCommonSize(Symbol& sym)
 {
     CommonSize* x = sym.getAssocData<CommonSize>();
     if (!x)
@@ -163,7 +158,7 @@ getCommonSize(Symbol& sym)
 }
 
 void
-DirExtern(DirectiveInfo& info, Diagnostic& diags)
+yasm::DirExtern(DirectiveInfo& info, Diagnostic& diags)
 {
     Object& object = info.getObject();
     NameValue& nv = info.getNameValues().front();
@@ -175,7 +170,7 @@ DirExtern(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DirGlobal(DirectiveInfo& info, Diagnostic& diags)
+yasm::DirGlobal(DirectiveInfo& info, Diagnostic& diags)
 {
     Object& object = info.getObject();
     NameValue& nv = info.getNameValues().front();
@@ -187,7 +182,7 @@ DirGlobal(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DirCommon(DirectiveInfo& info, Diagnostic& diags)
+yasm::DirCommon(DirectiveInfo& info, Diagnostic& diags)
 {
     NameValues& namevals = info.getNameValues();
     if (namevals.size() < 2)
@@ -214,5 +209,3 @@ DirCommon(DirectiveInfo& info, Diagnostic& diags)
     if (!info.getObjextNameValues().empty())
         setObjextNameValues(*sym, info.getObjextNameValues());
 }
-
-} // namespace yasm

@@ -51,8 +51,7 @@ STATISTIC(num_output, "Number of bytecodes output");
 STATISTIC(fixed_output, "Total number of fixed bytes output");
 STATISTIC(tail_output, "Total number of tail bytes output");
 
-namespace yasm
-{
+using namespace yasm;
 
 Bytecode::Contents::Contents()
 {
@@ -414,5 +413,3 @@ Bytecode::Fixup::Dump() const
     Write(out);
     llvm::errs() << out.c_str() << '\n';
 }
-
-} // namespace yasm

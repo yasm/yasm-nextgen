@@ -46,6 +46,8 @@
 #include "yasmx/Support/errwarn.h"
 
 
+using namespace yasm;
+
 namespace
 {
 
@@ -60,11 +62,8 @@ private:
 
 } // anonymous namespace
 
-namespace yasm
-{
-
 std::string
-SplitPath_unix(const std::string& path, /*@out@*/ std::string& tail)
+yasm::SplitPath_unix(const std::string& path, /*@out@*/ std::string& tail)
 {
     std::string::size_type found = path.rfind('/');
     if (found == std::string::npos)
@@ -97,7 +96,7 @@ SplitPath_unix(const std::string& path, /*@out@*/ std::string& tail)
 }
 
 std::string
-SplitPath_win(const std::string& path, /*@out@*/ std::string& tail)
+yasm::SplitPath_win(const std::string& path, /*@out@*/ std::string& tail)
 {
     std::string::size_type found = path.find_last_of("/\\");
     if (found == std::string::npos)
@@ -147,7 +146,7 @@ SplitPath_win(const std::string& path, /*@out@*/ std::string& tail)
 }
 
 std::string
-getCurDir()
+yasm::getCurDir()
 {
     size_t size = 1024;
     char* buf = static_cast<char*>(std::malloc(size));
@@ -172,7 +171,7 @@ getCurDir()
 
 // FIXME: dumb way for now
 std::string
-AbsPath_unix(const std::string& path)
+yasm::AbsPath_unix(const std::string& path)
 {
     std::string abspath = getCurDir();
     abspath += '/';
@@ -182,7 +181,7 @@ AbsPath_unix(const std::string& path)
 
 // FIXME: dumb way for now
 std::string
-AbsPath_win(const std::string& path)
+yasm::AbsPath_win(const std::string& path)
 {
     std::string abspath = getCurDir();
     abspath += '\\';
@@ -195,7 +194,7 @@ AbsPath_win(const std::string& path)
 }
 
 std::string
-CombPath_unix(const std::string& from, const std::string& to)
+yasm::CombPath_unix(const std::string& from, const std::string& to)
 {
     if (to[0] == '/')
     {
@@ -275,7 +274,7 @@ CombPath_unix(const std::string& from, const std::string& to)
 }
 
 std::string
-CombPath_win(const std::string& from, const std::string& to)
+yasm::CombPath_win(const std::string& from, const std::string& to)
 {
     if ((to.length() >= 2 && std::isalpha(to[0]) && to[1] == ':') ||
         to[0] == '/' || to[0] == '\\')
@@ -371,8 +370,9 @@ CombPath_win(const std::string& from, const std::string& to)
 }
 
 std::string
-ReplaceExtension(const std::string& orig, const std::string& ext,
-                 const std::string& def)
+yasm::ReplaceExtension(const std::string& orig,
+                       const std::string& ext,
+                       const std::string& def)
 {
     std::string::size_type origext = orig.find_last_of('.');
     if (origext != std::string::npos)
@@ -407,5 +407,3 @@ ReplaceExtension(const std::string& orig, const std::string& ext,
     out += ext;
     return out;
 }
-
-} // namespace yasm

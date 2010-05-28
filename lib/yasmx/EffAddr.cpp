@@ -35,8 +35,7 @@
 #include "yasmx/Expr.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 EffAddr::EffAddr(std::auto_ptr<Expr> e)
     : m_disp(0, e),
@@ -94,5 +93,3 @@ EffAddr::Dump() const
     Write(out);
     llvm::errs() << out.c_str() << '\n';
 }
-
-} // namespace yasm

@@ -35,10 +35,10 @@
 #include "yasmx/Diagnostic.h"
 
 
+using namespace yasm;
+
 namespace
 {
-
-using namespace yasm;
 
 class OrgBytecode : public Bytecode::Contents
 {
@@ -82,6 +82,7 @@ private:
     unsigned long m_fill;       ///< fill value
 };
 
+} // anonymous namespace
 
 OrgBytecode::OrgBytecode(unsigned long start, unsigned long fill)
     : m_start(start),
@@ -177,20 +178,13 @@ OrgBytecode::Write(YAML::Emitter& out) const
     out << YAML::EndMap;
 }
 
-} // anonymous namespace
-
-namespace yasm
-{
-
 void
-AppendOrg(BytecodeContainer& container,
-          unsigned long start,
-          unsigned long fill,
-          clang::SourceLocation source)
+yasm::AppendOrg(BytecodeContainer& container,
+                unsigned long start,
+                unsigned long fill,
+                clang::SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     bc.Transform(Bytecode::Contents::Ptr(new OrgBytecode(start, fill)));
     bc.setSource(source);
 }
-
-} // namespace yasm

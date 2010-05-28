@@ -35,8 +35,7 @@
 #include "yasmx/Reloc.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 Section::Section(llvm::StringRef name,
                  bool code,
@@ -113,5 +112,3 @@ Section::Dump() const
     Write(out);
     llvm::errs() << out.c_str() << '\n';
 }
-
-} // namespace yasm

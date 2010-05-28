@@ -36,8 +36,7 @@
 #include "yasmx/Symbol.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 NameValue::NameValue(llvm::StringRef name,
                      llvm::StringRef id,
@@ -250,5 +249,3 @@ NameValues::Dump() const
     Write(out);
     llvm::errs() << out.c_str() << '\n';
 }
-
-} // namespace yasm

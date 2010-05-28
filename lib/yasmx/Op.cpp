@@ -30,11 +30,10 @@
 #include "yasmx/Op.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 bool
-isUnary(Op::Op op)
+yasm::isUnary(Op::Op op)
 {
     switch (op)
     {
@@ -50,7 +49,7 @@ isUnary(Op::Op op)
 }
 
 bool
-isCommutative(Op::Op op)
+yasm::isCommutative(Op::Op op)
 {
     switch (op)
     {
@@ -73,7 +72,7 @@ isCommutative(Op::Op op)
 }
 
 bool
-isAssociative(Op::Op op)
+yasm::isAssociative(Op::Op op)
 {
     switch (op)
     {
@@ -92,5 +91,3 @@ isAssociative(Op::Op op)
             return false;
     }
 }
-
-} // namespace yasm

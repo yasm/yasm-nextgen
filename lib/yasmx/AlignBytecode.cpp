@@ -39,10 +39,10 @@
 #include "yasmx/IntNum.h"
 
 
+using namespace yasm;
+
 namespace
 {
-
-using namespace yasm;
 
 class AlignBytecode : public Bytecode::Contents
 {
@@ -97,6 +97,7 @@ private:
     /*@null@*/ const unsigned char** m_code_fill;
 };
 
+} // anonymous namespace
 
 AlignBytecode::AlignBytecode(const Expr& boundary,
                              const Expr& fill,
@@ -285,23 +286,16 @@ AlignBytecode::Write(YAML::Emitter& out) const
     out << YAML::EndMap;
 }
 
-} // anonymous namespace
-
-namespace yasm
-{
-
 void
-AppendAlign(BytecodeContainer& container,
-            const Expr& boundary,
-            const Expr& fill,
-            const Expr& maxskip,
-            /*@null@*/ const unsigned char** code_fill,
-            clang::SourceLocation source)
+yasm::AppendAlign(BytecodeContainer& container,
+                  const Expr& boundary,
+                  const Expr& fill,
+                  const Expr& maxskip,
+                  /*@null@*/ const unsigned char** code_fill,
+                  clang::SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     bc.Transform(Bytecode::Contents::Ptr(
         new AlignBytecode(boundary, fill, maxskip, code_fill)));
     bc.setSource(source);
 }
-
-} // namespace yasm

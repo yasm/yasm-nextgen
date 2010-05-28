@@ -30,8 +30,7 @@
 #include "yasmx/DebugFormat.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 DebugFormat::~DebugFormat()
 {
@@ -51,5 +50,3 @@ DebugFormatModule::getType() const
 {
     return "DebugFormat";
 }
-
-} // namespace yasm

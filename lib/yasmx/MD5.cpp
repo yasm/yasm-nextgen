@@ -32,8 +32,8 @@
 
 #include <cstring>
 
-namespace
-{
+
+using namespace yasm;
 
 /* Little-endian byte-swapping routines.  Note that these do not
    depend on the size of datatypes such as cvs_uint32, nor do they require
@@ -41,14 +41,14 @@ namespace
    is possible they should be macros for speed, but I would be
    surprised if they were a performance bottleneck for MD5.  */
 
-inline unsigned long
+static inline unsigned long
 getu32(const unsigned char *addr)
 {
         return ((((static_cast<unsigned long>(addr[3]) << 8) | addr[2]) << 8)
                 | addr[1]) << 8 | addr[0];
 }
 
-void
+static void
 putu32(unsigned long data, unsigned char *addr)
 {
         addr[0] = static_cast<unsigned char>(data);
@@ -56,11 +56,6 @@ putu32(unsigned long data, unsigned char *addr)
         addr[2] = static_cast<unsigned char>(data >> 16);
         addr[3] = static_cast<unsigned char>(data >> 24);
 }
-
-} // anonymous namespace
-
-namespace yasm
-{
 
 /*
  * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious
@@ -286,8 +281,6 @@ MD5::Transform(unsigned long buf[4], const unsigned char inraw[64])
 }
 #endif
 
-} // namespace yasm
-
 #ifdef TEST
 /* Simple test program.  Can use it to manually run the tests from
    RFC1321 for example.  */
@@ -296,7 +289,7 @@ MD5::Transform(unsigned long buf[4], const unsigned char inraw[64])
 int
 main (int argc, char **argv)
 {
-        yasm::MD5 context;
+        MD5 context;
         unsigned char checksum[16];
         int i;
         int j;

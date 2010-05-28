@@ -41,10 +41,10 @@
 #include "yasmx/Value.h"
 
 
+using namespace yasm;
+
 namespace
 {
-
-using namespace yasm;
 
 class IncbinBytecode : public Bytecode::Contents
 {
@@ -82,6 +82,8 @@ private:
     /// maximum number of bytes to read (NULL=no limit)
     /*@null@*/ util::scoped_ptr<Expr> m_maxlen;
 };
+
+} // anonymous namespace
 
 IncbinBytecode::IncbinBytecode(llvm::StringRef filename,
                                std::auto_ptr<Expr> start,
@@ -242,22 +244,15 @@ IncbinBytecode::Write(YAML::Emitter& out) const
     out << YAML::EndMap;
 }
 
-} // anonymous namespace
-
-namespace yasm
-{
-
 void
-AppendIncbin(BytecodeContainer& container,
-             llvm::StringRef filename,
-             /*@null@*/ std::auto_ptr<Expr> start,
-             /*@null@*/ std::auto_ptr<Expr> maxlen,
-             clang::SourceLocation source)
+yasm::AppendIncbin(BytecodeContainer& container,
+                   llvm::StringRef filename,
+                   /*@null@*/ std::auto_ptr<Expr> start,
+                   /*@null@*/ std::auto_ptr<Expr> maxlen,
+                   clang::SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     bc.Transform(Bytecode::Contents::Ptr(
         new IncbinBytecode(filename, start, maxlen)));
     bc.setSource(source);
 }
-
-} // namespace yasm

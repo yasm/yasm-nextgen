@@ -36,8 +36,7 @@
 #include "clang/Basic/SourceLocation.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 ParserImpl::ParserImpl(const ParserModule& module, Preprocessor& preproc)
     : Parser(module)
@@ -194,5 +193,3 @@ ParserImpl::SkipUntil(const unsigned int* toks,
         isFirstTokenSkipped = false;
     }
 }
-
-} // namespace yasm

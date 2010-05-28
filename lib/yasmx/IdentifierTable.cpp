@@ -43,8 +43,7 @@ STATISTIC(num_reg_lookup_segreg, "Number of register lookups to segreg");
 STATISTIC(num_reg_lookup_targetmod, "Number of register lookups to targetmod");
 STATISTIC(num_reg_lookup_none, "Number of register lookups to identifier");
 
-namespace yasm
-{
+using namespace yasm;
 
 void
 IdentifierInfo::DoInsnLookup(const Arch& arch,
@@ -113,5 +112,3 @@ IdentifierInfo::DoRegLookup(const Arch& arch,
     }
     m_flags |= DID_REG_LOOKUP;
 }
-
-} // namespace yasm

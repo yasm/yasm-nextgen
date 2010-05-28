@@ -35,8 +35,7 @@
 #include "yasmx/Diagnostic.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 unsigned char Lexer::s_char_info[256];
 
@@ -517,5 +516,3 @@ Lexer::LexEndOfFile(Token* result, const char* cur_ptr)
     // Finally, let the preprocessor handle this.
     return m_preproc->HandleEndOfFile(result);
 }
-
-} // namespace yasm

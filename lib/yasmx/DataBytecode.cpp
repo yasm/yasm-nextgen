@@ -34,21 +34,20 @@
 #include "yasmx/Expr.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 void
-AppendByte(BytecodeContainer& container, unsigned char val)
+yasm::AppendByte(BytecodeContainer& container, unsigned char val)
 {
     Bytecode& bc = container.FreshBytecode();
     Write8(bc.getFixed(), val);
 }
 
 void
-AppendData(BytecodeContainer& container,
-           const IntNum& val,
-           unsigned int size,
-           const Arch& arch)
+yasm::AppendData(BytecodeContainer& container,
+                 const IntNum& val,
+                 unsigned int size,
+                 const Arch& arch)
 {
     Bytecode& bc = container.FreshBytecode();
     Bytes zero;
@@ -58,11 +57,11 @@ AppendData(BytecodeContainer& container,
 }
 
 void
-AppendData(BytecodeContainer& container,
-           std::auto_ptr<Expr> expr,
-           unsigned int size,
-           const Arch& arch,
-           clang::SourceLocation source)
+yasm::AppendData(BytecodeContainer& container,
+                 std::auto_ptr<Expr> expr,
+                 unsigned int size,
+                 const Arch& arch,
+                 clang::SourceLocation source)
 {
     expr->Simplify();
     if (expr->isIntNum())
@@ -75,7 +74,9 @@ AppendData(BytecodeContainer& container,
 }
 
 void
-AppendData(BytecodeContainer& container, llvm::StringRef str, bool append_zero)
+yasm::AppendData(BytecodeContainer& container,
+                 llvm::StringRef str,
+                 bool append_zero)
 {
     Bytes& fixed = container.FreshBytecode().getFixed();
     fixed.Write(reinterpret_cast<const unsigned char *>(str.data()),
@@ -85,10 +86,10 @@ AppendData(BytecodeContainer& container, llvm::StringRef str, bool append_zero)
 }
 
 void
-AppendData(BytecodeContainer& container,
-           llvm::StringRef str,
-           unsigned int size,
-           bool append_zero)
+yasm::AppendData(BytecodeContainer& container,
+                 llvm::StringRef str,
+                 unsigned int size,
+                 bool append_zero)
 {
     Bytes& fixed = container.FreshBytecode().getFixed();
     size_t len = str.size();
@@ -98,5 +99,3 @@ AppendData(BytecodeContainer& container,
     if (append_zero)
         Write8(fixed, 0);
 }
-
-} // namespace yasm

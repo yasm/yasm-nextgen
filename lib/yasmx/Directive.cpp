@@ -34,6 +34,8 @@
 #include "yasmx/Directive.h"
 
 
+using namespace yasm;
+
 namespace yasm
 {
 
@@ -63,6 +65,8 @@ public:
     typedef llvm::StringMap<Dir> DirMap;
     DirMap m_dirs;
 };
+
+} // namespace yasm
 
 Directives::Directives()
     : m_impl(new Impl)
@@ -113,5 +117,3 @@ Directives::Impl::Dir::operator() (llvm::StringRef name,
 
     m_handler(info, diags);
 }
-
-} // namespace yasm

@@ -30,8 +30,7 @@
 #include "yasmx/ListFormat.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 ListFormat::~ListFormat()
 {
@@ -51,5 +50,3 @@ ListFormatModule::getType() const
 {
     return "ListFormat";
 }
-
-} // namespace yasm

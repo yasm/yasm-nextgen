@@ -36,10 +36,12 @@
 #include "yasmx/NameValue.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 static llvm::APInt staticbv(IntNum::BITVECT_NATIVE_SIZE, 0);
+
+namespace yasm
+{
 
 class DirHelpers::Impl
 {
@@ -47,6 +49,8 @@ public:
     typedef llvm::StringMap<DirHelper> HelperMap;
     HelperMap m_value_helpers, m_novalue_helpers;
 };
+
+} // namespace yasm
 
 DirHelpers::DirHelpers()
     : m_impl(new Impl)
@@ -119,11 +123,11 @@ DirHelpers::operator()
 }
 
 void
-DirIntNumPower2(NameValue& nv,
-                Diagnostic& diags,
-                Object* obj,
-                IntNum* out,
-                bool* out_set)
+yasm::DirIntNumPower2(NameValue& nv,
+                      Diagnostic& diags,
+                      Object* obj,
+                      IntNum* out,
+                      bool* out_set)
 {
     std::auto_ptr<Expr> e(nv.ReleaseExpr(*obj));
 
@@ -146,11 +150,11 @@ DirIntNumPower2(NameValue& nv,
 }
 
 void
-DirIntNum(NameValue& nv,
-          Diagnostic& diags,
-          Object* obj,
-          IntNum* out,
-          bool* out_set)
+yasm::DirIntNum(NameValue& nv,
+                Diagnostic& diags,
+                Object* obj,
+                IntNum* out,
+                bool* out_set)
 {
     std::auto_ptr<Expr> e(nv.ReleaseExpr(*obj));
 
@@ -166,11 +170,11 @@ DirIntNum(NameValue& nv,
 }
 
 void
-DirExpr(NameValue& nv,
-        Diagnostic& diags,
-        Object* obj,
-        std::auto_ptr<Expr>* out,
-        bool* out_set)
+yasm::DirExpr(NameValue& nv,
+              Diagnostic& diags,
+              Object* obj,
+              std::auto_ptr<Expr>* out,
+              bool* out_set)
 {
     if (!nv.isExpr())
     {
@@ -183,10 +187,10 @@ DirExpr(NameValue& nv,
 }
 
 void
-DirString(NameValue& nv,
-          Diagnostic& diags,
-          std::string* out,
-          bool* out_set)
+yasm::DirString(NameValue& nv,
+                Diagnostic& diags,
+                std::string* out,
+                bool* out_set)
 {
     if (!nv.isString())
     {
@@ -199,9 +203,9 @@ DirString(NameValue& nv,
 }
 
 bool
-DirNameValueWarn(NameValue& nv,
-                 clang::SourceLocation dir_source,
-                 Diagnostic& diags)
+yasm::DirNameValueWarn(NameValue& nv,
+                       clang::SourceLocation dir_source,
+                       Diagnostic& diags)
 {
     if (nv.getNameSource().isValid())
     {
@@ -215,5 +219,3 @@ DirNameValueWarn(NameValue& nv,
 
     return false;
 }
-
-} // namespace yasm

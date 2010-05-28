@@ -30,8 +30,7 @@
 #include "yasmx/Parser.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 Parser::~Parser()
 {
@@ -51,5 +50,3 @@ ParserModule::getType() const
 {
     return "Parser";
 }
-
-} // namespace yasm

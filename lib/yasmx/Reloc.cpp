@@ -30,8 +30,7 @@
 #include "YAML/emitter.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 Reloc::Reloc(const IntNum& addr, SymbolRef sym)
     : m_addr(addr),
@@ -74,5 +73,3 @@ Reloc::DoWrite(YAML::Emitter& out) const
 {
     out << YAML::Null;
 }
-
-} // namespace yasm

@@ -33,8 +33,7 @@
 #include "YAML/emitter.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 AssocData::~AssocData()
 {
@@ -131,5 +130,3 @@ AssocDataContainer::Dump() const
     Write(out);
     llvm::errs() << out.c_str() << '\n';
 }
-
-} // namespace yasm

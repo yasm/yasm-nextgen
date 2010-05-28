@@ -36,8 +36,7 @@
 #include "yasmx/Expr.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 Symbol::Symbol(llvm::StringRef name)
     : m_name(name),
@@ -212,5 +211,3 @@ Symbol::Dump() const
     Write(out);
     llvm::errs() << out.c_str() << '\n';
 }
-
-} // namespace yasm

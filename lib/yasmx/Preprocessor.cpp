@@ -36,8 +36,7 @@
 #include "yasmx/Parse/HeaderSearch.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 Preprocessor::Preprocessor(Diagnostic& diags,
                            clang::SourceManager& sm,
@@ -358,5 +357,3 @@ Preprocessor::HandleIdentifier(Token* identifier)
     }
 }
 #endif
-
-} // namespace yasm

@@ -29,11 +29,10 @@
 #include <cctype>
 
 
-namespace yasm
-{
+using namespace yasm;
 
 std::string
-ConvUnprint(int ch)
+yasm::ConvUnprint(int ch)
 {
     std::string unprint;
 
@@ -54,5 +53,3 @@ ConvUnprint(int ch)
 
     return unprint;
 }
-
-} // namespace yasm

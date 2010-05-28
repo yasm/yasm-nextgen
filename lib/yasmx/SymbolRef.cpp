@@ -33,11 +33,10 @@
 #include "YAML/emitter.h"
 #include "yasmx/Symbol.h"
 
-namespace yasm
-{
+using namespace yasm;
 
 YAML::Emitter&
-operator<< (YAML::Emitter& out, const SymbolRef& sym)
+yasm::operator<< (YAML::Emitter& out, const SymbolRef& sym)
 {
     if (!sym)
         out << YAML::Null;
@@ -45,5 +44,3 @@ operator<< (YAML::Emitter& out, const SymbolRef& sym)
         out << YAML::Alias("SYM@" + sym->getName());
     return out;
 }
-
-} // namespace yasm

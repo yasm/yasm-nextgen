@@ -27,11 +27,8 @@
 #include "yasmx/Module.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 Module::~Module()
 {
 }
-
-} // namespace yasm

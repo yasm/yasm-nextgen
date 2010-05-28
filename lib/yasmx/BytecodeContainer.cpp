@@ -37,10 +37,10 @@
 #include "yasmx/Expr.h"
 
 
+using namespace yasm;
+
 namespace
 {
-
-using namespace yasm;
 
 class GapBytecode : public Bytecode::Contents
 {
@@ -73,6 +73,7 @@ private:
     unsigned long m_size;       ///< size of gap (in bytes)
 };
 
+} // anonymous namespace
 
 GapBytecode::GapBytecode(unsigned long size)
     : m_size(size)
@@ -126,11 +127,6 @@ GapBytecode::Write(YAML::Emitter& out) const
     out << YAML::Key << "size" << YAML::Value << m_size;
     out << YAML::EndMap;
 }
-
-} // anonymous namespace
-
-namespace yasm
-{
 
 BytecodeContainer::BytecodeContainer()
     : m_object(0),
@@ -238,5 +234,3 @@ BytecodeContainer::Dump() const
     Write(out);
     llvm::errs() << out.c_str() << '\n';
 }
-
-} // namespace yasm

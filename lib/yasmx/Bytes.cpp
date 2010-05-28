@@ -33,11 +33,10 @@
 #include "YAML/emitter.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 llvm::raw_ostream&
-operator<< (llvm::raw_ostream& os, const Bytes& bytes)
+yasm::operator<< (llvm::raw_ostream& os, const Bytes& bytes)
 {
     os.write(reinterpret_cast<const char*>(&bytes[0]), bytes.size());
     return os;
@@ -70,7 +69,7 @@ Bytes::Dump() const
 }
 
 YAML::Emitter&
-operator<< (YAML::Emitter& out, const Bytes& bytes)
+yasm::operator<< (YAML::Emitter& out, const Bytes& bytes)
 {
     out << YAML::Flow << YAML::BeginSeq;
     for (Bytes::size_type i=0; i<bytes.size(); ++i)
@@ -78,5 +77,3 @@ operator<< (YAML::Emitter& out, const Bytes& bytes)
     out << YAML::EndSeq;
     return out;
 }
-
-} // namespace yasm

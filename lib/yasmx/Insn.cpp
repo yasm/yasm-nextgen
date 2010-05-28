@@ -40,8 +40,7 @@
 #include "yasmx/Expr_util.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 TargetModifier::~TargetModifier()
 {
@@ -369,5 +368,3 @@ Insn::Dump() const
     Write(out);
     llvm::errs() << out.c_str() << '\n';
 }
-
-} // namespace yasm

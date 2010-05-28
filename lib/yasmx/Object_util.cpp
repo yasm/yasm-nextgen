@@ -38,14 +38,13 @@
 #include "yasmx/Object.h"
 #include "yasmx/ObjectFormat.h"
 
-namespace yasm
-{
+using namespace yasm;
 
 void
-DirIdentCommon(ObjectFormat& objfmt,
-               llvm::StringRef sectname,
-               DirectiveInfo& info,
-               Diagnostic& diags)
+yasm::DirIdentCommon(ObjectFormat& objfmt,
+                     llvm::StringRef sectname,
+                     DirectiveInfo& info,
+                     Diagnostic& diags)
 {
     NameValues& namevals = info.getNameValues();
     // Accept, but do nothing with empty ident
@@ -74,5 +73,3 @@ DirIdentCommon(ObjectFormat& objfmt,
                          diag::err_value_string);
     }
 }
-
-} // namespace yasm

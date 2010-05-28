@@ -31,14 +31,16 @@
 #include <list>
 
 
-namespace yasm
-{
+using namespace yasm;
 
 // Default handlers for replacable functions
 static const char *def_gettext_hook(const char *msgid);
 
 // Storage for errwarn's "extern" functions
-const char * (*gettext_hook) (const char *msgid) = def_gettext_hook;
+const char * (*yasm::gettext_hook) (const char *msgid) = def_gettext_hook;
+
+namespace yasm
+{
 
 class ErrwarnManager
 {
@@ -74,6 +76,8 @@ private:
     ErrwarnManager & operator= (const ErrwarnManager &) { return *this; }
     ~ErrwarnManager();
 };
+
+} // namespace yasm
 
 static const char *
 def_gettext_hook(const char *msgid)
@@ -201,13 +205,13 @@ ParseError::~ParseError() throw()
 }
 
 void
-ClearWarn()
+yasm::ClearWarn()
 {
     ErrwarnManager::Instance().m_warns.clear();
 }
 
 WarnClass
-WarnOccurred()
+yasm::WarnOccurred()
 {
     ErrwarnManager &manager = ErrwarnManager::Instance();
     if (manager.m_warns.empty())
@@ -225,7 +229,9 @@ ErrwarnManager::Warning::Warning(clang::SourceRange source,
 }
 
 void
-setWarn(clang::SourceRange source, WarnClass wclass, const std::string& str)
+yasm::setWarn(clang::SourceRange source,
+              WarnClass wclass,
+              const std::string& str)
 {
     ErrwarnManager &manager = ErrwarnManager::Instance();
 
@@ -236,7 +242,7 @@ setWarn(clang::SourceRange source, WarnClass wclass, const std::string& str)
 }
 
 void
-WarnUpdateSource(clang::SourceRange source)
+yasm::WarnUpdateSource(clang::SourceRange source)
 {
     ErrwarnManager &manager = ErrwarnManager::Instance();
 
@@ -249,7 +255,7 @@ WarnUpdateSource(clang::SourceRange source)
 }
 
 WarnClass
-FetchWarn(std::string* wmsg, clang::SourceRange* wsource)
+yasm::FetchWarn(std::string* wmsg, clang::SourceRange* wsource)
 {
     ErrwarnManager& manager = ErrwarnManager::Instance();
 
@@ -269,21 +275,19 @@ FetchWarn(std::string* wmsg, clang::SourceRange* wsource)
 }
 
 void
-EnableWarn(WarnClass num)
+yasm::EnableWarn(WarnClass num)
 {
     ErrwarnManager::Instance().m_wclass_enabled |= (1UL<<num);
 }
 
 void
-DisableWarn(WarnClass num)
+yasm::DisableWarn(WarnClass num)
 {
     ErrwarnManager::Instance().m_wclass_enabled &= ~(1UL<<num);
 }
 
 void
-DisableAllWarn()
+yasm::DisableAllWarn()
 {
     ErrwarnManager::Instance().m_wclass_enabled = 0;
 }
-
-} // namespace yasm

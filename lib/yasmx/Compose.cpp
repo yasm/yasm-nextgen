@@ -28,8 +28,7 @@
 
 #include <cctype>
 
-namespace String
-{
+using namespace String;
 
 Composer::~Composer()
 {
@@ -113,5 +112,3 @@ Composer::getStr() const
 
     return str;
 }
-
-} // namespace String

@@ -36,13 +36,15 @@
 #include "yasmx/Support/errwarn.h"
 
 
+using namespace yasm;
+
 namespace
 {
 
 class EWData
 {
 public:
-    EWData(clang::SourceRange source, const yasm::Error& err);
+    EWData(clang::SourceRange source, const Error& err);
     EWData(clang::SourceRange source, const std::string& wmsg);
     ~EWData();
 
@@ -68,7 +70,7 @@ public:
     }
 };
 
-EWData::EWData(clang::SourceRange source, const yasm::Error& err)
+EWData::EWData(clang::SourceRange source, const Error& err)
     : m_type(ERROR),
       m_source(source),
       m_xrefsource(err.m_xrefsource),
@@ -104,6 +106,8 @@ public:
     std::vector<EWData> m_errwarns;
     int m_ecount, m_wcount;
 };
+
+} // namespace yasm
 
 Errwarns::Impl::Impl()
     : m_ecount(0), m_wcount(0)
@@ -194,5 +198,3 @@ Errwarns::OutputAll(const clang::SourceManager& source_mgr,
             print_warning(source_mgr, i->m_source, i->m_message);
     }
 }
-
-} // namespace yasm

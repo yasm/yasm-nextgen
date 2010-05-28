@@ -39,10 +39,10 @@
 #include "yasmx/IntNum.h"
 
 
+using namespace yasm;
+
 namespace
 {
-
-using namespace yasm;
 
 class LEB128Bytecode : public Bytecode::Contents
 {
@@ -73,6 +73,7 @@ private:
     bool m_sign;
 };
 
+} // anonymous namespace
 
 LEB128Bytecode::LEB128Bytecode(const Expr& expr, bool sign)
     : m_expr(expr),
@@ -139,17 +140,12 @@ LEB128Bytecode::Write(YAML::Emitter& out) const
     out << YAML::EndMap;
 }
 
-} // anonymous namespace
-
-namespace yasm
-{
-
 void
-AppendLEB128(BytecodeContainer& container,
-             const IntNum& intn,
-             bool sign,
-             clang::SourceLocation source,
-             Diagnostic& diags)
+yasm::AppendLEB128(BytecodeContainer& container,
+                   const IntNum& intn,
+                   bool sign,
+                   clang::SourceLocation source,
+                   Diagnostic& diags)
 {
     if (intn.getSign() < 0 && !sign)
         diags.Report(source, diag::warn_negative_uleb128);
@@ -158,11 +154,11 @@ AppendLEB128(BytecodeContainer& container,
 }
 
 void
-AppendLEB128(BytecodeContainer& container,
-             std::auto_ptr<Expr> expr,
-             bool sign,
-             clang::SourceLocation source,
-             Diagnostic& diags)
+yasm::AppendLEB128(BytecodeContainer& container,
+                   std::auto_ptr<Expr> expr,
+                   bool sign,
+                   clang::SourceLocation source,
+                   Diagnostic& diags)
 {
     // If expression is just an integer, output directly.
     expr->Simplify();
@@ -177,5 +173,3 @@ AppendLEB128(BytecodeContainer& container,
     bc.Transform(Bytecode::Contents::Ptr(new LEB128Bytecode(expr, sign)));
     bc.setSource(source);
 }
-
-} // namespace yasm

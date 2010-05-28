@@ -36,10 +36,10 @@
 #include "yasmx/Location_util.h"
 
 
+using namespace yasm;
+
 namespace
 {
-
-using namespace yasm;
 
 class MultipleBytecode : public Bytecode::Contents
 {
@@ -89,6 +89,7 @@ private:
     BytecodeContainer m_contents;
 };
 
+} // anonymous namespace
 
 MultipleBytecode::MultipleBytecode(std::auto_ptr<Expr> e)
     : m_multiple(e),
@@ -269,15 +270,10 @@ MultipleBytecode::Write(YAML::Emitter& out) const
     out << YAML::EndMap;
 }
 
-} // anonymous namespace
-
-namespace yasm
-{
-
 BytecodeContainer&
-AppendMultiple(BytecodeContainer& container,
-               std::auto_ptr<Expr> multiple,
-               clang::SourceLocation source)
+yasm::AppendMultiple(BytecodeContainer& container,
+                     std::auto_ptr<Expr> multiple,
+                     clang::SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     MultipleBytecode* multbc(new MultipleBytecode(multiple));
@@ -286,5 +282,3 @@ AppendMultiple(BytecodeContainer& container,
     bc.setSource(source);
     return retval;
 }
-
-} // namespace yasm

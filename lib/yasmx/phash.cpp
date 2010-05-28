@@ -12,8 +12,7 @@ Source is http://burtleburtle.net/bob/c/lookupa.c
 */
 
 
-namespace phash
-{
+using namespace phash;
 
 #define ub4 unsigned long
 
@@ -97,7 +96,7 @@ acceptable.  Do NOT use for cryptographic purposes.
 */
 
 unsigned long
-lookup(
+phash::lookup(
     register const char *sk,        // the key
     register size_t length,         // the length of the key
     register unsigned long level)   // the previous hash, or an arbitrary value
@@ -201,7 +200,7 @@ is trying to cause collisions.  Do NOT use for cryptography.
 --------------------------------------------------------------------
 */
 void
-checksum(
+phash::checksum(
     register const char *sk,
     register size_t len,
     register unsigned long *state)
@@ -279,5 +278,3 @@ checksum(
     state[0]=a; state[1]=b; state[2]=c; state[3]=d;
     state[4]=e; state[5]=f; state[6]=g; state[7]=h;
 }
-
-} // namespace phash

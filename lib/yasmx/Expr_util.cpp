@@ -34,6 +34,8 @@
 #include "yasmx/Symbol.h"
 
 
+using namespace yasm;
+
 namespace
 {
 
@@ -54,11 +56,8 @@ public:
 
 } // anonymous namespace
 
-namespace yasm
-{
-
 bool
-ExpandEqu(Expr& e)
+yasm::ExpandEqu(Expr& e)
 {
     if (e.isEmpty())
         return true;
@@ -111,5 +110,3 @@ ExpandEqu(Expr& e)
     }
     return true;
 }
-
-} // namespace yasm

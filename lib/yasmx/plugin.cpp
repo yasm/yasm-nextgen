@@ -43,6 +43,9 @@
 #include <stdint.h>
 #endif
 
+
+using namespace yasm;
+
 static std::vector<void*> loaded_plugins;
 
 static void*
@@ -57,11 +60,8 @@ LoadDLL(const std::string& name)
 #endif
 }
 
-namespace yasm
-{
-
 bool
-LoadPlugin(llvm::StringRef name)
+yasm::LoadPlugin(llvm::StringRef name)
 {
     // Load library
     void* lib = 0;
@@ -120,7 +120,7 @@ LoadPlugin(llvm::StringRef name)
 }
 
 void
-UnloadPlugins(void)
+yasm::UnloadPlugins(void)
 {
     while (!loaded_plugins.empty()) {
         void* plugin = loaded_plugins.back();
@@ -132,5 +132,3 @@ UnloadPlugins(void)
 #endif
     }
 }
-
-} // namespace yasm

@@ -63,6 +63,8 @@ STATISTIC(num_recalc, "Number of span recalculations performed");
 STATISTIC(num_expansions, "Number of expansions performed");
 STATISTIC(num_initial_qb, "Number of spans on initial QB");
 
+using namespace yasm;
+
 //
 // Robertson (1977) optimizer
 // Based (somewhat loosely) on the algorithm given in:
@@ -161,11 +163,7 @@ STATISTIC(num_initial_qb, "Number of spans on initial QB");
 //       change), add it to tail of Q.
 // 3. Final pass over bytecodes to generate final offsets.
 //
-namespace
-{
-
-using namespace yasm;
-
+namespace {
 class OffsetSetter
 {
 public:
@@ -179,6 +177,7 @@ public:
     unsigned long m_new_val;
     unsigned long m_thres;
 };
+} // anonymous namespace
 
 OffsetSetter::OffsetSetter()
     : m_bc(0),
@@ -208,6 +207,7 @@ OffsetSetter::Dump() const
     llvm::errs() << out.c_str() << '\n';
 }
 
+namespace {
 class Optimizer;
 
 class Span
@@ -319,6 +319,7 @@ private:
     IntervalTree<Span::Term*> m_itree;
     std::vector<OffsetSetter> m_offset_setters;
 };
+} // anonymous namespace
 
 Span::Term::Term()
     : m_span(0),
@@ -975,10 +976,6 @@ Optimizer::Step2(Diagnostic& diags)
     }
 }
 
-} // anonymous namespace
-
-namespace yasm {
-
 void
 Object::UpdateBytecodeOffsets(Diagnostic& diags)
 {
@@ -1052,5 +1049,3 @@ Object::Optimize(Diagnostic& diags)
     // Step 3
     UpdateBytecodeOffsets(diags);
 }
-
-} // namespace yasm

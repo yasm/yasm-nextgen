@@ -51,6 +51,8 @@
 STATISTIC(num_exist_symbol, "Number of existing symbols found by name");
 STATISTIC(num_new_symbol, "Number of symbols created by name");
 
+using namespace yasm;
+
 namespace
 {
 
@@ -58,7 +60,7 @@ namespace
 class SymGetName
 {
 public:
-    llvm::StringRef operator() (const yasm::Symbol* sym) const
+    llvm::StringRef operator() (const Symbol* sym) const
     { return sym->getName(); }
 };
 
@@ -105,6 +107,8 @@ private:
     /// Pool for symbols not in the symbol table.
     boost::pool<> m_sym_pool;
 };
+
+} // namespace yasm
 
 Object::Object(llvm::StringRef src_filename,
                llvm::StringRef obj_filename,
@@ -313,5 +317,3 @@ Object::Dump() const
     Write(out);
     llvm::errs() << out.c_str() << '\n';
 }
-
-} // namespace yasm

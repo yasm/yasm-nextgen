@@ -29,8 +29,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 StringTable::StringTable(unsigned long first_index)
     : m_first_index(first_index)
@@ -69,5 +68,3 @@ StringTable::Read(const unsigned char* buf, unsigned long size)
     m_storage.clear();
     m_storage.insert(m_storage.end(), buf, buf+size);
 }
-
-} // namespace yasm

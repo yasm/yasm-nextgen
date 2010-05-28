@@ -40,31 +40,30 @@
 #include "yasmx/IntNum.h"
 
 
-namespace yasm
-{
+using namespace yasm;
 
 static llvm::APInt staticbv(IntNum::BITVECT_NATIVE_SIZE, 0);
 
 void
-Write8(Bytes& bytes, const IntNum& intn)
+yasm::Write8(Bytes& bytes, const IntNum& intn)
 {
     bytes.push_back(static_cast<unsigned char>(intn.Extract(8, 0)));
 }
 
 void
-Write16(Bytes& bytes, const IntNum& intn)
+yasm::Write16(Bytes& bytes, const IntNum& intn)
 {
     Write16(bytes, static_cast<unsigned int>(intn.Extract(16, 0)));
 }
 
 void
-Write32(Bytes& bytes, const IntNum& intn)
+yasm::Write32(Bytes& bytes, const IntNum& intn)
 {
     Write32(bytes, intn.Extract(32, 0));
 }
 
 void
-Write64(Bytes& bytes, const IntNum& intn)
+yasm::Write64(Bytes& bytes, const IntNum& intn)
 {
     unsigned long low = intn.Extract(32, 0);
     unsigned long high = intn.Extract(32, 32);
@@ -98,7 +97,7 @@ Write64I(Bytes& bytes, uint64_t val)
 }
 
 void
-WriteN(Bytes& bytes, const IntNum& intn, int n)
+yasm::WriteN(Bytes& bytes, const IntNum& intn, int n)
 {
     assert((n & 7) == 0 && "n must be a multiple of 8");
 
@@ -164,7 +163,7 @@ WriteN(Bytes& bytes, const IntNum& intn, int n)
 }
  
 void
-WriteN(Bytes& bytes, unsigned long val, int n)
+yasm::WriteN(Bytes& bytes, unsigned long val, int n)
 {
     assert((n & 7) == 0 && "n must be a multiple of 8");
     if (bytes.isBigEndian())
@@ -180,12 +179,12 @@ WriteN(Bytes& bytes, unsigned long val, int n)
 }
 
 void
-Overwrite(Bytes& bytes,
-          const llvm::APInt& intn,
-          unsigned int size,
-          int shift,
-          bool bigendian,
-          int warn)
+yasm::Overwrite(Bytes& bytes,
+                const llvm::APInt& intn,
+                unsigned int size,
+                int shift,
+                bool bigendian,
+                int warn)
 {
     // Split shift into left (shift) and right (rshift) components.
     unsigned int rshift = 0;
@@ -304,12 +303,12 @@ Overwrite(Bytes& bytes,
 }
 
 void
-Overwrite(Bytes& bytes,
-          const IntNum& intn,
-          unsigned int size,
-          int shift,
-          bool bigendian,
-          int warn)
+yasm::Overwrite(Bytes& bytes,
+                const IntNum& intn,
+                unsigned int size,
+                int shift,
+                bool bigendian,
+                int warn)
 {
     // Handle bigval specially
     if (!intn.isInt())
@@ -397,12 +396,12 @@ Overwrite(Bytes& bytes,
 }
 
 void
-Overwrite(Bytes& bytes,
-          const llvm::APFloat& flt,
-          unsigned int size,
-          int shift,
-          bool bigendian,
-          int warn)
+yasm::Overwrite(Bytes& bytes,
+                const llvm::APFloat& flt,
+                unsigned int size,
+                int shift,
+                bool bigendian,
+                int warn)
 {
     const llvm::fltSemantics* semantics;
     switch (size)
@@ -451,5 +450,3 @@ Overwrite(Bytes& bytes,
     assert(fltbits.getBitWidth() == size && "bad float to bits conversion");
     Overwrite(bytes, fltbits, size, shift, bigendian, warn);
 }
-
-} // namespace yasm
