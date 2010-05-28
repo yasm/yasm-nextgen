@@ -114,7 +114,7 @@ GasStringParser::GasStringParser(llvm::StringRef str,
                     ++s;
                 else
                 {
-                    pp.Diag(pp.AdvanceToTokenCharacter(loc, s-str.begin()-1),
+                    pp.Diag(pp.AdvanceToTokenCharacter(loc, s-str.begin()),
                             diag::warn_expected_hex_digit);
                 }
                 while (s < m_chars_end && isxdigit(*s))
