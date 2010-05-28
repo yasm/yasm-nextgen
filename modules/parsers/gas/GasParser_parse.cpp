@@ -1043,8 +1043,7 @@ GasParser::ParseInsn()
         ConsumeToken();
 
         Insn::Ptr insn(m_arch->CreateInsn(insninfo));
-        if (m_token.is(GasToken::eol) || m_token.is(GasToken::semi) ||
-            m_token.is(GasToken::eof))
+        if (m_token.isEndOfStatement())
             return insn; // no operands
 
         // parse operands
@@ -1055,8 +1054,7 @@ GasParser::ParseInsn()
             op.setSource(start);
             insn->AddOperand(op);
 
-            if (m_token.is(GasToken::eol) || m_token.is(GasToken::semi) ||
-                m_token.is(GasToken::eof))
+            if (m_token.isEndOfStatement())
                 break;
             if (ExpectAndConsume(GasToken::comma, diag::err_expected_comma))
                 break;
@@ -1749,7 +1747,7 @@ GasParser::DoParse()
 {
     while (m_token.isNot(GasToken::eof))
     {
-        if (m_token.is(GasToken::eol) || m_token.is(GasToken::semi))
+        if (m_token.isEndOfStatement())
             ConsumeToken();
         else
         {

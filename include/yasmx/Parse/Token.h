@@ -119,11 +119,12 @@ public:
     // Various flags set per token:
     enum TokenFlags
     {
-        StartOfLine   = 0x01,  // At start of line or only after whitespace.
-        LeadingSpace  = 0x02,  // Whitespace exists before this token.
-        DisableExpand = 0x04,  // This identifier may never be macro expanded.
-        NeedsCleaning = 0x08,  // Contained an escaped newline
-        Literal       = 0x10   // Is a literal
+        StartOfLine     = 0x01, // At start of line or only after whitespace.
+        LeadingSpace    = 0x02, // Whitespace exists before this token.
+        DisableExpand   = 0x04, // This identifier may never be macro expanded.
+        NeedsCleaning   = 0x08, // Contained an escaped newline
+        Literal         = 0x10, // Is a literal
+        EndOfStatement  = 0x20  // End of statement token (might be EOL or ';')
     };
 
     unsigned int getKind() const { return m_kind; }
@@ -224,6 +225,10 @@ public:
     /// Return true if this token has escaped newlines in it.
     bool needsCleaning() const
     { return (m_flags & NeedsCleaning) ? true : false; }
+
+    /// Return true if this token is the end of a statement.
+    bool isEndOfStatement() const
+    { return (m_flags & EndOfStatement) ? true : false; }
 };
 
 } // namespace yasm

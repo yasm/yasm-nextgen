@@ -184,30 +184,30 @@ public:
     /// Read tokens until we get to the specified token, then consume
     /// it (unless DontConsume is true).  Because we cannot guarantee that the
     /// token will ever occur, this skips to the next token, or to some likely
-    /// good stopping point.  If StopAtEol is true, skipping will stop at end
-    /// of line.
+    /// good stopping point.  If stop_at_eos is true, skipping will stop at any
+    /// end of statement token.
     /// 
     /// If it finds the specified token, it returns true, otherwise it
     /// returns false.  
     bool SkipUntil(unsigned int tok_kind,
-                   bool stop_at_eol = true,
+                   bool stop_at_eos = true,
                    bool dont_consume = false)
     {
-        return SkipUntil(&tok_kind, 1, stop_at_eol, dont_consume);
+        return SkipUntil(&tok_kind, 1, stop_at_eos, dont_consume);
     }
 
     bool SkipUntil(unsigned int tk1,
                    unsigned int tk2,
-                   bool stop_at_eol = true,
+                   bool stop_at_eos = true,
                    bool dont_consume = false)
     {
         unsigned int tok_array[] = {tk1, tk2};
-        return SkipUntil(tok_array, 2, stop_at_eol, dont_consume);
+        return SkipUntil(tok_array, 2, stop_at_eos, dont_consume);
     }
 
     bool SkipUntil(const unsigned int* toks,
                    unsigned int num_toks,
-                   bool stop_at_eol = true,
+                   bool stop_at_eos = true,
                    bool dont_consume = false);
 
 };

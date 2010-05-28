@@ -111,7 +111,7 @@ ParserImpl::ExpectAndConsume(unsigned int expected_tok,
 bool
 ParserImpl::SkipUntil(const unsigned int* toks,
                       unsigned int num_toks,
-                      bool stop_at_eol,
+                      bool stop_at_eos,
                       bool dont_consume)
 {
     // We always want this function to skip at least one token if the first
@@ -183,12 +183,11 @@ ParserImpl::SkipUntil(const unsigned int* toks,
             case Token::string_literal:
                 ConsumeToken();
                 break;
-            case Token::eol:
-                if (stop_at_eol)
-                    return false;
-                // FALL THROUGH.
             default:
-                // Skip this token.
+                // Stop if requested to on end of statement tokens.
+                if (stop_at_eos && m_token.isEndOfStatement())
+                    return false;
+                // Otherwise skip this token.
                 ConsumeToken();
                 break;
         }

@@ -167,6 +167,7 @@ Preprocessor::HandleEndOfFile(Token* Result, bool isEndOfMacro)
     }
 
     Result->StartToken();
+    Result->setFlag(Token::EndOfStatement);
     m_cur_lexer->m_buf_ptr = EndPos;
     m_cur_lexer->FormTokenWithChars(Result, EndPos, Token::eof);
 

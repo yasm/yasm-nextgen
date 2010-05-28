@@ -376,7 +376,7 @@ NasmParser::DoParse()
         else
             m_bc = &m_object->getCurSection()->FreshBytecode();
 
-        if (m_token.is(NasmToken::eol))
+        if (m_token.isEndOfStatement())
             ConsumeToken();
         else
         {
@@ -484,7 +484,7 @@ NasmParser::ParseLine()
             clang::SourceLocation dirloc = ConsumeToken();
 
             // catch [directive<eol> early (XXX: better way to do this?)
-            if (m_token.is(NasmToken::eol) || m_token.is(NasmToken::eof))
+            if (m_token.isEndOfStatement())
             {
                 MatchRHSPunctuation(NasmToken::r_square, lsquare_loc);
                 return false;
@@ -562,7 +562,7 @@ NasmParser::ParseLine()
             bool local;
             SymbolRef sym = ParseSymbol(ii, &local);
             DefineLabel(sym, id_source, local);
-            if (m_token.is(NasmToken::eol) || m_token.is(NasmToken::eof))
+            if (m_token.isEndOfStatement())
             {
                 // Label alone on the line.
                 if (!got_colon)
@@ -679,8 +679,7 @@ next:
             ConsumeToken();
         if (m_token.is(NasmToken::r_square) ||
             m_token.is(NasmToken::colon) ||
-            m_token.is(NasmToken::eol) ||
-            m_token.is(NasmToken::eof))
+            m_token.isEndOfStatement())
             return true;
     }
 }
@@ -743,8 +742,7 @@ NasmParser::ParseExp()
                     // then generate a real string dataval.
                     const Token& peek_token = NextToken();
                     if (peek_token.is(NasmToken::comma) ||
-                        peek_token.is(NasmToken::eol) ||
-                        peek_token.is(NasmToken::eof))
+                        peek_token.isEndOfStatement())
                     {
                         NasmStringParser str(m_token.getLiteral(),
                                              m_token.getLocation(), m_preproc);
@@ -770,10 +768,10 @@ NasmParser::ParseExp()
                     }
                 }
 dv_done:
-                if (m_token.is(NasmToken::eol) || m_token.is(NasmToken::eof))
+                if (m_token.isEndOfStatement())
                     break;
                 ExpectAndConsume(NasmToken::comma, diag::err_expected_comma);
-                if (m_token.is(NasmToken::eol) || m_token.is(NasmToken::eof))
+                if (m_token.isEndOfStatement())
                     break;  // allow trailing , on list
             }
             return true;
@@ -816,7 +814,7 @@ dv_done:
             // optional start expression
             if (m_token.is(NasmToken::comma))
                 ConsumeToken();
-            if (m_token.is(NasmToken::eol) || m_token.is(NasmToken::eof))
+            if (m_token.isEndOfStatement())
                 goto incbin_done;
             start.reset(new Expr);
             if (!ParseBExpr(*start, DV_EXPR))
@@ -828,7 +826,7 @@ dv_done:
             // optional maxlen expression
             if (m_token.is(NasmToken::comma))
                 ConsumeToken();
-            if (m_token.is(NasmToken::eol) || m_token.is(NasmToken::eof))
+            if (m_token.isEndOfStatement())
                 goto incbin_done;
             maxlen.reset(new Expr);
             if (!ParseBExpr(*maxlen, DV_EXPR))
@@ -861,7 +859,7 @@ NasmParser::ParseInsn()
         ConsumeToken();
         ++num_insn;
         Insn::Ptr insn(m_arch->CreateInsn(insninfo));
-        if (m_token.is(NasmToken::eol) || m_token.is(NasmToken::eof))
+        if (m_token.isEndOfStatement())
             return insn;    // no operands
 
         // parse operands
@@ -873,7 +871,7 @@ NasmParser::ParseInsn()
             op.setSource(start);
             insn->AddOperand(op);
 
-            if (m_token.is(NasmToken::eol) || m_token.is(NasmToken::eof))
+            if (m_token.isEndOfStatement())
                 break;
             if (ExpectAndConsume(NasmToken::comma, diag::err_expected_comma))
                 break;

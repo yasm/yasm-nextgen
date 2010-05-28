@@ -555,6 +555,7 @@ LexNextToken:
         m_is_at_start_of_line = true;
 
         kind = Token::eol;
+        result->setFlag(Token::EndOfStatement);
         break;
     case ' ':
     case '\t':
@@ -735,6 +736,7 @@ SkipIgnoredUnits:
         break;
     case ';':
         kind = GasToken::semi;
+        result->setFlag(Token::EndOfStatement);
         break;
     case '#':
         // EOL comment

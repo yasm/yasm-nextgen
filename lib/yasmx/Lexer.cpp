@@ -494,6 +494,7 @@ Lexer::LexEndOfFile(Token* result, const char* cur_ptr)
     if (isLexingRawMode())
     {
         result->StartToken();
+        result->setFlag(Token::EndOfStatement);
         m_buf_ptr = m_buf_end;
         FormTokenWithChars(result, m_buf_end, Token::eof);
         return true;
