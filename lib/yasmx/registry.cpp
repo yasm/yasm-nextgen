@@ -38,11 +38,7 @@
 using namespace yasm;
 using namespace yasm::impl;
 
-namespace yasm
-{
-namespace impl
-{
-
+namespace yasm { namespace impl {
 class ModuleFactory::Impl
 {
 public:
@@ -59,7 +55,6 @@ public:
     typedef llvm::IndexedMap<FN_REGISTRY*> MODULE_REGISTRY;
     MODULE_REGISTRY registry;
 };
-
 }} // namespace yasm::impl
 
 ModuleFactory::ModuleFactory()

@@ -38,9 +38,7 @@
 
 using namespace yasm;
 
-namespace
-{
-
+namespace {
 class MultipleBytecode : public Bytecode::Contents
 {
 public:
@@ -88,7 +86,6 @@ private:
     /// Contents to be repeated.
     BytecodeContainer m_contents;
 };
-
 } // anonymous namespace
 
 MultipleBytecode::MultipleBytecode(std::auto_ptr<Expr> e)

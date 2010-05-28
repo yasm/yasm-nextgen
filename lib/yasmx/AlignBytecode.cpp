@@ -41,9 +41,7 @@
 
 using namespace yasm;
 
-namespace
-{
-
+namespace {
 class AlignBytecode : public Bytecode::Contents
 {
 public:
@@ -96,7 +94,6 @@ private:
     /// Code fill, NULL if using 0 fill
     /*@null@*/ const unsigned char** m_code_fill;
 };
-
 } // anonymous namespace
 
 AlignBytecode::AlignBytecode(const Expr& boundary,

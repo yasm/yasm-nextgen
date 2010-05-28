@@ -37,9 +37,7 @@
 
 using namespace yasm;
 
-namespace
-{
-
+namespace {
 class OrgBytecode : public Bytecode::Contents
 {
 public:
@@ -81,7 +79,6 @@ private:
     unsigned long m_start;      ///< target starting offset within section
     unsigned long m_fill;       ///< fill value
 };
-
 } // anonymous namespace
 
 OrgBytecode::OrgBytecode(unsigned long start, unsigned long fill)

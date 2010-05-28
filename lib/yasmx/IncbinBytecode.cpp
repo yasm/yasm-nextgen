@@ -43,9 +43,7 @@
 
 using namespace yasm;
 
-namespace
-{
-
+namespace {
 class IncbinBytecode : public Bytecode::Contents
 {
 public:
@@ -82,7 +80,6 @@ private:
     /// maximum number of bytes to read (NULL=no limit)
     /*@null@*/ util::scoped_ptr<Expr> m_maxlen;
 };
-
 } // anonymous namespace
 
 IncbinBytecode::IncbinBytecode(llvm::StringRef filename,

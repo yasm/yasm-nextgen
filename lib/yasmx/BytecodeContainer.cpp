@@ -39,9 +39,7 @@
 
 using namespace yasm;
 
-namespace
-{
-
+namespace {
 class GapBytecode : public Bytecode::Contents
 {
 public:
@@ -72,7 +70,6 @@ public:
 private:
     unsigned long m_size;       ///< size of gap (in bytes)
 };
-
 } // anonymous namespace
 
 GapBytecode::GapBytecode(unsigned long size)

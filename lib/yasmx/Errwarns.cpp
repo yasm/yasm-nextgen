@@ -38,9 +38,7 @@
 
 using namespace yasm;
 
-namespace
-{
-
+namespace {
 class EWData
 {
 public:
@@ -69,6 +67,7 @@ public:
                                                rhs.m_source.getBegin());
     }
 };
+} // anonymous namespace
 
 EWData::EWData(clang::SourceRange source, const Error& err)
     : m_type(ERROR),
@@ -92,11 +91,7 @@ EWData::~EWData()
 {
 }
 
-} // anonymous namespace
-
-namespace yasm
-{
-
+namespace yasm {
 class Errwarns::Impl
 {
 public:
@@ -106,7 +101,6 @@ public:
     std::vector<EWData> m_errwarns;
     int m_ecount, m_wcount;
 };
-
 } // namespace yasm
 
 Errwarns::Impl::Impl()

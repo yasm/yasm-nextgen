@@ -51,7 +51,6 @@
 using namespace yasm;
 
 namespace {
-
 // Predicate used in Value::finalize() to remove matching integers.
 class TermIsInt
 {
@@ -67,7 +66,6 @@ public:
 private:
     IntNum m_intn;
 };
-
 } // anonymous namespace
 
 Value::Value(unsigned int size)

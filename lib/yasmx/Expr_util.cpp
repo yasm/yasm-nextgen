@@ -36,9 +36,7 @@
 
 using namespace yasm;
 
-namespace
-{
-
+namespace {
 struct SawEqu
 {
     yasm::Symbol* sym;
@@ -53,7 +51,6 @@ public:
     MatchSawEqu(yasm::Symbol* sym) : m_sym(sym) {}
     bool operator() (SawEqu& sawequ) { return sawequ.sym == m_sym; }
 };
-
 } // anonymous namespace
 
 bool

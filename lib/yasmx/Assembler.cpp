@@ -49,9 +49,7 @@
 
 using namespace yasm;
 
-namespace
-{
-
+namespace {
 class NocaseEquals
 {
     llvm::StringRef s;
@@ -62,12 +60,9 @@ public:
         return s.equals_lower(oth);
     }
 };
-
 } // anonymous namespace
 
-namespace yasm
-{
-
+namespace yasm {
 class Assembler::Impl
 {
 public:
@@ -106,7 +101,6 @@ public:
     std::string m_machine;
     Assembler::ObjectDumpTime m_dump_time;
 };
-
 } // namespace yasm
 
 Assembler::Impl::Impl(llvm::StringRef arch_keyword,

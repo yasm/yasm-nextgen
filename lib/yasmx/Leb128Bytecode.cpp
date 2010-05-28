@@ -41,9 +41,7 @@
 
 using namespace yasm;
 
-namespace
-{
-
+namespace {
 class LEB128Bytecode : public Bytecode::Contents
 {
 public:
@@ -72,7 +70,6 @@ private:
     Expr m_expr;
     bool m_sign;
 };
-
 } // anonymous namespace
 
 LEB128Bytecode::LEB128Bytecode(const Expr& expr, bool sign)

@@ -53,9 +53,7 @@ STATISTIC(num_new_symbol, "Number of symbols created by name");
 
 using namespace yasm;
 
-namespace
-{
-
+namespace {
 /// Get name helper for symbol table HAMT.
 class SymGetName
 {
@@ -63,12 +61,9 @@ public:
     llvm::StringRef operator() (const Symbol* sym) const
     { return sym->getName(); }
 };
-
 } // anonymous namespace
 
-namespace yasm
-{
-
+namespace yasm {
 class Object::Impl
 {
 public:
@@ -107,7 +102,6 @@ private:
     /// Pool for symbols not in the symbol table.
     boost::pool<> m_sym_pool;
 };
-
 } // namespace yasm
 
 Object::Object(llvm::StringRef src_filename,
