@@ -51,12 +51,9 @@ struct StaticDiagInfoRec {
 };
 
 static const StaticDiagInfoRec StaticDiagInfo[] = {
-#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP)    \
-  { diag::ENUM, DEFAULT_MAPPING, CLASS, DESC, GROUP },
-#include "yasmx/DiagnosticKinds.inc"
+#include "lib/StaticDiagInfo.inc"
   { 0, 0, 0, 0, 0 }
 };
-#undef DIAG
 
 /// GetDiagInfo - Return the StaticDiagInfoRec entry for the specified DiagID,
 /// or null if the ID is invalid.
@@ -348,16 +345,8 @@ struct WarningOption {
   const char  *SubGroups;
 };
 
-#define GET_DIAG_ARRAYS
-#include "yasmx/DiagnosticGroups.inc"
-#undef GET_DIAG_ARRAYS
-
-// Second the table of options, sorted by name for fast binary lookup.
-static const WarningOption OptionTable[] = {
-#define GET_DIAG_TABLE
-#include "yasmx/DiagnosticGroups.inc"
-#undef GET_DIAG_TABLE
-};
+// Includes the table of options, sorted by name for fast binary lookup.
+#include "lib/DiagnosticGroups.cpp"
 static const size_t OptionTableSize =
 sizeof(OptionTable) / sizeof(OptionTable[0]);
 

@@ -86,16 +86,19 @@ INCLUDE(ConfigureChecks.cmake)
 # Generate diagnostic includes
 ADD_CUSTOM_COMMAND(
     OUTPUT
-        ${CMAKE_BINARY_DIR}/include/yasmx/DiagnosticGroups.inc
-        ${CMAKE_BINARY_DIR}/include/yasmx/DiagnosticKinds.inc
+        ${CMAKE_BINARY_DIR}/lib/DiagnosticGroups.cpp
+        ${CMAKE_BINARY_DIR}/include/yasmx/DiagnosticKinds.h
+        ${CMAKE_BINARY_DIR}/lib/StaticDiagInfo.inc
     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/include/yasmx/gen_diag.py
-        ${CMAKE_BINARY_DIR}/include/yasmx/DiagnosticGroups.inc
-        ${CMAKE_BINARY_DIR}/include/yasmx/DiagnosticKinds.inc
+        ${CMAKE_BINARY_DIR}/lib/DiagnosticGroups.cpp
+        ${CMAKE_BINARY_DIR}/include/yasmx/DiagnosticKinds.h
+        ${CMAKE_BINARY_DIR}/lib/StaticDiagInfo.inc
     MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/include/yasmx/gen_diag.py
     )
 ADD_CUSTOM_TARGET(DiagnosticIncludes
-    DEPENDS ${CMAKE_BINARY_DIR}/include/yasmx/DiagnosticKinds.inc
-    DEPENDS ${CMAKE_BINARY_DIR}/include/yasmx/DiagnosticGroups.inc)
+    DEPENDS ${CMAKE_BINARY_DIR}/lib/DiagnosticGroups.cpp
+    DEPENDS ${CMAKE_BINARY_DIR}/include/yasmx/DiagnosticKinds.h
+    DEPENDS ${CMAKE_BINARY_DIR}/lib/StaticDiagInfo.inc)
 
 ADD_SUBDIRECTORY(tools)
 ADD_SUBDIRECTORY(modules)

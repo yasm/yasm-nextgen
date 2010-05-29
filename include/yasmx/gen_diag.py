@@ -69,13 +69,23 @@ def add_error(name, desc, mapping=None):
 def add_note(name, desc):
     add_diag(name, "NOTE", desc, mapping="FATAL")
 
+def output_diag_kinds(f):
+    print >>f, "namespace yasm { namespace diag {"
+    print >>f, "enum {"
+    for name in sorted(diags):
+        diag = diags[name]
+        print >>f, "%s," % diag.name
+    print >>f, "NUM_BUILTIN_DIAGNOSTICS"
+    print >>f, "};"
+    print >>f, "}}"
+
 def output_diags(f):
     for name in sorted(diags):
         diag = diags[name]
-        print >>f, "DIAG(%s, CLASS_%s, diag::MAP_%s, \"%s\", %s)" % (
+        print >>f, "{ diag::%s, diag::MAP_%s, CLASS_%s, \"%s\", %s }," % (
             diag.name,
-            diag.cls,
             diag.mapping or diag.cls,
+            diag.cls,
             diag.desc.encode("string_escape"),
             diag.group and "\"%s\"" % diag.group or "0")
 
@@ -85,7 +95,6 @@ def output_groups(f):
         groups[name].index = n
 
     # output arrays
-    print >>f, "#ifdef GET_DIAG_ARRAYS"
     for name in sorted(groups):
         group = groups[name]
         if group.members:
@@ -100,17 +109,15 @@ def output_groups(f):
                 print >>f, "%d, " % groups[subgroup].index,
             print >>f, "-1 };"
 
-    print >>f, "#endif // GET_DIAG_ARRAYS\n"
-
     # output table
-    print >>f, "#ifdef GET_DIAG_TABLE"
+    print >>f, "static const WarningOption OptionTable[] = {"
     for name in sorted(groups):
         group = groups[name]
         print >>f, "  { \"%s\", %s, %s }," % (
             group.name,
             group.members and ("DiagArray%d" % group.index) or "0",
             group.subgroups and ("DiagSubGroup%d" % group.index) or "0")
-    print >>f, "#endif // GET_DIAG_TABLE\n"
+    print >>f, "};"
 
 #####################################################################
 # Groups (for command line -W option)
@@ -446,9 +453,10 @@ add_error("err_unicode_escape_requires_hex",
 
 if __name__ == "__main__":
     import sys
-    if len(sys.argv) != 3:
-        print >>sys.stderr, "Usage: gen_diag.py <DiagnosticGroups.inc>"
-        print >>sys.stderr, "    <DiagnosticKinds.inc>"
+    if len(sys.argv) != 4:
+        print >>sys.stderr, "Usage: gen_diag.py <DiagnosticGroups.cpp>"
+        print >>sys.stderr, "    <DiagnosticKinds.h> <StaticDiagInfo.inc>"
         sys.exit(2)
     output_groups(file(sys.argv[1], "wt"))
-    output_diags(file(sys.argv[2], "wt"))
+    output_diag_kinds(file(sys.argv[2], "wt"))
+    output_diags(file(sys.argv[3], "wt"))

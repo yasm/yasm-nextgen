@@ -24,6 +24,9 @@ namespace llvm {
   template <typename T> class SmallVectorImpl;
 }
 
+// Get typedefs for common diagnostics.
+#include "yasmx/DiagnosticKinds.h"
+
 namespace yasm {
   class DiagnosticBuilder;
   class DiagnosticClient;
@@ -49,14 +52,6 @@ namespace yasm {
 
     /// diag::kind - All of the diagnostics that can be emitted by the frontend.
     typedef unsigned kind;
-
-    // Get typedefs for common diagnostics.
-    enum {
-#define DIAG(ENUM,FLAGS,DEFAULT_MAPPING,DESC,GROUP) ENUM,
-#include "yasmx/DiagnosticKinds.inc"
-      NUM_BUILTIN_DIAGNOSTICS
-#undef DIAG
-    };
 
     /// Enum values that allow the client to map NOTEs, WARNINGs, and EXTENSIONs
     /// to either MAP_IGNORE (nothing), MAP_WARNING (emit a warning), MAP_ERROR
