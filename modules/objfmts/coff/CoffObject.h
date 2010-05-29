@@ -68,7 +68,6 @@ public:
 #endif
     virtual void Output(llvm::raw_fd_ostream& os,
                         bool all_syms,
-                        Errwarns& errwarns,
                         Diagnostic& diags);
 
     virtual Section* AddDefaultSection();

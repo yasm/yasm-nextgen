@@ -47,7 +47,6 @@ namespace yasm
 
 class Diagnostic;
 class Directives;
-class Errwarns;
 class Object;
 class ObjectFormatModule;
 class Section;
@@ -94,7 +93,6 @@ public:
     /// @note Errors and warnings are stored into errwarns.
     virtual void Output(llvm::raw_fd_ostream& os,
                         bool all_syms,
-                        Errwarns& errwarns,
                         Diagnostic& diags) = 0;
 
     /// Add a default section to an object.

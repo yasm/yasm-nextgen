@@ -937,8 +937,7 @@ ElfAlignOutput(llvm::raw_fd_ostream& os, unsigned int align, Diagnostic& diags)
 }
 
 void
-ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
-                  Diagnostic& diags)
+ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
 {
     StringTable shstrtab, strtab;
 

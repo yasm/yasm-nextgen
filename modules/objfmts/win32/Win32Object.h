@@ -46,7 +46,7 @@ public:
 
     //virtual void InitSymbols(llvm::StringRef parser);
     //virtual void Read(const llvm::MemoryBuffer& in);
-    //virtual void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
+    //virtual void Output(std::ostream& os, bool all_syms, Diagnostic& diags);
 
     static llvm::StringRef getName() { return "Win32"; }
     static llvm::StringRef getKeyword() { return "win32"; }

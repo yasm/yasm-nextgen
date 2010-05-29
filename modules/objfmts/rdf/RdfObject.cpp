@@ -524,8 +524,7 @@ RdfOutput::OutputBSS()
 }
 
 void
-RdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
-                  Diagnostic& diags)
+RdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
 {
     // Number sections
     unsigned int scnum = 0;     // section numbering starts at 0

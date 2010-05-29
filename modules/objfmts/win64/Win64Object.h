@@ -49,7 +49,6 @@ public:
     //virtual void Read(const llvm::MemoryBuffer& in);
     virtual void Output(llvm::raw_fd_ostream& os,
                         bool all_syms,
-                        Errwarns& errwarns,
                         Diagnostic& diags);
 
     static llvm::StringRef getName() { return "Win64"; }

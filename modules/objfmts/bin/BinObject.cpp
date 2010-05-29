@@ -273,8 +273,7 @@ CheckSymbol(const Symbol& sym, Diagnostic& diags)
 }
 
 void
-BinObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
-                  Diagnostic& diags)
+BinObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
 {
     // Set ORG to 0 unless otherwise specified
     IntNum origin(0);
