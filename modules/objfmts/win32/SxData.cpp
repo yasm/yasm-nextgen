@@ -55,7 +55,7 @@ public:
                  Diagnostic& diags);
 
     /// Convert a bytecode into its byte representation.
-    bool Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags);
+    bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     SxData* clone() const;
 
@@ -93,7 +93,7 @@ SxData::CalcLen(Bytecode& bc,
 }
 
 bool
-SxData::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
+SxData::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     CoffSymbol* coffsym = m_sym->getAssocData<CoffSymbol>();
     assert(coffsym && "no symbol data for SAFESEH symbol");

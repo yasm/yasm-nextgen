@@ -62,7 +62,7 @@ public:
                  Diagnostic& diags);
 
     /// Convert a bytecode into its byte representation.
-    bool Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags);
+    bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     IncbinBytecode* clone() const;
 
@@ -194,7 +194,7 @@ IncbinBytecode::CalcLen(Bytecode& bc,
 }
 
 bool
-IncbinBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
+IncbinBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     unsigned long start = 0;
 

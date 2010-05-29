@@ -201,7 +201,7 @@ XdfOutput::OutputSection(Section& sect)
     for (Section::bc_iterator i=sect.bytecodes_begin(),
          end=sect.bytecodes_end(); i != end; ++i)
     {
-        if (i->Output(*outputter, getDiagnostics()))
+        if (i->Output(*outputter))
             xsect->size += i->getTotalLen();
     }
 

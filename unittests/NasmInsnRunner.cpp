@@ -413,7 +413,7 @@ NasmInsnRunner::TestInsn(yasm::Insn* insn,
     llvm::SmallString<64> outbytes;
     llvm::raw_svector_ostream outstream(outbytes);
     RawOutput outputter(outstream, *m_arch, diags);
-    container.bytecodes_first().Output(outputter, diags);
+    container.bytecodes_first().Output(outputter);
     outstream.flush();
 
     //

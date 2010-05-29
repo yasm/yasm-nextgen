@@ -56,7 +56,7 @@ public:
                  Diagnostic& diags);
 
     /// Output a bytecode.
-    bool Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags);
+    bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     /// Increase the gap size.
     /// @param size     size in bytes
@@ -98,7 +98,7 @@ GapBytecode::CalcLen(Bytecode& bc,
 }
 
 bool
-GapBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
+GapBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     bc_out.OutputGap(m_size, bc.getSource());
     return true;

@@ -151,14 +151,11 @@ public:
         /// Called from Bytecode::Output().
         /// @param bc           bytecode
         /// @param bc_out       bytecode output interface
-        /// @param diags        diagnostic reporting
         /// @return False if an error occurred.
         /// @note May result in non-reversible changes to the bytecode, but
         ///       it's preferable if calling this function twice would result
         ///       in the same output.
-        virtual bool Output(Bytecode& bc,
-                            BytecodeOutput& bc_out,
-                            Diagnostic& diags) = 0;
+        virtual bool Output(Bytecode& bc, BytecodeOutput& bc_out) = 0;
 
         /// Special bytecode classifications.  Most bytecode types should
         /// simply not override the getSpecial() function (which returns
@@ -320,12 +317,11 @@ public:
 
     /// Output a bytecode.
     /// @param bc_out       bytecode output interface
-    /// @param diags        diagnostic reporting
     /// @return False if an error occurred.
     /// @note Calling twice on the same bytecode may \em not produce the same
     ///       results on the second call, as calling this function may result
     ///       in non-reversible changes to the bytecode.
-    bool Output(BytecodeOutput& bc_out, Diagnostic& diags);
+    bool Output(BytecodeOutput& bc_out);
 
     /// Updates bytecode offset.
     /// @note For offset-based bytecodes, calls Expand() to determine new

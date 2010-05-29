@@ -30,7 +30,7 @@
 
 #include "YAML/emitter.h"
 #include "yasmx/Bytecode.h"
-#include "yasmx/Diagnostic.h"
+#include "yasmx/BytecodeOutput.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location_util.h"
@@ -67,7 +67,7 @@ public:
                 Diagnostic& diags);
 
     /// Convert a bytecode into its byte representation.
-    bool Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags);
+    bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     MultipleBytecode* clone() const;
 
@@ -213,20 +213,18 @@ MultipleBytecode::Expand(Bytecode& bc,
 }
 
 bool
-MultipleBytecode::Output(Bytecode& bc,
-                         BytecodeOutput& bc_out,
-                         Diagnostic& diags)
+MultipleBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     SimplifyCalcDist(*m_multiple);
     if (!m_multiple->isIntNum())
     {
-        diags.Report(bc.getSource(), diag::err_multiple_unknown);
+        bc_out.Diag(bc.getSource(), diag::err_multiple_unknown);
         return false;
     }
     IntNum num = m_multiple->getIntNum();
     if (num.getSign() < 0)
     {
-        diags.Report(bc.getSource(), diag::err_multiple_negative);
+        bc_out.Diag(bc.getSource(), diag::err_multiple_negative);
         return false;
     }
     assert(m_mult_int == num.getInt() && "multiple changed after optimize");
@@ -241,7 +239,7 @@ MultipleBytecode::Output(Bytecode& bc,
         for (BytecodeContainer::bc_iterator i = m_contents.bytecodes_begin(),
              end = m_contents.bytecodes_end(); i != end; ++i)
         {
-            if (!i->Output(bc_out, diags))
+            if (!i->Output(bc_out))
                 return false;
         }
     }

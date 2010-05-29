@@ -113,9 +113,7 @@ public:
     BinOutput(llvm::raw_fd_ostream& os, Object& object, Diagnostic& diags);
     ~BinOutput();
 
-    void OutputSection(Section& sect,
-                       const IntNum& origin,
-                       Diagnostic& diags);
+    void OutputSection(Section& sect, const IntNum& origin);
 
     // OutputBytecode overrides
     bool ConvertValueToBytes(Value& value,
@@ -145,9 +143,7 @@ BinOutput::~BinOutput()
 }
 
 void
-BinOutput::OutputSection(Section& sect,
-                         const IntNum& origin,
-                         Diagnostic& diags)
+BinOutput::OutputSection(Section& sect, const IntNum& origin)
 {
     BytecodeOutput* outputter;
 
@@ -161,24 +157,24 @@ BinOutput::OutputSection(Section& sect,
         file_start -= origin;
         if (file_start.getSign() < 0)
         {
-            diags.Report(clang::SourceLocation(),
-                         diags.getCustomDiagID(Diagnostic::Error,
-                             N_("section '%0' starts before origin (ORG)")))
+            Diag(clang::SourceLocation(),
+                 getDiagnostics().getCustomDiagID(Diagnostic::Error,
+                     N_("section '%0' starts before origin (ORG)")))
                 << sect.getName();
             return;
         }
         if (!file_start.isOkSize(sizeof(unsigned long)*8, 0, 0))
         {
-            diags.Report(clang::SourceLocation(),
-                         diags.getCustomDiagID(Diagnostic::Error,
-                             N_("section '%0' start value too large")))
+            Diag(clang::SourceLocation(),
+                 getDiagnostics().getCustomDiagID(Diagnostic::Error,
+                     N_("section '%0' start value too large")))
                 << sect.getName();
             return;
         }
         m_fd_os.seek(file_start.getUInt());
         if (m_os.has_error())
         {
-            diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+            Diag(clang::SourceLocation(), diag::err_file_output_seek);
             return;
         }
 
@@ -188,7 +184,7 @@ BinOutput::OutputSection(Section& sect,
     for (Section::bc_iterator i=sect.bytecodes_begin(),
          end=sect.bytecodes_end(); i != end; ++i)
     {
-        i->Output(*outputter, diags);
+        i->Output(*outputter);
     }
 }
 
@@ -325,7 +321,7 @@ BinObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        out.OutputSection(*i, origin, diags);
+        out.OutputSection(*i, origin);
     }
 }
 

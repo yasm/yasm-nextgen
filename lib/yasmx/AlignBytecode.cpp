@@ -73,7 +73,7 @@ public:
                 Diagnostic& diags);
 
     /// Convert a bytecode into its byte representation.
-    bool Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags);
+    bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     SpecialType getSpecial() const;
 
@@ -189,7 +189,7 @@ AlignBytecode::Expand(Bytecode& bc,
 }
 
 bool
-AlignBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
+AlignBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     unsigned long len;
     unsigned long boundary = m_boundary.getIntNum().getUInt();
@@ -226,7 +226,7 @@ AlignBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
             maxlen--;
         if (maxlen == 0)
         {
-            diags.Report(bc.getSource(), diag::err_align_code_not_found);
+            bc_out.Diag(bc.getSource(), diag::err_align_code_not_found);
             return false;
         }
 
@@ -241,7 +241,7 @@ AlignBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
 
         if (!m_code_fill[len])
         {
-            diags.Report(bc.getSource(), diag::err_align_invalid_code_size)
+            bc_out.Diag(bc.getSource(), diag::err_align_invalid_code_size)
                 << static_cast<unsigned int>(len);
             return false;
         }

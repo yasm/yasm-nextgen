@@ -85,7 +85,7 @@ public:
                 /*@out@*/ long* neg_thres,
                 /*@out@*/ long* pos_thres,
                 Diagnostic& diags);
-    bool Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags);
+    bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     X86General* clone() const;
 
@@ -470,7 +470,7 @@ GeneralToBytes(Bytes& bytes,
 }
 
 bool
-X86General::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
+X86General::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     Bytes& bytes = bc_out.getScratch();
 

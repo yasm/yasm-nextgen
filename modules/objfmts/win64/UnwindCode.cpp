@@ -202,7 +202,7 @@ UnwindCode::Expand(Bytecode& bc,
 }
 
 bool
-UnwindCode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
+UnwindCode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     Bytes& bytes = bc_out.getScratch();
 
@@ -255,25 +255,25 @@ UnwindCode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
     IntNum intn;
     if (!m_off.getIntNum(&intn, true))
     {
-        diags.Report(m_off.getSource().getBegin(),
-                     diag::err_too_complex_expression);
+        bc_out.Diag(m_off.getSource().getBegin(),
+                    diag::err_too_complex_expression);
         return false;
     }
 
     if (size != 4 && !intn.isInRange(low, high))
     {
-        diags.Report(m_off.getSource().getBegin(),
-                     diags.getCustomDiagID(Diagnostic::Error,
-                         N_("offset of %0 bytes, must be between %1 and %2")))
+        bc_out.Diag(m_off.getSource().getBegin(),
+                    bc_out.getDiagnostics().getCustomDiagID(Diagnostic::Error,
+                        N_("offset of %0 bytes, must be between %1 and %2")))
             << intn.getStr() << static_cast<int>(low) << static_cast<int>(high);
         return false;
     }
 
     if ((intn.getUInt() & mask) != 0)
     {
-        diags.Report(m_off.getSource().getBegin(),
-                     diags.getCustomDiagID(Diagnostic::Error,
-                         N_("offset of %0 is not a multiple of %1")))
+        bc_out.Diag(m_off.getSource().getBegin(),
+                    bc_out.getDiagnostics().getCustomDiagID(Diagnostic::Error,
+                        N_("offset of %0 is not a multiple of %1")))
             << intn.getStr() << static_cast<int>(mask+1);
         return false;
     }

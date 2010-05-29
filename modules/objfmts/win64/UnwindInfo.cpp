@@ -174,7 +174,7 @@ UnwindInfo::Expand(Bytecode& bc,
 }
 
 bool
-UnwindInfo::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
+UnwindInfo::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     Bytes& bytes = bc_out.getScratch();
     Location loc = {&bc, 0};
@@ -200,23 +200,23 @@ UnwindInfo::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
     IntNum intn;
     if (!m_frameoff.getIntNum(&intn, true))
     {
-        diags.Report(m_frameoff.getSource().getBegin(),
-                     diag::err_too_complex_expression);
+        bc_out.Diag(m_frameoff.getSource().getBegin(),
+                    diag::err_too_complex_expression);
         return false;
     }
 
     if (!intn.isInRange(0, 240))
     {
-        diags.Report(m_frameoff.getSource().getBegin(),
-                     diags.getCustomDiagID(Diagnostic::Error,
+        bc_out.Diag(m_frameoff.getSource().getBegin(),
+                    bc_out.getDiagnostics().getCustomDiagID(Diagnostic::Error,
             N_("frame offset of %0 bytes, must be between 0 and 240")))
             << intn.getStr();
         return false;
     }
     else if ((intn.getUInt() & 0xF) != 0)
     {
-        diags.Report(m_frameoff.getSource().getBegin(),
-                     diags.getCustomDiagID(Diagnostic::Error,
+        bc_out.Diag(m_frameoff.getSource().getBegin(),
+                    bc_out.getDiagnostics().getCustomDiagID(Diagnostic::Error,
             N_("frame offset of %0 is not a multiple of 16")))
             << intn.getStr();
         return false;

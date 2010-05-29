@@ -104,9 +104,7 @@ public:
                         /*@out@*/ long* neg_thres,
                         /*@out@*/ long* pos_thres,
                         Diagnostic& diags);
-    virtual bool Output(Bytecode& bc,
-                        BytecodeOutput& bc_out,
-                        Diagnostic& diags);
+    virtual bool Output(Bytecode& bc, BytecodeOutput& bc_out);
     virtual UnwindCode* clone() const;
     virtual void Write(YAML::Emitter& out) const;
 

@@ -59,7 +59,7 @@ public:
                  Diagnostic& diags);
 
     /// Convert a bytecode into its byte representation.
-    bool Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags);
+    bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     LEB128Bytecode* clone() const;
 
@@ -113,7 +113,7 @@ LEB128Bytecode::CalcLen(Bytecode& bc,
 }
 
 bool
-LEB128Bytecode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
+LEB128Bytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     Bytes& bytes = bc_out.getScratch();
     WriteLEB128(bytes, m_expr.getIntNum(), m_sign);

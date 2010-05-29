@@ -66,7 +66,7 @@ public:
                 Diagnostic& diags);
 
     /// Convert a bytecode into its byte representation.
-    bool Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags);
+    bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
     SpecialType getSpecial() const;
 
@@ -137,12 +137,12 @@ OrgBytecode::Expand(Bytecode& bc,
 }
 
 bool
-OrgBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
+OrgBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     // Sanity check for overrun
     if (bc.getTailOffset() > m_start)
     {
-        diags.Report(bc.getSource(), diag::err_org_overlap);
+        bc_out.Diag(bc.getSource(), diag::err_org_overlap);
         return false;
     }
     unsigned long len = m_start - bc.getTailOffset();

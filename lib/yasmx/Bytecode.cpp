@@ -220,7 +220,7 @@ Bytecode::Expand(int span,
 }
 
 bool
-Bytecode::Output(BytecodeOutput& bc_out, Diagnostic& diags)
+Bytecode::Output(BytecodeOutput& bc_out)
 {
     unsigned long start = bc_out.getNumOutput();
 
@@ -265,7 +265,7 @@ Bytecode::Output(BytecodeOutput& bc_out, Diagnostic& diags)
     // handle tail contents
     if (m_contents.get() != 0)
     {
-        if (!m_contents->Output(*this, bc_out, diags))
+        if (!m_contents->Output(*this, bc_out))
             return false;
     }
 
