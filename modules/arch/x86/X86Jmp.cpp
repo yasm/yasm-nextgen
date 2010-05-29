@@ -230,7 +230,7 @@ X86Jmp::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
     }
 
     unsigned long pos = bytes.size();
-    bc_out.Output(bytes);
+    bc_out.OutputBytes(bytes);
 
     // Adjust relative displacement to end of instruction
     m_target.AddAbs(-static_cast<long>(pos+size));
@@ -244,7 +244,7 @@ X86Jmp::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
     Location loc = {&bc, bc.getFixedLen()+bytes.size()};
     Bytes& tbytes = bc_out.getScratch();
     tbytes.resize(size);
-    if (!bc_out.Output(m_target, tbytes, loc, 1, diags))
+    if (!bc_out.OutputValue(m_target, tbytes, loc, 1, diags))
         return false;
     return true;
 }

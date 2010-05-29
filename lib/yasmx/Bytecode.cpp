@@ -236,7 +236,7 @@ Bytecode::Output(BytecodeOutput& bc_out, Diagnostic& diags)
         Bytes& fixed = bc_out.getScratch();
         fixed.insert(fixed.end(), m_fixed.begin() + last,
                      m_fixed.begin() + off);
-        bc_out.Output(fixed);
+        bc_out.OutputBytes(fixed);
 
         // Output value.
         Bytes& vbytes = bc_out.getScratch();
@@ -245,7 +245,8 @@ Bytecode::Output(BytecodeOutput& bc_out, Diagnostic& diags)
         // Make a copy of the value to ensure things like
         // "TIMES x JMP label" work.
         Value vcopy = *i;
-        if (!bc_out.Output(vcopy, vbytes, loc, i->isSigned() ? -1 : 1, diags))
+        if (!bc_out.OutputValue(vcopy, vbytes, loc, i->isSigned() ? -1 : 1,
+                                diags))
             return false;
 
         last = off + i->getSize()/8;
@@ -255,7 +256,7 @@ Bytecode::Output(BytecodeOutput& bc_out, Diagnostic& diags)
     {
         Bytes& fixed = bc_out.getScratch();
         fixed.insert(fixed.end(), m_fixed.begin() + last, m_fixed.end());
-        bc_out.Output(fixed);
+        bc_out.OutputBytes(fixed);
     }
 
     start = start;  // avoid warning due to assert usage

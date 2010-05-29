@@ -101,7 +101,7 @@ SxData::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
     Bytes& bytes = bc_out.getScratch();
     bytes.setLittleEndian();
     Write32(bytes, coffsym->m_index);
-    bc_out.Output(bytes);
+    bc_out.OutputBytes(bytes);
     return true;
 }
 

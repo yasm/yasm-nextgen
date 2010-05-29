@@ -100,16 +100,16 @@ public:
     ///                     positive for unsigned integer warnings
     /// @param diags        diagnostic reporting
     /// @return False if an error occurred.
-    bool Output(Value& value,
-                Bytes& bytes,
-                Location loc,
-                int warn,
-                Diagnostic& diags)
+    bool OutputValue(Value& value,
+                     Bytes& bytes,
+                     Location loc,
+                     int warn,
+                     Diagnostic& diags)
     {
         if (!ConvertValueToBytes(value, bytes, loc, value.AdjustWarn(warn),
                                  diags))
             return false;
-        Output(bytes);
+        OutputBytes(bytes);
         return true;
     }
 
@@ -131,16 +131,16 @@ public:
     ///                     positive for unsigned integer warnings
     /// @param diags        diagnostic reporting
     /// @return False if an error occurred.
-    bool Output(SymbolRef sym,
-                Bytes& bytes,
-                Location loc,
-                unsigned int valsize,
-                int warn,
-                Diagnostic& diags)
+    bool OutputSymbol(SymbolRef sym,
+                      Bytes& bytes,
+                      Location loc,
+                      unsigned int valsize,
+                      int warn,
+                      Diagnostic& diags)
     {
         if (!ConvertSymbolToBytes(sym, bytes, loc, valsize, warn, diags))
             return false;
-        Output(bytes);
+        OutputBytes(bytes);
         return true;
     }
 
@@ -156,7 +156,7 @@ public:
 
     /// Output a sequence of bytes.
     /// @param bytes        bytes to output
-    void Output(const Bytes& bytes)
+    void OutputBytes(const Bytes& bytes)
     {
         DoOutputBytes(bytes);
         m_num_output += static_cast<unsigned long>(bytes.size());

@@ -210,7 +210,7 @@ IncbinBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
     Bytes& bytes = bc_out.getScratch();
     bytes.Write(reinterpret_cast<const unsigned char*>(m_buf->getBufferStart())
                 + start, bc.getTailLen());
-    bc_out.Output(bytes);
+    bc_out.OutputBytes(bytes);
     return true;
 }
 

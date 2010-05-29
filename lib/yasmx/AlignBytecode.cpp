@@ -255,7 +255,7 @@ AlignBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
         // Just fill with 0
         bytes.insert(bytes.end(), len, 0);
     }
-    bc_out.Output(bytes);
+    bc_out.OutputBytes(bytes);
     return true;
 }
 
