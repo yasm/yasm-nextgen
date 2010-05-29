@@ -26,8 +26,6 @@
 //
 #include "yasmx/System/file.h"
 
-#include <util.h>
-
 // Need either unistd.h or direct.h (on Windows) to prototype getcwd().
 #if defined(HAVE_UNISTD_H)
 #include <unistd.h>
@@ -38,19 +36,16 @@
 #include <errno.h>
 
 #include <algorithm>
+#include <cassert>
 #include <cctype>
 #include <cstdlib>
 #include <cstring>
 #include <string>
 
-#include "yasmx/Support/errwarn.h"
-
 
 using namespace yasm;
 
-namespace
-{
-
+namespace {
 class AdjacantChar
 {
 public:
@@ -59,7 +54,6 @@ public:
 private:
     char m_c;
 };
-
 } // anonymous namespace
 
 std::string
@@ -150,19 +144,17 @@ yasm::getCurDir()
 {
     size_t size = 1024;
     char* buf = static_cast<char*>(std::malloc(size));
-    if (!buf)
-        throw std::bad_alloc();
+    assert(buf && "allocation failed");
     while (getcwd(buf, size) == NULL)
     {
         if (errno != ERANGE)
         {
             std::free(buf);
-            throw Fatal(N_("could not determine current working directory"));
+            return std::string(); // could not determine
         }
         size *= 2;
         buf = static_cast<char*>(realloc(buf, size));
-        if (!buf)
-            throw std::bad_alloc();
+        assert(buf && "allocation failed");
     }
     std::string str(buf);
     free(buf);
