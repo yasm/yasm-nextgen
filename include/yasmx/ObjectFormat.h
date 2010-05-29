@@ -79,7 +79,7 @@ public:
     /// Read object file into associated object.
     /// May create sections, relocations, and bytecodes, as well as modify
     /// any other portion of associated object.
-    /// The default implementation always throws NotImplementedError.
+    /// The default implementation asserts (taste before you attempt reading).
     /// @param in           input object file
     virtual void Read(const llvm::MemoryBuffer& in);
 

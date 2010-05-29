@@ -26,10 +26,6 @@
 //
 #include "yasmx/ObjectFormat.h"
 
-#include "util.h"
-
-#include "yasmx/Support/errwarn.h"
-
 
 using namespace yasm;
 
@@ -45,7 +41,7 @@ ObjectFormat::AddDirectives(Directives& dirs, llvm::StringRef parser)
 void
 ObjectFormat::Read(const llvm::MemoryBuffer& in)
 {
-    throw NotImplementedError(N_("object format does not support reading"));
+    assert(false && "object format does not support reading");
 }
 
 void
