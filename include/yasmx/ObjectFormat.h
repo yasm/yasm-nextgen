@@ -102,9 +102,9 @@ public:
     virtual Section* AddDefaultSection() = 0;
 
     /// Add a section to an object.  Use this function instead of
-    /// Object::append_section() to ensure the object format is aware of the
-    /// section.  As with Object::append_section(), this does not check to see
-    /// if the section already exists; use Object::find_section() first.
+    /// Object::AppendSection() to ensure the object format is aware of the
+    /// section.  As with Object::AppendSection(), this does not check to see
+    /// if the section already exists; use Object::FindSection() first.
     /// @return New section.
     virtual Section* AppendSection(llvm::StringRef name,
                                    clang::SourceLocation source) = 0;

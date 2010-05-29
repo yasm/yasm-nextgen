@@ -168,8 +168,13 @@ CoffObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
     // Define a label for the start of the section
     Location start = {&section->bytecodes_first(), 0};
     SymbolRef sym = m_object.getSymbol(name);
-    sym->DefineLabel(start, source);
-    sym->Declare(Symbol::GLOBAL, source);
+    if (!sym->isDefined())
+    {
+        sym->DefineLabel(start);
+        sym->setDefSource(source);
+    }
+    sym->Declare(Symbol::GLOBAL);
+    sym->setDeclSource(source);
     sym->AddAssocData(
         std::auto_ptr<CoffSymbol>(new CoffSymbol(CoffSymbol::SCL_STAT,
                                                 CoffSymbol::AUX_SECT)));
@@ -198,7 +203,7 @@ CoffObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
         // win32 format supports >8 character section names in object
         // files via "/nnnn" (where nnnn is decimal offset into string table),
         // so only warn for regular COFF.
-        diags.Report(sectname_nv.getValueSource().getBegin(),
+        diags.Report(sectname_nv.getValueRange().getBegin(),
             diags.getCustomDiagID(Diagnostic::Warning,
                 "COFF section names limited to 8 characters: truncating"));
         sectname = sectname.substr(0, 8);
@@ -232,7 +237,7 @@ CoffObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
     NameValue& flags_nv = nvs[1];
     if (!flags_nv.isString())
     {
-        diags.Report(flags_nv.getValueSource().getBegin(),
+        diags.Report(flags_nv.getValueRange().getBegin(),
             diags.getCustomDiagID(Diagnostic::Error, "flag string expected"));
         return;
     }
@@ -277,7 +282,7 @@ CoffObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
             default:
             {
                 char print_flag[2] = {flagstr[i], 0};
-                diags.Report(flags_nv.getValueSource().getBegin()
+                diags.Report(flags_nv.getValueRange().getBegin()
                     .getFileLocWithOffset(i),
                     diags.getCustomDiagID(Diagnostic::Warning,
                         "unrecognized section attribute: '%0'"))
@@ -361,7 +366,7 @@ CoffObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
     NameValue& sectname_nv = nvs.front();
     if (!sectname_nv.isString())
     {
-        diags.Report(sectname_nv.getValueSource().getBegin(),
+        diags.Report(sectname_nv.getValueRange().getBegin(),
                      diag::err_value_string_or_id);
         return;
     }
@@ -372,7 +377,7 @@ CoffObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
         // win32 format supports >8 character section names in object
         // files via "/nnnn" (where nnnn is decimal offset into string table),
         // so only warn for regular COFF.
-        diags.Report(sectname_nv.getValueSource().getBegin(),
+        diags.Report(sectname_nv.getValueRange().getBegin(),
             diags.getCustomDiagID(Diagnostic::Warning,
                 "COFF section names limited to 8 characters: truncating"));
         sectname = sectname.substr(0, 8);

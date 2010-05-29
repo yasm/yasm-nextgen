@@ -86,7 +86,7 @@ Win64Object::DirProcFrame(DirectiveInfo& info, Diagnostic& diags)
     if (!name_nv.isId())
     {
         diags.Report(info.getSource(), diag::err_value_id)
-            << name_nv.getValueSource();
+            << name_nv.getValueRange();
         return;
     }
     llvm::StringRef name = name_nv.getId();
@@ -116,11 +116,11 @@ Win64Object::DirProcFrame(DirectiveInfo& info, Diagnostic& diags)
         if (!ehandler_nv.isId())
         {
             diags.Report(info.getSource(), diag::err_value_id)
-                << ehandler_nv.getValueSource();
+                << ehandler_nv.getValueRange();
             return;
         }
         SymbolRef ehandler = m_object.getSymbol(ehandler_nv.getId());
-        ehandler->Use(ehandler_nv.getValueSource().getBegin());
+        ehandler->Use(ehandler_nv.getValueRange().getBegin());
         m_unwind->setEHandler(ehandler);
     }
 }
@@ -164,7 +164,7 @@ getCurPos(Object& object, clang::SourceLocation source, Diagnostic& diags)
     SymbolRef sym = object.AddNonTableSymbol("$");
     Bytecode& bc = sect->FreshBytecode();
     Location loc = {&bc, bc.getFixedLen()};
-    sym->DefineLabel(loc, source);
+    sym->DefineLabel(loc);
     return sym;
 }
 
@@ -193,7 +193,7 @@ Win64Object::DirPushReg(DirectiveInfo& info, Diagnostic& diags)
     if (!reg)
     {
         diags.Report(info.getSource(), diag::err_value_register)
-            << namevals.front().getValueSource();
+            << namevals.front().getValueRange();
         return;
     }
 
@@ -219,7 +219,7 @@ Win64Object::DirSetFrame(DirectiveInfo& info, Diagnostic& diags)
     if (!reg)
     {
         diags.Report(info.getSource(), diag::err_value_register)
-            << namevals.front().getValueSource();
+            << namevals.front().getValueRange();
         return;
     }
 
@@ -257,7 +257,7 @@ Win64Object::DirAllocStack(DirectiveInfo& info, Diagnostic& diags)
     if (!nv.isExpr())
     {
         diags.Report(info.getSource(), diag::err_value_expression)
-            << nv.getValueSource();
+            << nv.getValueRange();
         return;
     }
 
@@ -289,7 +289,7 @@ Win64Object::SaveCommon(DirectiveInfo& info,
     if (!reg)
     {
         diags.Report(source, diag::err_value_register)
-            << namevals.front().getValueSource();
+            << namevals.front().getValueRange();
         return;
     }
 
@@ -302,7 +302,7 @@ Win64Object::SaveCommon(DirectiveInfo& info,
     if (!namevals[1].isExpr())
     {
         diags.Report(source, diag::err_offset_expression)
-            << namevals[1].getValueSource();
+            << namevals[1].getValueRange();
         return;
     }
 
@@ -401,7 +401,7 @@ Win64Object::DirEndProcFrame(DirectiveInfo& info, Diagnostic& diags)
     SymbolRef unwindpos = m_object.AddNonTableSymbol("$");
     Location unwindpos_loc =
         {&xdata->bytecodes_last(), xdata->bytecodes_last().getFixedLen()};
-    unwindpos->DefineLabel(unwindpos_loc, source);
+    unwindpos->DefineLabel(unwindpos_loc);
     // Get symbol for .xdata as we'll want to reference it with WRT.
     SymbolRef xdata_sym = xdata->getAssocData<CoffSection>()->m_sym;
 

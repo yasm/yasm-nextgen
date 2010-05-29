@@ -348,17 +348,29 @@ BinObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
     std::auto_ptr<BinSection> bsd(new BinSection());
 
     SymbolRef start = m_object.getSymbol(("section."+name+".start").str());
-    start->Declare(Symbol::EXTERN, source);
+    if (start->okToDeclare(Symbol::EXTERN))
+    {
+        start->Declare(Symbol::EXTERN);
+        start->setDeclSource(source);
+    }
     start->AddAssocData(std::auto_ptr<BinSymbol>
         (new BinSymbol(*section, *bsd, BinSymbol::START)));
 
     SymbolRef vstart = m_object.getSymbol(("section."+name+".vstart").str());
-    vstart->Declare(Symbol::EXTERN, source);
+    if (vstart->okToDeclare(Symbol::EXTERN))
+    {
+        vstart->Declare(Symbol::EXTERN);
+        vstart->setDeclSource(source);
+    }
     vstart->AddAssocData(std::auto_ptr<BinSymbol>
         (new BinSymbol(*section, *bsd, BinSymbol::VSTART)));
 
     SymbolRef length = m_object.getSymbol(("section."+name+".length").str());
-    length->Declare(Symbol::EXTERN, source);
+    if (length->okToDeclare(Symbol::EXTERN))
+    {
+        length->Declare(Symbol::EXTERN);
+        length->setDeclSource(source);
+    }
     length->AddAssocData(std::auto_ptr<BinSymbol>
         (new BinSymbol(*section, *bsd, BinSymbol::LENGTH)));
 
@@ -377,7 +389,7 @@ BinObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
     NameValue& sectname_nv = nvs.front();
     if (!sectname_nv.isString())
     {
-        diags.Report(sectname_nv.getValueSource().getBegin(),
+        diags.Report(sectname_nv.getValueRange().getBegin(),
                      diag::err_value_string_or_id);
         return;
     }
@@ -487,7 +499,7 @@ BinObject::DirOrg(DirectiveInfo& info, Diagnostic& diags)
     if (!nv.isExpr())
     {
         diags.Report(info.getSource(), diag::err_value_expression)
-            << nv.getValueSource();
+            << nv.getValueRange();
         return;
     }
     m_org.reset(new Expr(nv.getExpr(info.getObject())));
@@ -501,7 +513,7 @@ BinObject::setMapFilename(const NameValue& nv,
 {
     if (!m_map_filename.empty())
     {
-        diags.Report(nv.getValueSource().getBegin(),
+        diags.Report(nv.getValueRange().getBegin(),
             diags.getCustomDiagID(Diagnostic::Error,
                                   "map file already specified"));
         return true;
@@ -509,7 +521,7 @@ BinObject::setMapFilename(const NameValue& nv,
 
     if (!nv.isString())
     {
-        diags.Report(nv.getValueSource().getBegin(),
+        diags.Report(nv.getValueRange().getBegin(),
                      diag::err_value_string_or_id);
         return false;
     }

@@ -99,7 +99,8 @@ next:
                         << "=";
                     return false;
                 }
-                ParseSymbol(ii)->DefineEqu(e, id_source);
+                ParseSymbol(ii)->CheckedDefineEqu(e, id_source,
+                                                  m_preproc.getDiagnostics());
                 break;
             }
 
@@ -183,7 +184,9 @@ GasParser::setDebugFile(llvm::StringRef filename,
         return;
 
     DirectiveInfo info(*m_object, dir_source);
-    info.getNameValues().push_back(new NameValue(filename, filename_source));
+    NameValues& nvs = info.getNameValues();
+    nvs.push_back(new NameValue(filename));
+    nvs.back().setValueRange(filename_source);
     dir(info, m_preproc.getDiagnostics());
 }
 
@@ -200,8 +203,10 @@ GasParser::setDebugFile(const IntNum& fileno,
 
     DirectiveInfo info(*m_object, dir_source);
     NameValues& nvs = info.getNameValues();
-    nvs.push_back(new NameValue(Expr::Ptr(new Expr(fileno)), fileno_source));
-    nvs.push_back(new NameValue(filename, filename_source));
+    nvs.push_back(new NameValue(Expr::Ptr(new Expr(fileno))));
+    nvs.back().setValueRange(fileno_source);
+    nvs.push_back(new NameValue(filename));
+    nvs.back().setValueRange(filename_source);
     dir(info, m_preproc.getDiagnostics());
 }
 #if 0
@@ -557,7 +562,8 @@ GasParser::ParseDirLocal(unsigned int param, clang::SourceLocation source)
     }
 
     IdentifierInfo* ii = m_token.getIdentifierInfo();
-    ParseSymbol(ii)->Declare(Symbol::DLOCAL, ConsumeToken());
+    ParseSymbol(ii)->CheckedDeclare(Symbol::DLOCAL, ConsumeToken(),
+                                    m_preproc.getDiagnostics());
     return true;
 }
 
@@ -605,15 +611,18 @@ GasParser::ParseDirComm(unsigned int is_lcomm, clang::SourceLocation source)
         std::swap(*align_copy, align);
 
         NameValues extvps;
-        extvps.push_back(new NameValue(align_copy, align_source));
+        extvps.push_back(new NameValue(align_copy));
+        extvps.back().setValueRange(align_source);
 
-        sym->Declare(Symbol::COMMON, id_source);
+        sym->CheckedDeclare(Symbol::COMMON, id_source,
+                            m_preproc.getDiagnostics());
         setCommonSize(*sym, e);
         setObjextNameValues(*sym, extvps);
     }
     else
     {
-        sym->Declare(Symbol::COMMON, id_source);
+        sym->CheckedDeclare(Symbol::COMMON, id_source,
+                            m_preproc.getDiagnostics());
         setCommonSize(*sym, e);
     }
     return true;
@@ -942,7 +951,7 @@ GasParser::ParseDirEqu(unsigned int param, clang::SourceLocation source)
         Diag(expr_source, diag::err_expected_expression_after) << ",";
         return false;
     }
-    ParseSymbol(ii)->DefineEqu(e, id_source);
+    ParseSymbol(ii)->CheckedDefineEqu(e, id_source, m_preproc.getDiagnostics());
     return true;
 }
 
@@ -1108,16 +1117,17 @@ GasParser::ParseDirective(NameValues* nvs)
                         Expr::Ptr e(new Expr);
                         if (!ParseExpr(*e))
                             return false;
-                        nvs->push_back(new NameValue(e,
-                            clang::SourceRange(e_src, m_token.getLocation())));
+                        nvs->push_back(new NameValue(e));
+                        nvs->back().setValueRange(
+                            clang::SourceRange(e_src, m_token.getLocation()));
                         break;
                     }
                     default:
                         // Just an ID
                         nvs->push_back(new NameValue(
                             m_token.getIdentifierInfo()->getName(),
-                            '\0',
-                            m_token.getLocation()));
+                            '\0'));
+                        nvs->back().setValueRange(m_token.getLocation());
                         ConsumeToken();
                         break;
                 }
@@ -1131,8 +1141,10 @@ GasParser::ParseDirective(NameValues* nvs)
                 clang::SourceLocation str_source = ConsumeToken();
 
                 if (!str.hadError())
-                    nvs->push_back(new NameValue(str.getString(strbuf),
-                                                 str_source));
+                {
+                    nvs->push_back(new NameValue(str.getString(strbuf)));
+                    nvs->back().setValueRange(str_source);
+                }
                 break;
             }
             case GasToken::at:
@@ -1145,8 +1157,9 @@ GasParser::ParseDirective(NameValues* nvs)
                 Expr::Ptr e(new Expr);
                 if (!ParseExpr(*e))
                     return false;
-                nvs->push_back(new NameValue(e,
-                    clang::SourceRange(e_src, m_token.getLocation())));
+                nvs->push_back(new NameValue(e));
+                nvs->back().setValueRange(
+                    clang::SourceRange(e_src, m_token.getLocation()));
                 break;
             }
         }
@@ -1586,7 +1599,8 @@ GasParser::ParseExpr3(Expr& e)
                 SymbolRef sym = m_object->AddNonTableSymbol(".");
                 Bytecode& bc = m_container->FreshBytecode();
                 Location loc = {&bc, bc.getFixedLen()};
-                sym->DefineLabel(loc, id_source);
+                sym->CheckedDefineLabel(loc, id_source,
+                                        m_preproc.getDiagnostics());
                 e = sym;
             }
             else
@@ -1677,7 +1691,7 @@ GasParser::DefineLabel(llvm::StringRef name, clang::SourceLocation source)
     SymbolRef sym = m_object->getSymbol(name);
     Bytecode& bc = m_container->FreshBytecode();
     Location loc = {&bc, bc.getFixedLen()};
-    sym->DefineLabel(loc, source);
+    sym->CheckedDefineLabel(loc, source, m_preproc.getDiagnostics());
 }
 
 void
@@ -1698,7 +1712,7 @@ GasParser::DefineLcomm(SymbolRef sym,
     // Create common symbol
     Bytecode *bc = &bss.FreshBytecode();
     Location loc = {bc, bc->getFixedLen()};
-    sym->DefineLabel(loc, source);
+    sym->CheckedDefineLabel(loc, source, m_preproc.getDiagnostics());
 
     // Append gap for symbol storage
     size->Simplify();
@@ -1717,7 +1731,9 @@ GasParser::SwitchSection(llvm::StringRef name,
                          clang::SourceLocation source)
 {
     DirectiveInfo info(*m_object, source);
-    info.getNameValues().push_back(new NameValue(name, '\0', source));
+    NameValues& nvs = info.getNameValues();
+    nvs.push_back(new NameValue(name, '\0'));
+    nvs.back().setValueRange(source);
 
     Directive handler;
     if (m_dirs->get(&handler, ".section"))

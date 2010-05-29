@@ -44,6 +44,7 @@ namespace YAML { class Emitter; }
 namespace yasm
 {
 
+class Diagnostic;
 class Expr;
 
 /// A symbol.
@@ -85,9 +86,17 @@ public:
     /// @return Symbol visibility.
     int getVisibility() const { return m_visibility; }
 
-    /// Get the status of a symbol.
-    /// @return Symbol status.
-    int getStatus() const { return m_status; }
+    bool isUsed() const { return (m_status & USED) ? true : false; }
+    bool isDefined() const { return (m_status & DEFINED) ? true : false; }
+    bool isValued() const { return (m_status & VALUED) ? true : false; }
+
+    /// Set the source location where a symbol was first defined.
+    /// @param source   source location
+    void setDefSource(clang::SourceLocation source) { m_def_source = source; }
+
+    /// Set the source location where a symbol was first declared.
+    /// @param source   source location
+    void setDeclSource(clang::SourceLocation source) { m_decl_source = source; }
 
     /// Get the source location where a symbol was first defined.
     /// @return Source location.
@@ -130,30 +139,55 @@ public:
     void Use(clang::SourceLocation source);
 
     /// Define as an EQU value.
+    /// @note Asserts if already defined.
     /// @param e        EQU value (expression)
     /// @param source   source location
-    void DefineEqu(const Expr& e,
-                   clang::SourceLocation source = clang::SourceLocation());
+    void DefineEqu(const Expr& e);
+
+    /// Define as an EQU value.  Reports diagnostics if already defined.
+    /// @param e        EQU value (expression)
+    /// @param source   source location
+    /// @param diags    diagnostic reporting
+    void CheckedDefineEqu(const Expr& e,
+                          clang::SourceLocation source,
+                          Diagnostic& diags);
 
     /// Define as a label.
+    /// @note Asserts if already defined.
     /// @param loc      location of label
     /// @param source   source location
-    void DefineLabel(Location loc,
-                     clang::SourceLocation source = clang::SourceLocation());
+    void DefineLabel(Location loc);
+
+    /// Define as a label.  Reports diagnostics if already defined.
+    /// @param loc      location of label
+    /// @param source   source location
+    void CheckedDefineLabel(Location loc,
+                            clang::SourceLocation source,
+                            Diagnostic& diags);
 
     /// Define a special symbol.  Special symbols have no generic associated
     /// data (such as an expression or precbc).
+    /// @note Asserts if already defined.
     /// @param vis      symbol visibility
-    /// @param source   source location
-    void DefineSpecial(Symbol::Visibility vis,
-                       clang::SourceLocation source = clang::SourceLocation());
+    void DefineSpecial(Symbol::Visibility vis);
 
-    /// Declare external visibility.
-    /// @note Not all visibility combinations are allowed.
+    /// Determine if external visibility is compatible with symbol status.
+    /// @param vis      visibility
+    bool okToDeclare(Visibility vis) const;
+
+    /// Declare external visibility.  Asserts if incompatible visibility.
     /// @param vis      visibility
     /// @param source   source location
-    void Declare(Visibility vis,
-                 clang::SourceLocation source = clang::SourceLocation());
+    void Declare(Visibility vis);
+
+    /// Declare external visibility.  Reports diagnostics for incompatible
+    /// visibility.
+    /// @param vis      visibility
+    /// @param source   source location
+    /// @param diags    diagnostic reporting
+    void CheckedDeclare(Visibility vis,
+                        clang::SourceLocation source,
+                        Diagnostic& diags);
 
     /// Determine if symbol is used but is undefined.  Undefined symbols are
     /// those that are used but never defined or declared #EXTERN or #COMMON.
@@ -194,7 +228,7 @@ private:
         SPECIAL
     };
 
-    void Define(Type type, clang::SourceLocation source);
+    bool DefineCheck(clang::SourceLocation source, Diagnostic& diags) const;
 
     std::string m_name;
     Type m_type;

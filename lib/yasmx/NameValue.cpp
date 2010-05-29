@@ -38,71 +38,50 @@
 
 using namespace yasm;
 
-NameValue::NameValue(llvm::StringRef name,
-                     llvm::StringRef id,
-                     char id_prefix,
-                     clang::SourceLocation name_src,
-                     clang::SourceLocation id_src)
+NameValue::NameValue(llvm::StringRef name, llvm::StringRef id, char id_prefix)
     : m_name(name),
-      m_name_source(name_src),
       m_type(ID),
-      m_value_source(id_src),
       m_idstr(id),
       m_expr(0),
       m_id_prefix(id_prefix)
 {
 }
 
-NameValue::NameValue(llvm::StringRef name,
-                     llvm::StringRef str,
-                     clang::SourceLocation name_src,
-                     clang::SourceLocation str_src)
+NameValue::NameValue(llvm::StringRef name, llvm::StringRef str)
     : m_name(name),
-      m_name_source(name_src),
       m_type(STRING),
-      m_value_source(str_src),
       m_idstr(str),
       m_expr(0),
       m_id_prefix('\0')
 {
 }
 
-NameValue::NameValue(llvm::StringRef name,
-                     std::auto_ptr<Expr> e,
-                     clang::SourceLocation name_src,
-                     clang::SourceRange e_src)
+NameValue::NameValue(llvm::StringRef name, std::auto_ptr<Expr> e)
     : m_name(name),
-      m_name_source(name_src),
       m_type(EXPR),
-      m_value_source(e_src),
       m_expr(e.release()),
       m_id_prefix('\0')
 {
 }
 
-NameValue::NameValue(llvm::StringRef id,
-                     char id_prefix,
-                     clang::SourceLocation id_src)
+NameValue::NameValue(llvm::StringRef id, char id_prefix)
     : m_type(ID),
-      m_value_source(id_src),
       m_idstr(id),
       m_expr(0),
       m_id_prefix(id_prefix)
 {
 }
 
-NameValue::NameValue(llvm::StringRef str, clang::SourceLocation str_src)
+NameValue::NameValue(llvm::StringRef str)
     : m_type(STRING),
-      m_value_source(str_src),
       m_idstr(str),
       m_expr(0),
       m_id_prefix('\0')
 {
 }
 
-NameValue::NameValue(std::auto_ptr<Expr> e, clang::SourceRange e_src)
+NameValue::NameValue(std::auto_ptr<Expr> e)
     : m_type(EXPR),
-      m_value_source(e_src),
       m_expr(e.release()),
       m_id_prefix('\0')
 {
@@ -110,12 +89,13 @@ NameValue::NameValue(std::auto_ptr<Expr> e, clang::SourceRange e_src)
 
 NameValue::NameValue(const NameValue& oth)
     : m_name(oth.m_name),
-      m_name_source(oth.m_name_source),
       m_type(oth.m_type),
-      m_value_source(oth.m_value_source),
       m_idstr(oth.m_idstr),
       m_expr(oth.m_expr->clone()),
-      m_id_prefix(oth.m_id_prefix)
+      m_id_prefix(oth.m_id_prefix),
+      m_name_source(oth.m_name_source),
+      m_equals_source(oth.m_equals_source),
+      m_value_range(oth.m_value_range)
 {
 }
 
@@ -127,12 +107,13 @@ void
 NameValue::swap(NameValue& oth)
 {
     m_name.swap(oth.m_name);
-    std::swap(m_name_source, oth.m_name_source);
     std::swap(m_type, oth.m_type);
-    std::swap(m_value_source, oth.m_value_source);
     m_idstr.swap(oth.m_idstr);
     std::swap(m_expr, oth.m_expr);
     std::swap(m_id_prefix, oth.m_id_prefix);
+    std::swap(m_name_source, oth.m_name_source);
+    std::swap(m_equals_source, oth.m_equals_source);
+    std::swap(m_value_range, oth.m_value_range);
 }
 
 Expr
@@ -143,7 +124,7 @@ NameValue::getExpr(Object& object) const
         case ID:
         {
             SymbolRef sym = object.getSymbol(getId());
-            sym->Use(m_value_source.getBegin());
+            sym->Use(m_value_range.getBegin());
             return Expr(sym);
         }
         case EXPR:
@@ -162,7 +143,7 @@ NameValue::ReleaseExpr(Object& object)
         case ID:
         {
             SymbolRef sym = object.getSymbol(getId());
-            sym->Use(m_value_source.getBegin());
+            sym->Use(m_value_range.getBegin());
             return std::auto_ptr<Expr>(new Expr(sym));
         }
         case EXPR:

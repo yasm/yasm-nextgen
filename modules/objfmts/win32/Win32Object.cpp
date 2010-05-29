@@ -135,7 +135,7 @@ Win32Object::DirExport(DirectiveInfo& info, Diagnostic& diags)
     if (!name_nv.isId())
     {
         diags.Report(info.getSource(), diag::err_value_id)
-            << name_nv.getValueSource();
+            << name_nv.getValueRange();
         return;
     }
     llvm::StringRef symname = name_nv.getId();
@@ -165,7 +165,7 @@ Win32Object::DirSafeSEH(DirectiveInfo& info, Diagnostic& diags)
     if (!name_nv.isId())
     {
         diags.Report(info.getSource(), diag::err_value_id)
-            << name_nv.getValueSource();
+            << name_nv.getValueRange();
         return;
     }
     llvm::StringRef symname = name_nv.getId();
@@ -175,7 +175,8 @@ Win32Object::DirSafeSEH(DirectiveInfo& info, Diagnostic& diags)
     sym->Use(source);
 
     // Symbol must be externally visible, so force global.
-    sym->Declare(Symbol::GLOBAL, source);
+    sym->CheckedDeclare(Symbol::GLOBAL, name_nv.getValueRange().getBegin(),
+                        diags);
 
     // Add symbol number to end of .sxdata section (creating if necessary)
     Section* sect = m_object.FindSection(".sxdata");

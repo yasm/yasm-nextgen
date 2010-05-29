@@ -69,7 +69,7 @@ yasm::DirIdentCommon(ObjectFormat& objfmt,
         if (nv->isString())
             AppendData(*comment, nv->getString(), true);
         else
-            diags.Report(nv->getValueSource().getBegin(),
+            diags.Report(nv->getValueRange().getBegin(),
                          diag::err_value_string);
     }
 }

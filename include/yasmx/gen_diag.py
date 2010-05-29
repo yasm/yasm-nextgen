@@ -275,6 +275,10 @@ add_note("note_symbol_undefined_once",
 add_error("err_equ_not_integer", "global EQU value not an integer expression")
 add_error("err_common_size_not_integer",
           "COMMON data size not an integer expression")
+add_error("err_symbol_redefined", "redefinition of '%0'")
+add_note("note_previous_definition", "'%0' previously defined here")
+add_warning("warn_extern_defined", "'%0' both defined and declared extern")
+add_note("note_extern_declaration", "'%0' declared extern here")
 
 # Insn
 add_error("err_equ_circular_reference_mem",

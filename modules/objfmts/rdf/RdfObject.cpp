@@ -476,18 +476,18 @@ RdfOutput::OutputSymbol(Symbol& sym,
                     }
                     if (!nv->isExpr())
                     {
-                        diags.Report(nv->getValueSource().getBegin(),
+                        diags.Report(nv->getValueRange().getBegin(),
                                      diag::err_value_integer)
-                            << nv->getValueSource();
+                            << nv->getValueRange();
                         continue;
                     }
                     Expr aligne = nv->getExpr(m_object);
                     SimplifyCalcDist(aligne);
                     if (!aligne.isIntNum())
                     {
-                        diags.Report(nv->getValueSource().getBegin(),
+                        diags.Report(nv->getValueRange().getBegin(),
                                      diag::err_value_integer)
-                            << nv->getValueSource();
+                            << nv->getValueRange();
                         continue;
                     }
                     addralign = aligne.getIntNum().getUInt();
@@ -495,9 +495,9 @@ RdfOutput::OutputSymbol(Symbol& sym,
                     // Alignments must be a power of two.
                     if (!isExp2(addralign))
                     {
-                        diags.Report(nv->getValueSource().getBegin(),
+                        diags.Report(nv->getValueRange().getBegin(),
                                      diag::err_value_power2)
-                            << nv->getValueSource();
+                            << nv->getValueRange();
                         continue;
                     }
                 }
@@ -967,7 +967,11 @@ RdfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
     // Define a label for the start of the section
     Location start = {&section->bytecodes_first(), 0};
     SymbolRef sym = m_object.getSymbol(name);
-    sym->DefineLabel(start, source);
+    if (!sym->isDefined())
+    {
+        sym->DefineLabel(start);
+        sym->setDefSource(source);
+    }
 
     // Add RDF data to the section
     section->AddAssocData(std::auto_ptr<RdfSection>(new RdfSection(type, sym)));
@@ -998,7 +1002,7 @@ SetReserved(NameValue& nv,
 
     if ((e.get() == 0) || !e->isIntNum())
     {
-        diags.Report(nv.getValueSource().getBegin(),
+        diags.Report(nv.getValueRange().getBegin(),
                      diags.getCustomDiagID(Diagnostic::Error,
                          "implicit reserved size is not an integer"));
         return false;
@@ -1018,7 +1022,7 @@ RdfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
     NameValue& sectname_nv = nvs.front();
     if (!sectname_nv.isString())
     {
-        diags.Report(sectname_nv.getValueSource().getBegin(),
+        diags.Report(sectname_nv.getValueRange().getBegin(),
                      diag::err_value_string_or_id);
         return;
     }

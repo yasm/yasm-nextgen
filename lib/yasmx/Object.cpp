@@ -163,11 +163,11 @@ Object::getAbsoluteSymbol()
     SymbolRef sym = getSymbol("");
 
     // If we already defined it, we're done.
-    if (sym->getStatus() & Symbol::DEFINED)
+    if (sym->isDefined())
         return sym;
 
     // Define it
-    sym->DefineEqu(Expr(0), clang::SourceLocation());
+    sym->DefineEqu(Expr(0));
     sym->Use(clang::SourceLocation());
     return sym;
 }

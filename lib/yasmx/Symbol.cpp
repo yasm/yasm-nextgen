@@ -26,13 +26,10 @@
 //
 #include "yasmx/Symbol.h"
 
-#include "util.h"
-
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
-#include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytecode.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 
 
@@ -51,55 +48,84 @@ Symbol::~Symbol()
 {
 }
 
-void
-Symbol::Define(Type type, clang::SourceLocation source)
+bool
+Symbol::DefineCheck(clang::SourceLocation source, Diagnostic& diags) const
 {
+    assert(source.isValid() && "invalid source location");
     // Has it been defined before (either by DEFINED or COMMON/EXTERN)?
-    if (m_status & DEFINED)
+    if (isDefined())
     {
-        Error err(String::Compose(N_("redefinition of `%1'"), m_name));
-        err.setXRef(m_def_source.isValid() ? m_def_source : m_decl_source,
-                    String::Compose(N_("`%1' previously defined here"),
-                                    m_name));
-        throw err;
+        diags.Report(source, diag::err_symbol_redefined) << m_name;
+        diags.Report(m_def_source.isValid() ? m_def_source : m_decl_source,
+                     diag::note_previous_definition)
+            << m_name;
+        return false;
     }
-    else
+
+    if (m_visibility & EXTERN)
     {
-        if (m_visibility & EXTERN)
-            setWarn(WARN_GENERAL, String::Compose(
-                N_("`%1' both defined and declared extern"), m_name));
-        m_def_source = source;  // set source location of definition
-        m_type = type;
-        m_status |= DEFINED;
+        diags.Report(source, diag::warn_extern_defined) << m_name;
+        if (m_decl_source.isValid())
+        {
+            diags.Report(m_decl_source, diag::note_extern_declaration)
+                << m_name;
+        }
     }
+    return true;
 }
 
 void
-Symbol::DefineEqu(const Expr& e, clang::SourceLocation source)
+Symbol::DefineEqu(const Expr& e)
 {
-    Define(EQU, source);
+    assert(!isDefined() && "symbol already defined");
+    m_type = EQU;
+    m_status |= DEFINED | VALUED;
     m_equ.reset(new Expr(e));
-    m_status |= VALUED;
 }
 
 void
-Symbol::DefineLabel(Location loc, clang::SourceLocation source)
+Symbol::CheckedDefineEqu(const Expr& e,
+                         clang::SourceLocation source,
+                         Diagnostic& diags)
 {
-    Define(LABEL, source);
+    if (!DefineCheck(source, diags))
+        return;
+    DefineEqu(e);
+    m_def_source = source;
+}
+
+void
+Symbol::DefineLabel(Location loc)
+{
+    assert(!isDefined() && "symbol already defined");
+    m_type = LABEL;
+    m_status |= DEFINED;
     m_loc = loc;
     loc.bc->AddSymbol(SymbolRef(this)); /// XXX: should we add if not in table?
 }
 
 void
-Symbol::DefineSpecial(Visibility vis, clang::SourceLocation source)
+Symbol::CheckedDefineLabel(Location loc,
+                           clang::SourceLocation source,
+                           Diagnostic& diags)
 {
-    Define(SPECIAL, source);
-    m_status |= VALUED;
-    m_visibility = vis;
+    if (!DefineCheck(source, diags))
+        return;
+    DefineLabel(loc);
+    m_def_source = source;
 }
 
 void
-Symbol::Declare(Visibility vis, clang::SourceLocation source)
+Symbol::DefineSpecial(Visibility vis)
+{
+    assert(!isDefined() && "symbol already defined");
+    m_type = SPECIAL;
+    m_status |= VALUED | DEFINED;
+    m_visibility = vis;
+}
+
+bool
+Symbol::okToDeclare(Visibility vis) const
 {
     // Allowable combinations:
     //  Existing State--------------  vis  New State-------------------
@@ -112,22 +138,47 @@ Symbol::Declare(Visibility vis, clang::SourceLocation source)
     // X   1      -      -      1
     // X   1      -      1      -
     //
-    if ((vis == GLOBAL) ||
-        (!(m_status & DEFINED) &&
-         (!(m_visibility & (COMMON | EXTERN)) ||
-          ((m_visibility & COMMON) && (vis == COMMON)) ||
-          ((m_visibility & EXTERN) && (vis == EXTERN)))))
+
+    // It's always okay to declare global.
+    if (vis == GLOBAL)
+        return true;
+
+    // Can't declare a defined symbol anything but global.
+    if (isDefined())
+        return false;
+
+    // Allow redundant common and extern declarations
+    if (m_visibility & COMMON)
+        return vis == COMMON;
+    if (m_visibility & EXTERN)
+        return vis == EXTERN;
+    return true;
+}
+
+void
+Symbol::Declare(Visibility vis)
+{
+    assert(okToDeclare(vis) && "symbol already defined");
+    m_visibility |= vis;
+}
+
+void
+Symbol::CheckedDeclare(Visibility vis,
+                       clang::SourceLocation source,
+                       Diagnostic& diags)
+{
+    assert(source.isValid() && "invalid source location");
+    if (okToDeclare(vis))
     {
         m_decl_source = source;
         m_visibility |= vis;
     }
     else
     {
-        Error err(String::Compose(N_("redefinition of `%1'"), m_name));
-        err.setXRef(m_def_source.isValid() ? m_def_source : m_decl_source,
-                    String::Compose(N_("`%1' previously defined here"),
-                                    m_name));
-        throw err;
+        diags.Report(source, diag::err_symbol_redefined) << m_name;
+        diags.Report(m_def_source.isValid() ? m_def_source : m_decl_source,
+                     diag::note_previous_definition)
+            << m_name;
     }
 }
 

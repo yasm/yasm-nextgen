@@ -549,7 +549,8 @@ NasmParser::ParseLine()
                             << ii2->getName();
                         return false;
                     }
-                    ParseSymbol(ii)->DefineEqu(e, id_source);
+                    ParseSymbol(ii)->CheckedDefineEqu(e, id_source,
+                        m_preproc.getDiagnostics());
                     break;
                 }
             }
@@ -666,8 +667,8 @@ NasmParser::ParseDirective(/*@out@*/ NameValues& nvs)
             }
         }
 next:
-        nv->setNameLocation(name_loc);
-        nv->setEqualsLocation(equals_loc);
+        nv->setNameSource(name_loc);
+        nv->setEqualsSource(equals_loc);
         nvs.push_back(nv.release());
 
         // silently eat commas
@@ -1459,7 +1460,8 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
                 SymbolRef sym = m_object->AddNonTableSymbol("$");
                 m_bc = &m_container->FreshBytecode();
                 Location loc = {m_bc, m_bc->getFixedLen()};
-                sym->DefineLabel(loc, m_token.getLocation());
+                sym->CheckedDefineLabel(loc, m_token.getLocation(),
+                                        m_preproc.getDiagnostics());
                 e = sym;
             }
             break;
@@ -1471,7 +1473,8 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
             {
                 SymbolRef sym = m_object->AddNonTableSymbol("$$");
                 Location loc = {&m_container->bytecodes_first(), 0};
-                sym->DefineLabel(loc, m_token.getLocation());
+                sym->CheckedDefineLabel(loc, m_token.getLocation(),
+                                        m_preproc.getDiagnostics());
                 e = sym;
             }
             break;
@@ -1542,12 +1545,12 @@ NasmParser::DefineLabel(SymbolRef sym, clang::SourceLocation source, bool local)
         m_locallabel_base = sym->getName();
 
     if (!m_abspos.isEmpty())
-        sym->DefineEqu(m_abspos, source);
+        sym->CheckedDefineEqu(m_abspos, source, m_preproc.getDiagnostics());
     else
     {
         m_bc = &m_container->FreshBytecode();
         Location loc = {m_bc, m_bc->getFixedLen()};
-        sym->DefineLabel(loc, source);
+        sym->CheckedDefineLabel(loc, source, m_preproc.getDiagnostics());
     }
 }
 

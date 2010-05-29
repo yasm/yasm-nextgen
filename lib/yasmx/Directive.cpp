@@ -111,7 +111,7 @@ Directives::Impl::Dir::operator() (llvm::StringRef name,
         !namevals.front().isId())
     {
         diags.Report(info.getSource(), diag::err_value_id)
-            << namevals.front().getValueSource();
+            << namevals.front().getValueRange();
         return;
     }
 

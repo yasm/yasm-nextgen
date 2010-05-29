@@ -378,7 +378,7 @@ ElfObject::BuildExtern(Symbol& sym, Diagnostic& diags)
         {
             if (nv->isString())
             {
-                diags.Report(nv->getValueSource().getBegin(),
+                diags.Report(nv->getValueRange().getBegin(),
                              diags.getCustomDiagID(Diagnostic::Error,
                                                    "unrecognized symbol type"));
                 return;
@@ -400,7 +400,7 @@ GlobalNameValueFallback(NameValue& nv,
 {
     if (!nv.isExpr() && nv.isId())
     {
-        diags.Report(nv.getValueSource().getBegin(),
+        diags.Report(nv.getValueRange().getBegin(),
                      diags.getCustomDiagID(Diagnostic::Error,
                                            "unrecognized symbol type"));
         return true;
@@ -424,7 +424,7 @@ GlobalSetVis(NameValue& nv,
 {
     *vis_out = vis;
     *vis_count = *vis_count + 1;
-    *vis_source = nv.getValueSource().getBegin();
+    *vis_source = nv.getValueRange().getBegin();
 }
 
 
@@ -499,20 +499,20 @@ ElfObject::BuildCommon(Symbol& sym, Diagnostic& diags)
 
             if (!nv->isExpr())
             {
-                diags.Report(nv->getValueSource().getBegin(),
+                diags.Report(nv->getValueRange().getBegin(),
                              diags.getCustomDiagID(Diagnostic::Error,
                                  "alignment constraint is not an integer"))
-                    << nv->getValueSource();
+                    << nv->getValueRange();
                 return;
             }
 
             std::auto_ptr<Expr> align_expr = nv->ReleaseExpr(m_object);
             if (!align_expr->isIntNum())
             {
-                diags.Report(nv->getValueSource().getBegin(),
+                diags.Report(nv->getValueRange().getBegin(),
                              diags.getCustomDiagID(Diagnostic::Error,
                                  "alignment constraint is not an integer"))
-                    << nv->getValueSource();
+                    << nv->getValueRange();
                 return;
             }
             addralign = align_expr->getIntNum().getUInt();
@@ -520,9 +520,9 @@ ElfObject::BuildCommon(Symbol& sym, Diagnostic& diags)
             // Alignments must be a power of two.
             if (!isExp2(addralign))
             {
-                diags.Report(nv->getValueSource().getBegin(),
+                diags.Report(nv->getValueRange().getBegin(),
                              diag::err_value_power2)
-                    << nv->getValueSource();
+                    << nv->getValueRange();
                 return;
             }
         }
@@ -556,7 +556,6 @@ ElfObject::FinalizeSymbol(Symbol& sym,
                           Diagnostic& diags)
 {
     int vis = sym.getVisibility();
-    int status = sym.getStatus();
     ElfSymbol* elfsym = sym.getAssocData<ElfSymbol>();
 
     if (vis & Symbol::EXTERN)
@@ -576,7 +575,7 @@ ElfObject::FinalizeSymbol(Symbol& sym,
     }
 
     // Ignore any undefined at this point.
-    if (!(status & Symbol::DEFINED))
+    if (!sym.isDefined())
         return;
 
     if (elfsym)
@@ -1185,7 +1184,11 @@ ElfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
     // Define a label for the start of the section
     Location start = {&section->bytecodes_first(), 0};
     SymbolRef sym = m_object.getSymbol(name);
-    sym->DefineLabel(start, source);
+    if (!sym->isDefined())
+    {
+        sym->DefineLabel(start);
+        sym->setDefSource(source);
+    }
 
     // Add ELF data to the section
     ElfSection* elfsect = new ElfSection(m_config, type, flags);
@@ -1295,7 +1298,7 @@ ElfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
     NameValue& sectname_nv = nvs.front();
     if (!sectname_nv.isString())
     {
-        diags.Report(sectname_nv.getValueSource().getBegin(),
+        diags.Report(sectname_nv.getValueRange().getBegin(),
                      diag::err_value_string_or_id);
         return;
     }
@@ -1440,7 +1443,7 @@ ElfObject::DirSize(DirectiveInfo& info, Diagnostic& diags)
 
     NameValue& name_nv = namevals.front();
     SymbolRef sym = info.getObject().getSymbol(name_nv.getId());
-    sym->Use(name_nv.getValueSource().getBegin());
+    sym->Use(name_nv.getValueRange().getBegin());
 
     // Pull new size from param
     if (namevals.size() < 2)
@@ -1452,13 +1455,13 @@ ElfObject::DirSize(DirectiveInfo& info, Diagnostic& diags)
     if (!size_nv.isExpr())
     {
         diags.Report(info.getSource(), diag::err_size_expression)
-            << size_nv.getValueSource();
+            << size_nv.getValueRange();
         return;
     }
     Expr size = size_nv.getExpr(info.getObject());
 
     ElfSymbol& elfsym = BuildSymbol(*sym);
-    elfsym.setSize(size, size_nv.getValueSource().getBegin());
+    elfsym.setSize(size, size_nv.getValueRange().getBegin());
 }
 
 void
@@ -1466,9 +1469,11 @@ ElfObject::DirWeak(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
+    NameValue& name_nv = namevals.front();
 
-    SymbolRef sym = info.getObject().getSymbol(namevals.front().getId());
-    sym->Declare(Symbol::GLOBAL, info.getSource());
+    SymbolRef sym = info.getObject().getSymbol(name_nv.getId());
+    sym->CheckedDeclare(Symbol::GLOBAL, name_nv.getValueRange().getBegin(),
+                        diags);
 
     ElfSymbol& elfsym = BuildSymbol(*sym);
     elfsym.setBinding(STB_WEAK);

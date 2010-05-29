@@ -163,7 +163,7 @@ yasm::DirExtern(DirectiveInfo& info, Diagnostic& diags)
     Object& object = info.getObject();
     NameValue& nv = info.getNameValues().front();
     SymbolRef sym = object.getSymbol(nv.getId());
-    sym->Declare(Symbol::EXTERN, nv.getValueSource().getBegin());
+    sym->CheckedDeclare(Symbol::EXTERN, nv.getValueRange().getBegin(), diags);
 
     if (!info.getObjextNameValues().empty())
         setObjextNameValues(*sym, info.getObjextNameValues());
@@ -175,7 +175,7 @@ yasm::DirGlobal(DirectiveInfo& info, Diagnostic& diags)
     Object& object = info.getObject();
     NameValue& nv = info.getNameValues().front();
     SymbolRef sym = object.getSymbol(nv.getId());
-    sym->Declare(Symbol::GLOBAL, nv.getValueSource().getBegin());
+    sym->CheckedDeclare(Symbol::GLOBAL, nv.getValueRange().getBegin(), diags);
 
     if (!info.getObjextNameValues().empty())
         setObjextNameValues(*sym, info.getObjextNameValues());
@@ -195,14 +195,15 @@ yasm::DirCommon(DirectiveInfo& info, Diagnostic& diags)
     if (!size_nv.isExpr())
     {
         diags.Report(info.getSource(), diag::err_size_expression)
-            << size_nv.getValueSource();
+            << size_nv.getValueRange();
         return;
     }
 
     Object& object = info.getObject();
     NameValue& name_nv = namevals.front();
     SymbolRef sym = object.getSymbol(name_nv.getId());
-    sym->Declare(Symbol::COMMON, name_nv.getValueSource().getBegin());
+    sym->CheckedDeclare(Symbol::COMMON, name_nv.getValueRange().getBegin(),
+                        diags);
 
     setCommonSize(*sym, size_nv.getExpr(object));
 

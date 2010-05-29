@@ -167,7 +167,7 @@ X86Arch::DirCpu(DirectiveInfo& info, Diagnostic& diags)
             diags.Report(info.getSource(),
                 diags.getCustomDiagID(Diagnostic::Warning,
                                       "ignored unrecognized CPU identifier"))
-                << nv->getValueSource();
+                << nv->getValueRange();
         }
     }
 }
@@ -192,9 +192,8 @@ X86Arch::DirBits(DirectiveInfo& info, Diagnostic& diags)
         }
     }
 
-    diags.Report(info.getSource(),
-        diags.getCustomDiagID(Diagnostic::Error, "BITS must be 16, 32, or 64"))
-        << nv.getValueSource();
+    diags.Report(nv.getValueRange().getBegin(),
+        diags.getCustomDiagID(Diagnostic::Error, "BITS must be 16, 32, or 64"));
 }
 
 void

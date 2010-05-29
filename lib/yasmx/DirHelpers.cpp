@@ -134,14 +134,14 @@ yasm::DirIntNumPower2(NameValue& nv,
     if ((e.get() == 0) || !e->isIntNum())
     {
         diags.Report(nv.getNameSource(), diag::err_value_integer)
-            << nv.getValueSource();
+            << nv.getValueRange();
         return;
     }
 
     if (!e->getIntNum().getBV(&staticbv)->isPowerOf2())
     {
         diags.Report(nv.getNameSource(), diag::err_value_power2)
-            << nv.getValueSource();
+            << nv.getValueRange();
         return;
     }
 
@@ -161,7 +161,7 @@ yasm::DirIntNum(NameValue& nv,
     if ((e.get() == 0) || !e->isIntNum())
     {
         diags.Report(nv.getNameSource(), diag::err_value_integer)
-            << nv.getValueSource();
+            << nv.getValueRange();
         return;
     }
 
@@ -179,7 +179,7 @@ yasm::DirExpr(NameValue& nv,
     if (!nv.isExpr())
     {
         diags.Report(nv.getNameSource(), diag::err_value_expression)
-            << nv.getValueSource();
+            << nv.getValueRange();
         return;
     }
     *out = nv.ReleaseExpr(*obj);
@@ -195,7 +195,7 @@ yasm::DirString(NameValue& nv,
     if (!nv.isString())
     {
         diags.Report(nv.getNameSource(), diag::err_value_string_or_id)
-            << nv.getValueSource();
+            << nv.getValueRange();
         return;
     }
     *out = nv.getString();
@@ -215,7 +215,7 @@ yasm::DirNameValueWarn(NameValue& nv,
     }
 
     diags.Report(dir_source, diag::warn_unrecognized_qualifier)
-        << nv.getValueSource();
+        << nv.getValueRange();
 
     return false;
 }

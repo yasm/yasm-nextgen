@@ -633,7 +633,11 @@ XdfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
     // Define a label for the start of the section
     Location start = {&section->bytecodes_first(), 0};
     SymbolRef sym = m_object.getSymbol(name);
-    sym->DefineLabel(start, source);
+    if (!sym->isDefined())
+    {
+        sym->DefineLabel(start);
+        sym->setDefSource(source);
+    }
 
     // Add XDF data to the section
     section->AddAssocData(std::auto_ptr<XdfSection>(new XdfSection(sym)));
@@ -650,7 +654,7 @@ XdfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
     NameValue& sectname_nv = nvs.front();
     if (!sectname_nv.isString())
     {
-        diags.Report(sectname_nv.getValueSource().getBegin(),
+        diags.Report(sectname_nv.getValueRange().getBegin(),
                      diag::err_value_string_or_id);
         return;
     }

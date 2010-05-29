@@ -54,45 +54,31 @@ public:
     /// @param name         name; may be empty string if no name
     /// @param id           identifier value
     /// @param id_prefix    identifier prefix for raw identifiers
-    NameValue(llvm::StringRef name,
-              llvm::StringRef id,
-              char id_prefix,
-              clang::SourceLocation name_src = clang::SourceLocation(),
-              clang::SourceLocation id_src = clang::SourceLocation());
+    NameValue(llvm::StringRef name, llvm::StringRef id, char id_prefix);
 
     /// String value constructor.
     /// @param name         name; may be empty string if no name
     /// @param str          string value
-    NameValue(llvm::StringRef name,
-              llvm::StringRef str,
-              clang::SourceLocation name_src = clang::SourceLocation(),
-              clang::SourceLocation str_src = clang::SourceLocation());
+    NameValue(llvm::StringRef name, llvm::StringRef str);
 
     /// Expression value constructor.
     /// @param name         name; may be empty string if no name
     /// @param e            expression
-    NameValue(llvm::StringRef name,
-              std::auto_ptr<Expr> e,
-              clang::SourceLocation name_src = clang::SourceLocation(),
-              clang::SourceRange e_src = clang::SourceRange());
+    NameValue(llvm::StringRef name, std::auto_ptr<Expr> e);
 
     /// Identifier value constructor with no name.
     /// @param id           identifier value
     /// @param id_prefix    identifier prefix for raw identifiers
-    NameValue(llvm::StringRef id,
-              char id_prefix,
-              clang::SourceLocation id_src = clang::SourceLocation());
+    NameValue(llvm::StringRef id, char id_prefix);
 
     /// String value constructor with no name.
     /// @param name         name; may be empty string if no name
     /// @param str          string value
-    explicit NameValue(llvm::StringRef str,
-                       clang::SourceLocation str_src = clang::SourceLocation());
+    explicit NameValue(llvm::StringRef str);
 
     /// Expression value constructor with no name.
     /// @param e            expression
-    explicit NameValue(std::auto_ptr<Expr> e,
-                       clang::SourceRange e_src = clang::SourceRange());
+    explicit NameValue(std::auto_ptr<Expr> e);
 
     NameValue(const NameValue& oth);
     NameValue& operator= (const NameValue& rhs)
@@ -151,12 +137,6 @@ public:
     ///         identifier.
     llvm::StringRef getId() const;
 
-    /// Get source location of name.
-    clang::SourceLocation getNameSource() const { return m_name_source; }
-
-    /// Get source location of value.
-    clang::SourceRange getValueSource() const { return m_value_source; }
-
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     void Write(YAML::Emitter& out) const;
@@ -165,17 +145,15 @@ public:
     /// For debugging purposes.
     void Dump() const;
 
-    void setNameLocation(clang::SourceLocation loc) { m_name_loc = loc; }
-    void setEqualsLocation(clang::SourceLocation loc) { m_equals_loc = loc; }
+    void setNameSource(clang::SourceLocation loc) { m_name_source = loc; }
+    void setEqualsSource(clang::SourceLocation loc) { m_equals_source = loc; }
     void setValueRange(clang::SourceRange range) { m_value_range = range; }
 
-    clang::SourceLocation getNameLocation() const { return m_name_loc; }
-    clang::SourceLocation getEqualsLocation() const { return m_equals_loc; }
+    clang::SourceLocation getNameSource() const { return m_name_source; }
+    clang::SourceLocation getEqualsSource() const { return m_equals_source; }
     clang::SourceRange getValueRange() const { return m_value_range; }
 private:
     std::string m_name; ///< Name (empty string if no name)
-
-    clang::SourceLocation m_name_source;    ///< Name source
 
     /// Value type.
     enum Type
@@ -186,7 +164,6 @@ private:
     };
 
     Type m_type;
-    clang::SourceRange m_value_source;      ///< Value source
 
     /// Possible values
     std::string m_idstr;            ///< Identifier or string
@@ -199,9 +176,9 @@ private:
     /// from the returned value.
     char m_id_prefix;
 
-    clang::SourceLocation m_name_loc;
-    clang::SourceLocation m_equals_loc;
-    clang::SourceRange m_value_range;
+    clang::SourceLocation m_name_source;    ///< Name source
+    clang::SourceLocation m_equals_source;  ///< Source for equals sign
+    clang::SourceRange m_value_range;       ///< Value source
 };
 
 /// Dump a YAML representation of a name/value.  For debugging purposes.
