@@ -70,6 +70,8 @@ def add_note(name, desc):
     add_diag(name, "NOTE", desc, mapping="FATAL")
 
 def output_diag_kinds(f):
+    print >>f, "#ifndef YASM_DIAGNOSTICKINDS_H"
+    print >>f, "#define YASM_DIAGNOSTICKINDS_H"
     print >>f, "namespace yasm { namespace diag {"
     print >>f, "enum {"
     for name in sorted(diags):
@@ -78,6 +80,7 @@ def output_diag_kinds(f):
     print >>f, "NUM_BUILTIN_DIAGNOSTICS"
     print >>f, "};"
     print >>f, "}}"
+    print >>f, "#endif"
 
 def output_diags(f):
     for name in sorted(diags):
