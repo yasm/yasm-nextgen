@@ -26,14 +26,10 @@
 //
 #include "yasmx/Assembler.h"
 
-#include "util.h"
-
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
-#include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/Arch.h"
@@ -67,14 +63,18 @@ class Assembler::Impl
 {
 public:
     Impl(llvm::StringRef arch_keyword,
-         llvm::StringRef parser_keyword,
          llvm::StringRef objfmt_keyword,
+         Diagnostic& diags,
          Assembler::ObjectDumpTime dump_time);
     ~Impl();
 
-    void setMachine(llvm::StringRef machine);
-    void setDebugFormat(llvm::StringRef dbgfmt_keyword);
-    void setListFormat(llvm::StringRef listfmt_keyword);
+    bool Init(llvm::StringRef arch_keyword,
+              llvm::StringRef objfmt_keyword,
+              Diagnostic& diags);
+    bool setMachine(llvm::StringRef machine, Diagnostic& diags);
+    bool setParser(llvm::StringRef parser_keyword, Diagnostic& diags);
+    bool setDebugFormat(llvm::StringRef dbgfmt_keyword, Diagnostic& diags);
+    bool setListFormat(llvm::StringRef listfmt_keyword, Diagnostic& diags);
     bool Assemble(clang::SourceManager& source_mgr,
                   clang::FileManager& file_mgr,
                   Diagnostic& diags,
@@ -104,11 +104,11 @@ public:
 } // namespace yasm
 
 Assembler::Impl::Impl(llvm::StringRef arch_keyword,
-                      llvm::StringRef parser_keyword,
                       llvm::StringRef objfmt_keyword,
+                      Diagnostic& diags,
                       Assembler::ObjectDumpTime dump_time)
     : m_arch_module(LoadModule<ArchModule>(arch_keyword).release()),
-      m_parser_module(LoadModule<ParserModule>(parser_keyword).release()),
+      m_parser_module(0),
       m_objfmt_module(LoadModule<ObjectFormatModule>(objfmt_keyword).release()),
       m_dbgfmt_module(0),
       m_listfmt_module(0),
@@ -121,30 +121,27 @@ Assembler::Impl::Impl(llvm::StringRef arch_keyword,
       m_dump_time(dump_time)
 {
     if (m_arch_module.get() == 0)
-        throw Error(String::Compose(N_("could not load architecture `%1'"),
-                                    arch_keyword));
-
-    if (m_parser_module.get() == 0)
-        throw Error(String::Compose(N_("could not load parser `%1'"),
-                                    parser_keyword));
+    {
+        diags.Report(clang::SourceLocation(), diag::fatal_module_load)
+            << "architecture" << arch_keyword;
+        return;
+    }
 
     if (m_objfmt_module.get() == 0)
-        throw Error(String::Compose(N_("could not load object format `%1'"),
-                                    objfmt_keyword));
+    {
+        diags.Report(clang::SourceLocation(), diag::fatal_module_load)
+            << "object format" << objfmt_keyword;
+        return;
+    }
 
     // Create architecture.
     m_arch.reset(m_arch_module->Create().release());
-
-    // Ensure architecture supports parser.
-    if (!m_arch->setParser(parser_keyword))
-        throw Error(String::Compose(
-            _("`%1' is not a valid parser for architecture `%2'"),
-            parser_keyword, arch_keyword));
 
     // Get initial x86 BITS setting from object format
     if (m_arch_module->getKeyword().equals_lower("x86"))
         m_arch->setVar("mode_bits",
                        m_objfmt_module->getDefaultX86ModeBits());
+
 }
 
 Assembler::Impl::~Impl()
@@ -152,10 +149,10 @@ Assembler::Impl::~Impl()
 }
 
 Assembler::Assembler(llvm::StringRef arch_keyword,
-                     llvm::StringRef parser_keyword,
                      llvm::StringRef objfmt_keyword,
+                     Diagnostic& diags,
                      ObjectDumpTime dump_time)
-    : m_impl(new Impl(arch_keyword, parser_keyword, objfmt_keyword, dump_time))
+    : m_impl(new Impl(arch_keyword, objfmt_keyword, diags, dump_time))
 {
 }
 
@@ -169,25 +166,60 @@ Assembler::setObjectFilename(llvm::StringRef obj_filename)
     m_impl->m_obj_filename = obj_filename;
 }
 
-void
-Assembler::Impl::setMachine(llvm::StringRef machine)
+bool
+Assembler::Impl::setMachine(llvm::StringRef machine, Diagnostic& diags)
 {
     if (!m_arch->setMachine(machine))
-        throw Error(String::Compose(
-            N_("`%1' is not a valid machine for architecture `%2'"),
-            machine, m_arch_module->getKeyword()));
+    {
+        diags.Report(clang::SourceLocation(), diag::fatal_module_combo)
+            << "machine" << machine
+            << "architecture" << m_arch_module->getKeyword();
+        return false;
+    }
 
     m_machine = machine;
+    return true;
 }
 
-void
-Assembler::setMachine(llvm::StringRef machine)
+bool
+Assembler::setMachine(llvm::StringRef machine, Diagnostic& diags)
 {
-    m_impl->setMachine(machine);
+    return m_impl->setMachine(machine, diags);
 }
 
-void
-Assembler::Impl::setDebugFormat(llvm::StringRef dbgfmt_keyword)
+bool
+Assembler::Impl::setParser(llvm::StringRef parser_keyword, Diagnostic& diags)
+{
+    // Ensure architecture supports parser.
+    if (!m_arch->setParser(parser_keyword))
+    {
+        diags.Report(clang::SourceLocation(), diag::fatal_module_combo)
+            << "parser" << parser_keyword
+            << "architecture" << m_arch_module->getKeyword();
+        return false;
+    }
+
+    std::auto_ptr<ParserModule> parser_module =
+        LoadModule<ParserModule>(parser_keyword);
+    if (parser_module.get() == 0)
+    {
+        diags.Report(clang::SourceLocation(), diag::fatal_module_load)
+            << "parser" << parser_keyword;
+        return false;
+    }
+    m_parser_module.reset(parser_module.release());
+    return true;
+}
+
+bool
+Assembler::setParser(llvm::StringRef parser_keyword, Diagnostic& diags)
+{
+    return m_impl->setParser(parser_keyword, diags);
+}
+
+bool
+Assembler::Impl::setDebugFormat(llvm::StringRef dbgfmt_keyword,
+                                Diagnostic& diags)
 {
     // Check to see if the requested debug format is in the allowed list
     // for the active object format.
@@ -197,40 +229,50 @@ Assembler::Impl::setDebugFormat(llvm::StringRef dbgfmt_keyword)
                      NocaseEquals(dbgfmt_keyword))
         == dbgfmt_keywords.end())
     {
-        throw Error(String::Compose(
-            N_("`%1' is not a valid debug format for object format `%2'"),
-            dbgfmt_keyword, m_objfmt_module->getKeyword()));
+        diags.Report(clang::SourceLocation(), diag::fatal_module_combo)
+            << "debug format" << dbgfmt_keyword
+            << "object format" << m_objfmt_module->getKeyword();
+        return false;
     }
 
     std::auto_ptr<DebugFormatModule> dbgfmt_module =
         LoadModule<DebugFormatModule>(dbgfmt_keyword);
     if (dbgfmt_module.get() == 0)
-        throw Error(String::Compose(N_("could not load debug format `%1'"),
-                                    dbgfmt_keyword));
+    {
+        diags.Report(clang::SourceLocation(), diag::fatal_module_load)
+            << "debug format" << dbgfmt_keyword;
+        return false;
+    }
     m_dbgfmt_module.reset(dbgfmt_module.release());
+    return true;
 }
 
-void
-Assembler::setDebugFormat(llvm::StringRef dbgfmt_keyword)
+bool
+Assembler::setDebugFormat(llvm::StringRef dbgfmt_keyword, Diagnostic& diags)
 {
-    m_impl->setDebugFormat(dbgfmt_keyword);
+    return m_impl->setDebugFormat(dbgfmt_keyword, diags);
 }
 
-void
-Assembler::Impl::setListFormat(llvm::StringRef listfmt_keyword)
+bool
+Assembler::Impl::setListFormat(llvm::StringRef listfmt_keyword,
+                               Diagnostic& diags)
 {
     std::auto_ptr<ListFormatModule> listfmt_module =
         LoadModule<ListFormatModule>(listfmt_keyword);
     if (listfmt_module.get() == 0)
-        throw Error(String::Compose(N_("could not load list format `%1'"),
-                                    listfmt_keyword));
+    {
+        diags.Report(clang::SourceLocation(), diag::fatal_module_load)
+            << "list format" << listfmt_keyword;
+        return false;
+    }
     m_listfmt_module.reset(listfmt_module.release());
+    return true;
 }
 
-void
-Assembler::setListFormat(llvm::StringRef listfmt_keyword)
+bool
+Assembler::setListFormat(llvm::StringRef listfmt_keyword, Diagnostic& diags)
 {
-    m_impl->setListFormat(listfmt_keyword);
+    return m_impl->setListFormat(listfmt_keyword, diags);
 }
 
 bool
@@ -274,7 +316,10 @@ Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
         // we should do this in a more modular fashion.
         if (m_arch_module->getKeyword().equals_lower("x86") &&
             m_objfmt_module->getDefaultX86ModeBits() == 64)
-            setMachine("amd64");
+        {
+            if (!setMachine("amd64", diags))
+                return false;
+        }
     }
 
     // Create object
@@ -283,11 +328,12 @@ Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
     // See if the object format supports such an object
     if (!m_objfmt_module->isOkObject(*m_object))
     {
-        throw Error(String::Compose(
-            N_("object format `%1' does not support architecture `%2' machine `%3'"),
-            m_objfmt_module->getKeyword(),
-            m_arch_module->getKeyword(),
-            m_arch->getMachine()));
+        diags.Report(clang::SourceLocation(),
+                     diag::fatal_objfmt_machine_mismatch)
+            << m_objfmt_module->getKeyword()
+            << m_arch_module->getKeyword()
+            << m_arch->getMachine();
+        return false;
     }
 
     // Create the object format
@@ -301,14 +347,18 @@ Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
 
     // Default to null as the debug format if not specified
     if (m_dbgfmt_module.get() == 0)
-        setDebugFormat("null");
+    {
+        if (!setDebugFormat("null", diags))
+            return false;
+    }
 
     // See if the debug format supports such an object
     if (!m_dbgfmt_module->isOkObject(*m_object))
     {
-        throw Error(String::Compose(
-            N_("debug format `%1' does not work with object format `%2'"),
-            m_dbgfmt_module->getKeyword(), m_objfmt_module->getKeyword()));
+        diags.Report(clang::SourceLocation(), diag::fatal_module_combo)
+            << "debug format" << m_dbgfmt_module->getKeyword()
+            << "object format" << m_objfmt_module->getKeyword();
+        return false;
     }
 
     // Create the debug format

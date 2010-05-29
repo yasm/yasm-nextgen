@@ -65,12 +65,13 @@ public:
     /// Constructor.  A default section is created as the first
     /// section, and an empty symbol table is created.
     /// The object filename is initially unset (empty string).
-    /// @param parser_keyword   parser keyword
+    /// @param arch_keyword     architecture keyword
     /// @param objfmt_keyword   object format keyword
+    /// @param diags            diagnostic reporting
     /// @param dump_time        when (if ever) to dump object YAML to stderr
     Assembler(llvm::StringRef arch_keyword,
-              llvm::StringRef parser_keyword,
               llvm::StringRef objfmt_keyword,
+              Diagnostic& diags,
               ObjectDumpTime dump_time = DUMP_NEVER);
 
     /// Destructor.
@@ -84,27 +85,35 @@ public:
     /// Set the machine of architecture; if not set prior to assembly,
     /// determined by object format.
     /// @param machine          machine name
-    void setMachine(llvm::StringRef machine);
+    /// @param diags            diagnostic reporting
+    /// @return False on error.
+    bool setMachine(llvm::StringRef machine, Diagnostic& diags);
 
-    /// Set the preprocessor; if not set prior to assembly, determined
-    /// by parser.
-    /// @param preproc_keyword  preprocessor keyword
-    void setPreprocessor(llvm::StringRef preproc_keyword);
+    /// Set the parser.
+    /// @param parser_keyword   parser keyword
+    /// @param diags            diagnostic reporting
+    /// @return False on error.
+    bool setParser(llvm::StringRef parser_keyword, Diagnostic& diags);
 
     /// Set the debug format; if not set prior to assembly, defaults to null
     /// debug format (e.g. no debugging information).
     /// @param dbgfmt_keyword   debug format keyword
-    void setDebugFormat(llvm::StringRef dbgfmt_keyword);
+    /// @param diags            diagnostic reporting
+    /// @return False on error.
+    bool setDebugFormat(llvm::StringRef dbgfmt_keyword, Diagnostic& diags);
 
     /// Set the list format; if not set prior to assembly, defaults to null
     /// list format (e.g. no list output).
     /// @param listfmt_keyword  list format keyword
-    void setListFormat(llvm::StringRef list_keyword);
+    /// @param diags            diagnostic reporting
+    /// @return False on error.
+    bool setListFormat(llvm::StringRef list_keyword, Diagnostic& diags);
 
     /// Actually perform assembly.  Does not write to output file.
     /// It is assumed source_mgr is already loaded with a main file.
     /// @param source_mgr       source manager
     /// @param file_mgr         file manager
+    /// @param diags            diagnostic reporting
     /// @param warning_error    treat warnings as errors if true
     /// @return True on success, false on failure.
     bool Assemble(clang::SourceManager& source_mgr,

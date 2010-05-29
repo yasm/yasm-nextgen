@@ -63,6 +63,9 @@ def add_warning(name, desc, mapping=None, group=""):
             groups[group].members.append(name)
     add_diag(name, "WARNING", desc, mapping, group)
 
+def add_fatal(name, desc):
+    add_diag(name, "ERROR", desc, mapping="FATAL")
+
 def add_error(name, desc, mapping=None):
     add_diag(name, "ERROR", desc, mapping)
 
@@ -135,6 +138,12 @@ add_group("size-override")
 #####################################################################
 # Diagnostics
 #####################################################################
+
+# Frontend
+add_fatal("fatal_module_load", "could not load %0 '%1")
+add_fatal("fatal_module_combo", "'%0' is not a valid %1 for %2 '%3'")
+add_fatal("fatal_objfmt_machine_mismatch",
+          "object format '%0' does not support architecture '%1' machine '%2'")
 
 add_note("note_previous_definition", "previous definition is here")
 # note_matching - this is used as a continuation of a previous diagnostic,

@@ -693,17 +693,25 @@ do_assemble(void)
     clang::SourceManager source_mgr;
     yasm::Diagnostic diags(&source_mgr, &diag_printer);
     clang::FileManager file_mgr;
-    yasm::Assembler assembler(arch_keyword, parser_keyword, objfmt_keyword,
-                              dump_object);
+    yasm::Assembler assembler(arch_keyword, objfmt_keyword, diags, dump_object);
     yasm::HeaderSearch headers(file_mgr);
+
+    if (diags.hasFatalErrorOccurred())
+        return EXIT_FAILURE;
 
     // Set object filename if specified.
     if (!obj_filename.empty())
         assembler.setObjectFilename(obj_filename);
 
+    // Set parser.
+    assembler.setParser(parser_keyword, diags);
+
     // Set machine if specified.
     if (!machine_name.empty())
-        assembler.setMachine(machine_name);
+        assembler.setMachine(machine_name, diags);
+
+    if (diags.hasFatalErrorOccurred())
+        return EXIT_FAILURE;
 
 #if 0
     ApplyPreprocessorBuiltins(assembler.getPreprocessor());
