@@ -291,7 +291,7 @@ UnwindCode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
         Write16(bytes, intn);
     else if (size == 4)
         Write32(bytes, intn);
-    bc_out.OutputBytes(bytes);
+    bc_out.OutputBytes(bytes, bc.getSource());
     return true;
 }
 

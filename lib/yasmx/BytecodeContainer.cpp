@@ -100,7 +100,7 @@ GapBytecode::CalcLen(Bytecode& bc,
 bool
 GapBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
 {
-    bc_out.OutputGap(m_size);
+    bc_out.OutputGap(m_size, bc.getSource());
     return true;
 }
 

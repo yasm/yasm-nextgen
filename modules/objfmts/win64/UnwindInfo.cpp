@@ -184,17 +184,17 @@ UnwindInfo::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
         Write8(bytes, 1 | (UNW_FLAG_EHANDLER << 3));
     else
         Write8(bytes, 1);
-    bc_out.OutputBytes(bytes);
+    bc_out.OutputBytes(bytes, bc.getSource());
 
     // Size of prolog
     bytes.resize(0);
     Write8(bytes, 0);
-    bc_out.OutputValue(m_prolog_size, bytes, loc, 1, diags);
+    bc_out.OutputValue(m_prolog_size, bytes, loc, 1);
 
     // Count of codes
     bytes.resize(0);
     Write8(bytes, 0);
-    bc_out.OutputValue(m_codes_count, bytes, loc, 1, diags);
+    bc_out.OutputValue(m_codes_count, bytes, loc, 1);
 
     // Frame register and offset
     IntNum intn;
@@ -224,7 +224,7 @@ UnwindInfo::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
 
     bytes.resize(0);
     Write8(bytes, (intn.getUInt() & 0xF0) | (m_framereg & 0x0F));
-    bc_out.OutputBytes(bytes);
+    bc_out.OutputBytes(bytes, m_frameoff.getSource().getBegin());
     return true;
 }
 

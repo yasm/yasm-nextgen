@@ -110,7 +110,7 @@ namespace {
 class BinOutput : public BytecodeStreamOutput
 {
 public:
-    BinOutput(llvm::raw_fd_ostream& os, Object& object);
+    BinOutput(llvm::raw_fd_ostream& os, Object& object, Diagnostic& diags);
     ~BinOutput();
 
     void OutputSection(Section& sect,
@@ -121,8 +121,7 @@ public:
     bool ConvertValueToBytes(Value& value,
                              Bytes& bytes,
                              Location loc,
-                             int warn,
-                             Diagnostic& diags);
+                             int warn);
 
 private:
     Object& m_object;
@@ -131,10 +130,13 @@ private:
 };
 } // anonymous namespace
 
-BinOutput::BinOutput(llvm::raw_fd_ostream& os, Object& object)
-    : BytecodeStreamOutput(os),
+BinOutput::BinOutput(llvm::raw_fd_ostream& os,
+                     Object& object,
+                     Diagnostic& diags)
+    : BytecodeStreamOutput(os, diags),
       m_object(object),
-      m_fd_os(os)
+      m_fd_os(os),
+      m_no_output(diags)
 {
 }
 
@@ -194,8 +196,7 @@ bool
 BinOutput::ConvertValueToBytes(Value& value,
                                Bytes& bytes,
                                Location loc,
-                               int warn,
-                               Diagnostic& diags)
+                               int warn)
 {
     // Binary objects we need to resolve against object, not against section.
     if (value.isRelative())
@@ -239,9 +240,9 @@ done:
         return true;
 
     // Couldn't output, assume it contains an external reference.
-    diags.Report(value.getSource().getBegin(),
-                 diags.getCustomDiagID(Diagnostic::Error,
-                     N_("binary object format does not support external references")));
+    Diag(value.getSource().getBegin(),
+         getDiagnostics().getCustomDiagID(Diagnostic::Error,
+             N_("binary object format does not support external references")));
     return false;
 }
 
@@ -320,7 +321,7 @@ BinObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
         return;
 
     // Output sections
-    BinOutput out(os, m_object);
+    BinOutput out(os, m_object, diags);
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {

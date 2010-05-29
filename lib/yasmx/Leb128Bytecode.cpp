@@ -117,7 +117,7 @@ LEB128Bytecode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
 {
     Bytes& bytes = bc_out.getScratch();
     WriteLEB128(bytes, m_expr.getIntNum(), m_sign);
-    bc_out.OutputBytes(bytes);
+    bc_out.OutputBytes(bytes, bc.getSource());
     return true;
 }
 

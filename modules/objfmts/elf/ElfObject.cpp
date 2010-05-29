@@ -629,26 +629,27 @@ namespace {
 class ElfOutput : public BytecodeStreamOutput
 {
 public:
-    ElfOutput(llvm::raw_fd_ostream& os, ElfObject& objfmt, Object& object);
+    ElfOutput(llvm::raw_fd_ostream& os,
+              ElfObject& objfmt,
+              Object& object,
+              Diagnostic& diags);
     ~ElfOutput();
 
     void OutputSection(Section& sect,
                        unsigned int* sindex,
-                       StringTable& shstrtab,
-                       Diagnostic& diags);
+                       StringTable& shstrtab);
 
     // OutputBytecode overrides
     bool ConvertValueToBytes(Value& value,
                              Bytes& bytes,
                              Location loc,
-                             int warn,
-                             Diagnostic& diags);
+                             int warn);
     bool ConvertSymbolToBytes(SymbolRef sym,
                               Bytes& bytes,
                               Location loc,
                               unsigned int valsize,
                               int warn,
-                              Diagnostic& diags);
+                              clang::SourceLocation source);
 
 private:
     ElfObject& m_objfmt;
@@ -661,11 +662,13 @@ private:
 
 ElfOutput::ElfOutput(llvm::raw_fd_ostream& os,
                      ElfObject& objfmt,
-                     Object& object)
-    : BytecodeStreamOutput(os)
+                     Object& object,
+                     Diagnostic& diags)
+    : BytecodeStreamOutput(os, diags)
     , m_objfmt(objfmt)
     , m_object(object)
     , m_fd_os(os)
+    , m_no_output(diags)
     , m_GOT_sym(object.FindSymbol("_GLOBAL_OFFSET_TABLE_"))
 {
 }
@@ -680,7 +683,7 @@ ElfOutput::ConvertSymbolToBytes(SymbolRef sym,
                                 Location loc,
                                 unsigned int valsize,
                                 int warn,
-                                Diagnostic& diags)
+                                clang::SourceLocation source)
 {
     std::auto_ptr<ElfReloc> reloc =
         m_objfmt.m_machine->MakeReloc(sym, loc.getOffset());
@@ -692,7 +695,7 @@ ElfOutput::ConvertSymbolToBytes(SymbolRef sym,
     }
     else
     {
-        diags.Report(sym->getUseSource(), diag::err_reloc_invalid_size);
+        Diag(source, diag::err_reloc_invalid_size);
     }
 
     m_object.getArch()->ToBytes(0, bytes, valsize, 0, warn);
@@ -703,13 +706,12 @@ bool
 ElfOutput::ConvertValueToBytes(Value& value,
                                Bytes& bytes,
                                Location loc,
-                               int warn,
-                               Diagnostic& diags)
+                               int warn)
 {
     // We can't handle these types of values
     if (value.isSegOf() || value.isSectionRelative() || value.getRShift() > 0)
     {
-        diags.Report(value.getSource().getBegin(), diag::err_reloc_too_complex);
+        Diag(value.getSource().getBegin(), diag::err_reloc_too_complex);
         return false;
     }
 
@@ -759,8 +761,7 @@ ElfOutput::ConvertValueToBytes(Value& value,
         }
         else if (value.hasSubRelative())
         {
-            diags.Report(value.getSource().getBegin(),
-                         diag::err_reloc_too_complex);
+            Diag(value.getSource().getBegin(), diag::err_reloc_too_complex);
             return false;
         }
 
@@ -772,16 +773,15 @@ ElfOutput::ConvertValueToBytes(Value& value,
         {
             if (!reloc->setWrt(wrt, value.getSize()))
             {
-                diags.Report(value.getSource().getBegin(),
-                             diag::err_invalid_wrt);
+                Diag(value.getSource().getBegin(), diag::err_invalid_wrt);
             }
         }
         else
         {
             if (!reloc->setRel(pc_rel, m_GOT_sym, value.getSize()))
             {
-                diags.Report(value.getSource().getBegin(),
-                             diag::err_reloc_invalid_size);
+                Diag(value.getSource().getBegin(),
+                     diag::err_reloc_invalid_size);
             }
         }
 
@@ -838,8 +838,7 @@ elf_objfmt_create_dbg_secthead(yasm_section *sect, /*@null@*/ void *d)
 void
 ElfOutput::OutputSection(Section& sect,
                          unsigned int* sindex,
-                         StringTable& shstrtab,
-                         Diagnostic& diags)
+                         StringTable& shstrtab)
 {
     BytecodeOutput* outputter = this;
 
@@ -865,8 +864,7 @@ ElfOutput::OutputSection(Section& sect,
         pos = m_os.tell();
         if (m_os.has_error())
         {
-            diags.Report(clang::SourceLocation(),
-                         diag::err_file_output_position);
+            Diag(clang::SourceLocation(), diag::err_file_output_position);
             return;
         }
 
@@ -876,7 +874,7 @@ ElfOutput::OutputSection(Section& sect,
         m_fd_os.seek(elfsect->setFileOffset(pos));
         if (m_os.has_error())
         {
-            diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+            Diag(clang::SourceLocation(), diag::err_file_output_seek);
             return;
         }
     }
@@ -885,11 +883,11 @@ ElfOutput::OutputSection(Section& sect,
     for (Section::bc_iterator i=sect.bytecodes_begin(),
          end=sect.bytecodes_end(); i != end; ++i)
     {
-        if (i->Output(*outputter, diags))
+        if (i->Output(*outputter, getDiagnostics()))
             elfsect->AddSize(i->getTotalLen());
     }
 
-    if (diags.hasErrorOccurred())
+    if (getDiagnostics().hasErrorOccurred())
         return;
 
     // Sanity check final section size
@@ -979,14 +977,14 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     ElfSection null_sect(m_config, SHT_NULL, 0);
     null_sect.setIndex(m_config.secthead_count++);
 
-    ElfOutput out(os, *this, m_object);
+    ElfOutput out(os, *this, m_object, diags);
 
     // Output user sections.
     // Assign indices and names as we go (including for relocation sections).
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        out.OutputSection(*i, &m_config.secthead_count, shstrtab, diags);
+        out.OutputSection(*i, &m_config.secthead_count, shstrtab);
     }
 
     // If we're not forcing all symbols to be in the table, go through

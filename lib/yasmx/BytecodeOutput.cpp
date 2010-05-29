@@ -26,16 +26,14 @@
 //
 #include "yasmx/BytecodeOutput.h"
 
-#include "util.h"
-
 #include "llvm/Support/raw_ostream.h"
-#include "yasmx/Support/errwarn.h"
+#include "yasmx/Diagnostic.h"
 
 
 using namespace yasm;
 
-BytecodeOutput::BytecodeOutput()
-    : m_num_output(0)
+BytecodeOutput::BytecodeOutput(Diagnostic& diags)
+    : m_diags(diags), m_num_output(0)
 {
 }
 
@@ -49,7 +47,7 @@ BytecodeOutput::ConvertSymbolToBytes(SymbolRef sym,
                                      Location loc,
                                      unsigned int valsize,
                                      int warn,
-                                     Diagnostic& diags)
+                                     clang::SourceLocation source)
 {
     return true;
 }
@@ -62,24 +60,23 @@ bool
 BytecodeNoOutput::ConvertValueToBytes(Value& value,
                                       Bytes& bytes,
                                       Location loc,
-                                      int warn,
-                                      Diagnostic& diags)
+                                      int warn)
 {
     // unnecessary; we don't actually output it anyway
     return true;
 }
 
 void
-BytecodeNoOutput::DoOutputGap(unsigned int size)
+BytecodeNoOutput::DoOutputGap(unsigned int size, clang::SourceLocation source)
 {
     // expected
 }
 
 void
-BytecodeNoOutput::DoOutputBytes(const Bytes& bytes)
+BytecodeNoOutput::DoOutputBytes(const Bytes& bytes,
+                                clang::SourceLocation source)
 {
-    setWarn(WARN_GENERAL,
-            N_("initialized space declared in nobits section: ignoring"));
+    Diag(source, diag::warn_nobits_data);
 }
 
 BytecodeStreamOutput::~BytecodeStreamOutput()
@@ -87,13 +84,14 @@ BytecodeStreamOutput::~BytecodeStreamOutput()
 }
 
 void
-BytecodeStreamOutput::DoOutputGap(unsigned int size)
+BytecodeStreamOutput::DoOutputGap(unsigned int size,
+                                  clang::SourceLocation source)
 {
     // Warn that gaps are converted to 0 and write out the 0's.
     static const unsigned long BLOCK_SIZE = 4096;
 
-    setWarn(WARN_UNINIT_CONTENTS,
-            N_("uninitialized space declared in code/data section: zeroing"));
+    Diag(source, diag::warn_uninit_zero);
+
     // Write out in chunks
     Bytes& bytes = getScratch();
     bytes.resize(BLOCK_SIZE);
@@ -107,7 +105,8 @@ BytecodeStreamOutput::DoOutputGap(unsigned int size)
 }
 
 void
-BytecodeStreamOutput::DoOutputBytes(const Bytes& bytes)
+BytecodeStreamOutput::DoOutputBytes(const Bytes& bytes,
+                                    clang::SourceLocation source)
 {
     // Output bytes to file
     m_os << bytes;

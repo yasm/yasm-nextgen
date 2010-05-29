@@ -31,7 +31,9 @@
 ///
 #include "yasmx/Config/export.h"
 
+#include "clang/Basic/SourceLocation.h"
 #include "yasmx/Bytes.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Location.h"
 #include "yasmx/SymbolRef.h"
 #include "yasmx/Value.h"
@@ -43,21 +45,20 @@ namespace yasm
 {
 
 class Bytecode;
-class Diagnostic;
 
 /// Bytecode output interface.
 ///
 /// Object formats should implement this interface for output of bytecodes.
-/// Implementator notes: value_to_bytes() and sym_to_bytes() are called to
-/// convert values and relocations into byte format first, then
-/// do_output_bytes() is called.  It is assumed that do_output_bytes()
+/// Implementator notes: ConvertValueToBytes() and ConvertSymbolToBytes() are
+/// called to convert values and relocations into byte format first, then
+/// DoOutputBytes() is called.  It is assumed that DoOutputBytes()
 /// actually outputs the bytes to the object file.  The implementation
-/// function do_output_gap() will be called for gaps in the output.
+/// function DoOutputGap() will be called for gaps in the output.
 class YASM_LIB_EXPORT BytecodeOutput
 {
 public:
     /// Constructor.
-    BytecodeOutput();
+    BytecodeOutput(Diagnostic& diags);
 
     /// Destructor.
     virtual ~BytecodeOutput();
@@ -72,6 +73,14 @@ public:
         m_scratch.resize(0);
         return m_scratch;
     }
+
+    /// Get the diagnostic reporter.
+    Diagnostic& getDiagnostics() const { return m_diags; }
+
+    /// Diagnostic reporting wrapper.
+    DiagnosticBuilder Diag(clang::SourceLocation pos, unsigned diag_id)
+    { return m_diags.Report(pos, diag_id); }
+
 
     /// Reset the number of bytes output to zero.
     void ResetNumOutput() { m_num_output = 0; }
@@ -98,18 +107,15 @@ public:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    /// @param diags        diagnostic reporting
     /// @return False if an error occurred.
     bool OutputValue(Value& value,
                      Bytes& bytes,
                      Location loc,
-                     int warn,
-                     Diagnostic& diags)
+                     int warn)
     {
-        if (!ConvertValueToBytes(value, bytes, loc, value.AdjustWarn(warn),
-                                 diags))
+        if (!ConvertValueToBytes(value, bytes, loc, value.AdjustWarn(warn)))
             return false;
-        OutputBytes(bytes);
+        OutputBytes(bytes, value.getSource().getBegin());
         return true;
     }
 
@@ -129,18 +135,18 @@ public:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    /// @param diags        diagnostic reporting
+    /// @param source       source location
     /// @return False if an error occurred.
     bool OutputSymbol(SymbolRef sym,
                       Bytes& bytes,
                       Location loc,
                       unsigned int valsize,
                       int warn,
-                      Diagnostic& diags)
+                      clang::SourceLocation source)
     {
-        if (!ConvertSymbolToBytes(sym, bytes, loc, valsize, warn, diags))
+        if (!ConvertSymbolToBytes(sym, bytes, loc, valsize, warn, source))
             return false;
-        OutputBytes(bytes);
+        OutputBytes(bytes, source);
         return true;
     }
 
@@ -148,17 +154,19 @@ public:
     /// exist in the object file, but should be initialized to 0 when the
     /// program is run.
     /// @param size         gap size, in bytes
-    void OutputGap(unsigned int size)
+    /// @param source       source location
+    void OutputGap(unsigned int size, clang::SourceLocation source)
     {
-        DoOutputGap(size);
+        DoOutputGap(size, source);
         m_num_output += size;
     }
 
     /// Output a sequence of bytes.
     /// @param bytes        bytes to output
-    void OutputBytes(const Bytes& bytes)
+    /// @param source       source location
+    void OutputBytes(const Bytes& bytes, clang::SourceLocation source)
     {
-        DoOutputBytes(bytes);
+        DoOutputBytes(bytes, source);
         m_num_output += static_cast<unsigned long>(bytes.size());
     }
 
@@ -185,13 +193,11 @@ protected:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    /// @param diags        diagnostic reporting
     /// @return False if an error occurred.
     virtual bool ConvertValueToBytes(Value& value,
                                      Bytes& bytes,
                                      Location loc,
-                                     int warn,
-                                     Diagnostic& diags) = 0;
+                                     int warn) = 0;
 
     /// Convert a symbol to bytes.  Called by output_sym() so that
     /// implementations may keep track of relocations generated this way.
@@ -213,27 +219,31 @@ protected:
     ///                     for overflow/underflow floating point warnings;
     ///                     negative for signed integer warnings,
     ///                     positive for unsigned integer warnings
-    /// @param diags        diagnostic reporting
     /// @return False if an error occurred.
     virtual bool ConvertSymbolToBytes(SymbolRef sym,
                                       Bytes& bytes,
                                       Location loc,
                                       unsigned int valsize,
                                       int warn,
-                                      Diagnostic& diags);
+                                      clang::SourceLocation source);
 
-    /// Overrideable implementation of output_gap().
+    /// Overrideable implementation of OutputGap().
     /// @param size         gap size, in bytes
-    virtual void DoOutputGap(unsigned int size) = 0;
+    /// @param source       source location
+    virtual void DoOutputGap(unsigned int size,
+                             clang::SourceLocation source) = 0;
 
-    /// Overrideable implementation of output_bytes().
+    /// Overrideable implementation of OutputBytes().
     /// @param bytes        bytes to output
-    virtual void DoOutputBytes(const Bytes& bytes) = 0;
+    /// @param source       source location
+    virtual void DoOutputBytes(const Bytes& bytes,
+                               clang::SourceLocation source) = 0;
 
 private:
     BytecodeOutput(const BytecodeOutput&);                  // not implemented
     const BytecodeOutput& operator=(const BytecodeOutput&); // not implemented
 
+    Diagnostic& m_diags;        ///< Diagnostic reporting
     Bytes m_scratch;            ///< Reusable scratch area
     unsigned long m_num_output; ///< Total number of bytes+gap output
 };
@@ -243,17 +253,16 @@ private:
 class YASM_LIB_EXPORT BytecodeNoOutput : public BytecodeOutput
 {
 public:
-    BytecodeNoOutput() {}
+    BytecodeNoOutput(Diagnostic& diags) : BytecodeOutput(diags) {}
     ~BytecodeNoOutput();
 
 protected:
     bool ConvertValueToBytes(Value& value,
                              Bytes& bytes,
                              Location loc,
-                             int warn,
-                             Diagnostic& diags);
-    void DoOutputGap(unsigned int size);
-    void DoOutputBytes(const Bytes& bytes);
+                             int warn);
+    void DoOutputGap(unsigned int size, clang::SourceLocation source);
+    void DoOutputBytes(const Bytes& bytes, clang::SourceLocation source);
 };
 
 /// Stream output specialization of BytecodeOutput.
@@ -263,12 +272,14 @@ protected:
 class YASM_LIB_EXPORT BytecodeStreamOutput : public BytecodeOutput
 {
 public:
-    BytecodeStreamOutput(llvm::raw_ostream& os) : m_os(os) {}
+    BytecodeStreamOutput(llvm::raw_ostream& os, Diagnostic& diags)
+        : BytecodeOutput(diags), m_os(os)
+    {}
     ~BytecodeStreamOutput();
 
 protected:
-    void DoOutputGap(unsigned int size);
-    void DoOutputBytes(const Bytes& bytes);
+    void DoOutputGap(unsigned int size, clang::SourceLocation source);
+    void DoOutputBytes(const Bytes& bytes, clang::SourceLocation source);
 
     llvm::raw_ostream& m_os;
 };

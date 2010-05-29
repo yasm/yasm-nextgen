@@ -110,8 +110,8 @@ AddSpanTest(Bytecode& bc,
 class RawOutput : public BytecodeStreamOutput
 {
 public:
-    RawOutput(llvm::raw_ostream& os, const Arch& arch)
-        : BytecodeStreamOutput(os), m_arch(arch)
+    RawOutput(llvm::raw_ostream& os, const Arch& arch, Diagnostic& diags)
+        : BytecodeStreamOutput(os, diags), m_arch(arch)
     {}
     ~RawOutput() {}
 
@@ -119,8 +119,7 @@ public:
     bool ConvertValueToBytes(Value& value,
                              Bytes& bytes,
                              Location loc,
-                             int warn,
-                             Diagnostic& diags);
+                             int warn);
 
 private:
     const Arch& m_arch;
@@ -130,8 +129,7 @@ bool
 RawOutput::ConvertValueToBytes(Value& value,
                                Bytes& bytes,
                                Location loc,
-                               int warn,
-                               Diagnostic& diags)
+                               int warn)
 {
     // Simplify absolute portion of value
     if (Expr* abs = value.getAbs())
@@ -414,7 +412,7 @@ NasmInsnRunner::TestInsn(yasm::Insn* insn,
 
     llvm::SmallString<64> outbytes;
     llvm::raw_svector_ostream outstream(outbytes);
-    RawOutput outputter(outstream, *m_arch);
+    RawOutput outputter(outstream, *m_arch, diags);
     container.bytecodes_first().Output(outputter, diags);
     outstream.flush();
 

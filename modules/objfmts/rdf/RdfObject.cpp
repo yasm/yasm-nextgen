@@ -89,18 +89,14 @@ namespace {
 class RdfOutput : public BytecodeOutput
 {
 public:
-    RdfOutput(llvm::raw_ostream& os, Object& object);
+    RdfOutput(llvm::raw_ostream& os, Object& object, Diagnostic& diags);
     ~RdfOutput();
 
-    void OutputSectionToMemory(Section& sect, Diagnostic& diags);
+    void OutputSectionToMemory(Section& sect);
     void OutputSectionRelocs(const Section& sect);
     void OutputSectionToFile(const Section& sect);
 
-    void OutputSymbol(Symbol& sym,
-                      Diagnostic& diags,
-                      Errwarns& errwarns,
-                      bool all_syms,
-                      unsigned int* indx);
+    void OutputSymbol(Symbol& sym, bool all_syms, unsigned int* indx);
 
     void OutputBSS();
 
@@ -108,10 +104,9 @@ public:
     bool ConvertValueToBytes(Value& value,
                              Bytes& bytes,
                              Location loc,
-                             int warn,
-                             Diagnostic& diags);
-    void DoOutputGap(unsigned int size);
-    void DoOutputBytes(const Bytes& bytes);
+                             int warn);
+    void DoOutputGap(unsigned int size, clang::SourceLocation source);
+    void DoOutputBytes(const Bytes& bytes, clang::SourceLocation source);
 
 private:
     llvm::raw_ostream& m_os;
@@ -124,9 +119,11 @@ private:
 };
 } // anonymous namespace
 
-RdfOutput::RdfOutput(llvm::raw_ostream& os, Object& object)
-    : m_os(os)
+RdfOutput::RdfOutput(llvm::raw_ostream& os, Object& object, Diagnostic& diags)
+    : BytecodeOutput(diags)
+    , m_os(os)
     , m_object(object)
+    , m_no_output(diags)
     , m_bss_size(0)
 {
 }
@@ -144,13 +141,12 @@ bool
 RdfOutput::ConvertValueToBytes(Value& value,
                                Bytes& bytes,
                                Location loc,
-                               int warn,
-                               Diagnostic& diags)
+                               int warn)
 {
     // We can't handle these types of values
     if (value.isSectionRelative())
     {
-        diags.Report(value.getSource().getBegin(), diag::err_reloc_too_complex);
+        Diag(value.getSource().getBegin(), diag::err_reloc_too_complex);
         return false;
     }
 
@@ -162,8 +158,7 @@ RdfOutput::ConvertValueToBytes(Value& value,
     {
         if (value.isWRT())
         {
-            diags.Report(value.getSource().getBegin(),
-                         diag::err_wrt_not_supported);
+            Diag(value.getSource().getBegin(), diag::err_wrt_not_supported);
             return false;
         }
 
@@ -182,8 +177,7 @@ RdfOutput::ConvertValueToBytes(Value& value,
         }
         else if (value.hasSubRelative())
         {
-            diags.Report(value.getSource().getBegin(),
-                         diag::err_reloc_too_complex);
+            Diag(value.getSource().getBegin(), diag::err_reloc_too_complex);
             return false;
         }
 
@@ -224,22 +218,21 @@ RdfOutput::ConvertValueToBytes(Value& value,
 }
 
 void
-RdfOutput::DoOutputGap(unsigned int size)
+RdfOutput::DoOutputGap(unsigned int size, clang::SourceLocation source)
 {
-    setWarn(WARN_UNINIT_CONTENTS,
-            N_("uninitialized space declared in code/data section: zeroing"));
+    Diag(source, diag::warn_uninit_zero);
     m_rdfsect->raw_data.insert(m_rdfsect->raw_data.end(), size, 0);
 }
 
 void
-RdfOutput::DoOutputBytes(const Bytes& bytes)
+RdfOutput::DoOutputBytes(const Bytes& bytes, clang::SourceLocation source)
 {
     m_rdfsect->raw_data.insert(m_rdfsect->raw_data.end(), bytes.begin(),
                                bytes.end());
 }
 
 void
-RdfOutput::OutputSectionToMemory(Section& sect, Diagnostic& diags)
+RdfOutput::OutputSectionToMemory(Section& sect)
 {
     BytecodeOutput* outputter = this;
 
@@ -260,7 +253,7 @@ RdfOutput::OutputSectionToMemory(Section& sect, Diagnostic& diags)
     for (Section::bc_iterator i=sect.bytecodes_begin(),
          end=sect.bytecodes_end(); i != end; ++i)
     {
-        if (i->Output(*outputter, diags))
+        if (i->Output(*outputter, getDiagnostics()))
             size += i->getTotalLen();
     }
 
@@ -379,11 +372,7 @@ ParseFlags(Symbol& sym, Diagnostic& diags)
 }
 
 void
-RdfOutput::OutputSymbol(Symbol& sym,
-                        Diagnostic& diags,
-                        Errwarns& errwarns,
-                        bool all_syms,
-                        unsigned int* indx)
+RdfOutput::OutputSymbol(Symbol& sym, bool all_syms, unsigned int* indx)
 {
     int vis = sym.getVisibility();
 
@@ -406,9 +395,7 @@ RdfOutput::OutputSymbol(Symbol& sym,
     }
     else if (sym.getEqu())
     {
-        setWarn(WARN_GENERAL,
-                N_("rdf does not support exporting EQU/absolute values"));
-        errwarns.Propagate(sym.getDeclSource());
+        Diag(sym.getDeclSource(), diag::warn_export_equ);
         return;
     }
 
@@ -417,11 +404,7 @@ RdfOutput::OutputSymbol(Symbol& sym,
 
     if (len > EXIM_LABEL_MAX-1)
     {
-        setWarn(WARN_GENERAL, String::Compose(
-                N_("label name too long, truncating to %1 bytes"),
-                EXIM_LABEL_MAX));
-        errwarns.Propagate(sym.getDeclSource());
-
+        Diag(sym.getDeclSource(), diag::warn_name_too_long) << EXIM_LABEL_MAX;
         len = EXIM_LABEL_MAX-1;
     }
 
@@ -431,7 +414,7 @@ RdfOutput::OutputSymbol(Symbol& sym,
     {
         Write8(bytes, RDFREC_GLOBAL);
         Write8(bytes, 6+len+1);                 // record length
-        Write8(bytes, ParseFlags(sym, diags));  // flags
+        Write8(bytes, ParseFlags(sym, getDiagnostics())); // flags
         Write8(bytes, scnum);                   // segment referred to
         Write32(bytes, value);                  // offset
     }
@@ -455,8 +438,7 @@ RdfOutput::OutputSymbol(Symbol& sym,
             SimplifyCalcDist(csize_expr);
             if (!csize_expr.isIntNum())
             {
-                errwarns.Propagate(sym.getDeclSource(), NotConstantError(
-                    N_("COMMON data size not an integer expression")));
+                Diag(sym.getDeclSource(), diag::err_common_size_not_integer);
             }
             else
                 value = csize_expr.getIntNum().getUInt();
@@ -470,14 +452,14 @@ RdfOutput::OutputSymbol(Symbol& sym,
                 {
                     if (!nv->getName().empty())
                     {
-                        diags.Report(nv->getNameSource(),
-                                     diag::warn_unrecognized_qualifier);
+                        Diag(nv->getNameSource(),
+                             diag::warn_unrecognized_qualifier);
                         continue;
                     }
                     if (!nv->isExpr())
                     {
-                        diags.Report(nv->getValueRange().getBegin(),
-                                     diag::err_value_integer)
+                        Diag(nv->getValueRange().getBegin(),
+                             diag::err_value_integer)
                             << nv->getValueRange();
                         continue;
                     }
@@ -485,8 +467,8 @@ RdfOutput::OutputSymbol(Symbol& sym,
                     SimplifyCalcDist(aligne);
                     if (!aligne.isIntNum())
                     {
-                        diags.Report(nv->getValueRange().getBegin(),
-                                     diag::err_value_integer)
+                        Diag(nv->getValueRange().getBegin(),
+                             diag::err_value_integer)
                             << nv->getValueRange();
                         continue;
                     }
@@ -495,8 +477,8 @@ RdfOutput::OutputSymbol(Symbol& sym,
                     // Alignments must be a power of two.
                     if (!isExp2(addralign))
                     {
-                        diags.Report(nv->getValueRange().getBegin(),
-                                     diag::err_value_power2)
+                        Diag(nv->getValueRange().getBegin(),
+                             diag::err_value_power2)
                             << nv->getValueRange();
                         continue;
                     }
@@ -506,7 +488,7 @@ RdfOutput::OutputSymbol(Symbol& sym,
         }
         else if (vis & Symbol::EXTERN)
         {
-            unsigned int flags = ParseFlags(sym, diags);
+            unsigned int flags = ParseFlags(sym, getDiagnostics());
             if (flags & SYM_FAR)
             {
                 Write8(bytes, RDFREC_FARIMPORT);
@@ -563,7 +545,7 @@ RdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
         return;
     }
 
-    RdfOutput out(os, m_object);
+    RdfOutput out(os, m_object, diags);
 
     // Output custom header records (library and module, etc)
     for (std::vector<std::string>::const_iterator i=m_module_names.begin(),
@@ -590,7 +572,7 @@ RdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     for (Object::symbol_iterator sym = m_object.symbols_begin(),
          end = m_object.symbols_end(); sym != end; ++sym)
     {
-        out.OutputSymbol(*sym, diags, errwarns, all_syms, &scnum);
+        out.OutputSymbol(*sym, all_syms, &scnum);
     }
 
     // UGH! Due to the fact the relocs go at the beginning of the file, and
@@ -608,7 +590,7 @@ RdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     for (Object::section_iterator i = m_object.sections_begin(),
          end = m_object.sections_end(); i != end; ++i)
     {
-        out.OutputSectionToMemory(*i, diags);
+        out.OutputSectionToMemory(*i);
     }
 
     // Output all relocs

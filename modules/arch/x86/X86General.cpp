@@ -494,7 +494,7 @@ X86General::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
     }
 
     unsigned long pos = bytes.size();
-    bc_out.OutputBytes(bytes);
+    bc_out.OutputBytes(bytes, bc.getSource());
 
     // Calculate immediate length
     unsigned int imm_len = 0;
@@ -529,7 +529,7 @@ X86General::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
         pos += disp_len;
         Bytes& dbytes = bc_out.getScratch();
         dbytes.resize(disp_len);
-        if (!bc_out.OutputValue(m_ea->m_disp, bytes, loc, 1, diags))
+        if (!bc_out.OutputValue(m_ea->m_disp, bytes, loc, 1))
             return false;
     }
 
@@ -540,7 +540,7 @@ X86General::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
         Location loc = {&bc, bc.getFixedLen()+pos};
         Bytes& ibytes = bc_out.getScratch();
         ibytes.resize(imm_len);
-        if (!bc_out.OutputValue(*m_imm, bytes, loc, 1, diags))
+        if (!bc_out.OutputValue(*m_imm, bytes, loc, 1))
             return false;
     }
     return true;

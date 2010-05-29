@@ -281,9 +281,6 @@ add_error("err_org_overlap", "ORG overlap with already existing data")
 add_error("err_symbol_undefined", "undefined symbol '%0' (first use)")
 add_note("note_symbol_undefined_once",
          "(Each undefined symbol is reported only once.)")
-add_error("err_equ_not_integer", "global EQU value not an integer expression")
-add_error("err_common_size_not_integer",
-          "COMMON data size not an integer expression")
 add_error("err_symbol_redefined", "redefinition of '%0'")
 add_note("note_previous_definition", "'%0' previously defined here")
 add_warning("warn_extern_defined", "'%0' both defined and declared extern")
@@ -462,6 +459,18 @@ add_error("err_exponent_has_no_digits", "exponent has no digits")
 add_warning("warn_expected_hex_digit", "expected hex digit after \\x")
 add_error("err_unicode_escape_requires_hex",
           "expected hex digit for Unicode character code (%0 digits required)")
+
+# Output
+add_warning("warn_nobits_data",
+            "initialized space declared in nobits section: ignoring")
+add_warning("warn_uninit_zero",
+            "uninitialized space declared in code/data section: zeroing")
+add_warning("warn_export_equ",
+            "object format does not support exporting EQU/absolute values")
+add_warning("warn_name_too_long", "label name too long, truncating to %0 bytes")
+add_error("err_equ_not_integer", "global EQU value not an integer expression")
+add_error("err_common_size_not_integer",
+          "COMMON data size not an integer expression")
 
 #####################################################################
 # Output generation

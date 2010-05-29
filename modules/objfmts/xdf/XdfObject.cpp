@@ -95,12 +95,11 @@ namespace {
 class XdfOutput : public BytecodeStreamOutput
 {
 public:
-    XdfOutput(llvm::raw_ostream& os, Object& object);
+    XdfOutput(llvm::raw_ostream& os, Object& object, Diagnostic& diags);
     ~XdfOutput();
 
-    void OutputSection(Section& sect, Diagnostic& diags);
+    void OutputSection(Section& sect);
     void OutputSymbol(const Symbol& sym,
-                      Errwarns& errwarns,
                       bool all_syms,
                       unsigned long* strtab_offset);
 
@@ -108,8 +107,7 @@ public:
     bool ConvertValueToBytes(Value& value,
                              Bytes& bytes,
                              Location loc,
-                             int warn,
-                             Diagnostic& diags);
+                             int warn);
 
 private:
     Object& m_object;
@@ -117,9 +115,10 @@ private:
 };
 } // anonymous namespace
 
-XdfOutput::XdfOutput(llvm::raw_ostream& os, Object& object)
-    : BytecodeStreamOutput(os)
+XdfOutput::XdfOutput(llvm::raw_ostream& os, Object& object, Diagnostic& diags)
+    : BytecodeStreamOutput(os, diags)
     , m_object(object)
+    , m_no_output(diags)
 {
 }
 
@@ -131,13 +130,12 @@ bool
 XdfOutput::ConvertValueToBytes(Value& value,
                                Bytes& bytes,
                                Location loc,
-                               int warn,
-                               Diagnostic& diags)
+                               int warn)
 {
     // We can't handle these types of values
     if (value.isSectionRelative())
     {
-        diags.Report(value.getSource().getBegin(), diag::err_reloc_too_complex);
+        Diag(value.getSource().getBegin(), diag::err_reloc_too_complex);
         return false;
     }
 
@@ -157,8 +155,7 @@ XdfOutput::ConvertValueToBytes(Value& value,
         }
         else if (value.hasSubRelative())
         {
-            diags.Report(value.getSource().getBegin(),
-                         diag::err_reloc_too_complex);
+            Diag(value.getSource().getBegin(), diag::err_reloc_too_complex);
             return false;
         }
 
@@ -175,7 +172,7 @@ XdfOutput::ConvertValueToBytes(Value& value,
 }
 
 void
-XdfOutput::OutputSection(Section& sect, Diagnostic& diags)
+XdfOutput::OutputSection(Section& sect)
 {
     BytecodeOutput* outputter = this;
 
@@ -195,8 +192,7 @@ XdfOutput::OutputSection(Section& sect, Diagnostic& diags)
         pos = m_os.tell();
         if (m_os.has_error())
         {
-            diags.Report(clang::SourceLocation(),
-                         diag::err_file_output_position);
+            Diag(clang::SourceLocation(), diag::err_file_output_position);
             return;
         }
     }
@@ -205,7 +201,7 @@ XdfOutput::OutputSection(Section& sect, Diagnostic& diags)
     for (Section::bc_iterator i=sect.bytecodes_begin(),
          end=sect.bytecodes_end(); i != end; ++i)
     {
-        if (i->Output(*outputter, diags))
+        if (i->Output(*outputter, getDiagnostics()))
             xsect->size += i->getTotalLen();
     }
 
@@ -225,7 +221,7 @@ XdfOutput::OutputSection(Section& sect, Diagnostic& diags)
     pos = m_os.tell();
     if (m_os.has_error())
     {
-        diags.Report(clang::SourceLocation(), diag::err_file_output_position);
+        Diag(clang::SourceLocation(), diag::err_file_output_position);
         return;
     }
     xsect->relptr = static_cast<unsigned long>(pos);
@@ -243,7 +239,6 @@ XdfOutput::OutputSection(Section& sect, Diagnostic& diags)
 
 void
 XdfOutput::OutputSymbol(const Symbol& sym,
-                        Errwarns& errwarns,
                         bool all_syms,
                         unsigned long* strtab_offset)
 {
@@ -284,11 +279,7 @@ XdfOutput::OutputSymbol(const Symbol& sym,
         if (!equ_val_copy->isIntNum())
         {
             if (vis & Symbol::GLOBAL)
-            {
-                errwarns.Propagate(sym.getDefSource(),
-                    NotConstantError(
-                        N_("global EQU value not an integer expression")));
-            }
+                Diag(sym.getDefSource(), diag::err_equ_not_integer);
         }
         else
             value = equ_val_copy->getIntNum().getUInt();
@@ -362,7 +353,7 @@ XdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
         return;
     }
 
-    XdfOutput out(os, m_object);
+    XdfOutput out(os, m_object, diags);
 
     // Get file offset of start of string table
     unsigned long strtab_offset =
@@ -372,7 +363,7 @@ XdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     for (Object::const_symbol_iterator sym = m_object.symbols_begin(),
          end = m_object.symbols_end(); sym != end; ++sym)
     {
-        out.OutputSymbol(*sym, errwarns, all_syms, &strtab_offset);
+        out.OutputSymbol(*sym, all_syms, &strtab_offset);
     }
 
     // Output string table
@@ -387,7 +378,7 @@ XdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        out.OutputSection(*i, diags);
+        out.OutputSection(*i);
     }
 
     // Write headers

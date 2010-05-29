@@ -149,7 +149,7 @@ OrgBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
     Bytes& bytes = bc_out.getScratch();
     // XXX: handle more than 8 bit?
     bytes.insert(bytes.end(), len, static_cast<unsigned char>(m_fill));
-    bc_out.OutputBytes(bytes);
+    bc_out.OutputBytes(bytes, bc.getSource());
     return true;
 }
 

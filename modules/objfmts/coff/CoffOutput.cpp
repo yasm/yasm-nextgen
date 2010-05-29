@@ -63,21 +63,21 @@ public:
     CoffOutput(llvm::raw_ostream& os,
                CoffObject& objfmt,
                Object& object,
-               bool all_syms);
+               bool all_syms,
+               Diagnostic& diags);
     ~CoffOutput();
 
-    bool OutputSection(Section& sect, Diagnostic& diags);
+    bool OutputSection(Section& sect);
     void OutputSectionHeader(const Section& sect);
     unsigned long CountSymbols();
-    void OutputSymbolTable(Diagnostic& diags);
+    void OutputSymbolTable();
     void OutputStringTable();
 
     // OutputBytecode overrides
     bool ConvertValueToBytes(Value& value,
                              Bytes& bytes,
                              Location loc,
-                             int warn,
-                             Diagnostic& diags);
+                             int warn);
 
 private:
     CoffObject& m_objfmt;
@@ -92,12 +92,14 @@ private:
 CoffOutput::CoffOutput(llvm::raw_ostream& os,
                        CoffObject& objfmt,
                        Object& object,
-                       bool all_syms)
-    : BytecodeStreamOutput(os)
+                       bool all_syms,
+                       Diagnostic& diags)
+    : BytecodeStreamOutput(os, diags)
     , m_objfmt(objfmt)
     , m_object(object)
     , m_all_syms(all_syms)
     , m_strtab(4)   // first 4 bytes in string table are length
+    , m_no_output(diags)
 {
 }
 
@@ -109,8 +111,7 @@ bool
 CoffOutput::ConvertValueToBytes(Value& value,
                                 Bytes& bytes,
                                 Location loc,
-                                int warn,
-                                Diagnostic& diags)
+                                int warn)
 {
     // We can't handle these types of values
     if (value.getRShift() > 0
@@ -118,7 +119,7 @@ CoffOutput::ConvertValueToBytes(Value& value,
         || (value.isSectionRelative()
             && (value.isWRT() || value.hasSubRelative())))
     {
-        diags.Report(value.getSource().getBegin(), diag::err_reloc_too_complex);
+        Diag(value.getSource().getBegin(), diag::err_reloc_too_complex);
         return false;
     }
 
@@ -142,14 +143,13 @@ CoffOutput::ConvertValueToBytes(Value& value,
             Location wrt_loc, rel_loc;
             if (!sym->getLabel(&rel_loc) || !wrt->getLabel(&wrt_loc))
             {
-                diags.Report(value.getSource().getBegin(),
-                             diag::err_wrt_too_complex);
+                Diag(value.getSource().getBegin(), diag::err_wrt_too_complex);
                 return false;
             }
             if (!CalcDist(wrt_loc, rel_loc, &dist))
             {
-                diags.Report(value.getSource().getBegin(),
-                             diag::err_wrt_across_sections);
+                Diag(value.getSource().getBegin(),
+                     diag::err_wrt_across_sections);
                 return false;
             }
             sym = wrt;
@@ -166,16 +166,16 @@ CoffOutput::ConvertValueToBytes(Value& value,
                 SimplifyCalcDist(csize_expr);
                 if (!csize_expr.isIntNum())
                 {
-                    diags.Report(value.getSource().getBegin(),
-                                 diag::err_common_size_too_complex);
+                    Diag(value.getSource().getBegin(),
+                         diag::err_common_size_too_complex);
                     return false;
                 }
 
                 IntNum common_size = csize_expr.getIntNum();
                 if (common_size.getSign() < 0)
                 {
-                    diags.Report(value.getSource().getBegin(),
-                                 diag::err_common_size_negative);
+                    Diag(value.getSource().getBegin(),
+                         diag::err_common_size_negative);
                     return false;
                 }
 
@@ -208,8 +208,7 @@ CoffOutput::ConvertValueToBytes(Value& value,
         }
         else if (value.hasSubRelative())
         {
-            diags.Report(value.getSource().getBegin(),
-                         diag::err_reloc_too_complex);
+            Diag(value.getSource().getBegin(), diag::err_reloc_too_complex);
             return false;
         }
 
@@ -246,8 +245,8 @@ CoffOutput::ConvertValueToBytes(Value& value,
                     rtype = CoffReloc::I386_REL32;
                 else
                 {
-                    diags.Report(value.getSource().getBegin(),
-                                 diag::err_reloc_invalid_size);
+                    Diag(value.getSource().getBegin(),
+                         diag::err_reloc_invalid_size);
                     return false;
                 }
             }
@@ -269,8 +268,8 @@ CoffOutput::ConvertValueToBytes(Value& value,
             {
                 if (value.getSize() != 32)
                 {
-                    diags.Report(value.getSource().getBegin(),
-                                 diag::err_reloc_invalid_size);
+                    Diag(value.getSource().getBegin(),
+                         diag::err_reloc_invalid_size);
                     return false;
                 }
                 switch (value.getNextInsn())
@@ -282,8 +281,8 @@ CoffOutput::ConvertValueToBytes(Value& value,
                     case 4: rtype = CoffReloc::AMD64_REL32_4; break;
                     case 5: rtype = CoffReloc::AMD64_REL32_5; break;
                     default:
-                        diags.Report(value.getSource().getBegin(),
-                                     diag::err_reloc_invalid_size);
+                        Diag(value.getSource().getBegin(),
+                             diag::err_reloc_invalid_size);
                         return false;
                 }
             }
@@ -305,8 +304,8 @@ CoffOutput::ConvertValueToBytes(Value& value,
                     rtype = CoffReloc::AMD64_ADDR64;
                 else
                 {
-                    diags.Report(value.getSource().getBegin(),
-                                 diag::err_reloc_invalid_size);
+                    Diag(value.getSource().getBegin(),
+                         diag::err_reloc_invalid_size);
                     return false;
                 }
             }
@@ -333,7 +332,7 @@ CoffOutput::ConvertValueToBytes(Value& value,
 }
 
 bool
-CoffOutput::OutputSection(Section& sect, Diagnostic& diags)
+CoffOutput::OutputSection(Section& sect)
 {
     BytecodeOutput* outputter = this;
 
@@ -364,8 +363,7 @@ CoffOutput::OutputSection(Section& sect, Diagnostic& diags)
         pos = m_os.tell();
         if (pos < 0)
         {
-            diags.Report(clang::SourceLocation(),
-                         diag::err_file_output_position);
+            Diag(clang::SourceLocation(), diag::err_file_output_position);
             return false;
         }
     }
@@ -376,7 +374,7 @@ CoffOutput::OutputSection(Section& sect, Diagnostic& diags)
     for (Section::bc_iterator i=sect.bytecodes_begin(),
          end=sect.bytecodes_end(); i != end; ++i)
     {
-        if (i->Output(*outputter, diags))
+        if (i->Output(*outputter, getDiagnostics()))
             coffsect->m_size += i->getTotalLen();
     }
 
@@ -390,7 +388,7 @@ CoffOutput::OutputSection(Section& sect, Diagnostic& diags)
     pos = m_os.tell();
     if (pos < 0)
     {
-        diags.Report(clang::SourceLocation(), diag::err_file_output_position);
+        Diag(clang::SourceLocation(), diag::err_file_output_position);
         return false;
     }
     coffsect->m_relptr = static_cast<unsigned long>(pos);
@@ -413,7 +411,7 @@ CoffOutput::OutputSection(Section& sect, Diagnostic& diags)
         else
 #endif
         {
-            diags.Report(clang::SourceLocation(), diag::err_too_many_relocs)
+            Diag(clang::SourceLocation(), diag::err_too_many_relocs)
                 << sect.getName();
         }
     }
@@ -464,7 +462,7 @@ CoffOutput::CountSymbols()
 }
 
 void
-CoffOutput::OutputSymbolTable(Diagnostic& diags)
+CoffOutput::OutputSymbolTable()
 {
     for (Object::const_symbol_iterator i = m_object.symbols_begin(),
          end = m_object.symbols_end(); i != end; ++i)
@@ -479,7 +477,7 @@ CoffOutput::OutputSymbolTable(Diagnostic& diags)
         assert(coffsym != 0);
 
         Bytes& bytes = getScratch();
-        coffsym->Write(bytes, *i, diags, m_strtab);
+        coffsym->Write(bytes, *i, getDiagnostics(), m_strtab);
         m_os << bytes;
     }
 }
@@ -547,7 +545,7 @@ CoffObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
         return;
     }
 
-    CoffOutput out(os, *this, m_object, all_syms);
+    CoffOutput out(os, *this, m_object, all_syms, diags);
 
     // Finalize symbol table (assign index to each symbol).
     unsigned long symtab_count = out.CountSymbols();
@@ -556,7 +554,7 @@ CoffObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        if (!out.OutputSection(*i, diags))
+        if (!out.OutputSection(*i))
             return;
     }
 
@@ -568,7 +566,7 @@ CoffObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
         return;
     }
     unsigned long symtab_pos = static_cast<unsigned long>(pos);
-    out.OutputSymbolTable(diags);
+    out.OutputSymbolTable();
 
     // String table
     out.OutputStringTable();
