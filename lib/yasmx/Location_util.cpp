@@ -26,10 +26,8 @@
 //
 #include "yasmx/Location_util.h"
 
-#include "util.h"
-
 #include "llvm/ADT/APFloat.h"
-#include "yasmx/Support/errwarn.h"
+#include "llvm/ADT/SmallVector.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
@@ -58,19 +56,7 @@ TransformDistBase(Expr& e, int pos,
     // Handle symrec-symrec by checking for (-1*symrec)
     // and symrec term pairs (where both symrecs are in the same
     // segment).
-    if (root.getNumChild() > 32)
-        throw TooComplexError(N_("too many add terms; internal limit of 32"));
-
-    // Yes, this has a maximum upper bound on 32 terms, based on an
-    // "insane number of terms" (and ease of implementation) WAG.
-    // The right way to do this would be a stack-based alloca, but
-    // that's not portable.  We really don't want to alloc
-    // here as this function is hit a lot!
-    //
-    // We use chars to keep things small, as this is a recursive
-    // routine and we don't want to eat up stack space.
-    unsigned char relpos[32], subpos[32], subneg1[32], subroot[32];
-    int num_rel = 0, num_sub = 0;
+    llvm::SmallVector<int, 3> relpos, subpos, subneg1, subroot;
 
     // Scan for symrec and (-1*symrec) terms (or location equivalents)
     int n = pos-1;
@@ -93,9 +79,7 @@ TransformDistBase(Expr& e, int pos,
         // Remember symrec terms
         if (child.isType(ExprTerm::SYM | ExprTerm::LOC))
         {
-            if ((pos-n) >= 0xff)
-                throw TooComplexError(N_("expression too large"));
-            relpos[num_rel++] = pos-n;
+            relpos.push_back(pos-n);
             --n;
             continue;
         }
@@ -105,12 +89,9 @@ TransformDistBase(Expr& e, int pos,
         // Remember (-1*symrec) terms
         if (isNeg1Sym(e, &sym, &neg1, &n, true))
         {
-            if ((pos-sym) >= 0xff || (pos-neg1) >= 0xff)
-                throw TooComplexError(N_("expression too large"));
-            subpos[num_sub] = pos-sym;
-            subneg1[num_sub] = pos-neg1;
-            subroot[num_sub] = pos-curpos;
-            num_sub++;
+            subpos.push_back(pos-sym);
+            subneg1.push_back(pos-neg1);
+            subroot.push_back(pos-curpos);
             continue;
         }
 
@@ -118,12 +99,12 @@ TransformDistBase(Expr& e, int pos,
     }
 
     // Match additive and subtractive symbols.
-    for (int i=0; i<num_rel; ++i)
+    for (size_t i=0; i<relpos.size(); ++i)
     {
         ExprTerm& relterm = terms[pos-relpos[i]];
         SymbolRef rel = relterm.getSymbol();
 
-        for (int j=0; j<num_sub; ++j)
+        for (size_t j=0; j<subpos.size(); ++j)
         {
             if (subpos[j] == 0xff)
                 continue;   // previously matched
