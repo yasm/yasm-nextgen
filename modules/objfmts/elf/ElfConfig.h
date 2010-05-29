@@ -40,8 +40,8 @@ namespace yasm
 {
 
 class Bytes;
+class Diagnostic;
 class EndianState;
-class Errwarns;
 class Object;
 class Section;
 class StringTable;
@@ -87,7 +87,7 @@ struct YASM_STD_EXPORT ElfConfig
 
     unsigned long WriteSymbolTable(llvm::raw_ostream& os,
                                    Object& object,
-                                   Errwarns& errwarns,
+                                   Diagnostic& diags,
                                    Bytes& scratch) const;
     void ReadSymbolTable(const llvm::MemoryBuffer&  in,
                          const ElfSection&          symtab_sect,

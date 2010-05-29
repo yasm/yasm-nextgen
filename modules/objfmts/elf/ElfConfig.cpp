@@ -89,7 +89,7 @@ ElfConfig::AssignSymbolIndices(Object& object, ElfSymbolIndex* nlocal) const
 unsigned long
 ElfConfig::WriteSymbolTable(llvm::raw_ostream& os,
                             Object& object,
-                            Errwarns& errwarns,
+                            Diagnostic& diags,
                             Bytes& scratch) const
 {
     unsigned long size = 0;
@@ -109,7 +109,7 @@ ElfConfig::WriteSymbolTable(llvm::raw_ostream& os,
         if (!elfsym)
             continue;
 
-        elfsym->Finalize(*sym, errwarns);
+        elfsym->Finalize(*sym, diags);
 
         scratch.resize(0);
         elfsym->Write(scratch, *this);

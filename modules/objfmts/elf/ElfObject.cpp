@@ -1044,7 +1044,7 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
 
     // symbol table (.symtab)
     offset = ElfAlignOutput(os, 4, diags);
-    size = m_config.WriteSymbolTable(os, m_object, errwarns, out.getScratch());
+    size = m_config.WriteSymbolTable(os, m_object, diags, out.getScratch());
 
     ElfSection symtab_sect(m_config, SHT_SYMTAB, 0, true);
     symtab_sect.setName(symtab_name);

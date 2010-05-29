@@ -33,7 +33,7 @@
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes_util.h"
-#include "yasmx/Errwarns.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/InputBuffer.h"
 #include "yasmx/Location_util.h"
@@ -199,7 +199,7 @@ ElfSymbol::Write(YAML::Emitter& out) const
 }
 
 void
-ElfSymbol::Finalize(Symbol& sym, Errwarns& errwarns)
+ElfSymbol::Finalize(Symbol& sym, Diagnostic& diags)
 {
     // If symbol is in a TLS section, force its type to TLS.
     Location loc;
@@ -218,8 +218,7 @@ ElfSymbol::Finalize(Symbol& sym, Errwarns& errwarns)
     {
         SimplifyCalcDist(m_size);
         if (!m_size.isIntNum())
-            errwarns.Propagate(m_size_source, ValueError(
-                N_("size specifier not an integer expression")));
+            diags.Report(m_size_source, diag::err_size_integer);
     }
 
     // get EQU value for constants
@@ -233,8 +232,7 @@ ElfSymbol::Finalize(Symbol& sym, Errwarns& errwarns)
         if (equ_expr.isIntNum())
             m_value = equ_expr.getIntNum();
         else
-            errwarns.Propagate(sym.getDefSource(), ValueError(
-                N_("EQU value not an integer expression")));
+            diags.Report(sym.getDefSource(), diag::err_equ_not_integer);
 
         m_index = SHN_ABS;
     }

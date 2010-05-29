@@ -389,6 +389,7 @@ add_warning("warn_unrecognized_qualifier", "unrecognized qualifier")
 # Size/offset
 add_error("err_no_size", "no size specified")
 add_error("err_size_expression", "size must be an expression")
+add_error("err_size_integer", "size specifier must be an integer")
 add_error("err_no_offset", "no offset specified")
 add_error("err_offset_expression", "offset must be an expression")
 
@@ -468,7 +469,7 @@ add_warning("warn_uninit_zero",
 add_warning("warn_export_equ",
             "object format does not support exporting EQU/absolute values")
 add_warning("warn_name_too_long", "label name too long, truncating to %0 bytes")
-add_error("err_equ_not_integer", "global EQU value not an integer expression")
+add_error("err_equ_not_integer", "EQU value not an integer expression")
 add_error("err_common_size_not_integer",
           "COMMON data size not an integer expression")
 

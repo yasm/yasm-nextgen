@@ -47,7 +47,7 @@ namespace llvm { class MemoryBuffer; }
 namespace yasm
 {
 
-class Errwarns;
+class Diagnostic;
 class Expr;
 class Object;
 class Section;
@@ -75,7 +75,7 @@ public:
 
     void Write(YAML::Emitter& out) const;
 
-    void Finalize(Symbol& sym, Errwarns& errwarns);
+    void Finalize(Symbol& sym, Diagnostic& diags);
     void Write(Bytes& bytes, const ElfConfig& config);
 
     void setSection(Section* sect) { m_sect = sect; }
