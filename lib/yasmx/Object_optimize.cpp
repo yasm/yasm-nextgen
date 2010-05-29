@@ -997,8 +997,8 @@ Object::Optimize(Diagnostic& diags)
         unsigned long offset = 0;
 
         // Set the offset of the first (empty) bytecode.
-        sect->bytecodes_first().setIndex(bc_index++);
-        sect->bytecodes_first().setOffset(0);
+        sect->bytecodes_front().setIndex(bc_index++);
+        sect->bytecodes_front().setOffset(0);
 
         // Iterate through the remainder, if any.
         for (Section::bc_iterator bc=sect->bytecodes_begin(),

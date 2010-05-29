@@ -1472,7 +1472,7 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
             else
             {
                 SymbolRef sym = m_object->AddNonTableSymbol("$$");
-                Location loc = {&m_container->bytecodes_first(), 0};
+                Location loc = {&m_container->bytecodes_front(), 0};
                 sym->CheckedDefineLabel(loc, m_token.getLocation(),
                                         m_preproc.getDiagnostics());
                 e = sym;

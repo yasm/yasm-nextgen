@@ -139,7 +139,7 @@ ElfSymbol::CreateSymbol(Object& object, const StringTable& strtab) const
     }
     else if (m_sect != 0)
     {
-        Location loc = {&m_sect->bytecodes_first(), m_value.getUInt()};
+        Location loc = {&m_sect->bytecodes_front(), m_value.getUInt()};
         sym->DefineLabel(loc);
     }
 

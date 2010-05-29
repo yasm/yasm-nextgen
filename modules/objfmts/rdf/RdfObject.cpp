@@ -258,7 +258,7 @@ RdfOutput::OutputSectionToMemory(Section& sect)
     }
 
     // Sanity check final section size
-    assert(size == sect.bytecodes_last().getNextOffset());
+    assert(size == sect.bytecodes_back().getNextOffset());
 
     if (sect.isBSS())
     {
@@ -737,12 +737,12 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
             if (inbuf.getReadableSize() < size)
                 throw Error(String::Compose(
                     N_("could not read section %1 data"), rsect->scnum));
-            section->bytecodes_first().getFixed().Write(inbuf.Read(size), size);
+            section->bytecodes_front().getFixed().Write(inbuf.Read(size), size);
         }
 
         // Create symbol for section start (used for relocations)
         SymbolRef sym = m_object.AddNonTableSymbol(sectname);
-        Location loc = {&section->bytecodes_first(), 0};
+        Location loc = {&section->bytecodes_front(), 0};
         sym->DefineLabel(loc);
         // and keep in symtab map
         symtab.grow(rsect->scnum);
@@ -828,7 +828,7 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
                 // Create symbol
                 SymbolRef sym = m_object.getSymbol(symname);
                 Section& sect = m_object.getSection(scnum);
-                Location loc = {&sect.bytecodes_first(), value};
+                Location loc = {&sect.bytecodes_front(), value};
                 sym->DefineLabel(loc);
                 sym->Declare(Symbol::GLOBAL);
                 break;
@@ -862,7 +862,7 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
 
                 // Create symbol for section start (used for relocations)
                 SymbolRef sym = m_object.AddNonTableSymbol(".bss");
-                Location loc = {&section->bytecodes_first(), 0};
+                Location loc = {&section->bytecodes_front(), 0};
                 sym->DefineLabel(loc);
                 // and keep in symtab map
                 unsigned int scnum = m_object.getNumSections();
@@ -947,7 +947,7 @@ RdfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
     m_object.AppendSection(std::auto_ptr<Section>(section));
 
     // Define a label for the start of the section
-    Location start = {&section->bytecodes_first(), 0};
+    Location start = {&section->bytecodes_front(), 0};
     SymbolRef sym = m_object.getSymbol(name);
     if (!sym->isDefined())
     {

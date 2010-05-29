@@ -99,10 +99,10 @@ public:
     bc_iterator bytecodes_end() { return m_bcs.end(); }
     const_bc_iterator bytecodes_end() const { return m_bcs.end(); }
 
-    Bytecode& bytecodes_first() { return m_bcs.front(); }
-    const Bytecode& bytecodes_first() const { return m_bcs.front(); }
-    Bytecode& bytecodes_last() { return m_bcs.back(); }
-    const Bytecode& bytecodes_last() const { return m_bcs.back(); }
+    Bytecode& bytecodes_front() { return m_bcs.front(); }
+    const Bytecode& bytecodes_front() const { return m_bcs.front(); }
+    Bytecode& bytecodes_back() { return m_bcs.back(); }
+    const Bytecode& bytecodes_back() const { return m_bcs.back(); }
 
     /// Finalize all bytecodes after parsing.
     /// @param diags        diagnostic reporting

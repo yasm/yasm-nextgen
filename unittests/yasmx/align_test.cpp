@@ -39,7 +39,7 @@ TEST(AlignTest, Append)
                       yasm::Expr(),    // maxskip
                       0,               // code fill
                       clang::SourceLocation::getFromRawEncoding(5));
-    yasm::Bytecode& align = container.bytecodes_first();
+    yasm::Bytecode& align = container.bytecodes_front();
 
     // align always results in contents
     EXPECT_TRUE(align.hasContents());

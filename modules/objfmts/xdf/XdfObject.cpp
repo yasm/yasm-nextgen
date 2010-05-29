@@ -185,7 +185,7 @@ XdfOutput::OutputSection(Section& sect)
         // Don't output BSS sections.
         outputter = &m_no_output;
         pos = 0;    // position = 0 because it's not in the file
-        xsect->size = sect.bytecodes_last().getNextOffset();
+        xsect->size = sect.bytecodes_back().getNextOffset();
     }
     else
     {
@@ -206,7 +206,7 @@ XdfOutput::OutputSection(Section& sect)
     }
 
     // Sanity check final section size
-    assert(xsect->size == sect.bytecodes_last().getNextOffset());
+    assert(xsect->size == sect.bytecodes_back().getNextOffset());
 
     // Empty?  Go on to next section
     if (xsect->size == 0)
@@ -532,7 +532,7 @@ XdfObject::Read(const llvm::MemoryBuffer& in)
                 throw Error(String::Compose(
                     N_("could not read section `%1' data"), sectname));
 
-            section->bytecodes_first().getFixed().Write(inbuf.Read(xsect->size),
+            section->bytecodes_front().getFixed().Write(inbuf.Read(xsect->size),
                                                         xsect->size);
         }
 
@@ -565,7 +565,7 @@ XdfObject::Read(const llvm::MemoryBuffer& in)
         else if (sym_scnum < scnum)
         {
             Section& sect = m_object.getSection(sym_scnum);
-            Location loc = {&sect.bytecodes_first(), value};
+            Location loc = {&sect.bytecodes_front(), value};
             sym->DefineLabel(loc);
         }
 
@@ -622,7 +622,7 @@ XdfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
     m_object.AppendSection(std::auto_ptr<Section>(section));
 
     // Define a label for the start of the section
-    Location start = {&section->bytecodes_first(), 0};
+    Location start = {&section->bytecodes_front(), 0};
     SymbolRef sym = m_object.getSymbol(name);
     if (!sym->isDefined())
     {

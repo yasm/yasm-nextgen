@@ -868,7 +868,7 @@ ElfOutput::OutputSection(Section& sect,
             return;
         }
 
-        if (sect.bytecodes_last().getNextOffset() == 0)
+        if (sect.bytecodes_back().getNextOffset() == 0)
             return;
 
         m_fd_os.seek(elfsect->setFileOffset(pos));
@@ -891,7 +891,7 @@ ElfOutput::OutputSection(Section& sect,
         return;
 
     // Sanity check final section size
-    assert(elfsect->getSize() == sect.bytecodes_last().getNextOffset());
+    assert(elfsect->getSize() == sect.bytecodes_back().getNextOffset());
 
     // Empty?  Go on to next section
     if (elfsect->isEmpty())
@@ -1180,7 +1180,7 @@ ElfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
     section->setAlign(align);
 
     // Define a label for the start of the section
-    Location start = {&section->bytecodes_first(), 0};
+    Location start = {&section->bytecodes_front(), 0};
     SymbolRef sym = m_object.getSymbol(name);
     if (!sym->isDefined())
     {

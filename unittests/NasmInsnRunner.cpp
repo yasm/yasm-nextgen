@@ -401,8 +401,8 @@ NasmInsnRunner::TestInsn(yasm::Insn* insn,
     if (diags.hasErrorOccurred())
         return;
 
-    container.bytecodes_first().CalcLen(AddSpanTest, diags);
-    ASSERT_EQ(golden_len, container.bytecodes_first().getTotalLen());
+    container.bytecodes_front().CalcLen(AddSpanTest, diags);
+    ASSERT_EQ(golden_len, container.bytecodes_front().getTotalLen());
     if (diags.hasErrorOccurred())
         return;
 
@@ -413,7 +413,7 @@ NasmInsnRunner::TestInsn(yasm::Insn* insn,
     llvm::SmallString<64> outbytes;
     llvm::raw_svector_ostream outstream(outbytes);
     RawOutput outputter(outstream, *m_arch, diags);
-    container.bytecodes_first().Output(outputter);
+    container.bytecodes_front().Output(outputter);
     outstream.flush();
 
     //

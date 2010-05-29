@@ -400,7 +400,7 @@ Win64Object::DirEndProcFrame(DirectiveInfo& info, Diagnostic& diags)
     // Get current position in .xdata section.
     SymbolRef unwindpos = m_object.AddNonTableSymbol("$");
     Location unwindpos_loc =
-        {&xdata->bytecodes_last(), xdata->bytecodes_last().getFixedLen()};
+        {&xdata->bytecodes_back(), xdata->bytecodes_back().getFixedLen()};
     unwindpos->DefineLabel(unwindpos_loc);
     // Get symbol for .xdata as we'll want to reference it with WRT.
     SymbolRef xdata_sym = xdata->getAssocData<CoffSection>()->m_sym;

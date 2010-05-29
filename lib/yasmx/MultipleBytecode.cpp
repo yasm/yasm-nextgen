@@ -204,11 +204,11 @@ MultipleBytecode::Expand(Bytecode& bc,
     }
     else
     {
-        if (!m_contents.bytecodes_first().Expand(span, old_val, new_val, keep,
+        if (!m_contents.bytecodes_front().Expand(span, old_val, new_val, keep,
                                                  neg_thres, pos_thres, diags))
             return false;
     }
-    *len = m_contents.bytecodes_first().getTotalLen() * m_mult_int;
+    *len = m_contents.bytecodes_front().getTotalLen() * m_mult_int;
     return true;
 }
 

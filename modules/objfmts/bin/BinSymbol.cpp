@@ -121,7 +121,7 @@ objfmt::BinSimplify(Expr& e)
             continue;
 
         BytecodeContainer* container = loc.bc->getContainer();
-        Location first = {&container->bytecodes_first(), 0};
+        Location first = {&container->bytecodes_front(), 0};
         IntNum dist;
         if (CalcDist(first, loc, &dist))
         {

@@ -278,7 +278,7 @@ ElfSection::LoadSectionData(Section& sect, const llvm::MemoryBuffer& in) const
         throw Error(String::Compose(
             N_("could not read section `%1' data"), getName()));
 
-    sect.bytecodes_first().getFixed().Write(inbuf.Read(size), size);
+    sect.bytecodes_front().getFixed().Write(inbuf.Read(size), size);
 }
 
 unsigned long

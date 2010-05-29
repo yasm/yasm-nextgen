@@ -214,9 +214,9 @@ BinLink::CreateLMAGroup(Section& section)
     }
 
     // Calculate section integer length.
-    Location start = {&section.bytecodes_first(), 0};
-    Location end = {&section.bytecodes_last(),
-                    section.bytecodes_last().getTotalLen()};
+    Location start = {&section.bytecodes_front(), 0};
+    Location end = {&section.bytecodes_back(),
+                    section.bytecodes_back().getTotalLen()};
     if (!CalcDist(start, end, &bsd->length))
     {
         m_diags.Report(bsd->vstart_source,

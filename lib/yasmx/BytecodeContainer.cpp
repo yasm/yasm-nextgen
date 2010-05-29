@@ -189,7 +189,7 @@ BytecodeContainer::StartBytecode()
 Bytecode&
 BytecodeContainer::FreshBytecode()
 {
-    Bytecode& bc = bytecodes_last();
+    Bytecode& bc = bytecodes_back();
     if (bc.hasContents())
         return StartBytecode();
     return bc;

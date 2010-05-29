@@ -212,7 +212,7 @@ DumpSectionHeaders(const yasm::Object& object)
     {
         os << llvm::format("%3d", idx) << ' '
            << llvm::format("%-13s", sect->getName().str().c_str()) << ' ';
-        yasm::IntNum(sect->bytecodes_last().getNextOffset())
+        yasm::IntNum(sect->bytecodes_back().getNextOffset())
             .Print(os, 16, true, false, 32);
         os << "  ";
         sect->getVMA().Print(os, 16, true, false, bits);
@@ -341,7 +341,7 @@ DumpContents(const yasm::Object& object)
         if (sect->isBSS())
             continue;
 
-        unsigned long size = sect->bytecodes_last().getNextOffset();
+        unsigned long size = sect->bytecodes_back().getNextOffset();
         if (size == 0)
             continue;   // empty
 

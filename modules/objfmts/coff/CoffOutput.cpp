@@ -357,7 +357,7 @@ CoffOutput::OutputSection(Section& sect)
     }
     else
     {
-        if (sect.bytecodes_last().getNextOffset() == 0)
+        if (sect.bytecodes_back().getNextOffset() == 0)
             return true;
 
         pos = m_os.tell();
@@ -379,7 +379,7 @@ CoffOutput::OutputSection(Section& sect)
     }
 
     // Sanity check final section size
-    assert(coffsect->m_size == sect.bytecodes_last().getNextOffset());
+    assert(coffsect->m_size == sect.bytecodes_back().getNextOffset());
 
     // No relocations to output?  Go on to next section
     if (sect.getRelocs().size() == 0)
@@ -533,7 +533,7 @@ CoffObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
                 i->setVMA(addr);
             else
                 i->setVMA(0);
-            addr += i->bytecodes_last().getNextOffset();
+            addr += i->bytecodes_back().getNextOffset();
         }
     }
 

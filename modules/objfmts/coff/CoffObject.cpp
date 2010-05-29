@@ -166,7 +166,7 @@ CoffObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
     m_object.AppendSection(std::auto_ptr<Section>(section));
 
     // Define a label for the start of the section
-    Location start = {&section->bytecodes_first(), 0};
+    Location start = {&section->bytecodes_front(), 0};
     SymbolRef sym = m_object.getSymbol(name);
     if (!sym->isDefined())
     {
