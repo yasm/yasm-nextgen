@@ -44,7 +44,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 BinGroup::BinGroup(Section& section, BinSection& bsd)
     : m_section(section),

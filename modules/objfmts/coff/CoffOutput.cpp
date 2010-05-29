@@ -54,7 +54,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 namespace {
 class CoffOutput : public BytecodeStreamOutput

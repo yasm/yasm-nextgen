@@ -41,7 +41,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 static void
 MapPrescanBytes(const Section& sect, const BinSection& bsd, int* bytes)

@@ -55,7 +55,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 static const unsigned long XDF_MAGIC = 0x87654322;
 static const unsigned int FILEHEAD_SIZE = 16;

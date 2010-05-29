@@ -38,7 +38,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 ElfReloc::ElfReloc(SymbolRef sym, const IntNum& addr)
     : Reloc(addr, sym)

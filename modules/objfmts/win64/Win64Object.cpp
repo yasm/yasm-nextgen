@@ -45,7 +45,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 Win64Object::Win64Object(const ObjectFormatModule& module, Object& object)
     : Win32Object(module, object)

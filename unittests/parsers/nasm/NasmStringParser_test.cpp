@@ -40,7 +40,7 @@
 
 
 using namespace yasm;
-using namespace parser;
+using namespace yasm::parser;
 using namespace yasmunit;
 
 struct strtest

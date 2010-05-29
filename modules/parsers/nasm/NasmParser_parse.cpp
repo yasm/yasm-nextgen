@@ -63,7 +63,7 @@ STATISTIC(num_insn, "Number of instructions parsed");
 STATISTIC(num_insn_operand, "Number of instruction operands parsed");
 
 using namespace yasm;
-using namespace parser;
+using namespace yasm::parser;
 
 /// Identify pseudo-instructions.  We can't simply pre-populate IdentifierTable
 /// because of large numbers of combinations due to case-insensitivity.

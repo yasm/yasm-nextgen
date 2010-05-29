@@ -33,7 +33,7 @@
 
 
 using namespace yasm;
-using namespace parser;
+using namespace yasm::parser;
 
 static inline bool
 isoctdigit(char ch)

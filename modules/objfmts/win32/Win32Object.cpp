@@ -45,7 +45,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 Win32Object::Win32Object(const ObjectFormatModule& module, Object& object)
     : CoffObject(module, object, false, true)

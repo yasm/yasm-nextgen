@@ -33,7 +33,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 namespace {
 class ElfReloc_x86_x86 : public ElfReloc

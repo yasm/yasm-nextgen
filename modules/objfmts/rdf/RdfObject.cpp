@@ -61,7 +61,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 static const unsigned char RDF_MAGIC[] = {'R', 'D', 'O', 'F', 'F', '2'};
 

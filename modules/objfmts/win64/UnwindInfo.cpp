@@ -39,7 +39,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 #define UNW_FLAG_EHANDLER   0x01
 #define UNW_FLAG_UHANDLER   0x02

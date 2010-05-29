@@ -54,7 +54,7 @@ STATISTIC(num_generic, "Number of generic instructions appended");
 STATISTIC(num_generic_bc, "Number of generic bytecodes created");
 
 using namespace yasm;
-using namespace arch;
+using namespace yasm::arch;
 
 namespace {
 class X86General : public Bytecode::Contents

@@ -42,7 +42,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 const char* CoffSymbol::key = "objfmt::coff::CoffSymbol";
 

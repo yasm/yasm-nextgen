@@ -30,7 +30,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 const char* RdfSymbol::key = "objfmt::rdf::RdfSymbol";
 

@@ -40,7 +40,7 @@
 STATISTIC(num_jmpfar, "Number of far jump instructions appended");
 
 using namespace yasm;
-using namespace arch;
+using namespace yasm::arch;
 
 void
 arch::AppendJmpFar(BytecodeContainer& container,

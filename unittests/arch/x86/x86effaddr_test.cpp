@@ -46,7 +46,7 @@
 #endif
 
 using namespace yasm;
-using namespace arch;
+using namespace yasm::arch;
 
 class X86EffAddrTestBase
 {

@@ -56,7 +56,7 @@
 
 
 using namespace yasm;
-using namespace parser;
+using namespace yasm::parser;
 
 bool
 GasParser::ParseLine()

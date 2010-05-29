@@ -30,7 +30,7 @@
 
 
 using namespace yasm;
-using namespace dbgfmt;
+using namespace yasm::dbgfmt;
 
 NullDebug::~NullDebug()
 {

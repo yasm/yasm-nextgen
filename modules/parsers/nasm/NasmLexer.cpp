@@ -45,7 +45,7 @@ STATISTIC(num_string_literal, "Number of string literals lexed");
 STATISTIC(num_eol_comment, "Number of EOL comments lexed");
 
 using namespace yasm;
-using namespace parser;
+using namespace yasm::parser;
 
 NasmLexer::NasmLexer(clang::FileID fid,
                      const llvm::MemoryBuffer* input_buffer,

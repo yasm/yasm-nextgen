@@ -49,7 +49,7 @@ STATISTIC(num_jmp, "Number of jump instructions appended");
 STATISTIC(num_jmp_bc, "Number of jump bytecodes created");
 
 using namespace yasm;
-using namespace arch;
+using namespace yasm::arch;
 
 namespace {
 class X86Jmp : public Bytecode::Contents

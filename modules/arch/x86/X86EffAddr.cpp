@@ -39,7 +39,7 @@
 
 
 using namespace yasm;
-using namespace arch;
+using namespace yasm::arch;
 
 bool
 arch::setRexFromReg(unsigned char* rex,

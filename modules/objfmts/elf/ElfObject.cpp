@@ -74,7 +74,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 static inline bool
 isLocal(const Symbol& sym)

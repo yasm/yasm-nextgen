@@ -41,7 +41,7 @@
 
 
 using namespace yasm;
-using namespace parser;
+using namespace yasm::parser;
 
 GasParser::GasParser(const ParserModule& module,
                      Diagnostic& diags,

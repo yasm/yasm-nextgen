@@ -40,7 +40,7 @@
 
 
 using namespace yasm;
-using namespace parser;
+using namespace yasm::parser;
 
 /// decimal integer: [1-9] [0-9]*
 /// binary integer: "0" [bB] [01]+

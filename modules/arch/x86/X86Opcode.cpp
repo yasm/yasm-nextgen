@@ -33,7 +33,7 @@
 
 
 using namespace yasm;
-using namespace arch;
+using namespace yasm::arch;
 
 YAML::Emitter&
 arch::operator<< (YAML::Emitter& out, const X86Opcode& opcode)

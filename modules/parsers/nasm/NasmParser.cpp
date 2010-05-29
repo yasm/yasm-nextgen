@@ -38,7 +38,7 @@
 
 
 using namespace yasm;
-using namespace parser;
+using namespace yasm::parser;
 
 NasmParser::NasmParser(const ParserModule& module,
                        Diagnostic& diags,

@@ -61,7 +61,7 @@ STATISTIC(num_jmp_groups_scanned, "Total number of jump groups scanned");
 STATISTIC(num_empty_insn, "Number of empty instructions created");
 
 using namespace yasm;
-using namespace arch;
+using namespace yasm::arch;
 
 static std::string CpuFindReverse(unsigned int cpu0, unsigned int cpu1,
                                   unsigned int cpu2);

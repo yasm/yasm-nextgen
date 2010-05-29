@@ -38,7 +38,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 const char* BinSymbol::key = "objfmt::bin::BinSymbol";
 

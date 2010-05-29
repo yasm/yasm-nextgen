@@ -34,7 +34,7 @@
 
 
 using namespace yasm;
-using namespace parser;
+using namespace yasm::parser;
 
 NasmPreproc::NasmPreproc(Diagnostic& diags,
                          clang::SourceManager& sm,

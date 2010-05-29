@@ -42,7 +42,7 @@
 
 
 using namespace yasm;
-using namespace arch;
+using namespace yasm::arch;
 
 #ifndef NELEMS
 #define NELEMS(x) (sizeof(x)/sizeof(x[0]))

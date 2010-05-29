@@ -37,7 +37,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 CoffReloc::CoffReloc(const IntNum& addr, SymbolRef sym, Type type)
     : Reloc(addr, sym)

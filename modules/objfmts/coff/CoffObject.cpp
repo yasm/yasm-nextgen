@@ -47,7 +47,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 CoffObject::CoffObject(const ObjectFormatModule& module,
                        Object& object,

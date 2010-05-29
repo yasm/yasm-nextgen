@@ -35,7 +35,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 RdfReloc::RdfReloc(const IntNum& addr,
                    SymbolRef sym,

@@ -36,7 +36,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 namespace {
 class SxData : public Bytecode::Contents

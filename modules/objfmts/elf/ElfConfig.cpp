@@ -41,7 +41,7 @@
 
 
 using namespace yasm;
-using namespace objfmt;
+using namespace yasm::objfmt;
 
 ElfConfig::ElfConfig()
     : cls(ELFCLASSNONE)
