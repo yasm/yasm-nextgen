@@ -50,7 +50,7 @@ class NameValues;
 namespace parser
 {
 
-class YASM_STD_EXPORT NasmParser : public ParserImpl
+class YASM_STD_EXPORT NasmParser : public Parser, public ParserImpl
 {
 public:
     NasmParser(const ParserModule& module,

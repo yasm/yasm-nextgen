@@ -36,7 +36,6 @@
 #include "yasmx/Config/export.h"
 #include "yasmx/Parse/Preprocessor.h"
 #include "yasmx/Parse/Token.h"
-#include "yasmx/Parser.h"
 
 
 namespace clang
@@ -50,7 +49,7 @@ namespace yasm
 class DiagnosticBuilder;
 class Errwarns;
 
-class YASM_LIB_EXPORT ParserImpl : public Parser
+class YASM_LIB_EXPORT ParserImpl
 {
 protected:
     Preprocessor& m_preproc;
@@ -68,7 +67,7 @@ private:
     unsigned short m_paren_count, m_bracket_count;
 
 public:
-    ParserImpl(const ParserModule& module, Preprocessor& preproc);
+    ParserImpl(Preprocessor& preproc);
     virtual ~ParserImpl();
 
     /// Return true if the cur token is '(' or ')'.

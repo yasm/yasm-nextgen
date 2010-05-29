@@ -47,7 +47,8 @@ GasParser::GasParser(const ParserModule& module,
                      Diagnostic& diags,
                      clang::SourceManager& sm,
                      HeaderSearch& headers)
-    : ParserImpl(module, m_gas_preproc)
+    : Parser(module)
+    , ParserImpl(m_gas_preproc)
     , m_gas_preproc(diags, sm, headers)
 {
     static const GasDirLookup gas_dirs_init[] =

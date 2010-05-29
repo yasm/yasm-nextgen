@@ -73,7 +73,7 @@ struct GasDirLookup
     unsigned int param;
 };
 
-class YASM_STD_EXPORT GasParser : public ParserImpl
+class YASM_STD_EXPORT GasParser : public Parser, public ParserImpl
 {
 public:
     GasParser(const ParserModule& module,
