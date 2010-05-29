@@ -472,6 +472,11 @@ add_error("err_equ_not_integer", "global EQU value not an integer expression")
 add_error("err_common_size_not_integer",
           "COMMON data size not an integer expression")
 
+# Win64 object format
+add_error("err_eof_proc_frame", "end of file in procedure frame")
+add_note("note_proc_started_here", "procedure started here")
+
+
 #####################################################################
 # Output generation
 #####################################################################

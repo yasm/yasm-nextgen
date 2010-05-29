@@ -28,8 +28,6 @@
 
 #include "util.h"
 
-#include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
 #include "yasmx/BytecodeContainer.h"
@@ -63,9 +61,8 @@ Win64Object::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
 {
     if (m_proc_frame.isValid())
     {
-        Error err(N_("end of file in procedure frame"));
-        err.setXRef(m_proc_frame, N_("procedure started here"));
-        errwarns.Propagate(clang::SourceRange(), err);
+        diags.Report(clang::SourceLocation(), diag::err_eof_proc_frame);
+        diags.Report(m_proc_frame, diag::note_proc_started_here);
         return;
     }
 
