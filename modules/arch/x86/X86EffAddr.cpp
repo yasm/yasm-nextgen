@@ -38,20 +38,16 @@
 #include "X86Register.h"
 
 
-namespace yasm
-{
-namespace arch
-{
-namespace x86
-{
+using namespace yasm;
+using namespace arch;
 
 bool
-setRexFromReg(unsigned char* rex,
-              unsigned char* low3,
-              X86Register::Type reg_type,
-              unsigned int reg_num,
-              unsigned int bits,
-              X86RexBitPos rexbit)
+arch::setRexFromReg(unsigned char* rex,
+                    unsigned char* low3,
+                    X86Register::Type reg_type,
+                    unsigned int reg_num,
+                    unsigned int bits,
+                    X86RexBitPos rexbit)
 {
     *low3 = reg_num&7;
 
@@ -209,7 +205,6 @@ X86EffAddr::DoWrite(YAML::Emitter& out) const
 }
 
 namespace {
-
 class X86EAChecker
 {
 public:
@@ -246,6 +241,7 @@ private:
     unsigned int m_bits;
     unsigned int m_addrsize;
 };
+} // anonymous namespace
 
 // Only works if term.type == Expr::REG (doesn't check).
 // Overwrites term with intnum of 0 (to eliminate regs from the final expr).
@@ -580,8 +576,6 @@ X86EAChecker::GetRegUsage(Expr& e, /*@null@*/ int* indexreg, bool* ip_rel)
 
     return 0;
 }
-
-} // anonymous namespace
 
 /*@-nullstate@*/
 bool
@@ -1230,5 +1224,3 @@ X86EffAddr::Finalize(Diagnostic& diags)
     }
     return true;
 }
-
-}}} // namespace yasm::arch::x86

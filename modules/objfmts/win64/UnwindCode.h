@@ -41,8 +41,6 @@ class BytecodeContainer;
 
 namespace objfmt
 {
-namespace win64
-{
 
 class YASM_STD_EXPORT UnwindCode : public Bytecode::Contents
 {
@@ -125,6 +123,6 @@ YASM_STD_EXPORT
 void AppendUnwindCode(BytecodeContainer& container,
                       std::auto_ptr<UnwindCode> uwcode);
 
-}}} // namespace yasm::objfmt::win64
+}} // namespace yasm::objfmt
 
 #endif

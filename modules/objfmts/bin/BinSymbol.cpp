@@ -37,12 +37,8 @@
 #include "BinSection.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace bin
-{
+using namespace yasm;
+using namespace objfmt;
 
 const char* BinSymbol::key = "objfmt::bin::BinSymbol";
 
@@ -102,7 +98,7 @@ BinSymbol::getValue(IntNum* val) const
 }
 
 void
-BinSimplify(Expr& e)
+objfmt::BinSimplify(Expr& e)
 {
     for (ExprTerms::iterator i=e.getTerms().begin(),
          end=e.getTerms().end(); i != end; ++i)
@@ -135,5 +131,3 @@ BinSimplify(Expr& e)
         }
     }
 }
-
-}}} // namespace yasm::objfmt::bin

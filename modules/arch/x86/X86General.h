@@ -41,35 +41,33 @@ class Value;
 
 namespace arch
 {
-namespace x86
-{
 
 class X86Common;
 class X86EffAddr;
 class X86Opcode;
 
 // Postponed (from parsing to later binding) action options.
-enum GeneralPostOp
+enum X86GeneralPostOp
 {
     // None
-    POSTOP_NONE = 0,
+    X86_POSTOP_NONE = 0,
 
     // Instructions that take a sign-extended imm8 as well as imm values
     // (eg, the arith instructions and a subset of the imul instructions)
     // should set this and put the imm8 form as the "normal" opcode (in
     // the first one or two bytes) and non-imm8 form in the second or
     // third byte of the opcode.
-    POSTOP_SIGNEXT_IMM8,
+    X86_POSTOP_SIGNEXT_IMM8,
 
     // Could become a short opcode mov with bits=64 and a32 prefix.
-    POSTOP_SHORT_MOV,
+    X86_POSTOP_SHORT_MOV,
 
     // Override any attempt at address-size override to 16 bits, and never
     // generate a prefix.  This is used for the ENTER opcode.
-    POSTOP_ADDRESS16,
+    X86_POSTOP_ADDRESS16,
 
     // Large imm64 that can become a sign-extended imm32.
-    POSTOP_SIMM32_AVAIL
+    X86_POSTOP_SIMM32_AVAIL
 };
 
 YASM_STD_EXPORT
@@ -80,10 +78,10 @@ void AppendGeneral(BytecodeContainer& container,
                    std::auto_ptr<Value> imm,
                    unsigned char special_prefix,
                    unsigned char rex,
-                   GeneralPostOp postop,
+                   X86GeneralPostOp postop,
                    bool default_rel,
                    clang::SourceLocation source);
 
-}}} // namespace yasm::arch::x86
+}} // namespace yasm::arch
 
 #endif

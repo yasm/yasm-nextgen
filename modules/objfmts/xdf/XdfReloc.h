@@ -42,8 +42,6 @@ class Value;
 
 namespace objfmt
 {
-namespace xdf
-{
 
 class YASM_STD_EXPORT XdfReloc : public Reloc
 {
@@ -89,6 +87,6 @@ private:
     unsigned int m_shift;   //< relocation shift (0,4,8,16,24,32)
 };
 
-}}} // namespace yasm::objfmt::xdf
+}} // namespace yasm::objfmt
 
 #endif

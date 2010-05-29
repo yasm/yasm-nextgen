@@ -37,12 +37,8 @@
 #include "X86Register.h"
 
 
-namespace yasm
-{
-namespace arch
-{
-namespace x86
-{
+using namespace yasm;
+using namespace arch;
 
 X86Common::X86Common()
     : m_addrsize(0),
@@ -135,7 +131,7 @@ X86Common::Finish()
 }
 
 YAML::Emitter&
-operator<< (YAML::Emitter& out, const X86Common& common)
+arch::operator<< (YAML::Emitter& out, const X86Common& common)
 {
     out << YAML::Flow << YAML::BeginMap;
     out << YAML::Key << "addrsize";
@@ -179,5 +175,3 @@ X86Common::ToBytes(Bytes& bytes, const X86SegmentRegister* segreg) const
     if (m_lockrep_pre != 0)
         Write8(bytes, m_lockrep_pre);
 }
-
-}}} // namespace yasm::arch::x86

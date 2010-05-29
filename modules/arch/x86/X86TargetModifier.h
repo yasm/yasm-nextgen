@@ -32,8 +32,6 @@ namespace yasm
 {
 namespace arch
 {
-namespace x86
-{
 
 class YASM_STD_EXPORT X86TargetModifier : public TargetModifier
 {
@@ -62,6 +60,6 @@ private:
     Type m_type;
 };
 
-}}} // namespace yasm::arch::x86
+}} // namespace yasm::arch
 
 #endif

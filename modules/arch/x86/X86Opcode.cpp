@@ -32,15 +32,11 @@
 #include "yasmx/Bytes.h"
 
 
-namespace yasm
-{
-namespace arch
-{
-namespace x86
-{
+using namespace yasm;
+using namespace arch;
 
 YAML::Emitter&
-operator<< (YAML::Emitter& out, const X86Opcode& opcode)
+arch::operator<< (YAML::Emitter& out, const X86Opcode& opcode)
 {
     if (opcode.m_len == 0)
     {
@@ -81,5 +77,3 @@ X86Opcode::MakeAlt2()
     m_opcode[1] = m_opcode[2];
     m_len = 2;
 }
-
-}}} // namespace yasm::arch::x86

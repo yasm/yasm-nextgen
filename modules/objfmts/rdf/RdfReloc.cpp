@@ -34,12 +34,8 @@
 #include "RdfRecords.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace rdf
-{
+using namespace yasm;
+using namespace objfmt;
 
 RdfReloc::RdfReloc(const IntNum& addr,
                    SymbolRef sym,
@@ -114,5 +110,3 @@ RdfReloc::DoWrite(YAML::Emitter& out) const
     out << YAML::Key << "refseg" << YAML::Value << m_refseg;
     out << YAML::EndMap;
 }
-
-}}} // namespace yasm::objfmt::rdf

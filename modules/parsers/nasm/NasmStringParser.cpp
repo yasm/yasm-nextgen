@@ -32,12 +32,8 @@
 #include "yasmx/IntNum.h"
 
 
-namespace yasm
-{
-namespace parser
-{
-namespace nasm
-{
+using namespace yasm;
+using namespace parser;
 
 static inline bool
 isoctdigit(char ch)
@@ -285,5 +281,3 @@ NasmStringParser::getString(llvm::SmallVectorImpl<char>& buffer) const
 
     return llvm::StringRef(buffer.begin(), buffer.size());
 }
-
-}}} // namespace yasm::parser::nasm

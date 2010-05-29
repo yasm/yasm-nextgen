@@ -501,10 +501,8 @@ class Prefix(object):
         self.only64 = only64
 
     def code_str(self):
-        return '\n'.join([
-            "static const X86Prefix i_%s(X86Prefix::%s, 0x%02X);"
-                % (self.name, self.groupname, self.value),
-            "const X86Prefix* X86_%s = &i_%s;" % (self.name, self.name)])
+        return "static const X86Prefix i_%s(X86Prefix::%s, 0x%02X);" % (
+            self.name, self.groupname, self.value)
 
     def __str__(self):
         return ",\t".join(["&i_%s" % self.name,
@@ -635,7 +633,7 @@ def output_groups(f):
 
     # Output prefixes
     for name in sorted(prefixes):
-        print >>f, prefixes[name].code_str(), "\n"
+        print >>f, prefixes[name].code_str()
 
 #####################################################################
 # General instruction groupings

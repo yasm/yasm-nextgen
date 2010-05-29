@@ -38,12 +38,8 @@
 #include "yasmx/Symbol.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace win64
-{
+using namespace yasm;
+using namespace objfmt;
 
 UnwindCode::~UnwindCode()
 {
@@ -334,8 +330,8 @@ UnwindCode::Write(YAML::Emitter& out) const
 }
 
 void
-AppendUnwindCode(BytecodeContainer& container,
-                 std::auto_ptr<UnwindCode> uwcode)
+objfmt::AppendUnwindCode(BytecodeContainer& container,
+                         std::auto_ptr<UnwindCode> uwcode)
 {
     // Offset in prolog
     Bytecode& bc = container.FreshBytecode();
@@ -358,5 +354,3 @@ AppendUnwindCode(BytecodeContainer& container,
     bc.setSource(uwcode->m_loc->getDefSource());
     bc.Transform(Bytecode::Contents::Ptr(uwcode));
 }
-
-}}} // namespace yasm::objfmt::win64

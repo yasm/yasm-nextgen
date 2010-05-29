@@ -39,12 +39,8 @@
 #include "yasmx/IntNum.h"
 
 
-namespace yasm
-{
-namespace parser
-{
-namespace nasm
-{
+using namespace yasm;
+using namespace parser;
 
 /// decimal integer: [0-9] [0-9_]*
 /// binary integer: [01] [01_]* [bB]
@@ -226,5 +222,3 @@ NasmNumericParser::getFloatValue(const llvm::fltSemantics& format,
 
     return val;
 }
-
-}}} // namespace yasm::parser::nasm

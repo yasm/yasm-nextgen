@@ -38,8 +38,6 @@ namespace yasm
 {
 namespace arch
 {
-namespace x86
-{
 
 class X86SegmentRegister;
 
@@ -66,6 +64,6 @@ public:
 
 YAML::Emitter& operator<< (YAML::Emitter& out, const X86Common& common);
 
-}}} // namespace yasm::arch::x86
+}} // namespace yasm::arch
 
 #endif

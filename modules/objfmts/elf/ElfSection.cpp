@@ -44,12 +44,8 @@
 #include "ElfReloc.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace elf
-{
+using namespace yasm;
+using namespace objfmt;
 
 const char* ElfSection::key = "objfmt::elf::ElfSection";
 
@@ -405,5 +401,3 @@ ElfSection::setFileOffset(unsigned long pos)
     m_offset = (pos + align - 1) & ~(align - 1);
     return m_offset;
 }
-
-}}} // namespace yasm::objfmt::elf

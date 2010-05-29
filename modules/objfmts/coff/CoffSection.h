@@ -41,8 +41,6 @@ class Bytes;
 
 namespace objfmt
 {
-namespace coff
-{
 
 struct YASM_STD_EXPORT CoffSection : public AssocData
 {
@@ -83,6 +81,6 @@ struct YASM_STD_EXPORT CoffSection : public AssocData
     bool m_setalign;            ///< Set alignment in section flags
 };
 
-}}} // namespace yasm::objfmt::coff
+}} // namespace yasm::objfmt
 
 #endif

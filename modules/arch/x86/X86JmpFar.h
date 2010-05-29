@@ -41,8 +41,6 @@ class Expr;
 
 namespace arch
 {
-namespace x86
-{
 
 class X86Common;
 class X86Opcode;
@@ -58,6 +56,6 @@ void AppendJmpFar(BytecodeContainer& container,
                   std::auto_ptr<Expr> offset,
                   clang::SourceLocation source);
 
-}}} // namespace yasm::arch::x86
+}} // namespace yasm::arch
 
 #endif

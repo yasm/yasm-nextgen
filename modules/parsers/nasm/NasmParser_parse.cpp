@@ -62,12 +62,8 @@ STATISTIC(num_directive, "Number of directives parsed");
 STATISTIC(num_insn, "Number of instructions parsed");
 STATISTIC(num_insn_operand, "Number of instruction operands parsed");
 
-namespace yasm
-{
-namespace parser
-{
-namespace nasm
-{
+using namespace yasm;
+using namespace parser;
 
 /// Identify pseudo-instructions.  We can't simply pre-populate IdentifierTable
 /// because of large numbers of combinations due to case-insensitivity.
@@ -1630,5 +1626,3 @@ NasmParser::DoDirective(llvm::StringRef name, DirectiveInfo& info)
         m_abspos.Clear();
     }
 }
-
-}}} // namespace yasm::parser::nasm

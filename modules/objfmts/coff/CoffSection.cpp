@@ -37,12 +37,8 @@
 #include "yasmx/Symbol.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace coff
-{
+using namespace yasm;
+using namespace objfmt;
 
 const char* CoffSection::key = "objfmts::coff::CoffSection";
 
@@ -168,5 +164,3 @@ CoffSection::Write(Bytes& bytes, const Section& sect) const
     Write16(bytes, 0);                      // num of line number entries
     Write32(bytes, flags);                  // flags
 }
-
-}}} // namespace yasm::objfmt::coff

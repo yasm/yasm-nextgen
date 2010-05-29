@@ -1,9 +1,9 @@
-#ifndef YASM_WIN32OBJECT_H
-#define YASM_WIN32OBJECT_H
+#ifndef YASM_WIN64OBJECT_H
+#define YASM_WIN64OBJECT_H
 //
-// Win32 object format
+// Win64 object format
 //
-//  Copyright (C) 2007-2008  Peter Johnson
+//  Copyright (C) 2002-2009  Peter Johnson
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -26,9 +26,10 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "yasmx/Config/export.h"
+#include "modules/objfmts/win32/Win32Object.h"
 
-#include "modules/objfmts/coff/CoffObject.h"
+#include "UnwindCode.h"
+#include "UnwindInfo.h"
 
 
 namespace yasm
@@ -36,48 +37,64 @@ namespace yasm
 namespace objfmt
 {
 
-class YASM_STD_EXPORT Win32Object : public CoffObject
+class YASM_STD_EXPORT Win64Object : public Win32Object
 {
 public:
-    Win32Object(const ObjectFormatModule& module, Object& object);
-    virtual ~Win32Object();
+    Win64Object(const ObjectFormatModule& module, Object& object);
+    virtual ~Win64Object();
 
     virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
     //virtual void InitSymbols(llvm::StringRef parser);
     //virtual void Read(const llvm::MemoryBuffer& in);
-    //virtual void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
+    virtual void Output(llvm::raw_fd_ostream& os,
+                        bool all_syms,
+                        Errwarns& errwarns,
+                        Diagnostic& diags);
 
-    static llvm::StringRef getName() { return "Win32"; }
-    static llvm::StringRef getKeyword() { return "win32"; }
+    static llvm::StringRef getName() { return "Win64"; }
+    static llvm::StringRef getKeyword() { return "win64"; }
     static llvm::StringRef getExtension() { return ".obj"; }
-    static unsigned int getDefaultX86ModeBits() { return 32; }
+    static unsigned int getDefaultX86ModeBits() { return 64; }
 
     static llvm::StringRef getDefaultDebugFormatKeyword()
-    { return CoffObject::getDefaultDebugFormatKeyword(); }
-    static std::vector<llvm::StringRef> getDebugFormatKeywords();
+    { return Win32Object::getDefaultDebugFormatKeyword(); }
+    static std::vector<llvm::StringRef> getDebugFormatKeywords()
+    { return Win32Object::getDebugFormatKeywords(); }
 
     static bool isOkObject(Object& object)
-    { return CoffObject::isOkObject(object); }
+    { return Win32Object::isOkObject(object); }
     static bool Taste(const llvm::MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
     { return false; }
 
-protected:
+private:
     virtual bool InitSection(llvm::StringRef name,
                              Section& section,
                              CoffSection* coffsect);
-    virtual void DirSectionInitHelpers(DirHelpers& helpers,
-                                       CoffSection* csd,
-                                       IntNum* align,
-                                       bool* has_align);
 
-protected:
-    void DirExport(DirectiveInfo& info, Diagnostic& diags);
+    bool CheckProcFrameState(clang::SourceLocation dir_source,
+                             Diagnostic& diags);
 
-private:
-    void DirSafeSEH(DirectiveInfo& info, Diagnostic& diags);
+    void DirProcFrame(DirectiveInfo& info, Diagnostic& diags);
+    void DirPushReg(DirectiveInfo& info, Diagnostic& diags);
+    void DirSetFrame(DirectiveInfo& info, Diagnostic& diags);
+    void DirAllocStack(DirectiveInfo& info, Diagnostic& diags);
+
+    void SaveCommon(DirectiveInfo& info,
+                    UnwindCode::Opcode op,
+                    Diagnostic& diags);
+    void DirSaveReg(DirectiveInfo& info, Diagnostic& diags);
+    void DirSaveXMM128(DirectiveInfo& info, Diagnostic& diags);
+    void DirPushFrame(DirectiveInfo& info, Diagnostic& diags);
+    void DirEndProlog(DirectiveInfo& info, Diagnostic& diags);
+    void DirEndProcFrame(DirectiveInfo& info, Diagnostic& diags);
+
+    // data for proc_frame and related directives
+    clang::SourceLocation m_proc_frame;     // start of proc source location
+    clang::SourceLocation m_done_prolog;    // end of prologue source location
+    std::auto_ptr<UnwindInfo> m_unwind; // Unwind info
 };
 
 }} // namespace yasm::objfmt

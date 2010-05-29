@@ -40,6 +40,8 @@
 //
 // Each Section is spatially disjoint, and has exactly one SHT entry.
 //
+#include "ElfObject.h"
+
 #include "util.h"
 
 #include "llvm/Support/MemoryBuffer.h"
@@ -58,14 +60,12 @@
 #include "yasmx/Errwarns.h"
 #include "yasmx/Location_util.h"
 #include "yasmx/Object.h"
-#include "yasmx/ObjectFormat.h"
 #include "yasmx/Object_util.h"
 #include "yasmx/NameValue.h"
 #include "yasmx/Section.h"
 #include "yasmx/StringTable.h"
 #include "yasmx/Symbol_util.h"
 
-#include "ElfConfig.h"
 #include "ElfMachine.h"
 #include "ElfReloc.h"
 #include "ElfSection.h"
@@ -73,12 +73,8 @@
 #include "ElfTypes.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace elf
-{
+using namespace yasm;
+using namespace objfmt;
 
 static inline bool
 isLocal(const Symbol& sym)
@@ -86,120 +82,6 @@ isLocal(const Symbol& sym)
     int vis = sym.getVisibility();
     return (vis == Symbol::LOCAL || (vis & Symbol::DLOCAL) != 0);
 }
-
-class ElfObject : public ObjectFormat
-{
-public:
-    ElfObject(const ObjectFormatModule& module,
-              Object& object,
-              unsigned int bits=0);
-    ~ElfObject() {}
-
-    static llvm::StringRef getName() { return "ELF"; }
-    static llvm::StringRef getKeyword() { return "elf"; }
-    static llvm::StringRef getExtension() { return ".o"; }
-    static unsigned int getDefaultX86ModeBits() { return 0; }
-    static llvm::StringRef getDefaultDebugFormatKeyword() { return "null"; }
-    static std::vector<llvm::StringRef> getDebugFormatKeywords();
-    static bool isOkObject(Object& object) { return true; }
-    static bool Taste(const llvm::MemoryBuffer& in,
-                      /*@out@*/ std::string* arch_keyword,
-                      /*@out@*/ std::string* machine)
-    { return false; }
-
-    void AddDirectives(Directives& dirs, llvm::StringRef parser);
-
-    void InitSymbols(llvm::StringRef parser);
-
-    void Read(const llvm::MemoryBuffer& in);
-    void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
-                Diagnostic& diags);
-
-    Section* AddDefaultSection();
-    Section* AppendSection(llvm::StringRef name, clang::SourceLocation source);
-
-    ElfSymbol& BuildSymbol(Symbol& sym);
-    void BuildExtern(Symbol& sym, Diagnostic& diags);
-    void BuildGlobal(Symbol& sym, Diagnostic& diags);
-    void BuildCommon(Symbol& sym, Diagnostic& diags);
-    void setSymbolSectionValue(Symbol& sym, ElfSymbol& elfsym);
-    void FinalizeSymbol(Symbol& sym,
-                        StringTable& strtab,
-                        bool local_names,
-                        Diagnostic& diags);
-
-    void DirGasSection(DirectiveInfo& info, Diagnostic& diags);
-    void DirSection(DirectiveInfo& info, Diagnostic& diags);
-    void DirType(DirectiveInfo& info, Diagnostic& diags);
-    void DirSize(DirectiveInfo& info, Diagnostic& diags);
-    void DirWeak(DirectiveInfo& info, Diagnostic& diags);
-    void DirIdent(DirectiveInfo& info, Diagnostic& diags);
-
-    ElfConfig m_config;                     // ELF configuration
-    util::scoped_ptr<ElfMachine> m_machine; // ELF machine interface
-
-    ElfSymbol* m_file_elfsym;               // .file symbol
-    SymbolRef m_dotdotsym;                  // ..sym symbol
-};
-
-bool TasteCommon(const llvm::MemoryBuffer& in,
-                 /*@out@*/ std::string* arch_keyword,
-                 /*@out@*/ std::string* machine,
-                 ElfClass cls);
-
-class Elf32Object : public ElfObject
-{
-public:
-    Elf32Object(const ObjectFormatModule& module, Object& object)
-        : ElfObject(module, object, 32)
-    {}
-
-    static llvm::StringRef getName() { return "ELF (32-bit)"; }
-    static llvm::StringRef getKeyword() { return "elf32"; }
-    static llvm::StringRef getExtension() { return ElfObject::getExtension(); }
-    static unsigned int getDefaultX86ModeBits() { return 32; }
-
-    static llvm::StringRef getDefaultDebugFormatKeyword()
-    { return ElfObject::getDefaultDebugFormatKeyword(); }
-    static std::vector<llvm::StringRef> getDebugFormatKeywords()
-    { return ElfObject::getDebugFormatKeywords(); }
-
-    static bool isOkObject(Object& object)
-    { return isOkElfMachine(*object.getArch(), ELFCLASS32); }
-
-    // For tasting, let main elf handle it.
-    static bool Taste(const llvm::MemoryBuffer& in,
-                      /*@out@*/ std::string* arch_keyword,
-                      /*@out@*/ std::string* machine)
-    { return TasteCommon(in, arch_keyword, machine, ELFCLASS32); }
-};
-
-class Elf64Object : public ElfObject
-{
-public:
-    Elf64Object(const ObjectFormatModule& module, Object& object)
-        : ElfObject(module, object, 64)
-    {}
-
-    static llvm::StringRef getName() { return "ELF (64-bit)"; }
-    static llvm::StringRef getKeyword() { return "elf64"; }
-    static llvm::StringRef getExtension() { return ElfObject::getExtension(); }
-    static unsigned int getDefaultX86ModeBits() { return 64; }
-
-    static llvm::StringRef getDefaultDebugFormatKeyword()
-    { return ElfObject::getDefaultDebugFormatKeyword(); }
-    static std::vector<llvm::StringRef> getDebugFormatKeywords()
-    { return ElfObject::getDebugFormatKeywords(); }
-
-    static bool isOkObject(Object& object)
-    { return isOkElfMachine(*object.getArch(), ELFCLASS64); }
-
-    // For tasting, let main elf handle it.
-    static bool Taste(const llvm::MemoryBuffer& in,
-                      /*@out@*/ std::string* arch_keyword,
-                      /*@out@*/ std::string* machine)
-    { return TasteCommon(in, arch_keyword, machine, ELFCLASS64); }
-};
 
 ElfObject::ElfObject(const ObjectFormatModule& module,
                      Object& object,
@@ -222,7 +104,31 @@ ElfObject::ElfObject(const ObjectFormatModule& module,
     m_machine->Configure(&m_config);
 }
 
+ElfObject::~ElfObject()
+{
+}
+
+Elf32Object::~Elf32Object()
+{
+}
+
 bool
+Elf32Object::isOkObject(Object& object)
+{
+    return isOkElfMachine(*object.getArch(), ELFCLASS32);
+}
+
+Elf64Object::~Elf64Object()
+{
+}
+
+bool
+Elf64Object::isOkObject(Object& object)
+{
+    return isOkElfMachine(*object.getArch(), ELFCLASS64);
+}
+
+static bool
 TasteCommon(const llvm::MemoryBuffer& in,
             /*@out@*/ std::string* arch_keyword,
             /*@out@*/ std::string* machine,
@@ -253,6 +159,22 @@ TasteCommon(const llvm::MemoryBuffer& in,
             return false;
     }
     return true;
+}
+
+bool
+Elf32Object::Taste(const llvm::MemoryBuffer& in,
+                   /*@out@*/ std::string* arch_keyword,
+                   /*@out@*/ std::string* machine)
+{
+    return TasteCommon(in, arch_keyword, machine, ELFCLASS32);
+}
+
+bool
+Elf64Object::Taste(const llvm::MemoryBuffer& in,
+                   /*@out@*/ std::string* arch_keyword,
+                   /*@out@*/ std::string* machine)
+{
+    return TasteCommon(in, arch_keyword, machine, ELFCLASS64);
 }
 
 static inline StringTable
@@ -704,6 +626,7 @@ ElfObject::FinalizeSymbol(Symbol& sym,
     setSymbolSectionValue(sym, *elfsym);
 }
 
+namespace {
 class ElfOutput : public BytecodeStreamOutput
 {
 public:
@@ -735,6 +658,7 @@ private:
     BytecodeNoOutput m_no_output;
     SymbolRef m_GOT_sym;
 };
+} // anonymous namespace
 
 ElfOutput::ElfOutput(llvm::raw_fd_ostream& os,
                      ElfObject& objfmt,
@@ -801,9 +725,9 @@ ElfOutput::ConvertValueToBytes(Value& value,
 
         if (wrt == m_objfmt.m_dotdotsym)
             wrt = SymbolRef(0);
-        else if (wrt && isWRTSymRelative(*wrt))
+        else if (wrt && isWRTElfSymRelative(*wrt))
             ;
-        else if (wrt && isWRTPosAdjusted(*wrt))
+        else if (wrt && isWRTElfPosAdjusted(*wrt))
             intn += loc.getOffset();
         else if (isLocal(*sym))
         {
@@ -989,7 +913,7 @@ ElfOutput::OutputSection(Section& sect,
     elfsect->setRelName(shstrtab.getIndex(relname));
 }
 
-unsigned long
+static unsigned long
 ElfAlignOutput(llvm::raw_fd_ostream& os, unsigned int align, Diagnostic& diags)
 {
     assert(isExp2(align) && "requested alignment not a power of two");
@@ -1615,7 +1539,7 @@ static const yasm_stdmac elf_objfmt_stdmacs[] = {
 };
 #endif
 void
-DoRegister()
+yasm_objfmt_elf_DoRegister()
 {
     RegisterModule<ObjectFormatModule,
                    ObjectFormatModuleImpl<ElfObject> >("elf");
@@ -1624,5 +1548,3 @@ DoRegister()
     RegisterModule<ObjectFormatModule,
                    ObjectFormatModuleImpl<Elf64Object> >("elf64");
 }
-
-}}} // namespace yasm::objfmt::elf

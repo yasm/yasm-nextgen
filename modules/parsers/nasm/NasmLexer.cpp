@@ -44,12 +44,8 @@ STATISTIC(num_numeric_constant, "Number of numeric constants lexed");
 STATISTIC(num_string_literal, "Number of string literals lexed");
 STATISTIC(num_eol_comment, "Number of EOL comments lexed");
 
-namespace yasm
-{
-namespace parser
-{
-namespace nasm
-{
+using namespace yasm;
+using namespace parser;
 
 NasmLexer::NasmLexer(clang::FileID fid,
                      const llvm::MemoryBuffer* input_buffer,
@@ -556,5 +552,3 @@ SkipIgnoredUnits:
     // Update the location of token as well as m_buf_ptr.
     FormTokenWithChars(result, cur_ptr, kind);
 }
-
-}}} // namespace yasm::parser::nasm

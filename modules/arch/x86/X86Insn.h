@@ -37,8 +37,6 @@ namespace yasm
 {
 namespace arch
 {
-namespace x86
-{
 
 struct X86InfoOperand;
 struct X86InsnInfo;
@@ -139,6 +137,6 @@ private:
     unsigned int m_default_rel:1;
 };
 
-}}} // namespace yasm::arch::x86
+}} // namespace yasm::arch
 
 #endif

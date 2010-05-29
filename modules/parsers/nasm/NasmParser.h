@@ -49,8 +49,6 @@ class NameValues;
 
 namespace parser
 {
-namespace nasm
-{
 
 class YASM_STD_EXPORT NasmParser : public ParserImpl
 {
@@ -150,6 +148,6 @@ private:
     Expr m_abspos;
 };
 
-}}} // namespace yasm::parser::nasm
+}} // namespace yasm::parser
 
 #endif

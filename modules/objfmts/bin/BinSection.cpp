@@ -29,12 +29,8 @@
 #include "YAML/emitter.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace bin
-{
+using namespace yasm;
+using namespace objfmt;
 
 const char* BinSection::key = "objfmt::bin::BinSection";
 
@@ -80,5 +76,3 @@ BinSection::Write(YAML::Emitter& out) const
         out << YAML::Key << "length" << YAML::Value << length;
     out << YAML::EndMap;
 }
-
-}}} // namespace yasm::objfmt::bin

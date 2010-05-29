@@ -1,9 +1,9 @@
-#ifndef YASM_WIN32OBJECT_H
-#define YASM_WIN32OBJECT_H
+#ifndef YASM_XDFOBJECT_H
+#define YASM_XDFOBJECT_H
 //
-// Win32 object format
+// Extended Dynamic Object format
 //
-//  Copyright (C) 2007-2008  Peter Johnson
+//  Copyright (C) 2004-2007  Peter Johnson
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -26,58 +26,52 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "yasmx/Config/export.h"
-
-#include "modules/objfmts/coff/CoffObject.h"
+#include "yasmx/ObjectFormat.h"
 
 
 namespace yasm
 {
+class Diagnostic;
+class DirectiveInfo;
+
 namespace objfmt
 {
 
-class YASM_STD_EXPORT Win32Object : public CoffObject
+class YASM_STD_EXPORT XdfObject : public ObjectFormat
 {
 public:
-    Win32Object(const ObjectFormatModule& module, Object& object);
-    virtual ~Win32Object();
+    /// Constructor.
+    /// To make object format truly usable, set_object()
+    /// needs to be called.
+    XdfObject(const ObjectFormatModule& module, Object& object)
+        : ObjectFormat(module, object)
+    {}
 
-    virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
+    /// Destructor.
+    ~XdfObject();
 
-    //virtual void InitSymbols(llvm::StringRef parser);
-    //virtual void Read(const llvm::MemoryBuffer& in);
-    //virtual void Output(std::ostream& os, bool all_syms, Errwarns& errwarns);
+    void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
-    static llvm::StringRef getName() { return "Win32"; }
-    static llvm::StringRef getKeyword() { return "win32"; }
-    static llvm::StringRef getExtension() { return ".obj"; }
+    void Read(const llvm::MemoryBuffer& in);
+    void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
+                Diagnostic& diags);
+
+    Section* AddDefaultSection();
+    Section* AppendSection(llvm::StringRef name, clang::SourceLocation source);
+
+    static llvm::StringRef getName() { return "Extended Dynamic Object"; }
+    static llvm::StringRef getKeyword() { return "xdf"; }
+    static llvm::StringRef getExtension() { return ".xdf"; }
     static unsigned int getDefaultX86ModeBits() { return 32; }
-
-    static llvm::StringRef getDefaultDebugFormatKeyword()
-    { return CoffObject::getDefaultDebugFormatKeyword(); }
+    static llvm::StringRef getDefaultDebugFormatKeyword() { return "null"; }
     static std::vector<llvm::StringRef> getDebugFormatKeywords();
-
-    static bool isOkObject(Object& object)
-    { return CoffObject::isOkObject(object); }
+    static bool isOkObject(Object& object);
     static bool Taste(const llvm::MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
-                      /*@out@*/ std::string* machine)
-    { return false; }
-
-protected:
-    virtual bool InitSection(llvm::StringRef name,
-                             Section& section,
-                             CoffSection* coffsect);
-    virtual void DirSectionInitHelpers(DirHelpers& helpers,
-                                       CoffSection* csd,
-                                       IntNum* align,
-                                       bool* has_align);
-
-protected:
-    void DirExport(DirectiveInfo& info, Diagnostic& diags);
+                      /*@out@*/ std::string* machine);
 
 private:
-    void DirSafeSEH(DirectiveInfo& info, Diagnostic& diags);
+    void DirSection(DirectiveInfo& info, Diagnostic& diags);
 };
 
 }} // namespace yasm::objfmt

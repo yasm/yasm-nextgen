@@ -41,12 +41,8 @@
 #include "CoffSection.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace coff
-{
+using namespace yasm;
+using namespace objfmt;
 
 const char* CoffSymbol::key = "objfmt::coff::CoffSymbol";
 
@@ -222,5 +218,3 @@ CoffSymbol::Write(Bytes& bytes,
 
     assert(bytes.size() == 18+18*m_aux.size());
 }
-
-}}} // namespace yasm::objfmt::coff

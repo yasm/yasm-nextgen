@@ -43,8 +43,6 @@ class Section;
 
 namespace objfmt
 {
-namespace rdf
-{
 
 struct YASM_STD_EXPORT RdfSection : public AssocData
 {
@@ -84,6 +82,6 @@ struct YASM_STD_EXPORT RdfSection : public AssocData
     Bytes raw_data;         ///< raw section data, only used during output
 };
 
-}}} // namespace yasm::objfmt::rdf
+}} // namespace yasm::objfmt
 
 #endif

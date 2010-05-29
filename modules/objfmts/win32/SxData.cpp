@@ -35,11 +35,10 @@
 #include "modules/objfmts/coff/CoffSymbol.h"
 
 
-namespace
-{
-
 using namespace yasm;
+using namespace objfmt;
 
+namespace {
 class SxData : public Bytecode::Contents
 {
 public:
@@ -66,6 +65,7 @@ public:
 private:
     SymbolRef m_sym;            ///< symbol
 };
+} // anonymous namespace
 
 SxData::SxData(SymbolRef sym)
     : m_sym(sym)
@@ -95,8 +95,7 @@ SxData::CalcLen(Bytecode& bc,
 bool
 SxData::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
 {
-    yasm::objfmt::coff::CoffSymbol* coffsym =
-        m_sym->getAssocData<yasm::objfmt::coff::CoffSymbol>();
+    CoffSymbol* coffsym = m_sym->getAssocData<CoffSymbol>();
     assert(coffsym && "no symbol data for SAFESEH symbol");
 
     Bytes& bytes = bc_out.getScratch();
@@ -121,23 +120,12 @@ SxData::Write(YAML::Emitter& out) const
     out << YAML::EndMap;
 }
 
-} // anonymous namespace
-
-namespace yasm
-{
-namespace objfmt
-{
-namespace win32
-{
-
 void
-AppendSxData(BytecodeContainer& container,
-             SymbolRef sym,
-             clang::SourceLocation source)
+objfmt::AppendSxData(BytecodeContainer& container,
+                     SymbolRef sym,
+                     clang::SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     bc.Transform(Bytecode::Contents::Ptr(new SxData(sym)));
     bc.setSource(source);
 }
-
-}}} // namespace yasm::objfmt::win32

@@ -42,8 +42,6 @@ class IntNum;
 
 namespace objfmt
 {
-namespace xdf
-{
 
 struct YASM_STD_EXPORT XdfSection : public AssocData
 {
@@ -91,6 +89,6 @@ struct YASM_STD_EXPORT XdfSection : public AssocData
     unsigned long relptr;   //< file ptr to relocation
 };
 
-}}} // namespace yasm::objfmt::xdf
+}} // namespace yasm::objfmt
 
 #endif

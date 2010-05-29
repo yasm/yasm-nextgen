@@ -36,23 +36,10 @@
 #include "yasmx/Object.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace elf
-{
+using namespace yasm;
+using namespace objfmt;
 
-extern bool ElfMatch_x86_x86(llvm::StringRef arch_keyword,
-                             llvm::StringRef arch_machine,
-                             ElfClass cls);
-extern bool ElfMatch_x86_amd64(llvm::StringRef arch_keyword,
-                               llvm::StringRef arch_machine,
-                               ElfClass cls);
-
-extern std::auto_ptr<ElfMachine> ElfCreate_x86_x86();
-extern std::auto_ptr<ElfMachine> ElfCreate_x86_amd64();
-
+namespace {
 struct MachineCheckCreate
 {
     bool (*Match) (llvm::StringRef arch_keyword,
@@ -60,11 +47,12 @@ struct MachineCheckCreate
                    ElfClass cls);
     std::auto_ptr<ElfMachine> (*Create) ();
 };
+} // anonymous namespace
 
 static const MachineCheckCreate machines[] =
 {
-    {&ElfMatch_x86_x86, &ElfCreate_x86_x86},
-    {&ElfMatch_x86_amd64, &ElfCreate_x86_amd64},
+    {&impl::ElfMatch_x86_x86, &impl::ElfCreate_x86_x86},
+    {&impl::ElfMatch_x86_amd64, &impl::ElfCreate_x86_amd64},
 };
 
 const char* ElfSpecialSymbol::key = "objfmt::elf::ElfSpecialSymbol";
@@ -92,7 +80,7 @@ ElfMachine::~ElfMachine()
 }
 
 bool
-isOkElfMachine(const Arch& arch, ElfClass cls)
+objfmt::isOkElfMachine(const Arch& arch, ElfClass cls)
 {
     std::string keyword = arch.getModule().getKeyword();
     std::string machine = arch.getMachine();
@@ -105,7 +93,7 @@ isOkElfMachine(const Arch& arch, ElfClass cls)
 }
 
 std::auto_ptr<ElfMachine>
-CreateElfMachine(const Arch& arch, ElfClass cls)
+objfmt::CreateElfMachine(const Arch& arch, ElfClass cls)
 {
     std::string keyword = arch.getModule().getKeyword();
     std::string machine = arch.getMachine();
@@ -119,12 +107,10 @@ CreateElfMachine(const Arch& arch, ElfClass cls)
 }
 
 void
-AddElfSSym(Object& object, const SpecialSymbolData& ssym)
+objfmt::AddElfSSym(Object& object, const ElfSpecialSymbolData& ssym)
 {
     SymbolRef sym = object.AddSpecialSymbol(ssym.name);
     sym->DefineSpecial(Symbol::EXTERN);
     sym->AddAssocData(
         std::auto_ptr<ElfSpecialSymbol>(new ElfSpecialSymbol(ssym)));
 }
-
-}}} // namespace yasm::objfmt::elf

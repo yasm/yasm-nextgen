@@ -41,8 +41,6 @@ class Section;
 
 namespace objfmt
 {
-namespace bin
-{
 
 struct BinSection;
 
@@ -84,6 +82,6 @@ getBinSSymValue(const Symbol& sym, /*@out@*/ IntNum* val)
     return bsym->getValue(val);
 }
 
-}}} // namespace yasm::objfmt::bin
+}} // namespace yasm::objfmt
 
 #endif

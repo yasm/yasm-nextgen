@@ -37,12 +37,8 @@
 #include "ElfSymbol.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace elf
-{
+using namespace yasm;
+using namespace objfmt;
 
 ElfReloc::ElfReloc(SymbolRef sym, const IntNum& addr)
     : Reloc(addr, sym)
@@ -188,5 +184,3 @@ ElfReloc::DoWrite(YAML::Emitter& out) const
     out << YAML::Key << "addend" << YAML::Value << m_addend;
     out << YAML::EndMap;
 }
-
-}}} // namespace yasm::objfmt::elf

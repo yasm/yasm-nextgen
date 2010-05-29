@@ -45,12 +45,8 @@ STATISTIC(num_char_constant, "Number of char constants lexed");
 STATISTIC(num_string_literal, "Number of string literals lexed");
 STATISTIC(num_eol_comment, "Number of EOL comments lexed");
 
-namespace yasm
-{
-namespace parser
-{
-namespace gas
-{
+using namespace yasm;
+using namespace parser;
 
 GasLexer::GasLexer(clang::FileID fid,
                    const llvm::MemoryBuffer* input_buffer,
@@ -768,5 +764,3 @@ SkipIgnoredUnits:
     // Update the location of token as well as m_buf_ptr.
     FormTokenWithChars(result, cur_ptr, kind);
 }
-
-}}} // namespace yasm::parser::gas

@@ -45,7 +45,7 @@ void UnloadPlugins();
 
 /// Load standard plugins.
 /// @return False on failure
-YASM_LIB_EXPORT
+YASM_STD_EXPORT
 bool LoadStandardPlugins();
 
 } // namespace yasm

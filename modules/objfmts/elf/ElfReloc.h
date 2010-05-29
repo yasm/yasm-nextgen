@@ -44,8 +44,6 @@ class Expr;
 
 namespace objfmt
 {
-namespace elf
-{
 
 class YASM_STD_EXPORT ElfReloc : public Reloc
 {
@@ -88,6 +86,6 @@ protected:
     virtual void DoWrite(YAML::Emitter& out) const;
 };
 
-}}} // namespace yasm::objfmt::elf
+}} // namespace yasm::objfmt
 
 #endif

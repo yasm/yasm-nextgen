@@ -36,12 +36,8 @@
 #include "CoffSymbol.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace coff
-{
+using namespace yasm;
+using namespace objfmt;
 
 CoffReloc::CoffReloc(const IntNum& addr, SymbolRef sym, Type type)
     : Reloc(addr, sym)
@@ -128,5 +124,3 @@ Coff64Reloc::getTypeName() const
 
     return name;
 }
-
-}}} // namespace yasm::objfmt::coff

@@ -46,12 +46,8 @@
 #include "CoffSymbol.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace coff
-{
+using namespace yasm;
+using namespace objfmt;
 
 CoffObject::CoffObject(const ObjectFormatModule& module,
                        Object& object,
@@ -467,10 +463,8 @@ CoffObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
 }
 
 void
-DoRegister()
+yasm_objfmt_coff_DoRegister()
 {
     RegisterModule<ObjectFormatModule,
                    ObjectFormatModuleImpl<CoffObject> >("coff");
 }
-
-}}} // namespace yasm::objfmt::coff

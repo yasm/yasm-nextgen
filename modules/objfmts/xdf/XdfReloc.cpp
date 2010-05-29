@@ -35,12 +35,8 @@
 #include "XdfSymbol.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace xdf
-{
+using namespace yasm;
+using namespace objfmt;
 
 XdfReloc::XdfReloc(const IntNum& addr,
                    SymbolRef sym,
@@ -156,5 +152,3 @@ XdfReloc::DoWrite(YAML::Emitter& out) const
     out << YAML::Key << "shift" << YAML::Value << m_shift;
     out << YAML::EndMap;
 }
-
-}}} // namespace yasm::objfmt::xdf

@@ -39,19 +39,16 @@
 
 STATISTIC(num_jmpfar, "Number of far jump instructions appended");
 
-namespace yasm
-{
-namespace arch
-{
-namespace x86
-{
+using namespace yasm;
+using namespace arch;
 
-void AppendJmpFar(BytecodeContainer& container,
-                  const X86Common& common,
-                  const X86Opcode& opcode,
-                  std::auto_ptr<Expr> segment,
-                  std::auto_ptr<Expr> offset,
-                  clang::SourceLocation source)
+void
+arch::AppendJmpFar(BytecodeContainer& container,
+                   const X86Common& common,
+                   const X86Opcode& opcode,
+                   std::auto_ptr<Expr> segment,
+                   std::auto_ptr<Expr> offset,
+                   clang::SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     Bytes& bytes = bc.getFixed();
@@ -66,5 +63,3 @@ void AppendJmpFar(BytecodeContainer& container,
     bc.AppendFixed(size, offset, source).setInsnStart(bytes.size()-orig_size);
     bc.AppendFixed(2, segment, source).setInsnStart(bytes.size()-orig_size);
 }
-
-}}} // namespace yasm::arch::x86

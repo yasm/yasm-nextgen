@@ -34,8 +34,6 @@ namespace yasm
 {
 namespace objfmt
 {
-namespace rdf
-{
 
 struct YASM_STD_EXPORT RdfSymbol : public AssocData
 {
@@ -48,6 +46,6 @@ struct YASM_STD_EXPORT RdfSymbol : public AssocData
     unsigned int segment;       ///< assigned RDF "segment" index for symtab
 };
 
-}}} // namespace yasm::objfmt::rdf
+}} // namespace yasm::objfmt
 
 #endif

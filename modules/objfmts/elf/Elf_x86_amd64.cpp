@@ -32,13 +32,10 @@
 #include "ElfTypes.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace elf
-{
+using namespace yasm;
+using namespace objfmt;
 
+namespace {
 class ElfReloc_x86_amd64 : public ElfReloc
 {
 public:
@@ -84,11 +81,12 @@ public:
         return std::auto_ptr<ElfReloc>(new ElfReloc_x86_amd64(sym, addr));
     }
 };
+} // anonymous namespace
 
 bool
-ElfMatch_x86_amd64(llvm::StringRef arch_keyword,
-                   llvm::StringRef arch_machine,
-                   ElfClass cls)
+impl::ElfMatch_x86_amd64(llvm::StringRef arch_keyword,
+                         llvm::StringRef arch_machine,
+                         ElfClass cls)
 {
     return (arch_keyword.equals_lower("x86") &&
             arch_machine.equals_lower("amd64") &&
@@ -96,7 +94,7 @@ ElfMatch_x86_amd64(llvm::StringRef arch_keyword,
 }
 
 std::auto_ptr<ElfMachine>
-ElfCreate_x86_amd64()
+impl::ElfCreate_x86_amd64()
 {
     return std::auto_ptr<ElfMachine>(new Elf_x86_amd64);
 }
@@ -116,7 +114,7 @@ void
 Elf_x86_amd64::AddSpecialSymbols(Object& object,
                                  llvm::StringRef parser) const
 {
-    static const SpecialSymbolData ssyms[] =
+    static const ElfSpecialSymbolData ssyms[] =
     {
         //name,         type,             size,symrel,thread,curpos
         {"pltoff",      R_X86_64_PLTOFF64,  64,  true, false, false},
@@ -218,5 +216,3 @@ ElfReloc_x86_amd64::getTypeName() const
 
     return name;
 }
-
-}}} // namespace yasm::objfmt::elf

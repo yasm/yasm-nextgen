@@ -48,8 +48,6 @@ class StringTable;
 
 namespace objfmt
 {
-namespace elf
-{
 
 struct YASM_STD_EXPORT ElfConfig
 {
@@ -113,6 +111,6 @@ operator<< (YAML::Emitter& out, const ElfConfig& config)
     return out;
 }
 
-}}} // namespace yasm::objfmt::elf
+}} // namespace yasm::objfmt
 
 #endif

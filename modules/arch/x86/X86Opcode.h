@@ -38,8 +38,6 @@ class Bytes;
 
 namespace arch
 {
-namespace x86
-{
 
 class YASM_STD_EXPORT X86Opcode
 {
@@ -92,6 +90,6 @@ private:
 YASM_STD_EXPORT
 YAML::Emitter& operator<< (YAML::Emitter& os, const X86Opcode& opcode);
 
-}}} // namespace yasm::arch::x86
+}} // namespace yasm::arch
 
 #endif

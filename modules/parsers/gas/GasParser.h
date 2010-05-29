@@ -62,8 +62,6 @@ class Section;
 
 namespace parser
 {
-namespace gas
-{
 
 #define YYCTYPE         char
 
@@ -198,6 +196,6 @@ private:
     clang::SourceLocation m_comment_start;
 };
 
-}}} // namespace yasm::parser::gas
+}} // namespace yasm::parser
 
 #endif

@@ -53,13 +53,10 @@
 STATISTIC(num_generic, "Number of generic instructions appended");
 STATISTIC(num_generic_bc, "Number of generic bytecodes created");
 
-namespace yasm
-{
-namespace arch
-{
-namespace x86
-{
+using namespace yasm;
+using namespace arch;
 
+namespace {
 class X86General : public Bytecode::Contents
 {
 public:
@@ -70,7 +67,7 @@ public:
                std::auto_ptr<Value> imm,
                unsigned char special_prefix,
                unsigned char rex,
-               GeneralPostOp postop,
+               X86GeneralPostOp postop,
                bool default_rel);
     ~X86General();
 
@@ -112,8 +109,9 @@ private:
 
     unsigned char m_default_rel;
 
-    GeneralPostOp m_postop;
+    X86GeneralPostOp m_postop;
 };
+} // anonymous namespace
 
 X86General::X86General(const X86Common& common,
                        const X86Opcode& opcode,
@@ -121,7 +119,7 @@ X86General::X86General(const X86Common& common,
                        std::auto_ptr<Value> imm,
                        unsigned char special_prefix,
                        unsigned char rex,
-                       GeneralPostOp postop,
+                       X86GeneralPostOp postop,
                        bool default_rel)
     : m_common(common),
       m_opcode(opcode),
@@ -171,7 +169,7 @@ X86General::Finalize(Bytecode& bc, Diagnostic& diags)
         return false;
     }
 
-    if (m_postop == POSTOP_ADDRESS16 && m_common.m_addrsize != 0)
+    if (m_postop == X86_POSTOP_ADDRESS16 && m_common.m_addrsize != 0)
     {
         diags.Report(bc.getSource(),
                      diags.getCustomDiagID(Diagnostic::Warning,
@@ -182,7 +180,7 @@ X86General::Finalize(Bytecode& bc, Diagnostic& diags)
     // Handle non-span-dependent post-ops here
     switch (m_postop)
     {
-        case POSTOP_SHORT_MOV:
+        case X86_POSTOP_SHORT_MOV:
         {
             // Long (modrm+sib) mov instructions in amd64 can be optimized into
             // short mov instructions if a 32-bit address override is applied in
@@ -200,10 +198,10 @@ X86General::Finalize(Bytecode& bc, Diagnostic& diags)
                 // Make the short form permanent.
                 m_opcode.MakeAlt1();
             }
-            m_postop = POSTOP_NONE;
+            m_postop = X86_POSTOP_NONE;
             break;
         }
-        case POSTOP_SIMM32_AVAIL:
+        case X86_POSTOP_SIMM32_AVAIL:
         {
             // Used for 64-bit mov immediate, which can take a sign-extended
             // imm32 as well as imm64 values.  The imm32 form is put in the
@@ -234,7 +232,7 @@ X86General::Finalize(Bytecode& bc, Diagnostic& diags)
                 m_opcode.MakeAlt1();
                 m_imm->setSize(32);
             }
-            m_postop = POSTOP_NONE;
+            m_postop = X86_POSTOP_NONE;
             break;
         }
         default:
@@ -280,7 +278,7 @@ X86General::CalcLen(Bytecode& bc,
         // displacement.
         bool ip_rel = false;
         if (!m_ea->Check(&m_common.m_addrsize, m_common.m_mode_bits,
-                         m_postop == POSTOP_ADDRESS16, &m_rex,
+                         m_postop == X86_POSTOP_ADDRESS16, &m_rex,
                          &ip_rel, diags))
         {
             // failed, don't bother checking rest of insn
@@ -315,7 +313,7 @@ X86General::CalcLen(Bytecode& bc,
         ilen += m_ea->m_disp.getSize()/8;
 
         // Handle address16 postop case
-        if (m_postop == POSTOP_ADDRESS16)
+        if (m_postop == X86_POSTOP_ADDRESS16)
             m_common.m_addrsize = 0;
 
         // Compute length of ea and add to total
@@ -330,7 +328,7 @@ X86General::CalcLen(Bytecode& bc,
         // TODO: check imm->len vs. sized len from expr?
 
         // Handle signext_imm8 postop special-casing
-        if (m_postop == POSTOP_SIGNEXT_IMM8)
+        if (m_postop == X86_POSTOP_SIGNEXT_IMM8)
         {
             IntNum num;
             if (!m_imm->getIntNum(&num, false))
@@ -356,7 +354,7 @@ X86General::CalcLen(Bytecode& bc,
                     // We can't.  Copy over the word-sized opcode.
                     m_opcode.MakeAlt1();
                 }
-                m_postop = POSTOP_NONE;
+                m_postop = X86_POSTOP_NONE;
             }
         }
 
@@ -408,7 +406,7 @@ X86General::Expand(Bytecode& bc,
 
     if (m_imm != 0 && span == 2)
     {
-        if (m_postop == POSTOP_SIGNEXT_IMM8)
+        if (m_postop == X86_POSTOP_SIGNEXT_IMM8)
         {
             // Update len for new opcode and immediate size
             (*len) -= m_opcode.getLen();
@@ -416,7 +414,7 @@ X86General::Expand(Bytecode& bc,
 
             // Change to the word-sized opcode
             m_opcode.MakeAlt1();
-            m_postop = POSTOP_NONE;
+            m_postop = X86_POSTOP_NONE;
         }
     }
 
@@ -424,7 +422,7 @@ X86General::Expand(Bytecode& bc,
     return true;
 }
 
-void
+static void
 GeneralToBytes(Bytes& bytes,
                const X86Common& common,
                X86Opcode opcode,
@@ -502,7 +500,7 @@ X86General::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
     unsigned int imm_len = 0;
     if (m_imm != 0)
     {
-        if (m_postop == POSTOP_SIGNEXT_IMM8)
+        if (m_postop == X86_POSTOP_SIGNEXT_IMM8)
         {
             // If we got here with this postop still set, we need to force
             // imm size to 8 here.
@@ -584,33 +582,33 @@ X86General::Write(YAML::Emitter& out) const
     out << YAML::Key << "postop" << YAML::Value;
     switch (m_postop)
     {
-        case POSTOP_SIGNEXT_IMM8:   out << "SIGNEXT_IMM8"; break;
-        case POSTOP_SHORT_MOV:      out << "SHORT_MOV"; break;
-        case POSTOP_ADDRESS16:      out << "ADDRESS16"; break;
-        case POSTOP_SIMM32_AVAIL:   out << "SIMM32_AVAIL"; break;
-        case POSTOP_NONE:
-        default:                    out << YAML::Null; break;
+        case X86_POSTOP_SIGNEXT_IMM8:   out << "SIGNEXT_IMM8"; break;
+        case X86_POSTOP_SHORT_MOV:      out << "SHORT_MOV"; break;
+        case X86_POSTOP_ADDRESS16:      out << "ADDRESS16"; break;
+        case X86_POSTOP_SIMM32_AVAIL:   out << "SIMM32_AVAIL"; break;
+        case X86_POSTOP_NONE:
+        default:                        out << YAML::Null; break;
     }
     out << YAML::EndMap;
 }
 
 void
-AppendGeneral(BytecodeContainer& container,
-              const X86Common& common,
-              const X86Opcode& opcode,
-              std::auto_ptr<X86EffAddr> ea,
-              std::auto_ptr<Value> imm,
-              unsigned char special_prefix,
-              unsigned char rex,
-              GeneralPostOp postop,
-              bool default_rel,
-              clang::SourceLocation source)
+arch::AppendGeneral(BytecodeContainer& container,
+                    const X86Common& common,
+                    const X86Opcode& opcode,
+                    std::auto_ptr<X86EffAddr> ea,
+                    std::auto_ptr<Value> imm,
+                    unsigned char special_prefix,
+                    unsigned char rex,
+                    X86GeneralPostOp postop,
+                    bool default_rel,
+                    clang::SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     ++num_generic;
 
     // if no postop and no effective address, output the fixed contents
-    if (postop == POSTOP_NONE && ea.get() == 0)
+    if (postop == X86_POSTOP_NONE && ea.get() == 0)
     {
         Bytes& bytes = bc.getFixed();
         unsigned long orig_size = bytes.size();
@@ -629,5 +627,3 @@ AppendGeneral(BytecodeContainer& container,
     bc.setSource(source);
     ++num_generic_bc;
 }
-
-}}} // namespace yasm::arch::x86

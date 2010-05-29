@@ -38,12 +38,8 @@
 #include "yasmx/Symbol.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace win64
-{
+using namespace yasm;
+using namespace objfmt;
 
 #define UNW_FLAG_EHANDLER   0x01
 #define UNW_FLAG_UHANDLER   0x02
@@ -294,10 +290,10 @@ UnwindInfo::Write(YAML::Emitter& out) const
 }
 
 void
-Generate(std::auto_ptr<UnwindInfo> uwinfo,
-         BytecodeContainer& xdata,
-         clang::SourceLocation source,
-         const Arch& arch)
+objfmt::Generate(std::auto_ptr<UnwindInfo> uwinfo,
+                 BytecodeContainer& xdata,
+                 clang::SourceLocation source,
+                 const Arch& arch)
 {
     UnwindInfo* info = uwinfo.get();
 
@@ -339,5 +335,3 @@ Generate(std::auto_ptr<UnwindInfo> uwinfo,
         AppendData(xdata, Expr::Ptr(new Expr(info->m_ehandler)), 4, arch,
                    source);
 }
-
-}}} // namespace yasm::objfmt::win64

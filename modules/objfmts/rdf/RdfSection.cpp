@@ -33,12 +33,8 @@
 #include "yasmx/InputBuffer.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace rdf
-{
+using namespace yasm;
+using namespace objfmt;
 
 const char* RdfSection::key = "objfmt::rdf::RdfSection";
 
@@ -105,5 +101,3 @@ RdfSection::Read(InputBuffer& inbuf, unsigned long* size, std::string* name)
         oss << scnum;
     oss.flush();
 }
-
-}}} // namespace yasm::objfmt::rdf

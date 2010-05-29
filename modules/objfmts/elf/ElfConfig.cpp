@@ -40,12 +40,8 @@
 #include "ElfSymbol.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace elf
-{
+using namespace yasm;
+using namespace objfmt;
 
 ElfConfig::ElfConfig()
     : cls(ELFCLASSNONE)
@@ -405,5 +401,3 @@ ElfConfig::Dump() const
     Write(out);
     llvm::errs() << out.c_str() << '\n';
 }
-
-}}} // namespace yasm::objfmt::elf

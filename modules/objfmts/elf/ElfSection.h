@@ -50,8 +50,6 @@ class StringTable;
 
 namespace objfmt
 {
-namespace elf
-{
 
 class YASM_STD_EXPORT ElfSection : public AssocData
 {
@@ -176,6 +174,6 @@ private:
 //     link -> SHN_UNDEF
 //     info -> 0
 
-}}} // namespace yasm::objfmt::elf
+}} // namespace yasm::objfmt
 
 #endif

@@ -42,8 +42,6 @@ class IdentifierInfo;
 
 namespace parser
 {
-namespace gas
-{
 
 class YASM_STD_EXPORT GasPreproc : public Preprocessor
 {
@@ -61,6 +59,6 @@ protected:
 private:
 };
 
-}}} // namespace yasm::parser::gas
+}} // namespace yasm::parser
 
 #endif

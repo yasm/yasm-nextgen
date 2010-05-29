@@ -30,8 +30,6 @@ namespace yasm
 {
 namespace objfmt
 {
-namespace rdf
-{
 
 // Record types that may be present in the RDOFF header
 enum RdfRecordType
@@ -48,6 +46,6 @@ enum RdfRecordType
     RDFREC_COMMON = 10
 };
 
-}}} // namespace yasm::objfmt::rdf
+}} // namespace yasm::objfmt
 
 #endif

@@ -55,8 +55,6 @@ class StringTable;
 
 namespace objfmt
 {
-namespace elf
-{
 
 class YASM_STD_EXPORT ElfSymbol : public AssocData
 {
@@ -115,6 +113,6 @@ void InsertLocalSymbol(Object& object,
                        std::auto_ptr<Symbol> sym,
                        std::auto_ptr<ElfSymbol> entry);
 
-}}} // namespace yasm::objfmt::elf
+}} // namespace yasm::objfmt
 
 #endif

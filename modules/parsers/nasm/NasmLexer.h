@@ -43,8 +43,6 @@ class Register;
 
 namespace parser
 {
-namespace nasm
-{
 
 class NasmPreproc;
 
@@ -131,6 +129,6 @@ protected:
     void LexStringLiteral   (Token* result, const char* cur_ptr, char endch);
 };
 
-}}} // namespace yasm::parser::nasm
+}} // namespace yasm::parser
 
 #endif

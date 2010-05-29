@@ -41,17 +41,15 @@ class Expr;
 
 namespace arch
 {
-namespace x86
-{
 
 class X86Common;
 class X86Opcode;
 
-enum JmpOpcodeSel
+enum X86JmpOpcodeSel
 {
-    JMP_NONE,
-    JMP_SHORT,
-    JMP_NEAR
+    X86_JMP_NONE,
+    X86_JMP_SHORT,
+    X86_JMP_NEAR
 };
 
 YASM_STD_EXPORT
@@ -61,8 +59,8 @@ void AppendJmp(BytecodeContainer& container,
                const X86Opcode& nearop,
                std::auto_ptr<Expr> target,
                clang::SourceLocation source,
-               JmpOpcodeSel op_sel = JMP_NONE);
+               X86JmpOpcodeSel op_sel = X86_JMP_NONE);
 
-}}} // namespace yasm::arch::x86
+}} // namespace yasm::arch
 
 #endif

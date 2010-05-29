@@ -40,12 +40,8 @@
 #include "yasmx/Symbol_util.h"
 
 
-namespace yasm
-{
-namespace parser
-{
-namespace gas
-{
+using namespace yasm;
+using namespace parser;
 
 GasParser::GasParser(const ParserModule& module,
                      Diagnostic& diags,
@@ -177,10 +173,8 @@ GasParser::AddDirectives(Directives& dirs, llvm::StringRef parser)
 }
 
 void
-DoRegister()
+yasm_parser_gas_DoRegister()
 {
     RegisterModule<ParserModule, ParserModuleImpl<GasParser> >("gas");
     RegisterModule<ParserModule, ParserModuleImpl<GasParser> >("gnu");
 }
-
-}}} // namespace yasm::parser::gas

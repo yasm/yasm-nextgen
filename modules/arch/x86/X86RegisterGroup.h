@@ -36,8 +36,6 @@ namespace yasm
 {
 namespace arch
 {
-namespace x86
-{
 
 class YASM_STD_EXPORT X86RegisterGroup : public RegisterGroup
 {
@@ -62,6 +60,6 @@ private:
     unsigned long m_size;
 };
 
-}}} // namespace yasm::arch::x86
+}} // namespace yasm::arch
 
 #endif

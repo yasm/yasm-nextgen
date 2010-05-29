@@ -35,8 +35,6 @@ namespace yasm
 {
 namespace objfmt
 {
-namespace elf
-{
 
 struct ElfConfig;
 class ElfMachine;
@@ -386,6 +384,6 @@ enum ElfRelocationType_x86_64
 
 typedef std::vector<SymbolRef> ElfSymtab;
 
-}}} // namespace yasm::objfmt::elf
+}} // namespace yasm::objfmt
 
 #endif

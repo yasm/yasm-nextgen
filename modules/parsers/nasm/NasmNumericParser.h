@@ -55,8 +55,6 @@ class Preprocessor;
 
 namespace parser
 {
-namespace nasm
-{
 
 /// This performs strict semantic analysis of the content of a ppnumber,
 /// classifying it as either integer, floating, or erroneous, determines the
@@ -137,6 +135,6 @@ private:
     }
 };
 
-}}} // namespace yasm::parser::nasm
+}} // namespace yasm::parser
 
 #endif

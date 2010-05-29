@@ -39,8 +39,6 @@ class IntNum;
 
 namespace objfmt
 {
-namespace coff
-{
 
 struct CoffSection;
 struct CoffSymbol;
@@ -132,6 +130,6 @@ private:
     void DirIdent(DirectiveInfo& info, Diagnostic& diags);
 };
 
-}}} // namespace yasm::objfmt::coff
+}} // namespace yasm::objfmt
 
 #endif

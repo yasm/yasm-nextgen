@@ -47,10 +47,8 @@ class Object;
 
 namespace objfmt
 {
-namespace elf
-{
 
-struct SpecialSymbolData
+struct ElfSpecialSymbolData
 {
     const char* name;   // name without parser prefix (e.g. name for ..name)
 
@@ -64,12 +62,12 @@ struct SpecialSymbolData
 };
 
 struct YASM_STD_EXPORT ElfSpecialSymbol
-    : public AssocData, public SpecialSymbolData
+    : public AssocData, public ElfSpecialSymbolData
 {
     static const char* key;
 
-    explicit ElfSpecialSymbol(const SpecialSymbolData& rhs)
-        : SpecialSymbolData(rhs)
+    explicit ElfSpecialSymbol(const ElfSpecialSymbolData& rhs)
+        : ElfSpecialSymbolData(rhs)
     {}
     ~ElfSpecialSymbol();
 
@@ -77,7 +75,7 @@ struct YASM_STD_EXPORT ElfSpecialSymbol
 };
 
 inline bool
-isWRTSymRelative(const Symbol& wrt)
+isWRTElfSymRelative(const Symbol& wrt)
 {
     const ElfSpecialSymbol* ssym = wrt.getAssocData<ElfSpecialSymbol>();
     if (!ssym)
@@ -86,7 +84,7 @@ isWRTSymRelative(const Symbol& wrt)
 }
 
 inline bool
-isWRTPosAdjusted(const Symbol& wrt)
+isWRTElfPosAdjusted(const Symbol& wrt)
 {
     const ElfSpecialSymbol* ssym = wrt.getAssocData<ElfSpecialSymbol>();
     if (!ssym)
@@ -121,8 +119,20 @@ YASM_STD_EXPORT
 std::auto_ptr<ElfMachine> CreateElfMachine(const Arch& arch, ElfClass cls);
 
 YASM_STD_EXPORT
-void AddElfSSym(Object& object, const SpecialSymbolData& ssym);
+void AddElfSSym(Object& object, const ElfSpecialSymbolData& ssym);
 
-}}} // namespace yasm::objfmt::elf
+namespace impl {
+bool ElfMatch_x86_x86(llvm::StringRef arch_keyword,
+                      llvm::StringRef arch_machine,
+                      ElfClass cls);
+bool ElfMatch_x86_amd64(llvm::StringRef arch_keyword,
+                        llvm::StringRef arch_machine,
+                        ElfClass cls);
+
+std::auto_ptr<ElfMachine> ElfCreate_x86_x86();
+std::auto_ptr<ElfMachine> ElfCreate_x86_amd64();
+} // namespace impl
+
+}} // namespace yasm::objfmt
 
 #endif // ELF_MACHINE_H_INCLUDED

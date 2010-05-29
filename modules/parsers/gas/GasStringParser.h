@@ -46,8 +46,6 @@ class Preprocessor;
 
 namespace parser
 {
-namespace gas
-{
 
 /// This performs strict semantic analysis of the content of a string token,
 /// performs unescaping if necessary, and can convert it to a useful value.
@@ -80,6 +78,6 @@ public:
     void getIntegerValue(IntNum* val);
 };
 
-}}} // namespace yasm::parser::gas
+}} // namespace yasm::parser
 
 #endif

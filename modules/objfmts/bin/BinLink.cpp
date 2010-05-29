@@ -43,12 +43,8 @@
 #include "BinSection.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace bin
-{
+using namespace yasm;
+using namespace objfmt;
 
 BinGroup::BinGroup(Section& section, BinSection& bsd)
     : m_section(section),
@@ -80,7 +76,7 @@ BinGroup::Dump() const
 }
 
 YAML::Emitter&
-operator<< (YAML::Emitter& out, const BinGroups& groups)
+objfmt::operator<< (YAML::Emitter& out, const BinGroups& groups)
 {
     if (groups.empty())
         out << YAML::Flow;
@@ -617,5 +613,3 @@ BinGroup::AssignVStartRecurse(IntNum& start, Diagnostic& diags)
         follow_group->AssignVStartRecurse(start, diags);
     }
 }
-
-}}} // namespace yasm::objfmt::bin

@@ -39,14 +39,12 @@ class BytecodeContainer;
 
 namespace objfmt
 {
-namespace win32
-{
 
 YASM_STD_EXPORT
 void AppendSxData(BytecodeContainer& container,
                   SymbolRef sym,
                   clang::SourceLocation source);
 
-}}} // namespace yasm::objfmt::win32
+}} // namespace yasm::objfmt
 
 #endif

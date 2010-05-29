@@ -45,8 +45,6 @@ class StringTable;
 
 namespace objfmt
 {
-namespace coff
-{
 
 struct YASM_STD_EXPORT CoffSymbol : public AssocData
 {
@@ -111,6 +109,6 @@ struct YASM_STD_EXPORT CoffSymbol : public AssocData
     std::vector<AuxEntry> m_aux;    ///< aux entries
 };
 
-}}} // namespace yasm::objfmt::coff
+}} // namespace yasm::objfmt
 
 #endif

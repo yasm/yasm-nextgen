@@ -36,8 +36,6 @@ namespace yasm
 {
 namespace objfmt
 {
-namespace xdf
-{
 
 struct YASM_STD_EXPORT XdfSymbol : public AssocData
 {
@@ -57,6 +55,6 @@ struct YASM_STD_EXPORT XdfSymbol : public AssocData
     unsigned long index;                //< assigned XDF symbol table index
 };
 
-}}} // namespace yasm::objfmt::xdf
+}} // namespace yasm::objfmt
 
 #endif

@@ -40,8 +40,8 @@
 
 
 using namespace yasm;
+using namespace parser;
 using namespace yasmunit;
-using namespace yasm::parser::gas;
 
 struct strtest
 {

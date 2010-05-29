@@ -24,6 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "RdfObject.h"
+
 #include <util.h>
 
 #include "llvm/ADT/IndexedMap.h"
@@ -46,7 +48,6 @@
 #include "yasmx/NameValue.h"
 #include "yasmx/Object.h"
 #include "yasmx/Object_util.h"
-#include "yasmx/ObjectFormat.h"
 #include "yasmx/Reloc.h"
 #include "yasmx/Section.h"
 #include "yasmx/Symbol.h"
@@ -59,12 +60,8 @@
 #include "RdfSymbol.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace rdf
-{
+using namespace yasm;
+using namespace objfmt;
 
 static const unsigned char RDF_MAGIC[] = {'R', 'D', 'O', 'F', 'F', '2'};
 
@@ -77,53 +74,9 @@ static const unsigned int MODLIB_NAME_MAX = 128;
 // Maximum number of segments that we can handle in one file
 static const unsigned int RDF_MAXSEGS = 64;
 
-class RdfObject : public ObjectFormat
+RdfObject::~RdfObject()
 {
-public:
-    /// Constructor.
-    /// To make object format truly usable, set_object()
-    /// needs to be called.
-    RdfObject(const ObjectFormatModule& module, Object& object)
-        : ObjectFormat(module, object)
-    {}
-
-    /// Destructor.
-    ~RdfObject() {}
-
-    void AddDirectives(Directives& dirs, llvm::StringRef parser);
-
-    void Read(const llvm::MemoryBuffer& in);
-    void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
-                Diagnostic& diags);
-
-    Section* AddDefaultSection();
-    Section* AppendSection(llvm::StringRef name,
-                           clang::SourceLocation source);
-
-    static llvm::StringRef getName()
-    { return "Relocatable Dynamic Object File Format (RDOFF) v2.0"; }
-    static llvm::StringRef getKeyword() { return "rdf"; }
-    static llvm::StringRef getExtension() { return ".rdf"; }
-    static unsigned int getDefaultX86ModeBits() { return 32; }
-    static llvm::StringRef getDefaultDebugFormatKeyword() { return "null"; }
-    static std::vector<llvm::StringRef> getDebugFormatKeywords();
-    static bool isOkObject(Object& object) { return true; }
-    static bool Taste(const llvm::MemoryBuffer& in,
-                      /*@out@*/ std::string* arch_keyword,
-                      /*@out@*/ std::string* machine);
-
-private:
-    void DirSection(DirectiveInfo& info, Diagnostic& diags);
-    void DirLibrary(DirectiveInfo& info, Diagnostic& diags);
-    void DirModule(DirectiveInfo& info, Diagnostic& diags);
-
-    void AddLibOrModule(llvm::StringRef name,
-                        bool lib,
-                        Diagnostic& diags);
-
-    std::vector<std::string> m_module_names;
-    std::vector<std::string> m_library_names;
-};
+}
 
 std::vector<llvm::StringRef>
 RdfObject::getDebugFormatKeywords()
@@ -132,6 +85,7 @@ RdfObject::getDebugFormatKeywords()
     return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
 }
 
+namespace {
 class RdfOutput : public BytecodeOutput
 {
 public:
@@ -168,6 +122,7 @@ private:
 
     unsigned long m_bss_size;       // total BSS size
 };
+} // anonymous namespace
 
 RdfOutput::RdfOutput(llvm::raw_ostream& os, Object& object)
     : m_os(os)
@@ -1028,7 +983,7 @@ RdfObject::AddDefaultSection()
     return section;
 }
 
-inline bool
+static inline bool
 SetReserved(NameValue& nv,
             clang::SourceLocation dir_source,
             Diagnostic& diags,
@@ -1205,10 +1160,8 @@ static const yasm_stdmac rdf_objfmt_stdmacs[] = {
 #endif
 
 void
-DoRegister()
+yasm_objfmt_rdf_DoRegister()
 {
     RegisterModule<ObjectFormatModule,
                    ObjectFormatModuleImpl<RdfObject> >("rdf");
 }
-
-}}} // namespace yasm::objfmt::rdf

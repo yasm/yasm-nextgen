@@ -53,13 +53,10 @@
 #include "CoffSymbol.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace coff
-{
+using namespace yasm;
+using namespace objfmt;
 
+namespace {
 class CoffOutput : public BytecodeStreamOutput
 {
 public:
@@ -90,6 +87,7 @@ private:
     StringTable m_strtab;
     BytecodeNoOutput m_no_output;
 };
+} // anonymous namespace
 
 CoffOutput::CoffOutput(llvm::raw_ostream& os,
                        CoffObject& objfmt,
@@ -618,5 +616,3 @@ CoffObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
         out.OutputSectionHeader(*i);
     }
 }
-
-}}} // namespace yasm::objfmt::coff

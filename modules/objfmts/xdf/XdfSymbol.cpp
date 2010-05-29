@@ -29,12 +29,8 @@
 #include "YAML/emitter.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace xdf
-{
+using namespace yasm;
+using namespace objfmt;
 
 const char* XdfSymbol::key = "objfmt::xdf::XdfSymbol";
 
@@ -50,5 +46,3 @@ XdfSymbol::Write(YAML::Emitter& out) const
     out << YAML::Key << "index" << YAML::Value << index;
     out << YAML::EndMap;
 }
-
-}}} // namespace yasm::objfmt::xdf

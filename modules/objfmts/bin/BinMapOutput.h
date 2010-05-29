@@ -40,8 +40,6 @@ class Object;
 
 namespace objfmt
 {
-namespace bin
-{
 
 class YASM_STD_EXPORT BinMapOutput
 {
@@ -74,6 +72,6 @@ private:
     const BinGroups& m_groups;  // section groups
 };
 
-}}} // namespace yasm::objfmt::bin
+}} // namespace yasm::objfmt
 
 #endif

@@ -45,12 +45,8 @@
 #include "X86RegisterGroup.h"
 
 
-namespace yasm
-{
-namespace arch
-{
-namespace x86
-{
+using namespace yasm;
+using namespace arch;
 
 X86Arch::X86Arch(const ArchModule& module)
     : Arch(module),
@@ -540,9 +536,7 @@ X86Arch::CreateEffAddr(std::auto_ptr<Expr> e) const
 }
 
 void
-DoRegister()
+yasm_arch_x86_DoRegister()
 {
     RegisterModule<ArchModule, ArchModuleImpl<X86Arch> >("x86");
 }
-
-}}} // namespace yasm::arch::x86

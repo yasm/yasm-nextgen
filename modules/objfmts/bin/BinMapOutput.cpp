@@ -40,12 +40,8 @@
 #include "BinSymbol.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace bin
-{
+using namespace yasm;
+using namespace objfmt;
 
 static void
 MapPrescanBytes(const Section& sect, const BinSection& bsd, int* bytes)
@@ -316,5 +312,3 @@ BinMapOutput::OutputSectionsSymbols()
     // Other sections
     InnerSectionsSymbols(m_groups);
 }
-
-}}} // namespace yasm::objfmt::bin

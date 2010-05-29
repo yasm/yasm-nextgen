@@ -48,18 +48,15 @@
 STATISTIC(num_jmp, "Number of jump instructions appended");
 STATISTIC(num_jmp_bc, "Number of jump bytecodes created");
 
-namespace yasm
-{
-namespace arch
-{
-namespace x86
-{
+using namespace yasm;
+using namespace arch;
 
+namespace {
 class X86Jmp : public Bytecode::Contents
 {
 public:
     X86Jmp(const X86Common& common,
-           JmpOpcodeSel op_sel,
+           X86JmpOpcodeSel op_sel,
            const X86Opcode& shortop,
            const X86Opcode& nearop,
            std::auto_ptr<Expr> target);
@@ -93,11 +90,12 @@ private:
 
     // which opcode are we using?
     // The *FORCED forms are specified in the source as such
-    JmpOpcodeSel m_op_sel;
+    X86JmpOpcodeSel m_op_sel;
 };
+} // anonymous namespace
 
 X86Jmp::X86Jmp(const X86Common& common,
-               JmpOpcodeSel op_sel,
+               X86JmpOpcodeSel op_sel,
                const X86Opcode& shortop,
                const X86Opcode& nearop,
                std::auto_ptr<Expr> target)
@@ -148,12 +146,12 @@ X86Jmp::Finalize(Bytecode& bc, Diagnostic& diags)
         // External or out of segment, so we can't check distance.
         // Default to near (if explicitly overridden, we never get to
         // this function anyway).
-        m_op_sel = JMP_NEAR;
+        m_op_sel = X86_JMP_NEAR;
     }
     else
     {
         // Default to short jump
-        m_op_sel = JMP_SHORT;
+        m_op_sel = X86_JMP_SHORT;
     }
     return true;
 }
@@ -166,7 +164,7 @@ X86Jmp::CalcLen(Bytecode& bc,
 {
     unsigned long ilen = m_common.getLen();
 
-    if (m_op_sel == JMP_NEAR)
+    if (m_op_sel == X86_JMP_NEAR)
     {
         ilen += m_nearop.getLen();
         ilen += (m_common.m_opersize == 16) ? 2 : 4;
@@ -193,10 +191,10 @@ X86Jmp::Expand(Bytecode& bc,
                Diagnostic& diags)
 {
     assert(span == 1 && "unrecognized span id");
-    assert(m_op_sel != JMP_NEAR && "trying to expand an already-near jump");
+    assert(m_op_sel != X86_JMP_NEAR && "trying to expand an already-near jump");
 
     // Upgrade to a near jump
-    m_op_sel = JMP_NEAR;
+    m_op_sel = X86_JMP_NEAR;
     (*len) -= m_shortop.getLen() + 1;
     (*len) += m_nearop.getLen();
     (*len) += (m_common.m_opersize == 16) ? 2 : 4;
@@ -214,7 +212,7 @@ X86Jmp::Output(Bytecode& bc, BytecodeOutput& bc_out, Diagnostic& diags)
     m_common.ToBytes(bytes, 0);
 
     unsigned int size;
-    if (m_op_sel == JMP_SHORT)
+    if (m_op_sel == X86_JMP_SHORT)
     {
         // 1 byte relative displacement
         size = 1;
@@ -270,35 +268,35 @@ X86Jmp::Write(YAML::Emitter& out) const
     out << YAML::Key << "opcode selection" << YAML::Value;
     switch (m_op_sel)
     {
-        case JMP_NONE:  out << "None"; break;
-        case JMP_SHORT: out << "Short"; break;
-        case JMP_NEAR:  out << "Near"; break;
-        default:        out << YAML::Null; break;
+        case X86_JMP_NONE:  out << "None"; break;
+        case X86_JMP_SHORT: out << "Short"; break;
+        case X86_JMP_NEAR:  out << "Near"; break;
+        default:            out << YAML::Null; break;
     }
     out << YAML::EndMap;
 }
 
 void
-AppendJmp(BytecodeContainer& container,
-          const X86Common& common,
-          const X86Opcode& shortop,
-          const X86Opcode& nearop,
-          std::auto_ptr<Expr> target,
-          clang::SourceLocation source,
-          JmpOpcodeSel op_sel)
+arch::AppendJmp(BytecodeContainer& container,
+                const X86Common& common,
+                const X86Opcode& shortop,
+                const X86Opcode& nearop,
+                std::auto_ptr<Expr> target,
+                clang::SourceLocation source,
+                X86JmpOpcodeSel op_sel)
 {
     Bytecode& bc = container.FreshBytecode();
     ++num_jmp;
 
     if (shortop.getLen() == 0)
-        op_sel = JMP_NEAR;
+        op_sel = X86_JMP_NEAR;
     if (nearop.getLen() == 0)
-        op_sel = JMP_SHORT;
+        op_sel = X86_JMP_SHORT;
 
     // jump size not forced near or far, so variable size (need contents)
     // TODO: we can be a bit more optimal for backward jumps within the
     // same bytecode (as the distance is known)
-    if (op_sel == JMP_NONE)
+    if (op_sel == X86_JMP_NONE)
     {
         bc.Transform(Bytecode::Contents::Ptr(new X86Jmp(
             common, op_sel, shortop, nearop, target)));
@@ -321,7 +319,7 @@ AppendJmp(BytecodeContainer& container,
     targetv.setSigned();
     targetv.setNextInsn(0);     // always 0.
 
-    if (op_sel == JMP_SHORT)
+    if (op_sel == X86_JMP_SHORT)
     {
         // Opcode
         shortop.ToBytes(bytes);
@@ -344,5 +342,3 @@ AppendJmp(BytecodeContainer& container,
     targetv.setInsnStart(bytes.size()-orig_size);
     bc.AppendFixed(targetv);
 }
-
-}}} // namespace yasm::arch::x86

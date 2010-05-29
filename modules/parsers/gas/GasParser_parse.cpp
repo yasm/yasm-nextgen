@@ -55,12 +55,8 @@
 #include "GasStringParser.h"
 
 
-namespace yasm
-{
-namespace parser
-{
-namespace gas
-{
+using namespace yasm;
+using namespace parser;
 
 bool
 GasParser::ParseLine()
@@ -1756,5 +1752,3 @@ GasParser::DoParse()
         }
     }
 }
-
-}}} // namespace yasm::parser::gas

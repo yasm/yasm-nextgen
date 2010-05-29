@@ -42,8 +42,6 @@ class IdentifierInfo;
 
 namespace parser
 {
-namespace nasm
-{
 
 class YASM_STD_EXPORT NasmPreproc : public Preprocessor
 {
@@ -67,6 +65,6 @@ private:
     clang::SourceLocation m_DATE_loc, m_TIME_loc;
 };
 
-}}} // namespace yasm::parser::nasm
+}} // namespace yasm::parser
 
 #endif

@@ -32,12 +32,8 @@
 
 #include "GasLexer.h"
 
-namespace yasm
-{
-namespace parser
-{
-namespace gas
-{
+using namespace yasm;
+using namespace parser;
 
 GasPreproc::GasPreproc(Diagnostic& diags,
                        clang::SourceManager& sm,
@@ -61,5 +57,3 @@ GasPreproc::CreateLexer(clang::FileID fid,
 {
     return new GasLexer(fid, input_buffer, *this);
 }
-
-}}} // namespace yasm::parser::gas

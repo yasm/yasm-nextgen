@@ -44,12 +44,8 @@
 #include "ElfSection.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace elf
-{
+using namespace yasm;
+using namespace objfmt;
 
 const char* ElfSymbol::key = "objfmt::elf::ElfSymbol";
 
@@ -283,5 +279,3 @@ ElfSymbol::Write(Bytes& bytes, const ElfConfig& config)
     else if (config.cls == ELFCLASS64)
         assert(bytes.size() == SYMTAB64_SIZE);
 }
-
-}}} // namespace yasm::objfmt::elf

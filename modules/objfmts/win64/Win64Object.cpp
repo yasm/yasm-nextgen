@@ -24,6 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "Win64Object.h"
+
 #include "util.h"
 
 #include "yasmx/Support/Compose.h"
@@ -36,82 +38,14 @@
 #include "yasmx/Errwarns.h"
 #include "yasmx/Object.h"
 #include "yasmx/NameValue.h"
+#include "yasmx/Section.h"
 #include "yasmx/Symbol.h"
 
-#include "modules/objfmts/win32/Win32Object.h"
 #include "modules/objfmts/coff/CoffSection.h"
-#include "UnwindCode.h"
-#include "UnwindInfo.h"
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace win64
-{
 
-using yasm::objfmt::coff::CoffSection;
-using yasm::objfmt::win32::Win32Object;
-
-class Win64Object : public Win32Object
-{
-public:
-    Win64Object(const ObjectFormatModule& module, Object& object);
-    virtual ~Win64Object();
-
-    virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
-
-    //virtual void InitSymbols(llvm::StringRef parser);
-    //virtual void Read(const llvm::MemoryBuffer& in);
-    virtual void Output(llvm::raw_fd_ostream& os,
-                        bool all_syms,
-                        Errwarns& errwarns,
-                        Diagnostic& diags);
-
-    static llvm::StringRef getName() { return "Win64"; }
-    static llvm::StringRef getKeyword() { return "win64"; }
-    static llvm::StringRef getExtension() { return ".obj"; }
-    static unsigned int getDefaultX86ModeBits() { return 64; }
-
-    static llvm::StringRef getDefaultDebugFormatKeyword()
-    { return Win32Object::getDefaultDebugFormatKeyword(); }
-    static std::vector<llvm::StringRef> getDebugFormatKeywords()
-    { return Win32Object::getDebugFormatKeywords(); }
-
-    static bool isOkObject(Object& object)
-    { return Win32Object::isOkObject(object); }
-    static bool Taste(const llvm::MemoryBuffer& in,
-                      /*@out@*/ std::string* arch_keyword,
-                      /*@out@*/ std::string* machine)
-    { return false; }
-
-private:
-    virtual bool InitSection(llvm::StringRef name,
-                             Section& section,
-                             CoffSection* coffsect);
-
-    bool CheckProcFrameState(clang::SourceLocation dir_source,
-                             Diagnostic& diags);
-
-    void DirProcFrame(DirectiveInfo& info, Diagnostic& diags);
-    void DirPushReg(DirectiveInfo& info, Diagnostic& diags);
-    void DirSetFrame(DirectiveInfo& info, Diagnostic& diags);
-    void DirAllocStack(DirectiveInfo& info, Diagnostic& diags);
-
-    void SaveCommon(DirectiveInfo& info,
-                    UnwindCode::Opcode op,
-                    Diagnostic& diags);
-    void DirSaveReg(DirectiveInfo& info, Diagnostic& diags);
-    void DirSaveXMM128(DirectiveInfo& info, Diagnostic& diags);
-    void DirPushFrame(DirectiveInfo& info, Diagnostic& diags);
-    void DirEndProlog(DirectiveInfo& info, Diagnostic& diags);
-    void DirEndProcFrame(DirectiveInfo& info, Diagnostic& diags);
-
-    // data for proc_frame and related directives
-    clang::SourceLocation m_proc_frame;     // start of proc source location
-    clang::SourceLocation m_done_prolog;    // end of prologue source location
-    std::auto_ptr<UnwindInfo> m_unwind; // Unwind info
-};
+using namespace yasm;
+using namespace objfmt;
 
 Win64Object::Win64Object(const ObjectFormatModule& module, Object& object)
     : Win32Object(module, object)
@@ -579,12 +513,10 @@ static const yasm_stdmac win64_objfmt_stdmacs[] =
 #endif
 
 void
-DoRegister()
+yasm_objfmt_win64_DoRegister()
 {
     RegisterModule<ObjectFormatModule,
                    ObjectFormatModuleImpl<Win64Object> >("win64");
     RegisterModule<ObjectFormatModule,
                    ObjectFormatModuleImpl<Win64Object> >("x64");
 }
-
-}}} // namespace yasm::objfmt::win64

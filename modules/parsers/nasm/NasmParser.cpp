@@ -37,12 +37,8 @@
 #include "yasmx/Symbol_util.h"
 
 
-namespace yasm
-{
-namespace parser
-{
-namespace nasm
-{
+using namespace yasm;
+using namespace parser;
 
 NasmParser::NasmParser(const ParserModule& module,
                        Diagnostic& diags,
@@ -115,9 +111,7 @@ NasmParser::AddDirectives(Directives& dirs, llvm::StringRef parser)
 }
 
 void
-DoRegister()
+yasm_parser_nasm_DoRegister()
 {
     RegisterModule<ParserModule, ParserModuleImpl<NasmParser> >("nasm");
 }
-
-}}} // namespace yasm::parser::nasm

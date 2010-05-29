@@ -55,8 +55,6 @@ class Preprocessor;
 
 namespace parser
 {
-namespace gas
-{
 
 /// This performs strict semantic analysis of the content of a ppnumber,
 /// classifying it as either integer, floating, or erroneous, determines the
@@ -138,6 +136,6 @@ private:
     }
 };
 
-}}} // namespace yasm::parser::gas
+}} // namespace yasm::parser
 
 #endif

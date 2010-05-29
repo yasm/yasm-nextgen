@@ -38,8 +38,6 @@ class Diagnostic;
 
 namespace arch
 {
-namespace x86
-{
 
 enum X86RexBitPos
 {
@@ -156,6 +154,6 @@ private:
                  Diagnostic& diags);
 };
 
-}}} // namespace yasm::arch::x86
+}} // namespace yasm::arch
 
 #endif

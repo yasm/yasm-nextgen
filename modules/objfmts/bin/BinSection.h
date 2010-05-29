@@ -43,8 +43,6 @@ class Expr;
 
 namespace objfmt
 {
-namespace bin
-{
 
 struct YASM_STD_EXPORT BinSection : public AssocData
 {
@@ -77,6 +75,6 @@ struct YASM_STD_EXPORT BinSection : public AssocData
     IntNum length;
 };
 
-}}} // namespace yasm::objfmt::bin
+}} // namespace yasm::objfmt
 
 #endif

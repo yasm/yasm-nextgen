@@ -1,3 +1,5 @@
+#ifndef YASM_NULLDEBUG_H
+#define YASM_NULLDEBUG_H
 //
 // Null debugging format (creates NO debugging information)
 //
@@ -24,26 +26,30 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "NullDebug.h"
+#include "yasmx/Config/export.h"
+#include "yasmx/DebugFormat.h"
 
-#include "yasmx/Support/registry.h"
 
-
-using namespace yasm;
-using namespace dbgfmt;
-
-NullDebug::~NullDebug()
+namespace yasm
 {
-}
-
-void
-NullDebug::Generate(Linemap& linemap, Errwarns& errwarns)
+namespace dbgfmt
 {
-}
 
-void
-yasm_dbgfmt_null_DoRegister()
+class YASM_STD_EXPORT NullDebug : public DebugFormat
 {
-    RegisterModule<DebugFormatModule,
-                   DebugFormatModuleImpl<NullDebug> >("null");
-}
+public:
+    NullDebug(const DebugFormatModule& module, Object& object)
+        : DebugFormat(module)
+    {}
+    ~NullDebug();
+
+    static llvm::StringRef getName() { return "No debugging info"; }
+    static llvm::StringRef getKeyword() { return "null"; }
+    static bool isOkObject(Object& object) { return true; }
+
+    void Generate(Linemap& linemap, Errwarns& errwarns);
+};
+
+}} // namespace yasm::dbgfmt
+
+#endif

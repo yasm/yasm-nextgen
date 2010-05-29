@@ -32,13 +32,10 @@
 #include "ElfTypes.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace elf
-{
+using namespace yasm;
+using namespace objfmt;
 
+namespace {
 class ElfReloc_x86_x86 : public ElfReloc
 {
 public:
@@ -87,11 +84,12 @@ public:
         return std::auto_ptr<ElfReloc>(new ElfReloc_x86_x86(sym, addr));
     }
 };
+} // anonymous namespace
 
 bool
-ElfMatch_x86_x86(llvm::StringRef arch_keyword,
-                 llvm::StringRef arch_machine,
-                 ElfClass cls)
+impl::ElfMatch_x86_x86(llvm::StringRef arch_keyword,
+                       llvm::StringRef arch_machine,
+                       ElfClass cls)
 {
     return (arch_keyword.equals_lower("x86") &&
             arch_machine.equals_lower("x86") &&
@@ -99,7 +97,7 @@ ElfMatch_x86_x86(llvm::StringRef arch_keyword,
 }
 
 std::auto_ptr<ElfMachine>
-ElfCreate_x86_x86()
+impl::ElfCreate_x86_x86()
 {
     return std::auto_ptr<ElfMachine>(new Elf_x86_x86);
 }
@@ -118,7 +116,7 @@ Elf_x86_x86::Configure(ElfConfig* config) const
 void
 Elf_x86_x86::AddSpecialSymbols(Object& object, llvm::StringRef parser) const
 {
-    static const SpecialSymbolData ssyms[] =
+    static const ElfSpecialSymbolData ssyms[] =
     {
         //name,         type,             size,symrel,thread,curpos
         {"plt",         R_386_PLT32,        32,  true, false, false},
@@ -231,5 +229,3 @@ ElfReloc_x86_x86::HandleAddend(IntNum* intn,
     }
     ElfReloc::HandleAddend(intn, config, insn_start);
 }
-
-}}} // namespace yasm::objfmt::elf

@@ -40,12 +40,9 @@
 
 #include "modules/arch/x86/X86Arch.h"
 
-namespace yasm
-{
-namespace arch
-{
-namespace x86
-{
+
+using namespace yasm;
+using namespace arch;
 
 #ifndef NELEMS
 #define NELEMS(x) (sizeof(x)/sizeof(x[0]))
@@ -584,5 +581,3 @@ X86Arch::ParseCheckRegTmod(llvm::StringRef id,
 
     return RegTmod();
 }
-
-}}} // namespace yasm::arch::x86

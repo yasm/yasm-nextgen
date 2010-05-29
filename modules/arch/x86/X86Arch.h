@@ -44,8 +44,6 @@ class Object;
 
 namespace arch
 {
-namespace x86
-{
 
 class X86RegisterGroup;
 
@@ -225,6 +223,6 @@ private:
     NopFormat m_nop;
 };
 
-}}} // namespace yasm::arch::x86
+}} // namespace yasm::arch
 
 #endif

@@ -24,6 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "BinObject.h"
+
 #include "util.h"
 
 #include "clang/Basic/SourceLocation.h"
@@ -42,7 +44,6 @@
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Object.h"
-#include "yasmx/ObjectFormat.h"
 #include "yasmx/NameValue.h"
 #include "yasmx/Section.h"
 #include "yasmx/Symbol.h"
@@ -54,68 +55,8 @@
 #include "BinSymbol.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace bin
-{
-
-class BinObject : public ObjectFormat
-{
-public:
-    /// Constructor.
-    BinObject(const ObjectFormatModule& module, Object& object);
-
-    /// Destructor.
-    ~BinObject();
-
-    void AddDirectives(Directives& dirs, llvm::StringRef parser);
-
-    void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
-                Diagnostic& diags);
-
-    Section* AddDefaultSection();
-    Section* AppendSection(llvm::StringRef name, clang::SourceLocation source);
-
-    static llvm::StringRef getName() { return "Flat format binary"; }
-    static llvm::StringRef getKeyword() { return "bin"; }
-    static llvm::StringRef getExtension() { return ""; }
-    static unsigned int getDefaultX86ModeBits() { return 16; }
-    static llvm::StringRef getDefaultDebugFormatKeyword() { return "null"; }
-    static std::vector<llvm::StringRef> getDebugFormatKeywords();
-    static bool isOkObject(Object& object) { return true; }
-    static bool Taste(const llvm::MemoryBuffer& in,
-                      /*@out@*/ std::string* arch_keyword,
-                      /*@out@*/ std::string* machine)
-    { return false; }
-
-private:
-    void DirSection(DirectiveInfo& info, Diagnostic& diags);
-    void DirOrg(DirectiveInfo& info, Diagnostic& diags);
-    void DirMap(DirectiveInfo& info, Diagnostic& diags);
-    bool setMapFilename(const NameValue& nv,
-                        clang::SourceLocation dir_source,
-                        Diagnostic& diags);
-
-    void OutputMap(const IntNum& origin,
-                   const BinGroups& groups,
-                   Diagnostic& diags) const;
-
-    enum
-    {
-        NO_MAP = 0,
-        MAP_NONE = 0x01,
-        MAP_BRIEF = 0x02,
-        MAP_SECTIONS = 0x04,
-        MAP_SYMBOLS = 0x08
-    };
-    unsigned long m_map_flags;
-    std::string m_map_filename;
-
-    util::scoped_ptr<Expr> m_org;
-    clang::SourceLocation m_org_source;
-};
+using namespace yasm;
+using namespace objfmt;
 
 BinObject::BinObject(const ObjectFormatModule& module, Object& object)
     : ObjectFormat(module, object), m_map_flags(NO_MAP), m_org(0)
@@ -165,6 +106,7 @@ BinObject::OutputMap(const IntNum& origin,
         out.OutputSectionsSymbols();
 }
 
+namespace {
 class BinOutput : public BytecodeStreamOutput
 {
 public:
@@ -187,6 +129,7 @@ private:
     llvm::raw_fd_ostream& m_fd_os;
     BytecodeNoOutput m_no_output;
 };
+} // anonymous namespace
 
 BinOutput::BinOutput(llvm::raw_fd_ostream& os, Object& object)
     : BytecodeStreamOutput(os),
@@ -630,10 +573,8 @@ BinObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
 }
 
 void
-DoRegister()
+yasm_objfmt_bin_DoRegister()
 {
     RegisterModule<ObjectFormatModule,
                    ObjectFormatModuleImpl<BinObject> >("bin");
 }
-
-}}} // namespace yasm::objfmt::bin

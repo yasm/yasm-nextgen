@@ -37,8 +37,6 @@ class Bytes;
 
 namespace objfmt
 {
-namespace rdf
-{
 
 class YASM_STD_EXPORT RdfReloc : public Reloc
 {
@@ -73,6 +71,6 @@ private:
     unsigned int m_refseg;  ///< relocated symbol "segment number"
 };
 
-}}} // namespace yasm::objfmt::rdf
+}} // namespace yasm::objfmt
 
 #endif

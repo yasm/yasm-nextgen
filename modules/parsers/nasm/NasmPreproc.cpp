@@ -32,12 +32,9 @@
 
 #include "NasmLexer.h"
 
-namespace yasm
-{
-namespace parser
-{
-namespace nasm
-{
+
+using namespace yasm;
+using namespace parser;
 
 NasmPreproc::NasmPreproc(Diagnostic& diags,
                          clang::SourceManager& sm,
@@ -83,5 +80,3 @@ NasmPreproc::CreateLexer(clang::FileID fid,
 {
     return new NasmLexer(fid, input_buffer, *this);
 }
-
-}}} // namespace yasm::parser::nasm

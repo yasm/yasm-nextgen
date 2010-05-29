@@ -44,12 +44,8 @@
 #include "SxData.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace win32
-{
+using namespace yasm;
+using namespace objfmt;
 
 Win32Object::Win32Object(const ObjectFormatModule& module, Object& object)
     : CoffObject(module, object, false, true)
@@ -299,10 +295,8 @@ static const yasm_stdmac win32_objfmt_stdmacs[] =
 #endif
 
 void
-DoRegister()
+yasm_objfmt_win32_DoRegister()
 {
     RegisterModule<ObjectFormatModule,
                    ObjectFormatModuleImpl<Win32Object> >("win32");
 }
-
-}}} // namespace yasm::objfmt::win32

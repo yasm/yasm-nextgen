@@ -29,12 +29,8 @@
 #include "YAML/emitter.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace rdf
-{
+using namespace yasm;
+using namespace objfmt;
 
 const char* RdfSymbol::key = "objfmt::rdf::RdfSymbol";
 
@@ -50,5 +46,3 @@ RdfSymbol::Write(YAML::Emitter& out) const
     out << YAML::Key << "segment" << YAML::Value << segment;
     out << YAML::EndMap;
 }
-
-}}} // namespace yasm::objfmt::rdf

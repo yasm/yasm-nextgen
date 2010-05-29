@@ -43,8 +43,6 @@ class Register;
 
 namespace parser
 {
-namespace gas
-{
 
 class GasPreproc;
 
@@ -118,6 +116,6 @@ protected:
     void LexStringLiteral   (Token* result, const char* cur_ptr);
 };
 
-}}} // namespace yasm::parser::gas
+}} // namespace yasm::parser
 
 #endif

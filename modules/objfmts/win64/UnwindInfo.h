@@ -43,8 +43,6 @@ class BytecodeContainer;
 
 namespace objfmt
 {
-namespace win64
-{
 
 class YASM_STD_EXPORT UnwindInfo : public Bytecode::Contents
 {
@@ -111,6 +109,6 @@ void Generate(std::auto_ptr<UnwindInfo> uwinfo,
               clang::SourceLocation source,
               const Arch& arch);
 
-}}} // namespace yasm::objfmt::win64
+}} // namespace yasm::objfmt
 
 #endif

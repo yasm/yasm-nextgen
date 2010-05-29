@@ -41,8 +41,6 @@ class IntNum;
 
 namespace objfmt
 {
-namespace coff
-{
 
 class YASM_STD_EXPORT CoffReloc : public Reloc
 {
@@ -113,6 +111,6 @@ public:
     virtual std::string getTypeName() const;
 };
 
-}}} // namespace yasm::objfmt::coff
+}} // namespace yasm::objfmt
 
 #endif

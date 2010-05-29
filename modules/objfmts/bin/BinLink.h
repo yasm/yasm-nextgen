@@ -45,8 +45,6 @@ class Value;
 
 namespace objfmt
 {
-namespace bin
-{
 
 class BinObject;
 struct BinSection;
@@ -118,6 +116,6 @@ private:
     stdx::ptr_vector_owner<BinGroup> m_lma_groups_owner, m_vma_groups_owner;
 };
 
-}}} // namespace yasm::objfmt::bin
+}} // namespace yasm::objfmt
 
 #endif

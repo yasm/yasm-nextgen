@@ -60,16 +60,13 @@ STATISTIC(num_groups_scanned, "Total number of instruction groups scanned");
 STATISTIC(num_jmp_groups_scanned, "Total number of jump groups scanned");
 STATISTIC(num_empty_insn, "Number of empty instructions created");
 
-namespace yasm
-{
-namespace arch
-{
-namespace x86
-{
+using namespace yasm;
+using namespace arch;
 
 static std::string CpuFindReverse(unsigned int cpu0, unsigned int cpu1,
                                   unsigned int cpu2);
 
+namespace {
 // Opcode modifiers.
 enum X86OpcodeModifier
 {
@@ -220,7 +217,9 @@ enum X86OperandPostAction
     // large imm64 that can become a sign-extended imm32
     OPAP_SImm32Avail = 4
 };
+} // anonymous namespace
 
+namespace yasm { namespace arch {
 struct X86InfoOperand
 {
     // Operand types.  These are more detailed than the "general" types for all
@@ -324,6 +323,7 @@ struct X86InsnInfo
     // operand, see above
     unsigned int operands_index:12;
 };
+}} // namespace yasm::arch
 
 inline
 X86Prefix::X86Prefix(Type type, unsigned char value)
@@ -497,19 +497,19 @@ X86Insn::DoAppendJmp(BytecodeContainer& container,
     std::auto_ptr<Expr> imm = op.ReleaseImm();
     assert(imm.get() != 0);
 
-    JmpOpcodeSel op_sel;
+    X86JmpOpcodeSel op_sel;
 
     // See if the user explicitly specified short/near/far.
     switch (insn_operands[jinfo.operands_index+0].targetmod)
     {
         case OPTM_Short:
-            op_sel = JMP_SHORT;
+            op_sel = X86_JMP_SHORT;
             break;
         case OPTM_Near:
-            op_sel = JMP_NEAR;
+            op_sel = X86_JMP_NEAR;
             break;
         default:
-            op_sel = JMP_NONE;
+            op_sel = X86_JMP_NONE;
     }
 
     // Scan through other infos for this insn looking for short/near versions.
@@ -522,23 +522,23 @@ X86Insn::DoAppendJmp(BytecodeContainer& container,
             break;
     }
 
-    if ((op_sel == JMP_SHORT) && shortop.isEmpty())
+    if ((op_sel == X86_JMP_SHORT) && shortop.isEmpty())
     {
         diags.Report(source, diag::err_missing_jump_form) << "SHORT";
         return false;
     }
-    if ((op_sel == JMP_NEAR) && nearop.isEmpty())
+    if ((op_sel == X86_JMP_NEAR) && nearop.isEmpty())
     {
         diags.Report(source, diag::err_missing_jump_form) << "NEAR";
         return false;
     }
 
-    if (op_sel == JMP_NONE)
+    if (op_sel == X86_JMP_NONE)
     {
         if (nearop.isEmpty())
-            op_sel = JMP_SHORT;
+            op_sel = X86_JMP_SHORT;
         if (shortop.isEmpty())
-            op_sel = JMP_NEAR;
+            op_sel = X86_JMP_NEAR;
     }
 
     X86Common common;
@@ -1095,6 +1095,7 @@ X86Insn::DoAppend(BytecodeContainer& container,
     return DoAppendGeneral(container, *info, size_lookup, source, diags);
 }
 
+namespace {
 class BuildGeneral
 {
 public:
@@ -1134,13 +1135,14 @@ private:
     unsigned char m_spare;
     unsigned char m_im_len;
     unsigned char m_im_sign;
-    GeneralPostOp m_postop;
+    X86GeneralPostOp m_postop;
     unsigned char m_rex;
     unsigned char m_vexdata;
     unsigned char m_vexreg;
     unsigned char m_opersize;
     unsigned char m_addrsize;
 };
+} // anonymous namespace
 
 inline
 BuildGeneral::BuildGeneral(const X86InsnInfo& info,
@@ -1163,7 +1165,7 @@ BuildGeneral::BuildGeneral(const X86InsnInfo& info,
       m_spare(info.spare),
       m_im_len(0),
       m_im_sign(0),
-      m_postop(POSTOP_NONE),
+      m_postop(X86_POSTOP_NONE),
       m_rex(0),
       m_vexdata(0),
       m_vexreg(0),
@@ -1531,18 +1533,18 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
             // pre-emptively expand to full size.
             // For unspecified size case, still optimize.
             if (!(m_force_strict || op.isStrict()) || op.getSize() == 0)
-                m_postop = POSTOP_SIGNEXT_IMM8;
+                m_postop = X86_POSTOP_SIGNEXT_IMM8;
             else if (op.getSize() != 8)
                 m_opcode.MakeAlt1();
             break;
         case OPAP_ShortMov:
-            m_postop = POSTOP_SHORT_MOV;
+            m_postop = X86_POSTOP_SHORT_MOV;
             break;
         case OPAP_A16:
-            m_postop = POSTOP_ADDRESS16;
+            m_postop = X86_POSTOP_ADDRESS16;
             break;
         case OPAP_SImm32Avail:
-            m_postop = POSTOP_SIMM32_AVAIL;
+            m_postop = X86_POSTOP_SIMM32_AVAIL;
             break;
         default:
             assert(false && "unknown operand postponed action");
@@ -1701,6 +1703,7 @@ X86Insn::DoAppendGeneral(BytecodeContainer& container,
     return buildgen.Finish(container, m_prefixes, source);
 }
 
+namespace {
 // Static parse data structure for instructions
 struct InsnPrefixParseData
 {
@@ -1734,6 +1737,7 @@ struct InsnPrefixParseData
 // Pull in all parse data
 #include "X86Insn_nasm.cpp"
 #include "X86Insn_gas.cpp"
+} // anonymous namespace
 
 static std::string
 CpuFindReverse(unsigned int cpu0, unsigned int cpu1, unsigned int cpu2)
@@ -1997,5 +2001,3 @@ X86Arch::CreateInsn(const Arch::InsnInfo* info) const
         m_force_strict,
         m_default_rel));
 }
-
-}}} // namespace yasm::arch::x86

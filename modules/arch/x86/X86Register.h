@@ -33,8 +33,6 @@ namespace yasm
 {
 namespace arch
 {
-namespace x86
-{
 
 class YASM_STD_EXPORT X86Register : public Register
 {
@@ -128,6 +126,6 @@ private:
     unsigned char m_prefix;
 };
 
-}}} // namespace yasm::arch::x86
+}} // namespace yasm::arch
 
 #endif

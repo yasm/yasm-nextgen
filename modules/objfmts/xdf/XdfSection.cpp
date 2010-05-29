@@ -34,12 +34,8 @@
 #include "XdfSymbol.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace xdf
-{
+using namespace yasm;
+using namespace objfmt;
 
 const char* XdfSection::key = "objfmt::xdf::XdfSection";
 
@@ -152,5 +148,3 @@ XdfSection::Read(const llvm::MemoryBuffer& in,
     relptr = ReadU32(inbuf);            // file ptr to relocs
     *nrelocs = ReadU32(inbuf);          // num of relocation entries
 }
-
-}}} // namespace yasm::objfmt::xdf

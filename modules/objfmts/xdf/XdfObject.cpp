@@ -24,6 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "XdfObject.h"
+
 #include "util.h"
 
 #include "yasmx/Support/bitcount.h"
@@ -44,7 +46,6 @@
 #include "yasmx/Location_util.h"
 #include "yasmx/NameValue.h"
 #include "yasmx/Object.h"
-#include "yasmx/ObjectFormat.h"
 #include "yasmx/Section.h"
 #include "yasmx/Symbol.h"
 
@@ -53,12 +54,8 @@
 #include "XdfSymbol.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-namespace xdf
-{
+using namespace yasm;
+using namespace objfmt;
 
 static const unsigned long XDF_MAGIC = 0x87654322;
 static const unsigned int FILEHEAD_SIZE = 16;
@@ -66,42 +63,9 @@ static const unsigned int SECTHEAD_SIZE = 40;
 static const unsigned int SYMBOL_SIZE = 16;
 static const unsigned int RELOC_SIZE = 16;
 
-class XdfObject : public ObjectFormat
+XdfObject::~XdfObject()
 {
-public:
-    /// Constructor.
-    /// To make object format truly usable, set_object()
-    /// needs to be called.
-    XdfObject(const ObjectFormatModule& module, Object& object)
-        : ObjectFormat(module, object)
-    {}
-
-    /// Destructor.
-    ~XdfObject() {}
-
-    void AddDirectives(Directives& dirs, llvm::StringRef parser);
-
-    void Read(const llvm::MemoryBuffer& in);
-    void Output(llvm::raw_fd_ostream& os, bool all_syms, Errwarns& errwarns,
-                Diagnostic& diags);
-
-    Section* AddDefaultSection();
-    Section* AppendSection(llvm::StringRef name, clang::SourceLocation source);
-
-    static llvm::StringRef getName() { return "Extended Dynamic Object"; }
-    static llvm::StringRef getKeyword() { return "xdf"; }
-    static llvm::StringRef getExtension() { return ".xdf"; }
-    static unsigned int getDefaultX86ModeBits() { return 32; }
-    static llvm::StringRef getDefaultDebugFormatKeyword() { return "null"; }
-    static std::vector<llvm::StringRef> getDebugFormatKeywords();
-    static bool isOkObject(Object& object);
-    static bool Taste(const llvm::MemoryBuffer& in,
-                      /*@out@*/ std::string* arch_keyword,
-                      /*@out@*/ std::string* machine);
-
-private:
-    void DirSection(DirectiveInfo& info, Diagnostic& diags);
-};
+}
 
 bool
 XdfObject::isOkObject(Object& object)
@@ -127,7 +91,7 @@ XdfObject::getDebugFormatKeywords()
     return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
 }
 
-
+namespace {
 class XdfOutput : public BytecodeStreamOutput
 {
 public:
@@ -151,6 +115,7 @@ private:
     Object& m_object;
     BytecodeNoOutput m_no_output;
 };
+} // anonymous namespace
 
 XdfOutput::XdfOutput(llvm::raw_ostream& os, Object& object)
     : BytecodeStreamOutput(os)
@@ -479,6 +444,7 @@ XdfObject::Taste(const llvm::MemoryBuffer& in,
     return true;
 }
 
+namespace {
 class ReadString
 {
 public:
@@ -503,6 +469,7 @@ private:
     unsigned long m_offset;
     unsigned long m_len;
 };
+} // anonymous namespace
 
 void
 XdfObject::Read(const llvm::MemoryBuffer& in)
@@ -789,10 +756,8 @@ XdfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
 }
 
 void
-DoRegister()
+yasm_objfmt_xdf_DoRegister()
 {
     RegisterModule<ObjectFormatModule,
                    ObjectFormatModuleImpl<XdfObject> >("xdf");
 }
-
-}}} // namespace yasm::objfmt::xdf

@@ -32,12 +32,8 @@
 #include "yasmx/IntNum.h"
 
 
-namespace yasm
-{
-namespace parser
-{
-namespace gas
-{
+using namespace yasm;
+using namespace parser;
 
 static inline bool
 isoctdigit(char ch)
@@ -226,5 +222,3 @@ GasStringParser::getString(llvm::SmallVectorImpl<char>& buffer) const
 
     return llvm::StringRef(buffer.begin(), buffer.size());
 }
-
-}}} // namespace yasm::parser::gas
