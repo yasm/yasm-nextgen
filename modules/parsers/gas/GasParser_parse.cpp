@@ -1117,6 +1117,8 @@ GasParser::ParseDirective(NameValues* nvs)
 {
     for (;;)
     {
+        if (m_token.isEndOfStatement())
+            break;
         switch (m_token.getKind())
         {
             case GasToken::identifier:
