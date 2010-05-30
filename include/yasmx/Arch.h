@@ -57,6 +57,7 @@ class EffAddr;
 class Expr;
 class IntNum;
 class Insn;
+class NumericParser;
 class Prefix;
 class Preprocessor;
 class TargetModifier;
@@ -351,6 +352,10 @@ public:
     /// @return True if ParseInsn() should be used for instruction parsing.
     virtual bool hasParseInsn() const;
 
+    typedef NumericParser* (*MakeNumericParser) (llvm::StringRef str,
+                                                 clang::SourceLocation source,
+                                                 Preprocessor& preproc);
+
     /// Custom instruction parser.  Parses an instruction and appends it to a
     /// BytecodeContainer.  This function starts parsing with the passed
     /// token, getting additional tokens from preproc if necessary.  It
@@ -361,10 +366,12 @@ public:
     /// @param container        bytecode container for resulting instruction
     /// @param preproc          preprocessor
     /// @param token            first token (input), next token (output)
+    /// @param parse_numeric    function to make an appropriate numeric parser
     /// @return False if error occurred.
     virtual bool ParseInsn(BytecodeContainer& container,
                            Preprocessor& preproc,
-                           Token& token);
+                           Token& token,
+                           MakeNumericParser parse_numeric);
 
     /// Check an generic identifier to see if it matches architecture
     /// specific names for instructions or instruction prefixes.

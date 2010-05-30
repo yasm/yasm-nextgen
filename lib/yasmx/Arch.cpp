@@ -90,7 +90,8 @@ Arch::hasParseInsn() const
 bool
 Arch::ParseInsn(BytecodeContainer& container,
                 Preprocessor& preproc,
-                Token& token)
+                Token& token,
+                MakeNumericParser parse_numeric)
 {
     assert(false && "default Arch::ParseInsn() should not be called");
     return false;
