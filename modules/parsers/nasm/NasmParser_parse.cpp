@@ -65,6 +65,14 @@ STATISTIC(num_insn_operand, "Number of instruction operands parsed");
 using namespace yasm;
 using namespace yasm::parser;
 
+static NumericParser*
+MakeNasmNumericParser(llvm::StringRef str,
+                      clang::SourceLocation source,
+                      Preprocessor& preproc)
+{
+    return new NasmNumericParser(str, source, preproc);
+}
+
 /// Identify pseudo-instructions.  We can't simply pre-populate IdentifierTable
 /// because of large numbers of combinations due to case-insensitivity.
 void
@@ -708,22 +716,27 @@ NasmParser::ParseTimes(clang::SourceLocation times_source)
 bool
 NasmParser::ParseExp()
 {
-    clang::SourceLocation exp_source = m_token.getLocation();
-    Insn::Ptr insn = ParseInsn();
-    if (insn.get() != 0)
-    {
-        insn->Append(*m_container, exp_source, m_preproc.getDiagnostics());
-        return true;
-    }
-
     if (m_token.isNot(NasmToken::identifier))
         return false;
 
+    clang::SourceLocation exp_source = m_token.getLocation();
     IdentifierInfo* ii = m_token.getIdentifierInfo();
     CheckPseudoInsn(ii);
     const PseudoInsn* pseudo = ii->getCustom<const PseudoInsn>();
     if (!pseudo)
+    {
+        if (m_arch->hasParseInsn())
+            return m_arch->ParseInsn(*m_container, m_preproc, m_token,
+                                     MakeNasmNumericParser);
+
+        Insn::Ptr insn = ParseInsn();
+        if (insn.get() != 0)
+        {
+            insn->Append(*m_container, exp_source, m_preproc.getDiagnostics());
+            return true;
+        }
         return false;
+    }
 
     switch (pseudo->type)
     {

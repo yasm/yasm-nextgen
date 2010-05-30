@@ -58,6 +58,14 @@
 using namespace yasm;
 using namespace yasm::parser;
 
+static NumericParser*
+MakeGasNumericParser(llvm::StringRef str,
+                     clang::SourceLocation source,
+                     Preprocessor& preproc)
+{
+    return new GasNumericParser(str, source, preproc);
+}
+
 bool
 GasParser::ParseLine()
 {
@@ -65,12 +73,6 @@ next:
     m_container = m_object->getCurSection();
 
     clang::SourceLocation exp_source = m_token.getLocation();
-    Insn::Ptr insn = ParseInsn();
-    if (insn.get() != 0)
-    {
-        insn->Append(*m_container, exp_source, m_preproc.getDiagnostics());
-        return true;
-    }
 
     switch (m_token.getKind())
     {
@@ -78,19 +80,21 @@ next:
         case GasToken::label:
         {
             IdentifierInfo* ii = m_token.getIdentifierInfo();
-            clang::SourceLocation id_source = ConsumeToken();
 
-            if (m_token.is(GasToken::colon))
+            const Token& peek_token = NextToken();
+            if (peek_token.is(GasToken::colon))
             {
                 // Label
-                ConsumeToken();
+                clang::SourceLocation id_source = ConsumeToken();
+                ConsumeToken(); // consume the colon too
                 DefineLabel(ii->getName(), id_source);
                 goto next;
             }
-            else if (m_token.is(GasToken::equal))
+            else if (peek_token.is(GasToken::equal))
             {
                 // EQU
                 // TODO: allow redefinition, assigning to . (same as .org)
+                clang::SourceLocation id_source = ConsumeToken();
                 clang::SourceLocation equ_source = ConsumeToken();
                 Expr e;
                 if (!ParseExpr(e))
@@ -108,6 +112,8 @@ next:
             llvm::StringRef name = ii->getName();
             if (name[0] == '.')
             {
+                clang::SourceLocation id_source = ConsumeToken();
+
                 // See if it's a gas-specific directive
                 GasDirMap::iterator p = m_gas_dirs.find(name);
                 if (p != m_gas_dirs.end())
@@ -131,8 +137,20 @@ next:
                 break;
             }
 
+            if (m_arch->hasParseInsn())
+                return m_arch->ParseInsn(*m_container, m_preproc, m_token,
+                                         MakeGasNumericParser);
+
+            Insn::Ptr insn = ParseInsn();
+            if (insn.get() != 0)
+            {
+                insn->Append(*m_container, exp_source,
+                             m_preproc.getDiagnostics());
+                break;
+            }
+
             // id with nothing after it that wasn't an instruction
-            Diag(id_source, diag::err_unrecognized_instruction);
+            Diag(m_token, diag::err_unrecognized_instruction);
             return false;
         }
         case GasToken::numeric_constant:
@@ -1033,11 +1051,6 @@ Insn::Ptr
 GasParser::ParseInsn()
 {
     if (m_token.isNot(GasToken::identifier))
-        return Insn::Ptr(0);
-
-    // check to be sure it's not a label or equ
-    const Token& peek_token = NextToken();
-    if (peek_token.is(GasToken::colon) || peek_token.is(GasToken::equal))
         return Insn::Ptr(0);
 
     IdentifierInfo* ii = m_token.getIdentifierInfo();
