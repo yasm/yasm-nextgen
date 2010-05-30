@@ -371,7 +371,7 @@ public:
     virtual bool ParseInsn(BytecodeContainer& container,
                            Preprocessor& preproc,
                            Token& token,
-                           MakeNumericParser parse_numeric);
+                           MakeNumericParser parse_numeric) const;
 
     /// Check an generic identifier to see if it matches architecture
     /// specific names for instructions or instruction prefixes.
