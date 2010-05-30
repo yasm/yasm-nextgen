@@ -58,11 +58,6 @@ protected:
     /// that this is valid.
     Token m_token;
 
-    // The location of the token we previously
-    // consumed. This token is used for diagnostics where we expected to
-    // see a token following another token.
-    clang::SourceLocation m_prev_tok_location;
-
 private:
     unsigned short m_paren_count, m_bracket_count;
 
@@ -89,9 +84,9 @@ public:
     {
         assert(!isTokenParen() && !isTokenBracket() &&
                "Should consume special tokens with consume*token");
-        m_prev_tok_location = m_token.getLocation();
+        clang::SourceLocation prev_tok_location = m_token.getLocation();
         m_preproc.Lex(&m_token);
-        return m_prev_tok_location;
+        return prev_tok_location;
     }
 
     /// Dispatch to the right consume* method based on the
@@ -115,9 +110,9 @@ public:
             ++m_paren_count;
         else if (m_paren_count)
             --m_paren_count; // Don't let unbalanced drive the count negative.
-        m_prev_tok_location = m_token.getLocation();
+        clang::SourceLocation prev_tok_location = m_token.getLocation();
         m_preproc.Lex(&m_token);
-        return m_prev_tok_location;
+        return prev_tok_location;
     }
 
     /// This consume method keeps the bracket count up-to-date.
@@ -128,9 +123,9 @@ public:
             ++m_bracket_count;
         else if (m_bracket_count)
             --m_bracket_count; // Don't let unbalanced drive the count negative.
-        m_prev_tok_location = m_token.getLocation();
+        clang::SourceLocation prev_tok_location = m_token.getLocation();
         m_preproc.Lex(&m_token);
-        return m_prev_tok_location;
+        return prev_tok_location;
     }
 
     /// This peeks ahead N tokens and returns that token
