@@ -81,6 +81,21 @@ Arch::AddDirectives(Directives& dirs, llvm::StringRef parser)
 {
 }
 
+bool
+Arch::hasParseInsn() const
+{
+    return false;
+}
+
+bool
+Arch::ParseInsn(BytecodeContainer& container,
+                Preprocessor& preproc,
+                Token& token)
+{
+    assert(false && "default Arch::ParseInsn() should not be called");
+    return false;
+}
+
 ArchModule::~ArchModule()
 {
 }

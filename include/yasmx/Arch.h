@@ -49,6 +49,7 @@ namespace yasm
 {
 
 class ArchModule;
+class BytecodeContainer;
 class Bytes;
 class Diagnostic;
 class Directives;
@@ -57,7 +58,9 @@ class Expr;
 class IntNum;
 class Insn;
 class Prefix;
+class Preprocessor;
 class TargetModifier;
+class Token;
 
 /// A register.
 class YASM_LIB_EXPORT Register
@@ -341,6 +344,27 @@ public:
     /// @param val  value to set
     /// @return True on success, false on failure (variable does not exist).
     virtual bool setVar(llvm::StringRef var, unsigned long val) = 0;
+
+    /// Determine if a custom parser (ParseInsn) should be used.  The default
+    /// implementation returns false.
+    /// @note This can be parser-dependent, so call setParser() first.
+    /// @return True if ParseInsn() should be used for instruction parsing.
+    virtual bool hasParseInsn() const;
+
+    /// Custom instruction parser.  Parses an instruction and appends it to a
+    /// BytecodeContainer.  This function starts parsing with the passed
+    /// token, getting additional tokens from preproc if necessary.  It
+    /// stops parsing when it finds a token with the end of statement flag
+    /// set.  This end of statement token is placed into the passed token
+    /// prior to the function returning.
+    /// @note The default implementation asserts.
+    /// @param container        bytecode container for resulting instruction
+    /// @param preproc          preprocessor
+    /// @param token            first token (input), next token (output)
+    /// @return False if error occurred.
+    virtual bool ParseInsn(BytecodeContainer& container,
+                           Preprocessor& preproc,
+                           Token& token);
 
     /// Check an generic identifier to see if it matches architecture
     /// specific names for instructions or instruction prefixes.
