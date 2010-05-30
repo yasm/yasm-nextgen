@@ -51,11 +51,9 @@ class NasmToken : public Token
 public:
     enum Kind
     {
-        dollar = NUM_COMMON_TOKENS+1,// $
-        dollardollar,       // $$
+        dollardollar = NUM_COMMON_TOKENS+1,// $$
         slashslash,         // //
         percentpercent,     // %%
-        lessgreater,        // <>
         caretcaret,         // ^^
         // keywords
         kw_abs,

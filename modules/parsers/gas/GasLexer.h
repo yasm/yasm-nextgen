@@ -51,10 +51,8 @@ class GasToken : public Token
 public:
     enum Kind
     {
-        dollar = NUM_COMMON_TOKENS+1,// $
-        at,                 // @
+        at = NUM_COMMON_TOKENS+1,// @
         semi,               // ;
-        lessgreater,        // <>
         char_constant,      // 'x
         locallabelf,        // [0-9]f
         locallabelb,        // [0-9]b

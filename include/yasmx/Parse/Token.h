@@ -109,6 +109,8 @@ public:
         equal,              // =
         equalequal,         // ==
         comma,              // ,
+        dollar,             // $
+        lessgreater,        // <>
         identifier,         // abcde123
         numeric_constant,   // 0x123
         string_literal,     // "foo"
