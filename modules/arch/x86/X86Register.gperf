@@ -290,17 +290,13 @@ X86SegmentRegister::Write(YAML::Emitter& out) const
 void
 X86TargetModifier::Put(llvm::raw_ostream& os) const
 {
-    switch (m_type) {
-        case NEAR:
-            os << "near";
-        case SHORT:
-            os << "short";
-        case FAR:
-            os << "far";
-        case TO:
-            os << "to";
-        default:
-            assert(false);   // unknown
+    switch (m_type)
+    {
+        case NEAR:  os << "near"; break;
+        case SHORT: os << "short"; break;
+        case FAR:   os << "far"; break;
+        case TO:    os << "to"; break;
+        default:    assert(false);   // unknown
     }
 }
 
