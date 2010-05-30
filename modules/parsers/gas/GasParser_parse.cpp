@@ -70,6 +70,12 @@ bool
 GasParser::ParseLine()
 {
 next:
+    if (m_token.isEndOfStatement())
+    {
+        ConsumeToken();
+        goto next;
+    }
+
     m_container = m_object->getCurSection();
 
     clang::SourceLocation exp_source = m_token.getLocation();
