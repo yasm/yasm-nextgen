@@ -1,7 +1,5 @@
-#ifndef YASM_GASNUMERICPARSER_H
-#define YASM_GASNUMERICPARSER_H
 //
-// GAS-compatible numeric literal parser
+// Numeric literal parser
 //
 //  Copyright (C) 2009-2010  Peter Johnson
 //
@@ -32,35 +30,56 @@
 //
 #include "yasmx/Parse/NumericParser.h"
 
+#include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/SmallVector.h"
+#include "yasmx/IntNum.h"
 
-namespace clang { class SourceLocation; }
 
-namespace yasm
+using namespace yasm;
+
+NumericParser::NumericParser(llvm::StringRef str)
+    : m_digits_begin(str.begin())
+    , m_digits_end(str.end())
+    , m_is_float(false)
+    , m_had_error(false)
 {
-class Preprocessor;
+}
 
-namespace parser
+NumericParser::~NumericParser()
 {
+}
 
-/// This performs strict semantic analysis of the content of a ppnumber,
-/// classifying it as either integer, floating, or erroneous, determines the
-/// radix of the value and can convert it to a useful value.
-class YASM_STD_EXPORT GasNumericParser : public NumericParser
+bool
+NumericParser::getIntegerValue(IntNum* val)
 {
-public:
-    /// @param force_float  If true, always treat as decimal float;
-    ///                     0[letter] prefix is optional
-    GasNumericParser(llvm::StringRef str,
-                     clang::SourceLocation loc,
-                     Preprocessor& pp,
-                     bool force_float = false);
-    virtual ~GasNumericParser();
+    if ((m_digits_end-m_digits_begin) == 0)
+    {
+        val->Zero();
+        return false;
+    }
+    return val->setStr(llvm::StringRef(m_digits_begin,
+                                       m_digits_end-m_digits_begin),
+                       m_radix);
+}
 
-    //virtual bool getIntegerValue(IntNum* val);
-    //virtual llvm::APFloat getFloatValue(const llvm::fltSemantics& format,
-    //                                    bool* is_exact = 0);
-};
+llvm::APFloat
+NumericParser::getFloatValue(const llvm::fltSemantics& format,
+                             bool* is_exact)
+{
+    llvm::SmallVector<char, 256> float_chars;
+    for (const char* ch = m_digits_begin; ch < m_digits_end; ++ch)
+        float_chars.push_back(*ch);
 
-}} // namespace yasm::parser
+    float_chars.push_back('\0');
 
-#endif
+    llvm::APFloat val(format, llvm::APFloat::fcZero, false);
+  
+    llvm::APFloat::opStatus status =
+        val.convertFromString(&float_chars[0],
+                              llvm::APFloat::rmNearestTiesToEven);
+
+    if (is_exact)
+        *is_exact = (status == llvm::APFloat::opOK);
+
+    return val;
+}

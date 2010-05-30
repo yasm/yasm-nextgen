@@ -54,9 +54,7 @@ GasNumericParser::GasNumericParser(llvm::StringRef str,
                                    clang::SourceLocation loc,
                                    Preprocessor& pp,
                                    bool force_float)
-    : m_digits_end(str.end())
-    , m_is_float(false)
-    , m_had_error(false)
+    : NumericParser(str)
 {
     // This routine assumes that the range begin/end matches the regex for
     // integer and FP constants, and assumes that the byte at "*end" is both
@@ -181,37 +179,6 @@ GasNumericParser::GasNumericParser(llvm::StringRef str,
     }
 }
 
-bool
-GasNumericParser::getIntegerValue(IntNum* val)
+GasNumericParser::~GasNumericParser()
 {
-    if ((m_digits_end-m_digits_begin) == 0)
-    {
-        val->Zero();
-        return false;
-    }
-    return val->setStr(llvm::StringRef(m_digits_begin,
-                                       m_digits_end-m_digits_begin),
-                       m_radix);
-}
-
-llvm::APFloat
-GasNumericParser::getFloatValue(const llvm::fltSemantics& format,
-                                bool* is_exact)
-{
-    llvm::SmallVector<char, 256> float_chars;
-    for (const char* ch = m_digits_begin; ch < m_digits_end; ++ch)
-        float_chars.push_back(*ch);
-
-    float_chars.push_back('\0');
-
-    llvm::APFloat val(format, llvm::APFloat::fcZero, false);
-  
-    llvm::APFloat::opStatus status =
-        val.convertFromString(&float_chars[0],
-                              llvm::APFloat::rmNearestTiesToEven);
-
-    if (is_exact)
-        *is_exact = (status == llvm::APFloat::opOK);
-
-    return val;
 }

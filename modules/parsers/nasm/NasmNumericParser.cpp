@@ -58,9 +58,7 @@ using namespace yasm::parser;
 NasmNumericParser::NasmNumericParser(llvm::StringRef str,
                                      clang::SourceLocation loc,
                                      Preprocessor& pp)
-    : m_digits_end(str.end())
-    , m_is_float(false)
-    , m_had_error(false)
+    : NumericParser(str)
 {
     // This routine assumes that the range begin/end matches the regex for
     // integer and FP constants, and assumes that the byte at "*end" is both
@@ -190,12 +188,8 @@ NasmNumericParser::NasmNumericParser(llvm::StringRef str,
     }
 }
 
-bool
-NasmNumericParser::getIntegerValue(IntNum* val)
+NasmNumericParser::~NasmNumericParser()
 {
-    return val->setStr(llvm::StringRef(m_digits_begin,
-                                       m_digits_end-m_digits_begin),
-                       m_radix);
 }
 
 llvm::APFloat
