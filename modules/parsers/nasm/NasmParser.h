@@ -50,6 +50,20 @@ class NameValues;
 namespace parser
 {
 
+class YASM_STD_EXPORT NasmParseDirExprTerm : public ParseExprTerm
+{
+public:
+    virtual ~NasmParseDirExprTerm();
+    bool operator() (Expr& e, ParserImpl& parser, bool* handled) const;
+};
+
+class YASM_STD_EXPORT NasmParseDataExprTerm : public ParseExprTerm
+{
+public:
+    virtual ~NasmParseDataExprTerm();
+    bool operator() (Expr& e, ParserImpl& parser, bool* handled) const;
+};
+
 class YASM_STD_EXPORT NasmParser : public Parser, public ParserImpl
 {
 public:
@@ -66,14 +80,10 @@ public:
 
     void Parse(Object& object, Directives& dirs, Diagnostic& diags);
 
-    enum ExprType
-    {
-        NORM_EXPR,
-        DIR_EXPR,       // Can't have seg:off or WRT anywhere
-        DV_EXPR         // Can't have registers anywhere
-    };
-
 private:
+    friend class NasmParseDirExprTerm;
+    friend class NasmParseDataExprTerm;
+
     struct PseudoInsn
     {
         enum Type
@@ -104,15 +114,15 @@ private:
 
     Operand ParseMemoryAddress();
 
-    bool ParseExpr(Expr& e, ExprType type);
-    bool ParseBExpr(Expr& e, ExprType type);
-    bool ParseExpr0(Expr& e, ExprType type);
-    bool ParseExpr1(Expr& e, ExprType type);
-    bool ParseExpr2(Expr& e, ExprType type);
-    bool ParseExpr3(Expr& e, ExprType type);
-    bool ParseExpr4(Expr& e, ExprType type);
-    bool ParseExpr5(Expr& e, ExprType type);
-    bool ParseExpr6(Expr& e, ExprType type);
+    bool ParseSegOffExpr(Expr& e, const ParseExprTerm* parse_term = 0);
+    bool ParseExpr(Expr& e, const ParseExprTerm* parse_term = 0);
+    bool ParseExpr0(Expr& e, const ParseExprTerm* parse_term);
+    bool ParseExpr1(Expr& e, const ParseExprTerm* parse_term);
+    bool ParseExpr2(Expr& e, const ParseExprTerm* parse_term);
+    bool ParseExpr3(Expr& e, const ParseExprTerm* parse_term);
+    bool ParseExpr4(Expr& e, const ParseExprTerm* parse_term);
+    bool ParseExpr5(Expr& e, const ParseExprTerm* parse_term);
+    bool ParseExpr6(Expr& e, const ParseExprTerm* parse_term);
 
     SymbolRef ParseSymbol(IdentifierInfo* ii, bool* local = 0);
 

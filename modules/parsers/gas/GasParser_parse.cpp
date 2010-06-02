@@ -58,14 +58,6 @@
 using namespace yasm;
 using namespace yasm::parser;
 
-static NumericParser*
-MakeGasNumericParser(llvm::StringRef str,
-                     clang::SourceLocation source,
-                     Preprocessor& preproc)
-{
-    return new GasNumericParser(str, source, preproc);
-}
-
 bool
 GasParser::ParseLine()
 {
@@ -144,8 +136,7 @@ next:
             }
 
             if (m_arch->hasParseInsn())
-                return m_arch->ParseInsn(*m_container, m_preproc, m_token,
-                                         MakeGasNumericParser);
+                return m_arch->ParseInsn(*m_container, *this);
 
             Insn::Ptr insn = ParseInsn();
             if (insn.get() != 0)
@@ -1440,9 +1431,9 @@ GasParser::ParseOperand()
 //       | number
 
 bool
-GasParser::ParseExpr(Expr& e)
+GasParser::ParseExpr(Expr& e, const ParseExprTerm* parse_term)
 {
-    if (!ParseExpr0(e))
+    if (!ParseExpr0(e, parse_term))
         return false;
 
     for (;;)
@@ -1457,16 +1448,16 @@ GasParser::ParseExpr(Expr& e)
         ConsumeToken();
 
         Expr f;
-        if (!ParseExpr0(f))
+        if (!ParseExpr0(f, parse_term))
             return false;
         e.Calc(op, f);
     }
 }
 
 bool
-GasParser::ParseExpr0(Expr& e)
+GasParser::ParseExpr0(Expr& e, const ParseExprTerm* parse_term)
 {
-    if (!ParseExpr1(e))
+    if (!ParseExpr1(e, parse_term))
         return false;
 
     for (;;)
@@ -1487,16 +1478,16 @@ GasParser::ParseExpr0(Expr& e)
         ConsumeToken();
 
         Expr f;
-        if (!ParseExpr1(f))
+        if (!ParseExpr1(f, parse_term))
             return false;
         e.Calc(op, f);
     }
 }
 
 bool
-GasParser::ParseExpr1(Expr& e)
+GasParser::ParseExpr1(Expr& e, const ParseExprTerm* parse_term)
 {
-    if (!ParseExpr2(e))
+    if (!ParseExpr2(e, parse_term))
         return false;
 
     for (;;)
@@ -1513,16 +1504,16 @@ GasParser::ParseExpr1(Expr& e)
         ConsumeToken();
 
         Expr f;
-        if (!ParseExpr2(f))
+        if (!ParseExpr2(f, parse_term))
             return false;
         e.Calc(op, f);
     }
 }
 
 bool
-GasParser::ParseExpr2(Expr& e)
+GasParser::ParseExpr2(Expr& e, const ParseExprTerm* parse_term)
 {
-    if (!ParseExpr3(e))
+    if (!ParseExpr3(e, parse_term))
         return false;
 
     for (;;)
@@ -1540,36 +1531,45 @@ GasParser::ParseExpr2(Expr& e)
         ConsumeToken();
 
         Expr f;
-        if (!ParseExpr3(f))
+        if (!ParseExpr3(f, parse_term))
             return false;
         e.Calc(op, f);
     }
 }
 
 bool
-GasParser::ParseExpr3(Expr& e)
+GasParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
 {
+    if (parse_term)
+    {
+        bool handled = false;
+        if (!(*parse_term)(e, *this, &handled))
+            return false;
+        if (handled)
+            return true;
+    }
+
     switch (m_token.getKind())
     {
         case GasToken::plus:
             ConsumeToken();
-            return ParseExpr3(e);
+            return ParseExpr3(e, parse_term);
         case GasToken::minus:
             ConsumeToken();
-            if (!ParseExpr3(e))
+            if (!ParseExpr3(e, parse_term))
                 return false;
             e.Calc(Op::NEG);
             return true;
         case GasToken::tilde:
             ConsumeToken();
-            if (!ParseExpr3(e))
+            if (!ParseExpr3(e, parse_term))
                 return false;
             e.Calc(Op::NOT);
             return true;
         case GasToken::l_paren:
         {
             clang::SourceLocation lparen_loc = ConsumeParen();
-            if (!ParseExpr(e))
+            if (!ParseExpr(e, parse_term))
                 return false;
             MatchRHSPunctuation(GasToken::r_paren, lparen_loc);
             return true;

@@ -49,9 +49,26 @@ namespace yasm
 class DiagnosticBuilder;
 class Errwarns;
 
+/// Interface to override expression term (e.g. the lowest level of an
+/// expression) parsing by ParseExpr.
+class YASM_LIB_EXPORT ParseExprTerm
+{
+public:
+    virtual ~ParseExprTerm();
+
+    /// Entry point. If term is not recognized, should set handled to false,
+    /// not modify the parser state, and return true.
+    /// @param e        expression (term value should be assigned to this)
+    /// @param parser   parser implementation to get tokens from
+    /// @param handled  (output) set to true if term handled and token consumed
+    /// @return False to stop expression parsing (should generally return true).
+    virtual bool operator() (Expr& e, ParserImpl& parser, bool* handled) const
+        = 0;
+};
+
 class YASM_LIB_EXPORT ParserImpl
 {
-protected:
+public:
     Preprocessor& m_preproc;
 
     /// The current token we are peeking ahead.  All parsing methods assume
@@ -204,6 +221,8 @@ public:
                    bool stop_at_eos = true,
                    bool dont_consume = false);
 
+    /// Expression parser.
+    virtual bool ParseExpr(Expr& e, const ParseExprTerm* parse_term = 0) = 0;
 };
 
 } // namespace yasm

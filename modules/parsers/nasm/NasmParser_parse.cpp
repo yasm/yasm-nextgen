@@ -65,14 +65,6 @@ STATISTIC(num_insn_operand, "Number of instruction operands parsed");
 using namespace yasm;
 using namespace yasm::parser;
 
-static NumericParser*
-MakeNasmNumericParser(llvm::StringRef str,
-                      clang::SourceLocation source,
-                      Preprocessor& preproc)
-{
-    return new NasmNumericParser(str, source, preproc);
-}
-
 /// Identify pseudo-instructions.  We can't simply pre-populate IdentifierTable
 /// because of large numbers of combinations due to case-insensitivity.
 void
@@ -551,7 +543,7 @@ NasmParser::ParseLine()
                     // label EQU expr
                     ConsumeToken();
                     Expr e;
-                    if (!ParseExpr(e, NORM_EXPR))
+                    if (!ParseSegOffExpr(e))
                     {
                         Diag(m_token, diag::err_expected_expression_after)
                             << ii2->getName();
@@ -665,7 +657,8 @@ NasmParser::ParseDirective(/*@out@*/ NameValues& nvs)
             default:
             {
                 Expr::Ptr e(new Expr);
-                if (!ParseExpr(*e, DIR_EXPR))
+                NasmParseDirExprTerm parse_dir_term;
+                if (!ParseExpr0(*e, &parse_dir_term))
                 {
                     Diag(m_token, diag::err_invalid_directive_argument);
                     return false;
@@ -693,7 +686,8 @@ bool
 NasmParser::ParseTimes(clang::SourceLocation times_source)
 {
     Expr::Ptr multiple(new Expr);
-    if (!ParseBExpr(*multiple, DV_EXPR))
+    NasmParseDataExprTerm parse_data_term;
+    if (!ParseExpr(*multiple, &parse_data_term))
     {
         Diag(m_token, diag::err_expected_expression_after_id)
             << "TIMES";
@@ -726,8 +720,7 @@ NasmParser::ParseExp()
     if (!pseudo)
     {
         if (m_arch->hasParseInsn())
-            return m_arch->ParseInsn(*m_container, m_preproc, m_token,
-                                     MakeNasmNumericParser);
+            return m_arch->ParseInsn(*m_container, *this);
 
         Insn::Ptr insn = ParseInsn();
         if (insn.get() != 0)
@@ -768,7 +761,8 @@ NasmParser::ParseExp()
                 }
                 {
                     Expr::Ptr e(new Expr);
-                    if (ParseBExpr(*e, DV_EXPR))
+                    NasmParseDataExprTerm parse_data_term;
+                    if (ParseExpr(*e, &parse_data_term))
                         AppendData(*m_container, e, pseudo->size, *m_arch,
                                    exp_source);
                     else
@@ -790,7 +784,8 @@ dv_done:
         {
             ConsumeToken();
             Expr::Ptr e(new Expr);
-            if (!ParseBExpr(*e, DV_EXPR))
+            NasmParseDataExprTerm parse_data_term;
+            if (!ParseExpr(*e, &parse_data_term))
             {
                 Diag(m_token, diag::err_expected_expression_after_id)
                     << "RESx";
@@ -820,6 +815,7 @@ dv_done:
             ConsumeToken();
 
             Expr::Ptr start(0), maxlen(0);
+            NasmParseDataExprTerm parse_data_term;
 
             // optional start expression
             if (m_token.is(NasmToken::comma))
@@ -827,7 +823,7 @@ dv_done:
             if (m_token.isEndOfStatement())
                 goto incbin_done;
             start.reset(new Expr);
-            if (!ParseBExpr(*start, DV_EXPR))
+            if (!ParseExpr(*start, &parse_data_term))
             {
                 Diag(m_token, diag::err_incbin_expected_start_expression);
                 return false;
@@ -839,7 +835,7 @@ dv_done:
             if (m_token.isEndOfStatement())
                 goto incbin_done;
             maxlen.reset(new Expr);
-            if (!ParseBExpr(*maxlen, DV_EXPR))
+            if (!ParseExpr(*maxlen, &parse_data_term))
             {
                 Diag(m_token, diag::err_incbin_expected_length_expression);
                 return false;
@@ -1016,7 +1012,7 @@ NasmParser::ParseOperand()
         default:
         {
             Expr::Ptr e(new Expr);
-            if (!ParseBExpr(*e, NORM_EXPR))
+            if (!ParseExpr(*e))
             {
                 Diag(m_token, diag::err_expected_operand);
                 return Operand(e);
@@ -1025,7 +1021,7 @@ NasmParser::ParseOperand()
                 return Operand(e);
             ConsumeToken();
             Expr::Ptr off(new Expr);
-            if (!ParseBExpr(*off, NORM_EXPR))
+            if (!ParseExpr(*off))
             {
                 Diag(m_token, diag::err_expected_expression_after)
                     << ":";
@@ -1109,7 +1105,7 @@ NasmParser::ParseMemoryAddress()
         default:
         {
             Expr::Ptr e(new Expr);
-            if (!ParseBExpr(*e, NORM_EXPR))
+            if (!ParseExpr(*e))
             {
                 Diag(m_token, diag::err_expected_memory_address);
                 return Operand(e);
@@ -1118,7 +1114,7 @@ NasmParser::ParseMemoryAddress()
                 return Operand(m_object->getArch()->CreateEffAddr(e));
             ConsumeToken();
             Expr::Ptr off(new Expr);
-            if (!ParseBExpr(*off, NORM_EXPR))
+            if (!ParseExpr(*off))
             {
                 Diag(m_token, diag::err_expected_expression_after)
                     << ":";
@@ -1149,14 +1145,14 @@ NasmParser::ParseMemoryAddress()
 
 #define ParseExprCommon(leftfunc, tok, rightfunc, op) \
     do {                                              \
-        if (!leftfunc(e, type))                       \
+        if (!leftfunc(e, parse_term))                 \
             return false;                             \
                                                       \
         while (m_token.is(tok))                       \
         {                                             \
             ConsumeToken();                           \
             Expr f;                                   \
-            if (!rightfunc(f, type))                  \
+            if (!rightfunc(f, parse_term))            \
                 return false;                         \
             e.Calc(op, f);                            \
         }                                             \
@@ -1164,25 +1160,15 @@ NasmParser::ParseMemoryAddress()
     } while(0)
 
 bool
-NasmParser::ParseExpr(Expr& e, ExprType type)
+NasmParser::ParseSegOffExpr(Expr& e, const ParseExprTerm* parse_term)
 {
-    switch (type)
-    {
-        case DIR_EXPR:
-            // directive expressions can't handle seg:off or WRT
-            return ParseExpr0(e, type);
-        default:
-            ParseExprCommon(ParseBExpr, NasmToken::colon, ParseBExpr,
-                            Op::SEGOFF);
-    }
-    /*@notreached@*/
-    return false;
+    ParseExprCommon(ParseExpr, NasmToken::colon, ParseExpr, Op::SEGOFF);
 }
 
 bool
-NasmParser::ParseBExpr(Expr& e, ExprType type)
+NasmParser::ParseExpr(Expr& e, const ParseExprTerm* parse_term)
 {
-    if (!ParseExpr0(e, type))
+    if (!ParseExpr0(e, parse_term))
         return false;
 
     for (;;)
@@ -1197,7 +1183,7 @@ NasmParser::ParseBExpr(Expr& e, ExprType type)
             break;
         ConsumeToken();
         Expr f;
-        if (!ParseExpr6(f, type))
+        if (!ParseExpr6(f, parse_term))
             return false;
         e.Calc(Op::WRT, f);
     }
@@ -1205,27 +1191,27 @@ NasmParser::ParseBExpr(Expr& e, ExprType type)
 }
 
 bool
-NasmParser::ParseExpr0(Expr& e, ExprType type)
+NasmParser::ParseExpr0(Expr& e, const ParseExprTerm* parse_term)
 {
     ParseExprCommon(ParseExpr1, NasmToken::pipe, ParseExpr1, Op::OR);
 }
 
 bool
-NasmParser::ParseExpr1(Expr& e, ExprType type)
+NasmParser::ParseExpr1(Expr& e, const ParseExprTerm* parse_term)
 {
     ParseExprCommon(ParseExpr2, NasmToken::caret, ParseExpr2, Op::XOR);
 }
 
 bool
-NasmParser::ParseExpr2(Expr& e, ExprType type)
+NasmParser::ParseExpr2(Expr& e, const ParseExprTerm* parse_term)
 {
     ParseExprCommon(ParseExpr3, NasmToken::amp, ParseExpr3, Op::AND);
 }
 
 bool
-NasmParser::ParseExpr3(Expr& e, ExprType type)
+NasmParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
 {
-    if (!ParseExpr4(e, type))
+    if (!ParseExpr4(e, parse_term))
         return false;
 
     for (;;)
@@ -1240,16 +1226,16 @@ NasmParser::ParseExpr3(Expr& e, ExprType type)
         ConsumeToken();
 
         Expr f;
-        if (!ParseExpr4(f, type))
+        if (!ParseExpr4(f, parse_term))
             return false;
         e.Calc(op, f);
     }
 }
 
 bool
-NasmParser::ParseExpr4(Expr& e, ExprType type)
+NasmParser::ParseExpr4(Expr& e, const ParseExprTerm* parse_term)
 {
-    if (!ParseExpr5(e, type))
+    if (!ParseExpr5(e, parse_term))
         return false;
 
     for (;;)
@@ -1264,16 +1250,16 @@ NasmParser::ParseExpr4(Expr& e, ExprType type)
         ConsumeToken();
 
         Expr f;
-        if (!ParseExpr5(f, type))
+        if (!ParseExpr5(f, parse_term))
             return false;
         e.Calc(op, f);
     }
 }
 
 bool
-NasmParser::ParseExpr5(Expr& e, ExprType type)
+NasmParser::ParseExpr5(Expr& e, const ParseExprTerm* parse_term)
 {
-    if (!ParseExpr6(e, type))
+    if (!ParseExpr6(e, parse_term))
         return false;
 
     for (;;)
@@ -1291,38 +1277,47 @@ NasmParser::ParseExpr5(Expr& e, ExprType type)
         ConsumeToken();
 
         Expr f;
-        if (!ParseExpr6(f, type))
+        if (!ParseExpr6(f, parse_term))
             return false;
         e.Calc(op, f);
     }
 }
 
-bool
-NasmParser::ParseExpr6(Expr& e, ExprType type)
+NasmParseDirExprTerm::~NasmParseDirExprTerm()
 {
+}
+
+bool
+NasmParseDirExprTerm::operator() (Expr& e,
+                                  ParserImpl& parser,
+                                  bool* handled) const
+{
+    NasmParser* nasm_parser = static_cast<NasmParser*>(&parser);
+
     // directives allow very little and handle IDs specially
-    if (type == DIR_EXPR)
+    switch (parser.m_token.getKind())
     {
-        switch (m_token.getKind())
-        {
         case NasmToken::tilde:
-            ConsumeToken();
-            if (!ParseExpr6(e, type))
+            parser.ConsumeToken();
+            if (!nasm_parser->ParseExpr6(e, this))
                 return false;
             e.Calc(Op::NOT);
+            *handled = true;
             return true;
         case NasmToken::l_paren:
         {
-            clang::SourceLocation lparen_loc = ConsumeParen();
-            if (!ParseExpr(e, type))
+            clang::SourceLocation lparen_loc = parser.ConsumeParen();
+            if (!nasm_parser->ParseExpr0(e, this))
                 return false;
-            MatchRHSPunctuation(NasmToken::r_paren, lparen_loc);
+            parser.MatchRHSPunctuation(NasmToken::r_paren, lparen_loc);
+            *handled = true;
             return true;
         }
         case NasmToken::numeric_constant:
         {
-            NasmNumericParser num(m_token.getLiteral(), m_token.getLocation(),
-                                  m_preproc);
+            NasmNumericParser num(parser.m_token.getLiteral(),
+                                  parser.m_token.getLocation(),
+                                  parser.m_preproc);
             if (num.hadError())
                 e = IntNum(0);
             else if (num.isInteger())
@@ -1333,17 +1328,17 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
             }
             else if (num.isFloat())
             {
-                Diag(m_token, diag::err_float_in_directive);
+                parser.Diag(parser.m_token, diag::err_float_in_directive);
                 e = IntNum(0);
             }
             break;
         }
         case NasmToken::identifier:
         {
-            IdentifierInfo* ii = m_token.getIdentifierInfo();
+            IdentifierInfo* ii = parser.m_token.getIdentifierInfo();
             // Might be a register; handle that first.
-            ii->DoRegLookup(*m_arch, m_token.getLocation(),
-                            m_preproc.getDiagnostics());
+            ii->DoRegLookup(*nasm_parser->m_arch, parser.m_token.getLocation(),
+                            parser.m_preproc.getDiagnostics());
             if (const Register* reg = ii->getRegister())
             {
                 e = *reg;
@@ -1356,50 +1351,97 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
         {
             // Use cached symbol if available.
             // We don't try to resolve local labels, etc.
-            IdentifierInfo* ii = m_token.getIdentifierInfo();
+            IdentifierInfo* ii = parser.m_token.getIdentifierInfo();
             SymbolRef sym(0);
             if (ii->isSymbol())
                 sym = ii->getSymbol();
             else
             {
-                sym = m_object->getSymbol(ii->getName());
+                sym = nasm_parser->m_object->getSymbol(ii->getName());
                 ii->setSymbol(sym);
             }
-            sym->Use(m_token.getLocation());
+            sym->Use(parser.m_token.getLocation());
             e = sym;
             break;
         }
         default:
             return false;
-        }
     }
-    else switch (m_token.getKind())
+    parser.ConsumeToken();
+    *handled = true;
+    return true;
+}
+
+NasmParseDataExprTerm::~NasmParseDataExprTerm()
+{
+}
+
+bool
+NasmParseDataExprTerm::operator() (Expr& e,
+                                   ParserImpl& parser,
+                                   bool* handled) const
+{
+    NasmParser* nasm_parser = static_cast<NasmParser*>(&parser);
+
+    // Implementation of this is a bit atypical as we just let ParseExpr6
+    // actually handle the token.  This is only here to emit a diagnostic
+    // for registers.
+    *handled = false;
+
+    if (parser.m_token.isNot(NasmToken::identifier))
+        return true;
+
+    IdentifierInfo* ii = parser.m_token.getIdentifierInfo();
+    // Might be a register; handle that first.
+    ii->DoRegLookup(*nasm_parser->m_arch, parser.m_token.getLocation(),
+                    parser.m_preproc.getDiagnostics());
+    const Register* reg = ii->getRegister();
+    if (!reg)
+        return true;
+
+    parser.Diag(parser.m_token, diag::err_data_value_register);
+    return true;
+}
+
+bool
+NasmParser::ParseExpr6(Expr& e, const ParseExprTerm* parse_term)
+{
+    if (parse_term)
+    {
+        bool handled = false;
+        if (!(*parse_term)(e, *this, &handled))
+            return false;
+        if (handled)
+            return true;
+    }
+
+    switch (m_token.getKind())
     {
         case NasmToken::plus:
             ConsumeToken();
-            return ParseExpr6(e, type);
+            return ParseExpr6(e, parse_term);
         case NasmToken::minus:
             ConsumeToken();
-            if (!ParseExpr6(e, type))
+            if (!ParseExpr6(e, parse_term))
                 return false;
             e.Calc(Op::NEG);
             return true;
         case NasmToken::tilde:
             ConsumeToken();
-            if (!ParseExpr6(e, type))
+            if (!ParseExpr6(e, parse_term))
                 return false;
             e.Calc(Op::NOT);
             return true;
         case NasmToken::kw_seg:
             ConsumeToken();
-            if (!ParseExpr6(e, type))
+            if (!ParseExpr6(e, parse_term))
                 return false;
             e.Calc(Op::SEG);
             return true;
         case NasmToken::l_paren:
         {
             clang::SourceLocation lparen_loc = ConsumeParen();
-            if (!ParseExpr(e, type))
+            if (!ParseSegOffExpr(e, parse_term))
                 return false;
             MatchRHSPunctuation(NasmToken::r_paren, lparen_loc);
             return true;
@@ -1446,14 +1488,12 @@ NasmParser::ParseExpr6(Expr& e, ExprType type)
                             m_preproc.getDiagnostics());
             if (const Register* reg = ii->getRegister())
             {
-                if (type == DV_EXPR)
-                    Diag(m_token, diag::err_data_value_register);
                 e = *reg;
                 break;
             }
             // Might be an unrecognized keyword.
             if (CheckKeyword(ii))
-                return ParseExpr6(e, type); // recognized, reparse
+                return ParseExpr6(e, parse_term);   // recognized, reparse
             /*@fallthrough@*/
         }
         case NasmToken::label:

@@ -57,7 +57,7 @@ class EffAddr;
 class Expr;
 class IntNum;
 class Insn;
-class NumericParser;
+class ParserImpl;
 class Prefix;
 class Preprocessor;
 class TargetModifier;
@@ -352,26 +352,17 @@ public:
     /// @return True if ParseInsn() should be used for instruction parsing.
     virtual bool hasParseInsn() const;
 
-    typedef NumericParser* (*MakeNumericParser) (llvm::StringRef str,
-                                                 clang::SourceLocation source,
-                                                 Preprocessor& preproc);
-
     /// Custom instruction parser.  Parses an instruction and appends it to a
-    /// BytecodeContainer.  This function starts parsing with the passed
-    /// token, getting additional tokens from preproc if necessary.  It
-    /// stops parsing when it finds a token with the end of statement flag
-    /// set.  This end of statement token is placed into the passed token
-    /// prior to the function returning.
+    /// BytecodeContainer.  This function starts parsing with the current
+    /// token (parser.m_token), getting additional tokens from parser.m_preproc
+    /// as necessary.  It stops parsing when it finds a token with the end of
+    /// statement flag set.
     /// @note The default implementation asserts.
     /// @param container        bytecode container for resulting instruction
-    /// @param preproc          preprocessor
-    /// @param token            first token (input), next token (output)
-    /// @param parse_numeric    function to make an appropriate numeric parser
+    /// @param parser           parser implementation
     /// @return False if error occurred.
     virtual bool ParseInsn(BytecodeContainer& container,
-                           Preprocessor& preproc,
-                           Token& token,
-                           MakeNumericParser parse_numeric) const;
+                           ParserImpl& parser) const;
 
     /// Check an generic identifier to see if it matches architecture
     /// specific names for instructions or instruction prefixes.

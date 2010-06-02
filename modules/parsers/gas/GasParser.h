@@ -130,11 +130,11 @@ private:
     bool ParseDirective(NameValues* nvs);
     Operand ParseMemoryAddress();
     Operand ParseOperand();
-    bool ParseExpr(Expr& e);
-    bool ParseExpr0(Expr& e);
-    bool ParseExpr1(Expr& e);
-    bool ParseExpr2(Expr& e);
-    bool ParseExpr3(Expr& e);
+    bool ParseExpr(Expr& e, const ParseExprTerm* parse_term = 0);
+    bool ParseExpr0(Expr& e, const ParseExprTerm* parse_term);
+    bool ParseExpr1(Expr& e, const ParseExprTerm* parse_term);
+    bool ParseExpr2(Expr& e, const ParseExprTerm* parse_term);
+    bool ParseExpr3(Expr& e, const ParseExprTerm* parse_term);
 
     SymbolRef ParseSymbol(IdentifierInfo* ii);
     bool ParseInteger(IntNum* intn);

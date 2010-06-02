@@ -38,6 +38,10 @@
 
 using namespace yasm;
 
+ParseExprTerm::~ParseExprTerm()
+{
+}
+
 ParserImpl::ParserImpl(Preprocessor& preproc)
     : m_preproc(preproc)
     , m_paren_count(0)
