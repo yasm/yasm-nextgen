@@ -10,6 +10,8 @@ Prerequisites (what you need):
   * A standards-conforming C++ compiler (e.g. GCC 3.4+)
   * CMake 2.4+ (http://www.cmake.org/)
   * Python (http://www.python.org/)
+  * GoogleMock (http://code.google.com/p/googlemock/)
+  * GoogleTest (http://code.google.com/p/googletest/)
 
 If your C++ installation does not have TR1 functional headers, you will also
 need Boost 1.33.1+ (http://www.boost.org/).  The configuration process will
