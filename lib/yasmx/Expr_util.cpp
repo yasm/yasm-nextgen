@@ -105,5 +105,6 @@ yasm::ExpandEqu(Expr& e)
         terms[n].Clear();
         --n;
     }
+    e.Cleanup();
     return true;
 }
