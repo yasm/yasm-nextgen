@@ -96,7 +96,7 @@ IntNum::setBV(const llvm::APInt& bv)
         if (m_type == INTNUM_BV)
             delete m_val.bv;
         m_type = INTNUM_SV;
-        m_val.sv = static_cast<long>(bv.getSExtValue());
+        m_val.sv = static_cast<SmallValue>(bv.getSExtValue());
         return;
     }
     else if (m_type == INTNUM_BV)
@@ -188,7 +188,7 @@ IntNum::setStr(llvm::StringRef str, unsigned int radix)
     if (minbits > BITVECT_NATIVE_SIZE)
         return false;
 
-    if (minbits < LONG_BITS)
+    if (minbits < SV_BITS)
     {
         // shortcut "short" case
         SmallValue v = 0;
@@ -292,16 +292,20 @@ CalcSmallValue(Op::Op op,
             *lhs -= rhs;
             break;
         case Op::MUL:
+        {
             // half range
-            if (*lhs > -(1L<<(SV_BITS/2)) && *lhs < (1L<<(SV_BITS/2)))
+            IntNumData::SmallValue minmax = 1;
+            minmax <<= SV_BITS/2;
+            if (*lhs > -minmax && *lhs < minmax)
             {
-                if (rhs <= -(1L<<(SV_BITS/2)) || rhs >= (1L<<(SV_BITS/2)))
+                if (rhs <= -minmax || rhs >= minmax)
                     return false;
                 *lhs *= rhs;
                 break;
             }
             // maybe someday?
             return false;
+        }
         case Op::DIV:
             // TODO: make sure lhs and rhs are unsigned
         case Op::SIGNDIV:
@@ -657,38 +661,39 @@ IntNum::isOkSize(unsigned int size, unsigned int rshift, int rangetype) const
     // Non-bigval (for speed)
     if (m_type == INTNUM_SV)
     {
-        long v = m_val.sv;
+        SmallValue one = 1;
+        SmallValue v = m_val.sv;
         v >>= rshift;
         switch (rangetype)
         {
             case 0:
                 if (v < 0)
                     return false;
-                if (size >= LONG_BITS)
+                if (size >= SV_BITS)
                     return true;
-                return (v < (1L<<size));
+                return (v < (one<<size));
             case 1:
                 if (v < 0)
                 {
-                    if (size >= LONG_BITS+1)
+                    if (size >= SV_BITS+1)
                         return true;
                     v = 0-v;
-                    return (v <= (1L<<(size-1)));
+                    return (v <= (one<<(size-1)));
                 }
-                if (size >= LONG_BITS+1)
+                if (size >= SV_BITS+1)
                     return true;
-                return (v < (1L<<(size-1)));
+                return (v < (one<<(size-1)));
             case 2:
                 if (v < 0)
                 {
-                    if (size >= LONG_BITS+1)
+                    if (size >= SV_BITS+1)
                         return true;
                     v = 0-v;
-                    return (v <= (1L<<(size-1)));
+                    return (v <= (one<<(size-1)));
                 }
-                if (size >= LONG_BITS)
+                if (size >= SV_BITS)
                     return true;
-                return (v < (1L<<size));
+                return (v < (one<<size));
             default:
                 assert(false && "invalid range type");
                 return false;
@@ -852,8 +857,10 @@ IntNum::Extract(unsigned int width, unsigned int lsb) const
     if (m_type == INTNUM_SV)
     {
         // cast after shift to preserve sign bits
-        return (static_cast<unsigned long>(m_val.sv >> lsb)
-                & ((1UL << width) - 1));
+        unsigned long rv = static_cast<unsigned long>(m_val.sv >> lsb);
+        if (width < ULONG_BITS)
+            rv &= ((1UL << width) - 1);
+        return rv;
     }
     else
     {
