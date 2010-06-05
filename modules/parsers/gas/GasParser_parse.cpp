@@ -924,11 +924,54 @@ GasParser::ParseDirSection(unsigned int param, clang::SourceLocation source)
 {
     // DIR_SECTION ID ',' STRING ',' '@' ID ',' dirvals
     // Really parsed as just a bunch of dirvals; only needs to be unique
-    // function to set parser state appropriately.
-    //FIXME: m_state = SECTION_DIRECTIVE;
+    // function to handle section name as a special case.
     DirectiveInfo info(*m_object, source);
-    if (!ParseDirective(&info.getNameValues()))
+
+    if (m_token.is(GasToken::comma) || m_token.isEndOfStatement())
+    {
+        Diag(m_token, diag::err_directive_no_args);
         return false;
+    }
+
+    // Due to section names with special characters, concatenate tokens until
+    // we either get a comma or a token with preceding space.
+    llvm::SmallString<128> section_name;
+    clang::SourceLocation section_name_source = m_token.getLocation();
+    do {
+        // Turn the token back into characters.
+        // The first if's are optimizations for common cases.
+        if (m_token.isLiteral())
+            section_name += m_token.getLiteral();
+        else if (m_token.is(GasToken::identifier) ||
+                 m_token.is(GasToken::label))
+        {
+            IdentifierInfo* ii = m_token.getIdentifierInfo();
+            section_name += ii->getName();
+        }
+        else
+        {
+            // Get the raw data from the source manager.
+            clang::SourceManager& smgr = m_preproc.getSourceManager();
+            section_name +=
+                llvm::StringRef(smgr.getCharacterData(m_token.getLocation()),
+                                m_token.getLength());
+        }
+        ConsumeToken();
+    } while (m_token.isNot(GasToken::comma) && !m_token.isEndOfStatement() &&
+             !m_token.hasLeadingSpace());
+
+    NameValues& nvs = info.getNameValues();
+    nvs.push_back(new NameValue(section_name.str()));
+    nvs.back().setValueRange(section_name_source);
+
+    if (!m_token.isEndOfStatement())
+    {
+        if (ExpectAndConsume(GasToken::comma, diag::err_expected_comma))
+            return false;
+
+        if (!ParseDirective(&nvs))
+            return false;
+    }
 
     Directive handler;
     if (m_dirs->get(&handler, ".section"))
@@ -936,7 +979,6 @@ GasParser::ParseDirSection(unsigned int param, clang::SourceLocation source)
     else
         Diag(info.getSource(), diag::err_unrecognized_directive);
 
-    //FIXME: m_state = INITIAL;
     return true;
 }
 
