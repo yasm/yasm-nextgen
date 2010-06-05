@@ -1045,7 +1045,7 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
     symtab_sect.setIndex(m_config.secthead_count++);
     symtab_sect.setFileOffset(offset);
     symtab_sect.setSize(size);
-    symtab_sect.setInfo(symtab_nlocal);
+    symtab_sect.setInfo(symtab_nlocal+1);
     symtab_sect.setLink(strtab_sect.getIndex());    // link to .strtab
 
     // output relocations
