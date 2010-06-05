@@ -636,7 +636,7 @@ public:
     ~ElfOutput();
 
     void OutputSection(Section& sect,
-                       unsigned int* sindex,
+                       unsigned int sindex,
                        StringTable& shstrtab);
 
     // OutputBytecode overrides
@@ -837,7 +837,7 @@ elf_objfmt_create_dbg_secthead(yasm_section *sect, /*@null@*/ void *d)
 #endif
 void
 ElfOutput::OutputSection(Section& sect,
-                         unsigned int* sindex,
+                         unsigned int sindex,
                          StringTable& shstrtab)
 {
     BytecodeOutput* outputter = this;
@@ -849,8 +849,7 @@ ElfOutput::OutputSection(Section& sect,
         elfsect->setAlign(sect.getAlign());
 
     elfsect->setName(shstrtab.getIndex(sect.getName()));
-    elfsect->setIndex(*sindex);
-    *sindex = *sindex + 1;
+    elfsect->setIndex(sindex);
 
     uint64_t pos;
     if (sect.isBSS())
@@ -900,10 +899,6 @@ ElfOutput::OutputSection(Section& sect,
     // No relocations?  Go on to next section
     if (sect.getRelocs().size() == 0)
         return;
-
-    // need relocation section; set it up
-    elfsect->setRelIndex(*sindex);
-    *sindex = *sindex + 1;
 
     // name the relocation section .rel[a].foo
     std::string relname = m_objfmt.m_config.getRelocSectionName(sect.getName());
@@ -979,11 +974,11 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
     ElfOutput out(os, *this, m_object, diags);
 
     // Output user sections.
-    // Assign indices and names as we go (including for relocation sections).
+    // Assign indices and names as we go (including relocation section names).
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        out.OutputSection(*i, &m_config.secthead_count, shstrtab);
+        out.OutputSection(*i, m_config.secthead_count++, shstrtab);
     }
 
     // If we're not forcing all symbols to be in the table, go through
@@ -1063,6 +1058,9 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
 
         ElfSection* elfsect = i->getAssocData<ElfSection>();
         assert(elfsect != 0);
+
+        // need relocation section; set it up
+        elfsect->setRelIndex(m_config.secthead_count++);
         elfsect->WriteRelocs(os, *i, out.getScratch(), *m_machine, diags);
     }
 
@@ -1088,24 +1086,31 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
     // null section header
     null_sect.Write(os, out.getScratch());
 
-    // user section headers (and relocation section headers)
+    // user section headers
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
         ElfSection* elfsect = i->getAssocData<ElfSection>();
         assert(elfsect != 0);
 
-        if (elfsect->Write(os, out.getScratch()) == 0)
-            continue;
-
-        // relocation entries for .foo are stored in section .rel[a].foo
-        elfsect->WriteRel(os, symtab_sect.getIndex(), *i, out.getScratch());
+        elfsect->Write(os, out.getScratch());
     }
 
     // standard section headers
     shstrtab_sect.Write(os, out.getScratch());
     strtab_sect.Write(os, out.getScratch());
     symtab_sect.Write(os, out.getScratch());
+
+    // relocation section headers
+    for (Object::section_iterator i=m_object.sections_begin(),
+         end=m_object.sections_end(); i != end; ++i)
+    {
+        ElfSection* elfsect = i->getAssocData<ElfSection>();
+        assert(elfsect != 0);
+
+        // relocation entries for .foo are stored in section .rel[a].foo
+        elfsect->WriteRel(os, symtab_sect.getIndex(), *i, out.getScratch());
+    }
 
     // output Ehdr
     os.seek(0);
