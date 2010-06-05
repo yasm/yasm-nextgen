@@ -583,12 +583,12 @@ public:
     /// @param base         numeric base (10=decimal, etc)
     void Print(llvm::raw_ostream& os, int base=10) const;
 
+    /// Clean up terms by removing all empty (ExprTerm::NONE) elements.
+    void Cleanup();
+
 private:
     /// Terms of the expression.  The entire tree is stored here.
     ExprTerms m_terms;
-
-    /// Clean up terms by removing all empty (ExprTerm::NONE) elements.
-    void Cleanup();
 
     /// Reduce depth of a subexpression.
     /// @param pos      term index of subexpression operator
