@@ -725,7 +725,7 @@ ElfOutput::ConvertValueToBytes(Value& value,
         SymbolRef sym = value.getRelative();
         SymbolRef wrt = value.getWRT();
 
-        if (wrt == m_objfmt.m_dotdotsym)
+        if (wrt && wrt == m_objfmt.m_dotdotsym)
             wrt = SymbolRef(0);
         else if (wrt && isWRTElfSymRelative(*wrt))
             ;
