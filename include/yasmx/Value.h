@@ -196,11 +196,13 @@ public:
 
     /// Determine if value's relative portion is "complex".
     /// A relative is considered to be complex if its segment should be used
-    /// (is_seg_of() is true), it has a right shift (get_rshift() > 0), or
-    /// if it is section relative (is_section_rel() is true).
+    /// (isSegOf() is true), it has a right shift (getRShift() > 0), it has
+    /// a left shift (getShift() > 0), or if it is section relative
+    /// (isSectionRelative() is true).
     bool isComplexRelative() const
     {
-        return (m_seg_of != 0 || m_rshift > 0 || m_section_rel != 0);
+        return (m_seg_of != 0 || m_rshift > 0 || m_shift > 0 ||
+                m_section_rel != 0);
     }
 
     /// Determine if the segment of the relative portion should be used.
@@ -271,6 +273,14 @@ public:
     /// Get value size.
     /// @return Size of the value, in bits.
     unsigned int getSize() const { return m_size; }
+
+    /// Set value shift.
+    /// @param shift    left shift for the value result, in bits
+    void setShift(unsigned int shift) { m_shift = shift; }
+
+    /// Get value shift
+    /// @return Left shift for the value result, in bits.
+    unsigned int getShift() const { return m_shift; }
 
     /// Set distance from the start of the instruction to the start of the
     /// value.
@@ -363,6 +373,11 @@ private:
     /// (supported only by a few object formats).  If just the absolute
     /// portion should be shifted, that must be in the abs expr, not here!
     unsigned int m_rshift : 7;
+
+    /// If the value result should be shifted some number of bits to the left
+    /// when being output.  Usually only supported by specific object format
+    /// and architecture combinations.
+    unsigned int m_shift : 6;
 
     /// Indicates that the value should be treated as a IP-relative relocation;
     /// in some objfmt/arch combinations (e.g. win64/x86-amd64) this info

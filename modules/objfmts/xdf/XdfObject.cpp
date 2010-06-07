@@ -132,19 +132,18 @@ XdfOutput::ConvertValueToBytes(Value& value,
                                Location loc,
                                int warn)
 {
-    // We can't handle these types of values
-    if (value.isSectionRelative())
-    {
-        Diag(value.getSource().getBegin(), diag::err_reloc_too_complex);
-        return false;
-    }
-
     IntNum intn(0);
     if (value.OutputBasic(bytes, &intn, warn, *m_object.getArch()))
         return true;
 
     if (value.isRelative())
     {
+        if (value.isSectionRelative() || value.getShift() > 0)
+        {
+            Diag(value.getSource().getBegin(), diag::err_reloc_too_complex);
+            return false;
+        }
+
         bool pc_rel = false;
         IntNum intn2;
         if (value.CalcPCRelSub(&intn2, loc))
@@ -167,7 +166,8 @@ XdfOutput::ConvertValueToBytes(Value& value,
         sect->AddReloc(std::auto_ptr<Reloc>(reloc.release()));
     }
 
-    m_object.getArch()->ToBytes(intn, bytes, value.getSize(), 0, warn);
+    m_object.getArch()->ToBytes(intn, bytes, value.getSize(), value.getShift(),
+                                warn);
     return true;
 }
 

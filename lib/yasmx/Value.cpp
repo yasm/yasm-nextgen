@@ -78,6 +78,7 @@ Value::Value(unsigned int size)
       m_next_insn(0),
       m_seg_of(false),
       m_rshift(0),
+      m_shift(0),
       m_ip_rel(false),
       m_jump_target(false),
       m_section_rel(false),
@@ -97,6 +98,7 @@ Value::Value(unsigned int size, std::auto_ptr<Expr> e)
       m_next_insn(0),
       m_seg_of(false),
       m_rshift(0),
+      m_shift(0),
       m_ip_rel(false),
       m_jump_target(false),
       m_section_rel(false),
@@ -116,6 +118,7 @@ Value::Value(unsigned int size, SymbolRef sym)
       m_next_insn(0),
       m_seg_of(false),
       m_rshift(0),
+      m_shift(0),
       m_ip_rel(false),
       m_jump_target(false),
       m_section_rel(false),
@@ -137,6 +140,7 @@ Value::Value(const Value& oth)
       m_next_insn(oth.m_next_insn),
       m_seg_of(oth.m_seg_of),
       m_rshift(oth.m_rshift),
+      m_shift(oth.m_shift),
       m_ip_rel(oth.m_ip_rel),
       m_jump_target(oth.m_jump_target),
       m_section_rel(oth.m_section_rel),
@@ -184,6 +188,7 @@ Value::swap(Value& oth)
     unsigned int next_insn = m_next_insn;
     unsigned int seg_of = m_seg_of;
     unsigned int rshift = m_rshift;
+    unsigned int shift = m_shift;
     unsigned int ip_rel = m_ip_rel;
     unsigned int jump_target = m_jump_target;
     unsigned int section_rel = m_section_rel;
@@ -197,6 +202,7 @@ Value::swap(Value& oth)
     m_next_insn = oth.m_next_insn;
     m_seg_of = oth.m_seg_of;
     m_rshift = oth.m_rshift;
+    m_shift = oth.m_shift;
     m_ip_rel = oth.m_ip_rel;
     m_jump_target = oth.m_jump_target;
     m_section_rel = oth.m_section_rel;
@@ -210,6 +216,7 @@ Value::swap(Value& oth)
     oth.m_next_insn = next_insn;
     oth.m_seg_of = seg_of;
     oth.m_rshift = rshift;
+    oth.m_shift = shift;
     oth.m_ip_rel = ip_rel;
     oth.m_jump_target = jump_target;
     oth.m_section_rel = section_rel;
@@ -231,6 +238,7 @@ Value::Clear()
     m_next_insn = 0;
     m_seg_of = false;
     m_rshift = 0;
+    m_shift = 0;
     m_ip_rel = false;
     m_jump_target = false;
     m_section_rel = false;
@@ -271,6 +279,7 @@ Value::operator= (const Value& rhs)
         m_next_insn = rhs.m_next_insn;
         m_seg_of = rhs.m_seg_of;
         m_rshift = rhs.m_rshift;
+        m_shift = rhs.m_shift;
         m_ip_rel = rhs.m_ip_rel;
         m_jump_target = rhs.m_jump_target;
         m_section_rel = rhs.m_section_rel;
@@ -814,18 +823,18 @@ Value::OutputBasic(Bytes& bytes, IntNum* outval, int warn, const Arch& arch)
     {
         if (!m_abs)
         {
-            arch.ToBytes(0, bytes, m_size, 0, warn);
+            arch.ToBytes(0, bytes, m_size, m_shift, warn);
             return true;
         }
         else if (m_abs->isIntNum())
         {
             arch.ToBytes(*m_abs->getTerms().front().getIntNum(), bytes, m_size,
-                         0, warn);
+                         m_shift, warn);
             return true;
         }
         else if (m_abs->isFloat())
         {
-            arch.ToBytes(*m_abs->getFloat(), bytes, m_size, 0, warn);
+            arch.ToBytes(*m_abs->getFloat(), bytes, m_size, m_shift, warn);
             return true;
         }
     }
@@ -861,14 +870,14 @@ Value::OutputBasic(Bytes& bytes, IntNum* outval, int warn, const Arch& arch)
     {
         if (rel)
             throw TooComplexError(N_("cannot relocate float"));
-        arch.ToBytes(*term.getFloat(), bytes, m_size, 0, warn);
+        arch.ToBytes(*term.getFloat(), bytes, m_size, m_shift, warn);
         return true;
     }
 
     // Handle integer result
     if (!rel)
     {
-        arch.ToBytes(*term.getIntNum(), bytes, m_size, 0, warn);
+        arch.ToBytes(*term.getIntNum(), bytes, m_size, m_shift, warn);
         return true;
     }
     else
@@ -921,6 +930,7 @@ Value::Write(YAML::Emitter& out) const
     out << YAML::Key << "next insn" << YAML::Value << m_next_insn;
     out << YAML::Key << "seg of" << YAML::Value << static_cast<bool>(m_seg_of);
     out << YAML::Key << "right shift" << YAML::Value << m_rshift;
+    out << YAML::Key << "shift" << YAML::Value << m_shift;
     out << YAML::Key << "IP relative";
     out << YAML::Value << static_cast<bool>(m_ip_rel);
     out << YAML::Key << "jump target";

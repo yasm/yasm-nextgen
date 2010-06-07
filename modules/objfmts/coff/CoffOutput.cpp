@@ -113,16 +113,6 @@ CoffOutput::ConvertValueToBytes(Value& value,
                                 Location loc,
                                 int warn)
 {
-    // We can't handle these types of values
-    if (value.getRShift() > 0
-        || (value.isSegOf() && (value.isWRT() || value.hasSubRelative()))
-        || (value.isSectionRelative()
-            && (value.isWRT() || value.hasSubRelative())))
-    {
-        Diag(value.getSource().getBegin(), diag::err_reloc_too_complex);
-        return false;
-    }
-
     IntNum base(0);
     if (value.OutputBasic(bytes, &base, warn, *m_object.getArch()))
         return true;
@@ -131,6 +121,16 @@ CoffOutput::ConvertValueToBytes(Value& value,
     IntNum dist(0);
     if (value.isRelative())
     {
+        // We can't handle these types of values
+        if (value.getRShift() > 0 || value.getShift() > 0
+            || (value.isSegOf() && (value.isWRT() || value.hasSubRelative()))
+            || (value.isSectionRelative()
+                && (value.isWRT() || value.hasSubRelative())))
+        {
+            Diag(value.getSource().getBegin(), diag::err_reloc_too_complex);
+            return false;
+        }
+
         SymbolRef sym = value.getRelative();
         SymbolRef wrt = value.getWRT();
 
@@ -327,7 +327,8 @@ CoffOutput::ConvertValueToBytes(Value& value,
     intn += base;
     intn += dist;
 
-    m_object.getArch()->ToBytes(intn, bytes, value.getSize(), 0, warn);
+    m_object.getArch()->ToBytes(intn, bytes, value.getSize(), value.getShift(),
+                                warn);
     return true;
 }
 

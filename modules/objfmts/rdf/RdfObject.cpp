@@ -143,19 +143,18 @@ RdfOutput::ConvertValueToBytes(Value& value,
                                Location loc,
                                int warn)
 {
-    // We can't handle these types of values
-    if (value.isSectionRelative())
-    {
-        Diag(value.getSource().getBegin(), diag::err_reloc_too_complex);
-        return false;
-    }
-
     IntNum intn(0);
     if (value.OutputBasic(bytes, &intn, warn, *m_object.getArch()))
         return true;
 
     if (value.isRelative())
     {
+        // We can't handle these types of values
+        if (value.isSectionRelative() || value.getShift() > 0)
+        {
+            Diag(value.getSource().getBegin(), diag::err_reloc_too_complex);
+            return false;
+        }
         if (value.isWRT())
         {
             Diag(value.getSource().getBegin(), diag::err_wrt_not_supported);
@@ -213,7 +212,8 @@ RdfOutput::ConvertValueToBytes(Value& value,
             new RdfReloc(addr, sym, type, value.getSize()/8, refseg)));
     }
 
-    m_object.getArch()->ToBytes(intn, bytes, value.getSize(), 0, warn);
+    m_object.getArch()->ToBytes(intn, bytes, value.getSize(), value.getShift(),
+                                warn);
     return true;
 }
 
