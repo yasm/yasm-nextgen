@@ -937,6 +937,7 @@ void
 ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
 {
     StringTable shstrtab, strtab;
+    unsigned int align = (m_config.cls == ELFCLASS32) ? 4 : 8;
 
     // Add filename to strtab and set as .file symbol name
     if (m_file_elfsym)
@@ -1016,7 +1017,7 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
     ElfStringIndex symtab_name = shstrtab.getIndex(".symtab");
 
     // section header string table (.shstrtab)
-    offset = ElfAlignOutput(os, 4, diags);
+    offset = ElfAlignOutput(os, align, diags);
     size = shstrtab.getSize();
     shstrtab.Write(os);
 
@@ -1028,7 +1029,7 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
     shstrtab_sect.setSize(size);
 
     // string table (.strtab)
-    offset = ElfAlignOutput(os, 4, diags);
+    offset = ElfAlignOutput(os, align, diags);
     size = strtab.getSize();
     strtab.Write(os);
 
@@ -1039,7 +1040,7 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
     strtab_sect.setSize(size);
 
     // symbol table (.symtab)
-    offset = ElfAlignOutput(os, 4, diags);
+    offset = ElfAlignOutput(os, align, diags);
     size = m_config.WriteSymbolTable(os, m_object, diags, out.getScratch());
 
     ElfSection symtab_sect(m_config, SHT_SYMTAB, 0, true);

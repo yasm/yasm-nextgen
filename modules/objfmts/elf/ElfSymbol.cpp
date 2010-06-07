@@ -55,6 +55,7 @@ ElfSymbol::ElfSymbol(const ElfConfig&           config,
                      ElfSymbolIndex             index,
                      Section*                   sections[])
     : m_sect(0)
+    , m_name_index(0)
     , m_value(0)
     , m_size(0)
     , m_symindex(index)
