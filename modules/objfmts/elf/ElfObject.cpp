@@ -578,15 +578,14 @@ ElfObject::FinalizeSymbol(Symbol& sym,
     if (!sym.isDefined())
         return;
 
-    if (elfsym)
-        ;
-    else if (vis & Symbol::GLOBAL)
+    if ((vis & Symbol::COMMON) == 0 && (vis & Symbol::GLOBAL) != 0)
     {
         BuildGlobal(sym, diags);
         elfsym = sym.getAssocData<ElfSymbol>();
         elfsym->setName(strtab.getIndex(sym.getName()));
     }
-    else
+
+    if (!elfsym)
     {
         Location loc = {0, 0};
         if (!sym.getLabel(&loc))
