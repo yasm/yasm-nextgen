@@ -239,6 +239,7 @@ Bytecode::Output(BytecodeOutput& bc_out)
 
         // Get bytes to be updated
         Bytes& bytes = bc_out.getScratch();
+        assert((off+size) <= fixed.size());
         bytes.insert(bytes.end(), fixed.begin() + off,
                      fixed.begin() + off + size);
 
