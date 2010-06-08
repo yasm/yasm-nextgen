@@ -378,6 +378,8 @@ public:
         unsigned int m_off;
     };
 
+    void AppendFixup(const Fixup& fixup) { m_fixed_fixups.push_back(fixup); }
+
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     void Write(YAML::Emitter& out) const;

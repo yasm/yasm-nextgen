@@ -240,11 +240,14 @@ protected:
                                clang::SourceLocation source) = 0;
 
 private:
+    friend class Bytecode;
+
     BytecodeOutput(const BytecodeOutput&);                  // not implemented
     const BytecodeOutput& operator=(const BytecodeOutput&); // not implemented
 
     Diagnostic& m_diags;        ///< Diagnostic reporting
     Bytes m_scratch;            ///< Reusable scratch area
+    Bytes m_bc_scratch;         ///< Reusable scratch area for Bytecode class
     unsigned long m_num_output; ///< Total number of bytes+gap output
 };
 

@@ -224,39 +224,39 @@ Bytecode::Output(BytecodeOutput& bc_out)
 {
     unsigned long start = bc_out.getNumOutput();
 
-    // output fixups, outputting the fixed portions in between each one
-    unsigned int last = 0;
+    // make a copy of fixed portion
+    Bytes& fixed = bc_out.m_bc_scratch;
+    fixed.resize(0);
+    fixed.insert(fixed.end(), m_fixed.begin(), m_fixed.end());
+
+    // apply fixups
     for (std::vector<Fixup>::iterator i=m_fixed_fixups.begin(),
          end=m_fixed_fixups.end(); i != end; ++i)
     {
         unsigned int off = i->getOffset();
+        unsigned int size = (i->getSize()+i->getShift()+7)/8;
         Location loc = {this, off};
 
-        // Output fixed portion.
-        Bytes& fixed = bc_out.getScratch();
-        fixed.insert(fixed.end(), m_fixed.begin() + last,
-                     m_fixed.begin() + off);
-        bc_out.OutputBytes(fixed, m_source);
+        // Get bytes to be updated
+        Bytes& bytes = bc_out.getScratch();
+        bytes.insert(bytes.end(), fixed.begin() + off,
+                     fixed.begin() + off + size);
 
-        // Output value.
-        Bytes& vbytes = bc_out.getScratch();
-        vbytes.insert(vbytes.end(), m_fixed.begin() + off,
-                      m_fixed.begin() + off + i->getSize()/8);
         // Make a copy of the value to ensure things like
         // "TIMES x JMP label" work.
         Value vcopy = *i;
-        if (!bc_out.OutputValue(vcopy, vbytes, loc, i->isSigned() ? -1 : 1))
+
+        // Convert the value to bytes.
+        int warn = i->isSigned() ? -1 : 1;
+        if (!bc_out.ConvertValueToBytes(vcopy, bytes, loc, i->AdjustWarn(warn)))
             return false;
 
-        last = off + i->getSize()/8;
+        // Update bytes
+        std::copy(bytes.begin(), bytes.end(), fixed.begin() + off);
     }
-    // handle last part of fixed
-    if (last < m_fixed.size())
-    {
-        Bytes& fixed = bc_out.getScratch();
-        fixed.insert(fixed.end(), m_fixed.begin() + last, m_fixed.end());
-        bc_out.OutputBytes(fixed, m_source);
-    }
+
+    // output fixed portion
+    bc_out.OutputBytes(fixed, m_source);
 
     start = start;  // avoid warning due to assert usage
     assert((bc_out.getNumOutput() - start) == getFixedLen() &&
