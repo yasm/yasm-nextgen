@@ -1003,8 +1003,22 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
     stdx::stable_partition(m_object.symbols_begin(), m_object.symbols_end(),
                            isLocal);
 
-    // Number symbols.
-    ElfSymbolIndex symtab_nlocal;
+    // Number symbols.  Start at 1 due to undefined symbol (0).
+    ElfSymbolIndex symtab_nlocal = 1;
+
+    // The first symbols should be the section names in the same order as the
+    // sections themselves.
+    for (Object::section_iterator i=m_object.sections_begin(),
+         end=m_object.sections_end(); i != end; ++i)
+    {
+        ElfSection* elfsect = i->getAssocData<ElfSection>();
+        assert(elfsect != 0);
+        SymbolRef sectsym = elfsect->getSymbol();
+        ElfSymbol* elfsectsym = sectsym->getAssocData<ElfSymbol>();
+        elfsectsym->setSymbolIndex(symtab_nlocal++);
+    }
+
+    // The remainder of the symbols.
     m_config.AssignSymbolIndices(m_object, &symtab_nlocal);
 
     unsigned long offset, size;

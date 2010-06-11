@@ -66,14 +66,16 @@ ElfConfig::ElfConfig()
 ElfSymbolIndex
 ElfConfig::AssignSymbolIndices(Object& object, ElfSymbolIndex* nlocal) const
 {
-    // start at 1 due to undefined symbol (0)
-    ElfSymbolIndex num = 1;
-    *nlocal = 1;
+    ElfSymbolIndex num = *nlocal;
+
     for (Object::symbol_iterator i=object.symbols_begin(),
          end=object.symbols_end(); i != end; ++i)
     {
         ElfSymbol* elfsym = i->getAssocData<ElfSymbol>();
         if (!elfsym)
+            continue;
+
+        if (elfsym->getSymbolIndex() != 0)
             continue;
 
         elfsym->setSymbolIndex(num);
