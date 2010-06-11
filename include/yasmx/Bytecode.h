@@ -223,6 +223,11 @@ public:
     /// @return True if bytecode has contents.
     bool hasContents() const { return m_contents.get() != 0; }
 
+    /// Get the current contents.
+    /// @return Bytecode contents.
+    Contents& getContents() { return *m_contents.get(); }
+    const Contents& getContents() const { return *m_contents.get(); }
+
     /// Set source location of bytecode.
     /// @param source   source location
     void setSource(clang::SourceLocation source) { m_source = source; }
