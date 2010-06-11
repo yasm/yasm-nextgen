@@ -62,6 +62,8 @@ bool
 GasParser::ParseLine()
 {
 next:
+    if (m_token.is(GasToken::eof))
+        return true;
     if (m_token.isEndOfStatement())
     {
         ConsumeToken();
