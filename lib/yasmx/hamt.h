@@ -126,6 +126,8 @@ private:
     static unsigned long RehashKey(const Key& key, int Level);
     static unsigned long HashKeyNocase(const Key& key);
     static unsigned long RehashKeyNocase(const Key& key, int Level);
+    static bool Equals(const Key& k1, const Key& k2);
+    static bool EqualsNocase(const Key& k1, const Key& k2);
 };
 
 template <typename Key, typename T, typename GetKey>
@@ -173,6 +175,36 @@ hamt<Key,T,GetKey>::RehashKeyNocase(const Key& key, int Level)
 }
 
 template <typename Key, typename T, typename GetKey>
+bool
+hamt<Key,T,GetKey>::Equals(const Key& k1, const Key& k2)
+{
+    if (k1.size() != k2.size())
+        return false;
+    for (typename Key::const_iterator i=k1.begin(), i2=k2.begin(), end=k1.end();
+         i != end; ++i, ++i2)
+    {
+        if (*i != *i2)
+            return false;
+    }
+    return true;
+}
+
+template <typename Key, typename T, typename GetKey>
+bool
+hamt<Key,T,GetKey>::EqualsNocase(const Key& k1, const Key& k2)
+{
+    if (k1.size() != k2.size())
+        return false;
+    for (typename Key::const_iterator i=k1.begin(), i2=k2.begin(), end=k1.end();
+         i != end; ++i, ++i2)
+    {
+        if (std::tolower(*i) != std::tolower(*i2))
+            return false;
+    }
+    return true;
+}
+
+template <typename Key, typename T, typename GetKey>
 hamt<Key,T,GetKey>::hamt(bool nocase)
     : m_nocase(nocase)
 {
@@ -193,7 +225,11 @@ template <typename Key, typename T, typename GetKey>
 T*
 hamt<Key,T,GetKey>::InsRep(T* data, bool replace)
 {
-    unsigned long key = HashKey(get_key(data));
+    unsigned long key;
+    if (m_nocase)
+        key = HashKeyNocase(get_key(data));
+    else
+        key = HashKey(get_key(data));
     unsigned long keypart = key & 0x1F;
     Node** pnode = &m_root[keypart];
     Node* node = *pnode;
@@ -212,8 +248,8 @@ hamt<Key,T,GetKey>::InsRep(T* data, bool replace)
         if (node->value != 0)
         {
             if (node->bitmap_key == key &&
-                ((!m_nocase && get_key(data) == get_key(node->value)) ||
-                 (m_nocase && false/* TODO */)))
+                ((!m_nocase && Equals(get_key(data), get_key(node->value))) ||
+                 (m_nocase && EqualsNocase(get_key(data), get_key(node->value)))))
             {
                 T* oldvalue = node->value;
                 if (replace)
@@ -231,8 +267,16 @@ hamt<Key,T,GetKey>::InsRep(T* data, bool replace)
                     if (keypartbits > 30)
                     {
                         // Exceeded 32 bits: rehash
-                        key = RehashKey(get_key(data), level);
-                        key2 = RehashKey(get_key(node->value), level);
+                        if (m_nocase)
+                        {
+                            key = RehashKeyNocase(get_key(data), level);
+                            key2 = RehashKeyNocase(get_key(node->value), level);
+                        }
+                        else
+                        {
+                            key = RehashKey(get_key(data), level);
+                            key2 = RehashKey(get_key(node->value), level);
+                        }
                         keypartbits = 0;
                     }
                     keypart = (key >> keypartbits) & 0x1F;
@@ -299,7 +343,10 @@ hamt<Key,T,GetKey>::InsRep(T* data, bool replace)
         if (keypartbits > 30)
         {
             // Exceeded 32 bits of current key: rehash
-            key = RehashKey(get_key(data), level);
+            if (m_nocase)
+                key = RehashKeyNocase(get_key(data), level);
+            else
+                key = RehashKey(get_key(data), level);
             keypartbits = 0;
         }
         keypart = (key >> keypartbits) & 0x1F;
@@ -375,8 +422,8 @@ hamt<Key,T,GetKey>::Find(const Key& str)
         if (node->value != 0)
         {
             if (node->bitmap_key == key &&
-                ((!m_nocase && str == get_key(node->value)) ||
-                 (m_nocase && false/* TODO */)))
+                ((!m_nocase && Equals(str, get_key(node->value))) ||
+                 (m_nocase && EqualsNocase(str, get_key(node->value)))))
                 return node->value;
             else
                 return 0;
@@ -387,7 +434,10 @@ hamt<Key,T,GetKey>::Find(const Key& str)
         if (keypartbits > 30)
         {
             // Exceeded 32 bits of current key: rehash
-            key = RehashKey(str, level);
+            if (m_nocase)
+                key = RehashKeyNocase(str, level);
+            else
+                key = RehashKey(str, level);
             keypartbits = 0;
         }
         keypart = (key >> keypartbits) & 0x1F;
