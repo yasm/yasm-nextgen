@@ -93,12 +93,12 @@ private:
 
     bool ParseLine();
     void setDebugFile(llvm::StringRef filename,
-                      clang::SourceLocation filename_source,
+                      clang::SourceRange filename_source,
                       clang::SourceLocation dir_source);
     void setDebugFile(const IntNum& fileno,
-                      clang::SourceLocation fileno_source,
+                      clang::SourceRange fileno_source,
                       llvm::StringRef filename,
-                      clang::SourceLocation filename_source,
+                      clang::SourceRange filename_source,
                       clang::SourceLocation dir_source);
     void ParseCppLineMarker();
     void ParseNasmLineMarker();
@@ -147,10 +147,10 @@ private:
                      const Expr& align);
     void SwitchSection(llvm::StringRef name,
                        bool builtin,
-                       clang::SourceLocation source);
+                       clang::SourceRange source);
     Section& getSection(llvm::StringRef name,
                         bool builtin,
-                        clang::SourceLocation source);
+                        clang::SourceRange source);
 
     void DoParse();
 

@@ -193,7 +193,7 @@ next:
 
 void
 GasParser::setDebugFile(llvm::StringRef filename,
-                        clang::SourceLocation filename_source,
+                        clang::SourceRange filename_source,
                         clang::SourceLocation dir_source)
 {
     Directive dir;
@@ -209,9 +209,9 @@ GasParser::setDebugFile(llvm::StringRef filename,
 
 void
 GasParser::setDebugFile(const IntNum& fileno,
-                        clang::SourceLocation fileno_source,
+                        clang::SourceRange fileno_source,
                         llvm::StringRef filename,
-                        clang::SourceLocation filename_source,
+                        clang::SourceRange filename_source,
                         clang::SourceLocation dir_source)
 {
     Directive dir;
@@ -903,21 +903,24 @@ GasParser::ParseDirFill(unsigned int param, clang::SourceLocation source)
 bool
 GasParser::ParseDirBssSection(unsigned int param, clang::SourceLocation source)
 {
-    SwitchSection(".bss", true, source);
+    SwitchSection(".bss", true,
+                  clang::SourceRange(source, source.getFileLocWithOffset(4)));
     return true;
 }
 
 bool
 GasParser::ParseDirDataSection(unsigned int param, clang::SourceLocation source)
 {
-    SwitchSection(".data", true, source);
+    SwitchSection(".data", true,
+                  clang::SourceRange(source, source.getFileLocWithOffset(5)));
     return true;
 }
 
 bool
 GasParser::ParseDirTextSection(unsigned int param, clang::SourceLocation source)
 {
-    SwitchSection(".text", true, source);
+    SwitchSection(".text", true,
+                  clang::SourceRange(source, source.getFileLocWithOffset(5)));
     return true;
 }
 
@@ -939,6 +942,7 @@ GasParser::ParseDirSection(unsigned int param, clang::SourceLocation source)
     // we either get a comma or a token with preceding space.
     llvm::SmallString<128> section_name;
     clang::SourceLocation section_name_source = m_token.getLocation();
+    clang::SourceLocation section_name_ends;
     do {
         // Turn the token back into characters.
         // The first if's are optimizations for common cases.
@@ -958,13 +962,15 @@ GasParser::ParseDirSection(unsigned int param, clang::SourceLocation source)
                 llvm::StringRef(smgr.getCharacterData(m_token.getLocation()),
                                 m_token.getLength());
         }
+        section_name_ends = m_token.getEndLocation();
         ConsumeToken();
     } while (m_token.isNot(GasToken::comma) && !m_token.isEndOfStatement() &&
              !m_token.hasLeadingSpace());
 
     NameValues& nvs = info.getNameValues();
     nvs.push_back(new NameValue(section_name.str()));
-    nvs.back().setValueRange(section_name_source);
+    nvs.back().setValueRange(
+        clang::SourceRange(section_name_source, section_name_ends));
 
     if (!m_token.isEndOfStatement())
     {
@@ -1027,7 +1033,8 @@ GasParser::ParseDirFile(unsigned int param, clang::SourceLocation source)
                                  m_preproc);
         if (filename.hadError())
             return false;
-        clang::SourceLocation filename_source = ConsumeToken();
+        clang::SourceRange filename_source = m_token.getSourceRange();
+        ConsumeToken();
 
 #if 0
         // FIXME
@@ -1068,7 +1075,8 @@ GasParser::ParseDirFile(unsigned int param, clang::SourceLocation source)
     IntNum fileno;
     if (!ParseInteger(&fileno))
         return false;
-    clang::SourceLocation fileno_source = ConsumeToken();
+    clang::SourceRange fileno_source = m_token.getSourceRange();
+    ConsumeToken();
 
     // filename
     if (m_token.isNot(GasToken::string_literal))
@@ -1080,7 +1088,8 @@ GasParser::ParseDirFile(unsigned int param, clang::SourceLocation source)
                              m_preproc);
     if (filename.hadError())
         return false;
-    clang::SourceLocation filename_source = ConsumeToken();
+    clang::SourceRange filename_source = m_token.getSourceRange();
+    ConsumeToken();
 
     // Pass along to debug format
     setDebugFile(fileno, fileno_source, filename.getString(filename_buf),
@@ -1183,7 +1192,7 @@ GasParser::ParseDirective(NameValues* nvs)
                         nvs->push_back(new NameValue(
                             m_token.getIdentifierInfo()->getName(),
                             '\0'));
-                        nvs->back().setValueRange(m_token.getLocation());
+                        nvs->back().setValueRange(m_token.getSourceRange());
                         ConsumeToken();
                         break;
                 }
@@ -1194,7 +1203,8 @@ GasParser::ParseDirective(NameValues* nvs)
                 llvm::SmallString<64> strbuf;
                 GasStringParser str(m_token.getLiteral(), m_token.getLocation(),
                                     m_preproc);
-                clang::SourceLocation str_source = ConsumeToken();
+                clang::SourceRange str_source = m_token.getSourceRange();
+                ConsumeToken();
 
                 if (!str.hadError())
                 {
@@ -1793,9 +1803,9 @@ GasParser::DefineLcomm(SymbolRef sym,
 void
 GasParser::SwitchSection(llvm::StringRef name,
                          bool builtin,
-                         clang::SourceLocation source)
+                         clang::SourceRange source)
 {
-    DirectiveInfo info(*m_object, source);
+    DirectiveInfo info(*m_object, source.getBegin());
     NameValues& nvs = info.getNameValues();
     nvs.push_back(new NameValue(name, '\0'));
     nvs.back().setValueRange(source);
@@ -1810,7 +1820,7 @@ GasParser::SwitchSection(llvm::StringRef name,
 Section&
 GasParser::getSection(llvm::StringRef name,
                       bool builtin,
-                      clang::SourceLocation source)
+                      clang::SourceRange source)
 {
     Section* cur_section = m_object->getCurSection();
     SwitchSection(name, builtin, source);
