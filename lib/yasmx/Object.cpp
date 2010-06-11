@@ -69,7 +69,7 @@ class Object::Impl
 public:
     Impl(bool nocase)
         : sym_map(nocase)
-        , special_sym_map(false)
+        , special_sym_map(true)
         , m_sym_pool(sizeof(Symbol))
     {}
     ~Impl() {}
