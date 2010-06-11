@@ -1169,6 +1169,12 @@ ElfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
         type = SHT_PROGBITS;
         flags = 0;
     }
+    else if (name.startswith(".debug_"))
+    {
+        align = 0;
+        type = SHT_PROGBITS;
+        flags = 0;
+    }
     else
     {
         // Default to code, but align=1
@@ -1231,7 +1237,7 @@ ElfObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
     ElfSection* elfsect = sect->getAssocData<ElfSection>();
     assert(elfsect != 0);
 
-    int flags = 0, type = SHT_NULL;
+    int flags = 0, type = elfsect->getType();
     llvm::StringRef flagstr = nvs[1].getString();
 
     for (size_t i=0; i<flagstr.size(); ++i)
