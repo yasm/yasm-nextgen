@@ -172,6 +172,10 @@ public:
 
         virtual SpecialType getSpecial() const;
 
+        /// Get the type name of the bytecode contents.
+        /// Implementations should return a known unique identifying name.
+        virtual llvm::StringRef getType() const = 0;
+
         virtual Contents* clone() const = 0;
 
         /// Write a YAML representation.  For debugging purposes.

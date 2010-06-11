@@ -62,6 +62,8 @@ public:
     /// @param size     size in bytes
     void Extend(unsigned long size);
 
+    llvm::StringRef getType() const;
+
     GapBytecode* clone() const;
 
     /// Write a YAML representation.  For debugging purposes.
@@ -102,6 +104,12 @@ GapBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     bc_out.OutputGap(m_size, bc.getSource());
     return true;
+}
+
+llvm::StringRef
+GapBytecode::getType() const
+{
+    return "yasm::GapBytecode";
 }
 
 GapBytecode*

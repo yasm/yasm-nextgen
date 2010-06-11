@@ -57,6 +57,8 @@ public:
     /// Convert a bytecode into its byte representation.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
+    llvm::StringRef getType() const;
+
     SxData* clone() const;
 
     /// Write a YAML representation.  For debugging purposes.
@@ -103,6 +105,12 @@ SxData::Output(Bytecode& bc, BytecodeOutput& bc_out)
     Write32(bytes, coffsym->m_index);
     bc_out.OutputBytes(bytes, bc.getSource());
     return true;
+}
+
+llvm::StringRef
+SxData::getType() const
+{
+    return "yasm::objfmt::SxData";
 }
 
 SxData*

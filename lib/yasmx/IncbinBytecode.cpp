@@ -64,6 +64,8 @@ public:
     /// Convert a bytecode into its byte representation.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
+    llvm::StringRef getType() const;
+
     IncbinBytecode* clone() const;
 
     /// Write a YAML representation.  For debugging purposes.
@@ -212,6 +214,12 @@ IncbinBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
                 + start, bc.getTailLen());
     bc_out.OutputBytes(bytes, bc.getSource());
     return true;
+}
+
+llvm::StringRef
+IncbinBytecode::getType() const
+{
+    return "yasm::IncbinBytecode";
 }
 
 IncbinBytecode*

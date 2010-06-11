@@ -68,6 +68,8 @@ public:
     /// Convert a bytecode into its byte representation.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
+    llvm::StringRef getType() const;
+
     SpecialType getSpecial() const;
 
     OrgBytecode* clone() const;
@@ -151,6 +153,12 @@ OrgBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
     bytes.insert(bytes.end(), len, static_cast<unsigned char>(m_fill));
     bc_out.OutputBytes(bytes, bc.getSource());
     return true;
+}
+
+llvm::StringRef
+OrgBytecode::getType() const
+{
+    return "yasm::OrgBytecode";
 }
 
 OrgBytecode::SpecialType

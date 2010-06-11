@@ -295,6 +295,12 @@ UnwindCode::Output(Bytecode& bc, BytecodeOutput& bc_out)
     return true;
 }
 
+llvm::StringRef
+UnwindCode::getType() const
+{
+    return "yasm::objfmt::UnwindCode";
+}
+
 UnwindCode*
 UnwindCode::clone() const
 {

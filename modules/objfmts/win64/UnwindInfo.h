@@ -70,6 +70,7 @@ public:
                         /*@out@*/ long* pos_thres,
                         Diagnostic& diags);
     virtual bool Output(Bytecode& bc, BytecodeOutput& bc_out);
+    llvm::StringRef getType() const;
     virtual UnwindInfo* clone() const;
     virtual void Write(YAML::Emitter& out) const;
 

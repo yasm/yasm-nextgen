@@ -61,6 +61,8 @@ public:
     /// Convert a bytecode into its byte representation.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
+    llvm::StringRef getType() const;
+
     LEB128Bytecode* clone() const;
 
     /// Write a YAML representation.  For debugging purposes.
@@ -119,6 +121,12 @@ LEB128Bytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
     WriteLEB128(bytes, m_expr.getIntNum(), m_sign);
     bc_out.OutputBytes(bytes, bc.getSource());
     return true;
+}
+
+llvm::StringRef
+LEB128Bytecode::getType() const
+{
+    return "yasm::LEB128Bytecode";
 }
 
 LEB128Bytecode*

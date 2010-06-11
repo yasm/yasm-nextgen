@@ -78,6 +78,8 @@ public:
                 Diagnostic& diags);
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
+    llvm::StringRef getType() const;
+
     X86Jmp* clone() const;
 
     void Write(YAML::Emitter& out) const;
@@ -247,6 +249,12 @@ X86Jmp::Output(Bytecode& bc, BytecodeOutput& bc_out)
     if (!bc_out.OutputValue(m_target, tbytes, loc, 1))
         return false;
     return true;
+}
+
+llvm::StringRef
+X86Jmp::getType() const
+{
+    return "yasm::arch::X86Jmp";
 }
 
 X86Jmp*

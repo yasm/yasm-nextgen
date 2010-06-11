@@ -69,6 +69,8 @@ public:
     /// Convert a bytecode into its byte representation.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
+    llvm::StringRef getType() const;
+
     MultipleBytecode* clone() const;
 
     /// Write a YAML representation.  For debugging purposes.
@@ -244,6 +246,12 @@ MultipleBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
         }
     }
     return true;
+}
+
+llvm::StringRef
+MultipleBytecode::getType() const
+{
+    return "yasm::MultipleBytecode";
 }
 
 MultipleBytecode*

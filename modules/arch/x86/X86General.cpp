@@ -87,6 +87,8 @@ public:
                 Diagnostic& diags);
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
+    llvm::StringRef getType() const;
+
     X86General* clone() const;
 
     void Write(YAML::Emitter& out) const;
@@ -544,6 +546,12 @@ X86General::Output(Bytecode& bc, BytecodeOutput& bc_out)
             return false;
     }
     return true;
+}
+
+llvm::StringRef
+X86General::getType() const
+{
+    return "yasm::arch::X86General";
 }
 
 X86General*
