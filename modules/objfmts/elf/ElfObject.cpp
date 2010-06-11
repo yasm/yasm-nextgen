@@ -868,9 +868,6 @@ ElfOutput::OutputSection(Section& sect,
             return;
         }
 
-        if (sect.bytecodes_back().getNextOffset() == 0)
-            return;
-
         m_fd_os.seek(elfsect->setFileOffset(pos));
         if (m_os.has_error())
         {
