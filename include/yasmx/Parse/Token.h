@@ -142,6 +142,15 @@ public:
     clang::SourceLocation getLocation() const { return m_loc; }
     unsigned int getLength() const { return m_len; }
 
+    /// getEndLocation - Return a source location identifier one past the end
+    /// of this token.
+    clang::SourceLocation getEndLocation() const
+    { return m_loc.getFileLocWithOffset(m_len); }
+
+    /// getSourceRange - Return a source range for the token.
+    clang::SourceRange getSourceRange() const
+    { return clang::SourceRange(m_loc, getEndLocation()); }
+
     void setLocation(clang::SourceLocation l) { m_loc = l; }
     void setLength(unsigned int len) { m_len = len; }
 
