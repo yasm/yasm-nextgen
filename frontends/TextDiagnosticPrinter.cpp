@@ -120,7 +120,7 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
     EndColNo = SourceLine.size();
 
   // Fill the range with ~'s.
-  assert(StartColNo <= EndColNo && "Invalid range!");
+  //assert(StartColNo <= EndColNo && "Invalid range!");
   for (unsigned i = StartColNo; i < EndColNo; ++i)
     CaretLine[i] = '~';
 }
