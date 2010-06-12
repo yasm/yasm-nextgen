@@ -81,6 +81,8 @@ public:
     DiagnosticBuilder Diag(clang::SourceLocation pos, unsigned diag_id)
     { return m_diags.Report(pos, diag_id); }
 
+    /// Does this output to actual bits?  Base implementation returns true.
+    virtual bool isBits() const;
 
     /// Reset the number of bytes output to zero.
     void ResetNumOutput() { m_num_output = 0; }
@@ -258,6 +260,9 @@ class YASM_LIB_EXPORT BytecodeNoOutput : public BytecodeOutput
 public:
     BytecodeNoOutput(Diagnostic& diags) : BytecodeOutput(diags) {}
     ~BytecodeNoOutput();
+
+    /// Returns false.
+    bool isBits() const;
 
 protected:
     bool ConvertValueToBytes(Value& value,

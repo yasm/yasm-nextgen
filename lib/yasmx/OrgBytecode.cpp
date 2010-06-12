@@ -147,7 +147,14 @@ OrgBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
         bc_out.Diag(bc.getSource(), diag::err_org_overlap);
         return false;
     }
+
     unsigned long len = m_start - bc.getTailOffset();
+    if (!bc_out.isBits())
+    {
+        bc_out.OutputGap(len, bc.getSource());
+        return true;
+    }
+
     Bytes& bytes = bc_out.getScratch();
     // XXX: handle more than 8 bit?
     bytes.insert(bytes.end(), len, static_cast<unsigned char>(m_fill));

@@ -216,6 +216,12 @@ AlignBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
         }
     }
 
+    if (!bc_out.isBits())
+    {
+        // Output as a gap.
+        bc_out.OutputGap(len, bc.getSource());
+        return true;
+    }
     if (!m_fill.isEmpty())
     {
         unsigned long v = m_fill.getIntNum().getUInt();

@@ -42,6 +42,12 @@ BytecodeOutput::~BytecodeOutput()
 }
 
 bool
+BytecodeOutput::isBits() const
+{
+    return true;
+}
+
+bool
 BytecodeOutput::ConvertSymbolToBytes(SymbolRef sym,
                                      Bytes& bytes,
                                      Location loc,
@@ -54,6 +60,12 @@ BytecodeOutput::ConvertSymbolToBytes(SymbolRef sym,
 
 BytecodeNoOutput::~BytecodeNoOutput()
 {
+}
+
+bool
+BytecodeNoOutput::isBits() const
+{
+    return false;
 }
 
 bool
