@@ -31,6 +31,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -280,39 +281,10 @@ static cl::alias undefine_macros_alias("u",
     cl::aliasopt(undefine_macros));
 
 // -W
-enum WarningSetting
-{
-    E_ERROR,
-    D_ERROR,
-    E_UNREC_CHAR,
-    D_UNREC_CHAR,
-    E_ORPHAN_LABEL,
-    D_ORPHAN_LABEL,
-    E_UNINIT_CONTENTS,
-    D_UNINIT_CONTENTS,
-    E_SIZE_OVERRIDE,
-    D_SIZE_OVERRIDE
-};
-static cl::list<WarningSetting> warning_settings("W",
-    cl::desc("Enables/disables warning:"),
-    cl::Prefix,
-    cl::values(
-     clEnumValN(E_ERROR, "error",
-                "turns warnings into errors"),
-     clEnumValN(D_ERROR, "no-error", "(default)"),
-     clEnumValN(E_UNREC_CHAR, "unrecognized-char", "(default)"),
-     clEnumValN(D_UNREC_CHAR, "no-unrecognized-char",
-                "do not warn on unrecognized characters"),
-     clEnumValN(E_ORPHAN_LABEL, "orphan-labels",
-                "label alone on a line without a colon (NASM)"),
-     clEnumValN(D_ORPHAN_LABEL, "no-orphan-labels", "(default)"),
-     clEnumValN(E_UNINIT_CONTENTS, "uninit-contents", "(default)"),
-     clEnumValN(D_UNINIT_CONTENTS, "no-uninit-contents",
-                "do not warn on uninitialized space in code/data"),
-     clEnumValN(E_SIZE_OVERRIDE, "size-override",
-                "double size override (NASM)"),
-     clEnumValN(D_SIZE_OVERRIDE, "no-size-override", "(default)"),
-     clEnumValEnd));
+static cl::list<std::string> warning_settings("W",
+    cl::desc("Enables/disables warning"),
+    cl::value_desc("warn-group"),
+    cl::Prefix);
 
 // -w
 static cl::list<bool> inhibit_warnings("w",
@@ -389,7 +361,7 @@ ModuleCommonHandler(const std::string& param, const char* name,
 }
 
 static void
-ApplyWarningSettings()
+ApplyWarningSettings(yasm::Diagnostic& diags)
 {
     // Walk through warning_settings and inhibit_warnings in parallel,
     // ordering by command line argument position.
@@ -410,34 +382,66 @@ ApplyWarningSettings()
             (setting_pos == 0 || inhibit_pos < setting_pos))
         {
             // Handle inhibit option
-            yasm::DisableAllWarn();
+            diags.setIgnoreAllWarnings(true);
             ++inhibit_num;
         }
         else if (setting_pos != 0 &&
                  (inhibit_pos == 0 || setting_pos < inhibit_pos))
         {
-            // Handle setting option
-            switch (warning_settings[setting_num])
+            llvm::StringRef setting(warning_settings[setting_num]);
+
+            yasm::diag::Mapping mapping = yasm::diag::MAP_WARNING;
+            bool positive = true;
+            if (setting.startswith("no-"))
             {
-                case E_ERROR: warning_error = true; break;
-                case D_ERROR: warning_error = false; break;
-                case E_UNREC_CHAR:
-                    yasm::EnableWarn(yasm::WARN_UNREC_CHAR); break;
-                case D_UNREC_CHAR:
-                    yasm::DisableWarn(yasm::WARN_UNREC_CHAR); break;
-                case E_ORPHAN_LABEL:
-                    yasm::EnableWarn(yasm::WARN_ORPHAN_LABEL); break;
-                case D_ORPHAN_LABEL:
-                    yasm::DisableWarn(yasm::WARN_ORPHAN_LABEL); break;
-                case E_UNINIT_CONTENTS:
-                    yasm::EnableWarn(yasm::WARN_UNINIT_CONTENTS); break;
-                case D_UNINIT_CONTENTS:
-                    yasm::DisableWarn(yasm::WARN_UNINIT_CONTENTS); break;
-                case E_SIZE_OVERRIDE:
-                    yasm::EnableWarn(yasm::WARN_SIZE_OVERRIDE); break;
-                case D_SIZE_OVERRIDE:
-                    yasm::DisableWarn(yasm::WARN_SIZE_OVERRIDE); break;
+                positive = false;
+                mapping = yasm::diag::MAP_IGNORE;
+                setting = setting.substr(3);
             }
+
+            if (setting.startswith("error"))
+            {
+                llvm::StringRef unused;
+                llvm::tie(unused, setting) = setting.split('=');
+                // Just plain -Werror maps all warnings to errors.
+                // -Werror=foo/-Wno-error=foo maps warning foo.
+                if (setting.empty())
+                {
+                    diags.setWarningsAsErrors(positive);
+                    ++setting_num;
+                    continue;
+                }
+                else
+                {
+                    mapping = positive ? yasm::diag::MAP_ERROR
+                                       : yasm::diag::MAP_WARNING_NO_WERROR;
+                }
+            }
+#if 0
+            else if (setting.startswith("fatal-errors"))
+            {
+                llvm::StringRef unused;
+                llvm::tie(unused, setting) = setting.split('=');
+                // Just plain -Wfatal-error maps all errors to fatal errors.
+                // -Wfatal-errors=foo/-Wno-fatal-errors=foo maps just foo.
+                if (setting.empty())
+                {
+                    diags.setErrorsAsFatal(positive);
+                    ++setting_num;
+                    continue;
+                }
+                else
+                {
+                    mapping = positive ? yasm::diag::MAP_FATAL
+                                       : yasm::diag::MAP_ERROR_NO_WFATAL;
+                }
+            }
+#endif
+
+            if (diags.setDiagnosticGroupMapping(setting, mapping))
+                diags.Report(clang::SourceLocation(),
+                             yasm::diag::warn_unknown_warning_option)
+                    << ("-W" + warning_settings[setting_num]);
             ++setting_num;
         }
         else
@@ -692,6 +696,9 @@ do_assemble(void)
     yasm::TextDiagnosticPrinter diag_printer(*errfile);
     clang::SourceManager source_mgr;
     yasm::Diagnostic diags(&source_mgr, &diag_printer);
+    // Apply warning settings
+    ApplyWarningSettings(diags);
+
     clang::FileManager file_mgr;
     yasm::Assembler assembler(arch_keyword, objfmt_keyword, diags, dump_object);
     yasm::HeaderSearch headers(file_mgr);
@@ -926,9 +933,6 @@ main(int argc, char* argv[])
     // Default to NASM as the parser
     if (parser_keyword.empty())
         parser_keyword = "nasm";
-
-    // Apply warning settings
-    ApplyWarningSettings();
 
 #if 0
     // handle preproc-only case here

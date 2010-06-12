@@ -144,6 +144,7 @@ add_fatal("fatal_module_load", "could not load %0 '%1")
 add_fatal("fatal_module_combo", "'%0' is not a valid %1 for %2 '%3'")
 add_fatal("fatal_objfmt_machine_mismatch",
           "object format '%0' does not support architecture '%1' machine '%2'")
+add_warning("warn_unknown_warning_option", "unknown warning option '%0'")
 
 add_note("note_previous_definition", "previous definition is here")
 # note_matching - this is used as a continuation of a previous diagnostic,
@@ -465,7 +466,8 @@ add_error("err_unicode_escape_requires_hex",
 add_warning("warn_nobits_data",
             "initialized space declared in nobits section: ignoring")
 add_warning("warn_uninit_zero",
-            "uninitialized space declared in code/data section: zeroing")
+            "uninitialized space declared in code/data section: zeroing",
+            group="uninit-contents")
 add_warning("warn_export_equ",
             "object format does not support exporting EQU/absolute values")
 add_warning("warn_name_too_long", "label name too long, truncating to %0 bytes")
