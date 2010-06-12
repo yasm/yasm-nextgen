@@ -351,8 +351,8 @@ static const size_t OptionTableSize =
 sizeof(OptionTable) / sizeof(OptionTable[0]);
 
 static bool WarningOptionCompare(const WarningOption &LHS,
-                                 const WarningOption &RHS) {
-  return strcmp(LHS.Name, RHS.Name) < 0;
+                                 llvm::StringRef RHS) {
+  return LHS.Name < RHS;
 }
 
 static void MapGroupMembers(const WarningOption *Group, diag::Mapping Mapping,
@@ -373,15 +373,13 @@ static void MapGroupMembers(const WarningOption *Group, diag::Mapping Mapping,
 /// setDiagnosticGroupMapping - Change an entire diagnostic group (e.g.
 /// "unknown-pragmas" to have the specified mapping.  This returns true and
 /// ignores the request if "Group" was unknown, false otherwise.
-bool Diagnostic::setDiagnosticGroupMapping(const char *Group,
+bool Diagnostic::setDiagnosticGroupMapping(llvm::StringRef Group,
                                            diag::Mapping Map) {
 
-  WarningOption Key = { Group, 0, 0 };
   const WarningOption *Found =
-  std::lower_bound(OptionTable, OptionTable + OptionTableSize, Key,
+  std::lower_bound(OptionTable, OptionTable + OptionTableSize, Group,
                    WarningOptionCompare);
-  if (Found == OptionTable + OptionTableSize ||
-      strcmp(Found->Name, Group) != 0)
+  if (Found == OptionTable + OptionTableSize || Found->Name != Group)
     return true;  // Option not found.
 
   MapGroupMembers(Found, Map, *this);

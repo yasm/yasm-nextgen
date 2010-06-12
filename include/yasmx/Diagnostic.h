@@ -15,8 +15,8 @@
 #define YASM_DIAGNOSTIC_H
 
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
-#include <string>
 #include <vector>
 #include <cassert>
 
@@ -277,7 +277,7 @@ public:
   /// setDiagnosticGroupMapping - Change an entire diagnostic group (e.g.
   /// "unknown-pragmas" to have the specified mapping.  This returns true and
   /// ignores the request if "Group" was unknown, false otherwise.
-  bool setDiagnosticGroupMapping(const char *Group, diag::Mapping Map);
+  bool setDiagnosticGroupMapping(llvm::StringRef Group, diag::Mapping Map);
 
   bool hasErrorOccurred() const { return ErrorOccurred; }
   bool hasFatalErrorOccurred() const { return FatalErrorOccurred; }
