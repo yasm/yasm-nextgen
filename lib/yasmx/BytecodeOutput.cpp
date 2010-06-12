@@ -76,6 +76,8 @@ void
 BytecodeNoOutput::DoOutputBytes(const Bytes& bytes,
                                 clang::SourceLocation source)
 {
+    if (bytes.empty())
+        return;
     Diag(source, diag::warn_nobits_data);
 }
 
@@ -89,6 +91,9 @@ BytecodeStreamOutput::DoOutputGap(unsigned int size,
 {
     // Warn that gaps are converted to 0 and write out the 0's.
     static const unsigned long BLOCK_SIZE = 4096;
+
+    if (size == 0)
+        return;
 
     Diag(source, diag::warn_uninit_zero);
 
