@@ -288,22 +288,22 @@ ExprTerm::Dump() const
 void
 Expr::AppendOp(Op::Op op, int nchild)
 {
+    assert(nchild != 0 && "expression must have more than 0 terms");
     switch (nchild)
     {
-        case 0:
-            throw ValueError(N_("expression must have more than 0 terms"));
         case 1:
             if (!isUnary(op))
                 op = Op::IDENT;
             break;
         case 2:
-            if (isUnary(op))
-                throw ValueError(N_("unary expression may only have single term"));
+            assert(!isUnary(op) &&
+                   "unary expression may only have single term");
             break;
         default:
             // more than 2 terms
-            if (!isAssociative(op))
-                throw ValueError(N_("expression with more than two terms must be associative"));
+            assert(isAssociative(op) &&
+                   "expression with more than two terms must be associative");
+            break;
     }
 
     for (ExprTerms::iterator i=m_terms.begin(), end=m_terms.end(); i != end;
