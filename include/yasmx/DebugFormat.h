@@ -37,13 +37,13 @@
 #include "yasmx/Module.h"
 
 
+namespace clang { class SourceManager; }
+
 namespace yasm
 {
-
 class DebugFormatModule;
+class Diagnostic;
 class Directives;
-class Errwarns;
-class Linemap;
 class Object;
 
 /// Debug format interface.
@@ -63,10 +63,10 @@ public:
     virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
     /// Generate debugging information bytecodes.
-    /// @param linemap      virtual/physical line mapping
-    /// @param errwarns     error/warning set
+    /// @param smgr     source manager
+    /// @param diags    diagnostic reporting
     /// @note Errors and warnings are stored into errwarns.
-    virtual void Generate(Linemap& linemap, Errwarns& errwarns) = 0;
+    virtual void Generate(clang::SourceManager& smgr, Diagnostic& diags) = 0;
 
 private:
     DebugFormat(const DebugFormat&);                  // not implemented

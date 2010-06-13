@@ -406,7 +406,7 @@ Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
         return false;
 
     // generate any debugging information
-    //m_dbgfmt->generate(m_linemap, m_errwarns);
+    m_dbgfmt->Generate(source_mgr, diags);
     if (m_errwarns.getNumErrors(warning_error) > 0)
         return false;
 

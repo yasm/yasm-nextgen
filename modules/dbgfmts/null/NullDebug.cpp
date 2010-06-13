@@ -37,7 +37,7 @@ NullDebug::~NullDebug()
 }
 
 void
-NullDebug::Generate(Linemap& linemap, Errwarns& errwarns)
+NullDebug::Generate(clang::SourceManager& smgr, Diagnostic& diags)
 {
 }
 
