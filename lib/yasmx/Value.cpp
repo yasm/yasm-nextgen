@@ -32,6 +32,7 @@
 #include <bitset>
 
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Support/Compose.h"
@@ -360,20 +361,8 @@ Value::FinalizeScan(Expr& e, bool ssym_ok, int* pos)
             // Handle symrec-symrec by checking for (-1*symrec)
             // and symrec term pairs (where both symrecs are in the same
             // segment).
-            if (root.getNumChild() > 32)
-                throw TooComplexError(
-                    N_("too many add terms; internal limit of 32"));
-
-            // Yes, this has a maximum upper bound on 32 terms, based on an
-            // "insane number of terms" (and ease of implementation) WAG.
-            // The right way to do this would be a stack-based alloca, but
-            // that's not portable.  We really don't want to alloc
-            // here as this function is hit a lot!
-            //
-            // We use chars to keep things small, as this is a recursive
-            // routine and we don't want to eat up stack space.
-            unsigned char relpos[32], subpos[32];
-            int num_rel = 0, num_sub = 0;
+            typedef llvm::SmallVector<int, 4> SymIndexes;
+            SymIndexes relpos, subpos;
 
             // Scan for symrec and (-1*symrec) terms
             int n = *pos-1;
@@ -396,9 +385,7 @@ Value::FinalizeScan(Expr& e, bool ssym_ok, int* pos)
                 // Remember symrec terms
                 if (SymbolRef sym = child.getSymbol())
                 {
-                    if ((*pos-n) >= 0xff)
-                        throw TooComplexError(N_("expression too large"));
-                    relpos[num_rel++] = *pos-n;
+                    relpos.push_back(*pos-n);
                     --n;
                     continue;
                 }
@@ -407,9 +394,7 @@ Value::FinalizeScan(Expr& e, bool ssym_ok, int* pos)
                 // Remember (-1*symrec) terms
                 if (isNeg1Sym(e, &sym, &neg1, &n, false))
                 {
-                    if ((*pos-sym) >= 0xff)
-                        throw TooComplexError(N_("expression too large"));
-                    subpos[num_sub++] = *pos-sym;
+                    subpos.push_back(*pos-sym);
                     continue;
                 }
 
@@ -425,18 +410,20 @@ Value::FinalizeScan(Expr& e, bool ssym_ok, int* pos)
             }
 
             // Match additive and subtractive symbols.
-            for (int i=0; i<num_rel; ++i)
+            for (SymIndexes::iterator i=relpos.begin(), endi=relpos.end();
+                 i != endi; ++i)
             {
-                ExprTerm& relterm = terms[*pos-relpos[i]];
+                ExprTerm& relterm = terms[*pos-*i];
                 SymbolRef rel = relterm.getSymbol();
                 assert(rel != 0);
 
                 bool matched = false;
-                for (int j=0; j<num_sub; ++j)
+                for (SymIndexes::iterator j=subpos.begin(), endj=subpos.end();
+                     j != endj; ++j)
                 {
-                    if (subpos[j] == 0xff)
+                    if (*j == -1)
                         continue;   // previously matched
-                    ExprTerm& subterm = terms[*pos-subpos[j]];
+                    ExprTerm& subterm = terms[*pos-*j];
                     SymbolRef sub = subterm.getSymbol();
                     assert(sub != 0);
 
@@ -446,7 +433,7 @@ Value::FinalizeScan(Expr& e, bool ssym_ok, int* pos)
                     {
                         relterm.Zero();
                         subterm.Zero();
-                        subpos[j] = 0xff;   // mark as matched
+                        *j = -1;        // mark as matched
                         matched = true;
                         break;
                     }
@@ -464,7 +451,7 @@ Value::FinalizeScan(Expr& e, bool ssym_ok, int* pos)
                     if (rel_loc.bc->getContainer() ==
                         sub_loc.bc->getContainer())
                     {
-                        subpos[j] = 0xff;   // mark as matched
+                        *j = -1;        // mark as matched
                         matched = true;
                         break;
                     }
@@ -482,11 +469,12 @@ Value::FinalizeScan(Expr& e, bool ssym_ok, int* pos)
             }
 
             // Handle any remaining subtractive symbols.
-            for (int i=0; i<num_sub; ++i)
+            for (SymIndexes::iterator i=subpos.begin(), endi=subpos.end();
+                 i != endi; ++i)
             {
-                if (subpos[i] == 0xff)
+                if (*i == -1)
                     continue;   // previously matched
-                ExprTerm& subterm = terms[*pos-subpos[i]];
+                ExprTerm& subterm = terms[*pos-*i];
                 SymbolRef sub = subterm.getSymbol();
                 assert(sub != 0);
 
