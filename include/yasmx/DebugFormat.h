@@ -51,7 +51,9 @@ class YASM_LIB_EXPORT DebugFormat
 {
 public:
     /// Constructor.
-    DebugFormat(const DebugFormatModule& module) : m_module(module) {}
+    DebugFormat(const DebugFormatModule& module, Object& object)
+        : m_module(module), m_object(object)
+    {}
 
     /// Destructor.
     virtual ~DebugFormat();
@@ -73,6 +75,9 @@ private:
     const DebugFormat& operator=(const DebugFormat&); // not implemented
 
     const DebugFormatModule& m_module;
+
+protected:
+    Object& m_object;
 };
 
 /// Debug format module interface.

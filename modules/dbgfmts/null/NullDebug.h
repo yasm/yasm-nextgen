@@ -39,7 +39,7 @@ class YASM_STD_EXPORT NullDebug : public DebugFormat
 {
 public:
     NullDebug(const DebugFormatModule& module, Object& object)
-        : DebugFormat(module)
+        : DebugFormat(module, object)
     {}
     ~NullDebug();
 
