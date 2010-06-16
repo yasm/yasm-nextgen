@@ -47,7 +47,9 @@ public:
     static llvm::StringRef getKeyword() { return "null"; }
     static bool isOkObject(Object& object) { return true; }
 
-    void Generate(clang::SourceManager& smgr, Diagnostic& diags);
+    void Generate(ObjectFormat& objfmt,
+                  clang::SourceManager& smgr,
+                  Diagnostic& diags);
 };
 
 }} // namespace yasm::dbgfmt

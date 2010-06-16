@@ -406,7 +406,7 @@ Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
         return false;
 
     // generate any debugging information
-    m_dbgfmt->Generate(source_mgr, diags);
+    m_dbgfmt->Generate(*m_objfmt, source_mgr, diags);
     if (m_errwarns.getNumErrors(warning_error) > 0)
         return false;
 

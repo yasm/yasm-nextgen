@@ -45,6 +45,7 @@ class DebugFormatModule;
 class Diagnostic;
 class Directives;
 class Object;
+class ObjectFormat;
 
 /// Debug format interface.
 class YASM_LIB_EXPORT DebugFormat
@@ -65,10 +66,13 @@ public:
     virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
     /// Generate debugging information bytecodes.
+    /// @param objfmt   object format
     /// @param smgr     source manager
     /// @param diags    diagnostic reporting
     /// @note Errors and warnings are stored into errwarns.
-    virtual void Generate(clang::SourceManager& smgr, Diagnostic& diags) = 0;
+    virtual void Generate(ObjectFormat& objfmt,
+                          clang::SourceManager& smgr,
+                          Diagnostic& diags) = 0;
 
 private:
     DebugFormat(const DebugFormat&);                  // not implemented

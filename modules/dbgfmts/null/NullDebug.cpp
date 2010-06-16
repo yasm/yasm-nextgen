@@ -37,7 +37,9 @@ NullDebug::~NullDebug()
 }
 
 void
-NullDebug::Generate(clang::SourceManager& smgr, Diagnostic& diags)
+NullDebug::Generate(ObjectFormat& objfmt,
+                    clang::SourceManager& smgr,
+                    Diagnostic& diags)
 {
 }
 
