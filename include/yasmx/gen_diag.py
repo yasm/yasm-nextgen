@@ -265,6 +265,7 @@ add_error("err_incbin_maxlen_not_const",
 add_warning("warn_incbin_start_after_eof", "start past end of file")
 
 # LEB128
+add_error("err_leb128_too_complex", "LEB128 value is relative or too complex")
 add_warning("warn_negative_uleb128", "negative value in unsigned LEB128")
 
 # Multiple

@@ -34,9 +34,11 @@
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_leb128.h"
+#include "yasmx/Bytes_util.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
+#include "yasmx/Location_util.h"
 
 
 using namespace yasm;
@@ -45,7 +47,6 @@ namespace {
 class LEB128Bytecode : public Bytecode::Contents
 {
 public:
-    LEB128Bytecode(const Expr& expr, bool sign);
     LEB128Bytecode(std::auto_ptr<Expr> expr, bool sign);
     ~LEB128Bytecode();
 
@@ -58,6 +59,18 @@ public:
                  const Bytecode::AddSpanFunc& add_span,
                  Diagnostic& diags);
 
+    /// Recalculates the bytecode's length based on an expanded span
+    /// length.
+    bool Expand(Bytecode& bc,
+                unsigned long* len,
+                int span,
+                long old_val,
+                long new_val,
+                bool* keep,
+                /*@out@*/ long* neg_thres,
+                /*@out@*/ long* pos_thres,
+                Diagnostic& diags);
+
     /// Convert a bytecode into its byte representation.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
@@ -69,21 +82,14 @@ public:
     void Write(YAML::Emitter& out) const;
 
 private:
-    Expr m_expr;
-    bool m_sign;
+    Value m_value;
 };
 } // anonymous namespace
 
-LEB128Bytecode::LEB128Bytecode(const Expr& expr, bool sign)
-    : m_expr(expr),
-      m_sign(sign)
-{
-}
-
 LEB128Bytecode::LEB128Bytecode(std::auto_ptr<Expr> expr, bool sign)
-    : m_sign(sign)
+    : m_value(0, expr)
 {
-    std::swap(m_expr, *expr);
+    m_value.setSigned(sign);
 }
 
 LEB128Bytecode::~LEB128Bytecode()
@@ -93,14 +99,13 @@ LEB128Bytecode::~LEB128Bytecode()
 bool
 LEB128Bytecode::Finalize(Bytecode& bc, Diagnostic& diags)
 {
-    m_expr.Simplify();
-    if (!m_expr.isIntNum())
+    if (!m_value.Finalize() || m_value.isRelative())
     {
-        diags.Report(bc.getSource(), diag::err_value_not_constant);
+        diags.Report(bc.getSource(), diag::err_leb128_too_complex)
+            << m_value.getSource();
         return false;
     }
-    if (m_expr.getIntNum().getSign() < 0 && !m_sign)
-        diags.Report(bc.getSource(), diag::warn_negative_uleb128);
+
     return true;
 }
 
@@ -110,7 +115,58 @@ LEB128Bytecode::CalcLen(Bytecode& bc,
                         const Bytecode::AddSpanFunc& add_span,
                         Diagnostic& diags)
 {
-    *len = SizeLEB128(m_expr.getIntNum(), m_sign);
+    if (!m_value.hasAbs())
+    {
+        *len = 1;       // zero = 1 byte
+        m_value.setSize(1);
+        return true;
+    }
+    if (m_value.getAbs()->isIntNum())
+    {
+        *len = SizeLEB128(m_value.getAbs()->getIntNum(), m_value.isSigned());
+        m_value.setSize(*len);
+        return true;
+    }
+    *len = 1;   // start with 1 byte
+    m_value.setSize(1);
+    if (m_value.isSigned())
+        add_span(bc, 2, m_value, -64, 63);
+    else
+        add_span(bc, 2, m_value, 0, 127);
+    return true;
+}
+
+bool
+LEB128Bytecode::Expand(Bytecode& bc,
+                       unsigned long* len,
+                       int span,
+                       long old_val,
+                       long new_val,
+                       bool* keep,
+                       /*@out@*/ long* neg_thres,
+                       /*@out@*/ long* pos_thres,
+                       Diagnostic& diags)
+{
+    unsigned long size = SizeLEB128(new_val, m_value.isSigned());
+
+    // Don't allow length to shrink
+    if (size > m_value.getSize())
+    {
+        *len += size-m_value.getSize();
+        m_value.setSize(size);
+    }
+
+    if (m_value.isSigned())
+    {
+        *neg_thres = -(1<<(size*7-1));
+        *pos_thres = (1<<(size*7-1))-1;
+    }
+    else
+    {
+        *neg_thres = 0;
+        *pos_thres = (1<<(size*7))-1;
+    }
+    *keep = true;
     return true;
 }
 
@@ -118,7 +174,36 @@ bool
 LEB128Bytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     Bytes& bytes = bc_out.getScratch();
-    WriteLEB128(bytes, m_expr.getIntNum(), m_sign);
+    if (!m_value.hasAbs())
+        Write8(bytes, 0);   // zero
+    else
+    {
+        ExprTerm term;
+        if (!Evaluate(*m_value.getAbs(), &term) || !term.isType(ExprTerm::INT))
+        {
+            bc_out.getDiagnostics().Report(m_value.getSource().getBegin(),
+                                           diag::err_leb128_too_complex);
+            return false;
+        }
+
+        const IntNum* intn = term.getIntNum();
+        if (intn->getSign() < 0 && !m_value.isSigned())
+            bc_out.getDiagnostics().Report(m_value.getSource().getBegin(),
+                                           diag::warn_negative_uleb128);
+
+        // pad out in case final value is smaller than expanded size
+        unsigned long size = SizeLEB128(*intn, m_value.isSigned());
+        while (size < m_value.getSize())
+        {
+            if (m_value.isSigned())
+                Write8(bytes, intn->getSign() < 0 ? 0xff : 0x80);
+            else
+                Write8(bytes, 0x80);
+            ++size;
+        }
+        // write final value
+        WriteLEB128(bytes, *intn, m_value.isSigned());
+    }
     bc_out.OutputBytes(bytes, bc.getSource());
     return true;
 }
@@ -132,7 +217,7 @@ LEB128Bytecode::getType() const
 LEB128Bytecode*
 LEB128Bytecode::clone() const
 {
-    return new LEB128Bytecode(m_expr, m_sign);
+    return new LEB128Bytecode(*this);
 }
 
 void
@@ -140,8 +225,7 @@ LEB128Bytecode::Write(YAML::Emitter& out) const
 {
     out << YAML::BeginMap;
     out << YAML::Key << "type" << YAML::Value << "LEB128";
-    out << YAML::Key << "expr" << YAML::Value << m_expr;
-    out << YAML::Key << "sign" << YAML::Value << m_sign;
+    out << YAML::Key << "value" << YAML::Value << m_value;
     out << YAML::EndMap;
 }
 
