@@ -173,7 +173,7 @@ public:
     }
 
 protected:
-    /// Convert a value to bytes.  Called by output_value() so that
+    /// Convert a value to bytes.  Called by OutputValue() so that
     /// implementations can keep track of relocations and verify legal
     /// expressions.
     ///
@@ -201,7 +201,7 @@ protected:
                                      Location loc,
                                      int warn) = 0;
 
-    /// Convert a symbol to bytes.  Called by output_sym() so that
+    /// Convert a symbol to bytes.  Called by OutputSymbol() so that
     /// implementations may keep track of relocations generated this way.
     ///
     /// The bytes parameter is the destination; it is sized prior to this call
@@ -275,7 +275,7 @@ protected:
 
 /// Stream output specialization of BytecodeOutput.
 /// Handles gaps by converting to 0 and generating a warning.
-/// This does not implement value_to_bytes(), so it's still a virtual
+/// This does not implement ConvertValueToBytes(), so it's still a virtual
 /// base class.
 class YASM_LIB_EXPORT BytecodeStreamOutput : public BytecodeOutput
 {

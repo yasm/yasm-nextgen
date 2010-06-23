@@ -104,7 +104,7 @@ public:
 
     /// Add a new section.  Does /not/ check to see if there's already
     /// an existing section in the object with that name.  The caller
-    /// should first call find_section() if only unique names
+    /// should first call FindSection() if only unique names
     /// are desired.
     /// @param sect         section
     void AppendSection(std::auto_ptr<Section> sect);
@@ -140,7 +140,7 @@ public:
     /// Get the object's "absolute" symbol.  This is
     /// essentially an EQU with no name and value 0, and is used for
     /// relocating subtractive relative values.
-    /// @see Value::sub_rel().
+    /// @see Value::SubRelative().
     /// @return Absolute symbol.
     SymbolRef getAbsoluteSymbol();
 
@@ -187,7 +187,8 @@ public:
     void ExternUndefinedSymbols();
 
     /// Finalize symbol table after parsing stage.  Checks for symbols that
-    /// are used but never defined or declared #EXTERN or #COMMON.
+    /// are used but never defined or declared #Symbol::EXTERN or
+    /// #Symbol::COMMON.
     /// @param diags        diagnostic reporting
     void FinalizeSymbols(Diagnostic& diags);
 

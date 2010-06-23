@@ -64,19 +64,15 @@ public:
     explicit Value(unsigned int size);
 
     /// Initialize a value with just an expression.  No processing is
-    /// performed, the expression is simply stuck into #abs and the other
-    /// fields are initialized.  Use extract_value() to perform "smart"
-    /// processing into a value.  This function is intended for use during
-    /// parsing simply to ensure all fields of the value are initialized;
-    /// after the parse is complete, yasm_value_extract() should be called
+    /// performed, the expression is simply stuck into m_abs.
+    /// After the parse is complete, Finalize() should be called
     /// to finalize the value.  The value defaults to unsigned.
     /// @param e        expression (kept)
     /// @param size     value size (in bits)
     Value(unsigned int size, std::auto_ptr<Expr> e);
 
     /// Initialize with just a symrec.  No processing is performed,
-    /// the symrec is simply stuck into value.rel and the other fields are
-    /// initialized.
+    /// the symrec is simply stuck into m_rel.
     /// @param sym      symrec
     /// @param size     value size (in bits)
     Value(unsigned int size, SymbolRef sym);
@@ -110,9 +106,9 @@ public:
     /// @param sub      location to subtract
     void SubRelative(Object* object, Location sub);
 
-    /// Break an #Expr into a #Value constituent parts.  Extracts the
+    /// Break m_abs into its constituent parts.  Extracts the
     /// relative portion of the value, SEG and WRT portions, and top-level
-    /// right shift, if any.  Places any remaining expr into the absolute
+    /// right shift, if any.  Leaves any remaining expr in the absolute
     /// portion of the value.  First expands references to symrecs in
     /// absolute sections by expanding with the absolute section start plus
     /// the symrec offset within the absolute section.
@@ -145,7 +141,7 @@ public:
     bool getIntNum(/*@out@*/ IntNum* out, bool calc_bc_dist);
 
     /// Output value if absolute constant (no relative portion).  This should
-    /// be used from BytecodeOutput::output_value() implementations.
+    /// be used from BytecodeOutput::ConvertValueToBytes() implementations.
     /// @param bytes        storage for byte representation
     /// @param outval       output integer value (set on false return)
     /// @param warn         enables standard warnings: zero for none;
