@@ -953,6 +953,7 @@ RdfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
         sym->DefineLabel(start);
         sym->setDefSource(source);
     }
+    section->setSymbol(sym);
 
     // Add RDF data to the section
     section->AddAssocData(std::auto_ptr<RdfSection>(new RdfSection(type, sym)));

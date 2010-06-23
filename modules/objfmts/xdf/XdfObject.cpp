@@ -628,6 +628,7 @@ XdfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
         sym->DefineLabel(start);
         sym->setDefSource(source);
     }
+    section->setSymbol(sym);
 
     // Add XDF data to the section
     section->AddAssocData(std::auto_ptr<XdfSection>(new XdfSection(sym)));

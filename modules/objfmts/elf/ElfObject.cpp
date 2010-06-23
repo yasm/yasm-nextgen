@@ -604,7 +604,7 @@ ElfObject::FinalizeSymbol(Symbol& sym,
         if (sect)
         {
             ElfSection* elfsect = sect->getAssocData<ElfSection>();
-            if (elfsect && elfsect->getSymbol() == &sym)
+            if (elfsect && sect->getSymbol() == &sym)
                 is_sect = true;
         }
 
@@ -743,9 +743,7 @@ ElfOutput::ConvertValueToBytes(Value& value,
             {
                 // Relocate to section start
                 Section* sym_sect = symloc.bc->getContainer()->AsSection();
-                ElfSection* elfsect = sym_sect->getAssocData<ElfSection>();
-                assert(elfsect != 0);
-                sym = elfsect->getSymbol();
+                sym = sym_sect->getSymbol();
 
                 intn += symloc.getOffset();
             }
@@ -1011,9 +1009,7 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        ElfSection* elfsect = i->getAssocData<ElfSection>();
-        assert(elfsect != 0);
-        SymbolRef sectsym = elfsect->getSymbol();
+        SymbolRef sectsym = i->getSymbol();
         ElfSymbol* elfsectsym = sectsym->getAssocData<ElfSymbol>();
         elfsectsym->setSymbolIndex(symtab_nlocal++);
     }
@@ -1210,11 +1206,11 @@ ElfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
         sym->DefineLabel(start);
         sym->setDefSource(source);
     }
+    section->setSymbol(sym);
 
     // Add ELF data to the section
     ElfSection* elfsect = new ElfSection(m_config, type, flags);
     section->AddAssocData(std::auto_ptr<ElfSection>(elfsect));
-    elfsect->setSymbol(sym);
 
     return section;
 }

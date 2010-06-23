@@ -178,6 +178,7 @@ CoffObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
     sym->AddAssocData(
         std::auto_ptr<CoffSymbol>(new CoffSymbol(CoffSymbol::SCL_STAT,
                                                 CoffSymbol::AUX_SECT)));
+    section->setSymbol(sym);
 
     // Add COFF data to the section
     CoffSection* coffsect = new CoffSection(sym);

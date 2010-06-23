@@ -132,6 +132,14 @@ public:
     /// @return True if section name matches, false if not.
     bool isName(llvm::StringRef name) const { return m_name == name; }
 
+    /// Set section symbol.
+    /// @param sym  symbol
+    void setSymbol(SymbolRef sym) { m_sym = sym; }
+
+    /// Get section symbol.
+    /// @return Section symbol (0 if not set).
+    SymbolRef getSymbol() const { return m_sym; }
+
     /// Change alignment of a section.
     /// @param align    alignment in bytes
     void setAlign(unsigned long align) { m_align = align; }
@@ -175,6 +183,9 @@ public:
 
 private:
     std::string m_name;                 ///< name (given by user)
+
+    /// The section symbol (should be defined to the start of the section).
+    SymbolRef m_sym;
 
     IntNum m_vma;               ///< Virtual Memory Address (VMA)
     IntNum m_lma;               ///< Load Memory Address (LMA)

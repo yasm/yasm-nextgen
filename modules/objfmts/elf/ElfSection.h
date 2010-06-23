@@ -89,8 +89,6 @@ public:
 
     bool isEmpty() const { return m_size.isZero(); }
 
-    SymbolRef getSymbol() const { return m_sym; }
-
     unsigned long getAlign() const { return m_align; }
     void setAlign(unsigned long align) { m_align = align; }
 
@@ -109,8 +107,6 @@ public:
 
     void setEntSize(ElfSize size) { m_entsize = size; }
     ElfSize getEntSize() const { return m_entsize; }
-
-    void setSymbol(SymbolRef sym) { m_sym = sym; }
 
     void AddSize(const IntNum& size) { m_size += size; }
     void setSize(const IntNum& size) { m_size = size; }
@@ -148,7 +144,6 @@ private:
     unsigned long       m_align;
     ElfSize             m_entsize;
 
-    SymbolRef           m_sym;
     ElfStringIndex      m_name_index;
     ElfSectionIndex     m_index;
 

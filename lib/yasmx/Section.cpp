@@ -42,6 +42,7 @@ Section::Section(llvm::StringRef name,
                  bool bss,
                  clang::SourceLocation source)
     : m_name(name),
+      m_sym(0),
       m_vma(0),
       m_lma(0),
       m_filepos(0),
@@ -80,6 +81,7 @@ Section::Write(YAML::Emitter& out) const
 {
     out << YAML::BeginMap;
     out << YAML::Key << "name" << YAML::Value << m_name;
+    out << YAML::Key << "sym" << YAML::Value << m_sym;
     out << YAML::Key << "vma" << YAML::Value << m_vma;
     out << YAML::Key << "lma" << YAML::Value << m_lma;
     out << YAML::Key << "filepos" << YAML::Value << m_filepos;

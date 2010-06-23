@@ -53,7 +53,6 @@ ElfSection::ElfSection(const ElfConfig&             config,
                        const llvm::MemoryBuffer&    in,
                        ElfSectionIndex              index)
     : m_config(config)
-    , m_sym(0)
     , m_index(index)
     , m_rel_name_index(0)
     , m_rel_index(0)
@@ -119,7 +118,6 @@ ElfSection::ElfSection(const ElfConfig&     config,
     , m_info(0)
     , m_align(0)
     , m_entsize(0)
-    , m_sym(0)
     , m_name_index(0)
     , m_index(0)
     , m_rel_name_index(0)
@@ -183,7 +181,6 @@ ElfSection::Write(YAML::Emitter& out) const
     out << YAML::Key << "info" << YAML::Value << m_info;
     out << YAML::Key << "align" << YAML::Value << m_align;
     out << YAML::Key << "entsize" << YAML::Value << m_entsize;
-    out << YAML::Key << "sym" << YAML::Value << m_sym;
     out << YAML::Key << "name index" << YAML::Value << m_name_index;
     out << YAML::Key << "sect index" << YAML::Value << m_index;
     out << YAML::Key << "rel name index" << YAML::Value << m_rel_name_index;
