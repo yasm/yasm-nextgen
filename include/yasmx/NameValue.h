@@ -94,6 +94,10 @@ public:
     // Exchanges this name/value with another one.
     void swap(NameValue& oth);
 
+    /// Determine if name present.
+    /// @return True if name present.
+    bool hasName() const { return !m_name.empty(); }
+
     /// Get name.
     /// @return Name; empty string if no name.
     llvm::StringRef getName() const { return m_name; }
