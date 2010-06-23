@@ -67,7 +67,6 @@ public:
     ///                 (e.g. alignment should be made with NOP instructions)
     /// @param bss      if true, section is intended to contain only
     ///                 uninitialized space
-    /// @param isnew    output; set to true if section did not already exist
     /// @param source   source location of section declaration (ignored if
     ///                 section already exists)
     Section(llvm::StringRef name,
