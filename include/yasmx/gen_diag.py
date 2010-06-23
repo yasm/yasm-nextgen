@@ -476,6 +476,28 @@ add_error("err_equ_not_integer", "EQU value not an integer expression")
 add_error("err_common_size_not_integer",
           "COMMON data size not an integer expression")
 
+# DWARF debug format
+add_error("err_loc_file_number_missing", "file number required")
+add_error("err_loc_file_number_not_integer", "file number is not an integer")
+add_error("err_loc_file_number_invalid", "file number less than one")
+add_error("err_loc_line_number_missing", "line number required")
+add_error("err_loc_line_number_not_integer", "line number is not an integer")
+add_error("err_loc_column_number_not_integer",
+          "column number is not an integer")
+add_error("err_loc_must_be_in_section",
+          "[loc] can only be used inside of a section")
+add_error("err_loc_is_stmt_not_zero_or_one", "is_stmt value is not 0 or 1")
+add_error("err_loc_isa_not_integer", "isa value is not an integer")
+add_error("err_loc_isa_less_than_zero", "isa value is less than 0")
+add_warning("warn_unrecognized_loc_option", "unrecognized loc option '%0'")
+add_warning("warn_unrecognized_numeric_qualifier",
+            "unrecognized numeric qualifier")
+add_error("err_loc_option_requires_value", "option %0 requires value")
+
+add_error("err_loc_missing_filename", "file number given but no filename")
+
+add_error("err_file_number_unassigned", "file number %0 unassigned")
+
 # Win64 object format
 add_error("err_eof_proc_frame", "end of file in procedure frame")
 add_note("note_proc_started_here", "procedure started here")
