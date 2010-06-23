@@ -126,8 +126,7 @@ Bytecode::Bytecode(const Bytecode& oth)
       m_len(oth.m_len),
       m_source(oth.m_source),
       m_offset(oth.m_offset),
-      m_index(oth.m_index),
-      m_symbols(oth.m_symbols)
+      m_index(oth.m_index)
 {}
 
 Bytecode::~Bytecode()
@@ -145,7 +144,6 @@ Bytecode::swap(Bytecode& oth)
     std::swap(m_source, oth.m_source);
     std::swap(m_offset, oth.m_offset);
     std::swap(m_index, oth.m_index);
-    m_symbols.swap(oth.m_symbols);
 }
 
 bool

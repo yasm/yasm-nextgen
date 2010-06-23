@@ -28,7 +28,6 @@
 
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
-#include "yasmx/Bytecode.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 
@@ -101,7 +100,6 @@ Symbol::DefineLabel(Location loc)
     m_type = LABEL;
     m_status |= DEFINED;
     m_loc = loc;
-    loc.bc->AddSymbol(SymbolRef(this)); /// XXX: should we add if not in table?
 }
 
 void

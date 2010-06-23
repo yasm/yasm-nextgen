@@ -238,16 +238,6 @@ public:
     const BytecodeContainer* getContainer() const { return m_container; }
     BytecodeContainer* getContainer() { return m_container; }
 
-    /// Add to the list of symbols that reference this bytecode.
-    /// @note Intended for #Symbol use only.
-    /// @param sym  symbol
-    void AddSymbol(SymbolRef sym) { m_symbols.push_back(sym); }
-
-    /// Get the list of symbols that reference this bytecode.
-    /// @return Vector of symbol references.
-    const_symbolref_iterator symbols_begin() const { return m_symbols.begin(); }
-    const_symbolref_iterator symbols_end() const { return m_symbols.end(); }
-
     /// Destructor.
     ~Bytecode();
 
@@ -423,9 +413,6 @@ private:
 
     /// Unique integer index of bytecode.  Used during optimization.
     unsigned long m_index;
-
-    /// Labels that point to this bytecode.
-    SymbolRefs m_symbols;
 };
 
 inline YAML::Emitter&
