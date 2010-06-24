@@ -80,10 +80,9 @@ ElfConfig::AssignSymbolIndices(Object& object, ElfSymbolIndex* nlocal) const
 
         elfsym->setSymbolIndex(num);
 
+        ++num;
         if (elfsym->isLocal())
             *nlocal = num;
-
-        ++num;
     }
     return num;
 }

@@ -83,6 +83,20 @@ isLocal(const Symbol& sym)
     return (vis == Symbol::LOCAL || (vis & Symbol::DLOCAL) != 0);
 }
 
+static inline bool
+byIndex(const Symbol& s1, const Symbol& s2)
+{
+    const ElfSymbol* e1 = s1.getAssocData<ElfSymbol>();
+    const ElfSymbol* e2 = s2.getAssocData<ElfSymbol>();
+    if (e1 && !e2)
+        return true;
+    if (!e1 && e2)
+        return false;
+    if (!e1 && !e2)
+        return false;   // doesn't matter
+    return e1->getSymbolIndex() < e2->getSymbolIndex();
+}
+
 ElfObject::ElfObject(const ObjectFormatModule& module,
                      Object& object,
                      unsigned int bits)
@@ -337,6 +351,7 @@ ElfObject::InitSymbols(llvm::StringRef parser)
     elfsym->setSectionIndex(SHN_ABS);
     elfsym->setBinding(STB_LOCAL);
     elfsym->setType(STT_FILE);
+    elfsym->setSymbolIndex(1);  // by convention
     m_file_elfsym = elfsym.get();
 
     filesym->AddAssocData(elfsym);
@@ -1001,8 +1016,9 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
     stdx::stable_partition(m_object.symbols_begin(), m_object.symbols_end(),
                            isLocal);
 
-    // Number symbols.  Start at 1 due to undefined symbol (0).
-    ElfSymbolIndex symtab_nlocal = 1;
+    // Number symbols.  Start at 2 due to undefined symbol (0)
+    // and file symbol (1).
+    ElfSymbolIndex symtab_nlocal = 2;
 
     // The first symbols should be the section names in the same order as the
     // sections themselves.
@@ -1016,6 +1032,9 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
 
     // The remainder of the symbols.
     m_config.AssignSymbolIndices(m_object, &symtab_nlocal);
+
+    // Sort the symbols by symbol index.
+    stdx::sort(m_object.symbols_begin(), m_object.symbols_end(), byIndex);
 
     unsigned long offset, size;
     ElfStringIndex shstrtab_name = shstrtab.getIndex(".shstrtab");
@@ -1054,7 +1073,7 @@ ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
     symtab_sect.setIndex(m_config.secthead_count++);
     symtab_sect.setFileOffset(offset);
     symtab_sect.setSize(size);
-    symtab_sect.setInfo(symtab_nlocal+1);
+    symtab_sect.setInfo(symtab_nlocal);
     symtab_sect.setLink(strtab_sect.getIndex());    // link to .strtab
 
     // output relocations
