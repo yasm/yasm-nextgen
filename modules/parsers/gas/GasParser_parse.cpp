@@ -432,54 +432,79 @@ GasParser::ParseDirLine(unsigned int param, clang::SourceLocation source)
 //
 // Macro directives
 //
-#if 0
-GasRept::GasRept(unsigned long line, unsigned long n)
-    : startline(line)
-    , numrept(n)
-    , numdone(0)
-    , line(-1)
-    , linepos(0)
-    , ended(false)
-    , oldbuf(0)
-    , oldbuflen(0)
-    , oldbufpos(0)
-{
-}
-
-GasRept::~GasRept()
-{
-}
-
 bool
-GasParser::ParseDirRept(unsigned int param)
+GasParser::ParseDirRept(unsigned int param, clang::SourceLocation source)
 {
     Expr e;
     if (!ParseExpr(e))
     {
-        throw SyntaxError(String::Compose(
-            N_("expression expected after `%1'"), ".rept"));
+        Diag(source, diag::err_expected_expression_after_id) << ".rept";
+        return false;
     }
 
     e.Simplify();
     if (!e.isIntNum())
-        throw NotAbsoluteError(N_("rept expression not absolute"));
+    {
+        Diag(source, diag::err_multiple_not_absolute);
+        return false;
+    }
 
     IntNum intn = e.getIntNum();
     if (intn.getSign() < 0)
-        throw ValueError(N_("rept expression is negative"));
+    {
+        Diag(source, diag::err_multiple_negative);
+        return false;
+    }
+    unsigned long count = intn.getUInt();
 
-    m_rept.push_back(new GasRept(m_source, intn.getUInt()));
+    // Lex and save tokens until we get an .endr
+    llvm::SmallVector<Token, 8> tokens;
+    int depth = 1;
+    for (;;)
+    {
+        if (m_token.isAtStartOfLine() && m_token.is(GasToken::label) &&
+            m_token.getIdentifierInfo()->isStr(".endr"))
+        {
+            if (depth == 1)
+                break;
+            --depth;
+        }
+        // handle nesting
+        if (m_token.isAtStartOfLine() && m_token.is(GasToken::label) &&
+            m_token.getIdentifierInfo()->isStr(".rept"))
+            ++depth;
+        if (m_token.is(GasToken::eof))
+        {
+            Diag(source, diag::err_rept_without_endr);
+            // TODO: Push remaining tokens back on so we can continue working
+#if 0
+            Token* alloc_tokens = new Token[tokens.size()];
+            std::copy(tokens.begin(), tokens.end(), alloc_tokens);
+            m_preproc.EnterTokenStream(alloc_tokens, tokens.size(), false,
+                                       true);
+            ConsumeToken(); // get the first token of stream
+#endif
+            return false;
+        }
+        tokens.push_back(m_token);
+        ConsumeToken();
+    }
+    Token* alloc_tokens = new Token[count*tokens.size()];
+    for (unsigned long i=0; i<count; ++i)
+        std::copy(tokens.begin(), tokens.end(), &alloc_tokens[i*tokens.size()]);
+    m_preproc.EnterTokenStream(alloc_tokens, count*tokens.size(), false, true);
+    ConsumeToken(); // consume the .endr and get the first repeated token
     return true;
 }
 
 bool
-GasParser::ParseDirEndr(unsigned int param)
+GasParser::ParseDirEndr(unsigned int param, clang::SourceLocation source)
 {
-    // Shouldn't ever get here unless we didn't get a DIR_REPT first
-    throw SyntaxError(N_("endr without matching rept"));
+    // Shouldn't ever get here unless we didn't get a .rept first
+    Diag(source, diag::err_endr_without_rept);
     return false;
 }
-#endif
+
 //
 // Alignment directives
 //

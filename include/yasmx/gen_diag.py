@@ -197,6 +197,8 @@ add_error("err_bad_register_name", "bad register name")
 add_error("err_bad_register_index", "bad register index")
 add_error("err_missing_or_invalid_immediate",
           "missing or invalid immediate expression")
+add_error("err_rept_without_endr", ".rept without matching .endr")
+add_error("err_endr_without_rept", ".endr without matching .rept")
 
 # Value
 add_error("err_too_complex_expression", "expression too complex")

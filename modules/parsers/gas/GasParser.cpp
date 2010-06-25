@@ -95,10 +95,8 @@ GasParser::GasParser(const ParserModule& module,
         {".text",       &GasParser::ParseDirTextSection,    0},
         {".section",    &GasParser::ParseDirSection,        0},
         // macro directives
-#if 0
         {".rept",       &GasParser::ParseDirRept,   0},
         {".endr",       &GasParser::ParseDirEndr,   0},
-#endif
         // empty space/fill directives
         {".skip",       &GasParser::ParseDirSkip,   0},
         {".space",      &GasParser::ParseDirSkip,   0},
