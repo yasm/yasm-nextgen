@@ -34,6 +34,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/ptr_vector.h"
+#include "Location.h"
 
 
 namespace clang { class SourceLocation; }
@@ -103,6 +104,16 @@ public:
     const Bytecode& bytecodes_front() const { return m_bcs.front(); }
     Bytecode& bytecodes_back() { return m_bcs.back(); }
     const Bytecode& bytecodes_back() const { return m_bcs.back(); }
+
+    /// Get location for start of a bytecode container.
+    Location getBeginLoc()
+    {
+        Location loc = { &m_bcs.front(), 0 };
+        return loc;
+    }
+
+    /// Get location for (current) end of a bytecode container.
+    Location getEndLoc();
 
     /// Finalize all bytecodes after parsing.
     /// @param diags        diagnostic reporting

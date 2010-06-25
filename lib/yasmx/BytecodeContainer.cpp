@@ -203,6 +203,14 @@ BytecodeContainer::FreshBytecode()
     return bc;
 }
 
+Location
+BytecodeContainer::getEndLoc()
+{
+    Bytecode& last = m_bcs.back();
+    Location loc = { &last, last.getTotalLen() };
+    return loc;
+}
+
 void
 BytecodeContainer::Finalize(Diagnostic& diags)
 {
