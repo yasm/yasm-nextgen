@@ -720,6 +720,13 @@ do_assemble(void)
     if (diags.hasFatalErrorOccurred())
         return EXIT_FAILURE;
 
+    // Set debug format if specified.
+    if (!dbgfmt_keyword.empty())
+        assembler.setDebugFormat(dbgfmt_keyword, diags);
+
+    if (diags.hasFatalErrorOccurred())
+        return EXIT_FAILURE;
+
 #if 0
     ApplyPreprocessorBuiltins(assembler.getPreprocessor());
     ApplyPreprocessorSavedOptions(assembler.getPreprocessor());
