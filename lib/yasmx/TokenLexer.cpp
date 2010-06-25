@@ -323,7 +323,7 @@ void TokenLexer::ExpandFunctionArguments() {
 
 /// Lex - Lex and return a token from this macro stream.
 ///
-void TokenLexer::Lex(Token &Tok) {
+void TokenLexer::Lex(Token* Tok) {
   // Lexing off the end of the macro, pop this macro off the expansion stack.
   if (isAtEnd()) {
 #if 0
@@ -335,12 +335,12 @@ void TokenLexer::Lex(Token &Tok) {
     // Pop this context off the preprocessors lexer stack and get the next
     // token.  This will delete "this" so remember the PP instance var.
     Preprocessor &PPCache = m_pp;
-    if (m_pp.HandleEndOfTokenLexer(&Tok))
+    if (m_pp.HandleEndOfTokenLexer(Tok))
       return;
 
     // HandleEndOfTokenLexer may not return a token.  If it doesn't, lex
     // whatever is next.
-    return PPCache.Lex(&Tok);
+    return PPCache.Lex(Tok);
   }
 
   // If this is the first token of the expanded result, we inherit spacing
@@ -348,7 +348,7 @@ void TokenLexer::Lex(Token &Tok) {
   bool isFirstToken = m_cur_token == 0;
 
   // Get the next token to return.
-  Tok = m_tokens[m_cur_token++];
+  *Tok = m_tokens[m_cur_token++];
 
   // The token's current location indicate where the token was lexed from.  We
   // need this information to compute the spelling of the token, but any
@@ -357,17 +357,17 @@ void TokenLexer::Lex(Token &Tok) {
   // that captures all of this.
   if (m_instantiate_loc_start.isValid()) {   // Don't do this for token streams.
     clang::SourceManager &SM = m_pp.getSourceManager();
-    Tok.setLocation(SM.createInstantiationLoc(Tok.getLocation(),
-                                              m_instantiate_loc_start,
-                                              m_instantiate_loc_end,
-                                              Tok.getLength()));
+    Tok->setLocation(SM.createInstantiationLoc(Tok->getLocation(),
+                                               m_instantiate_loc_start,
+                                               m_instantiate_loc_end,
+                                               Tok->getLength()));
   }
 
   // If this is the first token, set the lexical properties of the token to
   // match the lexical properties of the macro identifier.
   if (isFirstToken) {
-    Tok.setFlagValue(Token::StartOfLine , m_at_start_of_line);
-    Tok.setFlagValue(Token::LeadingSpace, m_has_leading_space);
+    Tok->setFlagValue(Token::StartOfLine , m_at_start_of_line);
+    Tok->setFlagValue(Token::LeadingSpace, m_has_leading_space);
   }
 
   // Otherwise, return a normal token.

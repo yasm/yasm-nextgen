@@ -142,7 +142,7 @@ public:
     unsigned isNextTokenLParen() const;
 
     /// Lex - Lex and return a token from this macro stream.
-    void Lex(Token& tok);
+    void Lex(Token* tok);
 
 private:
     void destroy();

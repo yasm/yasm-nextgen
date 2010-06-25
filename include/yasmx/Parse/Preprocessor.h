@@ -154,6 +154,8 @@ public:
     {
         if (m_cur_lexer.get() != 0)
             m_cur_lexer->Lex(result);
+        else if (m_cur_token_lexer.get() != 0)
+            m_cur_token_lexer->Lex(result);
         else
             CachingLex(result);
     }
