@@ -39,7 +39,6 @@
 #include "llvm/ADT/StringMap.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Parse/ParserImpl.h"
-#include "yasmx/Support/ptr_vector.h"
 #include "yasmx/Insn.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Parser.h"
@@ -182,10 +181,6 @@ private:
     // Have we seen a line marker?
     bool m_seen_line_marker;
 
-#if 0
-    stdx::ptr_vector<GasRept> m_rept;
-    stdx::ptr_vector_owner<GasRept> m_rept_owner;
-#endif
     // Index of local labels; what's stored here is the /next/ index,
     // so these are all 0 at start.
     unsigned long m_local[10];
