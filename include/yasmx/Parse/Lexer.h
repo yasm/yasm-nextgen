@@ -115,6 +115,13 @@ public:
     /// Return true if this lexer is in raw mode or not.
     bool isLexingRawMode() const { return m_lexing_raw_mode; }
 
+    clang::FileID getFileID() const
+    {
+        assert(m_preproc &&
+               "Lexer::getFileID() should only be used with a Preprocessor");
+        return m_fid;
+    }
+
     /// Read the rest of the current preprocessor line as an uninterpreted
     /// string.  This switches the lexer out of directive mode.
     std::string ReadToEndOfLine();
