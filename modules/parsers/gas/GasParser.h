@@ -103,6 +103,9 @@ private:
     void ParseNasmLineMarker();
 
     bool ParseDirLine(unsigned int, clang::SourceLocation source);
+    bool ParseDirInclude(unsigned int, clang::SourceLocation source);
+    bool ParseDirMacro(unsigned int, clang::SourceLocation source);
+    bool ParseDirEndm(unsigned int, clang::SourceLocation source);
     bool ParseDirRept(unsigned int, clang::SourceLocation source);
     bool ParseDirEndr(unsigned int, clang::SourceLocation source);
     bool ParseDirAlign(unsigned int power2, clang::SourceLocation source);

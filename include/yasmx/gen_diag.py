@@ -465,6 +465,13 @@ add_warning("warn_expected_hex_digit", "expected hex digit after \\x")
 add_error("err_unicode_escape_requires_hex",
           "expected hex digit for Unicode character code (%0 digits required)")
 
+# Preprocessor
+add_error("err_pp_file_not_found", "'%0' file not found", mapping="FATAL")
+add_error("err_pp_error_opening_file", "error opening file '%0': %1",
+          mapping="FATAL")
+add_error("err_pp_empty_filename", "empty filename")
+add_error("err_pp_include_too_deep", "#include nested too deeply")
+
 # Output
 add_warning("warn_nobits_data",
             "initialized space declared in nobits section: ignoring")

@@ -51,6 +51,8 @@ public:
                HeaderSearch& headers);
     ~GasPreproc();
 
+    bool HandleInclude(llvm::StringRef filename, clang::SourceLocation source);
+
 protected:
     virtual void RegisterBuiltinMacros();
     virtual Lexer* CreateLexer(clang::FileID fid,

@@ -433,6 +433,22 @@ GasParser::ParseDirLine(unsigned int param, clang::SourceLocation source)
 // Macro directives
 //
 bool
+GasParser::ParseDirInclude(unsigned int param, clang::SourceLocation source)
+{
+    if (m_token.isNot(GasToken::string_literal))
+    {
+        Diag(m_token, diag::err_expected_string);
+        return false;
+    }
+    clang::SourceLocation filename_source = m_token.getLocation();
+    llvm::SmallString<64> strbuf;
+    GasStringParser str(m_token.getLiteral(), filename_source, m_preproc);
+    llvm::StringRef filename = str.getString(strbuf);
+    ConsumeToken();
+    return m_gas_preproc.HandleInclude(filename, filename_source);
+}
+
+bool
 GasParser::ParseDirRept(unsigned int param, clang::SourceLocation source)
 {
     Expr e;
