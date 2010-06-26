@@ -357,3 +357,42 @@ Preprocessor::HandleIdentifier(Token* identifier)
     }
 }
 #endif
+
+const clang::FileEntry*
+Preprocessor::LookupFile(llvm::StringRef filename,
+                         bool is_angled,
+                         const DirectoryLookup* from_dir,
+                         const DirectoryLookup*& cur_dir)
+{
+    // If the header lookup mechanism may be relative to the current file, pass
+    // in info about where the current file is.
+    const clang::FileEntry* cur_file_ent = 0;
+    if (!from_dir)
+    {
+        clang::FileID FID = getCurrentFileLexer()->getFileID();
+        cur_file_ent = m_source_mgr.getFileEntryForID(FID);
+
+        // If there is no file entry associated with this file, it must be the
+        // predefines buffer.  Any other file is not lexed with a normal lexer, so
+        // it won't be scanned for preprocessor directives.   If we have the
+        // predefines buffer, resolve #include references (which come from the
+        // -include command line argument) as if they came from the main file, this
+        // affects file lookup etc.
+        if (cur_file_ent == 0)
+        {
+            FID = m_source_mgr.getMainFileID();
+            cur_file_ent = m_source_mgr.getFileEntryForID(FID);
+        }
+    }
+
+    // Do a standard file entry lookup.
+    cur_dir = m_cur_dir_lookup;
+    const clang::FileEntry* FE =
+        m_header_info.LookupFile(filename, is_angled, from_dir, cur_dir,
+                                 cur_file_ent);
+    if (FE)
+        return FE;
+
+    // Otherwise, we really couldn't find the file.
+    return 0;
+}
