@@ -289,6 +289,7 @@ add_error("err_symbol_redefined", "redefinition of '%0'")
 add_note("note_previous_definition", "'%0' previously defined here")
 add_warning("warn_extern_defined", "'%0' both defined and declared extern")
 add_note("note_extern_declaration", "'%0' declared extern here")
+add_error("err_equ_circular_reference", "circular equ reference detected")
 
 # Insn
 add_error("err_equ_circular_reference_mem",
@@ -470,7 +471,14 @@ add_error("err_pp_file_not_found", "'%0' file not found", mapping="FATAL")
 add_error("err_pp_error_opening_file", "error opening file '%0': %1",
           mapping="FATAL")
 add_error("err_pp_empty_filename", "empty filename")
-add_error("err_pp_include_too_deep", "#include nested too deeply")
+add_error("err_pp_include_too_deep", "include nested too deeply")
+add_error("err_pp_else_after_else", "else after else")
+add_error("err_pp_elseif_after_else", "elseif after else")
+add_error("err_pp_else_without_if", "else without if")
+add_error("err_pp_elseif_without_if", "elseif without if")
+add_error("err_pp_endif_without_if", "endif without if")
+add_error("err_pp_if_without_endif", "if without endif")
+add_error("err_pp_cond_not_constant", "non-constant conditional expression")
 
 # Output
 add_warning("warn_nobits_data",

@@ -37,6 +37,7 @@
 #include "yasmx/Directive.h"
 #include "yasmx/Errwarns.h"
 #include "yasmx/Object.h"
+#include "yasmx/Op.h"
 #include "yasmx/Symbol_util.h"
 
 
@@ -107,6 +108,26 @@ GasParser::GasParser(const ParserModule& module,
         {".space",      &GasParser::ParseDirSkip,   0},
         {".fill",       &GasParser::ParseDirFill,   0},
         {".zero",       &GasParser::ParseDirZero,   0},
+        // conditional compilation directives
+        {".else",       &GasParser::ParseDirElse,   0},
+        {".elsec",      &GasParser::ParseDirElse,   0},
+        {".elseif",     &GasParser::ParseDirElseif, 0},
+        {".endif",      &GasParser::ParseDirEndif,  0},
+        {".endc",       &GasParser::ParseDirEndif,  0},
+        {".if",         &GasParser::ParseDirIf,     Op::NE},
+        {".ifb",        &GasParser::ParseDirIfb,    0},
+        {".ifdef",      &GasParser::ParseDirIfdef,  0},
+        {".ifeq",       &GasParser::ParseDirIf,     Op::EQ},
+        {".ifeqs",      &GasParser::ParseDirIfeqs,  0},
+        {".ifge",       &GasParser::ParseDirIf,     Op::GE},
+        {".ifgt",       &GasParser::ParseDirIf,     Op::GT},
+        {".ifle",       &GasParser::ParseDirIf,     Op::LE},
+        {".iflt",       &GasParser::ParseDirIf,     Op::LT},
+        {".ifnb",       &GasParser::ParseDirIfb,    1},
+        {".ifndef",     &GasParser::ParseDirIfdef,  1},
+        {".ifnotdef",   &GasParser::ParseDirIfdef,  1},
+        {".ifne",       &GasParser::ParseDirIf,     Op::NE},
+        {".ifnes",      &GasParser::ParseDirIfeqs,  1},
         // other directives
         {".equ",        &GasParser::ParseDirEqu,    0},
         {".file",       &GasParser::ParseDirFile,   0},
@@ -136,10 +157,10 @@ GasParser::Parse(Object& object, Directives& dirs, Diagnostic& diags)
     m_dir_line = 0;
     m_seen_line_marker = false;
 
-    //stdx::ptr_vector<GasRept>().swap(m_rept);   // clear the m_rept stack
-
     for (int i=0; i<10; i++)
         m_local[i] = 0;
+
+    m_cond_stack.clear();
 
     // Set up arch-sized directives
     m_sized_gas_dirs[0].name = ".word";

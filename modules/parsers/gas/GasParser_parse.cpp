@@ -43,6 +43,7 @@
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/Errwarns.h"
+#include "yasmx/Expr_util.h"
 #include "yasmx/NameValue.h"
 #include "yasmx/Object.h"
 #include "yasmx/Section.h"
@@ -87,7 +88,10 @@ next:
                 // Label
                 clang::SourceLocation id_source = ConsumeToken();
                 ConsumeToken(); // consume the colon too
-                DefineLabel(ii->getName(), id_source);
+                Bytecode& bc = m_container->FreshBytecode();
+                Location loc = {&bc, bc.getFixedLen()};
+                ParseSymbol(ii)->CheckedDefineLabel(loc, id_source,
+                                                    m_preproc.getDiagnostics());
                 goto next;
             }
             else if (peek_token.is(GasToken::equal))
@@ -443,6 +447,8 @@ GasParser::ParseDirInclude(unsigned int param, clang::SourceLocation source)
     clang::SourceLocation filename_source = m_token.getLocation();
     llvm::SmallString<64> strbuf;
     GasStringParser str(m_token.getLiteral(), filename_source, m_preproc);
+    if (str.hadError())
+        return false;
     llvm::StringRef filename = str.getString(strbuf);
     ConsumeToken();
     return m_gas_preproc.HandleInclude(filename, filename_source);
@@ -1135,6 +1141,232 @@ GasParser::ParseDirFile(unsigned int param, clang::SourceLocation source)
     // Pass along to debug format
     setDebugFile(fileno, fileno_source, filename.getString(filename_buf),
                  filename_source, source);
+    return true;
+}
+
+//
+// Conditional compilation directives
+//
+
+void
+GasParser::SkipConditional(clang::SourceLocation begin)
+{
+    Token prev_token = m_token;
+    int skip_depth = 1;
+    while (skip_depth > 0)
+    {
+        if (m_token.is(GasToken::eof))
+        {
+            Diag(begin, diag::err_pp_if_without_endif);
+            return;
+        }
+
+        // handle nesting
+        if (!m_token.isAtStartOfLine() || m_token.isNot(GasToken::label))
+        {
+            prev_token = m_token;
+            ConsumeToken();
+            continue;
+        }
+        IdentifierInfo* ii = m_token.getIdentifierInfo();
+        if (ii->getName().startswith(".if"))
+            ++skip_depth;
+        else if (ii->isStr(".endif") || ii->isStr(".endc"))
+        {
+            if (skip_depth == 1)
+            {
+                // insert current token, and make EOL the current token
+                m_preproc.EnterToken(m_token);
+                m_token = prev_token;
+                return;
+            }
+            --skip_depth;
+        }
+        else if (ii->isStr(".else") || ii->isStr(".elsec") ||
+                 ii->isStr(".elseif"))
+        {
+            if (skip_depth == 1)
+            {
+                // insert current token, and make EOL the current token
+                m_preproc.EnterToken(m_token);
+                m_token = prev_token;
+                return;
+            }
+        }
+        prev_token = m_token;
+        ConsumeToken();
+    }
+}
+
+void
+GasParser::HandleIf(bool is_true, clang::SourceLocation begin)
+{
+    if (!is_true)
+        SkipConditional(begin);
+    CondStatus status = { is_true, false };
+    m_cond_stack.push_back(status);
+}
+
+bool
+GasParser::ParseDirElse(unsigned int param, clang::SourceLocation source)
+{
+    if (m_cond_stack.empty())
+    {
+        Diag(source, diag::err_pp_else_without_if);
+        return false;
+    }
+
+    if (m_cond_stack.back().saw_else)
+    {
+        Diag(source, diag::err_pp_else_after_else);
+        return false;
+    }
+    m_cond_stack.back().saw_else = true;
+
+    // If we should be skipping, do so.
+    if (m_cond_stack.back().done)
+    {
+        SkipConditional(source);
+        return true;
+    }
+
+    // Otherwise we should be outputting.
+    m_cond_stack.back().done = true;
+    return true;
+}
+
+bool
+GasParser::ParseDirElseif(unsigned int param, clang::SourceLocation source)
+{
+    if (m_cond_stack.empty())
+    {
+        Diag(source, diag::err_pp_elseif_without_if);
+        return false;
+    }
+
+    if (m_cond_stack.back().saw_else)
+    {
+        Diag(source, diag::err_pp_elseif_after_else);
+        return false;
+    }
+
+    // if we've already output, don't even bother looking at the expression
+    if (m_cond_stack.back().done)
+    {
+        SkipConditional(source);
+        return true;
+    }
+
+    m_cond_stack.pop_back();
+    return ParseDirIf(Op::NE, source);
+}
+
+bool
+GasParser::ParseDirEndif(unsigned int param, clang::SourceLocation source)
+{
+    if (m_cond_stack.empty())
+    {
+        Diag(source, diag::err_pp_endif_without_if);
+        return false;
+    }
+
+    m_cond_stack.pop_back();
+    return true;
+}
+
+bool
+GasParser::ParseDirIf(unsigned int op, clang::SourceLocation source)
+{
+    Expr e;
+    if (!ParseExpr(e))
+    {
+        Diag(source, diag::err_expected_expression);
+        return false;
+    }
+
+    if (!ExpandEqu(e))
+    {
+        Diag(source, diag::err_equ_circular_reference);
+        return false;
+    }
+
+    e.Simplify();
+    if (!e.isIntNum())
+    {
+        Diag(source, diag::err_pp_cond_not_constant);
+        return false;
+    }
+
+    IntNum equal = e.getIntNum();
+    equal.Calc(static_cast<Op::Op>(op), IntNum(0));
+    HandleIf(equal.getUInt(), source);
+    return true;
+}
+
+bool
+GasParser::ParseDirIfb(unsigned int negate, clang::SourceLocation source)
+{
+    bool blank = m_token.isEndOfStatement();
+    if (!blank)
+        SkipUntil(GasToken::eol, GasToken::semi, true, false);
+    HandleIf(negate ? !blank : blank, source);
+    return true;
+}
+
+bool
+GasParser::ParseDirIfdef(unsigned int negate, clang::SourceLocation source)
+{
+    if (m_token.isNot(GasToken::identifier) && m_token.isNot(GasToken::label))
+    {
+        Diag(m_token, diag::err_expected_ident);
+        return false;
+    }
+    IdentifierInfo* ii = m_token.getIdentifierInfo();
+    clang::SourceLocation id_source = ConsumeToken();
+
+    bool defined = ii->isSymbol() && ii->getSymbol()->isDefined();
+    HandleIf(negate ? !defined : defined, source);
+    return true;
+}
+
+bool
+GasParser::ParseDirIfeqs(unsigned int negate, clang::SourceLocation source)
+{
+    // first string
+    if (m_token.isNot(GasToken::string_literal))
+    {
+        Diag(m_token, diag::err_expected_string);
+        return false;
+    }
+    llvm::SmallString<64> s1_buf;
+    GasStringParser s1(m_token.getLiteral(), m_token.getLocation(), m_preproc);
+    if (s1.hadError())
+        return false;
+    ConsumeToken();
+
+    if (ExpectAndConsume(GasToken::comma, diag::err_expected_comma))
+        return false;
+
+    // second string
+    if (m_token.isNot(GasToken::string_literal))
+    {
+        Diag(m_token, diag::err_expected_string);
+        return false;
+    }
+    llvm::SmallString<64> s2_buf;
+    GasStringParser s2(m_token.getLiteral(), m_token.getLocation(), m_preproc);
+    if (s2.hadError())
+        return false;
+    ConsumeToken();
+
+    if (!m_token.isEndOfStatement())
+    {
+        Diag(m_token, diag::err_eol_junk);
+        return false;
+    }
+
+    bool equal = s1.getString(s1_buf) == s2.getString(s2_buf);
+    HandleIf(negate ? !equal : equal, source);
     return true;
 }
 
@@ -1879,7 +2111,9 @@ GasParser::DoParse()
             ConsumeToken();
         else
         {
-            ParseLine();
+            bool result = ParseLine();
+            if (result && !m_token.isEndOfStatement())
+                Diag(m_token, diag::err_eol_junk);
             SkipUntil(GasToken::eol, GasToken::semi, true, false);
         }
     }

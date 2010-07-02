@@ -126,6 +126,16 @@ private:
     bool ParseDirEqu(unsigned int, clang::SourceLocation source);
     bool ParseDirFile(unsigned int, clang::SourceLocation source);
 
+    void SkipConditional(clang::SourceLocation begin);
+    void HandleIf(bool is_true, clang::SourceLocation begin);
+    bool ParseDirElse(unsigned int, clang::SourceLocation source);
+    bool ParseDirElseif(unsigned int, clang::SourceLocation source);
+    bool ParseDirEndif(unsigned int, clang::SourceLocation source);
+    bool ParseDirIf(unsigned int op, clang::SourceLocation source);
+    bool ParseDirIfb(unsigned int negate, clang::SourceLocation source);
+    bool ParseDirIfdef(unsigned int negate, clang::SourceLocation source);
+    bool ParseDirIfeqs(unsigned int negate, clang::SourceLocation source);
+
     Insn::Ptr ParseInsn();
     bool ParseDirective(NameValues* nvs);
     Operand ParseMemoryAddress();
@@ -190,6 +200,14 @@ private:
 
     // Start of comment.
     clang::SourceLocation m_comment_start;
+
+    // Conditional stack.
+    struct CondStatus
+    {
+        bool done;      // if we've output a section of this conditional
+        bool saw_else;  // if we've seen an else case for this conditional
+    };
+    std::vector<CondStatus> m_cond_stack;
 };
 
 }} // namespace yasm::parser
