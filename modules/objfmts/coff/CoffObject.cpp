@@ -71,7 +71,7 @@ CoffObject::CoffObject(const ObjectFormatModule& module,
 std::vector<llvm::StringRef>
 CoffObject::getDebugFormatKeywords()
 {
-    static const char* keywords[] = {"null", "dwarf2"};
+    static const char* keywords[] = {"null", "dwarf2", "dwarf2pass"};
     return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
 }
 

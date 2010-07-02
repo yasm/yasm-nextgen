@@ -1529,7 +1529,8 @@ ElfObject::getDebugFormatKeywords()
     {
         "null",
         "stabs",
-        "dwarf2"
+        "dwarf2",
+        "dwarf2pass"
     };
     return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
 }

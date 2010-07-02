@@ -75,6 +75,8 @@ public:
         unsigned long length;
     };
 
+    bool gotFile() { return !m_filenames.empty(); }
+
 private:
     ObjectFormat* m_objfmt;
     Diagnostic* m_diags;
@@ -162,6 +164,24 @@ private:
     size_t AddFile(const clang::FileEntry* file);
     unsigned long AddDir(llvm::StringRef dirname);
 };
+
+class YASM_STD_EXPORT Dwarf2PassDebug : public Dwarf2Debug
+{
+public:
+    Dwarf2PassDebug(const DebugFormatModule& module, Object& object)
+        : Dwarf2Debug(module, object)
+    {}
+    ~Dwarf2PassDebug();
+
+    static llvm::StringRef getName() { return "DWARF2 passthrough only"; }
+    static llvm::StringRef getKeyword() { return "dwarf2pass"; }
+    static bool isOkObject(Object& object) { return true; }
+
+    void Generate(ObjectFormat& objfmt,
+                  clang::SourceManager& smgr,
+                  Diagnostic& diags);
+};
+
 
 }} // namespace yasm::dbgfmt
 

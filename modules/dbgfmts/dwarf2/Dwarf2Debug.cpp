@@ -75,8 +75,7 @@ Dwarf2Debug::Generate(ObjectFormat& objfmt,
     // If we don't have any .file directives, generate line information
     // based on the asm source.
     Section& debug_line =
-        Generate_line(smgr, m_filenames.empty(), &main_code,
-                      &num_line_sections);
+        Generate_line(smgr, !gotFile(), &main_code, &num_line_sections);
 
     // If we don't have a .debug_info (or it's empty), generate the minimal
     // set of .debug_info, .debug_aranges, and .debug_abbrev so that the
@@ -90,6 +89,21 @@ Dwarf2Debug::Generate(ObjectFormat& objfmt,
         Generate_aranges(*debug_info);
         //Generate_pubnames(*debug_info);
     }
+}
+
+Dwarf2PassDebug::~Dwarf2PassDebug()
+{
+}
+
+void
+Dwarf2PassDebug::Generate(ObjectFormat& objfmt,
+                          clang::SourceManager& smgr,
+                          Diagnostic& diags)
+{
+    // If we don't have any .file directives, don't generate any debug info.
+    if (!gotFile())
+        return;
+    Dwarf2Debug::Generate(objfmt, smgr, diags);
 }
 
 Location
@@ -172,4 +186,6 @@ yasm_dbgfmt_dwarf2_DoRegister()
 {
     RegisterModule<DebugFormatModule,
                    DebugFormatModuleImpl<Dwarf2Debug> >("dwarf2");
+    RegisterModule<DebugFormatModule,
+                   DebugFormatModuleImpl<Dwarf2PassDebug> >("dwarf2pass");
 }
