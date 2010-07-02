@@ -141,7 +141,7 @@ add_group("size-override")
 
 # Frontend
 add_fatal("fatal_module_load", "could not load %0 '%1")
-add_fatal("fatal_module_combo", "'%0' is not a valid %1 for %2 '%3'")
+add_fatal("fatal_module_combo", "'%1' is not a valid %0 for %2 '%3'")
 add_fatal("fatal_objfmt_machine_mismatch",
           "object format '%0' does not support architecture '%1' machine '%2'")
 add_warning("warn_unknown_warning_option", "unknown warning option '%0'")
