@@ -112,7 +112,7 @@ public:
     SymbolRef m_dotdotsym;                  // ..sym symbol
 };
 
-class Elf32Object : public ElfObject
+class YASM_STD_EXPORT Elf32Object : public ElfObject
 {
 public:
     Elf32Object(const ObjectFormatModule& module, Object& object)
@@ -138,7 +138,7 @@ public:
                       /*@out@*/ std::string* machine);
 };
 
-class Elf64Object : public ElfObject
+class YASM_STD_EXPORT Elf64Object : public ElfObject
 {
 public:
     Elf64Object(const ObjectFormatModule& module, Object& object)
