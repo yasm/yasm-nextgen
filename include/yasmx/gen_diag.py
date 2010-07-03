@@ -24,7 +24,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+import sys
+
 scriptname = "gen_diag.py"
+
+def lprint(*args, **kwargs):
+    sep = kwargs.pop("sep", ' ')
+    end = kwargs.pop("end", '\n')
+    file = kwargs.pop("file", sys.stdout)
+    file.write(sep.join(args))
+    file.write(end)
 
 groups = dict()
 class Group(object):
@@ -38,7 +47,7 @@ class Group(object):
 
 def add_group(name, subgroups=None):
     if name in groups:
-        print "Warning: duplicate group %s" % name
+        lprint("Warning: duplicate group %s" % name, file=sys.stderr)
     groups[name] = Group(name, subgroups)
 
 class Diag(object):
@@ -52,13 +61,13 @@ class Diag(object):
 diags = dict()
 def add_diag(name, cls, desc, mapping=None, group=""):
     if name in diags:
-        print "Warning: duplicate diag %s" % name
+        lprint("Warning: duplicate diag %s" % name, file=sys.stderr)
     diags[name] = Diag(name, cls, desc, mapping, group)
 
 def add_warning(name, desc, mapping=None, group=""):
     if group:
         if group not in groups:
-            print "Unrecognized warning group %s" % group
+            lprint("Unrecognized warning group %s" % group, file=sys.stderr)
         else:
             groups[group].members.append(name)
     add_diag(name, "WARNING", desc, mapping, group)
@@ -73,27 +82,27 @@ def add_note(name, desc):
     add_diag(name, "NOTE", desc, mapping="FATAL")
 
 def output_diag_kinds(f):
-    print >>f, "#ifndef YASM_DIAGNOSTICKINDS_H"
-    print >>f, "#define YASM_DIAGNOSTICKINDS_H"
-    print >>f, "namespace yasm { namespace diag {"
-    print >>f, "enum {"
+    lprint("#ifndef YASM_DIAGNOSTICKINDS_H", file=f)
+    lprint("#define YASM_DIAGNOSTICKINDS_H", file=f)
+    lprint("namespace yasm { namespace diag {", file=f)
+    lprint("enum {", file=f)
     for name in sorted(diags):
         diag = diags[name]
-        print >>f, "%s," % diag.name
-    print >>f, "NUM_BUILTIN_DIAGNOSTICS"
-    print >>f, "};"
-    print >>f, "}}"
-    print >>f, "#endif"
+        lprint("%s," % diag.name, file=f)
+    lprint("NUM_BUILTIN_DIAGNOSTICS", file=f)
+    lprint("};", file=f)
+    lprint("}}", file=f)
+    lprint("#endif", file=f)
 
 def output_diags(f):
     for name in sorted(diags):
         diag = diags[name]
-        print >>f, "{ diag::%s, diag::MAP_%s, CLASS_%s, \"%s\", %s }," % (
+        lprint("{ diag::%s, diag::MAP_%s, CLASS_%s, \"%s\", %s }," % (
             diag.name,
             diag.mapping or diag.cls,
             diag.cls,
             diag.desc.encode("string_escape"),
-            diag.group and "\"%s\"" % diag.group or "0")
+            diag.group and "\"%s\"" % diag.group or "0"), file=f)
 
 def output_groups(f):
     # enumerate all groups and set indexes first
@@ -104,26 +113,28 @@ def output_groups(f):
     for name in sorted(groups):
         group = groups[name]
         if group.members:
-            print >>f, "static const short DiagArray%d[] = {" % group.index,
+            lprint("static const short DiagArray%d[] = {" % group.index,
+                   file=f, end='')
             for member in group.members:
-                print >>f, "diag::%s," % member,
-            print >>f, "-1 };"
+                lprint("diag::%s," % member, file=f, end='')
+            lprint("-1 };", file=f)
         if group.subgroups:
-            print >>f, "static const char DiagSubGroup%d[] = { " \
-                % group.index,
+            lprint("static const char DiagSubGroup%d[] = { " % group.index,
+                   file=f, end='')
             for subgroup in group.subgroups:
-                print >>f, "%d, " % groups[subgroup].index,
-            print >>f, "-1 };"
+                lprint("%d, " % groups[subgroup].index, file=f, end='')
+            lprint("-1 };", file=f)
 
     # output table
-    print >>f, "static const WarningOption OptionTable[] = {"
+    lprint("static const WarningOption OptionTable[] = {", file=f)
     for name in sorted(groups):
         group = groups[name]
-        print >>f, "  { \"%s\", %s, %s }," % (
-            group.name,
-            group.members and ("DiagArray%d" % group.index) or "0",
-            group.subgroups and ("DiagSubGroup%d" % group.index) or "0")
-    print >>f, "};"
+        lprint("  { \"%s\", %s, %s }," % (
+                group.name,
+                group.members and ("DiagArray%d" % group.index) or "0",
+                group.subgroups and ("DiagSubGroup%d" % group.index) or "0"),
+               file=f)
+    lprint("};", file=f)
 
 #####################################################################
 # Groups (for command line -W option)
@@ -525,10 +536,9 @@ add_note("note_proc_started_here", "procedure started here")
 #####################################################################
 
 if __name__ == "__main__":
-    import sys
     if len(sys.argv) != 4:
-        print >>sys.stderr, "Usage: gen_diag.py <DiagnosticGroups.cpp>"
-        print >>sys.stderr, "    <DiagnosticKinds.h> <StaticDiagInfo.inc>"
+        lprint("Usage: gen_diag.py <DiagnosticGroups.cpp>", file=sys.stderr)
+        lprint("    <DiagnosticKinds.h> <StaticDiagInfo.inc>", file=sys.stderr)
         sys.exit(2)
     output_groups(file(sys.argv[1], "wt"))
     output_diag_kinds(file(sys.argv[2], "wt"))

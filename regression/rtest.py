@@ -24,7 +24,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-import os, time, subprocess
+import sys, os, time, subprocess
+
+def lprint(*args, **kwargs):
+    sep = kwargs.pop("sep", ' ')
+    end = kwargs.pop("end", '\n')
+    file = kwargs.pop("file", sys.stdout)
+    file.write(sep.join(args))
+    file.write(end)
 
 yasmexe = None
 outdir = None
@@ -73,13 +80,13 @@ class Test(object):
 
         match = True
         if len(golden) != len(result):
-            print "%s: error/warning mismatches" % self.ewfn
+            lprint("%s: error/warning mismatches" % self.ewfn)
             match = False
         for i, (o, g) in enumerate(zip(result, golden)):
             if o != g:
-                print "%s:%d: mismatch on error/warning line %d" % (self.ewfn, i)
-                print " Expected: %s" % g
-                print " Actual: %s" % o
+                lprint("%s:%d: mismatch on error/warning line %d" % (self.ewfn, i))
+                lprint(" Expected: %s" % g)
+                lprint(" Actual: %s" % o)
                 match = False
 
         if not match:
@@ -112,18 +119,20 @@ class Test(object):
             result = f.read()
         match = True
         if len(golden) != len(result):
-            print "%s: output length %d (expected %d)" % (self.outfn, len(result), len(golden))
+            lprint("%s: output length %d (expected %d)"
+                    % (self.outfn, len(result), len(golden)))
             match = False
         for i, (o, g) in enumerate(zip([ord(x) for x in result], golden)):
             if o != g:
-                print "%s:%d: mismatch: %s (expected %s)" % (self.outfn, i, hex(o), hex(g))
-                print "  (only the first mismatch is reported)"
+                lprint("%s:%d: mismatch: %s (expected %s)"
+                        % (self.outfn, i, hex(o), hex(g)))
+                lprint("  (only the first mismatch is reported)")
                 match = False
                 break
 
         if not match:
             # save golden version to binary file
-            print "Expected output: %s" % goldenfn
+            lprint("Expected output: %s" % goldenfn)
             with open(os.path.join(outdir, goldenfn), "wb") as f:
                 f.write("".join([chr(x) for x in golden]))
 
@@ -166,8 +175,8 @@ class Test(object):
             yasmargs = shlex.split(yasmoverride)
 
         # Notify start of test
-        print "[ RUN      ] %s (%s)%s" % (self.name, " ".join(yasmargs[1:]),
-                                          expectfail and "{fail}" or "")
+        lprint("[ RUN      ] %s (%s)%s" % (self.name, " ".join(yasmargs[1:]),
+                                           expectfail and "{fail}" or ""))
 
         # Specify the output filename as we pipe the input.
         yasmargs.extend(["-o", os.path.join(outdir, self.outfn)])
@@ -187,16 +196,16 @@ class Test(object):
         if proc.returncode == 0 and not expectfail:
             ok = True
         elif proc.returncode < 0:
-            print " CRASHED: received signal %d from yasm" % (-proc.returncode)
+            lprint(" CRASHED: received signal %d from yasm" % (-proc.returncode))
             # Save stderr output
             with open(os.path.join(outdir, self.ewfn), "w") as f:
                 f.write(stderrdata)
         elif expectfail:
             ok = True
         else:
-            print "Error: yasm return code mismatch."
-            print " Expected: %d" % (expectfail and 1 or 0)
-            print " Actual: %d" % proc.returncode
+            lprint("Error: yasm return code mismatch.")
+            lprint(" Expected: %d" % (expectfail and 1 or 0))
+            lprint(" Actual: %d" % proc.returncode)
             if proc.returncode != 0:
                 # Save stderr output
                 with open(os.path.join(outdir, self.ewfn), "w") as f:
@@ -218,7 +227,7 @@ class Test(object):
             result = "      OK"
         else:
             result = " FAILED "
-        print "[ %s ] %s (%d ms)" % (result, self.name, int((end-start)*1000))
+        lprint("[ %s ] %s (%d ms)" % (result, self.name, int((end-start)*1000)))
         return ok
 
 def run_all(bpath):
@@ -226,14 +235,15 @@ def run_all(bpath):
     ndirs = 0
     npassed = 0
     failed = []
-    print "[==========] Running tests."
+    lprint("[==========] Running tests.")
     start = time.time()
     for root, dirs, files in os.walk(bpath):
         somefiles = [f for f in files if f.endswith(".asm") or f.endswith(".s")]
         if not somefiles:
             continue
         ndirs += 1
-        print "[----------] %d tests from %s" % (len(somefiles), root[len(bpath)+1:])
+        lprint("[----------] %d tests from %s"
+                % (len(somefiles), root[len(bpath)+1:]))
         for name in somefiles:
             fullpath = os.path.join(root, name)
             name = fullpath[len(bpath)+1:]
@@ -244,24 +254,25 @@ def run_all(bpath):
                 npassed += 1
             else:
                 failed.append(name)
-        print "[----------] %d tests from %s" % (len(somefiles), root[len(bpath)+1:])
+        lprint("[----------] %d tests from %s"
+                % (len(somefiles), root[len(bpath)+1:]))
     end = time.time()
-    print "[==========] %d tests from %d directories ran. (%d ms total)" % (ntests, ndirs, int((end-start)*1000))
-    print "[  PASSED  ] %d tests." % npassed
+    lprint("[==========] %d tests from %d directories ran. (%d ms total)"
+            % (ntests, ndirs, int((end-start)*1000)))
+    lprint("[  PASSED  ] %d tests." % npassed)
     if failed:
-        print "[  FAILED  ] %d tests, listed below:" % len(failed)
+        lprint("[  FAILED  ] %d tests, listed below:" % len(failed))
         for name in failed:
-            print "[  FAILED  ] %s" % name
-        print " %d FAILED TESTS" % len(failed)
+            lprint("[  FAILED  ] %s" % name)
+        lprint(" %d FAILED TESTS" % len(failed))
         return False
     return True
 
 if __name__ == "__main__":
-    import sys
     if len(sys.argv) != 4:
-        print >>sys.stderr, "Usage: rtest.py <path to regression tree>"
-        print >>sys.stderr, "    <path to output directory>"
-        print >>sys.stderr, "    <path to yasm executable>"
+        lprint("Usage: rtest.py <path to regression tree>", file=sys.stderr)
+        lprint("    <path to output directory>", file=sys.stderr)
+        lprint("    <path to yasm executable>", file=sys.stderr)
         sys.exit(2)
     outdir = sys.argv[2]
     yasmexe = sys.argv[3]
