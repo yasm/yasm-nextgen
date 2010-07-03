@@ -9,7 +9,6 @@ Key:
 -   macho
 - Translate debug formats from C version:
 -   stabs
--   dwarf2
 -   cv8
 - Object format reading for various formats
 - Disassembly core support
