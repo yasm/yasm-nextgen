@@ -54,8 +54,12 @@ XOPL0 = 0x80
 XOPL1 = 0x84
 XOPpp = 0x80    # OR with value
 
-def lprint(s, file = sys.stdout, end = '\n') :
-    file.write(s + end)
+def lprint(*args, **kwargs):
+    sep = kwargs.pop("sep", ' ')
+    end = kwargs.pop("end", '\n')
+    file = kwargs.pop("file", sys.stdout)
+    file.write(sep.join(args))
+    file.write(end)
 
 def cpu_lcd(cpu1, cpu2):
     """Find the lowest common denominator of two CPU sets."""
