@@ -53,6 +53,11 @@ class Test(object):
         self.outpath = os.path.splitext("_".join(path_splitall(self.name)))[0] + ".out"
         self.outfullpath = os.path.join(outdir, self.outpath)
 
+        # Read the input file in its entirety.  We use this for various things.
+        with open(self.fullpath) as f:
+            self.inputfile = f.read()
+        self.inputlines = self.inputfile.splitlines()
+
     def compare_ew(self, stderrdata):
         """Check error/warnings output."""
         # If there's a .ew file, use it.
@@ -132,27 +137,33 @@ class Test(object):
 
         return match
 
+    def get_option(self, option):
+        """Get test-specific option from the first line of the input file.
+        Returns None if option not present, otherwise option string."""
+        firstline = self.inputlines[0]
+
+        # command line override: "[yasm <args>]"
+        start = firstline.find("[" + option)
+        if start == -1:
+            return None
+
+        # get everything between the []
+        str = firstline[start+1:]
+        return str[:str.index(']')]
+
     def run(self):
         """Run test.  Returns false if test failed."""
         # We default to bin output and parser based on extension
         yasmargs = ["yasm", "-f", "bin", "-p", self.parser]
 
-        # Read the input file in its entirety.  We use this for various things.
-        with open(self.fullpath) as f:
-            inputfile = f.read()
-        self.inputlines = inputfile.splitlines()
-
-        # Read the first line of the file for test-specific options.
-        firstline = self.inputlines[0]
-
         # Expected failure: "[fail]"
-        expectfail = "[fail]" in firstline
+        expectfail = self.get_option("fail") is not None
 
-        # command line override: "yasm <args>"
-        customarg = firstline.find("yasm")
-        if customarg != -1:
+        # command line override: "[yasm <args>]"
+        yasmoverride = self.get_option("yasm")
+        if yasmoverride is not None:
             import shlex
-            yasmargs = shlex.split(firstline[customarg:].rstrip())
+            yasmargs = shlex.split(yasmoverride)
 
         # Notify start of test
         print "[ RUN      ] %s (%s)%s" % (self.name, " ".join(yasmargs[1:]),
@@ -169,7 +180,7 @@ class Test(object):
         proc = subprocess.Popen(yasmargs, bufsize=4096, executable=yasmexe,
                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
-        (stdoutdata, stderrdata) = proc.communicate(inputfile)
+        (stdoutdata, stderrdata) = proc.communicate(self.inputfile)
         end = time.time()
 
         ok = False
