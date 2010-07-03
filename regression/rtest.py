@@ -65,17 +65,30 @@ class Test(object):
         self.ewfn = self.basefn + ".ew"
 
         # Read the input file in its entirety.  We use this for various things.
-        with open(self.fullpath) as f:
+        f = open(self.fullpath)
+        try:
             self.inputfile = f.read()
+        finally:
+            f.close()
         self.inputlines = self.inputfile.splitlines()
+
+    def save_ew(self, stderrdata):
+        f = open(os.path.join(outdir, self.ewfn), "w")
+        try:
+            f.write(stderrdata)
+        finally:
+            f.close()
 
     def compare_ew(self, stderrdata):
         """Check error/warnings output."""
         # If there's a .ew file, use it.
         golden = []
         try:
-            with open(os.path.splitext(self.fullpath)[0] + ".ew") as f:
+            f = open(os.path.splitext(self.fullpath)[0] + ".ew")
+            try:
                 golden = [l.rstrip() for l in f.readlines()]
+            finally:
+                f.close()
         except IOError:
             pass
 
@@ -93,9 +106,7 @@ class Test(object):
                 match = False
 
         if not match:
-            # Save stderr output
-            with open(os.path.join(outdir, self.ewfn), "w") as f:
-                f.write(stderrdata)
+            self.save_ew(stderrdata)
 
         return match
 
@@ -105,8 +116,11 @@ class Test(object):
         # for comments starting with "out:" followed by hex digits.
         golden = []
         try:
-            with open(os.path.splitext(self.fullpath)[0] + ".hex") as f:
+            f = open(os.path.splitext(self.fullpath)[0] + ".hex")
+            try:
                 golden = [l.strip() for l in f.readlines()]
+            finally:
+                f.close()
         except IOError:
             for l in self.inputlines:
                 comment = l.partition(self.commentsep)[2].strip()
@@ -118,8 +132,11 @@ class Test(object):
         goldenfn = self.basefn + ".gold"
 
         # check result file
-        with open(os.path.join(outdir, self.outfn), "rb") as f:
+        f = open(os.path.join(outdir, self.outfn), "rb")
+        try:
             result = f.read()
+        finally:
+            f.close()
         match = True
         if len(golden) != len(result):
             lprint("%s: output length %d (expected %d)"
@@ -136,16 +153,25 @@ class Test(object):
         if not match:
             # save golden version to binary file
             lprint("Expected output: %s" % goldenfn)
-            with open(os.path.join(outdir, goldenfn), "wb") as f:
+            f = open(os.path.join(outdir, goldenfn), "wb")
+            try:
                 f.write("".join([chr(x) for x in golden]))
+            finally:
+                f.close()
 
             # save golden hex
-            with open(os.path.join(outdir, self.basefn + ".goldhex"), "w") as f:
+            f = open(os.path.join(outdir, self.basefn + ".goldhex"), "w")
+            try:
                 f.writelines(["%02x\n" % x for x in golden])
+            finally:
+                f.close()
 
             # save result hex
-            with open(os.path.join(outdir, self.basefn + ".outhex"), "w") as f:
+            f = open(os.path.join(outdir, self.basefn + ".outhex"), "w")
+            try:
                 f.writelines(["%02x\n" % ord(x) for x in result])
+            finally:
+                f.close()
 
         return match
 
@@ -200,9 +226,7 @@ class Test(object):
             ok = True
         elif proc.returncode < 0:
             lprint(" CRASHED: received signal %d from yasm" % (-proc.returncode))
-            # Save stderr output
-            with open(os.path.join(outdir, self.ewfn), "w") as f:
-                f.write(stderrdata)
+            self.save_ew(stderrdata)
         elif expectfail:
             ok = True
         else:
@@ -210,9 +234,7 @@ class Test(object):
             lprint(" Expected: %d" % (expectfail and 1 or 0))
             lprint(" Actual: %d" % proc.returncode)
             if proc.returncode != 0:
-                # Save stderr output
-                with open(os.path.join(outdir, self.ewfn), "w") as f:
-                    f.write(stderrdata)
+                self.save_ew(stderrdata)
 
         # Check results
         if ok:
