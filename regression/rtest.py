@@ -50,8 +50,9 @@ class Test(object):
         self.parser = self.name.endswith(".s") and "gas" or "nasm"
         self.commentsep = (self.parser == "gas") and "#" or ";"
 
-        self.outpath = os.path.splitext("_".join(path_splitall(self.name)))[0] + ".out"
-        self.outfullpath = os.path.join(outdir, self.outpath)
+        self.basefn = os.path.splitext("_".join(path_splitall(self.name)))[0]
+        self.outfn = self.basefn + ".out"
+        self.ewfn = self.basefn + ".ew"
 
         # Read the input file in its entirety.  We use this for various things.
         with open(self.fullpath) as f:
@@ -70,21 +71,20 @@ class Test(object):
 
         result = [l for l in stderrdata.splitlines() if l.startswith("<stdin>:")]
 
-        resultfn = os.path.splitext(self.outpath)[0] + ".ew"
         match = True
         if len(golden) != len(result):
-            print "%s: error/warning mismatches" % resultfn
+            print "%s: error/warning mismatches" % self.ewfn
             match = False
         for i, (o, g) in enumerate(zip(result, golden)):
             if o != g:
-                print "%s:%d: mismatch on error/warning line %d" % (resultfn, i)
+                print "%s:%d: mismatch on error/warning line %d" % (self.ewfn, i)
                 print " Expected: %s" % g
                 print " Actual: %s" % o
                 match = False
 
         if not match:
             # Save stderr output
-            with open(resultfn, "w") as f:
+            with open(os.path.join(outdir, self.ewfn), "w") as f:
                 f.write(stderrdata)
 
         return match
@@ -105,18 +105,18 @@ class Test(object):
                 golden.extend(comment[4:].split())
         golden = [int(x, 16) for x in golden if x]
 
-        goldenfn = os.path.splitext(self.outpath)[0] + ".gold"
+        goldenfn = self.basefn + ".gold"
 
         # check result file
-        with open(self.outfullpath, "rb") as f:
+        with open(os.path.join(outdir, self.outfn), "rb") as f:
             result = f.read()
         match = True
         if len(golden) != len(result):
-            print "%s: output length %d (expected %d)" % (self.outpath, len(result), len(golden))
+            print "%s: output length %d (expected %d)" % (self.outfn, len(result), len(golden))
             match = False
         for i, (o, g) in enumerate(zip([ord(x) for x in result], golden)):
             if o != g:
-                print "%s:%d: mismatch: %s (expected %s)" % (self.outpath, i, hex(o), hex(g))
+                print "%s:%d: mismatch: %s (expected %s)" % (self.outfn, i, hex(o), hex(g))
                 print "  (only the first mismatch is reported)"
                 match = False
                 break
@@ -124,15 +124,15 @@ class Test(object):
         if not match:
             # save golden version to binary file
             print "Expected output: %s" % goldenfn
-            with open(goldenfn, "wb") as f:
+            with open(os.path.join(outdir, goldenfn), "wb") as f:
                 f.write("".join([chr(x) for x in golden]))
 
             # save golden hex
-            with open(os.path.splitext(self.outpath)[0] + ".goldhex", "w") as f:
+            with open(os.path.join(outdir, self.basefn + ".goldhex"), "w") as f:
                 f.writelines(["%02x\n" % x for x in golden])
 
             # save result hex
-            with open(os.path.splitext(self.outpath)[0] + ".outhex", "w") as f:
+            with open(os.path.join(outdir, self.basefn + ".outhex"), "w") as f:
                 f.writelines(["%02x\n" % ord(x) for x in result])
 
         return match
@@ -170,7 +170,7 @@ class Test(object):
                                           expectfail and "{fail}" or "")
 
         # Specify the output filename as we pipe the input.
-        yasmargs.extend(["-o", self.outfullpath])
+        yasmargs.extend(["-o", os.path.join(outdir, self.outfn)])
 
         # We pipe the input, so append "-" to the command line for stdin input.
         yasmargs.append("-")
@@ -194,6 +194,10 @@ class Test(object):
             print "Error: yasm return code mismatch."
             print " Expected: %d" % (expectfail and 1 or 0)
             print " Actual: %d" % proc.returncode
+            if proc.returncode != 0:
+                # Save stderr output
+                with open(os.path.join(outdir, self.ewfn), "w") as f:
+                    f.write(stderrdata)
 
         # Check results
         if ok:
