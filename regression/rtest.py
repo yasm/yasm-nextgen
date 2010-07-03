@@ -24,7 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-import sys, os, time, subprocess
+import os
+import subprocess
+import sys
+import time
 
 def lprint(*args, **kwargs):
     sep = kwargs.pop("sep", ' ')
