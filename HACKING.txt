@@ -8,8 +8,10 @@ change drastically with little notice.
 Prerequisites (what you need):
 
   * A standards-conforming C++ compiler (e.g. GCC 3.4+)
-  * CMake 2.4+ (http://www.cmake.org/)
+  * CMake 2.4+; 2.8+ recommended (http://www.cmake.org/)
   * Python (http://www.python.org/)
+
+If you want to build unit tests, you will also need:
   * GoogleMock (http://code.google.com/p/googlemock/)
   * GoogleTest (http://code.google.com/p/googletest/)
 
@@ -44,6 +46,10 @@ on the cmake command line; e.g.:
   % cmake -DCMAKE_CXX_COMPILER=`which gfilt` ..
 (this sets the C++ compiler to gfilt, the stlfilt frontend)
 
+If you don't want to build unit tests, add -DBUILD_TESTS=NO to the cmake line.
+This also removes the GoogleTest and GoogleMock build dependencies.
+  % cmake -DBUILD_TESTS=NO ..
+
 Then to build:
   % make
 
@@ -51,3 +57,12 @@ Test:
   % make test
 
 etc.
+
+
+Building Yasm-C++ On Windows
+============================
+
+Create an object directory for the build.  Use cmake's gui to select the
+source and object directories.  CMake may need some help in finding
+prerequisites on Windows; it will tell you if it can't find a tool it needs
+and will not produce build files until all prerequisites are met.
