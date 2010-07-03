@@ -188,6 +188,9 @@ class Test(object):
             ok = True
         elif proc.returncode < 0:
             print " CRASHED: received signal %d from yasm" % (-proc.returncode)
+            # Save stderr output
+            with open(os.path.join(outdir, self.ewfn), "w") as f:
+                f.write(stderrdata)
         elif expectfail:
             ok = True
         else:
