@@ -30,6 +30,7 @@ yasmexe = None
 outdir = None
 
 def path_splitall(path):
+    """Split all components of a path into a list."""
     outpath = []
     while True:
         (head, tail) = os.path.split(path)
@@ -41,130 +42,166 @@ def path_splitall(path):
     outpath.reverse()
     return outpath
 
-def run_test(name, fullpath):
-    # We default to bin output and parser based on extension
-    parser = name.endswith(".s") and "gas" or "nasm"
-    commentsep = (parser == "gas") and "#" or ";"
-    yasmargs = ["yasm", "-f", "bin", "-p", parser]
+class Test(object):
+    def __init__(self, name, fullpath):
+        self.name = name
+        self.fullpath = fullpath
 
-    # Read the input file in its entirety.  We use this for various things.
-    with open(fullpath) as f:
-        inputfile = f.read()
-    inputlines = inputfile.splitlines()
+        self.parser = self.name.endswith(".s") and "gas" or "nasm"
+        self.commentsep = (self.parser == "gas") and "#" or ";"
 
-    # Read the first line of the file for test-specific options.
+        self.outpath = os.path.splitext("_".join(path_splitall(self.name)))[0] + ".out"
+        self.outfullpath = os.path.join(outdir, self.outpath)
 
-    # Expected failure: "[fail]"
-    expectfail = "[fail]" in inputlines[0]
-
-    # command line override: "yasm <args>"
-    customarg = inputlines[0].find("yasm")
-    if customarg != -1:
-        import shlex
-        yasmargs = shlex.split(inputlines[0][customarg:].rstrip())
-
-    # Notify start of test
-    print "[ RUN      ] %s (%s)%s" % (name, " ".join(yasmargs[1:]), expectfail and "{fail}" or "")
-
-    # Specify the output filename as we pipe the input.
-    outpath = os.path.splitext("_".join(path_splitall(name)))[0] + ".out"
-    outfullpath = os.path.join(outdir, outpath)
-    yasmargs.extend(["-o", outfullpath])
-
-    # We pipe the input, so append "-" to the command line for stdin input.
-    yasmargs.append("-")
-
-    # Run yasm!
-    start = time.time()
-    ok = False
-    proc = subprocess.Popen(yasmargs, bufsize=4096, executable=yasmexe,
-                            stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
-    (stdoutdata, stderrdata) = proc.communicate(inputfile)
-    if proc.returncode == 0 and not expectfail:
-        ok = True
-    elif proc.returncode < 0:
-        print " CRASHED: received signal %d from yasm" % (-proc.returncode)
-    elif expectfail:
-        ok = True
-    end = time.time()
-
-    # Check results
-    if ok:
-        # Check error/warnings output.
+    def compare_ew(self, stderrdata):
+        """Check error/warnings output."""
         # If there's a .ew file, use it.
         golden = []
         try:
-            with open(os.path.splitext(fullpath)[0] + ".ew") as f:
+            with open(os.path.splitext(self.fullpath)[0] + ".ew") as f:
                 golden = [l.rstrip() for l in f.readlines()]
         except IOError:
             pass
 
         result = [l for l in stderrdata.splitlines() if l.startswith("<stdin>:")]
 
-        resultfn = os.path.splitext(outpath)[0] + ".ew"
-        mismatch = False
+        resultfn = os.path.splitext(self.outpath)[0] + ".ew"
+        match = True
         if len(golden) != len(result):
             print "%s: error/warning mismatches" % resultfn
-            mismatch = True
+            match = False
         for i, (o, g) in enumerate(zip(result, golden)):
             if o != g:
                 print "%s:%d: mismatch on error/warning line %d" % (resultfn, i)
                 print " Expected: %s" % g
                 print " Actual: %s" % o
-                mismatch = True
-        if mismatch:
-            ok = False
+                match = False
+
+        if not match:
             # Save stderr output
             with open(resultfn, "w") as f:
                 f.write(stderrdata)
 
-        if not expectfail:
-            # Check output file.
-            # If there's a .hex file, use it; otherwise scan the input file
-            # for comments starting with "out:" followed by hex digits.
-            golden = []
-            try:
-                with open(os.path.splitext(fullpath)[0] + ".hex") as f:
-                    golden = [l.strip() for l in f.readlines()]
-            except IOError:
-                for l in inputlines:
-                    comment = l.partition(commentsep)[2].strip()
-                    if not comment.startswith('out:'):
-                        continue
-                    golden.extend(comment[4:].split())
-            golden = [int(x, 16) for x in golden if x]
+        return match
 
-            goldenfn = os.path.splitext(outpath)[0] + ".golden"
+    def compare_out(self):
+        """Check output file."""
+        # If there's a .hex file, use it; otherwise scan the input file
+        # for comments starting with "out:" followed by hex digits.
+        golden = []
+        try:
+            with open(os.path.splitext(self.fullpath)[0] + ".hex") as f:
+                golden = [l.strip() for l in f.readlines()]
+        except IOError:
+            for l in self.inputlines:
+                comment = l.partition(self.commentsep)[2].strip()
+                if not comment.startswith('out:'):
+                    continue
+                golden.extend(comment[4:].split())
+        golden = [int(x, 16) for x in golden if x]
 
-            # check result file
-            with open(outfullpath, "rb") as f:
-                result = f.read()
-            mismatch = False
-            if len(golden) != len(result):
-                print "%s: output length %d (expected %d)" % (outpath, len(result), len(golden))
-                mismatch = True
-            for i, (o, g) in enumerate(zip([ord(x) for x in result], golden)):
-                if o != g:
-                    print "%s:%d: mismatch: %s (expected %s)" % (outpath, i, hex(o), hex(g))
-                    print "  (only the first mismatch is reported)"
-                    mismatch = True
-                    break
+        goldenfn = os.path.splitext(self.outpath)[0] + ".gold"
 
-            if mismatch:
+        # check result file
+        with open(self.outfullpath, "rb") as f:
+            result = f.read()
+        match = True
+        if len(golden) != len(result):
+            print "%s: output length %d (expected %d)" % (self.outpath, len(result), len(golden))
+            match = False
+        for i, (o, g) in enumerate(zip([ord(x) for x in result], golden)):
+            if o != g:
+                print "%s:%d: mismatch: %s (expected %s)" % (self.outpath, i, hex(o), hex(g))
+                print "  (only the first mismatch is reported)"
+                match = False
+                break
+
+        if not match:
+            # save golden version to binary file
+            print "Expected output: %s" % goldenfn
+            with open(goldenfn, "wb") as f:
+                f.write("".join([chr(x) for x in golden]))
+
+            # save golden hex
+            with open(os.path.splitext(self.outpath)[0] + ".goldhex", "w") as f:
+                f.writelines(["%02x\n" % x for x in golden])
+
+            # save result hex
+            with open(os.path.splitext(self.outpath)[0] + ".outhex", "w") as f:
+                f.writelines(["%02x\n" % ord(x) for x in result])
+
+        return match
+
+    def run(self):
+        """Run test.  Returns false if test failed."""
+        # We default to bin output and parser based on extension
+        yasmargs = ["yasm", "-f", "bin", "-p", self.parser]
+
+        # Read the input file in its entirety.  We use this for various things.
+        with open(self.fullpath) as f:
+            inputfile = f.read()
+        self.inputlines = inputfile.splitlines()
+
+        # Read the first line of the file for test-specific options.
+        firstline = self.inputlines[0]
+
+        # Expected failure: "[fail]"
+        expectfail = "[fail]" in firstline
+
+        # command line override: "yasm <args>"
+        customarg = firstline.find("yasm")
+        if customarg != -1:
+            import shlex
+            yasmargs = shlex.split(firstline[customarg:].rstrip())
+
+        # Notify start of test
+        print "[ RUN      ] %s (%s)%s" % (self.name, " ".join(yasmargs[1:]),
+                                          expectfail and "{fail}" or "")
+
+        # Specify the output filename as we pipe the input.
+        yasmargs.extend(["-o", self.outfullpath])
+
+        # We pipe the input, so append "-" to the command line for stdin input.
+        yasmargs.append("-")
+
+        # Run yasm!
+        start = time.time()
+        proc = subprocess.Popen(yasmargs, bufsize=4096, executable=yasmexe,
+                                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        (stdoutdata, stderrdata) = proc.communicate(inputfile)
+        end = time.time()
+
+        ok = False
+        if proc.returncode == 0 and not expectfail:
+            ok = True
+        elif proc.returncode < 0:
+            print " CRASHED: received signal %d from yasm" % (-proc.returncode)
+        elif expectfail:
+            ok = True
+        else:
+            print "Error: yasm return code mismatch."
+            print " Expected: %d" % (expectfail and 1 or 0)
+            print " Actual: %d" % proc.returncode
+
+        # Check results
+        if ok:
+            match = self.compare_ew(stderrdata)
+            if not match:
                 ok = False
-                # save golden version to binary file
-                print "Expected binary file: %s" % goldenfn
-                with open(goldenfn, "wb") as f:
-                    f.write("".join([chr(x) for x in golden]))
 
-    # Summarize test result
-    if ok:
-        result = "      OK"
-    else:
-        result = " FAILED "
-    print "[ %s ] %s (%d ms)" % (result, name, int((end-start)*1000))
-    return ok
+            if not expectfail:
+                match = self.compare_out()
+                if not match:
+                    ok = False
+
+        # Summarize test result
+        if ok:
+            result = "      OK"
+        else:
+            result = " FAILED "
+        print "[ %s ] %s (%d ms)" % (result, self.name, int((end-start)*1000))
+        return ok
 
 def run_all(bpath):
     ntests = 0
@@ -182,7 +219,8 @@ def run_all(bpath):
         for name in somefiles:
             fullpath = os.path.join(root, name)
             name = fullpath[len(bpath)+1:]
-            ok = run_test(name, fullpath)
+            test = Test(name, fullpath)
+            ok = test.run()
             ntests += 1
             if ok:
                 npassed += 1
