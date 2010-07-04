@@ -185,7 +185,6 @@ XdfOutput::OutputSection(Section& sect)
         // Don't output BSS sections.
         outputter = &m_no_output;
         pos = 0;    // position = 0 because it's not in the file
-        xsect->size = sect.bytecodes_back().getNextOffset();
     }
     else
     {
@@ -198,6 +197,7 @@ XdfOutput::OutputSection(Section& sect)
     }
 
     // Output bytecodes
+    xsect->size = 0;
     for (Section::bc_iterator i=sect.bytecodes_begin(),
          end=sect.bytecodes_end(); i != end; ++i)
     {
@@ -663,7 +663,8 @@ XdfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
 
     m_object.setCurSection(sect);
     sect->setDefault(false);
-    m_object.getArch()->setVar("mode_bits", xsect->bits);       // reapply
+    if (xsect->bits != 0)
+        m_object.getArch()->setVar("mode_bits", xsect->bits);       // reapply
 
     // No name/values, so nothing more to do
     if (nvs.size() <= 1)
@@ -734,7 +735,8 @@ XdfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
     sect->setVMA(vma);
     sect->setLMA(lma);
     xsect->flat = flat;
-    m_object.getArch()->setVar("mode_bits", xsect->bits);
+    if (xsect->bits != 0)
+        m_object.getArch()->setVar("mode_bits", xsect->bits);
 }
 
 void
