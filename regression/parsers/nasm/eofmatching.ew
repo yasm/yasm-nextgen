@@ -1,0 +1,4 @@
+<stdin>:2:11: error: expected ']'
+<stdin>:2:9: note: to match this '['
+<stdin>:3:11: error: expected ']'
+<stdin>:3:9: note: to match this '['
