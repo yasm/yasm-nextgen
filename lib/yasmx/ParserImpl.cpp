@@ -196,3 +196,60 @@ ParserImpl::SkipUntil(const unsigned int* toks,
         isFirstTokenSkipped = false;
     }
 }
+
+llvm::StringRef
+ParserImpl::MergeTokensUntil(const unsigned int* toks,
+                             unsigned int num_toks,
+                             clang::SourceLocation* start,
+                             clang::SourceLocation* end,
+                             llvm::SmallVectorImpl<char>& buffer,
+                             bool stop_at_eos,
+                             bool stop_at_ws)
+{
+    buffer.clear();
+    *start = *end = m_token.getLocation();
+    for (;;)
+    {
+        // If we found one of the tokens, stop.
+        for (unsigned i = 0; i < num_toks; ++i)
+        {
+            if (m_token.is(toks[i]))
+                goto done;
+        }
+
+        // If we hit end of statement, stop.
+        if (stop_at_eos && m_token.isEndOfStatement())
+            break;
+
+        // Turn the token back into characters.
+        // The first if's are optimizations for common cases.
+        llvm::StringRef data;
+        if (m_token.isLiteral())
+        {
+            data = m_token.getLiteral();
+        }
+        else if (m_token.is(Token::identifier) || m_token.is(Token::label))
+        {
+            IdentifierInfo* ii = m_token.getIdentifierInfo();
+            data = ii->getName();
+        }
+        else
+        {
+            // Get the raw data from the source manager.
+            clang::SourceManager& smgr = m_preproc.getSourceManager();
+            data =
+                llvm::StringRef(smgr.getCharacterData(m_token.getLocation()),
+                                m_token.getLength());
+        }
+        buffer.append(data.begin(), data.end());
+        *end = m_token.getEndLocation();
+        ConsumeAnyToken();
+
+        // If we hit a token with leading space, stop.
+        // We do this down here in case the first token had preceding ws.
+        if (stop_at_ws && m_token.hasLeadingSpace())
+            break;
+    }
+done:
+    return llvm::StringRef(buffer.data(), buffer.size());
+}

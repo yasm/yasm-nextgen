@@ -105,7 +105,6 @@ private:
     void DoParse();
     bool ParseLine();
     bool ParseDirective(/*@out@*/ NameValues& nvs);
-    bool ParseDirRawName(NameValues& nvs);
     bool ParseTimes(clang::SourceLocation times_source);
     bool ParseExp();
     Insn::Ptr ParseInsn();

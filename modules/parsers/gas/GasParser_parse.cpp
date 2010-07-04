@@ -987,37 +987,15 @@ GasParser::ParseDirSection(unsigned int param, clang::SourceLocation source)
 
     // Due to section names with special characters, concatenate tokens until
     // we either get a comma or a token with preceding space.
-    llvm::SmallString<128> section_name;
-    clang::SourceLocation section_name_source = m_token.getLocation();
-    clang::SourceLocation section_name_ends;
-    do {
-        // Turn the token back into characters.
-        // The first if's are optimizations for common cases.
-        if (m_token.isLiteral())
-            section_name += m_token.getLiteral();
-        else if (m_token.is(GasToken::identifier) ||
-                 m_token.is(GasToken::label))
-        {
-            IdentifierInfo* ii = m_token.getIdentifierInfo();
-            section_name += ii->getName();
-        }
-        else
-        {
-            // Get the raw data from the source manager.
-            clang::SourceManager& smgr = m_preproc.getSourceManager();
-            section_name +=
-                llvm::StringRef(smgr.getCharacterData(m_token.getLocation()),
-                                m_token.getLength());
-        }
-        section_name_ends = m_token.getEndLocation();
-        ConsumeToken();
-    } while (m_token.isNot(GasToken::comma) && !m_token.isEndOfStatement() &&
-             !m_token.hasLeadingSpace());
+    unsigned int endtok = GasToken::comma;
+    clang::SourceLocation start, end;
+    llvm::SmallString<128> sectname_buf;
+    llvm::StringRef sectname =
+        MergeTokensUntil(&endtok, 1, &start, &end, sectname_buf);
 
     NameValues& nvs = info.getNameValues();
-    nvs.push_back(new NameValue(section_name.str()));
-    nvs.back().setValueRange(
-        clang::SourceRange(section_name_source, section_name_ends));
+    nvs.push_back(new NameValue(sectname.str()));
+    nvs.back().setValueRange(clang::SourceRange(start, end));
 
     if (!m_token.isEndOfStatement())
     {

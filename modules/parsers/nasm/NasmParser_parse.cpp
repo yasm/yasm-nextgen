@@ -494,8 +494,15 @@ NasmParser::ParseLine()
                 (dirname.equals_lower("section") ||
                  dirname.equals_lower("segment")))
             {
-                if (!ParseDirRawName(info.getNameValues()))
-                    return false;
+                unsigned int toks[2] = {NasmToken::comma, NasmToken::r_square};
+                clang::SourceLocation start, end;
+                llvm::SmallString<128> sectname_buf;
+                llvm::StringRef sectname =
+                    MergeTokensUntil(toks, 2, &start, &end, sectname_buf);
+
+                NameValues& nvs = info.getNameValues();
+                nvs.push_back(new NameValue(sectname));
+                nvs.back().setValueRange(clang::SourceRange(start, end));
             }
 
             // Parse "normal" directive namevals, if present
@@ -693,43 +700,6 @@ next:
             m_token.isEndOfStatement())
             return true;
     }
-}
-
-bool
-NasmParser::ParseDirRawName(NameValues& nvs)
-{
-    llvm::SmallString<128> name;
-    clang::SourceLocation name_source = m_token.getLocation();
-    clang::SourceLocation name_ends;
-    do {
-        // Turn the token back into characters.
-        // The first if's are optimizations for common cases.
-        if (m_token.isLiteral())
-            name += m_token.getLiteral();
-        else if (m_token.is(NasmToken::identifier) ||
-                 m_token.is(NasmToken::label))
-        {
-            IdentifierInfo* ii = m_token.getIdentifierInfo();
-            name += ii->getName();
-        }
-        else
-        {
-            // Get the raw data from the source manager.
-            clang::SourceManager& smgr = m_preproc.getSourceManager();
-            name +=
-                llvm::StringRef(smgr.getCharacterData(m_token.getLocation()),
-                                m_token.getLength());
-        }
-        name_ends = m_token.getEndLocation();
-        ConsumeToken();
-    } while (m_token.isNot(NasmToken::comma) &&
-             m_token.isNot(NasmToken::r_square) &&
-             !m_token.isEndOfStatement() &&
-             !m_token.hasLeadingSpace());
-
-    nvs.push_back(new NameValue(name.str()));
-    nvs.back().setValueRange(clang::SourceRange(name_source, name_ends));
-    return true;
 }
 
 bool
