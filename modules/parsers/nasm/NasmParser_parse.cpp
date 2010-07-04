@@ -487,6 +487,17 @@ NasmParser::ParseLine()
             }
 
             DirectiveInfo info(*m_object, dirloc);
+            // If this is a section or segment directive, parse the section
+            // name specially.
+            // XXX: should allow any directive to flag this to be done.
+            if (m_token.isNot(NasmToken::r_square) &&
+                (dirname.equals_lower("section") ||
+                 dirname.equals_lower("segment")))
+            {
+                if (!ParseDirRawName(info.getNameValues()))
+                    return false;
+            }
+
             // Parse "normal" directive namevals, if present
             if (m_token.isNot(NasmToken::r_square) &&
                 m_token.isNot(NasmToken::colon))
@@ -682,6 +693,43 @@ next:
             m_token.isEndOfStatement())
             return true;
     }
+}
+
+bool
+NasmParser::ParseDirRawName(NameValues& nvs)
+{
+    llvm::SmallString<128> name;
+    clang::SourceLocation name_source = m_token.getLocation();
+    clang::SourceLocation name_ends;
+    do {
+        // Turn the token back into characters.
+        // The first if's are optimizations for common cases.
+        if (m_token.isLiteral())
+            name += m_token.getLiteral();
+        else if (m_token.is(NasmToken::identifier) ||
+                 m_token.is(NasmToken::label))
+        {
+            IdentifierInfo* ii = m_token.getIdentifierInfo();
+            name += ii->getName();
+        }
+        else
+        {
+            // Get the raw data from the source manager.
+            clang::SourceManager& smgr = m_preproc.getSourceManager();
+            name +=
+                llvm::StringRef(smgr.getCharacterData(m_token.getLocation()),
+                                m_token.getLength());
+        }
+        name_ends = m_token.getEndLocation();
+        ConsumeToken();
+    } while (m_token.isNot(NasmToken::comma) &&
+             m_token.isNot(NasmToken::r_square) &&
+             !m_token.isEndOfStatement() &&
+             !m_token.hasLeadingSpace());
+
+    nvs.push_back(new NameValue(name.str()));
+    nvs.back().setValueRange(clang::SourceRange(name_source, name_ends));
+    return true;
 }
 
 bool
