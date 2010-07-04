@@ -658,12 +658,14 @@ NasmParser::ParseDirective(/*@out@*/ NameValues& nvs)
             {
                 Expr::Ptr e(new Expr);
                 NasmParseDirExprTerm parse_dir_term;
+                clang::SourceLocation e_src = m_token.getLocation();
                 if (!ParseExpr0(*e, &parse_dir_term))
                 {
                     Diag(m_token, diag::err_invalid_directive_argument);
                     return false;
                 }
                 nv.reset(new NameValue(name, e));
+                nv->setValueRange(e_src);
                 break;
             }
         }
