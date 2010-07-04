@@ -100,7 +100,7 @@ class Test(object):
             match = False
         for i, (o, g) in enumerate(zip(result, golden)):
             if o != g:
-                lprint("%s:%d: mismatch on error/warning line %d" % (self.ewfn, i))
+                lprint("%s:%d: mismatch on error/warning" % (self.ewfn, i))
                 lprint(" Expected: %s" % g)
                 lprint(" Actual: %s" % o)
                 match = False
