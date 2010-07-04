@@ -92,15 +92,16 @@ class Test(object):
         except IOError:
             pass
 
-        result = [l for l in stderrdata.splitlines() if l.startswith("<stdin>:")]
+        result = [l for l in enumerate(stderrdata.splitlines())
+                  if not l[1].startswith(" ")]
 
         match = True
         if len(golden) != len(result):
             lprint("%s: error/warning mismatches" % self.ewfn)
             match = False
-        for i, (o, g) in enumerate(zip(result, golden)):
+        for (i, o), g in zip(result, golden):
             if o != g:
-                lprint("%s:%d: mismatch on error/warning" % (self.ewfn, i))
+                lprint("%s:%d: mismatch on error/warning" % (self.ewfn, i+1))
                 lprint(" Expected: %s" % g)
                 lprint(" Actual: %s" % o)
                 match = False
