@@ -209,13 +209,12 @@ yasm::DirNameValueWarn(NameValue& nv,
 {
     if (nv.getNameSource().isValid())
     {
-        diags.Report(dir_source, diag::warn_unrecognized_qualifier)
-            << nv.getNameSource();
+        diags.Report(nv.getNameSource(), diag::warn_unrecognized_qualifier);
         return false;
     }
 
-    diags.Report(dir_source, diag::warn_unrecognized_qualifier)
-        << nv.getValueRange();
+    diags.Report(nv.getValueRange().getBegin(),
+                 diag::warn_unrecognized_qualifier);
 
     return false;
 }

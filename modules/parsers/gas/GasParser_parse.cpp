@@ -652,13 +652,14 @@ GasParser::ParseDirComm(unsigned int is_lcomm, clang::SourceLocation source)
         Diag(e_source, diag::err_comm_size_expected);
         return false;
     }
-    clang::SourceLocation align_source;
+    clang::SourceLocation align_start, align_end;
     if (m_token.is(GasToken::comma))
     {
         // Optional alignment expression
         ConsumeToken();
-        align_source = m_token.getLocation();
+        align_start = m_token.getLocation();
         ParseExpr(align);
+        align_end = m_token.getLocation();
     }
     // If already explicitly declared local, treat like LCOMM
     SymbolRef sym = ParseSymbol(ii);
@@ -676,7 +677,7 @@ GasParser::ParseDirComm(unsigned int is_lcomm, clang::SourceLocation source)
 
         NameValues extvps;
         extvps.push_back(new NameValue(align_copy));
-        extvps.back().setValueRange(align_source);
+        extvps.back().setValueRange(clang::SourceRange(align_start, align_end));
 
         sym->CheckedDeclare(Symbol::COMMON, id_source,
                             m_preproc.getDiagnostics());

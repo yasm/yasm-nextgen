@@ -636,8 +636,8 @@ NasmParser::ParseDirective(/*@out@*/ NameValues& nvs)
                     llvm::SmallString<64> strbuf;
                     nv.reset(new NameValue(name, str.getString(strbuf)));
                 }
-                /// XXX: full range of string token?
-                nv->setValueRange(ConsumeToken());
+                nv->setValueRange(m_token.getSourceRange());
+                ConsumeToken();
                 break;
             }
             case NasmToken::identifier:
@@ -667,8 +667,8 @@ NasmParser::ParseDirective(/*@out@*/ NameValues& nvs)
                         nv.reset(new NameValue(name,
                                                m_preproc.getSpelling(m_token),
                                                '$'));
-                        /// XXX: full range of ID?
-                        nv->setValueRange(ConsumeToken());
+                        nv->setValueRange(m_token.getSourceRange());
+                        ConsumeToken();
                         goto next;
                 }
                 /*@fallthrough@*/
@@ -683,7 +683,8 @@ NasmParser::ParseDirective(/*@out@*/ NameValues& nvs)
                     return false;
                 }
                 nv.reset(new NameValue(name, e));
-                nv->setValueRange(e_src);
+                nv->setValueRange(
+                    clang::SourceRange(e_src, m_token.getLocation()));
                 break;
             }
         }
