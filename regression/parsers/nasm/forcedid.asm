@@ -1,4 +1,4 @@
-; [yasm -f xdf -p nasm]
+; [oformat xdf]
 [bits 16]
 [extern ax]
 [extern $ax]

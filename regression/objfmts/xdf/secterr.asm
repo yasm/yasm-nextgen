@@ -1,4 +1,4 @@
-; [fail] [yasm -f xdf -p nasm]
+; [fail] [oformat xdf]
 [section]
 [section 1 use16=5]
 [section 2 use32=5]

@@ -1,4 +1,4 @@
-; [yasm -f xdf -p nasm]
+; [oformat xdf]
 [extern var4]
 [extern farlabel]
 [global equ2]

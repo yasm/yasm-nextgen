@@ -1,4 +1,4 @@
-; [yasm -f xdf -p nasm]
+; [oformat xdf]
 [section 1]
 [section 2 use16]
 [section 3 use32]

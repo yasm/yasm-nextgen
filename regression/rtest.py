@@ -57,8 +57,8 @@ class Test(object):
         self.name = name
         self.fullpath = fullpath
 
+        # Default parser based on extension
         self.parser = self.name.endswith(".s") and "gas" or "nasm"
-        self.commentsep = (self.parser == "gas") and "#" or ";"
 
         self.basefn = os.path.splitext("_".join(path_splitall(self.name)))[0]
         self.outfn = self.basefn + ".out"
@@ -176,33 +176,40 @@ class Test(object):
 
         return match
 
-    def get_option(self, option):
+    def get_option(self, option, default=None):
         """Get test-specific option from the first line of the input file.
         Returns None if option not present, otherwise option string."""
         firstline = self.inputlines[0]
 
-        # command line override: "[yasm <args>]"
         start = firstline.find("[" + option)
         if start == -1:
-            return None
+            return default
 
         # get everything between the []
         str = firstline[start+1:]
-        return str[:str.index(']')]
+        return str[len(option)+1:str.index(']')]
 
     def run(self):
         """Run test.  Returns false if test failed."""
-        # We default to bin output and parser based on extension
-        yasmargs = ["yasm", "-f", "bin", "-p", self.parser]
-
         # Expected failure: "[fail]"
         expectfail = self.get_option("fail") is not None
 
-        # command line override: "[yasm <args>]"
+        # Parser override: "[parser X]"
+        self.parser = self.get_option("parser", self.parser)
+
+        # Set comment separator based on parser
+        self.commentsep = (self.parser == "gas") and "#" or ";"
+
+        # We default to bin output, but can override with "[oformat X]"
+        format = self.get_option("oformat", "bin")
+
+        yasmargs = ["yasm", "-f", format, "-p", self.parser]
+
+        # full command line override: "[yasm <args>]"
         yasmoverride = self.get_option("yasm")
         if yasmoverride is not None:
             import shlex
-            yasmargs = shlex.split(yasmoverride)
+            yasmargs = shlex.split("yasm "+yasmoverride)
 
         # Notify start of test
         lprint("[ RUN      ] %s (%s)%s" % (self.name, " ".join(yasmargs[1:]),
