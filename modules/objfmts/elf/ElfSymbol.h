@@ -82,13 +82,21 @@ public:
     void setName(ElfStringIndex index) { m_name_index = index; }
     void setSectionIndex(ElfSectionIndex index) { m_index = index; }
     void setVisibility(ElfSymbolVis vis) { m_vis = ELF_ST_VISIBILITY(vis); }
+
+    ElfSymbolBinding getBinding() const { return m_bind; }
     void setBinding(ElfSymbolBinding bind) { m_bind = bind; }
+
+    ElfSymbolType getType() const { return m_type; }
+    bool hasType() const { return m_type != STT_NOTYPE; }
     void setType(ElfSymbolType type) { m_type = type; }
+
+    bool hasSize() const { return !m_size.isEmpty(); }
     void setSize(const Expr& size, clang::SourceLocation source)
     {
         m_size = size;
         m_size_source = source;
     }
+
     void setValue(ElfAddress value) { m_value = value; }
     void setSymbolIndex(ElfSymbolIndex symindex) { m_symindex = symindex; }
     ElfSymbolIndex getSymbolIndex() const { return m_symindex; }

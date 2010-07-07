@@ -402,7 +402,8 @@ ElfObject::BuildExtern(Symbol& sym, Diagnostic& diags)
     }
 
     ElfSymbol& elfsym = BuildSymbol(sym);
-    elfsym.setBinding(STB_GLOBAL);
+    if (elfsym.getBinding() == STB_LOCAL)
+        elfsym.setBinding(STB_GLOBAL);
 }
 
 static bool
@@ -487,10 +488,12 @@ ElfObject::BuildGlobal(Symbol& sym, Diagnostic& diags)
     }
 
     ElfSymbol& elfsym = BuildSymbol(sym);
-    elfsym.setBinding(STB_GLOBAL);
-    elfsym.setType(static_cast<ElfSymbolType>(type));
+    if (elfsym.getBinding() == STB_LOCAL)
+        elfsym.setBinding(STB_GLOBAL);
+    if (!elfsym.hasType())
+        elfsym.setType(static_cast<ElfSymbolType>(type));
     elfsym.setVisibility(vis);
-    if (size.get() != 0)
+    if (size.get() != 0 && !elfsym.hasSize())
         elfsym.setSize(*size, sym.getDeclSource());
 }
 
@@ -545,8 +548,10 @@ ElfObject::BuildCommon(Symbol& sym, Diagnostic& diags)
 
     ElfSymbol& elfsym = BuildSymbol(sym);
     elfsym.setSectionIndex(SHN_COMMON);
-    elfsym.setBinding(STB_GLOBAL);
-    elfsym.setSize(*getCommonSize(sym), sym.getDeclSource());
+    if (elfsym.getBinding() == STB_LOCAL)
+        elfsym.setBinding(STB_GLOBAL);
+    if (!elfsym.hasSize())
+        elfsym.setSize(*getCommonSize(sym), sym.getDeclSource());
     elfsym.setValue(addralign);
 }
 
