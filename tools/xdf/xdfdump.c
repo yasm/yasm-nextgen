@@ -163,8 +163,9 @@ print_section(const SECTION_HEADER *secthead, FILE *f, size_t symtab_off)
     printf("\n\tData Offset=0x%08X\n", secthead->s_data_off);
     printf("\tData Size=%d\n", secthead->s_data_size);
     if (!(secthead->s_flags & XDF_SECT_BSS) && secthead->s_data_size > 0) {
+        long oldpos;
         printf("\tSection Data:");
-        long oldpos = ftell(f);
+        oldpos = ftell(f);
         fseek(f, secthead->s_data_off, SEEK_SET);
         for (i=0; i<secthead->s_data_size; i++) {
             if (i % 16 == 0)
@@ -179,8 +180,9 @@ print_section(const SECTION_HEADER *secthead, FILE *f, size_t symtab_off)
     printf("\tReloc Table Offset=0x%08X\n", secthead->s_reltab_off);
     printf("\tNum Relocs=%d\n", secthead->s_num_reloc);
     if (secthead->s_num_reloc > 0) {
+        long oldpos;
         printf("\tRelocations:\n");
-        long oldpos = ftell(f);
+        oldpos = ftell(f);
         fseek(f, secthead->s_reltab_off, SEEK_SET);
         for (i=0; i<secthead->s_num_reloc; i++) {
             RELOCATION_ENTRY relocent;
