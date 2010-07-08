@@ -6,7 +6,6 @@ YASM_ADD_UNIT_TEST(libyasmx_tests
     compose_test.cpp
     expr_test.cpp
     expr_util_test.cpp
-    file_combpath_test.cpp
     floatnum_test.cpp
     hamt_test.cpp
     intnum_test.cpp

@@ -66,7 +66,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Errwarns.cpp
     yasmx/Expr.cpp
     yasmx/Expr_util.cpp
-    yasmx/file.cpp
     yasmx/HeaderSearch.cpp
     yasmx/IdentifierTable.cpp
     yasmx/IncbinBytecode.cpp
