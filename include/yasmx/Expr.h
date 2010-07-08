@@ -370,6 +370,8 @@ public:
         return *this;
     }
 
+    Expr& operator= (const Expr& e);
+
     /// Copy constructor.
     /// @param e        expression to copy from
     Expr(const Expr& e);
@@ -613,7 +615,6 @@ private:
 
 /// Assign an expression.
 /// @param e        expression
-template <>
 inline Expr&
 Expr::operator= (const Expr& rhs)
 {
