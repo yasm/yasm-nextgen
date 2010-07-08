@@ -41,8 +41,9 @@ namespace arch
 
 class YASM_STD_EXPORT X86Opcode
 {
-    friend YAML::Emitter& operator<< (YAML::Emitter& out,
-                                      const X86Opcode& opcode);
+    friend YASM_STD_EXPORT
+        YAML::Emitter& operator<< (YAML::Emitter& out,
+                                   const X86Opcode& opcode);
 
 public:
     X86Opcode() : m_len(0) {}

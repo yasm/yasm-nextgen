@@ -44,8 +44,9 @@ namespace objfmt
 
 class YASM_STD_EXPORT UnwindCode : public Bytecode::Contents
 {
-    friend void AppendUnwindCode(BytecodeContainer& container,
-                                 std::auto_ptr<UnwindCode> uwcode);
+    friend YASM_STD_EXPORT
+        void AppendUnwindCode(BytecodeContainer& container,
+                              std::auto_ptr<UnwindCode> uwcode);
 
 public:
     // Operation codes
