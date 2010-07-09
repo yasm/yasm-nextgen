@@ -16,7 +16,11 @@ endif (WIN32)
 
 OPTION(BUILD_STATIC "Build a monolithic executable with no plugin support" OFF)
 
-OPTION(BUILD_TESTS "Enable unit tests" ON)
+if (WIN32)
+    OPTION(BUILD_TESTS "Enable unit tests" OFF)
+else (WIN32)
+    OPTION(BUILD_TESTS "Enable unit tests" ON)
+endif (WIN32)
 
 INCLUDE(InstallOptions.cmake)
 INCLUDE(YasmMacros)
@@ -26,11 +30,13 @@ OPTION(ENABLE_NLS "Enable message translations" OFF)
 OPTION(BUILD_TEST_COVERAGE "Enable test coverage if possible" ON)
 
 IF(BUILD_TESTS)
+    SET(GTEST_ROOT $ENV{GTEST_ROOT} CACHE PATH "GoogleMock root directory")
     FIND_PACKAGE(GTest)
     IF(GTEST_FOUND)
         INCLUDE_DIRECTORIES(${GTEST_INCLUDE_DIRS})
     ENDIF(GTEST_FOUND)
 
+    SET(GMOCK_ROOT $ENV{GMOCK_ROOT} CACHE PATH "GoogleMock root directory")
     FIND_PACKAGE(GMock)
     IF(GMOCK_FOUND)
         INCLUDE_DIRECTORIES(${GMOCK_INCLUDE_DIRS})
@@ -60,9 +66,7 @@ INCLUDE_DIRECTORIES(BEFORE
     ${CMAKE_BINARY_DIR}/include
     )
 
-IF(BUILD_TESTS)
-    INCLUDE(CTest)
-ENDIF(BUILD_TESTS)
+INCLUDE(CTest)
 #INCLUDE(Dart)
 
 set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "Yasm is a modular assembler")
