@@ -38,6 +38,8 @@ using namespace yasm;
 llvm::raw_ostream&
 yasm::operator<< (llvm::raw_ostream& os, const Bytes& bytes)
 {
+    if (bytes.empty())
+        return os;
     os.write(reinterpret_cast<const char*>(&bytes[0]), bytes.size());
     return os;
 }
