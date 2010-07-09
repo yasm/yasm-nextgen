@@ -172,7 +172,7 @@ NameValue::getId() const
 {
     assert (m_type == ID && "name/value not convertible to identifier");
     if (m_idstr[0] == m_id_prefix)
-        return m_idstr.substr(1);
+        return llvm::StringRef(m_idstr).substr(1);
     else
         return m_idstr;
 }
