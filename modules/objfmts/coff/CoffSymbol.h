@@ -103,8 +103,10 @@ struct YASM_STD_EXPORT CoffSymbol : public AssocData
                Diagnostic& diags,
                StringTable& strtab) const;
 
+    bool m_forcevis;                ///< force visibility in symbol table
     unsigned long m_index;          ///< assigned COFF symbol table index
     StorageClass m_sclass;          ///< storage class
+    unsigned int m_type;            ///< type
     AuxType m_auxtype;              ///< type of aux entries
     std::vector<AuxEntry> m_aux;    ///< aux entries
 };

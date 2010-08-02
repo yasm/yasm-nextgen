@@ -41,6 +41,7 @@
 #include "yasmx/Symbol.h"
 
 #include "modules/objfmts/coff/CoffSection.h"
+#include "modules/objfmts/coff/CoffSymbol.h"
 #include "SxData.h"
 
 
@@ -61,6 +62,25 @@ Win32Object::getDebugFormatKeywords()
 {
     static const char* keywords[] = {"null", "dwarf2", "cv8"};
     return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
+}
+
+void
+Win32Object::InitSymbols(llvm::StringRef parser)
+{
+    CoffObject::InitSymbols(parser);
+
+    // Define a @feat.00 symbol to notify linker about safeseh handling.
+    if (!isWin64())
+    {
+        SymbolRef feat00 = m_object.AppendSymbol("@feat.00");
+        feat00->DefineEqu(Expr(IntNum(1)));
+
+        std::auto_ptr<CoffSymbol>
+            coffsym(new CoffSymbol(CoffSymbol::SCL_STAT));
+        coffsym->m_forcevis = true;
+
+        feat00->AddAssocData(coffsym);
+    }
 }
 
 static inline void
@@ -174,9 +194,15 @@ Win32Object::DirSafeSEH(DirectiveInfo& info, Diagnostic& diags)
     SymbolRef sym = m_object.getSymbol(symname);
     sym->Use(source);
 
-    // Symbol must be externally visible, so force global.
-    sym->CheckedDeclare(Symbol::GLOBAL, name_nv.getValueRange().getBegin(),
-                        diags);
+    // Symbol must be externally visible and have a type of 0x20 (function)
+    CoffSymbol* coffsym = sym->getAssocData<CoffSymbol>();
+    if (!coffsym)
+    {
+        coffsym = new CoffSymbol(CoffSymbol::SCL_NULL);
+        sym->AddAssocData(std::auto_ptr<CoffSymbol>(coffsym));
+    }
+    coffsym->m_forcevis = true;
+    coffsym->m_type = 0x20;
 
     // Add symbol number to end of .sxdata section (creating if necessary)
     Section* sect = m_object.FindSection(".sxdata");

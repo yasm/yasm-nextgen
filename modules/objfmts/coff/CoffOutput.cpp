@@ -438,21 +438,26 @@ CoffOutput::CountSymbols()
          end = m_object.symbols_end(); i != end; ++i)
     {
         int vis = i->getVisibility();
+        CoffSymbol* coffsym = i->getAssocData<CoffSymbol>();
 
         // Don't output local syms unless outputting all syms
-        if (!m_all_syms && vis == Symbol::LOCAL && !i->isAbsoluteSymbol())
+        if (!m_all_syms && vis == Symbol::LOCAL && !i->isAbsoluteSymbol()
+            && !(coffsym && coffsym->m_forcevis))
             continue;
-
-        CoffSymbol* coffsym = i->getAssocData<CoffSymbol>();
 
         // Create basic coff symbol data if it doesn't already exist
         if (!coffsym)
         {
-            if (vis & (Symbol::EXTERN|Symbol::GLOBAL|Symbol::COMMON))
-                coffsym = new CoffSymbol(CoffSymbol::SCL_EXT);
-            else
-                coffsym = new CoffSymbol(CoffSymbol::SCL_STAT);
+            coffsym = new CoffSymbol(CoffSymbol::SCL_NULL);
             i->AddAssocData(std::auto_ptr<CoffSymbol>(coffsym));
+        }
+        // Update storage class based on visibility if not otherwise set.
+        if (coffsym->m_sclass == CoffSymbol::SCL_NULL)
+        {
+            if (vis & (Symbol::EXTERN|Symbol::GLOBAL|Symbol::COMMON))
+                coffsym->m_sclass = CoffSymbol::SCL_EXT;
+            else
+                coffsym->m_sclass = CoffSymbol::SCL_STAT;
         }
         coffsym->m_index = indx;
 
@@ -468,16 +473,15 @@ CoffOutput::OutputSymbolTable()
     for (Object::const_symbol_iterator i = m_object.symbols_begin(),
          end = m_object.symbols_end(); i != end; ++i)
     {
+        const CoffSymbol* coffsym = i->getAssocData<CoffSymbol>();
+
         // Don't output local syms unless outputting all syms
         if (!m_all_syms && i->getVisibility() == Symbol::LOCAL
-            && !i->isAbsoluteSymbol())
+            && !i->isAbsoluteSymbol() && !(coffsym && coffsym->m_forcevis))
             continue;
 
-        // Get symrec data
-        const CoffSymbol* coffsym = i->getAssocData<CoffSymbol>();
-        assert(coffsym != 0);
-
         Bytes& bytes = getScratch();
+        assert(coffsym != 0);
         coffsym->Write(bytes, *i, getDiagnostics(), m_strtab);
         m_os << bytes;
     }
@@ -506,6 +510,7 @@ void
 CoffObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
 {
     // Update file symbol filename
+    assert(m_file_coffsym != 0);
     m_file_coffsym->m_aux.resize(1);
     m_file_coffsym->m_aux[0].fname = m_object.getSourceFilename();
 

@@ -43,6 +43,7 @@ public:
     virtual ~Win32Object();
 
     virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
+    virtual void InitSymbols(llvm::StringRef parser);
 
     //virtual void InitSymbols(llvm::StringRef parser);
     //virtual void Read(const llvm::MemoryBuffer& in);

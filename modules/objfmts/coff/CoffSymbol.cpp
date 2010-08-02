@@ -47,8 +47,10 @@ using namespace yasm::objfmt;
 const char* CoffSymbol::key = "objfmt::coff::CoffSymbol";
 
 CoffSymbol::CoffSymbol(StorageClass sclass, AuxType auxtype)
-    : m_index(0)
+    : m_forcevis(false)
+    , m_index(0)
     , m_sclass(sclass)
+    , m_type(0)
     , m_auxtype(auxtype)
 {
     if (auxtype != AUX_NONE)
@@ -64,8 +66,10 @@ CoffSymbol::Write(YAML::Emitter& out) const
 {
     out << YAML::BeginMap;
     out << YAML::Key << "type" << YAML::Value << key;
+    out << YAML::Key << "force vis" << YAML::Value << m_forcevis;
     out << YAML::Key << "symtab index" << YAML::Value << m_index;
     out << YAML::Key << "sclass" << YAML::Value << static_cast<int>(m_sclass);
+    out << YAML::Key << "symbol type" << YAML::Value << m_type;
 
     out << YAML::Key << "aux type" << YAML::Value;
     switch (m_auxtype)
@@ -177,7 +181,7 @@ CoffSymbol::Write(Bytes& bytes,
     }
     Write32(bytes, value);          // value
     Write16(bytes, scnum);          // section number
-    Write16(bytes, 0);              // type is always zero (for now)
+    Write16(bytes, m_type);         // type
     Write8(bytes, m_sclass);        // storage class
     Write8(bytes, m_aux.size());    // number of aux entries
 
