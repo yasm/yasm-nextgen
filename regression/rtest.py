@@ -223,9 +223,11 @@ class Test(object):
 
         # Run yasm!
         start = time.time()
+        env = os.environ.copy()
+        env["YASM_TEST_SUITE"] = "1"
         proc = subprocess.Popen(yasmargs, bufsize=4096, executable=yasmexe,
                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
+                                stderr=subprocess.PIPE, env=env)
         (stdoutdata, stderrdata) = proc.communicate(self.inputfile)
         end = time.time()
 
