@@ -433,6 +433,7 @@ Assembler::Output(llvm::raw_fd_ostream& os,
     m_impl->m_objfmt->Output
         (os,
          !m_impl->m_dbgfmt_module->getKeyword().equals_lower("null"),
+         *m_impl->m_dbgfmt,
          diags);
 
     if (m_impl->m_dump_time == DUMP_AFTER_OUTPUT)

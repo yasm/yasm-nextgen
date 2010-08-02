@@ -56,7 +56,10 @@ Win64Object::~Win64Object()
 }
 
 void
-Win64Object::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
+Win64Object::Output(llvm::raw_fd_ostream& os,
+                    bool all_syms,
+                    DebugFormat& dbgfmt,
+                    Diagnostic& diags)
 {
     if (m_proc_frame.isValid())
     {
@@ -68,7 +71,7 @@ Win64Object::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
     // Force all syms for win64 because they're needed for relocations.
     // FIXME: Not *all* syms need to be output, only the ones needed for
     // relocation.  Find a way to do that someday.
-    Win32Object::Output(os, true, diags);
+    Win32Object::Output(os, true, dbgfmt, diags);
 }
 
 void

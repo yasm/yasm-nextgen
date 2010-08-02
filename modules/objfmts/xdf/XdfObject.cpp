@@ -307,7 +307,10 @@ XdfOutput::OutputSymbol(const Symbol& sym,
 }
 
 void
-XdfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
+XdfObject::Output(llvm::raw_fd_ostream& os,
+                  bool all_syms,
+                  DebugFormat& dbgfmt,
+                  Diagnostic& diags)
 {
     all_syms = true;   // force all syms into symbol table
 

@@ -68,6 +68,7 @@ public:
 #endif
     virtual void Output(llvm::raw_fd_ostream& os,
                         bool all_syms,
+                        DebugFormat& dbgfmt,
                         Diagnostic& diags);
 
     virtual Section* AddDefaultSection();

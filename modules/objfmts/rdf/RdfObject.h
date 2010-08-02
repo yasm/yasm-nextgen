@@ -53,7 +53,10 @@ public:
     void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
     void Read(const llvm::MemoryBuffer& in);
-    void Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags);
+    void Output(llvm::raw_fd_ostream& os,
+                bool all_syms,
+                DebugFormat& dbgfmt,
+                Diagnostic& diags);
 
     Section* AddDefaultSection();
     Section* AppendSection(llvm::StringRef name,

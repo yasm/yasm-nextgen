@@ -45,10 +45,11 @@ public:
 
     virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
-    //virtual void InitSymbols(llvm::StringRef parser);
-    //virtual void Read(const llvm::MemoryBuffer& in);
+    //virtual void InitSymbols()
+    //virtual void Read()
     virtual void Output(llvm::raw_fd_ostream& os,
                         bool all_syms,
+                        DebugFormat& dbgfmt,
                         Diagnostic& diags);
 
     static llvm::StringRef getName() { return "Win64"; }

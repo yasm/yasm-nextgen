@@ -45,9 +45,9 @@ public:
     virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
     virtual void InitSymbols(llvm::StringRef parser);
 
-    //virtual void InitSymbols(llvm::StringRef parser);
-    //virtual void Read(const llvm::MemoryBuffer& in);
-    //virtual void Output(std::ostream& os, bool all_syms, Diagnostic& diags);
+    //virtual void InitSymbols()
+    //virtual void Read()
+    //virtual void Output()
 
     static llvm::StringRef getName() { return "Win32"; }
     static llvm::StringRef getKeyword() { return "win32"; }

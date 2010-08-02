@@ -948,7 +948,10 @@ ElfAlignOutput(llvm::raw_fd_ostream& os, unsigned int align, Diagnostic& diags)
 }
 
 void
-ElfObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
+ElfObject::Output(llvm::raw_fd_ostream& os,
+                  bool all_syms,
+                  DebugFormat& dbgfmt,
+                  Diagnostic& diags)
 {
     StringTable shstrtab, strtab;
     unsigned int align = (m_config.cls == ELFCLASS32) ? 4 : 8;

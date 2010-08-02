@@ -38,6 +38,7 @@
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
+#include "yasmx/DebugFormat.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location_util.h"
@@ -507,7 +508,10 @@ CoffOutput::OutputSectionHeader(const Section& sect)
 }
 
 void
-CoffObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
+CoffObject::Output(llvm::raw_fd_ostream& os,
+                   bool all_syms,
+                   DebugFormat& dbgfmt,
+                   Diagnostic& diags)
 {
     // Update file symbol filename
     assert(m_file_coffsym != 0);
@@ -601,10 +605,8 @@ CoffObject::Output(llvm::raw_fd_ostream& os, bool all_syms, Diagnostic& diags)
 
     // flags
     unsigned int flags = 0;
-#if 0
-    if (String::NocaseEqual(object->dbgfmt, "null"))
+    if (dbgfmt.getModule().getKeyword().equals_lower("null"))
         flags |= F_LNNO;
-#endif
     if (!all_syms)
         flags |= F_LSYMS;
     if (m_machine != MACHINE_AMD64)

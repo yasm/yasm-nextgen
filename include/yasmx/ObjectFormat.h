@@ -45,6 +45,7 @@ namespace llvm { class MemoryBuffer; class raw_fd_ostream; }
 namespace yasm
 {
 
+class DebugFormat;
 class Diagnostic;
 class Directives;
 class Object;
@@ -88,11 +89,12 @@ public:
     /// @param os           output object file
     /// @param all_syms     if true, all symbols should be included in
     ///                     the object file
-    /// @param errwarns     error/warning set
+    /// @param dbgfmt       debugging format
     /// @param diags        diagnostic reporting
     /// @note Errors and warnings are stored into errwarns.
     virtual void Output(llvm::raw_fd_ostream& os,
                         bool all_syms,
+                        DebugFormat& dbgfmt,
                         Diagnostic& diags) = 0;
 
     /// Add a default section to an object.
