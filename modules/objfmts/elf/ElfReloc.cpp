@@ -116,6 +116,7 @@ ElfReloc::setWrt(SymbolRef wrt, size_t valsize)
         if (ElfSymbol* esym = m_sym->getAssocData<ElfSymbol>())
             esym->setType(STT_TLS);
     }
+    m_wrt = wrt;
     m_type = ssym->reloc;
     return true;
 }

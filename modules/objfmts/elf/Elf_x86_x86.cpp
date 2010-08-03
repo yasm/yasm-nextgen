@@ -222,7 +222,7 @@ ElfReloc_x86_x86::HandleAddend(IntNum* intn,
                                const ElfConfig& config,
                                unsigned int insn_start)
 {
-    if (m_type == R_386_GOTPC)
+    if (!m_wrt && m_type == R_386_GOTPC)
     {
         // Need fixup to the value position within the instruction.
         *intn += insn_start;

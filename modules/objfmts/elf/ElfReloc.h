@@ -80,6 +80,7 @@ public:
     void Write(Bytes& bytes, const ElfConfig& config);
 
 protected:
+    SymbolRef           m_wrt;
     ElfRelocationType   m_type;
     IntNum              m_addend;
 
