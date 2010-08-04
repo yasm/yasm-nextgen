@@ -94,7 +94,8 @@ enum CPUFeature
     CPU_FMA4,           // AMD Fused-Multiply-Add extensions
     CPU_F16C,           // Intel float-16 instructions
     CPU_FSGSBASE,       // Intel FSGSBASE instructions
-    CPU_RDRAND          // Intel RDRAND instruction
+    CPU_RDRAND,         // Intel RDRAND instruction
+    CPU_XSAVEOPT        // Intel XSAVEOPT instruction
 };
 
 class YASM_STD_EXPORT X86RegTmod

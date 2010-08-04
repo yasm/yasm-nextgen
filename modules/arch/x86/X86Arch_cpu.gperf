@@ -382,6 +382,8 @@ fsgsbase,	X86CpuSet,	CPU_FSGSBASE
 nofsgsbase,	X86CpuClear,	CPU_FSGSBASE
 rdrand,		X86CpuSet,	CPU_RDRAND
 nordrand,	X86CpuClear,	CPU_RDRAND
+xsaveopt,	X86CpuSet,	CPU_XSAVEOPT
+noxsaveopt,	X86CpuClear,	CPU_XSAVEOPT
 # Change NOP patterns
 basicnop,	X86Nop,	X86Arch::NOP_BASIC
 intelnop,	X86Nop,	X86Arch::NOP_INTEL
