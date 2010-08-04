@@ -32,6 +32,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
+#include "yasmx/Errwarns.h"
 
 
 namespace clang { class FileManager; class SourceManager; }
@@ -43,11 +44,18 @@ namespace yasm
 {
 
 class Arch;
+class ArchModule;
+class DebugFormat;
+class DebugFormatModule;
 class Diagnostic;
-class Errwarns;
 class HeaderSearch;
+class ListFormat;
+class ListFormatModule;
 class Object;
-class Preprocessor;
+class ObjectFormat;
+class ObjectFormatModule;
+class Parser;
+class ParserModule;
 
 /// An assembler.
 class YASM_LIB_EXPORT Assembler
@@ -133,31 +141,43 @@ public:
 
     /// Get the object.  Returns 0 until after assembly is successful.
     /// @return Object.
-    Object* getObject();
-
-    /// Get the preprocessor.
-    /// @return Preprocessor.
-    Preprocessor* getPreprocessor();
+    Object* getObject() { return m_object.get(); }
 
     /// Get the architecture.
     /// @return Architecture.
-    Arch* getArch();
+    Arch* getArch() { return m_arch.get(); }
 
     /// Get the error/warning set.
     /// @return Errwarns.
-    Errwarns* getErrwarns();
+    Errwarns* getErrwarns() { return &m_errwarns; }
 
     /// Get the object filename.  May return empty string if called prior
     /// to assemble() being called.
-    llvm::StringRef getObjectFilename() const;
+    llvm::StringRef getObjectFilename() const { return m_obj_filename; }
 
 private:
     Assembler(const Assembler&);                    // not implemented
     const Assembler& operator=(const Assembler&);   // not implemented
 
-    /// Pimpl
-    class Impl;
-    util::scoped_ptr<Impl> m_impl;
+    util::scoped_ptr<ArchModule> m_arch_module;
+    util::scoped_ptr<ParserModule> m_parser_module;
+    util::scoped_ptr<ObjectFormatModule> m_objfmt_module;
+    util::scoped_ptr<DebugFormatModule> m_dbgfmt_module;
+    util::scoped_ptr<ListFormatModule> m_listfmt_module;
+
+    util::scoped_ptr<Arch> m_arch;
+    util::scoped_ptr<Parser> m_parser;
+    util::scoped_ptr<ObjectFormat> m_objfmt;
+    util::scoped_ptr<DebugFormat> m_dbgfmt;
+    util::scoped_ptr<ListFormat> m_listfmt;
+
+    util::scoped_ptr<Object> m_object;
+
+    Errwarns m_errwarns;
+
+    std::string m_obj_filename;
+    std::string m_machine;
+    Assembler::ObjectDumpTime m_dump_time;
 };
 
 } // namespace yasm

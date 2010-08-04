@@ -58,55 +58,10 @@ public:
 };
 } // anonymous namespace
 
-namespace yasm {
-class Assembler::Impl
-{
-public:
-    Impl(llvm::StringRef arch_keyword,
-         llvm::StringRef objfmt_keyword,
-         Diagnostic& diags,
-         Assembler::ObjectDumpTime dump_time);
-    ~Impl();
-
-    bool Init(llvm::StringRef arch_keyword,
-              llvm::StringRef objfmt_keyword,
-              Diagnostic& diags);
-    bool setMachine(llvm::StringRef machine, Diagnostic& diags);
-    bool setParser(llvm::StringRef parser_keyword, Diagnostic& diags);
-    bool setDebugFormat(llvm::StringRef dbgfmt_keyword, Diagnostic& diags);
-    bool setListFormat(llvm::StringRef listfmt_keyword, Diagnostic& diags);
-    bool Assemble(clang::SourceManager& source_mgr,
-                  clang::FileManager& file_mgr,
-                  Diagnostic& diags,
-                  HeaderSearch& headers,
-                  bool warning_error);
-
-    util::scoped_ptr<ArchModule> m_arch_module;
-    util::scoped_ptr<ParserModule> m_parser_module;
-    util::scoped_ptr<ObjectFormatModule> m_objfmt_module;
-    util::scoped_ptr<DebugFormatModule> m_dbgfmt_module;
-    util::scoped_ptr<ListFormatModule> m_listfmt_module;
-
-    util::scoped_ptr<Arch> m_arch;
-    util::scoped_ptr<Parser> m_parser;
-    util::scoped_ptr<ObjectFormat> m_objfmt;
-    util::scoped_ptr<DebugFormat> m_dbgfmt;
-    util::scoped_ptr<ListFormat> m_listfmt;
-
-    util::scoped_ptr<Object> m_object;
-
-    Errwarns m_errwarns;
-
-    std::string m_obj_filename;
-    std::string m_machine;
-    Assembler::ObjectDumpTime m_dump_time;
-};
-} // namespace yasm
-
-Assembler::Impl::Impl(llvm::StringRef arch_keyword,
-                      llvm::StringRef objfmt_keyword,
-                      Diagnostic& diags,
-                      Assembler::ObjectDumpTime dump_time)
+Assembler::Assembler(llvm::StringRef arch_keyword,
+                     llvm::StringRef objfmt_keyword,
+                     Diagnostic& diags,
+                     Assembler::ObjectDumpTime dump_time)
     : m_arch_module(LoadModule<ArchModule>(arch_keyword).release()),
       m_parser_module(0),
       m_objfmt_module(LoadModule<ObjectFormatModule>(objfmt_keyword).release()),
@@ -144,18 +99,6 @@ Assembler::Impl::Impl(llvm::StringRef arch_keyword,
 
 }
 
-Assembler::Impl::~Impl()
-{
-}
-
-Assembler::Assembler(llvm::StringRef arch_keyword,
-                     llvm::StringRef objfmt_keyword,
-                     Diagnostic& diags,
-                     ObjectDumpTime dump_time)
-    : m_impl(new Impl(arch_keyword, objfmt_keyword, diags, dump_time))
-{
-}
-
 Assembler::~Assembler()
 {
 }
@@ -163,11 +106,11 @@ Assembler::~Assembler()
 void
 Assembler::setObjectFilename(llvm::StringRef obj_filename)
 {
-    m_impl->m_obj_filename = obj_filename;
+    m_obj_filename = obj_filename;
 }
 
 bool
-Assembler::Impl::setMachine(llvm::StringRef machine, Diagnostic& diags)
+Assembler::setMachine(llvm::StringRef machine, Diagnostic& diags)
 {
     if (!m_arch->setMachine(machine))
     {
@@ -182,13 +125,7 @@ Assembler::Impl::setMachine(llvm::StringRef machine, Diagnostic& diags)
 }
 
 bool
-Assembler::setMachine(llvm::StringRef machine, Diagnostic& diags)
-{
-    return m_impl->setMachine(machine, diags);
-}
-
-bool
-Assembler::Impl::setParser(llvm::StringRef parser_keyword, Diagnostic& diags)
+Assembler::setParser(llvm::StringRef parser_keyword, Diagnostic& diags)
 {
     // Ensure architecture supports parser.
     if (!m_arch->setParser(parser_keyword))
@@ -212,14 +149,7 @@ Assembler::Impl::setParser(llvm::StringRef parser_keyword, Diagnostic& diags)
 }
 
 bool
-Assembler::setParser(llvm::StringRef parser_keyword, Diagnostic& diags)
-{
-    return m_impl->setParser(parser_keyword, diags);
-}
-
-bool
-Assembler::Impl::setDebugFormat(llvm::StringRef dbgfmt_keyword,
-                                Diagnostic& diags)
+Assembler::setDebugFormat(llvm::StringRef dbgfmt_keyword, Diagnostic& diags)
 {
     // Check to see if the requested debug format is in the allowed list
     // for the active object format.
@@ -248,14 +178,7 @@ Assembler::Impl::setDebugFormat(llvm::StringRef dbgfmt_keyword,
 }
 
 bool
-Assembler::setDebugFormat(llvm::StringRef dbgfmt_keyword, Diagnostic& diags)
-{
-    return m_impl->setDebugFormat(dbgfmt_keyword, diags);
-}
-
-bool
-Assembler::Impl::setListFormat(llvm::StringRef listfmt_keyword,
-                               Diagnostic& diags)
+Assembler::setListFormat(llvm::StringRef listfmt_keyword, Diagnostic& diags)
 {
     std::auto_ptr<ListFormatModule> listfmt_module =
         LoadModule<ListFormatModule>(listfmt_keyword);
@@ -270,17 +193,11 @@ Assembler::Impl::setListFormat(llvm::StringRef listfmt_keyword,
 }
 
 bool
-Assembler::setListFormat(llvm::StringRef listfmt_keyword, Diagnostic& diags)
-{
-    return m_impl->setListFormat(listfmt_keyword, diags);
-}
-
-bool
-Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
-                          clang::FileManager& file_mgr,
-                          Diagnostic& diags,
-                          HeaderSearch& headers,
-                          bool warning_error)
+Assembler::Assemble(clang::SourceManager& source_mgr,
+                    clang::FileManager& file_mgr,
+                    Diagnostic& diags,
+                    HeaderSearch& headers,
+                    bool warning_error)
 {
     llvm::StringRef in_filename =
         source_mgr.getBuffer(source_mgr.getMainFileID())->getBufferIdentifier();
@@ -414,59 +331,23 @@ Assembler::Impl::Assemble(clang::SourceManager& source_mgr,
 }
 
 bool
-Assembler::Assemble(clang::SourceManager& source_mgr,
-                    clang::FileManager& file_mgr,
-                    Diagnostic& diags,
-                    HeaderSearch& headers,
-                    bool warning_error)
-{
-    return m_impl->Assemble(source_mgr, file_mgr, diags, headers,
-                            warning_error);
-}
-
-bool
 Assembler::Output(llvm::raw_fd_ostream& os,
                   Diagnostic& diags,
                   bool warning_error)
 {
     // Write the object file
-    m_impl->m_objfmt->Output
-        (os,
-         !m_impl->m_dbgfmt_module->getKeyword().equals_lower("null"),
-         *m_impl->m_dbgfmt,
-         diags);
+    m_objfmt->Output(os,
+                     !m_dbgfmt_module->getKeyword().equals_lower("null"),
+                     *m_dbgfmt,
+                     diags);
 
-    if (m_impl->m_dump_time == DUMP_AFTER_OUTPUT)
-        m_impl->m_object->Dump();
+    if (m_dump_time == DUMP_AFTER_OUTPUT)
+        m_object->Dump();
 
     if (diags.hasErrorOccurred())
         return false;
-    if (m_impl->m_errwarns.getNumErrors(warning_error) > 0)
+    if (m_errwarns.getNumErrors(warning_error) > 0)
         return false;
 
     return true;
-}
-
-Object*
-Assembler::getObject()
-{
-    return m_impl->m_object.get();
-}
-
-Arch*
-Assembler::getArch()
-{
-    return m_impl->m_arch.get();
-}
-
-Errwarns*
-Assembler::getErrwarns()
-{
-    return &m_impl->m_errwarns;
-}
-
-llvm::StringRef
-Assembler::getObjectFilename() const
-{
-    return m_impl->m_obj_filename;
 }
