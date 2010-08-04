@@ -814,46 +814,7 @@ ElfOutput::ConvertValueToBytes(Value& value,
                                 warn);
     return true;
 }
-#if 0
-static int
-elf_objfmt_create_dbg_secthead(yasm_section *sect, /*@null@*/ void *d)
-{
-    /*@null@*/ elf_objfmt_output_info *info = (elf_objfmt_output_info *)d;
-    elf_secthead *shead;
-    elf_section_type type=SHT_PROGBITS;
-    elf_size entsize=0;
-    const char *sectname;
-    /*@dependent@*/ yasm_symrec *sym;
-    elf_strtab_entry *name;
 
-    shead = yasm_section_get_data(sect, &elf_section_data);
-    if (shead)
-        return 0;   /* only create new secthead if missing */
-
-    sectname = yasm_section_get_name(sect);
-    name = elf_strtab_append_str(info->objfmt_elf->shstrtab, sectname);
-
-    if (yasm__strcasecmp(sectname, ".stab")==0) {
-        entsize = 12;
-    } else if (yasm__strcasecmp(sectname, ".stabstr")==0) {
-        type = SHT_STRTAB;
-    } else if (yasm__strncasecmp(sectname, ".debug_", 7)==0) {
-        ;
-    } else
-        yasm_internal_error(N_("Unrecognized section without data"));
-
-    shead = elf_secthead_create(name, type, 0, 0, 0);
-    elf_secthead_set_entsize(shead, entsize);
-
-    sym = yasm_symtab_define_label(info->object->symtab, sectname,
-                                   yasm_section_bcs_first(sect), 1, 0);
-    elf_secthead_set_sym(shead, sym);
-
-    yasm_section_add_data(sect, &elf_section_data, shead);
-
-    return 0;
-}
-#endif
 void
 ElfOutput::OutputSection(Section& sect,
                          unsigned int sindex,
@@ -970,12 +931,6 @@ ElfObject::Output(llvm::raw_fd_ostream& os,
         return;
     }
 
-    // Create missing section headers
-#if 0
-    if (yasm_object_sections_traverse(object, &info,
-                                      elf_objfmt_create_dbg_secthead))
-        return;
-#endif
     // Finalize symbol table, handling any objfmt-specific extensions given
     // during parse phase.  If all_syms is true, add all local symbols and
     // include name information.
