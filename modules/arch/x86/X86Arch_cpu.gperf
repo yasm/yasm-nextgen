@@ -155,7 +155,6 @@ X86CpuAMD(X86Arch::CpuMask& cpu, X86Arch::NopFormat& nop, unsigned int data)
     {
         cpu.set(CPU_XOP);
         cpu.set(CPU_FMA4);
-        cpu.set(CPU_CVT16);
     }
     if (data >= PROC_k10)
         cpu.set(CPU_SSE4a);
@@ -377,8 +376,6 @@ xop,		X86CpuSet,	CPU_XOP
 noxop,		X86CpuClear,	CPU_XOP
 fma4,		X86CpuSet,	CPU_FMA4
 nofma4,		X86CpuClear,	CPU_FMA4
-cvt16,		X86CpuSet,	CPU_CVT16
-nocvt16,	X86CpuClear,	CPU_CVT16
 # Change NOP patterns
 basicnop,	X86Nop,	X86Arch::NOP_BASIC
 intelnop,	X86Nop,	X86Arch::NOP_INTEL
