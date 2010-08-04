@@ -376,6 +376,12 @@ xop,		X86CpuSet,	CPU_XOP
 noxop,		X86CpuClear,	CPU_XOP
 fma4,		X86CpuSet,	CPU_FMA4
 nofma4,		X86CpuClear,	CPU_FMA4
+f16c,		X86CpuSet,	CPU_F16C
+nof16c,		X86CpuClear,	CPU_F16C
+fsgsbase,	X86CpuSet,	CPU_FSGSBASE
+nofsgsbase,	X86CpuClear,	CPU_FSGSBASE
+rdrand,		X86CpuSet,	CPU_RDRAND
+nordrand,	X86CpuClear,	CPU_RDRAND
 # Change NOP patterns
 basicnop,	X86Nop,	X86Arch::NOP_BASIC
 intelnop,	X86Nop,	X86Arch::NOP_INTEL

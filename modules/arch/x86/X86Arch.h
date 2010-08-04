@@ -91,7 +91,10 @@ enum CPUFeature
     CPU_CLMUL,          // PCLMULQDQ instruction
     CPU_MOVBE,          // MOVBE instruction
     CPU_XOP,            // AMD XOP extensions
-    CPU_FMA4            // AMD Fused-Multiply-Add extensions
+    CPU_FMA4,           // AMD Fused-Multiply-Add extensions
+    CPU_F16C,           // Intel float-16 instructions
+    CPU_FSGSBASE,       // Intel FSGSBASE instructions
+    CPU_RDRAND          // Intel RDRAND instruction
 };
 
 class YASM_STD_EXPORT X86RegTmod
