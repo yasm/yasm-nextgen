@@ -93,12 +93,12 @@ class YASM_STD_EXPORT X86SegmentRegister : public SegmentRegister
 public:
     enum Type
     {
-        ES = 0,
-        CS,
-        SS,
-        DS,
-        FS,
-        GS,
+        kES = 0,
+        kCS,
+        kSS,
+        kDS,
+        kFS,
+        kGS,
         TYPE_COUNT
     };
 

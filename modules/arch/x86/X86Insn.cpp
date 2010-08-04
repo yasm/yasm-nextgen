@@ -674,27 +674,27 @@ X86Insn::MatchOperand(const Operand& op, const X86InfoOperand& info_op,
                 return false;
             break;
         case OPT_CS:
-            if (!segreg || segreg->isNot(X86SegmentRegister::CS))
+            if (!segreg || segreg->isNot(X86SegmentRegister::kCS))
                 return false;
             break;
         case OPT_DS:
-            if (!segreg || segreg->isNot(X86SegmentRegister::DS))
+            if (!segreg || segreg->isNot(X86SegmentRegister::kDS))
                 return false;
             break;
         case OPT_ES:
-            if (!segreg || segreg->isNot(X86SegmentRegister::ES))
+            if (!segreg || segreg->isNot(X86SegmentRegister::kES))
                 return false;
             break;
         case OPT_FS:
-            if (!segreg || segreg->isNot(X86SegmentRegister::FS))
+            if (!segreg || segreg->isNot(X86SegmentRegister::kFS))
                 return false;
             break;
         case OPT_GS:
-            if (!segreg || segreg->isNot(X86SegmentRegister::GS))
+            if (!segreg || segreg->isNot(X86SegmentRegister::kGS))
                 return false;
             break;
         case OPT_SS:
-            if (!segreg || segreg->isNot(X86SegmentRegister::SS))
+            if (!segreg || segreg->isNot(X86SegmentRegister::kSS))
                 return false;
             break;
         case OPT_CR4:
@@ -1317,8 +1317,8 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
                     else if (m_default_rel &&
                              !m_x86_ea->m_not_pc_rel &&
                              (!segreg ||
-                              (segreg->isNot(X86SegmentRegister::FS) &&
-                               segreg->isNot(X86SegmentRegister::GS))) &&
+                              (segreg->isNot(X86SegmentRegister::kFS) &&
+                               segreg->isNot(X86SegmentRegister::kGS))) &&
                              !m_x86_ea->m_disp.getAbs()->Contains(ExprTerm::REG))
                         // Enable default PC-rel if no regs and segreg
                         // is not FS or GS.
