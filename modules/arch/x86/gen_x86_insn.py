@@ -321,8 +321,6 @@ class GroupForm(object):
         opcodes_str.extend(["0", "0", "0"])
         opcodes_str = "{" + ', '.join(opcodes_str[0:3]) + "}"
 
-        cpus_str = "|".join("CPU_%s" % x for x in sorted(self.cpu))
-
         if len(self.modifiers) > 3:
             raise ValueError("too many modifiers: %s" % (self.modifiers,))
 
@@ -332,7 +330,7 @@ class GroupForm(object):
                 raise ValueError("too many CPUs: %s" % (self.cpu,))
 
             # Ensure CPUs initializer string is at least 3 long
-            cpus_str.extend("CPU_%s" % x for x in sorted(self.cpu))
+            cpus_str.extend("X86Arch::CPU_%s" % x for x in sorted(self.cpu))
 
         # Ensure cpus initializer string is 3 long; 0=CPU_Any
         cpus_str.extend(["0", "0", "0"])
@@ -476,7 +474,7 @@ class Insn(object):
         if self.cpu is not None:
             if len(self.cpu) > 3:
                 raise ValueError("too many CPUs: %s" % (self.cpu,))
-            cpus_str.extend("CPU_%s" % x for x in sorted(self.cpu))
+            cpus_str.extend("X86Arch::CPU_%s" % x for x in sorted(self.cpu))
 
         # Ensure cpus initializer string is 3 long
         cpus_str.extend(["0", "0", "0"])

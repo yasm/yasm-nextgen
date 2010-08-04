@@ -1744,75 +1744,75 @@ CpuFindReverse(unsigned int cpu0, unsigned int cpu1, unsigned int cpu2)
 {
     std::string s;
     llvm::raw_string_ostream cpuname(s);
-    std::bitset<64> cpu;
+    X86Arch::CpuMask cpu;
 
     cpu.set(cpu0);
     cpu.set(cpu1);
     cpu.set(cpu2);
 
-    if (cpu[CPU_Prot])
+    if (cpu[X86Arch::CPU_Prot])
         cpuname << " Protected";
-    if (cpu[CPU_Undoc])
+    if (cpu[X86Arch::CPU_Undoc])
         cpuname << " Undocumented";
-    if (cpu[CPU_Obs])
+    if (cpu[X86Arch::CPU_Obs])
         cpuname << " Obsolete";
-    if (cpu[CPU_Priv])
+    if (cpu[X86Arch::CPU_Priv])
         cpuname << " Privileged";
 
-    if (cpu[CPU_FPU])
+    if (cpu[X86Arch::CPU_FPU])
         cpuname << " FPU";
-    if (cpu[CPU_MMX])
+    if (cpu[X86Arch::CPU_MMX])
         cpuname << " MMX";
-    if (cpu[CPU_SSE])
+    if (cpu[X86Arch::CPU_SSE])
         cpuname << " SSE";
-    if (cpu[CPU_SSE2])
+    if (cpu[X86Arch::CPU_SSE2])
         cpuname << " SSE2";
-    if (cpu[CPU_SSE3])
+    if (cpu[X86Arch::CPU_SSE3])
         cpuname << " SSE3";
-    if (cpu[CPU_3DNow])
+    if (cpu[X86Arch::CPU_3DNow])
         cpuname << " 3DNow";
-    if (cpu[CPU_Cyrix])
+    if (cpu[X86Arch::CPU_Cyrix])
         cpuname << " Cyrix";
-    if (cpu[CPU_AMD])
+    if (cpu[X86Arch::CPU_AMD])
         cpuname << " AMD";
-    if (cpu[CPU_SMM])
+    if (cpu[X86Arch::CPU_SMM])
         cpuname << " SMM";
-    if (cpu[CPU_SVM])
+    if (cpu[X86Arch::CPU_SVM])
         cpuname << " SVM";
-    if (cpu[CPU_PadLock])
+    if (cpu[X86Arch::CPU_PadLock])
         cpuname << " PadLock";
-    if (cpu[CPU_EM64T])
+    if (cpu[X86Arch::CPU_EM64T])
         cpuname << " EM64T";
-    if (cpu[CPU_SSSE3])
+    if (cpu[X86Arch::CPU_SSSE3])
         cpuname << " SSSE3";
-    if (cpu[CPU_SSE41])
+    if (cpu[X86Arch::CPU_SSE41])
         cpuname << " SSE4.1";
-    if (cpu[CPU_SSE42])
+    if (cpu[X86Arch::CPU_SSE42])
         cpuname << " SSE4.2";
 
-    if (cpu[CPU_186])
+    if (cpu[X86Arch::CPU_186])
         cpuname << " 186";
-    if (cpu[CPU_286])
+    if (cpu[X86Arch::CPU_286])
         cpuname << " 286";
-    if (cpu[CPU_386])
+    if (cpu[X86Arch::CPU_386])
         cpuname << " 386";
-    if (cpu[CPU_486])
+    if (cpu[X86Arch::CPU_486])
         cpuname << " 486";
-    if (cpu[CPU_586])
+    if (cpu[X86Arch::CPU_586])
         cpuname << " 586";
-    if (cpu[CPU_686])
+    if (cpu[X86Arch::CPU_686])
         cpuname << " 686";
-    if (cpu[CPU_P3])
+    if (cpu[X86Arch::CPU_P3])
         cpuname << " P3";
-    if (cpu[CPU_P4])
+    if (cpu[X86Arch::CPU_P4])
         cpuname << " P4";
-    if (cpu[CPU_IA64])
+    if (cpu[X86Arch::CPU_IA64])
         cpuname << " IA64";
-    if (cpu[CPU_K6])
+    if (cpu[X86Arch::CPU_K6])
         cpuname << " K6";
-    if (cpu[CPU_Athlon])
+    if (cpu[X86Arch::CPU_Athlon])
         cpuname << " Athlon";
-    if (cpu[CPU_Hammer])
+    if (cpu[X86Arch::CPU_Hammer])
         cpuname << " Hammer";
 
     cpuname.flush();

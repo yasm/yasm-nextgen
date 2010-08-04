@@ -47,59 +47,6 @@ namespace arch
 
 class X86RegisterGroup;
 
-// Available CPU feature flags
-enum CPUFeature
-{
-    CPU_Any = 0,        // Any old cpu will do
-    CPU_086 = CPU_Any,
-    CPU_186,            // i186 or better required
-    CPU_286,            // i286 or better required
-    CPU_386,            // i386 or better required
-    CPU_486,            // i486 or better required
-    CPU_586,            // i585 or better required
-    CPU_686,            // i686 or better required
-    CPU_P3,             // Pentium3 or better required
-    CPU_P4,             // Pentium4 or better required
-    CPU_IA64,           // IA-64 or better required
-    CPU_K6,             // AMD K6 or better required
-    CPU_Athlon,         // AMD Athlon or better required
-    CPU_Hammer,         // AMD Sledgehammer or better required
-    CPU_FPU,            // FPU support required
-    CPU_MMX,            // MMX support required
-    CPU_SSE,            // Streaming SIMD extensions required
-    CPU_SSE2,           // Streaming SIMD extensions 2 required
-    CPU_SSE3,           // Streaming SIMD extensions 3 required
-    CPU_3DNow,          // 3DNow! support required
-    CPU_Cyrix,          // Cyrix-specific instruction
-    CPU_AMD,            // AMD-specific inst. (older than K6)
-    CPU_SMM,            // System Management Mode instruction
-    CPU_Prot,           // Protected mode only instruction
-    CPU_Undoc,          // Undocumented instruction
-    CPU_Obs,            // Obsolete instruction
-    CPU_Priv,           // Priveleged instruction
-    CPU_SVM,            // Secure Virtual Machine instruction
-    CPU_PadLock,        // VIA PadLock instruction
-    CPU_EM64T,          // Intel EM64T or better
-    CPU_SSSE3,          // Streaming SIMD extensions 3 required
-    CPU_SSE41,          // Streaming SIMD extensions 4.1 required
-    CPU_SSE42,          // Streaming SIMD extensions 4.2 required
-    CPU_SSE4a,          // AMD Streaming SIMD extensions 4a required
-    CPU_XSAVE,          // Intel XSAVE instruction
-    CPU_AVX,            // Intel Advanced Vector Extensions
-    CPU_FMA,            // Intel Fused-Multiply-Add Extensions
-    CPU_AES,            // AES instruction
-    CPU_CLMUL,          // PCLMULQDQ instruction
-    CPU_MOVBE,          // MOVBE instruction
-    CPU_XOP,            // AMD XOP extensions
-    CPU_FMA4,           // AMD Fused-Multiply-Add extensions
-    CPU_F16C,           // Intel float-16 instructions
-    CPU_FSGSBASE,       // Intel FSGSBASE instructions
-    CPU_RDRAND,         // Intel RDRAND instruction
-    CPU_XSAVEOPT,       // Intel XSAVEOPT instruction
-    CPU_EPTVPID,        // Intel INVEPT, INVVPID instructions
-    CPU_SMX             // Intel SMX instruction (GETSEC)
-};
-
 class YASM_STD_EXPORT X86RegTmod
 {
 public:
@@ -140,7 +87,60 @@ private:
 class YASM_STD_EXPORT X86Arch : public Arch
 {
 public:
+    // Available CPU feature flags
+    enum CpuFeature
+    {
+        CPU_Any = 0,        // Any old cpu will do
+        CPU_086 = CPU_Any,
+        CPU_186,            // i186 or better required
+        CPU_286,            // i286 or better required
+        CPU_386,            // i386 or better required
+        CPU_486,            // i486 or better required
+        CPU_586,            // i585 or better required
+        CPU_686,            // i686 or better required
+        CPU_P3,             // Pentium3 or better required
+        CPU_P4,             // Pentium4 or better required
+        CPU_IA64,           // IA-64 or better required
+        CPU_K6,             // AMD K6 or better required
+        CPU_Athlon,         // AMD Athlon or better required
+        CPU_Hammer,         // AMD Sledgehammer or better required
+        CPU_FPU,            // FPU support required
+        CPU_MMX,            // MMX support required
+        CPU_SSE,            // Streaming SIMD extensions required
+        CPU_SSE2,           // Streaming SIMD extensions 2 required
+        CPU_SSE3,           // Streaming SIMD extensions 3 required
+        CPU_3DNow,          // 3DNow! support required
+        CPU_Cyrix,          // Cyrix-specific instruction
+        CPU_AMD,            // AMD-specific inst. (older than K6)
+        CPU_SMM,            // System Management Mode instruction
+        CPU_Prot,           // Protected mode only instruction
+        CPU_Undoc,          // Undocumented instruction
+        CPU_Obs,            // Obsolete instruction
+        CPU_Priv,           // Priveleged instruction
+        CPU_SVM,            // Secure Virtual Machine instruction
+        CPU_PadLock,        // VIA PadLock instruction
+        CPU_EM64T,          // Intel EM64T or better
+        CPU_SSSE3,          // Streaming SIMD extensions 3 required
+        CPU_SSE41,          // Streaming SIMD extensions 4.1 required
+        CPU_SSE42,          // Streaming SIMD extensions 4.2 required
+        CPU_SSE4a,          // AMD Streaming SIMD extensions 4a required
+        CPU_XSAVE,          // Intel XSAVE instruction
+        CPU_AVX,            // Intel Advanced Vector Extensions
+        CPU_FMA,            // Intel Fused-Multiply-Add Extensions
+        CPU_AES,            // AES instruction
+        CPU_CLMUL,          // PCLMULQDQ instruction
+        CPU_MOVBE,          // MOVBE instruction
+        CPU_XOP,            // AMD XOP extensions
+        CPU_FMA4,           // AMD Fused-Multiply-Add extensions
+        CPU_F16C,           // Intel float-16 instructions
+        CPU_FSGSBASE,       // Intel FSGSBASE instructions
+        CPU_RDRAND,         // Intel RDRAND instruction
+        CPU_XSAVEOPT,       // Intel XSAVEOPT instruction
+        CPU_EPTVPID,        // Intel INVEPT, INVVPID instructions
+        CPU_SMX             // Intel SMX instruction (GETSEC)
+    };
     typedef std::bitset<64> CpuMask;
+
     enum ParserSelect
     {
         PARSER_NASM = 0,

@@ -59,80 +59,80 @@ X86CpuIntel(X86Arch::CpuMask& cpu, X86Arch::NopFormat& nop, unsigned int data)
 {
     cpu.reset();
 
-    cpu.set(CPU_Priv);
+    cpu.set(X86Arch::CPU_Priv);
     if (data >= PROC_286)
-        cpu.set(CPU_Prot);
+        cpu.set(X86Arch::CPU_Prot);
     if (data >= PROC_386)
-        cpu.set(CPU_SMM);
+        cpu.set(X86Arch::CPU_SMM);
     if (data >= PROC_sandybridge)
-        cpu.set(CPU_AVX);
+        cpu.set(X86Arch::CPU_AVX);
     if (data >= PROC_westmere)
     {
-        cpu.set(CPU_AES);
-        cpu.set(CPU_CLMUL);
+        cpu.set(X86Arch::CPU_AES);
+        cpu.set(X86Arch::CPU_CLMUL);
     }
     if (data >= PROC_nehalem)
     {
-        cpu.set(CPU_SSE42);
-        cpu.set(CPU_XSAVE);
+        cpu.set(X86Arch::CPU_SSE42);
+        cpu.set(X86Arch::CPU_XSAVE);
     }
     if (data >= PROC_penryn)
-        cpu.set(CPU_SSE41);
+        cpu.set(X86Arch::CPU_SSE41);
     if (data >= PROC_conroe)
-        cpu.set(CPU_SSSE3);
+        cpu.set(X86Arch::CPU_SSSE3);
     if (data >= PROC_prescott)
-        cpu.set(CPU_SSE3);
+        cpu.set(X86Arch::CPU_SSE3);
     if (data >= PROC_p4)
-        cpu.set(CPU_SSE2);
+        cpu.set(X86Arch::CPU_SSE2);
     if (data >= PROC_p3)
-        cpu.set(CPU_SSE);
+        cpu.set(X86Arch::CPU_SSE);
     if (data >= PROC_p2)
-        cpu.set(CPU_MMX);
+        cpu.set(X86Arch::CPU_MMX);
     if (data >= PROC_486)
-        cpu.set(CPU_FPU);
+        cpu.set(X86Arch::CPU_FPU);
     if (data >= PROC_prescott)
-        cpu.set(CPU_EM64T);
+        cpu.set(X86Arch::CPU_EM64T);
 
     if (data >= PROC_p4)
-        cpu.set(CPU_P4);
+        cpu.set(X86Arch::CPU_P4);
     if (data >= PROC_p3)
-        cpu.set(CPU_P3);
+        cpu.set(X86Arch::CPU_P3);
     if (data >= PROC_686)
-        cpu.set(CPU_686);
+        cpu.set(X86Arch::CPU_686);
     if (data >= PROC_586)
-        cpu.set(CPU_586);
+        cpu.set(X86Arch::CPU_586);
     if (data >= PROC_486)
-        cpu.set(CPU_486);
+        cpu.set(X86Arch::CPU_486);
     if (data >= PROC_386)
-        cpu.set(CPU_386);
+        cpu.set(X86Arch::CPU_386);
     if (data >= PROC_286)
-        cpu.set(CPU_286);
+        cpu.set(X86Arch::CPU_286);
     if (data >= PROC_186)
-        cpu.set(CPU_186);
-    cpu.set(CPU_086);
+        cpu.set(X86Arch::CPU_186);
+    cpu.set(X86Arch::CPU_086);
 }
 
 static void
 X86CpuIA64(X86Arch::CpuMask& cpu, X86Arch::NopFormat& nop, unsigned int data)
 {
     cpu.reset();
-    cpu.set(CPU_Priv);
-    cpu.set(CPU_Prot);
-    cpu.set(CPU_SMM);
-    cpu.set(CPU_SSE2);
-    cpu.set(CPU_SSE);
-    cpu.set(CPU_MMX);
-    cpu.set(CPU_FPU);
-    cpu.set(CPU_IA64);
-    cpu.set(CPU_P4);
-    cpu.set(CPU_P3);
-    cpu.set(CPU_686);
-    cpu.set(CPU_586);
-    cpu.set(CPU_486);
-    cpu.set(CPU_386);
-    cpu.set(CPU_286);
-    cpu.set(CPU_186);
-    cpu.set(CPU_086);
+    cpu.set(X86Arch::CPU_Priv);
+    cpu.set(X86Arch::CPU_Prot);
+    cpu.set(X86Arch::CPU_SMM);
+    cpu.set(X86Arch::CPU_SSE2);
+    cpu.set(X86Arch::CPU_SSE);
+    cpu.set(X86Arch::CPU_MMX);
+    cpu.set(X86Arch::CPU_FPU);
+    cpu.set(X86Arch::CPU_IA64);
+    cpu.set(X86Arch::CPU_P4);
+    cpu.set(X86Arch::CPU_P3);
+    cpu.set(X86Arch::CPU_686);
+    cpu.set(X86Arch::CPU_586);
+    cpu.set(X86Arch::CPU_486);
+    cpu.set(X86Arch::CPU_386);
+    cpu.set(X86Arch::CPU_286);
+    cpu.set(X86Arch::CPU_186);
+    cpu.set(X86Arch::CPU_086);
 }
 
 #define PROC_bulldozer	11
@@ -147,40 +147,40 @@ X86CpuAMD(X86Arch::CpuMask& cpu, X86Arch::NopFormat& nop, unsigned int data)
 {
     cpu.reset();
 
-    cpu.set(CPU_Priv);
-    cpu.set(CPU_Prot);
-    cpu.set(CPU_SMM);
-    cpu.set(CPU_3DNow);
+    cpu.set(X86Arch::CPU_Priv);
+    cpu.set(X86Arch::CPU_Prot);
+    cpu.set(X86Arch::CPU_SMM);
+    cpu.set(X86Arch::CPU_3DNow);
     if (data >= PROC_bulldozer)
     {
-        cpu.set(CPU_XOP);
-        cpu.set(CPU_FMA4);
+        cpu.set(X86Arch::CPU_XOP);
+        cpu.set(X86Arch::CPU_FMA4);
     }
     if (data >= PROC_k10)
-        cpu.set(CPU_SSE4a);
+        cpu.set(X86Arch::CPU_SSE4a);
     if (data >= PROC_venice)
-        cpu.set(CPU_SSE3);
+        cpu.set(X86Arch::CPU_SSE3);
     if (data >= PROC_hammer)
-        cpu.set(CPU_SSE2);
+        cpu.set(X86Arch::CPU_SSE2);
     if (data >= PROC_k7)
-        cpu.set(CPU_SSE);
+        cpu.set(X86Arch::CPU_SSE);
     if (data >= PROC_k6)
-        cpu.set(CPU_MMX);
-    cpu.set(CPU_FPU);
+        cpu.set(X86Arch::CPU_MMX);
+    cpu.set(X86Arch::CPU_FPU);
 
     if (data >= PROC_hammer)
-        cpu.set(CPU_Hammer);
+        cpu.set(X86Arch::CPU_Hammer);
     if (data >= PROC_k7)
-        cpu.set(CPU_Athlon);
+        cpu.set(X86Arch::CPU_Athlon);
     if (data >= PROC_k6)
-        cpu.set(CPU_K6);
-    cpu.set(CPU_686);
-    cpu.set(CPU_586);
-    cpu.set(CPU_486);
-    cpu.set(CPU_386);
-    cpu.set(CPU_286);
-    cpu.set(CPU_186);
-    cpu.set(CPU_086);
+        cpu.set(X86Arch::CPU_K6);
+    cpu.set(X86Arch::CPU_686);
+    cpu.set(X86Arch::CPU_586);
+    cpu.set(X86Arch::CPU_486);
+    cpu.set(X86Arch::CPU_386);
+    cpu.set(X86Arch::CPU_286);
+    cpu.set(X86Arch::CPU_186);
+    cpu.set(X86Arch::CPU_086);
 }
 
 static void
@@ -200,8 +200,8 @@ X86CpuSetSSE4(X86Arch::CpuMask& cpu,
               X86Arch::NopFormat& nop,
               unsigned int data)
 {
-    cpu.set(CPU_SSE41);
-    cpu.set(CPU_SSE42);
+    cpu.set(X86Arch::CPU_SSE41);
+    cpu.set(X86Arch::CPU_SSE42);
 }
 
 static void
@@ -209,8 +209,8 @@ X86CpuClearSSE4(X86Arch::CpuMask& cpu,
                 X86Arch::NopFormat& nop,
                 unsigned int data)
 {
-    cpu.reset(CPU_SSE41);
-    cpu.reset(CPU_SSE42);
+    cpu.reset(X86Arch::CPU_SSE41);
+    cpu.reset(X86Arch::CPU_SSE42);
 }
 
 static void
@@ -302,92 +302,92 @@ sandybridge,	X86CpuIntel,	PROC_sandybridge
 # Features have "no" versions to disable them, and only set/reset the
 # specific feature being changed.  All other bits are left alone.
 #
-fpu,		X86CpuSet,	CPU_FPU
-nofpu,		X86CpuClear,	CPU_FPU
-mmx,		X86CpuSet,	CPU_MMX
-nommx,		X86CpuClear,	CPU_MMX
-sse,		X86CpuSet,	CPU_SSE
-nosse,		X86CpuClear,	CPU_SSE
-sse2,		X86CpuSet,	CPU_SSE2
-nosse2,		X86CpuClear,	CPU_SSE2
-sse3,		X86CpuSet,	CPU_SSE3
-nosse3,		X86CpuClear,	CPU_SSE3
-#pni,		X86CpuSet,	CPU_PNI
-#nopni,		X86CpuClear,	CPU_PNI
-3dnow,		X86CpuSet,	CPU_3DNow
-no3dnow,	X86CpuClear,	CPU_3DNow
-cyrix,		X86CpuSet,	CPU_Cyrix
-nocyrix,	X86CpuClear,	CPU_Cyrix
-amd,		X86CpuSet,	CPU_AMD
-noamd,		X86CpuClear,	CPU_AMD
-smm,		X86CpuSet,	CPU_SMM
-nosmm,		X86CpuClear,	CPU_SMM
-prot,		X86CpuSet,	CPU_Prot
-noprot,		X86CpuClear,	CPU_Prot
-protected,	X86CpuSet,	CPU_Prot
-noprotected,	X86CpuClear,	CPU_Prot
-undoc,		X86CpuSet,	CPU_Undoc
-noundoc,	X86CpuClear,	CPU_Undoc
-undocumented,	X86CpuSet,	CPU_Undoc
-noundocumented,	X86CpuClear,	CPU_Undoc
-obs,		X86CpuSet,	CPU_Obs
-noobs,		X86CpuClear,	CPU_Obs
-obsolete,	X86CpuSet,	CPU_Obs
-noobsolete,	X86CpuClear,	CPU_Obs
-priv,		X86CpuSet,	CPU_Priv
-nopriv,		X86CpuClear,	CPU_Priv
-privileged,	X86CpuSet,	CPU_Priv
-noprivileged,	X86CpuClear,	CPU_Priv
-svm,		X86CpuSet,	CPU_SVM
-nosvm,		X86CpuClear,	CPU_SVM
-padlock,	X86CpuSet,	CPU_PadLock
-nopadlock,	X86CpuClear,	CPU_PadLock
-em64t,		X86CpuSet,	CPU_EM64T
-noem64t,	X86CpuClear,	CPU_EM64T
-ssse3,		X86CpuSet,	CPU_SSSE3
-nossse3,	X86CpuClear,	CPU_SSSE3
-sse4.1,		X86CpuSet,	CPU_SSE41
-nosse4.1,	X86CpuClear,	CPU_SSE41
-sse41,		X86CpuSet,	CPU_SSE41
-nosse41,	X86CpuClear,	CPU_SSE41
-sse4.2,		X86CpuSet,	CPU_SSE42
-nosse4.2,	X86CpuClear,	CPU_SSE42
-sse42,		X86CpuSet,	CPU_SSE42
-nosse42,	X86CpuClear,	CPU_SSE42
-sse4a,		X86CpuSet,	CPU_SSE4a
-nosse4a,	X86CpuClear,	CPU_SSE4a
+fpu,		X86CpuSet,	X86Arch::CPU_FPU
+nofpu,		X86CpuClear,	X86Arch::CPU_FPU
+mmx,		X86CpuSet,	X86Arch::CPU_MMX
+nommx,		X86CpuClear,	X86Arch::CPU_MMX
+sse,		X86CpuSet,	X86Arch::CPU_SSE
+nosse,		X86CpuClear,	X86Arch::CPU_SSE
+sse2,		X86CpuSet,	X86Arch::CPU_SSE2
+nosse2,		X86CpuClear,	X86Arch::CPU_SSE2
+sse3,		X86CpuSet,	X86Arch::CPU_SSE3
+nosse3,		X86CpuClear,	X86Arch::CPU_SSE3
+#pni,		X86CpuSet,	X86Arch::CPU_PNI
+#nopni,		X86CpuClear,	X86Arch::CPU_PNI
+3dnow,		X86CpuSet,	X86Arch::CPU_3DNow
+no3dnow,	X86CpuClear,	X86Arch::CPU_3DNow
+cyrix,		X86CpuSet,	X86Arch::CPU_Cyrix
+nocyrix,	X86CpuClear,	X86Arch::CPU_Cyrix
+amd,		X86CpuSet,	X86Arch::CPU_AMD
+noamd,		X86CpuClear,	X86Arch::CPU_AMD
+smm,		X86CpuSet,	X86Arch::CPU_SMM
+nosmm,		X86CpuClear,	X86Arch::CPU_SMM
+prot,		X86CpuSet,	X86Arch::CPU_Prot
+noprot,		X86CpuClear,	X86Arch::CPU_Prot
+protected,	X86CpuSet,	X86Arch::CPU_Prot
+noprotected,	X86CpuClear,	X86Arch::CPU_Prot
+undoc,		X86CpuSet,	X86Arch::CPU_Undoc
+noundoc,	X86CpuClear,	X86Arch::CPU_Undoc
+undocumented,	X86CpuSet,	X86Arch::CPU_Undoc
+noundocumented,	X86CpuClear,	X86Arch::CPU_Undoc
+obs,		X86CpuSet,	X86Arch::CPU_Obs
+noobs,		X86CpuClear,	X86Arch::CPU_Obs
+obsolete,	X86CpuSet,	X86Arch::CPU_Obs
+noobsolete,	X86CpuClear,	X86Arch::CPU_Obs
+priv,		X86CpuSet,	X86Arch::CPU_Priv
+nopriv,		X86CpuClear,	X86Arch::CPU_Priv
+privileged,	X86CpuSet,	X86Arch::CPU_Priv
+noprivileged,	X86CpuClear,	X86Arch::CPU_Priv
+svm,		X86CpuSet,	X86Arch::CPU_SVM
+nosvm,		X86CpuClear,	X86Arch::CPU_SVM
+padlock,	X86CpuSet,	X86Arch::CPU_PadLock
+nopadlock,	X86CpuClear,	X86Arch::CPU_PadLock
+em64t,		X86CpuSet,	X86Arch::CPU_EM64T
+noem64t,	X86CpuClear,	X86Arch::CPU_EM64T
+ssse3,		X86CpuSet,	X86Arch::CPU_SSSE3
+nossse3,	X86CpuClear,	X86Arch::CPU_SSSE3
+sse4.1,		X86CpuSet,	X86Arch::CPU_SSE41
+nosse4.1,	X86CpuClear,	X86Arch::CPU_SSE41
+sse41,		X86CpuSet,	X86Arch::CPU_SSE41
+nosse41,	X86CpuClear,	X86Arch::CPU_SSE41
+sse4.2,		X86CpuSet,	X86Arch::CPU_SSE42
+nosse4.2,	X86CpuClear,	X86Arch::CPU_SSE42
+sse42,		X86CpuSet,	X86Arch::CPU_SSE42
+nosse42,	X86CpuClear,	X86Arch::CPU_SSE42
+sse4a,		X86CpuSet,	X86Arch::CPU_SSE4a
+nosse4a,	X86CpuClear,	X86Arch::CPU_SSE4a
 sse4,		X86CpuSetSSE4,	0
 nosse4,		X86CpuClearSSE4,	0
-xsave,		X86CpuSet,	CPU_XSAVE
-noxsave,	X86CpuClear,	CPU_XSAVE
-avx,		X86CpuSet,	CPU_AVX
-noavx,		X86CpuClear,	CPU_AVX
-fma,		X86CpuSet,	CPU_FMA
-nofma,		X86CpuClear,	CPU_FMA
-aes,		X86CpuSet,	CPU_AES
-noaes,		X86CpuClear,	CPU_AES
-clmul,		X86CpuSet,	CPU_CLMUL
-noclmul,	X86CpuClear,	CPU_CLMUL
-pclmulqdq,	X86CpuSet,	CPU_CLMUL
-nopclmulqdq,	X86CpuClear,	CPU_CLMUL
-movbe,		X86CpuSet,	CPU_MOVBE
-nomovbe,	X86CpuClear,	CPU_MOVBE
-xop,		X86CpuSet,	CPU_XOP
-noxop,		X86CpuClear,	CPU_XOP
-fma4,		X86CpuSet,	CPU_FMA4
-nofma4,		X86CpuClear,	CPU_FMA4
-f16c,		X86CpuSet,	CPU_F16C
-nof16c,		X86CpuClear,	CPU_F16C
-fsgsbase,	X86CpuSet,	CPU_FSGSBASE
-nofsgsbase,	X86CpuClear,	CPU_FSGSBASE
-rdrand,		X86CpuSet,	CPU_RDRAND
-nordrand,	X86CpuClear,	CPU_RDRAND
-xsaveopt,	X86CpuSet,	CPU_XSAVEOPT
-noxsaveopt,	X86CpuClear,	CPU_XSAVEOPT
-eptvpid,	X86CpuSet,	CPU_EPTVPID
-noeptvpid,	X86CpuClear,	CPU_EPTVPID
-smx,		X86CpuSet,	CPU_SMX
-nosmx,		X86CpuClear,	CPU_SMX
+xsave,		X86CpuSet,	X86Arch::CPU_XSAVE
+noxsave,	X86CpuClear,	X86Arch::CPU_XSAVE
+avx,		X86CpuSet,	X86Arch::CPU_AVX
+noavx,		X86CpuClear,	X86Arch::CPU_AVX
+fma,		X86CpuSet,	X86Arch::CPU_FMA
+nofma,		X86CpuClear,	X86Arch::CPU_FMA
+aes,		X86CpuSet,	X86Arch::CPU_AES
+noaes,		X86CpuClear,	X86Arch::CPU_AES
+clmul,		X86CpuSet,	X86Arch::CPU_CLMUL
+noclmul,	X86CpuClear,	X86Arch::CPU_CLMUL
+pclmulqdq,	X86CpuSet,	X86Arch::CPU_CLMUL
+nopclmulqdq,	X86CpuClear,	X86Arch::CPU_CLMUL
+movbe,		X86CpuSet,	X86Arch::CPU_MOVBE
+nomovbe,	X86CpuClear,	X86Arch::CPU_MOVBE
+xop,		X86CpuSet,	X86Arch::CPU_XOP
+noxop,		X86CpuClear,	X86Arch::CPU_XOP
+fma4,		X86CpuSet,	X86Arch::CPU_FMA4
+nofma4,		X86CpuClear,	X86Arch::CPU_FMA4
+f16c,		X86CpuSet,	X86Arch::CPU_F16C
+nof16c,		X86CpuClear,	X86Arch::CPU_F16C
+fsgsbase,	X86CpuSet,	X86Arch::CPU_FSGSBASE
+nofsgsbase,	X86CpuClear,	X86Arch::CPU_FSGSBASE
+rdrand,		X86CpuSet,	X86Arch::CPU_RDRAND
+nordrand,	X86CpuClear,	X86Arch::CPU_RDRAND
+xsaveopt,	X86CpuSet,	X86Arch::CPU_XSAVEOPT
+noxsaveopt,	X86CpuClear,	X86Arch::CPU_XSAVEOPT
+eptvpid,	X86CpuSet,	X86Arch::CPU_EPTVPID
+noeptvpid,	X86CpuClear,	X86Arch::CPU_EPTVPID
+smx,		X86CpuSet,	X86Arch::CPU_SMX
+nosmx,		X86CpuClear,	X86Arch::CPU_SMX
 # Change NOP patterns
 basicnop,	X86Nop,	X86Arch::NOP_BASIC
 intelnop,	X86Nop,	X86Arch::NOP_INTEL
