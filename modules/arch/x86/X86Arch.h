@@ -95,7 +95,9 @@ enum CPUFeature
     CPU_F16C,           // Intel float-16 instructions
     CPU_FSGSBASE,       // Intel FSGSBASE instructions
     CPU_RDRAND,         // Intel RDRAND instruction
-    CPU_XSAVEOPT        // Intel XSAVEOPT instruction
+    CPU_XSAVEOPT,       // Intel XSAVEOPT instruction
+    CPU_EPTVPID,        // Intel INVEPT, INVVPID instructions
+    CPU_SMX             // Intel SMX instruction (GETSEC)
 };
 
 class YASM_STD_EXPORT X86RegTmod

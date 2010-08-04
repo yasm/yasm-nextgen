@@ -384,6 +384,10 @@ rdrand,		X86CpuSet,	CPU_RDRAND
 nordrand,	X86CpuClear,	CPU_RDRAND
 xsaveopt,	X86CpuSet,	CPU_XSAVEOPT
 noxsaveopt,	X86CpuClear,	CPU_XSAVEOPT
+eptvpid,	X86CpuSet,	CPU_EPTVPID
+noeptvpid,	X86CpuClear,	CPU_EPTVPID
+smx,		X86CpuSet,	CPU_SMX
+nosmx,		X86CpuClear,	CPU_SMX
 # Change NOP patterns
 basicnop,	X86Nop,	X86Arch::NOP_BASIC
 intelnop,	X86Nop,	X86Arch::NOP_INTEL
