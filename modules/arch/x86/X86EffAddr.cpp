@@ -219,12 +219,12 @@ public:
 
     enum RegIndex
     {
-        REG_NONE = -1,
-        REG_RAX = 0, REG_RCX,   REG_RDX,    REG_RBX,
-        REG_RSP,    REG_RBP,    REG_RSI,    REG_RDI,
-        REG_R8,     REG_R9,     REG_R10,    REG_R11,
-        REG_R12,    REG_R13,    REG_R14,    REG_R15,
-        REG_RIP
+        kREG_NONE = -1,
+        kREG_RAX = 0,   kREG_RCX,   kREG_RDX,   kREG_RBX,
+        kREG_RSP,       kREG_RBP,   kREG_RSI,   kREG_RDI,
+        kREG_R8,        kREG_R9,    kREG_R10,   kREG_R11,
+        kREG_R12,       kREG_R13,   kREG_R14,   kREG_R15,
+        kREG_RIP
     };
     int m_regmult[17];
 
@@ -258,8 +258,8 @@ X86EAChecker::getReg(ExprTerm& term, int* regnum)
                 return false;
             *regnum = reg->getNum();
             // only allow BX, SI, DI, BP
-            if (*regnum != REG_RBX && *regnum != REG_RSI && *regnum != REG_RDI
-                && *regnum != REG_RBP)
+            if (*regnum != kREG_RBX && *regnum != kREG_RSI
+                && *regnum != kREG_RDI && *regnum != kREG_RBP)
                 return false;
             break;
         case X86Register::REG32:
@@ -743,8 +743,8 @@ X86EffAddr::Check3264(unsigned int addrsize,
     int i;
     unsigned char low3;
 
-    int basereg = X86EAChecker::REG_NONE;   // "base" register (for SIB)
-    int indexreg = X86EAChecker::REG_NONE;  // "index" register (for SIB)
+    int basereg = X86EAChecker::kREG_NONE;  // "base" register (for SIB)
+    int indexreg = X86EAChecker::kREG_NONE; // "index" register (for SIB)
 
     // We can only do 64-bit addresses in 64-bit mode.
     if (addrsize == 64 && bits != 64)
@@ -783,8 +783,8 @@ X86EffAddr::Check3264(unsigned int addrsize,
     // If indexreg mult is 0, discard it.
     // This is possible because of the way indexreg is found in
     // expr_checkea_getregusage().
-    if (indexreg != X86EAChecker::REG_NONE && checker.m_regmult[indexreg] == 0)
-        indexreg = X86EAChecker::REG_NONE;
+    if (indexreg != X86EAChecker::kREG_NONE && checker.m_regmult[indexreg] == 0)
+        indexreg = X86EAChecker::kREG_NONE;
 
     // Find a basereg (*1, but not indexreg), if there is one.
     // Also, if an indexreg hasn't been assigned, try to find one.
@@ -797,15 +797,17 @@ X86EffAddr::Check3264(unsigned int addrsize,
             return false;
         }
         if (i != indexreg && checker.m_regmult[i] == 1 &&
-            basereg == X86EAChecker::REG_NONE)
+            basereg == X86EAChecker::kREG_NONE)
             basereg = i;
-        else if (indexreg == X86EAChecker::REG_NONE && checker.m_regmult[i] > 0)
+        else if (indexreg == X86EAChecker::kREG_NONE
+                 && checker.m_regmult[i] > 0)
             indexreg = i;
     }
 
     // Handle certain special cases of indexreg mults when basereg is
     // empty.
-    if (indexreg != X86EAChecker::REG_NONE && basereg == X86EAChecker::REG_NONE)
+    if (indexreg != X86EAChecker::kREG_NONE
+        && basereg == X86EAChecker::kREG_NONE)
         switch (checker.m_regmult[indexreg])
         {
             case 1:
@@ -844,7 +846,7 @@ X86EffAddr::Check3264(unsigned int addrsize,
     }
 
     // Check the index multiplier value for validity if present.
-    if (indexreg != X86EAChecker::REG_NONE &&
+    if (indexreg != X86EAChecker::kREG_NONE &&
         checker.m_regmult[indexreg] != 1 &&
         checker.m_regmult[indexreg] != 2 &&
         checker.m_regmult[indexreg] != 4 &&
@@ -855,12 +857,12 @@ X86EffAddr::Check3264(unsigned int addrsize,
     }
 
     // ESP is not a legal indexreg.
-    if (indexreg == X86EAChecker::REG_RSP)
+    if (indexreg == X86EAChecker::kREG_RSP)
     {
         // If mult>1 or basereg is ESP also, there's no way to make it
         // legal.
-        if (checker.m_regmult[X86EAChecker::REG_RSP] > 1 ||
-            basereg == X86EAChecker::REG_RSP)
+        if (checker.m_regmult[X86EAChecker::kREG_RSP] > 1 ||
+            basereg == X86EAChecker::kREG_RSP)
         {
             diags.Report(m_disp.getSource().getBegin(), diag::err_invalid_ea);
             return false;
@@ -868,13 +870,13 @@ X86EffAddr::Check3264(unsigned int addrsize,
 
         // If mult==1 and basereg is not ESP, swap indexreg w/basereg.
         indexreg = basereg;
-        basereg = X86EAChecker::REG_RSP;
+        basereg = X86EAChecker::kREG_RSP;
     }
 
     // RIP is only legal if it's the ONLY register used.
-    if (indexreg == X86EAChecker::REG_RIP ||
-        (basereg == X86EAChecker::REG_RIP &&
-         indexreg != X86EAChecker::REG_NONE))
+    if (indexreg == X86EAChecker::kREG_RIP ||
+        (basereg == X86EAChecker::kREG_RIP &&
+         indexreg != X86EAChecker::kREG_NONE))
     {
         diags.Report(m_disp.getSource().getBegin(), diag::err_invalid_ea);
         return false;
@@ -886,17 +888,18 @@ X86EffAddr::Check3264(unsigned int addrsize,
 
     // If we're supposed to be RIP-relative and there's no register
     // usage, change to RIP-relative.
-    if (basereg == X86EAChecker::REG_NONE &&
-        indexreg == X86EAChecker::REG_NONE &&
+    if (basereg == X86EAChecker::kREG_NONE &&
+        indexreg == X86EAChecker::kREG_NONE &&
         m_pc_rel)
     {
-        basereg = X86EAChecker::REG_RIP;
+        basereg = X86EAChecker::kREG_RIP;
         *ip_rel = true;
     }
 
     // First determine R/M (Mod is later determined from disp size)
     m_need_modrm = true;    // we always need ModRM
-    if (basereg == X86EAChecker::REG_NONE && indexreg == X86EAChecker::REG_NONE)
+    if (basereg == X86EAChecker::kREG_NONE
+        && indexreg == X86EAChecker::kREG_NONE)
     {
         // Just a disp32: in 64-bit mode the RM encoding is used for RIP
         // offset addressing, so we need to use the SIB form instead.
@@ -913,7 +916,7 @@ X86EffAddr::Check3264(unsigned int addrsize,
             m_need_sib = 0;
         }
     }
-    else if (basereg == X86EAChecker::REG_RIP)
+    else if (basereg == X86EAChecker::kREG_RIP)
     {
         m_modrm |= 5;
         m_sib = 0;
@@ -924,7 +927,7 @@ X86EffAddr::Check3264(unsigned int addrsize,
         m_disp.setSize(32);
         return true;
     }
-    else if (indexreg == X86EAChecker::REG_NONE)
+    else if (indexreg == X86EAChecker::kREG_NONE)
     {
         // basereg only
         // Don't need to go to the full effort of determining what type
@@ -939,8 +942,8 @@ X86EffAddr::Check3264(unsigned int addrsize,
         }
         m_modrm |= low3;
         // we don't need an SIB *unless* basereg is ESP or R12
-        if (basereg == X86EAChecker::REG_RSP ||
-            basereg == X86EAChecker::REG_R12)
+        if (basereg == X86EAChecker::kREG_RSP ||
+            basereg == X86EAChecker::kREG_R12)
             m_need_sib = 1;
         else
         {
@@ -962,7 +965,7 @@ X86EffAddr::Check3264(unsigned int addrsize,
         m_sib = 0;      // start with 0
 
         // Special case: no basereg
-        if (basereg == X86EAChecker::REG_NONE)
+        if (basereg == X86EAChecker::kREG_NONE)
             m_sib |= 5;
         else
         {
@@ -977,7 +980,7 @@ X86EffAddr::Check3264(unsigned int addrsize,
         }
 
         // Put in indexreg, checking for none case
-        if (indexreg == X86EAChecker::REG_NONE)
+        if (indexreg == X86EAChecker::kREG_NONE)
             m_sib |= 040;
             // Any scale field is valid, just leave at 0.
         else
@@ -1010,9 +1013,9 @@ X86EffAddr::Check3264(unsigned int addrsize,
     }
 
     // Calculate displacement length (if possible)
-    return CalcDispLen(32, basereg == X86EAChecker::REG_NONE,
-                       basereg == X86EAChecker::REG_RBP ||
-                       basereg == X86EAChecker::REG_R13,
+    return CalcDispLen(32, basereg == X86EAChecker::kREG_NONE,
+                       basereg == X86EAChecker::kREG_RBP ||
+                       basereg == X86EAChecker::kREG_R13,
                        diags);
 }
 
@@ -1083,10 +1086,10 @@ X86EffAddr::Check16(unsigned int bits,
         }
     }
 
-    int bx = checker.m_regmult[X86EAChecker::REG_RBX];
-    int si = checker.m_regmult[X86EAChecker::REG_RSI];
-    int di = checker.m_regmult[X86EAChecker::REG_RDI];
-    int bp = checker.m_regmult[X86EAChecker::REG_RBP];
+    int bx = checker.m_regmult[X86EAChecker::kREG_RBX];
+    int si = checker.m_regmult[X86EAChecker::kREG_RSI];
+    int di = checker.m_regmult[X86EAChecker::kREG_RDI];
+    int bp = checker.m_regmult[X86EAChecker::kREG_RBP];
 
     // reg multipliers not 0 or 1 are illegal.
     if (bx & ~1 || si & ~1 || di & ~1 || bp & ~1)
