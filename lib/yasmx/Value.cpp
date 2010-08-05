@@ -37,7 +37,6 @@
 #include "YAML/emitter.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
-#include "yasmx/Arch.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
