@@ -501,33 +501,10 @@ X86Arch::AddDirectives(Directives& dirs, llvm::StringRef parser)
         dirs.AddArray(this, gas_dirs, NELEMS(gas_dirs));
 }
 
-
 void
-X86Arch::ToBytes(const llvm::APFloat& flt,
-                 Bytes& bytes,
-                 size_t valsize,
-                 size_t shift,
-                 int warn) const
-{
-    if (valsize != 16 && valsize != 32 && valsize != 64 && valsize != 80)
-    {
-        assert(false && "invalid floating point constant size");
-        return;
-    }
-
-    bytes.setLittleEndian();
-    Overwrite(bytes, flt, valsize, shift, warn);
-}
-
-void
-X86Arch::ToBytes(const IntNum& intn,
-                 Bytes& bytes,
-                 size_t valsize,
-                 int shift,
-                 int warn) const
+X86Arch::setEndian(Bytes& bytes) const
 {
     bytes.setLittleEndian();
-    Overwrite(bytes, intn, valsize, shift, warn);
 }
 
 std::auto_ptr<EffAddr>

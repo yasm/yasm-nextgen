@@ -394,40 +394,8 @@ public:
     ///         in length.
     virtual const unsigned char** getFill() const = 0;
 
-    /// Output #APFloat to buffer.  Puts the value into the least
-    /// significant bits of the destination, or may be shifted into more
-    /// significant bits by the shift parameter.  The destination bits are
-    /// cleared before being set.
-    /// Architecture-specific because of endianness.
-    /// @param flt           floating point value
-    /// @param bytes         storage for bytes representation
-    /// @param valsize       size (in bits)
-    /// @param shift         left shift (in bits)
-    /// @param warn          enables standard overflow/underflow warnings
-    virtual void ToBytes(const llvm::APFloat& flt,
-                         Bytes& bytes,
-                         size_t valsize,
-                         size_t shift,
-                         int warn) const = 0;
-
-    /// Output #IntNum to buffer.  Puts the value into the least
-    /// significant bits of the destination, or may be shifted into more
-    /// significant bits by the shift parameter.  The destination bits are
-    /// cleared before being set.
-    /// @param intn         integer value
-    /// @param bytes        storage for bytes representation
-    /// @param valsize      size (in bits)
-    /// @param shift        left shift (in bits); may be negative to specify
-    ///                     right shift (standard warnings include
-    ///                     truncation to boundary)
-    /// @param loc          location of value
-    /// @param warn         enables standard warnings (value doesn't fit into
-    ///                     valsize bits)
-    virtual void ToBytes(const IntNum& intn,
-                         Bytes& bytes,
-                         size_t valsize,
-                         int shift,
-                         int warn) const = 0;
+    /// Set endianness of a buffer appropriately for this architecture.
+    virtual void setEndian(Bytes& bytes) const = 0;
 
     /// Create an effective address from an expression.
     /// @param e    expression

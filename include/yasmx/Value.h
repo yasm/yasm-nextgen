@@ -147,10 +147,9 @@ public:
     /// @param warn         enables standard warnings: zero for none;
     ///                     nonzero for overflow/underflow floating point and
     ///                     integer warnings
-    /// @param arch         architecture
     /// @return False if no value output due to value needing relocation;
     ///         true if value output.
-    bool OutputBasic(Bytes& bytes, IntNum* outval, int warn, const Arch& arch);
+    bool OutputBasic(Bytes& bytes, IntNum* outval, int warn);
 
     /// Get the absolute portion of the value.
     /// @return Absolute expression, or NULL if there is no absolute portion.

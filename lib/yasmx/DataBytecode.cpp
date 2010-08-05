@@ -52,7 +52,8 @@ yasm::AppendData(BytecodeContainer& container,
     Bytecode& bc = container.FreshBytecode();
     Bytes zero;
     zero.resize(size);
-    arch.ToBytes(val, zero, size*8, 0, 1);
+    arch.setEndian(zero);
+    Overwrite(zero, val, size*8, 0, 1);
     bc.getFixed().insert(bc.getFixed().end(), zero.begin(), zero.end());
 }
 

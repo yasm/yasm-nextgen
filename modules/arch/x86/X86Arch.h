@@ -178,16 +178,7 @@ public:
 
     const unsigned char** getFill() const;
 
-    void ToBytes(const llvm::APFloat& flt,
-                 Bytes& bytes,
-                 size_t valsize,
-                 size_t shift,
-                 int warn) const;
-    void ToBytes(const IntNum& intn,
-                 Bytes& bytes,
-                 size_t valsize,
-                 int shift,
-                 int warn) const;
+    void setEndian(Bytes& bytes) const;
 
     std::auto_ptr<EffAddr> CreateEffAddr(std::auto_ptr<Expr> e) const;
 

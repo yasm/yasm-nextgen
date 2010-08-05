@@ -137,7 +137,8 @@ RawOutput::ConvertValueToBytes(Value& value,
 
     // Output
     IntNum intn;
-    value.OutputBasic(bytes, &intn, warn, m_arch);
+    m_arch.setEndian(bytes);
+    value.OutputBasic(bytes, &intn, warn);
     return true;
 }
 

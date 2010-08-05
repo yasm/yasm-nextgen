@@ -143,8 +143,10 @@ RdfOutput::ConvertValueToBytes(Value& value,
                                Location loc,
                                int warn)
 {
+    m_object.getArch()->setEndian(bytes);
+
     IntNum intn(0);
-    if (value.OutputBasic(bytes, &intn, warn, *m_object.getArch()))
+    if (value.OutputBasic(bytes, &intn, warn))
         return true;
 
     if (value.isRelative())
@@ -212,8 +214,7 @@ RdfOutput::ConvertValueToBytes(Value& value,
             new RdfReloc(addr, sym, type, value.getSize()/8, refseg)));
     }
 
-    m_object.getArch()->ToBytes(intn, bytes, value.getSize(), value.getShift(),
-                                warn);
+    Overwrite(bytes, intn, value.getSize(), value.getShift(), warn);
     return true;
 }
 

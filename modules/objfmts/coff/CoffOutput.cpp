@@ -114,8 +114,10 @@ CoffOutput::ConvertValueToBytes(Value& value,
                                 Location loc,
                                 int warn)
 {
+    m_object.getArch()->setEndian(bytes);
+
     IntNum base(0);
-    if (value.OutputBasic(bytes, &base, warn, *m_object.getArch()))
+    if (value.OutputBasic(bytes, &base, warn))
         return true;
 
     IntNum intn(0);
@@ -328,8 +330,7 @@ CoffOutput::ConvertValueToBytes(Value& value,
     intn += base;
     intn += dist;
 
-    m_object.getArch()->ToBytes(intn, bytes, value.getSize(), value.getShift(),
-                                warn);
+    Overwrite(bytes, intn, value.getSize(), value.getShift(), warn);
     return true;
 }
 

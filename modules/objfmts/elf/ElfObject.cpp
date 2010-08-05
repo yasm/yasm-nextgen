@@ -54,6 +54,7 @@
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
+#include "yasmx/Bytes_util.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/DirHelpers.h"
@@ -717,7 +718,8 @@ ElfOutput::ConvertSymbolToBytes(SymbolRef sym,
         Diag(source, diag::err_reloc_invalid_size);
     }
 
-    m_object.getArch()->ToBytes(0, bytes, valsize, 0, warn);
+    m_object.getArch()->setEndian(bytes);
+    Overwrite(bytes, 0, valsize, 0, warn);
     return true;
 }
 
@@ -727,8 +729,10 @@ ElfOutput::ConvertValueToBytes(Value& value,
                                Location loc,
                                int warn)
 {
+    m_object.getArch()->setEndian(bytes);
+
     IntNum intn(0);
-    if (value.OutputBasic(bytes, &intn, warn, *m_object.getArch()))
+    if (value.OutputBasic(bytes, &intn, warn))
         return true;
 
     if (value.isRelative())
@@ -810,8 +814,7 @@ ElfOutput::ConvertValueToBytes(Value& value,
         }
     }
 
-    m_object.getArch()->ToBytes(intn, bytes, value.getSize(), value.getShift(),
-                                warn);
+    Overwrite(bytes, intn, value.getSize(), value.getShift(), warn);
     return true;
 }
 

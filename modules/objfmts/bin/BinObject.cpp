@@ -34,9 +34,11 @@
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
+#include "yasmx/Arch.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
+#include "yasmx/Bytes_util.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/DirHelpers.h"
@@ -232,7 +234,8 @@ done:
 
     // Output
     IntNum intn;
-    if (value.OutputBasic(bytes, &intn, warn, *m_object.getArch()))
+    m_object.getArch()->setEndian(bytes);
+    if (value.OutputBasic(bytes, &intn, warn))
         return true;
 
     // Couldn't output, assume it contains an external reference.

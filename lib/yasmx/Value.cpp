@@ -40,6 +40,7 @@
 #include "yasmx/Arch.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
+#include "yasmx/Bytes_util.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Expr_util.h"
 #include "yasmx/IntNum.h"
@@ -800,7 +801,7 @@ Value::getSubLocation(Location* loc) const
 }
 
 bool
-Value::OutputBasic(Bytes& bytes, IntNum* outval, int warn, const Arch& arch)
+Value::OutputBasic(Bytes& bytes, IntNum* outval, int warn)
 {
     // This code could be written more simply, but this is a very hot method,
     // so we need to shortcut all of the common cases.
@@ -811,18 +812,18 @@ Value::OutputBasic(Bytes& bytes, IntNum* outval, int warn, const Arch& arch)
     {
         if (!m_abs)
         {
-            arch.ToBytes(0, bytes, m_size, m_shift, warn);
+            Overwrite(bytes, 0, m_size, m_shift, warn);
             return true;
         }
         else if (m_abs->isIntNum())
         {
-            arch.ToBytes(*m_abs->getTerms().front().getIntNum(), bytes, m_size,
-                         m_shift, warn);
+            Overwrite(bytes, *m_abs->getTerms().front().getIntNum(), m_size,
+                      m_shift, warn);
             return true;
         }
         else if (m_abs->isFloat())
         {
-            arch.ToBytes(*m_abs->getFloat(), bytes, m_size, m_shift, warn);
+            Overwrite(bytes, *m_abs->getFloat(), m_size, m_shift, warn);
             return true;
         }
     }
@@ -858,14 +859,14 @@ Value::OutputBasic(Bytes& bytes, IntNum* outval, int warn, const Arch& arch)
     {
         if (rel)
             throw TooComplexError(N_("cannot relocate float"));
-        arch.ToBytes(*term.getFloat(), bytes, m_size, m_shift, warn);
+        Overwrite(bytes, *term.getFloat(), m_size, m_shift, warn);
         return true;
     }
 
     // Handle integer result
     if (!rel)
     {
-        arch.ToBytes(*term.getIntNum(), bytes, m_size, m_shift, warn);
+        Overwrite(bytes, *term.getIntNum(), m_size, m_shift, warn);
         return true;
     }
     else
