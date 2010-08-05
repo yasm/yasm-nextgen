@@ -149,7 +149,6 @@ void WriteN(Bytes& bytes, unsigned long val, int n);
 /// @param shift        left shift (in bits); may be negative to specify
 ///                     right shift (standard warnings include truncation
 ///                     to boundary)
-/// @param bigendian    endianness (true=big, false=little)
 /// @param warn         enables standard warnings (value doesn't fit into
 ///                     valsize bits): <0=signed warnings,
 ///                     >0=unsigned warnings, 0=no warn
@@ -158,7 +157,6 @@ void Overwrite(Bytes& bytes,
                const llvm::APInt& intn,
                unsigned int size,
                int shift,
-               bool bigendian,
                int warn);
 
 /// Output intnum to bytes in little-endian or big-endian.
@@ -172,7 +170,6 @@ void Overwrite(Bytes& bytes,
 /// @param shift        left shift (in bits); may be negative to specify
 ///                     right shift (standard warnings include truncation
 ///                     to boundary)
-/// @param bigendian    endianness (true=big, false=little)
 /// @param warn         enables standard warnings (value doesn't fit into
 ///                     valsize bits): <0=signed warnings,
 ///                     >0=unsigned warnings, 0=no warn
@@ -181,7 +178,6 @@ void Overwrite(Bytes& bytes,
                const IntNum& intn,
                unsigned int size,
                int shift,
-               bool bigendian,
                int warn);
 
 YASM_LIB_EXPORT
@@ -189,7 +185,6 @@ void Overwrite(Bytes& bytes,
                const llvm::APFloat& flt,
                unsigned int size,
                int shift,
-               bool bigendian,
                int warn);
 
 } // namespace yasm

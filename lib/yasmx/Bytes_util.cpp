@@ -183,7 +183,6 @@ yasm::Overwrite(Bytes& bytes,
                 const llvm::APInt& intn,
                 unsigned int size,
                 int shift,
-                bool bigendian,
                 int warn)
 {
     // Split shift into left (shift) and right (rshift) components.
@@ -221,7 +220,7 @@ yasm::Overwrite(Bytes& bytes,
     // Shortcut easy case
     if (shift == 0 && bytes.size()*8 == size)
     {
-        assert(!bigendian && "big endian not yet supported");
+        assert(bytes.isLittleEndian() && "big endian not yet supported");
 
         const uint64_t* words = work.getRawData();
 
@@ -307,13 +306,12 @@ yasm::Overwrite(Bytes& bytes,
                 const IntNum& intn,
                 unsigned int size,
                 int shift,
-                bool bigendian,
                 int warn)
 {
     // Handle bigval specially
     if (!intn.isInt())
     {
-        Overwrite(bytes, *intn.getBV(&staticbv), size, shift, bigendian, warn);
+        Overwrite(bytes, *intn.getBV(&staticbv), size, shift, warn);
         return;
     }
 
@@ -353,7 +351,7 @@ yasm::Overwrite(Bytes& bytes,
     rshift = 0;
 
     // Write out the new data, 8 bits at a time.
-    assert(!bigendian && "big endian not implemented");
+    assert(bytes.isLittleEndian() && "big endian not implemented");
     for (int i = 0, sz = size; i < destsize && sz > 0; ++i)
     {
         // handle left shift past whole bytes
@@ -400,7 +398,6 @@ yasm::Overwrite(Bytes& bytes,
                 const llvm::APFloat& flt,
                 unsigned int size,
                 int shift,
-                bool bigendian,
                 int warn)
 {
     const llvm::fltSemantics* semantics;
@@ -448,5 +445,5 @@ yasm::Overwrite(Bytes& bytes,
     // use APInt function to actually output
     llvm::APInt fltbits = fltcopy.bitcastToAPInt();
     assert(fltbits.getBitWidth() == size && "bad float to bits conversion");
-    Overwrite(bytes, fltbits, size, shift, bigendian, warn);
+    Overwrite(bytes, fltbits, size, shift, warn);
 }

@@ -143,7 +143,8 @@ protected:
         llvm::APFloat flt(llvm::APFloat::x87DoubleExtended, GetParam().ascii);
         yasm::Bytes result;
         result.resize(destsize);
-        yasm::Overwrite(result, flt, valsize, 0, false, 0);
+        result.setLittleEndian();
+        yasm::Overwrite(result, flt, valsize, 0, 0);
         for (int i=0; i<destsize; ++i)
             EXPECT_EQ(correct_result[i], result[i]);
     }

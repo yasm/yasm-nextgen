@@ -530,7 +530,11 @@ TEST_P(IntNumGetSizedTest, Overwrite)
     Bytes buf;
     buf.resize(test.destsize);
     memcpy(&buf[0], test.inbuf, test.destsize);
-    Overwrite(buf, intn, test.valsize, test.shift, test.bigendian, 0);
+    if (test.bigendian)
+        buf.setBigEndian();
+    else
+        buf.setLittleEndian();
+    Overwrite(buf, intn, test.valsize, test.shift, 0);
     for (unsigned int i=0; i<test.destsize; ++i)
         EXPECT_EQ(test.outbuf[i], buf[i]);
 }

@@ -515,7 +515,8 @@ X86Arch::ToBytes(const llvm::APFloat& flt,
         return;
     }
 
-    Overwrite(bytes, flt, valsize, shift, false, warn);
+    bytes.setLittleEndian();
+    Overwrite(bytes, flt, valsize, shift, warn);
 }
 
 void
@@ -525,7 +526,8 @@ X86Arch::ToBytes(const IntNum& intn,
                  int shift,
                  int warn) const
 {
-    Overwrite(bytes, intn, valsize, shift, false, warn);
+    bytes.setLittleEndian();
+    Overwrite(bytes, intn, valsize, shift, warn);
 }
 
 std::auto_ptr<EffAddr>
