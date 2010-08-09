@@ -27,7 +27,7 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Bytes.h"
-#include "yasmx/Bytes_util.h"
+#include "yasmx/NumericOutput.h"
 
 // constants describing parameters of internal floating point format.
 //  (these should match those in libyasmx/floatnum.cpp !)
@@ -144,7 +144,9 @@ protected:
         yasm::Bytes result;
         result.resize(destsize);
         result.setLittleEndian();
-        yasm::Overwrite(result, flt, valsize, 0, 0);
+        yasm::NumericOutput num_out(result);
+        num_out.setSize(valsize);
+        num_out.OutputFloat(flt);
         for (int i=0; i<destsize; ++i)
             EXPECT_EQ(correct_result[i], result[i]);
     }

@@ -28,8 +28,8 @@
 
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Bytes.h"
-#include "yasmx/Bytes_util.h"
 #include "yasmx/IntNum.h"
+#include "yasmx/NumericOutput.h"
 
 using namespace yasm;
 
@@ -534,7 +534,13 @@ TEST_P(IntNumGetSizedTest, Overwrite)
         buf.setBigEndian();
     else
         buf.setLittleEndian();
-    Overwrite(buf, intn, test.valsize, test.shift, 0);
+    NumericOutput num_out(buf);
+    num_out.setSize(test.valsize);
+    if (test.shift < 0)
+        num_out.setRShift(-test.shift);
+    else
+        num_out.setShift(test.shift);
+    num_out.OutputInteger(intn);
     for (unsigned int i=0; i<test.destsize; ++i)
         EXPECT_EQ(test.outbuf[i], buf[i]);
 }

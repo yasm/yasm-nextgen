@@ -658,15 +658,11 @@ public:
 
     // OutputBytecode overrides
     bool ConvertValueToBytes(Value& value,
-                             Bytes& bytes,
                              Location loc,
-                             int warn);
+                             NumericOutput& num_out);
     bool ConvertSymbolToBytes(SymbolRef sym,
-                              Bytes& bytes,
                               Location loc,
-                              unsigned int valsize,
-                              int warn,
-                              clang::SourceLocation source);
+                              NumericOutput& num_out);
 
 private:
     ElfObject& m_objfmt;
@@ -696,15 +692,12 @@ ElfOutput::~ElfOutput()
 
 bool
 ElfOutput::ConvertSymbolToBytes(SymbolRef sym,
-                                Bytes& bytes,
                                 Location loc,
-                                unsigned int valsize,
-                                int warn,
-                                clang::SourceLocation source)
+                                NumericOutput& num_out)
 {
     std::auto_ptr<ElfReloc> reloc =
         m_objfmt.m_machine->MakeReloc(sym, loc.getOffset());
-    if (reloc->setRel(false, m_GOT_sym, valsize))
+    if (reloc->setRel(false, m_GOT_sym, num_out.getSize()))
     {
         // allocate .rel[a] sections on a need-basis
         Section* sect = loc.bc->getContainer()->AsSection();
@@ -712,24 +705,23 @@ ElfOutput::ConvertSymbolToBytes(SymbolRef sym,
     }
     else
     {
-        Diag(source, diag::err_reloc_invalid_size);
+        Diag(num_out.getSource(), diag::err_reloc_invalid_size);
     }
 
-    m_object.getArch()->setEndian(bytes);
-    Overwrite(bytes, 0, valsize, 0, warn);
+    m_object.getArch()->setEndian(num_out.getBytes());
+    num_out.OutputInteger(0);
     return true;
 }
 
 bool
 ElfOutput::ConvertValueToBytes(Value& value,
-                               Bytes& bytes,
                                Location loc,
-                               int warn)
+                               NumericOutput& num_out)
 {
-    m_object.getArch()->setEndian(bytes);
+    m_object.getArch()->setEndian(num_out.getBytes());
 
     IntNum intn(0);
-    if (value.OutputBasic(bytes, &intn, warn))
+    if (value.OutputBasic(num_out, &intn, getDiagnostics()))
         return true;
 
     if (value.isRelative())
@@ -811,7 +803,7 @@ ElfOutput::ConvertValueToBytes(Value& value,
         }
     }
 
-    Overwrite(bytes, intn, value.getSize(), value.getShift(), warn);
+    num_out.OutputInteger(intn);
     return true;
 }
 

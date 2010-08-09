@@ -29,6 +29,8 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Diagnostic.h"
 
 #include <gmock/gmock.h>
@@ -42,6 +44,28 @@ class MockDiagnosticClient : public yasm::DiagnosticClient
 public:
     MOCK_METHOD2(HandleDiagnostic, void(yasm::Diagnostic::Level DiagLevel,
                                         const yasm::DiagnosticInfo& Info));
+};
+
+class MockDiagnosticString : public yasm::DiagnosticClient
+{
+public:
+    void HandleDiagnostic(yasm::Diagnostic::Level level,
+                          const yasm::DiagnosticInfo& info)
+    {
+        llvm::SmallString<100> str;
+        switch (level)
+        {
+            case yasm::Diagnostic::Ignored: assert(0 && "Invalid diagnostic type");
+            case yasm::Diagnostic::Note:    str += "note: "; break;
+            case yasm::Diagnostic::Warning: str += "warning: "; break;
+            case yasm::Diagnostic::Error:   str += "error: "; break;
+            case yasm::Diagnostic::Fatal:   str += "fatal error: "; break;
+        }
+        info.FormatDiagnostic(str);
+        DiagString(str);
+    }
+
+    MOCK_METHOD1(DiagString, void(llvm::StringRef str));
 };
 
 } // namespace yasmunit

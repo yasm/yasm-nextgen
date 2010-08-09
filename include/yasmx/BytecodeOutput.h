@@ -35,6 +35,7 @@
 #include "yasmx/Bytes.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Location.h"
+#include "yasmx/NumericOutput.h"
 #include "yasmx/SymbolRef.h"
 #include "yasmx/Value.h"
 
@@ -93,62 +94,35 @@ public:
 
     /// Output a value.
     ///
-    /// The value is put into the least significant bits of the destination,
-    /// unless shifted into more significant bits by value.m_shift.
-    ///
-    /// The bytes parameter is the destination; callers must size this prior
-    /// to calling this function to the correct number of bytes to be output.
-    /// It may contain non-zero bits.
-    ///
-    /// May raise an exception if an error occurs.
-    ///
     /// @param value        value
-    /// @param bytes        storage for byte representation
     /// @param loc          location of the expr contents (needed for relative)
-    /// @param warn         enables standard warnings.  Zero for none; nonzero
-    ///                     for overflow/underflow floating point warnings;
-    ///                     negative for signed integer warnings,
-    ///                     positive for unsigned integer warnings
+    /// @param num_out      numeric output
     /// @return False if an error occurred.
-    bool OutputValue(Value& value,
-                     Bytes& bytes,
-                     Location loc,
-                     int warn)
+    bool OutputValue(Value& value, Location loc, NumericOutput& num_out)
     {
-        if (!ConvertValueToBytes(value, bytes, loc, value.AdjustWarn(warn)))
+        if (!ConvertValueToBytes(value, loc, num_out))
             return false;
-        OutputBytes(bytes, value.getSource().getBegin());
+        OutputBytes(num_out.getBytes(), value.getSource().getBegin());
+        num_out.EmitWarnings(m_diags);
+        num_out.ClearWarnings();
         return true;
     }
 
     /// Output a symbol reference.
     ///
-    /// The bytes parameter is the destination; callers must size this prior
-    /// to calling this function to the correct number of bytes to be output.
-    /// It may contain non-zero bits.
-    ///
-    /// May raise an exception if an error occurs.
-    ///
     /// @param sym          symbol
-    /// @param bytes        storage for byte representation
     /// @param loc          location of the symbol reference
-    /// @param valsize      size (in bits)
-    /// @param warn         enables standard warnings.  Zero for none; nonzero
-    ///                     for overflow/underflow floating point warnings;
-    ///                     negative for signed integer warnings,
-    ///                     positive for unsigned integer warnings
-    /// @param source       source location
+    /// @param num_out      numeric output
     /// @return False if an error occurred.
     bool OutputSymbol(SymbolRef sym,
-                      Bytes& bytes,
                       Location loc,
-                      unsigned int valsize,
-                      int warn,
-                      clang::SourceLocation source)
+                      NumericOutput& num_out)
     {
-        if (!ConvertSymbolToBytes(sym, bytes, loc, valsize, warn, source))
+        if (!ConvertSymbolToBytes(sym, loc, num_out))
             return false;
-        OutputBytes(bytes, source);
+        OutputBytes(num_out.getBytes(), num_out.getSource());
+        num_out.EmitWarnings(m_diags);
+        num_out.ClearWarnings();
         return true;
     }
 
@@ -177,29 +151,13 @@ protected:
     /// implementations can keep track of relocations and verify legal
     /// expressions.
     ///
-    /// Implementations must put the value into the least significant bits of
-    /// the destination, unless shifted into more significant bits by
-    /// value.m_shift.
-    ///
-    /// The bytes parameter is the destination; it is sized prior to this call
-    /// to the correct number of bytes to be output, and may contain non-zero
-    /// bits.  Implementations should only overwrite the bits specified by the
-    /// value.
-    ///
-    /// Implementations may raise an exception if an error occurs.
-    ///
     /// @param value        value
-    /// @param bytes        storage for byte representation
     /// @param loc          location of the expr contents (needed for relative)
-    /// @param warn         enables standard warnings.  Zero for none; nonzero
-    ///                     for overflow/underflow floating point warnings;
-    ///                     negative for signed integer warnings,
-    ///                     positive for unsigned integer warnings
+    /// @param num_out      numeric output
     /// @return False if an error occurred.
     virtual bool ConvertValueToBytes(Value& value,
-                                     Bytes& bytes,
                                      Location loc,
-                                     int warn) = 0;
+                                     NumericOutput& num_out) = 0;
 
     /// Convert a symbol to bytes.  Called by OutputSymbol() so that
     /// implementations may keep track of relocations generated this way.
@@ -214,20 +172,12 @@ protected:
     /// The default implementation does nothing.
     ///
     /// @param sym          symbol
-    /// @param bytes        storage for byte representation
     /// @param loc          location of the symbol reference
-    /// @param valsize      size (in bits)
-    /// @param warn         enables standard warnings.  Zero for none; nonzero
-    ///                     for overflow/underflow floating point warnings;
-    ///                     negative for signed integer warnings,
-    ///                     positive for unsigned integer warnings
+    /// @param num_out      numeric output
     /// @return False if an error occurred.
     virtual bool ConvertSymbolToBytes(SymbolRef sym,
-                                      Bytes& bytes,
                                       Location loc,
-                                      unsigned int valsize,
-                                      int warn,
-                                      clang::SourceLocation source);
+                                      NumericOutput& num_out);
 
     /// Overrideable implementation of OutputGap().
     /// @param size         gap size, in bytes
@@ -266,9 +216,8 @@ public:
 
 protected:
     bool ConvertValueToBytes(Value& value,
-                             Bytes& bytes,
                              Location loc,
-                             int warn);
+                             NumericOutput& num_out);
     void DoOutputGap(unsigned int size, clang::SourceLocation source);
     void DoOutputBytes(const Bytes& bytes, clang::SourceLocation source);
 };

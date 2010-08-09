@@ -76,9 +76,8 @@ public:
 
     // OutputBytecode overrides
     bool ConvertValueToBytes(Value& value,
-                             Bytes& bytes,
                              Location loc,
-                             int warn);
+                             NumericOutput& num_out);
 
 private:
     CoffObject& m_objfmt;
@@ -110,14 +109,13 @@ CoffOutput::~CoffOutput()
 
 bool
 CoffOutput::ConvertValueToBytes(Value& value,
-                                Bytes& bytes,
                                 Location loc,
-                                int warn)
+                                NumericOutput& num_out)
 {
-    m_object.getArch()->setEndian(bytes);
+    m_object.getArch()->setEndian(num_out.getBytes());
 
     IntNum base(0);
-    if (value.OutputBasic(bytes, &base, warn))
+    if (value.OutputBasic(num_out, &base, getDiagnostics()))
         return true;
 
     IntNum intn(0);
@@ -330,7 +328,7 @@ CoffOutput::ConvertValueToBytes(Value& value,
     intn += base;
     intn += dist;
 
-    Overwrite(bytes, intn, value.getSize(), value.getShift(), warn);
+    num_out.OutputInteger(intn);
     return true;
 }
 

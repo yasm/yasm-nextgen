@@ -34,15 +34,8 @@
 #include "yasmx/Bytes.h"
 
 
-namespace llvm
-{
-class APFloat;
-class APInt;
-}
-
 namespace yasm
 {
-
 class IntNum;
 
 /// Write an intnum as an 8-bit value to a bytes buffer.
@@ -137,55 +130,6 @@ Write32(Bytes& bytes, unsigned long val)
 /// @warning Value is silently truncated to fit into N bits.
 YASM_LIB_EXPORT
 void WriteN(Bytes& bytes, unsigned long val, int n);
-
-/// Output APInt to bytes in little-endian or big-endian.
-/// Puts the value into the least significant bits of the destination,
-/// or may be shifted into more significant bits by the shift parameter.
-/// The destination bits are cleared before being set.
-/// [0] should be the first byte output to the file.
-/// @param bytes        output bytes buffer
-/// @param intn         APInt
-/// @param size         size (in bits)
-/// @param shift        left shift (in bits); may be negative to specify
-///                     right shift (standard warnings include truncation
-///                     to boundary)
-/// @param warn         enables standard warnings (value doesn't fit into
-///                     valsize bits): <0=signed warnings,
-///                     >0=unsigned warnings, 0=no warn
-YASM_LIB_EXPORT
-void Overwrite(Bytes& bytes,
-               const llvm::APInt& intn,
-               unsigned int size,
-               int shift,
-               int warn);
-
-/// Output intnum to bytes in little-endian or big-endian.
-/// Puts the value into the least significant bits of the destination,
-/// or may be shifted into more significant bits by the shift parameter.
-/// The destination bits are cleared before being set.
-/// [0] should be the first byte output to the file.
-/// @param bytes        output bytes buffer
-/// @param intn         intnum
-/// @param size         size (in bits)
-/// @param shift        left shift (in bits); may be negative to specify
-///                     right shift (standard warnings include truncation
-///                     to boundary)
-/// @param warn         enables standard warnings (value doesn't fit into
-///                     valsize bits): <0=signed warnings,
-///                     >0=unsigned warnings, 0=no warn
-YASM_LIB_EXPORT
-void Overwrite(Bytes& bytes,
-               const IntNum& intn,
-               unsigned int size,
-               int shift,
-               int warn);
-
-YASM_LIB_EXPORT
-void Overwrite(Bytes& bytes,
-               const llvm::APFloat& flt,
-               unsigned int size,
-               int shift,
-               int warn);
 
 } // namespace yasm
 

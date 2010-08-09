@@ -39,11 +39,11 @@
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
-#include "yasmx/Bytes_util.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Expr_util.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location_util.h"
+#include "yasmx/NumericOutput.h"
 #include "yasmx/Object.h"
 #include "yasmx/Section.h"
 #include "yasmx/Symbol.h"
@@ -799,8 +799,22 @@ Value::getSubLocation(Location* loc) const
         return false;
 }
 
+void
+Value::ConfigureOutput(NumericOutput* num_out) const
+{
+    num_out->setSize(m_size);
+    num_out->setShift(m_shift);
+    num_out->setRShift(m_rshift);
+    num_out->setSign(m_sign);
+    num_out->setSource(m_source.getBegin());
+    if (m_no_warn)
+        num_out->DisableWarnings();
+    else
+        num_out->EnableWarnings();
+}
+
 bool
-Value::OutputBasic(Bytes& bytes, IntNum* outval, int warn)
+Value::OutputBasic(NumericOutput& num_out, IntNum* outval, Diagnostic& diags)
 {
     // This code could be written more simply, but this is a very hot method,
     // so we need to shortcut all of the common cases.
@@ -811,18 +825,17 @@ Value::OutputBasic(Bytes& bytes, IntNum* outval, int warn)
     {
         if (!m_abs)
         {
-            Overwrite(bytes, 0, m_size, m_shift, warn);
+            num_out.OutputInteger(0);
             return true;
         }
         else if (m_abs->isIntNum())
         {
-            Overwrite(bytes, *m_abs->getTerms().front().getIntNum(), m_size,
-                      m_shift, warn);
+            num_out.OutputInteger(*m_abs->getTerms().front().getIntNum());
             return true;
         }
         else if (m_abs->isFloat())
         {
-            Overwrite(bytes, *m_abs->getFloat(), m_size, m_shift, warn);
+            num_out.OutputFloat(*m_abs->getFloat());
             return true;
         }
     }
@@ -858,14 +871,14 @@ Value::OutputBasic(Bytes& bytes, IntNum* outval, int warn)
     {
         if (rel)
             throw TooComplexError(N_("cannot relocate float"));
-        Overwrite(bytes, *term.getFloat(), m_size, m_shift, warn);
+        num_out.OutputFloat(*term.getFloat());
         return true;
     }
 
     // Handle integer result
     if (!rel)
     {
-        Overwrite(bytes, *term.getIntNum(), m_size, m_shift, warn);
+        num_out.OutputInteger(*term.getIntNum());
         return true;
     }
     else

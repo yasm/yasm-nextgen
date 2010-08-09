@@ -187,14 +187,22 @@ UnwindInfo::Output(Bytecode& bc, BytecodeOutput& bc_out)
     bc_out.OutputBytes(bytes, bc.getSource());
 
     // Size of prolog
-    bytes.resize(0);
-    Write8(bytes, 0);
-    bc_out.OutputValue(m_prolog_size, bytes, loc, 1);
+    {
+        bytes.resize(0);
+        Write8(bytes, 0);
+        NumericOutput num_out(bytes);
+        m_prolog_size.ConfigureOutput(&num_out);
+        bc_out.OutputValue(m_prolog_size, loc, num_out);
+    }
 
     // Count of codes
-    bytes.resize(0);
-    Write8(bytes, 0);
-    bc_out.OutputValue(m_codes_count, bytes, loc, 1);
+    {
+        bytes.resize(0);
+        Write8(bytes, 0);
+        NumericOutput num_out(bytes);
+        m_codes_count.ConfigureOutput(&num_out);
+        bc_out.OutputValue(m_codes_count, loc, num_out);
+    }
 
     // Frame register and offset
     IntNum intn;

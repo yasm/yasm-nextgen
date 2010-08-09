@@ -25,6 +25,7 @@
 #include "NasmInsnRunner.h"
 
 #include <memory>
+#include <ostream>
 #include <string>
 
 #include "clang/Basic/SourceManager.h"
@@ -50,6 +51,17 @@
 
 using namespace yasm;
 using namespace yasmunit;
+
+namespace llvm
+{
+
+// print llvm::StringRef values nicely
+void PrintTo(StringRef str, ::std::ostream* os)
+{
+    *os << str.str();
+}
+
+} // namespace llvm
 
 namespace {
 
@@ -117,9 +129,8 @@ public:
 
     // OutputBytecode overrides
     bool ConvertValueToBytes(Value& value,
-                             Bytes& bytes,
                              Location loc,
-                             int warn);
+                             NumericOutput& num_out);
 
 private:
     const Arch& m_arch;
@@ -127,9 +138,8 @@ private:
 
 bool
 RawOutput::ConvertValueToBytes(Value& value,
-                               Bytes& bytes,
                                Location loc,
-                               int warn)
+                               NumericOutput& num_out)
 {
     // Simplify absolute portion of value
     if (Expr* abs = value.getAbs())
@@ -137,8 +147,7 @@ RawOutput::ConvertValueToBytes(Value& value,
 
     // Output
     IntNum intn;
-    m_arch.setEndian(bytes);
-    value.OutputBasic(bytes, &intn, warn);
+    value.OutputBasic(num_out, &intn, getDiagnostics());
     return true;
 }
 
@@ -233,13 +242,13 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
 
     // interpret string in [] as error/warning
     if (!golden_in.empty() && golden_in[0] == '[')
-        llvm::tie(golden_errwarn, golden_in) = golden_in.split(']');
+        llvm::tie(golden_errwarn, golden_in) = golden_in.substr(1).split(']');
 
     //
     // parse the instruction
     //
     clang::SourceManager smgr;
-    ::testing::StrictMock<MockDiagnosticClient> mock_client;
+    ::testing::StrictMock<MockDiagnosticString> mock_client;
     Diagnostic diags(&smgr, &mock_client);
 
     // instruction name is the first thing on the line
@@ -394,8 +403,21 @@ NasmInsnRunner::TestInsn(yasm::Insn* insn,
     //
     BytecodeContainer container;
     clang::SourceManager smgr;
-    ::testing::StrictMock<MockDiagnosticClient> mock_client;
+
+    ::testing::StrictMock<MockDiagnosticString> mock_client;
     Diagnostic diags(&smgr, &mock_client);
+    if (!ew_msg.empty())
+    {
+        EXPECT_CALL(mock_client, DiagString(ew_msg))
+            .Times(1);
+    }
+    else
+    {
+        // expect no diagnostic calls
+        EXPECT_CALL(mock_client, DiagString(::testing::_))
+            .Times(0);
+    }
+
     insn->Append(container, clang::SourceLocation(), diags);
 
     container.Finalize(diags);

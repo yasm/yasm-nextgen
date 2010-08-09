@@ -246,9 +246,11 @@ Bytecode::Output(BytecodeOutput& bc_out)
         Value vcopy = *i;
 
         // Convert the value to bytes.
-        int warn = i->isSigned() ? -1 : 1;
-        if (!bc_out.ConvertValueToBytes(vcopy, bytes, loc, i->AdjustWarn(warn)))
+        NumericOutput num_out(bytes);
+        i->ConfigureOutput(&num_out);
+        if (!bc_out.ConvertValueToBytes(vcopy, loc, num_out))
             return false;
+        num_out.EmitWarnings(bc_out.getDiagnostics());
 
         // Update bytes
         std::copy(bytes.begin(), bytes.end(), fixed.begin() + off);

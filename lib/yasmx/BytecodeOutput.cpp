@@ -49,11 +49,8 @@ BytecodeOutput::isBits() const
 
 bool
 BytecodeOutput::ConvertSymbolToBytes(SymbolRef sym,
-                                     Bytes& bytes,
                                      Location loc,
-                                     unsigned int valsize,
-                                     int warn,
-                                     clang::SourceLocation source)
+                                     NumericOutput& num_out)
 {
     return true;
 }
@@ -70,9 +67,8 @@ BytecodeNoOutput::isBits() const
 
 bool
 BytecodeNoOutput::ConvertValueToBytes(Value& value,
-                                      Bytes& bytes,
                                       Location loc,
-                                      int warn)
+                                      NumericOutput& num_out)
 {
     // unnecessary; we don't actually output it anyway
     return true;

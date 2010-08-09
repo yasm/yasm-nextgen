@@ -105,9 +105,8 @@ public:
 
     // OutputBytecode overrides
     bool ConvertValueToBytes(Value& value,
-                             Bytes& bytes,
                              Location loc,
-                             int warn);
+                             NumericOutput& num_out);
 
 private:
     Object& m_object;
@@ -128,14 +127,13 @@ XdfOutput::~XdfOutput()
 
 bool
 XdfOutput::ConvertValueToBytes(Value& value,
-                               Bytes& bytes,
                                Location loc,
-                               int warn)
+                               NumericOutput& num_out)
 {
-    m_object.getArch()->setEndian(bytes);
+    m_object.getArch()->setEndian(num_out.getBytes());
 
     IntNum intn(0);
-    if (value.OutputBasic(bytes, &intn, warn))
+    if (value.OutputBasic(num_out, &intn, getDiagnostics()))
         return true;
 
     if (value.isRelative())
@@ -168,7 +166,7 @@ XdfOutput::ConvertValueToBytes(Value& value,
         sect->AddReloc(std::auto_ptr<Reloc>(reloc.release()));
     }
 
-    Overwrite(bytes, intn, value.getSize(), value.getShift(), warn);
+    num_out.OutputInteger(intn);
     return true;
 }
 

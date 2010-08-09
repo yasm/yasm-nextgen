@@ -119,9 +119,8 @@ public:
 
     // OutputBytecode overrides
     bool ConvertValueToBytes(Value& value,
-                             Bytes& bytes,
                              Location loc,
-                             int warn);
+                             NumericOutput& num_out);
 
 private:
     Object& m_object;
@@ -192,9 +191,8 @@ BinOutput::OutputSection(Section& sect, const IntNum& origin)
 
 bool
 BinOutput::ConvertValueToBytes(Value& value,
-                               Bytes& bytes,
                                Location loc,
-                               int warn)
+                               NumericOutput& num_out)
 {
     // Binary objects we need to resolve against object, not against section.
     if (value.isRelative())
@@ -234,8 +232,8 @@ done:
 
     // Output
     IntNum intn;
-    m_object.getArch()->setEndian(bytes);
-    if (value.OutputBasic(bytes, &intn, warn))
+    m_object.getArch()->setEndian(num_out.getBytes());
+    if (value.OutputBasic(num_out, &intn, getDiagnostics()))
         return true;
 
     // Couldn't output, assume it contains an external reference.

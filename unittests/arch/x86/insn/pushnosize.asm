@@ -10,7 +10,7 @@ push 128		; 68 80 00 - doesn't fit in byte, equivalent to push word 128
 push byte 128		; 6A 80 [warning: value does not fit in signed 8 bit field]
 push word 128		; 68 80 00
 push dword 128		; 66 68 80 00 00 00
-push strict byte 128	; 6A 80 - warning (signed overflow)[warning: value does not fit in signed 8 bit field]
+push strict byte 128	; 6A 80 [warning: value does not fit in signed 8 bit field]
 push strict word 128	; 68 80 00
 push strict dword 128	; 66 68 80 00 00 00
 

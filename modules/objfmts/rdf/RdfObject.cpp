@@ -102,9 +102,8 @@ public:
 
     // BytecodeOutput overrides
     bool ConvertValueToBytes(Value& value,
-                             Bytes& bytes,
                              Location loc,
-                             int warn);
+                             NumericOutput& num_out);
     void DoOutputGap(unsigned int size, clang::SourceLocation source);
     void DoOutputBytes(const Bytes& bytes, clang::SourceLocation source);
 
@@ -139,14 +138,13 @@ typedef struct rdf_objfmt_output_info {
 
 bool
 RdfOutput::ConvertValueToBytes(Value& value,
-                               Bytes& bytes,
                                Location loc,
-                               int warn)
+                               NumericOutput& num_out)
 {
-    m_object.getArch()->setEndian(bytes);
+    m_object.getArch()->setEndian(num_out.getBytes());
 
     IntNum intn(0);
-    if (value.OutputBasic(bytes, &intn, warn))
+    if (value.OutputBasic(num_out, &intn, getDiagnostics()))
         return true;
 
     if (value.isRelative())
@@ -214,7 +212,7 @@ RdfOutput::ConvertValueToBytes(Value& value,
             new RdfReloc(addr, sym, type, value.getSize()/8, refseg)));
     }
 
-    Overwrite(bytes, intn, value.getSize(), value.getShift(), warn);
+    num_out.OutputInteger(intn);
     return true;
 }
 

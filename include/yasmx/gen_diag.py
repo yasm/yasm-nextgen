@@ -222,6 +222,13 @@ add_error("err_data_value_register", "data values cannot have registers")
 add_error("err_expr_contains_float",
           "expression must not contain floating point value")
 
+# Integer/float output
+add_warning("warn_signed_overflow", "value does not fit in signed %0 bit field")
+add_warning("warn_unsigned_overflow", "value does not fit in %0 bit field")
+add_warning("warn_float_underflow", "underflow in floating point expression")
+add_warning("warn_float_overflow", "overflow in floating point expression")
+add_warning("warn_truncated", "misaligned value, truncating to %0 bit boundary")
+
 # Effective address
 add_error("err_invalid_ea_segment", "invalid segment in effective address")
 

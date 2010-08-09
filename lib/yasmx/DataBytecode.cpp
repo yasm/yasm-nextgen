@@ -32,6 +32,7 @@
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes_util.h"
 #include "yasmx/Expr.h"
+#include "yasmx/NumericOutput.h"
 
 
 using namespace yasm;
@@ -53,7 +54,9 @@ yasm::AppendData(BytecodeContainer& container,
     Bytes zero;
     zero.resize(size);
     arch.setEndian(zero);
-    Overwrite(zero, val, size*8, 0, 1);
+    NumericOutput numout(zero);
+    numout.setSize(size*8);
+    numout.OutputInteger(val);
     bc.getFixed().insert(bc.getFixed().end(), zero.begin(), zero.end());
 }
 

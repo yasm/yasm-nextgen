@@ -475,6 +475,7 @@ bool
 X86General::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     Bytes& bytes = bc_out.getScratch();
+    bytes.setLittleEndian();
 
     GeneralToBytes(bytes, m_common, m_opcode, m_ea.get(), m_special_prefix,
                    m_rex);
@@ -529,9 +530,11 @@ X86General::Output(Bytecode& bc, BytecodeOutput& bc_out)
         }
         Location loc = {&bc, bc.getFixedLen()+pos};
         pos += disp_len;
-        Bytes& dbytes = bc_out.getScratch();
-        dbytes.resize(disp_len);
-        if (!bc_out.OutputValue(m_ea->m_disp, bytes, loc, 1))
+        bytes.resize(0);
+        bytes.resize(disp_len);
+        NumericOutput num_out(bytes);
+        m_ea->m_disp.ConfigureOutput(&num_out);
+        if (!bc_out.OutputValue(m_ea->m_disp, loc, num_out))
             return false;
     }
 
@@ -540,9 +543,11 @@ X86General::Output(Bytecode& bc, BytecodeOutput& bc_out)
     {
         m_imm->setInsnStart(pos);
         Location loc = {&bc, bc.getFixedLen()+pos};
-        Bytes& ibytes = bc_out.getScratch();
-        ibytes.resize(imm_len);
-        if (!bc_out.OutputValue(*m_imm, bytes, loc, 1))
+        bytes.resize(0);
+        bytes.resize(imm_len);
+        NumericOutput num_out(bytes);
+        m_imm->ConfigureOutput(&num_out);
+        if (!bc_out.OutputValue(*m_imm, loc, num_out))
             return false;
     }
     return true;

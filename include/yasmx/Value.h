@@ -50,7 +50,9 @@ namespace yasm
 
 class Arch;
 class Bytes;
+class Diagnostic;
 class Expr;
+class NumericOutput;
 class Object;
 
 /// A value.  May be absolute or relative.  Outside the parser, #Expr
@@ -140,16 +142,18 @@ public:
     /// @return True (and out set) if can be resolved to integer value.
     bool getIntNum(/*@out@*/ IntNum* out, bool calc_bc_dist);
 
+    /// Configure numeric output based on value settings.
+    /// @param num_out      numeric output
+    void ConfigureOutput(NumericOutput* num_out) const;
+
     /// Output value if absolute constant (no relative portion).  This should
     /// be used from BytecodeOutput::ConvertValueToBytes() implementations.
-    /// @param bytes        storage for byte representation
+    /// @param num_out      numeric output
     /// @param outval       output integer value (set on false return)
-    /// @param warn         enables standard warnings: zero for none;
-    ///                     nonzero for overflow/underflow floating point and
-    ///                     integer warnings
+    /// @param diags        diagnostic reporting
     /// @return False if no value output due to value needing relocation;
     ///         true if value output.
-    bool OutputBasic(Bytes& bytes, IntNum* outval, int warn);
+    bool OutputBasic(NumericOutput& num_out, IntNum* outval, Diagnostic& diags);
 
     /// Get the absolute portion of the value.
     /// @return Absolute expression, or NULL if there is no absolute portion.
@@ -247,11 +251,6 @@ public:
     /// Determine if overflow warnings are enabled for this value.
     /// @return True if overflow warnings are enabled, false if not.
     bool isWarnEnabled() const { return !m_no_warn; }
-
-    /// Adjust warning based on value settings
-    /// @param warn     warning setting
-    /// @return Adjusted warning setting.
-    int AdjustWarn(int warn) const { return m_no_warn ? 0 : (m_sign ? -1 : 1); }
 
     /// Set sign of the value.
     /// @param sign     true if signed, false if unsigned.

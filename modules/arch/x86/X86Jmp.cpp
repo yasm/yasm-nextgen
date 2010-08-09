@@ -209,6 +209,7 @@ bool
 X86Jmp::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
     Bytes& bytes = bc_out.getScratch();
+    bytes.setLittleEndian();
 
     // Prefixes
     m_common.ToBytes(bytes, 0);
@@ -244,9 +245,11 @@ X86Jmp::Output(Bytecode& bc, BytecodeOutput& bc_out)
 
     // Output displacement
     Location loc = {&bc, bc.getFixedLen()+bytes.size()};
-    Bytes& tbytes = bc_out.getScratch();
-    tbytes.resize(size);
-    if (!bc_out.OutputValue(m_target, tbytes, loc, 1))
+    bytes.resize(0);
+    bytes.resize(size);
+    NumericOutput num_out(bytes);
+    m_target.ConfigureOutput(&num_out);
+    if (!bc_out.OutputValue(m_target, loc, num_out))
         return false;
     return true;
 }

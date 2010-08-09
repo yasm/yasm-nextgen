@@ -81,6 +81,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Module.cpp
     yasmx/MultipleBytecode.cpp
     yasmx/NameValue.cpp
+    yasmx/NumericOutput.cpp
     yasmx/NumericParser.cpp
     yasmx/Object.cpp
     yasmx/Object_optimize.cpp
