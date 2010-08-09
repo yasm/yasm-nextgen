@@ -174,7 +174,9 @@ Bytecode::Finalize(Diagnostic& diags)
         if (i->isIPRelative())
         {
             Location sub_loc = {this, i->getOffset()};
-            i->SubRelative(m_container->getObject(), sub_loc);
+            if (!i->SubRelative(m_container->getObject(), sub_loc))
+                diags.Report(i->getSource().getBegin(),
+                             diag::err_too_complex_expression);
         }
     }
 

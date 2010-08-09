@@ -106,7 +106,8 @@ public:
     /// portion.
     /// @param object   object
     /// @param sub      location to subtract
-    void SubRelative(Object* object, Location sub);
+    /// @return False if error occurred.
+    bool SubRelative(Object* object, Location sub);
 
     /// Break m_abs into its constituent parts.  Extracts the
     /// relative portion of the value, SEG and WRT portions, and top-level

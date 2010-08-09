@@ -292,7 +292,7 @@ Value::operator= (const Value& rhs)
     return *this;
 }
 
-void
+bool
 Value::SubRelative(Object* object, Location sub)
 {
     // In order for us to correctly output subtractive relative values, we must
@@ -303,7 +303,7 @@ Value::SubRelative(Object* object, Location sub)
         assert(object != 0);
         m_rel = object->getAbsoluteSymbol();
         if (hasSubRelative())
-            throw TooComplexError(N_("expression too complex"));
+            return false;
         m_sub.loc = sub;
         m_sub_loc = true;
     }
@@ -325,11 +325,12 @@ Value::SubRelative(Object* object, Location sub)
         else
         {
             if (hasSubRelative())
-                throw TooComplexError(N_("expression too complex"));
+                return false;
             m_sub.loc = sub;
             m_sub_loc = true;
         }
     }
+    return true;
 }
 
 bool

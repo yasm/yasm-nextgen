@@ -137,7 +137,9 @@ X86Jmp::Finalize(Bytecode& bc, Diagnostic& diags)
     // So just adjust to the start of the instruction, and handle the
     // difference in calc_len() and tobytes().
     Location sub_loc = {&bc, bc.getFixedLen()};
-    m_target.SubRelative(bc.getContainer()->getObject(), sub_loc);
+    if (!m_target.SubRelative(bc.getContainer()->getObject(), sub_loc))
+        diags.Report(m_target.getSource().getBegin(),
+                     diag::err_too_complex_expression);
     m_target.setIPRelative();
 
     Location target_loc;

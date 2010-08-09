@@ -301,7 +301,10 @@ X86General::CalcLen(Bytecode& bc,
         if (ip_rel)
         {
             Location sub_loc = {&bc, bc.getFixedLen()};
-            m_ea->m_disp.SubRelative(bc.getContainer()->getObject(), sub_loc);
+            if (!m_ea->m_disp.SubRelative(bc.getContainer()->getObject(),
+                                          sub_loc))
+                diags.Report(m_ea->m_disp.getSource().getBegin(),
+                             diag::err_too_complex_expression);
             m_ea->m_disp.setIPRelative();
         }
 
