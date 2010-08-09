@@ -1135,6 +1135,7 @@ private:
     unsigned char m_spare;
     unsigned char m_im_len;
     unsigned char m_im_sign;
+    clang::SourceLocation m_im_source;
     X86GeneralPostOp m_postop;
     unsigned char m_rex;
     unsigned char m_vexdata;
@@ -1358,6 +1359,7 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
             assert(m_imm.get() != 0 && "invalid operand conversion");
 
             m_im_len = m_size_lookup[info_op.size];
+            m_im_source = op.getSource();
             break;
         case OPA_SImm:
             if (op.getSeg() != 0)
@@ -1369,6 +1371,7 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
             assert(m_imm.get() != 0 && "invalid operand conversion");
 
             m_im_len = m_size_lookup[info_op.size];
+            m_im_source = op.getSource();
             m_im_sign = 1;
             break;
         case OPA_Spare:
@@ -1500,6 +1503,7 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
                 *m_imm |= IntNum((reg->getNum() << 4) & 0xF0);
             }
             m_im_len = 8;
+            m_im_source = op.getSource();
             break;
         }
         case OPA_VEXImm:
@@ -1515,6 +1519,7 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
                 op.ReleaseImm();
             }
             m_im_len = 8;
+            m_im_source = op.getSource();
             break;
         }
         default:
@@ -1584,6 +1589,7 @@ BuildGeneral::Finish(BytecodeContainer& container,
     {
         imm_val.reset(new Value(m_im_len, m_imm));
         imm_val->setSigned(m_im_sign);
+        imm_val->setSource(m_im_source);
     }
 
     X86Common common;
