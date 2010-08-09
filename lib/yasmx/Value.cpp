@@ -39,6 +39,7 @@
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Expr_util.h"
 #include "yasmx/IntNum.h"
@@ -852,7 +853,10 @@ Value::OutputBasic(NumericOutput& num_out, IntNum* outval, Diagnostic& diags)
             return false;
         }
         else if (m_abs->isFloat())
-            throw TooComplexError(N_("cannot relocate float"));
+        {
+            diags.Report(m_source.getBegin(), diag::err_reloc_contains_float);
+            return true;
+        }
     }
 
     // Not trivial, need to evaluate
@@ -861,16 +865,17 @@ Value::OutputBasic(NumericOutput& num_out, IntNum* outval, Diagnostic& diags)
     {
         // Check for complex float expressions
         if (m_abs->Contains(ExprTerm::FLOAT))
-            throw FloatingPointError(
-                N_("floating point expression too complex"));
-        throw TooComplexError(N_("relocation too complex"));
+            diags.Report(m_source.getBegin(), diag::err_reloc_contains_float);
+        else
+            diags.Report(m_source.getBegin(), diag::err_reloc_too_complex);
+        return true;
     }
 
     // Handle float result
     if (term.isType(ExprTerm::FLOAT))
     {
         if (rel)
-            throw TooComplexError(N_("cannot relocate float"));
+            diags.Report(m_source.getBegin(), diag::err_reloc_contains_float);
         num_out.OutputFloat(*term.getFloat());
         return true;
     }

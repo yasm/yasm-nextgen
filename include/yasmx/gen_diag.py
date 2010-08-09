@@ -216,6 +216,8 @@ add_error("err_too_complex_expression", "expression too complex")
 add_error("err_value_not_constant", "value not constant")
 add_error("err_too_complex_jump", "jump target expression too complex")
 add_error("err_invalid_jump_target", "invalid jump target")
+add_error("err_float_expression_too_complex",
+          "floating point expression too complex")
 
 # Expression
 add_error("err_data_value_register", "data values cannot have registers")
@@ -376,6 +378,7 @@ add_error("err_optimizer_secondary_expansion",
 
 # Output
 add_error("err_too_many_relocs", "too many relocations in section '%0'")
+add_error("err_reloc_contains_float", "cannot relocate float")
 add_error("err_reloc_too_complex", "relocation too complex")
 add_error("err_reloc_invalid_size", "invalid relocation size")
 add_error("err_wrt_not_supported", "WRT not supported")
