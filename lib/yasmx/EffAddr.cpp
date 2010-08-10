@@ -30,7 +30,6 @@
 
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Expr.h"
 
