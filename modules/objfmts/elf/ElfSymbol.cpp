@@ -248,7 +248,10 @@ ElfSymbol::Finalize(Symbol& sym, Diagnostic& diags)
         std::auto_ptr<Expr> equ_expr_p(new Expr);
         equ_expr_p->swap(equ_expr);
         Value val(64, equ_expr_p);
-        if (!val.Finalize() || val.isComplexRelative())
+        val.setSource(sym.getDefSource());
+        if (!val.Finalize(diags, diag::err_equ_too_complex))
+            return;
+        if (val.isComplexRelative())
         {
             diags.Report(sym.getDefSource(), diag::err_equ_too_complex);
             return;

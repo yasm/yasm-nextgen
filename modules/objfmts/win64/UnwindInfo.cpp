@@ -68,27 +68,12 @@ UnwindInfo::~UnwindInfo()
 bool
 UnwindInfo::Finalize(Bytecode& bc, Diagnostic& diags)
 {
-    if (!m_prolog_size.Finalize())
-    {
-        diags.Report(m_prolog_size.getSource().getBegin(),
-                     diag::err_too_complex_expression);
+    if (!m_prolog_size.Finalize(diags))
         return false;
-    }
-
-    if (!m_codes_count.Finalize())
-    {
-        diags.Report(m_codes_count.getSource().getBegin(),
-                     diag::err_too_complex_expression);
+    if (!m_codes_count.Finalize(diags))
         return false;
-    }
-
-    if (!m_frameoff.Finalize())
-    {
-        diags.Report(m_frameoff.getSource().getBegin(),
-                     diag::err_too_complex_expression);
+    if (!m_frameoff.Finalize(diags))
         return false;
-    }
-
     return true;
 }
 

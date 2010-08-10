@@ -36,6 +36,7 @@
 
 #include "clang/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
+#include "yasmx/DiagnosticKinds.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location.h"
 #include "yasmx/SymbolRef.h"
@@ -115,13 +116,16 @@ public:
     /// portion of the value.  First expands references to symrecs in
     /// absolute sections by expanding with the absolute section start plus
     /// the symrec offset within the absolute section.
-    /// @return False if the expr could not be split into a value for some
-    ///         reason (e.g. the relative portion was not added, but
-    ///         multiplied etc).
+    /// @param diags            diagnostic reporting
+    /// @param err_too_complex  error to report if the expr could not be
+    ///                         split into a value (e.g. the relative portion
+    ///                         was not added, but multiplied etc).
+    /// @return False if an error was reported.
     /// @note This should only be called after the parse is complete.
     ///       Calling before the parse is complete will usually result in
-    ///       an error return.
-    bool Finalize();
+    ///       an error.
+    bool Finalize(Diagnostic& diags, unsigned int err_too_complex =
+                  diag::err_too_complex_expression);
 
     /// Determine if subtractive relative portion can be treated as
     /// PC relative, and if so, calculate its needed integer fixup.

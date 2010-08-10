@@ -99,13 +99,9 @@ LEB128Bytecode::~LEB128Bytecode()
 bool
 LEB128Bytecode::Finalize(Bytecode& bc, Diagnostic& diags)
 {
-    if (!m_value.Finalize() || m_value.isRelative())
-    {
-        diags.Report(bc.getSource(), diag::err_leb128_too_complex)
-            << m_value.getSource();
+    if (!m_value.Finalize(diags, diag::err_leb128_too_complex) ||
+        m_value.isRelative())
         return false;
-    }
-
     return true;
 }
 

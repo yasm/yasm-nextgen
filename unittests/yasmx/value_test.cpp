@@ -24,6 +24,7 @@
 //
 #include <gtest/gtest.h>
 
+#include "clang/Basic/SourceManager.h"
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Arch.h"
@@ -34,7 +35,13 @@
 #include "yasmx/Symbol.h"
 #include "yasmx/Value.h"
 
+#include "unittests/diag_mock.h"
+
+
 using namespace yasm;
+using namespace yasmunit;
+
+using ::testing::Mock;
 
 class ValueTest : public ::testing::Test
 {
@@ -54,6 +61,8 @@ protected:
 
     Symbol sym1_sym, sym2_sym, wrt_sym;
     SymbolRef sym1, sym2, wrt;
+
+    clang::SourceManager smgr;
 
     ValueTest()
         : sym1_sym("sym1")
@@ -162,28 +171,33 @@ TEST_F(ValueTest, Finalize)
 
     Value v(8);
 
+    MockDiagnosticId mock_client;
+    Diagnostic diags(&smgr, &mock_client);
+
     // just an integer
     v = Value(8, Expr::Ptr(new Expr(4)));
-    EXPECT_TRUE(v.Finalize());
+    EXPECT_TRUE(v.Finalize(diags));
     ASSERT_TRUE(v.hasAbs());
     EXPECT_EQ("4", String::Format(*v.getAbs()));
     EXPECT_FALSE(v.isRelative());
 
     // simple relative
     v = Value(8, Expr::Ptr(new Expr(a)));
-    EXPECT_TRUE(v.Finalize());
+    EXPECT_TRUE(v.Finalize(diags));
     EXPECT_FALSE(v.hasAbs());
     EXPECT_EQ(a, v.getRelative());
 
     // masked relative
     v = Value(8, Expr::Ptr(new Expr(AND(a, 0xff))));
-    EXPECT_TRUE(v.Finalize());
+    EXPECT_TRUE(v.Finalize(diags));
     EXPECT_FALSE(v.hasAbs());
     EXPECT_EQ(a, v.getRelative());
     EXPECT_FALSE(v.isWarnEnabled());
 
     v = Value(8, Expr::Ptr(new Expr(AND(a, 0x7f))));
-    EXPECT_FALSE(v.Finalize());     // invalid
+    EXPECT_CALL(mock_client, DiagId(diag::err_too_complex_expression));
+    EXPECT_FALSE(v.Finalize(diags));     // invalid
+    Mock::VerifyAndClear(&mock_client);
     ASSERT_TRUE(v.hasAbs());
     EXPECT_EQ("a&127", String::Format(*v.getAbs()));
     EXPECT_FALSE(v.isRelative());
@@ -191,62 +205,66 @@ TEST_F(ValueTest, Finalize)
 
     // rel-rel (rel may be external)
     v = Value(8, Expr::Ptr(new Expr(SUB(a, a))));
-    EXPECT_TRUE(v.Finalize());
+    EXPECT_TRUE(v.Finalize(diags));
     EXPECT_FALSE(v.hasAbs());
     EXPECT_FALSE(v.isRelative());
 
     // abs+(rel-rel)
     v = Value(8, Expr::Ptr(new Expr(ADD(5, SUB(a, a)))));
-    EXPECT_TRUE(v.Finalize());
+    EXPECT_TRUE(v.Finalize(diags));
     ASSERT_TRUE(v.hasAbs());
     EXPECT_EQ("5", String::Format(*v.getAbs()));
     EXPECT_FALSE(v.isRelative());
 
     // (rel1+rel2)-rel2, all external
     v = Value(8, Expr::Ptr(new Expr(SUB(ADD(a, b), b))));
-    EXPECT_TRUE(v.Finalize());
+    EXPECT_TRUE(v.Finalize(diags));
     EXPECT_FALSE(v.hasAbs());
     EXPECT_EQ(a, v.getRelative());
 
     // rel1-rel2 in same section gets left in abs portion
     v = Value(8, Expr::Ptr(new Expr(SUB(c, d))));
-    EXPECT_TRUE(v.Finalize());
+    EXPECT_TRUE(v.Finalize(diags));
     ASSERT_TRUE(v.hasAbs());
     EXPECT_EQ("c+(d*-1)", String::Format(*v.getAbs()));
     EXPECT_FALSE(v.isRelative());
 
     // rel1-rel2 in different sections -> rel and sub portions, no abs
     v = Value(8, Expr::Ptr(new Expr(SUB(d, e))));
-    EXPECT_TRUE(v.Finalize());
+    EXPECT_TRUE(v.Finalize(diags));
     EXPECT_FALSE(v.hasAbs());
     EXPECT_EQ(d, v.getRelative());
     EXPECT_EQ(e, v.getSubSymbol());
 
     // rel1 WRT rel2
     v = Value(8, Expr::Ptr(new Expr(WRT(a, b))));
-    EXPECT_TRUE(v.Finalize());
+    EXPECT_TRUE(v.Finalize(diags));
     EXPECT_FALSE(v.hasAbs());
     EXPECT_EQ(a, v.getRelative());
     EXPECT_EQ(b, v.getWRT());
 
     // rel1 WRT reg
     v = Value(8, Expr::Ptr(new Expr(WRT(a, g))));
-    EXPECT_TRUE(v.Finalize());
+    EXPECT_TRUE(v.Finalize(diags));
     ASSERT_TRUE(v.hasAbs());
     EXPECT_EQ("0 WRT g", String::Format(*v.getAbs()));
     EXPECT_EQ(a, v.getRelative());
 
     // rel1 WRT 5 --> error
     v = Value(8, Expr::Ptr(new Expr(WRT(a, 5))));
-    EXPECT_FALSE(v.Finalize());
+    EXPECT_CALL(mock_client, DiagId(diag::err_too_complex_expression));
+    EXPECT_FALSE(v.Finalize(diags));
+    Mock::VerifyAndClear(&mock_client);
 
     // rel1 WRT (5+rel2) --> error
     v = Value(8, Expr::Ptr(new Expr(WRT(a, ADD(5, b)))));
-    EXPECT_FALSE(v.Finalize());
+    EXPECT_CALL(mock_client, DiagId(diag::err_too_complex_expression));
+    EXPECT_FALSE(v.Finalize(diags));
+    Mock::VerifyAndClear(&mock_client);
 
     // 5+(rel1 WRT rel2)
     v = Value(8, Expr::Ptr(new Expr(ADD(5, WRT(a, b)))));
-    EXPECT_TRUE(v.Finalize());
+    EXPECT_TRUE(v.Finalize(diags));
     ASSERT_TRUE(v.hasAbs());
     EXPECT_EQ("5", String::Format(*v.getAbs()));
     EXPECT_EQ(a, v.getRelative());
@@ -254,7 +272,7 @@ TEST_F(ValueTest, Finalize)
 
     // (5+rel1) WRT rel2
     v = Value(8, Expr::Ptr(new Expr(WRT(ADD(5, a), b))));
-    EXPECT_TRUE(v.Finalize());
+    EXPECT_TRUE(v.Finalize(diags));
     ASSERT_TRUE(v.hasAbs());
     EXPECT_EQ("5", String::Format(*v.getAbs()));
     EXPECT_EQ(a, v.getRelative());
@@ -262,7 +280,7 @@ TEST_F(ValueTest, Finalize)
 
     // (rel1 WRT reg) WRT rel2 --> OK
     v = Value(8, Expr::Ptr(new Expr(WRT(ADD(5, a), b))));
-    EXPECT_TRUE(v.Finalize());
+    EXPECT_TRUE(v.Finalize(diags));
     ASSERT_TRUE(v.hasAbs());
     EXPECT_EQ("5", String::Format(*v.getAbs()));
     EXPECT_EQ(a, v.getRelative());
@@ -270,48 +288,58 @@ TEST_F(ValueTest, Finalize)
 
     // (rel1 WRT rel2) WRT rel3 --> error
     v = Value(8, Expr::Ptr(new Expr(WRT(WRT(a, b), c))));
-    EXPECT_FALSE(v.Finalize());
+    EXPECT_CALL(mock_client, DiagId(diag::err_too_complex_expression));
+    EXPECT_FALSE(v.Finalize(diags));
+    Mock::VerifyAndClear(&mock_client);
 
     // SEG reg1
     v = Value(8, Expr::Ptr(new Expr(SEG(a))));
-    EXPECT_TRUE(v.Finalize());
+    EXPECT_TRUE(v.Finalize(diags));
     EXPECT_FALSE(v.hasAbs());
     EXPECT_EQ(a, v.getRelative());
     EXPECT_TRUE(v.isSegOf());
 
     // SEG 5 --> error
     v = Value(8, Expr::Ptr(new Expr(SEG(5))));
-    EXPECT_FALSE(v.Finalize());
+    EXPECT_CALL(mock_client, DiagId(diag::err_too_complex_expression));
+    EXPECT_FALSE(v.Finalize(diags));
+    Mock::VerifyAndClear(&mock_client);
 
     // rel1+SEG rel1 --> error
     v = Value(8, Expr::Ptr(new Expr(ADD(a, SEG(a)))));
-    EXPECT_FALSE(v.Finalize());
+    EXPECT_CALL(mock_client, DiagId(diag::err_too_complex_expression));
+    EXPECT_FALSE(v.Finalize(diags));
+    Mock::VerifyAndClear(&mock_client);
 
     // rel1>>5
     v = Value(8, Expr::Ptr(new Expr(SHR(a, 5))));
-    EXPECT_TRUE(v.Finalize());
+    EXPECT_TRUE(v.Finalize(diags));
     EXPECT_FALSE(v.hasAbs()) << String::Format(*v.getAbs());
     EXPECT_EQ(a, v.getRelative());
     EXPECT_EQ(5U, v.getRShift());
 
     // (rel1>>5)>>6 --> left as-is.
     v = Value(8, Expr::Ptr(new Expr(SHR(SHR(a, 5), 6))));
-    EXPECT_TRUE(v.Finalize());
+    EXPECT_TRUE(v.Finalize(diags));
     ASSERT_TRUE(v.hasAbs());
     EXPECT_EQ("(a>>5)>>6", String::Format(*v.getAbs()));
     EXPECT_FALSE(v.isRelative());
 
     // rel1>>reg --> error
     v = Value(8, Expr::Ptr(new Expr(SHR(a, g))));
-    EXPECT_FALSE(v.Finalize());
+    EXPECT_CALL(mock_client, DiagId(diag::err_too_complex_expression));
+    EXPECT_FALSE(v.Finalize(diags));
+    Mock::VerifyAndClear(&mock_client);
 
     // rel1+rel1>>5 --> error
     v = Value(8, Expr::Ptr(new Expr(ADD(a, SHR(a, 5)))));
-    EXPECT_FALSE(v.Finalize());
+    EXPECT_CALL(mock_client, DiagId(diag::err_too_complex_expression));
+    EXPECT_FALSE(v.Finalize(diags));
+    Mock::VerifyAndClear(&mock_client);
 
     // 5>>rel1 --> left as-is.
     v = Value(8, Expr::Ptr(new Expr(SHR(5, a))));
-    EXPECT_TRUE(v.Finalize());
+    EXPECT_TRUE(v.Finalize(diags));
     ASSERT_TRUE(v.hasAbs());
     EXPECT_EQ("5>>a", String::Format(*v.getAbs()));
     EXPECT_FALSE(v.isRelative());
@@ -319,8 +347,11 @@ TEST_F(ValueTest, Finalize)
 
 TEST_F(ValueTest, Clear)
 {
+    MockDiagnosticId mock_client;
+    Diagnostic diags(&smgr, &mock_client);
+
     Value v(6, Expr::Ptr(new Expr(WRT(sym1, wrt))));
-    v.Finalize();
+    EXPECT_TRUE(v.Finalize(diags));
     Bytecode bc;
     Location loc = {&bc, 0};
     v.SubRelative(0, loc);
@@ -351,8 +382,11 @@ TEST_F(ValueTest, Clear)
 
 TEST_F(ValueTest, ClearRelative)
 {
+    MockDiagnosticId mock_client;
+    Diagnostic diags(&smgr, &mock_client);
+
     Value v(6, Expr::Ptr(new Expr(WRT(sym1, wrt))));
-    v.Finalize();
+    EXPECT_TRUE(v.Finalize(diags));
     Bytecode bc;
     Location loc = {&bc, 0};
     v.SubRelative(0, loc);
@@ -419,12 +453,15 @@ TEST_F(ValueTest, isRelative)
 
 TEST_F(ValueTest, isWRT)
 {
+    MockDiagnosticId mock_client;
+    Diagnostic diags(&smgr, &mock_client);
+
     Value v1(4);
     EXPECT_FALSE(v1.isWRT());
     EXPECT_EQ(SymbolRef(0), v1.getWRT());
 
     Value v2(6, Expr::Ptr(new Expr(WRT(sym1, wrt))));
-    v2.Finalize();
+    EXPECT_TRUE(v2.Finalize(diags));
     EXPECT_TRUE(v2.isWRT());
     EXPECT_EQ(wrt, v2.getWRT());
 }

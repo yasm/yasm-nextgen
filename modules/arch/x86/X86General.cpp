@@ -163,12 +163,13 @@ X86General::Finalize(Bytecode& bc, Diagnostic& diags)
             return false;
     }
 
-    if (m_imm.get() != 0 && !m_imm->Finalize())
+    if (m_imm.get() != 0)
     {
-        diags.Report(m_imm->getSource().getBegin(),
-                     diags.getCustomDiagID(Diagnostic::Error,
-                         N_("immediate expression too complex")));
-        return false;
+        unsigned int err_complex =
+            diags.getCustomDiagID(Diagnostic::Error,
+                                  N_("immediate expression too complex"));
+        if (!m_imm->Finalize(diags, err_complex))
+            return false;
     }
 
     if (m_postop == X86_POSTOP_ADDRESS16 && m_common.m_addrsize != 0)

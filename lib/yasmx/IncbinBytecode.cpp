@@ -113,12 +113,9 @@ IncbinBytecode::Finalize(Bytecode& bc, Diagnostic& diags)
     if (m_start)
     {
         Value val(0, Expr::Ptr(m_start->clone()));
-        if (!val.Finalize())
-        {
-            diags.Report(bc.getSource(), diag::err_incbin_start_too_complex);
+        if (!val.Finalize(diags, diag::err_incbin_start_too_complex))
             return false;
-        }
-        else if (val.isRelative())
+        if (val.isRelative())
         {
             diags.Report(bc.getSource(), diag::err_incbin_start_not_absolute);
             return false;
@@ -129,12 +126,9 @@ IncbinBytecode::Finalize(Bytecode& bc, Diagnostic& diags)
     if (m_maxlen)
     {
         Value val(0, Expr::Ptr(m_maxlen->clone()));
-        if (!val.Finalize())
-        {
-            diags.Report(bc.getSource(), diag::err_incbin_maxlen_too_complex);
+        if (!val.Finalize(diags, diag::err_incbin_maxlen_too_complex))
             return false;
-        }
-        else if (val.isRelative())
+        if (val.isRelative())
         {
             diags.Report(bc.getSource(), diag::err_incbin_maxlen_not_absolute);
             return false;

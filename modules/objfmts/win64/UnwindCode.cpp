@@ -48,12 +48,8 @@ UnwindCode::~UnwindCode()
 bool
 UnwindCode::Finalize(Bytecode& bc, Diagnostic& diags)
 {
-    if (!m_off.Finalize())
-    {
-        diags.Report(m_off.getSource().getBegin(),
-                     diag::err_too_complex_expression);
+    if (!m_off.Finalize(diags))
         return false;
-    }
     return true;
 }
 

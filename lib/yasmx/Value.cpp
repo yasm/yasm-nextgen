@@ -35,8 +35,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
-#include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Diagnostic.h"
@@ -640,7 +638,7 @@ Value::FinalizeScan(Expr& e, bool ssym_ok, int* pos)
 }
 
 bool
-Value::Finalize()
+Value::Finalize(Diagnostic& diags, unsigned int err_too_complex)
 {
     if (!m_abs)
         return true;
@@ -652,7 +650,10 @@ Value::Finalize()
     }
 
     if (!ExpandEqu(*m_abs))
-        throw Error("circular reference detected");
+    {
+        diags.Report(m_source.getBegin(), diag::err_equ_circular_reference);
+        return false;
+    }
     m_abs->Simplify(false);
 
     // Strip top-level AND masking to an all-1s mask the same size
@@ -709,7 +710,10 @@ Value::Finalize()
 
     int pos = -1;
     if (!FinalizeScan(*m_abs, true, &pos))
+    {
+        diags.Report(m_source.getBegin(), err_too_complex);
         return false;
+    }
 
     m_abs->Simplify(false);
 

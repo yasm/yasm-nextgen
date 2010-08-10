@@ -152,16 +152,9 @@ Bytecode::Finalize(Diagnostic& diags)
     for (std::vector<Fixup>::iterator i=m_fixed_fixups.begin(),
          end=m_fixed_fixups.end(); i != end; ++i)
     {
-        if (!i->Finalize())
-        {
-            if (i->isJumpTarget())
-                diags.Report(i->getSource().getBegin(),
-                             diag::err_too_complex_jump);
-            else
-                diags.Report(i->getSource().getBegin(),
-                             diag::err_too_complex_expression);
+        if (!i->Finalize(diags, i->isJumpTarget() ? diag::err_too_complex_jump :
+                         diag::err_too_complex_expression))
             return false;
-        }
 
         if (i->isJumpTarget() && i->isComplexRelative())
         {

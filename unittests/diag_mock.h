@@ -68,6 +68,18 @@ public:
     MOCK_METHOD1(DiagString, void(llvm::StringRef str));
 };
 
+class MockDiagnosticId : public yasm::DiagnosticClient
+{
+public:
+    void HandleDiagnostic(yasm::Diagnostic::Level level,
+                          const yasm::DiagnosticInfo& info)
+    {
+        DiagId(info.getID());
+    }
+
+    MOCK_METHOD1(DiagId, void(unsigned int id));
+};
+
 } // namespace yasmunit
 
 #endif

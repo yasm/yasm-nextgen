@@ -119,12 +119,8 @@ X86Jmp::~X86Jmp()
 bool
 X86Jmp::Finalize(Bytecode& bc, Diagnostic& diags)
 {
-    if (!m_target.Finalize())
-    {
-        diags.Report(bc.getSource(), diag::err_too_complex_jump)
-            << m_target.getSource();
+    if (!m_target.Finalize(diags, diag::err_too_complex_jump))
         return false;
-    }
     if (m_target.isComplexRelative())
     {
         diags.Report(bc.getSource(), diag::err_invalid_jump_target)

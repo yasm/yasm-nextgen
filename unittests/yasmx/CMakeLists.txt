@@ -12,4 +12,4 @@ YASM_ADD_UNIT_TEST(libyasmx_tests
     location_test.cpp
     value_test.cpp
     )
-target_link_libraries(libyasmx_tests libyasmx ${GTEST_BOTH_LIBRARIES})
+target_link_libraries(libyasmx_tests libyasmx yasmunit ${GTEST_BOTH_LIBRARIES})

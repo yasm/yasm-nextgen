@@ -1220,10 +1220,7 @@ X86EffAddr::Check(unsigned char* addrsize,
 bool
 X86EffAddr::Finalize(Diagnostic& diags)
 {
-    if (!m_disp.Finalize())
-    {
-        diags.Report(m_disp.getSource().getBegin(), diag::err_ea_too_complex);
+    if (!m_disp.Finalize(diags, diag::err_ea_too_complex))
         return false;
-    }
     return true;
 }

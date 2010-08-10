@@ -105,12 +105,9 @@ MultipleBytecode::Finalize(Bytecode& bc, Diagnostic& diags)
 {
     Value val(0, std::auto_ptr<Expr>(m_multiple->clone()));
 
-    if (!val.Finalize())
-    {
-        diags.Report(bc.getSource(), diag::err_multiple_too_complex);
+    if (!val.Finalize(diags, diag::err_multiple_too_complex))
         return false;
-    }
-    else if (val.isRelative())
+    if (val.isRelative())
     {
         diags.Report(bc.getSource(), diag::err_multiple_not_absolute);
         return false;
