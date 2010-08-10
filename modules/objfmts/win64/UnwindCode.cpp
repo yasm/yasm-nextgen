@@ -108,7 +108,7 @@ UnwindCode::CalcLen(Bytecode& bc,
     }
 
     IntNum intn;
-    if (m_off.getIntNum(&intn, false))
+    if (m_off.getIntNum(&intn, false, diags))
     {
         long intv = intn.getInt();
         if (intv > high)
@@ -249,7 +249,7 @@ UnwindCode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 
     // Check for overflow
     IntNum intn;
-    if (!m_off.getIntNum(&intn, true))
+    if (!m_off.getIntNum(&intn, true, bc_out.getDiagnostics()))
     {
         bc_out.Diag(m_off.getSource().getBegin(),
                     diag::err_too_complex_expression);

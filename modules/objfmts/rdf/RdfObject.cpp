@@ -434,7 +434,7 @@ RdfOutput::OutputSymbol(Symbol& sym, bool all_syms, unsigned int* indx)
             // size
             assert(getCommonSize(sym) != 0);
             Expr csize_expr(*getCommonSize(sym));
-            SimplifyCalcDist(csize_expr);
+            SimplifyCalcDist(csize_expr, getDiagnostics());
             if (!csize_expr.isIntNum())
             {
                 Diag(sym.getDeclSource(), diag::err_common_size_not_integer);
@@ -463,7 +463,7 @@ RdfOutput::OutputSymbol(Symbol& sym, bool all_syms, unsigned int* indx)
                         continue;
                     }
                     Expr aligne = nv->getExpr(m_object);
-                    SimplifyCalcDist(aligne);
+                    SimplifyCalcDist(aligne, getDiagnostics());
                     if (!aligne.isIntNum())
                     {
                         Diag(nv->getValueRange().getBegin(),

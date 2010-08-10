@@ -24,11 +24,15 @@
 //
 #include <gtest/gtest.h>
 
+#include "clang/Basic/SourceManager.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Location.h"
 #include "yasmx/Location_util.h"
+
+#include "unittests/diag_mock.h"
+
 
 using namespace yasm;
 
@@ -37,6 +41,8 @@ class LocationTest : public testing::Test
 protected:
     Bytecode bc1, bc2;
     Location loc1, loc2, loc3;
+
+    clang::SourceManager smgr;
 
     virtual void SetUp()
     {
@@ -83,46 +89,52 @@ TEST_F(LocationTest, CalcDist)
 
 TEST_F(LocationTest, SimplifyCalcDistNoBC)
 {
+    yasmunit::MockDiagnosticClient mock_client;
+    Diagnostic diags(&smgr, &mock_client);
+
     Expr e;
 
     e = SUB(loc2, loc1);
-    SimplifyCalcDistNoBC(e);
+    SimplifyCalcDistNoBC(e, diags);
     EXPECT_EQ("30", String::Format(e));
 
     e = ADD(10, SUB(loc2, loc1));
-    SimplifyCalcDistNoBC(e);
+    SimplifyCalcDistNoBC(e, diags);
     EXPECT_EQ("40", String::Format(e));
 
     e = SUB(loc3, loc1);
-    SimplifyCalcDistNoBC(e);
+    SimplifyCalcDistNoBC(e, diags);
     EXPECT_EQ("{LOC}+({LOC}*-1)", String::Format(e));
 }
 
 TEST_F(LocationTest, SimplifyCalcDist)
 {
+    yasmunit::MockDiagnosticClient mock_client;
+    Diagnostic diags(&smgr, &mock_client);
+
     Expr e;
 
     e = SUB(loc2, loc1);
-    SimplifyCalcDist(e);
+    SimplifyCalcDist(e, diags);
     EXPECT_EQ("30", String::Format(e));
 
     e = ADD(10, SUB(loc2, loc1));
-    SimplifyCalcDist(e);
+    SimplifyCalcDist(e, diags);
     EXPECT_EQ("40", String::Format(e));
 
     e = SUB(loc3, loc1);
-    SimplifyCalcDist(e);
+    SimplifyCalcDist(e, diags);
     EXPECT_EQ("95", String::Format(e));
 
     e = ADD(SUB(loc3, loc1), SUB(loc2, loc1));
-    SimplifyCalcDist(e);
+    SimplifyCalcDist(e, diags);
     EXPECT_EQ("125", String::Format(e));
 
     e = SUB(SUB(loc3, loc1), SUB(loc2, loc1));
-    SimplifyCalcDist(e);
+    SimplifyCalcDist(e, diags);
     EXPECT_EQ("65", String::Format(e));
 
     e = MUL(SUB(loc2, loc1), SUB(loc3, loc2));
-    SimplifyCalcDist(e);
+    SimplifyCalcDist(e, diags);
     EXPECT_EQ("1950", String::Format(e));
 }

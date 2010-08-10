@@ -218,7 +218,7 @@ ElfSymbol::Finalize(Symbol& sym, Diagnostic& diags)
     // get size (if specified); expr overrides stored integer
     if (!m_size.isEmpty())
     {
-        SimplifyCalcDist(m_size);
+        SimplifyCalcDist(m_size, diags);
         if (!m_size.isIntNum())
             diags.Report(m_size_source, diag::err_size_integer);
     }
@@ -234,7 +234,7 @@ ElfSymbol::Finalize(Symbol& sym, Diagnostic& diags)
             diags.Report(sym.getDefSource(), diag::err_equ_circular_reference);
             return;
         }
-        SimplifyCalcDist(equ_expr);
+        SimplifyCalcDist(equ_expr, diags);
 
         // trivial case: simple integer
         if (equ_expr.isIntNum())
@@ -283,7 +283,7 @@ ElfSymbol::Finalize(Symbol& sym, Diagnostic& diags)
         // add in any remaining absolute portion
         if (Expr* abs = val.getAbs())
         {
-            SimplifyCalcDist(*abs);
+            SimplifyCalcDist(*abs, diags);
             if (!abs->isIntNum())
             {
                 diags.Report(sym.getDefSource(), diag::err_equ_not_integer);

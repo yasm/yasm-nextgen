@@ -70,7 +70,7 @@ Dwarf2Debug::Generate_aranges(Section& debug_info)
         // Create address range descriptor
         Expr::Ptr start(new Expr(i->getSymbol()));
         AppendData(*debug_aranges, start, m_sizeof_address, *m_object.getArch(),
-                   clang::SourceLocation());
+                   clang::SourceLocation(), *m_diags);
 
         IntNum length;
         CalcDist(i->getBeginLoc(), i->getEndLoc(), &length);

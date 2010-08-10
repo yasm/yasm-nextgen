@@ -337,7 +337,7 @@ X86General::CalcLen(Bytecode& bc,
         if (m_postop == X86_POSTOP_SIGNEXT_IMM8)
         {
             IntNum num;
-            if (!m_imm->getIntNum(&num, false))
+            if (!m_imm->getIntNum(&num, false, diags))
             {
                 // Unknown; default to byte form and set as critical
                 // expression.

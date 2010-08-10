@@ -183,12 +183,14 @@ void AppendData(BytecodeContainer& container,
 /// @param size         storage size (in bytes) for the data value
 /// @param arch         architecture
 /// @param source       source location
+/// @param diags        diagnostic reporting
 YASM_LIB_EXPORT
 void AppendData(BytecodeContainer& container,
                 std::auto_ptr<Expr> expr,
                 unsigned int size,
                 const Arch& arch,
-                clang::SourceLocation source);
+                clang::SourceLocation source,
+                Diagnostic& diags);
 
 /// Append a string value to the end of a section.
 /// @param sect         section

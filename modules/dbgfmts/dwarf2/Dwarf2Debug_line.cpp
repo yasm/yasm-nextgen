@@ -228,7 +228,7 @@ Dwarf2Debug::AppendLineExtOp(BytecodeContainer& container,
                  *m_diags);
     AppendByte(container, ext_opcode);
     AppendData(container, Expr::Ptr(new Expr(ext_operand)), ext_operandsize,
-               *m_object.getArch(), clang::SourceLocation());
+               *m_object.getArch(), clang::SourceLocation(), *m_diags);
 }
 
 void

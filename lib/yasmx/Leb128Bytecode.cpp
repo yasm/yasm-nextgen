@@ -175,7 +175,8 @@ LEB128Bytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
     else
     {
         ExprTerm term;
-        if (!Evaluate(*m_value.getAbs(), &term) || !term.isType(ExprTerm::INT))
+        if (!Evaluate(*m_value.getAbs(), bc_out.getDiagnostics(), &term) ||
+            !term.isType(ExprTerm::INT))
         {
             bc_out.getDiagnostics().Report(m_value.getSource().getBegin(),
                                            diag::err_leb128_too_complex);
@@ -246,7 +247,7 @@ yasm::AppendLEB128(BytecodeContainer& container,
                    Diagnostic& diags)
 {
     // If expression is just an integer, output directly.
-    expr->Simplify();
+    expr->Simplify(diags);
     if (expr->isIntNum())
     {
         AppendLEB128(container, expr->getIntNum(), sign, source, diags);

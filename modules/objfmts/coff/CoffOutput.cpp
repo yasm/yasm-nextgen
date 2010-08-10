@@ -164,7 +164,7 @@ CoffOutput::ConvertValueToBytes(Value& value,
             {
                 assert(getCommonSize(*sym) != 0);
                 Expr csize_expr(*getCommonSize(*sym));
-                SimplifyCalcDist(csize_expr);
+                SimplifyCalcDist(csize_expr, getDiagnostics());
                 if (!csize_expr.isIntNum())
                 {
                     Diag(value.getSource().getBegin(),

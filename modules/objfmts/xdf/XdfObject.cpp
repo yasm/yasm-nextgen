@@ -274,7 +274,7 @@ XdfOutput::OutputSymbol(const Symbol& sym,
     else if (const Expr* equ_val = sym.getEqu())
     {
         Expr::Ptr equ_val_copy(equ_val->clone());
-        equ_val_copy->Simplify();
+        equ_val_copy->Simplify(getDiagnostics());
         if (!equ_val_copy->isIntNum())
         {
             if (vis & Symbol::GLOBAL)

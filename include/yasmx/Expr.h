@@ -49,6 +49,7 @@ namespace yasm
 {
 
 class Bytecode;
+class Diagnostic;
 class Expr;
 class ExprTest;
 class Register;
@@ -452,18 +453,20 @@ public:
 
     /// Simplify an expression as much as possible.  Eliminates extraneous
     /// branches and simplifies integer-only subexpressions.  Does *not*
-    /// expand EQUs; use expand_equ() in expr_util.h to first expand EQUs.
+    /// expand EQUs; use ExpandEqu() in expr_util.h to first expand EQUs.
     /// @param simplify_reg_mul simplify REG*1 identities
-    void Simplify(bool simplify_reg_mul = true);
+    void Simplify(Diagnostic& diags, bool simplify_reg_mul = true);
 
     /// Simplify an expression as much as possible, taking a functor for
-    /// additional processing.  Calls level_op() both before and after the
+    /// additional processing.  Calls LevelOp() both before and after the
     /// functor in post-order.  Functor is only called on operator terms.
     /// @param func             functor to call on each operator, bottom-up
     ///                         called as (Expr&, int pos)
     /// @param simplify_reg_mul simplify REG*1 identities
     template <typename T>
-    void Simplify(const T& func, bool simplify_reg_mul = true);
+    void Simplify(Diagnostic& diags,
+                  const T& func,
+                  bool simplify_reg_mul = true);
 
     /// Extract the segment portion of an expression containing SEG:OFF,
     /// leaving the offset.
@@ -597,7 +600,7 @@ public:
     ///       post-order on a tree to combine deeper levels.
     /// @param simplify_reg_mul simplify REG*1 identities
     /// @param pos              index of top-level operator term
-    void LevelOp(bool simplify_reg_mul, int pos=-1);
+    void LevelOp(Diagnostic& diags, bool simplify_reg_mul, int pos=-1);
 
     //@}
 
@@ -699,7 +702,7 @@ inline void Expr::Append(const ExprTerm& term)
 
 template <typename T>
 void
-Expr::Simplify(const T& func, bool simplify_reg_mul)
+Expr::Simplify(Diagnostic& diags, const T& func, bool simplify_reg_mul)
 {
     TransformNeg();
 
@@ -708,7 +711,7 @@ Expr::Simplify(const T& func, bool simplify_reg_mul)
     {
         if (!m_terms[pos].isOp())
             continue;
-        LevelOp(simplify_reg_mul, pos);
+        LevelOp(diags, simplify_reg_mul, pos);
 
         if (!m_terms[pos].isOp())
             continue;
@@ -716,7 +719,7 @@ Expr::Simplify(const T& func, bool simplify_reg_mul)
 
         if (!m_terms[pos].isOp())
             continue;
-        LevelOp(simplify_reg_mul, pos);
+        LevelOp(diags, simplify_reg_mul, pos);
     }
 
     Cleanup();
@@ -724,6 +727,7 @@ Expr::Simplify(const T& func, bool simplify_reg_mul)
 
 /// Expression builder based on operator.
 /// Allows building expressions with the syntax Expr e = ADD(0, sym, ...);
+/// @note Source locations cannot be specified with this form.
 struct ExprBuilder
 {
     Op::Op op;
@@ -910,12 +914,18 @@ operator<< (YAML::Emitter& out, const Expr& e)
 }
 
 /// Perform a floating point calculation based on an #Op operator.
-/// @note Throws on error.  Asserts on invalid operation for floats.
 /// @param lhs      left hand side of expression (also modified as result)
 /// @param op       operator
 /// @param rhs      right hand side of expression
+/// @param source   operator source location
+/// @param diags    diagnostic reporting
+/// @return False if an error occurred.
 YASM_LIB_EXPORT
-void CalcFloat(llvm::APFloat* lhs, Op::Op op, const llvm::APFloat& rhs);
+bool CalcFloat(llvm::APFloat* lhs,
+               Op::Op op,
+               const llvm::APFloat& rhs,
+               clang::SourceLocation source,
+               Diagnostic& diags);
 
 /// Get left and right hand immediate children, or single immediate child.
 /// @param e        Expression

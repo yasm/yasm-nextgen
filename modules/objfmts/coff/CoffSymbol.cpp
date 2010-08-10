@@ -129,7 +129,7 @@ CoffSymbol::Write(Bytes& bytes,
     else if (const Expr* equ_val_c = sym.getEqu())
     {
         Expr equ_val(*equ_val_c);
-        SimplifyCalcDist(equ_val);
+        SimplifyCalcDist(equ_val, diags);
         if (equ_val.isIntNum())
             value = equ_val.getIntNum();
         else if (vis & Symbol::GLOBAL)
@@ -143,7 +143,7 @@ CoffSymbol::Write(Bytes& bytes,
         {
             assert(getCommonSize(sym) != 0);
             Expr csize(*getCommonSize(sym));
-            SimplifyCalcDist(csize);
+            SimplifyCalcDist(csize, diags);
             if (csize.isIntNum())
                 value = csize.getIntNum();
             else

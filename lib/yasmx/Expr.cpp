@@ -37,6 +37,7 @@
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/errwarn.h"
 #include "yasmx/Arch.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Symbol.h"
 
@@ -86,8 +87,12 @@ isRightIdentity(Op::Op op, const IntNum& intn)
             (iszero && op == Op::SHR));
 }
 
-void
-yasm::CalcFloat(llvm::APFloat* lhs, Op::Op op, const llvm::APFloat& rhs)
+bool
+yasm::CalcFloat(llvm::APFloat* lhs,
+                Op::Op op,
+                const llvm::APFloat& rhs,
+                clang::SourceLocation source,
+                Diagnostic& diags)
 {
     llvm::APFloat::opStatus status;
     switch (op)
@@ -110,21 +115,27 @@ yasm::CalcFloat(llvm::APFloat* lhs, Op::Op op, const llvm::APFloat& rhs)
             status = lhs->mod(rhs, llvm::APFloat::rmNearestTiesToEven);
             break;
         default:
-            assert(false && "unrecognized floating point operation");
             status = llvm::APFloat::opInvalidOp;
             break;
     }
 
     if (status & llvm::APFloat::opInvalidOp)
-        throw FloatingPointError(N_("invalid floating point operation"));
-    else if (status & llvm::APFloat::opDivByZero)
-        throw ZeroDivisionError(N_("divide by zero"));
-    else if (status & llvm::APFloat::opOverflow)
-        setWarn(WARN_GENERAL, N_("overflow in floating point expression"));
+    {
+        diags.Report(source, diag::err_float_invalid_op);
+        return false;
+    }
+    if (status & llvm::APFloat::opDivByZero)
+    {
+        diags.Report(source, diag::err_divide_by_zero);
+        return false;
+    }
+    if (status & llvm::APFloat::opOverflow)
+        diags.Report(source, diag::warn_float_overflow);
     else if (status & llvm::APFloat::opUnderflow)
-        setWarn(WARN_GENERAL, N_("underflow in floating point expression"));
+        diags.Report(source, diag::warn_float_underflow);
     else if (status & llvm::APFloat::opInexact)
-        setWarn(WARN_GENERAL, N_("inexact floating point result"));
+        diags.Report(source, diag::warn_float_inexact);
+    return true;
 }
 
 const ExprBuilder yasm::ADD = {Op::ADD};
@@ -589,7 +600,7 @@ Expr::TransformNeg()
 }
 
 void
-Expr::LevelOp(bool simplify_reg_mul, int pos)
+Expr::LevelOp(Diagnostic& diags, bool simplify_reg_mul, int pos)
 {
     if (pos < 0)
         pos += m_terms.size();
@@ -599,6 +610,7 @@ Expr::LevelOp(bool simplify_reg_mul, int pos)
     if (!root.isOp())
         return;
     Op::Op op = root.getOp();
+    clang::SourceLocation op_source = root.getSource();
     bool do_level = isAssociative(op);
 
     // Only one of intchild and fltchild is active.  If we run into a float,
@@ -726,7 +738,7 @@ again:
             }
 
             std::swap(*fltchild->getFloat(), *fltn);
-            CalcFloat(fltchild->getFloat(), op, *fltn);
+            CalcFloat(fltchild->getFloat(), op, *fltn, op_source, diags);
             child.Clear();
             root.AddNumChild(-1);
         }
@@ -769,7 +781,7 @@ again:
 }
 
 void
-Expr::Simplify(bool simplify_reg_mul)
+Expr::Simplify(Diagnostic& diags, bool simplify_reg_mul)
 {
     TransformNeg();
 
@@ -777,7 +789,7 @@ Expr::Simplify(bool simplify_reg_mul)
     {
         if (!m_terms[pos].isOp())
             continue;
-        LevelOp(simplify_reg_mul, pos);
+        LevelOp(diags, simplify_reg_mul, pos);
     }
 
     Cleanup();

@@ -785,7 +785,7 @@ NasmParser::ParseExp()
                     NasmParseDataExprTerm parse_data_term;
                     if (ParseExpr(*e, &parse_data_term))
                         AppendData(*m_container, e, pseudo->size, *m_arch,
-                                   exp_source);
+                                   exp_source, m_preproc.getDiagnostics());
                     else
                     {
                         Diag(m_token, diag::err_expected_expression_or_string);
@@ -1662,7 +1662,7 @@ NasmParser::DirAlign(DirectiveInfo& info, Diagnostic& diags)
         // Largest .align in the section specifies section alignment.
         // Note: this doesn't match NASM behavior, but is a lot more
         // intelligent!
-        boundval.Simplify();
+        boundval.Simplify(m_preproc.getDiagnostics());
         if (boundval.isIntNum())
         {
             unsigned long boundint = boundval.getIntNum().getUInt();

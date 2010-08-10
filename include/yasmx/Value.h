@@ -144,8 +144,9 @@ public:
     /// @param out          (output) integer
     /// @param calc_bc_dist if nonzero, calculates bytecode distances in
     ///                     absolute portion of value
+    /// @param diags        diagnostic reporting
     /// @return True (and out set) if can be resolved to integer value.
-    bool getIntNum(/*@out@*/ IntNum* out, bool calc_bc_dist);
+    bool getIntNum(/*@out@*/ IntNum* out, bool calc_bc_dist, Diagnostic& diags);
 
     /// Configure numeric output based on value settings.
     /// @param num_out      numeric output

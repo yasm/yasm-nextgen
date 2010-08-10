@@ -50,7 +50,8 @@ class YASM_STD_EXPORT UnwindInfo : public Bytecode::Contents
         void Generate(std::auto_ptr<UnwindInfo> uwinfo,
                       BytecodeContainer& xdata,
                       clang::SourceLocation source,
-                      const Arch& arch);
+                      const Arch& arch,
+                      Diagnostic& diags);
 
 public:
     UnwindInfo();
@@ -107,7 +108,8 @@ YASM_STD_EXPORT
 void Generate(std::auto_ptr<UnwindInfo> uwinfo,
               BytecodeContainer& xdata,
               clang::SourceLocation source,
-              const Arch& arch);
+              const Arch& arch,
+              Diagnostic& diags);
 
 }} // namespace yasm::objfmt
 

@@ -654,7 +654,7 @@ Value::Finalize(Diagnostic& diags, unsigned int err_too_complex)
         diags.Report(m_source.getBegin(), diag::err_equ_circular_reference);
         return false;
     }
-    m_abs->Simplify(false);
+    m_abs->Simplify(diags, false);
 
     // Strip top-level AND masking to an all-1s mask the same size
     // of the value size.  This allows forced avoidance of overflow warnings.
@@ -715,7 +715,7 @@ Value::Finalize(Diagnostic& diags, unsigned int err_too_complex)
         return false;
     }
 
-    m_abs->Simplify(false);
+    m_abs->Simplify(diags, false);
 
     // Simplify 0 in abs to NULL
     if (m_abs->isIntNum())
@@ -748,7 +748,7 @@ Value::CalcPCRelSub(/*@out@*/ IntNum* out, Location loc) const
 }
 
 bool
-Value::getIntNum(IntNum* out, bool calc_bc_dist)
+Value::getIntNum(IntNum* out, bool calc_bc_dist, Diagnostic& diags)
 {
     // This code could be written more simply, but this is a very hot method,
     // so we need to shortcut all of the common cases.
@@ -764,7 +764,7 @@ Value::getIntNum(IntNum* out, bool calc_bc_dist)
     else
     {
         ExprTerm term;
-        if (!Evaluate(*m_abs, &term, calc_bc_dist, false)
+        if (!Evaluate(*m_abs, diags, &term, calc_bc_dist, false)
             || !term.isType(ExprTerm::INT))
             return false;
         out->swap(*term.getIntNum());
@@ -866,7 +866,7 @@ Value::OutputBasic(NumericOutput& num_out, IntNum* outval, Diagnostic& diags)
 
     // Not trivial, need to evaluate
     ExprTerm term;
-    if (!Evaluate(*m_abs, &term))
+    if (!Evaluate(*m_abs, diags, &term))
     {
         // Check for complex float expressions
         if (m_abs->Contains(ExprTerm::FLOAT))

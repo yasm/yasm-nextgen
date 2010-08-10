@@ -244,7 +244,7 @@ public:
     ~Span();
 
     bool CreateTerms(Optimizer* optimize, Diagnostic& diags);
-    bool RecalcNormal();
+    bool RecalcNormal(Diagnostic& diags);
 
     void Write(YAML::Emitter& out) const;
     void Dump() const;
@@ -286,7 +286,7 @@ private:
 class Optimizer
 {
 public:
-    Optimizer();
+    Optimizer(Diagnostic& diags);
     ~Optimizer();
     void AddSpan(Bytecode& bc,
                  int id,
@@ -295,10 +295,10 @@ public:
                  long pos_thres);
     void AddOffsetSetter(Bytecode& bc);
 
-    void Step1b(Diagnostic& diags);
+    void Step1b();
     bool Step1d();
-    void Step1e(Diagnostic& diags);
-    void Step2(Diagnostic& diags);
+    void Step1e();
+    void Step2();
 
     void Write(YAML::Emitter& out) const;
     void Dump() const;
@@ -306,9 +306,10 @@ public:
 private:
     void ITreeAdd(Span& span, Span::Term& term);
     void CheckCycle(IntervalTreeNode<Span::Term*> * node,
-                    Span& span,
-                    Diagnostic& diags);
+                    Span& span);
     void ExpandTerm(IntervalTreeNode<Span::Term*> * node, long len_diff);
+
+    Diagnostic& m_diags;
 
     typedef std::list<Span*> Spans;
     Spans m_spans;      // ownership list
@@ -413,7 +414,7 @@ Span::CreateTerms(Optimizer* optimize, Diagnostic& diags)
     // Split out sym-sym terms in absolute portion of dependent value
     if (m_depval.hasAbs())
     {
-        SubstDist(*m_depval.getAbs(),
+        SubstDist(*m_depval.getAbs(), diags,
                   BIND::bind(&Span::AddTerm, this, _1, _2, _3));
         if (m_span_terms.size() > 0)
         {
@@ -443,7 +444,7 @@ Span::CreateTerms(Optimizer* optimize, Diagnostic& diags)
 // Recalculate span value based on current span replacement values.
 // Returns True if span needs expansion (e.g. exceeded thresholds).
 bool
-Span::RecalcNormal()
+Span::RecalcNormal(Diagnostic& diags)
 {
     ++num_recalc;
     m_new_val = 0;
@@ -458,7 +459,7 @@ Span::RecalcNormal()
         for (Terms::iterator i=m_span_terms.begin(), end=m_span_terms.end();
              i != end; ++i)
             *m_expr_terms[i->m_subst].getIntNum() = i->m_new_val;
-        if (!Evaluate(*m_depval.getAbs(), &result, &m_expr_terms[0],
+        if (!Evaluate(*m_depval.getAbs(), diags, &result, &m_expr_terms[0],
                       m_expr_terms.size(), false, false)
             || !result.isType(ExprTerm::INT))
             m_new_val = LONG_MAX;   // too complex; force to longest form
@@ -543,7 +544,8 @@ Span::Dump() const
     llvm::errs() << out.c_str() << '\n';
 }
 
-Optimizer::Optimizer()
+Optimizer::Optimizer(Diagnostic& diags)
+    : m_diags(diags)
 {
     // Create an placeholder offset setter for spans to point to; this will
     // get updated if/when we actually run into one.
@@ -665,9 +667,7 @@ Optimizer::ITreeAdd(Span& span, Span::Term& term)
 }
 
 void
-Optimizer::CheckCycle(IntervalTreeNode<Span::Term*> * node,
-                      Span& span,
-                      Diagnostic& diags)
+Optimizer::CheckCycle(IntervalTreeNode<Span::Term*> * node, Span& span)
 {
     Span::Term* term = node->getData();
     Span* depspan = term->m_span;
@@ -680,8 +680,8 @@ Optimizer::CheckCycle(IntervalTreeNode<Span::Term*> * node,
     // span is in our backtrace.
     if (span.m_backtrace.count(depspan))
     {
-        diags.Report(span.m_bc.getSource(),
-                     diag::err_optimizer_circular_reference);
+        m_diags.Report(span.m_bc.getSource(),
+                       diag::err_optimizer_circular_reference);
         return;
     }
 
@@ -732,7 +732,7 @@ Optimizer::ExpandTerm(IntervalTreeNode<Span::Term*> * node, long len_diff)
     }
 
     // Update term and check against thresholds
-    if (!span->RecalcNormal())
+    if (!span->RecalcNormal(m_diags))
     {
         DEBUG(llvm::errs() << "SPAN@" << span
               << " didn't change, not readded\n");
@@ -749,18 +749,18 @@ Optimizer::ExpandTerm(IntervalTreeNode<Span::Term*> * node, long len_diff)
 }
 
 void
-Optimizer::Step1b(Diagnostic& diags)
+Optimizer::Step1b()
 {
     Spans::iterator spani = m_spans.begin();
     while (spani != m_spans.end())
     {
         Span* span = *spani;
-        if (span->CreateTerms(this, diags) && span->RecalcNormal())
+        if (span->CreateTerms(this, m_diags) && span->RecalcNormal(m_diags))
         {
             bool still_depend = false;
             if (!span->m_bc.Expand(span->m_id, span->m_cur_val, span->m_new_val,
                                    &still_depend, &span->m_neg_thres,
-                                   &span->m_pos_thres, diags))
+                                   &span->m_pos_thres, m_diags))
             {
                 continue; // error
             }
@@ -768,8 +768,8 @@ Optimizer::Step1b(Diagnostic& diags)
             {
                 if (span->m_active == Span::INACTIVE)
                 {
-                    diags.Report(span->m_bc.getSource(),
-                                 diag::err_optimizer_secondary_expansion);
+                    m_diags.Report(span->m_bc.getSource(),
+                                   diag::err_optimizer_secondary_expansion);
                 }
             }
             else
@@ -810,7 +810,7 @@ Optimizer::Step1d()
                   << " newval to " << term->m_new_val << '\n');
         }
 
-        if (span->RecalcNormal())
+        if (span->RecalcNormal(m_diags))
         {
             // Exceeded threshold, add span to QB
             m_QB.push_back(&(*span));
@@ -824,7 +824,7 @@ Optimizer::Step1d()
 }
 
 void
-Optimizer::Step1e(Diagnostic& diags)
+Optimizer::Step1e()
 {
     // Update offset-setters values
     for (std::vector<OffsetSetter>::iterator os=m_offset_setters.begin(),
@@ -858,12 +858,12 @@ Optimizer::Step1e(Diagnostic& diags)
         m_itree.Enumerate(static_cast<long>(span->m_bc.getIndex()),
                           static_cast<long>(span->m_bc.getIndex()),
                           BIND::bind(&Optimizer::CheckCycle, this, _1,
-                                     REF::ref(*span), REF::ref(diags)));
+                                     REF::ref(*span)));
     }
 }
 
 void
-Optimizer::Step2(Diagnostic& diags)
+Optimizer::Step2()
 {
     DEBUG(Dump());
 
@@ -892,7 +892,7 @@ Optimizer::Step2(Diagnostic& diags)
         // Make sure we ended up ultimately exceeding thresholds; due to
         // offset BCs we may have been placed on Q and then reduced in size
         // again.
-        if (!span->RecalcNormal())
+        if (!span->RecalcNormal(m_diags))
             continue;
 
         ++num_expansions;
@@ -902,7 +902,7 @@ Optimizer::Step2(Diagnostic& diags)
         bool still_depend = false;
         if (!span->m_bc.Expand(span->m_id, span->m_cur_val, span->m_new_val,
                                &still_depend, &span->m_neg_thres,
-                               &span->m_pos_thres, diags))
+                               &span->m_pos_thres, m_diags))
         {
             // error
             continue;
@@ -958,7 +958,7 @@ Optimizer::Step2(Diagnostic& diags)
             os->m_bc->Expand(1, static_cast<long>(os->m_cur_val),
                              static_cast<long>(os->m_new_val),
                              &still_depend_temp, &neg_thres_temp,
-                             &pos_thres_temp, diags);
+                             &pos_thres_temp, m_diags);
             os->m_thres = static_cast<long>(pos_thres_temp);
 
             offset_diff =
@@ -987,7 +987,7 @@ Object::UpdateBytecodeOffsets(Diagnostic& diags)
 void
 Object::Optimize(Diagnostic& diags)
 {
-    Optimizer opt;
+    Optimizer opt(diags);
     unsigned long bc_index = 0;
 
     // Step 1a
@@ -1023,7 +1023,7 @@ Object::Optimize(Diagnostic& diags)
         return;
 
     // Step 1b
-    opt.Step1b(diags);
+    opt.Step1b();
     if (diags.hasErrorOccurred())
         return;
 
@@ -1037,12 +1037,12 @@ Object::Optimize(Diagnostic& diags)
         return;
 
     // Step 1e
-    opt.Step1e(diags);
+    opt.Step1e();
     if (diags.hasErrorOccurred())
         return;
 
     // Step 2
-    opt.Step2(diags);
+    opt.Step2();
     if (diags.hasErrorOccurred())
         return;
 

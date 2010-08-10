@@ -464,7 +464,7 @@ GasParser::ParseDirRept(unsigned int param, clang::SourceLocation source)
         return false;
     }
 
-    e.Simplify();
+    e.Simplify(m_preproc.getDiagnostics());
     if (!e.isIntNum())
     {
         Diag(source, diag::err_multiple_not_absolute);
@@ -560,7 +560,7 @@ GasParser::ParseDirAlign(unsigned int power2, clang::SourceLocation source)
         bound = SHL(1, bound);
 
     // Largest .align in the section specifies section alignment.
-    bound.Simplify();
+    bound.Simplify(m_preproc.getDiagnostics());
     if (bound.isIntNum())
     {
         unsigned long boundint = bound.getIntNum().getUInt();
@@ -784,7 +784,8 @@ GasParser::ParseDirFloat(unsigned int size, clang::SourceLocation source)
             // FIXME: Make arch-dependent
             Expr::Ptr e(new Expr(std::auto_ptr<llvm::APFloat>(new llvm::APFloat(
                 num.getFloatValue(llvm::APFloat::x87DoubleExtended)))));
-            AppendData(*m_container, e, size, *m_arch, num_source);
+            AppendData(*m_container, e, size, *m_arch, num_source,
+                       m_preproc.getDiagnostics());
         }
         if (m_token.isNot(GasToken::comma))
             break;
@@ -805,7 +806,8 @@ GasParser::ParseDirData(unsigned int size, clang::SourceLocation source)
             Diag(cur_source, diag::err_expected_expression_after) << ",";
             return false;
         }
-        AppendData(*m_container, e, size, *m_arch, cur_source);
+        AppendData(*m_container, e, size, *m_arch, cur_source,
+                   m_preproc.getDiagnostics());
         if (m_token.isNot(GasToken::comma))
             break;
         ConsumeToken();
@@ -881,7 +883,7 @@ GasParser::ParseDirSkip(unsigned int param, clang::SourceLocation source)
         Diag(cur_source, diag::err_expected_expression_after) << ",";
         return false;
     }
-    AppendData(inner, e_val, 1, *m_arch, source);
+    AppendData(inner, e_val, 1, *m_arch, source, m_preproc.getDiagnostics());
     return true;
 }
 
@@ -921,7 +923,7 @@ GasParser::ParseDirFill(unsigned int param, clang::SourceLocation source)
     unsigned int ssize = 1;
     if (!size.isEmpty())
     {
-        size.Simplify();
+        size.Simplify(m_preproc.getDiagnostics());
         if (!size.isIntNum())
         {
             Diag(size_src, diag::err_fill_size_not_absolute);
@@ -939,7 +941,8 @@ GasParser::ParseDirFill(unsigned int param, clang::SourceLocation source)
     {
         std::auto_ptr<Expr> value_copy(new Expr);
         std::swap(*value_copy, value);
-        AppendData(inner, value_copy, ssize, *m_arch, source);
+        AppendData(inner, value_copy, ssize, *m_arch, source,
+                   m_preproc.getDiagnostics());
     }
     return true;
 }
@@ -1269,7 +1272,7 @@ GasParser::ParseDirIf(unsigned int op, clang::SourceLocation source)
         return false;
     }
 
-    e.Simplify();
+    e.Simplify(m_preproc.getDiagnostics());
     if (!e.isIntNum())
     {
         Diag(source, diag::err_pp_cond_not_constant);
@@ -2042,7 +2045,7 @@ GasParser::DefineLcomm(SymbolRef sym,
     sym->CheckedDefineLabel(loc, source, m_preproc.getDiagnostics());
 
     // Append gap for symbol storage
-    size->Simplify();
+    size->Simplify(m_preproc.getDiagnostics());
     if (size->isIntNum())
         bss.AppendGap(size->getIntNum().getUInt(), source);
     else

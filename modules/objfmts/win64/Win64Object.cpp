@@ -406,7 +406,7 @@ Win64Object::DirEndProcFrame(DirectiveInfo& info, Diagnostic& diags)
 
     // Add unwind info.  Use line number of start of procedure.
     Arch& arch = *m_object.getArch();
-    Generate(m_unwind, *xdata, m_proc_frame, arch);
+    Generate(m_unwind, *xdata, m_proc_frame, arch, diags);
 
     //
     // Add function lookup to end of .pdata section.
@@ -420,12 +420,12 @@ Win64Object::DirEndProcFrame(DirectiveInfo& info, Diagnostic& diags)
 
     // Add function structure to end of .pdata
     AppendData(*pdata, std::auto_ptr<Expr>(new Expr(proc_sym)), 4, arch,
-               source);
+               source, diags);
     AppendData(*pdata, std::auto_ptr<Expr>(new Expr(WRT(curpos, proc_sym))),
-               4, arch, source);
+               4, arch, source, diags);
     AppendData(*pdata,
                std::auto_ptr<Expr>(new Expr(WRT(unwindpos, xdata_sym))),
-               4, arch, source);
+               4, arch, source, diags);
 
     m_proc_frame = clang::SourceLocation();
     m_done_prolog = clang::SourceLocation();

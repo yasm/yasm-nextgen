@@ -38,15 +38,17 @@
 namespace yasm
 {
 
+class Diagnostic;
 class Expr;
 class ExprTerm;
 
 /// Simplify instances of Symbol-Symbol [Symbol+(-1*Symbol)] in an expression
 /// into integers if possible by calling calc_dist().
 /// @param e            expression
+/// @param diags        diagnostic reporting
 /// @warning Only valid /after/ optimization.
 YASM_LIB_EXPORT
-void SimplifyCalcDist(Expr& e);
+void SimplifyCalcDist(Expr& e, Diagnostic& diags);
 
 /// Simplify instances of Symbol-Symbol [Symbol+(-1*Symbol)] in an expression
 /// into integers if possible by calling CalcDistNoBC().
@@ -54,11 +56,12 @@ void SimplifyCalcDist(Expr& e);
 /// locations/symbols are within the same bytecode, so it's safe to call
 /// prior to optimization being performed.
 /// @param e            expression
+/// @param diags        diagnostic reporting
 YASM_LIB_EXPORT
-void SimplifyCalcDistNoBC(Expr& e);
+void SimplifyCalcDistNoBC(Expr& e, Diagnostic& diags);
 
 YASM_LIB_EXPORT
-int SubstDist(Expr& e,
+int SubstDist(Expr& e, Diagnostic& diags,
               const FUNCTION::function<void (unsigned int subst,
                                              Location loc,
                                              Location loc2)>& func);
@@ -71,6 +74,7 @@ int SubstDist(Expr& e,
 ///       within the same section).
 ///       If you need such checking, use SimplifyCalcDist() instead.
 /// @param e            expression
+/// @param diags        diagnostic reporting
 /// @param result       result expression term (output)
 /// @param subst        Substitution terms ([0]=subst 0, [1]=subst 1, etc).
 ///                     Substitutions must be integer or float terms.
@@ -82,6 +86,7 @@ int SubstDist(Expr& e,
 /// @return True if successful.
 YASM_LIB_EXPORT
 bool Evaluate(const Expr& e,
+              Diagnostic& diags,
               ExprTerm* result,
               const ExprTerm* subst,
               unsigned int nsubst,
@@ -90,11 +95,12 @@ bool Evaluate(const Expr& e,
 
 inline bool
 Evaluate(const Expr& e,
+         Diagnostic& diags,
          ExprTerm* result,
          bool valueloc=true,
          bool zeroreg=false)
 {
-    return Evaluate(e, result, 0, 0, valueloc, zeroreg);
+    return Evaluate(e, diags, result, 0, 0, valueloc, zeroreg);
 }
 
 } // namespace yasm

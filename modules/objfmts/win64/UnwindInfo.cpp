@@ -89,7 +89,7 @@ UnwindInfo::CalcLen(Bytecode& bc,
     add_span(bc, 2, m_codes_count, 0, 255);
 
     IntNum intn;
-    if (m_frameoff.getIntNum(&intn, false))
+    if (m_frameoff.getIntNum(&intn, false, diags))
     {
         if (!intn.isInRange(0, 240))
         {
@@ -191,7 +191,7 @@ UnwindInfo::Output(Bytecode& bc, BytecodeOutput& bc_out)
 
     // Frame register and offset
     IntNum intn;
-    if (!m_frameoff.getIntNum(&intn, true))
+    if (!m_frameoff.getIntNum(&intn, true, bc_out.getDiagnostics()))
     {
         bc_out.Diag(m_frameoff.getSource().getBegin(),
                     diag::err_too_complex_expression);
@@ -292,7 +292,8 @@ void
 objfmt::Generate(std::auto_ptr<UnwindInfo> uwinfo,
                  BytecodeContainer& xdata,
                  clang::SourceLocation source,
-                 const Arch& arch)
+                 const Arch& arch,
+                 Diagnostic& diags)
 {
     UnwindInfo* info = uwinfo.get();
 
@@ -332,5 +333,5 @@ objfmt::Generate(std::auto_ptr<UnwindInfo> uwinfo,
     // Exception handler, if present.
     if (info->m_ehandler)
         AppendData(xdata, Expr::Ptr(new Expr(info->m_ehandler)), 4, arch,
-                   source);
+                   source, diags);
 }

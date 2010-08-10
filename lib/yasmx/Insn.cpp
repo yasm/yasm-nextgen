@@ -167,7 +167,7 @@ Operand::Finalize(Diagnostic& diags)
                 // Don't get over-ambitious here; some archs' memory expr
                 // parser are sensitive to the presence of *1, etc, so don't
                 // simplify reg*1 identities.
-                abs->Simplify(false);
+                abs->Simplify(diags, false);
             }
             break;
         case IMM:
@@ -176,7 +176,7 @@ Operand::Finalize(Diagnostic& diags)
                 diags.Report(m_source, diag::err_equ_circular_reference_imm);
                 return false;
             }
-            m_val->Simplify();
+            m_val->Simplify(diags);
             break;
         default:
             break;

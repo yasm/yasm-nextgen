@@ -57,11 +57,13 @@ MapPrescanBytes(const Section& sect, const BinSection& bsd, int* bytes)
 BinMapOutput::BinMapOutput(llvm::raw_ostream& os,
                            const Object& object,
                            const IntNum& origin,
-                           const BinGroups& groups)
-    : m_os(os),
-      m_object(object),
-      m_origin(origin),
-      m_groups(groups)
+                           const BinGroups& groups,
+                           Diagnostic& diags)
+    : m_os(os)
+    , m_object(object)
+    , m_origin(origin)
+    , m_groups(groups)
+    , m_diags(diags)
 {
     // Prescan all values to figure out what width we should make the output
     // fields.  Start with a minimum of 4.
@@ -237,9 +239,9 @@ BinMapOutput::OutputSymbols(const Section* sect)
         if (sect == 0 && (equ = sym->getEqu()))
         {
             std::auto_ptr<Expr> realequ(equ->clone());
-            realequ->Simplify();
+            realequ->Simplify(m_diags);
             BinSimplify(*realequ);
-            realequ->Simplify();
+            realequ->Simplify(m_diags);
             OutputIntNum(realequ->getIntNum());
             m_os << "  " << name << '\n';
         }

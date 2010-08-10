@@ -181,10 +181,10 @@ struct CalcDistFunctor
 } // anonymous namespace
 
 void
-yasm::SimplifyCalcDist(Expr& e)
+yasm::SimplifyCalcDist(Expr& e, Diagnostic& diags)
 {
     CalcDistFunctor functor;
-    e.Simplify(BIND::bind(&TransformDistBase, _1, _2, functor));
+    e.Simplify(diags, BIND::bind(&TransformDistBase, _1, _2, functor));
 }
 
 namespace {
@@ -203,10 +203,10 @@ struct CalcDistNoBCFunctor
 } // anonymous namespace
 
 void
-yasm::SimplifyCalcDistNoBC(Expr& e)
+yasm::SimplifyCalcDistNoBC(Expr& e, Diagnostic& diags)
 {
     CalcDistNoBCFunctor functor;
-    e.Simplify(BIND::bind(&TransformDistBase, _1, _2, functor));
+    e.Simplify(diags, BIND::bind(&TransformDistBase, _1, _2, functor));
 }
 
 namespace {
@@ -237,18 +237,19 @@ struct SubstDistFunctor
 } // anonymous namespace
 
 int
-yasm::SubstDist(Expr& e,
+yasm::SubstDist(Expr& e, Diagnostic& diags,
                 const FUNCTION::function<void (unsigned int subst,
                                                Location loc,
                                                Location loc2)>& func)
 {
     SubstDistFunctor functor(func);
-    e.Simplify(BIND::bind(&TransformDistBase, _1, _2, functor));
+    e.Simplify(diags, BIND::bind(&TransformDistBase, _1, _2, functor));
     return functor.m_subst;
 }
 
 bool
 yasm::Evaluate(const Expr& e,
+               Diagnostic& diags,
                ExprTerm* result,
                const ExprTerm* subst,
                unsigned int nsubst,
@@ -279,6 +280,7 @@ yasm::Evaluate(const Expr& e,
             size_t nchild = term.getNumChild();
             assert(stack.size() >= nchild && "not enough terms to evaluate op");
             Op::Op op = term.getOp();
+            clang::SourceLocation op_source = term.getSource();
 
             // Get first child (will be used as result)
             size_t resultindex = stack.size()-nchild;
@@ -312,7 +314,8 @@ yasm::Evaluate(const Expr& e,
                 if (result.isType(ExprTerm::INT))
                     result.getIntNum()->Calc(op, *child.getIntNum());
                 else if (op < Op::NEG)
-                    CalcFloat(result.getFloat(), op, *child.getFloat());
+                    CalcFloat(result.getFloat(), op, *child.getFloat(),
+                              op_source, diags);
                 else
                     return false;
             }

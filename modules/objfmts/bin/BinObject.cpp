@@ -94,7 +94,7 @@ BinObject::OutputMap(const IntNum& origin,
         return;
     }
 
-    BinMapOutput out(os, m_object, origin, groups);
+    BinMapOutput out(os, m_object, origin, groups, diags);
     out.OutputHeader();
     out.OutputOrigin();
 
@@ -227,7 +227,7 @@ done:
     if (Expr* abs = value.getAbs())
     {
         BinSimplify(*abs);
-        abs->Simplify();
+        abs->Simplify(getDiagnostics());
     }
 
     // Output
@@ -283,7 +283,7 @@ BinObject::Output(llvm::raw_fd_ostream& os,
     IntNum origin(0);
     if (m_org.get() != 0)
     {
-        m_org->Simplify();
+        m_org->Simplify(diags);
         if (!m_org->isIntNum())
         {
             diags.Report(m_org_source,

@@ -143,7 +143,7 @@ RawOutput::ConvertValueToBytes(Value& value,
 {
     // Simplify absolute portion of value
     if (Expr* abs = value.getAbs())
-        abs->Simplify();
+        abs->Simplify(getDiagnostics());
 
     // Output
     IntNum intn;

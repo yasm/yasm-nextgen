@@ -24,10 +24,14 @@
 //
 #include <gtest/gtest.h>
 
+#include "clang/Basic/SourceManager.h"
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Expr.h"
+
+#include "unittests/diag_mock.h"
+
 
 namespace yasm
 {
@@ -41,9 +45,12 @@ protected:
         x.Cleanup();
     }
 
-    static void LevelOp(Expr& x, bool simplify_reg_mul = true, int loc = -1)
+    static void LevelOp(Expr& x,
+                        Diagnostic& diags,
+                        bool simplify_reg_mul = true,
+                        int loc = -1)
     {
-        x.LevelOp(simplify_reg_mul, loc);
+        x.LevelOp(diags, simplify_reg_mul, loc);
     }
 
     class MockRegister : public yasm::Register
@@ -61,6 +68,8 @@ protected:
 
     const MockRegister a, b, c, d, e, f;
     yasm::Expr x;
+
+    clang::SourceManager smgr;
 
     ExprTest()
         : a("a"), b("b"), c("c"), d("d"), e("e"), f("f")
@@ -157,38 +166,41 @@ TEST_F(ExprTest, TransformNeg)
 // Expr::Simplify() tests
 TEST_F(ExprTest, Simplify)
 {
+    yasmunit::MockDiagnosticClient mock_client;
+    Diagnostic diags(&smgr, &mock_client);
+
     x = ADD(a, ADD(ADD(b, c), ADD(ADD(d, e), f)));
     EXPECT_EQ("a+((b+c)+((d+e)+f))", String::Format(x));
-    x.Simplify();
+    x.Simplify(diags);
     EXPECT_EQ("a+b+c+d+e+f", String::Format(x));
 
     // Negatives will be transformed to aid in leveling.
     x = SUB(a, ADD(b, ADD(c, d)));
     EXPECT_EQ("a-(b+(c+d))", String::Format(x));
-    x.Simplify();
+    x.Simplify(diags);
     EXPECT_EQ("a+(b*-1)+(c*-1)+(d*-1)", String::Format(x));
 
     // Constant folding will also be performed.
     x = MUL(1, MUL(2, ADD(3, 4)));
     EXPECT_EQ("1*(2*(3+4))", String::Format(x));
-    x.Simplify();
+    x.Simplify(diags);
     EXPECT_EQ("14", String::Format(x));
 
     // As will identity simplification.
     x = ADD(MUL(5, a, 0), 1);
     EXPECT_EQ("(5*a*0)+1", String::Format(x));
-    x.Simplify();
+    x.Simplify(diags);
     EXPECT_EQ("1", String::Format(x));
 
     // We can combine all of the above.
     x = MUL(ADD(5, a, 6), 1);
     EXPECT_EQ("(5+a+6)*1", String::Format(x));
-    x.Simplify();
+    x.Simplify(diags);
     EXPECT_EQ("a+11", String::Format(x));
 
     x = ADD(10, NEG(5));
     EXPECT_EQ("10+(-5)", String::Format(x));
-    x.Simplify();
+    x.Simplify(diags);
     EXPECT_EQ("5", String::Format(x));
 }
 
@@ -197,49 +209,55 @@ TEST_F(ExprTest, Simplify)
 //
 TEST_F(ExprTest, LevelOpBasic)
 {
+    yasmunit::MockDiagnosticClient mock_client;
+    Diagnostic diags(&smgr, &mock_client);
+
     x = ADD(a, ADD(b, ADD(c, d)));
     EXPECT_EQ("a+(b+(c+d))", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("a+b+c+d", String::Format(x));
 
     x = ADD(a, SUB(b, ADD(c, d)));
     EXPECT_EQ("a+(b-(c+d))", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("a+(b-(c+d))", String::Format(x));
 
     // Only one level of leveling is performed.
     x = SUB(a, ADD(b, ADD(c, d)));
     EXPECT_EQ("a-(b+(c+d))", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("a-(b+(c+d))", String::Format(x));
 
     x = ADD(a, SUB(b, ADD(c, d)), ADD(e, f));
     EXPECT_EQ("a+(b-(c+d))+(e+f)", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("a+(b-(c+d))+e+f", String::Format(x));
 
     x = ADD(ADD(a, b), ADD(c, d, ADD(e, f)));
     EXPECT_EQ("(a+b)+(c+d+(e+f))", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("a+b+c+d+e+f", String::Format(x));
 }
 
 // One-level constant folding will also be performed.
 TEST_F(ExprTest, LevelOpConstFold)
 {
+    yasmunit::MockDiagnosticClient mock_client;
+    Diagnostic diags(&smgr, &mock_client);
+
     x = ADD(1, ADD(2, ADD(3, 4)));
     EXPECT_EQ("1+(2+(3+4))", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("10", String::Format(x));
 
     x = MUL(1, MUL(2, ADD(3, 4)));
     EXPECT_EQ("1*(2*(3+4))", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("2*(3+4)", String::Format(x));
 
     x = SHR(3, 1);
     EXPECT_EQ("3>>1", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("1", String::Format(x));
 }
 
@@ -247,76 +265,82 @@ TEST_F(ExprTest, LevelOpConstFold)
 // Some identities can result in deletion of the rest of the expression.
 TEST_F(ExprTest, LevelOpIdentities)
 {
+    yasmunit::MockDiagnosticClient mock_client;
+    Diagnostic diags(&smgr, &mock_client);
+
     x = ADD(a, 0);
     EXPECT_EQ("a+0", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("a", String::Format(x));
 
     // Simplification of 1*REG is affected by simplify_reg_mul
     x = MUL(1, a);
     EXPECT_EQ("1*a", String::Format(x));
-    ExprTest::LevelOp(x, false);
+    ExprTest::LevelOp(x, diags, false);
     EXPECT_EQ("1*a", String::Format(x));
 
     // Simplification of 1*REG is affected by simplify_reg_mul
     x = MUL(1, a);
     EXPECT_EQ("1*a", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("a", String::Format(x));
 
     x = SUB(a, 0);
     EXPECT_EQ("a-0", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("a", String::Format(x));
 
     x = SUB(0, a);
     EXPECT_EQ("0-a", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("0-a", String::Format(x));
 
     x = MUL(2, a, 0, 3);
     EXPECT_EQ("2*a*0*3", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("0", String::Format(x));
 
     x = MUL(ADD(5, a, 6), 0);
     EXPECT_EQ("(5+a+6)*0", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("0", String::Format(x));
 }
 
 // SEG of SEG:OFF should be simplified to just the segment portion.
 TEST_F(ExprTest, LevelOpSegOfSegoff)
 {
+    yasmunit::MockDiagnosticClient mock_client;
+    Diagnostic diags(&smgr, &mock_client);
+
     x = SEG(SEGOFF(1, 2));
     EXPECT_EQ("SEG (1:2)", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("1", String::Format(x));
 
     x = SEG(SEGOFF(1, ADD(2, 3)));
     EXPECT_EQ("SEG (1:(2+3))", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("1", String::Format(x));
 
     x = SEG(SEGOFF(ADD(1, 2), 3));
     EXPECT_EQ("SEG ((1+2):3)", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("1+2", String::Format(x));
 
     x = SEG(SEGOFF(ADD(1, 2), ADD(3, 4)));
     EXPECT_EQ("SEG ((1+2):(3+4))", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("1+2", String::Format(x));
 
     // Should only affect SEG of SEG:OFF.
     x = SEG(ADD(1, 2));
     EXPECT_EQ("SEG (1+2)", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("SEG (1+2)", String::Format(x));
 
     x = SEG(1);
     EXPECT_EQ("SEG 1", String::Format(x));
-    ExprTest::LevelOp(x);
+    ExprTest::LevelOp(x, diags);
     EXPECT_EQ("SEG 1", String::Format(x));
 }
 

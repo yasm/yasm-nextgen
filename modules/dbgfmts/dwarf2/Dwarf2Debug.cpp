@@ -133,7 +133,7 @@ Dwarf2Debug::AppendHead(Section& sect,
     {
         AppendData(sect, Expr::Ptr(new Expr(debug_ptr->getSymbol())),
                    m_sizeof_offset, *m_object.getArch(),
-                   clang::SourceLocation());
+                   clang::SourceLocation(), *m_diags);
     }
 
     // Size of the offset portion of the address

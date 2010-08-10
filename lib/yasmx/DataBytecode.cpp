@@ -65,9 +65,10 @@ yasm::AppendData(BytecodeContainer& container,
                  std::auto_ptr<Expr> expr,
                  unsigned int size,
                  const Arch& arch,
-                 clang::SourceLocation source)
+                 clang::SourceLocation source,
+                 Diagnostic& diags)
 {
-    expr->Simplify();
+    expr->Simplify(diags);
     if (expr->isIntNum())
     {
         AppendData(container, expr->getIntNum(), size, arch);

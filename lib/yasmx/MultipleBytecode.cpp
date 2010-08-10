@@ -214,7 +214,7 @@ MultipleBytecode::Expand(Bytecode& bc,
 bool
 MultipleBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
-    SimplifyCalcDist(*m_multiple);
+    SimplifyCalcDist(*m_multiple, bc_out.getDiagnostics());
     if (!m_multiple->isIntNum())
     {
         bc_out.Diag(bc.getSource(), diag::err_multiple_unknown);

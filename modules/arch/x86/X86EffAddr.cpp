@@ -208,8 +208,8 @@ namespace {
 class X86EAChecker
 {
 public:
-    X86EAChecker(unsigned int bits, unsigned int addrsize)
-        : m_bits(bits), m_addrsize(addrsize)
+    X86EAChecker(unsigned int bits, unsigned int addrsize, Diagnostic& diags)
+        : m_bits(bits), m_addrsize(addrsize), m_diags(diags)
     {
         for (int i=0; i<17; ++i)
             m_regmult[i] = 0;
@@ -240,6 +240,7 @@ private:
 private:
     unsigned int m_bits;
     unsigned int m_addrsize;
+    Diagnostic& m_diags;
 };
 } // anonymous namespace
 
@@ -389,7 +390,7 @@ X86EAChecker::DistReg(Expr& e, int& pos, bool simplify_reg_mul)
         // Level if child is also a MUL
         if (terms[n].isOp(Op::MUL))
         {
-            e.LevelOp(simplify_reg_mul, n+2);
+            e.LevelOp(m_diags, simplify_reg_mul, n+2);
             // Leveling may have brought up terms, so we need to skip
             // all children explicitly.
             int childnum = terms[n+2].getNumChild();
@@ -509,7 +510,8 @@ X86EAChecker::GetRegUsage(Expr& e, /*@null@*/ int* indexreg, bool* ip_rel)
 {
     if (!ExpandEqu(e))
         return 2;
-    e.Simplify(BIND::bind(&X86EAChecker::DistReg, this, _1, _2, indexreg == 0),
+    e.Simplify(m_diags, BIND::bind(&X86EAChecker::DistReg, this, _1, _2,
+                                   indexreg == 0),
                indexreg == 0);
 
     // Check for WRT rip first
@@ -572,7 +574,7 @@ X86EAChecker::GetRegUsage(Expr& e, /*@null@*/ int* indexreg, bool* ip_rel)
 
     // Simplify expr, which is now really just the displacement. This
     // should get rid of the 0's we put in for registers in the callback.
-    e.Simplify();
+    e.Simplify(m_diags);
 
     return 0;
 }
@@ -664,7 +666,7 @@ X86EffAddr::CalcDispLen(unsigned int wordsize,
     // FIXME: The complex expression equaling zero is probably a rare case,
     // so we ignore it for now.
     IntNum num;
-    if (!m_disp.getIntNum(&num, false))
+    if (!m_disp.getIntNum(&num, false, diags))
     {
         // Still has unknown values.
         m_need_nonzero_len = true;
@@ -761,7 +763,7 @@ X86EffAddr::Check3264(unsigned int addrsize,
         m_pc_rel = false;
     }
 
-    X86EAChecker checker(bits, addrsize);
+    X86EAChecker checker(bits, addrsize, diags);
 
     if (m_disp.hasAbs())
     {
@@ -1067,7 +1069,7 @@ X86EffAddr::Check16(unsigned int bits,
     m_valid_sib = false;
     m_need_sib = 0;
 
-    X86EAChecker checker(bits, 16);
+    X86EAChecker checker(bits, 16, diags);
 
     if (m_disp.hasAbs())
     {

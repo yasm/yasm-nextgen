@@ -411,6 +411,9 @@ TEST_F(ValueTest, ClearRelative)
 
 TEST_F(ValueTest, AddAbsInt)
 {
+    MockDiagnosticId mock_client;
+    Diagnostic diags(&smgr, &mock_client);
+
     Value v(4);
     EXPECT_FALSE(v.hasAbs());
     // add to an empty abs
@@ -419,23 +422,26 @@ TEST_F(ValueTest, AddAbsInt)
     EXPECT_EQ(6, v.getAbs()->getIntNum().getInt());
     // add to an abs with a value
     v.AddAbs(8);
-    v.getAbs()->Simplify();
+    v.getAbs()->Simplify(diags);
     ASSERT_TRUE(v.hasAbs());
     EXPECT_EQ(14, v.getAbs()->getIntNum().getInt());
 }
 
 TEST_F(ValueTest, AddAbsExpr)
 {
+    MockDiagnosticId mock_client;
+    Diagnostic diags(&smgr, &mock_client);
+
     Value v(4);
     EXPECT_FALSE(v.hasAbs());
     // add to an empty abs
     v.AddAbs(Expr(6));
     ASSERT_TRUE(v.hasAbs());
-    v.getAbs()->Simplify();
+    v.getAbs()->Simplify(diags);
     EXPECT_EQ(6, v.getAbs()->getIntNum().getInt());
     // add to an abs with a value
     v.AddAbs(Expr(8));
-    v.getAbs()->Simplify();
+    v.getAbs()->Simplify(diags);
     ASSERT_TRUE(v.hasAbs());
     EXPECT_EQ(14, v.getAbs()->getIntNum().getInt());
 }
@@ -524,24 +530,27 @@ TEST_F(ValueTest, GetSetSource)
 
 TEST_F(ValueTest, getIntNum)
 {
+    MockDiagnosticId mock_client;
+    Diagnostic diags(&smgr, &mock_client);
+
     IntNum intn;
     bool rv;
 
     // just a size, should be =0
     Value v(4);
-    rv = v.getIntNum(&intn, false);
+    rv = v.getIntNum(&intn, false, diags);
     EXPECT_TRUE(rv);
     EXPECT_EQ(0, intn.getInt());
 
     // just an integer, should be =int
     v.AddAbs(5);
-    rv = v.getIntNum(&intn, false);
+    rv = v.getIntNum(&intn, false, diags);
     EXPECT_TRUE(rv);
     EXPECT_EQ(5, intn.getInt());
 
     // with relative portion, not possible (returns false)
     Value v2(6, sym1);
-    rv = v2.getIntNum(&intn, false);
+    rv = v2.getIntNum(&intn, false, diags);
     EXPECT_FALSE(rv);
 
     // TODO: calc_bc_dist-using tests
