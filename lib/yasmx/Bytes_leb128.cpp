@@ -29,7 +29,6 @@
 #include <util.h>
 
 #include "llvm/ADT/SmallVector.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/InputBuffer.h"
 #include "yasmx/IntNum.h"
