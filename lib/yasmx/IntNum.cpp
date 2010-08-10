@@ -395,8 +395,8 @@ CalcSmallValue(Op::Op op,
 void
 IntNum::Calc(Op::Op op, const IntNum* operand)
 {
-    if (!operand && op != Op::NEG && op != Op::NOT && op != Op::LNOT)
-        throw ArithmeticError(N_("operation needs an operand"));
+    assert((operand || op == Op::NEG || op == Op::NOT || op == Op::LNOT) &&
+           "operation needs an operand");
 
     if (m_type == INTNUM_SV && (!operand || operand->m_type == INTNUM_SV))
     {
