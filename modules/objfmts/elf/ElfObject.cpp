@@ -632,9 +632,6 @@ ElfObject::FinalizeSymbol(Symbol& sym,
         if (!local_names && !is_sect)
             return;
 
-        if (sym.getEqu() && !sym.isAbsoluteSymbol())
-            return;
-
         elfsym = &BuildSymbol(sym);
         if (local_names || is_sect)
             elfsym->setName(strtab.getIndex(sym.getName()));
