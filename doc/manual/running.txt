@@ -255,14 +255,6 @@ defined earlier in the command line with %-D% (see <<yasm-option-d>>).
 Yasm supports the following instruction set architectures (ISAs).  For
 more details see <<architectures>>.
 
-lc3b::
-  The ""lc3b"" architecture supports the LC-3b ISA as used in the ECE
-  411 (formerly ECE 312) course at the University of Illinois,
-  Urbana-Champaign, as well as other university courses.  See
-  http://courses.ece.uiuc.edu/ece411/ for more details and example
-  code.  The ""lc3b"" architecture consists of only one machine:
-  ""lc3b"".
-
 x86::
   The ""x86"" architecture supports the IA-32 instruction set and
   derivatives (including 16-bit and non-Intel instructions) and the
