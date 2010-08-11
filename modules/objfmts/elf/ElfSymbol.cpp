@@ -35,6 +35,7 @@
 #include "yasmx/Bytes_util.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
+#include "yasmx/Expr_util.h"
 #include "yasmx/InputBuffer.h"
 #include "yasmx/Location_util.h"
 #include "yasmx/Object.h"
@@ -228,14 +229,65 @@ ElfSymbol::Finalize(Symbol& sym, Diagnostic& diags)
     if (equ_expr_c != 0)
     {
         Expr equ_expr = *equ_expr_c;
+        if (!ExpandEqu(equ_expr))
+        {
+            diags.Report(sym.getDefSource(), diag::err_equ_circular_reference);
+            return;
+        }
         SimplifyCalcDist(equ_expr);
 
+        // trivial case: simple integer
         if (equ_expr.isIntNum())
+        {
+            m_index = SHN_ABS;
             m_value = equ_expr.getIntNum();
-        else
-            diags.Report(sym.getDefSource(), diag::err_equ_not_integer);
+            return;
+        }
 
-        m_index = SHN_ABS;
+        // otherwise might contain relocatable value (e.g. symbol alias)
+        std::auto_ptr<Expr> equ_expr_p(new Expr);
+        equ_expr_p->swap(equ_expr);
+        Value val(64, equ_expr_p);
+        if (!val.Finalize() || val.isComplexRelative())
+        {
+            diags.Report(sym.getDefSource(), diag::err_equ_too_complex);
+            return;
+        }
+
+        // set section appropriately based on if value is relative
+        if (val.isRelative())
+        {
+            SymbolRef rel = val.getRelative();
+            Location loc;
+            if (!rel->getLabel(&loc) || !loc.bc)
+            {
+                // Referencing an undefined label?
+                // GNU as silently allows this... but doesn't gen the symbol?
+                // We make it an error instead.
+                diags.Report(sym.getDefSource(), diag::err_equ_too_complex);
+                return;
+            }
+
+            m_sect = loc.bc->getContainer()->AsSection();
+            m_value = loc.getOffset();
+        }
+        else
+        {
+            m_index = SHN_ABS;
+            m_value = 0;
+        }
+
+        // add in any remaining absolute portion
+        if (Expr* abs = val.getAbs())
+        {
+            SimplifyCalcDist(*abs);
+            if (!abs->isIntNum())
+            {
+                diags.Report(sym.getDefSource(), diag::err_equ_not_integer);
+                return;
+            }
+            m_value += abs->getIntNum();
+        }
     }
 }
 

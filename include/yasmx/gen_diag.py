@@ -501,6 +501,7 @@ add_warning("warn_export_equ",
             "object format does not support exporting EQU/absolute values")
 add_warning("warn_name_too_long", "label name too long, truncating to %0 bytes")
 add_error("err_equ_not_integer", "EQU value not an integer expression")
+add_error("err_equ_too_complex", "EQU value too complex")
 add_error("err_common_size_not_integer",
           "COMMON data size not an integer expression")
 
