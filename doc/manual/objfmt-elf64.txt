@@ -1,0 +1,88 @@
+// $Id: objfmt-elf64.txt 2217 2009-07-24 17:47:49Z peter $
+[[objfmt-elf64]]
+== `elf64`: Executable and Linkable Format 64-bit Object Files
+
+indexterm:[`elf`,`elf64`]
+indexterm:[`Linux`,`elf`]
+indexterm:[Executable and Linkable Format,64-bit]
+indexterm:[Solaris x86-64]
+indexterm:[amd64]
+
+The `elf64` object format is the 64-bit version of the Executable and
+Linkable Object Format.  As it shares many similarities with `elf32`,
+only differences between `elf32` and `elf64` will be described in this
+chapter.  For details on `elf32`, see <<objfmt-elf32>>.
+
+Yasm defaults to `BITS 64` mode when outputting to the `elf64` object
+format.
+
+`elf64` supports the same debug formats as `elf32`, however, the
+`stabs` debug format is limited to 32-bit addresses, so `dwarf2` (see
+<<dbgfmt-dwarf2>>) is the recommended debugging format.
+
+`elf64` also supports the exact same sections, section attributes, and
+directives as `elf32`.  See <<objfmt-elf-section>> for more details on
+section attributes, and <<objfmt-elf-directives>> for details on the
+additional directives ELF provides.
+
+[[objfmt-elf64-wrt]]
+=== `elf64` Special Symbols and `WRT`
+
+indexterm:[Position-Independent Code]
+indexterm:[ELF,64-bit shared libraries]
+indexterm:[relocations,PIC-specific]
+The primary difference between `elf32` and `elf64` (other than 64-bit
+support in general) is the differences in shared library handling and
+position-independent code.  As `BITS 64` enables the use of
+`RIP`-relative addressing, most variable accesses can be relative to
+RIP, allowing easy relocation of the shared library to a different
+memory address.
+
+While RIP-relative addressing is available, it does not handle all
+possible variable access modes, so special symbols are still required,
+as in `elf32`.  And as with `elf32`, the `elf64` output format makes
+use of ((`WRT`)) for utilizing the ((PIC))-specific relocation types.
+
+`elf64` defines four special symbols which you can use as the
+right-hand side of the `WRT` operator to obtain PIC relocation types.
+They are ((`..gotpcrel`)), ((`..got`)), ((`..plt`)) and ((`..sym`)).
+Their functions are summarized here:
+
+`..gotpcrel`::
+  While RIP-relative addressing allows you to encode an instruction
+  pointer relative data reference to `foo` with `[rel foo]`, it's
+  sometimes necessary to encode a RIP-relative reference to a
+  linker-generated symbol pointer for symbol foo; this is done using
+  `wrt ..gotpcrel`, e.g. `[rel foo wrt ..gotpcrel]`.  Unlike in
+  `elf32`, this relocation, combined with RIP-relative addressing,
+  makes it possible to load an address from the ((global offset
+  table)) using a single instruction.  Note that since RIP-relative
+  references are limited to a signed 32-bit displacement, the ((GOT))
+  size accessible through this method is limited to 2 GB.
+
+`..got`::
+  As in `elf32`, referring to an external or global symbol using `wrt
+  ..got` causes the linker to build an entry _in_ the GOT containing
+  the address of the symbol, and the reference gives the distance from
+  the beginning of the GOT to the entry; so you can add on the address
+  of the GOT, load from the resulting address, and end up with the
+  address of the symbol.
+
+`..plt`::
+  As in `elf32`, referring to a procedure name using `wrt ..plt`
+  causes the linker to build a ((procedure linkage table)) entry for
+  the symbol, and the reference gives the address of the ((PLT))
+  entry.  You can only use this in contexts which would generate a
+  PC-relative relocation normally (i.e. as the destination for `CALL`
+  or `JMP`), since ELF contains no relocation type to refer to PLT
+  entries absolutely.
+
+`..sym`::
+  As in `elf32`, referring to a symbol name using `wrt ..sym` causes
+  Yasm to write an ordinary relocation, but instead of making the
+  relocation relative to the start of the section and then adding on
+  the offset to the symbol, it will write a relocation record aimed
+  directly at the symbol in question.  The distinction is a necessary
+  one due to a peculiarity of the dynamic linker.
+
+// vim: set syntax=asciidoc sw=2 tw=70:

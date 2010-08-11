@@ -1,0 +1,45 @@
+// $Id: introduction.txt 2217 2009-07-24 17:47:49Z peter $
+[[introduction]]
+=== Introduction
+
+Yasm is a (mostly) BSD-licensed assembler that is designed from the
+ground up to allow for multiple assembler syntaxes to be supported
+(e.g. NASM, GNU AS, etc.) in addition to multiple output object
+formats and multiple instruction sets.  Its modular architecture
+allows additional object formats, debug formats, and syntaxes to be
+added relatively easily.
+
+Yasm started life in 2001 as a rewrite of the NASM (Netwide) x86
+assembler under the BSD license.  Since then, it has matched and
+exceeded NASM's capabilities, incorporating features such as
+supporting the 64-bit AMD64 architecture, parsing GNU AS syntax, and
+generating STABS, DWARF2, and CodeView 8 debugging information.
+
+[[license]]
+=== License
+
+Yasm is primarily licensed under the 2-clause and 3-clause ""revised""
+BSD licenses, with two exceptions.  The NASM preprocessor is imported
+from the NASM project and is thus LGPL licensed.  The Bit::Vector
+module used by Yasm to implement Yasm's large integer and
+machine-independent floating point support is triple-licensed under
+the Artistic license, GPL, and LGPL.  The full text of the licenses
+are provided in the Yasm source distribution.
+
+This user manual is licensed under the 2-clause BSD license, with the
+exception of <<nasm-language>>, <<nasm-preprocessor>>, and
+<<nasm-directives>>, large portions of which are copyrighted by the
+NASM Development Team and licensed under the LGPL.
+
+[[material-covered]]
+=== Material Covered in this Book
+
+This book is intended to be a user's manual for Yasm, serving as both
+an introduction and a general-purpose reference.  While mentions may
+be made in various sections of Yasm's implementation (usually to
+explain the reasons behind bugs or unusual aspects to various
+features), this book will not go into depth explaining how Yasm does
+its job; for an in-depth discussion of Yasm's internals, see _The
+Design and Implementation of the Yasm Assembler_.
+
+// vim: set syntax=asciidoc sw=2 tw=70:

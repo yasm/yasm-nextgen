@@ -1,0 +1,970 @@
+// $Id: nasm-language.txt 2217 2009-07-24 17:47:49Z peter $
+[[nasm-language]]
+== The NASM Language
+
+////
+ <chapterinfo>
+  <authorgroup>
+   <corpauthor>The NASM Development Team</corpauthor>
+
+   <author>
+    <firstname>Peter</firstname>
+    <surname>Johnson</surname>
+    <contrib>Updated for Yasm context by </contrib>
+   </author>
+  </authorgroup>
+ </chapterinfo>
+////
+
+[[nasm-syntax]]
+=== Layout of a NASM Source Line
+
+Like most assemblers, each NASM source line contains (unless it is a
+macro, a preprocessor directive or an assembler directive: see
+<<nasm-directives>>) some combination of the four fields
+
+[source]
+----
+label:  instruction operands        ; comment
+----
+
+As usual, most of these fields are optional; the presence or absence
+of any combination of a label, an instruction and a comment is
+allowed. Of course, the operand field is either required or forbidden
+by the presence and nature of the instruction field.
+
+NASM uses backslash (\) as the line continuation character; if a line
+ends with backslash, the next line is considered to be a part of the
+backslash-ended line.
+
+NASM places no restrictions on white space within a line: labels may
+have white space before them, or instructions may have no space before
+them, or anything. The ((colon)) after a label is also optional.  Note
+that this means that if you intend to code `lodsb` alone on a line,
+and type `lodab` by accident, then that's still a valid source line
+which does nothing but define a label.  Running NASM with the
+command-line option %-w+((orphan-labels))% will cause it to warn you
+if you define a label alone on a line without a trailing colon.
+
+indexterm:[`$`,prefix]
+((Valid characters)) in labels are letters, numbers, `_`, `$`, `#`,
+`@`, `~`, `.`, and `?`. The only characters which may be used as the
+_first_ character of an identifier are letters, `.` (with special
+meaning: see <<nasm-local-label>>), `_` and `?`.  An identifier may
+also be prefixed with a `$` to indicate that it is intended to be read
+as an identifier and not a reserved word; thus, if some other module
+you are linking with defines a symbol called `eax`, you can refer to
+`$eax` in NASM code to distinguish the symbol from the register.
+
+indexterm:[address-size prefixes]
+The instruction field may contain any machine instruction: Pentium and
+P6 instructions, FPU instructions, MMX instructions and even
+undocumented instructions are all supported. The instruction may be
+prefixed by `LOCK`, `REP`, `REPE`/`REPZ` or `REPNE`/`REPNZ`, in the
+usual way.  Explicit address-size and ((operand-size prefixes)) `A16`,
+`A32`, `O16` and `O32` are provided.  You can also use the name of a
+segment register as an instruction prefix: coding `es mov [bx],ax` is
+equivalent to coding `mov [es:bx],ax`. We recommend the latter syntax,
+since it is consistent with other syntactic features of the language,
+but for instructions such as `LODSB`, which has no operands and yet
+can require a ((segment override)), there is no clean syntactic way to
+proceed apart from `es lodsb`.
+
+An instruction is not required to use a prefix: prefixes such as `CS`,
+`A32`, `LOCK` or `REPE` can appear on a line by themselves, and NASM
+will just generate the prefix bytes.
+
+In addition to actual machine instructions, NASM also supports a
+number of pseudo-instructions, described in <<nasm-pseudop>>.
+
+Instruction ((operands)) may take a number of forms: they can be
+registers, described simply by the register name (e.g.  `AX`, `BP`,
+`EBX`, `CR0`): NASM does not use the **gas**-style syntax in which
+register names must be prefixed by a `%` sign), or they can be
+((effective addresses)) (see <<nasm-effaddr>>), constants
+(<<nasm-const>>) or expressions (<<nasm-expr>>).
+
+For ((floating-point)) instructions, NASM accepts a wide range of
+syntaxes: you can use two-operand forms like MASM supports, or you can
+use NASM's native single-operand forms in most cases.  For example,
+you can code:
+
+[source]
+----
+        fadd    st1             ; this sets st0 := st0 + st1
+        fadd    st0, st1        ; so does this
+
+        fadd    st1, st0        ; this sets st1 := st1 + st0
+        fadd    to st1          ; so does this
+----
+
+Almost any floating-point instruction that references memory must use
+one of the prefixes ((`DWORD`)), ((`QWORD`)), ((`TWORD`)),
+((`DDQWORD`)), or ((`OWORD`)) to indicate what size of ((memory
+operand)) it refers to.
+
+[[nasm-pseudop]]
+=== Pseudo-Instructions
+
+Pseudo-instructions are things which, though not real x86 machine
+instructions, are used in the instruction field anyway because that's
+the most convenient place to put them. The current
+((pseudo-instructions)) are `DB`, `DW`, `DD`, `DQ`, `DT`, `DDQ`, `DO`,
+their uninitialized counterparts `RESB`, `RESW`, `RESD`, `RESQ`,
+`REST`, `RESDDQ`, and `RESO`, the `INCBIN` command, the `EQU` command,
+and the `TIMES` prefix.
+
+[[nasm-pseudop-db]]
+==== `DB` and Friends: Declaring Initialized Data
+
+indexterm:[Initialized]
+indexterm:[floating-point]
+indexterm:[character constant]
+indexterm:[string constant]
+((`DB`)), ((`DW`)), ((`DD`)), ((`DQ`)), ((`DT`)), ((`DDQ`)), and
+((`DO`)) are used to declare initialized data in the output file.
+They can be invoked in a wide range of ways:
+
+[source]
+----
+        db      0x55                ; just the byte 0x55
+        db      0x55,0x56,0x57      ; three bytes in succession
+        db      'a',0x55            ; character constants are OK
+        db      'hello',13,10,'$'   ; so are string constants
+        dw      0x1234              ; 0x34 0x12
+        dw      'a'                 ; 0x41 0x00 (it's just a number)
+        dw      'ab'                ; 0x41 0x42 (character constant)
+        dw      'abc'               ; 0x41 0x42 0x43 0x00 (string)
+        dd      0x12345678          ; 0x78 0x56 0x34 0x12
+        dq      0x1122334455667788  ; 0x88 0x77 0x66 0x55 0x44 0x33 0x22 0x11
+        ddq     0x112233445566778899aabbccddeeff00
+        ; 0x00 0xff 0xee 0xdd 0xcc 0xbb 0xaa 0x99
+        ; 0x88 0x77 0x66 0x55 0x44 0x33 0x22 0x11
+        do     0x112233445566778899aabbccddeeff00 ; same as previous
+        dd      1.234567e20         ; floating-point constant
+        dq      1.234567e20         ; double-precision float
+        dt      1.234567e20         ; extended-precision float
+----
+
+((`DT`)) does not accept ((numeric constant))s as operands, and
+((`DDQ`)) does not accept float constants as operands.  Any size
+larger than ((`DD`)) does not accept strings as operands.
+
+[[nasm-pseudop-resb]]
+==== `RESB` and Friends: Declaring Uninitialized Data
+
+indexterm:[Uninitialized]
+indexterm:[`?`]
+indexterm:[critical expression]
+((`RESB`)), ((`RESW`)), ((`RESD`)), ((`RESQ`)), ((`REST`)),
+((`RESDQ`)), and ((`RESO`)) are designed to be used in the BSS section
+of a module: they declare _uninitialised_ storage space. Each takes a
+single operand, which is the number of bytes, words, doublewords or
+whatever to reserve.  NASM does not support the MASM/TASM syntax of
+reserving uninitialised space by writing `DW ?` or similar things:
+this is what it does instead. The operand to a `RESB`-type
+pseudo-instruction is a **critical expression**: see <<nasm-crit>>.
+
+For example:
+
+[source]
+----
+buffer:         resb    64      ; reserve 64 bytes
+wordvar:        resw    1       ; reserve a word
+realarray       resq    10      ; array of ten reals
+----
+
+[[nasm-pseudop-incbin]]
+==== `INCBIN`: Including External Binary Files
+
+indexterm:[Binary Files]
+((`INCBIN`)) includes a binary file verbatim into the output file.
+This can be handy for (for example) including ((graphics)) and
+((sound)) data directly into a game executable file.  However, it is
+recommended to use this for only _small_ pieces of data.  It can be
+called in one of these three ways:
+
+[source]
+----
+        incbin "file.dat"        ; include the whole file
+        incbin "file.dat",1024   ; skip the first 1024 bytes
+        incbin "file.dat",1024,512 ; skip the first 1024, and
+                                 ; actually include at most 512
+----
+
+[[nasm-pseudop-equ]]
+==== `EQU`: Defining Constants
+
+((`EQU`)) defines a symbol to a given constant value: when `EQU` is
+used, the source line must contain a label. The action of `EQU` is to
+define the given label name to the value of its (only) operand. This
+definition is absolute, and cannot change later. So, for example,
+
+[source]
+----
+message db 'hello, world'
+msglen  equ $-message
+----
+
+defines `msglen` to be the constant 12.  `msglen` may not then be
+redefined later. This is not a ((preprocessor)) definition either: the
+value of `msglen` is evaluated _once_, using the value of `$` (see
+<<nasm-expr>> for an explanation of `$`) at the point of definition,
+rather than being evaluated wherever it is referenced and using the
+value of `$` at the point of reference. Note that the operand to an
+`EQU` is also a ((critical expression)) (<<nasm-crit>>).
+
+[[nasm-pseudop-times]]
+==== `TIMES`: Repeating Instructions or Data
+
+indexterm:[Repeating]
+The ((`TIMES`)) prefix causes the instruction to be assembled multiple
+times.  This is partly present as NASM's equivalent of the ((`DUP`))
+syntax supported by MASM-compatible assemblers, in that you can code
+
+[source]
+----
+zerobuf:        times 64 db 0
+----
+
+or similar things; but `TIMES` is more versatile than that. The
+argument to `TIMES` is not just a numeric constant, but a numeric
+_expression_, so you can do things like
+
+[source]
+----
+buffer: db 'hello, world'
+        times 64-$+buffer db ' '
+----
+
+which will store exactly enough spaces to make the total length of
+`buffer` up to 64. Finally, `TIMES` can be applied to ordinary
+instructions, so you can code trivial ((unrolled loops)) in it:
+
+[source]
+----
+        times 100 movsb
+----
+
+Note that there is no effective difference between `times 100 resb 1`
+and `resb 100`, except that the latter will be assembled about 100
+times faster due to the internal structure of the assembler.
+
+The operand to `TIMES`, like that of `EQU` and those of `RESB` and
+friends, is a critical expression (<<nasm-crit>>).
+
+Note also that `TIMES` can't be applied to ((macros)): the reason for
+this is that `TIMES` is processed after the macro phase, which allows
+the argument to `TIMES` to contain expressions such as `64-$+buffer`
+as above. To repeat more than one line of code, or a complex macro,
+use the preprocessor ((`%rep`)) directive.
+
+[[nasm-effaddr]]
+=== Effective Addresses
+
+indexterm:[memory reference]
+An ((effective address)) is any operand to an instruction which
+references memory. Effective addresses, in NASM, have a very simple
+syntax: they consist of an expression evaluating to the desired
+address, enclosed in ((square brackets)). For example:
+
+[source]
+----
+wordvar dw 123
+        mov ax,[wordvar]
+        mov ax,[wordvar+1]
+        mov ax,[es:wordvar+bx]
+----
+
+Anything not conforming to this simple system is not a valid memory
+reference in NASM, for example `es:wordvar[bx]`.
+
+More complicated effective addresses, such as those involving more
+than one register, work in exactly the same way:
+
+[source]
+----
+        mov eax,[ebx*2+ecx+offset]
+        mov ax,[bp+di+8]
+----
+
+NASM is capable of doing ((algebra)) on these effective addresses, so
+that things which don't necessarily _look_ legal are perfectly all
+right:
+
+[source]
+----
+        mov eax,[ebx*5]         ; assembles as [ebx*4+ebx]
+        mov eax,[label1*2-label2] ; ie [label1+(label1-label2)]
+----
+
+Some forms of effective address have more than one assembled form; in
+most such cases NASM will generate the smallest form it can. For
+example, there are distinct assembled forms for the 32-bit effective
+addresses `[eax*2+0]` and `[eax+eax]`, and NASM will generally
+generate the latter on the grounds that the former requires four bytes
+to store a zero offset.
+
+NASM has a hinting mechanism which will cause `[eax+ebx]` and
+`[ebx+eax]` to generate different opcodes; this is occasionally useful
+because `[esi+ebp]` and `[ebp+esi]` have different default segment
+registers.
+
+However, you can force NASM to generate an effective address in a
+particular form by the use of the keywords `BYTE`, `WORD`, `DWORD` and
+((`NOSPLIT`)). If you need `[eax+3]` to be assembled using a
+double-word offset field instead of the one byte NASM will normally
+generate, you can code `[dword eax+3]`.  Similarly, you can force NASM
+to use a byte offset for a small value which it hasn't seen on the
+first pass (see <<nasm-crit>> for an example of such a code fragment)
+by using `[byte eax+offset]`. As special cases, `[byte eax]` will code
+`[eax+0]` with a byte offset of zero, and `[dword eax]` will code it
+with a double-word offset of zero. The normal form, `[eax]`, will be
+coded with no offset field.
+
+The form described in the previous paragraph is also useful if you are
+trying to access data in a 32-bit segment from within 16 bit code.
+// For more information on this see the section on mixed-size
+// addressing (<<mixaddr>>).
+In particular, if you need to access data with a known offset that is
+larger than will fit in a 16-bit value, if you don't specify that it
+is a dword offset, NASM will cause the high word of the offset to be
+lost.
+
+Similarly, NASM will split `[eax*2]` into `[eax+eax]` because that
+allows the offset field to be absent and space to be saved; in fact,
+it will also split `[eax*2+offset]` into `[eax+eax+offset]`. You can
+combat this behaviour by the use of the `NOSPLIT` keyword:
+`[nosplit eax*2]` will force `[eax*2+0]` to be generated literally.
+
+[[nasm-effaddr-disp64]]
+==== 64-bit Displacements
+
+In `BITS 64` mode, displacements, for the most part, remain 32 bits
+and are sign extended prior to use.  The exception is one restricted
+form of the mov instruction: between an `AL`, `AX`, `EAX`, or `RAX`
+register and a 64-bit absolute address (no registers are allowed in
+the effective address, and the address cannot be RIP-relative).  In
+NASM syntax, use of the 64-bit absolute form requires `QWORD`.
+Examples in NASM syntax:
+
+[source]
+----
+        mov eax, [1]    ; 32 bit, with sign extension
+        mov al, [rax-1] ; 32 bit, with sign extension
+        mov al, [qword 0x1122334455667788] ; 64-bit absolute
+        mov al, [0x1122334455667788] ; truncated to 32-bit (warning)
+----
+
+[[nasm-effaddr-riprel]]
+==== `RIP` Relative Addressing
+
+In 64-bit mode, a new form of effective addressing is available to
+make it easier to write position-independent code.  Any memory
+reference may be made ((`RIP`)) relative (`RIP` is the instruction
+pointer register, which contains the address of the location
+immediately following the current instruction).
+
+In NASM syntax, there are two ways to specify RIP-relative addressing:
+
+[source]
+----
+        mov dword [rip+10], 1
+----
+
+stores the value 1 ten bytes after the end of the instruction.  `10`
+can also be a symbolic constant, and will be treated the same way.  On
+the other hand,
+
+[source]
+----
+        mov dword [symb wrt rip], 1
+----
+
+stores the value 1 into the address of symbol `symb`.  This is
+distinctly different than the behavior of:
+
+[source]
+----
+        mov dword [symb+rip], 1
+----
+
+which takes the address of the end of the instruction, adds the
+address of `symb` to it, then stores the value 1 there.  If `symb` is
+a variable, this will _not_ store the value 1 into the `symb`
+variable!
+
+Yasm also supports the following syntax for RIP-relative addressing.
+The ((`REL`)) keyword makes it produce `RIP`-relative addresses, while
+the ((`ABS`)) keyword makes it produce non-`RIP`-relative addresses:
+
+[source]
+----
+        mov [rel sym], rax  ; RIP-relative
+        mov [abs sym], rax  ; not RIP-relative
+----
+
+The behavior of `mov [sym], rax` depends on a mode set by the
+((`DEFAULT`)) directive (see <<nasm-directive-default>>), as follows.
+The default mode at Yasm start-up is always `ABS`, and in `REL` mode,
+use of registers, a `FS` or `GS` segment override, or an explicit
+`ABS` override will result in a non-RIP-relative effective address.
+
+[source]
+----
+default rel
+        mov [sym], rbx      ; RIP-relative
+        mov [abs sym], rbx  ; not RIP-relative (explicit override)
+        mov [rbx+1], rbx    ; not RIP-relative (register use)
+        mov [fs:sym], rbx   ; not RIP-relative (fs or gs use)
+        mov [ds:sym], rbx   ; RIP-relative (segment, but not fs or gs)
+        mov [rel sym], rbx  ; RIP-relative (redundant override)
+
+default abs
+        mov [sym], rbx      ; not RIP-relative
+        mov [abs sym], rbx  ; not RIP-relative
+        mov [rbx+1], rbx    ; not RIP-relative
+        mov [fs:sym], rbx   ; not RIP-relative
+        mov [ds:sym], rbx   ; not RIP-relative
+        mov [rel sym], rbx  ; RIP-relative (explicit override)
+----
+
+[[nasm-immediate]]
+=== Immediate Operands
+
+indexterm:[Immediates]
+Immediate operands in NASM may be 8 bits, 16 bits, 32 bits, and even
+64 bits in size.  The immediate size can be directly specified through
+the use of the `BYTE`, `WORD`, or `DWORD` keywords, respectively.
+
+64 bit immediate operands are limited to direct 64-bit register move
+instructions in `BITS 64` mode.  For all other instructions in 64-bit
+mode, immediate values remain 32 bits; their value is sign-extended
+into the upper 32 bits of the target register prior to being used.
+The exception is the mov instruction, which can take a 64-bit
+immediate when the destination is a 64-bit register.
+
+All unsized immediate values in `BITS 64` in Yasm default to 32-bit
+size for consistency.  In order to get a 64-bit immediate with a
+label, specify the size explicitly with the `QWORD` keyword.  For ease
+of use, Yasm will also try to recognize 64-bit values and change the
+size to 64 bits automatically for these cases.
+
+Examples in NASM syntax:
+
+[source]
+----
+        add rax, 1           ; optimized down to signed 8-bit
+        add rax, dword 1     ; force size to 32-bit
+        add rax, 0xffffffff  ; sign-extended 32-bit
+        add rax, -1          ; same as above
+        add rax, 0xffffffffffffffff ; truncated to 32-bit (warning)
+        mov eax, 1           ; 5 byte
+        mov rax, 1           ; 5 byte (optimized to signed 32-bit)
+        mov rax, qword 1     ; 10 byte (forced 64-bit)
+        mov rbx, 0x1234567890abcdef ; 10 byte
+        mov rcx, 0xffffffff  ; 10 byte (does not fit in signed 32-bit)
+        mov ecx, -1          ; 5 byte, equivalent to above
+        mov rcx, sym         ; 5 byte, 32-bit size default for symbols
+        mov rcx, qword sym   ; 10 byte, override default size
+----
+
+A caution for users using both Yasm and NASM 2.x: the handling of mov
+reg64, unsized immediate is different between Yasm and NASM 2.x; YASM
+follows the above behavior, while NASM 2.x does the following:
+
+[source]
+----
+        add rax, 0xffffffff  ; sign-extended 32-bit immediate
+        add rax, -1          ; same as above
+        add rax, 0xffffffffffffffff ; truncated 32-bit (warning)
+        add rax, sym         ; sign-extended 32-bit immediate
+        mov eax, 1           ; 5 byte (32-bit immediate)
+        mov rax, 1           ; 10 byte (64-bit immediate)
+        mov rbx, 0x1234567890abcdef ; 10 byte instruction
+        mov rcx, 0xffffffff  ; 10 byte instruction
+        mov ecx, -1          ; 5 byte, equivalent to above
+        mov ecx, sym         ; 5 byte (32-bit immediate)
+        mov rcx, sym         ; 10 byte (64-bit immediate)
+        mov rcx, qword sym   ; 10 byte, same as above
+----
+
+[[nasm-const]]
+=== Constants
+
+indexterm:[Constants]
+NASM understands four different types of constant: numeric, character,
+string and floating-point.
+
+[[nasm-const-num]]
+==== Numeric Constants
+
+indexterm:[Numeric Constants]
+indexterm:[`$`,prefix]
+A numeric constant is simply a number. NASM allows you to specify
+numbers in a variety of number bases, in a variety of ways: you can
+suffix `H`, `Q` or `O`, and `B` for ((hex)), ((octal)), and
+((binary)), or you can prefix `0x` for hex in the style of C, or you
+can prefix `$` for hex in the style of Borland Pascal.  Note, though,
+that the `$` prefix does double duty as a prefix on identifiers (see
+<<nasm-syntax>>), so a hex number prefixed with a `$` sign must have a
+digit after the `$` rather than a letter.
+
+Some examples:
+
+[source]
+----
+        mov ax,100              ; decimal
+        mov ax,0a2h             ; hex
+        mov ax,$0a2             ; hex again: the 0 is required
+        mov ax,0xa2             ; hex yet again
+        mov ax,777q             ; octal
+        mov ax,777o             ; octal again
+        mov ax,10010011b        ; binary
+----
+
+[[nasm-const-char]]
+==== Character Constants
+
+indexterm:[Character Constants]
+
+A character constant consists of up to four characters enclosed in
+either single or double quotes. The type of quote makes no difference
+to NASM, except of course that surrounding the constant with single
+quotes allows double quotes to appear within it and vice versa.
+
+A character constant with more than one character will be arranged
+with ((little-endian)) order in mind: if you code
+
+[source]
+----
+        mov eax,'abcd'
+----
+
+then the constant generated is not `0x61626364`, but `0x64636261`, so
+that if you were then to store the value into memory, it would read
+`abcd` rather than `dcba`.  This is also the sense of character
+constants understood by the Pentium's ((`CPUID`)) instruction.
+
+[[nasm-const-string]]
+==== String Constants
+
+indexterm:[String Constants]
+indexterm:[`DW`]
+indexterm:[`DD`]
+indexterm:[`DQ`]
+String constants are only acceptable to some pseudo-instructions,
+namely the ((`DB`)) family and ((`INCBIN`)).
+
+A string constant looks like a character constant, only longer. It is
+treated as a concatenation of maximum-size character constants for the
+conditions. So the following are equivalent:
+
+[source]
+----
+        db 'hello'              ; string constant
+        db 'h','e','l','l','o'  ; equivalent character constants
+----
+
+And the following are also equivalent:
+
+[source]
+----
+        dd 'ninechars'          ; doubleword string constant
+        dd 'nine','char','s'    ; becomes three doublewords
+        db 'ninechars',0,0,0    ; and really looks like this
+----
+
+Note that when used as an operand to `db`, a constant like `'ab'` is
+treated as a string constant despite being short enough to be a
+character constant, because otherwise `db 'ab'` would have the same
+effect as `db 'a'`, which would be silly.  Similarly, three-character
+or four-character constants are treated as strings when they are
+operands to `dw`.
+
+[[nasm-const-float]]
+==== Floating-Point Constants
+
+indexterm:[floating-point,constants]
+Floating-point constants are acceptable only as arguments to ((`DW`)),
+((`DD`)), ((`DQ`)) and ((`DT`)). They are expressed in the traditional
+form: digits, then a period, then optionally more digits, then
+optionally an `E` followed by an exponent. The period is mandatory, so
+that NASM can distinguish between `dd 1`, which declares an integer
+constant, and `dd 1.0` which declares a floating-point constant.
+
+Some examples:
+
+[source]
+----
+        dw -0.5                 ; IEEE half precision
+        dd 1.2                  ; an easy one
+        dq 1.e10                ; 10,000,000,000
+        dq 1.e+10               ; synonymous with 1.e10
+        dq 1.e-10               ; 0.000 000 000 1
+        dt 3.141592653589793238462 ; pi
+----
+
+NASM cannot do compile-time arithmetic on floating-point constants.
+This is because NASM is designed to be portable - although it always
+generates code to run on x86 processors, the assembler itself can run
+on any system with an ANSI C compiler.  Therefore, the assembler
+cannot guarantee the presence of a floating-point unit capable of
+handling the ((Intel number formats)), and so for NASM to be able to
+do floating arithmetic it would have to include its own complete set
+of floating-point routines, which would significantly increase the
+size of the assembler for very little benefit.
+
+[[nasm-expr]]
+=== Expressions
+
+((Expressions)) in NASM are similar in syntax to those in C.
+
+NASM does not guarantee the size of the integers used to evaluate
+expressions at compile time: since NASM can compile and run on 64-bit
+systems quite happily, don't assume that expressions are evaluated in
+32-bit registers and so try to make deliberate use of ((integer
+overflow)). It might not always work. The only thing NASM will
+guarantee is what's guaranteed by ANSI C: you always have _at least_
+32 bits to work in.
+
+indexterm:[`$`,here]
+NASM supports two special tokens in expressions, allowing calculations
+to involve the current assembly position: the `$` and
+((+++<literal>$$</literal>+++)) tokens.  `$` evaluates to the assembly
+position at the beginning of the line containing the expression; so
+you can code an ((infinite loop)) using `JMP $`.
++++<literal>$$</literal>+++ evaluates to the beginning of the current
+section; so you can tell how far into the section you are by using
++++<literal>($-$$)</literal>+++.
+
+The arithmetic ((operators)) provided by NASM are listed here, in
+increasing order of ((precedence)).
+
+[[nasm-expr-or]]
+==== `|`: Bitwise OR Operator
+
+The ((`|` operator)) gives a ((bitwise OR)), exactly as performed by
+the `OR` machine instruction.  Bitwise OR is the lowest-priority
+arithmetic operator supported by NASM.
+
+[[nasm-expr-xor]]
+==== `^`: Bitwise XOR Operator
+
+indexterm:[`^` operator]
+`^` provides the ((bitwise XOR)) operation.
+
+[[nasm-expr-and]]
+==== `&`: Bitwise AND Operator
+
+indexterm:[`&` operator]
+`&` provides the ((bitwise AND)) operation.
+
+[[nasm-expr-shift]]
+==== `<<` and `>>`: Bit Shift Operators
+
+indexterm:[`<<` operator]
+indexterm:[`>>` operator]
+indexterm:[Bit Shift]
+`<<` gives a bit-shift to the left, just as it does in C. So `5<<3`
+evaluates to 5 times 8, or 40. `>>` gives a bit-shift to the right; in
+NASM, such a shift is _always_ unsigned, so that the bits shifted in
+from the left-hand end are filled with zero rather than a
+sign-extension of the previous highest bit.
+
+[[nasm-expr-plusminus]]
+==== `+` and `-`: Addition and Subtraction Operators
+
+indexterm:[`+` operator,binary]
+indexterm:[`-` operator,binary]
+The `+` and `-` operators do perfectly ordinary ((addition)) and
+((subtraction)).
+
+[[nasm-expr-mul]]
+==== `*`, `/`, `//`, `%` and `%%`: Multiplication and Division
+
+indexterm:[`*` operator]
+indexterm:[`/` operator]
+indexterm:[`//` operator]
+indexterm:[`%` operator]
+indexterm:[`%%` operator]
+indexterm:[unsigned modulo]
+indexterm:[signed modulo]
+`*` is the ((multiplication)) operator.  `/` and `//` are both
+((division)) operators: `/` is ((unsigned division)) and `//` is
+((signed division)). Similarly, `%` and `%%` provide unsigned and
+signed ((modulo operators)) respectively.
+
+NASM, like ANSI C, provides no guarantees about the sensible operation
+of the signed modulo operator.
+
+Since the `%` character is used extensively by the macro preprocessor,
+you should ensure that both the signed and unsigned modulo operators
+are followed by white space wherever they appear.
+
+[[nasm-expr-unary]]
+==== Unary Operators: `+`, `-`, `~` and `SEG`
+
+indexterm:[Unary Operators]
+indexterm:[`+` operator,unary]
+indexterm:[`-` operator,unary]
+indexterm:[`~` operator]
+The highest-priority operators in NASM's expression grammar are those
+which only apply to one argument. `-` negates its operand, `+` does
+nothing (it's provided for symmetry with `-`), `~` computes the
+((one's complement)) of its operand, and ((`SEG`)) provides the
+((segment address)) of its operand (explained in more detail in
+<<nasm-segwrt>>).
+
+[[nasm-segwrt]]
+==== `SEG` and `WRT`
+
+indexterm:[segment address]
+When writing large 16-bit programs, which must be split into multiple
+((segments)), it is often necessary to be able to refer to the segment
+part of the address of a symbol. NASM supports the ((`SEG`)) operator
+to perform this function.
+
+indexterm:[preferred]
+The `SEG` operator returns the _preferred_ segment base of a symbol,
+defined as the segment base relative to which the offset of the symbol
+makes sense. So the code
+
+[source]
+----
+        mov ax, seg symbol
+        mov es, ax
+        mov bx, symbol
+----
+
+will load `es:bx` with a valid pointer to the symbol `symbol`.
+
+indexterm:[overlapping segments]
+Things can be more complex than this: since 16-bit segments and
+((groups)) may overlap, you might occasionally want to refer to some
+symbol using a different segment base from the preferred one.  NASM
+lets you do this, by the use of the ((`WRT`)) (With Reference To)
+keyword. So you can do things like
+
+[source]
+----
+        mov ax, weird_seg       ; weird_seg is a segment base
+        mov es, ax
+        mov bx, symbol wrt weird_seg
+----
+
+to load `es:bx` with a different, but functionally equivalent, pointer
+to the symbol `symbol`.
+
+NASM supports far (inter-segment) calls and jumps by means of the
+syntax `call segment:offset`, where `segment` and `offset` both
+represent immediate values. So to call a far procedure, you could code
+either of
+
+[source]
+----
+        call (seg procedure):procedure
+        call weird_seg:(procedure wrt weird_seg)
+----
+
+(The parentheses are included for clarity, to show the intended
+parsing of the above instructions. They are not necessary in
+practice.)
+
+indexterm:[`CALL FAR`]
+NASM supports the syntax `call far procedure` as a synonym for the
+first of the above usages.  `JMP` works identically to `CALL` in these
+examples.
+
+To declare a ((far pointer)) to a data item in a data segment, you
+must code
+
+[source]
+----
+        dw symbol, seg symbol
+----
+
+NASM supports no convenient synonym for this, though you can always
+invent one using the macro processor.
+
+[[nasm-strict]]
+=== `STRICT`: Inhibiting Optimization
+
+When assembling with the optimizer set to level 2 or higher,
+// (see <<opt-On>>)
+NASM will use size specifiers (`BYTE`, `WORD`, `DWORD`, `QWORD`, or
+`TWORD`), but will give them the smallest possible size. The keyword
+((`STRICT`)) can be used to inhibit optimization and force a
+particular operand to be emitted in the specified size. For example,
+with the optimizer on, and in `BITS 16` mode,
+
+[source]
+----
+        push dword 33
+----
+
+is encoded in three bytes `66 6A 21`, whereas
+
+[source]
+----
+        push strict dword 33
+----
+
+is encoded in six bytes, with a full dword immediate operand
+`66 68 21 00 00 00`.
+
+[[nasm-crit]]
+=== Critical Expressions
+
+indexterm:[Critical Expressions]
+A limitation of NASM is that it is a ((two-pass assembler)); unlike
+TASM and others, it will always do exactly two ((assembly passes)).
+Therefore it is unable to cope with source files that are complex
+enough to require three or more ((passes)).
+
+The first pass is used to determine the size of all the assembled code
+and data, so that the second pass, when generating all the code, knows
+all the symbol addresses the code refers to. So one thing NASM can't
+handle is code whose size depends on the value of a symbol declared
+after the code in question. For example,
+
+[source]
+----
+        times (label-$) db 0
+label:  db 'Where am I?'
+----
+
+The argument to ((`TIMES`)) in this case could equally legally
+evaluate to anything at all; NASM will reject this example because it
+cannot tell the size of the `TIMES` line when it first sees it. It
+will just as firmly reject the slightly ((paradox))ical code
+
+[source]
+----
+        times (label-$+1) db 0
+label:  db 'NOW where am I?'
+----
+
+in which _any_ value for the `TIMES` argument is by definition wrong!
+
+NASM rejects these examples by means of a concept called a *critical
+expression*, which is defined to be an expression whose value is
+required to be computable in the first pass, and which must therefore
+depend only on symbols defined before it. The argument to the `TIMES`
+prefix is a critical expression; for the same reason, the arguments to
+the ((`RESB`)) family of pseudo-instructions are also critical
+expressions.
+
+Critical expressions can crop up in other contexts as well: consider
+the following code.
+
+[source]
+----
+        mov ax, symbol1
+symbol1 equ symbol2
+symbol2:
+----
+
+On the first pass, NASM cannot determine the value of `symbol1`,
+because `symbol1` is defined to be equal to `symbol2` which NASM
+hasn't seen yet. On the second pass, therefore, when it encounters the
+line `mov ax,symbol1`, it is unable to generate the code for it
+because it still doesn't know the value of `symbol1`. On the next
+line, it would see the ((`EQU`)) again and be able to determine the
+value of `symbol1`, but by then it would be too late.
+
+NASM avoids this problem by defining the right-hand side of an `EQU`
+statement to be a critical expression, so the definition of `symbol1`
+would be rejected in the first pass.
+
+There is a related issue involving ((forward references)): consider
+this code fragment.
+
+[source]
+----
+        mov eax, [ebx+offset]
+offset  equ 10
+----
+
+NASM, on pass one, must calculate the size of the instruction `mov
+eax,[ebx+offset]` without knowing the value of `offset`. It has no way
+of knowing that `offset` is small enough to fit into a one-byte offset
+field and that it could therefore get away with generating a shorter
+form of the ((effective-address)) encoding; for all it knows, in pass
+one, `offset` could be a symbol in the code segment, and it might need
+the full four-byte form. So it is forced to compute the size of the
+instruction to accommodate a four-byte address part. In pass two,
+having made this decision, it is now forced to honour it and keep the
+instruction large, so the code generated in this case is not as small
+as it could have been.  This problem can be solved by defining
+`offset` before using it, or by forcing byte size in the effective
+address by coding `[byte ebx+offset]`.
+
+[[nasm-local-label]]
+=== Local Labels
+
+indexterm:[Local Labels]
+NASM gives special treatment to symbols beginning with a ((period)). A
+label beginning with a single period is treated as a _local_ label,
+which means that it is associated with the previous non-local label.
+So, for example:
+
+[source]
+----
+label1  ; some code
+.loop   ; some more code
+        jne .loop
+        ret
+label2  ; some code
+.loop   ; some more code
+        jne .loop
+        ret
+----
+
+In the above code fragment, each `JNE` instruction jumps to the line
+immediately before it, because the two definitions of `.loop` are kept
+separate by virtue of each being associated with the previous
+non-local label.
+
+NASM goes one step further, in allowing access to local labels from
+other parts of the code. This is achieved by means of _defining_ a
+local label in terms of the previous non-local label: the first
+definition of `.loop` above is really defining a symbol called
+`label1.loop`, and the second defines a symbol called `label2.loop`.
+So, if you really needed to, you could write
+
+[source]
+----
+label3  ; some more code
+        ; and some more
+        jmp label1.loop
+----
+
+indexterm:[label prefix]
+indexterm:[`..@` symbol prefix]
+Sometimes it is useful - in a macro, for instance - to be able to
+define a label which can be referenced from anywhere but which doesn't
+interfere with the normal local-label mechanism. Such a label can't be
+non-local because it would interfere with subsequent definitions of,
+and references to, local labels; and it can't be local because the
+macro that defined it wouldn't know the label's full name. NASM
+therefore introduces a third type of label, which is probably only
+useful in macro definitions: if a label begins with the special prefix
+`..@`, then it does nothing to the local label mechanism. So you could
+code
+
+[source]
+----
+label1: ; a non-local label
+.local: ; this is really label1.local
+..@foo: ; this is a special symbol
+label2: ; another non-local label
+.local: ; this is really label2.local
+        jmp ..@foo              ; this will jump three lines up
+----
+
+NASM has the capacity to define other special symbols beginning with a
+double period: for example, `..start` is used to specify the entry
+point in the `obj` output format.
+
+// vim: set syntax=asciidoc sw=2 tw=70:

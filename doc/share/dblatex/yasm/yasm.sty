@@ -1,0 +1,452 @@
+%%
+%% This is the DocBook LaTeX style used by Yasm
+%% (http://www.tortall.net/projects/yasm)
+%%
+%% Based on the DB2LaTeX style (http://db2latex.sf.net)
+%%
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{yasm}[2007/02/25 Yasm DocBook Style]
+
+% The defined options
+\DeclareOption{hyperlink}{ \def\DBKhyperlink{yes} }
+\DeclareOption{nohyperlink}{ \def\DBKhyperlink{no} }
+\DeclareOption{article}{ \def\DBKisarticle{yes} }
+\DeclareOption{report}{ \def\DBKisarticle{no} }
+
+% Default values
+\ExecuteOptions{nohyperlink,report}
+
+% If defined, process the options
+\ProcessOptions\relax
+
+% Needed packages
+\usepackage{ifthen}
+\usepackage{float}       
+\usepackage{footmisc} 
+
+\newcommand{\DBKreleaseinfo}{Working Paper}
+
+\usepackage{dbk_fonts}
+\usepackage{dbk_hyper}
+\usepackage{dbk_biblio}
+\usepackage{dbk_table}
+\usepackage{dbk_changebar}
+\usepackage{dbk_graphic}
+\usepackage{dbk_verbatim}
+\usepackage{dbk_callout}
+\usepackage{dbk_locale}
+\usepackage{dbk_annot}
+
+% LaTeX <othercredit> commands to define
+%
+% #1: mapped to <contrib>
+% #2: mapped to <firstname> <surname>
+%
+\def\DBKinditem#1#2{
+  #2  & #1 \tabularnewline
+  \hline
+}
+
+\newenvironment{DBKindtable}{
+  \begin{tabular}{ |l|l| }
+  \hline
+  \emph{Collaborator} & \emph{Contribution}
+  \hline
+}{
+  \end{tabular}
+}
+
+%
+% Latex <revhistory> table
+%
+\newenvironment{DBKrevtable}{
+  \begin{longtable}{ |l|l|l|l| }
+  \hline
+  Revision number & Date & Release Info & Author \tabularnewline
+  \hline
+  \endhead
+}{
+  \end{longtable}
+}
+
+\newcommand{\DBKreference}{}
+\newcommand{\DBKsite}{}
+\newcommand{\DBKedition}{}
+\newcommand{\DBKsubtitle}{}
+\newcommand{\DBKdate}{\today}
+\newcommand{\DBKpubdate}{}
+\newcommand{\DBKindexation}{}
+\newcommand{\DBKrevhistory}{}
+\newcommand{\DBKlegalblock}{}
+\newcommand{\DBKlegaltitle}{}
+\newcommand{\DBKcopyright}{}
+
+
+% --------------------------
+% Title and Bookinfo display
+% --------------------------
+\let\stdtitle=\title
+\def\title#1{
+  \def\DBKtitle{#1}
+  \stdtitle{\bfseries #1%
+    \ifthenelse{\equal{\DBKsubtitle}{}}{}{\\[12pt]\normalsize \DBKsubtitle}}
+}
+
+\let\stdauthor=\author
+\def\author#1{
+  \def\DBKauthor{#1}
+  \stdauthor{#1}%
+}
+
+\let\stdmaketitle=\maketitle
+\def\maketitle{
+  \stdmaketitle
+  \noindent
+  \textbf{\DBKtitle \\}
+  \ifx\DBKauthor\empty\else{by \DBKauthor \\}\fi
+  \hspace{0pt}\\
+  \ifthenelse{\equal{\DBKedition}{}}{}{Edition \DBKedition \\}
+  \ifthenelse{\equal{\DBKpubdate}{}}{}{Published \DBKpubdate \\}
+  \ifthenelse{\equal{\DBKcopyright}{}}{}{\DBKcopyright \\}
+  \hspace{0pt}\\
+  % Now the legalnotice block
+  \DBKlegalblock
+  \newpage
+}
+
+\newenvironment{DBKlegalnotice}{
+  \if@twocolumn
+    \noindent\small\textit{\DBKlegaltitle}
+    \/\bfseries---$\!$
+  \else
+    \noindent\begin{center}\small\bfseries\DBKlegaltitle
+    \end{center}\begin{quote}\small
+  \fi
+}{
+  \vspace{0.6em}\par\if@twocolumn\else\end{quote}\fi
+}
+
+% --------------------------------------------
+% Check for PDFLaTeX/LaTeX 
+% --------------------------------------------
+% \usepackage{ifpdf}
+\usepackage{anysize}
+\marginsize{3cm}{2cm}{1.25cm}{1.25cm}
+
+\makeatletter
+% redefine the listoffigures and listoftables so that the name of the chapter
+% is printed whenever there are figures or tables from that chapter. encourage
+% pagebreak prior to the name of the chapter (discourage orphans).
+\let\save@@chapter\@chapter
+\let\save@@l@figure\l@figure
+\let\the@l@figure@leader\relax
+\def\@chapter[#1]#2{\save@@chapter[{#1}]{#2}%
+\addtocontents{lof}{\protect\def\the@l@figure@leader{\protect\pagebreak[0]\protect\contentsline{chapter}{\protect\numberline{\thechapter}#1}{}{\thepage}}}%
+\addtocontents{lot}{\protect\def\the@l@figure@leader{\protect\pagebreak[0]\protect\contentsline{chapter}{\protect\numberline{\thechapter}#1}{}{\thepage}}}%
+}
+\renewcommand*\l@figure{\the@l@figure@leader\let\the@l@figure@leader\relax\save@@l@figure}
+\let\l@table\l@figure
+\makeatother
+\usepackage{fancyhdr}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+% Safeguard against long headers.
+\IfFileExists{truncate.sty}{
+\usepackage{truncate}
+% Use an ellipsis when text would be larger than x% of the text width.
+% Preserve left/right text alignment using \hfill (works for English).
+\fancyhead[ol]{\truncate{0.49\textwidth}{\sl\leftmark}}
+\fancyhead[er]{\truncate{0.49\textwidth}{\hfill\sl\rightmark}}
+\fancyhead[el]{\truncate{0.49\textwidth}{\sl\leftmark}}
+\fancyhead[or]{\truncate{0.49\textwidth}{\hfill\sl\rightmark}}
+}{
+\fancyhead{} % clear all header fields
+\fancyhead[el]{\sl\leftmark}
+\fancyhead[or]{\hfill\sl\rightmark}
+}
+\pagestyle{fancy}
+
+% Define front/main/back matter if not available
+\makeatletter
+\@ifundefined{frontmatter}{
+  \def\frontmatter{\cleardoublepage\pagenumbering{roman}}
+}{}
+\@ifundefined{mainmatter}{
+  \def\mainmatter{\cleardoublepage\pagenumbering{arabic}}
+}{}
+\@ifundefined{backmatter}{
+  \def\backmatter{\if@openright\cleardoublepage\else\clearpage\fi}
+}{}
+\makeatother
+
+% ---------------------- 
+% Most Common Packages   
+% ---------------------- 
+\usepackage{latexsym} 
+% FIXME: enumitem is expected by the stylesheets
+\usepackage{enumitem}
+\usepackage{fancybox} 
+\usepackage{ragged2e} 
+\usepackage{fancyvrb} 
+\makeatletter\@namedef{FV@fontfamily@default}{\def\FV@FontScanPrep{}\def\FV@FontFamily{}}\makeatother
+\fvset{obeytabs=true,tabsize=3}
+\makeatletter
+\let\dblatex@center\center\let\dblatex@endcenter\endcenter
+\def\dblatex@nolistI{\leftmargin\leftmargini\topsep\z@ \parsep\parskip \itemsep\z@}
+\def\center{\let\@listi\dblatex@nolistI\@listi\dblatex@center\let\@listi\@listI\@listi}
+\def\endcenter{\dblatex@endcenter}
+\makeatother
+\usepackage{rotating}         
+\usepackage{subfigure}         
+\usepackage{tabularx}         
+\usepackage{url}         
+
+% --------------------------------------------
+% Math support                                
+% --------------------------------------------
+\usepackage{amsmath,amsthm,amsfonts,amssymb,amsxtra,amsopn}
+ \newcommand{\bysame}{\mbox{\rule{3em}{.4pt}}\,}
+ \newcommand{\A}{\mathcal{A}}
+ \newcommand{\B}{\mathcal{B}}
+ \newcommand{\XcY}{{(X,Y)}}
+ \newcommand{\SX}{{S_X}}
+ \newcommand{\SY}{{S_Y}}
+ \newcommand{\SXY}{{S_{X,Y}}}
+ \newcommand{\SXgYy}{{S_{X|Y}(y)}}
+ \newcommand{\Cw}[1]{{\hat C_#1(X|Y)}}
+ \newcommand{\G}{{G(X|Y)}}
+ \newcommand{\PY}{{P_{\mathcal{Y}}}}
+ \newcommand{\X}{\mathcal{X}}
+ \newcommand{\wt}{\widetilde}
+ \newcommand{\wh}{\widehat}
+ % --------------------------------------------
+ %\DeclareMathOperator{\per}{per}
+ \DeclareMathOperator{\cov}{cov}
+ \DeclareMathOperator{\non}{non}
+ \DeclareMathOperator{\cf}{cf}
+ \DeclareMathOperator{\add}{add}
+ \DeclareMathOperator{\Cham}{Cham}
+ \DeclareMathOperator{\IM}{Im}
+ \DeclareMathOperator{\esssup}{ess\,sup}
+ \DeclareMathOperator{\meas}{meas}
+ \DeclareMathOperator{\seg}{seg}
+
+% ---------------
+% Document Font  
+% ---------------
+\usepackage{palatino}
+
+% ----------------------------------------------
+% Define a new LaTeX environment (adminipage)
+% ----------------------------------------------
+\newenvironment{admminipage}%
+{ % this code corresponds to the \begin{adminipage} command
+  \begin{Sbox}%
+  \begin{minipage}%
+} %done
+{ % this code corresponds to the \end{adminipage} command
+  \end{minipage}
+  \end{Sbox}
+  \fbox{\TheSbox}
+} %done
+
+% ----------------------------------------------
+% Define a new LaTeX length (admlength)
+% ----------------------------------------------
+\newlength{\admlength}
+
+% ----------------------------------------------
+% Define a new LaTeX environment (admonition)
+% With 2 parameters:
+% #1 The image (e.g. note.pdf)
+% #2 The caption
+% ----------------------------------------------
+\newenvironment{DBKadmonition}[2] {
+  % this code corresponds to the \begin{admonition} command
+  \hspace{0mm}\newline\hspace*\fill\newline
+  \noindent
+  \setlength{\fboxsep}{5pt}
+  \setlength{\admlength}{\linewidth}
+  \addtolength{\admlength}{-10\fboxsep}
+  \addtolength{\admlength}{-10\fboxrule}
+  \admminipage{\admlength}
+  {\bfseries \sc\large{#2}} \newline
+  ~\\[1mm]
+  \sffamily
+  \ifthenelse{\equal{#1}{}}{
+    \def\admgraph{false}
+  }{
+    \def\admgraph{true}
+    \includegraphics[width=1cm]{#1}
+    \addtolength{\admlength}{-1cm}
+    \addtolength{\admlength}{-20pt}
+    \begin{minipage}[lt]{\admlength}
+  }
+  \parskip=0.5\baselineskip \advance\parskip by 0pt plus 2pt
+} %done
+{ % this code corresponds to the \end{admonition} command
+  \vspace{5mm} 
+  \ifthenelse{\equal{\admgraph}{false}}{}{
+    \end{minipage}
+  }
+  \endadmminipage
+  \vspace{.5em}
+  \par
+}
+
+\newenvironment{sidebar}[1][\textwidth]{
+  \hspace{0mm}\newline%
+  \noindent\begin{Sbox}\begin{minipage}{#1}
+}{
+  \end{minipage}\end{Sbox}\shadowbox{\TheSbox}%
+}
+
+% --------------------------------------------
+% Commands to manage/style/create floats      
+% figures, tables, algorithms, examples, eqn  
+% --------------------------------------------
+\makeatletter
+\floatstyle{ruled}
+\restylefloat{figure}
+\floatstyle{ruled}
+\restylefloat{table}
+\@ifundefined{chapter}{
+  \floatstyle{ruled}
+  \newfloat{program}{ht}{lop}[section]
+  \floatstyle{ruled}
+  \newfloat{example}{ht}{loe}[section]
+  \floatname{example}{\examplename}
+  \floatstyle{ruled}
+  \newfloat{dbequation}{ht}{loe}[section]
+  \def\toclevel@dbequation{0}
+  \floatname{dbequation}{Equation}
+  \floatstyle{boxed}
+  \newfloat{algorithm}{ht}{loa}[section]
+  \floatname{algorithm}{Algorithm}
+}{
+  \floatstyle{ruled}
+  \newfloat{program}{ht}{lop}[chapter]
+  \floatstyle{ruled}
+  \newfloat{example}{ht}{loe}[chapter]
+  \floatname{example}{\examplename}
+  \floatstyle{ruled}
+  \newfloat{dbequation}{ht}{loe}[chapter]
+  \def\toclevel@dbequation{0}
+  \floatname{dbequation}{Equation}
+  \floatstyle{boxed}
+  \newfloat{algorithm}{ht}{loa}[chapter]
+  \floatname{algorithm}{Algorithm}
+}
+\makeatother
+%\ifpdf
+%\DeclareGraphicsExtensions{.pdf,.png,.jpg}
+%\else
+%\DeclareGraphicsExtensions{.eps}
+%\fi
+
+% --------------------------------------------
+% $latex.caption.swapskip enabled for $formal.title.placement support
+%\newlength{\docbooktolatextempskip}
+%\newcommand{\captionswapskip}{\setlength{\docbooktolatextempskip}{\abovecaptionskip}\setlength{\abovecaptionskip}{\belowcaptionskip}\setlength{\belowcaptionskip}{\docbooktolatextempskip}}
+%% Guard against a problem with old package versions.
+%\makeatletter
+%\AtBeginDocument{
+%\DeclareRobustCommand\ref{\@refstar}
+%\DeclareRobustCommand\pageref{\@pagerefstar}
+%}
+%\makeatother
+%% --------------------------------------------
+\makeatletter
+\newcommand{\dbz}{\penalty \z@}
+\newcommand{\docbooktolatexpipe}{\ensuremath{|}\dbz}
+\newskip\docbooktolatexoldparskip
+\newcommand{\docbooktolatexnoparskip}{\docbooktolatexoldparskip=\parskip\parskip=0pt plus 1pt}
+\newcommand{\docbooktolatexrestoreparskip}{\parskip=\docbooktolatexoldparskip}
+\def\cleardoublepage{\clearpage\if@twoside \ifodd\c@page\else\hbox{}\thispagestyle{empty}\newpage\if@twocolumn\hbox{}\newpage\fi\fi\fi}
+\usepackage[latin1]{inputenc}
+
+\ifx\dblatex@chaptersmark\@undefined\def\dblatex@chaptersmark#1{\markboth{\MakeUppercase{#1}}{}}\fi
+\let\save@makeschapterhead\@makeschapterhead
+\def\dblatex@makeschapterhead#1{\vspace*{-80pt}\save@makeschapterhead{#1}}
+\def\@makeschapterhead#1{\dblatex@makeschapterhead{#1}\dblatex@chaptersmark{#1}}
+
+			
+\AtBeginDocument{\ifx\refname\@undefined\let\docbooktolatexbibname\bibname\def\docbooktolatexbibnamex{\bibname}\else\let\docbooktolatexbibname\refname\def\docbooktolatexbibnamex{\refname}\fi}
+% Facilitate use of \cite with \label
+\newcommand{\docbooktolatexbibaux}[2]{%
+  \protected@write\@auxout{}{\string\global\string\@namedef{docbooktolatexcite@#1}{#2}}
+}
+
+%\usepackage{cite}
+%\renewcommand\citeleft{(}  % parentheses around list
+%\renewcommand\citeright{)} % parentheses around list
+\newcommand{\docbooktolatexcite}[2]{%
+  \@ifundefined{docbooktolatexcite@#1}%
+  {\cite{#1}}%
+  {\def\@docbooktolatextemp{#2}\ifx\@docbooktolatextemp\@empty%
+   \cite{\@nameuse{docbooktolatexcite@#1}}%
+   \else\cite[#2]{\@nameuse{docbooktolatexcite@#1}}%
+   \fi%
+  }%
+}
+\newcommand{\docbooktolatexbackcite}[1]{%
+  \ifx\Hy@backout\@undefined\else%
+    \@ifundefined{docbooktolatexcite@#1}{%
+      % emit warning?
+    }{%
+      \ifBR@verbose%
+        \PackageInfo{backref}{back cite \string`#1\string' as \string`\@nameuse{docbooktolatexcite@#1}\string'}%
+      \fi%
+      \Hy@backout{\@nameuse{docbooktolatexcite@#1}}%
+    }%
+  \fi%
+}
+
+% --------------------------------------------
+% A way to honour <footnoteref>s
+% Blame j-devenish (at) users.sourceforge.net
+% In any other LaTeX context, this would probably go into a style file.
+\newcommand{\docbooktolatexusefootnoteref}[1]{\@ifundefined{@fn@label@#1}%
+  {\hbox{\@textsuperscript{\normalfont ?}}%
+    \@latex@warning{Footnote label `#1' was not defined}}%
+  {\@nameuse{@fn@label@#1}}}
+\newcommand{\docbooktolatexmakefootnoteref}[1]{%
+  \protected@write\@auxout{}%
+    {\global\string\@namedef{@fn@label@#1}{\@makefnmark}}%
+  \@namedef{@fn@label@#1}{\hbox{\@textsuperscript{\normalfont ?}}}%
+  }
+
+% index labeling helper
+\newif\ifdocbooktolatexprintindex\docbooktolatexprintindextrue
+\let\dbtolatex@@theindex\theindex
+\let\dbtolatex@@endtheindex\endtheindex
+\renewenvironment{theindex}{
+  \if@openright\cleardoublepage\else\clearpage\fi
+  \dbtolatex@@theindex
+  % To have the index in the TOC
+  \@ifundefined{chapter}{
+    \addcontentsline{toc}{section}{\numberline{}\indexname}
+  }{
+    \refstepcounter{chapter}
+    \addcontentsline{toc}{chapter}{\numberline{}\indexname}
+  }
+}{
+  \dbtolatex@@endtheindex%
+}
+
+\newlength\saveparskip \newlength\saveparindent
+\newlength\tempparskip \newlength\tempparindent
+
+% Prevent multiple openings of the same aux file
+% (happens when backref is used with multiple bibliography environments)
+\ifx\AfterBeginDocument\undefined\let\AfterBeginDocument\AtBeginDocument\fi
+\AfterBeginDocument{
+  \let\latex@@starttoc\@starttoc
+  \def\@starttoc#1{%
+    \@ifundefined{docbooktolatex@aux#1}{%
+      \global\@namedef{docbooktolatex@aux#1}{}%
+      \latex@@starttoc{#1}%
+    }{}
+  }
+}
+

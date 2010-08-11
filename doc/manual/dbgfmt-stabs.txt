@@ -1,0 +1,10 @@
+// $Id: dbgfmt-stabs.txt 2217 2009-07-24 17:47:49Z peter $
+[[dbgfmt-stabs]]
+== `stabs`: Stabs Debugging Format
+
+indexterm:[`stabs`]
+indexterm:[COFF,debugging]
+indexterm:[ELF,debugging]
+indexterm:[gdb]
+
+// vim: set syntax=asciidoc sw=2 tw=70:

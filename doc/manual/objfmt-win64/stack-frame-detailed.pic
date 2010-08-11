@@ -1,0 +1,96 @@
+.PS
+# $Id$
+
+# Static frame
+STATIC: [
+  down;
+  R1: box shaded "yellow" wid 1 ht 0.2 "Return Address";
+  A: [
+    box shaded "green" wid 1 ht 0.4 "Non-volatile" "register save area";
+    box shaded "green" wid 1 ht 0.4 "Space for local" "variables";
+    box shaded "green" wid 1 ht 0.4 "B's stack" "parameters";
+    box shaded "green" wid 1 ht 0.6 "B's register" "parameters" "shadow space";
+  ]
+  R2: box shaded "yellow" wid 1 ht 0.2 "Return Address";
+  B: box shaded "skyblue" wid 1 ht 0.2;
+
+  # Stack extensions up and down
+  line from R1.nw to R1.nw + (0, 0.1);
+  line from R1.ne to R1.ne + (0, 0.1);
+  line from B.sw to B.sw + (0, -0.1);
+  line from B.se to B.se + (0, -0.1);
+
+  # Labels
+  box shaded "navyblue" wid 0.2 ht 0.2 "\m[white]A\m[]" \
+    with .ne at A.nw + (-0.1, 0);
+  box shaded "navyblue" wid 0.2 ht 0.2 "\m[white]B\m[]" \
+    with .ne at B.nw + (-0.1, 0);
+  box shaded "navyblue" wid 1 ht 0.2 "\m[white]Static\m[]" \
+    with .sw at R1.ne + (0.1, 0.1);
+
+  # Comments
+  box invis wid 1 ht 0.4 "16 byte aligned" "stack pointer" \
+    with .nw at R1.se + (0.25, 0);
+  line from last box .n to R1.ne + (0.5, 0) thickness 1.5;
+  arrow to R1.ne thickness 1.5;
+
+  UNWIND: box invis wid 1 ht 0.4 "Base for" "unwind offsets" \
+    with .w at R2.ne + (0.25, 0);
+  arrow from last box .w to R2.ne thickness 1.5;
+
+  box invis wid 0.75 ht 0.4 "16 byte" "aligned" \
+    with .n at UNWIND.s + (0, -0.25);
+  arrow from last box to UNWIND chop thickness 1.5;
+]
+
+# Dynamic frame
+DYNAMIC: [
+  down;
+  R1: box shaded "yellow" wid 1 ht 0.2 "Return Address";
+  A: [
+    box shaded "green" wid 1 ht 0.4 "Non-volatile" "register save area";
+    box shaded "green" wid 1 ht 0.4 "Space for local" "variables";
+    PARAMS: box shaded "green" wid 1 ht 0.4 "B's stack" "parameters";
+    box shaded "green" wid 1 ht 0.6 "B's register" "parameters" "shadow space";
+    ALLOCA: box shaded "green" wid 1 ht 0.6 \
+      "Dynamically" "allocated stack" "space (alloca)";
+  ]
+  R2: box shaded "yellow" wid 1 ht 0.2 "Return Address";
+  B: box shaded "skyblue" wid 1 ht 0.2;
+
+  # Stack extensions up and down
+  line from R1.nw to R1.nw + (0, 0.1);
+  line from R1.ne to R1.ne + (0, 0.1);
+  line from B.sw to B.sw + (0, -0.1);
+  line from B.se to B.se + (0, -0.1);
+
+  # Labels
+  box shaded "navyblue" wid 0.2 ht 0.2 "\m[white]A\m[]" \
+    with .ne at A.nw + (-0.1, 0);
+  box shaded "navyblue" wid 0.2 ht 0.2 "\m[white]B\m[]" \
+    with .ne at B.nw + (-0.1, 0);
+  box shaded "navyblue" wid 1 ht 0.2 "\m[white]Dynamic\m[]" \
+    with .sw at R1.ne + (0.1, 0.1);
+
+  # Comments
+  box invis wid 1 ht 0.4 "16 byte aligned" "stack pointer" \
+    with .nw at R1.se + (0.25, 0);
+  line from last box .n to R1.ne + (0.5, 0) thickness 1.5;
+  arrow to R1.ne thickness 1.5;
+
+  box invis wid 0.75 ht 0.6 "Frame" "register" "value" \
+    with .w at A.PARAMS.ne + (0.25, 0);
+  arrow from last box .w to A.PARAMS.ne thickness 1.5;
+
+  UNWIND: box invis wid 1 ht 0.4 "Base for" "unwind offsets" \
+    with .w at A.ALLOCA.ne + (0.25, 0);
+  arrow from last box .w to A.ALLOCA.ne thickness 1.5;
+
+  box invis wid 0.6 ht 0.4 "16 byte" "aligned" \
+    with .n at UNWIND.s + (0, -0.5);
+  line from last box .nw to R2.ne + (0.25, 0) thickness 1.5;
+  arrow to R2.ne thickness 1.5;
+  arrow from last box to UNWIND chop thickness 1.5;
+] with .nw at STATIC.ne;
+
+.PE

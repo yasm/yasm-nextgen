@@ -1,0 +1,8 @@
+// $Id: objfmt-coff.txt 2217 2009-07-24 17:47:49Z peter $
+[[objfmt-coff]]
+== `coff`: Common Object File Format
+
+indexterm:[`coff`]
+indexterm:[Common Object File Format]
+
+// vim: set syntax=asciidoc sw=2 tw=70:

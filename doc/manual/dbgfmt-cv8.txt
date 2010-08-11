@@ -1,0 +1,10 @@
+// $Id: dbgfmt-cv8.txt 2217 2009-07-24 17:47:49Z peter $
+[[dbgfmt-cv8]]
+== `cv8`: CodeView Debugging Format for VC8
+
+indexterm:[`cv8`]
+indexterm:[Visual Studio 2008]
+indexterm:[Visual Studio 2005]
+indexterm:[CodeView]
+
+// vim: set syntax=asciidoc sw=2 tw=70:

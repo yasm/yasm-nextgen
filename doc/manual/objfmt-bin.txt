@@ -1,0 +1,220 @@
+// $Id: objfmt-bin.txt 2217 2009-07-24 17:47:49Z peter $
+[[objfmt-bin]]
+== `bin`: Flat-Form Binary Output
+
+indexterm:[Flat-Form Binary]
+indexterm:[pure binary]
+The ((+bin+)) ""object format"" does not produce object files: the
+output file produced contains only the section data; no headers or
+relocations are generated.  The output can be considered ""plain
+binary"", and is useful for operating system and boot loader
+development, generating MS-DOS ((`.COM`)) executables and ((`.SYS`))
+device drivers, and creating images for embedded target environments
+(e.g. ((Flash)) ROM).
+
+The `bin` object format supports an unlimited number of named
+sections.  See <<objfmt-bin-section>> for details.  The only
+restriction on these sections is that their storage locations in the
+output file cannot overlap.
+
+When used with the x86 architecture, the `bin` object format starts
+Yasm in 16-bit mode.  In order to write native 32-bit or 64-bit code,
+an explicit `BITS 32` or `BITS 64` directive is required respectively.
+
+`bin` produces an output file with no extension by default; it simply
+strips the extension from the input file name.  Thus the default
+output filename for the input file `foo.asm` is simply `foo`.
+
+[[objfmt-bin-org]]
+=== `ORG`: Binary Origin
+
+indexterm:[Origin]
+indexterm:[Binary origin]
+`bin` provides the ((`ORG`)) directive in NASM syntax to allow setting
+of the memory address at which the output file is initially loaded.
+The `ORG` directive may only be used once (as the output file can only
+be initially loaded into a single location).  If `ORG` is not
+specified, `ORG 0` is used by default.
+
+This makes the operation of NASM-syntax `ORG` very different from the
+operation of `ORG` in other assemblers, which typically simply move
+the assembly location to the value given.  `bin` provides a more
+powerful alternative in the form of extensions to the `SECTION`
+directive; see <<objfmt-bin-section>> for details.
+
+When combined with multiple sections, `ORG` also has the effect of
+defaulting the LMA of the first section to the `ORG` value to make the
+output file as small as possible.  If this is not the desired
+behavior, explicitly specify a LMA for all sections via either `START`
+or `FOLLOWS` qualifiers in the `SECTION` directive.
+
+[[objfmt-bin-section]]
+=== `bin` Extensions to the `SECTION` Directive
+
+indexterm:[`VALIGN`]
+indexterm:[`VFOLLOWS`]
+indexterm:[`FOLLOWS`]
+indexterm:[`ALIGN`]
+indexterm:[LMA]
+The `bin` object format allows the use of multiple sections of
+arbitrary names.  It also extends the `SECTION` (or `SEGMENT`)
+directive to allow complex ordering of the segments both in the output
+file or initial load address (also known as LMA) and at the ultimate
+execution address (the virtual address or VMA).
+
+The ((VMA)) is the execution address.  Yasm calculates absolute memory
+references within a section assuming that the program code is at the
+VMA while being executed.  The LMA, on the other hand, specifies where
+a section is _initially_ loaded, as well as its location in the output
+file.
+
+Often, VMA will be the same as LMA.  However, they may be different if
+the program or another piece of code copies (relocates) a section
+prior to execution.  A typical example of this in an embedded system
+would be a piece of code stored in ROM, but is copied to faster RAM
+prior to execution.  Another example would be overlays: sections
+loaded on demand from different file locations to the same execution
+location.
+
+The `bin` extensions to the `SECTION` directive allow flexible
+specification of both VMA and LMA, including alignment constraints.
+As with other object formats, additional attributes may be added after
+the section name.  The available attributes are listed in
+<<bin-section-attributes>>.
+
+[[bin-section-attributes]]
+.`bin` Section Attributes
+[cols="^,<",options="header"]
+|========
+|Attribute|Indicates the section
+
+|`progbits`|
+is stored in the disk image, as opposed to allocated and initialized
+at load.
+
+|`nobits`|
+is allocated and initialized at load (the opposite of `progbits`).
+Only one of `progbits` or `nobits` may be specified; they are mutually
+exclusive attributes.
+
+|+start=?address?+|
+has an LMA starting at ?address?.  If a LMA alignment constraint is
+given, it is checked against the provided address and a warning is
+issued if ?address? does not meet the alignment constraint.
+
+|+follows=?sectname?+|
+should follow the section named ?sectname? in the output file (LMA).
+If a LMA alignment constraint is given, it is respected and a gap is
+inserted such that the section meets its alignment requirement.  Note
+that as LMA overlap is not allowed, typically only one section may
+follow another.
+
+|+align=?n?+|
+requires a LMA alignment of ?n? bytes.  The value ?n? must always be a
+power of 2.  LMA alignment defaults to 4 if not specified.
+
+|+vstart=?address?+|
+has an VMA starting at ?address?.  If a VMA alignment constraint is
+given, it is checked against the provided address and a warning is
+issued if ?address? does not meet the alignment constraint.
+
+|+vfollows=?sectname?+|
+should follow the section named ?sectname? in the output file (VMA).
+If a VMA alignment constraint is given, it is respected and a gap is
+inserted such that the section meets its alignment requirement.  VMA
+overlap is allowed, so more than one section may follow another
+(possibly useful in the case of overlays).
+
+|+valign=?n?+|
+requires a VMA alignment of ?n? bytes.  The value ?n? must always be a
+power of 2.  VMA alignment defaults to the LMA alignment if not
+specified.
+
+|========
+
+Only one of `start` or `follows` may be specified for a section; the
+same restriction applies to `vstart` and `vfollows`.
+
+Unless otherwise specified via the use of `follows` or `start`, Yasm
+by default assumes the implicit ordering given by the order of the
+sections in the input file.  A section named `.text` is always the
+first section.  Any code which comes before an explicit `SECTION`
+directive goes into the `.text` section.  The `.text` section
+attributes may be overridden by giving an explicit `SECTION .text`
+directive with attributes.
+
+Also, unless otherwise specified, Yasm defaults to setting VMA=LMA.
+If just `valign` is specified, Yasm just takes the LMA and aligns it
+to the required alignment.  This may have the effect of pushing
+following sections' VMAs to non-LMA addresses as well, to avoid VMA
+overlap.
+
+Yasm treats `nobits` sections in a special way in order to minimize
+the size of the output file.  As `nobits` sections can be 0-sized in
+the LMA realm, but cannot be if located between two other sections
+(due to the VMA=LMA default), Yasm moves all `nobits` sections with
+unspecified LMA to the end of the output file, where they can savely
+have 0 LMA size and thus not take up any space in the output file.  If
+this behavior is not desired, a `nobits` section LMA (just like a
+`progbits` section) may be specified using either the `follows` or
+`start` section attribute.
+
+[[objfmt-bin-ssym]]
+=== `bin` Special Symbols
+
+indexterm:[`section.start`]
+indexterm:[`section.vstart`]
+indexterm:[`section.length`]
+To facilitate writing code that copies itself from one location to
+another (e.g. from its LMA to its VMA during execution), the `bin`
+object format provides several special symbols for every defined
+section.  Each special symbol begins with `section.` followed by the
+section name.  The supported special `bin` symbols are:
+
++section.?sectname?.start+::
+  Set to the LMA address of the section named ?sectname?.
+
++section.?sectname?.vstart+::
+  Set to the VMA address of the section named ?sectname?.
+
++section.?sectname?.length+::
+  Set to the length of the section named ?sectname?.  The length is
+  considered the runtime length, so `nobits` sections' length is their
+  runtime length, not 0.
+
+[[objfmt-bin-map]]
+=== Map Files
+
+indexterm:[%--mapfile%]
+((Map file))s may be generated in `bin` via the use of the ((`[MAP]`))
+directive.  The map filename may be specified either with a command
+line option (%--mapfile=?filename?%) or in the `[MAP]` directive.  If
+a map is requested but no output filename is given, the map output
+goes to standard output by default.
+
+If no `[MAP]` directive is given in the input file, no map output is
+generated.  If `[MAP]` is given with no options, a brief map is
+generated.  The `[MAP]` directive accepts the following options to
+control what is included in the map file.  More than one option may be
+specified.  Any option other than the ones below is interpreted as the
+output filename.
+
+`brief`::
+  Includes the input and output filenames, origin (`ORG` value), and a
+  brief section summary listing the VMA and LMA start and stop
+  addresses and the section length of every section.
+
+`sections`::
+`segments`::
+  Includes a detailed list of sections, including the VMA and LMA
+  alignment, any ""follows"" settings, as well as the VMA and LMA
+  start addresses and the section length.
+
+`symbols`::
+  Includes a detailed list of all EQU values and VMA and LMA symbol
+  locations, grouped by section.
+
+`all`::
+  All of the above.
+
+// vim: set syntax=asciidoc sw=2 tw=70:

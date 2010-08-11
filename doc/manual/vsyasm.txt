@@ -1,0 +1,94 @@
+// $Id: vsyasm.txt 2301 2010-03-09 23:59:23Z peter $
+[[vsyasm]]
+== **VSYASM** - Yasm for Microsoft Visual Studio 2010
+
+The build system used in ((Microsoft Visual Studio 2010)) is based on
+((**MSBUILD**)), Microsoft's dedicated build management tool, a change
+that requires that external tools are integrated into the development
+environment in a new way.  ((**VSYASM**)) has been developed to
+facilitate Yasm integration with ((Visual Studio 2010)) in a robust
+and efficient manner. The main difference between VSYASM and other
+versions is that it is capable of assembling multiple source code
+files given on a single command line.
+
+When assembling a single file VSYASM behaves in the same way as the
+normal **yasm** tool.  The only change in this case is that VSYASM
+doesn't offer the pre-process only mode.  
+
+If however the VSYASM command line includes multiple source files, any
+output, list and map paths given on the command line are resolved to
+their directory components alone and each source code file is then
+assembled using these directories for the relevant outputs.  Before
+assembly starts, any non-existent directories needed for VSYASM
+outputs are recursively created.  The assembly process itself stops if
+any file being assembled generates errors.  
+
+The %-E ?file?% command line switch can be used to send error reports
+to a file, in which case this file will also include the command line
+used to invoke VSYASM.  This provides a way to check that VSYASM is
+being called correctly from the controlling Visual Studio build
+process.
+
+[[vsyasm-integration]]
+=== Integration Steps
+
+Firstly, the VSYASM executable file (`vsyasm.exe`) should be added to
+the Visual Studio directory holding the C tools. This is typically at:
+
+-------------------------------
+C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin
+-------------------------------
+
+Secondly, the three files--`vsyasm.xml`, `vsyasm.props` and
+`vsyasm.targets`--should be added into the project directory of the
+project in which VSYASM is being used (an alternative will be
+explained later).
+
+Thirdly, to add Yasm support to a project after the project has been
+opened in the IDE, right click on the project in the solution explorer
+and select ""Build Customisations..."".  If vsyasm is offered as an
+option in the resulting list you can then select it; if not, use the
+""Find Existing..."" button and the resulting file dialogue to
+navigate to the `vsyasm.targets` that you put in the project
+directory, select it to add it to the list and then select it from the
+list.
+
+Once you have done this, right clicking on the project in the solution
+explorer and selecting ""Properties"" will bring up a dialogue with a
+new item ""Yasm Assembler"" that will allow you to configure Yasm for
+building any assembler files added to the project.  
+
+[[vsyasm-integration-alt]]
+=== Alternative Integration Steps
+
+If you have many projects that use VSYASM, you can put the three files
+mentioned above into MSBUILD's build customisation directory which is
+typically at:
+
+-------------------------------
+C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\BuildCustomizations
+-------------------------------
+
+VSYASM will then always be available in the Build Customisations
+dialogue.   An alternative way of doing this is to put these files in
+a convenient location and then add the path to this location to the
+""Build Customisations Search Path"" item under ""VC++ Project
+Settings"" in the Visual Studio 2010 Options dialogue.
+
+[[vsyasm-using]]
+=== Using VSYASM
+
+In a Visual Studio project with assembler source code files, Yasm
+settings are entered in the ""Yasm Assembler"" item in the projects
+Property Dialogue.  The items available correspond with those
+available on Yasm's command line and are mostly self explanatory but
+one item--""Object Filename""--does need further explanation.  
+
+If the ""Object Filename"" item refers to a directory (the default),
+MSBUILD will collect all the assembler files in the project together
+as a batch and invoke VSYASM in multiple file mode.  In order to
+assemble files one at a time it is necessary to change this to the
+name of an output *file* such as, for example,
+""$(IntDir)%(Filename).obj"".
+
+// vim: set syntax=asciidoc sw=2 tw=70:

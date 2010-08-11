@@ -1,0 +1,17 @@
+The following tools are necessary for building most output formats of
+the design document (and other DocBook documentation) from their XML
+and asciidoc sources:
+
+- GNU make
+- asciidoc 8.5.3
+- dblatex
+  dblatex has a number of dependences:
+  - Python >= 2.4
+  - Recent LaTeX distribution
+  - xsltproc
+  - XML DocBook 4.1 DTD
+- Ghostscript
+- groff + GNU pic
+- HTML Tidy
+- realpath
+

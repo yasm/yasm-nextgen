@@ -1,0 +1,9 @@
+// $Id: objfmt-rdf.txt 2217 2009-07-24 17:47:49Z peter $
+[[objfmt-rdf]]
+== `rdf`: Relocatable Dynamic Object File Format
+
+indexterm:[`rdf`]
+indexterm:[RDOFF]
+indexterm:[Relocatable Dynamic Object File Format]
+
+// vim: set syntax=asciidoc sw=2 tw=70:

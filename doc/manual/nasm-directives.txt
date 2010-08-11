@@ -1,0 +1,404 @@
+// $Id: nasm-directives.txt 2217 2009-07-24 17:47:49Z peter $
+[[nasm-directives]]
+== NASM Assembler Directives
+
+////
+ <chapterinfo>
+  <authorgroup>
+   <corpauthor>The NASM Development Team</corpauthor>
+
+   <author>
+    <firstname>Peter</firstname>
+    <surname>Johnson</surname>
+    <contrib>Updated for Yasm context by </contrib>
+   </author>
+  </authorgroup>
+ </chapterinfo>
+////
+
+indexterm:[Assembler Directives]
+NASM, though it attempts to avoid the bureaucracy of assemblers like
+MASM and TASM, is nevertheless forced to support a _few_ directives.
+These are described in this chapter.
+
+indexterm:[user-level directives]
+indexterm:[primitive directives]
+NASM's directives come in two types: _user-level_ directives and
+_primitive_ directives. Typically, each directive has a user-level
+form and a primitive form. In almost all cases, we recommend that
+users use the user-level forms of the directives, which are
+implemented as macros which call the primitive forms.
+
+Primitive directives are enclosed in square brackets; user-level
+directives are not.
+
+indexterm:[format-specific directives]
+In addition to the universal directives described in this chapter,
+each object file format can optionally supply extra directives in
+order to control particular features of that file format. These
+_format-specific_ directives are documented along with the formats
+that implement them, in <<objfmts>>.
+
+[[nasm-directive-bits-top]]
+=== Specifying Target Processor Mode
+
+indexterm:[Processor Mode]
+
+[[nasm-directive-bits]]
+==== `BITS`
+
+indexterm:[16-bit mode,versus 32-bit mode]
+indexterm:[32-bit mode,versus 64-bit mode]
+indexterm:[REX]
+The ((`BITS`)) directive specifies whether Yasm should generate code
+designed to run on a processor operating in 16-bit mode, 32-bit mode,
+or 64-bit mode. The syntax is `BITS 16`, `BITS 32`, or `BITS 64`.
+
+In most cases, you should not need to use `BITS` explicitly. The
+`coff`, `elf32`, `macho32`, and `win32` object formats, which are
+designed for use in 32-bit operating systems, all cause Yasm to select
+32-bit mode by default. The `elf64`, `macho64`, and `win64` object
+formats, which are designed for use in 64-bit operating systems, both
+cause Yasm to select 64-bit mode by default.  The `xdf` object format
+allows you to specify each segment you define as `USE16`, `USE32`, or
+`USE64`, and Yasm will set its operating mode accordingly, so the use
+of the `BITS` directive is once again unnecessary.
+
+The most likely reason for using the `BITS` directive is to write
+32-bit or 64-bit code in a flat binary file; this is because the `bin`
+object format defaults to 16-bit mode in anticipation of it being used
+most frequently to write DOS `.COM` programs, DOS `.SYS` device
+drivers and boot loader software.
+
+You do _not_ need to specify `BITS 32` merely in order to use 32-bit
+instructions in a 16-bit DOS program; if you do, the assembler will
+generate incorrect code because it will be writing code targeted at a
+32-bit platform, to be run on a 16-bit one.  However, it _is_
+necessary to specify `BITS 64` to use 64-bit instructions and
+registers; this is done to allow use of those instruction and register
+names in 32-bit or 16-bit programs, although such use will generate a
+warning.
+
+When Yasm is in `BITS 16` mode, instructions which use 32-bit data are
+prefixed with an 0x66 byte, and those referring to 32-bit addresses
+have an 0x67 prefix. In `BITS 32` mode, the reverse is true: 32-bit
+instructions require no prefixes, whereas instructions using 16-bit
+data need an 0x66 and those working in 16-bit addresses need an 0x67.
+
+When Yasm is in `BITS 64` mode, 32-bit instructions usually require no
+prefixes, and most uses of 64-bit registers or data size requires a
+REX prefix.  Yasm automatically inserts REX prefixes where necessary.
+There are also 8 more general and SSE registers, and 16-bit addressing
+is no longer supported.  The default address size is 64 bits; 32-bit
+addressing can be selected with the 0x67 prefix.  The default operand
+size is still 32 bits, however, and the 0x66 prefix selects 16-bit
+operand size.  The REX prefix is used both to select 64-bit operand
+size, and to access the new registers.  A few instructions have a
+default 64-bit operand size.
+
+When the REX prefix is used, the processor does not know how to
+address the `AH`, `BH`, `CH` or `DH` (high 8-bit legacy) registers.
+Instead, it is possible to access the the low 8-bits of the `SP`, `BP`
+`SI`, and `DI` registers as `SPL`, `BPL`, `SIL`, and `DIL`,
+respectively; but only when the REX prefix is used.
+
+The `BITS` directive has an exactly equivalent primitive form, `[BITS
+16]`, `[BITS 32]`, and `[BITS 64]`.  The user-level form is a macro
+which has no function other than to call the primitive form.
+
+[[nasm-directive-use16use32use64]]
+==== `USE16`, `USE32`, and `USE64`
+
+The ((`USE16`)), ((`USE32`)), and ((`USE64`)) directives can be used
+in place of `BITS 16`, `BITS 32`, and `BITS 64` respectively for
+compatibility with other assemblers.
+
+[[nasm-directive-default]]
+=== `DEFAULT`: Change the assembler defaults
+
+The ((`DEFAULT`)) directive changes the assembler defaults.  Normally,
+Yasm defaults to a mode where the programmer is expected to explicitly
+specify most features directly.  However, sometimes this is not
+desirable if a certain behavior is very commmonly used.
+
+Currently, the only `DEFAULT` that is settable is whether or not
+registerless effective addresses in 64-bit mode are `RIP`-relative or
+not.  By default, they are absolute unless overridden with the
+((`REL`)) specifier (see <<nasm-effaddr>>).  However, if `DEFAULT REL`
+is specified, `REL` is default, unless overridden with the ((`ABS`))
+specifier, a `FS` or `GS` segment override is used, or another
+register is part of the effective address.
+
+The special handling of `FS` and `GS` overrides are due to the fact
+that these segments are the only segments which can have non-0 base
+addresses in 64-bit mode, and thus are generally used as thread
+pointers or other special functions.  With a non-zero base address,
+generating `RIP`-relative addresses for these forms would be extremely
+confusing.  Other segment registers such as `DS` always have a base
+address of 0, so RIP-relative access still makes sense.
+
+`DEFAULT REL` is disabled with `DEFAULT ABS`.  The default mode of the
+assembler at start-up is `DEFAULT ABS`.
+
+[[nasm-directive-section-top]]
+=== Changing and Defining Sections
+
+indexterm:[Defining Sections]
+indexterm:[changing sections]
+indexterm:[switching between sections]
+
+[[nasm-directive-section]]
+==== `SECTION` and `SEGMENT`
+
+The ((`SECTION`)) directive (((`SEGMENT`)) is an exactly equivalent
+synonym) changes which section of the output file the code you write
+will be assembled into. In some object file formats, the number and
+names of sections are fixed; in others, the user may make up as many
+as they wish. Hence `SECTION` may sometimes give an error message, or
+may define a new section, if you try to switch to a section that does
+not (yet) exist.
+
+[[nasm-directive-section-standard-name]]
+==== Standardized Section Names
+
+The Unix object formats, and the `bin` object format, all support the
+((standardised section names)) `.text`, `.data` and `.bss` for the
+code, data and uninitialised-data sections. The `obj` format, by
+contrast, does not recognise these section names as being special, and
+indeed will strip off the leading period of any section name that has
+one.
+
+[[nasm-directive-section-macro]]
+==== The `__SECT__` Macro
+
+The `SECTION` directive is unusual in that its user-level form
+functions differently from its primitive form.  The primitive form,
+`[SECTION xyz]`, simply switches the current target section to the one
+given. The user-level form, `SECTION xyz`, however, first defines the
+single-line macro ((`__SECT__`)) to be the primitive `[SECTION]`
+directive which it is about to issue, and then issues it. So the
+user-level directive
+
+[source]
+----
+        SECTION .text
+----
+
+expands to the two lines
+
+[source]
+----
+%define __SECT__ [SECTION .text]
+        [SECTION .text]
+----
+
+Users may find it useful to make use of this in their own macros. For
+example, the `writefile` macro defined in the NASM Manual can be
+usefully rewritten in the following more sophisticated form:
+
+[source]
+----
+%macro writefile 2+
+        [section .data]
+%%str:  db %2
+%%endstr:
+        __SECT__
+        mov dx,%%str
+        mov cx,%%endstr-%%str
+        mov bx,%1
+        mov ah,0x40
+        int 0x21
+%endmacro
+----
+
+This form of the macro, once passed a string to output, first switches
+temporarily to the data section of the file, using the primitive form
+of the `SECTION` directive so as not to modify `__SECT__`. It then
+declares its string in the data section, and then invokes `__SECT__`
+to switch back to _whichever_ section the user was previously working
+in. It thus avoids the need, in the previous version of the macro, to
+include a `JMP` instruction to jump over the data, and also does not
+fail if, in a complicated `OBJ` format module, the user could
+potentially be assembling the code in any of several separate code
+sections.
+
+[[nasm-directive-absolute]]
+=== `ABSOLUTE`: Defining Absolute Labels
+
+The ((`ABSOLUTE`)) directive can be thought of as an alternative form
+of `SECTION`: it causes the subsequent code to be directed at no
+physical section, but at the hypothetical section starting at the
+given absolute address.  The only instructions you can use in this
+mode are the `RESB` family.
+
+`ABSOLUTE` is used as follows:
+
+[source]
+----
+        ABSOLUTE 0x1A
+kbuf_chr        resw 1
+kbuf_free       resw 1
+kbuf            resw 16
+----
+
+This example describes a section of the PC BIOS data area, at segment
+address 0x40: the above code defines `kbuf_chr` to be 0x1A,
+`kbuf_free` to be 0x1C, and `kbuf` to be 0x1E.
+
+The user-level form of `ABSOLUTE`, like that of `SECTION`, redefines
+the ((`__SECT__`)) macro when it is invoked.
+
+((`STRUC`)) and ((`ENDSTRUC`)) are defined as macros which use
+`ABSOLUTE` (and also `__SECT__`).
+
+`ABSOLUTE` doesn't have to take an absolute constant as an argument:
+it can take an expression (actually, a ((critical expression)): see
+<<nasm-crit>>) and it can be a value in a segment. For example, a TSR
+can re-use its setup code as run-time BSS like this:
+
+[source]
+----
+        org 100h                ; it's a .COM program
+        jmp setup               ; setup code comes last
+        ; the resident part of the TSR goes here
+setup:  ; now write the code that installs the TSR here
+        absolute setup
+runtimevar1 resw 1
+runtimevar2 resd 20
+tsr_end:
+----
+
+This defines some variables ""on top of"" the setup code, so that
+after the setup has finished running, the space it took up can be
+re-used as data storage for the running TSR. The symbol ""tsr_end""
+can be used to calculate the total size of the part of the TSR that
+needs to be made resident.
+
+[[nasm-directive-extern]]
+=== `EXTERN`: Importing Symbols
+
+indexterm:[Importing Symbols]
+((`EXTERN`)) is similar to the MASM directive `EXTRN` and the C
+keyword `extern`: it is used to declare a symbol which is not defined
+anywhere in the module being assembled, but is assumed to be defined
+in some other module and needs to be referred to by this one. Not
+every object-file format can support external variables: the `bin`
+format cannot.
+
+The `EXTERN` directive takes as many arguments as you like. Each
+argument is the name of a symbol:
+
+[source]
+----
+        extern _printf
+        extern _sscanf, _fscanf
+----
+
+Some object-file formats provide extra features to the `EXTERN`
+directive. In all cases, the extra features are used by suffixing a
+colon to the symbol name followed by object-format specific text. For
+example, the `obj` format allows you to declare that the default
+segment base of an external should be the group `dgroup` by means of
+the directive
+
+[source]
+----
+        extern _variable:wrt dgroup
+----
+
+The primitive form of `EXTERN` differs from the user-level form only
+in that it can take only one argument at a time: the support for
+multiple arguments is implemented at the preprocessor level.
+
+You can declare the same variable as `EXTERN` more than once: NASM
+will quietly ignore the second and later redeclarations. You can't
+declare a variable as `EXTERN` as well as something else, though.
+
+[[nasm-directive-global]]
+=== `GLOBAL`: Exporting Symbols
+
+indexterm:[Exporting Symbols]
+((`GLOBAL`)) is the other end of `EXTERN`: if one module declares a
+symbol as `EXTERN` and refers to it, then in order to prevent linker
+errors, some other module must actually _define_ the symbol and
+declare it as `GLOBAL`. Some assemblers use the name ((`PUBLIC`)) for
+this purpose.
+
+The `GLOBAL` directive applying to a symbol must appear _before_ the
+definition of the symbol.
+
+`GLOBAL` uses the same syntax as `EXTERN`, except that it must refer
+to symbols which _are_ defined in the same module as the `GLOBAL`
+directive. For example:
+
+[source]
+----
+        global _main
+_main:  ; some code
+----
+
+`GLOBAL`, like `EXTERN`, allows object formats to define private
+extensions by means of a colon. The `elf` object format, for example,
+lets you specify whether global data items are functions or data:
+
+[source]
+----
+        global hashlookup:function, hashtable:data
+----
+
+Like `EXTERN`, the primitive form of `GLOBAL` differs from the
+user-level form only in that it can take only one argument at a time.
+
+[[nasm-directive-common]]
+=== `COMMON`: Defining Common Data Areas
+
+indexterm:[common variables]
+The ((`COMMON`)) directive is used to declare _common variables_. A
+common variable is much like a global variable declared in the
+uninitialised data section, so that
+
+[source]
+----
+        common intvar 4
+----
+
+is similar in function to
+
+[source]
+----
+        global intvar
+        section .bss
+intvar  resd 1
+----
+
+The difference is that if more than one module defines the same common
+variable, then at link time those variables will be _merged_, and
+references to `intvar` in all modules will point at the same piece of
+memory.
+
+Like `GLOBAL` and `EXTERN`, `COMMON` supports object-format specific
+extensions. For example, the `obj` format allows common variables to
+be NEAR or FAR, and the `elf` format allows you to specify the
+alignment requirements of a common variable:
+
+[source]
+----
+        common commvar 4:near   ; works in OBJ
+        common intarray 100:4   ; works in ELF: 4 byte aligned
+----
+
+Once again, like `EXTERN` and `GLOBAL`, the primitive form of `COMMON`
+differs from the user-level form only in that it can take only one
+argument at a time.
+
+[[nasm-directive-cpu]]
+=== `CPU`: Defining CPU Dependencies
+
+The ((`CPU`)) directive restricts assembly to those instructions which
+are available on the specified CPU.  See <<architectures>> for `CPU`
+options for various architectures.
+
+All options are case insensitive.  Instructions will be enabled only
+if they apply to the selected cpu or lower.
+
+// vim: set syntax=asciidoc sw=2 tw=70:

@@ -1,0 +1,92 @@
+.PS
+# $Id: x86-registers.pic 1869 2007-06-02 03:15:35Z peter $
+
+# Register macro
+define register { [
+    right;
+    box invis wid 0.75 ht 0.2 "$1";
+    box wid 2 ht 0.2;
+    box wid 1 ht 0.2;
+    box wid 0.5 ht 0.2 "$2";
+    box wid 0.5 ht 0.2 "$3";
+    box invis wid 0.5 ht 0.2 "$4";
+    box invis wid 0.5 ht 0.2 "$5";
+    box invis wid 0.5 ht 0.2 "$6";
+] }
+
+down;
+
+# Draw table headers
+[
+  box invis wid 0.75 ht 0.4 "Register" "encoding";
+  A: box invis wid 2 ht 0.4 "Zero-extended for" "32-bit operands" \
+    with .sw at last box .se;
+  B: box invis wid 3 ht 0.2 "Not modified for 16-bit operands" \
+    with .sw at last box .nw;
+  C: box invis wid 3.5 ht 0.2 "Not modified for 8-bit operands" \
+    with .sw at last box .nw;
+
+  # Dotted borders around A, B, C boxes
+  line dotted from A.sw to A.nw;
+  line dotted to A.ne;
+  line dotted to A.se;
+
+  line dotted from A.nw to B.nw;
+  line dotted to B.ne;
+  line dotted to (B.e.x, A.s.y);
+
+  line dotted from B.nw to C.nw;
+  line dotted to C.ne;
+  line dotted to (C.e.x, A.s.y);
+
+  box invis wid 0.5 ht 0.4 "Low" "8-bit" with .sw at (C.e.x, A.s.y);
+  box invis wid 0.5 ht 0.2 "16-bit" with .sw at last box .se;
+  box invis wid 0.5 ht 0.2 "32-bit" with .sw at last box .se;
+  box invis wid 0.5 ht 0.2 "64-bit" with .sw at last box .se;
+]
+
+# Registers
+register(0,AH\[dg],AL,AX,EAX,RAX);
+register(3,BH\[dg],BL,BX,EBX,RBX);
+register(1,CH\[dg],CL,CX,ECX,RCX);
+register(2,DH\[dg],DL,DX,EDX,RDX);
+register(6,"",SIL\[dd],SI,ESI,RSI);
+register(7,"",DIL\[dd],DI,EDI,RDI);
+register(5,"",BPL\[dd],BP,EBP,RBP);
+register(4,"",SPL\[dd],SP,ESP,RSP);
+register(8,"",R8B,R8W,R8D,R8);
+register(9,"",R9B,R9W,R9D,R9);
+register(10,"",R10B,R10W,R10D,R10);
+register(11,"",R11B,R11W,R11D,R11);
+register(12,"",R12B,R12W,R12D,R12);
+register(13,"",R13B,R13W,R13D,R13);
+register(14,"",R14B,R14W,R14D,R14);
+register(15,"",R15B,R15W,R15D,R15);
+
+# Table footer
+[
+  right;
+  box invis wid 0.75 ht 0.2;
+  A: box invis wid 2 ht 0.2;
+  B: box invis wid 1 ht 0.2;
+  C: box invis wid 0.5 ht 0.2;
+  D: box invis wid 0.5 ht 0.2;
+  box invis wid 1.5 ht 0.2;
+
+  "63" ljust at A.w + (0.05, 0);
+  "32" rjust at A.e + (-0.05, 0);
+  "31" ljust at B.w + (0.05, 0);
+  "16" rjust at B.e + (-0.05, 0);
+  "15" ljust at C.w + (0.05, 0);
+  "8" rjust at C.e + (-0.05, 0);
+  "7" ljust at D.w + (0.05, 0);
+  "0" rjust at D.e + (-0.05, 0);
+]
+
+[
+  right;
+  box invis wid 3 ht 0.2 "\[dg] Not legal with REX prefix";
+  box invis wid 3 ht 0.2 "\[dd] Requires REX prefix";
+]
+
+.PE

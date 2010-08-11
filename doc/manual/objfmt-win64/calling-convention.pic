@@ -1,0 +1,90 @@
+.PS
+# $Id: calling-convention.pic 1860 2007-06-01 09:10:46Z peter $
+
+down;
+
+# Function A stack
+A: [
+  box shaded "skyblue" wid 1 ht 0.2;
+  box shaded "skyblue" wid 1 ht 0.2;
+  box shaded "skyblue" wid 1 ht 0.2;
+  box shaded "skyblue" wid 1 ht 0.2;
+  box shaded "skyblue" wid 1 ht 0.4;
+  box shaded "skyblue" wid 1 ht 0.2 "R9 data";
+  box shaded "skyblue" wid 1 ht 0.2 "R8 data";
+  box shaded "skyblue" wid 1 ht 0.2 "RDX data";
+  box shaded "skyblue" wid 1 ht 0.2 "RCX data";
+]
+
+R1: box shaded "yellow" wid 1 ht 0.2 "Return Address";
+
+# Function B stack
+B: [
+  box shaded "green" wid 1 ht 0.6 "non-volatile" "registers and" "local variables";
+  ALLOCA: box shaded "green" wid 1 ht 0.4 "dynamic stack" "space (alloca)";
+  box shaded "green" wid 1 ht 0.4;
+  STACKPARM: box shaded "green" wid 1 ht 0.4 "C's stack" "parameters";
+  SHADOW: box shaded "green" wid 1 ht 0.6 "C's register" "parameters" "shadow space";
+]
+
+R2: box shaded "yellow" wid 1 ht 0.2 "Return Address";
+
+# Function C stack
+C: [
+  box shaded "tan" wid 1 ht 0.2;
+  box shaded "tan" wid 1 ht 0.2;
+]
+
+# Stack extensions up and down
+line from A.nw to A.nw + (0, 0.1);
+line from A.ne to A.ne + (0, 0.1);
+line from C.sw to C.sw + (0, -0.1);
+line from C.se to C.se + (0, -0.1);
+
+# Function captions
+define caption {
+  line from $1.nw + (-0.1, 0) to $1.nw + (-0.2, 0) thickness 1.5;
+  MID: line to $1.sw + (-0.2, 0) thickness 1.5;
+  if ( $2 == 1 ) then {
+    line to $1.sw + (-0.1, 0) thickness 1.5;
+  }
+  box shaded "navyblue" wid 1 ht 0.2 "\m[white]Function $1\m[]" at MID.c;
+}
+caption(A,1);
+caption(B,1);
+caption(C,0);
+
+# Comments
+box invis wid 1 ht 0.4 "16 byte aligned" "stack pointer" \
+  with .sw at R1.ne + (0.5, 0);
+arrow from last box .w to R1.ne thickness 1.5;
+
+box invis wid 1 ht 0.4 "stack pointer" "after call" \
+  with .nw at R1.se + (0.5, 0);
+arrow from last box .w to R1.se thickness 1.5;
+
+box invis wid 1 ht 0.2 "frame pointer" with .w at B.ALLOCA.ne + (0.5, 0);
+arrow from last box .w to B.ALLOCA.ne thickness 1.5;
+
+define param { [
+  right;
+  box wid 0.75 ht 0.15 "$1";
+  box invis wid 0.25 ht 0.15 "$2";
+] }
+
+box invis wid 1 ht 0.4 "integer" "parameters" \
+  with .w at B.STACKPARM.e + (0.5, 0);
+INTPARMS: [
+  down;
+  param(R9 data,4th);
+  param(R8 data,3rd);
+  param(RDX data,2nd);
+  param(RCX data,1st);
+] with .w at B.SHADOW.e + (0.5, 0);
+arrow from INTPARMS.w to B.SHADOW.e thickness 1.5;
+
+box invis wid 1 ht 0.4 "16 byte aligned" "stack pointer" \
+  with .nw at R2.se + (0.5, 0);
+arrow from last box .w to R2.ne thickness 1.5;
+
+.PE

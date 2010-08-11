@@ -1,0 +1,10 @@
+// $Id: dbgfmt-dwarf2.txt 2217 2009-07-24 17:47:49Z peter $
+[[dbgfmt-dwarf2]]
+== `dwarf2`: DWARF2 Debugging Format
+
+indexterm:[`dwarf2`]
+indexterm:[DWARF]
+indexterm:[ELF,debugging]
+indexterm:[gdb]
+
+// vim: set syntax=asciidoc sw=2 tw=70:

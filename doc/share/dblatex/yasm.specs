@@ -1,0 +1,6 @@
+#
+# Dblatex spec file for DB2LaTeX style
+#
+TexInputs: yasm//
+TexStyle:  yasm
+XslParam: yasm/param.xsl

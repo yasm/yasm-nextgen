@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!--DOCTYPE catalog
+   PUBLIC "-//OASIS/DTD Entity Resolution XML Catalog V1.0//EN"
+   "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd"-->
+<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+ <!-- FreeBSD -->
+ <rewriteSystem
+  systemIdStartString="http://www.oasis-open.org/docbook/xml/4.5/"
+  rewritePrefix="file:///usr/local/share/xml/docbook/4.5/" />
+ <rewriteSystem
+  systemIdStartString="http://www.oasis-open.org/docbook/xml/4.4/"
+  rewritePrefix="file:///usr/local/share/xml/docbook/4.4/" />
+ <rewriteURI
+  uriStartString="http://docbook.sourceforge.net/release/xsl/current/"
+  rewritePrefix="file:///usr/local/share/xsl/docbook/" />
+ <!-- Mandriva 2010.1
+ <rewriteSystem
+  systemIdStartString="http://www.oasis-open.org/docbook/xml/4.5/"
+  rewritePrefix="file:///usr/share/sgml/docbook/xml-dtd-4.5/" />
+ <rewriteSystem
+  systemIdStartString="http://www.oasis-open.org/docbook/xml/4.4/"
+  rewritePrefix="file:///usr/share/sgml/docbook/xml-dtd-4.4/" />
+ <rewriteURI
+  uriStartString="http://docbook.sourceforge.net/release/xsl/current/"
+  rewritePrefix="file:///usr/share/sgml/docbook/xsl-stylesheets/" />
+ -->
+</catalog>

@@ -1,0 +1,8 @@
+// $Id: objfmt-xdf.txt 2217 2009-07-24 17:47:49Z peter $
+[[objfmt-xdf]]
+== `xdf`: Extended Dynamic Object Format
+
+indexterm:[`xdf`]
+indexterm:[Extended Dynamic Object]
+
+// vim: set syntax=asciidoc sw=2 tw=70:

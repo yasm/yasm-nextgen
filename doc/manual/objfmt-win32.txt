@@ -1,0 +1,168 @@
+// $Id: objfmt-win32.txt 2355 2010-08-07 21:51:40Z peter $
+[[objfmt-win32]]
+== `win32`: Microsoft Win32 Object Files
+
+indexterm:[Windows,32-bit]
+indexterm:[Vista]
+The ((`win32`)) object format generates Microsoft ((Win32)) object
+files for use on the 32-bit native ((Windows XP)) (and Vista)
+platforms.  Object files produced using this object format may be
+linked with 32-bit Microsoft linkers such as ((Visual Studio)) in
+order to produce 32-bit ((PE)) executables.
+
+The `win32` object format provides a default output filename extension
+of ((`.obj`)).
+
+Note that although Microsoft say that Win32 object files follow the
+`COFF` (Common Object File Format) standard, the object files produced
+by Microsoft Win32 compilers are not compatible with COFF linkers such
+as DJGPP's, and vice versa. This is due to a difference of opinion
+over the precise semantics of PC-relative relocations. To produce COFF
+files suitable for DJGPP, use the `coff` output format; conversely,
+the `coff` format does not produce object files that Win32 linkers can
+generate correct output from.
+
+[[objfmt-win32-sect]]
+=== `win32` Extensions to the `SECTION` Directive
+
+indexterm:[`win32`,SECTION]
+indexterm:[`SECTION`,win32 extensions to]
+The `win32` object format allows you to specify additional information
+on the `SECTION` directive line, to control the type and properties of
+sections you declare. Section types and properties are generated
+automatically by Yasm for the ((standard section names)) `.text`,
+`.data` and `.bss`, but may still be overridden by these qualifiers.
+
+The available qualifiers are:
+
+`code` or `text`::
+  Defines the section to be a code section. This marks the section as
+  readable and executable, but not writable, and also indicates to
+  the linker that the type of the section is code.
+
+`data` or `bss`::
+  Defines the section to be a data section, analogously to `code`.
+  Data sections are marked as readable and writable, but not
+  executable.  `data` declares an initialized data section, whereas
+  `bss` declares an uninitialized data section.
+
+`rdata`::
+  Declares an initialized data section that is readable but not
+  writable. Microsoft compilers use this section to place constants
+  in it.
+
+`info`::
+  Defines the section to be an ((informational section)), which is not
+  included in the executable file by the linker, but may (for example)
+  pass information _to_ the linker. For example, declaring an
+  `info`-type section called ((`.drectve`)) causes the linker to
+  interpret the contents of the section as command-line options.
+
++align=?n?+::
+  indexterm:[section alignment, in win32]
+  indexterm:[alignment, in win32 sections]
+  Specifies the alignment requirements of the section.  The maximum
+  you may specify is 8192: the Win32 object file format contains no
+  means to request a greater section alignment. If alignment is not
+  explicitly specified, the defaults are 16-byte alignment for code
+  sections, 8-byte alignment for rdata sections and 4-byte alignment
+  for data (and BSS) sections.  Informational sections get a default
+  alignment of 1 byte (no alignment), though the value does not
+  matter.  The alignment must be a power of 2.
+
+Other qualifiers are supported which control specific section flags:
+`discard`, `cache`, `page`, `share`, `execute`, `read`, `write`, and
+`base`.  Each of these sets the similarly-named section flag, while
+prefixing them with `no` clears the corresponding section flag; e.g.
+`nodiscard` clears the discard flag.
+
+The defaults assumed by Yasm if you do not specify the above
+qualifiers are:
+
+[source]
+----
+section .text    code  align=16
+section .data    data  align=4
+section .rdata   rdata align=8
+section .rodata  rdata align=8
+section .rdata$  rdata align=8
+section .bss     bss   align=4
+section .drectve info
+section .comment info
+----
+
+Any other section name is treated by default like `.text`.
+
+[[objfmt-win32-safeseh]]
+=== `win32`: Safe Structured Exception Handling
+
+Among other improvements in Windows XP SP2 and Windows Server 2003
+Microsoft introduced the concept of "safe structured exception
+handling."  The general idea is to collect handlers' entry points in a
+designated read-only table and have each entry point verified against
+this table for exceptions prior to control being passed to the
+handler.  In order for an executable to be created with a safe
+exception handler table, each object file on the linker command line
+must contain a special symbol named `@feat.00`.  If any object file
+passed to the linker does not have this symbol, then the exception
+handler table is omitted from the executable and thus the run-time
+checks will not be performed for the application.  By default, the
+table is omitted from the executable silently if this happens and
+therefore can be easily overlooked.  A user can instruct the linker to
+refuse to produce an executable without this table by passing the
+`/safeseh` command line option.
+
+As of version 1.1.0, Yasm adds this special symbol to `win32` object
+files so its output does not fail to link with `/safeseh`.
+
+Yasm also has directives to support registering custom exception
+handlers.  The `safeseh` directive instructs the assembler to produce
+appropriately formatted input data for the safe exception handler
+table.  A typical use case is given in
+<<objfmt-win32-safeseh-example>>.
+
+[[objfmt-win32-safeseh-example]]
+.Win32 `safeseh` Example
+[source]
+----
+section .text
+extern  _MessageBoxA@16
+safeseh handler         ; register handler as "safe handler"
+handler:
+        push    DWORD 1 ; MB_OKCANCEL
+        push    DWORD caption
+        push    DWORD text
+        push    DWORD 0
+        call    _MessageBoxA@16
+        sub     eax,1   ; incidentally suits as return value
+                        ; for exception handler
+        ret
+global  _main
+_main:
+        push    DWORD handler
+        push    DWORD [fs:0]
+        mov     DWORD [fs:0],esp ; engage exception handler
+        xor     eax,eax
+        mov     eax,DWORD[eax]   ; cause exception
+        pop     DWORD [fs:0]     ; disengage exception handler
+        add     esp,4
+        ret
+text:   db      'OK to rethrow, CANCEL to generate core dump',0
+caption:db      'SEGV',0
+
+section .drectve info
+        db      '/defaultlib:user32.lib /defaultlib:msvcrt.lib '
+----
+
+If an application has a safe exception handler table, attempting to
+execute any unregistered exception handler will result in immediate
+program termination.  Thus it is important to register each exception
+handler's entry point with the `safeseh` directive.
+
+All mentions of linker in this section refer to the Microsoft linker
+version 7.x and later.  The presence of the `@feat.00` symbol and the
+data for the safe exception handler table cause no backward
+incompatibilities and thus "safeseh" object files generated can still
+be linked by earlier linker versions or by non-Microsoft linkers.
+
+// vim: set syntax=asciidoc sw=2 tw=70:

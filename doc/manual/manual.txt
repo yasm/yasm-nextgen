@@ -1,0 +1,118 @@
+Yasm User Manual
+================
+Peter Johnson <yasm-doc@tortall.net>
+$Id: manual.txt 2301 2010-03-09 23:59:23Z peter $
+
+= Preface
+
+// Front matter
+include::introduction.txt[]
+
+[[using-yasm]]
+= Using Yasm
+
+include::running.txt[]
+
+include::vsyasm.txt[]
+
+[[nasm]]
+= NASM Syntax
+
+[[nasm-intro]]
+[partintro]
+****
+The chapters in this part of the book document the NASM-compatible
+syntax accepted by the Yasm ""nasm"" parser and preprocessor.
+****
+
+include::nasm-language.txt[]
+
+include::nasm-preprocessor.txt[]
+
+include::nasm-directives.txt[]
+
+//include::nasm-architectures.txt[]
+
+[[gas]]
+= GAS Syntax
+
+[[gas-intro]]
+[partintro]
+****
+The chapters in this part of the book document the GNU AS-compatible
+syntax accepted by the Yasm ""gas"" parser.
+****
+
+== TBD
+
+To be written.
+
+//include::gas-language.txt[]
+
+//include::gas-directives.txt[]
+
+//include::gas-architectures.txt[]
+
+[[objfmts]]
+= Object Formats
+
+[[objfmts-intro]]
+[partintro]
+****
+The chapters in this part of the book document Yasm's support for
+various object file formats.
+****
+
+include::objfmt-bin.txt[]
+
+include::objfmt-coff.txt[]
+
+include::objfmt-elf32.txt[]
+
+include::objfmt-elf64.txt[]
+
+include::objfmt-macho32.txt[]
+
+include::objfmt-macho64.txt[]
+
+include::objfmt-rdf.txt[]
+
+include::objfmt-win32.txt[]
+
+include::objfmt-win64.txt[]
+
+include::objfmt-xdf.txt[]
+
+[[dbgfmts]]
+= Debugging Formats
+
+[[dbgfmts-intro]]
+[partintro]
+****
+The chapters in this part of the book document Yasm's support for
+various debugging formats.
+****
+
+include::dbgfmt-cv8.txt[]
+
+include::dbgfmt-dwarf2.txt[]
+
+include::dbgfmt-stabs.txt[]
+
+[[architectures]]
+= Architectures
+
+[[architectures-intro]]
+[partintro]
+****
+The chapters in this part of the book document Yasm's support for
+various instruction set architectures.
+****
+
+//include::arch-lc3b.txt[]
+
+include::arch-x86.txt[]
+
+= Index
+
+// vim: set syntax=asciidoc sw=2 tw=70:

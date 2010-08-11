@@ -1,0 +1,16 @@
+<!-- $Id: manual-docinfo.xml 2217 2009-07-24 17:47:49Z peter $ -->
+<pubdate>2009</pubdate>
+
+<copyright>
+ <year>2006</year>
+ <year>2007</year>
+ <year>2008</year>
+ <year>2009</year>
+ <holder>Peter Johnson</holder>
+</copyright>
+
+<abstract>
+ <para>This document is the user manual for the Yasm assembler.  It
+  is intended as both an introduction and a general-purpose
+  reference for all Yasm users.</para>
+</abstract>
