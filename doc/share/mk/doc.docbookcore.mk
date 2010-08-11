@@ -12,7 +12,8 @@ XSLTPROC?=	xsltproc
 DBLATEX?=	dblatex
 TIDY?=		tidy
 
-XMLCATALOGFILES?=	../share/xml/catalog.xml
+PLATFORM?=	$(shell ../share/misc/distname.sh)
+XMLCATALOGFILES?=	../share/xml/catalog.${PLATFORM}.xml
 
 XSLHTML?=	../share/xml/style-html.xsl
 XSLHTMLCHUNK?=	../share/xml/style-chunk.xsl
