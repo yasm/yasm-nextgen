@@ -33,6 +33,7 @@
 #include <cstdlib>
 #include <string>
 
+#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
@@ -44,6 +45,7 @@ namespace YAML { class Emitter; class raw_ostream; }
 
 namespace yasm
 {
+class Diagnostic;
 
 /// Check to see if APInt will fit without overflow into size bits.
 /// @param intn         APInt
@@ -216,13 +218,32 @@ public:
             delete m_val.bv;
     }
 
-    /// Floating point calculation function: acc = acc op operand.
+    /// Integer calculation function: acc = acc op operand.
     /// @note Not all operations in Op::Op may be supported; unsupported
     ///       operations will result in an error.
     /// @param op       operation
     /// @param operand  intnum operand
-    void Calc(Op::Op op, const IntNum& operand) { Calc(op, &operand); }
-    void Calc(Op::Op op, /*@null@*/ const IntNum* operand = 0);
+    /// @param source   source location of operation
+    /// @param diags    diagnostic reporting
+    /// @return False if an error occurred.
+    bool Calc(Op::Op op,
+              const IntNum& operand,
+              clang::SourceLocation source,
+              Diagnostic& diags)
+    { return CalcImpl(op, &operand, source, &diags); }
+    bool Calc(Op::Op op, clang::SourceLocation source, Diagnostic& diags)
+    { return CalcImpl(op, 0, source, &diags); }
+
+    /// Integer calculation function: acc = acc op operand.
+    /// @note Not all operations in Op::Op may be supported; unsupported
+    ///       operations will result in an error.
+    /// @param op       operation
+    /// @param operand  intnum operand
+    /// @note Asserts if an error occurs.
+    void CalcAssert(Op::Op op, const IntNum& operand)
+    { CalcImpl(op, &operand, clang::SourceLocation(), 0); }
+    void CalcAssert(Op::Op op)
+    { CalcImpl(op, 0, clang::SourceLocation(), 0); }
 
     /// Zero an intnum.
     void Zero() { set(static_cast<SmallValue>(0)); }
@@ -379,6 +400,19 @@ public:
                int bits = -1) const;
 
 private:
+    /// Integer calculation function: acc = acc op operand.
+    /// @note Not all operations in Op::Op may be supported; unsupported
+    ///       operations will result in an error.
+    /// @param op       operation
+    /// @param operand  intnum operand
+    /// @param source   source location of operation
+    /// @param diags    diagnostic reporting
+    /// @return False if an error occurred.
+    bool CalcImpl(Op::Op op,
+                  /*@null@*/ const IntNum* operand,
+                  clang::SourceLocation source,
+                  Diagnostic* diags);
+
     /// Set an intnum to an unsigned integer.
     /// @param val      integer value
     void set(USmallValue val);
@@ -395,38 +429,41 @@ private:
 };
 
 /// Overloaded assignment binary operators.
+/// @note These assert on failure.
 inline IntNum& operator+=(IntNum& lhs, const IntNum& rhs)
-{ lhs.Calc(Op::ADD, &rhs); return lhs; }
+{ lhs.CalcAssert(Op::ADD, rhs); return lhs; }
 inline IntNum& operator-=(IntNum& lhs, const IntNum& rhs)
-{ lhs.Calc(Op::SUB, &rhs); return lhs; }
+{ lhs.CalcAssert(Op::SUB, rhs); return lhs; }
 inline IntNum& operator*=(IntNum& lhs, const IntNum& rhs)
-{ lhs.Calc(Op::MUL, &rhs); return lhs; }
+{ lhs.CalcAssert(Op::MUL, rhs); return lhs; }
 inline IntNum& operator/=(IntNum& lhs, const IntNum& rhs)
-{ lhs.Calc(Op::DIV, &rhs); return lhs; }
+{ lhs.CalcAssert(Op::DIV, rhs); return lhs; }
 inline IntNum& operator%=(IntNum& lhs, const IntNum& rhs)
-{ lhs.Calc(Op::MOD, &rhs); return lhs; }
+{ lhs.CalcAssert(Op::MOD, rhs); return lhs; }
 inline IntNum& operator^=(IntNum& lhs, const IntNum& rhs)
-{ lhs.Calc(Op::XOR, &rhs); return lhs; }
+{ lhs.CalcAssert(Op::XOR, rhs); return lhs; }
 inline IntNum& operator&=(IntNum& lhs, const IntNum& rhs)
-{ lhs.Calc(Op::AND, &rhs); return lhs; }
+{ lhs.CalcAssert(Op::AND, rhs); return lhs; }
 inline IntNum& operator|=(IntNum& lhs, const IntNum& rhs)
-{ lhs.Calc(Op::OR, &rhs); return lhs; }
+{ lhs.CalcAssert(Op::OR, rhs); return lhs; }
 inline IntNum& operator>>=(IntNum& lhs, const IntNum& rhs)
-{ lhs.Calc(Op::SHR, &rhs); return lhs; }
+{ lhs.CalcAssert(Op::SHR, rhs); return lhs; }
 inline IntNum& operator<<=(IntNum& lhs, const IntNum& rhs)
-{ lhs.Calc(Op::SHL, &rhs); return lhs; }
+{ lhs.CalcAssert(Op::SHL, rhs); return lhs; }
 
 /// Overloaded unary operators.
+/// @note These assert on failure.
 inline IntNum operator-(IntNum rhs)
-{ rhs.Calc(Op::NEG, 0); return rhs; }
+{ rhs.CalcAssert(Op::NEG); return rhs; }
 inline IntNum operator+(const IntNum& rhs)
 { return IntNum(rhs); }
 inline IntNum operator~(IntNum rhs)
-{ rhs.Calc(Op::NOT, 0); return rhs; }
+{ rhs.CalcAssert(Op::NOT); return rhs; }
 inline bool operator!(const IntNum& rhs)
 { return rhs.isZero(); }
 
 /// Overloaded binary operators.
+/// @note These assert on failure.
 inline const IntNum operator+(IntNum lhs, const IntNum& rhs)
 { return lhs += rhs; }
 inline const IntNum operator-(IntNum lhs, const IntNum& rhs)

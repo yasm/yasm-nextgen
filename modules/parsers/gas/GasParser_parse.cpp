@@ -1280,7 +1280,8 @@ GasParser::ParseDirIf(unsigned int op, clang::SourceLocation source)
     }
 
     IntNum equal = e.getIntNum();
-    equal.Calc(static_cast<Op::Op>(op), IntNum(0));
+    equal.Calc(static_cast<Op::Op>(op), IntNum(0), source,
+               m_preproc.getDiagnostics());
     HandleIf(equal.getUInt(), source);
     return true;
 }

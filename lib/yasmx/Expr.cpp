@@ -392,7 +392,7 @@ Expr::ReduceDepth(int pos, int delta)
 }
 
 void
-Expr::MakeIdent(int pos)
+Expr::MakeIdent(Diagnostic& diags, int pos)
 {
     if (pos < 0)
         pos += m_terms.size();
@@ -435,7 +435,7 @@ Expr::MakeIdent(int pos)
             // if a simple integer, compute it
             if (IntNum* intn = child.getIntNum())
             {
-                intn->Calc(op);
+                intn->Calc(op, root.getSource(), diags);
                 child.m_depth -= 1;
                 root.Clear();
             }
@@ -555,7 +555,7 @@ TransformNegImpl(Expr& e,
                 // Directly negate if possible (integers or floats)
                 if (IntNum* intn = child->getIntNum())
                 {
-                    intn->Calc(Op::NEG);
+                    intn->CalcAssert(Op::NEG);
                     break;
                 }
 
@@ -711,7 +711,7 @@ again:
             if (op < Op::NONNUM)
             {
                 std::swap(*intchild->getIntNum(), *intn);
-                intchild->getIntNum()->Calc(op, *intn);
+                intchild->getIntNum()->Calc(op, *intn, op_source, diags);
                 child.Clear();
                 root.AddNumChild(-1);
             }
@@ -764,7 +764,7 @@ again:
         if (unary && op < Op::NONNUM && intchild != 0)
         {
             // if unary on a simple integer, compute it
-            intchild->getIntNum()->Calc(op);
+            intchild->getIntNum()->Calc(op, op_source, diags);
             intchild->m_depth -= 1;
             root.Clear();
         }

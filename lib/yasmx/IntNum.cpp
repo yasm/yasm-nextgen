@@ -38,8 +38,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
-#include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
+#include "yasmx/Diagnostic.h"
 
 
 using namespace yasm;
@@ -266,29 +265,33 @@ IntNum::IntNum(const IntNum& rhs)
 
 // Speedup function for non-bitvect calculations.
 // Always makes conservative assumptions; we fall back to bitvect if this
-// function returns false.
+// function does not set handled to true.
 static bool
-CalcSmallValue(Op::Op op,
+CalcSmallValue(bool* handled,
+               Op::Op op,
                IntNumData::SmallValue* lhs,
-               IntNumData::SmallValue rhs)
+               IntNumData::SmallValue rhs,
+               clang::SourceLocation source,
+               Diagnostic* diags)
 {
     static const IntNumData::SmallValue SV_MAX =
         std::numeric_limits<IntNumData::SmallValue>::max();
     static const IntNumData::SmallValue SV_MIN =
         std::numeric_limits<IntNumData::SmallValue>::min();
 
+    *handled = false;
     switch (op)
     {
         case Op::ADD:
             if (*lhs >= SV_MAX/2 || *lhs <= SV_MIN/2 ||
                 rhs >= SV_MAX/2 || rhs <= SV_MIN/2)
-                return false;
+                return true;
             *lhs += rhs;
             break;
         case Op::SUB:
             if (*lhs >= SV_MAX/2 || *lhs <= SV_MIN/2 ||
                 rhs >= SV_MAX/2 || rhs <= SV_MIN/2)
-                return false;
+                return true;
             *lhs -= rhs;
             break;
         case Op::MUL:
@@ -299,25 +302,33 @@ CalcSmallValue(Op::Op op,
             if (*lhs > -minmax && *lhs < minmax)
             {
                 if (rhs <= -minmax || rhs >= minmax)
-                    return false;
+                    return true;
                 *lhs *= rhs;
                 break;
             }
             // maybe someday?
-            return false;
+            return true;
         }
         case Op::DIV:
             // TODO: make sure lhs and rhs are unsigned
         case Op::SIGNDIV:
             if (rhs == 0)
-                throw ZeroDivisionError(N_("divide by zero"));
+            {
+                assert(diags && "divide by zero");
+                diags->Report(source, diag::err_divide_by_zero);
+                return false;
+            }
             *lhs /= rhs;
             break;
         case Op::MOD:
             // TODO: make sure lhs and rhs are unsigned
         case Op::SIGNMOD:
             if (rhs == 0)
-                throw ZeroDivisionError(N_("divide by zero"));
+            {
+                assert(diags && "divide by zero");
+                diags->Report(source, diag::err_divide_by_zero);
+                return false;
+            }
             *lhs %= rhs;
             break;
         case Op::NEG:
@@ -343,7 +354,7 @@ CalcSmallValue(Op::Op op,
             break;
         case Op::SHL:
             // maybe someday?
-            return false;
+            return true;
         case Op::SHR:
             *lhs >>= rhs;
             break;
@@ -386,22 +397,30 @@ CalcSmallValue(Op::Op op,
         case Op::IDENT:
             break;
         default:
-            return false;
+            return true;
     }
+    *handled = true;
     return true;
 }
 
 /*@-nullderef -nullpass -branchstate@*/
-void
-IntNum::Calc(Op::Op op, const IntNum* operand)
+bool
+IntNum::CalcImpl(Op::Op op,
+                 const IntNum* operand,
+                 clang::SourceLocation source,
+                 Diagnostic* diags)
 {
     assert((operand || op == Op::NEG || op == Op::NOT || op == Op::LNOT) &&
            "operation needs an operand");
 
     if (m_type == INTNUM_SV && (!operand || operand->m_type == INTNUM_SV))
     {
-        if (CalcSmallValue(op, &m_val.sv, operand ? operand->m_val.sv : 0))
-            return;
+        bool handled = false;
+        if (!CalcSmallValue(&handled, op, &m_val.sv,
+                            operand ? operand->m_val.sv : 0, source, diags))
+            return false;
+        if (handled)
+            return true;
     }
 
     // Always do computations with in full bit vector.
@@ -433,28 +452,40 @@ IntNum::Calc(Op::Op op, const IntNum* operand)
         case Op::DIV:
             // TODO: make sure op1 and op2 are unsigned
             if (!*op2)
-                throw ZeroDivisionError(N_("divide by zero"));
-            else
-                result = op1->udiv(*op2);
+            {
+                assert(diags && "divide by zero");
+                diags->Report(source, diag::err_divide_by_zero);
+                return false;
+            }
+            result = op1->udiv(*op2);
             break;
         case Op::SIGNDIV:
             if (!*op2)
-                throw ZeroDivisionError(N_("divide by zero"));
-            else
-                result = op1->sdiv(*op2);
+            {
+                assert(diags && "divide by zero");
+                diags->Report(source, diag::err_divide_by_zero);
+                return false;
+            }
+            result = op1->sdiv(*op2);
             break;
         case Op::MOD:
             // TODO: make sure op1 and op2 are unsigned
             if (!*op2)
-                throw ZeroDivisionError(N_("divide by zero"));
-            else
-                result = op1->urem(*op2);
+            {
+                assert(diags && "divide by zero");
+                diags->Report(source, diag::err_divide_by_zero);
+                return false;
+            }
+            result = op1->urem(*op2);
             break;
         case Op::SIGNMOD:
             if (!*op2)
-                throw ZeroDivisionError(N_("divide by zero"));
-            else
-                result = op1->srem(*op2);
+            {
+                assert(diags && "divide by zero");
+                diags->Report(source, diag::err_divide_by_zero);
+                return false;
+            }
+            result = op1->srem(*op2);
             break;
         case Op::NEG:
             result = -*op1;
@@ -509,62 +540,64 @@ IntNum::Calc(Op::Op op, const IntNum* operand)
             break;
         case Op::LOR:
             set(static_cast<SmallValue>((!!*op1) || (!!*op2)));
-            return;
+            return true;
         case Op::LAND:
             set(static_cast<SmallValue>((!!*op1) && (!!*op2)));
-            return;
+            return true;
         case Op::LNOT:
             set(static_cast<SmallValue>(!*op1));
-            return;
+            return true;
         case Op::LXOR:
             set(static_cast<SmallValue>((!!*op1) ^ (!!*op2)));
-            return;
+            return true;
         case Op::LXNOR:
             set(static_cast<SmallValue>(!((!!*op1) ^ (!!*op2))));
-            return;
+            return true;
         case Op::LNOR:
             set(static_cast<SmallValue>(!((!!*op1) || (!!*op2))));
-            return;
+            return true;
         case Op::EQ:
             set(static_cast<SmallValue>(op1->eq(*op2)));
-            return;
+            return true;
         case Op::LT:
             set(static_cast<SmallValue>(op1->slt(*op2)));
-            return;
+            return true;
         case Op::GT:
             set(static_cast<SmallValue>(op1->sgt(*op2)));
-            return;
+            return true;
         case Op::LE:
             set(static_cast<SmallValue>(op1->sle(*op2)));
-            return;
+            return true;
         case Op::GE:
             set(static_cast<SmallValue>(op1->sge(*op2)));
-            return;
+            return true;
         case Op::NE:
             set(static_cast<SmallValue>(op1->ne(*op2)));
-            return;
+            return true;
         case Op::SEG:
-            throw ArithmeticError(String::Compose(N_("invalid use of '%1'"),
-                                                  "SEG"));
-            break;
+            assert(diags && "invalid use of operator 'SEG'");
+            diags->Report(source, diag::err_invalid_op_use) << "SEG";
+            return false;
         case Op::WRT:
-            throw ArithmeticError(String::Compose(N_("invalid use of '%1'"),
-                                                  "WRT"));
-            break;
+            assert(diags && "invalid use of operator 'WRT'");
+            diags->Report(source, diag::err_invalid_op_use) << "WRT";
+            return false;
         case Op::SEGOFF:
-            throw ArithmeticError(String::Compose(N_("invalid use of '%1'"),
-                                                  ":"));
-            break;
+            assert(diags && "invalid use of operator ':'");
+            diags->Report(source, diag::err_invalid_op_use) << ":";
+            return false;
         case Op::IDENT:
             result = *op1;
             break;
         default:
-            throw ArithmeticError(
-                N_("invalid operation in intnum calculation"));
+            assert(diags && "invalid integer operation");
+            diags->Report(source, diag::err_int_invalid_op);
+            return false;
     }
 
     // Try to fit the result into long if possible
     setBV(result);
+    return true;
 }
 /*@=nullderef =nullpass =branchstate@*/
 

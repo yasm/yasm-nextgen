@@ -615,7 +615,7 @@ TEST_P(Write64Test, BE)
 
 TEST_P(Write64Test, InvLE)
 {
-    intn.Calc(Op::NOT);
+    intn.CalcAssert(Op::NOT);
     bytes.setLittleEndian();
     Write64(bytes, intn);
     CheckInvLE();
@@ -623,7 +623,7 @@ TEST_P(Write64Test, InvLE)
 
 TEST_P(Write64Test, InvBE)
 {
-    intn.Calc(Op::NOT);
+    intn.CalcAssert(Op::NOT);
     bytes.setBigEndian();
     Write64(bytes, intn);
     CheckInvBE();

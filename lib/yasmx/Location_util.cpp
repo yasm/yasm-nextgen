@@ -312,7 +312,8 @@ yasm::Evaluate(const Expr& e,
 
                 // Perform calculation
                 if (result.isType(ExprTerm::INT))
-                    result.getIntNum()->Calc(op, *child.getIntNum());
+                    result.getIntNum()->Calc(op, *child.getIntNum(), op_source,
+                                             diags);
                 else if (op < Op::NEG)
                     CalcFloat(result.getFloat(), op, *child.getFloat(),
                               op_source, diags);
@@ -325,7 +326,7 @@ yasm::Evaluate(const Expr& e,
             {
                 assert(isUnary(op) && "single-term subexpression is non-unary");
                 if (result.isType(ExprTerm::INT))
-                    result.getIntNum()->Calc(op);
+                    result.getIntNum()->Calc(op, op_source, diags);
                 else if (op == Op::NEG)
                     result.getFloat()->changeSign();
                 else

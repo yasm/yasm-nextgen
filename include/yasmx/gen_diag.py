@@ -227,9 +227,11 @@ add_error("err_expr_contains_float",
 # Integer/float calculation
 add_error("err_divide_by_zero", "divide by zero")
 add_error("err_float_invalid_op", "invalid floating point operation")
+add_error("err_int_invalid_op", "invalid integer operation")
 add_warning("warn_float_underflow", "underflow in floating point expression")
 add_warning("warn_float_overflow", "overflow in floating point expression")
 add_warning("warn_float_inexact", "inexact floating point result")
+add_error("err_invalid_op_use", "invalid use of operator '%0'")
 
 # Integer/float output
 add_warning("warn_signed_overflow", "value does not fit in signed %0 bit field")

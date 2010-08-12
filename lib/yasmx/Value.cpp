@@ -690,7 +690,7 @@ Value::Finalize(Diagnostic& diags, unsigned int err_too_complex)
         if (found)
         {
             m_no_warn = true;
-            m_abs->MakeIdent();
+            m_abs->MakeIdent(diags);
         }
     }
 

@@ -589,7 +589,7 @@ public:
 
     /// Make expression an ident if it only has one term.
     /// @param pos      index of operator term, may be negative for "from end"
-    void MakeIdent(int pos=-1);
+    void MakeIdent(Diagnostic& diags, int pos=-1);
 
     /// Levels an expression tree.
     /// a+(b+c) -> a+b+c
