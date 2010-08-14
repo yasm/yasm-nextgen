@@ -52,7 +52,7 @@ public:
 
     void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
-    void Read(const llvm::MemoryBuffer& in);
+    bool Read(clang::SourceManager& sm, Diagnostic& diags);
     void Output(llvm::raw_fd_ostream& os,
                 bool all_syms,
                 DebugFormat& dbgfmt,

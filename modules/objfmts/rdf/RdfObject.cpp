@@ -28,6 +28,7 @@
 
 #include <util.h>
 
+#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/Compose.h"
@@ -678,9 +679,10 @@ RdfObject::Taste(const llvm::MemoryBuffer& in,
     return true;
 }
 
-void
-RdfObject::Read(const llvm::MemoryBuffer& in)
+bool
+RdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
 {
+    const llvm::MemoryBuffer& in = *sm.getBuffer(sm.getMainFileID());
     InputBuffer inbuf(in);
 
     // Read file header
@@ -930,6 +932,7 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
                 break;  // ignore unrecognized records
         }
     }
+    return true;
 }
 
 Section*

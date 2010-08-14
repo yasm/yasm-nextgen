@@ -548,6 +548,10 @@ add_error("err_loc_missing_filename", "file number given but no filename")
 
 add_error("err_file_number_unassigned", "file number %0 unassigned")
 
+# Object reading
+add_error("err_object_read_not_supported",
+          "object format does not support reading")
+
 # ELF object format
 add_warning("warn_unrecognized_symbol_type", "unrecognized symbol type '%0'")
 add_warning("warn_multiple_symbol_visibility",

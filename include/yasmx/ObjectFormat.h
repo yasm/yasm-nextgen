@@ -39,7 +39,7 @@
 #include "yasmx/Module.h"
 
 
-namespace clang { class SourceLocation; }
+namespace clang { class SourceManager; class SourceLocation; }
 namespace llvm { class MemoryBuffer; class raw_fd_ostream; }
 
 namespace yasm
@@ -79,9 +79,12 @@ public:
     /// Read object file into associated object.
     /// May create sections, relocations, and bytecodes, as well as modify
     /// any other portion of associated object.
-    /// The default implementation asserts (taste before you attempt reading).
-    /// @param in           input object file
-    virtual void Read(const llvm::MemoryBuffer& in);
+    /// The default implementation returns false (taste before you attempt
+    /// reading).
+    /// @param sm           source manager (main file is object file to read)
+    /// @param diags        diagnostic reporting
+    /// @return False if an error occurred.
+    virtual bool Read(clang::SourceManager& sm, Diagnostic& diags);
 
     /// Write out (post-optimized) sections to the object file.
     /// This function may call #Symbol and #Object functions as necessary

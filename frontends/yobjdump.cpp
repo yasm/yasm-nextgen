@@ -31,6 +31,8 @@
 #include <string>
 #include <vector>
 
+#include "clang/Basic/FileManager.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Format.h"
@@ -43,6 +45,7 @@
 #include "yasmx/System/plugin.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Bytecode.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/Location.h"
 #include "yasmx/Object.h"
 #include "yasmx/ObjectFormat.h"
@@ -51,6 +54,7 @@
 #include "yasmx/Symbol.h"
 
 #include "frontends/license.cpp"
+#include "frontends/OffsetDiagnosticPrinter.h"
 
 namespace cl = llvm::cl;
 
@@ -394,15 +398,32 @@ DumpContents(const yasm::Object& object)
     }
 }
 
-static void
+static int
 DoDump(const std::string& in_filename)
 {
-    // open the input file
-    std::auto_ptr<llvm::MemoryBuffer>
-        in_file(llvm::MemoryBuffer::getFileOrSTDIN(in_filename));
-    if (in_file.get() == 0)
-        throw yasm::Error(String::Compose(_("could not open file `%1'"),
-                          in_filename));
+    yasm::OffsetDiagnosticPrinter diag_printer(llvm::errs());
+    clang::SourceManager source_mgr;
+    yasm::Diagnostic diags(&source_mgr, &diag_printer);
+    clang::FileManager file_mgr;
+
+    // open the input file or STDIN (for filename of "-")
+    if (in_filename == "-")
+    {
+        source_mgr.createMainFileIDForMemBuffer(llvm::MemoryBuffer::getSTDIN());
+    }
+    else
+    {
+        const clang::FileEntry* in = file_mgr.getFile(in_filename);
+        if (!in)
+        {
+            throw yasm::Error(String::Compose(_("could not open file `%1'"),
+                              in_filename));
+        }
+        source_mgr.createMainFileID(in, clang::SourceLocation());
+    }
+
+    const llvm::MemoryBuffer* in_file =
+        source_mgr.getBuffer(source_mgr.getMainFileID());
 
     std::auto_ptr<yasm::ObjectFormatModule> objfmt_module(0);
     std::string arch_keyword, machine;
@@ -476,7 +497,8 @@ DoDump(const std::string& in_filename)
     }
 
     std::auto_ptr<yasm::ObjectFormat> objfmt = objfmt_module->Create(object);
-    objfmt->Read(*in_file);
+    if (!objfmt->Read(source_mgr, diags))
+        return EXIT_FAILURE;
 
     llvm::outs() << in_filename << ":     file format "
                  << objfmt_module->getKeyword() << "\n\n";
@@ -489,6 +511,7 @@ DoDump(const std::string& in_filename)
         DumpRelocs(object);
     if (show_contents)
         DumpContents(object);
+    return EXIT_SUCCESS;
 }
 
 int
@@ -558,7 +581,8 @@ main(int argc, char* argv[])
     {
         try
         {
-            DoDump(*i);
+            if (DoDump(*i) != EXIT_SUCCESS)
+                retval = EXIT_FAILURE;
         }
         catch (yasm::Error& err)
         {

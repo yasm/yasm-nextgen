@@ -28,6 +28,7 @@
 
 #include "util.h"
 
+#include "clang/Basic/SourceManager.h"
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/errwarn.h"
@@ -463,9 +464,10 @@ private:
 };
 } // anonymous namespace
 
-void
-XdfObject::Read(const llvm::MemoryBuffer& in)
+bool
+XdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
 {
+    const llvm::MemoryBuffer& in = *sm.getBuffer(sm.getMainFileID());
     InputBuffer inbuf(in);
     inbuf.setLittleEndian();
 
@@ -605,6 +607,7 @@ XdfObject::Read(const llvm::MemoryBuffer& in)
                 new XdfReloc(addr, sym, basesym, type, size, shift)));
         }
     }
+    return true;
 }
 
 Section*

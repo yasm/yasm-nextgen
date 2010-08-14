@@ -44,6 +44,7 @@
 
 #include "util.h"
 
+#include "clang/Basic/SourceManager.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/Compose.h"
@@ -204,9 +205,11 @@ LoadStringTable(const llvm::MemoryBuffer& in, const ElfSection& elfsect)
     return StringTable(start, end);
 }
 
-void
-ElfObject::Read(const llvm::MemoryBuffer& in)
+bool
+ElfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
 {
+    const llvm::MemoryBuffer& in = *sm.getBuffer(sm.getMainFileID());
+
     // Read header
     if (!m_config.ReadProgramHeader(in))
         throw Error(N_("not an ELF file"));
@@ -341,6 +344,7 @@ ElfObject::Read(const llvm::MemoryBuffer& in)
         elfsects[info]->ReadRelocs(in, *reloc_sect, *sections[info],
                                    *m_machine, symtab, secttype == SHT_RELA);
     }
+    return true;
 }
 
 void

@@ -1,7 +1,9 @@
+#ifndef YASM_OFFSET_DIAGNOSTIC_PRINTER_H
+#define YASM_OFFSET_DIAGNOSTIC_PRINTER_H
 //
-// Object format module base implementation.
+// Binary Offset Diagnostic Client (for binary files)
 //
-//  Copyright (C) 2007  Peter Johnson
+//  Copyright (C) 2010  Peter Johnson
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -24,40 +26,34 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "yasmx/ObjectFormat.h"
-
+#include "clang/Basic/SourceLocation.h"
 #include "yasmx/Diagnostic.h"
 
+namespace clang { class SourceManager; }
+namespace llvm { class raw_ostream; }
 
-using namespace yasm;
-
-ObjectFormat::~ObjectFormat()
+namespace yasm
 {
-}
 
-void
-ObjectFormat::AddDirectives(Directives& dirs, llvm::StringRef parser)
+class OffsetDiagnosticPrinter : public DiagnosticClient
 {
-}
+    llvm::raw_ostream& m_os;
+    bool m_print_diagnostic_option;
+    bool m_use_colors;
 
-bool
-ObjectFormat::Read(clang::SourceManager& sm, Diagnostic& diags)
-{
-    diags.Report(clang::SourceLocation(), diag::err_object_read_not_supported);
-    return false;
-}
+public:
+    OffsetDiagnosticPrinter(llvm::raw_ostream &os,
+                            bool print_diagnostic_option = true,
+                            bool use_colors = false)
+        : m_os(os)
+        , m_print_diagnostic_option(print_diagnostic_option)
+        , m_use_colors(use_colors)
+    {}
 
-void
-ObjectFormat::InitSymbols(llvm::StringRef parser)
-{
-}
+    virtual void HandleDiagnostic(Diagnostic::Level level,
+                                  const DiagnosticInfo& info);
+};
 
-ObjectFormatModule::~ObjectFormatModule()
-{
-}
+} // end namspace yasm
 
-llvm::StringRef
-ObjectFormatModule::getType() const
-{
-    return "ObjectFormat";
-}
+#endif
