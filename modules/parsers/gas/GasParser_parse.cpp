@@ -783,7 +783,8 @@ GasParser::ParseDirFloat(unsigned int size, clang::SourceLocation source)
         {
             // FIXME: Make arch-dependent
             Expr::Ptr e(new Expr(std::auto_ptr<llvm::APFloat>(new llvm::APFloat(
-                num.getFloatValue(llvm::APFloat::x87DoubleExtended)))));
+                num.getFloatValue(llvm::APFloat::x87DoubleExtended))),
+                                 num_source));
             AppendData(*m_container, e, size, *m_arch, num_source,
                        m_preproc.getDiagnostics());
         }
@@ -1755,12 +1756,12 @@ GasParser::ParseExpr(Expr& e, const ParseExprTerm* parse_term)
             case GasToken::pipepipe:    op = Op::LOR; break;
             default: return true;
         }
-        ConsumeToken();
+        clang::SourceLocation op_source = ConsumeToken();
 
         Expr f;
         if (!ParseExpr0(f, parse_term))
             return false;
-        e.Calc(op, f);
+        e.Calc(op, f, op_source);
     }
 }
 
@@ -1785,12 +1786,12 @@ GasParser::ParseExpr0(Expr& e, const ParseExprTerm* parse_term)
             case GasToken::greaterequal:    op = Op::GE; break;
             default: return true;
         }
-        ConsumeToken();
+        clang::SourceLocation op_source = ConsumeToken();
 
         Expr f;
         if (!ParseExpr1(f, parse_term))
             return false;
-        e.Calc(op, f);
+        e.Calc(op, f, op_source);
     }
 }
 
@@ -1811,12 +1812,12 @@ GasParser::ParseExpr1(Expr& e, const ParseExprTerm* parse_term)
             case GasToken::exclaim: op = Op::NOR; break;
             default: return true;
         }
-        ConsumeToken();
+        clang::SourceLocation op_source = ConsumeToken();
 
         Expr f;
         if (!ParseExpr2(f, parse_term))
             return false;
-        e.Calc(op, f);
+        e.Calc(op, f, op_source);
     }
 }
 
@@ -1838,12 +1839,12 @@ GasParser::ParseExpr2(Expr& e, const ParseExprTerm* parse_term)
             case GasToken::greatergreater:  op = Op::SHR; break;
             default: return true;
         }
-        ConsumeToken();
+        clang::SourceLocation op_source = ConsumeToken();
 
         Expr f;
         if (!ParseExpr3(f, parse_term))
             return false;
-        e.Calc(op, f);
+        e.Calc(op, f, op_source);
     }
 }
 
@@ -1865,42 +1866,48 @@ GasParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
             ConsumeToken();
             return ParseExpr3(e, parse_term);
         case GasToken::minus:
-            ConsumeToken();
+        {
+            clang::SourceLocation op_source = ConsumeToken();
             if (!ParseExpr3(e, parse_term))
                 return false;
-            e.Calc(Op::NEG);
-            return true;
+            e.Calc(Op::NEG, op_source);
+            break;
+        }
         case GasToken::tilde:
-            ConsumeToken();
+        {
+            clang::SourceLocation op_source = ConsumeToken();
             if (!ParseExpr3(e, parse_term))
                 return false;
-            e.Calc(Op::NOT);
-            return true;
+            e.Calc(Op::NOT, op_source);
+            break;
+        }
         case GasToken::l_paren:
         {
             clang::SourceLocation lparen_loc = ConsumeParen();
             if (!ParseExpr(e, parse_term))
                 return false;
             MatchRHSPunctuation(GasToken::r_paren, lparen_loc);
-            return true;
+            break;
         }
         case GasToken::numeric_constant:
         {
             GasNumericParser num(m_token.getLiteral(), m_token.getLocation(),
                                  m_preproc);
+            clang::SourceLocation num_source = ConsumeToken();
             if (num.hadError())
-                e = IntNum(0);
+                e = Expr(IntNum(0), num_source);
             else if (num.isInteger())
             {
                 IntNum val;
                 num.getIntegerValue(&val);
-                e = val;
+                e = Expr(val, num_source);
             }
             else if (num.isFloat())
             {
                 // FIXME: Make arch-dependent
                 e = Expr(std::auto_ptr<llvm::APFloat>(new llvm::APFloat(
-                    num.getFloatValue(llvm::APFloat::x87DoubleExtended))));
+                    num.getFloatValue(llvm::APFloat::x87DoubleExtended))),
+                         num_source);
             }
             break;
         }
@@ -1908,14 +1915,15 @@ GasParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
         {
             GasStringParser str(m_token.getLiteral(), m_token.getLocation(),
                                 m_preproc);
+            clang::SourceLocation str_source = ConsumeToken();
             if (str.hadError())
-                e = IntNum(0);
+                e = Expr(IntNum(0), str_source);
             else
             {
                 IntNum val;
                 str.getIntegerValue(&val);
                 val = val.Extract(8, 0);
-                e = val;
+                e = Expr(val, str_source);
             }
             break;
         }
@@ -1932,13 +1940,13 @@ GasParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
                 Location loc = {&bc, bc.getFixedLen()};
                 sym->CheckedDefineLabel(loc, id_source,
                                         m_preproc.getDiagnostics());
-                e = sym;
+                e = Expr(sym, id_source);
             }
             else
             {
                 SymbolRef sym = ParseSymbol(ii);
                 sym->Use(id_source);
-                e = sym;
+                e = Expr(sym, id_source);
             }
 
             if (m_token.is(GasToken::at))
@@ -1954,17 +1962,16 @@ GasParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
                 SymbolRef wrt = m_object->FindSpecialSymbol(
                     m_token.getIdentifierInfo()->getName());
                 if (wrt)
-                    e.Calc(Op::WRT, wrt);
+                    e.Calc(Op::WRT, wrt, m_token.getLocation());
                 else
                     Diag(m_token, diag::warn_unrecognized_ident);
                 ConsumeToken();
             }
-            return true;
+            break;
         }
         default:
             return false;
     }
-    ConsumeToken();
     return true;
 }
 
