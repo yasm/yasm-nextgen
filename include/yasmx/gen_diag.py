@@ -550,6 +550,8 @@ add_error("err_file_number_unassigned", "file number %0 unassigned")
 # COFF object format
 add_warning("warn_coff_section_name_length",
             "COFF section names limited to 8 characters: truncating")
+add_warning("warn_coff_no_readonly_sections",
+            "standard COFF does not support read-only data sections")
 
 # Win32 object format
 add_error("err_win32_align_too_big",

@@ -53,7 +53,8 @@ Dwarf2Debug::Generate_aranges(Section& debug_info)
     else
     {
         debug_aranges = m_objfmt->AppendSection(".debug_aranges",
-                                                clang::SourceLocation());
+                                                clang::SourceLocation(),
+                                                *m_diags);
         debug_aranges->setAlign(2*m_sizeof_address);
     }
 

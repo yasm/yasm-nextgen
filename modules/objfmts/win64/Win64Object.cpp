@@ -394,7 +394,7 @@ Win64Object::DirEndProcFrame(DirectiveInfo& info, Diagnostic& diags)
 
     // Create xdata section if needed.
     if (!xdata)
-        xdata = AppendSection(".xdata", source);
+        xdata = AppendSection(".xdata", source, diags);
 
     // Get current position in .xdata section.
     SymbolRef unwindpos = m_object.AddNonTableSymbol("$");
@@ -416,7 +416,7 @@ Win64Object::DirEndProcFrame(DirectiveInfo& info, Diagnostic& diags)
 
     // Initialize pdata section if needed.
     if (!pdata)
-        pdata = AppendSection(".pdata", source);
+        pdata = AppendSection(".pdata", source, diags);
 
     // Add function structure to end of .pdata
     AppendData(*pdata, std::auto_ptr<Expr>(new Expr(proc_sym)), 4, arch,
@@ -473,9 +473,11 @@ Win64Object::AddDirectives(Directives& dirs, llvm::StringRef parser)
 bool
 Win64Object::InitSection(llvm::StringRef name,
                          Section& section,
-                         CoffSection* coffsect)
+                         CoffSection* coffsect,
+                         clang::SourceLocation source,
+                         Diagnostic& diags)
 {
-    if (Win32Object::InitSection(name, section, coffsect))
+    if (Win32Object::InitSection(name, section, coffsect, source, diags))
         return true;
     else if (name == ".pdata")
     {

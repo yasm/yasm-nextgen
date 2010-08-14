@@ -91,7 +91,7 @@ public:
     ///                     the object file
     /// @param dbgfmt       debugging format
     /// @param diags        diagnostic reporting
-    /// @note Errors and warnings are stored into errwarns.
+    /// @note Errors and warnings are reported via diags.
     virtual void Output(llvm::raw_fd_ostream& os,
                         bool all_syms,
                         DebugFormat& dbgfmt,
@@ -105,9 +105,13 @@ public:
     /// Object::AppendSection() to ensure the object format is aware of the
     /// section.  As with Object::AppendSection(), this does not check to see
     /// if the section already exists; use Object::FindSection() first.
+    /// @param name     section name
+    /// @param source   source location
+    /// @param diags    diagnostic reporting
     /// @return New section.
     virtual Section* AppendSection(llvm::StringRef name,
-                                   clang::SourceLocation source) = 0;
+                                   clang::SourceLocation source,
+                                   Diagnostic& diags) = 0;
 
 private:
     ObjectFormat(const ObjectFormat&);                  // not implemented

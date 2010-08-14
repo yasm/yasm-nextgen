@@ -481,7 +481,8 @@ Dwarf2Debug::Generate_line(clang::SourceManager& smgr,
     if (!debug_line)
     {
         debug_line =
-            m_objfmt->AppendSection(".debug_line", clang::SourceLocation());
+            m_objfmt->AppendSection(".debug_line", clang::SourceLocation(),
+                                    *m_diags);
         debug_line->setAlign(0);
     }
 

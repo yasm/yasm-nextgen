@@ -73,7 +73,8 @@ public:
 
     virtual Section* AddDefaultSection();
     virtual Section* AppendSection(llvm::StringRef name,
-                                   clang::SourceLocation source);
+                                   clang::SourceLocation source,
+                                   Diagnostic& diags);
 
     Machine getMachine() const { return m_machine; }
 
@@ -97,7 +98,9 @@ protected:
     /// @return True if section name recognized, false otherwise.
     virtual bool InitSection(llvm::StringRef name,
                              Section& section,
-                             CoffSection* coffsect);
+                             CoffSection* coffsect,
+                             clang::SourceLocation source,
+                             Diagnostic& diags);
     virtual void DirSectionInitHelpers(DirHelpers& helpers,
                                        CoffSection* csd,
                                        IntNum* align,

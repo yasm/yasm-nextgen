@@ -72,7 +72,9 @@ public:
 private:
     virtual bool InitSection(llvm::StringRef name,
                              Section& section,
-                             CoffSection* coffsect);
+                             CoffSection* coffsect,
+                             clang::SourceLocation source,
+                             Diagnostic& diags);
 
     bool CheckProcFrameState(clang::SourceLocation dir_source,
                              Diagnostic& diags);

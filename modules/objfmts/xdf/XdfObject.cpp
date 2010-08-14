@@ -610,13 +610,16 @@ XdfObject::Read(const llvm::MemoryBuffer& in)
 Section*
 XdfObject::AddDefaultSection()
 {
-    Section* section = AppendSection(".text", clang::SourceLocation());
+    Diagnostic diags(NULL);
+    Section* section = AppendSection(".text", clang::SourceLocation(), diags);
     section->setDefault(true);
     return section;
 }
 
 Section*
-XdfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
+XdfObject::AppendSection(llvm::StringRef name,
+                         clang::SourceLocation source,
+                         Diagnostic& diags)
 {
     bool code = (name == ".text");
     Section* section = new Section(name, code, false, source);
@@ -658,7 +661,7 @@ XdfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, info.getSource());
+        sect = AppendSection(sectname, info.getSource(), diags);
 
     XdfSection* xsect = sect->getAssocData<XdfSection>();
     assert(xsect != 0);

@@ -70,9 +70,11 @@ Section&
 Dwarf2Debug::Generate_info(Section& debug_line, Section* main_code)
 {
     Section& debug_abbrev =
-        *m_objfmt->AppendSection(".debug_abbrev", clang::SourceLocation());
+        *m_objfmt->AppendSection(".debug_abbrev", clang::SourceLocation(),
+                                 *m_diags);
     Section& debug_info =
-        *m_objfmt->AppendSection(".debug_info", clang::SourceLocation());
+        *m_objfmt->AppendSection(".debug_info", clang::SourceLocation(),
+                                 *m_diags);
 
     debug_abbrev.setAlign(0);
     debug_info.setAlign(0);

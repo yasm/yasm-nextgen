@@ -31,8 +31,6 @@
 #include <vector>
 
 #include "yasmx/Support/bitcount.h"
-#include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Diagnostic.h"
@@ -111,7 +109,8 @@ CoffObject::~CoffObject()
 Section*
 CoffObject::AddDefaultSection()
 {
-    Section* section = AppendSection(".text", clang::SourceLocation());
+    Diagnostic diags(NULL);
+    Section* section = AppendSection(".text", clang::SourceLocation(), diags);
     section->setDefault(true);
     return section;
 }
@@ -119,7 +118,9 @@ CoffObject::AddDefaultSection()
 bool
 CoffObject::InitSection(llvm::StringRef name,
                         Section& section,
-                        CoffSection* coffsect)
+                        CoffSection* coffsect,
+                        clang::SourceLocation source,
+                        Diagnostic& diags)
 {
     unsigned long flags = 0;
 
@@ -139,8 +140,7 @@ CoffObject::InitSection(llvm::StringRef name,
              || name.startswith(".rodata") || name.startswith(".rdata$"))
     {
         flags = CoffSection::DATA;
-        setWarn(WARN_GENERAL,
-                N_("Standard COFF does not support read-only data sections"));
+        diags.Report(source, diag::warn_coff_no_readonly_sections);
     }
     else if (name == ".drectve")
         flags = CoffSection::INFO;
@@ -160,7 +160,9 @@ CoffObject::InitSection(llvm::StringRef name,
 }
 
 Section*
-CoffObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
+CoffObject::AppendSection(llvm::StringRef name,
+                          clang::SourceLocation source,
+                          Diagnostic& diags)
 {
     Section* section = new Section(name, false, false, source);
     m_object.AppendSection(std::auto_ptr<Section>(section));
@@ -183,7 +185,7 @@ CoffObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
     // Add COFF data to the section
     CoffSection* coffsect = new CoffSection(sym);
     section->AddAssocData(std::auto_ptr<CoffSection>(coffsect));
-    InitSection(name, *section, coffsect);
+    InitSection(name, *section, coffsect, source, diags);
 
     return section;
 }
@@ -218,7 +220,7 @@ CoffObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, info.getSource());
+        sect = AppendSection(sectname, info.getSource(), diags);
 
     CoffSection* coffsect = sect->getAssocData<CoffSection>();
     assert(coffsect != 0);
@@ -390,7 +392,7 @@ CoffObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, info.getSource());
+        sect = AppendSection(sectname, info.getSource(), diags);
 
     CoffSection* coffsect = sect->getAssocData<CoffSection>();
     assert(coffsect != 0);

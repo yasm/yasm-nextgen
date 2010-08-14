@@ -89,7 +89,9 @@ public:
                 Diagnostic& diags);
 
     Section* AddDefaultSection();
-    Section* AppendSection(llvm::StringRef name, clang::SourceLocation source);
+    Section* AppendSection(llvm::StringRef name,
+                           clang::SourceLocation source,
+                           Diagnostic& diags);
 
     ElfSymbol& BuildSymbol(Symbol& sym);
     void BuildExtern(Symbol& sym, Diagnostic& diags);

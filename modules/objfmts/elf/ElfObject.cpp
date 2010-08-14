@@ -1109,13 +1109,16 @@ ElfObject::Output(llvm::raw_fd_ostream& os,
 Section*
 ElfObject::AddDefaultSection()
 {
-    Section* section = AppendSection(".text", clang::SourceLocation());
+    Diagnostic diags(NULL);
+    Section* section = AppendSection(".text", clang::SourceLocation(), diags);
     section->setDefault(true);
     return section;
 }
 
 Section*
-ElfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
+ElfObject::AppendSection(llvm::StringRef name,
+                         clang::SourceLocation source,
+                         Diagnostic& diags)
 {
     ElfSectionType type = SHT_PROGBITS;
     ElfSectionFlags flags = SHF_ALLOC;
@@ -1209,7 +1212,7 @@ ElfObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, info.getSource());
+        sect = AppendSection(sectname, info.getSource(), diags);
 
     m_object.setCurSection(sect);
     sect->setDefault(false);
@@ -1315,7 +1318,7 @@ ElfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, info.getSource());
+        sect = AppendSection(sectname, info.getSource(), diags);
 
     m_object.setCurSection(sect);
     sect->setDefault(false);

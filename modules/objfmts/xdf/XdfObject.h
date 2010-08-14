@@ -59,7 +59,9 @@ public:
                 Diagnostic& diags);
 
     Section* AddDefaultSection();
-    Section* AppendSection(llvm::StringRef name, clang::SourceLocation source);
+    Section* AppendSection(llvm::StringRef name,
+                           clang::SourceLocation source,
+                           Diagnostic& diags);
 
     static llvm::StringRef getName() { return "Extended Dynamic Object"; }
     static llvm::StringRef getKeyword() { return "xdf"; }

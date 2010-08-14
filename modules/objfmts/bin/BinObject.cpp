@@ -331,13 +331,16 @@ BinObject::Output(llvm::raw_fd_ostream& os,
 Section*
 BinObject::AddDefaultSection()
 {
-    Section* section = AppendSection(".text", clang::SourceLocation());
+    Diagnostic diags(NULL);
+    Section* section = AppendSection(".text", clang::SourceLocation(), diags);
     section->setDefault(true);
     return section;
 }
 
 Section*
-BinObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
+BinObject::AppendSection(llvm::StringRef name,
+                         clang::SourceLocation source,
+                         Diagnostic& diags)
 {
     bool bss = (name == ".bss");
     bool code = (name == ".text");
@@ -400,7 +403,7 @@ BinObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, source);
+        sect = AppendSection(sectname, source, diags);
 
     m_object.setCurSection(sect);
     sect->setDefault(false);

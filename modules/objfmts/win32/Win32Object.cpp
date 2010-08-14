@@ -166,7 +166,7 @@ Win32Object::DirExport(DirectiveInfo& info, Diagnostic& diags)
     // Add to end of linker directives, creating directive section if needed.
     Section* sect = m_object.FindSection(".drectve");
     if (!sect)
-        sect = AppendSection(".drectve", info.getSource());
+        sect = AppendSection(".drectve", info.getSource(), diags);
 
     // Add text to end of section
     AppendData(*sect, "-export:", 1, false);
@@ -207,7 +207,7 @@ Win32Object::DirSafeSEH(DirectiveInfo& info, Diagnostic& diags)
     // Add symbol number to end of .sxdata section (creating if necessary)
     Section* sect = m_object.FindSection(".sxdata");
     if (!sect)
-        sect = AppendSection(".sxdata", source);
+        sect = AppendSection(".sxdata", source, diags);
 
     AppendSxData(*sect, sym, source);
 }
@@ -238,7 +238,9 @@ Win32Object::AddDirectives(Directives& dirs, llvm::StringRef parser)
 bool
 Win32Object::InitSection(llvm::StringRef name,
                          Section& section,
-                         CoffSection* coffsect)
+                         CoffSection* coffsect,
+                         clang::SourceLocation source,
+                         Diagnostic& diags)
 {
     if (name == ".data")
     {

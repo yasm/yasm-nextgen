@@ -933,7 +933,9 @@ RdfObject::Read(const llvm::MemoryBuffer& in)
 }
 
 Section*
-RdfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
+RdfObject::AppendSection(llvm::StringRef name,
+                         clang::SourceLocation source,
+                         Diagnostic& diags)
 {
     RdfSection::Type type = RdfSection::RDF_UNKNOWN;
     if (name == ".text")
@@ -966,7 +968,8 @@ RdfObject::AppendSection(llvm::StringRef name, clang::SourceLocation source)
 Section*
 RdfObject::AddDefaultSection()
 {
-    Section* section = AppendSection(".text", clang::SourceLocation());
+    Diagnostic diags(NULL);
+    Section* section = AppendSection(".text", clang::SourceLocation(), diags);
     section->setDefault(true);
     return section;
 }
@@ -1017,7 +1020,7 @@ RdfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
     if (sect)
         first = sect->isDefault();
     else
-        sect = AppendSection(sectname, info.getSource());
+        sect = AppendSection(sectname, info.getSource(), diags);
 
     RdfSection* rsect = sect->getAssocData<RdfSection>();
     assert(rsect != 0);

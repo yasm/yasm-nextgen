@@ -60,7 +60,8 @@ public:
 
     Section* AddDefaultSection();
     Section* AppendSection(llvm::StringRef name,
-                           clang::SourceLocation source);
+                           clang::SourceLocation source,
+                           Diagnostic& diags);
 
     static llvm::StringRef getName()
     { return "Relocatable Dynamic Object File Format (RDOFF) v2.0"; }

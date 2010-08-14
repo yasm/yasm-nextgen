@@ -62,7 +62,9 @@ public:
                 Diagnostic& diags);
 
     Section* AddDefaultSection();
-    Section* AppendSection(llvm::StringRef name, clang::SourceLocation source);
+    Section* AppendSection(llvm::StringRef name,
+                           clang::SourceLocation source,
+                           Diagnostic& diags);
 
     static llvm::StringRef getName() { return "Flat format binary"; }
     static llvm::StringRef getKeyword() { return "bin"; }
