@@ -1319,12 +1319,14 @@ NasmParseDirExprTerm::operator() (Expr& e,
     switch (parser.m_token.getKind())
     {
         case NasmToken::tilde:
-            parser.ConsumeToken();
+        {
+            clang::SourceLocation op_source = parser.ConsumeToken();
             if (!nasm_parser->ParseExpr6(e, this))
                 return false;
-            e.Calc(Op::NOT, parser.m_token.getLocation());
+            e.Calc(Op::NOT, op_source);
             *handled = true;
             return true;
+        }
         case NasmToken::l_paren:
         {
             clang::SourceLocation lparen_loc = parser.ConsumeParen();
@@ -1442,23 +1444,29 @@ NasmParser::ParseExpr6(Expr& e, const ParseExprTerm* parse_term)
             ConsumeToken();
             return ParseExpr6(e, parse_term);
         case NasmToken::minus:
-            ConsumeToken();
+        {
+            clang::SourceLocation op_source = ConsumeToken();
             if (!ParseExpr6(e, parse_term))
                 return false;
-            e.Calc(Op::NEG, m_token.getLocation());
+            e.Calc(Op::NEG, op_source);
             return true;
+        }
         case NasmToken::tilde:
-            ConsumeToken();
+        {
+            clang::SourceLocation op_source = ConsumeToken();
             if (!ParseExpr6(e, parse_term))
                 return false;
-            e.Calc(Op::NOT, m_token.getLocation());
+            e.Calc(Op::NOT, op_source);
             return true;
+        }
         case NasmToken::kw_seg:
-            ConsumeToken();
+        {
+            clang::SourceLocation op_source = ConsumeToken();
             if (!ParseExpr6(e, parse_term))
                 return false;
-            e.Calc(Op::SEG, m_token.getLocation());
+            e.Calc(Op::SEG, op_source);
             return true;
+        }
         case NasmToken::l_paren:
         {
             clang::SourceLocation lparen_loc = ConsumeParen();
