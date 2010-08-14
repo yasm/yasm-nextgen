@@ -1076,7 +1076,7 @@ RdfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
     if (rsect->type == RdfSection::RDF_UNKNOWN)
     {
         rsect->type = RdfSection::RDF_DATA;
-        throw ValueError(N_("new segment declared without type code"));
+        diags.Report(info.getSource(), diag::err_segment_requires_type);
     }
 
     if (has_reserved)
@@ -1089,14 +1089,13 @@ RdfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
 void
 RdfObject::AddLibOrModule(llvm::StringRef name,
                           bool lib,
+                          clang::SourceLocation name_source,
                           Diagnostic& diags)
 {
     llvm::StringRef name2 = name;
     if (name2.size() > MODLIB_NAME_MAX)
     {
-        setWarn(WARN_GENERAL,
-                String::Compose(N_("name too long, truncating to %1 bytes"),
-                                MODLIB_NAME_MAX));
+        diags.Report(name_source, diag::warn_name_too_long) << MODLIB_NAME_MAX;
         name2 = name2.substr(0, MODLIB_NAME_MAX);
     }
 
@@ -1109,13 +1108,15 @@ RdfObject::AddLibOrModule(llvm::StringRef name,
 void
 RdfObject::DirLibrary(DirectiveInfo& info, Diagnostic& diags)
 {
-    AddLibOrModule(info.getNameValues().front().getString(), true, diags);
+    NameValue& nv = info.getNameValues().front();
+    AddLibOrModule(nv.getString(), true, nv.getValueRange().getBegin(), diags);
 }
 
 void
 RdfObject::DirModule(DirectiveInfo& info, Diagnostic& diags)
 {
-    AddLibOrModule(info.getNameValues().front().getString(), false, diags);
+    NameValue& nv = info.getNameValues().front();
+    AddLibOrModule(nv.getString(), false, nv.getValueRange().getBegin(), diags);
 }
 
 void

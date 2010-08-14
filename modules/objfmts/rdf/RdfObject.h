@@ -82,6 +82,7 @@ private:
 
     void AddLibOrModule(llvm::StringRef name,
                         bool lib,
+                        clang::SourceLocation name_source,
                         Diagnostic& diags);
 
     std::vector<std::string> m_module_names;

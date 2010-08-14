@@ -110,9 +110,11 @@ ElfObject::ElfObject(const ObjectFormatModule& module,
         m_config.cls = ELFCLASS32;
     else if (bits == 64)
         m_config.cls = ELFCLASS64;
-    else if (bits != 0)
-        throw ValueError(String::Compose(N_("unknown ELF bits setting %1"),
-                                         bits));
+    else
+    {
+        assert(bits == 0 && "unknown ELF bits setting");
+        m_config.cls = ELFCLASS32;
+    }
 
     m_machine.reset(CreateElfMachine(*m_object.getArch(),
                                      m_config.cls).release());
@@ -395,8 +397,8 @@ ElfObject::BuildExtern(Symbol& sym, Diagnostic& diags)
             if (nv->isString())
             {
                 diags.Report(nv->getValueRange().getBegin(),
-                             diags.getCustomDiagID(Diagnostic::Error,
-                                                   "unrecognized symbol type"));
+                             diag::warn_unrecognized_symbol_type)
+                    << nv->getString();
                 return;
             }
         }
@@ -418,8 +420,8 @@ GlobalNameValueFallback(NameValue& nv,
     if (!nv.isExpr() && nv.isId())
     {
         diags.Report(nv.getValueRange().getBegin(),
-                     diags.getCustomDiagID(Diagnostic::Error,
-                                           "unrecognized symbol type"));
+                     diag::warn_unrecognized_symbol_type)
+            << nv.getId();
         return true;
     }
     else if (nv.isExpr() && size->get() == 0)
@@ -483,10 +485,7 @@ ElfObject::BuildGlobal(Symbol& sym, Diagnostic& diags)
     }
 
     if (nvis > 1)
-    {
-        diags.Report(vis_source, diags.getCustomDiagID(Diagnostic::Warning,
-            "more than one symbol visibility provided; using last"));
-    }
+        diags.Report(vis_source, diag::warn_multiple_symbol_visibility);
 
     ElfSymbol& elfsym = BuildSymbol(sym);
     if (elfsym.getBinding() == STB_LOCAL)
@@ -519,9 +518,7 @@ ElfObject::BuildCommon(Symbol& sym, Diagnostic& diags)
             if (!nv->isExpr())
             {
                 diags.Report(nv->getValueRange().getBegin(),
-                             diags.getCustomDiagID(Diagnostic::Error,
-                                 "alignment constraint is not an integer"))
-                    << nv->getValueRange();
+                             diag::err_align_not_integer);
                 return;
             }
 
@@ -529,9 +526,7 @@ ElfObject::BuildCommon(Symbol& sym, Diagnostic& diags)
             if (!align_expr->isIntNum())
             {
                 diags.Report(nv->getValueRange().getBegin(),
-                             diags.getCustomDiagID(Diagnostic::Error,
-                                 "alignment constraint is not an integer"))
-                    << nv->getValueRange();
+                             diag::err_align_not_integer);
                 return;
             }
             addralign = align_expr->getIntNum().getUInt();
@@ -540,8 +535,7 @@ ElfObject::BuildCommon(Symbol& sym, Diagnostic& diags)
             if (!isExp2(addralign))
             {
                 diags.Report(nv->getValueRange().getBegin(),
-                             diag::err_value_power2)
-                    << nv->getValueRange();
+                             diag::err_value_power2);
                 return;
             }
         }
@@ -1377,7 +1371,7 @@ ElfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
     helpers.Add("progbits", false,
                 BIND::bind(&DirResetFlag, _1, _2, &type, SHT_PROGBITS));
 
-    helpers.Add("align", true, BIND::bind(&DirIntNum, _1, _2, &m_object,
+    helpers.Add("align", true, BIND::bind(&DirIntNumPower2, _1, _2, &m_object,
                                           &align, &has_align));
     helpers.Add("merge", true, BIND::bind(&DirIntNum, _1, _2, &m_object,
                                           &merge, &has_merge));
@@ -1387,18 +1381,7 @@ ElfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
 
     // handle align
     if (has_align)
-    {
-        unsigned long aligni = align.getUInt();
-
-        // Alignments must be a power of two.
-        if (!isExp2(aligni))
-        {
-            throw ValueError(String::Compose(
-                N_("argument to `%1' is not a power of two"), "align"));
-        }
-
-        sect->setAlign(aligni);
-    }
+        sect->setAlign(align.getUInt());
 
     // Handle merge entity size
     if (has_merge)
@@ -1425,10 +1408,9 @@ ElfObject::DirType(DirectiveInfo& info, Diagnostic& diags)
     ElfSymbol& elfsym = BuildSymbol(*sym);
 
     // Pull new type from param
-    if (namevals.size() < 2)
-        throw SyntaxError(N_("no type specified"));
-    if (!namevals[1].isId())
-        throw SyntaxError(N_("type must be an identifier"));
+    if (namevals.size() < 2 || !namevals[1].isId())
+        diags.Report(namevals[1].getValueRange().getBegin(),
+                      diag::err_expected_ident);
 
     llvm::StringRef type = namevals[1].getId();
     if (type.equals_lower("function"))
@@ -1440,8 +1422,8 @@ ElfObject::DirType(DirectiveInfo& info, Diagnostic& diags)
     else if (type.equals_lower("notype"))
         elfsym.setType(STT_NOTYPE);
     else
-        setWarn(WARN_GENERAL,
-                String::Compose(N_("unrecognized symbol type `%s'"), type));
+        diags.Report(namevals[1].getValueRange().getBegin(),
+                     diag::warn_unrecognized_symbol_type) << type;
 }
 
 void

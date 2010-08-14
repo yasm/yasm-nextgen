@@ -274,6 +274,7 @@ add_error("err_file_output_position",
           mapping="FATAL")
 
 # Align
+add_error("err_align_not_integer", "alignment constraint is not an integer")
 add_error("err_align_boundary_not_const", "align boundary must be a constant")
 add_error("err_align_fill_not_const", "align fill must be a constant")
 add_error("err_align_skip_not_const", "align maximum skip must be a constant")
@@ -519,7 +520,7 @@ add_warning("warn_uninit_zero",
             group="uninit-contents")
 add_warning("warn_export_equ",
             "object format does not support exporting EQU/absolute values")
-add_warning("warn_name_too_long", "label name too long, truncating to %0 bytes")
+add_warning("warn_name_too_long", "name too long, truncating to %0 bytes")
 add_error("err_equ_not_integer", "EQU value not an integer expression")
 add_error("err_equ_too_complex", "EQU value too complex")
 add_error("err_common_size_not_integer",
@@ -547,6 +548,11 @@ add_error("err_loc_missing_filename", "file number given but no filename")
 
 add_error("err_file_number_unassigned", "file number %0 unassigned")
 
+# ELF object format
+add_warning("warn_unrecognized_symbol_type", "unrecognized symbol type '%0'")
+add_warning("warn_multiple_symbol_visibility",
+            "more than one symbol visibility provided; using last")
+
 # COFF object format
 add_warning("warn_coff_section_name_length",
             "COFF section names limited to 8 characters: truncating")
@@ -561,6 +567,8 @@ add_error("err_win32_align_too_big",
 add_error("err_eof_proc_frame", "end of file in procedure frame")
 add_note("note_proc_started_here", "procedure started here")
 
+# RDF object format
+add_error("err_segment_requires_type", "new segment declared without type code")
 
 #####################################################################
 # Output generation
