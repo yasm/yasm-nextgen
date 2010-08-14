@@ -1195,9 +1195,14 @@ ElfObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
 
-    if (!nvs.front().isString())
-        throw Error(N_("section name must be a string"));
-    llvm::StringRef sectname = nvs.front().getString();
+    NameValue& sectname_nv = nvs.front();
+    if (!sectname_nv.isString())
+    {
+        diags.Report(sectname_nv.getValueRange().getBegin(),
+                     diag::err_value_string_or_id);
+        return;
+    }
+    llvm::StringRef sectname = sectname_nv.getString();
 
     Section* sect = m_object.FindSection(sectname);
     bool first = true;
@@ -1214,15 +1219,20 @@ ElfObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
         return;
 
     // Section flags must be a string.
-    if (!nvs[1].isString())
-        throw SyntaxError(N_("flag string expected"));
+    NameValue& flags_nv = nvs[1];
+    if (!flags_nv.isString())
+    {
+        diags.Report(flags_nv.getValueRange().getBegin(),
+                     diag::err_expected_flag_string);
+        return;
+    }
 
     // Parse section flags
     ElfSection* elfsect = sect->getAssocData<ElfSection>();
     assert(elfsect != 0);
 
     int flags = 0, type = elfsect->getType();
-    llvm::StringRef flagstr = nvs[1].getString();
+    llvm::StringRef flagstr = flags_nv.getString();
 
     for (size_t i=0; i<flagstr.size(); ++i)
     {
@@ -1250,8 +1260,13 @@ ElfObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
                 flags |= SHF_TLS;
                 break;
             default:
-                setWarn(WARN_GENERAL, String::Compose(
-                    N_("unrecognized section attribute: `%1'"), flagstr[i]));
+            {
+                char print_flag[2] = {flagstr[i], 0};
+                diags.Report(flags_nv.getValueRange().getBegin()
+                             .getFileLocWithOffset(i),
+                             diag::warn_unrecognized_section_attribute)
+                    << print_flag;
+            }
         }
     }
 

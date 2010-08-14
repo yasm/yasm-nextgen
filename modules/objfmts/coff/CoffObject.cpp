@@ -196,7 +196,11 @@ CoffObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
 
     NameValue& sectname_nv = nvs.front();
     if (!sectname_nv.isString())
-        throw Error(N_("section name must be a string"));
+    {
+        diags.Report(sectname_nv.getValueRange().getBegin(),
+                     diag::err_value_string_or_id);
+        return;
+    }
     llvm::StringRef sectname = sectname_nv.getString();
 
     if (sectname.size() > 8 && !m_win32)
@@ -205,8 +209,7 @@ CoffObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
         // files via "/nnnn" (where nnnn is decimal offset into string table),
         // so only warn for regular COFF.
         diags.Report(sectname_nv.getValueRange().getBegin(),
-            diags.getCustomDiagID(Diagnostic::Warning,
-                "COFF section names limited to 8 characters: truncating"));
+                     diag::warn_coff_section_name_length);
         sectname = sectname.substr(0, 8);
     }
 
@@ -239,7 +242,7 @@ CoffObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
     if (!flags_nv.isString())
     {
         diags.Report(flags_nv.getValueRange().getBegin(),
-            diags.getCustomDiagID(Diagnostic::Error, "flag string expected"));
+                     diag::err_expected_flag_string);
         return;
     }
 
@@ -284,9 +287,8 @@ CoffObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
             {
                 char print_flag[2] = {flagstr[i], 0};
                 diags.Report(flags_nv.getValueRange().getBegin()
-                    .getFileLocWithOffset(i),
-                    diags.getCustomDiagID(Diagnostic::Warning,
-                        "unrecognized section attribute: '%0'"))
+                             .getFileLocWithOffset(i),
+                             diag::warn_unrecognized_section_attribute)
                     << print_flag;
             }
         }
@@ -379,8 +381,7 @@ CoffObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
         // files via "/nnnn" (where nnnn is decimal offset into string table),
         // so only warn for regular COFF.
         diags.Report(sectname_nv.getValueRange().getBegin(),
-            diags.getCustomDiagID(Diagnostic::Warning,
-                "COFF section names limited to 8 characters: truncating"));
+                     diag::warn_coff_section_name_length);
         sectname = sectname.substr(0, 8);
     }
 
@@ -430,11 +431,7 @@ CoffObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
         // Check to see if alignment is supported size
         // FIXME: Use actual value source location
         if (aligni > 8192)
-        {
-            diags.Report(info.getSource(),
-                diags.getCustomDiagID(Diagnostic::Error,
-                    "Win32 does not support alignments > 8192"));
-        }
+            diags.Report(info.getSource(), diag::err_win32_align_too_big);
 
         sect->setAlign(aligni);
     }

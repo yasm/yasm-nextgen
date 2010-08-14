@@ -429,6 +429,9 @@ add_error("err_offset_expression", "offset must be an expression")
 # Section directive
 add_warning("warn_section_redef_flags",
             "section flags ignored on section redeclaration")
+add_error("err_expected_flag_string", "expected flag string")
+add_warning("warn_unrecognized_section_attribute",
+            "unrecognized section attribute: '%0'")
 
 # Operand size override
 add_error("err_register_size_override", "cannot override register size")
@@ -543,6 +546,14 @@ add_error("err_loc_option_requires_value", "option %0 requires value")
 add_error("err_loc_missing_filename", "file number given but no filename")
 
 add_error("err_file_number_unassigned", "file number %0 unassigned")
+
+# COFF object format
+add_warning("warn_coff_section_name_length",
+            "COFF section names limited to 8 characters: truncating")
+
+# Win32 object format
+add_error("err_win32_align_too_big",
+          "Win32 does not support alignments > 8192")
 
 # Win64 object format
 add_error("err_eof_proc_frame", "end of file in procedure frame")
