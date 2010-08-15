@@ -28,9 +28,8 @@
 
 #include "util.h"
 
+#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
-#include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
@@ -51,7 +50,8 @@ const char* ElfSection::key = "objfmt::elf::ElfSection";
 
 ElfSection::ElfSection(const ElfConfig&             config,
                        const llvm::MemoryBuffer&    in,
-                       ElfSectionIndex              index)
+                       ElfSectionIndex              index,
+                       Diagnostic&                  diags)
     : m_config(config)
     , m_index(index)
     , m_rel_name_index(0)
@@ -63,7 +63,11 @@ ElfSection::ElfSection(const ElfConfig&             config,
     // Go to section header
     inbuf.setPosition(config.secthead_pos + index * config.secthead_size);
     if (inbuf.getReadableSize() < 8)
-        throw Error(N_("section header too small"));
+    {
+        diags.Report(clang::SourceLocation(),
+                     diag::err_section_header_too_small);
+        return;
+    }
 
     m_config.setEndian(inbuf);
 
@@ -73,7 +77,11 @@ ElfSection::ElfSection(const ElfConfig&             config,
     if (m_config.cls == ELFCLASS32)
     {
         if (inbuf.getReadableSize() < SHDR32_SIZE-8)
-            throw Error(N_("section header too small"));
+        {
+            diags.Report(clang::SourceLocation(),
+                         diag::err_section_header_too_small);
+            return;
+        }
 
         m_flags = static_cast<ElfSectionFlags>(ReadU32(inbuf));
         m_addr = ReadU32(inbuf);
@@ -89,7 +97,11 @@ ElfSection::ElfSection(const ElfConfig&             config,
     else if (m_config.cls == ELFCLASS64)
     {
         if (inbuf.getReadableSize() < SHDR64_SIZE-8)
-            throw Error(N_("section header too small"));
+        {
+            diags.Report(clang::SourceLocation(),
+                         diag::err_section_header_too_small);
+            return;
+        }
 
         m_flags = static_cast<ElfSectionFlags>(ReadU64(inbuf).getUInt());
         m_addr = ReadU64(inbuf);
@@ -230,9 +242,6 @@ ElfSection::Write(llvm::raw_ostream& os, Bytes& scratch) const
     }
 
     os << scratch;
-    if (os.has_error())
-        throw IOError(N_("Failed to write an elf section header"));
-
     return scratch.size();
 }
 
@@ -261,21 +270,27 @@ ElfSection::CreateSection(const StringTable& shstrtab) const
     return section;
 }
 
-void
-ElfSection::LoadSectionData(Section& sect, const llvm::MemoryBuffer& in) const
+bool
+ElfSection::LoadSectionData(Section& sect,
+                            const llvm::MemoryBuffer& in,
+                            Diagnostic& diags) const
 {
     if (sect.isBSS())
-        return;
+        return true;
 
     // Read section data
     InputBuffer inbuf(in, m_offset);
 
     unsigned long size = m_size.getUInt();
     if (inbuf.getReadableSize() < size)
-        throw Error(String::Compose(
-            N_("could not read section `%1' data"), getName()));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_section_data_unreadable)
+            << sect.getName();
+        return false;
+    }
 
     sect.bytecodes_front().getFixed().Write(inbuf.Read(size), size);
+    return true;
 }
 
 unsigned long
@@ -324,9 +339,6 @@ ElfSection::WriteRel(llvm::raw_ostream& os,
     }
 
     os << scratch;
-    if (os.has_error())
-        throw IOError(N_("Failed to write an elf section header"));
-
     return scratch.size();
 }
 

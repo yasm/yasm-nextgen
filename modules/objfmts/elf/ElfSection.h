@@ -59,7 +59,8 @@ public:
     // Constructor that reads from memory buffer.
     ElfSection(const ElfConfig&             config,
                const llvm::MemoryBuffer&    in,
-               ElfSectionIndex              index);
+               ElfSectionIndex              index,
+               Diagnostic&                  diags);
 
     ElfSection(const ElfConfig&     config,
                ElfSectionType       type,
@@ -73,7 +74,9 @@ public:
     unsigned long Write(llvm::raw_ostream& os, Bytes& scratch) const;
 
     std::auto_ptr<Section> CreateSection(const StringTable& shstrtab) const;
-    void LoadSectionData(Section& sect, const llvm::MemoryBuffer& in) const;
+    bool LoadSectionData(Section& sect,
+                         const llvm::MemoryBuffer& in,
+                         Diagnostic& diags) const;
 
     ElfSectionType getType() const { return m_type; }
 

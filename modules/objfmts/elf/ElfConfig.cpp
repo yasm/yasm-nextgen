@@ -30,9 +30,9 @@
 
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
+#include "yasmx/Diagnostic.h"
 #include "yasmx/InputBuffer.h"
 #include "yasmx/Object.h"
 
@@ -120,17 +120,22 @@ ElfConfig::WriteSymbolTable(llvm::raw_ostream& os,
     return size;
 }
 
-void
+bool
 ElfConfig::ReadSymbolTable(const llvm::MemoryBuffer&    in,
                            const ElfSection&            symtab_sect,
                            ElfSymtab&                   symtab,
                            Object&                      object,
                            const StringTable&           strtab,
-                           Section*                     sections[]) const
+                           Section*                     sections[],
+                           Diagnostic&                  diags) const
 {
     ElfSize symsize = symtab_sect.getEntSize();
     if (symsize == 0)
-        throw Error(N_("symbol table entity size is zero"));
+    {
+        diags.Report(clang::SourceLocation(),
+                     diag::err_symbol_entity_size_zero);
+        return false;
+    }
 
     unsigned long size = symtab_sect.getSize().getUInt();
 
@@ -141,7 +146,9 @@ ElfConfig::ReadSymbolTable(const llvm::MemoryBuffer&    in,
     for (unsigned long pos=symsize; pos<size; pos += symsize, ++index)
     {
         std::auto_ptr<ElfSymbol> elfsym(
-            new ElfSymbol(*this, in, symtab_sect, index, sections));
+            new ElfSymbol(*this, in, symtab_sect, index, sections, diags));
+        if (diags.hasErrorOccurred())
+            return false;
 
         SymbolRef sym = elfsym->CreateSymbol(object, strtab);
         symtab.push_back(sym);
@@ -149,6 +156,7 @@ ElfConfig::ReadSymbolTable(const llvm::MemoryBuffer&    in,
         if (sym)
             sym->AddAssocData(elfsym);  // Associate symbol data with symbol
     }
+    return true;
 }
 
 unsigned long

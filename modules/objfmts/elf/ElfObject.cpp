@@ -46,9 +46,8 @@
 
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Support/bitcount.h"
-#include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Support/scoped_array.h"
 #include "yasmx/Arch.h"
@@ -195,14 +194,22 @@ Elf64Object::Taste(const llvm::MemoryBuffer& in,
     return TasteCommon(in, arch_keyword, machine, ELFCLASS64);
 }
 
-static inline StringTable
-LoadStringTable(const llvm::MemoryBuffer& in, const ElfSection& elfsect)
+static inline bool
+LoadStringTable(StringTable* strtab,
+                const llvm::MemoryBuffer& in,
+                const ElfSection& elfsect,
+                Diagnostic& diags)
 {
     const char* start = in.getBufferStart() + elfsect.getFileOffset();
     const char* end = start + elfsect.getSize().getUInt();
     if (end > in.getBufferEnd())
-        throw Error(N_("could not read string table data"));
-    return StringTable(start, end);
+    {
+        diags.Report(clang::SourceLocation(),
+                     diag::err_string_table_unreadable);
+        return false;
+    }
+    strtab->Read(reinterpret_cast<const unsigned char*>(start), end-start);
+    return true;
 }
 
 bool
@@ -212,16 +219,27 @@ ElfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
 
     // Read header
     if (!m_config.ReadProgramHeader(in))
-        throw Error(N_("not an ELF file"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_not_file_type) << "ELF";
+        return false;
+    }
 
     // Can't handle files without section table yet
     if (m_config.secthead_pos == 0)
-        throw Error(N_("no section table"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_no_section_table);
+        return false;
+    }
 
     // Read section string table (needed for section names)
     std::auto_ptr<ElfSection>
-        shstrtab_sect(new ElfSection(m_config, in, m_config.shstrtab_index));
-    StringTable shstrtab = LoadStringTable(in, *shstrtab_sect);
+        shstrtab_sect(new ElfSection(m_config, in, m_config.shstrtab_index,
+                                     diags));
+    if (diags.hasErrorOccurred())
+        return false;
+    StringTable shstrtab;
+    if (!LoadStringTable(&shstrtab, in, *shstrtab_sect, diags))
+        return false;
 
     // Read all section headers
 
@@ -245,7 +263,10 @@ ElfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
     for (unsigned int i=0; i<m_config.secthead_count; ++i)
     {
         // read section header and save by index
-        std::auto_ptr<ElfSection> elfsect(new ElfSection(m_config, in, i));
+        std::auto_ptr<ElfSection> elfsect(new ElfSection(m_config, in, i,
+                                                         diags));
+        if (diags.hasErrorOccurred())
+            return false;
         elfsects[i] = elfsect.get();
 
         llvm::StringRef sectname = shstrtab.getString(elfsect->getName());
@@ -281,7 +302,8 @@ ElfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
         else
         {
             std::auto_ptr<Section> section = elfsect->CreateSection(shstrtab);
-            elfsect->LoadSectionData(*section, in);
+            if (!elfsect->LoadSectionData(*section, in, diags))
+                return false;
             sections[i] = section.get();
 
             // Associate section data with section
@@ -305,14 +327,21 @@ ElfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
             strtab_sect = elfsects[link];
 
         if (strtab_sect == 0)
-            throw Error(N_("could not find symbol string table"));
+        {
+            diags.Report(clang::SourceLocation(),
+                         diag::err_no_symbol_string_table);
+            return false;
+        }
 
         // load symbol string table
-        StringTable strtab = LoadStringTable(in, *strtab_sect);
+        StringTable strtab;
+        if (!LoadStringTable(&strtab, in, *strtab_sect, diags))
+            return false;
 
         // load symbol table
-        m_config.ReadSymbolTable(in, *symtab_sect, symtab, m_object, strtab,
-                                 &sections[0]);
+        if (!m_config.ReadSymbolTable(in, *symtab_sect, symtab, m_object,
+                                      strtab, &sections[0], diags))
+            return false;
     }
 
     // go through misc sections to load relocations
@@ -331,7 +360,9 @@ ElfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
         {
             if (rel_symtab_sect != elfsects[link])
             {
-                throw Error(N_("only one symbol table supported"));
+                diags.Report(clang::SourceLocation(),
+                             diag::err_multiple_symbol_tables);
+                return false;
             }
         }
 

@@ -89,12 +89,13 @@ struct YASM_STD_EXPORT ElfConfig
                                    Object& object,
                                    Diagnostic& diags,
                                    Bytes& scratch) const;
-    void ReadSymbolTable(const llvm::MemoryBuffer&  in,
+    bool ReadSymbolTable(const llvm::MemoryBuffer&  in,
                          const ElfSection&          symtab_sect,
                          ElfSymtab&                 symtab,
                          Object&                    object,
                          const StringTable&         strtab,
-                         Section*                   sections[]) const;
+                         Section*                   sections[],
+                         Diagnostic&                diags) const;
 
     std::string getRelocSectionName(const std::string& basesect) const;
 

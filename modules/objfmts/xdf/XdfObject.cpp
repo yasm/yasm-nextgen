@@ -29,9 +29,8 @@
 #include "util.h"
 
 #include "clang/Basic/SourceManager.h"
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Support/bitcount.h"
-#include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
 #include "yasmx/BytecodeOutput.h"
@@ -443,17 +442,23 @@ class ReadString
 public:
     ReadString(const llvm::MemoryBuffer& in,
                unsigned long strtab_offset,
-               unsigned long strtab_len)
+               unsigned long strtab_len,
+               Diagnostic& diags)
         : m_in(in)
         , m_offset(strtab_offset)
         , m_len(strtab_len)
+        , m_diags(diags)
     {}
 
     llvm::StringRef
     operator() (unsigned long str_index)
     {
         if (str_index < m_offset || str_index >= m_offset+m_len)
-            throw Error(N_("invalid string table offset"));
+        {
+            m_diags.Report(clang::SourceLocation(),
+                           diag::err_invalid_string_offset);
+            str_index = 0;
+        }
         return m_in.getBufferStart() + str_index;
     }
 
@@ -461,6 +466,7 @@ private:
     const llvm::MemoryBuffer& m_in;
     unsigned long m_offset;
     unsigned long m_len;
+    Diagnostic& m_diags;
 };
 } // anonymous namespace
 
@@ -473,21 +479,32 @@ XdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
 
     // Read object header
     if (inbuf.getReadableSize() < FILEHEAD_SIZE)
-        throw Error(N_("could not read object header"));
+    {
+        diags.Report(clang::SourceLocation(),
+                     diag::err_object_header_unreadable);
+        return false;
+    }
     unsigned long magic = ReadU32(inbuf);
     if (magic != XDF_MAGIC)
-        throw Error(N_("not an XDF file"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_not_file_type) << "XDF";
+        return false;
+    }
     unsigned long scnum = ReadU32(inbuf);
     unsigned long symnum = ReadU32(inbuf);
     unsigned long headers_len = ReadU32(inbuf);
     if (inbuf.getReadableSize() < headers_len)
-        throw Error(N_("could not read XDF header tables"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_xdf_headers_unreadable);
+        return false;
+    }
 
     unsigned long section_offset = FILEHEAD_SIZE;
     unsigned long symtab_offset = section_offset + SECTHEAD_SIZE*scnum;
     unsigned long strtab_offset = symtab_offset + SYMBOL_SIZE*symnum;
     ReadString read_string(in, strtab_offset,
-                           FILEHEAD_SIZE+headers_len-strtab_offset);
+                           FILEHEAD_SIZE+headers_len-strtab_offset,
+                           diags);
 
     // Storage for nrelocs, indexed by section number
     std::vector<unsigned long> sects_nrelocs;
@@ -532,8 +549,11 @@ XdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
             // Read section data
             inbuf.setPosition(filepos);
             if (inbuf.getReadableSize() < xsect->size)
-                throw Error(String::Compose(
-                    N_("could not read section `%1' data"), sectname));
+            {
+                diags.Report(clang::SourceLocation(),
+                             diag::err_section_data_unreadable) << sectname;
+                return false;
+            }
 
             section->bytecodes_front().getFixed().Write(inbuf.Read(xsect->size),
                                                         xsect->size);
@@ -587,8 +607,12 @@ XdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
         // Read relocations
         inbuf.setPosition(xsect->relptr);
         if (inbuf.getReadableSize() < (*nrelocsi) * RELOC_SIZE)
-            throw Error(String::Compose(
-                N_("could not read section `%1' relocs"), sect->getName()));
+        {
+            diags.Report(clang::SourceLocation(),
+                         diag::err_section_relocs_unreadable)
+                << sect->getName();
+            return false;
+        }
 
         for (unsigned long i=0; i<(*nrelocsi); ++i)
         {
@@ -607,6 +631,8 @@ XdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
                 new XdfReloc(addr, sym, basesym, type, size, shift)));
         }
     }
+    if (diags.hasErrorOccurred())
+        return false;
     return true;
 }
 

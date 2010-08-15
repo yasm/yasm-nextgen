@@ -66,7 +66,8 @@ public:
               const llvm::MemoryBuffer& in,
               const ElfSection&         symtab_sect,
               ElfSymbolIndex            index,
-              Section*                  sections[]);
+              Section*                  sections[],
+              Diagnostic&               diags);
 
     ElfSymbol();
     ~ElfSymbol();

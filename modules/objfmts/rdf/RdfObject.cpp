@@ -30,9 +30,8 @@
 
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/IndexedMap.h"
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Support/bitcount.h"
-#include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Bytecode.h"
@@ -687,13 +686,21 @@ RdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
 
     // Read file header
     if (inbuf.getReadableSize() < sizeof(RDF_MAGIC)+8)
-        throw IOError(N_("could not read object header"));
+    {
+        diags.Report(clang::SourceLocation(),
+                     diag::err_object_header_unreadable);
+        return false;
+    }
 
     const unsigned char* magic = inbuf.Read(sizeof(RDF_MAGIC));
     for (unsigned int i=0; i<sizeof(RDF_MAGIC); ++i)
     {
         if (magic[i] != RDF_MAGIC[i])
-            throw Error(N_("not a RDF file"));
+        {
+            diags.Report(clang::SourceLocation(), diag::err_not_file_type)
+                << "RDF";
+            return false;
+        }
     }
 
     inbuf.setLittleEndian();
@@ -738,8 +745,12 @@ RdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
         {
             // Read section data
             if (inbuf.getReadableSize() < size)
-                throw Error(String::Compose(
-                    N_("could not read section %1 data"), rsect->scnum));
+            {
+                diags.Report(clang::SourceLocation(),
+                             diag::err_section_data_unreadable)
+                    << section->getName();
+                return false;
+            }
             section->bytecodes_front().getFixed().Write(inbuf.Read(size), size);
         }
 
@@ -849,7 +860,11 @@ RdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
             case RDFREC_BSS:
             {
                 if (len != 4)
-                    throw Error(N_("BSS record is not 4 bytes long"));
+                {
+                    diags.Report(clang::SourceLocation(),
+                                 diag::err_invalid_bss_record);
+                    return false;
+                }
 
                 // Make .bss section, populate it, and add it to the object.
                 unsigned long size = ReadU32(recbuf);
@@ -918,12 +933,20 @@ RdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
                 // Create relocation
                 Section& sect = m_object.getSection(scnum);
                 if (refseg >= symtab.size())
-                    throw Error(String::Compose(
-                        N_("relocation refseg %1 out of range"), refseg));
+                {
+                    diags.Report(clang::SourceLocation(),
+                                 diag::err_refseg_out_of_range)
+                        << refseg;
+                    return false;
+                }
                 SymbolRef sym = symtab[refseg];
                 if (!sym)
-                    throw Error(String::Compose(
-                        N_("invalid refseg %1"), refseg));
+                {
+                    diags.Report(clang::SourceLocation(),
+                                 diag::err_invalid_refseg)
+                        << refseg;
+                    return false;
+                }
                 sect.AddReloc(std::auto_ptr<Reloc>(
                     new RdfReloc(addr, sym, rtype, size, refseg)));
                 break;

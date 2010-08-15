@@ -30,7 +30,6 @@
 
 #include "llvm/ADT/Twine.h"
 #include "YAML/emitter.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes_util.h"
 #include "yasmx/Diagnostic.h"
@@ -54,7 +53,8 @@ ElfSymbol::ElfSymbol(const ElfConfig&           config,
                      const llvm::MemoryBuffer&  in,
                      const ElfSection&          symtab_sect,
                      ElfSymbolIndex             index,
-                     Section*                   sections[])
+                     Section*                   sections[],
+                     Diagnostic&                diags)
     : m_sect(0)
     , m_name_index(0)
     , m_value(0)
@@ -66,7 +66,10 @@ ElfSymbol::ElfSymbol(const ElfConfig&           config,
     ElfSize symsize = symtab_sect.getEntSize();
     inbuf.setPosition(symtab_sect.getFileOffset() + index * symsize);
     if (inbuf.getReadableSize() < symsize)
-        throw Error(N_("could not read symbol table entry"));
+    {
+        diags.Report(clang::SourceLocation(), diag::err_symbol_unreadable);
+        return;
+    }
 
     config.setEndian(inbuf);
 

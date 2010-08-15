@@ -551,6 +551,18 @@ add_error("err_file_number_unassigned", "file number %0 unassigned")
 # Object reading
 add_error("err_object_read_not_supported",
           "object format does not support reading")
+add_error("err_object_header_unreadable", "could not read object header")
+add_error("err_not_file_type", "not an %0 file")
+add_error("err_no_section_table", "no section table")
+add_error("err_no_symbol_string_table", "could not find symbol string table")
+add_error("err_multiple_symbol_tables", "only one symbol table supported")
+add_error("err_string_table_unreadable", "could not read string table data")
+add_error("err_section_header_too_small", "section header too small")
+add_error("err_section_data_unreadable", "could not read section '%0' data")
+add_error("err_section_relocs_unreadable", "could not read section '%0' relocs")
+add_error("err_symbol_unreadable", "could not read symbol table entry")
+add_error("err_symbol_entity_size_zero", "symbol table entity size is zero")
+add_error("err_invalid_string_offset", "invalid string table offset")
 
 # ELF object format
 add_warning("warn_unrecognized_symbol_type", "unrecognized symbol type '%0'")
@@ -573,6 +585,12 @@ add_note("note_proc_started_here", "procedure started here")
 
 # RDF object format
 add_error("err_segment_requires_type", "new segment declared without type code")
+add_error("err_invalid_bss_record", "BSS record is not 4 bytes long")
+add_error("err_refseg_out_of_range", "relocation refseg %0 out of range")
+add_error("err_invalid_refseg", "invalid refseg %0")
+
+# XDF object format
+add_error("err_xdf_headers_unreadable", "could not read XDF header tables")
 
 #####################################################################
 # Output generation
