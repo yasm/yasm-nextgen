@@ -156,6 +156,15 @@ add_fatal("fatal_module_combo", "'%1' is not a valid %0 for %2 '%3'")
 add_fatal("fatal_objfmt_machine_mismatch",
           "object format '%0' does not support architecture '%1' machine '%2'")
 add_warning("warn_unknown_warning_option", "unknown warning option '%0'")
+add_fatal("fatal_file_open", "could not open file '%0'")
+add_fatal("fatal_file_open_desc", "could not open file '%0': %1")
+
+# yobjdump
+add_error("err_file_open", "could not open file '%0'")
+add_error("err_unrecognized_object_format", "unrecognized object format '%0'")
+add_error("err_unrecognized_object_file",
+          "file is not recognized as a '%0' object file")
+add_error("err_unrecognized_file_format", "file format not recognized")
 
 add_note("note_previous_definition", "previous definition is here")
 # note_matching - this is used as a continuation of a previous diagnostic,

@@ -39,7 +39,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Parse/HeaderSearch.h"
 #include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/System/plugin.h"
 #include "yasmx/Arch.h"
@@ -511,12 +510,6 @@ ApplyPreprocessorSavedOptions(yasm::Preprocessor* preproc)
 }
 #endif
 
-static const char *
-handle_yasm_gettext(const char *msgid)
-{
-    return yasm_gettext(msgid);
-}
-
 static const char *fmt[2] =
 {
     "%1:%2: %3%4",      // GNU
@@ -744,8 +737,9 @@ do_assemble(void)
         const clang::FileEntry* in = file_mgr.getFile(in_filename);
         if (!in)
         {
-            throw yasm::Error(String::Compose(_("could not open file `%1'"),
-                              in_filename));
+            diags.Report(clang::SourceLocation(), yasm::diag::fatal_file_open)
+                << in_filename;
+            return EXIT_FAILURE;
         }
         source_mgr.createMainFileID(in, clang::SourceLocation());
     }
@@ -768,8 +762,11 @@ do_assemble(void)
     llvm::raw_fd_ostream out(assembler.getObjectFilename().str().c_str(),
                              err, llvm::raw_fd_ostream::F_Binary);
     if (!err.empty())
-        throw yasm::Error(String::Compose(_("could not open file `%1': %2"),
-                          obj_filename, err));
+    {
+        diags.Report(clang::SourceLocation(), yasm::diag::fatal_file_open_desc)
+            << obj_filename << err;
+        return EXIT_FAILURE;
+    }
 
     if (!assembler.Output(out, diags, warning_error))
     {
@@ -826,9 +823,6 @@ main(int argc, char* argv[])
 #endif
     yasm_textdomain(PACKAGE);
 #endif
-
-    // Initialize errwarn handling
-    yasm::gettext_hook = handle_yasm_gettext;
 
     cl::SetVersionPrinter(&PrintVersion);
     cl::ParseCommandLineOptions(argc, argv);
@@ -954,14 +948,6 @@ main(int argc, char* argv[])
             listfmt_keyword = "nasm";
     }
 
-    try
-    {
-        return do_assemble();
-    }
-    catch (yasm::Error& err)
-    {
-        PrintError(String::Compose(_("FATAL: %1"), err.what()));
-    }
-    return EXIT_FAILURE;
+    return do_assemble();
 }
 

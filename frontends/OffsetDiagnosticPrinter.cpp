@@ -61,8 +61,9 @@ OffsetDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level level,
 
         if (m_use_colors)
             m_os.changeColor(savedColor, true);
-        m_os << sm.getBuffer(fid)->getBufferIdentifier() << ':'
-             << offset << ':';
+        m_os << sm.getBuffer(fid)->getBufferIdentifier() << ':';
+        if (offset != 0)
+             m_os << offset << ':';
 
         m_os << ' ';
         if (m_use_colors)

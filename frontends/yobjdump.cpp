@@ -28,6 +28,7 @@
 
 #include <cctype>
 #include <cstring>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -40,7 +41,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Support/Compose.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/System/plugin.h"
 #include "yasmx/Arch.h"
@@ -191,12 +191,6 @@ list_module()
         std::auto_ptr<T> obj = yasm::LoadModule<T>(*i);
         PrintListKeywordDesc(obj->getName(), *i);
     }
-}
-
-static const char *
-handle_yasm_gettext(const char *msgid)
-{
-    return yasm_gettext(msgid);
 }
 
 static void
@@ -416,14 +410,16 @@ DoDump(const std::string& in_filename)
         const clang::FileEntry* in = file_mgr.getFile(in_filename);
         if (!in)
         {
-            throw yasm::Error(String::Compose(_("could not open file `%1'"),
-                              in_filename));
+            diags.Report(clang::SourceLocation(), yasm::diag::err_file_open)
+                << in_filename;
         }
         source_mgr.createMainFileID(in, clang::SourceLocation());
     }
 
     const llvm::MemoryBuffer* in_file =
         source_mgr.getBuffer(source_mgr.getMainFileID());
+    clang::SourceLocation sloc =
+        source_mgr.getLocForStartOfFile(source_mgr.getMainFileID());
 
     std::auto_ptr<yasm::ObjectFormatModule> objfmt_module(0);
     std::string arch_keyword, machine;
@@ -433,8 +429,9 @@ DoDump(const std::string& in_filename)
         objfmt_keyword = llvm::LowercaseString(objfmt_keyword);
         if (!yasm::isModule<yasm::ObjectFormatModule>(objfmt_keyword))
         {
-            throw yasm::Error(String::Compose(
-                _("unrecognized object format `%1'"), objfmt_keyword));
+            diags.Report(sloc, yasm::diag::err_unrecognized_object_format)
+                << objfmt_keyword;
+            return EXIT_FAILURE;
         }
 
         // Object format forced by user
@@ -443,15 +440,16 @@ DoDump(const std::string& in_filename)
 
         if (objfmt_module.get() == 0)
         {
-            throw yasm::Error(String::Compose(
-                _("could not load object format `%1'"), objfmt_keyword));
+            diags.Report(sloc, yasm::diag::fatal_module_load)
+                << "object format" << objfmt_keyword;
+            return EXIT_FAILURE;
         }
 
         if (!objfmt_module->Taste(*in_file, &arch_keyword, &machine))
         {
-            throw yasm::Error(String::Compose(
-                _("file is not recognized as a `%1' object file"),
-                objfmt_module->getKeyword()));
+            diags.Report(sloc, yasm::diag::err_unrecognized_object_file)
+                << objfmt_module->getKeyword();
+            return EXIT_FAILURE;
         }
     }
     else
@@ -467,33 +465,38 @@ DoDump(const std::string& in_filename)
         }
         if (i == end)
         {
-            throw yasm::Error(_("File format not recognized"));
+            diags.Report(sloc, yasm::diag::err_unrecognized_file_format);
+            return EXIT_FAILURE;
         }
     }
 
     std::auto_ptr<yasm::ArchModule> arch_module =
         yasm::LoadModule<yasm::ArchModule>(arch_keyword);
     if (arch_module.get() == 0)
-        throw yasm::Error(String::Compose(
-            _("could not load architecture `%1'"), arch_keyword));
+    {
+        diags.Report(sloc, yasm::diag::fatal_module_load)
+            << "architecture" << arch_keyword;
+        return EXIT_FAILURE;
+    }
 
     std::auto_ptr<yasm::Arch> arch = arch_module->Create();
     if (!arch->setMachine(machine))
     {
-        throw yasm::Error(String::Compose(
-            _("`%1' is not a valid machine for architecture `%2'"),
-            machine, arch_module->getKeyword()));
+        diags.Report(sloc, yasm::diag::fatal_module_combo)
+            << "machine" << machine
+            << "architecture" << arch_module->getKeyword();
+        return EXIT_FAILURE;
     }
 
     yasm::Object object("", in_filename, arch.get());
 
     if (!objfmt_module->isOkObject(object))
     {
-        throw yasm::Error(String::Compose(
-            _("object format `%1' does not support architecture `%2' machine `%3'"),
-            objfmt_module->getKeyword(),
-            arch_module->getKeyword(),
-            arch->getMachine()));
+        diags.Report(sloc, yasm::diag::fatal_objfmt_machine_mismatch)
+            << objfmt_module->getKeyword()
+            << arch_module->getKeyword()
+            << arch->getMachine();
+        return EXIT_FAILURE;
     }
 
     std::auto_ptr<yasm::ObjectFormat> objfmt = objfmt_module->Create(object);
@@ -527,9 +530,6 @@ main(int argc, char* argv[])
 #endif
     yasm_textdomain(PACKAGE);
 #endif
-
-    // Initialize errwarn handling
-    yasm::gettext_hook = handle_yasm_gettext;
 
     // Load standard modules
     if (!yasm::LoadStandardPlugins())
@@ -584,15 +584,11 @@ main(int argc, char* argv[])
             if (DoDump(*i) != EXIT_SUCCESS)
                 retval = EXIT_FAILURE;
         }
-        catch (yasm::Error& err)
-        {
-            PrintError(String::Compose(_("%1: %2"), *i, err.what()));
-            retval = EXIT_FAILURE;
-        }
         catch (std::out_of_range& err)
         {
-            PrintError(String::Compose(
-                _("%1: out of range error while reading (corrupt file?)"), *i));
+            llvm::errs() << *i << ": "
+                << _("out of range error while reading (corrupt file?)")
+                << '\n';
             retval = EXIT_FAILURE;
         }
     }
