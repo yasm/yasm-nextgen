@@ -58,6 +58,7 @@ CoffObject::CoffObject(const ObjectFormatModule& module,
     , m_win64(win64)
     , m_machine(MACHINE_UNKNOWN)
     , m_file_coffsym(0)
+    , m_def_sym(0)
 {
     // Support x86 and amd64 machines of x86 arch
     if (m_object.getArch()->getMachine().equals_lower("x86"))
@@ -447,6 +448,76 @@ CoffObject::DirIdent(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
+CoffObject::DirGasDef(DirectiveInfo& info, Diagnostic& diags)
+{
+    if (m_def_sym)
+    {
+        diags.Report(info.getSource(), diag::warn_nested_def);
+        return;
+    }
+
+    NameValue& symname_nv = info.getNameValues().front();
+    if (!symname_nv.isId())
+    {
+        diags.Report(symname_nv.getValueRange().getBegin(),
+                     diag::err_value_id);
+        return;
+    }
+    llvm::StringRef symname = symname_nv.getId();
+    SymbolRef sym = m_object.getSymbol(symname);
+
+    std::auto_ptr<CoffSymbol> coffsym(new CoffSymbol(CoffSymbol::SCL_NULL));
+    m_def_sym = coffsym.get();
+
+    sym->AddAssocData(coffsym);
+}
+
+void
+CoffObject::DirGasScl(DirectiveInfo& info, Diagnostic& diags)
+{
+    if (!m_def_sym)
+    {
+        diags.Report(info.getSource(), diag::warn_outside_def) << ".scl";
+        return;
+    }
+
+    IntNum val;
+    bool val_set = false;
+    DirIntNum(info.getNameValues().front(), diags, &m_object, &val, &val_set);
+    if (!val_set)
+        return;
+    m_def_sym->m_sclass = static_cast<CoffSymbol::StorageClass>(val.getUInt());
+}
+
+void
+CoffObject::DirGasType(DirectiveInfo& info, Diagnostic& diags)
+{
+    if (!m_def_sym)
+    {
+        diags.Report(info.getSource(), diag::warn_outside_def) << ".type";
+        return;
+    }
+
+    IntNum val;
+    bool val_set = false;
+    DirIntNum(info.getNameValues().front(), diags, &m_object, &val, &val_set);
+    if (!val_set)
+        return;
+    m_def_sym->m_type = val.getUInt();
+}
+
+void
+CoffObject::DirGasEndef(DirectiveInfo& info, Diagnostic& diags)
+{
+    if (!m_def_sym)
+    {
+        diags.Report(info.getSource(), diag::warn_endef_before_def);
+        return;
+    }
+    m_def_sym = NULL;
+}
+
+void
 CoffObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
 {
     static const Directives::Init<CoffObject> nasm_dirs[] =
@@ -457,8 +528,12 @@ CoffObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
     };
     static const Directives::Init<CoffObject> gas_dirs[] =
     {
-        {".section", &CoffObject::DirGasSection, Directives::ARG_REQUIRED},
-        {".ident",   &CoffObject::DirIdent, Directives::ANY},
+        {".section",&CoffObject::DirGasSection, Directives::ARG_REQUIRED},
+        {".ident",  &CoffObject::DirIdent,      Directives::ANY},
+        {".def",    &CoffObject::DirGasDef,     Directives::ID_REQUIRED},
+        {".scl",    &CoffObject::DirGasScl,     Directives::ARG_REQUIRED},
+        {".type",   &CoffObject::DirGasType,    Directives::ARG_REQUIRED},
+        {".endef",  &CoffObject::DirGasEndef,   Directives::ANY},
     };
 
     if (parser.equals_lower("nasm"))

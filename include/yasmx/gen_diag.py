@@ -583,6 +583,12 @@ add_warning("warn_coff_section_name_length",
             "COFF section names limited to 8 characters: truncating")
 add_warning("warn_coff_no_readonly_sections",
             "standard COFF does not support read-only data sections")
+add_warning("warn_nested_def",
+            ".def pseudo-op used inside of .def/.endef; ignored")
+add_warning("warn_outside_def",
+            "%0 pseudo-op used outside of .def/.endef; ignored")
+add_warning("warn_endef_before_def",
+            ".endef pseudo-op used before .def; ignored")
 
 # Win32 object format
 add_error("err_win32_align_too_big",

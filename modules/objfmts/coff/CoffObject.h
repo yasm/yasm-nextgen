@@ -128,9 +128,15 @@ private:
 
     CoffSymbol* m_file_coffsym;     // Data for .file symbol
 
+    CoffSymbol* m_def_sym;          // Data for symbol specified by .def dir
+
     void DirGasSection(DirectiveInfo& info, Diagnostic& diags);
     void DirSection(DirectiveInfo& info, Diagnostic& diags);
     void DirIdent(DirectiveInfo& info, Diagnostic& diags);
+    void DirGasDef(DirectiveInfo& info, Diagnostic& diags);
+    void DirGasScl(DirectiveInfo& info, Diagnostic& diags);
+    void DirGasType(DirectiveInfo& info, Diagnostic& diags);
+    void DirGasEndef(DirectiveInfo& info, Diagnostic& diags);
 };
 
 }} // namespace yasm::objfmt
