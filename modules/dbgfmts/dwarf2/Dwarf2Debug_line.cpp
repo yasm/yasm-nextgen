@@ -220,6 +220,18 @@ Dwarf2Debug::AppendLineExtOp(BytecodeContainer& container,
 void
 Dwarf2Debug::AppendLineExtOp(BytecodeContainer& container,
                              DwarfLineNumberExtOp ext_opcode,
+                             const IntNum& operand)
+{
+    AppendByte(container, DW_LNS_extended_op);
+    AppendLEB128(container, 1 + SizeLEB128(operand, false), false,
+                 clang::SourceLocation(), *m_diags);
+    AppendByte(container, ext_opcode);
+    AppendLEB128(container, operand, false, clang::SourceLocation(), *m_diags);
+}
+
+void
+Dwarf2Debug::AppendLineExtOp(BytecodeContainer& container,
+                             DwarfLineNumberExtOp ext_opcode,
                              unsigned long ext_operandsize,
                              SymbolRef ext_operand)
 {
@@ -246,6 +258,11 @@ Dwarf2Debug::GenerateLineOp(Section& debug_line,
     {
         state->column = loc.column;
         AppendLineOp(debug_line, DW_LNS_set_column, state->column);
+    }
+    if (loc.discriminator != 0)
+    {
+        AppendLineExtOp(debug_line, DW_LNE_set_discriminator,
+                        loc.discriminator);
     }
 #ifdef WITH_DWARF3
     if (loc.isa_change)
@@ -652,7 +669,7 @@ Dwarf2Debug::DirLoc(DirectiveInfo& info, Diagnostic& diags)
     // Other options; note for GAS compatibility we need to support both:
     // is_stmt=1 (NASM) and
     // is_stmt 1 (GAS)
-    bool in_is_stmt = false, in_isa = false;
+    bool in_is_stmt = false, in_isa = false, in_discriminator = false;
     while (nv != end)
     {
         llvm::StringRef name = nv->getName();
@@ -712,6 +729,31 @@ restart:
             loc->isa_change = true;
             loc->isa = isa.getUInt();
         }
+        else if (in_discriminator)
+        {
+            in_discriminator = false;
+            if (!nv->isExpr())
+            {
+                diags.Report(nv->getValueRange().getBegin(),
+                             diag::err_loc_discriminator_not_integer);
+                return;
+            }
+            Expr discriminator_e = nv->getExpr(m_object);
+            if (!discriminator_e.isIntNum())
+            {
+                diags.Report(nv->getValueRange().getBegin(),
+                             diag::err_loc_discriminator_not_integer);
+                return;
+            }
+            IntNum discriminator = discriminator_e.getIntNum();
+            if (discriminator.getSign() < 0)
+            {
+                diags.Report(nv->getValueRange().getBegin(),
+                             diag::err_loc_discriminator_less_than_zero);
+                return;
+            }
+            loc->discriminator = discriminator;
+        }
         else if (name.empty() && nv->isId())
         {
             llvm::StringRef s = nv->getId();
@@ -719,6 +761,8 @@ restart:
                 in_is_stmt = true;
             else if (s.equals_lower("isa"))
                 in_isa = true;
+            else if (s.equals_lower("discriminator"))
+                in_discriminator = true;
             else if (s.equals_lower("basic_block"))
                 loc->basic_block = true;
             else if (s.equals_lower("prologue_end"))
@@ -744,16 +788,21 @@ restart:
             in_isa = true;
             goto restart;   // don't go to the next nameval
         }
+        else if (name.equals_lower("discriminator"))
+        {
+            in_discriminator = true;
+            goto restart;   // don't go to the next nameval
+        }
         else
             diags.Report(nv->getNameSource(),
                          diag::warn_unrecognized_loc_option) << name;
         ++nv;
     }
 
-    if (in_is_stmt || in_isa)
+    if (in_is_stmt || in_isa || in_discriminator)
     {
         diags.Report(info.getSource(), diag::err_loc_option_requires_value)
-            << (in_is_stmt ? "is_stmt" : "isa");
+            << (in_is_stmt ? "is_stmt" : (in_isa ? "isa" : "discriminator"));
         return;
     }
 

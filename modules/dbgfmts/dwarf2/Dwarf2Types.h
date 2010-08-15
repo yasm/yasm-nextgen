@@ -207,7 +207,8 @@ enum DwarfLineNumberExtOp
 {
     DW_LNE_end_sequence = 1,
     DW_LNE_set_address,
-    DW_LNE_define_file
+    DW_LNE_define_file,
+    DW_LNE_set_discriminator
 };
 
 }} // namespace yasm::dbgfmt

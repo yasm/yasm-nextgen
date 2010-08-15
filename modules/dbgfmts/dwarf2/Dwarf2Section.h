@@ -29,6 +29,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "yasmx/AssocData.h"
+#include "yasmx/IntNum.h"
 #include "yasmx/Location.h"
 #include "yasmx/SymbolRef.h"
 
@@ -54,6 +55,7 @@ struct YASM_STD_EXPORT Dwarf2Loc
     unsigned long file;     // index into table of filenames
     unsigned long line;     // source line number
     unsigned long column;   // source column
+    IntNum discriminator;
     bool isa_change;
     unsigned long isa;
     enum IsStmt

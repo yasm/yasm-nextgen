@@ -115,6 +115,9 @@ private:
                          DwarfLineNumberExtOp ext_opcode);
     void AppendLineExtOp(BytecodeContainer& container,
                          DwarfLineNumberExtOp ext_opcode,
+                         const IntNum& operand);
+    void AppendLineExtOp(BytecodeContainer& container,
+                         DwarfLineNumberExtOp ext_opcode,
                          unsigned long ext_operandsize,
                          SymbolRef ext_operand);
     void GenerateLineSection(Section& sect,

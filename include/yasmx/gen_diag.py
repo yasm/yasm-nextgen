@@ -548,6 +548,10 @@ add_error("err_loc_must_be_in_section",
 add_error("err_loc_is_stmt_not_zero_or_one", "is_stmt value is not 0 or 1")
 add_error("err_loc_isa_not_integer", "isa value is not an integer")
 add_error("err_loc_isa_less_than_zero", "isa value is less than 0")
+add_error("err_loc_discriminator_not_integer",
+          "discriminator value is not an integer")
+add_error("err_loc_discriminator_less_than_zero",
+          "discriminator value is less than 0")
 add_warning("warn_unrecognized_loc_option", "unrecognized loc option '%0'")
 add_warning("warn_unrecognized_numeric_qualifier",
             "unrecognized numeric qualifier")
