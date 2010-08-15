@@ -62,8 +62,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Directive.cpp
     yasmx/DirHelpers.cpp
     yasmx/EffAddr.cpp
-    yasmx/errwarn.cpp
-    yasmx/Errwarns.cpp
     yasmx/Expr.cpp
     yasmx/Expr_util.cpp
     yasmx/HeaderSearch.cpp
