@@ -32,6 +32,7 @@
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes_util.h"
 #include "yasmx/Diagnostic.h"
+#include "yasmx/Expr_util.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location_util.h"
 #include "yasmx/Section.h"
@@ -126,16 +127,73 @@ CoffSymbol::Write(Bytes& bytes,
                 value += loc.getOffset();
         }
     }
-    else if (const Expr* equ_val_c = sym.getEqu())
+    else if (const Expr* equ_expr_c = sym.getEqu())
     {
-        Expr equ_val(*equ_val_c);
-        SimplifyCalcDist(equ_val, diags);
-        if (equ_val.isIntNum())
-            value = equ_val.getIntNum();
-        else if (vis & Symbol::GLOBAL)
-            diags.Report(sym.getDefSource(), diag::err_equ_not_integer);
+        Expr equ_expr = *equ_expr_c;
+        if (!ExpandEqu(equ_expr))
+        {
+            diags.Report(sym.getDefSource(), diag::err_equ_circular_reference);
+            return;
+        }
+        SimplifyCalcDist(equ_expr, diags);
 
-        scnum = 0xffff;     // -1 = absolute symbol
+        // trivial case: simple integer
+        if (equ_expr.isIntNum())
+        {
+            scnum = 0xffff;     // -1 = absolute symbol
+            value = equ_expr.getIntNum();
+        }
+        else
+        {
+            // otherwise might contain relocatable value (e.g. symbol alias)
+            std::auto_ptr<Expr> equ_expr_p(new Expr);
+            equ_expr_p->swap(equ_expr);
+            Value val(64, equ_expr_p);
+            val.setSource(sym.getDefSource());
+            if (!val.Finalize(diags, diag::err_equ_too_complex))
+                return;
+            if (val.isComplexRelative())
+            {
+                diags.Report(sym.getDefSource(), diag::err_equ_too_complex);
+                return;
+            }
+
+            // set section appropriately based on if value is relative
+            if (val.isRelative())
+            {
+                SymbolRef rel = val.getRelative();
+                Location loc;
+                if (!rel->getLabel(&loc) || !loc.bc)
+                {
+                    // Referencing an undefined label?
+                    // GNU as silently allows this... but doesn't gen the symbol?
+                    // We make it an error instead.
+                    diags.Report(sym.getDefSource(), diag::err_equ_too_complex);
+                    return;
+                }
+
+                Section* sect = loc.bc->getContainer()->AsSection();
+                CoffSection* coffsect = sect->getAssocData<CoffSection>();
+                assert(coffsect != 0);
+                scnum = coffsect->m_scnum;
+                value = sect->getVMA() + loc.getOffset();
+            }
+            else
+            {
+                scnum = 0xffff;     // -1 = absolute symbol
+                value = 0;
+            }
+
+            // add in any remaining absolute portion
+            if (Expr* abs = val.getAbs())
+            {
+                SimplifyCalcDist(*abs, diags);
+                if (abs->isIntNum())
+                    value += abs->getIntNum();
+                else
+                    diags.Report(sym.getDefSource(), diag::err_equ_not_integer);
+            }
+        }
     }
     else
     {
