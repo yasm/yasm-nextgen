@@ -58,7 +58,6 @@
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/DirHelpers.h"
-#include "yasmx/Errwarns.h"
 #include "yasmx/Location_util.h"
 #include "yasmx/Object.h"
 #include "yasmx/Object_util.h"

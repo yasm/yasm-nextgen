@@ -42,7 +42,6 @@
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
-#include "yasmx/Errwarns.h"
 #include "yasmx/Expr_util.h"
 #include "yasmx/NameValue.h"
 #include "yasmx/Object.h"

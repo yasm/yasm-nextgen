@@ -43,7 +43,6 @@
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/EffAddr.h"
-#include "yasmx/Errwarns.h"
 #include "yasmx/Expr.h"
 #include "yasmx/NameValue.h"
 #include "yasmx/Object.h"

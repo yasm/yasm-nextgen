@@ -35,7 +35,6 @@
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Directive.h"
-#include "yasmx/Errwarns.h"
 #include "yasmx/Object.h"
 #include "yasmx/Op.h"
 #include "yasmx/Symbol_util.h"
