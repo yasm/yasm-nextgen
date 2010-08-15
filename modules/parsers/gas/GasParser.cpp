@@ -31,7 +31,6 @@
 
 #include "util.h"
 
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Directive.h"

@@ -28,7 +28,6 @@
 #include <gtest/gtest.h>
 
 #include "clang/Basic/SourceManager.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
