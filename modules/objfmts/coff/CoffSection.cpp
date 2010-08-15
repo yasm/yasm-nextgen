@@ -30,8 +30,9 @@
 
 #include "util.h"
 
+#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
-#include "yasmx/Support/Compose.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
 #include "yasmx/Symbol.h"
@@ -136,9 +137,10 @@ CoffSection::Write(Bytes& bytes, const Section& sect) const
     char name[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     if (fullname.size() > 8)
     {
-        std::string namenum = "/";
-        namenum += String::Format(m_strtab_name);
-        std::strncpy(name, namenum.c_str(), 8);
+        llvm::SmallString<20> namenum;
+        llvm::raw_svector_ostream os(namenum);
+        os << '/' << m_strtab_name;
+        std::strncpy(name, os.str().data(), 8);
     }
     else
         std::memcpy(name, fullname.data(), fullname.size());

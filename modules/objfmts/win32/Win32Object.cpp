@@ -30,7 +30,6 @@
 
 #include <vector>
 
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/Diagnostic.h"

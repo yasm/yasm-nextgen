@@ -31,7 +31,6 @@
 #include <string>
 
 #include "YAML/emitter.h"
-#include "yasmx/Support/errwarn.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Object.h"
 

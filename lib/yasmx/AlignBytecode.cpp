@@ -29,7 +29,6 @@
 #include "util.h"
 
 #include "YAML/emitter.h"
-#include "yasmx/Support/Compose.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"

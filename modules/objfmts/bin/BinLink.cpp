@@ -33,7 +33,6 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
-#include "yasmx/Support/Compose.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
