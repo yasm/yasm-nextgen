@@ -36,6 +36,7 @@ class TextDiagnosticPrinter : public DiagnosticClient {
   clang::FullSourceLoc LastLoc;
   bool LastCaretDiagnosticWasNote;
 
+  bool VcStyle;
   bool ShowColumn;
   bool CaretDiagnostics;
   bool ShowLocation;
@@ -47,6 +48,7 @@ class TextDiagnosticPrinter : public DiagnosticClient {
 
 public:
   TextDiagnosticPrinter(llvm::raw_ostream &os,
+                        bool vcStyle = false,
                         bool showColumn = true,
                         bool caretDiagnistics = true, bool showLocation = true,
                         bool printRangeInfo = true,
@@ -55,7 +57,8 @@ public:
                         unsigned messageLength = 0,
                         bool useColors = false)
     : OS(os), LangOpts(0),
-      LastCaretDiagnosticWasNote(false), ShowColumn(showColumn),
+      LastCaretDiagnosticWasNote(false), VcStyle(vcStyle),
+      ShowColumn(showColumn),
       CaretDiagnostics(caretDiagnistics), ShowLocation(showLocation),
       PrintRangeInfo(printRangeInfo),
       PrintDiagnosticOption(printDiagnosticOption),

@@ -45,7 +45,6 @@
 #include "yasmx/Assembler.h"
 #include "yasmx/DebugFormat.h"
 #include "yasmx/Diagnostic.h"
-#include "yasmx/Errwarns.h"
 #include "yasmx/ListFormat.h"
 #include "yasmx/Module.h"
 #include "yasmx/ObjectFormat.h"
@@ -309,7 +308,10 @@ static cl::opt<ErrwarnStyle> ewmsg_style("X",
 static void
 PrintError(const std::string& msg)
 {
-    *errfile << "yasm: " << msg << '\n';
+    if (ewmsg_style == EWSTYLE_VC)
+        *errfile << "yasm : " << msg << '\n';
+    else
+        *errfile << "yasm: " << msg << '\n';
 }
 
 static void
@@ -510,69 +512,6 @@ ApplyPreprocessorSavedOptions(yasm::Preprocessor* preproc)
 }
 #endif
 
-static const char *fmt[2] =
-{
-    "%1:%2: %3%4",      // GNU
-    "%1(%2) : %3%4"     // VC
-};
-
-static const char *fmt_noline[2] =
-{
-    "%1: %2%3",         // GNU
-    "%1 : %2%3"         // VC
-};
-
-static void
-PrintYasmError(const clang::SourceManager& source_mgr,
-               clang::SourceRange source,
-               llvm::StringRef msg,
-               clang::SourceRange xref_source,
-               llvm::StringRef xref_msg)
-{
-    if (source.isValid())
-    {
-        clang::PresumedLoc loc = source_mgr.getPresumedLoc(source.getBegin());
-        *errfile <<
-            String::Compose(fmt[ewmsg_style], loc.getFilename(), loc.getLine(),
-                            _("error: "), msg) << '\n';
-    }
-    else
-    {
-        *errfile <<
-            String::Compose(fmt_noline[ewmsg_style], in_filename, _("error: "),
-                            msg) << '\n';
-    }
-
-    if (xref_source.isValid() && !xref_msg.empty())
-    {
-        clang::PresumedLoc loc =
-            source_mgr.getPresumedLoc(xref_source.getBegin());
-        *errfile <<
-            String::Compose(fmt[ewmsg_style], loc.getFilename(), loc.getLine(),
-                            _("error: "), xref_msg) << '\n';
-    }
-}
-
-static void
-PrintYasmWarning(const clang::SourceManager& source_mgr,
-                 clang::SourceRange source,
-                 llvm::StringRef msg)
-{
-    if (source.isValid())
-    {
-        clang::PresumedLoc loc = source_mgr.getPresumedLoc(source.getBegin());
-        *errfile <<
-            String::Compose(fmt[ewmsg_style], loc.getFilename(), loc.getLine(),
-                            _("warning: "), msg) << '\n';
-    }
-    else
-    {
-        *errfile <<
-            String::Compose(fmt_noline[ewmsg_style], in_filename,
-                            _("warning: "), msg) << '\n';
-    }
-}
-
 #if 0
 static int
 do_preproc_only(void)
@@ -686,7 +625,8 @@ do_preproc_only(void)
 static int
 do_assemble(void)
 {
-    yasm::TextDiagnosticPrinter diag_printer(*errfile);
+    yasm::TextDiagnosticPrinter diag_printer(*errfile,
+                                             ewmsg_style == EWSTYLE_VC);
     clang::SourceManager source_mgr;
     yasm::Diagnostic diags(&source_mgr, &diag_printer);
     // Apply warning settings
@@ -748,12 +688,7 @@ do_assemble(void)
     if (!assembler.Assemble(source_mgr, file_mgr, diags, headers,
                             warning_error))
     {
-        // An error occurred during assembly; output all errors and warnings
-        // and then exit.
-        assembler.getErrwarns()->OutputAll(source_mgr,
-                                           warning_error,
-                                           PrintYasmError,
-                                           PrintYasmWarning);
+        // An error occurred during assembly.
         return EXIT_FAILURE;
     }
 
@@ -770,13 +705,9 @@ do_assemble(void)
 
     if (!assembler.Output(out, diags, warning_error))
     {
-        // An error occurred during output; output all errors and warnings.
+        // An error occurred during output.
         // If we had an error at this point, we also need to delete the output
         // object file (to make sure it's not left newer than the source).
-        assembler.getErrwarns()->OutputAll(source_mgr,
-                                           warning_error,
-                                           PrintYasmError,
-                                           PrintYasmWarning);
         out.close();
         remove(assembler.getObjectFilename().str().c_str());
         return EXIT_FAILURE;
@@ -801,11 +732,6 @@ do_assemble(void)
         fclose(list);
     }
 #endif
-    assembler.getErrwarns()->OutputAll(source_mgr,
-                                       warning_error,
-                                       PrintYasmError,
-                                       PrintYasmWarning);
-
     return EXIT_SUCCESS;
 }
 

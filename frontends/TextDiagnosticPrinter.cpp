@@ -628,10 +628,18 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     if (ShowLocation) {
       if (UseColors)
         OS.changeColor(savedColor, true);
-      OS << PLoc.getFilename() << ':' << LineNo << ':';
-      if (ShowColumn)
-        if (unsigned ColNo = PLoc.getColumn())
-          OS << ColNo << ':';
+      if (VcStyle) {
+        OS << PLoc.getFilename() << '(' << LineNo;
+        if (ShowColumn)
+          if (unsigned ColNo = PLoc.getColumn())
+            OS << '-' << ColNo;
+        OS << ')';
+      } else {
+        OS << PLoc.getFilename() << ':' << LineNo << ':';
+        if (ShowColumn)
+          if (unsigned ColNo = PLoc.getColumn())
+            OS << ColNo << ':';
+      }
 
       if (PrintRangeInfo && Info.getNumRanges()) {
         FileID CaretFileID =

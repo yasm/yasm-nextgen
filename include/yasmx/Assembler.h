@@ -32,7 +32,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
-#include "yasmx/Errwarns.h"
 
 
 namespace clang { class FileManager; class SourceManager; }
@@ -147,10 +146,6 @@ public:
     /// @return Architecture.
     Arch* getArch() { return m_arch.get(); }
 
-    /// Get the error/warning set.
-    /// @return Errwarns.
-    Errwarns* getErrwarns() { return &m_errwarns; }
-
     /// Get the object filename.  May return empty string if called prior
     /// to assemble() being called.
     llvm::StringRef getObjectFilename() const { return m_obj_filename; }
@@ -172,8 +167,6 @@ private:
     util::scoped_ptr<ListFormat> m_listfmt;
 
     util::scoped_ptr<Object> m_object;
-
-    Errwarns m_errwarns;
 
     std::string m_obj_filename;
     std::string m_machine;

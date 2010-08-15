@@ -36,7 +36,6 @@
 #include "yasmx/DebugFormat.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
-#include "yasmx/Errwarns.h"
 #include "yasmx/ListFormat.h"
 #include "yasmx/Object.h"
 #include "yasmx/ObjectFormat.h"
@@ -303,8 +302,6 @@ Assembler::Assemble(clang::SourceManager& source_mgr,
         m_object->Dump();
     if (diags.hasErrorOccurred())
         return false;
-    if (m_errwarns.getNumErrors(warning_error) > 0)
-        return false;
 
     // Finalize parse
     m_object->Finalize(diags);
@@ -324,8 +321,6 @@ Assembler::Assemble(clang::SourceManager& source_mgr,
 
     // generate any debugging information
     m_dbgfmt->Generate(*m_objfmt, source_mgr, diags);
-    if (m_errwarns.getNumErrors(warning_error) > 0)
-        return false;
 
     return true;
 }
@@ -345,8 +340,6 @@ Assembler::Output(llvm::raw_fd_ostream& os,
         m_object->Dump();
 
     if (diags.hasErrorOccurred())
-        return false;
-    if (m_errwarns.getNumErrors(warning_error) > 0)
         return false;
 
     return true;
