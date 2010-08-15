@@ -235,6 +235,10 @@ public:
     /// @return True if value is a jump target address, false if not.
     bool isJumpTarget() const { return m_jump_target; }
 
+    /// Indicate the value should be treated as section-relative.
+    /// @param sect_rel     true if value should be treated as section-relative
+    void setSectionRelative(bool sect_rel = true) { m_section_rel = sect_rel; }
+
     /// Determine if the value should be relocated relative to its relative
     /// portion's section rather than the section containing the value.
     /// @return True if value is section-relative, false if not.

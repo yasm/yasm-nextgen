@@ -137,6 +137,7 @@ private:
     void DirGasScl(DirectiveInfo& info, Diagnostic& diags);
     void DirGasType(DirectiveInfo& info, Diagnostic& diags);
     void DirGasEndef(DirectiveInfo& info, Diagnostic& diags);
+    void DirSecRel32(DirectiveInfo& info, Diagnostic& diags);
 };
 
 }} // namespace yasm::objfmt

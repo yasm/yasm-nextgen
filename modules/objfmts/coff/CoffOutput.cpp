@@ -228,8 +228,8 @@ CoffOutput::ConvertValueToBytes(Value& value,
                 intn -= loc.getOffset();
         }
 
-        // Zero value for segment or section-relative generation.
-        if (value.isSegOf() || value.isSectionRelative())
+        // Zero value for segment generation.
+        if (value.isSegOf())
             intn = 0;
 
         // Generate reloc

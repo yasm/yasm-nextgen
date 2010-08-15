@@ -33,12 +33,14 @@
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
+#include "yasmx/Bytecode.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/DirHelpers.h"
 #include "yasmx/NameValue.h"
 #include "yasmx/Object.h"
 #include "yasmx/Object_util.h"
+#include "yasmx/Value.h"
 
 #include "CoffSection.h"
 #include "CoffSymbol.h"
@@ -518,6 +520,20 @@ CoffObject::DirGasEndef(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
+CoffObject::DirSecRel32(DirectiveInfo& info, Diagnostic& diags)
+{
+    NameValues& nvs = info.getNameValues();
+    for (NameValues::iterator i=nvs.begin(), end=nvs.end(); i != end; ++i)
+    {
+        std::auto_ptr<Value> val(new Value(32, i->ReleaseExpr(m_object)));
+        val->setSource(i->getValueRange().getBegin());
+        val->setSectionRelative();
+        Bytecode& bc = m_object.getCurSection()->FreshBytecode();
+        bc.AppendFixed(val);
+    }
+}
+
+void
 CoffObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
 {
     static const Directives::Init<CoffObject> nasm_dirs[] =
@@ -534,6 +550,7 @@ CoffObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
         {".scl",    &CoffObject::DirGasScl,     Directives::ARG_REQUIRED},
         {".type",   &CoffObject::DirGasType,    Directives::ARG_REQUIRED},
         {".endef",  &CoffObject::DirGasEndef,   Directives::ANY},
+        {".secrel32", &CoffObject::DirSecRel32, Directives::ARG_REQUIRED},
     };
 
     if (parser.equals_lower("nasm"))
