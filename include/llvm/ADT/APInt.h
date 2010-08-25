@@ -235,7 +235,7 @@ public:
   /// @param str the string to be interpreted
   /// @param radix the radix to use for the conversion 
   /// @brief Construct an APInt from a string representation.
-  APInt(unsigned numBits, const StringRef &str, uint8_t radix);
+  APInt(unsigned numBits, StringRef str, uint8_t radix);
 
   /// Simply makes *this a copy of that.
   /// @brief Copy Constructor.
@@ -451,7 +451,7 @@ public:
     // For small values, return quickly
     if (numBits <= APINT_BITS_PER_WORD)
       return APInt(numBits, ~0ULL << shiftAmt);
-    return (~APInt(numBits, 0)).shl(shiftAmt);
+    return getAllOnesValue(numBits).shl(shiftAmt);
   }
 
   /// Constructs an APInt value that has the bottom loBitsSet bits set.
@@ -468,7 +468,7 @@ public:
     // For small values, return quickly.
     if (numBits < APINT_BITS_PER_WORD)
       return APInt(numBits, (1ULL << loBitsSet) - 1);
-    return (~APInt(numBits, 0)).lshr(numBits - loBitsSet);
+    return getAllOnesValue(numBits).lshr(numBits - loBitsSet);
   }
 
   /// The hash value is computed as the sum of the words and the bit width.
@@ -857,11 +857,27 @@ public:
   /// @brief Unsigned less than comparison
   bool ult(const APInt& RHS) const;
 
+  /// Regards both *this as an unsigned quantity and compares it with RHS for
+  /// the validity of the less-than relationship.
+  /// @returns true if *this < RHS when considered unsigned.
+  /// @brief Unsigned less than comparison
+  bool ult(uint64_t RHS) const {
+    return ult(APInt(getBitWidth(), RHS));
+  }
+
   /// Regards both *this and RHS as signed quantities and compares them for
   /// validity of the less-than relationship.
   /// @returns true if *this < RHS when both are considered signed.
   /// @brief Signed less than comparison
   bool slt(const APInt& RHS) const;
+
+  /// Regards both *this as a signed quantity and compares it with RHS for
+  /// the validity of the less-than relationship.
+  /// @returns true if *this < RHS when considered signed.
+  /// @brief Signed less than comparison
+  bool slt(uint64_t RHS) const {
+    return slt(APInt(getBitWidth(), RHS));
+  }
 
   /// Regards both *this and RHS as unsigned quantities and compares them for
   /// validity of the less-or-equal relationship.
@@ -869,6 +885,14 @@ public:
   /// @brief Unsigned less or equal comparison
   bool ule(const APInt& RHS) const {
     return ult(RHS) || eq(RHS);
+  }
+
+  /// Regards both *this as an unsigned quantity and compares it with RHS for
+  /// the validity of the less-or-equal relationship.
+  /// @returns true if *this <= RHS when considered unsigned.
+  /// @brief Unsigned less or equal comparison
+  bool ule(uint64_t RHS) const {
+    return ule(APInt(getBitWidth(), RHS));
   }
 
   /// Regards both *this and RHS as signed quantities and compares them for
@@ -879,12 +903,28 @@ public:
     return slt(RHS) || eq(RHS);
   }
 
+  /// Regards both *this as a signed quantity and compares it with RHS for
+  /// the validity of the less-or-equal relationship.
+  /// @returns true if *this <= RHS when considered signed.
+  /// @brief Signed less or equal comparison
+  bool sle(uint64_t RHS) const {
+    return sle(APInt(getBitWidth(), RHS));
+  }
+
   /// Regards both *this and RHS as unsigned quantities and compares them for
   /// the validity of the greater-than relationship.
   /// @returns true if *this > RHS when both are considered unsigned.
   /// @brief Unsigned greather than comparison
   bool ugt(const APInt& RHS) const {
     return !ult(RHS) && !eq(RHS);
+  }
+
+  /// Regards both *this as an unsigned quantity and compares it with RHS for
+  /// the validity of the greater-than relationship.
+  /// @returns true if *this > RHS when considered unsigned.
+  /// @brief Unsigned greater than comparison
+  bool ugt(uint64_t RHS) const {
+    return ugt(APInt(getBitWidth(), RHS));
   }
 
   /// Regards both *this and RHS as signed quantities and compares them for
@@ -895,6 +935,14 @@ public:
     return !slt(RHS) && !eq(RHS);
   }
 
+  /// Regards both *this as a signed quantity and compares it with RHS for
+  /// the validity of the greater-than relationship.
+  /// @returns true if *this > RHS when considered signed.
+  /// @brief Signed greater than comparison
+  bool sgt(uint64_t RHS) const {
+    return sgt(APInt(getBitWidth(), RHS));
+  }
+
   /// Regards both *this and RHS as unsigned quantities and compares them for
   /// validity of the greater-or-equal relationship.
   /// @returns true if *this >= RHS when both are considered unsigned.
@@ -903,12 +951,28 @@ public:
     return !ult(RHS);
   }
 
+  /// Regards both *this as an unsigned quantity and compares it with RHS for
+  /// the validity of the greater-or-equal relationship.
+  /// @returns true if *this >= RHS when considered unsigned.
+  /// @brief Unsigned greater or equal comparison
+  bool uge(uint64_t RHS) const {
+    return uge(APInt(getBitWidth(), RHS));
+  }
+
   /// Regards both *this and RHS as signed quantities and compares them for
   /// validity of the greater-or-equal relationship.
   /// @returns true if *this >= RHS when both are considered signed.
   /// @brief Signed greather or equal comparison
   bool sge(const APInt& RHS) const {
     return !slt(RHS);
+  }
+
+  /// Regards both *this as a signed quantity and compares it with RHS for
+  /// the validity of the greater-or-equal relationship.
+  /// @returns true if *this >= RHS when considered signed.
+  /// @brief Signed greater or equal comparison
+  bool sge(uint64_t RHS) const {
+    return sge(APInt(getBitWidth(), RHS));
   }
 
   /// This operation tests if there are any pairs of corresponding bits
@@ -1076,7 +1140,7 @@ public:
   /// This method determines how many bits are required to hold the APInt
   /// equivalent of the string given by \arg str.
   /// @brief Get bits required for string value.
-  static unsigned getBitsNeeded(const StringRef& str, uint8_t radix);
+  static unsigned getBitsNeeded(StringRef str, uint8_t radix);
 
   /// countLeadingZeros - This function is an APInt version of the
   /// countLeadingZeros_{32,64} functions in MathExtras.h. It counts the number

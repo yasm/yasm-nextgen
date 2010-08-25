@@ -90,13 +90,14 @@ public:
 
   /// has_error - Return the value of the flag in this raw_ostream indicating
   /// whether an output error has been encountered.
+  /// This doesn't implicitly flush any pending output.
   bool has_error() const {
     return Error;
   }
 
   /// clear_error - Set the flag read by has_error() to false. If the error
   /// flag is set at the time when this raw_ostream's destructor is called,
-  /// llvm_report_error is called to report the error. Use clear_error()
+  /// report_fatal_error is called to report the error. Use clear_error()
   /// after handling the error to avoid this behavior.
   void clear_error() {
     Error = false;
@@ -234,8 +235,8 @@ public:
   /// @param bold bold/brighter text, default false
   /// @param bg if true change the background, default: change foreground
   /// @returns itself so it can be used within << invocations
-  virtual raw_ostream &changeColor(enum Colors, bool = false,
-				   bool = false) { return *this; }
+  virtual raw_ostream &changeColor(enum Colors, bool = false, bool = false) {
+    return *this; }
 
   /// Resets the colors to terminal defaults. Call this when you are done
   /// outputting colored text, or before program exit.
@@ -353,8 +354,11 @@ public:
   /// be immediately destroyed; the string will be empty if no error occurred.
   /// This allows optional flags to control how the file will be opened.
   ///
-  /// \param Filename - The file to open. If this is "-" then the
-  /// stream will use stdout instead.
+  /// As a special case, if Filename is "-", then the stream will use
+  /// STDOUT_FILENO instead of opening a file. Note that it will still consider
+  /// itself to own the file descriptor. In particular, it will close the
+  /// file descriptor when it is done (this is necessary to detect
+  /// output errors).
   raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
                  unsigned Flags = 0);
 
@@ -367,10 +371,11 @@ public:
   ~raw_fd_ostream();
 
   /// close - Manually flush the stream and close the file.
+  /// Note that this does not call fsync.
   void close();
 
   /// seek - Flushes the stream and repositions the underlying file descriptor
-  ///  positition to the offset specified from the beginning of the file.
+  /// positition to the offset specified from the beginning of the file.
   uint64_t seek(uint64_t off);
 
   virtual raw_ostream &changeColor(enum Colors colors, bool bold=false,
@@ -464,7 +469,7 @@ public:
   /// outside of the raw_svector_ostream's control.  It is only safe to do this
   /// if the raw_svector_ostream has previously been flushed.
   void resync();
-  
+
   /// str - Flushes the stream contents to the target vector and return a
   /// StringRef for the vector contents.
   StringRef str();
@@ -482,6 +487,25 @@ class YASM_LIB_EXPORT raw_null_ostream : public raw_ostream {
 public:
   explicit raw_null_ostream() {}
   ~raw_null_ostream();
+};
+
+/// tool_output_file - This class behaves like a raw_fd_ostream but adds a
+/// few extra features commonly needed for compiler-like tool output files:
+///   - The file is automatically deleted if the process is killed.
+///   - The file is automatically deleted when the tool_output_file
+///     object is destroyed unless the client calls keep().
+class YASM_LIB_EXPORT tool_output_file : public raw_fd_ostream {
+  std::string Filename;
+  bool Keep;
+public:
+  tool_output_file(const char *filename, std::string &ErrorInfo,
+                   unsigned Flags = 0);
+
+  ~tool_output_file();
+
+  /// keep - Indicate that the tool's job wrt this output file has been
+  /// successful and the file should not be deleted.
+  void keep() { Keep = true; }
 };
 
 } // end llvm namespace

@@ -119,6 +119,10 @@ check_symbol_exists(strerror string.h HAVE_STRERROR)
 check_symbol_exists(strerror_r string.h HAVE_STRERROR_R)
 check_symbol_exists(strtoll stdlib.h HAVE_STRTOLL)
 
+SET(CMAKE_REQUIRED_FLAGS "-std=c99")
+SET(CMAKE_REQUIRED_LIBRARIES m)
+check_function_exists(round HAVE_ROUND)
+
 check_symbol_exists(__GLIBC__ stdio.h LLVM_USING_GLIBC)
 if( LLVM_USING_GLIBC )
   add_definitions( -D_GNU_SOURCE )

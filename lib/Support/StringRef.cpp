@@ -9,6 +9,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/APInt.h"
+#include <bitset>
 
 using namespace llvm;
 
@@ -23,6 +24,10 @@ static char ascii_tolower(char x) {
   return x;
 }
 
+static bool ascii_isdigit(char x) {
+  return x >= '0' && x <= '9';
+}
+
 /// compare_lower - Compare strings, ignoring case.
 int StringRef::compare_lower(StringRef RHS) const {
   for (size_t I = 0, E = min(Length, RHS.Length); I != E; ++I) {
@@ -32,6 +37,30 @@ int StringRef::compare_lower(StringRef RHS) const {
       return LHC < RHC ? -1 : 1;
   }
 
+  if (Length == RHS.Length)
+        return 0;
+  return Length < RHS.Length ? -1 : 1;
+}
+
+/// compare_numeric - Compare strings, handle embedded numbers.
+int StringRef::compare_numeric(StringRef RHS) const {
+  for (size_t I = 0, E = min(Length, RHS.Length); I != E; ++I) {
+    if (Data[I] == RHS.Data[I])
+      continue;
+    if (ascii_isdigit(Data[I]) && ascii_isdigit(RHS.Data[I])) {
+      // The longer sequence of numbers is larger. This doesn't really handle
+      // prefixed zeros well.
+      for (size_t J = I+1; J != E+1; ++J) {
+        bool ld = J < Length && ascii_isdigit(Data[J]);
+        bool rd = J < RHS.Length && ascii_isdigit(RHS.Data[J]);
+        if (ld != rd)
+          return rd ? -1 : 1;
+        if (!rd)
+          break;
+      }
+    }
+    return Data[I] < RHS.Data[I] ? -1 : 1;
+  }
   if (Length == RHS.Length)
         return 0;
   return Length < RHS.Length ? -1 : 1;
@@ -125,11 +154,15 @@ size_t StringRef::rfind(StringRef Str) const {
 /// find_first_of - Find the first character in the string that is in \arg
 /// Chars, or npos if not found.
 ///
-/// Note: O(size() * Chars.size())
+/// Note: O(size() + Chars.size())
 StringRef::size_type StringRef::find_first_of(StringRef Chars,
                                               size_t From) const {
+  std::bitset<1 << CHAR_BIT> CharBits;
+  for (size_type i = 0; i != Chars.size(); ++i)
+    CharBits.set((unsigned char)Chars[i]);
+
   for (size_type i = min(From, Length), e = Length; i != e; ++i)
-    if (Chars.find(Data[i]) != npos)
+    if (CharBits.test((unsigned char)Data[i]))
       return i;
   return npos;
 }
@@ -146,11 +179,15 @@ StringRef::size_type StringRef::find_first_not_of(char C, size_t From) const {
 /// find_first_not_of - Find the first character in the string that is not
 /// in the string \arg Chars, or npos if not found.
 ///
-/// Note: O(size() * Chars.size())
+/// Note: O(size() + Chars.size())
 StringRef::size_type StringRef::find_first_not_of(StringRef Chars,
                                                   size_t From) const {
+  std::bitset<1 << CHAR_BIT> CharBits;
+  for (size_type i = 0; i != Chars.size(); ++i)
+    CharBits.set((unsigned char)Chars[i]);
+
   for (size_type i = min(From, Length), e = Length; i != e; ++i)
-    if (Chars.find(Data[i]) == npos)
+    if (!CharBits.test((unsigned char)Data[i]))
       return i;
   return npos;
 }

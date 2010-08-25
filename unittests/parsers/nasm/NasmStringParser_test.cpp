@@ -93,9 +93,7 @@ TEST_P(NasmStringParserTest, StringTest)
     // create a main "file" consisting solely of the test string
     llvm::StringRef in_str(GetParam().in_str);
     smgr.createMainFileIDForMemBuffer(
-        llvm::MemoryBuffer::getMemBuffer(in_str.data(),
-                                         in_str.data()+in_str.size(),
-                                         "<string>"));
+        llvm::MemoryBuffer::getMemBuffer(in_str, "<string>"));
     pp.EnterMainSourceFile();
     clang::SourceLocation sof = smgr.getLocForStartOfFile(smgr.getMainFileID());
 

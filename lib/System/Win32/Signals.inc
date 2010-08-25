@@ -163,6 +163,7 @@ void sys::AddSignalHandler(void (*FnPtr)(void *), void *Cookie) {
     CallBacksToRun = new std::vector<std::pair<void(*)(void*), void*> >();
   CallBacksToRun->push_back(std::make_pair(FnPtr, Cookie));
   RegisterHandler();
+  LeaveCriticalSection(&CriticalSection);
 }
 }
 
@@ -186,6 +187,10 @@ static void Cleanup() {
       (*CallBacksToRun)[i].first((*CallBacksToRun)[i].second);
 
   LeaveCriticalSection(&CriticalSection);
+}
+
+void llvm::sys::RunInterruptHandlers() {
+  Cleanup();
 }
 
 static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
@@ -278,7 +283,7 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
 
 #ifdef _MSC_VER
   if (ExitOnUnhandledExceptions)
-  	_exit(-3);
+    _exit(-3);
 #endif
 
   // Allow dialog box to pop up allowing choice to start debugger.

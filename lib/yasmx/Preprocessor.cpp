@@ -277,9 +277,7 @@ Preprocessor::EnterMainSourceFile()
 
     // Preprocess Predefines to populate the initial preprocessor state.
     llvm::MemoryBuffer* SB = 
-        llvm::MemoryBuffer::getMemBufferCopy(m_predefines.data(),
-                                             m_predefines.data() + m_predefines.size(),
-                                             "<built-in>");
+        llvm::MemoryBuffer::getMemBufferCopy(m_predefines, "<built-in>");
     assert(SB && "Cannot fail to create predefined source buffer");
     clang::FileID FID = m_source_mgr.createFileIDForMemBuffer(SB);
     assert(!FID.isInvalid() && "Could not create FileID for predefines?");

@@ -312,6 +312,9 @@
 /* Define to 1 if you have the `roundf' function. */
 #undef HAVE_ROUNDF
 
+/* Define to 1 if you have the `round' function. */
+#cmakedefine HAVE_ROUND ${HAVE_ROUND}
+
 /* Define to 1 if you have the `sbrk' function. */
 #cmakedefine HAVE_SBRK ${HAVE_SBRK}
 
@@ -628,3 +631,6 @@
 
 /* Native LLVM architecture */
 #cmakedefine LLVM_NATIVE_ARCH ${LLVM_NATIVE_ARCH}Target
+
+/* Native LLVM architecture, short name */
+#cmakedefine LLVM_NATIVE_ARCHNAME ${LLVM_NATIVE_ARCH}

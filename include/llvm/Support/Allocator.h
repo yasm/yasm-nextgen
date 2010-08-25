@@ -15,10 +15,13 @@
 #define LLVM_SUPPORT_ALLOCATOR_H
 
 #include "llvm/Support/AlignOf.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/System/DataTypes.h"
 #include "yasmx/Config/export.h"
+#include <algorithm>
 #include <cassert>
 #include <cstdlib>
+#include <cstddef>
 
 namespace llvm {
 
@@ -131,6 +134,7 @@ class YASM_LIB_EXPORT BumpPtrAllocator {
 
   static MallocSlabAllocator DefaultSlabAllocator;
 
+  template<typename T> friend class SpecificBumpPtrAllocator;
 public:
   BumpPtrAllocator(size_t size = 4096, size_t threshold = 4096,
                    SlabAllocator &allocator = DefaultSlabAllocator);
@@ -174,6 +178,65 @@ public:
   void PrintStats() const;
 };
 
+/// SpecificBumpPtrAllocator - Same as BumpPtrAllocator but allows only
+/// elements of one type to be allocated. This allows calling the destructor
+/// in DestroyAll() and when the allocator is destroyed.
+template <typename T>
+class SpecificBumpPtrAllocator {
+  BumpPtrAllocator Allocator;
+public:
+  SpecificBumpPtrAllocator(size_t size = 4096, size_t threshold = 4096,
+              SlabAllocator &allocator = BumpPtrAllocator::DefaultSlabAllocator)
+    : Allocator(size, threshold, allocator) {}
+
+  ~SpecificBumpPtrAllocator() {
+    DestroyAll();
+  }
+
+  /// Call the destructor of each allocated object and deallocate all but the
+  /// current slab and reset the current pointer to the beginning of it, freeing
+  /// all memory allocated so far.
+  void DestroyAll() {
+    MemSlab *Slab = Allocator.CurSlab;
+    while (Slab) {
+      char *End = Slab == Allocator.CurSlab ? Allocator.CurPtr :
+                                              (char *)Slab + Slab->Size;
+      for (char *Ptr = (char*)(Slab+1); Ptr < End; Ptr += sizeof(T)) {
+        Ptr = Allocator.AlignPtr(Ptr, alignof<T>());
+        if (Ptr + sizeof(T) <= End)
+          reinterpret_cast<T*>(Ptr)->~T();
+      }
+      Slab = Slab->NextPtr;
+    }
+    Allocator.Reset();
+  }
+
+  /// Allocate space for a specific count of elements.
+  T *Allocate(size_t num = 1) {
+    return Allocator.Allocate<T>(num);
+  }
+};
+
 }  // end namespace llvm
+
+inline void *operator new(size_t Size, llvm::BumpPtrAllocator &Allocator) {
+  struct S {
+    char c;
+#ifdef __GNUC__
+    char x __attribute__((aligned));
+#else
+    union {
+      double D;
+      long double LD;
+      long long L;
+      void *P;
+    } x;
+#endif
+  };
+  return Allocator.Allocate(Size, std::min((size_t)llvm::NextPowerOf2(Size),
+                                           offsetof(S, x)));
+}
+
+inline void operator delete(void *, llvm::BumpPtrAllocator &) {}
 
 #endif // LLVM_SUPPORT_ALLOCATOR_H
