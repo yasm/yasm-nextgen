@@ -47,7 +47,6 @@ namespace yasm
 {
 
 class DiagnosticBuilder;
-class Errwarns;
 
 /// Interface to override expression term (e.g. the lowest level of an
 /// expression) parsing by ParseExpr.

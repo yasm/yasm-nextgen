@@ -50,7 +50,6 @@ namespace yasm
 {
 
 class Bytecode;
-class Errwarns;
 class Object;
 class Reloc;
 
