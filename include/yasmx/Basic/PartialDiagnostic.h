@@ -17,9 +17,9 @@
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/System/DataTypes.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
-#include "yasmx/Diagnostic.h"
 #include <cassert>
 
 namespace yasm {

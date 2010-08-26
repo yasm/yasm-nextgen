@@ -38,7 +38,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
-#include "yasmx/Diagnostic.h"
+#include "yasmx/Basic/Diagnostic.h"
 
 
 using namespace yasm;

@@ -31,8 +31,8 @@
 #include "yasmx/Parse/Lexer.h"
 
 #include "llvm/Support/MemoryBuffer.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Parse/Preprocessor.h"
-#include "yasmx/Diagnostic.h"
 
 
 using namespace yasm;

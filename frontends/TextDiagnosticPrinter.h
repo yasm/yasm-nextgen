@@ -15,8 +15,8 @@
 #ifndef YASM_TEXT_DIAGNOSTIC_PRINTER_H
 #define YASM_TEXT_DIAGNOSTIC_PRINTER_H
 
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Diagnostic.h"
 
 namespace llvm {
   class raw_ostream;

@@ -31,9 +31,9 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
-#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 
 

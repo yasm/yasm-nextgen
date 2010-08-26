@@ -4,6 +4,7 @@ IF (NOT BUILD_STATIC)
 ENDIF (NOT BUILD_STATIC)
 
 YASM_ADD_LIBRARY(libyasmx SHARED
+    Basic/Diagnostic.cpp
     Basic/FileManager.cpp
     Basic/SourceLocation.cpp
     Basic/SourceManager.cpp
@@ -58,7 +59,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Compose.cpp
     yasmx/DataBytecode.cpp
     yasmx/DebugFormat.cpp
-    yasmx/Diagnostic.cpp
     yasmx/Directive.cpp
     yasmx/DirHelpers.cpp
     yasmx/EffAddr.cpp

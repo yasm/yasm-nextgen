@@ -29,9 +29,9 @@
 #include "util.h"
 
 #include "YAML/emitter.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes_util.h"
-#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr_util.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location_util.h"

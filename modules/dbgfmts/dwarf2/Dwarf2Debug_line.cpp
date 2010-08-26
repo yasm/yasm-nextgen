@@ -32,13 +32,13 @@
 #include <algorithm>
 
 #include "llvm/System/Path.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/FileManager.h"
 #include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/Bytes_leb128.h"
 #include "yasmx/Bytes_util.h"
-#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"

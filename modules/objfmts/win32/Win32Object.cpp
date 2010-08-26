@@ -30,9 +30,9 @@
 
 #include <vector>
 
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/BytecodeContainer.h"
-#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/DirHelpers.h"
 #include "yasmx/Object.h"

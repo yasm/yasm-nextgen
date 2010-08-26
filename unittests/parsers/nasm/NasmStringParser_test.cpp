@@ -28,10 +28,10 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/FileManager.h"
 #include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Parse/HeaderSearch.h"
-#include "yasmx/Diagnostic.h"
 
 #include "modules/parsers/nasm/NasmPreproc.h"
 #include "modules/parsers/nasm/NasmStringParser.h"

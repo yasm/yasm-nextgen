@@ -34,9 +34,9 @@
 #include <cstring>
 
 #include "YAML/emitter.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/phash.h"
-#include "yasmx/Diagnostic.h"
 
 #include "modules/arch/x86/X86Arch.h"
 

@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "yasmx/Diagnostic.h"
+#include "yasmx/Basic/Diagnostic.h"
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
@@ -21,8 +21,8 @@
 #include "yasmx/Basic/FileManager.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Basic/SourceManager.h"
+#include "yasmx/Basic/PartialDiagnostic.h"
 #include "yasmx/Parse/IdentifierTable.h"
-#include "yasmx/PartialDiagnostic.h"
 
 #include <vector>
 #include <map>
@@ -60,7 +60,7 @@ struct StaticDiagInfoRec {
 }
 
 static const StaticDiagInfoRec StaticDiagInfo[] = {
-#include "lib/StaticDiagInfo.inc"
+#include "lib/Basic/StaticDiagInfo.inc"
   { 0, 0, 0, 0, 0, 0}
 };
 #undef DIAG
@@ -122,7 +122,7 @@ unsigned Diagnostic::getCategoryNumberForDiag(unsigned DiagID) {
 }
 
 // Includes the table of options, sorted by name for fast binary lookup.
-#include "lib/DiagnosticCategories.cpp"
+#include "lib/Basic/DiagnosticCategories.cpp"
 static const size_t CategoryNameTableSize =
   sizeof(CategoryNameTable) / sizeof(CategoryNameTable[0])-1;
 
@@ -434,7 +434,7 @@ struct WarningOption {
 };
 
 // Includes the table of options, sorted by name for fast binary lookup.
-#include "lib/DiagnosticGroups.cpp"
+#include "lib/Basic/DiagnosticGroups.cpp"
 static const size_t OptionTableSize =
 sizeof(OptionTable) / sizeof(OptionTable[0]);
 

@@ -28,10 +28,10 @@
 
 #include "util.h"
 
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
 #include "yasmx/BytecodeContainer.h"
-#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/Object.h"
 #include "yasmx/NameValue.h"

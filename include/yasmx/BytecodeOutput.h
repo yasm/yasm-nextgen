@@ -31,9 +31,9 @@
 ///
 #include "yasmx/Config/export.h"
 
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Bytes.h"
-#include "yasmx/Diagnostic.h"
 #include "yasmx/Location.h"
 #include "yasmx/NumericOutput.h"
 #include "yasmx/SymbolRef.h"

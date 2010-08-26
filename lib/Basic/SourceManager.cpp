@@ -16,9 +16,9 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/FileManager.h"
 #include "yasmx/Basic/SourceManagerInternals.h"
-#include "yasmx/Diagnostic.h"
 #include <algorithm>
 #include <string>
 #include <cstring>

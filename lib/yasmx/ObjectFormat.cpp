@@ -26,7 +26,7 @@
 //
 #include "yasmx/ObjectFormat.h"
 
-#include "yasmx/Diagnostic.h"
+#include "yasmx/Basic/Diagnostic.h"
 
 
 using namespace yasm;

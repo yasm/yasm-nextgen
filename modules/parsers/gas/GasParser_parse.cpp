@@ -35,12 +35,12 @@
 #include <cstdio>
 
 #include "llvm/ADT/SmallString.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/BytecodeContainer.h"
-#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/Expr_util.h"
 #include "yasmx/NameValue.h"

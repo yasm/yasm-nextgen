@@ -30,6 +30,7 @@
 
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/Support/raw_ostream.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/registry.h"
@@ -38,7 +39,6 @@
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
-#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/DirHelpers.h"
 #include "yasmx/InputBuffer.h"

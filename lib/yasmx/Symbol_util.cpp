@@ -29,9 +29,9 @@
 #include <util.h>
 
 #include "YAML/emitter.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/AssocData.h"
-#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Object.h"

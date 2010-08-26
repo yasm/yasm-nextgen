@@ -32,11 +32,11 @@
 
 #include "llvm/ADT/Statistic.h"
 #include "YAML/emitter.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
-#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Symbol.h"

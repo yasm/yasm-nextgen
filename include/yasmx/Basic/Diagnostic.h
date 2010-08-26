@@ -28,7 +28,7 @@ namespace llvm {
 }
 
 // Get typedefs for common diagnostics.
-#include "yasmx/DiagnosticKinds.h"
+#include "yasmx/Basic/DiagnosticKinds.h"
 
 namespace yasm {
   class DeclContext;

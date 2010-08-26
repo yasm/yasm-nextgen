@@ -39,9 +39,9 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Arch.h"
-#include "yasmx/Diagnostic.h"
 #include "yasmx/Section.h"
 #include "yasmx/Symbol.h"
 

@@ -98,24 +98,26 @@ INCLUDE(CPack)
 INCLUDE(ConfigureChecks.cmake)
 
 # Generate diagnostic includes
+FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/lib/Basic)
+FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/include/yasmx/Basic)
 ADD_CUSTOM_COMMAND(
     OUTPUT
-        ${CMAKE_BINARY_DIR}/lib/DiagnosticGroups.cpp
-        ${CMAKE_BINARY_DIR}/lib/DiagnosticCategories.cpp
-        ${CMAKE_BINARY_DIR}/include/yasmx/DiagnosticKinds.h
-        ${CMAKE_BINARY_DIR}/lib/StaticDiagInfo.inc
-    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/include/yasmx/gen_diag.py
-        ${CMAKE_BINARY_DIR}/lib/DiagnosticGroups.cpp
-        ${CMAKE_BINARY_DIR}/lib/DiagnosticCategories.cpp
-        ${CMAKE_BINARY_DIR}/include/yasmx/DiagnosticKinds.h
-        ${CMAKE_BINARY_DIR}/lib/StaticDiagInfo.inc
-    MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/include/yasmx/gen_diag.py
+        ${CMAKE_BINARY_DIR}/lib/Basic/DiagnosticGroups.cpp
+        ${CMAKE_BINARY_DIR}/lib/Basic/DiagnosticCategories.cpp
+        ${CMAKE_BINARY_DIR}/include/yasmx/Basic/DiagnosticKinds.h
+        ${CMAKE_BINARY_DIR}/lib/Basic/StaticDiagInfo.inc
+    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/include/yasmx/Basic/gen_diag.py
+        ${CMAKE_BINARY_DIR}/lib/Basic/DiagnosticGroups.cpp
+        ${CMAKE_BINARY_DIR}/lib/Basic/DiagnosticCategories.cpp
+        ${CMAKE_BINARY_DIR}/include/yasmx/Basic/DiagnosticKinds.h
+        ${CMAKE_BINARY_DIR}/lib/Basic/StaticDiagInfo.inc
+    MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/include/yasmx/Basic/gen_diag.py
     )
 ADD_CUSTOM_TARGET(DiagnosticIncludes
-    DEPENDS ${CMAKE_BINARY_DIR}/lib/DiagnosticGroups.cpp
-    DEPENDS ${CMAKE_BINARY_DIR}/lib/DiagnosticCategories.cpp
-    DEPENDS ${CMAKE_BINARY_DIR}/include/yasmx/DiagnosticKinds.h
-    DEPENDS ${CMAKE_BINARY_DIR}/lib/StaticDiagInfo.inc)
+    DEPENDS ${CMAKE_BINARY_DIR}/lib/Basic/DiagnosticGroups.cpp
+    DEPENDS ${CMAKE_BINARY_DIR}/lib/Basic/DiagnosticCategories.cpp
+    DEPENDS ${CMAKE_BINARY_DIR}/include/yasmx/Basic/DiagnosticKinds.h
+    DEPENDS ${CMAKE_BINARY_DIR}/lib/Basic/StaticDiagInfo.inc)
 
 ADD_SUBDIRECTORY(tools)
 ADD_SUBDIRECTORY(modules)

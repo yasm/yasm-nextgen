@@ -37,6 +37,7 @@
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Config/export.h"
@@ -44,7 +45,6 @@
 #include "yasmx/Parse/Lexer.h"
 #include "yasmx/Parse/Token.h"
 #include "yasmx/Parse/TokenLexer.h"
-#include "yasmx/Diagnostic.h"
 
 
 namespace yasm

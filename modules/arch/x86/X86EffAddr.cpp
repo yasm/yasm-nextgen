@@ -29,8 +29,8 @@
 #include "util.h"
 
 #include "YAML/emitter.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
-#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Expr_util.h"
 #include "yasmx/IntNum.h"

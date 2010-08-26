@@ -30,11 +30,11 @@
 
 #include <vector>
 
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Bytecode.h"
-#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/DirHelpers.h"
 #include "yasmx/NameValue.h"

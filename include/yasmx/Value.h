@@ -34,9 +34,9 @@
 
 #include <boost/scoped_ptr.hpp>
 
+#include "yasmx/Basic/DiagnosticKinds.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
-#include "yasmx/DiagnosticKinds.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location.h"
 #include "yasmx/SymbolRef.h"

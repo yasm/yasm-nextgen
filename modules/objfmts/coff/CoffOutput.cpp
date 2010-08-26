@@ -33,13 +33,13 @@
 #include <vector>
 
 #include "llvm/Support/raw_ostream.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Arch.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
 #include "yasmx/DebugFormat.h"
-#include "yasmx/Diagnostic.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location_util.h"
 #include "yasmx/Object.h"

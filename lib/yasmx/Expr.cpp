@@ -34,9 +34,9 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Arch.h"
-#include "yasmx/Diagnostic.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Symbol.h"
 

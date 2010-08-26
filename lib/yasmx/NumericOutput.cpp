@@ -33,8 +33,8 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Bytes.h"
-#include "yasmx/Diagnostic.h"
 #include "yasmx/IntNum.h"
 
 

@@ -31,8 +31,8 @@
 
 #include "util.h"
 
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Bytecode.h"
-#include "yasmx/Diagnostic.h"
 #include "yasmx/Directive.h"
 #include "yasmx/Section.h"
 #include "yasmx/Object.h"

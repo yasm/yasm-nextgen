@@ -27,8 +27,8 @@
 
 #include <gtest/gtest.h>
 
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/SourceManager.h"
-#include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Symbol.h"

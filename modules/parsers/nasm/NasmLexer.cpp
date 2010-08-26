@@ -35,8 +35,8 @@
 #include <cctype>
 
 #include "llvm/ADT/Statistic.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Parse/Preprocessor.h"
-#include "yasmx/Diagnostic.h"
 
 
 STATISTIC(num_identifier, "Number of identifiers lexed");

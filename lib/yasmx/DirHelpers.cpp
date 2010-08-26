@@ -30,7 +30,7 @@
 
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
-#include "yasmx/Diagnostic.h"
+#include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/NameValue.h"
