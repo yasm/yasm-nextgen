@@ -55,6 +55,11 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Parse/PPCaching.cpp
     yasmx/Parse/PPLexerChange.cpp
     yasmx/Parse/TokenLexer.cpp
+    yasmx/Support/Compose.cpp
+    yasmx/Support/MD5.cpp
+    yasmx/Support/phash.cpp
+    yasmx/Support/registry.cpp
+    yasmx/Support/StringExtras.cpp
     yasmx/AlignBytecode.cpp
     yasmx/Arch.cpp
     yasmx/Assembler.cpp
@@ -65,7 +70,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Bytes.cpp
     yasmx/Bytes_util.cpp
     yasmx/Bytes_leb128.cpp
-    yasmx/Compose.cpp
     yasmx/DataBytecode.cpp
     yasmx/DebugFormat.cpp
     yasmx/Directive.cpp
@@ -81,7 +85,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/ListFormat.cpp
     yasmx/Location.cpp
     yasmx/Location_util.cpp
-    yasmx/MD5.cpp
     yasmx/Module.cpp
     yasmx/MultipleBytecode.cpp
     yasmx/NameValue.cpp
@@ -93,12 +96,9 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/OrgBytecode.cpp
     yasmx/Op.cpp
     yasmx/Parser.cpp
-    yasmx/phash.cpp
     ${PLUGIN_CPP}
-    yasmx/registry.cpp
     yasmx/Reloc.cpp
     yasmx/Section.cpp
-    yasmx/StringExtras.cpp
     yasmx/StringTable.cpp
     yasmx/Symbol.cpp
     yasmx/Symbol_util.cpp
