@@ -60,7 +60,7 @@ struct StaticDiagInfoRec {
 }
 
 static const StaticDiagInfoRec StaticDiagInfo[] = {
-#include "lib/Basic/StaticDiagInfo.inc"
+#include "lib/yasmx/Basic/StaticDiagInfo.inc"
   { 0, 0, 0, 0, 0, 0}
 };
 #undef DIAG
@@ -122,7 +122,7 @@ unsigned Diagnostic::getCategoryNumberForDiag(unsigned DiagID) {
 }
 
 // Includes the table of options, sorted by name for fast binary lookup.
-#include "lib/Basic/DiagnosticCategories.cpp"
+#include "lib/yasmx/Basic/DiagnosticCategories.cpp"
 static const size_t CategoryNameTableSize =
   sizeof(CategoryNameTable) / sizeof(CategoryNameTable[0])-1;
 
@@ -434,7 +434,7 @@ struct WarningOption {
 };
 
 // Includes the table of options, sorted by name for fast binary lookup.
-#include "lib/Basic/DiagnosticGroups.cpp"
+#include "lib/yasmx/Basic/DiagnosticGroups.cpp"
 static const size_t OptionTableSize =
 sizeof(OptionTable) / sizeof(OptionTable[0]);
 

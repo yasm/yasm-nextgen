@@ -4,48 +4,48 @@ IF (NOT BUILD_STATIC)
 ENDIF (NOT BUILD_STATIC)
 
 YASM_ADD_LIBRARY(libyasmx SHARED
-    Basic/Diagnostic.cpp
-    Basic/FileManager.cpp
-    Basic/SourceLocation.cpp
-    Basic/SourceManager.cpp
-    Support/Allocator.cpp
-    Support/APFloat.cpp
-    Support/APInt.cpp
-    Support/circular_raw_ostream.cpp
-    Support/CommandLine.cpp
-    Support/Debug.cpp
-    Support/ErrorHandling.cpp
-    Support/FoldingSet.cpp
-    Support/raw_ostream.cpp
-    Support/ManagedStatic.cpp
-    Support/MemoryBuffer.cpp
-    Support/PrettyStackTrace.cpp
-    Support/SmallPtrSet.cpp
-    Support/SmallVector.cpp
-    Support/Statistic.cpp
-    Support/StringExtras.cpp
-    Support/StringMap.cpp
-    Support/StringRef.cpp
-    Support/Timer.cpp
-    Support/Twine.cpp
-    System/Atomic.cpp
-    System/Errno.cpp
-    System/Memory.cpp
-    System/Mutex.cpp
-    System/Path.cpp
-    System/Process.cpp
-    System/Program.cpp
-    System/Signals.cpp
-    System/Threading.cpp
-    System/ThreadLocal.cpp
-    System/TimeValue.cpp
-    System/Valgrind.cpp
+    llvm/Support/Allocator.cpp
+    llvm/Support/APFloat.cpp
+    llvm/Support/APInt.cpp
+    llvm/Support/circular_raw_ostream.cpp
+    llvm/Support/CommandLine.cpp
+    llvm/Support/Debug.cpp
+    llvm/Support/ErrorHandling.cpp
+    llvm/Support/FoldingSet.cpp
+    llvm/Support/raw_ostream.cpp
+    llvm/Support/ManagedStatic.cpp
+    llvm/Support/MemoryBuffer.cpp
+    llvm/Support/PrettyStackTrace.cpp
+    llvm/Support/SmallPtrSet.cpp
+    llvm/Support/SmallVector.cpp
+    llvm/Support/Statistic.cpp
+    llvm/Support/StringExtras.cpp
+    llvm/Support/StringMap.cpp
+    llvm/Support/StringRef.cpp
+    llvm/Support/Timer.cpp
+    llvm/Support/Twine.cpp
+    llvm/System/Atomic.cpp
+    llvm/System/Errno.cpp
+    llvm/System/Memory.cpp
+    llvm/System/Mutex.cpp
+    llvm/System/Path.cpp
+    llvm/System/Process.cpp
+    llvm/System/Program.cpp
+    llvm/System/Signals.cpp
+    llvm/System/Threading.cpp
+    llvm/System/ThreadLocal.cpp
+    llvm/System/TimeValue.cpp
+    llvm/System/Valgrind.cpp
     YAML/emitter.cpp
     YAML/emitterstate.cpp
     YAML/emitterutils.cpp
     YAML/ostream.cpp
     YAML/regex.cpp
     YAML/stream.cpp
+    yasmx/Basic/Diagnostic.cpp
+    yasmx/Basic/FileManager.cpp
+    yasmx/Basic/SourceLocation.cpp
+    yasmx/Basic/SourceManager.cpp
     yasmx/AlignBytecode.cpp
     yasmx/Arch.cpp
     yasmx/Assembler.cpp
