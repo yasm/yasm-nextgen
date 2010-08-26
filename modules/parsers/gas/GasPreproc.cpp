@@ -30,7 +30,7 @@
 //
 #include "GasPreproc.h"
 
-#include "clang/Basic/FileManager.h"
+#include "yasmx/Basic/FileManager.h"
 #include "yasmx/Parse/HeaderSearch.h"
 
 #include "GasLexer.h"
@@ -39,7 +39,7 @@ using namespace yasm;
 using namespace yasm::parser;
 
 GasPreproc::GasPreproc(Diagnostic& diags,
-                       clang::SourceManager& sm,
+                       SourceManager& sm,
                        HeaderSearch& headers)
     : Preprocessor(diags, sm, headers)
 {
@@ -50,8 +50,7 @@ GasPreproc::~GasPreproc()
 }
 
 bool
-GasPreproc::HandleInclude(llvm::StringRef filename,
-                          clang::SourceLocation source)
+GasPreproc::HandleInclude(llvm::StringRef filename, SourceLocation source)
 {
     if (filename.empty())
     {
@@ -68,7 +67,7 @@ GasPreproc::HandleInclude(llvm::StringRef filename,
 
     // Search include directories.
     const DirectoryLookup* cur_dir;
-    const clang::FileEntry* file = LookupFile(filename, false, NULL, cur_dir);
+    const FileEntry* file = LookupFile(filename, false, NULL, cur_dir);
     if (file == 0)
     {
         Diag(source, diag::err_pp_file_not_found) << filename;
@@ -81,8 +80,7 @@ GasPreproc::HandleInclude(llvm::StringRef filename,
         return true;
 
     // Look up the file, create a File ID for it.
-    clang::FileID fid =
-        m_source_mgr.createFileID(file, source, clang::SrcMgr::C_User);
+    FileID fid = m_source_mgr.createFileID(file, source, SrcMgr::C_User);
     if (fid.isInvalid())
     {
         Diag(source, diag::err_pp_file_not_found) << filename;
@@ -90,11 +88,7 @@ GasPreproc::HandleInclude(llvm::StringRef filename,
     }
 
     // Finally, if all is good, enter the new file!
-    std::string error_str;
-    if (EnterSourceFile(fid, cur_dir, &error_str))
-        Diag(source, diag::err_pp_error_opening_file)
-            << std::string(m_source_mgr.getFileEntryForID(fid)->getName())
-            << error_str;
+    EnterSourceFile(fid, cur_dir, source);
     return true;
 }
 
@@ -104,8 +98,7 @@ GasPreproc::RegisterBuiltinMacros()
 }
 
 Lexer*
-GasPreproc::CreateLexer(clang::FileID fid,
-                        const llvm::MemoryBuffer* input_buffer)
+GasPreproc::CreateLexer(FileID fid, const llvm::MemoryBuffer* input_buffer)
 {
     return new GasLexer(fid, input_buffer, *this);
 }

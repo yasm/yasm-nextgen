@@ -26,8 +26,8 @@
 //
 #include "NasmStringParser.h"
 
-#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/SmallString.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Parse/Preprocessor.h"
 #include "yasmx/IntNum.h"
 
@@ -59,7 +59,7 @@ fromxdigit(char ch)
 /// Octal, hex, and Unicode escapes are also supported
 ///
 NasmStringParser::NasmStringParser(llvm::StringRef str,
-                                   clang::SourceLocation loc,
+                                   SourceLocation loc,
                                    Preprocessor& pp)
     : m_chars_begin(str.begin()+1)
     , m_chars_end(str.end()-1)

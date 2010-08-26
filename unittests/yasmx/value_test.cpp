@@ -24,7 +24,7 @@
 //
 #include <gtest/gtest.h>
 
-#include "clang/Basic/SourceManager.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Arch.h"
@@ -61,8 +61,6 @@ protected:
 
     Symbol sym1_sym, sym2_sym, wrt_sym;
     SymbolRef sym1, sym2, wrt;
-
-    clang::SourceManager smgr;
 
     ValueTest()
         : sym1_sym("sym1")
@@ -157,9 +155,9 @@ TEST_F(ValueTest, Finalize)
     SymbolRef f = object.getSymbol("f");    // in section y
     const MockRegister g("g");
 
-    Section* x = new Section("x", false, false, clang::SourceLocation());
+    Section* x = new Section("x", false, false, SourceLocation());
     object.AppendSection(std::auto_ptr<Section>(x));
-    Section* y = new Section("y", false, false, clang::SourceLocation());
+    Section* y = new Section("y", false, false, SourceLocation());
     object.AppendSection(std::auto_ptr<Section>(y));
 
     Location loc = {&x->FreshBytecode(), 0};
@@ -172,7 +170,9 @@ TEST_F(ValueTest, Finalize)
     Value v(8);
 
     MockDiagnosticId mock_client;
-    Diagnostic diags(&smgr, &mock_client);
+    Diagnostic diags(&mock_client);
+    SourceManager smgr(diags);
+    diags.setSourceManager(&smgr);
 
     // just an integer
     v = Value(8, Expr::Ptr(new Expr(4)));
@@ -348,7 +348,9 @@ TEST_F(ValueTest, Finalize)
 TEST_F(ValueTest, Clear)
 {
     MockDiagnosticId mock_client;
-    Diagnostic diags(&smgr, &mock_client);
+    Diagnostic diags(&mock_client);
+    SourceManager smgr(diags);
+    diags.setSourceManager(&smgr);
 
     Value v(6, Expr::Ptr(new Expr(WRT(sym1, wrt))));
     EXPECT_TRUE(v.Finalize(diags));
@@ -359,7 +361,7 @@ TEST_F(ValueTest, Clear)
     EXPECT_EQ(sym1, v.getRelative());
     EXPECT_EQ(wrt, v.getWRT());
     EXPECT_TRUE(v.hasSubRelative());
-    v.setSource(clang::SourceLocation::getFromRawEncoding(4));
+    v.setSource(SourceLocation::getFromRawEncoding(4));
     InitClear(&v);
 
     v.Clear();
@@ -383,7 +385,9 @@ TEST_F(ValueTest, Clear)
 TEST_F(ValueTest, ClearRelative)
 {
     MockDiagnosticId mock_client;
-    Diagnostic diags(&smgr, &mock_client);
+    Diagnostic diags(&mock_client);
+    SourceManager smgr(diags);
+    diags.setSourceManager(&smgr);
 
     Value v(6, Expr::Ptr(new Expr(WRT(sym1, wrt))));
     EXPECT_TRUE(v.Finalize(diags));
@@ -412,7 +416,9 @@ TEST_F(ValueTest, ClearRelative)
 TEST_F(ValueTest, AddAbsInt)
 {
     MockDiagnosticId mock_client;
-    Diagnostic diags(&smgr, &mock_client);
+    Diagnostic diags(&mock_client);
+    SourceManager smgr(diags);
+    diags.setSourceManager(&smgr);
 
     Value v(4);
     EXPECT_FALSE(v.hasAbs());
@@ -430,7 +436,9 @@ TEST_F(ValueTest, AddAbsInt)
 TEST_F(ValueTest, AddAbsExpr)
 {
     MockDiagnosticId mock_client;
-    Diagnostic diags(&smgr, &mock_client);
+    Diagnostic diags(&mock_client);
+    SourceManager smgr(diags);
+    diags.setSourceManager(&smgr);
 
     Value v(4);
     EXPECT_FALSE(v.hasAbs());
@@ -460,7 +468,9 @@ TEST_F(ValueTest, isRelative)
 TEST_F(ValueTest, isWRT)
 {
     MockDiagnosticId mock_client;
-    Diagnostic diags(&smgr, &mock_client);
+    Diagnostic diags(&mock_client);
+    SourceManager smgr(diags);
+    diags.setSourceManager(&smgr);
 
     Value v1(4);
     EXPECT_FALSE(v1.isWRT());
@@ -523,7 +533,7 @@ TEST_F(ValueTest, GetSetSource)
 {
     Value v(4);
     EXPECT_FALSE(v.getSource().isValid());
-    v.setSource(clang::SourceLocation::getFromRawEncoding(5));
+    v.setSource(SourceLocation::getFromRawEncoding(5));
     EXPECT_EQ(5, v.getSource().getBegin().getRawEncoding());
     EXPECT_EQ(5, v.getSource().getEnd().getRawEncoding());
 }
@@ -531,7 +541,9 @@ TEST_F(ValueTest, GetSetSource)
 TEST_F(ValueTest, getIntNum)
 {
     MockDiagnosticId mock_client;
-    Diagnostic diags(&smgr, &mock_client);
+    Diagnostic diags(&mock_client);
+    SourceManager smgr(diags);
+    diags.setSourceManager(&smgr);
 
     IntNum intn;
     bool rv;

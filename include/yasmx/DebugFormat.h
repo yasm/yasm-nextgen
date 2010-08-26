@@ -37,8 +37,6 @@
 #include "yasmx/Module.h"
 
 
-namespace clang { class SourceManager; }
-
 namespace yasm
 {
 class DebugFormatModule;
@@ -46,6 +44,7 @@ class Diagnostic;
 class Directives;
 class Object;
 class ObjectFormat;
+class SourceManager;
 
 /// Debug format interface.
 class YASM_LIB_EXPORT DebugFormat
@@ -71,7 +70,7 @@ public:
     /// @param diags    diagnostic reporting
     /// @note Errors and warnings are stored into errwarns.
     virtual void Generate(ObjectFormat& objfmt,
-                          clang::SourceManager& smgr,
+                          SourceManager& smgr,
                           Diagnostic& diags) = 0;
 
 private:

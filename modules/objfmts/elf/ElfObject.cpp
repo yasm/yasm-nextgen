@@ -44,9 +44,9 @@
 
 #include "util.h"
 
-#include "clang/Basic/SourceManager.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Support/scoped_array.h"
@@ -203,8 +203,7 @@ LoadStringTable(StringTable* strtab,
     const char* end = start + elfsect.getSize().getUInt();
     if (end > in.getBufferEnd())
     {
-        diags.Report(clang::SourceLocation(),
-                     diag::err_string_table_unreadable);
+        diags.Report(SourceLocation(), diag::err_string_table_unreadable);
         return false;
     }
     strtab->Read(reinterpret_cast<const unsigned char*>(start), end-start);
@@ -212,21 +211,21 @@ LoadStringTable(StringTable* strtab,
 }
 
 bool
-ElfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
+ElfObject::Read(SourceManager& sm, Diagnostic& diags)
 {
     const llvm::MemoryBuffer& in = *sm.getBuffer(sm.getMainFileID());
 
     // Read header
     if (!m_config.ReadProgramHeader(in))
     {
-        diags.Report(clang::SourceLocation(), diag::err_not_file_type) << "ELF";
+        diags.Report(SourceLocation(), diag::err_not_file_type) << "ELF";
         return false;
     }
 
     // Can't handle files without section table yet
     if (m_config.secthead_pos == 0)
     {
-        diags.Report(clang::SourceLocation(), diag::err_no_section_table);
+        diags.Report(SourceLocation(), diag::err_no_section_table);
         return false;
     }
 
@@ -327,8 +326,7 @@ ElfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
 
         if (strtab_sect == 0)
         {
-            diags.Report(clang::SourceLocation(),
-                         diag::err_no_symbol_string_table);
+            diags.Report(SourceLocation(), diag::err_no_symbol_string_table);
             return false;
         }
 
@@ -359,7 +357,7 @@ ElfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
         {
             if (rel_symtab_sect != elfsects[link])
             {
-                diags.Report(clang::SourceLocation(),
+                diags.Report(SourceLocation(),
                              diag::err_multiple_symbol_tables);
                 return false;
             }
@@ -445,7 +443,7 @@ ElfObject::BuildExtern(Symbol& sym, Diagnostic& diags)
 
 static bool
 GlobalNameValueFallback(NameValue& nv,
-                        clang::SourceLocation dir_source,
+                        SourceLocation dir_source,
                         Diagnostic& diags,
                         Object* object,
                         Expr::Ptr* size)
@@ -472,7 +470,7 @@ GlobalSetVis(NameValue& nv,
              Diagnostic& diags,
              ElfSymbolVis* vis_out,
              unsigned int* vis_count,
-             clang::SourceLocation* vis_source,
+             SourceLocation* vis_source,
              ElfSymbolVis vis)
 {
     *vis_out = vis;
@@ -488,7 +486,7 @@ ElfObject::BuildGlobal(Symbol& sym, Diagnostic& diags)
     unsigned long type = STT_NOTYPE;    // ElfSymbolType
     ElfSymbolVis vis = STV_DEFAULT;
     unsigned int nvis = 0;
-    clang::SourceLocation vis_source;
+    SourceLocation vis_source;
 
     DirHelpers helpers;
 
@@ -863,14 +861,14 @@ ElfOutput::OutputSection(Section& sect,
         pos = m_os.tell();
         if (m_os.has_error())
         {
-            Diag(clang::SourceLocation(), diag::err_file_output_position);
+            Diag(SourceLocation(), diag::err_file_output_position);
             return;
         }
 
         m_fd_os.seek(elfsect->setFileOffset(pos));
         if (m_os.has_error())
         {
-            Diag(clang::SourceLocation(), diag::err_file_output_seek);
+            Diag(SourceLocation(), diag::err_file_output_seek);
             return;
         }
     }
@@ -910,7 +908,7 @@ ElfAlignOutput(llvm::raw_fd_ostream& os, unsigned int align, Diagnostic& diags)
     uint64_t pos = os.tell();
     if (os.has_error())
     {
-        diags.Report(clang::SourceLocation(), diag::err_file_output_position);
+        diags.Report(SourceLocation(), diag::err_file_output_position);
         return 0;
     }
 
@@ -921,7 +919,7 @@ ElfAlignOutput(llvm::raw_fd_ostream& os, unsigned int align, Diagnostic& diags)
         os.seek(pos);
         if (os.has_error())
         {
-            diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+            diags.Report(SourceLocation(), diag::err_file_output_seek);
             return 0;
         }
     }
@@ -947,7 +945,7 @@ ElfObject::Output(llvm::raw_fd_ostream& os,
     os.seek(m_config.getProgramHeaderSize());
     if (os.has_error())
     {
-        diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+        diags.Report(SourceLocation(), diag::err_file_output_seek);
         return;
     }
 
@@ -1127,7 +1125,7 @@ ElfObject::Output(llvm::raw_fd_ostream& os,
     os.seek(0);
     if (os.has_error())
     {
-        diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+        diags.Report(SourceLocation(), diag::err_file_output_seek);
         return;
     }
 
@@ -1138,14 +1136,14 @@ Section*
 ElfObject::AddDefaultSection()
 {
     Diagnostic diags(NULL);
-    Section* section = AppendSection(".text", clang::SourceLocation(), diags);
+    Section* section = AppendSection(".text", SourceLocation(), diags);
     section->setDefault(true);
     return section;
 }
 
 Section*
 ElfObject::AppendSection(llvm::StringRef name,
-                         clang::SourceLocation source,
+                         SourceLocation source,
                          Diagnostic& diags)
 {
     ElfSectionType type = SHT_PROGBITS;

@@ -63,7 +63,7 @@ Dwarf2Debug::~Dwarf2Debug()
 
 void
 Dwarf2Debug::Generate(ObjectFormat& objfmt,
-                      clang::SourceManager& smgr,
+                      SourceManager& smgr,
                       Diagnostic& diags)
 {
     m_objfmt = &objfmt;
@@ -97,7 +97,7 @@ Dwarf2PassDebug::~Dwarf2PassDebug()
 
 void
 Dwarf2PassDebug::Generate(ObjectFormat& objfmt,
-                          clang::SourceManager& smgr,
+                          SourceManager& smgr,
                           Diagnostic& diags)
 {
     // If we don't have any .file directives, don't generate any debug info.
@@ -132,8 +132,8 @@ Dwarf2Debug::AppendHead(Section& sect,
     if (debug_ptr)
     {
         AppendData(sect, Expr::Ptr(new Expr(debug_ptr->getSymbol())),
-                   m_sizeof_offset, *m_object.getArch(),
-                   clang::SourceLocation(), *m_diags);
+                   m_sizeof_offset, *m_object.getArch(), SourceLocation(),
+                   *m_diags);
     }
 
     // Size of the offset portion of the address

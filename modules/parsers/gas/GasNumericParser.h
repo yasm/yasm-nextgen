@@ -33,11 +33,10 @@
 #include "yasmx/Parse/NumericParser.h"
 
 
-namespace clang { class SourceLocation; }
-
 namespace yasm
 {
 class Preprocessor;
+class SourceLocation;
 
 namespace parser
 {
@@ -51,7 +50,7 @@ public:
     /// @param force_float  If true, always treat as decimal float;
     ///                     0[letter] prefix is optional
     GasNumericParser(llvm::StringRef str,
-                     clang::SourceLocation loc,
+                     SourceLocation loc,
                      Preprocessor& pp,
                      bool force_float = false);
     virtual ~GasNumericParser();

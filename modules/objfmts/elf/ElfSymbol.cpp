@@ -67,7 +67,7 @@ ElfSymbol::ElfSymbol(const ElfConfig&           config,
     inbuf.setPosition(symtab_sect.getFileOffset() + index * symsize);
     if (inbuf.getReadableSize() < symsize)
     {
-        diags.Report(clang::SourceLocation(), diag::err_symbol_unreadable);
+        diags.Report(SourceLocation(), diag::err_symbol_unreadable);
         return;
     }
 

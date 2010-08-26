@@ -38,15 +38,11 @@
 #include "yasmx/Parse/Token.h"
 
 
-namespace clang
-{
-class SourceLocation;
-}
-
 namespace yasm
 {
 
 class DiagnosticBuilder;
+class SourceLocation;
 
 /// Interface to override expression term (e.g. the lowest level of an
 /// expression) parsing by ParseExpr.
@@ -96,11 +92,11 @@ public:
     /// This does not work with all kinds of tokens: specific other
     /// tokens must be consumed with custom methods below.  This returns the
     /// location of the consumed token.
-    clang::SourceLocation ConsumeToken()
+    SourceLocation ConsumeToken()
     {
         assert(!isTokenParen() && !isTokenBracket() &&
                "Should consume special tokens with consume*token");
-        clang::SourceLocation prev_tok_location = m_token.getLocation();
+        SourceLocation prev_tok_location = m_token.getLocation();
         m_preproc.Lex(&m_token);
         return prev_tok_location;
     }
@@ -108,7 +104,7 @@ public:
     /// Dispatch to the right consume* method based on the
     /// current token type.  This should only be used in cases where the type
     /// of the token really isn't known, e.g. in error recovery.
-    clang::SourceLocation ConsumeAnyToken()
+    SourceLocation ConsumeAnyToken()
     {
         if (isTokenParen())
             return ConsumeParen();
@@ -119,27 +115,27 @@ public:
     }
 
     /// This consume method keeps the paren count up-to-date.
-    clang::SourceLocation ConsumeParen()
+    SourceLocation ConsumeParen()
     {
         assert(isTokenParen() && "wrong consume method");
         if (m_token.is(Token::l_paren))
             ++m_paren_count;
         else if (m_paren_count)
             --m_paren_count; // Don't let unbalanced drive the count negative.
-        clang::SourceLocation prev_tok_location = m_token.getLocation();
+        SourceLocation prev_tok_location = m_token.getLocation();
         m_preproc.Lex(&m_token);
         return prev_tok_location;
     }
 
     /// This consume method keeps the bracket count up-to-date.
-    clang::SourceLocation ConsumeBracket()
+    SourceLocation ConsumeBracket()
     {
         assert(isTokenBracket() && "wrong consume method");
         if (m_token.is(Token::l_square))
             ++m_bracket_count;
         else if (m_bracket_count)
             --m_bracket_count; // Don't let unbalanced drive the count negative.
-        clang::SourceLocation prev_tok_location = m_token.getLocation();
+        SourceLocation prev_tok_location = m_token.getLocation();
         m_preproc.Lex(&m_token);
         return prev_tok_location;
     }
@@ -168,8 +164,8 @@ public:
     /// that the parser failed to match the RHS of the token at LHSLoc.  LHSName
     /// should be the name of the unmatched LHS token.  This returns the
     /// location of the consumed token.
-    clang::SourceLocation MatchRHSPunctuation(unsigned int rhs_tok,
-                                              clang::SourceLocation lhs_loc);
+    SourceLocation MatchRHSPunctuation(unsigned int rhs_tok,
+                                       SourceLocation lhs_loc);
 
     /// The parser expects that 'ExpectedTok' is next in the
     /// input.  If so, it is consumed and false is returned.
@@ -182,7 +178,7 @@ public:
                           const char* diag_msg = "",
                           unsigned int skip_to_tok = Token::unknown);
 
-    DiagnosticBuilder Diag(clang::SourceLocation loc, unsigned int id)
+    DiagnosticBuilder Diag(SourceLocation loc, unsigned int id)
     {
         return m_preproc.Diag(loc, id);
     }
@@ -225,8 +221,8 @@ public:
     /// with leading whitespace (if stop_at_ws is true).
     llvm::StringRef MergeTokensUntil(const unsigned int* toks,
                                      unsigned int num_toks,
-                                     clang::SourceLocation* start,
-                                     clang::SourceLocation* end,
+                                     SourceLocation* start,
+                                     SourceLocation* end,
                                      llvm::SmallVectorImpl<char>& buffer,
                                      bool stop_at_eos = true,
                                      bool stop_at_ws = true);

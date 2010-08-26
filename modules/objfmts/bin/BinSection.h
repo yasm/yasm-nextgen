@@ -28,7 +28,7 @@
 //
 #include <string>
 
-#include "clang/Basic/SourceLocation.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/AssocData.h"
@@ -60,8 +60,8 @@ struct YASM_STD_EXPORT BinSection : public AssocData
     // User-provided starts
     util::scoped_ptr<Expr> start;
     util::scoped_ptr<Expr> vstart;
-    clang::SourceLocation start_source;
-    clang::SourceLocation vstart_source;
+    SourceLocation start_source;
+    SourceLocation vstart_source;
 
     // User-provided follows
     std::string follows;

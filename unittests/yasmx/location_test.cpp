@@ -24,7 +24,7 @@
 //
 #include <gtest/gtest.h>
 
-#include "clang/Basic/SourceManager.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"
@@ -41,8 +41,6 @@ class LocationTest : public testing::Test
 protected:
     Bytecode bc1, bc2;
     Location loc1, loc2, loc3;
-
-    clang::SourceManager smgr;
 
     virtual void SetUp()
     {
@@ -90,7 +88,9 @@ TEST_F(LocationTest, CalcDist)
 TEST_F(LocationTest, SimplifyCalcDistNoBC)
 {
     yasmunit::MockDiagnosticClient mock_client;
-    Diagnostic diags(&smgr, &mock_client);
+    Diagnostic diags(&mock_client);
+    SourceManager smgr(diags);
+    diags.setSourceManager(&smgr);
 
     Expr e;
 
@@ -110,7 +110,9 @@ TEST_F(LocationTest, SimplifyCalcDistNoBC)
 TEST_F(LocationTest, SimplifyCalcDist)
 {
     yasmunit::MockDiagnosticClient mock_client;
-    Diagnostic diags(&smgr, &mock_client);
+    Diagnostic diags(&mock_client);
+    SourceManager smgr(diags);
+    diags.setSourceManager(&smgr);
 
     Expr e;
 

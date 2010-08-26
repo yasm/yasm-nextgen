@@ -619,7 +619,7 @@ arch::AppendGeneral(BytecodeContainer& container,
                     unsigned char rex,
                     X86GeneralPostOp postop,
                     bool default_rel,
-                    clang::SourceLocation source)
+                    SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     ++num_generic;

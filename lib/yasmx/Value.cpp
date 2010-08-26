@@ -231,7 +231,7 @@ Value::Clear()
     m_abs.reset(0);
     m_rel = SymbolRef(0);
     m_wrt = SymbolRef(0);
-    m_source = clang::SourceRange();
+    m_source = SourceRange();
     m_sub_sym = false;
     m_sub_loc = false;
     m_insn_start = 0;

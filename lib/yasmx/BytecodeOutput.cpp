@@ -75,14 +75,13 @@ BytecodeNoOutput::ConvertValueToBytes(Value& value,
 }
 
 void
-BytecodeNoOutput::DoOutputGap(unsigned int size, clang::SourceLocation source)
+BytecodeNoOutput::DoOutputGap(unsigned int size, SourceLocation source)
 {
     // expected
 }
 
 void
-BytecodeNoOutput::DoOutputBytes(const Bytes& bytes,
-                                clang::SourceLocation source)
+BytecodeNoOutput::DoOutputBytes(const Bytes& bytes, SourceLocation source)
 {
     if (bytes.empty())
         return;
@@ -94,8 +93,7 @@ BytecodeStreamOutput::~BytecodeStreamOutput()
 }
 
 void
-BytecodeStreamOutput::DoOutputGap(unsigned int size,
-                                  clang::SourceLocation source)
+BytecodeStreamOutput::DoOutputGap(unsigned int size, SourceLocation source)
 {
     // Warn that gaps are converted to 0 and write out the 0's.
     static const unsigned long BLOCK_SIZE = 4096;
@@ -118,8 +116,7 @@ BytecodeStreamOutput::DoOutputGap(unsigned int size,
 }
 
 void
-BytecodeStreamOutput::DoOutputBytes(const Bytes& bytes,
-                                    clang::SourceLocation source)
+BytecodeStreamOutput::DoOutputBytes(const Bytes& bytes, SourceLocation source)
 {
     // Output bytes to file
     m_os << bytes;

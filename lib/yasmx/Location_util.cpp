@@ -280,7 +280,7 @@ yasm::Evaluate(const Expr& e,
             size_t nchild = term.getNumChild();
             assert(stack.size() >= nchild && "not enough terms to evaluate op");
             Op::Op op = term.getOp();
-            clang::SourceLocation op_source = term.getSource();
+            SourceLocation op_source = term.getSource();
 
             // Get first child (will be used as result)
             size_t resultindex = stack.size()-nchild;

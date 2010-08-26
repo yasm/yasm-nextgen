@@ -35,10 +35,10 @@
 #include <string>
 #include <vector>
 
-#include "clang/Basic/SourceLocation.h"
-#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
+#include "yasmx/Basic/SourceLocation.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Parse/IdentifierTable.h"
 #include "yasmx/Parse/Lexer.h"
@@ -56,13 +56,11 @@ class HeaderSearch;
 class YASM_LIB_EXPORT Preprocessor
 {
 public:
-    Preprocessor(Diagnostic& diags,
-                 clang::SourceManager& sm,
-                 HeaderSearch& headers);
+    Preprocessor(Diagnostic& diags, SourceManager& sm, HeaderSearch& headers);
     virtual ~Preprocessor();
 
     Diagnostic& getDiagnostics() const { return m_diags; }
-    clang::SourceManager& getSourceManager() const { return m_source_mgr; }
+    SourceManager& getSourceManager() const { return m_source_mgr; }
     IdentifierTable& getIdentifierTable() { return m_identifiers; }
     llvm::BumpPtrAllocator& getPreprocessorAllocator() { return m_bp; }
 
@@ -97,9 +95,9 @@ public:
     /// Add a source file to the top of the include stack and
     /// start lexing tokens from it instead of the current buffer.  Return true
     /// and fill in ErrorStr with the error information on failure.
-    bool EnterSourceFile(clang::FileID cur_file_id,
+    void EnterSourceFile(FileID cur_file_id,
                          const DirectoryLookup* dir,
-                         std::string* error_str);
+                         SourceLocation loc);
 
     /// Add a "macro" context to the top of the include stack,
     /// which will cause the lexer to start returning the specified tokens.
@@ -199,7 +197,7 @@ public:
     /// the specified Token's location, translating the token's start
     /// position in the current buffer into a SourcePosition object for
     /// rendering.
-    DiagnosticBuilder Diag(clang::SourceLocation loc, unsigned int id)
+    DiagnosticBuilder Diag(SourceLocation loc, unsigned int id)
     {
         return m_diags.Report(loc, id);
     }
@@ -244,12 +242,12 @@ public:
     /// the returned source location would not be meaningful (e.g., if
     /// it points into a macro), this routine returns an invalid
     /// source location.
-    clang::SourceLocation getLocForEndOfToken(clang::SourceLocation Loc);
+    SourceLocation getLocForEndOfToken(SourceLocation Loc);
 
     /// Given a location that specifies the start of a
     /// token, return a new location that specifies a character within the token.
-    clang::SourceLocation AdvanceToTokenCharacter
-        (clang::SourceLocation tok_start, unsigned int char_no);
+    SourceLocation AdvanceToTokenCharacter
+        (SourceLocation tok_start, unsigned int char_no);
 
 
     // Preprocessor callback methods.  These are invoked by a lexer as various
@@ -279,10 +277,10 @@ public:
     /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
     /// return null on failure.  isAngled indicates whether the file reference is
     /// for system #include's or not (i.e. using <> instead of "").
-    const clang::FileEntry* LookupFile(llvm::StringRef filename,
-                                       bool is_angled,
-                                       const DirectoryLookup* from_dir,
-                                       const DirectoryLookup*& cur_dir);
+    const FileEntry* LookupFile(llvm::StringRef filename,
+                                bool is_angled,
+                                const DirectoryLookup* from_dir,
+                                const DirectoryLookup*& cur_dir);
 
     /// GetCurDirLookup - The DirectoryLookup structure used to find the current
     /// FileEntry, if CurLexer is non-null and if applicable.  This allows us to
@@ -295,8 +293,8 @@ public:
 
 protected:
     Diagnostic& m_diags;
-    clang::FileManager& m_file_mgr;
-    clang::SourceManager& m_source_mgr;
+    FileManager& m_file_mgr;
+    SourceManager& m_source_mgr;
     HeaderSearch& m_header_info;
 
     /// A BumpPtrAllocator object used to quickly allocate and release
@@ -399,13 +397,13 @@ protected:
     virtual void RegisterBuiltinMacros();
 
     /// Factory function to make a new lexer.
-    virtual Lexer* CreateLexer(clang::FileID fid,
+    virtual Lexer* CreateLexer(FileID fid,
                                const llvm::MemoryBuffer* input_buffer) = 0;
 
 #if 0
     /// Factory function to make a new raw lexer.
     virtual Lexer* CreateRawLexer
-        (clang::SourceLocation file_loc,
+        (SourceLocation file_loc,
          const char *buf_start,
          const char *buf_ptr,
          const char *buf_end) = 0;

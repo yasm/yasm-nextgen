@@ -90,7 +90,7 @@ bool
 yasm::CalcFloat(llvm::APFloat* lhs,
                 Op::Op op,
                 const llvm::APFloat& rhs,
-                clang::SourceLocation source,
+                SourceLocation source,
                 Diagnostic& diags)
 {
     llvm::APFloat::opStatus status;
@@ -170,7 +170,7 @@ const ExprBuilder yasm::WRT = {Op::WRT};
 const ExprBuilder yasm::SEGOFF = {Op::SEGOFF};
 
 ExprTerm::ExprTerm(std::auto_ptr<IntNum> intn,
-                   clang::SourceLocation source,
+                   SourceLocation source,
                    int depth)
     : m_source(source), m_type(INT), m_depth(depth)
 {
@@ -179,7 +179,7 @@ ExprTerm::ExprTerm(std::auto_ptr<IntNum> intn,
 }
 
 ExprTerm::ExprTerm(std::auto_ptr<llvm::APFloat> flt,
-                   clang::SourceLocation source,
+                   SourceLocation source,
                    int depth)
     : m_source(source), m_type(FLOAT), m_depth(depth)
 {
@@ -302,7 +302,7 @@ ExprTerm::Dump() const
 }
 
 void
-Expr::AppendOp(Op::Op op, int nchild, clang::SourceLocation source)
+Expr::AppendOp(Op::Op op, int nchild, SourceLocation source)
 {
     assert(nchild != 0 && "expression must have more than 0 terms");
     switch (nchild)
@@ -335,12 +335,12 @@ Expr::Expr(const Expr& e)
 {
 }
 
-Expr::Expr(std::auto_ptr<IntNum> intn, clang::SourceLocation source)
+Expr::Expr(std::auto_ptr<IntNum> intn, SourceLocation source)
 {
     m_terms.push_back(ExprTerm(intn, source));
 }
 
-Expr::Expr(std::auto_ptr<llvm::APFloat> flt, clang::SourceLocation source)
+Expr::Expr(std::auto_ptr<llvm::APFloat> flt, SourceLocation source)
 {
     m_terms.push_back(ExprTerm(flt, source));
 }
@@ -609,7 +609,7 @@ Expr::LevelOp(Diagnostic& diags, bool simplify_reg_mul, int pos)
     if (!root.isOp())
         return;
     Op::Op op = root.getOp();
-    clang::SourceLocation op_source = root.getSource();
+    SourceLocation op_source = root.getSource();
     bool do_level = isAssociative(op);
 
     // Only one of intchild and fltchild is active.  If we run into a float,

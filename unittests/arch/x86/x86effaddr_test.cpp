@@ -27,7 +27,7 @@
 
 #include <gtest/gtest.h>
 
-#include "clang/Basic/SourceManager.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
@@ -53,9 +53,9 @@ protected:
     X86Register BX, BP, SI, DI;
     X86Register EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI;
 
-    clang::SourceManager smgr;
     ::testing::StrictMock<yasmunit::MockDiagnosticClient> mock_client;
     Diagnostic diags;
+    SourceManager smgr;
 
     X86EffAddrTestBase()
         : BX(X86Register::REG16, 3)
@@ -70,8 +70,10 @@ protected:
         , EBP(X86Register::REG32, 5)
         , ESI(X86Register::REG32, 6)
         , EDI(X86Register::REG32, 7)
-        , diags(&smgr, &mock_client)
+        , diags(&mock_client)
+        , smgr(diags)
     {
+        diags.setSourceManager(&smgr);
     }
 };
 
@@ -411,7 +413,8 @@ TEST_F(X86EffAddrTest, InitExpr32)
             if (expect_error)
             {
                 ::testing::StrictMock<yasmunit::MockDiagnosticClient> mock_client2;
-                Diagnostic diags2(&smgr, &mock_client2);
+                Diagnostic diags2(&mock_client2);
+                diags2.setSourceManager(&smgr);
                 EXPECT_CALL(mock_client2,
                             HandleDiagnostic(Diagnostic::Error, ::testing::_));
                 EXPECT_FALSE(ea.Check(&addrsize, 32, false, &rex, 0, diags2));

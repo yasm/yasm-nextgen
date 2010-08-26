@@ -40,8 +40,6 @@
 #include "yasmx/NameValue.h"
 
 
-namespace clang { class SourceLocation; }
-
 namespace yasm
 {
 
@@ -49,6 +47,7 @@ class Diagnostic;
 class Expr;
 class IntNum;
 class Object;
+class SourceLocation;
 
 /// Directive helper function.
 /// @param nv       name/value
@@ -84,10 +83,10 @@ public:
     bool operator()
         (NameValues::iterator nv_first,
          NameValues::iterator nv_last,
-         clang::SourceLocation dir_source,
+         SourceLocation dir_source,
          Diagnostic& diags,
          FUNCTION::function<bool (NameValue& nv,
-                                  clang::SourceLocation dir_source,
+                                  SourceLocation dir_source,
                                   Diagnostic& diags)>
              helper_nameval);
 
@@ -210,7 +209,7 @@ void DirString(NameValue& nv,
 /// @return False
 YASM_LIB_EXPORT
 bool DirNameValueWarn(NameValue& nv,
-                      clang::SourceLocation dir_source,
+                      SourceLocation dir_source,
                       Diagnostic& diags);
 
 } // namespace yasm

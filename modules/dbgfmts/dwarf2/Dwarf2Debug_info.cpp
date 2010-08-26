@@ -70,11 +70,9 @@ Section&
 Dwarf2Debug::Generate_info(Section& debug_line, Section* main_code)
 {
     Section& debug_abbrev =
-        *m_objfmt->AppendSection(".debug_abbrev", clang::SourceLocation(),
-                                 *m_diags);
+        *m_objfmt->AppendSection(".debug_abbrev", SourceLocation(), *m_diags);
     Section& debug_info =
-        *m_objfmt->AppendSection(".debug_info", clang::SourceLocation(),
-                                 *m_diags);
+        *m_objfmt->AppendSection(".debug_info", SourceLocation(), *m_diags);
 
     debug_abbrev.setAlign(0);
     debug_info.setAlign(0);
@@ -90,12 +88,12 @@ Dwarf2Debug::Generate_info(Section& debug_line, Section* main_code)
     // and we're only generating one piece of info).
 
     // generating info using abbrev 1
-    AppendLEB128(debug_info, 1, false, clang::SourceLocation(), *m_diags);
+    AppendLEB128(debug_info, 1, false, SourceLocation(), *m_diags);
 
     // statement list (line numbers)
     AppendAbbrevAttr(abbrev, DW_AT_stmt_list, DW_FORM_data4);
     AppendData(debug_info, Expr::Ptr(new Expr(debug_line.getSymbol())),
-               m_sizeof_offset, *m_object.getArch(), clang::SourceLocation(),
+               m_sizeof_offset, *m_object.getArch(), SourceLocation(),
                *m_diags);
 
     if (main_code)
@@ -104,14 +102,14 @@ Dwarf2Debug::Generate_info(Section& debug_line, Section* main_code)
         // All code is contiguous in one section
         AppendAbbrevAttr(abbrev, DW_AT_low_pc, DW_FORM_addr);
         AppendData(debug_info, Expr::Ptr(new Expr(first)), m_sizeof_offset,
-                   *m_object.getArch(), clang::SourceLocation(), *m_diags);
+                   *m_object.getArch(), SourceLocation(), *m_diags);
 
         AppendAbbrevAttr(abbrev, DW_AT_high_pc, DW_FORM_addr);
         Expr::Ptr last(new Expr(first));
         last->Calc(Op::ADD, (main_code->bytecodes_back().getTailOffset() -
                              main_code->bytecodes_front().getOffset()));
         AppendData(debug_info, last, m_sizeof_offset, *m_object.getArch(),
-                   clang::SourceLocation(), *m_diags);
+                   SourceLocation(), *m_diags);
     }
 
     // input filename

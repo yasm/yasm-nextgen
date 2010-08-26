@@ -32,11 +32,11 @@
 //
 #include "llvm/ADT/StringRef.h"
 
-namespace clang { class DirectoryEntry; class FileEntry; }
-
 namespace yasm
 {
 
+class DirectoryEntry;
+class FileEntry;
 class HeaderSearch;
 
 /// DirectoryLookup - This class represents one entry in the search list that
@@ -45,7 +45,7 @@ class DirectoryLookup
 {
 private:
     /// Dir - This is the actual directory that we're referring to.
-    const clang::DirectoryEntry *Dir;
+    const DirectoryEntry *Dir;
 
     /// UserSupplied - True if this is a user-supplied directory.
     bool UserSupplied : 1;
@@ -53,7 +53,7 @@ private:
 public:
     /// DirectoryLookup ctor - Note that this ctor *does not take ownership* of
     /// 'dir'.
-    DirectoryLookup(const clang::DirectoryEntry* dir, bool isUser)
+    DirectoryLookup(const DirectoryEntry* dir, bool isUser)
         : Dir(dir), UserSupplied(isUser)
     {
     }
@@ -64,7 +64,7 @@ public:
 
     /// getDir - Return the directory that this entry refers to.
     ///
-    const clang::DirectoryEntry* getDir() const { return Dir; }
+    const DirectoryEntry* getDir() const { return Dir; }
 
     /// isUserSupplied - True if this is a user-supplied directory.
     ///
@@ -72,8 +72,8 @@ public:
 
     /// LookupFile - Lookup the specified file in this search path, returning it
     /// if it exists or returning null if not.
-    const clang::FileEntry* LookupFile(llvm::StringRef Filename,
-                                       HeaderSearch& HS) const;
+    const FileEntry* LookupFile(llvm::StringRef Filename,
+                                HeaderSearch& HS) const;
 };
 
 } // namespace yasm

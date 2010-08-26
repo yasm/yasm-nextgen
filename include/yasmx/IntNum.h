@@ -33,9 +33,9 @@
 #include <cstdlib>
 #include <string>
 
-#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Config/longlong.h"
 #include "yasmx/Op.h"
@@ -228,10 +228,10 @@ public:
     /// @return False if an error occurred.
     bool Calc(Op::Op op,
               const IntNum& operand,
-              clang::SourceLocation source,
+              SourceLocation source,
               Diagnostic& diags)
     { return CalcImpl(op, &operand, source, &diags); }
-    bool Calc(Op::Op op, clang::SourceLocation source, Diagnostic& diags)
+    bool Calc(Op::Op op, SourceLocation source, Diagnostic& diags)
     { return CalcImpl(op, 0, source, &diags); }
 
     /// Integer calculation function: acc = acc op operand.
@@ -241,9 +241,9 @@ public:
     /// @param operand  intnum operand
     /// @note Asserts if an error occurs.
     void CalcAssert(Op::Op op, const IntNum& operand)
-    { CalcImpl(op, &operand, clang::SourceLocation(), 0); }
+    { CalcImpl(op, &operand, SourceLocation(), 0); }
     void CalcAssert(Op::Op op)
-    { CalcImpl(op, 0, clang::SourceLocation(), 0); }
+    { CalcImpl(op, 0, SourceLocation(), 0); }
 
     /// Zero an intnum.
     void Zero() { set(static_cast<SmallValue>(0)); }
@@ -410,7 +410,7 @@ private:
     /// @return False if an error occurred.
     bool CalcImpl(Op::Op op,
                   /*@null@*/ const IntNum* operand,
-                  clang::SourceLocation source,
+                  SourceLocation source,
                   Diagnostic* diags);
 
     /// Set an intnum to an unsigned integer.

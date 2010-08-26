@@ -48,12 +48,12 @@ Dwarf2Debug::Generate_aranges(Section& debug_info)
     if (debug_aranges)
     {
         AppendAlign(*debug_aranges, Expr(2*m_sizeof_address), Expr(), Expr(), 0,
-                    clang::SourceLocation());
+                    SourceLocation());
     }
     else
     {
         debug_aranges = m_objfmt->AppendSection(".debug_aranges",
-                                                clang::SourceLocation(),
+                                                SourceLocation(),
                                                 *m_diags);
         debug_aranges->setAlign(2*m_sizeof_address);
     }
@@ -71,7 +71,7 @@ Dwarf2Debug::Generate_aranges(Section& debug_info)
         // Create address range descriptor
         Expr::Ptr start(new Expr(i->getSymbol()));
         AppendData(*debug_aranges, start, m_sizeof_address, *m_object.getArch(),
-                   clang::SourceLocation(), *m_diags);
+                   SourceLocation(), *m_diags);
 
         IntNum length;
         CalcDist(i->getBeginLoc(), i->getEndLoc(), &length);

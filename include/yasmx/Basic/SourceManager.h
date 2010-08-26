@@ -11,29 +11,32 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SOURCEMANAGER_H
-#define LLVM_CLANG_SOURCEMANAGER_H
+#ifndef YASM_SOURCEMANAGER_H
+#define YASM_SOURCEMANAGER_H
 
-#include "clang/Basic/SourceLocation.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/System/DataTypes.h"
+#include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/DenseMap.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include <vector>
 #include <cassert>
 
 namespace llvm {
 class MemoryBuffer;
+class StringRef;
 }
 
-namespace clang {
+namespace yasm {
 
+class Diagnostic;
 class SourceManager;
 class FileManager;
 class FileEntry;
-class IdentifierTokenInfo;
 class LineTableInfo;
-
+  
 /// SrcMgr - Public enums and private classes that are part of the
 /// SourceManager implementation.
 ///
@@ -51,9 +54,17 @@ namespace SrcMgr {
   /// ContentCache - Once instance of this struct is kept for every file
   /// loaded or used.  This object owns the MemoryBuffer object.
   class YASM_LIB_EXPORT ContentCache {
+    enum CCFlags {
+      /// \brief Whether the buffer is invalid.
+      InvalidFlag = 0x01,
+      /// \brief Whether the buffer should not be freed on destruction.
+      DoNotFreeFlag = 0x02
+    };
+    
     /// Buffer - The actual buffer containing the characters from the input
     /// file.  This is owned by the ContentCache object.
-    mutable const llvm::MemoryBuffer *Buffer;
+    /// The bits indicate indicates whether the buffer is invalid.
+    mutable llvm::PointerIntPair<const llvm::MemoryBuffer *, 2> Buffer;
 
   public:
     /// Reference to the file entry.  This reference does not own
@@ -70,10 +81,19 @@ namespace SrcMgr {
     /// if SourceLineCache is non-null.
     unsigned NumLines;
 
-    /// getBuffer - Returns the memory buffer for the associated content.  If
-    /// there is an error opening this buffer the first time, this manufactures
-    /// a temporary buffer and returns a non-empty error string.
-    const llvm::MemoryBuffer *getBuffer(std::string *ErrorStr = 0) const;
+    /// getBuffer - Returns the memory buffer for the associated content.
+    ///
+    /// \param Diag Object through which diagnostics will be emitted it the
+    /// buffer cannot be retrieved.
+    /// 
+    /// \param Loc If specified, is the location that invalid file diagnostics
+    ///     will be emitted at.
+    ///
+    /// \param Invalid If non-NULL, will be set \c true if an error occurred.
+    const llvm::MemoryBuffer *getBuffer(Diagnostic &Diag,
+                                        const SourceManager &SM,
+                                        SourceLocation Loc = SourceLocation(),
+                                        bool *Invalid = 0) const;
 
     /// getSize - Returns the size of the content encapsulated by this
     ///  ContentCache. This can be the size of the source file or the size of an
@@ -87,26 +107,45 @@ namespace SrcMgr {
     unsigned getSizeBytesMapped() const;
 
     void setBuffer(const llvm::MemoryBuffer *B) {
-      assert(!Buffer && "MemoryBuffer already set.");
-      Buffer = B;
+      assert(!Buffer.getPointer() && "MemoryBuffer already set.");
+      Buffer.setPointer(B);
+      Buffer.setInt(false);
+    }
+    
+    /// \brief Get the underlying buffer, returning NULL if the buffer is not
+    /// yet available.
+    const llvm::MemoryBuffer *getRawBuffer() const {
+      return Buffer.getPointer();
     }
 
     /// \brief Replace the existing buffer (which will be deleted)
     /// with the given buffer.
-    void replaceBuffer(const llvm::MemoryBuffer *B);
+    void replaceBuffer(const llvm::MemoryBuffer *B, bool DoNotFree = false);
 
+    /// \brief Determine whether the buffer itself is invalid.
+    bool isBufferInvalid() const {
+      return Buffer.getInt() & InvalidFlag;
+    }
+    
+    /// \brief Determine whether the buffer should be freed.
+    bool shouldFreeBuffer() const {
+      return (Buffer.getInt() & DoNotFreeFlag) == 0;
+    }
+    
     ContentCache(const FileEntry *Ent = 0)
-      : Buffer(0), Entry(Ent), SourceLineCache(0), NumLines(0) {}
+      : Buffer(0, false), Entry(Ent), SourceLineCache(0), NumLines(0) {}
 
     ~ContentCache();
 
     /// The copy ctor does not allow copies where source object has either
     ///  a non-NULL Buffer or SourceLineCache.  Ownership of allocated memory
     ///  is not transfered, so this is a logical error.
-    ContentCache(const ContentCache &RHS) : Buffer(0), SourceLineCache(0) {
+    ContentCache(const ContentCache &RHS) 
+      : Buffer(0, false), SourceLineCache(0) 
+    {
       Entry = RHS.Entry;
 
-      assert (RHS.Buffer == 0 && RHS.SourceLineCache == 0
+      assert (RHS.Buffer.getPointer() == 0 && RHS.SourceLineCache == 0
               && "Passed ContentCache object cannot own a buffer.");
 
       NumLines = RHS.NumLines;
@@ -265,6 +304,57 @@ public:
   /// \brief Read the source location entry with index ID.
   virtual void ReadSLocEntry(unsigned ID) = 0;
 };
+  
+
+/// IsBeforeInTranslationUnitCache - This class holds the cache used by
+/// isBeforeInTranslationUnit.  The cache structure is complex enough to be
+/// worth breaking out of SourceManager.
+class IsBeforeInTranslationUnitCache {
+  /// L/R QueryFID - These are the FID's of the cached query.  If these match up
+  /// with a subsequent query, the result can be reused.
+  FileID LQueryFID, RQueryFID;
+  
+  /// CommonFID - This is the file found in common between the two #include
+  /// traces.  It is the nearest common ancestor of the #include tree.
+  FileID CommonFID;
+  
+  /// L/R CommonOffset - This is the offset of the previous query in CommonFID.
+  /// Usually, this represents the location of the #include for QueryFID, but if
+  /// LQueryFID is a parent of RQueryFID (or vise versa) then these can be a
+  /// random token in the parent.
+  unsigned LCommonOffset, RCommonOffset;
+public:
+  
+  /// isCacheValid - Return true if the currently cached values match up with
+  /// the specified LHS/RHS query.  If not, we can't use the cache.
+  bool isCacheValid(FileID LHS, FileID RHS) const {
+    return LQueryFID == LHS && RQueryFID == RHS;
+  }
+  
+  /// getCachedResult - If the cache is valid, compute the result given the
+  /// specified offsets in the LHS/RHS FID's.
+  bool getCachedResult(unsigned LOffset, unsigned ROffset) const {
+    // If one of the query files is the common file, use the offset.  Otherwise,
+    // use the #include loc in the common file.
+    if (LQueryFID != CommonFID) LOffset = LCommonOffset;
+    if (RQueryFID != CommonFID) ROffset = RCommonOffset;
+    return LOffset < ROffset;
+  }
+  
+  // Set up a new query.
+  void setQueryFIDs(FileID LHS, FileID RHS) {
+    LQueryFID = LHS;
+    RQueryFID = RHS;
+  }
+  
+  void setCommonLoc(FileID commonFID, unsigned lCommonOffset,
+                    unsigned rCommonOffset) {
+    CommonFID = commonFID;
+    LCommonOffset = lCommonOffset;
+    RCommonOffset = rCommonOffset;
+  }
+  
+};
 
 /// SourceManager - This file handles loading and caching of source files into
 /// memory.  This object owns the MemoryBuffer objects for all of the loaded
@@ -278,6 +368,9 @@ public:
 /// location indicates where the expanded token came from and the instantiation
 /// location specifies where it was expanded.
 class YASM_LIB_EXPORT SourceManager {
+  /// \brief Diagnostic object.
+  Diagnostic &Diag;
+  
   mutable llvm::BumpPtrAllocator ContentCacheAlloc;
 
   /// FileInfos - Memoized information about all of the files tracked by this
@@ -329,16 +422,14 @@ class YASM_LIB_EXPORT SourceManager {
   mutable unsigned NumLinearScans, NumBinaryProbes;
 
   // Cache results for the isBeforeInTranslationUnit method.
-  mutable FileID LastLFIDForBeforeTUCheck;
-  mutable FileID LastRFIDForBeforeTUCheck;
-  mutable bool   LastResForBeforeTUCheck;
+  mutable IsBeforeInTranslationUnitCache IsBeforeInTUCache;
 
   // SourceManager doesn't support copy construction.
   explicit SourceManager(const SourceManager&);
   void operator=(const SourceManager&);
 public:
-  SourceManager()
-    : ExternalSLocEntries(0), LineTable(0), NumLinearScans(0), 
+  SourceManager(Diagnostic &Diag)
+    : Diag(Diag), ExternalSLocEntries(0), LineTable(0), NumLinearScans(0),
       NumBinaryProbes(0) {
     clearIDTables();
   }
@@ -368,7 +459,7 @@ public:
   /// createFileID - Create a new FileID that represents the specified file
   /// being #included from the specified IncludePosition.  This returns 0 on
   /// error and translates NULL into standard input.
-  /// PreallocateID should be non-zero to specify which a pre-allocated,
+  /// PreallocateID should be non-zero to specify which pre-allocated,
   /// lazily computed source location is being filled in by this operation.
   FileID createFileID(const FileEntry *SourceFile, SourceLocation IncludePos,
                       SrcMgr::CharacteristicKind FileCharacter,
@@ -409,7 +500,11 @@ public:
                                         unsigned Offset = 0);
 
   /// \brief Retrieve the memory buffer associated with the given file.
-  const llvm::MemoryBuffer *getMemoryBufferForFile(const FileEntry *File);
+  ///
+  /// \param Invalid If non-NULL, will be set \c true if an error
+  /// occurs while retrieving the memory buffer.
+  const llvm::MemoryBuffer *getMemoryBufferForFile(const FileEntry *File,
+                                                   bool *Invalid = 0);
 
   /// \brief Override the contents of the given source file by providing an
   /// already-allocated buffer.
@@ -419,9 +514,13 @@ public:
   /// \param Buffer the memory buffer whose contents will be used as the
   /// data in the given source file.
   ///
+  /// \param DoNotFree If true, then the buffer will not be freed when the
+  /// source manager is destroyed.
+  ///
   /// \returns true if an error occurred, false otherwise.
   bool overrideFileContents(const FileEntry *SourceFile,
-                            const llvm::MemoryBuffer *Buffer);
+                            const llvm::MemoryBuffer *Buffer,
+                            bool DoNotFree = false);
 
   //===--------------------------------------------------------------------===//
   // FileID manipulation methods.
@@ -430,18 +529,28 @@ public:
   /// getBuffer - Return the buffer for the specified FileID. If there is an
   /// error opening this buffer the first time, this manufactures a temporary
   /// buffer and returns a non-empty error string.
-  const llvm::MemoryBuffer *getBuffer(FileID FID, std::string *Error = 0) const{
-    return getSLocEntry(FID).getFile().getContentCache()->getBuffer(Error);
+  const llvm::MemoryBuffer *getBuffer(FileID FID, SourceLocation Loc,
+                                      bool *Invalid = 0) const {
+    return getSLocEntry(FID).getFile().getContentCache()
+       ->getBuffer(Diag, *this, Loc, Invalid);
   }
 
+  const llvm::MemoryBuffer *getBuffer(FileID FID, bool *Invalid = 0) const {
+    return getSLocEntry(FID).getFile().getContentCache()
+       ->getBuffer(Diag, *this, SourceLocation(), Invalid);
+  }
+  
   /// getFileEntryForID - Returns the FileEntry record for the provided FileID.
   const FileEntry *getFileEntryForID(FileID FID) const {
     return getSLocEntry(FID).getFile().getContentCache()->Entry;
   }
 
-  /// getBufferData - Return a pointer to the start and end of the source buffer
-  /// data for the specified FileID.
-  std::pair<const char*, const char*> getBufferData(FileID FID) const;
+  /// getBufferData - Return a StringRef to the source buffer data for the
+  /// specified FileID.
+  ///
+  /// \param FID The file ID whose contents will be returned.
+  /// \param Invalid If non-NULL, will be set true if an error occurred.
+  llvm::StringRef getBufferData(FileID FID, bool *Invalid = 0) const;
 
 
   //===--------------------------------------------------------------------===//
@@ -559,31 +668,37 @@ public:
 
   /// getCharacterData - Return a pointer to the start of the specified location
   /// in the appropriate spelling MemoryBuffer.
-  const char *getCharacterData(SourceLocation SL) const;
+  ///
+  /// \param Invalid If non-NULL, will be set \c true if an error occurs.
+  const char *getCharacterData(SourceLocation SL, bool *Invalid = 0) const;
 
   /// getColumnNumber - Return the column # for the specified file position.
   /// This is significantly cheaper to compute than the line number.  This
   /// returns zero if the column number isn't known.  This may only be called on
   /// a file sloc, so you must choose a spelling or instantiation location
   /// before calling this method.
-  unsigned getColumnNumber(FileID FID, unsigned FilePos) const;
-  unsigned getSpellingColumnNumber(SourceLocation Loc) const;
-  unsigned getInstantiationColumnNumber(SourceLocation Loc) const;
+  unsigned getColumnNumber(FileID FID, unsigned FilePos, 
+                           bool *Invalid = 0) const;
+  unsigned getSpellingColumnNumber(SourceLocation Loc,
+                                   bool *Invalid = 0) const;
+  unsigned getInstantiationColumnNumber(SourceLocation Loc,
+                                        bool *Invalid = 0) const;
 
 
   /// getLineNumber - Given a SourceLocation, return the spelling line number
   /// for the position indicated.  This requires building and caching a table of
   /// line offsets for the MemoryBuffer, so this is not cheap: use only when
   /// about to emit a diagnostic.
-  unsigned getLineNumber(FileID FID, unsigned FilePos) const;
+  unsigned getLineNumber(FileID FID, unsigned FilePos, bool *Invalid = 0) const;
 
-  unsigned getInstantiationLineNumber(SourceLocation Loc) const;
-  unsigned getSpellingLineNumber(SourceLocation Loc) const;
+  unsigned getInstantiationLineNumber(SourceLocation Loc, 
+                                      bool *Invalid = 0) const;
+  unsigned getSpellingLineNumber(SourceLocation Loc, bool *Invalid = 0) const;
 
   /// Return the filename or buffer identifier of the buffer the location is in.
   /// Note that this name does not respect #line directives.  Use getPresumedLoc
   /// for normal clients.
-  const char *getBufferName(SourceLocation Loc) const;
+  const char *getBufferName(SourceLocation Loc, bool *Invalid = 0) const;
 
   /// getFileCharacteristic - return the file characteristic of the specified
   /// source location, indicating whether this is a normal file, a system
@@ -679,9 +794,9 @@ public:
   void PrintStats() const;
 
   unsigned sloc_entry_size() const { return SLocEntryTable.size(); }
-  
+
   // FIXME: Exposing this is a little gross; what we want is a good way
-  //  to iterate the entries that were not defined in a PCH file (or
+  //  to iterate the entries that were not defined in an AST file (or
   //  any other external source).
   unsigned sloc_loaded_entry_size() const { return SLocEntryLoaded.size(); }
 
@@ -693,8 +808,8 @@ public:
       ExternalSLocEntries->ReadSLocEntry(ID);
     return SLocEntryTable[ID];
   }
-  
-  const SrcMgr::SLocEntry &getSLocEntry(FileID FID) const {    
+
+  const SrcMgr::SLocEntry &getSLocEntry(FileID FID) const {
     return getSLocEntry(FID.ID);
   }
 
@@ -756,6 +871,6 @@ private:
 };
 
 
-}  // end namespace clang
+}  // end namespace yasm
 
 #endif

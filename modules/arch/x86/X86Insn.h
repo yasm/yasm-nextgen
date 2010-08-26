@@ -31,10 +31,11 @@
 
 #include "X86Arch.h"
 
-namespace clang { class SourceLocation; }
-
 namespace yasm
 {
+
+class SourceLocation;
+
 namespace arch
 {
 
@@ -64,14 +65,14 @@ public:
 
 protected:
     bool DoAppend(BytecodeContainer& container,
-                  clang::SourceLocation source,
+                  SourceLocation source,
                   Diagnostic& diags);
     void DoWrite(YAML::Emitter& out) const;
 
 private:
     bool DoAppendJmpFar(BytecodeContainer& container,
                         const X86InsnInfo& info,
-                        clang::SourceLocation source,
+                        SourceLocation source,
                         Diagnostic& diags);
 
     bool MatchJmpInfo(const X86InsnInfo& info,
@@ -80,13 +81,13 @@ private:
                       X86Opcode& nearop) const;
     bool DoAppendJmp(BytecodeContainer& container,
                      const X86InsnInfo& jinfo,
-                     clang::SourceLocation source,
+                     SourceLocation source,
                      Diagnostic& diags);
 
     bool DoAppendGeneral(BytecodeContainer& container,
                          const X86InsnInfo& info,
                          const unsigned int* size_lookup,
-                         clang::SourceLocation source,
+                         SourceLocation source,
                          Diagnostic& diags);
 
     const X86InsnInfo* FindMatch(const unsigned int* size_lookup, int bypass)
@@ -100,7 +101,7 @@ private:
                       const unsigned int* size_lookup,
                       int bypass) const;
     void MatchError(const unsigned int* size_lookup,
-                    clang::SourceLocation source,
+                    SourceLocation source,
                     Diagnostic& diags) const;
 
     // architecture

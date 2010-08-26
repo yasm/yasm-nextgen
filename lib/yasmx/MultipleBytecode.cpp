@@ -273,7 +273,7 @@ MultipleBytecode::Write(YAML::Emitter& out) const
 BytecodeContainer&
 yasm::AppendMultiple(BytecodeContainer& container,
                      std::auto_ptr<Expr> multiple,
-                     clang::SourceLocation source)
+                     SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     MultipleBytecode* multbc(new MultipleBytecode(multiple));

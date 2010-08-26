@@ -302,7 +302,7 @@ yasm::AppendAlign(BytecodeContainer& container,
                   const Expr& fill,
                   const Expr& maxskip,
                   /*@null@*/ const unsigned char** code_fill,
-                  clang::SourceLocation source)
+                  SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     bc.Transform(Bytecode::Contents::Ptr(

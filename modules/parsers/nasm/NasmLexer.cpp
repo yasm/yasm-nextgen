@@ -47,7 +47,7 @@ STATISTIC(num_eol_comment, "Number of EOL comments lexed");
 using namespace yasm;
 using namespace yasm::parser;
 
-NasmLexer::NasmLexer(clang::FileID fid,
+NasmLexer::NasmLexer(FileID fid,
                      const llvm::MemoryBuffer* input_buffer,
                      Preprocessor& pp)
     : Lexer(fid, input_buffer, pp)
@@ -55,7 +55,7 @@ NasmLexer::NasmLexer(clang::FileID fid,
     InitCharacterInfo();
 }
 
-NasmLexer::NasmLexer(clang::SourceLocation file_loc,
+NasmLexer::NasmLexer(SourceLocation file_loc,
                      const char* start,
                      const char* ptr,
                      const char* end)

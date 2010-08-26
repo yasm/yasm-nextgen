@@ -194,7 +194,7 @@ void
 yasm::AppendOrg(BytecodeContainer& container,
                 unsigned long start,
                 unsigned long fill,
-                clang::SourceLocation source)
+                SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     bc.Transform(Bytecode::Contents::Ptr(new OrgBytecode(start, fill)));

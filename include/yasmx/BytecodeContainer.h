@@ -37,7 +37,6 @@
 #include "Location.h"
 
 
-namespace clang { class SourceLocation; }
 namespace YAML { class Emitter; }
 
 namespace yasm
@@ -50,6 +49,7 @@ class Expr;
 class IntNum;
 class Section;
 class Object;
+class SourceLocation;
 
 /// A bytecode container.
 class YASM_LIB_EXPORT BytecodeContainer
@@ -80,7 +80,7 @@ public:
     /// @param size     number of bytes of gap
     /// @param source   source location
     /// @return Reference to gap bytecode.
-    Bytecode& AppendGap(unsigned long size, clang::SourceLocation source);
+    Bytecode& AppendGap(unsigned long size, SourceLocation source);
 
     /// Start a new bytecode at the end of the container.  Factory function.
     /// @return Reference to new bytecode.
@@ -189,7 +189,7 @@ void AppendData(BytecodeContainer& container,
                 std::auto_ptr<Expr> expr,
                 unsigned int size,
                 const Arch& arch,
-                clang::SourceLocation source,
+                SourceLocation source,
                 Diagnostic& diags);
 
 /// Append a string value to the end of a section.
@@ -222,7 +222,7 @@ YASM_LIB_EXPORT
 void AppendLEB128(BytecodeContainer& container,
                   const IntNum& intn,
                   bool sign,
-                  clang::SourceLocation source,
+                  SourceLocation source,
                   Diagnostic& diags);
 
 /// Append an LEB128-encoded data value to the end of a section.
@@ -235,7 +235,7 @@ YASM_LIB_EXPORT
 void AppendLEB128(BytecodeContainer& container,
                   std::auto_ptr<Expr> expr,
                   bool sign,
-                  clang::SourceLocation source,
+                  SourceLocation source,
                   Diagnostic& diags);
 
 /// Append a binary file verbatim to the end of a section.
@@ -251,7 +251,7 @@ void AppendIncbin(BytecodeContainer& container,
                   llvm::StringRef filename,
                   /*@null@*/ std::auto_ptr<Expr> start,
                   /*@null@*/ std::auto_ptr<Expr> maxlen,
-                  clang::SourceLocation source);
+                  SourceLocation source);
 
 /// Append an alignment constraint that aligns the following data to a boundary.
 /// @param sect         section
@@ -270,7 +270,7 @@ void AppendAlign(BytecodeContainer& container,
                  const Expr& fill,
                  const Expr& maxskip,
                  /*@null@*/ const unsigned char** code_fill,
-                 clang::SourceLocation source);
+                 SourceLocation source);
 
 /// Append a location constraint that puts the following data at a fixed
 /// section offset.
@@ -282,7 +282,7 @@ YASM_LIB_EXPORT
 void AppendOrg(BytecodeContainer& container,
                unsigned long start,
                unsigned long fill,
-               clang::SourceLocation source);
+               SourceLocation source);
 
 /// Append a multiple container.
 /// @param container    bytecode container
@@ -292,7 +292,7 @@ void AppendOrg(BytecodeContainer& container,
 YASM_LIB_EXPORT
 BytecodeContainer& AppendMultiple(BytecodeContainer& container,
                                   std::auto_ptr<Expr> multiple,
-                                  clang::SourceLocation source);
+                                  SourceLocation source);
 
 } // namespace yasm
 

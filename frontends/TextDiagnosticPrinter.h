@@ -15,25 +15,22 @@
 #ifndef YASM_TEXT_DIAGNOSTIC_PRINTER_H
 #define YASM_TEXT_DIAGNOSTIC_PRINTER_H
 
-#include "clang/Basic/SourceLocation.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Diagnostic.h"
 
 namespace llvm {
   class raw_ostream;
 }
 
-namespace clang {
-class SourceManager;
-}
-
 namespace yasm {
 class LangOptions;
+class SourceManager;
 
 class TextDiagnosticPrinter : public DiagnosticClient {
   llvm::raw_ostream &OS;
   const LangOptions *LangOpts;
-  clang::SourceLocation LastWarningLoc;
-  clang::FullSourceLoc LastLoc;
+  SourceLocation LastWarningLoc;
+  FullSourceLoc LastLoc;
   bool LastCaretDiagnosticWasNote;
 
   bool VcStyle;
@@ -70,19 +67,18 @@ public:
     LangOpts = LO;
   }
 
-  void PrintIncludeStack(clang::SourceLocation Loc,
-                         const clang::SourceManager &SM);
+  void PrintIncludeStack(SourceLocation Loc, const SourceManager &SM);
 
-  void HighlightRange(const clang::SourceRange &R,
-                      const clang::SourceManager &SrcMgr,
-                      unsigned LineNo, clang::FileID FID,
+  void HighlightRange(const CharSourceRange &R,
+                      const SourceManager &SrcMgr,
+                      unsigned LineNo, FileID FID,
                       std::string &CaretLine,
                       const std::string &SourceLine);
 
-  void EmitCaretDiagnostic(clang::SourceLocation Loc,
-                           clang::SourceRange *Ranges, unsigned NumRanges,
-                           clang::SourceManager &SM,
-                           const CodeModificationHint *Hints,
+  void EmitCaretDiagnostic(SourceLocation Loc,
+                           CharSourceRange *Ranges, unsigned NumRanges,
+                           const SourceManager &SM,
+                           const FixItHint *Hints,
                            unsigned NumHints,
                            unsigned Columns);
 

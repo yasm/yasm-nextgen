@@ -34,8 +34,8 @@
 #include <cmath>
 #include <cstdio>
 
-#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallString.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Bytecode.h"
@@ -72,7 +72,7 @@ next:
 
     m_container = m_object->getCurSection();
 
-    clang::SourceLocation exp_source = m_token.getLocation();
+    SourceLocation exp_source = m_token.getLocation();
 
     switch (m_token.getKind())
     {
@@ -85,7 +85,7 @@ next:
             if (peek_token.is(GasToken::colon))
             {
                 // Label
-                clang::SourceLocation id_source = ConsumeToken();
+                SourceLocation id_source = ConsumeToken();
                 ConsumeToken(); // consume the colon too
                 Bytecode& bc = m_container->FreshBytecode();
                 Location loc = {&bc, bc.getFixedLen()};
@@ -97,8 +97,8 @@ next:
             {
                 // EQU
                 // TODO: allow redefinition, assigning to . (same as .org)
-                clang::SourceLocation id_source = ConsumeToken();
-                clang::SourceLocation equ_source = ConsumeToken();
+                SourceLocation id_source = ConsumeToken();
+                SourceLocation equ_source = ConsumeToken();
                 Expr e;
                 if (!ParseExpr(e))
                 {
@@ -115,7 +115,7 @@ next:
             llvm::StringRef name = ii->getName();
             if (name[0] == '.')
             {
-                clang::SourceLocation id_source = ConsumeToken();
+                SourceLocation id_source = ConsumeToken();
 
                 // See if it's a gas-specific directive
                 GasDirMap::iterator p = m_gas_dirs.find(name);
@@ -196,8 +196,8 @@ next:
 
 void
 GasParser::setDebugFile(llvm::StringRef filename,
-                        clang::SourceRange filename_source,
-                        clang::SourceLocation dir_source)
+                        SourceRange filename_source,
+                        SourceLocation dir_source)
 {
     Directive dir;
     if (!m_dirs->get(&dir, ".file"))
@@ -212,10 +212,10 @@ GasParser::setDebugFile(llvm::StringRef filename,
 
 void
 GasParser::setDebugFile(const IntNum& fileno,
-                        clang::SourceRange fileno_source,
+                        SourceRange fileno_source,
                         llvm::StringRef filename,
-                        clang::SourceRange filename_source,
-                        clang::SourceLocation dir_source)
+                        SourceRange filename_source,
+                        SourceLocation dir_source)
 {
     Directive dir;
     if (!m_dirs->get(&dir, ".file"))
@@ -286,7 +286,7 @@ GasParser::ParseCppLineMarker()
     ConsumeToken();
 
     // Add a line note.
-    clang::SourceManager& smgr = m_preproc->getSourceManager();
+    SourceManager& smgr = m_preproc->getSourceManager();
     smgr.AddLineNote(m_source, line,
                      smgr.getLineTableFilenameID(filename.data(),
                                                  filename.size()));
@@ -376,7 +376,7 @@ GasParser::ParseNasmLineMarker()
 
     // Add a line note.
     // FIXME: handle increment
-    clang::SourceManager& smgr = m_preproc->getSourceManager();
+    SourceManager& smgr = m_preproc->getSourceManager();
     smgr.AddLineNote(m_source, line,
                      smgr.getLineTableFilenameID(filename.data(),
                                                  filename.size()));
@@ -397,7 +397,7 @@ GasParser::ParseNasmLineMarker()
 #endif
 // Line directive
 bool
-GasParser::ParseDirLine(unsigned int param, clang::SourceLocation source)
+GasParser::ParseDirLine(unsigned int param, SourceLocation source)
 {
     if (m_token.isNot(GasToken::numeric_constant))
     {
@@ -419,7 +419,7 @@ GasParser::ParseDirLine(unsigned int param, clang::SourceLocation source)
     {
         // Had previous file directive only
         m_dir_fileline = FL_BOTH;
-        clang::SourceManager& smgr = m_preproc.getSourceManager();
+        SourceManager& smgr = m_preproc.getSourceManager();
         smgr.AddLineNote(source, m_dir_line,
                          smgr.getLineTableFilenameID(m_dir_file.data(),
                                                      m_dir_file.size()));
@@ -436,14 +436,14 @@ GasParser::ParseDirLine(unsigned int param, clang::SourceLocation source)
 // Macro directives
 //
 bool
-GasParser::ParseDirInclude(unsigned int param, clang::SourceLocation source)
+GasParser::ParseDirInclude(unsigned int param, SourceLocation source)
 {
     if (m_token.isNot(GasToken::string_literal))
     {
         Diag(m_token, diag::err_expected_string);
         return false;
     }
-    clang::SourceLocation filename_source = m_token.getLocation();
+    SourceLocation filename_source = m_token.getLocation();
     llvm::SmallString<64> strbuf;
     GasStringParser str(m_token.getLiteral(), filename_source, m_preproc);
     if (str.hadError())
@@ -454,7 +454,7 @@ GasParser::ParseDirInclude(unsigned int param, clang::SourceLocation source)
 }
 
 bool
-GasParser::ParseDirRept(unsigned int param, clang::SourceLocation source)
+GasParser::ParseDirRept(unsigned int param, SourceLocation source)
 {
     Expr e;
     if (!ParseExpr(e))
@@ -519,7 +519,7 @@ GasParser::ParseDirRept(unsigned int param, clang::SourceLocation source)
 }
 
 bool
-GasParser::ParseDirEndr(unsigned int param, clang::SourceLocation source)
+GasParser::ParseDirEndr(unsigned int param, SourceLocation source)
 {
     // Shouldn't ever get here unless we didn't get a .rept first
     Diag(source, diag::err_endr_without_rept);
@@ -531,7 +531,7 @@ GasParser::ParseDirEndr(unsigned int param, clang::SourceLocation source)
 //
 
 bool
-GasParser::ParseDirAlign(unsigned int power2, clang::SourceLocation source)
+GasParser::ParseDirAlign(unsigned int power2, SourceLocation source)
 {
     Expr bound, fill, maxskip;
 
@@ -579,7 +579,7 @@ GasParser::ParseDirAlign(unsigned int power2, clang::SourceLocation source)
 }
 
 bool
-GasParser::ParseDirOrg(unsigned int param, clang::SourceLocation source)
+GasParser::ParseDirOrg(unsigned int param, SourceLocation source)
 {
     // TODO: support expr instead of intnum
     if (m_token.isNot(GasToken::numeric_constant))
@@ -616,7 +616,7 @@ GasParser::ParseDirOrg(unsigned int param, clang::SourceLocation source)
 //
 
 bool
-GasParser::ParseDirLocal(unsigned int param, clang::SourceLocation source)
+GasParser::ParseDirLocal(unsigned int param, SourceLocation source)
 {
     if (m_token.isNot(GasToken::identifier) && m_token.isNot(GasToken::label))
     {
@@ -631,7 +631,7 @@ GasParser::ParseDirLocal(unsigned int param, clang::SourceLocation source)
 }
 
 bool
-GasParser::ParseDirComm(unsigned int is_lcomm, clang::SourceLocation source)
+GasParser::ParseDirComm(unsigned int is_lcomm, SourceLocation source)
 {
     if (m_token.isNot(GasToken::identifier) && m_token.isNot(GasToken::label))
     {
@@ -640,18 +640,18 @@ GasParser::ParseDirComm(unsigned int is_lcomm, clang::SourceLocation source)
     }
 
     IdentifierInfo* ii = m_token.getIdentifierInfo();
-    clang::SourceLocation id_source = ConsumeToken();
+    SourceLocation id_source = ConsumeToken();
 
     ExpectAndConsume(GasToken::comma, diag::err_expected_comma);
 
     Expr e, align;
-    clang::SourceLocation e_source = m_token.getLocation();
+    SourceLocation e_source = m_token.getLocation();
     if (!ParseExpr(e))
     {
         Diag(e_source, diag::err_comm_size_expected);
         return false;
     }
-    clang::SourceLocation align_start, align_end;
+    SourceLocation align_start, align_end;
     if (m_token.is(GasToken::comma))
     {
         // Optional alignment expression
@@ -676,7 +676,7 @@ GasParser::ParseDirComm(unsigned int is_lcomm, clang::SourceLocation source)
 
         NameValues extvps;
         extvps.push_back(new NameValue(align_copy));
-        extvps.back().setValueRange(clang::SourceRange(align_start, align_end));
+        extvps.back().setValueRange(SourceRange(align_start, align_end));
 
         sym->CheckedDeclare(Symbol::COMMON, id_source,
                             m_preproc.getDiagnostics());
@@ -697,14 +697,14 @@ GasParser::ParseDirComm(unsigned int is_lcomm, clang::SourceLocation source)
 //
 
 bool
-GasParser::ParseDirAscii(unsigned int withzero, clang::SourceLocation source)
+GasParser::ParseDirAscii(unsigned int withzero, SourceLocation source)
 {
     for (;;)
     {
         // <##> character constant
         if (m_token.is(GasToken::less))
         {
-            clang::SourceLocation less_loc = ConsumeToken();
+            SourceLocation less_loc = ConsumeToken();
             if (m_token.isNot(GasToken::numeric_constant))
             {
                 Diag(less_loc, diag::err_expected_string);
@@ -714,7 +714,7 @@ GasParser::ParseDirAscii(unsigned int withzero, clang::SourceLocation source)
             IntNum val;
             if (!ParseInteger(&val))
                 return false;
-            clang::SourceLocation val_source = ConsumeToken();
+            SourceLocation val_source = ConsumeToken();
             AppendByte(*m_container, val.getUInt() & 0xff);
 
             MatchRHSPunctuation(GasToken::greater, less_loc);
@@ -742,7 +742,7 @@ GasParser::ParseDirAscii(unsigned int withzero, clang::SourceLocation source)
 }
 
 bool
-GasParser::ParseDirFloat(unsigned int size, clang::SourceLocation source)
+GasParser::ParseDirFloat(unsigned int size, SourceLocation source)
 {
     for (;;)
     {
@@ -771,7 +771,7 @@ GasParser::ParseDirFloat(unsigned int size, clang::SourceLocation source)
         }
 
         GasNumericParser num(num_str, m_token.getLocation(), m_preproc, true);
-        clang::SourceLocation num_source = ConsumeToken();
+        SourceLocation num_source = ConsumeToken();
         if (num.hadError())
             ;
         else if (num.isInteger())
@@ -795,11 +795,11 @@ GasParser::ParseDirFloat(unsigned int size, clang::SourceLocation source)
 }
 
 bool
-GasParser::ParseDirData(unsigned int size, clang::SourceLocation source)
+GasParser::ParseDirData(unsigned int size, SourceLocation source)
 {
     for (;;)
     {
-        clang::SourceLocation cur_source = m_token.getLocation();
+        SourceLocation cur_source = m_token.getLocation();
         std::auto_ptr<Expr> e(new Expr);
         if (!ParseExpr(*e))
         {
@@ -816,11 +816,11 @@ GasParser::ParseDirData(unsigned int size, clang::SourceLocation source)
 }
 
 bool
-GasParser::ParseDirLeb128(unsigned int sign, clang::SourceLocation source)
+GasParser::ParseDirLeb128(unsigned int sign, SourceLocation source)
 {
     for (;;)
     {
-        clang::SourceLocation cur_source = m_token.getLocation();
+        SourceLocation cur_source = m_token.getLocation();
         std::auto_ptr<Expr> e(new Expr);
         if (!ParseExpr(*e))
         {
@@ -841,9 +841,9 @@ GasParser::ParseDirLeb128(unsigned int sign, clang::SourceLocation source)
 //
 
 bool
-GasParser::ParseDirZero(unsigned int param, clang::SourceLocation source)
+GasParser::ParseDirZero(unsigned int param, SourceLocation source)
 {
-    clang::SourceLocation cur_source = m_token.getLocation();
+    SourceLocation cur_source = m_token.getLocation();
     std::auto_ptr<Expr> e(new Expr);
     if (!ParseExpr(*e))
     {
@@ -857,9 +857,9 @@ GasParser::ParseDirZero(unsigned int param, clang::SourceLocation source)
 }
 
 bool
-GasParser::ParseDirSkip(unsigned int param, clang::SourceLocation source)
+GasParser::ParseDirSkip(unsigned int param, SourceLocation source)
 {
-    clang::SourceLocation cur_source = m_token.getLocation();
+    SourceLocation cur_source = m_token.getLocation();
     std::auto_ptr<Expr> e(new Expr);
     if (!ParseExpr(*e))
     {
@@ -889,11 +889,11 @@ GasParser::ParseDirSkip(unsigned int param, clang::SourceLocation source)
 
 // fill data definition directive
 bool
-GasParser::ParseDirFill(unsigned int param, clang::SourceLocation source)
+GasParser::ParseDirFill(unsigned int param, SourceLocation source)
 {
     std::auto_ptr<Expr> repeat(new Expr);
     Expr size, value;
-    clang::SourceLocation size_src;
+    SourceLocation size_src;
     if (!ParseExpr(*repeat))
     {
         Diag(m_token, diag::err_expected_expression_after_id) << ".FILL";
@@ -911,7 +911,7 @@ GasParser::ParseDirFill(unsigned int param, clang::SourceLocation source)
         if (m_token.is(GasToken::comma))
         {
             ConsumeToken();
-            clang::SourceLocation value_src = m_token.getLocation();
+            SourceLocation value_src = m_token.getLocation();
             if (!ParseExpr(value))
             {
                 Diag(value_src, diag::err_expected_expression_after) << ",";
@@ -952,31 +952,31 @@ GasParser::ParseDirFill(unsigned int param, clang::SourceLocation source)
 //
 
 bool
-GasParser::ParseDirBssSection(unsigned int param, clang::SourceLocation source)
+GasParser::ParseDirBssSection(unsigned int param, SourceLocation source)
 {
     SwitchSection(".bss", true,
-                  clang::SourceRange(source, source.getFileLocWithOffset(4)));
+                  SourceRange(source, source.getFileLocWithOffset(4)));
     return true;
 }
 
 bool
-GasParser::ParseDirDataSection(unsigned int param, clang::SourceLocation source)
+GasParser::ParseDirDataSection(unsigned int param, SourceLocation source)
 {
     SwitchSection(".data", true,
-                  clang::SourceRange(source, source.getFileLocWithOffset(5)));
+                  SourceRange(source, source.getFileLocWithOffset(5)));
     return true;
 }
 
 bool
-GasParser::ParseDirTextSection(unsigned int param, clang::SourceLocation source)
+GasParser::ParseDirTextSection(unsigned int param, SourceLocation source)
 {
     SwitchSection(".text", true,
-                  clang::SourceRange(source, source.getFileLocWithOffset(5)));
+                  SourceRange(source, source.getFileLocWithOffset(5)));
     return true;
 }
 
 bool
-GasParser::ParseDirSection(unsigned int param, clang::SourceLocation source)
+GasParser::ParseDirSection(unsigned int param, SourceLocation source)
 {
     // DIR_SECTION ID ',' STRING ',' '@' ID ',' dirvals
     // Really parsed as just a bunch of dirvals; only needs to be unique
@@ -992,14 +992,14 @@ GasParser::ParseDirSection(unsigned int param, clang::SourceLocation source)
     // Due to section names with special characters, concatenate tokens until
     // we either get a comma or a token with preceding space.
     unsigned int endtok = GasToken::comma;
-    clang::SourceLocation start, end;
+    SourceLocation start, end;
     llvm::SmallString<128> sectname_buf;
     llvm::StringRef sectname =
         MergeTokensUntil(&endtok, 1, &start, &end, sectname_buf);
 
     NameValues& nvs = info.getNameValues();
     nvs.push_back(new NameValue(sectname.str()));
-    nvs.back().setValueRange(clang::SourceRange(start, end));
+    nvs.back().setValueRange(SourceRange(start, end));
 
     if (!m_token.isEndOfStatement())
     {
@@ -1024,7 +1024,7 @@ GasParser::ParseDirSection(unsigned int param, clang::SourceLocation source)
 //
 
 bool
-GasParser::ParseDirEqu(unsigned int param, clang::SourceLocation source)
+GasParser::ParseDirEqu(unsigned int param, SourceLocation source)
 {
     // ID ',' expr
     if (m_token.isNot(GasToken::identifier) && m_token.isNot(GasToken::label))
@@ -1033,12 +1033,12 @@ GasParser::ParseDirEqu(unsigned int param, clang::SourceLocation source)
         return false;
     }
     IdentifierInfo* ii = m_token.getIdentifierInfo();
-    clang::SourceLocation id_source = ConsumeToken();
+    SourceLocation id_source = ConsumeToken();
 
     if (ExpectAndConsume(GasToken::comma, diag::err_expected_comma))
         return false;
 
-    clang::SourceLocation expr_source = m_token.getLocation();
+    SourceLocation expr_source = m_token.getLocation();
     Expr e;
     if (!ParseExpr(e))
     {
@@ -1050,7 +1050,7 @@ GasParser::ParseDirEqu(unsigned int param, clang::SourceLocation source)
 }
 
 bool
-GasParser::ParseDirFile(unsigned int param, clang::SourceLocation source)
+GasParser::ParseDirFile(unsigned int param, SourceLocation source)
 {
     llvm::SmallString<64> filename_buf;
 
@@ -1062,7 +1062,7 @@ GasParser::ParseDirFile(unsigned int param, clang::SourceLocation source)
                                  m_preproc);
         if (filename.hadError())
             return false;
-        clang::SourceRange filename_source = m_token.getSourceRange();
+        SourceRange filename_source = m_token.getSourceRange();
         ConsumeToken();
 
 #if 0
@@ -1104,7 +1104,7 @@ GasParser::ParseDirFile(unsigned int param, clang::SourceLocation source)
     IntNum fileno;
     if (!ParseInteger(&fileno))
         return false;
-    clang::SourceRange fileno_source = m_token.getSourceRange();
+    SourceRange fileno_source = m_token.getSourceRange();
     ConsumeToken();
 
     // filename
@@ -1117,7 +1117,7 @@ GasParser::ParseDirFile(unsigned int param, clang::SourceLocation source)
                              m_preproc);
     if (filename.hadError())
         return false;
-    clang::SourceRange filename_source = m_token.getSourceRange();
+    SourceRange filename_source = m_token.getSourceRange();
     ConsumeToken();
 
     // Pass along to debug format
@@ -1131,7 +1131,7 @@ GasParser::ParseDirFile(unsigned int param, clang::SourceLocation source)
 //
 
 void
-GasParser::SkipConditional(clang::SourceLocation begin)
+GasParser::SkipConditional(SourceLocation begin)
 {
     Token prev_token = m_token;
     int skip_depth = 1;
@@ -1181,7 +1181,7 @@ GasParser::SkipConditional(clang::SourceLocation begin)
 }
 
 void
-GasParser::HandleIf(bool is_true, clang::SourceLocation begin)
+GasParser::HandleIf(bool is_true, SourceLocation begin)
 {
     if (!is_true)
         SkipConditional(begin);
@@ -1190,7 +1190,7 @@ GasParser::HandleIf(bool is_true, clang::SourceLocation begin)
 }
 
 bool
-GasParser::ParseDirElse(unsigned int param, clang::SourceLocation source)
+GasParser::ParseDirElse(unsigned int param, SourceLocation source)
 {
     if (m_cond_stack.empty())
     {
@@ -1218,7 +1218,7 @@ GasParser::ParseDirElse(unsigned int param, clang::SourceLocation source)
 }
 
 bool
-GasParser::ParseDirElseif(unsigned int param, clang::SourceLocation source)
+GasParser::ParseDirElseif(unsigned int param, SourceLocation source)
 {
     if (m_cond_stack.empty())
     {
@@ -1244,7 +1244,7 @@ GasParser::ParseDirElseif(unsigned int param, clang::SourceLocation source)
 }
 
 bool
-GasParser::ParseDirEndif(unsigned int param, clang::SourceLocation source)
+GasParser::ParseDirEndif(unsigned int param, SourceLocation source)
 {
     if (m_cond_stack.empty())
     {
@@ -1257,7 +1257,7 @@ GasParser::ParseDirEndif(unsigned int param, clang::SourceLocation source)
 }
 
 bool
-GasParser::ParseDirIf(unsigned int op, clang::SourceLocation source)
+GasParser::ParseDirIf(unsigned int op, SourceLocation source)
 {
     Expr e;
     if (!ParseExpr(e))
@@ -1287,7 +1287,7 @@ GasParser::ParseDirIf(unsigned int op, clang::SourceLocation source)
 }
 
 bool
-GasParser::ParseDirIfb(unsigned int negate, clang::SourceLocation source)
+GasParser::ParseDirIfb(unsigned int negate, SourceLocation source)
 {
     bool blank = m_token.isEndOfStatement();
     if (!blank)
@@ -1297,7 +1297,7 @@ GasParser::ParseDirIfb(unsigned int negate, clang::SourceLocation source)
 }
 
 bool
-GasParser::ParseDirIfdef(unsigned int negate, clang::SourceLocation source)
+GasParser::ParseDirIfdef(unsigned int negate, SourceLocation source)
 {
     if (m_token.isNot(GasToken::identifier) && m_token.isNot(GasToken::label))
     {
@@ -1305,7 +1305,7 @@ GasParser::ParseDirIfdef(unsigned int negate, clang::SourceLocation source)
         return false;
     }
     IdentifierInfo* ii = m_token.getIdentifierInfo();
-    clang::SourceLocation id_source = ConsumeToken();
+    SourceLocation id_source = ConsumeToken();
 
     bool defined = ii->isSymbol() && ii->getSymbol()->isDefined();
     HandleIf(negate ? !defined : defined, source);
@@ -1313,7 +1313,7 @@ GasParser::ParseDirIfdef(unsigned int negate, clang::SourceLocation source)
 }
 
 bool
-GasParser::ParseDirIfeqs(unsigned int negate, clang::SourceLocation source)
+GasParser::ParseDirIfeqs(unsigned int negate, SourceLocation source)
 {
     // first string
     if (m_token.isNot(GasToken::string_literal))
@@ -1373,7 +1373,7 @@ GasParser::ParseInsn()
         // parse operands
         for (;;)
         {
-            clang::SourceLocation start = m_token.getLocation();
+            SourceLocation start = m_token.getLocation();
             Operand op = ParseOperand();
             op.setSource(start);
             insn->AddOperand(op);
@@ -1387,7 +1387,7 @@ GasParser::ParseInsn()
     }
     if (const Prefix* prefix = ii->getPrefix())
     {
-        clang::SourceLocation prefix_source = ConsumeToken();
+        SourceLocation prefix_source = ConsumeToken();
         Insn::Ptr insn = ParseInsn();
         if (insn.get() == 0)
             insn = m_arch->CreateEmptyInsn();
@@ -1399,7 +1399,7 @@ GasParser::ParseInsn()
     ii->DoRegLookup(*m_arch, m_token.getLocation(), m_preproc.getDiagnostics());
     if (const SegmentRegister* segreg = ii->getSegReg())
     {
-        clang::SourceLocation segreg_source = ConsumeToken();
+        SourceLocation segreg_source = ConsumeToken();
         Insn::Ptr insn = ParseInsn();
         if (insn.get() == 0)
             insn = m_arch->CreateEmptyInsn();
@@ -1434,13 +1434,13 @@ GasParser::ParseDirective(NameValues* nvs)
                     case GasToken::percent: case GasToken::lessless:
                     case GasToken::greatergreater:
                     {
-                        clang::SourceLocation e_src = m_token.getLocation();
+                        SourceLocation e_src = m_token.getLocation();
                         Expr::Ptr e(new Expr);
                         if (!ParseExpr(*e))
                             return false;
                         nvs->push_back(new NameValue(e));
                         nvs->back().setValueRange(
-                            clang::SourceRange(e_src, m_token.getLocation()));
+                            SourceRange(e_src, m_token.getLocation()));
                         break;
                     }
                     default:
@@ -1459,7 +1459,7 @@ GasParser::ParseDirective(NameValues* nvs)
                 llvm::SmallString<64> strbuf;
                 GasStringParser str(m_token.getLiteral(), m_token.getLocation(),
                                     m_preproc);
-                clang::SourceRange str_source = m_token.getSourceRange();
+                SourceRange str_source = m_token.getSourceRange();
                 ConsumeToken();
 
                 if (!str.hadError())
@@ -1475,13 +1475,13 @@ GasParser::ParseDirective(NameValues* nvs)
                 continue;
             default:
             {
-                clang::SourceLocation e_src = m_token.getLocation();
+                SourceLocation e_src = m_token.getLocation();
                 Expr::Ptr e(new Expr);
                 if (!ParseExpr(*e))
                     return false;
                 nvs->push_back(new NameValue(e));
                 nvs->back().setValueRange(
-                    clang::SourceRange(e_src, m_token.getLocation()));
+                    SourceRange(e_src, m_token.getLocation()));
                 break;
             }
         }
@@ -1512,12 +1512,12 @@ GasParser::ParseMemoryAddress()
     {
         bool havereg = false;
         const Register* reg = 0;
-        clang::SourceLocation scale_src;
+        SourceLocation scale_src;
         bool havescale = false;
         IntNum scale;
         Expr e2;
 
-        clang::SourceLocation lparen_loc = ConsumeParen();
+        SourceLocation lparen_loc = ConsumeParen();
 
         // base register
         if (m_token.is(GasToken::percent))
@@ -1637,7 +1637,7 @@ GasParser::ParseOperand()
                             m_preproc.getDiagnostics());
             if (const SegmentRegister* segreg = ii->getSegReg())
             {
-                clang::SourceLocation segreg_source = ConsumeToken();
+                SourceLocation segreg_source = ConsumeToken();
 
                 // if followed by ':', it's a memory address
                 if (m_token.is(GasToken::colon))
@@ -1662,11 +1662,11 @@ GasParser::ParseOperand()
             }
             if (const RegisterGroup* reggroup = ii->getRegGroup())
             {
-                clang::SourceLocation reggroup_source = ConsumeToken();
+                SourceLocation reggroup_source = ConsumeToken();
 
                 if (m_token.isNot(GasToken::l_paren))
                     return Operand(reggroup->getReg(0));
-                clang::SourceLocation lparen_loc = ConsumeParen();
+                SourceLocation lparen_loc = ConsumeParen();
 
                 if (m_token.isNot(GasToken::numeric_constant))
                 {
@@ -1675,7 +1675,7 @@ GasParser::ParseOperand()
                 }
                 IntNum regindex;
                 ParseInteger(&regindex);    // OK to ignore return value
-                clang::SourceLocation regindex_source = ConsumeToken();
+                SourceLocation regindex_source = ConsumeToken();
 
                 MatchRHSPunctuation(GasToken::r_paren, lparen_loc);
 
@@ -1695,7 +1695,7 @@ GasParser::ParseOperand()
         case GasToken::dollar:
         {
             ConsumeToken();
-            clang::SourceLocation e_source = m_token.getLocation();
+            SourceLocation e_source = m_token.getLocation();
             Expr::Ptr e(new Expr);
             if (!ParseExpr(*e))
                 Diag(e_source, diag::err_missing_or_invalid_immediate);
@@ -1755,7 +1755,7 @@ GasParser::ParseExpr(Expr& e, const ParseExprTerm* parse_term)
             case GasToken::pipepipe:    op = Op::LOR; break;
             default: return true;
         }
-        clang::SourceLocation op_source = ConsumeToken();
+        SourceLocation op_source = ConsumeToken();
 
         Expr f;
         if (!ParseExpr0(f, parse_term))
@@ -1785,7 +1785,7 @@ GasParser::ParseExpr0(Expr& e, const ParseExprTerm* parse_term)
             case GasToken::greaterequal:    op = Op::GE; break;
             default: return true;
         }
-        clang::SourceLocation op_source = ConsumeToken();
+        SourceLocation op_source = ConsumeToken();
 
         Expr f;
         if (!ParseExpr1(f, parse_term))
@@ -1811,7 +1811,7 @@ GasParser::ParseExpr1(Expr& e, const ParseExprTerm* parse_term)
             case GasToken::exclaim: op = Op::NOR; break;
             default: return true;
         }
-        clang::SourceLocation op_source = ConsumeToken();
+        SourceLocation op_source = ConsumeToken();
 
         Expr f;
         if (!ParseExpr2(f, parse_term))
@@ -1838,7 +1838,7 @@ GasParser::ParseExpr2(Expr& e, const ParseExprTerm* parse_term)
             case GasToken::greatergreater:  op = Op::SHR; break;
             default: return true;
         }
-        clang::SourceLocation op_source = ConsumeToken();
+        SourceLocation op_source = ConsumeToken();
 
         Expr f;
         if (!ParseExpr3(f, parse_term))
@@ -1866,7 +1866,7 @@ GasParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
             return ParseExpr3(e, parse_term);
         case GasToken::minus:
         {
-            clang::SourceLocation op_source = ConsumeToken();
+            SourceLocation op_source = ConsumeToken();
             if (!ParseExpr3(e, parse_term))
                 return false;
             e.Calc(Op::NEG, op_source);
@@ -1874,7 +1874,7 @@ GasParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
         }
         case GasToken::tilde:
         {
-            clang::SourceLocation op_source = ConsumeToken();
+            SourceLocation op_source = ConsumeToken();
             if (!ParseExpr3(e, parse_term))
                 return false;
             e.Calc(Op::NOT, op_source);
@@ -1882,7 +1882,7 @@ GasParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
         }
         case GasToken::l_paren:
         {
-            clang::SourceLocation lparen_loc = ConsumeParen();
+            SourceLocation lparen_loc = ConsumeParen();
             if (!ParseExpr(e, parse_term))
                 return false;
             MatchRHSPunctuation(GasToken::r_paren, lparen_loc);
@@ -1892,7 +1892,7 @@ GasParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
         {
             GasNumericParser num(m_token.getLiteral(), m_token.getLocation(),
                                  m_preproc);
-            clang::SourceLocation num_source = ConsumeToken();
+            SourceLocation num_source = ConsumeToken();
             if (num.hadError())
                 e = Expr(IntNum(0), num_source);
             else if (num.isInteger())
@@ -1914,7 +1914,7 @@ GasParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
         {
             GasStringParser str(m_token.getLiteral(), m_token.getLocation(),
                                 m_preproc);
-            clang::SourceLocation str_source = ConsumeToken();
+            SourceLocation str_source = ConsumeToken();
             if (str.hadError())
                 e = Expr(IntNum(0), str_source);
             else
@@ -1930,7 +1930,7 @@ GasParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
         case GasToken::label:
         {
             IdentifierInfo* ii = m_token.getIdentifierInfo();
-            clang::SourceLocation id_source = ConsumeToken();
+            SourceLocation id_source = ConsumeToken();
             // "." references the current assembly position
             if (ii->isStr("."))
             {
@@ -2023,7 +2023,7 @@ GasParser::ParseRegister()
 }
 
 void
-GasParser::DefineLabel(llvm::StringRef name, clang::SourceLocation source)
+GasParser::DefineLabel(llvm::StringRef name, SourceLocation source)
 {
     SymbolRef sym = m_object->getSymbol(name);
     Bytecode& bc = m_container->FreshBytecode();
@@ -2033,7 +2033,7 @@ GasParser::DefineLabel(llvm::StringRef name, clang::SourceLocation source)
 
 void
 GasParser::DefineLcomm(SymbolRef sym,
-                       clang::SourceLocation source,
+                       SourceLocation source,
                        std::auto_ptr<Expr> size,
                        const Expr& align)
 {
@@ -2063,9 +2063,7 @@ GasParser::DefineLcomm(SymbolRef sym,
 }
 
 void
-GasParser::SwitchSection(llvm::StringRef name,
-                         bool builtin,
-                         clang::SourceRange source)
+GasParser::SwitchSection(llvm::StringRef name, bool builtin, SourceRange source)
 {
     DirectiveInfo info(*m_object, source.getBegin());
     NameValues& nvs = info.getNameValues();
@@ -2080,9 +2078,7 @@ GasParser::SwitchSection(llvm::StringRef name,
 }
 
 Section&
-GasParser::getSection(llvm::StringRef name,
-                      bool builtin,
-                      clang::SourceRange source)
+GasParser::getSection(llvm::StringRef name, bool builtin, SourceRange source)
 {
     Section* cur_section = m_object->getCurSection();
     SwitchSection(name, builtin, source);

@@ -26,10 +26,9 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "clang/Basic/SourceLocation.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Diagnostic.h"
 
-namespace clang { class SourceManager; }
 namespace llvm { class raw_ostream; }
 
 namespace yasm

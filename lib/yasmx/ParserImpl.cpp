@@ -33,7 +33,7 @@
 ///
 #include "yasmx/Parse/ParserImpl.h"
 
-#include "clang/Basic/SourceLocation.h"
+#include "yasmx/Basic/SourceLocation.h"
 
 
 using namespace yasm;
@@ -54,14 +54,13 @@ ParserImpl::~ParserImpl()
 {
 }
 
-clang::SourceLocation
-ParserImpl::MatchRHSPunctuation(unsigned int rhs_tok,
-                                clang::SourceLocation lhs_loc)
+SourceLocation
+ParserImpl::MatchRHSPunctuation(unsigned int rhs_tok, SourceLocation lhs_loc)
 {
     if (m_token.is(rhs_tok))
         return ConsumeAnyToken();
 
-    clang::SourceLocation R = m_token.getLocation();
+    SourceLocation R = m_token.getLocation();
     const char* LHSName = "unknown";
     diag::kind DID = diag::err_parse_error;
     switch (rhs_tok)
@@ -91,7 +90,7 @@ ParserImpl::ExpectAndConsume(unsigned int expected_tok,
 
 #if 0
     const char* spelling = 0;
-    clang::SourceLocation end_loc =
+    SourceLocation end_loc =
         m_preproc.getLocForEndOfToken(m_prev_tok_location);
     if (end_loc.isValid() && 
         (spelling = tok::getTokenSimpleSpelling(expected_tok)))
@@ -200,8 +199,8 @@ ParserImpl::SkipUntil(const unsigned int* toks,
 llvm::StringRef
 ParserImpl::MergeTokensUntil(const unsigned int* toks,
                              unsigned int num_toks,
-                             clang::SourceLocation* start,
-                             clang::SourceLocation* end,
+                             SourceLocation* start,
+                             SourceLocation* end,
                              llvm::SmallVectorImpl<char>& buffer,
                              bool stop_at_eos,
                              bool stop_at_ws)
@@ -236,7 +235,7 @@ ParserImpl::MergeTokensUntil(const unsigned int* toks,
         else
         {
             // Get the raw data from the source manager.
-            clang::SourceManager& smgr = m_preproc.getSourceManager();
+            SourceManager& smgr = m_preproc.getSourceManager();
             data =
                 llvm::StringRef(smgr.getCharacterData(m_token.getLocation()),
                                 m_token.getLength());

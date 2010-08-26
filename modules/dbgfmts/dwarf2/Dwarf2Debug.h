@@ -28,7 +28,7 @@
 //
 #include <vector>
 
-#include "clang/Basic/SourceLocation.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/DebugFormat.h"
 #include "yasmx/Location.h"
@@ -38,11 +38,10 @@
 #include "Dwarf2Types.h"
 
 
-namespace clang { class FileEntry; }
-
 namespace yasm {
 class BytecodeContainer;
 class DirectiveInfo;
+class FileEntry;
 class Section;
 
 namespace dbgfmt {
@@ -60,9 +59,7 @@ public:
     static bool isOkObject(Object& object) { return true; }
 
     void AddDirectives(Directives& dirs, llvm::StringRef parser);
-    void Generate(ObjectFormat& objfmt,
-                  clang::SourceManager& smgr,
-                  Diagnostic& diags);
+    void Generate(ObjectFormat& objfmt, SourceManager& smgr, Diagnostic& diags);
 
     struct Filename
     {
@@ -102,7 +99,7 @@ private:
     void DirFile(DirectiveInfo& info, Diagnostic& diags);
 
     /// Generate .debug_line section.
-    Section& Generate_line(clang::SourceManager& smgr,
+    Section& Generate_line(SourceManager& smgr,
                            bool asm_source,
                            /*@out@*/ Section** main_code,
                            /*@out@*/ size_t* num_line_sections);
@@ -122,7 +119,7 @@ private:
                          SymbolRef ext_operand);
     void GenerateLineSection(Section& sect,
                              Section& debug_line,
-                             clang::SourceManager& smgr,
+                             SourceManager& smgr,
                              bool asm_source,
                              Section** last_code,
                              size_t* num_line_sections);
@@ -131,7 +128,7 @@ private:
                         const Dwarf2Loc& loc,
                         const Dwarf2Loc* nextloc);
     void GenerateLineBC(Section& debug_line,
-                        clang::SourceManager& smgr,
+                        SourceManager& smgr,
                         Dwarf2LineState* state,
                         Bytecode& bc,
                         Dwarf2Loc* loc,
@@ -164,7 +161,7 @@ private:
     void setHeadEnd(Location head, Location tail);
 
     size_t AddFile(unsigned long filenum, llvm::StringRef pathname);
-    size_t AddFile(const clang::FileEntry* file);
+    size_t AddFile(const FileEntry* file);
     unsigned long AddDir(llvm::StringRef dirname);
 };
 
@@ -180,9 +177,7 @@ public:
     static llvm::StringRef getKeyword() { return "dwarf2pass"; }
     static bool isOkObject(Object& object) { return true; }
 
-    void Generate(ObjectFormat& objfmt,
-                  clang::SourceManager& smgr,
-                  Diagnostic& diags);
+    void Generate(ObjectFormat& objfmt, SourceManager& smgr, Diagnostic& diags);
 };
 
 

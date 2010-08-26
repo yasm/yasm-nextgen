@@ -32,8 +32,6 @@
 #include "yasmx/Config/export.h"
 
 
-namespace clang { class SourceLocation; }
-
 namespace yasm
 {
 
@@ -42,6 +40,7 @@ class DirectiveInfo;
 class Expr;
 class NameValues;
 class Object;
+class SourceLocation;
 class Symbol;
 
 /// Set object-extended name/values.

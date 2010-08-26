@@ -34,7 +34,7 @@
 
 #include <boost/scoped_ptr.hpp>
 
-#include "clang/Basic/SourceLocation.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/DiagnosticKinds.h"
 #include "yasmx/IntNum.h"
@@ -306,11 +306,11 @@ public:
 
     /// Set source range.
     /// @param range    Source range
-    void setSource(clang::SourceRange range) { m_source = range; }
+    void setSource(SourceRange range) { m_source = range; }
 
     /// Get source range.
     /// @return Source range.
-    clang::SourceRange getSource() const { return m_source; }
+    SourceRange getSource() const { return m_source; }
 
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
@@ -349,7 +349,7 @@ private:
     } m_sub;
 
     /// Source range.
-    clang::SourceRange m_source;
+    SourceRange m_source;
 
     /// If m_sub is a symbol.  Boolean.
     /// Should not be set if m_sub_loc is set.

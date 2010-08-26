@@ -76,10 +76,10 @@ bool
 DirHelpers::operator()
     (NameValues::iterator nv_first,
      NameValues::iterator nv_last,
-     clang::SourceLocation dir_source,
+     SourceLocation dir_source,
      Diagnostic& diags,
      FUNCTION::function<bool (NameValue& nv,
-                              clang::SourceLocation dir_source,
+                              SourceLocation dir_source,
                               Diagnostic& diags)>
          helper_nameval)
 {
@@ -204,7 +204,7 @@ yasm::DirString(NameValue& nv,
 
 bool
 yasm::DirNameValueWarn(NameValue& nv,
-                       clang::SourceLocation dir_source,
+                       SourceLocation dir_source,
                        Diagnostic& diags)
 {
     if (nv.getNameSource().isValid())

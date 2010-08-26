@@ -26,7 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "clang/Basic/SourceLocation.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "yasmx/AssocData.h"
 #include "yasmx/IntNum.h"
@@ -45,11 +45,11 @@ namespace dbgfmt {
 struct YASM_STD_EXPORT Dwarf2Loc
 {
     Dwarf2Loc(Location loc_,
-              clang::SourceLocation source_,
+              SourceLocation source_,
               unsigned long file_,
               unsigned long line_);
 
-    clang::SourceLocation source;   // source location of .loc directive
+    SourceLocation source;    // source location of .loc directive
 
     // source information
     unsigned long file;     // index into table of filenames

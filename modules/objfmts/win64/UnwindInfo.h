@@ -49,7 +49,7 @@ class YASM_STD_EXPORT UnwindInfo : public Bytecode::Contents
     friend YASM_STD_EXPORT
         void Generate(std::auto_ptr<UnwindInfo> uwinfo,
                       BytecodeContainer& xdata,
-                      clang::SourceLocation source,
+                      SourceLocation source,
                       const Arch& arch,
                       Diagnostic& diags);
 
@@ -107,7 +107,7 @@ private:
 YASM_STD_EXPORT
 void Generate(std::auto_ptr<UnwindInfo> uwinfo,
               BytecodeContainer& xdata,
-              clang::SourceLocation source,
+              SourceLocation source,
               const Arch& arch,
               Diagnostic& diags);
 

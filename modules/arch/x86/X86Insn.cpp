@@ -367,7 +367,7 @@ X86Prefix::Write(YAML::Emitter& out) const
 bool
 X86Insn::DoAppendJmpFar(BytecodeContainer& container,
                         const X86InsnInfo& info,
-                        clang::SourceLocation source,
+                        SourceLocation source,
                         Diagnostic& diags)
 {
     Operand& op = m_operands.front();
@@ -486,7 +486,7 @@ X86Insn::MatchJmpInfo(const X86InsnInfo& info, unsigned int opersize,
 bool
 X86Insn::DoAppendJmp(BytecodeContainer& container,
                      const X86InsnInfo& jinfo,
-                     clang::SourceLocation source,
+                     SourceLocation source,
                      Diagnostic& diags)
 {
     static const unsigned char size_lookup[] =
@@ -961,7 +961,7 @@ X86Insn::FindMatch(const unsigned int* size_lookup, int bypass) const
 
 void
 X86Insn::MatchError(const unsigned int* size_lookup,
-                    clang::SourceLocation source,
+                    SourceLocation source,
                     Diagnostic& diags) const
 {
     const X86InsnInfo* i = m_group;
@@ -1029,7 +1029,7 @@ X86Insn::MatchError(const unsigned int* size_lookup,
 
 bool
 X86Insn::DoAppend(BytecodeContainer& container,
-                  clang::SourceLocation source,
+                  SourceLocation source,
                   Diagnostic& diags)
 {
     unsigned int size_lookup[] = {0, 8, 16, 32, 64, 80, 128, 256, 0};
@@ -1111,11 +1111,10 @@ public:
     void UpdateRex();
     void ApplyOperands(X86Arch::ParserSelect parser,
                        Insn::Operands& operands);
-    void ApplySegReg(const SegmentRegister* segreg,
-                     clang::SourceLocation source);
+    void ApplySegReg(const SegmentRegister* segreg, SourceLocation source);
     bool Finish(BytecodeContainer& container,
                 const Insn::Prefixes& prefixes,
-                clang::SourceLocation source);
+                SourceLocation source);
 
 private:
     void ApplyOperand(const X86InfoOperand& info_op, Operand& op);
@@ -1135,7 +1134,7 @@ private:
     unsigned char m_spare;
     unsigned char m_im_len;
     unsigned char m_im_sign;
-    clang::SourceLocation m_im_source;
+    SourceLocation m_im_source;
     X86GeneralPostOp m_postop;
     unsigned char m_rex;
     unsigned char m_vexdata;
@@ -1558,7 +1557,7 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
 
 void
 BuildGeneral::ApplySegReg(const SegmentRegister* segreg,
-                          clang::SourceLocation source)
+                          SourceLocation source)
 {
     if (X86EffAddr* x86_ea = m_x86_ea.get())
     {
@@ -1581,7 +1580,7 @@ BuildGeneral::ApplySegReg(const SegmentRegister* segreg,
 bool
 BuildGeneral::Finish(BytecodeContainer& container,
                      const Insn::Prefixes& prefixes,
-                     clang::SourceLocation source)
+                     SourceLocation source)
 {
     std::auto_ptr<Value> imm_val(0);
 
@@ -1695,7 +1694,7 @@ bool
 X86Insn::DoAppendGeneral(BytecodeContainer& container,
                          const X86InsnInfo& info,
                          const unsigned int* size_lookup,
-                         clang::SourceLocation source,
+                         SourceLocation source,
                          Diagnostic& diags)
 {
     BuildGeneral buildgen(info, m_mode_bits, size_lookup, m_force_strict,
@@ -1827,7 +1826,7 @@ CpuFindReverse(unsigned int cpu0, unsigned int cpu1, unsigned int cpu2)
 
 Arch::InsnPrefix
 X86Arch::ParseCheckInsnPrefix(llvm::StringRef id,
-                              clang::SourceLocation source,
+                              SourceLocation source,
                               Diagnostic& diags) const
 {
     size_t id_len = id.size();

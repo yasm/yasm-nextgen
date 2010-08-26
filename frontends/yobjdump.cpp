@@ -32,14 +32,14 @@
 #include <string>
 #include <vector>
 
-#include "clang/Basic/FileManager.h"
-#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "yasmx/Basic/FileManager.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/System/plugin.h"
@@ -396,9 +396,10 @@ static int
 DoDump(const std::string& in_filename)
 {
     yasm::OffsetDiagnosticPrinter diag_printer(llvm::errs());
-    clang::SourceManager source_mgr;
-    yasm::Diagnostic diags(&source_mgr, &diag_printer);
-    clang::FileManager file_mgr;
+    yasm::Diagnostic diags(&diag_printer);
+    yasm::SourceManager source_mgr(diags);
+    diags.setSourceManager(&source_mgr);
+    yasm::FileManager file_mgr;
 
     // open the input file or STDIN (for filename of "-")
     if (in_filename == "-")
@@ -407,18 +408,18 @@ DoDump(const std::string& in_filename)
     }
     else
     {
-        const clang::FileEntry* in = file_mgr.getFile(in_filename);
+        const yasm::FileEntry* in = file_mgr.getFile(in_filename);
         if (!in)
         {
-            diags.Report(clang::SourceLocation(), yasm::diag::err_file_open)
+            diags.Report(yasm::SourceLocation(), yasm::diag::err_file_open)
                 << in_filename;
         }
-        source_mgr.createMainFileID(in, clang::SourceLocation());
+        source_mgr.createMainFileID(in, yasm::SourceLocation());
     }
 
     const llvm::MemoryBuffer* in_file =
         source_mgr.getBuffer(source_mgr.getMainFileID());
-    clang::SourceLocation sloc =
+    yasm::SourceLocation sloc =
         source_mgr.getLocForStartOfFile(source_mgr.getMainFileID());
 
     std::auto_ptr<yasm::ObjectFormatModule> objfmt_module(0);

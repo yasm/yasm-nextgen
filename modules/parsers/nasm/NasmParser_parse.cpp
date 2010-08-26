@@ -457,7 +457,7 @@ NasmParser::ParseLine()
             // %line indicates the line number of the *next* line, so subtract
             // out the increment when setting the line number.
             // FIXME: handle incr
-            clang::SourceManager& smgr = m_preproc->getSourceManager();
+            SourceManager& smgr = m_preproc->getSourceManager();
             smgr.AddLineNote(m_source, line->getUInt(),
                              smgr.getLineTableFilenameID(filename.data(),
                                                          filename.size()));
@@ -466,7 +466,7 @@ NasmParser::ParseLine()
 #endif
         case NasmToken::l_square: // [ directive ]
         {
-            clang::SourceLocation lsquare_loc = ConsumeBracket();
+            SourceLocation lsquare_loc = ConsumeBracket();
 
             if (m_token.isNot(NasmToken::identifier))
             {
@@ -476,7 +476,7 @@ NasmParser::ParseLine()
             llvm::SmallString<64> dirname_buf;
             llvm::StringRef dirname =
                 m_preproc.getSpelling(m_token, dirname_buf);
-            clang::SourceLocation dirloc = ConsumeToken();
+            SourceLocation dirloc = ConsumeToken();
 
             // catch [directive<eol> early (XXX: better way to do this?)
             if (m_token.isEndOfStatement())
@@ -494,14 +494,14 @@ NasmParser::ParseLine()
                  dirname.equals_lower("segment")))
             {
                 unsigned int toks[2] = {NasmToken::comma, NasmToken::r_square};
-                clang::SourceLocation start, end;
+                SourceLocation start, end;
                 llvm::SmallString<128> sectname_buf;
                 llvm::StringRef sectname =
                     MergeTokensUntil(toks, 2, &start, &end, sectname_buf);
 
                 NameValues& nvs = info.getNameValues();
                 nvs.push_back(new NameValue(sectname));
-                nvs.back().setValueRange(clang::SourceRange(start, end));
+                nvs.back().setValueRange(SourceRange(start, end));
             }
 
             // Parse "normal" directive namevals, if present
@@ -539,7 +539,7 @@ NasmParser::ParseLine()
             // LABEL: EQU val
             // (INSN args is caught by ParseExp() call above)
             IdentifierInfo* ii = m_token.getIdentifierInfo();
-            clang::SourceLocation id_source = ConsumeToken();
+            SourceLocation id_source = ConsumeToken();
 
             // Eat the (optional) colon if it is present
             bool got_colon = false;
@@ -608,7 +608,7 @@ NasmParser::ParseDirective(/*@out@*/ NameValues& nvs)
     {
         std::string name;
         std::auto_ptr<NameValue> nv(0);
-        clang::SourceLocation name_loc, equals_loc;
+        SourceLocation name_loc, equals_loc;
 
         // Look for value first
         if (m_token.is(NasmToken::identifier) || m_token.is(NasmToken::label))
@@ -675,15 +675,14 @@ NasmParser::ParseDirective(/*@out@*/ NameValues& nvs)
             {
                 Expr::Ptr e(new Expr);
                 NasmParseDirExprTerm parse_dir_term;
-                clang::SourceLocation e_src = m_token.getLocation();
+                SourceLocation e_src = m_token.getLocation();
                 if (!ParseExpr0(*e, &parse_dir_term))
                 {
                     Diag(m_token, diag::err_invalid_directive_argument);
                     return false;
                 }
                 nv.reset(new NameValue(name, e));
-                nv->setValueRange(
-                    clang::SourceRange(e_src, m_token.getLocation()));
+                nv->setValueRange(SourceRange(e_src, m_token.getLocation()));
                 break;
             }
         }
@@ -703,7 +702,7 @@ next:
 }
 
 bool
-NasmParser::ParseTimes(clang::SourceLocation times_source)
+NasmParser::ParseTimes(SourceLocation times_source)
 {
     Expr::Ptr multiple(new Expr);
     NasmParseDataExprTerm parse_data_term;
@@ -716,7 +715,7 @@ NasmParser::ParseTimes(clang::SourceLocation times_source)
     BytecodeContainer* orig_container = m_container;
     m_container = &AppendMultiple(*m_container, multiple, times_source);
 
-    clang::SourceLocation cursource = m_token.getLocation();
+    SourceLocation cursource = m_token.getLocation();
     if (!ParseExp())
     {
         Diag(cursource, diag::err_expected_insn_after_times);
@@ -733,7 +732,7 @@ NasmParser::ParseExp()
     if (m_token.isNot(NasmToken::identifier))
         return false;
 
-    clang::SourceLocation exp_source = m_token.getLocation();
+    SourceLocation exp_source = m_token.getLocation();
     IdentifierInfo* ii = m_token.getIdentifierInfo();
     CheckPseudoInsn(ii);
     const PseudoInsn* pseudo = ii->getCustom<const PseudoInsn>();
@@ -891,7 +890,7 @@ NasmParser::ParseInsn()
         // parse operands
         for (;;)
         {
-            clang::SourceLocation start = m_token.getLocation();
+            SourceLocation start = m_token.getLocation();
             ++num_insn_operand;
             Operand op = ParseOperand();
             op.setSource(start);
@@ -906,7 +905,7 @@ NasmParser::ParseInsn()
     }
     if (const Prefix* prefix = ii->getPrefix())
     {
-        clang::SourceLocation prefix_source = ConsumeToken();
+        SourceLocation prefix_source = ConsumeToken();
         Insn::Ptr insn = ParseInsn();
         if (insn.get() == 0)
             insn = m_arch->CreateEmptyInsn();
@@ -916,7 +915,7 @@ NasmParser::ParseInsn()
     ii->DoRegLookup(*m_arch, m_token.getLocation(), m_preproc.getDiagnostics());
     if (const SegmentRegister* segreg = ii->getSegReg())
     {
-        clang::SourceLocation segreg_source = ConsumeToken();
+        SourceLocation segreg_source = ConsumeToken();
         Insn::Ptr insn = ParseInsn();
         if (insn.get() == 0)
             insn = m_arch->CreateEmptyInsn();
@@ -956,7 +955,7 @@ NasmParser::ParseOperand()
     unsigned int size = getSizeOverride(m_token);
     if (size != 0)
     {
-        clang::SourceLocation override_loc = ConsumeToken();
+        SourceLocation override_loc = ConsumeToken();
         Operand op = ParseOperand();
         const Register* reg = op.getReg();
         if (reg && reg->getSize() != size)
@@ -987,7 +986,7 @@ NasmParser::ParseOperand()
     {
         case NasmToken::l_square:
         {
-            clang::SourceLocation lsquare_loc = ConsumeBracket();
+            SourceLocation lsquare_loc = ConsumeBracket();
             Operand op = ParseMemoryAddress();
             MatchRHSPunctuation(NasmToken::r_square, lsquare_loc);
             return op;
@@ -1103,7 +1102,7 @@ NasmParser::ParseMemoryAddress()
                             m_preproc.getDiagnostics());
             if (const SegmentRegister* segreg = ii->getSegReg())
             {
-                clang::SourceLocation segreg_source = ConsumeToken();
+                SourceLocation segreg_source = ConsumeToken();
 
                 ExpectAndConsume(NasmToken::colon,
                                  diag::err_colon_required_after_segreg);
@@ -1170,7 +1169,7 @@ NasmParser::ParseMemoryAddress()
                                                       \
         while (m_token.is(tok))                       \
         {                                             \
-            clang::SourceLocation op_source = ConsumeToken(); \
+            SourceLocation op_source = ConsumeToken(); \
             Expr f;                                   \
             if (!rightfunc(f, parse_term))            \
                 return false;                         \
@@ -1243,7 +1242,7 @@ NasmParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
             case NasmToken::greatergreater: op = Op::SHR; break;
             default: return true;
         }
-        clang::SourceLocation op_source = ConsumeToken();
+        SourceLocation op_source = ConsumeToken();
 
         Expr f;
         if (!ParseExpr4(f, parse_term))
@@ -1267,7 +1266,7 @@ NasmParser::ParseExpr4(Expr& e, const ParseExprTerm* parse_term)
             case NasmToken::minus:  op = Op::SUB; break;
             default: return true;
         }
-        clang::SourceLocation op_source = ConsumeToken();
+        SourceLocation op_source = ConsumeToken();
 
         Expr f;
         if (!ParseExpr5(f, parse_term))
@@ -1294,7 +1293,7 @@ NasmParser::ParseExpr5(Expr& e, const ParseExprTerm* parse_term)
             case NasmToken::percentpercent: op = Op::SIGNMOD; break;
             default: return true;
         }
-        clang::SourceLocation op_source = ConsumeToken();
+        SourceLocation op_source = ConsumeToken();
 
         Expr f;
         if (!ParseExpr6(f, parse_term))
@@ -1319,7 +1318,7 @@ NasmParseDirExprTerm::operator() (Expr& e,
     {
         case NasmToken::tilde:
         {
-            clang::SourceLocation op_source = parser.ConsumeToken();
+            SourceLocation op_source = parser.ConsumeToken();
             if (!nasm_parser->ParseExpr6(e, this))
                 return false;
             e.Calc(Op::NOT, op_source);
@@ -1328,7 +1327,7 @@ NasmParseDirExprTerm::operator() (Expr& e,
         }
         case NasmToken::l_paren:
         {
-            clang::SourceLocation lparen_loc = parser.ConsumeParen();
+            SourceLocation lparen_loc = parser.ConsumeParen();
             if (!nasm_parser->ParseExpr0(e, this))
                 return false;
             parser.MatchRHSPunctuation(NasmToken::r_paren, lparen_loc);
@@ -1444,7 +1443,7 @@ NasmParser::ParseExpr6(Expr& e, const ParseExprTerm* parse_term)
             return ParseExpr6(e, parse_term);
         case NasmToken::minus:
         {
-            clang::SourceLocation op_source = ConsumeToken();
+            SourceLocation op_source = ConsumeToken();
             if (!ParseExpr6(e, parse_term))
                 return false;
             e.Calc(Op::NEG, op_source);
@@ -1452,7 +1451,7 @@ NasmParser::ParseExpr6(Expr& e, const ParseExprTerm* parse_term)
         }
         case NasmToken::tilde:
         {
-            clang::SourceLocation op_source = ConsumeToken();
+            SourceLocation op_source = ConsumeToken();
             if (!ParseExpr6(e, parse_term))
                 return false;
             e.Calc(Op::NOT, op_source);
@@ -1460,7 +1459,7 @@ NasmParser::ParseExpr6(Expr& e, const ParseExprTerm* parse_term)
         }
         case NasmToken::kw_seg:
         {
-            clang::SourceLocation op_source = ConsumeToken();
+            SourceLocation op_source = ConsumeToken();
             if (!ParseExpr6(e, parse_term))
                 return false;
             e.Calc(Op::SEG, op_source);
@@ -1468,7 +1467,7 @@ NasmParser::ParseExpr6(Expr& e, const ParseExprTerm* parse_term)
         }
         case NasmToken::l_paren:
         {
-            clang::SourceLocation lparen_loc = ConsumeParen();
+            SourceLocation lparen_loc = ConsumeParen();
             if (!ParseSegOffExpr(e, parse_term))
                 return false;
             MatchRHSPunctuation(NasmToken::r_paren, lparen_loc);
@@ -1621,7 +1620,7 @@ NasmParser::ParseSymbol(IdentifierInfo* ii, bool* local)
 }
 
 void
-NasmParser::DefineLabel(SymbolRef sym, clang::SourceLocation source, bool local)
+NasmParser::DefineLabel(SymbolRef sym, SourceLocation source, bool local)
 {
     if (!local)
         m_locallabel_base = sym->getName();
@@ -1650,7 +1649,7 @@ NasmParser::DirAlign(DirectiveInfo& info, Diagnostic& diags)
 {
     Object& object = info.getObject();
     NameValues& namevals = info.getNameValues();
-    clang::SourceLocation source = info.getSource();
+    SourceLocation source = info.getSource();
 
     // Really, we shouldn't end up with an align directive in an absolute
     // section (as it's supposed to be only used for nop fill), but handle

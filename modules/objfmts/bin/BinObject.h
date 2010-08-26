@@ -26,7 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "clang/Basic/SourceLocation.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/ObjectFormat.h"
@@ -63,7 +63,7 @@ public:
 
     Section* AddDefaultSection();
     Section* AppendSection(llvm::StringRef name,
-                           clang::SourceLocation source,
+                           SourceLocation source,
                            Diagnostic& diags);
 
     static llvm::StringRef getName() { return "Flat format binary"; }
@@ -83,7 +83,7 @@ private:
     void DirOrg(DirectiveInfo& info, Diagnostic& diags);
     void DirMap(DirectiveInfo& info, Diagnostic& diags);
     bool setMapFilename(const NameValue& nv,
-                        clang::SourceLocation dir_source,
+                        SourceLocation dir_source,
                         Diagnostic& diags);
 
     void OutputMap(const IntNum& origin,
@@ -102,7 +102,7 @@ private:
     std::string m_map_filename;
 
     util::scoped_ptr<Expr> m_org;
-    clang::SourceLocation m_org_source;
+    SourceLocation m_org_source;
 };
 
 }} // namespace yasm::objfmt

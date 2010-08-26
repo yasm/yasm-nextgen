@@ -168,7 +168,7 @@ Object::getAbsoluteSymbol()
 
     // Define it
     sym->DefineEqu(Expr(0));
-    sym->Use(clang::SourceLocation());
+    sym->Use(SourceLocation());
     return sym;
 }
 

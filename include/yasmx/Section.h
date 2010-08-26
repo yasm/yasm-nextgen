@@ -43,7 +43,6 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace clang { class SourceLocation; }
 namespace YAML { class Emitter; }
 
 namespace yasm
@@ -52,6 +51,7 @@ namespace yasm
 class Bytecode;
 class Object;
 class Reloc;
+class SourceLocation;
 
 /// A section.
 class YASM_LIB_EXPORT Section
@@ -68,10 +68,7 @@ public:
     ///                 uninitialized space
     /// @param source   source location of section declaration (ignored if
     ///                 section already exists)
-    Section(llvm::StringRef name,
-            bool code,
-            bool bss,
-            clang::SourceLocation source);
+    Section(llvm::StringRef name, bool code, bool bss, SourceLocation source);
 
     ~Section();
 

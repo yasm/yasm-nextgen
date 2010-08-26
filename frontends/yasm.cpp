@@ -28,8 +28,6 @@
 
 #include <memory>
 
-#include "clang/Basic/FileManager.h"
-#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
@@ -37,6 +35,8 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "yasmx/Basic/FileManager.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Parse/HeaderSearch.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/registry.h"
@@ -440,7 +440,7 @@ ApplyWarningSettings(yasm::Diagnostic& diags)
 #endif
 
             if (diags.setDiagnosticGroupMapping(setting, mapping))
-                diags.Report(clang::SourceLocation(),
+                diags.Report(yasm::SourceLocation(),
                              yasm::diag::warn_unknown_warning_option)
                     << ("-W" + warning_settings[setting_num]);
             ++setting_num;
@@ -627,12 +627,13 @@ do_assemble(void)
 {
     yasm::TextDiagnosticPrinter diag_printer(*errfile,
                                              ewmsg_style == EWSTYLE_VC);
-    clang::SourceManager source_mgr;
-    yasm::Diagnostic diags(&source_mgr, &diag_printer);
+    yasm::Diagnostic diags(&diag_printer);
+    yasm::SourceManager source_mgr(diags);
+    diags.setSourceManager(&source_mgr);
     // Apply warning settings
     ApplyWarningSettings(diags);
 
-    clang::FileManager file_mgr;
+    yasm::FileManager file_mgr;
     yasm::Assembler assembler(arch_keyword, objfmt_keyword, diags, dump_object);
     yasm::HeaderSearch headers(file_mgr);
 
@@ -674,14 +675,14 @@ do_assemble(void)
     }
     else
     {
-        const clang::FileEntry* in = file_mgr.getFile(in_filename);
+        const yasm::FileEntry* in = file_mgr.getFile(in_filename);
         if (!in)
         {
-            diags.Report(clang::SourceLocation(), yasm::diag::fatal_file_open)
+            diags.Report(yasm::SourceLocation(), yasm::diag::fatal_file_open)
                 << in_filename;
             return EXIT_FAILURE;
         }
-        source_mgr.createMainFileID(in, clang::SourceLocation());
+        source_mgr.createMainFileID(in, yasm::SourceLocation());
     }
 
     // assemble the input.
@@ -698,7 +699,7 @@ do_assemble(void)
                              err, llvm::raw_fd_ostream::F_Binary);
     if (!err.empty())
     {
-        diags.Report(clang::SourceLocation(), yasm::diag::fatal_file_open_desc)
+        diags.Report(yasm::SourceLocation(), yasm::diag::err_cannot_open_file)
             << obj_filename << err;
         return EXIT_FAILURE;
     }

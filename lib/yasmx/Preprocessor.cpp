@@ -30,16 +30,16 @@
 //
 #include "yasmx/Parse/Preprocessor.h"
 
-#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Parse/HeaderSearch.h"
 
 
 using namespace yasm;
 
 Preprocessor::Preprocessor(Diagnostic& diags,
-                           clang::SourceManager& sm,
+                           SourceManager& sm,
                            HeaderSearch& headers)
     : m_diags(diags)
     , m_file_mgr(headers.getFileMgr())
@@ -201,8 +201,8 @@ Preprocessor::getSpelling(const Token &Tok,
     return llvm::StringRef(Ptr, Len);
 }
 
-clang::SourceLocation
-Preprocessor::AdvanceToTokenCharacter(clang::SourceLocation tok_start, 
+SourceLocation
+Preprocessor::AdvanceToTokenCharacter(SourceLocation tok_start, 
                                       unsigned int char_no)
 {
     // Figure out how many physical characters away the specified instantiation
@@ -245,11 +245,11 @@ Preprocessor::AdvanceToTokenCharacter(clang::SourceLocation tok_start,
 }
 
 #if 0
-clang::SourceLocation
-Preprocessor::getLocForEndOfToken(clang::SourceLocation loc)
+SourceLocation
+Preprocessor::getLocForEndOfToken(SourceLocation loc)
 {
     if (loc.isInvalid() || !loc.isFileID())
-        return clang::SourceLocation();
+        return SourceLocation();
 
     unsigned int len = Lexer::MeasureTokenLength(loc, m_source_mgr);
     return AdvanceToTokenCharacter(loc, len);
@@ -263,28 +263,25 @@ Preprocessor::EnterMainSourceFile()
     // cause FileID's to accumulate information from both runs (e.g. #line
     // information) and predefined macros aren't guaranteed to be set properly.
     assert(m_NumEnteredSourceFiles == 0 && "Cannot reenter the main file!");
-    clang::FileID MainFileID = m_source_mgr.getMainFileID();
+    FileID MainFileID = m_source_mgr.getMainFileID();
 
     // Enter the main file source buffer.
-    std::string ErrorStr;
-    bool Res = EnterSourceFile(MainFileID, 0, &ErrorStr);
-    assert(!Res && "Entering main file should not fail!");
+    EnterSourceFile(MainFileID, 0, SourceLocation());
 
     // Tell the header info that the main file was entered.  If the file is
     // later #imported, it won't be re-entered.
-    if (const clang::FileEntry *FE = m_source_mgr.getFileEntryForID(MainFileID))
+    if (const FileEntry *FE = m_source_mgr.getFileEntryForID(MainFileID))
         m_header_info.IncrementIncludeCount(FE);
 
     // Preprocess Predefines to populate the initial preprocessor state.
     llvm::MemoryBuffer* SB = 
         llvm::MemoryBuffer::getMemBufferCopy(m_predefines, "<built-in>");
     assert(SB && "Cannot fail to create predefined source buffer");
-    clang::FileID FID = m_source_mgr.createFileIDForMemBuffer(SB);
+    FileID FID = m_source_mgr.createFileIDForMemBuffer(SB);
     assert(!FID.isInvalid() && "Could not create FileID for predefines?");
 
     // Start parsing the predefines.
-    Res = EnterSourceFile(FID, 0, &ErrorStr);
-    assert(!Res && "Entering predefines should not fail!");
+    EnterSourceFile(FID, 0, SourceLocation());
 }
 
 IdentifierInfo*
@@ -356,7 +353,7 @@ Preprocessor::HandleIdentifier(Token* identifier)
 }
 #endif
 
-const clang::FileEntry*
+const FileEntry*
 Preprocessor::LookupFile(llvm::StringRef filename,
                          bool is_angled,
                          const DirectoryLookup* from_dir,
@@ -364,10 +361,10 @@ Preprocessor::LookupFile(llvm::StringRef filename,
 {
     // If the header lookup mechanism may be relative to the current file, pass
     // in info about where the current file is.
-    const clang::FileEntry* cur_file_ent = 0;
+    const FileEntry* cur_file_ent = 0;
     if (!from_dir)
     {
-        clang::FileID FID = getCurrentFileLexer()->getFileID();
+        FileID FID = getCurrentFileLexer()->getFileID();
         cur_file_ent = m_source_mgr.getFileEntryForID(FID);
 
         // If there is no file entry associated with this file, it must be the
@@ -385,7 +382,7 @@ Preprocessor::LookupFile(llvm::StringRef filename,
 
     // Do a standard file entry lookup.
     cur_dir = m_cur_dir_lookup;
-    const clang::FileEntry* FE =
+    const FileEntry* FE =
         m_header_info.LookupFile(filename, is_angled, from_dir, cur_dir,
                                  cur_file_ent);
     if (FE)

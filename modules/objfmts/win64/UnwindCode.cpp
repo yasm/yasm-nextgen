@@ -338,7 +338,7 @@ objfmt::AppendUnwindCode(BytecodeContainer& container,
     // Offset in prolog
     Bytecode& bc = container.FreshBytecode();
     bc.AppendFixed(1, Expr::Ptr(new Expr(SUB(uwcode->m_loc, uwcode->m_proc))),
-                   clang::SourceLocation());
+                   SourceLocation());
 
     switch (uwcode->m_opcode)
     {

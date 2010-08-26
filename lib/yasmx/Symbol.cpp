@@ -48,7 +48,7 @@ Symbol::~Symbol()
 }
 
 bool
-Symbol::DefineCheck(clang::SourceLocation source, Diagnostic& diags) const
+Symbol::DefineCheck(SourceLocation source, Diagnostic& diags) const
 {
     assert(source.isValid() && "invalid source location");
     // Has it been defined before (either by DEFINED or COMMON/EXTERN)?
@@ -84,7 +84,7 @@ Symbol::DefineEqu(const Expr& e)
 
 void
 Symbol::CheckedDefineEqu(const Expr& e,
-                         clang::SourceLocation source,
+                         SourceLocation source,
                          Diagnostic& diags)
 {
     if (!DefineCheck(source, diags))
@@ -104,7 +104,7 @@ Symbol::DefineLabel(Location loc)
 
 void
 Symbol::CheckedDefineLabel(Location loc,
-                           clang::SourceLocation source,
+                           SourceLocation source,
                            Diagnostic& diags)
 {
     if (!DefineCheck(source, diags))
@@ -162,7 +162,7 @@ Symbol::Declare(Visibility vis)
 
 void
 Symbol::CheckedDeclare(Visibility vis,
-                       clang::SourceLocation source,
+                       SourceLocation source,
                        Diagnostic& diags)
 {
     assert(source.isValid() && "invalid source location");

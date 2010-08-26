@@ -32,9 +32,9 @@
 
 #include <string>
 
-#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Parse/Preprocessor.h"
 #include "yasmx/IntNum.h"
 
@@ -56,7 +56,7 @@ using namespace yasm::parser;
 /// hex float: "0x" [0-9a-fA-F_]+ [pP] [-+]? [0-9]+
 ///
 NasmNumericParser::NasmNumericParser(llvm::StringRef str,
-                                     clang::SourceLocation loc,
+                                     SourceLocation loc,
                                      Preprocessor& pp)
     : NumericParser(str)
 {

@@ -31,12 +31,11 @@
 #include "yasmx/Config/export.h"
 
 
-namespace clang { class SourceLocation; }
-
 namespace yasm
 {
 
 class BytecodeContainer;
+class SourceLocation;
 class Value;
 
 namespace arch
@@ -80,7 +79,7 @@ void AppendGeneral(BytecodeContainer& container,
                    unsigned char rex,
                    X86GeneralPostOp postop,
                    bool default_rel,
-                   clang::SourceLocation source);
+                   SourceLocation source);
 
 }} // namespace yasm::arch
 

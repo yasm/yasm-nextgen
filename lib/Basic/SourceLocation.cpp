@@ -11,13 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Basic/SourceLocation.h"
-#include "clang/Basic/PrettyStackTrace.h"
-#include "clang/Basic/SourceManager.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "yasmx/Basic/PrettyStackTrace.h"
+#include "yasmx/Basic/SourceManager.h"
 #include <cstdio>
-using namespace clang;
+using namespace yasm;
 
 //===----------------------------------------------------------------------===//
 // PrettyStackTraceLoc
@@ -80,24 +80,24 @@ FullSourceLoc FullSourceLoc::getSpellingLoc() const {
   return FullSourceLoc(SrcMgr->getSpellingLoc(*this), *SrcMgr);
 }
 
-unsigned FullSourceLoc::getInstantiationLineNumber() const {
+unsigned FullSourceLoc::getInstantiationLineNumber(bool *Invalid) const {
   assert(isValid());
-  return SrcMgr->getInstantiationLineNumber(*this);
+  return SrcMgr->getInstantiationLineNumber(*this, Invalid);
 }
 
-unsigned FullSourceLoc::getInstantiationColumnNumber() const {
+unsigned FullSourceLoc::getInstantiationColumnNumber(bool *Invalid) const {
   assert(isValid());
-  return SrcMgr->getInstantiationColumnNumber(*this);
+  return SrcMgr->getInstantiationColumnNumber(*this, Invalid);
 }
 
-unsigned FullSourceLoc::getSpellingLineNumber() const {
+unsigned FullSourceLoc::getSpellingLineNumber(bool *Invalid) const {
   assert(isValid());
-  return SrcMgr->getSpellingLineNumber(*this);
+  return SrcMgr->getSpellingLineNumber(*this, Invalid);
 }
 
-unsigned FullSourceLoc::getSpellingColumnNumber() const {
+unsigned FullSourceLoc::getSpellingColumnNumber(bool *Invalid) const {
   assert(isValid());
-  return SrcMgr->getSpellingColumnNumber(*this);
+  return SrcMgr->getSpellingColumnNumber(*this, Invalid);
 }
 
 bool FullSourceLoc::isInSystemHeader() const {
@@ -105,19 +105,18 @@ bool FullSourceLoc::isInSystemHeader() const {
   return SrcMgr->isInSystemHeader(*this);
 }
 
-const char *FullSourceLoc::getCharacterData() const {
+const char *FullSourceLoc::getCharacterData(bool *Invalid) const {
   assert(isValid());
-  return SrcMgr->getCharacterData(*this);
+  return SrcMgr->getCharacterData(*this, Invalid);
 }
 
-const llvm::MemoryBuffer* FullSourceLoc::getBuffer() const {
+const llvm::MemoryBuffer* FullSourceLoc::getBuffer(bool *Invalid) const {
   assert(isValid());
-  return SrcMgr->getBuffer(SrcMgr->getFileID(*this));
+  return SrcMgr->getBuffer(SrcMgr->getFileID(*this), Invalid);
 }
 
-std::pair<const char*, const char*> FullSourceLoc::getBufferData() const {
-  const llvm::MemoryBuffer *Buf = getBuffer();
-  return std::make_pair(Buf->getBufferStart(), Buf->getBufferEnd());
+llvm::StringRef FullSourceLoc::getBufferData(bool *Invalid) const {
+  return getBuffer(Invalid)->getBuffer();
 }
 
 std::pair<FileID, unsigned> FullSourceLoc::getDecomposedLoc() const {

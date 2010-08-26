@@ -30,7 +30,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "clang/Basic/SourceLocation.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Parse/Preprocessor.h"
 
@@ -46,14 +46,12 @@ namespace parser
 class YASM_STD_EXPORT NasmPreproc : public Preprocessor
 {
 public:
-    NasmPreproc(Diagnostic& diags,
-                clang::SourceManager& sm,
-                HeaderSearch& headers);
+    NasmPreproc(Diagnostic& diags, SourceManager& sm, HeaderSearch& headers);
     ~NasmPreproc();
 
 protected:
     virtual void RegisterBuiltinMacros();
-    virtual Lexer* CreateLexer(clang::FileID fid,
+    virtual Lexer* CreateLexer(FileID fid,
                                const llvm::MemoryBuffer* input_buffer);
 
 private:
@@ -62,7 +60,7 @@ private:
     IdentifierInfo *m_DATE, *m_TIME;  // __DATE__, __TIME__
     IdentifierInfo *m_BITS;           // __BITS__
 
-    clang::SourceLocation m_DATE_loc, m_TIME_loc;
+    SourceLocation m_DATE_loc, m_TIME_loc;
 };
 
 }} // namespace yasm::parser

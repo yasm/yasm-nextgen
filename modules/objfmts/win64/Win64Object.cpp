@@ -62,7 +62,7 @@ Win64Object::Output(llvm::raw_fd_ostream& os,
 {
     if (m_proc_frame.isValid())
     {
-        diags.Report(clang::SourceLocation(), diag::err_eof_proc_frame);
+        diags.Report(SourceLocation(), diag::err_eof_proc_frame);
         diags.Report(m_proc_frame, diag::note_proc_started_here);
         return;
     }
@@ -78,7 +78,7 @@ Win64Object::DirProcFrame(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
-    clang::SourceLocation source = info.getSource();
+    SourceLocation source = info.getSource();
 
     NameValue& name_nv = namevals.front();
     if (!name_nv.isId())
@@ -100,7 +100,7 @@ Win64Object::DirProcFrame(DirectiveInfo& info, Diagnostic& diags)
         return;
     }
     m_proc_frame = source;
-    m_done_prolog = clang::SourceLocation();
+    m_done_prolog = SourceLocation();
     m_unwind.reset(new UnwindInfo);
 
     SymbolRef proc = m_object.getSymbol(name);
@@ -124,8 +124,7 @@ Win64Object::DirProcFrame(DirectiveInfo& info, Diagnostic& diags)
 }
 
 bool
-Win64Object::CheckProcFrameState(clang::SourceLocation dir_source,
-                                 Diagnostic& diags)
+Win64Object::CheckProcFrameState(SourceLocation dir_source, Diagnostic& diags)
 {
     if (!m_proc_frame.isValid())
     {
@@ -149,7 +148,7 @@ Win64Object::CheckProcFrameState(clang::SourceLocation dir_source,
 
 // Get current assembly position.
 static SymbolRef
-getCurPos(Object& object, clang::SourceLocation source, Diagnostic& diags)
+getCurPos(Object& object, SourceLocation source, Diagnostic& diags)
 {
     Section* sect = object.getCurSection();
     if (!sect)
@@ -277,7 +276,7 @@ Win64Object::SaveCommon(DirectiveInfo& info,
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
-    clang::SourceLocation source = info.getSource();
+    SourceLocation source = info.getSource();
 
     assert(!namevals.empty());
     if (!CheckProcFrameState(info.getSource(), diags))
@@ -358,7 +357,7 @@ void
 Win64Object::DirEndProcFrame(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
-    clang::SourceLocation source = info.getSource();
+    SourceLocation source = info.getSource();
 
     if (!m_proc_frame.isValid())
     {
@@ -376,7 +375,7 @@ Win64Object::DirEndProcFrame(DirectiveInfo& info, Diagnostic& diags)
                      diags.getCustomDiagID(Diagnostic::Note,
                                            "procedure started here"));
         m_unwind.reset(0);
-        m_proc_frame = clang::SourceLocation();
+        m_proc_frame = SourceLocation();
         return;
     }
     assert(m_unwind.get() != 0 && "unwind info not present");
@@ -426,8 +425,8 @@ Win64Object::DirEndProcFrame(DirectiveInfo& info, Diagnostic& diags)
                std::auto_ptr<Expr>(new Expr(WRT(unwindpos, xdata_sym))),
                4, arch, source, diags);
 
-    m_proc_frame = clang::SourceLocation();
-    m_done_prolog = clang::SourceLocation();
+    m_proc_frame = SourceLocation();
+    m_done_prolog = SourceLocation();
 }
 
 void
@@ -473,7 +472,7 @@ bool
 Win64Object::InitSection(llvm::StringRef name,
                          Section& section,
                          CoffSection* coffsect,
-                         clang::SourceLocation source,
+                         SourceLocation source,
                          Diagnostic& diags)
 {
     if (Win32Object::InitSection(name, section, coffsect, source, diags))

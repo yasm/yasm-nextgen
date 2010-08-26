@@ -47,7 +47,7 @@ using namespace yasm;
 
 void
 IdentifierInfo::DoInsnLookup(const Arch& arch,
-                             clang::SourceLocation source,
+                             SourceLocation source,
                              Diagnostic& diags)
 {
     if (m_flags & DID_INSN_LOOKUP)
@@ -76,7 +76,7 @@ IdentifierInfo::DoInsnLookup(const Arch& arch,
 
 void
 IdentifierInfo::DoRegLookup(const Arch& arch,
-                            clang::SourceLocation source,
+                            SourceLocation source,
                             Diagnostic& diags)
 {
     if (m_flags & DID_REG_LOOKUP)

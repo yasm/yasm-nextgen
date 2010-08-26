@@ -32,8 +32,8 @@
 //
 #include <cassert>
 
-#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/SourceLocation.h"
 
 namespace yasm
 {
@@ -47,7 +47,7 @@ class IdentifierInfo;
 class Token
 {
     /// The location of the token.
-    clang::SourceLocation m_loc;
+    SourceLocation m_loc;
 
     /// PtrData - This is a union of four different pointer types, which depends
     /// on what type of token this is:
@@ -139,19 +139,19 @@ public:
 
     /// getLocation - Return a source location identifier for the specified
     /// offset in the current file.
-    clang::SourceLocation getLocation() const { return m_loc; }
+    SourceLocation getLocation() const { return m_loc; }
     unsigned int getLength() const { return m_len; }
 
     /// getEndLocation - Return a source location identifier one past the end
     /// of this token.
-    clang::SourceLocation getEndLocation() const
+    SourceLocation getEndLocation() const
     { return m_loc.getFileLocWithOffset(m_len); }
 
     /// getSourceRange - Return a source range for the token.
-    clang::SourceRange getSourceRange() const
-    { return clang::SourceRange(m_loc, getEndLocation()); }
+    SourceRange getSourceRange() const
+    { return SourceRange(m_loc, getEndLocation()); }
 
-    void setLocation(clang::SourceLocation l) { m_loc = l; }
+    void setLocation(SourceLocation l) { m_loc = l; }
     void setLength(unsigned int len) { m_len = len; }
 
 #if 0
@@ -167,7 +167,7 @@ public:
         m_kind = 0;
         m_flags = 0;
         m_ptr_data = 0;
-        m_loc = clang::SourceLocation();
+        m_loc = SourceLocation();
     }
 
     IdentifierInfo* getIdentifierInfo() const

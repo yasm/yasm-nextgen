@@ -17,7 +17,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Basic/FileManager.h"
+#include "yasmx/Basic/FileManager.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
@@ -25,7 +25,7 @@
 #include <map>
 #include <set>
 #include <string>
-using namespace clang;
+using namespace yasm;
 
 // FIXME: Enhance libsystem to support inode and other fields.
 #include <sys/stat.h>
@@ -331,8 +331,8 @@ const FileEntry *FileManager::getFile(const char *NameStart,
 }
 
 const FileEntry *
-FileManager::getVirtualFile(const llvm::StringRef &Filename,
-                            off_t Size, time_t ModificationTime) {
+FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
+                            time_t ModificationTime) {
   const char *NameStart = Filename.begin(), *NameEnd = Filename.end();
 
   ++NumFileLookups;
@@ -365,6 +365,18 @@ FileManager::getVirtualFile(const llvm::StringRef &Filename,
   UFE->ModTime = ModificationTime;
   UFE->Dir     = DirInfo;
   UFE->UID     = NextFileUID++;
+  
+  // If this virtual file resolves to a file, also map that file to the 
+  // newly-created file entry.
+  const char *InterndFileName = NamedFileEnt.getKeyData();
+  struct stat StatBuf;
+  if (!stat_cached(InterndFileName, &StatBuf) &&
+      !S_ISDIR(StatBuf.st_mode)) {
+    llvm::sys::Path FilePath(InterndFileName);
+    FilePath.makeAbsolute();
+    FileEntries[FilePath.str()] = UFE;
+  }
+  
   return UFE;
 }
 

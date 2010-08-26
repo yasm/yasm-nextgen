@@ -131,7 +131,7 @@ SxData::Write(YAML::Emitter& out) const
 void
 objfmt::AppendSxData(BytecodeContainer& container,
                      SymbolRef sym,
-                     clang::SourceLocation source)
+                     SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     bc.Transform(Bytecode::Contents::Ptr(new SxData(sym)));

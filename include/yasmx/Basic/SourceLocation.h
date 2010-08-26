@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SOURCELOCATION_H
-#define LLVM_CLANG_SOURCELOCATION_H
+#ifndef YASM_SOURCELOCATION_H
+#define YASM_SOURCELOCATION_H
 
 #include <utility>
 #include <cassert>
@@ -21,14 +21,14 @@
 namespace llvm {
   class MemoryBuffer;
   class raw_ostream;
+  class StringRef;
   template <typename T> struct DenseMapInfo;
   template <typename T> struct isPodLike;
 }
 
-namespace clang {
+namespace yasm {
 
 class SourceManager;
-class FileEntry;
 
 /// FileID - This is an opaque identifier used by SourceManager which refers to
 /// a source file (MemoryBuffer) along with its #include path and #line data.
@@ -173,22 +173,67 @@ public:
     return B != X.B || E != X.E;
   }
 };
+  
+/// CharSourceRange - This class represents a character granular source range.
+/// The underlying SourceRange can either specify the starting/ending character
+/// of the range, or it can specify the start or the range and the start of the
+/// last token of the range (a "token range").  In the token range case, the
+/// size of the last token must be measured to determine the actual end of the
+/// range.
+class CharSourceRange { 
+  SourceRange Range;
+  bool IsTokenRange;
+public:
+  CharSourceRange() : IsTokenRange(false) {}
+  CharSourceRange(SourceRange R, bool ITR) : Range(R),IsTokenRange(ITR){}
+
+  static CharSourceRange getTokenRange(SourceRange R) {
+    CharSourceRange Result;
+    Result.Range = R;
+    Result.IsTokenRange = true;
+    return Result;
+  }
+
+  static CharSourceRange getCharRange(SourceRange R) {
+    CharSourceRange Result;
+    Result.Range = R;
+    Result.IsTokenRange = false;
+    return Result;
+  }
+    
+  static CharSourceRange getTokenRange(SourceLocation B, SourceLocation E) {
+    return getTokenRange(SourceRange(B, E));
+  }
+  static CharSourceRange getCharRange(SourceLocation B, SourceLocation E) {
+    return getCharRange(SourceRange(B, E));
+  }
+  
+  /// isTokenRange - Return true if the end of this range specifies the start of
+  /// the last token.  Return false if the end of this range specifies the last
+  /// character in the range.
+  bool isTokenRange() const { return IsTokenRange; }
+  
+  SourceLocation getBegin() const { return Range.getBegin(); }
+  SourceLocation getEnd() const { return Range.getEnd(); }
+  const SourceRange &getAsRange() const { return Range; }
+ 
+  void setBegin(SourceLocation b) { Range.setBegin(b); }
+  void setEnd(SourceLocation e) { Range.setEnd(e); }
+  
+  bool isValid() const { return Range.isValid(); }
+  bool isInvalid() const { return !isValid(); }
+};
 
 /// FullSourceLoc - A SourceLocation and its associated SourceManager.  Useful
 /// for argument passing to functions that expect both objects.
 class YASM_LIB_EXPORT FullSourceLoc : public SourceLocation {
-  SourceManager* SrcMgr;
+  const SourceManager *SrcMgr;
 public:
   /// Creates a FullSourceLoc where isValid() returns false.
-  explicit FullSourceLoc() : SrcMgr((SourceManager*) 0) {}
+  explicit FullSourceLoc() : SrcMgr(0) {}
 
-  explicit FullSourceLoc(SourceLocation Loc, SourceManager &SM)
+  explicit FullSourceLoc(SourceLocation Loc, const SourceManager &SM)
     : SourceLocation(Loc), SrcMgr(&SM) {}
-
-  SourceManager &getManager() {
-    assert(SrcMgr && "SourceManager is NULL.");
-    return *SrcMgr;
-  }
 
   const SourceManager &getManager() const {
     assert(SrcMgr && "SourceManager is NULL.");
@@ -200,19 +245,19 @@ public:
   FullSourceLoc getInstantiationLoc() const;
   FullSourceLoc getSpellingLoc() const;
 
-  unsigned getInstantiationLineNumber() const;
-  unsigned getInstantiationColumnNumber() const;
+  unsigned getInstantiationLineNumber(bool *Invalid = 0) const;
+  unsigned getInstantiationColumnNumber(bool *Invalid = 0) const;
 
-  unsigned getSpellingLineNumber() const;
-  unsigned getSpellingColumnNumber() const;
+  unsigned getSpellingLineNumber(bool *Invalid = 0) const;
+  unsigned getSpellingColumnNumber(bool *Invalid = 0) const;
 
-  const char *getCharacterData() const;
+  const char *getCharacterData(bool *Invalid = 0) const;
 
-  const llvm::MemoryBuffer* getBuffer() const;
+  const llvm::MemoryBuffer* getBuffer(bool *Invalid = 0) const;
 
-  /// getBufferData - Return a pointer to the start and end of the source buffer
-  /// data for the specified FileID.
-  std::pair<const char*, const char*> getBufferData() const;
+  /// getBufferData - Return a StringRef to the source buffer data for the
+  /// specified FileID.
+  llvm::StringRef getBufferData(bool *Invalid = 0) const;
 
   /// getDecomposedLoc - Decompose the specified location into a raw FileID +
   /// Offset pair.  The first element is the FileID, the second is the
@@ -278,33 +323,33 @@ public:
 };
 
 
-}  // end namespace clang
+}  // end namespace yasm
 
 namespace llvm {
   /// Define DenseMapInfo so that FileID's can be used as keys in DenseMap and
   /// DenseSets.
   template <>
-  struct DenseMapInfo<clang::FileID> {
-    static inline clang::FileID getEmptyKey() {
-      return clang::FileID();
+  struct DenseMapInfo<yasm::FileID> {
+    static inline yasm::FileID getEmptyKey() {
+      return yasm::FileID();
     }
-    static inline clang::FileID getTombstoneKey() {
-      return clang::FileID::getSentinel();
+    static inline yasm::FileID getTombstoneKey() {
+      return yasm::FileID::getSentinel();
     }
 
-    static unsigned getHashValue(clang::FileID S) {
+    static unsigned getHashValue(yasm::FileID S) {
       return S.getHashValue();
     }
 
-    static bool isEqual(clang::FileID LHS, clang::FileID RHS) {
+    static bool isEqual(yasm::FileID LHS, yasm::FileID RHS) {
       return LHS == RHS;
     }
   };
   
   template <>
-  struct isPodLike<clang::SourceLocation> { static const bool value = true; };
+  struct isPodLike<yasm::SourceLocation> { static const bool value = true; };
   template <>
-  struct isPodLike<clang::FileID> { static const bool value = true; };
+  struct isPodLike<yasm::FileID> { static const bool value = true; };
 
 }  // end namespace llvm
 

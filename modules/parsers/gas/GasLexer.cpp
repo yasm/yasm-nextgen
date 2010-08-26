@@ -48,7 +48,7 @@ STATISTIC(num_eol_comment, "Number of EOL comments lexed");
 using namespace yasm;
 using namespace yasm::parser;
 
-GasLexer::GasLexer(clang::FileID fid,
+GasLexer::GasLexer(FileID fid,
                    const llvm::MemoryBuffer* input_buffer,
                    Preprocessor& pp)
     : Lexer(fid, input_buffer, pp)
@@ -56,7 +56,7 @@ GasLexer::GasLexer(clang::FileID fid,
     InitCharacterInfo();
 }
 
-GasLexer::GasLexer(clang::SourceLocation file_loc,
+GasLexer::GasLexer(SourceLocation file_loc,
                    const char* start,
                    const char* ptr,
                    const char* end)

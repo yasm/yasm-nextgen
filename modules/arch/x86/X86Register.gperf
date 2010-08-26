@@ -531,7 +531,7 @@ to,	TARGETMOD,	0,	X86TargetModifier::TO,		0
 
 Arch::RegTmod
 X86Arch::ParseCheckRegTmod(llvm::StringRef id,
-                           clang::SourceLocation source,
+                           SourceLocation source,
                            Diagnostic& diags) const
 {
     size_t id_len = id.size();

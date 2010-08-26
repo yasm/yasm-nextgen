@@ -170,10 +170,10 @@ public:
     bool setVar(llvm::StringRef var, unsigned long val);
 
     InsnPrefix ParseCheckInsnPrefix(llvm::StringRef id,
-                                    clang::SourceLocation source,
+                                    SourceLocation source,
                                     Diagnostic& diags) const;
     RegTmod ParseCheckRegTmod(llvm::StringRef id,
-                              clang::SourceLocation source,
+                              SourceLocation source,
                               Diagnostic& diags) const;
 
     const unsigned char** getFill() const;

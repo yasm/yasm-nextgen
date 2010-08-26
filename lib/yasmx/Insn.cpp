@@ -310,7 +310,7 @@ Insn::~Insn()
 
 bool
 Insn::Append(BytecodeContainer& container,
-             clang::SourceLocation source,
+             SourceLocation source,
              Diagnostic& diags)
 {
     // Simplify the operands' expressions.

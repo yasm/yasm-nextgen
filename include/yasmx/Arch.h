@@ -41,7 +41,6 @@
 #include "yasmx/Module.h"
 
 
-namespace clang { class SourceLocation; }
 namespace llvm { class APFloat; class raw_ostream; }
 namespace YAML { class Emitter; }
 
@@ -60,6 +59,7 @@ class Insn;
 class ParserImpl;
 class Prefix;
 class Preprocessor;
+class SourceLocation;
 class TargetModifier;
 class Token;
 
@@ -376,7 +376,7 @@ public:
     ///                     returned (and 0 otherwise)
     /// @return Identifier type (empty if unrecognized)
     virtual InsnPrefix ParseCheckInsnPrefix(llvm::StringRef id,
-                                            clang::SourceLocation source,
+                                            SourceLocation source,
                                             Diagnostic& diags) const = 0;
 
     /// Check an generic identifier to see if it matches architecture
@@ -385,7 +385,7 @@ public:
     /// @param id           identifier as in the input file
     /// @return Identifier type (empty if unrecognized)
     virtual RegTmod ParseCheckRegTmod(llvm::StringRef id,
-                                      clang::SourceLocation source,
+                                      SourceLocation source,
                                       Diagnostic& diags) const = 0;
 
     /// Get NOP fill patterns for 1-15 bytes of fill.

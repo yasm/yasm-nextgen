@@ -28,9 +28,9 @@
 
 #include "util.h"
 
-#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
@@ -85,7 +85,7 @@ BinObject::OutputMap(const IntNum& origin,
         (m_map_filename.empty() ? "-" : m_map_filename.c_str(), err);
     if (!err.empty())
     {
-        diags.Report(clang::SourceLocation(),
+        diags.Report(SourceLocation(),
                      diags.getCustomDiagID(Diagnostic::Warning,
                          N_("unable to open map file '%0': %1")))
             << m_map_filename << err;
@@ -156,7 +156,7 @@ BinOutput::OutputSection(Section& sect, const IntNum& origin)
         file_start -= origin;
         if (file_start.getSign() < 0)
         {
-            Diag(clang::SourceLocation(),
+            Diag(SourceLocation(),
                  getDiagnostics().getCustomDiagID(Diagnostic::Error,
                      N_("section '%0' starts before origin (ORG)")))
                 << sect.getName();
@@ -164,7 +164,7 @@ BinOutput::OutputSection(Section& sect, const IntNum& origin)
         }
         if (!file_start.isOkSize(sizeof(unsigned long)*8, 0, 0))
         {
-            Diag(clang::SourceLocation(),
+            Diag(SourceLocation(),
                  getDiagnostics().getCustomDiagID(Diagnostic::Error,
                      N_("section '%0' start value too large")))
                 << sect.getName();
@@ -173,7 +173,7 @@ BinOutput::OutputSection(Section& sect, const IntNum& origin)
         m_fd_os.seek(file_start.getUInt());
         if (m_os.has_error())
         {
-            Diag(clang::SourceLocation(), diag::err_file_output_seek);
+            Diag(SourceLocation(), diag::err_file_output_seek);
             return;
         }
 
@@ -330,14 +330,14 @@ Section*
 BinObject::AddDefaultSection()
 {
     Diagnostic diags(NULL);
-    Section* section = AppendSection(".text", clang::SourceLocation(), diags);
+    Section* section = AppendSection(".text", SourceLocation(), diags);
     section->setDefault(true);
     return section;
 }
 
 Section*
 BinObject::AppendSection(llvm::StringRef name,
-                         clang::SourceLocation source,
+                         SourceLocation source,
                          Diagnostic& diags)
 {
     bool bss = (name == ".bss");
@@ -385,7 +385,7 @@ BinObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
-    clang::SourceLocation source = info.getSource();
+    SourceLocation source = info.getSource();
 
     NameValue& sectname_nv = nvs.front();
     if (!sectname_nv.isString())
@@ -509,7 +509,7 @@ BinObject::DirOrg(DirectiveInfo& info, Diagnostic& diags)
 
 bool
 BinObject::setMapFilename(const NameValue& nv,
-                          clang::SourceLocation dir_source,
+                          SourceLocation dir_source,
                           Diagnostic& diags)
 {
     if (!m_map_filename.empty())

@@ -14,9 +14,12 @@
 #ifndef YASM_DIAGNOSTIC_H
 #define YASM_DIAGNOSTIC_H
 
-#include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/type_traits.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
+#include <string>
 #include <vector>
 #include <cassert>
 
@@ -28,11 +31,14 @@ namespace llvm {
 #include "yasmx/DiagnosticKinds.h"
 
 namespace yasm {
+  class DeclContext;
   class DiagnosticBuilder;
   class DiagnosticClient;
+  class FileManager;
   class IdentifierInfo;
   class LangOptions;
   class PartialDiagnostic;
+  class Preprocessor;
 
   // Import the diagnostic enums themselves.
   namespace diag {
@@ -44,7 +50,7 @@ namespace yasm {
       DIAG_START_PARSE    = DIAG_START_LEX      +  300,
       DIAG_START_AST      = DIAG_START_PARSE    +  300,
       DIAG_START_SEMA     = DIAG_START_AST      +  100,
-      DIAG_START_ANALYSIS = DIAG_START_SEMA     + 1000,
+      DIAG_START_ANALYSIS = DIAG_START_SEMA     + 1500,
       DIAG_UPPER_LIMIT    = DIAG_START_ANALYSIS +  100
     };
 
@@ -67,7 +73,10 @@ namespace yasm {
 
       /// Map this diagnostic to "warning", but make it immune to -Werror.  This
       /// happens when you specify -Wno-error=foo.
-      MAP_WARNING_NO_WERROR = 5
+      MAP_WARNING_NO_WERROR = 5,
+      /// Map this diagnostic to "error", but make it immune to -Wfatal-errors.
+      /// This happens for -Wno-fatal-errors=foo.
+      MAP_ERROR_NO_WFATAL = 6
     };
   }
 
@@ -80,14 +89,11 @@ namespace yasm {
 /// should also provide full recovery from such errors, such that
 /// suppressing the diagnostic output can still result in successful
 /// compilation.
-class CodeModificationHint {
+class FixItHint {
 public:
-  /// \brief Tokens that should be removed to correct the error.
-  clang::SourceRange RemoveRange;
-
-  /// \brief The location at which we should insert code to correct
-  /// the error.
-  clang::SourceLocation InsertionLoc;
+  /// \brief Code that should be replaced to correct the error. Empty for an
+  /// insertion hint.
+  CharSourceRange RemoveRange;
 
   /// \brief The actual code to insert at the insertion location, as a
   /// string.
@@ -95,35 +101,47 @@ public:
 
   /// \brief Empty code modification hint, indicating that no code
   /// modification is known.
-  CodeModificationHint() : RemoveRange(), InsertionLoc() { }
+  FixItHint() : RemoveRange() { }
 
+  bool isNull() const {
+    return !RemoveRange.isValid();
+  }
+  
   /// \brief Create a code modification hint that inserts the given
   /// code string at a specific location.
-  static CodeModificationHint CreateInsertion
-      (clang::SourceLocation InsertionLoc, const std::string &Code) {
-    CodeModificationHint Hint;
-    Hint.InsertionLoc = InsertionLoc;
+  static FixItHint CreateInsertion(SourceLocation InsertionLoc,
+                                   llvm::StringRef Code) {
+    FixItHint Hint;
+    Hint.RemoveRange =
+      CharSourceRange(SourceRange(InsertionLoc, InsertionLoc), false);
     Hint.CodeToInsert = Code;
     return Hint;
   }
 
   /// \brief Create a code modification hint that removes the given
   /// source range.
-  static CodeModificationHint CreateRemoval(clang::SourceRange RemoveRange) {
-    CodeModificationHint Hint;
+  static FixItHint CreateRemoval(CharSourceRange RemoveRange) {
+    FixItHint Hint;
     Hint.RemoveRange = RemoveRange;
     return Hint;
   }
-
+  static FixItHint CreateRemoval(SourceRange RemoveRange) {
+    return CreateRemoval(CharSourceRange::getTokenRange(RemoveRange));
+  }
+  
   /// \brief Create a code modification hint that replaces the given
   /// source range with the given code string.
-  static CodeModificationHint CreateReplacement(clang::SourceRange RemoveRange, 
-                                                const std::string &Code) {
-    CodeModificationHint Hint;
+  static FixItHint CreateReplacement(CharSourceRange RemoveRange,
+                                     llvm::StringRef Code) {
+    FixItHint Hint;
     Hint.RemoveRange = RemoveRange;
-    Hint.InsertionLoc = RemoveRange.getBegin();
     Hint.CodeToInsert = Code;
     return Hint;
+  }
+  
+  static FixItHint CreateReplacement(SourceRange RemoveRange,
+                                     llvm::StringRef Code) {
+    return CreateReplacement(CharSourceRange::getTokenRange(RemoveRange), Code);
   }
 };
 
@@ -131,7 +149,7 @@ public:
 /// problems and issues.  It massages the diagnostics (e.g. handling things like
 /// "report warnings as errors" and passes them off to the DiagnosticClient for
 /// reporting to the user.
-class YASM_LIB_EXPORT Diagnostic {
+class YASM_LIB_EXPORT Diagnostic : public llvm::RefCountedBase<Diagnostic> {
 public:
   /// Level - The level of the diagnostic, after it has been through mapping.
   enum Level {
@@ -152,27 +170,61 @@ public:
     ak_identifierinfo,  // IdentifierInfo
     ak_qualtype,        // QualType
     ak_declarationname, // DeclarationName
-    ak_nameddecl        // NamedDecl *
+    ak_nameddecl,       // NamedDecl *
+    ak_nestednamespec,  // NestedNameSpecifier *
+    ak_declcontext      // DeclContext *
   };
+
+  /// Specifies which overload candidates to display when overload resolution
+  /// fails.
+  enum OverloadsShown {
+    Ovl_All,  ///< Show all overloads.
+    Ovl_Best  ///< Show just the "best" overload candidates.
+  };
+
+  /// ArgumentValue - This typedef represents on argument value, which is a
+  /// union discriminated by ArgumentKind, with a value.
+  typedef std::pair<ArgumentKind, intptr_t> ArgumentValue;
 
 private:
   unsigned char AllExtensionsSilenced; // Used by __extension__
   bool IgnoreAllWarnings;        // Ignore all warnings: -w
   bool WarningsAsErrors;         // Treat warnings like errors:
+  bool ErrorsAsFatal;            // Treat errors like fatal errors.
   bool SuppressSystemWarnings;   // Suppress warnings in system headers.
   bool SuppressAllDiagnostics;   // Suppress all diagnostics.
+  OverloadsShown ShowOverloads;  // Which overload candidates to show.
+  unsigned ErrorLimit;           // Cap of # errors emitted, 0 -> no limit.
+  unsigned TemplateBacktraceLimit; // Cap on depth of template backtrace stack,
+                                   // 0 -> no limit.
   ExtensionHandling ExtBehavior; // Map extensions onto warnings or errors?
-  DiagnosticClient *Client;
-  clang::SourceManager* SrcMgr;
-
+  DiagnosticClient* Client;
+  SourceManager* SrcMgr;
+  
   /// DiagMappings - Mapping information for diagnostics.  Mapping info is
   /// packed into four bits per diagnostic.  The low three bits are the mapping
   /// (an instance of diag::Mapping), or zero if unset.  The high bit is set
   /// when the mapping was established as a user mapping.  If the high bit is
   /// clear, then the low bits are set to the default value, and should be
   /// mapped with -pedantic, -Werror, etc.
+  class DiagMappings {
+    unsigned char Values[diag::DIAG_UPPER_LIMIT/2];
 
-  typedef std::vector<unsigned char> DiagMappings;
+  public:
+    DiagMappings() {
+      memset(Values, 0, diag::DIAG_UPPER_LIMIT/2);
+    }
+
+    void setMapping(diag::kind Diag, unsigned Map) {
+      size_t Shift = (Diag & 1)*4;
+      Values[Diag/2] = (Values[Diag/2] & ~(15 << Shift)) | (Map << Shift);
+    }
+
+    diag::Mapping getMapping(diag::kind Diag) const {
+      return (diag::Mapping)((Values[Diag/2] >> (Diag & 1)*4) & 15);
+    }
+  };
+
   mutable std::vector<DiagMappings> DiagMappingsStack;
 
   /// ErrorOccurred / FatalErrorOccurred - This is set to true when an error or
@@ -185,26 +237,48 @@ private:
   /// diagnostic that they follow.
   Diagnostic::Level LastDiagLevel;
 
-  unsigned NumDiagnostics;    // Number of diagnostics reported
-  unsigned NumErrors;         // Number of diagnostics that are errors
-
+  unsigned NumWarnings;       // Number of warnings reported
+  unsigned NumErrors;         // Number of errors reported
+  unsigned NumErrorsSuppressed; // Number of errors suppressed
+  
   /// CustomDiagInfo - Information for uniquing and looking up custom diags.
   diag::CustomDiagInfo *CustomDiagInfo;
 
   /// ArgToStringFn - A function pointer that converts an opaque diagnostic
   /// argument to a strings.  This takes the modifiers and argument that was
   /// present in the diagnostic.
+  ///
+  /// The PrevArgs array (whose length is NumPrevArgs) indicates the previous
+  /// arguments formatted for this diagnostic.  Implementations of this function
+  /// can use this information to avoid redundancy across arguments.
+  ///
   /// This is a hack to avoid a layering violation between libbasic and libsema.
   typedef void (*ArgToStringFnTy)(ArgumentKind Kind, intptr_t Val,
                                   const char *Modifier, unsigned ModifierLen,
                                   const char *Argument, unsigned ArgumentLen,
+                                  const ArgumentValue *PrevArgs,
+                                  unsigned NumPrevArgs,
                                   llvm::SmallVectorImpl<char> &Output,
                                   void *Cookie);
   void *ArgToStringCookie;
   ArgToStringFnTy ArgToStringFn;
+
+  /// \brief ID of the "delayed" diagnostic, which is a (typically
+  /// fatal) diagnostic that had to be delayed because it was found
+  /// while emitting another diagnostic.
+  unsigned DelayedDiagID;
+
+  /// \brief First string argument for the delayed diagnostic.
+  std::string DelayedDiagArg1;
+
+  /// \brief Second string argument for the delayed diagnostic.
+  std::string DelayedDiagArg2;
+
 public:
-  explicit Diagnostic(clang::SourceManager* smgr, DiagnosticClient *client = 0);
+  explicit Diagnostic(DiagnosticClient *client = 0);
   ~Diagnostic();
+
+  void setSourceManager(SourceManager* smgr) { SrcMgr = smgr; }
 
   //===--------------------------------------------------------------------===//
   //  Diagnostic characterization methods, used by a client to customize how
@@ -212,8 +286,7 @@ public:
 
   DiagnosticClient *getClient() { return Client; }
   const DiagnosticClient *getClient() const { return Client; }
-
-
+  
   /// pushMappings - Copies the current DiagMappings and pushes the new copy
   /// onto the top of the stack.
   void pushMappings();
@@ -224,8 +297,25 @@ public:
   /// stack.
   bool popMappings();
 
+  /// \brief Set the diagnostic client associated with this diagnostic object.
   void setClient(DiagnosticClient* client) { Client = client; }
 
+  /// setErrorLimit - Specify a limit for the number of errors we should
+  /// emit before giving up.  Zero disables the limit.
+  void setErrorLimit(unsigned Limit) { ErrorLimit = Limit; }
+  
+  /// \brief Specify the maximum number of template instantiation
+  /// notes to emit along with a given diagnostic.
+  void setTemplateBacktraceLimit(unsigned Limit) {
+    TemplateBacktraceLimit = Limit;
+  }
+  
+  /// \brief Retrieve the maximum number of template instantiation
+  /// nodes to emit along with a given diagnostic.
+  unsigned getTemplateBacktraceLimit() const {
+    return TemplateBacktraceLimit;
+  }
+  
   /// setIgnoreAllWarnings - When set to true, any unmapped warnings are
   /// ignored.  If this and WarningsAsErrors are both set, then this one wins.
   void setIgnoreAllWarnings(bool Val) { IgnoreAllWarnings = Val; }
@@ -235,6 +325,11 @@ public:
   /// as errors.
   void setWarningsAsErrors(bool Val) { WarningsAsErrors = Val; }
   bool getWarningsAsErrors() const { return WarningsAsErrors; }
+
+  /// setErrorsAsFatal - When set to true, any error reported is made a
+  /// fatal error.
+  void setErrorsAsFatal(bool Val) { ErrorsAsFatal = Val; }
+  bool getErrorsAsFatal() const { return ErrorsAsFatal; }
 
   /// setSuppressSystemWarnings - When set to true mask warnings that
   /// come from system headers.
@@ -248,7 +343,20 @@ public:
     SuppressAllDiagnostics = Val; 
   }
   bool getSuppressAllDiagnostics() const { return SuppressAllDiagnostics; }
-
+  
+  /// \brief Specify which overload candidates to show when overload resolution
+  /// fails.  By default, we show all candidates.
+  void setShowOverloads(OverloadsShown Val) {
+    ShowOverloads = Val;
+  }
+  OverloadsShown getShowOverloads() const { return ShowOverloads; }
+  
+  /// \brief Pretend that the last diagnostic issued was ignored. This can
+  /// be used by clients who suppress diagnostics themselves.
+  void setLastDiagnosticIgnored() {
+    LastDiagLevel = Ignored;
+  }
+  
   /// setExtensionHandlingBehavior - This controls whether otherwise-unmapped
   /// extension diagnostics are mapped onto ignore/warning/error.  This
   /// corresponds to the GCC -pedantic and -pedantic-errors option.
@@ -269,8 +377,9 @@ public:
   void setDiagnosticMapping(diag::kind Diag, diag::Mapping Map) {
     assert(Diag < diag::DIAG_UPPER_LIMIT &&
            "Can only map builtin diagnostics");
-    assert((isBuiltinWarningOrExtension(Diag) || Map == diag::MAP_FATAL) &&
-           "Cannot map errors!");
+    assert((isBuiltinWarningOrExtension(Diag) ||
+            (Map == diag::MAP_FATAL || Map == diag::MAP_ERROR)) &&
+           "Cannot map errors into warnings!");
     setDiagnosticMappingInternal(Diag, Map, true);
   }
 
@@ -283,12 +392,17 @@ public:
   bool hasFatalErrorOccurred() const { return FatalErrorOccurred; }
 
   unsigned getNumErrors() const { return NumErrors; }
-  unsigned getNumDiagnostics() const { return NumDiagnostics; }
+  unsigned getNumErrorsSuppressed() const { return NumErrorsSuppressed; }
+  unsigned getNumWarnings() const { return NumWarnings; }
+
+  void setNumWarnings(unsigned NumWarnings) {
+    this->NumWarnings = NumWarnings;
+  }
 
   /// getCustomDiagID - Return an ID for a diagnostic with the specified message
   /// and level.  If this is the first request for this diagnosic, it is
   /// registered and created, otherwise the existing ID is returned.
-  unsigned getCustomDiagID(Level L, const char *Message);
+  unsigned getCustomDiagID(Level L, llvm::StringRef Message);
 
 
   /// ConvertArgToString - This method converts a diagnostic argument (as an
@@ -296,9 +410,10 @@ public:
   void ConvertArgToString(ArgumentKind Kind, intptr_t Val,
                           const char *Modifier, unsigned ModLen,
                           const char *Argument, unsigned ArgLen,
+                          const ArgumentValue *PrevArgs, unsigned NumPrevArgs,
                           llvm::SmallVectorImpl<char> &Output) const {
-    ArgToStringFn(Kind, Val, Modifier, ModLen, Argument, ArgLen, Output,
-                  ArgToStringCookie);
+    ArgToStringFn(Kind, Val, Modifier, ModLen, Argument, ArgLen,
+                  PrevArgs, NumPrevArgs, Output, ArgToStringCookie);
   }
 
   void SetArgToStringFn(ArgToStringFnTy Fn, void *Cookie) {
@@ -306,6 +421,10 @@ public:
     ArgToStringCookie = Cookie;
   }
 
+  /// \brief Reset the state of the diagnostic object to its initial 
+  /// configuration.
+  void Reset();
+  
   //===--------------------------------------------------------------------===//
   // Diagnostic classification and reporting interfaces.
   //
@@ -327,13 +446,32 @@ public:
   /// isBuiltinExtensionDiag - Determine whether the given built-in diagnostic
   /// ID is for an extension of some sort.
   ///
-  static bool isBuiltinExtensionDiag(unsigned DiagID);
+  static bool isBuiltinExtensionDiag(unsigned DiagID) {
+    bool ignored;
+    return isBuiltinExtensionDiag(DiagID, ignored);
+  }
+  
+  /// isBuiltinExtensionDiag - Determine whether the given built-in diagnostic
+  /// ID is for an extension of some sort.  This also returns EnabledByDefault,
+  /// which is set to indicate whether the diagnostic is ignored by default (in
+  /// which case -pedantic enables it) or treated as a warning/error by default.
+  ///
+  static bool isBuiltinExtensionDiag(unsigned DiagID, bool &EnabledByDefault);
+  
 
   /// getWarningOptionForDiag - Return the lowest-level warning option that
   /// enables the specified diagnostic.  If there is no -Wfoo flag that controls
   /// the diagnostic, this returns null.
   static const char *getWarningOptionForDiag(unsigned DiagID);
 
+  /// getWarningOptionForDiag - Return the category number that a specified
+  /// DiagID belongs to, or 0 if no category.
+  static unsigned getCategoryNumberForDiag(unsigned DiagID);
+
+  /// getCategoryNameFromID - Given a category ID, return the name of the
+  /// category.
+  static const char *getCategoryNameFromID(unsigned CategoryID);
+  
   /// getDiagnosticLevel - Based on the way the client configured the Diagnostic
   /// object, classify the specified diagnostic ID into a Level, consumable by
   /// the DiagnosticClient.
@@ -344,27 +482,55 @@ public:
   /// which emits the diagnostics (through @c ProcessDiag) when it is destroyed.
   /// @c Pos represents the source location associated with the diagnostic,
   /// which can be an invalid location if no position information is available.
-  inline DiagnosticBuilder Report(clang::SourceLocation Pos, unsigned DiagID);
+  inline DiagnosticBuilder Report(SourceLocation Pos, unsigned DiagID);
+  inline DiagnosticBuilder Report(unsigned DiagID);
 
+  /// \brief Determine whethere there is already a diagnostic in flight.
+  bool isDiagnosticInFlight() const { return CurDiagID != ~0U; }
+
+  /// \brief Set the "delayed" diagnostic that will be emitted once
+  /// the current diagnostic completes.
+  ///
+  ///  If a diagnostic is already in-flight but the front end must
+  ///  report a problem (e.g., with an inconsistent file system
+  ///  state), this routine sets a "delayed" diagnostic that will be
+  ///  emitted after the current diagnostic completes. This should
+  ///  only be used for fatal errors detected at inconvenient
+  ///  times. If emitting a delayed diagnostic causes a second delayed
+  ///  diagnostic to be introduced, that second delayed diagnostic
+  ///  will be ignored.
+  ///
+  /// \param DiagID The ID of the diagnostic being delayed.
+  ///
+  /// \param Arg1 A string argument that will be provided to the
+  /// diagnostic. A copy of this string will be stored in the
+  /// Diagnostic object itself.
+  ///
+  /// \param Arg2 A string argument that will be provided to the
+  /// diagnostic. A copy of this string will be stored in the
+  /// Diagnostic object itself.
+  void SetDelayedDiagnostic(unsigned DiagID, llvm::StringRef Arg1 = "",
+                            llvm::StringRef Arg2 = "");
+  
   /// \brief Clear out the current diagnostic.
   void Clear() { CurDiagID = ~0U; }
 
 private:
+  /// \brief Report the delayed diagnostic.
+  void ReportDelayed();
+
+
   /// getDiagnosticMappingInfo - Return the mapping info currently set for the
   /// specified builtin diagnostic.  This returns the high bit encoding, or zero
   /// if the field is completely uninitialized.
-  unsigned getDiagnosticMappingInfo(diag::kind Diag) const {
-    const DiagMappings &currentMappings = DiagMappingsStack.back();
-    return (diag::Mapping)((currentMappings[Diag/2] >> (Diag & 1)*4) & 15);
+  diag::Mapping getDiagnosticMappingInfo(diag::kind Diag) const {
+    return DiagMappingsStack.back().getMapping(Diag);
   }
 
   void setDiagnosticMappingInternal(unsigned DiagId, unsigned Map,
                                     bool isUser) const {
     if (isUser) Map |= 8;  // Set the high bit for user mappings.
-    unsigned char &Slot = DiagMappingsStack.back()[DiagId/2];
-    unsigned Shift = (DiagId & 1)*4;
-    Slot &= ~(15 << Shift);
-    Slot |= Map << Shift;
+    DiagMappingsStack.back().setMapping((diag::kind)DiagId, Map);
   }
 
   /// getDiagnosticLevel - This is an internal implementation helper used when
@@ -382,7 +548,7 @@ private:
 
   /// CurDiagLoc - This is the location of the current diagnostic that is in
   /// flight.
-  clang::FullSourceLoc CurDiagLoc;
+  FullSourceLoc CurDiagLoc;
 
   /// CurDiagID - This is the ID of the current diagnostic that is in flight.
   /// This is set to ~0U when there is no diagnostic in flight.
@@ -400,8 +566,8 @@ private:
   /// NumRanges - This is the number of ranges in the DiagRanges array.
   unsigned char NumDiagRanges;
   /// \brief The number of code modifications hints in the
-  /// CodeModificationHints array.
-  unsigned char NumCodeModificationHints;
+  /// FixItHints array.
+  unsigned char NumFixItHints;
 
   /// DiagArgumentsKind - This is an array of ArgumentKind::ArgumentKind enum
   /// values, with one for each argument.  This specifies whether the argument
@@ -421,13 +587,13 @@ private:
 
   /// DiagRanges - The list of ranges added to this diagnostic.  It currently
   /// only support 10 ranges, could easily be extended if needed.
-  const clang::SourceRange *DiagRanges[10];
+  CharSourceRange DiagRanges[10];
 
-  enum { MaxCodeModificationHints = 3 };
+  enum { MaxFixItHints = 3 };
 
-  /// CodeModificationHints - If valid, provides a hint with some code
+  /// FixItHints - If valid, provides a hint with some code
   /// to insert, remove, or modify at a particular position.
-  CodeModificationHint CodeModificationHints[MaxCodeModificationHints];
+  FixItHint FixItHints[MaxFixItHints];
 
   /// ProcessDiag - This is the method used to report a diagnostic that is
   /// finally fully formed.
@@ -452,15 +618,14 @@ private:
 /// This ensures that compilers with somewhat reasonable optimizers will promote
 /// the common fields to registers, eliminating increments of the NumArgs field,
 /// for example.
-class DiagnosticBuilder {
+class YASM_LIB_EXPORT DiagnosticBuilder {
   mutable Diagnostic *DiagObj;
-  mutable unsigned NumArgs, NumRanges, NumCodeModificationHints;
+  mutable unsigned NumArgs, NumRanges, NumFixItHints;
 
   void operator=(const DiagnosticBuilder&); // DO NOT IMPLEMENT
   friend class Diagnostic;
   explicit DiagnosticBuilder(Diagnostic *diagObj)
-    : DiagObj(diagObj), NumArgs(0), NumRanges(0),
-      NumCodeModificationHints(0) {}
+    : DiagObj(diagObj), NumArgs(0), NumRanges(0), NumFixItHints(0) {}
 
 public:
   /// Copy constructor.  When copied, this "takes" the diagnostic info from the
@@ -470,7 +635,7 @@ public:
     D.DiagObj = 0;
     NumArgs = D.NumArgs;
     NumRanges = D.NumRanges;
-    NumCodeModificationHints = D.NumCodeModificationHints;
+    NumFixItHints = D.NumFixItHints;
   }
 
   /// \brief Simple enumeration value used to give a name to the
@@ -480,7 +645,7 @@ public:
   /// \brief Create an empty DiagnosticBuilder object that represents
   /// no actual diagnostic.
   explicit DiagnosticBuilder(SuppressKind)
-    : DiagObj(0), NumArgs(0), NumRanges(0), NumCodeModificationHints(0) { }
+    : DiagObj(0), NumArgs(0), NumRanges(0), NumFixItHints(0) { }
 
   /// \brief Force the diagnostic builder to emit the diagnostic now.
   ///
@@ -489,40 +654,21 @@ public:
   ///
   /// \returns true if a diagnostic was emitted, false if the
   /// diagnostic was suppressed.
-  bool Emit() {
-    // If DiagObj is null, then its soul was stolen by the copy ctor
-    // or the user called Emit().
-    if (DiagObj == 0) return false;
-
-    // When emitting diagnostics, we set the final argument count into
-    // the Diagnostic object.
-    DiagObj->NumDiagArgs = NumArgs;
-    DiagObj->NumDiagRanges = NumRanges;
-    DiagObj->NumCodeModificationHints = NumCodeModificationHints;
-
-    // Process the diagnostic, sending the accumulated information to the
-    // DiagnosticClient.
-    bool Emitted = DiagObj->ProcessDiag();
-
-    // Clear out the current diagnostic object.
-    DiagObj->Clear();
-
-    // This diagnostic is dead.
-    DiagObj = 0;
-
-    return Emitted;
-  }
+  bool Emit();
 
   /// Destructor - The dtor emits the diagnostic if it hasn't already
   /// been emitted.
   ~DiagnosticBuilder() { Emit(); }
+
+  /// isActive - Determine whether this diagnostic is still active.
+  bool isActive() const { return DiagObj != 0; }
 
   /// Operator bool: conversion of DiagnosticBuilder to bool always returns
   /// true.  This allows is to be used in boolean error contexts like:
   /// return Diag(...);
   operator bool() const { return true; }
 
-  void AddString(const std::string &S) const {
+  void AddString(llvm::StringRef S) const {
     assert(NumArgs < Diagnostic::MaxArguments &&
            "Too many arguments to diagnostic!");
     if (DiagObj) {
@@ -540,24 +686,27 @@ public:
     }
   }
 
-  void AddSourceRange(const clang::SourceRange &R) const {
+  void AddSourceRange(const CharSourceRange &R) const {
     assert(NumRanges <
            sizeof(DiagObj->DiagRanges)/sizeof(DiagObj->DiagRanges[0]) &&
            "Too many arguments to diagnostic!");
     if (DiagObj)
-      DiagObj->DiagRanges[NumRanges++] = &R;
-  }    
+      DiagObj->DiagRanges[NumRanges++] = R;
+  }
 
-  void AddCodeModificationHint(const CodeModificationHint &Hint) const {
-    assert(NumCodeModificationHints < Diagnostic::MaxCodeModificationHints &&
-           "Too many code modification hints!");
+  void AddFixItHint(const FixItHint &Hint) const {
+    if (Hint.isNull())
+      return;
+    
+    assert(NumFixItHints < Diagnostic::MaxFixItHints &&
+           "Too many fix-it hints!");
     if (DiagObj)
-      DiagObj->CodeModificationHints[NumCodeModificationHints++] = Hint;
+      DiagObj->FixItHints[NumFixItHints++] = Hint;
   }
 };
 
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
-                                           const std::string &S) {
+                                           llvm::StringRef S) {
   DB.AddString(S);
   return DB;
 }
@@ -592,28 +741,51 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
   return DB;
 }
 
+// Adds a DeclContext to the diagnostic. The enable_if template magic is here
+// so that we only match those arguments that are (statically) DeclContexts;
+// other arguments that derive from DeclContext (e.g., RecordDecls) will not
+// match.
+template<typename T>
+inline
+typename llvm::enable_if<llvm::is_same<T, DeclContext>, 
+                         const DiagnosticBuilder &>::type
+operator<<(const DiagnosticBuilder &DB, T *DC) {
+  DB.AddTaggedVal(reinterpret_cast<intptr_t>(DC),
+                  Diagnostic::ak_declcontext);
+  return DB;
+}
+  
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
-                                           const clang::SourceRange &R) {
-  DB.AddSourceRange(R);
+                                           const SourceRange &R) {
+  DB.AddSourceRange(CharSourceRange::getTokenRange(R));
   return DB;
 }
 
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
-                                           const CodeModificationHint &Hint) {
-  DB.AddCodeModificationHint(Hint);
+                                           const CharSourceRange &R) {
+  DB.AddSourceRange(R);
+  return DB;
+}
+  
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           const FixItHint &Hint) {
+  DB.AddFixItHint(Hint);
   return DB;
 }
 
 /// Report - Issue the message to the client.  DiagID is a member of the
 /// diag::kind enum.  This actually returns a new instance of DiagnosticBuilder
 /// which emits the diagnostics (through ProcessDiag) when it is destroyed.
-inline DiagnosticBuilder Diagnostic::Report(clang::SourceLocation Loc,
+inline DiagnosticBuilder Diagnostic::Report(SourceLocation Loc,
                                             unsigned DiagID){
   assert(CurDiagID == ~0U && "Multiple diagnostics in flight at once!");
   assert(SrcMgr != 0 && "Generated unexpected diagnostic!");
-  CurDiagLoc = clang::FullSourceLoc(Loc, *SrcMgr);
+  CurDiagLoc = FullSourceLoc(Loc, *SrcMgr);
   CurDiagID = DiagID;
   return DiagnosticBuilder(this);
+}
+inline DiagnosticBuilder Diagnostic::Report(unsigned DiagID) {
+  return Report(SourceLocation(), DiagID);
 }
 
 //===----------------------------------------------------------------------===//
@@ -630,9 +802,8 @@ public:
 
   const Diagnostic *getDiags() const { return DiagObj; }
   unsigned getID() const { return DiagObj->CurDiagID; }
-  const clang::FullSourceLoc &getLocation() const
-  { return DiagObj->CurDiagLoc; }
-  
+  const FullSourceLoc &getLocation() const { return DiagObj->CurDiagLoc; }
+
   unsigned getNumArgs() const { return DiagObj->NumDiagArgs; }
 
   /// getArgKind - Return the kind of the specified index.  Based on the kind
@@ -691,28 +862,83 @@ public:
     return DiagObj->NumDiagRanges;
   }
 
-  const clang::SourceRange &getRange(unsigned Idx) const {
+  const CharSourceRange &getRange(unsigned Idx) const {
     assert(Idx < DiagObj->NumDiagRanges && "Invalid diagnostic range index!");
-    return *DiagObj->DiagRanges[Idx];
+    return DiagObj->DiagRanges[Idx];
   }
 
-  unsigned getNumCodeModificationHints() const {
-    return DiagObj->NumCodeModificationHints;
+  unsigned getNumFixItHints() const {
+    return DiagObj->NumFixItHints;
   }
 
-  const CodeModificationHint &getCodeModificationHint(unsigned Idx) const {
-    return DiagObj->CodeModificationHints[Idx];
+  const FixItHint &getFixItHint(unsigned Idx) const {
+    return DiagObj->FixItHints[Idx];
   }
 
-  const CodeModificationHint *getCodeModificationHints() const {
-    return DiagObj->NumCodeModificationHints?
-             &DiagObj->CodeModificationHints[0] : 0;
+  const FixItHint *getFixItHints() const {
+    return DiagObj->NumFixItHints?
+             &DiagObj->FixItHints[0] : 0;
   }
 
   /// FormatDiagnostic - Format this diagnostic into a string, substituting the
   /// formal arguments into the %0 slots.  The result is appended onto the Str
   /// array.
   void FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const;
+
+  /// FormatDiagnostic - Format the given format-string into the
+  /// output buffer using the arguments stored in this diagnostic.
+  void FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
+                        llvm::SmallVectorImpl<char> &OutStr) const;
+};
+
+/**
+ * \brief Represents a diagnostic in a form that can be serialized and
+ * deserialized.
+ */
+class YASM_LIB_EXPORT StoredDiagnostic {
+  Diagnostic::Level Level;
+  FullSourceLoc Loc;
+  std::string Message;
+  std::vector<CharSourceRange> Ranges;
+  std::vector<FixItHint> FixIts;
+
+public:
+  StoredDiagnostic();
+  StoredDiagnostic(Diagnostic::Level Level, const DiagnosticInfo &Info);
+  StoredDiagnostic(Diagnostic::Level Level, llvm::StringRef Message);
+  ~StoredDiagnostic();
+
+  /// \brief Evaluates true when this object stores a diagnostic.
+  operator bool() const { return Message.size() > 0; }
+
+  Diagnostic::Level getLevel() const { return Level; }
+  const FullSourceLoc &getLocation() const { return Loc; }
+  llvm::StringRef getMessage() const { return Message; }
+
+  void setLocation(FullSourceLoc Loc) { this->Loc = Loc; }
+
+  typedef std::vector<CharSourceRange>::const_iterator range_iterator;
+  range_iterator range_begin() const { return Ranges.begin(); }
+  range_iterator range_end() const { return Ranges.end(); }
+  unsigned range_size() const { return Ranges.size(); }
+
+  typedef std::vector<FixItHint>::const_iterator fixit_iterator;
+  fixit_iterator fixit_begin() const { return FixIts.begin(); }
+  fixit_iterator fixit_end() const { return FixIts.end(); }
+  unsigned fixit_size() const { return FixIts.size(); }
+
+  /// Serialize - Serialize the given diagnostic (with its diagnostic
+  /// level) to the given stream. Serialization is a lossy operation,
+  /// since the specific diagnostic ID and any macro-instantiation
+  /// information is lost.
+  void Serialize(llvm::raw_ostream &OS) const;
+
+  /// Deserialize - Deserialize the first diagnostic within the memory
+  /// [Memory, MemoryEnd), producing a new diagnostic builder describing the
+  /// deserialized diagnostic. If the memory does not contain a
+  /// diagnostic, returns a diagnostic builder with no diagnostic ID.
+  static StoredDiagnostic Deserialize(FileManager &FM, SourceManager &SM, 
+                                   const char *&Memory, const char *MemoryEnd);
 };
 
 /// DiagnosticClient - This is an abstract interface implemented by clients of
@@ -721,17 +947,29 @@ class YASM_LIB_EXPORT DiagnosticClient {
 public:
   virtual ~DiagnosticClient();
 
-  /// setLangOptions - This is set by clients of diagnostics when they know the
-  /// language parameters of the diagnostics that may be sent through.  Note
-  /// that this can change over time if a DiagClient has multiple languages sent
-  /// through it.  It may also be set to null (e.g. when processing command line
-  /// options).
-  virtual void setLangOptions(const LangOptions *LO) {}
+  /// BeginSourceFile - Callback to inform the diagnostic client that processing
+  /// of a source file is beginning.
+  ///
+  /// Note that diagnostics may be emitted outside the processing of a source
+  /// file, for example during the parsing of command line options. However,
+  /// diagnostics with source range information are required to only be emitted
+  /// in between BeginSourceFile() and EndSourceFile().
+  ///
+  /// \arg LO - The language options for the source file being processed.
+  /// \arg PP - The preprocessor object being used for the source; this optional
+  /// and may not be present, for example when processing AST source files.
+  virtual void BeginSourceFile(const LangOptions &LangOpts,
+                               const Preprocessor *PP = 0) {}
+
+  /// EndSourceFile - Callback to inform the diagnostic client that processing
+  /// of a source file has ended. The diagnostic client should assume that any
+  /// objects made available via \see BeginSourceFile() are inaccessible.
+  virtual void EndSourceFile() {}
 
   /// IncludeInDiagnosticCounts - This method (whose default implementation
-  ///  returns true) indicates whether the diagnostics handled by this
-  ///  DiagnosticClient should be included in the number of diagnostics
-  ///  reported by Diagnostic.
+  /// returns true) indicates whether the diagnostics handled by this
+  /// DiagnosticClient should be included in the number of diagnostics reported
+  /// by Diagnostic.
   virtual bool IncludeInDiagnosticCounts() const;
 
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or

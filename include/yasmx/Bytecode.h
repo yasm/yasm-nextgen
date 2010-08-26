@@ -33,7 +33,7 @@
 #include <memory>
 #include <vector>
 
-#include "clang/Basic/SourceLocation.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/scoped_ptr.h"
@@ -198,7 +198,7 @@ public:
     /// Create a bytecode of given contents.
     /// @param contents     type-specific data
     /// @param source       source location
-    Bytecode(Contents::Ptr contents, clang::SourceLocation source);
+    Bytecode(Contents::Ptr contents, SourceLocation source);
 
     /// Create a bytecode of no type.
     Bytecode();
@@ -230,7 +230,7 @@ public:
 
     /// Set source location of bytecode.
     /// @param source   source location
-    void setSource(clang::SourceLocation source) { m_source = source; }
+    void setSource(SourceLocation source) { m_source = source; }
 
     /// Get the container the bytecode resides in.
     /// @param bc   bytecode
@@ -330,7 +330,7 @@ public:
     /// @return Offset of next bytecode.
     unsigned long UpdateOffset(unsigned long offset, Diagnostic& diags);
 
-    clang::SourceLocation getSource() const { return m_source; }
+    SourceLocation getSource() const { return m_source; }
 
     unsigned long getIndex() const { return m_index; }
     void setIndex(unsigned long idx) { m_index = idx; }
@@ -349,7 +349,7 @@ public:
     void AppendFixed(std::auto_ptr<Value> val);
     Value& AppendFixed(unsigned int size,
                        std::auto_ptr<Expr> e,
-                       clang::SourceLocation source);
+                       SourceLocation source);
 
     /// A fixup consists of a value+offset combination.  0's need to be stored
     /// in m_fixed as placeholders.
@@ -361,7 +361,7 @@ public:
         Fixup(unsigned int off,
               unsigned int size,
               std::auto_ptr<Expr> e,
-              clang::SourceLocation source);
+              SourceLocation source);
         void swap(Fixup& oth);
         unsigned int getOffset() const { return m_off; }
 
@@ -405,7 +405,7 @@ private:
     unsigned long m_len;
 
     /// Source location where bytecode tail was defined.
-    clang::SourceLocation m_source;
+    SourceLocation m_source;
 
     /// Offset of bytecode from beginning of its section.
     /// 0-based, ~0UL (e.g. all 1 bits) if unknown.

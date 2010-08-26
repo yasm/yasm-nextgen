@@ -12,13 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "TextDiagnosticPrinter.h"
-#include "clang/Basic/SourceManager.h"
 //#include "clang/Lex/Lexer.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallString.h"
+#include "yasmx/Basic/SourceManager.h"
 #include <algorithm>
-using namespace clang;
 using namespace yasm;
 
 static const enum llvm::raw_ostream::Colors noteColor =
@@ -56,7 +55,7 @@ PrintIncludeStack(SourceLocation Loc, const SourceManager &SM) {
 
 /// HighlightRange - Given a SourceRange and a line number, highlight (with ~'s)
 /// any characters in LineNo that intersect the SourceRange.
-void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
+void TextDiagnosticPrinter::HighlightRange(const CharSourceRange &R,
                                            const SourceManager &SM,
                                            unsigned LineNo, FileID FID,
                                            std::string &CaretLine,
@@ -256,10 +255,10 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
 }
 
 void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
-                                                SourceRange *Ranges,
+                                                CharSourceRange *Ranges,
                                                 unsigned NumRanges,
-                                                SourceManager &SM,
-                                          const CodeModificationHint *Hints,
+                                                const SourceManager &SM,
+                                                const FixItHint *Hints,
                                                 unsigned NumHints,
                                                 unsigned Columns) {
   assert(!Loc.isInvalid() && "must have a valid source location here");
@@ -276,10 +275,12 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
 
     // Map the ranges.
     for (unsigned i = 0; i != NumRanges; ++i) {
-      SourceLocation S = Ranges[i].getBegin(), E = Ranges[i].getEnd();
-      if (S.isMacroID()) S = SM.getImmediateSpellingLoc(S);
-      if (E.isMacroID()) E = SM.getImmediateSpellingLoc(E);
-      Ranges[i] = SourceRange(S, E);
+      CharSourceRange &R = Ranges[i];
+      SourceLocation S = R.getBegin(), E = R.getEnd();
+      if (S.isMacroID())
+        R.setBegin(SM.getImmediateSpellingLoc(S));
+      if (E.isMacroID())
+        R.setEnd(SM.getImmediateSpellingLoc(E));
     }
 
     if (ShowLocation) {
@@ -304,8 +305,10 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   unsigned FileOffset = LocInfo.second;
 
   // Get information about the buffer it points into.
-  std::pair<const char*, const char*> BufferInfo = SM.getBufferData(FID);
-  const char *BufStart = BufferInfo.first;
+  bool Invalid = false;
+  const char *BufStart = SM.getBufferData(FID, &Invalid).data();
+  if (Invalid)
+    return;
 
   unsigned ColNo = SM.getColumnNumber(FID, FileOffset);
   unsigned CaretEndColNo
@@ -375,13 +378,13 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
 
   std::string FixItInsertionLine;
   if (NumHints && PrintFixItInfo) {
-    for (const CodeModificationHint *Hint = Hints, *LastHint = Hints + NumHints;
+    for (const FixItHint *Hint = Hints, *LastHint = Hints + NumHints;
          Hint != LastHint; ++Hint) {
-      if (Hint->InsertionLoc.isValid()) {
+      if (!Hint->CodeToInsert.empty()) {
         // We have an insertion hint. Determine whether the inserted
         // code is on the same line as the caret.
         std::pair<FileID, unsigned> HintLocInfo
-          = SM.getDecomposedInstantiationLoc(Hint->InsertionLoc);
+          = SM.getDecomposedInstantiationLoc(Hint->RemoveRange.getBegin());
         if (SM.getLineNumber(HintLocInfo.first, HintLocInfo.second) ==
               SM.getLineNumber(FID, FileOffset)) {
           // Insert the new code into the line just below the code
@@ -756,21 +759,21 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   if (CaretDiagnostics && Info.getLocation().isValid() &&
       ((LastLoc != Info.getLocation()) || Info.getNumRanges() ||
        (LastCaretDiagnosticWasNote && Level != Diagnostic::Note) ||
-       Info.getNumCodeModificationHints())) {
+       Info.getNumFixItHints())) {
     // Cache the LastLoc, it allows us to omit duplicate source/caret spewage.
     LastLoc = Info.getLocation();
     LastCaretDiagnosticWasNote = (Level == Diagnostic::Note);
 
     // Get the ranges into a local array we can hack on.
-    SourceRange Ranges[20];
+    CharSourceRange Ranges[20];
     unsigned NumRanges = Info.getNumRanges();
     assert(NumRanges < 20 && "Out of space");
     for (unsigned i = 0; i != NumRanges; ++i)
       Ranges[i] = Info.getRange(i);
 
-    unsigned NumHints = Info.getNumCodeModificationHints();
+    unsigned NumHints = Info.getNumFixItHints();
     for (unsigned idx = 0; idx < NumHints; ++idx) {
-      const CodeModificationHint &Hint = Info.getCodeModificationHint(idx);
+      const FixItHint &Hint = Info.getFixItHint(idx);
       if (Hint.RemoveRange.isValid()) {
         assert(NumRanges < 20 && "Out of space");
         Ranges[NumRanges++] = Hint.RemoveRange;
@@ -778,8 +781,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     }
 
     EmitCaretDiagnostic(LastLoc, Ranges, NumRanges, LastLoc.getManager(),
-                        Info.getCodeModificationHints(),
-                        Info.getNumCodeModificationHints(),
+                        Info.getFixItHints(),
+                        Info.getNumFixItHints(),
                         MessageLength);
   }
 

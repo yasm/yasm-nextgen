@@ -271,7 +271,7 @@ CalcSmallValue(bool* handled,
                Op::Op op,
                IntNumData::SmallValue* lhs,
                IntNumData::SmallValue rhs,
-               clang::SourceLocation source,
+               SourceLocation source,
                Diagnostic* diags)
 {
     static const IntNumData::SmallValue SV_MAX =
@@ -407,7 +407,7 @@ CalcSmallValue(bool* handled,
 bool
 IntNum::CalcImpl(Op::Op op,
                  const IntNum* operand,
-                 clang::SourceLocation source,
+                 SourceLocation source,
                  Diagnostic* diags)
 {
     assert((operand || op == Op::NEG || op == Op::NOT || op == Op::LNOT) &&

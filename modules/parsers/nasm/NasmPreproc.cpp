@@ -37,7 +37,7 @@ using namespace yasm;
 using namespace yasm::parser;
 
 NasmPreproc::NasmPreproc(Diagnostic& diags,
-                         clang::SourceManager& sm,
+                         SourceManager& sm,
                          HeaderSearch& headers)
     : Preprocessor(diags, sm, headers)
 {
@@ -57,7 +57,7 @@ RegisterBuiltinMacro(NasmPreproc& pp, const char* name)
 
 #if 0
     // Mark it as being a macro that is builtin.
-    MacroInfo* mi = pp.AllocateMacroInfo(clang::SourceLocation());
+    MacroInfo* mi = pp.AllocateMacroInfo(SourceLocation());
     mi->setIsBuiltinMacro();
     pp.setMacroInfo(id, mi);
 #endif
@@ -75,8 +75,7 @@ NasmPreproc::RegisterBuiltinMacros()
 }
 
 Lexer*
-NasmPreproc::CreateLexer(clang::FileID fid,
-                         const llvm::MemoryBuffer* input_buffer)
+NasmPreproc::CreateLexer(FileID fid, const llvm::MemoryBuffer* input_buffer)
 {
     return new NasmLexer(fid, input_buffer, *this);
 }

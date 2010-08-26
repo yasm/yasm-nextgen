@@ -167,7 +167,7 @@ BinLink::CreateLMAGroup(Section& section)
     {
         if (align > bsd->align)
         {
-            m_diags.Report(clang::SourceLocation(),
+            m_diags.Report(SourceLocation(),
                            m_diags.getCustomDiagID(Diagnostic::Warning,
                 N_("section '%0' internal align of %1 is greater than '%2' of %3; using '%4'")))
                 << section.getName()
@@ -276,7 +276,7 @@ BinLink::DoLink(const IntNum& origin)
             found = FindGroup(m_lma_groups, group->m_bsd.follows);
             if (!found)
             {
-                m_diags.Report(clang::SourceLocation(),
+                m_diags.Report(SourceLocation(),
                                m_diags.getCustomDiagID(Diagnostic::Error,
                     N_("section '%0' follows an invalid or unknown section '%1'")))
                     << group->m_section.getName()
@@ -288,7 +288,7 @@ BinLink::DoLink(const IntNum& origin)
             if (&group->m_section == &found->m_section ||
                 FindGroup(group->m_follow_groups, found->m_section))
             {
-                m_diags.Report(clang::SourceLocation(),
+                m_diags.Report(SourceLocation(),
                                m_diags.getCustomDiagID(Diagnostic::Error,
                     N_("follows loop between section '%0' and section '%1'")))
                     << group->m_section.getName()
@@ -370,7 +370,7 @@ BinLink::DoLink(const IntNum& origin)
             found = FindGroup(m_vma_groups, group->m_bsd.vfollows);
             if (!found)
             {
-                m_diags.Report(clang::SourceLocation(),
+                m_diags.Report(SourceLocation(),
                                m_diags.getCustomDiagID(Diagnostic::Error,
                     N_("section '%0' vfollows an invalid or unknown section '%1'")))
                     << group->m_section.getName()
@@ -382,7 +382,7 @@ BinLink::DoLink(const IntNum& origin)
             if (&group->m_section == &found->m_section ||
                 FindGroup(group->m_follow_groups, found->m_section))
             {
-                m_diags.Report(clang::SourceLocation(),
+                m_diags.Report(SourceLocation(),
                                m_diags.getCustomDiagID(Diagnostic::Error,
                     N_("vfollows loop between section '%0' and section '%1'")))
                     << group->m_section.getName()
@@ -446,7 +446,7 @@ BinLink::CheckLMAOverlap(const Section& sect, const Section& other)
 
     if (overlap.getSign() > 0)
     {
-        m_diags.Report(clang::SourceLocation(),
+        m_diags.Report(SourceLocation(),
                        m_diags.getCustomDiagID(Diagnostic::Error,
             N_("sections '%0' and '%1' overlap by %2 bytes")))
             << sect.getName()
@@ -574,7 +574,7 @@ BinGroup::AssignVStartRecurse(IntNum& start, Diagnostic& diags)
     {
         if (m_section.getAlign() > m_bsd.valign)
         {
-            diags.Report(clang::SourceLocation(),
+            diags.Report(SourceLocation(),
                          diags.getCustomDiagID(Diagnostic::Warning,
                 N_("section '%0' internal align of %1 is greater than '%2' of %3; using '%4'")))
                 << m_section.getName()

@@ -40,8 +40,6 @@
 #include "yasmx/Module.h"
 
 
-namespace clang { class SourceManager; }
-
 namespace yasm
 {
 
@@ -52,6 +50,7 @@ class Linemap;
 class Object;
 class ParserModule;
 class Preprocessor;
+class SourceManager;
 
 /// Parser interface.  The "front end" of the assembler.
 class YASM_LIB_EXPORT Parser
@@ -75,10 +74,10 @@ public:
     /// @param source   source location of beginning of line
     /// @return True if line read; false if no more lines.
     virtual bool getLine(/*@out@*/ std::string* line,
-                         /*@out@*/ clang::SourceLocation* source) = 0;
+                         /*@out@*/ SourceLocation* source) = 0;
 
     /// Gets the source manager.
-    virtual clang::SourceManager& getSourceManager() = 0;
+    virtual SourceManager& getSourceManager() = 0;
 
     /// Get the next filename included by the source code.
     /// @return Filename.
@@ -134,7 +133,7 @@ public:
     /// @return New parser.
     /// @note It is assumed sm is already loaded with a main file.
     virtual std::auto_ptr<Parser> Create(Diagnostic& diags,
-                                         clang::SourceManager& sm,
+                                         SourceManager& sm,
                                          HeaderSearch& headers) const = 0;
 };
 
@@ -149,7 +148,7 @@ public:
     llvm::StringRef getKeyword() const { return ParserImpl::getKeyword(); }
 
     std::auto_ptr<Parser> Create(Diagnostic& diags,
-                                 clang::SourceManager& sm,
+                                 SourceManager& sm,
                                  HeaderSearch& headers) const
     {
         return std::auto_ptr<Parser>(new ParserImpl(*this, diags, sm, headers));

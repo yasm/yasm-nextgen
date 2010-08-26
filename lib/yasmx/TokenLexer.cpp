@@ -32,8 +32,8 @@
 
 //#include "MacroArgs.h"
 //#include "clang/Lex/MacroInfo.h"
-#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallVector.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Parse/Preprocessor.h"
 
 using namespace yasm;
@@ -91,7 +91,7 @@ TokenLexer::Init(const Token *TokArray, unsigned NumToks,
     m_disable_macro_expansion = disableMacroExpansion;
     m_num_tokens = NumToks;
     m_cur_token = 0;
-    m_instantiate_loc_start = m_instantiate_loc_end = clang::SourceLocation();
+    m_instantiate_loc_start = m_instantiate_loc_end = SourceLocation();
     m_at_start_of_line = false;
     m_has_leading_space = false;
 
@@ -356,7 +356,7 @@ void TokenLexer::Lex(Token* Tok) {
   // InstantiationLoc.  Pull this information together into a new SourceLocation
   // that captures all of this.
   if (m_instantiate_loc_start.isValid()) {   // Don't do this for token streams.
-    clang::SourceManager &SM = m_pp.getSourceManager();
+    SourceManager &SM = m_pp.getSourceManager();
     Tok->setLocation(SM.createInstantiationLoc(Tok->getLocation(),
                                                m_instantiate_loc_start,
                                                m_instantiate_loc_end,

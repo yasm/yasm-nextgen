@@ -31,8 +31,8 @@
 ///
 #include <string>
 
-#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/AssocData.h"
@@ -92,23 +92,23 @@ public:
 
     /// Set the source location where a symbol was first defined.
     /// @param source   source location
-    void setDefSource(clang::SourceLocation source) { m_def_source = source; }
+    void setDefSource(SourceLocation source) { m_def_source = source; }
 
     /// Set the source location where a symbol was first declared.
     /// @param source   source location
-    void setDeclSource(clang::SourceLocation source) { m_decl_source = source; }
+    void setDeclSource(SourceLocation source) { m_decl_source = source; }
 
     /// Get the source location where a symbol was first defined.
     /// @return Source location.
-    clang::SourceLocation getDefSource() const { return m_def_source; }
+    SourceLocation getDefSource() const { return m_def_source; }
 
     /// Get the source location where a symbol was first declared.
     /// @return Source location.
-    clang::SourceLocation getDeclSource() const { return m_decl_source; }
+    SourceLocation getDeclSource() const { return m_decl_source; }
 
     /// Get the source location where a symbol was first used.
     /// @return Source location.
-    clang::SourceLocation getUseSource() const { return m_use_source; }
+    SourceLocation getUseSource() const { return m_use_source; }
 
     /// Get EQU value of a symbol.
     /// @return EQU value, or NULL if symbol is not an EQU or is not defined.
@@ -136,7 +136,7 @@ public:
     /// Mark the symbol as used.  The symbol does not necessarily need to
     /// be defined before it is used.
     /// @param source   source location
-    void Use(clang::SourceLocation source);
+    void Use(SourceLocation source);
 
     /// Define as an EQU value.
     /// @note Asserts if already defined.
@@ -149,7 +149,7 @@ public:
     /// @param source   source location
     /// @param diags    diagnostic reporting
     void CheckedDefineEqu(const Expr& e,
-                          clang::SourceLocation source,
+                          SourceLocation source,
                           Diagnostic& diags);
 
     /// Define as a label.
@@ -162,7 +162,7 @@ public:
     /// @param loc      location of label
     /// @param source   source location
     void CheckedDefineLabel(Location loc,
-                            clang::SourceLocation source,
+                            SourceLocation source,
                             Diagnostic& diags);
 
     /// Define a special symbol.  Special symbols have no generic associated
@@ -186,7 +186,7 @@ public:
     /// @param source   source location
     /// @param diags    diagnostic reporting
     void CheckedDeclare(Visibility vis,
-                        clang::SourceLocation source,
+                        SourceLocation source,
                         Diagnostic& diags);
 
     /// Determine if symbol is used but is undefined.  Undefined symbols are
@@ -228,15 +228,15 @@ private:
         SPECIAL
     };
 
-    bool DefineCheck(clang::SourceLocation source, Diagnostic& diags) const;
+    bool DefineCheck(SourceLocation source, Diagnostic& diags) const;
 
     std::string m_name;
     Type m_type;
     int m_status;
     int m_visibility;
-    clang::SourceLocation m_def_source;     ///< where symbol was first defined
-    clang::SourceLocation m_decl_source;    ///< where symbol was first declared
-    clang::SourceLocation m_use_source;     ///< where symbol was first used
+    SourceLocation m_def_source;    ///< where symbol was first defined
+    SourceLocation m_decl_source;   ///< where symbol was first declared
+    SourceLocation m_use_source;    ///< where symbol was first used
 
     // Possible data
 
@@ -247,7 +247,7 @@ private:
 };
 
 inline void
-Symbol::Use(clang::SourceLocation source)
+Symbol::Use(SourceLocation source)
 {
     if (!m_use_source.isValid())
         m_use_source = source;      // set source location of first use

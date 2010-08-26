@@ -31,9 +31,9 @@
 
 #include <algorithm>
 
-#include "clang/Basic/FileManager.h"
-#include "clang/Basic/SourceManager.h"
 #include "llvm/System/Path.h"
+#include "yasmx/Basic/FileManager.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/Bytes_leb128.h"
@@ -137,7 +137,7 @@ Dwarf2Debug::AddDir(llvm::StringRef dirname)
 }
 
 size_t
-Dwarf2Debug::AddFile(const clang::FileEntry* file)
+Dwarf2Debug::AddFile(const FileEntry* file)
 {
     unsigned long dir = AddDir(file->getDir()->getName());
 
@@ -204,7 +204,7 @@ Dwarf2Debug::AppendLineOp(BytecodeContainer& container,
 {
     AppendByte(container, opcode);
     AppendLEB128(container, operand, opcode == DW_LNS_advance_line,
-                 clang::SourceLocation(), *m_diags);
+                 SourceLocation(), *m_diags);
 }
 
 // Create and add a new extended line opcode to a section.
@@ -213,7 +213,7 @@ Dwarf2Debug::AppendLineExtOp(BytecodeContainer& container,
                              DwarfLineNumberExtOp ext_opcode)
 {
     AppendByte(container, DW_LNS_extended_op);
-    AppendLEB128(container, 1, false, clang::SourceLocation(), *m_diags);
+    AppendLEB128(container, 1, false, SourceLocation(), *m_diags);
     AppendByte(container, ext_opcode);
 }
 
@@ -224,9 +224,9 @@ Dwarf2Debug::AppendLineExtOp(BytecodeContainer& container,
 {
     AppendByte(container, DW_LNS_extended_op);
     AppendLEB128(container, 1 + SizeLEB128(operand, false), false,
-                 clang::SourceLocation(), *m_diags);
+                 SourceLocation(), *m_diags);
     AppendByte(container, ext_opcode);
-    AppendLEB128(container, operand, false, clang::SourceLocation(), *m_diags);
+    AppendLEB128(container, operand, false, SourceLocation(), *m_diags);
 }
 
 void
@@ -236,11 +236,11 @@ Dwarf2Debug::AppendLineExtOp(BytecodeContainer& container,
                              SymbolRef ext_operand)
 {
     AppendByte(container, DW_LNS_extended_op);
-    AppendLEB128(container, ext_operandsize+1, false, clang::SourceLocation(),
+    AppendLEB128(container, ext_operandsize+1, false, SourceLocation(),
                  *m_diags);
     AppendByte(container, ext_opcode);
     AppendData(container, Expr::Ptr(new Expr(ext_operand)), ext_operandsize,
-               *m_object.getArch(), clang::SourceLocation(), *m_diags);
+               *m_object.getArch(), SourceLocation(), *m_diags);
 }
 
 void
@@ -369,7 +369,7 @@ Dwarf2Debug::GenerateLineOp(Section& debug_line,
 #if 0
 void
 Dwarf2Debug::GenerateLineBC(Section& debug_line,
-                            clang::SourceManager& smgr,
+                            SourceManager& smgr,
                             Dwarf2LineState* state,
                             Bytecode& bc,
                             Dwarf2Loc* loc,
@@ -409,7 +409,7 @@ Dwarf2Debug::GenerateLineBC(Section& debug_line,
 void
 Dwarf2Debug::GenerateLineSection(Section& sect,
                                  Section& debug_line,
-                                 clang::SourceManager& smgr,
+                                 SourceManager& smgr,
                                  bool asm_source,
                                  Section** last_code,
                                  size_t* num_line_sections)
@@ -479,7 +479,7 @@ Dwarf2Debug::GenerateLineSection(Section& sect,
 }
 
 Section&
-Dwarf2Debug::Generate_line(clang::SourceManager& smgr,
+Dwarf2Debug::Generate_line(SourceManager& smgr,
                            bool asm_source,
                            /*@out@*/ Section** main_code,
                            /*@out@*/ size_t* num_line_sections)
@@ -487,7 +487,7 @@ Dwarf2Debug::Generate_line(clang::SourceManager& smgr,
     if (asm_source)
     {
         // Generate dirs and filenames based on smgr
-        for (clang::SourceManager::fileinfo_iterator i=smgr.fileinfo_begin(),
+        for (SourceManager::fileinfo_iterator i=smgr.fileinfo_begin(),
              end=smgr.fileinfo_end(); i != end; ++i)
         {
             AddFile(i->first);
@@ -498,8 +498,7 @@ Dwarf2Debug::Generate_line(clang::SourceManager& smgr,
     if (!debug_line)
     {
         debug_line =
-            m_objfmt->AppendSection(".debug_line", clang::SourceLocation(),
-                                    *m_diags);
+            m_objfmt->AppendSection(".debug_line", SourceLocation(), *m_diags);
         debug_line->setAlign(0);
     }
 
@@ -561,8 +560,7 @@ Dwarf2Debug::AppendSPP(BytecodeContainer& container)
     {
         if (i->filename.empty())
         {
-            m_diags->Report(clang::SourceLocation(),
-                            diag::err_file_number_unassigned)
+            m_diags->Report(SourceLocation(), diag::err_file_number_unassigned)
                 << static_cast<unsigned int>((i-m_filenames.begin())+1);
             continue;
         }

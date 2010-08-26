@@ -32,9 +32,9 @@
 
 #include <string>
 
-#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Parse/Preprocessor.h"
 #include "yasmx/IntNum.h"
 
@@ -51,7 +51,7 @@ using namespace yasm::parser;
 ///        [-+]? [0-9]* ([.] [0-9]*)? ([eE] [-+]? [0-9]+)?
 ///
 GasNumericParser::GasNumericParser(llvm::StringRef str,
-                                   clang::SourceLocation loc,
+                                   SourceLocation loc,
                                    Preprocessor& pp,
                                    bool force_float)
     : NumericParser(str)

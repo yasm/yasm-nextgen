@@ -29,7 +29,7 @@
 #include <iosfwd>
 #include <vector>
 
-#include "clang/Basic/SourceLocation.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/AssocData.h"
 #include "yasmx/Bytes.h"
@@ -92,7 +92,7 @@ public:
     void setType(ElfSymbolType type) { m_type = type; }
 
     bool hasSize() const { return !m_size.isEmpty(); }
-    void setSize(const Expr& size, clang::SourceLocation source)
+    void setSize(const Expr& size, SourceLocation source)
     {
         m_size = size;
         m_size_source = source;
@@ -108,7 +108,7 @@ private:
     Section*                m_sect;
     ElfStringIndex          m_name_index;
     IntNum                  m_value;
-    clang::SourceLocation   m_size_source;
+    SourceLocation          m_size_source;
     Expr                    m_size;
     ElfSectionIndex         m_index;
     ElfSymbolBinding        m_bind;

@@ -28,7 +28,7 @@
 //
 #include <cctype>
 
-#include "clang/Basic/SourceLocation.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 
 
@@ -69,8 +69,8 @@ public:
 
     Bytes& getBytes() { return m_bytes; }
 
-    void setSource(clang::SourceLocation source) { m_source = source; }
-    clang::SourceLocation getSource() const { return m_source; }
+    void setSource(SourceLocation source) { m_source = source; }
+    SourceLocation getSource() const { return m_source; }
 
     /// @param size     output size (in bits)
     void setSize(unsigned int size)     { m_size = size; }
@@ -114,7 +114,7 @@ private:
     };
 
     Bytes& m_bytes;
-    clang::SourceLocation m_source;
+    SourceLocation m_source;
     unsigned int m_size;
     unsigned int m_shift;
     unsigned int m_rshift;

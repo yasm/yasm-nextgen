@@ -12,15 +12,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SOURCEMANAGER_INTERNALS_H
-#define LLVM_CLANG_SOURCEMANAGER_INTERNALS_H
+#ifndef YASM_SOURCEMANAGER_INTERNALS_H
+#define YASM_SOURCEMANAGER_INTERNALS_H
 
-#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringMap.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Config/export.h"
 #include <map>
 
-namespace clang {
+namespace yasm {
 
 //===----------------------------------------------------------------------===//
 // Line Table Implementation
@@ -126,6 +126,6 @@ public:
   void AddEntry(unsigned FID, const std::vector<LineEntry> &Entries);
 };
 
-} // end namespace clang
+} // end namespace yasm
 
 #endif

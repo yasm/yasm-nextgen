@@ -24,8 +24,8 @@
 //
 #include <gtest/gtest.h>
 
-#include "clang/Basic/SourceManager.h"
 #include "llvm/Support/raw_ostream.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Expr.h"
@@ -68,8 +68,6 @@ protected:
 
     const MockRegister a, b, c, d, e, f;
     yasm::Expr x;
-
-    clang::SourceManager smgr;
 
     ExprTest()
         : a("a"), b("b"), c("c"), d("d"), e("e"), f("f")
@@ -167,7 +165,9 @@ TEST_F(ExprTest, TransformNeg)
 TEST_F(ExprTest, Simplify)
 {
     yasmunit::MockDiagnosticClient mock_client;
-    Diagnostic diags(&smgr, &mock_client);
+    Diagnostic diags(&mock_client);
+    SourceManager smgr(diags);
+    diags.setSourceManager(&smgr);
 
     x = ADD(a, ADD(ADD(b, c), ADD(ADD(d, e), f)));
     EXPECT_EQ("a+((b+c)+((d+e)+f))", String::Format(x));
@@ -210,7 +210,9 @@ TEST_F(ExprTest, Simplify)
 TEST_F(ExprTest, LevelOpBasic)
 {
     yasmunit::MockDiagnosticClient mock_client;
-    Diagnostic diags(&smgr, &mock_client);
+    Diagnostic diags(&mock_client);
+    SourceManager smgr(diags);
+    diags.setSourceManager(&smgr);
 
     x = ADD(a, ADD(b, ADD(c, d)));
     EXPECT_EQ("a+(b+(c+d))", String::Format(x));
@@ -243,7 +245,9 @@ TEST_F(ExprTest, LevelOpBasic)
 TEST_F(ExprTest, LevelOpConstFold)
 {
     yasmunit::MockDiagnosticClient mock_client;
-    Diagnostic diags(&smgr, &mock_client);
+    Diagnostic diags(&mock_client);
+    SourceManager smgr(diags);
+    diags.setSourceManager(&smgr);
 
     x = ADD(1, ADD(2, ADD(3, 4)));
     EXPECT_EQ("1+(2+(3+4))", String::Format(x));
@@ -266,7 +270,9 @@ TEST_F(ExprTest, LevelOpConstFold)
 TEST_F(ExprTest, LevelOpIdentities)
 {
     yasmunit::MockDiagnosticClient mock_client;
-    Diagnostic diags(&smgr, &mock_client);
+    Diagnostic diags(&mock_client);
+    SourceManager smgr(diags);
+    diags.setSourceManager(&smgr);
 
     x = ADD(a, 0);
     EXPECT_EQ("a+0", String::Format(x));
@@ -310,7 +316,9 @@ TEST_F(ExprTest, LevelOpIdentities)
 TEST_F(ExprTest, LevelOpSegOfSegoff)
 {
     yasmunit::MockDiagnosticClient mock_client;
-    Diagnostic diags(&smgr, &mock_client);
+    Diagnostic diags(&mock_client);
+    SourceManager smgr(diags);
+    diags.setSourceManager(&smgr);
 
     x = SEG(SEGOFF(1, 2));
     EXPECT_EQ("SEG (1:2)", String::Format(x));

@@ -44,7 +44,7 @@ using namespace yasm::parser;
 
 GasParser::GasParser(const ParserModule& module,
                      Diagnostic& diags,
-                     clang::SourceManager& sm,
+                     SourceManager& sm,
                      HeaderSearch& headers)
     : Parser(module)
     , ParserImpl(m_gas_preproc)

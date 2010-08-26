@@ -11,15 +11,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Basic/SourceManager.h"
-#include "clang/Basic/SourceManagerInternals.h"
-#include "clang/Basic/FileManager.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
+#include "yasmx/Basic/FileManager.h"
+#include "yasmx/Basic/SourceManagerInternals.h"
+#include "yasmx/Diagnostic.h"
 #include <algorithm>
-using namespace clang;
+#include <string>
+#include <cstring>
+
+using namespace yasm;
 using namespace SrcMgr;
 using llvm::MemoryBuffer;
 
@@ -28,14 +32,15 @@ using llvm::MemoryBuffer;
 //===----------------------------------------------------------------------===//
 
 ContentCache::~ContentCache() {
-  delete Buffer;
+  if (shouldFreeBuffer())
+    delete Buffer.getPointer();
 }
 
 /// getSizeBytesMapped - Returns the number of bytes actually mapped for
 ///  this ContentCache.  This can be 0 if the MemBuffer was not actually
 ///  instantiated.
 unsigned ContentCache::getSizeBytesMapped() const {
-  return Buffer ? Buffer->getBufferSize() : 0;
+  return Buffer.getPointer() ? Buffer.getPointer()->getBufferSize() : 0;
 }
 
 /// getSize - Returns the size of the content encapsulated by this ContentCache.
@@ -43,22 +48,34 @@ unsigned ContentCache::getSizeBytesMapped() const {
 ///  scratch buffer.  If the ContentCache encapsulates a source file, that
 ///  file is not lazily brought in from disk to satisfy this query.
 unsigned ContentCache::getSize() const {
-  return Buffer ? (unsigned) Buffer->getBufferSize()
-                : (unsigned) Entry->getSize();
+  return Buffer.getPointer() ? (unsigned) Buffer.getPointer()->getBufferSize()
+                             : (unsigned) Entry->getSize();
 }
 
-void ContentCache::replaceBuffer(const llvm::MemoryBuffer *B) {
-  assert(B != Buffer);
+void ContentCache::replaceBuffer(const llvm::MemoryBuffer *B,
+                                 bool DoNotFree) {
+  assert(B != Buffer.getPointer());
   
-  delete Buffer;
-  Buffer = B;
+  if (shouldFreeBuffer())
+    delete Buffer.getPointer();
+  Buffer.setPointer(B);
+  Buffer.setInt(DoNotFree? DoNotFreeFlag : 0);
 }
 
-const llvm::MemoryBuffer *ContentCache::getBuffer(std::string *ErrorStr) const {
+const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
+                                                  const SourceManager &SM,
+                                                  SourceLocation Loc,
+                                                  bool *Invalid) const {
+  if (Invalid)
+    *Invalid = false;
+      
   // Lazily create the Buffer for ContentCaches that wrap files.
-  if (!Buffer && Entry) {
-    Buffer = MemoryBuffer::getFile(Entry->getName(), ErrorStr,Entry->getSize());
-
+  if (!Buffer.getPointer() && Entry) {
+    std::string ErrorStr;
+    struct stat FileInfo;
+    Buffer.setPointer(MemoryBuffer::getFile(Entry->getName(), &ErrorStr,
+                                            Entry->getSize(), &FileInfo));
+    
     // If we were unable to open the file, then we are in an inconsistent
     // situation where the content cache referenced a file which no longer
     // exists. Most likely, we were using a stat cache with an invalid entry but
@@ -69,15 +86,86 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(std::string *ErrorStr) const {
     // currently handle returning a null entry here. Ideally we should detect
     // that we are in an inconsistent situation and error out as quickly as
     // possible.
-    if (!Buffer) {
+    if (!Buffer.getPointer()) {
       const llvm::StringRef FillStr("<<<MISSING SOURCE FILE>>>\n");
-      Buffer = MemoryBuffer::getNewMemBuffer(Entry->getSize(), "<invalid>");
-      char *Ptr = const_cast<char*>(Buffer->getBufferStart());
+      Buffer.setPointer(MemoryBuffer::getNewMemBuffer(Entry->getSize(), 
+                                                      "<invalid>"));
+      char *Ptr = const_cast<char*>(Buffer.getPointer()->getBufferStart());
       for (unsigned i = 0, e = Entry->getSize(); i != e; ++i)
         Ptr[i] = FillStr[i % FillStr.size()];
+
+      if (Diag.isDiagnosticInFlight())
+        Diag.SetDelayedDiagnostic(diag::err_cannot_open_file, 
+                                  Entry->getName(), ErrorStr);
+      else 
+        Diag.Report(FullSourceLoc(Loc, SM), diag::err_cannot_open_file)
+          << Entry->getName() << ErrorStr;
+
+      Buffer.setInt(Buffer.getInt() | InvalidFlag);
+
+    // FIXME: This conditionalization is horrible, but we see spurious failures
+    // in the test suite due to this warning and no one has had time to hunt it
+    // down. So for now, we just don't emit this diagnostic on Win32, and hope
+    // nothing bad happens.
+    //
+    // PR6812.
+#if !defined(LLVM_ON_WIN32)
+    } else if (FileInfo.st_size != Entry->getSize() ||
+               FileInfo.st_mtime != Entry->getModificationTime()) {
+      // Check that the file's size and modification time are the same
+      // as in the file entry (which may have come from a stat cache).
+      if (Diag.isDiagnosticInFlight())
+        Diag.SetDelayedDiagnostic(diag::err_file_modified,
+                                  Entry->getName());
+      else
+        Diag.Report(FullSourceLoc(Loc, SM), diag::err_file_modified)
+          << Entry->getName();
+
+      Buffer.setInt(Buffer.getInt() | InvalidFlag);
+#endif
+    }
+    
+    // If the buffer is valid, check to see if it has a UTF Byte Order Mark
+    // (BOM).  We only support UTF-8 without a BOM right now.  See
+    // http://en.wikipedia.org/wiki/Byte_order_mark for more information.
+    if (!isBufferInvalid()) {
+      llvm::StringRef BufStr = Buffer.getPointer()->getBuffer();
+      const char *BOM = 0;
+      if (BufStr.startswith("\xFE\xBB\xBF"))
+        BOM = "UTF-8";
+      else if (BufStr.startswith("\xFE\xFF"))
+        BOM = "UTF-16 (BE)";
+      else if (BufStr.startswith("\xFF\xFE"))
+        BOM = "UTF-16 (LE)";
+      else if (BufStr.startswith(llvm::StringRef("\x00\x00\xFE\xFF", 4)))
+        BOM = "UTF-32 (BE)";
+      else if (BufStr.startswith(llvm::StringRef("\xFF\xFE\x00\x00", 4)))
+        BOM = "UTF-32 (LE)";
+      else if (BufStr.startswith("\x2B\x2F\x76"))
+        BOM = "UTF-7";
+      else if (BufStr.startswith("\xF7\x64\x4C"))
+        BOM = "UTF-1";
+      else if (BufStr.startswith("\xDD\x73\x66\x73"))
+        BOM = "UTF-EBCDIC";
+      else if (BufStr.startswith("\x0E\xFE\xFF"))
+        BOM = "SDSU";
+      else if (BufStr.startswith("\xFB\xEE\x28"))
+        BOM = "BOCU-1";
+      else if (BufStr.startswith("\x84\x31\x95\x33"))
+        BOM = "BOCU-1";
+      
+      if (BOM) {
+        Diag.Report(FullSourceLoc(Loc, SM), diag::err_unsupported_bom)
+          << BOM << Entry->getName();
+        Buffer.setInt(1);
+      }
     }
   }
-  return Buffer;
+  
+  if (Invalid)
+    *Invalid = isBufferInvalid();
+  
+  return Buffer.getPointer();
 }
 
 unsigned LineTableInfo::getLineTableFilenameID(const char *Ptr, unsigned Len) {
@@ -336,9 +424,12 @@ void SourceManager::PreallocateSLocEntries(ExternalSLocEntrySource *Source,
                                            unsigned NextOffset) {
   ExternalSLocEntries = Source;
   this->NextOffset = NextOffset;
+  unsigned CurPrealloc = SLocEntryLoaded.size();
+  // If we've ever preallocated, we must not count the dummy entry.
+  if (CurPrealloc) --CurPrealloc;
   SLocEntryLoaded.resize(NumSLocEntries + 1);
   SLocEntryLoaded[0] = true;
-  SLocEntryTable.resize(SLocEntryTable.size() + NumSLocEntries);
+  SLocEntryTable.resize(SLocEntryTable.size() + NumSLocEntries - CurPrealloc);
 }
 
 void SourceManager::ClearPreallocatedSLocEntries() {
@@ -382,7 +473,7 @@ FileID SourceManager::createFileID(const ContentCache *File,
       = SLocEntry::get(Offset, FileInfo::get(IncludePos, File, FileCharacter));
     SLocEntryLoaded[PreallocatedID] = true;
     FileID FID = FileID::get(PreallocatedID);
-    return LastFileIDLookup = FID;
+    return FID;
   }
 
   SLocEntryTable.push_back(SLocEntry::get(NextOffset,
@@ -427,32 +518,35 @@ SourceLocation SourceManager::createInstantiationLoc(SourceLocation SpellingLoc,
 }
 
 const llvm::MemoryBuffer *
-SourceManager::getMemoryBufferForFile(const FileEntry *File) {
+SourceManager::getMemoryBufferForFile(const FileEntry *File,
+                                      bool *Invalid) {
   const SrcMgr::ContentCache *IR = getOrCreateContentCache(File);
-  if (IR == 0)
-    return 0;
-
-  return IR->getBuffer();
+  assert(IR && "getOrCreateContentCache() cannot return NULL");
+  return IR->getBuffer(Diag, *this, SourceLocation(), Invalid);
 }
 
 bool SourceManager::overrideFileContents(const FileEntry *SourceFile,
-                                         const llvm::MemoryBuffer *Buffer) {
+                                         const llvm::MemoryBuffer *Buffer,
+                                         bool DoNotFree) {
   const SrcMgr::ContentCache *IR = getOrCreateContentCache(SourceFile);
   if (IR == 0)
     return true;
 
-  const_cast<SrcMgr::ContentCache *>(IR)->replaceBuffer(Buffer);
+  const_cast<SrcMgr::ContentCache *>(IR)->replaceBuffer(Buffer, DoNotFree);
   return false;
 }
 
-/// getBufferData - Return a pointer to the start and end of the source buffer
-/// data for the specified FileID.
-std::pair<const char*, const char*>
-SourceManager::getBufferData(FileID FID) const {
-  const llvm::MemoryBuffer *Buf = getBuffer(FID);
-  return std::make_pair(Buf->getBufferStart(), Buf->getBufferEnd());
-}
+llvm::StringRef SourceManager::getBufferData(FileID FID, bool *Invalid) const {
+  bool MyInvalid = false;
+  const llvm::MemoryBuffer *Buf = getBuffer(FID, &MyInvalid);
+  if (Invalid)
+    *Invalid = MyInvalid;
 
+  if (MyInvalid)
+    return "";
+  
+  return Buf->getBuffer();
+}
 
 //===----------------------------------------------------------------------===//
 // SourceLocation manipulation methods.
@@ -667,21 +761,34 @@ SourceManager::getInstantiationRange(SourceLocation Loc) const {
 
 /// getCharacterData - Return a pointer to the start of the specified location
 /// in the appropriate MemoryBuffer.
-const char *SourceManager::getCharacterData(SourceLocation SL) const {
+const char *SourceManager::getCharacterData(SourceLocation SL,
+                                            bool *Invalid) const {
   // Note that this is a hot function in the getSpelling() path, which is
   // heavily used by -E mode.
   std::pair<FileID, unsigned> LocInfo = getDecomposedSpellingLoc(SL);
 
   // Note that calling 'getBuffer()' may lazily page in a source file.
-  return getSLocEntry(LocInfo.first).getFile().getContentCache()
-              ->getBuffer()->getBufferStart() + LocInfo.second;
+  bool CharDataInvalid = false;
+  const llvm::MemoryBuffer *Buffer
+    = getSLocEntry(LocInfo.first).getFile().getContentCache()
+    ->getBuffer(Diag, *this, SourceLocation(), &CharDataInvalid);
+  if (Invalid)
+    *Invalid = CharDataInvalid;
+  return Buffer->getBufferStart() + (CharDataInvalid? 0 : LocInfo.second);
 }
 
 
 /// getColumnNumber - Return the column # for the specified file position.
 /// this is significantly cheaper to compute than the line number.
-unsigned SourceManager::getColumnNumber(FileID FID, unsigned FilePos) const {
-  const char *Buf = getBuffer(FID)->getBufferStart();
+unsigned SourceManager::getColumnNumber(FileID FID, unsigned FilePos,
+                                        bool *Invalid) const {
+  bool MyInvalid = false;
+  const char *Buf = getBuffer(FID, &MyInvalid)->getBufferStart();
+  if (Invalid)
+    *Invalid = MyInvalid;
+
+  if (MyInvalid)
+    return 1;
 
   unsigned LineStart = FilePos;
   while (LineStart && Buf[LineStart-1] != '\n' && Buf[LineStart-1] != '\r')
@@ -689,25 +796,32 @@ unsigned SourceManager::getColumnNumber(FileID FID, unsigned FilePos) const {
   return FilePos-LineStart+1;
 }
 
-unsigned SourceManager::getSpellingColumnNumber(SourceLocation Loc) const {
+unsigned SourceManager::getSpellingColumnNumber(SourceLocation Loc,
+                                                bool *Invalid) const {
   if (Loc.isInvalid()) return 0;
   std::pair<FileID, unsigned> LocInfo = getDecomposedSpellingLoc(Loc);
-  return getColumnNumber(LocInfo.first, LocInfo.second);
+  return getColumnNumber(LocInfo.first, LocInfo.second, Invalid);
 }
 
-unsigned SourceManager::getInstantiationColumnNumber(SourceLocation Loc) const {
+unsigned SourceManager::getInstantiationColumnNumber(SourceLocation Loc,
+                                                     bool *Invalid) const {
   if (Loc.isInvalid()) return 0;
   std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
-  return getColumnNumber(LocInfo.first, LocInfo.second);
+  return getColumnNumber(LocInfo.first, LocInfo.second, Invalid);
 }
 
-
-
-static DISABLE_INLINE void ComputeLineNumbers(ContentCache* FI,
-                                              llvm::BumpPtrAllocator &Alloc);
-static void ComputeLineNumbers(ContentCache* FI, llvm::BumpPtrAllocator &Alloc){
+static DISABLE_INLINE void
+ComputeLineNumbers(Diagnostic &Diag, ContentCache *FI,
+                   llvm::BumpPtrAllocator &Alloc,
+                   const SourceManager &SM, bool &Invalid);
+static void ComputeLineNumbers(Diagnostic &Diag, ContentCache *FI, 
+                               llvm::BumpPtrAllocator &Alloc,
+                               const SourceManager &SM, bool &Invalid) {
   // Note that calling 'getBuffer()' may lazily page in the file.
-  const MemoryBuffer *Buffer = FI->getBuffer();
+  const MemoryBuffer *Buffer = FI->getBuffer(Diag, SM, SourceLocation(),
+                                             &Invalid);
+  if (Invalid)
+    return;
 
   // Find the file offsets of all of the *physical* source lines.  This does
   // not look at trigraphs, escaped newlines, or anything else tricky.
@@ -753,7 +867,8 @@ static void ComputeLineNumbers(ContentCache* FI, llvm::BumpPtrAllocator &Alloc){
 /// for the position indicated.  This requires building and caching a table of
 /// line offsets for the MemoryBuffer, so this is not cheap: use only when
 /// about to emit a diagnostic.
-unsigned SourceManager::getLineNumber(FileID FID, unsigned FilePos) const {
+unsigned SourceManager::getLineNumber(FileID FID, unsigned FilePos, 
+                                      bool *Invalid) const {
   ContentCache *Content;
   if (LastLineNoFileIDQuery == FID)
     Content = LastLineNoContentCache;
@@ -763,8 +878,15 @@ unsigned SourceManager::getLineNumber(FileID FID, unsigned FilePos) const {
 
   // If this is the first use of line information for this buffer, compute the
   /// SourceLineCache for it on demand.
-  if (Content->SourceLineCache == 0)
-    ComputeLineNumbers(Content, ContentCacheAlloc);
+  if (Content->SourceLineCache == 0) {
+    bool MyInvalid = false;
+    ComputeLineNumbers(Diag, Content, ContentCacheAlloc, *this, MyInvalid);
+    if (Invalid)
+      *Invalid = MyInvalid;
+    if (MyInvalid)
+      return 1;
+  } else if (Invalid)
+    *Invalid = false;
 
   // Okay, we know we have a line number table.  Do a binary search to find the
   // line number that this character position lands on.
@@ -850,12 +972,14 @@ unsigned SourceManager::getLineNumber(FileID FID, unsigned FilePos) const {
   return LineNo;
 }
 
-unsigned SourceManager::getInstantiationLineNumber(SourceLocation Loc) const {
+unsigned SourceManager::getInstantiationLineNumber(SourceLocation Loc, 
+                                                   bool *Invalid) const {
   if (Loc.isInvalid()) return 0;
   std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
   return getLineNumber(LocInfo.first, LocInfo.second);
 }
-unsigned SourceManager::getSpellingLineNumber(SourceLocation Loc) const {
+unsigned SourceManager::getSpellingLineNumber(SourceLocation Loc, 
+                                              bool *Invalid) const {
   if (Loc.isInvalid()) return 0;
   std::pair<FileID, unsigned> LocInfo = getDecomposedSpellingLoc(Loc);
   return getLineNumber(LocInfo.first, LocInfo.second);
@@ -895,10 +1019,11 @@ SourceManager::getFileCharacteristic(SourceLocation Loc) const {
 /// Return the filename or buffer identifier of the buffer the location is in.
 /// Note that this name does not respect #line directives.  Use getPresumedLoc
 /// for normal clients.
-const char *SourceManager::getBufferName(SourceLocation Loc) const {
+const char *SourceManager::getBufferName(SourceLocation Loc, 
+                                         bool *Invalid) const {
   if (Loc.isInvalid()) return "<invalid loc>";
 
-  return getBuffer(getFileID(Loc))->getBufferIdentifier();
+  return getBuffer(getFileID(Loc), Invalid)->getBufferIdentifier();
 }
 
 
@@ -921,8 +1046,11 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
   // To get the source name, first consult the FileEntry (if one exists)
   // before the MemBuffer as this will avoid unnecessarily paging in the
   // MemBuffer.
-  const char *Filename =
-    C->Entry ? C->Entry->getName() : C->getBuffer()->getBufferIdentifier();
+  const char *Filename;
+  if (C->Entry)
+    Filename = C->Entry->getName();
+  else
+    Filename = C->getBuffer(Diag, *this)->getBufferIdentifier();
   unsigned LineNo = getLineNumber(LocInfo.first, LocInfo.second);
   unsigned ColNo  = getColumnNumber(LocInfo.first, LocInfo.second);
   SourceLocation IncludeLoc = FI.getIncludeLoc();
@@ -978,8 +1106,12 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
 
   // If this is the first use of line information for this buffer, compute the
   /// SourceLineCache for it on demand.
-  if (Content->SourceLineCache == 0)
-    ComputeLineNumbers(Content, ContentCacheAlloc);
+  if (Content->SourceLineCache == 0) {
+    bool MyInvalid = false;
+    ComputeLineNumbers(Diag, Content, ContentCacheAlloc, *this, MyInvalid);
+    if (MyInvalid)
+      return SourceLocation();
+  }
 
   // Find the first file ID that corresponds to the given file.
   FileID FirstFID;
@@ -1008,15 +1140,15 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
     return SourceLocation();
 
   if (Line > Content->NumLines) {
-    unsigned Size = Content->getBuffer()->getBufferSize();
+    unsigned Size = Content->getBuffer(Diag, *this)->getBufferSize();
     if (Size > 0)
       --Size;
     return getLocForStartOfFile(FirstFID).getFileLocWithOffset(Size);
   }
 
   unsigned FilePos = Content->SourceLineCache[Line - 1];
-  const char *Buf = Content->getBuffer()->getBufferStart() + FilePos;
-  unsigned BufLength = Content->getBuffer()->getBufferEnd() - Buf;
+  const char *Buf = Content->getBuffer(Diag, *this)->getBufferStart() + FilePos;
+  unsigned BufLength = Content->getBuffer(Diag, *this)->getBufferEnd() - Buf;
   unsigned i = 0;
 
   // Check that the given column is valid.
@@ -1027,6 +1159,27 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
 
   return getLocForStartOfFile(FirstFID).getFileLocWithOffset(FilePos + Col - 1);
 }
+
+/// Given a decomposed source location, move it up the include/instantiation
+/// stack to the parent source location.  If this is possible, return the
+/// decomposed version of the parent in Loc and return false.  If Loc is the
+/// top-level entry, return true and don't modify it.
+static bool MoveUpIncludeHierarchy(std::pair<FileID, unsigned> &Loc,
+                                   const SourceManager &SM) {
+  SourceLocation UpperLoc;
+  const SrcMgr::SLocEntry &Entry = SM.getSLocEntry(Loc.first);
+  if (Entry.isInstantiation())
+    UpperLoc = Entry.getInstantiation().getInstantiationLocStart();
+  else
+    UpperLoc = Entry.getFile().getIncludeLoc();
+  
+  if (UpperLoc.isInvalid())
+    return true; // We reached the top.
+  
+  Loc = SM.getDecomposedLoc(UpperLoc);
+  return false;
+}
+  
 
 /// \brief Determines the order of 2 source locations in the translation unit.
 ///
@@ -1046,78 +1199,74 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
 
   // If we are comparing a source location with multiple locations in the same
   // file, we get a big win by caching the result.
+  if (IsBeforeInTUCache.isCacheValid(LOffs.first, ROffs.first))
+    return IsBeforeInTUCache.getCachedResult(LOffs.second, ROffs.second);
 
-  if (LastLFIDForBeforeTUCheck == LOffs.first &&
-      LastRFIDForBeforeTUCheck == ROffs.first)
-    return LastResForBeforeTUCheck;
-
-  LastLFIDForBeforeTUCheck = LOffs.first;
-  LastRFIDForBeforeTUCheck = ROffs.first;
+  // Okay, we missed in the cache, start updating the cache for this query.
+  IsBeforeInTUCache.setQueryFIDs(LOffs.first, ROffs.first);
 
   // "Traverse" the include/instantiation stacks of both locations and try to
-  // find a common "ancestor".
+  // find a common "ancestor".  FileIDs build a tree-like structure that
+  // reflects the #include hierarchy, and this algorithm needs to find the
+  // nearest common ancestor between the two locations.  For example, if you
+  // have a.c that includes b.h and c.h, and are comparing a location in b.h to
+  // a location in c.h, we need to find that their nearest common ancestor is
+  // a.c, and compare the locations of the two #includes to find their relative
+  // ordering.
   //
-  // First we traverse the stack of the right location and check each level
-  // against the level of the left location, while collecting all levels in a
-  // "stack map".
+  // SourceManager assigns FileIDs in order of parsing.  This means that an
+  // includee always has a larger FileID than an includer.  While you might
+  // think that we could just compare the FileID's here, that doesn't work to
+  // compare a point at the end of a.c with a point within c.h.  Though c.h has
+  // a larger FileID, we have to compare the include point of c.h to the
+  // location in a.c.
+  //
+  // Despite not being able to directly compare FileID's, we can tell that a
+  // larger FileID is necessarily more deeply nested than a lower one and use
+  // this information to walk up the tree to the nearest common ancestor.
+  do {
+    // If LOffs is larger than ROffs, then LOffs must be more deeply nested than
+    // ROffs, walk up the #include chain.
+    if (LOffs.first.ID > ROffs.first.ID) {
+      if (MoveUpIncludeHierarchy(LOffs, *this))
+        break; // We reached the top.
+      
+    } else {
+      // Otherwise, ROffs is larger than LOffs, so ROffs must be more deeply
+      // nested than LOffs, walk up the #include chain.
+      if (MoveUpIncludeHierarchy(ROffs, *this))
+        break; // We reached the top.
+    }
+  } while (LOffs.first != ROffs.first);
 
-  std::map<FileID, unsigned> ROffsMap;
-  ROffsMap[ROffs.first] = ROffs.second;
-
-  while (1) {
-    SourceLocation UpperLoc;
-    const SrcMgr::SLocEntry &Entry = getSLocEntry(ROffs.first);
-    if (Entry.isInstantiation())
-      UpperLoc = Entry.getInstantiation().getInstantiationLocStart();
-    else
-      UpperLoc = Entry.getFile().getIncludeLoc();
-
-    if (UpperLoc.isInvalid())
-      break; // We reached the top.
-
-    ROffs = getDecomposedLoc(UpperLoc);
-
-    if (LOffs.first == ROffs.first)
-      return LastResForBeforeTUCheck = LOffs.second < ROffs.second;
-
-    ROffsMap[ROffs.first] = ROffs.second;
-  }
-
-  // We didn't find a common ancestor. Now traverse the stack of the left
-  // location, checking against the stack map of the right location.
-
-  while (1) {
-    SourceLocation UpperLoc;
-    const SrcMgr::SLocEntry &Entry = getSLocEntry(LOffs.first);
-    if (Entry.isInstantiation())
-      UpperLoc = Entry.getInstantiation().getInstantiationLocStart();
-    else
-      UpperLoc = Entry.getFile().getIncludeLoc();
-
-    if (UpperLoc.isInvalid())
-      break; // We reached the top.
-
-    LOffs = getDecomposedLoc(UpperLoc);
-
-    std::map<FileID, unsigned>::iterator I = ROffsMap.find(LOffs.first);
-    if (I != ROffsMap.end())
-      return LastResForBeforeTUCheck = LOffs.second < I->second;
+  // If we exited because we found a nearest common ancestor, compare the
+  // locations within the common file and cache them.
+  if (LOffs.first == ROffs.first) {
+    IsBeforeInTUCache.setCommonLoc(LOffs.first, LOffs.second, ROffs.second);
+    return IsBeforeInTUCache.getCachedResult(LOffs.second, ROffs.second);
   }
 
   // There is no common ancestor, most probably because one location is in the
-  // predefines buffer.
-  //
+  // predefines buffer or an AST file.
   // FIXME: We should rearrange the external interface so this simply never
   // happens; it can't conceptually happen. Also see PR5662.
+  IsBeforeInTUCache.setQueryFIDs(FileID(), FileID()); // Don't try caching.
 
+  // Zip both entries up to the top level record.
+  while (!MoveUpIncludeHierarchy(LOffs, *this)) /*empty*/;
+  while (!MoveUpIncludeHierarchy(ROffs, *this)) /*empty*/;
+  
   // If exactly one location is a memory buffer, assume it preceeds the other.
-  bool LIsMB = !getSLocEntry(LOffs.first).getFile().getContentCache()->Entry;
-  bool RIsMB = !getSLocEntry(ROffs.first).getFile().getContentCache()->Entry;
+  
+  // Strip off macro instantation locations, going up to the top-level File
+  // SLocEntry.
+  bool LIsMB = getFileEntryForID(LOffs.first) == 0;
+  bool RIsMB = getFileEntryForID(ROffs.first) == 0;
   if (LIsMB != RIsMB)
-    return LastResForBeforeTUCheck = LIsMB;
+    return LIsMB;
 
   // Otherwise, just assume FileIDs were created in order.
-  return LastResForBeforeTUCheck = (LOffs.first < ROffs.first);
+  return LOffs.first < ROffs.first;
 }
 
 /// PrintStats - Print statistics to stderr.

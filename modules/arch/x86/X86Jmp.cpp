@@ -291,7 +291,7 @@ arch::AppendJmp(BytecodeContainer& container,
                 const X86Opcode& shortop,
                 const X86Opcode& nearop,
                 std::auto_ptr<Expr> target,
-                clang::SourceLocation source,
+                SourceLocation source,
                 X86JmpOpcodeSel op_sel)
 {
     Bytecode& bc = container.FreshBytecode();

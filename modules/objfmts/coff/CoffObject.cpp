@@ -113,7 +113,7 @@ Section*
 CoffObject::AddDefaultSection()
 {
     Diagnostic diags(NULL);
-    Section* section = AppendSection(".text", clang::SourceLocation(), diags);
+    Section* section = AppendSection(".text", SourceLocation(), diags);
     section->setDefault(true);
     return section;
 }
@@ -122,7 +122,7 @@ bool
 CoffObject::InitSection(llvm::StringRef name,
                         Section& section,
                         CoffSection* coffsect,
-                        clang::SourceLocation source,
+                        SourceLocation source,
                         Diagnostic& diags)
 {
     unsigned long flags = 0;
@@ -164,7 +164,7 @@ CoffObject::InitSection(llvm::StringRef name,
 
 Section*
 CoffObject::AppendSection(llvm::StringRef name,
-                          clang::SourceLocation source,
+                          SourceLocation source,
                           Diagnostic& diags)
 {
     Section* section = new Section(name, false, false, source);

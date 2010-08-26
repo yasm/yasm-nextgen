@@ -80,10 +80,10 @@ public:
 class YASM_STD_EXPORT NasmLexer : public Lexer
 {
 public:
-    NasmLexer(clang::FileID fid,
+    NasmLexer(FileID fid,
               const llvm::MemoryBuffer* input_buffer,
               Preprocessor& pp);
-    NasmLexer(clang::SourceLocation file_loc,
+    NasmLexer(SourceLocation file_loc,
               const char* start,
               const char* ptr,
               const char* end);

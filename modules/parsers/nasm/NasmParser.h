@@ -69,7 +69,7 @@ class YASM_STD_EXPORT NasmParser : public Parser, public ParserImpl
 public:
     NasmParser(const ParserModule& module,
                Diagnostic& diags,
-               clang::SourceManager& sm,
+               SourceManager& sm,
                HeaderSearch& headers);
     ~NasmParser();
 
@@ -100,12 +100,12 @@ private:
     void CheckPseudoInsn(IdentifierInfo* ii);
     bool CheckKeyword(IdentifierInfo* ii);
 
-    void DefineLabel(SymbolRef sym, clang::SourceLocation source, bool local);
+    void DefineLabel(SymbolRef sym, SourceLocation source, bool local);
 
     void DoParse();
     bool ParseLine();
     bool ParseDirective(/*@out@*/ NameValues& nvs);
-    bool ParseTimes(clang::SourceLocation times_source);
+    bool ParseTimes(SourceLocation times_source);
     bool ParseExp();
     Insn::Ptr ParseInsn();
 

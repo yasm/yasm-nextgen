@@ -30,7 +30,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "clang/Basic/SourceLocation.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 
 namespace yasm
@@ -78,7 +78,7 @@ class YASM_LIB_EXPORT TokenLexer
     unsigned m_cur_token;
 
     /// The source location range where this macro was instantiated.
-    clang::SourceLocation m_instantiate_loc_start, m_instantiate_loc_end;
+    SourceLocation m_instantiate_loc_start, m_instantiate_loc_end;
 
     /// Lexical information about the expansion point of the macro: the identifier
     /// that the macro expanded from had these properties.
@@ -103,7 +103,7 @@ public:
     /// arguments.  Note that this ctor takes ownership of the ActualArgs pointer.
     /// ILEnd specifies the location of the ')' for a function-like macro or the
     /// identifier for an object-like macro.
-    TokenLexer(Token& tok, clang::SourceLocation il_end, MacroArgs* actual_args,
+    TokenLexer(Token& tok, SourceLocation il_end, MacroArgs* actual_args,
                Preprocessor& pp)
         : m_macro(0), m_actual_args(0), m_pp(pp), m_owns_tokens(false)
     {

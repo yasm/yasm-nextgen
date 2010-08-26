@@ -69,7 +69,7 @@ protected:
     virtual bool InitSection(llvm::StringRef name,
                              Section& section,
                              CoffSection* coffsect,
-                             clang::SourceLocation source,
+                             SourceLocation source,
                              Diagnostic& diags);
     virtual void DirSectionInitHelpers(DirHelpers& helpers,
                                        CoffSection* csd,

@@ -13,11 +13,17 @@
 
 #include "yasmx/Diagnostic.h"
 
-#include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "yasmx/Basic/FileManager.h"
+#include "yasmx/Basic/SourceLocation.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Parse/IdentifierTable.h"
+#include "yasmx/PartialDiagnostic.h"
+
 #include <vector>
 #include <map>
 #include <cstring>
@@ -26,6 +32,8 @@ using namespace yasm;
 //===----------------------------------------------------------------------===//
 // Builtin Diagnostic information
 //===----------------------------------------------------------------------===//
+
+namespace {
 
 // Diagnostic classes.
 enum {
@@ -39,21 +47,23 @@ struct StaticDiagInfoRec {
   unsigned short DiagID;
   unsigned Mapping : 3;
   unsigned Class : 3;
+  unsigned Category : 5;
+  
   const char *Description;
   const char *OptionGroup;
 
   bool operator<(const StaticDiagInfoRec &RHS) const {
     return DiagID < RHS.DiagID;
   }
-  bool operator>(const StaticDiagInfoRec &RHS) const {
-    return DiagID > RHS.DiagID;
-  }
 };
+
+}
 
 static const StaticDiagInfoRec StaticDiagInfo[] = {
 #include "lib/StaticDiagInfo.inc"
-  { 0, 0, 0, 0, 0 }
+  { 0, 0, 0, 0, 0, 0}
 };
+#undef DIAG
 
 /// GetDiagInfo - Return the StaticDiagInfoRec entry for the specified DiagID,
 /// or null if the ID is invalid.
@@ -64,15 +74,20 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
 #ifndef NDEBUG
   static bool IsFirst = true;
   if (IsFirst) {
-    for (unsigned i = 1; i != NumDiagEntries; ++i)
+    for (unsigned i = 1; i != NumDiagEntries; ++i) {
+      assert(StaticDiagInfo[i-1].DiagID != StaticDiagInfo[i].DiagID &&
+             "Diag ID conflict, the enums at the start of clang::diag (in "
+             "Diagnostic.h) probably need to be increased");
+
       assert(StaticDiagInfo[i-1] < StaticDiagInfo[i] &&
              "Improperly sorted diag info");
+    }
     IsFirst = false;
   }
 #endif
 
   // Search the diagnostic table with a binary search.
-  StaticDiagInfoRec Find = { DiagID, 0, 0, 0, 0 };
+  StaticDiagInfoRec Find = { DiagID, 0, 0, 0, 0, 0 };
 
   const StaticDiagInfoRec *Found =
     std::lower_bound(StaticDiagInfo, StaticDiagInfo + NumDiagEntries, Find);
@@ -97,6 +112,29 @@ const char *Diagnostic::getWarningOptionForDiag(unsigned DiagID) {
     return Info->OptionGroup;
   return 0;
 }
+
+/// getWarningOptionForDiag - Return the category number that a specified
+/// DiagID belongs to, or 0 if no category.
+unsigned Diagnostic::getCategoryNumberForDiag(unsigned DiagID) {
+  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
+    return Info->Category;
+  return 0;
+}
+
+// Includes the table of options, sorted by name for fast binary lookup.
+#include "lib/DiagnosticCategories.cpp"
+static const size_t CategoryNameTableSize =
+  sizeof(CategoryNameTable) / sizeof(CategoryNameTable[0])-1;
+
+/// getCategoryNameFromID - Given a category ID, return the name of the
+/// category, an empty string if CategoryID is zero, or null if CategoryID is
+/// invalid.
+const char *Diagnostic::getCategoryNameFromID(unsigned CategoryID) {
+  if (CategoryID >= CategoryNameTableSize) return 0;
+  return CategoryNameTable[CategoryID];
+}
+
+
 
 /// getDiagClass - Return the class field of the diagnostic.
 ///
@@ -133,7 +171,7 @@ namespace yasm {
         return DiagInfo[DiagID-DIAG_UPPER_LIMIT].first;
       }
 
-      unsigned getOrCreateDiagID(Diagnostic::Level L, const char *Message,
+      unsigned getOrCreateDiagID(Diagnostic::Level L, llvm::StringRef Message,
                                  Diagnostic &Diags) {
         DiagDesc D(L, Message);
         // Check to see if it already exists.
@@ -160,6 +198,8 @@ namespace yasm {
 static void DummyArgToStringFn(Diagnostic::ArgumentKind AK, intptr_t QT,
                                const char *Modifier, unsigned ML,
                                const char *Argument, unsigned ArgLen,
+                               const Diagnostic::ArgumentValue *PrevArgs,
+                               unsigned NumPrevArgs,
                                llvm::SmallVectorImpl<char> &Output,
                                void *Cookie) {
   const char *Str = "<can't format argument>";
@@ -167,30 +207,29 @@ static void DummyArgToStringFn(Diagnostic::ArgumentKind AK, intptr_t QT,
 }
 
 
-Diagnostic::Diagnostic(clang::SourceManager* smgr, DiagnosticClient *client)
-  : Client(client), SrcMgr(smgr) {
-  AllExtensionsSilenced = 0;
-  IgnoreAllWarnings = false;
-  WarningsAsErrors = false;
-  SuppressSystemWarnings = false;
-  SuppressAllDiagnostics = false;
-  ExtBehavior = Ext_Ignore;
-
-  ErrorOccurred = false;
-  FatalErrorOccurred = false;
-  NumDiagnostics = 0;
-
-  NumErrors = 0;
-  CustomDiagInfo = 0;
-  CurDiagID = ~0U;
-  LastDiagLevel = Ignored;
-
+Diagnostic::Diagnostic(DiagnosticClient *client)
+  : Client(client), SrcMgr(0) {
   ArgToStringFn = DummyArgToStringFn;
   ArgToStringCookie = 0;
 
+  AllExtensionsSilenced = 0;
+  IgnoreAllWarnings = false;
+  WarningsAsErrors = false;
+  ErrorsAsFatal = false;
+  SuppressSystemWarnings = false;
+  SuppressAllDiagnostics = false;
+  ShowOverloads = Ovl_All;
+  ExtBehavior = Ext_Ignore;
+
+  ErrorLimit = 0;
+  TemplateBacktraceLimit = 0;
+  CustomDiagInfo = 0;
+
   // Set all mappings to 'unset'.
-  DiagMappings BlankDiags(diag::DIAG_UPPER_LIMIT/2, 0);
-  DiagMappingsStack.push_back(BlankDiags);
+  DiagMappingsStack.clear();
+  DiagMappingsStack.push_back(DiagMappings());
+
+  Reset();
 }
 
 Diagnostic::~Diagnostic() {
@@ -199,6 +238,8 @@ Diagnostic::~Diagnostic() {
 
 
 void Diagnostic::pushMappings() {
+  // Avoids undefined behavior when the stack has to resize.
+  DiagMappingsStack.reserve(DiagMappingsStack.size() + 1);
   DiagMappingsStack.push_back(DiagMappingsStack.back());
 }
 
@@ -213,7 +254,7 @@ bool Diagnostic::popMappings() {
 /// getCustomDiagID - Return an ID for a diagnostic with the specified message
 /// and level.  If this is the first request for this diagnosic, it is
 /// registered and created, otherwise the existing ID is returned.
-unsigned Diagnostic::getCustomDiagID(Level L, const char *Message) {
+unsigned Diagnostic::getCustomDiagID(Level L, llvm::StringRef Message) {
   if (CustomDiagInfo == 0)
     CustomDiagInfo = new diag::CustomDiagInfo();
   return CustomDiagInfo->getOrCreateDiagID(L, Message, *this);
@@ -237,13 +278,31 @@ bool Diagnostic::isBuiltinNote(unsigned DiagID) {
 }
 
 /// isBuiltinExtensionDiag - Determine whether the given built-in diagnostic
-/// ID is for an extension of some sort.
+/// ID is for an extension of some sort.  This also returns EnabledByDefault,
+/// which is set to indicate whether the diagnostic is ignored by default (in
+/// which case -pedantic enables it) or treated as a warning/error by default.
 ///
-bool Diagnostic::isBuiltinExtensionDiag(unsigned DiagID) {
-  return DiagID < diag::DIAG_UPPER_LIMIT &&
-         getBuiltinDiagClass(DiagID) == CLASS_EXTENSION;
+bool Diagnostic::isBuiltinExtensionDiag(unsigned DiagID,
+                                        bool &EnabledByDefault) {
+  if (DiagID >= diag::DIAG_UPPER_LIMIT ||
+      getBuiltinDiagClass(DiagID) != CLASS_EXTENSION)
+    return false;
+  
+  EnabledByDefault = GetDefaultDiagMapping(DiagID) != diag::MAP_IGNORE;
+  return true;
 }
 
+void Diagnostic::Reset() {
+  ErrorOccurred = false;
+  FatalErrorOccurred = false;
+  
+  NumWarnings = 0;
+  NumErrors = 0;
+  NumErrorsSuppressed = 0;
+  CurDiagID = ~0U;
+  LastDiagLevel = Ignored;
+  DelayedDiagID = 0;
+}
 
 /// getDescription - Given a diagnostic ID, return a description of the
 /// issue.
@@ -251,6 +310,23 @@ const char *Diagnostic::getDescription(unsigned DiagID) const {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
     return Info->Description;
   return CustomDiagInfo->getDescription(DiagID);
+}
+
+void Diagnostic::SetDelayedDiagnostic(unsigned DiagID, llvm::StringRef Arg1,
+                                      llvm::StringRef Arg2) {
+  if (DelayedDiagID)
+    return;
+
+  DelayedDiagID = DiagID;
+  DelayedDiagArg1 = Arg1.str();
+  DelayedDiagArg2 = Arg2.str();
+}
+
+void Diagnostic::ReportDelayed() {
+  Report(DelayedDiagID) << DelayedDiagArg1 << DelayedDiagArg2;
+  DelayedDiagID = 0;
+  DelayedDiagArg1.clear();
+  DelayedDiagArg2.clear();
 }
 
 /// getDiagnosticLevel - Based on the way the client configured the Diagnostic
@@ -293,9 +369,13 @@ Diagnostic::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const {
       return Diagnostic::Ignored;
     Result = Diagnostic::Warning;
     if (ExtBehavior == Ext_Error) Result = Diagnostic::Error;
+    if (Result == Diagnostic::Error && ErrorsAsFatal)
+      Result = Diagnostic::Fatal;
     break;
   case diag::MAP_ERROR:
     Result = Diagnostic::Error;
+    if (ErrorsAsFatal)
+      Result = Diagnostic::Fatal;
     break;
   case diag::MAP_FATAL:
     Result = Diagnostic::Fatal;
@@ -316,6 +396,8 @@ Diagnostic::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const {
 
     if (WarningsAsErrors)
       Result = Diagnostic::Error;
+    if (Result == Diagnostic::Error && ErrorsAsFatal)
+      Result = Diagnostic::Fatal;
     break;
 
   case diag::MAP_WARNING_NO_WERROR:
@@ -327,6 +409,12 @@ Diagnostic::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const {
     if (IgnoreAllWarnings)
       return Diagnostic::Ignored;
 
+    break;
+
+  case diag::MAP_ERROR_NO_WFATAL:
+    // Diagnostics specified as -Wno-fatal-error=foo should be errors, but
+    // unaffected by -Wfatal-errors.
+    Result = Diagnostic::Error;
     break;
   }
 
@@ -342,7 +430,7 @@ Diagnostic::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const {
 struct WarningOption {
   const char  *Name;
   const short *Members;
-  const char  *SubGroups;
+  const short *SubGroups;
 };
 
 // Includes the table of options, sorted by name for fast binary lookup.
@@ -364,9 +452,9 @@ static void MapGroupMembers(const WarningOption *Group, diag::Mapping Mapping,
   }
 
   // Enable/disable all subgroups along with this one.
-  if (const char *SubGroups = Group->SubGroups) {
-    for (; *SubGroups != (char)-1; ++SubGroups)
-      MapGroupMembers(&OptionTable[(unsigned char)*SubGroups], Mapping, Diags);
+  if (const short *SubGroups = Group->SubGroups) {
+    for (; *SubGroups != (short)-1; ++SubGroups)
+      MapGroupMembers(&OptionTable[(short)*SubGroups], Mapping, Diags);
   }
 }
 
@@ -441,8 +529,14 @@ bool Diagnostic::ProcessDiag() {
 
   // If a fatal error has already been emitted, silence all subsequent
   // diagnostics.
-  if (FatalErrorOccurred)
+  if (FatalErrorOccurred) {
+    if (DiagLevel >= Diagnostic::Error && Client->IncludeInDiagnosticCounts()) {
+      ++NumErrors;
+      ++NumErrorsSuppressed;
+    }
+
     return false;
+  }
 
   // If the client doesn't care about this message, don't issue it.  If this is
   // a note and the last real diagnostic was ignored, ignore it too.
@@ -454,24 +548,64 @@ bool Diagnostic::ProcessDiag() {
   // it.
   if (SuppressSystemWarnings && !ShouldEmitInSystemHeader &&
       Info.getLocation().isValid() &&
-      Info.getLocation().getSpellingLoc().isInSystemHeader() &&
+      Info.getLocation().getInstantiationLoc().isInSystemHeader() &&
       (DiagLevel != Diagnostic::Note || LastDiagLevel == Diagnostic::Ignored)) {
     LastDiagLevel = Diagnostic::Ignored;
     return false;
   }
 
   if (DiagLevel >= Diagnostic::Error) {
-    ErrorOccurred = true;
-    ++NumErrors;
+    if (Client->IncludeInDiagnosticCounts()) {
+      ErrorOccurred = true;
+      ++NumErrors;
+    }
+
+    // If we've emitted a lot of errors, emit a fatal error after it to stop a
+    // flood of bogus errors.
+    if (ErrorLimit && NumErrors >= ErrorLimit &&
+        DiagLevel == Diagnostic::Error)
+      SetDelayedDiagnostic(diag::fatal_too_many_errors);
   }
 
   // Finally, report it.
   Client->HandleDiagnostic(DiagLevel, Info);
-  if (Client->IncludeInDiagnosticCounts()) ++NumDiagnostics;
+  if (Client->IncludeInDiagnosticCounts()) {
+    if (DiagLevel == Diagnostic::Warning)
+      ++NumWarnings;
+  }
 
   CurDiagID = ~0U;
 
   return true;
+}
+
+bool DiagnosticBuilder::Emit() {
+  // If DiagObj is null, then its soul was stolen by the copy ctor
+  // or the user called Emit().
+  if (DiagObj == 0) return false;
+
+  // When emitting diagnostics, we set the final argument count into
+  // the Diagnostic object.
+  DiagObj->NumDiagArgs = NumArgs;
+  DiagObj->NumDiagRanges = NumRanges;
+  DiagObj->NumFixItHints = NumFixItHints;
+
+  // Process the diagnostic, sending the accumulated information to the
+  // DiagnosticClient.
+  bool Emitted = DiagObj->ProcessDiag();
+
+  // Clear out the current diagnostic object.
+  unsigned DiagID = DiagObj->CurDiagID;
+  DiagObj->Clear();
+
+  // If there was a delayed diagnostic, emit it now.
+  if (DiagObj->DelayedDiagID && DiagObj->DelayedDiagID != DiagID)
+    DiagObj->ReportDelayed();
+
+  // This diagnostic is dead.
+  DiagObj = 0;
+
+  return Emitted;
 }
 
 
@@ -485,19 +619,46 @@ static bool ModifierIs(const char *Modifier, unsigned ModifierLen,
   return StrLen-1 == ModifierLen && !memcmp(Modifier, Str, StrLen-1);
 }
 
+/// ScanForward - Scans forward, looking for the given character, skipping
+/// nested clauses and escaped characters.
+static const char *ScanFormat(const char *I, const char *E, char Target) {
+  unsigned Depth = 0;
+
+  for ( ; I != E; ++I) {
+    if (Depth == 0 && *I == Target) return I;
+    if (Depth != 0 && *I == '}') Depth--;
+
+    if (*I == '%') {
+      I++;
+      if (I == E) break;
+
+      // Escaped characters get implicitly skipped here.
+
+      // Format specifier.
+      if (!isdigit(*I) && !ispunct(*I)) {
+        for (I++; I != E && !isdigit(*I) && *I != '{'; I++) ;
+        if (I == E) break;
+        if (*I == '{')
+          Depth++;
+      }
+    }
+  }
+  return E;
+}
+
 /// HandleSelectModifier - Handle the integer 'select' modifier.  This is used
 /// like this:  %select{foo|bar|baz}2.  This means that the integer argument
 /// "%2" has a value from 0-2.  If the value is 0, the diagnostic prints 'foo'.
 /// If the value is 1, it prints 'bar'.  If it has the value 2, it prints 'baz'.
 /// This is very useful for certain classes of variant diagnostics.
-static void HandleSelectModifier(unsigned ValNo,
+static void HandleSelectModifier(const DiagnosticInfo &DInfo, unsigned ValNo,
                                  const char *Argument, unsigned ArgumentLen,
                                  llvm::SmallVectorImpl<char> &OutStr) {
   const char *ArgumentEnd = Argument+ArgumentLen;
 
   // Skip over 'ValNo' |'s.
   while (ValNo) {
-    const char *NextVal = std::find(Argument, ArgumentEnd, '|');
+    const char *NextVal = ScanFormat(Argument, ArgumentEnd, '|');
     assert(NextVal != ArgumentEnd && "Value for integer select modifier was"
            " larger than the number of options in the diagnostic string!");
     Argument = NextVal+1;  // Skip this string.
@@ -505,9 +666,10 @@ static void HandleSelectModifier(unsigned ValNo,
   }
 
   // Get the end of the value.  This is either the } or the |.
-  const char *EndPtr = std::find(Argument, ArgumentEnd, '|');
-  // Add the value to the output string.
-  OutStr.append(Argument, EndPtr);
+  const char *EndPtr = ScanFormat(Argument, ArgumentEnd, '|');
+
+  // Recursively format the result of the select clause into the output string.
+  DInfo.FormatDiagnostic(Argument, EndPtr, OutStr);
 }
 
 /// HandleIntegerSModifier - Handle the integer 's' modifier.  This adds the
@@ -517,6 +679,37 @@ static void HandleIntegerSModifier(unsigned ValNo,
                                    llvm::SmallVectorImpl<char> &OutStr) {
   if (ValNo != 1)
     OutStr.push_back('s');
+}
+
+/// HandleOrdinalModifier - Handle the integer 'ord' modifier.  This
+/// prints the ordinal form of the given integer, with 1 corresponding
+/// to the first ordinal.  Currently this is hard-coded to use the
+/// English form.
+static void HandleOrdinalModifier(unsigned ValNo,
+                                  llvm::SmallVectorImpl<char> &OutStr) {
+  assert(ValNo != 0 && "ValNo must be strictly positive!");
+
+  llvm::raw_svector_ostream Out(OutStr);
+
+  // We could use text forms for the first N ordinals, but the numeric
+  // forms are actually nicer in diagnostics because they stand out.
+  Out << ValNo;
+
+  // It is critically important that we do this perfectly for
+  // user-written sequences with over 100 elements.
+  switch (ValNo % 100) {
+  case 11:
+  case 12:
+  case 13:
+    Out << "th"; return;
+  default:
+    switch (ValNo % 10) {
+    case 1: Out << "st"; return;
+    case 2: Out << "nd"; return;
+    case 3: Out << "rd"; return;
+    default: Out << "th"; return;
+    }
+  }
 }
 
 
@@ -629,11 +822,11 @@ static void HandlePluralModifier(unsigned ValNo,
     }
     if (EvalPluralExpr(ValNo, Argument, ExprEnd)) {
       Argument = ExprEnd + 1;
-      ExprEnd = std::find(Argument, ArgumentEnd, '|');
+      ExprEnd = ScanFormat(Argument, ArgumentEnd, '|');
       OutStr.append(Argument, ExprEnd);
       return;
     }
-    Argument = std::find(Argument, ArgumentEnd - 1, '|') + 1;
+    Argument = ScanFormat(Argument, ArgumentEnd - 1, '|') + 1;
   }
 }
 
@@ -646,6 +839,19 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
   const char *DiagStr = getDiags()->getDescription(getID());
   const char *DiagEnd = DiagStr+strlen(DiagStr);
 
+  FormatDiagnostic(DiagStr, DiagEnd, OutStr);
+}
+
+void DiagnosticInfo::
+FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
+                 llvm::SmallVectorImpl<char> &OutStr) const {
+
+  /// FormattedArgs - Keep track of all of the arguments formatted by
+  /// ConvertArgToString and pass them into subsequent calls to
+  /// ConvertArgToString, allowing the implementation to avoid redundancies in
+  /// obvious cases.
+  llvm::SmallVector<Diagnostic::ArgumentValue, 8> FormattedArgs;
+  
   while (DiagStr != DiagEnd) {
     if (DiagStr[0] != '%') {
       // Append non-%0 substrings to Str if we have one.
@@ -653,8 +859,8 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
       OutStr.append(DiagStr, StrEnd);
       DiagStr = StrEnd;
       continue;
-    } else if (DiagStr[1] == '%') {
-      OutStr.push_back('%');  // %% -> %.
+    } else if (ispunct(DiagStr[1])) {
+      OutStr.push_back(DiagStr[1]);  // %% -> %.
       DiagStr += 2;
       continue;
     }
@@ -683,8 +889,8 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
         ++DiagStr; // Skip {.
         Argument = DiagStr;
 
-        for (; DiagStr[0] != '}'; ++DiagStr)
-          assert(DiagStr[0] && "Mismatched {}'s in diagnostic string!");
+        DiagStr = ScanFormat(DiagStr, DiagEnd, '}');
+        assert(DiagStr != DiagEnd && "Mismatched {}'s in diagnostic string!");
         ArgumentLen = DiagStr-Argument;
         ++DiagStr;  // Skip }.
       }
@@ -693,7 +899,9 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
     assert(isdigit(*DiagStr) && "Invalid format for argument in diagnostic");
     unsigned ArgNo = *DiagStr++ - '0';
 
-    switch (getArgKind(ArgNo)) {
+    Diagnostic::ArgumentKind Kind = getArgKind(ArgNo);
+    
+    switch (Kind) {
     // ---- STRINGS ----
     case Diagnostic::ak_std_string: {
       const std::string &S = getArgStdStr(ArgNo);
@@ -717,16 +925,16 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
       int Val = getArgSInt(ArgNo);
 
       if (ModifierIs(Modifier, ModifierLen, "select")) {
-        HandleSelectModifier((unsigned)Val, Argument, ArgumentLen, OutStr);
+        HandleSelectModifier(*this, (unsigned)Val, Argument, ArgumentLen, OutStr);
       } else if (ModifierIs(Modifier, ModifierLen, "s")) {
         HandleIntegerSModifier(Val, OutStr);
       } else if (ModifierIs(Modifier, ModifierLen, "plural")) {
         HandlePluralModifier((unsigned)Val, Argument, ArgumentLen, OutStr);
+      } else if (ModifierIs(Modifier, ModifierLen, "ordinal")) {
+        HandleOrdinalModifier((unsigned)Val, OutStr);
       } else {
         assert(ModifierLen == 0 && "Unknown integer modifier");
-        // FIXME: Optimize
-        std::string S = llvm::itostr(Val);
-        OutStr.append(S.begin(), S.end());
+        llvm::raw_svector_ostream(OutStr) << Val;
       }
       break;
     }
@@ -734,17 +942,16 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
       unsigned Val = getArgUInt(ArgNo);
 
       if (ModifierIs(Modifier, ModifierLen, "select")) {
-        HandleSelectModifier(Val, Argument, ArgumentLen, OutStr);
+        HandleSelectModifier(*this, Val, Argument, ArgumentLen, OutStr);
       } else if (ModifierIs(Modifier, ModifierLen, "s")) {
         HandleIntegerSModifier(Val, OutStr);
       } else if (ModifierIs(Modifier, ModifierLen, "plural")) {
         HandlePluralModifier((unsigned)Val, Argument, ArgumentLen, OutStr);
+      } else if (ModifierIs(Modifier, ModifierLen, "ordinal")) {
+        HandleOrdinalModifier(Val, OutStr);
       } else {
         assert(ModifierLen == 0 && "Unknown integer modifier");
-
-        // FIXME: Optimize
-        std::string S = llvm::utostr_32(Val);
-        OutStr.append(S.begin(), S.end());
+        llvm::raw_svector_ostream(OutStr) << Val;
       }
       break;
     }
@@ -766,12 +973,295 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
     case Diagnostic::ak_qualtype:
     case Diagnostic::ak_declarationname:
     case Diagnostic::ak_nameddecl:
-      getDiags()->ConvertArgToString(getArgKind(ArgNo), getRawArg(ArgNo),
+    case Diagnostic::ak_nestednamespec:
+    case Diagnostic::ak_declcontext:
+      getDiags()->ConvertArgToString(Kind, getRawArg(ArgNo),
                                      Modifier, ModifierLen,
-                                     Argument, ArgumentLen, OutStr);
+                                     Argument, ArgumentLen,
+                                     FormattedArgs.data(), FormattedArgs.size(),
+                                     OutStr);
       break;
     }
+    
+    // Remember this argument info for subsequent formatting operations.  Turn
+    // std::strings into a null terminated string to make it be the same case as
+    // all the other ones.
+    if (Kind != Diagnostic::ak_std_string)
+      FormattedArgs.push_back(std::make_pair(Kind, getRawArg(ArgNo)));
+    else
+      FormattedArgs.push_back(std::make_pair(Diagnostic::ak_c_string,
+                                        (intptr_t)getArgStdStr(ArgNo).c_str()));
+    
   }
+}
+
+StoredDiagnostic::StoredDiagnostic() { }
+
+StoredDiagnostic::StoredDiagnostic(Diagnostic::Level Level, 
+                                   llvm::StringRef Message)
+  : Level(Level), Loc(), Message(Message) { }
+
+StoredDiagnostic::StoredDiagnostic(Diagnostic::Level Level, 
+                                   const DiagnosticInfo &Info)
+  : Level(Level), Loc(Info.getLocation()) {
+  llvm::SmallString<64> Message;
+  Info.FormatDiagnostic(Message);
+  this->Message.assign(Message.begin(), Message.end());
+
+  Ranges.reserve(Info.getNumRanges());
+  for (unsigned I = 0, N = Info.getNumRanges(); I != N; ++I)
+    Ranges.push_back(Info.getRange(I));
+
+  FixIts.reserve(Info.getNumFixItHints());
+  for (unsigned I = 0, N = Info.getNumFixItHints(); I != N; ++I)
+    FixIts.push_back(Info.getFixItHint(I));
+}
+
+StoredDiagnostic::~StoredDiagnostic() { }
+
+static void WriteUnsigned(llvm::raw_ostream &OS, unsigned Value) {
+  OS.write((const char *)&Value, sizeof(unsigned));
+}
+
+static void WriteString(llvm::raw_ostream &OS, llvm::StringRef String) {
+  WriteUnsigned(OS, String.size());
+  OS.write(String.data(), String.size());
+}
+
+static void WriteSourceLocation(llvm::raw_ostream &OS, 
+                                SourceManager *SM,
+                                SourceLocation Location) {
+  if (!SM || Location.isInvalid()) {
+    // If we don't have a source manager or this location is invalid,
+    // just write an invalid location.
+    WriteUnsigned(OS, 0);
+    WriteUnsigned(OS, 0);
+    WriteUnsigned(OS, 0);
+    return;
+  }
+
+  Location = SM->getInstantiationLoc(Location);
+  std::pair<FileID, unsigned> Decomposed = SM->getDecomposedLoc(Location);
+
+  const FileEntry *FE = SM->getFileEntryForID(Decomposed.first);
+  if (FE)
+    WriteString(OS, FE->getName());
+  else {
+    // Fallback to using the buffer name when there is no entry.
+    WriteString(OS, SM->getBuffer(Decomposed.first)->getBufferIdentifier());
+  }
+
+  WriteUnsigned(OS, SM->getLineNumber(Decomposed.first, Decomposed.second));
+  WriteUnsigned(OS, SM->getColumnNumber(Decomposed.first, Decomposed.second));
+}
+
+void StoredDiagnostic::Serialize(llvm::raw_ostream &OS) const {
+  SourceManager *SM = 0;
+  if (getLocation().isValid())
+    SM = &const_cast<SourceManager &>(getLocation().getManager());
+
+  // Write a short header to help identify diagnostics.
+  OS << (char)0x06 << (char)0x07;
+  
+  // Write the diagnostic level and location.
+  WriteUnsigned(OS, (unsigned)Level);
+  WriteSourceLocation(OS, SM, getLocation());
+
+  // Write the diagnostic message.
+  llvm::SmallString<64> Message;
+  WriteString(OS, getMessage());
+  
+  // Count the number of ranges that don't point into macros, since
+  // only simple file ranges serialize well.
+  unsigned NumNonMacroRanges = 0;
+  for (range_iterator R = range_begin(), REnd = range_end(); R != REnd; ++R) {
+    if (R->getBegin().isMacroID() || R->getEnd().isMacroID())
+      continue;
+
+    ++NumNonMacroRanges;
+  }
+
+  // Write the ranges.
+  WriteUnsigned(OS, NumNonMacroRanges);
+  if (NumNonMacroRanges) {
+    for (range_iterator R = range_begin(), REnd = range_end(); R != REnd; ++R) {
+      if (R->getBegin().isMacroID() || R->getEnd().isMacroID())
+        continue;
+      
+      WriteSourceLocation(OS, SM, R->getBegin());
+      WriteSourceLocation(OS, SM, R->getEnd());
+      WriteUnsigned(OS, R->isTokenRange());
+    }
+  }
+
+  // Determine if all of the fix-its involve rewrites with simple file
+  // locations (not in macro instantiations). If so, we can write
+  // fix-it information.
+  unsigned NumFixIts = 0;
+  for (fixit_iterator F = fixit_begin(), FEnd = fixit_end(); F != FEnd; ++F) {
+    if (F->RemoveRange.isValid() &&
+        (F->RemoveRange.getBegin().isMacroID() ||
+         F->RemoveRange.getEnd().isMacroID())) {
+      NumFixIts = 0;
+      break;
+    }
+
+    ++NumFixIts;
+  }
+
+  // Write the fix-its.
+  WriteUnsigned(OS, NumFixIts);
+  for (fixit_iterator F = fixit_begin(), FEnd = fixit_end(); F != FEnd; ++F) {
+    WriteSourceLocation(OS, SM, F->RemoveRange.getBegin());
+    WriteSourceLocation(OS, SM, F->RemoveRange.getEnd());
+    WriteUnsigned(OS, F->RemoveRange.isTokenRange());
+    WriteString(OS, F->CodeToInsert);
+  }
+}
+
+static bool ReadUnsigned(const char *&Memory, const char *MemoryEnd,
+                         unsigned &Value) {
+  if (Memory + sizeof(unsigned) > MemoryEnd)
+    return true;
+
+  memmove(&Value, Memory, sizeof(unsigned));
+  Memory += sizeof(unsigned);
+  return false;
+}
+
+static bool ReadSourceLocation(FileManager &FM, SourceManager &SM,
+                               const char *&Memory, const char *MemoryEnd,
+                               SourceLocation &Location) {
+  // Read the filename.
+  unsigned FileNameLen = 0;
+  if (ReadUnsigned(Memory, MemoryEnd, FileNameLen) || 
+      Memory + FileNameLen > MemoryEnd)
+    return true;
+
+  llvm::StringRef FileName(Memory, FileNameLen);
+  Memory += FileNameLen;
+
+  // Read the line, column.
+  unsigned Line = 0, Column = 0;
+  if (ReadUnsigned(Memory, MemoryEnd, Line) ||
+      ReadUnsigned(Memory, MemoryEnd, Column))
+    return true;
+
+  if (FileName.empty()) {
+    Location = SourceLocation();
+    return false;
+  }
+
+  const FileEntry *File = FM.getFile(FileName);
+  if (!File)
+    return true;
+
+  // Make sure that this file has an entry in the source manager.
+  if (!SM.hasFileInfo(File))
+    SM.createFileID(File, SourceLocation(), SrcMgr::C_User);
+
+  Location = SM.getLocation(File, Line, Column);
+  return false;
+}
+
+StoredDiagnostic 
+StoredDiagnostic::Deserialize(FileManager &FM, SourceManager &SM, 
+                              const char *&Memory, const char *MemoryEnd) {
+  while (true) {
+    if (Memory == MemoryEnd)
+      return StoredDiagnostic();
+    
+    if (*Memory != 0x06) {
+      ++Memory;
+      continue;
+    }
+    
+    ++Memory;
+    if (Memory == MemoryEnd)
+      return StoredDiagnostic();
+  
+    if (*Memory != 0x07) {
+      ++Memory;
+      continue;
+    }
+    
+    // We found the header. We're done.
+    ++Memory;
+    break;
+  }
+  
+  // Read the severity level.
+  unsigned Level = 0;
+  if (ReadUnsigned(Memory, MemoryEnd, Level) || Level > Diagnostic::Fatal)
+    return StoredDiagnostic();
+
+  // Read the source location.
+  SourceLocation Location;
+  if (ReadSourceLocation(FM, SM, Memory, MemoryEnd, Location))
+    return StoredDiagnostic();
+
+  // Read the diagnostic text.
+  if (Memory == MemoryEnd)
+    return StoredDiagnostic();
+
+  unsigned MessageLen = 0;
+  if (ReadUnsigned(Memory, MemoryEnd, MessageLen) ||
+      Memory + MessageLen > MemoryEnd)
+    return StoredDiagnostic();
+  
+  llvm::StringRef Message(Memory, MessageLen);
+  Memory += MessageLen;
+
+
+  // At this point, we have enough information to form a diagnostic. Do so.
+  StoredDiagnostic Diag;
+  Diag.Level = (Diagnostic::Level)Level;
+  Diag.Loc = FullSourceLoc(Location, SM);
+  Diag.Message = Message;
+  if (Memory == MemoryEnd)
+    return Diag;
+
+  // Read the source ranges.
+  unsigned NumSourceRanges = 0;
+  if (ReadUnsigned(Memory, MemoryEnd, NumSourceRanges))
+    return Diag;
+  for (unsigned I = 0; I != NumSourceRanges; ++I) {
+    SourceLocation Begin, End;
+    unsigned IsTokenRange;
+    if (ReadSourceLocation(FM, SM, Memory, MemoryEnd, Begin) ||
+        ReadSourceLocation(FM, SM, Memory, MemoryEnd, End) ||
+        ReadUnsigned(Memory, MemoryEnd, IsTokenRange))
+      return Diag;
+
+    Diag.Ranges.push_back(CharSourceRange(SourceRange(Begin, End),
+                                          IsTokenRange));
+  }
+
+  // Read the fix-it hints.
+  unsigned NumFixIts = 0;
+  if (ReadUnsigned(Memory, MemoryEnd, NumFixIts))
+    return Diag;
+  for (unsigned I = 0; I != NumFixIts; ++I) {
+    SourceLocation RemoveBegin, RemoveEnd;
+    unsigned InsertLen = 0, RemoveIsTokenRange;
+    if (ReadSourceLocation(FM, SM, Memory, MemoryEnd, RemoveBegin) ||
+        ReadSourceLocation(FM, SM, Memory, MemoryEnd, RemoveEnd) ||
+        ReadUnsigned(Memory, MemoryEnd, RemoveIsTokenRange) ||
+        ReadUnsigned(Memory, MemoryEnd, InsertLen) ||
+        Memory + InsertLen > MemoryEnd) {
+      Diag.FixIts.clear();
+      return Diag;
+    }
+
+    FixItHint Hint;
+    Hint.RemoveRange = CharSourceRange(SourceRange(RemoveBegin, RemoveEnd),
+                                       RemoveIsTokenRange);
+    Hint.CodeToInsert.assign(Memory, Memory + InsertLen);
+    Memory += InsertLen;
+    Diag.FixIts.push_back(Hint);
+  }
+
+  return Diag;
 }
 
 /// IncludeInDiagnosticCounts - This method (whose default implementation
@@ -779,3 +1269,13 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
 ///  DiagnosticClient should be included in the number of diagnostics
 ///  reported by Diagnostic.
 bool DiagnosticClient::IncludeInDiagnosticCounts() const { return true; }
+
+PartialDiagnostic::StorageAllocator::StorageAllocator() {
+  for (unsigned I = 0; I != NumCached; ++I)
+    FreeList[I] = Cached + I;
+  NumFreeListEntries = NumCached;
+}
+
+PartialDiagnostic::StorageAllocator::~StorageAllocator() {
+  assert(NumFreeListEntries == NumCached && "A partial is on the lamb");
+}

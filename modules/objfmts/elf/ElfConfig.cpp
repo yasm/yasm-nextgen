@@ -132,8 +132,7 @@ ElfConfig::ReadSymbolTable(const llvm::MemoryBuffer&    in,
     ElfSize symsize = symtab_sect.getEntSize();
     if (symsize == 0)
     {
-        diags.Report(clang::SourceLocation(),
-                     diag::err_symbol_entity_size_zero);
+        diags.Report(SourceLocation(), diag::err_symbol_entity_size_zero);
         return false;
     }
 

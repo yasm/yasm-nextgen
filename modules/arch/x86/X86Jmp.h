@@ -31,13 +31,12 @@
 #include "yasmx/Config/export.h"
 
 
-namespace clang { class SourceLocation; }
-
 namespace yasm
 {
 
 class BytecodeContainer;
 class Expr;
+class SourceLocation;
 
 namespace arch
 {
@@ -58,7 +57,7 @@ void AppendJmp(BytecodeContainer& container,
                const X86Opcode& shortop,
                const X86Opcode& nearop,
                std::auto_ptr<Expr> target,
-               clang::SourceLocation source,
+               SourceLocation source,
                X86JmpOpcodeSel op_sel = X86_JMP_NONE);
 
 }} // namespace yasm::arch

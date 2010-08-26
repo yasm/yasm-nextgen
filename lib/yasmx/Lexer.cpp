@@ -63,7 +63,7 @@ Lexer::InitLexer(const char* start, const char* ptr, const char* end)
     m_lexing_raw_mode = false;
 }
 
-Lexer::Lexer(clang::FileID fid,
+Lexer::Lexer(FileID fid,
              const llvm::MemoryBuffer* input_file,
              Preprocessor& pp)
     : m_preproc(&pp)
@@ -74,7 +74,7 @@ Lexer::Lexer(clang::FileID fid,
               input_file->getBufferEnd());
 }
 
-Lexer::Lexer(clang::SourceLocation file_loc,
+Lexer::Lexer(SourceLocation file_loc,
              const char *buf_start,
              const char *buf_ptr,
              const char *buf_end)
@@ -86,9 +86,9 @@ Lexer::Lexer(clang::SourceLocation file_loc,
     m_lexing_raw_mode = true;
 }
 
-Lexer::Lexer(clang::FileID fid,
+Lexer::Lexer(FileID fid,
              const llvm::MemoryBuffer* from_file,
-             const clang::SourceManager& sm)
+             const SourceManager& sm)
   : m_file_loc(sm.getLocForStartOfFile(fid))
 {
     InitLexer(from_file->getBufferStart(), from_file->getBufferStart(), 
@@ -104,8 +104,8 @@ Lexer::~Lexer()
 
 #if 0
 unsigned int
-Lexer::MeasureTokenLength(clang::SourceLocation loc,
-                          const clang::SourceManager& sm)
+Lexer::MeasureTokenLength(SourceLocation loc,
+                          const SourceManager& sm)
 {
     // TODO: this could be special cased for common tokens like identifiers,
     // ')', etc to make this faster, if it mattered.  Just look at StrData[0]
@@ -116,7 +116,7 @@ Lexer::MeasureTokenLength(clang::SourceLocation loc,
     // If this comes from a macro expansion, we really do want the macro name,
     // not the token this macro expanded to.
     loc = sm.getInstantiationLoc(loc);
-    std::pair<clang::FileID, unsigned> loc_info = sm.getDecomposedLoc(loc);
+    std::pair<FileID, unsigned> loc_info = sm.getDecomposedLoc(loc);
     std::pair<const char *,const char *> buffer =
         sm.getBufferData(loc_info.first);
     const char* str_data = buffer.first+loc_info.second;
@@ -130,7 +130,7 @@ Lexer::MeasureTokenLength(clang::SourceLocation loc,
 }
 #endif
 
-clang::SourceLocation
+SourceLocation
 Lexer::getSourceLocation(const char* loc, unsigned int tok_len) const
 {
     assert(loc >= m_buf_start && loc <= m_buf_end &&

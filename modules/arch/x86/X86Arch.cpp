@@ -217,7 +217,7 @@ X86Arch::DirCode64(DirectiveInfo& info, Diagnostic& diags)
 void
 X86Arch::DirDefault(DirectiveInfo& info, Diagnostic& diags)
 {
-    clang::SourceLocation source = info.getSource();
+    SourceLocation source = info.getSource();
     for (NameValues::const_iterator nv=info.getNameValues().begin(),
          end=info.getNameValues().end(); nv != end; ++nv)
     {

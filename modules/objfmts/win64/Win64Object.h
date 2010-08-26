@@ -73,11 +73,10 @@ private:
     virtual bool InitSection(llvm::StringRef name,
                              Section& section,
                              CoffSection* coffsect,
-                             clang::SourceLocation source,
+                             SourceLocation source,
                              Diagnostic& diags);
 
-    bool CheckProcFrameState(clang::SourceLocation dir_source,
-                             Diagnostic& diags);
+    bool CheckProcFrameState(SourceLocation dir_source, Diagnostic& diags);
 
     void DirProcFrame(DirectiveInfo& info, Diagnostic& diags);
     void DirPushReg(DirectiveInfo& info, Diagnostic& diags);
@@ -94,8 +93,8 @@ private:
     void DirEndProcFrame(DirectiveInfo& info, Diagnostic& diags);
 
     // data for proc_frame and related directives
-    clang::SourceLocation m_proc_frame;     // start of proc source location
-    clang::SourceLocation m_done_prolog;    // end of prologue source location
+    SourceLocation m_proc_frame;        // start of proc source location
+    SourceLocation m_done_prolog;       // end of prologue source location
     std::auto_ptr<UnwindInfo> m_unwind; // Unwind info
 };
 

@@ -121,10 +121,10 @@ public:
 
     // Perform lookup of instruction/register data.
     void DoInsnLookup(const Arch& arch,
-                      clang::SourceLocation source,
+                      SourceLocation source,
                       Diagnostic& diags);
     void DoRegLookup(const Arch& arch,
-                     clang::SourceLocation source,
+                     SourceLocation source,
                      Diagnostic& diags);
 
     bool isUnknown()

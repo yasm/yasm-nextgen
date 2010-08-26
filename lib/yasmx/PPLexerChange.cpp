@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Basic/SourceManager.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Parse/HeaderSearch.h"
 #include "yasmx/Parse/Preprocessor.h"
 
@@ -50,10 +50,10 @@ Preprocessor::getCurrentFileLexer() const
     return 0;
 }
 
-bool
-Preprocessor::EnterSourceFile(clang::FileID FID,
+void
+Preprocessor::EnterSourceFile(FileID FID,
                               const DirectoryLookup* CurDir,
-                              std::string* ErrorStr)
+                              SourceLocation Loc)
 {
     assert(m_cur_token_lexer == 0 && "Cannot #include a file inside a macro!");
     ++m_NumEnteredSourceFiles;
@@ -62,13 +62,17 @@ Preprocessor::EnterSourceFile(clang::FileID FID,
         m_MaxIncludeStackDepth = m_include_macro_stack.size();
 
     // Get the MemoryBuffer for this FID, if it fails, we fail.
+    bool Invalid = false;
     const llvm::MemoryBuffer *InputFile =
-        getSourceManager().getBuffer(FID, ErrorStr);
-    if (!ErrorStr->empty())
-        return true;
+        getSourceManager().getBuffer(FID, Loc, &Invalid);
+    if (Invalid) {
+        SourceLocation FileStart = m_source_mgr.getLocForStartOfFile(FID);
+        Diag(Loc, diag::err_pp_error_opening_file)
+            << std::string(m_source_mgr.getBufferName(FileStart)) << "";
+        return;
+    }
 
     EnterSourceFileWithLexer(CreateLexer(FID, InputFile), CurDir);
-    return false;
 }
 
 void Preprocessor::EnterSourceFileWithLexer(Lexer* lexer,

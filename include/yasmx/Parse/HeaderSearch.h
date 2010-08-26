@@ -35,11 +35,11 @@
 #include "llvm/ADT/StringMap.h"
 #include <vector>
 
-namespace clang { class FileEntry; class FileManager; }
-
 namespace yasm
 {
 
+class FileEntry;
+class FileManager;
 class IdentifierInfo;
 
 /// HeaderFileInfo - The preprocessor keeps track of this information for each
@@ -76,7 +76,7 @@ struct HeaderFileInfo {
 /// file referenced by a #include or #include_next, (sub-)framework lookup, etc.
 class YASM_LIB_EXPORT HeaderSearch
 {
-  clang::FileManager &FileMgr;
+  FileManager &FileMgr;
 
   /// #include search path information.  Requests for #include "x" search the
   /// directory of the #including file first, then each directory in SearchDirs
@@ -116,10 +116,10 @@ class YASM_LIB_EXPORT HeaderSearch
   explicit HeaderSearch(const HeaderSearch&);
   void operator=(const HeaderSearch&);
 public:
-  HeaderSearch(clang::FileManager &FM);
+  HeaderSearch(FileManager &FM);
   ~HeaderSearch();
 
-  clang::FileManager &getFileMgr() const { return FileMgr; }
+  FileManager &getFileMgr() const { return FileMgr; }
 
   /// SetSearchPaths - Interface for setting the file search paths.
   ///
@@ -150,33 +150,33 @@ public:
   /// search location.  This is used to implement #include_next.  CurFileEnt, if
   /// non-null, indicates where the #including file is, in case a relative
   /// search is needed.
-  const clang::FileEntry *LookupFile(llvm::StringRef Filename, bool isAngled,
-                                     const DirectoryLookup *FromDir,
-                                     const DirectoryLookup *&CurDir,
-                                     const clang::FileEntry *CurFileEnt);
+  const FileEntry *LookupFile(llvm::StringRef Filename, bool isAngled,
+                              const DirectoryLookup *FromDir,
+                              const DirectoryLookup *&CurDir,
+                              const FileEntry *CurFileEnt);
 
   /// ShouldEnterIncludeFile - Mark the specified file as a target of of a
   /// #include, #include_next, or #import directive.  Return false if #including
   /// the file will have no effect or true if we should include it.
-  bool ShouldEnterIncludeFile(const clang::FileEntry *File, bool isImport);
+  bool ShouldEnterIncludeFile(const FileEntry *File, bool isImport);
 
 
   /// MarkFileIncludeOnce - Mark the specified file as a "once only" file, e.g.
   /// due to #pragma once.
-  void MarkFileIncludeOnce(const clang::FileEntry *File) {
+  void MarkFileIncludeOnce(const FileEntry *File) {
     getFileInfo(File).isImport = true;
   }
 
   /// IncrementIncludeCount - Increment the count for the number of times the
   /// specified FileEntry has been entered.
-  void IncrementIncludeCount(const clang::FileEntry *File) {
+  void IncrementIncludeCount(const FileEntry *File) {
     ++getFileInfo(File).NumIncludes;
   }
 
   /// SetFileControllingMacro - Mark the specified file as having a controlling
   /// macro.  This is used by the multiple-include optimization to eliminate
   /// no-op #includes.
-  void SetFileControllingMacro(const clang::FileEntry *File,
+  void SetFileControllingMacro(const FileEntry *File,
                                const IdentifierInfo *ControllingMacro) {
     getFileInfo(File).ControllingMacro = ControllingMacro;
   }
@@ -190,7 +190,7 @@ private:
 
   /// getFileInfo - Return the HeaderFileInfo structure for the specified
   /// FileEntry.
-  HeaderFileInfo &getFileInfo(const clang::FileEntry *FE);
+  HeaderFileInfo &getFileInfo(const FileEntry *FE);
 };
 
 } // namespace yasm

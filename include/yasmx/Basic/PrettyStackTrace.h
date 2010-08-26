@@ -13,14 +13,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_BASIC_PRETTYSTACKTRACE_H
-#define CLANG_BASIC_PRETTYSTACKTRACE_H
+#ifndef YASM_PRETTYSTACKTRACE_H
+#define YASM_PRETTYSTACKTRACE_H
 
-#include "clang/Basic/SourceLocation.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 
-namespace clang {
+namespace yasm {
 
   /// PrettyStackTraceLoc - If a crash happens while one of these objects are
   /// live, the message is printed out along with the specified source location.

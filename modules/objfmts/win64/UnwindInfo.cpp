@@ -291,7 +291,7 @@ UnwindInfo::Write(YAML::Emitter& out) const
 void
 objfmt::Generate(std::auto_ptr<UnwindInfo> uwinfo,
                  BytecodeContainer& xdata,
-                 clang::SourceLocation source,
+                 SourceLocation source,
                  const Arch& arch,
                  Diagnostic& diags)
 {

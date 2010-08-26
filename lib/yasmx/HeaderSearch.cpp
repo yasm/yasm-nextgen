@@ -30,9 +30,9 @@
 //
 #include "yasmx/Parse/HeaderSearch.h"
 
-#include "clang/Basic/FileManager.h"
 #include "llvm/System/Path.h"
 #include "llvm/ADT/SmallString.h"
+#include "yasmx/Basic/FileManager.h"
 #include "yasmx/Parse/IdentifierTable.h"
 #include <cstdio>
 
@@ -52,7 +52,7 @@ HeaderFileInfo::getControllingMacro(ExternalIdentifierLookup *External) {
 }
 #endif
 
-HeaderSearch::HeaderSearch(clang::FileManager &FM) : FileMgr(FM)
+HeaderSearch::HeaderSearch(FileManager &FM) : FileMgr(FM)
 {
   SystemDirIdx = 0;
   NoCurDirSearch = false;
@@ -102,7 +102,7 @@ const char *DirectoryLookup::getName() const
 
 /// LookupFile - Lookup the specified file in this search path, returning it
 /// if it exists or returning null if not.
-const clang::FileEntry *DirectoryLookup::LookupFile(llvm::StringRef Filename,
+const FileEntry *DirectoryLookup::LookupFile(llvm::StringRef Filename,
                                                     HeaderSearch &HS) const
 {
   llvm::SmallString<1024> TmpDir;
@@ -125,12 +125,12 @@ const clang::FileEntry *DirectoryLookup::LookupFile(llvm::StringRef Filename,
 /// for system #include's or not (i.e. using <> instead of "").  CurFileEnt, if
 /// non-null, indicates where the #including file is, in case a relative search
 /// is needed.
-const clang::FileEntry *
+const FileEntry *
 HeaderSearch::LookupFile(llvm::StringRef Filename,
                          bool isAngled,
                          const DirectoryLookup *FromDir,
                          const DirectoryLookup *&CurDir,
-                         const clang::FileEntry *CurFileEnt)
+                         const FileEntry *CurFileEnt)
 {
   // If 'Filename' is absolute, check to see if it exists and no searching.
   if (llvm::sys::Path::isAbsolute(Filename.begin(), Filename.size())) {
@@ -155,7 +155,7 @@ HeaderSearch::LookupFile(llvm::StringRef Filename,
     TmpDir += CurFileEnt->getDir()->getName();
     TmpDir.push_back('/');
     TmpDir.append(Filename.begin(), Filename.end());
-    if (const clang::FileEntry *FE = FileMgr.getFile(TmpDir.str())) {
+    if (const FileEntry *FE = FileMgr.getFile(TmpDir.str())) {
       // Leave CurDir unset.
       return FE;
     }
@@ -193,7 +193,7 @@ HeaderSearch::LookupFile(llvm::StringRef Filename,
 
   // Check each directory in sequence to see if it contains this file.
   for (; i != SearchDirs.size(); ++i) {
-    const clang::FileEntry *FE =
+    const FileEntry *FE =
       SearchDirs[i].LookupFile(Filename, *this);
     if (!FE) continue;
 
@@ -216,7 +216,7 @@ HeaderSearch::LookupFile(llvm::StringRef Filename,
 
 /// getFileInfo - Return the HeaderFileInfo structure for the specified
 /// FileEntry.
-HeaderFileInfo &HeaderSearch::getFileInfo(const clang::FileEntry *FE) {
+HeaderFileInfo &HeaderSearch::getFileInfo(const FileEntry *FE) {
   if (FE->getUID() >= FileInfo.size())
     FileInfo.resize(FE->getUID()+1);
   return FileInfo[FE->getUID()];
@@ -226,7 +226,7 @@ HeaderFileInfo &HeaderSearch::getFileInfo(const clang::FileEntry *FE) {
 /// #include, #include_next, or #import directive.  Return false if #including
 /// the file will have no effect or true if we should include it.
 bool
-HeaderSearch::ShouldEnterIncludeFile(const clang::FileEntry *File, bool isImport)
+HeaderSearch::ShouldEnterIncludeFile(const FileEntry *File, bool isImport)
 {
   ++NumIncluded; // Count # of attempted #includes.
 

@@ -28,9 +28,9 @@
 
 #include "util.h"
 
-#include "clang/Basic/SourceLocation.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Reloc.h"
 
@@ -40,7 +40,7 @@ using namespace yasm;
 Section::Section(llvm::StringRef name,
                  bool code,
                  bool bss,
-                 clang::SourceLocation source)
+                 SourceLocation source)
     : m_name(name),
       m_sym(0),
       m_vma(0),

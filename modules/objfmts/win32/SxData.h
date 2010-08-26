@@ -30,12 +30,11 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace clang { class SourceLocation; }
-
 namespace yasm
 {
 
 class BytecodeContainer;
+class SourceLocation;
 
 namespace objfmt
 {
@@ -43,7 +42,7 @@ namespace objfmt
 YASM_STD_EXPORT
 void AppendSxData(BytecodeContainer& container,
                   SymbolRef sym,
-                  clang::SourceLocation source);
+                  SourceLocation source);
 
 }} // namespace yasm::objfmt
 

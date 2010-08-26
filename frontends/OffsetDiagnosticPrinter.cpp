@@ -26,14 +26,13 @@
 //
 #include "OffsetDiagnosticPrinter.h"
 
-#include "clang/Basic/SourceManager.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
+#include "yasmx/Basic/SourceManager.h"
 
 
-using namespace clang;
 using namespace yasm;
 
 static const enum llvm::raw_ostream::Colors noteColor =

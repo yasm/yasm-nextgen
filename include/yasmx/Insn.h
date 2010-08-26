@@ -32,8 +32,8 @@
 #include <memory>
 #include <vector>
 
-#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/SmallVector.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/EffAddr.h"
 #include "yasmx/Expr.h"
@@ -197,10 +197,10 @@ public:
     void setStrict(bool strict=true) { m_strict = strict; }
 
     /// Get the source location of the operand.
-    clang::SourceLocation getSource() const { return m_source; }
+    SourceLocation getSource() const { return m_source; }
 
     /// Set the source location of the operand.
-    void setSource(clang::SourceLocation source) { m_source = source; }
+    void setSource(SourceLocation source) { m_source = source; }
 
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
@@ -227,7 +227,7 @@ private:
     const TargetModifier* m_targetmod;
 
     /// Source location of the operand.
-    clang::SourceLocation m_source;
+    SourceLocation m_source;
 
     /// Specified size of the operand, in bits.
     /// 0 if not user-specified.
@@ -286,8 +286,7 @@ public:
     typedef std::auto_ptr<Insn> Ptr;
 
     typedef llvm::SmallVector<Operand, 3> Operands;
-    typedef std::vector<std::pair<const Prefix*,
-                                  clang::SourceLocation> > Prefixes;
+    typedef std::vector<std::pair<const Prefix*, SourceLocation> > Prefixes;
 
     Insn();
     virtual ~Insn();
@@ -301,23 +300,21 @@ public:
 
     /// Associate a prefix with an instruction.
     /// @param prefix       data that identifies the prefix
-    void AddPrefix(const Prefix* prefix, clang::SourceLocation source)
+    void AddPrefix(const Prefix* prefix, SourceLocation source)
     {
         m_prefixes.push_back(std::make_pair(prefix, source));
     }
 
     bool hasSegPrefix() const { return m_segreg != 0; }
 
-    std::pair<const SegmentRegister*, clang::SourceLocation>
-    getSegPrefix() const
+    std::pair<const SegmentRegister*, SourceLocation> getSegPrefix() const
     {
         return std::make_pair(m_segreg, m_segreg_source);
     }
 
     /// Associate a segment prefix with an instruction.
     /// @param segreg       data that identifies the segment register
-    void setSegPrefix(const SegmentRegister* segreg,
-                      clang::SourceLocation source)
+    void setSegPrefix(const SegmentRegister* segreg, SourceLocation source)
     {
         m_segreg = segreg;
         m_segreg_source = source;
@@ -325,7 +322,7 @@ public:
 
     /// Append instruction to a bytecode container.
     bool Append(BytecodeContainer& container,
-                clang::SourceLocation source,
+                SourceLocation source,
                 Diagnostic& diags);
 
     virtual Insn* clone() const = 0;
@@ -344,7 +341,7 @@ protected:
 
     /// Append instruction to a section.
     virtual bool DoAppend(BytecodeContainer& container,
-                          clang::SourceLocation source,
+                          SourceLocation source,
                           Diagnostic& diags) = 0;
 
     /// Write derived class YAML representation.  For debugging purposes.
@@ -359,7 +356,7 @@ protected:
 
     /// Segment prefix.
     const SegmentRegister* m_segreg;
-    clang::SourceLocation m_segreg_source;
+    SourceLocation m_segreg_source;
 
 private:
     const Insn& operator=(const Insn&);

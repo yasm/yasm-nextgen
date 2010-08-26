@@ -28,8 +28,8 @@
 
 #include "util.h"
 
-#include "clang/Basic/SourceManager.h"
 #include "llvm/Support/raw_ostream.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
@@ -189,7 +189,7 @@ XdfOutput::OutputSection(Section& sect)
         pos = m_os.tell();
         if (m_os.has_error())
         {
-            Diag(clang::SourceLocation(), diag::err_file_output_position);
+            Diag(SourceLocation(), diag::err_file_output_position);
             return;
         }
     }
@@ -219,7 +219,7 @@ XdfOutput::OutputSection(Section& sect)
     pos = m_os.tell();
     if (m_os.has_error())
     {
-        Diag(clang::SourceLocation(), diag::err_file_output_position);
+        Diag(SourceLocation(), diag::err_file_output_position);
         return;
     }
     xsect->relptr = static_cast<unsigned long>(pos);
@@ -349,7 +349,7 @@ XdfObject::Output(llvm::raw_fd_ostream& os,
     os.seek(FILEHEAD_SIZE+SECTHEAD_SIZE*scnum);
     if (os.has_error())
     {
-        diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+        diags.Report(SourceLocation(), diag::err_file_output_seek);
         return;
     }
 
@@ -385,7 +385,7 @@ XdfObject::Output(llvm::raw_fd_ostream& os,
     os.seek(0);
     if (os.has_error())
     {
-        diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+        diags.Report(SourceLocation(), diag::err_file_output_seek);
         return;
     }
 
@@ -454,8 +454,7 @@ public:
     {
         if (str_index < m_offset || str_index >= m_offset+m_len)
         {
-            m_diags.Report(clang::SourceLocation(),
-                           diag::err_invalid_string_offset);
+            m_diags.Report(SourceLocation(), diag::err_invalid_string_offset);
             str_index = 0;
         }
         return m_in.getBufferStart() + str_index;
@@ -470,7 +469,7 @@ private:
 } // anonymous namespace
 
 bool
-XdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
+XdfObject::Read(SourceManager& sm, Diagnostic& diags)
 {
     const llvm::MemoryBuffer& in = *sm.getBuffer(sm.getMainFileID());
     InputBuffer inbuf(in);
@@ -479,14 +478,13 @@ XdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
     // Read object header
     if (inbuf.getReadableSize() < FILEHEAD_SIZE)
     {
-        diags.Report(clang::SourceLocation(),
-                     diag::err_object_header_unreadable);
+        diags.Report(SourceLocation(), diag::err_object_header_unreadable);
         return false;
     }
     unsigned long magic = ReadU32(inbuf);
     if (magic != XDF_MAGIC)
     {
-        diags.Report(clang::SourceLocation(), diag::err_not_file_type) << "XDF";
+        diags.Report(SourceLocation(), diag::err_not_file_type) << "XDF";
         return false;
     }
     unsigned long scnum = ReadU32(inbuf);
@@ -494,7 +492,7 @@ XdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
     unsigned long headers_len = ReadU32(inbuf);
     if (inbuf.getReadableSize() < headers_len)
     {
-        diags.Report(clang::SourceLocation(), diag::err_xdf_headers_unreadable);
+        diags.Report(SourceLocation(), diag::err_xdf_headers_unreadable);
         return false;
     }
 
@@ -529,8 +527,7 @@ XdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
         llvm::StringRef sectname = read_string(ReadU32(inbuf));
 
         std::auto_ptr<Section> section(
-            new Section(sectname, xsect->bits != 0, bss,
-                        clang::SourceLocation()));
+            new Section(sectname, xsect->bits != 0, bss, SourceLocation()));
 
         section->setFilePos(filepos);
         section->setVMA(vma);
@@ -539,7 +536,7 @@ XdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
         if (bss)
         {
             Bytecode& gap =
-                section->AppendGap(xsect->size, clang::SourceLocation());
+                section->AppendGap(xsect->size, SourceLocation());
             Diagnostic nodiags(0);
             gap.CalcLen(0, nodiags);    // force length calculation of gap
         }
@@ -549,7 +546,7 @@ XdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
             inbuf.setPosition(filepos);
             if (inbuf.getReadableSize() < xsect->size)
             {
-                diags.Report(clang::SourceLocation(),
+                diags.Report(SourceLocation(),
                              diag::err_section_data_unreadable) << sectname;
                 return false;
             }
@@ -607,8 +604,7 @@ XdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
         inbuf.setPosition(xsect->relptr);
         if (inbuf.getReadableSize() < (*nrelocsi) * RELOC_SIZE)
         {
-            diags.Report(clang::SourceLocation(),
-                         diag::err_section_relocs_unreadable)
+            diags.Report(SourceLocation(), diag::err_section_relocs_unreadable)
                 << sect->getName();
             return false;
         }
@@ -639,14 +635,14 @@ Section*
 XdfObject::AddDefaultSection()
 {
     Diagnostic diags(NULL);
-    Section* section = AppendSection(".text", clang::SourceLocation(), diags);
+    Section* section = AppendSection(".text", SourceLocation(), diags);
     section->setDefault(true);
     return section;
 }
 
 Section*
 XdfObject::AppendSection(llvm::StringRef name,
-                         clang::SourceLocation source,
+                         SourceLocation source,
                          Diagnostic& diags)
 {
     bool code = (name == ".text");

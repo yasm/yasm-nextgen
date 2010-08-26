@@ -26,10 +26,10 @@
 
 #include <gtest/gtest.h>
 
-#include "clang/Basic/FileManager.h"
-#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "yasmx/Basic/FileManager.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Parse/HeaderSearch.h"
 #include "yasmx/Diagnostic.h"
 
@@ -84,10 +84,11 @@ INSTANTIATE_TEST_CASE_P(GasStringParserTests, GasStringParserTest,
 
 TEST_P(GasStringParserTest, StringTest)
 {
-    clang::SourceManager smgr;
-    clang::FileManager fmgr;
+    FileManager fmgr;
     MockDiagnosticClient mock_client;
-    Diagnostic diags(&smgr, &mock_client);
+    Diagnostic diags(&mock_client);
+    SourceManager smgr(diags);
+    diags.setSourceManager(&smgr);
     HeaderSearch headers(fmgr);
     GasPreproc pp(diags, smgr, headers);
 
@@ -96,13 +97,13 @@ TEST_P(GasStringParserTest, StringTest)
     smgr.createMainFileIDForMemBuffer(
         llvm::MemoryBuffer::getMemBuffer(in_str, "<string>"));
     pp.EnterMainSourceFile();
-    clang::SourceLocation sof = smgr.getLocForStartOfFile(smgr.getMainFileID());
+    SourceLocation sof = smgr.getLocForStartOfFile(smgr.getMainFileID());
 
     using ::testing::_;
     if (GetParam().has_error || GetParam().has_warning)
     {
         // expect an error/warning of the specified type and location
-        clang::FullSourceLoc
+        FullSourceLoc
             full_loc(sof.getFileLocWithOffset(GetParam().warnerr_loc), smgr);
         using ::testing::Property;
         using ::testing::Eq;

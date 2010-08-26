@@ -364,7 +364,7 @@ CoffOutput::OutputSection(Section& sect)
         pos = m_os.tell();
         if (pos < 0)
         {
-            Diag(clang::SourceLocation(), diag::err_file_output_position);
+            Diag(SourceLocation(), diag::err_file_output_position);
             return false;
         }
     }
@@ -389,7 +389,7 @@ CoffOutput::OutputSection(Section& sect)
     pos = m_os.tell();
     if (pos < 0)
     {
-        Diag(clang::SourceLocation(), diag::err_file_output_position);
+        Diag(SourceLocation(), diag::err_file_output_position);
         return false;
     }
     coffsect->m_relptr = static_cast<unsigned long>(pos);
@@ -412,7 +412,7 @@ CoffOutput::OutputSection(Section& sect)
         else
 #endif
         {
-            Diag(clang::SourceLocation(), diag::err_too_many_relocs)
+            Diag(SourceLocation(), diag::err_too_many_relocs)
                 << sect.getName();
         }
     }
@@ -549,7 +549,7 @@ CoffObject::Output(llvm::raw_fd_ostream& os,
     os.seek(20+40*(scnum-1));
     if (os.has_error())
     {
-        diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+        diags.Report(SourceLocation(), diag::err_file_output_seek);
         return;
     }
 
@@ -570,7 +570,7 @@ CoffObject::Output(llvm::raw_fd_ostream& os,
     long pos = os.tell();
     if (pos < 0)
     {
-        diags.Report(clang::SourceLocation(), diag::err_file_output_position);
+        diags.Report(SourceLocation(), diag::err_file_output_position);
         return;
     }
     unsigned long symtab_pos = static_cast<unsigned long>(pos);
@@ -583,7 +583,7 @@ CoffObject::Output(llvm::raw_fd_ostream& os,
     os.seek(0);
     if (os.has_error())
     {
-        diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+        diags.Report(SourceLocation(), diag::err_file_output_seek);
         return;
     }
 

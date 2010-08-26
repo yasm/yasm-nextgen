@@ -32,8 +32,8 @@
 #include <memory>
 #include <string>
 
-#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "yasmx/Expr.h"
@@ -149,13 +149,13 @@ public:
     /// For debugging purposes.
     void Dump() const;
 
-    void setNameSource(clang::SourceLocation loc) { m_name_source = loc; }
-    void setEqualsSource(clang::SourceLocation loc) { m_equals_source = loc; }
-    void setValueRange(clang::SourceRange range) { m_value_range = range; }
+    void setNameSource(SourceLocation loc) { m_name_source = loc; }
+    void setEqualsSource(SourceLocation loc) { m_equals_source = loc; }
+    void setValueRange(SourceRange range) { m_value_range = range; }
 
-    clang::SourceLocation getNameSource() const { return m_name_source; }
-    clang::SourceLocation getEqualsSource() const { return m_equals_source; }
-    clang::SourceRange getValueRange() const { return m_value_range; }
+    SourceLocation getNameSource() const { return m_name_source; }
+    SourceLocation getEqualsSource() const { return m_equals_source; }
+    SourceRange getValueRange() const { return m_value_range; }
 private:
     std::string m_name; ///< Name (empty string if no name)
 
@@ -180,9 +180,9 @@ private:
     /// from the returned value.
     char m_id_prefix;
 
-    clang::SourceLocation m_name_source;    ///< Name source
-    clang::SourceLocation m_equals_source;  ///< Source for equals sign
-    clang::SourceRange m_value_range;       ///< Value source
+    SourceLocation m_name_source;   ///< Name source
+    SourceLocation m_equals_source; ///< Source for equals sign
+    SourceRange m_value_range;      ///< Value source
 };
 
 /// Dump a YAML representation of a name/value.  For debugging purposes.

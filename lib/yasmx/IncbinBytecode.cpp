@@ -247,7 +247,7 @@ yasm::AppendIncbin(BytecodeContainer& container,
                    llvm::StringRef filename,
                    /*@null@*/ std::auto_ptr<Expr> start,
                    /*@null@*/ std::auto_ptr<Expr> maxlen,
-                   clang::SourceLocation source)
+                   SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     bc.Transform(Bytecode::Contents::Ptr(

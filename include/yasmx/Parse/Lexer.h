@@ -50,14 +50,14 @@ public:
     /// preprocessor managing the lexing process.  This lexer assumes that
     /// the associated file buffer and Preprocessor objects will outlive it,
     /// so it doesn't take ownership of either of them.
-    Lexer(clang::FileID fid,
+    Lexer(FileID fid,
           const llvm::MemoryBuffer* input_buffer,
           Preprocessor& pp);
 
     /// Create a new raw lexer object.  This object is only suitable for calls
     /// to 'LexRawToken'.  This lexer assumes that the text range will outlive
     /// it, so it doesn't take ownership of it.
-    Lexer(clang::SourceLocation file_loc,
+    Lexer(SourceLocation file_loc,
           const char *buf_start,
           const char *buf_ptr,
           const char *buf_end);
@@ -65,9 +65,9 @@ public:
     /// Create a new raw lexer object.  This object is only suitable for
     /// calls to 'LexRawToken'.  This lexer assumes that the text range will
     /// outlive it, so it doesn't take ownership of it.
-    Lexer(clang::FileID fid,
+    Lexer(FileID fid,
           const llvm::MemoryBuffer* input_buffer,
-          const clang::SourceManager& sm);
+          const SourceManager& sm);
 
     virtual ~Lexer();
 
@@ -115,7 +115,7 @@ public:
     /// Return true if this lexer is in raw mode or not.
     bool isLexingRawMode() const { return m_lexing_raw_mode; }
 
-    clang::FileID getFileID() const
+    FileID getFileID() const
     {
         assert(m_preproc &&
                "Lexer::getFileID() should only be used with a Preprocessor");
@@ -133,19 +133,19 @@ public:
 
     /// Return a source location identifier for the specified
     /// offset in the current file.
-    clang::SourceLocation getSourceLocation(const char* loc,
-                                            unsigned int tok_len = 1) const;
+    SourceLocation getSourceLocation(const char* loc,
+                                     unsigned int tok_len = 1) const;
     
     /// Return a source location for the next character in the current file.
-    clang::SourceLocation getSourceLocation() const
+    SourceLocation getSourceLocation() const
     { return getSourceLocation(m_buf_ptr); }
 
 #if 0
     /// Relex the token at the specified location and return its length in
     /// bytes in the input file.  If the token needs cleaning (e.g. includes an
     /// escaped newline) then this count includes bytes that are part of that.
-    static unsigned int MeasureTokenLength(clang::SourceLocation loc,
-                                           const clang::SourceManager& sm);
+    static unsigned int MeasureTokenLength(SourceLocation loc,
+                                           const SourceManager& sm);
 #endif
 
     /// Return true if the specified character is not possibly part of a more
@@ -198,9 +198,9 @@ protected:
     Preprocessor* m_preproc;    // Preprocessor object controlling lexing.
 
     /// The SourceManager FileID corresponding to the file being lexed.
-    const clang::FileID m_fid;
+    const FileID m_fid;
 
-    clang::SourceLocation m_file_loc;   // Location for start of file.
+    SourceLocation m_file_loc;  // Location for start of file.
 
     const char* m_buf_start;    // Start of the buffer.
     const char* m_buf_end;      // End of the buffer.

@@ -100,8 +100,7 @@ Bytecode::Transform(std::auto_ptr<Contents> contents)
     m_contents.reset(contents.release());
 }
 
-Bytecode::Bytecode(std::auto_ptr<Contents> contents,
-                   clang::SourceLocation source)
+Bytecode::Bytecode(std::auto_ptr<Contents> contents, SourceLocation source)
     : m_contents(contents),
       m_container(0),
       m_len(0),
@@ -312,7 +311,7 @@ Bytecode::AppendFixed(std::auto_ptr<Value> val)
 Value&
 Bytecode::AppendFixed(unsigned int size,
                       std::auto_ptr<Expr> e,
-                      clang::SourceLocation source)
+                      SourceLocation source)
 {
     m_fixed_fixups.push_back(Fixup(m_fixed.size(), size*8, e, source));
     m_fixed.Write(size, 0);
@@ -379,7 +378,7 @@ Bytecode::Fixup::Fixup(unsigned int off, std::auto_ptr<Value> val)
 Bytecode::Fixup::Fixup(unsigned int off,
                        unsigned int size,
                        std::auto_ptr<Expr> e,
-                       clang::SourceLocation source)
+                       SourceLocation source)
     : Value(size, e), m_off(off)
 {
     setSource(source);

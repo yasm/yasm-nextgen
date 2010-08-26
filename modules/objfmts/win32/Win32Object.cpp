@@ -178,7 +178,7 @@ Win32Object::DirSafeSEH(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
-    clang::SourceLocation source = info.getSource();
+    SourceLocation source = info.getSource();
 
     NameValue& name_nv = namevals.front();
     if (!name_nv.isId())
@@ -238,7 +238,7 @@ bool
 Win32Object::InitSection(llvm::StringRef name,
                          Section& section,
                          CoffSection* coffsect,
-                         clang::SourceLocation source,
+                         SourceLocation source,
                          Diagnostic& diags)
 {
     if (name == ".data")

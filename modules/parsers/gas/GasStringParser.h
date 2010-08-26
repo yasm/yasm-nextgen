@@ -33,16 +33,12 @@
 #include "yasmx/Config/export.h"
 
 
-namespace clang
-{
-class SourceLocation;
-} // namespace clang
-
 namespace yasm
 {
 
 class IntNum;
 class Preprocessor;
+class SourceLocation;
 
 namespace parser
 {
@@ -58,9 +54,7 @@ class YASM_STD_EXPORT GasStringParser
     bool m_had_error;
 
 public:
-    GasStringParser(llvm::StringRef str,
-                    clang::SourceLocation loc,
-                    Preprocessor& pp);
+    GasStringParser(llvm::StringRef str, SourceLocation loc, Preprocessor& pp);
 
     bool hadError() const { return m_had_error; }
 

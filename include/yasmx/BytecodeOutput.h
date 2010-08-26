@@ -31,7 +31,7 @@
 ///
 #include "yasmx/Config/export.h"
 
-#include "clang/Basic/SourceLocation.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Diagnostic.h"
 #include "yasmx/Location.h"
@@ -79,7 +79,7 @@ public:
     Diagnostic& getDiagnostics() const { return m_diags; }
 
     /// Diagnostic reporting wrapper.
-    DiagnosticBuilder Diag(clang::SourceLocation pos, unsigned diag_id)
+    DiagnosticBuilder Diag(SourceLocation pos, unsigned diag_id)
     { return m_diags.Report(pos, diag_id); }
 
     /// Does this output to actual bits?  Base implementation returns true.
@@ -131,7 +131,7 @@ public:
     /// program is run.
     /// @param size         gap size, in bytes
     /// @param source       source location
-    void OutputGap(unsigned int size, clang::SourceLocation source)
+    void OutputGap(unsigned int size, SourceLocation source)
     {
         DoOutputGap(size, source);
         m_num_output += size;
@@ -140,7 +140,7 @@ public:
     /// Output a sequence of bytes.
     /// @param bytes        bytes to output
     /// @param source       source location
-    void OutputBytes(const Bytes& bytes, clang::SourceLocation source)
+    void OutputBytes(const Bytes& bytes, SourceLocation source)
     {
         DoOutputBytes(bytes, source);
         m_num_output += static_cast<unsigned long>(bytes.size());
@@ -183,13 +183,13 @@ protected:
     /// @param size         gap size, in bytes
     /// @param source       source location
     virtual void DoOutputGap(unsigned int size,
-                             clang::SourceLocation source) = 0;
+                             SourceLocation source) = 0;
 
     /// Overrideable implementation of OutputBytes().
     /// @param bytes        bytes to output
     /// @param source       source location
     virtual void DoOutputBytes(const Bytes& bytes,
-                               clang::SourceLocation source) = 0;
+                               SourceLocation source) = 0;
 
 private:
     friend class Bytecode;
@@ -218,8 +218,8 @@ protected:
     bool ConvertValueToBytes(Value& value,
                              Location loc,
                              NumericOutput& num_out);
-    void DoOutputGap(unsigned int size, clang::SourceLocation source);
-    void DoOutputBytes(const Bytes& bytes, clang::SourceLocation source);
+    void DoOutputGap(unsigned int size, SourceLocation source);
+    void DoOutputBytes(const Bytes& bytes, SourceLocation source);
 };
 
 /// Stream output specialization of BytecodeOutput.
@@ -235,8 +235,8 @@ public:
     ~BytecodeStreamOutput();
 
 protected:
-    void DoOutputGap(unsigned int size, clang::SourceLocation source);
-    void DoOutputBytes(const Bytes& bytes, clang::SourceLocation source);
+    void DoOutputGap(unsigned int size, SourceLocation source);
+    void DoOutputBytes(const Bytes& bytes, SourceLocation source);
 
     llvm::raw_ostream& m_os;
 };

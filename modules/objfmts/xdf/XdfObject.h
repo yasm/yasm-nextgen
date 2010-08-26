@@ -52,7 +52,7 @@ public:
 
     void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
-    bool Read(clang::SourceManager& sm, Diagnostic& diags);
+    bool Read(SourceManager& sm, Diagnostic& diags);
     void Output(llvm::raw_fd_ostream& os,
                 bool all_syms,
                 DebugFormat& dbgfmt,
@@ -60,7 +60,7 @@ public:
 
     Section* AddDefaultSection();
     Section* AppendSection(llvm::StringRef name,
-                           clang::SourceLocation source,
+                           SourceLocation source,
                            Diagnostic& diags);
 
     static llvm::StringRef getName() { return "Extended Dynamic Object"; }

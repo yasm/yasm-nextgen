@@ -170,7 +170,7 @@ BytecodeContainer::AppendBytecode(std::auto_ptr<Bytecode> bc)
 }
 
 Bytecode&
-BytecodeContainer::AppendGap(unsigned long size, clang::SourceLocation source)
+BytecodeContainer::AppendGap(unsigned long size, SourceLocation source)
 {
     if (m_last_gap)
     {

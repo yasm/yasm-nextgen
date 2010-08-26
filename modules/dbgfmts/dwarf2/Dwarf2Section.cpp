@@ -34,7 +34,7 @@ using namespace yasm;
 using namespace yasm::dbgfmt;
 
 Dwarf2Loc::Dwarf2Loc(Location loc_,
-                     clang::SourceLocation source_,
+                     SourceLocation source_,
                      unsigned long file_,
                      unsigned long line_)
     : source(source_)

@@ -48,7 +48,7 @@ arch::AppendJmpFar(BytecodeContainer& container,
                    const X86Opcode& opcode,
                    std::auto_ptr<Expr> segment,
                    std::auto_ptr<Expr> offset,
-                   clang::SourceLocation source)
+                   SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     Bytes& bytes = bc.getFixed();

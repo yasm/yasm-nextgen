@@ -26,10 +26,10 @@
 //
 #include "yasmx/Assembler.h"
 
-#include "clang/Basic/SourceManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/Arch.h"
@@ -76,14 +76,14 @@ Assembler::Assembler(llvm::StringRef arch_keyword,
 {
     if (m_arch_module.get() == 0)
     {
-        diags.Report(clang::SourceLocation(), diag::fatal_module_load)
+        diags.Report(SourceLocation(), diag::fatal_module_load)
             << "architecture" << arch_keyword;
         return;
     }
 
     if (m_objfmt_module.get() == 0)
     {
-        diags.Report(clang::SourceLocation(), diag::fatal_module_load)
+        diags.Report(SourceLocation(), diag::fatal_module_load)
             << "object format" << objfmt_keyword;
         return;
     }
@@ -113,7 +113,7 @@ Assembler::setMachine(llvm::StringRef machine, Diagnostic& diags)
 {
     if (!m_arch->setMachine(machine))
     {
-        diags.Report(clang::SourceLocation(), diag::fatal_module_combo)
+        diags.Report(SourceLocation(), diag::fatal_module_combo)
             << "machine" << machine
             << "architecture" << m_arch_module->getKeyword();
         return false;
@@ -129,7 +129,7 @@ Assembler::setParser(llvm::StringRef parser_keyword, Diagnostic& diags)
     // Ensure architecture supports parser.
     if (!m_arch->setParser(parser_keyword))
     {
-        diags.Report(clang::SourceLocation(), diag::fatal_module_combo)
+        diags.Report(SourceLocation(), diag::fatal_module_combo)
             << "parser" << parser_keyword
             << "architecture" << m_arch_module->getKeyword();
         return false;
@@ -139,7 +139,7 @@ Assembler::setParser(llvm::StringRef parser_keyword, Diagnostic& diags)
         LoadModule<ParserModule>(parser_keyword);
     if (parser_module.get() == 0)
     {
-        diags.Report(clang::SourceLocation(), diag::fatal_module_load)
+        diags.Report(SourceLocation(), diag::fatal_module_load)
             << "parser" << parser_keyword;
         return false;
     }
@@ -158,7 +158,7 @@ Assembler::setDebugFormat(llvm::StringRef dbgfmt_keyword, Diagnostic& diags)
                      NocaseEquals(dbgfmt_keyword))
         == dbgfmt_keywords.end())
     {
-        diags.Report(clang::SourceLocation(), diag::fatal_module_combo)
+        diags.Report(SourceLocation(), diag::fatal_module_combo)
             << "debug format" << dbgfmt_keyword
             << "object format" << m_objfmt_module->getKeyword();
         return false;
@@ -168,7 +168,7 @@ Assembler::setDebugFormat(llvm::StringRef dbgfmt_keyword, Diagnostic& diags)
         LoadModule<DebugFormatModule>(dbgfmt_keyword);
     if (dbgfmt_module.get() == 0)
     {
-        diags.Report(clang::SourceLocation(), diag::fatal_module_load)
+        diags.Report(SourceLocation(), diag::fatal_module_load)
             << "debug format" << dbgfmt_keyword;
         return false;
     }
@@ -183,7 +183,7 @@ Assembler::setListFormat(llvm::StringRef listfmt_keyword, Diagnostic& diags)
         LoadModule<ListFormatModule>(listfmt_keyword);
     if (listfmt_module.get() == 0)
     {
-        diags.Report(clang::SourceLocation(), diag::fatal_module_load)
+        diags.Report(SourceLocation(), diag::fatal_module_load)
             << "list format" << listfmt_keyword;
         return false;
     }
@@ -192,8 +192,8 @@ Assembler::setListFormat(llvm::StringRef listfmt_keyword, Diagnostic& diags)
 }
 
 bool
-Assembler::Assemble(clang::SourceManager& source_mgr,
-                    clang::FileManager& file_mgr,
+Assembler::Assemble(SourceManager& source_mgr,
+                    FileManager& file_mgr,
                     Diagnostic& diags,
                     HeaderSearch& headers,
                     bool warning_error)
@@ -244,8 +244,7 @@ Assembler::Assemble(clang::SourceManager& source_mgr,
     // See if the object format supports such an object
     if (!m_objfmt_module->isOkObject(*m_object))
     {
-        diags.Report(clang::SourceLocation(),
-                     diag::fatal_objfmt_machine_mismatch)
+        diags.Report(SourceLocation(), diag::fatal_objfmt_machine_mismatch)
             << m_objfmt_module->getKeyword()
             << m_arch_module->getKeyword()
             << m_arch->getMachine();
@@ -271,7 +270,7 @@ Assembler::Assemble(clang::SourceManager& source_mgr,
     // See if the debug format supports such an object
     if (!m_dbgfmt_module->isOkObject(*m_object))
     {
-        diags.Report(clang::SourceLocation(), diag::fatal_module_combo)
+        diags.Report(SourceLocation(), diag::fatal_module_combo)
             << "debug format" << m_dbgfmt_module->getKeyword()
             << "object format" << m_objfmt_module->getKeyword();
         return false;

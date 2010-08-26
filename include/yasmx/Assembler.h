@@ -34,7 +34,6 @@
 #include "yasmx/Support/scoped_ptr.h"
 
 
-namespace clang { class FileManager; class SourceManager; }
 namespace llvm { class MemoryBuffer; class raw_fd_ostream; }
 
 /// Namespace for classes, functions, and templates related to the Yasm
@@ -47,6 +46,7 @@ class ArchModule;
 class DebugFormat;
 class DebugFormatModule;
 class Diagnostic;
+class FileManager;
 class HeaderSearch;
 class ListFormat;
 class ListFormatModule;
@@ -55,6 +55,7 @@ class ObjectFormat;
 class ObjectFormatModule;
 class Parser;
 class ParserModule;
+class SourceManager;
 
 /// An assembler.
 class YASM_LIB_EXPORT Assembler
@@ -123,8 +124,8 @@ public:
     /// @param diags            diagnostic reporting
     /// @param warning_error    treat warnings as errors if true
     /// @return True on success, false on failure.
-    bool Assemble(clang::SourceManager& source_mgr,
-                  clang::FileManager& file_mgr,
+    bool Assemble(SourceManager& source_mgr,
+                  FileManager& file_mgr,
                   Diagnostic& diags,
                   HeaderSearch& headers,
                   bool warning_error = false);

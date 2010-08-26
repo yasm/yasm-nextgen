@@ -229,7 +229,7 @@ void
 yasm::AppendLEB128(BytecodeContainer& container,
                    const IntNum& intn,
                    bool sign,
-                   clang::SourceLocation source,
+                   SourceLocation source,
                    Diagnostic& diags)
 {
     if (intn.getSign() < 0 && !sign)
@@ -242,7 +242,7 @@ void
 yasm::AppendLEB128(BytecodeContainer& container,
                    std::auto_ptr<Expr> expr,
                    bool sign,
-                   clang::SourceLocation source,
+                   SourceLocation source,
                    Diagnostic& diags)
 {
     // If expression is just an integer, output directly.

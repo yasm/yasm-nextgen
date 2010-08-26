@@ -28,13 +28,13 @@
 #include <ostream>
 #include <string>
 
-#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/BytecodeContainer.h"
@@ -247,15 +247,16 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
     //
     // parse the instruction
     //
-    clang::SourceManager smgr;
     ::testing::StrictMock<MockDiagnosticString> mock_client;
-    Diagnostic diags(&smgr, &mock_client);
+    Diagnostic diags(&mock_client);
+    SourceManager smgr(diags);
+    diags.setSourceManager(&smgr);
 
     // instruction name is the first thing on the line
     llvm::StringRef insn_name;
     llvm::tie(insn_name, insn_in) = insn_in.split(' ');
     Arch::InsnPrefix insnprefix =
-        m_arch->ParseCheckInsnPrefix(insn_name, clang::SourceLocation(), diags);
+        m_arch->ParseCheckInsnPrefix(insn_name, SourceLocation(), diags);
     ASSERT_TRUE(insnprefix.isType(Arch::InsnPrefix::INSN));
     std::auto_ptr<Insn> insn = m_arch->CreateInsn(insnprefix.getInsn());
     ASSERT_TRUE(insn.get() != 0) << "unrecognized instruction '"
@@ -322,7 +323,7 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
                     {
                         Arch::RegTmod regtmod =
                             m_arch->ParseCheckRegTmod(tok,
-                                                      clang::SourceLocation(),
+                                                      SourceLocation(),
                                                       diags);
                         ASSERT_TRUE(regtmod.isType(Arch::RegTmod::REG))
                             << "cannot handle label '" << tok.str() << "'";
@@ -352,7 +353,7 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
 
         // Test for registers
         Arch::RegTmod regtmod =
-            m_arch->ParseCheckRegTmod(arg_str, clang::SourceLocation(), diags);
+            m_arch->ParseCheckRegTmod(arg_str, SourceLocation(), diags);
         if (const Register* reg = regtmod.getReg())
         {
             Operand operand(reg);
@@ -402,10 +403,12 @@ NasmInsnRunner::TestInsn(yasm::Insn* insn,
     // Turn the instruction into bytes
     //
     BytecodeContainer container;
-    clang::SourceManager smgr;
 
     ::testing::StrictMock<MockDiagnosticString> mock_client;
-    Diagnostic diags(&smgr, &mock_client);
+    Diagnostic diags(&mock_client);
+    SourceManager smgr(diags);
+    diags.setSourceManager(&smgr);
+
     if (!ew_msg.empty())
     {
         EXPECT_CALL(mock_client, DiagString(ew_msg))
@@ -418,7 +421,7 @@ NasmInsnRunner::TestInsn(yasm::Insn* insn,
             .Times(0);
     }
 
-    insn->Append(container, clang::SourceLocation(), diags);
+    insn->Append(container, SourceLocation(), diags);
 
     container.Finalize(diags);
     if (diags.hasErrorOccurred())

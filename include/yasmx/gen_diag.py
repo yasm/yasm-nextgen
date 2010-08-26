@@ -50,36 +50,49 @@ def add_group(name, subgroups=None):
         lprint("Warning: duplicate group %s" % name, file=sys.stderr)
     groups[name] = Group(name, subgroups)
 
+categories = dict()
+class Category(object):
+    def __init__(self, name):
+        self.name = name
+
+def add_category(name):
+    if name in categories:
+        lprint("Warning: duplicate category %s" % name, file=sys.stderr)
+    categories[name] = Category(name)
+
 class Diag(object):
-    def __init__(self, name, cls, desc, mapping=None, group=""):
+    def __init__(self, name, cls, desc, mapping=None, group="", category=""):
         self.name = name
         self.cls = cls
         self.desc = desc
         self.mapping = mapping
         self.group = group
+        if category not in categories:
+            add_category(category)
+        self.category = category
 
 diags = dict()
-def add_diag(name, cls, desc, mapping=None, group=""):
+def add_diag(name, cls, desc, mapping=None, group="", category=""):
     if name in diags:
         lprint("Warning: duplicate diag %s" % name, file=sys.stderr)
-    diags[name] = Diag(name, cls, desc, mapping, group)
+    diags[name] = Diag(name, cls, desc, mapping, group, category)
 
-def add_warning(name, desc, mapping=None, group=""):
+def add_warning(name, desc, mapping=None, group="", category=""):
     if group:
         if group not in groups:
             lprint("Unrecognized warning group %s" % group, file=sys.stderr)
         else:
             groups[group].members.append(name)
-    add_diag(name, "WARNING", desc, mapping, group)
+    add_diag(name, "WARNING", desc, mapping, group, category)
 
-def add_fatal(name, desc):
-    add_diag(name, "ERROR", desc, mapping="FATAL")
+def add_fatal(name, desc, category=""):
+    add_diag(name, "ERROR", desc, mapping="FATAL", category=category)
 
-def add_error(name, desc, mapping=None):
-    add_diag(name, "ERROR", desc, mapping)
+def add_error(name, desc, mapping=None, category=""):
+    add_diag(name, "ERROR", desc, mapping, category=category)
 
-def add_note(name, desc):
-    add_diag(name, "NOTE", desc, mapping="FATAL")
+def add_note(name, desc, category=""):
+    add_diag(name, "NOTE", desc, mapping="FATAL", category=category)
 
 def output_diag_kinds(f):
     lprint("#ifndef YASM_DIAGNOSTICKINDS_H", file=f)
@@ -97,10 +110,11 @@ def output_diag_kinds(f):
 def output_diags(f):
     for name in sorted(diags):
         diag = diags[name]
-        lprint("{ diag::%s, diag::MAP_%s, CLASS_%s, \"%s\", %s }," % (
+        lprint("{ diag::%s, diag::MAP_%s, CLASS_%s, %d, \"%s\", %s }," % (
             diag.name,
             diag.mapping or diag.cls,
             diag.cls,
+            categories[diag.category].index,
             diag.desc.encode("string_escape"),
             diag.group and "\"%s\"" % diag.group or "0"), file=f)
 
@@ -136,6 +150,19 @@ def output_groups(f):
                file=f)
     lprint("};", file=f)
 
+def output_categories(f):
+    # enumerate all categories and set indexes first
+    for n, name in enumerate(sorted(categories)):
+        categories[name].index = n
+
+    # output table
+    lprint("static const char *CategoryNameTable[] = {", file=f)
+    for name in sorted(categories):
+        category = categories[name]
+        lprint("  \"%s\"," % category.name, file=f)
+    lprint("  \"<<END>>\"", file=f)
+    lprint("};", file=f)
+
 #####################################################################
 # Groups (for command line -W option)
 #####################################################################
@@ -150,6 +177,8 @@ add_group("size-override")
 # Diagnostics
 #####################################################################
 
+add_fatal("fatal_too_many_errors", "too many errors emitted, stopping now")
+
 # Frontend
 add_fatal("fatal_module_load", "could not load %0 '%1")
 add_fatal("fatal_module_combo", "'%1' is not a valid %0 for %2 '%3'")
@@ -157,7 +186,13 @@ add_fatal("fatal_objfmt_machine_mismatch",
           "object format '%0' does not support architecture '%1' machine '%2'")
 add_warning("warn_unknown_warning_option", "unknown warning option '%0'")
 add_fatal("fatal_file_open", "could not open file '%0'")
-add_fatal("fatal_file_open_desc", "could not open file '%0': %1")
+
+# Source manager
+add_fatal("err_cannot_open_file", "cannot open file '%0': %1")
+add_fatal("err_file_modified",
+          "file '%0' modified since it was first processed")
+add_fatal("err_unsupported_bom", "%0 byte order mark detected in '%1', but "
+          "encoding is not supported")
 
 # yobjdump
 add_error("err_file_open", "could not open file '%0'")
@@ -616,10 +651,12 @@ add_error("err_xdf_headers_unreadable", "could not read XDF header tables")
 #####################################################################
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 5:
         lprint("Usage: gen_diag.py <DiagnosticGroups.cpp>", file=sys.stderr)
+        lprint("    <DiagnosticCategories.cpp>", file=sys.stderr)
         lprint("    <DiagnosticKinds.h> <StaticDiagInfo.inc>", file=sys.stderr)
         sys.exit(2)
     output_groups(file(sys.argv[1], "wt"))
-    output_diag_kinds(file(sys.argv[2], "wt"))
-    output_diags(file(sys.argv[3], "wt"))
+    output_categories(file(sys.argv[2], "wt"))
+    output_diag_kinds(file(sys.argv[3], "wt"))
+    output_diags(file(sys.argv[4], "wt"))

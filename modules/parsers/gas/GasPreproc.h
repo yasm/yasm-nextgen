@@ -30,7 +30,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "clang/Basic/SourceLocation.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Parse/Preprocessor.h"
 
@@ -46,16 +46,14 @@ namespace parser
 class YASM_STD_EXPORT GasPreproc : public Preprocessor
 {
 public:
-    GasPreproc(Diagnostic& diags,
-               clang::SourceManager& sm,
-               HeaderSearch& headers);
+    GasPreproc(Diagnostic& diags, SourceManager& sm, HeaderSearch& headers);
     ~GasPreproc();
 
-    bool HandleInclude(llvm::StringRef filename, clang::SourceLocation source);
+    bool HandleInclude(llvm::StringRef filename, SourceLocation source);
 
 protected:
     virtual void RegisterBuiltinMacros();
-    virtual Lexer* CreateLexer(clang::FileID fid,
+    virtual Lexer* CreateLexer(FileID fid,
                                const llvm::MemoryBuffer* input_buffer);
 
 private:

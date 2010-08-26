@@ -42,7 +42,7 @@ using namespace yasm::parser;
 
 NasmParser::NasmParser(const ParserModule& module,
                        Diagnostic& diags,
-                       clang::SourceManager& sm,
+                       SourceManager& sm,
                        HeaderSearch& headers)
     : Parser(module)
     , ParserImpl(m_nasm_preproc)

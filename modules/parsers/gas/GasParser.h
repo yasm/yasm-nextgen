@@ -34,9 +34,9 @@
 #include <string>
 #include <vector>
 
-#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/StringMap.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Parse/ParserImpl.h"
 #include "yasmx/Insn.h"
@@ -68,7 +68,7 @@ class GasParser;
 struct GasDirLookup
 {
     const char* name;
-    bool (GasParser::*handler) (unsigned int, clang::SourceLocation source);
+    bool (GasParser::*handler) (unsigned int, SourceLocation source);
     unsigned int param;
 };
 
@@ -77,7 +77,7 @@ class YASM_STD_EXPORT GasParser : public Parser, public ParserImpl
 public:
     GasParser(const ParserModule& module,
               Diagnostic& diags,
-              clang::SourceManager& sm,
+              SourceManager& sm,
               HeaderSearch& headers);
     ~GasParser();
 
@@ -92,49 +92,49 @@ private:
 
     bool ParseLine();
     void setDebugFile(llvm::StringRef filename,
-                      clang::SourceRange filename_source,
-                      clang::SourceLocation dir_source);
+                      SourceRange filename_source,
+                      SourceLocation dir_source);
     void setDebugFile(const IntNum& fileno,
-                      clang::SourceRange fileno_source,
+                      SourceRange fileno_source,
                       llvm::StringRef filename,
-                      clang::SourceRange filename_source,
-                      clang::SourceLocation dir_source);
+                      SourceRange filename_source,
+                      SourceLocation dir_source);
     void ParseCppLineMarker();
     void ParseNasmLineMarker();
 
-    bool ParseDirLine(unsigned int, clang::SourceLocation source);
-    bool ParseDirInclude(unsigned int, clang::SourceLocation source);
-    bool ParseDirMacro(unsigned int, clang::SourceLocation source);
-    bool ParseDirEndm(unsigned int, clang::SourceLocation source);
-    bool ParseDirRept(unsigned int, clang::SourceLocation source);
-    bool ParseDirEndr(unsigned int, clang::SourceLocation source);
-    bool ParseDirAlign(unsigned int power2, clang::SourceLocation source);
-    bool ParseDirOrg(unsigned int, clang::SourceLocation source);
-    bool ParseDirLocal(unsigned int, clang::SourceLocation source);
-    bool ParseDirComm(unsigned int is_lcomm, clang::SourceLocation source);
-    bool ParseDirAscii(unsigned int withzero, clang::SourceLocation source);
-    bool ParseDirFloat(unsigned int size, clang::SourceLocation source);
-    bool ParseDirData(unsigned int size, clang::SourceLocation source);
-    bool ParseDirLeb128(unsigned int sign, clang::SourceLocation source);
-    bool ParseDirZero(unsigned int, clang::SourceLocation source);
-    bool ParseDirSkip(unsigned int, clang::SourceLocation source);
-    bool ParseDirFill(unsigned int, clang::SourceLocation source);
-    bool ParseDirBssSection(unsigned int, clang::SourceLocation source);
-    bool ParseDirDataSection(unsigned int, clang::SourceLocation source);
-    bool ParseDirTextSection(unsigned int, clang::SourceLocation source);
-    bool ParseDirSection(unsigned int, clang::SourceLocation source);
-    bool ParseDirEqu(unsigned int, clang::SourceLocation source);
-    bool ParseDirFile(unsigned int, clang::SourceLocation source);
+    bool ParseDirLine(unsigned int, SourceLocation source);
+    bool ParseDirInclude(unsigned int, SourceLocation source);
+    bool ParseDirMacro(unsigned int, SourceLocation source);
+    bool ParseDirEndm(unsigned int, SourceLocation source);
+    bool ParseDirRept(unsigned int, SourceLocation source);
+    bool ParseDirEndr(unsigned int, SourceLocation source);
+    bool ParseDirAlign(unsigned int power2, SourceLocation source);
+    bool ParseDirOrg(unsigned int, SourceLocation source);
+    bool ParseDirLocal(unsigned int, SourceLocation source);
+    bool ParseDirComm(unsigned int is_lcomm, SourceLocation source);
+    bool ParseDirAscii(unsigned int withzero, SourceLocation source);
+    bool ParseDirFloat(unsigned int size, SourceLocation source);
+    bool ParseDirData(unsigned int size, SourceLocation source);
+    bool ParseDirLeb128(unsigned int sign, SourceLocation source);
+    bool ParseDirZero(unsigned int, SourceLocation source);
+    bool ParseDirSkip(unsigned int, SourceLocation source);
+    bool ParseDirFill(unsigned int, SourceLocation source);
+    bool ParseDirBssSection(unsigned int, SourceLocation source);
+    bool ParseDirDataSection(unsigned int, SourceLocation source);
+    bool ParseDirTextSection(unsigned int, SourceLocation source);
+    bool ParseDirSection(unsigned int, SourceLocation source);
+    bool ParseDirEqu(unsigned int, SourceLocation source);
+    bool ParseDirFile(unsigned int, SourceLocation source);
 
-    void SkipConditional(clang::SourceLocation begin);
-    void HandleIf(bool is_true, clang::SourceLocation begin);
-    bool ParseDirElse(unsigned int, clang::SourceLocation source);
-    bool ParseDirElseif(unsigned int, clang::SourceLocation source);
-    bool ParseDirEndif(unsigned int, clang::SourceLocation source);
-    bool ParseDirIf(unsigned int op, clang::SourceLocation source);
-    bool ParseDirIfb(unsigned int negate, clang::SourceLocation source);
-    bool ParseDirIfdef(unsigned int negate, clang::SourceLocation source);
-    bool ParseDirIfeqs(unsigned int negate, clang::SourceLocation source);
+    void SkipConditional(SourceLocation begin);
+    void HandleIf(bool is_true, SourceLocation begin);
+    bool ParseDirElse(unsigned int, SourceLocation source);
+    bool ParseDirElseif(unsigned int, SourceLocation source);
+    bool ParseDirEndif(unsigned int, SourceLocation source);
+    bool ParseDirIf(unsigned int op, SourceLocation source);
+    bool ParseDirIfb(unsigned int negate, SourceLocation source);
+    bool ParseDirIfdef(unsigned int negate, SourceLocation source);
+    bool ParseDirIfeqs(unsigned int negate, SourceLocation source);
 
     Insn::Ptr ParseInsn();
     bool ParseDirective(NameValues* nvs);
@@ -150,17 +150,13 @@ private:
     bool ParseInteger(IntNum* intn);
     const Register* ParseRegister();
 
-    void DefineLabel(llvm::StringRef name, clang::SourceLocation source);
+    void DefineLabel(llvm::StringRef name, SourceLocation source);
     void DefineLcomm(SymbolRef sym,
-                     clang::SourceLocation source,
+                     SourceLocation source,
                      std::auto_ptr<Expr> size,
                      const Expr& align);
-    void SwitchSection(llvm::StringRef name,
-                       bool builtin,
-                       clang::SourceRange source);
-    Section& getSection(llvm::StringRef name,
-                        bool builtin,
-                        clang::SourceRange source);
+    void SwitchSection(llvm::StringRef name, bool builtin, SourceRange source);
+    Section& getSection(llvm::StringRef name, bool builtin, SourceRange source);
 
     void DoParse();
 
@@ -199,7 +195,7 @@ private:
     unsigned long m_local[10];
 
     // Start of comment.
-    clang::SourceLocation m_comment_start;
+    SourceLocation m_comment_start;
 
     // Conditional stack.
     struct CondStatus

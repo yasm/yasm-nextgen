@@ -33,11 +33,10 @@
 #include "yasmx/Parse/NumericParser.h"
 
 
-namespace clang { class SourceLocation; }
-
 namespace yasm
 {
 class Preprocessor;
+class SourceLocation;
 
 namespace parser
 {
@@ -49,7 +48,7 @@ class YASM_STD_EXPORT NasmNumericParser : public NumericParser
 {
 public:
     NasmNumericParser(llvm::StringRef str,
-                      clang::SourceLocation loc,
+                      SourceLocation loc,
                       Preprocessor& pp);
     virtual ~NasmNumericParser();
 

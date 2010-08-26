@@ -64,8 +64,7 @@ ElfSection::ElfSection(const ElfConfig&             config,
     inbuf.setPosition(config.secthead_pos + index * config.secthead_size);
     if (inbuf.getReadableSize() < 8)
     {
-        diags.Report(clang::SourceLocation(),
-                     diag::err_section_header_too_small);
+        diags.Report(SourceLocation(), diag::err_section_header_too_small);
         return;
     }
 
@@ -78,8 +77,7 @@ ElfSection::ElfSection(const ElfConfig&             config,
     {
         if (inbuf.getReadableSize() < SHDR32_SIZE-8)
         {
-            diags.Report(clang::SourceLocation(),
-                         diag::err_section_header_too_small);
+            diags.Report(SourceLocation(), diag::err_section_header_too_small);
             return;
         }
 
@@ -98,8 +96,7 @@ ElfSection::ElfSection(const ElfConfig&             config,
     {
         if (inbuf.getReadableSize() < SHDR64_SIZE-8)
         {
-            diags.Report(clang::SourceLocation(),
-                         diag::err_section_header_too_small);
+            diags.Report(SourceLocation(), diag::err_section_header_too_small);
             return;
         }
 
@@ -252,7 +249,7 @@ ElfSection::CreateSection(const StringTable& shstrtab) const
 
     std::auto_ptr<Section> section(
         new Section(shstrtab.getString(m_name_index), m_flags & SHF_EXECINSTR,
-                    bss, clang::SourceLocation()));
+                    bss, SourceLocation()));
 
     section->setFilePos(m_offset);
     section->setVMA(m_addr);
@@ -262,7 +259,7 @@ ElfSection::CreateSection(const StringTable& shstrtab) const
     if (bss)
     {
         Bytecode& gap =
-            section->AppendGap(m_size.getUInt(), clang::SourceLocation());
+            section->AppendGap(m_size.getUInt(), SourceLocation());
         Diagnostic nodiags(0);
         gap.CalcLen(0, nodiags);    // force length calculation of gap
     }
@@ -284,7 +281,7 @@ ElfSection::LoadSectionData(Section& sect,
     unsigned long size = m_size.getUInt();
     if (inbuf.getReadableSize() < size)
     {
-        diags.Report(clang::SourceLocation(), diag::err_section_data_unreadable)
+        diags.Report(SourceLocation(), diag::err_section_data_unreadable)
             << sect.getName();
         return false;
     }
@@ -356,7 +353,7 @@ ElfSection::WriteRelocs(llvm::raw_ostream& os,
     uint64_t pos = os.tell();
     if (os.has_error())
     {
-        diags.Report(clang::SourceLocation(), diag::err_file_output_position);
+        diags.Report(SourceLocation(), diag::err_file_output_position);
         pos = 0;
     }
     uint64_t apos = (pos + 3) & ~3;

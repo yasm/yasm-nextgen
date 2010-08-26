@@ -26,8 +26,8 @@
 //
 #include "GasStringParser.h"
 
-#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/SmallString.h"
+#include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Parse/Preprocessor.h"
 #include "yasmx/IntNum.h"
 
@@ -59,7 +59,7 @@ fromxdigit(char ch)
 /// Octal and hex escapes are also supported
 ///
 GasStringParser::GasStringParser(llvm::StringRef str,
-                                 clang::SourceLocation loc,
+                                 SourceLocation loc,
                                  Preprocessor& pp)
     : m_chars_begin(str.begin()+1)
     , m_needs_unescape(false)

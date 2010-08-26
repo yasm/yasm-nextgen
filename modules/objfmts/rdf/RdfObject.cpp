@@ -28,9 +28,9 @@
 
 #include <util.h>
 
-#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/Support/raw_ostream.h"
+#include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Support/bitcount.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
@@ -103,8 +103,8 @@ public:
     bool ConvertValueToBytes(Value& value,
                              Location loc,
                              NumericOutput& num_out);
-    void DoOutputGap(unsigned int size, clang::SourceLocation source);
-    void DoOutputBytes(const Bytes& bytes, clang::SourceLocation source);
+    void DoOutputGap(unsigned int size, SourceLocation source);
+    void DoOutputBytes(const Bytes& bytes, SourceLocation source);
 
 private:
     llvm::raw_ostream& m_os;
@@ -216,14 +216,14 @@ RdfOutput::ConvertValueToBytes(Value& value,
 }
 
 void
-RdfOutput::DoOutputGap(unsigned int size, clang::SourceLocation source)
+RdfOutput::DoOutputGap(unsigned int size, SourceLocation source)
 {
     Diag(source, diag::warn_uninit_zero);
     m_rdfsect->raw_data.insert(m_rdfsect->raw_data.end(), size, 0);
 }
 
 void
-RdfOutput::DoOutputBytes(const Bytes& bytes, clang::SourceLocation source)
+RdfOutput::DoOutputBytes(const Bytes& bytes, SourceLocation source)
 {
     m_rdfsect->raw_data.insert(m_rdfsect->raw_data.end(), bytes.begin(),
                                bytes.end());
@@ -541,7 +541,7 @@ RdfObject::Output(llvm::raw_fd_ostream& os,
     os.seek(sizeof(RDF_MAGIC)+8);
     if (os.has_error())
     {
-        diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+        diags.Report(SourceLocation(), diag::err_file_output_seek);
         return;
     }
 
@@ -607,7 +607,7 @@ RdfObject::Output(llvm::raw_fd_ostream& os,
     uint64_t pos = os.tell();
     if (os.has_error())
     {
-        diags.Report(clang::SourceLocation(), diag::err_file_output_position);
+        diags.Report(SourceLocation(), diag::err_file_output_position);
         return;
     }
     unsigned long headerlen = static_cast<unsigned long>(pos);
@@ -630,7 +630,7 @@ RdfObject::Output(llvm::raw_fd_ostream& os,
     pos = os.tell();
     if (os.has_error())
     {
-        diags.Report(clang::SourceLocation(), diag::err_file_output_position);
+        diags.Report(SourceLocation(), diag::err_file_output_position);
         return;
     }
     unsigned long filelen = static_cast<unsigned long>(pos);
@@ -639,7 +639,7 @@ RdfObject::Output(llvm::raw_fd_ostream& os,
     os.seek(0);
     if (os.has_error())
     {
-        diags.Report(clang::SourceLocation(), diag::err_file_output_seek);
+        diags.Report(SourceLocation(), diag::err_file_output_seek);
         return;
     }
 
@@ -678,7 +678,7 @@ RdfObject::Taste(const llvm::MemoryBuffer& in,
 }
 
 bool
-RdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
+RdfObject::Read(SourceManager& sm, Diagnostic& diags)
 {
     const llvm::MemoryBuffer& in = *sm.getBuffer(sm.getMainFileID());
     InputBuffer inbuf(in);
@@ -686,8 +686,7 @@ RdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
     // Read file header
     if (inbuf.getReadableSize() < sizeof(RDF_MAGIC)+8)
     {
-        diags.Report(clang::SourceLocation(),
-                     diag::err_object_header_unreadable);
+        diags.Report(SourceLocation(), diag::err_object_header_unreadable);
         return false;
     }
 
@@ -696,7 +695,7 @@ RdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
     {
         if (magic[i] != RDF_MAGIC[i])
         {
-            diags.Report(clang::SourceLocation(), diag::err_not_file_type)
+            diags.Report(SourceLocation(), diag::err_not_file_type)
                 << "RDF";
             return false;
         }
@@ -730,13 +729,13 @@ RdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
         std::auto_ptr<Section> section(
             new Section(sectname, rsect->type == RdfSection::RDF_CODE,
                         rsect->type == RdfSection::RDF_BSS,
-                        clang::SourceLocation()));
+                        SourceLocation()));
 
         section->setFilePos(inbuf.getPosition());
 
         if (rsect->type == RdfSection::RDF_BSS)
         {
-            Bytecode& gap = section->AppendGap(size, clang::SourceLocation());
+            Bytecode& gap = section->AppendGap(size, SourceLocation());
             Diagnostic nodiags(0);
             gap.CalcLen(0, nodiags);    // force length calculation of gap
         }
@@ -745,7 +744,7 @@ RdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
             // Read section data
             if (inbuf.getReadableSize() < size)
             {
-                diags.Report(clang::SourceLocation(),
+                diags.Report(SourceLocation(),
                              diag::err_section_data_unreadable)
                     << section->getName();
                 return false;
@@ -860,7 +859,7 @@ RdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
             {
                 if (len != 4)
                 {
-                    diags.Report(clang::SourceLocation(),
+                    diags.Report(SourceLocation(),
                                  diag::err_invalid_bss_record);
                     return false;
                 }
@@ -871,9 +870,9 @@ RdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
                     new RdfSection(RdfSection::RDF_BSS, SymbolRef(0)));
                 rsect->scnum = 0;
                 std::auto_ptr<Section> section(
-                    new Section(".bss", false, true, clang::SourceLocation()));
+                    new Section(".bss", false, true, SourceLocation()));
                 Bytecode& gap =
-                    section->AppendGap(size, clang::SourceLocation());
+                    section->AppendGap(size, SourceLocation());
                 Diagnostic nodiags(0);
                 gap.CalcLen(0, nodiags);    // force length calculation of gap
 
@@ -933,7 +932,7 @@ RdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
                 Section& sect = m_object.getSection(scnum);
                 if (refseg >= symtab.size())
                 {
-                    diags.Report(clang::SourceLocation(),
+                    diags.Report(SourceLocation(),
                                  diag::err_refseg_out_of_range)
                         << refseg;
                     return false;
@@ -941,8 +940,7 @@ RdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
                 SymbolRef sym = symtab[refseg];
                 if (!sym)
                 {
-                    diags.Report(clang::SourceLocation(),
-                                 diag::err_invalid_refseg)
+                    diags.Report(SourceLocation(), diag::err_invalid_refseg)
                         << refseg;
                     return false;
                 }
@@ -959,7 +957,7 @@ RdfObject::Read(clang::SourceManager& sm, Diagnostic& diags)
 
 Section*
 RdfObject::AppendSection(llvm::StringRef name,
-                         clang::SourceLocation source,
+                         SourceLocation source,
                          Diagnostic& diags)
 {
     RdfSection::Type type = RdfSection::RDF_UNKNOWN;
@@ -994,14 +992,14 @@ Section*
 RdfObject::AddDefaultSection()
 {
     Diagnostic diags(NULL);
-    Section* section = AppendSection(".text", clang::SourceLocation(), diags);
+    Section* section = AppendSection(".text", SourceLocation(), diags);
     section->setDefault(true);
     return section;
 }
 
 static inline bool
 SetReserved(NameValue& nv,
-            clang::SourceLocation dir_source,
+            SourceLocation dir_source,
             Diagnostic& diags,
             Object* obj,
             IntNum* out,
@@ -1114,7 +1112,7 @@ RdfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
 void
 RdfObject::AddLibOrModule(llvm::StringRef name,
                           bool lib,
-                          clang::SourceLocation name_source,
+                          SourceLocation name_source,
                           Diagnostic& diags)
 {
     llvm::StringRef name2 = name;
