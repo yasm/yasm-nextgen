@@ -46,10 +46,14 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Basic/FileManager.cpp
     yasmx/Basic/SourceLocation.cpp
     yasmx/Basic/SourceManager.cpp
+    yasmx/Parse/Directive.cpp
+    yasmx/Parse/DirHelpers.cpp
     yasmx/Parse/HeaderSearch.cpp
     yasmx/Parse/IdentifierTable.cpp
     yasmx/Parse/Lexer.cpp
+    yasmx/Parse/NameValue.cpp
     yasmx/Parse/NumericParser.cpp
+    yasmx/Parse/Parser.cpp
     yasmx/Parse/ParserImpl.cpp
     yasmx/Parse/Preprocessor.cpp
     yasmx/Parse/PPCaching.cpp
@@ -72,8 +76,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Bytes_leb128.cpp
     yasmx/DataBytecode.cpp
     yasmx/DebugFormat.cpp
-    yasmx/Directive.cpp
-    yasmx/DirHelpers.cpp
     yasmx/EffAddr.cpp
     yasmx/Expr.cpp
     yasmx/Expr_util.cpp
@@ -87,7 +89,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Location_util.cpp
     yasmx/Module.cpp
     yasmx/MultipleBytecode.cpp
-    yasmx/NameValue.cpp
     yasmx/NumericOutput.cpp
     yasmx/Object.cpp
     yasmx/Object_optimize.cpp
@@ -95,7 +96,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Object_util.cpp
     yasmx/OrgBytecode.cpp
     yasmx/Op.cpp
-    yasmx/Parser.cpp
     ${PLUGIN_CPP}
     yasmx/Reloc.cpp
     yasmx/Section.cpp

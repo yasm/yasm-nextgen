@@ -31,15 +31,15 @@
 #include "llvm/System/Path.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/SourceManager.h"
+#include "yasmx/Parse/Directive.h"
+#include "yasmx/Parse/Parser.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/Arch.h"
 #include "yasmx/DebugFormat.h"
-#include "yasmx/Directive.h"
 #include "yasmx/ListFormat.h"
 #include "yasmx/Object.h"
 #include "yasmx/ObjectFormat.h"
-#include "yasmx/Parser.h"
 
 
 using namespace yasm;

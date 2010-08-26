@@ -39,6 +39,7 @@
 #include "yasmx/Basic/FileManager.h"
 #include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Parse/HeaderSearch.h"
+#include "yasmx/Parse/Parser.h"
 #include "yasmx/Support/Compose.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/System/plugin.h"
@@ -48,7 +49,6 @@
 #include "yasmx/ListFormat.h"
 #include "yasmx/Module.h"
 #include "yasmx/ObjectFormat.h"
-#include "yasmx/Parser.h"
 
 #ifdef HAVE_LIBGEN_H
 #include <libgen.h>

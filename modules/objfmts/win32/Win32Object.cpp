@@ -31,12 +31,12 @@
 #include <vector>
 
 #include "yasmx/Basic/Diagnostic.h"
+#include "yasmx/Parse/Directive.h"
+#include "yasmx/Parse/DirHelpers.h"
+#include "yasmx/Parse/NameValue.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/BytecodeContainer.h"
-#include "yasmx/Directive.h"
-#include "yasmx/DirHelpers.h"
 #include "yasmx/Object.h"
-#include "yasmx/NameValue.h"
 #include "yasmx/Symbol.h"
 
 #include "modules/objfmts/coff/CoffSection.h"

@@ -31,9 +31,9 @@
 
 #include "util.h"
 
+#include "yasmx/Parse/Directive.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
-#include "yasmx/Directive.h"
 #include "yasmx/Object.h"
 #include "yasmx/Op.h"
 #include "yasmx/Symbol_util.h"

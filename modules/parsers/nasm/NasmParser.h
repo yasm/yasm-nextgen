@@ -30,9 +30,9 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "yasmx/Config/export.h"
+#include "yasmx/Parse/Parser.h"
 #include "yasmx/Parse/ParserImpl.h"
 #include "yasmx/Insn.h"
-#include "yasmx/Parser.h"
 
 #include "NasmPreproc.h"
 

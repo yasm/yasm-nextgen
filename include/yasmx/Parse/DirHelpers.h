@@ -35,9 +35,8 @@
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Config/functional.h"
+#include "yasmx/Parse/NameValue.h"
 #include "yasmx/Support/scoped_ptr.h"
-
-#include "yasmx/NameValue.h"
 
 
 namespace yasm

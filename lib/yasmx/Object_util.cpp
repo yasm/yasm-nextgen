@@ -32,8 +32,8 @@
 #include "util.h"
 
 #include "yasmx/Basic/Diagnostic.h"
+#include "yasmx/Parse/Directive.h"
 #include "yasmx/Bytecode.h"
-#include "yasmx/Directive.h"
 #include "yasmx/Section.h"
 #include "yasmx/Object.h"
 #include "yasmx/ObjectFormat.h"

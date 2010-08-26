@@ -24,16 +24,16 @@
 /// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 /// POSSIBILITY OF SUCH DAMAGE.
 ///
-#include "yasmx/DirHelpers.h"
+#include "yasmx/Parse/DirHelpers.h"
 
 #include "util.h"
 
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "yasmx/Basic/Diagnostic.h"
+#include "yasmx/Parse/NameValue.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
-#include "yasmx/NameValue.h"
 
 
 using namespace yasm;

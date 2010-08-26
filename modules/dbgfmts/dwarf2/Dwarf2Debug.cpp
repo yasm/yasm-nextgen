@@ -28,12 +28,12 @@
 
 #include <algorithm>
 
+#include "yasmx/Parse/Directive.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
-#include "yasmx/Directive.h"
 #include "yasmx/Object.h"
 #include "yasmx/Section.h"
 #include "yasmx/Symbol.h"

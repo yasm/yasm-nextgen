@@ -30,9 +30,9 @@
 
 #include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
+#include "yasmx/Parse/Directive.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/AssocData.h"
-#include "yasmx/Directive.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Object.h"
 #include "yasmx/Symbol.h"

@@ -38,10 +38,10 @@
 #include "llvm/ADT/StringMap.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
+#include "yasmx/Parse/Parser.h"
 #include "yasmx/Parse/ParserImpl.h"
 #include "yasmx/Insn.h"
 #include "yasmx/IntNum.h"
-#include "yasmx/Parser.h"
 
 #include "GasPreproc.h"
 

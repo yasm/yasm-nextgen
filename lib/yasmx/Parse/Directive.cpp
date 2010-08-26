@@ -24,14 +24,13 @@
 /// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 /// POSSIBILITY OF SUCH DAMAGE.
 ///
-#include "yasmx/Directive.h"
+#include "yasmx/Parse/Directive.h"
 
 #include "util.h"
 
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "yasmx/Basic/Diagnostic.h"
-#include "yasmx/Directive.h"
 
 
 using namespace yasm;
