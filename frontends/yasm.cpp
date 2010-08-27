@@ -55,6 +55,7 @@
 #endif
 
 #include "frontends/license.cpp"
+#include "frontends/DiagnosticOptions.h"
 #include "frontends/TextDiagnosticPrinter.h"
 
 
@@ -625,8 +626,11 @@ do_preproc_only(void)
 static int
 do_assemble(void)
 {
-    yasm::TextDiagnosticPrinter diag_printer(*errfile,
-                                             ewmsg_style == EWSTYLE_VC);
+    yasm::DiagnosticOptions diag_opts;
+    diag_opts.Microsoft = (ewmsg_style == EWSTYLE_VC);
+    diag_opts.ShowOptionNames = 1;
+    diag_opts.ShowSourceRanges = 1;
+    yasm::TextDiagnosticPrinter diag_printer(*errfile, diag_opts);
     yasm::Diagnostic diags(&diag_printer);
     yasm::SourceManager source_mgr(diags);
     diags.setSourceManager(&source_mgr);

@@ -18,54 +18,30 @@
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/SourceLocation.h"
 
-namespace llvm {
-  class raw_ostream;
-}
-
 namespace yasm {
-class LangOptions;
-class SourceManager;
+class DiagnosticOptions;
 
 class TextDiagnosticPrinter : public DiagnosticClient {
   llvm::raw_ostream &OS;
-  const LangOptions *LangOpts;
+  const DiagnosticOptions *DiagOpts;
+
   SourceLocation LastWarningLoc;
   FullSourceLoc LastLoc;
-  bool LastCaretDiagnosticWasNote;
+  unsigned LastCaretDiagnosticWasNote : 1;
+  unsigned OwnsOutputStream : 1;
 
-  bool VcStyle;
-  bool ShowColumn;
-  bool CaretDiagnostics;
-  bool ShowLocation;
-  bool PrintRangeInfo;
-  bool PrintDiagnosticOption;
-  bool PrintFixItInfo;
-  unsigned MessageLength;
-  bool UseColors;
+  /// A string to prefix to error messages.
+  std::string Prefix;
 
 public:
-  TextDiagnosticPrinter(llvm::raw_ostream &os,
-                        bool vcStyle = false,
-                        bool showColumn = true,
-                        bool caretDiagnistics = true, bool showLocation = true,
-                        bool printRangeInfo = true,
-                        bool printDiagnosticOption = true,
-                        bool printFixItInfo = true,
-                        unsigned messageLength = 0,
-                        bool useColors = false)
-    : OS(os), LangOpts(0),
-      LastCaretDiagnosticWasNote(false), VcStyle(vcStyle),
-      ShowColumn(showColumn),
-      CaretDiagnostics(caretDiagnistics), ShowLocation(showLocation),
-      PrintRangeInfo(printRangeInfo),
-      PrintDiagnosticOption(printDiagnosticOption),
-      PrintFixItInfo(printFixItInfo),
-      MessageLength(messageLength),
-      UseColors(useColors) {}
+  TextDiagnosticPrinter(llvm::raw_ostream &os, const DiagnosticOptions &diags,
+                        bool OwnsOutputStream = false);
+  virtual ~TextDiagnosticPrinter();
 
-  void setLangOptions(const LangOptions *LO) {
-    LangOpts = LO;
-  }
+  /// setPrefix - Set the diagnostic printer prefix string, which will be
+  /// printed at the start of any diagnostics. If empty, no prefix string is
+  /// used.
+  void setPrefix(std::string Value) { Prefix = Value; }
 
   void PrintIncludeStack(SourceLocation Loc, const SourceManager &SM);
 
@@ -80,12 +56,15 @@ public:
                            const SourceManager &SM,
                            const FixItHint *Hints,
                            unsigned NumHints,
-                           unsigned Columns);
+                           unsigned Columns,  
+                           unsigned OnMacroInst,
+                           unsigned MacroSkipStart,
+                           unsigned MacroSkipEnd);
 
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 const DiagnosticInfo &Info);
 };
 
-} // end namspace yasm
+} // end namespace yasm
 
 #endif
