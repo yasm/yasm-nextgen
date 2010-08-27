@@ -25,8 +25,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #include "X86Arch.h"
 
-#include "util.h"
-
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"
@@ -496,9 +494,9 @@ X86Arch::AddDirectives(Directives& dirs, llvm::StringRef parser)
     };
 
     if (parser.equals_lower("nasm"))
-        dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
+        dirs.AddArray(this, nasm_dirs);
     else if (parser.equals_lower("gas") || parser.equals_lower("gnu"))
-        dirs.AddArray(this, gas_dirs, NELEMS(gas_dirs));
+        dirs.AddArray(this, gas_dirs);
 }
 
 void

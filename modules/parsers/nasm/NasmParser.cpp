@@ -26,8 +26,6 @@
 //
 #include "NasmParser.h"
 
-#include "util.h"
-
 #include "yasmx/Parse/Directive.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
@@ -104,7 +102,7 @@ NasmParser::AddDirectives(Directives& dirs, llvm::StringRef parser)
 
     if (parser.equals_lower("nasm"))
     {
-        dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
+        dirs.AddArray(this, nasm_dirs);
         dirs.Add("extern", &DirExtern, Directives::ID_REQUIRED);
         dirs.Add("global", &DirGlobal, Directives::ID_REQUIRED);
         dirs.Add("common", &DirCommon, Directives::ID_REQUIRED);

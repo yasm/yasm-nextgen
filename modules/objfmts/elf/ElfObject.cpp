@@ -42,8 +42,6 @@
 //
 #include "ElfObject.h"
 
-#include "util.h"
-
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Basic/Diagnostic.h"
@@ -1386,7 +1384,7 @@ ElfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
         {"write",   "nowrite",  SHF_WRITE},
         {"tls",     "notls",    SHF_TLS},
     };
-    for (unsigned int i=0; i<NELEMS(name_flags); ++i)
+    for (size_t i=0; i<sizeof(name_flags)/sizeof(name_flags[0]); ++i)
     {
         helpers.Add(name_flags[i].enable, false,
                     BIND::bind(&DirSetFlag, _1, _2, &flags,
@@ -1519,7 +1517,8 @@ ElfObject::getDebugFormatKeywords()
         "dwarf2",
         "dwarf2pass"
     };
-    return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
+    size_t keywords_size = sizeof(keywords)/sizeof(keywords[0]);
+    return std::vector<llvm::StringRef>(keywords, keywords+keywords_size);
 }
 
 void
@@ -1544,9 +1543,9 @@ ElfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
     };
 
     if (parser.equals_lower("nasm"))
-        dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
+        dirs.AddArray(this, nasm_dirs);
     else if (parser.equals_lower("gas") || parser.equals_lower("gnu"))
-        dirs.AddArray(this, gas_dirs, NELEMS(gas_dirs));
+        dirs.AddArray(this, gas_dirs);
 }
 #if 0
 static const char *elf_nasm_stdmac[] = {

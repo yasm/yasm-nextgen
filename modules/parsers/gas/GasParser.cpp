@@ -29,8 +29,6 @@
 //
 #include "GasParser.h"
 
-#include "util.h"
-
 #include "yasmx/Parse/Directive.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
@@ -133,7 +131,7 @@ GasParser::GasParser(const ParserModule& module,
         {".set",        &GasParser::ParseDirEqu,    0}
     };
 
-    for (unsigned int i=0; i<NELEMS(gas_dirs_init); ++i)
+    for (size_t i=0; i<sizeof(gas_dirs_init)/sizeof(gas_dirs_init[0]); ++i)
         m_gas_dirs[gas_dirs_init[i].name] = &gas_dirs_init[i];
 }
 
@@ -164,7 +162,8 @@ GasParser::Parse(Object& object, Directives& dirs, Diagnostic& diags)
     m_sized_gas_dirs[0].name = ".word";
     m_sized_gas_dirs[0].handler = &GasParser::ParseDirData;
     m_sized_gas_dirs[0].param = m_arch->getModule().getWordSize()/8;
-    for (unsigned int i=0; i<NELEMS(m_sized_gas_dirs); ++i)
+    for (size_t i=0; i<sizeof(m_sized_gas_dirs)/sizeof(m_sized_gas_dirs[0]);
+         ++i)
         m_gas_dirs[m_sized_gas_dirs[i].name] = &m_sized_gas_dirs[i];
 
     m_preproc.EnterMainSourceFile();

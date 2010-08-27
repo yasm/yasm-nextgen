@@ -110,11 +110,11 @@ public:
     /// Add directives from an initializer array.
     /// @param me           this pointer to associate
     /// @param inits        initializer array
-    /// @param size         size of initializer array
-    template <typename T>
-    void AddArray(T* me, const Init<T>* inits, unsigned int size)
+    /// @note Uses array size reference template trick to determine array size.
+    template <typename T, size_t N>
+    void AddArray(T* me, const Init<T> (& inits) [N])
     {
-        for (unsigned int i=0; i<size; ++i)
+        for (size_t i=0; i<N; ++i)
             Add(inits[i].name,
                 BIND::bind(inits[i].func, me, _1, _2),
                 inits[i].flags);

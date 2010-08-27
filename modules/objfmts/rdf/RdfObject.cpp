@@ -1154,7 +1154,7 @@ RdfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
     };
 
     if (parser.equals_lower("nasm"))
-        dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
+        dirs.AddArray(this, nasm_dirs);
 }
 
 #if 0

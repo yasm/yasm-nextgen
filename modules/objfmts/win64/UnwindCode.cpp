@@ -26,8 +26,6 @@
 //
 #include "UnwindCode.h"
 
-#include "util.h"
-
 #include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeContainer.h"
@@ -123,15 +121,13 @@ UnwindCode::CalcLen(Bytecode& bc,
         if (intv < low)
         {
             diags.Report(m_off.getSource().getBegin(),
-                         diags.getCustomDiagID(Diagnostic::Error,
-                             N_("offset cannot be negative")));
+                         diag::err_negative_offset);
             return false;
         }
         if ((intv & mask) != 0)
         {
             diags.Report(m_off.getSource().getBegin(),
-                         diags.getCustomDiagID(Diagnostic::Error,
-                             N_("offset of %0 is not a multiple of %1")))
+                         diag::err_offset_not_multiple)
                 << static_cast<int>(intv) << static_cast<int>(mask+1);
             return false;
         }
@@ -154,9 +150,7 @@ UnwindCode::Expand(Bytecode& bc,
 {
     if (new_val < 0)
     {
-        diags.Report(m_off.getSource().getBegin(),
-                     diags.getCustomDiagID(Diagnostic::Error,
-                         N_("offset cannot be negative")));
+        diags.Report(m_off.getSource().getBegin(), diag::err_negative_offset);
         return false;
     }
 
@@ -258,18 +252,14 @@ UnwindCode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 
     if (size != 4 && !intn.isInRange(low, high))
     {
-        bc_out.Diag(m_off.getSource().getBegin(),
-                    bc_out.getDiagnostics().getCustomDiagID(Diagnostic::Error,
-                        N_("offset of %0 bytes, must be between %1 and %2")))
+        bc_out.Diag(m_off.getSource().getBegin(), diag::err_offset_out_of_range)
             << intn.getStr() << static_cast<int>(low) << static_cast<int>(high);
         return false;
     }
 
     if ((intn.getUInt() & mask) != 0)
     {
-        bc_out.Diag(m_off.getSource().getBegin(),
-                    bc_out.getDiagnostics().getCustomDiagID(Diagnostic::Error,
-                        N_("offset of %0 is not a multiple of %1")))
+        bc_out.Diag(m_off.getSource().getBegin(), diag::err_offset_not_multiple)
             << intn.getStr() << static_cast<int>(mask+1);
         return false;
     }

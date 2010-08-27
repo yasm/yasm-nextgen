@@ -24,8 +24,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "util.h"
-
 #include "ElfConfig.h"
 #include "ElfMachine.h"
 #include "ElfReloc.h"
@@ -136,7 +134,7 @@ Elf_x86_x86::AddSpecialSymbols(Object& object, llvm::StringRef parser) const
         {"tlscall",     R_386_TLS_DESC_CALL,32,  true,  true, false}
     };
 
-    for (unsigned int i=0; i<NELEMS(ssyms); ++i)
+    for (size_t i=0; i<sizeof(ssyms)/sizeof(ssyms[0]); ++i)
         AddElfSSym(object, ssyms[i]);
 }
 

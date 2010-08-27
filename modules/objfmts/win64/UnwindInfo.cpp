@@ -26,8 +26,6 @@
 //
 #include "UnwindInfo.h"
 
-#include "util.h"
-
 #include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeContainer.h"
@@ -94,17 +92,15 @@ UnwindInfo::CalcLen(Bytecode& bc,
         if (!intn.isInRange(0, 240))
         {
             diags.Report(m_frameoff.getSource().getBegin(),
-                         diags.getCustomDiagID(Diagnostic::Error,
-                N_("frame offset of %0 bytes, must be between 0 and 240")))
-                << intn.getStr();
+                         diag::err_offset_out_of_range)
+                << intn.getStr() << "0" << 240;
             return false;
         }
         else if ((intn.getUInt() & 0xF) != 0)
         {
             diags.Report(m_frameoff.getSource().getBegin(),
-                         diags.getCustomDiagID(Diagnostic::Error,
-                N_("frame offset of %0 is not a multiple of 16")))
-                << intn.getStr();
+                         diag::err_offset_not_multiple)
+                << intn.getStr() << 16;
             return false;
         }
     }
@@ -131,25 +127,20 @@ UnwindInfo::Expand(Bytecode& bc,
         case 1:
         {
             diags.Report(m_prolog_size.getSource().getBegin(),
-                         diags.getCustomDiagID(Diagnostic::Error,
-                             N_("prologue %0 bytes, must be <256")))
+                         diag::err_prologue_too_large)
                 << static_cast<int>(new_val);
-            diags.Report(m_prolog->getDefSource(),
-                         diags.getCustomDiagID(Diagnostic::Error,
-                                               N_("prologue ended here")));
+            diags.Report(m_prolog->getDefSource(), diag::note_prologue_end);
             return false;
         }
         case 2:
             diags.Report(m_frameoff.getSource().getBegin(),
-                         diags.getCustomDiagID(Diagnostic::Error,
-                             N_("%0 unwind codes, maximum of 255")))
+                         diag::err_too_many_unwind_codes)
                 << static_cast<int>(new_val);
             return false;
         case 3:
             diags.Report(m_frameoff.getSource().getBegin(),
-                         diags.getCustomDiagID(Diagnostic::Error,
-                N_("frame offset of %0 bytes, must be between 0 and 240")))
-                << static_cast<int>(new_val);
+                         diag::err_offset_out_of_range)
+                << static_cast<int>(new_val) << "0" << 240;
             return false;
         default:
             assert(false && "unrecognized span id");
@@ -201,17 +192,15 @@ UnwindInfo::Output(Bytecode& bc, BytecodeOutput& bc_out)
     if (!intn.isInRange(0, 240))
     {
         bc_out.Diag(m_frameoff.getSource().getBegin(),
-                    bc_out.getDiagnostics().getCustomDiagID(Diagnostic::Error,
-            N_("frame offset of %0 bytes, must be between 0 and 240")))
-            << intn.getStr();
+                    diag::err_offset_out_of_range)
+            << intn.getStr() << "0" << 240;
         return false;
     }
     else if ((intn.getUInt() & 0xF) != 0)
     {
         bc_out.Diag(m_frameoff.getSource().getBegin(),
-                    bc_out.getDiagnostics().getCustomDiagID(Diagnostic::Error,
-            N_("frame offset of %0 is not a multiple of 16")))
-            << intn.getStr();
+                    diag::err_offset_not_multiple)
+            << intn.getStr() << 16;
         return false;
     }
 

@@ -26,8 +26,6 @@
 //
 #include "Win64Object.h"
 
-#include "util.h"
-
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Parse/Directive.h"
 #include "yasmx/Parse/NameValue.h"
@@ -460,9 +458,9 @@ Win64Object::AddDirectives(Directives& dirs, llvm::StringRef parser)
     };
 
     if (parser.equals_lower("nasm"))
-        dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
+        dirs.AddArray(this, nasm_dirs);
     else if (parser.equals_lower("gas") || parser.equals_lower("gnu"))
-        dirs.AddArray(this, gas_dirs, NELEMS(gas_dirs));
+        dirs.AddArray(this, gas_dirs);
 
     // Pull in coff directives (but not win32 directives)
     CoffObject::AddDirectives(dirs, parser);

@@ -26,8 +26,6 @@
 //
 #include "CoffObject.h"
 
-#include "util.h"
-
 #include <cstdlib>
 #include <ctime>
 #include <vector>

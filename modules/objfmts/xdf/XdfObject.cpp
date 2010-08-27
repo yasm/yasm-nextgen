@@ -26,8 +26,6 @@
 //
 #include "XdfObject.h"
 
-#include "util.h"
-
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/SourceManager.h"
@@ -87,7 +85,8 @@ std::vector<llvm::StringRef>
 XdfObject::getDebugFormatKeywords()
 {
     static const char* keywords[] = {"null"};
-    return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
+    size_t keywords_size = sizeof(keywords)/sizeof(keywords[0]);
+    return std::vector<llvm::StringRef>(keywords, keywords+keywords_size);
 }
 
 namespace {
@@ -321,8 +320,7 @@ XdfObject::Output(llvm::raw_fd_ostream& os,
         if (vis & Symbol::COMMON)
         {
             diags.Report(sym->getDeclSource(),
-                         diags.getCustomDiagID(Diagnostic::Error,
-                N_("XDF object format does not support common variables")));
+                         diag::err_xdf_common_unsupported);
             continue;
         }
         if (all_syms || (vis != Symbol::LOCAL && !(vis & Symbol::DLOCAL)))
@@ -778,7 +776,7 @@ XdfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
     };
 
     if (parser.equals_lower("nasm"))
-        dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
+        dirs.AddArray(this, nasm_dirs);
 }
 
 void

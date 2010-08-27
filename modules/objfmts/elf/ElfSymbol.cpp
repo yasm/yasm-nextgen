@@ -26,8 +26,6 @@
 //
 #include "ElfSymbol.h"
 
-#include "util.h"
-
 #include "llvm/ADT/Twine.h"
 #include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"

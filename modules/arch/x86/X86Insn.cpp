@@ -28,8 +28,6 @@
 
 #include "X86Insn.h"
 
-#include "util.h"
-
 #include <algorithm>
 #include <cctype>
 #include <cstring>
@@ -55,6 +53,10 @@
 #include "X86Opcode.h"
 #include "X86Prefix.h"
 
+
+#ifndef NELEMS
+#define NELEMS(array)   (sizeof(array) / sizeof(array[0]))
+#endif
 
 STATISTIC(num_groups_scanned, "Total number of instruction groups scanned");
 STATISTIC(num_jmp_groups_scanned, "Total number of jump groups scanned");

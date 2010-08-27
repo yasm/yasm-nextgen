@@ -28,8 +28,6 @@
 
 #include "X86Jmp.h"
 
-#include "util.h"
-
 #include "llvm/ADT/Statistic.h"
 #include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"

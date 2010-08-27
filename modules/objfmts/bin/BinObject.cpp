@@ -26,8 +26,6 @@
 //
 #include "BinObject.h"
 
-#include "util.h"
-
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Basic/Diagnostic.h"
@@ -85,9 +83,7 @@ BinObject::OutputMap(const IntNum& origin,
         (m_map_filename.empty() ? "-" : m_map_filename.c_str(), err);
     if (!err.empty())
     {
-        diags.Report(SourceLocation(),
-                     diags.getCustomDiagID(Diagnostic::Warning,
-                         N_("unable to open map file '%0': %1")))
+        diags.Report(SourceLocation(), diag::warn_cannot_open_map_file)
             << m_map_filename << err;
         return;
     }
@@ -156,17 +152,13 @@ BinOutput::OutputSection(Section& sect, const IntNum& origin)
         file_start -= origin;
         if (file_start.getSign() < 0)
         {
-            Diag(SourceLocation(),
-                 getDiagnostics().getCustomDiagID(Diagnostic::Error,
-                     N_("section '%0' starts before origin (ORG)")))
+            Diag(SourceLocation(), diag::err_section_before_origin)
                 << sect.getName();
             return;
         }
         if (!file_start.isOkSize(sizeof(unsigned long)*8, 0, 0))
         {
-            Diag(SourceLocation(),
-                 getDiagnostics().getCustomDiagID(Diagnostic::Error,
-                     N_("section '%0' start value too large")))
+            Diag(SourceLocation(), diag::err_start_too_large)
                 << sect.getName();
             return;
         }
@@ -235,9 +227,7 @@ done:
         return true;
 
     // Couldn't output, assume it contains an external reference.
-    Diag(value.getSource().getBegin(),
-         getDiagnostics().getCustomDiagID(Diagnostic::Error,
-             N_("binary object format does not support external references")));
+    Diag(value.getSource().getBegin(), diag::err_bin_extern_ref);
     return false;
 }
 
@@ -253,21 +243,18 @@ CheckSymbol(const Symbol& sym, Diagnostic& diags)
 
     if (vis & Symbol::EXTERN)
     {
-        diags.Report(sym.getDeclSource(),
-                     diags.getCustomDiagID(Diagnostic::Warning,
-            N_("binary object format does not support extern variables")));
+        diags.Report(sym.getDeclSource(), diag::warn_bin_unsupported_decl)
+            << "EXTERN";
     }
     else if (vis & Symbol::GLOBAL)
     {
-        diags.Report(sym.getDeclSource(),
-                     diags.getCustomDiagID(Diagnostic::Warning,
-            N_("binary object format does not support global variables")));
+        diags.Report(sym.getDeclSource(), diag::warn_bin_unsupported_decl)
+            << "GLOBAL";
     }
     else if (vis & Symbol::COMMON)
     {
-        diags.Report(sym.getDeclSource(),
-                     diags.getCustomDiagID(Diagnostic::Error,
-            N_("binary object format does not support common variables")));
+        diags.Report(sym.getDeclSource(), diag::warn_bin_unsupported_decl)
+            << "COMMON";
     }
 }
 
@@ -284,17 +271,13 @@ BinObject::Output(llvm::raw_fd_ostream& os,
         m_org->Simplify(diags);
         if (!m_org->isIntNum())
         {
-            diags.Report(m_org_source,
-                         diags.getCustomDiagID(Diagnostic::Error,
-                             N_("ORG expression is too complex")));
+            diags.Report(m_org_source, diag::err_org_too_complex);
             return;
         }
         IntNum orgi = m_org->getIntNum();
         if (orgi.getSign() < 0)
         {
-            diags.Report(m_org_source,
-                         diags.getCustomDiagID(Diagnostic::Error,
-                             N_("ORG expression is negative")));
+            diags.Report(m_org_source, diag::err_org_negative);
             return;
         }
         origin = orgi;
@@ -561,7 +544,8 @@ std::vector<llvm::StringRef>
 BinObject::getDebugFormatKeywords()
 {
     static const char* keywords[] = {"null"};
-    return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
+    size_t keywords_size = sizeof(keywords)/sizeof(keywords[0]);
+    return std::vector<llvm::StringRef>(keywords, keywords+keywords_size);
 }
 
 void
@@ -580,9 +564,9 @@ BinObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
     };
 
     if (parser.equals_lower("nasm"))
-        dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
+        dirs.AddArray(this, nasm_dirs);
     else if (parser.equals_lower("gas") || parser.equals_lower("gnu"))
-        dirs.AddArray(this, gas_dirs, NELEMS(gas_dirs));
+        dirs.AddArray(this, gas_dirs);
 }
 
 void

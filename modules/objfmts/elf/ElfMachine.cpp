@@ -26,8 +26,6 @@
 //
 #include "ElfMachine.h"
 
-#include "util.h"
-
 #include <string>
 
 #include "YAML/emitter.h"
@@ -53,6 +51,7 @@ static const MachineCheckCreate machines[] =
     {&impl::ElfMatch_x86_x86, &impl::ElfCreate_x86_x86},
     {&impl::ElfMatch_x86_amd64, &impl::ElfCreate_x86_amd64},
 };
+static const size_t nmachines = sizeof(machines)/sizeof(machines[0]);
 
 const char* ElfSpecialSymbol::key = "objfmt::elf::ElfSpecialSymbol";
 
@@ -83,7 +82,7 @@ objfmt::isOkElfMachine(const Arch& arch, ElfClass cls)
 {
     std::string keyword = arch.getModule().getKeyword();
     std::string machine = arch.getMachine();
-    for (unsigned int i=0; i<NELEMS(machines); ++i)
+    for (size_t i=0; i<nmachines; ++i)
     {
         if (machines[i].Match(keyword, machine, cls))
             return true;
@@ -96,7 +95,7 @@ objfmt::CreateElfMachine(const Arch& arch, ElfClass cls)
 {
     std::string keyword = arch.getModule().getKeyword();
     std::string machine = arch.getMachine();
-    for (unsigned int i=0; i<NELEMS(machines); ++i)
+    for (size_t i=0; i<nmachines; ++i)
     {
         if (machines[i].Match(keyword, machine, cls))
             return machines[i].Create();

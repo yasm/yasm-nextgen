@@ -407,6 +407,10 @@ add_warning("warn_rex_overrides_internal", "overriding generated REX prefix")
 add_warning("warn_multiple_rex", "multiple REX prefixes, using leftmost")
 add_error("err_high8_rex_conflict",
           "cannot use A/B/C/DH with instruction needing REX")
+add_warning("warn_address_size_ignored", "address size override ignored")
+
+# Immediate
+add_error("err_imm_too_complex", "immediate expression too complex")
 
 # EffAddr
 add_error("err_invalid_ea", "invalid effective address")
@@ -422,6 +426,8 @@ add_warning("warn_rip_rel_not64mode",
             "RIP-relative directive ignored in non-64-bit mode")
 add_error("err_16bit_ea_64mode",
           "16-bit addresses not supported in 64-bit mode")
+add_error("err_ea_length_unknown",
+          "indeterminate effective address during length calculation")
 
 # Optimizer
 add_error("err_optimizer_circular_reference", "circular reference detected")
@@ -612,6 +618,37 @@ add_error("err_symbol_unreadable", "could not read symbol table entry")
 add_error("err_symbol_entity_size_zero", "symbol table entity size is zero")
 add_error("err_invalid_string_offset", "invalid string table offset")
 
+# Binary object format
+add_error("err_org_too_complex", "ORG expression is too complex")
+add_error("err_org_negative", "ORG expression is negative")
+add_error("err_start_too_complex", "start expression is too complex")
+add_error("err_vstart_too_complex", "vstart expression is too complex")
+add_error("err_start_too_large", "section '%0' start value is too large")
+add_error("err_indeterminate_section_length",
+          "could not determine length of section '%0'")
+add_error("err_section_follows_unknown",
+          "section '%0' follows an invalid or unknown section '%1'")
+add_error("err_section_follows_loop",
+          "follows loop between section '%0' and section '%1'")
+add_error("err_section_vfollows_unknown",
+          "section '%0' vfollows an invalid or unknown section '%1'")
+add_error("err_section_vfollows_loop",
+          "vfollows loop between section '%0' and section '%1'")
+add_error("err_section_overlap",
+          "sections '%0' and '%1' overlap by %2 bytes")
+add_error("err_section_before_origin",
+          "section '%0' starts before origin (ORG)")
+add_warning("warn_section_align_larger",
+            "section '%0' internal align of %1 is greater than '%2' of %3; using '%2'")
+add_warning("warn_start_not_aligned",
+            "start inconsistent with align; using aligned value")
+add_error("err_vstart_not_aligned", "vstart inconsistent with valign")
+add_warning("warn_cannot_open_map_file", "cannot open map file '%0': %1")
+add_error("err_bin_extern_ref",
+          "binary object format does not support external references")
+add_warning("warn_bin_unsupported_decl",
+            "binary object format does not support %0 variables")
+
 # ELF object format
 add_warning("warn_unrecognized_symbol_type", "unrecognized symbol type '%0'")
 add_warning("warn_multiple_symbol_visibility",
@@ -636,15 +673,25 @@ add_error("err_win32_align_too_big",
 # Win64 object format
 add_error("err_eof_proc_frame", "end of file in procedure frame")
 add_note("note_proc_started_here", "procedure started here")
+add_error("err_negative_offset", "offset cannot be negative")
+add_error("err_offset_not_multiple", "offset of %0 is not a multiple of %1")
+add_error("err_offset_out_of_range",
+          "offset of %0 bytes, must be between %1 and %2")
+add_error("err_prologue_too_large", "prologue %0 bytes, must be <256")
+add_error("err_too_many_unwind_codes", "%0 unwind codes, maximum of 255")
+add_note("note_prologue_end", "prologue ended here")
 
 # RDF object format
-add_error("err_segment_requires_type", "new segment declared without type code")
+add_error("err_segment_requires_type",
+          "new segment declared without type code")
 add_error("err_invalid_bss_record", "BSS record is not 4 bytes long")
 add_error("err_refseg_out_of_range", "relocation refseg %0 out of range")
 add_error("err_invalid_refseg", "invalid refseg %0")
 
 # XDF object format
 add_error("err_xdf_headers_unreadable", "could not read XDF header tables")
+add_error("err_xdf_common_unsupported",
+          "XDF object format does not support COMMON variables")
 
 #####################################################################
 # Output generation

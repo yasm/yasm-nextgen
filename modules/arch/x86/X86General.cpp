@@ -28,8 +28,6 @@
 
 #include "X86General.h"
 
-#include "util.h"
-
 #include "llvm/ADT/Statistic.h"
 #include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
@@ -165,18 +163,13 @@ X86General::Finalize(Bytecode& bc, Diagnostic& diags)
 
     if (m_imm.get() != 0)
     {
-        unsigned int err_complex =
-            diags.getCustomDiagID(Diagnostic::Error,
-                                  N_("immediate expression too complex"));
-        if (!m_imm->Finalize(diags, err_complex))
+        if (!m_imm->Finalize(diags, diag::err_imm_too_complex))
             return false;
     }
 
     if (m_postop == X86_POSTOP_ADDRESS16 && m_common.m_addrsize != 0)
     {
-        diags.Report(bc.getSource(),
-                     diags.getCustomDiagID(Diagnostic::Warning,
-                         N_("address size override ignored")));
+        diags.Report(bc.getSource(), diag::warn_address_size_ignored);
         m_common.m_addrsize = 0;
     }
 
@@ -285,10 +278,8 @@ X86General::CalcLen(Bytecode& bc,
                          &ip_rel, diags))
         {
             // failed, don't bother checking rest of insn
-            diags.Report(bc.getSource(),
-                         diags.getCustomDiagID(Diagnostic::Error,
-                             N_("indeterminate effective address during length calculation")))
-                << m_ea->m_disp.getSource();
+            diags.Report(m_ea->m_disp.getSource().getBegin(),
+                         diag::err_ea_length_unknown);
             return false;
         }
 

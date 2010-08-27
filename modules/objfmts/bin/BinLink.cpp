@@ -26,8 +26,6 @@
 //
 #include "BinLink.h"
 
-#include "util.h"
-
 #include <algorithm>
 
 #include "llvm/ADT/Twine.h"
@@ -167,14 +165,11 @@ BinLink::CreateLMAGroup(Section& section)
     {
         if (align > bsd->align)
         {
-            m_diags.Report(SourceLocation(),
-                           m_diags.getCustomDiagID(Diagnostic::Warning,
-                N_("section '%0' internal align of %1 is greater than '%2' of %3; using '%4'")))
+            m_diags.Report(SourceLocation(), diag::warn_section_align_larger)
                 << section.getName()
                 << static_cast<unsigned int>(align)
                 << "align"
-                << bsd->align.getStr()
-                << "align";
+                << bsd->align.getStr();
         }
     }
 
@@ -183,9 +178,7 @@ BinLink::CreateLMAGroup(Section& section)
     {
         if (!bsd->start->isIntNum())
         {
-            m_diags.Report(bsd->start_source,
-                           m_diags.getCustomDiagID(Diagnostic::Error,
-                                 N_("start expression is too complex")));
+            m_diags.Report(bsd->start_source, diag::err_start_too_complex);
             return false;
         }
         else
@@ -200,9 +193,7 @@ BinLink::CreateLMAGroup(Section& section)
     {
         if (!bsd->vstart->isIntNum())
         {
-            m_diags.Report(bsd->vstart_source,
-                           m_diags.getCustomDiagID(Diagnostic::Error,
-                                 N_("vstart expression is too complex")));
+            m_diags.Report(bsd->vstart_source, diag::err_vstart_too_complex);
             return false;
         }
         else
@@ -219,8 +210,7 @@ BinLink::CreateLMAGroup(Section& section)
     if (!CalcDist(start, end, &bsd->length))
     {
         m_diags.Report(bsd->vstart_source,
-                       m_diags.getCustomDiagID(Diagnostic::Error,
-            N_("could not determine length of section '%1'")))
+                       diag::err_indeterminate_section_length)
             << section.getName();
         return false;
     }
@@ -277,8 +267,7 @@ BinLink::DoLink(const IntNum& origin)
             if (!found)
             {
                 m_diags.Report(SourceLocation(),
-                               m_diags.getCustomDiagID(Diagnostic::Error,
-                    N_("section '%0' follows an invalid or unknown section '%1'")))
+                               diag::err_section_follows_unknown)
                     << group->m_section.getName()
                     << group->m_bsd.follows;
                 return false;
@@ -288,9 +277,7 @@ BinLink::DoLink(const IntNum& origin)
             if (&group->m_section == &found->m_section ||
                 FindGroup(group->m_follow_groups, found->m_section))
             {
-                m_diags.Report(SourceLocation(),
-                               m_diags.getCustomDiagID(Diagnostic::Error,
-                    N_("follows loop between section '%0' and section '%1'")))
+                m_diags.Report(SourceLocation(), diag::err_section_follows_loop)
                     << group->m_section.getName()
                     << found->m_section.getName();
                 return false;
@@ -371,8 +358,7 @@ BinLink::DoLink(const IntNum& origin)
             if (!found)
             {
                 m_diags.Report(SourceLocation(),
-                               m_diags.getCustomDiagID(Diagnostic::Error,
-                    N_("section '%0' vfollows an invalid or unknown section '%1'")))
+                               diag::err_section_vfollows_unknown)
                     << group->m_section.getName()
                     << group->m_bsd.vfollows;
                 return false;
@@ -383,8 +369,7 @@ BinLink::DoLink(const IntNum& origin)
                 FindGroup(group->m_follow_groups, found->m_section))
             {
                 m_diags.Report(SourceLocation(),
-                               m_diags.getCustomDiagID(Diagnostic::Error,
-                    N_("vfollows loop between section '%0' and section '%1'")))
+                               diag::err_section_vfollows_loop)
                     << group->m_section.getName()
                     << found->m_section.getName();
                 return false;
@@ -446,9 +431,7 @@ BinLink::CheckLMAOverlap(const Section& sect, const Section& other)
 
     if (overlap.getSign() > 0)
     {
-        m_diags.Report(SourceLocation(),
-                       m_diags.getCustomDiagID(Diagnostic::Error,
-            N_("sections '%0' and '%1' overlap by %2 bytes")))
+        m_diags.Report(SourceLocation(), diag::err_section_overlap)
             << sect.getName()
             << other.getName()
             << overlap.getStr();
@@ -505,11 +488,7 @@ BinGroup::AssignStartRecurse(IntNum& start,
     {
         m_section.setLMA(AlignStart(start, m_bsd.align));
         if (m_bsd.has_istart && start != m_section.getLMA())
-        {
-            diags.Report(m_bsd.start_source,
-                         diags.getCustomDiagID(Diagnostic::Warning,
-                N_("start inconsistent with align; using aligned value")));
-        }
+            diags.Report(m_bsd.start_source, diag::warn_start_not_aligned);
     }
     else
         m_section.setLMA(start);
@@ -574,14 +553,11 @@ BinGroup::AssignVStartRecurse(IntNum& start, Diagnostic& diags)
     {
         if (m_section.getAlign() > m_bsd.valign)
         {
-            diags.Report(SourceLocation(),
-                         diags.getCustomDiagID(Diagnostic::Warning,
-                N_("section '%0' internal align of %1 is greater than '%2' of %3; using '%4'")))
+            diags.Report(SourceLocation(), diag::warn_section_align_larger)
                 << m_section.getName()
                 << static_cast<unsigned int>(m_section.getAlign())
                 << "valign"
-                << m_bsd.valign.getStr()
-                << "valign";
+                << m_bsd.valign.getStr();
         }
     }
 
@@ -590,11 +566,7 @@ BinGroup::AssignVStartRecurse(IntNum& start, Diagnostic& diags)
     {
         m_section.setVMA(AlignStart(start, m_bsd.valign));
         if (m_bsd.has_ivstart && start != m_section.getVMA())
-        {
-            diags.Report(m_bsd.vstart_source,
-                         diags.getCustomDiagID(Diagnostic::Error,
-                             N_("vstart inconsistent with valign")));
-        }
+            diags.Report(m_bsd.vstart_source, diag::err_vstart_not_aligned);
     }
     else
         m_section.setVMA(start);

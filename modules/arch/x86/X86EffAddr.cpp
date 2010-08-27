@@ -26,8 +26,6 @@
 //
 #include "X86EffAddr.h"
 
-#include "util.h"
-
 #include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"

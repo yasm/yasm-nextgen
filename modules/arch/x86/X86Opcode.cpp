@@ -26,8 +26,6 @@
 //
 #include "X86Opcode.h"
 
-#include "util.h"
-
 #include "YAML/emitter.h"
 #include "yasmx/Bytes.h"
 

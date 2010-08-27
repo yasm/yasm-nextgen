@@ -26,8 +26,6 @@
 //
 #include "CoffObject.h"
 
-#include "util.h"
-
 #include <vector>
 
 #include "yasmx/Basic/Diagnostic.h"
@@ -73,7 +71,8 @@ std::vector<llvm::StringRef>
 CoffObject::getDebugFormatKeywords()
 {
     static const char* keywords[] = {"null", "dwarf2", "dwarf2pass"};
-    return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
+    size_t keywords_size = sizeof(keywords)/sizeof(keywords[0]);
+    return std::vector<llvm::StringRef>(keywords, keywords+keywords_size);
 }
 
 bool
@@ -554,9 +553,9 @@ CoffObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
     };
 
     if (parser.equals_lower("nasm"))
-        dirs.AddArray(this, nasm_dirs, NELEMS(nasm_dirs));
+        dirs.AddArray(this, nasm_dirs);
     else if (parser.equals_lower("gas") || parser.equals_lower("gnu"))
-        dirs.AddArray(this, gas_dirs, NELEMS(gas_dirs));
+        dirs.AddArray(this, gas_dirs);
 }
 
 void

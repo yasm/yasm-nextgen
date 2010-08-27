@@ -47,10 +47,12 @@
 #include "yasmx/Object.h"
 #include "yasmx/ObjectFormat.h"
 
-#include "util.h"
-
 #include "Dwarf2Section.h"
 
+
+#ifndef NELEMS
+#define NELEMS(array)   (sizeof(array) / sizeof(array[0]))
+#endif
 
 using namespace yasm;
 using namespace yasm::dbgfmt;

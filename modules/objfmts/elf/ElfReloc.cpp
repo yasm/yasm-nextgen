@@ -26,8 +26,6 @@
 //
 #include "ElfReloc.h"
 
-#include "util.h"
-
 #include "YAML/emitter.h"
 #include "yasmx/Bytes_util.h"
 #include "yasmx/InputBuffer.h"

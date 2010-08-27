@@ -28,8 +28,6 @@
 #include "modules/arch/x86/X86Register.h"
 #include "modules/arch/x86/X86TargetModifier.h"
 
-#include "util.h"
-
 #include <cctype>
 #include <cstring>
 

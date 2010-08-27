@@ -26,8 +26,6 @@
 //
 #include "CoffReloc.h"
 
-#include "util.h"
-
 #include "YAML/emitter.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
