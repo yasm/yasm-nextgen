@@ -741,15 +741,6 @@ int
 main(int argc, char* argv[])
 {
     llvm::llvm_shutdown_obj llvm_manager(false);
-#if 0
-#if defined(HAVE_SETLOCALE) && defined(HAVE_LC_MESSAGES)
-    setlocale(LC_MESSAGES, "");
-#endif
-#if defined(LOCALEDIR)
-    yasm_bindtextdomain(PACKAGE, LOCALEDIR);
-#endif
-    yasm_textdomain(PACKAGE);
-#endif
 
     cl::SetVersionPrinter(&PrintVersion);
     cl::ParseCommandLineOptions(argc, argv);
