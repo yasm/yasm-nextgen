@@ -26,8 +26,6 @@
 ///
 #include "yasmx/Parse/DirHelpers.h"
 
-#include "util.h"
-
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "yasmx/Basic/Diagnostic.h"

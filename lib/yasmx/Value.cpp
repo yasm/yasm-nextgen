@@ -26,8 +26,6 @@
 //
 #include "yasmx/Value.h"
 
-#include "util.h"
-
 #include <algorithm>
 #include <bitset>
 

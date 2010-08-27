@@ -26,8 +26,6 @@
 //
 #include "yasmx/Expr.h"
 
-#include "util.h"
-
 #include <algorithm>
 #include <iterator>
 

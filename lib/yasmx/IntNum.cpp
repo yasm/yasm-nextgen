@@ -26,8 +26,6 @@
 //
 #include "yasmx/IntNum.h"
 
-#include "util.h"
-
 #include <cctype>
 #include <climits>
 #include <cstdio>

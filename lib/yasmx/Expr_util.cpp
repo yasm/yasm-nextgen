@@ -26,8 +26,6 @@
 //
 #include "yasmx/Expr_util.h"
 
-#include "util.h"
-
 #include <algorithm>
 
 #include "yasmx/Expr.h"

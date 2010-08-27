@@ -28,8 +28,6 @@
 
 #include "yasmx/Object.h"
 
-#include "util.h"
-
 #include <algorithm>
 #include <deque>
 #include <list>

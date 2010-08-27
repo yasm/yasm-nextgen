@@ -1,8 +1,6 @@
 // Modified for use with yasm by Peter Johnson.
 #include "yasmx/Support/phash.h"
 
-#include "util.h"
-
 /*
 --------------------------------------------------------------------
 lookupa.c, by Bob Jenkins, December 1996.  Same as lookup2.c

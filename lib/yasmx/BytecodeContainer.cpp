@@ -26,8 +26,6 @@
 //
 #include "yasmx/BytecodeContainer.h"
 
-#include "util.h"
-
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"

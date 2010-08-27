@@ -26,8 +26,6 @@
 ///
 #include "yasmx/BytecodeContainer.h"
 
-#include "util.h"
-
 #include "llvm/Support/MemoryBuffer.h"
 #include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"

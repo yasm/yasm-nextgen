@@ -29,8 +29,6 @@
 ///
 #include "yasmx/Object_util.h"
 
-#include "util.h"
-
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Parse/Directive.h"
 #include "yasmx/Bytecode.h"

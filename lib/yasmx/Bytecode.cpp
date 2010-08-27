@@ -28,8 +28,6 @@
 
 #include "yasmx/Bytecode.h"
 
-#include "util.h"
-
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"

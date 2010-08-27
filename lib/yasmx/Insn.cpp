@@ -26,8 +26,6 @@
 //
 #include "yasmx/Insn.h"
 
-#include "util.h"
-
 #include <algorithm>
 
 #include "llvm/Support/raw_ostream.h"

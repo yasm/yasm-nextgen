@@ -26,8 +26,6 @@
 ///
 #include "yasmx/BytecodeContainer.h"
 
-#include "util.h"
-
 #include "yasmx/Arch.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes_util.h"
