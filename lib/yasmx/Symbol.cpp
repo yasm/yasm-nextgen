@@ -56,8 +56,7 @@ Symbol::DefineCheck(SourceLocation source, Diagnostic& diags) const
     {
         diags.Report(source, diag::err_symbol_redefined) << m_name;
         diags.Report(m_def_source.isValid() ? m_def_source : m_decl_source,
-                     diag::note_previous_definition)
-            << m_name;
+                     diag::note_previous_definition);
         return false;
     }
 
@@ -175,8 +174,7 @@ Symbol::CheckedDeclare(Visibility vis,
     {
         diags.Report(source, diag::err_symbol_redefined) << m_name;
         diags.Report(m_def_source.isValid() ? m_def_source : m_decl_source,
-                     diag::note_previous_definition)
-            << m_name;
+                     diag::note_previous_definition);
     }
 }
 

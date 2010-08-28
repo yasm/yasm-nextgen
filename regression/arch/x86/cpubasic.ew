@@ -4,7 +4,7 @@
 <stdin>:8:1: warning: identifier is an instruction with CPU FPU
 <stdin>:8:7: warning: label alone on a line without a colon might be in error [-Worphan-labels]
 <stdin>:11:1: error: redefinition of 'fninit'
-<stdin>:8:1: note: 'fninit' previously defined here
+<stdin>:8:1: note: previous definition is here
 <stdin>:11:7: warning: label alone on a line without a colon might be in error [-Worphan-labels]
 <stdin>:16:1: error: requires CPU 186
 <stdin>:17:1: warning: identifier is an instruction with CPU 386

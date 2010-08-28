@@ -362,7 +362,6 @@ add_error("err_symbol_undefined", "undefined symbol '%0' (first use)")
 add_note("note_symbol_undefined_once",
          "(Each undefined symbol is reported only once.)")
 add_error("err_symbol_redefined", "redefinition of '%0'")
-add_note("note_previous_definition", "'%0' previously defined here")
 add_warning("warn_extern_defined", "'%0' both defined and declared extern")
 add_note("note_extern_declaration", "'%0' declared extern here")
 add_error("err_equ_circular_reference", "circular equ reference detected")
