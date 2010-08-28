@@ -761,9 +761,6 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   // file+line+column number prefix is.
   uint64_t StartOfLocationInfo = OS.tell();
 
-  if (!Prefix.empty())
-    OS << Prefix << ": ";
-
   // If the location is specified, print out a file/line/col and include trace
   // if enabled.
   if (Info.getLocation().isValid()) {
@@ -846,6 +843,12 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
       if (DiagOpts->ShowColors)
         OS.resetColor();
     }
+  }
+  else if (!Prefix.empty()) {
+    if (DiagOpts->Microsoft)
+      OS << Prefix << " : ";
+    else
+      OS << Prefix << ": ";
   }
 
   if (DiagOpts->ShowColors) {
