@@ -26,8 +26,6 @@
 //
 #define DEBUG_TYPE "NasmParser"
 
-#include <util.h>
-
 #include <math.h>
 
 #include "llvm/ADT/APFloat.h"

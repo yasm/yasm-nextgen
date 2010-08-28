@@ -26,8 +26,6 @@
 //
 #include "yasmx/Bytes_leb128.h"
 
-#include <util.h>
-
 #include "llvm/ADT/SmallVector.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/InputBuffer.h"

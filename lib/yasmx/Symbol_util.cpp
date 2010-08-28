@@ -26,8 +26,6 @@
 //
 #include "yasmx/Symbol_util.h"
 
-#include <util.h>
-
 #include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Parse/Directive.h"

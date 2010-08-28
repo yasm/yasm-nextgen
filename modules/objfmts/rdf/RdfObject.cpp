@@ -26,8 +26,6 @@
 //
 #include "RdfObject.h"
 
-#include <util.h>
-
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Basic/Diagnostic.h"
@@ -81,7 +79,8 @@ std::vector<llvm::StringRef>
 RdfObject::getDebugFormatKeywords()
 {
     static const char* keywords[] = {"null"};
-    return std::vector<llvm::StringRef>(keywords, keywords+NELEMS(keywords));
+    size_t keywords_size = sizeof(keywords)/sizeof(keywords[0]);
+    return std::vector<llvm::StringRef>(keywords, keywords+keywords_size);
 }
 
 namespace {

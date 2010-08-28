@@ -29,8 +29,6 @@
 ///
 #include "yasmx/InputBuffer.h"
 
-#include <util.h>
-
 #include <cassert>
 
 #include "llvm/ADT/SmallVector.h"
