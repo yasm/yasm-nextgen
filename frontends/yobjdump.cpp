@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "util.h"
+#include "config.h"
 
 #include <cctype>
 #include <cstring>
@@ -167,12 +167,6 @@ static cl::opt<bool> show_all_headers("x",
 static cl::alias show_all_headers_long("all-headers",
     cl::desc("Alias for -x"),
     cl::aliasopt(show_all_headers));
-
-static void
-PrintError(const std::string& msg)
-{
-    llvm::errs() << "yobjdump: " << msg << '\n';
-}
 
 static void
 PrintListKeywordDesc(const std::string& name, const std::string& keyword)
@@ -393,12 +387,10 @@ DumpContents(const yasm::Object& object)
 }
 
 static int
-DoDump(const std::string& in_filename)
+DoDump(const std::string& in_filename,
+       yasm::SourceManager& source_mgr,
+       yasm::Diagnostic& diags)
 {
-    yasm::OffsetDiagnosticPrinter diag_printer(llvm::errs());
-    yasm::Diagnostic diags(&diag_printer);
-    yasm::SourceManager source_mgr(diags);
-    diags.setSourceManager(&source_mgr);
     yasm::FileManager file_mgr;
 
     // open the input file or STDIN (for filename of "-")
@@ -523,31 +515,15 @@ main(int argc, char* argv[])
 {
     llvm::llvm_shutdown_obj llvm_manager(false);
 
-    // Load standard modules
-    if (!yasm::LoadStandardPlugins())
-    {
-        PrintError(_("FATAL: could not load standard modules"));
-        return EXIT_FAILURE;
-    }
-
     cl::SetVersionPrinter(&PrintVersion);
     cl::ParseCommandLineOptions(argc, argv);
-
-    if (show_all_headers)
-    {
-        show_file_headers = true;
-        show_section_headers = true;
-        show_private_headers = true;
-        show_relocs = true;
-        show_symbols = true;
-    }
 
     if (show_help)
         cl::PrintHelpMessage();
 
     if (show_license)
     {
-        for (std::size_t i=0; i<NELEMS(license_msg); i++)
+        for (std::size_t i=0; i<sizeof(license_msg)/sizeof(license_msg[0]); i++)
             llvm::outs() << license_msg[i] << '\n';
         return EXIT_SUCCESS;
     }
@@ -559,10 +535,32 @@ main(int argc, char* argv[])
         return EXIT_SUCCESS;
     }
 
+    yasm::OffsetDiagnosticPrinter diag_printer(llvm::errs());
+    yasm::Diagnostic diags(&diag_printer);
+    yasm::SourceManager source_mgr(diags);
+    diags.setSourceManager(&source_mgr);
+    diag_printer.setPrefix("yobjdump");
+
+    // Load standard modules
+    if (!yasm::LoadStandardPlugins())
+    {
+        diags.Report(yasm::diag::fatal_standard_modules);
+        return EXIT_FAILURE;
+    }
+
+    if (show_all_headers)
+    {
+        show_file_headers = true;
+        show_section_headers = true;
+        show_private_headers = true;
+        show_relocs = true;
+        show_symbols = true;
+    }
+
     // Determine input filename and open input file.
     if (in_filenames.empty())
     {
-        PrintError(_("No input file specified"));
+        diags.Report(yasm::diag::fatal_no_input_files);
         return EXIT_FAILURE;
     }
 
@@ -573,14 +571,13 @@ main(int argc, char* argv[])
     {
         try
         {
-            if (DoDump(*i) != EXIT_SUCCESS)
+            if (DoDump(*i, source_mgr, diags) != EXIT_SUCCESS)
                 retval = EXIT_FAILURE;
         }
         catch (std::out_of_range& err)
         {
             llvm::errs() << *i << ": "
-                << _("out of range error while reading (corrupt file?)")
-                << '\n';
+                << "out of range error while reading (corrupt file?)\n";
             retval = EXIT_FAILURE;
         }
     }

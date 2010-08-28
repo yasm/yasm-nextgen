@@ -40,6 +40,8 @@ class OffsetDiagnosticPrinter : public DiagnosticClient
     bool m_print_diagnostic_option;
     bool m_use_colors;
 
+    std::string m_prefix;
+
 public:
     OffsetDiagnosticPrinter(llvm::raw_ostream &os,
                             bool print_diagnostic_option = true,
@@ -48,6 +50,8 @@ public:
         , m_print_diagnostic_option(print_diagnostic_option)
         , m_use_colors(use_colors)
     {}
+
+    void setPrefix(std::string value) { m_prefix = value; }
 
     virtual void HandleDiagnostic(Diagnostic::Level level,
                                   const DiagnosticInfo& info);

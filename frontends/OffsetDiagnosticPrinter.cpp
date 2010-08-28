@@ -68,6 +68,8 @@ OffsetDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level level,
         if (m_use_colors)
             m_os.resetColor();
     }
+    else if (!m_prefix.empty())
+        m_os << m_prefix << ": ";
 
     if (m_use_colors)
     {

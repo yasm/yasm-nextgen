@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "util.h"
+#include "config.h"
 
 #include <memory>
 
@@ -40,7 +40,6 @@
 #include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Parse/HeaderSearch.h"
 #include "yasmx/Parse/Parser.h"
-#include "yasmx/Support/Compose.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/System/plugin.h"
 #include "yasmx/Arch.h"
@@ -307,15 +306,6 @@ static cl::opt<ErrwarnStyle> ewmsg_style("X",
      clEnumValEnd));
 
 static void
-PrintError(const std::string& msg)
-{
-    if (ewmsg_style == EWSTYLE_VC)
-        *errfile << "yasm : " << msg << '\n';
-    else
-        *errfile << "yasm: " << msg << '\n';
-}
-
-static void
 PrintListKeywordDesc(const std::string& name, const std::string& keyword)
 {
     llvm::outs() << "    " << llvm::format("%-12s", keyword.c_str())
@@ -337,8 +327,11 @@ ListModule()
 
 template <typename T>
 static std::string
-ModuleCommonHandler(const std::string& param, const char* name,
-                    const char* name_plural, bool* listed)
+ModuleCommonHandler(const std::string& param,
+                    const char* name,
+                    const char* name_plural,
+                    bool* listed,
+                    yasm::Diagnostic& diags)
 {
     if (param.empty())
         return param;
@@ -348,15 +341,12 @@ ModuleCommonHandler(const std::string& param, const char* name,
     {
         if (param == "help")
         {
-            llvm::outs()
-                << String::Compose(_("Available yasm %1:"), name_plural)
-                << '\n';
+            llvm::outs() << "Available yasm " << name_plural << ":\n";
             ListModule<T>();
             *listed = true;
             return keyword;
         }
-        PrintError(String::Compose(_("%1: unrecognized %2 `%3'"), _("FATAL"),
-                                    name, param));
+        diags.Report(yasm::diag::fatal_unrecognized_module) << name << param;
         exit(EXIT_FAILURE);
     }
     return keyword;
@@ -624,16 +614,8 @@ do_preproc_only(void)
 }
 #endif
 static int
-do_assemble(void)
+do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
 {
-    yasm::DiagnosticOptions diag_opts;
-    diag_opts.Microsoft = (ewmsg_style == EWSTYLE_VC);
-    diag_opts.ShowOptionNames = 1;
-    diag_opts.ShowSourceRanges = 1;
-    yasm::TextDiagnosticPrinter diag_printer(*errfile, diag_opts);
-    yasm::Diagnostic diags(&diag_printer);
-    yasm::SourceManager source_mgr(diags);
-    diags.setSourceManager(&source_mgr);
     // Apply warning settings
     ApplyWarningSettings(diags);
 
@@ -755,7 +737,7 @@ main(int argc, char* argv[])
 
     if (show_license)
     {
-        for (std::size_t i=0; i<NELEMS(license_msg); i++)
+        for (std::size_t i=0; i<sizeof(license_msg)/sizeof(license_msg[0]); i++)
             llvm::outs() << license_msg[i] << '\n';
         return EXIT_SUCCESS;
     }
@@ -775,18 +757,28 @@ main(int argc, char* argv[])
         errfile.reset(new llvm::raw_fd_ostream(error_filename.c_str(), err));
         if (!err.empty())
         {
-            PrintError(String::Compose(_("could not open file `%1': %2"),
-                                        error_filename, err));
+            llvm::errs() << "yasm: could not open file '" << error_filename
+                         << "': " << err << '\n';
             return EXIT_FAILURE;
         }
     }
     else
         errfile.reset(new llvm::raw_stderr_ostream);
 
+    yasm::DiagnosticOptions diag_opts;
+    diag_opts.Microsoft = (ewmsg_style == EWSTYLE_VC);
+    diag_opts.ShowOptionNames = 1;
+    diag_opts.ShowSourceRanges = 1;
+    yasm::TextDiagnosticPrinter diag_printer(*errfile, diag_opts);
+    yasm::Diagnostic diags(&diag_printer);
+    yasm::SourceManager source_mgr(diags);
+    diags.setSourceManager(&source_mgr);
+    diag_printer.setPrefix("yasm");
+
     // Load standard modules
     if (!yasm::LoadStandardPlugins())
     {
-        PrintError(_("FATAL: could not load standard modules"));
+        diags.Report(yasm::diag::fatal_standard_modules);
         return EXIT_FAILURE;
     }
 
@@ -796,23 +788,22 @@ main(int argc, char* argv[])
          end=plugin_names.end(); i != end; ++i)
     {
         if (!yasm::LoadPlugin(*i))
-            PrintError(String::Compose(
-                _("warning: could not load plugin `%s'"), *i));
+            diags.Report(yasm::diag::warn_plugin_load) << *i;
     }
 #endif
 
     // Handle keywords (including "help").
     bool listed = false;
     arch_keyword = ModuleCommonHandler<yasm::ArchModule>
-        (arch_keyword, _("architecture"), _("architectures"), &listed);
+        (arch_keyword, "architecture", "architectures", &listed, diags);
     parser_keyword = ModuleCommonHandler<yasm::ParserModule>
-        (parser_keyword, _("parser"), _("parsers"), &listed);
+        (parser_keyword, "parser", "parsers", &listed, diags);
     objfmt_keyword = ModuleCommonHandler<yasm::ObjectFormatModule>
-        (objfmt_keyword, _("object format"), _("object formats"), &listed);
+        (objfmt_keyword, "object format", "object formats", &listed, diags);
     dbgfmt_keyword = ModuleCommonHandler<yasm::DebugFormatModule>
-        (dbgfmt_keyword, _("debug format"), _("debug formats"), &listed);
+        (dbgfmt_keyword, "debug format", "debug formats", &listed, diags);
     listfmt_keyword = ModuleCommonHandler<yasm::ListFormatModule>
-        (listfmt_keyword, _("list format"), _("list formats"), &listed);
+        (listfmt_keyword, "list format", "list formats", &listed, diags);
     if (listed)
         return EXIT_SUCCESS;
 
@@ -830,9 +821,8 @@ main(int argc, char* argv[])
     {
         std::auto_ptr<yasm::ArchModule> arch_auto =
             yasm::LoadModule<yasm::ArchModule>(arch_keyword);
-        llvm::outs() << String::Compose(_("Available %1 for %2 `%3':"),
-                                        _("machines"), _("architecture"),
-                                        arch_keyword) << '\n';
+        llvm::outs() << "Available machines for architecture '"
+                     << arch_keyword << "':\n";
         yasm::ArchModule::MachineNames machines = arch_auto->getMachines();
 
         for (yasm::ArchModule::MachineNames::const_iterator
@@ -845,7 +835,7 @@ main(int argc, char* argv[])
     // as we want to allow e.g. "yasm --license".
     if (in_filename.empty())
     {
-        PrintError(_("No input files specified"));
+        diags.Report(yasm::diag::fatal_no_input_files);
         return EXIT_FAILURE;
     }
 
@@ -870,6 +860,6 @@ main(int argc, char* argv[])
             listfmt_keyword = "nasm";
     }
 
-    return do_assemble();
+    return do_assemble(source_mgr, diags);
 }
 

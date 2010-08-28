@@ -186,6 +186,10 @@ add_fatal("fatal_objfmt_machine_mismatch",
           "object format '%0' does not support architecture '%1' machine '%2'")
 add_warning("warn_unknown_warning_option", "unknown warning option '%0'")
 add_fatal("fatal_file_open", "could not open file '%0'")
+add_fatal("fatal_standard_modules", "could not load standard modules")
+add_warning("warn_plugin_load", "could not load plugin '%0'")
+add_fatal("fatal_no_input_files", "no input files specified")
+add_fatal("fatal_unrecognized_module", "unrecognized %0 '%1'")
 
 # Source manager
 add_fatal("err_cannot_open_file", "cannot open file '%0': %1")
