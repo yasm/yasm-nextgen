@@ -1,0 +1,4 @@
+<stdin>:13:9: warning: unknown escape sequence '\ '
+<stdin>:43:9: warning: expected hex digit after \x
+<stdin>:43:13: warning: unknown escape sequence '\y'
+<stdin>:49:36: warning: unknown escape sequence '\J'
