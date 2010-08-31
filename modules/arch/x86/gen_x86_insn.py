@@ -1068,9 +1068,9 @@ add_group("movabs",
 add_insn("movabs", "movabs", parser="gas")
 
 #
-# Move with sign/zero extend
+# Move with sign extend
 #
-add_group("movszx",
+add_group("movsx",
     suffix="b",
     cpu=["386"],
     modifiers=["Op1Add"],
@@ -1078,7 +1078,7 @@ add_group("movszx",
     opcode=[0x0F, 0x00],
     operands=[Operand(type="Reg", size=16, dest="Spare"),
               Operand(type="RM", size=8, relaxed=True, dest="EA")])
-add_group("movszx",
+add_group("movsx",
     suffix="b",
     cpu=["386"],
     modifiers=["Op1Add"],
@@ -1086,14 +1086,14 @@ add_group("movszx",
     opcode=[0x0F, 0x00],
     operands=[Operand(type="Reg", size=32, dest="Spare"),
               Operand(type="RM", size=8, dest="EA")])
-add_group("movszx",
+add_group("movsx",
     suffix="b",
     modifiers=["Op1Add"],
     opersize=64,
     opcode=[0x0F, 0x00],
     operands=[Operand(type="Reg", size=64, dest="Spare"),
               Operand(type="RM", size=8, dest="EA")])
-add_group("movszx",
+add_group("movsx",
     suffix="w",
     cpu=["386"],
     modifiers=["Op1Add"],
@@ -1101,26 +1101,27 @@ add_group("movszx",
     opcode=[0x0F, 0x01],
     operands=[Operand(type="Reg", size=32, dest="Spare"),
               Operand(type="RM", size=16, dest="EA")])
-add_group("movszx",
+add_group("movsx",
     suffix="w",
     modifiers=["Op1Add"],
     opersize=64,
     opcode=[0x0F, 0x01],
     operands=[Operand(type="Reg", size=64, dest="Spare"),
               Operand(type="RM", size=16, dest="EA")])
+# Move with sign-extend doubleword (gas allows unsuffixed)
+add_group("movsx",
+    parsers=["gas"],
+    opersize=64,
+    opcode=[0x63],
+    operands=[Operand(type="Reg", size=64, dest="Spare"),
+              Operand(type="RM", size=32, dest="EA")])
 
-add_insn("movsbw", "movszx", suffix="b", modifiers=[0xBE])
-add_insn("movsbl", "movszx", suffix="b", modifiers=[0xBE])
-add_insn("movswl", "movszx", suffix="w", modifiers=[0xBE])
-add_insn("movsbq", "movszx", suffix="b", modifiers=[0xBE], only64=True)
-add_insn("movswq", "movszx", suffix="w", modifiers=[0xBE], only64=True)
-add_insn("movsx", "movszx", modifiers=[0xBE])
-add_insn("movzbw", "movszx", suffix="b", modifiers=[0xB6])
-add_insn("movzbl", "movszx", suffix="b", modifiers=[0xB6])
-add_insn("movzwl", "movszx", suffix="w", modifiers=[0xB6])
-add_insn("movzbq", "movszx", suffix="b", modifiers=[0xB6], only64=True)
-add_insn("movzwq", "movszx", suffix="w", modifiers=[0xB6], only64=True)
-add_insn("movzx", "movszx", modifiers=[0xB6])
+add_insn("movsbw", "movsx", suffix="b", modifiers=[0xBE])
+add_insn("movsbl", "movsx", suffix="b", modifiers=[0xBE])
+add_insn("movswl", "movsx", suffix="w", modifiers=[0xBE])
+add_insn("movsbq", "movsx", suffix="b", modifiers=[0xBE], only64=True)
+add_insn("movswq", "movsx", suffix="w", modifiers=[0xBE], only64=True)
+add_insn("movsx", "movsx", modifiers=[0xBE])
 
 #
 # Move with sign-extend doubleword (64-bit mode only)
@@ -1134,6 +1135,55 @@ add_group("movsxd",
 
 add_insn("movslq", "movsxd", suffix="l")
 add_insn("movsxd", "movsxd", parser="nasm")
+
+#
+# Move with zero extend
+#
+add_group("movzx",
+    suffix="b",
+    cpu=["386"],
+    modifiers=["Op1Add"],
+    opersize=16,
+    opcode=[0x0F, 0x00],
+    operands=[Operand(type="Reg", size=16, dest="Spare"),
+              Operand(type="RM", size=8, relaxed=True, dest="EA")])
+add_group("movzx",
+    suffix="b",
+    cpu=["386"],
+    modifiers=["Op1Add"],
+    opersize=32,
+    opcode=[0x0F, 0x00],
+    operands=[Operand(type="Reg", size=32, dest="Spare"),
+              Operand(type="RM", size=8, dest="EA")])
+add_group("movzx",
+    suffix="b",
+    modifiers=["Op1Add"],
+    opersize=64,
+    opcode=[0x0F, 0x00],
+    operands=[Operand(type="Reg", size=64, dest="Spare"),
+              Operand(type="RM", size=8, dest="EA")])
+add_group("movzx",
+    suffix="w",
+    cpu=["386"],
+    modifiers=["Op1Add"],
+    opersize=32,
+    opcode=[0x0F, 0x01],
+    operands=[Operand(type="Reg", size=32, dest="Spare"),
+              Operand(type="RM", size=16, dest="EA")])
+add_group("movzx",
+    suffix="w",
+    modifiers=["Op1Add"],
+    opersize=64,
+    opcode=[0x0F, 0x01],
+    operands=[Operand(type="Reg", size=64, dest="Spare"),
+              Operand(type="RM", size=16, dest="EA")])
+
+add_insn("movzbw", "movzx", suffix="b", modifiers=[0xB6])
+add_insn("movzbl", "movzx", suffix="b", modifiers=[0xB6])
+add_insn("movzwl", "movzx", suffix="w", modifiers=[0xB6])
+add_insn("movzbq", "movzx", suffix="b", modifiers=[0xB6], only64=True)
+add_insn("movzwq", "movzx", suffix="w", modifiers=[0xB6], only64=True)
+add_insn("movzx", "movzx", modifiers=[0xB6])
 
 #
 # Push instructions
