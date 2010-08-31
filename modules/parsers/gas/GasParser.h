@@ -90,6 +90,20 @@ public:
 
 private:
 
+    /// Get the local label name for the given numeric index + suffix.
+    /// @param name     label name (output)
+    /// @param num      numeric index string
+    /// @param suffix   suffix (e.g. 'f', 'b' for reference, ':' for
+    ///                 definition)
+    /// @param source   source location of numeric index
+    /// @param inc      increment label index (typically used for definition).
+    /// @return True on success, false on error.
+    bool getLocalLabel(llvm::SmallVectorImpl<char>& name,
+                       llvm::StringRef num,
+                       char suffix,
+                       SourceLocation source,
+                       bool inc = false);
+
     bool ParseLine();
     void setDebugFile(llvm::StringRef filename,
                       SourceRange filename_source,
@@ -192,7 +206,7 @@ private:
 
     // Index of local labels; what's stored here is the /next/ index,
     // so these are all 0 at start.
-    unsigned long m_local[10];
+    llvm::SmallVector<unsigned long, 10> m_local;
 
     // Start of comment.
     SourceLocation m_comment_start;

@@ -153,9 +153,7 @@ GasParser::Parse(Object& object, Directives& dirs, Diagnostic& diags)
     m_dir_line = 0;
     m_seen_line_marker = false;
 
-    for (int i=0; i<10; i++)
-        m_local[i] = 0;
-
+    m_local.clear();
     m_cond_stack.clear();
 
     // Set up arch-sized directives

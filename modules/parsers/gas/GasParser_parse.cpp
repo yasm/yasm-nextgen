@@ -57,6 +57,36 @@ using namespace yasm;
 using namespace yasm::parser;
 
 bool
+GasParser::getLocalLabel(llvm::SmallVectorImpl<char>& name,
+                         llvm::StringRef num,
+                         char suffix,
+                         SourceLocation source,
+                         bool inc)
+{
+    // GasNumericParser needs a terminated StringRef; ensure it gets one.
+    llvm::SmallString<20> refnum;
+    refnum += num;
+    refnum.push_back('\0');
+    GasNumericParser numparse(refnum.str().substr(0, num.size()),
+                              m_token.getLocation(), m_preproc);
+    if (numparse.hadError() || !numparse.isInteger())
+        return false;
+
+    IntNum val;
+    numparse.getIntegerValue(&val);
+    name.push_back('L');
+    val.getStr(name);
+    name.push_back('\001');
+    unsigned long ndx = val.getUInt();
+    if (ndx >= m_local.size())
+        m_local.resize(ndx+1);
+    IntNum(m_local[ndx] + (suffix == 'b' ? 0 : 1)).getStr(name);
+    if (inc)
+        ++m_local[ndx];
+    return true;
+}
+
+bool
 GasParser::ParseLine()
 {
 next:
@@ -155,21 +185,16 @@ next:
         }
         case GasToken::numeric_constant:
         {
-            // If it's a simple integer from 0-9 and followed by a colon,
+            // If it's an integer from 0-9 and followed by a colon,
             // it's a local label.
-            if (m_token.getLength() != 1 ||
-                !isdigit(m_token.getLiteralData()[0]) ||
-                NextToken().isNot(Token::colon))
+            llvm::SmallString<20> labelname;
+            if (NextToken().isNot(Token::colon) ||
+                !getLocalLabel(labelname, m_token.getLiteral(), ':',
+                               m_token.getLocation(), true))
             {
                 Diag(m_token, diag::err_expected_insn_or_label_after_eol);
                 return false;
             }
-            char label = m_token.getLiteralData()[0];
-            // increment label index
-            m_local[label-'0']++;
-            // build local label name and define it
-            char labelname[30];
-            std::sprintf(labelname, "L%c\001%lu", label, m_local[label-'0']);
             DefineLabel(labelname, m_token.getLocation());
             ConsumeToken();
             ConsumeToken(); // also eat the :
@@ -1888,8 +1913,21 @@ GasParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
         }
         case GasToken::numeric_constant:
         {
-            GasNumericParser num(m_token.getLiteral(), m_token.getLocation(),
-                                 m_preproc);
+            // handle forward/backward local label reference
+            llvm::StringRef literal = m_token.getLiteral();
+            llvm::SmallString<20> llname;
+            if ((literal.back() == 'b' || literal.back() == 'f') &&
+                getLocalLabel(llname, literal.substr(0, literal.size()-1),
+                                  literal.back(), m_token.getLocation()))
+            {
+                SourceLocation id_source = ConsumeToken();
+                SymbolRef sym = m_object->getSymbol(llname);
+                sym->Use(id_source);
+                e = Expr(sym, id_source);
+                break;
+            }
+
+            GasNumericParser num(literal, m_token.getLocation(), m_preproc);
             SourceLocation num_source = ConsumeToken();
             if (num.hadError())
                 e = Expr(IntNum(0), num_source);
