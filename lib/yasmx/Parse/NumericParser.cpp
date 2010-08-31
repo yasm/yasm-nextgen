@@ -73,7 +73,15 @@ NumericParser::getFloatValue(const llvm::fltSemantics& format,
     float_chars.push_back('\0');
 
     llvm::APFloat val(format, llvm::APFloat::fcZero, false);
-  
+
+    // avoid assert in APFloat on empty string
+    if (float_chars.size() == 1)
+    {
+        if (is_exact)
+            *is_exact = true;
+        return val;
+    }
+
     llvm::APFloat::opStatus status =
         val.convertFromString(&float_chars[0],
                               llvm::APFloat::rmNearestTiesToEven);
