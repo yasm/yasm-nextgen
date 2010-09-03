@@ -1916,7 +1916,9 @@ GasParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
             // handle forward/backward local label reference
             llvm::StringRef literal = m_token.getLiteral();
             llvm::SmallString<20> llname;
-            if ((literal.back() == 'b' || literal.back() == 'f') &&
+            bool ishex = (literal.size() > 2 && literal[0] == '0' &&
+                          (literal[1] == 'x' || literal[1] == 'X'));
+            if (!ishex && (literal.back() == 'b' || literal.back() == 'f') &&
                 getLocalLabel(llname, literal.substr(0, literal.size()-1),
                                   literal.back(), m_token.getLocation()))
             {
