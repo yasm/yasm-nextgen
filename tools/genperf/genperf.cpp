@@ -31,7 +31,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
+#include <ios>
+#include <ctype.h>
 #include "perfect.h"
 
 class Keyword

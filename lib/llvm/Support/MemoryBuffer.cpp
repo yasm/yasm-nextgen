@@ -32,6 +32,7 @@
 #include <io.h>
 #endif
 #include <fcntl.h>
+#include <new>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
