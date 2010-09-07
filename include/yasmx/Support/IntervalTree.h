@@ -167,6 +167,7 @@ namespace yasm
 
 template <typename T>
 IntervalTreeNode<T>::IntervalTreeNode(long l, long h)
+    : data(0)
 {
     if (l < h)
     {
@@ -269,7 +270,7 @@ IntervalTree<T>::LeftRotate(IntervalTreeNode<T>* x)
 
     x->maxHigh=Max(x->left->maxHigh, Max(x->right->maxHigh, x->high));
     y->maxHigh=Max(x->maxHigh, Max(y->right->maxHigh, y->high));
-#ifdef CHECK_INTERVAL_TREE_ASSUMPTIONS
+#ifdef YASM_INTERVAL_TREE_CHECK_ASSUMPTIONS
     CheckAssumptions();
 #else
     assert(!m_nil->red);
@@ -333,7 +334,7 @@ IntervalTree<T>::RightRotate(IntervalTreeNode<T>* y)
 
     y->maxHigh=Max(y->left->maxHigh, Max(y->right->maxHigh, y->high));
     x->maxHigh=Max(x->left->maxHigh, Max(y->maxHigh, x->high));
-#ifdef CHECK_INTERVAL_TREE_ASSUMPTIONS
+#ifdef YASM_INTERVAL_TREE_CHECK_ASSUMPTIONS
     CheckAssumptions();
 #else
     assert(!m_nil->red);
@@ -408,7 +409,7 @@ IntervalTree<T>::FixUpMaxHigh(IntervalTreeNode<T>* x)
         x->maxHigh=Max(x->high, Max(x->left->maxHigh, x->right->maxHigh));
         x=x->parent;
     }
-#ifdef CHECK_INTERVAL_TREE_ASSUMPTIONS
+#ifdef YASM_INTERVAL_TREE_CHECK_ASSUMPTIONS
     CheckAssumptions();
 #endif
 }
@@ -494,7 +495,7 @@ IntervalTree<T>::Insert(long low, long high, T data)
     }
     m_root->left->red=false;
 
-#ifdef CHECK_INTERVAL_TREE_ASSUMPTIONS
+#ifdef YASM_INTERVAL_TREE_CHECK_ASSUMPTIONS
     CheckAssumptions();
 #else
     assert(!m_nil->red);
@@ -761,7 +762,7 @@ IntervalTree<T>::DeleteFixUp(IntervalTreeNode<T>* x)
     }
     x->red=false;
 
-#ifdef CHECK_INTERVAL_TREE_ASSUMPTIONS
+#ifdef YASM_INTERVAL_TREE_CHECK_ASSUMPTIONS
     CheckAssumptions();
 #else
     assert(!m_nil->red);
@@ -831,7 +832,7 @@ IntervalTree<T>::DeleteNode(IntervalTreeNode<T>* z, long& low, long& high)
         else
             y->red = z->red;
         delete z;
-#ifdef CHECK_INTERVAL_TREE_ASSUMPTIONS
+#ifdef YASM_INTERVAL_TREE_CHECK_ASSUMPTIONS
         CheckAssumptions();
 #else
         assert(!m_nil->red);
@@ -844,7 +845,7 @@ IntervalTree<T>::DeleteNode(IntervalTreeNode<T>* z, long& low, long& high)
         if (!(y->red))
             DeleteFixUp(x);
         delete y;
-#ifdef CHECK_INTERVAL_TREE_ASSUMPTIONS
+#ifdef YASM_INTERVAL_TREE_CHECK_ASSUMPTIONS
         CheckAssumptions();
 #else
         assert(!m_nil->red);
@@ -949,7 +950,7 @@ IntervalTree<T>::Verify(bool condition, const char* condstr, const char* file,
 {
     if (!condition)
     {
-        llvm::errs() << "Assumption \"" << condstr << "\"" << '\n';
+        llvm::errs() << "Assumption \"" << condstr << "\"" << '\n'
                      << "Failed in file " << file << ": at line:" << line
                      << '\n';
         abort();
@@ -986,7 +987,7 @@ IntervalTree<T>::CheckMaxHighFields(IntervalTreeNode<T>* x) const
     if (x != m_nil)
     {
         CheckMaxHighFields(x->left);
-        if(CheckMaxHighFieldsHelper(x, x->maxHigh, false))
+        if(!CheckMaxHighFieldsHelper(x, x->maxHigh, false))
         {
             llvm::errs() << "error found in CheckMaxHighFields.\n";
             abort();
