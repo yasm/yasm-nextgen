@@ -82,6 +82,8 @@ public:
     void setSection(Section* sect) { m_sect = sect; }
     void setName(ElfStringIndex index) { m_name_index = index; }
     void setSectionIndex(ElfSectionIndex index) { m_index = index; }
+
+    ElfSymbolVis getVisibility() const { return m_vis; }
     void setVisibility(ElfSymbolVis vis) { m_vis = ELF_ST_VISIBILITY(vis); }
 
     ElfSymbolBinding getBinding() const { return m_bind; }

@@ -108,6 +108,7 @@ public:
     void DirType(DirectiveInfo& info, Diagnostic& diags);
     void DirSize(DirectiveInfo& info, Diagnostic& diags);
     void DirWeak(DirectiveInfo& info, Diagnostic& diags);
+    void DirHidden(DirectiveInfo& info, Diagnostic& diags);
     void DirIdent(DirectiveInfo& info, Diagnostic& diags);
 
     ElfConfig m_config;                     // ELF configuration
