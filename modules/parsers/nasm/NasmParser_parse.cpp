@@ -528,6 +528,10 @@ NasmParser::ParseLine()
         case NasmToken::kw_times: // TIMES expr exp
             return ParseTimes(ConsumeToken());
         case NasmToken::identifier:
+            // check for keyword
+            if (CheckKeyword(m_token.getIdentifierInfo()))
+                return ParseLine();  // recognized, reparse
+            //@fallthrough@
         case NasmToken::label:
         {
             // Might be any one of the following cases:
