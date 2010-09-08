@@ -244,6 +244,7 @@ public:
     bool CreateTerms(Optimizer* optimize, Diagnostic& diags);
     bool RecalcNormal(Diagnostic& diags);
 
+    std::string getName() const;
     void Write(YAML::Emitter& out) const;
     void Dump() const;
 
@@ -468,7 +469,7 @@ Span::RecalcNormal(Diagnostic& diags)
     if (m_new_val == LONG_MAX)
         m_active = INACTIVE;
 
-    DEBUG(llvm::errs() << "updated SPAN@" << this << " newval to "
+    DEBUG(llvm::errs() << "updated " << getName() << " newval to "
           << m_new_val << '\n');
 
     // If id<=0, flag update on any change
@@ -480,6 +481,15 @@ Span::RecalcNormal(Diagnostic& diags)
 
 Span::~Span()
 {
+}
+
+std::string
+Span::getName() const
+{
+    llvm::SmallString<32> ss;
+    llvm::raw_svector_ostream oss(ss);
+    oss << "SPAN{" << m_bc.getIndex() << ',' << m_id << '}';
+    return oss.str();
 }
 
 void
@@ -525,7 +535,7 @@ Span::Write(YAML::Emitter& out) const
     for (BacktraceSpans::const_iterator i=m_backtrace.begin(),
          end=m_backtrace.end(); i != end; ++i)
     {
-        out << YAML::Alias("SPAN@" + llvm::Twine::utohexstr((uint64_t)(*i)));
+        out << YAML::Alias((*i)->getName());
     }
     out << YAML::EndSeq;
 
@@ -572,7 +582,7 @@ Optimizer::Write(YAML::Emitter& out) const
     for (Spans::const_iterator i=m_spans.begin(), end=m_spans.end();
          i != end; ++i)
     {
-        out << YAML::Alias("SPAN@" + llvm::Twine::utohexstr((uint64_t)(*i)));
+        out << YAML::Alias((*i)->getName());
         (*i)->Write(out);
     }
     out << YAML::EndSeq;
@@ -582,7 +592,7 @@ Optimizer::Write(YAML::Emitter& out) const
     for (SpanQueue::const_iterator j=m_QA.begin(), end=m_QA.end();
          j != end; ++j)
     {
-        out << YAML::Alias("SPAN@" + llvm::Twine::utohexstr((uint64_t)(*j)));
+        out << YAML::Alias((*j)->getName());
     }
     out << YAML::EndSeq;
 
@@ -591,7 +601,7 @@ Optimizer::Write(YAML::Emitter& out) const
     for (SpanQueue::const_iterator k=m_QB.begin(), end=m_QB.end();
          k != end; ++k)
     {
-        out << YAML::Alias("SPAN@" + llvm::Twine::utohexstr((uint64_t)(*k)));
+        out << YAML::Alias((*k)->getName());
     }
     out << YAML::EndSeq;
 
@@ -701,7 +711,8 @@ Optimizer::ExpandTerm(IntervalTreeNode<Span::Term*> * node, long len_diff)
     if (span->m_active == Span::INACTIVE)
         return;
 
-    DEBUG(llvm::errs() << "expand SPAN@" << span << " by " << len_diff << '\n');
+    DEBUG(llvm::errs() << "expand " << span->getName() << " by " << len_diff
+          << '\n');
 
     // Update term length
     if (term->m_loc.bc)
@@ -718,27 +729,27 @@ Optimizer::ExpandTerm(IntervalTreeNode<Span::Term*> * node, long len_diff)
         term->m_new_val += len_diff;
     else
         term->m_new_val -= len_diff;
-    DEBUG(llvm::errs() << "updated SPAN@" << span << " term "
+    DEBUG(llvm::errs() << "updated " << span->getName() << " term "
           << (term-&span->m_span_terms.front())
           << " newval to " << term->m_new_val << '\n');
 
     // If already on Q, don't re-add
     if (span->m_active == Span::ON_Q)
     {
-        DEBUG(llvm::errs() << "SPAN@" << span << " already on queue\n");
+        DEBUG(llvm::errs() << span->getName() << " already on queue\n");
         return;
     }
 
     // Update term and check against thresholds
     if (!span->RecalcNormal(m_diags))
     {
-        DEBUG(llvm::errs() << "SPAN@" << span
+        DEBUG(llvm::errs() << span->getName()
               << " didn't change, not readded\n");
         return; // didn't exceed thresholds, we're done
     }
 
     // Exceeded thresholds, need to add to Q for expansion
-    DEBUG(llvm::errs() << "SPAN@" << span << " added back on queue\n");
+    DEBUG(llvm::errs() << span->getName() << " added back on queue\n");
     if (span->m_id <= 0)
         m_QA.push_back(span);
     else
@@ -777,7 +788,7 @@ Optimizer::Step1b()
                 continue;
             }
         }
-        DEBUG(llvm::errs() << "updated SPAN@" << span << " curval from "
+        DEBUG(llvm::errs() << "updated " << span->getName() << " curval from "
               << span->m_cur_val << " to " << span->m_new_val << '\n');
         span->m_cur_val = span->m_new_val;
         ++spani;
@@ -803,7 +814,7 @@ Optimizer::Step1d()
             assert(ok && "could not calculate bc distance");
             term->m_cur_val = term->m_new_val;
             term->m_new_val = intn.getInt();
-            DEBUG(llvm::errs() << "updated SPAN@" << span << " term "
+            DEBUG(llvm::errs() << "updated " << span->getName() << " term "
                   << (term-span->m_span_terms.begin())
                   << " newval to " << term->m_new_val << '\n');
         }
@@ -911,8 +922,9 @@ Optimizer::Step2()
             for (Span::Terms::iterator term=span->m_span_terms.begin(),
                  endterm=span->m_span_terms.end(); term != endterm; ++term)
                 term->m_cur_val = term->m_new_val;
-            DEBUG(llvm::errs() << "updated SPAN@" << span << " curval from "
-                  << span->m_cur_val << " to " << span->m_new_val << '\n');
+            DEBUG(llvm::errs() << "updated " << span->getName()
+                  << " curval from " << span->m_cur_val << " to "
+                  << span->m_new_val << '\n');
             span->m_cur_val = span->m_new_val;
         }
         else
@@ -922,7 +934,8 @@ Optimizer::Step2()
         if (len_diff == 0)
             continue;   // didn't increase in size
 
-        DEBUG(llvm::errs() << "BC@" << &span->m_bc << " expansion by "
+        DEBUG(llvm::errs() << "BC@" << &span->m_bc << " ("
+              << span->m_bc.getIndex() << ") expansion by "
               << len_diff << ":\n");
         // Iterate over all spans dependent across the bc just expanded
         m_itree.Enumerate(static_cast<long>(span->m_bc.getIndex()),
@@ -963,10 +976,15 @@ Optimizer::Step2()
                 os->m_new_val + os->m_bc->getTotalLen() - old_next_offset;
             len_diff = os->m_bc->getTailLen() - orig_len;
             if (len_diff != 0)
+            {
+                DEBUG(llvm::errs() << "BC@" << os->m_bc << " ("
+                      << os->m_bc->getIndex() << ") offset setter change by "
+                      << len_diff << ":\n");
                 m_itree.Enumerate(static_cast<long>(os->m_bc->getIndex()),
                                   static_cast<long>(os->m_bc->getIndex()),
                                   BIND::bind(&Optimizer::ExpandTerm, this, _1,
                                              len_diff));
+            }
 
             os->m_cur_val = os->m_new_val;
             ++os;
