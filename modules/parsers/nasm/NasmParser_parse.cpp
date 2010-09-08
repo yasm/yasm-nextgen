@@ -130,27 +130,27 @@ NasmParser::CheckPseudoInsn(IdentifierInfo* ii)
     unsigned int idx = 0;
     switch (name[0])
     {
-        case 'b':   idx = DB; ++name; break;
-        case 'h':
-            if (name[1] != 'w')
+        case 'b': case 'B': idx = DB; ++name; break;
+        case 'h': case 'H':
+            if (name[1] != 'w' && name[1] != 'W')
                 return;
             idx = DHW;
             name += 2;
             break;
-        case 'w':   idx = DW; ++name; break;
-        case 'd':
+        case 'w': case 'W': idx = DW; ++name; break;
+        case 'd': case 'D':
             idx = DD;
             ++name;
-            if (name[0] == 'q')
+            if (name[0] == 'q' || name[0] == 'Q')
             {
                 idx = DO;       // ddq is an alias for do
                 ++name;
             }
             break;
-        case 'q':   idx = DQ; ++name; break;
-        case 't':   idx = DT; ++name; break;
-        case 'o':   idx = DO; ++name; break;
-        case 'y':   idx = DY; ++name; break;
+        case 'q': case 'Q': idx = DQ; ++name; break;
+        case 't': case 'T': idx = DT; ++name; break;
+        case 'o': case 'O': idx = DO; ++name; break;
+        case 'y': case 'Y': idx = DY; ++name; break;
         default:    return;
     }
 
