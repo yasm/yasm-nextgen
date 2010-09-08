@@ -659,13 +659,13 @@ Optimizer::ITreeAdd(Span& span, Span::Term& term)
 
     if (precbc_index < precbc2_index)
     {
-        low = precbc_index+1;
-        high = precbc2_index;
+        low = precbc_index;
+        high = precbc2_index-1;
     }
     else if (precbc_index > precbc2_index)
     {
-        low = precbc2_index+1;
-        high = precbc_index;
+        low = precbc2_index;
+        high = precbc_index-1;
     }
     else
         return;     // difference is same bc - always 0!
