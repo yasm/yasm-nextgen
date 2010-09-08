@@ -1588,6 +1588,10 @@ NasmParser::ParseSymbol(IdentifierInfo* ii, bool* local)
     // check for local labels
     if (len > 1 && name[0] == '.')
     {
+        // set local flag if possible
+        if (local)
+            *local = true;
+
         // check for special labels like ..start
         if (len > 2 && name[1] == '.')
         {
@@ -1608,9 +1612,6 @@ NasmParser::ParseSymbol(IdentifierInfo* ii, bool* local)
         if (m_locallabel_base.empty())
             Diag(m_token, diag::warn_no_nonlocal);
 
-        // set local flag if possible
-        if (local)
-            *local = true;
         // don't try to cache local labels
         return m_object->getSymbol(m_locallabel_base + name);
     }
