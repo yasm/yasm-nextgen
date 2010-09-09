@@ -1573,53 +1573,56 @@ NasmParser::ParseSymbol(IdentifierInfo* ii, bool* local)
 {
     const char* name = ii->getNameStart();
     unsigned int len = ii->getLength();
+    bool islocal = false;
 
+    // skip over initial $ (forced identifier)
+    if (name[0] == '$')
+    {
+        ++name;
+        --len;
+    }
+
+    // check for local labels
+    if (len > 1 && name[0] == '.')
+        islocal = true;
+    // return local flag (if possible)
     if (local)
-        *local = false;
+        *local = islocal;
 
     // see if there's a cached version
     if (ii->isSymbol())
         return ii->getSymbol();
 
-    // skip over initial $ (forced identifier)
-    if (name[0] == '$')
-        ++name;
-
-    // check for local labels
-    if (len > 1 && name[0] == '.')
+    if (!islocal)
     {
-        // set local flag if possible
-        if (local)
-            *local = true;
+        // just a normal label
+        SymbolRef sym = m_object->getSymbol(name);
+        ii->setSymbol(sym);    // cache it
+        return sym;
+    }
 
-        // check for special labels like ..start
-        if (len > 2 && name[1] == '.')
+    // check for special labels like ..start
+    if (len > 2 && name[1] == '.')
+    {
+        // check for non-local ..@label
+        if (len > 3 && name[2] == '@')
         {
-            // check for non-local ..@label
-            if (len > 3 && name[2] == '@')
-            {
-                SymbolRef sym = m_object->getSymbol(name);
-                ii->setSymbol(sym);    // cache it
-                return sym;
-            }
-
-            // otherwise it's a special symbol; skip the ".." portion
-            SymbolRef sym = m_object->FindSpecialSymbol(name+2);
+            SymbolRef sym = m_object->getSymbol(name);
             ii->setSymbol(sym);    // cache it
             return sym;
         }
 
-        if (m_locallabel_base.empty())
-            Diag(m_token, diag::warn_no_nonlocal);
-
-        // don't try to cache local labels
-        return m_object->getSymbol(m_locallabel_base + name);
+        // otherwise it's a special symbol; skip the ".." portion
+        SymbolRef sym = m_object->FindSpecialSymbol(name+2);
+        ii->setSymbol(sym);    // cache it
+        return sym;
     }
 
-    // just a normal label
-    SymbolRef sym = m_object->getSymbol(name);
-    ii->setSymbol(sym);    // cache it
-    return sym;
+    if (m_locallabel_base.empty())
+        Diag(m_token, diag::warn_no_nonlocal);
+
+    // don't try to cache local labels
+    return m_object->getSymbol(m_locallabel_base + name);
 }
 
 void
