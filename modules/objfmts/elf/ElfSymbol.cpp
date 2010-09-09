@@ -56,7 +56,6 @@ ElfSymbol::ElfSymbol(const ElfConfig&           config,
     : m_sect(0)
     , m_name_index(0)
     , m_value(0)
-    , m_size(0)
     , m_symindex(index)
 {
     InputBuffer inbuf(in);
@@ -99,7 +98,6 @@ ElfSymbol::ElfSymbol()
     : m_sect(0)
     , m_name_index(0)
     , m_value(0)
-    , m_size(0)
     , m_index(SHN_UNDEF)
     , m_bind(STB_LOCAL)
     , m_type(STT_NOTYPE)
@@ -134,7 +132,10 @@ ElfSymbol::CreateSymbol(Object& object, const StringTable& strtab) const
 
     if (m_index == SHN_ABS)
     {
-        sym->DefineEqu(m_size);
+        if (hasSize())
+            sym->DefineEqu(m_size);
+        else
+            sym->DefineEqu(Expr(0));
     }
     else if (m_index == SHN_COMMON)
     {
@@ -306,7 +307,7 @@ ElfSymbol::Write(Bytes& bytes, const ElfConfig& config)
     if (config.cls == ELFCLASS32)
     {
         Write32(bytes, m_value);
-        Write32(bytes, m_size.getIntNum());
+        Write32(bytes, hasSize() ? m_size.getIntNum() : 0);
     }
 
     Write8(bytes, ELF_ST_INFO(m_bind, m_type));
@@ -326,7 +327,7 @@ ElfSymbol::Write(Bytes& bytes, const ElfConfig& config)
     if (config.cls == ELFCLASS64)
     {
         Write64(bytes, m_value);
-        Write64(bytes, m_size.getIntNum());
+        Write64(bytes, hasSize() ? m_size.getIntNum() : 0);
     }
 
     if (config.cls == ELFCLASS32)
