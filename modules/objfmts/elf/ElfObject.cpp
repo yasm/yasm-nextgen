@@ -578,6 +578,8 @@ ElfObject::BuildCommon(Symbol& sym, Diagnostic& diags)
         elfsym.setBinding(STB_GLOBAL);
     if (!elfsym.hasSize())
         elfsym.setSize(*getCommonSize(sym), sym.getDeclSource());
+    if (!elfsym.hasType())
+        elfsym.setType(STT_OBJECT);
     elfsym.setValue(addralign);
 }
 
