@@ -532,6 +532,7 @@ void
 ElfObject::BuildCommon(Symbol& sym, Diagnostic& diags)
 {
     NameValues* objext_nvs = getObjextNameValues(sym);
+    bool has_align = false;
     unsigned long addralign = 0;
 
     if (objext_nvs)
@@ -561,6 +562,7 @@ ElfObject::BuildCommon(Symbol& sym, Diagnostic& diags)
                 return;
             }
             addralign = align_expr->getIntNum().getUInt();
+            has_align = true;
 
             // Alignments must be a power of two.
             if (!isExp2(addralign))
@@ -580,6 +582,32 @@ ElfObject::BuildCommon(Symbol& sym, Diagnostic& diags)
         elfsym.setSize(*getCommonSize(sym), sym.getDeclSource());
     if (!elfsym.hasType())
         elfsym.setType(STT_OBJECT);
+    if (!has_align)
+    {
+        Expr size = elfsym.getSize();
+        if (!size.isEmpty())
+        {
+            SimplifyCalcDist(size, diags);
+            if (size.isIntNum())
+            {
+                unsigned long sz = size.getIntNum().getUInt();
+                // set alignment to largest power of two <= size, up to 16.
+                if (sz < 2)
+                    addralign = 1;
+                else if (sz < 4)
+                    addralign = 2;
+                else if (sz < 8)
+                    addralign = 4;
+                else if (sz < 16)
+                    addralign = 8;
+                else
+                    addralign = 16;
+            }
+            else
+                diags.Report(elfsym.getSizeSource(), diag::err_size_integer);
+        }
+
+    }
     elfsym.setValue(addralign);
 }
 

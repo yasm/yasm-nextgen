@@ -99,6 +99,8 @@ public:
         m_size = size;
         m_size_source = source;
     }
+    const Expr& getSize() { return m_size; }
+    SourceLocation getSizeSource() { return m_size_source; }
 
     void setValue(ElfAddress value) { m_value = value; }
     void setSymbolIndex(ElfSymbolIndex symindex) { m_symindex = symindex; }
