@@ -762,7 +762,7 @@ ElfOutput::ConvertSymbolToBytes(SymbolRef sym,
 {
     std::auto_ptr<ElfReloc> reloc =
         m_objfmt.m_machine->MakeReloc(sym, loc.getOffset());
-    if (reloc->setRel(false, m_GOT_sym, num_out.getSize()))
+    if (reloc->setRel(false, m_GOT_sym, num_out.getSize(), false))
     {
         // allocate .rel[a] sections on a need-basis
         Section* sect = loc.bc->getContainer()->AsSection();
@@ -854,7 +854,8 @@ ElfOutput::ConvertValueToBytes(Value& value,
         }
         else
         {
-            if (!reloc->setRel(pc_rel, m_GOT_sym, value.getSize()))
+            if (!reloc->setRel(pc_rel, m_GOT_sym, value.getSize(),
+                               value.isSigned()))
             {
                 Diag(value.getSource().getBegin(),
                      diag::err_reloc_invalid_size);

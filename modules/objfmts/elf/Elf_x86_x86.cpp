@@ -50,7 +50,7 @@ public:
 
     ~ElfReloc_x86_x86() {}
 
-    bool setRel(bool rel, SymbolRef GOT_sym, size_t valsize);
+    bool setRel(bool rel, SymbolRef GOT_sym, size_t valsize, bool sign);
     std::string getTypeName() const;
     void HandleAddend(IntNum* intn,
                       const ElfConfig& config,
@@ -139,7 +139,10 @@ Elf_x86_x86::AddSpecialSymbols(Object& object, llvm::StringRef parser) const
 }
 
 bool
-ElfReloc_x86_x86::setRel(bool rel, SymbolRef GOT_sym, size_t valsize)
+ElfReloc_x86_x86::setRel(bool rel,
+                         SymbolRef GOT_sym,
+                         size_t valsize,
+                         bool sign)
 {
     if (m_sym == GOT_sym && valsize == 32)
         m_type = R_386_GOTPC;

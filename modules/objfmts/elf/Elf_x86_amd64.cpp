@@ -50,7 +50,7 @@ public:
 
     ~ElfReloc_x86_amd64() {}
 
-    bool setRel(bool rel, SymbolRef GOT_sym, size_t valsize);
+    bool setRel(bool rel, SymbolRef GOT_sym, size_t valsize, bool sign);
     std::string getTypeName() const;
 };
 
@@ -135,7 +135,10 @@ Elf_x86_amd64::AddSpecialSymbols(Object& object,
 }
 
 bool
-ElfReloc_x86_amd64::setRel(bool rel, SymbolRef GOT_sym, size_t valsize)
+ElfReloc_x86_amd64::setRel(bool rel,
+                           SymbolRef GOT_sym,
+                           size_t valsize,
+                           bool sign)
 {
     // Map PC-relative GOT to appropriate relocation
     if (rel && m_type == R_X86_64_GOT32)
@@ -161,7 +164,12 @@ ElfReloc_x86_amd64::setRel(bool rel, SymbolRef GOT_sym, size_t valsize)
         {
             case 8: m_type = R_X86_64_8; break;
             case 16: m_type = R_X86_64_16; break;
-            case 32: m_type = R_X86_64_32; break;
+            case 32:
+                if (sign)
+                    m_type = R_X86_64_32S;
+                else
+                    m_type = R_X86_64_32;
+                break;
             case 64: m_type = R_X86_64_64; break;
             default: return false;
         }

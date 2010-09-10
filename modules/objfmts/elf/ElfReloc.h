@@ -61,8 +61,12 @@ public:
     /// @param rel      PC-relative?
     /// @param GOT_sym  _GLOBAL_OFFSET_TABLE_ symbol
     /// @param valsize  relocation size (in bits)
+    /// @param sign     signed?
     /// @return False if unable to determine relocation type.
-    virtual bool setRel(bool rel, SymbolRef GOT_sym, size_t valsize) = 0;
+    virtual bool setRel(bool rel,
+                        SymbolRef GOT_sym,
+                        size_t valsize,
+                        bool sign) = 0;
 
     /// Set relocation type via WRT (special symbol) mechanism.
     /// @param valsize  relocation size (in bits)
