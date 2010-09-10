@@ -1844,7 +1844,8 @@ for sfx, sz, immsz in zip("wlq", [16, 32, 64], [16, 32, 32]):
         opcode1=[0x83, 0xC0],
         opcode2=[0x05],
         operands=[Operand(type="Areg", size=sz, dest=None),
-                  Operand(type="Imm", size=immsz, relaxed=True, dest="Imm",
+                  Operand(type="Imm", size=immsz, relaxed=True,
+                          dest=(sz==64 and immsz==32) and "SImm" or "Imm",
                           opt="SImm8")])
 
 add_group("arith",
@@ -1939,7 +1940,8 @@ add_group("arith",
     spare=0,
     operands=[
         Operand(type="RM", size=64, dest="EA"),
-        Operand(type="Imm", size=32, relaxed=True, dest="Imm", opt="SImm8")])
+        Operand(type="Imm", size=32, relaxed=True, dest="SImm",
+                opt="SImm8")])
 
 for sfx, sz in zip("bwlq", [8, 16, 32, 64]):
     add_group("arith",
