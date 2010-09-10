@@ -227,6 +227,7 @@ X86General::Finalize(Bytecode& bc, Diagnostic& diags)
                 // Make the imm32s form permanent.
                 m_opcode.MakeAlt1();
                 m_imm->setSize(32);
+                m_imm->setSigned();
             }
             m_postop = X86_POSTOP_NONE;
             break;

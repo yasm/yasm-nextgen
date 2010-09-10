@@ -10,13 +10,13 @@ mov rax, 0x7fffffff 		; 48 c7 c0 ff ff ff 7f
 mov rax, dword 0x7fffffff 	; 48 c7 c0 ff ff ff 7f
 mov rax, qword 0x7fffffff 	; 48 b8 ff ff ff 7f 00 00 00 00
 mov rax, 0x80000000 		; 48 b8 00 00 00 80 00 00 00 00
-mov rax, dword 0x80000000 	; 48 c7 c0 00 00 00 80
+mov rax, dword 0x80000000 	; 48 c7 c0 00 00 00 80 [warning: value does not fit in signed 32 bit field]
 mov rax, qword 0x80000000 	; 48 b8 00 00 00 80 00 00 00 00
 mov rax, -0x80000000 		; 48 c7 c0 00 00 00 80
 mov rax, dword -0x80000000 	; 48 c7 c0 00 00 00 80
 mov rax, qword -0x80000000 	; 48 b8 00 00 00 80 ff ff ff ff
 mov rax, 0x100000000 		; 48 b8 00 00 00 00 01 00 00 00
-mov rax, dword 0x100000000 	; 48 c7 c0 00 00 00 00 [warning: value does not fit in 32 bit field]
+mov rax, dword 0x100000000 	; 48 c7 c0 00 00 00 00 [warning: value does not fit in signed 32 bit field]
 mov rax, qword 0x100000000 	; 48 b8 00 00 00 00 01 00 00 00
 mov ah, bl 	; 88 dc
 mov bl, r8b 	; 44 88 c3

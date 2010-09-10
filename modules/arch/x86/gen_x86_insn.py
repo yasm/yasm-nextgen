@@ -864,14 +864,16 @@ for sfx, sz, immsz in zip("bwlq", [8, 16, 32, 64], [8, 16, 32, 32]):
         opersize=sz,
         opcode=[0xC6+(sz!=8)],
         operands=[Operand(type="RM", size=sz, relaxed=True, dest="EA"),
-                  Operand(type="Imm", size=immsz, dest="Imm")])
+                  Operand(type="Imm", size=immsz,
+                          dest=(sz==64 and immsz==32) and "SImm" or "Imm")])
 for sfx, sz, immsz in zip("bwlq", [8, 16, 32, 64], [8, 16, 32, 32]):
     add_group("mov",
             suffix=sfx,
             opersize=sz,
             opcode=[0xC6+(sz!=8)],
             operands=[Operand(type="RM", size=sz, dest="EA"),
-                Operand(type="Imm", size=immsz, relaxed=True, dest="Imm")])
+                Operand(type="Imm", size=immsz, relaxed=True,
+                        dest=(sz==64 and immsz==32) and "SImm" or "Imm")])
 
 # CR forms
 add_group("mov",
