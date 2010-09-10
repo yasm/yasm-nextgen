@@ -661,6 +661,8 @@ ElfObject::FinalizeSymbol(Symbol& sym,
         elfsym->setName(strtab.getIndex(sym.getName()));
     }
 
+    bool is_sect = false;
+
     if (!elfsym)
     {
         Location loc = {0, 0};
@@ -676,7 +678,6 @@ ElfObject::FinalizeSymbol(Symbol& sym,
 
         // Locals (except when debugging) do not need to be
         // in the symbol table, unless they're a section.
-        bool is_sect = false;
         if (sect)
         {
             ElfSection* elfsect = sect->getAssocData<ElfSection>();
@@ -684,15 +685,24 @@ ElfObject::FinalizeSymbol(Symbol& sym,
                 is_sect = true;
         }
 
-        if (!local_names && !is_sect)
-            return;
+        if (!is_sect)
+        {
+            if (!local_names)
+                return;
+            // GCC names its internal symbols .Lxxxx; follow gas' lead and
+            // don't output these symbols even if local_names is enabled.
+            llvm::StringRef name = sym.getName();
+            if (name.size() > 2 && name[0] == '.' && name[1] == 'L')
+                return;
+        }
 
         elfsym = &BuildSymbol(sym);
-        if (local_names || is_sect)
-            elfsym->setName(strtab.getIndex(sym.getName()));
         if (is_sect)
             elfsym->setType(STT_SECTION);
     }
+
+    if (!elfsym->hasName() && (local_names || is_sect))
+        elfsym->setName(strtab.getIndex(sym.getName()));
 
     setSymbolSectionValue(sym, *elfsym);
 }
