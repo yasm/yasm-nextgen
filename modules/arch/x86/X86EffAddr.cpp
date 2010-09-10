@@ -922,9 +922,10 @@ X86EffAddr::Check3264(unsigned int addrsize,
         m_sib = 0;
         m_valid_sib = false;
         m_need_sib = 0;
-        // RIP always requires a 32-bit displacement
+        // RIP always requires a 32-bit signed displacement
         m_valid_modrm = true;
         m_disp.setSize(32);
+        m_disp.setSigned();
         return true;
     }
     else if (indexreg == X86EAChecker::kREG_NONE)
@@ -1179,15 +1180,22 @@ X86EffAddr::Check(unsigned char* addrsize,
     if ((*addrsize == 32 || *addrsize == 64) &&
         ((m_need_modrm && !m_valid_modrm) || (m_need_sib && !m_valid_sib)))
     {
-        return Check3264(*addrsize, bits, rex, ip_rel, diags);
+        if (!Check3264(*addrsize, bits, rex, ip_rel, diags))
+            return false;
+        if (m_disp.getSize() < bits)
+            m_disp.setSigned();
     }
     else if (*addrsize == 16 && m_need_modrm && !m_valid_modrm)
     {
-        return Check16(bits, address16_op, ip_rel, diags);
+        if (!Check16(bits, address16_op, ip_rel, diags))
+            return false;
+        if (m_disp.getSize() < bits)
+            m_disp.setSigned();
     }
     else if (!m_need_modrm && !m_need_sib)
     {
         // Special case for MOV MemOffs opcode: displacement but no modrm.
+        m_disp.setSigned(false);    // always unsigned
         switch (*addrsize)
         {
             case 64:
