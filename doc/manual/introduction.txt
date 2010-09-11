@@ -2,12 +2,12 @@
 [[introduction]]
 === Introduction
 
-Yasm is a (mostly) BSD-licensed assembler that is designed from the
-ground up to allow for multiple assembler syntaxes to be supported
-(e.g. NASM, GNU AS, etc.) in addition to multiple output object
-formats and multiple instruction sets.  Its modular architecture
-allows additional object formats, debug formats, and syntaxes to be
-added relatively easily.
+Yasm is a BSD-licensed assembler that is designed from the ground up
+to allow for multiple assembler syntaxes to be supported (e.g. NASM,
+GNU AS, etc.) in addition to multiple output object formats and
+multiple instruction sets.  Its modular architecture allows additional
+object formats, debug formats, and syntaxes to be added relatively
+easily.
 
 Yasm started life in 2001 as a rewrite of the NASM (Netwide) x86
 assembler under the BSD license.  Since then, it has matched and
@@ -18,18 +18,11 @@ generating STABS, DWARF2, and CodeView 8 debugging information.
 [[license]]
 === License
 
-Yasm is primarily licensed under the 2-clause and 3-clause ""revised""
-BSD licenses, with two exceptions.  The NASM preprocessor is imported
-from the NASM project and is thus LGPL licensed.  The Bit::Vector
-module used by Yasm to implement Yasm's large integer and
-machine-independent floating point support is triple-licensed under
-the Artistic license, GPL, and LGPL.  The full text of the licenses
-are provided in the Yasm source distribution.
+Yasm is licensed under the 2-clause and 3-clause ""revised"" BSD
+licenses, or equivalent.  The full text of the licenses are provided
+in the Yasm source distribution.
 
-This user manual is licensed under the 2-clause BSD license, with the
-exception of <<nasm-language>>, <<nasm-preprocessor>>, and
-<<nasm-directives>>, large portions of which are copyrighted by the
-NASM Development Team and licensed under the LGPL.
+This user manual is licensed under the 2-clause BSD license.
 
 [[material-covered]]
 === Material Covered in this Book
