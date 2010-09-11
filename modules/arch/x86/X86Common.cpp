@@ -61,7 +61,8 @@ X86Common::ApplyPrefixes(unsigned int def_opersize_64,
         switch (prefix->getType())
         {
             case X86Prefix::LOCKREP:
-                diags.Report(i->second, diag::warn_multiple_lock_rep);
+                if (m_lockrep_pre != 0)
+                    diags.Report(i->second, diag::warn_multiple_lock_rep);
                 m_lockrep_pre = prefix->getValue();
                 break;
             case X86Prefix::ADDRSIZE:
