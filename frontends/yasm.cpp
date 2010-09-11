@@ -96,7 +96,8 @@ static cl::opt<std::string> in_filename(cl::Positional,
 static cl::opt<std::string> arch_keyword("a",
     cl::desc("Select architecture (list with -a help)"),
     cl::value_desc("arch"),
-    cl::Prefix);
+    cl::Prefix,
+    cl::ZeroOrMore);
 static cl::alias arch_keyword_long("arch",
     cl::desc("Alias for -a"),
     cl::value_desc("arch"),
@@ -131,11 +132,13 @@ static llvm::cl::opt<yasm::Assembler::ObjectDumpTime> dump_object("dump-object",
 static cl::opt<std::string> error_filename("E",
     cl::desc("redirect error messages to file"),
     cl::value_desc("file"),
-    cl::Prefix);
+    cl::Prefix,
+    cl::ZeroOrMore);
 
 // -e
 static cl::opt<bool> preproc_only("e",
-    cl::desc("preprocess only (writes output to stdout by default)"));
+    cl::desc("preprocess only (writes output to stdout by default)"),
+    cl::ZeroOrMore);
 static cl::alias preproc_only_long("preproc-only",
     cl::desc("Alias for -e"),
     cl::aliasopt(preproc_only));
@@ -144,7 +147,8 @@ static cl::alias preproc_only_long("preproc-only",
 static cl::opt<std::string> objfmt_keyword("f",
     cl::desc("Select object format (list with -f help)"),
     cl::value_desc("format"),
-    cl::Prefix);
+    cl::Prefix,
+    cl::ZeroOrMore);
 static cl::alias objfmt_keyword_long("oformat",
     cl::desc("Alias for -f"),
     cl::value_desc("format"),
@@ -154,7 +158,8 @@ static cl::alias objfmt_keyword_long("oformat",
 static cl::opt<std::string> dbgfmt_keyword("g",
     cl::desc("Select debugging format (list with -g help)"),
     cl::value_desc("debug"),
-    cl::Prefix);
+    cl::Prefix,
+    cl::ZeroOrMore);
 static cl::alias dbgfmt_keyword_long("dformat",
     cl::desc("Alias for -g"),
     cl::value_desc("debug"),
@@ -183,7 +188,8 @@ static cl::alias include_paths_alias("i",
 static cl::opt<std::string> listfmt_keyword("L",
     cl::desc("Select list format (list with -L help)"),
     cl::value_desc("list"),
-    cl::Prefix);
+    cl::Prefix,
+    cl::ZeroOrMore);
 static cl::alias listfmt_keyword_long("lformat",
     cl::desc("Alias for -L"),
     cl::value_desc("list"),
@@ -211,7 +217,8 @@ static cl::opt<bool> generate_make_dependencies("M",
 static cl::opt<std::string> machine_name("m",
     cl::desc("Select machine (list with -m help)"),
     cl::value_desc("machine"),
-    cl::Prefix);
+    cl::Prefix,
+    cl::ZeroOrMore);
 static cl::alias machine_name_long("machine",
     cl::desc("Alias for -m"),
     cl::value_desc("machine"),
@@ -258,7 +265,8 @@ static cl::list<std::string> preinclude_files("P",
 static cl::opt<std::string> parser_keyword("p",
     cl::desc("Select parser (list with -p help)"),
     cl::value_desc("parser"),
-    cl::Prefix);
+    cl::Prefix,
+    cl::ZeroOrMore);
 static cl::alias parser_keyword_long("parser",
     cl::desc("Alias for -p"),
     cl::value_desc("parser"),
@@ -266,7 +274,8 @@ static cl::alias parser_keyword_long("parser",
 
 // -s
 static cl::opt<bool> error_stdout("s",
-    cl::desc("redirect error messages to stdout"));
+    cl::desc("redirect error messages to stdout"),
+    cl::ZeroOrMore);
 
 // -U, -u
 static cl::list<std::string> undefine_macros("U",
