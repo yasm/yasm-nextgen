@@ -112,6 +112,7 @@ Object::Object(llvm::StringRef src_filename,
       m_symbols_owner(m_symbols),
       m_impl(new Impl(false))
 {
+    m_options.DisableGlobalSubRelative = false;
 }
 
 void

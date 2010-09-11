@@ -30,6 +30,8 @@
 //
 #include "yasmx/Parse/Lexer.h"
 
+#include <cctype>
+
 #include "llvm/Support/MemoryBuffer.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Parse/Preprocessor.h"

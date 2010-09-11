@@ -311,7 +311,9 @@ Value::SubRelative(Object* object, Location sub)
         // portion.
         if (!m_wrt && !m_seg_of && !m_rshift && !m_section_rel
             && m_rel->getLabel(&loc)
-            && loc.bc->getContainer() == sub.bc->getContainer())
+            && loc.bc->getContainer() == sub.bc->getContainer()
+            && (!object->getOptions().DisableGlobalSubRelative ||
+                (m_rel->getVisibility() & Symbol::GLOBAL) == 0))
         {
             if (!m_abs)
                 m_abs.reset(new Expr());

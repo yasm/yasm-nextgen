@@ -376,6 +376,9 @@ ElfObject::Read(SourceManager& sm, Diagnostic& diags)
 void
 ElfObject::InitSymbols(llvm::StringRef parser)
 {
+    // Set object options
+    m_object.getOptions().DisableGlobalSubRelative = true;
+
     // Add .file symbol
     SymbolRef filesym = m_object.AppendSymbol(".file");
     filesym->DefineSpecial(Symbol::LOCAL);

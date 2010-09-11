@@ -58,6 +58,17 @@ class YASM_LIB_EXPORT Object
     YAML::Emitter& operator<< (YAML::Emitter& out, const Object& object);
 
 public:
+    /// Options to control behavior of various functions globally for
+    /// this object.
+    struct Options
+    {
+        /// Don't allow Value::SubRelative() to move global symbols into
+        /// the absolute portion of the value.  This forces a relocation
+        /// to be generated even if the symbol is in the same section as
+        /// the value.  Defaults to false.
+        bool DisableGlobalSubRelative;
+    };
+
     /// Constructor.  A default section is created as the first
     /// section, and an empty symbol table is created.
     /// The object filename is initially unset (empty string).
@@ -90,6 +101,8 @@ public:
     /// Get the object filename for an object.
     /// @return Object filename.
     llvm::StringRef getObjectFilename() const { return m_obj_filename; }
+
+    Options& getOptions() { return m_options; }
 
     /// Optimize an object.  Takes the unoptimized object and optimizes it.
     /// If successful, the object is ready for output to an object file.
@@ -227,6 +240,8 @@ private:
 
     std::string m_src_filename;         ///< Source filename
     std::string m_obj_filename;         ///< Object filename
+
+    Options m_options;                  ///< Object options
 
     Arch* m_arch;                       ///< Target architecture
 
