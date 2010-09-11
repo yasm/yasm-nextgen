@@ -314,6 +314,9 @@ static cl::opt<ErrwarnStyle> ewmsg_style("X",
      clEnumValN(EWSTYLE_VC,  "vc",  "Visual Studio error/warning style"),
      clEnumValEnd));
 
+// sink to warn instead of error on unrecognized options
+static cl::list<std::string> unknown_options(cl::Sink);
+
 static void
 PrintListKeywordDesc(const std::string& name, const std::string& keyword)
 {
@@ -783,6 +786,12 @@ main(int argc, char* argv[])
     yasm::SourceManager source_mgr(diags);
     diags.setSourceManager(&source_mgr);
     diag_printer.setPrefix("yasm");
+
+    for (std::vector<std::string>::const_iterator i=unknown_options.begin(),
+         end=unknown_options.end(); i != end; ++i)
+    {
+        diags.Report(yasm::diag::warn_unknown_command_line_option) << *i;
+    }
 
     // Load standard modules
     if (!yasm::LoadStandardPlugins())
