@@ -275,6 +275,23 @@ ElfSymbol::Finalize(Symbol& sym, Diagnostic& diags)
 
             m_sect = loc.bc->getContainer()->AsSection();
             m_value = loc.getOffset();
+
+            // Pull referenced elf symbol information type and size
+            ElfSymbol* elfrel = rel->getAssocData<ElfSymbol>();
+            if (elfrel)
+            {
+                if (!hasType() && elfrel->hasType())
+                    m_type = elfrel->m_type;
+                if (!hasSize() && elfrel->hasSize())
+                {
+                    m_size = elfrel->m_size;
+                    m_size_source = elfrel->m_size_source;
+                    // just in case, simplify it
+                    SimplifyCalcDist(m_size, diags);
+                    if (!m_size.isIntNum())
+                        diags.Report(m_size_source, diag::err_size_integer);
+                }
+            }
         }
         else
         {
