@@ -172,6 +172,7 @@ add_group("unrecognized-char")
 add_group("orphan-labels")
 add_group("uninit-contents")
 add_group("size-override")
+add_group("signed-overflow")
 
 #####################################################################
 # Diagnostics
@@ -284,7 +285,9 @@ add_warning("warn_float_inexact", "inexact floating point result")
 add_error("err_invalid_op_use", "invalid use of operator '%0'")
 
 # Integer/float output
-add_warning("warn_signed_overflow", "value does not fit in signed %0 bit field")
+add_warning("warn_signed_overflow",
+            "value does not fit in signed %0 bit field",
+            group="signed-overflow")
 add_warning("warn_unsigned_overflow", "value does not fit in %0 bit field")
 add_warning("warn_truncated", "misaligned value, truncating to %0 bit boundary")
 

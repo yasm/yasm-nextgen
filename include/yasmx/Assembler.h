@@ -103,6 +103,11 @@ public:
     /// @return False on error.
     bool setParser(llvm::StringRef parser_keyword, Diagnostic& diags);
 
+    /// Check to see if a particular debug format is legal for the selected
+    /// object format.
+    /// @return False if not legal.
+    bool isOkDebugFormat(llvm::StringRef dbgfmt_keyword) const;
+
     /// Set the debug format; if not set prior to assembly, defaults to null
     /// debug format (e.g. no debugging information).
     /// @param dbgfmt_keyword   debug format keyword

@@ -148,15 +148,21 @@ Assembler::setParser(llvm::StringRef parser_keyword, Diagnostic& diags)
 }
 
 bool
+Assembler::isOkDebugFormat(llvm::StringRef dbgfmt_keyword) const
+{
+    std::vector<llvm::StringRef> dbgfmt_keywords =
+        m_objfmt_module->getDebugFormatKeywords();
+    return (std::find_if(dbgfmt_keywords.begin(), dbgfmt_keywords.end(),
+                     NocaseEquals(dbgfmt_keyword))
+            != dbgfmt_keywords.end());
+}
+
+bool
 Assembler::setDebugFormat(llvm::StringRef dbgfmt_keyword, Diagnostic& diags)
 {
     // Check to see if the requested debug format is in the allowed list
     // for the active object format.
-    std::vector<llvm::StringRef> dbgfmt_keywords =
-        m_objfmt_module->getDebugFormatKeywords();
-    if (std::find_if(dbgfmt_keywords.begin(), dbgfmt_keywords.end(),
-                     NocaseEquals(dbgfmt_keyword))
-        == dbgfmt_keywords.end())
+    if (!isOkDebugFormat(dbgfmt_keyword))
     {
         diags.Report(SourceLocation(), diag::fatal_module_combo)
             << "debug format" << dbgfmt_keyword
