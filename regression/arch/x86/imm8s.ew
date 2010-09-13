@@ -1,0 +1,3 @@
+<stdin>:3:10: warning: value does not fit in 32 bit field
+<stdin>:5:10: warning: value does not fit in 32 bit field
+<stdin>:4:10: warning: value does not fit in 32 bit field
