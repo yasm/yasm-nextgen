@@ -689,6 +689,9 @@ IntNum::isInt() const
 bool
 IntNum::isOkSize(unsigned int size, unsigned int rshift, int rangetype) const
 {
+    static const IntNumData::SmallValue SV_MIN =
+        std::numeric_limits<IntNumData::SmallValue>::min();
+
     // Non-bigval (for speed)
     if (m_type == INTNUM_SV)
     {
@@ -708,6 +711,8 @@ IntNum::isOkSize(unsigned int size, unsigned int rshift, int rangetype) const
                 {
                     if (size >= SV_BITS+1)
                         return true;
+                    if (v == SV_MIN)
+                        return size >= SV_BITS;
                     v = 0-v;
                     return (v <= (one<<(size-1)));
                 }
@@ -719,6 +724,8 @@ IntNum::isOkSize(unsigned int size, unsigned int rshift, int rangetype) const
                 {
                     if (size >= SV_BITS+1)
                         return true;
+                    if (v == SV_MIN)
+                        return size >= SV_BITS;
                     v = 0-v;
                     return (v <= (one<<(size-1)));
                 }
