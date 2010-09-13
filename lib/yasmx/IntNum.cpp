@@ -50,6 +50,9 @@ static llvm::APInt spare(IntNum::BITVECT_NATIVE_SIZE, 0);
 static llvm::APInt op1static(IntNum::BITVECT_NATIVE_SIZE, 0);
 static llvm::APInt op2static(IntNum::BITVECT_NATIVE_SIZE, 0);
 
+/// Static bitvect used for sign extension.
+static llvm::APInt signext_bv(IntNum::BITVECT_NATIVE_SIZE, 0);
+
 enum
 {
     SV_BITS = std::numeric_limits<IntNumData::SmallValue>::digits,
@@ -598,6 +601,16 @@ IntNum::CalcImpl(Op::Op op,
     return true;
 }
 /*@=nullderef =nullpass =branchstate@*/
+
+void
+IntNum::SignExtend(unsigned int size)
+{
+    // For now, always implement with full bit vector.
+    llvm::APInt* bv = getBV(&signext_bv);
+    bv->trunc(size);
+    bv->sext(BITVECT_NATIVE_SIZE);
+    setBV(*bv);
+}
 
 void
 IntNum::set(IntNum::USmallValue val)

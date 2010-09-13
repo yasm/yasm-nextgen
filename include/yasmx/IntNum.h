@@ -245,6 +245,12 @@ public:
     void CalcAssert(Op::Op op)
     { CalcImpl(op, 0, SourceLocation(), 0); }
 
+    /// Sign extension.  Takes the current value as a signed value of @p size
+    /// bits and changes the value to its sign extended version.
+    /// Example: 0xffffff7, size 32 results in -9.
+    /// @param size     size to extend from, in bits
+    void SignExtend(unsigned int size);
+
     /// Zero an intnum.
     void Zero() { set(static_cast<SmallValue>(0)); }
 

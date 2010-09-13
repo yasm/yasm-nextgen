@@ -338,14 +338,36 @@ X86General::CalcLen(Bytecode& bc,
             }
             else
             {
+                // Sign extend based on immediate size.  This is so that e.g.
+                // a 32-bit value 0xfffffff7 is seen as a large signed number.
+                // We can't do mark it as signed in the instruction table
+                // because it will result in a warning and result in signed
+                // relocations.
+                bool ok = num.isOkSize(immlen, 0, 2);
+                num.SignExtend(immlen);
+
                 if (num.isInRange(-128, 127))
                 {
                     // We can use the sign-extended byte form: shorten
                     // the immediate length to 1 and make the byte form
                     // permanent.
+
+                    // Warn if we truncated.
+                    if (!ok)
+                    {
+                        diags.Report(m_imm->getSource().getBegin(),
+                                     m_imm->isSigned() ?
+                                     diag::warn_signed_overflow :
+                                     diag::warn_unsigned_overflow)
+                            << immlen;
+                    }
+
                     m_imm->setSize(8);
                     m_imm->setSigned();
                     immlen = 8;
+                    // Set the value to the sign-extended one.
+                    if (Expr* abs = m_imm->getAbs())
+                        *abs = num;
                 }
                 else
                 {
