@@ -1484,8 +1484,11 @@ ElfObject::DirType(DirectiveInfo& info, Diagnostic& diags)
 
     // Pull new type from param
     if (namevals.size() < 2 || !namevals[1].isId())
+    {
         diags.Report(namevals[1].getValueRange().getBegin(),
                       diag::err_expected_ident);
+        return;
+    }
 
     llvm::StringRef type = namevals[1].getId();
     if (type.equals_lower("function"))
