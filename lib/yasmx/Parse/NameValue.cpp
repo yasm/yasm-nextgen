@@ -84,6 +84,14 @@ NameValue::NameValue(std::auto_ptr<Expr> e)
 {
 }
 
+NameValue::NameValue(const Token& token)
+    : m_type(TOKEN),
+      m_token(token),
+      m_id_prefix('\0')
+{
+    setValueRange(token.getLocation());
+}
+
 NameValue::NameValue(const NameValue& oth)
     : m_name(oth.m_name),
       m_type(oth.m_type),
@@ -174,6 +182,13 @@ NameValue::getId() const
         return m_idstr;
 }
 
+const Token&
+NameValue::getToken() const
+{
+    assert(m_type == TOKEN && "name/value not token");
+    return m_token;
+}
+
 void
 NameValue::Write(YAML::Emitter& out) const
 {
@@ -190,6 +205,9 @@ NameValue::Write(YAML::Emitter& out) const
             break;
         case EXPR:
             out << YAML::Key << "expr" << YAML::Value << *m_expr;
+            break;
+        case TOKEN:
+            out << YAML::Key << "token" << YAML::Value << m_token.getKind();
             break;
     }
     out << YAML::EndMap;

@@ -1493,7 +1493,7 @@ GasParser::ParseDirective(NameValues* nvs)
                 break;
             }
             case GasToken::at:
-                // XXX: is throwing it away *really* the right thing?
+                nvs->push_back(new NameValue(m_token));
                 ConsumeToken();
                 continue;
             default:

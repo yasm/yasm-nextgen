@@ -35,6 +35,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
+#include "yasmx/Parse/Token.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "yasmx/Expr.h"
 
@@ -80,6 +81,10 @@ public:
     /// @param e            expression
     explicit NameValue(std::auto_ptr<Expr> e);
 
+    /// Token value constructor (no name assumed).
+    /// @param token        token
+    explicit NameValue(const Token& token);
+
     NameValue(const NameValue& oth);
     NameValue& operator= (const NameValue& rhs)
     {
@@ -114,6 +119,10 @@ public:
     /// @return True if convertible.
     bool isId() const { return m_type == ID; }
 
+    /// Determine if value is a token.
+    /// @return True if token.
+    bool isToken() const { return m_type == TOKEN; }
+
     /// Get value as an expr.  If the parameter is an identifier,
     /// it's treated as a symbol (Symbol::use() is called to convert it).
     /// @param object       object
@@ -141,6 +150,8 @@ public:
     ///         identifier.
     llvm::StringRef getId() const;
 
+    const Token& getToken() const;
+
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     void Write(YAML::Emitter& out) const;
@@ -164,7 +175,8 @@ private:
     {
         ID,             ///< Identifier
         STRING,         ///< String
-        EXPR            ///< Expression
+        EXPR,           ///< Expression
+        TOKEN           ///< Token
     };
 
     Type m_type;
@@ -172,6 +184,7 @@ private:
     /// Possible values
     std::string m_idstr;            ///< Identifier or string
     std::auto_ptr<Expr> m_expr;     ///< Expression
+    Token m_token;                  ///< Token
 
     /// Prefix character that indicates a raw identifier.  When
     /// get_string() is called on a #ID, all characters are

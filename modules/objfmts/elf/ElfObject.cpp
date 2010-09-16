@@ -1343,9 +1343,21 @@ ElfObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
     }
 
     // Parse section type
-    if (nvs.size() > 2 && nvs[2].isId())
+    if (nvs.size() > 2)
     {
-        llvm::StringRef typestr = nvs[2].getId();
+        if (!nvs[2].isToken() || nvs[2].getToken().isNot(Token::at))
+        {
+            diags.Report(nvs[2].getValueRange().getBegin(),
+                         diag::err_expected_at);
+            return;
+        }
+        if (nvs.size() < 3 || !nvs[3].isId())
+        {
+            diags.Report(nvs[3].getValueRange().getBegin(),
+                         diag::err_expected_ident);
+            return;
+        }
+        llvm::StringRef typestr = nvs[3].getId();
         if (typestr == "progbits")
             type = SHT_PROGBITS;
         else if (typestr == "nobits")
@@ -1477,20 +1489,25 @@ ElfObject::DirType(DirectiveInfo& info, Diagnostic& diags)
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
 
-    SymbolRef sym = info.getObject().getSymbol(namevals.front().getId());
+    NameValues::iterator nv = namevals.begin(), end = namevals.end();
+    SymbolRef sym = info.getObject().getSymbol(nv->getId());
     sym->Use(info.getSource());
+    ++nv;
 
     ElfSymbol& elfsym = BuildSymbol(*sym);
 
+    // Throw away @ sign if provided (gas syntax)
+    if (nv != end && nv->isToken() && nv->getToken().is(Token::at))
+        ++nv;
+
     // Pull new type from param
-    if (namevals.size() < 2 || !namevals[1].isId())
+    if (nv == end || !nv->isId())
     {
-        diags.Report(namevals[1].getValueRange().getBegin(),
-                      diag::err_expected_ident);
+        diags.Report(nv->getValueRange().getBegin(), diag::err_expected_ident);
         return;
     }
 
-    llvm::StringRef type = namevals[1].getId();
+    llvm::StringRef type = nv->getId();
     if (type.equals_lower("function"))
         elfsym.setType(STT_FUNC);
     else if (type.equals_lower("object"))
@@ -1500,7 +1517,7 @@ ElfObject::DirType(DirectiveInfo& info, Diagnostic& diags)
     else if (type.equals_lower("notype"))
         elfsym.setType(STT_NOTYPE);
     else
-        diags.Report(namevals[1].getValueRange().getBegin(),
+        diags.Report(nv->getValueRange().getBegin(),
                      diag::warn_unrecognized_symbol_type) << type;
 }
 
