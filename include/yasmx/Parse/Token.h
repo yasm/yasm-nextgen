@@ -110,6 +110,7 @@ public:
         equalequal,         // ==
         comma,              // ,
         dollar,             // $
+        at,                 // @
         lessgreater,        // <>
         identifier,         // abcde123
         numeric_constant,   // 0x123
