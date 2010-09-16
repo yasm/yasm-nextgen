@@ -79,6 +79,11 @@ public:
     ///         If key was not present, NULL.
     T* Replace(T* data) { return InsRep(data, true); }
 
+    /// Remove the data associated with a key from the HAMT.
+    /// @param key          Key
+    /// @return NULL if key not present, otherwise old associated data.
+    T* Remove(const Key& key);
+
 private:
     hamt(const hamt&);                  // not implemented
     const hamt& operator=(const hamt&); // not implemented
@@ -252,7 +257,7 @@ hamt<Key,T,GetKey>::InsRep(T* data, bool replace)
                  (m_nocase && EqualsNocase(get_key(data), get_key(node->value)))))
             {
                 T* oldvalue = node->value;
-                if (replace)
+                if (replace || !oldvalue)
                     node->value = data;
                 return oldvalue;
             }
@@ -452,6 +457,92 @@ hamt<Key,T,GetKey>::Find(const Key& str)
         level++;
         node = node->SubTrie(map);
     }
+}
+
+template <typename Key, typename T, typename GetKey>
+T*
+hamt<Key,T,GetKey>::Remove(const Key& str)
+{
+    unsigned long key = m_nocase ? HashKeyNocase(str) : HashKey(str);
+    unsigned long keypart = key & 0x1F;
+    Node* node = m_root[keypart];
+
+    // Find the key.  If not present, return 0.
+    if (node == 0)
+        return 0;
+
+    unsigned long node_keypart = keypart;
+    unsigned long node_off = keypart;
+    Node** pnode = &m_root[keypart];
+    Node* parent = 0;
+    Node** pparent = 0;
+    for (int keypartbits=0, level=0;;)
+    {
+        if (node->value != 0)
+        {
+            if (node->bitmap_key == key &&
+                ((!m_nocase && Equals(str, get_key(node->value))) ||
+                 (m_nocase && EqualsNocase(str, get_key(node->value)))))
+                break;
+            else
+                return 0;
+        }
+
+        // Subtree: look up in bitmap
+        keypartbits += 5;
+        if (keypartbits > 30)
+        {
+            // Exceeded 32 bits of current key: rehash
+            if (m_nocase)
+                key = RehashKeyNocase(str, level);
+            else
+                key = RehashKey(str, level);
+            keypartbits = 0;
+        }
+        keypart = (key >> keypartbits) & 0x1F;
+        if (!(node->bitmap_key & (1<<keypart)))
+            return 0;       // bit is 0 in bitmap -> no match
+
+        // Count bits below
+        unsigned long map = BitCount(node->bitmap_key & ~((~0UL)<<keypart));
+        map &= 0x1F;        // Clamp to <32
+
+        node_keypart = keypart;
+        node_off = map;
+
+        // Go down a level
+        level++;
+        pparent = pnode;
+        parent = node;
+        pnode = &node->SubTrie(map);
+        node = *pnode;
+    }
+
+    // Now delete it.  Save the value so we can return it.
+    T* value = node->value;
+
+    // Key at root level
+    if (!parent)
+    {
+        m_root[keypart] = 0;
+        m_pools[0]->free(node);
+        return value;
+    }
+
+    // downsize parent and copy remaining nodes into it
+    unsigned long size = BitCount(parent->bitmap_key);
+    Node* newparent = static_cast<Node*>(m_pools[size-1]->malloc());
+    newparent->bitmap_key = parent->bitmap_key & ~(1 << node_keypart);
+    std::memcpy(&newparent->SubTrie(0), &parent->SubTrie(0),
+                node_off*sizeof(Node*));
+    std::memcpy(&newparent->SubTrie(node_off), &node->SubTrie(node_off+1),
+                (size-node_off-1)*sizeof(Node*));
+    m_pools[size]->free(parent);
+    *pparent = newparent;
+
+    // delete value node and return
+    m_pools[0]->free(node);
+    return value;
 }
 
 } // namespace yasm

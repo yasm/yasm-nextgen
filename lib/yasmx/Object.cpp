@@ -215,6 +215,14 @@ Object::AddNonTableSymbol(llvm::StringRef name)
 }
 
 void
+Object::RenameSymbol(SymbolRef sym, llvm::StringRef name)
+{
+    m_impl->sym_map.Remove(sym->getName());
+    sym->m_name = name;
+    m_impl->sym_map.Insert(sym);
+}
+
+void
 Object::ExternUndefinedSymbols()
 {
     for (symbol_iterator i=m_symbols.begin(), end=m_symbols.end();

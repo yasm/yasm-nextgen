@@ -196,6 +196,9 @@ public:
     /// @return Reference to symbol.
     SymbolRef AddNonTableSymbol(llvm::StringRef name);
 
+    /// Rename a symbol.
+    void RenameSymbol(SymbolRef sym, llvm::StringRef name);
+
     /// Declare all used but undefined symbols extern.
     void ExternUndefinedSymbols();
 

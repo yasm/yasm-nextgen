@@ -46,10 +46,13 @@ namespace yasm
 
 class Diagnostic;
 class Expr;
+class Object;
 
 /// A symbol.
 class YASM_LIB_EXPORT Symbol : public AssocDataContainer
 {
+    friend class Object;
+
 public:
     /// Constructor.
     explicit Symbol(llvm::StringRef name);
