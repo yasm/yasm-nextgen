@@ -42,6 +42,7 @@
 //
 #include "ElfObject.h"
 
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Basic/Diagnostic.h"
@@ -992,6 +993,63 @@ ElfObject::Output(llvm::raw_fd_ostream& os,
         return;
     }
 
+    // Generate version symbols.
+    for (SymVers::const_iterator i=m_symvers.begin(), end=m_symvers.end();
+         i != end; ++i)
+    {
+        SymbolRef sym = m_object.FindSymbol(i->m_real);
+        if (!sym)
+            continue;
+
+        ElfSymbol& elfsym = BuildSymbol(*sym);
+        llvm::SmallString<64> newname;
+        if (i->m_mode == ElfSymVersion::Standard)
+        {
+            // rename to name@version
+            std::string oldname = sym->getName();
+            newname += i->m_name;
+            newname += '@';
+            newname += i->m_version;
+            m_object.RenameSymbol(sym, newname.str());
+            // if it was defined, create a new alias.
+            if (sym->isDefined())
+            {
+                SymbolRef sym2 = m_object.getSymbol(oldname);
+                ElfSymbol& elfsym2 = BuildSymbol(*sym2);
+                // copy visibility and binding
+                sym2->Declare(
+                    static_cast<Symbol::Visibility>(sym->getVisibility()));
+                elfsym2.setBinding(elfsym.getBinding());
+                    sym2->DefineEqu(Expr(sym));
+            }
+        }
+        else if (i->m_mode == ElfSymVersion::Default)
+        {
+            newname += i->m_name;
+            newname += "@@";
+            newname += i->m_version;
+            SymbolRef sym2 = m_object.getSymbol(newname.str());
+            ElfSymbol& elfsym2 = BuildSymbol(*sym2);
+            // copy visibility and binding
+            sym2->Declare(
+                static_cast<Symbol::Visibility>(sym->getVisibility()));
+            elfsym2.setBinding(elfsym.getBinding());
+            sym2->DefineEqu(Expr(sym));
+        }
+        else if (i->m_mode == ElfSymVersion::Auto)
+        {
+            // rename to name@@version
+            std::string oldname = sym->getName();
+            newname += i->m_name;
+            if (sym->isDefined())
+                newname += "@@";
+            else
+                newname += '@';
+            newname += i->m_version;
+            m_object.RenameSymbol(sym, newname.str());
+        }
+    }
+
     // Finalize symbol table, handling any objfmt-specific extensions given
     // during parse phase.  If all_syms is true, add all local symbols and
     // include name information.
@@ -1581,6 +1639,64 @@ ElfObject::DirHidden(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
+ElfObject::DirSymVer(DirectiveInfo& info, Diagnostic& diags)
+{
+    assert(info.isObject(m_object));
+    NameValues& namevals = info.getNameValues();
+    NameValues::iterator nv = namevals.begin(), end = namevals.end();
+    llvm::StringRef real = nv->getId();
+    ++nv;
+
+    // name
+    if (nv == end || !nv->isId())
+    {
+        diags.Report(nv->getValueRange().getBegin(), diag::err_expected_ident);
+        return;
+    }
+    llvm::StringRef name = nv->getId();
+    ++nv;
+
+    // @, @@, @@@ portion
+    int numat = 0;
+    while (nv != end && nv->isToken() && nv->getToken().is(Token::at))
+    {
+        ++numat;
+        if (numat > 3)
+        {
+            diags.Report(nv->getValueRange().getBegin(),
+                         diag::err_expected_ident);
+            return;
+        }
+        ++nv;
+    }
+
+    if (numat == 0)
+    {
+        diags.Report(nv->getValueRange().getBegin(), diag::err_expected_at);
+        return;
+    }
+
+    // version
+    if (nv == end || !nv->isId())
+    {
+        diags.Report(nv->getValueRange().getBegin(), diag::err_expected_ident);
+        return;
+    }
+    llvm::StringRef version = nv->getId();
+
+    ElfSymVersion::Mode mode;
+    switch (numat)
+    {
+        case 1: mode = ElfSymVersion::Standard; break;
+        case 2: mode = ElfSymVersion::Default; break;
+        case 3: mode = ElfSymVersion::Auto; break;
+        default:
+            assert(false && "unexpected number of @ tokens");
+    }
+    m_symvers.push_back(new ElfSymVersion(real, name, version, mode));
+}
+
+void
 ElfObject::DirIdent(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
@@ -1621,6 +1737,7 @@ ElfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
         {".size", &ElfObject::DirSize, Directives::ID_REQUIRED},
         {".weak", &ElfObject::DirWeak, Directives::ID_REQUIRED},
         {".hidden", &ElfObject::DirHidden, Directives::ID_REQUIRED},
+        {".symver", &ElfObject::DirSymVer, Directives::ID_REQUIRED},
         {".ident", &ElfObject::DirIdent, Directives::ANY},
     };
 

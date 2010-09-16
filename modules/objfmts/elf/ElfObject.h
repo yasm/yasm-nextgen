@@ -42,6 +42,7 @@
 //
 // Each Section is spatially disjoint, and has exactly one SHT entry.
 //
+#include "yasmx/Support/ptr_vector.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/ObjectFormat.h"
 
@@ -58,7 +59,35 @@ namespace objfmt
 class ElfMachine;
 class ElfSymbol;
 
-class ElfObject : public ObjectFormat
+// ELF symbol version alias.
+class YASM_STD_EXPORT ElfSymVersion
+{
+public:
+    enum Mode
+    {
+        Standard,   // name@node in gas syntax
+        Default,    // name@@node in gas syntax (default version)
+        Auto        // name@@@node in gas syntax (automatic std/default)
+    };
+
+    ElfSymVersion(llvm::StringRef real,
+                  llvm::StringRef name,
+                  llvm::StringRef version,
+                  Mode mode)
+        : m_real(real)
+        , m_name(name)
+        , m_version(version)
+        , m_mode(mode)
+    {
+    }
+
+    std::string m_real;
+    std::string m_name;
+    std::string m_version;
+    Mode m_mode;
+};
+
+class YASM_STD_EXPORT ElfObject : public ObjectFormat
 {
 public:
     ElfObject(const ObjectFormatModule& module,
@@ -109,6 +138,7 @@ public:
     void DirSize(DirectiveInfo& info, Diagnostic& diags);
     void DirWeak(DirectiveInfo& info, Diagnostic& diags);
     void DirHidden(DirectiveInfo& info, Diagnostic& diags);
+    void DirSymVer(DirectiveInfo& info, Diagnostic& diags);
     void DirIdent(DirectiveInfo& info, Diagnostic& diags);
 
     ElfConfig m_config;                     // ELF configuration
@@ -116,6 +146,9 @@ public:
 
     ElfSymbol* m_file_elfsym;               // .file symbol
     SymbolRef m_dotdotsym;                  // ..sym symbol
+
+    typedef stdx::ptr_vector<ElfSymVersion> SymVers;
+    SymVers m_symvers;                      // symbol version aliases
 };
 
 class YASM_STD_EXPORT Elf32Object : public ElfObject
