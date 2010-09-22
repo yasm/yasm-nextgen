@@ -595,12 +595,6 @@ CONFIGURE_FILE(
     include/yasmx/Config/longlong.h.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/include/yasmx/Config/longlong.h
     )
-IF(BUILD_TESTS)
-    CONFIGURE_FILE(
-        unittests/unittest_config.h.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/unittests/unittest_config.h
-        )
-ENDIF(BUILD_TESTS)
 
 # Generate LLVM configured files
 CONFIGURE_FILE(
