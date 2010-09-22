@@ -34,8 +34,6 @@
 
 namespace llvm { class MemoryBuffer; }
 
-namespace YAML { class Emitter; }
-
 namespace yasm
 {
 
@@ -100,17 +98,7 @@ struct YASM_STD_EXPORT ElfConfig
     std::string getRelocSectionName(const std::string& basesect) const;
 
     bool setEndian(EndianState& state) const;
-
-    void Write(YAML::Emitter& out) const;
-    void Dump() const;
 };
-
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const ElfConfig& config)
-{
-    config.Write(out);
-    return out;
-}
 
 }} // namespace yasm::objfmt
 

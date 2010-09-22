@@ -30,7 +30,6 @@
 
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
@@ -82,14 +81,6 @@ Bytecode::Contents::getSpecial() const
 
 Bytecode::Contents::Contents(const Contents& rhs)
 {
-}
-
-void
-Bytecode::Contents::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
 
 void
@@ -317,51 +308,6 @@ Bytecode::AppendFixed(unsigned int size,
     return m_fixed_fixups.back();
 }
 
-void
-Bytecode::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "fixed" << YAML::Value << m_fixed;
-
-    // fixups
-    out << YAML::Key << "fixed fixups" << YAML::Value;
-    if (m_fixed_fixups.empty())
-        out << YAML::Flow;
-    out << YAML::BeginSeq;
-    for (std::vector<Fixup>::const_iterator i=m_fixed_fixups.begin(),
-         end=m_fixed_fixups.end(); i != end; ++i)
-        out << *i;
-    out << YAML::EndSeq;
-
-    // tail contents
-    out << YAML::Key << "tail" << YAML::Value;
-    if (m_contents.get() != 0)
-        out << *m_contents;
-    else
-        out << YAML::Null;
-
-    out << YAML::Key << "tail length" << YAML::Value << m_len;
-    out << YAML::Key << "source" << YAML::Value << m_source.getRawEncoding();
-    out << YAML::Key << "offset" << YAML::Value << m_offset;
-    out << YAML::Key << "index" << YAML::Value;
-    if (m_index != ~0UL)
-        out << m_index;
-    else
-        out << YAML::Null;
-
-    // TODO: symbols
-
-    out << YAML::EndMap;
-}
-
-void
-Bytecode::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
-}
-
 Bytecode::Fixup::Fixup(unsigned int off, const Value& val)
     : Value(val), m_off(off)
 {
@@ -387,22 +333,4 @@ Bytecode::Fixup::swap(Fixup& oth)
 {
     Value::swap(oth);
     std::swap(m_off, oth.m_off);
-}
-
-void
-Bytecode::Fixup::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "offset" << YAML::Value << m_off;
-    out << YAML::Key << "value" << YAML::Value;
-    Value::Write(out);
-    out << YAML::EndMap;
-}
-
-void
-Bytecode::Fixup::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }

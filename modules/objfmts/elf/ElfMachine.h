@@ -70,8 +70,6 @@ struct YASM_STD_EXPORT ElfSpecialSymbol
         : ElfSpecialSymbolData(rhs)
     {}
     ~ElfSpecialSymbol();
-
-    void Write(YAML::Emitter& out) const;
 };
 
 inline bool

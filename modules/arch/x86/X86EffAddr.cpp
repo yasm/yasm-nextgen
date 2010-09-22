@@ -26,7 +26,6 @@
 //
 #include "X86EffAddr.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Expr.h"
@@ -183,23 +182,6 @@ X86EffAddr*
 X86EffAddr::clone() const
 {
     return new X86EffAddr(*this);
-}
-
-void
-X86EffAddr::DoWrite(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "modrm";
-    out << YAML::Value << YAML::Oct << static_cast<unsigned int>(m_modrm);
-    out << YAML::Key << "need modrm" << YAML::Value << m_need_modrm;
-    out << YAML::Key << "valid modrm" << YAML::Value << m_valid_modrm;
-
-    out << YAML::Key << "sib";
-    out << YAML::Value << YAML::Oct << static_cast<unsigned int>(m_sib);
-    out << YAML::Key << "need sib";
-    out << YAML::Value << static_cast<unsigned int>(m_need_sib);
-    out << YAML::Key << "valid sib" << YAML::Value << m_valid_sib;
-    out << YAML::EndMap;
 }
 
 namespace {

@@ -26,7 +26,6 @@
 //
 #include "ElfReloc.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Bytes_util.h"
 #include "yasmx/InputBuffer.h"
 
@@ -173,13 +172,4 @@ ElfReloc::Write(Bytes& bytes, const ElfConfig& config)
         if (config.rela)
             Write64(bytes, m_addend);
     }
-}
-
-void
-ElfReloc::DoWrite(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "ElfReloc";
-    out << YAML::Key << "addend" << YAML::Value << m_addend;
-    out << YAML::EndMap;
 }

@@ -29,7 +29,6 @@
 #include "X86General.h"
 
 #include "llvm/ADT/Statistic.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
@@ -88,8 +87,6 @@ public:
     llvm::StringRef getType() const;
 
     X86General* clone() const;
-
-    void Write(YAML::Emitter& out) const;
 
 private:
     X86General(const X86General& rhs);
@@ -581,46 +578,6 @@ X86General*
 X86General::clone() const
 {
     return new X86General(*this);
-}
-
-void
-X86General::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "X86General";
-    out << YAML::Key << "common" << YAML::Value << m_common;
-    out << YAML::Key << "opcode" << YAML::Value << m_opcode;
-
-    // effective address
-    out << YAML::Key << "effective address" << YAML::Value;
-    if (m_ea)
-        m_ea->Write(out);
-    else
-        out << YAML::Null;
-
-    out << YAML::Key << "immediate:" << YAML::Value;
-    if (m_imm)
-        m_imm->Write(out);
-    else
-        out << YAML::Null;
-
-    out << YAML::Key << "special prefix" << YAML::Value;
-    out << YAML::Hex << static_cast<unsigned int>(m_special_prefix);
-    out << YAML::Key << "rex";
-    out << YAML::Value << YAML::Oct << static_cast<unsigned int>(m_rex);
-    out << YAML::Key << "default rel";
-    out << YAML::Value << static_cast<bool>(m_default_rel);
-    out << YAML::Key << "postop" << YAML::Value;
-    switch (m_postop)
-    {
-        case X86_POSTOP_SIGNEXT_IMM8:   out << "SIGNEXT_IMM8"; break;
-        case X86_POSTOP_SHORT_MOV:      out << "SHORT_MOV"; break;
-        case X86_POSTOP_ADDRESS16:      out << "ADDRESS16"; break;
-        case X86_POSTOP_SIMM32_AVAIL:   out << "SIMM32_AVAIL"; break;
-        case X86_POSTOP_NONE:
-        default:                        out << YAML::Null; break;
-    }
-    out << YAML::EndMap;
 }
 
 void

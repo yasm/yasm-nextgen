@@ -30,7 +30,6 @@
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"
@@ -52,37 +51,6 @@ BinGroup::BinGroup(Section& section, BinSection& bsd)
 
 BinGroup::~BinGroup()
 {
-}
-
-void
-BinGroup::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "section";
-    out << YAML::Value << YAML::Alias("SECT@" + m_section.getName());
-    out << YAML::Key << "following groups" << YAML::Value << m_follow_groups;
-    out << YAML::EndMap;
-}
-
-void
-BinGroup::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
-}
-
-YAML::Emitter&
-objfmt::operator<< (YAML::Emitter& out, const BinGroups& groups)
-{
-    if (groups.empty())
-        out << YAML::Flow;
-    out << YAML::BeginSeq;
-    for (BinGroups::const_iterator group = groups.begin(), end = groups.end();
-         group != end; ++group)
-        out << *group;
-    out << YAML::EndSeq;
-    return out;
 }
 
 // Recursive function to find group containing named section.
@@ -129,23 +97,6 @@ BinLink::BinLink(Object& object, Diagnostic& diags)
 
 BinLink::~BinLink()
 {
-}
-
-void
-BinLink::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "lma groups" << YAML::Value << m_lma_groups;
-    out << YAML::Key << "vma groups" << YAML::Value << m_vma_groups;
-    out << YAML::EndMap;
-}
-
-void
-BinLink::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
 
 bool

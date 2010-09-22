@@ -26,7 +26,6 @@
 //
 #include "yasmx/Symbol_util.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Parse/Directive.h"
 #include "yasmx/Support/scoped_ptr.h"
@@ -47,8 +46,6 @@ public:
     ObjextNameValues(NameValues& nvs) { m_nvs.swap(nvs); }
     ~ObjextNameValues();
 
-    void Write(YAML::Emitter& out) const;
-
     const NameValues& get() const { return m_nvs; }
     NameValues& get() { return m_nvs; }
 
@@ -63,15 +60,6 @@ ObjextNameValues::~ObjextNameValues()
 {
 }
 
-void
-ObjextNameValues::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << key;
-    out << YAML::Key << "namevalues" << YAML::Value << m_nvs;
-    out << YAML::EndMap;
-}
-
 namespace {
 class CommonSize : public AssocData
 {
@@ -80,8 +68,6 @@ public:
 
     CommonSize(const Expr& e) : m_expr(e) {}
     ~CommonSize();
-
-    void Write(YAML::Emitter& out) const;
 
     const Expr* get() const { return &m_expr; }
     Expr* get() { return &m_expr; }
@@ -95,15 +81,6 @@ const char* CommonSize::key = "CommonSize";
 
 CommonSize::~CommonSize()
 {
-}
-
-void
-CommonSize::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << key;
-    out << YAML::Key << "size" << YAML::Value << m_expr;
-    out << YAML::EndMap;
 }
 
 void

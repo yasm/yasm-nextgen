@@ -26,7 +26,6 @@
 ///
 #include "yasmx/BytecodeContainer.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/BytecodeOutput.h"
@@ -77,9 +76,6 @@ public:
     SpecialType getSpecial() const;
 
     AlignBytecode* clone() const;
-
-    /// Write a YAML representation.  For debugging purposes.
-    void Write(YAML::Emitter& out) const;
 
 private:
     Expr m_boundary;    ///< alignment boundary
@@ -280,18 +276,6 @@ AlignBytecode*
 AlignBytecode::clone() const
 {
     return new AlignBytecode(m_boundary, m_fill, m_maxskip, m_code_fill);
-}
-
-void
-AlignBytecode::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "Align";
-    out << YAML::Key << "boundary" << YAML::Value << m_boundary;
-    out << YAML::Key << "fill" << YAML::Value << m_fill;
-    out << YAML::Key << "max skip" << YAML::Value << m_maxskip;
-    out << YAML::Key << "code fill" << YAML::Value << (m_code_fill != 0);
-    out << YAML::EndMap;
 }
 
 void

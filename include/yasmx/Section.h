@@ -43,8 +43,6 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace YAML { class Emitter; }
-
 namespace yasm
 {
 
@@ -169,14 +167,6 @@ public:
     /// @param filepos  File position
     void setFilePos(unsigned long filepos) { m_filepos = filepos; }
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
-
 private:
     std::string m_name;                 ///< name (given by user)
 
@@ -200,17 +190,6 @@ private:
     Relocs m_relocs;
     stdx::ptr_vector_owner<Reloc> m_relocs_owner;
 };
-
-/// Dump a YAML representation of a section.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param section      section
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Section& section)
-{
-    section.Write(out);
-    return out;
-}
 
 } // namespace yasm
 

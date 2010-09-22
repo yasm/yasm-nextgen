@@ -61,26 +61,15 @@ class SourceManager;
 class YASM_LIB_EXPORT Assembler
 {
 public:
-    enum ObjectDumpTime
-    {
-        DUMP_NEVER = 0,
-        DUMP_AFTER_PARSE,
-        DUMP_AFTER_FINALIZE,
-        DUMP_AFTER_OPTIMIZE,
-        DUMP_AFTER_OUTPUT
-    };
-
     /// Constructor.  A default section is created as the first
     /// section, and an empty symbol table is created.
     /// The object filename is initially unset (empty string).
     /// @param arch_keyword     architecture keyword
     /// @param objfmt_keyword   object format keyword
     /// @param diags            diagnostic reporting
-    /// @param dump_time        when (if ever) to dump object YAML to stderr
     Assembler(llvm::StringRef arch_keyword,
               llvm::StringRef objfmt_keyword,
-              Diagnostic& diags,
-              ObjectDumpTime dump_time = DUMP_NEVER);
+              Diagnostic& diags);
 
     /// Destructor.
     ~Assembler();
@@ -176,7 +165,6 @@ private:
 
     std::string m_obj_filename;
     std::string m_machine;
-    Assembler::ObjectDumpTime m_dump_time;
 };
 
 } // namespace yasm

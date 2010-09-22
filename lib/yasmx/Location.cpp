@@ -28,7 +28,6 @@
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/IntNum.h"
 
@@ -39,24 +38,6 @@ unsigned long
 Location::getOffset() const
 {
     return bc->getOffset() + off;
-}
-
-void
-Location::Write(YAML::Emitter& out) const
-{
-    out << YAML::Flow << YAML::BeginMap;
-    out << YAML::Key << "bc" << YAML::Value
-        << YAML::Alias("BC@" + llvm::Twine::utohexstr((uint64_t)bc));
-    out << YAML::Key << "off" << YAML::Value << off;
-    out << YAML::EndMap;
-}
-
-void
-Location::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
 
 bool

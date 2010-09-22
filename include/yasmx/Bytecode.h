@@ -42,8 +42,6 @@
 #include "yasmx/Value.h"
 
 
-namespace YAML { class Emitter; }
-
 namespace yasm
 {
 
@@ -177,15 +175,6 @@ public:
         virtual llvm::StringRef getType() const = 0;
 
         virtual Contents* clone() const = 0;
-
-        /// Write a YAML representation.  For debugging purposes.
-        /// Called by Bytecode::Write(YAML::Emitter&).
-        /// @param out          YAML emitter
-        virtual void Write(YAML::Emitter& out) const = 0;
-
-        /// Dump a YAML representation to stderr.
-        /// For debugging purposes.
-        void Dump() const;
 
     protected:
         /// Copy constructor so that derived classes can sanely have one.
@@ -365,27 +354,11 @@ public:
         void swap(Fixup& oth);
         unsigned int getOffset() const { return m_off; }
 
-        /// Write a YAML representation.  For debugging purposes.
-        /// @param out          YAML emitter
-        void Write(YAML::Emitter& out) const;
-
-        /// Dump a YAML representation to stderr.
-        /// For debugging purposes.
-        void Dump() const;
-
     private:
         unsigned int m_off;
     };
 
     void AppendFixup(const Fixup& fixup) { m_fixed_fixups.push_back(fixup); }
-
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
 
 private:
     /// Fixed data that comes before the possibly dynamic length data generated
@@ -414,27 +387,6 @@ private:
     /// Unique integer index of bytecode.  Used during optimization.
     unsigned long m_index;
 };
-
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Bytecode::Contents& contents)
-{
-    contents.Write(out);
-    return out;
-}
-
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Bytecode::Fixup& fixup)
-{
-    fixup.Write(out);
-    return out;
-}
-
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Bytecode& bc)
-{
-    bc.Write(out);
-    return out;
-}
 
 /// Specialized swap for algorithms.
 inline void

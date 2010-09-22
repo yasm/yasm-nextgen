@@ -33,8 +33,6 @@
 
 #include "yasmx/Config/export.h"
 
-namespace YAML { class Emitter; }
-
 namespace yasm
 {
 
@@ -62,13 +60,6 @@ public:
 private:
     Symbol* m_sym;
 };
-
-/// Dump a YAML representation of a symbol reference.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param sym          symbol reference
-/// @return Emitter.
-YASM_LIB_EXPORT
-YAML::Emitter& operator<< (YAML::Emitter& out, const SymbolRef& sym);
 
 } // namespace yasm
 

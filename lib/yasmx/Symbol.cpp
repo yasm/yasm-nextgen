@@ -27,7 +27,6 @@
 #include "yasmx/Symbol.h"
 
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Expr.h"
 
@@ -185,76 +184,4 @@ Symbol::getLabel(Location* loc) const
         return false;
     *loc = m_loc;
     return true;
-}
-
-void
-Symbol::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "name" << YAML::Value << m_name;
-    out << YAML::Key << "type" << YAML::Value;
-    switch (m_type)
-    {
-        case EQU:
-            out << "EQU";
-            out << YAML::Key << "value" << YAML::Value;
-            if (m_status & VALUED)
-                out << *m_equ;
-            else
-                out << YAML::Null;
-            break;
-        case LABEL:
-            out << "Label";
-            out << YAML::Key << "loc" << YAML::Value << m_loc;
-            break;
-        case SPECIAL:
-            out << "Special";
-            break;
-        case UNKNOWN:
-            out << "Unknown (Common/Extern)";
-            break;
-        default:
-            out << YAML::Null;
-            break;
-    }
-
-    out << YAML::Key << "status" << YAML::Value << YAML::Flow << YAML::BeginSeq;
-    if (m_status & USED)
-        out << "Used";
-    if (m_status & DEFINED)
-        out << "Defined";
-    if (m_status & VALUED)
-        out << "Valued";
-    out << YAML::EndSeq;
-
-    out << YAML::Key << "visibility";
-    out << YAML::Value << YAML::Flow << YAML::BeginSeq;
-    if (m_visibility & GLOBAL)
-        out << "Global";
-    if (m_visibility & COMMON)
-        out << "Common";
-    if (m_visibility & EXTERN)
-        out << "Extern";
-    if (m_visibility & DLOCAL)
-        out << "DLocal";
-    out << YAML::EndSeq;
-
-    out << YAML::Key << "define source"
-        << YAML::Value << m_def_source.getRawEncoding();
-    out << YAML::Key << "declare source"
-        << YAML::Value << m_decl_source.getRawEncoding();
-    out << YAML::Key << "use source"
-        << YAML::Value << m_use_source.getRawEncoding();
-
-    out << YAML::Key << "assoc data" << YAML::Value;
-    AssocDataContainer::Write(out);
-    out << YAML::EndMap;
-}
-
-void
-Symbol::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }

@@ -39,8 +39,6 @@
 #include "yasmx/Location.h"
 
 
-namespace YAML { class Emitter; }
-
 namespace yasm
 {
 
@@ -208,14 +206,6 @@ public:
             m_visibility |= EXTERN;
     }
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
-
 private:
     Symbol(const Symbol&);                  // not implemented
     const Symbol& operator=(const Symbol&); // not implemented
@@ -263,17 +253,6 @@ Symbol::getEqu() const
     if (m_type == EQU && (m_status & VALUED))
         return m_equ.get();
     return 0;
-}
-
-/// Dump a YAML representation of a symbol.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param symbol       symbol
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Symbol& symbol)
-{
-    symbol.Write(out);
-    return out;
 }
 
 } // namespace yasm

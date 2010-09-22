@@ -28,7 +28,6 @@
 
 #include <string>
 
-#include "YAML/emitter.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Object.h"
 
@@ -57,20 +56,6 @@ const char* ElfSpecialSymbol::key = "objfmt::elf::ElfSpecialSymbol";
 
 ElfSpecialSymbol::~ElfSpecialSymbol()
 {
-}
-
-void
-ElfSpecialSymbol::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << key;
-    out << YAML::Key << "name" << YAML::Value << name;
-    out << YAML::Key << "reloc type" << YAML::Value << reloc;
-    out << YAML::Key << "data size" << YAML::Value << size;
-    out << YAML::Key << "symbol relative" << YAML::Value << sym_relative;
-    out << YAML::Key << "thread local" << YAML::Value << thread_local;
-    out << YAML::Key << "curpos adjust" << YAML::Value << curpos_adjust;
-    out << YAML::EndMap;
 }
 
 ElfMachine::~ElfMachine()

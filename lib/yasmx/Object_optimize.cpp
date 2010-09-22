@@ -40,7 +40,6 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/IntervalTree.h"
@@ -167,8 +166,6 @@ class OffsetSetter
 public:
     OffsetSetter();
     ~OffsetSetter() {}
-    void Write(YAML::Emitter& out) const;
-    void Dump() const;
 
     Bytecode* m_bc;
     unsigned long m_cur_val;
@@ -183,26 +180,6 @@ OffsetSetter::OffsetSetter()
       m_new_val(0),
       m_thres(0)
 {
-}
-
-void
-OffsetSetter::Write(YAML::Emitter& out) const
-{
-    out << YAML::Flow << YAML::BeginMap;
-    out << YAML::Key << "bc" << YAML::Value
-        << YAML::Alias("BC@" + llvm::Twine::utohexstr((uint64_t)m_bc));
-    out << YAML::Key << "curval" << YAML::Value << m_cur_val;
-    out << YAML::Key << "newval" << YAML::Value << m_new_val;
-    out << YAML::Key << "thres" << YAML::Value << m_thres;
-    out << YAML::EndMap;
-}
-
-void
-OffsetSetter::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
 
 namespace {
@@ -222,8 +199,6 @@ public:
              Span* span,
              long new_val);
         ~Term() {}
-        void Write(YAML::Emitter& out) const;
-        void Dump() const;
 
         Location m_loc;
         Location m_loc2;
@@ -245,8 +220,6 @@ public:
     bool RecalcNormal(Diagnostic& diags);
 
     std::string getName() const;
-    void Write(YAML::Emitter& out) const;
-    void Dump() const;
 
 private:
     Span(const Span&);                  // not implemented
@@ -299,9 +272,6 @@ public:
     void Step1e();
     void Step2();
 
-    void Write(YAML::Emitter& out) const;
-    void Dump() const;
-
 private:
     void ITreeAdd(Span& span, Span::Term& term);
     void CheckCycle(IntervalTreeNode<Span::Term*> * node,
@@ -342,26 +312,6 @@ Span::Term::Term(unsigned int subst,
       m_subst(subst)
 {
     ++num_span_terms;
-}
-
-void
-Span::Term::Write(YAML::Emitter& out) const
-{
-    out << YAML::Flow << YAML::BeginMap;
-    out << YAML::Key << "loc" << YAML::Value << m_loc;
-    out << YAML::Key << "loc2" << YAML::Value << m_loc2;
-    out << YAML::Key << "curval" << YAML::Value << m_cur_val;
-    out << YAML::Key << "newval" << YAML::Value << m_new_val;
-    out << YAML::Key << "subst" << YAML::Value << m_subst;
-    out << YAML::EndMap;
-}
-
-void
-Span::Term::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
 
 Span::Span(Bytecode& bc,
@@ -492,66 +442,6 @@ Span::getName() const
     return oss.str();
 }
 
-void
-Span::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "bc" << YAML::Value
-        << YAML::Alias("BC@" + llvm::Twine::utohexstr((uint64_t)(&m_bc)));
-    if (!m_depval.hasAbs() || m_depval.isRelative())
-        out << YAML::Key << "depval" << YAML::Value << m_depval;
-    else
-    {
-        llvm::SmallString<256> ss;
-        llvm::raw_svector_ostream oss(ss);
-        oss << *m_depval.getAbs();
-        out << YAML::Key << "depval" << YAML::Value << oss.str();
-    }
-
-    out << YAML::Key << "span terms" << YAML::Value << YAML::BeginSeq;
-    for (Terms::const_iterator i=m_span_terms.begin(), end=m_span_terms.end();
-         i != end; ++i)
-    {
-        i->Write(out);
-    }
-    out << YAML::EndSeq;
-
-    out << YAML::Key << "curval" << YAML::Value << m_cur_val;
-    out << YAML::Key << "newval" << YAML::Value << m_new_val;
-    out << YAML::Key << "negthres" << YAML::Value << m_neg_thres;
-    out << YAML::Key << "posthres" << YAML::Value << m_pos_thres;
-    out << YAML::Key << "id" << YAML::Value << m_id;
-
-    out << YAML::Key << "active" << YAML::Value;
-    switch (m_active)
-    {
-        case INACTIVE: out << "inactive"; break;
-        case ACTIVE: out << "active"; break;
-        case ON_Q: out << "on queue"; break;
-    }
-
-    out << YAML::Key << "backtrace" << YAML::Value;
-    out << YAML::Flow << YAML::BeginSeq;
-    for (BacktraceSpans::const_iterator i=m_backtrace.begin(),
-         end=m_backtrace.end(); i != end; ++i)
-    {
-        out << YAML::Alias((*i)->getName());
-    }
-    out << YAML::EndSeq;
-
-    out << YAML::Key << "offset setter index";
-	out << YAML::Value << static_cast<unsigned long>(m_os_index);
-    out << YAML::EndMap;
-}
-
-void
-Span::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
-}
-
 Optimizer::Optimizer(Diagnostic& diags)
     : m_diags(diags)
 {
@@ -567,65 +457,6 @@ Optimizer::~Optimizer()
         delete m_spans.back();
         m_spans.pop_back();
     }
-}
-
-void
-Optimizer::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-
-    // spans
-    out << YAML::Key << "spans" << YAML::Value;
-    if (m_spans.empty())
-        out << YAML::Flow;
-    out << YAML::BeginSeq;
-    for (Spans::const_iterator i=m_spans.begin(), end=m_spans.end();
-         i != end; ++i)
-    {
-        out << YAML::Alias((*i)->getName());
-        (*i)->Write(out);
-    }
-    out << YAML::EndSeq;
-
-    // queue A
-    out << YAML::Key << "QA" << YAML::Value << YAML::Flow << YAML::BeginSeq;
-    for (SpanQueue::const_iterator j=m_QA.begin(), end=m_QA.end();
-         j != end; ++j)
-    {
-        out << YAML::Alias((*j)->getName());
-    }
-    out << YAML::EndSeq;
-
-    // queue B
-    out << YAML::Key << "QB" << YAML::Value << YAML::Flow << YAML::BeginSeq;
-    for (SpanQueue::const_iterator k=m_QB.begin(), end=m_QB.end();
-         k != end; ++k)
-    {
-        out << YAML::Alias((*k)->getName());
-    }
-    out << YAML::EndSeq;
-
-    // offset setters
-    out << YAML::Key << "offset setters" << YAML::Value;
-    if (m_offset_setters.empty())
-        out << YAML::Flow;
-    out << YAML::BeginSeq;
-    for (std::vector<OffsetSetter>::const_iterator m=m_offset_setters.begin(),
-         end=m_offset_setters.end(); m != end; ++m)
-    {
-        m->Write(out);
-    }
-    out << YAML::EndSeq;
-
-    out << YAML::EndMap;
-}
-
-void
-Optimizer::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
 
 void
@@ -874,8 +705,6 @@ Optimizer::Step1e()
 void
 Optimizer::Step2()
 {
-    DEBUG(Dump());
-
     while (!m_QA.empty() || !m_QB.empty())
     {
         Span* span;

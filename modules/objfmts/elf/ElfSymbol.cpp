@@ -27,7 +27,6 @@
 #include "ElfSymbol.h"
 
 #include "llvm/ADT/Twine.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes_util.h"
@@ -148,58 +147,6 @@ ElfSymbol::CreateSymbol(Object& object, const StringTable& strtab) const
     }
 
     return sym;
-}
-
-void
-ElfSymbol::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << key;
-    out << YAML::Key << "sect" << YAML::Value;
-    if (m_sect)
-        out << YAML::Alias("SECT@" + m_sect->getName());
-    else
-        out << YAML::Null;
-    out << YAML::Key << "value" << YAML::Value << m_value;
-    out << YAML::Key << "size source"
-        << YAML::Value << m_size_source.getRawEncoding();
-    out << YAML::Key << "size" << YAML::Value << m_size;
-    out << YAML::Key << "index" << YAML::Value << m_index;
-
-    out << YAML::Key << "bind" << YAML::Value;
-    switch (m_bind)
-    {
-        case STB_LOCAL:     out << "local";     break;
-        case STB_GLOBAL:    out << "global";    break;
-        case STB_WEAK:      out << "weak";      break;
-        default:            out << static_cast<int>(m_bind); break;
-    }
-
-    out << YAML::Key << "symtype" << YAML::Value;
-    switch (m_type)
-    {
-        case STT_NOTYPE:    out << "notype";    break;
-        case STT_OBJECT:    out << "object";    break;
-        case STT_FUNC:      out << "func";      break;
-        case STT_SECTION:   out << "section";   break;
-        case STT_FILE:      out << "file";      break;
-        case STT_COMMON:    out << "common";    break;
-        case STT_TLS:       out << "tls";       break;
-        default:            out << static_cast<int>(m_type); break;
-    }
-
-    out << YAML::Key << "vis" << YAML::Value;
-    switch (m_vis)
-    {
-        case STV_DEFAULT:   out << "default";   break;
-        case STV_INTERNAL:  out << "internal";  break;
-        case STV_HIDDEN:    out << "hidden";    break;
-        case STV_PROTECTED: out << "protected"; break;
-        default:            out << static_cast<int>(m_vis); break;
-    }
-
-    out << YAML::Key << "symindex" << YAML::Value << m_symindex;
-    out << YAML::EndMap;
 }
 
 void

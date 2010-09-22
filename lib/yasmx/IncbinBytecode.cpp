@@ -27,7 +27,6 @@
 #include "yasmx/BytecodeContainer.h"
 
 #include "llvm/Support/MemoryBuffer.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/BytecodeOutput.h"
@@ -64,9 +63,6 @@ public:
     llvm::StringRef getType() const;
 
     IncbinBytecode* clone() const;
-
-    /// Write a YAML representation.  For debugging purposes.
-    void Write(YAML::Emitter& out) const;
 
 private:
     std::string m_filename;     ///< file to include data from
@@ -219,25 +215,6 @@ IncbinBytecode::clone() const
     return new IncbinBytecode(m_filename,
                               std::auto_ptr<Expr>(m_start->clone()),
                               std::auto_ptr<Expr>(m_maxlen->clone()));
-}
-
-void
-IncbinBytecode::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "IncBin";
-    out << YAML::Key << "filename" << YAML::Value << m_filename;
-    out << YAML::Key << "start" << YAML::Value;
-    if (m_start)
-        out << *m_start;
-    else
-        out << YAML::Null;
-    out << YAML::Key << "max length" << YAML::Value;
-    if (m_maxlen)
-        out << *m_maxlen;
-    else
-        out << YAML::Null;
-    out << YAML::EndMap;
 }
 
 void

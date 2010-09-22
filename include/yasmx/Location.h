@@ -32,8 +32,6 @@
 #include "yasmx/Config/export.h"
 
 
-namespace YAML { class Emitter; }
-
 namespace yasm
 {
 
@@ -51,14 +49,6 @@ struct YASM_LIB_EXPORT Location
     /// Get real offset (bc offset + off)
     /// @return Offset.
     unsigned long getOffset() const;
-
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
 };
 
 inline bool
@@ -90,17 +80,6 @@ bool CalcDist(Location loc1, Location loc2, /*@out@*/ IntNum* dist);
 ///         indeterminate (e.g. the locations have different bytecodes).
 YASM_LIB_EXPORT
 bool CalcDistNoBC(Location loc1, Location loc2, IntNum* dist);
-
-/// Dump a YAML representation of a location.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param loc          location
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Location& loc)
-{
-    loc.Write(out);
-    return out;
-}
 
 } // namespace yasm
 

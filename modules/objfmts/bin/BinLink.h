@@ -31,8 +31,6 @@
 #include "yasmx/Bytes.h"
 
 
-namespace YAML { class Emitter; }
-
 namespace yasm
 {
 
@@ -58,9 +56,6 @@ public:
     BinGroup(Section& section, BinSection& bsd);
     ~BinGroup();
 
-    void Write(YAML::Emitter& out) const;
-    void Dump() const;
-
     void AssignStartRecurse(IntNum& start,
                             IntNum& last,
                             IntNum& vdelta,
@@ -76,24 +71,11 @@ public:
     stdx::ptr_vector_owner<BinGroup> m_follow_groups_owner;
 };
 
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const BinGroup& group)
-{
-    group.Write(out);
-    return out;
-}
-
-YASM_STD_EXPORT
-YAML::Emitter& operator<< (YAML::Emitter& os, const BinGroups& groups);
-
 class YASM_STD_EXPORT BinLink
 {
 public:
     BinLink(Object& object, Diagnostic& diags);
     ~BinLink();
-
-    void Write(YAML::Emitter& out) const;
-    void Dump() const;
 
     bool DoLink(const IntNum& origin);
     bool CheckLMAOverlap();

@@ -41,8 +41,6 @@
 #include "yasmx/Op.h"
 
 
-namespace YAML { class Emitter; class raw_ostream; }
-
 namespace yasm
 {
 class Diagnostic;
@@ -382,14 +380,6 @@ public:
     /// @param bv       bitvector
     void setBV(const llvm::APInt& bv);
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
-
     /// Print to stream.
     /// @param os           output stream
     /// @param base         numeric base (10=decimal, etc)
@@ -525,17 +515,6 @@ operator<< (llvm::raw_ostream& os, const IntNum& intn)
 {
     intn.Print(os);
     return os;
-}
-
-/// Dump a YAML representation of intnum.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param intn         intnum
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const IntNum& intn)
-{
-    intn.Write(out);
-    return out;
 }
 
 } // namespace yasm

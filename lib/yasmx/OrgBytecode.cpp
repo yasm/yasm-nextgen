@@ -26,7 +26,6 @@
 ///
 #include "yasmx/BytecodeContainer.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
@@ -71,9 +70,6 @@ public:
     SpecialType getSpecial() const;
 
     OrgBytecode* clone() const;
-
-    /// Write a YAML representation.  For debugging purposes.
-    void Write(YAML::Emitter& out) const;
 
 private:
     unsigned long m_start;      ///< target starting offset within section
@@ -176,16 +172,6 @@ OrgBytecode*
 OrgBytecode::clone() const
 {
     return new OrgBytecode(m_start, m_fill);
-}
-
-void
-OrgBytecode::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "Org";
-    out << YAML::Key << "start" << YAML::Value << m_start;
-    out << YAML::Key << "fill" << YAML::Value << m_fill;
-    out << YAML::EndMap;
 }
 
 void

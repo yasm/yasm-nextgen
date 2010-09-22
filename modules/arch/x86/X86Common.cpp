@@ -26,7 +26,6 @@
 //
 #include "X86Common.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
@@ -127,22 +126,6 @@ X86Common::Finish()
     // X86EffAddr::checkea().
     if (m_opersize == 0)
         m_opersize = (m_mode_bits == 64 ? 32 : m_mode_bits);
-}
-
-YAML::Emitter&
-arch::operator<< (YAML::Emitter& out, const X86Common& common)
-{
-    out << YAML::Flow << YAML::BeginMap;
-    out << YAML::Key << "addrsize";
-    out << YAML::Value << static_cast<unsigned int>(common.m_addrsize);
-    out << YAML::Key << "opersize";
-    out << YAML::Value << static_cast<unsigned int>(common.m_opersize);
-    out << YAML::Key << "lockrep" << YAML::Value;
-    out << YAML::Hex << static_cast<unsigned int>(common.m_lockrep_pre);
-    out << YAML::Key << "bits";
-    out << YAML::Value << static_cast<unsigned int>(common.m_mode_bits);
-    out << YAML::EndMap;
-    return out;
 }
 
 unsigned long

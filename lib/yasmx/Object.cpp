@@ -36,7 +36,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Arch.h"
@@ -267,54 +266,4 @@ SymbolRef
 Object::FindSpecialSymbol(llvm::StringRef name)
 {
     return SymbolRef(m_impl->special_sym_map.Find(name));
-}
-
-void
-Object::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "source filename" << YAML::Value << m_src_filename;
-    out << YAML::Key << "object filename" << YAML::Value << m_obj_filename;
-
-    out << YAML::Key << "architecture keyword" << YAML::Value;
-    if (m_arch)
-        out << m_arch->getModule().getKeyword();
-    else
-        out << YAML::Null;
-
-    out << YAML::Key << "current section name" << YAML::Value;
-    if (m_cur_section)
-        out << m_cur_section->getName();
-    else
-        out << YAML::Null;
-
-    // sections (and their bytecodes)
-    out << YAML::Key << "sections" << YAML::Value;
-    if (m_sections.empty())
-        out << YAML::Flow;
-    out << YAML::BeginSeq;
-    for (const_section_iterator i=m_sections.begin(), end=m_sections.end();
-         i != end; ++i)
-        out << YAML::Anchor("SECT@" + i->getName()) << *i;
-    out << YAML::EndSeq;
-
-    // symbols
-    out << YAML::Key << "symbols" << YAML::Value;
-    if (m_symbols.empty())
-        out << YAML::Flow;
-    out << YAML::BeginSeq;
-    for (const_symbol_iterator i=m_symbols.begin(), end=m_symbols.end();
-         i != end; ++i)
-        out << YAML::Anchor("SYM@" + i->getName()) << *i;
-    out << YAML::EndSeq;
-
-    out << YAML::EndMap;
-}
-
-void
-Object::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }

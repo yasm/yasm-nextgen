@@ -28,21 +28,12 @@
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 
 
 using namespace yasm;
 
 AssocData::~AssocData()
 {
-}
-
-void
-AssocData::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
 
 AssocDataContainer::AssocDataContainer()
@@ -102,29 +93,4 @@ AssocDataContainer::getAssocData(const void* key) const
             return i->value;
     }
     return 0;
-}
-
-void
-AssocDataContainer::Write(YAML::Emitter& out) const
-{
-    if (m_assoc_map.empty())
-        out << YAML::Flow;
-    out << YAML::BeginMap;
-    for (AssocMap::const_iterator i=m_assoc_map.begin(), end=m_assoc_map.end();
-         i != end; ++i)
-    {
-        llvm::SmallString<128> ss;
-        llvm::raw_svector_ostream oss(ss);
-        oss << (uint64_t)(i->key);
-        out << YAML::Key << oss.str() << YAML::Value << *i->value;
-    }
-    out << YAML::EndMap;
-}
-
-void
-AssocDataContainer::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }

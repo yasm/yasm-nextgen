@@ -26,34 +26,11 @@
 //
 #include "X86Opcode.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Bytes.h"
 
 
 using namespace yasm;
 using namespace yasm::arch;
-
-YAML::Emitter&
-arch::operator<< (YAML::Emitter& out, const X86Opcode& opcode)
-{
-    if (opcode.m_len == 0)
-    {
-        out << YAML::Null;
-        return out;
-    }
-
-    out << YAML::Flow << YAML::BeginMap;
-    out << YAML::Key << "opcode" << YAML::Value << YAML::Flow << YAML::BeginSeq;
-    out << YAML::Hex << static_cast<unsigned int>(opcode.m_opcode[0]);
-    out << YAML::Hex << static_cast<unsigned int>(opcode.m_opcode[1]);
-    out << YAML::Hex << static_cast<unsigned int>(opcode.m_opcode[2]);
-    out << YAML::EndSeq;
-
-    out << YAML::Key << "length";
-    out << YAML::Value << static_cast<unsigned int>(opcode.m_len);
-    out << YAML::EndMap;
-    return out;
-}
 
 void
 X86Opcode::ToBytes(Bytes& bytes) const

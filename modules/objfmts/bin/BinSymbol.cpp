@@ -27,7 +27,6 @@
 #include "BinSymbol.h"
 
 #include "llvm/ADT/Twine.h"
-#include "YAML/emitter.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"
@@ -51,24 +50,6 @@ BinSymbol::BinSymbol(const Section& sect,
 
 BinSymbol::~BinSymbol()
 {
-}
-
-void
-BinSymbol::Write(YAML::Emitter& out) const
-{
-    out << YAML::Flow << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << key;
-    out << YAML::Key << "section";
-    out << YAML::Value << YAML::Alias("SECT@" + m_sect.getName());
-    out << YAML::Key << "ssym" << YAML::Value;
-    switch (m_which)
-    {
-        case START:     out << "START"; break;
-        case VSTART:    out << "VSTART"; break;
-        case LENGTH:    out << "LENGTH"; break;
-        default:        out << YAML::Null; break;
-    }
-    out << YAML::EndMap;
 }
 
 bool

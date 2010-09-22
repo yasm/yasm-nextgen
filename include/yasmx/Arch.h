@@ -42,7 +42,6 @@
 
 
 namespace llvm { class APFloat; class raw_ostream; }
-namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -84,14 +83,6 @@ public:
     /// @param os   output stream
     virtual void Put(llvm::raw_ostream& os) const = 0;
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    virtual void Write(YAML::Emitter& out) const = 0;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
-
 private:
     Register(const Register&);                  // not implemented
     const Register& operator=(const Register&); // not implemented
@@ -102,17 +93,6 @@ inline llvm::raw_ostream& operator<<
 {
     reg.Put(os);
     return os;
-}
-
-/// Dump a YAML representation of a register.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param reg          register
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Register& reg)
-{
-    reg.Write(out);
-    return out;
 }
 
 /// A group of registers.
@@ -129,29 +109,10 @@ public:
     ///         otherwise the specific register.
     virtual const Register* getReg(unsigned long regindex) const = 0;
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    virtual void Write(YAML::Emitter& out) const = 0;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
-
 private:
     RegisterGroup(const RegisterGroup&);                  // not implemented
     const RegisterGroup& operator=(const RegisterGroup&); // not implemented
 };
-
-/// Dump a YAML representation of a register group.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param reggroup     register group
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const RegisterGroup& reggroup)
-{
-    reggroup.Write(out);
-    return out;
-}
 
 /// A segment register.
 class YASM_LIB_EXPORT SegmentRegister
@@ -168,14 +129,6 @@ public:
     /// @param os   output stream
     virtual void Put(llvm::raw_ostream& os) const = 0;
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    virtual void Write(YAML::Emitter& out) const = 0;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
-
 private:
     SegmentRegister(const SegmentRegister&);                  // not implemented
     const SegmentRegister& operator=(const SegmentRegister&); // not implemented
@@ -186,17 +139,6 @@ inline llvm::raw_ostream& operator<<
 {
     segreg.Put(os);
     return os;
-}
-
-/// Dump a YAML representation of a segment register.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param segreg       segment register
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const SegmentRegister& segreg)
-{
-    segreg.Write(out);
-    return out;
 }
 
 /// Architecture interface.

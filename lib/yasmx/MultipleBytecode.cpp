@@ -26,7 +26,6 @@
 ///
 #include "yasmx/BytecodeContainer.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Expr.h"
@@ -70,9 +69,6 @@ public:
     llvm::StringRef getType() const;
 
     MultipleBytecode* clone() const;
-
-    /// Write a YAML representation.  For debugging purposes.
-    void Write(YAML::Emitter& out) const;
 
     BytecodeContainer& getContents() { return m_contents; }
 
@@ -255,17 +251,6 @@ MultipleBytecode::clone() const
     // TODO: cloning
     assert(false);
     return 0;
-}
-
-void
-MultipleBytecode::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "Multiple";
-    out << YAML::Key << "multiple" << YAML::Value << *m_multiple;
-    out << YAML::Key << "multiple int" << YAML::Value << m_mult_int;
-    out << YAML::Key << "contents" << YAML::Value << m_contents;
-    out << YAML::EndMap;
 }
 
 BytecodeContainer&

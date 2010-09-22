@@ -41,7 +41,6 @@
 
 
 namespace llvm { class Twine; }
-namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -54,9 +53,6 @@ class Symbol;
 /// An object.  This is the internal representation of an object file.
 class YASM_LIB_EXPORT Object
 {
-    friend YASM_LIB_EXPORT
-    YAML::Emitter& operator<< (YAML::Emitter& out, const Object& object);
-
 public:
     /// Options to control behavior of various functions globally for
     /// this object.
@@ -229,14 +225,6 @@ public:
     Arch* getArch() { return m_arch; }
     const Arch* getArch() const { return m_arch; }
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
-
 private:
     Object(const Object&);                  // not implemented
     const Object& operator=(const Object&); // not implemented
@@ -264,17 +252,6 @@ private:
     class Impl;
     util::scoped_ptr<Impl> m_impl;
 };
-
-/// Dump a YAML representation of object.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param object       object
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Object& object)
-{
-    object.Write(out);
-    return out;
-}
 
 } // namespace yasm
 

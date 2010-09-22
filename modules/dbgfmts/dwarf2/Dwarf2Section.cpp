@@ -60,9 +60,3 @@ Dwarf2Section::Dwarf2Section()
 Dwarf2Section::~Dwarf2Section()
 {
 }
-
-void
-Dwarf2Section::Write(YAML::Emitter& out) const
-{
-    // TODO
-}

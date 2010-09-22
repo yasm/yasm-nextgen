@@ -32,7 +32,6 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
@@ -896,69 +895,4 @@ Value::OutputBasic(NumericOutput& num_out, IntNum* outval, Diagnostic& diags)
         term.getIntNum()->swap(*outval);
         return false;
     }
-}
-
-void
-Value::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-
-    // abs
-    out << YAML::Key << "abs" << YAML::Value;
-    if (m_abs.get() != 0)
-        out << *m_abs;
-    else
-        out << YAML::Null;
-
-    // rel
-    out << YAML::Key << "rel" << YAML::Value;
-    if (m_rel)
-        out << m_rel->getName();
-    else
-        out << YAML::Null;
-
-    // wrt
-    out << YAML::Key << "wrt" << YAML::Value;
-    if (m_wrt)
-        out << m_wrt->getName();
-    else
-        out << YAML::Null;
-
-    // sub
-    out << YAML::Key << "sub" << YAML::Value;
-    if (m_sub_sym)
-        out << m_sub.sym->getName();
-    else if (m_sub_loc)
-        out << m_sub.loc;
-    else
-        out << YAML::Null;
-
-    out << YAML::Key << "source" << YAML::Value << YAML::Flow << YAML::BeginSeq
-        << m_source.getBegin().getRawEncoding()
-        << m_source.getEnd().getRawEncoding()
-        << YAML::EndSeq;
-    out << YAML::Key << "insn start" << YAML::Value << m_insn_start;
-    out << YAML::Key << "next insn" << YAML::Value << m_next_insn;
-    out << YAML::Key << "seg of" << YAML::Value << static_cast<bool>(m_seg_of);
-    out << YAML::Key << "right shift" << YAML::Value << m_rshift;
-    out << YAML::Key << "shift" << YAML::Value << m_shift;
-    out << YAML::Key << "IP relative";
-    out << YAML::Value << static_cast<bool>(m_ip_rel);
-    out << YAML::Key << "jump target";
-    out << YAML::Value << static_cast<bool>(m_jump_target);
-    out << YAML::Key << "section relative";
-    out << YAML::Value << static_cast<bool>(m_section_rel);
-    out << YAML::Key << "warnings disabled";
-    out << YAML::Value << static_cast<bool>(m_no_warn);
-    out << YAML::Key << "sign" << YAML::Value << static_cast<bool>(m_sign);
-    out << YAML::Key << "size" << YAML::Value << m_size;
-    out << YAML::EndMap;
-}
-
-void
-Value::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }

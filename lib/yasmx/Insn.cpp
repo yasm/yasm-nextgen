@@ -29,7 +29,6 @@
 #include <algorithm>
 
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Arch.h"
@@ -42,14 +41,6 @@ using namespace yasm;
 
 TargetModifier::~TargetModifier()
 {
-}
-
-void
-TargetModifier::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
 
 Operand::Operand(const Register* reg)
@@ -218,70 +209,8 @@ Operand::setSeg(std::auto_ptr<Expr> seg)
     m_seg = seg.release();
 }
 
-void
-Operand::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value;
-    switch (m_type)
-    {
-        case NONE:
-            out << "None";
-            break;
-        case REG:
-            out << "Reg";
-            out << YAML::Key << "reg" << YAML::Value << *m_reg;
-            break;
-        case SEGREG:
-            out << "SegReg";
-            out << YAML::Key << "segreg" << YAML::Value << *m_segreg;
-            break;
-        case MEMORY:
-            out << "Memory";
-            out << YAML::Key << "ea" << YAML::Value << *m_ea;
-            break;
-        case IMM:
-            out << "Imm";
-            out << YAML::Key << "immval" << YAML::Value << *m_val;
-            break;
-    }
-
-    out << YAML::Key << "seg" << YAML::Value;
-    if (m_seg)
-        out << *m_seg;
-    else
-        out << YAML::Null;
-
-    out << YAML::Key << "targetmod" << YAML::Value;
-    if (m_targetmod)
-        out << *m_targetmod;
-    else
-        out << YAML::Null;
-
-    out << YAML::Key << "size" << YAML::Value << m_size;
-    out << YAML::Key << "deref" << YAML::Value << static_cast<bool>(m_deref);
-    out << YAML::Key << "strict" << YAML::Value << static_cast<bool>(m_strict);
-    out << YAML::EndMap;
-}
-
-void
-Operand::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
-}
-
 Prefix::~Prefix()
 {
-}
-
-void
-Prefix::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
 
 Insn::Insn()
@@ -322,47 +251,4 @@ Insn::Append(BytecodeContainer& container,
     if (!ok)
         return false;
     return DoAppend(container, source, diags);
-}
-
-void
-Insn::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-
-    // operands
-    out << YAML::Key << "operands" << YAML::Value;
-    if (m_operands.empty())
-        out << YAML::Flow;
-    out << YAML::BeginSeq;
-    std::for_each(m_operands.begin(), m_operands.end(),
-                  BIND::bind(&Operand::Write, _1, REF::ref(out)));
-    out << YAML::EndSeq;
-
-    // prefixes
-    out << YAML::Key << "prefixes" << YAML::Value;
-    if (m_prefixes.empty())
-        out << YAML::Flow;
-    out << YAML::BeginSeq;
-    for (Prefixes::const_iterator i=m_prefixes.begin(), end=m_prefixes.end();
-         i != end; ++i)
-        i->first->Write(out);
-    out << YAML::EndSeq;
-
-    // segreg
-    out << YAML::Key << "segreg" << YAML::Value;
-    m_segreg->Write(out);
-    out << YAML::Key << "segreg source" << YAML::Value
-        << m_segreg_source.getRawEncoding();
-
-    out << YAML::Key << "implementation" << YAML::Value;
-    DoWrite(out);
-    out << YAML::EndMap;
-}
-
-void
-Insn::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }

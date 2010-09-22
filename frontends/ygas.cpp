@@ -106,21 +106,6 @@ static cl::list<std::string> ignored_D("D",
     cl::Prefix,
     cl::Hidden);
 
-// -dump-object
-static llvm::cl::opt<yasm::Assembler::ObjectDumpTime> dump_object("dump-object",
-    llvm::cl::desc("Dump object in YAML after this phase:"),
-    llvm::cl::values(
-        clEnumValN(yasm::Assembler::DUMP_NEVER, "never", "never dump"),
-        clEnumValN(yasm::Assembler::DUMP_AFTER_PARSE, "parsed",
-                   "after parse phase"),
-        clEnumValN(yasm::Assembler::DUMP_AFTER_FINALIZE, "finalized",
-                   "after finalization"),
-        clEnumValN(yasm::Assembler::DUMP_AFTER_OPTIMIZE, "optimized",
-                   "after optimization"),
-        clEnumValN(yasm::Assembler::DUMP_AFTER_OUTPUT, "output",
-                   "after output"),
-        clEnumValEnd));
-
 // -J
 static cl::list<bool> no_signed_overflow("J",
     cl::desc("don't warn about signed overflow"));
@@ -301,8 +286,7 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
     std::string objfmt_bits = GetBitsSetting();
 
     yasm::FileManager file_mgr;
-    yasm::Assembler assembler("x86", YGAS_OBJFMT_BASE + objfmt_bits, diags,
-                              dump_object);
+    yasm::Assembler assembler("x86", YGAS_OBJFMT_BASE + objfmt_bits, diags);
     yasm::HeaderSearch headers(file_mgr);
 
     if (diags.hasFatalErrorOccurred())

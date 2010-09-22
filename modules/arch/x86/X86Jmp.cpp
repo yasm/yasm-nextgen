@@ -29,7 +29,6 @@
 #include "X86Jmp.h"
 
 #include "llvm/ADT/Statistic.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
@@ -79,8 +78,6 @@ public:
     llvm::StringRef getType() const;
 
     X86Jmp* clone() const;
-
-    void Write(YAML::Emitter& out) const;
 
 private:
     X86Common m_common;
@@ -260,27 +257,6 @@ X86Jmp*
 X86Jmp::clone() const
 {
     return new X86Jmp(*this);
-}
-
-void
-X86Jmp::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "X86Jmp";
-    out << YAML::Key << "common" << YAML::Value << m_common;
-    out << YAML::Key << "short opcode" << YAML::Value << m_shortop;
-    out << YAML::Key << "near opcode" << YAML::Value << m_nearop;
-    out << YAML::Key << "target" << YAML::Value << m_target;
-
-    out << YAML::Key << "opcode selection" << YAML::Value;
-    switch (m_op_sel)
-    {
-        case X86_JMP_NONE:  out << "None"; break;
-        case X86_JMP_SHORT: out << "Short"; break;
-        case X86_JMP_NEAR:  out << "Near"; break;
-        default:            out << YAML::Null; break;
-    }
-    out << YAML::EndMap;
 }
 
 void

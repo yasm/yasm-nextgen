@@ -59,8 +59,7 @@ public:
 
 Assembler::Assembler(llvm::StringRef arch_keyword,
                      llvm::StringRef objfmt_keyword,
-                     Diagnostic& diags,
-                     Assembler::ObjectDumpTime dump_time)
+                     Diagnostic& diags)
     : m_arch_module(LoadModule<ArchModule>(arch_keyword).release()),
       m_parser_module(0),
       m_objfmt_module(LoadModule<ObjectFormatModule>(objfmt_keyword).release()),
@@ -71,8 +70,7 @@ Assembler::Assembler(llvm::StringRef arch_keyword,
       m_objfmt(0),
       m_dbgfmt(0),
       m_listfmt(0),
-      m_object(0),
-      m_dump_time(dump_time)
+      m_object(0)
 {
     if (m_arch_module.get() == 0)
     {
@@ -303,23 +301,16 @@ Assembler::Assemble(SourceManager& source_mgr,
     // Parse!
     m_parser->Parse(*m_object, dirs, diags);
 
-    if (m_dump_time == Assembler::DUMP_AFTER_PARSE)
-        m_object->Dump();
     if (diags.hasErrorOccurred())
         return false;
 
     // Finalize parse
     m_object->Finalize(diags);
-    if (m_dump_time == Assembler::DUMP_AFTER_FINALIZE)
-        m_object->Dump();
     if (diags.hasErrorOccurred())
         return false;
 
     // Optimize
     m_object->Optimize(diags);
-
-    if (m_dump_time == Assembler::DUMP_AFTER_OPTIMIZE)
-        m_object->Dump();
 
     if (diags.hasErrorOccurred())
         return false;
@@ -340,9 +331,6 @@ Assembler::Output(llvm::raw_fd_ostream& os,
                      !m_dbgfmt_module->getKeyword().equals_lower("null"),
                      *m_dbgfmt,
                      diags);
-
-    if (m_dump_time == DUMP_AFTER_OUTPUT)
-        m_object->Dump();
 
     if (diags.hasErrorOccurred())
         return false;

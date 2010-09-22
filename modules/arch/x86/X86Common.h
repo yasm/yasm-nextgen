@@ -32,8 +32,6 @@
 #include "yasmx/Insn.h"
 
 
-namespace YAML { class Emitter; }
-
 namespace yasm
 {
 namespace arch
@@ -61,8 +59,6 @@ public:
 
     unsigned char m_mode_bits;
 };
-
-YAML::Emitter& operator<< (YAML::Emitter& out, const X86Common& common);
 
 }} // namespace yasm::arch
 

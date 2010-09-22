@@ -37,8 +37,6 @@
 #include "Location.h"
 
 
-namespace YAML { class Emitter; }
-
 namespace yasm
 {
 
@@ -125,13 +123,6 @@ public:
     /// @note Errors/warnings are stored into errwarns.
     void UpdateOffsets(Diagnostic& diags);
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
-
-    /// Dump a YAML representation to stderr.  For debugging purposes.
-    void Dump() const;
-
 private:
     // not implemented (noncopyable class)
     BytecodeContainer(const BytecodeContainer&);
@@ -145,17 +136,6 @@ private:
 
     bool m_last_gap;        ///< Last bytecode is a gap bytecode
 };
-
-/// Dump a YAML representation of bytecode container.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param container    container
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const BytecodeContainer& container)
-{
-    container.Write(out);
-    return out;
-}
 
 /// The factory functions append to the end of a section.
 /// The functions will throw an error if unable to append.

@@ -51,7 +51,6 @@ public:
     Type getType() const { return m_type; }
 
     void Put(llvm::raw_ostream& os) const;
-    void Write(YAML::Emitter& out) const;
 
     bool is(Type type) const { return m_type == type; }
     bool isNot(Type type) const { return m_type != type; }

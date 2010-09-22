@@ -36,7 +36,6 @@
 
 
 namespace llvm { class raw_ostream; }
-namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -99,10 +98,6 @@ public:
     /// @param  n   number of bytes
     /// @param  v   byte value
     void Write(size_type n, unsigned char v);
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
 };
 
 /// Output the entire contents of a bytes container to an output stream.
@@ -111,13 +106,6 @@ public:
 /// @return Output stream
 YASM_LIB_EXPORT
 llvm::raw_ostream& operator<< (llvm::raw_ostream& os, const Bytes& bytes);
-
-/// Dump a YAML representation of bytes.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param bytes        bytes
-/// @return Emitter.
-YASM_LIB_EXPORT
-YAML::Emitter& operator<< (YAML::Emitter& out, const Bytes& bytes);
 
 /// Specialized swap for algorithms.
 inline void

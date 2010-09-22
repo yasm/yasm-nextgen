@@ -36,12 +36,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     llvm/System/ThreadLocal.cpp
     llvm/System/TimeValue.cpp
     llvm/System/Valgrind.cpp
-    YAML/emitter.cpp
-    YAML/emitterstate.cpp
-    YAML/emitterutils.cpp
-    YAML/ostream.cpp
-    YAML/regex.cpp
-    YAML/stream.cpp
     yasmx/Basic/Diagnostic.cpp
     yasmx/Basic/FileManager.cpp
     yasmx/Basic/SourceLocation.cpp
@@ -101,7 +95,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/StringTable.cpp
     yasmx/Symbol.cpp
     yasmx/Symbol_util.cpp
-    yasmx/SymbolRef.cpp
     yasmx/Value.cpp
     )
 SET_TARGET_PROPERTIES(libyasmx PROPERTIES

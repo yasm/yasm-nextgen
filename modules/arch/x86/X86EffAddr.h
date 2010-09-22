@@ -113,8 +113,6 @@ public:
 
     X86EffAddr* clone() const;
 
-    void DoWrite(YAML::Emitter& out) const;
-
     // Check an effective address.  Returns true if EA was successfully
     // determined, false if indeterminate EA.
     bool Check(unsigned char* addrsize,

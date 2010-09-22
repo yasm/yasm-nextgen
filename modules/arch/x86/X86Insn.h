@@ -67,7 +67,6 @@ protected:
     bool DoAppend(BytecodeContainer& container,
                   SourceLocation source,
                   Diagnostic& diags);
-    void DoWrite(YAML::Emitter& out) const;
 
 private:
     bool DoAppendJmpFar(BytecodeContainer& container,

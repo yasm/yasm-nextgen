@@ -69,8 +69,6 @@ public:
 
     ~ElfSection();
 
-    void Write(YAML::Emitter& out) const;
-
     unsigned long Write(llvm::raw_ostream& os, Bytes& scratch) const;
 
     std::auto_ptr<Section> CreateSection(const StringTable& shstrtab) const;

@@ -61,7 +61,6 @@ public:
               const BinSection& bsd,
               SpecialSym which);
     ~BinSymbol();
-    void Write(YAML::Emitter& out) const;
     bool getValue(/*@out@*/ IntNum* val) const;
 
 private:

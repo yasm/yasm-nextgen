@@ -27,7 +27,6 @@
 #include "yasmx/EffAddr.h"
 
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Expr.h"
 
@@ -60,33 +59,4 @@ EffAddr::EffAddr(const EffAddr& rhs)
 
 EffAddr::~EffAddr()
 {
-}
-
-void
-EffAddr::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "disp" << YAML::Value << m_disp;
-    out << YAML::Key << "segreg" << YAML::Value;
-    if (m_segreg != 0)
-        out << *m_segreg;
-    else
-        out << YAML::Null;
-    out << YAML::Key << "need nonzero len" << YAML::Value << m_need_nonzero_len;
-    out << YAML::Key << "need disp" << YAML::Value << m_need_disp;
-    out << YAML::Key << "no split" << YAML::Value << m_nosplit;
-    out << YAML::Key << "strong" << YAML::Value << m_strong;
-    out << YAML::Key << "PC relative" << YAML::Value << m_pc_rel;
-    out << YAML::Key << "not PC relative" << YAML::Value << m_not_pc_rel;
-    out << YAML::Key << "implementation" << YAML::Value;
-    DoWrite(out);
-    out << YAML::EndMap;
-}
-
-void
-EffAddr::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }

@@ -30,7 +30,6 @@
 #include <iterator>
 
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 
 
 using namespace yasm;
@@ -60,22 +59,4 @@ Bytes::Write(size_type n, unsigned char v)
         push_back(v);
         n--;
     } while (n != 0);
-}
-
-void
-Bytes::Dump() const
-{
-    YAML::Emitter out;
-    out << *this;
-    llvm::errs() << out.c_str() << '\n';
-}
-
-YAML::Emitter&
-yasm::operator<< (YAML::Emitter& out, const Bytes& bytes)
-{
-    out << YAML::Flow << YAML::BeginSeq;
-    for (Bytes::size_type i=0; i<bytes.size(); ++i)
-        out << YAML::Hex << static_cast<unsigned int>(bytes[i]);
-    out << YAML::EndSeq;
-    return out;
 }

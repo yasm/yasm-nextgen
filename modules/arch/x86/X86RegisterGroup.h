@@ -51,10 +51,6 @@ public:
     ///         otherwise the specific register.
     const X86Register* getReg(unsigned long regindex) const;
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
-
 private:
     X86Register** m_regs;
     unsigned long m_size;

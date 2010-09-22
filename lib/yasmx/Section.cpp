@@ -27,7 +27,6 @@
 #include "yasmx/Section.h"
 
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Reloc.h"
@@ -72,43 +71,4 @@ void
 Section::AddReloc(std::auto_ptr<Reloc> reloc)
 {
     m_relocs.push_back(reloc.release());
-}
-
-void
-Section::Write(YAML::Emitter& out) const
-{
-    out << YAML::BeginMap;
-    out << YAML::Key << "name" << YAML::Value << m_name;
-    out << YAML::Key << "sym" << YAML::Value << m_sym;
-    out << YAML::Key << "vma" << YAML::Value << m_vma;
-    out << YAML::Key << "lma" << YAML::Value << m_lma;
-    out << YAML::Key << "filepos" << YAML::Value << m_filepos;
-    out << YAML::Key << "align" << YAML::Value << m_align;
-    out << YAML::Key << "code" << YAML::Value << m_code;
-    out << YAML::Key << "bss" << YAML::Value << m_bss;
-    out << YAML::Key << "default" << YAML::Value << m_def;
-
-    out << YAML::Key << "assoc data" << YAML::Value;
-    AssocDataContainer::Write(out);
-
-    out << YAML::Key << "bytecodes" << YAML::Value;
-    BytecodeContainer::Write(out);
-
-    out << YAML::Key << "relocs" << YAML::Value;
-    if (m_relocs.empty())
-        out << YAML::Flow;
-    out << YAML::BeginSeq;
-    for (Relocs::const_iterator i=m_relocs.begin(), end=m_relocs.end();
-         i != end; ++i)
-        out << *i;
-    out << YAML::EndSeq;
-    out << YAML::EndMap;
-}
-
-void
-Section::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
