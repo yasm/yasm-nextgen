@@ -26,7 +26,6 @@
 //
 #include "yasmx/EffAddr.h"
 
-#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Expr.h"
 

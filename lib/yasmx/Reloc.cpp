@@ -26,8 +26,6 @@
 //
 #include "yasmx/Reloc.h"
 
-#include "llvm/Support/raw_ostream.h"
-
 
 using namespace yasm;
 

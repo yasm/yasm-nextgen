@@ -26,7 +26,6 @@
 //
 #include "yasmx/Section.h"
 
-#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Reloc.h"

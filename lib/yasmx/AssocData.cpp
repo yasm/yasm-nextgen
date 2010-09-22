@@ -27,7 +27,6 @@
 #include "yasmx/AssocData.h"
 
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/raw_ostream.h"
 
 
 using namespace yasm;

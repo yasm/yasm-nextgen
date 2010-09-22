@@ -27,7 +27,6 @@
 #include "yasmx/BytecodeContainer.h"
 
 #include "llvm/ADT/Twine.h"
-#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"

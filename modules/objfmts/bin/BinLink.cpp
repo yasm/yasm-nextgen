@@ -29,7 +29,6 @@
 #include <algorithm>
 
 #include "llvm/ADT/Twine.h"
-#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"

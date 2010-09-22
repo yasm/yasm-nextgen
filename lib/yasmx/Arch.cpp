@@ -26,7 +26,6 @@
 //
 #include "yasmx/Arch.h"
 
-#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Insn.h"
 
