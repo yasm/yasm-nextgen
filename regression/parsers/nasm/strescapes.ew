@@ -1,3 +1,0 @@
-<stdin>:3:7: warning: expected hex digit after \x
-<stdin>:4:6: warning: unknown escape sequence '\y'
-<stdin>:5:6: warning: unknown escape sequence '\8'
