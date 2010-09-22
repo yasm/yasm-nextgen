@@ -59,7 +59,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Parse/PPCaching.cpp
     yasmx/Parse/PPLexerChange.cpp
     yasmx/Parse/TokenLexer.cpp
-    yasmx/Support/Compose.cpp
     yasmx/Support/MD5.cpp
     yasmx/Support/phash.cpp
     yasmx/Support/registry.cpp

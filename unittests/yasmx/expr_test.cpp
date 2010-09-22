@@ -26,11 +26,11 @@
 
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Basic/SourceManager.h"
-#include "yasmx/Support/Compose.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Expr.h"
 
 #include "unittests/diag_mock.h"
+#include "unittests/unittest_util.h"
 
 
 namespace yasm

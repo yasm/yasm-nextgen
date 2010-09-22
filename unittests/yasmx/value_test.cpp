@@ -26,7 +26,6 @@
 
 #include "yasmx/Basic/SourceManager.h"
 #include "llvm/Support/raw_ostream.h"
-#include "yasmx/Support/Compose.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"
@@ -36,6 +35,7 @@
 #include "yasmx/Value.h"
 
 #include "unittests/diag_mock.h"
+#include "unittests/unittest_util.h"
 
 
 using namespace yasm;

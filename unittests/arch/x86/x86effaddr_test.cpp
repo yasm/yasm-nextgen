@@ -32,12 +32,12 @@
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Symbol.h"
-#include "yasmx/Support/Compose.h"
 
 #include "modules/arch/x86/X86EffAddr.h"
 #include "modules/arch/x86/X86Register.h"
 
 #include "unittests/diag_mock.h"
+#include "unittests/unittest_util.h"
 
 
 #ifndef NELEMS

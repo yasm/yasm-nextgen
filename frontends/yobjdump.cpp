@@ -41,7 +41,6 @@
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/FileManager.h"
 #include "yasmx/Basic/SourceManager.h"
-#include "yasmx/Support/Compose.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/System/plugin.h"
 #include "yasmx/Arch.h"

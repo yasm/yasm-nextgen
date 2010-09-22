@@ -24,11 +24,12 @@
 //
 #include <gtest/gtest.h>
 
-#include "yasmx/Support/Compose.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Expr_util.h"
 #include "yasmx/Symbol.h"
+
+#include "unittests/unittest_util.h"
 
 using namespace yasm;
 

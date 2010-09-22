@@ -31,6 +31,8 @@
 ///
 #include <iosfwd>
 
+#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Config/export.h"
 
 
@@ -44,5 +46,20 @@ YASM_UNIT_EXPORT
 std::ostream& operator<< (std::ostream& os, const llvm::format_object_base& fmt);
 
 } // namespace yasmunit
+
+namespace String
+{
+
+template<typename T>
+std::string
+Format(const T& x)
+{
+    llvm::SmallString<64> ss;
+    llvm::raw_svector_ostream oss(ss);
+    oss << x;
+    return oss.str();
+}
+
+} // namespace String
 
 #endif

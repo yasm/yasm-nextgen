@@ -38,7 +38,6 @@
 #include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
-#include "yasmx/Support/Compose.h"
 #include "yasmx/Support/phash.h"
 #include "yasmx/EffAddr.h"
 #include "yasmx/Expr.h"

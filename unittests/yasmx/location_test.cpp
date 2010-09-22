@@ -25,13 +25,13 @@
 #include <gtest/gtest.h>
 
 #include "yasmx/Basic/SourceManager.h"
-#include "yasmx/Support/Compose.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Location.h"
 #include "yasmx/Location_util.h"
 
 #include "unittests/diag_mock.h"
+#include "unittests/unittest_util.h"
 
 
 using namespace yasm;
