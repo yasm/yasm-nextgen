@@ -160,6 +160,18 @@ static cl::opt<bool> ignored_x("x",
     cl::ZeroOrMore,
     cl::Hidden);
 
+// -Qy
+static cl::opt<bool> ignored_qy("Qy",
+    cl::desc("Ignored"),
+    cl::ZeroOrMore,
+    cl::Hidden);
+
+// -Qn
+static cl::opt<bool> ignored_qn("Qn",
+    cl::desc("Ignored"),
+    cl::ZeroOrMore,
+    cl::Hidden);
+
 // -W, --no-warn
 static cl::list<bool> inhibit_warnings("W",
     cl::desc("Suppress warning messages"));
