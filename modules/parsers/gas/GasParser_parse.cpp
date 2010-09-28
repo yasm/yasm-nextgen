@@ -2256,6 +2256,16 @@ GasParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
             e.Calc(Op::NOT, op_source);
             break;
         }
+        case GasToken::l_square:
+        {
+            if (m_intel)
+                return false;
+            SourceLocation lsquare_loc = ConsumeBracket();
+            if (!ParseExpr(e, parse_term))
+                return false;
+            MatchRHSPunctuation(GasToken::r_square, lsquare_loc);
+            break;
+        }
         case GasToken::l_paren:
         {
             SourceLocation lparen_loc = ConsumeParen();
