@@ -47,6 +47,8 @@ GasParser::GasParser(const ParserModule& module,
     : Parser(module)
     , ParserImpl(m_gas_preproc)
     , m_gas_preproc(diags, sm, headers)
+    , m_intel(false)
+    , m_reg_prefix(true)
 {
     static const GasDirLookup gas_dirs_init[] =
     {
@@ -125,6 +127,8 @@ GasParser::GasParser(const ParserModule& module,
         {".ifne",       &GasParser::ParseDirIf,     Op::NE},
         {".ifnes",      &GasParser::ParseDirIfeqs,  1},
         // other directives
+        {".att_syntax",     &GasParser::ParseDirSyntax, 0},
+        {".intel_syntax",   &GasParser::ParseDirSyntax, 1},
         {".equ",        &GasParser::ParseDirEqu,    0},
         {".file",       &GasParser::ParseDirFile,   0},
         {".line",       &GasParser::ParseDirLine,   0},

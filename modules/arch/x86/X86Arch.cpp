@@ -66,6 +66,9 @@ X86Arch::setParser(llvm::StringRef parser)
         m_parser = PARSER_NASM;
     else if (parser.equals_lower("gas") || parser.equals_lower("gnu"))
         m_parser = PARSER_GAS;
+    else if (parser.equals_lower("gas-intel") ||
+             parser.equals_lower("gnu-intel"))
+        m_parser = PARSER_GAS_INTEL;
     else
         return false;
     return true;

@@ -1843,6 +1843,7 @@ X86Arch::ParseCheckInsnPrefix(llvm::StringRef id,
     switch (m_parser)
     {
         case PARSER_NASM:
+        case PARSER_GAS_INTEL:
             pdata = InsnPrefixNasmHash::in_word_set(lcaseid, id_len);
             break;
         case PARSER_GAS:

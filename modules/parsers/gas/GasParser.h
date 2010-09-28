@@ -150,10 +150,17 @@ private:
     bool ParseDirIfdef(unsigned int negate, SourceLocation source);
     bool ParseDirIfeqs(unsigned int negate, SourceLocation source);
 
+    bool ParseDirSyntax(unsigned int intel, SourceLocation source);
+
     Insn::Ptr ParseInsn();
     bool ParseDirective(NameValues* nvs);
     Operand ParseMemoryAddress();
     Operand ParseOperand();
+
+    unsigned int getSizeOverride();
+    Operand ParseMemoryAddressIntel();
+    Operand ParseOperandIntel();
+
     bool ParseExpr(Expr& e, const ParseExprTerm* parse_term = 0);
     bool ParseExpr0(Expr& e, const ParseExprTerm* parse_term);
     bool ParseExpr1(Expr& e, const ParseExprTerm* parse_term);
@@ -218,6 +225,10 @@ private:
         bool saw_else;  // if we've seen an else case for this conditional
     };
     std::vector<CondStatus> m_cond_stack;
+
+    // Syntax modes.
+    bool m_intel;
+    bool m_reg_prefix;
 };
 
 }} // namespace yasm::parser
