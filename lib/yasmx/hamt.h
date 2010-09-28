@@ -531,6 +531,7 @@ hamt<Key,T,GetKey>::Remove(const Key& str)
 
     // downsize parent and copy remaining nodes into it
     unsigned long size = BitCount(parent->bitmap_key);
+    size &= 0x1F;       // Clamp to <32
     Node* newparent = static_cast<Node*>(m_pools[size-1]->malloc());
     newparent->bitmap_key = parent->bitmap_key & ~(1 << node_keypart);
     std::memcpy(&newparent->SubTrie(0), &parent->SubTrie(0),
