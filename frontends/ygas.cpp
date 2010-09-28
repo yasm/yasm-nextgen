@@ -426,13 +426,9 @@ main(int argc, char* argv[])
     }
 #endif
 
-    // Require an input filename.  We don't use llvm::cl facilities for this
-    // as we want to allow e.g. "yasm --license".
+    // Default to stdin if no filename specified.
     if (in_filename.empty())
-    {
-        diags.Report(yasm::diag::fatal_no_input_files);
-        return EXIT_FAILURE;
-    }
+        in_filename = "-";
 
     return do_assemble(source_mgr, diags);
 }
