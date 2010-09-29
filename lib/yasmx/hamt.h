@@ -534,9 +534,10 @@ hamt<Key,T,GetKey>::Remove(const Key& str)
     size &= 0x1F;       // Clamp to <32
     Node* newparent = static_cast<Node*>(m_pools[size-1]->malloc());
     newparent->bitmap_key = parent->bitmap_key & ~(1 << node_keypart);
+    assert(newparent->bitmap_key != parent->bitmap_key);
     std::memcpy(&newparent->SubTrie(0), &parent->SubTrie(0),
                 node_off*sizeof(Node*));
-    std::memcpy(&newparent->SubTrie(node_off), &node->SubTrie(node_off+1),
+    std::memcpy(&newparent->SubTrie(node_off), &parent->SubTrie(node_off+1),
                 (size-node_off-1)*sizeof(Node*));
     m_pools[size]->free(parent);
     *pparent = newparent;
