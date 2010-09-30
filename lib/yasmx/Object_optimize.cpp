@@ -842,7 +842,7 @@ Optimizer::Step1e()
         if (!os->m_bc)
             continue;
         os->m_thres = os->m_bc->getNextOffset();
-        os->m_new_val = os->m_bc->getOffset();
+        os->m_new_val = os->m_bc->getOffset() + os->m_bc->getFixedLen();
         os->m_cur_val = os->m_new_val;
         ++num_offset_setters;
     }
