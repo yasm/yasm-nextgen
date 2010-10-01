@@ -683,6 +683,10 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
         source_mgr.createMainFileID(in, yasm::SourceLocation());
     }
 
+    // initialize the object.
+    if (!assembler.InitObject(source_mgr, diags))
+        return EXIT_FAILURE;
+
     // assemble the input.
     if (!assembler.Assemble(source_mgr, file_mgr, diags, headers,
                             warning_error))

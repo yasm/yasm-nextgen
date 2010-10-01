@@ -194,6 +194,8 @@ add_fatal("fatal_no_input_files", "no input files specified")
 add_fatal("fatal_unrecognized_module", "unrecognized %0 '%1'")
 add_warning("warn_unknown_command_line_option",
             "unknown command line argument '%0'; try '-help'")
+add_fatal("fatal_bad_defsym",
+          "bad defsym '%0'; format is --defsym name=value")
 
 # Source manager
 add_fatal("err_cannot_open_file", "cannot open file '%0': %1")

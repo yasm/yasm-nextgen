@@ -45,9 +45,13 @@
 #include "yasmx/Arch.h"
 #include "yasmx/Assembler.h"
 #include "yasmx/DebugFormat.h"
+#include "yasmx/Expr.h"
+#include "yasmx/IntNum.h"
 #include "yasmx/ListFormat.h"
 #include "yasmx/Module.h"
+#include "yasmx/Object.h"
 #include "yasmx/ObjectFormat.h"
+#include "yasmx/Symbol.h"
 
 #ifdef HAVE_LIBGEN_H
 #include <libgen.h>
@@ -99,6 +103,10 @@ static cl::list<bool> bits_32("32",
 // -64
 static cl::list<bool> bits_64("64",
     cl::desc("set 64-bit output"));
+
+// -defsym
+static cl::list<std::string> defsym("defsym",
+    cl::desc("define symbol"));
 
 // -D (ignored)
 static cl::list<std::string> ignored_D("D",
@@ -359,7 +367,71 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
         source_mgr.createMainFileID(in, yasm::SourceLocation());
     }
 
-    // assemble the input.
+    // Initialize the object.
+    if (!assembler.InitObject(source_mgr, diags))
+        return EXIT_FAILURE;
+
+    // Predefine symbols.
+    for (std::vector<std::string>::const_iterator i=defsym.begin(),
+         end=defsym.end(); i != end; ++i)
+    {
+        llvm::StringRef name, vstr;
+        llvm::tie(name, vstr) = llvm::StringRef(*i).split('=');
+        if (vstr.empty())
+        {
+            diags.Report(yasm::diag::fatal_bad_defsym) << name;
+            continue;
+        }
+
+        // determine radix
+        unsigned int radix;
+        if (vstr[0] == '0' && (vstr[1] == 'x' || vstr[1] == 'X'))
+        {
+            vstr = vstr.substr(2);
+            radix = 16;
+        }
+        else if (vstr[0] == '0')
+        {
+            vstr = vstr.substr(1);
+            radix = 8;
+        }
+        else
+            radix = 10;
+
+        // check validity
+        const char* ptr = vstr.begin();
+        const char* end = vstr.end();
+        if (radix == 16)
+        {
+            while (ptr != end && isxdigit(*ptr))
+                ++ptr;
+        }
+        else if (radix == 8)
+        {
+            while (ptr != end && (*ptr >= '0' && *ptr <= '7'))
+                ++ptr;
+        }
+        else
+        {
+            while (ptr != end && isdigit(*ptr))
+                ++ptr;
+        }
+        if (ptr != end)
+        {
+            diags.Report(yasm::diag::fatal_bad_defsym) << name;
+            continue;
+        }
+
+        // define equ
+        yasm::IntNum value;
+        value.setStr(vstr, radix);
+        assembler.getObject()->getSymbol(name)->DefineEqu(yasm::Expr(value));
+    }
+
+    if (diags.hasFatalErrorOccurred())
+        return EXIT_FAILURE;
+
+    // Assemble the input.
     if (!assembler.Assemble(source_mgr, file_mgr, diags, headers,
                             warning_error))
     {

@@ -198,11 +198,7 @@ Assembler::setListFormat(llvm::StringRef listfmt_keyword, Diagnostic& diags)
 }
 
 bool
-Assembler::Assemble(SourceManager& source_mgr,
-                    FileManager& file_mgr,
-                    Diagnostic& diags,
-                    HeaderSearch& headers,
-                    bool warning_error)
+Assembler::InitObject(SourceManager& source_mgr, Diagnostic& diags)
 {
     llvm::StringRef in_filename =
         source_mgr.getBuffer(source_mgr.getMainFileID())->getBufferIdentifier();
@@ -284,6 +280,18 @@ Assembler::Assemble(SourceManager& source_mgr,
 
     // Create the debug format
     m_dbgfmt.reset(m_dbgfmt_module->Create(*m_object).release());
+
+    return true;
+}
+
+bool
+Assembler::Assemble(SourceManager& source_mgr,
+                    FileManager& file_mgr,
+                    Diagnostic& diags,
+                    HeaderSearch& headers,
+                    bool warning_error)
+{
+    llvm::StringRef parser_keyword = m_parser_module->getKeyword();
 
     // Create parser
     m_parser.reset(m_parser_module->Create(diags, source_mgr, headers).release());
