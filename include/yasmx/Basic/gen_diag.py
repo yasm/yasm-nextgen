@@ -532,6 +532,8 @@ add_warning("escaped_newline_block_comment_end",
             "escaped newline between */ characters at block comment end",
             group="comment")
 
+add_warning("warn_unterminated_string",
+            "unterminated string; newline inserted")
 add_error("err_unterminated_string", "missing terminating %0 character")
 add_error("err_unterminated_block_comment", "unterminated /* comment")
 

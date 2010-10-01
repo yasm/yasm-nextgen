@@ -230,8 +230,12 @@ GasLexer::LexStringLiteral(Token* result, const char* cur_ptr)
             // Skip the escaped character.
             ch = getAndAdvanceChar(cur_ptr, result);
         }
-        else if (ch == '\n' || ch == '\r' ||            // Newline.
-                 (ch == 0 && cur_ptr-1 == m_buf_end))   // End of file.
+        else if (ch == '\n' || ch == '\r')              // Newline.
+        {
+            if (!isLexingRawMode())
+                Diag(cur_ptr-1, diag::warn_unterminated_string);
+        }
+        else if (ch == 0 && cur_ptr-1 == m_buf_end)     // End of file.
         {
             if (!isLexingRawMode())
                 Diag(m_buf_ptr, diag::err_unterminated_string) << "\"";
