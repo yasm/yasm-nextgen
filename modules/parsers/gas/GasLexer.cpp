@@ -207,6 +207,10 @@ GasLexer::LexCharConstant(Token* result, const char* cur_ptr)
         }
     }
 
+    // An optional trailing ' is allowed.
+    if (*cur_ptr == '\'')
+        ch = getAndAdvanceChar(cur_ptr, result);
+
     // Update the location of the token as well as m_buf_ptr.
     const char* tok_start = m_buf_ptr;
     FormTokenWithChars(result, cur_ptr, GasToken::char_constant);
