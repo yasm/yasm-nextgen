@@ -49,6 +49,7 @@ GasParser::GasParser(const ParserModule& module,
     , m_gas_preproc(diags, sm, headers)
     , m_intel(false)
     , m_reg_prefix(true)
+    , m_previous_section(0)
 {
     static const GasDirLookup gas_dirs_init[] =
     {
@@ -93,6 +94,9 @@ GasParser::GasParser(const ParserModule& module,
         {".data",       &GasParser::ParseDirDataSection,    0},
         {".text",       &GasParser::ParseDirTextSection,    0},
         {".section",    &GasParser::ParseDirSection,        0},
+        {".pushsection",&GasParser::ParseDirSection,        1},
+        {".popsection", &GasParser::ParseDirPopSection,     0},
+        {".previous",   &GasParser::ParseDirPrevious,       0},
         // macro directives
         {".include",    &GasParser::ParseDirInclude,    0},
 #if 0

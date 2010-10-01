@@ -137,6 +137,8 @@ private:
     bool ParseDirDataSection(unsigned int, SourceLocation source);
     bool ParseDirTextSection(unsigned int, SourceLocation source);
     bool ParseDirSection(unsigned int, SourceLocation source);
+    bool ParseDirPopSection(unsigned int, SourceLocation source);
+    bool ParseDirPrevious(unsigned int, SourceLocation source);
     bool ParseDirEqu(unsigned int, SourceLocation source);
     bool ParseDirFile(unsigned int, SourceLocation source);
 
@@ -229,6 +231,15 @@ private:
     // Syntax modes.
     bool m_intel;
     bool m_reg_prefix;
+
+    // Section stack and previous section.
+    struct SectionState
+    {
+        Section* cur_sect;
+        Section* prev_sect;
+    };
+    std::vector<SectionState> m_section_stack;
+    Section* m_previous_section;
 };
 
 }} // namespace yasm::parser

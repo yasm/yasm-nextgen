@@ -966,6 +966,7 @@ GasParser::ParseDirFill(unsigned int param, SourceLocation source)
 bool
 GasParser::ParseDirBssSection(unsigned int param, SourceLocation source)
 {
+    m_previous_section = m_object->getCurSection();
     SwitchSection(".bss", true,
                   SourceRange(source, source.getFileLocWithOffset(4)));
     return true;
@@ -974,6 +975,7 @@ GasParser::ParseDirBssSection(unsigned int param, SourceLocation source)
 bool
 GasParser::ParseDirDataSection(unsigned int param, SourceLocation source)
 {
+    m_previous_section = m_object->getCurSection();
     SwitchSection(".data", true,
                   SourceRange(source, source.getFileLocWithOffset(5)));
     return true;
@@ -982,6 +984,7 @@ GasParser::ParseDirDataSection(unsigned int param, SourceLocation source)
 bool
 GasParser::ParseDirTextSection(unsigned int param, SourceLocation source)
 {
+    m_previous_section = m_object->getCurSection();
     SwitchSection(".text", true,
                   SourceRange(source, source.getFileLocWithOffset(5)));
     return true;
@@ -990,6 +993,15 @@ GasParser::ParseDirTextSection(unsigned int param, SourceLocation source)
 bool
 GasParser::ParseDirSection(unsigned int param, SourceLocation source)
 {
+    // .pushsection if param is nonzero
+    if (param)
+    {
+        SectionState state;
+        state.cur_sect = m_object->getCurSection();
+        state.prev_sect = m_previous_section;
+        m_section_stack.push_back(state);
+    }
+
     // DIR_SECTION ID ',' STRING ',' '@' ID ',' dirvals
     // Really parsed as just a bunch of dirvals; only needs to be unique
     // function to handle section name as a special case.
@@ -1022,12 +1034,44 @@ GasParser::ParseDirSection(unsigned int param, SourceLocation source)
             return false;
     }
 
+    m_previous_section = m_object->getCurSection();
+
     Directive handler;
     if (m_dirs->get(&handler, ".section"))
         handler(info, m_preproc.getDiagnostics());
     else
         Diag(info.getSource(), diag::err_unrecognized_directive);
 
+    return true;
+}
+
+bool
+GasParser::ParseDirPopSection(unsigned int param, SourceLocation source)
+{
+    if (m_section_stack.empty())
+    {
+        Diag(source, diag::warn_popsection_without_pushsection);
+        return true;
+    }
+
+    m_object->setCurSection(m_section_stack.back().cur_sect);
+    m_previous_section = m_section_stack.back().prev_sect;
+    m_section_stack.pop_back();
+    return true;
+}
+
+bool
+GasParser::ParseDirPrevious(unsigned int param, SourceLocation source)
+{
+    if (!m_previous_section)
+    {
+        Diag(source, diag::warn_previous_without_section);
+        return true;
+    }
+
+    Section* new_sect = m_previous_section;
+    m_previous_section = m_object->getCurSection();
+    m_object->setCurSection(new_sect);
     return true;
 }
 

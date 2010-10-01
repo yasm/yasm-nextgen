@@ -266,6 +266,10 @@ add_error("err_missing_or_invalid_immediate",
 add_error("err_rept_without_endr", ".rept without matching .endr")
 add_error("err_endr_without_rept", ".endr without matching .rept")
 add_error("err_bad_argument_to_syntax_dir", "bad argument to syntax directive")
+add_warning("warn_popsection_without_pushsection",
+            ".popsection without corresponding .pushsection; ignored")
+add_warning("warn_previous_without_section",
+            ".previous without corresponding .section; ignored")
 
 # Value
 add_error("err_too_complex_expression", "expression too complex")
