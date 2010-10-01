@@ -390,7 +390,7 @@ X86Insn::DoAppendJmpFar(BytecodeContainer& container,
         // Two operand form (gas)
         Operand& op2 = m_operands[1];
         segment = imm;
-        imm.reset(op2.getImm());
+        imm = op2.ReleaseImm();
         if (op2.getSize() == OPS_BITS)
             opersize = m_mode_bits;
     }
