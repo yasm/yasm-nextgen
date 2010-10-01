@@ -3126,6 +3126,7 @@ add_insn("stosd", "onebyte", parser="nasm", modifiers=[0xAB, 32],
 add_insn("stosl", "onebyte", parser="gas", modifiers=[0xAB, 32], cpu=["386"])
 add_insn("stosq", "onebyte", modifiers=[0xAB, 64], only64=True)
 add_insn("xlatb", "onebyte", modifiers=[0xD7, 0])
+add_insn("xlat", "onebyte", parser="gas", modifiers=[0xD7, 0])
 
 #####################################################################
 # Bit manipulation
