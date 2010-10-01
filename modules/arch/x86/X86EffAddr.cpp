@@ -442,7 +442,7 @@ X86EAChecker::GetTermRegUsage(Expr& e,
     {
         int lhs, rhs;
         if (!getChildren(e, &lhs, &rhs, &pos))
-            return false;
+            return true;
 
         ExprTerm* regterm;
         ExprTerm* intterm;
@@ -459,7 +459,7 @@ X86EAChecker::GetTermRegUsage(Expr& e,
             intterm = &terms[lhs];
         }
         else
-            return false;
+            return true;
 
         IntNum* intn = intterm->getIntNum();
         assert(intn);
