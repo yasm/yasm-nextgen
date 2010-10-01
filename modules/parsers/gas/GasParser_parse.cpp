@@ -1624,6 +1624,9 @@ GasParser::ParseMemoryAddress()
         }
 
         // scale
+        if (m_token.is(GasToken::r_paren))
+            goto done;
+
         if (m_token.isNot(GasToken::numeric_constant))
         {
             Diag(m_token, diag::err_expected_integer);
