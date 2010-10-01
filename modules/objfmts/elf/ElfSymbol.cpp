@@ -324,7 +324,7 @@ ElfSymbol::Write(Bytes& bytes, const ElfConfig& config)
     if (config.cls == ELFCLASS32)
     {
         Write32(bytes, m_value);
-        Write32(bytes, hasSize() ? m_size.getIntNum() : 0);
+        Write32(bytes, hasSize() && m_size.isIntNum() ? m_size.getIntNum() : 0);
     }
 
     Write8(bytes, ELF_ST_INFO(m_bind, m_type));
