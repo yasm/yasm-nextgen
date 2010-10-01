@@ -1,27 +1,26 @@
 .code32
-inb (%dx), %al
-inw (%dx), %ax
-inl (%dx), %eax
-inb %dx, %al
-inw %dx, %ax
-inl %dx, %eax
-inb (%dx)
-inw (%dx)
-inl (%dx)
-inb %dx
-inw %dx
-inl %dx
+inb (%dx), %al		# out: ec
+inw (%dx), %ax		# out: 66 ed
+inl (%dx), %eax		# out: ed
+inb %dx, %al		# out: ec
+inw %dx, %ax		# out: 66 ed
+inl %dx, %eax		# out: ed
+inb (%dx)		# out: ec
+inw (%dx)		# out: 66 ed
+inl (%dx)		# out: ed
+inb %dx			# out: ec
+inw %dx			# out: 66 ed
+inl %dx			# out: ed
 
-outb %al, (%dx)
-outw %ax, (%dx)
-outl %eax, (%dx)
-outb %al, %dx
-outw %ax, %dx
-outl %eax, %dx
-outb (%dx)
-outw (%dx)
-outl (%dx)
-outb %dx
-outw %dx
-outl %dx
-
+outb %al, (%dx)		# out: ee
+outw %ax, (%dx)		# out: 66 ef
+outl %eax, (%dx)	# out: ef
+outb %al, %dx		# out: ee
+outw %ax, %dx		# out: 66 ef
+outl %eax, %dx		# out: ef
+outb (%dx)		# out: ee
+outw (%dx)		# out: 66 ef
+outl (%dx)		# out: ef
+outb %dx		# out: ee
+outw %dx		# out: 66 ef
+outl %dx		# out: ef
