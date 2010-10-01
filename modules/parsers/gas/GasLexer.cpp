@@ -234,7 +234,7 @@ GasLexer::LexStringLiteral(Token* result, const char* cur_ptr)
                  (ch == 0 && cur_ptr-1 == m_buf_end))   // End of file.
         {
             if (!isLexingRawMode())
-                Diag(m_buf_ptr, diag::err_unterminated_string);
+                Diag(m_buf_ptr, diag::err_unterminated_string) << "\"";
             FormTokenWithChars(result, cur_ptr-1, Token::unknown);
             return;
         }
