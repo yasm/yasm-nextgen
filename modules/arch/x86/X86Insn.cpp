@@ -499,6 +499,7 @@ X86Insn::DoAppendJmp(BytecodeContainer& container,
     Operand& op = m_operands.front();
     std::auto_ptr<Expr> imm = op.ReleaseImm();
     assert(imm.get() != 0);
+    SourceLocation imm_source = op.getSource();
 
     X86JmpOpcodeSel op_sel;
 
@@ -564,7 +565,8 @@ X86Insn::DoAppendJmp(BytecodeContainer& container,
     common.ApplyPrefixes(jinfo.def_opersize_64, m_prefixes, diags);
     common.Finish();
 
-    AppendJmp(container, common, shortop, nearop, imm, source, op_sel);
+    AppendJmp(container, common, shortop, nearop, imm, imm_source, source,
+              op_sel);
     return true;
 }
 
@@ -1076,8 +1078,10 @@ X86Insn::DoAppend(BytecodeContainer& container,
                 // actually an immediate for the purposes of relative jumps.
                 if (ea->m_segreg != 0)
                     diags.Report(source, diag::warn_prefixes_skipped);
+                SourceLocation source = op->getSource();
                 *op = Operand(std::auto_ptr<Expr>(
                     ea->m_disp.getAbs()->clone()));
+                op->setSource(source);
                 delete ea;
             }
         }
