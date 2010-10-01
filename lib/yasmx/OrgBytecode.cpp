@@ -188,8 +188,11 @@ OrgBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 
     Bytes& bytes = bc_out.getScratch();
     // XXX: handle more than 8 bit?
-    bytes.insert(bytes.end(), len,
-                 static_cast<unsigned char>(m_fill.getIntNum().getUInt()));
+    if (m_fill.isEmpty())
+        bytes.insert(bytes.end(), len, 0);
+    else
+        bytes.insert(bytes.end(), len,
+                     static_cast<unsigned char>(m_fill.getIntNum().getUInt()));
     bc_out.OutputBytes(bytes, bc.getSource());
     return true;
 }
