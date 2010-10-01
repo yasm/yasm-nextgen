@@ -140,6 +140,7 @@ public:
     void DirHidden(DirectiveInfo& info, Diagnostic& diags);
     void DirSymVer(DirectiveInfo& info, Diagnostic& diags);
     void DirIdent(DirectiveInfo& info, Diagnostic& diags);
+    void DirVersion(DirectiveInfo& info, Diagnostic& diags);
 
     ElfConfig m_config;                     // ELF configuration
     util::scoped_ptr<ElfMachine> m_machine; // ELF machine interface

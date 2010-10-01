@@ -33,6 +33,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
+#include "yasmx/Support/EndianState.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "Location.h"
 
@@ -176,6 +177,17 @@ void AppendData(BytecodeContainer& container,
                 const IntNum& val,
                 unsigned int size,
                 const Arch& arch);
+
+/// Append a raw data value to the end of a section.
+/// @param sect         section
+/// @param val          data value
+/// @param size         storage size (in bytes) for the data value
+/// @param endian       endianness
+YASM_LIB_EXPORT
+void AppendData(BytecodeContainer& container,
+                const IntNum& val,
+                unsigned int size,
+                EndianState endian);
 
 /// Append a data value to the end of a section.
 /// @param sect         section

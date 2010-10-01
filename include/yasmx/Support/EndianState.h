@@ -42,6 +42,11 @@ public:
     bool isBigEndian() const { return m_bigendian; }
     bool isLittleEndian() const { return !m_bigendian; }
 
+    void setEndian(EndianState oth)
+    {
+        m_bigendian = oth.m_bigendian;
+    }
+
     void swap(EndianState& oth)
     {
         bool t = m_bigendian;

@@ -1710,6 +1710,36 @@ ElfObject::DirIdent(DirectiveInfo& info, Diagnostic& diags)
     DirIdentCommon(*this, ".comment", info, diags);
 }
 
+void
+ElfObject::DirVersion(DirectiveInfo& info, Diagnostic& diags)
+{
+    assert(info.isObject(m_object));
+
+    // Put version data into .note section
+    Section* note = info.getObject().FindSection(".note");
+    if (!note)
+        note = AppendSection(".note", info.getSource(), diags);
+
+    for (NameValues::const_iterator nv=info.getNameValues().begin(),
+         end=info.getNameValues().end(); nv != end; ++nv)
+    {
+        if (!nv->isString())
+        {
+            diags.Report(nv->getValueRange().getBegin(),
+                         diag::err_value_string);
+            continue;
+        }
+        llvm::StringRef str = nv->getString();
+        EndianState endian;
+        m_config.setEndian(endian);
+        AppendData(*note, str.size(), 4, endian);   // name size
+        AppendData(*note, 0, 4, endian);    // desc size
+        AppendData(*note, 1, 4, endian);    // type
+        AppendData(*note, str, 4, true);    // name
+        // empty desc
+    }
+}
+
 std::vector<llvm::StringRef>
 ElfObject::getDebugFormatKeywords()
 {
@@ -1746,6 +1776,7 @@ ElfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
         {".hidden", &ElfObject::DirHidden, Directives::ID_REQUIRED},
         {".symver", &ElfObject::DirSymVer, Directives::ID_REQUIRED},
         {".ident", &ElfObject::DirIdent, Directives::ANY},
+        {".version", &ElfObject::DirVersion, Directives::ARG_REQUIRED},
     };
 
     if (parser.equals_lower("nasm"))
