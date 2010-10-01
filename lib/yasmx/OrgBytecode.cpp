@@ -31,6 +31,8 @@
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
+#include "yasmx/Expr.h"
+#include "yasmx/Expr_util.h"
 
 
 using namespace yasm;
@@ -39,7 +41,7 @@ namespace {
 class OrgBytecode : public Bytecode::Contents
 {
 public:
-    OrgBytecode(unsigned long start, unsigned long fill);
+    OrgBytecode(const Expr& start, const Expr& fill);
     ~OrgBytecode();
 
     /// Finalizes the bytecode after parsing.
@@ -76,12 +78,12 @@ public:
     void Write(YAML::Emitter& out) const;
 
 private:
-    unsigned long m_start;      ///< target starting offset within section
-    unsigned long m_fill;       ///< fill value
+    Expr m_start;       ///< target starting offset within section
+    Expr m_fill;        ///< fill value
 };
 } // anonymous namespace
 
-OrgBytecode::OrgBytecode(unsigned long start, unsigned long fill)
+OrgBytecode::OrgBytecode(const Expr& start, const Expr& fill)
     : m_start(start),
       m_fill(fill)
 {
@@ -94,6 +96,33 @@ OrgBytecode::~OrgBytecode()
 bool
 OrgBytecode::Finalize(Bytecode& bc, Diagnostic& diags)
 {
+    if (!ExpandEqu(m_start))
+    {
+        diags.Report(bc.getSource(), diag::err_equ_circular_reference);
+        return false;
+    }
+    m_start.Simplify(diags, false);
+    if (!m_start.isIntNum())
+    {
+        diags.Report(bc.getSource(), diag::err_org_start_not_const);
+        return false;
+    }
+
+    if (!m_fill.isEmpty())
+    {
+        if (!ExpandEqu(m_fill))
+        {
+            diags.Report(bc.getSource(), diag::err_equ_circular_reference);
+            return false;
+        }
+        m_fill.Simplify(diags, false);
+        if (!m_fill.isIntNum())
+        {
+            diags.Report(bc.getSource(), diag::err_org_fill_not_const);
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -105,7 +134,7 @@ OrgBytecode::CalcLen(Bytecode& bc,
 {
     bool keep = false;
     long neg_thres = 0;
-    long pos_thres = m_start;
+    long pos_thres = m_start.getIntNum().getUInt();
 
     *len = 0;
     return Expand(bc, len, 0, 0, static_cast<long>(bc.getTailOffset()), &keep,
@@ -123,15 +152,17 @@ OrgBytecode::Expand(Bytecode& bc,
                     /*@out@*/ long* pos_thres,
                     Diagnostic& diags)
 {
+    unsigned long start = m_start.getIntNum().getUInt();
+
     // Check for overrun
-    if (static_cast<unsigned long>(new_val) > m_start)
+    if (static_cast<unsigned long>(new_val) > start)
     {
         diags.Report(bc.getSource(), diag::err_org_overlap);
         return false;
     }
 
     // Generate space to start offset
-    *len = m_start - new_val;
+    *len = start - new_val;
     *keep = true;
     return true;
 }
@@ -139,14 +170,16 @@ OrgBytecode::Expand(Bytecode& bc,
 bool
 OrgBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 {
+    unsigned long start = m_start.getIntNum().getUInt();
+
     // Sanity check for overrun
-    if (bc.getTailOffset() > m_start)
+    if (bc.getTailOffset() > start)
     {
         bc_out.Diag(bc.getSource(), diag::err_org_overlap);
         return false;
     }
 
-    unsigned long len = m_start - bc.getTailOffset();
+    unsigned long len = start - bc.getTailOffset();
     if (!bc_out.isBits())
     {
         bc_out.OutputGap(len, bc.getSource());
@@ -155,7 +188,8 @@ OrgBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 
     Bytes& bytes = bc_out.getScratch();
     // XXX: handle more than 8 bit?
-    bytes.insert(bytes.end(), len, static_cast<unsigned char>(m_fill));
+    bytes.insert(bytes.end(), len,
+                 static_cast<unsigned char>(m_fill.getIntNum().getUInt()));
     bc_out.OutputBytes(bytes, bc.getSource());
     return true;
 }
@@ -190,8 +224,8 @@ OrgBytecode::Write(YAML::Emitter& out) const
 
 void
 yasm::AppendOrg(BytecodeContainer& container,
-                unsigned long start,
-                unsigned long fill,
+                const Expr& start,
+                const Expr& fill,
                 SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();

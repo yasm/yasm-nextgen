@@ -363,6 +363,8 @@ add_error("err_multiple_unknown", "could not determine multiple")
 
 # ORG
 add_error("err_org_overlap", "ORG overlap with already existing data")
+add_error("err_org_start_not_const", "org start must be a constant")
+add_error("err_org_fill_not_const", "org fill must be a constant")
 
 # Symbol
 add_error("err_symbol_undefined", "undefined symbol '%0' (first use)")

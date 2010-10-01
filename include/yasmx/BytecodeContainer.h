@@ -280,8 +280,8 @@ void AppendAlign(BytecodeContainer& container,
 /// @param source       source location
 YASM_LIB_EXPORT
 void AppendOrg(BytecodeContainer& container,
-               unsigned long start,
-               unsigned long fill,
+               const Expr& start,
+               const Expr& fill,
                SourceLocation source);
 
 /// Append a multiple container.

@@ -604,33 +604,22 @@ GasParser::ParseDirAlign(unsigned int power2, SourceLocation source)
 bool
 GasParser::ParseDirOrg(unsigned int param, SourceLocation source)
 {
-    // TODO: support expr instead of intnum
-    if (m_token.isNot(GasToken::numeric_constant))
+    Expr start;
+    if (!ParseExpr(start))
     {
-        Diag(m_token, diag::err_expected_integer);
+        Diag(m_token, diag::err_expected_expression);
         return false;
     }
-    IntNum start;
-    if (!ParseInteger(&start))
-        return false;
-    ConsumeToken();
 
-    IntNum value;
+    Expr fill;
     if (m_token.is(GasToken::comma))
     {
         ConsumeToken();
         // TODO: support expr instead of intnum
-        if (m_token.isNot(GasToken::numeric_constant))
-        {
-            Diag(m_token, diag::err_expected_integer);
-            return false;
-        }
-        if (!ParseInteger(&value))
-            return false;
-        ConsumeToken();
+        ParseExpr(fill);
     }
 
-    AppendOrg(*m_container, start.getUInt(), value.getUInt(), source);
+    AppendOrg(*m_container, start, fill, source);
     return true;
 }
 
