@@ -190,9 +190,9 @@ GasParser::AddDirectives(Directives& dirs, llvm::StringRef parser)
 {
     if (parser.equals_lower("gas") || parser.equals_lower("gnu"))
     {
-        dirs.Add(".extern", &DirExtern, Directives::ID_REQUIRED);
-        dirs.Add(".global", &DirGlobal, Directives::ID_REQUIRED);
-        dirs.Add(".globl",  &DirGlobal, Directives::ID_REQUIRED);
+        dirs.Add(".extern", &DirExternMulti, Directives::ID_REQUIRED);
+        dirs.Add(".global", &DirGlobalMulti, Directives::ID_REQUIRED);
+        dirs.Add(".globl",  &DirGlobalMulti, Directives::ID_REQUIRED);
     }
 }
 
