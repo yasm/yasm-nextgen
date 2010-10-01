@@ -375,56 +375,62 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
     for (std::vector<std::string>::const_iterator i=defsym.begin(),
          end=defsym.end(); i != end; ++i)
     {
-        llvm::StringRef name, vstr;
-        llvm::tie(name, vstr) = llvm::StringRef(*i).split('=');
-        if (vstr.empty())
+        llvm::StringRef str(*i);
+        size_t equalpos = str.find('=');
+        if (equalpos == llvm::StringRef::npos)
         {
-            diags.Report(yasm::diag::fatal_bad_defsym) << name;
+            diags.Report(yasm::diag::fatal_bad_defsym) << str;
             continue;
         }
+        llvm::StringRef name = str.slice(0, equalpos);
+        llvm::StringRef vstr = str.slice(equalpos+1, llvm::StringRef::npos);
 
-        // determine radix
-        unsigned int radix;
-        if (vstr[0] == '0' && (vstr[1] == 'x' || vstr[1] == 'X'))
+        yasm::IntNum value;
+        if (!vstr.empty())
         {
-            vstr = vstr.substr(2);
-            radix = 16;
-        }
-        else if (vstr[0] == '0')
-        {
-            vstr = vstr.substr(1);
-            radix = 8;
-        }
-        else
-            radix = 10;
+            // determine radix
+            unsigned int radix;
+            if (vstr[0] == '0' && vstr.size() > 1 &&
+                (vstr[1] == 'x' || vstr[1] == 'X'))
+            {
+                vstr = vstr.substr(2);
+                radix = 16;
+            }
+            else if (vstr[0] == '0')
+            {
+                vstr = vstr.substr(1);
+                radix = 8;
+            }
+            else
+                radix = 10;
 
-        // check validity
-        const char* ptr = vstr.begin();
-        const char* end = vstr.end();
-        if (radix == 16)
-        {
-            while (ptr != end && isxdigit(*ptr))
-                ++ptr;
-        }
-        else if (radix == 8)
-        {
-            while (ptr != end && (*ptr >= '0' && *ptr <= '7'))
-                ++ptr;
-        }
-        else
-        {
-            while (ptr != end && isdigit(*ptr))
-                ++ptr;
-        }
-        if (ptr != end)
-        {
-            diags.Report(yasm::diag::fatal_bad_defsym) << name;
-            continue;
+            // check validity
+            const char* ptr = vstr.begin();
+            const char* end = vstr.end();
+            if (radix == 16)
+            {
+                while (ptr != end && isxdigit(*ptr))
+                    ++ptr;
+            }
+            else if (radix == 8)
+            {
+                while (ptr != end && (*ptr >= '0' && *ptr <= '7'))
+                    ++ptr;
+            }
+            else
+            {
+                while (ptr != end && isdigit(*ptr))
+                    ++ptr;
+            }
+            if (ptr != end)
+            {
+                diags.Report(yasm::diag::fatal_bad_defsym) << name;
+                continue;
+            }
+            value.setStr(vstr, radix);
         }
 
         // define equ
-        yasm::IntNum value;
-        value.setStr(vstr, radix);
         assembler.getObject()->getSymbol(name)->DefineEqu(yasm::Expr(value));
     }
 
