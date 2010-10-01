@@ -1694,6 +1694,39 @@ add_group("in",
     opersize=32,
     opcode=[0xED],
     operands=[Operand(type="Dreg", size=16, dest=None)])
+# GAS-only variants (DX specified as memory instead of register)
+add_group("in",
+    suffix="b",
+    parsers=["gas"],
+    opcode=[0xEC],
+    operands=[Operand(type="Areg", size=8, dest=None),
+              Operand(type="MemDX", relaxed=True, dest=None)])
+for sfx, sz in zip("wl", [16, 32]):
+    add_group("in",
+        suffix=sfx,
+        parsers=["gas"],
+        opersize=sz,
+        opcode=[0xED],
+        operands=[Operand(type="Areg", size=sz, dest=None),
+                  Operand(type="MemDX", relaxed=True, dest=None)])
+add_group("in",
+    suffix="b",
+    parsers=["gas"],
+    opcode=[0xEC],
+    operands=[Operand(type="MemDX", relaxed=True, dest=None)])
+add_group("in",
+    suffix="w",
+    parsers=["gas"],
+    opersize=16,
+    opcode=[0xED],
+    operands=[Operand(type="MemDX", relaxed=True, dest=None)])
+add_group("in",
+    suffix="l",
+    cpu=["386"],
+    parsers=["gas"],
+    opersize=32,
+    opcode=[0xED],
+    operands=[Operand(type="MemDX", relaxed=True, dest=None)])
 
 add_insn("in", "in")
 
@@ -1758,6 +1791,39 @@ add_group("out",
     opersize=32,
     opcode=[0xEF],
     operands=[Operand(type="Dreg", size=16, dest=None)])
+# GAS-only variants (DX specified as memory instead of register)
+add_group("out",
+    suffix="b",
+    parsers=["gas"],
+    opcode=[0xEE],
+    operands=[Operand(type="MemDX", relaxed=True, dest=None),
+              Operand(type="Areg", size=8, dest=None)])
+for sfx, sz in zip("wl", [16, 32]):
+    add_group("out",
+        suffix=sfx,
+        parsers=["gas"],
+        opersize=sz,
+        opcode=[0xEF],
+        operands=[Operand(type="MemDX", relaxed=True, dest=None),
+                  Operand(type="Areg", size=sz, dest=None)])
+add_group("out",
+    suffix="b",
+    parsers=["gas"],
+    opcode=[0xEE],
+    operands=[Operand(type="MemDX", relaxed=True, dest=None)])
+add_group("out",
+    suffix="w",
+    parsers=["gas"],
+    opersize=16,
+    opcode=[0xEF],
+    operands=[Operand(type="MemDX", relaxed=True, dest=None)])
+add_group("out",
+    suffix="l",
+    cpu=["386"],
+    parsers=["gas"],
+    opersize=32,
+    opcode=[0xEF],
+    operands=[Operand(type="MemDX", relaxed=True, dest=None)])
 
 add_insn("out", "out")
 

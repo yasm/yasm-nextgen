@@ -145,7 +145,9 @@ enum X86OperandType
     // AX/EAX/RAX memory operand only (EA) [special case for SVM opcodes]
     OPT_MemrAX = 25,
     // EAX memory operand only (EA) [special case for SVM skinit opcode]
-    OPT_MemEAX = 26
+    OPT_MemEAX = 26,
+    // DX memory operand only (EA) [special case for in/out opcodes]
+    OPT_MemDX = 27
 };
 
 enum X86OperandSize
@@ -752,6 +754,16 @@ X86Insn::MatchOperand(const Operand& op, const X86InfoOperand& info_op,
             const X86Register* reg2 = static_cast<const X86Register*>
                 (ea->m_disp.getAbs()->getRegister());
             if (reg2->isNot(X86Register::REG32) || reg2->getNum() != 0)
+                return false;
+            break;
+        }
+        case OPT_MemDX:
+        {
+            if (!ea || !ea->m_disp.getAbs()->isRegister())
+                return false;
+            const X86Register* reg2 = static_cast<const X86Register*>
+                (ea->m_disp.getAbs()->getRegister());
+            if (reg2->isNot(X86Register::REG16) || reg2->getNum() != 2)
                 return false;
             break;
         }
