@@ -1295,6 +1295,7 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
                                        diag::err_high8_rex_conflict);
                         return;
                     }
+                    m_x86_ea->m_disp.setSource(op.getSource());
                     break;
                 case Operand::SEGREG:
                     assert(false && "invalid operand conversion");
@@ -1309,6 +1310,7 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
                     }
                     m_x86_ea.reset(static_cast<X86EffAddr*>
                                    (op.ReleaseMemory().release()));
+                    m_x86_ea->m_disp.setSource(op.getSource());
                     const X86SegmentRegister* segreg =
                         static_cast<const X86SegmentRegister*>
                         (m_x86_ea->m_segreg);
@@ -1331,6 +1333,7 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
                         m_x86_ea.reset(new X86EffAddr());
                     m_x86_ea->setImm(op.ReleaseImm(),
                                      m_size_lookup[info_op.size]);
+                    m_x86_ea->m_disp.setSource(op.getSource());
                     break;
             }
             break;
