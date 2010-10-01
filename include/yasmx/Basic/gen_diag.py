@@ -170,6 +170,7 @@ def output_categories(f):
 add_group("comment")
 add_group("unrecognized-char")
 add_group("orphan-labels")
+add_group("init-nobits")
 add_group("uninit-contents")
 add_group("size-override")
 add_group("signed-overflow")
@@ -578,7 +579,8 @@ add_error("err_pp_cond_not_constant", "non-constant conditional expression")
 
 # Output
 add_warning("warn_nobits_data",
-            "initialized space declared in nobits section: ignoring")
+            "initialized space declared in nobits section: ignoring",
+            group="init-nobits")
 add_warning("warn_uninit_zero",
             "uninitialized space declared in code/data section: zeroing",
             group="uninit-contents")

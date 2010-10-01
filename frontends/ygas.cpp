@@ -193,6 +193,10 @@ static cl::list<std::string> unknown_options(cl::Sink);
 static void
 ApplyWarningSettings(yasm::Diagnostic& diags)
 {
+    // Disable init-nobits and uninit-contents by default.
+    diags.setDiagnosticGroupMapping("init-nobits", yasm::diag::MAP_IGNORE);
+    diags.setDiagnosticGroupMapping("uninit-contents", yasm::diag::MAP_IGNORE);
+
     // Walk through inhibit_warnings, fatal_warnings, enable_warnings, and
     // no_signed_overflow in parallel, ordering by command line argument
     // position.
