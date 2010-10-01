@@ -58,6 +58,7 @@
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes_util.h"
+#include "yasmx/Expr_util.h"
 #include "yasmx/Location_util.h"
 #include "yasmx/Object.h"
 #include "yasmx/Object_util.h"
@@ -591,6 +592,12 @@ ElfObject::BuildCommon(Symbol& sym, Diagnostic& diags)
         Expr size = elfsym.getSize();
         if (!size.isEmpty())
         {
+            if (!ExpandEqu(size))
+            {
+                diags.Report(elfsym.getSizeSource(),
+                             diag::err_equ_circular_reference);
+                return;
+            }
             SimplifyCalcDist(size, diags);
             if (size.isIntNum())
             {

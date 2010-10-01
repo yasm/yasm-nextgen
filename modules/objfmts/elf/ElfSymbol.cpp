@@ -220,6 +220,11 @@ ElfSymbol::Finalize(Symbol& sym, Diagnostic& diags)
     // get size (if specified); expr overrides stored integer
     if (!m_size.isEmpty())
     {
+        if (!ExpandEqu(m_size))
+        {
+            diags.Report(m_size_source, diag::err_equ_circular_reference);
+            return;
+        }
         SimplifyCalcDist(m_size, diags);
         if (!m_size.isIntNum())
             diags.Report(m_size_source, diag::err_size_integer);
