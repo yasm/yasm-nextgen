@@ -7,3 +7,4 @@ call a
 call b
 call c
 call d
+.globl f

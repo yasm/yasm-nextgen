@@ -706,6 +706,9 @@ ElfObject::FinalizeSymbol(Symbol& sym,
         setSymbolSectionValue(sym, *elfsym);
     }
 
+    if (!elfsym)
+        return;
+
     elfsym->Finalize(sym, diags);
 
     if (elfsym->isInTable() && !elfsym->hasName())
