@@ -458,19 +458,6 @@ GasLexer::SkipBlockComment(Token* result, const char* cur_ptr)
     }
 #endif
 
-    // It is common for the tokens immediately after a /**/ comment to be
-    // whitespace.  Instead of going through the big switch, handle it
-    // efficiently now.  This is safe even in KeepWhitespaceMode because we would
-    // have already returned above with the comment as a token.
-    if (isHorizontalWhitespace(*cur_ptr))
-    {
-        result->setFlag(Token::LeadingSpace);
-        SkipWhitespace(result, cur_ptr+1);
-        return false;
-    }
-
-    // Otherwise, just return so that the next character will be lexed as a
-    // token.
     m_buf_ptr = cur_ptr;
     result->setFlag(Token::LeadingSpace);
     return false;
