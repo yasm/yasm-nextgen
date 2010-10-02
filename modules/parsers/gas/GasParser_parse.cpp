@@ -559,10 +559,7 @@ GasParser::ParseDirAlign(unsigned int power2, SourceLocation source)
     Expr bound, fill, maxskip;
 
     if (!ParseExpr(bound))
-    {
-        Diag(source, diag::err_align_no_alignment);
-        return false;
-    }
+        return true;
 
     if (m_token.is(GasToken::comma))
     {
