@@ -595,6 +595,8 @@ add_warning("warn_export_equ",
 add_warning("warn_name_too_long", "name too long, truncating to %0 bytes")
 add_error("err_equ_not_integer", "EQU value not an integer expression")
 add_error("err_equ_too_complex", "EQU value too complex")
+add_warning("warn_equ_undef_ref",
+            "EQU value contains undefined symbol; not emitting")
 add_error("err_common_size_not_integer",
           "COMMON data size not an integer expression")
 

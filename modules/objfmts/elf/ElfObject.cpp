@@ -649,73 +649,67 @@ ElfObject::FinalizeSymbol(Symbol& sym,
     {
         BuildExtern(sym, diags);
         elfsym = sym.getAssocData<ElfSymbol>();
-        elfsym->setName(strtab.getIndex(sym.getName()));
-        return;
     }
-
-    if (vis & Symbol::COMMON)
+    else if (vis & Symbol::COMMON)
     {
         BuildCommon(sym, diags);
         elfsym = sym.getAssocData<ElfSymbol>();
-        elfsym->setName(strtab.getIndex(sym.getName()));
-        // fall through (check below catches undefined case)
     }
 
-    // Ignore any undefined at this point.
-    if (!sym.isDefined())
-        return;
-
-    if ((vis & Symbol::COMMON) == 0 && (vis & Symbol::GLOBAL) != 0)
+    if (sym.isDefined())
     {
-        BuildGlobal(sym, diags);
-        elfsym = sym.getAssocData<ElfSymbol>();
-        elfsym->setName(strtab.getIndex(sym.getName()));
+        if ((vis & Symbol::COMMON) == 0 && (vis & Symbol::GLOBAL) != 0)
+        {
+            BuildGlobal(sym, diags);
+            elfsym = sym.getAssocData<ElfSymbol>();
+        }
+
+        if (!elfsym)
+        {
+            Location loc = {0, 0};
+            if (!sym.getLabel(&loc))
+            {
+                if (!sym.getEqu() && !sym.isAbsoluteSymbol())
+                    return;
+            }
+
+            Section* sect = 0;
+            if (loc.bc)
+                sect = loc.bc->getContainer()->AsSection();
+
+            // Locals (except when debugging) do not need to be
+            // in the symbol table, unless they're a section.
+            bool is_sect = false;
+            if (sect)
+            {
+                ElfSection* elfsect = sect->getAssocData<ElfSection>();
+                if (elfsect && sect->getSymbol() == &sym)
+                    is_sect = true;
+            }
+
+            if (!is_sect)
+            {
+                if (!local_names)
+                    return;
+                // GCC names its internal symbols .Lxxxx; follow gas' lead and
+                // don't output these symbols even if local_names is enabled.
+                llvm::StringRef name = sym.getName();
+                if (name.size() > 2 && name[0] == '.' && name[1] == 'L')
+                    return;
+            }
+
+            elfsym = &BuildSymbol(sym);
+            if (is_sect)
+                elfsym->setType(STT_SECTION);
+        }
+
+        setSymbolSectionValue(sym, *elfsym);
     }
 
-    bool is_sect = false;
+    elfsym->Finalize(sym, diags);
 
-    if (!elfsym)
-    {
-        Location loc = {0, 0};
-        if (!sym.getLabel(&loc))
-        {
-            if (!sym.getEqu() && !sym.isAbsoluteSymbol())
-                return;
-        }
-
-        Section* sect = 0;
-        if (loc.bc)
-            sect = loc.bc->getContainer()->AsSection();
-
-        // Locals (except when debugging) do not need to be
-        // in the symbol table, unless they're a section.
-        if (sect)
-        {
-            ElfSection* elfsect = sect->getAssocData<ElfSection>();
-            if (elfsect && sect->getSymbol() == &sym)
-                is_sect = true;
-        }
-
-        if (!is_sect)
-        {
-            if (!local_names)
-                return;
-            // GCC names its internal symbols .Lxxxx; follow gas' lead and
-            // don't output these symbols even if local_names is enabled.
-            llvm::StringRef name = sym.getName();
-            if (name.size() > 2 && name[0] == '.' && name[1] == 'L')
-                return;
-        }
-
-        elfsym = &BuildSymbol(sym);
-        if (is_sect)
-            elfsym->setType(STT_SECTION);
-    }
-
-    if (!elfsym->hasName() && (local_names || is_sect))
+    if (elfsym->isInTable() && !elfsym->hasName())
         elfsym->setName(strtab.getIndex(sym.getName()));
-
-    setSymbolSectionValue(sym, *elfsym);
 }
 
 namespace {
@@ -1097,6 +1091,8 @@ ElfObject::Output(llvm::raw_fd_ostream& os,
                 ElfSymbol& elfsym = BuildSymbol(*sym); // XXX
                 elfsym.setName(strtab.getIndex(sym->getName()));
                 setSymbolSectionValue(*sym, elfsym);
+                elfsym.setInTable(true);
+                elfsym.Finalize(*sym, diags);
             }
         }
     }
