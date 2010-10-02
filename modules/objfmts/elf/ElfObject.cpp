@@ -696,6 +696,10 @@ ElfObject::FinalizeSymbol(Symbol& sym,
                 llvm::StringRef name = sym.getName();
                 if (name.size() > 2 && name[0] == '.' && name[1] == 'L')
                     return;
+                // Don't output GAS parser local labels.
+                if (name[0] == 'L' &&
+                    name.rfind('\001') != llvm::StringRef::npos)
+                    return;
             }
 
             elfsym = &BuildSymbol(sym);
