@@ -1128,6 +1128,7 @@ public:
     void UpdateRex();
     void ApplyOperands(X86Arch::ParserSelect parser,
                        Insn::Operands& operands);
+    void CheckSegReg(const X86SegmentRegister* segreg, SourceLocation source);
     void ApplySegReg(const SegmentRegister* segreg, SourceLocation source);
     bool Finish(BytecodeContainer& container,
                 const Insn::Prefixes& prefixes,
@@ -1342,6 +1343,8 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
                         // Enable default PC-rel if no regs and segreg
                         // is not FS or GS.
                         m_x86_ea->m_pc_rel = true;
+                    // Warn on 64-bit cs/es/ds/ss segment overrides
+                    CheckSegReg(segreg, op.getSource());
                     break;
                 }
                 case Operand::IMM:
@@ -1576,8 +1579,28 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
 }
 
 void
-BuildGeneral::ApplySegReg(const SegmentRegister* segreg,
+BuildGeneral::CheckSegReg(const X86SegmentRegister* segreg,
                           SourceLocation source)
+{
+    if (!segreg || m_mode_bits != 64)
+        return;
+
+    const char* segname = NULL;
+    if (segreg->is(X86SegmentRegister::kCS))
+        segname = "cs";
+    else if (segreg->is(X86SegmentRegister::kDS))
+        segname = "ds";
+    else if (segreg->is(X86SegmentRegister::kES))
+        segname = "es";
+    else if (segreg->is(X86SegmentRegister::kSS))
+        segname = "ss";
+    if (!segname)
+        return;
+    m_diags.Report(source, diag::warn_seg_ignored_in_xxmode) << segname << 64;
+}
+
+void
+BuildGeneral::ApplySegReg(const SegmentRegister* segreg, SourceLocation source)
 {
     if (X86EffAddr* x86_ea = m_x86_ea.get())
     {
@@ -1595,6 +1618,7 @@ BuildGeneral::ApplySegReg(const SegmentRegister* segreg,
     }
     else if (segreg != 0)
         assert(false && "unhandled segment prefix");
+    CheckSegReg(static_cast<const X86SegmentRegister*>(segreg), source);
 }
 
 bool

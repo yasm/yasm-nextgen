@@ -1,0 +1,8 @@
+<stdin>:7:1: warning: 'cs' segment register ignored in 64-bit mode
+<stdin>:8:1: warning: 'es' segment register ignored in 64-bit mode
+<stdin>:9:1: warning: 'ds' segment register ignored in 64-bit mode
+<stdin>:10:1: warning: 'ss' segment register ignored in 64-bit mode
+<stdin>:12:11: warning: 'cs' segment register ignored in 64-bit mode
+<stdin>:13:11: warning: 'es' segment register ignored in 64-bit mode
+<stdin>:14:11: warning: 'ds' segment register ignored in 64-bit mode
+<stdin>:15:11: warning: 'ss' segment register ignored in 64-bit mode

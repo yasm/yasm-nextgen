@@ -341,7 +341,6 @@ struct RegTmodParseData {
     unsigned int data:8;
 
     // REG: required bits setting
-    // SEGREG: BITS in which the segment is ignored
     // Others: 0
     unsigned int bits:8;
 };
@@ -513,10 +512,10 @@ ymm,	REGGROUP,	0,	X86Register::YMMREG,	0
 #
 # segment registers
 #
-es,	SEGREG,	0,	X86SegmentRegister::kES,	64
+es,	SEGREG,	0,	X86SegmentRegister::kES,	0
 cs,	SEGREG,	0,	X86SegmentRegister::kCS,	0
-ss,	SEGREG,	0,	X86SegmentRegister::kSS,	64
-ds,	SEGREG,	0,	X86SegmentRegister::kDS,	64
+ss,	SEGREG,	0,	X86SegmentRegister::kSS,	0
+ds,	SEGREG,	0,	X86SegmentRegister::kDS,	0
 fs,	SEGREG,	0,	X86SegmentRegister::kFS,	0
 gs,	SEGREG,	0,	X86SegmentRegister::kGS,	0
 #
@@ -562,11 +561,6 @@ X86Arch::ParseCheckRegTmod(llvm::StringRef id,
             return X86RegTmod::Instance()
                 .getRegGroup(static_cast<X86Register::Type>(pdata->data));
         case SEGREG:
-            if (bits != 0 && m_mode_bits == bits)
-            {
-                diags.Report(source, diag::warn_seg_ignored_in_xxmode)
-                    << id << bits;
-            }
             return X86RegTmod::Instance()
                 .getSegReg(static_cast<X86SegmentRegister::Type>(pdata->data));
         case TARGETMOD:
