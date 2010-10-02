@@ -2779,7 +2779,7 @@ add_insn("retn", "retnf", parser="nasm", modifiers=[0xC2])
 add_insn("retf", "retnf", parser="nasm", modifiers=[0xCA, 64])
 add_insn("lret", "retnf", parser="gas", modifiers=[0xCA], suffix="z")
 add_insn("lretw", "retnf", parser="gas", modifiers=[0xCA, 16], suffix="w")
-add_insn("lretl", "retnf", parser="gas", modifiers=[0xCA], suffix="l")
+add_insn("lretl", "retnf", parser="gas", modifiers=[0xCA, 32], suffix="l")
 add_insn("lretq", "retnf", parser="gas", modifiers=[0xCA, 64], only64=True,
          suffix="q")
 
