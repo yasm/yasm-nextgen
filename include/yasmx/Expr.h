@@ -136,12 +136,7 @@ public:
              int depth=0);
 
     /// Assignment operator.
-    ExprTerm& operator= (const ExprTerm& rhs)
-    {
-        if (this != &rhs)
-            ExprTerm(rhs).swap(*this);
-        return *this;
-    }
+    ExprTerm& operator= (const ExprTerm& rhs);
 
     /// Copy constructor.
     ExprTerm(const ExprTerm& term);
@@ -154,22 +149,10 @@ public:
     void swap(ExprTerm& oth);
 
     /// Clear the term.
-    void Clear()
-    {
-        if (m_type == INT)
-            static_cast<IntNum&>(m_data.intn).~IntNum();
-        else if (m_type == FLOAT)
-            delete m_data.flt;
-        m_type = NONE;
-    }
+    void Clear();
 
     /// Make the term zero.
-    void Zero()
-    {
-        Clear();
-        m_type = INT;
-        m_data.intn = IntNum(0);
-    }
+    void Zero();
 
     /// Is term cleared?
     bool isEmpty() const { return (m_type == NONE); }
@@ -229,13 +212,7 @@ public:
         return (m_type == INT ? static_cast<IntNum*>(&m_data.intn) : 0);
     }
 
-    void setIntNum(IntNum intn)
-    {
-        Clear();
-        m_type = INT;
-        m_data.intn.m_type = IntNumData::INTNUM_SV;
-        intn.swap(static_cast<IntNum&>(m_data.intn));
-    }
+    void setIntNum(IntNum intn);
 
     const unsigned int* getSubst() const
     {
@@ -322,6 +299,41 @@ public:
 
 typedef llvm::SmallVector<ExprTerm, 3> ExprTerms;
 
+inline ExprTerm&
+ExprTerm::operator= (const ExprTerm& rhs)
+{
+    if (this != &rhs)
+        ExprTerm(rhs).swap(*this);
+    return *this;
+}
+
+inline void
+ExprTerm::Clear()
+{
+    if (m_type == INT)
+        static_cast<IntNum&>(m_data.intn).~IntNum();
+    else if (m_type == FLOAT)
+        delete m_data.flt;
+    m_type = NONE;
+}
+
+inline void
+ExprTerm::Zero()
+{
+    Clear();
+    m_type = INT;
+    m_data.intn = IntNum(0);
+}
+
+inline void
+ExprTerm::setIntNum(IntNum intn)
+{
+    Clear();
+    m_type = INT;
+    m_data.intn.m_type = IntNumData::INTNUM_SV;
+    intn.swap(static_cast<IntNum&>(m_data.intn));
+}
+
 /// An expression.
 ///
 /// Expressions are n-ary trees.  Most operators are either unary or binary,
@@ -375,22 +387,12 @@ public:
     /// Assign to expression.
     /// @param term     expression value
     template <typename T>
-    Expr& operator= (const T& term)
-    {
-        m_terms.clear();
-        m_terms.push_back(ExprTerm(term));
-        return *this;
-    }
+    Expr& operator= (const T& term);
 
     /// Assign to expression.
     /// @param term     expression value
     template <typename T>
-    Expr& operator= (T& term)
-    {
-        m_terms.clear();
-        m_terms.push_back(ExprTerm(term));
-        return *this;
-    }
+    Expr& operator= (T& term);
 
     Expr& operator= (const Expr& e);
 
@@ -542,19 +544,12 @@ public:
     /// @return True on error (index out of range).
     bool Substitute(const ExprTerms& terms);
 
-    void Calc(Op::Op op, SourceLocation source = SourceLocation())
-    {
-        if (!isEmpty())
-            AppendOp(op, 1, source);
-    }
+    void Calc(Op::Op op, SourceLocation source = SourceLocation());
+
     template <typename T>
-    void Calc(Op::Op op, const T& rhs, SourceLocation source = SourceLocation())
-    {
-        bool was_empty = isEmpty();
-        Append(rhs);
-        if (!was_empty)
-            AppendOp(op, 2, source);
-    }
+    void Calc(Op::Op op,
+              const T& rhs,
+              SourceLocation source = SourceLocation());
 
     /// @defgroup lowlevel Low Level Manipulators
     /// Functions to manipulate the innards of the expression terms.
@@ -579,7 +574,8 @@ public:
     /// operator term to end.
     /// @param op       operator
     /// @param nchild   number of children
-    void AppendOp(Op::Op op, int nchild,
+    void AppendOp(Op::Op op,
+                  int nchild,
                   SourceLocation source = SourceLocation());
 
     /// Make expression an ident if it only has one term.
@@ -639,6 +635,28 @@ private:
     ///             from
     Expr ExtractLHS(ExprTerms::reverse_iterator op);
 };
+
+/// Assign to expression.
+/// @param term     expression value
+template <typename T>
+inline Expr&
+Expr::operator= (const T& term)
+{
+    m_terms.clear();
+    m_terms.push_back(ExprTerm(term));
+    return *this;
+}
+
+/// Assign to expression.
+/// @param term     expression value
+template <typename T>
+inline Expr&
+Expr::operator= (T& term)
+{
+    m_terms.clear();
+    m_terms.push_back(ExprTerm(term));
+    return *this;
+}
 
 /// Assign an expression.
 /// @param e        expression
@@ -719,6 +737,24 @@ Expr::Simplify(Diagnostic& diags, const T& func, bool simplify_reg_mul)
 
     Cleanup();
 }
+
+inline void
+Expr::Calc(Op::Op op, SourceLocation source)
+{
+    if (!isEmpty())
+        AppendOp(op, 1, source);
+}
+
+template <typename T>
+inline void
+Expr::Calc(Op::Op op, const T& rhs, SourceLocation source)
+{
+    bool was_empty = isEmpty();
+    Append(rhs);
+    if (!was_empty)
+        AppendOp(op, 2, source);
+}
+
 
 /// Expression builder based on operator.
 /// Allows building expressions with the syntax Expr e = ADD(0, sym, ...);

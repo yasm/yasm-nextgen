@@ -69,11 +69,7 @@ public:
     /// available, and calling this function again will clear all previous
     /// usages.
     /// @return Shared scratch buffer.
-    Bytes& getScratch()
-    {
-        m_scratch.resize(0);
-        return m_scratch;
-    }
+    Bytes& getScratch();
 
     /// Get the diagnostic reporter.
     Diagnostic& getDiagnostics() const { return m_diags; }
@@ -98,15 +94,7 @@ public:
     /// @param loc          location of the expr contents (needed for relative)
     /// @param num_out      numeric output
     /// @return False if an error occurred.
-    bool OutputValue(Value& value, Location loc, NumericOutput& num_out)
-    {
-        if (!ConvertValueToBytes(value, loc, num_out))
-            return false;
-        OutputBytes(num_out.getBytes(), value.getSource().getBegin());
-        num_out.EmitWarnings(m_diags);
-        num_out.ClearWarnings();
-        return true;
-    }
+    bool OutputValue(Value& value, Location loc, NumericOutput& num_out);
 
     /// Output a symbol reference.
     ///
@@ -116,35 +104,19 @@ public:
     /// @return False if an error occurred.
     bool OutputSymbol(SymbolRef sym,
                       Location loc,
-                      NumericOutput& num_out)
-    {
-        if (!ConvertSymbolToBytes(sym, loc, num_out))
-            return false;
-        OutputBytes(num_out.getBytes(), num_out.getSource());
-        num_out.EmitWarnings(m_diags);
-        num_out.ClearWarnings();
-        return true;
-    }
+                      NumericOutput& num_out);
 
     /// Output a "gap" in the object file: the data does not really need to
     /// exist in the object file, but should be initialized to 0 when the
     /// program is run.
     /// @param size         gap size, in bytes
     /// @param source       source location
-    void OutputGap(unsigned int size, SourceLocation source)
-    {
-        DoOutputGap(size, source);
-        m_num_output += size;
-    }
+    void OutputGap(unsigned int size, SourceLocation source);
 
     /// Output a sequence of bytes.
     /// @param bytes        bytes to output
     /// @param source       source location
-    void OutputBytes(const Bytes& bytes, SourceLocation source)
-    {
-        DoOutputBytes(bytes, source);
-        m_num_output += static_cast<unsigned long>(bytes.size());
-    }
+    void OutputBytes(const Bytes& bytes, SourceLocation source);
 
 protected:
     /// Convert a value to bytes.  Called by OutputValue() so that
@@ -202,6 +174,51 @@ private:
     Bytes m_bc_scratch;         ///< Reusable scratch area for Bytecode class
     unsigned long m_num_output; ///< Total number of bytes+gap output
 };
+
+inline Bytes&
+BytecodeOutput::getScratch()
+{
+    m_scratch.resize(0);
+    return m_scratch;
+}
+
+inline bool
+BytecodeOutput::OutputValue(Value& value, Location loc, NumericOutput& num_out)
+{
+    if (!ConvertValueToBytes(value, loc, num_out))
+        return false;
+    OutputBytes(num_out.getBytes(), value.getSource().getBegin());
+    num_out.EmitWarnings(m_diags);
+    num_out.ClearWarnings();
+    return true;
+}
+
+inline bool
+BytecodeOutput::OutputSymbol(SymbolRef sym,
+                             Location loc,
+                             NumericOutput& num_out)
+{
+    if (!ConvertSymbolToBytes(sym, loc, num_out))
+        return false;
+    OutputBytes(num_out.getBytes(), num_out.getSource());
+    num_out.EmitWarnings(m_diags);
+    num_out.ClearWarnings();
+    return true;
+}
+
+inline void
+BytecodeOutput::OutputGap(unsigned int size, SourceLocation source)
+{
+    DoOutputGap(size, source);
+    m_num_output += size;
+}
+
+inline void
+BytecodeOutput::OutputBytes(const Bytes& bytes, SourceLocation source)
+{
+    DoOutputBytes(bytes, source);
+    m_num_output += static_cast<unsigned long>(bytes.size());
+}
 
 /// No-output specialization of BytecodeOutput.
 /// Warns on all attempts to output non-gaps.

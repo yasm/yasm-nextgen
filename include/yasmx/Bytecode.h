@@ -204,12 +204,7 @@ public:
     Bytecode();
 
     Bytecode(const Bytecode& oth);
-    Bytecode& operator= (const Bytecode& rhs)
-    {
-        if (this != &rhs)
-            Bytecode(rhs).swap(*this);
-        return *this;
-    }
+    Bytecode& operator= (const Bytecode& rhs);
 
     /// Exchanges this bytecode with another one.
     /// @param oth      other bytecode
@@ -335,12 +330,7 @@ public:
     unsigned long getIndex() const { return m_index; }
     void setIndex(unsigned long idx) { m_index = idx; }
 
-    Contents::SpecialType getSpecial() const
-    {
-        if (m_contents.get() == 0)
-            return Contents::SPECIAL_NONE;
-        return m_contents->getSpecial();
-    }
+    Contents::SpecialType getSpecial() const;
 
     Bytes& getFixed() { return m_fixed; }
     const Bytes& getFixed() const { return m_fixed; }
@@ -414,6 +404,22 @@ private:
     /// Unique integer index of bytecode.  Used during optimization.
     unsigned long m_index;
 };
+
+inline Bytecode&
+Bytecode::operator= (const Bytecode& rhs)
+{
+    if (this != &rhs)
+        Bytecode(rhs).swap(*this);
+    return *this;
+}
+
+inline Bytecode::Contents::SpecialType
+Bytecode::getSpecial() const
+{
+    if (m_contents.get() == 0)
+        return Contents::SPECIAL_NONE;
+    return m_contents->getSpecial();
+}
 
 inline YAML::Emitter&
 operator<< (YAML::Emitter& out, const Bytecode::Contents& contents)
