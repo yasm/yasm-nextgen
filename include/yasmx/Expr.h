@@ -402,19 +402,19 @@ public:
 
     /// Single-term constructor for register.
     explicit Expr(const Register& reg, SourceLocation source = SourceLocation())
-    { m_terms.push_back(ExprTerm(reg)); }
+    { m_terms.push_back(ExprTerm(reg, source)); }
 
     /// Single-term constructor for integer.
     explicit Expr(IntNum intn, SourceLocation source = SourceLocation())
-    { m_terms.push_back(ExprTerm(intn)); }
+    { m_terms.push_back(ExprTerm(intn, source)); }
 
     /// Single-term constructor for symbol.
     explicit Expr(SymbolRef sym, SourceLocation source = SourceLocation())
-    { m_terms.push_back(ExprTerm(sym)); }
+    { m_terms.push_back(ExprTerm(sym, source)); }
 
     /// Single-term constructor for location.
     explicit Expr(Location loc, SourceLocation source = SourceLocation())
-    { m_terms.push_back(ExprTerm(loc)); }
+    { m_terms.push_back(ExprTerm(loc, source)); }
 
     /// Single-term constructor for IntNum auto_ptr.
     explicit Expr(std::auto_ptr<IntNum> intn,
