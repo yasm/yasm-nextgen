@@ -62,7 +62,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Support/MD5.cpp
     yasmx/Support/phash.cpp
     yasmx/Support/registry.cpp
-    yasmx/Support/StringExtras.cpp
     yasmx/AlignBytecode.cpp
     yasmx/Arch.cpp
     yasmx/Assembler.cpp
