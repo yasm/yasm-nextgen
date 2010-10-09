@@ -7,7 +7,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     llvm/Support/Allocator.cpp
     llvm/Support/APFloat.cpp
     llvm/Support/APInt.cpp
-    llvm/Support/circular_raw_ostream.cpp
     llvm/Support/CommandLine.cpp
     llvm/Support/ErrorHandling.cpp
     llvm/Support/FoldingSet.cpp
