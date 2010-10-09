@@ -13,7 +13,6 @@
 
 #include "llvm/Support/Allocator.h"
 #include "llvm/System/DataTypes.h"
-#include "llvm/Support/Recycler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Memory.h"
 #include <cstring>
