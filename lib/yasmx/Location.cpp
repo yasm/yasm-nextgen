@@ -26,7 +26,6 @@
 //
 #include "yasmx/Location.h"
 
-#include "llvm/ADT/Twine.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/IntNum.h"
 

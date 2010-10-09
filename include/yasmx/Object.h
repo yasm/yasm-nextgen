@@ -40,8 +40,6 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace llvm { class Twine; }
-
 namespace yasm
 {
 

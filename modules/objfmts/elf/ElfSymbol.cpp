@@ -26,7 +26,6 @@
 //
 #include "ElfSymbol.h"
 
-#include "llvm/ADT/Twine.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes_util.h"

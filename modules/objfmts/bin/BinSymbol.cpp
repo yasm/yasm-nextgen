@@ -26,7 +26,6 @@
 //
 #include "BinSymbol.h"
 
-#include "llvm/ADT/Twine.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"

@@ -26,7 +26,7 @@
 //
 #include "BinObject.h"
 
-#include "llvm/ADT/Twine.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/SourceLocation.h"
@@ -331,7 +331,9 @@ BinObject::AppendSection(llvm::StringRef name,
     // Initialize section data and symbols.
     std::auto_ptr<BinSection> bsd(new BinSection());
 
-    SymbolRef start = m_object.getSymbol(("section."+name+".start").str());
+    llvm::SmallString<64> fullname;
+    fullname = "section."; fullname += name; fullname += ".start";
+    SymbolRef start = m_object.getSymbol(fullname.str());
     if (start->okToDeclare(Symbol::EXTERN))
     {
         start->Declare(Symbol::EXTERN);
@@ -340,7 +342,8 @@ BinObject::AppendSection(llvm::StringRef name,
     start->AddAssocData(std::auto_ptr<BinSymbol>
         (new BinSymbol(*section, *bsd, BinSymbol::START)));
 
-    SymbolRef vstart = m_object.getSymbol(("section."+name+".vstart").str());
+    fullname = "section."; fullname += name; fullname += ".vstart";
+    SymbolRef vstart = m_object.getSymbol(fullname.str());
     if (vstart->okToDeclare(Symbol::EXTERN))
     {
         vstart->Declare(Symbol::EXTERN);
@@ -349,7 +352,8 @@ BinObject::AppendSection(llvm::StringRef name,
     vstart->AddAssocData(std::auto_ptr<BinSymbol>
         (new BinSymbol(*section, *bsd, BinSymbol::VSTART)));
 
-    SymbolRef length = m_object.getSymbol(("section."+name+".length").str());
+    fullname = "section."; fullname += name; fullname += ".length";
+    SymbolRef length = m_object.getSymbol(fullname.str());
     if (length->okToDeclare(Symbol::EXTERN))
     {
         length->Declare(Symbol::EXTERN);

@@ -34,7 +34,6 @@
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/Twine.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/IntervalTree.h"

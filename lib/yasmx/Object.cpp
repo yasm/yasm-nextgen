@@ -31,7 +31,6 @@
 
 #include <boost/pool/pool.hpp>
 
-#include "llvm/ADT/Twine.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Arch.h"
