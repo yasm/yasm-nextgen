@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/System/Memory.h"
-#include "llvm/System/Valgrind.h"
 #include "llvm/Config/config.h"
 
 namespace llvm {
@@ -69,6 +68,4 @@ void llvm::sys::Memory::InvalidateInstructionCache(const void *Addr,
 #  endif
 
 #endif  // end apple
-
-  ValgrindDiscardTranslations(Addr, Len);
 }

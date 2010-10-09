@@ -25,7 +25,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     llvm/System/Path.cpp
     llvm/System/Process.cpp
     llvm/System/TimeValue.cpp
-    llvm/System/Valgrind.cpp
     yasmx/Basic/Diagnostic.cpp
     yasmx/Basic/FileManager.cpp
     yasmx/Basic/SourceLocation.cpp
