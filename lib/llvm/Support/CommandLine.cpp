@@ -20,7 +20,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -73,11 +72,11 @@ static char ProgramName[80] = "<premain>";
 static const char *ProgramOverview = 0;
 
 // This collects additional help to be printed.
-static ManagedStatic<std::vector<const char*> > MoreHelp;
+static std::vector<const char*> MoreHelp;
 
 extrahelp::extrahelp(const char *Help)
   : morehelp(Help) {
-  MoreHelp->push_back(Help);
+  MoreHelp.push_back(Help);
 }
 
 static bool OptionListChanged = false;
@@ -767,7 +766,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
   // be processed once!
   Opts.clear();
   PositionalOpts.clear();
-  MoreHelp->clear();
+  MoreHelp.clear();
 
   // Free the memory allocated by ExpandResponseFiles.
   if (ReadResponseFiles) {
@@ -1114,10 +1113,10 @@ public:
       Opts[i].second->printOptionInfo(MaxArgLen);
 
     // Print any extra help the user has declared.
-    for (std::vector<const char *>::iterator I = MoreHelp->begin(),
-          E = MoreHelp->end(); I != E; ++I)
+    for (std::vector<const char *>::iterator I = MoreHelp.begin(),
+          E = MoreHelp.end(); I != E; ++I)
       outs() << *I;
-    MoreHelp->clear();
+    MoreHelp.clear();
 
     // Halt the program since help information was printed
     exit(1);

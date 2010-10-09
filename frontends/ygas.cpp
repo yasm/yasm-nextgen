@@ -32,7 +32,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Format.h"
-#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Basic/Diagnostic.h"
@@ -459,8 +458,6 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
 int
 main(int argc, char* argv[])
 {
-    llvm::llvm_shutdown_obj llvm_manager(false);
-
     cl::SetVersionPrinter(&PrintVersion);
     cl::ParseCommandLineOptions(argc, argv, "", true);
 
