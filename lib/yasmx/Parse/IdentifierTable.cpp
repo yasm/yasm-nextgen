@@ -24,24 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#define DEBUG_TYPE "IdTable"
-
 #include "yasmx/Parse/IdentifierTable.h"
 
-#include "llvm/ADT/Statistic.h"
-
-
-STATISTIC(num_insn_lookup, "Total number of instruction lookups");
-STATISTIC(num_insn_lookup_insn, "Number of instruction lookups to insn");
-STATISTIC(num_insn_lookup_prefix, "Number of instruction lookups to prefix");
-STATISTIC(num_insn_lookup_none, "Number of instruction lookups to identifier");
-
-STATISTIC(num_reg_lookup, "Total number of register lookups");
-STATISTIC(num_reg_lookup_reg, "Number of register lookups to reg");
-STATISTIC(num_reg_lookup_reggroup, "Number of register lookups to reggroup");
-STATISTIC(num_reg_lookup_segreg, "Number of register lookups to segreg");
-STATISTIC(num_reg_lookup_targetmod, "Number of register lookups to targetmod");
-STATISTIC(num_reg_lookup_none, "Number of register lookups to identifier");
 
 using namespace yasm;
 
@@ -52,23 +36,19 @@ IdentifierInfo::DoInsnLookup(const Arch& arch,
 {
     if (m_flags & DID_INSN_LOOKUP)
         return;
-    ++num_insn_lookup;
     m_flags &= ~(IS_INSN | IS_PREFIX);
     Arch::InsnPrefix ip = arch.ParseCheckInsnPrefix(getName(), source, diags);
     switch (ip.getType())
     {
         case Arch::InsnPrefix::INSN:
-            ++num_insn_lookup_insn;
             m_info = const_cast<Arch::InsnInfo*>(ip.getInsn());
             m_flags |= IS_INSN;
             break;
         case Arch::InsnPrefix::PREFIX:
-            ++num_insn_lookup_prefix;
             m_info = const_cast<Prefix*>(ip.getPrefix());
             m_flags |= IS_PREFIX;
             break;
         default:
-            ++num_insn_lookup_none;
             break;
     }
     m_flags |= DID_INSN_LOOKUP;
@@ -81,33 +61,27 @@ IdentifierInfo::DoRegLookup(const Arch& arch,
 {
     if (m_flags & DID_REG_LOOKUP)
         return;
-    ++num_reg_lookup;
     m_flags &= ~(IS_REGISTER | IS_REGGROUP | IS_SEGREG | IS_TARGETMOD);
     Arch::RegTmod regtmod = arch.ParseCheckRegTmod(getName(), source, diags);
     switch (regtmod.getType())
     {
         case Arch::RegTmod::REG:
-            ++num_reg_lookup_reg;
             m_info = const_cast<Register*>(regtmod.getReg());
             m_flags |= IS_REGISTER;
             break;
         case Arch::RegTmod::REGGROUP:
-            ++num_reg_lookup_reggroup;
             m_info = const_cast<RegisterGroup*>(regtmod.getRegGroup());
             m_flags |= IS_REGGROUP;
             break;
         case Arch::RegTmod::SEGREG:
-            ++num_reg_lookup_segreg;
             m_info = const_cast<SegmentRegister*>(regtmod.getSegReg());
             m_flags |= IS_SEGREG;
             break;
         case Arch::RegTmod::TARGETMOD:
-            ++num_reg_lookup_targetmod;
             m_info = const_cast<TargetModifier*>(regtmod.getTargetMod());
             m_flags |= IS_TARGETMOD;
             break;
         default:
-            ++num_reg_lookup_none;
             break;
     }
     m_flags |= DID_REG_LOOKUP;

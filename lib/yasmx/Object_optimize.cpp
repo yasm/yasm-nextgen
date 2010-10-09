@@ -36,7 +36,6 @@
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
 #include "yasmx/Basic/Diagnostic.h"
@@ -49,15 +48,6 @@
 #include "yasmx/Section.h"
 #include "yasmx/Value.h"
 
-
-STATISTIC(num_span_terms, "Number of span terms created");
-STATISTIC(num_spans, "Number of spans created");
-STATISTIC(num_step1d, "Number of spans after step 1b");
-STATISTIC(num_itree, "Number of span terms added to interval tree");
-STATISTIC(num_offset_setters, "Number of offset setters");
-STATISTIC(num_recalc, "Number of span recalculations performed");
-STATISTIC(num_expansions, "Number of expansions performed");
-STATISTIC(num_initial_qb, "Number of spans on initial QB");
 
 using namespace yasm;
 
@@ -310,7 +300,6 @@ Span::Term::Term(unsigned int subst,
       m_new_val(new_val),
       m_subst(subst)
 {
-    ++num_span_terms;
 }
 
 Span::Span(Bytecode& bc,
@@ -329,7 +318,6 @@ Span::Span(Bytecode& bc,
       m_active(ACTIVE),
       m_os_index(os_index)
 {
-    ++num_spans;
 }
 
 void
@@ -394,7 +382,6 @@ Span::CreateTerms(Optimizer* optimize, Diagnostic& diags)
 bool
 Span::RecalcNormal(Diagnostic& diags)
 {
-    ++num_recalc;
     m_new_val = 0;
 
     if (m_depval.isRelative())
@@ -501,7 +488,6 @@ Optimizer::ITreeAdd(Span& span, Span::Term& term)
         return;     // difference is same bc - always 0!
 
     m_itree.Insert(static_cast<long>(low), static_cast<long>(high), &term);
-    ++num_itree;
 }
 
 void
@@ -631,7 +617,6 @@ Optimizer::Step1d()
     for (Spans::iterator spani=m_spans.begin(), endspan=m_spans.end();
          spani != endspan; ++spani)
     {
-        ++num_step1d;
         Span* span = *spani;
 
         // Update span terms based on new bc offsets
@@ -654,7 +639,6 @@ Optimizer::Step1d()
             // Exceeded threshold, add span to QB
             m_QB.push_back(&(*span));
             span->m_active = Span::ON_Q;
-            ++num_initial_qb;
         }
     }
 
@@ -674,7 +658,6 @@ Optimizer::Step1e()
         os->m_thres = os->m_bc->getNextOffset();
         os->m_new_val = os->m_bc->getOffset() + os->m_bc->getFixedLen();
         os->m_cur_val = os->m_new_val;
-        ++num_offset_setters;
     }
 
     // Build up interval tree
@@ -731,8 +714,6 @@ Optimizer::Step2()
         // again.
         if (!span->RecalcNormal(m_diags))
             continue;
-
-        ++num_expansions;
 
         unsigned long orig_len = span->m_bc.getTotalLen();
 

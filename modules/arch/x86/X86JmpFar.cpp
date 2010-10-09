@@ -24,11 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#define DEBUG_TYPE "x86"
-
 #include "X86JmpFar.h"
 
-#include "llvm/ADT/Statistic.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"
@@ -36,8 +33,6 @@
 #include "X86Common.h"
 #include "X86Opcode.h"
 
-
-STATISTIC(num_jmpfar, "Number of far jump instructions appended");
 
 using namespace yasm;
 using namespace yasm::arch;
@@ -53,7 +48,6 @@ arch::AppendJmpFar(BytecodeContainer& container,
     Bytecode& bc = container.FreshBytecode();
     Bytes& bytes = bc.getFixed();
     unsigned long orig_size = bytes.size();
-    ++num_jmpfar;
 
     common.ToBytes(bytes, 0);
     opcode.ToBytes(bytes);

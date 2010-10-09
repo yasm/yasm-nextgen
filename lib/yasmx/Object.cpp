@@ -24,8 +24,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#define DEBUG_TYPE "Object"
-
 #include "yasmx/Object.h"
 
 #include <algorithm>
@@ -33,7 +31,6 @@
 
 #include <boost/pool/pool.hpp>
 
-#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/Twine.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
@@ -43,9 +40,6 @@
 
 #include "hamt.h"
 
-
-STATISTIC(num_exist_symbol, "Number of existing symbols found by name");
-STATISTIC(num_new_symbol, "Number of symbols created by name");
 
 using namespace yasm;
 
@@ -186,12 +180,8 @@ Object::getSymbol(llvm::StringRef name)
     std::auto_ptr<Symbol> sym(new Symbol(name));
     Symbol* sym2 = m_impl->sym_map.Insert(sym.get());
     if (sym2)
-    {
-        ++num_exist_symbol;
         return SymbolRef(sym2);
-    }
 
-    ++num_new_symbol;
     sym2 = sym.get();
     m_symbols.push_back(sym.release());
     return SymbolRef(sym2);

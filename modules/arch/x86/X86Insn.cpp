@@ -24,8 +24,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#define DEBUG_TYPE "x86"
-
 #include "X86Insn.h"
 
 #include <algorithm>
@@ -33,7 +31,6 @@
 #include <cstring>
 #include <string>
 
-#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
@@ -56,9 +53,6 @@
 #define NELEMS(array)   (sizeof(array) / sizeof(array[0]))
 #endif
 
-STATISTIC(num_groups_scanned, "Total number of instruction groups scanned");
-STATISTIC(num_jmp_groups_scanned, "Total number of jump groups scanned");
-STATISTIC(num_empty_insn, "Number of empty instructions created");
 
 using namespace yasm;
 using namespace yasm::arch;
@@ -418,8 +412,6 @@ bool
 X86Insn::MatchJmpInfo(const X86InsnInfo& info, unsigned int opersize,
                       X86Opcode& shortop, X86Opcode& nearop) const
 {
-    ++num_jmp_groups_scanned;
-
     // Match CPU
     if (m_mode_bits != 64 && (info.misc_flags & ONLY_64))
         return false;
@@ -854,8 +846,6 @@ bool
 X86Insn::MatchInfo(const X86InsnInfo& info, const unsigned int* size_lookup,
                    int bypass) const
 {
-    ++num_groups_scanned;
-
     // Match CPU
     if (m_mode_bits != 64 && (info.misc_flags & ONLY_64))
         return false;
@@ -1959,7 +1949,6 @@ X86Insn::clone() const
 std::auto_ptr<Insn>
 X86Arch::CreateEmptyInsn() const
 {
-    ++num_empty_insn;
     return std::auto_ptr<Insn>(new X86Insn(
         *this,
         empty_insn,

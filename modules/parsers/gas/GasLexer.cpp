@@ -28,22 +28,13 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#define DEBUG_TYPE "GasLexer"
-
 #include "GasLexer.h"
 
 #include <cctype>
 
-#include "llvm/ADT/Statistic.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Parse/Preprocessor.h"
 
-
-STATISTIC(num_identifier, "Number of identifiers lexed");
-STATISTIC(num_numeric_constant, "Number of numeric constants lexed");
-STATISTIC(num_char_constant, "Number of char constants lexed");
-STATISTIC(num_string_literal, "Number of string literals lexed");
-STATISTIC(num_eol_comment, "Number of EOL comments lexed");
 
 using namespace yasm;
 using namespace yasm::parser;
@@ -127,7 +118,6 @@ FinishIdentifier:
         if (ii->isHandleIdentifierCase())
             m_preproc->HandleIdentifier(result);
 #endif
-        ++num_identifier;
         return;
     }
   
@@ -177,7 +167,6 @@ GasLexer::LexNumericConstant(Token* result, const char* cur_ptr)
     FormTokenWithChars(result, cur_ptr, GasToken::numeric_constant);
     result->setFlag(Token::Literal);
     result->setLiteralData(tok_start);
-    ++num_numeric_constant;
 }
 
 /// Lex the remainder of a character constant literal, after having lexed '.
@@ -216,7 +205,6 @@ GasLexer::LexCharConstant(Token* result, const char* cur_ptr)
     FormTokenWithChars(result, cur_ptr, GasToken::char_constant);
     result->setFlag(Token::Literal);
     result->setLiteralData(tok_start);
-    ++num_char_constant;
 }
 
 /// Lex the remainder of a string literal, after having lexed ".
@@ -262,7 +250,6 @@ GasLexer::LexStringLiteral(Token* result, const char* cur_ptr)
     FormTokenWithChars(result, cur_ptr, GasToken::string_literal);
     result->setFlag(Token::Literal);
     result->setLiteralData(tok_start);
-    ++num_string_literal;
 }
 
 /// isBlockCommentEndOfEscapedNewLine - Return true if the specified newline
@@ -731,7 +718,6 @@ SkipIgnoredUnits:
         break;
     case '#':
         // EOL comment
-        ++num_eol_comment;
         if (SkipLineComment(result, cur_ptr))
             return; // KeepCommentMode
       

@@ -24,11 +24,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#define DEBUG_TYPE "Bytecode"
-
 #include "yasmx/Bytecode.h"
 
-#include "llvm/ADT/Statistic.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
@@ -40,12 +37,6 @@
 #include "yasmx/Op.h"
 #include "yasmx/Symbol.h"
 #include "yasmx/Value.h"
-
-
-STATISTIC(num_fixed_value, "Total number of values appended to fixed portions");
-STATISTIC(num_output, "Number of bytecodes output");
-STATISTIC(fixed_output, "Total number of fixed bytes output");
-STATISTIC(tail_output, "Total number of tail bytes output");
 
 using namespace yasm;
 
@@ -255,9 +246,6 @@ Bytecode::Output(BytecodeOutput& bc_out)
     assert((bc_out.getNumOutput() - start) == getTotalLen() &&
            "failed to output correct number of bytes");
 
-    ++num_output;
-    fixed_output += getFixedLen();
-    tail_output += getTailLen();
     return true;
 }
 
@@ -284,7 +272,6 @@ Bytecode::AppendFixed(const Value& val)
     unsigned int valsize = val.getSize()/8;
     m_fixed_fixups.push_back(Fixup(m_fixed.size(), val));
     m_fixed.Write(valsize, 0);
-    ++num_fixed_value;
 }
 
 void
@@ -293,7 +280,6 @@ Bytecode::AppendFixed(std::auto_ptr<Value> val)
     unsigned int valsize = val->getSize()/8;
     m_fixed_fixups.push_back(Fixup(m_fixed.size(), val));
     m_fixed.Write(valsize, 0);
-    ++num_fixed_value;
 }
 
 Value&
@@ -303,7 +289,6 @@ Bytecode::AppendFixed(unsigned int size,
 {
     m_fixed_fixups.push_back(Fixup(m_fixed.size(), size*8, e, source));
     m_fixed.Write(size, 0);
-    ++num_fixed_value;
     return m_fixed_fixups.back();
 }
 
