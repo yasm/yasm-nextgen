@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include <limits.h>
@@ -778,11 +778,6 @@ APFloat::APFloat(const APFloat &rhs)
 APFloat::~APFloat()
 {
   freeSignificand();
-}
-
-// Profile - This method 'profiles' an APFloat for use with FoldingSet.
-void APFloat::Profile(FoldingSetNodeID& ID) const {
-  ID.Add(bitcastToAPInt());
 }
 
 unsigned int

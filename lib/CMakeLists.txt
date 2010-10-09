@@ -9,7 +9,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     llvm/Support/APInt.cpp
     llvm/Support/CommandLine.cpp
     llvm/Support/ErrorHandling.cpp
-    llvm/Support/FoldingSet.cpp
     llvm/Support/raw_ostream.cpp
     llvm/Support/ManagedStatic.cpp
     llvm/Support/MemoryBuffer.cpp

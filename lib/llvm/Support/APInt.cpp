@@ -15,7 +15,6 @@
 #define DEBUG_TYPE "apint"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -151,20 +150,6 @@ APInt& APInt::operator=(uint64_t RHS) {
     memset(pVal+1, 0, (getNumWords() - 1) * APINT_WORD_SIZE);
   }
   return clearUnusedBits();
-}
-
-/// Profile - This method 'profiles' an APInt for use with FoldingSet.
-void APInt::Profile(FoldingSetNodeID& ID) const {
-  ID.AddInteger(BitWidth);
-
-  if (isSingleWord()) {
-    ID.AddInteger(VAL);
-    return;
-  }
-
-  unsigned NumWords = getNumWords();
-  for (unsigned i = 0; i < NumWords; ++i)
-    ID.AddInteger(pVal[i]);
 }
 
 /// add_1 - This function adds a single "digit" integer, y, to the multiple

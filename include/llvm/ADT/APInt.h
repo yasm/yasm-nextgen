@@ -25,7 +25,6 @@
 namespace llvm {
   class Serializer;
   class Deserializer;
-  class FoldingSetNodeID;
   class raw_ostream;
   class StringRef;
 
@@ -257,10 +256,6 @@ public:
   /// Default constructor that creates an uninitialized APInt.  This is useful
   ///  for object deserialization (pair this with the static method Read).
   explicit APInt() : BitWidth(1) {}
-
-  /// Profile - Used to insert APInt objects, or objects that contain APInt
-  ///  objects, into FoldingSets.
-  void Profile(FoldingSetNodeID& id) const;
 
   /// @brief Used by the Bitcode serializer to emit APInts to Bitcode.
   void Emit(Serializer& S) const;
