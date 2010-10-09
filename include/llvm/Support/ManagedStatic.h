@@ -14,8 +14,7 @@
 #ifndef LLVM_SUPPORT_MANAGED_STATIC_H
 #define LLVM_SUPPORT_MANAGED_STATIC_H
 
-#include "llvm/System/Atomic.h"
-#include "llvm/System/Threading.h"
+#include <stddef.h>
 #include "yasmx/Config/export.h"
 
 namespace llvm {
@@ -64,28 +63,24 @@ public:
   // Accessors.
   C &operator*() {
     void* tmp = Ptr;
-    if (llvm_is_multithreaded()) sys::MemoryFence();
     if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>::call);
 
     return *static_cast<C*>(Ptr);
   }
   C *operator->() {
     void* tmp = Ptr;
-    if (llvm_is_multithreaded()) sys::MemoryFence();
     if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>::call);
 
     return static_cast<C*>(Ptr);
   }
   const C &operator*() const {
     void* tmp = Ptr;
-    if (llvm_is_multithreaded()) sys::MemoryFence();
     if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>::call);
 
     return *static_cast<C*>(Ptr);
   }
   const C *operator->() const {
     void* tmp = Ptr;
-    if (llvm_is_multithreaded()) sys::MemoryFence();
     if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>::call);
 
     return static_cast<C*>(Ptr);
@@ -108,7 +103,6 @@ void llvm_shutdown();
 struct llvm_shutdown_obj {
   llvm_shutdown_obj() { }
   explicit llvm_shutdown_obj(bool multithreaded) {
-    if (multithreaded) llvm_start_multithreaded();
   }
   ~llvm_shutdown_obj() { llvm_shutdown(); }
 };

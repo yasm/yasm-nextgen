@@ -16,8 +16,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Signals.h"
-#include "llvm/System/Threading.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Config/config.h"
 #include <cassert>
@@ -39,8 +37,6 @@ static void *ErrorHandlerUserData = 0;
 
 void llvm::install_fatal_error_handler(fatal_error_handler_t handler,
                                        void *user_data) {
-  assert(!llvm_is_multithreaded() &&
-         "Cannot register error handlers after starting multithreaded mode!\n");
   assert(!ErrorHandler && "Error handler already registered!\n");
   ErrorHandler = handler;
   ErrorHandlerUserData = user_data;
@@ -71,11 +67,6 @@ void llvm::report_fatal_error(const Twine &Reason) {
     StringRef MessageStr = OS.str();
     (void)::write(2, MessageStr.data(), MessageStr.size());
   }
-
-  // If we reached here, we are failing ungracefully. Run the interrupt handlers
-  // to make sure any special cleanups get done, in particular that we remove
-  // files registered with RemoveFileOnSignal.
-  sys::RunInterruptHandlers();
 
   exit(1);
 }

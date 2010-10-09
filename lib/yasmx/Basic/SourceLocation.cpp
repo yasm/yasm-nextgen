@@ -14,22 +14,9 @@
 #include "yasmx/Basic/SourceLocation.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
-#include "yasmx/Basic/PrettyStackTrace.h"
 #include "yasmx/Basic/SourceManager.h"
 #include <cstdio>
 using namespace yasm;
-
-//===----------------------------------------------------------------------===//
-// PrettyStackTraceLoc
-//===----------------------------------------------------------------------===//
-
-void PrettyStackTraceLoc::print(llvm::raw_ostream &OS) const {
-  if (Loc.isValid()) {
-    Loc.print(OS, SM);
-    OS << ": ";
-  }
-  OS << Message << '\n';
-}
 
 //===----------------------------------------------------------------------===//
 // SourceLocation

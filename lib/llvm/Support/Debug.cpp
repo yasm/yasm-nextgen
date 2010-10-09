@@ -26,7 +26,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/circular_raw_ostream.h"
-#include "llvm/System/Signals.h"
 
 using namespace llvm;
 
@@ -70,17 +69,6 @@ DebugOnly("debug-only", cl::desc("Enable a specific type of debug output"),
           cl::Hidden, cl::value_desc("debug string"),
           cl::location(DebugOnlyOptLoc), cl::ValueRequired);
 
-// Signal handlers - dump debug output on termination.
-static void debug_user_sig_handler(void *Cookie) {
-  // This is a bit sneaky.  Since this is under #ifndef NDEBUG, we
-  // know that debug mode is enabled and dbgs() really is a
-  // circular_raw_ostream.  If NDEBUG is defined, then dbgs() ==
-  // errs() but this will never be invoked.
-  llvm::circular_raw_ostream *dbgout =
-    static_cast<llvm::circular_raw_ostream *>(&llvm::dbgs());
-  dbgout->flushBufferWithBanner();
-}
-
 // isCurrentDebugType - Return true if the specified string is the debug type
 // specified on the command line, or if none was specified on the command line
 // with the -debug-only=X option.
@@ -106,10 +94,6 @@ raw_ostream &llvm::dbgs() {
     dbgstream() :
         strm(errs(), "*** Debug Log Output ***\n",
              (!EnableDebugBuffering || !DebugFlag) ? 0 : DebugBufferSize) {
-      if (EnableDebugBuffering && DebugFlag && DebugBufferSize != 0)
-        // TODO: Add a handler for SIGUSER1-type signals so the user can
-        // force a debug dump.
-        sys::AddSignalHandler(&debug_user_sig_handler, 0);
       // Otherwise we've already set the debug stream buffer size to
       // zero, disabling buffering so it will output directly to errs().
     }

@@ -15,25 +15,17 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     llvm/Support/raw_ostream.cpp
     llvm/Support/ManagedStatic.cpp
     llvm/Support/MemoryBuffer.cpp
-    llvm/Support/PrettyStackTrace.cpp
     llvm/Support/SmallPtrSet.cpp
     llvm/Support/SmallVector.cpp
-    llvm/Support/Statistic.cpp
     llvm/Support/StringExtras.cpp
     llvm/Support/StringMap.cpp
     llvm/Support/StringRef.cpp
-    llvm/Support/Timer.cpp
     llvm/Support/Twine.cpp
-    llvm/System/Atomic.cpp
     llvm/System/Errno.cpp
     llvm/System/Memory.cpp
-    llvm/System/Mutex.cpp
     llvm/System/Path.cpp
     llvm/System/Process.cpp
     llvm/System/Program.cpp
-    llvm/System/Signals.cpp
-    llvm/System/Threading.cpp
-    llvm/System/ThreadLocal.cpp
     llvm/System/TimeValue.cpp
     llvm/System/Valgrind.cpp
     yasmx/Basic/Diagnostic.cpp
