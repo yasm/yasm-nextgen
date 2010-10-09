@@ -13,7 +13,6 @@
 
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Format.h"
-#include "llvm/System/Program.h"
 #include "llvm/System/Process.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Config/config.h"
@@ -382,10 +381,6 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
   // file descriptor when we're done and set the "binary" flag globally.
   if (Filename[0] == '-' && Filename[1] == 0) {
     FD = STDOUT_FILENO;
-    // If user requested binary then put stdout into binary mode if
-    // possible.
-    if (Flags & F_Binary)
-      sys::Program::ChangeStdoutToBinary();
     // Close stdout when we're done, to detect any output errors.
     ShouldClose = true;
     return;

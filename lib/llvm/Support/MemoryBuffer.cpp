@@ -18,7 +18,6 @@
 #include "llvm/System/Errno.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Process.h"
-#include "llvm/System/Program.h"
 #include <cassert>
 #include <cstdio>
 #include <cstring>
@@ -276,8 +275,6 @@ MemoryBuffer *MemoryBuffer::getSTDIN(std::string *ErrStr) {
   //
   // FIXME: That isn't necessarily true, we should try to mmap stdin and
   // fallback if it fails.
-  sys::Program::ChangeStdinToBinary();
-
   const ssize_t ChunkSize = 4096*4;
   SmallString<ChunkSize> Buffer;
   ssize_t ReadBytes;
