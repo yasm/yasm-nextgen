@@ -45,9 +45,13 @@
 #include "yasmx/Arch.h"
 #include "yasmx/Assembler.h"
 #include "yasmx/DebugFormat.h"
+#include "yasmx/Expr.h"
+#include "yasmx/IntNum.h"
 #include "yasmx/ListFormat.h"
 #include "yasmx/Module.h"
+#include "yasmx/Object.h"
 #include "yasmx/ObjectFormat.h"
+#include "yasmx/Symbol.h"
 
 #ifdef HAVE_LIBGEN_H
 #include <libgen.h>
@@ -100,6 +104,10 @@ static cl::list<bool> bits_32("32",
 static cl::list<bool> bits_64("64",
     cl::desc("set 64-bit output"));
 
+// -defsym
+static cl::list<std::string> defsym("defsym",
+    cl::desc("define symbol"));
+
 // -D (ignored)
 static cl::list<std::string> ignored_D("D",
     cl::desc("Ignored"),
@@ -145,6 +153,18 @@ static cl::opt<bool> ignored_x("x",
     cl::ZeroOrMore,
     cl::Hidden);
 
+// -Qy
+static cl::opt<bool> ignored_qy("Qy",
+    cl::desc("Ignored"),
+    cl::ZeroOrMore,
+    cl::Hidden);
+
+// -Qn
+static cl::opt<bool> ignored_qn("Qn",
+    cl::desc("Ignored"),
+    cl::ZeroOrMore,
+    cl::Hidden);
+
 // -W, --no-warn
 static cl::list<bool> inhibit_warnings("W",
     cl::desc("Suppress warning messages"));
@@ -166,6 +186,10 @@ static cl::list<std::string> unknown_options(cl::Sink);
 static void
 ApplyWarningSettings(yasm::Diagnostic& diags)
 {
+    // Disable init-nobits and uninit-contents by default.
+    diags.setDiagnosticGroupMapping("init-nobits", yasm::diag::MAP_IGNORE);
+    diags.setDiagnosticGroupMapping("uninit-contents", yasm::diag::MAP_IGNORE);
+
     // Walk through inhibit_warnings, fatal_warnings, enable_warnings, and
     // no_signed_overflow in parallel, ordering by command line argument
     // position.
@@ -327,7 +351,77 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
         source_mgr.createMainFileID(in, yasm::SourceLocation());
     }
 
-    // assemble the input.
+    // Initialize the object.
+    if (!assembler.InitObject(source_mgr, diags))
+        return EXIT_FAILURE;
+
+    // Predefine symbols.
+    for (std::vector<std::string>::const_iterator i=defsym.begin(),
+         end=defsym.end(); i != end; ++i)
+    {
+        llvm::StringRef str(*i);
+        size_t equalpos = str.find('=');
+        if (equalpos == llvm::StringRef::npos)
+        {
+            diags.Report(yasm::diag::fatal_bad_defsym) << str;
+            continue;
+        }
+        llvm::StringRef name = str.slice(0, equalpos);
+        llvm::StringRef vstr = str.slice(equalpos+1, llvm::StringRef::npos);
+
+        yasm::IntNum value;
+        if (!vstr.empty())
+        {
+            // determine radix
+            unsigned int radix;
+            if (vstr[0] == '0' && vstr.size() > 1 &&
+                (vstr[1] == 'x' || vstr[1] == 'X'))
+            {
+                vstr = vstr.substr(2);
+                radix = 16;
+            }
+            else if (vstr[0] == '0')
+            {
+                vstr = vstr.substr(1);
+                radix = 8;
+            }
+            else
+                radix = 10;
+
+            // check validity
+            const char* ptr = vstr.begin();
+            const char* end = vstr.end();
+            if (radix == 16)
+            {
+                while (ptr != end && isxdigit(*ptr))
+                    ++ptr;
+            }
+            else if (radix == 8)
+            {
+                while (ptr != end && (*ptr >= '0' && *ptr <= '7'))
+                    ++ptr;
+            }
+            else
+            {
+                while (ptr != end && isdigit(*ptr))
+                    ++ptr;
+            }
+            if (ptr != end)
+            {
+                diags.Report(yasm::diag::fatal_bad_defsym) << name;
+                continue;
+            }
+            value.setStr(vstr, radix);
+        }
+
+        // define equ
+        assembler.getObject()->getSymbol(name)->DefineEqu(yasm::Expr(value));
+    }
+
+    if (diags.hasFatalErrorOccurred())
+        return EXIT_FAILURE;
+
+    // Assemble the input.
     if (!assembler.Assemble(source_mgr, file_mgr, diags, headers,
                             warning_error))
     {
@@ -410,13 +504,9 @@ main(int argc, char* argv[])
     }
 #endif
 
-    // Require an input filename.  We don't use llvm::cl facilities for this
-    // as we want to allow e.g. "yasm --license".
+    // Default to stdin if no filename specified.
     if (in_filename.empty())
-    {
-        diags.Report(yasm::diag::fatal_no_input_files);
-        return EXIT_FAILURE;
-    }
+        in_filename = "-";
 
     return do_assemble(source_mgr, diags);
 }

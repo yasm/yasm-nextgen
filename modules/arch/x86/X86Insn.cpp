@@ -144,7 +144,9 @@ enum X86OperandType
     // AX/EAX/RAX memory operand only (EA) [special case for SVM opcodes]
     OPT_MemrAX = 25,
     // EAX memory operand only (EA) [special case for SVM skinit opcode]
-    OPT_MemEAX = 26
+    OPT_MemEAX = 26,
+    // DX memory operand only (EA) [special case for in/out opcodes]
+    OPT_MemDX = 27
 };
 
 enum X86OperandSize
@@ -370,7 +372,7 @@ X86Insn::DoAppendJmpFar(BytecodeContainer& container,
         // Two operand form (gas)
         Operand& op2 = m_operands[1];
         segment = imm;
-        imm.reset(op2.getImm());
+        imm = op2.ReleaseImm();
         if (op2.getSize() == OPS_BITS)
             opersize = m_mode_bits;
     }
@@ -477,6 +479,7 @@ X86Insn::DoAppendJmp(BytecodeContainer& container,
     Operand& op = m_operands.front();
     std::auto_ptr<Expr> imm = op.ReleaseImm();
     assert(imm.get() != 0);
+    SourceLocation imm_source = op.getSource();
 
     X86JmpOpcodeSel op_sel;
 
@@ -542,7 +545,8 @@ X86Insn::DoAppendJmp(BytecodeContainer& container,
     common.ApplyPrefixes(jinfo.def_opersize_64, m_prefixes, diags);
     common.Finish();
 
-    AppendJmp(container, common, shortop, nearop, imm, source, op_sel);
+    AppendJmp(container, common, shortop, nearop, imm, imm_source, source,
+              op_sel);
     return true;
 }
 
@@ -732,6 +736,16 @@ X86Insn::MatchOperand(const Operand& op, const X86InfoOperand& info_op,
             const X86Register* reg2 = static_cast<const X86Register*>
                 (ea->m_disp.getAbs()->getRegister());
             if (reg2->isNot(X86Register::REG32) || reg2->getNum() != 0)
+                return false;
+            break;
+        }
+        case OPT_MemDX:
+        {
+            if (!ea || !ea->m_disp.getAbs()->isRegister())
+                return false;
+            const X86Register* reg2 = static_cast<const X86Register*>
+                (ea->m_disp.getAbs()->getRegister());
+            if (reg2->isNot(X86Register::REG16) || reg2->getNum() != 2)
                 return false;
             break;
         }
@@ -1044,8 +1058,10 @@ X86Insn::DoAppend(BytecodeContainer& container,
                 // actually an immediate for the purposes of relative jumps.
                 if (ea->m_segreg != 0)
                     diags.Report(source, diag::warn_prefixes_skipped);
+                SourceLocation source = op->getSource();
                 *op = Operand(std::auto_ptr<Expr>(
                     ea->m_disp.getAbs()->clone()));
+                op->setSource(source);
                 delete ea;
             }
         }
@@ -1092,6 +1108,7 @@ public:
     void UpdateRex();
     void ApplyOperands(X86Arch::ParserSelect parser,
                        Insn::Operands& operands);
+    void CheckSegReg(const X86SegmentRegister* segreg, SourceLocation source);
     void ApplySegReg(const SegmentRegister* segreg, SourceLocation source);
     bool Finish(BytecodeContainer& container,
                 const Insn::Prefixes& prefixes,
@@ -1275,6 +1292,7 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
                                        diag::err_high8_rex_conflict);
                         return;
                     }
+                    m_x86_ea->m_disp.setSource(op.getSource());
                     break;
                 case Operand::SEGREG:
                     assert(false && "invalid operand conversion");
@@ -1289,6 +1307,7 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
                     }
                     m_x86_ea.reset(static_cast<X86EffAddr*>
                                    (op.ReleaseMemory().release()));
+                    m_x86_ea->m_disp.setSource(op.getSource());
                     const X86SegmentRegister* segreg =
                         static_cast<const X86SegmentRegister*>
                         (m_x86_ea->m_segreg);
@@ -1304,6 +1323,8 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
                         // Enable default PC-rel if no regs and segreg
                         // is not FS or GS.
                         m_x86_ea->m_pc_rel = true;
+                    // Warn on 64-bit cs/es/ds/ss segment overrides
+                    CheckSegReg(segreg, op.getSource());
                     break;
                 }
                 case Operand::IMM:
@@ -1311,6 +1332,7 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
                         m_x86_ea.reset(new X86EffAddr());
                     m_x86_ea->setImm(op.ReleaseImm(),
                                      m_size_lookup[info_op.size]);
+                    m_x86_ea->m_disp.setSource(op.getSource());
                     break;
             }
             break;
@@ -1537,8 +1559,28 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
 }
 
 void
-BuildGeneral::ApplySegReg(const SegmentRegister* segreg,
+BuildGeneral::CheckSegReg(const X86SegmentRegister* segreg,
                           SourceLocation source)
+{
+    if (!segreg || m_mode_bits != 64)
+        return;
+
+    const char* segname = NULL;
+    if (segreg->is(X86SegmentRegister::kCS))
+        segname = "cs";
+    else if (segreg->is(X86SegmentRegister::kDS))
+        segname = "ds";
+    else if (segreg->is(X86SegmentRegister::kES))
+        segname = "es";
+    else if (segreg->is(X86SegmentRegister::kSS))
+        segname = "ss";
+    if (!segname)
+        return;
+    m_diags.Report(source, diag::warn_seg_ignored_in_xxmode) << segname << 64;
+}
+
+void
+BuildGeneral::ApplySegReg(const SegmentRegister* segreg, SourceLocation source)
 {
     if (X86EffAddr* x86_ea = m_x86_ea.get())
     {
@@ -1556,6 +1598,7 @@ BuildGeneral::ApplySegReg(const SegmentRegister* segreg,
     }
     else if (segreg != 0)
         assert(false && "unhandled segment prefix");
+    CheckSegReg(static_cast<const X86SegmentRegister*>(segreg), source);
 }
 
 bool
@@ -1823,6 +1866,7 @@ X86Arch::ParseCheckInsnPrefix(llvm::StringRef id,
     switch (m_parser)
     {
         case PARSER_NASM:
+        case PARSER_GAS_INTEL:
             pdata = InsnPrefixNasmHash::in_word_set(lcaseid, id_len);
             break;
         case PARSER_GAS:

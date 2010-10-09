@@ -45,16 +45,8 @@ class IntNum;
 class InputBuffer : public EndianState
 {
 public:
-    InputBuffer(const llvm::MemoryBuffer& input, size_t startpos=0)
-        : m_start(reinterpret_cast<const unsigned char*>(input.getBufferStart()))
-        , m_end(reinterpret_cast<const unsigned char*>(input.getBufferEnd()))
-    {
-        m_ptr = m_start + startpos;
-    }
-
-    InputBuffer(const unsigned char* input, size_t len)
-        : m_start(input), m_end(input+len), m_ptr(input)
-    {}
+    InputBuffer(const llvm::MemoryBuffer& input, size_t startpos=0);
+    InputBuffer(const unsigned char* input, size_t len);
 
     /// Get buffer size.
     /// @return Buffer size.
@@ -70,32 +62,52 @@ public:
 
     /// Get remaining bytes after read position.
     /// @return Number of bytes.
-    size_t getReadableSize() const
-    {
-        if (m_ptr > m_end)
-            return 0;
-        return m_end-m_ptr;
-    }
+    size_t getReadableSize() const;
 
     /// Perform a "read" by returning a pointer to the current read position
     /// and then advancing the read position.
     /// @param n    number of bytes to advance read position by
     /// @return Pointer to current read position.
     /// Throws std::out_of_range if not enough bytes left to read n bytes.
-    const unsigned char* Read(size_t n)
-    {
-        const unsigned char* oldptr = m_ptr;
-        m_ptr += n;
-        if (m_ptr > m_end)
-            throw std::out_of_range("read past end of buffer");
-        return oldptr;
-    }
+    const unsigned char* Read(size_t n);
 
 private:
     const unsigned char* m_start;
     const unsigned char* m_end;
     const unsigned char* m_ptr;
 };
+
+inline
+InputBuffer::InputBuffer(const llvm::MemoryBuffer& input, size_t startpos)
+    : m_start(reinterpret_cast<const unsigned char*>(input.getBufferStart()))
+    , m_end(reinterpret_cast<const unsigned char*>(input.getBufferEnd()))
+{
+    m_ptr = m_start + startpos;
+}
+
+inline
+InputBuffer::InputBuffer(const unsigned char* input, size_t len)
+    : m_start(input), m_end(input+len), m_ptr(input)
+{
+}
+
+inline size_t
+InputBuffer::getReadableSize() const
+{
+    if (m_ptr > m_end)
+        return 0;
+    return m_end-m_ptr;
+}
+
+inline const unsigned char*
+InputBuffer::Read(size_t n)
+{
+    const unsigned char* oldptr = m_ptr;
+    m_ptr += n;
+    if (m_ptr > m_end)
+        throw std::out_of_range("read past end of buffer");
+    return oldptr;
+}
 
 /// Read an unsigned 8-bit value from an input buffer.
 /// @param input    input buffer

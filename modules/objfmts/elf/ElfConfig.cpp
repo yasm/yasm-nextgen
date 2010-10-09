@@ -69,7 +69,7 @@ ElfConfig::AssignSymbolIndices(Object& object, ElfSymbolIndex* nlocal) const
          end=object.symbols_end(); i != end; ++i)
     {
         ElfSymbol* elfsym = i->getAssocData<ElfSymbol>();
-        if (!elfsym)
+        if (!elfsym || !elfsym->isInTable())
             continue;
 
         if (elfsym->getSymbolIndex() != 0)
@@ -95,7 +95,7 @@ ElfConfig::WriteSymbolTable(llvm::raw_ostream& os,
     // write undef symbol
     ElfSymbol undef;
     scratch.resize(0);
-    undef.Write(scratch, *this);
+    undef.Write(scratch, *this, diags);
     os << scratch;
     size += scratch.size();
 
@@ -104,13 +104,11 @@ ElfConfig::WriteSymbolTable(llvm::raw_ostream& os,
          end=object.symbols_end(); sym != end; ++sym)
     {
         ElfSymbol* elfsym = sym->getAssocData<ElfSymbol>();
-        if (!elfsym)
+        if (!elfsym || !elfsym->isInTable())
             continue;
 
-        elfsym->Finalize(*sym, diags);
-
         scratch.resize(0);
-        elfsym->Write(scratch, *this);
+        elfsym->Write(scratch, *this, diags);
         os << scratch;
         size += scratch.size();
     }

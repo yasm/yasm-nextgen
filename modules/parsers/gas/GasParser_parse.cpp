@@ -559,10 +559,7 @@ GasParser::ParseDirAlign(unsigned int power2, SourceLocation source)
     Expr bound, fill, maxskip;
 
     if (!ParseExpr(bound))
-    {
-        Diag(source, diag::err_align_no_alignment);
-        return false;
-    }
+        return true;
 
     if (m_token.is(GasToken::comma))
     {
@@ -604,33 +601,22 @@ GasParser::ParseDirAlign(unsigned int power2, SourceLocation source)
 bool
 GasParser::ParseDirOrg(unsigned int param, SourceLocation source)
 {
-    // TODO: support expr instead of intnum
-    if (m_token.isNot(GasToken::numeric_constant))
+    Expr start;
+    if (!ParseExpr(start))
     {
-        Diag(m_token, diag::err_expected_integer);
+        Diag(m_token, diag::err_expected_expression);
         return false;
     }
-    IntNum start;
-    if (!ParseInteger(&start))
-        return false;
-    ConsumeToken();
 
-    IntNum value;
+    Expr fill;
     if (m_token.is(GasToken::comma))
     {
         ConsumeToken();
         // TODO: support expr instead of intnum
-        if (m_token.isNot(GasToken::numeric_constant))
-        {
-            Diag(m_token, diag::err_expected_integer);
-            return false;
-        }
-        if (!ParseInteger(&value))
-            return false;
-        ConsumeToken();
+        ParseExpr(fill);
     }
 
-    AppendOrg(*m_container, start.getUInt(), value.getUInt(), source);
+    AppendOrg(*m_container, start, fill, source);
     return true;
 }
 
@@ -977,6 +963,7 @@ GasParser::ParseDirFill(unsigned int param, SourceLocation source)
 bool
 GasParser::ParseDirBssSection(unsigned int param, SourceLocation source)
 {
+    m_previous_section = m_object->getCurSection();
     SwitchSection(".bss", true,
                   SourceRange(source, source.getFileLocWithOffset(4)));
     return true;
@@ -985,6 +972,7 @@ GasParser::ParseDirBssSection(unsigned int param, SourceLocation source)
 bool
 GasParser::ParseDirDataSection(unsigned int param, SourceLocation source)
 {
+    m_previous_section = m_object->getCurSection();
     SwitchSection(".data", true,
                   SourceRange(source, source.getFileLocWithOffset(5)));
     return true;
@@ -993,6 +981,7 @@ GasParser::ParseDirDataSection(unsigned int param, SourceLocation source)
 bool
 GasParser::ParseDirTextSection(unsigned int param, SourceLocation source)
 {
+    m_previous_section = m_object->getCurSection();
     SwitchSection(".text", true,
                   SourceRange(source, source.getFileLocWithOffset(5)));
     return true;
@@ -1001,6 +990,15 @@ GasParser::ParseDirTextSection(unsigned int param, SourceLocation source)
 bool
 GasParser::ParseDirSection(unsigned int param, SourceLocation source)
 {
+    // .pushsection if param is nonzero
+    if (param)
+    {
+        SectionState state;
+        state.cur_sect = m_object->getCurSection();
+        state.prev_sect = m_previous_section;
+        m_section_stack.push_back(state);
+    }
+
     // DIR_SECTION ID ',' STRING ',' '@' ID ',' dirvals
     // Really parsed as just a bunch of dirvals; only needs to be unique
     // function to handle section name as a special case.
@@ -1033,12 +1031,44 @@ GasParser::ParseDirSection(unsigned int param, SourceLocation source)
             return false;
     }
 
+    m_previous_section = m_object->getCurSection();
+
     Directive handler;
     if (m_dirs->get(&handler, ".section"))
         handler(info, m_preproc.getDiagnostics());
     else
         Diag(info.getSource(), diag::err_unrecognized_directive);
 
+    return true;
+}
+
+bool
+GasParser::ParseDirPopSection(unsigned int param, SourceLocation source)
+{
+    if (m_section_stack.empty())
+    {
+        Diag(source, diag::warn_popsection_without_pushsection);
+        return true;
+    }
+
+    m_object->setCurSection(m_section_stack.back().cur_sect);
+    m_previous_section = m_section_stack.back().prev_sect;
+    m_section_stack.pop_back();
+    return true;
+}
+
+bool
+GasParser::ParseDirPrevious(unsigned int param, SourceLocation source)
+{
+    if (!m_previous_section)
+    {
+        Diag(source, diag::warn_previous_without_section);
+        return true;
+    }
+
+    Section* new_sect = m_previous_section;
+    m_previous_section = m_object->getCurSection();
+    m_object->setCurSection(new_sect);
     return true;
 }
 
@@ -1376,6 +1406,51 @@ GasParser::ParseDirIfeqs(unsigned int negate, SourceLocation source)
     return true;
 }
 
+bool
+GasParser::ParseDirSyntax(unsigned int intel, SourceLocation source)
+{
+    bool new_intel = (intel != 0);
+    // default to false for intel syntax, true for att syntax
+    bool reg_prefix = !new_intel;
+
+    if (!m_token.isEndOfStatement())
+    {
+        if (m_token.isNot(GasToken::identifier) &&
+            m_token.isNot(GasToken::label))
+        {
+            Diag(m_token, diag::err_expected_ident);
+            return false;
+        }
+        IdentifierInfo* ii = m_token.getIdentifierInfo();
+        SourceLocation id_source = ConsumeToken();
+        llvm::StringRef name = ii->getName();
+        if (name.equals_lower("prefix"))
+            reg_prefix = true;
+        else if (name.equals_lower("noprefix"))
+            reg_prefix = false;
+        else
+        {
+            Diag(id_source, diag::err_bad_argument_to_syntax_dir);
+            return false;
+        }
+
+        // TODO: not yet supported: intel with reg prefix, att without
+        if (reg_prefix != (!new_intel))
+            Diag(id_source, diag::err_bad_argument_to_syntax_dir);
+    }
+
+    m_reg_prefix = reg_prefix;
+    if (m_intel != new_intel)
+        m_preproc.getIdentifierTable().clear();
+    if (new_intel)
+        m_object->getArch()->setParser("gas-intel");
+    else
+        m_object->getArch()->setParser("gas");
+    m_intel = new_intel;
+
+    return true;
+}
+
 Insn::Ptr
 GasParser::ParseInsn()
 {
@@ -1590,6 +1665,9 @@ GasParser::ParseMemoryAddress()
         }
 
         // scale
+        if (m_token.is(GasToken::r_paren))
+            goto done;
+
         if (m_token.isNot(GasToken::numeric_constant))
         {
             Diag(m_token, diag::err_expected_integer);
@@ -1643,6 +1721,9 @@ done:
 Operand
 GasParser::ParseOperand()
 {
+    if (m_intel)
+        return ParseOperandIntel();
+
     switch (m_token.getKind())
     {
         case GasToken::percent:
@@ -1749,6 +1830,311 @@ GasParser::ParseOperand()
             }
         default:
             return ParseMemoryAddress();
+    }
+}
+
+//
+// Intel syntax operand and memory address parsing.
+//
+unsigned int
+GasParser::getSizeOverride()
+{
+    if (m_token.isNot(GasToken::identifier))
+        return 0;
+    IdentifierInfo* ii = m_token.getIdentifierInfo();
+
+    // Do a case-insensitive match against size overrides.
+    // This is a fairly "hot" piece of code.
+    const char* name = ii->getNameStart();
+    unsigned int len = ii->getLength();
+    unsigned int size = 0;
+    unsigned int wordsize = m_arch->getModule().getWordSize();
+
+    switch (name[0])
+    {
+        case 'b':
+        case 'B':
+            // BYTE
+            if (len != 4 ||
+                (name[1] != 'y' && name[1] != 'Y') ||
+                (name[2] != 't' && name[2] != 'T') ||
+                (name[3] != 'e' && name[3] != 'E'))
+                return 0;
+            return 8;
+        case 'd':
+        case 'D':
+            // DWORD
+            if (len == 5)
+            {
+                size = wordsize*2;
+                ++name;
+                break;  // check for "WORD" suffix
+            }
+            // DQWORD
+            if (len == 6 &&
+                (name[1] == 'q' || name[1] == 'Q'))
+            {
+                size = wordsize*8;
+                name += 2;
+                break;  // check for "WORD" suffix
+            }
+            return false;
+        case 'h':
+        case 'H':
+            // HWORD
+            if (len != 5)
+                return 0;
+            size = wordsize/2;
+            ++name;
+            break;  // check for "WORD" suffix
+        case 'o':
+        case 'O':
+            // OWORD
+            if (len != 5)
+                return 0;
+            size = wordsize*8;
+            ++name;
+            break;  // check for "WORD" suffix
+        case 'q':
+        case 'Q':
+            // QWORD
+            if (len != 5)
+                return 0;
+            size = wordsize*4;
+            ++name;
+            break;  // check for "WORD" suffix
+        case 't':
+        case 'T':
+            // TWORD
+            if (len != 5)
+                return 0;
+            // TWORD
+            if ((name[1] == 'w' || name[1] == 'W'))
+            {
+                size = 80;
+                ++name;
+                break;  // check for "WORD" suffix
+            }
+            return true;
+        case 'w':
+        case 'W':
+            // WORD
+            if (len != 4)
+                return 0;
+            size = wordsize;
+            break;  // check for "WORD" suffix
+        case 'y':
+        case 'Y':
+            // YWORD
+            if (len != 5)
+                return false;
+            size = 256;
+            ++name;
+            break;  // check for "WORD" suffix
+        default:
+            return false;
+    }
+
+    // Common "WORD" suffix matching
+    if ((name[0] != 'w' && name[0] != 'W') ||
+        (name[1] != 'o' && name[1] != 'O') ||
+        (name[2] != 'r' && name[2] != 'R') ||
+        (name[3] != 'd' && name[3] != 'D'))
+        return 0;
+    return size;
+}
+
+Operand
+GasParser::ParseOperandIntel()
+{
+    // Look for size override keywords
+    unsigned int size = getSizeOverride();
+    if (size != 0)
+    {
+        SourceLocation override_loc = ConsumeToken();
+        // Consume "ptr" if present.
+        if (m_token.is(GasToken::identifier))
+        {
+            IdentifierInfo* ii = m_token.getIdentifierInfo();
+            if (ii->getName().equals_lower("ptr"))
+                ConsumeToken();
+        }
+        Operand op = ParseOperandIntel();
+        const Register* reg = op.getReg();
+        if (reg && reg->getSize() != size)
+            Diag(override_loc, diag::err_register_size_override);
+        else
+        {
+            // Silently override others unless a warning is turned on.
+            unsigned int opsize = op.getSize();
+            if (opsize != 0)
+            {
+                if (opsize != size)
+                    Diag(override_loc, diag::warn_operand_size_override)
+                        << opsize << size;
+                else
+                    Diag(override_loc, diag::warn_operand_size_duplicate);
+            }
+            op.setSize(size);
+        }
+        return op;
+    }
+
+    switch (m_token.getKind())
+    {
+        case GasToken::l_square:
+        {
+            SourceLocation lsquare_loc = ConsumeBracket();
+            Operand op = ParseMemoryAddressIntel();
+            MatchRHSPunctuation(GasToken::r_square, lsquare_loc);
+            return op;
+        }
+        case GasToken::identifier:
+        case GasToken::label:
+        {
+            // Look for register, etc. matches
+            IdentifierInfo* ii = m_token.getIdentifierInfo();
+            ii->DoRegLookup(*m_arch, m_token.getLocation(),
+                            m_preproc.getDiagnostics());
+            if (const Register* reg = ii->getRegister())
+            {
+                Operand op(reg);
+                ConsumeToken();
+                return op;
+            }
+            if (const SegmentRegister* segreg = ii->getSegReg())
+            {
+                Operand op(segreg);
+                ConsumeToken();
+                return op;
+            }
+            if (const TargetModifier* tmod = ii->getTargetModifier())
+            {
+                ConsumeToken();
+                Operand op = ParseOperandIntel();
+                op.setTargetMod(tmod);
+                return op;
+            }
+            /*@fallthrough@*/
+        }
+        default:
+        {
+            Expr::Ptr e(new Expr);
+            if (!ParseExpr(*e))
+            {
+                Diag(m_token, diag::err_expected_operand);
+                return Operand(e);
+            }
+            if (m_token.isNot(GasToken::colon))
+                return Operand(e);
+            ConsumeToken();
+            Expr::Ptr off(new Expr);
+            if (!ParseExpr(*off))
+            {
+                Diag(m_token, diag::err_expected_expression_after) << ":";
+                return Operand(e);
+            }
+            Operand op(off);
+            op.setSeg(e);
+            return op;
+        }
+    }
+}
+
+// memory addresses
+namespace {
+class IntelParseMemoryExprTerm : public ParseExprTerm
+{
+    Arch& m_arch;
+    bool m_reg_prefix;
+public:
+    IntelParseMemoryExprTerm(Arch& arch, bool reg_prefix)
+        : m_arch(arch), m_reg_prefix(reg_prefix)
+    {}
+    ~IntelParseMemoryExprTerm() {}
+
+    bool operator() (Expr& e, ParserImpl& parser, bool* handled) const;
+};
+} // anonymous namespace
+
+bool
+IntelParseMemoryExprTerm::operator()
+    (Expr& e, ParserImpl& parser, bool* handled) const
+{
+    if (parser.m_token.is(GasToken::identifier))
+    {
+        IdentifierInfo* ii = parser.m_token.getIdentifierInfo();
+        // See if it's a register.
+        ii->DoRegLookup(m_arch, parser.m_token.getLocation(),
+                        parser.m_preproc.getDiagnostics());
+        if (const Register* reg = ii->getRegister())
+        {
+            e = Expr(*reg, parser.m_token.getLocation());
+            parser.ConsumeToken();
+            *handled = true;
+            return true;
+        }
+    }
+
+    *handled = false;
+    return true;
+}
+
+Operand
+GasParser::ParseMemoryAddressIntel()
+{
+    switch (m_token.getKind())
+    {
+        case GasToken::identifier:
+        case GasToken::label:
+        {
+            IdentifierInfo* ii = m_token.getIdentifierInfo();
+            // See if it's a segment register first.
+            ii->DoRegLookup(*m_arch, m_token.getLocation(),
+                            m_preproc.getDiagnostics());
+            if (const SegmentRegister* segreg = ii->getSegReg())
+            {
+                SourceLocation segreg_source = ConsumeToken();
+
+                ExpectAndConsume(GasToken::colon,
+                                 diag::err_colon_required_after_segreg);
+
+                Operand op = ParseMemoryAddressIntel();
+                if (EffAddr* ea = op.getMemory())
+                {
+                    if (ea->m_segreg != 0)
+                        Diag(segreg_source, diag::warn_multiple_seg_override);
+                    ea->m_segreg = segreg;
+                }
+                return op;
+            }
+            /*@fallthrough@*/
+        }
+        default:
+        {
+            IntelParseMemoryExprTerm parse_term(*m_object->getArch(),
+                                                m_reg_prefix);
+
+            Expr::Ptr e(new Expr);
+            if (!ParseExpr(*e, &parse_term))
+            {
+                Diag(m_token, diag::err_expected_memory_address);
+                return Operand(e);
+            }
+            if (m_token.isNot(GasToken::colon))
+                return Operand(m_object->getArch()->CreateEffAddr(e));
+            ConsumeToken();
+            Expr::Ptr off(new Expr);
+            if (!ParseExpr(*off, &parse_term))
+            {
+                Diag(m_token, diag::err_expected_expression_after)
+                    << ":";
+                return Operand(e);
+            }
+            Operand op(m_object->getArch()->CreateEffAddr(off));
+            op.setSeg(e);
+            return op;
+        }
     }
 }
 
@@ -1901,6 +2287,16 @@ GasParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
             if (!ParseExpr3(e, parse_term))
                 return false;
             e.Calc(Op::NOT, op_source);
+            break;
+        }
+        case GasToken::l_square:
+        {
+            if (m_intel)
+                return false;
+            SourceLocation lsquare_loc = ConsumeBracket();
+            if (!ParseExpr(e, parse_term))
+                return false;
+            MatchRHSPunctuation(GasToken::r_square, lsquare_loc);
             break;
         }
         case GasToken::l_paren:

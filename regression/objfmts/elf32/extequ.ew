@@ -1,0 +1,2 @@
+<stdin>:4:6: warning: EQU value contains undefined symbol; not emitting
+<stdin>:5:6: warning: EQU value contains undefined symbol; not emitting

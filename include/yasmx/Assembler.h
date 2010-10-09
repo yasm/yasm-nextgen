@@ -111,6 +111,12 @@ public:
     /// @return False on error.
     bool setListFormat(llvm::StringRef list_keyword, Diagnostic& diags);
 
+    /// Initialize the object for assembly.  Does not read from input file.
+    /// @param source_mgr       source manager
+    /// @param diags            diagnostic reporting
+    /// @return True on success, false on failure.
+    bool InitObject(SourceManager& source_mgr, Diagnostic& diags);
+
     /// Actually perform assembly.  Does not write to output file.
     /// It is assumed source_mgr is already loaded with a main file.
     /// @param source_mgr       source manager
@@ -133,7 +139,7 @@ public:
                 Diagnostic& diags,
                 bool warning_error = false);
 
-    /// Get the object.  Returns 0 until after assembly is successful.
+    /// Get the object.  Returns 0 until after InitObject() is called.
     /// @return Object.
     Object* getObject() { return m_object.get(); }
 

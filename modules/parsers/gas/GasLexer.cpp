@@ -207,6 +207,10 @@ GasLexer::LexCharConstant(Token* result, const char* cur_ptr)
         }
     }
 
+    // An optional trailing ' is allowed.
+    if (*cur_ptr == '\'')
+        ch = getAndAdvanceChar(cur_ptr, result);
+
     // Update the location of the token as well as m_buf_ptr.
     const char* tok_start = m_buf_ptr;
     FormTokenWithChars(result, cur_ptr, GasToken::char_constant);
@@ -230,11 +234,15 @@ GasLexer::LexStringLiteral(Token* result, const char* cur_ptr)
             // Skip the escaped character.
             ch = getAndAdvanceChar(cur_ptr, result);
         }
-        else if (ch == '\n' || ch == '\r' ||            // Newline.
-                 (ch == 0 && cur_ptr-1 == m_buf_end))   // End of file.
+        else if (ch == '\n' || ch == '\r')              // Newline.
         {
             if (!isLexingRawMode())
-                Diag(m_buf_ptr, diag::err_unterminated_string);
+                Diag(cur_ptr-1, diag::warn_unterminated_string);
+        }
+        else if (ch == 0 && cur_ptr-1 == m_buf_end)     // End of file.
+        {
+            if (!isLexingRawMode())
+                Diag(m_buf_ptr, diag::err_unterminated_string) << "\"";
             FormTokenWithChars(result, cur_ptr-1, Token::unknown);
             return;
         }
@@ -450,19 +458,6 @@ GasLexer::SkipBlockComment(Token* result, const char* cur_ptr)
     }
 #endif
 
-    // It is common for the tokens immediately after a /**/ comment to be
-    // whitespace.  Instead of going through the big switch, handle it
-    // efficiently now.  This is safe even in KeepWhitespaceMode because we would
-    // have already returned above with the comment as a token.
-    if (isHorizontalWhitespace(*cur_ptr))
-    {
-        result->setFlag(Token::LeadingSpace);
-        SkipWhitespace(result, cur_ptr+1);
-        return false;
-    }
-
-    // Otherwise, just return so that the next character will be lexed as a
-    // token.
     m_buf_ptr = cur_ptr;
     result->setFlag(Token::LeadingSpace);
     return false;

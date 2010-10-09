@@ -58,6 +58,7 @@
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes_util.h"
+#include "yasmx/Expr_util.h"
 #include "yasmx/Location_util.h"
 #include "yasmx/Object.h"
 #include "yasmx/Object_util.h"
@@ -591,6 +592,12 @@ ElfObject::BuildCommon(Symbol& sym, Diagnostic& diags)
         Expr size = elfsym.getSize();
         if (!size.isEmpty())
         {
+            if (!ExpandEqu(size))
+            {
+                diags.Report(elfsym.getSizeSource(),
+                             diag::err_equ_circular_reference);
+                return;
+            }
             SimplifyCalcDist(size, diags);
             if (size.isIntNum())
             {
@@ -642,73 +649,74 @@ ElfObject::FinalizeSymbol(Symbol& sym,
     {
         BuildExtern(sym, diags);
         elfsym = sym.getAssocData<ElfSymbol>();
-        elfsym->setName(strtab.getIndex(sym.getName()));
-        return;
     }
-
-    if (vis & Symbol::COMMON)
+    else if (vis & Symbol::COMMON)
     {
         BuildCommon(sym, diags);
         elfsym = sym.getAssocData<ElfSymbol>();
-        elfsym->setName(strtab.getIndex(sym.getName()));
-        // fall through (check below catches undefined case)
     }
 
-    // Ignore any undefined at this point.
-    if (!sym.isDefined())
-        return;
-
-    if ((vis & Symbol::COMMON) == 0 && (vis & Symbol::GLOBAL) != 0)
+    if (sym.isDefined())
     {
-        BuildGlobal(sym, diags);
-        elfsym = sym.getAssocData<ElfSymbol>();
-        elfsym->setName(strtab.getIndex(sym.getName()));
-    }
+        if ((vis & Symbol::COMMON) == 0 && (vis & Symbol::GLOBAL) != 0)
+        {
+            BuildGlobal(sym, diags);
+            elfsym = sym.getAssocData<ElfSymbol>();
+        }
 
-    bool is_sect = false;
+        if (!elfsym)
+        {
+            Location loc = {0, 0};
+            if (!sym.getLabel(&loc))
+            {
+                if (!sym.getEqu() && !sym.isAbsoluteSymbol())
+                    return;
+            }
+
+            Section* sect = 0;
+            if (loc.bc)
+                sect = loc.bc->getContainer()->AsSection();
+
+            // Locals (except when debugging) do not need to be
+            // in the symbol table, unless they're a section.
+            bool is_sect = false;
+            if (sect)
+            {
+                ElfSection* elfsect = sect->getAssocData<ElfSection>();
+                if (elfsect && sect->getSymbol() == &sym)
+                    is_sect = true;
+            }
+
+            if (!is_sect)
+            {
+                if (!local_names)
+                    return;
+                // GCC names its internal symbols .Lxxxx; follow gas' lead and
+                // don't output these symbols even if local_names is enabled.
+                llvm::StringRef name = sym.getName();
+                if (name.size() > 2 && name[0] == '.' && name[1] == 'L')
+                    return;
+                // Don't output GAS parser local labels.
+                if (name[0] == 'L' &&
+                    name.rfind('\001') != llvm::StringRef::npos)
+                    return;
+            }
+
+            elfsym = &BuildSymbol(sym);
+            if (is_sect)
+                elfsym->setType(STT_SECTION);
+        }
+
+        setSymbolSectionValue(sym, *elfsym);
+    }
 
     if (!elfsym)
-    {
-        Location loc = {0, 0};
-        if (!sym.getLabel(&loc))
-        {
-            if (!sym.getEqu() && !sym.isAbsoluteSymbol())
-                return;
-        }
+        return;
 
-        Section* sect = 0;
-        if (loc.bc)
-            sect = loc.bc->getContainer()->AsSection();
+    elfsym->Finalize(sym, diags);
 
-        // Locals (except when debugging) do not need to be
-        // in the symbol table, unless they're a section.
-        if (sect)
-        {
-            ElfSection* elfsect = sect->getAssocData<ElfSection>();
-            if (elfsect && sect->getSymbol() == &sym)
-                is_sect = true;
-        }
-
-        if (!is_sect)
-        {
-            if (!local_names)
-                return;
-            // GCC names its internal symbols .Lxxxx; follow gas' lead and
-            // don't output these symbols even if local_names is enabled.
-            llvm::StringRef name = sym.getName();
-            if (name.size() > 2 && name[0] == '.' && name[1] == 'L')
-                return;
-        }
-
-        elfsym = &BuildSymbol(sym);
-        if (is_sect)
-            elfsym->setType(STT_SECTION);
-    }
-
-    if (!elfsym->hasName() && (local_names || is_sect))
+    if (elfsym->isInTable() && !elfsym->hasName())
         elfsym->setName(strtab.getIndex(sym.getName()));
-
-    setSymbolSectionValue(sym, *elfsym);
 }
 
 namespace {
@@ -1090,6 +1098,8 @@ ElfObject::Output(llvm::raw_fd_ostream& os,
                 ElfSymbol& elfsym = BuildSymbol(*sym); // XXX
                 elfsym.setName(strtab.getIndex(sym->getName()));
                 setSymbolSectionValue(*sym, elfsym);
+                elfsym.setInTable(true);
+                elfsym.Finalize(*sym, diags);
             }
         }
     }
@@ -1703,6 +1713,36 @@ ElfObject::DirIdent(DirectiveInfo& info, Diagnostic& diags)
     DirIdentCommon(*this, ".comment", info, diags);
 }
 
+void
+ElfObject::DirVersion(DirectiveInfo& info, Diagnostic& diags)
+{
+    assert(info.isObject(m_object));
+
+    // Put version data into .note section
+    Section* note = info.getObject().FindSection(".note");
+    if (!note)
+        note = AppendSection(".note", info.getSource(), diags);
+
+    for (NameValues::const_iterator nv=info.getNameValues().begin(),
+         end=info.getNameValues().end(); nv != end; ++nv)
+    {
+        if (!nv->isString())
+        {
+            diags.Report(nv->getValueRange().getBegin(),
+                         diag::err_value_string);
+            continue;
+        }
+        llvm::StringRef str = nv->getString();
+        EndianState endian;
+        m_config.setEndian(endian);
+        AppendData(*note, str.size(), 4, endian);   // name size
+        AppendData(*note, 0, 4, endian);    // desc size
+        AppendData(*note, 1, 4, endian);    // type
+        AppendData(*note, str, 4, true);    // name
+        // empty desc
+    }
+}
+
 std::vector<llvm::StringRef>
 ElfObject::getDebugFormatKeywords()
 {
@@ -1739,6 +1779,7 @@ ElfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
         {".hidden", &ElfObject::DirHidden, Directives::ID_REQUIRED},
         {".symver", &ElfObject::DirSymVer, Directives::ID_REQUIRED},
         {".ident", &ElfObject::DirIdent, Directives::ANY},
+        {".version", &ElfObject::DirVersion, Directives::ARG_REQUIRED},
     };
 
     if (parser.equals_lower("nasm"))

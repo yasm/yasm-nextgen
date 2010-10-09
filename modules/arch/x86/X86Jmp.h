@@ -57,6 +57,7 @@ void AppendJmp(BytecodeContainer& container,
                const X86Opcode& shortop,
                const X86Opcode& nearop,
                std::auto_ptr<Expr> target,
+               SourceLocation target_source,
                SourceLocation source,
                X86JmpOpcodeSel op_sel = X86_JMP_NONE);
 

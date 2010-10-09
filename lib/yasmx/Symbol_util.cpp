@@ -145,6 +145,25 @@ yasm::DirExtern(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
+yasm::DirExternMulti(DirectiveInfo& info, Diagnostic& diags)
+{
+    Object& object = info.getObject();
+    NameValues& nvs = info.getNameValues();
+    for (NameValues::const_iterator i=nvs.begin(), end=nvs.end(); i != end; ++i)
+    {
+        if (i->isId())
+        {
+            SymbolRef sym = object.getSymbol(i->getId());
+            sym->CheckedDeclare(Symbol::EXTERN, i->getValueRange().getBegin(),
+                                diags);
+        }
+        else
+            diags.Report(i->getValueRange().getBegin(),
+                         diag::err_expected_ident);
+    }
+}
+
+void
 yasm::DirGlobal(DirectiveInfo& info, Diagnostic& diags)
 {
     Object& object = info.getObject();
@@ -154,6 +173,25 @@ yasm::DirGlobal(DirectiveInfo& info, Diagnostic& diags)
 
     if (!info.getObjextNameValues().empty())
         setObjextNameValues(*sym, info.getObjextNameValues());
+}
+
+void
+yasm::DirGlobalMulti(DirectiveInfo& info, Diagnostic& diags)
+{
+    Object& object = info.getObject();
+    NameValues& nvs = info.getNameValues();
+    for (NameValues::const_iterator i=nvs.begin(), end=nvs.end(); i != end; ++i)
+    {
+        if (i->isId())
+        {
+            SymbolRef sym = object.getSymbol(i->getId());
+            sym->CheckedDeclare(Symbol::GLOBAL, i->getValueRange().getBegin(),
+                                diags);
+        }
+        else
+            diags.Report(i->getValueRange().getBegin(),
+                         diag::err_expected_ident);
+    }
 }
 
 void

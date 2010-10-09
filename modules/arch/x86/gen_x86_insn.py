@@ -1234,12 +1234,6 @@ add_group("push",
     opcode=[0x6A],
     operands=[Operand(type="Imm", size=8, dest="SImm")])
 add_group("push",
-    cpu=["186"],
-    parsers=["gas"],
-    def_opersize_64=64,
-    opcode=[0x6A],
-    operands=[Operand(type="Imm", size=8, relaxed=True, dest="SImm")])
-add_group("push",
     suffix="q",
     only64=True,
     opersize=64,
@@ -1251,7 +1245,6 @@ add_group("push",
 add_group("push",
     not64=True,
     cpu=["186"],
-    parsers=["nasm"],
     opcode1=[0x6A],
     opcode2=[0x68],
     operands=[Operand(type="Imm", size="BITS", relaxed=True, dest="Imm",
@@ -1443,11 +1436,13 @@ add_group("pop",
     opcode=[0x17],
     operands=[Operand(type="SS", dest=None)])
 add_group("pop",
+    suffix="w",
     not64=True,
     opersize=16,
     opcode=[0x17],
     operands=[Operand(type="SS", size=16, dest=None)])
 add_group("pop",
+    suffix="l",
     not64=True,
     opersize=32,
     opcode=[0x17],
@@ -1457,11 +1452,13 @@ add_group("pop",
     opcode=[0x1F],
     operands=[Operand(type="DS", dest=None)])
 add_group("pop",
+    suffix="w",
     not64=True,
     opersize=16,
     opcode=[0x1F],
     operands=[Operand(type="DS", size=16, dest=None)])
 add_group("pop",
+    suffix="l",
     not64=True,
     opersize=32,
     opcode=[0x1F],
@@ -1471,11 +1468,13 @@ add_group("pop",
     opcode=[0x07],
     operands=[Operand(type="ES", dest=None)])
 add_group("pop",
+    suffix="w",
     not64=True,
     opersize=16,
     opcode=[0x07],
     operands=[Operand(type="ES", size=16, dest=None)])
 add_group("pop",
+    suffix="l",
     not64=True,
     opersize=32,
     opcode=[0x07],
@@ -1484,10 +1483,12 @@ add_group("pop",
     opcode=[0x0F, 0xA1],
     operands=[Operand(type="FS", dest=None)])
 add_group("pop",
+    suffix="w",
     opersize=16,
     opcode=[0x0F, 0xA1],
     operands=[Operand(type="FS", size=16, dest=None)])
 add_group("pop",
+    suffix="l",
     opersize=32,
     opcode=[0x0F, 0xA1],
     operands=[Operand(type="FS", size=32, dest=None)])
@@ -1495,10 +1496,12 @@ add_group("pop",
     opcode=[0x0F, 0xA9],
     operands=[Operand(type="GS", dest=None)])
 add_group("pop",
+    suffix="w",
     opersize=16,
     opcode=[0x0F, 0xA9],
     operands=[Operand(type="GS", size=16, dest=None)])
 add_group("pop",
+    suffix="l",
     opersize=32,
     opcode=[0x0F, 0xA9],
     operands=[Operand(type="GS", size=32, dest=None)])
@@ -1691,6 +1694,39 @@ add_group("in",
     opersize=32,
     opcode=[0xED],
     operands=[Operand(type="Dreg", size=16, dest=None)])
+# GAS-only variants (DX specified as memory instead of register)
+add_group("in",
+    suffix="b",
+    parsers=["gas"],
+    opcode=[0xEC],
+    operands=[Operand(type="Areg", size=8, dest=None),
+              Operand(type="MemDX", relaxed=True, dest=None)])
+for sfx, sz in zip("wl", [16, 32]):
+    add_group("in",
+        suffix=sfx,
+        parsers=["gas"],
+        opersize=sz,
+        opcode=[0xED],
+        operands=[Operand(type="Areg", size=sz, dest=None),
+                  Operand(type="MemDX", relaxed=True, dest=None)])
+add_group("in",
+    suffix="b",
+    parsers=["gas"],
+    opcode=[0xEC],
+    operands=[Operand(type="MemDX", relaxed=True, dest=None)])
+add_group("in",
+    suffix="w",
+    parsers=["gas"],
+    opersize=16,
+    opcode=[0xED],
+    operands=[Operand(type="MemDX", relaxed=True, dest=None)])
+add_group("in",
+    suffix="l",
+    cpu=["386"],
+    parsers=["gas"],
+    opersize=32,
+    opcode=[0xED],
+    operands=[Operand(type="MemDX", relaxed=True, dest=None)])
 
 add_insn("in", "in")
 
@@ -1755,6 +1791,39 @@ add_group("out",
     opersize=32,
     opcode=[0xEF],
     operands=[Operand(type="Dreg", size=16, dest=None)])
+# GAS-only variants (DX specified as memory instead of register)
+add_group("out",
+    suffix="b",
+    parsers=["gas"],
+    opcode=[0xEE],
+    operands=[Operand(type="MemDX", relaxed=True, dest=None),
+              Operand(type="Areg", size=8, dest=None)])
+for sfx, sz in zip("wl", [16, 32]):
+    add_group("out",
+        suffix=sfx,
+        parsers=["gas"],
+        opersize=sz,
+        opcode=[0xEF],
+        operands=[Operand(type="MemDX", relaxed=True, dest=None),
+                  Operand(type="Areg", size=sz, dest=None)])
+add_group("out",
+    suffix="b",
+    parsers=["gas"],
+    opcode=[0xEE],
+    operands=[Operand(type="MemDX", relaxed=True, dest=None)])
+add_group("out",
+    suffix="w",
+    parsers=["gas"],
+    opersize=16,
+    opcode=[0xEF],
+    operands=[Operand(type="MemDX", relaxed=True, dest=None)])
+add_group("out",
+    suffix="l",
+    cpu=["386"],
+    parsers=["gas"],
+    opersize=32,
+    opcode=[0xEF],
+    operands=[Operand(type="MemDX", relaxed=True, dest=None)])
 
 add_insn("out", "out")
 
@@ -2710,7 +2779,7 @@ add_insn("retn", "retnf", parser="nasm", modifiers=[0xC2])
 add_insn("retf", "retnf", parser="nasm", modifiers=[0xCA, 64])
 add_insn("lret", "retnf", parser="gas", modifiers=[0xCA], suffix="z")
 add_insn("lretw", "retnf", parser="gas", modifiers=[0xCA, 16], suffix="w")
-add_insn("lretl", "retnf", parser="gas", modifiers=[0xCA], suffix="l")
+add_insn("lretl", "retnf", parser="gas", modifiers=[0xCA, 32], suffix="l")
 add_insn("lretq", "retnf", parser="gas", modifiers=[0xCA, 64], only64=True,
          suffix="q")
 
@@ -3057,6 +3126,7 @@ add_insn("stosd", "onebyte", parser="nasm", modifiers=[0xAB, 32],
 add_insn("stosl", "onebyte", parser="gas", modifiers=[0xAB, 32], cpu=["386"])
 add_insn("stosq", "onebyte", modifiers=[0xAB, 64], only64=True)
 add_insn("xlatb", "onebyte", modifiers=[0xD7, 0])
+add_insn("xlat", "onebyte", parser="gas", modifiers=[0xD7, 0])
 
 #####################################################################
 # Bit manipulation

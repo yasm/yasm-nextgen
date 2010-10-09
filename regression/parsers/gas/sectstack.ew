@@ -1,0 +1,2 @@
+<stdin>:2:1: warning: .previous without corresponding .section; ignored
+<stdin>:28:1: warning: .popsection without corresponding .pushsection; ignored

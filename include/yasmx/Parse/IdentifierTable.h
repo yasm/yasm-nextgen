@@ -256,6 +256,7 @@ public:
     iterator begin() const      { return m_hash_table.begin(); }
     iterator end() const        { return m_hash_table.end(); }
     unsigned int size() const   { return m_hash_table.size(); }
+    void clear()                { m_hash_table.clear(); }
 };
 
 } // namespace yasm

@@ -32,6 +32,7 @@
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Expr.h"
+#include "yasmx/Expr_util.h"
 #include "yasmx/IntNum.h"
 
 
@@ -109,20 +110,46 @@ AlignBytecode::~AlignBytecode()
 bool
 AlignBytecode::Finalize(Bytecode& bc, Diagnostic& diags)
 {
+    if (!ExpandEqu(m_boundary))
+    {
+        diags.Report(bc.getSource(), diag::err_equ_circular_reference);
+        return false;
+    }
+    m_boundary.Simplify(diags, false);
     if (!m_boundary.isIntNum())
     {
         diags.Report(bc.getSource(), diag::err_align_boundary_not_const);
         return false;
     }
-    if (!m_fill.isEmpty() && !m_fill.isIntNum())
+
+    if (!m_fill.isEmpty())
     {
-        diags.Report(bc.getSource(), diag::err_align_fill_not_const);
-        return false;
+        if (!ExpandEqu(m_fill))
+        {
+            diags.Report(bc.getSource(), diag::err_equ_circular_reference);
+            return false;
+        }
+        m_fill.Simplify(diags, false);
+        if (!m_fill.isIntNum())
+        {
+            diags.Report(bc.getSource(), diag::err_align_fill_not_const);
+            return false;
+        }
     }
-    if (!m_maxskip.isEmpty() && !m_maxskip.isIntNum())
+
+    if (!m_maxskip.isEmpty())
     {
-        diags.Report(bc.getSource(), diag::err_align_skip_not_const);
-        return false;
+        if (!ExpandEqu(m_maxskip))
+        {
+            diags.Report(bc.getSource(), diag::err_equ_circular_reference);
+            return false;
+        }
+        m_maxskip.Simplify(diags, false);
+        if (!m_maxskip.isIntNum())
+        {
+            diags.Report(bc.getSource(), diag::err_align_skip_not_const);
+            return false;
+        }
     }
     return true;
 }

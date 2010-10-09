@@ -47,6 +47,9 @@ GasParser::GasParser(const ParserModule& module,
     : Parser(module)
     , ParserImpl(m_gas_preproc)
     , m_gas_preproc(diags, sm, headers)
+    , m_intel(false)
+    , m_reg_prefix(true)
+    , m_previous_section(0)
 {
     static const GasDirLookup gas_dirs_init[] =
     {
@@ -91,6 +94,9 @@ GasParser::GasParser(const ParserModule& module,
         {".data",       &GasParser::ParseDirDataSection,    0},
         {".text",       &GasParser::ParseDirTextSection,    0},
         {".section",    &GasParser::ParseDirSection,        0},
+        {".pushsection",&GasParser::ParseDirSection,        1},
+        {".popsection", &GasParser::ParseDirPopSection,     0},
+        {".previous",   &GasParser::ParseDirPrevious,       0},
         // macro directives
         {".include",    &GasParser::ParseDirInclude,    0},
 #if 0
@@ -125,6 +131,8 @@ GasParser::GasParser(const ParserModule& module,
         {".ifne",       &GasParser::ParseDirIf,     Op::NE},
         {".ifnes",      &GasParser::ParseDirIfeqs,  1},
         // other directives
+        {".att_syntax",     &GasParser::ParseDirSyntax, 0},
+        {".intel_syntax",   &GasParser::ParseDirSyntax, 1},
         {".equ",        &GasParser::ParseDirEqu,    0},
         {".file",       &GasParser::ParseDirFile,   0},
         {".line",       &GasParser::ParseDirLine,   0},
@@ -186,9 +194,9 @@ GasParser::AddDirectives(Directives& dirs, llvm::StringRef parser)
 {
     if (parser.equals_lower("gas") || parser.equals_lower("gnu"))
     {
-        dirs.Add(".extern", &DirExtern, Directives::ID_REQUIRED);
-        dirs.Add(".global", &DirGlobal, Directives::ID_REQUIRED);
-        dirs.Add(".globl",  &DirGlobal, Directives::ID_REQUIRED);
+        dirs.Add(".extern", &DirExternMulti, Directives::ID_REQUIRED);
+        dirs.Add(".global", &DirGlobalMulti, Directives::ID_REQUIRED);
+        dirs.Add(".globl",  &DirGlobalMulti, Directives::ID_REQUIRED);
     }
 }
 

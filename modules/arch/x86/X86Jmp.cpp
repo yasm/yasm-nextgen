@@ -56,7 +56,8 @@ public:
            X86JmpOpcodeSel op_sel,
            const X86Opcode& shortop,
            const X86Opcode& nearop,
-           std::auto_ptr<Expr> target);
+           std::auto_ptr<Expr> target,
+           SourceLocation target_source);
     ~X86Jmp();
 
     bool Finalize(Bytecode& bc, Diagnostic& diags);
@@ -95,7 +96,8 @@ X86Jmp::X86Jmp(const X86Common& common,
                X86JmpOpcodeSel op_sel,
                const X86Opcode& shortop,
                const X86Opcode& nearop,
-               std::auto_ptr<Expr> target)
+               std::auto_ptr<Expr> target,
+               SourceLocation target_source)
     : Bytecode::Contents(),
       m_common(common),
       m_shortop(shortop),
@@ -105,6 +107,7 @@ X86Jmp::X86Jmp(const X86Common& common,
 {
     m_target.setJumpTarget();
     m_target.setSigned();
+    m_target.setSource(target_source);
 }
 
 X86Jmp::~X86Jmp()
@@ -265,6 +268,7 @@ arch::AppendJmp(BytecodeContainer& container,
                 const X86Opcode& shortop,
                 const X86Opcode& nearop,
                 std::auto_ptr<Expr> target,
+                SourceLocation target_source,
                 SourceLocation source,
                 X86JmpOpcodeSel op_sel)
 {
@@ -282,7 +286,7 @@ arch::AppendJmp(BytecodeContainer& container,
     if (op_sel == X86_JMP_NONE)
     {
         bc.Transform(Bytecode::Contents::Ptr(new X86Jmp(
-            common, op_sel, shortop, nearop, target)));
+            common, op_sel, shortop, nearop, target, target_source)));
         bc.setSource(source);
         ++num_jmp_bc;
         return;
@@ -301,6 +305,7 @@ arch::AppendJmp(BytecodeContainer& container,
     targetv.setIPRelative();
     targetv.setSigned();
     targetv.setNextInsn(0);     // always 0.
+    targetv.setSource(target_source);
 
     if (op_sel == X86_JMP_SHORT)
     {

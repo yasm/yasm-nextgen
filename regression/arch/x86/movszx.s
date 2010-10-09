@@ -1,28 +1,26 @@
-# [oformat elf64]
-movsbw %cl, %cx
-movsbl %cl, %ecx
-movswl %cx, %ecx
-movsbq %cl, %rcx
-movswq %cx, %rcx
-movslq %ecx, %rcx
+.code64
+movsbw %cl, %cx		# out: 66 0f be c9
+movsbl %cl, %ecx	# out: 0f be c9
+movswl %cx, %ecx	# out: 0f bf c9
+movsbq %cl, %rcx	# out: 48 0f be c9
+movswq %cx, %rcx	# out: 48 0f bf c9
+movslq %ecx, %rcx	# out: 48 63 c9
 
-movsx %cl, %cx
-movsx %cl, %ecx
-movsx %cx, %ecx
-movsx %cl, %rcx
-movsx %cx, %rcx
-movsx %ecx, %rcx
+movsx %cl, %cx		# out: 66 0f be c9
+movsx %cl, %ecx		# out: 0f be c9
+movsx %cx, %ecx		# out: 0f bf c9
+movsx %cl, %rcx		# out: 48 0f be c9
+movsx %cx, %rcx		# out: 48 0f bf c9
+movsx %ecx, %rcx	# out: 48 63 c9
 
-movzbw %cl, %cx
-movzbl %cl, %ecx
-movzwl %cx, %ecx
-movzbq %cl, %rcx
-movzwq %cx, %rcx
+movzbw %cl, %cx		# out: 66 0f b6 c9
+movzbl %cl, %ecx	# out: 0f b6 c9
+movzwl %cx, %ecx	# out: 0f b7 c9
+movzbq %cl, %rcx	# out: 48 0f b6 c9
+movzwq %cx, %rcx	# out: 48 0f b7 c9
 
-movzx %cl, %cx
-movzx %cl, %ecx
-movzx %cx, %ecx
-movzx %cl, %rcx
-movzx %cx, %rcx
-
-
+movzx %cl, %cx		# out: 66 0f b6 c9
+movzx %cl, %ecx		# out: 0f b6 c9
+movzx %cx, %ecx		# out: 0f b7 c9
+movzx %cl, %rcx		# out: 48 0f b6 c9
+movzx %cx, %rcx		# out: 48 0f b7 c9

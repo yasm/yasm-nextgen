@@ -75,7 +75,7 @@ public:
     SymbolRef CreateSymbol(Object& object, const StringTable& strtab) const;
 
     void Finalize(Symbol& sym, Diagnostic& diags);
-    void Write(Bytes& bytes, const ElfConfig& config);
+    void Write(Bytes& bytes, const ElfConfig& config, Diagnostic& diags);
 
     void setSection(Section* sect) { m_sect = sect; }
     void setName(ElfStringIndex index) { m_name_index = index; }
@@ -107,10 +107,14 @@ public:
 
     bool isLocal() const { return m_bind == STB_LOCAL; }
 
+    bool isInTable() const { return m_in_table; }
+    void setInTable(bool in_table) { m_in_table = in_table; }
+
 private:
     Section*                m_sect;
     ElfStringIndex          m_name_index;
     IntNum                  m_value;
+    SymbolRef               m_value_rel;
     SourceLocation          m_size_source;
     Expr                    m_size;
     ElfSectionIndex         m_index;
@@ -118,6 +122,7 @@ private:
     ElfSymbolType           m_type;
     ElfSymbolVis            m_vis;
     ElfSymbolIndex          m_symindex;
+    bool                    m_in_table;
 };
 
 YASM_STD_EXPORT

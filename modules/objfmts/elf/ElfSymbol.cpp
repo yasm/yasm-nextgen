@@ -56,6 +56,7 @@ ElfSymbol::ElfSymbol(const ElfConfig&           config,
     , m_name_index(0)
     , m_value(0)
     , m_symindex(index)
+    , m_in_table(true)
 {
     InputBuffer inbuf(in);
 
@@ -102,6 +103,7 @@ ElfSymbol::ElfSymbol()
     , m_type(STT_NOTYPE)
     , m_vis(STV_DEFAULT)
     , m_symindex(STN_UNDEF)
+    , m_in_table(true)
 {
 }
 
@@ -167,6 +169,11 @@ ElfSymbol::Finalize(Symbol& sym, Diagnostic& diags)
     // get size (if specified); expr overrides stored integer
     if (!m_size.isEmpty())
     {
+        if (!ExpandEqu(m_size))
+        {
+            diags.Report(m_size_source, diag::err_equ_circular_reference);
+            return;
+        }
         SimplifyCalcDist(m_size, diags);
         if (!m_size.isIntNum())
             diags.Report(m_size_source, diag::err_size_integer);
@@ -213,32 +220,15 @@ ElfSymbol::Finalize(Symbol& sym, Diagnostic& diags)
             Location loc;
             if (!rel->getLabel(&loc) || !loc.bc)
             {
-                // Referencing an undefined label?
-                // GNU as silently allows this... but doesn't gen the symbol?
-                // We make it an error instead.
-                diags.Report(sym.getDefSource(), diag::err_equ_too_complex);
+                // Referencing an undefined label? Don't gen the symbol.
+                diags.Report(sym.getDefSource(), diag::warn_equ_undef_ref);
+                m_in_table = false;
                 return;
             }
 
             m_sect = loc.bc->getContainer()->AsSection();
             m_value = loc.getOffset();
-
-            // Pull referenced elf symbol information type and size
-            ElfSymbol* elfrel = rel->getAssocData<ElfSymbol>();
-            if (elfrel)
-            {
-                if (!hasType() && elfrel->hasType())
-                    m_type = elfrel->m_type;
-                if (!hasSize() && elfrel->hasSize())
-                {
-                    m_size = elfrel->m_size;
-                    m_size_source = elfrel->m_size_source;
-                    // just in case, simplify it
-                    SimplifyCalcDist(m_size, diags);
-                    if (!m_size.isIntNum())
-                        diags.Report(m_size_source, diag::err_size_integer);
-                }
-            }
+            m_value_rel = rel;
         }
         else
         {
@@ -261,8 +251,28 @@ ElfSymbol::Finalize(Symbol& sym, Diagnostic& diags)
 }
 
 void
-ElfSymbol::Write(Bytes& bytes, const ElfConfig& config)
+ElfSymbol::Write(Bytes& bytes, const ElfConfig& config, Diagnostic& diags)
 {
+    // Pull referenced elf symbol information type and size
+    if (m_value_rel)
+    {
+        ElfSymbol* elfrel = m_value_rel->getAssocData<ElfSymbol>();
+        if (elfrel)
+        {
+            if (!hasType() && elfrel->hasType())
+                m_type = elfrel->m_type;
+            if (!hasSize() && elfrel->hasSize())
+            {
+                m_size = elfrel->m_size;
+                m_size_source = elfrel->m_size_source;
+                // just in case, simplify it
+                SimplifyCalcDist(m_size, diags);
+                if (!m_size.isIntNum())
+                    diags.Report(m_size_source, diag::err_size_integer);
+            }
+        }
+    }
+
     bytes.resize(0);
     config.setEndian(bytes);
 
@@ -271,7 +281,7 @@ ElfSymbol::Write(Bytes& bytes, const ElfConfig& config)
     if (config.cls == ELFCLASS32)
     {
         Write32(bytes, m_value);
-        Write32(bytes, hasSize() ? m_size.getIntNum() : 0);
+        Write32(bytes, hasSize() && m_size.isIntNum() ? m_size.getIntNum() : 0);
     }
 
     Write8(bytes, ELF_ST_INFO(m_bind, m_type));

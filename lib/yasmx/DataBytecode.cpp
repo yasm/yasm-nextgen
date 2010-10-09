@@ -60,6 +60,22 @@ yasm::AppendData(BytecodeContainer& container,
 
 void
 yasm::AppendData(BytecodeContainer& container,
+                 const IntNum& val,
+                 unsigned int size,
+                 EndianState endian)
+{
+    Bytecode& bc = container.FreshBytecode();
+    Bytes zero;
+    zero.resize(size);
+    zero.setEndian(endian);
+    NumericOutput numout(zero);
+    numout.setSize(size*8);
+    numout.OutputInteger(val);
+    bc.getFixed().insert(bc.getFixed().end(), zero.begin(), zero.end());
+}
+
+void
+yasm::AppendData(BytecodeContainer& container,
                  std::auto_ptr<Expr> expr,
                  unsigned int size,
                  const Arch& arch,
@@ -97,8 +113,11 @@ yasm::AppendData(BytecodeContainer& container,
     Bytes& fixed = container.FreshBytecode().getFixed();
     size_t len = str.size();
     fixed.Write(reinterpret_cast<const unsigned char *>(str.data()), len);
+    if (append_zero)
+    {
+        Write8(fixed, 0);
+        ++len;
+    }
     if ((len % size) != 0)
         fixed.Write(size-(len % size), 0);
-    if (append_zero)
-        Write8(fixed, 0);
 }

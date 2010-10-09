@@ -145,6 +145,7 @@ public:
     {
         PARSER_NASM = 0,
         PARSER_GAS = 1,
+        PARSER_GAS_INTEL = 2,
         PARSER_UNKNOWN
     };
     enum NopFormat

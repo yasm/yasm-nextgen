@@ -170,6 +170,7 @@ def output_categories(f):
 add_group("comment")
 add_group("unrecognized-char")
 add_group("orphan-labels")
+add_group("init-nobits")
 add_group("uninit-contents")
 add_group("size-override")
 add_group("signed-overflow")
@@ -193,6 +194,8 @@ add_fatal("fatal_no_input_files", "no input files specified")
 add_fatal("fatal_unrecognized_module", "unrecognized %0 '%1'")
 add_warning("warn_unknown_command_line_option",
             "unknown command line argument '%0'; try '-help'")
+add_fatal("fatal_bad_defsym",
+          "bad defsym '%0'; format is --defsym name=value")
 
 # Source manager
 add_fatal("err_cannot_open_file", "cannot open file '%0': %1")
@@ -262,6 +265,11 @@ add_error("err_missing_or_invalid_immediate",
           "missing or invalid immediate expression")
 add_error("err_rept_without_endr", ".rept without matching .endr")
 add_error("err_endr_without_rept", ".endr without matching .rept")
+add_error("err_bad_argument_to_syntax_dir", "bad argument to syntax directive")
+add_warning("warn_popsection_without_pushsection",
+            ".popsection without corresponding .pushsection; ignored")
+add_warning("warn_previous_without_section",
+            ".previous without corresponding .section; ignored")
 
 # Value
 add_error("err_too_complex_expression", "expression too complex")
@@ -362,6 +370,8 @@ add_error("err_multiple_unknown", "could not determine multiple")
 
 # ORG
 add_error("err_org_overlap", "ORG overlap with already existing data")
+add_error("err_org_start_not_const", "org start must be a constant")
+add_error("err_org_fill_not_const", "org fill must be a constant")
 
 # Symbol
 add_error("err_symbol_undefined", "undefined symbol '%0' (first use)")
@@ -529,6 +539,8 @@ add_warning("escaped_newline_block_comment_end",
             "escaped newline between */ characters at block comment end",
             group="comment")
 
+add_warning("warn_unterminated_string",
+            "unterminated string; newline inserted")
 add_error("err_unterminated_string", "missing terminating %0 character")
 add_error("err_unterminated_block_comment", "unterminated /* comment")
 
@@ -573,7 +585,8 @@ add_error("err_pp_cond_not_constant", "non-constant conditional expression")
 
 # Output
 add_warning("warn_nobits_data",
-            "initialized space declared in nobits section: ignoring")
+            "initialized space declared in nobits section: ignoring",
+            group="init-nobits")
 add_warning("warn_uninit_zero",
             "uninitialized space declared in code/data section: zeroing",
             group="uninit-contents")
@@ -582,6 +595,8 @@ add_warning("warn_export_equ",
 add_warning("warn_name_too_long", "name too long, truncating to %0 bytes")
 add_error("err_equ_not_integer", "EQU value not an integer expression")
 add_error("err_equ_too_complex", "EQU value too complex")
+add_warning("warn_equ_undef_ref",
+            "EQU value contains undefined symbol; not emitting")
 add_error("err_common_size_not_integer",
           "COMMON data size not an integer expression")
 

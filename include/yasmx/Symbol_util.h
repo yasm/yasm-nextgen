@@ -92,12 +92,26 @@ YASM_LIB_EXPORT
 YASM_LIB_EXPORT
 void DirExtern(DirectiveInfo& info, Diagnostic& diags);
 
+/// Extern multiple directive handler.  Sets each symbol's visibility to
+/// Symbol::EXTERN.
+/// @param info     directive info
+/// @param diags    diagnostic reporter
+YASM_LIB_EXPORT
+void DirExternMulti(DirectiveInfo& info, Diagnostic& diags);
+
 /// Global directive handler.  Sets symbol visibility to Symbol::GLOBAL and
 /// saves objext_namevals as associated symbol data.
 /// @param info     directive info
 /// @param diags    diagnostic reporter
 YASM_LIB_EXPORT
 void DirGlobal(DirectiveInfo& info, Diagnostic& diags);
+
+/// Global multiple directive handler.  Sets each symbol's visibility to
+/// Symbol::GLOBAL.
+/// @param info     directive info
+/// @param diags    diagnostic reporter
+YASM_LIB_EXPORT
+void DirGlobalMulti(DirectiveInfo& info, Diagnostic& diags);
 
 /// Common directive handler.  Sets symbol visibility to Symbol::COMMON and
 /// saves common size and objext_namevals as associated symbol data.

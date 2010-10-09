@@ -89,16 +89,19 @@ public:
     /// Copy from a byte array, appending the values to the end.
     /// @param  buf input buffer
     /// @param  n   number of bytes
-    void Write(const unsigned char* buf, size_type n)
-    {
-        insert(end(), buf, buf+n);
-    }
+    void Write(const unsigned char* buf, size_type n);
 
     /// Append n bytes of value v.
     /// @param  n   number of bytes
     /// @param  v   byte value
     void Write(size_type n, unsigned char v);
 };
+
+inline void
+Bytes::Write(const unsigned char* buf, size_type n)
+{
+    insert(end(), buf, buf+n);
+}
 
 /// Output the entire contents of a bytes container to an output stream.
 /// @param os    output stream
