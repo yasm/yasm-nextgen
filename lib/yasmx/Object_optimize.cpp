@@ -24,8 +24,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#define DEBUG_TYPE "Optimize"
-
 #include "yasmx/Object.h"
 
 #include <algorithm>
@@ -37,7 +35,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/Support/Debug.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/IntervalTree.h"
@@ -405,9 +402,6 @@ Span::RecalcNormal(Diagnostic& diags)
     if (m_new_val == LONG_MAX)
         m_active = INACTIVE;
 
-    DEBUG(llvm::errs() << "updated " << getName() << " newval to "
-          << m_new_val << '\n');
-
     // If id<=0, flag update on any change
     if (m_id <= 0)
         return (m_new_val != m_cur_val);
@@ -527,9 +521,6 @@ Optimizer::ExpandTerm(IntervalTreeNode<Span::Term*> * node, long len_diff)
     if (span->m_active == Span::INACTIVE)
         return;
 
-    DEBUG(llvm::errs() << "expand " << span->getName() << " by " << len_diff
-          << '\n');
-
     // Update term length
     if (term->m_loc.bc)
         precbc_index = term->m_loc.bc->getIndex();
@@ -545,27 +536,16 @@ Optimizer::ExpandTerm(IntervalTreeNode<Span::Term*> * node, long len_diff)
         term->m_new_val += len_diff;
     else
         term->m_new_val -= len_diff;
-    DEBUG(llvm::errs() << "updated " << span->getName() << " term "
-          << (term-&span->m_span_terms.front())
-          << " newval to " << term->m_new_val << '\n');
 
     // If already on Q, don't re-add
     if (span->m_active == Span::ON_Q)
-    {
-        DEBUG(llvm::errs() << span->getName() << " already on queue\n");
         return;
-    }
 
     // Update term and check against thresholds
     if (!span->RecalcNormal(m_diags))
-    {
-        DEBUG(llvm::errs() << span->getName()
-              << " didn't change, not readded\n");
         return; // didn't exceed thresholds, we're done
-    }
 
     // Exceeded thresholds, need to add to Q for expansion
-    DEBUG(llvm::errs() << span->getName() << " added back on queue\n");
     if (span->m_id <= 0)
         m_QA.push_back(span);
     else
@@ -604,8 +584,6 @@ Optimizer::Step1b()
                 continue;
             }
         }
-        DEBUG(llvm::errs() << "updated " << span->getName() << " curval from "
-              << span->m_cur_val << " to " << span->m_new_val << '\n');
         span->m_cur_val = span->m_new_val;
         ++spani;
     }
@@ -629,9 +607,6 @@ Optimizer::Step1d()
             assert(ok && "could not calculate bc distance");
             term->m_cur_val = term->m_new_val;
             term->m_new_val = intn.getInt();
-            DEBUG(llvm::errs() << "updated " << span->getName() << " term "
-                  << (term-span->m_span_terms.begin())
-                  << " newval to " << term->m_new_val << '\n');
         }
 
         if (span->RecalcNormal(m_diags))
@@ -731,9 +706,6 @@ Optimizer::Step2()
             for (Span::Terms::iterator term=span->m_span_terms.begin(),
                  endterm=span->m_span_terms.end(); term != endterm; ++term)
                 term->m_cur_val = term->m_new_val;
-            DEBUG(llvm::errs() << "updated " << span->getName()
-                  << " curval from " << span->m_cur_val << " to "
-                  << span->m_new_val << '\n');
             span->m_cur_val = span->m_new_val;
         }
         else
@@ -743,9 +715,6 @@ Optimizer::Step2()
         if (len_diff == 0)
             continue;   // didn't increase in size
 
-        DEBUG(llvm::errs() << "BC@" << &span->m_bc << " ("
-              << span->m_bc.getIndex() << ") expansion by "
-              << len_diff << ":\n");
         // Iterate over all spans dependent across the bc just expanded
         m_itree.Enumerate(static_cast<long>(span->m_bc.getIndex()),
                           static_cast<long>(span->m_bc.getIndex()),
@@ -786,9 +755,6 @@ Optimizer::Step2()
             len_diff = os->m_bc->getTailLen() - orig_len;
             if (len_diff != 0)
             {
-                DEBUG(llvm::errs() << "BC@" << os->m_bc << " ("
-                      << os->m_bc->getIndex() << ") offset setter change by "
-                      << len_diff << ":\n");
                 m_itree.Enumerate(static_cast<long>(os->m_bc->getIndex()),
                                   static_cast<long>(os->m_bc->getIndex()),
                                   BIND::bind(&Optimizer::ExpandTerm, this, _1,
