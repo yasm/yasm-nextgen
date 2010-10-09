@@ -2204,14 +2204,6 @@ std::string APInt::toString(unsigned Radix, bool Signed, bool Lowercase) const {
 }
 
 
-void APInt::dump() const {
-  SmallString<40> S, U;
-  this->toStringUnsigned(U);
-  this->toStringSigned(S);
-  dbgs() << "APInt(" << BitWidth << "b, "
-         << U.str() << "u " << S.str() << "s)";
-}
-
 void APInt::print(raw_ostream &OS, bool isSigned) const {
   SmallString<40> S;
   this->toString(S, 10, isSigned);

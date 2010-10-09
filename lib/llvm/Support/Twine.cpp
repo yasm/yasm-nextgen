@@ -130,11 +130,3 @@ void Twine::printRepr(raw_ostream &OS) const {
   printOneChildRepr(OS, RHS, getRHSKind());
   OS << ")";
 }
-
-void Twine::dump() const {
-  print(llvm::dbgs());
-}
-
-void Twine::dumpRepr() const {
-  printRepr(llvm::dbgs());
-}

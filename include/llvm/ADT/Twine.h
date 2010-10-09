@@ -387,14 +387,8 @@ namespace llvm {
     /// stream \arg OS.
     void print(raw_ostream &OS) const;
 
-    /// dump - Dump the concatenated string represented by this twine to stderr.
-    void dump() const;
-
     /// print - Write the representation of this twine to the stream \arg OS.
     void printRepr(raw_ostream &OS) const;
-
-    /// dumpRepr - Dump the representation of this twine to stderr.
-    void dumpRepr() const;
 
     /// @}
   };
