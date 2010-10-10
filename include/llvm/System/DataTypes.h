@@ -24,11 +24,7 @@
 #ifndef SUPPORT_DATATYPES_H
 #define SUPPORT_DATATYPES_H
 
-#cmakedefine HAVE_SYS_TYPES_H ${HAVE_SYS_TYPES_H}
-#cmakedefine HAVE_INTTYPES_H ${HAVE_INTTYPES_H}
-#cmakedefine HAVE_STDINT_H ${HAVE_STDINT_H}
-#cmakedefine HAVE_UINT64_T ${HAVE_UINT64_T}
-#cmakedefine HAVE_U_INT64_T ${HAVE_U_INT64_T}
+#include "config.h"
 
 #ifdef __cplusplus
 #include <cmath>

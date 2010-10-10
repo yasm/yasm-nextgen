@@ -21,7 +21,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
-#include "llvm/Config/config.h"
+#include "config.h"
 #include <map>
 #include <set>
 #include <string>

@@ -19,7 +19,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Config/config.h" // for mode_t
+#include "config.h" // for mode_t
 #include "yasmx/Config/export.h"
 // FIXME: Enhance libsystem to support inode and other fields in stat.
 #include <sys/types.h>

@@ -56,7 +56,7 @@
 #include <libgen.h>
 #endif
 
-#include "frontends/license.cpp"
+#include "license.cpp"
 #include "frontends/DiagnosticOptions.h"
 #include "frontends/TextDiagnosticPrinter.h"
 

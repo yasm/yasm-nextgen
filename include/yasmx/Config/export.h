@@ -1,0 +1,11 @@
+#ifndef YASM_EXPORT_H
+#define YASM_EXPORT_H
+
+#define YASM_LIB_EXPORT
+#define YASM_LIB_IMPORT
+#define YASM_STD_EXPORT
+#define YASM_STD_IMPORT
+#define YASM_UNIT_EXPORT
+#define YASM_UNIT_IMPORT
+
+#endif

@@ -15,7 +15,7 @@
 #include "llvm/Support/Format.h"
 #include "llvm/System/Process.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Config/config.h"
+#include "config.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/STLExtras.h"

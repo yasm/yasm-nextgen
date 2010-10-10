@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/System/Memory.h"
-#include "llvm/Config/config.h"
+#include "config.h"
 
 namespace llvm {
 using namespace sys;

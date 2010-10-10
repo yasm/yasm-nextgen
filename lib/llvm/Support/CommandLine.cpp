@@ -27,7 +27,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/Config/config.h"
+#include "config.h"
 #include <cerrno>
 #include <cstdlib>
 using namespace llvm;

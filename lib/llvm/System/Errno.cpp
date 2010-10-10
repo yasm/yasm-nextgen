@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/System/Errno.h"
-#include "llvm/Config/config.h"     // Get autoconf configuration settings
+#include "config.h"     // Get autoconf configuration settings
 
 #if HAVE_STRING_H
 #include <string.h>

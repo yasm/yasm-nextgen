@@ -19,7 +19,7 @@
 //===          is guaranteed to work on all UNIX variants.
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Config/config.h"     // Get autoconf configuration settings
+#include "config.h"     // Get autoconf configuration settings
 #include "llvm/System/Errno.h"
 #include <cstdlib>
 #include <cstdio>
