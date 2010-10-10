@@ -47,53 +47,41 @@ ENDMACRO(YASM_CHECK_CXX)
 #
 # Look for TR1 header files
 #
+CHECK_INCLUDE_FILE_CXX(functional HAVE_STD_FUNCTIONAL)
 CHECK_INCLUDE_FILE_CXX(tr1/functional HAVE_TR1_FUNCTIONAL)
 
 #
-# Look for various pieces of TR1 functionality
+# Look for various pieces of TR1 functionality: function, ref, bind, mem_fn
 #
 
-# function
 IF(HAVE_TR1_FUNCTIONAL)
     YASM_CHECK_CXX("std::function<void (int)> x = f2;" "std::function" "tr1/functional" HAVE_STD_FUNCTION1)
     YASM_CHECK_CXX("std::tr1::function<void (int)> x = f2;" "std::tr1::function" "tr1/functional" HAVE_TR1_FUNCTION1)
-ENDIF(HAVE_TR1_FUNCTIONAL)
-
-YASM_CHECK_CXX("std::function<void (int)> x = f2;" "std::function" "functional" HAVE_STD_FUNCTION2)
-YASM_CHECK_CXX("std::tr1::function<void (int)> x = f2;" "std::tr1::function" "functional" HAVE_TR1_FUNCTION2)
-
-# ref
-IF(HAVE_TR1_FUNCTIONAL)
     YASM_CHECK_CXX("X x1;\n  X& x2 = std::ref(x1);" "std::ref" "tr1/functional" HAVE_STD_REF1)
     YASM_CHECK_CXX("X x1;\n  X& x2 = std::tr1::ref(x1);" "std::tr1::ref" "tr1/functional" HAVE_TR1_REF1)
-ENDIF(HAVE_TR1_FUNCTIONAL)
-
-YASM_CHECK_CXX("X x1;\n  X& x2 = std::ref(x1);" "std::ref" "functional" HAVE_STD_REF2)
-YASM_CHECK_CXX("X x1;\n  X& x2 = std::tr1::ref(x1);" "std::tr1::ref" "functional" HAVE_TR1_REF2)
-
-# bind
-IF(HAVE_TR1_FUNCTIONAL)
     YASM_CHECK_CXX("std::bind(f2, 1)();" "std::bind" "tr1/functional" HAVE_STD_BIND1)
     YASM_CHECK_CXX("std::tr1::bind(f2, 1)();" "std::tr1::bind" "tr1/functional" HAVE_TR1_BIND1)
-ENDIF(HAVE_TR1_FUNCTIONAL)
-
-YASM_CHECK_CXX("std::bind(f2, 1)();" "std::bind" "functional" HAVE_STD_BIND2)
-YASM_CHECK_CXX("std::tr1::bind(f2, 1)();" "std::tr1::bind" "functional" HAVE_TR1_BIND2)
-
-# mem_fn
-IF(HAVE_TR1_FUNCTIONAL)
     YASM_CHECK_CXX("std::vector<X> v;\n  std::for_each(v.begin(), v.end(), std::mem_fn(&X::f));" "std::mem_fn" "tr1/functional" HAVE_STD_MEMFN1)
     YASM_CHECK_CXX("std::vector<X> v;\n  std::for_each(v.begin(), v.end(), std::tr1::mem_fn(&X::f));" "std::tr1::mem_fn" "tr1/functional" HAVE_TR1_MEMFN1)
 ENDIF(HAVE_TR1_FUNCTIONAL)
 
-YASM_CHECK_CXX("std::vector<X> v;\n  std::for_each(v.begin(), v.end(), std::mem_fn(&X::f));" "std::mem_fn" "functional" HAVE_STD_MEMFN2)
-YASM_CHECK_CXX("std::vector<X> v;\n  std::for_each(v.begin(), v.end(), std::tr1::mem_fn(&X::f));" "std::tr1::mem_fn" "functional" HAVE_TR1_MEMFN2)
+IF(HAVE_STD_FUNCTIONAL)
+    YASM_CHECK_CXX("std::function<void (int)> x = f2;" "std::function" "functional" HAVE_STD_FUNCTION2)
+    YASM_CHECK_CXX("std::tr1::function<void (int)> x = f2;" "std::tr1::function" "functional" HAVE_TR1_FUNCTION2)
+    YASM_CHECK_CXX("X x1;\n  X& x2 = std::ref(x1);" "std::ref" "functional" HAVE_STD_REF2)
+    YASM_CHECK_CXX("X x1;\n  X& x2 = std::tr1::ref(x1);" "std::tr1::ref" "functional" HAVE_TR1_REF2)
+    YASM_CHECK_CXX("std::bind(f2, 1)();" "std::bind" "functional" HAVE_STD_BIND2)
+    YASM_CHECK_CXX("std::tr1::bind(f2, 1)();" "std::tr1::bind" "functional" HAVE_TR1_BIND2)
+    YASM_CHECK_CXX("std::vector<X> v;\n  std::for_each(v.begin(), v.end(), std::mem_fn(&X::f));" "std::mem_fn" "functional" HAVE_STD_MEMFN2)
+    YASM_CHECK_CXX("std::vector<X> v;\n  std::for_each(v.begin(), v.end(), std::tr1::mem_fn(&X::f));" "std::tr1::mem_fn" "functional" HAVE_TR1_MEMFN2)
+ENDIF(HAVE_STD_FUNCTIONAL)
 
 #
 # Generate functional.h code
 #
-SET(FUNCTIONAL_INCLUDES "${FUNCTIONAL_INCLUDES}#include <functional>\n")
-SET(FUNCTIONAL_ALIASES "")
+IF(HAVE_STD_FUNCTIONAL)
+    SET(FUNCTIONAL_INCLUDES "${FUNCTIONAL_INCLUDES}#include <functional>\n")
+ENDIF(HAVE_STD_FUNCTIONAL)
 
 # Bring in generic TR1 functional header if we have it.
 IF(HAVE_TR1_FUNCTIONAL)
@@ -101,52 +89,42 @@ IF(HAVE_TR1_FUNCTIONAL)
 ENDIF(HAVE_TR1_FUNCTIONAL)
 
 # Point to correct namespace, bringing in boost if necessary.
+IF(HAVE_STD_FUNCTION2 AND HAVE_STD_REF2 AND HAVE_STD_BIND2 AND HAVE_STD_MEMFN2)
+    SET(TR1_NAMESPACE "std")
+    SET(TR1_HEADER "functional")
+ELSEIF(HAVE_TR1_FUNCTION2 AND HAVE_TR1_REF2 AND HAVE_TR1_BIND2 AND HAVE_TR1_MEMFN2)
+    SET(TR1_NAMESPACE "std::tr1")
+    SET(TR1_HEADER "functional")
+ELSEIF(HAVE_STD_FUNCTION1 AND HAVE_STD_REF1 AND HAVE_STD_BIND1 AND HAVE_STD_MEMFN1)
+    SET(TR1_NAMESPACE "std")
+    SET(TR1_HEADER "tr1/functional")
+ELSEIF(HAVE_TR1_FUNCTION1 AND HAVE_TR1_REF1 AND HAVE_TR1_BIND1 AND HAVE_TR1_MEMFN1)
+    SET(TR1_NAMESPACE "std::tr1")
+    SET(TR1_HEADER "tr1/functional")
+ELSE(HAVE_STD_FUNCTION2 AND HAVE_STD_REF2 AND HAVE_STD_BIND2 AND HAVE_STD_MEMFN2)
+    SET(TR1_NAMESPACE "boost")
+    SET(TR1_HEADER "boost")
+ENDIF(HAVE_STD_FUNCTION2 AND HAVE_STD_REF2 AND HAVE_STD_BIND2 AND HAVE_STD_MEMFN2)
+MESSAGE(STATUS "Using functional ${TR1_NAMESPACE}:: from ${TR1_HEADER}")
 
 SET(BOOST_REQUIRED FALSE)
+SET(FUNCTIONAL_ALIASES "")
+IF(TR1_HEADER STREQUAL "boost")
+    SET(BOOST_REQUIRED TRUE)
 
-# function
-IF(HAVE_STD_FUNCTION1 OR HAVE_STD_FUNCTION2)
-    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace FUNCTION = std;\n")
-ELSEIF(HAVE_TR1_FUNCTION1 OR HAVE_TR1_FUNCTION2)
-    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace FUNCTION = std::tr1;\n")
-ELSE(HAVE_STD_FUNCTION1 OR HAVE_STD_FUNCTION2)
     SET(FUNCTIONAL_INCLUDES "${FUNCTIONAL_INCLUDES}#include <boost/function.hpp>\n")
-    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace FUNCTION = boost;\n")
-    SET(BOOST_REQUIRED TRUE)
-ENDIF(HAVE_STD_FUNCTION1 OR HAVE_STD_FUNCTION2)
-
-# ref
-IF(HAVE_STD_REF1 OR HAVE_STD_REF2)
-    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace REF = std;\n")
-ELSEIF(HAVE_TR1_REF1 OR HAVE_TR1_REF2)
-    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace REF = std::tr1;\n")
-ELSE(HAVE_STD_REF1 OR HAVE_STD_REF2)
     SET(FUNCTIONAL_INCLUDES "${FUNCTIONAL_INCLUDES}#include <boost/ref.hpp>\n")
-    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace REF = boost;\n")
-    SET(BOOST_REQUIRED TRUE)
-ENDIF(HAVE_STD_REF1 OR HAVE_STD_REF2)
-
-# bind
-IF(HAVE_STD_BIND1 OR HAVE_STD_BIND2)
-    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace BIND = std;\n")
-    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}using namespace std::placeholders;\n")
-ELSEIF(HAVE_TR1_BIND1 OR HAVE_TR1_BIND2)
-    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace BIND = std::tr1;\n")
-    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}using namespace std::tr1::placeholders;\n")
-ELSE(HAVE_STD_BIND1 OR HAVE_STD_BIND2)
     SET(FUNCTIONAL_INCLUDES "${FUNCTIONAL_INCLUDES}#include <boost/bind.hpp>\n")
-    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace BIND = boost;\n")
-    SET(BOOST_REQUIRED TRUE)
-ENDIF(HAVE_STD_BIND1 OR HAVE_STD_BIND2)
-
-# mem_fn
-IF(HAVE_STD_MEMFN1 OR HAVE_STD_MEMFN2)
-    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace MEMFN = std;\n")
-ELSEIF(HAVE_TR1_MEMFN1 OR HAVE_TR1_MEMFN2)
-    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace MEMFN = std::tr1;\n")
-ELSE(HAVE_STD_MEMFN1 OR HAVE_STD_MEMFN2)
     SET(FUNCTIONAL_INCLUDES "${FUNCTIONAL_INCLUDES}#include <boost/mem_fn.hpp>\n")
-    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace MEMFN = boost;\n")
-    SET(BOOST_REQUIRED TRUE)
-ENDIF(HAVE_STD_MEMFN1 OR HAVE_STD_MEMFN2)
 
+    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace FUNCTION = boost;\n")
+    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace REF = boost;\n")
+    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace BIND = boost;\n")
+    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace MEMFN = boost;\n")
+ELSE(TR1_HEADER STREQUAL "boost")
+    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace FUNCTION = ${TR1_NAMESPACE};\n")
+    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace REF = ${TR1_NAMESPACE};\n")
+    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace BIND = ${TR1_NAMESPACE};\n")
+    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}using namespace ${TR1_NAMESPACE}::placeholders;\n")
+    SET(FUNCTIONAL_ALIASES "${FUNCTIONAL_ALIASES}namespace MEMFN = ${TR1_NAMESPACE};\n")
+ENDIF(TR1_HEADER STREQUAL "boost")
