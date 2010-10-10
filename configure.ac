@@ -163,8 +163,17 @@ AC_MSG_RESULT([$tr1_namespace:: from $tr1_header])
 
 rm -f functional_includes
 rm -f functional_aliases
+
+touch functional_includes
+if test $ac_cv_header_functional = yes ; then
+  echo "#include <functional>" >> functional_includes
+fi
+if test $ac_cv_header_tr1_functional = yes ; then
+  echo "#include <tr1/functional>" >> functional_includes
+fi
+
 if test tr1_header = boost ; then
-  cat <<EOF > functional_includes
+  cat <<EOF >> functional_includes
 #include <boost/function.hpp>
 #include <boost/ref.hpp>
 #include <boost/bind.hpp>
@@ -177,9 +186,6 @@ namespace BIND = boost;
 namespace MEMFN = boost;
 EOF
 else
-  cat <<EOF > functional_includes
-#include <$tr1_header>
-EOF
   cat <<EOF > functional_aliases
 namespace FUNCTION = $tr1_namespace;
 namespace REF = $tr1_namespace;
