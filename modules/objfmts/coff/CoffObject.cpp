@@ -332,36 +332,36 @@ CoffObject::DirSectionInitHelpers(DirHelpers& helpers,
                                   bool* has_align)
 {
     helpers.Add("code", false,
-                BIND::bind(&DirResetFlag, _1, _2, &coffsect->m_flags,
-                           CoffSection::TEXT |
-                           CoffSection::EXECUTE |
-                           CoffSection::READ));
+                TR1::bind(&DirResetFlag, _1, _2, &coffsect->m_flags,
+                          CoffSection::TEXT |
+                          CoffSection::EXECUTE |
+                          CoffSection::READ));
     helpers.Add("text", false,
-                BIND::bind(&DirResetFlag, _1, _2, &coffsect->m_flags,
-                           CoffSection::TEXT |
-                           CoffSection::EXECUTE |
-                           CoffSection::READ));
+                TR1::bind(&DirResetFlag, _1, _2, &coffsect->m_flags,
+                          CoffSection::TEXT |
+                          CoffSection::EXECUTE |
+                          CoffSection::READ));
     helpers.Add("data", false,
-                BIND::bind(&DirResetFlag, _1, _2, &coffsect->m_flags,
-                           CoffSection::DATA |
-                           CoffSection::READ |
-                           CoffSection::WRITE));
+                TR1::bind(&DirResetFlag, _1, _2, &coffsect->m_flags,
+                          CoffSection::DATA |
+                          CoffSection::READ |
+                          CoffSection::WRITE));
     helpers.Add("rdata", false,
-                BIND::bind(&DirResetFlag, _1, _2, &coffsect->m_flags,
-                           CoffSection::DATA | CoffSection::READ));
+                TR1::bind(&DirResetFlag, _1, _2, &coffsect->m_flags,
+                          CoffSection::DATA | CoffSection::READ));
     helpers.Add("bss", false,
-                BIND::bind(&DirResetFlag, _1, _2, &coffsect->m_flags,
-                           CoffSection::BSS |
-                           CoffSection::READ |
-                           CoffSection::WRITE));
+                TR1::bind(&DirResetFlag, _1, _2, &coffsect->m_flags,
+                          CoffSection::BSS |
+                          CoffSection::READ |
+                          CoffSection::WRITE));
     helpers.Add("info", false,
-                BIND::bind(&DirResetFlag, _1, _2, &coffsect->m_flags,
-                           CoffSection::INFO |
-                           CoffSection::DISCARD |
-                           CoffSection::READ));
+                TR1::bind(&DirResetFlag, _1, _2, &coffsect->m_flags,
+                          CoffSection::INFO |
+                          CoffSection::DISCARD |
+                          CoffSection::READ));
     helpers.Add("align", true,
-                BIND::bind(&DirIntNumPower2, _1, _2, &m_object, align,
-                           has_align));
+                TR1::bind(&DirIntNumPower2, _1, _2, &m_object, align,
+                          has_align));
 }
 
 void

@@ -717,26 +717,26 @@ XdfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
 
     DirHelpers helpers;
     helpers.Add("use16", false,
-                BIND::bind(&DirResetFlag, _1, _2, &xsect->bits, 16));
+                TR1::bind(&DirResetFlag, _1, _2, &xsect->bits, 16));
     helpers.Add("use32", false,
-                BIND::bind(&DirResetFlag, _1, _2, &xsect->bits, 32));
+                TR1::bind(&DirResetFlag, _1, _2, &xsect->bits, 32));
     helpers.Add("use64", false,
-                BIND::bind(&DirResetFlag, _1, _2, &xsect->bits, 64));
-    helpers.Add("bss", false, BIND::bind(&DirSetFlag, _1, _2, &bss, 1));
-    helpers.Add("nobss", false, BIND::bind(&DirClearFlag, _1, _2, &bss, 1));
-    helpers.Add("code", false, BIND::bind(&DirSetFlag, _1, _2, &code, 1));
-    helpers.Add("data", false, BIND::bind(&DirClearFlag, _1, _2, &code, 1));
-    helpers.Add("flat", false, BIND::bind(&DirSetFlag, _1, _2, &flat, 1));
-    helpers.Add("noflat", false, BIND::bind(&DirClearFlag, _1, _2, &flat, 1));
+                TR1::bind(&DirResetFlag, _1, _2, &xsect->bits, 64));
+    helpers.Add("bss", false, TR1::bind(&DirSetFlag, _1, _2, &bss, 1));
+    helpers.Add("nobss", false, TR1::bind(&DirClearFlag, _1, _2, &bss, 1));
+    helpers.Add("code", false, TR1::bind(&DirSetFlag, _1, _2, &code, 1));
+    helpers.Add("data", false, TR1::bind(&DirClearFlag, _1, _2, &code, 1));
+    helpers.Add("flat", false, TR1::bind(&DirSetFlag, _1, _2, &flat, 1));
+    helpers.Add("noflat", false, TR1::bind(&DirClearFlag, _1, _2, &flat, 1));
     helpers.Add("absolute", true,
-                BIND::bind(&DirIntNum, _1, _2, &m_object, &lma,
-                           &xsect->has_addr));
+                TR1::bind(&DirIntNum, _1, _2, &m_object, &lma,
+                          &xsect->has_addr));
     helpers.Add("virtual", true,
-                BIND::bind(&DirIntNum, _1, _2, &m_object, &vma,
-                           &xsect->has_vaddr));
+                TR1::bind(&DirIntNum, _1, _2, &m_object, &vma,
+                          &xsect->has_vaddr));
     helpers.Add("align", true,
-                BIND::bind(&DirIntNumPower2, _1, _2, &m_object, &align,
-                           &has_align));
+                TR1::bind(&DirIntNumPower2, _1, _2, &m_object, &align,
+                          &has_align));
 
     helpers(++nvs.begin(), nvs.end(), info.getSource(), diags,
             DirNameValueWarn);

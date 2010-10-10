@@ -41,9 +41,9 @@ using namespace yasm;
 // quite small.  Also works for loc-loc (or Symbol-loc, loc-Symbol).
 static void
 TransformDistBase(Expr& e, int pos,
-                  const FUNCTION::function<bool (ExprTerm& term,
-                                                 Location loc1,
-                                                 Location loc2)> func)
+                  const TR1::function<bool (ExprTerm& term,
+                                            Location loc1,
+                                            Location loc2)> func)
 {
     ExprTerms& terms = e.getTerms();
     if (pos < 0)
@@ -184,7 +184,7 @@ void
 yasm::SimplifyCalcDist(Expr& e, Diagnostic& diags)
 {
     CalcDistFunctor functor;
-    e.Simplify(diags, BIND::bind(&TransformDistBase, _1, _2, functor));
+    e.Simplify(diags, TR1::bind(&TransformDistBase, _1, _2, functor));
 }
 
 namespace {
@@ -206,20 +206,20 @@ void
 yasm::SimplifyCalcDistNoBC(Expr& e, Diagnostic& diags)
 {
     CalcDistNoBCFunctor functor;
-    e.Simplify(diags, BIND::bind(&TransformDistBase, _1, _2, functor));
+    e.Simplify(diags, TR1::bind(&TransformDistBase, _1, _2, functor));
 }
 
 namespace {
 struct SubstDistFunctor
 {
-    const FUNCTION::function<void (unsigned int subst,
-                                   Location loc,
-                                   Location loc2)>& m_func;
+    const TR1::function<void (unsigned int subst,
+                              Location loc,
+                              Location loc2)>& m_func;
     unsigned int m_subst;
 
-    SubstDistFunctor(const FUNCTION::function<void (unsigned int subst,
-                                                    Location loc,
-                                                    Location loc2)>& func)
+    SubstDistFunctor(const TR1::function<void (unsigned int subst,
+                                               Location loc,
+                                               Location loc2)>& func)
         : m_func(func), m_subst(0)
     {}
 
@@ -238,12 +238,12 @@ struct SubstDistFunctor
 
 int
 yasm::SubstDist(Expr& e, Diagnostic& diags,
-                const FUNCTION::function<void (unsigned int subst,
-                                               Location loc,
-                                               Location loc2)>& func)
+                const TR1::function<void (unsigned int subst,
+                                          Location loc,
+                                          Location loc2)>& func)
 {
     SubstDistFunctor functor(func);
-    e.Simplify(diags, BIND::bind(&TransformDistBase, _1, _2, functor));
+    e.Simplify(diags, TR1::bind(&TransformDistBase, _1, _2, functor));
     return functor.m_subst;
 }
 

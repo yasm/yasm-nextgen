@@ -339,27 +339,27 @@ ParseFlags(Symbol& sym, Diagnostic& diags)
 
     DirHelpers helpers;
     helpers.Add("data", false,
-                BIND::bind(&DirSetFlag, _1, _2, &flags, SYM_DATA));
+                TR1::bind(&DirSetFlag, _1, _2, &flags, SYM_DATA));
     helpers.Add("object", false,
-                BIND::bind(&DirSetFlag, _1, _2, &flags, SYM_DATA));
+                TR1::bind(&DirSetFlag, _1, _2, &flags, SYM_DATA));
     helpers.Add("proc", false,
-                BIND::bind(&DirSetFlag, _1, _2, &flags, SYM_FUNCTION));
+                TR1::bind(&DirSetFlag, _1, _2, &flags, SYM_FUNCTION));
     helpers.Add("function", false,
-                BIND::bind(&DirSetFlag, _1, _2, &flags, SYM_FUNCTION));
+                TR1::bind(&DirSetFlag, _1, _2, &flags, SYM_FUNCTION));
 
     if (vis & Symbol::GLOBAL)
     {
         helpers.Add("export", false,
-                    BIND::bind(&DirSetFlag, _1, _2, &flags, SYM_GLOBAL));
+                    TR1::bind(&DirSetFlag, _1, _2, &flags, SYM_GLOBAL));
     }
     if (vis & Symbol::EXTERN)
     {
         helpers.Add("import", false,
-                    BIND::bind(&DirSetFlag, _1, _2, &flags, SYM_IMPORT));
+                    TR1::bind(&DirSetFlag, _1, _2, &flags, SYM_IMPORT));
         helpers.Add("far", false,
-                    BIND::bind(&DirSetFlag, _1, _2, &flags, SYM_FAR));
+                    TR1::bind(&DirSetFlag, _1, _2, &flags, SYM_FAR));
         helpers.Add("near", false,
-                    BIND::bind(&DirClearFlag, _1, _2, &flags, SYM_FAR));
+                    TR1::bind(&DirClearFlag, _1, _2, &flags, SYM_FAR));
     }
 
     helpers(objext_nvs->begin(), objext_nvs->end(), sym.getDeclSource(), diags,
@@ -1070,29 +1070,29 @@ RdfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
     // FIXME: We don't allow multiple bss sections (for now) because we'd have
     // to merge them before output into a single section.
     //helpers.Add("bss", false,
-    //            BIND::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_BSS));
+    //            TR1::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_BSS));
     helpers.Add("code", false,
-                BIND::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_CODE));
+                TR1::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_CODE));
     helpers.Add("text", false,
-                BIND::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_CODE));
+                TR1::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_CODE));
     helpers.Add("data", false,
-                BIND::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_DATA));
+                TR1::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_DATA));
     helpers.Add("comment", false,
-                BIND::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_COMMENT));
+                TR1::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_COMMENT));
     helpers.Add("lcomment", false,
-                BIND::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_LCOMMENT));
+                TR1::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_LCOMMENT));
     helpers.Add("pcomment", false,
-                BIND::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_PCOMMENT));
+                TR1::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_PCOMMENT));
     helpers.Add("symdebug", false,
-                BIND::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_SYMDEBUG));
-    helpers.Add("linedebug", false, BIND::bind(&DirResetFlag, _1, _2, &type,
-                                               RdfSection::RDF_LINEDEBUG));
-    helpers.Add("reserved", true, BIND::bind(&DirIntNum, _1, _2, &m_object,
-                                             &reserved, &has_reserved));
+                TR1::bind(&DirResetFlag, _1, _2, &type, RdfSection::RDF_SYMDEBUG));
+    helpers.Add("linedebug", false, TR1::bind(&DirResetFlag, _1, _2, &type,
+                                              RdfSection::RDF_LINEDEBUG));
+    helpers.Add("reserved", true, TR1::bind(&DirIntNum, _1, _2, &m_object,
+                                            &reserved, &has_reserved));
 
     helpers(++nvs.begin(), nvs.end(), info.getSource(), diags,
-            BIND::bind(&SetReserved, _1, _2, _3, &m_object, &reserved,
-                       &has_reserved));
+            TR1::bind(&SetReserved, _1, _2, _3, &m_object, &reserved,
+                      &has_reserved));
 
     rsect->type = static_cast<RdfSection::Type>(type);
     if (rsect->type == RdfSection::RDF_UNKNOWN)

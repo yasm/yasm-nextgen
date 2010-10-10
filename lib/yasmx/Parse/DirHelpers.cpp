@@ -76,9 +76,9 @@ DirHelpers::operator()
      NameValues::iterator nv_last,
      SourceLocation dir_source,
      Diagnostic& diags,
-     FUNCTION::function<bool (NameValue& nv,
-                              SourceLocation dir_source,
-                              Diagnostic& diags)>
+     TR1::function<bool (NameValue& nv,
+                         SourceLocation dir_source,
+                         Diagnostic& diags)>
          helper_nameval)
 {
     bool anymatched = false;

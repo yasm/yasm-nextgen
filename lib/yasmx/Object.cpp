@@ -135,7 +135,7 @@ void
 Object::Finalize(Diagnostic& diags)
 {
     std::for_each(m_sections.begin(), m_sections.end(),
-                  BIND::bind(&Section::Finalize, _1, REF::ref(diags)));
+                  TR1::bind(&Section::Finalize, _1, TR1::ref(diags)));
 }
 
 void
@@ -150,7 +150,7 @@ Object::FindSection(llvm::StringRef name)
 {
     section_iterator i =
         std::find_if(m_sections.begin(), m_sections.end(),
-                     BIND::bind(&Section::isName, _1, REF::ref(name)));
+                     TR1::bind(&Section::isName, _1, TR1::ref(name)));
     if (i == m_sections.end())
         return 0;
     return &(*i);

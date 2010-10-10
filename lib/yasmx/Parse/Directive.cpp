@@ -88,7 +88,7 @@ Directives::get(Directive* dir, llvm::StringRef name) const
         return false;
 
     *dir =
-        BIND::bind(&Impl::Dir::operator(), REF::ref(p->second), name, _1, _2);
+        TR1::bind(&Impl::Dir::operator(), TR1::ref(p->second), name, _1, _2);
     return true;
 }
 

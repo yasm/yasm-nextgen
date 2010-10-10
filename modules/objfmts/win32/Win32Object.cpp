@@ -96,51 +96,51 @@ Win32Object::DirSectionInitHelpers(DirHelpers& helpers,
     CoffObject::DirSectionInitHelpers(helpers, csd, align, has_align);
 
     helpers.Add("discard", false,
-                BIND::bind(&DirSetFlag, _1, _2, &csd->m_flags,
-                           CoffSection::DISCARD));
+                TR1::bind(&DirSetFlag, _1, _2, &csd->m_flags,
+                          CoffSection::DISCARD));
     helpers.Add("nodiscard", false,
-                BIND::bind(&DirClearFlag, _1, _2, &csd->m_flags,
-                           CoffSection::DISCARD));
+                TR1::bind(&DirClearFlag, _1, _2, &csd->m_flags,
+                          CoffSection::DISCARD));
     helpers.Add("cache", false,
-                BIND::bind(&DirClearFlag, _1, _2, &csd->m_flags,
-                           CoffSection::NOCACHE));
+                TR1::bind(&DirClearFlag, _1, _2, &csd->m_flags,
+                          CoffSection::NOCACHE));
     helpers.Add("nocache", false,
-                BIND::bind(&DirSetFlag, _1, _2, &csd->m_flags,
-                           CoffSection::NOCACHE));
+                TR1::bind(&DirSetFlag, _1, _2, &csd->m_flags,
+                          CoffSection::NOCACHE));
     helpers.Add("page", false,
-                BIND::bind(&DirClearFlag, _1, _2, &csd->m_flags,
-                           CoffSection::NOPAGE));
+                TR1::bind(&DirClearFlag, _1, _2, &csd->m_flags,
+                          CoffSection::NOPAGE));
     helpers.Add("nopage", false,
-                BIND::bind(&DirSetFlag, _1, _2, &csd->m_flags,
-                           CoffSection::NOPAGE));
+                TR1::bind(&DirSetFlag, _1, _2, &csd->m_flags,
+                          CoffSection::NOPAGE));
     helpers.Add("share", false,
-                BIND::bind(&DirSetFlag, _1, _2, &csd->m_flags,
-                           CoffSection::SHARED));
+                TR1::bind(&DirSetFlag, _1, _2, &csd->m_flags,
+                          CoffSection::SHARED));
     helpers.Add("noshare", false,
-                BIND::bind(&DirClearFlag, _1, _2, &csd->m_flags,
-                           CoffSection::SHARED));
+                TR1::bind(&DirClearFlag, _1, _2, &csd->m_flags,
+                          CoffSection::SHARED));
     helpers.Add("execute", false,
-                BIND::bind(&DirSetFlag, _1, _2, &csd->m_flags,
-                           CoffSection::EXECUTE));
+                TR1::bind(&DirSetFlag, _1, _2, &csd->m_flags,
+                          CoffSection::EXECUTE));
     helpers.Add("noexecute", false,
-                BIND::bind(&DirClearFlag, _1, _2, &csd->m_flags,
-                           CoffSection::EXECUTE));
+                TR1::bind(&DirClearFlag, _1, _2, &csd->m_flags,
+                          CoffSection::EXECUTE));
     helpers.Add("read", false,
-                BIND::bind(&DirSetFlag, _1, _2, &csd->m_flags,
-                           CoffSection::READ));
+                TR1::bind(&DirSetFlag, _1, _2, &csd->m_flags,
+                          CoffSection::READ));
     helpers.Add("noread", false,
-                BIND::bind(&DirClearFlag, _1, _2, &csd->m_flags,
-                           CoffSection::READ));
+                TR1::bind(&DirClearFlag, _1, _2, &csd->m_flags,
+                          CoffSection::READ));
     helpers.Add("write", false,
-                BIND::bind(&DirSetFlag, _1, _2, &csd->m_flags,
-                           CoffSection::WRITE));
+                TR1::bind(&DirSetFlag, _1, _2, &csd->m_flags,
+                          CoffSection::WRITE));
     helpers.Add("nowrite", false,
-                BIND::bind(&DirClearFlag, _1, _2, &csd->m_flags,
-                           CoffSection::WRITE));
+                TR1::bind(&DirClearFlag, _1, _2, &csd->m_flags,
+                          CoffSection::WRITE));
     helpers.Add("base", false,
-                BIND::bind(&setBool, _1, _2, &csd->m_nobase, false));
+                TR1::bind(&setBool, _1, _2, &csd->m_nobase, false));
     helpers.Add("nobase", false,
-                BIND::bind(&setBool, _1, _2, &csd->m_nobase, true));
+                TR1::bind(&setBool, _1, _2, &csd->m_nobase, true));
 }
 
 void

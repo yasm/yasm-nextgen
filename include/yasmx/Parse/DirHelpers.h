@@ -51,7 +51,7 @@ class SourceLocation;
 /// Directive helper function.
 /// @param nv       name/value
 /// @param diags    diagnostic reporting
-typedef FUNCTION::function<void (NameValue& nv, Diagnostic& diags)> DirHelper;
+typedef TR1::function<void (NameValue& nv, Diagnostic& diags)> DirHelper;
 
 /// Helper class to make writing directive handlers easier.
 class YASM_LIB_EXPORT DirHelpers
@@ -84,9 +84,9 @@ public:
          NameValues::iterator nv_last,
          SourceLocation dir_source,
          Diagnostic& diags,
-         FUNCTION::function<bool (NameValue& nv,
-                                  SourceLocation dir_source,
-                                  Diagnostic& diags)>
+         TR1::function<bool (NameValue& nv,
+                             SourceLocation dir_source,
+                             Diagnostic& diags)>
              helper_nameval);
 
 private:

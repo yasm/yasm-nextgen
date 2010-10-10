@@ -508,8 +508,8 @@ X86EAChecker::GetRegUsage(Expr& e, /*@null@*/ int* indexreg, bool* ip_rel)
 {
     if (!ExpandEqu(e))
         return 2;
-    e.Simplify(m_diags, BIND::bind(&X86EAChecker::DistReg, this, _1, _2,
-                                   indexreg == 0),
+    e.Simplify(m_diags, TR1::bind(&X86EAChecker::DistReg, this, _1, _2,
+                                  indexreg == 0),
                indexreg == 0);
 
     // Check for WRT rip first
