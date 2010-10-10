@@ -496,29 +496,29 @@ ElfObject::BuildGlobal(Symbol& sym, Diagnostic& diags)
     DirHelpers helpers;
 
     helpers.Add("function", false,
-                BIND::bind(&DirResetFlag, _1, _2, &type, STT_FUNC));
+                TR1::bind(&DirResetFlag, _1, _2, &type, STT_FUNC));
     helpers.Add("data", false,
-                BIND::bind(&DirResetFlag, _1, _2, &type, STT_OBJECT));
+                TR1::bind(&DirResetFlag, _1, _2, &type, STT_OBJECT));
     helpers.Add("object", false,
-                BIND::bind(&DirResetFlag, _1, _2, &type, STT_OBJECT));
+                TR1::bind(&DirResetFlag, _1, _2, &type, STT_OBJECT));
     helpers.Add("object", false,
-                BIND::bind(&DirResetFlag, _1, _2, &type, STT_OBJECT));
+                TR1::bind(&DirResetFlag, _1, _2, &type, STT_OBJECT));
     helpers.Add("internal", false,
-                BIND::bind(&GlobalSetVis, _1, _2, &vis, &nvis, &vis_source,
-                           STV_INTERNAL));
+                TR1::bind(&GlobalSetVis, _1, _2, &vis, &nvis, &vis_source,
+                          STV_INTERNAL));
     helpers.Add("hidden", false,
-                BIND::bind(&GlobalSetVis, _1, _2, &vis, &nvis, &vis_source,
-                           STV_HIDDEN));
+                TR1::bind(&GlobalSetVis, _1, _2, &vis, &nvis, &vis_source,
+                          STV_HIDDEN));
     helpers.Add("protected", false,
-                BIND::bind(&GlobalSetVis, _1, _2, &vis, &nvis, &vis_source,
-                           STV_PROTECTED));
+                TR1::bind(&GlobalSetVis, _1, _2, &vis, &nvis, &vis_source,
+                          STV_PROTECTED));
 
     NameValues* objext_nvs = getObjextNameValues(sym);
     if (objext_nvs)
     {
         helpers(objext_nvs->begin(), objext_nvs->end(), sym.getDeclSource(),
-                diags, BIND::bind(&GlobalNameValueFallback, _1, _2, _3,
-                                  &m_object, &size));
+                diags, TR1::bind(&GlobalNameValueFallback, _1, _2, _3,
+                                 &m_object, &size));
     }
 
     if (nvis > 1)
@@ -1512,24 +1512,23 @@ ElfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
     for (size_t i=0; i<sizeof(name_flags)/sizeof(name_flags[0]); ++i)
     {
         helpers.Add(name_flags[i].enable, false,
-                    BIND::bind(&DirSetFlag, _1, _2, &flags,
-                               name_flags[i].flag));
+                    TR1::bind(&DirSetFlag, _1, _2, &flags, name_flags[i].flag));
         helpers.Add(name_flags[i].disable, false,
-                    BIND::bind(&DirClearFlag, _1, _2, &flags,
-                               name_flags[i].flag));
+                    TR1::bind(&DirClearFlag, _1, _2, &flags,
+                              name_flags[i].flag));
     }
 
     helpers.Add("noprogbits", false,
-                BIND::bind(&DirResetFlag, _1, _2, &type, SHT_NOBITS));
+                TR1::bind(&DirResetFlag, _1, _2, &type, SHT_NOBITS));
     helpers.Add("nobits", false,
-                BIND::bind(&DirResetFlag, _1, _2, &type, SHT_NOBITS));
+                TR1::bind(&DirResetFlag, _1, _2, &type, SHT_NOBITS));
     helpers.Add("progbits", false,
-                BIND::bind(&DirResetFlag, _1, _2, &type, SHT_PROGBITS));
+                TR1::bind(&DirResetFlag, _1, _2, &type, SHT_PROGBITS));
 
-    helpers.Add("align", true, BIND::bind(&DirIntNumPower2, _1, _2, &m_object,
-                                          &align, &has_align));
-    helpers.Add("merge", true, BIND::bind(&DirIntNum, _1, _2, &m_object,
-                                          &merge, &has_merge));
+    helpers.Add("align", true, TR1::bind(&DirIntNumPower2, _1, _2, &m_object,
+                                         &align, &has_align));
+    helpers.Add("merge", true, TR1::bind(&DirIntNum, _1, _2, &m_object,
+                                         &merge, &has_merge));
 
     helpers(++nvs.begin(), nvs.end(), info.getSource(), diags,
             DirNameValueWarn);

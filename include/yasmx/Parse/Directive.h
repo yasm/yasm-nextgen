@@ -72,8 +72,7 @@ private:
 ///       handler) is free to modify it (specifically the name/values
 ///       portions).  The typical modification performed is to swap or
 ///       otherwise remove values without copying.
-typedef FUNCTION::function<void (DirectiveInfo& info,
-                                 Diagnostic& diags)> Directive;
+typedef TR1::function<void (DirectiveInfo& info, Diagnostic& diags)> Directive;
 
 /// Container to manage and call directive handlers.
 class YASM_LIB_EXPORT Directives
@@ -116,7 +115,7 @@ public:
     {
         for (size_t i=0; i<N; ++i)
             Add(inits[i].name,
-                BIND::bind(inits[i].func, me, _1, _2),
+                TR1::bind(inits[i].func, me, _1, _2),
                 inits[i].flags);
     }
 

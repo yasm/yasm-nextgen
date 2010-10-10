@@ -888,15 +888,15 @@ X86Insn::MatchInfo(const X86InsnInfo& info, const unsigned int* size_lookup,
     if (m_parser == X86Arch::PARSER_GAS && !(gas_flags & GAS_NO_REV))
         return std::equal(m_operands.rbegin(), m_operands.rend(),
                           &insn_operands[info.operands_index],
-                          BIND::bind(&X86Insn::MatchOperand, this, _1, _2,
-                                     REF::ref(m_operands.back()),
-                                     size_lookup, bypass));
+                          TR1::bind(&X86Insn::MatchOperand, this, _1, _2,
+                                    TR1::ref(m_operands.back()),
+                                    size_lookup, bypass));
     else
         return std::equal(m_operands.begin(), m_operands.end(),
                           &insn_operands[info.operands_index],
-                          BIND::bind(&X86Insn::MatchOperand, this, _1, _2,
-                                     REF::ref(m_operands.front()),
-                                     size_lookup, bypass));
+                          TR1::bind(&X86Insn::MatchOperand, this, _1, _2,
+                                    TR1::ref(m_operands.front()),
+                                    size_lookup, bypass));
 #else
     const X86InfoOperand* first2 = &insn_operands[info.operands_index];
     if (m_parser == X86Arch::PARSER_GAS && !(gas_flags & GAS_NO_REV))
@@ -937,8 +937,8 @@ X86Insn::FindMatch(const unsigned int* size_lookup, int bypass) const
     // First match wins.
     const X86InsnInfo* info =
         std::find_if(&m_group[0], &m_group[m_num_info],
-                     BIND::bind(&X86Insn::MatchInfo, this, _1, size_lookup,
-                                bypass));
+                     TR1::bind(&X86Insn::MatchInfo, this, _1, size_lookup,
+                               bypass));
     if (info == &m_group[m_num_info])
         return 0;
     return info;

@@ -417,26 +417,25 @@ BinObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
 
     DirHelpers helpers;
     helpers.Add("follows", true,
-                BIND::bind(&DirString, _1, _2, &bsd->follows, &has_follows));
+                TR1::bind(&DirString, _1, _2, &bsd->follows, &has_follows));
     helpers.Add("vfollows", true,
-                BIND::bind(&DirString, _1, _2, &bsd->vfollows, &has_vfollows));
+                TR1::bind(&DirString, _1, _2, &bsd->vfollows, &has_vfollows));
     helpers.Add("start", true,
-                BIND::bind(&DirExpr, _1, _2, &m_object, &start, &has_start));
+                TR1::bind(&DirExpr, _1, _2, &m_object, &start, &has_start));
     helpers.Add("vstart", true,
-                BIND::bind(&DirExpr, _1, _2, &m_object, &vstart, &has_vstart));
+                TR1::bind(&DirExpr, _1, _2, &m_object, &vstart, &has_vstart));
     helpers.Add("align", true,
-                BIND::bind(&DirIntNumPower2, _1, _2, &m_object, &bsd->align,
-                           &bsd->has_align));
+                TR1::bind(&DirIntNumPower2, _1, _2, &m_object, &bsd->align,
+                          &bsd->has_align));
     helpers.Add("valign", true,
-                BIND::bind(&DirIntNumPower2, _1, _2, &m_object, &bsd->valign,
+                TR1::bind(&DirIntNumPower2, _1, _2, &m_object, &bsd->valign,
                            &bsd->has_valign));
-    helpers.Add("nobits", false, BIND::bind(&DirSetFlag, _1, _2, &bss, 1));
-    helpers.Add("progbits", false, BIND::bind(&DirClearFlag, _1, _2, &bss, 1));
-    helpers.Add("code", false, BIND::bind(&DirSetFlag, _1, _2, &code, 1));
-    helpers.Add("data", false, BIND::bind(&DirClearFlag, _1, _2, &code, 1));
-    helpers.Add("execute", false, BIND::bind(&DirSetFlag, _1, _2, &code, 1));
-    helpers.Add("noexecute", false,
-                BIND::bind(&DirClearFlag, _1, _2, &code, 1));
+    helpers.Add("nobits", false, TR1::bind(&DirSetFlag, _1, _2, &bss, 1));
+    helpers.Add("progbits", false, TR1::bind(&DirClearFlag, _1, _2, &bss, 1));
+    helpers.Add("code", false, TR1::bind(&DirSetFlag, _1, _2, &code, 1));
+    helpers.Add("data", false, TR1::bind(&DirClearFlag, _1, _2, &code, 1));
+    helpers.Add("execute", false, TR1::bind(&DirSetFlag, _1, _2, &code, 1));
+    helpers.Add("noexecute", false, TR1::bind(&DirClearFlag, _1, _2, &code, 1));
 
     helpers(++nvs.begin(), nvs.end(), info.getSource(), diags,
             DirNameValueWarn);
@@ -522,26 +521,26 @@ BinObject::DirMap(DirectiveInfo& info, Diagnostic& diags)
 {
     DirHelpers helpers;
     helpers.Add("all", false,
-                BIND::bind(&DirSetFlag, _1, _2, &m_map_flags,
-                           MAP_BRIEF|MAP_SECTIONS|MAP_SYMBOLS));
+                TR1::bind(&DirSetFlag, _1, _2, &m_map_flags,
+                          MAP_BRIEF|MAP_SECTIONS|MAP_SYMBOLS));
     helpers.Add("brief", false,
-                BIND::bind(&DirSetFlag, _1, _2, &m_map_flags,
-                           static_cast<unsigned long>(MAP_BRIEF)));
+                TR1::bind(&DirSetFlag, _1, _2, &m_map_flags,
+                          static_cast<unsigned long>(MAP_BRIEF)));
     helpers.Add("sections", false,
-                BIND::bind(&DirSetFlag, _1, _2, &m_map_flags,
-                           static_cast<unsigned long>(MAP_SECTIONS)));
+                TR1::bind(&DirSetFlag, _1, _2, &m_map_flags,
+                          static_cast<unsigned long>(MAP_SECTIONS)));
     helpers.Add("segments", false,
-                BIND::bind(&DirSetFlag, _1, _2, &m_map_flags,
-                           static_cast<unsigned long>(MAP_SECTIONS)));
+                TR1::bind(&DirSetFlag, _1, _2, &m_map_flags,
+                          static_cast<unsigned long>(MAP_SECTIONS)));
     helpers.Add("symbols", false,
-                BIND::bind(&DirSetFlag, _1, _2, &m_map_flags,
-                           static_cast<unsigned long>(MAP_SYMBOLS)));
+                TR1::bind(&DirSetFlag, _1, _2, &m_map_flags,
+                          static_cast<unsigned long>(MAP_SYMBOLS)));
 
     m_map_flags |= MAP_NONE;
 
     helpers(info.getNameValues().begin(), info.getNameValues().end(),
             info.getSource(), diags,
-            BIND::bind(&BinObject::setMapFilename, this, _1, _2, _3));
+            TR1::bind(&BinObject::setMapFilename, this, _1, _2, _3));
 }
 
 std::vector<llvm::StringRef>

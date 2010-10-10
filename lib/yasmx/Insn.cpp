@@ -225,13 +225,13 @@ Insn::Insn(const Insn& rhs)
 {
     m_operands.reserve(rhs.m_operands.size());
     std::transform(rhs.m_operands.begin(), rhs.m_operands.end(),
-                   m_operands.begin(), MEMFN::mem_fn(&Operand::clone));
+                   m_operands.begin(), TR1::mem_fn(&Operand::clone));
 }
 
 Insn::~Insn()
 {
     std::for_each(m_operands.begin(), m_operands.end(),
-                  MEMFN::mem_fn(&Operand::Destroy));
+                  TR1::mem_fn(&Operand::Destroy));
 }
 
 bool

@@ -347,7 +347,7 @@ Span::CreateTerms(Optimizer* optimize, Diagnostic& diags)
     if (m_depval.hasAbs())
     {
         SubstDist(*m_depval.getAbs(), diags,
-                  BIND::bind(&Span::AddTerm, this, _1, _2, _3));
+                  TR1::bind(&Span::AddTerm, this, _1, _2, _3));
         if (m_span_terms.size() > 0)
         {
             for (Terms::iterator i=m_span_terms.begin(),
@@ -653,8 +653,8 @@ Optimizer::Step1e()
             continue;
         m_itree.Enumerate(static_cast<long>(span->m_bc.getIndex()),
                           static_cast<long>(span->m_bc.getIndex()),
-                          BIND::bind(&Optimizer::CheckCycle, this, _1,
-                                     REF::ref(*span)));
+                          TR1::bind(&Optimizer::CheckCycle, this, _1,
+                                    TR1::ref(*span)));
     }
 }
 
@@ -717,8 +717,8 @@ Optimizer::Step2()
         // Iterate over all spans dependent across the bc just expanded
         m_itree.Enumerate(static_cast<long>(span->m_bc.getIndex()),
                           static_cast<long>(span->m_bc.getIndex()),
-                          BIND::bind(&Optimizer::ExpandTerm, this, _1,
-                                     len_diff));
+                          TR1::bind(&Optimizer::ExpandTerm, this, _1,
+                                    len_diff));
 
         // Iterate over offset-setters that follow the bc just expanded.
         // Stop iteration if:
@@ -756,8 +756,8 @@ Optimizer::Step2()
             {
                 m_itree.Enumerate(static_cast<long>(os->m_bc->getIndex()),
                                   static_cast<long>(os->m_bc->getIndex()),
-                                  BIND::bind(&Optimizer::ExpandTerm, this, _1,
-                                             len_diff));
+                                  TR1::bind(&Optimizer::ExpandTerm, this, _1,
+                                            len_diff));
             }
 
             os->m_cur_val = os->m_new_val;
@@ -797,8 +797,8 @@ Object::Optimize(Diagnostic& diags)
             bc->setIndex(bc_index++);
             bc->setOffset(offset);
 
-            if (bc->CalcLen(BIND::bind(&Optimizer::AddSpan, &opt,
-                                       _1, _2, _3, _4, _5),
+            if (bc->CalcLen(TR1::bind(&Optimizer::AddSpan, &opt,
+                                      _1, _2, _3, _4, _5),
                             diags))
             {
                 if (bc->getSpecial() == Bytecode::Contents::SPECIAL_OFFSET)

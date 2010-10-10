@@ -70,12 +70,11 @@ public:
     /// @param value        dependent value for bytecode expansion
     /// @param neg_thres    negative threshold for long/short decision
     /// @param pos_thres    positive threshold for long/short decision
-    typedef
-        FUNCTION::function<void (Bytecode& bc,
-                                 int id,
-                                 const Value& value,
-                                 long neg_thres,
-                                 long pos_thres)>
+    typedef TR1::function<void (Bytecode& bc,
+                                int id,
+                                const Value& value,
+                                long neg_thres,
+                                long pos_thres)>
         AddSpanFunc;
 
     typedef std::auto_ptr<Bytecode> Ptr;

@@ -70,7 +70,7 @@ public:
     IntervalTreeNode<T>* getPredecessor(IntervalTreeNode<T>*) const;
     IntervalTreeNode<T>* getSuccessor(IntervalTreeNode<T>*) const;
     void Enumerate(long low, long high,
-                   FUNCTION::function<void (IntervalTreeNode<T>*)> callback);
+                   TR1::function<void (IntervalTreeNode<T>*)> callback);
     void Put(llvm::raw_ostream& os) const;
 #ifdef YASM_INTERVAL_TREE_CHECK_ASSUMPTIONS
     void CheckAssumptions() const;
@@ -897,7 +897,7 @@ IntervalTree<T>::DeleteNode(IntervalTreeNode<T>* z, long& low, long& high)
 template <typename T>
 void
 IntervalTree<T>::Enumerate(long low, long high,
-    FUNCTION::function<void (IntervalTreeNode<T>*)> callback)
+    TR1::function<void (IntervalTreeNode<T>*)> callback)
 {
     std::vector<RecursionNode> recursionNodeStack(1);
 

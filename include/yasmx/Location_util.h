@@ -62,9 +62,9 @@ void SimplifyCalcDistNoBC(Expr& e, Diagnostic& diags);
 
 YASM_LIB_EXPORT
 int SubstDist(Expr& e, Diagnostic& diags,
-              const FUNCTION::function<void (unsigned int subst,
-                                             Location loc,
-                                             Location loc2)>& func);
+              const TR1::function<void (unsigned int subst,
+                                        Location loc,
+                                        Location loc2)>& func);
 
 /// Try to evaluate an expression down to a single integer or float term.
 /// Unlike SimplifyCalcDist(), does not modify the expression.

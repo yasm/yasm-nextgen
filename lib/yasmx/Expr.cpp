@@ -290,7 +290,7 @@ Expr::Cleanup()
 {
     ExprTerms::iterator erasefrom =
         std::remove_if(m_terms.begin(), m_terms.end(),
-                       BIND::bind(&ExprTerm::isEmpty, _1));
+                       TR1::bind(&ExprTerm::isEmpty, _1));
     m_terms.erase(erasefrom, m_terms.end());
 }
 

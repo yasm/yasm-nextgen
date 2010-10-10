@@ -172,6 +172,7 @@ if test $ac_cv_header_tr1_functional = yes ; then
   echo "#include <tr1/functional>" >> functional_includes
 fi
 
+echo "namespace TR1 = $tr1_namespace;" > functional_aliases
 if test tr1_header = boost ; then
   cat <<EOF >> functional_includes
 #include <boost/function.hpp>
@@ -179,20 +180,8 @@ if test tr1_header = boost ; then
 #include <boost/bind.hpp>
 #include <boost/mem_fn.hpp>
 EOF
-  cat <<EOF > functional_aliases
-namespace FUNCTION = boost;
-namespace REF = boost;
-namespace BIND = boost;
-namespace MEMFN = boost;
-EOF
 else
-  cat <<EOF > functional_aliases
-namespace FUNCTION = $tr1_namespace;
-namespace REF = $tr1_namespace;
-namespace BIND = $tr1_namespace;
-using namespace $tr1_namespace::placeholders;
-namespace MEMFN = $tr1_namespace;
-EOF
+  echo "using namespace $tr1_namespace::placeholders;" >> functional_aliases
 fi
 FUNCTIONAL_INCLUDES=functional_includes
 FUNCTIONAL_ALIASES=functional_aliases
