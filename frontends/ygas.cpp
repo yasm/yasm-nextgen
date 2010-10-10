@@ -127,13 +127,6 @@ static cl::list<std::string> include_paths("I",
 static cl::opt<bool> show_license("license",
     cl::desc("Show license text"));
 
-// --plugin
-#ifndef BUILD_STATIC
-static cl::list<std::string> plugin_names("plugin",
-    cl::desc("Load plugin module"),
-    cl::value_desc("plugin"));
-#endif
-
 // -o
 static cl::opt<std::string> obj_filename("o",
     cl::desc("Name of object-file output"),
@@ -490,16 +483,6 @@ main(int argc, char* argv[])
         diags.Report(yasm::diag::fatal_standard_modules);
         return EXIT_FAILURE;
     }
-
-#ifndef BUILD_STATIC
-    // Load plugins
-    for (std::vector<std::string>::const_iterator i=plugin_names.begin(),
-         end=plugin_names.end(); i != end; ++i)
-    {
-        if (!yasm::LoadPlugin(*i))
-            diags.Report(yasm::diag::warn_plugin_load) << *i;
-    }
-#endif
 
     // Default to stdin if no filename specified.
     if (in_filename.empty())
