@@ -1,34 +1,21 @@
-Welcome to Yasm-C++!
+Welcome to ygas!
 
-This project is a translation of the Yasm C code into ANSI/ISO C++.
-It's very much an experimental project at the time of this writing,
-so don't expect anything to really work, and expect that the code may
-change drastically with little notice.
+This is a repackaged and slimmed down version of yasm that implements only
+the GNU as syntax and command line "ygas" frontend and the ELF/DWARF backend.
+It is intended for use only on UNIX systems, and can serve as a drop-in
+replacement for GNU as by simply renaming "ygas" to "as".
 
 Prerequisites (what you need):
 
   * A standards-conforming C++ compiler (e.g. GCC 3.4+)
-  * CMake 2.4+; 2.8+ recommended (http://www.cmake.org/)
   * Python (http://www.python.org/)
 
-If you want to build unit tests, you will also need:
-  * GoogleMock (http://code.google.com/p/googlemock/)
-  * GoogleTest (http://code.google.com/p/googletest/)
-
 If your C++ installation does not have TR1 functional headers, you will also
-need Boost 1.33.1+ (http://www.boost.org/).  The configuration process will
-autodetect this and report an error if it requires Boost and you do not have
-it.
-
-Also recommended (for development):
-
-  * STLFilt (http://www.bdsoft.com/tools/stlfilt.html)
-
-STLFilt makes C++ compiler error messages relatively readable.
+need Boost 1.33.1+ (http://www.boost.org/).
 
 
-Building Yasm-C++ On UNIX
-=========================
+Building On UNIX
+================
 
 The standard build setup places the object directory separately from the
 source.  This makes it easier to clean up any temporary build files as well
@@ -38,31 +25,8 @@ noisy.  The standard place to put this for Yasm is "objdir".
 To prepare your working copy for building, run:
   % mkdir objdir
   % cd objdir
-  % cmake ..
-
-Alternatively, you can run "ccmake .." which will display a text-mode GUI
-that shows some of the configurable options.  Options may also be specified
-on the cmake command line; e.g.:
-  % cmake -DCMAKE_CXX_COMPILER=`which gfilt` ..
-(this sets the C++ compiler to gfilt, the stlfilt frontend)
-
-If you don't want to build unit tests, add -DBUILD_TESTS=NO to the cmake line.
-This also removes the GoogleTest and GoogleMock build dependencies.
-  % cmake -DBUILD_TESTS=NO ..
+  % ../configure
 
 Then to build:
   % make
 
-Test:
-  % make test
-
-etc.
-
-
-Building Yasm-C++ On Windows
-============================
-
-Create an object directory for the build.  Use cmake's gui to select the
-source and object directories.  CMake may need some help in finding
-prerequisites on Windows; it will tell you if it can't find a tool it needs
-and will not produce build files until all prerequisites are met.
