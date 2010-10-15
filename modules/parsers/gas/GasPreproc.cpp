@@ -35,9 +35,6 @@
 
 #include "GasLexer.h"
 
-using namespace yasm;
-using namespace yasm::parser;
-
 GasPreproc::GasPreproc(Diagnostic& diags,
                        SourceManager& sm,
                        HeaderSearch& headers)

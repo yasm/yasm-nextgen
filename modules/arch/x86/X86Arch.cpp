@@ -43,9 +43,6 @@
 #include "X86RegisterGroup.h"
 
 
-using namespace yasm;
-using namespace yasm::arch;
-
 X86Arch::X86Arch(const ArchModule& module)
     : Arch(module),
       m_amd64_machine(false),

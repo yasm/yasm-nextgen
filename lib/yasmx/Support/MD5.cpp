@@ -33,8 +33,6 @@
 #include <cstring>
 
 
-using namespace yasm;
-
 /* Little-endian byte-swapping routines.  Note that these do not
    depend on the size of datatypes such as cvs_uint32, nor do they require
    us to detect the endianness of the machine we are running on.  It

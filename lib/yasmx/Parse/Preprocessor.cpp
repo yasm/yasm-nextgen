@@ -36,8 +36,6 @@
 #include "yasmx/Parse/HeaderSearch.h"
 
 
-using namespace yasm;
-
 Preprocessor::Preprocessor(Diagnostic& diags,
                            SourceManager& sm,
                            HeaderSearch& headers)

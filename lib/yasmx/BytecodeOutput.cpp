@@ -29,8 +29,6 @@
 #include "yasmx/Basic/Diagnostic.h"
 
 
-using namespace yasm;
-
 BytecodeOutput::BytecodeOutput(Diagnostic& diags)
     : m_diags(diags), m_num_output(0)
 {

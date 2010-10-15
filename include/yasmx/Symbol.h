@@ -38,9 +38,6 @@
 #include "yasmx/Location.h"
 
 
-namespace yasm
-{
-
 class Diagnostic;
 class Expr;
 class Object;
@@ -253,7 +250,5 @@ Symbol::getEqu() const
         return m_equ.get();
     return 0;
 }
-
-} // namespace yasm
 
 #endif

@@ -53,9 +53,6 @@
 #include "GasStringParser.h"
 
 
-using namespace yasm;
-using namespace yasm::parser;
-
 bool
 GasParser::getLocalLabel(llvm::SmallVectorImpl<char>& name,
                          llvm::StringRef num,

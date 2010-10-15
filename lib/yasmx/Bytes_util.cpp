@@ -35,30 +35,28 @@
 #include "yasmx/IntNum.h"
 
 
-using namespace yasm;
-
 static llvm::APInt staticbv(IntNum::BITVECT_NATIVE_SIZE, 0);
 
 void
-yasm::Write8(Bytes& bytes, const IntNum& intn)
+Write8(Bytes& bytes, const IntNum& intn)
 {
     bytes.push_back(static_cast<unsigned char>(intn.Extract(8, 0)));
 }
 
 void
-yasm::Write16(Bytes& bytes, const IntNum& intn)
+Write16(Bytes& bytes, const IntNum& intn)
 {
     Write16(bytes, static_cast<unsigned int>(intn.Extract(16, 0)));
 }
 
 void
-yasm::Write32(Bytes& bytes, const IntNum& intn)
+Write32(Bytes& bytes, const IntNum& intn)
 {
     Write32(bytes, intn.Extract(32, 0));
 }
 
 void
-yasm::Write64(Bytes& bytes, const IntNum& intn)
+Write64(Bytes& bytes, const IntNum& intn)
 {
     unsigned long low = intn.Extract(32, 0);
     unsigned long high = intn.Extract(32, 32);
@@ -92,7 +90,7 @@ Write64I(Bytes& bytes, uint64_t val)
 }
 
 void
-yasm::WriteN(Bytes& bytes, const IntNum& intn, int n)
+WriteN(Bytes& bytes, const IntNum& intn, int n)
 {
     assert((n & 7) == 0 && "n must be a multiple of 8");
 
@@ -158,7 +156,7 @@ yasm::WriteN(Bytes& bytes, const IntNum& intn, int n)
 }
  
 void
-yasm::WriteN(Bytes& bytes, unsigned long val, int n)
+WriteN(Bytes& bytes, unsigned long val, int n)
 {
     assert((n & 7) == 0 && "n must be a multiple of 8");
     if (bytes.isBigEndian())

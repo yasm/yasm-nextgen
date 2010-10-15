@@ -2,8 +2,6 @@
 // rev 5
 #include <yasmx/System/plugin.h>
 
-using namespace yasm;
-
 void yasm_arch_x86_DoRegister();
 void yasm_dbgfmt_dwarf2_DoRegister();
 void yasm_dbgfmt_null_DoRegister();
@@ -12,7 +10,7 @@ void yasm_objfmt_elf_DoRegister();
 void yasm_parser_gas_DoRegister();
 
 bool
-yasm::LoadStandardPlugins()
+LoadStandardPlugins()
 {
     yasm_arch_x86_DoRegister();
     yasm_dbgfmt_dwarf2_DoRegister();

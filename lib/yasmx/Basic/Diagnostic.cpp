@@ -27,7 +27,6 @@
 #include <vector>
 #include <map>
 #include <cstring>
-using namespace yasm;
 
 //===----------------------------------------------------------------------===//
 // Builtin Diagnostic information
@@ -148,7 +147,6 @@ static unsigned getBuiltinDiagClass(unsigned DiagID) {
 // Custom Diagnostic information
 //===----------------------------------------------------------------------===//
 
-namespace yasm {
   namespace diag {
     class CustomDiagInfo {
       typedef std::pair<Diagnostic::Level, std::string> DiagDesc;
@@ -188,7 +186,6 @@ namespace yasm {
     };
 
   } // end diag namespace
-} // end yasm namespace
 
 
 //===----------------------------------------------------------------------===//

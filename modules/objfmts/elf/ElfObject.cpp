@@ -73,9 +73,6 @@
 #include "ElfTypes.h"
 
 
-using namespace yasm;
-using namespace yasm::objfmt;
-
 static inline bool
 isLocal(const Symbol& sym)
 {

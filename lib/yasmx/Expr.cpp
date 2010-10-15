@@ -38,8 +38,6 @@
 #include "yasmx/Symbol.h"
 
 
-using namespace yasm;
-
 /// Look for simple identities that make the entire result constant:
 /// 0*&x, -1|x, etc.
 static inline bool
@@ -84,11 +82,11 @@ isRightIdentity(Op::Op op, const IntNum& intn)
 }
 
 bool
-yasm::CalcFloat(llvm::APFloat* lhs,
-                Op::Op op,
-                const llvm::APFloat& rhs,
-                SourceLocation source,
-                Diagnostic& diags)
+CalcFloat(llvm::APFloat* lhs,
+          Op::Op op,
+          const llvm::APFloat& rhs,
+          SourceLocation source,
+          Diagnostic& diags)
 {
     llvm::APFloat::opStatus status;
     switch (op)
@@ -134,37 +132,37 @@ yasm::CalcFloat(llvm::APFloat* lhs,
     return true;
 }
 
-const ExprBuilder yasm::ADD = {Op::ADD};
-const ExprBuilder yasm::SUB = {Op::SUB};
-const ExprBuilder yasm::MUL = {Op::MUL};
-const ExprBuilder yasm::DIV = {Op::DIV};
-const ExprBuilder yasm::SIGNDIV = {Op::SIGNDIV};
-const ExprBuilder yasm::MOD = {Op::MOD};
-const ExprBuilder yasm::SIGNMOD = {Op::SIGNMOD};
-const ExprBuilder yasm::NEG = {Op::NEG};
-const ExprBuilder yasm::NOT = {Op::NOT};
-const ExprBuilder yasm::OR = {Op::OR};
-const ExprBuilder yasm::AND = {Op::AND};
-const ExprBuilder yasm::XOR = {Op::XOR};
-const ExprBuilder yasm::XNOR = {Op::XNOR};
-const ExprBuilder yasm::NOR = {Op::NOR};
-const ExprBuilder yasm::SHL = {Op::SHL};
-const ExprBuilder yasm::SHR = {Op::SHR};
-const ExprBuilder yasm::LOR = {Op::LOR};
-const ExprBuilder yasm::LAND = {Op::LAND};
-const ExprBuilder yasm::LNOT = {Op::LNOT};
-const ExprBuilder yasm::LXOR = {Op::LXOR};
-const ExprBuilder yasm::LXNOR = {Op::LXNOR};
-const ExprBuilder yasm::LNOR = {Op::LNOR};
-const ExprBuilder yasm::LT = {Op::LT};
-const ExprBuilder yasm::GT = {Op::GT};
-const ExprBuilder yasm::EQ = {Op::EQ};
-const ExprBuilder yasm::LE = {Op::LE};
-const ExprBuilder yasm::GE = {Op::GE};
-const ExprBuilder yasm::NE = {Op::NE};
-const ExprBuilder yasm::SEG = {Op::SEG};
-const ExprBuilder yasm::WRT = {Op::WRT};
-const ExprBuilder yasm::SEGOFF = {Op::SEGOFF};
+const ExprBuilder ADD = {Op::ADD};
+const ExprBuilder SUB = {Op::SUB};
+const ExprBuilder MUL = {Op::MUL};
+const ExprBuilder DIV = {Op::DIV};
+const ExprBuilder SIGNDIV = {Op::SIGNDIV};
+const ExprBuilder MOD = {Op::MOD};
+const ExprBuilder SIGNMOD = {Op::SIGNMOD};
+const ExprBuilder NEG = {Op::NEG};
+const ExprBuilder NOT = {Op::NOT};
+const ExprBuilder OR = {Op::OR};
+const ExprBuilder AND = {Op::AND};
+const ExprBuilder XOR = {Op::XOR};
+const ExprBuilder XNOR = {Op::XNOR};
+const ExprBuilder NOR = {Op::NOR};
+const ExprBuilder SHL = {Op::SHL};
+const ExprBuilder SHR = {Op::SHR};
+const ExprBuilder LOR = {Op::LOR};
+const ExprBuilder LAND = {Op::LAND};
+const ExprBuilder LNOT = {Op::LNOT};
+const ExprBuilder LXOR = {Op::LXOR};
+const ExprBuilder LXNOR = {Op::LXNOR};
+const ExprBuilder LNOR = {Op::LNOR};
+const ExprBuilder LT = {Op::LT};
+const ExprBuilder GT = {Op::GT};
+const ExprBuilder EQ = {Op::EQ};
+const ExprBuilder LE = {Op::LE};
+const ExprBuilder GE = {Op::GE};
+const ExprBuilder NE = {Op::NE};
+const ExprBuilder SEG = {Op::SEG};
+const ExprBuilder WRT = {Op::WRT};
+const ExprBuilder SEGOFF = {Op::SEGOFF};
 
 ExprTerm::ExprTerm(std::auto_ptr<IntNum> intn,
                    SourceLocation source,
@@ -1006,7 +1004,7 @@ Expr::Print(llvm::raw_ostream& os, int base) const
 }
 
 bool
-yasm::getChildren(Expr& e, /*@out@*/ int* lhs, /*@out@*/ int* rhs, int* pos)
+getChildren(Expr& e, /*@out@*/ int* lhs, /*@out@*/ int* rhs, int* pos)
 {
     ExprTerms& terms = e.getTerms();
     if (*pos < 0)
@@ -1051,11 +1049,11 @@ yasm::getChildren(Expr& e, /*@out@*/ int* lhs, /*@out@*/ int* rhs, int* pos)
 }
 
 bool
-yasm::isNeg1Sym(Expr& e,
-                /*@out@*/ int* sym,
-                /*@out@*/ int* neg1,
-                int* pos,
-                bool loc_ok)
+isNeg1Sym(Expr& e,
+          /*@out@*/ int* sym,
+          /*@out@*/ int* neg1,
+          int* pos,
+          bool loc_ok)
 {
     ExprTerms& terms = e.getTerms();
     if (*pos < 0)

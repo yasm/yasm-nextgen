@@ -41,9 +41,6 @@ class APFloat;
 struct fltSemantics;
 }
 
-namespace yasm
-{
-
 class IntNum;
 
 /// This performs strict semantic analysis of the content of a ppnumber,
@@ -120,7 +117,5 @@ protected:
         return ptr;
     }
 };
-
-} // namespace yasm
 
 #endif

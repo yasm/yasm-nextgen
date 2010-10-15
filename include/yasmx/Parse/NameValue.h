@@ -39,9 +39,6 @@
 #include "yasmx/Expr.h"
 
 
-namespace yasm
-{
-
 class Object;
 
 /// Name/value pair.
@@ -235,22 +232,20 @@ swap(NameValues& left, NameValues& right)
     left.swap(right);
 }
 
-} // namespace yasm
-
 namespace std
 {
 
 // Specialized std::swap.
 template <>
 inline void
-swap(yasm::NameValue& left, yasm::NameValue& right)
+swap(NameValue& left, NameValue& right)
 {
     left.swap(right);
 }
 
 template <>
 inline void
-swap(yasm::NameValues& left, yasm::NameValues& right)
+swap(NameValues& left, NameValues& right)
 {
     left.swap(right);
 }

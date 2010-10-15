@@ -33,17 +33,15 @@
 #include "yasmx/NumericOutput.h"
 
 
-using namespace yasm;
-
 void
-yasm::AppendByte(BytecodeContainer& container, unsigned char val)
+AppendByte(BytecodeContainer& container, unsigned char val)
 {
     Bytecode& bc = container.FreshBytecode();
     Write8(bc.getFixed(), val);
 }
 
 void
-yasm::AppendData(BytecodeContainer& container,
+AppendData(BytecodeContainer& container,
                  const IntNum& val,
                  unsigned int size,
                  const Arch& arch)
@@ -59,7 +57,7 @@ yasm::AppendData(BytecodeContainer& container,
 }
 
 void
-yasm::AppendData(BytecodeContainer& container,
+AppendData(BytecodeContainer& container,
                  const IntNum& val,
                  unsigned int size,
                  EndianState endian)
@@ -75,7 +73,7 @@ yasm::AppendData(BytecodeContainer& container,
 }
 
 void
-yasm::AppendData(BytecodeContainer& container,
+AppendData(BytecodeContainer& container,
                  std::auto_ptr<Expr> expr,
                  unsigned int size,
                  const Arch& arch,
@@ -93,7 +91,7 @@ yasm::AppendData(BytecodeContainer& container,
 }
 
 void
-yasm::AppendData(BytecodeContainer& container,
+AppendData(BytecodeContainer& container,
                  llvm::StringRef str,
                  bool append_zero)
 {
@@ -105,7 +103,7 @@ yasm::AppendData(BytecodeContainer& container,
 }
 
 void
-yasm::AppendData(BytecodeContainer& container,
+AppendData(BytecodeContainer& container,
                  llvm::StringRef str,
                  unsigned int size,
                  bool append_zero)

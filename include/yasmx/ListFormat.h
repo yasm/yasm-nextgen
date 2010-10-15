@@ -37,9 +37,6 @@
 
 namespace llvm { class raw_ostream; }
 
-namespace yasm
-{
-
 class Arch;
 class Directives;
 class Linemap;
@@ -110,7 +107,5 @@ public:
         return std::auto_ptr<ListFormat>(new ListFormatImpl(*this));
     }
 };
-
-} // namespace yasm
 
 #endif

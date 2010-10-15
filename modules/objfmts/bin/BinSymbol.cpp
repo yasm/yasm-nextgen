@@ -35,9 +35,6 @@
 #include "BinSection.h"
 
 
-using namespace yasm;
-using namespace yasm::objfmt;
-
 const char* BinSymbol::key = "objfmt::bin::BinSymbol";
 
 BinSymbol::BinSymbol(const Section& sect,
@@ -78,7 +75,7 @@ BinSymbol::getValue(IntNum* val) const
 }
 
 void
-objfmt::BinSimplify(Expr& e)
+BinSimplify(Expr& e)
 {
     for (ExprTerms::iterator i=e.getTerms().begin(),
          end=e.getTerms().end(); i != end; ++i)

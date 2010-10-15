@@ -36,9 +36,6 @@
 
 namespace llvm { class raw_ostream; }
 
-namespace yasm
-{
-
 /// A vector of bytes.
 class Bytes
     : private std::vector<unsigned char>
@@ -115,15 +112,13 @@ swap(Bytes& left, Bytes& right)
     left.swap(right);
 }
 
-} // namespace yasm
-
 namespace std
 {
 
 // Specialized std::swap.
 template <>
 inline void
-swap(yasm::Bytes& left, yasm::Bytes& right)
+swap(Bytes& left, Bytes& right)
 {
     left.swap(right);
 }

@@ -42,8 +42,6 @@
 #include "yasmx/ObjectFormat.h"
 
 
-using namespace yasm;
-
 namespace {
 class NocaseEquals
 {

@@ -36,9 +36,6 @@
 #include "Dwarf2Section.h"
 
 
-using namespace yasm;
-using namespace yasm::dbgfmt;
-
 Section&
 Dwarf2Debug::Generate_aranges(Section& debug_info)
 {

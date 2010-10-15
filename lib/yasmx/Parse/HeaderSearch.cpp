@@ -36,8 +36,6 @@
 #include "yasmx/Parse/IdentifierTable.h"
 #include <cstdio>
 
-using namespace yasm;
-
 #if 0
 const IdentifierInfo *
 HeaderFileInfo::getControllingMacro(ExternalIdentifierLookup *External) {

@@ -26,13 +26,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-namespace yasm
-{
-
 class Bytes;
-
-namespace arch
-{
 
 class X86Opcode
 {
@@ -78,7 +72,5 @@ private:
     unsigned char m_opcode[3];      // opcode
     unsigned char m_len;
 };
-
-}} // namespace yasm::arch
 
 #endif

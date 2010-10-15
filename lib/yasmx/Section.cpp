@@ -31,8 +31,6 @@
 #include "yasmx/Reloc.h"
 
 
-using namespace yasm;
-
 Section::Section(llvm::StringRef name,
                  bool code,
                  bool bss,

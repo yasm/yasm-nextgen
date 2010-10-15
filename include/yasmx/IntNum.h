@@ -40,8 +40,6 @@
 #include "yasmx/Op.h"
 
 
-namespace yasm
-{
 class Diagnostic;
 
 /// Check to see if APInt will fit without overflow into size bits.
@@ -507,15 +505,13 @@ operator<< (llvm::raw_ostream& os, const IntNum& intn)
     return os;
 }
 
-} // namespace yasm
-
 namespace std
 {
 
 /// Specialized std::swap.
 template <>
 inline void
-swap(yasm::IntNum& left, yasm::IntNum& right)
+swap(IntNum& left, IntNum& right)
 {
     left.swap(right);
 }

@@ -54,9 +54,6 @@
 #endif
 
 
-using namespace yasm;
-using namespace yasm::arch;
-
 static std::string CpuFindReverse(unsigned int cpu0, unsigned int cpu1,
                                   unsigned int cpu2);
 
@@ -215,7 +212,6 @@ enum X86OperandPostAction
 };
 } // anonymous namespace
 
-namespace yasm { namespace arch {
 struct X86InfoOperand
 {
     // Operand types.  These are more detailed than the "general" types for all
@@ -319,7 +315,6 @@ struct X86InsnInfo
     // operand, see above
     unsigned int operands_index:12;
 };
-}} // namespace yasm::arch
 
 inline
 X86Prefix::X86Prefix(Type type, unsigned char value)

@@ -29,8 +29,6 @@
 #include "llvm/Support/raw_ostream.h"
 
 
-using namespace yasm;
-
 StringTable::StringTable(unsigned long first_index)
     : m_first_index(first_index)
 {

@@ -30,18 +30,12 @@
 #include "yasmx/Bytes.h"
 
 
-namespace yasm
-{
-
 class Bytecode;
 class Diagnostic;
 class IntNum;
 class Object;
 class Section;
 class Value;
-
-namespace objfmt
-{
 
 class BinObject;
 struct BinSection;
@@ -96,7 +90,5 @@ private:
     BinGroups m_lma_groups, m_vma_groups;
     stdx::ptr_vector_owner<BinGroup> m_lma_groups_owner, m_vma_groups_owner;
 };
-
-}} // namespace yasm::objfmt
 
 #endif

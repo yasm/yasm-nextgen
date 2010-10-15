@@ -32,10 +32,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 
-using namespace yasm;
-
 llvm::raw_ostream&
-yasm::operator<< (llvm::raw_ostream& os, const Bytes& bytes)
+operator<< (llvm::raw_ostream& os, const Bytes& bytes)
 {
     if (bytes.empty())
         return os;

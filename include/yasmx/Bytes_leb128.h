@@ -32,9 +32,6 @@
 #include "yasmx/IntNum.h"
 
 
-namespace yasm
-{
-
 class Bytes;
 class InputBuffer;
 
@@ -117,7 +114,5 @@ ReadULEB128(InputBuffer& input, /*@out@*/ unsigned long* size = 0)
 {
     return ReadLEB128(input, false, size);
 }
-
-} // namespace yasm
 
 #endif

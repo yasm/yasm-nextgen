@@ -28,8 +28,6 @@ class MemoryBuffer;
 class StringRef;
 }
 
-namespace yasm {
-
 class Diagnostic;
 class SourceManager;
 class FileManager;
@@ -868,8 +866,5 @@ private:
   getDecomposedSpellingLocSlowCase(const SrcMgr::SLocEntry *E,
                                    unsigned Offset) const;
 };
-
-
-}  // end namespace yasm
 
 #endif

@@ -42,9 +42,6 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace yasm
-{
-
 class Bytecode;
 class Object;
 class Reloc;
@@ -189,7 +186,5 @@ private:
     Relocs m_relocs;
     stdx::ptr_vector_owner<Reloc> m_relocs_owner;
 };
-
-} // namespace yasm
 
 #endif

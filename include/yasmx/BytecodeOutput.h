@@ -40,9 +40,6 @@
 
 namespace llvm { class raw_ostream; }
 
-namespace yasm
-{
-
 class Bytecode;
 
 /// Bytecode output interface.
@@ -255,7 +252,5 @@ protected:
 
     llvm::raw_ostream& m_os;
 };
-
-} // namespace yasm
 
 #endif

@@ -29,9 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-namespace yasm
-{
-
 namespace Op
 {
     /// Operators usable in expressions.
@@ -90,7 +87,5 @@ bool isCommutative(Op::Op op);
 /// @return True if op is associative (A op (B op C) === (A op B) op C),
 ///         false otherwise.
 bool isAssociative(Op::Op op);
-
-} // namespace yasm
 
 #endif

@@ -7,9 +7,6 @@
  * $Id: md5.h 1825 2007-04-22 03:32:46Z peter $
  */
 
-namespace yasm
-{
-
 /* Unlike previous versions of this code, uint32 need not be exactly
    32 bits, merely 32 bits or more.  Choosing a data type which is 32
    bits instead of 64 is not important; speed is considerably more
@@ -37,7 +34,5 @@ MD5::MD5()
 {
     Init();
 }
-
-} // namespace yasm
 
 #endif

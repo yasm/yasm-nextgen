@@ -30,8 +30,6 @@
 #include "yasmx/ListFormat.h"
 
 
-using namespace yasm;
-
 ListFormat::~ListFormat()
 {
 }

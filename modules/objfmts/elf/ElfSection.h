@@ -39,16 +39,10 @@
 
 namespace llvm { class MemoryBuffer; }
 
-namespace yasm
-{
-
 class Bytes;
 class Diagnostic;
 class Section;
 class StringTable;
-
-namespace objfmt
-{
 
 class ElfSection : public AssocData
 {
@@ -168,7 +162,5 @@ private:
 //   for all others:
 //     link -> SHN_UNDEF
 //     info -> 0
-
-}} // namespace yasm::objfmt
 
 #endif

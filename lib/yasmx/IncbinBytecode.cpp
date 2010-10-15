@@ -37,8 +37,6 @@
 #include "yasmx/Value.h"
 
 
-using namespace yasm;
-
 namespace {
 class IncbinBytecode : public Bytecode::Contents
 {
@@ -206,7 +204,7 @@ IncbinBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 llvm::StringRef
 IncbinBytecode::getType() const
 {
-    return "yasm::IncbinBytecode";
+    return "IncbinBytecode";
 }
 
 IncbinBytecode*
@@ -218,11 +216,11 @@ IncbinBytecode::clone() const
 }
 
 void
-yasm::AppendIncbin(BytecodeContainer& container,
-                   llvm::StringRef filename,
-                   /*@null@*/ std::auto_ptr<Expr> start,
-                   /*@null@*/ std::auto_ptr<Expr> maxlen,
-                   SourceLocation source)
+AppendIncbin(BytecodeContainer& container,
+             llvm::StringRef filename,
+             /*@null@*/ std::auto_ptr<Expr> start,
+             /*@null@*/ std::auto_ptr<Expr> maxlen,
+             SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     bc.Transform(Bytecode::Contents::Ptr(

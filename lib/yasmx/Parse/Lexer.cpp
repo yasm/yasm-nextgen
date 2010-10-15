@@ -37,8 +37,6 @@
 #include "yasmx/Parse/Preprocessor.h"
 
 
-using namespace yasm;
-
 unsigned char Lexer::s_char_info[256];
 
 void

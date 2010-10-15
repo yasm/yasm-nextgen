@@ -35,8 +35,6 @@
 #include "yasmx/Symbol.h"
 
 
-using namespace yasm;
-
 namespace {
 class ObjextNameValues : public AssocData
 {
@@ -84,14 +82,14 @@ CommonSize::~CommonSize()
 }
 
 void
-yasm::setObjextNameValues(Symbol& sym, NameValues& objext_namevals)
+setObjextNameValues(Symbol& sym, NameValues& objext_namevals)
 {
     sym.AddAssocData(std::auto_ptr<ObjextNameValues>
                      (new ObjextNameValues(objext_namevals)));
 }
 
 const NameValues*
-yasm::getObjextNameValues(const Symbol& sym)
+getObjextNameValues(const Symbol& sym)
 {
     const ObjextNameValues* x = sym.getAssocData<ObjextNameValues>();
     if (!x)
@@ -100,7 +98,7 @@ yasm::getObjextNameValues(const Symbol& sym)
 }
 
 NameValues*
-yasm::getObjextNameValues(Symbol& sym)
+getObjextNameValues(Symbol& sym)
 {
     ObjextNameValues* x = sym.getAssocData<ObjextNameValues>();
     if (!x)
@@ -109,13 +107,13 @@ yasm::getObjextNameValues(Symbol& sym)
 }
 
 void
-yasm::setCommonSize(Symbol& sym, const Expr& common_size)
+setCommonSize(Symbol& sym, const Expr& common_size)
 {
     sym.AddAssocData(std::auto_ptr<CommonSize>(new CommonSize(common_size)));
 }
 
 const Expr*
-yasm::getCommonSize(const Symbol& sym)
+getCommonSize(const Symbol& sym)
 {
     const CommonSize* x = sym.getAssocData<CommonSize>();
     if (!x)
@@ -124,7 +122,7 @@ yasm::getCommonSize(const Symbol& sym)
 }
 
 Expr*
-yasm::getCommonSize(Symbol& sym)
+getCommonSize(Symbol& sym)
 {
     CommonSize* x = sym.getAssocData<CommonSize>();
     if (!x)
@@ -133,7 +131,7 @@ yasm::getCommonSize(Symbol& sym)
 }
 
 void
-yasm::DirExtern(DirectiveInfo& info, Diagnostic& diags)
+DirExtern(DirectiveInfo& info, Diagnostic& diags)
 {
     Object& object = info.getObject();
     NameValue& nv = info.getNameValues().front();
@@ -145,7 +143,7 @@ yasm::DirExtern(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-yasm::DirExternMulti(DirectiveInfo& info, Diagnostic& diags)
+DirExternMulti(DirectiveInfo& info, Diagnostic& diags)
 {
     Object& object = info.getObject();
     NameValues& nvs = info.getNameValues();
@@ -164,7 +162,7 @@ yasm::DirExternMulti(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-yasm::DirGlobal(DirectiveInfo& info, Diagnostic& diags)
+DirGlobal(DirectiveInfo& info, Diagnostic& diags)
 {
     Object& object = info.getObject();
     NameValue& nv = info.getNameValues().front();
@@ -176,7 +174,7 @@ yasm::DirGlobal(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-yasm::DirGlobalMulti(DirectiveInfo& info, Diagnostic& diags)
+DirGlobalMulti(DirectiveInfo& info, Diagnostic& diags)
 {
     Object& object = info.getObject();
     NameValues& nvs = info.getNameValues();
@@ -195,7 +193,7 @@ yasm::DirGlobalMulti(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-yasm::DirCommon(DirectiveInfo& info, Diagnostic& diags)
+DirCommon(DirectiveInfo& info, Diagnostic& diags)
 {
     NameValues& namevals = info.getNameValues();
     if (namevals.size() < 2)

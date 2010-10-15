@@ -32,9 +32,6 @@
 #include "yasmx/IntNum.h"
 
 
-using namespace yasm;
-using namespace yasm::parser;
-
 static inline bool
 isoctdigit(char ch)
 {

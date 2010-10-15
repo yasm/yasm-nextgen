@@ -32,15 +32,9 @@
 #include "llvm/ADT/StringRef.h"
 
 
-namespace yasm
-{
-
 class IntNum;
 class Preprocessor;
 class SourceLocation;
-
-namespace parser
-{
 
 /// This performs strict semantic analysis of the content of a string token,
 /// performs unescaping if necessary, and can convert it to a useful value.
@@ -70,7 +64,5 @@ public:
     /// This follows the NASM "character constant" conversion rules.
     void getIntegerValue(IntNum* val);
 };
-
-}} // namespace yasm::parser
 
 #endif

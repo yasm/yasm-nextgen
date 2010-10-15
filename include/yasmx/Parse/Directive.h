@@ -36,9 +36,6 @@
 #include "yasmx/Support/scoped_ptr.h"
 
 
-namespace yasm
-{
-
 class Diagnostic;
 class Object;
 
@@ -130,7 +127,5 @@ private:
     class Impl;
     util::scoped_ptr<Impl> m_impl;
 };
-
-} // namespace yasm
 
 #endif

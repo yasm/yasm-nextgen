@@ -29,8 +29,6 @@
 #include "yasmx/Basic/Diagnostic.h"
 
 
-using namespace yasm;
-
 ObjectFormat::~ObjectFormat()
 {
 }

@@ -38,8 +38,6 @@
 #include "yasmx/Basic/Diagnostic.h"
 
 
-using namespace yasm;
-
 /// Static bitvect used for conversions.
 static llvm::APInt conv_bv(IntNum::BITVECT_NATIVE_SIZE, 0);
 
@@ -60,7 +58,7 @@ enum
 };
 
 bool
-yasm::isOkSize(const llvm::APInt& intn,
+isOkSize(const llvm::APInt& intn,
                unsigned int size,
                unsigned int rshift,
                int rangetype)
@@ -749,7 +747,7 @@ IntNum::isOkSize(unsigned int size, unsigned int rshift, int rangetype) const
                 return false;
         }
     }
-    return yasm::isOkSize(*getBV(&conv_bv), size, rshift, rangetype);
+    return ::isOkSize(*getBV(&conv_bv), size, rshift, rangetype);
 }
 
 bool
@@ -798,7 +796,7 @@ IntNum::operator--()
 }
 
 int
-yasm::Compare(const IntNum& lhs, const IntNum& rhs)
+Compare(const IntNum& lhs, const IntNum& rhs)
 {
     if (lhs.m_type == IntNum::INTNUM_SV && rhs.m_type == IntNum::INTNUM_SV)
     {
@@ -819,7 +817,7 @@ yasm::Compare(const IntNum& lhs, const IntNum& rhs)
 }
 
 bool
-yasm::operator==(const IntNum& lhs, const IntNum& rhs)
+operator==(const IntNum& lhs, const IntNum& rhs)
 {
     if (lhs.m_type == IntNum::INTNUM_SV && rhs.m_type == IntNum::INTNUM_SV)
         return lhs.m_val.sv == rhs.m_val.sv;
@@ -830,7 +828,7 @@ yasm::operator==(const IntNum& lhs, const IntNum& rhs)
 }
 
 bool
-yasm::operator<(const IntNum& lhs, const IntNum& rhs)
+operator<(const IntNum& lhs, const IntNum& rhs)
 {
     if (lhs.m_type == IntNum::INTNUM_SV && rhs.m_type == IntNum::INTNUM_SV)
         return lhs.m_val.sv < rhs.m_val.sv;
@@ -841,7 +839,7 @@ yasm::operator<(const IntNum& lhs, const IntNum& rhs)
 }
 
 bool
-yasm::operator>(const IntNum& lhs, const IntNum& rhs)
+operator>(const IntNum& lhs, const IntNum& rhs)
 {
     if (lhs.m_type == IntNum::INTNUM_SV && rhs.m_type == IntNum::INTNUM_SV)
         return lhs.m_val.sv > rhs.m_val.sv;

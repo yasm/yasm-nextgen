@@ -20,7 +20,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include "yasmx/Basic/SourceManager.h"
 #include <algorithm>
-using namespace yasm;
 
 static const enum llvm::raw_ostream::Colors noteColor =
   llvm::raw_ostream::BLACK;

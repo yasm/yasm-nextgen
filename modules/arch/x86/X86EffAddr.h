@@ -30,13 +30,7 @@
 
 #include "X86Register.h"
 
-namespace yasm
-{
-
 class Diagnostic;
-
-namespace arch
-{
 
 enum X86RexBitPos
 {
@@ -149,7 +143,5 @@ private:
                  bool* ip_rel,
                  Diagnostic& diags);
 };
-
-}} // namespace yasm::arch
 
 #endif

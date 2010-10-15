@@ -29,15 +29,9 @@
 #include <memory>
 
 
-namespace yasm
-{
-
 class BytecodeContainer;
 class SourceLocation;
 class Value;
-
-namespace arch
-{
 
 class X86Common;
 class X86EffAddr;
@@ -77,7 +71,5 @@ void AppendGeneral(BytecodeContainer& container,
                    X86GeneralPostOp postop,
                    bool default_rel,
                    SourceLocation source);
-
-}} // namespace yasm::arch
 
 #endif

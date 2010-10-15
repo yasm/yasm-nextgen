@@ -38,9 +38,6 @@
 #include "yasmx/Section.h"
 
 
-using namespace yasm;
-using namespace yasm::dbgfmt;
-
 static void
 AppendAbbrevHeader(Bytes& bytes,
                    unsigned long id,

@@ -39,9 +39,6 @@
 #include "yasmx/Symbol.h"
 
 
-using namespace yasm;
-using namespace yasm::dbgfmt;
-
 Dwarf2Debug::Dwarf2Debug(const DebugFormatModule& module, Object& object)
     : DebugFormat(module, object)
     , m_format(FORMAT_32BIT)    // TODO: flexible?

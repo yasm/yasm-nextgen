@@ -34,12 +34,7 @@
 #include "yasmx/IntNum.h"
 
 
-using namespace yasm;
-
 static llvm::APInt staticbv(IntNum::BITVECT_NATIVE_SIZE, 0);
-
-namespace yasm
-{
 
 class DirHelpers::Impl
 {
@@ -47,8 +42,6 @@ public:
     typedef llvm::StringMap<DirHelper> HelperMap;
     HelperMap m_value_helpers, m_novalue_helpers;
 };
-
-} // namespace yasm
 
 DirHelpers::DirHelpers()
     : m_impl(new Impl)
@@ -121,11 +114,11 @@ DirHelpers::operator()
 }
 
 void
-yasm::DirIntNumPower2(NameValue& nv,
-                      Diagnostic& diags,
-                      Object* obj,
-                      IntNum* out,
-                      bool* out_set)
+DirIntNumPower2(NameValue& nv,
+                Diagnostic& diags,
+                Object* obj,
+                IntNum* out,
+                bool* out_set)
 {
     std::auto_ptr<Expr> e(nv.ReleaseExpr(*obj));
 
@@ -148,11 +141,11 @@ yasm::DirIntNumPower2(NameValue& nv,
 }
 
 void
-yasm::DirIntNum(NameValue& nv,
-                Diagnostic& diags,
-                Object* obj,
-                IntNum* out,
-                bool* out_set)
+DirIntNum(NameValue& nv,
+          Diagnostic& diags,
+          Object* obj,
+          IntNum* out,
+          bool* out_set)
 {
     std::auto_ptr<Expr> e(nv.ReleaseExpr(*obj));
 
@@ -168,11 +161,11 @@ yasm::DirIntNum(NameValue& nv,
 }
 
 void
-yasm::DirExpr(NameValue& nv,
-              Diagnostic& diags,
-              Object* obj,
-              std::auto_ptr<Expr>* out,
-              bool* out_set)
+DirExpr(NameValue& nv,
+        Diagnostic& diags,
+        Object* obj,
+        std::auto_ptr<Expr>* out,
+        bool* out_set)
 {
     if (!nv.isExpr())
     {
@@ -185,10 +178,7 @@ yasm::DirExpr(NameValue& nv,
 }
 
 void
-yasm::DirString(NameValue& nv,
-                Diagnostic& diags,
-                std::string* out,
-                bool* out_set)
+DirString(NameValue& nv, Diagnostic& diags, std::string* out, bool* out_set)
 {
     if (!nv.isString())
     {
@@ -201,9 +191,7 @@ yasm::DirString(NameValue& nv,
 }
 
 bool
-yasm::DirNameValueWarn(NameValue& nv,
-                       SourceLocation dir_source,
-                       Diagnostic& diags)
+DirNameValueWarn(NameValue& nv, SourceLocation dir_source, Diagnostic& diags)
 {
     if (nv.getNameSource().isValid())
     {

@@ -33,16 +33,11 @@
 #include "BinLink.h"
 
 
-namespace yasm
-{
 class Diagnostic;
 class DirectiveInfo;
 class Expr;
 class IntNum;
 class NameValue;
-
-namespace objfmt
-{
 
 class BinObject : public ObjectFormat
 {
@@ -103,7 +98,5 @@ private:
     util::scoped_ptr<Expr> m_org;
     SourceLocation m_org_source;
 };
-
-}} // namespace yasm::objfmt
 
 #endif

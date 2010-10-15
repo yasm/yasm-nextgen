@@ -29,7 +29,6 @@ namespace llvm {
 // Get typedefs for common diagnostics.
 #include "yasmx/Basic/DiagnosticKinds.h"
 
-namespace yasm {
   class DeclContext;
   class DiagnosticBuilder;
   class DiagnosticClient;
@@ -976,7 +975,5 @@ public:
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 const DiagnosticInfo &Info) = 0;
 };
-
-}  // end namespace yasm
 
 #endif

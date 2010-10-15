@@ -35,16 +35,13 @@
 #include "X86Register.h"
 
 
-using namespace yasm;
-using namespace yasm::arch;
-
 bool
-arch::setRexFromReg(unsigned char* rex,
-                    unsigned char* low3,
-                    X86Register::Type reg_type,
-                    unsigned int reg_num,
-                    unsigned int bits,
-                    X86RexBitPos rexbit)
+setRexFromReg(unsigned char* rex,
+              unsigned char* low3,
+              X86Register::Type reg_type,
+              unsigned int reg_num,
+              unsigned int bits,
+              X86RexBitPos rexbit)
 {
     *low3 = reg_num&7;
 

@@ -32,9 +32,6 @@
 #include "llvm/ADT/StringRef.h"
 
 
-namespace yasm
-{
-
 class Diagnostic;
 class DirectiveInfo;
 class ObjectFormat;
@@ -51,7 +48,5 @@ void DirIdentCommon(ObjectFormat& objfmt,
                     llvm::StringRef sectname,
                     DirectiveInfo& info,
                     Diagnostic& diags);
-
-} // namespace yasm
 
 #endif

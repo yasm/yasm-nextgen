@@ -28,11 +28,6 @@
 //
 #include "yasmx/Insn.h"
 
-namespace yasm
-{
-namespace arch
-{
-
 class X86TargetModifier : public TargetModifier
 {
 public:
@@ -58,7 +53,5 @@ public:
 private:
     Type m_type;
 };
-
-}} // namespace yasm::arch
 
 #endif

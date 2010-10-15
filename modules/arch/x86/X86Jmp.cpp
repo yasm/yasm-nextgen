@@ -39,9 +39,6 @@
 #include "X86Opcode.h"
 
 
-using namespace yasm;
-using namespace yasm::arch;
-
 namespace {
 class X86Jmp : public Bytecode::Contents
 {
@@ -247,7 +244,7 @@ X86Jmp::Output(Bytecode& bc, BytecodeOutput& bc_out)
 llvm::StringRef
 X86Jmp::getType() const
 {
-    return "yasm::arch::X86Jmp";
+    return "X86Jmp";
 }
 
 X86Jmp*
@@ -257,14 +254,14 @@ X86Jmp::clone() const
 }
 
 void
-arch::AppendJmp(BytecodeContainer& container,
-                const X86Common& common,
-                const X86Opcode& shortop,
-                const X86Opcode& nearop,
-                std::auto_ptr<Expr> target,
-                SourceLocation target_source,
-                SourceLocation source,
-                X86JmpOpcodeSel op_sel)
+AppendJmp(BytecodeContainer& container,
+          const X86Common& common,
+          const X86Opcode& shortop,
+          const X86Opcode& nearop,
+          std::auto_ptr<Expr> target,
+          SourceLocation target_source,
+          SourceLocation source,
+          X86JmpOpcodeSel op_sel)
 {
     Bytecode& bc = container.FreshBytecode();
 

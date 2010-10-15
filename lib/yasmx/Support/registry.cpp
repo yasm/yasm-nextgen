@@ -35,10 +35,7 @@
 #include "llvm/ADT/StringMap.h"
 
 
-using namespace yasm;
-using namespace yasm::impl;
-
-namespace yasm { namespace impl {
+namespace impl {
 class ModuleFactory::Impl
 {
 public:
@@ -55,7 +52,6 @@ public:
     typedef llvm::IndexedMap<FN_REGISTRY*> MODULE_REGISTRY;
     MODULE_REGISTRY registry;
 };
-}} // namespace yasm::impl
 
 ModuleFactory::ModuleFactory()
     : m_impl(new Impl)
@@ -138,3 +134,5 @@ ModuleFactory::isRegistered(unsigned int type, llvm::StringRef keyword) const
         return false;
     return module_entry->find(keyword) != module_entry->end();
 }
+
+} // namespace impl

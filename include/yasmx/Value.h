@@ -43,9 +43,6 @@
 
 class ValueTest;
 
-namespace yasm
-{
-
 class Arch;
 class Bytes;
 class Diagnostic;
@@ -407,15 +404,13 @@ swap(Value& left, Value& right)
     left.swap(right);
 }
 
-} // namespace yasm
-
 namespace std
 {
 
 /// Specialized std::swap for Value.
 template <>
 inline void
-swap(yasm::Value& left, yasm::Value& right)
+swap(Value& left, Value& right)
 {
     left.swap(right);
 }

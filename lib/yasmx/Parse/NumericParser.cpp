@@ -35,8 +35,6 @@
 #include "yasmx/IntNum.h"
 
 
-using namespace yasm;
-
 NumericParser::NumericParser(llvm::StringRef str)
     : m_digits_begin(str.begin())
     , m_digits_end(str.end())

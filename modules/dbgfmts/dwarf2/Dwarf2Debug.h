@@ -37,13 +37,11 @@
 #include "Dwarf2Types.h"
 
 
-namespace yasm {
 class BytecodeContainer;
 class DirectiveInfo;
 class FileEntry;
 class Section;
 
-namespace dbgfmt {
 struct Dwarf2Loc;
 struct Dwarf2LineState;
 
@@ -179,7 +177,5 @@ public:
     void Generate(ObjectFormat& objfmt, SourceManager& smgr, Diagnostic& diags);
 };
 
-
-}} // namespace yasm::dbgfmt
 
 #endif

@@ -32,9 +32,6 @@
 #include "yasmx/Object.h"
 
 
-using namespace yasm;
-using namespace yasm::objfmt;
-
 namespace {
 struct MachineCheckCreate
 {
@@ -47,8 +44,8 @@ struct MachineCheckCreate
 
 static const MachineCheckCreate machines[] =
 {
-    {&impl::ElfMatch_x86_x86, &impl::ElfCreate_x86_x86},
-    {&impl::ElfMatch_x86_amd64, &impl::ElfCreate_x86_amd64},
+    {&ElfMatch_x86_x86, &ElfCreate_x86_x86},
+    {&ElfMatch_x86_amd64, &ElfCreate_x86_amd64},
 };
 static const size_t nmachines = sizeof(machines)/sizeof(machines[0]);
 
@@ -63,7 +60,7 @@ ElfMachine::~ElfMachine()
 }
 
 bool
-objfmt::isOkElfMachine(const Arch& arch, ElfClass cls)
+isOkElfMachine(const Arch& arch, ElfClass cls)
 {
     std::string keyword = arch.getModule().getKeyword();
     std::string machine = arch.getMachine();
@@ -76,7 +73,7 @@ objfmt::isOkElfMachine(const Arch& arch, ElfClass cls)
 }
 
 std::auto_ptr<ElfMachine>
-objfmt::CreateElfMachine(const Arch& arch, ElfClass cls)
+CreateElfMachine(const Arch& arch, ElfClass cls)
 {
     std::string keyword = arch.getModule().getKeyword();
     std::string machine = arch.getMachine();
@@ -90,7 +87,7 @@ objfmt::CreateElfMachine(const Arch& arch, ElfClass cls)
 }
 
 void
-objfmt::AddElfSSym(Object& object, const ElfSpecialSymbolData& ssym)
+AddElfSSym(Object& object, const ElfSpecialSymbolData& ssym)
 {
     SymbolRef sym = object.AddSpecialSymbol(ssym.name);
     sym->DefineSpecial(Symbol::EXTERN);

@@ -34,14 +34,8 @@
 #include "yasmx/Parse/Token.h"
 
 
-namespace yasm
-{
-
 class DiagnosticBuilder;
 class Register;
-
-namespace parser
-{
 
 class GasPreproc;
 
@@ -111,7 +105,5 @@ protected:
     void LexCharConstant    (Token* result, const char* cur_ptr);
     void LexStringLiteral   (Token* result, const char* cur_ptr);
 };
-
-}} // namespace yasm::parser
 
 #endif

@@ -32,8 +32,6 @@
 #include "yasmx/Bytes.h"
 
 
-namespace yasm
-{
 class IntNum;
 
 /// Write an intnum as an 8-bit value to a bytes buffer.
@@ -122,7 +120,5 @@ Write32(Bytes& bytes, unsigned long val)
 /// @param n        number of bits (must be multiple of 8)
 /// @warning Value is silently truncated to fit into N bits.
 void WriteN(Bytes& bytes, unsigned long val, int n);
-
-} // namespace yasm
 
 #endif

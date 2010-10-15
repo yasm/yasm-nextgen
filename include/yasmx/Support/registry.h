@@ -35,9 +35,6 @@
 #include "yasmx/Support/scoped_ptr.h"
 
 
-namespace yasm
-{
-
 // standard yasm module types
 class Arch;
 class DebugFormat;
@@ -137,7 +134,5 @@ getModules()
 {
     return impl::ModuleFactory::Instance().getRegistered(T::module_type);
 }
-
-} // namespace yasm
 
 #endif

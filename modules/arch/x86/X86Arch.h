@@ -34,15 +34,9 @@
 #include "X86TargetModifier.h"
 
 
-namespace yasm
-{
-
 class Diagnostic;
 class DirectiveInfo;
 class Object;
-
-namespace arch
-{
 
 class X86RegisterGroup;
 
@@ -218,7 +212,5 @@ private:
     bool m_default_rel;
     NopFormat m_nop;
 };
-
-}} // namespace yasm::arch
 
 #endif

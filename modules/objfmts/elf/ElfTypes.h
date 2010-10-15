@@ -31,11 +31,6 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace yasm
-{
-namespace objfmt
-{
-
 struct ElfConfig;
 class ElfMachine;
 class ElfReloc;
@@ -383,7 +378,5 @@ enum ElfRelocationType_x86_64
 };
 
 typedef std::vector<SymbolRef> ElfSymtab;
-
-}} // namespace yasm::objfmt
 
 #endif

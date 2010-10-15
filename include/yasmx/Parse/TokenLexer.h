@@ -32,9 +32,6 @@
 //
 #include "yasmx/Basic/SourceLocation.h"
 
-namespace yasm
-{
-
 #if 0
 class MacroArgs;
 class MacroInfo;
@@ -166,7 +163,5 @@ private:
     void ExpandFunctionArguments();
 #endif
 };
-
-} // namespace yasm
 
 #endif

@@ -34,9 +34,6 @@
 #include "llvm/ADT/SmallVector.h"
 
 
-namespace yasm
-{
-
 /// Associated data interface (abstract base).
 class AssocData
 {
@@ -89,7 +86,5 @@ public:
         return static_cast<const T*>(getAssocData(T::key));
     }
 };
-
-} // namespace yasm
 
 #endif

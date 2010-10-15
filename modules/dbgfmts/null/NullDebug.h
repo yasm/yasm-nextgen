@@ -29,11 +29,6 @@
 #include "yasmx/DebugFormat.h"
 
 
-namespace yasm
-{
-namespace dbgfmt
-{
-
 class NullDebug : public DebugFormat
 {
 public:
@@ -48,7 +43,5 @@ public:
 
     void Generate(ObjectFormat& objfmt, SourceManager& smgr, Diagnostic& diags);
 };
-
-}} // namespace yasm::dbgfmt
 
 #endif

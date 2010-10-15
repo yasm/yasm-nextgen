@@ -32,9 +32,6 @@
 #include <cassert>
 
 
-namespace yasm
-{
-
 class Symbol;
 
 /// Reference to a symbol.  References are not counted, so the reference
@@ -59,7 +56,5 @@ public:
 private:
     Symbol* m_sym;
 };
-
-} // namespace yasm
 
 #endif

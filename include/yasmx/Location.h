@@ -29,9 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-namespace yasm
-{
-
 class Bytecode;
 class IntNum;
 
@@ -75,7 +72,5 @@ bool CalcDist(Location loc1, Location loc2, /*@out@*/ IntNum* dist);
 /// @return True if distance calculated; false if the distance was
 ///         indeterminate (e.g. the locations have different bytecodes).
 bool CalcDistNoBC(Location loc1, Location loc2, IntNum* dist);
-
-} // namespace yasm
 
 #endif

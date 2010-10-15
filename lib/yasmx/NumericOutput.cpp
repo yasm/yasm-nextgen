@@ -38,8 +38,6 @@
 #include "yasmx/IntNum.h"
 
 
-using namespace yasm;
-
 static llvm::APInt staticbv(IntNum::BITVECT_NATIVE_SIZE, 0);
 
 NumericOutput::NumericOutput(Bytes& bytes)

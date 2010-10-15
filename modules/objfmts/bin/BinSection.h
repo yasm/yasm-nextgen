@@ -35,13 +35,7 @@
 #include "yasmx/Section.h"
 
 
-namespace yasm
-{
-
 class Expr;
-
-namespace objfmt
-{
 
 struct BinSection : public AssocData
 {
@@ -72,7 +66,5 @@ struct BinSection : public AssocData
     bool has_length;
     IntNum length;
 };
-
-}} // namespace yasm::objfmt
 
 #endif

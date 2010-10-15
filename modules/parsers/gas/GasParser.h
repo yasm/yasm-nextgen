@@ -44,9 +44,6 @@
 
 #include "GasPreproc.h"
 
-namespace yasm
-{
-
 class Arch;
 class Bytecode;
 class Directives;
@@ -57,9 +54,6 @@ class NameValues;
 class Register;
 class RegisterGroup;
 class Section;
-
-namespace parser
-{
 
 #define YYCTYPE         char
 
@@ -240,7 +234,5 @@ private:
     std::vector<SectionState> m_section_stack;
     Section* m_previous_section;
 };
-
-}} // namespace yasm::parser
 
 #endif

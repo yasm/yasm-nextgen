@@ -16,7 +16,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Basic/SourceManager.h"
 #include <cstdio>
-using namespace yasm;
 
 //===----------------------------------------------------------------------===//
 // SourceLocation

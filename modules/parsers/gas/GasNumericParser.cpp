@@ -39,9 +39,6 @@
 #include "yasmx/IntNum.h"
 
 
-using namespace yasm;
-using namespace yasm::parser;
-
 /// decimal integer: [1-9] [0-9]*
 /// binary integer: "0" [bB] [01]+
 /// octal integer: "0" [0-7]*

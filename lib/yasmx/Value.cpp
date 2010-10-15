@@ -44,8 +44,6 @@
 #include "yasmx/Symbol.h"
 
 
-using namespace yasm;
-
 namespace {
 // Predicate used in Value::finalize() to remove matching integers.
 class TermIsInt
@@ -53,7 +51,7 @@ class TermIsInt
 public:
     TermIsInt(const IntNum& intn) : m_intn(intn) {}
 
-    bool operator() (const yasm::ExprTerm& term) const
+    bool operator() (const ExprTerm& term) const
     {
         const IntNum* intn = term.getIntNum();
         return intn && m_intn == *intn;

@@ -29,8 +29,6 @@
 #include "llvm/ADT/SmallString.h"
 
 
-using namespace yasm;
-
 AssocData::~AssocData()
 {
 }

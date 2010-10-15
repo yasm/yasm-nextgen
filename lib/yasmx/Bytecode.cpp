@@ -38,8 +38,6 @@
 #include "yasmx/Symbol.h"
 #include "yasmx/Value.h"
 
-using namespace yasm;
-
 Bytecode::Contents::Contents()
 {
 }

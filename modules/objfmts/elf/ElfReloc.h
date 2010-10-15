@@ -35,14 +35,8 @@
 
 namespace llvm { class MemoryBuffer; }
 
-namespace yasm
-{
-
 class Bytes;
 class Expr;
-
-namespace objfmt
-{
 
 class ElfReloc : public Reloc
 {
@@ -87,7 +81,5 @@ protected:
     ElfRelocationType   m_type;
     IntNum              m_addend;
 };
-
-}} // namespace yasm::objfmt
 
 #endif

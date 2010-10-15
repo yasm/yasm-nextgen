@@ -37,9 +37,6 @@
 #include "ElfSymbol.h"
 
 
-using namespace yasm;
-using namespace yasm::objfmt;
-
 ElfConfig::ElfConfig()
     : cls(ELFCLASSNONE)
     , encoding(ELFDATANONE)

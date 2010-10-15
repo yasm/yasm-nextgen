@@ -19,8 +19,6 @@
 #include "yasmx/Basic/SourceManager.h"
 #include <map>
 
-namespace yasm {
-
 //===----------------------------------------------------------------------===//
 // Line Table Implementation
 //===----------------------------------------------------------------------===//
@@ -124,7 +122,5 @@ public:
   /// the internal representation of the line table.
   void AddEntry(unsigned FID, const std::vector<LineEntry> &Entries);
 };
-
-} // end namespace yasm
 
 #endif

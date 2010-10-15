@@ -37,9 +37,6 @@
 #include "yasmx/Parse/Token.h"
 
 
-namespace yasm
-{
-
 class DiagnosticBuilder;
 class SourceLocation;
 
@@ -229,7 +226,5 @@ public:
     /// Expression parser.
     virtual bool ParseExpr(Expr& e, const ParseExprTerm* parse_term = 0) = 0;
 };
-
-} // namespace yasm
 
 #endif

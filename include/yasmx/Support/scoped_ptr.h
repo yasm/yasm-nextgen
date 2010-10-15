@@ -14,8 +14,6 @@
 #include <assert.h>
 #include <memory>           // for std::auto_ptr
 
-namespace yasm
-{
 namespace util
 {
 
@@ -109,6 +107,6 @@ template<class T> inline void swap(scoped_ptr<T> & a, scoped_ptr<T> & b) // neve
     a.swap(b);
 }
 
-}} // namespace yasm::util
+} // namespace util
 
 #endif

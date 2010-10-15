@@ -23,7 +23,6 @@
 #include <string>
 #include <cstring>
 
-using namespace yasm;
 using namespace SrcMgr;
 using llvm::MemoryBuffer;
 

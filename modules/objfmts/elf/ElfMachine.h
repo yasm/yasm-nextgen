@@ -37,15 +37,9 @@
 
 namespace llvm { class MemoryBuffer; }
 
-namespace yasm
-{
-
 class Arch;
 class IntNum;
 class Object;
-
-namespace objfmt
-{
 
 struct ElfSpecialSymbolData
 {
@@ -115,7 +109,6 @@ std::auto_ptr<ElfMachine> CreateElfMachine(const Arch& arch, ElfClass cls);
 
 void AddElfSSym(Object& object, const ElfSpecialSymbolData& ssym);
 
-namespace impl {
 bool ElfMatch_x86_x86(llvm::StringRef arch_keyword,
                       llvm::StringRef arch_machine,
                       ElfClass cls);
@@ -125,8 +118,5 @@ bool ElfMatch_x86_amd64(llvm::StringRef arch_keyword,
 
 std::auto_ptr<ElfMachine> ElfCreate_x86_x86();
 std::auto_ptr<ElfMachine> ElfCreate_x86_amd64();
-} // namespace impl
-
-}} // namespace yasm::objfmt
 
 #endif // ELF_MACHINE_H_INCLUDED

@@ -31,8 +31,6 @@
 #include "yasmx/Symbol.h"
 
 
-using namespace yasm;
-
 NameValue::NameValue(llvm::StringRef name, llvm::StringRef id, char id_prefix)
     : m_name(name),
       m_type(ID),

@@ -34,9 +34,6 @@
 #include "yasmx/Value.h"
 
 
-namespace yasm
-{
-
 class SegmentRegister;
 
 /// Base class for an effective address.
@@ -94,7 +91,5 @@ protected:
 private:
     const EffAddr& operator=(const EffAddr&);
 };
-
-} // namespace yasm
 
 #endif

@@ -18,7 +18,6 @@
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/SourceLocation.h"
 
-namespace yasm {
 class DiagnosticOptions;
 
 class TextDiagnosticPrinter : public DiagnosticClient {
@@ -64,7 +63,5 @@ public:
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 const DiagnosticInfo &Info);
 };
-
-} // end namespace yasm
 
 #endif

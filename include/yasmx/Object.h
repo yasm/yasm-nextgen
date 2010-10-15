@@ -39,9 +39,6 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace yasm
-{
-
 class Arch;
 class Diagnostic;
 class Section;
@@ -249,7 +246,5 @@ private:
     class Impl;
     util::scoped_ptr<Impl> m_impl;
 };
-
-} // namespace yasm
 
 #endif

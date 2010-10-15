@@ -33,13 +33,8 @@
 #include "yasmx/Parse/NumericParser.h"
 
 
-namespace yasm
-{
 class Preprocessor;
 class SourceLocation;
-
-namespace parser
-{
 
 /// This performs strict semantic analysis of the content of a ppnumber,
 /// classifying it as either integer, floating, or erroneous, determines the
@@ -59,7 +54,5 @@ public:
     //virtual llvm::APFloat getFloatValue(const llvm::fltSemantics& format,
     //                                    bool* is_exact = 0);
 };
-
-}} // namespace yasm::parser
 
 #endif

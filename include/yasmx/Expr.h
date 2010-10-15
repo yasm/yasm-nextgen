@@ -43,9 +43,6 @@
 
 namespace llvm { class APFloat; class raw_ostream; struct fltSemantics; }
 
-namespace yasm
-{
-
 class Bytecode;
 class Diagnostic;
 class Expr;
@@ -957,15 +954,13 @@ swap(ExprTerm& left, ExprTerm& right)
     left.swap(right);
 }
 
-} // namespace yasm
-
 namespace std
 {
 
 /// Specialized std::swap for Expr.
 template <>
 inline void
-swap(yasm::Expr& left, yasm::Expr& right)
+swap(Expr& left, Expr& right)
 {
     left.swap(right);
 }
@@ -973,7 +968,7 @@ swap(yasm::Expr& left, yasm::Expr& right)
 /// Specialized std::swap for ExprTerm.
 template <>
 inline void
-swap(yasm::ExprTerm& left, yasm::ExprTerm& right)
+swap(ExprTerm& left, ExprTerm& right)
 {
     left.swap(right);
 }

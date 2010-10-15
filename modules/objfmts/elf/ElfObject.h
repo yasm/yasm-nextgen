@@ -49,13 +49,9 @@
 #include "ElfConfig.h"
 
 
-namespace yasm
-{
 class Diagnostic;
 class DirectiveInfo;
 
-namespace objfmt
-{
 class ElfMachine;
 class ElfSymbol;
 
@@ -203,7 +199,5 @@ public:
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine);
 };
-
-}} // namespace yasm::objfmt
 
 #endif

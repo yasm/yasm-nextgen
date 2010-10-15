@@ -37,8 +37,6 @@
 #include "yasmx/Location_util.h"
 
 
-using namespace yasm;
-
 namespace {
 class LEB128Bytecode : public Bytecode::Contents
 {
@@ -201,7 +199,7 @@ LEB128Bytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 llvm::StringRef
 LEB128Bytecode::getType() const
 {
-    return "yasm::LEB128Bytecode";
+    return "LEB128Bytecode";
 }
 
 LEB128Bytecode*
@@ -211,11 +209,11 @@ LEB128Bytecode::clone() const
 }
 
 void
-yasm::AppendLEB128(BytecodeContainer& container,
-                   const IntNum& intn,
-                   bool sign,
-                   SourceLocation source,
-                   Diagnostic& diags)
+AppendLEB128(BytecodeContainer& container,
+             const IntNum& intn,
+             bool sign,
+             SourceLocation source,
+             Diagnostic& diags)
 {
     if (intn.getSign() < 0 && !sign)
         diags.Report(source, diag::warn_negative_uleb128);
@@ -224,11 +222,11 @@ yasm::AppendLEB128(BytecodeContainer& container,
 }
 
 void
-yasm::AppendLEB128(BytecodeContainer& container,
-                   std::auto_ptr<Expr> expr,
-                   bool sign,
-                   SourceLocation source,
-                   Diagnostic& diags)
+AppendLEB128(BytecodeContainer& container,
+             std::auto_ptr<Expr> expr,
+             bool sign,
+             SourceLocation source,
+             Diagnostic& diags)
 {
     // If expression is just an integer, output directly.
     expr->Simplify(diags);

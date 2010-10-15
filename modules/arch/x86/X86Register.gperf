@@ -39,9 +39,6 @@
 #include "modules/arch/x86/X86Arch.h"
 
 
-using namespace yasm;
-using namespace yasm::arch;
-
 #ifndef NELEMS
 #define NELEMS(x) (sizeof(x)/sizeof(x[0]))
 #endif

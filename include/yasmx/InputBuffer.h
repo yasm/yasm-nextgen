@@ -35,9 +35,6 @@
 #include "yasmx/Support/EndianState.h"
 
 
-namespace yasm
-{
-
 class IntNum;
 
 /// An input buffer.
@@ -232,7 +229,5 @@ IntNum ReadU64(InputBuffer& input);
 /// @param input    input buffer
 /// @return 64-bit value (as an IntNum).
 IntNum ReadS64(InputBuffer& input);
-
-} // namespace yasm
 
 #endif

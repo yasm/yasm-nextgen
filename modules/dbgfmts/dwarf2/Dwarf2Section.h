@@ -34,10 +34,7 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace yasm {
 class Section;
-
-namespace dbgfmt {
 
 /// .loc directive data
 struct Dwarf2Loc
@@ -84,7 +81,5 @@ public:
     typedef stdx::ptr_vector<Dwarf2Loc> Locs;
     Locs locs;
 };
-
-}} // namespace yasm::dbgfmt
 
 #endif

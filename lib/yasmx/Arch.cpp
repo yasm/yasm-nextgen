@@ -30,8 +30,6 @@
 #include "yasmx/Insn.h"
 
 
-using namespace yasm;
-
 Register::~Register()
 {
 }

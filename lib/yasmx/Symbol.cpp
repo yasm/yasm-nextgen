@@ -30,8 +30,6 @@
 #include "yasmx/Expr.h"
 
 
-using namespace yasm;
-
 Symbol::Symbol(llvm::StringRef name)
     : m_name(name),
       m_type(UNKNOWN),

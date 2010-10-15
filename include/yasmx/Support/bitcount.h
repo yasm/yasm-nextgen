@@ -35,9 +35,6 @@
 /// @endlicense
 ///
 
-namespace yasm
-{
-
 // Bit-counting: used primarily by HAMT but also in a few other places.
 inline unsigned long
 BC_TWO(int c)
@@ -78,7 +75,5 @@ isExp2(unsigned long x)
 {
     return ((x & (x - 1)) == 0);
 }
-
-} // namespace yasm
 
 #endif

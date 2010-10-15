@@ -37,9 +37,6 @@
 #include "yasmx/Symbol_util.h"
 
 
-using namespace yasm;
-using namespace yasm::parser;
-
 GasParser::GasParser(const ParserModule& module,
                      Diagnostic& diags,
                      SourceManager& sm,

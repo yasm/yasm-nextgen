@@ -36,8 +36,6 @@
 #include "yasmx/IntNum.h"
 
 
-using namespace yasm;
-
 namespace {
 class AlignBytecode : public Bytecode::Contents
 {
@@ -290,7 +288,7 @@ AlignBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 llvm::StringRef
 AlignBytecode::getType() const
 {
-    return "yasm::AlignBytecode";
+    return "AlignBytecode";
 }
 
 AlignBytecode::SpecialType
@@ -306,12 +304,12 @@ AlignBytecode::clone() const
 }
 
 void
-yasm::AppendAlign(BytecodeContainer& container,
-                  const Expr& boundary,
-                  const Expr& fill,
-                  const Expr& maxskip,
-                  /*@null@*/ const unsigned char** code_fill,
-                  SourceLocation source)
+AppendAlign(BytecodeContainer& container,
+            const Expr& boundary,
+            const Expr& fill,
+            const Expr& maxskip,
+            /*@null@*/ const unsigned char** code_fill,
+            SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     bc.Transform(Bytecode::Contents::Ptr(

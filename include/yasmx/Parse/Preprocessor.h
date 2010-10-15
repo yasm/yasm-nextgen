@@ -46,9 +46,6 @@
 #include "yasmx/Parse/TokenLexer.h"
 
 
-namespace yasm
-{
-
 class DirectoryLookup;
 class HeaderSearch;
 
@@ -463,7 +460,5 @@ private:
     void HandleIncludeDirective(Token& tok,
                                 const DirectoryLookup* lookup_from = 0);
 };
-
-} // namespace yasm
 
 #endif

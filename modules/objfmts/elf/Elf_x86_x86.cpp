@@ -30,9 +30,6 @@
 #include "ElfTypes.h"
 
 
-using namespace yasm;
-using namespace yasm::objfmt;
-
 namespace {
 class ElfReloc_x86_x86 : public ElfReloc
 {
@@ -85,9 +82,9 @@ public:
 } // anonymous namespace
 
 bool
-impl::ElfMatch_x86_x86(llvm::StringRef arch_keyword,
-                       llvm::StringRef arch_machine,
-                       ElfClass cls)
+ElfMatch_x86_x86(llvm::StringRef arch_keyword,
+                 llvm::StringRef arch_machine,
+                 ElfClass cls)
 {
     return (arch_keyword.equals_lower("x86") &&
             arch_machine.equals_lower("x86") &&
@@ -95,7 +92,7 @@ impl::ElfMatch_x86_x86(llvm::StringRef arch_keyword,
 }
 
 std::auto_ptr<ElfMachine>
-impl::ElfCreate_x86_x86()
+ElfCreate_x86_x86()
 {
     return std::auto_ptr<ElfMachine>(new Elf_x86_x86);
 }

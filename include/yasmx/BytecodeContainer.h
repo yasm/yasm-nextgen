@@ -37,9 +37,6 @@
 #include "Location.h"
 
 
-namespace yasm
-{
-
 class Arch;
 class Bytecode;
 class Diagnostic;
@@ -272,7 +269,5 @@ void AppendOrg(BytecodeContainer& container,
 BytecodeContainer& AppendMultiple(BytecodeContainer& container,
                                   std::auto_ptr<Expr> multiple,
                                   SourceLocation source);
-
-} // namespace yasm
 
 #endif

@@ -29,9 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-namespace yasm
-{
-
 class EndianState
 {
 public:
@@ -57,7 +54,5 @@ public:
 private:
     bool m_bigendian;
 };
-
-} // namespace yasm
 
 #endif

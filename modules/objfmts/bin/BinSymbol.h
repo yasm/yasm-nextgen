@@ -32,14 +32,8 @@
 #include "yasmx/Symbol.h"
 
 
-namespace yasm
-{
-
 class IntNum;
 class Section;
-
-namespace objfmt
-{
 
 struct BinSection;
 
@@ -78,7 +72,5 @@ getBinSSymValue(const Symbol& sym, /*@out@*/ IntNum* val)
         return false;
     return bsym->getValue(val);
 }
-
-}} // namespace yasm::objfmt
 
 #endif

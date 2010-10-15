@@ -36,8 +36,6 @@
 #include "yasmx/Expr_util.h"
 
 
-using namespace yasm;
-
 TargetModifier::~TargetModifier()
 {
 }

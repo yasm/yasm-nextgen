@@ -38,8 +38,6 @@ class APInt;
 struct fltSemantics;
 }
 
-namespace yasm
-{
 class Bytes;
 class Diagnostic;
 class IntNum;
@@ -121,7 +119,5 @@ private:
     bool m_warns_enabled;
     unsigned int m_warns;   // WarnFlags
 };
-
-} // namespace yasm
 
 #endif

@@ -32,9 +32,6 @@
 //
 #include "llvm/ADT/StringRef.h"
 
-namespace yasm
-{
-
 class DirectoryEntry;
 class FileEntry;
 class HeaderSearch;
@@ -75,7 +72,5 @@ public:
     const FileEntry* LookupFile(llvm::StringRef Filename,
                                 HeaderSearch& HS) const;
 };
-
-} // namespace yasm
 
 #endif

@@ -45,8 +45,6 @@
 #include "yasmx/Value.h"
 
 
-using namespace yasm;
-
 //
 // Robertson (1977) optimizer
 // Based (somewhat loosely) on the algorithm given in:

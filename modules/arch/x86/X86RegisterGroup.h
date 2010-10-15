@@ -31,11 +31,6 @@
 #include "X86Register.h"
 
 
-namespace yasm
-{
-namespace arch
-{
-
 class X86RegisterGroup : public RegisterGroup
 {
 public:
@@ -54,7 +49,5 @@ private:
     X86Register** m_regs;
     unsigned long m_size;
 };
-
-}} // namespace yasm::arch
 
 #endif

@@ -32,9 +32,6 @@
 #include "llvm/ADT/StringRef.h"
 
 
-namespace yasm
-{
-
 /// Load a plugin.
 /// @return False on failure
 bool LoadPlugin(llvm::StringRef name);
@@ -43,7 +40,5 @@ void UnloadPlugins();
 /// Load standard plugins.
 /// @return False on failure
 bool LoadStandardPlugins();
-
-} // namespace yasm
 
 #endif

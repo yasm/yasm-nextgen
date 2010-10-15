@@ -42,9 +42,6 @@
 
 namespace llvm { class APFloat; class raw_ostream; }
 
-namespace yasm
-{
-
 class ArchModule;
 class BytecodeContainer;
 class Bytes;
@@ -420,7 +417,5 @@ public:
         return std::auto_ptr<Arch>(new ArchImpl(*this));
     }
 };
-
-} // namespace yasm
 
 #endif

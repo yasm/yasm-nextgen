@@ -31,11 +31,6 @@
 #include "yasmx/Insn.h"
 
 
-namespace yasm
-{
-namespace arch
-{
-
 class X86SegmentRegister;
 
 class X86Common
@@ -58,7 +53,5 @@ public:
 
     unsigned char m_mode_bits;
 };
-
-}} // namespace yasm::arch
 
 #endif

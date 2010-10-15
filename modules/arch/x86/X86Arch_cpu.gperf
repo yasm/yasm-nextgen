@@ -32,9 +32,6 @@
 
 #include "modules/arch/x86/X86Arch.h"
 
-using namespace yasm;
-using namespace yasm::arch;
-
 #define PROC_8086	0
 #define PROC_186	1
 #define PROC_286	2

@@ -35,11 +35,6 @@
 
 namespace llvm { class MemoryBuffer; class raw_fd_ostream; }
 
-/// Namespace for classes, functions, and templates related to the Yasm
-/// assembler.
-namespace yasm
-{
-
 class Arch;
 class ArchModule;
 class DebugFormat;
@@ -171,7 +166,5 @@ private:
     std::string m_obj_filename;
     std::string m_machine;
 };
-
-} // namespace yasm
 
 #endif

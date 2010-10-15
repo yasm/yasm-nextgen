@@ -37,9 +37,6 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace yasm
-{
-
 /// Basic YASM relocation.  Object formats will need to extend this
 /// structure with additional fields for relocation type, etc.
 class Reloc
@@ -71,7 +68,5 @@ private:
     Reloc(const Reloc&);                    // not implemented
     const Reloc& operator=(const Reloc&);   // not implemented
 };
-
-} // namespace yasm
 
 #endif

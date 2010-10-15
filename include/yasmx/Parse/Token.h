@@ -35,9 +35,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Basic/SourceLocation.h"
 
-namespace yasm
-{
-
 class IdentifierInfo;
 
 /// This structure provides full information about a lexed token.
@@ -242,7 +239,5 @@ public:
     bool isEndOfStatement() const
     { return (m_flags & EndOfStatement) ? true : false; }
 };
-
-} // namespace yasm
 
 #endif

@@ -29,15 +29,9 @@
 #include <memory>
 
 
-namespace yasm
-{
-
 class BytecodeContainer;
 class Expr;
 class SourceLocation;
-
-namespace arch
-{
 
 class X86Common;
 class X86Opcode;
@@ -51,7 +45,5 @@ void AppendJmpFar(BytecodeContainer& container,
                   std::auto_ptr<Expr> segment,
                   std::auto_ptr<Expr> offset,
                   SourceLocation source);
-
-}} // namespace yasm::arch
 
 #endif

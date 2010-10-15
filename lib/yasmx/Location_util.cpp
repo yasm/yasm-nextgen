@@ -34,8 +34,6 @@
 #include "yasmx/Symbol.h"
 
 
-using namespace yasm;
-
 // Transforms instances of Symbol-Symbol [Symbol+(-1*Symbol)] into single
 // ExprTerms if possible.  Uses a simple n^2 algorithm because n is usually
 // quite small.  Also works for loc-loc (or Symbol-loc, loc-Symbol).
@@ -181,7 +179,7 @@ struct CalcDistFunctor
 } // anonymous namespace
 
 void
-yasm::SimplifyCalcDist(Expr& e, Diagnostic& diags)
+SimplifyCalcDist(Expr& e, Diagnostic& diags)
 {
     CalcDistFunctor functor;
     e.Simplify(diags, TR1::bind(&TransformDistBase, _1, _2, functor));
@@ -203,7 +201,7 @@ struct CalcDistNoBCFunctor
 } // anonymous namespace
 
 void
-yasm::SimplifyCalcDistNoBC(Expr& e, Diagnostic& diags)
+SimplifyCalcDistNoBC(Expr& e, Diagnostic& diags)
 {
     CalcDistNoBCFunctor functor;
     e.Simplify(diags, TR1::bind(&TransformDistBase, _1, _2, functor));
@@ -237,10 +235,10 @@ struct SubstDistFunctor
 } // anonymous namespace
 
 int
-yasm::SubstDist(Expr& e, Diagnostic& diags,
-                const TR1::function<void (unsigned int subst,
-                                          Location loc,
-                                          Location loc2)>& func)
+SubstDist(Expr& e, Diagnostic& diags,
+          const TR1::function<void (unsigned int subst,
+                                    Location loc,
+                                    Location loc2)>& func)
 {
     SubstDistFunctor functor(func);
     e.Simplify(diags, TR1::bind(&TransformDistBase, _1, _2, functor));
@@ -248,13 +246,13 @@ yasm::SubstDist(Expr& e, Diagnostic& diags,
 }
 
 bool
-yasm::Evaluate(const Expr& e,
-               Diagnostic& diags,
-               ExprTerm* result,
-               const ExprTerm* subst,
-               unsigned int nsubst,
-               bool valueloc,
-               bool zeroreg)
+Evaluate(const Expr& e,
+         Diagnostic& diags,
+         ExprTerm* result,
+         const ExprTerm* subst,
+         unsigned int nsubst,
+         bool valueloc,
+         bool zeroreg)
 {
     if (e.isEmpty())
         return false;

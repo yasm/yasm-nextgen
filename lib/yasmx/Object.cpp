@@ -40,8 +40,6 @@
 #include "hamt.h"
 
 
-using namespace yasm;
-
 namespace {
 /// Get name helper for symbol table HAMT.
 class SymGetName
@@ -52,7 +50,6 @@ public:
 };
 } // anonymous namespace
 
-namespace yasm {
 class Object::Impl
 {
 public:
@@ -91,7 +88,6 @@ private:
     /// Pool for symbols not in the symbol table.
     boost::pool<> m_sym_pool;
 };
-} // namespace yasm
 
 Object::Object(llvm::StringRef src_filename,
                llvm::StringRef obj_filename,

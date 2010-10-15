@@ -30,8 +30,6 @@
 #include "yasmx/Expr.h"
 
 
-using namespace yasm;
-
 EffAddr::EffAddr(std::auto_ptr<Expr> e)
     : m_disp(0, e),
       m_segreg(0),

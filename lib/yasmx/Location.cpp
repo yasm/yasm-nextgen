@@ -30,8 +30,6 @@
 #include "yasmx/IntNum.h"
 
 
-using namespace yasm;
-
 unsigned long
 Location::getOffset() const
 {
@@ -39,7 +37,7 @@ Location::getOffset() const
 }
 
 bool
-yasm::CalcDist(Location loc1, Location loc2, IntNum* dist)
+CalcDist(Location loc1, Location loc2, IntNum* dist)
 {
     assert(loc1.bc && loc2.bc);
     if (loc1.bc->getContainer() != loc2.bc->getContainer())
@@ -51,7 +49,7 @@ yasm::CalcDist(Location loc1, Location loc2, IntNum* dist)
 }
 
 bool
-yasm::CalcDistNoBC(Location loc1, Location loc2, IntNum* dist)
+CalcDistNoBC(Location loc1, Location loc2, IntNum* dist)
 {
     assert(loc1.bc && loc2.bc);
     if (loc1.bc != loc2.bc)

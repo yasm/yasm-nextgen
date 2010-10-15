@@ -28,11 +28,6 @@
 //
 #include "yasmx/Arch.h"
 
-namespace yasm
-{
-namespace arch
-{
-
 class X86Register : public Register
 {
 public:
@@ -116,7 +111,5 @@ private:
     Type m_type;
     unsigned char m_prefix;
 };
-
-}} // namespace yasm::arch
 
 #endif

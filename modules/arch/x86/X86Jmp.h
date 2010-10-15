@@ -29,15 +29,9 @@
 #include <memory>
 
 
-namespace yasm
-{
-
 class BytecodeContainer;
 class Expr;
 class SourceLocation;
-
-namespace arch
-{
 
 class X86Common;
 class X86Opcode;
@@ -57,7 +51,5 @@ void AppendJmp(BytecodeContainer& container,
                SourceLocation target_source,
                SourceLocation source,
                X86JmpOpcodeSel op_sel = X86_JMP_NONE);
-
-}} // namespace yasm::arch
 
 #endif

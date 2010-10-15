@@ -34,8 +34,6 @@
 #include "yasmx/Expr_util.h"
 
 
-using namespace yasm;
-
 namespace {
 class OrgBytecode : public Bytecode::Contents
 {
@@ -196,7 +194,7 @@ OrgBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 llvm::StringRef
 OrgBytecode::getType() const
 {
-    return "yasm::OrgBytecode";
+    return "OrgBytecode";
 }
 
 OrgBytecode::SpecialType
@@ -212,10 +210,10 @@ OrgBytecode::clone() const
 }
 
 void
-yasm::AppendOrg(BytecodeContainer& container,
-                const Expr& start,
-                const Expr& fill,
-                SourceLocation source)
+AppendOrg(BytecodeContainer& container,
+          const Expr& start,
+          const Expr& fill,
+          SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     bc.Transform(Bytecode::Contents::Ptr(new OrgBytecode(start, fill)));

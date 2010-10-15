@@ -53,9 +53,6 @@
 #include "BinSymbol.h"
 
 
-using namespace yasm;
-using namespace yasm::objfmt;
-
 BinObject::BinObject(const ObjectFormatModule& module, Object& object)
     : ObjectFormat(module, object), m_map_flags(NO_MAP), m_org(0)
 {

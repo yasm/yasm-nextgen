@@ -33,8 +33,6 @@
 #include "yasmx/Location_util.h"
 
 
-using namespace yasm;
-
 namespace {
 class MultipleBytecode : public Bytecode::Contents
 {
@@ -242,7 +240,7 @@ MultipleBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 llvm::StringRef
 MultipleBytecode::getType() const
 {
-    return "yasm::MultipleBytecode";
+    return "MultipleBytecode";
 }
 
 MultipleBytecode*
@@ -254,9 +252,9 @@ MultipleBytecode::clone() const
 }
 
 BytecodeContainer&
-yasm::AppendMultiple(BytecodeContainer& container,
-                     std::auto_ptr<Expr> multiple,
-                     SourceLocation source)
+AppendMultiple(BytecodeContainer& container,
+               std::auto_ptr<Expr> multiple,
+               SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     MultipleBytecode* multbc(new MultipleBytecode(multiple));

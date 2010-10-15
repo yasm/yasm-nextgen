@@ -30,9 +30,6 @@
 #include "Dwarf2Section.h"
 
 
-using namespace yasm;
-using namespace yasm::dbgfmt;
-
 Dwarf2Loc::Dwarf2Loc(Location loc_,
                      SourceLocation source_,
                      unsigned long file_,
@@ -51,7 +48,7 @@ Dwarf2Loc::Dwarf2Loc(Location loc_,
 {
 }
 
-const char* Dwarf2Section::key = "yasm::dbgfmt::Dwarf2Section";
+const char* Dwarf2Section::key = "Dwarf2Section";
 
 Dwarf2Section::Dwarf2Section()
 {

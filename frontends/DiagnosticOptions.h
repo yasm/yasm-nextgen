@@ -15,8 +15,6 @@
 #include <string>
 #include <vector>
 
-namespace yasm {
-
 /// DiagnosticOptions - Options for controlling the compiler diagnostics
 /// engine.
 class DiagnosticOptions {
@@ -94,7 +92,5 @@ public:
     MacroBacktraceLimit = DefaultMacroBacktraceLimit;
   }
 };
-
-}  // end namespace yasm
 
 #endif

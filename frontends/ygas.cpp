@@ -176,11 +176,11 @@ static cl::list<bool> enable_warnings("warn",
 static cl::list<std::string> unknown_options(cl::Sink);
 
 static void
-ApplyWarningSettings(yasm::Diagnostic& diags)
+ApplyWarningSettings(Diagnostic& diags)
 {
     // Disable init-nobits and uninit-contents by default.
-    diags.setDiagnosticGroupMapping("init-nobits", yasm::diag::MAP_IGNORE);
-    diags.setDiagnosticGroupMapping("uninit-contents", yasm::diag::MAP_IGNORE);
+    diags.setDiagnosticGroupMapping("init-nobits", diag::MAP_IGNORE);
+    diags.setDiagnosticGroupMapping("uninit-contents", diag::MAP_IGNORE);
 
     // Walk through inhibit_warnings, fatal_warnings, enable_warnings, and
     // no_signed_overflow in parallel, ordering by command line argument
@@ -227,7 +227,7 @@ ApplyWarningSettings(yasm::Diagnostic& diags)
             diags.setIgnoreAllWarnings(false);
             diags.setWarningsAsErrors(false);
             diags.setDiagnosticGroupMapping("signed-overflow",
-                                            yasm::diag::MAP_WARNING);
+                                            diag::MAP_WARNING);
         }
         else if (fatal_pos != 0 &&
                  (enable_pos == 0 || fatal_pos < enable_pos) &&
@@ -246,7 +246,7 @@ ApplyWarningSettings(yasm::Diagnostic& diags)
             // Handle signed option
             ++signed_num;
             diags.setDiagnosticGroupMapping("signed-overflow",
-                                            yasm::diag::MAP_IGNORE);
+                                            diag::MAP_IGNORE);
         }
         else
             break; // we're done with the list
@@ -293,7 +293,7 @@ GetBitsSetting()
 }
 
 static int
-do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
+do_assemble(SourceManager& source_mgr, Diagnostic& diags)
 {
     // Apply warning settings
     ApplyWarningSettings(diags);
@@ -301,9 +301,9 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
     // Determine objfmt_bits based on -32 and -64 options
     std::string objfmt_bits = GetBitsSetting();
 
-    yasm::FileManager file_mgr;
-    yasm::Assembler assembler("x86", YGAS_OBJFMT_BASE + objfmt_bits, diags);
-    yasm::HeaderSearch headers(file_mgr);
+    FileManager file_mgr;
+    Assembler assembler("x86", YGAS_OBJFMT_BASE + objfmt_bits, diags);
+    HeaderSearch headers(file_mgr);
 
     if (diags.hasFatalErrorOccurred())
         return EXIT_FAILURE;
@@ -333,14 +333,14 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
     }
     else
     {
-        const yasm::FileEntry* in = file_mgr.getFile(in_filename);
+        const FileEntry* in = file_mgr.getFile(in_filename);
         if (!in)
         {
-            diags.Report(yasm::SourceLocation(), yasm::diag::fatal_file_open)
+            diags.Report(SourceLocation(), diag::fatal_file_open)
                 << in_filename;
             return EXIT_FAILURE;
         }
-        source_mgr.createMainFileID(in, yasm::SourceLocation());
+        source_mgr.createMainFileID(in, SourceLocation());
     }
 
     // Initialize the object.
@@ -355,13 +355,13 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
         size_t equalpos = str.find('=');
         if (equalpos == llvm::StringRef::npos)
         {
-            diags.Report(yasm::diag::fatal_bad_defsym) << str;
+            diags.Report(diag::fatal_bad_defsym) << str;
             continue;
         }
         llvm::StringRef name = str.slice(0, equalpos);
         llvm::StringRef vstr = str.slice(equalpos+1, llvm::StringRef::npos);
 
-        yasm::IntNum value;
+        IntNum value;
         if (!vstr.empty())
         {
             // determine radix
@@ -400,14 +400,14 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
             }
             if (ptr != end)
             {
-                diags.Report(yasm::diag::fatal_bad_defsym) << name;
+                diags.Report(diag::fatal_bad_defsym) << name;
                 continue;
             }
             value.setStr(vstr, radix);
         }
 
         // define equ
-        assembler.getObject()->getSymbol(name)->DefineEqu(yasm::Expr(value));
+        assembler.getObject()->getSymbol(name)->DefineEqu(Expr(value));
     }
 
     if (diags.hasFatalErrorOccurred())
@@ -427,7 +427,7 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
                              err, llvm::raw_fd_ostream::F_Binary);
     if (!err.empty())
     {
-        diags.Report(yasm::SourceLocation(), yasm::diag::err_cannot_open_file)
+        diags.Report(SourceLocation(), diag::err_cannot_open_file)
             << obj_filename << err;
         return EXIT_FAILURE;
     }
@@ -462,25 +462,25 @@ main(int argc, char* argv[])
         return EXIT_SUCCESS;
     }
 
-    yasm::DiagnosticOptions diag_opts;
+    DiagnosticOptions diag_opts;
     diag_opts.ShowOptionNames = 1;
     diag_opts.ShowSourceRanges = 1;
-    yasm::TextDiagnosticPrinter diag_printer(llvm::errs(), diag_opts);
-    yasm::Diagnostic diags(&diag_printer);
-    yasm::SourceManager source_mgr(diags);
+    TextDiagnosticPrinter diag_printer(llvm::errs(), diag_opts);
+    Diagnostic diags(&diag_printer);
+    SourceManager source_mgr(diags);
     diags.setSourceManager(&source_mgr);
     diag_printer.setPrefix("ygas");
 
     for (std::vector<std::string>::const_iterator i=unknown_options.begin(),
          end=unknown_options.end(); i != end; ++i)
     {
-        diags.Report(yasm::diag::warn_unknown_command_line_option) << *i;
+        diags.Report(diag::warn_unknown_command_line_option) << *i;
     }
 
     // Load standard modules
-    if (!yasm::LoadStandardPlugins())
+    if (!LoadStandardPlugins())
     {
-        diags.Report(yasm::diag::fatal_standard_modules);
+        diags.Report(diag::fatal_standard_modules);
         return EXIT_FAILURE;
     }
 

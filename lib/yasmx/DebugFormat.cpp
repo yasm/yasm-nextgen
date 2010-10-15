@@ -30,8 +30,6 @@
 #include "yasmx/DebugFormat.h"
 
 
-using namespace yasm;
-
 DebugFormat::~DebugFormat()
 {
 }

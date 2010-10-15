@@ -17,8 +17,6 @@
 #include "yasmx/Parse/HeaderSearch.h"
 #include "yasmx/Parse/Preprocessor.h"
 
-using namespace yasm;
-
 bool
 Preprocessor::isInPrimaryFile() const
 {

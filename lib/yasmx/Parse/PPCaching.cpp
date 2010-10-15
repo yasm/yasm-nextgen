@@ -15,8 +15,6 @@
 #include "yasmx/Parse/Preprocessor.h"
 
 
-using namespace yasm;
-
 /// EnableBacktrackAtThisPos - From the point that this method is called, and
 /// until CommitBacktrackedTokens() or Backtrack() is called, the Preprocessor
 /// keeps track of the lexed tokens so that a subsequent Backtrack() call will

@@ -24,7 +24,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-namespace yasm {
 class FileManager;
 
 /// DirectoryEntry - Cached information about one directory on the disk.
@@ -210,7 +209,5 @@ public:
                                   time_t ModificationTime);
   void PrintStats() const;
 };
-
-}  // end namespace yasm
 
 #endif

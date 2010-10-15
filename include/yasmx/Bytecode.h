@@ -41,9 +41,6 @@
 #include "yasmx/Value.h"
 
 
-namespace yasm
-{
-
 class BytecodeContainer;
 class BytecodeOutput;
 class Diagnostic;
@@ -405,22 +402,20 @@ swap(Bytecode::Fixup& left, Bytecode::Fixup& right)
     left.swap(right);
 }
 
-} // namespace yasm
-
 namespace std
 {
 
 // Specialized std::swap.
 template <>
 inline void
-swap(yasm::Bytecode& left, yasm::Bytecode& right)
+swap(Bytecode& left, Bytecode& right)
 {
     left.swap(right);
 }
 
 template <>
 inline void
-swap(yasm::Bytecode::Fixup& left, yasm::Bytecode::Fixup& right)
+swap(Bytecode::Fixup& left, Bytecode::Fixup& right)
 {
     left.swap(right);
 }

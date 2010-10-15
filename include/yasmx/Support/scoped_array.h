@@ -14,8 +14,6 @@
 #include <assert.h>
 #include <cstddef>            // for std::ptrdiff_t
 
-namespace yasm
-{
 namespace util
 {
 
@@ -99,6 +97,6 @@ template<class T> inline void swap(scoped_array<T> & a, scoped_array<T> & b) // 
     a.swap(b);
 }
 
-}} // namespace yasm::util
+} // namespace util
 
 #endif

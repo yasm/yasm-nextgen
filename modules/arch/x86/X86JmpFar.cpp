@@ -34,16 +34,13 @@
 #include "X86Opcode.h"
 
 
-using namespace yasm;
-using namespace yasm::arch;
-
 void
-arch::AppendJmpFar(BytecodeContainer& container,
-                   const X86Common& common,
-                   const X86Opcode& opcode,
-                   std::auto_ptr<Expr> segment,
-                   std::auto_ptr<Expr> offset,
-                   SourceLocation source)
+AppendJmpFar(BytecodeContainer& container,
+             const X86Common& common,
+             const X86Opcode& opcode,
+             std::auto_ptr<Expr> segment,
+             std::auto_ptr<Expr> offset,
+             SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
     Bytes& bytes = bc.getFixed();

@@ -40,9 +40,6 @@
 #include "ElfReloc.h"
 
 
-using namespace yasm;
-using namespace yasm::objfmt;
-
 const char* ElfSection::key = "objfmt::elf::ElfSection";
 
 ElfSection::ElfSection(const ElfConfig&             config,

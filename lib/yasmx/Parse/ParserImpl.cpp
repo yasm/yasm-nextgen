@@ -36,8 +36,6 @@
 #include "yasmx/Basic/SourceLocation.h"
 
 
-using namespace yasm;
-
 ParseExprTerm::~ParseExprTerm()
 {
 }

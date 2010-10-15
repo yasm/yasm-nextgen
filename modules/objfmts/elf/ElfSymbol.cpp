@@ -40,9 +40,6 @@
 #include "ElfSection.h"
 
 
-using namespace yasm;
-using namespace yasm::objfmt;
-
 const char* ElfSymbol::key = "objfmt::elf::ElfSymbol";
 
 ElfSymbol::ElfSymbol(const ElfConfig&           config,

@@ -25,8 +25,6 @@ namespace llvm {
   template <typename T> struct isPodLike;
 }
 
-namespace yasm {
-
 class SourceManager;
 
 /// FileID - This is an opaque identifier used by SourceManager which refers to
@@ -322,33 +320,31 @@ public:
 };
 
 
-}  // end namespace yasm
-
 namespace llvm {
   /// Define DenseMapInfo so that FileID's can be used as keys in DenseMap and
   /// DenseSets.
   template <>
-  struct DenseMapInfo<yasm::FileID> {
-    static inline yasm::FileID getEmptyKey() {
-      return yasm::FileID();
+  struct DenseMapInfo<FileID> {
+    static inline FileID getEmptyKey() {
+      return FileID();
     }
-    static inline yasm::FileID getTombstoneKey() {
-      return yasm::FileID::getSentinel();
+    static inline FileID getTombstoneKey() {
+      return FileID::getSentinel();
     }
 
-    static unsigned getHashValue(yasm::FileID S) {
+    static unsigned getHashValue(FileID S) {
       return S.getHashValue();
     }
 
-    static bool isEqual(yasm::FileID LHS, yasm::FileID RHS) {
+    static bool isEqual(FileID LHS, FileID RHS) {
       return LHS == RHS;
     }
   };
   
   template <>
-  struct isPodLike<yasm::SourceLocation> { static const bool value = true; };
+  struct isPodLike<SourceLocation> { static const bool value = true; };
   template <>
-  struct isPodLike<yasm::FileID> { static const bool value = true; };
+  struct isPodLike<FileID> { static const bool value = true; };
 
 }  // end namespace llvm
 

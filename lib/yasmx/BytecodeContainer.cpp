@@ -32,8 +32,6 @@
 #include "yasmx/Expr.h"
 
 
-using namespace yasm;
-
 namespace {
 class GapBytecode : public Bytecode::Contents
 {
@@ -101,7 +99,7 @@ GapBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 llvm::StringRef
 GapBytecode::getType() const
 {
-    return "yasm::GapBytecode";
+    return "GapBytecode";
 }
 
 GapBytecode*

@@ -54,9 +54,6 @@
 #define NELEMS(array)   (sizeof(array) / sizeof(array[0]))
 #endif
 
-using namespace yasm;
-using namespace yasm::dbgfmt;
-
 // # of LEB128 operands needed for each of the above opcodes
 static unsigned char line_opcode_num_operands[DWARF2_LINE_OPCODE_BASE-1] =
 {
@@ -87,7 +84,6 @@ static const int DWARF2_LINE_RANGE = 14;
 // Initial value of is_stmt register
 #define DWARF2_LINE_DEFAULT_IS_STMT     1
 
-namespace yasm { namespace dbgfmt {
 // Line number state machine register state
 struct Dwarf2LineState
 {
@@ -102,7 +98,6 @@ struct Dwarf2LineState
     // other state information
     Location prevloc;
 };
-}} // namespace yasm::dbgfmt
 
 namespace {
 class MatchFileDir

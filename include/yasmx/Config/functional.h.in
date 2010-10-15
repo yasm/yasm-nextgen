@@ -3,10 +3,6 @@
 
 @FUNCTIONAL_INCLUDES@
 
-namespace yasm {
-
 @FUNCTIONAL_ALIASES@
-
-} // namespace yasm
 
 #endif

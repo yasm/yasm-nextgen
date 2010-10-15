@@ -30,8 +30,6 @@
 #include "yasmx/Parse/Parser.h"
 
 
-using namespace yasm;
-
 Parser::~Parser()
 {
 }

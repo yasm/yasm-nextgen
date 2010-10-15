@@ -35,8 +35,6 @@
 #include "yasmx/Module.h"
 
 
-namespace yasm
-{
 class DebugFormatModule;
 class Diagnostic;
 class Directives;
@@ -122,7 +120,5 @@ public:
         return std::auto_ptr<DebugFormat>(new DebugFormatImpl(*this, object));
     }
 };
-
-} // namespace yasm
 
 #endif

@@ -27,9 +27,6 @@
 #include "BinSection.h"
 
 
-using namespace yasm;
-using namespace yasm::objfmt;
-
 const char* BinSection::key = "objfmt::bin::BinSection";
 
 BinSection::BinSection()

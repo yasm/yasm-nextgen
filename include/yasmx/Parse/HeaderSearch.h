@@ -34,9 +34,6 @@
 #include "llvm/ADT/StringMap.h"
 #include <vector>
 
-namespace yasm
-{
-
 class FileEntry;
 class FileManager;
 class IdentifierInfo;
@@ -191,7 +188,5 @@ private:
   /// FileEntry.
   HeaderFileInfo &getFileInfo(const FileEntry *FE);
 };
-
-} // namespace yasm
 
 #endif

@@ -27,8 +27,6 @@
 #include "yasmx/Parse/IdentifierTable.h"
 
 
-using namespace yasm;
-
 void
 IdentifierInfo::DoInsnLookup(const Arch& arch,
                              SourceLocation source,

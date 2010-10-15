@@ -39,9 +39,6 @@
 
 namespace llvm { class MemoryBuffer; class raw_fd_ostream; }
 
-namespace yasm
-{
-
 class DebugFormat;
 class Diagnostic;
 class Directives;
@@ -210,7 +207,5 @@ public:
         return std::auto_ptr<ObjectFormat>(new ObjectFormatImpl(*this, object));
     }
 };
-
-} // namespace yasm
 
 #endif

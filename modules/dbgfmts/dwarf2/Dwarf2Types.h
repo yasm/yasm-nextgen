@@ -26,9 +26,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-namespace yasm {
-namespace dbgfmt {
-
 enum DwarfLang
 {
     DW_LANG_Mips_Assembler = 0x8001
@@ -210,7 +207,5 @@ enum DwarfLineNumberExtOp
     DW_LNE_define_file,
     DW_LNE_set_discriminator
 };
-
-}} // namespace yasm::dbgfmt
 
 #endif

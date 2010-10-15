@@ -38,9 +38,6 @@
 #include "yasmx/Support/scoped_ptr.h"
 
 
-namespace yasm
-{
-
 class Diagnostic;
 class Expr;
 class IntNum;
@@ -204,7 +201,5 @@ void DirString(NameValue& nv,
 bool DirNameValueWarn(NameValue& nv,
                       SourceLocation dir_source,
                       Diagnostic& diags);
-
-} // namespace yasm
 
 #endif

@@ -97,14 +97,14 @@ def add_note(name, desc, category=""):
 def output_diag_kinds(f):
     lprint("#ifndef YASM_DIAGNOSTICKINDS_H", file=f)
     lprint("#define YASM_DIAGNOSTICKINDS_H", file=f)
-    lprint("namespace yasm { namespace diag {", file=f)
+    lprint("namespace diag {", file=f)
     lprint("enum {", file=f)
     for name in sorted(diags):
         diag = diags[name]
         lprint("%s," % diag.name, file=f)
     lprint("NUM_BUILTIN_DIAGNOSTICS", file=f)
     lprint("};", file=f)
-    lprint("}}", file=f)
+    lprint("}", file=f)
     lprint("#endif", file=f)
 
 def output_diags(f):

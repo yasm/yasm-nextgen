@@ -43,17 +43,11 @@
 
 namespace llvm { class MemoryBuffer; }
 
-namespace yasm
-{
-
 class Diagnostic;
 class Expr;
 class Object;
 class Section;
 class StringTable;
-
-namespace objfmt
-{
 
 class ElfSymbol : public AssocData
 {
@@ -127,7 +121,5 @@ private:
 void InsertLocalSymbol(Object& object,
                        std::auto_ptr<Symbol> sym,
                        std::auto_ptr<ElfSymbol> entry);
-
-}} // namespace yasm::objfmt
 
 #endif

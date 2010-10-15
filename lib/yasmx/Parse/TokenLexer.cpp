@@ -36,8 +36,6 @@
 #include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Parse/Preprocessor.h"
 
-using namespace yasm;
-
 #if 0
 /// Create a TokenLexer for the specified macro with the specified actual
 /// arguments.  Note that this ctor takes ownership of the ActualArgs pointer.

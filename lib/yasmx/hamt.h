@@ -42,9 +42,6 @@
 #include "yasmx/Support/bitcount.h"
 
 
-namespace yasm
-{
-
 /// Hash array mapped trie data structure.
 /// Template parameters:
 /// - Key: class that keys the data (e.g. std::string)
@@ -546,7 +543,5 @@ hamt<Key,T,GetKey>::Remove(const Key& str)
     m_pools[0]->free(node);
     return value;
 }
-
-} // namespace yasm
 
 #endif

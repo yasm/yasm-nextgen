@@ -29,9 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-namespace yasm
-{
-
 class Diagnostic;
 class DirectiveInfo;
 class Expr;
@@ -105,7 +102,5 @@ void DirGlobalMulti(DirectiveInfo& info, Diagnostic& diags);
 /// @param info     directive info
 /// @param diags    diagnostic reporter
 void DirCommon(DirectiveInfo& info, Diagnostic& diags);
-
-} // namespace yasm
 
 #endif

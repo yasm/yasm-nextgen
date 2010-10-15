@@ -23,9 +23,6 @@
 #include "yasmx/Config/functional.h"
 
 
-namespace yasm
-{
-
 template <typename T> class IntervalTree;
 
 template <typename T>
@@ -159,11 +156,6 @@ Overlap(int a1, int a2, int b1, int b2)
     else
         return (a1 <= b2);
 }
-
-} // anonymous namespace
-
-namespace yasm
-{
 
 template <typename T>
 IntervalTreeNode<T>::IntervalTreeNode(long l, long h)
@@ -1013,7 +1005,5 @@ IntervalTree<T>::CheckAssumptions() const
     CheckMaxHighFields(m_root->left);
 }
 #endif
-
-} // namespace yasm
 
 #endif

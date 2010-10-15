@@ -21,8 +21,6 @@
 #include "yasmx/Basic/SourceLocation.h"
 #include <cassert>
 
-namespace yasm {
-
 class PartialDiagnostic {
 public:
   struct Storage {
@@ -288,6 +286,4 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
   return DB;
 }
   
-
-}  // end namespace yasm
 #endif

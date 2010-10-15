@@ -29,9 +29,6 @@
 #include "yasmx/Bytes.h"
 
 
-using namespace yasm;
-using namespace yasm::arch;
-
 void
 X86Opcode::ToBytes(Bytes& bytes) const
 {

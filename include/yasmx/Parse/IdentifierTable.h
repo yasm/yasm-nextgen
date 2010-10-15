@@ -40,9 +40,6 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace yasm
-{
-
 class IdentifierTable;
 
 class IdentifierInfo
@@ -258,33 +255,31 @@ public:
     void clear()                { m_hash_table.clear(); }
 };
 
-} // namespace yasm
-
 namespace llvm
 {
 
 // Provide PointerLikeTypeTraits for IdentifierInfo pointers, which
 // are not guaranteed to be 8-byte aligned.
 template<>
-class PointerLikeTypeTraits<yasm::IdentifierInfo*> {
+class PointerLikeTypeTraits<IdentifierInfo*> {
 public:
-  static inline void *getAsVoidPointer(yasm::IdentifierInfo* P) {
+  static inline void *getAsVoidPointer(IdentifierInfo* P) {
     return P; 
   }
-  static inline yasm::IdentifierInfo *getFromVoidPointer(void *P) {
-    return static_cast<yasm::IdentifierInfo*>(P);
+  static inline IdentifierInfo *getFromVoidPointer(void *P) {
+    return static_cast<IdentifierInfo*>(P);
   }
   enum { NumLowBitsAvailable = 1 };
 };
 
 template<>
-class PointerLikeTypeTraits<const yasm::IdentifierInfo*> {
+class PointerLikeTypeTraits<const IdentifierInfo*> {
 public:
-  static inline const void *getAsVoidPointer(const yasm::IdentifierInfo* P) {
+  static inline const void *getAsVoidPointer(const IdentifierInfo* P) {
     return P; 
   }
-  static inline const yasm::IdentifierInfo *getFromVoidPointer(const void *P) {
-    return static_cast<const yasm::IdentifierInfo*>(P);
+  static inline const IdentifierInfo *getFromVoidPointer(const void *P) {
+    return static_cast<const IdentifierInfo*>(P);
   }
   enum { NumLowBitsAvailable = 1 };
 };

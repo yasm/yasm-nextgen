@@ -31,11 +31,6 @@
 #include "yasmx/Basic/Diagnostic.h"
 
 
-using namespace yasm;
-
-namespace yasm
-{
-
 class Directives::Impl
 {
 public:
@@ -62,8 +57,6 @@ public:
     typedef llvm::StringMap<Dir> DirMap;
     DirMap m_dirs;
 };
-
-} // namespace yasm
 
 Directives::Directives()
     : m_impl(new Impl)

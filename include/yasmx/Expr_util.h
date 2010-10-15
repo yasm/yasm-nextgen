@@ -29,9 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-namespace yasm
-{
-
 class Expr;
 
 /// Expand any and all EQU values in an expression.
@@ -39,7 +36,5 @@ class Expr;
 /// @param e        Expression
 /// @return True if equ expansion successful with no circular references.
 bool ExpandEqu(Expr& e);
-
-} // namespace yasm
 
 #endif

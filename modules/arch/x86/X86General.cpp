@@ -44,9 +44,6 @@
 #include "X86Register.h"
 
 
-using namespace yasm;
-using namespace yasm::arch;
-
 namespace {
 class X86General : public Bytecode::Contents
 {
@@ -565,7 +562,7 @@ X86General::Output(Bytecode& bc, BytecodeOutput& bc_out)
 llvm::StringRef
 X86General::getType() const
 {
-    return "yasm::arch::X86General";
+    return "X86General";
 }
 
 X86General*
@@ -575,16 +572,16 @@ X86General::clone() const
 }
 
 void
-arch::AppendGeneral(BytecodeContainer& container,
-                    const X86Common& common,
-                    const X86Opcode& opcode,
-                    std::auto_ptr<X86EffAddr> ea,
-                    std::auto_ptr<Value> imm,
-                    unsigned char special_prefix,
-                    unsigned char rex,
-                    X86GeneralPostOp postop,
-                    bool default_rel,
-                    SourceLocation source)
+AppendGeneral(BytecodeContainer& container,
+              const X86Common& common,
+              const X86Opcode& opcode,
+              std::auto_ptr<X86EffAddr> ea,
+              std::auto_ptr<Value> imm,
+              unsigned char special_prefix,
+              unsigned char rex,
+              X86GeneralPostOp postop,
+              bool default_rel,
+              SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
 

@@ -32,8 +32,6 @@
 #include "yasmx/IntNum.h"
 
 
-using namespace yasm;
-
 static llvm::APInt staticbv(IntNum::BITVECT_NATIVE_SIZE, 0);
 
 static inline uint64_t
@@ -45,7 +43,7 @@ Extract(const llvm::APInt& bv, unsigned int width, unsigned int lsb)
 }
 
 unsigned long
-yasm::WriteLEB128(Bytes& bytes, const IntNum& intn, bool sign)
+WriteLEB128(Bytes& bytes, const IntNum& intn, bool sign)
 {
     // Shortcut 0
     if (intn.isZero())
@@ -71,7 +69,7 @@ yasm::WriteLEB128(Bytes& bytes, const IntNum& intn, bool sign)
 }
 
 unsigned long
-yasm::SizeLEB128(const IntNum& intn, bool sign)
+SizeLEB128(const IntNum& intn, bool sign)
 {
     // Shortcut 0
     if (intn.isZero())
@@ -85,7 +83,7 @@ yasm::SizeLEB128(const IntNum& intn, bool sign)
 }
 
 IntNum
-yasm::ReadLEB128(InputBuffer& input, bool sign, /*@out@*/ unsigned long* size)
+ReadLEB128(InputBuffer& input, bool sign, /*@out@*/ unsigned long* size)
 {
     unsigned int nwords = 1;
     llvm::SmallVector<uint64_t, 4> words(nwords);

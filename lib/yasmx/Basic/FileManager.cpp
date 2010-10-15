@@ -25,7 +25,6 @@
 #include <map>
 #include <set>
 #include <string>
-using namespace yasm;
 
 // FIXME: Enhance libsystem to support inode and other fields.
 #include <sys/stat.h>

@@ -34,13 +34,7 @@
 #include "yasmx/Parse/Preprocessor.h"
 
 
-namespace yasm
-{
-
 class IdentifierInfo;
-
-namespace parser
-{
 
 class GasPreproc : public Preprocessor
 {
@@ -57,7 +51,5 @@ protected:
 
 private:
 };
-
-}} // namespace yasm::parser
 
 #endif

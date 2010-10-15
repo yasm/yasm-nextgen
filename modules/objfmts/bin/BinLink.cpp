@@ -37,9 +37,6 @@
 #include "BinSection.h"
 
 
-using namespace yasm;
-using namespace yasm::objfmt;
-
 BinGroup::BinGroup(Section& section, BinSection& bsd)
     : m_section(section),
       m_bsd(bsd),

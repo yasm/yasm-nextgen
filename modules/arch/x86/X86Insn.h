@@ -30,13 +30,7 @@
 
 #include "X86Arch.h"
 
-namespace yasm
-{
-
 class SourceLocation;
-
-namespace arch
-{
 
 struct X86InfoOperand;
 struct X86InsnInfo;
@@ -135,7 +129,5 @@ private:
     // Default rel setting at the time of parsing the instruction
     unsigned int m_default_rel:1;
 };
-
-}} // namespace yasm::arch
 
 #endif

@@ -36,9 +36,6 @@
 
 namespace llvm { class raw_ostream; }
 
-namespace yasm
-{
-
 /// A string table of 0-terminated strings.  Always begins with a 0-length
 /// string (a single 0 byte) at offset 0.
 class StringTable
@@ -94,7 +91,5 @@ private:
     std::vector<char> m_storage;
     unsigned long m_first_index;
 };
-
-} // namespace yasm
 
 #endif

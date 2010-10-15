@@ -28,11 +28,6 @@
 //
 #include "yasmx/Insn.h"
 
-namespace yasm
-{
-namespace arch
-{
-
 class X86Prefix : public Prefix
 {
 public:
@@ -60,7 +55,5 @@ private:
     Type m_type;
     unsigned char m_value;
 };
-
-}} // namespace yasm::arch
 
 #endif

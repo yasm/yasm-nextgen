@@ -29,9 +29,6 @@
 #include "yasmx/Support/registry.h"
 
 
-using namespace yasm;
-using namespace yasm::dbgfmt;
-
 NullDebug::~NullDebug()
 {
 }

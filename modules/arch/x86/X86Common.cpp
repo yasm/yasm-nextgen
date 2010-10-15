@@ -34,9 +34,6 @@
 #include "X86Register.h"
 
 
-using namespace yasm;
-using namespace yasm::arch;
-
 X86Common::X86Common()
     : m_addrsize(0),
       m_opersize(0),

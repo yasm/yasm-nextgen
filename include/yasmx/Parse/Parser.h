@@ -38,9 +38,6 @@
 #include "yasmx/Module.h"
 
 
-namespace yasm
-{
-
 class Diagnostic;
 class Directives;
 class HeaderSearch;
@@ -152,7 +149,5 @@ public:
         return std::auto_ptr<Parser>(new ParserImpl(*this, diags, sm, headers));
     }
 };
-
-} // namespace yasm
 
 #endif

@@ -38,9 +38,6 @@
 #include "yasmx/Expr.h"
 
 
-namespace yasm
-{
-
 class BytecodeContainer;
 class Bytes;
 class Diagnostic;
@@ -336,7 +333,5 @@ operator<< (llvm::raw_ostream& os, const Prefix& prefix)
     prefix.Put(os);
     return os;
 }
-
-} // namespace yasm
 
 #endif

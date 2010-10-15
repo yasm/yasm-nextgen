@@ -34,9 +34,6 @@
 #include "yasmx/Location.h"
 
 
-namespace yasm
-{
-
 class Diagnostic;
 class Expr;
 class ExprTerm;
@@ -97,7 +94,5 @@ Evaluate(const Expr& e,
 {
     return Evaluate(e, diags, result, 0, 0, valueloc, zeroreg);
 }
-
-} // namespace yasm
 
 #endif

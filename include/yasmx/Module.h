@@ -32,9 +32,6 @@
 #include "llvm/ADT/StringRef.h"
 
 
-namespace yasm
-{
-
 /// Module interface (abstract base).
 class Module
 {
@@ -61,7 +58,5 @@ private:
     Module(const Module&);                  // not implemented
     const Module& operator=(const Module&); // not implemented
 };
-
-} // namespace yasm
 
 #endif

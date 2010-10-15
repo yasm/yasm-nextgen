@@ -36,9 +36,6 @@
 #include "yasmx/Parse/Token.h"
 
 
-namespace yasm
-{
-
 class DiagnosticBuilder;
 class Preprocessor;
 
@@ -328,7 +325,5 @@ private:
 
     void InitLexer(const char* start, const char* ptr, const char* end);
 };
-
-} // namespace yasm
 
 #endif

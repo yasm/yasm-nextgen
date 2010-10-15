@@ -33,18 +33,12 @@
 
 namespace llvm { class MemoryBuffer; }
 
-namespace yasm
-{
-
 class Bytes;
 class Diagnostic;
 class EndianState;
 class Object;
 class Section;
 class StringTable;
-
-namespace objfmt
-{
 
 struct ElfConfig
 {
@@ -98,7 +92,5 @@ struct ElfConfig
 
     bool setEndian(EndianState& state) const;
 };
-
-}} // namespace yasm::objfmt
 
 #endif
