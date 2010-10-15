@@ -354,7 +354,8 @@ X86Insn::DoAppendJmpFar(BytecodeContainer& container,
     if (segment.get() == 0 && tmod && tmod->is(X86TargetModifier::FAR))
     {
         // "FAR imm" target needs to become "seg imm:imm".
-        segment.reset(new Expr(SEG(*imm)));
+        segment.reset(imm->clone());
+        segment->Calc(Op::SEG);
     }
     else if (m_operands.size() > 1)
     {

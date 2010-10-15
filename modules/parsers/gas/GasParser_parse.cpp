@@ -573,7 +573,11 @@ GasParser::ParseDirAlign(unsigned int power2, SourceLocation source)
 
     // Convert power of two to number of bytes if necessary
     if (power2)
-        bound = SHL(1, bound);
+    {
+        Expr newbound(1);
+        newbound <<= bound;
+        bound.swap(newbound);
+    }
 
     // Largest .align in the section specifies section alignment.
     bound.Simplify(m_preproc.getDiagnostics());
@@ -1686,7 +1690,9 @@ done:
             }
             else
             {
-                e2 += MUL(*reg, scale);
+                Expr scalereg(*reg);
+                scalereg *= scale;
+                e2 += scalereg;
             }
         }
 
@@ -1694,10 +1700,9 @@ done:
         {
             // Ordering is critical here to correctly detecting presence of
             // RIP in RIP-relative expressions.
-            e1 = ADD(e2, e1);
+            e2 += e1;
         }
-        else
-            std::swap(e1, e2);
+        e1.swap(e2);
         strong = true;
     }
 /*

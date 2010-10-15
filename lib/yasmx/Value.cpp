@@ -313,7 +313,9 @@ Value::SubRelative(Object* object, Location sub)
         {
             if (!m_abs)
                 m_abs.reset(new Expr());
-            *m_abs += SUB(m_rel, sub);
+            Expr subexp(m_rel);
+            subexp -= sub;
+            *m_abs += subexp;
             m_rel = SymbolRef(0);
         }
         else
