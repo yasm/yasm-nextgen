@@ -139,20 +139,20 @@ if test $ac_cv_header_functional = yes ; then
 fi
 
 AC_MSG_CHECKING([Using functional])
-if test $ac_cv_std_function2 = yes -a $ac_cv_std_ref2 = yes -a \
-        $ac_cv_std_bind2 = yes -a $ac_cv_std_mem_fn2 = yes ; then
+if test x$ac_cv_std_function2 = xyes -a x$ac_cv_std_ref2 = xyes -a \
+        x$ac_cv_std_bind2 = xyes -a x$ac_cv_std_mem_fn2 = xyes ; then
   tr1_namespace=std
   tr1_header=functional
-elif test $ac_cv_tr1_function2 = yes -a $ac_cv_tr1_ref2 = yes -a \
-          $ac_cv_tr1_bind2 = yes -a $ac_cv_tr1_mem_fn2 = yes ; then
+elif test x$ac_cv_tr1_function2 = xyes -a x$ac_cv_tr1_ref2 = xyes -a \
+          x$ac_cv_tr1_bind2 = xyes -a x$ac_cv_tr1_mem_fn2 = xyes ; then
   tr1_namespace=std::tr1
   tr1_header=functional
-elif test $ac_cv_std_function1 = yes -a $ac_cv_std_ref1 = yes -a \
-          $ac_cv_std_bind1 = yes -a $ac_cv_std_mem_fn1 = yes ; then
+elif test x$ac_cv_std_function1 = xyes -a x$ac_cv_std_ref1 = xyes -a \
+          x$ac_cv_std_bind1 = xyes -a x$ac_cv_std_mem_fn1 = xyes ; then
   tr1_namespace=std
   tr1_header=tr1/functional
-elif test $ac_cv_tr1_function1 = yes -a $ac_cv_tr1_ref1 = yes -a \
-          $ac_cv_tr1_bind1 = yes -a $ac_cv_tr1_mem_fn1 = yes ; then
+elif test x$ac_cv_tr1_function1 = xyes -a x$ac_cv_tr1_ref1 = xyes -a \
+          x$ac_cv_tr1_bind1 = xyes -a x$ac_cv_tr1_mem_fn1 = xyes ; then
   tr1_namespace=std::tr1
   tr1_header=tr1/functional
 else
@@ -165,15 +165,15 @@ rm -f functional_includes
 rm -f functional_aliases
 
 touch functional_includes
-if test $ac_cv_header_functional = yes ; then
+if test x$ac_cv_header_functional = xyes ; then
   echo "#include <functional>" >> functional_includes
 fi
-if test $ac_cv_header_tr1_functional = yes ; then
+if test x$ac_cv_header_tr1_functional = xyes ; then
   echo "#include <tr1/functional>" >> functional_includes
 fi
 
 echo "namespace TR1 = $tr1_namespace;" > functional_aliases
-if test tr1_header = boost ; then
+if test x$tr1_header = xboost ; then
   cat <<EOF >> functional_includes
 #include <boost/function.hpp>
 #include <boost/ref.hpp>
