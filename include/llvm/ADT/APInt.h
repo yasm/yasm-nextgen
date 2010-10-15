@@ -16,7 +16,6 @@
 #define LLVM_APINT_H
 
 #include "llvm/Support/MathExtras.h"
-#include "yasmx/Config/export.h"
 #include <cassert>
 #include <climits>
 #include <cstring>
@@ -69,7 +68,7 @@ namespace llvm {
 ///     uses in its IR. This simplifies its use for LLVM.
 ///
 /// @brief Class for arbitrary precision integers.
-class YASM_LIB_EXPORT APInt {
+class APInt {
   unsigned BitWidth;      ///< The number of bits in this APInt.
 
   /// This union is used to store the integer value. When the
@@ -1578,7 +1577,6 @@ inline unsigned logBase2(const APInt& APIVal) {
 /// divisor of the two APInt values using Euclid's algorithm.
 /// @returns the greatest common divisor of Val1 and Val2
 /// @brief Compute GCD of two APInt values.
-YASM_LIB_EXPORT
 APInt GreatestCommonDivisor(const APInt& Val1, const APInt& Val2);
 
 /// Treats the APInt as an unsigned value for conversion purposes.
@@ -1606,7 +1604,6 @@ inline float RoundSignedAPIntToFloat(const APInt& APIVal) {
 
 /// RoundDoubleToAPInt - This function convert a double value to an APInt value.
 /// @brief Converts the given double value into a APInt.
-YASM_LIB_EXPORT
 APInt RoundDoubleToAPInt(double Double, unsigned width);
 
 /// RoundFloatToAPInt - Converts a float value into an APInt value.

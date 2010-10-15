@@ -33,7 +33,6 @@
 #include <string>
 
 #include "llvm/ADT/StringRef.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Parse/NameValue.h"
 #include "yasmx/Support/scoped_ptr.h"
@@ -54,7 +53,7 @@ class SourceLocation;
 typedef TR1::function<void (NameValue& nv, Diagnostic& diags)> DirHelper;
 
 /// Helper class to make writing directive handlers easier.
-class YASM_LIB_EXPORT DirHelpers
+class DirHelpers
 {
 public:
     DirHelpers();
@@ -152,7 +151,6 @@ DirClearFlag(NameValue& nv,
 /// @param obj      object
 /// @param out      reference to IntNum
 /// @param out_set  reference that is set to 1 when called
-YASM_LIB_EXPORT
 void DirIntNumPower2(NameValue& nv,
                      Diagnostic& diags,
                      Object* obj,
@@ -166,7 +164,6 @@ void DirIntNumPower2(NameValue& nv,
 /// @param obj      object
 /// @param out      reference to IntNum
 /// @param out_set  reference that is set to 1 when called
-YASM_LIB_EXPORT
 void DirIntNum(NameValue& nv,
                Diagnostic& diags,
                Object* obj,
@@ -180,7 +177,6 @@ void DirIntNum(NameValue& nv,
 /// @param obj      object
 /// @param out      reference to Expr auto_ptr
 /// @param out_set  reference that is set to 1 when called
-YASM_LIB_EXPORT
 void DirExpr(NameValue& nv,
              Diagnostic& diags,
              Object* obj,
@@ -194,7 +190,6 @@ void DirExpr(NameValue& nv,
 /// @param diags    diagnostic reporting
 /// @param out      reference to string
 /// @param out_set  reference that is set to 1 when called
-YASM_LIB_EXPORT
 void DirString(NameValue& nv,
                Diagnostic& diags,
                std::string* out,
@@ -206,7 +201,6 @@ void DirString(NameValue& nv,
 /// @param dir_source   source location of directive name
 /// @param diags        diagnostic reporting
 /// @return False
-YASM_LIB_EXPORT
 bool DirNameValueWarn(NameValue& nv,
                       SourceLocation dir_source,
                       Diagnostic& diags);

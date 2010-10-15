@@ -20,7 +20,6 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Allocator.h"
 #include "config.h" // for mode_t
-#include "yasmx/Config/export.h"
 // FIXME: Enhance libsystem to support inode and other fields in stat.
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -107,7 +106,7 @@ public:
 /// \brief A stat "cache" that can be used by FileManager to keep
 /// track of the results of stat() calls that occur throughout the
 /// execution of the front end.
-class YASM_LIB_EXPORT MemorizeStatCalls : public StatSysCallCache {
+class MemorizeStatCalls : public StatSysCallCache {
 public:
   /// \brief The result of a stat() call.
   ///
@@ -133,7 +132,7 @@ public:
 /// properties, such as uniquing files based on "inode", so that a file with two
 /// names (e.g. symlinked) will be treated as a single file.
 ///
-class YASM_LIB_EXPORT FileManager {
+class FileManager {
 
   class UniqueDirContainer;
   class UniqueFileContainer;

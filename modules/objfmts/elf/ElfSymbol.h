@@ -30,7 +30,6 @@
 #include <vector>
 
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/AssocData.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/IntNum.h"
@@ -56,7 +55,7 @@ class StringTable;
 namespace objfmt
 {
 
-class YASM_STD_EXPORT ElfSymbol : public AssocData
+class ElfSymbol : public AssocData
 {
 public:
     static const char* key;
@@ -125,7 +124,6 @@ private:
     bool                    m_in_table;
 };
 
-YASM_STD_EXPORT
 void InsertLocalSymbol(Object& object,
                        std::auto_ptr<Symbol> sym,
                        std::auto_ptr<ElfSymbol> entry);

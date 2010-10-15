@@ -35,8 +35,6 @@
 #include <vector>
 
 #include "llvm/ADT/StringRef.h"
-#include "yasmx/Config/export.h"
-
 #include "yasmx/Module.h"
 
 
@@ -53,7 +51,7 @@ class Preprocessor;
 class SourceManager;
 
 /// Parser interface.  The "front end" of the assembler.
-class YASM_LIB_EXPORT Parser
+class Parser
 {
 public:
     /// Constructor.
@@ -115,7 +113,7 @@ private:
 };
 
 /// Parser module interface.
-class YASM_LIB_EXPORT ParserModule : public Module
+class ParserModule : public Module
 {
 public:
     enum { module_type = 5 };

@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/System/DataTypes.h"
-#include "yasmx/Config/export.h"
 #include <string>
 #include <sys/stat.h>
 
@@ -32,7 +31,7 @@ namespace llvm {
 /// be more efficient for clients which are reading all the data to stop
 /// reading when they encounter a '\0' than to continually check the file
 /// position to see if it has reached the end of the file.
-class YASM_LIB_EXPORT MemoryBuffer {
+class MemoryBuffer {
   const char *BufferStart; // Start of the buffer.
   const char *BufferEnd;   // End of the buffer.
 

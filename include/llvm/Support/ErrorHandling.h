@@ -16,7 +16,6 @@
 #define LLVM_SUPPORT_ERRORHANDLING_H
 
 #include "llvm/Support/Compiler.h"
-#include "yasmx/Config/export.h"
 #include <string>
 
 namespace llvm {
@@ -45,14 +44,12 @@ namespace llvm {
   ///
   /// \param user_data - An argument which will be passed to the install error
   /// handler.
-  YASM_LIB_EXPORT
   void install_fatal_error_handler(fatal_error_handler_t handler,
                                    void *user_data = 0);
 
   /// Restores default error handling behaviour.
   /// This must not be called between llvm_start_multithreaded() and
   /// llvm_stop_multithreaded().
-  YASM_LIB_EXPORT
   void remove_fatal_error_handler();
 
   /// ScopedFatalErrorHandler - This is a simple helper class which just
@@ -75,17 +72,13 @@ namespace llvm {
   /// standard error, followed by a newline.
   /// After the error handler is called this function will call exit(1), it 
   /// does not return.
-  YASM_LIB_EXPORT
   NORETURN void report_fatal_error(const char *reason);
-  YASM_LIB_EXPORT
   NORETURN void report_fatal_error(const std::string &reason);
-  YASM_LIB_EXPORT
   NORETURN void report_fatal_error(const Twine &reason);
 
   /// This function calls abort(), and prints the optional message to stderr.
   /// Use the llvm_unreachable macro (that adds location info), instead of
   /// calling this function directly.
-  YASM_LIB_EXPORT
   NORETURN void llvm_unreachable_internal(const char *msg=0,
                                           const char *file=0, unsigned line=0);
 }

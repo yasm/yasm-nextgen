@@ -31,7 +31,6 @@
 ///
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Parse/NameValue.h"
 #include "yasmx/Support/scoped_ptr.h"
@@ -75,7 +74,7 @@ private:
 typedef TR1::function<void (DirectiveInfo& info, Diagnostic& diags)> Directive;
 
 /// Container to manage and call directive handlers.
-class YASM_LIB_EXPORT Directives
+class Directives
 {
 public:
     /// Tests to perform prior to directive handler being called.

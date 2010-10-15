@@ -33,7 +33,6 @@
 #include <memory>
 #include <string>
 
-#include "yasmx/Config/export.h"
 #include "yasmx/Parse/Token.h"
 
 
@@ -43,7 +42,7 @@ namespace yasm
 class DiagnosticBuilder;
 class Preprocessor;
 
-class YASM_LIB_EXPORT Lexer
+class Lexer
 {
 public:
     /// Create a new lexer object for the specified buffer with the specified

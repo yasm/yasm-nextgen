@@ -19,7 +19,6 @@
 #include "llvm/System/DataTypes.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 #include <cassert>
 
 namespace yasm {
@@ -71,7 +70,7 @@ public:
 
   /// \brief An allocator for Storage objects, which uses a small cache to 
   /// objects, used to reduce malloc()/free() traffic for partial diagnostics.
-  class YASM_LIB_EXPORT StorageAllocator {
+  class StorageAllocator {
     static const unsigned NumCached = 4;
     Storage Cached[NumCached];
     Storage *FreeList[NumCached];

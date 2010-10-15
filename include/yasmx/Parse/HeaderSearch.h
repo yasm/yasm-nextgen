@@ -30,7 +30,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "yasmx/Config/export.h"
 #include "yasmx/Parse/DirectoryLookup.h"
 #include "llvm/ADT/StringMap.h"
 #include <vector>
@@ -74,7 +73,7 @@ struct HeaderFileInfo {
 
 /// HeaderSearch - This class encapsulates the information needed to find the
 /// file referenced by a #include or #include_next, (sub-)framework lookup, etc.
-class YASM_LIB_EXPORT HeaderSearch
+class HeaderSearch
 {
   FileManager &FileMgr;
 

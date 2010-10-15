@@ -26,7 +26,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "yasmx/Config/export.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Reloc.h"
 #include "yasmx/SymbolRef.h"
@@ -45,7 +44,7 @@ class Expr;
 namespace objfmt
 {
 
-class YASM_STD_EXPORT ElfReloc : public Reloc
+class ElfReloc : public Reloc
 {
 public:
     // Constructor that reads from memory buffer.

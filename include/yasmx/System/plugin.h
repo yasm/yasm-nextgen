@@ -30,7 +30,6 @@
 /// @endlicense
 ///
 #include "llvm/ADT/StringRef.h"
-#include "yasmx/Config/export.h"
 
 
 namespace yasm
@@ -38,14 +37,11 @@ namespace yasm
 
 /// Load a plugin.
 /// @return False on failure
-YASM_LIB_EXPORT
 bool LoadPlugin(llvm::StringRef name);
-YASM_LIB_EXPORT
 void UnloadPlugins();
 
 /// Load standard plugins.
 /// @return False on failure
-YASM_STD_EXPORT
 bool LoadStandardPlugins();
 
 } // namespace yasm

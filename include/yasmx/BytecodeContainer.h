@@ -32,7 +32,6 @@
 #include <memory>
 
 #include "llvm/ADT/StringRef.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/Support/EndianState.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "Location.h"
@@ -51,7 +50,7 @@ class Object;
 class SourceLocation;
 
 /// A bytecode container.
-class YASM_LIB_EXPORT BytecodeContainer
+class BytecodeContainer
 {
     friend class Object;
 
@@ -144,7 +143,6 @@ private:
 /// Append a single byte value to the end of a section.
 /// @param sect         section
 /// @param val          byte value
-YASM_LIB_EXPORT
 void AppendByte(BytecodeContainer& container, unsigned char val);
 
 /// Append a raw data value to the end of a section.
@@ -152,7 +150,6 @@ void AppendByte(BytecodeContainer& container, unsigned char val);
 /// @param val          data value
 /// @param size         storage size (in bytes) for the data value
 /// @param arch         architecture
-YASM_LIB_EXPORT
 void AppendData(BytecodeContainer& container,
                 const IntNum& val,
                 unsigned int size,
@@ -163,7 +160,6 @@ void AppendData(BytecodeContainer& container,
 /// @param val          data value
 /// @param size         storage size (in bytes) for the data value
 /// @param endian       endianness
-YASM_LIB_EXPORT
 void AppendData(BytecodeContainer& container,
                 const IntNum& val,
                 unsigned int size,
@@ -176,7 +172,6 @@ void AppendData(BytecodeContainer& container,
 /// @param arch         architecture
 /// @param source       source location
 /// @param diags        diagnostic reporting
-YASM_LIB_EXPORT
 void AppendData(BytecodeContainer& container,
                 std::auto_ptr<Expr> expr,
                 unsigned int size,
@@ -188,7 +183,6 @@ void AppendData(BytecodeContainer& container,
 /// @param sect         section
 /// @param str          string/data (may contain 0 values)
 /// @param append_zero  append a single zero byte after the string (if true)
-YASM_LIB_EXPORT
 void AppendData(BytecodeContainer& container,
                 llvm::StringRef str,
                 bool append_zero);
@@ -198,7 +192,6 @@ void AppendData(BytecodeContainer& container,
 /// @param str          string/data (may contain 0 values)
 /// @param size         storage size (in bytes) to round up to
 /// @param append_zero  append a single zero byte after the string (if true)
-YASM_LIB_EXPORT
 void AppendData(BytecodeContainer& container,
                 llvm::StringRef str,
                 unsigned int size,
@@ -210,7 +203,6 @@ void AppendData(BytecodeContainer& container,
 /// @param sign         signedness (True=signed, False=unsigned) of the
 ///                     data value
 /// @param source       source location
-YASM_LIB_EXPORT
 void AppendLEB128(BytecodeContainer& container,
                   const IntNum& intn,
                   bool sign,
@@ -223,7 +215,6 @@ void AppendLEB128(BytecodeContainer& container,
 /// @param sign         signedness (True=signed, False=unsigned) of the
 ///                     data value
 /// @param source       source location
-YASM_LIB_EXPORT
 void AppendLEB128(BytecodeContainer& container,
                   std::auto_ptr<Expr> expr,
                   bool sign,
@@ -238,7 +229,6 @@ void AppendLEB128(BytecodeContainer& container,
 /// @param maxlen           maximum number of bytes to read from the file;
 ///                         may be NULL to indicate no maximum
 /// @param source           source location
-YASM_LIB_EXPORT
 void AppendIncbin(BytecodeContainer& container,
                   llvm::StringRef filename,
                   /*@null@*/ std::auto_ptr<Expr> start,
@@ -256,7 +246,6 @@ void AppendIncbin(BytecodeContainer& container,
 ///       - from fill parameter (if not NULL)
 ///       - from code_fill parameter (if not NULL)
 ///       - 0
-YASM_LIB_EXPORT
 void AppendAlign(BytecodeContainer& container,
                  const Expr& boundary,
                  const Expr& fill,
@@ -270,7 +259,6 @@ void AppendAlign(BytecodeContainer& container,
 /// @param start        section offset of following bytecode
 /// @param fill         fill value
 /// @param source       source location
-YASM_LIB_EXPORT
 void AppendOrg(BytecodeContainer& container,
                const Expr& start,
                const Expr& fill,
@@ -281,7 +269,6 @@ void AppendOrg(BytecodeContainer& container,
 /// @param multiple     multiple expression
 /// @param source       source location
 /// @return Multiple inner container.
-YASM_LIB_EXPORT
 BytecodeContainer& AppendMultiple(BytecodeContainer& container,
                                   std::auto_ptr<Expr> multiple,
                                   SourceLocation source);

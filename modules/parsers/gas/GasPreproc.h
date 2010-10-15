@@ -31,7 +31,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/Parse/Preprocessor.h"
 
 
@@ -43,7 +42,7 @@ class IdentifierInfo;
 namespace parser
 {
 
-class YASM_STD_EXPORT GasPreproc : public Preprocessor
+class GasPreproc : public Preprocessor
 {
 public:
     GasPreproc(Diagnostic& diags, SourceManager& sm, HeaderSearch& headers);

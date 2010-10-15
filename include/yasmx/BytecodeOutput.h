@@ -29,8 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "yasmx/Config/export.h"
-
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Bytes.h"
@@ -55,7 +53,7 @@ class Bytecode;
 /// DoOutputBytes() is called.  It is assumed that DoOutputBytes()
 /// actually outputs the bytes to the object file.  The implementation
 /// function DoOutputGap() will be called for gaps in the output.
-class YASM_LIB_EXPORT BytecodeOutput
+class BytecodeOutput
 {
 public:
     /// Constructor.
@@ -222,7 +220,7 @@ BytecodeOutput::OutputBytes(const Bytes& bytes, SourceLocation source)
 
 /// No-output specialization of BytecodeOutput.
 /// Warns on all attempts to output non-gaps.
-class YASM_LIB_EXPORT BytecodeNoOutput : public BytecodeOutput
+class BytecodeNoOutput : public BytecodeOutput
 {
 public:
     BytecodeNoOutput(Diagnostic& diags) : BytecodeOutput(diags) {}
@@ -243,7 +241,7 @@ protected:
 /// Handles gaps by converting to 0 and generating a warning.
 /// This does not implement ConvertValueToBytes(), so it's still a virtual
 /// base class.
-class YASM_LIB_EXPORT BytecodeStreamOutput : public BytecodeOutput
+class BytecodeStreamOutput : public BytecodeOutput
 {
 public:
     BytecodeStreamOutput(llvm::raw_ostream& os, Diagnostic& diags)

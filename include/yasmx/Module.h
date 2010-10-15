@@ -30,14 +30,13 @@
 /// @endlicense
 ///
 #include "llvm/ADT/StringRef.h"
-#include "yasmx/Config/export.h"
 
 
 namespace yasm
 {
 
 /// Module interface (abstract base).
-class YASM_LIB_EXPORT Module
+class Module
 {
 public:
     /// Constructor.

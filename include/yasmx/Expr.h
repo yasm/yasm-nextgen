@@ -35,7 +35,6 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location.h"
 #include "yasmx/Op.h"
@@ -55,7 +54,7 @@ class Register;
 class Symbol;
 
 /// An term inside an expression.
-class YASM_LIB_EXPORT ExprTerm
+class ExprTerm
 {
 public:
     /// Note loc must be used carefully (in a-b pairs), as only symrecs
@@ -365,7 +364,7 @@ ExprTerm::setIntNum(IntNum intn)
 /// but it is key to doing advanced expression manipulation.  Due to the
 /// RPN storage style, most processing occurs going from back-to-front within
 /// the terms vector.
-class YASM_LIB_EXPORT Expr
+class Expr
 {
     friend class ExprTest;
 
@@ -833,41 +832,41 @@ inline Expr ExprBuilder::operator() (const ExprTerms& terms) const
     return e;
 }
 
-extern YASM_LIB_EXPORT const ExprBuilder ADD;        ///< Addition (+).
-extern YASM_LIB_EXPORT const ExprBuilder SUB;        ///< Subtraction (-).
-extern YASM_LIB_EXPORT const ExprBuilder MUL;        ///< Multiplication (*).
-extern YASM_LIB_EXPORT const ExprBuilder DIV;        ///< Unsigned division.
-extern YASM_LIB_EXPORT const ExprBuilder SIGNDIV;    ///< Signed division.
-extern YASM_LIB_EXPORT const ExprBuilder MOD;        ///< Unsigned modulus.
-extern YASM_LIB_EXPORT const ExprBuilder SIGNMOD;    ///< Signed modulus.
-extern YASM_LIB_EXPORT const ExprBuilder NEG;        ///< Negation (-).
-extern YASM_LIB_EXPORT const ExprBuilder NOT;        ///< Bitwise negation.
-extern YASM_LIB_EXPORT const ExprBuilder OR;         ///< Bitwise OR.
-extern YASM_LIB_EXPORT const ExprBuilder AND;        ///< Bitwise AND.
-extern YASM_LIB_EXPORT const ExprBuilder XOR;        ///< Bitwise XOR.
-extern YASM_LIB_EXPORT const ExprBuilder XNOR;       ///< Bitwise XNOR.
-extern YASM_LIB_EXPORT const ExprBuilder NOR;        ///< Bitwise NOR.
-extern YASM_LIB_EXPORT const ExprBuilder SHL;        ///< Shift left (logical).
-extern YASM_LIB_EXPORT const ExprBuilder SHR;        ///< Shift right (logical).
-extern YASM_LIB_EXPORT const ExprBuilder LOR;        ///< Logical OR.
-extern YASM_LIB_EXPORT const ExprBuilder LAND;       ///< Logical AND.
-extern YASM_LIB_EXPORT const ExprBuilder LNOT;       ///< Logical negation.
-extern YASM_LIB_EXPORT const ExprBuilder LXOR;       ///< Logical XOR.
-extern YASM_LIB_EXPORT const ExprBuilder LXNOR;      ///< Logical XNOR.
-extern YASM_LIB_EXPORT const ExprBuilder LNOR;       ///< Logical NOR.
-extern YASM_LIB_EXPORT const ExprBuilder LT;         ///< Less than comparison.
-extern YASM_LIB_EXPORT const ExprBuilder GT;         ///< Greater than.
-extern YASM_LIB_EXPORT const ExprBuilder EQ;         ///< Equality comparison.
-extern YASM_LIB_EXPORT const ExprBuilder LE;         ///< Less than or equal to.
-extern YASM_LIB_EXPORT const ExprBuilder GE;         ///< Greater than or equal.
-extern YASM_LIB_EXPORT const ExprBuilder NE;         ///< Not equal comparison.
+extern const ExprBuilder ADD;       ///< Addition (+).
+extern const ExprBuilder SUB;       ///< Subtraction (-).
+extern const ExprBuilder MUL;       ///< Multiplication (*).
+extern const ExprBuilder DIV;       ///< Unsigned division.
+extern const ExprBuilder SIGNDIV;   ///< Signed division.
+extern const ExprBuilder MOD;       ///< Unsigned modulus.
+extern const ExprBuilder SIGNMOD;   ///< Signed modulus.
+extern const ExprBuilder NEG;       ///< Negation (-).
+extern const ExprBuilder NOT;       ///< Bitwise negation.
+extern const ExprBuilder OR;        ///< Bitwise OR.
+extern const ExprBuilder AND;       ///< Bitwise AND.
+extern const ExprBuilder XOR;       ///< Bitwise XOR.
+extern const ExprBuilder XNOR;      ///< Bitwise XNOR.
+extern const ExprBuilder NOR;       ///< Bitwise NOR.
+extern const ExprBuilder SHL;       ///< Shift left (logical).
+extern const ExprBuilder SHR;       ///< Shift right (logical).
+extern const ExprBuilder LOR;       ///< Logical OR.
+extern const ExprBuilder LAND;      ///< Logical AND.
+extern const ExprBuilder LNOT;      ///< Logical negation.
+extern const ExprBuilder LXOR;      ///< Logical XOR.
+extern const ExprBuilder LXNOR;     ///< Logical XNOR.
+extern const ExprBuilder LNOR;      ///< Logical NOR.
+extern const ExprBuilder LT;        ///< Less than comparison.
+extern const ExprBuilder GT;        ///< Greater than.
+extern const ExprBuilder EQ;        ///< Equality comparison.
+extern const ExprBuilder LE;        ///< Less than or equal to.
+extern const ExprBuilder GE;        ///< Greater than or equal.
+extern const ExprBuilder NE;        ///< Not equal comparison.
 /// SEG operator (gets segment portion of address).
-extern YASM_LIB_EXPORT const ExprBuilder SEG;
+extern const ExprBuilder SEG;
 /// WRT operator (gets offset of address relative to some other
 /// segment).
-extern YASM_LIB_EXPORT const ExprBuilder WRT;
+extern const ExprBuilder WRT;
 /// The ':' in segment:offset.
-extern YASM_LIB_EXPORT const ExprBuilder SEGOFF;
+extern const ExprBuilder SEGOFF;
 
 /// Overloaded assignment binary operators.
 template <typename T> inline Expr& operator+=(Expr& lhs, const T& rhs)
@@ -912,7 +911,6 @@ operator<< (llvm::raw_ostream& os, const Expr& e)
 /// @param source   operator source location
 /// @param diags    diagnostic reporting
 /// @return False if an error occurred.
-YASM_LIB_EXPORT
 bool CalcFloat(llvm::APFloat* lhs,
                Op::Op op,
                const llvm::APFloat& rhs,
@@ -928,7 +926,6 @@ bool CalcFloat(llvm::APFloat* lhs,
 /// For single children, pass lhs=NULL and the rhs output will be the single
 /// child.  Passed-in pos may be negative to indicate index "from end".
 /// @return False if too many or too few children found.
-YASM_LIB_EXPORT
 bool getChildren(Expr& e, /*@out@*/ int* lhs, /*@out@*/ int* rhs, int* pos);
 
 /// Determine if a expression subtree is of the form Symbol*-1.
@@ -940,7 +937,6 @@ bool getChildren(Expr& e, /*@out@*/ int* lhs, /*@out@*/ int* rhs, int* pos);
 /// @return True if subtree matches.
 /// If the subtree matches, pos is updated before return with the term index
 /// following the tree.
-YASM_LIB_EXPORT
 bool isNeg1Sym(Expr& e,
                /*@out@*/ int* sym,
                /*@out@*/ int* neg1,

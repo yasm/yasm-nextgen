@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/System/DataTypes.h"
-#include "yasmx/Config/export.h"
 #include <string>
 
 #ifndef LLVM_SYSTEM_TIMEVALUE_H
@@ -29,7 +28,7 @@ namespace sys {
   /// timeout, etc.
   /// @since 1.4
   /// @brief Provides an abstraction for a fixed point in time.
-  class YASM_LIB_EXPORT TimeValue {
+  class TimeValue {
 
   /// @name Constants
   /// @{

@@ -33,7 +33,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "yasmx/Config/export.h"
 #include "yasmx/Parse/Preprocessor.h"
 #include "yasmx/Parse/Token.h"
 
@@ -46,7 +45,7 @@ class SourceLocation;
 
 /// Interface to override expression term (e.g. the lowest level of an
 /// expression) parsing by ParseExpr.
-class YASM_LIB_EXPORT ParseExprTerm
+class ParseExprTerm
 {
 public:
     virtual ~ParseExprTerm();
@@ -61,7 +60,7 @@ public:
         = 0;
 };
 
-class YASM_LIB_EXPORT ParserImpl
+class ParserImpl
 {
 public:
     Preprocessor& m_preproc;

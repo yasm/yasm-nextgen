@@ -35,7 +35,6 @@
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/Parse/Token.h"
 #include "yasmx/Arch.h"
 #include "yasmx/SymbolRef.h"
@@ -46,7 +45,7 @@ namespace yasm
 
 class IdentifierTable;
 
-class YASM_LIB_EXPORT IdentifierInfo
+class IdentifierInfo
 {
     enum Flags
     {

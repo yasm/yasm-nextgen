@@ -17,7 +17,6 @@
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/System/DataTypes.h"
-#include "yasmx/Config/export.h"
 #include <algorithm>
 #include <cassert>
 #include <cstdlib>
@@ -60,7 +59,7 @@ public:
 /// by the JIT to allocate contiguous swathes of executable memory.  The
 /// interface uses MemSlab's instead of void *'s so that the allocator
 /// doesn't have to remember the size of the pointer it allocated.
-class YASM_LIB_EXPORT SlabAllocator {
+class SlabAllocator {
 public:
   virtual ~SlabAllocator();
   virtual MemSlab *Allocate(size_t Size) = 0;
@@ -70,7 +69,7 @@ public:
 /// MallocSlabAllocator - The default slab allocator for the bump allocator
 /// is an adapter class for MallocAllocator that just forwards the method
 /// calls and translates the arguments.
-class YASM_LIB_EXPORT MallocSlabAllocator : public SlabAllocator {
+class MallocSlabAllocator : public SlabAllocator {
   /// Allocator - The underlying allocator that we forward to.
   ///
   MallocAllocator Allocator;
@@ -86,7 +85,7 @@ public:
 /// very simple memory allocation strategies.  In particular, this just keeps
 /// allocating memory, and never deletes it until the entire block is dead. This
 /// makes allocation speedy, but must only be used when the trade-off is ok.
-class YASM_LIB_EXPORT BumpPtrAllocator {
+class BumpPtrAllocator {
   BumpPtrAllocator(const BumpPtrAllocator &); // do not implement
   void operator=(const BumpPtrAllocator &);   // do not implement
 

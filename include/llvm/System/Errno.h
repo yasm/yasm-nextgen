@@ -14,7 +14,6 @@
 #ifndef LLVM_SYSTEM_ERRNO_H
 #define LLVM_SYSTEM_ERRNO_H
 
-#include "yasmx/Config/export.h"
 #include <string>
 
 namespace llvm {
@@ -24,11 +23,9 @@ namespace sys {
 /// thread-safe variant of strerror() is available.  Be sure to call this
 /// immediately after the function that set errno, or errno may have been
 /// overwritten by an intervening call.
-YASM_LIB_EXPORT
 std::string StrError();
 
 /// Like the no-argument version above, but uses \p errnum instead of errno.
-YASM_LIB_EXPORT
 std::string StrError(int errnum);
 
 }  // namespace sys

@@ -29,7 +29,6 @@
 #include <cctype>
 
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 
 
 namespace llvm
@@ -57,7 +56,7 @@ class IntNum;
 ///
 /// Respects endianness of bytes buffer, so [0] should be the first byte output
 /// to the file.
-class YASM_LIB_EXPORT NumericOutput
+class NumericOutput
 {
 public:
     /// @param bytes    destination

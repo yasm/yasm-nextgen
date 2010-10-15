@@ -10,7 +10,6 @@
 #ifndef LLVM_ADT_STRINGREF_H
 #define LLVM_ADT_STRINGREF_H
 
-#include "yasmx/Config/export.h"
 #include <cassert>
 #include <cstring>
 #include <utility>
@@ -28,7 +27,7 @@ namespace llvm {
   /// situations where the character data resides in some other buffer, whose
   /// lifetime extends past that of the StringRef. For this reason, it is not in
   /// general safe to store a StringRef.
-  class YASM_LIB_EXPORT StringRef {
+  class StringRef {
   public:
     typedef const char *iterator;
     typedef const char *const_iterator;

@@ -29,9 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "yasmx/Config/export.h"
-
-
 namespace yasm
 {
 
@@ -41,7 +38,7 @@ class IntNum;
 /// An assembly location.  The finest granularity a label can directly access,
 /// and used throughout yasm to address a specific assembly location.
 /// This structure is passed around by value, etc, so it must remain small!
-struct YASM_LIB_EXPORT Location
+struct Location
 {
     Bytecode* bc;
     unsigned long off;
@@ -65,7 +62,6 @@ operator==(const Location& lhs, const Location& rhs)
 /// @return True if distance calculated; false if the distance was
 ///         indeterminate.
 /// @warning Only valid /after/ optimization.
-YASM_LIB_EXPORT
 bool CalcDist(Location loc1, Location loc2, /*@out@*/ IntNum* dist);
 
 /// Determine the distance between the starting offsets of two locations.
@@ -78,7 +74,6 @@ bool CalcDist(Location loc1, Location loc2, /*@out@*/ IntNum* dist);
 ///                     (loc2-loc1); output.
 /// @return True if distance calculated; false if the distance was
 ///         indeterminate (e.g. the locations have different bytecodes).
-YASM_LIB_EXPORT
 bool CalcDistNoBC(Location loc1, Location loc2, IntNum* dist);
 
 } // namespace yasm

@@ -15,7 +15,6 @@
 #define LLVM_SYSTEM_MEMORY_H
 
 #include "llvm/System/DataTypes.h"
-#include "yasmx/Config/export.h"
 #include <string>
 
 namespace llvm {
@@ -42,7 +41,7 @@ namespace sys {
   /// MemoryBlock instances.
   /// @since 1.4
   /// @brief An abstraction for memory operations.
-  class YASM_LIB_EXPORT Memory {
+  class Memory {
   public:
     /// This method allocates a block of Read/Write/Execute memory that is
     /// suitable for executing dynamically generated code (e.g. JIT). An

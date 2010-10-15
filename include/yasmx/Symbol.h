@@ -33,7 +33,6 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/AssocData.h"
 #include "yasmx/Location.h"
@@ -47,7 +46,7 @@ class Expr;
 class Object;
 
 /// A symbol.
-class YASM_LIB_EXPORT Symbol : public AssocDataContainer
+class Symbol : public AssocDataContainer
 {
     friend class Object;
 

@@ -26,7 +26,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "yasmx/Config/export.h"
 #include "yasmx/Insn.h"
 
 #include "X86Arch.h"
@@ -43,7 +42,7 @@ struct X86InfoOperand;
 struct X86InsnInfo;
 class X86Opcode;
 
-class YASM_STD_EXPORT X86Insn : public Insn
+class X86Insn : public Insn
 {
 public:
     X86Insn(const X86Arch& arch,

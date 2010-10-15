@@ -32,7 +32,6 @@
 #include <stdexcept>
 
 #include "llvm/Support/MemoryBuffer.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/Support/EndianState.h"
 
 
@@ -216,26 +215,22 @@ ReadS32(InputBuffer& input)
 /// @param input    input buffer
 /// @param n        number of bits (must be multiple of 8)
 /// @return N-bit value (as an IntNum).
-YASM_LIB_EXPORT
 IntNum ReadUnsigned(InputBuffer& input, int n);
 
 /// Read an signed N-bit value from an input buffer.
 /// @param input    input buffer
 /// @param n        number of bits (must be multiple of 8)
 /// @return N-bit value (as an IntNum).
-YASM_LIB_EXPORT
 IntNum ReadSigned(InputBuffer& input, int n);
 
 /// Read an unsigned 64-bit value from an input buffer.
 /// @param input    input buffer
 /// @return 64-bit value (as an IntNum).
-YASM_LIB_EXPORT
 IntNum ReadU64(InputBuffer& input);
 
 /// Read an signed 64-bit value from an input buffer.
 /// @param input    input buffer
 /// @return 64-bit value (as an IntNum).
-YASM_LIB_EXPORT
 IntNum ReadS64(InputBuffer& input);
 
 } // namespace yasm

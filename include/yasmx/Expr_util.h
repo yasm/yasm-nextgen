@@ -29,9 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "yasmx/Config/export.h"
-
-
 namespace yasm
 {
 
@@ -41,7 +38,6 @@ class Expr;
 /// Detects circular references, and will return false if one found.
 /// @param e        Expression
 /// @return True if equ expansion successful with no circular references.
-YASM_LIB_EXPORT
 bool ExpandEqu(Expr& e);
 
 } // namespace yasm

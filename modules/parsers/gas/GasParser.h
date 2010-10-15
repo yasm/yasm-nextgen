@@ -37,7 +37,6 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/StringMap.h"
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/Parse/Parser.h"
 #include "yasmx/Parse/ParserImpl.h"
 #include "yasmx/Insn.h"
@@ -72,7 +71,7 @@ struct GasDirLookup
     unsigned int param;
 };
 
-class YASM_STD_EXPORT GasParser : public Parser, public ParserImpl
+class GasParser : public Parser, public ParserImpl
 {
 public:
     GasParser(const ParserModule& module,

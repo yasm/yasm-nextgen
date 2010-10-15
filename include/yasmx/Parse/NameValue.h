@@ -34,7 +34,6 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/Parse/Token.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "yasmx/Expr.h"
@@ -46,7 +45,7 @@ namespace yasm
 class Object;
 
 /// Name/value pair.
-class YASM_LIB_EXPORT NameValue
+class NameValue
 {
 public:
     /// Identifier value constructor.
@@ -189,7 +188,7 @@ private:
 };
 
 /// Vector of name/values.
-class YASM_LIB_EXPORT NameValues : private stdx::ptr_vector<NameValue>
+class NameValues : private stdx::ptr_vector<NameValue>
 {
     typedef stdx::ptr_vector<NameValue> base_vector;
 

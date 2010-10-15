@@ -32,7 +32,6 @@
 #include <vector>
 
 #include "llvm/ADT/StringRef.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
 
 
@@ -53,7 +52,7 @@ namespace impl
 {
 
 // Implemented using the Singleton pattern
-class YASM_LIB_EXPORT ModuleFactory
+class ModuleFactory
 {
 public:
     ~ModuleFactory();

@@ -26,9 +26,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "yasmx/Config/export.h"
-
-
 namespace yasm
 {
 
@@ -37,7 +34,7 @@ class Bytes;
 namespace arch
 {
 
-class YASM_STD_EXPORT X86Opcode
+class X86Opcode
 {
 public:
     X86Opcode() : m_len(0) {}

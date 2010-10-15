@@ -34,7 +34,6 @@
 #include <vector>
 
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/Bytes.h"
@@ -51,7 +50,7 @@ class Diagnostic;
 class Expr;
 
 /// A bytecode.
-class YASM_LIB_EXPORT Bytecode
+class Bytecode
 {
     friend class BytecodeContainer;
 
@@ -82,7 +81,7 @@ public:
     /// Bytecode contents (abstract base class).  Any implementation of a
     /// specific bytecode must implement a class derived from this one.
     /// The bytecode implementation-specific data is stored in #m_contents.
-    class YASM_LIB_EXPORT Contents
+    class Contents
     {
     public:
         typedef std::auto_ptr<Contents> Ptr;
@@ -331,7 +330,7 @@ public:
 
     /// A fixup consists of a value+offset combination.  0's need to be stored
     /// in m_fixed as placeholders.
-    class YASM_LIB_EXPORT Fixup : public Value
+    class Fixup : public Value
     {
     public:
         Fixup(unsigned int off, const Value& val);

@@ -60,7 +60,7 @@ class ElfMachine;
 class ElfSymbol;
 
 // ELF symbol version alias.
-class YASM_STD_EXPORT ElfSymVersion
+class ElfSymVersion
 {
 public:
     enum Mode
@@ -87,7 +87,7 @@ public:
     Mode m_mode;
 };
 
-class YASM_STD_EXPORT ElfObject : public ObjectFormat
+class ElfObject : public ObjectFormat
 {
 public:
     ElfObject(const ObjectFormatModule& module,
@@ -152,7 +152,7 @@ public:
     SymVers m_symvers;                      // symbol version aliases
 };
 
-class YASM_STD_EXPORT Elf32Object : public ElfObject
+class Elf32Object : public ElfObject
 {
 public:
     Elf32Object(const ObjectFormatModule& module, Object& object)
@@ -178,7 +178,7 @@ public:
                       /*@out@*/ std::string* machine);
 };
 
-class YASM_STD_EXPORT Elf64Object : public ElfObject
+class Elf64Object : public ElfObject
 {
 public:
     Elf64Object(const ObjectFormatModule& module, Object& object)

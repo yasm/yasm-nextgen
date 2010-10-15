@@ -16,7 +16,6 @@
 
 #include <utility>
 #include <cassert>
-#include "yasmx/Config/export.h"
 
 namespace llvm {
   class MemoryBuffer;
@@ -65,7 +64,7 @@ private:
 /// SourceLocation - This is a carefully crafted 32-bit identifier that encodes
 /// a full include stack, line and column number information for a position in
 /// an input translation unit.
-class YASM_LIB_EXPORT SourceLocation {
+class SourceLocation {
   unsigned ID;
   friend class SourceManager;
   enum {
@@ -226,7 +225,7 @@ public:
 
 /// FullSourceLoc - A SourceLocation and its associated SourceManager.  Useful
 /// for argument passing to functions that expect both objects.
-class YASM_LIB_EXPORT FullSourceLoc : public SourceLocation {
+class FullSourceLoc : public SourceLocation {
   const SourceManager *SrcMgr;
 public:
   /// Creates a FullSourceLoc where isValid() returns false.

@@ -28,8 +28,6 @@
 //
 #include <memory>
 
-#include "yasmx/Config/export.h"
-
 
 namespace yasm
 {
@@ -69,7 +67,6 @@ enum X86GeneralPostOp
     X86_POSTOP_SIMM32_AVAIL
 };
 
-YASM_STD_EXPORT
 void AppendGeneral(BytecodeContainer& container,
                    const X86Common& common,
                    const X86Opcode& opcode,

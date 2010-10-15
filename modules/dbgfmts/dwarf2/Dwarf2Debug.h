@@ -29,7 +29,6 @@
 #include <vector>
 
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/DebugFormat.h"
 #include "yasmx/Location.h"
 #include "yasmx/SymbolRef.h"
@@ -48,7 +47,7 @@ namespace dbgfmt {
 struct Dwarf2Loc;
 struct Dwarf2LineState;
 
-class YASM_STD_EXPORT Dwarf2Debug : public DebugFormat
+class Dwarf2Debug : public DebugFormat
 {
 public:
     Dwarf2Debug(const DebugFormatModule& module, Object& object);
@@ -165,7 +164,7 @@ private:
     unsigned long AddDir(llvm::StringRef dirname);
 };
 
-class YASM_STD_EXPORT Dwarf2PassDebug : public Dwarf2Debug
+class Dwarf2PassDebug : public Dwarf2Debug
 {
 public:
     Dwarf2PassDebug(const DebugFormatModule& module, Object& object)

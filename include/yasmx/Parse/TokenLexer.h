@@ -31,7 +31,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 
 namespace yasm
 {
@@ -47,7 +46,7 @@ class Token;
 /// or token stream instead of lexing from a character buffer.  This is used for
 /// macro expansion, for example.
 ///
-class YASM_LIB_EXPORT TokenLexer
+class TokenLexer
 {
 #if 0
     /// The macro we are expanding from.  This is null if expanding a

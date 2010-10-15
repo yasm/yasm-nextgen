@@ -33,7 +33,6 @@
 #include <string>
 
 #include "llvm/ADT/StringRef.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/Support/ptr_vector.h"
 
 #include "yasmx/AssocData.h"
@@ -52,7 +51,7 @@ class Reloc;
 class SourceLocation;
 
 /// A section.
-class YASM_LIB_EXPORT Section
+class Section
     : public AssocDataContainer,
       public BytecodeContainer
 {

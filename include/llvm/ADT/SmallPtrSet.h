@@ -20,7 +20,6 @@
 #include <iterator>
 #include "llvm/System/DataTypes.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
-#include "yasmx/Config/export.h"
 
 namespace llvm {
 
@@ -44,7 +43,7 @@ class SmallPtrSetIteratorImpl;
 /// (-2), to allow deletion.  The hash table is resized when the table is 3/4 or
 /// more.  When this happens, the table is doubled in size.
 ///
-class YASM_LIB_EXPORT SmallPtrSetImpl {
+class SmallPtrSetImpl {
   friend class SmallPtrSetIteratorImpl;
 protected:
   /// SmallArray - Points to a fixed size set of buckets, used in 'small mode'.

@@ -29,9 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "yasmx/Config/export.h"
-
-
 namespace yasm
 {
 
@@ -47,77 +44,66 @@ class Symbol;
 /// @param sym              symbol
 /// @param objext_namevals  object-extended name/values
 /// @note object_namevals are moved, not copied.
-YASM_LIB_EXPORT
 void setObjextNameValues(Symbol& sym, NameValues& objext_namevals);
 
 /// Get object-extended name/values, if any, associated with symbol's
 /// declaration.
 /// @param sym          symbol
 /// @return Object-extended name/values (NULL if none).
-YASM_LIB_EXPORT
 /*@null@*/ const NameValues* getObjextNameValues(const Symbol& sym);
 
 /// Get object-extended name/values, if any, associated with symbol's
 /// declaration (non-const version).
 /// @param sym          symbol
 /// @return Object-extended name/values (NULL if none).
-YASM_LIB_EXPORT
 /*@null@*/ NameValues* getObjextNameValues(Symbol& sym);
 
 /// Set common size of symbol.
 /// @param sym          symbol
 /// @param common_size  common size expression
 /// @return Symbol (this).
-YASM_LIB_EXPORT
 void setCommonSize(Symbol& sym, const Expr& common_size);
 
 /// Get common size of symbol, if symbol is declared #COMMON and a
 /// size was set for it.
 /// @param sym          symbol
 /// @return Common size (NULL if none).
-YASM_LIB_EXPORT
 /*@null@*/ const Expr* getCommonSize(const Symbol& sym);
 
 /// Get common size of symbol, if symbol is declared #COMMON and a
 /// size was set for it.
 /// @param sym          symbol
 /// @return Common size (NULL if none).
-YASM_LIB_EXPORT
 /*@null@*/ Expr* getCommonSize(Symbol& sym);
 
 /// Extern directive handler.  Sets symbol visibility to Symbol::EXTERN and
 /// saves objext_namevals as associated symbol data.
 /// @param info     directive info
 /// @param diags    diagnostic reporter
-YASM_LIB_EXPORT
 void DirExtern(DirectiveInfo& info, Diagnostic& diags);
 
 /// Extern multiple directive handler.  Sets each symbol's visibility to
 /// Symbol::EXTERN.
 /// @param info     directive info
 /// @param diags    diagnostic reporter
-YASM_LIB_EXPORT
 void DirExternMulti(DirectiveInfo& info, Diagnostic& diags);
 
 /// Global directive handler.  Sets symbol visibility to Symbol::GLOBAL and
 /// saves objext_namevals as associated symbol data.
 /// @param info     directive info
 /// @param diags    diagnostic reporter
-YASM_LIB_EXPORT
 void DirGlobal(DirectiveInfo& info, Diagnostic& diags);
 
 /// Global multiple directive handler.  Sets each symbol's visibility to
 /// Symbol::GLOBAL.
 /// @param info     directive info
 /// @param diags    diagnostic reporter
-YASM_LIB_EXPORT
 void DirGlobalMulti(DirectiveInfo& info, Diagnostic& diags);
 
 /// Common directive handler.  Sets symbol visibility to Symbol::COMMON and
 /// saves common size and objext_namevals as associated symbol data.
 /// @param info     directive info
 /// @param diags    diagnostic reporter
-YASM_LIB_EXPORT
 void DirCommon(DirectiveInfo& info, Diagnostic& diags);
 
 } // namespace yasm

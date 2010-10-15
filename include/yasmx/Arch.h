@@ -35,7 +35,6 @@
 #include <vector>
 
 #include "llvm/ADT/StringRef.h"
-#include "yasmx/Config/export.h"
 
 #include "yasmx/Location.h"
 #include "yasmx/Module.h"
@@ -63,7 +62,7 @@ class TargetModifier;
 class Token;
 
 /// A register.
-class YASM_LIB_EXPORT Register
+class Register
 {
 public:
     Register() {}
@@ -96,7 +95,7 @@ inline llvm::raw_ostream& operator<<
 }
 
 /// A group of registers.
-class YASM_LIB_EXPORT RegisterGroup
+class RegisterGroup
 {
 public:
     RegisterGroup() {}
@@ -115,7 +114,7 @@ private:
 };
 
 /// A segment register.
-class YASM_LIB_EXPORT SegmentRegister
+class SegmentRegister
 {
 public:
     SegmentRegister() {}
@@ -144,7 +143,7 @@ inline llvm::raw_ostream& operator<<
 /// Architecture interface.
 /// To make architecture truly usable, setMachine() and setParser()
 /// need to be called.
-class YASM_LIB_EXPORT Arch
+class Arch
 {
 public:
     /// Opaque class to be used as a ParseCheckInsnPrefix() return value
@@ -152,7 +151,7 @@ public:
     class InsnInfo;
 
     /// Return value for ParseCheckInsnPrefix().
-    class YASM_LIB_EXPORT InsnPrefix
+    class InsnPrefix
     {
     public:
         enum Type
@@ -191,7 +190,7 @@ public:
     };
 
     /// Return value for ParseCheckRegTmod().
-    class YASM_LIB_EXPORT RegTmod
+    class RegTmod
     {
     public:
         enum Type
@@ -362,7 +361,7 @@ private:
 };
 
 /// Arch module interface.
-class YASM_LIB_EXPORT ArchModule : public Module
+class ArchModule : public Module
 {
 public:
     enum { module_type = 1 };

@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
-#include "yasmx/Config/export.h"
 #include <cstring>
 #include <string>
 
@@ -52,7 +51,7 @@ public:
 
 /// StringMapImpl - This is the base class of StringMap that is shared among
 /// all of its instantiations.
-class YASM_LIB_EXPORT StringMapImpl {
+class StringMapImpl {
 public:
   /// ItemBucket - The hash table consists of an array of these.  If Item is
   /// non-null, this is an extant entry, otherwise, it is a hole.

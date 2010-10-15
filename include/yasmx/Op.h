@@ -29,9 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "yasmx/Config/export.h"
-
-
 namespace yasm
 {
 
@@ -81,20 +78,17 @@ namespace Op
 /// Determine if operator is unary.
 /// @param op   Operator
 /// @return True if op is unary, false otherwise.
-YASM_LIB_EXPORT
 bool isUnary(Op::Op op);
 
 /// Determine if operator is commutative.
 /// @param op   Operator
 /// @return True if op is commutative (A op B === B op A), false otherwise.
-YASM_LIB_EXPORT
 bool isCommutative(Op::Op op);
 
 /// Determine if operator is associative.
 /// @param op   Operator
 /// @return True if op is associative (A op (B op C) === (A op B) op C),
 ///         false otherwise.
-YASM_LIB_EXPORT
 bool isAssociative(Op::Op op);
 
 } // namespace yasm

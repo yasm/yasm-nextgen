@@ -28,7 +28,6 @@
 //
 #include <vector>
 
-#include "yasmx/Config/export.h"
 #include "yasmx/Insn.h"
 
 
@@ -39,7 +38,7 @@ namespace arch
 
 class X86SegmentRegister;
 
-class YASM_STD_EXPORT X86Common
+class X86Common
 {
 public:
     X86Common();

@@ -29,7 +29,6 @@
 #include <string>
 
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/AssocData.h"
 #include "yasmx/IntNum.h"
@@ -44,7 +43,7 @@ class Expr;
 namespace objfmt
 {
 
-struct YASM_STD_EXPORT BinSection : public AssocData
+struct BinSection : public AssocData
 {
     static const char* key;
 

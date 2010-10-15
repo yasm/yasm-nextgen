@@ -40,7 +40,6 @@
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Basic/SourceManager.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/Parse/IdentifierTable.h"
 #include "yasmx/Parse/Lexer.h"
 #include "yasmx/Parse/Token.h"
@@ -53,7 +52,7 @@ namespace yasm
 class DirectoryLookup;
 class HeaderSearch;
 
-class YASM_LIB_EXPORT Preprocessor
+class Preprocessor
 {
 public:
     Preprocessor(Diagnostic& diags, SourceManager& sm, HeaderSearch& headers);

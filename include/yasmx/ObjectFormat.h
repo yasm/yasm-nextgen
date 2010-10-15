@@ -34,8 +34,6 @@
 #include <vector>
 
 #include "llvm/ADT/StringRef.h"
-#include "yasmx/Config/export.h"
-
 #include "yasmx/Module.h"
 
 
@@ -54,7 +52,7 @@ class SourceLocation;
 class SourceManager;
 
 /// Object format interface.
-class YASM_LIB_EXPORT ObjectFormat
+class ObjectFormat
 {
 public:
     /// Constructor.
@@ -128,7 +126,7 @@ protected:
 };
 
 /// Object format module interface.
-class YASM_LIB_EXPORT ObjectFormatModule : public Module
+class ObjectFormatModule : public Module
 {
 public:
     enum { module_type = 4 };

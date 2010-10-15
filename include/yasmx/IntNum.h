@@ -36,7 +36,6 @@
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/Config/longlong.h"
 #include "yasmx/Op.h"
 
@@ -54,7 +53,6 @@ class Diagnostic;
 ///                     1 => (signed min, signed max);
 ///                     2 => (signed min, unsigned max)
 /// @return True if APInt will fit.
-YASM_LIB_EXPORT
 bool isOkSize(const llvm::APInt& intn,
               unsigned int size,
               unsigned int rshift,
@@ -63,7 +61,7 @@ bool isOkSize(const llvm::APInt& intn,
 class ExprTerm;
 
 /// Raw storage for IntNum.
-struct YASM_LIB_EXPORT IntNumData
+struct IntNumData
 {
 #ifdef YASM_HAVE_LONG_LONG
     typedef long long SmallValue;
@@ -81,18 +79,14 @@ struct YASM_LIB_EXPORT IntNumData
 };
 
 /// Big integer number.
-class YASM_LIB_EXPORT IntNum : private IntNumData
+class IntNum : private IntNumData
 {
-    friend YASM_LIB_EXPORT
-    llvm::raw_ostream& operator<< (llvm::raw_ostream& os, const IntNum& intn);
-    friend YASM_LIB_EXPORT
-    int Compare(const IntNum& intn1, const IntNum& intn2);
-    friend YASM_LIB_EXPORT
-    bool operator==(const IntNum& lhs, const IntNum& rhs);
-    friend YASM_LIB_EXPORT
-    bool operator<(const IntNum& lhs, const IntNum& rhs);
-    friend YASM_LIB_EXPORT
-    bool operator>(const IntNum& lhs, const IntNum& rhs);
+    friend llvm::raw_ostream& operator<< (llvm::raw_ostream& os,
+                                          const IntNum& intn);
+    friend int Compare(const IntNum& intn1, const IntNum& intn2);
+    friend bool operator==(const IntNum& lhs, const IntNum& rhs);
+    friend bool operator<(const IntNum& lhs, const IntNum& rhs);
+    friend bool operator>(const IntNum& lhs, const IntNum& rhs);
     friend class ExprTerm;
 
 public:
@@ -485,15 +479,11 @@ inline const IntNum operator<<(IntNum lhs, const IntNum& rhs)
 /// @param lhs      first intnum
 /// @param rhs      second intnum
 /// @return -1 if lhs < rhs, 0 if lhs == rhs, 1 if lhs > rhs.
-YASM_LIB_EXPORT
 int Compare(const IntNum& lhs, const IntNum& rhs);
 
 /// Overloaded comparison operators.
-YASM_LIB_EXPORT
 bool operator==(const IntNum& lhs, const IntNum& rhs);
-YASM_LIB_EXPORT
 bool operator<(const IntNum& lhs, const IntNum& rhs);
-YASM_LIB_EXPORT
 bool operator>(const IntNum& lhs, const IntNum& rhs);
 
 inline bool operator!=(const IntNum& lhs, const IntNum& rhs)

@@ -36,7 +36,6 @@
 
 #include "yasmx/Basic/DiagnosticKinds.h"
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location.h"
 #include "yasmx/SymbolRef.h"
@@ -57,7 +56,7 @@ class Object;
 /// A value.  May be absolute or relative.  Outside the parser, #Expr
 /// should only be used for absolute exprs.  Anything that could contain
 /// a relocatable value should use this structure instead.
-class YASM_LIB_EXPORT Value
+class Value
 {
     friend class ::ValueTest;
 

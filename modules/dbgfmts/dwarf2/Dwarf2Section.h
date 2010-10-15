@@ -40,7 +40,7 @@ class Section;
 namespace dbgfmt {
 
 /// .loc directive data
-struct YASM_STD_EXPORT Dwarf2Loc
+struct Dwarf2Loc
 {
     Dwarf2Loc(Location loc_,
               SourceLocation source_,
@@ -71,7 +71,7 @@ struct YASM_STD_EXPORT Dwarf2Loc
 };
 
 /// Per-section DWARF2 data
-class YASM_STD_EXPORT Dwarf2Section : public AssocData
+class Dwarf2Section : public AssocData
 {
 public:
     static const char* key;

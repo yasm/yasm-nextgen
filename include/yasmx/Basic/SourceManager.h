@@ -20,7 +20,6 @@
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/DenseMap.h"
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 #include <vector>
 #include <cassert>
 
@@ -53,7 +52,7 @@ namespace SrcMgr {
 
   /// ContentCache - Once instance of this struct is kept for every file
   /// loaded or used.  This object owns the MemoryBuffer object.
-  class YASM_LIB_EXPORT ContentCache {
+  class ContentCache {
     enum CCFlags {
       /// \brief Whether the buffer is invalid.
       InvalidFlag = 0x01,
@@ -297,7 +296,7 @@ namespace SrcMgr {
 }  // end SrcMgr namespace.
 
 /// \brief External source of source location entries.
-class YASM_LIB_EXPORT ExternalSLocEntrySource {
+class ExternalSLocEntrySource {
 public:
   virtual ~ExternalSLocEntrySource();
 
@@ -367,7 +366,7 @@ public:
 /// user's view.  In the case of a macro expansion, for example, the spelling
 /// location indicates where the expanded token came from and the instantiation
 /// location specifies where it was expanded.
-class YASM_LIB_EXPORT SourceManager {
+class SourceManager {
   /// \brief Diagnostic object.
   Diagnostic &Diag;
   

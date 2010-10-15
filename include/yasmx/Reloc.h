@@ -32,8 +32,6 @@
 #include <memory>
 #include <string>
 
-#include "yasmx/Config/export.h"
-
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/SymbolRef.h"
@@ -44,7 +42,7 @@ namespace yasm
 
 /// Basic YASM relocation.  Object formats will need to extend this
 /// structure with additional fields for relocation type, etc.
-class YASM_LIB_EXPORT Reloc
+class Reloc
 {
 public:
     Reloc(const IntNum& addr, SymbolRef sym);

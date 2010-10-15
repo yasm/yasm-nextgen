@@ -32,8 +32,6 @@
 #include <memory>
 
 #include "llvm/ADT/StringRef.h"
-#include "yasmx/Config/export.h"
-
 #include "yasmx/Module.h"
 
 
@@ -48,7 +46,7 @@ class Linemap;
 class ListFormatModule;
 
 /// List format interface.
-class YASM_LIB_EXPORT ListFormat
+class ListFormat
 {
 public:
     /// Constructor.
@@ -80,7 +78,7 @@ private:
 };
 
 /// List format module interface.
-class YASM_LIB_EXPORT ListFormatModule : public Module
+class ListFormatModule : public Module
 {
 public:
     enum { module_type = 3 };

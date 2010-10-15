@@ -30,7 +30,6 @@
 /// @endlicense
 ///
 #include "llvm/ADT/StringRef.h"
-#include "yasmx/Config/export.h"
 
 
 namespace yasm
@@ -48,7 +47,6 @@ class ObjectFormat;
 /// @param sectname     Ident section name
 /// @param info         Directive info
 /// @param diags        Diagnostic reporting
-YASM_LIB_EXPORT
 void DirIdentCommon(ObjectFormat& objfmt,
                     llvm::StringRef sectname,
                     DirectiveInfo& info,

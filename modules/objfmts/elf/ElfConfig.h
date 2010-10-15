@@ -26,7 +26,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "yasmx/Config/export.h"
 #include "yasmx/IntNum.h"
 
 #include "ElfTypes.h"
@@ -47,7 +46,7 @@ class StringTable;
 namespace objfmt
 {
 
-struct YASM_STD_EXPORT ElfConfig
+struct ElfConfig
 {
     ElfClass        cls;            // ELF class (32/64)
     ElfDataEncoding encoding;       // ELF encoding (MSB/LSB)

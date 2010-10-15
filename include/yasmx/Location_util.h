@@ -29,7 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "yasmx/Config/export.h"
 #include "yasmx/Config/functional.h"
 
 #include "yasmx/Location.h"
@@ -47,7 +46,6 @@ class ExprTerm;
 /// @param e            expression
 /// @param diags        diagnostic reporting
 /// @warning Only valid /after/ optimization.
-YASM_LIB_EXPORT
 void SimplifyCalcDist(Expr& e, Diagnostic& diags);
 
 /// Simplify instances of Symbol-Symbol [Symbol+(-1*Symbol)] in an expression
@@ -57,10 +55,8 @@ void SimplifyCalcDist(Expr& e, Diagnostic& diags);
 /// prior to optimization being performed.
 /// @param e            expression
 /// @param diags        diagnostic reporting
-YASM_LIB_EXPORT
 void SimplifyCalcDistNoBC(Expr& e, Diagnostic& diags);
 
-YASM_LIB_EXPORT
 int SubstDist(Expr& e, Diagnostic& diags,
               const TR1::function<void (unsigned int subst,
                                         Location loc,
@@ -84,7 +80,6 @@ int SubstDist(Expr& e, Diagnostic& diags,
 /// @param valueloc     replace symbols and locations with their values
 /// @param zeroreg      replace registers with zero?
 /// @return True if successful.
-YASM_LIB_EXPORT
 bool Evaluate(const Expr& e,
               Diagnostic& diags,
               ExprTerm* result,

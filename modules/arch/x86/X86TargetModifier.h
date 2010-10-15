@@ -33,7 +33,7 @@ namespace yasm
 namespace arch
 {
 
-class YASM_STD_EXPORT X86TargetModifier : public TargetModifier
+class X86TargetModifier : public TargetModifier
 {
 public:
     enum Type

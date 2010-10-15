@@ -12,7 +12,6 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/System/DataTypes.h"
-#include "yasmx/Config/export.h"
 #include <cassert>
 #include <string>
 
@@ -78,7 +77,7 @@ namespace llvm {
   /// so we provide two additional methods (and accompanying operator+
   /// overloads) to guarantee that particularly important cases (cstring plus
   /// StringRef) codegen as desired.
-  class YASM_LIB_EXPORT Twine {
+  class Twine {
     /// NodeKind - Represent the type of an argument.
     enum NodeKind {
       /// An empty string; the result of concatenating anything with it is also

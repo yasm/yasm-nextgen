@@ -30,7 +30,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "yasmx/Config/export.h"
 #include "yasmx/Parse/Lexer.h"
 #include "yasmx/Parse/Token.h"
 
@@ -59,7 +58,7 @@ public:
     };
 };
 
-class YASM_STD_EXPORT GasLexer : public Lexer
+class GasLexer : public Lexer
 {
 public:
     GasLexer(FileID fid,

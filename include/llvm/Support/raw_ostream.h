@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/System/DataTypes.h"
-#include "yasmx/Config/export.h"
 
 namespace llvm {
   class format_object_base;
@@ -27,7 +26,7 @@ namespace llvm {
 /// that can *only* output to a stream.  It does not support seeking, reopening,
 /// rewinding, line buffered disciplines etc. It is a simple buffer that outputs
 /// a chunk at a time.
-class YASM_LIB_EXPORT raw_ostream {
+class raw_ostream {
 private:
   // Do not implement. raw_ostream is noncopyable.
   void operator=(const raw_ostream &);
@@ -317,7 +316,7 @@ private:
 
 /// raw_fd_ostream - A raw_ostream that writes to a file descriptor.
 ///
-class YASM_LIB_EXPORT raw_fd_ostream : public raw_ostream {
+class raw_fd_ostream : public raw_ostream {
   int FD;
   bool ShouldClose;
   uint64_t pos;
@@ -387,7 +386,7 @@ public:
 
 /// raw_stdout_ostream - This is a stream that always prints to stdout.
 ///
-class YASM_LIB_EXPORT raw_stdout_ostream : public raw_fd_ostream {
+class raw_stdout_ostream : public raw_fd_ostream {
   // An out of line virtual method to provide a home for the class vtable.
   virtual void handle();
 public:
@@ -396,7 +395,7 @@ public:
 
 /// raw_stderr_ostream - This is a stream that always prints to stderr.
 ///
-class YASM_LIB_EXPORT raw_stderr_ostream : public raw_fd_ostream {
+class raw_stderr_ostream : public raw_fd_ostream {
   // An out of line virtual method to provide a home for the class vtable.
   virtual void handle();
 public:
@@ -405,17 +404,14 @@ public:
 
 /// outs() - This returns a reference to a raw_ostream for standard output.
 /// Use it like: outs() << "foo" << "bar";
-YASM_LIB_EXPORT
 raw_ostream &outs();
 
 /// errs() - This returns a reference to a raw_ostream for standard error.
 /// Use it like: errs() << "foo" << "bar";
-YASM_LIB_EXPORT
 raw_ostream &errs();
 
 /// nulls() - This returns a reference to a raw_ostream which simply discards
 /// output.
-YASM_LIB_EXPORT
 raw_ostream &nulls();
 
 //===----------------------------------------------------------------------===//
@@ -424,7 +420,7 @@ raw_ostream &nulls();
 
 /// raw_string_ostream - A raw_ostream that writes to an std::string.  This is a
 /// simple adaptor class. This class does not encounter output errors.
-class YASM_LIB_EXPORT raw_string_ostream : public raw_ostream {
+class raw_string_ostream : public raw_ostream {
   std::string &OS;
 
   /// write_impl - See raw_ostream::write_impl.
@@ -448,7 +444,7 @@ public:
 /// raw_svector_ostream - A raw_ostream that writes to an SmallVector or
 /// SmallString.  This is a simple adaptor class. This class does not
 /// encounter output errors.
-class YASM_LIB_EXPORT raw_svector_ostream : public raw_ostream {
+class raw_svector_ostream : public raw_ostream {
   SmallVectorImpl<char> &OS;
 
   /// write_impl - See raw_ostream::write_impl.
@@ -476,7 +472,7 @@ public:
 };
 
 /// raw_null_ostream - A raw_ostream that discards all output.
-class YASM_LIB_EXPORT raw_null_ostream : public raw_ostream {
+class raw_null_ostream : public raw_ostream {
   /// write_impl - See raw_ostream::write_impl.
   virtual void write_impl(const char *Ptr, size_t size);
 
@@ -494,7 +490,7 @@ public:
 ///   - The file is automatically deleted if the process is killed.
 ///   - The file is automatically deleted when the tool_output_file
 ///     object is destroyed unless the client calls keep().
-class YASM_LIB_EXPORT tool_output_file : public raw_fd_ostream {
+class tool_output_file : public raw_fd_ostream {
   std::string Filename;
   bool Keep;
 public:

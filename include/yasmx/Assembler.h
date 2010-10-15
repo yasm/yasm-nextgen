@@ -30,7 +30,6 @@
 /// @endlicense
 ///
 #include "llvm/ADT/StringRef.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
 
 
@@ -58,7 +57,7 @@ class ParserModule;
 class SourceManager;
 
 /// An assembler.
-class YASM_LIB_EXPORT Assembler
+class Assembler
 {
 public:
     /// Constructor.  A default section is created as the first

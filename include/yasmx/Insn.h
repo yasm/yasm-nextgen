@@ -34,7 +34,6 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/EffAddr.h"
 #include "yasmx/Expr.h"
 
@@ -49,7 +48,7 @@ class Register;
 class SegmentRegister;
 
 /// Base class for target modifiers.
-class YASM_LIB_EXPORT TargetModifier
+class TargetModifier
 {
 public:
     TargetModifier() {}
@@ -63,7 +62,7 @@ private:
 };
 
 /// An instruction operand.
-class YASM_LIB_EXPORT Operand
+class Operand
 {
 public:
     /// Operand type.
@@ -240,7 +239,7 @@ private:
 };
 
 /// Base class for instruction prefixes.
-class YASM_LIB_EXPORT Prefix
+class Prefix
 {
 public:
     Prefix() {}
@@ -254,7 +253,7 @@ private:
 
 /// Base class for instructions.  Architectures should
 /// derive their own implementation from this.
-class YASM_LIB_EXPORT Insn
+class Insn
 {
 public:
     typedef std::auto_ptr<Insn> Ptr;

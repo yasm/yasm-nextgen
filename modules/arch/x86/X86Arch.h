@@ -28,7 +28,6 @@
 //
 #include <bitset>
 
-#include "yasmx/Config/export.h"
 #include "yasmx/Arch.h"
 
 #include "X86Register.h"
@@ -47,7 +46,7 @@ namespace arch
 
 class X86RegisterGroup;
 
-class YASM_STD_EXPORT X86RegTmod
+class X86RegTmod
 {
 public:
     static const X86RegTmod& Instance();
@@ -84,7 +83,7 @@ private:
     ~X86RegTmod();
 };
 
-class YASM_STD_EXPORT X86Arch : public Arch
+class X86Arch : public Arch
 {
 public:
     // Available CPU feature flags

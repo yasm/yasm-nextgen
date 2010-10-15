@@ -31,7 +31,6 @@
 ///
 #include <cassert>
 
-#include "yasmx/Config/export.h"
 
 namespace yasm
 {

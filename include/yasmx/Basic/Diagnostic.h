@@ -18,7 +18,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/type_traits.h"
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 #include <string>
 #include <vector>
 #include <cassert>
@@ -149,7 +148,7 @@ public:
 /// problems and issues.  It massages the diagnostics (e.g. handling things like
 /// "report warnings as errors" and passes them off to the DiagnosticClient for
 /// reporting to the user.
-class YASM_LIB_EXPORT Diagnostic : public llvm::RefCountedBase<Diagnostic> {
+class Diagnostic : public llvm::RefCountedBase<Diagnostic> {
 public:
   /// Level - The level of the diagnostic, after it has been through mapping.
   enum Level {
@@ -618,7 +617,7 @@ private:
 /// This ensures that compilers with somewhat reasonable optimizers will promote
 /// the common fields to registers, eliminating increments of the NumArgs field,
 /// for example.
-class YASM_LIB_EXPORT DiagnosticBuilder {
+class DiagnosticBuilder {
   mutable Diagnostic *DiagObj;
   mutable unsigned NumArgs, NumRanges, NumFixItHints;
 
@@ -795,7 +794,7 @@ inline DiagnosticBuilder Diagnostic::Report(unsigned DiagID) {
 /// DiagnosticInfo - This is a little helper class (which is basically a smart
 /// pointer that forward info from Diagnostic) that allows clients to enquire
 /// about the currently in-flight diagnostic.
-class YASM_LIB_EXPORT DiagnosticInfo {
+class DiagnosticInfo {
   const Diagnostic *DiagObj;
 public:
   explicit DiagnosticInfo(const Diagnostic *DO) : DiagObj(DO) {}
@@ -895,7 +894,7 @@ public:
  * \brief Represents a diagnostic in a form that can be serialized and
  * deserialized.
  */
-class YASM_LIB_EXPORT StoredDiagnostic {
+class StoredDiagnostic {
   Diagnostic::Level Level;
   FullSourceLoc Loc;
   std::string Message;
@@ -943,7 +942,7 @@ public:
 
 /// DiagnosticClient - This is an abstract interface implemented by clients of
 /// the front-end, which formats and prints fully processed diagnostics.
-class YASM_LIB_EXPORT DiagnosticClient {
+class DiagnosticClient {
 public:
   virtual ~DiagnosticClient();
 

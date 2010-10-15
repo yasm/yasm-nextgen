@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/System/TimeValue.h"
-#include "yasmx/Config/export.h"
 #include <set>
 #include <string>
 #include <vector>
@@ -83,7 +82,7 @@ namespace sys {
   /// notion that the operation modifies the file system.
   /// @since 1.4
   /// @brief An abstraction for operating system paths.
-  class YASM_LIB_EXPORT Path {
+  class Path {
     /// @name Constructors
     /// @{
     public:
@@ -597,7 +596,7 @@ namespace sys {
   /// operating systems so we want to be careful and explicity about where we
   /// allow this operation in LLVM.
   /// @brief Path with file status class.
-  class YASM_LIB_EXPORT PathWithStatus : public Path {
+  class PathWithStatus : public Path {
     /// @name Constructors
     /// @{
     public:
@@ -698,19 +697,16 @@ namespace sys {
 
   /// This utility function allows any memory block to be examined in order
   /// to determine its file type.
-  YASM_LIB_EXPORT
   LLVMFileType IdentifyFileType(const char*magic, unsigned length);
 
   /// This function can be used to copy the file specified by Src to the
   /// file specified by Dest. If an error occurs, Dest is removed.
   /// @returns true if an error occurs, false otherwise
   /// @brief Copy one file to another.
-  YASM_LIB_EXPORT
   bool CopyFile(const Path& Dest, const Path& Src, std::string* ErrMsg);
 
   /// This is the OS-specific path separator: a colon on Unix or a semicolon
   /// on Windows.
-  YASM_LIB_EXPORT
   extern const char PathSeparator;
 }
 

@@ -26,7 +26,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "yasmx/Config/export.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "yasmx/Bytes.h"
 
@@ -50,7 +49,7 @@ struct BinSection;
 class BinGroup;
 typedef stdx::ptr_vector<BinGroup> BinGroups;
 
-class YASM_STD_EXPORT BinGroup
+class BinGroup
 {
 public:
     BinGroup(Section& section, BinSection& bsd);
@@ -71,7 +70,7 @@ public:
     stdx::ptr_vector_owner<BinGroup> m_follow_groups_owner;
 };
 
-class YASM_STD_EXPORT BinLink
+class BinLink
 {
 public:
     BinLink(Object& object, Diagnostic& diags);

@@ -17,7 +17,6 @@
 #include "llvm/System/DataTypes.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/StringRef.h"
-#include "yasmx/Config/export.h"
 #include <cctype>
 #include <cstdio>
 #include <string>
@@ -136,7 +135,6 @@ static inline std::string UppercaseString(StringRef S) {
 /// StrInStrNoCase - Portable version of strcasestr.  Locates the first
 /// occurrence of string 's1' in string 's2', ignoring case.  Returns
 /// the offset of s2 in s1 or npos if s2 cannot be found.
-YASM_LIB_EXPORT
 StringRef::size_type StrInStrNoCase(StringRef s1, StringRef s2);
 
 /// getToken - This function extracts one token from source, ignoring any
@@ -145,13 +143,11 @@ StringRef::size_type StrInStrNoCase(StringRef s1, StringRef s2);
 /// there are no tokens in the source string, an empty string is returned.
 /// The function returns a pair containing the extracted token and the
 /// remaining tail string.
-YASM_LIB_EXPORT
 std::pair<StringRef, StringRef> getToken(StringRef Source,
                                          StringRef Delimiters = " \t\n\v\f\r");
 
 /// SplitString - Split up the specified string according to the specified
 /// delimiters, appending the result fragments to the output list.
-YASM_LIB_EXPORT
 void SplitString(StringRef Source,
                  SmallVectorImpl<StringRef> &OutFragments,
                  StringRef Delimiters = " \t\n\v\f\r");

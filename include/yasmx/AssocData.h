@@ -32,14 +32,13 @@
 #include <memory>
 
 #include "llvm/ADT/SmallVector.h"
-#include "yasmx/Config/export.h"
 
 
 namespace yasm
 {
 
 /// Associated data interface (abstract base).
-class YASM_LIB_EXPORT AssocData
+class AssocData
 {
 public:
     AssocData() {}
@@ -53,7 +52,7 @@ private:
 };
 
 /// Associated data container.
-class YASM_LIB_EXPORT AssocDataContainer
+class AssocDataContainer
 {
     struct AssocMapEntry
     {

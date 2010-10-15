@@ -18,13 +18,12 @@
 
 #include "llvm/Support/PrettyStackTrace.h"
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 
 namespace yasm {
 
   /// PrettyStackTraceLoc - If a crash happens while one of these objects are
   /// live, the message is printed out along with the specified source location.
-  class YASM_LIB_EXPORT PrettyStackTraceLoc : public llvm::PrettyStackTraceEntry {
+  class PrettyStackTraceLoc : public llvm::PrettyStackTraceEntry {
     SourceManager &SM;
     SourceLocation Loc;
     const char *Message;

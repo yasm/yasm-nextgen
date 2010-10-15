@@ -27,7 +27,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 #include "yasmx/Basic/SourceLocation.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/ObjectFormat.h"
 
@@ -45,7 +44,7 @@ class NameValue;
 namespace objfmt
 {
 
-class YASM_STD_EXPORT BinObject : public ObjectFormat
+class BinObject : public ObjectFormat
 {
 public:
     /// Constructor.

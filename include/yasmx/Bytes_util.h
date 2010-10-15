@@ -29,8 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "yasmx/Config/export.h"
-
 #include "yasmx/Bytes.h"
 
 
@@ -42,28 +40,24 @@ class IntNum;
 /// @param bytes    output bytes buffer
 /// @param intn     intnum
 /// @warning Intnum is silently truncated to fit into 8 bits.
-YASM_LIB_EXPORT
 void Write8(Bytes& bytes, const IntNum& intn);
 
 /// Write an intnum as a 16-bit value to a bytes buffer.
 /// @param bytes    output bytes buffer
 /// @param intn     intnum
 /// @warning Intnum is silently truncated to fit into 16 bits.
-YASM_LIB_EXPORT
 void Write16(Bytes& bytes, const IntNum& intn);
 
 /// Write an intnum as a 32-bit value to a bytes buffer.
 /// @param bytes    output bytes buffer
 /// @param intn     intnum
 /// @warning Intnum is silently truncated to fit into 32 bits.
-YASM_LIB_EXPORT
 void Write32(Bytes& bytes, const IntNum& intn);
 
 /// Write an intnum as a 64-bit value to a bytes buffer.
 /// @param bytes    output bytes buffer
 /// @param intn     intnum
 /// @warning Intnum is silently truncated to fit into 64 bits.
-YASM_LIB_EXPORT
 void Write64(Bytes& bytes, const IntNum& intn);
 
 /// Write an intnum as a N-bit value to a bytes buffer.
@@ -71,7 +65,6 @@ void Write64(Bytes& bytes, const IntNum& intn);
 /// @param intn     intnum
 /// @param n        number of bits (must be multiple of 8)
 /// @warning Intnum is silently truncated to fit into N bits.
-YASM_LIB_EXPORT
 void WriteN(Bytes& bytes, const IntNum& intn, int n);
 
 /// Write an 8-bit value to a bytes buffer.
@@ -128,7 +121,6 @@ Write32(Bytes& bytes, unsigned long val)
 /// @param val      integer value
 /// @param n        number of bits (must be multiple of 8)
 /// @warning Value is silently truncated to fit into N bits.
-YASM_LIB_EXPORT
 void WriteN(Bytes& bytes, unsigned long val, int n);
 
 } // namespace yasm

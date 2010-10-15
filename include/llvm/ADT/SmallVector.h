@@ -15,7 +15,6 @@
 #define LLVM_ADT_SMALLVECTOR_H
 
 #include "llvm/Support/type_traits.h"
-#include "yasmx/Config/export.h"
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -51,7 +50,7 @@ namespace llvm {
 
 /// SmallVectorBase - This is all the non-templated stuff common to all
 /// SmallVectors.
-class YASM_LIB_EXPORT SmallVectorBase {
+class SmallVectorBase {
 protected:
   void *BeginX, *EndX, *CapacityX;
 

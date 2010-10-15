@@ -32,8 +32,6 @@
 #include <memory>
 
 #include "llvm/ADT/StringRef.h"
-#include "yasmx/Config/export.h"
-
 #include "yasmx/Module.h"
 
 
@@ -47,7 +45,7 @@ class ObjectFormat;
 class SourceManager;
 
 /// Debug format interface.
-class YASM_LIB_EXPORT DebugFormat
+class DebugFormat
 {
 public:
     /// Constructor.
@@ -84,7 +82,7 @@ protected:
 };
 
 /// Debug format module interface.
-class YASM_LIB_EXPORT DebugFormatModule : public Module
+class DebugFormatModule : public Module
 {
 public:
     enum { module_type = 2 };

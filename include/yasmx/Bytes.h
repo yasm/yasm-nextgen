@@ -31,7 +31,6 @@
 ///
 #include <vector>
 
-#include "yasmx/Config/export.h"
 #include "yasmx/Support/EndianState.h"
 
 
@@ -41,7 +40,7 @@ namespace yasm
 {
 
 /// A vector of bytes.
-class YASM_LIB_EXPORT Bytes
+class Bytes
     : private std::vector<unsigned char>
     , public EndianState
 {
@@ -107,7 +106,6 @@ Bytes::Write(const unsigned char* buf, size_type n)
 /// @param os    output stream
 /// @param bytes bytes
 /// @return Output stream
-YASM_LIB_EXPORT
 llvm::raw_ostream& operator<< (llvm::raw_ostream& os, const Bytes& bytes);
 
 /// Specialized swap for algorithms.

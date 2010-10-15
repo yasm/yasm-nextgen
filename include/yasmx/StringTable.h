@@ -32,7 +32,6 @@
 #include <vector>
 
 #include "llvm/ADT/StringRef.h"
-#include "yasmx/Config/export.h"
 
 
 namespace llvm { class raw_ostream; }
@@ -42,7 +41,7 @@ namespace yasm
 
 /// A string table of 0-terminated strings.  Always begins with a 0-length
 /// string (a single 0 byte) at offset 0.
-class YASM_LIB_EXPORT StringTable
+class StringTable
 {
 public:
     /// Empty table constructor.

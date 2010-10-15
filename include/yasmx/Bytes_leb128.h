@@ -29,8 +29,6 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "yasmx/Config/export.h"
-
 #include "yasmx/IntNum.h"
 
 
@@ -45,14 +43,12 @@ class InputBuffer;
 /// @param intn     intnum
 /// @param sign     true if signed LEB128, false if unsigned LEB128
 /// @return Number of bytes generated.
-YASM_LIB_EXPORT
 unsigned long WriteLEB128(Bytes& bytes, const IntNum& intn, bool sign);
 
 /// Calculate number of bytes LEB128-encoded form of intnum will take.
 /// @param intn     intnum
 /// @param sign     true if signed LEB128, false if unsigned LEB128
 /// @return Number of bytes.
-YASM_LIB_EXPORT
 unsigned long SizeLEB128(const IntNum& intn, bool sign);
 
 /// Read a LEB128-encoded value from an input buffer.
@@ -60,7 +56,6 @@ unsigned long SizeLEB128(const IntNum& intn, bool sign);
 /// @param sign     true if signed LEB128, false if unsigned LEB128
 /// @param size     number of bytes read (returned)
 /// @return IntNum value; number of bytes read returned in size.
-YASM_LIB_EXPORT
 IntNum ReadLEB128(InputBuffer& input,
                   bool sign,
                   /*@out@*/ unsigned long* size = 0);

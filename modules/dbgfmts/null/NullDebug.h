@@ -26,7 +26,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "yasmx/Config/export.h"
 #include "yasmx/DebugFormat.h"
 
 
@@ -35,7 +34,7 @@ namespace yasm
 namespace dbgfmt
 {
 
-class YASM_STD_EXPORT NullDebug : public DebugFormat
+class NullDebug : public DebugFormat
 {
 public:
     NullDebug(const DebugFormatModule& module, Object& object)

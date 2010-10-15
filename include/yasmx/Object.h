@@ -33,7 +33,6 @@
 #include <string>
 
 #include "llvm/ADT/StringRef.h"
-#include "yasmx/Config/export.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "yasmx/Support/scoped_ptr.h"
 
@@ -49,7 +48,7 @@ class Section;
 class Symbol;
 
 /// An object.  This is the internal representation of an object file.
-class YASM_LIB_EXPORT Object
+class Object
 {
 public:
     /// Options to control behavior of various functions globally for

@@ -26,7 +26,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "yasmx/Config/export.h"
 #include "BinLink.h"
 
 
@@ -42,7 +41,7 @@ class Object;
 namespace objfmt
 {
 
-class YASM_STD_EXPORT BinMapOutput
+class BinMapOutput
 {
 public:
     BinMapOutput(llvm::raw_ostream& os,

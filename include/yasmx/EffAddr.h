@@ -31,7 +31,6 @@
 ///
 #include <memory>
 
-#include "yasmx/Config/export.h"
 #include "yasmx/Value.h"
 
 
@@ -42,7 +41,7 @@ class SegmentRegister;
 
 /// Base class for an effective address.
 /// Architectures should derive their own implementation from this.
-class YASM_LIB_EXPORT EffAddr
+class EffAddr
 {
 public:
     typedef std::auto_ptr<EffAddr> Ptr;

@@ -29,7 +29,6 @@
 #include <iosfwd>
 #include <vector>
 
-#include "yasmx/Config/export.h"
 #include "yasmx/AssocData.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Section.h"
@@ -51,7 +50,7 @@ class StringTable;
 namespace objfmt
 {
 
-class YASM_STD_EXPORT ElfSection : public AssocData
+class ElfSection : public AssocData
 {
 public:
     static const char* key;
