@@ -29,14 +29,14 @@ else
   YGAS_OBJFMT_BITS=32
 fi
 AC_MSG_RESULT([${YGAS_OBJFMT_BITS}])
-AC_DEFINE([YGAS_OBJFMT_BITS], ["${YGAS_OBJFMT_BITS}"],
-	  [Define to default ygas bits])
+AC_DEFINE_UNQUOTED([YGAS_OBJFMT_BITS], ["${YGAS_OBJFMT_BITS}"],
+		   [Define to default ygas bits])
 
 AC_MSG_CHECKING([YGAS_OBJFMT_BASE])
 YGAS_OBJFMT_BASE=elf
 AC_MSG_RESULT([${YGAS_OBJFMT_BASE}])
-AC_DEFINE([YGAS_OBJFMT_BASE], ["${YGAS_OBJFMT_BASE}"],
-	  [Define to default ygas object format])
+AC_DEFINE_UNQUOTED([YGAS_OBJFMT_BASE], ["${YGAS_OBJFMT_BASE}"],
+		   [Define to default ygas object format])
 
 #
 # Checks for programs.
