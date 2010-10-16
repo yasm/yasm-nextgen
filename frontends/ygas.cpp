@@ -61,8 +61,6 @@
 #include "frontends/TextDiagnosticPrinter.h"
 
 
-static bool warning_error = false;  // warnings being treated as errors
-
 // version message
 static const char* version_msg =
     PACKAGE_NAME " " PACKAGE_INTVER "." PACKAGE_BUILD "\n"
@@ -242,8 +240,7 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
         return EXIT_FAILURE;
 
     // Assemble the input.
-    if (!assembler.Assemble(source_mgr, file_mgr, diags, headers,
-                            warning_error))
+    if (!assembler.Assemble(source_mgr, file_mgr, diags, headers))
     {
         // An error occurred during assembly.
         return EXIT_FAILURE;
@@ -260,7 +257,7 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
         return EXIT_FAILURE;
     }
 
-    if (!assembler.Output(out, diags, warning_error))
+    if (!assembler.Output(out, diags))
     {
         // An error occurred during output.
         // If we had an error at this point, we also need to delete the output
