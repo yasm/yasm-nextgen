@@ -26,11 +26,11 @@
 //
 #include "config.h"
 
+#include <getopt.h>
 #include <memory>
 
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
@@ -61,246 +61,72 @@
 #include "frontends/TextDiagnosticPrinter.h"
 
 
-// Preprocess-only buffer size
-#define PREPROC_BUF_SIZE    16384
-
-namespace cl = llvm::cl;
-
-static bool warning_error = false;  // warnings being treated as errors
-static std::auto_ptr<llvm::raw_ostream> errfile;
-
 // version message
-static const char* full_version =
-    PACKAGE_NAME " " PACKAGE_INTVER "." PACKAGE_BUILD;
-void
-PrintVersion()
-{
-    llvm::outs()
-        << full_version << '\n'
-        << "Compiled on " __DATE__ ".\n"
-        << "Copyright (c) 2001-2010 Peter Johnson and other Yasm developers.\n"
-        << "Run ygas --license for licensing overview and summary.\n";
-}
+static const char* version_msg =
+    PACKAGE_NAME " " PACKAGE_INTVER "." PACKAGE_BUILD "\n"
+    "Compiled on " __DATE__ ".\n"
+    "Copyright (c) 2001-2010 Peter Johnson and other Yasm developers.\n"
+    "Run ygas --license for licensing overview and summary.\n";
 
-// extra help messages
-static cl::extrahelp help_tail(
+// help message
+static const char* help_msg =
+    "USAGE: ygas [options] file\n"
+    "\n"
+    "OPTIONS:\n"
+    "  -32              - set 32-bit output\n"
+    "  -64              - set 64-bit output\n"
+    "  -I <path>        - Add include path\n"
+    "  -J               - don't warn about signed overflow\n"
+    "  -W               - Suppress warning messages\n"
+    "  -defsym <string> - define symbol\n"
+    "  -fatal-warnings  - Suppress warning messages\n"
+    "  -help            - Display available options (-help-hidden for more)\n"
+    "  -license         - Show license text\n"
+    "  -o <filename>    - Name of object-file output\n"
+    "  -version         - Display the version of this program\n"
+    "  -warn            - Don't suppress warning messages or treat them as errors\n"
     "\n"
     "Files are asm sources to be assembled.\n"
     "\n"
     "Sample invocation:\n"
     "   ygas -32 -o object.o source.s\n"
     "\n"
-    "Report bugs to bug-yasm@tortall.net\n");
+    "Report bugs to bug-yasm@tortall.net\n";
 
-static cl::opt<std::string> in_filename(cl::Positional,
-    cl::desc("file"));
+static std::string objfmt_bits = YGAS_OBJFMT_BITS;
+static std::vector<std::string> defsym;
+static std::vector<std::string> include_paths;
+static std::string obj_filename;
+static std::string in_filename = "-";
 
-// -32
-static cl::list<bool> bits_32("32",
-    cl::desc("set 32-bit output"));
-
-// -64
-static cl::list<bool> bits_64("64",
-    cl::desc("set 64-bit output"));
-
-// -defsym
-static cl::list<std::string> defsym("defsym",
-    cl::desc("define symbol"));
-
-// -D (ignored)
-static cl::list<std::string> ignored_D("D",
-    cl::desc("Ignored"),
-    cl::Prefix,
-    cl::Hidden);
-
-// -J
-static cl::list<bool> no_signed_overflow("J",
-    cl::desc("don't warn about signed overflow"));
-
-// -I
-static cl::list<std::string> include_paths("I",
-    cl::desc("Add include path"),
-    cl::value_desc("path"),
-    cl::Prefix);
-
-// --license
-static cl::opt<bool> show_license("license",
-    cl::desc("Show license text"));
-
-// -o
-static cl::opt<std::string> obj_filename("o",
-    cl::desc("Name of object-file output"),
-    cl::value_desc("filename"),
-    cl::Prefix);
-
-// -w
-static cl::opt<bool> ignored_w("w",
-    cl::desc("Ignored"),
-    cl::ZeroOrMore,
-    cl::Hidden);
-
-// -x
-static cl::opt<bool> ignored_x("x",
-    cl::desc("Ignored"),
-    cl::ZeroOrMore,
-    cl::Hidden);
-
-// -Qy
-static cl::opt<bool> ignored_qy("Qy",
-    cl::desc("Ignored"),
-    cl::ZeroOrMore,
-    cl::Hidden);
-
-// -Qn
-static cl::opt<bool> ignored_qn("Qn",
-    cl::desc("Ignored"),
-    cl::ZeroOrMore,
-    cl::Hidden);
-
-// -W, --no-warn
-static cl::list<bool> inhibit_warnings("W",
-    cl::desc("Suppress warning messages"));
-static cl::alias inhibit_warnings_long("no-warn",
-    cl::desc("Alias for -W"),
-    cl::aliasopt(inhibit_warnings));
-
-// --fatal-warnings
-static cl::list<bool> fatal_warnings("fatal-warnings",
-    cl::desc("Suppress warning messages"));
-
-// --warn
-static cl::list<bool> enable_warnings("warn",
-    cl::desc("Don't suppress warning messages or treat them as errors"));
-
-// sink to warn instead of error on unrecognized options
-static cl::list<std::string> unknown_options(cl::Sink);
-
-static void
-ApplyWarningSettings(Diagnostic& diags)
+enum longopt_val {
+    OPT_32 = 1,
+    OPT_64,
+    OPT_defsym,
+    OPT_warn,
+    OPT_fatal_warnings,
+    OPT_help,
+    OPT_version,
+    OPT_license
+};
+static const char* shortopts = "DJI:o:wxWQ";
+static struct option longopts[] =
 {
-    // Disable init-nobits and uninit-contents by default.
-    diags.setDiagnosticGroupMapping("init-nobits", diag::MAP_IGNORE);
-    diags.setDiagnosticGroupMapping("uninit-contents", diag::MAP_IGNORE);
-
-    // Walk through inhibit_warnings, fatal_warnings, enable_warnings, and
-    // no_signed_overflow in parallel, ordering by command line argument
-    // position.
-    unsigned int inhibit_pos = 0, inhibit_num = 0;
-    unsigned int enable_pos = 0,  enable_num = 0;
-    unsigned int fatal_pos = 0,   fatal_num = 0;
-    unsigned int signed_pos = 0,  signed_num = 0;
-    for (;;)
-    {
-        if (inhibit_num < inhibit_warnings.size())
-            inhibit_pos = inhibit_warnings.getPosition(inhibit_num);
-        else
-            inhibit_pos = 0;
-        if (enable_num < enable_warnings.size())
-            enable_pos = enable_warnings.getPosition(enable_num);
-        else
-            enable_pos = 0;
-        if (fatal_num < fatal_warnings.size())
-            fatal_pos = fatal_warnings.getPosition(fatal_num);
-        else
-            fatal_pos = 0;
-        if (signed_num < no_signed_overflow.size())
-            signed_pos = no_signed_overflow.getPosition(signed_num);
-        else
-            signed_pos = 0;
-
-        if (inhibit_pos != 0 &&
-            (enable_pos == 0 || inhibit_pos < enable_pos) &&
-            (fatal_pos == 0 || inhibit_pos < fatal_pos) &&
-            (signed_pos == 0 || inhibit_pos < signed_pos))
-        {
-            // Handle inhibit option
-            ++inhibit_num;
-            diags.setIgnoreAllWarnings(true);
-        }
-        else if (enable_pos != 0 &&
-                 (inhibit_pos == 0 || enable_pos < inhibit_pos) &&
-                 (fatal_pos == 0 || enable_pos < fatal_pos) &&
-                 (signed_pos == 0 || enable_pos < signed_pos))
-        {
-            // Handle enable option
-            ++enable_num;
-            diags.setIgnoreAllWarnings(false);
-            diags.setWarningsAsErrors(false);
-            diags.setDiagnosticGroupMapping("signed-overflow",
-                                            diag::MAP_WARNING);
-        }
-        else if (fatal_pos != 0 &&
-                 (enable_pos == 0 || fatal_pos < enable_pos) &&
-                 (inhibit_pos == 0 || fatal_pos < inhibit_pos) &&
-                 (signed_pos == 0 || fatal_pos < signed_pos))
-        {
-            // Handle fatal option
-            ++fatal_num;
-            diags.setWarningsAsErrors(true);
-        }
-        else if (signed_pos != 0 &&
-                 (enable_pos == 0 || signed_pos < enable_pos) &&
-                 (fatal_pos == 0 || signed_pos < fatal_pos) &&
-                 (inhibit_pos == 0 || signed_pos < inhibit_pos))
-        {
-            // Handle signed option
-            ++signed_num;
-            diags.setDiagnosticGroupMapping("signed-overflow",
-                                            diag::MAP_IGNORE);
-        }
-        else
-            break; // we're done with the list
-    }
-}
-
-static std::string
-GetBitsSetting()
-{
-    std::string bits = YGAS_OBJFMT_BITS;
-
-    // Walk through bits_32 and bits_64 in parallel, ordering by command line
-    // argument position.
-    unsigned int bits32_pos = 0, bits32_num = 0;
-    unsigned int bits64_pos = 0, bits64_num = 0;
-    for (;;)
-    {
-        if (bits32_num < bits_32.size())
-            bits32_pos = bits_32.getPosition(bits32_num);
-        else
-            bits32_pos = 0;
-        if (bits64_num < bits_64.size())
-            bits64_pos = bits_64.getPosition(bits32_num);
-        else
-            bits64_pos = 0;
-
-        if (bits32_pos != 0 && (bits64_pos == 0 || bits32_pos < bits64_pos))
-        {
-            // Handle bits32 option
-            ++bits32_num;
-            bits = "32";
-        }
-        else if (bits64_pos != 0 &&
-                 (bits32_pos == 0 || bits64_pos < bits32_pos))
-        {
-            // Handle bits64 option
-            ++bits64_num;
-            bits = "64";
-        }
-        else
-            break; // we're done with the list
-    }
-    return bits;
-}
+    { "32",             no_argument,        NULL,   OPT_32 },
+    { "64",             no_argument,        NULL,   OPT_64 },
+    { "defsym",         required_argument,  NULL,   OPT_defsym },
+    { "warn",           no_argument,        NULL,   OPT_warn },
+    { "fatal-warnings", no_argument,        NULL,   OPT_fatal_warnings },
+    { "help",           no_argument,        NULL,   OPT_help },
+    { "version",        no_argument,        NULL,   OPT_version },
+    { "license",        no_argument,        NULL,   OPT_license },
+    { "no-warn",        no_argument,        NULL,   'W' },
+    { NULL,             0,                  NULL,   0 },
+};
 
 static int
 do_assemble(SourceManager& source_mgr, Diagnostic& diags)
 {
-    // Apply warning settings
-    ApplyWarningSettings(diags);
-
-    // Determine objfmt_bits based on -32 and -64 options
-    std::string objfmt_bits = GetBitsSetting();
-
     FileManager file_mgr;
     Assembler assembler("x86", YGAS_OBJFMT_BASE + objfmt_bits, diags);
     HeaderSearch headers(file_mgr);
@@ -414,8 +240,7 @@ do_assemble(SourceManager& source_mgr, Diagnostic& diags)
         return EXIT_FAILURE;
 
     // Assemble the input.
-    if (!assembler.Assemble(source_mgr, file_mgr, diags, headers,
-                            warning_error))
+    if (!assembler.Assemble(source_mgr, file_mgr, diags, headers))
     {
         // An error occurred during assembly.
         return EXIT_FAILURE;
@@ -432,7 +257,7 @@ do_assemble(SourceManager& source_mgr, Diagnostic& diags)
         return EXIT_FAILURE;
     }
 
-    if (!assembler.Output(out, diags, warning_error))
+    if (!assembler.Output(out, diags))
     {
         // An error occurred during output.
         // If we had an error at this point, we also need to delete the output
@@ -451,17 +276,6 @@ do_assemble(SourceManager& source_mgr, Diagnostic& diags)
 int
 main(int argc, char* argv[])
 {
-    cl::SetVersionPrinter(&PrintVersion);
-    cl::ParseCommandLineOptions(argc, argv, "", true);
-
-    // Handle special exiting options
-    if (show_license)
-    {
-        for (std::size_t i=0; i<sizeof(license_msg)/sizeof(license_msg[0]); i++)
-            llvm::outs() << license_msg[i] << '\n';
-        return EXIT_SUCCESS;
-    }
-
     DiagnosticOptions diag_opts;
     diag_opts.ShowOptionNames = 1;
     diag_opts.ShowSourceRanges = 1;
@@ -471,11 +285,80 @@ main(int argc, char* argv[])
     diags.setSourceManager(&source_mgr);
     diag_printer.setPrefix("ygas");
 
-    for (std::vector<std::string>::const_iterator i=unknown_options.begin(),
-         end=unknown_options.end(); i != end; ++i)
+    // Disable init-nobits and uninit-contents by default.
+    diags.setDiagnosticGroupMapping("init-nobits", diag::MAP_IGNORE);
+    diags.setDiagnosticGroupMapping("uninit-contents", diag::MAP_IGNORE);
+
+    // Parse command line options
+    for (;;)
     {
-        diags.Report(diag::warn_unknown_command_line_option) << *i;
+        int longindex;
+        int ch = getopt_long_only(argc, argv, shortopts, longopts, &longindex);
+        if (ch == -1)
+            break;
+        switch (ch)
+        {
+            case 'D': case 'w': case 'x': case 'Q':
+                break; // ignored
+            case 'I':
+                include_paths.push_back(optarg);
+                break;
+            case 'o':
+                obj_filename = optarg;
+                break;
+            case OPT_32:
+                objfmt_bits = "32";
+                break;
+            case OPT_64:
+                objfmt_bits = "64";
+                break;
+            case OPT_defsym:
+                defsym.push_back(optarg);
+                break;
+            case 'J':
+                // Signed overflow warning disable
+                diags.setDiagnosticGroupMapping("signed-overflow",
+                                                diag::MAP_IGNORE);
+                break;
+            case OPT_warn:
+                // Enable all warnings
+                diags.setIgnoreAllWarnings(false);
+                diags.setWarningsAsErrors(false);
+                diags.setDiagnosticGroupMapping("signed-overflow",
+                                                diag::MAP_WARNING);
+                break;
+            case OPT_fatal_warnings:
+                // Make warnings fatal (errors)
+                diags.setWarningsAsErrors(true);
+                break;
+            case 'W':
+                // Inhibit all warnings
+                diags.setIgnoreAllWarnings(true);
+                break;
+            case OPT_help:
+                llvm::outs() << help_msg;
+                return EXIT_SUCCESS;
+            case OPT_version:
+                llvm::outs() << version_msg;
+                return EXIT_SUCCESS;
+            case OPT_license:
+                llvm::outs() << license_msg;
+                return EXIT_SUCCESS;
+            default:
+                break;
+        }
     }
+
+    argc -= optind;
+    argv += optind;
+
+    if (argc > 1)
+    {
+        diags.Report(diag::fatal_too_many_input_files);
+        return EXIT_FAILURE;
+    }
+    if (argc == 1)
+        in_filename = argv[0];
 
     // Load standard modules
     if (!LoadStandardPlugins())
@@ -483,10 +366,6 @@ main(int argc, char* argv[])
         diags.Report(diag::fatal_standard_modules);
         return EXIT_FAILURE;
     }
-
-    // Default to stdin if no filename specified.
-    if (in_filename.empty())
-        in_filename = "-";
 
     return do_assemble(source_mgr, diags);
 }
