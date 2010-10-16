@@ -191,6 +191,7 @@ add_fatal("fatal_file_open", "could not open file '%0'")
 add_fatal("fatal_standard_modules", "could not load standard modules")
 add_warning("warn_plugin_load", "could not load plugin '%0'")
 add_fatal("fatal_no_input_files", "no input files specified")
+add_fatal("fatal_too_many_input_files", "too many input files specified")
 add_fatal("fatal_unrecognized_module", "unrecognized %0 '%1'")
 add_warning("warn_unknown_command_line_option",
             "unknown command line argument '%0'; try '-help'")
