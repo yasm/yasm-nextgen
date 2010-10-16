@@ -63,7 +63,6 @@
 
 namespace cl = llvm::cl;
 
-static bool warning_error = false;  // warnings being treated as errors
 static std::auto_ptr<llvm::raw_ostream> errfile;
 
 // version message
@@ -688,8 +687,7 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
         return EXIT_FAILURE;
 
     // assemble the input.
-    if (!assembler.Assemble(source_mgr, file_mgr, diags, headers,
-                            warning_error))
+    if (!assembler.Assemble(source_mgr, file_mgr, diags, headers))
     {
         // An error occurred during assembly.
         return EXIT_FAILURE;
@@ -706,7 +704,7 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
         return EXIT_FAILURE;
     }
 
-    if (!assembler.Output(out, diags, warning_error))
+    if (!assembler.Output(out, diags))
     {
         // An error occurred during output.
         // If we had an error at this point, we also need to delete the output

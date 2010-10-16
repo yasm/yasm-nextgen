@@ -288,8 +288,7 @@ bool
 Assembler::Assemble(SourceManager& source_mgr,
                     FileManager& file_mgr,
                     Diagnostic& diags,
-                    HeaderSearch& headers,
-                    bool warning_error)
+                    HeaderSearch& headers)
 {
     llvm::StringRef parser_keyword = m_parser_module->getKeyword();
 
@@ -339,9 +338,7 @@ Assembler::Assemble(SourceManager& source_mgr,
 }
 
 bool
-Assembler::Output(llvm::raw_fd_ostream& os,
-                  Diagnostic& diags,
-                  bool warning_error)
+Assembler::Output(llvm::raw_fd_ostream& os, Diagnostic& diags)
 {
     // Write the object file
     m_objfmt->Output(os,

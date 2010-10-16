@@ -133,22 +133,17 @@ public:
     /// @param source_mgr       source manager
     /// @param file_mgr         file manager
     /// @param diags            diagnostic reporting
-    /// @param warning_error    treat warnings as errors if true
     /// @return True on success, false on failure.
     bool Assemble(SourceManager& source_mgr,
                   FileManager& file_mgr,
                   Diagnostic& diags,
-                  HeaderSearch& headers,
-                  bool warning_error = false);
+                  HeaderSearch& headers);
 
     /// Write assembly results to output file.  Fails if assembly not
     /// performed first.
     /// @param os               output stream
-    /// @param warning_error    treat warnings as errors if true
     /// @return True on success, false on failure.
-    bool Output(llvm::raw_fd_ostream& os,
-                Diagnostic& diags,
-                bool warning_error = false);
+    bool Output(llvm::raw_fd_ostream& os, Diagnostic& diags);
 
     /// Get the object.  Returns 0 until after InitObject() is called.
     /// @return Object.
