@@ -65,7 +65,7 @@ NumericOutput::EmitWarnings(Diagnostic& diags) const
     if ((m_warns & FP_OVERFLOW) != 0)
         diags.Report(m_source, diag::warn_float_overflow);
     if ((m_warns & TRUNCATED) != 0)
-        diags.Report(m_source, diag::warn_truncated) << m_shift;
+        diags.Report(m_source, diag::warn_truncated) << m_rshift;
 }
 
 void
