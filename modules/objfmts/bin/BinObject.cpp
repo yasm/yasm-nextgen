@@ -205,9 +205,6 @@ BinOutput::ConvertValueToBytes(Value& value,
         if (value.getSubLocation(&label_loc) && label_loc.bc->getContainer())
             syme -= label_loc;
 
-        if (value.getRShift() > 0)
-            syme >>= IntNum(value.getRShift());
-
         // Add into absolute portion
         value.AddAbs(syme);
         value.ClearRelative();
