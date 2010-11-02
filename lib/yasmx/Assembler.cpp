@@ -26,7 +26,6 @@
 //
 #include "yasmx/Assembler.h"
 
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
 #include "yasmx/Basic/Diagnostic.h"
@@ -215,8 +214,8 @@ Assembler::InitObject(SourceManager& source_mgr, Diagnostic& diags)
                 m_obj_filename = "yasm.out";
             else
             {
-                m_obj_filename =
-                    (base_filename+m_objfmt_module->getExtension()).str();
+                m_obj_filename = base_filename;
+                m_obj_filename += m_objfmt_module->getExtension();
                 if (m_obj_filename == in_filename)
                     m_obj_filename = "yasm.out";
             }

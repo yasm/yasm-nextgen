@@ -694,7 +694,7 @@ ElfObject::FinalizeSymbol(Symbol& sym,
                 if (name.size() > 2 && name[0] == '.' && name[1] == 'L')
                     return;
                 // Don't output GAS parser local labels.
-                if (name[0] == 'L' &&
+                if (name.size() > 1 && name[0] == 'L' &&
                     name.rfind('\001') != llvm::StringRef::npos)
                     return;
             }

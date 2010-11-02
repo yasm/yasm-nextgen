@@ -20,7 +20,7 @@ AC_DEFINE(PACKAGE_BUILD, ["HEAD"], [Define to build version of this package.])
 AC_DEFINE(LLVM_ON_UNIX, [1], [Define if building on unix.])
 
 AC_MSG_CHECKING([YGAS_OBJFMT_BITS])
-if echo $target_cpu | grep -Eq '^x86_64' ; then
+if echo $target_cpu | grep -Eq '^x86_64|^amd64' ; then
   YGAS_OBJFMT_BITS=64
 elif echo $target_cpu | grep -Eq '^i[0-9]86' ; then
   YGAS_OBJFMT_BITS=32
