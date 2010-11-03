@@ -1567,6 +1567,61 @@ GasParser::ParseDirective(NameValues* nvs)
                 }
                 break;
             }
+            case GasToken::percent:
+            {
+                // some kind of register
+                ConsumeToken();
+                if (m_token.isNot(GasToken::identifier))
+                {
+                    Diag(m_token, diag::err_bad_register_name);
+                    return false;
+                }
+                IdentifierInfo* ii = m_token.getIdentifierInfo();
+                ii->DoRegLookup(*m_arch, m_token.getLocation(),
+                                m_preproc.getDiagnostics());
+                if (const Register* reg = ii->getRegister())
+                {
+                    ConsumeToken();
+                    nvs->push_back(new NameValue(Expr::Ptr(new Expr(*reg))));
+                    break;
+                }
+                if (const RegisterGroup* reggroup = ii->getRegGroup())
+                {
+                    SourceLocation reggroup_source = ConsumeToken();
+
+                    if (m_token.isNot(GasToken::l_paren))
+                    {
+                        nvs->push_back(new NameValue(Expr::Ptr(
+                            new Expr(*reggroup->getReg(0)))));
+                        break;
+                    }
+                    SourceLocation lparen_loc = ConsumeParen();
+
+                    if (m_token.isNot(GasToken::numeric_constant))
+                    {
+                        Diag(m_token, diag::err_expected_integer);
+                        return false;
+                    }
+                    IntNum regindex;
+                    ParseInteger(&regindex);    // OK to ignore return value
+                    SourceLocation regindex_source = ConsumeToken();
+
+                    MatchRHSPunctuation(GasToken::r_paren, lparen_loc);
+
+                    const Register* reg = reggroup->getReg(regindex.getUInt());
+                    if (!reg)
+                    {
+                        Diag(regindex_source, diag::err_bad_register_index);
+                        return false;
+                    }
+                    nvs->push_back(new NameValue(Expr::Ptr(new Expr(*reg))));
+                    break;
+                }
+                // didn't recognize it?
+                Diag(m_token, diag::err_bad_register_name);
+                ConsumeToken();
+                return false;
+            }
             case GasToken::at:
                 nvs->push_back(new NameValue(m_token));
                 ConsumeToken();
