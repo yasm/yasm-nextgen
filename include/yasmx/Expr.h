@@ -540,9 +540,10 @@ public:
     bool Contains(int type, int pos=-1) const;
 
     /// Substitute terms into expr SUBST terms (by index).
-    /// @param terms        terms
-    /// @return True on error (index out of range).
-    bool Substitute(const ExprTerms& terms);
+    /// @param begin        beginning of terms
+    /// @param end          end of terms
+    /// @return False on error (index out of range).
+    bool Substitute(const ExprTerm* begin, const ExprTerm* end);
 
     void Calc(Op::Op op, SourceLocation source = SourceLocation());
 

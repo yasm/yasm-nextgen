@@ -820,7 +820,7 @@ Expr::Contains(int type, int pos) const
 }
 
 bool
-Expr::Substitute(const ExprTerms& subst_terms)
+Expr::Substitute(const ExprTerm* subst_begin, const ExprTerm* subst_end)
 {
     for (ExprTerms::iterator i=m_terms.begin(), end=m_terms.end(); i != end;
          ++i)
@@ -828,13 +828,13 @@ Expr::Substitute(const ExprTerms& subst_terms)
         const unsigned int* substp = i->getSubst();
         if (!substp)
             continue;
-        if (*substp >= subst_terms.size())
-            return true;   // error
+        if (*substp >= (subst_end-subst_begin))
+            return false;   // error
         int depth = i->m_depth;
-        *i = subst_terms[*substp];
+        *i = subst_begin[*substp];
         i->m_depth = depth;
     }
-    return false;
+    return true;
 }
 
 Expr
