@@ -492,8 +492,8 @@ public:
     ///         the left side of the WRT expression.
     Expr ExtractWRT();
 
-    /// Determine if an expression is just a symbol.
-    /// @return True if get_symbol() is safe to call.
+    /// Determine if an expression is just a float.
+    /// @return True if getFloat() is safe to call.
     bool isFloat() const
     {
         return (m_terms.size() == 1
@@ -508,7 +508,7 @@ public:
     /// Determine if an expression is just an integer.
     /// Returns false if the expression is too complex (contains anything other
     /// than integers, eg floats, non-valued labels, or registers).
-    /// @return True if get_intnum() is safe to call.
+    /// @return True if getIntNum() is safe to call.
     bool isIntNum() const
     { return (m_terms.size() == 1 && m_terms.front().isType(ExprTerm::INT)); }
 
@@ -518,7 +518,7 @@ public:
     IntNum getIntNum() const;
 
     /// Determine if an expression is just a symbol.
-    /// @return True if get_symbol() is safe to call.
+    /// @return True if getSymbol() is safe to call.
     bool isSymbol() const
     { return (m_terms.size() == 1 && m_terms.front().isType(ExprTerm::SYM)); }
 
@@ -528,7 +528,7 @@ public:
     SymbolRef getSymbol() const;
 
     /// Determine if an expression is just a symbol.
-    /// @return True if get_reg() is safe to call.
+    /// @return True if getRegister() is safe to call.
     bool isRegister() const
     { return (m_terms.size() == 1 && m_terms.front().isType(ExprTerm::REG)); }
 
