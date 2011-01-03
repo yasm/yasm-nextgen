@@ -113,6 +113,8 @@ Object::Object(llvm::StringRef src_filename,
       m_impl(new Impl(false))
 {
     m_options.DisableGlobalSubRelative = false;
+    m_config.ExecStack = false;
+    m_config.NoExecStack = false;
 }
 
 void

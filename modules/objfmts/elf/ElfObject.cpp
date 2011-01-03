@@ -993,6 +993,30 @@ ElfObject::Output(llvm::raw_fd_ostream& os,
         m_file_elfsym->setName(strtab.getIndex(m_object.getSourceFilename()));
     }
 
+    // Create .note.GNU-stack if we need to advise linker about executable
+    // stack.
+    Object::Config& oconfig = m_object.getConfig();
+    if (oconfig.ExecStack || oconfig.NoExecStack)
+    {
+        Section* gnu_stack = m_object.FindSection(".note.GNU-stack");
+        if (!gnu_stack)
+            gnu_stack = AppendSection(".note.GNU-stack", SourceLocation(),
+                                      diags);
+
+        gnu_stack->setAlign(0);
+        ElfSection* elfsect = gnu_stack->getAssocData<ElfSection>();
+        if (oconfig.ExecStack)
+        {
+            gnu_stack->setCode(true);
+            elfsect->setTypeFlags(SHT_PROGBITS, SHF_EXECINSTR);
+        }
+        else
+        {
+            gnu_stack->setCode(false);
+            elfsect->setTypeFlags(SHT_PROGBITS, 0);
+        }
+    }
+
     // Allocate space for Ehdr by seeking forward
     os.seek(m_config.getProgramHeaderSize());
     if (os.has_error())

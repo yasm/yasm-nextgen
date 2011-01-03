@@ -128,6 +128,10 @@ static llvm::cl::opt<yasm::Assembler::ObjectDumpTime> dump_object("dump-object",
                    "after output"),
         clEnumValEnd));
 
+// --execstack, --noexecstack
+static cl::list<bool> execstack("execstack");
+static cl::list<bool> noexecstack("noexecstack");
+
 // -J
 static cl::list<bool> no_signed_overflow("J",
     cl::desc("don't warn about signed overflow"));
@@ -291,7 +295,7 @@ GetBitsSetting()
         else
             bits32_pos = 0;
         if (bits64_num < bits_64.size())
-            bits64_pos = bits_64.getPosition(bits32_num);
+            bits64_pos = bits_64.getPosition(bits64_num);
         else
             bits64_pos = 0;
 
@@ -312,6 +316,45 @@ GetBitsSetting()
             break; // we're done with the list
     }
     return bits;
+}
+
+static void
+ConfigureObject(yasm::Object& object)
+{
+    yasm::Object::Config& config = object.getConfig();
+
+    // Walk through execstack and noexecstack in parallel, ordering by command
+    // line argument position.
+    unsigned int exec_pos = 0, exec_num = 0;
+    unsigned int noexec_pos = 0, noexec_num = 0;
+    for (;;)
+    {
+        if (exec_num < execstack.size())
+            exec_pos = execstack.getPosition(exec_num);
+        else
+            exec_pos = 0;
+        if (noexec_num < noexecstack.size())
+            noexec_pos = noexecstack.getPosition(noexec_num);
+        else
+            noexec_pos = 0;
+
+        if (exec_pos != 0 && (noexec_pos == 0 || exec_pos < noexec_pos))
+        {
+            // Handle exec option
+            ++exec_num;
+            config.ExecStack = true;
+            config.NoExecStack = false;
+        }
+        else if (noexec_pos != 0 && (exec_pos == 0 || noexec_pos < exec_pos))
+        {
+            // Handle noexec option
+            ++noexec_num;
+            config.ExecStack = false;
+            config.NoExecStack = true;
+        }
+        else
+            break; // we're done with the list
+    }
 }
 
 static int
@@ -369,6 +412,9 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
     // Initialize the object.
     if (!assembler.InitObject(source_mgr, diags))
         return EXIT_FAILURE;
+
+    // Configure object per command line parameters.
+    ConfigureObject(*assembler.getObject());
 
     // Predefine symbols.
     for (std::vector<std::string>::const_iterator i=defsym.begin(),

@@ -69,6 +69,18 @@ public:
         bool DisableGlobalSubRelative;
     };
 
+    /// Generic object configuration.
+    struct Config
+    {
+        /// Advise linker that stack should be executable.
+        /// Defaults to false.
+        bool ExecStack;
+
+        /// Advise linker that stack should be non-executable.
+        /// Defaults to false.
+        bool NoExecStack;
+    };
+
     /// Constructor.  A default section is created as the first
     /// section, and an empty symbol table is created.
     /// The object filename is initially unset (empty string).
@@ -103,6 +115,7 @@ public:
     llvm::StringRef getObjectFilename() const { return m_obj_filename; }
 
     Options& getOptions() { return m_options; }
+    Config& getConfig() { return m_config; }
 
     /// Optimize an object.  Takes the unoptimized object and optimizes it.
     /// If successful, the object is ready for output to an object file.
@@ -245,6 +258,7 @@ private:
     std::string m_obj_filename;         ///< Object filename
 
     Options m_options;                  ///< Object options
+    Config m_config;                    ///< Object configuration
 
     Arch* m_arch;                       ///< Target architecture
 
