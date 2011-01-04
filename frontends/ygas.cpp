@@ -129,8 +129,10 @@ static llvm::cl::opt<yasm::Assembler::ObjectDumpTime> dump_object("dump-object",
         clEnumValEnd));
 
 // --execstack, --noexecstack
-static cl::list<bool> execstack("execstack");
-static cl::list<bool> noexecstack("noexecstack");
+static cl::list<bool> execstack("execstack",
+    cl::desc("require executable stack for this object"));
+static cl::list<bool> noexecstack("noexecstack",
+    cl::desc("don't require executable stack for this object"));
 
 // -J
 static cl::list<bool> no_signed_overflow("J",
