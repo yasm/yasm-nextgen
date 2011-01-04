@@ -197,9 +197,6 @@ class Test(object):
         # Parser override: "[parser X]"
         self.parser = self.get_option("parser", self.parser)
 
-        # Set comment separator based on parser
-        self.commentsep = (self.parser == "gas") and "#" or ";"
-
         # We default to bin output, but can override with "[oformat X]"
         format = self.get_option("oformat", "bin")
 
@@ -211,9 +208,20 @@ class Test(object):
             import shlex
             yasmargs = shlex.split("yasm "+yasmoverride)
 
+        # full command line override: "[ygas <args>]"
+        ygasoverride = self.get_option("ygas")
+        if ygasoverride is not None:
+            import shlex
+            yasmargs = shlex.split("ygas "+ygasoverride)
+            self.parser = "gas"
+
+        # Set comment separator based on parser
+        self.commentsep = (self.parser == "gas") and "#" or ";"
+
         # Notify start of test
-        lprint("[ RUN      ] %s (%s)%s" % (self.name, " ".join(yasmargs[1:]),
-                                           expectfail and "{fail}" or ""))
+        lprint("[ RUN      ] %s (%s%s)%s" %
+               (self.name, yasmargs[0] == "ygas" and "ygas " or "",
+                " ".join(yasmargs[1:]), expectfail and "{fail}" or ""))
 
         # Specify the output filename as we pipe the input.
         yasmargs.extend(["-o", os.path.join(outdir, self.outfn)])
@@ -225,7 +233,8 @@ class Test(object):
         start = time.time()
         env = os.environ.copy()
         env["YASM_TEST_SUITE"] = "1"
-        proc = subprocess.Popen(yasmargs, bufsize=4096, executable=yasmexe,
+        proc = subprocess.Popen(yasmargs, bufsize=4096,
+                                executable=(ygasoverride and ygasexe or yasmexe),
                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, env=env)
         (stdoutdata, stderrdata) = proc.communicate(self.inputfile)
@@ -235,12 +244,12 @@ class Test(object):
         if proc.returncode == 0 and not expectfail:
             ok = True
         elif proc.returncode < 0:
-            lprint(" CRASHED: received signal %d from yasm" % (-proc.returncode))
+            lprint(" CRASHED: received signal %d" % (-proc.returncode))
             self.save_ew(stderrdata)
         elif expectfail:
             ok = True
         else:
-            lprint("Error: yasm return code mismatch.")
+            lprint("Error: return code mismatch.")
             lprint(" Expected: %d" % (expectfail and 1 or 0))
             lprint(" Actual: %d" % proc.returncode)
             if proc.returncode != 0:
@@ -304,13 +313,15 @@ def run_all(bpath):
     return True
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 5:
         lprint("Usage: rtest.py <path to regression tree>", file=sys.stderr)
         lprint("    <path to output directory>", file=sys.stderr)
         lprint("    <path to yasm executable>", file=sys.stderr)
+        lprint("    <path to ygas executable>", file=sys.stderr)
         sys.exit(2)
     outdir = sys.argv[2]
     yasmexe = sys.argv[3]
+    ygasexe = sys.argv[4]
     all_ok = run_all(sys.argv[1])
     if all_ok:
         sys.exit(0)
