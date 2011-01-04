@@ -47,6 +47,7 @@
 #include "yasmx/DebugFormat.h"
 #include "yasmx/ListFormat.h"
 #include "yasmx/Module.h"
+#include "yasmx/Object.h"
 #include "yasmx/ObjectFormat.h"
 
 #ifdef HAVE_LIBGEN_H
@@ -141,6 +142,12 @@ static cl::opt<bool> preproc_only("e",
 static cl::alias preproc_only_long("preproc-only",
     cl::desc("Alias for -e"),
     cl::aliasopt(preproc_only));
+
+// --execstack, --noexecstack
+static cl::list<bool> execstack("execstack",
+    cl::desc("require executable stack for this object"));
+static cl::list<bool> noexecstack("noexecstack",
+    cl::desc("don't require executable stack for this object"));
 
 // -f, --oformat
 static cl::opt<std::string> objfmt_keyword("f",
@@ -452,6 +459,45 @@ ApplyWarningSettings(yasm::Diagnostic& diags)
     }
 }
 
+static void
+ConfigureObject(yasm::Object& object)
+{
+    yasm::Object::Config& config = object.getConfig();
+
+    // Walk through execstack and noexecstack in parallel, ordering by command
+    // line argument position.
+    unsigned int exec_pos = 0, exec_num = 0;
+    unsigned int noexec_pos = 0, noexec_num = 0;
+    for (;;)
+    {
+        if (exec_num < execstack.size())
+            exec_pos = execstack.getPosition(exec_num);
+        else
+            exec_pos = 0;
+        if (noexec_num < noexecstack.size())
+            noexec_pos = noexecstack.getPosition(noexec_num);
+        else
+            noexec_pos = 0;
+
+        if (exec_pos != 0 && (noexec_pos == 0 || exec_pos < noexec_pos))
+        {
+            // Handle exec option
+            ++exec_num;
+            config.ExecStack = true;
+            config.NoExecStack = false;
+        }
+        else if (noexec_pos != 0 && (exec_pos == 0 || noexec_pos < exec_pos))
+        {
+            // Handle noexec option
+            ++noexec_num;
+            config.ExecStack = false;
+            config.NoExecStack = true;
+        }
+        else
+            break; // we're done with the list
+    }
+}
+
 #if 0
 static void
 ApplyPreprocessorBuiltins(yasm::Preprocessor* preproc)
@@ -685,6 +731,9 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
     // initialize the object.
     if (!assembler.InitObject(source_mgr, diags))
         return EXIT_FAILURE;
+
+    // Configure object per command line parameters.
+    ConfigureObject(*assembler.getObject());
 
     // assemble the input.
     if (!assembler.Assemble(source_mgr, file_mgr, diags, headers))
