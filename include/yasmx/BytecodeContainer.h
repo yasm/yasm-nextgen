@@ -306,6 +306,30 @@ BytecodeContainer& AppendMultiple(BytecodeContainer& container,
                                   std::auto_ptr<Expr> multiple,
                                   SourceLocation source);
 
+/// Append a skip.
+/// @param container    bytecode container
+/// @param multiple     multiple expression
+/// @param size         size of each skip, in bytes
+/// @param source       source location.
+YASM_LIB_EXPORT
+void AppendSkip(BytecodeContainer& container,
+                std::auto_ptr<Expr> multiple,
+                unsigned int size,
+                SourceLocation source);
+
+/// Append a fill.
+/// @param container    bytecode container
+/// @param multiple     multiple expression
+/// @param size         size of each value, in bytes
+/// @param value        value expression
+/// @param source       source location.
+YASM_LIB_EXPORT
+void AppendFill(BytecodeContainer& container,
+                std::auto_ptr<Expr> multiple,
+                unsigned int size,
+                std::auto_ptr<Expr> value,
+                SourceLocation source);
+
 } // namespace yasm
 
 #endif

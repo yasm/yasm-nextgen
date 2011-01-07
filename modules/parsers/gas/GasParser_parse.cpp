@@ -860,8 +860,7 @@ GasParser::ParseDirZero(unsigned int param, SourceLocation source)
         return false;
     }
 
-    BytecodeContainer& inner = AppendMultiple(*m_container, e, source);
-    AppendByte(inner, 0);
+    AppendFill(*m_container, e, 1, std::auto_ptr<Expr>(new Expr(0)), source);
     return true;
 }
 
@@ -876,10 +875,9 @@ GasParser::ParseDirSkip(unsigned int param, SourceLocation source)
         return false;
     }
 
-    BytecodeContainer& inner = AppendMultiple(*m_container, e, source);
     if (m_token.isNot(GasToken::comma))
     {
-        inner.AppendGap(1, source);
+        AppendSkip(*m_container, e, 1, source);
         return true;
     }
     ConsumeToken();
@@ -892,7 +890,7 @@ GasParser::ParseDirSkip(unsigned int param, SourceLocation source)
         Diag(cur_source, diag::err_expected_expression_after) << ",";
         return false;
     }
-    AppendData(inner, e_val, 1, *m_arch, source, m_preproc.getDiagnostics());
+    AppendFill(*m_container, e, 1, e_val, source);
     return true;
 }
 
@@ -901,7 +899,8 @@ bool
 GasParser::ParseDirFill(unsigned int param, SourceLocation source)
 {
     std::auto_ptr<Expr> repeat(new Expr);
-    Expr size, value;
+    Expr size;
+    std::auto_ptr<Expr> value(new Expr);
     SourceLocation size_src;
     if (!ParseExpr(*repeat))
     {
@@ -921,7 +920,7 @@ GasParser::ParseDirFill(unsigned int param, SourceLocation source)
         {
             ConsumeToken();
             SourceLocation value_src = m_token.getLocation();
-            if (!ParseExpr(value))
+            if (!ParseExpr(*value))
             {
                 Diag(value_src, diag::err_expected_expression_after) << ",";
                 return false;
@@ -941,18 +940,9 @@ GasParser::ParseDirFill(unsigned int param, SourceLocation source)
         ssize = size.getIntNum().getUInt();
     }
 
-    BytecodeContainer& inner = AppendMultiple(*m_container, repeat, source);
-    if (value.isEmpty())
-    {
-        AppendData(inner, 0, ssize, *m_arch);
-    }
-    else
-    {
-        std::auto_ptr<Expr> value_copy(new Expr);
-        std::swap(*value_copy, value);
-        AppendData(inner, value_copy, ssize, *m_arch, source,
-                   m_preproc.getDiagnostics());
-    }
+    if (value->isEmpty())
+        *value = 0;
+    AppendFill(*m_container, repeat, ssize, value, source);
     return true;
 }
 
