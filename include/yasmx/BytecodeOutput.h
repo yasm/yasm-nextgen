@@ -118,7 +118,6 @@ public:
     /// @param source       source location
     void OutputBytes(const Bytes& bytes, SourceLocation source);
 
-protected:
     /// Convert a value to bytes.  Called by OutputValue() so that
     /// implementations can keep track of relocations and verify legal
     /// expressions.
@@ -151,6 +150,7 @@ protected:
                                       Location loc,
                                       NumericOutput& num_out);
 
+protected:
     /// Overrideable implementation of OutputGap().
     /// @param size         gap size, in bytes
     /// @param source       source location
