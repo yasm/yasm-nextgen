@@ -75,7 +75,7 @@ BytecodeNoOutput::ConvertValueToBytes(Value& value,
 }
 
 void
-BytecodeNoOutput::DoOutputGap(unsigned int size, SourceLocation source)
+BytecodeNoOutput::DoOutputGap(unsigned long size, SourceLocation source)
 {
     // expected
 }
@@ -93,7 +93,7 @@ BytecodeStreamOutput::~BytecodeStreamOutput()
 }
 
 void
-BytecodeStreamOutput::DoOutputGap(unsigned int size, SourceLocation source)
+BytecodeStreamOutput::DoOutputGap(unsigned long size, SourceLocation source)
 {
     // Warn that gaps are converted to 0 and write out the 0's.
     static const unsigned long BLOCK_SIZE = 4096;

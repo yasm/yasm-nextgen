@@ -102,7 +102,7 @@ public:
     bool ConvertValueToBytes(Value& value,
                              Location loc,
                              NumericOutput& num_out);
-    void DoOutputGap(unsigned int size, SourceLocation source);
+    void DoOutputGap(unsigned long size, SourceLocation source);
     void DoOutputBytes(const Bytes& bytes, SourceLocation source);
 
 private:
@@ -215,7 +215,7 @@ RdfOutput::ConvertValueToBytes(Value& value,
 }
 
 void
-RdfOutput::DoOutputGap(unsigned int size, SourceLocation source)
+RdfOutput::DoOutputGap(unsigned long size, SourceLocation source)
 {
     Diag(source, diag::warn_uninit_zero);
     m_rdfsect->raw_data.insert(m_rdfsect->raw_data.end(), size, 0);

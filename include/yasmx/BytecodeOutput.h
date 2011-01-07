@@ -111,7 +111,7 @@ public:
     /// program is run.
     /// @param size         gap size, in bytes
     /// @param source       source location
-    void OutputGap(unsigned int size, SourceLocation source);
+    void OutputGap(unsigned long size, SourceLocation source);
 
     /// Output a sequence of bytes.
     /// @param bytes        bytes to output
@@ -154,7 +154,7 @@ protected:
     /// Overrideable implementation of OutputGap().
     /// @param size         gap size, in bytes
     /// @param source       source location
-    virtual void DoOutputGap(unsigned int size,
+    virtual void DoOutputGap(unsigned long size,
                              SourceLocation source) = 0;
 
     /// Overrideable implementation of OutputBytes().
@@ -207,7 +207,7 @@ BytecodeOutput::OutputSymbol(SymbolRef sym,
 }
 
 inline void
-BytecodeOutput::OutputGap(unsigned int size, SourceLocation source)
+BytecodeOutput::OutputGap(unsigned long size, SourceLocation source)
 {
     DoOutputGap(size, source);
     m_num_output += size;
@@ -235,7 +235,7 @@ protected:
     bool ConvertValueToBytes(Value& value,
                              Location loc,
                              NumericOutput& num_out);
-    void DoOutputGap(unsigned int size, SourceLocation source);
+    void DoOutputGap(unsigned long size, SourceLocation source);
     void DoOutputBytes(const Bytes& bytes, SourceLocation source);
 };
 
@@ -252,7 +252,7 @@ public:
     ~BytecodeStreamOutput();
 
 protected:
-    void DoOutputGap(unsigned int size, SourceLocation source);
+    void DoOutputGap(unsigned long size, SourceLocation source);
     void DoOutputBytes(const Bytes& bytes, SourceLocation source);
 
     llvm::raw_ostream& m_os;
