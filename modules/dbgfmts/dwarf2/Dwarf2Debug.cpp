@@ -74,6 +74,7 @@ Dwarf2Debug::Generate(ObjectFormat& objfmt,
     // based on the asm source.
     Section& debug_line =
         Generate_line(smgr, !gotFile(), &main_code, &num_line_sections);
+    debug_line.Finalize(diags);
 
     // If we don't have a .debug_info (or it's empty), generate the minimal
     // set of .debug_info, .debug_aranges, and .debug_abbrev so that the
@@ -84,7 +85,9 @@ Dwarf2Debug::Generate(ObjectFormat& objfmt,
          debug_info->bytecodes_begin() == debug_info->bytecodes_end()))
     {
         debug_info = &Generate_info(debug_line, main_code);
-        Generate_aranges(*debug_info);
+        debug_info->Finalize(diags);
+        Section& aranges = Generate_aranges(*debug_info);
+        aranges.Finalize(diags);
         //Generate_pubnames(*debug_info);
     }
 }
