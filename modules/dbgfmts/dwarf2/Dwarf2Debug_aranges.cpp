@@ -60,6 +60,8 @@ Dwarf2Debug::Generate_aranges(Section& debug_info)
 
     // header
     Location head = AppendHead(*debug_aranges, &debug_info, true, true);
+    AppendAlign(*debug_aranges, Expr(m_sizeof_address), Expr(), Expr(), 0,
+                SourceLocation());
 
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
