@@ -101,14 +101,14 @@ Dwarf2Debug::Generate_info(Section& debug_line, Section* main_code)
         SymbolRef first = main_code->getSymbol();
         // All code is contiguous in one section
         AppendAbbrevAttr(abbrev, DW_AT_low_pc, DW_FORM_addr);
-        AppendData(debug_info, Expr::Ptr(new Expr(first)), m_sizeof_offset,
+        AppendData(debug_info, Expr::Ptr(new Expr(first)), m_sizeof_address,
                    *m_object.getArch(), SourceLocation(), *m_diags);
 
         AppendAbbrevAttr(abbrev, DW_AT_high_pc, DW_FORM_addr);
         Expr::Ptr last(new Expr(first));
         last->Calc(Op::ADD, (main_code->bytecodes_back().getTailOffset() -
                              main_code->bytecodes_front().getOffset()));
-        AppendData(debug_info, last, m_sizeof_offset, *m_object.getArch(),
+        AppendData(debug_info, last, m_sizeof_address, *m_object.getArch(),
                    SourceLocation(), *m_diags);
     }
 
