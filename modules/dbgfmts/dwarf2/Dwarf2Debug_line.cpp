@@ -298,10 +298,6 @@ Dwarf2Debug::GenerateLineOp(Section& debug_line,
     }
 #endif
 
-    // If multiple loc for the same location, use last
-    if (nextloc && nextloc->loc == loc.loc)
-        return;
-
     IntNum addr_delta;
     if (!state->prevloc.bc)
     {
