@@ -570,7 +570,7 @@ Dwarf2Debug::AppendSPP(BytecodeContainer& container)
                     i->filename.length());
         Write8(bytes, 0);
 
-        WriteULEB128(bytes, i->dir);    // dir
+        WriteULEB128(bytes, i->dir+1);  // dir
         WriteULEB128(bytes, i->time);   // time
         WriteULEB128(bytes, i->length); // length
     }
