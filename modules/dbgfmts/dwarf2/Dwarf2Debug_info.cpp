@@ -112,9 +112,12 @@ Dwarf2Debug::Generate_info(Section& debug_line, Section* main_code)
                    SourceLocation(), *m_diags);
     }
 
-    // input filename
+    // input filename: use file 1 if specified, otherwise use source filename
     AppendAbbrevAttr(abbrev, DW_AT_name, DW_FORM_string);
-    AppendData(debug_info, m_object.getSourceFilename(), true);
+    if (!m_filenames.empty() && !m_filenames[0].pathname.empty())
+        AppendData(debug_info, m_filenames[0].pathname, true);
+    else
+        AppendData(debug_info, m_object.getSourceFilename(), true);
 
     // compile directory (current working directory)
     AppendAbbrevAttr(abbrev, DW_AT_comp_dir, DW_FORM_string);
