@@ -137,6 +137,7 @@ public:
     void DirType(DirectiveInfo& info, Diagnostic& diags);
     void DirSize(DirectiveInfo& info, Diagnostic& diags);
     void DirWeak(DirectiveInfo& info, Diagnostic& diags);
+    void DirInternal(DirectiveInfo& info, Diagnostic& diags);
     void DirHidden(DirectiveInfo& info, Diagnostic& diags);
     void DirProtected(DirectiveInfo& info, Diagnostic& diags);
     void DirSymVer(DirectiveInfo& info, Diagnostic& diags);

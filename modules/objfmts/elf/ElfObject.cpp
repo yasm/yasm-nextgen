@@ -1657,6 +1657,21 @@ ElfObject::DirWeak(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
+ElfObject::DirInternal(DirectiveInfo& info, Diagnostic& diags)
+{
+    assert(info.isObject(m_object));
+    NameValues& namevals = info.getNameValues();
+    NameValue& name_nv = namevals.front();
+
+    SymbolRef sym = info.getObject().getSymbol(name_nv.getId());
+    sym->CheckedDeclare(Symbol::GLOBAL, name_nv.getValueRange().getBegin(),
+                        diags);
+
+    ElfSymbol& elfsym = BuildSymbol(*sym);
+    elfsym.setVisibility(STV_INTERNAL);
+}
+
+void
 ElfObject::DirHidden(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
@@ -1805,6 +1820,7 @@ ElfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
         {"type", &ElfObject::DirType, Directives::ID_REQUIRED},
         {"size", &ElfObject::DirSize, Directives::ID_REQUIRED},
         {"weak", &ElfObject::DirWeak, Directives::ID_REQUIRED},
+        {"internal", &ElfObject::DirInternal, Directives::ID_REQUIRED},
         {"hidden", &ElfObject::DirHidden, Directives::ID_REQUIRED},
         {"protected", &ElfObject::DirProtected, Directives::ID_REQUIRED},
         {"ident", &ElfObject::DirIdent, Directives::ANY},
@@ -1815,6 +1831,7 @@ ElfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
         {".type", &ElfObject::DirType, Directives::ID_REQUIRED},
         {".size", &ElfObject::DirSize, Directives::ID_REQUIRED},
         {".weak", &ElfObject::DirWeak, Directives::ID_REQUIRED},
+        {".internal", &ElfObject::DirInternal, Directives::ID_REQUIRED},
         {".hidden", &ElfObject::DirHidden, Directives::ID_REQUIRED},
         {".protected", &ElfObject::DirProtected, Directives::ID_REQUIRED},
         {".symver", &ElfObject::DirSymVer, Directives::ID_REQUIRED},
