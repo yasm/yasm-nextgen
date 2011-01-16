@@ -1646,59 +1646,53 @@ ElfObject::DirWeak(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
-    NameValue& name_nv = namevals.front();
+    for (NameValues::iterator nv = namevals.begin(), end = namevals.end();
+         nv != end; ++nv)
+    {
+        SymbolRef sym = info.getObject().getSymbol(nv->getId());
+        sym->CheckedDeclare(Symbol::GLOBAL, nv->getValueRange().getBegin(),
+                            diags);
 
-    SymbolRef sym = info.getObject().getSymbol(name_nv.getId());
-    sym->CheckedDeclare(Symbol::GLOBAL, name_nv.getValueRange().getBegin(),
-                        diags);
+        ElfSymbol& elfsym = BuildSymbol(*sym);
+        elfsym.setBinding(STB_WEAK);
+    }
+}
 
-    ElfSymbol& elfsym = BuildSymbol(*sym);
-    elfsym.setBinding(STB_WEAK);
+void
+ElfObject::VisibilityDir(DirectiveInfo& info,
+                         Diagnostic& diags,
+                         ElfSymbolVis vis)
+{
+    assert(info.isObject(m_object));
+    NameValues& namevals = info.getNameValues();
+    for (NameValues::iterator nv = namevals.begin(), end = namevals.end();
+         nv != end; ++nv)
+    {
+        SymbolRef sym = info.getObject().getSymbol(nv->getId());
+        sym->CheckedDeclare(Symbol::GLOBAL, nv->getValueRange().getBegin(),
+                            diags);
+
+        ElfSymbol& elfsym = BuildSymbol(*sym);
+        elfsym.setVisibility(STV_HIDDEN);
+    }
 }
 
 void
 ElfObject::DirInternal(DirectiveInfo& info, Diagnostic& diags)
 {
-    assert(info.isObject(m_object));
-    NameValues& namevals = info.getNameValues();
-    NameValue& name_nv = namevals.front();
-
-    SymbolRef sym = info.getObject().getSymbol(name_nv.getId());
-    sym->CheckedDeclare(Symbol::GLOBAL, name_nv.getValueRange().getBegin(),
-                        diags);
-
-    ElfSymbol& elfsym = BuildSymbol(*sym);
-    elfsym.setVisibility(STV_INTERNAL);
+    VisibilityDir(info, diags, STV_INTERNAL);
 }
 
 void
 ElfObject::DirHidden(DirectiveInfo& info, Diagnostic& diags)
 {
-    assert(info.isObject(m_object));
-    NameValues& namevals = info.getNameValues();
-    NameValue& name_nv = namevals.front();
-
-    SymbolRef sym = info.getObject().getSymbol(name_nv.getId());
-    sym->CheckedDeclare(Symbol::GLOBAL, name_nv.getValueRange().getBegin(),
-                        diags);
-
-    ElfSymbol& elfsym = BuildSymbol(*sym);
-    elfsym.setVisibility(STV_HIDDEN);
+    VisibilityDir(info, diags, STV_HIDDEN);
 }
 
 void
 ElfObject::DirProtected(DirectiveInfo& info, Diagnostic& diags)
 {
-    assert(info.isObject(m_object));
-    NameValues& namevals = info.getNameValues();
-    NameValue& name_nv = namevals.front();
-
-    SymbolRef sym = info.getObject().getSymbol(name_nv.getId());
-    sym->CheckedDeclare(Symbol::GLOBAL, name_nv.getValueRange().getBegin(),
-                        diags);
-
-    ElfSymbol& elfsym = BuildSymbol(*sym);
-    elfsym.setVisibility(STV_PROTECTED);
+    VisibilityDir(info, diags, STV_PROTECTED);
 }
 
 void
