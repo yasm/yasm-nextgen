@@ -1673,7 +1673,7 @@ ElfObject::VisibilityDir(DirectiveInfo& info,
                             diags);
 
         ElfSymbol& elfsym = BuildSymbol(*sym);
-        elfsym.setVisibility(STV_HIDDEN);
+        elfsym.setVisibility(vis);
     }
 }
 
