@@ -94,7 +94,7 @@ public:
     /// @param loc          location of the expr contents (needed for relative)
     /// @param num_out      numeric output
     /// @return False if an error occurred.
-    bool OutputValue(Value& value, Location loc, NumericOutput& num_out);
+    inline bool OutputValue(Value& value, Location loc, NumericOutput& num_out);
 
     /// Output a symbol reference.
     ///
@@ -102,21 +102,21 @@ public:
     /// @param loc          location of the symbol reference
     /// @param num_out      numeric output
     /// @return False if an error occurred.
-    bool OutputSymbol(SymbolRef sym,
-                      Location loc,
-                      NumericOutput& num_out);
+    inline bool OutputSymbol(SymbolRef sym,
+                             Location loc,
+                             NumericOutput& num_out);
 
     /// Output a "gap" in the object file: the data does not really need to
     /// exist in the object file, but should be initialized to 0 when the
     /// program is run.
     /// @param size         gap size, in bytes
     /// @param source       source location
-    void OutputGap(unsigned long size, SourceLocation source);
+    inline void OutputGap(unsigned long size, SourceLocation source);
 
     /// Output a sequence of bytes.
     /// @param bytes        bytes to output
     /// @param source       source location
-    void OutputBytes(const Bytes& bytes, SourceLocation source);
+    inline void OutputBytes(const Bytes& bytes, SourceLocation source);
 
     /// Convert a value to bytes.  Called by OutputValue() so that
     /// implementations can keep track of relocations and verify legal

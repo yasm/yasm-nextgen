@@ -149,10 +149,10 @@ public:
     void swap(ExprTerm& oth);
 
     /// Clear the term.
-    void Clear();
+    inline void Clear();
 
     /// Make the term zero.
-    void Zero();
+    inline void Zero();
 
     /// Is term cleared?
     bool isEmpty() const { return (m_type == NONE); }
