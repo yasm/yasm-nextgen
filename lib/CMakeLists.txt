@@ -19,6 +19,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     llvm/Support/SmallPtrSet.cpp
     llvm/Support/SmallVector.cpp
     llvm/Support/Statistic.cpp
+    llvm/Support/strdup.c
     llvm/Support/StringExtras.cpp
     llvm/Support/StringMap.cpp
     llvm/Support/StringRef.cpp

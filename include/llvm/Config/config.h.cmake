@@ -376,7 +376,7 @@
 #undef HAVE_STRCMP
 
 /* Define to 1 if you have the `strdup' function. */
-#undef HAVE_STRDUP
+#cmakedefine HAVE_STRDUP ${HAVE_STRDUP}
 
 /* Define to 1 if you have the `strerror' function. */
 #cmakedefine HAVE_STRERROR ${HAVE_STRERROR}
