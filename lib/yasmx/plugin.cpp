@@ -31,7 +31,7 @@
 
 #include <vector>
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #include <windows.h>
 #elif defined(__MACH__) || defined(__APPLE__) || defined(__GNUC__)
 #include <dlfcn.h>
@@ -51,7 +51,7 @@ static std::vector<void*> loaded_plugins;
 static void*
 LoadDLL(const std::string& name)
 {
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
     return LoadLibrary(name.c_str());
 #elif defined(__MACH__) || defined(__APPLE__) || defined(__GNUC__)
     return dlopen(name.c_str(), RTLD_NOW);
@@ -68,7 +68,7 @@ yasm::LoadPlugin(llvm::StringRef name)
 
     // First attempt: FOO.so
     std::string path = name;
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
     if (!name.endswith(".dll"))
         path += ".dll";
 #elif defined(__MACH__) || defined(__APPLE__)
@@ -83,7 +83,7 @@ yasm::LoadPlugin(llvm::StringRef name)
     // Second attempt: PLUGIN_INSTALL_DIR/FOO.so
     if (!lib && path.find_first_of("\\/") == std::string::npos)
     {
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
         path.insert(0, PLUGIN_INSTALL_DIR "\\");
 #elif defined(__GNUC__)
         path.insert(0, PLUGIN_INSTALL_DIR "/");
@@ -104,7 +104,7 @@ yasm::LoadPlugin(llvm::StringRef name)
     // Get yasm_init_plugin() function and run it
 
     void (*init_plugin) (void) = 0;
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
     init_plugin = reinterpret_cast<void (*)(void)>
         (GetProcAddress((HINSTANCE)lib, "yasm_init_plugin"));
 #elif defined(__MACH__) || defined(__APPLE__) || defined(__GNUC__)
@@ -125,7 +125,7 @@ yasm::UnloadPlugins(void)
     while (!loaded_plugins.empty()) {
         void* plugin = loaded_plugins.back();
         loaded_plugins.pop_back();
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
         FreeLibrary(reinterpret_cast<HINSTANCE>(plugin));
 #elif defined(__MACH__) || defined(__APPLE__) || defined(__GNUC__)
         dlclose(plugin);
