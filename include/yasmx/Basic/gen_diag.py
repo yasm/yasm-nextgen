@@ -115,7 +115,7 @@ def output_diags(f):
             diag.mapping or diag.cls,
             diag.cls,
             categories[diag.category].index,
-            diag.desc.encode("string_escape"),
+            diag.desc.replace("\\", "\\\\").replace('"', '\\"'),
             diag.group and "\"%s\"" % diag.group or "0"), file=f)
 
 def output_groups(f):
@@ -727,7 +727,7 @@ if __name__ == "__main__":
         lprint("    <DiagnosticCategories.cpp>", file=sys.stderr)
         lprint("    <DiagnosticKinds.h> <StaticDiagInfo.inc>", file=sys.stderr)
         sys.exit(2)
-    output_groups(file(sys.argv[1], "wt"))
-    output_categories(file(sys.argv[2], "wt"))
-    output_diag_kinds(file(sys.argv[3], "wt"))
-    output_diags(file(sys.argv[4], "wt"))
+    output_groups(open(sys.argv[1], "wt"))
+    output_categories(open(sys.argv[2], "wt"))
+    output_diag_kinds(open(sys.argv[3], "wt"))
+    output_diags(open(sys.argv[4], "wt"))
