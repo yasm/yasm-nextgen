@@ -193,7 +193,7 @@ macro (YASM_ADD_EXECUTABLE _target_NAME)
    if (NOT BUILD_STATIC)
        yasm_handle_rpath_for_executable(${_target_NAME} ${_type})
    endif (NOT BUILD_STATIC)
-   TARGET_LINK_LIBRARIES(${_target_NAME} yasmstdx libyasmx)
+   TARGET_LINK_LIBRARIES(${_target_NAME} yasmstdx libyasmx ${LIBPSAPI} ${LIBIMAGEHLP})
 
 endmacro (YASM_ADD_EXECUTABLE)
 
