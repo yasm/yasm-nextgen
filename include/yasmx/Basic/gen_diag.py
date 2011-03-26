@@ -720,6 +720,21 @@ add_warning("warn_outside_def",
 add_warning("warn_endef_before_def",
             ".endef pseudo-op used before .def; ignored")
 
+# Mach-O object format
+add_error("err_macho_segment_section_required",
+          ".section directive requires both segment and section names")
+add_warning("warn_macho_segment_name_length",
+            "Mach-O segment names limited to 16 characters: truncating")
+add_warning("warn_macho_section_name_length",
+            "Mach-O section names limited to 16 characters: truncating")
+add_error("err_macho_unknown_section_type", "unrecognized section type")
+add_error("err_macho_unknown_section_attr", "unrecognized section attribute")
+add_error("err_macho_align_too_big",
+          "Mach-O does not support alignments > 16384")
+add_error("err_macho_no_32_absolute_reloc_in_64",
+          'Mach-O cannot apply 32 bit absolute relocations in 64 bit mode; consider "[_symbol wrt rip]" for mem access, "qword" and "dq _foo" for pointers.')
+add_error("err_macho_desc_requires_expr", ".desc requires n_desc expression")
+
 # Win32 object format
 add_error("err_win32_align_too_big",
           "Win32 does not support alignments > 8192")
