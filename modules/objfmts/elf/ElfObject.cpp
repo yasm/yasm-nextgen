@@ -1107,19 +1107,18 @@ ElfObject::Output(llvm::raw_fd_ostream& os,
         out.OutputSection(*i, m_config.secthead_count++, shstrtab);
     }
 
-    // If we're not forcing all symbols to be in the table, go through
-    // relocations and force referenced symbols into symbol table, because
-    // relocation needs a symtab index.
-    if (!all_syms)
+    // Go through relocations and force referenced symbols into symbol table,
+    // because relocation needs a symtab index.
+    for (Object::section_iterator sect=m_object.sections_begin(),
+         endsect=m_object.sections_end(); sect != endsect; ++sect)
     {
-        for (Object::section_iterator sect=m_object.sections_begin(),
-             endsect=m_object.sections_end(); sect != endsect; ++sect)
+        for (Section::reloc_iterator reloc=sect->relocs_begin(),
+             endreloc=sect->relocs_end(); reloc != endreloc; ++reloc)
         {
-            for (Section::reloc_iterator reloc=sect->relocs_begin(),
-                 endreloc=sect->relocs_end(); reloc != endreloc; ++reloc)
+            SymbolRef sym = reloc->getSymbol();
+            if (!all_syms || !sym->getAssocData<ElfSymbol>())
             {
-                SymbolRef sym = reloc->getSymbol();
-                ElfSymbol& elfsym = BuildSymbol(*sym); // XXX
+                ElfSymbol& elfsym = BuildSymbol(*sym);
                 elfsym.setName(strtab.getIndex(sym->getName()));
                 setSymbolSectionValue(*sym, elfsym);
                 elfsym.setInTable(true);
