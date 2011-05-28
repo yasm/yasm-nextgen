@@ -26,7 +26,6 @@
 //
 #include "XdfReloc.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
 #include "yasmx/IntNum.h"
@@ -142,13 +141,27 @@ XdfReloc::Write(Bytes& bytes) const
     Write8(bytes, 0);                   // flags
 }
 
-void
-XdfReloc::DoWrite(YAML::Emitter& out) const
+pugi::xml_node
+XdfReloc::DoWrite(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "XdfReloc";
-    out << YAML::Key << "base" << YAML::Value << m_base;
-    out << YAML::Key << "size" << YAML::Value << m_size;
-    out << YAML::Key << "shift" << YAML::Value << m_shift;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("XdfReloc");
+    append_child(root, "Base", m_base);
+    pugi::xml_attribute type = root.append_attribute("type");
+    switch (m_type)
+    {
+        case XDF_REL:   type = "REL"; break;
+        case XDF_WRT:   type = "WRT"; break;
+        case XDF_RIP:   type = "RIP"; break;
+        case XDF_SEG:   type = "SEG"; break;
+    }
+    pugi::xml_attribute size = root.append_attribute("size");
+    switch (m_size)
+    {
+        case XDF_8:     size = 8; break;
+        case XDF_16:    size = 16; break;
+        case XDF_32:    size = 32; break;
+        case XDF_64:    size = 64; break;
+    }
+    append_child(root, "Shift", m_shift);
+    return root;
 }

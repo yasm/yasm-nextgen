@@ -61,7 +61,7 @@ public:
               const BinSection& bsd,
               SpecialSym which);
     ~BinSymbol();
-    void Write(YAML::Emitter& out) const;
+    pugi::xml_node Write(pugi::xml_node out) const;
     bool getValue(/*@out@*/ IntNum* val) const;
 
 private:

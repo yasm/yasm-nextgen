@@ -61,8 +61,8 @@ Dwarf2Section::~Dwarf2Section()
 {
 }
 
-void
-Dwarf2Section::Write(YAML::Emitter& out) const
+pugi::xml_node
+Dwarf2Section::Write(pugi::xml_node out) const
 {
-    // TODO
+    return out; // TODO
 }

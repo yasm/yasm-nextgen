@@ -26,8 +26,6 @@
 //
 #include "RdfSymbol.h"
 
-#include "YAML/emitter.h"
-
 
 using namespace yasm;
 using namespace yasm::objfmt;
@@ -38,11 +36,11 @@ RdfSymbol::~RdfSymbol()
 {
 }
 
-void
-RdfSymbol::Write(YAML::Emitter& out) const
+pugi::xml_node
+RdfSymbol::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << key;
-    out << YAML::Key << "segment" << YAML::Value << segment;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("RdfSymbol");
+    root.append_attribute("key") = key;
+    append_child(root, "Segment", segment);
+    return root;
 }

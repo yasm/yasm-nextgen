@@ -26,7 +26,6 @@
 //
 #include "UnwindCode.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
@@ -295,30 +294,28 @@ UnwindCode::clone() const
     return uwcode;
 }
 
-void
-UnwindCode::Write(YAML::Emitter& out) const
+pugi::xml_node
+UnwindCode::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "UnwindCode";
-    out << YAML::Key << "proc" << YAML::Value << m_proc;
-    out << YAML::Key << "loc" << YAML::Value << m_loc;
-    out << YAML::Key << "opcode" << YAML::Value;
+    pugi::xml_node root = out.append_child("UnwindCode");
+    append_child(root, "Proc", m_proc);
+    append_child(root, "Loc", m_loc);
+    pugi::xml_attribute opcode = root.append_attribute("opcode");
     switch (m_opcode)
     {
-        case PUSH_NONVOL:       out << "PUSH_NONVOL"; break;
-        case ALLOC_LARGE:       out << "ALLOC_LARGE"; break;
-        case ALLOC_SMALL:       out << "ALLOC_SMALL"; break;
-        case SET_FPREG:         out << "SET_FPREG"; break;
-        case SAVE_NONVOL:       out << "SAVE_NONVOL"; break;
-        case SAVE_NONVOL_FAR:   out << "SAVE_NONVOL_FAR"; break;
-        case SAVE_XMM128:       out << "SAVE_XMM128"; break;
-        case SAVE_XMM128_FAR:   out << "SAVE_XMM128_FAR"; break;
-        case PUSH_MACHFRAME:    out << "PUSH_MACHFRAME"; break;
-        default:                out << YAML::Null; break;
+        case PUSH_NONVOL:       opcode = "PUSH_NONVOL"; break;
+        case ALLOC_LARGE:       opcode = "ALLOC_LARGE"; break;
+        case ALLOC_SMALL:       opcode = "ALLOC_SMALL"; break;
+        case SET_FPREG:         opcode = "SET_FPREG"; break;
+        case SAVE_NONVOL:       opcode = "SAVE_NONVOL"; break;
+        case SAVE_NONVOL_FAR:   opcode = "SAVE_NONVOL_FAR"; break;
+        case SAVE_XMM128:       opcode = "SAVE_XMM128"; break;
+        case SAVE_XMM128_FAR:   opcode = "SAVE_XMM128_FAR"; break;
+        case PUSH_MACHFRAME:    opcode = "PUSH_MACHFRAME"; break;
     }
-    out << YAML::Key << "info" << YAML::Value << m_info;
-    out << YAML::Key << "off" << YAML::Value << m_off;
-    out << YAML::EndMap;
+    append_child(root, "Info", m_info);
+    append_child(root, "Off", m_off);
+    return root;
 }
 
 void

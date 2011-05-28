@@ -26,7 +26,6 @@
 //
 #include "yasmx/Section.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Reloc.h"
@@ -73,33 +72,29 @@ Section::AddReloc(std::auto_ptr<Reloc> reloc)
     m_relocs.push_back(reloc.release());
 }
 
-void
-Section::Write(YAML::Emitter& out) const
+pugi::xml_node
+Section::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "name" << YAML::Value << m_name;
-    out << YAML::Key << "sym" << YAML::Value << m_sym;
-    out << YAML::Key << "vma" << YAML::Value << m_vma;
-    out << YAML::Key << "lma" << YAML::Value << m_lma;
-    out << YAML::Key << "filepos" << YAML::Value << m_filepos;
-    out << YAML::Key << "align" << YAML::Value << m_align;
-    out << YAML::Key << "code" << YAML::Value << m_code;
-    out << YAML::Key << "bss" << YAML::Value << m_bss;
-    out << YAML::Key << "default" << YAML::Value << m_def;
+    pugi::xml_node root = out.append_child("Section");
+    root.append_attribute("id") = m_name.c_str();
+    append_child(root, "Name", m_name);
+    append_child(root, "Sym", m_sym);
+    append_child(root, "VMA", m_vma);
+    append_child(root, "LMA", m_lma);
+    append_child(root, "FilePos", m_filepos);
+    append_child(root, "Align", m_align);
+    if (m_code)
+        root.append_attribute("code") = true;
+    if (m_bss)
+        root.append_attribute("bss") = true;
+    if (m_def)
+        root.append_attribute("default") = true;
 
-    out << YAML::Key << "assoc data" << YAML::Value;
-    AssocDataContainer::Write(out);
+    AssocDataContainer::Write(root);
+    BytecodeContainer::Write(root);
 
-    out << YAML::Key << "bytecodes" << YAML::Value;
-    BytecodeContainer::Write(out);
-
-    out << YAML::Key << "relocs" << YAML::Value;
-    if (m_relocs.empty())
-        out << YAML::Flow;
-    out << YAML::BeginSeq;
     for (Relocs::const_iterator i=m_relocs.begin(), end=m_relocs.end();
          i != end; ++i)
-        out << *i;
-    out << YAML::EndSeq;
-    out << YAML::EndMap;
+        append_data(root, *i);
+    return root;
 }

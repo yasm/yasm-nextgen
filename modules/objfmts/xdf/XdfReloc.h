@@ -78,7 +78,7 @@ public:
     void Write(Bytes& bytes) const;
 
 protected:
-    void DoWrite(YAML::Emitter& out) const;
+    pugi::xml_node DoWrite(pugi::xml_node out) const;
 
 private:
     SymbolRef m_base;       //< base symbol (for WRT)

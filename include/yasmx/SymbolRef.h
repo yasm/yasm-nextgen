@@ -33,7 +33,8 @@
 
 #include "yasmx/Config/export.h"
 
-namespace YAML { class Emitter; }
+
+namespace pugi { class xml_node; }
 
 namespace yasm
 {
@@ -42,7 +43,7 @@ class Symbol;
 
 /// Reference to a symbol.  References are not counted, so the reference
 /// becomes invalid when the referred-to Symbol is destroyed.
-class SymbolRef
+class YASM_LIB_EXPORT SymbolRef
 {
 public:
     SymbolRef() : m_sym(0) {}
@@ -58,17 +59,11 @@ public:
         assert(m_sym && "deref of null symbol reference");
         return m_sym;
     }
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 private:
     Symbol* m_sym;
 };
-
-/// Dump a YAML representation of a symbol reference.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param sym          symbol reference
-/// @return Emitter.
-YASM_LIB_EXPORT
-YAML::Emitter& operator<< (YAML::Emitter& out, const SymbolRef& sym);
 
 } // namespace yasm
 

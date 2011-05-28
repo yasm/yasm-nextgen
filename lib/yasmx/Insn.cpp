@@ -28,7 +28,6 @@
 
 #include <algorithm>
 
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Arch.h"
@@ -209,50 +208,46 @@ Operand::setSeg(std::auto_ptr<Expr> seg)
     m_seg = seg.release();
 }
 
-void
-Operand::Write(YAML::Emitter& out) const
+pugi::xml_node
+Operand::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value;
+    pugi::xml_node root = out.append_child("Operand");
+    pugi::xml_attribute type = root.append_attribute("type");
     switch (m_type)
     {
         case NONE:
-            out << "None";
+            type = "none";
             break;
         case REG:
-            out << "Reg";
-            out << YAML::Key << "reg" << YAML::Value << *m_reg;
+            type = "reg";
+            append_data(root, *m_reg);
             break;
         case SEGREG:
-            out << "SegReg";
-            out << YAML::Key << "segreg" << YAML::Value << *m_segreg;
+            type = "segreg";
+            append_data(root, *m_segreg);
             break;
         case MEMORY:
-            out << "Memory";
-            out << YAML::Key << "ea" << YAML::Value << *m_ea;
+            type = "memory";
+            append_data(root, *m_ea);
             break;
         case IMM:
-            out << "Imm";
-            out << YAML::Key << "immval" << YAML::Value << *m_val;
+            type = "imm";
+            append_data(root, *m_val);
             break;
     }
 
-    out << YAML::Key << "seg" << YAML::Value;
     if (m_seg)
-        out << *m_seg;
-    else
-        out << YAML::Null;
+        append_child(root, "Seg", *m_seg);
 
-    out << YAML::Key << "targetmod" << YAML::Value;
     if (m_targetmod)
-        out << *m_targetmod;
-    else
-        out << YAML::Null;
+        append_child(root, "TargetMod", *m_targetmod);
 
-    out << YAML::Key << "size" << YAML::Value << m_size;
-    out << YAML::Key << "deref" << YAML::Value << static_cast<bool>(m_deref);
-    out << YAML::Key << "strict" << YAML::Value << static_cast<bool>(m_strict);
-    out << YAML::EndMap;
+    append_child(root, "Size", m_size);
+    if (m_deref)
+        root.append_attribute("deref") = true;
+    if (m_strict)
+        root.append_attribute("strict") = true;
+    return root;
 }
 
 Prefix::~Prefix()
@@ -299,37 +294,28 @@ Insn::Append(BytecodeContainer& container,
     return DoAppend(container, source, diags);
 }
 
-void
-Insn::Write(YAML::Emitter& out) const
+pugi::xml_node
+Insn::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
+    pugi::xml_node root = out.append_child("Insn");
 
     // operands
-    out << YAML::Key << "operands" << YAML::Value;
-    if (m_operands.empty())
-        out << YAML::Flow;
-    out << YAML::BeginSeq;
-    std::for_each(m_operands.begin(), m_operands.end(),
-                  TR1::bind(&Operand::Write, _1, TR1::ref(out)));
-    out << YAML::EndSeq;
+    for (Operands::const_iterator i=m_operands.begin(), end=m_operands.end();
+         i != end; ++i)
+        append_data(root, *i);
 
     // prefixes
-    out << YAML::Key << "prefixes" << YAML::Value;
-    if (m_prefixes.empty())
-        out << YAML::Flow;
-    out << YAML::BeginSeq;
     for (Prefixes::const_iterator i=m_prefixes.begin(), end=m_prefixes.end();
          i != end; ++i)
-        i->first->Write(out);
-    out << YAML::EndSeq;
+        append_data(root, *i->first);
 
     // segreg
-    out << YAML::Key << "segreg" << YAML::Value;
-    m_segreg->Write(out);
-    out << YAML::Key << "segreg source" << YAML::Value
-        << m_segreg_source.getRawEncoding();
+    if (m_segreg)
+    {
+        append_data(root, *m_segreg).append_attribute("source") =
+            m_segreg_source.getRawEncoding();
+    }
 
-    out << YAML::Key << "implementation" << YAML::Value;
-    DoWrite(out);
-    out << YAML::EndMap;
+    DoWrite(root);
+    return root;
 }

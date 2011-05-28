@@ -29,10 +29,9 @@
 #include <vector>
 
 #include "yasmx/Config/export.h"
+#include "yasmx/DebugDumper.h"
 #include "yasmx/Insn.h"
 
-
-namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -41,7 +40,7 @@ namespace arch
 
 class X86SegmentRegister;
 
-class YASM_STD_EXPORT X86Common
+class YASM_STD_EXPORT X86Common : public DebugDumper<X86Common>
 {
 public:
     X86Common();
@@ -55,14 +54,14 @@ public:
     unsigned long getLen() const;
     void ToBytes(Bytes& bytes, const X86SegmentRegister* segreg) const;
 
+    pugi::xml_node Write(pugi::xml_node out) const;
+
     unsigned char m_addrsize;       // 0 or =mode_bits => no override
     unsigned char m_opersize;       // 0 or =mode_bits => no override
     unsigned char m_lockrep_pre;    // 0 indicates no prefix
 
     unsigned char m_mode_bits;
 };
-
-YAML::Emitter& operator<< (YAML::Emitter& out, const X86Common& common);
 
 }} // namespace yasm::arch
 

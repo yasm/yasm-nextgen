@@ -26,7 +26,6 @@
 //
 #include "yasmx/EffAddr.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Expr.h"
 
@@ -61,23 +60,25 @@ EffAddr::~EffAddr()
 {
 }
 
-void
-EffAddr::Write(YAML::Emitter& out) const
+pugi::xml_node
+EffAddr::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "disp" << YAML::Value << m_disp;
-    out << YAML::Key << "segreg" << YAML::Value;
+    pugi::xml_node root = out.append_child("EffAddr");
+    append_child(root, "Disp", m_disp);
     if (m_segreg != 0)
-        out << *m_segreg;
-    else
-        out << YAML::Null;
-    out << YAML::Key << "need nonzero len" << YAML::Value << m_need_nonzero_len;
-    out << YAML::Key << "need disp" << YAML::Value << m_need_disp;
-    out << YAML::Key << "no split" << YAML::Value << m_nosplit;
-    out << YAML::Key << "strong" << YAML::Value << m_strong;
-    out << YAML::Key << "PC relative" << YAML::Value << m_pc_rel;
-    out << YAML::Key << "not PC relative" << YAML::Value << m_not_pc_rel;
-    out << YAML::Key << "implementation" << YAML::Value;
-    DoWrite(out);
-    out << YAML::EndMap;
+        append_child(root, "SegReg", *m_segreg);
+    if (m_need_nonzero_len)
+        root.append_attribute("need_nonzero_len") = true;
+    if (m_need_disp)
+        root.append_attribute("need_disp") = true;
+    if (m_nosplit)
+        root.append_attribute("nosplit") = true;
+    if (m_strong)
+        root.append_attribute("strong") = true;
+    if (m_pc_rel)
+        root.append_attribute("pc_rel") = true;
+    if (m_not_pc_rel)
+        root.append_attribute("not_pc_rel") = true;
+    DoWrite(root);
+    return root;
 }

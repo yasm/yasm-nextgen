@@ -27,9 +27,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 #include "yasmx/Config/export.h"
+#include "yasmx/DebugDumper.h"
 
-
-namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -39,12 +38,8 @@ class Bytes;
 namespace arch
 {
 
-class YASM_STD_EXPORT X86Opcode
+class YASM_STD_EXPORT X86Opcode : public DebugDumper<X86Opcode>
 {
-    friend YASM_STD_EXPORT
-        YAML::Emitter& operator<< (YAML::Emitter& out,
-                                   const X86Opcode& opcode);
-
 public:
     X86Opcode() : m_len(0) {}
 
@@ -83,13 +78,12 @@ public:
 
     unsigned char get(int byte) { return m_opcode[byte]; }
 
+    pugi::xml_node Write(pugi::xml_node out) const;
+
 private:
     unsigned char m_opcode[3];      // opcode
     unsigned char m_len;
 };
-
-YASM_STD_EXPORT
-YAML::Emitter& operator<< (YAML::Emitter& os, const X86Opcode& opcode);
 
 }} // namespace yasm::arch
 

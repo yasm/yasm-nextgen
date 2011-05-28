@@ -26,7 +26,6 @@
 //
 #include "SxData.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
@@ -61,8 +60,8 @@ public:
 
     SxData* clone() const;
 
-    /// Write a YAML representation.  For debugging purposes.
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 private:
     SymbolRef m_sym;            ///< symbol
@@ -119,13 +118,12 @@ SxData::clone() const
     return new SxData(m_sym);
 }
 
-void
-SxData::Write(YAML::Emitter& out) const
+pugi::xml_node
+SxData::Write(pugi::xml_node out) const
 {
-    out << YAML::Flow << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "SxData";
-    out << YAML::Key << "sym" << YAML::Value << m_sym;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("SxData");
+    append_child(root, "Sym", m_sym);
+    return root;
 }
 
 void

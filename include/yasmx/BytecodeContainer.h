@@ -125,9 +125,10 @@ public:
     /// @note Errors/warnings are stored into errwarns.
     void UpdateOffsets(Diagnostic& diags);
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 private:
     // not implemented (noncopyable class)
@@ -142,17 +143,6 @@ private:
 
     bool m_last_gap;        ///< Last bytecode is a gap bytecode
 };
-
-/// Dump a YAML representation of bytecode container.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param container    container
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const BytecodeContainer& container)
-{
-    container.Write(out);
-    return out;
-}
 
 /// The factory functions append to the end of a section.
 /// The functions will throw an error if unable to append.

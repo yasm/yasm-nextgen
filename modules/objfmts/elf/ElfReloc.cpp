@@ -26,7 +26,6 @@
 //
 #include "ElfReloc.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Bytes_util.h"
 #include "yasmx/InputBuffer.h"
 
@@ -175,11 +174,10 @@ ElfReloc::Write(Bytes& bytes, const ElfConfig& config)
     }
 }
 
-void
-ElfReloc::DoWrite(YAML::Emitter& out) const
+pugi::xml_node
+ElfReloc::DoWrite(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "ElfReloc";
-    out << YAML::Key << "addend" << YAML::Value << m_addend;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("ElfReloc");
+    append_child(root, "Addend", m_addend);
+    return root;
 }

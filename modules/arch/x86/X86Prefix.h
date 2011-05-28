@@ -50,7 +50,7 @@ public:
     X86Prefix(Type type, unsigned char value);
     ~X86Prefix();
     void Put(llvm::raw_ostream& os) const;
-    void Write(YAML::Emitter& out) const;
+    pugi::xml_node Write(pugi::xml_node out) const;
 
     Type getType() const { return m_type; }
     unsigned char getValue() const { return m_value; }

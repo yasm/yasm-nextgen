@@ -31,7 +31,6 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
@@ -897,59 +896,50 @@ Value::OutputBasic(NumericOutput& num_out, IntNum* outval, Diagnostic& diags)
     }
 }
 
-void
-Value::Write(YAML::Emitter& out) const
+pugi::xml_node
+Value::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
+    pugi::xml_node root = out.append_child("Value");
 
     // abs
-    out << YAML::Key << "abs" << YAML::Value;
     if (m_abs.get() != 0)
-        out << *m_abs;
-    else
-        out << YAML::Null;
+        append_data(root, *m_abs);
 
     // rel
-    out << YAML::Key << "rel" << YAML::Value;
     if (m_rel)
-        out << m_rel->getName();
-    else
-        out << YAML::Null;
+        append_child(root, "Rel", m_rel);
 
     // wrt
-    out << YAML::Key << "wrt" << YAML::Value;
     if (m_wrt)
-        out << m_wrt->getName();
-    else
-        out << YAML::Null;
+        append_child(root, "WRT", m_wrt);
 
     // sub
-    out << YAML::Key << "sub" << YAML::Value;
     if (m_sub_sym)
-        out << m_sub.sym->getName();
+        append_child(root, "Sub", m_sub.sym->getName());
     else if (m_sub_loc)
-        out << m_sub.loc;
-    else
-        out << YAML::Null;
+        append_child(root, "Sub", m_sub.loc);
 
-    out << YAML::Key << "source" << YAML::Value << YAML::Flow << YAML::BeginSeq
-        << m_source.getBegin().getRawEncoding()
-        << m_source.getEnd().getRawEncoding()
-        << YAML::EndSeq;
-    out << YAML::Key << "insn start" << YAML::Value << m_insn_start;
-    out << YAML::Key << "next insn" << YAML::Value << m_next_insn;
-    out << YAML::Key << "seg of" << YAML::Value << static_cast<bool>(m_seg_of);
-    out << YAML::Key << "right shift" << YAML::Value << m_rshift;
-    out << YAML::Key << "shift" << YAML::Value << m_shift;
-    out << YAML::Key << "IP relative";
-    out << YAML::Value << static_cast<bool>(m_ip_rel);
-    out << YAML::Key << "jump target";
-    out << YAML::Value << static_cast<bool>(m_jump_target);
-    out << YAML::Key << "section relative";
-    out << YAML::Value << static_cast<bool>(m_section_rel);
-    out << YAML::Key << "warnings disabled";
-    out << YAML::Value << static_cast<bool>(m_no_warn);
-    out << YAML::Key << "sign" << YAML::Value << static_cast<bool>(m_sign);
-    out << YAML::Key << "size" << YAML::Value << m_size;
-    out << YAML::EndMap;
+    root.append_attribute("source.begin") = m_source.getBegin().getRawEncoding();
+    root.append_attribute("source.end") = m_source.getEnd().getRawEncoding();
+    append_child(root, "InsnStart", m_insn_start);
+    if (m_seg_of)
+        root.append_attribute("seg_of") = true;
+    if (m_rshift > 0)
+        append_child(root, "RShift", m_rshift);
+    if (m_shift > 0)
+        append_child(root, "Shift", m_shift);
+    if (m_ip_rel)
+    {
+        root.append_attribute("ip_rel") = true;
+        append_child(root, "NextInsn", m_next_insn);
+    }
+    if (m_jump_target)
+        root.append_attribute("jump_target") = true;
+    if (m_section_rel)
+        root.append_attribute("section_rel") = true;
+    if (m_no_warn)
+        root.append_attribute("no_warn") = true;
+    append_child(root, "Sign", static_cast<bool>(m_sign));
+    append_child(root, "Size", m_size);
+    return root;
 }

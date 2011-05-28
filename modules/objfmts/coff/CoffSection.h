@@ -32,8 +32,6 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace YAML { class Emitter; }
-
 namespace yasm
 {
 
@@ -48,7 +46,7 @@ struct YASM_STD_EXPORT CoffSection : public AssocData
 
     CoffSection(SymbolRef sym);
     ~CoffSection();
-    void Write(YAML::Emitter& out) const;
+    pugi::xml_node Write(pugi::xml_node out) const;
     void Write(Bytes& bytes, const Section& sect) const;
 
     static const unsigned long TEXT;

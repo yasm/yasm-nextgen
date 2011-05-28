@@ -50,7 +50,7 @@ struct YASM_STD_EXPORT BinSection : public AssocData
 
     BinSection();
     ~BinSection();
-    void Write(YAML::Emitter& out) const;
+    pugi::xml_node Write(pugi::xml_node out) const;
 
     // User-provided alignment
     bool has_align, has_valign;

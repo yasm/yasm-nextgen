@@ -28,8 +28,8 @@
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Bytecode.h"
+#include "yasmx/DebugDumper.h"
 #include "yasmx/IntNum.h"
 
 
@@ -41,22 +41,23 @@ Location::getOffset() const
     return bc->getOffset() + off;
 }
 
-void
-Location::Write(YAML::Emitter& out) const
+pugi::xml_node
+Location::Write(pugi::xml_node out) const
 {
-    out << YAML::Flow << YAML::BeginMap;
-    out << YAML::Key << "bc" << YAML::Value
-        << YAML::Alias("BC@" + llvm::Twine::utohexstr((uint64_t)bc));
-    out << YAML::Key << "off" << YAML::Value << off;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("Location");
+    root.append_attribute("bc") =
+        llvm::Twine::utohexstr((uint64_t)bc).str().c_str();
+    root.append_attribute("off") = off;
+    return root;
 }
 
 void
 Location::Dump() const
 {
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
+    pugi::xml_document doc;
+    Write(doc);
+    xml_writer_raw_ostream writer(llvm::errs());
+    doc.print(writer);
 }
 
 bool

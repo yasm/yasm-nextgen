@@ -30,7 +30,6 @@
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"
@@ -54,35 +53,23 @@ BinGroup::~BinGroup()
 {
 }
 
-void
-BinGroup::Write(YAML::Emitter& out) const
+pugi::xml_node
+BinGroup::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "section";
-    out << YAML::Value << YAML::Alias("SECT@" + m_section.getName());
-    out << YAML::Key << "following groups" << YAML::Value << m_follow_groups;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("BinGroup");
+    root.append_attribute("section") = m_section.getName().str().c_str();
+    append_child(root, "FollowGroups", m_follow_groups);
+    return root;
 }
 
-void
-BinGroup::Dump() const
+pugi::xml_node
+yasm::objfmt::append_data(pugi::xml_node out, const BinGroups& groups)
 {
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
-}
-
-YAML::Emitter&
-objfmt::operator<< (YAML::Emitter& out, const BinGroups& groups)
-{
-    if (groups.empty())
-        out << YAML::Flow;
-    out << YAML::BeginSeq;
+    pugi::xml_node root = out.append_child("BinGroups");
     for (BinGroups::const_iterator group = groups.begin(), end = groups.end();
          group != end; ++group)
-        out << *group;
-    out << YAML::EndSeq;
-    return out;
+        append_data(root, *group);
+    return root;
 }
 
 // Recursive function to find group containing named section.
@@ -131,21 +118,13 @@ BinLink::~BinLink()
 {
 }
 
-void
-BinLink::Write(YAML::Emitter& out) const
+pugi::xml_node
+BinLink::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "lma groups" << YAML::Value << m_lma_groups;
-    out << YAML::Key << "vma groups" << YAML::Value << m_vma_groups;
-    out << YAML::EndMap;
-}
-
-void
-BinLink::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
+    pugi::xml_node root = out.append_child("BinLink");
+    append_data(root, m_lma_groups).append_attribute("type") = "lma";
+    append_data(root, m_vma_groups).append_attribute("type") = "vma";
+    return root;
 }
 
 bool

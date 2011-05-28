@@ -26,7 +26,6 @@
 ///
 #include "yasmx/BytecodeContainer.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
@@ -74,8 +73,8 @@ public:
 
     OrgBytecode* clone() const;
 
-    /// Write a YAML representation.  For debugging purposes.
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 private:
     Expr m_start;       ///< target starting offset within section
@@ -215,14 +214,13 @@ OrgBytecode::clone() const
     return new OrgBytecode(m_start, m_fill);
 }
 
-void
-OrgBytecode::Write(YAML::Emitter& out) const
+pugi::xml_node
+OrgBytecode::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "Org";
-    out << YAML::Key << "start" << YAML::Value << m_start;
-    out << YAML::Key << "fill" << YAML::Value << m_fill;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("Org");
+    append_child(root, "Start", m_start);
+    append_child(root, "Fill", m_fill);
+    return root;
 }
 
 void

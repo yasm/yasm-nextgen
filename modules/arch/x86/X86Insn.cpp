@@ -34,11 +34,12 @@
 #include <string>
 
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/phash.h"
+#include "yasmx/Bytes.h"
 #include "yasmx/EffAddr.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
@@ -346,23 +347,21 @@ X86Prefix::Put(llvm::raw_ostream& os) const
     os << "PREFIX";
 }
 
-void
-X86Prefix::Write(YAML::Emitter& out) const
+pugi::xml_node
+X86Prefix::Write(pugi::xml_node out) const
 {
-    out << YAML::Flow << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value;
+    pugi::xml_node root = out.append_child("X86Prefix");
+    pugi::xml_attribute type = root.append_attribute("type");
     switch (m_type)
     {
-        case LOCKREP:   out << "LOCKREP"; break;
-        case ADDRSIZE:  out << "ADDRSIZE"; break;
-        case OPERSIZE:  out << "OPERSIZE"; break;
-        case SEGREG:    out << "SEGREG"; break;
-        case REX:       out << "REX"; break;
-        default:        out << YAML::Null; break;
+        case LOCKREP:   type = "LOCKREP"; break;
+        case ADDRSIZE:  type = "ADDRSIZE"; break;
+        case OPERSIZE:  type = "OPERSIZE"; break;
+        case SEGREG:    type = "SEGREG"; break;
+        case REX:       type = "REX"; break;
     }
-    out << YAML::Key << "value";
-    out << YAML::Value << YAML::Hex << static_cast<unsigned int>(m_value);
-    out << YAML::EndMap;
+    append_data(root, llvm::Twine::utohexstr(m_value).str());
+    return root;
 }
 
 #include "X86Insns.cpp"
@@ -1976,38 +1975,31 @@ X86Insn::clone() const
     return new X86Insn(*this);
 }
 
-void
-X86Insn::DoWrite(YAML::Emitter& out) const
+pugi::xml_node
+X86Insn::DoWrite(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "X86Insn";
+    pugi::xml_node root = out.append_child("X86Insn");
 
-    out << YAML::Key << "active cpu" << YAML::Value;
-    out << m_active_cpu.to_string<char, std::char_traits<char>,
-                                  std::allocator<char> >();
+    append_child(root, "ActiveCpu",
+                 m_active_cpu.to_string<char, std::char_traits<char>,
+                                        std::allocator<char> >());
 
-    out << YAML::Key << "mod data";
-    out << YAML::Value << YAML::Flow << YAML::BeginSeq;
-    out << YAML::Hex << m_mod_data[0];
-    out << YAML::Hex << m_mod_data[1];
-    out << YAML::Hex << m_mod_data[2];
-    out << YAML::EndSeq;
+    append_child(root, "ModData", Bytes(m_mod_data, m_mod_data+2));
+    
+    append_child(root, "NumInfo", m_num_info);
+    append_child(root, "ModeBits", m_mode_bits);
 
-    out << YAML::Key << "num info" << YAML::Value << m_num_info;
-    out << YAML::Key << "bits" << YAML::Value << m_mode_bits;
+    append_child(root, "SuffixFlags", llvm::Twine::utohexstr(m_suffix).str());
+    append_child(root, "MiscFlags",
+                 llvm::Twine::utohexstr(m_misc_flags).str());
+    append_child(root, "Parser", m_parser);
 
-    out << YAML::Key << "suffix flags";
-    out << YAML::Value << YAML::Hex << m_suffix;
-    out << YAML::Key << "misc flags";
-    out << YAML::Value << YAML::Hex << m_misc_flags;
-    out << YAML::Key << "parser" << YAML::Value << m_parser;
+    if (m_force_strict)
+        root.append_attribute("force_strict") = true;
+    if (m_default_rel)
+        root.append_attribute("default_rel") = true;
 
-    out << YAML::Key << "force strict";
-    out << YAML::Value << static_cast<bool>(m_mode_bits);
-    out << YAML::Key << "default rel";
-    out << YAML::Value << static_cast<bool>(m_default_rel);
-
-    out << YAML::EndMap;
+    return root;
 }
 
 std::auto_ptr<Insn>

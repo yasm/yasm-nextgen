@@ -34,8 +34,6 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace YAML { class Emitter; }
-
 namespace yasm {
 class Section;
 
@@ -80,7 +78,7 @@ public:
 
     Dwarf2Section();
     ~Dwarf2Section();
-    void Write(YAML::Emitter& out) const;
+    pugi::xml_node Write(pugi::xml_node out) const;
 
     /// The locations set by the .loc directives in this section, in assembly
     /// source order.

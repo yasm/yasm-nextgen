@@ -60,7 +60,7 @@ protected:
         unsigned int getSize() const { return 0; }
         unsigned int getNum() const { return m_name[0]-'a'; }
         void Put(llvm::raw_ostream& os) const { os << m_name; }
-        void Write(YAML::Emitter& out) const {}
+        pugi::xml_node Write(pugi::xml_node out) const { return out; }
 
     private:
         const char* m_name;

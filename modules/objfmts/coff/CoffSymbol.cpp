@@ -26,7 +26,6 @@
 //
 #include "CoffSymbol.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes_util.h"
@@ -60,34 +59,28 @@ CoffSymbol::~CoffSymbol()
 {
 }
 
-void
-CoffSymbol::Write(YAML::Emitter& out) const
+pugi::xml_node
+CoffSymbol::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << key;
-    out << YAML::Key << "force vis" << YAML::Value << m_forcevis;
-    out << YAML::Key << "symtab index" << YAML::Value << m_index;
-    out << YAML::Key << "sclass" << YAML::Value << static_cast<int>(m_sclass);
-    out << YAML::Key << "symbol type" << YAML::Value << m_type;
+    pugi::xml_node root = out.append_child("CoffSymbol");
+    root.append_attribute("key") = key;
+    append_child(root, "ForceVis", m_forcevis);
+    append_child(root, "SymIndex", m_index);
+    append_child(root, "SClass", static_cast<int>(m_sclass));
+    append_child(root, "SymbolType", m_type);
 
-    out << YAML::Key << "aux type" << YAML::Value;
     switch (m_auxtype)
     {
-        case AUX_SECT:  out << "SECT"; break;
-        case AUX_FILE:  out << "FILE"; break;
-        case AUX_NONE:
-        default:        out << YAML::Null; break;
+        case AUX_SECT:  append_child(root, "AuxType", "SECT"); break;
+        case AUX_FILE:  append_child(root, "AuxType", "FILE"); break;
+        case AUX_NONE:  break;
     }
 
-    out << YAML::Key << "aux" << YAML::Value;
-    if (m_aux.empty())
-        out << YAML::Flow;
-    out << YAML::BeginSeq;
+    pugi::xml_node aux = root.append_child("Aux");
     for (std::vector<AuxEntry>::const_iterator i=m_aux.begin(), end=m_aux.end();
          i != end; ++i)
-        out << i->fname;
-    out << YAML::EndSeq;
-    out << YAML::EndMap;
+        append_child(aux, "FName", i->fname);
+    return root;
 }
 
 void

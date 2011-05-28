@@ -34,8 +34,6 @@
 #include "yasmx/Symbol.h"
 
 
-namespace YAML { class Emitter; }
-
 namespace yasm
 {
 
@@ -97,7 +95,7 @@ struct YASM_STD_EXPORT CoffSymbol : public AssocData
 
     CoffSymbol(StorageClass sclass, AuxType auxtype = AUX_NONE);
     ~CoffSymbol();
-    void Write(YAML::Emitter& out) const;
+    pugi::xml_node Write(pugi::xml_node out) const;
     void Write(Bytes& bytes,
                const Symbol& sym,
                Diagnostic& diags,

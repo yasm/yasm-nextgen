@@ -29,7 +29,7 @@
 #include "X86General.h"
 
 #include "llvm/ADT/Statistic.h"
-#include "YAML/emitter.h"
+#include "llvm/ADT/Twine.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
@@ -89,7 +89,7 @@ public:
 
     X86General* clone() const;
 
-    void Write(YAML::Emitter& out) const;
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 private:
     X86General(const X86General& rhs);
@@ -583,44 +583,37 @@ X86General::clone() const
     return new X86General(*this);
 }
 
-void
-X86General::Write(YAML::Emitter& out) const
+pugi::xml_node
+X86General::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "X86General";
-    out << YAML::Key << "common" << YAML::Value << m_common;
-    out << YAML::Key << "opcode" << YAML::Value << m_opcode;
+    pugi::xml_node root = out.append_child("X86General");
+    append_data(root, m_common);
+    append_data(root, m_opcode);
 
     // effective address
-    out << YAML::Key << "effective address" << YAML::Value;
     if (m_ea)
-        m_ea->Write(out);
-    else
-        out << YAML::Null;
+        append_data(root, *m_ea);
 
-    out << YAML::Key << "immediate:" << YAML::Value;
     if (m_imm)
-        m_imm->Write(out);
-    else
-        out << YAML::Null;
+        append_child(root, "Imm", *m_imm);
 
-    out << YAML::Key << "special prefix" << YAML::Value;
-    out << YAML::Hex << static_cast<unsigned int>(m_special_prefix);
-    out << YAML::Key << "rex";
-    out << YAML::Value << YAML::Oct << static_cast<unsigned int>(m_rex);
-    out << YAML::Key << "default rel";
-    out << YAML::Value << static_cast<bool>(m_default_rel);
-    out << YAML::Key << "postop" << YAML::Value;
+    append_child(root, "SpecialPrefix",
+                 llvm::Twine::utohexstr(m_special_prefix).str());
+    append_child(root, "REX", llvm::Twine::utohexstr(m_rex).str());
+    if (m_default_rel)
+        root.append_attribute("default_rel") = true;
+    const char* postop = NULL;
     switch (m_postop)
     {
-        case X86_POSTOP_SIGNEXT_IMM8:   out << "SIGNEXT_IMM8"; break;
-        case X86_POSTOP_SHORT_MOV:      out << "SHORT_MOV"; break;
-        case X86_POSTOP_ADDRESS16:      out << "ADDRESS16"; break;
-        case X86_POSTOP_SIMM32_AVAIL:   out << "SIMM32_AVAIL"; break;
-        case X86_POSTOP_NONE:
-        default:                        out << YAML::Null; break;
+        case X86_POSTOP_SIGNEXT_IMM8:   postop = "SIGNEXT_IMM8"; break;
+        case X86_POSTOP_SHORT_MOV:      postop = "SHORT_MOV"; break;
+        case X86_POSTOP_ADDRESS16:      postop = "ADDRESS16"; break;
+        case X86_POSTOP_SIMM32_AVAIL:   postop = "SIMM32_AVAIL"; break;
+        case X86_POSTOP_NONE:           break;
     }
-    out << YAML::EndMap;
+    if (postop)
+        append_child(root, "PostOp", postop);
+    return root;
 }
 
 void

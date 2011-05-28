@@ -176,10 +176,11 @@ public:
 
         virtual Contents* clone() const = 0;
 
-        /// Write a YAML representation.  For debugging purposes.
-        /// Called by Bytecode::Write(YAML::Emitter&).
-        /// @param out          YAML emitter
-        virtual void Write(YAML::Emitter& out) const = 0;
+        /// Write an XML representation.  For debugging purposes.
+        /// Called by Bytecode::Write(pugi::xml_node).
+        /// @param out          XML node
+        /// @return Root node.
+        virtual pugi::xml_node Write(pugi::xml_node out) const = 0;
 
     protected:
         /// Copy constructor so that derived classes can sanely have one.
@@ -349,9 +350,10 @@ public:
         void swap(Fixup& oth);
         unsigned int getOffset() const { return m_off; }
 
-        /// Write a YAML representation.  For debugging purposes.
-        /// @param out          YAML emitter
-        void Write(YAML::Emitter& out) const;
+        /// Write an XML representation.  For debugging purposes.
+        /// @param out          XML node
+        /// @return Root node.
+        pugi::xml_node Write(pugi::xml_node out) const;
 
     private:
         unsigned int m_off;
@@ -359,9 +361,10 @@ public:
 
     void AppendFixup(const Fixup& fixup) { m_fixed_fixups.push_back(fixup); }
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 private:
     /// Fixed data that comes before the possibly dynamic length data generated
@@ -405,27 +408,6 @@ Bytecode::getSpecial() const
     if (m_contents.get() == 0)
         return Contents::SPECIAL_NONE;
     return m_contents->getSpecial();
-}
-
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Bytecode::Contents& contents)
-{
-    contents.Write(out);
-    return out;
-}
-
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Bytecode::Fixup& fixup)
-{
-    fixup.Write(out);
-    return out;
-}
-
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Bytecode& bc)
-{
-    bc.Write(out);
-    return out;
 }
 
 /// Specialized swap for algorithms.

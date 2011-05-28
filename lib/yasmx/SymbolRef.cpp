@@ -30,17 +30,16 @@
 #include "yasmx/SymbolRef.h"
 
 #include "llvm/ADT/Twine.h"
-#include "YAML/emitter.h"
+#include "yasmx/DebugDumper.h"
 #include "yasmx/Symbol.h"
 
 using namespace yasm;
 
-YAML::Emitter&
-yasm::operator<< (YAML::Emitter& out, const SymbolRef& sym)
+pugi::xml_node
+SymbolRef::Write(pugi::xml_node out) const
 {
-    if (!sym)
-        out << YAML::Null;
+    if (!m_sym)
+        return out;
     else
-        out << YAML::Alias("SYM@" + sym->getName());
-    return out;
+        return append_data(out, m_sym->getName());
 }

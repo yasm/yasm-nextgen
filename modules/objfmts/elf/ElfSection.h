@@ -69,7 +69,7 @@ public:
 
     ~ElfSection();
 
-    void Write(YAML::Emitter& out) const;
+    pugi::xml_node Write(pugi::xml_node out) const;
 
     unsigned long Write(llvm::raw_ostream& os, Bytes& scratch) const;
 

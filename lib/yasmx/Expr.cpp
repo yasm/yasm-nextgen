@@ -30,7 +30,7 @@
 #include <iterator>
 
 #include "llvm/ADT/APFloat.h"
-#include "YAML/emitter.h"
+#include "llvm/ADT/SmallString.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Arch.h"
@@ -225,69 +225,75 @@ ExprTerm::PromoteToFloat(const llvm::fltSemantics& semantics)
     m_data.flt = upconvf.release();
 }
 
-void
-ExprTerm::Write(YAML::Emitter& out) const
+pugi::xml_node
+ExprTerm::Write(pugi::xml_node out) const
 {
-    if (m_type == NONE)
-    {
-        out << YAML::Null;
-        return;
-    }
+    pugi::xml_node root = out.append_child("Term");
 
-    out << YAML::Flow << YAML::BeginMap << YAML::Key;
+    if (m_type == NONE)
+        return root;
+
+    pugi::xml_attribute type = root.append_attribute("type");
     switch (m_type)
     {
-        case REG:   out << "reg" << YAML::Value << *m_data.reg; break;
-        case INT:   out << "int" << YAML::Value << *getIntNum(); break;
-        case SUBST: out << "subst" << YAML::Value << m_data.subst; break;
-        case FLOAT: out << "float" << YAML::Value << YAML::Null; break;
-        case SYM:   out << "sym" << YAML::Value << SymbolRef(m_data.sym); break;
-        case LOC:   out << "loc" << YAML::Value << m_data.loc; break;
+        case REG:   type = "reg"; append_data(root, *m_data.reg); break;
+        case INT:   type = "int"; append_data(root, *getIntNum()); break;
+        case SUBST: type = "subst"; append_data(root, m_data.subst); break;
+        case FLOAT: type = "float"; break; // TODO
+        case SYM:
+            type = "sym";
+            append_data(root, SymbolRef(m_data.sym));
+            break;
+        case LOC:   type = "loc"; append_data(root, m_data.loc); break;
         case OP:
-            out << "op" << YAML::Value;
+        {
+            type = "op";
+            const char* op = "";
             switch (m_data.op.op)
             {
-                case Op::ADD:       out << "ADD"; break;
-                case Op::SUB:       out << "SUB"; break;
-                case Op::MUL:       out << "MUL"; break;
-                case Op::DIV:       out << "DIV"; break;
-                case Op::SIGNDIV:   out << "SIGNDIV"; break;
-                case Op::MOD:       out << "MOD"; break;
-                case Op::SIGNMOD:   out << "SIGNMOD"; break;
-                case Op::NEG:       out << "NEG"; break;
-                case Op::NOT:       out << "NOT"; break;
-                case Op::OR:        out << "OR"; break;
-                case Op::AND:       out << "AND"; break;
-                case Op::XOR:       out << "XOR"; break;
-                case Op::XNOR:      out << "XNOR"; break;
-                case Op::NOR:       out << "NOR"; break;
-                case Op::SHL:       out << "SHL"; break;
-                case Op::SHR:       out << "SHR"; break;
-                case Op::LOR:       out << "LOR"; break;
-                case Op::LAND:      out << "LAND"; break;
-                case Op::LNOT:      out << "LNOT"; break;
-                case Op::LXOR:      out << "LXOR"; break;
-                case Op::LXNOR:     out << "LXNOR"; break;
-                case Op::LNOR:      out << "LNOR"; break;
-                case Op::LT:        out << "LT"; break;
-                case Op::GT:        out << "GT"; break;
-                case Op::LE:        out << "LE"; break;
-                case Op::GE:        out << "GE"; break;
-                case Op::NE:        out << "NE"; break;
-                case Op::EQ:        out << "EQ"; break;
-                case Op::SEG:       out << "SEG"; break;
-                case Op::WRT:       out << "WRT"; break;
-                case Op::SEGOFF:    out << "SEGOFF"; break;
-                case Op::IDENT:     out << "IDENT"; break;
-                default:            out << YAML::Null; break;
+                case Op::ADD:       op = "ADD"; break;
+                case Op::SUB:       op = "SUB"; break;
+                case Op::MUL:       op = "MUL"; break;
+                case Op::DIV:       op = "DIV"; break;
+                case Op::SIGNDIV:   op = "SIGNDIV"; break;
+                case Op::MOD:       op = "MOD"; break;
+                case Op::SIGNMOD:   op = "SIGNMOD"; break;
+                case Op::NEG:       op = "NEG"; break;
+                case Op::NOT:       op = "NOT"; break;
+                case Op::OR:        op = "OR"; break;
+                case Op::AND:       op = "AND"; break;
+                case Op::XOR:       op = "XOR"; break;
+                case Op::XNOR:      op = "XNOR"; break;
+                case Op::NOR:       op = "NOR"; break;
+                case Op::SHL:       op = "SHL"; break;
+                case Op::SHR:       op = "SHR"; break;
+                case Op::LOR:       op = "LOR"; break;
+                case Op::LAND:      op = "LAND"; break;
+                case Op::LNOT:      op = "LNOT"; break;
+                case Op::LXOR:      op = "LXOR"; break;
+                case Op::LXNOR:     op = "LXNOR"; break;
+                case Op::LNOR:      op = "LNOR"; break;
+                case Op::LT:        op = "LT"; break;
+                case Op::GT:        op = "GT"; break;
+                case Op::LE:        op = "LE"; break;
+                case Op::GE:        op = "GE"; break;
+                case Op::NE:        op = "NE"; break;
+                case Op::EQ:        op = "EQ"; break;
+                case Op::SEG:       op = "SEG"; break;
+                case Op::WRT:       op = "WRT"; break;
+                case Op::SEGOFF:    op = "SEGOFF"; break;
+                case Op::IDENT:     op = "IDENT"; break;
+                default:            break;
             }
-            out << YAML::Key << "nchild" << YAML::Value << m_data.op.nchild;
+            append_child(root, "Op", op);
+            append_child(root, "NChild", m_data.op.nchild);
             break;
+        }
         default: break;
     }
-    out << YAML::Key << "depth" << YAML::Value << m_depth;
-    out << YAML::Key << "source" << YAML::Value << m_source.getRawEncoding();
-    out << YAML::EndMap;
+    root.append_attribute("depth") = m_depth;
+    root.append_attribute("source") = m_source.getRawEncoding();
+    return root;
 }
 
 void
@@ -943,20 +949,22 @@ Expr::getRegister() const
     return m_terms.front().getRegister();
 }
 
-void
-Expr::Write(YAML::Emitter& out) const
+pugi::xml_node
+Expr::Write(pugi::xml_node out) const
 {
-    if (m_terms.empty())
-    {
-        out << YAML::Null;
-        return;
-    }
-    out << YAML::Flow;
-    out << YAML::BeginSeq;
+    pugi::xml_node root = out.append_child("Expr");
     for (ExprTerms::const_iterator i=m_terms.begin(), end=m_terms.end();
          i != end; ++i)
-        out << *i;
-    out << YAML::EndSeq;
+        append_data(root, *i);
+
+    // generate an easier to read version as an attribute
+    llvm::SmallString<128> ss;
+    llvm::raw_svector_ostream oss(ss);
+    Print(oss);
+    oss << '\0';
+    root.append_attribute("def") = oss.str().data();
+
+    return root;
 }
 
 void

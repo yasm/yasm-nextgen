@@ -33,10 +33,10 @@
 
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/EndianState.h"
+#include "yasmx/DebugDumper.h"
 
 
 namespace llvm { class raw_ostream; }
-namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -45,6 +45,7 @@ namespace yasm
 class YASM_LIB_EXPORT Bytes
     : private std::vector<unsigned char>
     , public EndianState
+    , public DebugDumper<Bytes>
 {
     typedef std::vector<unsigned char> base_vector;
 
@@ -97,9 +98,10 @@ public:
     /// @param  v   byte value
     void Write(size_type n, unsigned char v);
 
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
+    /// Write an XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    pugi::xml_node Write(pugi::xml_node out) const;
 };
 
 inline void
@@ -114,13 +116,6 @@ Bytes::Write(const unsigned char* buf, size_type n)
 /// @return Output stream
 YASM_LIB_EXPORT
 llvm::raw_ostream& operator<< (llvm::raw_ostream& os, const Bytes& bytes);
-
-/// Dump a YAML representation of bytes.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param bytes        bytes
-/// @return Emitter.
-YASM_LIB_EXPORT
-YAML::Emitter& operator<< (YAML::Emitter& out, const Bytes& bytes);
 
 /// Specialized swap for algorithms.
 inline void

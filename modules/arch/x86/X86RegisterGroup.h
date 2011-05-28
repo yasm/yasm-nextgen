@@ -51,9 +51,10 @@ public:
     ///         otherwise the specific register.
     const X86Register* getReg(unsigned long regindex) const;
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 private:
     X86Register** m_regs;

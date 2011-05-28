@@ -76,7 +76,7 @@ public:
     /// @param arch_keyword     architecture keyword
     /// @param objfmt_keyword   object format keyword
     /// @param diags            diagnostic reporting
-    /// @param dump_time        when (if ever) to dump object YAML to stderr
+    /// @param dump_time        when (if ever) to dump object XML to stderr
     Assembler(llvm::StringRef arch_keyword,
               llvm::StringRef objfmt_keyword,
               Diagnostic& diags,

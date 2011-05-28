@@ -26,8 +26,6 @@
 //
 #include "BinSection.h"
 
-#include "YAML/emitter.h"
-
 
 using namespace yasm;
 using namespace yasm::objfmt;
@@ -47,32 +45,28 @@ BinSection::~BinSection()
 {
 }
 
-void
-BinSection::Write(YAML::Emitter& out) const
+pugi::xml_node
+BinSection::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << key;
+    pugi::xml_node root = out.append_child("BinSection");
+    root.append_attribute("key") = key;
     if (has_align)
-        out << YAML::Key << "align" << YAML::Value << align;
+        append_child(root, "Align", align);
     if (has_valign)
-        out << YAML::Key << "valign" << YAML::Value << valign;
+        append_child(root, "VAlign", valign);
 
-    out << YAML::Key << "start" << YAML::Value;
     if (start)
-        out << *start;
-    else
-        out << YAML::Null;
+        append_child(root, "Start", *start);
 
-    out << YAML::Key << "vstart" << YAML::Value;
     if (vstart)
-        out << *vstart;
-    else
-        out << YAML::Null;
+        append_child(root, "VStart", *vstart);
 
-    out << YAML::Key << "follows" << YAML::Value << follows;
-    out << YAML::Key << "vfollows" << YAML::Value << vfollows;
+    if (!follows.empty())
+        append_child(root, "Follows", follows);
+    if (!vfollows.empty())
+        append_child(root, "VFollows", vfollows);
 
     if (has_length)
-        out << YAML::Key << "length" << YAML::Value << length;
-    out << YAML::EndMap;
+        append_child(root, "Length", length);
+    return root;
 }

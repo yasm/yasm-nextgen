@@ -260,9 +260,10 @@ public:
     /// @param semantics    float semantics to use for converted value
     void PromoteToFloat(const llvm::fltSemantics& semantics);
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
     /// Print to stream.
     /// @param os           output stream
@@ -592,9 +593,10 @@ public:
 
     //@}
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
     /// Print to stream.
     /// @param os           output stream
@@ -913,28 +915,6 @@ operator<< (llvm::raw_ostream& os, const Expr& e)
 {
     e.Print(os);
     return os;
-}
-
-/// Dump a YAML representation of expression term.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param term         expression term
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const ExprTerm& term)
-{
-    term.Write(out);
-    return out;
-}
-
-/// Dump a YAML representation of expression.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param e            expression
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Expr& e)
-{
-    e.Write(out);
-    return out;
 }
 
 /// Perform a floating point calculation based on an #Op operator.

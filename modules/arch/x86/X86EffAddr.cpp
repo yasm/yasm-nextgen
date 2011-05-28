@@ -26,7 +26,7 @@
 //
 #include "X86EffAddr.h"
 
-#include "YAML/emitter.h"
+#include "llvm/ADT/Twine.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Expr.h"
@@ -185,21 +185,20 @@ X86EffAddr::clone() const
     return new X86EffAddr(*this);
 }
 
-void
-X86EffAddr::DoWrite(YAML::Emitter& out) const
+pugi::xml_node
+X86EffAddr::DoWrite(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "modrm";
-    out << YAML::Value << YAML::Oct << static_cast<unsigned int>(m_modrm);
-    out << YAML::Key << "need modrm" << YAML::Value << m_need_modrm;
-    out << YAML::Key << "valid modrm" << YAML::Value << m_valid_modrm;
+    pugi::xml_node root = out.append_child("X86EffAddr");
+    pugi::xml_node modrm = root.append_child("ModRM");
+    append_data(modrm, llvm::Twine::utohexstr(m_modrm).str());
+    modrm.append_attribute("need") = static_cast<bool>(m_need_modrm);
+    modrm.append_attribute("valid") = static_cast<bool>(m_valid_modrm);
 
-    out << YAML::Key << "sib";
-    out << YAML::Value << YAML::Oct << static_cast<unsigned int>(m_sib);
-    out << YAML::Key << "need sib";
-    out << YAML::Value << static_cast<unsigned int>(m_need_sib);
-    out << YAML::Key << "valid sib" << YAML::Value << m_valid_sib;
-    out << YAML::EndMap;
+    pugi::xml_node sib = root.append_child("SIB");
+    append_data(sib, llvm::Twine::utohexstr(m_sib).str());
+    sib.append_attribute("need") = static_cast<bool>(m_need_sib);
+    sib.append_attribute("valid") = static_cast<bool>(m_valid_sib);
+    return root;
 }
 
 namespace {

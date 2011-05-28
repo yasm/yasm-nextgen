@@ -26,7 +26,6 @@
 //
 #include "yasmx/Symbol.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Expr.h"
 
@@ -186,66 +185,58 @@ Symbol::getLabel(Location* loc) const
     return true;
 }
 
-void
-Symbol::Write(YAML::Emitter& out) const
+pugi::xml_node
+Symbol::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "name" << YAML::Value << m_name;
-    out << YAML::Key << "type" << YAML::Value;
+    pugi::xml_node root = out.append_child("Symbol");
+    root.append_attribute("id") = m_name.c_str();
+    append_child(root, "Name", m_name);
+    pugi::xml_attribute type = root.append_attribute("type");
     switch (m_type)
     {
         case EQU:
-            out << "EQU";
-            out << YAML::Key << "value" << YAML::Value;
+        {
+            type = "EQU";
             if (m_status & VALUED)
-                out << *m_equ;
-            else
-                out << YAML::Null;
+                append_data(root, *m_equ);
             break;
+        }
         case LABEL:
-            out << "Label";
-            out << YAML::Key << "loc" << YAML::Value << m_loc;
+            type = "Label";
+            append_data(root, m_loc);
             break;
         case SPECIAL:
-            out << "Special";
+            type = "Special";
             break;
         case UNKNOWN:
-            out << "Unknown (Common/Extern)";
+            type = "Unknown (Common/Extern)";
             break;
         default:
-            out << YAML::Null;
             break;
     }
 
-    out << YAML::Key << "status" << YAML::Value << YAML::Flow << YAML::BeginSeq;
     if (m_status & USED)
-        out << "Used";
+        root.append_child("Used").append_attribute("source") =
+            m_use_source.getRawEncoding();
     if (m_status & DEFINED)
-        out << "Defined";
+        root.append_child("Defined").append_attribute("source") =
+            m_def_source.getRawEncoding();
     if (m_status & VALUED)
-        out << "Valued";
-    out << YAML::EndSeq;
+        root.append_attribute("Valued") = true;
 
-    out << YAML::Key << "visibility";
-    out << YAML::Value << YAML::Flow << YAML::BeginSeq;
     if (m_visibility & GLOBAL)
-        out << "Global";
+        root.append_child("Global").append_attribute("source") =
+            m_decl_source.getRawEncoding();
     if (m_visibility & COMMON)
-        out << "Common";
+        root.append_child("Common").append_attribute("source") =
+            m_decl_source.getRawEncoding();
     if (m_visibility & EXTERN)
-        out << "Extern";
+        root.append_child("Extern").append_attribute("source") =
+            m_decl_source.getRawEncoding();
     if (m_visibility & DLOCAL)
-        out << "DLocal";
-    out << YAML::EndSeq;
+        root.append_child("DLocal").append_attribute("source") =
+            m_decl_source.getRawEncoding();
 
-    out << YAML::Key << "define source"
-        << YAML::Value << m_def_source.getRawEncoding();
-    out << YAML::Key << "declare source"
-        << YAML::Value << m_decl_source.getRawEncoding();
-    out << YAML::Key << "use source"
-        << YAML::Value << m_use_source.getRawEncoding();
-
-    out << YAML::Key << "assoc data" << YAML::Value;
-    AssocDataContainer::Write(out);
-    out << YAML::EndMap;
+    AssocDataContainer::Write(root);
+    return root;
 }

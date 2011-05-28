@@ -206,9 +206,10 @@ public:
             m_visibility |= EXTERN;
     }
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 private:
     Symbol(const Symbol&);                  // not implemented
@@ -257,17 +258,6 @@ Symbol::getEqu() const
     if (m_type == EQU && (m_status & VALUED))
         return m_equ.get();
     return 0;
-}
-
-/// Dump a YAML representation of a symbol.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param symbol       symbol
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Symbol& symbol)
-{
-    symbol.Write(out);
-    return out;
 }
 
 } // namespace yasm

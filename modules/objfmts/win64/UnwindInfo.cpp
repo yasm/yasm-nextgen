@@ -26,7 +26,6 @@
 //
 #include "UnwindInfo.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
@@ -238,43 +237,30 @@ UnwindInfo::clone() const
     return info.release();
 }
 
-void
-UnwindInfo::Write(YAML::Emitter& out) const
+pugi::xml_node
+UnwindInfo::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "UnwindInfo";
+    pugi::xml_node root = out.append_child("UnwindInfo");
 
-    out << YAML::Key << "proc" << YAML::Value;
     if (m_proc)
-        out << m_proc->getName();
-    else
-        out << YAML::Null;
+        append_child(root, "Proc", m_proc);
 
-    out << YAML::Key << "prolog" << YAML::Value;
     if (m_prolog)
-        out << m_prolog->getName();
-    else
-        out << YAML::Null;
+        append_child(root, "Prolog", m_prolog);
 
-    out << YAML::Key << "ehandler" << YAML::Value;
     if (m_ehandler)
-        out << m_ehandler->getName();
-    else
-        out << YAML::Null;
+        append_child(root, "EHandler", m_ehandler);
 
-    out << YAML::Key << "frame reg" << YAML::Value << m_framereg;
-    out << YAML::Key << "frame off" << YAML::Value << m_frameoff;
+    append_child(root, "FrameReg", m_framereg);
+    append_child(root, "FrameOff", m_frameoff);
 
-    out << YAML::Key << "codes" << YAML::Value << YAML::BeginSeq;
     for (std::vector<UnwindCode*>::const_iterator i=m_codes.begin(),
         end=m_codes.end(); i != end; ++i)
-        (*i)->Write(out);
-    out << YAML::EndSeq;
+        append_data(root, **i);
 
-    out << YAML::Key << "prolog size" << YAML::Value << m_prolog_size;
-    out << YAML::Key << "codes count" << YAML::Value << m_codes_count;
-
-    out << YAML::EndMap;
+    append_child(root, "PrologSize", m_prolog_size);
+    append_child(root, "CodesCount", m_codes_count);
+    return root;
 }
 
 void

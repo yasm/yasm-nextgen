@@ -29,8 +29,8 @@
 #include <algorithm>
 #include <iterator>
 
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 
 
 using namespace yasm;
@@ -62,12 +62,17 @@ Bytes::Write(size_type n, unsigned char v)
     } while (n != 0);
 }
 
-YAML::Emitter&
-yasm::operator<< (YAML::Emitter& out, const Bytes& bytes)
+pugi::xml_node
+Bytes::Write(pugi::xml_node out) const
 {
-    out << YAML::Flow << YAML::BeginSeq;
-    for (Bytes::size_type i=0; i<bytes.size(); ++i)
-        out << YAML::Hex << static_cast<unsigned int>(bytes[i]);
-    out << YAML::EndSeq;
-    return out;
+    llvm::SmallString<128> ss;
+    llvm::raw_svector_ostream oss(ss);
+    for (size_type i=0; i<size(); ++i)
+    {
+        oss.write_hex(static_cast<unsigned int>(operator[](i)));
+        if (i+1 < size())
+            oss << ' ';
+    }
+    oss << '\0';
+    return append_data(out, oss.str().data());
 }

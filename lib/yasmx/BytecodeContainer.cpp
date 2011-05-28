@@ -26,8 +26,6 @@
 //
 #include "yasmx/BytecodeContainer.h"
 
-#include "llvm/ADT/Twine.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
@@ -63,8 +61,8 @@ public:
 
     GapBytecode* clone() const;
 
-    /// Write a YAML representation.  For debugging purposes.
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 private:
     unsigned long m_size;       ///< size of gap (in bytes)
@@ -121,13 +119,12 @@ GapBytecode::Extend(unsigned long size)
     m_size += size;
 }
 
-void
-GapBytecode::Write(YAML::Emitter& out) const
+pugi::xml_node
+GapBytecode::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "Gap";
-    out << YAML::Key << "size" << YAML::Value << m_size;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("Gap");
+    append_child(root, "Size", m_size);
+    return root;
 }
 
 BytecodeContainer::BytecodeContainer()
@@ -224,15 +221,11 @@ BytecodeContainer::UpdateOffsets(Diagnostic& diags)
         offset = bc->UpdateOffset(offset, diags);
 }
 
-void
-BytecodeContainer::Write(YAML::Emitter& out) const
+pugi::xml_node
+BytecodeContainer::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginSeq;
     for (BytecodeContainer::const_bc_iterator bc=m_bcs.begin(), end=m_bcs.end();
          bc != end; ++bc)
-    {
-        out << YAML::Anchor("BC@" + llvm::Twine::utohexstr((uint64_t)&(*bc)))
-            << *bc;
-    }
-    out << YAML::EndSeq;
+        append_data(out, *bc);
+    return out;
 }

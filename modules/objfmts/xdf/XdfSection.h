@@ -49,7 +49,7 @@ struct YASM_STD_EXPORT XdfSection : public AssocData
 
     XdfSection(SymbolRef sym_);
     ~XdfSection();
-    void Write(YAML::Emitter& out) const;
+    pugi::xml_node Write(pugi::xml_node out) const;
 
     void Write(Bytes& bytes, const Section& sect) const;
     void Read(const llvm::MemoryBuffer& in,

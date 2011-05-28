@@ -34,7 +34,6 @@
 #include <limits>
 
 #include "llvm/ADT/SmallString.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 
 
@@ -920,12 +919,13 @@ IntNum::Extract(unsigned int width, unsigned int lsb) const
     }
 }
 
-void
-IntNum::Write(YAML::Emitter& out) const
+pugi::xml_node
+IntNum::Write(pugi::xml_node out) const
 {
     llvm::SmallString<40> s;
     getStr(s);
-    out << s.str();
+    s += '\0';
+    return append_data(out, s.str().data());
 }
 
 void

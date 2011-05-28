@@ -26,7 +26,6 @@
 //
 #include "XdfSection.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
 #include "yasmx/InputBuffer.h"
@@ -55,20 +54,22 @@ XdfSection::~XdfSection()
 {
 }
 
-void
-XdfSection::Write(YAML::Emitter& out) const
+pugi::xml_node
+XdfSection::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << key;
-    out << YAML::Key << "sym" << YAML::Value << sym;
-    out << YAML::Key << "has addr" << YAML::Value << has_addr;
-    out << YAML::Key << "has vaddr" << YAML::Value << has_vaddr;
-    out << YAML::Key << "scnum" << YAML::Value << scnum;
-    out << YAML::Key << "flat" << YAML::Value << flat;
-    out << YAML::Key << "bits" << YAML::Value << bits;
-    out << YAML::Key << "size" << YAML::Value << size;
-    out << YAML::Key << "relptr" << YAML::Value << relptr;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("XdfSection");
+    root.append_attribute("key") = key;
+    append_child(root, "Sym", sym);
+    if (has_addr)
+        root.append_attribute("has_addr") = true;
+    if (has_vaddr)
+        root.append_attribute("has_vaddr") = true;
+    append_child(root, "ScNum", scnum);
+    append_child(root, "Flat", flat);
+    append_child(root, "Bits", bits);
+    append_child(root, "Size", size);
+    append_child(root, "RelPtr", relptr);
+    return root;
 }
 
 void

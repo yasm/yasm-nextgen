@@ -27,7 +27,6 @@
 #include "ElfConfig.h"
 
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
@@ -311,97 +310,99 @@ ElfConfig::setEndian(EndianState& state) const
     return true;
 }
 
-void
-ElfConfig::Write(YAML::Emitter& out) const
+pugi::xml_node
+ElfConfig::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "cls" << YAML::Value;
+    pugi::xml_node root = out.append_child("ElfConfig");
     switch (cls)
     {
-        case ELFCLASS32:    out << "ELFCLASS32"; break;
-        case ELFCLASS64:    out << "ELFCLASS64"; break;
-        default:            out << static_cast<int>(cls); break;
+        case ELFCLASS32:    append_child(root, "Cls", "ELFCLASS32"); break;
+        case ELFCLASS64:    append_child(root, "Cls", "ELFCLASS64"); break;
+        default:    append_child(root, "Cls", static_cast<int>(cls)); break;
     }
 
-    out << YAML::Key << "encoding" << YAML::Value;
     switch (encoding)
     {
-        case ELFDATA2LSB:   out << "2LSB"; break;
-        case ELFDATA2MSB:   out << "2MSB"; break;
-        default:            out << static_cast<int>(encoding); break;
+        case ELFDATA2LSB:   append_child(root, "Encoding", "2LSB"); break;
+        case ELFDATA2MSB:   append_child(root, "Encoding", "2MSB"); break;
+        default:
+            append_child(root, "Encoding", static_cast<int>(encoding));
+            break;
     }
 
-    out << YAML::Key << "version" << YAML::Value;
     if (version == EV_CURRENT)
-        out << "EV_CURRENT";
+        append_child(root, "Version", "EV_CURRENT");
     else
-        out << static_cast<int>(version);
+        append_child(root, "Version", static_cast<int>(version));
 
-    out << YAML::Key << "osabi" << YAML::Value;
+    const char* osabi_str = NULL;
     switch (osabi)
     {
-        case ELFOSABI_SYSV:         out << "SYSV"; break;
-        case ELFOSABI_HPUX:         out << "HPUX"; break;
-        case ELFOSABI_STANDALONE:   out << "STANDALONE"; break;
-        default:                    out << static_cast<int>(osabi); break;
+        case ELFOSABI_SYSV:         osabi_str = "SYSV"; break;
+        case ELFOSABI_HPUX:         osabi_str = "HPUX"; break;
+        case ELFOSABI_STANDALONE:   osabi_str = "STANDALONE"; break;
     }
+    if (osabi_str)
+        append_child(root, "OsAbi", osabi_str);
+    else
+        append_child(root, "OsAbi", static_cast<int>(osabi));
 
-    out << YAML::Key << "abi version" << YAML::Value << abi_version;
+    append_child(root, "AbiVersion", static_cast<unsigned int>(abi_version));
 
-    out << YAML::Key << "file type" << YAML::Value;
+    const char* ft_str = NULL;
     switch (file_type)
     {
-        case ET_NONE:   out << "NONE"; break;
-        case ET_REL:    out << "REL"; break;
-        case ET_EXEC:   out << "EXEC"; break;
-        case ET_DYN:    out << "DYN"; break;
-        case ET_CORE:   out << "CORE"; break;
-        default:        out << YAML::Hex << static_cast<int>(file_type); break;
+        case ET_NONE:   ft_str = "NONE"; break;
+        case ET_REL:    ft_str = "REL"; break;
+        case ET_EXEC:   ft_str = "EXEC"; break;
+        case ET_DYN:    ft_str = "DYN"; break;
+        case ET_CORE:   ft_str = "CORE"; break;
+        default:        break;
     }
+    if (ft_str)
+        append_child(root, "FileType", ft_str);
+    else
+        append_child(root, "FileType", static_cast<int>(file_type));
 
-    out << YAML::Key << "machine type" << YAML::Value;
+    const char* mt_str = NULL;
     switch (machine_type)
     {
-        case EM_NONE:           out << "NONE"; break;
-        case EM_M32:            out << "M32"; break;
-        case EM_SPARC:          out << "SPARC"; break;
-        case EM_386:            out << "386"; break;
-        case EM_68K:            out << "68K"; break;
-        case EM_88K:            out << "88K"; break;
-        case EM_860:            out << "860"; break;
-        case EM_MIPS:           out << "MIPS"; break;
-        case EM_S370:           out << "S370"; break;
-        case EM_MIPS_RS4_BE:    out << "MIPS_RS4_BE"; break;
-        case EM_PARISC:         out << "PARISC"; break;
-        case EM_SPARC32PLUS:    out << "SPARC32PLUS"; break;
-        case EM_PPC:            out << "PPC"; break;
-        case EM_PPC64:          out << "PPC64"; break;
-        case EM_ARM:            out << "ARM"; break;
-        case EM_SPARCV9:        out << "SPARCV9"; break;
-        case EM_IA_64:          out << "IA_64"; break;
-        case EM_X86_64:         out << "X86_64"; break;
-        case EM_ALPHA:          out << "ALPHA"; break;
-        default:    out << YAML::Hex << static_cast<int>(machine_type); break;
+        case EM_NONE:           mt_str = "NONE"; break;
+        case EM_M32:            mt_str = "M32"; break;
+        case EM_SPARC:          mt_str = "SPARC"; break;
+        case EM_386:            mt_str = "386"; break;
+        case EM_68K:            mt_str = "68K"; break;
+        case EM_88K:            mt_str = "88K"; break;
+        case EM_860:            mt_str = "860"; break;
+        case EM_MIPS:           mt_str = "MIPS"; break;
+        case EM_S370:           mt_str = "S370"; break;
+        case EM_MIPS_RS4_BE:    mt_str = "MIPS_RS4_BE"; break;
+        case EM_PARISC:         mt_str = "PARISC"; break;
+        case EM_SPARC32PLUS:    mt_str = "SPARC32PLUS"; break;
+        case EM_PPC:            mt_str = "PPC"; break;
+        case EM_PPC64:          mt_str = "PPC64"; break;
+        case EM_ARM:            mt_str = "ARM"; break;
+        case EM_SPARCV9:        mt_str = "SPARCV9"; break;
+        case EM_IA_64:          mt_str = "IA_64"; break;
+        case EM_X86_64:         mt_str = "X86_64"; break;
+        case EM_ALPHA:          mt_str = "ALPHA"; break;
     }
+    if (mt_str)
+        append_child(root, "MachineType", mt_str);
+    else
+        append_child(root, "MachineType", static_cast<int>(machine_type));
 
-    out << YAML::Key << "start" << YAML::Value << start;
-    out << YAML::Key << "rela" << YAML::Value << rela;
-    out << YAML::Key << "proghead pos" << YAML::Value << proghead_pos;
-    out << YAML::Key << "proghead count" << YAML::Value << proghead_count;
-    out << YAML::Key << "proghead size" << YAML::Value << proghead_size;
-    out << YAML::Key << "secthead pos" << YAML::Value << secthead_pos;
-    out << YAML::Key << "secthead count" << YAML::Value << secthead_count;
-    out << YAML::Key << "secthead size" << YAML::Value << secthead_size;
-    out << YAML::Key << "machine flags";
-    out << YAML::Value << YAML::Hex << machine_flags;
-    out << YAML::Key << "shstrtab index" << YAML::Value << shstrtab_index;
-    out << YAML::EndMap;
-}
-
-void
-ElfConfig::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
+    append_child(root, "Start", start);
+    append_child(root, "Rela", rela);
+    pugi::xml_node ph_node = root.append_child("ProgHead");
+    ph_node.append_attribute("pos") = proghead_pos;
+    ph_node.append_attribute("count") = proghead_count;
+    ph_node.append_attribute("size") = proghead_size;
+    pugi::xml_node sh_node = root.append_child("SectHead");
+    sh_node.append_attribute("pos") = secthead_pos;
+    sh_node.append_attribute("count") = secthead_count;
+    sh_node.append_attribute("size") = secthead_size;
+    append_child(root, "MachineFlags", machine_flags);
+    append_child(root, "ShstrtabIndex", shstrtab_index);
+    return root;
 }

@@ -26,7 +26,6 @@
 ///
 #include "yasmx/BytecodeContainer.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Expr.h"
@@ -54,8 +53,8 @@ public:
     /// Calculate for output.
     bool CalcForOutput(SourceLocation source, Diagnostic& diags);
 
-    /// Write a YAML representation.  For debugging purposes.
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
     void setInt(long val) { m_int = val; }
     long getInt() const { return m_int; }
@@ -102,8 +101,8 @@ public:
 
     MultipleBytecode* clone() const;
 
-    /// Write a YAML representation.  For debugging purposes.
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
     BytecodeContainer& getContents() { return m_contents; }
 
@@ -153,8 +152,8 @@ public:
 
     FillBytecode* clone() const;
 
-    /// Write a YAML representation.  For debugging purposes.
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 private:
     /// Number of times contents is repeated.
@@ -258,13 +257,13 @@ Multiple::CalcForOutput(SourceLocation source, Diagnostic& diags)
     return true;
 }
 
-void
-Multiple::Write(YAML::Emitter& out) const
+pugi::xml_node
+Multiple::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "expr" << YAML::Value << m_expr;
-    out << YAML::Key << "int" << YAML::Value << m_int;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("Multiple");
+    append_data(root, m_expr);
+    root.append_attribute("int") = m_int;
+    return root;
 }
 
 MultipleBytecode::MultipleBytecode(std::auto_ptr<Expr> e)
@@ -380,15 +379,13 @@ MultipleBytecode::clone() const
     return 0;
 }
 
-void
-MultipleBytecode::Write(YAML::Emitter& out) const
+pugi::xml_node
+MultipleBytecode::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "Multiple";
-    out << YAML::Key << "multiple" << YAML::Value;
-    m_multiple.Write(out);
-    out << YAML::Key << "contents" << YAML::Value << m_contents;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("MultipleBytecode");
+    append_child(root, "Multiple", m_multiple);
+    append_child(root, "Contents", m_contents);
+    return root;
 }
 
 FillBytecode::FillBytecode(std::auto_ptr<Expr> multiple, unsigned int size)
@@ -502,16 +499,15 @@ FillBytecode::clone() const
     return new FillBytecode(*this);
 }
 
-void
-FillBytecode::Write(YAML::Emitter& out) const
+pugi::xml_node
+FillBytecode::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "Fill";
-    out << YAML::Key << "multiple" << YAML::Value;
-    m_multiple.Write(out);
-    out << YAML::Key << "value" << YAML::Value << m_value;
-    out << YAML::Key << "skip" << YAML::Value << m_skip;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("Fill");
+    append_data(root, m_multiple);
+    append_data(root, m_value);
+    if (m_skip)
+        root.append_attribute("skip") = true;
+    return root;
 }
 
 BytecodeContainer&

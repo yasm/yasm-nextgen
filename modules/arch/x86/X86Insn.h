@@ -67,7 +67,7 @@ protected:
     bool DoAppend(BytecodeContainer& container,
                   SourceLocation source,
                   Diagnostic& diags);
-    void DoWrite(YAML::Emitter& out) const;
+    pugi::xml_node DoWrite(pugi::xml_node out) const;
 
 private:
     bool DoAppendJmpFar(BytecodeContainer& container,

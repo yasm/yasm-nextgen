@@ -27,14 +27,13 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 #include "yasmx/Config/export.h"
+#include "yasmx/DebugDumper.h"
 #include "yasmx/IntNum.h"
 
 #include "ElfTypes.h"
 
 
 namespace llvm { class MemoryBuffer; }
-
-namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -49,7 +48,7 @@ class StringTable;
 namespace objfmt
 {
 
-struct YASM_STD_EXPORT ElfConfig
+struct YASM_STD_EXPORT ElfConfig : public DebugDumper<ElfConfig>
 {
     ElfClass        cls;            // ELF class (32/64)
     ElfDataEncoding encoding;       // ELF encoding (MSB/LSB)
@@ -101,16 +100,8 @@ struct YASM_STD_EXPORT ElfConfig
 
     bool setEndian(EndianState& state) const;
 
-    void Write(YAML::Emitter& out) const;
-    void Dump() const;
+    pugi::xml_node Write(pugi::xml_node out) const;
 };
-
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const ElfConfig& config)
-{
-    config.Write(out);
-    return out;
-}
 
 }} // namespace yasm::objfmt
 

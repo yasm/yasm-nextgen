@@ -30,7 +30,6 @@
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
 #include "yasmx/Symbol.h"
@@ -78,37 +77,33 @@ CoffSection::~CoffSection()
 {
 }
 
-void
-CoffSection::Write(YAML::Emitter& out) const
+pugi::xml_node
+CoffSection::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << key;
-    out << YAML::Key << "sym" << YAML::Value << m_sym;
-    out << YAML::Key << "scnum" << YAML::Value << m_scnum;
-    out << YAML::Key << "flags" << YAML::Value;
+    pugi::xml_node root = out.append_child("CoffSection");
+    root.append_attribute("key") = key;
+    append_child(root, "Sym", m_sym);
+    append_child(root, "ScNum", m_scnum);
+    pugi::xml_node flags = append_child(root, "Flags", m_flags);
+    const char* flags_std = NULL;
     switch (m_flags & STD_MASK)
     {
-        case TEXT:
-            out << "TEXT";
-            break;
-        case DATA:
-            out << "DATA";
-            break;
-        case BSS:
-            out << "BSS";
-            break;
-        default:
-            out << "UNKNOWN";
-            break;
+        case TEXT: flags_std = "TEXT"; break;
+        case DATA: flags_std = "DATA"; break;
+        case BSS: flags_std = "BSS"; break;
     }
-    out << YAML::Key << "flags value" << YAML::Value << YAML::Hex << m_flags;
-    out << YAML::Key << "size" << YAML::Value << m_size;
-    out << YAML::Key << "relptr" << YAML::Value << m_relptr;
-    out << YAML::Key << "strtab name offset" << YAML::Value << m_strtab_name;
-    out << YAML::Key << "no base" << YAML::Value << m_nobase;
-    out << YAML::Key << "debug" << YAML::Value << m_isdebug;
-    out << YAML::Key << "set align" << YAML::Value << m_setalign;
-    out << YAML::EndMap;
+    if (flags_std)
+        flags.append_attribute("std") = flags_std;
+    append_child(root, "Size", m_size);
+    append_child(root, "RelPtr", m_relptr);
+    append_child(root, "NameOffset", m_strtab_name);
+    if (m_nobase)
+        root.append_attribute("nobase") = true;
+    if (m_isdebug)
+        root.append_attribute("debug") = true;
+    if (m_setalign)
+        root.append_attribute("setalign") = true;
+    return root;
 }
 
 void

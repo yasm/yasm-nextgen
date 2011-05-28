@@ -33,7 +33,6 @@
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Support/phash.h"
 
@@ -230,16 +229,16 @@ X86Register::Put(llvm::raw_ostream& os) const
     }
 }
 
-void
-X86Register::Write(YAML::Emitter& out) const
+pugi::xml_node
+X86Register::Write(pugi::xml_node out) const
 {
-    out << YAML::Flow << YAML::BeginMap;
-    out << YAML::Key << "arch" << YAML::Value << "x86";
+    pugi::xml_node root = out.append_child("X86Register");
     llvm::SmallString<256> ss;
     llvm::raw_svector_ostream oss(ss);
     Put(oss);
-    out << YAML::Key << "type" << YAML::Value << oss.str();
-    out << YAML::EndMap;
+    oss << '\0';
+    append_data(root, oss.str().data());
+    return root;
 }
 
 const X86Register*
@@ -250,15 +249,13 @@ X86RegisterGroup::getReg(unsigned long regindex) const
     return m_regs[regindex];
 }
 
-void
-X86RegisterGroup::Write(YAML::Emitter& out) const
+pugi::xml_node
+X86RegisterGroup::Write(pugi::xml_node out) const
 {
-    out << YAML::Flow << YAML::BeginMap;
-    out << YAML::Key << "arch" << YAML::Value << "x86";
-    out << YAML::Key << "reg0" << YAML::Value;
-    m_regs[0]->Write(out);
-    out << YAML::Key << "size" << YAML::Value << m_size;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("X86RegGroup");
+    m_regs[0]->Write(root);
+    root.append_attribute("size") = m_size;
+    return root;
 }
 
 X86SegmentRegister::~X86SegmentRegister()
@@ -272,18 +269,17 @@ X86SegmentRegister::Put(llvm::raw_ostream& os) const
     os << name[m_type];
 }
 
-void
-X86SegmentRegister::Write(YAML::Emitter& out) const
+pugi::xml_node
+X86SegmentRegister::Write(pugi::xml_node out) const
 {
-    out << YAML::Flow << YAML::BeginMap;
-    out << YAML::Key << "arch" << YAML::Value << "x86";
+    pugi::xml_node root = out.append_child("X86SegReg");
     llvm::SmallString<256> ss;
     llvm::raw_svector_ostream oss(ss);
     Put(oss);
-    out << YAML::Key << "type" << YAML::Value << oss.str();
-    out << YAML::Key << "prefix";
-    out << YAML::Value << static_cast<unsigned int>(m_prefix);
-    out << YAML::EndMap;
+    oss << '\0';
+    root.append_attribute("type") = oss.str().data();
+    root.append_attribute("prefix") = static_cast<unsigned int>(m_prefix);
+    return root;
 }
 
 void
@@ -299,16 +295,16 @@ X86TargetModifier::Put(llvm::raw_ostream& os) const
     }
 }
 
-void
-X86TargetModifier::Write(YAML::Emitter& out) const
+pugi::xml_node
+X86TargetModifier::Write(pugi::xml_node out) const
 {
-    out << YAML::Flow << YAML::BeginMap;
-    out << YAML::Key << "arch" << YAML::Value << "x86";
+    pugi::xml_node root = out.append_child("X86TargetMod");
     llvm::SmallString<256> ss;
     llvm::raw_svector_ostream oss(ss);
     Put(oss);
-    out << YAML::Key << "type" << YAML::Value << oss.str();
-    out << YAML::EndMap;
+    oss << '\0';
+    root.append_attribute("type") = oss.str().data();
+    return root;
 }
 
 enum RegTmodType

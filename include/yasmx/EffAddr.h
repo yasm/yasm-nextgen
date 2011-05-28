@@ -89,28 +89,23 @@ public:
     /// Clone an effective address.
     virtual EffAddr* clone() const = 0;
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 protected:
     /// Copy constructor so that derived classes can sanely have one.
     EffAddr(const EffAddr& rhs);
 
-    /// Write derived class YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    virtual void DoWrite(YAML::Emitter& out) const = 0;
+    /// Write derived class XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    virtual pugi::xml_node DoWrite(pugi::xml_node out) const = 0;
 
 private:
     const EffAddr& operator=(const EffAddr&);
 };
-
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const EffAddr& ea)
-{
-    ea.Write(out);
-    return out;
-}
 
 } // namespace yasm
 

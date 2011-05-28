@@ -26,8 +26,6 @@
 //
 #include "XdfSymbol.h"
 
-#include "YAML/emitter.h"
-
 
 using namespace yasm;
 using namespace yasm::objfmt;
@@ -38,11 +36,11 @@ XdfSymbol::~XdfSymbol()
 {
 }
 
-void
-XdfSymbol::Write(YAML::Emitter& out) const
+pugi::xml_node
+XdfSymbol::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << key;
-    out << YAML::Key << "index" << YAML::Value << index;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("XdfSymbol");
+    root.append_attribute("key") = key;
+    root.append_attribute("index") = index;
+    return root;
 }

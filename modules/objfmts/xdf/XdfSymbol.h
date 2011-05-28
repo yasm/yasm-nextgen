@@ -43,7 +43,7 @@ struct YASM_STD_EXPORT XdfSymbol : public AssocData
 
     XdfSymbol(unsigned long index_) : index(index_) {}
     ~XdfSymbol();
-    void Write(YAML::Emitter& out) const;
+    pugi::xml_node Write(pugi::xml_node out) const;
 
     enum Flags
     {

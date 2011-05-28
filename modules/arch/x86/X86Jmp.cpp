@@ -29,7 +29,6 @@
 #include "X86Jmp.h"
 
 #include "llvm/ADT/Statistic.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
@@ -81,7 +80,7 @@ public:
 
     X86Jmp* clone() const;
 
-    void Write(YAML::Emitter& out) const;
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 private:
     X86Common m_common;
@@ -265,25 +264,23 @@ X86Jmp::clone() const
     return new X86Jmp(*this);
 }
 
-void
-X86Jmp::Write(YAML::Emitter& out) const
+pugi::xml_node
+X86Jmp::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "X86Jmp";
-    out << YAML::Key << "common" << YAML::Value << m_common;
-    out << YAML::Key << "short opcode" << YAML::Value << m_shortop;
-    out << YAML::Key << "near opcode" << YAML::Value << m_nearop;
-    out << YAML::Key << "target" << YAML::Value << m_target;
+    pugi::xml_node root = out.append_child("X86Jmp");
+    append_data(root, m_common);
+    append_data(root, m_shortop).append_attribute("type") = "short";
+    append_data(root, m_nearop).append_attribute("type") = "near";
+    append_child(root, "Target", m_target);
 
-    out << YAML::Key << "opcode selection" << YAML::Value;
+    pugi::xml_attribute op_sel = root.append_attribute("op_sel");
     switch (m_op_sel)
     {
-        case X86_JMP_NONE:  out << "None"; break;
-        case X86_JMP_SHORT: out << "Short"; break;
-        case X86_JMP_NEAR:  out << "Near"; break;
-        default:            out << YAML::Null; break;
+        case X86_JMP_NONE:  op_sel = "none"; break;
+        case X86_JMP_SHORT: op_sel = "short"; break;
+        case X86_JMP_NEAR:  op_sel = "near"; break;
     }
-    out << YAML::EndMap;
+    return root;
 }
 
 void

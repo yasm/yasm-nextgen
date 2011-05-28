@@ -151,9 +151,10 @@ public:
 
     const Token& getToken() const;
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
     void setNameSource(SourceLocation loc) { m_name_source = loc; }
     void setEqualsSource(SourceLocation loc) { m_equals_source = loc; }
@@ -193,17 +194,6 @@ private:
     SourceRange m_value_range;      ///< Value source
 };
 
-/// Dump a YAML representation of a name/value.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param nv           name/value
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const NameValue& nv)
-{
-    nv.Write(out);
-    return out;
-}
-
 /// Vector of name/values.
 class YASM_LIB_EXPORT NameValues
     : public DebugDumper<NameValues>, private stdx::ptr_vector<NameValue>
@@ -239,22 +229,11 @@ public:
     // Exchanges this vector with another one.
     void swap(NameValues& oth) { base_vector::swap(oth); }
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    pugi::xml_node Write(pugi::xml_node out) const;
 };
-
-/// Dump a YAML representation of vector of name/values.
-/// For debugging purposes.
-/// @param out          YAML emitter
-/// @param namevals     name/values
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const NameValues& namevals)
-{
-    namevals.Write(out);
-    return out;
-}
 
 /// Specialized swap for algorithms.
 inline void

@@ -167,9 +167,10 @@ public:
     /// @param filepos  File position
     void setFilePos(unsigned long filepos) { m_filepos = filepos; }
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 private:
     std::string m_name;                 ///< name (given by user)
@@ -194,17 +195,6 @@ private:
     Relocs m_relocs;
     stdx::ptr_vector_owner<Reloc> m_relocs_owner;
 };
-
-/// Dump a YAML representation of a section.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param section      section
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Section& section)
-{
-    section.Write(out);
-    return out;
-}
 
 } // namespace yasm
 

@@ -27,7 +27,6 @@
 #include "ElfSymbol.h"
 
 #include "llvm/ADT/Twine.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes_util.h"
@@ -152,56 +151,62 @@ ElfSymbol::CreateSymbol(Object& object, const StringTable& strtab) const
     return sym;
 }
 
-void
-ElfSymbol::Write(YAML::Emitter& out) const
+pugi::xml_node
+ElfSymbol::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << key;
-    out << YAML::Key << "sect" << YAML::Value;
+    pugi::xml_node root = out.append_child("ElfSymbol");
+    root.append_attribute("key") = key;
     if (m_sect)
-        out << YAML::Alias("SECT@" + m_sect->getName());
-    else
-        out << YAML::Null;
-    out << YAML::Key << "value" << YAML::Value << m_value;
-    out << YAML::Key << "size source"
-        << YAML::Value << m_size_source.getRawEncoding();
-    out << YAML::Key << "size" << YAML::Value << m_size;
-    out << YAML::Key << "index" << YAML::Value << m_index;
+        root.append_attribute("sect") = m_sect->getName().str().c_str();
+    append_child(root, "Value", m_value);
+    if (!m_size.isEmpty())
+        append_child(root, "Size", m_size).append_attribute("source") =
+            m_size_source.getRawEncoding();
+    switch (m_index)
+    {
+        case SHN_UNDEF:     append_child(root, "Index", "UNDEF"); break;
+        case SHN_ABS:       append_child(root, "Index", "ABS"); break;
+        case SHN_COMMON:    append_child(root, "Index", "COMMON"); break;
+        default:            append_child(root, "Index", m_index); break;
+    }
 
-    out << YAML::Key << "bind" << YAML::Value;
     switch (m_bind)
     {
-        case STB_LOCAL:     out << "local";     break;
-        case STB_GLOBAL:    out << "global";    break;
-        case STB_WEAK:      out << "weak";      break;
-        default:            out << static_cast<int>(m_bind); break;
+        case STB_LOCAL:     append_child(root, "Bind", "local"); break;
+        case STB_GLOBAL:    append_child(root, "Bind", "global"); break;
+        case STB_WEAK:      append_child(root, "Bind", "weak"); break;
+        default:
+            append_child(root, "Bind", static_cast<int>(m_bind));
+            break;
     }
 
-    out << YAML::Key << "symtype" << YAML::Value;
     switch (m_type)
     {
-        case STT_NOTYPE:    out << "notype";    break;
-        case STT_OBJECT:    out << "object";    break;
-        case STT_FUNC:      out << "func";      break;
-        case STT_SECTION:   out << "section";   break;
-        case STT_FILE:      out << "file";      break;
-        case STT_COMMON:    out << "common";    break;
-        case STT_TLS:       out << "tls";       break;
-        default:            out << static_cast<int>(m_type); break;
+        case STT_NOTYPE:    append_child(root, "SymType", "notype"); break;
+        case STT_OBJECT:    append_child(root, "SymType", "object"); break;
+        case STT_FUNC:      append_child(root, "SymType", "func"); break;
+        case STT_SECTION:   append_child(root, "SymType", "section"); break;
+        case STT_FILE:      append_child(root, "SymType", "file"); break;
+        case STT_COMMON:    append_child(root, "SymType", "common"); break;
+        case STT_TLS:       append_child(root, "SymType", "tls"); break;
+        default:
+            append_child(root, "SymType", static_cast<int>(m_type));
+            break;
     }
 
-    out << YAML::Key << "vis" << YAML::Value;
     switch (m_vis)
     {
-        case STV_DEFAULT:   out << "default";   break;
-        case STV_INTERNAL:  out << "internal";  break;
-        case STV_HIDDEN:    out << "hidden";    break;
-        case STV_PROTECTED: out << "protected"; break;
-        default:            out << static_cast<int>(m_vis); break;
+        case STV_DEFAULT:   append_child(root, "Vis", "default"); break;
+        case STV_INTERNAL:  append_child(root, "Vis", "internal"); break;
+        case STV_HIDDEN:    append_child(root, "Vis", "hidden"); break;
+        case STV_PROTECTED: append_child(root, "Vis", "protected"); break;
+        default:
+            append_child(root, "Vis", static_cast<int>(m_vis));
+            break;
     }
 
-    out << YAML::Key << "symindex" << YAML::Value << m_symindex;
-    out << YAML::EndMap;
+    append_child(root, "SymIndex", m_symindex);
+    return root;
 }
 
 void

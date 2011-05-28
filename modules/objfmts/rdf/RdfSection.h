@@ -65,7 +65,7 @@ struct YASM_STD_EXPORT RdfSection : public AssocData
 
     RdfSection(Type type_, SymbolRef sym_);
     ~RdfSection();
-    void Write(YAML::Emitter& out) const;
+    pugi::xml_node Write(pugi::xml_node out) const;
 
     /// Write section header to bytes.
     void Write(Bytes& bytes, const Section& sect) const;

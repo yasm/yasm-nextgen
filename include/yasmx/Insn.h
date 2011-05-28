@@ -57,9 +57,10 @@ public:
     virtual ~TargetModifier();
     virtual void Put(llvm::raw_ostream& os) const = 0;
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    virtual void Write(YAML::Emitter& out) const = 0;
+    /// Write an XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    virtual pugi::xml_node Write(pugi::xml_node out) const = 0;
 
 private:
     // not implemented (noncopyable class)
@@ -197,9 +198,10 @@ public:
     /// Set the source location of the operand.
     void setSource(SourceLocation source) { m_source = source; }
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 private:
     /// Operand data.
@@ -256,9 +258,10 @@ public:
     virtual ~Prefix();
     virtual void Put(llvm::raw_ostream& os) const = 0;
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    virtual void Write(YAML::Emitter& out) const = 0;
+    /// Write an XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    virtual pugi::xml_node Write(pugi::xml_node out) const = 0;
 
 private:
     Prefix(const Prefix&);                  // not implemented
@@ -314,9 +317,10 @@ public:
 
     virtual Insn* clone() const = 0;
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 protected:
     /// Copy constructor.
@@ -327,9 +331,10 @@ protected:
                           SourceLocation source,
                           Diagnostic& diags) = 0;
 
-    /// Write derived class YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    virtual void DoWrite(YAML::Emitter& out) const = 0;
+    /// Write derived class XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    virtual pugi::xml_node DoWrite(pugi::xml_node out) const = 0;
 
     /// Operands.
     Operands m_operands;
@@ -357,50 +362,6 @@ operator<< (llvm::raw_ostream& os, const Prefix& prefix)
 {
     prefix.Put(os);
     return os;
-}
-
-/// Dump a YAML representation of a target modifier.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param tmod         target modifier
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const TargetModifier& tmod)
-{
-    tmod.Write(out);
-    return out;
-}
-
-/// Dump a YAML representation of a prefix.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param prefix       prefix
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Prefix& prefix)
-{
-    prefix.Write(out);
-    return out;
-}
-
-/// Dump a YAML representation of an operand.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param operand      operand
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Operand& operand)
-{
-    operand.Write(out);
-    return out;
-}
-
-/// Dump a YAML representation of an instruction.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param insn         instruction
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Insn& insn)
-{
-    insn.Write(out);
-    return out;
 }
 
 } // namespace yasm

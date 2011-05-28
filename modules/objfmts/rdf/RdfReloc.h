@@ -63,7 +63,7 @@ public:
     void Write(Bytes& bytes, unsigned int scnum) const;
 
 protected:
-    void DoWrite(YAML::Emitter& out) const;
+    pugi::xml_node DoWrite(pugi::xml_node out) const;
 
 private:
     Type m_type;            ///< type of relocation

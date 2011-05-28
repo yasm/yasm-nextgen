@@ -28,7 +28,6 @@
 
 #include <string>
 
-#include "YAML/emitter.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Object.h"
 
@@ -59,18 +58,18 @@ ElfSpecialSymbol::~ElfSpecialSymbol()
 {
 }
 
-void
-ElfSpecialSymbol::Write(YAML::Emitter& out) const
+pugi::xml_node
+ElfSpecialSymbol::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << key;
-    out << YAML::Key << "name" << YAML::Value << name;
-    out << YAML::Key << "reloc type" << YAML::Value << reloc;
-    out << YAML::Key << "data size" << YAML::Value << size;
-    out << YAML::Key << "symbol relative" << YAML::Value << sym_relative;
-    out << YAML::Key << "thread local" << YAML::Value << thread_local;
-    out << YAML::Key << "curpos adjust" << YAML::Value << curpos_adjust;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("ElfSpecialSymbol");
+    root.append_attribute("type") = key;
+    append_child(root, "Name", name);
+    append_child(root, "RelocType", reloc);
+    append_child(root, "DataSize", size);
+    append_child(root, "SymRelative", sym_relative);
+    append_child(root, "ThreadLocal", thread_local);
+    append_child(root, "CurposAdjust", curpos_adjust);
+    return root;
 }
 
 ElfMachine::~ElfMachine()

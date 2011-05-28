@@ -29,7 +29,7 @@
 #include "yasmx/Bytecode.h"
 
 #include "llvm/ADT/Statistic.h"
-#include "YAML/emitter.h"
+#include "llvm/ADT/Twine.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeContainer.h"
 #include "yasmx/BytecodeOutput.h"
@@ -308,41 +308,35 @@ Bytecode::AppendFixed(unsigned int size,
     return m_fixed_fixups.back();
 }
 
-void
-Bytecode::Write(YAML::Emitter& out) const
+pugi::xml_node
+Bytecode::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "fixed" << YAML::Value << m_fixed;
+    pugi::xml_node root = out.append_child("Bytecode");
+    if (m_index != ~0UL)
+        root.append_attribute("index") = m_index;
+    root.append_attribute("id") =
+        llvm::Twine::utohexstr((uint64_t)this).str().c_str();
+    root.append_attribute("source") = m_source.getRawEncoding();
+    root.append_attribute("offset") = m_offset;
+
+    if (!m_fixed.empty())
+        append_child(root, "Fixed", m_fixed);
 
     // fixups
-    out << YAML::Key << "fixed fixups" << YAML::Value;
-    if (m_fixed_fixups.empty())
-        out << YAML::Flow;
-    out << YAML::BeginSeq;
     for (std::vector<Fixup>::const_iterator i=m_fixed_fixups.begin(),
          end=m_fixed_fixups.end(); i != end; ++i)
-        out << *i;
-    out << YAML::EndSeq;
+        append_data(root, *i);
 
     // tail contents
-    out << YAML::Key << "tail" << YAML::Value;
     if (m_contents.get() != 0)
-        out << *m_contents;
-    else
-        out << YAML::Null;
-
-    out << YAML::Key << "tail length" << YAML::Value << m_len;
-    out << YAML::Key << "source" << YAML::Value << m_source.getRawEncoding();
-    out << YAML::Key << "offset" << YAML::Value << m_offset;
-    out << YAML::Key << "index" << YAML::Value;
-    if (m_index != ~0UL)
-        out << m_index;
-    else
-        out << YAML::Null;
+    {
+        append_data(root, *m_contents);
+        root.append_attribute("tail_len") = m_len;
+    }
 
     // TODO: symbols
 
-    out << YAML::EndMap;
+    return root;
 }
 
 Bytecode::Fixup::Fixup(unsigned int off, const Value& val)
@@ -372,12 +366,11 @@ Bytecode::Fixup::swap(Fixup& oth)
     std::swap(m_off, oth.m_off);
 }
 
-void
-Bytecode::Fixup::Write(YAML::Emitter& out) const
+pugi::xml_node
+Bytecode::Fixup::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "offset" << YAML::Value << m_off;
-    out << YAML::Key << "value" << YAML::Value;
-    Value::Write(out);
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("Fixup");
+    root.append_attribute("offset") = m_off;
+    Value::Write(root);
+    return root;
 }

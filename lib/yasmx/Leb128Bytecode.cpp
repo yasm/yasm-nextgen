@@ -26,7 +26,6 @@
 ///
 #include "yasmx/BytecodeContainer.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
@@ -75,8 +74,8 @@ public:
 
     LEB128Bytecode* clone() const;
 
-    /// Write a YAML representation.  For debugging purposes.
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 private:
     Value m_value;
@@ -214,13 +213,12 @@ LEB128Bytecode::clone() const
     return new LEB128Bytecode(*this);
 }
 
-void
-LEB128Bytecode::Write(YAML::Emitter& out) const
+pugi::xml_node
+LEB128Bytecode::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "LEB128";
-    out << YAML::Key << "value" << YAML::Value << m_value;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("LEB128");
+    append_data(root, m_value);
+    return root;
 }
 
 void

@@ -27,7 +27,6 @@
 #include "RdfSection.h"
 
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
 #include "yasmx/InputBuffer.h"
@@ -50,16 +49,16 @@ RdfSection::~RdfSection()
 {
 }
 
-void
-RdfSection::Write(YAML::Emitter& out) const
+pugi::xml_node
+RdfSection::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << key;
-    out << YAML::Key << "sym" << YAML::Value << sym;
-    out << YAML::Key << "scnum" << YAML::Value << scnum;
-    out << YAML::Key << "reserved" << YAML::Value << reserved;
-    out << YAML::Key << "raw data" << YAML::Value << raw_data;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("RdfSection");
+    root.append_attribute("key") = key;
+    append_child(root, "Sym", sym);
+    root.append_attribute("scnum") = scnum;
+    append_child(root, "Reserved", reserved);
+    append_child(root, "RawData", raw_data);
+    return root;
 }
 
 void

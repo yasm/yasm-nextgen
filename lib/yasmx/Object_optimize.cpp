@@ -40,7 +40,6 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/IntervalTree.h"
@@ -168,7 +167,7 @@ class OffsetSetter : public DebugDumper<OffsetSetter>
 public:
     OffsetSetter();
     ~OffsetSetter() {}
-    void Write(YAML::Emitter& out) const;
+    pugi::xml_node Write(pugi::xml_node out) const;
 
     Bytecode* m_bc;
     unsigned long m_cur_val;
@@ -185,16 +184,16 @@ OffsetSetter::OffsetSetter()
 {
 }
 
-void
-OffsetSetter::Write(YAML::Emitter& out) const
+pugi::xml_node
+OffsetSetter::Write(pugi::xml_node out) const
 {
-    out << YAML::Flow << YAML::BeginMap;
-    out << YAML::Key << "bc" << YAML::Value
-        << YAML::Alias("BC@" + llvm::Twine::utohexstr((uint64_t)m_bc));
-    out << YAML::Key << "curval" << YAML::Value << m_cur_val;
-    out << YAML::Key << "newval" << YAML::Value << m_new_val;
-    out << YAML::Key << "thres" << YAML::Value << m_thres;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("OffsetSetter");
+    root.append_attribute("bc") =
+        llvm::Twine::utohexstr((uint64_t)m_bc).str().c_str();
+    root.append_attribute("curval") = m_cur_val;
+    root.append_attribute("newval") = m_new_val;
+    root.append_attribute("thres") = m_thres;
+    return root;
 }
 
 namespace {
@@ -214,7 +213,7 @@ public:
              Span* span,
              long new_val);
         ~Term() {}
-        void Write(YAML::Emitter& out) const;
+        pugi::xml_node Write(pugi::xml_node out) const;
 
         Location m_loc;
         Location m_loc2;
@@ -236,7 +235,8 @@ public:
     bool RecalcNormal(Diagnostic& diags);
 
     std::string getName() const;
-    void Write(YAML::Emitter& out) const;
+    pugi::xml_node Write(pugi::xml_node out) const;
+    pugi::xml_node WriteRef(pugi::xml_node out) const;
 
 private:
     Span(const Span&);                  // not implemented
@@ -289,7 +289,7 @@ public:
     void Step1e();
     void Step2();
 
-    void Write(YAML::Emitter& out) const;
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 private:
     void ITreeAdd(Span& span, Span::Term& term);
@@ -333,16 +333,16 @@ Span::Term::Term(unsigned int subst,
     ++num_span_terms;
 }
 
-void
-Span::Term::Write(YAML::Emitter& out) const
+pugi::xml_node
+Span::Term::Write(pugi::xml_node out) const
 {
-    out << YAML::Flow << YAML::BeginMap;
-    out << YAML::Key << "loc" << YAML::Value << m_loc;
-    out << YAML::Key << "loc2" << YAML::Value << m_loc2;
-    out << YAML::Key << "curval" << YAML::Value << m_cur_val;
-    out << YAML::Key << "newval" << YAML::Value << m_new_val;
-    out << YAML::Key << "subst" << YAML::Value << m_subst;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("Term");
+    append_child(root, "Loc", m_loc);
+    append_child(root, "Loc2", m_loc2);
+    root.append_attribute("curval") = m_cur_val;
+    root.append_attribute("newval") = m_new_val;
+    root.append_attribute("subst") = m_subst;
+    return root;
 }
 
 Span::Span(Bytecode& bc,
@@ -473,56 +473,56 @@ Span::getName() const
     return oss.str();
 }
 
-void
-Span::Write(YAML::Emitter& out) const
+pugi::xml_node
+Span::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "bc" << YAML::Value
-        << YAML::Alias("BC@" + llvm::Twine::utohexstr((uint64_t)(&m_bc)));
+    pugi::xml_node root = out.append_child("Span");
+    root.append_attribute("bc") =
+        llvm::Twine::utohexstr((uint64_t)(&m_bc)).str().c_str();
+    root.append_attribute("id") = m_id;
+
     if (!m_depval.hasAbs() || m_depval.isRelative())
-        out << YAML::Key << "depval" << YAML::Value << m_depval;
+        append_child(root, "DepVal", m_depval);
     else
     {
         llvm::SmallString<256> ss;
         llvm::raw_svector_ostream oss(ss);
-        oss << *m_depval.getAbs();
-        out << YAML::Key << "depval" << YAML::Value << oss.str();
+        oss << *m_depval.getAbs() << '\0';
+        append_child(root, "DepVal", oss.str().data());
     }
 
-    out << YAML::Key << "span terms" << YAML::Value << YAML::BeginSeq;
     for (Terms::const_iterator i=m_span_terms.begin(), end=m_span_terms.end();
          i != end; ++i)
-    {
-        i->Write(out);
-    }
-    out << YAML::EndSeq;
+        append_data(root, *i);
 
-    out << YAML::Key << "curval" << YAML::Value << m_cur_val;
-    out << YAML::Key << "newval" << YAML::Value << m_new_val;
-    out << YAML::Key << "negthres" << YAML::Value << m_neg_thres;
-    out << YAML::Key << "posthres" << YAML::Value << m_pos_thres;
-    out << YAML::Key << "id" << YAML::Value << m_id;
+    root.append_attribute("curval") = m_cur_val;
+    root.append_attribute("newval") = m_new_val;
+    root.append_attribute("negthres") = m_neg_thres;
+    root.append_attribute("posthres") = m_pos_thres;
 
-    out << YAML::Key << "active" << YAML::Value;
     switch (m_active)
     {
-        case INACTIVE: out << "inactive"; break;
-        case ACTIVE: out << "active"; break;
-        case ON_Q: out << "on queue"; break;
+        case INACTIVE:  root.append_attribute("active") = "inactive"; break;
+        case ACTIVE:    root.append_attribute("active") = "active"; break;
+        case ON_Q:      root.append_attribute("active") = "queued"; break;
     }
 
-    out << YAML::Key << "backtrace" << YAML::Value;
-    out << YAML::Flow << YAML::BeginSeq;
+    pugi::xml_node backtrace = root.append_child("Backtrace");
     for (BacktraceSpans::const_iterator i=m_backtrace.begin(),
          end=m_backtrace.end(); i != end; ++i)
-    {
-        out << YAML::Alias((*i)->getName());
-    }
-    out << YAML::EndSeq;
+        (*i)->WriteRef(backtrace);
 
-    out << YAML::Key << "offset setter index";
-	out << YAML::Value << static_cast<unsigned long>(m_os_index);
-    out << YAML::EndMap;
+    root.append_attribute("os_index") = static_cast<unsigned long>(m_os_index);
+    return root;
+}
+
+pugi::xml_node
+Span::WriteRef(pugi::xml_node out) const
+{
+    pugi::xml_node root = out.append_child("Span");
+    root.append_attribute("bc") = m_bc.getIndex();
+    root.append_attribute("id") = m_id;
+    return root;
 }
 
 Optimizer::Optimizer(Diagnostic& diags)
@@ -542,55 +542,36 @@ Optimizer::~Optimizer()
     }
 }
 
-void
-Optimizer::Write(YAML::Emitter& out) const
+pugi::xml_node
+Optimizer::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
+    pugi::xml_node root = out.append_child("Optimizer");
 
     // spans
-    out << YAML::Key << "spans" << YAML::Value;
-    if (m_spans.empty())
-        out << YAML::Flow;
-    out << YAML::BeginSeq;
+    pugi::xml_node spans = root.append_child("Spans");
     for (Spans::const_iterator i=m_spans.begin(), end=m_spans.end();
          i != end; ++i)
-    {
-        out << YAML::Alias((*i)->getName());
-        (*i)->Write(out);
-    }
-    out << YAML::EndSeq;
+        append_data(spans, **i);
 
     // queue A
-    out << YAML::Key << "QA" << YAML::Value << YAML::Flow << YAML::BeginSeq;
+    pugi::xml_node qa = root.append_child("QueueA");
     for (SpanQueue::const_iterator j=m_QA.begin(), end=m_QA.end();
          j != end; ++j)
-    {
-        out << YAML::Alias((*j)->getName());
-    }
-    out << YAML::EndSeq;
+        (*j)->WriteRef(qa);
 
     // queue B
-    out << YAML::Key << "QB" << YAML::Value << YAML::Flow << YAML::BeginSeq;
+    pugi::xml_node qb = root.append_child("QueueB");
     for (SpanQueue::const_iterator k=m_QB.begin(), end=m_QB.end();
          k != end; ++k)
-    {
-        out << YAML::Alias((*k)->getName());
-    }
-    out << YAML::EndSeq;
+        (*k)->WriteRef(qa);
 
     // offset setters
-    out << YAML::Key << "offset setters" << YAML::Value;
-    if (m_offset_setters.empty())
-        out << YAML::Flow;
-    out << YAML::BeginSeq;
+    pugi::xml_node osetters = root.append_child("OffsetSetters");
     for (std::vector<OffsetSetter>::const_iterator m=m_offset_setters.begin(),
          end=m_offset_setters.end(); m != end; ++m)
-    {
-        m->Write(out);
-    }
-    out << YAML::EndSeq;
+        append_data(osetters, *m);
 
-    out << YAML::EndMap;
+    return root;
 }
 
 void

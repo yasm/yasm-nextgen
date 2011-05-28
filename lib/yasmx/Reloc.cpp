@@ -26,8 +26,6 @@
 //
 #include "yasmx/Reloc.h"
 
-#include "YAML/emitter.h"
-
 
 using namespace yasm;
 
@@ -47,20 +45,19 @@ Reloc::getValue() const
     return Expr(m_sym);
 }
 
-void
-Reloc::Write(YAML::Emitter& out) const
+pugi::xml_node
+Reloc::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "reloc type" << YAML::Value << getTypeName();
-    out << YAML::Key << "addr" << YAML::Value << m_addr;
-    out << YAML::Key << "sym" << YAML::Value << m_sym;
-    out << YAML::Key << "implementation" << YAML::Value;
+    pugi::xml_node root = out.append_child("Reloc");
+    root.append_attribute("type") = getTypeName().c_str();
+    append_child(root, "Addr", m_addr);
+    append_child(root, "Sym", m_sym);
     DoWrite(out);
-    out << YAML::EndMap;
+    return root;
 }
 
-void
-Reloc::DoWrite(YAML::Emitter& out) const
+pugi::xml_node
+Reloc::DoWrite(pugi::xml_node out) const
 {
-    out << YAML::Null;
+    return out;
 }

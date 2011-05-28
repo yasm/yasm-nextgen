@@ -108,7 +108,7 @@ public:
     virtual bool Output(Bytecode& bc, BytecodeOutput& bc_out);
     llvm::StringRef getType() const;
     virtual UnwindCode* clone() const;
-    virtual void Write(YAML::Emitter& out) const;
+    virtual pugi::xml_node Write(pugi::xml_node out) const;
 
 private:
     SymbolRef m_proc;       // Start of procedure

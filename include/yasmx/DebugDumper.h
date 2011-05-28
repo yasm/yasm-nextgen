@@ -31,42 +31,103 @@
 ///
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
+#include "pugixml/pugixml.h"
 #include "yasmx/Config/export.h"
 
 
 namespace yasm
 {
 
+class YASM_LIB_EXPORT xml_writer_raw_ostream : public pugi::xml_writer
+{
+public:
+    xml_writer_raw_ostream(llvm::raw_ostream& os) : m_os(os) {}
+    virtual ~xml_writer_raw_ostream();
+    void write(const void* data, size_t size);
+
+private:
+    llvm::raw_ostream& m_os;
+};
+
 template <typename T>
 class YASM_LIB_EXPORT DebugDumper
 {
 public:
-    /// Dump a YAML representation to stderr.
+    /// Dump an XML representation to stderr.
     /// For debugging purposes.
     void Dump() const;
 };
 
 template <typename T>
+YASM_LIB_EXPORT
 void
 DebugDumper<T>::Dump() const
 {
-    YAML::Emitter out;
-    static_cast<const T*>(this)->Write(out);
-    llvm::errs() << out.c_str() << '\n';
+    pugi::xml_document doc;
+    static_cast<const T*>(this)->Write(doc);
+    xml_writer_raw_ostream writer(llvm::errs());
+    doc.print(writer);
 }
 
-/// Dump a YAML representation.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param dumper       dumper
-/// @return Emitter.
+/// Generic catch-all helper function to append something.
 template <typename T>
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const DebugDumper<T>& dumper)
+inline pugi::xml_node
+append_data(pugi::xml_node node, const T& val)
 {
-    dumper.Write(out);
-    return out;
+    return val.Write(node);
 }
+
+/// Helper functions to append a simple pcdata integer or string node.
+YASM_LIB_EXPORT
+pugi::xml_node append_data(pugi::xml_node node, const char* val);
+YASM_LIB_EXPORT
+pugi::xml_node append_data(pugi::xml_node node, const std::string& val);
+YASM_LIB_EXPORT
+pugi::xml_node append_data(pugi::xml_node node, llvm::StringRef val);
+YASM_LIB_EXPORT
+pugi::xml_node append_data(pugi::xml_node node, int val);
+YASM_LIB_EXPORT
+pugi::xml_node append_data(pugi::xml_node node, unsigned int val);
+YASM_LIB_EXPORT
+pugi::xml_node append_data(pugi::xml_node node, long val);
+YASM_LIB_EXPORT
+pugi::xml_node append_data(pugi::xml_node node, unsigned long val);
+YASM_LIB_EXPORT
+pugi::xml_node append_data(pugi::xml_node node, bool val);
+YASM_LIB_EXPORT
+pugi::xml_node append_data(pugi::xml_node node, double val);
+
+/// Generic catch-all helper function to append <tag>something</tag>.
+template <typename T>
+inline pugi::xml_node
+append_child(pugi::xml_node node, const char* name, const T& val)
+{
+    pugi::xml_node child = node.append_child(name);
+    append_data(child, val);
+    return child;
+}
+
+/// Helper function to append a simple <tag>string</tag> node.
+YASM_LIB_EXPORT
+pugi::xml_node append_child(pugi::xml_node node, const char* name, const char* val);
+YASM_LIB_EXPORT
+pugi::xml_node append_child(pugi::xml_node node, const char* name, const std::string& val);
+YASM_LIB_EXPORT
+pugi::xml_node append_child(pugi::xml_node node, const char* name, llvm::StringRef val);
+
+/// Helper functions to append a simple <tag>integer</tag> node.
+YASM_LIB_EXPORT
+pugi::xml_node append_child(pugi::xml_node node, const char* name, int val);
+YASM_LIB_EXPORT
+pugi::xml_node append_child(pugi::xml_node node, const char* name, unsigned int val);
+YASM_LIB_EXPORT
+pugi::xml_node append_child(pugi::xml_node node, const char* name, long val);
+YASM_LIB_EXPORT
+pugi::xml_node append_child(pugi::xml_node node, const char* name, unsigned long val);
+YASM_LIB_EXPORT
+pugi::xml_node append_child(pugi::xml_node node, const char* name, bool val);
+YASM_LIB_EXPORT
+pugi::xml_node append_child(pugi::xml_node node, const char* name, double val);
 
 } // yasm namespace
 

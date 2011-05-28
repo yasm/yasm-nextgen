@@ -26,7 +26,6 @@
 ///
 #include "yasmx/Parse/NameValue.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Object.h"
 #include "yasmx/Symbol.h"
@@ -188,28 +187,34 @@ NameValue::getToken() const
     return m_token;
 }
 
-void
-NameValue::Write(YAML::Emitter& out) const
+pugi::xml_node
+NameValue::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "name" << YAML::Value << m_name;
+    pugi::xml_node root = out.append_child("NameValue");
+    append_child(root, "Name", m_name);
+    pugi::xml_node val = root.append_child("Value");
+    pugi::xml_attribute type = val.append_attribute("type");
     switch (m_type)
     {
         case ID:
-            out << YAML::Key << "id" << YAML::Value << m_idstr;
-            out << YAML::Key << "prefix" << YAML::Value << m_id_prefix;
+            type = "id";
+            append_child(val, "Id", m_idstr);
+            append_child(val, "Prefix", llvm::StringRef(&m_id_prefix, 1));
             break;
         case STRING:
-            out << YAML::Key << "string" << YAML::Value << m_idstr;
+            type = "string";
+            append_data(val, m_idstr);
             break;
         case EXPR:
-            out << YAML::Key << "expr" << YAML::Value << *m_expr;
+            type = "expr";
+            append_data(val, *m_expr);
             break;
         case TOKEN:
-            out << YAML::Key << "token" << YAML::Value << m_token.getKind();
+            type = "token";
+            append_data(val, m_token.getKind());
             break;
     }
-    out << YAML::EndMap;
+    return root;
 }
 
 NameValues::~NameValues()
@@ -220,11 +225,11 @@ NameValues::~NameValues()
     stdx::ptr_vector_owner<NameValue> owner(*this);
 }
 
-void
-NameValues::Write(YAML::Emitter& out) const
+pugi::xml_node
+NameValues::Write(pugi::xml_node out) const
 {
-    out << YAML::Flow << YAML::BeginSeq;
+    pugi::xml_node root = out.append_child("NameValues");
     for (const_iterator i=begin(), endi=end(); i != endi; ++i)
-        out << *i;
-    out << YAML::EndSeq;
+        append_data(root, *i);
+    return root;
 }

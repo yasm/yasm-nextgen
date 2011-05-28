@@ -27,7 +27,6 @@
 #include "RdfReloc.h"
 
 #include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_util.h"
 
@@ -101,12 +100,11 @@ RdfReloc::Write(Bytes& bytes, unsigned int scnum) const
     Write16(bytes, m_refseg);       // relocated symbol
 }
 
-void
-RdfReloc::DoWrite(YAML::Emitter& out) const
+pugi::xml_node
+RdfReloc::DoWrite(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "RdfReloc";
-    out << YAML::Key << "size" << YAML::Value << m_size;
-    out << YAML::Key << "refseg" << YAML::Value << m_refseg;
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("RdfReloc");
+    append_child(root, "Size", m_size);
+    append_child(root, "RefSeg", m_refseg);
+    return root;
 }

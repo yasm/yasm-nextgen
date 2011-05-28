@@ -26,7 +26,6 @@
 ///
 #include "yasmx/BytecodeContainer.h"
 
-#include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/BytecodeOutput.h"
@@ -79,8 +78,8 @@ public:
 
     AlignBytecode* clone() const;
 
-    /// Write a YAML representation.  For debugging purposes.
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 private:
     Expr m_boundary;    ///< alignment boundary
@@ -309,16 +308,16 @@ AlignBytecode::clone() const
     return new AlignBytecode(m_boundary, m_fill, m_maxskip, m_code_fill);
 }
 
-void
-AlignBytecode::Write(YAML::Emitter& out) const
+pugi::xml_node
+AlignBytecode::Write(pugi::xml_node out) const
 {
-    out << YAML::BeginMap;
-    out << YAML::Key << "type" << YAML::Value << "Align";
-    out << YAML::Key << "boundary" << YAML::Value << m_boundary;
-    out << YAML::Key << "fill" << YAML::Value << m_fill;
-    out << YAML::Key << "max skip" << YAML::Value << m_maxskip;
-    out << YAML::Key << "code fill" << YAML::Value << (m_code_fill != 0);
-    out << YAML::EndMap;
+    pugi::xml_node root = out.append_child("Align");
+    append_child(root, "Boundary", m_boundary);
+    append_child(root, "Fill", m_fill);
+    append_child(root, "MaxSkip", m_maxskip);
+    if (m_code_fill != 0)
+        root.append_attribute("code") = true;
+    return root;
 }
 
 void

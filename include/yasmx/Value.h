@@ -311,9 +311,10 @@ public:
     /// @return Source range.
     SourceRange getSource() const { return m_source; }
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
     /// Maximum value of right shift.
     enum { RSHIFT_MAX = 127 };
@@ -405,17 +406,6 @@ private:
     /// Size of the value, in bits.
     unsigned int m_size : 8;
 };
-
-/// Dump a YAML representation of value.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param value        value
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Value& value)
-{
-    value.Write(out);
-    return out;
-}
 
 /// Specialized swap for Value.
 inline void

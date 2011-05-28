@@ -65,34 +65,25 @@ public:
     /// @return Type name.
     virtual std::string getTypeName() const = 0;
 
-    /// Write a YAML representation.  For debugging purposes.
-    /// @param out          YAML emitter
-    void Write(YAML::Emitter& out) const;
+    /// Write an XML representation.  For debugging purposes.
+    /// @param out          XML node
+    /// @return Root node.
+    pugi::xml_node Write(pugi::xml_node out) const;
 
 protected:
     IntNum m_addr;      ///< Offset (address) within section
     SymbolRef m_sym;    ///< Relocated symbol
 
-    /// Write derived class YAML representation.  For debugging purposes.
+    /// Write derived class XML representation.  For debugging purposes.
     /// Default implementation outputs a simple null.
-    /// @param out          YAML emitter
-    virtual void DoWrite(YAML::Emitter& out) const;
+    /// @param out          XML node
+    /// @return Root node.
+    virtual pugi::xml_node DoWrite(pugi::xml_node out) const;
 
 private:
     Reloc(const Reloc&);                    // not implemented
     const Reloc& operator=(const Reloc&);   // not implemented
 };
-
-/// Dump a YAML representation of relocation.  For debugging purposes.
-/// @param out          YAML emitter
-/// @param reloc        relocation
-/// @return Emitter.
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const Reloc& reloc)
-{
-    reloc.Write(out);
-    return out;
-}
 
 } // namespace yasm
 

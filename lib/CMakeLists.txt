@@ -37,12 +37,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     llvm/System/ThreadLocal.cpp
     llvm/System/TimeValue.cpp
     llvm/System/Valgrind.cpp
-    YAML/emitter.cpp
-    YAML/emitterstate.cpp
-    YAML/emitterutils.cpp
-    YAML/ostream.cpp
-    YAML/regex.cpp
-    YAML/stream.cpp
+    pugixml/pugixml.cpp
     yasmx/Basic/Diagnostic.cpp
     yasmx/Basic/FileManager.cpp
     yasmx/Basic/SourceLocation.cpp
@@ -74,6 +69,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Bytes_util.cpp
     yasmx/Bytes_leb128.cpp
     yasmx/DataBytecode.cpp
+    yasmx/DebugDumper.cpp
     yasmx/DebugFormat.cpp
     yasmx/EffAddr.cpp
     yasmx/Expr.cpp

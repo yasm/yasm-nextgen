@@ -29,9 +29,8 @@
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "yasmx/Bytes.h"
+#include "yasmx/DebugDumper.h"
 
-
-namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -52,14 +51,13 @@ struct BinSection;
 class BinGroup;
 typedef stdx::ptr_vector<BinGroup> BinGroups;
 
-class YASM_STD_EXPORT BinGroup
+class YASM_STD_EXPORT BinGroup : DebugDumper<BinGroup>
 {
 public:
     BinGroup(Section& section, BinSection& bsd);
     ~BinGroup();
 
-    void Write(YAML::Emitter& out) const;
-    void Dump() const;
+    pugi::xml_node Write(pugi::xml_node out) const;
 
     void AssignStartRecurse(IntNum& start,
                             IntNum& last,
@@ -76,24 +74,13 @@ public:
     stdx::ptr_vector_owner<BinGroup> m_follow_groups_owner;
 };
 
-inline YAML::Emitter&
-operator<< (YAML::Emitter& out, const BinGroup& group)
-{
-    group.Write(out);
-    return out;
-}
-
-YASM_STD_EXPORT
-YAML::Emitter& operator<< (YAML::Emitter& os, const BinGroups& groups);
-
-class YASM_STD_EXPORT BinLink
+class YASM_STD_EXPORT BinLink : DebugDumper<BinLink>
 {
 public:
     BinLink(Object& object, Diagnostic& diags);
     ~BinLink();
 
-    void Write(YAML::Emitter& out) const;
-    void Dump() const;
+    pugi::xml_node Write(pugi::xml_node out) const;
 
     bool DoLink(const IntNum& origin);
     bool CheckLMAOverlap();
@@ -115,6 +102,9 @@ private:
     BinGroups m_lma_groups, m_vma_groups;
     stdx::ptr_vector_owner<BinGroup> m_lma_groups_owner, m_vma_groups_owner;
 };
+
+YASM_STD_EXPORT
+pugi::xml_node append_data(pugi::xml_node out, const BinGroups& groups);
 
 }} // namespace yasm::objfmt
 
