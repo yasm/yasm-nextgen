@@ -45,6 +45,7 @@
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/IntervalTree.h"
 #include "yasmx/Bytecode.h"
+#include "yasmx/DebugDumper.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location_util.h"
@@ -162,13 +163,12 @@ using namespace yasm;
 // 3. Final pass over bytecodes to generate final offsets.
 //
 namespace {
-class OffsetSetter
+class OffsetSetter : public DebugDumper<OffsetSetter>
 {
 public:
     OffsetSetter();
     ~OffsetSetter() {}
     void Write(YAML::Emitter& out) const;
-    void Dump() const;
 
     Bytecode* m_bc;
     unsigned long m_cur_val;
@@ -200,11 +200,11 @@ OffsetSetter::Write(YAML::Emitter& out) const
 namespace {
 class Optimizer;
 
-class Span
+class Span : public DebugDumper<Span>
 {
     friend class Optimizer;
 public:
-    class Term
+    class Term : public DebugDumper<Span::Term>
     {
     public:
         Term();
@@ -215,7 +215,6 @@ public:
              long new_val);
         ~Term() {}
         void Write(YAML::Emitter& out) const;
-        void Dump() const;
 
         Location m_loc;
         Location m_loc2;
@@ -238,7 +237,6 @@ public:
 
     std::string getName() const;
     void Write(YAML::Emitter& out) const;
-    void Dump() const;
 
 private:
     Span(const Span&);                  // not implemented
@@ -274,7 +272,7 @@ private:
     size_t m_os_index;
 };
 
-class Optimizer
+class Optimizer : public DebugDumper<Optimizer>
 {
 public:
     Optimizer(Diagnostic& diags);
@@ -292,7 +290,6 @@ public:
     void Step2();
 
     void Write(YAML::Emitter& out) const;
-    void Dump() const;
 
 private:
     void ITreeAdd(Span& span, Span::Term& term);
@@ -346,14 +343,6 @@ Span::Term::Write(YAML::Emitter& out) const
     out << YAML::Key << "newval" << YAML::Value << m_new_val;
     out << YAML::Key << "subst" << YAML::Value << m_subst;
     out << YAML::EndMap;
-}
-
-void
-Span::Term::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
 
 Span::Span(Bytecode& bc,
@@ -536,14 +525,6 @@ Span::Write(YAML::Emitter& out) const
     out << YAML::EndMap;
 }
 
-void
-Span::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
-}
-
 Optimizer::Optimizer(Diagnostic& diags)
     : m_diags(diags)
 {
@@ -610,14 +591,6 @@ Optimizer::Write(YAML::Emitter& out) const
     out << YAML::EndSeq;
 
     out << YAML::EndMap;
-}
-
-void
-Optimizer::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
 
 void
