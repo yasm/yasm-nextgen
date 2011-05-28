@@ -26,7 +26,6 @@
 //
 #include "yasmx/Reloc.h"
 
-#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 
 
@@ -58,14 +57,6 @@ Reloc::Write(YAML::Emitter& out) const
     out << YAML::Key << "implementation" << YAML::Value;
     DoWrite(out);
     out << YAML::EndMap;
-}
-
-void
-Reloc::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
 
 void

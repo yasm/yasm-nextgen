@@ -29,7 +29,6 @@
 #include "yasmx/Bytecode.h"
 
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeContainer.h"
@@ -82,14 +81,6 @@ Bytecode::Contents::getSpecial() const
 
 Bytecode::Contents::Contents(const Contents& rhs)
 {
-}
-
-void
-Bytecode::Contents::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
 
 void
@@ -354,14 +345,6 @@ Bytecode::Write(YAML::Emitter& out) const
     out << YAML::EndMap;
 }
 
-void
-Bytecode::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
-}
-
 Bytecode::Fixup::Fixup(unsigned int off, const Value& val)
     : Value(val), m_off(off)
 {
@@ -397,12 +380,4 @@ Bytecode::Fixup::Write(YAML::Emitter& out) const
     out << YAML::Key << "value" << YAML::Value;
     Value::Write(out);
     out << YAML::EndMap;
-}
-
-void
-Bytecode::Fixup::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }

@@ -34,7 +34,6 @@
 #include <limits>
 
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 
@@ -927,14 +926,6 @@ IntNum::Write(YAML::Emitter& out) const
     llvm::SmallString<40> s;
     getStr(s);
     out << s.str();
-}
-
-void
-IntNum::Dump() const
-{
-    llvm::SmallString<40> s;
-    getStr(s);
-    llvm::errs() << s.str() << '\n';
 }
 
 void

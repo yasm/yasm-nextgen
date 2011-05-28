@@ -35,7 +35,6 @@
 
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
@@ -311,12 +310,4 @@ Object::Write(YAML::Emitter& out) const
     out << YAML::EndSeq;
 
     out << YAML::EndMap;
-}
-
-void
-Object::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }

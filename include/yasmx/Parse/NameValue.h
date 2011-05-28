@@ -37,10 +37,9 @@
 #include "yasmx/Config/export.h"
 #include "yasmx/Parse/Token.h"
 #include "yasmx/Support/ptr_vector.h"
+#include "yasmx/DebugDumper.h"
 #include "yasmx/Expr.h"
 
-
-namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -48,7 +47,7 @@ namespace yasm
 class Object;
 
 /// Name/value pair.
-class YASM_LIB_EXPORT NameValue
+class YASM_LIB_EXPORT NameValue : public DebugDumper<NameValue>
 {
 public:
     /// Identifier value constructor.
@@ -156,10 +155,6 @@ public:
     /// @param out          YAML emitter
     void Write(YAML::Emitter& out) const;
 
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
-
     void setNameSource(SourceLocation loc) { m_name_source = loc; }
     void setEqualsSource(SourceLocation loc) { m_equals_source = loc; }
     void setValueRange(SourceRange range) { m_value_range = range; }
@@ -210,7 +205,8 @@ operator<< (YAML::Emitter& out, const NameValue& nv)
 }
 
 /// Vector of name/values.
-class YASM_LIB_EXPORT NameValues : private stdx::ptr_vector<NameValue>
+class YASM_LIB_EXPORT NameValues
+    : public DebugDumper<NameValues>, private stdx::ptr_vector<NameValue>
 {
     typedef stdx::ptr_vector<NameValue> base_vector;
 
@@ -246,10 +242,6 @@ public:
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     void Write(YAML::Emitter& out) const;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
 };
 
 /// Dump a YAML representation of vector of name/values.

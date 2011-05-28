@@ -26,7 +26,6 @@
 //
 #include "yasmx/EffAddr.h"
 
-#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Expr.h"
@@ -81,12 +80,4 @@ EffAddr::Write(YAML::Emitter& out) const
     out << YAML::Key << "implementation" << YAML::Value;
     DoWrite(out);
     out << YAML::EndMap;
-}
-
-void
-EffAddr::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }

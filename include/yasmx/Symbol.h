@@ -39,8 +39,6 @@
 #include "yasmx/Location.h"
 
 
-namespace YAML { class Emitter; }
-
 namespace yasm
 {
 
@@ -211,10 +209,6 @@ public:
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     void Write(YAML::Emitter& out) const;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
 
 private:
     Symbol(const Symbol&);                  // not implemented

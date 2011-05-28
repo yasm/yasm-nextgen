@@ -26,7 +26,6 @@
 ///
 #include "yasmx/Parse/NameValue.h"
 
-#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Expr.h"
 #include "yasmx/Object.h"
@@ -213,14 +212,6 @@ NameValue::Write(YAML::Emitter& out) const
     out << YAML::EndMap;
 }
 
-void
-NameValue::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
-}
-
 NameValues::~NameValues()
 {
     // Destroy contained NameValues.  By doing this here, we can guarantee
@@ -236,12 +227,4 @@ NameValues::Write(YAML::Emitter& out) const
     for (const_iterator i=begin(), endi=end(); i != endi; ++i)
         out << *i;
     out << YAML::EndSeq;
-}
-
-void
-NameValues::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }

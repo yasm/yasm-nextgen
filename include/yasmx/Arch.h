@@ -36,13 +36,12 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "yasmx/Config/export.h"
-
+#include "yasmx/DebugDumper.h"
 #include "yasmx/Location.h"
 #include "yasmx/Module.h"
 
 
 namespace llvm { class APFloat; class raw_ostream; }
-namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -64,7 +63,7 @@ class TargetModifier;
 class Token;
 
 /// A register.
-class YASM_LIB_EXPORT Register
+class YASM_LIB_EXPORT Register : public DebugDumper<Register>
 {
 public:
     Register() {}
@@ -87,10 +86,6 @@ public:
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     virtual void Write(YAML::Emitter& out) const = 0;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
 
 private:
     Register(const Register&);                  // not implemented
@@ -116,7 +111,7 @@ operator<< (YAML::Emitter& out, const Register& reg)
 }
 
 /// A group of registers.
-class YASM_LIB_EXPORT RegisterGroup
+class YASM_LIB_EXPORT RegisterGroup : public DebugDumper<RegisterGroup>
 {
 public:
     RegisterGroup() {}
@@ -132,10 +127,6 @@ public:
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     virtual void Write(YAML::Emitter& out) const = 0;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
 
 private:
     RegisterGroup(const RegisterGroup&);                  // not implemented
@@ -154,7 +145,7 @@ operator<< (YAML::Emitter& out, const RegisterGroup& reggroup)
 }
 
 /// A segment register.
-class YASM_LIB_EXPORT SegmentRegister
+class YASM_LIB_EXPORT SegmentRegister : public DebugDumper<SegmentRegister>
 {
 public:
     SegmentRegister() {}
@@ -171,10 +162,6 @@ public:
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     virtual void Write(YAML::Emitter& out) const = 0;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
 
 private:
     SegmentRegister(const SegmentRegister&);                  // not implemented

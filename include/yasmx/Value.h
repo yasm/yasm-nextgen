@@ -37,14 +37,13 @@
 #include "yasmx/Basic/DiagnosticKinds.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
+#include "yasmx/DebugDumper.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location.h"
 #include "yasmx/SymbolRef.h"
 
 
 class ValueTest;
-
-namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -59,7 +58,7 @@ class Object;
 /// A value.  May be absolute or relative.  Outside the parser, #Expr
 /// should only be used for absolute exprs.  Anything that could contain
 /// a relocatable value should use this structure instead.
-class YASM_LIB_EXPORT Value
+class YASM_LIB_EXPORT Value : public DebugDumper<Value>
 {
     friend class ::ValueTest;
 
@@ -315,10 +314,6 @@ public:
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     void Write(YAML::Emitter& out) const;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
 
     /// Maximum value of right shift.
     enum { RSHIFT_MAX = 127 };

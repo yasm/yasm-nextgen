@@ -36,6 +36,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
+#include "yasmx/DebugDumper.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location.h"
 #include "yasmx/Op.h"
@@ -43,7 +44,6 @@
 
 
 namespace llvm { class APFloat; class raw_ostream; struct fltSemantics; }
-namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -56,7 +56,7 @@ class Register;
 class Symbol;
 
 /// An term inside an expression.
-class YASM_LIB_EXPORT ExprTerm
+class YASM_LIB_EXPORT ExprTerm : public DebugDumper<ExprTerm>
 {
 public:
     /// Note loc must be used carefully (in a-b pairs), as only symrecs
@@ -264,10 +264,6 @@ public:
     /// @param out          YAML emitter
     void Write(YAML::Emitter& out) const;
 
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
-
     /// Print to stream.
     /// @param os           output stream
     /// @param base         numeric base (10=decimal, etc)
@@ -374,7 +370,7 @@ ExprTerm::setIntNum(IntNum intn)
 /// but it is key to doing advanced expression manipulation.  Due to the
 /// RPN storage style, most processing occurs going from back-to-front within
 /// the terms vector.
-class YASM_LIB_EXPORT Expr
+class YASM_LIB_EXPORT Expr : public DebugDumper<Expr>
 {
     friend class ExprTest;
 
@@ -599,10 +595,6 @@ public:
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     void Write(YAML::Emitter& out) const;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
 
     /// Print to stream.
     /// @param os           output stream

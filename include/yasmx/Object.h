@@ -36,12 +36,11 @@
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "yasmx/Support/scoped_ptr.h"
-
+#include "yasmx/DebugDumper.h"
 #include "yasmx/SymbolRef.h"
 
 
 namespace llvm { class Twine; }
-namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -52,7 +51,7 @@ class Section;
 class Symbol;
 
 /// An object.  This is the internal representation of an object file.
-class YASM_LIB_EXPORT Object
+class YASM_LIB_EXPORT Object : public DebugDumper<Object>
 {
     friend YASM_LIB_EXPORT
     YAML::Emitter& operator<< (YAML::Emitter& out, const Object& object);
@@ -245,10 +244,6 @@ public:
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     void Write(YAML::Emitter& out) const;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
 
 private:
     Object(const Object&);                  // not implemented

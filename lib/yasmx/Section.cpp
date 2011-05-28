@@ -26,7 +26,6 @@
 //
 #include "yasmx/Section.h"
 
-#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/IntNum.h"
@@ -103,12 +102,4 @@ Section::Write(YAML::Emitter& out) const
         out << *i;
     out << YAML::EndSeq;
     out << YAML::EndMap;
-}
-
-void
-Section::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }

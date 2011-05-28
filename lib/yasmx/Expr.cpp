@@ -30,7 +30,6 @@
 #include <iterator>
 
 #include "llvm/ADT/APFloat.h"
-#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
@@ -289,14 +288,6 @@ ExprTerm::Write(YAML::Emitter& out) const
     out << YAML::Key << "depth" << YAML::Value << m_depth;
     out << YAML::Key << "source" << YAML::Value << m_source.getRawEncoding();
     out << YAML::EndMap;
-}
-
-void
-ExprTerm::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
 
 void
@@ -966,14 +957,6 @@ Expr::Write(YAML::Emitter& out) const
          i != end; ++i)
         out << *i;
     out << YAML::EndSeq;
-}
-
-void
-Expr::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
 
 void

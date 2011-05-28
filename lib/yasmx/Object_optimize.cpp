@@ -197,14 +197,6 @@ OffsetSetter::Write(YAML::Emitter& out) const
     out << YAML::EndMap;
 }
 
-void
-OffsetSetter::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
-}
-
 namespace {
 class Optimizer;
 

@@ -38,11 +38,10 @@
 #include "yasmx/Config/functional.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/Bytes.h"
+#include "yasmx/DebugDumper.h"
 #include "yasmx/SymbolRef.h"
 #include "yasmx/Value.h"
 
-
-namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -53,7 +52,7 @@ class Diagnostic;
 class Expr;
 
 /// A bytecode.
-class YASM_LIB_EXPORT Bytecode
+class YASM_LIB_EXPORT Bytecode : public DebugDumper<Bytecode>
 {
     friend class BytecodeContainer;
 
@@ -84,7 +83,7 @@ public:
     /// Bytecode contents (abstract base class).  Any implementation of a
     /// specific bytecode must implement a class derived from this one.
     /// The bytecode implementation-specific data is stored in #m_contents.
-    class YASM_LIB_EXPORT Contents
+    class YASM_LIB_EXPORT Contents : public DebugDumper<Bytecode::Contents>
     {
     public:
         typedef std::auto_ptr<Contents> Ptr;
@@ -181,10 +180,6 @@ public:
         /// Called by Bytecode::Write(YAML::Emitter&).
         /// @param out          YAML emitter
         virtual void Write(YAML::Emitter& out) const = 0;
-
-        /// Dump a YAML representation to stderr.
-        /// For debugging purposes.
-        void Dump() const;
 
     protected:
         /// Copy constructor so that derived classes can sanely have one.
@@ -358,10 +353,6 @@ public:
         /// @param out          YAML emitter
         void Write(YAML::Emitter& out) const;
 
-        /// Dump a YAML representation to stderr.
-        /// For debugging purposes.
-        void Dump() const;
-
     private:
         unsigned int m_off;
     };
@@ -371,10 +362,6 @@ public:
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     void Write(YAML::Emitter& out) const;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
 
 private:
     /// Fixed data that comes before the possibly dynamic length data generated

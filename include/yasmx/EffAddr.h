@@ -32,10 +32,9 @@
 #include <memory>
 
 #include "yasmx/Config/export.h"
+#include "yasmx/DebugDumper.h"
 #include "yasmx/Value.h"
 
-
-namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -44,7 +43,7 @@ class SegmentRegister;
 
 /// Base class for an effective address.
 /// Architectures should derive their own implementation from this.
-class YASM_LIB_EXPORT EffAddr
+class YASM_LIB_EXPORT EffAddr : public DebugDumper<EffAddr>
 {
 public:
     typedef std::auto_ptr<EffAddr> Ptr;
@@ -93,10 +92,6 @@ public:
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     void Write(YAML::Emitter& out) const;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
 
 protected:
     /// Copy constructor so that derived classes can sanely have one.

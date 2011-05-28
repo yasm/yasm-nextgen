@@ -26,7 +26,6 @@
 //
 #include "yasmx/Symbol.h"
 
-#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Expr.h"
@@ -249,12 +248,4 @@ Symbol::Write(YAML::Emitter& out) const
     out << YAML::Key << "assoc data" << YAML::Value;
     AssocDataContainer::Write(out);
     out << YAML::EndMap;
-}
-
-void
-Symbol::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }

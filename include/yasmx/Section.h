@@ -43,8 +43,6 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace YAML { class Emitter; }
-
 namespace yasm
 {
 
@@ -172,10 +170,6 @@ public:
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     void Write(YAML::Emitter& out) const;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
 
 private:
     std::string m_name;                 ///< name (given by user)

@@ -33,15 +33,14 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "yasmx/Config/export.h"
+#include "yasmx/DebugDumper.h"
 
-
-namespace YAML { class Emitter; }
 
 namespace yasm
 {
 
 /// Associated data interface (abstract base).
-class YASM_LIB_EXPORT AssocData
+class YASM_LIB_EXPORT AssocData : public DebugDumper<AssocData>
 {
 public:
     AssocData() {}
@@ -52,10 +51,6 @@ public:
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     virtual void Write(YAML::Emitter& out) const = 0;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
 
 private:
     AssocData(const AssocData&);                    // not implemented
@@ -75,6 +70,7 @@ operator<< (YAML::Emitter& out, const AssocData& data)
 
 /// Associated data container.
 class YASM_LIB_EXPORT AssocDataContainer
+    : public DebugDumper<AssocDataContainer>
 {
     struct AssocMapEntry
     {
@@ -114,10 +110,6 @@ public:
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     virtual void Write(YAML::Emitter& out) const = 0;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
 };
 
 /// Dump a YAML representation of associated data container.

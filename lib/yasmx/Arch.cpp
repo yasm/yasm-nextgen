@@ -26,8 +26,6 @@
 //
 #include "yasmx/Arch.h"
 
-#include "llvm/Support/raw_ostream.h"
-#include "YAML/emitter.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Insn.h"
 
@@ -38,36 +36,12 @@ Register::~Register()
 {
 }
 
-void
-Register::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
-}
-
 RegisterGroup::~RegisterGroup()
 {
 }
 
-void
-RegisterGroup::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
-}
-
 SegmentRegister::~SegmentRegister()
 {
-}
-
-void
-SegmentRegister::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
 
 Arch::~Arch()

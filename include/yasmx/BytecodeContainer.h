@@ -35,10 +35,9 @@
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/EndianState.h"
 #include "yasmx/Support/ptr_vector.h"
+#include "yasmx/DebugDumper.h"
 #include "yasmx/Location.h"
 
-
-namespace YAML { class Emitter; }
 
 namespace yasm
 {
@@ -53,7 +52,7 @@ class Object;
 class SourceLocation;
 
 /// A bytecode container.
-class YASM_LIB_EXPORT BytecodeContainer
+class YASM_LIB_EXPORT BytecodeContainer : public DebugDumper<BytecodeContainer>
 {
     friend class Object;
 
@@ -129,9 +128,6 @@ public:
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     void Write(YAML::Emitter& out) const;
-
-    /// Dump a YAML representation to stderr.  For debugging purposes.
-    void Dump() const;
 
 private:
     // not implemented (noncopyable class)

@@ -62,14 +62,6 @@ Bytes::Write(size_type n, unsigned char v)
     } while (n != 0);
 }
 
-void
-Bytes::Dump() const
-{
-    YAML::Emitter out;
-    out << *this;
-    llvm::errs() << out.c_str() << '\n';
-}
-
 YAML::Emitter&
 yasm::operator<< (YAML::Emitter& out, const Bytes& bytes)
 {

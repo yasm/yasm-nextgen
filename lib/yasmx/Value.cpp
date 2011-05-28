@@ -31,7 +31,6 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Bytecode.h"
@@ -953,12 +952,4 @@ Value::Write(YAML::Emitter& out) const
     out << YAML::Key << "sign" << YAML::Value << static_cast<bool>(m_sign);
     out << YAML::Key << "size" << YAML::Value << m_size;
     out << YAML::EndMap;
-}
-
-void
-Value::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }

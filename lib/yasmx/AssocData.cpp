@@ -37,14 +37,6 @@ AssocData::~AssocData()
 {
 }
 
-void
-AssocData::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
-}
-
 AssocDataContainer::AssocDataContainer()
 {
 }
@@ -119,12 +111,4 @@ AssocDataContainer::Write(YAML::Emitter& out) const
         out << YAML::Key << oss.str() << YAML::Value << *i->value;
     }
     out << YAML::EndMap;
-}
-
-void
-AssocDataContainer::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }

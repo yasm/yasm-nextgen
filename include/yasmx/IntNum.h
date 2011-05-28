@@ -38,10 +38,9 @@
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Config/longlong.h"
+#include "yasmx/DebugDumper.h"
 #include "yasmx/Op.h"
 
-
-namespace YAML { class Emitter; class raw_ostream; }
 
 namespace yasm
 {
@@ -83,7 +82,7 @@ struct YASM_LIB_EXPORT IntNumData
 };
 
 /// Big integer number.
-class YASM_LIB_EXPORT IntNum : private IntNumData
+class YASM_LIB_EXPORT IntNum : public DebugDumper<IntNum>, private IntNumData
 {
     friend YASM_LIB_EXPORT
     llvm::raw_ostream& operator<< (llvm::raw_ostream& os, const IntNum& intn);
@@ -385,10 +384,6 @@ public:
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     void Write(YAML::Emitter& out) const;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
 
     /// Print to stream.
     /// @param os           output stream

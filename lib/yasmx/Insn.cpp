@@ -28,7 +28,6 @@
 
 #include <algorithm>
 
-#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
@@ -42,14 +41,6 @@ using namespace yasm;
 
 TargetModifier::~TargetModifier()
 {
-}
-
-void
-TargetModifier::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
 
 Operand::Operand(const Register* reg)
@@ -264,24 +255,8 @@ Operand::Write(YAML::Emitter& out) const
     out << YAML::EndMap;
 }
 
-void
-Operand::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
-}
-
 Prefix::~Prefix()
 {
-}
-
-void
-Prefix::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }
 
 Insn::Insn()
@@ -357,12 +332,4 @@ Insn::Write(YAML::Emitter& out) const
     out << YAML::Key << "implementation" << YAML::Value;
     DoWrite(out);
     out << YAML::EndMap;
-}
-
-void
-Insn::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }

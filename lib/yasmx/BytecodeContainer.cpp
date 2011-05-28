@@ -27,7 +27,6 @@
 #include "yasmx/BytecodeContainer.h"
 
 #include "llvm/ADT/Twine.h"
-#include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/BytecodeOutput.h"
@@ -236,12 +235,4 @@ BytecodeContainer::Write(YAML::Emitter& out) const
             << *bc;
     }
     out << YAML::EndSeq;
-}
-
-void
-BytecodeContainer::Dump() const
-{
-    YAML::Emitter out;
-    Write(out);
-    llvm::errs() << out.c_str() << '\n';
 }

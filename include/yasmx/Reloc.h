@@ -33,20 +33,18 @@
 #include <string>
 
 #include "yasmx/Config/export.h"
-
+#include "yasmx/DebugDumper.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/SymbolRef.h"
 
-
-namespace YAML { class Emitter; }
 
 namespace yasm
 {
 
 /// Basic YASM relocation.  Object formats will need to extend this
 /// structure with additional fields for relocation type, etc.
-class YASM_LIB_EXPORT Reloc
+class YASM_LIB_EXPORT Reloc : public DebugDumper<Reloc>
 {
 public:
     Reloc(const IntNum& addr, SymbolRef sym);
@@ -70,10 +68,6 @@ public:
     /// Write a YAML representation.  For debugging purposes.
     /// @param out          YAML emitter
     void Write(YAML::Emitter& out) const;
-
-    /// Dump a YAML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
 
 protected:
     IntNum m_addr;      ///< Offset (address) within section
