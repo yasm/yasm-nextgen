@@ -35,7 +35,7 @@
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/EndianState.h"
 #include "yasmx/Support/ptr_vector.h"
-#include "Location.h"
+#include "yasmx/Location.h"
 
 
 namespace YAML { class Emitter; }
