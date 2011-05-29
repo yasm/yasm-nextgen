@@ -89,19 +89,23 @@ public:
     /// Clone an effective address.
     virtual EffAddr* clone() const = 0;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 protected:
     /// Copy constructor so that derived classes can sanely have one.
     EffAddr(const EffAddr& rhs);
 
+#ifdef WITH_XML
     /// Write derived class XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     virtual pugi::xml_node DoWrite(pugi::xml_node out) const = 0;
+#endif // WITH_XML
 
 private:
     const EffAddr& operator=(const EffAddr&);

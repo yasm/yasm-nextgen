@@ -185,6 +185,7 @@ Symbol::getLabel(Location* loc) const
     return true;
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 Symbol::Write(pugi::xml_node out) const
 {
@@ -240,3 +241,4 @@ Symbol::Write(pugi::xml_node out) const
     AssocDataContainer::Write(root);
     return root;
 }
+#endif // WITH_XML

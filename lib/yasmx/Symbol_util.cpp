@@ -46,7 +46,9 @@ public:
     ObjextNameValues(NameValues& nvs) { m_nvs.swap(nvs); }
     ~ObjextNameValues();
 
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     const NameValues& get() const { return m_nvs; }
     NameValues& get() { return m_nvs; }
@@ -62,6 +64,7 @@ ObjextNameValues::~ObjextNameValues()
 {
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 ObjextNameValues::Write(pugi::xml_node out) const
 {
@@ -70,6 +73,7 @@ ObjextNameValues::Write(pugi::xml_node out) const
     append_data(root, m_nvs);
     return root;
 }
+#endif // WITH_XML
 
 namespace {
 class CommonSize : public AssocData
@@ -80,7 +84,9 @@ public:
     CommonSize(const Expr& e) : m_expr(e) {}
     ~CommonSize();
 
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     const Expr* get() const { return &m_expr; }
     Expr* get() { return &m_expr; }
@@ -96,6 +102,7 @@ CommonSize::~CommonSize()
 {
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 CommonSize::Write(pugi::xml_node out) const
 {
@@ -104,6 +111,7 @@ CommonSize::Write(pugi::xml_node out) const
     append_child(root, "Size", m_expr);
     return root;
 }
+#endif // WITH_XML
 
 void
 yasm::setObjextNameValues(Symbol& sym, NameValues& objext_namevals)

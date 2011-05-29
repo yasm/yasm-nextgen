@@ -77,6 +77,7 @@ CoffSection::~CoffSection()
 {
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 CoffSection::Write(pugi::xml_node out) const
 {
@@ -105,6 +106,7 @@ CoffSection::Write(pugi::xml_node out) const
         root.append_attribute("setalign") = true;
     return root;
 }
+#endif // WITH_XML
 
 void
 CoffSection::Write(Bytes& bytes, const Section& sect) const

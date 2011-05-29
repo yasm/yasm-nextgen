@@ -174,6 +174,7 @@ ElfReloc::Write(Bytes& bytes, const ElfConfig& config)
     }
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 ElfReloc::DoWrite(pugi::xml_node out) const
 {
@@ -181,3 +182,4 @@ ElfReloc::DoWrite(pugi::xml_node out) const
     append_child(root, "Addend", m_addend);
     return root;
 }
+#endif // WITH_XML

@@ -347,6 +347,7 @@ X86Prefix::Put(llvm::raw_ostream& os) const
     os << "PREFIX";
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 X86Prefix::Write(pugi::xml_node out) const
 {
@@ -363,6 +364,7 @@ X86Prefix::Write(pugi::xml_node out) const
     append_data(root, llvm::Twine::utohexstr(m_value).str());
     return root;
 }
+#endif // WITH_XML
 
 #include "X86Insns.cpp"
 
@@ -1975,6 +1977,7 @@ X86Insn::clone() const
     return new X86Insn(*this);
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 X86Insn::DoWrite(pugi::xml_node out) const
 {
@@ -2001,6 +2004,7 @@ X86Insn::DoWrite(pugi::xml_node out) const
 
     return root;
 }
+#endif // WITH_XML
 
 std::auto_ptr<Insn>
 X86Arch::CreateEmptyInsn() const

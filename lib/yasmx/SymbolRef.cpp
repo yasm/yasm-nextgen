@@ -35,6 +35,7 @@
 
 using namespace yasm;
 
+#ifdef WITH_XML
 pugi::xml_node
 SymbolRef::Write(pugi::xml_node out) const
 {
@@ -43,3 +44,4 @@ SymbolRef::Write(pugi::xml_node out) const
     else
         return append_data(out, m_sym->getName());
 }
+#endif // WITH_XML

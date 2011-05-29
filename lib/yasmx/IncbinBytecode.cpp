@@ -64,8 +64,10 @@ public:
 
     IncbinBytecode* clone() const;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     std::string m_filename;     ///< file to include data from
@@ -220,6 +222,7 @@ IncbinBytecode::clone() const
                               std::auto_ptr<Expr>(m_maxlen->clone()));
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 IncbinBytecode::Write(pugi::xml_node out) const
 {
@@ -231,6 +234,7 @@ IncbinBytecode::Write(pugi::xml_node out) const
         append_child(root, "MaxLen", *m_maxlen);
     return root;
 }
+#endif // WITH_XML
 
 void
 yasm::AppendIncbin(BytecodeContainer& container,

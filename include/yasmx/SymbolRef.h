@@ -59,7 +59,9 @@ public:
         assert(m_sym && "deref of null symbol reference");
         return m_sym;
     }
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     Symbol* m_sym;

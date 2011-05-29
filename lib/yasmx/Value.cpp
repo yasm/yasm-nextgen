@@ -896,6 +896,7 @@ Value::OutputBasic(NumericOutput& num_out, IntNum* outval, Diagnostic& diags)
     }
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 Value::Write(pugi::xml_node out) const
 {
@@ -943,3 +944,4 @@ Value::Write(pugi::xml_node out) const
     append_child(root, "Size", m_size);
     return root;
 }
+#endif // WITH_XML

@@ -36,6 +36,7 @@ RdfSymbol::~RdfSymbol()
 {
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 RdfSymbol::Write(pugi::xml_node out) const
 {
@@ -44,3 +45,4 @@ RdfSymbol::Write(pugi::xml_node out) const
     append_child(root, "Segment", segment);
     return root;
 }
+#endif // WITH_XML

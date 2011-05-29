@@ -238,10 +238,12 @@ public:
     Arch* getArch() { return m_arch; }
     const Arch* getArch() const { return m_arch; }
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     Object(const Object&);                  // not implemented

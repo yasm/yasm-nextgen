@@ -41,6 +41,7 @@ Location::getOffset() const
     return bc->getOffset() + off;
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 Location::Write(pugi::xml_node out) const
 {
@@ -50,14 +51,17 @@ Location::Write(pugi::xml_node out) const
     root.append_attribute("off") = off;
     return root;
 }
+#endif // WITH_XML
 
 void
 Location::Dump() const
 {
+#ifdef WITH_XML
     pugi::xml_document doc;
     Write(doc);
     xml_writer_raw_ostream writer(llvm::errs());
     doc.print(writer);
+#endif // WITH_XML
 }
 
 bool

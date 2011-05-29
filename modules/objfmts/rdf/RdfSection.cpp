@@ -49,6 +49,7 @@ RdfSection::~RdfSection()
 {
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 RdfSection::Write(pugi::xml_node out) const
 {
@@ -60,6 +61,7 @@ RdfSection::Write(pugi::xml_node out) const
     append_child(root, "RawData", raw_data);
     return root;
 }
+#endif // WITH_XML
 
 void
 RdfSection::Write(Bytes& bytes, const Section& sect) const

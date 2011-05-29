@@ -185,6 +185,7 @@ X86EffAddr::clone() const
     return new X86EffAddr(*this);
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 X86EffAddr::DoWrite(pugi::xml_node out) const
 {
@@ -200,6 +201,7 @@ X86EffAddr::DoWrite(pugi::xml_node out) const
     sib.append_attribute("valid") = static_cast<bool>(m_valid_sib);
     return root;
 }
+#endif // WITH_XML
 
 namespace {
 class X86EAChecker

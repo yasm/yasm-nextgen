@@ -167,7 +167,9 @@ class OffsetSetter : public DebugDumper<OffsetSetter>
 public:
     OffsetSetter();
     ~OffsetSetter() {}
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     Bytecode* m_bc;
     unsigned long m_cur_val;
@@ -184,6 +186,7 @@ OffsetSetter::OffsetSetter()
 {
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 OffsetSetter::Write(pugi::xml_node out) const
 {
@@ -195,6 +198,7 @@ OffsetSetter::Write(pugi::xml_node out) const
     root.append_attribute("thres") = m_thres;
     return root;
 }
+#endif // WITH_XML
 
 namespace {
 class Optimizer;
@@ -213,7 +217,9 @@ public:
              Span* span,
              long new_val);
         ~Term() {}
+#ifdef WITH_XML
         pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
         Location m_loc;
         Location m_loc2;
@@ -235,8 +241,10 @@ public:
     bool RecalcNormal(Diagnostic& diags);
 
     std::string getName() const;
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
     pugi::xml_node WriteRef(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     Span(const Span&);                  // not implemented
@@ -289,7 +297,9 @@ public:
     void Step1e();
     void Step2();
 
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     void ITreeAdd(Span& span, Span::Term& term);
@@ -333,6 +343,7 @@ Span::Term::Term(unsigned int subst,
     ++num_span_terms;
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 Span::Term::Write(pugi::xml_node out) const
 {
@@ -344,6 +355,7 @@ Span::Term::Write(pugi::xml_node out) const
     root.append_attribute("subst") = m_subst;
     return root;
 }
+#endif // WITH_XML
 
 Span::Span(Bytecode& bc,
            int id,
@@ -473,6 +485,7 @@ Span::getName() const
     return oss.str();
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 Span::Write(pugi::xml_node out) const
 {
@@ -524,6 +537,7 @@ Span::WriteRef(pugi::xml_node out) const
     root.append_attribute("id") = m_id;
     return root;
 }
+#endif // WITH_XML
 
 Optimizer::Optimizer(Diagnostic& diags)
     : m_diags(diags)
@@ -542,6 +556,7 @@ Optimizer::~Optimizer()
     }
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 Optimizer::Write(pugi::xml_node out) const
 {
@@ -573,6 +588,7 @@ Optimizer::Write(pugi::xml_node out) const
 
     return root;
 }
+#endif // WITH_XML
 
 void
 Optimizer::AddOffsetSetter(Bytecode& bc)

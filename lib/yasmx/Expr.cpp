@@ -31,6 +31,7 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Arch.h"
@@ -225,6 +226,7 @@ ExprTerm::PromoteToFloat(const llvm::fltSemantics& semantics)
     m_data.flt = upconvf.release();
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 ExprTerm::Write(pugi::xml_node out) const
 {
@@ -295,6 +297,7 @@ ExprTerm::Write(pugi::xml_node out) const
     root.append_attribute("source") = m_source.getRawEncoding();
     return root;
 }
+#endif // WITH_XML
 
 void
 Expr::AppendOp(Op::Op op, int nchild, SourceLocation source)
@@ -949,6 +952,7 @@ Expr::getRegister() const
     return m_terms.front().getRegister();
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 Expr::Write(pugi::xml_node out) const
 {
@@ -966,6 +970,7 @@ Expr::Write(pugi::xml_node out) const
 
     return root;
 }
+#endif // WITH_XML
 
 void
 ExprTerm::Print(llvm::raw_ostream& os, int base) const

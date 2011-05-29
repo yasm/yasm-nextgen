@@ -52,6 +52,7 @@ BinSymbol::~BinSymbol()
 {
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 BinSymbol::Write(pugi::xml_node out) const
 {
@@ -67,6 +68,7 @@ BinSymbol::Write(pugi::xml_node out) const
     }
     return root;
 }
+#endif // WITH_XML
 
 bool
 BinSymbol::getValue(IntNum* val) const

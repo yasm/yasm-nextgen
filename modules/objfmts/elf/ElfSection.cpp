@@ -149,6 +149,7 @@ ElfSection::~ElfSection()
 {
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 ElfSection::Write(pugi::xml_node out) const
 {
@@ -194,6 +195,7 @@ ElfSection::Write(pugi::xml_node out) const
     append_child(root, "RelOffset", m_rel_offset);
     return root;
 }
+#endif // WITH_XML
 
 unsigned long
 ElfSection::Write(llvm::raw_ostream& os, Bytes& scratch) const

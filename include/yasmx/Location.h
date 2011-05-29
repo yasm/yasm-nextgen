@@ -52,10 +52,12 @@ struct YASM_LIB_EXPORT Location
     /// @return Offset.
     unsigned long getOffset() const;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     /// Dump an XML representation to stderr.
     /// For debugging purposes.

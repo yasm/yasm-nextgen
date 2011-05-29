@@ -294,6 +294,7 @@ UnwindCode::clone() const
     return uwcode;
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 UnwindCode::Write(pugi::xml_node out) const
 {
@@ -317,6 +318,7 @@ UnwindCode::Write(pugi::xml_node out) const
     append_child(root, "Off", m_off);
     return root;
 }
+#endif // WITH_XML
 
 void
 objfmt::AppendUnwindCode(BytecodeContainer& container,

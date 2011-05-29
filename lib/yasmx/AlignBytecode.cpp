@@ -78,8 +78,10 @@ public:
 
     AlignBytecode* clone() const;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     Expr m_boundary;    ///< alignment boundary
@@ -308,6 +310,7 @@ AlignBytecode::clone() const
     return new AlignBytecode(m_boundary, m_fill, m_maxskip, m_code_fill);
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 AlignBytecode::Write(pugi::xml_node out) const
 {
@@ -319,6 +322,7 @@ AlignBytecode::Write(pugi::xml_node out) const
         root.append_attribute("code") = true;
     return root;
 }
+#endif // WITH_XML
 
 void
 yasm::AppendAlign(BytecodeContainer& container,

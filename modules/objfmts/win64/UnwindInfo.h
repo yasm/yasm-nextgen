@@ -74,7 +74,9 @@ public:
     virtual bool Output(Bytecode& bc, BytecodeOutput& bc_out);
     llvm::StringRef getType() const;
     virtual UnwindInfo* clone() const;
+#ifdef WITH_XML
     virtual pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     void setProc(SymbolRef proc) { m_proc = proc; }
     SymbolRef getProc() { return m_proc; }

@@ -176,11 +176,13 @@ public:
 
         virtual Contents* clone() const = 0;
 
+#ifdef WITH_XML
         /// Write an XML representation.  For debugging purposes.
         /// Called by Bytecode::Write(pugi::xml_node).
         /// @param out          XML node
         /// @return Root node.
         virtual pugi::xml_node Write(pugi::xml_node out) const = 0;
+#endif // WITH_XML
 
     protected:
         /// Copy constructor so that derived classes can sanely have one.
@@ -350,10 +352,12 @@ public:
         void swap(Fixup& oth);
         unsigned int getOffset() const { return m_off; }
 
+#ifdef WITH_XML
         /// Write an XML representation.  For debugging purposes.
         /// @param out          XML node
         /// @return Root node.
         pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     private:
         unsigned int m_off;
@@ -361,10 +365,12 @@ public:
 
     void AppendFixup(const Fixup& fixup) { m_fixed_fixups.push_back(fixup); }
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     /// Fixed data that comes before the possibly dynamic length data generated

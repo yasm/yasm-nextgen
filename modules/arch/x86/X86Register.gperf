@@ -229,6 +229,7 @@ X86Register::Put(llvm::raw_ostream& os) const
     }
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 X86Register::Write(pugi::xml_node out) const
 {
@@ -240,6 +241,7 @@ X86Register::Write(pugi::xml_node out) const
     append_data(root, oss.str().data());
     return root;
 }
+#endif // WITH_XML
 
 const X86Register*
 X86RegisterGroup::getReg(unsigned long regindex) const
@@ -249,6 +251,7 @@ X86RegisterGroup::getReg(unsigned long regindex) const
     return m_regs[regindex];
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 X86RegisterGroup::Write(pugi::xml_node out) const
 {
@@ -257,6 +260,7 @@ X86RegisterGroup::Write(pugi::xml_node out) const
     root.append_attribute("size") = m_size;
     return root;
 }
+#endif // WITH_XML
 
 X86SegmentRegister::~X86SegmentRegister()
 {
@@ -269,6 +273,7 @@ X86SegmentRegister::Put(llvm::raw_ostream& os) const
     os << name[m_type];
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 X86SegmentRegister::Write(pugi::xml_node out) const
 {
@@ -281,6 +286,7 @@ X86SegmentRegister::Write(pugi::xml_node out) const
     root.append_attribute("prefix") = static_cast<unsigned int>(m_prefix);
     return root;
 }
+#endif // WITH_XML
 
 void
 X86TargetModifier::Put(llvm::raw_ostream& os) const
@@ -295,6 +301,7 @@ X86TargetModifier::Put(llvm::raw_ostream& os) const
     }
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 X86TargetModifier::Write(pugi::xml_node out) const
 {
@@ -306,6 +313,7 @@ X86TargetModifier::Write(pugi::xml_node out) const
     root.append_attribute("type") = oss.str().data();
     return root;
 }
+#endif // WITH_XML
 
 enum RegTmodType
 {

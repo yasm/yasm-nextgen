@@ -310,6 +310,7 @@ ElfConfig::setEndian(EndianState& state) const
     return true;
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 ElfConfig::Write(pugi::xml_node out) const
 {
@@ -406,3 +407,4 @@ ElfConfig::Write(pugi::xml_node out) const
     append_child(root, "ShstrtabIndex", shstrtab_index);
     return root;
 }
+#endif // WITH_XML

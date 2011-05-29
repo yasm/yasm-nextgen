@@ -208,6 +208,7 @@ Operand::setSeg(std::auto_ptr<Expr> seg)
     m_seg = seg.release();
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 Operand::Write(pugi::xml_node out) const
 {
@@ -249,6 +250,7 @@ Operand::Write(pugi::xml_node out) const
         root.append_attribute("strict") = true;
     return root;
 }
+#endif // WITH_XML
 
 Prefix::~Prefix()
 {
@@ -294,6 +296,7 @@ Insn::Append(BytecodeContainer& container,
     return DoAppend(container, source, diags);
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 Insn::Write(pugi::xml_node out) const
 {
@@ -319,3 +322,4 @@ Insn::Write(pugi::xml_node out) const
     DoWrite(root);
     return root;
 }
+#endif // WITH_XML

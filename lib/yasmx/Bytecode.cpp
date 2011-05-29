@@ -308,6 +308,7 @@ Bytecode::AppendFixed(unsigned int size,
     return m_fixed_fixups.back();
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 Bytecode::Write(pugi::xml_node out) const
 {
@@ -338,6 +339,7 @@ Bytecode::Write(pugi::xml_node out) const
 
     return root;
 }
+#endif // WITH_XML
 
 Bytecode::Fixup::Fixup(unsigned int off, const Value& val)
     : Value(val), m_off(off)
@@ -366,6 +368,7 @@ Bytecode::Fixup::swap(Fixup& oth)
     std::swap(m_off, oth.m_off);
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 Bytecode::Fixup::Write(pugi::xml_node out) const
 {
@@ -374,3 +377,4 @@ Bytecode::Fixup::Write(pugi::xml_node out) const
     Value::Write(root);
     return root;
 }
+#endif // WITH_XML

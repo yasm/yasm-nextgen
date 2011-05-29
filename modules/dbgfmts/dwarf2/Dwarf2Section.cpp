@@ -61,8 +61,10 @@ Dwarf2Section::~Dwarf2Section()
 {
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 Dwarf2Section::Write(pugi::xml_node out) const
 {
     return out; // TODO
 }
+#endif // WITH_XML

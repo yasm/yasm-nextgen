@@ -89,7 +89,9 @@ public:
 
     X86General* clone() const;
 
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     X86General(const X86General& rhs);
@@ -583,6 +585,7 @@ X86General::clone() const
     return new X86General(*this);
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 X86General::Write(pugi::xml_node out) const
 {
@@ -615,6 +618,7 @@ X86General::Write(pugi::xml_node out) const
         append_child(root, "PostOp", postop);
     return root;
 }
+#endif // WITH_XML
 
 void
 arch::AppendGeneral(BytecodeContainer& container,

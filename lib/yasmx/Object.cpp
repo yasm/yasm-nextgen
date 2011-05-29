@@ -269,6 +269,7 @@ Object::FindSpecialSymbol(llvm::StringRef name)
     return SymbolRef(m_impl->special_sym_map.Find(name));
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 Object::Write(pugi::xml_node out) const
 {
@@ -294,3 +295,4 @@ Object::Write(pugi::xml_node out) const
 
     return root;
 }
+#endif // WITH_XML

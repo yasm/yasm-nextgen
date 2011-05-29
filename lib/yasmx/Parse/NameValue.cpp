@@ -187,6 +187,7 @@ NameValue::getToken() const
     return m_token;
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 NameValue::Write(pugi::xml_node out) const
 {
@@ -216,6 +217,7 @@ NameValue::Write(pugi::xml_node out) const
     }
     return root;
 }
+#endif // WITH_XML
 
 NameValues::~NameValues()
 {
@@ -225,6 +227,7 @@ NameValues::~NameValues()
     stdx::ptr_vector_owner<NameValue> owner(*this);
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 NameValues::Write(pugi::xml_node out) const
 {
@@ -233,3 +236,4 @@ NameValues::Write(pugi::xml_node out) const
         append_data(root, *i);
     return root;
 }
+#endif // WITH_XML

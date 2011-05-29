@@ -59,6 +59,7 @@ CoffSymbol::~CoffSymbol()
 {
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 CoffSymbol::Write(pugi::xml_node out) const
 {
@@ -82,6 +83,7 @@ CoffSymbol::Write(pugi::xml_node out) const
         append_child(aux, "FName", i->fname);
     return root;
 }
+#endif // WITH_XML
 
 void
 CoffSymbol::Write(Bytes& bytes,

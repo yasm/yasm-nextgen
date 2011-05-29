@@ -32,6 +32,7 @@
 using namespace yasm;
 using namespace yasm::arch;
 
+#ifdef WITH_XML
 pugi::xml_node
 X86Opcode::Write(pugi::xml_node out) const
 {
@@ -40,6 +41,7 @@ X86Opcode::Write(pugi::xml_node out) const
         append_data(root, Bytes(m_opcode, m_opcode+m_len));
     return root;
 }
+#endif // WITH_XML
 
 void
 X86Opcode::ToBytes(Bytes& bytes) const

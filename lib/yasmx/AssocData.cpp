@@ -95,6 +95,7 @@ AssocDataContainer::getAssocData(const void* key) const
     return 0;
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 AssocDataContainer::Write(pugi::xml_node out) const
 {
@@ -112,3 +113,4 @@ AssocDataContainer::Write(pugi::xml_node out) const
     }
     return out;
 }
+#endif // WITH_XML

@@ -34,6 +34,7 @@
 #include <limits>
 
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Basic/Diagnostic.h"
 
 
@@ -919,6 +920,7 @@ IntNum::Extract(unsigned int width, unsigned int lsb) const
     }
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 IntNum::Write(pugi::xml_node out) const
 {
@@ -927,6 +929,7 @@ IntNum::Write(pugi::xml_node out) const
     s += '\0';
     return append_data(out, s.str().data());
 }
+#endif // WITH_XML
 
 void
 IntNum::Print(llvm::raw_ostream& os,

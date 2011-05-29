@@ -74,8 +74,10 @@ public:
 
     LEB128Bytecode* clone() const;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     Value m_value;
@@ -213,6 +215,7 @@ LEB128Bytecode::clone() const
     return new LEB128Bytecode(*this);
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 LEB128Bytecode::Write(pugi::xml_node out) const
 {
@@ -220,6 +223,7 @@ LEB128Bytecode::Write(pugi::xml_node out) const
     append_data(root, m_value);
     return root;
 }
+#endif // WITH_XML
 
 void
 yasm::AppendLEB128(BytecodeContainer& container,

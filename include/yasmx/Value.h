@@ -311,10 +311,12 @@ public:
     /// @return Source range.
     SourceRange getSource() const { return m_source; }
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     /// Maximum value of right shift.
     enum { RSHIFT_MAX = 127 };

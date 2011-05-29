@@ -141,6 +141,7 @@ XdfReloc::Write(Bytes& bytes) const
     Write8(bytes, 0);                   // flags
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 XdfReloc::DoWrite(pugi::xml_node out) const
 {
@@ -165,3 +166,4 @@ XdfReloc::DoWrite(pugi::xml_node out) const
     append_child(root, "Shift", m_shift);
     return root;
 }
+#endif // WITH_XML

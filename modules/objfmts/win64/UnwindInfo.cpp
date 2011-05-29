@@ -237,6 +237,7 @@ UnwindInfo::clone() const
     return info.release();
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 UnwindInfo::Write(pugi::xml_node out) const
 {
@@ -262,6 +263,7 @@ UnwindInfo::Write(pugi::xml_node out) const
     append_child(root, "CodesCount", m_codes_count);
     return root;
 }
+#endif // WITH_XML
 
 void
 objfmt::Generate(std::auto_ptr<UnwindInfo> uwinfo,

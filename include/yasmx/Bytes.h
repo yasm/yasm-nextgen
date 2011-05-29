@@ -98,10 +98,12 @@ public:
     /// @param  v   byte value
     void Write(size_type n, unsigned char v);
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 };
 
 inline void

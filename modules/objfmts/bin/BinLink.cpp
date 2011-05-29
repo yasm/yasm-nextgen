@@ -53,6 +53,7 @@ BinGroup::~BinGroup()
 {
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 BinGroup::Write(pugi::xml_node out) const
 {
@@ -71,6 +72,7 @@ yasm::objfmt::append_data(pugi::xml_node out, const BinGroups& groups)
         append_data(root, *group);
     return root;
 }
+#endif // WITH_XML
 
 // Recursive function to find group containing named section.
 static BinGroup*
@@ -118,6 +120,7 @@ BinLink::~BinLink()
 {
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 BinLink::Write(pugi::xml_node out) const
 {
@@ -126,6 +129,7 @@ BinLink::Write(pugi::xml_node out) const
     append_data(root, m_vma_groups).append_attribute("type") = "vma";
     return root;
 }
+#endif // WITH_XML
 
 bool
 BinLink::CreateLMAGroup(Section& section)

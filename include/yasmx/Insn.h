@@ -57,10 +57,12 @@ public:
     virtual ~TargetModifier();
     virtual void Put(llvm::raw_ostream& os) const = 0;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     virtual pugi::xml_node Write(pugi::xml_node out) const = 0;
+#endif // WITH_XML
 
 private:
     // not implemented (noncopyable class)
@@ -198,10 +200,12 @@ public:
     /// Set the source location of the operand.
     void setSource(SourceLocation source) { m_source = source; }
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     /// Operand data.
@@ -258,10 +262,12 @@ public:
     virtual ~Prefix();
     virtual void Put(llvm::raw_ostream& os) const = 0;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     virtual pugi::xml_node Write(pugi::xml_node out) const = 0;
+#endif // WITH_XML
 
 private:
     Prefix(const Prefix&);                  // not implemented
@@ -317,10 +323,12 @@ public:
 
     virtual Insn* clone() const = 0;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 protected:
     /// Copy constructor.
@@ -331,10 +339,12 @@ protected:
                           SourceLocation source,
                           Diagnostic& diags) = 0;
 
+#ifdef WITH_XML
     /// Write derived class XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     virtual pugi::xml_node DoWrite(pugi::xml_node out) const = 0;
+#endif // WITH_XML
 
     /// Operands.
     Operands m_operands;

@@ -45,6 +45,7 @@ BinSection::~BinSection()
 {
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 BinSection::Write(pugi::xml_node out) const
 {
@@ -70,3 +71,4 @@ BinSection::Write(pugi::xml_node out) const
         append_child(root, "Length", length);
     return root;
 }
+#endif // WITH_XML

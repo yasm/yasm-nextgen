@@ -113,6 +113,7 @@ static cl::alias predefine_macros_alias("d",
     cl::value_desc("macro[=value]"),
     cl::aliasopt(predefine_macros));
 
+#ifdef WITH_XML
 // -dump-object
 static llvm::cl::opt<yasm::Assembler::ObjectDumpTime> dump_object("dump-object",
     llvm::cl::desc("Dump object in YAML after this phase:"),
@@ -127,6 +128,9 @@ static llvm::cl::opt<yasm::Assembler::ObjectDumpTime> dump_object("dump-object",
         clEnumValN(yasm::Assembler::DUMP_AFTER_OUTPUT, "output",
                    "after output"),
         clEnumValEnd));
+#else
+yasm::Assembler::ObjectDumpTime dump_object = yasm::Assembler::DUMP_NEVER;
+#endif // WITH_XML
 
 // -E
 static cl::opt<std::string> error_filename("E",

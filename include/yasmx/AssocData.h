@@ -48,10 +48,12 @@ public:
     /// Destructor.
     virtual ~AssocData();
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     virtual pugi::xml_node Write(pugi::xml_node out) const = 0;
+#endif // WITH_XML
 
 private:
     AssocData(const AssocData&);                    // not implemented
@@ -97,10 +99,12 @@ public:
         return static_cast<const T*>(getAssocData(T::key));
     }
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     virtual pugi::xml_node Write(pugi::xml_node out) const = 0;
+#endif // WITH_XML
 };
 
 } // namespace yasm

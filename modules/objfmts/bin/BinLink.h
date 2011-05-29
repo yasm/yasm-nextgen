@@ -57,7 +57,9 @@ public:
     BinGroup(Section& section, BinSection& bsd);
     ~BinGroup();
 
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     void AssignStartRecurse(IntNum& start,
                             IntNum& last,
@@ -80,7 +82,9 @@ public:
     BinLink(Object& object, Diagnostic& diags);
     ~BinLink();
 
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     bool DoLink(const IntNum& origin);
     bool CheckLMAOverlap();
@@ -103,8 +107,10 @@ private:
     stdx::ptr_vector_owner<BinGroup> m_lma_groups_owner, m_vma_groups_owner;
 };
 
+#ifdef WITH_XML
 YASM_STD_EXPORT
 pugi::xml_node append_data(pugi::xml_node out, const BinGroups& groups);
+#endif // WITH_XML
 
 }} // namespace yasm::objfmt
 

@@ -151,10 +151,12 @@ public:
 
     const Token& getToken() const;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     void setNameSource(SourceLocation loc) { m_name_source = loc; }
     void setEqualsSource(SourceLocation loc) { m_equals_source = loc; }
@@ -229,10 +231,12 @@ public:
     // Exchanges this vector with another one.
     void swap(NameValues& oth) { base_vector::swap(oth); }
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 };
 
 /// Specialized swap for algorithms.

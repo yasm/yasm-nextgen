@@ -62,6 +62,7 @@ Bytes::Write(size_type n, unsigned char v)
     } while (n != 0);
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 Bytes::Write(pugi::xml_node out) const
 {
@@ -76,3 +77,4 @@ Bytes::Write(pugi::xml_node out) const
     oss << '\0';
     return append_data(out, oss.str().data());
 }
+#endif // WITH_XML

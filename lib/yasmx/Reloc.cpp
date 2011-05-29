@@ -45,6 +45,7 @@ Reloc::getValue() const
     return Expr(m_sym);
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 Reloc::Write(pugi::xml_node out) const
 {
@@ -61,3 +62,4 @@ Reloc::DoWrite(pugi::xml_node out) const
 {
     return out;
 }
+#endif // WITH_XML

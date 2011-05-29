@@ -27,6 +27,10 @@ INCLUDE(YasmMacros)
 INCLUDE(VersionGen)
 
 OPTION(ENABLE_NLS "Enable message translations" OFF)
+OPTION(WITH_XML "Enable XML debug dumps" ON)
+if (WITH_XML)
+    ADD_DEFINITIONS(-DWITH_XML)
+endif (WITH_XML)
 
 OPTION(BUILD_TEST_COVERAGE "Enable test coverage if possible" ON)
 

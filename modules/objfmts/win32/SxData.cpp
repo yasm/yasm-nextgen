@@ -60,8 +60,10 @@ public:
 
     SxData* clone() const;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     SymbolRef m_sym;            ///< symbol
@@ -118,6 +120,7 @@ SxData::clone() const
     return new SxData(m_sym);
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 SxData::Write(pugi::xml_node out) const
 {
@@ -125,6 +128,7 @@ SxData::Write(pugi::xml_node out) const
     append_child(root, "Sym", m_sym);
     return root;
 }
+#endif // WITH_XML
 
 void
 objfmt::AppendSxData(BytecodeContainer& container,

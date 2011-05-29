@@ -100,6 +100,7 @@ RdfReloc::Write(Bytes& bytes, unsigned int scnum) const
     Write16(bytes, m_refseg);       // relocated symbol
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 RdfReloc::DoWrite(pugi::xml_node out) const
 {
@@ -108,3 +109,4 @@ RdfReloc::DoWrite(pugi::xml_node out) const
     append_child(root, "RefSeg", m_refseg);
     return root;
 }
+#endif // WITH_XML

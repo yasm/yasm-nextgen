@@ -53,8 +53,10 @@ public:
     /// Calculate for output.
     bool CalcForOutput(SourceLocation source, Diagnostic& diags);
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     void setInt(long val) { m_int = val; }
     long getInt() const { return m_int; }
@@ -101,8 +103,10 @@ public:
 
     MultipleBytecode* clone() const;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     BytecodeContainer& getContents() { return m_contents; }
 
@@ -152,8 +156,10 @@ public:
 
     FillBytecode* clone() const;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     /// Number of times contents is repeated.
@@ -257,6 +263,7 @@ Multiple::CalcForOutput(SourceLocation source, Diagnostic& diags)
     return true;
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 Multiple::Write(pugi::xml_node out) const
 {
@@ -265,6 +272,7 @@ Multiple::Write(pugi::xml_node out) const
     root.append_attribute("int") = m_int;
     return root;
 }
+#endif // WITH_XML
 
 MultipleBytecode::MultipleBytecode(std::auto_ptr<Expr> e)
     : m_multiple(e)
@@ -379,6 +387,7 @@ MultipleBytecode::clone() const
     return 0;
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 MultipleBytecode::Write(pugi::xml_node out) const
 {
@@ -387,6 +396,7 @@ MultipleBytecode::Write(pugi::xml_node out) const
     append_child(root, "Contents", m_contents);
     return root;
 }
+#endif // WITH_XML
 
 FillBytecode::FillBytecode(std::auto_ptr<Expr> multiple, unsigned int size)
     : m_multiple(multiple)
@@ -499,6 +509,7 @@ FillBytecode::clone() const
     return new FillBytecode(*this);
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 FillBytecode::Write(pugi::xml_node out) const
 {
@@ -509,6 +520,7 @@ FillBytecode::Write(pugi::xml_node out) const
         root.append_attribute("skip") = true;
     return root;
 }
+#endif // WITH_XML
 
 BytecodeContainer&
 yasm::AppendMultiple(BytecodeContainer& container,

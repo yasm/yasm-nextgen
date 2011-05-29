@@ -65,20 +65,24 @@ public:
     /// @return Type name.
     virtual std::string getTypeName() const = 0;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 protected:
     IntNum m_addr;      ///< Offset (address) within section
     SymbolRef m_sym;    ///< Relocated symbol
 
+#ifdef WITH_XML
     /// Write derived class XML representation.  For debugging purposes.
     /// Default implementation outputs a simple null.
     /// @param out          XML node
     /// @return Root node.
     virtual pugi::xml_node DoWrite(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     Reloc(const Reloc&);                    // not implemented

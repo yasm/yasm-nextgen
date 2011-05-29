@@ -61,8 +61,10 @@ public:
 
     GapBytecode* clone() const;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     unsigned long m_size;       ///< size of gap (in bytes)
@@ -119,6 +121,7 @@ GapBytecode::Extend(unsigned long size)
     m_size += size;
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 GapBytecode::Write(pugi::xml_node out) const
 {
@@ -126,6 +129,7 @@ GapBytecode::Write(pugi::xml_node out) const
     append_child(root, "Size", m_size);
     return root;
 }
+#endif // WITH_XML
 
 BytecodeContainer::BytecodeContainer()
     : m_object(0),
@@ -221,6 +225,7 @@ BytecodeContainer::UpdateOffsets(Diagnostic& diags)
         offset = bc->UpdateOffset(offset, diags);
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 BytecodeContainer::Write(pugi::xml_node out) const
 {
@@ -229,3 +234,4 @@ BytecodeContainer::Write(pugi::xml_node out) const
         append_data(out, *bc);
     return out;
 }
+#endif // WITH_XML

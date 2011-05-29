@@ -78,7 +78,9 @@ public:
 
     unsigned char get(int byte) { return m_opcode[byte]; }
 
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     unsigned char m_opcode[3];      // opcode

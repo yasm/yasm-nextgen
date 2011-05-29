@@ -58,6 +58,7 @@ ElfSpecialSymbol::~ElfSpecialSymbol()
 {
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 ElfSpecialSymbol::Write(pugi::xml_node out) const
 {
@@ -71,6 +72,7 @@ ElfSpecialSymbol::Write(pugi::xml_node out) const
     append_child(root, "CurposAdjust", curpos_adjust);
     return root;
 }
+#endif // WITH_XML
 
 ElfMachine::~ElfMachine()
 {

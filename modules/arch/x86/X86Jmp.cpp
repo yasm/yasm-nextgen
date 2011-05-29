@@ -80,7 +80,9 @@ public:
 
     X86Jmp* clone() const;
 
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     X86Common m_common;
@@ -264,6 +266,7 @@ X86Jmp::clone() const
     return new X86Jmp(*this);
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 X86Jmp::Write(pugi::xml_node out) const
 {
@@ -282,6 +285,7 @@ X86Jmp::Write(pugi::xml_node out) const
     }
     return root;
 }
+#endif // WITH_XML
 
 void
 arch::AppendJmp(BytecodeContainer& container,

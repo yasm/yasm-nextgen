@@ -260,10 +260,12 @@ public:
     /// @param semantics    float semantics to use for converted value
     void PromoteToFloat(const llvm::fltSemantics& semantics);
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     /// Print to stream.
     /// @param os           output stream
@@ -593,10 +595,12 @@ public:
 
     //@}
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     /// Print to stream.
     /// @param os           output stream

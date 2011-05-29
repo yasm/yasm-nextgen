@@ -72,6 +72,7 @@ Section::AddReloc(std::auto_ptr<Reloc> reloc)
     m_relocs.push_back(reloc.release());
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 Section::Write(pugi::xml_node out) const
 {
@@ -98,3 +99,4 @@ Section::Write(pugi::xml_node out) const
         append_data(root, *i);
     return root;
 }
+#endif // WITH_XML

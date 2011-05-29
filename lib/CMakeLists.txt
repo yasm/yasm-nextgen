@@ -3,6 +3,13 @@ IF (NOT BUILD_STATIC)
     SET (PLUGIN_CPP yasmx/plugin.cpp)
 ENDIF (NOT BUILD_STATIC)
 
+SET (XML_CPP)
+IF (WITH_XML)
+    SET (XML_CPP
+        pugixml/pugixml.cpp
+        yasmx/DebugDumper.cpp)
+ENDIF (WITH_XML)
+
 YASM_ADD_LIBRARY(libyasmx SHARED
     llvm/Support/Allocator.cpp
     llvm/Support/APFloat.cpp
@@ -37,7 +44,7 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     llvm/System/ThreadLocal.cpp
     llvm/System/TimeValue.cpp
     llvm/System/Valgrind.cpp
-    pugixml/pugixml.cpp
+    ${XML_CPP}
     yasmx/Basic/Diagnostic.cpp
     yasmx/Basic/FileManager.cpp
     yasmx/Basic/SourceLocation.cpp
@@ -69,7 +76,6 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/Bytes_util.cpp
     yasmx/Bytes_leb128.cpp
     yasmx/DataBytecode.cpp
-    yasmx/DebugDumper.cpp
     yasmx/DebugFormat.cpp
     yasmx/EffAddr.cpp
     yasmx/Expr.cpp

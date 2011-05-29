@@ -129,6 +129,7 @@ X86Common::Finish()
         m_opersize = (m_mode_bits == 64 ? 32 : m_mode_bits);
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 X86Common::Write(pugi::xml_node out) const
 {
@@ -141,6 +142,7 @@ X86Common::Write(pugi::xml_node out) const
     root.append_attribute("bits") = static_cast<unsigned int>(m_mode_bits);
     return root;
 }
+#endif // WITH_XML
 
 unsigned long
 X86Common::getLen() const

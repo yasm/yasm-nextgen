@@ -151,6 +151,7 @@ ElfSymbol::CreateSymbol(Object& object, const StringTable& strtab) const
     return sym;
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 ElfSymbol::Write(pugi::xml_node out) const
 {
@@ -208,6 +209,7 @@ ElfSymbol::Write(pugi::xml_node out) const
     append_child(root, "SymIndex", m_symindex);
     return root;
 }
+#endif // WITH_XML
 
 void
 ElfSymbol::Finalize(Symbol& sym, Diagnostic& diags)

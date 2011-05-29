@@ -36,6 +36,7 @@ XdfSymbol::~XdfSymbol()
 {
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 XdfSymbol::Write(pugi::xml_node out) const
 {
@@ -44,3 +45,4 @@ XdfSymbol::Write(pugi::xml_node out) const
     root.append_attribute("index") = index;
     return root;
 }
+#endif // WITH_XML

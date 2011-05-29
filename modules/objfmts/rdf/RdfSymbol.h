@@ -41,7 +41,9 @@ struct YASM_STD_EXPORT RdfSymbol : public AssocData
 
     RdfSymbol(unsigned long segment_) : segment(segment_) {}
     ~RdfSymbol();
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     unsigned int segment;       ///< assigned RDF "segment" index for symtab
 };

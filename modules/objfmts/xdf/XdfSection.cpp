@@ -54,6 +54,7 @@ XdfSection::~XdfSection()
 {
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 XdfSection::Write(pugi::xml_node out) const
 {
@@ -71,6 +72,7 @@ XdfSection::Write(pugi::xml_node out) const
     append_child(root, "RelPtr", relptr);
     return root;
 }
+#endif // WITH_XML
 
 void
 XdfSection::Write(Bytes& bytes, const Section& sect) const

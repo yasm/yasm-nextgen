@@ -73,8 +73,10 @@ public:
 
     OrgBytecode* clone() const;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     Expr m_start;       ///< target starting offset within section
@@ -214,6 +216,7 @@ OrgBytecode::clone() const
     return new OrgBytecode(m_start, m_fill);
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 OrgBytecode::Write(pugi::xml_node out) const
 {
@@ -222,6 +225,7 @@ OrgBytecode::Write(pugi::xml_node out) const
     append_child(root, "Fill", m_fill);
     return root;
 }
+#endif // WITH_XML
 
 void
 yasm::AppendOrg(BytecodeContainer& container,

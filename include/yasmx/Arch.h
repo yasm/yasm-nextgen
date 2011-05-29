@@ -83,10 +83,12 @@ public:
     /// @param os   output stream
     virtual void Put(llvm::raw_ostream& os) const = 0;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     virtual pugi::xml_node Write(pugi::xml_node out) const = 0;
+#endif // WITH_XML
 
 private:
     Register(const Register&);                  // not implemented
@@ -114,10 +116,12 @@ public:
     ///         otherwise the specific register.
     virtual const Register* getReg(unsigned long regindex) const = 0;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     virtual pugi::xml_node Write(pugi::xml_node out) const = 0;
+#endif // WITH_XML
 
 private:
     RegisterGroup(const RegisterGroup&);                  // not implemented
@@ -139,10 +143,12 @@ public:
     /// @param os   output stream
     virtual void Put(llvm::raw_ostream& os) const = 0;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     virtual pugi::xml_node Write(pugi::xml_node out) const = 0;
+#endif // WITH_XML
 
 private:
     SegmentRegister(const SegmentRegister&);                  // not implemented

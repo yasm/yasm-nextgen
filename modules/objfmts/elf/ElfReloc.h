@@ -88,7 +88,9 @@ protected:
     ElfRelocationType   m_type;
     IntNum              m_addend;
 
+#ifdef WITH_XML
     virtual pugi::xml_node DoWrite(pugi::xml_node out) const;
+#endif // WITH_XML
 };
 
 }} // namespace yasm::objfmt

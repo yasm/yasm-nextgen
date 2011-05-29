@@ -29,15 +29,18 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#ifdef WITH_XML
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include "pugixml/pugixml.h"
+#endif // WITH_XML
 #include "yasmx/Config/export.h"
 
 
 namespace yasm
 {
 
+#ifdef WITH_XML
 class YASM_LIB_EXPORT xml_writer_raw_ostream : public pugi::xml_writer
 {
 public:
@@ -48,6 +51,7 @@ public:
 private:
     llvm::raw_ostream& m_os;
 };
+#endif // WITH_XML
 
 template <typename T>
 class YASM_LIB_EXPORT DebugDumper
@@ -60,15 +64,21 @@ public:
 
 template <typename T>
 YASM_LIB_EXPORT
+#ifdef NO_XML
+inline
+#endif
 void
 DebugDumper<T>::Dump() const
 {
+#ifdef WITH_XML
     pugi::xml_document doc;
     static_cast<const T*>(this)->Write(doc);
     xml_writer_raw_ostream writer(llvm::errs());
     doc.print(writer);
+#endif // WITH_XML
 }
 
+#ifdef WITH_XML
 /// Generic catch-all helper function to append something.
 template <typename T>
 inline pugi::xml_node
@@ -128,6 +138,7 @@ YASM_LIB_EXPORT
 pugi::xml_node append_child(pugi::xml_node node, const char* name, bool val);
 YASM_LIB_EXPORT
 pugi::xml_node append_child(pugi::xml_node node, const char* name, double val);
+#endif // WITH_XML
 
 } // yasm namespace
 

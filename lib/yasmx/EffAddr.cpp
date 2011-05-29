@@ -60,6 +60,7 @@ EffAddr::~EffAddr()
 {
 }
 
+#ifdef WITH_XML
 pugi::xml_node
 EffAddr::Write(pugi::xml_node out) const
 {
@@ -82,3 +83,4 @@ EffAddr::Write(pugi::xml_node out) const
     DoWrite(root);
     return root;
 }
+#endif // WITH_XML
