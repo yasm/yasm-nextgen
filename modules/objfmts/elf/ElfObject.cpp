@@ -58,6 +58,7 @@
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes_util.h"
+#include "yasmx/DebugFormat.h"
 #include "yasmx/Expr_util.h"
 #include "yasmx/Location_util.h"
 #include "yasmx/Object.h"
@@ -1034,6 +1035,10 @@ ElfObject::Output(llvm::raw_fd_ostream& os,
     StringTable shstrtab, strtab;
     unsigned int align = (m_config.cls == ELFCLASS32) ? 4 : 8;
 
+    // XXX: ugly workaround to prevent all_syms from kicking in
+    if (dbgfmt.getModule().getKeyword() == "elfcfi")
+        all_syms = false;
+
     // Add filename to strtab and set as .file symbol name
     if (m_file_elfsym)
     {
@@ -1405,7 +1410,7 @@ ElfObject::AppendSection(llvm::StringRef name,
         type = SHT_PROGBITS;
         flags = SHF_ALLOC + SHF_WRITE + SHF_TLS;
     }
-    else if (name == ".rodata")
+    else if (name == ".rodata" || name == ".eh_frame")
     {
         type = SHT_PROGBITS;
         flags = SHF_ALLOC;
@@ -1995,6 +2000,7 @@ ElfObject::getDebugFormatKeywords()
     {
         "null",
         "stabs",
+        "elfcfi",
         "dwarf",
         "dwarfpass",
         "dwarf2",
