@@ -155,6 +155,7 @@ public:
 
     typedef stdx::ptr_vector<ElfSymVersion> SymVers;
     SymVers m_symvers;                      // symbol version aliases
+    stdx::ptr_vector_owner<ElfSymVersion> m_symvers_owner;
 };
 
 class YASM_STD_EXPORT Elf32Object : public ElfObject

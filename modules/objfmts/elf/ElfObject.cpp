@@ -104,6 +104,7 @@ ElfObject::ElfObject(const ObjectFormatModule& module,
     , m_machine(0)
     , m_file_elfsym(0)
     , m_dotdotsym(0)
+    , m_symvers_owner(m_symvers)
 {
     if (bits == 32)
         m_config.cls = ELFCLASS32;
