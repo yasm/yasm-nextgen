@@ -167,6 +167,15 @@ operator<< (YAML::Emitter& out, const BytecodeContainer& container)
 YASM_LIB_EXPORT
 void AppendByte(BytecodeContainer& container, unsigned char val);
 
+/// Append a single byte value to the end of a section.
+/// @param sect         section
+/// @param expr         byte value
+YASM_LIB_EXPORT
+void AppendByte(BytecodeContainer& container,
+                std::auto_ptr<Expr> expr,
+                SourceLocation source,
+                Diagnostic& diags);
+
 /// Append a raw data value to the end of a section.
 /// @param sect         section
 /// @param val          data value
