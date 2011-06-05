@@ -172,8 +172,16 @@ public:
     void setEqualsSource(SourceLocation loc) { m_equals_source = loc; }
     void setValueRange(SourceRange range) { m_value_range = range; }
 
-    SourceLocation getNameSource() const { return m_name_source; }
-    SourceLocation getEqualsSource() const { return m_equals_source; }
+    SourceLocation getNameSource() const
+    {
+        return m_name_source.isValid() ?
+            m_name_source : m_value_range.getBegin();
+    }
+    SourceLocation getEqualsSource() const
+    {
+        return m_equals_source.isValid() ?
+            m_equals_source : m_value_range.getBegin();
+    }
     SourceRange getValueRange() const { return m_value_range; }
 private:
     std::string m_name; ///< Name (empty string if no name)
