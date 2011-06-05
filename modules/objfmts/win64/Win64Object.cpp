@@ -163,17 +163,6 @@ getCurPos(Object& object, SourceLocation source, Diagnostic& diags)
     return sym;
 }
 
-static const Register*
-getRegisterFromNameValue(Object& object, NameValue& nv)
-{
-    if (!nv.isExpr())
-        return 0;
-    Expr e = nv.getExpr(object);
-    if (!e.isRegister())
-        return 0;
-    return e.getRegister();
-}
-
 void
 Win64Object::DirPushReg(DirectiveInfo& info, Diagnostic& diags)
 {
@@ -184,13 +173,13 @@ Win64Object::DirPushReg(DirectiveInfo& info, Diagnostic& diags)
     if (!CheckProcFrameState(info.getSource(), diags))
         return;
 
-    const Register* reg = getRegisterFromNameValue(m_object, namevals.front());
-    if (!reg)
+    if (!namevals.front().isRegister())
     {
         diags.Report(info.getSource(), diag::err_value_register)
             << namevals.front().getValueRange();
         return;
     }
+    const Register* reg = namevals.front().getRegister();
 
     // Generate a PUSH_NONVOL unwind code.
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
@@ -210,13 +199,13 @@ Win64Object::DirSetFrame(DirectiveInfo& info, Diagnostic& diags)
     if (!CheckProcFrameState(info.getSource(), diags))
         return;
 
-    const Register* reg = getRegisterFromNameValue(m_object, namevals.front());
-    if (!reg)
+    if (!namevals.front().isRegister())
     {
         diags.Report(info.getSource(), diag::err_value_register)
             << namevals.front().getValueRange();
         return;
     }
+    const Register* reg = namevals.front().getRegister();
 
     std::auto_ptr<Expr> off(0);
     if (namevals.size() > 1)
@@ -280,13 +269,13 @@ Win64Object::SaveCommon(DirectiveInfo& info,
     if (!CheckProcFrameState(info.getSource(), diags))
         return;
 
-    const Register* reg = getRegisterFromNameValue(m_object, namevals.front());
-    if (!reg)
+    if (!namevals.front().isRegister())
     {
         diags.Report(source, diag::err_value_register)
             << namevals.front().getValueRange();
         return;
     }
+    const Register* reg = namevals.front().getRegister();
 
     if (namevals.size() < 2)
     {

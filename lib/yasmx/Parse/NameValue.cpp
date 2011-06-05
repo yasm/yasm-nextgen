@@ -158,6 +158,13 @@ NameValue::ReleaseExpr(Object& object)
     }
 }
 
+const Register*
+NameValue::getRegister() const
+{
+    assert (isRegister() && "name/value not convertible to register");
+    return m_expr->getRegister();
+}
+
 llvm::StringRef
 NameValue::getString() const
 {

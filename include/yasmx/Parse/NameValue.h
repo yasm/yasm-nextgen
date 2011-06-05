@@ -111,6 +111,10 @@ public:
     /// @return True if convertible.
     bool isExpr() const { return (m_type == ID) || (m_type == EXPR); }
 
+    /// Determine if value is convertible to a register using getRegister().
+    /// @return True if convertible.
+    bool isRegister() const { return m_type == EXPR && m_expr->isRegister(); }
+
     /// Determine if value is convertible to a string using getString().
     /// @return True if convertible.
     bool isString() const { return (m_type == ID) || (m_type == STRING); }
@@ -139,10 +143,14 @@ public:
     ///         converted to an expression.
     /*@null@*/ std::auto_ptr<Expr> ReleaseExpr(Object& object);
 
+    /// Get value as a register.
+    /// @return Register; asserts if the parameter is not a register.
+    const Register* getRegister() const;
+
     /// Get value as a string.  If the parameter is an identifier,
     /// it's treated as a string.
-    /// @return String; raises an exception if the parameter cannot be
-    ///         realized as a string.
+    /// @return String; asserts if the parameter cannot be realized as a
+    ///         string.
     llvm::StringRef getString() const;
 
     /// Get value as an identifier.
