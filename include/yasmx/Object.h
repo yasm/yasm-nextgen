@@ -37,6 +37,7 @@
 #include "yasmx/Support/ptr_vector.h"
 #include "yasmx/Support/scoped_ptr.h"
 
+#include "yasmx/Location.h"
 #include "yasmx/SymbolRef.h"
 
 
@@ -179,6 +180,11 @@ public:
     /// @param name         symbol name
     /// @return Symbol matching name.
     SymbolRef getSymbol(llvm::StringRef name);
+
+    /// Get a symbol for an arbitrary location.  The symbol may already exist,
+    /// or a new unnamed one may be created.
+    /// @param loc          location
+    SymbolRef getSymbol(Location loc);
 
     typedef stdx::ptr_vector<Symbol> Symbols;
     typedef Symbols::iterator symbol_iterator;

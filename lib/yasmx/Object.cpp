@@ -202,6 +202,15 @@ Object::getSymbol(llvm::StringRef name)
 }
 
 SymbolRef
+Object::getSymbol(Location loc)
+{
+    // TODO: try to find a matching named symbol.
+    SymbolRef sym = AddNonTableSymbol("$");
+    sym->DefineLabel(loc);
+    return sym;
+}
+
+SymbolRef
 Object::AppendSymbol(llvm::StringRef name)
 {
     Symbol* sym = new Symbol(name);

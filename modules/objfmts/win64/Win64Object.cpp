@@ -144,25 +144,6 @@ Win64Object::CheckProcFrameState(SourceLocation dir_source, Diagnostic& diags)
     return true;
 }
 
-// Get current assembly position.
-static SymbolRef
-getCurPos(Object& object, SourceLocation source, Diagnostic& diags)
-{
-    Section* sect = object.getCurSection();
-    if (!sect)
-    {
-        diags.Report(source,
-                     diags.getCustomDiagID(Diagnostic::Error,
-                         "directive can only be used inside of a section"));
-        return SymbolRef();
-    }
-    SymbolRef sym = object.AddNonTableSymbol("$");
-    Bytecode& bc = sect->FreshBytecode();
-    Location loc = {&bc, bc.getFixedLen()};
-    sym->DefineLabel(loc);
-    return sym;
-}
-
 void
 Win64Object::DirPushReg(DirectiveInfo& info, Diagnostic& diags)
 {
@@ -184,7 +165,7 @@ Win64Object::DirPushReg(DirectiveInfo& info, Diagnostic& diags)
     // Generate a PUSH_NONVOL unwind code.
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(m_object, info.getSource(), diags),
+        m_object.getSymbol(info.getLocation()),
         UnwindCode::PUSH_NONVOL,
         reg->getNum() & 0xF)));
 }
@@ -220,7 +201,7 @@ Win64Object::DirSetFrame(DirectiveInfo& info, Diagnostic& diags)
     // Generate a SET_FPREG unwind code
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(m_object, info.getSource(), diags),
+        m_object.getSymbol(info.getLocation()),
         UnwindCode::SET_FPREG,
         reg->getNum() & 0xF,
         8,
@@ -249,7 +230,7 @@ Win64Object::DirAllocStack(DirectiveInfo& info, Diagnostic& diags)
     // ALLOC_LARGE if necessary.
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(m_object, info.getSource(), diags),
+        m_object.getSymbol(info.getLocation()),
         UnwindCode::ALLOC_SMALL,
         0,
         7,
@@ -294,7 +275,7 @@ Win64Object::SaveCommon(DirectiveInfo& info,
     // SAVE_XXX_FAR if necessary.
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(m_object, source, diags),
+        m_object.getSymbol(info.getLocation()),
         op,
         reg->getNum() & 0xF,
         16,
@@ -324,7 +305,7 @@ Win64Object::DirPushFrame(DirectiveInfo& info, Diagnostic& diags)
     // we set info to 1.  Otherwise we set info to 0.
     m_unwind->AddCode(std::auto_ptr<UnwindCode>(new UnwindCode(
         m_unwind->getProc(),
-        getCurPos(m_object, info.getSource(), diags),
+        m_object.getSymbol(info.getLocation()),
         UnwindCode::PUSH_MACHFRAME,
         info.getNameValues().empty() ? 0 : 1)));
 }
@@ -337,7 +318,7 @@ Win64Object::DirEndProlog(DirectiveInfo& info, Diagnostic& diags)
         return;
     m_done_prolog = info.getSource();
 
-    m_unwind->setProlog(getCurPos(m_object, info.getSource(), diags));
+    m_unwind->setProlog(m_object.getSymbol(info.getLocation()));
 }
 
 void
@@ -369,7 +350,7 @@ Win64Object::DirEndProcFrame(DirectiveInfo& info, Diagnostic& diags)
 
     SymbolRef proc_sym = m_unwind->getProc();
 
-    SymbolRef curpos = getCurPos(m_object, source, diags);
+    SymbolRef curpos = m_object.getSymbol(info.getLocation());
 
     //
     // Add unwind info to end of .xdata section.
