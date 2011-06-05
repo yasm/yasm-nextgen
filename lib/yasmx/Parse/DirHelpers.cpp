@@ -127,9 +127,16 @@ yasm::DirIntNumPower2(NameValue& nv,
                       IntNum* out,
                       bool* out_set)
 {
-    std::auto_ptr<Expr> e(nv.ReleaseExpr(*obj));
+    if (!nv.isExpr())
+    {
+        diags.Report(nv.getNameSource(), diag::err_value_integer)
+            << nv.getValueRange();
+        return;
+    }
 
-    if ((e.get() == 0) || !e->isIntNum())
+    std::auto_ptr<Expr> e(nv.ReleaseExpr(*obj));
+    e->Simplify(diags);
+    if (!e->isIntNum())
     {
         diags.Report(nv.getNameSource(), diag::err_value_integer)
             << nv.getValueRange();
@@ -154,9 +161,16 @@ yasm::DirIntNum(NameValue& nv,
                 IntNum* out,
                 bool* out_set)
 {
-    std::auto_ptr<Expr> e(nv.ReleaseExpr(*obj));
+    if (!nv.isExpr())
+    {
+        diags.Report(nv.getNameSource(), diag::err_value_integer)
+            << nv.getValueRange();
+        return;
+    }
 
-    if ((e.get() == 0) || !e->isIntNum())
+    std::auto_ptr<Expr> e(nv.ReleaseExpr(*obj));
+    e->Simplify(diags);
+    if (!e->isIntNum())
     {
         diags.Report(nv.getNameSource(), diag::err_value_integer)
             << nv.getValueRange();
