@@ -204,8 +204,8 @@ BytecodeContainer::FreshBytecode()
 Location
 BytecodeContainer::getEndLoc()
 {
-    Bytecode& last = m_bcs.back();
-    Location loc = { &last, last.getTotalLen() };
+    Bytecode& last = FreshBytecode();
+    Location loc = { &last, last.getFixedLen() };
     return loc;
 }
 
