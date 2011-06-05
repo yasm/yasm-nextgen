@@ -483,7 +483,7 @@ NasmParser::ParseLine()
                 return false;
             }
 
-            DirectiveInfo info(*m_object, dirloc);
+            DirectiveInfo info(*m_object, m_container->getEndLoc(), dirloc);
             // If this is a section or segment directive, parse the section
             // name specially.
             // XXX: should allow any directive to flag this to be done.

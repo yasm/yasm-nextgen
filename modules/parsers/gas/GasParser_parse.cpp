@@ -154,7 +154,8 @@ next:
                                                          id_source);
                 }
 
-                DirectiveInfo dirinfo(*m_object, id_source);
+                DirectiveInfo dirinfo(*m_object, m_container->getEndLoc(),
+                                      id_source);
                 ParseDirective(&dirinfo.getNameValues());
                 Directive dir;
                 if (m_dirs->get(&dir, name))
@@ -226,7 +227,7 @@ GasParser::setDebugFile(llvm::StringRef filename,
     if (!m_dirs->get(&dir, ".file"))
         return;
 
-    DirectiveInfo info(*m_object, dir_source);
+    DirectiveInfo info(*m_object, m_container->getEndLoc(), dir_source);
     NameValues& nvs = info.getNameValues();
     nvs.push_back(new NameValue(filename));
     nvs.back().setValueRange(filename_source);
@@ -244,7 +245,7 @@ GasParser::setDebugFile(const IntNum& fileno,
     if (!m_dirs->get(&dir, ".file"))
         return;
 
-    DirectiveInfo info(*m_object, dir_source);
+    DirectiveInfo info(*m_object, m_container->getEndLoc(), dir_source);
     NameValues& nvs = info.getNameValues();
     nvs.push_back(new NameValue(Expr::Ptr(new Expr(fileno))));
     nvs.back().setValueRange(fileno_source);
@@ -992,7 +993,7 @@ GasParser::ParseDirSection(unsigned int param, SourceLocation source)
     // DIR_SECTION ID ',' STRING ',' '@' ID ',' dirvals
     // Really parsed as just a bunch of dirvals; only needs to be unique
     // function to handle section name as a special case.
-    DirectiveInfo info(*m_object, source);
+    DirectiveInfo info(*m_object, m_container->getEndLoc(), source);
 
     if (m_token.is(GasToken::comma) || m_token.isEndOfStatement())
     {
@@ -2544,7 +2545,7 @@ GasParser::DefineLcomm(SymbolRef sym,
 void
 GasParser::SwitchSection(llvm::StringRef name, bool builtin, SourceRange source)
 {
-    DirectiveInfo info(*m_object, source.getBegin());
+    DirectiveInfo info(*m_object, m_container->getEndLoc(), source.getBegin());
     NameValues& nvs = info.getNameValues();
     nvs.push_back(new NameValue(name, '\0'));
     nvs.back().setValueRange(source);
