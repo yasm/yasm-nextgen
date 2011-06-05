@@ -185,6 +185,22 @@ yasm::DirExpr(NameValue& nv,
 }
 
 void
+yasm::DirRegister(NameValue& nv,
+                  Diagnostic& diags,
+                  RegisterPtr* out,
+                  bool* out_set)
+{
+    if (!nv.isRegister())
+    {
+        diags.Report(nv.getNameSource(), diag::err_value_register)
+            << nv.getValueRange();
+        return;
+    }
+    *out = nv.getRegister();
+    *out_set = true;
+}
+
+void
 yasm::DirString(NameValue& nv,
                 Diagnostic& diags,
                 std::string* out,
