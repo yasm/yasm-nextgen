@@ -58,6 +58,8 @@ ElfSymbol::ElfSymbol(const ElfConfig&           config,
     , m_value(0)
     , m_symindex(index)
     , m_in_table(true)
+    , m_weak_ref(false)
+    , m_weak_refr(false)
 {
     InputBuffer inbuf(in);
 
@@ -105,6 +107,8 @@ ElfSymbol::ElfSymbol()
     , m_vis(STV_DEFAULT)
     , m_symindex(STN_UNDEF)
     , m_in_table(true)
+    , m_weak_ref(false)
+    , m_weak_refr(false)
 {
 }
 
@@ -207,6 +211,40 @@ ElfSymbol::Write(YAML::Emitter& out) const
 void
 ElfSymbol::Finalize(Symbol& sym, Diagnostic& diags)
 {
+    // If symbol is a weakrefr, make it weak at this point.
+    if (m_weak_refr)
+    {
+        if (!sym.isDefined() &&
+            (sym.getVisibility() & (Symbol::GLOBAL | Symbol::COMMON)) == 0)
+        {
+            if (sym.isUsed())
+            {
+                setInTable(true);
+                sym.Declare(Symbol::GLOBAL);
+                setBinding(STB_WEAK);
+            }
+            else
+            {
+                setInTable(false);
+                return;
+            }
+        }
+        else if (!sym.isDefined() &&
+                 (sym.getVisibility() & Symbol::GLOBAL) != 0)
+        {
+            setBinding(STB_GLOBAL);
+        }
+    }
+
+    // Don't put the LHS of weakrefs into the symbol table unless they're
+    // specifically requested.
+    if (m_weak_ref && (sym.getVisibility() == Symbol::DLOCAL ||
+                       sym.getVisibility() == Symbol::LOCAL))
+    {
+        setInTable(false);
+        return;
+    }
+
     // If symbol is in a TLS section, force its type to TLS.
     Location loc;
     Section* sect;

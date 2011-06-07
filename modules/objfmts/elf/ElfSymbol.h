@@ -85,10 +85,18 @@ public:
     void setSectionIndex(ElfSectionIndex index) { m_index = index; }
 
     ElfSymbolVis getVisibility() const { return m_vis; }
-    void setVisibility(ElfSymbolVis vis) { m_vis = ELF_ST_VISIBILITY(vis); }
+    void setVisibility(ElfSymbolVis vis)
+    {
+        m_vis = ELF_ST_VISIBILITY(vis);
+        m_weak_refr = false;
+    }
 
     ElfSymbolBinding getBinding() const { return m_bind; }
-    void setBinding(ElfSymbolBinding bind) { m_bind = bind; }
+    void setBinding(ElfSymbolBinding bind)
+    {
+        m_bind = bind;
+        m_weak_refr = false;
+    }
 
     ElfSymbolType getType() const { return m_type; }
     bool hasType() const { return m_type != STT_NOTYPE; }
@@ -112,6 +120,9 @@ public:
     bool isInTable() const { return m_in_table; }
     void setInTable(bool in_table) { m_in_table = in_table; }
 
+    void setWeakRef(bool weak_ref) { m_weak_ref = weak_ref; }
+    void setWeakRefr(bool weak_refr) { m_weak_refr = weak_refr; }
+
 private:
     Section*                m_sect;
     ElfStringIndex          m_name_index;
@@ -125,6 +136,8 @@ private:
     ElfSymbolVis            m_vis;
     ElfSymbolIndex          m_symindex;
     bool                    m_in_table;
+    bool                    m_weak_ref;
+    bool                    m_weak_refr;
 };
 
 YASM_STD_EXPORT

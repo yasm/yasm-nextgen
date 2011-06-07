@@ -1659,6 +1659,31 @@ ElfObject::DirWeak(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
+ElfObject::DirWeakRef(DirectiveInfo& info, Diagnostic& diags)
+{
+    assert(info.isObject(m_object));
+    NameValues& nvs = info.getNameValues();
+    if (nvs.size() != 2 || !nvs[0].isId() || !nvs[1].isId())
+    {
+        diags.Report(info.getSource(), diag::err_value_id);
+        return;
+    }
+
+    SymbolRef sym1 = info.getObject().getSymbol(nvs[0].getId());
+    ElfSymbol& elfsym1 = BuildSymbol(*sym1);
+    elfsym1.setWeakRef(true);
+    SymbolRef sym2 = info.getObject().getSymbol(nvs[1].getId());
+    if (!sym2->getAssocData<ElfSymbol>())
+    {
+        ElfSymbol& elfsym2 = BuildSymbol(*sym2);
+        elfsym2.setWeakRefr(true);
+    }
+
+    sym1->CheckedDefineEqu(Expr(sym2), nvs[0].getValueRange().getBegin(),
+                           diags);
+}
+
+void
 ElfObject::VisibilityDir(DirectiveInfo& info,
                          Diagnostic& diags,
                          ElfSymbolVis vis)
@@ -1814,6 +1839,7 @@ ElfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
         {"type", &ElfObject::DirType, Directives::ID_REQUIRED},
         {"size", &ElfObject::DirSize, Directives::ID_REQUIRED},
         {"weak", &ElfObject::DirWeak, Directives::ID_REQUIRED},
+        {"weakref", &ElfObject::DirWeakRef, Directives::ID_REQUIRED},
         {"internal", &ElfObject::DirInternal, Directives::ID_REQUIRED},
         {"hidden", &ElfObject::DirHidden, Directives::ID_REQUIRED},
         {"protected", &ElfObject::DirProtected, Directives::ID_REQUIRED},
@@ -1825,6 +1851,7 @@ ElfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
         {".type", &ElfObject::DirType, Directives::ID_REQUIRED},
         {".size", &ElfObject::DirSize, Directives::ID_REQUIRED},
         {".weak", &ElfObject::DirWeak, Directives::ID_REQUIRED},
+        {".weakref", &ElfObject::DirWeakRef, Directives::ID_REQUIRED},
         {".internal", &ElfObject::DirInternal, Directives::ID_REQUIRED},
         {".hidden", &ElfObject::DirHidden, Directives::ID_REQUIRED},
         {".protected", &ElfObject::DirProtected, Directives::ID_REQUIRED},

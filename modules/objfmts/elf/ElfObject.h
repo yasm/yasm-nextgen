@@ -137,6 +137,7 @@ public:
     void DirType(DirectiveInfo& info, Diagnostic& diags);
     void DirSize(DirectiveInfo& info, Diagnostic& diags);
     void DirWeak(DirectiveInfo& info, Diagnostic& diags);
+    void DirWeakRef(DirectiveInfo& info, Diagnostic& diags);
     void VisibilityDir(DirectiveInfo& info,
                        Diagnostic& diags,
                        ElfSymbolVis vis);

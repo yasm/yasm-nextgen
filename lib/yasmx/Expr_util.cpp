@@ -78,10 +78,20 @@ yasm::ExpandEqu(Expr& e)
             depth_delta = seen.back().depth_delta;
         child->m_depth += depth_delta;
 
-        // Only look at equ's.
         yasm::Symbol* sym;
+        if (!(sym = child->getSymbol()))
+        {
+            --n;
+            continue;
+        }
+
+        // Mark symbol as used if it wasn't already.
+        if (!sym->isUsed())
+            sym->Use(child->getSource());
+
+        // Only look at equ's.
         const Expr* equ;
-        if (!(sym = child->getSymbol()) || !(equ = sym->getEqu()))
+        if (!(equ = sym->getEqu()))
         {
             --n;
             continue;
