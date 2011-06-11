@@ -97,6 +97,15 @@ byIndex(const Symbol& s1, const Symbol& s2)
     return e1->getSymbolIndex() < e2->getSymbolIndex();
 }
 
+ElfGroup::ElfGroup()
+    : flags(0)
+{
+}
+
+ElfGroup::~ElfGroup()
+{
+}
+
 ElfObject::ElfObject(const ObjectFormatModule& module,
                      Object& object,
                      unsigned int bits)
@@ -105,6 +114,7 @@ ElfObject::ElfObject(const ObjectFormatModule& module,
     , m_file_elfsym(0)
     , m_dotdotsym(0)
     , m_symvers_owner(m_symvers)
+    , m_groups_owner(m_groups)
 {
     if (bits == 32)
         m_config.cls = ELFCLASS32;
@@ -730,9 +740,8 @@ public:
               Diagnostic& diags);
     ~ElfOutput();
 
-    void OutputSection(Section& sect,
-                       unsigned int sindex,
-                       StringTable& shstrtab);
+    void OutputGroup(ElfGroup& group);
+    void OutputSection(Section& sect, StringTable& shstrtab);
 
     // OutputBytecode overrides
     bool ConvertValueToBytes(Value& value,
@@ -887,9 +896,46 @@ ElfOutput::ConvertValueToBytes(Value& value,
 }
 
 void
-ElfOutput::OutputSection(Section& sect,
-                         unsigned int sindex,
-                         StringTable& shstrtab)
+ElfOutput::OutputGroup(ElfGroup& group)
+{
+    uint64_t pos = m_os.tell();
+    if (m_os.has_error())
+    {
+        Diag(SourceLocation(), diag::err_file_output_position);
+        return;
+    }
+
+    m_fd_os.seek(group.elfsect->setFileOffset(pos));
+    if (m_os.has_error())
+    {
+        Diag(SourceLocation(), diag::err_file_output_seek);
+        return;
+    }
+
+    Bytes& scratch = getScratch();
+    m_objfmt.m_config.setEndian(scratch);
+
+    // sort and uniquify sections before output
+    std::sort(group.sects.begin(), group.sects.end());
+    std::vector<Section*>::iterator it =
+        std::unique(group.sects.begin(), group.sects.end());
+    group.sects.resize(it - group.sects.begin());
+
+    Write32(scratch, group.flags);
+    for (std::vector<Section*>::const_iterator i=group.sects.begin(),
+         end=group.sects.end(); i != end; ++i)
+    {
+        ElfSection* elfsect = (*i)->getAssocData<ElfSection>();
+        assert(elfsect != 0);
+        Write32(scratch, elfsect->getIndex());
+    }
+
+    group.elfsect->setSize(scratch.size());
+    OutputBytes(scratch, SourceLocation());
+}
+
+void
+ElfOutput::OutputSection(Section& sect, StringTable& shstrtab)
 {
     BytecodeOutput* outputter = this;
 
@@ -900,7 +946,6 @@ ElfOutput::OutputSection(Section& sect,
         elfsect->setAlign(sect.getAlign());
 
     elfsect->setName(shstrtab.getIndex(sect.getName()));
-    elfsect->setIndex(sindex);
 
     uint64_t pos;
     if (sect.isBSS())
@@ -1083,6 +1128,46 @@ ElfObject::Output(llvm::raw_fd_ostream& os,
         }
     }
 
+    m_config.secthead_count = 0;
+
+    // dummy section header
+    ElfSection null_sect(m_config, SHT_NULL, 0);
+    null_sect.setIndex(m_config.secthead_count++);
+
+    ElfOutput out(os, *this, m_object, diags);
+
+    // Group sections.
+    ElfStringIndex groupname_index = 0;
+    for (Groups::iterator i=m_groups.begin(), end=m_groups.end(); i != end; ++i)
+    {
+        ElfGroup& group = *i;
+        group.elfsect.reset(new ElfSection(m_config, SHT_GROUP, 0));
+
+        i->sym = m_object.FindSymbol(i->name);
+        ElfSymbol* elfsym = 0;
+        if (i->sym)
+        {
+            if (groupname_index == 0)
+                groupname_index = shstrtab.getIndex(".group");
+            group.elfsect->setName(groupname_index);
+            elfsym = i->sym->getAssocData<ElfSymbol>();
+            if (!elfsym)
+                elfsym = &BuildSymbol(*i->sym);
+        }
+        else
+        {
+            i->sym = m_object.getSymbol(i->name);
+            group.elfsect->setName(shstrtab.getIndex(i->name));
+            elfsym = &BuildSymbol(*i->sym);
+            elfsym->setType(STT_SECTION);
+            elfsym->setSectionIndex(m_config.secthead_count);
+        }
+
+        group.elfsect->setIndex(m_config.secthead_count++);
+        group.elfsect->setEntSize(4);
+        group.elfsect->setAlign(4);
+    }
+
     // Finalize symbol table, handling any objfmt-specific extensions given
     // during parse phase.  If all_syms is true, add all local symbols and
     // include name information.
@@ -1092,20 +1177,27 @@ ElfObject::Output(llvm::raw_fd_ostream& os,
         FinalizeSymbol(*i, strtab, all_syms, diags);
     }
 
-    m_config.secthead_count = 0;
+    // Number user sections (numbering required for group sections).
+    for (Object::section_iterator i=m_object.sections_begin(),
+         end=m_object.sections_end(); i != end; ++i)
+    {
+        ElfSection* elfsect = i->getAssocData<ElfSection>();
+        assert(elfsect != 0);
+        elfsect->setIndex(m_config.secthead_count++);
+    }
 
-    // dummy section header
-    ElfSection null_sect(m_config, SHT_NULL, 0);
-    null_sect.setIndex(m_config.secthead_count++);
-
-    ElfOutput out(os, *this, m_object, diags);
+    // Output group sections.
+    for (Groups::iterator i=m_groups.begin(), end=m_groups.end(); i != end; ++i)
+    {
+        out.OutputGroup(*i);
+    }
 
     // Output user sections.
     // Assign indices and names as we go (including relocation section names).
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        out.OutputSection(*i, m_config.secthead_count++, shstrtab);
+        out.OutputSection(*i, shstrtab);
     }
 
     // Go through relocations and force referenced symbols into symbol table,
@@ -1229,6 +1321,18 @@ ElfObject::Output(llvm::raw_fd_ostream& os,
 
     // null section header
     null_sect.Write(os, out.getScratch());
+
+    // group section headers
+    for (Groups::iterator i=m_groups.begin(), end=m_groups.end(); i != end; ++i)
+    {
+        ElfGroup& group = *i;
+        group.elfsect->setLink(symtab_sect.getIndex());
+
+        ElfSymbol* elfsym = i->sym->getAssocData<ElfSymbol>();
+        group.elfsect->setInfo(elfsym->getSymbolIndex());
+
+        group.elfsect->Write(os, out.getScratch());
+    }
 
     // user section headers
     for (Object::section_iterator i=m_object.sections_begin(),
@@ -1358,15 +1462,15 @@ ElfObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
+    NameValues::iterator nv = nvs.begin();
 
-    NameValue& sectname_nv = nvs.front();
-    if (!sectname_nv.isString())
+    if (!nv->isString())
     {
-        diags.Report(sectname_nv.getValueRange().getBegin(),
+        diags.Report(nv->getValueRange().getBegin(),
                      diag::err_value_string_or_id);
         return;
     }
-    llvm::StringRef sectname = sectname_nv.getString();
+    llvm::StringRef sectname = nv->getString();
 
     Section* sect = m_object.FindSection(sectname);
     bool first = true;
@@ -1378,15 +1482,16 @@ ElfObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
     m_object.setCurSection(sect);
     sect->setDefault(false);
 
+    ++nv;
+
     // No name/values, so nothing more to do
-    if (nvs.size() <= 1)
+    if (nv == nvs.end())
         return;
 
     // Section flags must be a string.
-    NameValue& flags_nv = nvs[1];
-    if (!flags_nv.isString())
+    if (!nv->isString())
     {
-        diags.Report(flags_nv.getValueRange().getBegin(),
+        diags.Report(nv->getValueRange().getBegin(),
                      diag::err_expected_flag_string);
         return;
     }
@@ -1396,7 +1501,7 @@ ElfObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
     assert(elfsect != 0);
 
     int flags = 0, type = elfsect->getType();
-    llvm::StringRef flagstr = flags_nv.getString();
+    llvm::StringRef flagstr = nv->getString();
 
     for (size_t i=0; i<flagstr.size(); ++i)
     {
@@ -1426,30 +1531,32 @@ ElfObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
             default:
             {
                 char print_flag[2] = {flagstr[i], 0};
-                diags.Report(flags_nv.getValueRange().getBegin()
+                diags.Report(nv->getValueRange().getBegin()
                              .getFileLocWithOffset(i),
                              diag::warn_unrecognized_section_attribute)
                     << print_flag;
             }
         }
     }
+    ++nv;
 
     // Parse section type
-    if (nvs.size() > 2)
+    if (nv != nvs.end())
     {
-        if (!nvs[2].isToken() || nvs[2].getToken().isNot(Token::at))
+        if (!nv->isToken() || nv->getToken().isNot(Token::at))
         {
-            diags.Report(nvs[2].getValueRange().getBegin(),
+            diags.Report(nv->getValueRange().getBegin(),
                          diag::err_expected_at);
             return;
         }
-        if (nvs.size() < 3 || !nvs[3].isId())
+        ++nv;
+        if (nv == nvs.end() || !nv->isId())
         {
-            diags.Report(nvs[3].getValueRange().getBegin(),
+            diags.Report(nv->getValueRange().getBegin(),
                          diag::err_expected_ident);
             return;
         }
-        llvm::StringRef typestr = nvs[3].getId();
+        llvm::StringRef typestr = nv->getId();
         if (typestr == "progbits")
             type = SHT_PROGBITS;
         else if (typestr == "nobits")
@@ -1462,9 +1569,74 @@ ElfObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
             type = SHT_FINI_ARRAY;
         else if (typestr == "preinit_array")
             type = SHT_PREINIT_ARRAY;
+        ++nv;
     }
 
     // Handle merge entity size
+    if ((flags & SHF_MERGE) != 0)
+    {
+        if (nv == nvs.end())
+        {
+            diags.Report(nv->getValueRange().getBegin(),
+                         diag::err_expected_merge_entity_size);
+            return;
+        }
+
+        IntNum merge;
+        bool merge_ok;
+        DirIntNum(*nv, diags, &m_object, &merge, &merge_ok);
+        if (!merge_ok)
+            return;
+
+        elfsect->setEntSize(merge.getUInt());
+        ++nv;
+    }
+
+    // Handle group name
+    if ((flags & SHF_GROUP) != 0)
+    {
+        if (nv == nvs.end())
+        {
+            diags.Report(nv->getValueRange().getBegin(),
+                         diag::err_expected_group_name);
+            return;
+        }
+
+        if (!nv->isString())
+        {
+            diags.Report(nv->getValueRange().getBegin(),
+                         diag::err_value_string_or_id);
+            return;
+        }
+
+        llvm::StringMapEntry<ElfGroup*>& entry =
+            m_group_map.GetOrCreateValue(nv->getString());
+        ElfGroup* group;
+        if (entry.getValue() != 0)
+            group = entry.getValue();
+        else
+        {
+            group = new ElfGroup;
+            group->name = nv->getString();
+            entry.setValue(group);
+            m_groups.push_back(group);
+        }
+        group->sects.push_back(sect);
+
+        ++nv;
+
+        // look for comdat flag
+        if (nv != nvs.end() && nv->isId() && nv->getId() == "comdat")
+        {
+            group->flags |= 1;
+            ++nv;
+        }
+
+        // also treat sections named ".gnu.linkonce" as comdat
+        if (sectname.startswith(".gnu.linkonce"))
+            group->flags |= 1;
+    }
+
     elfsect->setTypeFlags(static_cast<ElfSectionType>(type),
                           static_cast<ElfSectionFlags>(flags));
     sect->setBSS(type == SHT_NOBITS);

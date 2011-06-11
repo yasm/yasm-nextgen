@@ -677,6 +677,10 @@ add_warning("warn_bin_unsupported_decl",
 add_warning("warn_unrecognized_symbol_type", "unrecognized symbol type '%0'")
 add_warning("warn_multiple_symbol_visibility",
             "more than one symbol visibility provided; using last")
+add_error("err_expected_merge_entity_size",
+          "entity size for SHF_MERGE not specified")
+add_error("err_expected_group_name",
+          "group name for SHF_GROUP not specified")
 
 # COFF object format
 add_warning("warn_coff_section_name_length",

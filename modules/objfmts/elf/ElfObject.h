@@ -42,6 +42,7 @@
 //
 // Each Section is spatially disjoint, and has exactly one SHT entry.
 //
+#include "llvm/ADT/StringMap.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/ObjectFormat.h"
@@ -57,6 +58,7 @@ class DirectiveInfo;
 namespace objfmt
 {
 class ElfMachine;
+class ElfSection;
 class ElfSymbol;
 
 // ELF symbol version alias.
@@ -85,6 +87,19 @@ public:
     std::string m_name;
     std::string m_version;
     Mode m_mode;
+};
+
+class YASM_STD_EXPORT ElfGroup
+{
+public:
+    ElfGroup();
+    ~ElfGroup();
+
+    unsigned long flags;
+    std::string name;
+    std::vector<Section*> sects;
+    util::scoped_ptr<ElfSection> elfsect;
+    SymbolRef sym;
 };
 
 class YASM_STD_EXPORT ElfObject : public ObjectFormat
@@ -157,6 +172,12 @@ public:
     typedef stdx::ptr_vector<ElfSymVersion> SymVers;
     SymVers m_symvers;                      // symbol version aliases
     stdx::ptr_vector_owner<ElfSymVersion> m_symvers_owner;
+
+    typedef stdx::ptr_vector<ElfGroup> Groups;
+    Groups m_groups;                        // section groups
+    stdx::ptr_vector_owner<ElfGroup> m_groups_owner;
+
+    llvm::StringMap<ElfGroup*> m_group_map; // section groups by name
 };
 
 class YASM_STD_EXPORT Elf32Object : public ElfObject
