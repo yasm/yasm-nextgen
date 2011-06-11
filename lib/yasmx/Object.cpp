@@ -34,6 +34,7 @@
 #include <boost/pool/pool.hpp>
 
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "YAML/emitter.h"
@@ -96,6 +97,9 @@ public:
     /// Special symbols, indexed by name.
     SymbolTable special_sym_map;
 
+    /// Sections, indexed by name.
+    llvm::StringMap<Section*> section_map;
+
 private:
     /// Pool for symbols not in the symbol table.
     boost::pool<> m_sym_pool;
@@ -144,18 +148,14 @@ void
 Object::AppendSection(std::auto_ptr<Section> sect)
 {
     sect->m_object = this;
+    m_impl->section_map[sect->getName()] = sect.get();
     m_sections.push_back(sect.release());
 }
 
 Section*
 Object::FindSection(llvm::StringRef name)
 {
-    section_iterator i =
-        std::find_if(m_sections.begin(), m_sections.end(),
-                     TR1::bind(&Section::isName, _1, TR1::ref(name)));
-    if (i == m_sections.end())
-        return 0;
-    return &(*i);
+    return m_impl->section_map[name];
 }
 
 SymbolRef
