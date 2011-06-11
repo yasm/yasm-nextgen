@@ -726,7 +726,8 @@ ElfObject::FinalizeSymbol(Symbol& sym,
 
     elfsym->Finalize(sym, diags);
 
-    if (elfsym->isInTable() && !elfsym->hasName())
+    if (elfsym->isInTable() && !elfsym->hasName() &&
+        elfsym->getType() != STT_SECTION)
         elfsym->setName(strtab.getIndex(sym.getName()));
 }
 
