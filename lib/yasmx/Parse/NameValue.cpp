@@ -149,7 +149,7 @@ NameValue::ReleaseExpr(Object& object)
         {
             SymbolRef sym = object.getSymbol(getId());
             sym->Use(m_value_range.getBegin());
-            return std::auto_ptr<Expr>(new Expr(sym));
+            return std::auto_ptr<Expr>(new Expr(sym, m_value_range.getBegin()));
         }
         case EXPR:
             return m_expr;
