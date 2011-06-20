@@ -1,5 +1,5 @@
 //
-// DWARF2 debugging format - info and abbreviation tables
+// DWARF debugging format - info and abbreviation tables
 //
 //  Copyright (C) 2006-2007  Peter Johnson
 //
@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Dwarf2Debug.h"
+#include "DwarfDebug.h"
 
 #include "config.h"
 #include "llvm/System/Path.h"
@@ -67,7 +67,7 @@ AppendAbbrevTail(Bytes& bytes)
 }
 
 Section&
-Dwarf2Debug::Generate_info(Section& debug_line, Section* main_code)
+DwarfDebug::Generate_info(Section& debug_line, Section* main_code)
 {
     Section& debug_abbrev =
         *m_objfmt->AppendSection(".debug_abbrev", SourceLocation(), *m_diags);

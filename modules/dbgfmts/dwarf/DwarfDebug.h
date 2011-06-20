@@ -1,7 +1,7 @@
-#ifndef YASM_DWARF2DEBUG_H
-#define YASM_DWARF2DEBUG_H
+#ifndef YASM_DWARFDEBUG_H
+#define YASM_DWARFDEBUG_H
 //
-// DWARF2 debugging format
+// DWARF debugging format
 //
 //  Copyright (C) 2006-2007  Peter Johnson
 //
@@ -35,7 +35,7 @@
 #include "yasmx/SymbolRef.h"
 
 #define WITH_DWARF3 1
-#include "Dwarf2Types.h"
+#include "DwarfTypes.h"
 
 
 namespace yasm {
@@ -45,17 +45,17 @@ class FileEntry;
 class Section;
 
 namespace dbgfmt {
-struct Dwarf2Loc;
-struct Dwarf2LineState;
+struct DwarfLoc;
+struct DwarfLineState;
 
-class YASM_STD_EXPORT Dwarf2Debug : public DebugFormat
+class YASM_STD_EXPORT DwarfDebug : public DebugFormat
 {
 public:
-    Dwarf2Debug(const DebugFormatModule& module, Object& object);
-    ~Dwarf2Debug();
+    DwarfDebug(const DebugFormatModule& module, Object& object);
+    ~DwarfDebug();
 
-    static llvm::StringRef getName() { return "DWARF2 debugging format"; }
-    static llvm::StringRef getKeyword() { return "dwarf2"; }
+    static llvm::StringRef getName() { return "DWARF debugging format"; }
+    static llvm::StringRef getKeyword() { return "dwarf"; }
     static bool isOkObject(Object& object) { return true; }
 
     void AddDirectives(Directives& dirs, llvm::StringRef parser);
@@ -124,14 +124,14 @@ private:
                              Section** last_code,
                              size_t* num_line_sections);
     void GenerateLineOp(Section& debug_line,
-                        Dwarf2LineState* state,
-                        const Dwarf2Loc& loc,
-                        const Dwarf2Loc* nextloc);
+                        DwarfLineState* state,
+                        const DwarfLoc& loc,
+                        const DwarfLoc* nextloc);
     void GenerateLineBC(Section& debug_line,
                         SourceManager& smgr,
-                        Dwarf2LineState* state,
+                        DwarfLineState* state,
                         Bytecode& bc,
-                        Dwarf2Loc* loc,
+                        DwarfLoc* loc,
                         unsigned long* lastfile);
     /// Append statement program prologue
     void AppendSPP(BytecodeContainer& container);
@@ -165,16 +165,16 @@ private:
     unsigned long AddDir(llvm::StringRef dirname);
 };
 
-class YASM_STD_EXPORT Dwarf2PassDebug : public Dwarf2Debug
+class YASM_STD_EXPORT DwarfPassDebug : public DwarfDebug
 {
 public:
-    Dwarf2PassDebug(const DebugFormatModule& module, Object& object)
-        : Dwarf2Debug(module, object)
+    DwarfPassDebug(const DebugFormatModule& module, Object& object)
+        : DwarfDebug(module, object)
     {}
-    ~Dwarf2PassDebug();
+    ~DwarfPassDebug();
 
-    static llvm::StringRef getName() { return "DWARF2 passthrough only"; }
-    static llvm::StringRef getKeyword() { return "dwarf2pass"; }
+    static llvm::StringRef getName() { return "DWARF passthrough only"; }
+    static llvm::StringRef getKeyword() { return "dwarfpass"; }
     static bool isOkObject(Object& object) { return true; }
 
     void Generate(ObjectFormat& objfmt, SourceManager& smgr, Diagnostic& diags);

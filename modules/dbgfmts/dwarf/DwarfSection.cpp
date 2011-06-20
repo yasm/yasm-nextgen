@@ -1,5 +1,5 @@
 //
-// DWARF2 debugging format - per-section information
+// DWARF debugging format - per-section information
 //
 //  Copyright (C) 2006-2007  Peter Johnson
 //
@@ -27,16 +27,16 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Dwarf2Section.h"
+#include "DwarfSection.h"
 
 
 using namespace yasm;
 using namespace yasm::dbgfmt;
 
-Dwarf2Loc::Dwarf2Loc(Location loc_,
-                     SourceLocation source_,
-                     unsigned long file_,
-                     unsigned long line_)
+DwarfLoc::DwarfLoc(Location loc_,
+                   SourceLocation source_,
+                   unsigned long file_,
+                   unsigned long line_)
     : source(source_)
     , file(file_)
     , line(line_)
@@ -51,18 +51,18 @@ Dwarf2Loc::Dwarf2Loc(Location loc_,
 {
 }
 
-const char* Dwarf2Section::key = "yasm::dbgfmt::Dwarf2Section";
+const char* DwarfSection::key = "yasm::dbgfmt::DwarfSection";
 
-Dwarf2Section::Dwarf2Section()
+DwarfSection::DwarfSection()
 {
 }
 
-Dwarf2Section::~Dwarf2Section()
+DwarfSection::~DwarfSection()
 {
 }
 
 void
-Dwarf2Section::Write(YAML::Emitter& out) const
+DwarfSection::Write(YAML::Emitter& out) const
 {
     // TODO
 }

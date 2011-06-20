@@ -1,5 +1,5 @@
 //
-// DWARF2 debugging format - line information
+// DWARF debugging format - line information
 //
 //  Copyright (C) 2006-2007  Peter Johnson
 //
@@ -27,7 +27,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Dwarf2Debug.h"
+#include "DwarfDebug.h"
 
 #include <algorithm>
 
@@ -47,7 +47,7 @@
 #include "yasmx/Object.h"
 #include "yasmx/ObjectFormat.h"
 
-#include "Dwarf2Section.h"
+#include "DwarfSection.h"
 
 
 #ifndef NELEMS
@@ -58,7 +58,7 @@ using namespace yasm;
 using namespace yasm::dbgfmt;
 
 // # of LEB128 operands needed for each of the above opcodes
-static unsigned char line_opcode_num_operands[DWARF2_LINE_OPCODE_BASE-1] =
+static unsigned char line_opcode_num_operands[DWARF_LINE_OPCODE_BASE-1] =
 {
     0,  // DW_LNS_copy
     1,  // DW_LNS_advance_pc
@@ -77,21 +77,20 @@ static unsigned char line_opcode_num_operands[DWARF2_LINE_OPCODE_BASE-1] =
 };
 
 // Base and range for line offsets in special opcodes
-static const int DWARF2_LINE_BASE = -5;
-static const int DWARF2_LINE_RANGE = 14;
+static const int DWARF_LINE_BASE = -5;
+static const int DWARF_LINE_RANGE = 14;
 
-#define DWARF2_MAX_SPECIAL_ADDR_DELTA   \
-    (((255-DWARF2_LINE_OPCODE_BASE)/DWARF2_LINE_RANGE)*\
-     m_min_insn_len)
+#define DWARF_MAX_SPECIAL_ADDR_DELTA   \
+    (((255-DWARF_LINE_OPCODE_BASE)/DWARF_LINE_RANGE)*m_min_insn_len)
 
 // Initial value of is_stmt register
-#define DWARF2_LINE_DEFAULT_IS_STMT     1
+#define DWARF_LINE_DEFAULT_IS_STMT      1
 
 namespace yasm { namespace dbgfmt {
 // Line number state machine register state
-struct Dwarf2LineState
+struct DwarfLineState
 {
-    // DWARF2 state machine registers
+    // DWARF state machine registers
     unsigned long address;
     unsigned long file;
     unsigned long line;
@@ -112,7 +111,7 @@ public:
         : m_name(name), m_dir(dir)
     {}
 
-    bool operator() (const Dwarf2Debug::Filename& file)
+    bool operator() (const DwarfDebug::Filename& file)
     {
         if (file.filename.empty())
             return true;
@@ -126,7 +125,7 @@ private:
 } // anonymous namespace
 
 unsigned long
-Dwarf2Debug::AddDir(llvm::StringRef dirname)
+DwarfDebug::AddDir(llvm::StringRef dirname)
 {
     // Put the directory into the directory table (checking for duplicates)
     Dirs::iterator d =
@@ -139,7 +138,7 @@ Dwarf2Debug::AddDir(llvm::StringRef dirname)
 }
 
 size_t
-Dwarf2Debug::AddFile(const FileEntry* file)
+DwarfDebug::AddFile(const FileEntry* file)
 {
     unsigned long dir = AddDir(file->getDir()->getName());
 
@@ -167,7 +166,7 @@ Dwarf2Debug::AddFile(const FileEntry* file)
 }
 
 size_t
-Dwarf2Debug::AddFile(unsigned long filenum, llvm::StringRef pathname)
+DwarfDebug::AddFile(unsigned long filenum, llvm::StringRef pathname)
 {
     llvm::sys::Path path(pathname);
 
@@ -193,14 +192,14 @@ Dwarf2Debug::AddFile(unsigned long filenum, llvm::StringRef pathname)
 
 // Create and add a new line opcode to a section.
 void
-Dwarf2Debug::AppendLineOp(BytecodeContainer& container,
+DwarfDebug::AppendLineOp(BytecodeContainer& container,
                           unsigned int opcode)
 {
     AppendByte(container, opcode);
 }
 
 void
-Dwarf2Debug::AppendLineOp(BytecodeContainer& container,
+DwarfDebug::AppendLineOp(BytecodeContainer& container,
                           unsigned int opcode,
                           const IntNum& operand)
 {
@@ -211,8 +210,8 @@ Dwarf2Debug::AppendLineOp(BytecodeContainer& container,
 
 // Create and add a new extended line opcode to a section.
 void
-Dwarf2Debug::AppendLineExtOp(BytecodeContainer& container,
-                             DwarfLineNumberExtOp ext_opcode)
+DwarfDebug::AppendLineExtOp(BytecodeContainer& container,
+                            DwarfLineNumberExtOp ext_opcode)
 {
     AppendByte(container, DW_LNS_extended_op);
     AppendLEB128(container, 1, false, SourceLocation(), *m_diags);
@@ -220,9 +219,9 @@ Dwarf2Debug::AppendLineExtOp(BytecodeContainer& container,
 }
 
 void
-Dwarf2Debug::AppendLineExtOp(BytecodeContainer& container,
-                             DwarfLineNumberExtOp ext_opcode,
-                             const IntNum& operand)
+DwarfDebug::AppendLineExtOp(BytecodeContainer& container,
+                            DwarfLineNumberExtOp ext_opcode,
+                            const IntNum& operand)
 {
     AppendByte(container, DW_LNS_extended_op);
     AppendLEB128(container, 1 + SizeLEB128(operand, false), false,
@@ -232,10 +231,10 @@ Dwarf2Debug::AppendLineExtOp(BytecodeContainer& container,
 }
 
 void
-Dwarf2Debug::AppendLineExtOp(BytecodeContainer& container,
-                             DwarfLineNumberExtOp ext_opcode,
-                             unsigned long ext_operandsize,
-                             SymbolRef ext_operand)
+DwarfDebug::AppendLineExtOp(BytecodeContainer& container,
+                            DwarfLineNumberExtOp ext_opcode,
+                            unsigned long ext_operandsize,
+                            SymbolRef ext_operand)
 {
     AppendByte(container, DW_LNS_extended_op);
     AppendLEB128(container, ext_operandsize+1, false, SourceLocation(),
@@ -246,10 +245,10 @@ Dwarf2Debug::AppendLineExtOp(BytecodeContainer& container,
 }
 
 void
-Dwarf2Debug::GenerateLineOp(Section& debug_line,
-                            Dwarf2LineState* state,
-                            const Dwarf2Loc& loc,
-                            const Dwarf2Loc* nextloc)
+DwarfDebug::GenerateLineOp(Section& debug_line,
+                           DwarfLineState* state,
+                           const DwarfLoc& loc,
+                           const DwarfLoc* nextloc)
 {
     if (state->file != loc.file)
     {
@@ -273,12 +272,12 @@ Dwarf2Debug::GenerateLineOp(Section& debug_line,
         AppendLineOp(debug_line, DW_LNS_set_isa, state->isa);
     }
 #endif
-    if (!state->is_stmt && loc.is_stmt == Dwarf2Loc::IS_STMT_SET)
+    if (!state->is_stmt && loc.is_stmt == DwarfLoc::IS_STMT_SET)
     {
         state->is_stmt = true;
         AppendLineOp(debug_line, DW_LNS_negate_stmt);
     }
-    else if (state->is_stmt && loc.is_stmt == Dwarf2Loc::IS_STMT_CLEAR)
+    else if (state->is_stmt && loc.is_stmt == DwarfLoc::IS_STMT_CLEAR)
     {
         state->is_stmt = false;
         AppendLineOp(debug_line, DW_LNS_negate_stmt);
@@ -316,8 +315,8 @@ Dwarf2Debug::GenerateLineOp(Section& debug_line,
     state->line = loc.line;
 
     // First handle the line delta
-    if (line_delta < DWARF2_LINE_BASE
-        || line_delta >= DWARF2_LINE_BASE+DWARF2_LINE_RANGE)
+    if (line_delta < DWARF_LINE_BASE
+        || line_delta >= DWARF_LINE_BASE+DWARF_LINE_RANGE)
     {
         // Won't fit in special opcode, use (signed) line advance
         AppendLineOp(debug_line, DW_LNS_advance_line, line_delta);
@@ -327,22 +326,22 @@ Dwarf2Debug::GenerateLineOp(Section& debug_line,
     // Next handle the address delta
     int opcode1, opcode2;
     opcode1 = opcode2 =
-        DWARF2_LINE_OPCODE_BASE + line_delta.getInt() - DWARF2_LINE_BASE;
-    opcode1 += DWARF2_LINE_RANGE * (addr_delta.getUInt() / m_min_insn_len);
-    opcode2 += DWARF2_LINE_RANGE *
-        ((addr_delta.getUInt() - DWARF2_MAX_SPECIAL_ADDR_DELTA) / m_min_insn_len);
+        DWARF_LINE_OPCODE_BASE + line_delta.getInt() - DWARF_LINE_BASE;
+    opcode1 += DWARF_LINE_RANGE * (addr_delta.getUInt() / m_min_insn_len);
+    opcode2 += DWARF_LINE_RANGE *
+        ((addr_delta.getUInt() - DWARF_MAX_SPECIAL_ADDR_DELTA) / m_min_insn_len);
     if (line_delta.isZero() && addr_delta.isZero())
     {
         // Both line and addr deltas are 0: do DW_LNS_copy
         AppendLineOp(debug_line, DW_LNS_copy);
     }
-    else if (addr_delta.getUInt() <= DWARF2_MAX_SPECIAL_ADDR_DELTA &&
+    else if (addr_delta.getUInt() <= DWARF_MAX_SPECIAL_ADDR_DELTA &&
              opcode1 <= 255)
     {
         // Addr delta in range of special opcode
         AppendLineOp(debug_line, opcode1);
     }
-    else if (addr_delta.getUInt() <= 2*DWARF2_MAX_SPECIAL_ADDR_DELTA &&
+    else if (addr_delta.getUInt() <= 2*DWARF_MAX_SPECIAL_ADDR_DELTA &&
              opcode2 <= 255)
     {
         // Addr delta in range of const_add_pc + special
@@ -358,20 +357,20 @@ Dwarf2Debug::GenerateLineOp(Section& debug_line,
             AppendLineOp(debug_line, DW_LNS_copy);
         else
         {
-            AppendLineOp(debug_line, DWARF2_LINE_OPCODE_BASE +
-                                     line_delta.getInt() - DWARF2_LINE_BASE);
+            AppendLineOp(debug_line, DWARF_LINE_OPCODE_BASE +
+                                     line_delta.getInt() - DWARF_LINE_BASE);
         }
     }
     state->prevloc = loc.loc;
 }
 #if 0
 void
-Dwarf2Debug::GenerateLineBC(Section& debug_line,
-                            SourceManager& smgr,
-                            Dwarf2LineState* state,
-                            Bytecode& bc,
-                            Dwarf2Loc* loc,
-                            unsigned long* lastfile)
+DwarfDebug::GenerateLineBC(Section& debug_line,
+                           SourceManager& smgr,
+                           DwarfLineState* state,
+                           Bytecode& bc,
+                           DwarfLoc* loc,
+                           unsigned long* lastfile)
 {
     unsigned long i;
     const char *filename;
@@ -405,34 +404,34 @@ Dwarf2Debug::GenerateLineBC(Section& debug_line,
 }
 #endif
 void
-Dwarf2Debug::GenerateLineSection(Section& sect,
-                                 Section& debug_line,
-                                 SourceManager& smgr,
-                                 bool asm_source,
-                                 Section** last_code,
-                                 size_t* num_line_sections)
+DwarfDebug::GenerateLineSection(Section& sect,
+                                Section& debug_line,
+                                SourceManager& smgr,
+                                bool asm_source,
+                                Section** last_code,
+                                size_t* num_line_sections)
 {
-    Dwarf2Section* dwarf2sect = sect.getAssocData<Dwarf2Section>();
+    DwarfSection* dwarf2sect = sect.getAssocData<DwarfSection>();
     if (!dwarf2sect)
     {
         if (!asm_source || !sect.isCode())
             return;     // no line data for this section
         // Create line data for asm code sections
-        dwarf2sect = new Dwarf2Section;
-        sect.AddAssocData(std::auto_ptr<Dwarf2Section>(dwarf2sect));
+        dwarf2sect = new DwarfSection;
+        sect.AddAssocData(std::auto_ptr<DwarfSection>(dwarf2sect));
     }
 
     ++(*num_line_sections);
     *last_code = &sect;
 
     // initialize state machine registers for each sequence
-    Dwarf2LineState state;
+    DwarfLineState state;
     state.address = 0;
     state.file = 1;
     state.line = 1;
     state.column = 0;
     state.isa = 0;
-    state.is_stmt = DWARF2_LINE_DEFAULT_IS_STMT;
+    state.is_stmt = DWARF_LINE_DEFAULT_IS_STMT;
     state.prevloc.bc = NULL;
 
     // Set the starting address for the section
@@ -443,7 +442,7 @@ Dwarf2Debug::GenerateLineSection(Section& sect,
     {
 #if 0
         unsigned long lastfile = 0;
-        Dwarf2Loc loc;
+        DwarfLoc loc;
 
         for (Section::bc_iterator i=sect.bytecodes_begin(),
              end=sect.bytecodes_end(); i != end; ++i)
@@ -454,10 +453,10 @@ Dwarf2Debug::GenerateLineSection(Section& sect,
     }
     else
     {
-        for (Dwarf2Section::Locs::const_iterator i=dwarf2sect->locs.begin(),
+        for (DwarfSection::Locs::const_iterator i=dwarf2sect->locs.begin(),
              end=dwarf2sect->locs.end(); i != end; ++i)
         {
-            Dwarf2Section::Locs::const_iterator next = i+1;
+            DwarfSection::Locs::const_iterator next = i+1;
             GenerateLineOp(debug_line, &state, *i, next != end ? &*next : 0);
         }
     }
@@ -469,7 +468,7 @@ Dwarf2Debug::GenerateLineSection(Section& sect,
         state.prevloc = sect.getBeginLoc();
     IntNum addr_delta;
     CalcDist(state.prevloc, sect.getEndLoc(), &addr_delta);
-    if (addr_delta == DWARF2_MAX_SPECIAL_ADDR_DELTA)
+    if (addr_delta == DWARF_MAX_SPECIAL_ADDR_DELTA)
         AppendLineOp(debug_line, DW_LNS_const_add_pc);
     else if (addr_delta > 0)
         AppendLineOp(debug_line, DW_LNS_advance_pc, addr_delta);
@@ -477,10 +476,10 @@ Dwarf2Debug::GenerateLineSection(Section& sect,
 }
 
 Section&
-Dwarf2Debug::Generate_line(SourceManager& smgr,
-                           bool asm_source,
-                           /*@out@*/ Section** main_code,
-                           /*@out@*/ size_t* num_line_sections)
+DwarfDebug::Generate_line(SourceManager& smgr,
+                          bool asm_source,
+                          /*@out@*/ Section** main_code,
+                          /*@out@*/ size_t* num_line_sections)
 {
     if (asm_source)
     {
@@ -528,15 +527,15 @@ Dwarf2Debug::Generate_line(SourceManager& smgr,
 }
 
 void
-Dwarf2Debug::AppendSPP(BytecodeContainer& container)
+DwarfDebug::AppendSPP(BytecodeContainer& container)
 {
     Bytes bytes;
 
     Write8(bytes, m_min_insn_len);                  // minimum_instr_len
-    Write8(bytes, DWARF2_LINE_DEFAULT_IS_STMT);     // default_is_stmt
-    Write8(bytes, DWARF2_LINE_BASE);                // line_base
-    Write8(bytes, DWARF2_LINE_RANGE);               // line_range
-    Write8(bytes, DWARF2_LINE_OPCODE_BASE);         // opcode_base
+    Write8(bytes, DWARF_LINE_DEFAULT_IS_STMT);      // default_is_stmt
+    Write8(bytes, DWARF_LINE_BASE);                 // line_base
+    Write8(bytes, DWARF_LINE_RANGE);                // line_range
+    Write8(bytes, DWARF_LINE_OPCODE_BASE);          // opcode_base
 
     // Standard opcode # operands array
     for (unsigned int i=0; i<NELEMS(line_opcode_num_operands); ++i)
@@ -582,7 +581,7 @@ Dwarf2Debug::AppendSPP(BytecodeContainer& container)
 }
 
 void
-Dwarf2Debug::DirLoc(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirLoc(DirectiveInfo& info, Diagnostic& diags)
 {
     NameValues::const_iterator nv = info.getNameValues().begin();
     NameValues::const_iterator end = info.getNameValues().end();
@@ -634,18 +633,18 @@ Dwarf2Debug::DirLoc(DirectiveInfo& info, Diagnostic& diags)
         return;
     }
 
-    Dwarf2Section* dwarf2sect = section->getAssocData<Dwarf2Section>();
+    DwarfSection* dwarf2sect = section->getAssocData<DwarfSection>();
     if (!dwarf2sect)
     {
-        dwarf2sect = new Dwarf2Section;
-        section->AddAssocData(std::auto_ptr<Dwarf2Section>(dwarf2sect));
+        dwarf2sect = new DwarfSection;
+        section->AddAssocData(std::auto_ptr<DwarfSection>(dwarf2sect));
     }
 
     // Defaults for optional settings
     Bytecode& herebc = info.getObject().getCurSection()->FreshBytecode();
     Location here = { &herebc, herebc.getFixedLen() };
-    std::auto_ptr<Dwarf2Loc> loc(new Dwarf2Loc(here, info.getSource(),
-                                               file.getUInt(), line.getUInt()));
+    std::auto_ptr<DwarfLoc> loc(new DwarfLoc(here, info.getSource(),
+                                             file.getUInt(), line.getUInt()));
 
     // Optional column number
     ++nv;
@@ -689,9 +688,9 @@ restart:
             }
             IntNum is_stmt = is_stmt_e.getIntNum();
             if (is_stmt.isZero())
-                loc->is_stmt = Dwarf2Loc::IS_STMT_SET;
+                loc->is_stmt = DwarfLoc::IS_STMT_SET;
             else if (is_stmt.isPos1())
-                loc->is_stmt = Dwarf2Loc::IS_STMT_CLEAR;
+                loc->is_stmt = DwarfLoc::IS_STMT_CLEAR;
             else
             {
                 diags.Report(nv->getValueRange().getBegin(),
@@ -807,7 +806,7 @@ restart:
 }
 
 void
-Dwarf2Debug::DirFile(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirFile(DirectiveInfo& info, Diagnostic& diags)
 {
     NameValues& nvs = info.getNameValues();
     assert(!nvs.empty());
