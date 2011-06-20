@@ -1995,6 +1995,8 @@ ElfObject::getDebugFormatKeywords()
     {
         "null",
         "stabs",
+        "dwarf",
+        "dwarfpass",
         "dwarf2",
         "dwarf2pass"
     };

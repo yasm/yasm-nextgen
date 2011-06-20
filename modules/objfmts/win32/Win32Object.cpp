@@ -57,7 +57,8 @@ Win32Object::~Win32Object()
 std::vector<llvm::StringRef>
 Win32Object::getDebugFormatKeywords()
 {
-    static const char* keywords[] = {"null", "dwarf2", "cv8"};
+    static const char* keywords[] =
+        {"null", "dwarf", "dwarf2", "cv8"};
     size_t keywords_size = sizeof(keywords)/sizeof(keywords[0]);
     return std::vector<llvm::StringRef>(keywords, keywords+keywords_size);
 }
