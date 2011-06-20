@@ -41,6 +41,8 @@
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Arch.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/Optimizer.h"
 #include "yasmx/Section.h"
 #include "yasmx/Symbol.h"
 
@@ -328,4 +330,78 @@ Object::Dump() const
     YAML::Emitter out;
     Write(out);
     llvm::errs() << out.c_str() << '\n';
+}
+
+void
+Object::UpdateBytecodeOffsets(Diagnostic& diags)
+{
+    for (section_iterator sect=m_sections.begin(), end=m_sections.end();
+         sect != end; ++sect)
+        sect->UpdateOffsets(diags);
+}
+
+void
+Object::Optimize(Diagnostic& diags)
+{
+    Optimizer opt(diags);
+    unsigned long bc_index = 0;
+
+    // Step 1a
+    for (section_iterator sect=m_sections.begin(), sectend=m_sections.end();
+         sect != sectend; ++sect)
+    {
+        unsigned long offset = 0;
+
+        // Set the offset of the first (empty) bytecode.
+        sect->bytecodes_front().setIndex(bc_index++);
+        sect->bytecodes_front().setOffset(0);
+
+        // Iterate through the remainder, if any.
+        for (Section::bc_iterator bc=sect->bytecodes_begin(),
+             bcend=sect->bytecodes_end(); bc != bcend; ++bc)
+        {
+            bc->setIndex(bc_index++);
+            bc->setOffset(offset);
+
+            if (bc->CalcLen(TR1::bind(&Optimizer::AddSpan, &opt,
+                                      _1, _2, _3, _4, _5),
+                            diags))
+            {
+                if (bc->getSpecial() == Bytecode::Contents::SPECIAL_OFFSET)
+                    opt.AddOffsetSetter(*bc);
+
+                offset = bc->getNextOffset();
+            }
+        }
+    }
+
+    if (diags.hasErrorOccurred())
+        return;
+
+    // Step 1b
+    opt.Step1b();
+    if (diags.hasErrorOccurred())
+        return;
+
+    // Step 1c
+    UpdateBytecodeOffsets(diags);
+    if (diags.hasErrorOccurred())
+        return;
+
+    // Step 1d
+    if (opt.Step1d())
+        return;
+
+    // Step 1e
+    opt.Step1e();
+    if (diags.hasErrorOccurred())
+        return;
+
+    // Step 2
+    opt.Step2();
+    if (diags.hasErrorOccurred())
+        return;
+
+    // Step 3
+    UpdateBytecodeOffsets(diags);
 }
