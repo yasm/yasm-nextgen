@@ -1395,7 +1395,7 @@ ElfObject::AppendSection(llvm::StringRef name,
         type = SHT_NOBITS;
         flags = SHF_ALLOC + SHF_WRITE;
     }
-    else if (name == ".data")
+    else if (name == ".data" || name == ".ctors" || name == ".dtors")
     {
         type = SHT_PROGBITS;
         flags = SHF_ALLOC + SHF_WRITE;
