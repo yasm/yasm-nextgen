@@ -121,6 +121,12 @@ public:
     /// @note Errors/warnings are stored into errwarns.
     void Finalize(Diagnostic& diags);
 
+    /// Optimize this container.  Generally, Object::Optimize() should be
+    /// called instead to optimize the entire object at once.
+    /// @param diags        diagnostic reporting
+    /// @note Errors/warnings are stored into diags.
+    void Optimize(Diagnostic& diags);
+
     /// Update all bytecode offsets.
     /// @param diags        diagnostic reporting
     /// @note Errors/warnings are stored into errwarns.
