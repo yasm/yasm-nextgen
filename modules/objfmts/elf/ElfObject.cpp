@@ -1575,6 +1575,8 @@ ElfObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
             type = SHT_FINI_ARRAY;
         else if (typestr == "preinit_array")
             type = SHT_PREINIT_ARRAY;
+        else if (typestr == "unwind")
+            type = SHT_UNWIND;
         ++nv;
     }
 
