@@ -30,6 +30,7 @@
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"
+#include "yasmx/Optimizer.h"
 
 
 using namespace yasm;
@@ -204,8 +205,8 @@ BytecodeContainer::FreshBytecode()
 Location
 BytecodeContainer::getEndLoc()
 {
-    Bytecode& last = m_bcs.back();
-    Location loc = { &last, last.getTotalLen() };
+    Bytecode& last = FreshBytecode();
+    Location loc = { &last, last.getFixedLen() };
     return loc;
 }
 
@@ -223,6 +224,67 @@ BytecodeContainer::UpdateOffsets(Diagnostic& diags)
     m_bcs.front().setOffset(0);
     for (bc_iterator bc=m_bcs.begin(), end=m_bcs.end(); bc != end; ++bc)
         offset = bc->UpdateOffset(offset, diags);
+}
+
+void
+BytecodeContainer::Optimize(Diagnostic& diags)
+{
+    Optimizer opt(diags);
+
+    // Step 1a
+    unsigned long bc_index = 0;
+    unsigned long offset = 0;
+
+    // Set the offset of the first (empty) bytecode.
+    m_bcs.front().setIndex(bc_index++);
+    m_bcs.front().setOffset(0);
+
+    // Iterate through the remainder, if any.
+    for (bc_iterator bc=m_bcs.begin(), bcend=m_bcs.end(); bc != bcend; ++bc)
+    {
+        bc->setIndex(bc_index++);
+        bc->setOffset(offset);
+
+        if (bc->CalcLen(TR1::bind(&Optimizer::AddSpan, &opt,
+                                  _1, _2, _3, _4, _5),
+                        diags))
+        {
+            if (bc->getSpecial() == Bytecode::Contents::SPECIAL_OFFSET)
+                opt.AddOffsetSetter(*bc);
+
+            offset = bc->getNextOffset();
+        }
+    }
+
+    if (diags.hasErrorOccurred())
+        return;
+
+    // Step 1b
+    opt.Step1b();
+    if (diags.hasErrorOccurred())
+        return;
+
+    // Step 1c
+    UpdateOffsets(diags);
+    if (diags.hasErrorOccurred())
+        return;
+
+    // Step 1d
+    if (opt.Step1d())
+        return;
+
+    // Step 1e
+    opt.Step1e();
+    if (diags.hasErrorOccurred())
+        return;
+
+    // Step 2
+    opt.Step2();
+    if (diags.hasErrorOccurred())
+        return;
+
+    // Step 3
+    UpdateOffsets(diags);
 }
 
 #ifdef WITH_XML

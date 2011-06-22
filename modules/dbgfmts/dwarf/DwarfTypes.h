@@ -1,7 +1,7 @@
-#ifndef YASM_DWARF2TYPES_H
-#define YASM_DWARF2TYPES_H
+#ifndef YASM_DWARFTYPES_H
+#define YASM_DWARFTYPES_H
 //
-// DWARF2 debugging format types
+// DWARF debugging format types
 //
 //  Copyright (C) 2006-2007  Peter Johnson
 //
@@ -199,7 +199,7 @@ enum DwarfLineNumberOp
     DW_LNS_set_epilogue_begin,
     DW_LNS_set_isa,
 #endif
-    DWARF2_LINE_OPCODE_BASE
+    DWARF_LINE_OPCODE_BASE
 };
 
 // Line number extended opcodes

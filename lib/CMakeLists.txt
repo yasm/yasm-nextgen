@@ -92,11 +92,11 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/MultipleBytecode.cpp
     yasmx/NumericOutput.cpp
     yasmx/Object.cpp
-    yasmx/Object_optimize.cpp
     yasmx/ObjectFormat.cpp
     yasmx/Object_util.cpp
     yasmx/OrgBytecode.cpp
     yasmx/Op.cpp
+    yasmx/Optimizer.cpp
     ${PLUGIN_CPP}
     yasmx/Reloc.cpp
     yasmx/Section.cpp

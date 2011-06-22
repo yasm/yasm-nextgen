@@ -42,6 +42,7 @@
 //
 // Each Section is spatially disjoint, and has exactly one SHT entry.
 //
+#include "llvm/ADT/StringMap.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/ObjectFormat.h"
@@ -57,6 +58,7 @@ class DirectiveInfo;
 namespace objfmt
 {
 class ElfMachine;
+class ElfSection;
 class ElfSymbol;
 
 // ELF symbol version alias.
@@ -87,6 +89,19 @@ public:
     Mode m_mode;
 };
 
+class YASM_STD_EXPORT ElfGroup
+{
+public:
+    ElfGroup();
+    ~ElfGroup();
+
+    unsigned long flags;
+    std::string name;
+    std::vector<Section*> sects;
+    util::scoped_ptr<ElfSection> elfsect;
+    SymbolRef sym;
+};
+
 class YASM_STD_EXPORT ElfObject : public ObjectFormat
 {
 public:
@@ -99,7 +114,7 @@ public:
     static llvm::StringRef getKeyword() { return "elf"; }
     static llvm::StringRef getExtension() { return ".o"; }
     static unsigned int getDefaultX86ModeBits() { return 0; }
-    static llvm::StringRef getDefaultDebugFormatKeyword() { return "null"; }
+    static llvm::StringRef getDefaultDebugFormatKeyword() { return "elfcfi"; }
     static std::vector<llvm::StringRef> getDebugFormatKeywords();
     static bool isOkObject(Object& object) { return true; }
     static bool Taste(const llvm::MemoryBuffer& in,
@@ -137,6 +152,7 @@ public:
     void DirType(DirectiveInfo& info, Diagnostic& diags);
     void DirSize(DirectiveInfo& info, Diagnostic& diags);
     void DirWeak(DirectiveInfo& info, Diagnostic& diags);
+    void DirWeakRef(DirectiveInfo& info, Diagnostic& diags);
     void VisibilityDir(DirectiveInfo& info,
                        Diagnostic& diags,
                        ElfSymbolVis vis);
@@ -155,6 +171,13 @@ public:
 
     typedef stdx::ptr_vector<ElfSymVersion> SymVers;
     SymVers m_symvers;                      // symbol version aliases
+    stdx::ptr_vector_owner<ElfSymVersion> m_symvers_owner;
+
+    typedef stdx::ptr_vector<ElfGroup> Groups;
+    Groups m_groups;                        // section groups
+    stdx::ptr_vector_owner<ElfGroup> m_groups_owner;
+
+    llvm::StringMap<ElfGroup*> m_group_map; // section groups by name
 };
 
 class YASM_STD_EXPORT Elf32Object : public ElfObject

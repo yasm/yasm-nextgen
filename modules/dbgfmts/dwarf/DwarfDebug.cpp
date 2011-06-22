@@ -1,5 +1,5 @@
 //
-// DWARF2 debugging format
+// DWARF debugging format
 //
 //  Copyright (C) 2006-2007  Peter Johnson
 //
@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Dwarf2Debug.h"
+#include "DwarfDebug.h"
 
 #include <algorithm>
 
@@ -42,27 +42,30 @@
 using namespace yasm;
 using namespace yasm::dbgfmt;
 
-Dwarf2Debug::Dwarf2Debug(const DebugFormatModule& module, Object& object)
+DwarfDebug::DwarfDebug(const DebugFormatModule& module, Object& object)
     : DebugFormat(module, object)
     , m_format(FORMAT_32BIT)    // TODO: flexible?
     , m_sizeof_address(object.getArch()->getAddressSize()/8)
     , m_min_insn_len(object.getArch()->getModule().getMinInsnLen())
+    , m_fdes_owner(m_fdes)
+    , m_cur_fde(0)
 {
     switch (m_format)
     {
         case FORMAT_32BIT: m_sizeof_offset = 4; break;
         case FORMAT_64BIT: m_sizeof_offset = 8; break;
     }
+    InitCfi(*object.getArch());
 }
 
-Dwarf2Debug::~Dwarf2Debug()
+DwarfDebug::~DwarfDebug()
 {
 }
 
 void
-Dwarf2Debug::Generate(ObjectFormat& objfmt,
-                      SourceManager& smgr,
-                      Diagnostic& diags)
+DwarfDebug::GenerateDebug(ObjectFormat& objfmt,
+                          SourceManager& smgr,
+                          Diagnostic& diags)
 {
     m_objfmt = &objfmt;
     m_diags = &diags;
@@ -92,26 +95,38 @@ Dwarf2Debug::Generate(ObjectFormat& objfmt,
     }
 }
 
-Dwarf2PassDebug::~Dwarf2PassDebug()
+void
+DwarfDebug::Generate(ObjectFormat& objfmt,
+                     SourceManager& smgr,
+                     Diagnostic& diags)
+{
+    GenerateCfi(objfmt, smgr, diags);
+    GenerateDebug(objfmt, smgr, diags);
+}
+
+DwarfPassDebug::~DwarfPassDebug()
 {
 }
 
 void
-Dwarf2PassDebug::Generate(ObjectFormat& objfmt,
-                          SourceManager& smgr,
-                          Diagnostic& diags)
+DwarfPassDebug::Generate(ObjectFormat& objfmt,
+                         SourceManager& smgr,
+                         Diagnostic& diags)
 {
+    // Always generate CFI.
+    GenerateCfi(objfmt, smgr, diags);
+
     // If we don't have any .file directives, don't generate any debug info.
     if (!gotFile())
         return;
-    Dwarf2Debug::Generate(objfmt, smgr, diags);
+    GenerateDebug(objfmt, smgr, diags);
 }
 
 Location
-Dwarf2Debug::AppendHead(Section& sect,
-                        /*@null@*/ Section* debug_ptr,
-                        bool with_address,
-                        bool with_segment)
+DwarfDebug::AppendHead(Section& sect,
+                       /*@null@*/ Section* debug_ptr,
+                       bool with_address,
+                       bool with_segment)
 {
     if (m_format == FORMAT_64BIT)
     {
@@ -149,7 +164,7 @@ Dwarf2Debug::AppendHead(Section& sect,
 }
 
 void
-Dwarf2Debug::setHeadEnd(Location head, Location tail)
+DwarfDebug::setHeadEnd(Location head, Location tail)
 {
     assert(head.bc->getContainer() == tail.bc->getContainer());
 
@@ -163,17 +178,17 @@ Dwarf2Debug::setHeadEnd(Location head, Location tail)
 }
 
 void
-Dwarf2Debug::AddDirectives(Directives& dirs, llvm::StringRef parser)
+DwarfDebug::AddDebugDirectives(Directives& dirs, llvm::StringRef parser)
 {
-    static const Directives::Init<Dwarf2Debug> nasm_dirs[] =
+    static const Directives::Init<DwarfDebug> nasm_dirs[] =
     {
-        {"loc",     &Dwarf2Debug::DirLoc,   Directives::ARG_REQUIRED},
-        {"file",    &Dwarf2Debug::DirFile,  Directives::ARG_REQUIRED},
+        {"loc",     &DwarfDebug::DirLoc,   Directives::ARG_REQUIRED},
+        {"file",    &DwarfDebug::DirFile,  Directives::ARG_REQUIRED},
     };
-    static const Directives::Init<Dwarf2Debug> gas_dirs[] =
+    static const Directives::Init<DwarfDebug> gas_dirs[] =
     {
-        {".loc",    &Dwarf2Debug::DirLoc,   Directives::ARG_REQUIRED},
-        {".file",   &Dwarf2Debug::DirFile,  Directives::ARG_REQUIRED},
+        {".loc",    &DwarfDebug::DirLoc,   Directives::ARG_REQUIRED},
+        {".file",   &DwarfDebug::DirFile,  Directives::ARG_REQUIRED},
     };
 
     if (parser.equals_lower("nasm"))
@@ -183,10 +198,41 @@ Dwarf2Debug::AddDirectives(Directives& dirs, llvm::StringRef parser)
 }
 
 void
-yasm_dbgfmt_dwarf2_DoRegister()
+DwarfDebug::AddDirectives(Directives& dirs, llvm::StringRef parser)
+{
+    AddDebugDirectives(dirs, parser);
+    AddCfiDirectives(dirs, parser);
+}
+
+ElfCfiDebug::~ElfCfiDebug()
+{
+}
+
+void
+ElfCfiDebug::AddDirectives(Directives& dirs, llvm::StringRef parser)
+{
+    AddCfiDirectives(dirs, parser);
+}
+
+void
+ElfCfiDebug::Generate(ObjectFormat& objfmt,
+                      SourceManager& smgr,
+                      Diagnostic& diags)
+{
+    GenerateCfi(objfmt, smgr, diags);
+}
+
+void
+yasm_dbgfmt_dwarf_DoRegister()
 {
     RegisterModule<DebugFormatModule,
-                   DebugFormatModuleImpl<Dwarf2Debug> >("dwarf2");
+                   DebugFormatModuleImpl<DwarfDebug> >("dwarf");
     RegisterModule<DebugFormatModule,
-                   DebugFormatModuleImpl<Dwarf2PassDebug> >("dwarf2pass");
+                   DebugFormatModuleImpl<DwarfPassDebug> >("dwarfpass");
+    RegisterModule<DebugFormatModule,
+                   DebugFormatModuleImpl<DwarfDebug> >("dwarf2");
+    RegisterModule<DebugFormatModule,
+                   DebugFormatModuleImpl<DwarfPassDebug> >("dwarf2pass");
+    RegisterModule<DebugFormatModule,
+                   DebugFormatModuleImpl<ElfCfiDebug> >("elfcfi");
 }

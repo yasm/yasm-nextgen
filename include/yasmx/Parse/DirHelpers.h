@@ -187,6 +187,19 @@ void DirExpr(NameValue& nv,
              std::auto_ptr<Expr>* out,
              bool* out_set);
 
+/// Standard helper for DirHelpers() that parses a register value.
+/// When calling DirHelpers::add(), needsvalue should be set to true.
+/// @param nv       name/value
+/// @param diags    diagnostic reporting
+/// @param out      reference to Register*
+/// @param out_set  reference that is set to 1 when called
+typedef const Register* RegisterPtr;
+YASM_LIB_EXPORT
+void DirRegister(NameValue& nv,
+                 Diagnostic& diags,
+                 RegisterPtr* out,
+                 bool* out_set);
+
 /// Standard helper for DirHelpers() that parses an string (or
 /// standalone identifier) value.
 /// When calling DirHelpers::add(), needsvalue should be set to true.

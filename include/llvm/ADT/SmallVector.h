@@ -22,6 +22,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <iterator>
 
 #ifdef _MSC_VER
 namespace std {

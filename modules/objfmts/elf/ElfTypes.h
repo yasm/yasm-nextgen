@@ -161,6 +161,7 @@ enum ElfSectionType
     SHT_LOOS = 0x60000000,      // reserved for environment specific use
     SHT_HIOS = 0x6fffffff,
     SHT_LOPROC = 0x70000000,    // reserved for processor specific semantics
+    SHT_UNWIND = 0x70000001,    // @unwind section type
     SHT_HIPROC = 0x7fffffff/*,
     SHT_LOUSER = 0x80000000,*/  // reserved for applications; safe
     /*SHT_HIUSER = 0xffffffff*/

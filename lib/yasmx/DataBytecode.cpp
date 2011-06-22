@@ -43,6 +43,22 @@ yasm::AppendByte(BytecodeContainer& container, unsigned char val)
 }
 
 void
+yasm::AppendByte(BytecodeContainer& container,
+                 std::auto_ptr<Expr> expr,
+                 SourceLocation source,
+                 Diagnostic& diags)
+{
+    expr->Simplify(diags);
+    if (expr->isIntNum())
+    {
+        AppendByte(container, expr->getIntNum().getUInt());
+        return;
+    }
+    Bytecode& bc = container.FreshBytecode();
+    bc.AppendFixed(1, expr, source);
+}
+
+void
 yasm::AppendData(BytecodeContainer& container,
                  const IntNum& val,
                  unsigned int size,

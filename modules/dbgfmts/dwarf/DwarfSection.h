@@ -1,7 +1,7 @@
-#ifndef YASM_DWARF2SECTION_H
-#define YASM_DWARF2SECTION_H
+#ifndef YASM_DWARFSECTION_H
+#define YASM_DWARFSECTION_H
 //
-// DWARF2 debugging format per-section data
+// DWARF debugging format per-section data
 //
 //  Copyright (C) 2006-2007  Peter Johnson
 //
@@ -40,12 +40,12 @@ class Section;
 namespace dbgfmt {
 
 /// .loc directive data
-struct YASM_STD_EXPORT Dwarf2Loc
+struct YASM_STD_EXPORT DwarfLoc
 {
-    Dwarf2Loc(Location loc_,
-              SourceLocation source_,
-              unsigned long file_,
-              unsigned long line_);
+    DwarfLoc(Location loc_,
+             SourceLocation source_,
+             unsigned long file_,
+             unsigned long line_);
 
     SourceLocation source;    // source location of .loc directive
 
@@ -70,19 +70,21 @@ struct YASM_STD_EXPORT Dwarf2Loc
     Location loc;           // location following
 };
 
-/// Per-section DWARF2 data
-class YASM_STD_EXPORT Dwarf2Section : public AssocData
+/// Per-section DWARF data
+class YASM_STD_EXPORT DwarfSection : public AssocData
 {
 public:
     static const char* key;
 
-    Dwarf2Section();
-    ~Dwarf2Section();
+    DwarfSection();
+    ~DwarfSection();
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     /// The locations set by the .loc directives in this section, in assembly
     /// source order.
-    typedef stdx::ptr_vector<Dwarf2Loc> Locs;
+    typedef stdx::ptr_vector<DwarfLoc> Locs;
     Locs locs;
 };
 

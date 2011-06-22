@@ -1,5 +1,5 @@
 //
-// DWARF2 debugging format - address range table
+// DWARF debugging format - address range table
 //
 //  Copyright (C) 2006-2007  Peter Johnson
 //
@@ -24,7 +24,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "Dwarf2Debug.h"
+#include "DwarfDebug.h"
 
 #include "yasmx/Bytecode.h"
 #include "yasmx/BytecodeContainer.h"
@@ -33,14 +33,14 @@
 #include "yasmx/ObjectFormat.h"
 #include "yasmx/Section.h"
 
-#include "Dwarf2Section.h"
+#include "DwarfSection.h"
 
 
 using namespace yasm;
 using namespace yasm::dbgfmt;
 
 Section&
-Dwarf2Debug::Generate_aranges(Section& debug_info)
+DwarfDebug::Generate_aranges(Section& debug_info)
 {
     Section* debug_aranges = m_object.FindSection(".debug_aranges");
 
@@ -66,7 +66,7 @@ Dwarf2Debug::Generate_aranges(Section& debug_info)
     for (Object::section_iterator i=m_object.sections_begin(),
          end=m_object.sections_end(); i != end; ++i)
     {
-        Dwarf2Section* dwarf2sect = i->getAssocData<Dwarf2Section>();
+        DwarfSection* dwarf2sect = i->getAssocData<DwarfSection>();
         if (!dwarf2sect)
             continue;   // no line data for this section
 

@@ -476,6 +476,7 @@ add_warning("warn_no_nonlocal", "no preceding non-local label")
 add_error("err_expected_directive_name", "expected directive name")
 add_error("err_invalid_directive_argument", "invalid argument to directive")
 add_error("err_directive_no_args", "directive requires an argument")
+add_error("err_directive_too_few_args", "directive requires %0 arguments")
 add_warning("warn_directive_one_arg", "directive only uses first argument")
 add_error("err_float_in_directive",
           "directive argument cannot be floating point")
@@ -677,6 +678,25 @@ add_warning("warn_bin_unsupported_decl",
 add_warning("warn_unrecognized_symbol_type", "unrecognized symbol type '%0'")
 add_warning("warn_multiple_symbol_visibility",
             "more than one symbol visibility provided; using last")
+add_error("err_expected_merge_entity_size",
+          "entity size for SHF_MERGE not specified")
+add_error("err_expected_group_name",
+          "group name for SHF_GROUP not specified")
+
+# ELF/DWARF CFI
+add_error("err_nested_cfi",
+          "previous CFI entry not closed (missing .cfi_endproc")
+add_warning("warn_outside_cfiproc",
+            "CFI instruction used without previous .cfi_startproc; ignored")
+add_warning("warn_cfi_endproc_before_startproc",
+            ".cfi_endproc without corresponding .cfi_startproc; ignored")
+add_error("err_eof_inside_cfiproc",
+          "open CFI at end of file; missing .cfi_endproc directive")
+add_error("err_cfi_state_stack_empty",
+          "CFI state restore without previous remember")
+add_warning("warn_cfi_routine_ignored", "personality routine ignored")
+add_error("err_cfi_invalid_encoding", "invalid or unsupported encoding")
+add_error("err_cfi_routine_required", "personality routine symbol required")
 
 # COFF object format
 add_warning("warn_coff_section_name_length",

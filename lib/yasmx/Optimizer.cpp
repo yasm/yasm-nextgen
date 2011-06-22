@@ -26,7 +26,7 @@
 //
 #define DEBUG_TYPE "Optimize"
 
-#include "yasmx/Object.h"
+#include "yasmx/Optimizer.h"
 
 #include <algorithm>
 #include <deque>
@@ -201,11 +201,10 @@ OffsetSetter::Write(pugi::xml_node out) const
 #endif // WITH_XML
 
 namespace {
-class Optimizer;
-
 class Span : public DebugDumper<Span>
 {
     friend class Optimizer;
+    friend class Optimizer::Impl;
 public:
     class Term : public DebugDumper<Span::Term>
     {
@@ -237,7 +236,7 @@ public:
          size_t os_index);
     ~Span();
 
-    bool CreateTerms(Optimizer* optimize, Diagnostic& diags);
+    bool CreateTerms(Optimizer::Impl* optimize, Diagnostic& diags);
     bool RecalcNormal(Diagnostic& diags);
 
     std::string getName() const;
@@ -279,18 +278,14 @@ private:
     // Index of first offset setter following this span's bytecode
     size_t m_os_index;
 };
+} // anonymous namespace
 
-class Optimizer : public DebugDumper<Optimizer>
+namespace yasm {
+class Optimizer::Impl : public DebugDumper<Optimizer::Impl>
 {
 public:
-    Optimizer(Diagnostic& diags);
-    ~Optimizer();
-    void AddSpan(Bytecode& bc,
-                 int id,
-                 const Value& value,
-                 long neg_thres,
-                 long pos_thres);
-    void AddOffsetSetter(Bytecode& bc);
+    Impl(Diagnostic& diags);
+    ~Impl();
 
     void Step1b();
     bool Step1d();
@@ -301,7 +296,6 @@ public:
     pugi::xml_node Write(pugi::xml_node out) const;
 #endif // WITH_XML
 
-private:
     void ITreeAdd(Span& span, Span::Term& term);
     void CheckCycle(IntervalTreeNode<Span::Term*> * node,
                     Span& span);
@@ -318,7 +312,7 @@ private:
     IntervalTree<Span::Term*> m_itree;
     std::vector<OffsetSetter> m_offset_setters;
 };
-} // anonymous namespace
+} // namespace yasm
 
 Span::Term::Term()
     : m_span(0),
@@ -383,8 +377,8 @@ Optimizer::AddSpan(Bytecode& bc,
                    long neg_thres,
                    long pos_thres)
 {
-    m_spans.push_back(new Span(bc, id, value, neg_thres, pos_thres,
-                               m_offset_setters.size()-1));
+    m_impl->m_spans.push_back(new Span(bc, id, value, neg_thres, pos_thres,
+                                       m_impl->m_offset_setters.size()-1));
 }
 
 void
@@ -401,7 +395,7 @@ Span::AddTerm(unsigned int subst, Location loc, Location loc2)
 }
 
 bool
-Span::CreateTerms(Optimizer* optimize, Diagnostic& diags)
+Span::CreateTerms(Optimizer::Impl* optimize, Diagnostic& diags)
 {
     // Split out sym-sym terms in absolute portion of dependent value
     if (m_depval.hasAbs())
@@ -539,7 +533,7 @@ Span::WriteRef(pugi::xml_node out) const
 }
 #endif // WITH_XML
 
-Optimizer::Optimizer(Diagnostic& diags)
+Optimizer::Impl::Impl(Diagnostic& diags)
     : m_diags(diags)
 {
     // Create an placeholder offset setter for spans to point to; this will
@@ -547,7 +541,7 @@ Optimizer::Optimizer(Diagnostic& diags)
     m_offset_setters.push_back(OffsetSetter());
 }
 
-Optimizer::~Optimizer()
+Optimizer::Impl::~Impl()
 {
     while (!m_spans.empty())
     {
@@ -558,7 +552,7 @@ Optimizer::~Optimizer()
 
 #ifdef WITH_XML
 pugi::xml_node
-Optimizer::Write(pugi::xml_node out) const
+Optimizer::Impl::Write(pugi::xml_node out) const
 {
     pugi::xml_node root = out.append_child("Optimizer");
 
@@ -594,16 +588,16 @@ void
 Optimizer::AddOffsetSetter(Bytecode& bc)
 {
     // Remember it
-    OffsetSetter& os = m_offset_setters.back();
+    OffsetSetter& os = m_impl->m_offset_setters.back();
     os.m_bc = &bc;
     os.m_thres = bc.getNextOffset();
 
     // Create new placeholder
-    m_offset_setters.push_back(OffsetSetter());
+    m_impl->m_offset_setters.push_back(OffsetSetter());
 }
 
 void
-Optimizer::ITreeAdd(Span& span, Span::Term& term)
+Optimizer::Impl::ITreeAdd(Span& span, Span::Term& term)
 {
     long precbc_index, precbc2_index;
     unsigned long low, high;
@@ -637,7 +631,7 @@ Optimizer::ITreeAdd(Span& span, Span::Term& term)
 }
 
 void
-Optimizer::CheckCycle(IntervalTreeNode<Span::Term*> * node, Span& span)
+Optimizer::Impl::CheckCycle(IntervalTreeNode<Span::Term*> * node, Span& span)
 {
     Span::Term* term = node->getData();
     Span* depspan = term->m_span;
@@ -663,7 +657,7 @@ Optimizer::CheckCycle(IntervalTreeNode<Span::Term*> * node, Span& span)
 }
 
 void
-Optimizer::ExpandTerm(IntervalTreeNode<Span::Term*> * node, long len_diff)
+Optimizer::Impl::ExpandTerm(IntervalTreeNode<Span::Term*> * node, long len_diff)
 {
     Span::Term* term = node->getData();
     Span* span = term->m_span;
@@ -720,7 +714,7 @@ Optimizer::ExpandTerm(IntervalTreeNode<Span::Term*> * node, long len_diff)
 }
 
 void
-Optimizer::Step1b()
+Optimizer::Impl::Step1b()
 {
     Spans::iterator spani = m_spans.begin();
     while (spani != m_spans.end())
@@ -758,7 +752,7 @@ Optimizer::Step1b()
 }
 
 bool
-Optimizer::Step1d()
+Optimizer::Impl::Step1d()
 {
     for (Spans::iterator spani=m_spans.begin(), endspan=m_spans.end();
          spani != endspan; ++spani)
@@ -795,7 +789,7 @@ Optimizer::Step1d()
 }
 
 void
-Optimizer::Step1e()
+Optimizer::Impl::Step1e()
 {
     // Update offset-setters values
     for (std::vector<OffsetSetter>::iterator os=m_offset_setters.begin(),
@@ -828,13 +822,13 @@ Optimizer::Step1e()
             continue;
         m_itree.Enumerate(static_cast<long>(span->m_bc.getIndex()),
                           static_cast<long>(span->m_bc.getIndex()),
-                          TR1::bind(&Optimizer::CheckCycle, this, _1,
+                          TR1::bind(&Optimizer::Impl::CheckCycle, this, _1,
                                     TR1::ref(*span)));
     }
 }
 
 void
-Optimizer::Step2()
+Optimizer::Impl::Step2()
 {
     DEBUG(Dump());
 
@@ -902,7 +896,7 @@ Optimizer::Step2()
         // Iterate over all spans dependent across the bc just expanded
         m_itree.Enumerate(static_cast<long>(span->m_bc.getIndex()),
                           static_cast<long>(span->m_bc.getIndex()),
-                          TR1::bind(&Optimizer::ExpandTerm, this, _1,
+                          TR1::bind(&Optimizer::Impl::ExpandTerm, this, _1,
                                     len_diff));
 
         // Iterate over offset-setters that follow the bc just expanded.
@@ -944,8 +938,8 @@ Optimizer::Step2()
                       << len_diff << ":\n");
                 m_itree.Enumerate(static_cast<long>(os->m_bc->getIndex()),
                                   static_cast<long>(os->m_bc->getIndex()),
-                                  TR1::bind(&Optimizer::ExpandTerm, this, _1,
-                                            len_diff));
+                                  TR1::bind(&Optimizer::Impl::ExpandTerm, this,
+                                            _1, len_diff));
             }
 
             os->m_cur_val = os->m_new_val;
@@ -954,76 +948,43 @@ Optimizer::Step2()
     }
 }
 
-void
-Object::UpdateBytecodeOffsets(Diagnostic& diags)
+Optimizer::Optimizer(Diagnostic& diags)
+    : m_impl(new Impl(diags))
 {
-    for (section_iterator sect=m_sections.begin(), end=m_sections.end();
-         sect != end; ++sect)
-        sect->UpdateOffsets(diags);
+}
+
+Optimizer::~Optimizer()
+{
 }
 
 void
-Object::Optimize(Diagnostic& diags)
+Optimizer::Step1b()
 {
-    Optimizer opt(diags);
-    unsigned long bc_index = 0;
-
-    // Step 1a
-    for (section_iterator sect=m_sections.begin(), sectend=m_sections.end();
-         sect != sectend; ++sect)
-    {
-        unsigned long offset = 0;
-
-        // Set the offset of the first (empty) bytecode.
-        sect->bytecodes_front().setIndex(bc_index++);
-        sect->bytecodes_front().setOffset(0);
-
-        // Iterate through the remainder, if any.
-        for (Section::bc_iterator bc=sect->bytecodes_begin(),
-             bcend=sect->bytecodes_end(); bc != bcend; ++bc)
-        {
-            bc->setIndex(bc_index++);
-            bc->setOffset(offset);
-
-            if (bc->CalcLen(TR1::bind(&Optimizer::AddSpan, &opt,
-                                      _1, _2, _3, _4, _5),
-                            diags))
-            {
-                if (bc->getSpecial() == Bytecode::Contents::SPECIAL_OFFSET)
-                    opt.AddOffsetSetter(*bc);
-
-                offset = bc->getNextOffset();
-            }
-        }
-    }
-
-    if (diags.hasErrorOccurred())
-        return;
-
-    // Step 1b
-    opt.Step1b();
-    if (diags.hasErrorOccurred())
-        return;
-
-    // Step 1c
-    UpdateBytecodeOffsets(diags);
-    if (diags.hasErrorOccurred())
-        return;
-
-    // Step 1d
-    if (opt.Step1d())
-        return;
-
-    // Step 1e
-    opt.Step1e();
-    if (diags.hasErrorOccurred())
-        return;
-
-    // Step 2
-    opt.Step2();
-    if (diags.hasErrorOccurred())
-        return;
-
-    // Step 3
-    UpdateBytecodeOffsets(diags);
+    m_impl->Step1b();
 }
+
+bool
+Optimizer::Step1d()
+{
+    return m_impl->Step1d();
+}
+
+void
+Optimizer::Step1e()
+{
+    m_impl->Step1e();
+}
+
+void
+Optimizer::Step2()
+{
+    m_impl->Step2();
+}
+
+#ifdef WITH_XML
+pugi::xml_node
+Optimizer::Write(pugi::xml_node out) const
+{
+    return m_impl->Write(out);
+}
+#endif // WITH_XML

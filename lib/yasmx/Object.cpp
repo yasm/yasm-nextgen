@@ -34,10 +34,13 @@
 #include <boost/pool/pool.hpp>
 
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Arch.h"
+#include "yasmx/Bytecode.h"
+#include "yasmx/Optimizer.h"
 #include "yasmx/Section.h"
 #include "yasmx/Symbol.h"
 
@@ -94,6 +97,9 @@ public:
     /// Special symbols, indexed by name.
     SymbolTable special_sym_map;
 
+    /// Sections, indexed by name.
+    llvm::StringMap<Section*> section_map;
+
 private:
     /// Pool for symbols not in the symbol table.
     boost::pool<> m_sym_pool;
@@ -142,18 +148,14 @@ void
 Object::AppendSection(std::auto_ptr<Section> sect)
 {
     sect->m_object = this;
+    m_impl->section_map[sect->getName()] = sect.get();
     m_sections.push_back(sect.release());
 }
 
 Section*
 Object::FindSection(llvm::StringRef name)
 {
-    section_iterator i =
-        std::find_if(m_sections.begin(), m_sections.end(),
-                     TR1::bind(&Section::isName, _1, TR1::ref(name)));
-    if (i == m_sections.end())
-        return 0;
-    return &(*i);
+    return m_impl->section_map[name];
 }
 
 SymbolRef
@@ -197,6 +199,15 @@ Object::getSymbol(llvm::StringRef name)
     sym2 = sym.get();
     m_symbols.push_back(sym.release());
     return SymbolRef(sym2);
+}
+
+SymbolRef
+Object::getSymbol(Location loc)
+{
+    // TODO: try to find a matching named symbol.
+    SymbolRef sym = AddNonTableSymbol("$");
+    sym->DefineLabel(loc);
+    return sym;
 }
 
 SymbolRef
@@ -296,3 +307,77 @@ Object::Write(pugi::xml_node out) const
     return root;
 }
 #endif // WITH_XML
+
+void
+Object::UpdateBytecodeOffsets(Diagnostic& diags)
+{
+    for (section_iterator sect=m_sections.begin(), end=m_sections.end();
+         sect != end; ++sect)
+        sect->UpdateOffsets(diags);
+}
+
+void
+Object::Optimize(Diagnostic& diags)
+{
+    Optimizer opt(diags);
+    unsigned long bc_index = 0;
+
+    // Step 1a
+    for (section_iterator sect=m_sections.begin(), sectend=m_sections.end();
+         sect != sectend; ++sect)
+    {
+        unsigned long offset = 0;
+
+        // Set the offset of the first (empty) bytecode.
+        sect->bytecodes_front().setIndex(bc_index++);
+        sect->bytecodes_front().setOffset(0);
+
+        // Iterate through the remainder, if any.
+        for (Section::bc_iterator bc=sect->bytecodes_begin(),
+             bcend=sect->bytecodes_end(); bc != bcend; ++bc)
+        {
+            bc->setIndex(bc_index++);
+            bc->setOffset(offset);
+
+            if (bc->CalcLen(TR1::bind(&Optimizer::AddSpan, &opt,
+                                      _1, _2, _3, _4, _5),
+                            diags))
+            {
+                if (bc->getSpecial() == Bytecode::Contents::SPECIAL_OFFSET)
+                    opt.AddOffsetSetter(*bc);
+
+                offset = bc->getNextOffset();
+            }
+        }
+    }
+
+    if (diags.hasErrorOccurred())
+        return;
+
+    // Step 1b
+    opt.Step1b();
+    if (diags.hasErrorOccurred())
+        return;
+
+    // Step 1c
+    UpdateBytecodeOffsets(diags);
+    if (diags.hasErrorOccurred())
+        return;
+
+    // Step 1d
+    if (opt.Step1d())
+        return;
+
+    // Step 1e
+    opt.Step1e();
+    if (diags.hasErrorOccurred())
+        return;
+
+    // Step 2
+    opt.Step2();
+    if (diags.hasErrorOccurred())
+        return;
+
+    // Step 3
+    UpdateBytecodeOffsets(diags);
+}

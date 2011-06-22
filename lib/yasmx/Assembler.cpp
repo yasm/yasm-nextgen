@@ -261,10 +261,11 @@ Assembler::InitObject(SourceManager& source_mgr, Diagnostic& diags)
     // Add an initial "default" section to object
     m_object->setCurSection(m_objfmt->AddDefaultSection());
 
-    // Default to null as the debug format if not specified
+    // Default debug format if not specified
     if (m_dbgfmt_module.get() == 0)
     {
-        if (!setDebugFormat("null", diags))
+        if (!setDebugFormat(m_objfmt_module->getDefaultDebugFormatKeyword(),
+                            diags))
             return false;
     }
 

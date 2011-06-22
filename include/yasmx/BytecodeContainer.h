@@ -120,6 +120,12 @@ public:
     /// @note Errors/warnings are stored into errwarns.
     void Finalize(Diagnostic& diags);
 
+    /// Optimize this container.  Generally, Object::Optimize() should be
+    /// called instead to optimize the entire object at once.
+    /// @param diags        diagnostic reporting
+    /// @note Errors/warnings are stored into diags.
+    void Optimize(Diagnostic& diags);
+
     /// Update all bytecode offsets.
     /// @param diags        diagnostic reporting
     /// @note Errors/warnings are stored into errwarns.
@@ -154,6 +160,15 @@ private:
 /// @param val          byte value
 YASM_LIB_EXPORT
 void AppendByte(BytecodeContainer& container, unsigned char val);
+
+/// Append a single byte value to the end of a section.
+/// @param sect         section
+/// @param expr         byte value
+YASM_LIB_EXPORT
+void AppendByte(BytecodeContainer& container,
+                std::auto_ptr<Expr> expr,
+                SourceLocation source,
+                Diagnostic& diags);
 
 /// Append a raw data value to the end of a section.
 /// @param sect         section

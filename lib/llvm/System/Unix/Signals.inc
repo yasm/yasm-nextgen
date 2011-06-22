@@ -28,9 +28,10 @@
 #endif
 #if HAVE_DLFCN_H && __GNUG__
 #include <dlfcn.h>
-#include <cxxabi.h> 
 #endif
 using namespace llvm;
+
+char * __cxa_demangle(const char *__mangled_name, char *__output_buffer, size_t *__length, int *__status);
 
 static RETSIGTYPE SignalHandler(int Sig);  // defined below.
 
