@@ -1657,8 +1657,7 @@ GasParser::ParseMemoryAddress()
         bool havereg = false;
         const Register* reg = 0;
         SourceLocation scale_src;
-        bool havescale = false;
-        IntNum scale;
+        Expr scale;
         Expr e2;
 
         SourceLocation lparen_loc = ConsumeParen();
@@ -1688,8 +1687,6 @@ GasParser::ParseMemoryAddress()
         if (m_token.is(GasToken::r_paren))
             goto done;
 
-        havescale = true;
-
         // index register
         if (m_token.is(GasToken::percent))
         {
@@ -1714,23 +1711,22 @@ GasParser::ParseMemoryAddress()
         if (m_token.is(GasToken::r_paren))
             goto done;
 
-        if (m_token.isNot(GasToken::numeric_constant))
+        scale_src = m_token.getLocation();
+        if (!ParseExpr(scale))
         {
             Diag(m_token, diag::err_expected_integer);
             return Operand(m_object->getArch()->CreateEffAddr(Expr::Ptr(new Expr(0))));
         }
-        if (!ParseInteger(&scale))
-            return Operand(m_object->getArch()->CreateEffAddr(Expr::Ptr(new Expr(0))));
-        scale_src = ConsumeToken();
 
 done:
         MatchRHSPunctuation(GasToken::r_paren, lparen_loc);
 
-        if (havescale)
+        if (!scale.isEmpty())
         {
             if (!havereg)
             {
-                if (scale.getUInt() != 1)
+                scale.Simplify(m_preproc.getDiagnostics());
+                if (scale.isIntNum() && scale.getIntNum().getUInt() != 1)
                     Diag(scale_src, diag::warn_scale_without_index);
             }
             else
