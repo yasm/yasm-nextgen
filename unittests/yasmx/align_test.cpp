@@ -32,7 +32,7 @@
 
 TEST(AlignTest, Append)
 {
-    yasm::BytecodeContainer container;
+    yasm::BytecodeContainer container(0);
     yasm::AppendAlign(container,
                       yasm::Expr(4),
                       yasm::Expr(),    // fill

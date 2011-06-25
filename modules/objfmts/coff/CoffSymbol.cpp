@@ -104,7 +104,7 @@ CoffSymbol::Write(Bytes& bytes,
     {
         Section* sect = 0;
         if (loc.bc)
-            sect = loc.bc->getContainer()->AsSection();
+            sect = loc.bc->getContainer()->getSection();
         // it's a label: get value and offset.
         // If there is not a section, leave as debugging symbol.
         if (sect)
@@ -165,7 +165,7 @@ CoffSymbol::Write(Bytes& bytes,
                     return;
                 }
 
-                Section* sect = loc.bc->getContainer()->AsSection();
+                Section* sect = loc.bc->getContainer()->getSection();
                 CoffSection* coffsect = sect->getAssocData<CoffSection>();
                 assert(coffsect != 0);
                 scnum = coffsect->m_scnum;

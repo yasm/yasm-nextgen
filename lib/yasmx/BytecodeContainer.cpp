@@ -132,8 +132,8 @@ GapBytecode::Write(pugi::xml_node out) const
 }
 #endif // WITH_XML
 
-BytecodeContainer::BytecodeContainer()
-    : m_object(0),
+BytecodeContainer::BytecodeContainer(Section* sect)
+    : m_sect(sect),
       m_bcs_owner(m_bcs),
       m_last_gap(false)
 {
@@ -143,18 +143,6 @@ BytecodeContainer::BytecodeContainer()
 
 BytecodeContainer::~BytecodeContainer()
 {
-}
-
-Section*
-BytecodeContainer::AsSection()
-{
-    return 0;
-}
-
-const Section*
-BytecodeContainer::AsSection() const
-{
-    return 0;
 }
 
 void

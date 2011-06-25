@@ -257,7 +257,7 @@ ElfSymbol::Finalize(Symbol& sym, Diagnostic& diags)
     Section* sect;
     ElfSection* elfsect;
     if (sym.getLabel(&loc) &&
-        (sect = loc.bc->getContainer()->AsSection()) &&
+        (sect = loc.bc->getContainer()->getSection()) &&
         (elfsect = sect->getAssocData<ElfSection>()) &&
         (elfsect->getFlags() & SHF_TLS))
     {
@@ -324,7 +324,7 @@ ElfSymbol::Finalize(Symbol& sym, Diagnostic& diags)
                 return;
             }
 
-            m_sect = loc.bc->getContainer()->AsSection();
+            m_sect = loc.bc->getContainer()->getSection();
             m_value = loc.getOffset();
             m_value_rel = rel;
         }

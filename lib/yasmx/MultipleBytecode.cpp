@@ -72,7 +72,7 @@ private:
 class MultipleBytecode : public Bytecode::Contents
 {
 public:
-    MultipleBytecode(std::auto_ptr<Expr> e);
+    MultipleBytecode(Section* sect, std::auto_ptr<Expr> e);
     ~MultipleBytecode();
 
     /// Finalizes the bytecode after parsing.
@@ -274,8 +274,9 @@ Multiple::Write(pugi::xml_node out) const
 }
 #endif // WITH_XML
 
-MultipleBytecode::MultipleBytecode(std::auto_ptr<Expr> e)
+MultipleBytecode::MultipleBytecode(Section* sect, std::auto_ptr<Expr> e)
     : m_multiple(e)
+    , m_contents(sect)
 {
 }
 
@@ -528,7 +529,8 @@ yasm::AppendMultiple(BytecodeContainer& container,
                      SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
-    MultipleBytecode* multbc(new MultipleBytecode(multiple));
+    MultipleBytecode* multbc(new MultipleBytecode(container.getSection(),
+                                                  multiple));
     BytecodeContainer& retval = multbc->getContents();
     bc.Transform(Bytecode::Contents::Ptr(multbc));
     bc.setSource(source);

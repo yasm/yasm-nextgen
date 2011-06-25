@@ -39,6 +39,7 @@
 #include "yasmx/Location_util.h"
 #include "yasmx/Object.h"
 #include "yasmx/Op.h"
+#include "yasmx/Section.h"
 #include "yasmx/Symbol.h"
 #include "yasmx/Value.h"
 
@@ -155,7 +156,8 @@ Bytecode::Finalize(Diagnostic& diags)
         if (i->isIPRelative())
         {
             Location sub_loc = {this, i->getOffset()};
-            if (!i->SubRelative(m_container->getObject(), sub_loc))
+            if (!i->SubRelative(m_container->getSection()->getObject(),
+                                sub_loc))
                 diags.Report(i->getSource().getBegin(),
                              diag::err_too_complex_expression);
         }

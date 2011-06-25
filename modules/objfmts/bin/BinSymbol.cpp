@@ -124,7 +124,7 @@ objfmt::BinSimplify(Expr& e)
         IntNum dist;
         if (CalcDist(first, loc, &dist))
         {
-            const Section* sect = container->AsSection();
+            const Section* sect = container->getSection();
             dist += sect->getVMA();
             i->setIntNum(dist);
         }

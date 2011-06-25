@@ -643,7 +643,7 @@ ElfObject::setSymbolSectionValue(Symbol& sym, ElfSymbol& elfsym)
 
     if (loc.bc)
     {
-        elfsym.setSection(loc.bc->getContainer()->AsSection());
+        elfsym.setSection(loc.bc->getContainer()->getSection());
         elfsym.setValue(loc.getOffset());
     }
 }
@@ -687,7 +687,7 @@ ElfObject::FinalizeSymbol(Symbol& sym,
 
             Section* sect = 0;
             if (loc.bc)
-                sect = loc.bc->getContainer()->AsSection();
+                sect = loc.bc->getContainer()->getSection();
 
             // Locals (except when debugging) do not need to be
             // in the symbol table, unless they're a section.
@@ -789,7 +789,7 @@ ElfOutput::ConvertSymbolToBytes(SymbolRef sym,
     if (reloc->setRel(false, m_GOT_sym, num_out.getSize(), false))
     {
         // allocate .rel[a] sections on a need-basis
-        Section* sect = loc.bc->getContainer()->AsSection();
+        Section* sect = loc.bc->getContainer()->getSection();
         sect->AddReloc(std::auto_ptr<Reloc>(reloc.release()));
     }
     else
@@ -844,7 +844,7 @@ ElfOutput::ConvertValueToBytes(Value& value,
             if (sym->getLabel(&symloc))
             {
                 // Relocate to section start
-                Section* sym_sect = symloc.bc->getContainer()->AsSection();
+                Section* sym_sect = symloc.bc->getContainer()->getSection();
                 sym = sym_sect->getSymbol();
 
                 intn += symloc.getOffset();
@@ -866,7 +866,7 @@ ElfOutput::ConvertValueToBytes(Value& value,
         }
 
         // Create relocation
-        Section* sect = loc.bc->getContainer()->AsSection();
+        Section* sect = loc.bc->getContainer()->getSection();
         std::auto_ptr<ElfReloc> reloc =
             m_objfmt.m_machine->MakeReloc(sym, loc.getOffset());
         if (wrt)

@@ -402,7 +402,7 @@ NasmInsnRunner::TestInsn(yasm::Insn* insn,
     //
     // Turn the instruction into bytes
     //
-    BytecodeContainer container;
+    BytecodeContainer container(0);
 
     ::testing::StrictMock<MockDiagnosticString> mock_client;
     Diagnostic diags(&mock_client);

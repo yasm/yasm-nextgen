@@ -56,6 +56,8 @@ class YASM_LIB_EXPORT Section
     : public AssocDataContainer,
       public BytecodeContainer
 {
+    friend class Object;
+
 public:
     /// Create a new section.  The section
     /// is added to the object if there's not already a section by that name.
@@ -70,10 +72,9 @@ public:
 
     ~Section();
 
-    /// BytecodeContainer override that returns this.
-    /// @return This section.
-    Section* AsSection();
-    const Section* AsSection() const;
+    /// Get object owner of a section.
+    /// @return Object this section is a part of.
+    Object* getObject() const { return m_object; }
 
     /// Determine if a section is flagged to contain code.
     /// @return True if section is flagged to contain code.
@@ -176,6 +177,8 @@ public:
 
 private:
     std::string m_name;                 ///< name (given by user)
+
+    Object* m_object;           ///< Pointer to parent object
 
     /// The section symbol (should be defined to the start of the section).
     SymbolRef m_sym;

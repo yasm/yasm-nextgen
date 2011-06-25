@@ -160,7 +160,7 @@ XdfOutput::ConvertValueToBytes(Value& value,
             reloc(new XdfReloc(loc.getOffset(), value, pc_rel));
         if (pc_rel)
             intn -= loc.getOffset();    // Adjust to start of section
-        Section* sect = loc.bc->getContainer()->AsSection();
+        Section* sect = loc.bc->getContainer()->getSection();
         sect->AddReloc(std::auto_ptr<Reloc>(reloc.release()));
     }
 
@@ -258,7 +258,7 @@ XdfOutput::OutputSymbol(const Symbol& sym,
     {
         const Section* sect = 0;
         if (loc.bc)
-            sect = loc.bc->getContainer()->AsSection();
+            sect = loc.bc->getContainer()->getSection();
         // it's a label: get value and offset.
         // If there is not a section, leave as debugging symbol.
         if (sect)

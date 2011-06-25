@@ -241,7 +241,7 @@ DumpSymbols(const yasm::Object& object)
         // TODO: symbol flags
         int vis = sym->getVisibility();
         if (is_label)
-            os << loc.bc->getContainer()->AsSection()->getName() << '\t';
+            os << loc.bc->getContainer()->getSection()->getName() << '\t';
         else if (sym->getEqu())
             os << "*ABS*\t";
         else if ((vis & yasm::Symbol::EXTERN) != 0)

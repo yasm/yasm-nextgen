@@ -187,7 +187,7 @@ CoffOutput::ConvertValueToBytes(Value& value,
             Location symloc;
             if (sym->getLabel(&symloc))
             {
-                Section* sym_sect = symloc.bc->getContainer()->AsSection();
+                Section* sym_sect = symloc.bc->getContainer()->getSection();
                 CoffSection* coffsect = sym_sect->getAssocData<CoffSection>();
                 assert(coffsect != 0);
                 sym = coffsect->m_sym;
@@ -234,7 +234,7 @@ CoffOutput::ConvertValueToBytes(Value& value,
         CoffObject::Machine machine = m_objfmt.getMachine();
         CoffReloc::Type rtype = CoffReloc::ABSOLUTE;
         IntNum addr = loc.getOffset();
-        addr += loc.bc->getContainer()->AsSection()->getVMA();
+        addr += loc.bc->getContainer()->getSection()->getVMA();
 
         if (machine == CoffObject::MACHINE_I386)
         {
@@ -312,7 +312,7 @@ CoffOutput::ConvertValueToBytes(Value& value,
         else
             assert(false);  // unrecognized machine
 
-        Section* sect = loc.bc->getContainer()->AsSection();
+        Section* sect = loc.bc->getContainer()->getSection();
         Reloc* reloc = 0;
         if (machine == CoffObject::MACHINE_I386)
             reloc = new Coff32Reloc(addr, sym, rtype);

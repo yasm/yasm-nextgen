@@ -159,7 +159,7 @@ RdfOutput::ConvertValueToBytes(Value& value,
             return false;
         }
 
-        Section* sect = loc.bc->getContainer()->AsSection();
+        Section* sect = loc.bc->getContainer()->getSection();
         IntNum addr = loc.getOffset();
         SymbolRef sym = value.getRelative();
         RdfReloc::Type type = RdfReloc::RDF_NORM;
@@ -192,7 +192,7 @@ RdfOutput::ConvertValueToBytes(Value& value,
         {
             // local, set the value to be the offset, and the refseg to the
             // segment number.
-            Section* sym_sect = symloc.bc->getContainer()->AsSection();
+            Section* sym_sect = symloc.bc->getContainer()->getSection();
             RdfSection* rdfsect = sym_sect->getAssocData<RdfSection>();
             assert(rdfsect != 0);
             refseg = rdfsect->scnum;
@@ -384,7 +384,7 @@ RdfOutput::OutputSymbol(Symbol& sym, bool all_syms, unsigned int* indx)
     if (sym.getLabel(&loc))
     {
         // it's a label: get value and offset.
-        Section* sect = loc.bc->getContainer()->AsSection();
+        Section* sect = loc.bc->getContainer()->getSection();
         RdfSection* rdfsect = sect->getAssocData<RdfSection>();
         assert (rdfsect != 0);
         scnum = rdfsect->scnum;

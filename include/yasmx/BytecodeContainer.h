@@ -48,29 +48,22 @@ class Diagnostic;
 class Expr;
 class IntNum;
 class Section;
-class Object;
 class SourceLocation;
 
 /// A bytecode container.
 class YASM_LIB_EXPORT BytecodeContainer : public DebugDumper<BytecodeContainer>
 {
-    friend class Object;
-
 public:
     /// Constructor.
-    BytecodeContainer();
+    BytecodeContainer(Section* sect);
 
     /// Destructor.
-    virtual ~BytecodeContainer();
+    ~BytecodeContainer();
 
-    /// If container is a section, get it as such.
-    /// @return Section if this container is a section, else NULL.
-    /*@null@*/ virtual Section* AsSection();
-    /*@null@*/ virtual const Section* AsSection() const;
-
-    /// Get object owner of a section.
-    /// @return Object this section is a part of.
-    Object* getObject() const { return m_object; }
+    /// Get section parent.
+    /// @return Section this container is/is a part of.
+    Section* getSection() { return m_sect; }
+    const Section* getSection() const { return m_sect; }
 
     /// Add bytecode to the end of the container.
     /// @param bc       bytecode (may be NULL)
@@ -143,7 +136,7 @@ private:
     BytecodeContainer(const BytecodeContainer&);
     const BytecodeContainer& operator=(const BytecodeContainer&);
 
-    /*@dependent@*/ Object* m_object;   ///< Pointer to parent object
+    Section* m_sect;        ///< Pointer to parent section
 
     /// The bytecodes for the section's contents.
     stdx::ptr_vector<Bytecode> m_bcs;

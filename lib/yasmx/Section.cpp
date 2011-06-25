@@ -37,7 +37,9 @@ Section::Section(llvm::StringRef name,
                  bool code,
                  bool bss,
                  SourceLocation source)
-    : m_name(name),
+    : BytecodeContainer(this),
+      m_name(name),
+      m_object(0),
       m_sym(0),
       m_vma(0),
       m_lma(0),
@@ -52,18 +54,6 @@ Section::Section(llvm::StringRef name,
 
 Section::~Section()
 {
-}
-
-Section*
-Section::AsSection()
-{
-    return this;
-}
-
-const Section*
-Section::AsSection() const
-{
-    return this;
 }
 
 void
