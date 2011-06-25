@@ -37,18 +37,18 @@ Section::Section(llvm::StringRef name,
                  bool code,
                  bool bss,
                  SourceLocation source)
-    : BytecodeContainer(this),
-      m_name(name),
-      m_object(0),
-      m_sym(0),
-      m_vma(0),
-      m_lma(0),
-      m_filepos(0),
-      m_align(0),
-      m_code(code),
-      m_bss(bss),
-      m_def(false),
-      m_relocs_owner(m_relocs)
+    : BytecodeContainer(this)
+    , m_name(name)
+    , m_object(0)
+    , m_sym(0)
+    , m_vma(0)
+    , m_lma(0)
+    , m_filepos(0)
+    , m_align(0)
+    , m_code(code)
+    , m_bss(bss)
+    , m_def(false)
+    , m_relocs_owner(m_relocs)
 {
 }
 
