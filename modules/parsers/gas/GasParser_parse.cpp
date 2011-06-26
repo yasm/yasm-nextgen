@@ -115,9 +115,8 @@ next:
                 // Label
                 SourceLocation id_source = ConsumeToken();
                 ConsumeToken(); // consume the colon too
-                Bytecode& bc = m_container->FreshBytecode();
-                Location loc = {&bc, bc.getFixedLen()};
-                ParseSymbol(ii)->CheckedDefineLabel(loc, id_source,
+                ParseSymbol(ii)->CheckedDefineLabel(m_container->getEndLoc(),
+                                                    id_source,
                                                     m_preproc.getDiagnostics());
                 goto next;
             }
@@ -2411,9 +2410,7 @@ GasParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
             if (ii->isStr("."))
             {
                 SymbolRef sym = m_object->AddNonTableSymbol(".");
-                Bytecode& bc = m_container->FreshBytecode();
-                Location loc = {&bc, bc.getFixedLen()};
-                sym->CheckedDefineLabel(loc, id_source,
+                sym->CheckedDefineLabel(m_container->getEndLoc(), id_source,
                                         m_preproc.getDiagnostics());
                 e = Expr(sym, id_source);
             }
@@ -2502,9 +2499,8 @@ void
 GasParser::DefineLabel(llvm::StringRef name, SourceLocation source)
 {
     SymbolRef sym = m_object->getSymbol(name);
-    Bytecode& bc = m_container->FreshBytecode();
-    Location loc = {&bc, bc.getFixedLen()};
-    sym->CheckedDefineLabel(loc, source, m_preproc.getDiagnostics());
+    sym->CheckedDefineLabel(m_container->getEndLoc(), source,
+                            m_preproc.getDiagnostics());
 }
 
 void
@@ -2523,9 +2519,8 @@ GasParser::DefineLcomm(SymbolRef sym,
     }
 
     // Create common symbol
-    Bytecode *bc = &bss.FreshBytecode();
-    Location loc = {bc, bc->getFixedLen()};
-    sym->CheckedDefineLabel(loc, source, m_preproc.getDiagnostics());
+    sym->CheckedDefineLabel(bss.getEndLoc(), source,
+                            m_preproc.getDiagnostics());
 
     // Append gap for symbol storage
     size->Simplify(m_preproc.getDiagnostics());

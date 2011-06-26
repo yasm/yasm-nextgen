@@ -1542,8 +1542,8 @@ NasmParser::ParseExpr6(Expr& e, const ParseExprTerm* parse_term)
             {
                 SymbolRef sym = m_object->AddNonTableSymbol("$");
                 m_bc = &m_container->FreshBytecode();
-                Location loc = {m_bc, m_bc->getFixedLen()};
-                sym->CheckedDefineLabel(loc, m_token.getLocation(),
+                sym->CheckedDefineLabel(m_container->getEndLoc(),
+                                        m_token.getLocation(),
                                         m_preproc.getDiagnostics());
                 e = Expr(sym, m_token.getLocation());
             }
@@ -1555,8 +1555,8 @@ NasmParser::ParseExpr6(Expr& e, const ParseExprTerm* parse_term)
             else
             {
                 SymbolRef sym = m_object->AddNonTableSymbol("$$");
-                Location loc = {&m_container->bytecodes_front(), 0};
-                sym->CheckedDefineLabel(loc, m_token.getLocation(),
+                sym->CheckedDefineLabel(m_container->getBeginLoc(),
+                                        m_token.getLocation(),
                                         m_preproc.getDiagnostics());
                 e = Expr(sym, m_token.getLocation());
             }
@@ -1636,8 +1636,8 @@ NasmParser::DefineLabel(SymbolRef sym, SourceLocation source, bool local)
     else
     {
         m_bc = &m_container->FreshBytecode();
-        Location loc = {m_bc, m_bc->getFixedLen()};
-        sym->CheckedDefineLabel(loc, source, m_preproc.getDiagnostics());
+        sym->CheckedDefineLabel(m_container->getEndLoc(), source,
+                                m_preproc.getDiagnostics());
     }
 }
 
