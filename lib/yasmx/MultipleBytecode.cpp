@@ -236,7 +236,7 @@ Multiple::CalcLen(Bytecode& bc,
         else
         {
             Value value(0, Expr::Ptr(m_expr.clone()));
-            add_span(bc, 0, value, 0, 0);
+            add_span(bc, -1, value, 0, 0);
             m_int = 0;      // assume 0 to start
         }
     }
@@ -304,6 +304,45 @@ MultipleBytecode::Finalize(Bytecode& bc, Diagnostic& diags)
     return true;
 }
 
+namespace {
+// Override inner bytecode with outer when adding spans so we get notified
+// when the size changes.
+class AddSpanInner
+{
+public:
+    AddSpanInner(Bytecode& outer_bc,
+                 const Bytecode::AddSpanFunc& outer_addspan)
+        : m_outer_bc(outer_bc)
+        , m_outer_addspan(outer_addspan)
+        , m_base(0)
+    {}
+
+    void setBase(int base) { m_base = base; }
+
+    void operator() (Bytecode& bc,
+                     int id,
+                     const Value& value,
+                     long neg_thres,
+                     long pos_thres);
+
+private:
+    Bytecode& m_outer_bc;
+    const Bytecode::AddSpanFunc& m_outer_addspan;
+    int m_base;
+};
+} // anonymous namespace
+
+void
+AddSpanInner::operator() (Bytecode& bc,
+                          int id,
+                          const Value& value,
+                          long neg_thres,
+                          long pos_thres)
+{
+    int outer_id = id + (id < 0 ? -m_base : m_base);
+    m_outer_addspan(m_outer_bc, outer_id, value, neg_thres, pos_thres);
+}
+
 bool
 MultipleBytecode::CalcLen(Bytecode& bc,
                           /*@out@*/ unsigned long* len,
@@ -313,11 +352,15 @@ MultipleBytecode::CalcLen(Bytecode& bc,
     if (!m_multiple.CalcLen(bc, add_span, diags))
         return false;
 
+    AddSpanInner add_span_inner(bc, add_span);
+    int base = 100;
     unsigned long ilen = 0;
     for (BytecodeContainer::bc_iterator i = m_contents.bytecodes_begin(),
          end = m_contents.bytecodes_end(); i != end; ++i)
     {
-        if (!i->CalcLen(add_span, diags))
+        add_span_inner.setBase(base);
+        base += 100;
+        if (!i->CalcLen(add_span_inner, diags))
             return false;
         ilen += i->getTotalLen();
     }
@@ -337,16 +380,29 @@ MultipleBytecode::Expand(Bytecode& bc,
                          /*@out@*/ long* pos_thres,
                          Diagnostic& diags)
 {
-    // XXX: support more than one bytecode here
-    if (span == 0)
+    if (span == -1)
     {
         m_multiple.setInt(new_val);
         *keep = true;
     }
     else
     {
-        if (!m_contents.bytecodes_front().Expand(span, old_val, new_val, keep,
-                                                 neg_thres, pos_thres, diags))
+        int inner_index;
+        int inner_span;
+        if (span < 0)
+        {
+            inner_index = (-span) / 100 - 1;
+            inner_span = -((-span) % 100);
+        }
+        else
+        {
+            inner_index = span / 100 - 1;
+            inner_span = span % 100;
+        }
+        BytecodeContainer::bc_iterator inner = m_contents.bytecodes_begin();
+        inner += inner_index;
+        if (!inner->Expand(inner_span, old_val, new_val, keep, neg_thres,
+                           pos_thres, diags))
             return false;
     }
     *len = m_contents.bytecodes_front().getTotalLen() * m_multiple.getInt();
