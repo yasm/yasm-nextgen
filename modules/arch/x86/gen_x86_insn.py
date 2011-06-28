@@ -1856,7 +1856,7 @@ for sfx, sz in zip("wl", [16, 32]):
 add_insn("lds", "ldes", modifiers=[0xC5])
 add_insn("les", "ldes", modifiers=[0xC4])
 
-for sfx, sz in zip("wl", [16, 32]):
+for sfx, sz in zip("wlq", [16, 32, 64]):
     add_group("lfgss",
         suffix=sfx,
         cpu=["386"],
