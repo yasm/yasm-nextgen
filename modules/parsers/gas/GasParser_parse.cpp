@@ -1821,6 +1821,76 @@ done:
 }
 
 Operand
+GasParser::ParseRegOperand()
+{
+    // may be a memory address (%segreg:memory)
+    if (m_token.isNot(GasToken::identifier))
+    {
+        Diag(m_token, diag::err_bad_register_name);
+        return Operand(Expr::Ptr(new Expr));
+    }
+    IdentifierInfo* ii = m_token.getIdentifierInfo();
+    ii->DoRegLookup(*m_arch, m_token.getLocation(),
+                    m_preproc.getDiagnostics());
+    if (const SegmentRegister* segreg = ii->getSegReg())
+    {
+        SourceLocation segreg_source = ConsumeToken();
+
+        // if followed by ':', it's a memory address
+        if (m_token.is(GasToken::colon))
+        {
+            ConsumeToken();
+            Operand op = ParseMemoryAddress();
+            if (EffAddr* ea = op.getMemory())
+            {
+                if (ea->m_segreg != 0)
+                    Diag(segreg_source,
+                         diag::warn_multiple_seg_override);
+                ea->m_segreg = segreg;
+            }
+            return op;
+        }
+        return Operand(segreg);
+    }
+    if (const Register* reg = ii->getRegister())
+    {
+        ConsumeToken();
+        return Operand(reg);
+    }
+    if (const RegisterGroup* reggroup = ii->getRegGroup())
+    {
+        SourceLocation reggroup_source = ConsumeToken();
+
+        if (m_token.isNot(GasToken::l_paren))
+            return Operand(reggroup->getReg(0));
+        SourceLocation lparen_loc = ConsumeParen();
+
+        if (m_token.isNot(GasToken::numeric_constant))
+        {
+            Diag(m_token, diag::err_expected_integer);
+            return Operand(reggroup->getReg(0));
+        }
+        IntNum regindex;
+        ParseInteger(&regindex);    // OK to ignore return value
+        SourceLocation regindex_source = ConsumeToken();
+
+        MatchRHSPunctuation(GasToken::r_paren, lparen_loc);
+
+        const Register* reg = reggroup->getReg(regindex.getUInt());
+        if (!reg)
+        {
+            Diag(regindex_source, diag::err_bad_register_index);
+            return Operand(reggroup->getReg(0));
+        }
+        return Operand(reg);
+    }
+    // didn't recognize it?
+    Diag(m_token, diag::err_bad_register_name);
+    ConsumeToken();
+    return Operand(Expr::Ptr(new Expr));
+}
+
+Operand
 GasParser::ParseOperand()
 {
     if (m_intel)
@@ -1830,73 +1900,8 @@ GasParser::ParseOperand()
     {
         case GasToken::percent:
         {
-            // some kind of register operand
-            // may also be a memory address (%segreg:memory)
             ConsumeToken();
-            if (m_token.isNot(GasToken::identifier))
-            {
-                Diag(m_token, diag::err_bad_register_name);
-                return Operand(Expr::Ptr(new Expr));
-            }
-            IdentifierInfo* ii = m_token.getIdentifierInfo();
-            ii->DoRegLookup(*m_arch, m_token.getLocation(),
-                            m_preproc.getDiagnostics());
-            if (const SegmentRegister* segreg = ii->getSegReg())
-            {
-                SourceLocation segreg_source = ConsumeToken();
-
-                // if followed by ':', it's a memory address
-                if (m_token.is(GasToken::colon))
-                {
-                    ConsumeToken();
-                    Operand op = ParseMemoryAddress();
-                    if (EffAddr* ea = op.getMemory())
-                    {
-                        if (ea->m_segreg != 0)
-                            Diag(segreg_source,
-                                 diag::warn_multiple_seg_override);
-                        ea->m_segreg = segreg;
-                    }
-                    return op;
-                }
-                return Operand(segreg);
-            }
-            if (const Register* reg = ii->getRegister())
-            {
-                ConsumeToken();
-                return Operand(reg);
-            }
-            if (const RegisterGroup* reggroup = ii->getRegGroup())
-            {
-                SourceLocation reggroup_source = ConsumeToken();
-
-                if (m_token.isNot(GasToken::l_paren))
-                    return Operand(reggroup->getReg(0));
-                SourceLocation lparen_loc = ConsumeParen();
-
-                if (m_token.isNot(GasToken::numeric_constant))
-                {
-                    Diag(m_token, diag::err_expected_integer);
-                    return Operand(reggroup->getReg(0));
-                }
-                IntNum regindex;
-                ParseInteger(&regindex);    // OK to ignore return value
-                SourceLocation regindex_source = ConsumeToken();
-
-                MatchRHSPunctuation(GasToken::r_paren, lparen_loc);
-
-                const Register* reg = reggroup->getReg(regindex.getUInt());
-                if (!reg)
-                {
-                    Diag(regindex_source, diag::err_bad_register_index);
-                    return Operand(reggroup->getReg(0));
-                }
-                return Operand(reg);
-            }
-            // didn't recognize it?
-            Diag(m_token, diag::err_bad_register_name);
-            ConsumeToken();
-            return Operand(Expr::Ptr(new Expr));
+            return ParseRegOperand();
         }
         case GasToken::dollar:
         {
@@ -1911,16 +1916,8 @@ GasParser::ParseOperand()
             ConsumeToken();
             if (m_token.is(GasToken::percent))
             {
-                // register
                 ConsumeToken();
-                const Register* reg = ParseRegister();
-                if (!reg)
-                {
-                    Diag(m_token, diag::err_bad_register_name);
-                    return Operand(Expr::Ptr(new Expr));
-                }
-                ConsumeToken();
-                Operand op(reg);
+                Operand op = ParseRegOperand();
                 op.setDeref();
                 return op;
             }

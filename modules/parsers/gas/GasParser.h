@@ -158,6 +158,7 @@ private:
     Insn::Ptr ParseInsn();
     bool ParseDirective(NameValues* nvs);
     Operand ParseMemoryAddress();
+    Operand ParseRegOperand();
     Operand ParseOperand();
 
     unsigned int getSizeOverride();
