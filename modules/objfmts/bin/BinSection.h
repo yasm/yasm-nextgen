@@ -50,7 +50,9 @@ struct YASM_STD_EXPORT BinSection : public AssocData
 
     BinSection();
     ~BinSection();
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     // User-provided alignment
     bool has_align, has_valign;

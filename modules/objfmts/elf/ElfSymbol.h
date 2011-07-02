@@ -74,7 +74,9 @@ public:
 
     SymbolRef CreateSymbol(Object& object, const StringTable& strtab) const;
 
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     void Finalize(Symbol& sym, Diagnostic& diags);
     void Write(Bytes& bytes, const ElfConfig& config, Diagnostic& diags);

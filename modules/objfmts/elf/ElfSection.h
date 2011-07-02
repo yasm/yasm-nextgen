@@ -69,7 +69,9 @@ public:
 
     ~ElfSection();
 
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     unsigned long Write(llvm::raw_ostream& os, Bytes& scratch) const;
 

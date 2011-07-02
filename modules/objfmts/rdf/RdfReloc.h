@@ -63,7 +63,9 @@ public:
     void Write(Bytes& bytes, unsigned int scnum) const;
 
 protected:
+#ifdef WITH_XML
     pugi::xml_node DoWrite(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     Type m_type;            ///< type of relocation

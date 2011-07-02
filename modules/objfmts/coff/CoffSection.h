@@ -46,7 +46,9 @@ struct YASM_STD_EXPORT CoffSection : public AssocData
 
     CoffSection(SymbolRef sym);
     ~CoffSection();
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
     void Write(Bytes& bytes, const Section& sect) const;
 
     static const unsigned long TEXT;

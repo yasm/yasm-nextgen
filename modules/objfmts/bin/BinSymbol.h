@@ -61,7 +61,9 @@ public:
               const BinSection& bsd,
               SpecialSym which);
     ~BinSymbol();
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
     bool getValue(/*@out@*/ IntNum* val) const;
 
 private:

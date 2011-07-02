@@ -49,7 +49,9 @@ struct YASM_STD_EXPORT XdfSection : public AssocData
 
     XdfSection(SymbolRef sym_);
     ~XdfSection();
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     void Write(Bytes& bytes, const Section& sect) const;
     void Read(const llvm::MemoryBuffer& in,

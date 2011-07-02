@@ -54,7 +54,9 @@ public:
     unsigned long getLen() const;
     void ToBytes(Bytes& bytes, const X86SegmentRegister* segreg) const;
 
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     unsigned char m_addrsize;       // 0 or =mode_bits => no override
     unsigned char m_opersize;       // 0 or =mode_bits => no override

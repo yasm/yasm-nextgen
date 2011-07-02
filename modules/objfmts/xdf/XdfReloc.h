@@ -78,7 +78,9 @@ public:
     void Write(Bytes& bytes) const;
 
 protected:
+#ifdef WITH_XML
     pugi::xml_node DoWrite(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     SymbolRef m_base;       //< base symbol (for WRT)

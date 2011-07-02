@@ -113,7 +113,9 @@ public:
 
     X86EffAddr* clone() const;
 
+#ifdef WITH_XML
     pugi::xml_node DoWrite(pugi::xml_node out) const;
+#endif // WITH_XML
 
     // Check an effective address.  Returns true if EA was successfully
     // determined, false if indeterminate EA.

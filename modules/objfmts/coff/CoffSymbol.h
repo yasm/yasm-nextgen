@@ -95,7 +95,9 @@ struct YASM_STD_EXPORT CoffSymbol : public AssocData
 
     CoffSymbol(StorageClass sclass, AuxType auxtype = AUX_NONE);
     ~CoffSymbol();
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
     void Write(Bytes& bytes,
                const Symbol& sym,
                Diagnostic& diags,

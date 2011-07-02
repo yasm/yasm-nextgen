@@ -71,7 +71,9 @@ struct YASM_STD_EXPORT ElfSpecialSymbol
     {}
     ~ElfSpecialSymbol();
 
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 };
 
 inline bool

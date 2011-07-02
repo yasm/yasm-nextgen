@@ -100,7 +100,9 @@ struct YASM_STD_EXPORT ElfConfig : public DebugDumper<ElfConfig>
 
     bool setEndian(EndianState& state) const;
 
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 };
 
 }} // namespace yasm::objfmt

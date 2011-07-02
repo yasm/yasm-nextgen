@@ -51,10 +51,12 @@ public:
     ///         otherwise the specific register.
     const X86Register* getReg(unsigned long regindex) const;
 
+#ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
     /// @param out          XML node
     /// @return Root node.
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     X86Register** m_regs;

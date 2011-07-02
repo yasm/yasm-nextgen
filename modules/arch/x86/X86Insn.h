@@ -67,7 +67,9 @@ protected:
     bool DoAppend(BytecodeContainer& container,
                   SourceLocation source,
                   Diagnostic& diags);
+#ifdef WITH_XML
     pugi::xml_node DoWrite(pugi::xml_node out) const;
+#endif // WITH_XML
 
 private:
     bool DoAppendJmpFar(BytecodeContainer& container,

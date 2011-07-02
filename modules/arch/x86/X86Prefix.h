@@ -50,7 +50,9 @@ public:
     X86Prefix(Type type, unsigned char value);
     ~X86Prefix();
     void Put(llvm::raw_ostream& os) const;
+#ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
 
     Type getType() const { return m_type; }
     unsigned char getValue() const { return m_value; }

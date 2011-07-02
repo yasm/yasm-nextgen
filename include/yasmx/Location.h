@@ -32,7 +32,9 @@
 #include "yasmx/Config/export.h"
 
 
+#ifdef WITH_XML
 namespace pugi { class xml_node; }
+#endif // WITH_XML
 
 namespace yasm
 {
