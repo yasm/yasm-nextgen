@@ -116,7 +116,7 @@ static cl::alias predefine_macros_alias("d",
 #ifdef WITH_XML
 // -dump-object
 static llvm::cl::opt<yasm::Assembler::ObjectDumpTime> dump_object("dump-object",
-    llvm::cl::desc("Dump object in YAML after this phase:"),
+    llvm::cl::desc("Dump object in XML after this phase:"),
     llvm::cl::values(
         clEnumValN(yasm::Assembler::DUMP_NEVER, "never", "never dump"),
         clEnumValN(yasm::Assembler::DUMP_AFTER_PARSE, "parsed",
