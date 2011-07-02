@@ -865,7 +865,7 @@ GasParser::ParseDirZero(unsigned int param, SourceLocation source)
 }
 
 bool
-GasParser::ParseDirSkip(unsigned int param, SourceLocation source)
+GasParser::ParseDirSkip(unsigned int size, SourceLocation source)
 {
     SourceLocation cur_source = m_token.getLocation();
     std::auto_ptr<Expr> e(new Expr);
@@ -877,7 +877,7 @@ GasParser::ParseDirSkip(unsigned int param, SourceLocation source)
 
     if (m_token.isNot(GasToken::comma))
     {
-        AppendSkip(*m_container, e, 1, source);
+        AppendSkip(*m_container, e, size, source);
         return true;
     }
     ConsumeToken();
@@ -890,7 +890,7 @@ GasParser::ParseDirSkip(unsigned int param, SourceLocation source)
         Diag(cur_source, diag::err_expected_expression_after) << ",";
         return false;
     }
-    AppendFill(*m_container, e, 1, e_val, source);
+    AppendFill(*m_container, e, size, e_val, source);
     return true;
 }
 
@@ -943,6 +943,67 @@ GasParser::ParseDirFill(unsigned int param, SourceLocation source)
     if (value->isEmpty())
         *value = 0;
     AppendFill(*m_container, repeat, ssize, value, source);
+    return true;
+}
+
+bool
+GasParser::ParseDirFloatFill(unsigned int size, SourceLocation source)
+{
+    SourceLocation cur_source = m_token.getLocation();
+    std::auto_ptr<Expr> e(new Expr);
+    if (!ParseExpr(*e))
+    {
+        Diag(cur_source, diag::err_expected_expression);
+        return false;
+    }
+
+    if (m_token.isNot(GasToken::comma))
+    {
+        Diag(cur_source, diag::err_expected_comma);
+        return true;
+    }
+    ConsumeToken();
+
+    llvm::StringRef num_str;
+
+    switch (m_token.getKind())
+    {
+        case GasToken::numeric_constant:
+        {
+            num_str = m_token.getLiteral();
+            break;
+        }
+        case GasToken::label:
+        {
+            // Try to parse identifiers starting with . as floating point
+            // numbers; this is to allow e.g. ".float .1" to work.
+            IdentifierInfo* ii = m_token.getIdentifierInfo();
+            num_str = ii->getName();
+            if (num_str[0] == '.')
+                break;
+            // fallthrough
+        }
+        default:
+            Diag(m_token, diag::err_expected_float);
+            return false;
+    }
+
+    GasNumericParser num(num_str, m_token.getLocation(), m_preproc, true);
+    SourceLocation num_source = ConsumeToken();
+    if (num.hadError())
+        ;
+    else if (num.isInteger())
+    {
+        Diag(num_source, diag::err_expected_float);
+    }
+    else if (num.isFloat())
+    {
+        // FIXME: Make arch-dependent
+        Expr::Ptr e_val(new Expr(std::auto_ptr<llvm::APFloat>(new llvm::APFloat(
+            num.getFloatValue(llvm::APFloat::x87DoubleExtended))),
+                             num_source));
+        AppendFill(*m_container, e, size, e_val, num_source);
+    }
     return true;
 }
 

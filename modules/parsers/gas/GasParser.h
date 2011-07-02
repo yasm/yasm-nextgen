@@ -131,8 +131,9 @@ private:
     bool ParseDirData(unsigned int size, SourceLocation source);
     bool ParseDirLeb128(unsigned int sign, SourceLocation source);
     bool ParseDirZero(unsigned int, SourceLocation source);
-    bool ParseDirSkip(unsigned int, SourceLocation source);
+    bool ParseDirSkip(unsigned int size, SourceLocation source);
     bool ParseDirFill(unsigned int, SourceLocation source);
+    bool ParseDirFloatFill(unsigned int size, SourceLocation source);
     bool ParseDirBssSection(unsigned int, SourceLocation source);
     bool ParseDirDataSection(unsigned int, SourceLocation source);
     bool ParseDirTextSection(unsigned int, SourceLocation source);
