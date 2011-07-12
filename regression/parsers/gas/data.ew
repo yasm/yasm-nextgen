@@ -1,0 +1,9 @@
+<stdin>:4:7: warning: zero assumed for missing expression
+<stdin>:4:8: warning: zero assumed for missing expression
+<stdin>:6:9: warning: zero assumed for missing expression
+<stdin>:14:10: warning: zero assumed for missing expression
+<stdin>:14:11: warning: zero assumed for missing expression
+<stdin>:16:12: warning: zero assumed for missing expression
+<stdin>:20:8: warning: zero assumed for missing expression
+<stdin>:20:9: warning: zero assumed for missing expression
+<stdin>:22:12: warning: zero assumed for missing expression

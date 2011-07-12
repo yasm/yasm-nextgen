@@ -270,6 +270,8 @@ add_warning("warn_popsection_without_pushsection",
             ".popsection without corresponding .pushsection; ignored")
 add_warning("warn_previous_without_section",
             ".previous without corresponding .section; ignored")
+add_warning("warn_zero_assumed_for_missing_expression",
+            "zero assumed for missing expression")
 
 # Value
 add_error("err_too_complex_expression", "expression too complex")

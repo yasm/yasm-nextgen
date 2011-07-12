@@ -737,6 +737,8 @@ GasParser::ParseDirAscii(unsigned int withzero, SourceLocation source)
                 AppendData(*m_container, str.getString(strbuf), withzero);
             ConsumeToken();
         }
+        else if (m_token.is(GasToken::eol))
+            break;
         else
         {
             Diag(m_token, diag::err_expected_string);
@@ -753,15 +755,21 @@ GasParser::ParseDirAscii(unsigned int withzero, SourceLocation source)
 bool
 GasParser::ParseDirFloat(unsigned int size, SourceLocation source)
 {
+    if (m_token.is(GasToken::eol))
+        return true;
+
+    SourceLocation lastcomma = m_token.getLocation().getFileLocWithOffset(-1);
     for (;;)
     {
         llvm::StringRef num_str;
 
+        SourceLocation num_source = m_token.getLocation();
         switch (m_token.getKind())
         {
             case GasToken::numeric_constant:
             {
                 num_str = m_token.getLiteral();
+                ConsumeToken();
                 break;
             }
             case GasToken::label:
@@ -771,16 +779,25 @@ GasParser::ParseDirFloat(unsigned int size, SourceLocation source)
                 IdentifierInfo* ii = m_token.getIdentifierInfo();
                 num_str = ii->getName();
                 if (num_str[0] == '.')
+                {
+                    ConsumeToken();
                     break;
-                // fallthrough
+                }
+                Diag(m_token, diag::err_expected_float);
+                return false;
             }
+            case GasToken::eol:
+            case GasToken::comma:
+                Diag(lastcomma.getFileLocWithOffset(1),
+                     diag::warn_zero_assumed_for_missing_expression);
+                num_str = "0.0";
+                break;
             default:
                 Diag(m_token, diag::err_expected_float);
                 return false;
         }
 
-        GasNumericParser num(num_str, m_token.getLocation(), m_preproc, true);
-        SourceLocation num_source = ConsumeToken();
+        GasNumericParser num(num_str, num_source, m_preproc, true);
         if (num.hadError())
             ;
         else if (num.isInteger())
@@ -798,6 +815,7 @@ GasParser::ParseDirFloat(unsigned int size, SourceLocation source)
         }
         if (m_token.isNot(GasToken::comma))
             break;
+        lastcomma = m_token.getLocation();
         ConsumeToken();
     }
     return true;
@@ -806,19 +824,25 @@ GasParser::ParseDirFloat(unsigned int size, SourceLocation source)
 bool
 GasParser::ParseDirData(unsigned int size, SourceLocation source)
 {
+    if (m_token.is(GasToken::eol))
+        return true;
+
+    SourceLocation lastcomma = m_token.getLocation().getFileLocWithOffset(-1);
     for (;;)
     {
         SourceLocation cur_source = m_token.getLocation();
         std::auto_ptr<Expr> e(new Expr);
         if (!ParseExpr(*e))
         {
-            Diag(cur_source, diag::err_expected_expression_after) << ",";
-            return false;
+            Diag(lastcomma.getFileLocWithOffset(1),
+                 diag::warn_zero_assumed_for_missing_expression);
+            *e = 0;
         }
         AppendData(*m_container, e, size, *m_arch, cur_source,
                    m_preproc.getDiagnostics());
         if (m_token.isNot(GasToken::comma))
             break;
+        lastcomma = m_token.getLocation();
         ConsumeToken();
     }
     return true;
@@ -827,19 +851,25 @@ GasParser::ParseDirData(unsigned int size, SourceLocation source)
 bool
 GasParser::ParseDirLeb128(unsigned int sign, SourceLocation source)
 {
+    if (m_token.is(GasToken::eol))
+        return true;
+
+    SourceLocation lastcomma = m_token.getLocation().getFileLocWithOffset(-1);
     for (;;)
     {
         SourceLocation cur_source = m_token.getLocation();
         std::auto_ptr<Expr> e(new Expr);
         if (!ParseExpr(*e))
         {
-            Diag(cur_source, diag::err_expected_expression_after) << ",";
-            return false;
+            Diag(lastcomma.getFileLocWithOffset(1),
+                 diag::warn_zero_assumed_for_missing_expression);
+            *e = 0;
         }
         AppendLEB128(*m_container, e, sign, cur_source,
                      m_preproc.getDiagnostics());
         if (m_token.isNot(GasToken::comma))
             break;
+        lastcomma = m_token.getLocation();
         ConsumeToken();
     }
     return true;
