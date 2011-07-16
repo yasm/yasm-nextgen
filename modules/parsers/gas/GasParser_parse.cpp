@@ -1878,6 +1878,12 @@ GasParser::ParseRegOperand()
                          diag::warn_multiple_seg_override);
                 ea->m_segreg = segreg;
             }
+
+            if (m_token.isNot(GasToken::comma) && !m_token.isEndOfStatement())
+            {
+                Diag(m_token.getLocation(), diag::err_bad_memory_operand);
+                SkipUntil(GasToken::comma, true, true);
+            }
             return op;
         }
         return Operand(segreg);
