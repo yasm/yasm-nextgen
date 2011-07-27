@@ -64,24 +64,24 @@ TEST_F(LocationTest, GetOffset)
 TEST_F(LocationTest, CalcDistNoBC)
 {
     IntNum dist;
-    EXPECT_EQ(true, CalcDistNoBC(loc1, loc2, &dist));
+    EXPECT_TRUE(CalcDistNoBC(loc1, loc2, &dist));
     EXPECT_EQ(30, dist.getInt());
-    EXPECT_EQ(true, CalcDistNoBC(loc2, loc1, &dist));
+    EXPECT_TRUE(CalcDistNoBC(loc2, loc1, &dist));
     EXPECT_EQ(-30, dist.getInt());
-    EXPECT_EQ(false, CalcDistNoBC(loc1, loc3, &dist));
-    EXPECT_EQ(false, CalcDistNoBC(loc3, loc2, &dist));
+    EXPECT_FALSE(CalcDistNoBC(loc1, loc3, &dist));
+    EXPECT_FALSE(CalcDistNoBC(loc3, loc2, &dist));
 }
 
 TEST_F(LocationTest, CalcDist)
 {
     IntNum dist;
-    EXPECT_EQ(true, CalcDist(loc1, loc2, &dist));
+    EXPECT_TRUE(CalcDist(loc1, loc2, &dist));
     EXPECT_EQ(30, dist.getInt());
-    EXPECT_EQ(true, CalcDist(loc2, loc1, &dist));
+    EXPECT_TRUE(CalcDist(loc2, loc1, &dist));
     EXPECT_EQ(-30, dist.getInt());
-    EXPECT_EQ(true, CalcDist(loc1, loc3, &dist));
+    EXPECT_TRUE(CalcDist(loc1, loc3, &dist));
     EXPECT_EQ(95, dist.getInt());
-    EXPECT_EQ(true, CalcDist(loc3, loc2, &dist));
+    EXPECT_TRUE(CalcDist(loc3, loc2, &dist));
     EXPECT_EQ(-65, dist.getInt());
 }
 
