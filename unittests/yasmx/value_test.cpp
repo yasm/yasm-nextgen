@@ -536,8 +536,8 @@ TEST_F(ValueTest, GetSetSource)
     Value v(4);
     EXPECT_FALSE(v.getSource().isValid());
     v.setSource(SourceLocation::getFromRawEncoding(5));
-    EXPECT_EQ(5, v.getSource().getBegin().getRawEncoding());
-    EXPECT_EQ(5, v.getSource().getEnd().getRawEncoding());
+    EXPECT_EQ(5U, v.getSource().getBegin().getRawEncoding());
+    EXPECT_EQ(5U, v.getSource().getEnd().getRawEncoding());
 }
 
 TEST_F(ValueTest, getIntNum)

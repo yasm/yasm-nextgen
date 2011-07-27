@@ -236,7 +236,7 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
                 | (fromoctdigit(byte_str[1]) << 3)
                 | fromoctdigit(byte_str[2]);
 
-        ASSERT_LE(byte_val, 0xff) << "invalid golden value";
+        ASSERT_LE(byte_val, 0xffU) << "invalid golden value";
         golden.push_back(byte_val);
     }
 

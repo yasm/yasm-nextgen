@@ -49,7 +49,7 @@ struct strtest
     std::string out_str;
     bool has_error;
     bool has_warning;
-    int warnerr_no;
+    unsigned int warnerr_no;
     int warnerr_loc;
 };
 const strtest NasmStringParserTestValues[] =
