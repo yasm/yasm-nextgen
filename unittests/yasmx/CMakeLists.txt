@@ -1,6 +1,7 @@
 INCLUDE_DIRECTORIES(${yasm_SOURCE_DIR}/lib/yasmx)
 
 YASM_ADD_UNIT_TEST(libyasmx_tests
+    "libyasmx;yasmunit;gmock;gmock_main"
     align_test.cpp
     bytes_util_test.cpp
     expr_test.cpp
@@ -11,4 +12,3 @@ YASM_ADD_UNIT_TEST(libyasmx_tests
     location_test.cpp
     value_test.cpp
     )
-target_link_libraries(libyasmx_tests libyasmx yasmunit ${GTEST_BOTH_LIBRARIES})

@@ -143,31 +143,38 @@ macro(YASM_CHECK_EXECUTABLE_PARAMS _output_LIST _uninst _test)
 
 endmacro(YASM_CHECK_EXECUTABLE_PARAMS)
 
-# add a unit test, which is executed when running make test
-# it will be built with RPATH pointing to the build dir
-# The targets are always created, but only built for the "all"
-# target if the option BUILD_TESTING is enabled. Otherwise the rules for
-# the target are created but not built by default. You can build them by
-# manually building the target.
-# The name of the target can be specified using TESTNAME <testname>, if it is
-# not given the macro will default to the <name>
-macro (YASM_ADD_UNIT_TEST _test_NAME)
-    if(BUILD_TESTS)
-        set(_srcList ${ARGN})
-        set(_targetName ${_test_NAME})
-        if( ${ARGV1} STREQUAL "TESTNAME" )
-            set(_targetName ${ARGV2})
-            LIST(REMOVE_AT _srcList 0 1)
-        endif( ${ARGV1} STREQUAL "TESTNAME" )
-        yasm_add_executable( ${_test_NAME} TEST ${_srcList} )
-        set(_executable ${_test_NAME})
-        if(${CMAKE_VERSION} VERSION_LESS "2.8.0")
-            add_test( ${_targetName} ${_executable} )
-        else(${CMAKE_VERSION} VERSION_LESS "2.8.0")
-            add_test(NAME ${_targetName} COMMAND ${_executable} )
-        endif(${CMAKE_VERSION} VERSION_LESS "2.8.0")
-    endif(BUILD_TESTS)
-endmacro (YASM_ADD_UNIT_TEST)
+macro (YASM_SET_COMPILE_FLAGS)
+    set(_cxx_srcs "")
+    set(_c_srcs "")
+    set(_SRCS ${ARGN})
+    #message(STATUS "srcs: ${_SRCS}")
+    foreach (_src ${_SRCS})
+        #message(STATUS "src: ${_src}")
+        if ("${_src}" MATCHES "[.]c$")
+            list(APPEND _c_srcs ${_src})
+        else ("${_src}" MATCHES "[.]c$")
+            list(APPEND _cxx_srcs ${_src})
+        endif ("${_src}" MATCHES "[.]c$")
+    endforeach (_src ${_SRCS})
+    #message(STATUS "cxx: ${_cxx_srcs}")
+    #message(STATUS "c: ${_c_srcs}")
+    set_source_files_properties(${_cxx_srcs} PROPERTIES
+        COMPILE_FLAGS "${YASM_CXX_FLAGS}"
+        COMPILE_FLAGS_RELWITHDEBINFO "${YASM_CXX_FLAGS_RELWITHDEBINFO}"
+        COMPILE_FLAGS_RELEASE "${YASM_CXX_FLAGS_RELEASE}"
+        COMPILE_FLAGS_DEBUG "${YASM_CXX_FLAGS_DEBUG}"
+        COMPILE_FLAGS_DEBUGFULL "${YASM_CXX_FLAGS_DEBUGFULL}"
+        COMPILE_FLAGS_PROFILE "${YASM_CXX_FLAGS_PROFILE}"
+        )
+    set_source_files_properties(${_c_srcs} PROPERTIES
+        COMPILE_FLAGS "${YASM_C_FLAGS}"
+        COMPILE_FLAGS_RELWITHDEBINFO "${YASM_C_FLAGS_RELWITHDEBINFO}"
+        COMPILE_FLAGS_RELEASE "${YASM_C_FLAGS_RELEASE}"
+        COMPILE_FLAGS_DEBUG "${YASM_C_FLAGS_DEBUG}"
+        COMPILE_FLAGS_DEBUGFULL "${YASM_C_FLAGS_DEBUGFULL}"
+        COMPILE_FLAGS_PROFILE "${YASM_C_FLAGS_PROFILE}"
+        )
+endmacro (YASM_SET_COMPILE_FLAGS)
 
 # add an executable
 # it will be built with RPATH pointing to the build dir
@@ -194,7 +201,10 @@ macro (YASM_ADD_EXECUTABLE _target_NAME)
        yasm_handle_rpath_for_executable(${_target_NAME} ${_type})
    endif (NOT BUILD_STATIC)
    TARGET_LINK_LIBRARIES(${_target_NAME} yasmstdx libyasmx ${LIBPSAPI} ${LIBIMAGEHLP})
-
+   set_target_properties(${_target_NAME} PROPERTIES
+       LINK_FLAGS "${YASM_EXE_LINKER_FLAGS}"
+       )
+   yasm_set_compile_flags(${_SRCS})
 endmacro (YASM_ADD_EXECUTABLE)
 
 macro (YASM_ADD_LIBRARY _target_NAME _lib_TYPE)
@@ -230,7 +240,13 @@ macro (YASM_ADD_LIBRARY _target_NAME _lib_TYPE)
    string(REGEX REPLACE "[^_A-Za-z0-9]" "_" _symbol ${_symbol})
    set(_symbol "MAKE_${_symbol}_LIB")
    set_target_properties(${_target_NAME} PROPERTIES DEFINE_SYMBOL ${_symbol})
+   if (${_add_lib_param} STREQUAL "SHARED")
+       set_target_properties(${_target_NAME} PROPERTIES LINK_FLAGS ${YASM_SHARED_LINKER_FLAGS})
+   elseif (${_add_lib_param} STREQUAL "MODULE")
+       set_target_properties(${_target_NAME} PROPERTIES LINK_FLAGS ${YASM_MODULE_LINKER_FLAGS})
+   endif (${_add_lib_param} STREQUAL "SHARED")
 
+   yasm_set_compile_flags(${_SRCS})
 endmacro (YASM_ADD_LIBRARY _target_NAME _lib_TYPE)
 
 macro (YASM_ADD_MODULE _module_NAME)

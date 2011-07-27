@@ -1,6 +1,4 @@
 YASM_ADD_UNIT_TEST(parser_nasm_tests
+    "yasmstdx;libyasmx;yasmunit;gmock;gmock_main"
     NasmStringParser_test.cpp
     )
-
-target_link_libraries(parser_nasm_tests libyasmx yasmunit
-                      ${GTEST_BOTH_LIBRARIES})
