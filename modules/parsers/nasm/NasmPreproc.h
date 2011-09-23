@@ -49,9 +49,18 @@ public:
     NasmPreproc(Diagnostic& diags, SourceManager& sm, HeaderSearch& headers);
     ~NasmPreproc();
 
+    virtual void PreInclude(llvm::StringRef filename);
     virtual void PredefineMacro(llvm::StringRef macronameval);
     virtual void UndefineMacro(llvm::StringRef macroname);
     virtual void DefineBuiltin(llvm::StringRef macronameval);
+
+    struct Predef
+    {
+        enum Type { PREINC, PREDEF, UNDEF, BUILTIN } m_type;
+        std::string m_string;
+    };
+
+    std::vector<Predef> m_predefs;
 
 protected:
     virtual void RegisterBuiltinMacros();

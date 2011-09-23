@@ -395,40 +395,86 @@ NasmParser::ParseLine()
 
     switch (m_token.getKind())
     {
-#if 0
-        case LINE: // LINE INTNUM '+' INTNUM FILENAME
+        case NasmToken::percent: // %line INTNUM '+' INTNUM FILENAME
         {
-            getNextToken();
+            // %line
+            SourceLocation percent_loc = ConsumeToken();
 
-            if (!Expect(INTNUM, diag::err_expected_integer))
+            if (m_token.isNot(NasmToken::identifier))
+            {
+                Diag(m_token, diag::err_expected_directive_name);
                 return false;
-            std::auto_ptr<IntNum> line(INTNUM_val);
-            getNextToken();
+            }
 
-            if (!ExpectAndConsume('+', diag::err_expected_plus))
+            llvm::SmallString<16> dirname_buf;
+            if (!m_preproc.getSpelling(m_token, dirname_buf)
+                .equals_lower("line"))
+            {
+                Diag(m_token, diag::err_pp_expected_line);
                 return false;
+            }
 
-            if (!Expect(INTNUM, diag::err_expected_integer))
-                return false;
-            std::auto_ptr<IntNum> incr(INTNUM_val);
-            getNextToken();
+            ConsumeToken();
 
-            if (!Expect(FILENAME, diag::err_expected_filename))
+            // line number
+            if (m_token.isNot(NasmToken::numeric_constant))
+            {
+                Diag(m_token, diag::err_expected_integer);
                 return false;
-            std::string filename;
-            std::swap(filename, FILENAME_val);
-            getNextToken();
+            }
+
+            IntNum line;
+            NasmNumericParser line_p(m_token.getLiteral(),
+                                     m_token.getLocation(),
+                                     m_preproc);
+            if (line_p.hadError())
+                ;
+            else if (line_p.isInteger())
+                line_p.getIntegerValue(&line);
+            else
+                Diag(m_token, diag::err_expected_integer);
+
+            ConsumeToken();
+
+            // '+'
+            ExpectAndConsume(NasmToken::plus, diag::err_expected_plus);
+
+            // increment
+            if (m_token.isNot(NasmToken::numeric_constant))
+            {
+                Diag(m_token, diag::err_expected_integer);
+                return false;
+            }
+
+            IntNum incr;
+            NasmNumericParser incr_p(m_token.getLiteral(),
+                                     m_token.getLocation(),
+                                     m_preproc);
+            if (incr_p.hadError())
+                ;
+            else if (incr_p.isInteger())
+                incr_p.getIntegerValue(&incr);
+            else
+                Diag(m_token, diag::err_expected_integer);
+
+            ConsumeToken();
+
+            // filename
+            unsigned int toks[1] = {NasmToken::eol};
+            SourceLocation start, end;
+            llvm::SmallString<128> filename_buf;
+            llvm::StringRef filename =
+                MergeTokensUntil(toks, 1, &start, &end, filename_buf);
 
             // %line indicates the line number of the *next* line, so subtract
             // out the increment when setting the line number.
             // FIXME: handle incr
-            SourceManager& smgr = m_preproc->getSourceManager();
-            smgr.AddLineNote(m_source, line->getUInt(),
+            SourceManager& smgr = m_preproc.getSourceManager();
+            smgr.AddLineNote(m_token.getLocation(), line.getUInt(),
                              smgr.getLineTableFilenameID(filename.data(),
                                                          filename.size()));
             break;
         }
-#endif
         case NasmToken::l_square: // [ directive ]
         {
             SourceLocation lsquare_loc = ConsumeBracket();

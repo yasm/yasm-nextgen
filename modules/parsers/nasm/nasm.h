@@ -10,6 +10,11 @@
 #ifndef YASM_NASM_H
 #define YASM_NASM_H
 
+namespace llvm { class MemoryBuffer; }
+namespace yasm { class IntNum; class Expr; }
+
+namespace nasm {
+
 #ifndef NULL
 #define NULL 0
 #endif
@@ -153,7 +158,7 @@ typedef struct {
  */
 struct tokenval {
     int t_type;
-    yasm_intnum *t_integer, *t_inttwo;
+    yasm::IntNum *t_integer, *t_inttwo;
     char *t_charptr;
 };
 typedef int (*scanner) (void *private_data, struct tokenval *tv);
@@ -198,7 +203,7 @@ enum {                                 /* token types, other than chars */
  * &&, ^^ and ||.
  */
 #define CRITICAL 0x100
-typedef yasm_expr *(*evalfunc) (scanner sc, void *scprivate, struct tokenval *tv,
+typedef yasm::Expr *(*evalfunc) (scanner sc, void *scprivate, struct tokenval *tv,
                            int critical, efunc error);
 
 /*
@@ -210,7 +215,7 @@ typedef struct {
      * of the pass, an error reporting function, an evaluator
      * function, and a listing generator to talk to.
      */
-    void (*reset) (FILE *, const char *, int, efunc, evalfunc, ListGen *);
+    void (*reset) (yasm::FileID, int, efunc, evalfunc);
 
     /*
      * Called to fetch a line of preprocessed source. The line
@@ -279,5 +284,7 @@ extern int tasm_compatible_mode;
 extern int tasm_locals;
 extern const char *tasm_segment;
 const char *tasm_get_segment_register(const char *segment);
+
+} // namespace nasm
 
 #endif

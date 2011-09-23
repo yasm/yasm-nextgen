@@ -9,6 +9,10 @@
 #ifndef YASM_NASM_PREPROC_H
 #define YASM_NASM_PREPROC_H
 
+namespace yasm { class Preprocessor; }
+
+namespace nasm {
+
 void pp_pre_include (const char *);
 void pp_pre_define (char *);
 void pp_pre_undefine (char *);
@@ -16,7 +20,10 @@ void pp_builtin_define (char *);
 void pp_extra_stdmac (const char **);
 
 extern Preproc nasmpp;
+extern yasm::Preprocessor* yasm_preproc;
 
 void nasm_preproc_add_dep(char *);
+
+} // namespace nasm
 
 #endif

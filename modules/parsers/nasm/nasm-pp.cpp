@@ -33,19 +33,100 @@
  *
  * detoken is used to convert the line back to text
  */
-#include <util.h>
-#include <libyasm-stdint.h>
-#include <libyasm/coretype.h>
-#include <libyasm/intnum.h>
-#include <libyasm/expr.h>
-#include <libyasm/file.h>
-#include <stdarg.h>
-#include <ctype.h>
-#include <limits.h>
+#include <cctype>
+#include <climits>
+#include <cstdarg>
+#include <cstdio>
+#include <cstring>
+
+#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "yasmx/IntNum.h"
+#include "yasmx/Expr.h"
+#include "yasmx/Parse/Preprocessor.h"
+#include "yasmx/Parse/HeaderSearch.h"
 
 #include "nasm.h"
 #include "nasmlib.h"
 #include "nasm-pp.h"
+
+using yasm::DirectoryLookup;
+using yasm::Expr;
+using yasm::FileID;
+using yasm::IntNum;
+using yasm::SourceLocation;
+
+namespace nasm {
+
+int tasm_compatible_mode = 0;
+int tasm_locals;
+const char *tasm_segment;
+
+yasm::Preprocessor* yasm_preproc;
+
+const llvm::MemoryBuffer*
+yasm_fopen_include(llvm::StringRef filename,
+                   const DirectoryLookup* from_dir,
+                   const DirectoryLookup*& cur_dir,
+                   FileID from_file,
+                   FileID& cur_file)
+{
+    yasm::SourceManager& srcmgr = yasm_preproc->getSourceManager();
+
+    const yasm::FileEntry* from_file_ent = srcmgr.getFileEntryForID(from_file);
+
+    const yasm::FileEntry* file =
+        yasm_preproc->getHeaderSearch().LookupFile(filename, false, from_dir,
+                                                   cur_dir, from_file_ent);
+    if (!file)
+        return 0;
+
+    FileID fid =
+        srcmgr.createFileID(file, SourceLocation(), yasm::SrcMgr::C_User);
+    if (fid.isInvalid())
+        return 0;
+    cur_file = fid;
+
+    bool invalid = false;
+    const llvm::MemoryBuffer* input_file =
+        srcmgr.getBuffer(fid, SourceLocation(), &invalid);
+    if (invalid)
+        return 0;
+
+    return input_file;
+}
+
+char *
+yasm_fgets(char *buf, int n, const llvm::MemoryBuffer *in, size_t *pos)
+{
+    if (n <= 0)
+        return NULL;
+
+    n--;    // leave space for NUL
+
+    int len = in->getBufferSize() - *pos;
+    const char *p = in->getBufferStart() + *pos;
+
+    /* EOF: stop */
+    if (len <= 0)
+        return NULL;
+
+    /*
+     * Scan through at most n bytes of the current buffer,
+     * looking for '\n'.  If found, copy up to and including
+     * newline, and stop.  Otherwise, copy entire chunk
+     * and loop.
+     */
+    if (len > n)
+        len = n;
+    const char *t = (const char*)memchr((void *)p, '\n', len);
+    if (t != NULL)
+        len = ++t - p;
+    *pos += len;
+    (void)memcpy((void *)buf, (void *)p, len);
+    buf[len] = 0;
+    return buf;
+}
 
 typedef struct SMacro SMacro;
 typedef struct MMacro MMacro;
@@ -190,7 +271,10 @@ struct Line
 struct Include
 {
     Include *next;
-    FILE *fp;
+    FileID fid;
+    const llvm::MemoryBuffer *in;
+    const DirectoryLookup* cur_dir;
+    size_t pos;
     Cond *conds;
     Line *expansion;
     char *fname;
@@ -345,8 +429,6 @@ static int Level = 0;
 static Context *cstk;
 static Include *istk;
 
-static FILE *first_fp = NULL;
-
 static efunc _error;            /* Pointer to client-provided error reporting function */
 static evalfunc evaluate;
 
@@ -358,8 +440,6 @@ static Line *builtindef = NULL;
 static Line *stddef = NULL;
 static Line *predef = NULL;
 static int first_line = 1;
-
-static ListGen *list;
 
 /*
  * The number of hash values we use for the macro lookup tables.
@@ -468,7 +548,7 @@ static Token *expand_mmac_params(Token * tline);
 static Token *expand_smacro(Token * tline);
 static Token *expand_id(Token * tline);
 static Context *get_ctx(char *name, int all_contexts);
-static void make_tok_num(Token * tok, yasm_intnum *val);
+static void make_tok_num(Token * tok, const IntNum& val);
 static void error(int severity, const char *fmt, ...);
 static void *new_Block(size_t size);
 static void delete_Blocks(void);
@@ -580,7 +660,7 @@ check_tasm_directive(char *line)
                  * code, but does need to parse for the TASM macro
                  * package.
                  */
-                line = nasm_malloc(13);
+                line = (char*)nasm_malloc(13);
                 strcpy(line, "%ifdef BOGUS");
             }
             else if (k == TM_INCLUDE)
@@ -590,12 +670,12 @@ check_tasm_directive(char *line)
                 while (isspace(*p) && *p)
                     p++;
                 len = strlen(p);
-                line = nasm_malloc(1 + 7 + 1 + 1 + len + 1 + 1);
+                line = (char*)nasm_malloc(1 + 7 + 1 + 1 + len + 1 + 1);
                 sprintf(line, "%%include \"%s\"", p);
             }
             else
             {
-                line = nasm_malloc(len + 2);
+                line = (char*)nasm_malloc(len + 2);
                 line[0] = '%';
                 memcpy(line + 1, p, len + 1);
             }
@@ -626,12 +706,12 @@ check_tasm_directive(char *line)
         switch (end->type) {
         case TM_MACRO:
             len = 0;
-            for (parameter = end->data; *parameter; parameter++)
+            for (parameter = (char**)end->data; *parameter; parameter++)
                 len += 6 + 1 + strlen(*parameter) + 1;
             len += 5 + 1;
-            line = nasm_malloc(len);
+            line = (char*)nasm_malloc(len);
             p = line;
-            for (parameter = end->data; *parameter; parameter++) {
+            for (parameter = (char**)end->data; *parameter; parameter++) {
                 p += sprintf(p, "%%undef %s\n", *parameter);
                 nasm_free(*parameter);
             }
@@ -651,8 +731,8 @@ check_tasm_directive(char *line)
                 "%%endm\n"
                 "irp %s\n"
                 "%%undef irp";
-            data = end->data;
-            line = nasm_malloc(strlen(irp_format) - 4 + strlen(data[0])
+            data = (char**)end->data;
+            line = (char*)nasm_malloc(strlen(irp_format) - 4 + strlen(data[0])
                    + strlen(data[1]));
             sprintf(line, irp_format, data[0], data[1]);
             nasm_free(data[0]);
@@ -669,7 +749,7 @@ check_tasm_directive(char *line)
         return nasm_strdup("");
     } else if (!nasm_stricmp(p, "rept")) {
         /* handle repeat directive */
-        end = nasm_malloc(sizeof(*end));
+        end = (TMEndItem*)nasm_malloc(sizeof(*end));
         end->type = TM_REPT;
         end->next = EndmStack;
         EndmStack = end;
@@ -705,9 +785,9 @@ check_tasm_directive(char *line)
             "%%define %s %%1\n";
         char **data;
 
-        data = malloc(2*sizeof(char*));
+        data = (char**)malloc(2*sizeof(char*));
         oldline = line;
-        line = nasm_malloc(strlen(irp_format) - 2 + len2 + 1);
+        line = (char*)nasm_malloc(strlen(irp_format) - 2 + len2 + 1);
         sprintf(line,irp_format,q);
         data[0] = nasm_strdup(q);
 
@@ -720,7 +800,7 @@ check_tasm_directive(char *line)
         q = strchr(p, '>');
         data[1] = nasm_strndup(p, q - p);
 
-        end = nasm_malloc(sizeof(*end));
+        end = (TMEndItem*)nasm_malloc(sizeof(*end));
         end->type = TM_IRP;
         end->next = EndmStack;
         end->data = data;
@@ -734,7 +814,7 @@ check_tasm_directive(char *line)
         /* count parameters */
         j = 1;
         i = 0;
-        TMParameters = nasm_malloc(j*sizeof(*TMParameters));
+        TMParameters = (char**)nasm_malloc(j*sizeof(*TMParameters));
         len = 0;
         p = q + len2 + 1;
         /* Skip whitespaces */
@@ -746,14 +826,14 @@ check_tasm_directive(char *line)
             len2 = q-p;
             if (len2 == 0)
                 error(ERR_FATAL, "'%s': expected parameter name", p);
-            TMParameters[i] = nasm_malloc(len2 + 1);
+            TMParameters[i] = (char*)nasm_malloc(len2 + 1);
             memcpy(TMParameters[i], p, len2);
             TMParameters[i][len2] = '\0';
             len += len2;
             i++;
             if (i + 1 > j) {
                 j *= 2;
-                TMParameters = nasm_realloc(TMParameters,
+                TMParameters = (char**)nasm_realloc(TMParameters,
                                                j*sizeof(*TMParameters));
             }
             if (i == 1000)
@@ -770,18 +850,18 @@ check_tasm_directive(char *line)
                 p++;
         }
         TMParameters[i] = NULL;
-        TMParameters = nasm_realloc(TMParameters,
+        TMParameters = (char**)nasm_realloc(TMParameters,
                                         (i+1)*sizeof(*TMParameters));
         len += 1 + 6 + 1 + strlen(name) + 1 + 3; /* macro definition */
         len += i * (1 + 9 + 1 + 1 + 1 + 3 + 2); /* macro parameter definition */
         oldline = line;
-        p = line = nasm_malloc(len + 1);
+        p = line = (char*)nasm_malloc(len + 1);
         p += sprintf(p, "%%imacro %s 0-*", name);
         nasm_free(oldline);
         for (j = 0; TMParameters[j]; j++) {
             p += sprintf(p, "\n%%idefine %s %%{%-u}", TMParameters[j], j + 1);
         }
-        end = nasm_malloc(sizeof(*end));
+        end = (TMEndItem*)nasm_malloc(sizeof(*end));
         end->type = TM_MACRO;
         end->next = EndmStack;
         end->data = TMParameters;
@@ -790,7 +870,7 @@ check_tasm_directive(char *line)
     } else if (!nasm_stricmp(q, "proc")) {
         /* handle PROC */
         oldline = line;
-        line = nasm_malloc(2 + len + 1);
+        line = (char*)nasm_malloc(2 + len + 1);
         sprintf(line, "..%s",p);
         nasm_free(oldline);
         return line;
@@ -802,9 +882,9 @@ check_tasm_directive(char *line)
             return line;
         }
         oldline = line;
-        line = nasm_malloc(5 + 1 + len + 1);
+        line = (char*)nasm_malloc(5 + 1 + len + 1);
         sprintf(line, "struc %s", p);
-        struc = malloc(sizeof(*struc));
+        struc = (TStruc*)malloc(sizeof(*struc));
         struc->name = nasm_strdup(p);
         struc->fields = NULL;
         struc->lastField = NULL;
@@ -812,7 +892,7 @@ check_tasm_directive(char *line)
         TStrucs = struc;
         inTstruc = 1;
         nasm_free(oldline);
-        end = nasm_malloc(sizeof(*end));
+        end = (TMEndItem*)nasm_malloc(sizeof(*end));
         end->type = TM_STRUC;
         end->next = EndsStack;
         EndsStack = end;
@@ -827,7 +907,7 @@ check_tasm_directive(char *line)
         }
         tasm_segment = nasm_strdup(p);
         nasm_free(oldline);
-        end = nasm_malloc(sizeof(*end));
+        end = (TMEndItem*)nasm_malloc(sizeof(*end));
         end->type = TM_SEGMENT;
         end->next = EndsStack;
         EndsStack = end;
@@ -862,7 +942,7 @@ check_tasm_directive(char *line)
         struct TSegmentAssume *assume;
         /* handle ASSUME */
         if (!TAssumes) {
-            TAssumes = nasm_malloc(sizeof(*TAssumes));
+            TAssumes = (TSegmentAssume*)nasm_malloc(sizeof(*TAssumes));
             TAssumes[0].segreg = NULL;
         }
         i = 0;
@@ -878,11 +958,11 @@ check_tasm_directive(char *line)
             /* segment register name */
             for (assume = TAssumes; assume->segreg; assume++)
                 if (strlen(assume->segreg) == (size_t)(q-p) &&
-                    !yasm__strncasecmp(assume->segreg, p, q-p))
+                    !nasm_strnicmp(assume->segreg, p, q-p))
                     break;
             if (!assume->segreg) {
                 i = assume - TAssumes + 1;
-                TAssumes = nasm_realloc(TAssumes, (i+1)*sizeof(*TAssumes));
+                TAssumes = (TSegmentAssume*)nasm_realloc(TAssumes, (i+1)*sizeof(*TAssumes));
                 assume = TAssumes + i - 1;
                 assume->segreg = nasm_strndup(p, q-p);
                 assume[1].segreg = NULL;
@@ -905,13 +985,13 @@ check_tasm_directive(char *line)
             for (; *q && isspace(*q); q++);
         }
         TAssumes[i].segreg = NULL;
-        TAssumes = nasm_realloc(TAssumes, (i+1)*sizeof(*TAssumes));
+        TAssumes = (TSegmentAssume*)nasm_realloc(TAssumes, (i+1)*sizeof(*TAssumes));
         nasm_free(line);
         return nasm_strdup("");
     } else if (inTstruc) {
         struct TStrucField *field;
         /* TODO: handle unnamed data */
-        field = nasm_malloc(sizeof(*field));
+        field = (TStrucField*)nasm_malloc(sizeof(*field));
         field->name = nasm_strdup(p);
         /* TODO: type struc ! */
         field->type = nasm_strdup(q);
@@ -926,7 +1006,7 @@ check_tasm_directive(char *line)
             return line;
         }
         oldline = line;
-        line = nasm_malloc(1 + len + 1 + len2 + 1 + strlen(q+len2+1) + 1);
+        line = (char*)nasm_malloc(1 + len + 1 + len2 + 1 + strlen(q+len2+1) + 1);
         sprintf(line, ".%s %s %s", p, q, q+len2+1);
         nasm_free(oldline);
         return line;
@@ -934,7 +1014,7 @@ check_tasm_directive(char *line)
     {
         struct TStruc *struc;
         for (struc = TStrucs; struc; struc = struc->next) {
-            if (!yasm__strcasecmp(q, struc->name)) {
+            if (!nasm_stricmp(q, struc->name)) {
                 char *r = q + len2 + 1, *s, *t, tasm_param[6];
                 struct TStrucField *field = struc->fields;
                 int size, n;
@@ -955,7 +1035,7 @@ check_tasm_directive(char *line)
                 *t = 0;
                 oldline = line;
                 size = len + len2 + 128;
-                line = nasm_malloc(size);
+                line = (char*)nasm_malloc(size);
                 if (defining)
                     for (n=0;TMParameters[n];n++)
                         if (!strcmp(TMParameters[n],p)) {
@@ -974,7 +1054,7 @@ check_tasm_directive(char *line)
                     m = strlen(p) + 1 + strlen(field->name)*2 + 8 +
                         strlen(field->type) + 1 + strlen(r+1) + 2;
                     size += m;
-                    line = nasm_realloc(line, size);
+                    line = (char*)nasm_realloc(line, size);
                     sprintf(line + n, "%s.%s: at .%s, %s %s\n",
                             p, field->name, field->name, field->type, r + 1);
                     n += m-1;
@@ -986,14 +1066,14 @@ check_tasm_directive(char *line)
                     m = strlen(p) + 1 + strlen(field->name)*2 + 8 +
                         strlen(field->type) + 1 + (r ? strlen(r+1) : 1) + 2;
                     size += m;
-                    line = nasm_realloc(line, size);
+                    line = (char*)nasm_realloc(line, size);
                     sprintf(line + n, "%s.%s: at .%s, %s %s\n", p, field->name,
                             field->name, field->type, r ? r + 1: "?");
                     n += m-1;
                     r = NULL;
                     field = field->next;
                 }
-                line = nasm_realloc(line, n + 5);
+                line = (char*)nasm_realloc(line, n + 5);
                 sprintf(line + n, "iend");
                 nasm_free(oldline);
                 return line;
@@ -1024,7 +1104,7 @@ static Token * tasm_join_tokens(Token *tline)
             else {
                 int lenp = strlen(prev->text);
                 int lenn = strlen(next->text);
-                prev->text = nasm_realloc(prev->text, lenp + lenn + 1);
+                prev->text = (char*)nasm_realloc(prev->text, lenp + lenn + 1);
                 strncpy(prev->text + lenp, next->text, lenn + 1);
                 (void) delete_Token(t);
                 prev->next = delete_Token(next);
@@ -1060,7 +1140,7 @@ prepreproc(char *line)
         if (*fname == '"')
             fname++;
         fnlen = strcspn(fname, "\"");
-        line = nasm_malloc(20 + fnlen);
+        line = (char*)nasm_malloc(20 + fnlen);
         sprintf(line, "%%line %d %.*s", lineno, (int)fnlen, fname);
         nasm_free(oldline);
     }
@@ -1079,7 +1159,7 @@ prepreproc(char *line)
         d = strchr(c+1, '\n');
         if (d)
             *d = '\0';
-        l = malloc(sizeof(*l));
+        l = (Line*)malloc(sizeof(*l));
         l -> first = tokenise(c+1);
         l -> finishes = NULL;
         l -> next = *lp;
@@ -1200,12 +1280,12 @@ read_line(void)
     int bufsize, continued_count;
 
     bufsize = BUF_DELTA;
-    buffer = nasm_malloc(BUF_DELTA);
+    buffer = (char*)nasm_malloc(BUF_DELTA);
     p = buffer;
     continued_count = 0;
     while (1)
     {
-        q = fgets(p, bufsize - (int)(p - buffer), istk->fp);
+        q = yasm_fgets(p, bufsize - (int)(p - buffer), istk->in, &istk->pos);
         if (!q)
             break;
         p += strlen(p);
@@ -1233,7 +1313,7 @@ read_line(void)
         {
             long offset = (long)(p - buffer);
             bufsize += BUF_DELTA;
-            buffer = nasm_realloc(buffer, (size_t)bufsize);
+            buffer = (char*)nasm_realloc(buffer, (size_t)bufsize);
             p = buffer + offset;        /* prevent stale-pointer problems */
         }
     }
@@ -1259,7 +1339,7 @@ read_line(void)
      */
     buffer[strcspn(buffer, "\032")] = '\0';
 
-    list->line(LIST_READ, buffer);
+    //list->line(LIST_READ, buffer);
 
     return buffer;
 }
@@ -1447,7 +1527,7 @@ new_Block(size_t size)
         b->chunk = nasm_malloc(size);
         
         /* now allocate a new block for the next request */
-        b->next = nasm_malloc(sizeof(Blocks));
+        b->next = (Blocks*)nasm_malloc(sizeof(Blocks));
         /* and initialize the contents of the new block */
         b->next->next = NULL;
         b->next->chunk = NULL;
@@ -1509,7 +1589,7 @@ new_Token(Token * next, int type, const char *text, size_t txtlen)
     {
         if (txtlen == 0)
             txtlen = strlen(text);
-        t->text = nasm_malloc(1 + txtlen);
+        t->text = (char*)nasm_malloc(1 + txtlen);
         strncpy(t->text, text, txtlen);
         t->text[txtlen] = '\0';
     }
@@ -1577,7 +1657,7 @@ detoken(Token * tlist, int expand_locals)
             len += strlen(t->text);
         }
     }
-    p = line = nasm_malloc(len + 1);
+    p = line = (char*)nasm_malloc(len + 1);
     for (t = tlist; t; t = t->next)
     {
         if (t->type == TOK_WHITESPACE)
@@ -1605,7 +1685,7 @@ detoken(Token * tlist, int expand_locals)
 static int
 ppscan(void *private_data, struct tokenval *tokval)
 {
-    Token **tlineptr = private_data;
+    Token **tlineptr = (Token**)private_data;
     Token *tline;
 
     do
@@ -1647,7 +1727,7 @@ ppscan(void *private_data, struct tokenval *tokval)
     {
         int rn_error;
 
-        tokval->t_integer = nasm_readnum(tline->text, &rn_error);
+        tokval->t_integer = nasm_readnum(tline->text, &rn_error).clone();
         if (rn_error)
             return tokval->t_type = TOKEN_ERRNUM;
         tokval->t_charptr = NULL;
@@ -1666,7 +1746,7 @@ ppscan(void *private_data, struct tokenval *tokval)
 
         if (l == 0 || r[l - 1] != q)
             return tokval->t_type = TOKEN_ERRNUM;
-        tokval->t_integer = nasm_readstrnum(r, l - 1, &rn_warn);
+        tokval->t_integer = nasm_readstrnum(r, l - 1, &rn_warn).clone();
         if (rn_warn)
             error(ERR_WARNING | ERR_PASS1, "character constant too long");
         tokval->t_charptr = NULL;
@@ -1782,11 +1862,15 @@ get_ctx(char *name, int all_contexts)
  * the include path one by one until it finds the file or reaches
  * the end of the path.
  */
-static FILE *
-inc_fopen(char *file, char **newname)
+static const llvm::MemoryBuffer*
+inc_fopen(char *file,
+          const DirectoryLookup* from_dir,
+          const DirectoryLookup*& cur_dir,
+          FileID from_file,
+          FileID& cur_file)
 {
-    FILE *fp;
-    char *combine = NULL, *c;
+    const llvm::MemoryBuffer *in;
+    char *c;
     char *pb, *p1, *p2, *file2 = NULL;
 
     /* Try to expand all %ENVVAR% in filename.  Warn, and leave %string%
@@ -1820,10 +1904,10 @@ inc_fopen(char *file, char **newname)
         }
         /* need to expand */
         if (!file2) {
-            file2 = nasm_malloc(strlen(file)+strlen(env)+1);
+            file2 = (char*)nasm_malloc(strlen(file)+strlen(env)+1);
             file2[0] = '\0';
         } else
-            file2 = nasm_realloc(file2, strlen(file2)+strlen(env)+1);
+            file2 = (char*)nasm_realloc(file2, strlen(file2)+strlen(env)+1);
         *p1 = '\0';
         strcat(file2, pb);
         strcat(file2, env);
@@ -1834,39 +1918,37 @@ inc_fopen(char *file, char **newname)
     if (file2)
         strcat(file2, pb);
 
-    fp = yasm_fopen_include(file2 ? file2 : file, nasm_src_get_fname(), "r",
-                            &combine);
-    if (!fp && tasm_compatible_mode)
+    in = yasm_fopen_include(file2 ? file2 : file, from_dir, cur_dir, from_file, cur_file);
+    if (!in && tasm_compatible_mode)
     {
         char *thefile = file2 ? file2 : file;
         /* try a few case combinations */
         do {
             for (c = thefile; *c; c++)
                 *c = toupper(*c);
-            fp = yasm_fopen_include(thefile, nasm_src_get_fname(), "r", &combine);
-            if (fp) break;
+            in = yasm_fopen_include(thefile, from_dir, cur_dir, from_file, cur_file);
+            if (in) break;
             *thefile = tolower(*thefile);
-            fp = yasm_fopen_include(thefile, nasm_src_get_fname(), "r", &combine);
-            if (fp) break;
+            in = yasm_fopen_include(thefile, from_dir, cur_dir, from_file, cur_file);
+            if (in) break;
             for (c = thefile; *c; c++)
                 *c = tolower(*c);
-            fp = yasm_fopen_include(thefile, nasm_src_get_fname(), "r", &combine);
-            if (fp) break;
+            in = yasm_fopen_include(thefile, from_dir, cur_dir, from_file, cur_file);
+            if (in) break;
             *thefile = toupper(*thefile);
-            fp = yasm_fopen_include(thefile, nasm_src_get_fname(), "r", &combine);
-            if (fp) break;
+            in = yasm_fopen_include(thefile, from_dir, cur_dir, from_file, cur_file);
+            if (in) break;
         } while (0);
     }
-    if (!fp)
+    if (!in)
         error(ERR_FATAL, "unable to open include file `%s'",
               file2 ? file2 : file);
-    nasm_preproc_add_dep(combine);
+    //nasm_preproc_add_dep(combine);
 
     if (file2)
         nasm_free(file2);
 
-    *newname = combine;
-    return fp;
+    return in;
 }
 
 /*
@@ -1948,7 +2030,7 @@ count_mmac_params(Token * t, int *nparam, Token *** params)
         if (*nparam+1 >= paramsize)
         {
             paramsize += PARAM_DELTA;
-            *params = nasm_realloc(*params, sizeof(**params) * paramsize);
+            *params = (Token**)nasm_realloc(*params, sizeof(**params) * paramsize);
         }
         skip_white_(t);
         brace = FALSE;
@@ -1993,8 +2075,7 @@ if_condition(Token * tline, int i)
     int j, casesense;
     Token *t, *tt, **tptr, *origline;
     struct tokenval tokval;
-    yasm_expr *evalresult;
-    yasm_intnum *intn;
+    Expr *evalresult;
 
     origline = tline;
 
@@ -2161,10 +2242,8 @@ if_condition(Token * tline, int i)
             }
             else
             {
-                intn = nasm_readnum(tline->text, &j);
-                searching.nparam_min = searching.nparam_max =
-                    yasm_intnum_get_int(intn);
-                yasm_intnum_destroy(intn);
+                IntNum intn = nasm_readnum(tline->text, &j);
+                searching.nparam_min = searching.nparam_max = intn.getInt();
                 if (j)
                     error(ERR_NONFATAL,
                           "unable to parse parameter count `%s'",
@@ -2181,9 +2260,8 @@ if_condition(Token * tline, int i)
                           directives[i]);
                 else
                 {
-                    intn = nasm_readnum(tline->text, &j);
-                    searching.nparam_max = yasm_intnum_get_int(intn);
-                    yasm_intnum_destroy(intn);
+                    IntNum intn = nasm_readnum(tline->text, &j);
+                    searching.nparam_max = intn.getInt();
                     if (j)
                         error(ERR_NONFATAL,
                                 "unable to parse parameter count `%s'",
@@ -2267,6 +2345,7 @@ if_condition(Token * tline, int i)
 
         case PP_IF:
         case PP_ELIF:
+        {
             t = tline = expand_smacro(tline);
             tptr = &t;
             tokval.t_type = TOKEN_INVALID;
@@ -2278,18 +2357,18 @@ if_condition(Token * tline, int i)
             if (tokval.t_type)
                 error(ERR_WARNING,
                         "trailing garbage after expression ignored");
-            intn = yasm_expr_get_intnum(&evalresult, 0);
-            if (!intn)
+            evalresult->Simplify(yasm_preproc->getDiagnostics());
+            if (!evalresult->isIntNum())
             {
                 error(ERR_NONFATAL,
                         "non-constant value given to `%s'", directives[i]);
-                yasm_expr_destroy(evalresult);
+                delete evalresult;
                 return -1;
             }
-            j = !yasm_intnum_is_zero(intn);
-            yasm_expr_destroy(evalresult);
+            j = !evalresult->getIntNum().isZero();
+            delete evalresult;
             return j;
-
+        }
         default:
             error(ERR_FATAL,
                     "preprocessor directive `%s' not yet implemented",
@@ -2329,7 +2408,7 @@ do_directive(Token * tline)
 {
     int i, j, k, m, nparam, nolist;
     int offset;
-    char *p, *mname, *newname;
+    char *p, *mname;
     Include *inc;
     Context *ctx;
     Cond *cond;
@@ -2338,9 +2417,8 @@ do_directive(Token * tline)
     Token *t, *tt, *param_start, *macro_start, *last, **tptr, *origline;
     Line *l;
     struct tokenval tokval;
-    yasm_expr *evalresult;
+    Expr *evalresult;
     MMacro *tmp_defining;       /* Used when manipulating rep_nest */
-    yasm_intnum *intn;
 
     origline = tline;
 
@@ -2705,6 +2783,7 @@ do_directive(Token * tline)
             return DIRECTIVE_FOUND;
 
         case PP_INCLUDE:
+        {
             tline = tline->next;
             skip_white_(tline);
             if (!tline || (tline->type != TOK_STRING &&
@@ -2725,19 +2804,25 @@ do_directive(Token * tline)
             else
                 p = tline->text;        /* internal_string is easier */
             expand_macros_in_string(&p);
-            inc = nasm_malloc(sizeof(Include));
+            inc = (Include*)nasm_malloc(sizeof(Include));
             inc->next = istk;
             inc->conds = NULL;
-            inc->fp = inc_fopen(p, &newname);
-            inc->fname = nasm_src_set_fname(newname);
+            const DirectoryLookup* to_dir;
+            FileID to_file;
+            inc->in = inc_fopen(p, istk->cur_dir, to_dir, istk->fid, to_file);
+            inc->fid = to_file;
+            inc->cur_dir = to_dir;
+            inc->pos = 0;
+            inc->fname = nasm_src_set_fname(nasm_strdup(inc->in->getBufferIdentifier()));
             inc->lineno = nasm_src_set_linnum(0);
             inc->lineinc = 1;
             inc->expansion = NULL;
             inc->mstk = NULL;
             istk = inc;
-            list->uplevel(LIST_INCLUDE);
+            //list->uplevel(LIST_INCLUDE);
             free_tlist(origline);
             return DIRECTIVE_FOUND;
+        }
 
         case PP_PUSH:
             tline = tline->next;
@@ -2751,7 +2836,7 @@ do_directive(Token * tline)
             }
             if (tline->next)
                 error(ERR_WARNING, "trailing garbage after `%%push' ignored");
-            ctx = nasm_malloc(sizeof(Context));
+            ctx = (Context*)nasm_malloc(sizeof(Context));
             ctx->next = cstk;
             ctx->localmac = NULL;
             ctx->name = nasm_strdup(tline->text);
@@ -2902,7 +2987,7 @@ do_directive(Token * tline)
                 j = j < 0 ? COND_NEVER : j ? COND_IF_TRUE : COND_IF_FALSE;
             }
             free_tlist(origline);
-            cond = nasm_malloc(sizeof(Cond));
+            cond = (Cond*)nasm_malloc(sizeof(Cond));
             cond->next = istk->conds;
             cond->state = j;
             istk->conds = cond;
@@ -2989,7 +3074,7 @@ do_directive(Token * tline)
                         (i == PP_IMACRO ? "i" : ""));
                 return DIRECTIVE_FOUND;
             }
-            defining = nasm_malloc(sizeof(MMacro));
+            defining = (MMacro*)nasm_malloc(sizeof(MMacro));
             defining->name = nasm_strdup(tline->text);
             defining->casesense = (i == PP_MACRO);
             defining->plus = FALSE;
@@ -3007,10 +3092,8 @@ do_directive(Token * tline)
             }
             else
             {
-                intn = nasm_readnum(tline->text, &j);
-                defining->nparam_min = defining->nparam_max =
-                    yasm_intnum_get_int(intn);
-                yasm_intnum_destroy(intn);
+                IntNum intn = nasm_readnum(tline->text, &j);
+                defining->nparam_min = defining->nparam_max = intn.getInt();
                 if (j)
                     error(ERR_NONFATAL,
                             "unable to parse parameter count `%s'",
@@ -3027,9 +3110,8 @@ do_directive(Token * tline)
                             (i == PP_IMACRO ? "i" : ""));
                 else
                 {
-                    intn = nasm_readnum(tline->text, &j);
-                    defining->nparam_max = yasm_intnum_get_int(intn);
-                    yasm_intnum_destroy(intn);
+                    IntNum intn = nasm_readnum(tline->text, &j);
+                    defining->nparam_max = intn.getInt();
                     if (j)
                         error(ERR_NONFATAL,
                                 "unable to parse parameter count `%s'",
@@ -3122,11 +3204,11 @@ do_directive(Token * tline)
             if (tokval.t_type)
                 error(ERR_WARNING,
                         "trailing garbage after expression ignored");
-            intn = yasm_expr_get_intnum(&evalresult, 0);
-            if (!intn)
+            evalresult->Simplify(yasm_preproc->getDiagnostics());
+            if (!evalresult->isIntNum())
             {
                 error(ERR_NONFATAL, "non-constant value given to `%%rotate'");
-                yasm_expr_destroy(evalresult);
+                delete evalresult;
                 return DIRECTIVE_FOUND;
             }
             mmac = istk->mstk;
@@ -3144,14 +3226,14 @@ do_directive(Token * tline)
             }
             else
             {
-                mmac->rotate = mmac->rotate + yasm_intnum_get_int(intn);
+                mmac->rotate = mmac->rotate + evalresult->getIntNum().getInt();
                 
                 if (mmac->rotate < 0)
                     mmac->rotate = 
                         mmac->nparam - (-mmac->rotate) % mmac->nparam;
                 mmac->rotate %= mmac->nparam;
             }
-            yasm_expr_destroy(evalresult);
+            delete evalresult;
             return DIRECTIVE_FOUND;
 
         case PP_REP:
@@ -3183,15 +3265,15 @@ do_directive(Token * tline)
                 if (tokval.t_type)
                     error(ERR_WARNING,
                           "trailing garbage after expression ignored");
-                intn = yasm_expr_get_intnum(&evalresult, 0);
-                if (!intn)
+                evalresult->Simplify(yasm_preproc->getDiagnostics());
+                if (!evalresult->isIntNum())
                 {
                     error(ERR_NONFATAL, "non-constant value given to `%%rep'");
-                    yasm_expr_destroy(evalresult);
+                    delete evalresult;
                     return DIRECTIVE_FOUND;
                 }
-                i = (int)yasm_intnum_get_int(intn) + 1;
-                yasm_expr_destroy(evalresult);
+                i = (int)evalresult->getIntNum().getInt() + 1;
+                delete evalresult;
             }
             else
             {
@@ -3201,7 +3283,7 @@ do_directive(Token * tline)
             free_tlist(origline);
 
             tmp_defining = defining;
-            defining = nasm_malloc(sizeof(MMacro));
+            defining = (MMacro*)nasm_malloc(sizeof(MMacro));
             defining->name = NULL;      /* flags this macro as a %rep block */
             defining->casesense = 0;
             defining->plus = FALSE;
@@ -3233,7 +3315,7 @@ do_directive(Token * tline)
              * continues) until the whole expansion is forcibly removed
              * from istk->expansion by a %exitrep.
              */
-            l = nasm_malloc(sizeof(Line));
+            l = (Line*)nasm_malloc(sizeof(Line));
             l->next = istk->expansion;
             l->finishes = defining;
             l->first = NULL;
@@ -3241,7 +3323,7 @@ do_directive(Token * tline)
 
             istk->mstk = defining;
 
-            list->uplevel(defining->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
+            //list->uplevel(defining->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
             tmp_defining = defining;
             defining = defining->rep_nest;
             free_tlist(origline);
@@ -3391,14 +3473,14 @@ do_directive(Token * tline)
                 }
                 else
                 {
-                    smac = nasm_malloc(sizeof(SMacro));
+                    smac = (SMacro*)nasm_malloc(sizeof(SMacro));
                     smac->next = *smhead;
                     *smhead = smac;
                 }
             }
             else
             {
-                smac = nasm_malloc(sizeof(SMacro));
+                smac = (SMacro*)nasm_malloc(sizeof(SMacro));
                 smac->next = *smhead;
                 *smhead = smac;
             }
@@ -3493,10 +3575,9 @@ do_directive(Token * tline)
                 return DIRECTIVE_FOUND;
             }
 
-            macro_start = nasm_malloc(sizeof(*macro_start));
+            macro_start = (Token*)nasm_malloc(sizeof(*macro_start));
             macro_start->next = NULL;
-            make_tok_num(macro_start,
-                yasm_intnum_create_uint((unsigned long)(strlen(t->text) - 2)));
+            make_tok_num(macro_start, (unsigned long)(strlen(t->text) - 2));
             macro_start->mac = NULL;
 
             /*
@@ -3523,7 +3604,7 @@ do_directive(Token * tline)
             }
             else
             {
-                smac = nasm_malloc(sizeof(SMacro));
+                smac = (SMacro*)nasm_malloc(sizeof(SMacro));
                 smac->next = *smhead;
                 *smhead = smac;
             }
@@ -3538,6 +3619,7 @@ do_directive(Token * tline)
             return DIRECTIVE_FOUND;
 
         case PP_SUBSTR:
+        {
             tline = tline->next;
             skip_white_(tline);
             tline = expand_id(tline);
@@ -3584,29 +3666,29 @@ do_directive(Token * tline)
                 free_tlist(origline);
                 return DIRECTIVE_FOUND;
             }
-            intn = yasm_expr_get_intnum(&evalresult, 0);
-            if (!intn)
+            evalresult->Simplify(yasm_preproc->getDiagnostics());
+            if (!evalresult->isIntNum())
             {
                 error(ERR_NONFATAL, "non-constant value given to `%%substr`");
                 free_tlist(tline);
                 free_tlist(origline);
-                yasm_expr_destroy(evalresult);
+                delete evalresult;
                 return DIRECTIVE_FOUND;
             }
 
-            macro_start = nasm_malloc(sizeof(*macro_start));
+            macro_start = (Token*)nasm_malloc(sizeof(*macro_start));
             macro_start->next = NULL;
             macro_start->text = nasm_strdup("'''");
-            if (yasm_intnum_sign(intn) == 1
-                    && yasm_intnum_get_uint(intn) < strlen(t->text) - 1)
+            IntNum intn = evalresult->getIntNum();
+            delete evalresult;
+            if (intn.getSign() == 1 && intn.getUInt() < strlen(t->text) - 1)
             {
-                macro_start->text[1] = t->text[yasm_intnum_get_uint(intn)];
+                macro_start->text[1] = t->text[intn.getUInt()];
             }
             else
             {
                 macro_start->text[2] = '\0';
             }
-            yasm_expr_destroy(evalresult);
             macro_start->type = TOK_STRING;
             macro_start->mac = NULL;
 
@@ -3634,7 +3716,7 @@ do_directive(Token * tline)
             }
             else
             {
-                smac = nasm_malloc(sizeof(SMacro));
+                smac = (SMacro*)nasm_malloc(sizeof(SMacro));
                 smac->next = *smhead;
                 *smhead = smac;
             }
@@ -3647,7 +3729,7 @@ do_directive(Token * tline)
             free_tlist(tline);
             free_tlist(origline);
             return DIRECTIVE_FOUND;
-
+        }
 
         case PP_ASSIGN:
         case PP_IASSIGN:
@@ -3689,21 +3771,21 @@ do_directive(Token * tline)
                 error(ERR_WARNING,
                         "trailing garbage after expression ignored");
 
-            intn = yasm_expr_get_intnum(&evalresult, 0);
-            if (!intn)
+            evalresult->Simplify(yasm_preproc->getDiagnostics());
+            if (!evalresult->isIntNum())
             {
                 error(ERR_NONFATAL,
                         "non-constant value given to `%%%sassign'",
                         (i == PP_IASSIGN ? "i" : ""));
                 free_tlist(origline);
-                yasm_expr_destroy(evalresult);
+                delete evalresult;
                 return DIRECTIVE_FOUND;
             }
 
-            macro_start = nasm_malloc(sizeof(*macro_start));
+            macro_start = (Token*)nasm_malloc(sizeof(*macro_start));
             macro_start->next = NULL;
-            make_tok_num(macro_start, yasm_intnum_copy(intn));
-            yasm_expr_destroy(evalresult);
+            make_tok_num(macro_start, evalresult->getIntNum());
+            delete evalresult;
             macro_start->mac = NULL;
 
             /*
@@ -3730,7 +3812,7 @@ do_directive(Token * tline)
             }
             else
             {
-                smac = nasm_malloc(sizeof(SMacro));
+                smac = (SMacro*)nasm_malloc(sizeof(SMacro));
                 smac->next = *smhead;
                 *smhead = smac;
             }
@@ -3755,9 +3837,7 @@ do_directive(Token * tline)
                 free_tlist(origline);
                 return DIRECTIVE_FOUND;
             }
-            intn = nasm_readnum(tline->text, &j);
-            k = yasm_intnum_get_int(intn);
-            yasm_intnum_destroy(intn);
+            k = nasm_readnum(tline->text, &j).getInt();
             m = 1;
             tline = tline->next;
             if (tok_is_(tline, "+"))
@@ -3769,9 +3849,7 @@ do_directive(Token * tline)
                     free_tlist(origline);
                     return DIRECTIVE_FOUND;
                 }
-                intn = nasm_readnum(tline->text, &j);
-                m = yasm_intnum_get_int(intn);
-                yasm_intnum_destroy(intn);
+                m = nasm_readnum(tline->text, &j).getInt();
                 tline = tline->next;
             }
             skip_white_(tline);
@@ -4160,7 +4238,7 @@ expand_smacro(Token * tline)
                         if (!strcmp("__LINE__", m->name))
                         {
                             nasm_free(tline->text);
-                            make_tok_num(tline, yasm_intnum_create_int(nasm_src_get_linnum()));
+                            make_tok_num(tline, nasm_src_get_linnum());
                             continue;
                         }
                         tline = delete_Token(tline);
@@ -4205,9 +4283,9 @@ expand_smacro(Token * tline)
                         brackets = 0;
                         nparam = 0;
                         sparam = PARAM_DELTA;
-                        params = nasm_malloc(sparam * sizeof(Token *));
+                        params = (Token**)nasm_malloc(sparam * sizeof(Token *));
                         params[0] = tline->next;
-                        paramsize = nasm_malloc(sparam * sizeof(int));
+                        paramsize = (int*)nasm_malloc(sparam * sizeof(int));
                         paramsize[0] = 0;
                         while (TRUE)
                         {       /* parameter loop */
@@ -4248,9 +4326,9 @@ expand_smacro(Token * tline)
                                     if (++nparam >= sparam)
                                     {
                                         sparam += PARAM_DELTA;
-                                        params = nasm_realloc(params,
+                                        params = (Token**)nasm_realloc(params,
                                                 sparam * sizeof(Token *));
-                                        paramsize = nasm_realloc(paramsize,
+                                        paramsize = (int*)nasm_realloc(paramsize,
                                                 sparam * sizeof(int));
                                     }
                                     params[nparam] = tline->next;
@@ -4580,7 +4658,7 @@ is_mmacro(Token * tline, Token *** params_array)
             if (m->defaults && nparam < m->nparam_min + m->ndefs)
             {
                 params =
-                        nasm_realloc(params,
+                        (Token**)nasm_realloc(params,
                         ((m->nparam_min + m->ndefs + 1) * sizeof(*params)));
                 while (nparam < m->nparam_min + m->ndefs)
                 {
@@ -4600,7 +4678,7 @@ is_mmacro(Token * tline, Token *** params_array)
              */
             if (!params)
             {                   /* need this special case */
-                params = nasm_malloc(sizeof(*params));
+                params = (Token**)nasm_malloc(sizeof(*params));
                 nparam = 0;
             }
             params[nparam] = NULL;
@@ -4683,7 +4761,7 @@ expand_mmacro(Token * tline)
      */
     for (nparam = 0; params[nparam]; nparam++)
         ;
-    paramlen = nparam ? nasm_malloc(nparam * sizeof(*paramlen)) : NULL;
+    paramlen = nparam ? (long*)nasm_malloc(nparam * sizeof(*paramlen)) : NULL;
 
     for (i = 0; params[i]; i++)
     {
@@ -4722,7 +4800,7 @@ expand_mmacro(Token * tline)
      * macro as in progress, and set up its invocation-specific
      * variables.
      */
-    ll = nasm_malloc(sizeof(Line));
+    ll = (Line*)nasm_malloc(sizeof(Line));
     ll->next = istk->expansion;
     ll->finishes = m;
     ll->first = NULL;
@@ -4744,7 +4822,7 @@ expand_mmacro(Token * tline)
     {
         Token **tail;
 
-        ll = nasm_malloc(sizeof(Line));
+        ll = (Line*)nasm_malloc(sizeof(Line));
         ll->finishes = NULL;
         ll->next = istk->expansion;
         istk->expansion = ll;
@@ -4777,7 +4855,7 @@ expand_mmacro(Token * tline)
             free_tlist(startline);
         else
         {
-            ll = nasm_malloc(sizeof(Line));
+            ll = (Line*)nasm_malloc(sizeof(Line));
             ll->finishes = NULL;
             ll->next = istk->expansion;
             istk->expansion = ll;
@@ -4791,7 +4869,7 @@ expand_mmacro(Token * tline)
         }
     }
 
-    list->uplevel(m->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
+    //list->uplevel(m->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
 
     return 1;
 }
@@ -4828,22 +4906,25 @@ error(int severity, const char *fmt, ...)
 }
 
 static void
-pp_reset(FILE *f, const char *file, int apass, efunc errfunc, evalfunc eval,
-        ListGen * listgen)
+pp_reset(FileID fid, int apass, efunc errfunc, evalfunc eval)
 {
     int h;
 
-    first_fp = f;
     _error = errfunc;
     cstk = NULL;
-    istk = nasm_malloc(sizeof(Include));
+    istk = (Include*)nasm_malloc(sizeof(Include));
     istk->next = NULL;
     istk->conds = NULL;
     istk->expansion = NULL;
     istk->mstk = NULL;
-    istk->fp = f;
+    istk->fid = fid;
+    bool invalid = false;
+    istk->in = yasm_preproc->getSourceManager()
+        .getBuffer(fid, SourceLocation(), &invalid);
+    istk->cur_dir = NULL;
+    istk->pos = 0;
     istk->fname = NULL;
-    nasm_free(nasm_src_set_fname(nasm_strdup(file)));
+    nasm_free(nasm_src_set_fname(nasm_strdup(istk->in->getBufferIdentifier())));
     nasm_src_set_linnum(0);
     istk->lineinc = 1;
     defining = NULL;
@@ -4858,7 +4939,6 @@ pp_reset(FILE *f, const char *file, int apass, efunc errfunc, evalfunc eval,
     if (tasm_compatible_mode) {
         pp_extra_stdmac(tasm_compat_macros);
     }
-    list = listgen;
     evaluate = eval;
     pass = apass;
     first_line = 1;
@@ -4885,7 +4965,7 @@ poke_predef(Line *predef_lines)
             *tail = new_Token(NULL, t->type, t->text, 0);
             tail = &(*tail)->next;
         }
-        l = nasm_malloc(sizeof(Line));
+        l = (Line*)nasm_malloc(sizeof(Line));
         l->next = istk->expansion;
         l->first = head;
         l->finishes = FALSE;
@@ -4943,7 +5023,7 @@ pp_getline(void)
                 {
                     Token *t, *tt, **tail;
 
-                    ll = nasm_malloc(sizeof(Line));
+                    ll = (Line*)nasm_malloc(sizeof(Line));
                     ll->next = istk->expansion;
                     ll->finishes = NULL;
                     ll->first = NULL;
@@ -5003,7 +5083,7 @@ pp_getline(void)
                 }
                 istk->expansion = l->next;
                 nasm_free(l);
-                list->downlevel(LIST_MACRO);
+                //list->downlevel(LIST_MACRO);
             }
         }
         while (1)
@@ -5019,7 +5099,7 @@ pp_getline(void)
                 istk->expansion = l->next;
                 nasm_free(l);
                 p = detoken(tline, FALSE);
-                list->line(LIST_MACRO, p);
+                //list->line(LIST_MACRO, p);
                 nasm_free(p);
                 break;
             }
@@ -5036,8 +5116,6 @@ pp_getline(void)
              */
             {
                 Include *i = istk;
-                if (i->fp != first_fp)
-                    fclose(i->fp);
                 if (i->conds)
                     error(ERR_FATAL, "expected `%%endif' before end of file");
                 /* only set line and file name if there's a next node */
@@ -5047,7 +5125,7 @@ pp_getline(void)
                     nasm_free(nasm_src_set_fname(nasm_strdup(i->fname)));
                 }
                 istk = i->next;
-                list->downlevel(LIST_INCLUDE);
+                //list->downlevel(LIST_INCLUDE);
                 nasm_free(i);
                 if (!istk)
                     return NULL;
@@ -5083,7 +5161,7 @@ pp_getline(void)
              * at all, and just
              * shove the tokenised line on to the macro definition.
              */
-            Line *l = nasm_malloc(sizeof(Line));
+            Line *l = (Line*)nasm_malloc(sizeof(Line));
             l->next = defining->expansion;
             l->first = tline;
             l->finishes = FALSE;
@@ -5177,8 +5255,6 @@ pp_cleanup(int pass_)
     {
         Include *i = istk;
         istk = istk->next;
-        if (i->fp != first_fp)
-            fclose(i->fp);
         nasm_free(i->fname);
         nasm_free(i);
     }
@@ -5209,7 +5285,7 @@ pp_pre_include(const char *fname)
     space = new_Token(name, TOK_WHITESPACE, NULL, 0);
     inc = new_Token(space, TOK_PREPROC_ID, "%include", 0);
 
-    l = nasm_malloc(sizeof(Line));
+    l = (Line*)nasm_malloc(sizeof(Line));
     l->next = predef;
     l->first = inc;
     l->finishes = FALSE;
@@ -5232,7 +5308,7 @@ pp_pre_define(char *definition)
     if (equals)
         *equals = '=';
 
-    l = nasm_malloc(sizeof(Line));
+    l = (Line*)nasm_malloc(sizeof(Line));
     l->next = predef;
     l->first = def;
     l->finishes = FALSE;
@@ -5249,7 +5325,7 @@ pp_pre_undefine(char *definition)
     def = new_Token(space, TOK_PREPROC_ID, "%undef", 0);
     space->next = tokenise(definition);
 
-    l = nasm_malloc(sizeof(Line));
+    l = (Line*)nasm_malloc(sizeof(Line));
     l->next = predef;
     l->first = def;
     l->finishes = FALSE;
@@ -5272,7 +5348,7 @@ pp_builtin_define(char *definition)
     if (equals)
         *equals = '=';
 
-    l = nasm_malloc(sizeof(Line));
+    l = (Line*)nasm_malloc(sizeof(Line));
     l->next = builtindef;
     l->first = def;
     l->finishes = FALSE;
@@ -5294,7 +5370,7 @@ pp_extra_stdmac(const char **macros)
         t = tokenise(macro);
         nasm_free(macro);
 
-        l = nasm_malloc(sizeof(Line));
+        l = (Line*)nasm_malloc(sizeof(Line));
         l->next = stddef;
         l->first = t;
         l->finishes = FALSE;
@@ -5303,9 +5379,11 @@ pp_extra_stdmac(const char **macros)
 }
 
 static void
-make_tok_num(Token * tok, yasm_intnum *val)
+make_tok_num(Token * tok, const IntNum& val)
 {
-    tok->text = yasm_intnum_get_str(val);
+    llvm::SmallString<64> str;
+    val.getStr(str);
+    tok->text = nasm_strdup(str.c_str());
     tok->type = TOK_NUMBER;
 }
 
@@ -5314,3 +5392,5 @@ Preproc nasmpp = {
     pp_getline,
     pp_cleanup
 };
+
+} // namespace nasm

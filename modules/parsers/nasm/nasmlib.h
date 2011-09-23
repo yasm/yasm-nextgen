@@ -9,6 +9,12 @@
 #ifndef YASM_NASMLIB_H
 #define YASM_NASMLIB_H
 
+#include <cstdlib>
+
+namespace yasm { class IntNum; }
+
+namespace nasm {
+
 /*
  * Wrappers around malloc, realloc and free. nasm_malloc will
  * fatal-error and die rather than return NULL; nasm_realloc will
@@ -16,23 +22,21 @@
  * passed a NULL pointer; nasm_free will do nothing if it is passed
  * a NULL pointer.
  */
-#define nasm_malloc yasm_xmalloc
-#define nasm_realloc yasm_xrealloc
-#ifdef WITH_DMALLOC
-#define nasm_free(p) do { if (p) yasm_xfree(p); } while(0)
-#else
-#define nasm_free(p) yasm_xfree(p)
-#endif
-#define nasm_strdup yasm__xstrdup
-#define nasm_strndup yasm__xstrndup
-#define nasm_stricmp yasm__strcasecmp
-#define nasm_strnicmp yasm__strncasecmp
+#define nasm_malloc malloc
+void *nasm_realloc(void *q, size_t size);
+#define nasm_free(p) do { if (p) free(p); } while(0)
+char *nasm_strdup(const char *s);
+char *nasm_strndup(const char *s, size_t len);
+int nasm_stricmp(const char *s1, const char *s2);
+//#define nasm_stricmp yasm__strcasecmp
+int nasm_strnicmp(const char *s1, const char *s2, size_t n);
+//#define nasm_strnicmp yasm__strncasecmp
 
 /*
  * Convert a string into a number, using NASM number rules. Sets
  * `*error' to TRUE if an error occurs, and FALSE otherwise.
  */
-yasm_intnum *nasm_readnum(char *str, int *error);
+yasm::IntNum nasm_readnum(char *str, int *error);
 
 /*
  * Convert a character constant into a number. Sets
@@ -40,7 +44,7 @@ yasm_intnum *nasm_readnum(char *str, int *error);
  * str points to and length covers the middle of the string,
  * without the quotes.
  */
-yasm_intnum *nasm_readstrnum(char *str, size_t length, int *warn);
+yasm::IntNum nasm_readstrnum(char *str, size_t length, int *warn);
 
 char *nasm_src_set_fname(char *newname);
 char *nasm_src_get_fname(void);
@@ -56,5 +60,7 @@ int nasm_src_get(long *xline, char **xname);
 
 void nasm_quote(char **str);
 char *nasm_strcat(const char *one, const char *two);
+
+} // namespace nasm
 
 #endif

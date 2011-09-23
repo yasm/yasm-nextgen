@@ -591,6 +591,9 @@ add_error("err_pp_endif_without_if", "endif without if")
 add_error("err_pp_if_without_endif", "if without endif")
 add_error("err_pp_cond_not_constant", "non-constant conditional expression")
 
+add_error("err_pp_expected_line", "expected %%line")
+add_fatal("fatal_pp_errors", "preprocessor errors")
+
 # Output
 add_warning("warn_nobits_data",
             "initialized space declared in nobits section: ignoring",

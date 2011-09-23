@@ -48,18 +48,31 @@ NasmPreproc::~NasmPreproc()
 }
 
 void
+NasmPreproc::PreInclude(llvm::StringRef filename)
+{
+    Predef p = { Predef::PREINC, filename };
+    m_predefs.push_back(p);
+}
+
+void
 NasmPreproc::PredefineMacro(llvm::StringRef macronameval)
 {
+    Predef p = { Predef::PREDEF, macronameval };
+    m_predefs.push_back(p);
 }
 
 void
 NasmPreproc::UndefineMacro(llvm::StringRef macroname)
 {
+    Predef p = { Predef::UNDEF, macroname };
+    m_predefs.push_back(p);
 }
 
 void
 NasmPreproc::DefineBuiltin(llvm::StringRef macronameval)
 {
+    Predef p = { Predef::BUILTIN, macronameval };
+    m_predefs.push_back(p);
 }
 
 /// RegisterBuiltinMacro - Register the specified identifier in the identifier
