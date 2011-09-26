@@ -61,6 +61,7 @@ public:
 
     Diagnostic& getDiagnostics() const { return m_diags; }
     SourceManager& getSourceManager() const { return m_source_mgr; }
+    HeaderSearch& getHeaderSearch() const { return m_header_info; }
     IdentifierTable& getIdentifierTable() { return m_identifiers; }
     llvm::BumpPtrAllocator& getPreprocessorAllocator() { return m_bp; }
 
