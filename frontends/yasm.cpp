@@ -38,6 +38,7 @@
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/FileManager.h"
 #include "yasmx/Basic/SourceManager.h"
+#include "yasmx/Parse/DirectoryLookup.h"
 #include "yasmx/Parse/HeaderSearch.h"
 #include "yasmx/Parse/Parser.h"
 #include "yasmx/Support/registry.h"
@@ -707,6 +708,15 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
 
     if (diags.hasFatalErrorOccurred())
         return EXIT_FAILURE;
+
+    // Set up header search paths
+    std::vector<yasm::DirectoryLookup> dirs;
+    for (std::vector<std::string>::iterator i = include_paths.begin(),
+         end = include_paths.end(); i != end; ++i)
+    {
+        dirs.push_back(yasm::DirectoryLookup(file_mgr.getDirectory(*i), true));
+    }
+    headers.SetSearchPaths(dirs, 0, false);
 
 #if 0
     ApplyPreprocessorBuiltins(assembler.getPreprocessor());
