@@ -128,16 +128,22 @@ public:
     /// @return True on success, false on failure.
     bool InitObject(SourceManager& source_mgr, Diagnostic& diags);
 
+    /// Initialize parser.  Does not read from input file.
+    /// @param source_mgr       source manager
+    /// @param diags            diagnostic reporting
+    /// @param headers          header search paths
+    /// @return Parser.
+    Parser& InitParser(SourceManager& source_mgr,
+                       Diagnostic& diags,
+                       HeaderSearch& headers);
+
+
     /// Actually perform assembly.  Does not write to output file.
     /// It is assumed source_mgr is already loaded with a main file.
     /// @param source_mgr       source manager
-    /// @param file_mgr         file manager
     /// @param diags            diagnostic reporting
     /// @return True on success, false on failure.
-    bool Assemble(SourceManager& source_mgr,
-                  FileManager& file_mgr,
-                  Diagnostic& diags,
-                  HeaderSearch& headers);
+    bool Assemble(SourceManager& source_mgr, Diagnostic& diags);
 
     /// Write assembly results to output file.  Fails if assembly not
     /// performed first.

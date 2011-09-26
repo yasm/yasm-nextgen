@@ -749,8 +749,11 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
     // Configure object per command line parameters.
     ConfigureObject(*assembler.getObject());
 
+    // initialize the parser.
+    assembler.InitParser(source_mgr, diags, headers);
+
     // assemble the input.
-    if (!assembler.Assemble(source_mgr, file_mgr, diags, headers))
+    if (!assembler.Assemble(source_mgr, diags))
     {
         // An error occurred during assembly.
         return EXIT_FAILURE;

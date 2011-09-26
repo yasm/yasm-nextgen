@@ -284,16 +284,20 @@ Assembler::InitObject(SourceManager& source_mgr, Diagnostic& diags)
     return true;
 }
 
-bool
-Assembler::Assemble(SourceManager& source_mgr,
-                    FileManager& file_mgr,
-                    Diagnostic& diags,
-                    HeaderSearch& headers)
+Parser&
+Assembler::InitParser(SourceManager& source_mgr,
+                      Diagnostic& diags,
+                      HeaderSearch& headers)
 {
-    llvm::StringRef parser_keyword = m_parser_module->getKeyword();
-
-    // Create parser
     m_parser.reset(m_parser_module->Create(diags, source_mgr, headers).release());
+    return *m_parser;
+}
+
+bool
+Assembler::Assemble(SourceManager& source_mgr, Diagnostic& diags)
+{
+
+    llvm::StringRef parser_keyword = m_parser_module->getKeyword();
 
     // Set up directive handlers
     Directives dirs;

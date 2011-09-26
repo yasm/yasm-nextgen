@@ -484,8 +484,11 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
     if (diags.hasFatalErrorOccurred())
         return EXIT_FAILURE;
 
+    // Initialize the parser.
+    assembler.InitParser(source_mgr, diags, headers);
+
     // Assemble the input.
-    if (!assembler.Assemble(source_mgr, file_mgr, diags, headers))
+    if (!assembler.Assemble(source_mgr, diags))
     {
         // An error occurred during assembly.
         return EXIT_FAILURE;
