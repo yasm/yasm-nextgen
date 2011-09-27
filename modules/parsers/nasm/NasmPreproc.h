@@ -49,6 +49,10 @@ public:
     NasmPreproc(Diagnostic& diags, SourceManager& sm, HeaderSearch& headers);
     ~NasmPreproc();
 
+    virtual void PredefineMacro(llvm::StringRef macronameval);
+    virtual void UndefineMacro(llvm::StringRef macroname);
+    virtual void DefineBuiltin(llvm::StringRef macronameval);
+
 protected:
     virtual void RegisterBuiltinMacros();
     virtual Lexer* CreateLexer(FileID fid,

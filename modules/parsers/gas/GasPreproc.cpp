@@ -49,6 +49,21 @@ GasPreproc::~GasPreproc()
 {
 }
 
+void
+GasPreproc::PredefineMacro(llvm::StringRef macronameval)
+{
+}
+
+void
+GasPreproc::UndefineMacro(llvm::StringRef macroname)
+{
+}
+
+void
+GasPreproc::DefineBuiltin(llvm::StringRef macronameval)
+{
+}
+
 bool
 GasPreproc::HandleInclude(llvm::StringRef filename, SourceLocation source)
 {

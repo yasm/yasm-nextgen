@@ -41,6 +41,7 @@
 #include "yasmx/Parse/DirectoryLookup.h"
 #include "yasmx/Parse/HeaderSearch.h"
 #include "yasmx/Parse/Parser.h"
+#include "yasmx/Parse/Preprocessor.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/System/plugin.h"
 #include "yasmx/Arch.h"
@@ -503,18 +504,17 @@ ConfigureObject(yasm::Object& object)
     }
 }
 
-#if 0
 static void
-ApplyPreprocessorBuiltins(yasm::Preprocessor* preproc)
+ApplyPreprocessorBuiltins(yasm::Preprocessor& preproc)
 {
     // Define standard YASM assembly-time macro constants
     std::string predef("__YASM_OBJFMT__=");
     predef += objfmt_keyword;
-    preproc->DefineBuiltin(predef);
+    preproc.DefineBuiltin(predef);
 }
 
 static void
-ApplyPreprocessorSavedOptions(yasm::Preprocessor* preproc)
+ApplyPreprocessorSavedOptions(yasm::Preprocessor& preproc)
 {
     // Walk through predefine_macros, undefine_macros, and preinclude_files
     // in parallel, ordering by command line argument position.
@@ -540,7 +540,7 @@ ApplyPreprocessorSavedOptions(yasm::Preprocessor* preproc)
             (inc_pos == 0 || def_pos < inc_pos))
         {
             // Handle predefine option
-            preproc->PredefineMacro(predefine_macros[def_num]);
+            preproc.PredefineMacro(predefine_macros[def_num]);
             ++def_num;
         }
         else if (undef_pos != 0 &&
@@ -548,7 +548,7 @@ ApplyPreprocessorSavedOptions(yasm::Preprocessor* preproc)
                  (inc_pos == 0 || undef_pos < inc_pos))
         {
             // Handle undefine option
-            preproc->UndefineMacro(undefine_macros[undef_num]);
+            preproc.UndefineMacro(undefine_macros[undef_num]);
             ++undef_num;
         }
         else if (inc_pos != 0 &&
@@ -556,14 +556,13 @@ ApplyPreprocessorSavedOptions(yasm::Preprocessor* preproc)
                  (undef_pos == 0 || inc_pos < undef_pos))
         {
             // Handle preinclude option
-            preproc->AddIncludeFile(preinclude_files[inc_num]);
+            preproc.PreInclude(preinclude_files[inc_num]);
             ++inc_num;
         }
         else
             break; // we're done with the list
     }
 }
-#endif
 
 #if 0
 static int
@@ -718,11 +717,6 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
     }
     headers.SetSearchPaths(dirs, 0, false);
 
-#if 0
-    ApplyPreprocessorBuiltins(assembler.getPreprocessor());
-    ApplyPreprocessorSavedOptions(assembler.getPreprocessor());
-#endif
-
     assembler.getArch()->setVar("force_strict", force_strict);
 
     // open the input file or STDIN (for filename of "-")
@@ -750,7 +744,11 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
     ConfigureObject(*assembler.getObject());
 
     // initialize the parser.
-    assembler.InitParser(source_mgr, diags, headers);
+    yasm::Parser& parser = assembler.InitParser(source_mgr, diags, headers);
+    ApplyPreprocessorBuiltins(parser.getPreprocessor());
+    ApplyPreprocessorSavedOptions(parser.getPreprocessor());
+    if (diags.hasErrorOccurred())
+        return EXIT_FAILURE;
 
     // assemble the input.
     if (!assembler.Assemble(source_mgr, diags))

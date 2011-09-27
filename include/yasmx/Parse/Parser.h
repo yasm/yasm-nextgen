@@ -68,37 +68,8 @@ public:
     /// Add directive handlers.
     virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
-#if 0
-    /// Gets a line of preprocessed source code.
-    /// @param line     destination string for line of preprocessed source
-    /// @param source   source location of beginning of line
-    /// @return True if line read; false if no more lines.
-    virtual bool getLine(/*@out@*/ std::string* line,
-                         /*@out@*/ SourceLocation* source) = 0;
+    virtual Preprocessor& getPreprocessor() const = 0;
 
-    /// Gets the source manager.
-    virtual SourceManager& getSourceManager() = 0;
-
-    /// Get the next filename included by the source code.
-    /// @return Filename.
-    virtual std::string getIncludedFile() = 0;
-
-    /// Pre-include a file.
-    /// @param filename     filename
-    virtual void AddIncludeFile(llvm::StringRef filename) = 0;
-
-    /// Pre-define a macro.
-    /// @param macronameval "name=value" string
-    virtual void PredefineMacro(llvm::StringRef macronameval) = 0;
-
-    /// Un-define a macro.
-    /// @param macroname    macro name
-    virtual void UndefineMacro(llvm::StringRef macroname) = 0;
-
-    /// Define a builtin macro, preprocessed before the "standard" macros.
-    /// @param macronameval "name=value" string
-    virtual void DefineBuiltin(llvm::StringRef macronameval) = 0;
-#endif
     /// Parse an input stream into an object.
     /// @param object       object to parse into
     /// @param preproc      preprocessor

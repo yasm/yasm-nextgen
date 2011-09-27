@@ -34,6 +34,7 @@
 /// @endlicense
 ///
 #include "yasmx/Config/export.h"
+#include "yasmx/Parse/Parser.h"
 #include "yasmx/Parse/Preprocessor.h"
 #include "yasmx/Parse/Token.h"
 
@@ -61,7 +62,7 @@ public:
         = 0;
 };
 
-class YASM_LIB_EXPORT ParserImpl
+class YASM_LIB_EXPORT ParserImpl : public Parser
 {
 public:
     Preprocessor& m_preproc;
@@ -74,8 +75,10 @@ private:
     unsigned short m_paren_count, m_bracket_count;
 
 public:
-    ParserImpl(Preprocessor& preproc);
+    ParserImpl(const ParserModule& module, Preprocessor& preproc);
     virtual ~ParserImpl();
+
+    virtual Preprocessor& getPreprocessor() const;
 
     /// Return true if the cur token is '(' or ')'.
     bool isTokenParen() const

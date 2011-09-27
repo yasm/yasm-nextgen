@@ -47,6 +47,21 @@ NasmPreproc::~NasmPreproc()
 {
 }
 
+void
+NasmPreproc::PredefineMacro(llvm::StringRef macronameval)
+{
+}
+
+void
+NasmPreproc::UndefineMacro(llvm::StringRef macroname)
+{
+}
+
+void
+NasmPreproc::DefineBuiltin(llvm::StringRef macronameval)
+{
+}
+
 /// RegisterBuiltinMacro - Register the specified identifier in the identifier
 /// table and mark it as a builtin macro to be expanded.
 static IdentifierInfo*

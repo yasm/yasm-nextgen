@@ -49,6 +49,10 @@ public:
     GasPreproc(Diagnostic& diags, SourceManager& sm, HeaderSearch& headers);
     ~GasPreproc();
 
+    virtual void PredefineMacro(llvm::StringRef macronameval);
+    virtual void UndefineMacro(llvm::StringRef macroname);
+    virtual void DefineBuiltin(llvm::StringRef macronameval);
+
     bool HandleInclude(llvm::StringRef filename, SourceLocation source);
 
 protected:

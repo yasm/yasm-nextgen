@@ -96,6 +96,24 @@ Preprocessor::~Preprocessor()
 }
 
 void
+Preprocessor::PredefineText(llvm::MemoryBuffer* buf)
+{
+    m_predefines.push_back(buf);
+}
+
+void
+Preprocessor::PreInclude(llvm::StringRef filename)
+{
+    std::string err;
+    llvm::MemoryBuffer* buf = llvm::MemoryBuffer::getFile(filename, &err);
+    if (buf)
+        PredefineText(buf);
+    else
+        Diag(yasm::SourceLocation(), yasm::diag::err_cannot_open_file)
+            << filename << err;
+}
+
+void
 Preprocessor::RegisterBuiltinMacros()
 {
 }
@@ -274,14 +292,15 @@ Preprocessor::EnterMainSourceFile()
         m_header_info.IncrementIncludeCount(FE);
 
     // Preprocess Predefines to populate the initial preprocessor state.
-    llvm::MemoryBuffer* SB = 
-        llvm::MemoryBuffer::getMemBufferCopy(m_predefines, "<built-in>");
-    assert(SB && "Cannot fail to create predefined source buffer");
-    FileID FID = m_source_mgr.createFileIDForMemBuffer(SB);
-    assert(!FID.isInvalid() && "Could not create FileID for predefines?");
+    for (std::vector<llvm::MemoryBuffer*>::reverse_iterator
+         i=m_predefines.rbegin(), end=m_predefines.rend(); i != end; ++i)
+    {
+        FileID FID = m_source_mgr.createFileIDForMemBuffer(*i);
+        assert(!FID.isInvalid() && "Could not create FileID for predefines?");
 
-    // Start parsing the predefines.
-    EnterSourceFile(FID, 0, SourceLocation());
+        // Start parsing the predefines.
+        EnterSourceFile(FID, 0, SourceLocation());
+    }
 }
 
 IdentifierInfo*

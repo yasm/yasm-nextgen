@@ -89,6 +89,26 @@ public:
         return &m_identifiers.get(name);
     }
 
+    /// Pre-include arbitrary text content (e.g. from a file).
+    /// @param buf      memory buffer
+    virtual void PredefineText(llvm::MemoryBuffer* buf);
+
+    /// Pre-include file.
+    /// @param filename filename
+    virtual void PreInclude(llvm::StringRef filename);
+
+    /// Pre-define a macro.
+    /// @param macronameval "name=value" string
+    virtual void PredefineMacro(llvm::StringRef macronameval) = 0;
+
+    /// Un-define a macro.
+    /// @param macroname    macro name
+    virtual void UndefineMacro(llvm::StringRef macroname) = 0;
+
+    /// Define a builtin macro, preprocessed before the "standard" macros.
+    /// @param macronameval "name=value" string
+    virtual void DefineBuiltin(llvm::StringRef macronameval) = 0;
+
     /// Enter the specified FileID as the main source file,
     /// which implicitly adds the builtin defines etc.
     void EnterMainSourceFile();
@@ -368,7 +388,7 @@ protected:
 
     /// This string is the predefined macros that preprocessor
     /// should use from the command line etc.
-    std::string m_predefines;
+    std::vector<llvm::MemoryBuffer*> m_predefines;
   
     /// Cache macro expanders to reduce malloc traffic.
     enum { TokenLexerCacheSize = 8 };

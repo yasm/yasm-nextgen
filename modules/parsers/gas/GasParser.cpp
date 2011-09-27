@@ -44,8 +44,7 @@ GasParser::GasParser(const ParserModule& module,
                      Diagnostic& diags,
                      SourceManager& sm,
                      HeaderSearch& headers)
-    : Parser(module)
-    , ParserImpl(m_gas_preproc)
+    : ParserImpl(module, m_gas_preproc)
     , m_gas_preproc(diags, sm, headers)
     , m_intel(false)
     , m_reg_prefix(true)

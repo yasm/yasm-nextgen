@@ -42,8 +42,7 @@ NasmParser::NasmParser(const ParserModule& module,
                        Diagnostic& diags,
                        SourceManager& sm,
                        HeaderSearch& headers)
-    : Parser(module)
-    , ParserImpl(m_nasm_preproc)
+    : ParserImpl(module, m_nasm_preproc)
     , m_nasm_preproc(diags, sm, headers)
 {
 }

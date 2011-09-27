@@ -64,7 +64,7 @@ public:
     bool operator() (Expr& e, ParserImpl& parser, bool* handled) const;
 };
 
-class YASM_STD_EXPORT NasmParser : public Parser, public ParserImpl
+class YASM_STD_EXPORT NasmParser : public ParserImpl
 {
 public:
     NasmParser(const ParserModule& module,
