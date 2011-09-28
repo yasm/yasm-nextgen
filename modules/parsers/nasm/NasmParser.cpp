@@ -34,6 +34,7 @@
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "yasmx/Parse/Directive.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/Arch.h"
