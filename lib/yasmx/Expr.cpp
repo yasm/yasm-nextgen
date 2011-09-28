@@ -673,6 +673,7 @@ again:
                  op != Op::MUL ||
                  !intn->isPos1() ||
                  !Contains(ExprTerm::REG, pos))
+                && root.getNumChild() > 1
                 &&
                 ((childnum != 0 && isRightIdentity(op, *intn)) ||
                  (childnum == 0 && isLeftIdentity(op, *intn))))
