@@ -376,41 +376,8 @@ NasmParser::DoParse()
             ParseLine();
             SkipUntil(NasmToken::eol);
         }
-#if 0
-            if (m_abspos.get() != 0)
-            {
-                // If we're inside an absolute section, just add to the
-                // absolute position rather than appending bytecodes to a
-                // section.  Only RES* are allowed in an absolute section,
-                // so this is easy.
-                if (m_bc->has_contents())
-                {
-                    unsigned int itemsize;
-                    const Expr* numitems = m_bc->reserve_numitems(itemsize);
-                    if (numitems)
-                    {
-                        Expr::Ptr e(new Expr(numitems->clone(),
-                                             Op::MUL,
-                                             new IntNum(itemsize),
-                                             cur_line));
-                        const Expr* multiple = m_bc->getMultipleExpr();
-                        if (multiple)
-                            e.reset(new Expr(e.release(),
-                                             Op::MUL,
-                                             multiple->clone(),
-                                             cur_line));
-                        m_abspos.reset(new Expr(m_abspos.release(),
-                                                Op::ADD,
-                                                e,
-                                                cur_line));
-                    }
-                    else
-                        throw SyntaxError(
-                            N_("only RES* allowed within absolute section"));
-                    bc.reset(new Bytecode());
-                }
-            }
-#endif
+        if (!m_abspos.isEmpty())
+            m_abspos += m_absinc;
     }
 }
 
@@ -483,7 +450,10 @@ NasmParser::ParseLine()
                 return false;
             }
 
-            DirectiveInfo info(*m_object, m_container->getEndLoc(), dirloc);
+            Location loc = {0, 0};
+            if (m_container)
+                loc = m_container->getEndLoc();
+            DirectiveInfo info(*m_object, loc, dirloc);
             // If this is a section or segment directive, parse the section
             // name specially.
             // XXX: should allow any directive to flag this to be done.
@@ -715,17 +685,29 @@ NasmParser::ParseTimes(SourceLocation times_source)
             << "TIMES";
         return false;
     }
-    BytecodeContainer* orig_container = m_container;
-    m_container = &AppendMultiple(*m_container, multiple, times_source);
-
     SourceLocation cursource = m_token.getLocation();
-    if (!ParseExp())
+
+    if (!m_abspos.isEmpty())
     {
-        Diag(cursource, diag::err_expected_insn_after_times);
-        m_container = orig_container;
-        return false;
+        if (!ParseExp())
+        {
+            Diag(cursource, diag::err_expected_insn_after_times);
+            return false;
+        }
+        m_absinc *= *multiple;
     }
-    m_container = orig_container;
+    else
+    {
+        BytecodeContainer* orig_container = m_container;
+        m_container = &AppendMultiple(*m_container, multiple, times_source);
+        if (!ParseExp())
+        {
+            Diag(cursource, diag::err_expected_insn_after_times);
+            m_container = orig_container;
+            return false;
+        }
+        m_container = orig_container;
+    }
     return true;
 }
 
@@ -747,6 +729,11 @@ NasmParser::ParseExp()
         Insn::Ptr insn = ParseInsn();
         if (insn.get() != 0)
         {
+            if (!m_abspos.isEmpty())
+            {
+                Diag(exp_source, diag::err_non_reserve_in_absolute_section);
+                return false;
+            }
             insn->Append(*m_container, exp_source, m_preproc.getDiagnostics());
             return true;
         }
@@ -757,6 +744,11 @@ NasmParser::ParseExp()
     {
         case PseudoInsn::DECLARE_DATA:
         {
+            if (!m_abspos.isEmpty())
+            {
+                Diag(m_token, diag::err_non_reserve_in_absolute_section);
+                return false;
+            }
             ConsumeToken();
 
             for (;;)
@@ -813,13 +805,23 @@ dv_done:
                     << "RESx";
                 return false;
             }
-            BytecodeContainer& multc =
-                AppendMultiple(*m_container, e, exp_source);
-            multc.AppendGap(pseudo->size, exp_source);
+            if (!m_abspos.isEmpty())
+                m_absinc = MUL(pseudo->size, *e);
+            else
+            {
+                BytecodeContainer& multc =
+                    AppendMultiple(*m_container, e, exp_source);
+                multc.AppendGap(pseudo->size, exp_source);
+            }
             return true;
         }
         case PseudoInsn::INCBIN:
         {
+            if (!m_abspos.isEmpty())
+            {
+                Diag(m_token, diag::err_non_reserve_in_absolute_section);
+                return false;
+            }
             ConsumeToken();
 
             if (m_token.isNot(NasmToken::string_literal))

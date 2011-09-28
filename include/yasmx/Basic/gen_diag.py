@@ -253,6 +253,10 @@ add_error("err_unrecognized_directive", "unrecognized directive")
 add_warning("warn_unrecognized_directive", "unrecognized directive")
 add_warning("warn_unrecognized_ident", "unrecognized identifier")
 
+# NASM errors
+add_error("err_non_reserve_in_absolute_section",
+          "only RES* allowed within absolute section")
+
 # GAS warnings
 add_warning("warn_scale_without_index",
             "scale factor without an index register")

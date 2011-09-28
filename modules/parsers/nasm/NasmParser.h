@@ -156,6 +156,9 @@ private:
     // Current location inside an absolute section (including the start).
     // Empty if not in an absolute section.
     Expr m_abspos;
+
+    // Delta to add to abspos when the current line completes.
+    Expr m_absinc;
 };
 
 }} // namespace yasm::parser
