@@ -551,6 +551,10 @@ public:
               const T& rhs,
               SourceLocation source = SourceLocation());
 
+    void Calc(Op::Op op,
+              const Expr& rhs,
+              SourceLocation source = SourceLocation());
+
     /// @defgroup lowlevel Low Level Manipulators
     /// Functions to manipulate the innards of the expression terms.
     /// Use with caution.
@@ -748,6 +752,17 @@ template <typename T>
 inline void
 Expr::Calc(Op::Op op, const T& rhs, SourceLocation source)
 {
+    bool was_empty = isEmpty();
+    Append(rhs);
+    if (!was_empty)
+        AppendOp(op, 2, source);
+}
+
+inline void
+Expr::Calc(Op::Op op, const Expr& rhs, SourceLocation source)
+{
+    if (rhs.isEmpty())
+        return;
     bool was_empty = isEmpty();
     Append(rhs);
     if (!was_empty)
