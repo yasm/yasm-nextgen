@@ -601,11 +601,10 @@ NasmParser::ParseLine()
                     Diag(m_token, diag::warn_orphan_label);
                 break;
             }
-            CheckKeyword(m_token.getIdentifierInfo());
+            if (m_token.is(Token::identifier))
+                CheckKeyword(m_token.getIdentifierInfo());
             if (m_token.is(NasmToken::kw_times))
-            {
                 return ParseTimes(ConsumeToken());
-            }
             if (!ParseExp())
             {
                 Diag(m_token, diag::err_expected_insn_after_label);
