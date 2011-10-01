@@ -876,9 +876,9 @@ incbin_done:
         case PseudoInsn::TIMES:
         {
             ConsumeToken();
-            Expr::Ptr multiple(new Expr);
+            Expr multiple;
             NasmParseDataExprTerm parse_data_term;
-            if (!ParseExpr(*multiple, &parse_data_term))
+            if (!ParseExpr(multiple, &parse_data_term))
             {
                 Diag(m_token, diag::err_expected_expression_after_id)
                     << "TIMES";
@@ -888,27 +888,50 @@ incbin_done:
 
             if (!m_abspos.isEmpty())
             {
+                // In an absolute section, manipulate m_absinc directly.
                 if (!ParseExp())
                 {
                     Diag(cursource, diag::err_expected_insn_after_times);
                     return false;
                 }
-                m_absinc *= *multiple;
+                m_absinc *= multiple;
+            }
+            else if (!m_times.isEmpty())
+            {
+                // Inside of another times, just multiply it out.
+                m_times *= multiple;
+                if (!ParseExp())
+                {
+                    Diag(cursource, diag::err_expected_insn_after_times);
+                    return false;
+                }
             }
             else
             {
+                m_times.swap(multiple);
+
                 std::auto_ptr<BytecodeContainer>
                     inner(new BytecodeContainer(m_container->getSection()));
-                BytecodeContainer* orig_container = m_container;
+                m_times_outer_container = m_container;
                 m_container = &(*inner);
                 if (!ParseExp())
                 {
                     Diag(cursource, diag::err_expected_insn_after_times);
-                    m_container = orig_container;
+                    m_container = m_times_outer_container;
+                    m_times.Clear();
                     return false;
                 }
-                m_container = orig_container;
-                AppendMultiple(*m_container, inner, multiple, exp_source);
+                m_container = m_times_outer_container;
+                m_times_outer_container = 0;    // to be safe
+
+                if (inner->size() > 0)
+                {
+                    Expr::Ptr multcopy(new Expr);
+                    multcopy->swap(m_times);
+                    AppendMultiple(*m_container, inner, multcopy, exp_source);
+                }
+                else
+                    m_times.Clear();
             }
             return true;
         }
@@ -1693,6 +1716,7 @@ NasmParser::DirAbsolute(DirectiveInfo& info, Diagnostic& diags)
     Object& object = info.getObject();
     m_absstart = info.getNameValues().front().getExpr(object);
     m_abspos = m_absstart;
+    m_absinc = Expr();
     object.setCurSection(0);
 }
 
