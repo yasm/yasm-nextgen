@@ -72,7 +72,8 @@ private:
 class MultipleBytecode : public Bytecode::Contents
 {
 public:
-    MultipleBytecode(Section* sect, std::auto_ptr<Expr> e);
+    MultipleBytecode(std::auto_ptr<BytecodeContainer> contents,
+                     std::auto_ptr<Expr> e);
     ~MultipleBytecode();
 
     /// Finalizes the bytecode after parsing.
@@ -108,14 +109,14 @@ public:
     pugi::xml_node Write(pugi::xml_node out) const;
 #endif // WITH_XML
 
-    BytecodeContainer& getContents() { return m_contents; }
+    BytecodeContainer& getContents() { return *m_contents; }
 
 private:
     /// Number of times contents is repeated.
     Multiple m_multiple;
 
     /// Contents to be repeated.
-    BytecodeContainer m_contents;
+    util::scoped_ptr<BytecodeContainer> m_contents;
 };
 
 class FillBytecode : public Bytecode::Contents
@@ -274,9 +275,10 @@ Multiple::Write(pugi::xml_node out) const
 }
 #endif // WITH_XML
 
-MultipleBytecode::MultipleBytecode(Section* sect, std::auto_ptr<Expr> e)
+MultipleBytecode::MultipleBytecode(std::auto_ptr<BytecodeContainer> contents,
+                                   std::auto_ptr<Expr> e)
     : m_multiple(e)
-    , m_contents(sect)
+    , m_contents(contents.release())
 {
 }
 
@@ -290,8 +292,8 @@ MultipleBytecode::Finalize(Bytecode& bc, Diagnostic& diags)
     if (!m_multiple.Finalize(bc.getSource(), diags))
         return false;
 
-    for (BytecodeContainer::bc_iterator i = m_contents.bytecodes_begin(),
-         end = m_contents.bytecodes_end(); i != end; ++i)
+    for (BytecodeContainer::bc_iterator i = m_contents->bytecodes_begin(),
+         end = m_contents->bytecodes_end(); i != end; ++i)
     {
         if (i->getSpecial() == Bytecode::Contents::SPECIAL_OFFSET)
         {
@@ -355,8 +357,8 @@ MultipleBytecode::CalcLen(Bytecode& bc,
     AddSpanInner add_span_inner(bc, add_span);
     int base = 100;
     unsigned long ilen = 0;
-    for (BytecodeContainer::bc_iterator i = m_contents.bytecodes_begin(),
-         end = m_contents.bytecodes_end(); i != end; ++i)
+    for (BytecodeContainer::bc_iterator i = m_contents->bytecodes_begin(),
+         end = m_contents->bytecodes_end(); i != end; ++i)
     {
         add_span_inner.setBase(base);
         base += 100;
@@ -399,13 +401,13 @@ MultipleBytecode::Expand(Bytecode& bc,
             inner_index = span / 100 - 1;
             inner_span = span % 100;
         }
-        BytecodeContainer::bc_iterator inner = m_contents.bytecodes_begin();
+        BytecodeContainer::bc_iterator inner = m_contents->bytecodes_begin();
         inner += inner_index;
         if (!inner->Expand(inner_span, old_val, new_val, keep, neg_thres,
                            pos_thres, diags))
             return false;
     }
-    *len = m_contents.bytecodes_front().getTotalLen() * m_multiple.getInt();
+    *len = m_contents->bytecodes_front().getTotalLen() * m_multiple.getInt();
     return true;
 }
 
@@ -420,8 +422,8 @@ MultipleBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
     for (long mult=0, multend=m_multiple.getInt(); mult<multend;
          mult++, pos += total_len)
     {
-        for (BytecodeContainer::bc_iterator i = m_contents.bytecodes_begin(),
-             end = m_contents.bytecodes_end(); i != end; ++i)
+        for (BytecodeContainer::bc_iterator i = m_contents->bytecodes_begin(),
+             end = m_contents->bytecodes_end(); i != end; ++i)
         {
             if (!i->Output(bc_out))
                 return false;
@@ -450,7 +452,7 @@ MultipleBytecode::Write(pugi::xml_node out) const
 {
     pugi::xml_node root = out.append_child("MultipleBytecode");
     append_child(root, "Multiple", m_multiple);
-    append_child(root, "Contents", m_contents);
+    append_child(root, "Contents", *m_contents);
     return root;
 }
 #endif // WITH_XML
@@ -579,18 +581,16 @@ FillBytecode::Write(pugi::xml_node out) const
 }
 #endif // WITH_XML
 
-BytecodeContainer&
+void
 yasm::AppendMultiple(BytecodeContainer& container,
+                     std::auto_ptr<BytecodeContainer> contents,
                      std::auto_ptr<Expr> multiple,
                      SourceLocation source)
 {
     Bytecode& bc = container.FreshBytecode();
-    MultipleBytecode* multbc(new MultipleBytecode(container.getSection(),
-                                                  multiple));
-    BytecodeContainer& retval = multbc->getContents();
+    MultipleBytecode* multbc(new MultipleBytecode(contents, multiple));
     bc.Transform(Bytecode::Contents::Ptr(multbc));
     bc.setSource(source);
-    return retval;
 }
 
 void

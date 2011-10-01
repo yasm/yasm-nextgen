@@ -2623,8 +2623,10 @@ GasParser::DefineLcomm(SymbolRef sym,
         bss.AppendGap(size->getIntNum().getUInt(), source);
     else
     {
-        BytecodeContainer& multc = AppendMultiple(bss, size, source);
-        multc.AppendGap(1, source);
+        std::auto_ptr<BytecodeContainer>
+            multc(new BytecodeContainer(bss.getSection()));
+        multc->AppendGap(1, source);
+        AppendMultiple(bss, multc, size, source);
     }
 }
 

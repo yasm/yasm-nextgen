@@ -743,8 +743,10 @@ NasmParser::ParseTimes(SourceLocation times_source)
     }
     else
     {
+        std::auto_ptr<BytecodeContainer>
+            inner(new BytecodeContainer(m_container->getSection()));
         BytecodeContainer* orig_container = m_container;
-        m_container = &AppendMultiple(*m_container, multiple, times_source);
+        m_container = &(*inner);
         if (!ParseExp())
         {
             Diag(cursource, diag::err_expected_insn_after_times);
@@ -752,6 +754,7 @@ NasmParser::ParseTimes(SourceLocation times_source)
             return false;
         }
         m_container = orig_container;
+        AppendMultiple(*m_container, inner, multiple, times_source);
     }
     return true;
 }
@@ -854,9 +857,9 @@ dv_done:
                 m_absinc = MUL(pseudo->size, *e);
             else
             {
-                BytecodeContainer& multc =
-                    AppendMultiple(*m_container, e, exp_source);
+                BytecodeContainer multc(m_container->getSection());
                 multc.AppendGap(pseudo->size, exp_source);
+                AppendMultiple(*m_container, multc, e, exp_source);
             }
             return true;
         }

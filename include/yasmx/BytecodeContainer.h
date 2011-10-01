@@ -294,13 +294,15 @@ void AppendOrg(BytecodeContainer& container,
 
 /// Append a multiple container.
 /// @param container    bytecode container
+/// @param contents     multiple contents
 /// @param multiple     multiple expression
 /// @param source       source location
 /// @return Multiple inner container.
 YASM_LIB_EXPORT
-BytecodeContainer& AppendMultiple(BytecodeContainer& container,
-                                  std::auto_ptr<Expr> multiple,
-                                  SourceLocation source);
+void AppendMultiple(BytecodeContainer& container,
+                    std::auto_ptr<BytecodeContainer> contents,
+                    std::auto_ptr<Expr> multiple,
+                    SourceLocation source);
 
 /// Append a skip.
 /// @param container    bytecode container
