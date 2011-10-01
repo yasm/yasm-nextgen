@@ -98,6 +98,8 @@ public:
     Bytecode& bytecodes_back() { return m_bcs.back(); }
     const Bytecode& bytecodes_back() const { return m_bcs.back(); }
 
+    stdx::ptr_vector<Bytecode>::size_type size() { return m_bcs.size(); }
+
     /// Get location for start of a bytecode container.
     Location getBeginLoc()
     {
