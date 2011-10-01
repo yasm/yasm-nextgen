@@ -755,6 +755,7 @@ NasmParser::ParseExp()
             }
             ConsumeToken();
 
+            unsigned int nvals = 0;
             for (;;)
             {
                 if (m_token.is(NasmToken::string_literal))
@@ -781,8 +782,25 @@ NasmParser::ParseExp()
                     Expr::Ptr e(new Expr);
                     NasmParseDataExprTerm parse_data_term;
                     if (ParseExpr(*e, &parse_data_term))
+                    {
+                        ++nvals;
+                        // Check to see if we're in a TIMES with a single data
+                        // value.  This is a very common case due to standard
+                        // macros, so we handle it specially here to speed up
+                        // the backend.
+                        if (nvals == 1 && !m_times.isEmpty() &&
+                            m_token.isEndOfStatement())
+                        {
+                            Expr::Ptr multcopy(new Expr);
+                            multcopy->swap(m_times);
+                            AppendFill(*m_times_outer_container, multcopy,
+                                       pseudo->size, e, *m_arch, exp_source,
+                                       m_preproc.getDiagnostics());
+                            break;
+                        }
                         AppendData(*m_container, e, pseudo->size, *m_arch,
                                    exp_source, m_preproc.getDiagnostics());
+                    }
                     else
                     {
                         Diag(m_token, diag::err_expected_expression_or_string);
@@ -811,12 +829,16 @@ dv_done:
             }
             if (!m_abspos.isEmpty())
                 m_absinc = MUL(pseudo->size, *e);
-            else
+            else if (!m_times.isEmpty())
             {
-                BytecodeContainer multc(m_container->getSection());
-                multc.AppendGap(pseudo->size, exp_source);
-                AppendMultiple(*m_container, multc, e, exp_source);
+                // Fold in TIMES expression if we're in one.
+                *e *= m_times;
+                m_times.Clear();
+                AppendSkip(*m_times_outer_container, e, pseudo->size,
+                           exp_source);
             }
+            else
+                AppendSkip(*m_container, e, pseudo->size, exp_source);
             return true;
         }
         case PseudoInsn::INCBIN:
@@ -924,7 +946,8 @@ incbin_done:
                 m_container = m_times_outer_container;
                 m_times_outer_container = 0;    // to be safe
 
-                if (inner->size() > 0)
+                // Don't append if an inner pseudoinsn did something special.
+                if (!m_times.isEmpty() && inner->size() > 0)
                 {
                     Expr::Ptr multcopy(new Expr);
                     multcopy->swap(m_times);

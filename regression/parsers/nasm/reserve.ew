@@ -1,0 +1,2 @@
+<stdin>:1:9: warning: uninitialized space declared in code/data section: zeroing [-Wuninit-contents]
+<stdin>:2:1: warning: uninitialized space declared in code/data section: zeroing [-Wuninit-contents]
