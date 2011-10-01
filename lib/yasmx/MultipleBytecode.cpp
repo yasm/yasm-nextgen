@@ -380,7 +380,7 @@ MultipleBytecode::Expand(Bytecode& bc,
                          /*@out@*/ long* pos_thres,
                          Diagnostic& diags)
 {
-    if (span == -1)
+    if (span < 0)
     {
         m_multiple.setInt(new_val);
         *keep = true;
@@ -513,7 +513,7 @@ FillBytecode::Expand(Bytecode& bc,
                      /*@out@*/ long* pos_thres,
                      Diagnostic& diags)
 {
-    if (span == 0)
+    if (span < 0)
     {
         m_multiple.setInt(new_val);
         *keep = true;
