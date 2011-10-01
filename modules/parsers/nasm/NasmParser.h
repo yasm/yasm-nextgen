@@ -91,7 +91,8 @@ private:
             DECLARE_DATA,
             RESERVE_SPACE,
             INCBIN,
-            EQU
+            EQU,
+            TIMES
         };
         Type type;
         unsigned int size;
@@ -105,7 +106,6 @@ private:
     void DoParse();
     bool ParseLine();
     bool ParseDirective(/*@out@*/ NameValues& nvs);
-    bool ParseTimes(SourceLocation times_source);
     bool ParseExp();
     Insn::Ptr ParseInsn();
 

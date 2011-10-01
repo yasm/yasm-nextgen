@@ -68,7 +68,6 @@ public:
         kw_rel,
         kw_seg,
         kw_strict,
-        kw_times,
         kw_tword,
         kw_word,
         kw_wrt,
