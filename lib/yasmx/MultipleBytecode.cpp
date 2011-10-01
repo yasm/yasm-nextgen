@@ -26,12 +26,19 @@
 ///
 #include "yasmx/BytecodeContainer.h"
 
+#define DEBUG_TYPE "MultipleBytecode"
+
+#include "llvm/ADT/Statistic.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location_util.h"
 
+
+STATISTIC(num_multiple, "Number of multiple bytecodes");
+STATISTIC(num_skip, "Number of skip bytecodes");
+STATISTIC(num_fill, "Number of fill bytecodes");
 
 using namespace yasm;
 
@@ -587,6 +594,7 @@ yasm::AppendMultiple(BytecodeContainer& container,
                      std::auto_ptr<Expr> multiple,
                      SourceLocation source)
 {
+    ++num_multiple;
     Bytecode& bc = container.FreshBytecode();
     MultipleBytecode* multbc(new MultipleBytecode(contents, multiple));
     bc.Transform(Bytecode::Contents::Ptr(multbc));
@@ -599,6 +607,7 @@ yasm::AppendSkip(BytecodeContainer& container,
                  unsigned int size,
                  SourceLocation source)
 {
+    ++num_skip;
     Bytecode& bc = container.FreshBytecode();
     FillBytecode* fillbc(new FillBytecode(multiple, size));
     bc.Transform(Bytecode::Contents::Ptr(fillbc));
@@ -612,6 +621,7 @@ yasm::AppendFill(BytecodeContainer& container,
                  std::auto_ptr<Expr> value,
                  SourceLocation source)
 {
+    ++num_fill;
     Bytecode& bc = container.FreshBytecode();
     FillBytecode* fillbc(new FillBytecode(multiple, size, value, source));
     bc.Transform(Bytecode::Contents::Ptr(fillbc));
