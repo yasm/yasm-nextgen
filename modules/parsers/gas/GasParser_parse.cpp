@@ -891,7 +891,8 @@ GasParser::ParseDirZero(unsigned int param, SourceLocation source)
         return false;
     }
 
-    AppendFill(*m_container, e, 1, std::auto_ptr<Expr>(new Expr(0)), source);
+    AppendFill(*m_container, e, 1, std::auto_ptr<Expr>(new Expr(0)), *m_arch,
+               source, m_preproc.getDiagnostics());
     return true;
 }
 
@@ -921,7 +922,8 @@ GasParser::ParseDirSkip(unsigned int size, SourceLocation source)
         Diag(cur_source, diag::err_expected_expression_after) << ",";
         return false;
     }
-    AppendFill(*m_container, e, size, e_val, source);
+    AppendFill(*m_container, e, size, e_val, *m_arch, source,
+               m_preproc.getDiagnostics());
     return true;
 }
 
@@ -973,7 +975,8 @@ GasParser::ParseDirFill(unsigned int param, SourceLocation source)
 
     if (value->isEmpty())
         *value = 0;
-    AppendFill(*m_container, repeat, ssize, value, source);
+    AppendFill(*m_container, repeat, ssize, value, *m_arch, source,
+               m_preproc.getDiagnostics());
     return true;
 }
 
@@ -1033,7 +1036,8 @@ GasParser::ParseDirFloatFill(unsigned int size, SourceLocation source)
         Expr::Ptr e_val(new Expr(std::auto_ptr<llvm::APFloat>(new llvm::APFloat(
             num.getFloatValue(llvm::APFloat::x87DoubleExtended))),
                              num_source));
-        AppendFill(*m_container, e, size, e_val, num_source);
+        AppendFill(*m_container, e, size, e_val, *m_arch, num_source,
+                   m_preproc.getDiagnostics());
     }
     return true;
 }

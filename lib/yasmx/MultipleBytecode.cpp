@@ -32,6 +32,7 @@
 #include "yasmx/Bytecode.h"
 #include "yasmx/BytecodeOutput.h"
 #include "yasmx/Expr.h"
+#include "yasmx/Expr_util.h"
 #include "yasmx/IntNum.h"
 #include "yasmx/Location_util.h"
 
@@ -619,8 +620,40 @@ yasm::AppendFill(BytecodeContainer& container,
                  std::auto_ptr<Expr> multiple,
                  unsigned int size,
                  std::auto_ptr<Expr> value,
-                 SourceLocation source)
+                 Arch& arch,
+                 SourceLocation source,
+                 Diagnostic& diags)
 {
+    // optimize common case
+    if (!ExpandEqu(*multiple))
+    {
+        diags.Report(source, diag::err_equ_circular_reference);
+        return;
+    }
+    SimplifyCalcDistNoBC(*multiple, diags);
+    if (multiple->isIntNum())
+    {
+        long num = multiple->getIntNum().getInt();
+        if (num >= 0 && num <= 100) // heuristic upper bound
+        {
+            value->Simplify(diags);
+            if (value->isIntNum())
+            {
+                IntNum val = value->getIntNum();
+                for (long i=0; i<num; ++i)
+                    AppendData(container, val, size, arch);
+            }
+            else
+            {
+                for (long i=0; i<num; ++i)
+                    AppendData(container, Expr::Ptr(value->clone()), size,
+                               arch, source, diags);
+            }
+            return;
+        }
+    }
+
+    // general case
     ++num_fill;
     Bytecode& bc = container.FreshBytecode();
     FillBytecode* fillbc(new FillBytecode(multiple, size, value, source));

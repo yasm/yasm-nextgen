@@ -328,7 +328,9 @@ void AppendFill(BytecodeContainer& container,
                 std::auto_ptr<Expr> multiple,
                 unsigned int size,
                 std::auto_ptr<Expr> value,
-                SourceLocation source);
+                Arch& arch,
+                SourceLocation source,
+                Diagnostic& diags);
 
 } // namespace yasm
 
