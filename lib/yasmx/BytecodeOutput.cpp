@@ -32,7 +32,7 @@
 
 using namespace yasm;
 
-BytecodeOutput::BytecodeOutput(Diagnostic& diags)
+BytecodeOutput::BytecodeOutput(DiagnosticsEngine& diags)
     : m_diags(diags), m_num_output(0)
 {
 }

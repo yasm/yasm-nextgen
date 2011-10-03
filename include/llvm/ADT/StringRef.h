@@ -10,16 +10,28 @@
 #ifndef LLVM_ADT_STRINGREF_H
 #define LLVM_ADT_STRINGREF_H
 
+#include "llvm/Support/type_traits.h"
 #include "yasmx/Config/export.h"
+
+#include <algorithm>
 #include <cassert>
 #include <cstring>
-#include <utility>
+#include <limits>
 #include <string>
+#include <utility>
 
 namespace llvm {
   template<typename T>
   class SmallVectorImpl;
   class APInt;
+  class hash_code;
+  class StringRef;
+
+  /// Helper functions for StringRef::getAsInteger.
+  bool getAsUnsignedInteger(StringRef Str, unsigned Radix,
+                            unsigned long long &Result);
+
+  bool getAsSignedInteger(StringRef Str, unsigned Radix, long long &Result);
 
   /// StringRef - Represent a constant reference to a string, i.e. a character
   /// array and a length, which need not be null terminated.
@@ -47,7 +59,14 @@ namespace llvm {
     // integer works around this bug.
     static size_t min(size_t a, size_t b) { return a < b ? a : b; }
     static size_t max(size_t a, size_t b) { return a > b ? a : b; }
-
+    
+    // Workaround memcmp issue with null pointers (undefined behavior)
+    // by providing a specialized version
+    static int compareMemory(const char *Lhs, const char *Rhs, size_t Length) {
+      if (Length == 0) { return 0; }
+      return ::memcmp(Lhs,Rhs,Length);
+    }
+    
   public:
     /// @name Constructors
     /// @{
@@ -57,11 +76,17 @@ namespace llvm {
 
     /// Construct a string ref from a cstring.
     /*implicit*/ StringRef(const char *Str)
-      : Data(Str), Length(::strlen(Str)) {}
+      : Data(Str) {
+        assert(Str && "StringRef cannot be built from a NULL argument");
+        Length = ::strlen(Str); // invoking strlen(NULL) is undefined behavior
+      }
 
     /// Construct a string ref from a pointer and length.
     /*implicit*/ StringRef(const char *data, size_t length)
-      : Data(data), Length(length) {}
+      : Data(data), Length(length) {
+        assert((data || length == 0) &&
+        "StringRef cannot be built from a NULL argument with non-null length");
+      }
 
     /// Construct a string ref from an std::string.
     /*implicit*/ StringRef(const std::string &Str)
@@ -105,7 +130,7 @@ namespace llvm {
     /// compare() when the relative ordering of inequal strings isn't needed.
     bool equals(StringRef RHS) const {
       return (Length == RHS.Length &&
-              memcmp(Data, RHS.Data, RHS.Length) == 0);
+              compareMemory(Data, RHS.Data, RHS.Length) == 0);
     }
 
     /// equals_lower - Check for string equality, ignoring case.
@@ -117,7 +142,7 @@ namespace llvm {
     /// is lexicographically less than, equal to, or greater than the \arg RHS.
     int compare(StringRef RHS) const {
       // Check the prefix for a mismatch.
-      if (int Res = memcmp(Data, RHS.Data, min(Length, RHS.Length)))
+      if (int Res = compareMemory(Data, RHS.Data, min(Length, RHS.Length)))
         return Res < 0 ? -1 : 1;
 
       // Otherwise the prefixes match, so we only need to check the lengths.
@@ -133,7 +158,7 @@ namespace llvm {
     /// numbers.
     int compare_numeric(StringRef RHS) const;
 
-    /// \brief Determine the edit distance between this string and another 
+    /// \brief Determine the edit distance between this string and another
     /// string.
     ///
     /// \param Other the string to compare this string against.
@@ -143,11 +168,16 @@ namespace llvm {
     /// operation, rather than as two operations (an insertion and a
     /// removal).
     ///
+    /// \param MaxEditDistance If non-zero, the maximum edit distance that
+    /// this routine is allowed to compute. If the edit distance will exceed
+    /// that maximum, returns \c MaxEditDistance+1.
+    ///
     /// \returns the minimum number of character insertions, removals,
     /// or (if \p AllowReplacements is \c true) replacements needed to
     /// transform one of the given strings into the other. If zero,
     /// the strings are identical.
-    unsigned edit_distance(StringRef Other, bool AllowReplacements = true);
+    unsigned edit_distance(StringRef Other, bool AllowReplacements = true,
+                           unsigned MaxEditDistance = 0);
 
     /// str - Get the contents as an std::string.
     std::string str() const {
@@ -179,13 +209,13 @@ namespace llvm {
     /// startswith - Check if this string starts with the given \arg Prefix.
     bool startswith(StringRef Prefix) const {
       return Length >= Prefix.Length &&
-             memcmp(Data, Prefix.Data, Prefix.Length) == 0;
+             compareMemory(Data, Prefix.Data, Prefix.Length) == 0;
     }
 
     /// endswith - Check if this string ends with the given \arg Suffix.
     bool endswith(StringRef Suffix) const {
       return Length >= Suffix.Length &&
-             memcmp(end() - Suffix.Length, Suffix.Data, Suffix.Length) == 0;
+        compareMemory(end() - Suffix.Length, Suffix.Data, Suffix.Length) == 0;
     }
 
     /// @}
@@ -252,6 +282,28 @@ namespace llvm {
     /// Note: O(size() + Chars.size())
     size_type find_first_not_of(StringRef Chars, size_t From = 0) const;
 
+    /// find_last_of - Find the last character in the string that is \arg C, or
+    /// npos if not found.
+    size_type find_last_of(char C, size_t From = npos) const {
+      return rfind(C, From);
+    }
+
+    /// find_last_of - Find the last character in the string that is in \arg C,
+    /// or npos if not found.
+    ///
+    /// Note: O(size() + Chars.size())
+    size_type find_last_of(StringRef Chars, size_t From = npos) const;
+
+    /// find_last_not_of - Find the last character in the string that is not
+    /// \arg C, or npos if not found.
+    size_type find_last_not_of(char C, size_t From = npos) const;
+
+    /// find_last_not_of - Find the last character in the string that is not in
+    /// \arg Chars, or npos if not found.
+    ///
+    /// Note: O(size() + Chars.size())
+    size_type find_last_not_of(StringRef Chars, size_t From = npos) const;
+
     /// @}
     /// @name Helpful Algorithms
     /// @{
@@ -275,14 +327,29 @@ namespace llvm {
     ///
     /// If the string is invalid or if only a subset of the string is valid,
     /// this returns true to signify the error.  The string is considered
-    /// erroneous if empty.
+    /// erroneous if empty or if it overflows T.
     ///
-    bool getAsInteger(unsigned Radix, long long &Result) const;
-    bool getAsInteger(unsigned Radix, unsigned long long &Result) const;
-    bool getAsInteger(unsigned Radix, int &Result) const;
-    bool getAsInteger(unsigned Radix, unsigned &Result) const;
+    template <typename T>
+    typename enable_if_c<std::numeric_limits<T>::is_signed, bool>::type
+    getAsInteger(unsigned Radix, T &Result) const {
+      long long LLVal;
+      if (getAsSignedInteger(*this, Radix, LLVal) ||
+            static_cast<T>(LLVal) != LLVal)
+        return true;
+      Result = LLVal;
+      return false;
+    }
 
-    // TODO: Provide overloads for int/unsigned that check for overflow.
+    template <typename T>
+    typename enable_if_c<!std::numeric_limits<T>::is_signed, bool>::type
+    getAsInteger(unsigned Radix, T &Result) const {
+      unsigned long long ULLVal;
+      if (getAsUnsignedInteger(*this, Radix, ULLVal) ||
+            static_cast<T>(ULLVal) != ULLVal)
+        return true;
+      Result = ULLVal;
+      return false;
+    }
 
     /// getAsInteger - Parse the current string as an integer of the
     /// specified radix, or of an autosensed radix if the radix given
@@ -296,6 +363,16 @@ namespace llvm {
     /// APInt::fromString is superficially similar but assumes the
     /// string is well-formed in the given radix.
     bool getAsInteger(unsigned Radix, APInt &Result) const;
+
+    /// @}
+    /// @name String Operations
+    /// @{
+
+    // lower - Convert the given ASCII string to lowercase.
+    std::string lower() const;
+
+    /// upper - Convert the given ASCII string to uppercase.
+    std::string upper() const;
 
     /// @}
     /// @name Substring Operations
@@ -313,6 +390,20 @@ namespace llvm {
     StringRef substr(size_t Start, size_t N = npos) const {
       Start = min(Start, Length);
       return StringRef(Data + Start, min(N, Length - Start));
+    }
+    
+    /// drop_front - Return a StringRef equal to 'this' but with the first
+    /// elements dropped.
+    StringRef drop_front(unsigned N = 1) const {
+      assert(size() >= N && "Dropping more elements than exist");
+      return substr(N);
+    }
+
+    /// drop_back - Return a StringRef equal to 'this' but with the last
+    /// elements dropped.
+    StringRef drop_back(unsigned N = 1) const {
+      assert(size() >= N && "Dropping more elements than exist");
+      return substr(0, size()-N);
     }
 
     /// slice - Return a reference to the substring from [Start, End).
@@ -401,6 +492,24 @@ namespace llvm {
       return std::make_pair(slice(0, Idx), slice(Idx+1, npos));
     }
 
+    /// ltrim - Return string with consecutive characters in \arg Chars starting
+    /// from the left removed.
+    StringRef ltrim(StringRef Chars = " \t\n\v\f\r") const {
+      return drop_front(std::min(Length, find_first_not_of(Chars)));
+    }
+
+    /// rtrim - Return string with consecutive characters in \arg Chars starting
+    /// from the right removed.
+    StringRef rtrim(StringRef Chars = " \t\n\v\f\r") const {
+      return drop_back(Length - std::min(Length, find_last_not_of(Chars) + 1));
+    }
+
+    /// trim - Return string with consecutive characters in \arg Chars starting
+    /// from the left and right removed.
+    StringRef trim(StringRef Chars = " \t\n\v\f\r") const {
+      return ltrim(Chars).rtrim(Chars);
+    }
+
     /// @}
   };
 
@@ -431,7 +540,18 @@ namespace llvm {
     return LHS.compare(RHS) != -1;
   }
 
+  inline std::string &operator+=(std::string &buffer, llvm::StringRef string) {
+    return buffer.append(string.data(), string.size());
+  }
+
   /// @}
+
+  /// \brief Compute a hash_code for a StringRef.
+  hash_code hash_value(StringRef S);
+
+  // StringRefs can be treated like a POD type.
+  template <typename T> struct isPodLike;
+  template <> struct isPodLike<StringRef> { static const bool value = true; };
 
 }
 

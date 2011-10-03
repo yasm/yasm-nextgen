@@ -19,7 +19,7 @@
 #include <cstddef>
 #include <cstring>
 #include <iterator>
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
 #include "yasmx/Config/export.h"
 
@@ -58,7 +58,7 @@ protected:
   /// it, so that the end iterator actually points to valid memory.
   unsigned CurArraySize;
 
-  // If small, this is # elts allocated consequtively
+  // If small, this is # elts allocated consecutively
   unsigned NumElements;
   unsigned NumTombstones;
 
@@ -127,17 +127,18 @@ protected:
 private:
   bool isSmall() const { return CurArray == SmallArray; }
 
-  unsigned Hash(const void *Ptr) const {
-    return static_cast<unsigned>(((uintptr_t)Ptr >> 4) & (CurArraySize-1));
-  }
   const void * const *FindBucketFor(const void *Ptr) const;
   void shrink_and_clear();
 
   /// Grow - Allocate a larger backing store for the buckets and move it over.
-  void Grow();
+  void Grow(unsigned NewSize);
 
   void operator=(const SmallPtrSetImpl &RHS);  // DO NOT IMPLEMENT.
 protected:
+  /// swap - Swaps the elements of two sets.
+  /// Note: This method assumes that both sets have the same small size.
+  void swap(SmallPtrSetImpl &RHS);
+
   void CopyFrom(const SmallPtrSetImpl &RHS);
 };
 
@@ -288,8 +289,20 @@ public:
     return *this;
   }
 
+  /// swap - Swaps the elements of two sets.
+  void swap(SmallPtrSet<PtrType, SmallSize> &RHS) {
+    SmallPtrSetImpl::swap(RHS);
+  }
 };
 
+}
+
+namespace std {
+  /// Implement std::swap in terms of SmallPtrSet swap.
+  template<class T, unsigned N>
+  inline void swap(llvm::SmallPtrSet<T, N> &LHS, llvm::SmallPtrSet<T, N> &RHS) {
+    LHS.swap(RHS);
+  }
 }
 
 #endif

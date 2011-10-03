@@ -45,7 +45,7 @@ namespace yasm
 
 class BytecodeContainer;
 class Bytes;
-class Diagnostic;
+class DiagnosticsEngine;
 class Register;
 class SegmentRegister;
 
@@ -125,7 +125,7 @@ public:
     /// expression trees.
     void Destroy();
 
-    bool Finalize(Diagnostic& diags);
+    bool Finalize(DiagnosticsEngine& diags);
 
     /// Match type.
     bool isType(Type type) const
@@ -319,7 +319,7 @@ public:
     /// Append instruction to a bytecode container.
     bool Append(BytecodeContainer& container,
                 SourceLocation source,
-                Diagnostic& diags);
+                DiagnosticsEngine& diags);
 
     virtual Insn* clone() const = 0;
 
@@ -337,7 +337,7 @@ protected:
     /// Append instruction to a section.
     virtual bool DoAppend(BytecodeContainer& container,
                           SourceLocation source,
-                          Diagnostic& diags) = 0;
+                          DiagnosticsEngine& diags) = 0;
 
 #ifdef WITH_XML
     /// Write derived class XML representation.  For debugging purposes.

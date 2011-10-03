@@ -24,9 +24,10 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Mutex.h"
+#include "llvm/Support/Mutex.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <cstring>
@@ -72,9 +73,12 @@ void Statistic::RegisterStatistic() {
     if (Enabled)
       StatInfo->addStatistic(this);
 
+    TsanHappensBefore(this);
     sys::MemoryFence();
     // Remember we have been registered.
+    TsanIgnoreWritesBegin();
     Initialized = true;
+    TsanIgnoreWritesEnd();
   }
 }
 
@@ -101,6 +105,10 @@ void llvm::EnableStatistics() {
   Enabled.setValue(true);
 }
 
+bool llvm::AreStatisticsEnabled() {
+  return Enabled;
+}
+
 void llvm::PrintStatistics(raw_ostream &OS) {
   StatisticInfo &Stats = *StatInfo;
 
@@ -122,13 +130,11 @@ void llvm::PrintStatistics(raw_ostream &OS) {
      << "===" << std::string(73, '-') << "===\n\n";
 
   // Print all of the statistics.
-  for (size_t i = 0, e = Stats.Stats.size(); i != e; ++i) {
-    std::string CountStr = utostr(Stats.Stats[i]->getValue());
-    OS << std::string(MaxValLen-CountStr.size(), ' ')
-       << CountStr << " " << Stats.Stats[i]->getName()
-       << std::string(MaxNameLen-std::strlen(Stats.Stats[i]->getName()), ' ')
-       << " - " << Stats.Stats[i]->getDesc() << "\n";
-  }
+  for (size_t i = 0, e = Stats.Stats.size(); i != e; ++i)
+    OS << format("%*u %-*s - %s\n",
+                 MaxValLen, Stats.Stats[i]->getValue(),
+                 MaxNameLen, Stats.Stats[i]->getName(),
+                 Stats.Stats[i]->getDesc());
 
   OS << '\n';  // Flush the output stream.
   OS.flush();

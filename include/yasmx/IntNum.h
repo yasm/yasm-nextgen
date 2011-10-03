@@ -44,7 +44,7 @@
 
 namespace yasm
 {
-class Diagnostic;
+class DiagnosticsEngine;
 
 /// Check to see if APInt will fit without overflow into size bits.
 /// @param intn         APInt
@@ -228,9 +228,9 @@ public:
     bool Calc(Op::Op op,
               const IntNum& operand,
               SourceLocation source,
-              Diagnostic& diags)
+              DiagnosticsEngine& diags)
     { return CalcImpl(op, &operand, source, &diags); }
-    bool Calc(Op::Op op, SourceLocation source, Diagnostic& diags)
+    bool Calc(Op::Op op, SourceLocation source, DiagnosticsEngine& diags)
     { return CalcImpl(op, 0, source, &diags); }
 
     /// Integer calculation function: acc = acc op operand.
@@ -415,7 +415,7 @@ private:
     bool CalcImpl(Op::Op op,
                   /*@null@*/ const IntNum* operand,
                   SourceLocation source,
-                  Diagnostic* diags);
+                  DiagnosticsEngine* diags);
 
     /// Set an intnum to an unsigned integer.
     /// @param val      integer value

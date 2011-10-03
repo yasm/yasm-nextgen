@@ -91,7 +91,7 @@ TokenLexer::Init(const Token *TokArray, unsigned NumToks,
     m_disable_macro_expansion = disableMacroExpansion;
     m_num_tokens = NumToks;
     m_cur_token = 0;
-    m_instantiate_loc_start = m_instantiate_loc_end = SourceLocation();
+    m_expand_loc_start = m_expand_loc_end = SourceLocation();
     m_at_start_of_line = false;
     m_has_leading_space = false;
 
@@ -355,12 +355,12 @@ void TokenLexer::Lex(Token* Tok) {
   // diagnostics for the expanded token should appear as if they came from
   // InstantiationLoc.  Pull this information together into a new SourceLocation
   // that captures all of this.
-  if (m_instantiate_loc_start.isValid()) {   // Don't do this for token streams.
+  if (m_expand_loc_start.isValid()) {   // Don't do this for token streams.
     SourceManager &SM = m_pp.getSourceManager();
-    Tok->setLocation(SM.createInstantiationLoc(Tok->getLocation(),
-                                               m_instantiate_loc_start,
-                                               m_instantiate_loc_end,
-                                               Tok->getLength()));
+    Tok->setLocation(SM.createExpansionLoc(Tok->getLocation(),
+                                           m_expand_loc_start,
+                                           m_expand_loc_end,
+                                           Tok->getLength()));
   }
 
   // If this is the first token, set the lexical properties of the token to
@@ -471,7 +471,7 @@ bool TokenLexer::PasteTokens(Token &Tok) {
 
         // Do not emit the warning when preprocessing assembler code.
         if (!PP.getLangOptions().AsmPreprocessor) {
-          // Explicitly convert the token location to have proper instantiation
+          // Explicitly convert the token location to have proper expansion
           // information so that the user knows where it came from.
           SourceManager &SM = PP.getSourceManager();
           SourceLocation Loc =
@@ -526,7 +526,7 @@ unsigned TokenLexer::isNextTokenLParen() const {
 /// HandleMicrosoftCommentPaste - In microsoft compatibility mode, /##/ pastes
 /// together to form a comment that comments out everything in the current
 /// macro, other active macros, and anything left on the current physical
-/// source line of the instantiated buffer.  Handle this by returning the
+/// source line of the expanded buffer.  Handle this by returning the
 /// first token on the next line.
 void TokenLexer::HandleMicrosoftCommentPaste(Token &Tok) {
   // We 'comment out' the rest of this macro by just ignoring the rest of the

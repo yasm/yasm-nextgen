@@ -65,7 +65,7 @@ DwarfDebug::~DwarfDebug()
 void
 DwarfDebug::GenerateDebug(ObjectFormat& objfmt,
                           SourceManager& smgr,
-                          Diagnostic& diags)
+                          DiagnosticsEngine& diags)
 {
     m_objfmt = &objfmt;
     m_diags = &diags;
@@ -98,7 +98,7 @@ DwarfDebug::GenerateDebug(ObjectFormat& objfmt,
 void
 DwarfDebug::Generate(ObjectFormat& objfmt,
                      SourceManager& smgr,
-                     Diagnostic& diags)
+                     DiagnosticsEngine& diags)
 {
     GenerateCfi(objfmt, smgr, diags);
     GenerateDebug(objfmt, smgr, diags);
@@ -111,7 +111,7 @@ DwarfPassDebug::~DwarfPassDebug()
 void
 DwarfPassDebug::Generate(ObjectFormat& objfmt,
                          SourceManager& smgr,
-                         Diagnostic& diags)
+                         DiagnosticsEngine& diags)
 {
     // Always generate CFI.
     GenerateCfi(objfmt, smgr, diags);
@@ -217,7 +217,7 @@ CfiDebug::AddDirectives(Directives& dirs, llvm::StringRef parser)
 void
 CfiDebug::Generate(ObjectFormat& objfmt,
                    SourceManager& smgr,
-                   Diagnostic& diags)
+                   DiagnosticsEngine& diags)
 {
     GenerateCfi(objfmt, smgr, diags);
 }

@@ -46,7 +46,9 @@ namespace parser
 class YASM_STD_EXPORT NasmPreproc : public Preprocessor
 {
 public:
-    NasmPreproc(Diagnostic& diags, SourceManager& sm, HeaderSearch& headers);
+    NasmPreproc(DiagnosticsEngine& diags,
+                SourceManager& sm,
+                HeaderSearch& headers);
     ~NasmPreproc();
 
     virtual void PreInclude(llvm::StringRef filename);

@@ -38,7 +38,7 @@
 using namespace yasm;
 using namespace yasm::parser;
 
-GasPreproc::GasPreproc(Diagnostic& diags,
+GasPreproc::GasPreproc(DiagnosticsEngine& diags,
                        SourceManager& sm,
                        HeaderSearch& headers)
     : Preprocessor(diags, sm, headers)

@@ -28,6 +28,7 @@
 #include <gtest/gtest.h>
 
 #include "yasmx/Basic/Diagnostic.h"
+#include "yasmx/Basic/FileManager.h"
 #include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Expr.h"
 #include "yasmx/IntNum.h"
@@ -53,8 +54,11 @@ protected:
     X86Register BX, BP, SI, DI;
     X86Register EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI;
 
-    ::testing::StrictMock<yasmunit::MockDiagnosticClient> mock_client;
-    Diagnostic diags;
+    ::testing::StrictMock<yasmunit::MockDiagnosticConsumer> mock_consumer;
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids;
+    DiagnosticsEngine diags;
+    FileSystemOptions opts;
+    FileManager fmgr;
     SourceManager smgr;
 
     X86EffAddrTestBase()
@@ -70,8 +74,10 @@ protected:
         , EBP(X86Register::REG32, 5)
         , ESI(X86Register::REG32, 6)
         , EDI(X86Register::REG32, 7)
-        , diags(&mock_client)
-        , smgr(diags)
+        , diagids(new DiagnosticIDs)
+        , diags(diagids, &mock_consumer, false)
+        , fmgr(opts)
+        , smgr(diags, fmgr)
     {
         diags.setSourceManager(&smgr);
     }
@@ -412,11 +418,11 @@ TEST_F(X86EffAddrTest, InitExpr32)
             unsigned char rex = 0;
             if (expect_error)
             {
-                ::testing::StrictMock<yasmunit::MockDiagnosticClient> mock_client2;
-                Diagnostic diags2(&mock_client2);
+                ::testing::StrictMock<yasmunit::MockDiagnosticConsumer> mock_consumer2;
+                DiagnosticsEngine diags2(diagids, &mock_consumer2, false);
                 diags2.setSourceManager(&smgr);
-                EXPECT_CALL(mock_client2,
-                            HandleDiagnostic(Diagnostic::Error, ::testing::_));
+                EXPECT_CALL(mock_consumer2,
+                            HandleDiagnostic(DiagnosticsEngine::Error, ::testing::_));
                 EXPECT_FALSE(ea.Check(&addrsize, 32, false, &rex, 0, diags2));
             }
             else

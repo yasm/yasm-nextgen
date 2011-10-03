@@ -52,7 +52,7 @@ public:
         ~Dir() {}
         void operator() (llvm::StringRef name,
                          DirectiveInfo& info,
-                         Diagnostic& diags);
+                         DiagnosticsEngine& diags);
 
     private:
         Directive m_handler;
@@ -77,13 +77,13 @@ Directives::~Directives()
 void
 Directives::Add(llvm::StringRef name, Directive handler, Flags flags)
 {
-    m_impl->m_dirs[llvm::LowercaseString(name)] = Impl::Dir(handler, flags);
+    m_impl->m_dirs[name.lower()] = Impl::Dir(handler, flags);
 }
 
 bool
 Directives::get(Directive* dir, llvm::StringRef name) const
 {
-    Impl::DirMap::iterator p = m_impl->m_dirs.find(llvm::LowercaseString(name));
+    Impl::DirMap::iterator p = m_impl->m_dirs.find(name.lower());
     if (p == m_impl->m_dirs.end())
         return false;
 
@@ -95,7 +95,7 @@ Directives::get(Directive* dir, llvm::StringRef name) const
 void
 Directives::Impl::Dir::operator() (llvm::StringRef name,
                                    DirectiveInfo& info,
-                                   Diagnostic& diags)
+                                   DiagnosticsEngine& diags)
 {
     NameValues& namevals = info.getNameValues();
     if ((m_flags & (ARG_REQUIRED|ID_REQUIRED)) && namevals.empty())

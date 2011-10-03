@@ -49,7 +49,7 @@ namespace yasm
 {
 
 class Bytecode;
-class Diagnostic;
+class DiagnosticsEngine;
 class Expr;
 class ExprTest;
 class Register;
@@ -452,7 +452,7 @@ public:
     /// branches and simplifies integer-only subexpressions.  Does *not*
     /// expand EQUs; use ExpandEqu() in expr_util.h to first expand EQUs.
     /// @param simplify_reg_mul simplify REG*1 identities
-    void Simplify(Diagnostic& diags, bool simplify_reg_mul = true);
+    void Simplify(DiagnosticsEngine& diags, bool simplify_reg_mul = true);
 
     /// Simplify an expression as much as possible, taking a functor for
     /// additional processing.  Calls LevelOp() both before and after the
@@ -461,7 +461,9 @@ public:
     ///                         called as (Expr&, int pos)
     /// @param simplify_reg_mul simplify REG*1 identities
     template <typename T>
-    void Simplify(Diagnostic& diags, T& func, bool simplify_reg_mul = true);
+    void Simplify(DiagnosticsEngine& diags,
+                  T& func,
+                  bool simplify_reg_mul = true);
 
     /// Extract the segment portion of an expression containing SEG:OFF,
     /// leaving the offset.
@@ -582,7 +584,7 @@ public:
 
     /// Make expression an ident if it only has one term.
     /// @param pos      index of operator term, may be negative for "from end"
-    void MakeIdent(Diagnostic& diags, int pos=-1);
+    void MakeIdent(DiagnosticsEngine& diags, int pos=-1);
 
     /// Levels an expression tree.
     /// a+(b+c) -> a+b+c
@@ -593,7 +595,7 @@ public:
     ///       post-order on a tree to combine deeper levels.
     /// @param simplify_reg_mul simplify REG*1 identities
     /// @param pos              index of top-level operator term
-    void LevelOp(Diagnostic& diags, bool simplify_reg_mul, int pos=-1);
+    void LevelOp(DiagnosticsEngine& diags, bool simplify_reg_mul, int pos=-1);
 
     //@}
 
@@ -701,7 +703,7 @@ inline void Expr::Append(const ExprTerm& term)
 
 template <typename T>
 void
-Expr::Simplify(Diagnostic& diags, T& func, bool simplify_reg_mul)
+Expr::Simplify(DiagnosticsEngine& diags, T& func, bool simplify_reg_mul)
 {
     TransformNeg();
 
@@ -931,7 +933,7 @@ bool CalcFloat(llvm::APFloat* lhs,
                Op::Op op,
                const llvm::APFloat& rhs,
                SourceLocation source,
-               Diagnostic& diags);
+               DiagnosticsEngine& diags);
 
 /// Get left and right hand immediate children, or single immediate child.
 /// @param e        Expression

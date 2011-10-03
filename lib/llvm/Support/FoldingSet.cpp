@@ -15,9 +15,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Host.h"
 #include <cassert>
 #include <cstring>
 using namespace llvm;
@@ -28,24 +30,7 @@ using namespace llvm;
 /// ComputeHash - Compute a strong hash value for this FoldingSetNodeIDRef,
 /// used to lookup the node in the FoldingSetImpl.
 unsigned FoldingSetNodeIDRef::ComputeHash() const {
-  // This is adapted from SuperFastHash by Paul Hsieh.
-  unsigned Hash = static_cast<unsigned>(Size);
-  for (const unsigned *BP = Data, *E = BP+Size; BP != E; ++BP) {
-    unsigned Data = *BP;
-    Hash         += Data & 0xFFFF;
-    unsigned Tmp  = ((Data >> 16) << 11) ^ Hash;
-    Hash          = (Hash << 16) ^ Tmp;
-    Hash         += Hash >> 11;
-  }
-  
-  // Force "avalanching" of final 127 bits.
-  Hash ^= Hash << 3;
-  Hash += Hash >> 5;
-  Hash ^= Hash << 4;
-  Hash += Hash >> 17;
-  Hash ^= Hash << 25;
-  Hash += Hash >> 6;
-  return Hash;
+  return static_cast<unsigned>(hash_combine_range(Data, Data+Size));
 }
 
 bool FoldingSetNodeIDRef::operator==(FoldingSetNodeIDRef RHS) const {
@@ -63,10 +48,8 @@ void FoldingSetNodeID::AddPointer(const void *Ptr) {
   // depend on the host.  It doesn't matter however, because hashing on
   // pointer values in inherently unstable.  Nothing  should depend on the 
   // ordering of nodes in the folding set.
-  intptr_t PtrI = (intptr_t)Ptr;
-  Bits.push_back(unsigned(PtrI));
-  if (sizeof(intptr_t) > sizeof(unsigned))
-    Bits.push_back(unsigned(uint64_t(PtrI) >> 32));
+  Bits.append(reinterpret_cast<unsigned *>(&Ptr),
+              reinterpret_cast<unsigned *>(&Ptr+1));
 }
 void FoldingSetNodeID::AddInteger(signed I) {
   Bits.push_back(I);
@@ -91,7 +74,7 @@ void FoldingSetNodeID::AddInteger(long long I) {
 }
 void FoldingSetNodeID::AddInteger(unsigned long long I) {
   AddInteger(unsigned(I));
-  if ((uint64_t)(int)I != I)
+  if ((uint64_t)(unsigned)I != I)
     Bits.push_back(unsigned(I >> 32));
 }
 
@@ -110,18 +93,32 @@ void FoldingSetNodeID::AddString(StringRef String) {
     Pos = (Units + 1) * 4;
   } else {
     // Otherwise do it the hard way.
-    for (Pos += 4; Pos <= Size; Pos += 4) {
-      unsigned V = ((unsigned char)String[Pos - 4] << 24) |
-                   ((unsigned char)String[Pos - 3] << 16) |
-                   ((unsigned char)String[Pos - 2] << 8) |
-                    (unsigned char)String[Pos - 1];
-      Bits.push_back(V);
+    // To be compatible with above bulk transfer, we need to take endianness
+    // into account.
+    if (sys::isBigEndianHost()) {
+      for (Pos += 4; Pos <= Size; Pos += 4) {
+        unsigned V = ((unsigned char)String[Pos - 4] << 24) |
+                     ((unsigned char)String[Pos - 3] << 16) |
+                     ((unsigned char)String[Pos - 2] << 8) |
+                      (unsigned char)String[Pos - 1];
+        Bits.push_back(V);
+      }
+    } else {
+      assert(sys::isLittleEndianHost() && "Unexpected host endianness");
+      for (Pos += 4; Pos <= Size; Pos += 4) {
+        unsigned V = ((unsigned char)String[Pos - 1] << 24) |
+                     ((unsigned char)String[Pos - 2] << 16) |
+                     ((unsigned char)String[Pos - 3] << 8) |
+                      (unsigned char)String[Pos - 4];
+        Bits.push_back(V);
+      }
     }
   }
   
   // With the leftover bits.
   unsigned V = 0;
-  // Pos will have overshot size by 4 - #bytes left over. 
+  // Pos will have overshot size by 4 - #bytes left over.
+  // No need to take endianness into account here - this is always executed.
   switch (Pos - Size) {
   case 1: V = (V << 8) | (unsigned char)String[Size - 3]; // Fall thru.
   case 2: V = (V << 8) | (unsigned char)String[Size - 2]; // Fall thru.
@@ -130,6 +127,11 @@ void FoldingSetNodeID::AddString(StringRef String) {
   }
 
   Bits.push_back(V);
+}
+
+// AddNodeID - Adds the Bit data of another ID to *this.
+void FoldingSetNodeID::AddNodeID(const FoldingSetNodeID &ID) {
+  Bits.append(ID.Bits.begin(), ID.Bits.end());
 }
 
 /// ComputeHash - Compute a strong hash value for this FoldingSetNodeID, used to 
@@ -263,15 +265,15 @@ void FoldingSetImpl::GrowHashTable() {
 FoldingSetImpl::Node
 *FoldingSetImpl::FindNodeOrInsertPos(const FoldingSetNodeID &ID,
                                      void *&InsertPos) {
-  
-  void **Bucket = GetBucketFor(ID.ComputeHash(), Buckets, NumBuckets);
+  unsigned IDHash = ID.ComputeHash();
+  void **Bucket = GetBucketFor(IDHash, Buckets, NumBuckets);
   void *Probe = *Bucket;
   
   InsertPos = 0;
   
   FoldingSetNodeID TempID;
   while (Node *NodeInBucket = GetNextPtr(Probe)) {
-    if (NodeEquals(NodeInBucket, ID, TempID))
+    if (NodeEquals(NodeInBucket, ID, IDHash, TempID))
       return NodeInBucket;
     TempID.clear();
 

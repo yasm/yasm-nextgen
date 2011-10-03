@@ -89,7 +89,7 @@ yasm::CalcFloat(llvm::APFloat* lhs,
                 Op::Op op,
                 const llvm::APFloat& rhs,
                 SourceLocation source,
-                Diagnostic& diags)
+                DiagnosticsEngine& diags)
 {
     llvm::APFloat::opStatus status;
     switch (op)
@@ -394,7 +394,7 @@ ReduceDepth(ExprTerms& terms, int pos, int delta=1)
 }
 
 void
-Expr::MakeIdent(Diagnostic& diags, int pos)
+Expr::MakeIdent(DiagnosticsEngine& diags, int pos)
 {
     if (pos < 0)
         pos += m_terms.size();
@@ -605,7 +605,7 @@ Expr::TransformNeg()
 }
 
 void
-Expr::LevelOp(Diagnostic& diags, bool simplify_reg_mul, int pos)
+Expr::LevelOp(DiagnosticsEngine& diags, bool simplify_reg_mul, int pos)
 {
     if (pos < 0)
         pos += m_terms.size();
@@ -787,7 +787,7 @@ again:
 }
 
 void
-Expr::Simplify(Diagnostic& diags, bool simplify_reg_mul)
+Expr::Simplify(DiagnosticsEngine& diags, bool simplify_reg_mul)
 {
     TransformNeg();
 

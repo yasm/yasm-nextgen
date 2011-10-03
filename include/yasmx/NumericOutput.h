@@ -42,7 +42,7 @@ struct fltSemantics;
 namespace yasm
 {
 class Bytes;
-class Diagnostic;
+class DiagnosticsEngine;
 class IntNum;
 
 /// This performs output of both integer and floating point numbers.
@@ -102,7 +102,7 @@ public:
     void OutputInteger(const IntNum& intn);
     void OutputFloat(const llvm::APFloat& flt);
 
-    void EmitWarnings(Diagnostic& diags) const;
+    void EmitWarnings(DiagnosticsEngine& diags) const;
 
 private:
     enum WarnFlag

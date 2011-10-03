@@ -87,7 +87,7 @@ namespace {
 class RdfOutput : public BytecodeOutput
 {
 public:
-    RdfOutput(llvm::raw_ostream& os, Object& object, Diagnostic& diags);
+    RdfOutput(llvm::raw_ostream& os, Object& object, DiagnosticsEngine& diags);
     ~RdfOutput();
 
     void OutputSectionToMemory(Section& sect);
@@ -116,7 +116,9 @@ private:
 };
 } // anonymous namespace
 
-RdfOutput::RdfOutput(llvm::raw_ostream& os, Object& object, Diagnostic& diags)
+RdfOutput::RdfOutput(llvm::raw_ostream& os,
+                     Object& object,
+                     DiagnosticsEngine& diags)
     : BytecodeOutput(diags)
     , m_os(os)
     , m_object(object)
@@ -328,7 +330,7 @@ enum RdfSymbolFlags
 };
 
 static unsigned int
-ParseFlags(Symbol& sym, Diagnostic& diags)
+ParseFlags(Symbol& sym, DiagnosticsEngine& diags)
 {
     unsigned long flags = 0;
     int vis = sym.getVisibility();
@@ -524,7 +526,7 @@ void
 RdfObject::Output(llvm::raw_fd_ostream& os,
                   bool all_syms,
                   DebugFormat& dbgfmt,
-                  Diagnostic& diags)
+                  DiagnosticsEngine& diags)
 {
     // Number sections
     unsigned int scnum = 0;     // section numbering starts at 0
@@ -686,7 +688,7 @@ NoAddSpan(Bytecode& bc,
 }
 
 bool
-RdfObject::Read(SourceManager& sm, Diagnostic& diags)
+RdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
 {
     const llvm::MemoryBuffer& in = *sm.getBuffer(sm.getMainFileID());
     InputBuffer inbuf(in);
@@ -744,7 +746,8 @@ RdfObject::Read(SourceManager& sm, Diagnostic& diags)
         if (rsect->type == RdfSection::RDF_BSS)
         {
             Bytecode& gap = section->AppendGap(size, SourceLocation());
-            Diagnostic nodiags(0);
+            llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+            DiagnosticsEngine nodiags(diagids);
             gap.CalcLen(NoAddSpan, nodiags); // force length calculation
         }
         else
@@ -881,7 +884,9 @@ RdfObject::Read(SourceManager& sm, Diagnostic& diags)
                     new Section(".bss", false, true, SourceLocation()));
                 Bytecode& gap =
                     section->AppendGap(size, SourceLocation());
-                Diagnostic nodiags(0);
+                llvm::IntrusiveRefCntPtr<DiagnosticIDs>
+                    diagids(new DiagnosticIDs);
+                DiagnosticsEngine nodiags(diagids);
                 gap.CalcLen(NoAddSpan, nodiags); // force length calculation
 
                 // Create symbol for section start (used for relocations)
@@ -966,7 +971,7 @@ RdfObject::Read(SourceManager& sm, Diagnostic& diags)
 Section*
 RdfObject::AppendSection(llvm::StringRef name,
                          SourceLocation source,
-                         Diagnostic& diags)
+                         DiagnosticsEngine& diags)
 {
     RdfSection::Type type = RdfSection::RDF_UNKNOWN;
     if (name == ".text")
@@ -999,7 +1004,8 @@ RdfObject::AppendSection(llvm::StringRef name,
 Section*
 RdfObject::AddDefaultSection()
 {
-    Diagnostic diags(NULL);
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids);
     Section* section = AppendSection(".text", SourceLocation(), diags);
     section->setDefault(true);
     return section;
@@ -1008,7 +1014,7 @@ RdfObject::AddDefaultSection()
 static inline bool
 SetReserved(NameValue& nv,
             SourceLocation dir_source,
-            Diagnostic& diags,
+            DiagnosticsEngine& diags,
             Object* obj,
             IntNum* out,
             bool* out_set)
@@ -1021,7 +1027,7 @@ SetReserved(NameValue& nv,
     if ((e.get() == 0) || !e->isIntNum())
     {
         diags.Report(nv.getValueRange().getBegin(),
-                     diags.getCustomDiagID(Diagnostic::Error,
+                     diags.getCustomDiagID(DiagnosticsEngine::Error,
                          "implicit reserved size is not an integer"));
         return false;
     }
@@ -1032,7 +1038,7 @@ SetReserved(NameValue& nv,
 }
 
 void
-RdfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
+RdfObject::DirSection(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
@@ -1121,7 +1127,7 @@ void
 RdfObject::AddLibOrModule(llvm::StringRef name,
                           bool lib,
                           SourceLocation name_source,
-                          Diagnostic& diags)
+                          DiagnosticsEngine& diags)
 {
     llvm::StringRef name2 = name;
     if (name2.size() > MODLIB_NAME_MAX)
@@ -1137,14 +1143,14 @@ RdfObject::AddLibOrModule(llvm::StringRef name,
 }
 
 void
-RdfObject::DirLibrary(DirectiveInfo& info, Diagnostic& diags)
+RdfObject::DirLibrary(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     NameValue& nv = info.getNameValues().front();
     AddLibOrModule(nv.getString(), true, nv.getValueRange().getBegin(), diags);
 }
 
 void
-RdfObject::DirModule(DirectiveInfo& info, Diagnostic& diags)
+RdfObject::DirModule(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     NameValue& nv = info.getNameValues().front();
     AddLibOrModule(nv.getString(), false, nv.getValueRange().getBegin(), diags);

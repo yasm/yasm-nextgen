@@ -40,7 +40,7 @@
 namespace yasm
 {
 class DebugFormatModule;
-class Diagnostic;
+class DiagnosticsEngine;
 class Directives;
 class Object;
 class ObjectFormat;
@@ -71,7 +71,7 @@ public:
     /// @note Errors and warnings are stored into errwarns.
     virtual void Generate(ObjectFormat& objfmt,
                           SourceManager& smgr,
-                          Diagnostic& diags) = 0;
+                          DiagnosticsEngine& diags) = 0;
 
 private:
     DebugFormat(const DebugFormat&);                  // not implemented

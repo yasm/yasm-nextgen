@@ -44,7 +44,7 @@ namespace yasm
 
 class Arch;
 class Bytecode;
-class Diagnostic;
+class DiagnosticsEngine;
 class Expr;
 class IntNum;
 class Section;
@@ -113,18 +113,18 @@ public:
     /// Finalize all bytecodes after parsing.
     /// @param diags        diagnostic reporting
     /// @note Errors/warnings are stored into errwarns.
-    void Finalize(Diagnostic& diags);
+    void Finalize(DiagnosticsEngine& diags);
 
     /// Optimize this container.  Generally, Object::Optimize() should be
     /// called instead to optimize the entire object at once.
     /// @param diags        diagnostic reporting
     /// @note Errors/warnings are stored into diags.
-    void Optimize(Diagnostic& diags);
+    void Optimize(DiagnosticsEngine& diags);
 
     /// Update all bytecode offsets.
     /// @param diags        diagnostic reporting
     /// @note Errors/warnings are stored into errwarns.
-    void UpdateOffsets(Diagnostic& diags);
+    void UpdateOffsets(DiagnosticsEngine& diags);
 
 #ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
@@ -163,7 +163,7 @@ YASM_LIB_EXPORT
 void AppendByte(BytecodeContainer& container,
                 std::auto_ptr<Expr> expr,
                 SourceLocation source,
-                Diagnostic& diags);
+                DiagnosticsEngine& diags);
 
 /// Append a raw data value to the end of a section.
 /// @param sect         section
@@ -200,7 +200,7 @@ void AppendData(BytecodeContainer& container,
                 unsigned int size,
                 const Arch& arch,
                 SourceLocation source,
-                Diagnostic& diags);
+                DiagnosticsEngine& diags);
 
 /// Append a string value to the end of a section.
 /// @param sect         section
@@ -233,7 +233,7 @@ void AppendLEB128(BytecodeContainer& container,
                   const IntNum& intn,
                   bool sign,
                   SourceLocation source,
-                  Diagnostic& diags);
+                  DiagnosticsEngine& diags);
 
 /// Append an LEB128-encoded data value to the end of a section.
 /// @param sect         section
@@ -246,7 +246,7 @@ void AppendLEB128(BytecodeContainer& container,
                   std::auto_ptr<Expr> expr,
                   bool sign,
                   SourceLocation source,
-                  Diagnostic& diags);
+                  DiagnosticsEngine& diags);
 
 /// Append a binary file verbatim to the end of a section.
 /// @param sect             section
@@ -330,7 +330,7 @@ void AppendFill(BytecodeContainer& container,
                 std::auto_ptr<Expr> value,
                 Arch& arch,
                 SourceLocation source,
-                Diagnostic& diags);
+                DiagnosticsEngine& diags);
 
 } // namespace yasm
 

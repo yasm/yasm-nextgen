@@ -91,11 +91,11 @@ public:
 
     ~UnwindCode();
 
-    virtual bool Finalize(Bytecode& bc, Diagnostic& diags);
+    virtual bool Finalize(Bytecode& bc, DiagnosticsEngine& diags);
     virtual bool CalcLen(Bytecode& bc,
                          /*@out@*/ unsigned long* len,
                          const Bytecode::AddSpanFunc& add_span,
-                         Diagnostic& diags);
+                         DiagnosticsEngine& diags);
     virtual bool Expand(Bytecode& bc,
                         unsigned long* len,
                         int span,
@@ -104,7 +104,7 @@ public:
                         bool* keep,
                         /*@out@*/ long* neg_thres,
                         /*@out@*/ long* pos_thres,
-                        Diagnostic& diags);
+                        DiagnosticsEngine& diags);
     virtual bool Output(Bytecode& bc, BytecodeOutput& bc_out);
     llvm::StringRef getType() const;
     virtual UnwindCode* clone() const;

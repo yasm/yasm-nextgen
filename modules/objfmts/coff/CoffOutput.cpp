@@ -63,7 +63,7 @@ public:
                CoffObject& objfmt,
                Object& object,
                bool all_syms,
-               Diagnostic& diags);
+               DiagnosticsEngine& diags);
     ~CoffOutput();
 
     bool OutputSection(Section& sect);
@@ -91,7 +91,7 @@ CoffOutput::CoffOutput(llvm::raw_ostream& os,
                        CoffObject& objfmt,
                        Object& object,
                        bool all_syms,
-                       Diagnostic& diags)
+                       DiagnosticsEngine& diags)
     : BytecodeStreamOutput(os, diags)
     , m_objfmt(objfmt)
     , m_object(object)
@@ -511,7 +511,7 @@ void
 CoffObject::Output(llvm::raw_fd_ostream& os,
                    bool all_syms,
                    DebugFormat& dbgfmt,
-                   Diagnostic& diags)
+                   DiagnosticsEngine& diags)
 {
     // Update file symbol filename
     assert(m_file_coffsym != 0);

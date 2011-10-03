@@ -236,8 +236,8 @@ public:
          size_t os_index);
     ~Span();
 
-    bool CreateTerms(Optimizer::Impl* optimize, Diagnostic& diags);
-    bool RecalcNormal(Diagnostic& diags);
+    bool CreateTerms(Optimizer::Impl* optimize, DiagnosticsEngine& diags);
+    bool RecalcNormal(DiagnosticsEngine& diags);
 
     std::string getName() const;
 #ifdef WITH_XML
@@ -284,7 +284,7 @@ namespace yasm {
 class Optimizer::Impl
 {
 public:
-    Impl(Diagnostic& diags);
+    Impl(DiagnosticsEngine& diags);
     ~Impl();
 
     void Step1b();
@@ -301,7 +301,7 @@ public:
                     Span& span);
     void ExpandTerm(IntervalTreeNode<Span::Term*> * node, long len_diff);
 
-    Diagnostic& m_diags;
+    DiagnosticsEngine& m_diags;
 
     typedef std::list<Span*> Spans;
     Spans m_spans;      // ownership list
@@ -395,7 +395,7 @@ Span::AddTerm(unsigned int subst, Location loc, Location loc2)
 }
 
 bool
-Span::CreateTerms(Optimizer::Impl* optimize, Diagnostic& diags)
+Span::CreateTerms(Optimizer::Impl* optimize, DiagnosticsEngine& diags)
 {
     // Split out sym-sym terms in absolute portion of dependent value
     if (m_depval.hasAbs())
@@ -430,7 +430,7 @@ Span::CreateTerms(Optimizer::Impl* optimize, Diagnostic& diags)
 // Recalculate span value based on current span replacement values.
 // Returns True if span needs expansion (e.g. exceeded thresholds).
 bool
-Span::RecalcNormal(Diagnostic& diags)
+Span::RecalcNormal(DiagnosticsEngine& diags)
 {
     ++num_recalc;
     m_new_val = 0;
@@ -533,7 +533,7 @@ Span::WriteRef(pugi::xml_node out) const
 }
 #endif // WITH_XML
 
-Optimizer::Impl::Impl(Diagnostic& diags)
+Optimizer::Impl::Impl(DiagnosticsEngine& diags)
     : m_diags(diags)
 {
     // Create an placeholder offset setter for spans to point to; this will
@@ -948,7 +948,7 @@ Optimizer::Impl::Step2()
     }
 }
 
-Optimizer::Optimizer(Diagnostic& diags)
+Optimizer::Optimizer(DiagnosticsEngine& diags)
     : m_impl(new Impl(diags))
 {
 }

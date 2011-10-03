@@ -41,7 +41,7 @@ ObjectFormat::AddDirectives(Directives& dirs, llvm::StringRef parser)
 }
 
 bool
-ObjectFormat::Read(SourceManager& sm, Diagnostic& diags)
+ObjectFormat::Read(SourceManager& sm, DiagnosticsEngine& diags)
 {
     diags.Report(SourceLocation(), diag::err_object_read_not_supported);
     return false;

@@ -27,7 +27,7 @@
 #include "DwarfDebug.h"
 
 #include "config.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Bytes.h"
 #include "yasmx/Bytes_leb128.h"

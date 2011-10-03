@@ -52,7 +52,7 @@
 
 namespace yasm
 {
-class Diagnostic;
+class DiagnosticsEngine;
 class DirectiveInfo;
 
 namespace objfmt
@@ -126,42 +126,42 @@ public:
 
     void InitSymbols(llvm::StringRef parser);
 
-    bool Read(SourceManager& sm, Diagnostic& diags);
+    bool Read(SourceManager& sm, DiagnosticsEngine& diags);
     void Output(llvm::raw_fd_ostream& os,
                 bool all_syms,
                 DebugFormat& dbgfmt,
-                Diagnostic& diags);
+                DiagnosticsEngine& diags);
 
     Section* AddDefaultSection();
     Section* AppendSection(llvm::StringRef name,
                            SourceLocation source,
-                           Diagnostic& diags);
+                           DiagnosticsEngine& diags);
 
     ElfSymbol& BuildSymbol(Symbol& sym);
-    void BuildExtern(Symbol& sym, Diagnostic& diags);
-    void BuildGlobal(Symbol& sym, Diagnostic& diags);
-    void BuildCommon(Symbol& sym, Diagnostic& diags);
+    void BuildExtern(Symbol& sym, DiagnosticsEngine& diags);
+    void BuildGlobal(Symbol& sym, DiagnosticsEngine& diags);
+    void BuildCommon(Symbol& sym, DiagnosticsEngine& diags);
     void setSymbolSectionValue(Symbol& sym, ElfSymbol& elfsym);
     void FinalizeSymbol(Symbol& sym,
                         StringTable& strtab,
                         bool local_names,
-                        Diagnostic& diags);
+                        DiagnosticsEngine& diags);
 
-    void DirGasSection(DirectiveInfo& info, Diagnostic& diags);
-    void DirSection(DirectiveInfo& info, Diagnostic& diags);
-    void DirType(DirectiveInfo& info, Diagnostic& diags);
-    void DirSize(DirectiveInfo& info, Diagnostic& diags);
-    void DirWeak(DirectiveInfo& info, Diagnostic& diags);
-    void DirWeakRef(DirectiveInfo& info, Diagnostic& diags);
+    void DirGasSection(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirSection(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirType(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirSize(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirWeak(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirWeakRef(DirectiveInfo& info, DiagnosticsEngine& diags);
     void VisibilityDir(DirectiveInfo& info,
-                       Diagnostic& diags,
+                       DiagnosticsEngine& diags,
                        ElfSymbolVis vis);
-    void DirInternal(DirectiveInfo& info, Diagnostic& diags);
-    void DirHidden(DirectiveInfo& info, Diagnostic& diags);
-    void DirProtected(DirectiveInfo& info, Diagnostic& diags);
-    void DirSymVer(DirectiveInfo& info, Diagnostic& diags);
-    void DirIdent(DirectiveInfo& info, Diagnostic& diags);
-    void DirVersion(DirectiveInfo& info, Diagnostic& diags);
+    void DirInternal(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirHidden(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirProtected(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirSymVer(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirIdent(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirVersion(DirectiveInfo& info, DiagnosticsEngine& diags);
 
     ElfConfig m_config;                     // ELF configuration
     util::scoped_ptr<ElfMachine> m_machine; // ELF machine interface

@@ -48,7 +48,7 @@ const char* ElfSection::key = "objfmt::elf::ElfSection";
 ElfSection::ElfSection(const ElfConfig&             config,
                        const llvm::MemoryBuffer&    in,
                        ElfSectionIndex              index,
-                       Diagnostic&                  diags)
+                       DiagnosticsEngine&           diags)
     : m_config(config)
     , m_index(index)
     , m_rel_name_index(0)
@@ -268,7 +268,8 @@ ElfSection::CreateSection(const StringTable& shstrtab) const
     {
         Bytecode& gap =
             section->AppendGap(m_size.getUInt(), SourceLocation());
-        Diagnostic nodiags(0);
+        llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+        DiagnosticsEngine nodiags(diagids);
         gap.CalcLen(NoAddSpan, nodiags); // force length calculation
     }
 
@@ -278,7 +279,7 @@ ElfSection::CreateSection(const StringTable& shstrtab) const
 bool
 ElfSection::LoadSectionData(Section& sect,
                             const llvm::MemoryBuffer& in,
-                            Diagnostic& diags) const
+                            DiagnosticsEngine& diags) const
 {
     if (sect.isBSS())
         return true;
@@ -352,7 +353,7 @@ ElfSection::WriteRelocs(llvm::raw_ostream& os,
                         Section& sect,
                         Bytes& scratch,
                         const ElfMachine& machine,
-                        Diagnostic& diags)
+                        DiagnosticsEngine& diags)
 {
     if (sect.getRelocs().size() == 0)
         return 0;

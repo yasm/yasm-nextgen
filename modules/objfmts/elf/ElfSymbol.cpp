@@ -51,7 +51,7 @@ ElfSymbol::ElfSymbol(const ElfConfig&           config,
                      const ElfSection&          symtab_sect,
                      ElfSymbolIndex             index,
                      Section*                   sections[],
-                     Diagnostic&                diags)
+                     DiagnosticsEngine&         diags)
     : m_sect(0)
     , m_name_index(0)
     , m_value(0)
@@ -216,7 +216,7 @@ ElfSymbol::Write(pugi::xml_node out) const
 #endif // WITH_XML
 
 void
-ElfSymbol::Finalize(Symbol& sym, Diagnostic& diags)
+ElfSymbol::Finalize(Symbol& sym, DiagnosticsEngine& diags)
 {
     // If symbol is a weakrefr, make it weak at this point.
     if (m_weak_refr)
@@ -349,7 +349,9 @@ ElfSymbol::Finalize(Symbol& sym, Diagnostic& diags)
 }
 
 void
-ElfSymbol::Write(Bytes& bytes, const ElfConfig& config, Diagnostic& diags)
+ElfSymbol::Write(Bytes& bytes,
+                 const ElfConfig& config,
+                 DiagnosticsEngine& diags)
 {
     // Pull referenced elf symbol information type and size
     if (m_value_rel)

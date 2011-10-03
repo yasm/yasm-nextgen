@@ -422,7 +422,7 @@ bool
 X86Insn::DoAppendJmpFar(BytecodeContainer& container,
                         const X86InsnInfo& info,
                         SourceLocation source,
-                        Diagnostic& diags)
+                        DiagnosticsEngine& diags)
 {
     Operand& op = m_operands.front();
     std::auto_ptr<Expr> imm = op.ReleaseImm();
@@ -541,7 +541,7 @@ bool
 X86Insn::DoAppendJmp(BytecodeContainer& container,
                      const X86InsnInfo& jinfo,
                      SourceLocation source,
-                     Diagnostic& diags)
+                     DiagnosticsEngine& diags)
 {
     static const unsigned char size_lookup[] =
         {0, 8, 16, 32, 64, 80, 128, 0, 0};  // 256 not needed
@@ -1042,7 +1042,7 @@ X86Insn::FindMatch(const unsigned int* size_lookup, int bypass) const
 void
 X86Insn::MatchError(const unsigned int* size_lookup,
                     SourceLocation source,
-                    Diagnostic& diags) const
+                    DiagnosticsEngine& diags) const
 {
     const X86InsnInfo* i = m_group;
 
@@ -1110,7 +1110,7 @@ X86Insn::MatchError(const unsigned int* size_lookup,
 bool
 X86Insn::DoAppend(BytecodeContainer& container,
                   SourceLocation source,
-                  Diagnostic& diags)
+                  DiagnosticsEngine& diags)
 {
     unsigned int size_lookup[] = {0, 8, 16, 32, 64, 80, 128, 256, 0};
     size_lookup[OPS_BITS] = m_mode_bits;
@@ -1186,7 +1186,7 @@ public:
                  const unsigned int* size_lookup,
                  bool force_strict,
                  bool default_rel,
-                 Diagnostic& diags);
+                 DiagnosticsEngine& diags);
     ~BuildGeneral();
 
     void ApplyModifiers(unsigned char* mod_data);
@@ -1207,7 +1207,7 @@ private:
     const unsigned int* m_size_lookup;
     bool m_force_strict;
     bool m_default_rel;
-    Diagnostic& m_diags;
+    DiagnosticsEngine& m_diags;
 
     X86Opcode m_opcode;
     std::auto_ptr<X86EffAddr> m_x86_ea;
@@ -1233,7 +1233,7 @@ BuildGeneral::BuildGeneral(const X86InsnInfo& info,
                            const unsigned int* size_lookup,
                            bool force_strict,
                            bool default_rel,
-                           Diagnostic& diags)
+                           DiagnosticsEngine& diags)
     : m_info(info),
       m_mode_bits(mode_bits),
       m_size_lookup(size_lookup),
@@ -1817,7 +1817,7 @@ X86Insn::DoAppendGeneral(BytecodeContainer& container,
                          const X86InsnInfo& info,
                          const unsigned int* size_lookup,
                          SourceLocation source,
-                         Diagnostic& diags)
+                         DiagnosticsEngine& diags)
 {
     BuildGeneral buildgen(info, m_mode_bits, size_lookup, m_force_strict,
                           m_default_rel, diags);
@@ -1949,7 +1949,7 @@ CpuFindReverse(unsigned int cpu0, unsigned int cpu1, unsigned int cpu2)
 Arch::InsnPrefix
 X86Arch::ParseCheckInsnPrefix(llvm::StringRef id,
                               SourceLocation source,
-                              Diagnostic& diags) const
+                              DiagnosticsEngine& diags) const
 {
     size_t id_len = id.size();
     if (id_len > 16)

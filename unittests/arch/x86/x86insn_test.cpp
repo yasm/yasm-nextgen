@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/System/plugin.h"
 #include "yasmx/Arch.h"
@@ -89,7 +89,8 @@ GetTestFiles()
     for (std::set<Path>::const_iterator i=paths.begin(), end=paths.end();
          i != end; ++i)
     {
-        if (i->getSuffix() == "asm" || i->getSuffix() == "ASM")
+        if (llvm::sys::path::extension(i->str()) == ".asm" ||
+            llvm::sys::path::extension(i->str()) == ".ASM")
             v.push_back(i->str());
     }
     return v;

@@ -30,6 +30,16 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
 
 template<class Ty>
+struct identity : public std::unary_function<Ty, Ty> {
+  Ty &operator()(Ty &self) const {
+    return self;
+  }
+  const Ty &operator()(const Ty &self) const {
+    return self;
+  }
+};
+
+template<class Ty>
 struct less_ptr : public std::binary_function<Ty, Ty, bool> {
   bool operator()(const Ty* left, const Ty* right) const {
     return *left < *right;
@@ -49,7 +59,7 @@ struct greater_ptr : public std::binary_function<Ty, Ty, bool> {
 //   for_each(V.begin(), B.end(), deleter<Interval>);
 //
 template <class T>
-static inline void deleter(T *Ptr) {
+inline void deleter(T *Ptr) {
   delete Ptr;
 }
 
@@ -186,25 +196,21 @@ inline ItTy prior(ItTy it)
 //   // do stuff
 // else
 //   // do other stuff
+template <typename T1, typename T2>
+struct tier {
+  typedef T1 &first_type;
+  typedef T2 &second_type;
 
-namespace
-{
-  template <typename T1, typename T2>
-  struct tier {
-    typedef T1 &first_type;
-    typedef T2 &second_type;
+  first_type first;
+  second_type second;
 
-    first_type first;
-    second_type second;
-
-    tier(first_type f, second_type s) : first(f), second(s) { }
-    tier& operator=(const std::pair<T1, T2>& p) {
-      first = p.first;
-      second = p.second;
-      return *this;
-    }
-  };
-}
+  tier(first_type f, second_type s) : first(f), second(s) { }
+  tier& operator=(const std::pair<T1, T2>& p) {
+    first = p.first;
+    second = p.second;
+    return *this;
+  }
+};
 
 template <typename T1, typename T2>
 inline tier<T1, T2> tie(T1& f, T2& s) {
@@ -225,14 +231,14 @@ inline T *array_endof(T (&x)[N]) {
 
 /// Find the length of an array.
 template<class T, std::size_t N>
-inline size_t array_lengthof(T (&x)[N]) {
+inline size_t array_lengthof(T (&)[N]) {
   return N;
 }
 
 /// array_pod_sort_comparator - This is helper function for array_pod_sort,
 /// which just uses operator< on T.
 template<typename T>
-static inline int array_pod_sort_comparator(const void *P1, const void *P2) {
+inline int array_pod_sort_comparator(const void *P1, const void *P2) {
   if (*reinterpret_cast<const T*>(P1) < *reinterpret_cast<const T*>(P2))
     return -1;
   if (*reinterpret_cast<const T*>(P2) < *reinterpret_cast<const T*>(P1))
@@ -243,7 +249,7 @@ static inline int array_pod_sort_comparator(const void *P1, const void *P2) {
 /// get_array_pad_sort_comparator - This is an internal helper function used to
 /// get type deduction of T right.
 template<typename T>
-static int (*get_array_pad_sort_comparator(const T &X))
+inline int (*get_array_pad_sort_comparator(const T &))
              (const void*, const void*) {
   return array_pod_sort_comparator<T>;
 }
@@ -264,7 +270,7 @@ static int (*get_array_pad_sort_comparator(const T &X))
 /// NOTE: If qsort_r were portable, we could allow a custom comparator and
 /// default to std::less.
 template<class IteratorTy>
-static inline void array_pod_sort(IteratorTy Start, IteratorTy End) {
+inline void array_pod_sort(IteratorTy Start, IteratorTy End) {
   // Don't dereference start iterator of empty sequence.
   if (Start == End) return;
   qsort(&*Start, End-Start, sizeof(*Start),
@@ -272,13 +278,13 @@ static inline void array_pod_sort(IteratorTy Start, IteratorTy End) {
 }
 
 template<class IteratorTy>
-static inline void array_pod_sort(IteratorTy Start, IteratorTy End,
+inline void array_pod_sort(IteratorTy Start, IteratorTy End,
                                   int (*Compare)(const void*, const void*)) {
   // Don't dereference start iterator of empty sequence.
   if (Start == End) return;
   qsort(&*Start, End-Start, sizeof(*Start), Compare);
 }
-  
+
 //===----------------------------------------------------------------------===//
 //     Extra additions to <algorithm>
 //===----------------------------------------------------------------------===//

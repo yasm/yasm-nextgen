@@ -112,7 +112,8 @@ CoffObject::~CoffObject()
 Section*
 CoffObject::AddDefaultSection()
 {
-    Diagnostic diags(NULL);
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids);
     Section* section = AppendSection(".text", SourceLocation(), diags);
     section->setDefault(true);
     return section;
@@ -123,7 +124,7 @@ CoffObject::InitSection(llvm::StringRef name,
                         Section& section,
                         CoffSection* coffsect,
                         SourceLocation source,
-                        Diagnostic& diags)
+                        DiagnosticsEngine& diags)
 {
     unsigned long flags = 0;
 
@@ -165,7 +166,7 @@ CoffObject::InitSection(llvm::StringRef name,
 Section*
 CoffObject::AppendSection(llvm::StringRef name,
                           SourceLocation source,
-                          Diagnostic& diags)
+                          DiagnosticsEngine& diags)
 {
     Section* section = new Section(name, false, false, source);
     m_object.AppendSection(std::auto_ptr<Section>(section));
@@ -194,7 +195,7 @@ CoffObject::AppendSection(llvm::StringRef name,
 }
 
 void
-CoffObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
+CoffObject::DirGasSection(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
@@ -292,7 +293,7 @@ CoffObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
             {
                 char print_flag[2] = {flagstr[i], 0};
                 diags.Report(flags_nv.getValueRange().getBegin()
-                             .getFileLocWithOffset(i),
+                             .getLocWithOffset(i),
                              diag::warn_unrecognized_section_attribute)
                     << print_flag;
             }
@@ -366,7 +367,7 @@ CoffObject::DirSectionInitHelpers(DirHelpers& helpers,
 }
 
 void
-CoffObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
+CoffObject::DirSection(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
@@ -443,14 +444,14 @@ CoffObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-CoffObject::DirIdent(DirectiveInfo& info, Diagnostic& diags)
+CoffObject::DirIdent(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     DirIdentCommon(*this, ".comment", info, diags);
 }
 
 void
-CoffObject::DirGasDef(DirectiveInfo& info, Diagnostic& diags)
+CoffObject::DirGasDef(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (m_def_sym)
     {
@@ -475,7 +476,7 @@ CoffObject::DirGasDef(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-CoffObject::DirGasScl(DirectiveInfo& info, Diagnostic& diags)
+CoffObject::DirGasScl(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!m_def_sym)
     {
@@ -492,7 +493,7 @@ CoffObject::DirGasScl(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-CoffObject::DirGasType(DirectiveInfo& info, Diagnostic& diags)
+CoffObject::DirGasType(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!m_def_sym)
     {
@@ -509,7 +510,7 @@ CoffObject::DirGasType(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-CoffObject::DirGasEndef(DirectiveInfo& info, Diagnostic& diags)
+CoffObject::DirGasEndef(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!m_def_sym)
     {
@@ -520,7 +521,7 @@ CoffObject::DirGasEndef(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-CoffObject::DirSecRel32(DirectiveInfo& info, Diagnostic& diags)
+CoffObject::DirSecRel32(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     NameValues& nvs = info.getNameValues();
     for (NameValues::iterator i=nvs.begin(), end=nvs.end(); i != end; ++i)

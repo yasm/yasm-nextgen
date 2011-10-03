@@ -36,7 +36,7 @@
 
 namespace yasm
 {
-class Diagnostic;
+class DiagnosticsEngine;
 class DirectiveInfo;
 class Expr;
 class IntNum;
@@ -59,12 +59,12 @@ public:
     void Output(llvm::raw_fd_ostream& os,
                 bool all_syms,
                 DebugFormat& dbgfmt,
-                Diagnostic& diags);
+                DiagnosticsEngine& diags);
 
     Section* AddDefaultSection();
     Section* AppendSection(llvm::StringRef name,
                            SourceLocation source,
-                           Diagnostic& diags);
+                           DiagnosticsEngine& diags);
 
     static llvm::StringRef getName() { return "Flat format binary"; }
     static llvm::StringRef getKeyword() { return "bin"; }
@@ -79,16 +79,16 @@ public:
     { return false; }
 
 private:
-    void DirSection(DirectiveInfo& info, Diagnostic& diags);
-    void DirOrg(DirectiveInfo& info, Diagnostic& diags);
-    void DirMap(DirectiveInfo& info, Diagnostic& diags);
+    void DirSection(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirOrg(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirMap(DirectiveInfo& info, DiagnosticsEngine& diags);
     bool setMapFilename(const NameValue& nv,
                         SourceLocation dir_source,
-                        Diagnostic& diags);
+                        DiagnosticsEngine& diags);
 
     void OutputMap(const IntNum& origin,
                    const BinGroups& groups,
-                   Diagnostic& diags) const;
+                   DiagnosticsEngine& diags) const;
 
     enum
     {

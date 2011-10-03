@@ -146,7 +146,7 @@ public:
     /// getEndLocation - Return a source location identifier one past the end
     /// of this token.
     SourceLocation getEndLocation() const
-    { return m_loc.getFileLocWithOffset(m_len); }
+    { return m_loc.getLocWithOffset(m_len); }
 
     /// getSourceRange - Return a source range for the token.
     SourceRange getSourceRange() const

@@ -142,7 +142,7 @@ Lexer::getSourceLocation(const char* loc, unsigned int tok_len) const
     // the file id from FileLoc with the offset specified.
     unsigned char_no = loc-m_buf_start;
     assert(m_file_loc.isFileID() && "Must be lexing from a file");
-    return m_file_loc.getFileLocWithOffset(char_no);
+    return m_file_loc.getLocWithOffset(char_no);
 }
 
 DiagnosticBuilder

@@ -636,7 +636,7 @@ Value::FinalizeScan(Expr& e, bool ssym_ok, int* pos)
 }
 
 bool
-Value::Finalize(Diagnostic& diags, unsigned int err_too_complex)
+Value::Finalize(DiagnosticsEngine& diags, unsigned int err_too_complex)
 {
     if (!m_abs)
         return true;
@@ -746,7 +746,7 @@ Value::CalcPCRelSub(/*@out@*/ IntNum* out, Location loc) const
 }
 
 bool
-Value::getIntNum(IntNum* out, bool calc_bc_dist, Diagnostic& diags)
+Value::getIntNum(IntNum* out, bool calc_bc_dist, DiagnosticsEngine& diags)
 {
     // This code could be written more simply, but this is a very hot method,
     // so we need to shortcut all of the common cases.
@@ -818,7 +818,9 @@ Value::ConfigureOutput(NumericOutput* num_out) const
 }
 
 bool
-Value::OutputBasic(NumericOutput& num_out, IntNum* outval, Diagnostic& diags)
+Value::OutputBasic(NumericOutput& num_out,
+                   IntNum* outval,
+                   DiagnosticsEngine& diags)
 {
     // This code could be written more simply, but this is a very hot method,
     // so we need to shortcut all of the common cases.

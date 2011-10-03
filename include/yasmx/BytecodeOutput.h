@@ -59,7 +59,7 @@ class YASM_LIB_EXPORT BytecodeOutput
 {
 public:
     /// Constructor.
-    BytecodeOutput(Diagnostic& diags);
+    BytecodeOutput(DiagnosticsEngine& diags);
 
     /// Destructor.
     virtual ~BytecodeOutput();
@@ -72,7 +72,7 @@ public:
     Bytes& getScratch();
 
     /// Get the diagnostic reporter.
-    Diagnostic& getDiagnostics() const { return m_diags; }
+    DiagnosticsEngine& getDiagnostics() const { return m_diags; }
 
     /// Diagnostic reporting wrapper.
     DiagnosticBuilder Diag(SourceLocation pos, unsigned diag_id)
@@ -169,7 +169,7 @@ private:
     BytecodeOutput(const BytecodeOutput&);                  // not implemented
     const BytecodeOutput& operator=(const BytecodeOutput&); // not implemented
 
-    Diagnostic& m_diags;        ///< Diagnostic reporting
+    DiagnosticsEngine& m_diags; ///< Diagnostic reporting
     Bytes m_scratch;            ///< Reusable scratch area
     Bytes m_bc_scratch;         ///< Reusable scratch area for Bytecode class
     unsigned long m_num_output; ///< Total number of bytes+gap output
@@ -225,7 +225,7 @@ BytecodeOutput::OutputBytes(const Bytes& bytes, SourceLocation source)
 class YASM_LIB_EXPORT BytecodeNoOutput : public BytecodeOutput
 {
 public:
-    BytecodeNoOutput(Diagnostic& diags) : BytecodeOutput(diags) {}
+    BytecodeNoOutput(DiagnosticsEngine& diags) : BytecodeOutput(diags) {}
     ~BytecodeNoOutput();
 
     /// Returns false.
@@ -246,7 +246,7 @@ protected:
 class YASM_LIB_EXPORT BytecodeStreamOutput : public BytecodeOutput
 {
 public:
-    BytecodeStreamOutput(llvm::raw_ostream& os, Diagnostic& diags)
+    BytecodeStreamOutput(llvm::raw_ostream& os, DiagnosticsEngine& diags)
         : BytecodeOutput(diags), m_os(os)
     {}
     ~BytecodeStreamOutput();

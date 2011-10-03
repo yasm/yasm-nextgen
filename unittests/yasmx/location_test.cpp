@@ -24,6 +24,7 @@
 //
 #include <gtest/gtest.h>
 
+#include "yasmx/Basic/FileManager.h"
 #include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"
@@ -87,9 +88,12 @@ TEST_F(LocationTest, CalcDist)
 
 TEST_F(LocationTest, SimplifyCalcDistNoBC)
 {
-    yasmunit::MockDiagnosticClient mock_client;
-    Diagnostic diags(&mock_client);
-    SourceManager smgr(diags);
+    yasmunit::MockDiagnosticConsumer mock_consumer;
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &mock_consumer, false);
+    FileSystemOptions opts;
+    FileManager fmgr(opts);
+    SourceManager smgr(diags, fmgr);
     diags.setSourceManager(&smgr);
 
     Expr e;
@@ -109,9 +113,12 @@ TEST_F(LocationTest, SimplifyCalcDistNoBC)
 
 TEST_F(LocationTest, SimplifyCalcDist)
 {
-    yasmunit::MockDiagnosticClient mock_client;
-    Diagnostic diags(&mock_client);
-    SourceManager smgr(diags);
+    yasmunit::MockDiagnosticConsumer mock_consumer;
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &mock_consumer, false);
+    FileSystemOptions opts;
+    FileManager fmgr(opts);
+    SourceManager smgr(diags, fmgr);
     diags.setSourceManager(&smgr);
 
     Expr e;

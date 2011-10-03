@@ -50,7 +50,7 @@ class YASM_STD_EXPORT DwarfCfiOutput
 {
 public:
     DwarfCfiOutput(BytecodeContainer& container_,
-                   Diagnostic& diags_,
+                   DiagnosticsEngine& diags_,
                    const DwarfDebug& debug_,
                    Object& object_,
                    bool eh_frame_)
@@ -62,7 +62,7 @@ public:
     {}
 
     BytecodeContainer& container;
-    Diagnostic& diags;
+    DiagnosticsEngine& diags;
     const DwarfDebug& debug;
     Object& object;
     bool eh_frame;

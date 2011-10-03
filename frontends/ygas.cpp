@@ -35,9 +35,12 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/system_error.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/FileManager.h"
 #include "yasmx/Basic/SourceManager.h"
+#include "yasmx/Frontend/DiagnosticOptions.h"
+#include "yasmx/Frontend/TextDiagnosticPrinter.h"
 #include "yasmx/Parse/HeaderSearch.h"
 #include "yasmx/Parse/Parser.h"
 #include "yasmx/Support/registry.h"
@@ -58,8 +61,6 @@
 #endif
 
 #include "frontends/license.cpp"
-#include "frontends/DiagnosticOptions.h"
-#include "frontends/TextDiagnosticPrinter.h"
 
 
 // Preprocess-only buffer size
@@ -204,7 +205,7 @@ static cl::list<bool> enable_warnings("warn",
 static cl::list<std::string> unknown_options(cl::Sink);
 
 static void
-ApplyWarningSettings(yasm::Diagnostic& diags)
+ApplyWarningSettings(yasm::DiagnosticsEngine& diags)
 {
     // Disable init-nobits and uninit-contents by default.
     diags.setDiagnosticGroupMapping("init-nobits", yasm::diag::MAP_IGNORE);
@@ -360,7 +361,7 @@ ConfigureObject(yasm::Object& object)
 }
 
 static int
-do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
+do_assemble(yasm::SourceManager& source_mgr, yasm::DiagnosticsEngine& diags)
 {
     // Apply warning settings
     ApplyWarningSettings(diags);
@@ -368,7 +369,7 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
     // Determine objfmt_bits based on -32 and -64 options
     std::string objfmt_bits = GetBitsSetting();
 
-    yasm::FileManager file_mgr;
+    yasm::FileManager& file_mgr = source_mgr.getFileManager();
     yasm::Assembler assembler("x86", YGAS_OBJFMT_BASE + objfmt_bits, diags,
                               dump_object);
     yasm::HeaderSearch headers(file_mgr);
@@ -397,7 +398,14 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
     // open the input file or STDIN (for filename of "-")
     if (in_filename == "-")
     {
-        source_mgr.createMainFileIDForMemBuffer(llvm::MemoryBuffer::getSTDIN());
+        llvm::OwningPtr<llvm::MemoryBuffer> my_stdin;
+        if (llvm::error_code err = llvm::MemoryBuffer::getSTDIN(my_stdin))
+        {
+            diags.Report(yasm::SourceLocation(), yasm::diag::fatal_file_open)
+                << in_filename << err.message();
+            return EXIT_FAILURE;
+        }
+        source_mgr.createMainFileIDForMemBuffer(my_stdin.take());
     }
     else
     {
@@ -408,7 +416,7 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
                 << in_filename;
             return EXIT_FAILURE;
         }
-        source_mgr.createMainFileID(in, yasm::SourceLocation());
+        source_mgr.createMainFileID(in);
     }
 
     // Initialize the object.
@@ -541,8 +549,12 @@ main(int argc, char* argv[])
     diag_opts.ShowOptionNames = 1;
     diag_opts.ShowSourceRanges = 1;
     yasm::TextDiagnosticPrinter diag_printer(llvm::errs(), diag_opts);
-    yasm::Diagnostic diags(&diag_printer);
-    yasm::SourceManager source_mgr(diags);
+    llvm::IntrusiveRefCntPtr<yasm::DiagnosticIDs>
+        diagids(new yasm::DiagnosticIDs);
+    yasm::DiagnosticsEngine diags(diagids, &diag_printer, false);
+    yasm::FileSystemOptions opts;
+    yasm::FileManager file_mgr(opts);
+    yasm::SourceManager source_mgr(diags, file_mgr);
     diags.setSourceManager(&source_mgr);
     diag_printer.setPrefix("ygas");
 

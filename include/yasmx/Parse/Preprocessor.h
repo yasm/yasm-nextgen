@@ -56,10 +56,12 @@ class HeaderSearch;
 class YASM_LIB_EXPORT Preprocessor
 {
 public:
-    Preprocessor(Diagnostic& diags, SourceManager& sm, HeaderSearch& headers);
+    Preprocessor(DiagnosticsEngine& diags,
+                 SourceManager& sm,
+                 HeaderSearch& headers);
     virtual ~Preprocessor();
 
-    Diagnostic& getDiagnostics() const { return m_diags; }
+    DiagnosticsEngine& getDiagnostics() const { return m_diags; }
     SourceManager& getSourceManager() const { return m_source_mgr; }
     HeaderSearch& getHeaderSearch() const { return m_header_info; }
     IdentifierTable& getIdentifierTable() { return m_identifiers; }
@@ -313,7 +315,7 @@ public:
     bool isInPrimaryFile() const;
 
 protected:
-    Diagnostic& m_diags;
+    DiagnosticsEngine& m_diags;
     FileManager& m_file_mgr;
     SourceManager& m_source_mgr;
     HeaderSearch& m_header_info;

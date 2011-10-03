@@ -45,7 +45,7 @@ namespace yasm
 {
 
 class DebugFormat;
-class Diagnostic;
+class DiagnosticsEngine;
 class Directives;
 class Object;
 class ObjectFormatModule;
@@ -85,7 +85,7 @@ public:
     /// @param sm           source manager (main file is object file to read)
     /// @param diags        diagnostic reporting
     /// @return False if an error occurred.
-    virtual bool Read(SourceManager& sm, Diagnostic& diags);
+    virtual bool Read(SourceManager& sm, DiagnosticsEngine& diags);
 
     /// Write out (post-optimized) sections to the object file.
     /// This function may call #Symbol and #Object functions as necessary
@@ -99,7 +99,7 @@ public:
     virtual void Output(llvm::raw_fd_ostream& os,
                         bool all_syms,
                         DebugFormat& dbgfmt,
-                        Diagnostic& diags) = 0;
+                        DiagnosticsEngine& diags) = 0;
 
     /// Add a default section to an object.
     /// @return Default section.
@@ -115,7 +115,7 @@ public:
     /// @return New section.
     virtual Section* AppendSection(llvm::StringRef name,
                                    SourceLocation source,
-                                   Diagnostic& diags) = 0;
+                                   DiagnosticsEngine& diags) = 0;
 
 private:
     ObjectFormat(const ObjectFormat&);                  // not implemented

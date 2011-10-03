@@ -36,7 +36,7 @@ namespace yasm
 {
 
 class Bytecode;
-class Diagnostic;
+class DiagnosticsEngine;
 class IntNum;
 class Object;
 class Section;
@@ -64,8 +64,8 @@ public:
     void AssignStartRecurse(IntNum& start,
                             IntNum& last,
                             IntNum& vdelta,
-                            Diagnostic& diags);
-    void AssignVStartRecurse(IntNum& start, Diagnostic& diags);
+                            DiagnosticsEngine& diags);
+    void AssignVStartRecurse(IntNum& start, DiagnosticsEngine& diags);
 
     Section& m_section;
     BinSection& m_bsd;
@@ -79,7 +79,7 @@ public:
 class YASM_STD_EXPORT BinLink
 {
 public:
-    BinLink(Object& object, Diagnostic& diags);
+    BinLink(Object& object, DiagnosticsEngine& diags);
     ~BinLink();
 
 #ifdef WITH_XML
@@ -101,7 +101,7 @@ private:
     void OutputBytecode(Bytecode& bc);
 
     Object& m_object;
-    Diagnostic& m_diags;
+    DiagnosticsEngine& m_diags;
 
     BinGroups m_lma_groups, m_vma_groups;
     stdx::ptr_vector_owner<BinGroup> m_lma_groups_owner, m_vma_groups_owner;

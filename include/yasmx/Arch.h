@@ -49,7 +49,7 @@ namespace yasm
 class ArchModule;
 class BytecodeContainer;
 class Bytes;
-class Diagnostic;
+class DiagnosticsEngine;
 class Directives;
 class EffAddr;
 class Expr;
@@ -340,7 +340,8 @@ public:
     /// @return Identifier type (empty if unrecognized)
     virtual InsnPrefix ParseCheckInsnPrefix(llvm::StringRef id,
                                             SourceLocation source,
-                                            Diagnostic& diags) const = 0;
+                                            DiagnosticsEngine& diags)
+        const = 0;
 
     /// Check an generic identifier to see if it matches architecture
     /// specific names for registers or target modifiers.  Unrecognized
@@ -349,7 +350,7 @@ public:
     /// @return Identifier type (empty if unrecognized)
     virtual RegTmod ParseCheckRegTmod(llvm::StringRef id,
                                       SourceLocation source,
-                                      Diagnostic& diags) const = 0;
+                                      DiagnosticsEngine& diags) const = 0;
 
     /// Get NOP fill patterns for 1-15 bytes of fill.
     /// @return 16-entry array of arrays; [0] is unused,

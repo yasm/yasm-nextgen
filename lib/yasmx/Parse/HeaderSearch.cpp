@@ -30,7 +30,7 @@
 //
 #include "yasmx/Parse/HeaderSearch.h"
 
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 #include "llvm/ADT/SmallString.h"
 #include "yasmx/Basic/FileManager.h"
 #include "yasmx/Parse/IdentifierTable.h"
@@ -111,7 +111,7 @@ const FileEntry *DirectoryLookup::LookupFile(llvm::StringRef Filename,
   TmpDir += getDir()->getName();
   TmpDir.push_back('/');
   TmpDir.append(Filename.begin(), Filename.end());
-  return HS.getFileMgr().getFile(TmpDir.begin(), TmpDir.end());
+  return HS.getFileMgr().getFile(TmpDir);
 }
 
 
@@ -133,7 +133,7 @@ HeaderSearch::LookupFile(llvm::StringRef Filename,
                          const FileEntry *CurFileEnt)
 {
   // If 'Filename' is absolute, check to see if it exists and no searching.
-  if (llvm::sys::Path::isAbsolute(Filename.begin(), Filename.size())) {
+  if (llvm::sys::path::is_absolute(Filename)) {
     CurDir = 0;
 
     // If this was an #include_next "/absolute/file", fail.
@@ -155,7 +155,7 @@ HeaderSearch::LookupFile(llvm::StringRef Filename,
     TmpDir += CurFileEnt->getDir()->getName();
     TmpDir.push_back('/');
     TmpDir.append(Filename.begin(), Filename.end());
-    if (const FileEntry *FE = FileMgr.getFile(TmpDir.str())) {
+    if (const FileEntry *FE = FileMgr.getFile(TmpDir)) {
       // Leave CurDir unset.
       return FE;
     }

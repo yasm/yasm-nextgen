@@ -39,7 +39,7 @@ namespace yasm
 {
 
 class Bytes;
-class Diagnostic;
+class DiagnosticsEngine;
 class EndianState;
 class Object;
 class Section;
@@ -86,7 +86,7 @@ struct YASM_STD_EXPORT ElfConfig
 
     unsigned long WriteSymbolTable(llvm::raw_ostream& os,
                                    Object& object,
-                                   Diagnostic& diags,
+                                   DiagnosticsEngine& diags,
                                    Bytes& scratch) const;
     bool ReadSymbolTable(const llvm::MemoryBuffer&  in,
                          const ElfSection&          symtab_sect,
@@ -94,7 +94,7 @@ struct YASM_STD_EXPORT ElfConfig
                          Object&                    object,
                          const StringTable&         strtab,
                          Section*                   sections[],
-                         Diagnostic&                diags) const;
+                         DiagnosticsEngine&         diags) const;
 
     std::string getRelocSectionName(const std::string& basesect) const;
 

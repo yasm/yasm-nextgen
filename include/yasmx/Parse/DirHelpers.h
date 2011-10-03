@@ -42,7 +42,7 @@
 namespace yasm
 {
 
-class Diagnostic;
+class DiagnosticsEngine;
 class Expr;
 class IntNum;
 class Object;
@@ -51,7 +51,8 @@ class SourceLocation;
 /// Directive helper function.
 /// @param nv       name/value
 /// @param diags    diagnostic reporting
-typedef TR1::function<void (NameValue& nv, Diagnostic& diags)> DirHelper;
+typedef TR1::function<void (NameValue& nv,
+                            DiagnosticsEngine& diags)> DirHelper;
 
 /// Helper class to make writing directive handlers easier.
 class YASM_LIB_EXPORT DirHelpers
@@ -83,10 +84,10 @@ public:
         (NameValues::iterator nv_first,
          NameValues::iterator nv_last,
          SourceLocation dir_source,
-         Diagnostic& diags,
+         DiagnosticsEngine& diags,
          TR1::function<bool (NameValue& nv,
                              SourceLocation dir_source,
-                             Diagnostic& diags)>
+                             DiagnosticsEngine& diags)>
              helper_nameval);
 
 private:
@@ -104,7 +105,7 @@ private:
 /// @param val      value to set
 inline void
 DirResetFlag(NameValue& nv,
-             Diagnostic& diags,
+             DiagnosticsEngine& diags,
              unsigned long* out,
              unsigned long val)
 {
@@ -120,7 +121,7 @@ DirResetFlag(NameValue& nv,
 /// @param flag     flag bit(s) to set
 inline void
 DirSetFlag(NameValue& nv,
-           Diagnostic& diags,
+           DiagnosticsEngine& diags,
            unsigned long* out,
            unsigned long flag)
 {
@@ -137,7 +138,7 @@ DirSetFlag(NameValue& nv,
 /// @param flag     flag bit(s) to clear
 inline void
 DirClearFlag(NameValue& nv,
-             Diagnostic& diags,
+             DiagnosticsEngine& diags,
              unsigned long* out,
              unsigned long flag)
 {
@@ -154,7 +155,7 @@ DirClearFlag(NameValue& nv,
 /// @param out_set  reference that is set to 1 when called
 YASM_LIB_EXPORT
 void DirIntNumPower2(NameValue& nv,
-                     Diagnostic& diags,
+                     DiagnosticsEngine& diags,
                      Object* obj,
                      IntNum* out,
                      bool* out_set);
@@ -168,7 +169,7 @@ void DirIntNumPower2(NameValue& nv,
 /// @param out_set  reference that is set to 1 when called
 YASM_LIB_EXPORT
 void DirIntNum(NameValue& nv,
-               Diagnostic& diags,
+               DiagnosticsEngine& diags,
                Object* obj,
                IntNum* out,
                bool* out_set);
@@ -182,7 +183,7 @@ void DirIntNum(NameValue& nv,
 /// @param out_set  reference that is set to 1 when called
 YASM_LIB_EXPORT
 void DirExpr(NameValue& nv,
-             Diagnostic& diags,
+             DiagnosticsEngine& diags,
              Object* obj,
              std::auto_ptr<Expr>* out,
              bool* out_set);
@@ -196,7 +197,7 @@ void DirExpr(NameValue& nv,
 typedef const Register* RegisterPtr;
 YASM_LIB_EXPORT
 void DirRegister(NameValue& nv,
-                 Diagnostic& diags,
+                 DiagnosticsEngine& diags,
                  RegisterPtr* out,
                  bool* out_set);
 
@@ -209,7 +210,7 @@ void DirRegister(NameValue& nv,
 /// @param out_set  reference that is set to 1 when called
 YASM_LIB_EXPORT
 void DirString(NameValue& nv,
-               Diagnostic& diags,
+               DiagnosticsEngine& diags,
                std::string* out,
                bool* out_set);
 
@@ -222,7 +223,7 @@ void DirString(NameValue& nv,
 YASM_LIB_EXPORT
 bool DirNameValueWarn(NameValue& nv,
                       SourceLocation dir_source,
-                      Diagnostic& diags);
+                      DiagnosticsEngine& diags);
 
 } // namespace yasm
 

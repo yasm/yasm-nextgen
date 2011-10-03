@@ -93,19 +93,22 @@ FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/include/yasmx/Basic)
 ADD_CUSTOM_COMMAND(
     OUTPUT
         ${CMAKE_BINARY_DIR}/lib/yasmx/Basic/DiagnosticGroups.cpp
-        ${CMAKE_BINARY_DIR}/lib/yasmx/Basic/DiagnosticCategories.cpp
+        ${CMAKE_BINARY_DIR}/include/yasmx/Basic/DiagnosticCategories.h
+        ${CMAKE_BINARY_DIR}/lib/yasmx/Basic/CategoryNameTable.inc
         ${CMAKE_BINARY_DIR}/include/yasmx/Basic/DiagnosticKinds.h
         ${CMAKE_BINARY_DIR}/lib/yasmx/Basic/StaticDiagInfo.inc
     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/include/yasmx/Basic/gen_diag.py
         ${CMAKE_BINARY_DIR}/lib/yasmx/Basic/DiagnosticGroups.cpp
-        ${CMAKE_BINARY_DIR}/lib/yasmx/Basic/DiagnosticCategories.cpp
+        ${CMAKE_BINARY_DIR}/include/yasmx/Basic/DiagnosticCategories.h
+        ${CMAKE_BINARY_DIR}/lib/yasmx/Basic/CategoryNameTable.inc
         ${CMAKE_BINARY_DIR}/include/yasmx/Basic/DiagnosticKinds.h
         ${CMAKE_BINARY_DIR}/lib/yasmx/Basic/StaticDiagInfo.inc
     MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/include/yasmx/Basic/gen_diag.py
     )
 ADD_CUSTOM_TARGET(DiagnosticIncludes
     DEPENDS ${CMAKE_BINARY_DIR}/lib/yasmx/Basic/DiagnosticGroups.cpp
-    DEPENDS ${CMAKE_BINARY_DIR}/lib/yasmx/Basic/DiagnosticCategories.cpp
+    DEPENDS ${CMAKE_BINARY_DIR}/include/yasmx/Basic/DiagnosticCategories.h
+    DEPENDS ${CMAKE_BINARY_DIR}/lib/yasmx/Basic/CategoryNameTable.inc
     DEPENDS ${CMAKE_BINARY_DIR}/include/yasmx/Basic/DiagnosticKinds.h
     DEPENDS ${CMAKE_BINARY_DIR}/lib/yasmx/Basic/StaticDiagInfo.inc)
 

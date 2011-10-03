@@ -47,7 +47,7 @@ public:
 
     void ApplyPrefixes(unsigned int def_opersize_64,
                        const Insn::Prefixes& prefixes,
-                       Diagnostic& diags,
+                       DiagnosticsEngine& diags,
                        unsigned char* rex = 0);
     void Finish();
 

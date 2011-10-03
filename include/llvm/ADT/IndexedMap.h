@@ -20,19 +20,14 @@
 #ifndef LLVM_ADT_INDEXEDMAP_H
 #define LLVM_ADT_INDEXEDMAP_H
 
+#include "llvm/ADT/STLExtras.h"
 #include <cassert>
 #include <functional>
 #include <vector>
 
 namespace llvm {
 
-  struct IdentityFunctor : public std::unary_function<unsigned, unsigned> {
-    unsigned operator()(unsigned Index) const {
-      return Index;
-    }
-  };
-
-  template <typename T, typename ToIndexT = IdentityFunctor>
+template <typename T, typename ToIndexT = llvm::identity<unsigned> >
   class IndexedMap {
     typedef typename ToIndexT::argument_type IndexT;
     typedef std::vector<T> StorageT;
@@ -55,6 +50,14 @@ namespace llvm {
       return storage_[toIndex_(n)];
     }
 
+    void reserve(typename StorageT::size_type s) {
+      storage_.reserve(s);
+    }
+
+    void resize(typename StorageT::size_type s) {
+      storage_.resize(s, nullVal_);
+    }
+
     void clear() {
       storage_.clear();
     }
@@ -62,7 +65,11 @@ namespace llvm {
     void grow(IndexT n) {
       unsigned NewSize = toIndex_(n) + 1;
       if (NewSize > storage_.size())
-        storage_.resize(NewSize, nullVal_);
+        resize(NewSize);
+    }
+
+    bool inBounds(IndexT n) const {
+      return toIndex_(n) < storage_.size();
     }
 
     typename StorageT::size_type size() const {

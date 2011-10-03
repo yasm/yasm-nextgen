@@ -50,7 +50,7 @@ X86Common::X86Common()
 void
 X86Common::ApplyPrefixes(unsigned int def_opersize_64,
                          const Insn::Prefixes& prefixes,
-                         Diagnostic& diags,
+                         DiagnosticsEngine& diags,
                          unsigned char* rex)
 {
     bool first = true;

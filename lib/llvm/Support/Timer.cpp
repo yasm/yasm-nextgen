@@ -17,8 +17,8 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Format.h"
-#include "llvm/System/Mutex.h"
-#include "llvm/System/Process.h"
+#include "llvm/Support/Mutex.h"
+#include "llvm/Support/Process.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 using namespace llvm;
@@ -168,10 +168,8 @@ void Timer::stopTimer() {
 static void printVal(double Val, double Total, raw_ostream &OS) {
   if (Total < 1e-7)   // Avoid dividing by zero.
     OS << "        -----     ";
-  else {
-    OS << "  " << format("%7.4f", Val) << " (";
-    OS << format("%5.1f", Val*100/Total) << "%)";
-  }
+  else
+    OS << format("  %7.4f (%5.1f%%)", Val, Val*100/Total);
 }
 
 void TimeRecord::print(const TimeRecord &Total, raw_ostream &OS) const {
@@ -184,9 +182,6 @@ void TimeRecord::print(const TimeRecord &Total, raw_ostream &OS) const {
   printVal(getWallTime(), Total.getWallTime(), OS);
   
   OS << "  ";
-  
-  if (Total.getMemUsed())
-    OS << format("%9lld", (long long)getMemUsed()) << "  ";
 }
 
 
@@ -332,11 +327,9 @@ void TimerGroup::PrintQueuedTimers(raw_ostream &OS) {
   // If this is not an collection of ungrouped times, print the total time.
   // Ungrouped timers don't really make sense to add up.  We still print the
   // TOTAL line to make the percentages make sense.
-  if (this != DefaultTimerGroup) {
-    OS << "  Total Execution Time: ";
-    OS << format("%5.4f", Total.getProcessTime()) << " seconds (";
-    OS << format("%5.4f", Total.getWallTime()) << " wall clock)\n";
-  }
+  if (this != DefaultTimerGroup)
+    OS << format("  Total Execution Time: %5.4f seconds (%5.4f wall clock)\n",
+                 Total.getProcessTime(), Total.getWallTime());
   OS << '\n';
   
   if (Total.getUserTime())

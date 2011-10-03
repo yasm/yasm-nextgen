@@ -122,10 +122,10 @@ public:
     // Perform lookup of instruction/register data.
     void DoInsnLookup(const Arch& arch,
                       SourceLocation source,
-                      Diagnostic& diags);
+                      DiagnosticsEngine& diags);
     void DoRegLookup(const Arch& arch,
                      SourceLocation source,
-                     Diagnostic& diags);
+                     DiagnosticsEngine& diags);
 
     bool isUnknown()
     {
@@ -225,10 +225,10 @@ public:
     }
   
     /// Return the identifier token info for the specified named identifier.
-    IdentifierInfo& get(const char* name_start, const char* name_end)
+    IdentifierInfo& get(llvm::StringRef name)
     {
         llvm::StringMapEntry<IdentifierInfo*>& entry =
-            m_hash_table.GetOrCreateValue(name_start, name_end);
+            m_hash_table.GetOrCreateValue(name);
     
         IdentifierInfo* ii = entry.getValue();
         if (ii) return *ii;
@@ -243,11 +243,6 @@ public:
         ii->m_entry = &entry;
 
         return *ii;
-    }
-
-    IdentifierInfo& get(llvm::StringRef name)
-    {
-        return get(name.begin(), name.end());
     }
 
     typedef HashTable::const_iterator iterator;

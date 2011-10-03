@@ -68,7 +68,7 @@ class YASM_STD_EXPORT NasmParser : public ParserImpl
 {
 public:
     NasmParser(const ParserModule& module,
-               Diagnostic& diags,
+               DiagnosticsEngine& diags,
                SourceManager& sm,
                HeaderSearch& headers);
     ~NasmParser();
@@ -78,7 +78,7 @@ public:
     static llvm::StringRef getName() { return "NASM-compatible parser"; }
     static llvm::StringRef getKeyword() { return "nasm"; }
 
-    void Parse(Object& object, Directives& dirs, Diagnostic& diags);
+    void Parse(Object& object, Directives& dirs, DiagnosticsEngine& diags);
 
 private:
     friend class NasmParseDirExprTerm;
@@ -126,8 +126,8 @@ private:
 
     SymbolRef ParseSymbol(IdentifierInfo* ii, bool* local = 0);
 
-    void DirAbsolute(DirectiveInfo& info, Diagnostic& diags);
-    void DirAlign(DirectiveInfo& info, Diagnostic& diags);
+    void DirAbsolute(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirAlign(DirectiveInfo& info, DiagnosticsEngine& diags);
 
     void DoDirective(llvm::StringRef name, DirectiveInfo& info);
 

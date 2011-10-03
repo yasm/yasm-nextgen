@@ -27,7 +27,7 @@
 #include "yasmx/Assembler.h"
 
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Parse/Directive.h"
@@ -58,7 +58,7 @@ public:
 
 Assembler::Assembler(llvm::StringRef arch_keyword,
                      llvm::StringRef objfmt_keyword,
-                     Diagnostic& diags,
+                     DiagnosticsEngine& diags,
                      Assembler::ObjectDumpTime dump_time)
     : m_arch_module(LoadModule<ArchModule>(arch_keyword).release()),
       m_parser_module(0),
@@ -108,7 +108,7 @@ Assembler::setObjectFilename(llvm::StringRef obj_filename)
 }
 
 bool
-Assembler::setMachine(llvm::StringRef machine, Diagnostic& diags)
+Assembler::setMachine(llvm::StringRef machine, DiagnosticsEngine& diags)
 {
     if (!m_arch->setMachine(machine))
     {
@@ -123,7 +123,7 @@ Assembler::setMachine(llvm::StringRef machine, Diagnostic& diags)
 }
 
 bool
-Assembler::setParser(llvm::StringRef parser_keyword, Diagnostic& diags)
+Assembler::setParser(llvm::StringRef parser_keyword, DiagnosticsEngine& diags)
 {
     // Ensure architecture supports parser.
     if (!m_arch->setParser(parser_keyword))
@@ -157,7 +157,8 @@ Assembler::isOkDebugFormat(llvm::StringRef dbgfmt_keyword) const
 }
 
 bool
-Assembler::setDebugFormat(llvm::StringRef dbgfmt_keyword, Diagnostic& diags)
+Assembler::setDebugFormat(llvm::StringRef dbgfmt_keyword,
+                          DiagnosticsEngine& diags)
 {
     // Check to see if the requested debug format is in the allowed list
     // for the active object format.
@@ -182,7 +183,8 @@ Assembler::setDebugFormat(llvm::StringRef dbgfmt_keyword, Diagnostic& diags)
 }
 
 bool
-Assembler::setListFormat(llvm::StringRef listfmt_keyword, Diagnostic& diags)
+Assembler::setListFormat(llvm::StringRef listfmt_keyword,
+                         DiagnosticsEngine& diags)
 {
     std::auto_ptr<ListFormatModule> listfmt_module =
         LoadModule<ListFormatModule>(listfmt_keyword);
@@ -197,7 +199,7 @@ Assembler::setListFormat(llvm::StringRef listfmt_keyword, Diagnostic& diags)
 }
 
 bool
-Assembler::InitObject(SourceManager& source_mgr, Diagnostic& diags)
+Assembler::InitObject(SourceManager& source_mgr, DiagnosticsEngine& diags)
 {
     llvm::StringRef in_filename =
         source_mgr.getBuffer(source_mgr.getMainFileID())->getBufferIdentifier();
@@ -206,19 +208,17 @@ Assembler::InitObject(SourceManager& source_mgr, Diagnostic& diags)
     // determine the object filename if not specified
     if (m_obj_filename.empty())
     {
-        if (in_filename[0] == '\0')
+        if (in_filename[0] == '\0' || in_filename == "<stdin>")
             // Default to yasm.out if no obj filename specified
             m_obj_filename = "yasm.out";
         else
         {
             // replace (or add) extension to base filename
-            llvm::sys::Path fn(in_filename);
-            llvm::StringRef base_filename = fn.getBasename();
-            if (base_filename.empty())
+            if (!llvm::sys::path::has_stem(in_filename))
                 m_obj_filename = "yasm.out";
             else
             {
-                m_obj_filename = base_filename;
+                m_obj_filename = llvm::sys::path::stem(in_filename);
                 m_obj_filename += m_objfmt_module->getExtension();
                 if (m_obj_filename == in_filename)
                     m_obj_filename = "yasm.out";
@@ -286,7 +286,7 @@ Assembler::InitObject(SourceManager& source_mgr, Diagnostic& diags)
 
 Parser&
 Assembler::InitParser(SourceManager& source_mgr,
-                      Diagnostic& diags,
+                      DiagnosticsEngine& diags,
                       HeaderSearch& headers)
 {
     m_parser.reset(m_parser_module->Create(diags, source_mgr, headers).release());
@@ -294,9 +294,8 @@ Assembler::InitParser(SourceManager& source_mgr,
 }
 
 bool
-Assembler::Assemble(SourceManager& source_mgr, Diagnostic& diags)
+Assembler::Assemble(SourceManager& source_mgr, DiagnosticsEngine& diags)
 {
-
     llvm::StringRef parser_keyword = m_parser_module->getKeyword();
 
     // Set up directive handlers
@@ -310,6 +309,9 @@ Assembler::Assemble(SourceManager& source_mgr, Diagnostic& diags)
         m_listfmt.reset(m_listfmt_module->Create().release());
         m_listfmt->AddDirectives(dirs, parser_keyword);
     }
+
+    // Inform the diagnostic consumer we are processing a source file
+    diags.getClient()->BeginSourceFile();
 
     // Parse!
     m_parser->Parse(*m_object, dirs, diags);
@@ -338,17 +340,26 @@ Assembler::Assemble(SourceManager& source_mgr, Diagnostic& diags)
     // generate any debugging information
     m_dbgfmt->Generate(*m_objfmt, source_mgr, diags);
 
+    // Inform the diagnostic consumer we are done processing source.
+    diags.getClient()->EndSourceFile();
+
     return true;
 }
 
 bool
-Assembler::Output(llvm::raw_fd_ostream& os, Diagnostic& diags)
+Assembler::Output(llvm::raw_fd_ostream& os, DiagnosticsEngine& diags)
 {
+    // Inform the diagnostic consumer we are processing a source file
+    diags.getClient()->BeginSourceFile();
+
     // Write the object file
     m_objfmt->Output(os,
                      !m_dbgfmt_module->getKeyword().equals_lower("null"),
                      *m_dbgfmt,
                      diags);
+
+    // Inform the diagnostic consumer we are done processing source.
+    diags.getClient()->EndSourceFile();
 
     if (m_dump_time == DUMP_AFTER_OUTPUT)
         DumpXml(*m_object);

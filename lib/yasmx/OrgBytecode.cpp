@@ -44,13 +44,13 @@ public:
     ~OrgBytecode();
 
     /// Finalizes the bytecode after parsing.
-    bool Finalize(Bytecode& bc, Diagnostic& diags);
+    bool Finalize(Bytecode& bc, DiagnosticsEngine& diags);
 
     /// Calculates the minimum size of a bytecode.
     bool CalcLen(Bytecode& bc,
                  /*@out@*/ unsigned long* len,
                  const Bytecode::AddSpanFunc& add_span,
-                 Diagnostic& diags);
+                 DiagnosticsEngine& diags);
 
     /// Recalculates the bytecode's length based on an expanded span
     /// length.
@@ -62,7 +62,7 @@ public:
                 bool* keep,
                 /*@out@*/ long* neg_thres,
                 /*@out@*/ long* pos_thres,
-                Diagnostic& diags);
+                DiagnosticsEngine& diags);
 
     /// Convert a bytecode into its byte representation.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
@@ -95,7 +95,7 @@ OrgBytecode::~OrgBytecode()
 }
 
 bool
-OrgBytecode::Finalize(Bytecode& bc, Diagnostic& diags)
+OrgBytecode::Finalize(Bytecode& bc, DiagnosticsEngine& diags)
 {
     if (!ExpandEqu(m_start))
     {
@@ -131,7 +131,7 @@ bool
 OrgBytecode::CalcLen(Bytecode& bc,
                      /*@out@*/ unsigned long* len,
                      const Bytecode::AddSpanFunc& add_span,
-                     Diagnostic& diags)
+                     DiagnosticsEngine& diags)
 {
     bool keep = false;
     long neg_thres = 0;
@@ -151,7 +151,7 @@ OrgBytecode::Expand(Bytecode& bc,
                     bool* keep,
                     /*@out@*/ long* neg_thres,
                     /*@out@*/ long* pos_thres,
-                    Diagnostic& diags)
+                    DiagnosticsEngine& diags)
 {
     unsigned long start = m_start.getIntNum().getUInt();
 

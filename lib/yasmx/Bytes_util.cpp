@@ -114,7 +114,7 @@ yasm::WriteN(Bytes& bytes, const IntNum& intn, int n)
     if (bv->getBitWidth() < static_cast<unsigned int>(n*8))
     {
         tmp = *bv;
-        tmp.sext(n*8);
+        tmp = tmp.sext(n*8);
         words = tmp.getRawData();
         nwords = tmp.getNumWords();
     }

@@ -38,7 +38,7 @@
 namespace yasm
 {
 
-class Diagnostic;
+class DiagnosticsEngine;
 class DirectiveInfo;
 class Object;
 
@@ -179,10 +179,10 @@ public:
 
     InsnPrefix ParseCheckInsnPrefix(llvm::StringRef id,
                                     SourceLocation source,
-                                    Diagnostic& diags) const;
+                                    DiagnosticsEngine& diags) const;
     RegTmod ParseCheckRegTmod(llvm::StringRef id,
                               SourceLocation source,
-                              Diagnostic& diags) const;
+                              DiagnosticsEngine& diags) const;
 
     const unsigned char** getFill() const;
 
@@ -209,12 +209,12 @@ private:
     bool ParseCpu(llvm::StringRef cpuid);
 
     // Directives
-    void DirCpu(DirectiveInfo& info, Diagnostic& diags);
-    void DirBits(DirectiveInfo& info, Diagnostic& diags);
-    void DirCode16(DirectiveInfo& info, Diagnostic& diags);
-    void DirCode32(DirectiveInfo& info, Diagnostic& diags);
-    void DirCode64(DirectiveInfo& info, Diagnostic& diags);
-    void DirDefault(DirectiveInfo& info, Diagnostic& diags);
+    void DirCpu(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirBits(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirCode16(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirCode32(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirCode64(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirDefault(DirectiveInfo& info, DiagnosticsEngine& diags);
 
     // What instructions/features are enabled?
     CpuMask m_active_cpu;

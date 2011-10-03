@@ -38,14 +38,14 @@ namespace yasm
 {
 
 class Bytecode;
-class Diagnostic;
+class DiagnosticsEngine;
 class Value;
 
 /// Optimizer.  Determines jump sizes, offset setters, all offsets.
 class YASM_LIB_EXPORT Optimizer
 {
 public:
-    Optimizer(Diagnostic& diags);
+    Optimizer(DiagnosticsEngine& diags);
     ~Optimizer();
     void AddSpan(Bytecode& bc,
                  int id,

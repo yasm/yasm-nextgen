@@ -83,10 +83,12 @@ INSTANTIATE_TEST_CASE_P(NasmStringParserTests, NasmStringParserTest,
 
 TEST_P(NasmStringParserTest, StringTest)
 {
-    FileManager fmgr;
-    MockDiagnosticClient mock_client;
-    Diagnostic diags(&mock_client);
-    SourceManager smgr(diags);
+    MockDiagnosticConsumer mock_consumer;
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &mock_consumer, false);
+    FileSystemOptions opts;
+    FileManager fmgr(opts);
+    SourceManager smgr(diags, fmgr);
     diags.setSourceManager(&smgr);
     HeaderSearch headers(fmgr);
     NasmPreproc pp(diags, smgr, headers);
@@ -103,17 +105,17 @@ TEST_P(NasmStringParserTest, StringTest)
     {
         // expect an error/warning of the specified type and location
         FullSourceLoc
-            full_loc(sof.getFileLocWithOffset(GetParam().warnerr_loc), smgr);
+            full_loc(sof.getLocWithOffset(GetParam().warnerr_loc), smgr);
         using ::testing::Property;
         using ::testing::Eq;
-        EXPECT_CALL(mock_client, HandleDiagnostic(_,
-            AllOf(Property(&DiagnosticInfo::getID, Eq(GetParam().warnerr_no)),
-                  Property(&DiagnosticInfo::getLocation, Eq(full_loc)))));
+        EXPECT_CALL(mock_consumer, HandleDiagnostic(_,
+            AllOf(Property(&Diagnostic::getID, Eq(GetParam().warnerr_no)),
+                  Property(&Diagnostic::getLocation, Eq(full_loc)))));
     }
     else
     {
         // expect no diagnostic calls
-        EXPECT_CALL(mock_client, HandleDiagnostic(_, _))
+        EXPECT_CALL(mock_consumer, HandleDiagnostic(_, _))
             .Times(0);
     }
 

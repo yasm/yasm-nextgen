@@ -14,15 +14,27 @@ SET(LIBYASMX_SOURCES
     llvm/Support/Allocator.cpp
     llvm/Support/APFloat.cpp
     llvm/Support/APInt.cpp
+    llvm/Support/Atomic.cpp
     llvm/Support/circular_raw_ostream.cpp
     llvm/Support/CommandLine.cpp
+    llvm/Support/CrashRecoveryContext.cpp
     llvm/Support/Debug.cpp
+    llvm/Support/Errno.cpp
     llvm/Support/ErrorHandling.cpp
     llvm/Support/FoldingSet.cpp
+    llvm/Support/Hashing.cpp
+    llvm/Support/Locale.cpp
     llvm/Support/raw_ostream.cpp
     llvm/Support/ManagedStatic.cpp
+    llvm/Support/Memory.cpp
     llvm/Support/MemoryBuffer.cpp
+    llvm/Support/Mutex.cpp
+    llvm/Support/Path.cpp
+    llvm/Support/PathV2.cpp
     llvm/Support/PrettyStackTrace.cpp
+    llvm/Support/Process.cpp
+    llvm/Support/Program.cpp
+    llvm/Support/Signals.cpp
     llvm/Support/SmallPtrSet.cpp
     llvm/Support/SmallVector.cpp
     llvm/Support/Statistic.cpp
@@ -30,25 +42,26 @@ SET(LIBYASMX_SOURCES
     llvm/Support/StringExtras.cpp
     llvm/Support/StringMap.cpp
     llvm/Support/StringRef.cpp
+    llvm/Support/system_error.cpp
+    llvm/Support/Threading.cpp
+    llvm/Support/ThreadLocal.cpp
     llvm/Support/Timer.cpp
+    llvm/Support/TimeValue.cpp
     llvm/Support/Twine.cpp
-    llvm/System/Atomic.cpp
-    llvm/System/Errno.cpp
-    llvm/System/Memory.cpp
-    llvm/System/Mutex.cpp
-    llvm/System/Path.cpp
-    llvm/System/Process.cpp
-    llvm/System/Program.cpp
-    llvm/System/Signals.cpp
-    llvm/System/Threading.cpp
-    llvm/System/ThreadLocal.cpp
-    llvm/System/TimeValue.cpp
-    llvm/System/Valgrind.cpp
+    llvm/Support/Valgrind.cpp
     ${XML_CPP}
+    yasmx/Basic/ConvertUTF.c
+    yasmx/Basic/ConvertUTFWrapper.cpp
     yasmx/Basic/Diagnostic.cpp
+    yasmx/Basic/DiagnosticIDs.cpp
     yasmx/Basic/FileManager.cpp
+    yasmx/Basic/FileSystemStatCache.cpp
     yasmx/Basic/SourceLocation.cpp
     yasmx/Basic/SourceManager.cpp
+    yasmx/Frontend/DiagnosticRenderer.cpp
+    yasmx/Frontend/OffsetDiagnosticPrinter.cpp
+    yasmx/Frontend/TextDiagnostic.cpp
+    yasmx/Frontend/TextDiagnosticPrinter.cpp
     yasmx/Parse/Directive.cpp
     yasmx/Parse/DirHelpers.cpp
     yasmx/Parse/HeaderSearch.cpp

@@ -131,7 +131,7 @@ Object::~Object()
 }
 
 void
-Object::Finalize(Diagnostic& diags)
+Object::Finalize(DiagnosticsEngine& diags)
 {
     for (section_iterator i=m_sections.begin(), end=m_sections.end();
          i != end; ++i)
@@ -238,7 +238,7 @@ Object::ExternUndefinedSymbols()
 }
 
 void
-Object::FinalizeSymbols(Diagnostic& diags)
+Object::FinalizeSymbols(DiagnosticsEngine& diags)
 {
     bool firstundef = true;
 
@@ -303,7 +303,7 @@ Object::Write(pugi::xml_node out) const
 #endif // WITH_XML
 
 void
-Object::UpdateBytecodeOffsets(Diagnostic& diags)
+Object::UpdateBytecodeOffsets(DiagnosticsEngine& diags)
 {
     for (section_iterator sect=m_sections.begin(), end=m_sections.end();
          sect != end; ++sect)
@@ -311,7 +311,7 @@ Object::UpdateBytecodeOffsets(Diagnostic& diags)
 }
 
 void
-Object::Optimize(Diagnostic& diags)
+Object::Optimize(DiagnosticsEngine& diags)
 {
     Optimizer opt(diags);
     unsigned long bc_index = 0;

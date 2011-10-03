@@ -27,6 +27,7 @@
 #include "yasmx/BytecodeContainer.h"
 
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/system_error.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Support/scoped_ptr.h"
 #include "yasmx/BytecodeOutput.h"
@@ -49,13 +50,13 @@ public:
     ~IncbinBytecode();
 
     /// Finalizes the bytecode after parsing.
-    bool Finalize(Bytecode& bc, Diagnostic& diags);
+    bool Finalize(Bytecode& bc, DiagnosticsEngine& diags);
 
     /// Calculates the minimum size of a bytecode.
     bool CalcLen(Bytecode& bc,
                  /*@out@*/ unsigned long* len,
                  const Bytecode::AddSpanFunc& add_span,
-                 Diagnostic& diags);
+                 DiagnosticsEngine& diags);
 
     /// Convert a bytecode into its byte representation.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
@@ -72,7 +73,7 @@ public:
 private:
     std::string m_filename;     ///< file to include data from
 
-    llvm::MemoryBuffer* m_buf;  ///< Buffer for file data
+    llvm::OwningPtr<llvm::MemoryBuffer> m_buf;  ///< Buffer for file data
 
     /// starting offset to read from (NULL=0)
     /*@null@*/ util::scoped_ptr<Expr> m_start;
@@ -86,7 +87,6 @@ IncbinBytecode::IncbinBytecode(llvm::StringRef filename,
                                std::auto_ptr<Expr> start,
                                std::auto_ptr<Expr> maxlen)
     : m_filename(filename),
-      m_buf(0),
       m_start(start.release()),
       m_maxlen(maxlen.release())
 {
@@ -94,17 +94,15 @@ IncbinBytecode::IncbinBytecode(llvm::StringRef filename,
 
 IncbinBytecode::~IncbinBytecode()
 {
-    delete m_buf;
 }
 
 bool
-IncbinBytecode::Finalize(Bytecode& bc, Diagnostic& diags)
+IncbinBytecode::Finalize(Bytecode& bc, DiagnosticsEngine& diags)
 {
-    std::string err;
-    m_buf = llvm::MemoryBuffer::getFile(m_filename.c_str(), &err);
-    if (!m_buf)
+    if (llvm::error_code err = llvm::MemoryBuffer::getFile(m_filename, m_buf))
     {
-        diags.Report(bc.getSource(), diag::err_file_read) << m_filename << err;
+        diags.Report(bc.getSource(), diag::err_file_read) << m_filename
+            << err.message();
         return false;
     }
 
@@ -140,7 +138,7 @@ bool
 IncbinBytecode::CalcLen(Bytecode& bc,
                         /*@out@*/ unsigned long* len,
                         const Bytecode::AddSpanFunc& add_span,
-                        Diagnostic& diags)
+                        DiagnosticsEngine& diags)
 {
     unsigned long start = 0, maxlen = 0xFFFFFFFFUL;
 

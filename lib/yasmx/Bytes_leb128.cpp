@@ -114,7 +114,7 @@ yasm::ReadLEB128(InputBuffer& input, bool sign, /*@out@*/ unsigned long* size)
     llvm::APInt val(i, nwords, &words[0]);
     // Zero extend if needed to make positive number
     if (!sign && val.isNegative())
-        val.zext(i+1);
+        val = val.zext(i+1);
 
     // Convert to intnum
     IntNum intn;

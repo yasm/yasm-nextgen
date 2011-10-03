@@ -25,6 +25,7 @@
 #include <gtest/gtest.h>
 
 #include "llvm/Support/raw_ostream.h"
+#include "yasmx/Basic/FileManager.h"
 #include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Expr.h"
@@ -46,7 +47,7 @@ protected:
     }
 
     static void LevelOp(Expr& x,
-                        Diagnostic& diags,
+                        DiagnosticsEngine& diags,
                         bool simplify_reg_mul = true,
                         int loc = -1)
     {
@@ -166,9 +167,12 @@ TEST_F(ExprTest, TransformNeg)
 // Expr::Simplify() tests
 TEST_F(ExprTest, Simplify)
 {
-    yasmunit::MockDiagnosticClient mock_client;
-    Diagnostic diags(&mock_client);
-    SourceManager smgr(diags);
+    yasmunit::MockDiagnosticConsumer mock_consumer;
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &mock_consumer, false);
+    FileSystemOptions opts;
+    FileManager fmgr(opts);
+    SourceManager smgr(diags, fmgr);
     diags.setSourceManager(&smgr);
 
     x = ADD(a, ADD(ADD(b, c), ADD(ADD(d, e), f)));
@@ -211,9 +215,12 @@ TEST_F(ExprTest, Simplify)
 //
 TEST_F(ExprTest, LevelOpBasic)
 {
-    yasmunit::MockDiagnosticClient mock_client;
-    Diagnostic diags(&mock_client);
-    SourceManager smgr(diags);
+    yasmunit::MockDiagnosticConsumer mock_consumer;
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &mock_consumer, false);
+    FileSystemOptions opts;
+    FileManager fmgr(opts);
+    SourceManager smgr(diags, fmgr);
     diags.setSourceManager(&smgr);
 
     x = ADD(a, ADD(b, ADD(c, d)));
@@ -246,9 +253,12 @@ TEST_F(ExprTest, LevelOpBasic)
 // One-level constant folding will also be performed.
 TEST_F(ExprTest, LevelOpConstFold)
 {
-    yasmunit::MockDiagnosticClient mock_client;
-    Diagnostic diags(&mock_client);
-    SourceManager smgr(diags);
+    yasmunit::MockDiagnosticConsumer mock_consumer;
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &mock_consumer, false);
+    FileSystemOptions opts;
+    FileManager fmgr(opts);
+    SourceManager smgr(diags, fmgr);
     diags.setSourceManager(&smgr);
 
     x = ADD(1, ADD(2, ADD(3, 4)));
@@ -271,9 +281,12 @@ TEST_F(ExprTest, LevelOpConstFold)
 // Some identities can result in deletion of the rest of the expression.
 TEST_F(ExprTest, LevelOpIdentities)
 {
-    yasmunit::MockDiagnosticClient mock_client;
-    Diagnostic diags(&mock_client);
-    SourceManager smgr(diags);
+    yasmunit::MockDiagnosticConsumer mock_consumer;
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &mock_consumer, false);
+    FileSystemOptions opts;
+    FileManager fmgr(opts);
+    SourceManager smgr(diags, fmgr);
     diags.setSourceManager(&smgr);
 
     x = ADD(a, 0);
@@ -317,9 +330,12 @@ TEST_F(ExprTest, LevelOpIdentities)
 // SEG of SEG:OFF should be simplified to just the segment portion.
 TEST_F(ExprTest, LevelOpSegOfSegoff)
 {
-    yasmunit::MockDiagnosticClient mock_client;
-    Diagnostic diags(&mock_client);
-    SourceManager smgr(diags);
+    yasmunit::MockDiagnosticConsumer mock_consumer;
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &mock_consumer, false);
+    FileSystemOptions opts;
+    FileManager fmgr(opts);
+    SourceManager smgr(diags, fmgr);
     diags.setSourceManager(&smgr);
 
     x = SEG(SEGOFF(1, 2));

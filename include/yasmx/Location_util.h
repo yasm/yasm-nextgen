@@ -38,7 +38,7 @@
 namespace yasm
 {
 
-class Diagnostic;
+class DiagnosticsEngine;
 class Expr;
 class ExprTerm;
 
@@ -48,7 +48,7 @@ class ExprTerm;
 /// @param diags        diagnostic reporting
 /// @warning Only valid /after/ optimization.
 YASM_LIB_EXPORT
-void SimplifyCalcDist(Expr& e, Diagnostic& diags);
+void SimplifyCalcDist(Expr& e, DiagnosticsEngine& diags);
 
 /// Simplify instances of Symbol-Symbol [Symbol+(-1*Symbol)] in an expression
 /// into integers if possible by calling CalcDistNoBC().
@@ -58,10 +58,10 @@ void SimplifyCalcDist(Expr& e, Diagnostic& diags);
 /// @param e            expression
 /// @param diags        diagnostic reporting
 YASM_LIB_EXPORT
-void SimplifyCalcDistNoBC(Expr& e, Diagnostic& diags);
+void SimplifyCalcDistNoBC(Expr& e, DiagnosticsEngine& diags);
 
 YASM_LIB_EXPORT
-int SubstDist(Expr& e, Diagnostic& diags,
+int SubstDist(Expr& e, DiagnosticsEngine& diags,
               const TR1::function<void (unsigned int subst,
                                         Location loc,
                                         Location loc2)>& func);
@@ -86,7 +86,7 @@ int SubstDist(Expr& e, Diagnostic& diags,
 /// @return True if successful.
 YASM_LIB_EXPORT
 bool Evaluate(const Expr& e,
-              Diagnostic& diags,
+              DiagnosticsEngine& diags,
               ExprTerm* result,
               const ExprTerm* subst,
               unsigned int nsubst,
@@ -95,7 +95,7 @@ bool Evaluate(const Expr& e,
 
 inline bool
 Evaluate(const Expr& e,
-         Diagnostic& diags,
+         DiagnosticsEngine& diags,
          ExprTerm* result,
          bool valueloc=true,
          bool zeroreg=false)

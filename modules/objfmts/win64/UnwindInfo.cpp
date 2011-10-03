@@ -63,7 +63,7 @@ UnwindInfo::~UnwindInfo()
 }
 
 bool
-UnwindInfo::Finalize(Bytecode& bc, Diagnostic& diags)
+UnwindInfo::Finalize(Bytecode& bc, DiagnosticsEngine& diags)
 {
     if (!m_prolog_size.Finalize(diags))
         return false;
@@ -78,7 +78,7 @@ bool
 UnwindInfo::CalcLen(Bytecode& bc,
                     /*@out@*/ unsigned long* len,
                     const Bytecode::AddSpanFunc& add_span,
-                    Diagnostic& diags)
+                    DiagnosticsEngine& diags)
 {
     // Want to make sure prolog size and codes count doesn't exceed
     // byte-size, and scaled frame offset doesn't exceed 4 bits.
@@ -119,7 +119,7 @@ UnwindInfo::Expand(Bytecode& bc,
                    bool* keep,
                    /*@out@*/ long* neg_thres,
                    /*@out@*/ long* pos_thres,
-                   Diagnostic& diags)
+                   DiagnosticsEngine& diags)
 {
     switch (span)
     {
@@ -270,7 +270,7 @@ objfmt::Generate(std::auto_ptr<UnwindInfo> uwinfo,
                  BytecodeContainer& xdata,
                  SourceLocation source,
                  const Arch& arch,
-                 Diagnostic& diags)
+                 DiagnosticsEngine& diags)
 {
     UnwindInfo* info = uwinfo.get();
 

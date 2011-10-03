@@ -76,7 +76,7 @@ class YASM_STD_EXPORT GasParser : public ParserImpl
 {
 public:
     GasParser(const ParserModule& module,
-              Diagnostic& diags,
+              DiagnosticsEngine& diags,
               SourceManager& sm,
               HeaderSearch& headers);
     ~GasParser();
@@ -86,7 +86,7 @@ public:
     static llvm::StringRef getName() { return "GNU AS (GAS)-compatible parser"; }
     static llvm::StringRef getKeyword() { return "gas"; }
 
-    void Parse(Object& object, Directives& dirs, Diagnostic& diags);
+    void Parse(Object& object, Directives& dirs, DiagnosticsEngine& diags);
 
 private:
 

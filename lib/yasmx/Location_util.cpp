@@ -210,7 +210,7 @@ CalcDistFunctor::TransformDelta(ExprTerm& term, Location loc, Location loc2)
 }
 
 void
-yasm::SimplifyCalcDist(Expr& e, Diagnostic& diags)
+yasm::SimplifyCalcDist(Expr& e, DiagnosticsEngine& diags)
 {
     CalcDistFunctor functor;
     e.Simplify(diags, functor);
@@ -228,7 +228,7 @@ CalcDistNoBCFunctor::TransformDelta(ExprTerm& term, Location loc, Location loc2)
 }
 
 void
-yasm::SimplifyCalcDistNoBC(Expr& e, Diagnostic& diags)
+yasm::SimplifyCalcDistNoBC(Expr& e, DiagnosticsEngine& diags)
 {
     CalcDistNoBCFunctor functor;
     e.Simplify(diags, functor);
@@ -247,7 +247,7 @@ SubstDistFunctor::TransformDelta(ExprTerm& term, Location loc, Location loc2)
 }
 
 int
-yasm::SubstDist(Expr& e, Diagnostic& diags,
+yasm::SubstDist(Expr& e, DiagnosticsEngine& diags,
                 const TR1::function<void (unsigned int subst,
                                           Location loc,
                                           Location loc2)>& func)
@@ -259,7 +259,7 @@ yasm::SubstDist(Expr& e, Diagnostic& diags,
 
 bool
 yasm::Evaluate(const Expr& e,
-               Diagnostic& diags,
+               DiagnosticsEngine& diags,
                ExprTerm* result,
                const ExprTerm* subst,
                unsigned int nsubst,

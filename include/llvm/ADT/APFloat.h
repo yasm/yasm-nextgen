@@ -110,6 +110,7 @@ namespace llvm {
   typedef signed short exponent_t;
 
   struct fltSemantics;
+  class APSInt;
   class StringRef;
 
   /* When bits of a floating point number are truncated, this enum is
@@ -247,6 +248,13 @@ namespace llvm {
     static APFloat getSmallestNormalized(const fltSemantics &Sem,
                                          bool Negative = false);
 
+    /// getAllOnesValue - Returns a float which is bitcasted from
+    /// an all one value int.
+    ///
+    /// \param BitWidth - Select float type
+    /// \param isIEEE   - If 128 bit number, select between PPC and IEEE
+    static APFloat getAllOnesValue(unsigned BitWidth, bool isIEEE = false);
+
     /// Profile - Used to insert APFloat objects, or objects that contain
     ///  APFloat objects, into FoldingSets.
     void Profile(FoldingSetNodeID& NID) const;
@@ -267,6 +275,7 @@ namespace llvm {
     /* C fmod, or llvm frem. */
     opStatus mod(const APFloat &, roundingMode);
     opStatus fusedMultiplyAdd(const APFloat &, const APFloat &, roundingMode);
+    opStatus roundToIntegral(roundingMode);
 
     /* Sign operations.  */
     void changeSign();
@@ -312,6 +321,7 @@ namespace llvm {
     const fltSemantics &getSemantics() const { return *semantics; }
     bool isZero() const { return category == fcZero; }
     bool isNonZero() const { return category != fcZero; }
+    bool isNormal() const { return category == fcNormal; }
     bool isNaN() const { return category == fcNaN; }
     bool isInfinity() const { return category == fcInfinity; }
     bool isNegative() const { return sign; }
@@ -320,8 +330,16 @@ namespace llvm {
 
     APFloat& operator=(const APFloat &);
 
-    /* Return an arbitrary integer value usable for hashing. */
-    uint32_t getHashValue() const;
+    /// \brief Overload to compute a hash code for an APFloat value.
+    ///
+    /// Note that the use of hash codes for floating point values is in general
+    /// frought with peril. Equality is hard to define for these values. For
+    /// example, should negative and positive zero hash to different codes? Are
+    /// they equal or not? This hash value implementation specifically
+    /// emphasizes producing different codes for different inputs in order to
+    /// be used in canonicalization and memoization. As such, equality is
+    /// bitwiseIsEqual, and 0 != -0.
+    friend hash_code hash_value(const APFloat &Arg);
 
     /// Converts this value into a decimal string.
     ///
@@ -346,6 +364,10 @@ namespace llvm {
     void toString(SmallVectorImpl<char> &Str,
                   unsigned FormatPrecision = 0,
                   unsigned FormatMaxPadding = 3) const;
+
+    /// getExactInverse - If this value has an exact multiplicative inverse,
+    /// store it in inv and return true.
+    bool getExactInverse(APFloat *inv) const;
 
   private:
 

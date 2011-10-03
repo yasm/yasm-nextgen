@@ -444,8 +444,7 @@ GasParser::ParseDirLine(unsigned int param, SourceLocation source)
         m_dir_fileline = FL_BOTH;
         SourceManager& smgr = m_preproc.getSourceManager();
         smgr.AddLineNote(source, m_dir_line,
-                         smgr.getLineTableFilenameID(m_dir_file.data(),
-                                                     m_dir_file.size()));
+                         smgr.getLineTableFilenameID(m_dir_file));
     }
     else
     {
@@ -759,7 +758,7 @@ GasParser::ParseDirFloat(unsigned int size, SourceLocation source)
     if (m_token.isEndOfStatement())
         return true;
 
-    SourceLocation lastcomma = m_token.getLocation().getFileLocWithOffset(-1);
+    SourceLocation lastcomma = m_token.getLocation().getLocWithOffset(-1);
     for (;;)
     {
         llvm::StringRef num_str;
@@ -790,7 +789,7 @@ GasParser::ParseDirFloat(unsigned int size, SourceLocation source)
             case GasToken::eol:
             case GasToken::semi:
             case GasToken::comma:
-                Diag(lastcomma.getFileLocWithOffset(1),
+                Diag(lastcomma.getLocWithOffset(1),
                      diag::warn_zero_assumed_for_missing_expression);
                 num_str = "0.0";
                 break;
@@ -829,14 +828,14 @@ GasParser::ParseDirData(unsigned int size, SourceLocation source)
     if (m_token.isEndOfStatement())
         return true;
 
-    SourceLocation lastcomma = m_token.getLocation().getFileLocWithOffset(-1);
+    SourceLocation lastcomma = m_token.getLocation().getLocWithOffset(-1);
     for (;;)
     {
         SourceLocation cur_source = m_token.getLocation();
         std::auto_ptr<Expr> e(new Expr);
         if (!ParseExpr(*e))
         {
-            Diag(lastcomma.getFileLocWithOffset(1),
+            Diag(lastcomma.getLocWithOffset(1),
                  diag::warn_zero_assumed_for_missing_expression);
             *e = 0;
         }
@@ -856,14 +855,14 @@ GasParser::ParseDirLeb128(unsigned int sign, SourceLocation source)
     if (m_token.isEndOfStatement())
         return true;
 
-    SourceLocation lastcomma = m_token.getLocation().getFileLocWithOffset(-1);
+    SourceLocation lastcomma = m_token.getLocation().getLocWithOffset(-1);
     for (;;)
     {
         SourceLocation cur_source = m_token.getLocation();
         std::auto_ptr<Expr> e(new Expr);
         if (!ParseExpr(*e))
         {
-            Diag(lastcomma.getFileLocWithOffset(1),
+            Diag(lastcomma.getLocWithOffset(1),
                  diag::warn_zero_assumed_for_missing_expression);
             *e = 0;
         }
@@ -1052,7 +1051,7 @@ GasParser::ParseDirBssSection(unsigned int param, SourceLocation source)
 {
     m_previous_section = m_object->getCurSection();
     SwitchSection(".bss", true,
-                  SourceRange(source, source.getFileLocWithOffset(4)));
+                  SourceRange(source, source.getLocWithOffset(4)));
     return true;
 }
 
@@ -1061,7 +1060,7 @@ GasParser::ParseDirDataSection(unsigned int param, SourceLocation source)
 {
     m_previous_section = m_object->getCurSection();
     SwitchSection(".data", true,
-                  SourceRange(source, source.getFileLocWithOffset(5)));
+                  SourceRange(source, source.getLocWithOffset(5)));
     return true;
 }
 
@@ -1070,7 +1069,7 @@ GasParser::ParseDirTextSection(unsigned int param, SourceLocation source)
 {
     m_previous_section = m_object->getCurSection();
     SwitchSection(".text", true,
-                  SourceRange(source, source.getFileLocWithOffset(5)));
+                  SourceRange(source, source.getLocWithOffset(5)));
     return true;
 }
 

@@ -108,7 +108,7 @@ FindGroup(BinGroups& groups, const Section& section)
     return 0;
 }
 
-BinLink::BinLink(Object& object, Diagnostic& diags)
+BinLink::BinLink(Object& object, DiagnosticsEngine& diags)
     : m_object(object),
       m_diags(diags),
       m_lma_groups_owner(m_lma_groups),
@@ -464,7 +464,7 @@ void
 BinGroup::AssignStartRecurse(IntNum& start,
                              IntNum& last,
                              IntNum& vdelta,
-                             Diagnostic& diags)
+                             DiagnosticsEngine& diags)
 {
     // Determine LMA
     if (m_bsd.has_align)
@@ -523,7 +523,7 @@ BinGroup::AssignStartRecurse(IntNum& start,
 // The tmp parameter is just a working intnum so one doesn't have to be
 // locally allocated for this purpose.
 void
-BinGroup::AssignVStartRecurse(IntNum& start, Diagnostic& diags)
+BinGroup::AssignVStartRecurse(IntNum& start, DiagnosticsEngine& diags)
 {
     // Determine VMA section alignment as necessary.
     // Default to LMA alignment if not specified.

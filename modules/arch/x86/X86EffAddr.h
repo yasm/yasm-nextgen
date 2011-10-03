@@ -34,7 +34,7 @@
 namespace yasm
 {
 
-class Diagnostic;
+class DiagnosticsEngine;
 
 namespace arch
 {
@@ -127,10 +127,10 @@ public:
                bool address16_op,
                unsigned char* rex,
                bool* ip_rel,
-               Diagnostic& diags);
+               DiagnosticsEngine& diags);
 
     /// Finalize the effective address.
-    bool Finalize(Diagnostic& diags);
+    bool Finalize(DiagnosticsEngine& diags);
 
 private:
     /// Copy constructor.
@@ -146,17 +146,17 @@ private:
     bool CalcDispLen(unsigned int wordsize,
                      bool noreg,
                      bool dispreq,
-                     Diagnostic& diags);
+                     DiagnosticsEngine& diags);
 
     bool Check3264(unsigned int addrsize,
                    unsigned int bits,
                    unsigned char* rex,
                    bool* ip_rel,
-                   Diagnostic& diags);
+                   DiagnosticsEngine& diags);
     bool Check16(unsigned int bits,
                  bool address16_op,
                  bool* ip_rel,
-                 Diagnostic& diags);
+                 DiagnosticsEngine& diags);
 };
 
 }} // namespace yasm::arch

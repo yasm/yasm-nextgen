@@ -41,7 +41,7 @@ using namespace yasm;
 using namespace yasm::parser;
 
 GasParser::GasParser(const ParserModule& module,
-                     Diagnostic& diags,
+                     DiagnosticsEngine& diags,
                      SourceManager& sm,
                      HeaderSearch& headers)
     : ParserImpl(module, m_gas_preproc)
@@ -173,7 +173,7 @@ GasParser::~GasParser()
 }
 
 void
-GasParser::Parse(Object& object, Directives& dirs, Diagnostic& diags)
+GasParser::Parse(Object& object, Directives& dirs, DiagnosticsEngine& diags)
 {
     m_object = &object;
     m_dirs = &dirs;

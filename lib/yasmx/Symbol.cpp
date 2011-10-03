@@ -46,7 +46,7 @@ Symbol::~Symbol()
 }
 
 bool
-Symbol::DefineCheck(SourceLocation source, Diagnostic& diags) const
+Symbol::DefineCheck(SourceLocation source, DiagnosticsEngine& diags) const
 {
     assert(source.isValid() && "invalid source location");
     // Has it been defined before (either by DEFINED or COMMON/EXTERN)?
@@ -82,7 +82,7 @@ Symbol::DefineEqu(const Expr& e)
 void
 Symbol::CheckedDefineEqu(const Expr& e,
                          SourceLocation source,
-                         Diagnostic& diags)
+                         DiagnosticsEngine& diags)
 {
     if (!DefineCheck(source, diags))
         return;
@@ -102,7 +102,7 @@ Symbol::DefineLabel(Location loc)
 void
 Symbol::CheckedDefineLabel(Location loc,
                            SourceLocation source,
-                           Diagnostic& diags)
+                           DiagnosticsEngine& diags)
 {
     if (!DefineCheck(source, diags))
         return;
@@ -160,7 +160,7 @@ Symbol::Declare(Visibility vis)
 void
 Symbol::CheckedDeclare(Visibility vis,
                        SourceLocation source,
-                       Diagnostic& diags)
+                       DiagnosticsEngine& diags)
 {
     assert(source.isValid() && "invalid source location");
     if (okToDeclare(vis))

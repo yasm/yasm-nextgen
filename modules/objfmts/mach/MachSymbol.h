@@ -35,7 +35,7 @@
 namespace yasm
 {
 class Bytes;
-class Diagnostic;
+class DiagnosticsEngine;
 class StringTable;
 class Symbol;
 
@@ -53,7 +53,7 @@ struct YASM_STD_EXPORT MachSymbol : public AssocData
 #ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
 #endif // WITH_XML
-    void Finalize(const Symbol& sym, Diagnostic& diags);
+    void Finalize(const Symbol& sym, DiagnosticsEngine& diags);
 
     void Write(Bytes& bytes,
                const Symbol& sym,

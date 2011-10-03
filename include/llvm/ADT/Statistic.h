@@ -26,7 +26,8 @@
 #ifndef LLVM_ADT_STATISTIC_H
 #define LLVM_ADT_STATISTIC_H
 
-#include "llvm/System/Atomic.h"
+#include "llvm/Support/Atomic.h"
+#include "llvm/Support/Valgrind.h"
 #include "yasmx/Config/export.h"
 
 namespace llvm {
@@ -55,7 +56,7 @@ public:
     Value = Val;
     return init();
   }
-  
+
   const Statistic &operator++() {
     // FIXME: This function and all those that follow carefully use an
     // atomic operation to update the value safely in the presence of
@@ -64,41 +65,43 @@ public:
     sys::AtomicIncrement(&Value);
     return init();
   }
-  
+
   unsigned operator++(int) {
     init();
     unsigned OldValue = Value;
     sys::AtomicIncrement(&Value);
     return OldValue;
   }
-  
+
   const Statistic &operator--() {
     sys::AtomicDecrement(&Value);
     return init();
   }
-  
+
   unsigned operator--(int) {
     init();
     unsigned OldValue = Value;
     sys::AtomicDecrement(&Value);
     return OldValue;
   }
-  
+
   const Statistic &operator+=(const unsigned &V) {
+    if (!V) return *this;
     sys::AtomicAdd(&Value, V);
     return init();
   }
-  
+
   const Statistic &operator-=(const unsigned &V) {
+    if (!V) return *this;
     sys::AtomicAdd(&Value, -V);
     return init();
   }
-  
+
   const Statistic &operator*=(const unsigned &V) {
     sys::AtomicMul(&Value, V);
     return init();
   }
-  
+
   const Statistic &operator/=(const unsigned &V) {
     sys::AtomicDiv(&Value, V);
     return init();
@@ -109,6 +112,7 @@ protected:
     bool tmp = Initialized;
     sys::MemoryFence();
     if (!tmp) RegisterStatistic();
+    TsanHappensAfter(this);
     return *this;
   }
   void RegisterStatistic();
@@ -121,6 +125,9 @@ protected:
 
 /// \brief Enable the collection and printing of statistics.
 void EnableStatistics();
+
+/// \brief Check if statistics are enabled.
+bool AreStatisticsEnabled();
 
 /// \brief Print statistics to the file returned by CreateInfoOutputFile().
 void PrintStatistics();

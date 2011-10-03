@@ -36,7 +36,7 @@
 using namespace yasm;
 using namespace yasm::parser;
 
-NasmPreproc::NasmPreproc(Diagnostic& diags,
+NasmPreproc::NasmPreproc(DiagnosticsEngine& diags,
                          SourceManager& sm,
                          HeaderSearch& headers)
     : Preprocessor(diags, sm, headers)

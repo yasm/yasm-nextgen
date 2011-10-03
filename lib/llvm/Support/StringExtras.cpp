@@ -51,31 +51,9 @@ std::pair<StringRef, StringRef> llvm::getToken(StringRef Source,
 void llvm::SplitString(StringRef Source,
                        SmallVectorImpl<StringRef> &OutFragments,
                        StringRef Delimiters) {
-  StringRef S2, S;
-  tie(S2, S) = getToken(Source, Delimiters);
-  while (!S2.empty()) {
-    OutFragments.push_back(S2);
-    tie(S2, S) = getToken(S, Delimiters);
+  std::pair<StringRef, StringRef> S = getToken(Source, Delimiters);
+  while (!S.first.empty()) {
+    OutFragments.push_back(S.first);
+    S = getToken(S.second, Delimiters);
   }
-}
-
-void llvm::StringRef::split(SmallVectorImpl<StringRef> &A,
-                            StringRef Separators, int MaxSplit,
-                            bool KeepEmpty) const {
-  StringRef rest = *this;
-
-  // rest.data() is used to distinguish cases like "a," that splits into
-  // "a" + "" and "a" that splits into "a" + 0.
-  for (int splits = 0;
-       rest.data() != NULL && (MaxSplit < 0 || splits < MaxSplit);
-       ++splits) {
-    std::pair<llvm::StringRef, llvm::StringRef> p = rest.split(Separators);
-
-    if (p.first.size() != 0 || KeepEmpty)
-      A.push_back(p.first);
-    rest = p.second;
-  }
-  // If we have a tail left, add it.
-  if (rest.data() != NULL && (rest.size() != 0 || KeepEmpty))
-    A.push_back(rest);
 }

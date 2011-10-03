@@ -310,7 +310,7 @@ DwarfCfiInsn::Output(DwarfCfiOutput& out)
 {
     BytecodeContainer& container = out.container;
     Arch& arch = *out.debug.m_object.getArch();
-    Diagnostic& diags = out.diags;
+    DiagnosticsEngine& diags = out.diags;
 
     switch (m_op)
     {
@@ -698,7 +698,7 @@ DwarfCfiFde::Output(DwarfCfiOutput& out, DwarfCfiCie& cie, unsigned int align)
 }
 
 void
-DwarfDebug::DirCfiStartproc(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiStartproc(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (m_cur_fde)
     {
@@ -717,7 +717,7 @@ DwarfDebug::DirCfiStartproc(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiEndproc(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiEndproc(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!m_cur_fde)
     {
@@ -730,7 +730,7 @@ DwarfDebug::DirCfiEndproc(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiSections(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiSections(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     NameValues& nvs = info.getNameValues();
     bool eh_frame = false;
@@ -757,7 +757,7 @@ DwarfDebug::DirCfiSections(DirectiveInfo& info, Diagnostic& diags)
 
 bool
 DwarfDebug::DirCheck(DirectiveInfo& info,
-                     Diagnostic& diags,
+                     DiagnosticsEngine& diags,
                      unsigned int nargs)
 {
     if (!m_cur_fde)
@@ -786,7 +786,7 @@ DwarfDebug::DirCheck(DirectiveInfo& info,
 
 void
 DwarfDebug::DirRegNum(NameValue& nv,
-                      Diagnostic& diags,
+                      DiagnosticsEngine& diags,
                       Object* obj,
                       unsigned int* out,
                       bool* out_set)
@@ -827,7 +827,7 @@ DwarfDebug::AdvanceCfiAddress(Location loc, SourceLocation source)
 
 static bool
 DirCfiEncLabel(DirectiveInfo& info,
-               Diagnostic& diags,
+               DiagnosticsEngine& diags,
                unsigned char* dest_encoding,
                Expr* dest_expr,
                SourceLocation* dest_source,
@@ -884,7 +884,7 @@ DirCfiEncLabel(DirectiveInfo& info,
 }
 
 void
-DwarfDebug::DirCfiPersonality(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiPersonality(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!m_cur_fde)
     {
@@ -897,7 +897,7 @@ DwarfDebug::DirCfiPersonality(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiLsda(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiLsda(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!m_cur_fde)
     {
@@ -910,7 +910,7 @@ DwarfDebug::DirCfiLsda(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiDefCfa(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiDefCfa(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!DirCheck(info, diags, 2))
         return;
@@ -932,7 +932,7 @@ DwarfDebug::DirCfiDefCfa(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiDefCfaRegister(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiDefCfaRegister(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!DirCheck(info, diags, 1))
         return;
@@ -952,7 +952,7 @@ DwarfDebug::DirCfiDefCfaRegister(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiDefCfaOffset(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiDefCfaOffset(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!DirCheck(info, diags, 1))
         return;
@@ -972,7 +972,7 @@ DwarfDebug::DirCfiDefCfaOffset(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiAdjustCfaOffset(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiAdjustCfaOffset(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!DirCheck(info, diags, 1))
         return;
@@ -992,7 +992,7 @@ DwarfDebug::DirCfiAdjustCfaOffset(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiOffset(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiOffset(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!DirCheck(info, diags, 2))
         return;
@@ -1014,7 +1014,7 @@ DwarfDebug::DirCfiOffset(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiRelOffset(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiRelOffset(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!DirCheck(info, diags, 2))
         return;
@@ -1036,7 +1036,7 @@ DwarfDebug::DirCfiRelOffset(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiRegister(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiRegister(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!DirCheck(info, diags, 2))
         return;
@@ -1058,7 +1058,7 @@ DwarfDebug::DirCfiRegister(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiRestore(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiRestore(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!DirCheck(info, diags, 1))
         return;
@@ -1078,7 +1078,7 @@ DwarfDebug::DirCfiRestore(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiUndefined(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiUndefined(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!DirCheck(info, diags, 1))
         return;
@@ -1098,7 +1098,7 @@ DwarfDebug::DirCfiUndefined(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiSameValue(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiSameValue(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!DirCheck(info, diags, 1))
         return;
@@ -1118,7 +1118,7 @@ DwarfDebug::DirCfiSameValue(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiRememberState(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiRememberState(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!DirCheck(info, diags, 0))
         return;
@@ -1132,7 +1132,7 @@ DwarfDebug::DirCfiRememberState(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiRestoreState(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiRestoreState(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!DirCheck(info, diags, 0))
         return;
@@ -1152,7 +1152,7 @@ DwarfDebug::DirCfiRestoreState(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiReturnColumn(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiReturnColumn(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!DirCheck(info, diags, 1))
         return;
@@ -1169,7 +1169,7 @@ DwarfDebug::DirCfiReturnColumn(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiSignalFrame(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiSignalFrame(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!DirCheck(info, diags, 0))
         return;
@@ -1177,7 +1177,7 @@ DwarfDebug::DirCfiSignalFrame(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiWindowSave(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiWindowSave(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!DirCheck(info, diags, 0))
         return;
@@ -1188,7 +1188,7 @@ DwarfDebug::DirCfiWindowSave(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiEscape(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiEscape(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     NameValues& nvs = info.getNameValues();
     std::vector<Expr> esc;
@@ -1218,7 +1218,7 @@ DwarfDebug::DirCfiEscape(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-DwarfDebug::DirCfiValEncodedAddr(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirCfiValEncodedAddr(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (!m_cur_fde)
     {
@@ -1335,7 +1335,7 @@ DwarfDebug::AddCfiDirectives(Directives& dirs, llvm::StringRef parser)
 
 void
 DwarfDebug::GenerateCfiSection(ObjectFormat& ofmt,
-                               Diagnostic& diags,
+                               DiagnosticsEngine& diags,
                                llvm::StringRef sectname,
                                bool eh_frame)
 {
@@ -1386,7 +1386,7 @@ DwarfDebug::GenerateCfiSection(ObjectFormat& ofmt,
 void
 DwarfDebug::GenerateCfi(ObjectFormat& ofmt,
                         SourceManager& smgr,
-                        Diagnostic& diags)
+                        DiagnosticsEngine& diags)
 {
     if (m_cur_fde)
     {

@@ -107,7 +107,7 @@ IntNum::setBV(const llvm::APInt& bv)
         m_type = INTNUM_BV;
         m_val.bv = new llvm::APInt(bv);
     }
-    m_val.bv->sextOrTrunc(BITVECT_NATIVE_SIZE);
+    *m_val.bv = m_val.bv->sextOrTrunc(BITVECT_NATIVE_SIZE);
 }
 
 const llvm::APInt*
@@ -121,7 +121,7 @@ IntNum::getBV(llvm::APInt* bv) const
     else
     {
         *bv = static_cast<USmallValue>(~m_val.sv);
-        bv->flip();
+        bv->flipAllBits();
     }
     return bv;
 }
@@ -137,7 +137,7 @@ IntNum::getBV(llvm::APInt* bv)
     else
     {
         *bv = static_cast<USmallValue>(~m_val.sv);
-        bv->flip();
+        bv->flipAllBits();
     }
     return bv;
 }
@@ -247,7 +247,7 @@ IntNum::setStr(llvm::StringRef str, unsigned int radix)
     if (is_neg)
     {
         --conv_bv;
-        conv_bv.flip();
+        conv_bv.flipAllBits();
     }
 
     setBV(conv_bv);
@@ -272,7 +272,7 @@ CalcSmallValue(bool* handled,
                IntNumData::SmallValue* lhs,
                IntNumData::SmallValue rhs,
                SourceLocation source,
-               Diagnostic* diags)
+               DiagnosticsEngine* diags)
 {
     static const IntNumData::SmallValue SV_MAX =
         std::numeric_limits<IntNumData::SmallValue>::max();
@@ -408,7 +408,7 @@ bool
 IntNum::CalcImpl(Op::Op op,
                  const IntNum* operand,
                  SourceLocation source,
-                 Diagnostic* diags)
+                 DiagnosticsEngine* diags)
 {
     assert((operand || op == Op::NEG || op == Op::NOT || op == Op::LNOT) &&
            "operation needs an operand");
@@ -492,7 +492,7 @@ IntNum::CalcImpl(Op::Op op,
             break;
         case Op::NOT:
             result = *op1;
-            result.flip();
+            result.flipAllBits();
             break;
         case Op::OR:
             result = *op1;
@@ -509,12 +509,12 @@ IntNum::CalcImpl(Op::Op op,
         case Op::XNOR:
             result = *op1;
             result ^= *op2;
-            result.flip();
+            result.flipAllBits();
             break;
         case Op::NOR:
             result = *op1;
             result |= *op2;
-            result.flip();
+            result.flipAllBits();
             break;
         case Op::SHL:
             if (operand->m_type == INTNUM_SV)
@@ -525,7 +525,7 @@ IntNum::CalcImpl(Op::Op op,
                     result = op1->ashr(-operand->m_val.sv);
             }
             else    // don't even bother, just zero result
-                result.clear();
+                result.clearAllBits();
             break;
         case Op::SHR:
             if (operand->m_type == INTNUM_SV)
@@ -536,7 +536,7 @@ IntNum::CalcImpl(Op::Op op,
                     result = op1->shl(-operand->m_val.sv);
             }
             else    // don't even bother, just zero result
-                result.clear();
+                result.clearAllBits();
             break;
         case Op::LOR:
             set(static_cast<SmallValue>((!!*op1) || (!!*op2)));
@@ -606,8 +606,7 @@ IntNum::SignExtend(unsigned int size)
 {
     // For now, always implement with full bit vector.
     llvm::APInt* bv = getBV(&signext_bv);
-    bv->trunc(size);
-    bv->sext(BITVECT_NATIVE_SIZE);
+    *bv = bv->trunc(size).sext(BITVECT_NATIVE_SIZE);
     setBV(*bv);
 }
 
@@ -858,7 +857,8 @@ IntNum::getStr(llvm::SmallVectorImpl<char>& str,
 {
     if (m_type == INTNUM_BV)
     {
-        m_val.bv->toString(str, static_cast<unsigned>(base), true, lowercase);
+        m_val.bv->toString(str, static_cast<unsigned>(base), true, false,
+                           lowercase);
         return;
     }
 
@@ -883,7 +883,7 @@ IntNum::getStr(llvm::SmallVectorImpl<char>& str,
         default:
             // fall back to bigval
             getBV(&conv_bv)->toString(str, static_cast<unsigned>(base), true,
-                                      lowercase);
+                                      false, lowercase);
             return;
     }
 
@@ -944,14 +944,14 @@ IntNum::Print(llvm::raw_ostream& os,
     {
         // negate in place
         conv_bv = *bv;
-        conv_bv.flip();
+        conv_bv.flipAllBits();
         ++conv_bv;
         bv = &conv_bv;
         os << '-';
     }
 
     llvm::SmallString<40> s;
-    bv->toString(s, base, true, lowercase);
+    bv->toString(s, base, true, false, lowercase);
 
     // prefix and 0 padding, if required
     int padding = 0;

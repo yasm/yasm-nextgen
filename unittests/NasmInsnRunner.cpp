@@ -34,7 +34,9 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/system_error.h"
 #include "yasmx/Basic/Diagnostic.h"
+#include "yasmx/Basic/FileManager.h"
 #include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Arch.h"
 #include "yasmx/Bytecode.h"
@@ -122,7 +124,7 @@ AddSpanTest(Bytecode& bc,
 class RawOutput : public BytecodeStreamOutput
 {
 public:
-    RawOutput(llvm::raw_ostream& os, const Arch& arch, Diagnostic& diags)
+    RawOutput(llvm::raw_ostream& os, const Arch& arch, DiagnosticsEngine& diags)
         : BytecodeStreamOutput(os, diags), m_arch(arch)
     {}
     ~RawOutput() {}
@@ -167,12 +169,10 @@ NasmInsnRunner::~NasmInsnRunner()
 void
 NasmInsnRunner::ParseAndTestFile(const char* filename)
 {
-    std::string errstr;
-    std::auto_ptr<llvm::MemoryBuffer> in(
-        llvm::MemoryBuffer::getFile(filename, &errstr));
+    llvm::OwningPtr<llvm::MemoryBuffer> in;
+    llvm::error_code err = llvm::MemoryBuffer::getFile(filename, in);
 
-    ASSERT_TRUE(in.get() != 0)
-        << "could not open " << filename << ": " << errstr;
+    ASSERT_TRUE(!err) << "could not open " << filename << ": " << err.message();
     int linenum = 0;
     llvm::StringRef remainder = in->getBuffer();
     do {
@@ -247,9 +247,12 @@ NasmInsnRunner::ParseAndTestLine(const char* filename,
     //
     // parse the instruction
     //
-    ::testing::StrictMock<MockDiagnosticString> mock_client;
-    Diagnostic diags(&mock_client);
-    SourceManager smgr(diags);
+    ::testing::StrictMock<MockDiagnosticString> mock_consumer;
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &mock_consumer, false);
+    FileSystemOptions opts;
+    FileManager fmgr(opts);
+    SourceManager smgr(diags, fmgr);
     diags.setSourceManager(&smgr);
 
     // instruction name is the first thing on the line
@@ -404,20 +407,23 @@ NasmInsnRunner::TestInsn(yasm::Insn* insn,
     //
     BytecodeContainer container(0);
 
-    ::testing::StrictMock<MockDiagnosticString> mock_client;
-    Diagnostic diags(&mock_client);
-    SourceManager smgr(diags);
+    ::testing::StrictMock<MockDiagnosticString> mock_consumer;
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &mock_consumer, false);
+    FileSystemOptions opts;
+    FileManager fmgr(opts);
+    SourceManager smgr(diags, fmgr);
     diags.setSourceManager(&smgr);
 
     if (!ew_msg.empty())
     {
-        EXPECT_CALL(mock_client, DiagString(ew_msg))
+        EXPECT_CALL(mock_consumer, DiagString(ew_msg))
             .Times(1);
     }
     else
     {
         // expect no diagnostic calls
-        EXPECT_CALL(mock_client, DiagString(::testing::_))
+        EXPECT_CALL(mock_consumer, DiagString(::testing::_))
             .Times(0);
     }
 

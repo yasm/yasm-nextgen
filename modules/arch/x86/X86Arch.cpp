@@ -142,7 +142,7 @@ X86Arch::setVar(llvm::StringRef var, unsigned long val)
 }
 
 void
-X86Arch::DirCpu(DirectiveInfo& info, Diagnostic& diags)
+X86Arch::DirCpu(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     for (NameValues::const_iterator nv=info.getNameValues().begin(),
          end=info.getNameValues().end(); nv != end; ++nv)
@@ -166,7 +166,7 @@ X86Arch::DirCpu(DirectiveInfo& info, Diagnostic& diags)
         if (!recognized)
         {
             diags.Report(info.getSource(),
-                diags.getCustomDiagID(Diagnostic::Warning,
+                diags.getCustomDiagID(DiagnosticsEngine::Warning,
                                       "ignored unrecognized CPU identifier"))
                 << nv->getValueRange();
         }
@@ -174,7 +174,7 @@ X86Arch::DirCpu(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-X86Arch::DirBits(DirectiveInfo& info, Diagnostic& diags)
+X86Arch::DirBits(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     if (info.getNameValues().size() > 1)
         diags.Report(info.getSource(), diag::warn_directive_one_arg);
@@ -194,29 +194,30 @@ X86Arch::DirBits(DirectiveInfo& info, Diagnostic& diags)
     }
 
     diags.Report(nv.getValueRange().getBegin(),
-        diags.getCustomDiagID(Diagnostic::Error, "BITS must be 16, 32, or 64"));
+        diags.getCustomDiagID(DiagnosticsEngine::Error,
+                              "BITS must be 16, 32, or 64"));
 }
 
 void
-X86Arch::DirCode16(DirectiveInfo& info, Diagnostic& diags)
+X86Arch::DirCode16(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     m_mode_bits = 16;
 }
 
 void
-X86Arch::DirCode32(DirectiveInfo& info, Diagnostic& diags)
+X86Arch::DirCode32(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     m_mode_bits = 32;
 }
 
 void
-X86Arch::DirCode64(DirectiveInfo& info, Diagnostic& diags)
+X86Arch::DirCode64(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     m_mode_bits = 64;
 }
 
 void
-X86Arch::DirDefault(DirectiveInfo& info, Diagnostic& diags)
+X86Arch::DirDefault(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     SourceLocation source = info.getSource();
     for (NameValues::const_iterator nv=info.getNameValues().begin(),
@@ -231,20 +232,20 @@ X86Arch::DirDefault(DirectiveInfo& info, Diagnostic& diags)
                     m_default_rel = true;
                 else
                     diags.Report(source,
-                                 diags.getCustomDiagID(Diagnostic::Warning,
+                                 diags.getCustomDiagID(DiagnosticsEngine::Warning,
                         "ignoring default rel in non-64-bit mode"));
             }
             else if (id.equals_lower("abs"))
                 m_default_rel = false;
             else
             {
-                diags.Report(source, diags.getCustomDiagID(Diagnostic::Error,
+                diags.Report(source, diags.getCustomDiagID(DiagnosticsEngine::Error,
                     "unrecognized default '%0'")) << id;
             }
         }
         else
         {
-            diags.Report(source, diags.getCustomDiagID(Diagnostic::Error,
+            diags.Report(source, diags.getCustomDiagID(DiagnosticsEngine::Error,
                 "unrecognized default value"));
         }
     }

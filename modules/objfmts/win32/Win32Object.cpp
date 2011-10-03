@@ -83,7 +83,7 @@ Win32Object::InitSymbols(llvm::StringRef parser)
 }
 
 static inline void
-setBool(NameValue& nv, Diagnostic& diags, bool* out, bool value)
+setBool(NameValue& nv, DiagnosticsEngine& diags, bool* out, bool value)
 {
     *out = value;
 }
@@ -145,7 +145,7 @@ Win32Object::DirSectionInitHelpers(DirHelpers& helpers,
 }
 
 void
-Win32Object::DirExport(DirectiveInfo& info, Diagnostic& diags)
+Win32Object::DirExport(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
@@ -174,7 +174,7 @@ Win32Object::DirExport(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-Win32Object::DirSafeSEH(DirectiveInfo& info, Diagnostic& diags)
+Win32Object::DirSafeSEH(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
@@ -239,7 +239,7 @@ Win32Object::InitSection(llvm::StringRef name,
                          Section& section,
                          CoffSection* coffsect,
                          SourceLocation source,
-                         Diagnostic& diags)
+                         DiagnosticsEngine& diags)
 {
     if (name == ".data")
     {

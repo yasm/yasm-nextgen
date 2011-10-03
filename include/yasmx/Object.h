@@ -47,7 +47,7 @@ namespace yasm
 {
 
 class Arch;
-class Diagnostic;
+class DiagnosticsEngine;
 class Section;
 class Symbol;
 
@@ -96,7 +96,7 @@ public:
 
     /// Finalize an object after parsing.
     /// @param diags    diagnostic reporting
-    void Finalize(Diagnostic& diags);
+    void Finalize(DiagnosticsEngine& diags);
 
     /// Change the source filename for an object.
     /// @param src_filename new source filename (e.g. "file.asm")
@@ -120,11 +120,11 @@ public:
     /// Optimize an object.  Takes the unoptimized object and optimizes it.
     /// If successful, the object is ready for output to an object file.
     /// @param diags    diagnostic reporting
-    void Optimize(Diagnostic& diags);
+    void Optimize(DiagnosticsEngine& diags);
 
     /// Updates all bytecode offsets in object.
     /// @param diags    diagnostic reporting
-    void UpdateBytecodeOffsets(Diagnostic& diags);
+    void UpdateBytecodeOffsets(DiagnosticsEngine& diags);
 
     // Section functions
 
@@ -224,7 +224,7 @@ public:
     /// are used but never defined or declared #Symbol::EXTERN or
     /// #Symbol::COMMON.
     /// @param diags        diagnostic reporting
-    void FinalizeSymbols(Diagnostic& diags);
+    void FinalizeSymbols(DiagnosticsEngine& diags);
 
     /// Add a special symbol.
     /// @param sym      symbol name

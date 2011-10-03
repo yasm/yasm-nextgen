@@ -39,7 +39,7 @@ NullDebug::~NullDebug()
 void
 NullDebug::Generate(ObjectFormat& objfmt,
                     SourceManager& smgr,
-                    Diagnostic& diags)
+                    DiagnosticsEngine& diags)
 {
 }
 

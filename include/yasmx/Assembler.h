@@ -45,7 +45,7 @@ class Arch;
 class ArchModule;
 class DebugFormat;
 class DebugFormatModule;
-class Diagnostic;
+class DiagnosticsEngine;
 class FileManager;
 class HeaderSearch;
 class ListFormat;
@@ -79,7 +79,7 @@ public:
     /// @param dump_time        when (if ever) to dump object XML to stderr
     Assembler(llvm::StringRef arch_keyword,
               llvm::StringRef objfmt_keyword,
-              Diagnostic& diags,
+              DiagnosticsEngine& diags,
               ObjectDumpTime dump_time = DUMP_NEVER);
 
     /// Destructor.
@@ -95,13 +95,13 @@ public:
     /// @param machine          machine name
     /// @param diags            diagnostic reporting
     /// @return False on error.
-    bool setMachine(llvm::StringRef machine, Diagnostic& diags);
+    bool setMachine(llvm::StringRef machine, DiagnosticsEngine& diags);
 
     /// Set the parser.
     /// @param parser_keyword   parser keyword
     /// @param diags            diagnostic reporting
     /// @return False on error.
-    bool setParser(llvm::StringRef parser_keyword, Diagnostic& diags);
+    bool setParser(llvm::StringRef parser_keyword, DiagnosticsEngine& diags);
 
     /// Check to see if a particular debug format is legal for the selected
     /// object format.
@@ -113,20 +113,22 @@ public:
     /// @param dbgfmt_keyword   debug format keyword
     /// @param diags            diagnostic reporting
     /// @return False on error.
-    bool setDebugFormat(llvm::StringRef dbgfmt_keyword, Diagnostic& diags);
+    bool setDebugFormat(llvm::StringRef dbgfmt_keyword,
+                        DiagnosticsEngine& diags);
 
     /// Set the list format; if not set prior to assembly, defaults to null
     /// list format (e.g. no list output).
     /// @param listfmt_keyword  list format keyword
     /// @param diags            diagnostic reporting
     /// @return False on error.
-    bool setListFormat(llvm::StringRef list_keyword, Diagnostic& diags);
+    bool setListFormat(llvm::StringRef list_keyword,
+                       DiagnosticsEngine& diags);
 
     /// Initialize the object for assembly.  Does not read from input file.
     /// @param source_mgr       source manager
     /// @param diags            diagnostic reporting
     /// @return True on success, false on failure.
-    bool InitObject(SourceManager& source_mgr, Diagnostic& diags);
+    bool InitObject(SourceManager& source_mgr, DiagnosticsEngine& diags);
 
     /// Initialize parser.  Does not read from input file.
     /// @param source_mgr       source manager
@@ -134,7 +136,7 @@ public:
     /// @param headers          header search paths
     /// @return Parser.
     Parser& InitParser(SourceManager& source_mgr,
-                       Diagnostic& diags,
+                       DiagnosticsEngine& diags,
                        HeaderSearch& headers);
 
 
@@ -143,13 +145,13 @@ public:
     /// @param source_mgr       source manager
     /// @param diags            diagnostic reporting
     /// @return True on success, false on failure.
-    bool Assemble(SourceManager& source_mgr, Diagnostic& diags);
+    bool Assemble(SourceManager& source_mgr, DiagnosticsEngine& diags);
 
     /// Write assembly results to output file.  Fails if assembly not
     /// performed first.
     /// @param os               output stream
     /// @return True on success, false on failure.
-    bool Output(llvm::raw_fd_ostream& os, Diagnostic& diags);
+    bool Output(llvm::raw_fd_ostream& os, DiagnosticsEngine& diags);
 
     /// Get the object.  Returns 0 until after InitObject() is called.
     /// @return Object.

@@ -38,7 +38,7 @@ namespace yasm
 {
 
 class Bytes;
-class Diagnostic;
+class DiagnosticsEngine;
 class StringTable;
 
 namespace objfmt
@@ -100,7 +100,7 @@ struct YASM_STD_EXPORT CoffSymbol : public AssocData
 #endif // WITH_XML
     void Write(Bytes& bytes,
                const Symbol& sym,
-               Diagnostic& diags,
+               DiagnosticsEngine& diags,
                StringTable& strtab) const;
 
     bool m_forcevis;                ///< force visibility in symbol table

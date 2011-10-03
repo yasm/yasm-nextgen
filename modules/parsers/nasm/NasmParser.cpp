@@ -88,7 +88,7 @@ nasm_efunc(int severity, const char *fmt, ...)
 }
 
 NasmParser::NasmParser(const ParserModule& module,
-                       Diagnostic& diags,
+                       DiagnosticsEngine& diags,
                        SourceManager& sm,
                        HeaderSearch& headers)
     : ParserImpl(module, m_nasm_preproc)
@@ -101,7 +101,7 @@ NasmParser::~NasmParser()
 }
 
 void
-NasmParser::Parse(Object& object, Directives& dirs, Diagnostic& diags)
+NasmParser::Parse(Object& object, Directives& dirs, DiagnosticsEngine& diags)
 {
     m_object = &object;
     m_dirs = &dirs;

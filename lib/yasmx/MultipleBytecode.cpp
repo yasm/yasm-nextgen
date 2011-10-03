@@ -51,15 +51,15 @@ public:
     ~Multiple();
 
     /// Finalizes after parsing.
-    bool Finalize(SourceLocation source, Diagnostic& diags);
+    bool Finalize(SourceLocation source, DiagnosticsEngine& diags);
 
     /// Calculates the minimum size.
     bool CalcLen(Bytecode& bc,
                  const Bytecode::AddSpanFunc& add_span,
-                 Diagnostic& diags);
+                 DiagnosticsEngine& diags);
 
     /// Calculate for output.
-    bool CalcForOutput(SourceLocation source, Diagnostic& diags);
+    bool CalcForOutput(SourceLocation source, DiagnosticsEngine& diags);
 
 #ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
@@ -85,13 +85,13 @@ public:
     ~MultipleBytecode();
 
     /// Finalizes the bytecode after parsing.
-    bool Finalize(Bytecode& bc, Diagnostic& diags);
+    bool Finalize(Bytecode& bc, DiagnosticsEngine& diags);
 
     /// Calculates the minimum size of a bytecode.
     bool CalcLen(Bytecode& bc,
                  /*@out@*/ unsigned long* len,
                  const Bytecode::AddSpanFunc& add_span,
-                 Diagnostic& diags);
+                 DiagnosticsEngine& diags);
 
     /// Recalculates the bytecode's length based on an expanded span
     /// length.
@@ -103,7 +103,7 @@ public:
                 bool* keep,
                 /*@out@*/ long* neg_thres,
                 /*@out@*/ long* pos_thres,
-                Diagnostic& diags);
+                DiagnosticsEngine& diags);
 
     /// Convert a bytecode into its byte representation.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
@@ -138,13 +138,13 @@ public:
     ~FillBytecode();
 
     /// Finalizes the bytecode after parsing.
-    bool Finalize(Bytecode& bc, Diagnostic& diags);
+    bool Finalize(Bytecode& bc, DiagnosticsEngine& diags);
 
     /// Calculates the minimum size of a bytecode.
     bool CalcLen(Bytecode& bc,
                  /*@out@*/ unsigned long* len,
                  const Bytecode::AddSpanFunc& add_span,
-                 Diagnostic& diags);
+                 DiagnosticsEngine& diags);
 
     /// Recalculates the bytecode's length based on an expanded span
     /// length.
@@ -156,7 +156,7 @@ public:
                 bool* keep,
                 /*@out@*/ long* neg_thres,
                 /*@out@*/ long* pos_thres,
-                Diagnostic& diags);
+                DiagnosticsEngine& diags);
 
     /// Convert a bytecode into its byte representation.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
@@ -193,7 +193,7 @@ Multiple::~Multiple()
 }
 
 bool
-Multiple::Finalize(SourceLocation source, Diagnostic& diags)
+Multiple::Finalize(SourceLocation source, DiagnosticsEngine& diags)
 {
     Value val(0, std::auto_ptr<Expr>(m_expr.clone()));
 
@@ -218,7 +218,7 @@ Multiple::Finalize(SourceLocation source, Diagnostic& diags)
 bool
 Multiple::CalcLen(Bytecode& bc,
                   const Bytecode::AddSpanFunc& add_span,
-                  Diagnostic& diags)
+                  DiagnosticsEngine& diags)
 {
     // Calculate multiple value as an integer
     m_int = 1;
@@ -253,7 +253,7 @@ Multiple::CalcLen(Bytecode& bc,
 }
 
 bool
-Multiple::CalcForOutput(SourceLocation source, Diagnostic& diags)
+Multiple::CalcForOutput(SourceLocation source, DiagnosticsEngine& diags)
 {
     SimplifyCalcDist(m_expr, diags);
     if (!m_expr.isIntNum())
@@ -295,7 +295,7 @@ MultipleBytecode::~MultipleBytecode()
 }
 
 bool
-MultipleBytecode::Finalize(Bytecode& bc, Diagnostic& diags)
+MultipleBytecode::Finalize(Bytecode& bc, DiagnosticsEngine& diags)
 {
     if (!m_multiple.Finalize(bc.getSource(), diags))
         return false;
@@ -357,7 +357,7 @@ bool
 MultipleBytecode::CalcLen(Bytecode& bc,
                           /*@out@*/ unsigned long* len,
                           const Bytecode::AddSpanFunc& add_span,
-                          Diagnostic& diags)
+                          DiagnosticsEngine& diags)
 {
     if (!m_multiple.CalcLen(bc, add_span, diags))
         return false;
@@ -388,7 +388,7 @@ MultipleBytecode::Expand(Bytecode& bc,
                          bool* keep,
                          /*@out@*/ long* neg_thres,
                          /*@out@*/ long* pos_thres,
-                         Diagnostic& diags)
+                         DiagnosticsEngine& diags)
 {
     if (span < 0)
     {
@@ -488,7 +488,7 @@ FillBytecode::~FillBytecode()
 }
 
 bool
-FillBytecode::Finalize(Bytecode& bc, Diagnostic& diags)
+FillBytecode::Finalize(Bytecode& bc, DiagnosticsEngine& diags)
 {
     if (!m_multiple.Finalize(bc.getSource(), diags))
         return false;
@@ -503,7 +503,7 @@ bool
 FillBytecode::CalcLen(Bytecode& bc,
                       /*@out@*/ unsigned long* len,
                       const Bytecode::AddSpanFunc& add_span,
-                      Diagnostic& diags)
+                      DiagnosticsEngine& diags)
 {
     if (!m_multiple.CalcLen(bc, add_span, diags))
         return false;
@@ -521,7 +521,7 @@ FillBytecode::Expand(Bytecode& bc,
                      bool* keep,
                      /*@out@*/ long* neg_thres,
                      /*@out@*/ long* pos_thres,
-                     Diagnostic& diags)
+                     DiagnosticsEngine& diags)
 {
     if (span < 0)
     {
@@ -622,7 +622,7 @@ yasm::AppendFill(BytecodeContainer& container,
                  std::auto_ptr<Expr> value,
                  Arch& arch,
                  SourceLocation source,
-                 Diagnostic& diags)
+                 DiagnosticsEngine& diags)
 {
     // optimize common case
     if (!ExpandEqu(*multiple))

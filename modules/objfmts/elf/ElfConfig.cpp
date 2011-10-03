@@ -87,7 +87,7 @@ ElfConfig::AssignSymbolIndices(Object& object, ElfSymbolIndex* nlocal) const
 unsigned long
 ElfConfig::WriteSymbolTable(llvm::raw_ostream& os,
                             Object& object,
-                            Diagnostic& diags,
+                            DiagnosticsEngine& diags,
                             Bytes& scratch) const
 {
     unsigned long size = 0;
@@ -122,7 +122,7 @@ ElfConfig::ReadSymbolTable(const llvm::MemoryBuffer&    in,
                            Object&                      object,
                            const StringTable&           strtab,
                            Section*                     sections[],
-                           Diagnostic&                  diags) const
+                           DiagnosticsEngine&           diags) const
 {
     ElfSize symsize = symtab_sect.getEntSize();
     if (symsize == 0)

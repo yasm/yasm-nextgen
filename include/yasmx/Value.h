@@ -50,7 +50,7 @@ namespace yasm
 
 class Arch;
 class Bytes;
-class Diagnostic;
+class DiagnosticsEngine;
 class Expr;
 class NumericOutput;
 class Object;
@@ -123,7 +123,7 @@ public:
     /// @note This should only be called after the parse is complete.
     ///       Calling before the parse is complete will usually result in
     ///       an error.
-    bool Finalize(Diagnostic& diags, unsigned int err_too_complex =
+    bool Finalize(DiagnosticsEngine& diags, unsigned int err_too_complex =
                   diag::err_too_complex_expression);
 
     /// Determine if subtractive relative portion can be treated as
@@ -145,7 +145,9 @@ public:
     ///                     absolute portion of value
     /// @param diags        diagnostic reporting
     /// @return True (and out set) if can be resolved to integer value.
-    bool getIntNum(/*@out@*/ IntNum* out, bool calc_bc_dist, Diagnostic& diags);
+    bool getIntNum(/*@out@*/ IntNum* out,
+                   bool calc_bc_dist,
+                   DiagnosticsEngine& diags);
 
     /// Configure numeric output based on value settings.
     /// @param num_out      numeric output
@@ -158,7 +160,9 @@ public:
     /// @param diags        diagnostic reporting
     /// @return False if no value output due to value needing relocation;
     ///         true if value output.
-    bool OutputBasic(NumericOutput& num_out, IntNum* outval, Diagnostic& diags);
+    bool OutputBasic(NumericOutput& num_out,
+                     IntNum* outval,
+                     DiagnosticsEngine& diags);
 
     /// Get the absolute portion of the value.
     /// @return Absolute expression, or NULL if there is no absolute portion.

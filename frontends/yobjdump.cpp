@@ -38,9 +38,11 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/system_error.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/FileManager.h"
 #include "yasmx/Basic/SourceManager.h"
+#include "yasmx/Frontend/OffsetDiagnosticPrinter.h"
 #include "yasmx/Support/registry.h"
 #include "yasmx/System/plugin.h"
 #include "yasmx/Arch.h"
@@ -53,7 +55,6 @@
 #include "yasmx/Symbol.h"
 
 #include "frontends/license.cpp"
-#include "frontends/OffsetDiagnosticPrinter.h"
 
 namespace cl = llvm::cl;
 
@@ -388,14 +389,21 @@ DumpContents(const yasm::Object& object)
 static int
 DoDump(const std::string& in_filename,
        yasm::SourceManager& source_mgr,
-       yasm::Diagnostic& diags)
+       yasm::DiagnosticsEngine& diags)
 {
-    yasm::FileManager file_mgr;
+    yasm::FileManager& file_mgr = source_mgr.getFileManager();
 
     // open the input file or STDIN (for filename of "-")
     if (in_filename == "-")
     {
-        source_mgr.createMainFileIDForMemBuffer(llvm::MemoryBuffer::getSTDIN());
+        llvm::OwningPtr<llvm::MemoryBuffer> my_stdin;
+        if (llvm::error_code err = llvm::MemoryBuffer::getSTDIN(my_stdin))
+        {
+            diags.Report(yasm::SourceLocation(), yasm::diag::fatal_file_open)
+                << in_filename << err.message();
+            return EXIT_FAILURE;
+        }
+        source_mgr.createMainFileIDForMemBuffer(my_stdin.take());
     }
     else
     {
@@ -405,7 +413,7 @@ DoDump(const std::string& in_filename,
             diags.Report(yasm::SourceLocation(), yasm::diag::err_file_open)
                 << in_filename;
         }
-        source_mgr.createMainFileID(in, yasm::SourceLocation());
+        source_mgr.createMainFileID(in);
     }
 
     const llvm::MemoryBuffer* in_file =
@@ -418,7 +426,7 @@ DoDump(const std::string& in_filename,
 
     if (!objfmt_keyword.empty())
     {
-        objfmt_keyword = llvm::LowercaseString(objfmt_keyword);
+        objfmt_keyword = llvm::StringRef(objfmt_keyword).lower();
         if (!yasm::isModule<yasm::ObjectFormatModule>(objfmt_keyword))
         {
             diags.Report(sloc, yasm::diag::err_unrecognized_object_format)
@@ -535,8 +543,12 @@ main(int argc, char* argv[])
     }
 
     yasm::OffsetDiagnosticPrinter diag_printer(llvm::errs());
-    yasm::Diagnostic diags(&diag_printer);
-    yasm::SourceManager source_mgr(diags);
+    llvm::IntrusiveRefCntPtr<yasm::DiagnosticIDs>
+        diagids(new yasm::DiagnosticIDs);
+    yasm::DiagnosticsEngine diags(diagids, &diag_printer, false);
+    yasm::FileSystemOptions opts;
+    yasm::FileManager file_mgr(opts);
+    yasm::SourceManager source_mgr(diags, file_mgr);
     diags.setSourceManager(&source_mgr);
     diag_printer.setPrefix("yobjdump");
 

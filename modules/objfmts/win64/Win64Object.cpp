@@ -56,7 +56,7 @@ void
 Win64Object::Output(llvm::raw_fd_ostream& os,
                     bool all_syms,
                     DebugFormat& dbgfmt,
-                    Diagnostic& diags)
+                    DiagnosticsEngine& diags)
 {
     if (m_proc_frame.isValid())
     {
@@ -72,7 +72,7 @@ Win64Object::Output(llvm::raw_fd_ostream& os,
 }
 
 void
-Win64Object::DirProcFrame(DirectiveInfo& info, Diagnostic& diags)
+Win64Object::DirProcFrame(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
@@ -90,10 +90,10 @@ Win64Object::DirProcFrame(DirectiveInfo& info, Diagnostic& diags)
     if (m_proc_frame.isValid())
     {
         diags.Report(info.getSource(),
-                     diags.getCustomDiagID(Diagnostic::Error,
+                     diags.getCustomDiagID(DiagnosticsEngine::Error,
             "nested procedures not supported (didn't use [ENDPROC_FRAME]?)"));
         diags.Report(m_proc_frame,
-                     diags.getCustomDiagID(Diagnostic::Note,
+                     diags.getCustomDiagID(DiagnosticsEngine::Note,
                                            "previous procedure started here"));
         return;
     }
@@ -122,12 +122,13 @@ Win64Object::DirProcFrame(DirectiveInfo& info, Diagnostic& diags)
 }
 
 bool
-Win64Object::CheckProcFrameState(SourceLocation dir_source, Diagnostic& diags)
+Win64Object::CheckProcFrameState(SourceLocation dir_source,
+                                 DiagnosticsEngine& diags)
 {
     if (!m_proc_frame.isValid())
     {
         diags.Report(dir_source,
-                     diags.getCustomDiagID(Diagnostic::Error,
+                     diags.getCustomDiagID(DiagnosticsEngine::Error,
                                            "no preceding [PROC_FRAME]"));
         return false;
     }
@@ -135,17 +136,18 @@ Win64Object::CheckProcFrameState(SourceLocation dir_source, Diagnostic& diags)
     if (m_done_prolog.isValid())
     {
         diags.Report(dir_source,
-                     diags.getCustomDiagID(Diagnostic::Error,
+                     diags.getCustomDiagID(DiagnosticsEngine::Error,
                                            "must come before [END_PROLOGUE]"));
         diags.Report(m_done_prolog,
-            diags.getCustomDiagID(Diagnostic::Note, "prologue ended here"));
+            diags.getCustomDiagID(DiagnosticsEngine::Note,
+                                  "prologue ended here"));
         return false;
     }
     return true;
 }
 
 void
-Win64Object::DirPushReg(DirectiveInfo& info, Diagnostic& diags)
+Win64Object::DirPushReg(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
@@ -171,7 +173,7 @@ Win64Object::DirPushReg(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-Win64Object::DirSetFrame(DirectiveInfo& info, Diagnostic& diags)
+Win64Object::DirSetFrame(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
@@ -209,7 +211,7 @@ Win64Object::DirSetFrame(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-Win64Object::DirAllocStack(DirectiveInfo& info, Diagnostic& diags)
+Win64Object::DirAllocStack(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
@@ -240,7 +242,7 @@ Win64Object::DirAllocStack(DirectiveInfo& info, Diagnostic& diags)
 void
 Win64Object::SaveCommon(DirectiveInfo& info,
                         UnwindCode::Opcode op,
-                        Diagnostic& diags)
+                        DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
@@ -283,19 +285,19 @@ Win64Object::SaveCommon(DirectiveInfo& info,
 }
 
 void
-Win64Object::DirSaveReg(DirectiveInfo& info, Diagnostic& diags)
+Win64Object::DirSaveReg(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     SaveCommon(info, UnwindCode::SAVE_NONVOL, diags);
 }
 
 void
-Win64Object::DirSaveXMM128(DirectiveInfo& info, Diagnostic& diags)
+Win64Object::DirSaveXMM128(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     SaveCommon(info, UnwindCode::SAVE_XMM128, diags);
 }
 
 void
-Win64Object::DirPushFrame(DirectiveInfo& info, Diagnostic& diags)
+Win64Object::DirPushFrame(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     if (!CheckProcFrameState(info.getSource(), diags))
@@ -311,7 +313,7 @@ Win64Object::DirPushFrame(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-Win64Object::DirEndProlog(DirectiveInfo& info, Diagnostic& diags)
+Win64Object::DirEndProlog(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     if (!CheckProcFrameState(info.getSource(), diags))
@@ -322,7 +324,7 @@ Win64Object::DirEndProlog(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-Win64Object::DirEndProcFrame(DirectiveInfo& info, Diagnostic& diags)
+Win64Object::DirEndProcFrame(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     SourceLocation source = info.getSource();
@@ -330,17 +332,17 @@ Win64Object::DirEndProcFrame(DirectiveInfo& info, Diagnostic& diags)
     if (!m_proc_frame.isValid())
     {
         diags.Report(source,
-                     diags.getCustomDiagID(Diagnostic::Error,
+                     diags.getCustomDiagID(DiagnosticsEngine::Error,
                                            "no preceding [PROC_FRAME]"));
         return;
     }
     if (!m_done_prolog.isValid())
     {
         diags.Report(info.getSource(),
-                     diags.getCustomDiagID(Diagnostic::Error,
+                     diags.getCustomDiagID(DiagnosticsEngine::Error,
             "ended procedure without ending prologue"));
         diags.Report(m_proc_frame,
-                     diags.getCustomDiagID(Diagnostic::Note,
+                     diags.getCustomDiagID(DiagnosticsEngine::Note,
                                            "procedure started here"));
         m_unwind.reset(0);
         m_proc_frame = SourceLocation();
@@ -441,7 +443,7 @@ Win64Object::InitSection(llvm::StringRef name,
                          Section& section,
                          CoffSection* coffsect,
                          SourceLocation source,
-                         Diagnostic& diags)
+                         DiagnosticsEngine& diags)
 {
     if (Win32Object::InitSection(name, section, coffsect, source, diags))
         return true;

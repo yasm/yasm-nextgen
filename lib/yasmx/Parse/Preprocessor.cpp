@@ -32,13 +32,14 @@
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/system_error.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Parse/HeaderSearch.h"
 
 
 using namespace yasm;
 
-Preprocessor::Preprocessor(Diagnostic& diags,
+Preprocessor::Preprocessor(DiagnosticsEngine& diags,
                            SourceManager& sm,
                            HeaderSearch& headers)
     : m_diags(diags)
@@ -104,13 +105,14 @@ Preprocessor::PredefineText(llvm::MemoryBuffer* buf)
 void
 Preprocessor::PreInclude(llvm::StringRef filename)
 {
-    std::string err;
-    llvm::MemoryBuffer* buf = llvm::MemoryBuffer::getFile(filename, &err);
-    if (buf)
-        PredefineText(buf);
-    else
+    llvm::OwningPtr<llvm::MemoryBuffer> file;
+    if (llvm::error_code err = llvm::MemoryBuffer::getFile(filename, file))
+    {
         Diag(yasm::SourceLocation(), yasm::diag::err_cannot_open_file)
-            << filename << err;
+            << filename << err.message();
+        return;
+    }
+    PredefineText(file.take());
 }
 
 void
@@ -239,7 +241,7 @@ Preprocessor::AdvanceToTokenCharacter(SourceLocation tok_start,
     while (Lexer::isSimpleCharacter(*tok_ptr))
     {
         if (char_no == 0)
-            return tok_start.getFileLocWithOffset(phys_offset);
+            return tok_start.getLocWithOffset(phys_offset);
         ++tok_ptr, --char_no, ++phys_offset;
     }
 
@@ -259,7 +261,7 @@ Preprocessor::AdvanceToTokenCharacter(SourceLocation tok_start,
     if (!Lexer::isSimpleCharacter(*tok_ptr))
         phys_offset = Lexer::SkipEscapedNewLines(tok_ptr)-tok_ptr;
 
-    return tok_start.getFileLocWithOffset(phys_offset);
+    return tok_start.getLocWithOffset(phys_offset);
 }
 
 #if 0

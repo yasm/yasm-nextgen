@@ -46,7 +46,7 @@ void
 yasm::AppendByte(BytecodeContainer& container,
                  std::auto_ptr<Expr> expr,
                  SourceLocation source,
-                 Diagnostic& diags)
+                 DiagnosticsEngine& diags)
 {
     expr->Simplify(diags);
     if (expr->isIntNum())
@@ -96,7 +96,7 @@ yasm::AppendData(BytecodeContainer& container,
                  unsigned int size,
                  const Arch& arch,
                  SourceLocation source,
-                 Diagnostic& diags)
+                 DiagnosticsEngine& diags)
 {
     expr->Simplify(diags);
     if (expr->isIntNum())

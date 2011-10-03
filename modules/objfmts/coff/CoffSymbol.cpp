@@ -88,7 +88,7 @@ CoffSymbol::Write(pugi::xml_node out) const
 void
 CoffSymbol::Write(Bytes& bytes,
                   const Symbol& sym,
-                  Diagnostic& diags,
+                  DiagnosticsEngine& diags,
                   StringTable& strtab) const
 {
     int vis = sym.getVisibility();

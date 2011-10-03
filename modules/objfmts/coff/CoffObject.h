@@ -32,7 +32,7 @@
 namespace yasm
 {
 
-class Diagnostic;
+class DiagnosticsEngine;
 class DirectiveInfo;
 class DirHelpers;
 class IntNum;
@@ -69,12 +69,12 @@ public:
     virtual void Output(llvm::raw_fd_ostream& os,
                         bool all_syms,
                         DebugFormat& dbgfmt,
-                        Diagnostic& diags);
+                        DiagnosticsEngine& diags);
 
     virtual Section* AddDefaultSection();
     virtual Section* AppendSection(llvm::StringRef name,
                                    SourceLocation source,
-                                   Diagnostic& diags);
+                                   DiagnosticsEngine& diags);
 
     Machine getMachine() const { return m_machine; }
 
@@ -100,7 +100,7 @@ protected:
                              Section& section,
                              CoffSection* coffsect,
                              SourceLocation source,
-                             Diagnostic& diags);
+                             DiagnosticsEngine& diags);
     virtual void DirSectionInitHelpers(DirHelpers& helpers,
                                        CoffSection* csd,
                                        IntNum* align,
@@ -130,14 +130,14 @@ private:
 
     CoffSymbol* m_def_sym;          // Data for symbol specified by .def dir
 
-    void DirGasSection(DirectiveInfo& info, Diagnostic& diags);
-    void DirSection(DirectiveInfo& info, Diagnostic& diags);
-    void DirIdent(DirectiveInfo& info, Diagnostic& diags);
-    void DirGasDef(DirectiveInfo& info, Diagnostic& diags);
-    void DirGasScl(DirectiveInfo& info, Diagnostic& diags);
-    void DirGasType(DirectiveInfo& info, Diagnostic& diags);
-    void DirGasEndef(DirectiveInfo& info, Diagnostic& diags);
-    void DirSecRel32(DirectiveInfo& info, Diagnostic& diags);
+    void DirGasSection(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirSection(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirIdent(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirGasDef(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirGasScl(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirGasType(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirGasEndef(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirSecRel32(DirectiveInfo& info, DiagnosticsEngine& diags);
 };
 
 }} // namespace yasm::objfmt

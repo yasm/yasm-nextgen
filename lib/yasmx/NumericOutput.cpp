@@ -54,7 +54,7 @@ NumericOutput::NumericOutput(Bytes& bytes)
 }
 
 void
-NumericOutput::EmitWarnings(Diagnostic& diags) const
+NumericOutput::EmitWarnings(DiagnosticsEngine& diags) const
 {
     if (m_sign && (m_warns & INT_OVERFLOW) != 0)
         diags.Report(m_source, diag::warn_signed_overflow) << m_size;
@@ -85,7 +85,7 @@ NumericOutput::OutputInteger(const llvm::APInt& intn)
     llvm::APInt work = intn.ashr(m_rshift);
 
     // Sign extend (or truncate) to correct size
-    work.sextOrTrunc(m_size);
+    work = work.sextOrTrunc(m_size);
 
     // Shortcut easy case
     if (m_shift == 0 && m_bytes.size()*8 == m_size)

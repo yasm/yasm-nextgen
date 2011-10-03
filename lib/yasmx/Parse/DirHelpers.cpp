@@ -65,9 +65,9 @@ DirHelpers::Add(llvm::StringRef name,
                 DirHelper helper)
 {
     if (needsvalue)
-        m_impl->m_value_helpers[llvm::LowercaseString(name)] = helper;
+        m_impl->m_value_helpers[name.lower()] = helper;
     else
-        m_impl->m_novalue_helpers[llvm::LowercaseString(name)] = helper;
+        m_impl->m_novalue_helpers[name.lower()] = helper;
 }
 
 bool
@@ -75,10 +75,10 @@ DirHelpers::operator()
     (NameValues::iterator nv_first,
      NameValues::iterator nv_last,
      SourceLocation dir_source,
-     Diagnostic& diags,
+     DiagnosticsEngine& diags,
      TR1::function<bool (NameValue& nv,
                          SourceLocation dir_source,
-                         Diagnostic& diags)>
+                         DiagnosticsEngine& diags)>
          helper_nameval)
 {
     bool anymatched = false;
@@ -90,7 +90,7 @@ DirHelpers::operator()
         if (nv->getName().empty() && nv->isId())
         {
             Impl::HelperMap::iterator helper =
-                m_impl->m_novalue_helpers.find(llvm::LowercaseString(nv->getId()));
+                m_impl->m_novalue_helpers.find(nv->getId().lower());
             if (helper != m_impl->m_novalue_helpers.end())
             {
                 helper->second(*nv, diags);
@@ -101,7 +101,7 @@ DirHelpers::operator()
         else if (!nv->getName().empty())
         {
             Impl::HelperMap::iterator helper =
-                m_impl->m_value_helpers.find(llvm::LowercaseString(nv->getName()));
+                m_impl->m_value_helpers.find(nv->getName().lower());
             if (helper != m_impl->m_value_helpers.end())
             {
                 helper->second(*nv, diags);
@@ -122,7 +122,7 @@ DirHelpers::operator()
 
 void
 yasm::DirIntNumPower2(NameValue& nv,
-                      Diagnostic& diags,
+                      DiagnosticsEngine& diags,
                       Object* obj,
                       IntNum* out,
                       bool* out_set)
@@ -156,7 +156,7 @@ yasm::DirIntNumPower2(NameValue& nv,
 
 void
 yasm::DirIntNum(NameValue& nv,
-                Diagnostic& diags,
+                DiagnosticsEngine& diags,
                 Object* obj,
                 IntNum* out,
                 bool* out_set)
@@ -183,7 +183,7 @@ yasm::DirIntNum(NameValue& nv,
 
 void
 yasm::DirExpr(NameValue& nv,
-              Diagnostic& diags,
+              DiagnosticsEngine& diags,
               Object* obj,
               std::auto_ptr<Expr>* out,
               bool* out_set)
@@ -200,7 +200,7 @@ yasm::DirExpr(NameValue& nv,
 
 void
 yasm::DirRegister(NameValue& nv,
-                  Diagnostic& diags,
+                  DiagnosticsEngine& diags,
                   RegisterPtr* out,
                   bool* out_set)
 {
@@ -216,7 +216,7 @@ yasm::DirRegister(NameValue& nv,
 
 void
 yasm::DirString(NameValue& nv,
-                Diagnostic& diags,
+                DiagnosticsEngine& diags,
                 std::string* out,
                 bool* out_set)
 {
@@ -233,7 +233,7 @@ yasm::DirString(NameValue& nv,
 bool
 yasm::DirNameValueWarn(NameValue& nv,
                        SourceLocation dir_source,
-                       Diagnostic& diags)
+                       DiagnosticsEngine& diags)
 {
     if (nv.getNameSource().isValid())
     {

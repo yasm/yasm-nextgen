@@ -42,7 +42,7 @@
 namespace yasm
 {
 
-class Diagnostic;
+class DiagnosticsEngine;
 class Expr;
 class Object;
 
@@ -151,7 +151,7 @@ public:
     /// @param diags    diagnostic reporting
     void CheckedDefineEqu(const Expr& e,
                           SourceLocation source,
-                          Diagnostic& diags);
+                          DiagnosticsEngine& diags);
 
     /// Define as a label.
     /// @note Asserts if already defined.
@@ -164,7 +164,7 @@ public:
     /// @param source   source location
     void CheckedDefineLabel(Location loc,
                             SourceLocation source,
-                            Diagnostic& diags);
+                            DiagnosticsEngine& diags);
 
     /// Define a special symbol.  Special symbols have no generic associated
     /// data (such as an expression or precbc).
@@ -188,7 +188,7 @@ public:
     /// @param diags    diagnostic reporting
     void CheckedDeclare(Visibility vis,
                         SourceLocation source,
-                        Diagnostic& diags);
+                        DiagnosticsEngine& diags);
 
     /// Determine if symbol is used but is undefined.  Undefined symbols are
     /// those that are used but never defined or declared #EXTERN or #COMMON.
@@ -228,7 +228,7 @@ private:
         SPECIAL
     };
 
-    bool DefineCheck(SourceLocation source, Diagnostic& diags) const;
+    bool DefineCheck(SourceLocation source, DiagnosticsEngine& diags) const;
 
     std::string m_name;
     Type m_type;

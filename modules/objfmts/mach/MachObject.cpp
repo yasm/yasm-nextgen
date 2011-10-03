@@ -377,7 +377,7 @@ MachObject::getDebugFormatKeywords()
 Section*
 MachObject::AddDefaultSection()
 {
-    Diagnostic diags(NULL);
+    DiagnosticsEngine diags(NULL);
     Section* section = AppendSection(".text", SourceLocation(), diags);
     section->setDefault(true);
     return section;
@@ -480,7 +480,7 @@ MachObject::LookupSection(llvm::StringRef segname, llvm::StringRef sectname)
 Section*
 MachObject::AppendSection(const SectionConfig& config,
                           SourceLocation source,
-                          Diagnostic& diags)
+                          DiagnosticsEngine& diags)
 {
     // Create section
     Section* section = new Section(config.name, false, false, source);
@@ -505,7 +505,7 @@ MachObject::AppendSection(const SectionConfig& config,
 Section*
 MachObject::AppendSection(llvm::StringRef name,
                           SourceLocation source,
-                          Diagnostic& diags)
+                          DiagnosticsEngine& diags)
 {
     if (name.startswith("LC_SEGMENT."))
     {
@@ -522,13 +522,13 @@ Section*
 MachObject::AppendSection(llvm::StringRef segname,
                           llvm::StringRef sectname,
                           SourceLocation source,
-                          Diagnostic& diags)
+                          DiagnosticsEngine& diags)
 {
     return AppendSection(LookupSection(segname, sectname), source, diags);
 }
 
 void
-MachObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
+MachObject::DirGasSection(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
@@ -692,7 +692,7 @@ MachObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
 
 static void
 MachDirSegname(NameValue& nv,
-               Diagnostic& diags,
+               DiagnosticsEngine& diags,
                std::string* out,
                bool* out_set)
 {
@@ -714,7 +714,7 @@ MachDirSegname(NameValue& nv,
 }
 
 void
-MachObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
+MachObject::DirSection(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
@@ -789,7 +789,7 @@ MachObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
 void
 MachObject::DirGasStandardSection(const StaticSectionConfig* config,
                                   DirectiveInfo& info,
-                                  Diagnostic& diags)
+                                  DiagnosticsEngine& diags)
 {
     Section* sect = m_object.FindSection(config->name);
     if (!sect)
@@ -800,17 +800,17 @@ MachObject::DirGasStandardSection(const StaticSectionConfig* config,
 }
 
 void
-MachObject::DirZerofill(DirectiveInfo& info, Diagnostic& diags)
+MachObject::DirZerofill(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
 }
 
 void
-MachObject::DirIndirectSymbol(DirectiveInfo& info, Diagnostic& diags)
+MachObject::DirIndirectSymbol(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
 }
 
 void
-MachObject::DirReference(DirectiveInfo& info, Diagnostic& diags)
+MachObject::DirReference(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
@@ -826,7 +826,7 @@ MachObject::DirReference(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-MachObject::DirLazyReference(DirectiveInfo& info, Diagnostic& diags)
+MachObject::DirLazyReference(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
@@ -842,7 +842,7 @@ MachObject::DirLazyReference(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-MachObject::DirWeakReference(DirectiveInfo& info, Diagnostic& diags)
+MachObject::DirWeakReference(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
@@ -857,7 +857,7 @@ MachObject::DirWeakReference(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-MachObject::DirWeakDefinition(DirectiveInfo& info, Diagnostic& diags)
+MachObject::DirWeakDefinition(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
@@ -873,7 +873,7 @@ MachObject::DirWeakDefinition(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-MachObject::DirPrivateExtern(DirectiveInfo& info, Diagnostic& diags)
+MachObject::DirPrivateExtern(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
@@ -889,7 +889,7 @@ MachObject::DirPrivateExtern(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-MachObject::DirDesc(DirectiveInfo& info, Diagnostic& diags)
+MachObject::DirDesc(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
 
@@ -913,7 +913,7 @@ MachObject::DirDesc(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-MachObject::DirNoDeadStrip(DirectiveInfo& info, Diagnostic& diags)
+MachObject::DirNoDeadStrip(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& namevals = info.getNameValues();
@@ -928,7 +928,8 @@ MachObject::DirNoDeadStrip(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-MachObject::DirSubsectionsViaSymbols(DirectiveInfo& info, Diagnostic& diags)
+MachObject::DirSubsectionsViaSymbols(DirectiveInfo& info,
+                                     DiagnosticsEngine& diags)
 {
     m_subsections_via_symbols = true;
 }

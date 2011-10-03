@@ -92,7 +92,7 @@ X86General::~X86General()
 }
 
 bool
-X86General::Finalize(Bytecode& bc, Diagnostic& diags)
+X86General::Finalize(Bytecode& bc, DiagnosticsEngine& diags)
 {
     if (m_ea)
     {
@@ -203,7 +203,7 @@ bool
 X86General::CalcLen(Bytecode& bc,
                     /*@out@*/ unsigned long* len,
                     const Bytecode::AddSpanFunc& add_span,
-                    Diagnostic& diags)
+                    DiagnosticsEngine& diags)
 {
     unsigned long ilen = 0;
     if (m_ea != 0)
@@ -345,7 +345,7 @@ X86General::Expand(Bytecode& bc,
                    bool* keep,
                    /*@out@*/ long* neg_thres,
                    /*@out@*/ long* pos_thres,
-                   Diagnostic& diags)
+                   DiagnosticsEngine& diags)
 {
     if (m_ea != 0 && span == 1)
     {

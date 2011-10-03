@@ -58,7 +58,7 @@ BinMapOutput::BinMapOutput(llvm::raw_ostream& os,
                            const Object& object,
                            const IntNum& origin,
                            const BinGroups& groups,
-                           Diagnostic& diags)
+                           DiagnosticsEngine& diags)
     : m_os(os)
     , m_object(object)
     , m_origin(origin)

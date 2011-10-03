@@ -35,7 +35,7 @@ namespace llvm { class raw_ostream; }
 namespace yasm
 {
 
-class Diagnostic;
+class DiagnosticsEngine;
 class IntNum;
 class Object;
 
@@ -49,7 +49,7 @@ public:
                  const Object& object,
                  const IntNum& origin,
                  const BinGroups& groups,
-                 Diagnostic& diags);
+                 DiagnosticsEngine& diags);
     ~BinMapOutput();
 
     void OutputHeader();
@@ -72,7 +72,7 @@ private:
     const Object& m_object;     // object
     const IntNum& m_origin;     // origin
     const BinGroups& m_groups;  // section groups
-    Diagnostic& m_diags;        // diagnostic reporting
+    DiagnosticsEngine& m_diags;     // diagnostic reporting
 };
 
 }} // namespace yasm::objfmt

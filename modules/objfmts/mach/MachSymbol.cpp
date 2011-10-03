@@ -87,7 +87,7 @@ MachSymbol::Write(pugi::xml_node out) const
 #endif // WITH_XML
 
 void
-MachSymbol::Finalize(const Symbol& sym, Diagnostic& diags)
+MachSymbol::Finalize(const Symbol& sym, DiagnosticsEngine& diags)
 {
     int vis = sym.getVisibility();
 

@@ -215,7 +215,7 @@ public:
     X86EAChecker(unsigned int bits,
                  unsigned int addrsize,
                  unsigned int vsib_mode,
-                 Diagnostic& diags)
+                 DiagnosticsEngine& diags)
         : m_bits(bits)
         , m_addrsize(addrsize)
         , m_vsib_mode(vsib_mode)
@@ -255,13 +255,13 @@ private:
     unsigned int m_bits;
     unsigned int m_addrsize;
     unsigned int m_vsib_mode;
-    Diagnostic& m_diags;
+    DiagnosticsEngine& m_diags;
 };
 
 class X86DistRegFunctor
 {
 public:
-    X86DistRegFunctor(bool simplify_reg_mul, Diagnostic& diags)
+    X86DistRegFunctor(bool simplify_reg_mul, DiagnosticsEngine& diags)
         : m_simplify_reg_mul(simplify_reg_mul), m_diags(diags)
     {}
 
@@ -269,7 +269,7 @@ public:
 
 private:
     bool m_simplify_reg_mul;
-    Diagnostic& m_diags;
+    DiagnosticsEngine& m_diags;
 };
 } // anonymous namespace
 
@@ -630,7 +630,7 @@ bool
 X86EffAddr::CalcDispLen(unsigned int wordsize,
                         bool noreg,
                         bool dispreq,
-                        Diagnostic& diags)
+                        DiagnosticsEngine& diags)
 {
     m_valid_modrm = false;      // default to not yet valid
 
@@ -786,7 +786,7 @@ X86EffAddr::Check3264(unsigned int addrsize,
                       unsigned int bits,
                       unsigned char* rex,
                       bool* ip_rel,
-                      Diagnostic& diags)
+                      DiagnosticsEngine& diags)
 {
     int i;
     unsigned char low3;
@@ -1098,7 +1098,7 @@ bool
 X86EffAddr::Check16(unsigned int bits,
                     bool address16_op,
                     bool* ip_rel,
-                    Diagnostic& diags)
+                    DiagnosticsEngine& diags)
 {
     static const unsigned char modrm16[16] =
     {
@@ -1204,7 +1204,7 @@ X86EffAddr::Check(unsigned char* addrsize,
                   bool address16_op,
                   unsigned char* rex,
                   bool* ip_rel,
-                  Diagnostic& diags)
+                  DiagnosticsEngine& diags)
 {
     if (*addrsize == 0)
     {
@@ -1306,7 +1306,7 @@ X86EffAddr::Check(unsigned char* addrsize,
 }
 
 bool
-X86EffAddr::Finalize(Diagnostic& diags)
+X86EffAddr::Finalize(DiagnosticsEngine& diags)
 {
     if (!m_disp.Finalize(diags, diag::err_ea_too_complex))
         return false;

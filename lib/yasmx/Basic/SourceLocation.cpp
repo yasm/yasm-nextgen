@@ -23,7 +23,7 @@ using namespace yasm;
 // PrettyStackTraceLoc
 //===----------------------------------------------------------------------===//
 
-void PrettyStackTraceLoc::print(llvm::raw_ostream &OS) const {
+void PrettyStackTraceLoc::print(raw_ostream &OS) const {
   if (Loc.isValid()) {
     Loc.print(OS, SM);
     OS << ": ";
@@ -35,7 +35,7 @@ void PrettyStackTraceLoc::print(llvm::raw_ostream &OS) const {
 // SourceLocation
 //===----------------------------------------------------------------------===//
 
-void SourceLocation::print(llvm::raw_ostream &OS, const SourceManager &SM)const{
+void SourceLocation::print(raw_ostream &OS, const SourceManager &SM)const{
   if (!isValid()) {
     OS << "<invalid loc>";
     return;
@@ -43,13 +43,18 @@ void SourceLocation::print(llvm::raw_ostream &OS, const SourceManager &SM)const{
 
   if (isFileID()) {
     PresumedLoc PLoc = SM.getPresumedLoc(*this);
-    // The instantiation and spelling pos is identical for file locs.
+    
+    if (PLoc.isInvalid()) {
+      OS << "<invalid>";
+      return;
+    }
+    // The macro expansion and spelling pos is identical for file locs.
     OS << PLoc.getFilename() << ':' << PLoc.getLine()
        << ':' << PLoc.getColumn();
     return;
   }
 
-  SM.getInstantiationLoc(*this).print(OS, SM);
+  SM.getExpansionLoc(*this).print(OS, SM);
 
   OS << " <Spelling=";
   SM.getSpellingLoc(*this).print(OS, SM);
@@ -70,9 +75,9 @@ FileID FullSourceLoc::getFileID() const {
 }
 
 
-FullSourceLoc FullSourceLoc::getInstantiationLoc() const {
+FullSourceLoc FullSourceLoc::getExpansionLoc() const {
   assert(isValid());
-  return FullSourceLoc(SrcMgr->getInstantiationLoc(*this), *SrcMgr);
+  return FullSourceLoc(SrcMgr->getExpansionLoc(*this), *SrcMgr);
 }
 
 FullSourceLoc FullSourceLoc::getSpellingLoc() const {
@@ -80,14 +85,14 @@ FullSourceLoc FullSourceLoc::getSpellingLoc() const {
   return FullSourceLoc(SrcMgr->getSpellingLoc(*this), *SrcMgr);
 }
 
-unsigned FullSourceLoc::getInstantiationLineNumber(bool *Invalid) const {
+unsigned FullSourceLoc::getExpansionLineNumber(bool *Invalid) const {
   assert(isValid());
-  return SrcMgr->getInstantiationLineNumber(*this, Invalid);
+  return SrcMgr->getExpansionLineNumber(*this, Invalid);
 }
 
-unsigned FullSourceLoc::getInstantiationColumnNumber(bool *Invalid) const {
+unsigned FullSourceLoc::getExpansionColumnNumber(bool *Invalid) const {
   assert(isValid());
-  return SrcMgr->getInstantiationColumnNumber(*this, Invalid);
+  return SrcMgr->getExpansionColumnNumber(*this, Invalid);
 }
 
 unsigned FullSourceLoc::getSpellingLineNumber(bool *Invalid) const {
@@ -105,6 +110,15 @@ bool FullSourceLoc::isInSystemHeader() const {
   return SrcMgr->isInSystemHeader(*this);
 }
 
+bool FullSourceLoc::isBeforeInTranslationUnitThan(SourceLocation Loc) const {
+  assert(isValid());
+  return SrcMgr->isBeforeInTranslationUnit(*this, Loc);
+}
+
+void FullSourceLoc::dump() const {
+  SourceLocation::dump(*SrcMgr);
+}
+
 const char *FullSourceLoc::getCharacterData(bool *Invalid) const {
   assert(isValid());
   return SrcMgr->getCharacterData(*this, Invalid);
@@ -115,7 +129,7 @@ const llvm::MemoryBuffer* FullSourceLoc::getBuffer(bool *Invalid) const {
   return SrcMgr->getBuffer(SrcMgr->getFileID(*this), Invalid);
 }
 
-llvm::StringRef FullSourceLoc::getBufferData(bool *Invalid) const {
+StringRef FullSourceLoc::getBufferData(bool *Invalid) const {
   return getBuffer(Invalid)->getBuffer();
 }
 

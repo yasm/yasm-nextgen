@@ -70,17 +70,17 @@ protected:
                              Section& section,
                              CoffSection* coffsect,
                              SourceLocation source,
-                             Diagnostic& diags);
+                             DiagnosticsEngine& diags);
     virtual void DirSectionInitHelpers(DirHelpers& helpers,
                                        CoffSection* csd,
                                        IntNum* align,
                                        bool* has_align);
 
 protected:
-    void DirExport(DirectiveInfo& info, Diagnostic& diags);
+    void DirExport(DirectiveInfo& info, DiagnosticsEngine& diags);
 
 private:
-    void DirSafeSEH(DirectiveInfo& info, Diagnostic& diags);
+    void DirSafeSEH(DirectiveInfo& info, DiagnosticsEngine& diags);
 };
 
 }} // namespace yasm::objfmt

@@ -24,6 +24,7 @@
 //
 #include <gtest/gtest.h>
 
+#include "yasmx/Basic/FileManager.h"
 #include "yasmx/Basic/SourceManager.h"
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Arch.h"
@@ -171,9 +172,12 @@ TEST_F(ValueTest, Finalize)
 
     Value v(8);
 
-    MockDiagnosticId mock_client;
-    Diagnostic diags(&mock_client);
-    SourceManager smgr(diags);
+    MockDiagnosticId mock_consumer;
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &mock_consumer, false);
+    FileSystemOptions opts;
+    FileManager fmgr(opts);
+    SourceManager smgr(diags, fmgr);
     diags.setSourceManager(&smgr);
 
     // just an integer
@@ -197,9 +201,9 @@ TEST_F(ValueTest, Finalize)
     EXPECT_FALSE(v.isWarnEnabled());
 
     v = Value(8, Expr::Ptr(new Expr(AND(a, 0x7f))));
-    EXPECT_CALL(mock_client, DiagId(diag::err_too_complex_expression));
+    EXPECT_CALL(mock_consumer, DiagId(diag::err_too_complex_expression));
     EXPECT_FALSE(v.Finalize(diags));     // invalid
-    Mock::VerifyAndClear(&mock_client);
+    Mock::VerifyAndClear(&mock_consumer);
     ASSERT_TRUE(v.hasAbs());
     EXPECT_EQ("a&127", String::Format(*v.getAbs()));
     EXPECT_FALSE(v.isRelative());
@@ -254,15 +258,15 @@ TEST_F(ValueTest, Finalize)
 
     // rel1 WRT 5 --> error
     v = Value(8, Expr::Ptr(new Expr(WRT(a, 5))));
-    EXPECT_CALL(mock_client, DiagId(diag::err_too_complex_expression));
+    EXPECT_CALL(mock_consumer, DiagId(diag::err_too_complex_expression));
     EXPECT_FALSE(v.Finalize(diags));
-    Mock::VerifyAndClear(&mock_client);
+    Mock::VerifyAndClear(&mock_consumer);
 
     // rel1 WRT (5+rel2) --> error
     v = Value(8, Expr::Ptr(new Expr(WRT(a, ADD(5, b)))));
-    EXPECT_CALL(mock_client, DiagId(diag::err_too_complex_expression));
+    EXPECT_CALL(mock_consumer, DiagId(diag::err_too_complex_expression));
     EXPECT_FALSE(v.Finalize(diags));
-    Mock::VerifyAndClear(&mock_client);
+    Mock::VerifyAndClear(&mock_consumer);
 
     // 5+(rel1 WRT rel2)
     v = Value(8, Expr::Ptr(new Expr(ADD(5, WRT(a, b)))));
@@ -290,9 +294,9 @@ TEST_F(ValueTest, Finalize)
 
     // (rel1 WRT rel2) WRT rel3 --> error
     v = Value(8, Expr::Ptr(new Expr(WRT(WRT(a, b), c))));
-    EXPECT_CALL(mock_client, DiagId(diag::err_too_complex_expression));
+    EXPECT_CALL(mock_consumer, DiagId(diag::err_too_complex_expression));
     EXPECT_FALSE(v.Finalize(diags));
-    Mock::VerifyAndClear(&mock_client);
+    Mock::VerifyAndClear(&mock_consumer);
 
     // SEG reg1
     v = Value(8, Expr::Ptr(new Expr(SEG(a))));
@@ -303,15 +307,15 @@ TEST_F(ValueTest, Finalize)
 
     // SEG 5 --> error
     v = Value(8, Expr::Ptr(new Expr(SEG(5))));
-    EXPECT_CALL(mock_client, DiagId(diag::err_too_complex_expression));
+    EXPECT_CALL(mock_consumer, DiagId(diag::err_too_complex_expression));
     EXPECT_FALSE(v.Finalize(diags));
-    Mock::VerifyAndClear(&mock_client);
+    Mock::VerifyAndClear(&mock_consumer);
 
     // rel1+SEG rel1 --> error
     v = Value(8, Expr::Ptr(new Expr(ADD(a, SEG(a)))));
-    EXPECT_CALL(mock_client, DiagId(diag::err_too_complex_expression));
+    EXPECT_CALL(mock_consumer, DiagId(diag::err_too_complex_expression));
     EXPECT_FALSE(v.Finalize(diags));
-    Mock::VerifyAndClear(&mock_client);
+    Mock::VerifyAndClear(&mock_consumer);
 
     // rel1>>5
     v = Value(8, Expr::Ptr(new Expr(SHR(a, 5))));
@@ -329,15 +333,15 @@ TEST_F(ValueTest, Finalize)
 
     // rel1>>reg --> error
     v = Value(8, Expr::Ptr(new Expr(SHR(a, g))));
-    EXPECT_CALL(mock_client, DiagId(diag::err_too_complex_expression));
+    EXPECT_CALL(mock_consumer, DiagId(diag::err_too_complex_expression));
     EXPECT_FALSE(v.Finalize(diags));
-    Mock::VerifyAndClear(&mock_client);
+    Mock::VerifyAndClear(&mock_consumer);
 
     // rel1+rel1>>5 --> error
     v = Value(8, Expr::Ptr(new Expr(ADD(a, SHR(a, 5)))));
-    EXPECT_CALL(mock_client, DiagId(diag::err_too_complex_expression));
+    EXPECT_CALL(mock_consumer, DiagId(diag::err_too_complex_expression));
     EXPECT_FALSE(v.Finalize(diags));
-    Mock::VerifyAndClear(&mock_client);
+    Mock::VerifyAndClear(&mock_consumer);
 
     // 5>>rel1 --> left as-is.
     v = Value(8, Expr::Ptr(new Expr(SHR(5, a))));
@@ -349,9 +353,12 @@ TEST_F(ValueTest, Finalize)
 
 TEST_F(ValueTest, Clear)
 {
-    MockDiagnosticId mock_client;
-    Diagnostic diags(&mock_client);
-    SourceManager smgr(diags);
+    MockDiagnosticId mock_consumer;
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &mock_consumer, false);
+    FileSystemOptions opts;
+    FileManager fmgr(opts);
+    SourceManager smgr(diags, fmgr);
     diags.setSourceManager(&smgr);
 
     Value v(6, Expr::Ptr(new Expr(WRT(sym1, wrt))));
@@ -386,9 +393,12 @@ TEST_F(ValueTest, Clear)
 
 TEST_F(ValueTest, ClearRelative)
 {
-    MockDiagnosticId mock_client;
-    Diagnostic diags(&mock_client);
-    SourceManager smgr(diags);
+    MockDiagnosticId mock_consumer;
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &mock_consumer, false);
+    FileSystemOptions opts;
+    FileManager fmgr(opts);
+    SourceManager smgr(diags, fmgr);
     diags.setSourceManager(&smgr);
 
     Value v(6, Expr::Ptr(new Expr(WRT(sym1, wrt))));
@@ -417,9 +427,12 @@ TEST_F(ValueTest, ClearRelative)
 
 TEST_F(ValueTest, AddAbsInt)
 {
-    MockDiagnosticId mock_client;
-    Diagnostic diags(&mock_client);
-    SourceManager smgr(diags);
+    MockDiagnosticId mock_consumer;
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &mock_consumer, false);
+    FileSystemOptions opts;
+    FileManager fmgr(opts);
+    SourceManager smgr(diags, fmgr);
     diags.setSourceManager(&smgr);
 
     Value v(4);
@@ -437,9 +450,12 @@ TEST_F(ValueTest, AddAbsInt)
 
 TEST_F(ValueTest, AddAbsExpr)
 {
-    MockDiagnosticId mock_client;
-    Diagnostic diags(&mock_client);
-    SourceManager smgr(diags);
+    MockDiagnosticId mock_consumer;
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &mock_consumer, false);
+    FileSystemOptions opts;
+    FileManager fmgr(opts);
+    SourceManager smgr(diags, fmgr);
     diags.setSourceManager(&smgr);
 
     Value v(4);
@@ -469,9 +485,12 @@ TEST_F(ValueTest, isRelative)
 
 TEST_F(ValueTest, isWRT)
 {
-    MockDiagnosticId mock_client;
-    Diagnostic diags(&mock_client);
-    SourceManager smgr(diags);
+    MockDiagnosticId mock_consumer;
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &mock_consumer, false);
+    FileSystemOptions opts;
+    FileManager fmgr(opts);
+    SourceManager smgr(diags, fmgr);
     diags.setSourceManager(&smgr);
 
     Value v1(4);
@@ -542,9 +561,12 @@ TEST_F(ValueTest, GetSetSource)
 
 TEST_F(ValueTest, getIntNum)
 {
-    MockDiagnosticId mock_client;
-    Diagnostic diags(&mock_client);
-    SourceManager smgr(diags);
+    MockDiagnosticId mock_consumer;
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &mock_consumer, false);
+    FileSystemOptions opts;
+    FileManager fmgr(opts);
+    SourceManager smgr(diags, fmgr);
     diags.setSourceManager(&smgr);
 
     IntNum intn;

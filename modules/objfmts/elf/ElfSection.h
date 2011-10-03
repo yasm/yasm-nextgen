@@ -44,7 +44,7 @@ namespace yasm
 {
 
 class Bytes;
-class Diagnostic;
+class DiagnosticsEngine;
 class Section;
 class StringTable;
 
@@ -60,7 +60,7 @@ public:
     ElfSection(const ElfConfig&             config,
                const llvm::MemoryBuffer&    in,
                ElfSectionIndex              index,
-               Diagnostic&                  diags);
+               DiagnosticsEngine&           diags);
 
     ElfSection(const ElfConfig&     config,
                ElfSectionType       type,
@@ -78,7 +78,7 @@ public:
     std::auto_ptr<Section> CreateSection(const StringTable& shstrtab) const;
     bool LoadSectionData(Section& sect,
                          const llvm::MemoryBuffer& in,
-                         Diagnostic& diags) const;
+                         DiagnosticsEngine& diags) const;
 
     ElfSectionType getType() const { return m_type; }
 
@@ -125,7 +125,7 @@ public:
                               Section& sect,
                               Bytes& scratch,
                               const ElfMachine& machine,
-                              Diagnostic& diags);
+                              DiagnosticsEngine& diags);
     void ReadRelocs(const llvm::MemoryBuffer& in,
                     const ElfSection& reloc_sect,
                     Section& sect,

@@ -35,7 +35,7 @@
 namespace yasm
 {
 
-class Diagnostic;
+class DiagnosticsEngine;
 class DirectiveInfo;
 class Expr;
 class NameValues;
@@ -90,35 +90,35 @@ YASM_LIB_EXPORT
 /// @param info     directive info
 /// @param diags    diagnostic reporter
 YASM_LIB_EXPORT
-void DirExtern(DirectiveInfo& info, Diagnostic& diags);
+void DirExtern(DirectiveInfo& info, DiagnosticsEngine& diags);
 
 /// Extern multiple directive handler.  Sets each symbol's visibility to
 /// Symbol::EXTERN.
 /// @param info     directive info
 /// @param diags    diagnostic reporter
 YASM_LIB_EXPORT
-void DirExternMulti(DirectiveInfo& info, Diagnostic& diags);
+void DirExternMulti(DirectiveInfo& info, DiagnosticsEngine& diags);
 
 /// Global directive handler.  Sets symbol visibility to Symbol::GLOBAL and
 /// saves objext_namevals as associated symbol data.
 /// @param info     directive info
 /// @param diags    diagnostic reporter
 YASM_LIB_EXPORT
-void DirGlobal(DirectiveInfo& info, Diagnostic& diags);
+void DirGlobal(DirectiveInfo& info, DiagnosticsEngine& diags);
 
 /// Global multiple directive handler.  Sets each symbol's visibility to
 /// Symbol::GLOBAL.
 /// @param info     directive info
 /// @param diags    diagnostic reporter
 YASM_LIB_EXPORT
-void DirGlobalMulti(DirectiveInfo& info, Diagnostic& diags);
+void DirGlobalMulti(DirectiveInfo& info, DiagnosticsEngine& diags);
 
 /// Common directive handler.  Sets symbol visibility to Symbol::COMMON and
 /// saves common size and objext_namevals as associated symbol data.
 /// @param info     directive info
 /// @param diags    diagnostic reporter
 YASM_LIB_EXPORT
-void DirCommon(DirectiveInfo& info, Diagnostic& diags);
+void DirCommon(DirectiveInfo& info, DiagnosticsEngine& diags);
 
 } // namespace yasm
 

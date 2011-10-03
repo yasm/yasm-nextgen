@@ -77,8 +77,8 @@ class YASM_LIB_EXPORT TokenLexer
     /// This is the next token that Lex will return.
     unsigned m_cur_token;
 
-    /// The source location range where this macro was instantiated.
-    SourceLocation m_instantiate_loc_start, m_instantiate_loc_end;
+    /// The source location range where this macro was expanded.
+    SourceLocation m_expand_loc_start, m_expand_loc_end;
 
     /// Lexical information about the expansion point of the macro: the identifier
     /// that the macro expanded from had these properties.

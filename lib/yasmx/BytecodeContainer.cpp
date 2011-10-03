@@ -43,13 +43,13 @@ public:
     ~GapBytecode();
 
     /// Finalizes the bytecode after parsing.
-    bool Finalize(Bytecode& bc, Diagnostic& diags);
+    bool Finalize(Bytecode& bc, DiagnosticsEngine& diags);
 
     /// Calculates the minimum size of a bytecode.
     bool CalcLen(Bytecode& bc,
                  /*@out@*/ unsigned long* len,
                  const Bytecode::AddSpanFunc& add_span,
-                 Diagnostic& diags);
+                 DiagnosticsEngine& diags);
 
     /// Output a bytecode.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
@@ -82,7 +82,7 @@ GapBytecode::~GapBytecode()
 }
 
 bool
-GapBytecode::Finalize(Bytecode& bc, Diagnostic& diags)
+GapBytecode::Finalize(Bytecode& bc, DiagnosticsEngine& diags)
 {
     return true;
 }
@@ -91,7 +91,7 @@ bool
 GapBytecode::CalcLen(Bytecode& bc,
                      /*@out@*/ unsigned long* len,
                      const Bytecode::AddSpanFunc& add_span,
-                     Diagnostic& diags)
+                     DiagnosticsEngine& diags)
 {
     *len = m_size;
     return true;
@@ -199,14 +199,14 @@ BytecodeContainer::getEndLoc()
 }
 
 void
-BytecodeContainer::Finalize(Diagnostic& diags)
+BytecodeContainer::Finalize(DiagnosticsEngine& diags)
 {
     for (bc_iterator bc=m_bcs.begin(), end=m_bcs.end(); bc != end; ++bc)
         bc->Finalize(diags);
 }
 
 void
-BytecodeContainer::UpdateOffsets(Diagnostic& diags)
+BytecodeContainer::UpdateOffsets(DiagnosticsEngine& diags)
 {
     unsigned long offset = 0;
     m_bcs.front().setOffset(0);
@@ -215,7 +215,7 @@ BytecodeContainer::UpdateOffsets(Diagnostic& diags)
 }
 
 void
-BytecodeContainer::Optimize(Diagnostic& diags)
+BytecodeContainer::Optimize(DiagnosticsEngine& diags)
 {
     Optimizer opt(diags);
 

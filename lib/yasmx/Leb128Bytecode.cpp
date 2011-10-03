@@ -47,13 +47,13 @@ public:
     ~LEB128Bytecode();
 
     /// Finalizes the bytecode after parsing.
-    bool Finalize(Bytecode& bc, Diagnostic& diags);
+    bool Finalize(Bytecode& bc, DiagnosticsEngine& diags);
 
     /// Calculates the minimum size of a bytecode.
     bool CalcLen(Bytecode& bc,
                  /*@out@*/ unsigned long* len,
                  const Bytecode::AddSpanFunc& add_span,
-                 Diagnostic& diags);
+                 DiagnosticsEngine& diags);
 
     /// Recalculates the bytecode's length based on an expanded span
     /// length.
@@ -65,7 +65,7 @@ public:
                 bool* keep,
                 /*@out@*/ long* neg_thres,
                 /*@out@*/ long* pos_thres,
-                Diagnostic& diags);
+                DiagnosticsEngine& diags);
 
     /// Convert a bytecode into its byte representation.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
@@ -95,7 +95,7 @@ LEB128Bytecode::~LEB128Bytecode()
 }
 
 bool
-LEB128Bytecode::Finalize(Bytecode& bc, Diagnostic& diags)
+LEB128Bytecode::Finalize(Bytecode& bc, DiagnosticsEngine& diags)
 {
     if (!m_value.Finalize(diags, diag::err_leb128_too_complex) ||
         m_value.isRelative())
@@ -107,7 +107,7 @@ bool
 LEB128Bytecode::CalcLen(Bytecode& bc,
                         /*@out@*/ unsigned long* len,
                         const Bytecode::AddSpanFunc& add_span,
-                        Diagnostic& diags)
+                        DiagnosticsEngine& diags)
 {
     if (!m_value.hasAbs())
     {
@@ -139,7 +139,7 @@ LEB128Bytecode::Expand(Bytecode& bc,
                        bool* keep,
                        /*@out@*/ long* neg_thres,
                        /*@out@*/ long* pos_thres,
-                       Diagnostic& diags)
+                       DiagnosticsEngine& diags)
 {
     unsigned long size = SizeLEB128(new_val, m_value.isSigned());
 
@@ -230,7 +230,7 @@ yasm::AppendLEB128(BytecodeContainer& container,
                    const IntNum& intn,
                    bool sign,
                    SourceLocation source,
-                   Diagnostic& diags)
+                   DiagnosticsEngine& diags)
 {
     if (intn.getSign() < 0 && !sign)
         diags.Report(source, diag::warn_negative_uleb128);
@@ -243,7 +243,7 @@ yasm::AppendLEB128(BytecodeContainer& container,
                    std::auto_ptr<Expr> expr,
                    bool sign,
                    SourceLocation source,
-                   Diagnostic& diags)
+                   DiagnosticsEngine& diags)
 {
     // If expression is just an integer, output directly.
     expr->Simplify(diags);

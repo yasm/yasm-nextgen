@@ -46,7 +46,9 @@ namespace parser
 class YASM_STD_EXPORT GasPreproc : public Preprocessor
 {
 public:
-    GasPreproc(Diagnostic& diags, SourceManager& sm, HeaderSearch& headers);
+    GasPreproc(DiagnosticsEngine& diags,
+               SourceManager& sm,
+               HeaderSearch& headers);
     ~GasPreproc();
 
     virtual void PredefineMacro(llvm::StringRef macronameval);

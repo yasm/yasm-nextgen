@@ -51,17 +51,17 @@ class YASM_STD_EXPORT UnwindInfo : public Bytecode::Contents
                       BytecodeContainer& xdata,
                       SourceLocation source,
                       const Arch& arch,
-                      Diagnostic& diags);
+                      DiagnosticsEngine& diags);
 
 public:
     UnwindInfo();
     ~UnwindInfo();
 
-    virtual bool Finalize(Bytecode& bc, Diagnostic& diags);
+    virtual bool Finalize(Bytecode& bc, DiagnosticsEngine& diags);
     virtual bool CalcLen(Bytecode& bc,
                          /*@out@*/ unsigned long* len,
                          const Bytecode::AddSpanFunc& add_span,
-                         Diagnostic& diags);
+                         DiagnosticsEngine& diags);
     virtual bool Expand(Bytecode& bc,
                         unsigned long* len,
                         int span,
@@ -70,7 +70,7 @@ public:
                         bool* keep,
                         /*@out@*/ long* neg_thres,
                         /*@out@*/ long* pos_thres,
-                        Diagnostic& diags);
+                        DiagnosticsEngine& diags);
     virtual bool Output(Bytecode& bc, BytecodeOutput& bc_out);
     llvm::StringRef getType() const;
     virtual UnwindInfo* clone() const;
@@ -111,7 +111,7 @@ void Generate(std::auto_ptr<UnwindInfo> uwinfo,
               BytecodeContainer& xdata,
               SourceLocation source,
               const Arch& arch,
-              Diagnostic& diags);
+              DiagnosticsEngine& diags);
 
 }} // namespace yasm::objfmt
 

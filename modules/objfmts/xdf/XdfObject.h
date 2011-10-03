@@ -31,7 +31,7 @@
 
 namespace yasm
 {
-class Diagnostic;
+class DiagnosticsEngine;
 class DirectiveInfo;
 
 namespace objfmt
@@ -52,16 +52,16 @@ public:
 
     void AddDirectives(Directives& dirs, llvm::StringRef parser);
 
-    bool Read(SourceManager& sm, Diagnostic& diags);
+    bool Read(SourceManager& sm, DiagnosticsEngine& diags);
     void Output(llvm::raw_fd_ostream& os,
                 bool all_syms,
                 DebugFormat& dbgfmt,
-                Diagnostic& diags);
+                DiagnosticsEngine& diags);
 
     Section* AddDefaultSection();
     Section* AppendSection(llvm::StringRef name,
                            SourceLocation source,
-                           Diagnostic& diags);
+                           DiagnosticsEngine& diags);
 
     static llvm::StringRef getName() { return "Extended Dynamic Object"; }
     static llvm::StringRef getKeyword() { return "xdf"; }
@@ -75,7 +75,7 @@ public:
                       /*@out@*/ std::string* machine);
 
 private:
-    void DirSection(DirectiveInfo& info, Diagnostic& diags);
+    void DirSection(DirectiveInfo& info, DiagnosticsEngine& diags);
 };
 
 }} // namespace yasm::objfmt

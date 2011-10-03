@@ -52,16 +52,22 @@ def add_group(name, subgroups=None):
 
 categories = dict()
 class Category(object):
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, name, desc=None):
+        if desc is None:
+            self.name = "".join(c.isalnum() and c or "_" for c in name)
+            self.desc = name
+        else:
+            self.name = name
+            self.desc = desc
 
-def add_category(name):
+def add_category(name, desc=None):
     if name in categories:
         lprint("Warning: duplicate category %s" % name, file=sys.stderr)
-    categories[name] = Category(name)
+    categories[name] = Category(name, desc)
 
 class Diag(object):
-    def __init__(self, name, cls, desc, mapping=None, group="", category=""):
+    def __init__(self, name, cls, desc, mapping=None, group="", category="",
+                 no_werror=False):
         self.name = name
         self.cls = cls
         self.desc = desc
@@ -70,20 +76,23 @@ class Diag(object):
         if category not in categories:
             add_category(category)
         self.category = category
+        self.no_werror = no_werror
 
 diags = dict()
-def add_diag(name, cls, desc, mapping=None, group="", category=""):
+def add_diag(name, cls, desc, mapping=None, group="", category="",
+             no_werror=False):
     if name in diags:
         lprint("Warning: duplicate diag %s" % name, file=sys.stderr)
-    diags[name] = Diag(name, cls, desc, mapping, group, category)
+    diags[name] = Diag(name, cls, desc, mapping, group, category, no_werror)
 
-def add_warning(name, desc, mapping=None, group="", category=""):
+def add_warning(name, desc, mapping=None, group="", category="",
+                no_werror=False):
     if group:
         if group not in groups:
             lprint("Unrecognized warning group %s" % group, file=sys.stderr)
         else:
             groups[group].members.append(name)
-    add_diag(name, "WARNING", desc, mapping, group, category)
+    add_diag(name, "WARNING", desc, mapping, group, category, no_werror)
 
 def add_fatal(name, desc, category=""):
     add_diag(name, "ERROR", desc, mapping="FATAL", category=category)
@@ -110,18 +119,20 @@ def output_diag_kinds(f):
 def output_diags(f):
     for name in sorted(diags):
         diag = diags[name]
-        lprint("{ diag::%s, diag::MAP_%s, CLASS_%s, %d, \"%s\", %s }," % (
+        lprint("{ diag::%s, diag::MAP_%s, CLASS_%s, %d, %d, %d, %d, \"%s\" }," % (
             diag.name,
             diag.mapping or diag.cls,
             diag.cls,
+            diag.no_werror and 1 or 0,
             categories[diag.category].index,
-            diag.desc.replace("\\", "\\\\").replace('"', '\\"'),
-            diag.group and "\"%s\"" % diag.group or "0"), file=f)
+            diag.group and groups[diag.group].index or 0,
+            len(diag.desc),
+            diag.desc.replace("\\", "\\\\").replace('"', '\\"')), file=f)
 
 def output_groups(f):
     # enumerate all groups and set indexes first
     for n, name in enumerate(sorted(groups)):
-        groups[name].index = n
+        groups[name].index = n+1
 
     # output arrays
     for name in sorted(groups):
@@ -141,14 +152,29 @@ def output_groups(f):
 
     # output table
     lprint("static const WarningOption OptionTable[] = {", file=f)
+    lprint("  { 0, \"\", 0, 0 },", file=f)
     for name in sorted(groups):
         group = groups[name]
-        lprint("  { \"%s\", %s, %s }," % (
+        lprint("  { %d, \"%s\", %s, %s }," % (
+                len(group.name),
                 group.name,
                 group.members and ("DiagArray%d" % group.index) or "0",
                 group.subgroups and ("DiagSubGroup%d" % group.index) or "0"),
                file=f)
     lprint("};", file=f)
+
+def output_diag_categories(f):
+    lprint("#ifndef YASM_DIAGNOSTICCATEGORIES_H", file=f)
+    lprint("#define YASM_DIAGNOSTICCATEGORIES_H", file=f)
+    lprint("namespace yasm { namespace diag {", file=f)
+    lprint("enum {", file=f)
+    for name in sorted(categories):
+        category = categories[name]
+        lprint("DiagCat_%s," % category.name, file=f)
+    lprint("DiagCat_NUM_CATEGORIES", file=f)
+    lprint("};", file=f)
+    lprint("}}", file=f)
+    lprint("#endif", file=f)
 
 def output_categories(f):
     # enumerate all categories and set indexes first
@@ -156,12 +182,15 @@ def output_categories(f):
         categories[name].index = n
 
     # output table
-    lprint("static const char *CategoryNameTable[] = {", file=f)
     for name in sorted(categories):
         category = categories[name]
-        lprint("  \"%s\"," % category.name, file=f)
-    lprint("  \"<<END>>\"", file=f)
-    lprint("};", file=f)
+        lprint("  { \"%s\", %d }," % (category.desc, len(category.desc)),
+               file=f)
+
+#####################################################################
+# Categories
+#####################################################################
+categories[""] = Category("None", "") # special case
 
 #####################################################################
 # Groups (for command line -W option)
@@ -769,12 +798,15 @@ add_error("err_xdf_common_unsupported",
 #####################################################################
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
+    if len(sys.argv) != 6:
         lprint("Usage: gen_diag.py <DiagnosticGroups.cpp>", file=sys.stderr)
-        lprint("    <DiagnosticCategories.cpp>", file=sys.stderr)
-        lprint("    <DiagnosticKinds.h> <StaticDiagInfo.inc>", file=sys.stderr)
+        lprint("    <DiagnosticCategories.h> <CategoryNameTable.inc>",
+               file=sys.stderr)
+        lprint("    <DiagnosticKinds.h> <StaticDiagInfo.inc>",
+               file=sys.stderr)
         sys.exit(2)
     output_groups(open(sys.argv[1], "wt"))
-    output_categories(open(sys.argv[2], "wt"))
-    output_diag_kinds(open(sys.argv[3], "wt"))
-    output_diags(open(sys.argv[4], "wt"))
+    output_diag_categories(open(sys.argv[2], "wt"))
+    output_categories(open(sys.argv[3], "wt"))
+    output_diag_kinds(open(sys.argv[4], "wt"))
+    output_diags(open(sys.argv[5], "wt"))

@@ -31,7 +31,7 @@
 
 #include <algorithm>
 
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/FileManager.h"
 #include "yasmx/Basic/SourceManager.h"
@@ -168,9 +168,10 @@ DwarfDebug::AddFile(const FileEntry* file)
 size_t
 DwarfDebug::AddFile(unsigned long filenum, llvm::StringRef pathname)
 {
-    llvm::sys::Path path(pathname);
-
-    unsigned long dir = AddDir(path.getDirname());
+    llvm::StringRef dirname = llvm::sys::path::parent_path(pathname);
+    if (dirname.empty())
+        dirname = ".";
+    unsigned long dir = AddDir(dirname);
 
     // Put the filename into the filename table
     assert(filenum != 0);
@@ -182,7 +183,7 @@ DwarfDebug::AddFile(unsigned long filenum, llvm::StringRef pathname)
 
     // Save in table
     m_filenames[filenum].pathname = pathname;
-    m_filenames[filenum].filename = path.getLast();
+    m_filenames[filenum].filename = llvm::sys::path::filename(pathname);
     m_filenames[filenum].dir = dir;
     m_filenames[filenum].time = 0;
     m_filenames[filenum].length = 0;
@@ -581,7 +582,7 @@ DwarfDebug::AppendSPP(BytecodeContainer& container)
 }
 
 void
-DwarfDebug::DirLoc(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirLoc(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     NameValues::const_iterator nv = info.getNameValues().begin();
     NameValues::const_iterator end = info.getNameValues().end();
@@ -806,7 +807,7 @@ restart:
 }
 
 void
-DwarfDebug::DirFile(DirectiveInfo& info, Diagnostic& diags)
+DwarfDebug::DirFile(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     NameValues& nvs = info.getNameValues();
     assert(!nvs.empty());

@@ -39,45 +39,59 @@
 namespace yasmunit
 {
 
-class MockDiagnosticClient : public yasm::DiagnosticClient
+class MockDiagnosticConsumer : public yasm::DiagnosticConsumer
 {
 public:
-    MOCK_METHOD2(HandleDiagnostic, void(yasm::Diagnostic::Level DiagLevel,
-                                        const yasm::DiagnosticInfo& Info));
+    MOCK_METHOD2(HandleDiagnostic, void(yasm::DiagnosticsEngine::Level DiagLevel,
+                                        const yasm::Diagnostic& Info));
+    yasm::DiagnosticConsumer* clone(yasm::DiagnosticsEngine& diags) const
+    {
+        return new MockDiagnosticConsumer;
+    }
 };
 
-class MockDiagnosticString : public yasm::DiagnosticClient
+class MockDiagnosticString : public yasm::DiagnosticConsumer
 {
 public:
-    void HandleDiagnostic(yasm::Diagnostic::Level level,
-                          const yasm::DiagnosticInfo& info)
+    void HandleDiagnostic(yasm::DiagnosticsEngine::Level level,
+                          const yasm::Diagnostic& info)
     {
         llvm::SmallString<100> str;
         switch (level)
         {
-            case yasm::Diagnostic::Ignored: assert(0 && "Invalid diagnostic type");
-            case yasm::Diagnostic::Note:    str += "note: "; break;
-            case yasm::Diagnostic::Warning: str += "warning: "; break;
-            case yasm::Diagnostic::Error:   str += "error: "; break;
-            case yasm::Diagnostic::Fatal:   str += "fatal error: "; break;
+            case yasm::DiagnosticsEngine::Ignored: assert(0 && "Invalid diagnostic type");
+            case yasm::DiagnosticsEngine::Note:    str += "note: "; break;
+            case yasm::DiagnosticsEngine::Warning: str += "warning: "; break;
+            case yasm::DiagnosticsEngine::Error:   str += "error: "; break;
+            case yasm::DiagnosticsEngine::Fatal:   str += "fatal error: "; break;
         }
         info.FormatDiagnostic(str);
         DiagString(str);
     }
 
     MOCK_METHOD1(DiagString, void(llvm::StringRef str));
+
+    yasm::DiagnosticConsumer* clone(yasm::DiagnosticsEngine& diags) const
+    {
+        return new MockDiagnosticString;
+    }
 };
 
-class MockDiagnosticId : public yasm::DiagnosticClient
+class MockDiagnosticId : public yasm::DiagnosticConsumer
 {
 public:
-    void HandleDiagnostic(yasm::Diagnostic::Level level,
-                          const yasm::DiagnosticInfo& info)
+    void HandleDiagnostic(yasm::DiagnosticsEngine::Level level,
+                          const yasm::Diagnostic& info)
     {
         DiagId(info.getID());
     }
 
     MOCK_METHOD1(DiagId, void(unsigned int id));
+
+    yasm::DiagnosticConsumer* clone(yasm::DiagnosticsEngine& diags) const
+    {
+        return new MockDiagnosticId;
+    }
 };
 
 } // namespace yasmunit

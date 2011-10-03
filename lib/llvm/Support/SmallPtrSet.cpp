@@ -13,7 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/Support/MathExtras.h"
+#include <algorithm>
 #include <cstdlib>
 
 using namespace llvm;
@@ -52,10 +54,14 @@ bool SmallPtrSetImpl::insert_imp(const void * Ptr) {
     // Otherwise, hit the big set case, which will call grow.
   }
   
-  // If more than 3/4 of the array is full, grow.
-  if (NumElements*4 >= CurArraySize*3 ||
-      CurArraySize-(NumElements+NumTombstones) < CurArraySize/8)
-    Grow();
+  if (NumElements*4 >= CurArraySize*3) {
+    // If more than 3/4 of the array is full, grow.
+    Grow(CurArraySize < 64 ? 128 : CurArraySize*2);
+  } else if (CurArraySize-(NumElements+NumTombstones) < CurArraySize/8) {
+    // If fewer of 1/8 of the array is empty (meaning that many are filled with
+    // tombstones), rehash.
+    Grow(CurArraySize);
+  }
   
   // Okay, we know we have space.  Find a hash bucket.
   const void **Bucket = const_cast<const void**>(FindBucketFor(Ptr));
@@ -97,7 +103,7 @@ bool SmallPtrSetImpl::erase_imp(const void * Ptr) {
 }
 
 const void * const *SmallPtrSetImpl::FindBucketFor(const void *Ptr) const {
-  unsigned Bucket = Hash(Ptr);
+  unsigned Bucket = DenseMapInfo<void *>::getHashValue(Ptr) & (CurArraySize-1);
   unsigned ArraySize = CurArraySize;
   unsigned ProbeAmt = 1;
   const void *const *Array = CurArray;
@@ -125,10 +131,9 @@ const void * const *SmallPtrSetImpl::FindBucketFor(const void *Ptr) const {
 
 /// Grow - Allocate a larger backing store for the buckets and move it over.
 ///
-void SmallPtrSetImpl::Grow() {
+void SmallPtrSetImpl::Grow(unsigned NewSize) {
   // Allocate at twice as many buckets, but at least 128.
   unsigned OldSize = CurArraySize;
-  unsigned NewSize = OldSize < 64 ? 128 : OldSize*2;
   
   const void **OldBuckets = CurArray;
   bool WasSmall = isSmall();
@@ -218,6 +223,56 @@ void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
   
   NumElements = RHS.NumElements;
   NumTombstones = RHS.NumTombstones;
+}
+
+void SmallPtrSetImpl::swap(SmallPtrSetImpl &RHS) {
+  if (this == &RHS) return;
+
+  // We can only avoid copying elements if neither set is small.
+  if (!this->isSmall() && !RHS.isSmall()) {
+    std::swap(this->CurArray, RHS.CurArray);
+    std::swap(this->CurArraySize, RHS.CurArraySize);
+    std::swap(this->NumElements, RHS.NumElements);
+    std::swap(this->NumTombstones, RHS.NumTombstones);
+    return;
+  }
+
+  // FIXME: From here on we assume that both sets have the same small size.
+
+  // If only RHS is small, copy the small elements into LHS and move the pointer
+  // from LHS to RHS.
+  if (!this->isSmall() && RHS.isSmall()) {
+    std::copy(RHS.SmallArray, RHS.SmallArray+RHS.CurArraySize,
+              this->SmallArray);
+    std::swap(this->NumElements, RHS.NumElements);
+    std::swap(this->CurArraySize, RHS.CurArraySize);
+    RHS.CurArray = this->CurArray;
+    RHS.NumTombstones = this->NumTombstones;
+    this->CurArray = this->SmallArray;
+    this->NumTombstones = 0;
+    return;
+  }
+
+  // If only LHS is small, copy the small elements into RHS and move the pointer
+  // from RHS to LHS.
+  if (this->isSmall() && !RHS.isSmall()) {
+    std::copy(this->SmallArray, this->SmallArray+this->CurArraySize,
+              RHS.SmallArray);
+    std::swap(RHS.NumElements, this->NumElements);
+    std::swap(RHS.CurArraySize, this->CurArraySize);
+    this->CurArray = RHS.CurArray;
+    this->NumTombstones = RHS.NumTombstones;
+    RHS.CurArray = RHS.SmallArray;
+    RHS.NumTombstones = 0;
+    return;
+  }
+
+  // Both a small, just swap the small elements.
+  assert(this->isSmall() && RHS.isSmall());
+  assert(this->CurArraySize == RHS.CurArraySize);
+  std::swap_ranges(this->SmallArray, this->SmallArray+this->CurArraySize,
+                   RHS.SmallArray);
+  std::swap(this->NumElements, RHS.NumElements);
 }
 
 SmallPtrSetImpl::~SmallPtrSetImpl() {

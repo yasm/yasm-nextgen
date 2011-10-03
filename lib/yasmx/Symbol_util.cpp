@@ -163,7 +163,7 @@ yasm::getCommonSize(Symbol& sym)
 }
 
 void
-yasm::DirExtern(DirectiveInfo& info, Diagnostic& diags)
+yasm::DirExtern(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     Object& object = info.getObject();
     NameValue& nv = info.getNameValues().front();
@@ -175,7 +175,7 @@ yasm::DirExtern(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-yasm::DirExternMulti(DirectiveInfo& info, Diagnostic& diags)
+yasm::DirExternMulti(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     Object& object = info.getObject();
     NameValues& nvs = info.getNameValues();
@@ -194,7 +194,7 @@ yasm::DirExternMulti(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-yasm::DirGlobal(DirectiveInfo& info, Diagnostic& diags)
+yasm::DirGlobal(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     Object& object = info.getObject();
     NameValue& nv = info.getNameValues().front();
@@ -206,7 +206,7 @@ yasm::DirGlobal(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-yasm::DirGlobalMulti(DirectiveInfo& info, Diagnostic& diags)
+yasm::DirGlobalMulti(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     Object& object = info.getObject();
     NameValues& nvs = info.getNameValues();
@@ -225,7 +225,7 @@ yasm::DirGlobalMulti(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-yasm::DirCommon(DirectiveInfo& info, Diagnostic& diags)
+yasm::DirCommon(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     NameValues& namevals = info.getNameValues();
     if (namevals.size() < 2)

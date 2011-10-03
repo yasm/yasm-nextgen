@@ -93,7 +93,7 @@ namespace {
 class XdfOutput : public BytecodeStreamOutput
 {
 public:
-    XdfOutput(llvm::raw_ostream& os, Object& object, Diagnostic& diags);
+    XdfOutput(llvm::raw_ostream& os, Object& object, DiagnosticsEngine& diags);
     ~XdfOutput();
 
     void OutputSection(Section& sect);
@@ -112,7 +112,9 @@ private:
 };
 } // anonymous namespace
 
-XdfOutput::XdfOutput(llvm::raw_ostream& os, Object& object, Diagnostic& diags)
+XdfOutput::XdfOutput(llvm::raw_ostream& os,
+                     Object& object,
+                     DiagnosticsEngine& diags)
     : BytecodeStreamOutput(os, diags)
     , m_object(object)
     , m_no_output(diags)
@@ -307,7 +309,7 @@ void
 XdfObject::Output(llvm::raw_fd_ostream& os,
                   bool all_syms,
                   DebugFormat& dbgfmt,
-                  Diagnostic& diags)
+                  DiagnosticsEngine& diags)
 {
     all_syms = true;   // force all syms into symbol table
 
@@ -440,7 +442,7 @@ public:
     ReadString(const llvm::MemoryBuffer& in,
                unsigned long strtab_offset,
                unsigned long strtab_len,
-               Diagnostic& diags)
+               DiagnosticsEngine& diags)
         : m_in(in)
         , m_offset(strtab_offset)
         , m_len(strtab_len)
@@ -462,7 +464,7 @@ private:
     const llvm::MemoryBuffer& m_in;
     unsigned long m_offset;
     unsigned long m_len;
-    Diagnostic& m_diags;
+    DiagnosticsEngine& m_diags;
 };
 } // anonymous namespace
 
@@ -476,7 +478,7 @@ NoAddSpan(Bytecode& bc,
 }
 
 bool
-XdfObject::Read(SourceManager& sm, Diagnostic& diags)
+XdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
 {
     const llvm::MemoryBuffer& in = *sm.getBuffer(sm.getMainFileID());
     InputBuffer inbuf(in);
@@ -544,7 +546,8 @@ XdfObject::Read(SourceManager& sm, Diagnostic& diags)
         {
             Bytecode& gap =
                 section->AppendGap(xsect->size, SourceLocation());
-            Diagnostic nodiags(0);
+            llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+            DiagnosticsEngine nodiags(diagids);
             gap.CalcLen(NoAddSpan, nodiags); // force length calculation
         }
         else
@@ -641,7 +644,8 @@ XdfObject::Read(SourceManager& sm, Diagnostic& diags)
 Section*
 XdfObject::AddDefaultSection()
 {
-    Diagnostic diags(NULL);
+    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids);
     Section* section = AppendSection(".text", SourceLocation(), diags);
     section->setDefault(true);
     return section;
@@ -650,7 +654,7 @@ XdfObject::AddDefaultSection()
 Section*
 XdfObject::AppendSection(llvm::StringRef name,
                          SourceLocation source,
-                         Diagnostic& diags)
+                         DiagnosticsEngine& diags)
 {
     bool code = (name == ".text");
     Section* section = new Section(name, code, false, source);
@@ -673,7 +677,7 @@ XdfObject::AppendSection(llvm::StringRef name,
 }
 
 void
-XdfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
+XdfObject::DirSection(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     assert(info.isObject(m_object));
     NameValues& nvs = info.getNameValues();
@@ -759,7 +763,7 @@ XdfObject::DirSection(DirectiveInfo& info, Diagnostic& diags)
         if (aligni > 4096)
         {
             diags.Report(info.getSource(),
-                diags.getCustomDiagID(Diagnostic::Error,
+                diags.getCustomDiagID(DiagnosticsEngine::Error,
                     "XDF does not support alignments > 4096"));
         }
 

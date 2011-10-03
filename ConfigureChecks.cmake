@@ -46,6 +46,7 @@ check_include_file(libgen.h HAVE_LIBGEN_H)
 check_include_file(limits.h HAVE_LIMITS_H)
 check_include_file(link.h HAVE_LINK_H)
 check_include_file(locale.h HAVE_LOCALE_H)
+check_include_file(mach/mach.h HAVE_MACH_MACH_H)
 check_include_file(malloc.h HAVE_MALLOC_H)
 check_include_file(malloc/malloc.h HAVE_MALLOC_MALLOC_H)
 check_include_file(memory.h HAVE_MEMORY_H)
@@ -225,7 +226,7 @@ set(RETSIGTYPE void)
 #else( ENABLE_THREADS )
 #  message(STATUS "Threads disabled.")
 #endif( ENABLE_THREADS )
-set(LLVM_MULTITHREADED 0)
+set(LLVM_HAS_ATOMICS 0)
 
 if(WIN32)
   if(CYGWIN)
@@ -632,7 +633,11 @@ CONFIGURE_FILE(
     ${CMAKE_CURRENT_BINARY_DIR}/include/llvm/Config/config.h
     )
 CONFIGURE_FILE(
-    include/llvm/System/DataTypes.h.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/include/llvm/System/DataTypes.h
+    include/llvm/Config/llvm-config.h.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/include/llvm/Config/llvm-config.h
+    )
+CONFIGURE_FILE(
+    include/llvm/Support/DataTypes.h.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/include/llvm/Support/DataTypes.h
     )
 

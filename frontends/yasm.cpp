@@ -35,9 +35,12 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/system_error.h"
 #include "yasmx/Basic/Diagnostic.h"
 #include "yasmx/Basic/FileManager.h"
 #include "yasmx/Basic/SourceManager.h"
+#include "yasmx/Frontend/DiagnosticOptions.h"
+#include "yasmx/Frontend/TextDiagnosticPrinter.h"
 #include "yasmx/Parse/DirectoryLookup.h"
 #include "yasmx/Parse/HeaderSearch.h"
 #include "yasmx/Parse/Parser.h"
@@ -57,8 +60,6 @@
 #endif
 
 #include "frontends/license.cpp"
-#include "frontends/DiagnosticOptions.h"
-#include "frontends/TextDiagnosticPrinter.h"
 
 
 // Preprocess-only buffer size
@@ -310,20 +311,20 @@ static cl::list<bool> inhibit_warnings("w",
     cl::desc("Inhibits warning messages"));
 
 // -X
-enum ErrwarnStyle
-{
-    EWSTYLE_GNU = 0,
-    EWSTYLE_VC
-};
-static cl::opt<ErrwarnStyle> ewmsg_style("X",
+static cl::opt<yasm::DiagnosticOptions::TextDiagnosticFormat> ewmsg_style("X",
     cl::desc("Set error/warning message style:"),
     cl::Prefix,
     cl::ZeroOrMore,
-    cl::init(EWSTYLE_GNU),
+    cl::init(yasm::DiagnosticOptions::Clang),
     cl::values(
-     clEnumValN(EWSTYLE_GNU, "gnu", "GNU (GCC) error/warning style (default)"),
-     clEnumValN(EWSTYLE_GNU, "gcc", "Alias for gnu"),
-     clEnumValN(EWSTYLE_VC,  "vc",  "Visual Studio error/warning style"),
+     clEnumValN(yasm::DiagnosticOptions::Clang, "gnu",
+                "GNU (GCC) error/warning style (default)"),
+     clEnumValN(yasm::DiagnosticOptions::Clang, "gcc", "Alias for gnu"),
+     clEnumValN(yasm::DiagnosticOptions::Msvc, "vc",
+                "Visual Studio error/warning style"),
+     clEnumValN(yasm::DiagnosticOptions::Msvc, "msvc",
+                "Alias for vc"),
+     clEnumValN(yasm::DiagnosticOptions::Vi, "vi", "Vi error/warning style"),
      clEnumValEnd));
 
 // sink to warn instead of error on unrecognized options
@@ -351,16 +352,16 @@ ListModule()
 
 template <typename T>
 static std::string
-ModuleCommonHandler(const std::string& param,
+ModuleCommonHandler(llvm::StringRef param,
                     const char* name,
                     const char* name_plural,
                     bool* listed,
-                    yasm::Diagnostic& diags)
+                    yasm::DiagnosticsEngine& diags)
 {
     if (param.empty())
         return param;
 
-    std::string keyword = llvm::LowercaseString(param);
+    std::string keyword = param.lower();
     if (!yasm::isModule<T>(keyword))
     {
         if (param == "help")
@@ -377,7 +378,7 @@ ModuleCommonHandler(const std::string& param,
 }
 
 static void
-ApplyWarningSettings(yasm::Diagnostic& diags)
+ApplyWarningSettings(yasm::DiagnosticsEngine& diags)
 {
     // Walk through warning_settings and inhibit_warnings in parallel,
     // ordering by command line argument position.
@@ -407,10 +408,10 @@ ApplyWarningSettings(yasm::Diagnostic& diags)
             llvm::StringRef setting(warning_settings[setting_num]);
 
             yasm::diag::Mapping mapping = yasm::diag::MAP_WARNING;
-            bool positive = true;
+            bool enabled = true;
             if (setting.startswith("no-"))
             {
-                positive = false;
+                enabled = false;
                 mapping = yasm::diag::MAP_IGNORE;
                 setting = setting.substr(3);
             }
@@ -423,17 +424,25 @@ ApplyWarningSettings(yasm::Diagnostic& diags)
                 // -Werror=foo/-Wno-error=foo maps warning foo.
                 if (setting.empty())
                 {
-                    diags.setWarningsAsErrors(positive);
+                    diags.setWarningsAsErrors(enabled);
                     ++setting_num;
                     continue;
                 }
+                else if (!diags.setDiagnosticGroupWarningAsError(setting,
+                                                                 enabled))
+                {
+                    ++setting_num;
+                    continue;
+                }
+#if 0
                 else
                 {
-                    mapping = positive ? yasm::diag::MAP_ERROR
-                                       : yasm::diag::MAP_WARNING_NO_WERROR;
+                    diags.setDiagnosticWarningAsError(enabled);
+                    ++setting_num;
+                    continue;
                 }
+#endif
             }
-#if 0
             else if (setting.startswith("fatal-errors"))
             {
                 llvm::StringRef unused;
@@ -442,17 +451,25 @@ ApplyWarningSettings(yasm::Diagnostic& diags)
                 // -Wfatal-errors=foo/-Wno-fatal-errors=foo maps just foo.
                 if (setting.empty())
                 {
-                    diags.setErrorsAsFatal(positive);
+                    diags.setErrorsAsFatal(enabled);
                     ++setting_num;
                     continue;
                 }
+                else if (!diags.setDiagnosticGroupErrorAsFatal(setting,
+                                                               enabled))
+                {
+                    ++setting_num;
+                    continue;
+                }
+#if 0
                 else
                 {
-                    mapping = positive ? yasm::diag::MAP_FATAL
-                                       : yasm::diag::MAP_ERROR_NO_WFATAL;
+                    diags.setDiagnosticErrorAsFatal(enabled);
+                    ++setting_num;
+                    continue;
                 }
-            }
 #endif
+            }
 
             if (diags.setDiagnosticGroupMapping(setting, mapping))
                 diags.Report(yasm::SourceLocation(),
@@ -675,13 +692,13 @@ do_preproc_only(void)
 }
 #endif
 static int
-do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
+do_assemble(yasm::SourceManager& source_mgr, yasm::DiagnosticsEngine& diags)
 {
     // Apply warning settings
     ApplyWarningSettings(diags);
 
-    yasm::FileManager file_mgr;
     yasm::Assembler assembler(arch_keyword, objfmt_keyword, diags, dump_object);
+    yasm::FileManager& file_mgr = source_mgr.getFileManager();
     yasm::HeaderSearch headers(file_mgr);
 
     if (diags.hasFatalErrorOccurred())
@@ -722,7 +739,14 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
     // open the input file or STDIN (for filename of "-")
     if (in_filename == "-")
     {
-        source_mgr.createMainFileIDForMemBuffer(llvm::MemoryBuffer::getSTDIN());
+        llvm::OwningPtr<llvm::MemoryBuffer> my_stdin;
+        if (llvm::error_code err = llvm::MemoryBuffer::getSTDIN(my_stdin))
+        {
+            diags.Report(yasm::SourceLocation(), yasm::diag::fatal_file_open)
+                << in_filename << err.message();
+            return EXIT_FAILURE;
+        }
+        source_mgr.createMainFileIDForMemBuffer(my_stdin.take());
     }
     else
     {
@@ -733,7 +757,7 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::Diagnostic& diags)
                 << in_filename;
             return EXIT_FAILURE;
         }
-        source_mgr.createMainFileID(in, yasm::SourceLocation());
+        source_mgr.createMainFileID(in);
     }
 
     // initialize the object.
@@ -844,12 +868,16 @@ main(int argc, char* argv[])
         errfile.reset(new llvm::raw_stderr_ostream);
 
     yasm::DiagnosticOptions diag_opts;
-    diag_opts.Microsoft = (ewmsg_style == EWSTYLE_VC);
+    diag_opts.Format = ewmsg_style;
     diag_opts.ShowOptionNames = 1;
     diag_opts.ShowSourceRanges = 1;
     yasm::TextDiagnosticPrinter diag_printer(*errfile, diag_opts);
-    yasm::Diagnostic diags(&diag_printer);
-    yasm::SourceManager source_mgr(diags);
+    llvm::IntrusiveRefCntPtr<yasm::DiagnosticIDs>
+        diagids(new yasm::DiagnosticIDs);
+    yasm::DiagnosticsEngine diags(diagids, &diag_printer, false);
+    yasm::FileSystemOptions opts;
+    yasm::FileManager file_mgr(opts);
+    yasm::SourceManager source_mgr(diags, file_mgr);
     diags.setSourceManager(&source_mgr);
     diag_printer.setPrefix("yasm");
 

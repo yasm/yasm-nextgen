@@ -43,7 +43,7 @@
 namespace yasm
 {
 
-class Diagnostic;
+class DiagnosticsEngine;
 class Directives;
 class HeaderSearch;
 class Linemap;
@@ -76,7 +76,9 @@ public:
     /// @param dirs         available directives
     /// @param diags        diagnostic reporter
     /// @note Parse errors and warnings are stored into errwarns.
-    virtual void Parse(Object& object, Directives& dirs, Diagnostic& diags) = 0;
+    virtual void Parse(Object& object,
+                       Directives& dirs,
+                       DiagnosticsEngine& diags) = 0;
 
 private:
     Parser(const Parser&);                  // not implemented
@@ -103,7 +105,7 @@ public:
     /// @param sm           source manager
     /// @return New parser.
     /// @note It is assumed sm is already loaded with a main file.
-    virtual std::auto_ptr<Parser> Create(Diagnostic& diags,
+    virtual std::auto_ptr<Parser> Create(DiagnosticsEngine& diags,
                                          SourceManager& sm,
                                          HeaderSearch& headers) const = 0;
 };
@@ -118,7 +120,7 @@ public:
     llvm::StringRef getName() const { return ParserImpl::getName(); }
     llvm::StringRef getKeyword() const { return ParserImpl::getKeyword(); }
 
-    std::auto_ptr<Parser> Create(Diagnostic& diags,
+    std::auto_ptr<Parser> Create(DiagnosticsEngine& diags,
                                  SourceManager& sm,
                                  HeaderSearch& headers) const
     {

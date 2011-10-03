@@ -66,7 +66,7 @@ public:
 protected:
     bool DoAppend(BytecodeContainer& container,
                   SourceLocation source,
-                  Diagnostic& diags);
+                  DiagnosticsEngine& diags);
 #ifdef WITH_XML
     pugi::xml_node DoWrite(pugi::xml_node out) const;
 #endif // WITH_XML
@@ -75,7 +75,7 @@ private:
     bool DoAppendJmpFar(BytecodeContainer& container,
                         const X86InsnInfo& info,
                         SourceLocation source,
-                        Diagnostic& diags);
+                        DiagnosticsEngine& diags);
 
     bool MatchJmpInfo(const X86InsnInfo& info,
                       unsigned int opersize,
@@ -84,13 +84,13 @@ private:
     bool DoAppendJmp(BytecodeContainer& container,
                      const X86InsnInfo& jinfo,
                      SourceLocation source,
-                     Diagnostic& diags);
+                     DiagnosticsEngine& diags);
 
     bool DoAppendGeneral(BytecodeContainer& container,
                          const X86InsnInfo& info,
                          const unsigned int* size_lookup,
                          SourceLocation source,
-                         Diagnostic& diags);
+                         DiagnosticsEngine& diags);
 
     const X86InsnInfo* FindMatch(const unsigned int* size_lookup, int bypass)
         const;
@@ -104,7 +104,7 @@ private:
                       int bypass) const;
     void MatchError(const unsigned int* size_lookup,
                     SourceLocation source,
-                    Diagnostic& diags) const;
+                    DiagnosticsEngine& diags) const;
 
     // architecture
     const X86Arch& m_arch;

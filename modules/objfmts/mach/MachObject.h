@@ -33,7 +33,7 @@
 
 namespace yasm
 {
-class Diagnostic;
+class DiagnosticsEngine;
 class DirectiveInfo;
 
 namespace objfmt
@@ -59,19 +59,19 @@ public:
     void Output(llvm::raw_fd_ostream& os,
                 bool all_syms,
                 DebugFormat& dbgfmt,
-                Diagnostic& diags);
+                DiagnosticsEngine& diags);
 
     Section* AddDefaultSection();
     Section* AppendSection(const SectionConfig& config,
                            SourceLocation source,
-                           Diagnostic& diags);
+                           DiagnosticsEngine& diags);
     Section* AppendSection(llvm::StringRef name,
                            SourceLocation source,
-                           Diagnostic& diags);
+                           DiagnosticsEngine& diags);
     Section* AppendSection(llvm::StringRef segname,
                            llvm::StringRef sectname,
                            SourceLocation source,
-                           Diagnostic& diags);
+                           DiagnosticsEngine& diags);
 
     static llvm::StringRef getName() { return "Mac OS X ABI Mach-O"; }
     static llvm::StringRef getKeyword() { return "macho"; }
@@ -89,21 +89,22 @@ private:
     void InitSection(const SectionConfig& config, Section& section);
     SectionConfig LookupSection(llvm::StringRef name);
     SectionConfig LookupSection(llvm::StringRef segname, llvm::StringRef sectname);
-    void DirGasSection(DirectiveInfo& info, Diagnostic& diags);
-    void DirSection(DirectiveInfo& info, Diagnostic& diags);
+    void DirGasSection(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirSection(DirectiveInfo& info, DiagnosticsEngine& diags);
     void DirGasStandardSection(const StaticSectionConfig* config,
                                DirectiveInfo& info,
-                               Diagnostic& diags);
-    void DirZerofill(DirectiveInfo& info, Diagnostic& diags);
-    void DirIndirectSymbol(DirectiveInfo& info, Diagnostic& diags);
-    void DirReference(DirectiveInfo& info, Diagnostic& diags);
-    void DirLazyReference(DirectiveInfo& info, Diagnostic& diags);
-    void DirWeakReference(DirectiveInfo& info, Diagnostic& diags);
-    void DirWeakDefinition(DirectiveInfo& info, Diagnostic& diags);
-    void DirPrivateExtern(DirectiveInfo& info, Diagnostic& diags);
-    void DirDesc(DirectiveInfo& info, Diagnostic& diags);
-    void DirNoDeadStrip(DirectiveInfo& info, Diagnostic& diags);
-    void DirSubsectionsViaSymbols(DirectiveInfo& info, Diagnostic& diags);
+                               DiagnosticsEngine& diags);
+    void DirZerofill(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirIndirectSymbol(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirReference(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirLazyReference(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirWeakReference(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirWeakDefinition(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirPrivateExtern(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirDesc(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirNoDeadStrip(DirectiveInfo& info, DiagnosticsEngine& diags);
+    void DirSubsectionsViaSymbols(DirectiveInfo& info,
+                                  DiagnosticsEngine& diags);
 
     unsigned int m_bits;
     bool m_subsections_via_symbols;

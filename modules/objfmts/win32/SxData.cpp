@@ -45,13 +45,13 @@ public:
     ~SxData();
 
     /// Finalizes the bytecode after parsing.
-    bool Finalize(Bytecode& bc, Diagnostic& diags);
+    bool Finalize(Bytecode& bc, DiagnosticsEngine& diags);
 
     /// Calculates the minimum size of a bytecode.
     bool CalcLen(Bytecode& bc,
                  /*@out@*/ unsigned long* len,
                  const Bytecode::AddSpanFunc& add_span,
-                 Diagnostic& diags);
+                 DiagnosticsEngine& diags);
 
     /// Convert a bytecode into its byte representation.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
@@ -80,7 +80,7 @@ SxData::~SxData()
 }
 
 bool
-SxData::Finalize(Bytecode& bc, Diagnostic& diags)
+SxData::Finalize(Bytecode& bc, DiagnosticsEngine& diags)
 {
     return true;
 }
@@ -89,7 +89,7 @@ bool
 SxData::CalcLen(Bytecode& bc,
                 /*@out@*/ unsigned long* len,
                 const Bytecode::AddSpanFunc& add_span,
-                Diagnostic& diags)
+                DiagnosticsEngine& diags)
 {
     *len = 4;
     return true;

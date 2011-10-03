@@ -473,8 +473,7 @@ NasmParser::ParseLine()
             // FIXME: handle incr
             SourceManager& smgr = m_preproc.getSourceManager();
             smgr.AddLineNote(m_token.getLocation(), line.getUInt(),
-                             smgr.getLineTableFilenameID(filename.data(),
-                                                         filename.size()));
+                             smgr.getLineTableFilenameID(filename));
             break;
         }
         case NasmToken::l_square: // [ directive ]
@@ -1734,7 +1733,7 @@ NasmParser::DefineLabel(SymbolRef sym, SourceLocation source, bool local)
 }
 
 void
-NasmParser::DirAbsolute(DirectiveInfo& info, Diagnostic& diags)
+NasmParser::DirAbsolute(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     Object& object = info.getObject();
     m_absstart = info.getNameValues().front().getExpr(object);
@@ -1744,7 +1743,7 @@ NasmParser::DirAbsolute(DirectiveInfo& info, Diagnostic& diags)
 }
 
 void
-NasmParser::DirAlign(DirectiveInfo& info, Diagnostic& diags)
+NasmParser::DirAlign(DirectiveInfo& info, DiagnosticsEngine& diags)
 {
     Object& object = info.getObject();
     NameValues& namevals = info.getNameValues();

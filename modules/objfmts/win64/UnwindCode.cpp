@@ -43,7 +43,7 @@ UnwindCode::~UnwindCode()
 }
 
 bool
-UnwindCode::Finalize(Bytecode& bc, Diagnostic& diags)
+UnwindCode::Finalize(Bytecode& bc, DiagnosticsEngine& diags)
 {
     if (!m_off.Finalize(diags))
         return false;
@@ -54,7 +54,7 @@ bool
 UnwindCode::CalcLen(Bytecode& bc,
                     /*@out@*/ unsigned long* len,
                     const Bytecode::AddSpanFunc& add_span,
-                    Diagnostic& diags)
+                    DiagnosticsEngine& diags)
 {
     *len = 0;
     int span = 0;
@@ -145,7 +145,7 @@ UnwindCode::Expand(Bytecode& bc,
                    bool* keep,
                    /*@out@*/ long* neg_thres,
                    /*@out@*/ long* pos_thres,
-                   Diagnostic& diags)
+                   DiagnosticsEngine& diags)
 {
     if (new_val < 0)
     {
